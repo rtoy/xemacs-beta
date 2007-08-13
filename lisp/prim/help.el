@@ -1292,3 +1292,161 @@ after the listing is made.)"
                     (setq cmd (cdr cmd))
                     (if cmd (princ " " stream)))))
             (terpri stream)))))))
+
+(defvar find-function-function 'ff-function-at-point
+  "The function used by `find-function' to select the function near
+point.
+
+For example `ff-function-at-point' or `function-called-at-point'.")
+
+(defvar find-function-source-path nil
+  "The default list of directories where find-function searches.
+
+If this variable is `nil' then find-function searches `load-path' by
+default.")
+
+;;; Code:
+
+(defun find-function-noselect (function &optional path)
+  "Put point at the definition of the function at point and return the buffer.
+
+Finds the emacs-lisp package containing the definition of FUNCTION
+into a buffer and place point before the definition.  The buffer is
+not selected.
+
+If the optional argument PATH is given, the package where FUNCTION is
+defined is searched in PATH instead of `load-path' (see
+`find-function-source-path')."
+  (and (subrp (symbol-function function))
+       (error "%s is a primitive function" function))
+  (if (not function)
+      (error "You didn't specify a function"))
+  (let ((def (symbol-function function))
+	package aliases)
+    (while (symbolp def)
+      (or (eq def function)
+	  (if aliases
+	      (setq aliases (concat aliases 
+				    (format ", which is an alias for %s"
+					    (symbol-name def))))
+	    (setq aliases (format "an alias for %s" (symbol-name
+						       def)))))
+      (setq function (symbol-function function)
+	    def (symbol-function function)))
+    (if aliases
+	(message aliases))
+    (setq package
+	  (cond ((eq (car-safe def) 'autoload)
+		 (nth 1 def))
+		((describe-function-find-file function))
+		((and (compiled-function-p def)
+		      (fboundp 'compiled-function-annotation))
+		 (substring (compiled-function-annotation def) 0 -4))))
+    (if (null package)
+	(error "Can't find package"))
+    (if (string-match "\\(\\.elc?\\'\\)" package)
+	(setq package (substring package 0 (match-beginning 1))))
+    (setq package (concat package ".el"))
+    (let ((filename (locate-library package t
+				    (if path
+					path
+				      find-function-source-path)))
+	  (calling-buffer (current-buffer)))
+      (if (not filename)
+	  (error "The package \"%s\" is not in the path." package))
+      (set-buffer (find-file-noselect filename))
+      (save-match-data
+	(let ((p (point))
+	      ;; avoid defconst, defgroup, defvar (any others?)
+	      (re (format "^(def[^cgv\W]\\w+\\s-+%s\\s-" function))
+	      (syntable (syntax-table)))
+	  (set-syntax-table emacs-lisp-mode-syntax-table)
+	  (goto-char (point-min))
+	  (if (prog1
+		  (re-search-forward re nil t)
+		(set-syntax-table syntable))
+	      (prog2
+		  (beginning-of-line)
+		  (current-buffer)
+		(set-buffer calling-buffer))
+	    (goto-char p)
+	    (set-buffer calling-buffer)
+	    (error "Cannot find definition of %s" function)))))))
+
+(defun ff-function-at-point ()
+  (condition-case ()
+      (let ((stab (syntax-table)))
+	(unwind-protect
+	    (save-excursion
+	      (set-syntax-table emacs-lisp-mode-syntax-table)
+	      (or (not (zerop (skip-syntax-backward "_w")))
+		  (eq (char-syntax (char-after (point))) ?w)
+		  (eq (char-syntax (char-after (point))) ?_)
+		  (forward-sexp -1))
+	      (skip-chars-forward "'")
+	      (let ((obj (read (current-buffer))))
+		(and (symbolp obj) (fboundp obj) obj)))
+	  (set-syntax-table stab)))
+    (error nil)))
+
+(defun ff-read-function ()
+  "Read and return a function, defaulting to the one near point.
+
+The function named by `find-function-function' is used to select the
+default function."
+  (let ((fn (funcall find-function-function))
+	(enable-recursive-minibuffers t)	     
+	val)
+    (setq val (completing-read
+	       (if fn
+		   (format "Find function (default %s): " fn)
+		 "Find function: ")
+	       obarray 'fboundp t))
+    (list (if (equal val "")
+	      fn (intern val)))))
+
+
+(defun find-function (function &optional path)
+  "Find the definition of the function near point in the current window.
+
+Finds the emacs-lisp package containing the definition of the function
+near point (selected by `find-function-function') and places point
+before the definition.
+
+If the optional argument PATH is given, the package where FUNCTION is
+defined is searched in PATH instead of `load-path'"
+  (interactive (ff-read-function))
+  (switch-to-buffer
+   (find-function-noselect function path)))
+
+(defun find-function-other-window (function &optional path)
+  "Find the definition of the function near point in the other window.
+
+Finds the emacs-lisp package containing the definition of the function
+near point (selected by `find-function-function') and places point
+before the definition.
+
+If the optional argument PATH is given, the package where FUNCTION is
+defined is searched in PATH instead of `load-path'"
+  (interactive (ff-read-function))
+  (switch-to-buffer-other-window
+   (find-function-noselect function path)))
+
+(defun find-function-other-frame (function &optional path)
+  "Find the definition of the function near point in the another frame.
+
+Finds the emacs-lisp package containing the definition of the function
+near point (selected by `find-function-function') and places point
+before the definition.
+
+If the optional argument PATH is given, the package where FUNCTION is
+defined is searched in PATH instead of `load-path'"
+  (interactive (ff-read-function))
+  (switch-to-buffer-other-frame
+   (find-function-noselect function path)))
+
+(define-key mode-specific-map "f" 'find-function)
+(define-key ctl-x-4-map "F" 'find-function-other-window)
+(define-key ctl-x-5-map "F" 'find-function-other-frame)
+
+;;; help.el ends here

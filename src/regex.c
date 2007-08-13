@@ -5018,7 +5018,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
           EXTRACT_NUMBER_AND_INCR (mcnt, p);
           DEBUG_PRINT3 (" %d (to 0x%p):\n", mcnt, p + mcnt);
 
-          PUSH_FAILURE_POINT (p + mcnt, NULL, -2);
+          PUSH_FAILURE_POINT (p + mcnt, (void *) 0, -2);
           break;
 
 
@@ -5274,7 +5274,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
           DEBUG_PRINT1 ("EXECUTING dummy_failure_jump.\n");
           /* It doesn't matter what we push for the string here.  What
              the code at `fail' tests is the value for the pattern.  */
-          PUSH_FAILURE_POINT (NULL, NULL, -2);
+          PUSH_FAILURE_POINT ((void *) 0, (void *) 0, -2);
           goto unconditional_jump;
 
 
@@ -5287,7 +5287,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
           DEBUG_PRINT1 ("EXECUTING push_dummy_failure.\n");
           /* See comments just above at `dummy_failure_jump' about the
              two zeroes.  */
-          PUSH_FAILURE_POINT (NULL, NULL, -2);
+          PUSH_FAILURE_POINT ((void *) 0, (void *) 0, -2);
           break;
 
         /* Have to succeed matching what follows at least n times.

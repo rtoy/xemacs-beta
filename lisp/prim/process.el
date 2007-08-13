@@ -101,7 +101,7 @@ you quit again before the process exits."
   (let ((temp (cond ((eq system-type 'vax-vms)
                      (make-temp-name "tmp:emacs"))
 		    ((or (eq system-type 'ms-dos)
-			 (eq system-type 'windowsnt))
+			 (eq system-type 'windows-nt))
 		     (make-temp-name
 		      (concat (file-name-as-directory
 			       (or (getenv "TMP")
@@ -113,7 +113,7 @@ you quit again before the process exits."
     (unwind-protect
 	(progn
 	  (if (or (eq system-type 'ms-dos)
-		  (eq system-type 'windowsnt))
+		  (eq system-type 'windows-nt))
 	      (let ((buffer-file-type binary-process-output))
 		(write-region start end temp nil 'silent))
 	    (write-region start end temp nil 'silent))

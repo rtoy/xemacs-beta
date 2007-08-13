@@ -612,112 +612,9 @@ emacs_Xt_mapping_action (Widget w, XEvent* event)
 /************************************************************************/
 
 static Lisp_Object
-x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
-     /* simple_p means don't try too hard (ASCII only) */
+x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
 {
   char *name;
-  KeySym keysym = 0;
-  /* Apparently it's necessary to specify a dummy here (rather than
-     passing in 0) to avoid crashes on German IRIX */
-  char dummy[256];
-
-#ifdef HAVE_XIM
-  int len;
-  char buffer[64];
-  char *bufptr = buffer;
-  int   bufsiz = sizeof (buffer);
-  Status status;
-#endif
-
-#ifdef HAVE_XIM
-#ifdef XIM_MOTIF
-#define LOOKUPSTRING \
-  len = XmImMbLookupString (XtWindowToWidget (event->display, event->window), \
-			  event, bufptr, bufsiz, &keysym, &status);
-#else /* XIM_XLIB */
-#define LOOKUPSTRING \
-  len = XmbLookupString \
-    (FRAME_X_XIC (x_any_window_to_frame \
-		  (get_device_from_display (event->display), event->window)), \
-     event, bufptr, bufsiz, &keysym, &status);
-#endif /* XIM_XLIB */
- LOOKUPSTRING;
- check_status: /* Come-From XBufferOverflow */
-
-#ifdef DEBUG_XEMACS
-  if (x_debug_events > 0)
-    {
-      stderr_out ("   status=");
-#define print_status_when(S) if (status == S) stderr_out (#S)
-      print_status_when (XLookupKeySym);
-      print_status_when (XLookupBoth);
-      print_status_when (XLookupChars);
-      print_status_when (XLookupNone);
-      print_status_when (XBufferOverflow);
-      
-      if (status == XLookupKeySym || status == XLookupBoth)
-	stderr_out (" keysym=%s",  XKeysymToString (keysym));
-      if (status == XLookupChars  || status == XLookupBoth)
-	{
-	  if (len != 1)
-	    {
-	      int j;
-	      stderr_out (" chars=\"");
-	      for (j=0; j<len; j++)
-		stderr_out ("%c", bufptr[j]);
-	      stderr_out ("\"");
-	    }
-	  else if (bufptr[0] <= 32 || bufptr[0] >= 127)
-	    stderr_out (" char=0x%x", bufptr[0]);
-	  else
-	    stderr_out (" char=%c", bufptr[0]);
-	}
-      stderr_out ("\n");
-    }
-#endif /* DEBUG_XEMACS */
-
-  switch (status)
-    {
-    case XLookupKeySym:
-    case XLookupBoth: break;
-
-    case XLookupChars:
-      {
-	/* Generate multiple emacs events */
-	struct device *d = get_device_from_display (event->display);
-        Emchar ch;
-        Lisp_Object instream =
-          make_fixed_buffer_input_stream ((unsigned char *) bufptr, len);
-
-        /* ### Use Fget_coding_system (Vcomposed_input_coding_system) */
-        instream =
-	  make_decoding_input_stream
-	  (XLSTREAM (instream), Fget_coding_system (Qautomatic_conversion));
-        
-        while ((ch = Lstream_get_emchar (XLSTREAM (instream))) != EOF)
-          {
-            Lisp_Object emacs_event = Fmake_event ();
-            XEVENT (emacs_event)->channel	      = DEVICE_CONSOLE (d);
-            XEVENT (emacs_event)->event_type	      = key_press_event;
-            XEVENT (emacs_event)->timestamp	      = event->time;
-            XEVENT (emacs_event)->event.key.modifiers = 0;
-            XEVENT (emacs_event)->event.key.keysym    = make_char (ch);
-            enqueue_Xt_dispatch_event (emacs_event);
-          }
-        Lstream_close (XLSTREAM (instream));
-	return Qnil;
-      }
-    case XLookupNone: return Qnil;
-    case XBufferOverflow:
-      bufptr = alloca (len+1);
-      bufsiz = len+1;
-      LOOKUPSTRING;
-      goto check_status;
-    }
-#else /* ! HAVE_XIM */
-  XLookupString (event, dummy, 200, &keysym, 0);
-#endif /* HAVE_XIM */
-
   if (keysym >= XK_exclam && keysym <= XK_asciitilde)
     /* We must assume that the X keysym numbers for the ASCII graphic
        characters are the same as their ASCII codes.  */
@@ -771,6 +668,124 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	}
       return KEYSYM (name);
     }
+}
+
+static Lisp_Object
+x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
+     /* simple_p means don't try too hard (ASCII only) */
+{
+  KeySym keysym = 0;
+
+#ifdef HAVE_XIM
+  int len;
+  char buffer[64];
+  char *bufptr = buffer;
+  int   bufsiz = sizeof (buffer);
+  Status status;
+#ifdef XIM_XLIB
+  XIC xic = FRAME_X_XIC (x_any_window_to_frame
+			 (get_device_from_display (event->display),
+			  event->window));
+#endif /* XIM_XLIB */
+#endif /* HAVE_XIM */
+
+  if (
+#ifndef HAVE_XIM
+      1
+#elif defined (XIM_MOTIF)
+      0
+#else /* XIM_XLIB */
+      !xic
+#endif
+      )
+    {
+      /* Apparently it's necessary to specify a dummy here (rather
+         than passing in 0) to avoid crashes on German IRIX */
+      char dummy[256];
+      XLookupString (event, dummy, 200, &keysym, 0);
+      return x_keysym_to_emacs_keysym (keysym, simple_p);
+    }
+
+#ifdef HAVE_XIM
+ Lookup_String: /* Come-From XBufferOverflow */
+#ifdef XIM_MOTIF
+  len = XmImMbLookupString (XtWindowToWidget (event->display, event->window),
+			    event, bufptr, bufsiz, &keysym, &status);
+#else /* XIM_XLIB */
+  len = XmbLookupString (xic, event, bufptr, bufsiz, &keysym, &status);
+#endif /* XIM_XLIB */
+
+#ifdef DEBUG_XEMACS
+  if (x_debug_events > 0)
+    {
+      stderr_out ("   status=");
+#define print_status_when(S) if (status == S) stderr_out (#S)
+      print_status_when (XLookupKeySym);
+      print_status_when (XLookupBoth);
+      print_status_when (XLookupChars);
+      print_status_when (XLookupNone);
+      print_status_when (XBufferOverflow);
+      
+      if (status == XLookupKeySym || status == XLookupBoth)
+	stderr_out (" keysym=%s",  XKeysymToString (keysym));
+      if (status == XLookupChars  || status == XLookupBoth)
+	{
+	  if (len != 1)
+	    {
+	      int j;
+	      stderr_out (" chars=\"");
+	      for (j=0; j<len; j++)
+		stderr_out ("%c", bufptr[j]);
+	      stderr_out ("\"");
+	    }
+	  else if (bufptr[0] <= 32 || bufptr[0] >= 127)
+	    stderr_out (" char=0x%x", bufptr[0]);
+	  else
+	    stderr_out (" char=%c", bufptr[0]);
+	}
+      stderr_out ("\n");
+    }
+#endif /* DEBUG_XEMACS */
+
+  switch (status)
+    {
+    case XLookupKeySym:
+    case XLookupBoth:
+      return x_keysym_to_emacs_keysym (keysym, simple_p);
+
+    case XLookupChars:
+      {
+	/* Generate multiple emacs events */
+	struct device *d = get_device_from_display (event->display);
+        Emchar ch;
+        Lisp_Object instream =
+          make_fixed_buffer_input_stream ((unsigned char *) bufptr, len);
+
+        /* ### Use Fget_coding_system (Vcomposed_input_coding_system) */
+        instream =
+	  make_decoding_input_stream (XLSTREAM (instream),
+				      Fget_coding_system (Qautomatic_conversion));
+        
+        while ((ch = Lstream_get_emchar (XLSTREAM (instream))) != EOF)
+          {
+            Lisp_Object emacs_event = Fmake_event ();
+            XEVENT (emacs_event)->channel	      = DEVICE_CONSOLE (d);
+            XEVENT (emacs_event)->event_type	      = key_press_event;
+            XEVENT (emacs_event)->timestamp	      = event->time;
+            XEVENT (emacs_event)->event.key.modifiers = 0;
+            XEVENT (emacs_event)->event.key.keysym    = make_char (ch);
+            enqueue_Xt_dispatch_event (emacs_event);
+          }
+        Lstream_close (XLSTREAM (instream));
+	return Qnil;
+      }
+    case XLookupNone: return Qnil;
+    case XBufferOverflow:
+      bufptr = alloca (len+1);
+      bufsiz = len+1;
+      goto Lookup_String;
+    }
+#endif /* HAVE_XIM */
 }
 
 static void

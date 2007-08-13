@@ -1,3 +1,41 @@
+1997-07-31  SL Baur  <steve@altair.xemacs.org>
+
+	* frame-x.c (x_offix_drop_event_handler): Use stderr_out instead
+	of fprintf.
+
+	* mule-coding.c (parse_iso2022_esc): Add abort() trap on unhandled 
+	condition.
+
+	* mule-wnnfns.c (Fwnn_dict_search): Remove unused variable.
+	(Fwnn_hindo_update): Ditto.
+	(Fwnn_inspect): Ditto.
+	(Fwnn_bunsetu_henkou): Ditto.
+
+	* eval.c (call_with_suspended_errors): Fix Gcc warning:
+	argument `retval' might be clobbered by `longjmp' or `vfork'
+
+1997-07-30  SL Baur  <steve@altair.xemacs.org>
+
+	* redisplay.c: `window-system' isn't going away any time soon.
+
+1997-07-29  SL Baur  <steve@altair.xemacs.org>
+
+	* callint.c (Fcall_interactively): Allow floating point numbers
+	for `n' and `N' interactive specs.
+
+1997-07-27  SL Baur  <steve@altair.xemacs.org>
+
+	* event-stream.c (command_builder_find_leaf): Fix typo in
+	HAVE_MENUBARS.
+
+	* gui-x.c (popup_selection_callback): Fix typo in HAVE_MENUBARS.
+
+	* event-stream.c (syms_of_event_stream): accelerate_menu needed
+	guards.
+
+	* emacs.c (vars_of_emacs): Main default package directory is now
+	${prefix}/lib/xemacs/packages.
+
 1997-07-25  David Moore  <dmoore@ucsd.edu>
 
 	* alloc.c (Fmake_byte_code): GC protect newly allocated function

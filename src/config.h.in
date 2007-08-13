@@ -409,8 +409,8 @@ Boston, MA 02111-1307, USA.  */
 /* Compile in support for OffiX Drag and Drop?  Requires libdnd. */
 #undef HAVE_OFFIX_DND
 
-/* Compile in support for WindowMaker Application Icons. */
-#undef HAVE_WINDOWMAKER
+/* Compile in support for proper session-management. */
+#undef HAVE_SESSION
 
 /* Define this if you want Mule support (multi-byte character support).
    There may be some performance penalty, although it should be small

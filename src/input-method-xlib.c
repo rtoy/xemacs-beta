@@ -154,7 +154,7 @@ XIM_init_frame (struct frame *f)
   XIC xic;
   Widget w = FRAME_X_TEXT_WIDGET (f);
   Window win = XtWindow (w);
-  XRectangle p_area = {0,0,0,0}, s_area={0,0,0,0};
+  XRectangle p_area = {0,0,1,1}, s_area={0,0,1,1};
   XPoint spot = {0,0};
   XIMStyle style;
   XVaNestedList p_list, s_list;
@@ -224,7 +224,6 @@ XIM_init_frame (struct frame *f)
                                 XNBackground,   xic_vars.bg,
                                 XNFontSet,      xic_vars.fontset,
                                 NULL);
-
   FRAME_X_XIC (f) = xic =
     XCreateIC (xim,
                XNInputStyle,        style,

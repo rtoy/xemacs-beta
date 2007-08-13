@@ -1,5 +1,8 @@
 (provide 'vm-autoload)
-
+"f-e-r-i-1:  /b/XEmacs/xemacs-20.0/src/xemacs
+""Find: /etc/xemacs
+""Find: /home/steve/.xemacs
+"
 (autoload (quote vm-delete-message) "vm-delete" "Add the `deleted' attribute to the current message.
 
 The message will be physically deleted from the current folder the next

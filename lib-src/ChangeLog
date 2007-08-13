@@ -1,3 +1,8 @@
+1997-07-27  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (UTILITIES): Add config.values so it can be
+	cleared away by `make distclean'.
+
 1997-07-21  SL Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh (make_special_commands): Remove processing for

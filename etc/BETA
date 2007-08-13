@@ -106,9 +106,10 @@ $ find . -name \*.rej -print
 Any rejections should be treated as serious problems to be resolved
 before starting compilation.
 
-After seeing that there were no rejections, issue the command
+After seeing that there were no rejections, issue the commands
 
-$ make all-elc
+$ ./config.status --recheck
+$ make beta
 
 and go play minesweep for awhile on an older XEmacs while the binary
 is rebuilt.

@@ -303,6 +303,11 @@ a = autoloaded, b = byte-compiled, i = internal, l = lambda, m = macro.\n\n"
 			 (if (natnump l) l 0)))
       (and hyper-apropos-show-brief-docs
 	   (setq doc (documentation fn))
+	   (if  (string-match
+		 "^([^\n\t )]+[\t ]*\\([^\n)]+\\)?)\\(:[\t ]*\\|\n?\\'\\)"
+		 doc)
+	       (setq doc (substring doc (match-end 0) (string-match "\n" doc)))
+	     t)
 	   (insert-face (if doc
 			    (concat " - "
 				    (substring doc 0 (string-match "\n" doc)))

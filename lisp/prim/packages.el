@@ -188,7 +188,7 @@ status as bundled packages."
 	dir)
     (while path
       (setq dir (car path))
-      (prin1 (concat "Find: " (expand-file-name dir) "\n"))
+      ;; (prin1 (concat "Find: " (expand-file-name dir) "\n"))
       (packages-find-packages-1 (expand-file-name dir) path-only)
       (setq path (cdr path)))))
 

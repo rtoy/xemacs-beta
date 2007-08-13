@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.9951
+;; Version: 1.9953
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -280,6 +280,7 @@ minibuffer."
 	 (let* ((overriding-terminal-local-map
 		 (make-sparse-keymap))
 		map choice (next-digit ?0)
+		some-choice-enabled
 		value)
 	   ;; Define SPC as a prefix char to get to this menu.
 	   (define-key overriding-terminal-local-map " "
@@ -294,11 +295,14 @@ minibuffer."
 		   (let* ((name (car choice))
 			 (function (cdr choice)))
 		     (insert (format "%c = %s\n" next-digit name))
-		     (define-key map (vector next-digit) function)))
+		     (define-key map (vector next-digit) function)
+		     (setq some-choice-enabled t)))
 	       ;; Allocate digits to disabled alternatives
 	       ;; so that the digit of a given alternative never varies.
 	       (setq next-digit (1+ next-digit)))
 	     (insert "\nC-g = Quit"))
+	   (or some-choice-enabled
+	       (error "None of the choices is currently meaningful"))
 	   (define-key map [?\C-g] 'keyboard-quit)
 	   (define-key map [t] 'keyboard-quit)
 	   (setcdr map (nreverse (cdr map)))
@@ -329,7 +333,9 @@ minibuffer."
 ;; These functions are for specifying text properties. 
 
 (defcustom widget-field-add-space 
-  (or (< emacs-major-version 20)
+  (or t
+      ;; It shouldn't be necessary in 20.3, but I need to debug it first.
+      (< emacs-major-version 20)
       (and (eq emacs-major-version 20)
 	   (< emacs-minor-version 3))
       (not (string-match "XEmacs" emacs-version)))
@@ -354,13 +360,13 @@ new value."
 
 (defun widget-specify-field (widget from to)
   "Specify editable button for WIDGET between FROM and TO."
-  ;; Terminating space is not part of the field, but necessary in
-  ;; order for local-map to work.  Remove next sexp if local-map works
-  ;; at the end of the overlay.
   (save-excursion
     (goto-char to)
     (cond ((null (widget-get widget :size))
 	   (forward-char 1))
+	  ;; Terminating space is not part of the field, but necessary in
+	  ;; order for local-map to work.  Remove next sexp if local-map works
+	  ;; at the end of the overlay.
 	  (widget-field-add-space
 	   (insert-and-inherit " ")))
     (setq to (point)))
@@ -593,7 +599,7 @@ The arguments MAPARG, and BUFFER default to nil and (current-buffer),
 respectively."
   (let ((cur (point-min))
 	(widget nil)
-	(parent nil)
+	;; (parent nil)
 	(overlays (if buffer
 		      (save-excursion (set-buffer buffer) (overlay-lists))
 		    (overlay-lists))))
@@ -841,8 +847,7 @@ The optional ARGS are additional keyword arguments."
   "Call `insert' with ARGS and make the text read only."
   (let ((inhibit-read-only t)
 	before-change-functions
-	after-change-functions
-	(from (point)))
+	after-change-functions)
     (apply 'insert args)))
 
 (defun widget-convert-text (type from to
@@ -1095,8 +1100,7 @@ ARG may be negative to move backward."
   (or (bobp) (> arg 0) (backward-char))
   (let ((pos (point))
 	(number arg)
-	(old (widget-tabable-at))
-	new)
+	(old (widget-tabable-at)))
     ;; Forward.
     (while (> arg 0)
       (cond ((eobp)

@@ -303,7 +303,7 @@ x_init_device (struct device *d, Lisp_Object props)
   XIM_init_device(d);
 #endif /* HAVE_XIM */
 
-#ifdef HAVE_WINDOWMAKER
+#ifdef HAVE_SESSION
   XtVaSetValues(DEVICE_XT_APP_SHELL (d),
                 XtNmappedWhenManaged, False,
                 XtNwidth, 1,
@@ -320,7 +320,7 @@ x_init_device (struct device *d, Lisp_Object props)
     free_argc_argv (argv);
 
   }
-#endif /* HAVE_WINDOWMAKER */
+#endif /* HAVE_SESSION */
 
   Vx_initial_argv_list = make_arg_list (argc, argv);
   free_argc_argv (argv);

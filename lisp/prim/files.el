@@ -957,9 +957,9 @@ problems will be suppressed."
 	(error "%s is a directory." filename))
     (let* ((buf (get-file-buffer filename))
 ;	   (truename (abbreviate-file-name (file-truename filename)))
-;	   (number (nthcdr 10 (file-attributes truename)))
-	   (number (and buffer-file-truename
-			(nthcdr 10 (file-attributes buffer-file-truename))))
+	   (number (nthcdr 10 (file-attributes (file-truename filename))))
+;	   (number (and buffer-file-truename
+;			(nthcdr 10 (file-attributes buffer-file-truename))))
 ;	   ;; Find any buffer for a file which has same truename.
 ;	   (other (and (not buf) (find-buffer-visiting filename)))
            (error nil))

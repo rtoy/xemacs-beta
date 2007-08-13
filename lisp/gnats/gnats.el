@@ -1019,8 +1019,10 @@ if needed."
 				 "%s/gnats/npr-edit"
 			       "%s/gnats/pr-edit")
 			     gnats:libdir)
-		     (if gnats:network-server (format  "--host=%s" gnats:network-server))
-		     args
+		     (if gnats:network-server 
+			(concat (format  "--host=%s" gnats:network-server) args)
+		       args
+		       )
 		     ))
 
 	;; Only set up the sentinel if they want stuff done in the background.

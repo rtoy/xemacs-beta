@@ -330,7 +330,7 @@ compiled_function_hash (Lisp_Object obj, int depth)
 static Lisp_Object
 restore_entering_debugger (Lisp_Object arg)
 {
-  entering_debugger = ((NILP (arg)) ? 0 : 1);
+  entering_debugger = ! NILP (arg);
   return arg;
 }
 
@@ -404,9 +404,9 @@ call_debugger (Lisp_Object arg)
   entering_debugger = 1;
   val = internal_catch (Qdebugger, call_debugger_259, arg, &threw);
 
-  return (unbind_to (speccount, ((threw) 
-                                 ? Qunbound /* Not returning a value */
-                                 : val)));
+  return unbind_to (speccount, ((threw) 
+				? Qunbound /* Not returning a value */
+				: val));
 }
 
 /* Called when debug-on-exit behavior is called for.  Enter the debugger
@@ -2124,7 +2124,7 @@ restore_current_error_state (Lisp_Object error_state)
 */
 
 Lisp_Object
-call_with_suspended_errors (lisp_fn_t fun, Lisp_Object retval,
+call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
 			    Lisp_Object class, Error_behavior errb,
 			    int nargs, ...)
 {

@@ -303,9 +303,9 @@ Window-system options:
 --x-includes=DIR 	Search for X header files in DIR.
 --x-libraries=DIR	Search for X libraries in DIR.
 --with-toolbars=no	Don't compile with any toolbar support.
---with-wm		Compile with realized leader window for proper
-			creation of the ApplicationIcon with the
-			WindowMaker windowmanager (SESSION MANAGEMENT).
+--with-session=no	Compile without realized leader window which will
+			keep the WM_COMMAND property. Required for proper
+			session-management. (ON by default for testing)
 --with-menubars=TYPE	Use TYPE menubars (lucid, motif, or no).  The Lucid
 			widgets emulate Motif (mostly) but are faster.
 			*WARNING*  The Motif menubar is currently broken.
@@ -516,7 +516,7 @@ while test $# != 0; do
 	with_jpeg	| \
 	with_png	| \
 	with_tiff	| \
-	with_wm		| \
+	with_session	| \
 	with_xmu	| \
 	with_quantify	| \
 	with_toolbars	| \
@@ -5505,9 +5505,9 @@ if test "$window_system" = "none" ; then
   if test "$with_tty" = "no" ; then
     { echo "configure: error: No window system support and no TTY support - Unable to proceed." 1>&2; exit 1; }
   fi
-  for feature in tooltalk cde offix wm \
+  for feature in tooltalk cde offix session \
                  menubars scrollbars toolbars dialogs xim xmu \
-                 tiff png jpeg gif compface xpm
+                 tiff png jpeg gif xface xpm
   do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
        echo "configure: warning: --with-$feature ignored:  Not valid without X support" 1>&2
@@ -5530,14 +5530,14 @@ case "$x_libraries" in *X11R4* )
   test "$opsys" = "hpux9-shr" && opsysfile="s/hpux9shxr4.h"
 esac
 
-echo "checking for WindowMaker option" 1>&6
-echo "configure:5535: checking for WindowMaker option" >&5;
-if test "$with_wm" = "yes"; then
+echo "checking for session-management option" 1>&6
+echo "configure:5535: checking for session-management option" >&5;
+if test "$with_session" != "no"; then
   { test "$extra_verbose" = "yes" && cat << \EOF
-    Defining HAVE_WINDOWMAKER
+    Defining HAVE_SESSION
 EOF
 cat >> confdefs.h <<\EOF
-#define HAVE_WINDOWMAKER 1
+#define HAVE_SESSION 1
 EOF
 }
 
@@ -10467,7 +10467,7 @@ test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_energize" = yes && echo "  Compiling in support for Lucid Energize (doesn't currently work)."
-test "$with_wm"       = yes && echo "  Compiling in support for WindowMaker."
+test "$with_session"  != no && echo "  Compiling in support for proper session-management."
 case  "$with_menubars" in
   lucid ) echo "  Using Lucid menubars." ;;
   motif ) echo "  Using Motif menubars."

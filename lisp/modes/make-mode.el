@@ -101,7 +101,8 @@
 
 ;; Sadly we need this for a macro.
 (eval-when-compile
-  (require 'imenu))
+  (unless (featurep 'xemacs)
+    (require 'imenu)))
 
 ;;; ------------------------------------------------------------
 ;;; Configurable stuff
@@ -585,8 +586,9 @@ makefile-special-targets-list:
   (setq add-log-current-defun-function 'makefile-add-log-defun)
 
   ;; Imenu.
-  (make-local-variable 'imenu-create-index-function)
-  (setq imenu-create-index-function 'makefile-menu-index-function)
+  (unless (featurep 'xemacs)
+    (make-local-variable 'imenu-create-index-function)
+    (setq imenu-create-index-function 'makefile-menu-index-function))
 
   ;; Dabbrev.
   (make-local-variable 'dabbrev-abbrev-skip-leading-regexp)

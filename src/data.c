@@ -930,11 +930,10 @@ If non-nil, the return value will be a list whose first element is
        (function))
 {
   CHECK_COMPILED_FUNCTION (function);
-  if (!XCOMPILED_FUNCTION (function)->flags.interactivep)
-    return Qnil;
-  return (list2 (Qinteractive,
-		 compiled_function_interactive
-		 (XCOMPILED_FUNCTION (function))));
+  return XCOMPILED_FUNCTION (function)->flags.interactivep
+    ? list2 (Qinteractive,
+	     compiled_function_interactive (XCOMPILED_FUNCTION (function)))
+    : Qnil;
 }
 
 DEFUN ("compiled-function-doc-string", Fcompiled_function_doc_string, 1, 1, 0, /*
@@ -945,7 +944,6 @@ an integer returned instead of a string.
        (function))
 {
   CHECK_COMPILED_FUNCTION (function);
-
   return compiled_function_documentation (XCOMPILED_FUNCTION (function));
 }
 
@@ -975,9 +973,9 @@ This is only meaningful if I18N3 was enabled when emacs was compiled.
        (function))
 {
   CHECK_COMPILED_FUNCTION (function);
-  if (!XCOMPILED_FUNCTION (function)->flags.domainp)
-    return Qnil;
-  return compiled_function_domain (XCOMPILED_FUNCTION (function));
+  return XCOMPILED_FUNCTION (function)->flags.domainp
+    ? compiled_function_domain (XCOMPILED_FUNCTION (function))
+    : Qnil;
 }
 
 

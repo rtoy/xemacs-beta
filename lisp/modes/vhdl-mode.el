@@ -1,16 +1,16 @@
 ;;; vhdl-mode.el --- major mode for editing VHDL code
 
-;; Copyright (C) 1994, 1995 Rodney J. Whitby
+;; Copyright (C) 1994 - 1997 Rodney J. Whitby
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
 
-;; Author:	  Rodney J. Whitby <rwhitby@asc.corp.mot.com>
-;; Maintainer:	  Rodney J. Whitby <rwhitby@asc.corp.mot.com>
+;; Author:	  Rodney J. Whitby <rwhitby@geocities.com>
+;; Maintainer:	  Rodney J. Whitby <rwhitby@geocities.com>
 ;; Created:	  June 1994, adapted from cc-mode.el 4.29 by Barry A. Warsaw.
-;; Version:	  $Revision: 1.5 $
-;; Last Modified: $Date: 1997/06/14 20:31:18 $
+;; Version:	  $Revision: 1.6 $
+;; Last Modified: $Date: 1997/08/01 03:27:57 $
 ;; Keywords:	  languages VHDL
-;; Archive:	  ftp.eda.com.au:/pub/emacs/vhdl-mode.tar.gz
+;; Archive:	  http://www.geocities.com/SiliconValley/Park/8287/
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -34,7 +34,7 @@
 
 ;; This package provides indentation support for VHDL code.
 
-;; Details on VHDL-MODE are  now contained in an  accompanying texinfo
+;; Details on VHDL-MODE are now contained in an accompanying texinfo
 ;; manual (vhdl-mode.texi).
 
 ;; To submit bug reports, hit "C-c C-b", and please try to include a
@@ -63,14 +63,12 @@
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, and code contributions,
 ;; and encouragement vhdl-mode.el would be a far inferior package.
-;; Special thanks to Ken Wood <ken@eda.com.au> for providing an FTP
-;; repository for vhdl-mode.
 
 ;; LCD Archive Entry:
-;; vhdl-mode.el|Rodney J. Whitby|rwhitby@asc.corp.mot.com
+;; vhdl-mode.el|Rodney J. Whitby|rwhitby@geocities.com
 ;; |Major mode for editing VHDL code
-;; |$Date: 1997/06/14 20:31:18 $|$Revision: 1.5 $
-;; |ftp.eda.com.au:/pub/emacs/vhdl-mode.tar.gz
+;; |$Date: 1997/08/01 03:27:57 $|$Revision: 1.6 $
+;; |http://www.geocities.com/SiliconValley/Park/8287/
 
 
 ;;; Code:
@@ -283,17 +281,17 @@ your style, only those that are different from the default.")
 	(error "Cannot figure out the major and minor version numbers."))
     ;; calculate the major version
     (cond
-     ((= major 18) (setq major 'v18))	;Emacs 18
-     ((= major 4)  (setq major 'v18))	;Epoch 4
-     ((>= major 19) (setq major 'v19	;Emacs 19
-			 flavor (cond
-				 ((string-match "Win-Emacs" emacs-version)
-				  'Win-Emacs)
-				 ((or (string-match "Lucid" emacs-version)
-				      (string-match "XEmacs" emacs-version))
-				  'XEmacs)
-				 (t
-				  'FSF))))
+     ((= major 18)  (setq major 'v18))	;Emacs 18
+     ((= major 4)   (setq major 'v18))	;Epoch 4
+     ((>= major 19) (setq major 'v19	;Emacs 19 or later
+			  flavor (cond
+				  ((string-match "Win-Emacs" emacs-version)
+				   'Win-Emacs)
+				  ((or (string-match "Lucid" emacs-version)
+				       (string-match "XEmacs" emacs-version))
+				   'XEmacs)
+				  (t
+				   'FSF))))
      ;; I don't know
      (t (error "Cannot recognize major version number: %s" major)))
     ;; lets do some minimal sanity checking.
@@ -347,6 +345,7 @@ supported list, along with the values for this variable:
   (define-key vhdl-mode-map "\M-\C-h"	'vhdl-mark-defun)
   (define-key vhdl-mode-map "\M-\C-q"	'vhdl-indent-sexp)
   (define-key vhdl-mode-map "\t"        'vhdl-indent-command)
+  (define-key vhdl-mode-map "\177"      'backward-delete-char-untabify)
   ;; these are new keybindings, with no counterpart to BOCM
   (define-key vhdl-mode-map "\C-c\C-b"  'vhdl-submit-bug-report)
   (define-key vhdl-mode-map "\C-c\C-c"  'comment-region)
@@ -538,11 +537,11 @@ This does a lot more highlighting.")
 ;;;###autoload
 (defun vhdl-mode ()
   "Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.5 $
+vhdl-mode $Revision: 1.6 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
-problem, including a reproducible test case and send the message.
+problem, including a reproducable test case and send the message.
 
 Note that the details of configuring vhdl-mode will soon be moved to the
 accompanying texinfo manual.  Until then, please read the README file
@@ -807,6 +806,28 @@ argument.  The styles are chosen from the `vhdl-style-alist' variable."
 	  )))
      vars))
   (vhdl-keep-region-active))
+
+(defun vhdl-add-style (style descrip &optional set-p)
+  "Adds a style to `vhdl-style-alist', or updates an existing one.
+STYLE is a string identifying the style to add or update.  DESCRIP is
+an association list describing the style and must be of the form:
+
+  ((VARIABLE . VALUE) [(VARIABLE . VALUE) ...])
+
+See the variable `vhdl-style-alist' for the semantics of VARIABLE and
+VALUE.  This function also sets the current style to STYLE using
+`vhdl-set-style' if the optional SET-P flag is non-nil."
+  (interactive
+   (let ((stylename (completing-read "Style to add: " vhdl-style-alist))
+	 (description (eval-minibuffer "Style description: ")))
+     (list stylename description
+	   (y-or-n-p "Set the style too? "))))
+  (setq style (downcase style))
+  (let ((s (assoc style vhdl-style-alist)))
+    (if s
+	(setcdr s (copy-alist descrip))	; replace
+      (setq vhdl-style-alist (cons (cons style descrip) vhdl-style-alist))))
+  (and set-p (vhdl-set-style style)))
 
 (defun vhdl-get-offset (langelem)
   ;; Get offset from LANGELEM which is a cons cell of the form:
@@ -2592,9 +2613,9 @@ ENDPOS is encountered.  (interactive)"
 
 ;; Defuns for submitting bug reports:
 
-(defconst vhdl-version "$Revision: 1.5 $"
+(defconst vhdl-version "$Revision: 1.6 $"
   "vhdl-mode version number.")
-(defconst vhdl-mode-help-address "rwhitby@asc.corp.mot.com"
+(defconst vhdl-mode-help-address "rwhitby@geocities.com"
   "Address accepting submission of bug reports.")
 
 (defun vhdl-version ()

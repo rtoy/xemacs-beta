@@ -293,7 +293,7 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
   /* This is the timestamp used for asserting focus so we need to get an
      up-to-date value event if no events has been dispatched to emacs
      */
-#if defined(HAVE_MENUBAR)
+#if defined(HAVE_MENUBARS)
   DEVICE_X_MOUSE_TIMESTAMP (d) = x_focus_timestamp_really_sucks_fix_me_better;
 #else
   DEVICE_X_MOUSE_TIMESTAMP (d) = DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (d);

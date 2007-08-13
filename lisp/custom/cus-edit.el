@@ -1,10 +1,10 @@
-;;; cus-edit.el --- Tools for customization Emacs.
+;;; cus-edit.el --- Tools for customizating Emacs and Lisp packages.
 ;;
 ;; Copyright (C) 1996, 1997 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9951
+;; Version: 1.9953
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -440,6 +440,11 @@ WIDGET is the widget to apply the filter entries of MENU on."
   :group 'custom-menu
   :type 'boolean)
 
+(defcustom custom-unlispify-remove-prefixes nil
+  "Non-nil means remove group prefixes from option names in buffer."
+  :group 'custom-menu
+  :type 'boolean)
+
 (defun custom-unlispify-menu-entry (symbol &optional no-suffix)
   "Convert symbol into a menu entry."
   (cond ((not custom-unlispify-menu-entries)
@@ -458,15 +463,16 @@ WIDGET is the widget to apply the filter entries of MENU on."
 		      (re-search-forward "-p\\'" nil t))
 	     (replace-match "" t t)
 	     (goto-char (point-min)))
-	   (let ((prefixes custom-prefix-list)
-		 prefix)
-	     (while prefixes
-	       (setq prefix (car prefixes))
-	       (if (search-forward prefix (+ (point) (length prefix)) t)
-		   (progn 
-		     (setq prefixes nil)
-		     (delete-region (point-min) (point)))
-		 (setq prefixes (cdr prefixes)))))
+	   (if custom-unlispify-remove-prefixes
+	       (let ((prefixes custom-prefix-list)
+		     prefix)
+		 (while prefixes
+		   (setq prefix (car prefixes))
+		   (if (search-forward prefix (+ (point) (length prefix)) t)
+		       (progn 
+			 (setq prefixes nil)
+			 (delete-region (point-min) (point)))
+		     (setq prefixes (cdr prefixes))))))
 	   (subst-char-in-region (point-min) (point-max) ?- ?\  t)
 	   (capitalize-region (point-min) (point-max))
 	   (unless no-suffix 
@@ -1134,25 +1140,19 @@ Reset all values in this buffer to their standard settings."
 ;;; The Tree Browser.
 
 ;;;###autoload
-(defun customize-browse (group)
+(defun customize-browse (&optional group)
   "Create a tree browser for the customize hierarchy."
-  (interactive (list (let ((completion-ignore-case t))
-		       (completing-read "Customize group: (default emacs) "
-					obarray 
-					(lambda (symbol)
-					  (get symbol 'custom-group))
-					t))))
-
-  (when (stringp group)
-    (if (string-equal "" group)
-	(setq group 'emacs)
-      (setq group (intern group))))
+  (interactive)
+  (unless group
+    (setq group 'emacs))
   (let ((name "*Customize Browser*"))
     (kill-buffer (get-buffer-create name))
     (switch-to-buffer (get-buffer-create name)))
   (custom-mode)
   (widget-insert "\
-Invoke [+] or [?] below to expand items, and [-] to collapse items.\n")
+Square brackets show active fields; type RET or click mouse-2
+on an active field to invoke its action.
+Invoke [+] below to expand a group, and [-] to collapse an expanded group.\n")
   (if custom-browse-only-groups
       (widget-insert "\
 Invoke the [Group] button below to edit that item in another window.\n\n")
@@ -1603,6 +1603,8 @@ and `face'."
 		   (require load)
 		 (error nil)))
 	      ;; Don't reload a file already loaded.
+	      ((and (boundp 'preloaded-file-list)
+		    (member load preloaded-file-list)))
 	      ((assoc load load-history))
 	      ((assoc (locate-library load) load-history))
 	      (t
@@ -2585,7 +2587,7 @@ If GROUPS-ONLY non-nil, return only those members that are groups."
   "Insert a customize group for WIDGET in the current buffer."
   (let* ((state (widget-get widget :custom-state))
 	 (level (widget-get widget :custom-level))
-	 (indent (widget-get widget :indent))
+	 ;; (indent (widget-get widget :indent))
 	 (prefix (widget-get widget :custom-prefix))
 	 (buttons (widget-get widget :buttons))
 	 (tag (widget-get widget :tag))
@@ -2600,7 +2602,7 @@ If GROUPS-ONLY non-nil, return only those members that are groups."
 	   (push (widget-create-child-and-convert
 		  widget 'custom-browse-visibility 
 		  ;; :tag-glyph "plus"
-		  :tag (if (custom-unloaded-widget-p widget) "?" "+"))
+		  :tag "+")
 		 buttons)
 	   (insert "-- ")
 	   ;; (widget-glyph-insert nil "-- " "horizontal")
@@ -3031,44 +3033,6 @@ Leave point at the location of the call, or after the last expression."
 
 ;;; Menu support
 
-(unless (string-match "XEmacs" emacs-version)
-  (defconst custom-help-menu
-    '("Customize"
-      ["Update menu" Custom-menu-update t]
-      ["Browse" (customize-browse 'emacs) t]
-      ["Group..." customize-group t]
-      ["Option..." customize-option t]
-      ["Face..." customize-face t]
-      ["Saved..." customize-saved t]
-      ["Set..." customize-customized t]
-      "--"
-      ["Apropos..." customize-apropos t]
-      ["Group apropos..." customize-apropos-groups t]
-      ["Option apropos..." customize-apropos-options t]
-      ["Face apropos..." customize-apropos-faces t])
-    ;; This menu should be identical to the one defined in `menu-bar.el'. 
-    "Customize menu")
-
-  (defun custom-menu-reset ()
-    "Reset customize menu."
-    (remove-hook 'custom-define-hook 'custom-menu-reset)
-    (define-key global-map [menu-bar help-menu customize-menu]
-      (cons (car custom-help-menu)
-	    (easy-menu-create-keymaps (car custom-help-menu)
-				      (cdr custom-help-menu)))))
-
-  (defun Custom-menu-update (event)
-    "Update customize menu."
-    (interactive "e")
-    (add-hook 'custom-define-hook 'custom-menu-reset)
-    (let* ((emacs (widget-apply '(custom-group) :custom-menu 'emacs))
-	   (menu `(,(car custom-help-menu)
-		   ,emacs
-		   ,@(cdr (cdr custom-help-menu)))))
-      (let ((map (easy-menu-create-keymaps (car menu) (cdr menu))))
-	(define-key global-map [menu-bar help-menu customize-menu]
-	  (cons (car menu) map))))))
-
 (defcustom custom-menu-nesting 2
   "Maximum nesting in custom menus."
   :type 'integer
@@ -3169,6 +3133,8 @@ The format is suitable for use with `easy-menu-define'."
   (define-key custom-mode-map "\177" 'scroll-down)
   (define-key custom-mode-map "q" 'bury-buffer)
   (define-key custom-mode-map "u" 'Custom-goto-parent)
+  (define-key custom-mode-map "n" 'widget-forward)
+  (define-key custom-mode-map "p" 'widget-backward)
   ;; (define-key custom-mode-map [mouse-1] 'Custom-move-and-invoke)
   )
 

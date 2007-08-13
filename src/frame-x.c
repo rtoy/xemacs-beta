@@ -366,9 +366,9 @@ x_wm_maybe_move_wm_command (struct frame *f)
 	return;
       f = XFRAME (XCAR (rest));
 
-#ifndef HAVE_WINDOWMAKER
+#ifndef HAVE_SESSION
       x_wm_maybe_store_wm_command (f);
-#endif /* HAVE_WINDOWMAKER */
+#endif /* HAVE_SESSION */
 
     }
 }
@@ -1178,32 +1178,61 @@ x_offix_drop_event_handler (Widget widget, XtPointer data, XEvent *event,
 
   Lisp_Object path = Qnil;
   Lisp_Object frame = Qnil;
+  Lisp_Object dnd_data = Qnil;
+  Lisp_Object dnd_type = Qnil;
 
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
   Type = DndDataType (event); 
-  if ((Type != DndFile) && (Type != DndFiles) && (Type != DndExe))
-    return;
+  if (Type < 0)  /* pseudo event produces -1 as type */
+    {
+      stderr_out("DndDropHandler: pseudo drop received\n");
+      return;
+    }
+
   DndGetData (&Data, &Size);
   
-  GCPRO2 (path, frame);
+  GCPRO4 (path, frame, dnd_data, dnd_type);
 
   frame = make_frame ((struct frame *) data);
 
-  if (Type == DndFiles)
+  stderr_out("DndDropHandler: real drop received (T%d Sl%d)\n",Type,Size);
+  
+  switch (Type)
     {
+    case DndFiles:
       while (*Data)
 	{
 	  len = strlen ((char*) Data);
-	  path = make_string ((char*) Data, len);
+	  path = make_ext_string ((char*) Data, len, FORMAT_FILENAME);
 	  va_run_hook_with_args (Qdrag_and_drop_functions, 2, frame, path);
 	  Data += len+1;
 	}
-    }
-  else
-    {
-      path = make_string ((char*) Data, strlen (Data));    
+      break;
+    case DndFile:
+      path = make_ext_string ((char*) Data, strlen(Data), FORMAT_FILENAME);
       va_run_hook_with_args (Qdrag_and_drop_functions, 2, frame, path);
+      break;
+    case DndText:
+      dnd_data = make_ext_string ((char *) Data, strlen(Data), FORMAT_FILENAME);
+      va_run_hook_with_args (Qdrag_and_drop_functions, 3, frame, path, dnd_data);
+      break;
+    case DndDir:
+    case DndLink:
+    case DndExe:
+    case DndURL:
+    case DndMIME:
+      dnd_type = make_int (Type);
+      dnd_data = make_ext_string ((char*) Data, strlen(Data), FORMAT_FILENAME);
+      va_run_hook_with_args (Qdrag_and_drop_functions, 4,
+			     frame, path, dnd_data, dnd_type);
+      break;
+    default: /* Unknown, RawData and any other type */
+      dnd_type = make_int (Type);
+      dnd_data = make_ext_string ((char*) Data, Size, FORMAT_BINARY);
+      va_run_hook_with_args (Qdrag_and_drop_functions, 4,
+			     frame, path, dnd_data, dnd_type);
+      break;
     }
 
   UNGCPRO;
@@ -1870,9 +1899,9 @@ x_popup_frame (struct frame *f)
 	/* tell the window manager about us. */
 	x_wm_store_class_hints (shell_widget, XtName (frame_widget));
 
-#ifndef HAVE_WINDOWMAKER
+#ifndef HAVE_SESSION
 	x_wm_maybe_store_wm_command (f);
-#endif /* HAVE_WINDOWMAKER */
+#endif /* HAVE_SESSION */
 
 	x_wm_hack_wm_protocols (shell_widget);
       }
@@ -2447,10 +2476,10 @@ x_delete_frame (struct frame *f)
   Widget w = FRAME_X_SHELL_WIDGET (f);
   Lisp_Object popup, frame;
 
-#ifndef HAVE_WINDOWMAKER
+#ifndef HAVE_SESSION
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))
     x_wm_maybe_move_wm_command (f);
-#endif /* HAVE_WINDOWMAKER */
+#endif /* HAVE_SESSION */
 
   /* Frames with the popup property are using other frames as their
      widget parent.  Deleting them are their parent has already been

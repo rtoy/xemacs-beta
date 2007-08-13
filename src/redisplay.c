@@ -8259,11 +8259,9 @@ It is up to you to set this variable if your terminal can do that.
 */ );
   no_redraw_on_reenter = 0;
 
-  /* #### This should be removed in 19.14 */
   DEFVAR_LISP ("window-system", &Vwindow_system /*
 A symbol naming the window-system under which Emacs is running,
 such as `x', or nil if emacs is running on an ordinary terminal.
-This variable is OBSOLETE and will be removed in a future version.
 */ );
   Vwindow_system = Qnil;
 

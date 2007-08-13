@@ -82,11 +82,6 @@ FORCE :
 PERL = perl
 TEXI2DVI = texi2dvi
 
-gnus.dvi : gnus.texi
-	$(PERL) -n -e 'print unless (/\@iflatex/ .. /\@end iflatex/)' gnus.texi > gnus.tmptexi
-	$(TEXI2DVI) gnus.tmptexi
-	rm -f gnus.tmptexi
-
 texinfo.dvi: texinfo.texi
 	$(TEXI2DVI) $<
 .texi.dvi:

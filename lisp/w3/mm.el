@@ -1033,7 +1033,7 @@ correspond to.")
 (defun mm-extension-to-mime (extn)
   "Return the MIME content type of the file extensions EXTN"
   (if (and (stringp extn)
-	   (not (= (string-to-char extn) ?.)))
+	   (not (eq (string-to-char extn) ?.)))
       (setq extn (concat "." extn)))
   (cdr (assoc (downcase extn) mm-mime-extensions)))
 

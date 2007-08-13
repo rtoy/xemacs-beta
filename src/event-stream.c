@@ -3652,7 +3652,7 @@ command_builder_find_leaf (struct command_builder *builder,
     return Qnil;
 
   /* if we're currently in a menu accelerator, check there for further events */
-#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBAR)
+#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBARS)
   if (lw_menu_active)
     {
       result = command_builder_operate_menu_accelerator (builder);
@@ -3666,7 +3666,7 @@ command_builder_find_leaf (struct command_builder *builder,
       if (NILP (result))
 #endif
 	result = command_builder_find_leaf_1 (builder);
-#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBAR)
+#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBARS)
       if (NILP (result)
 	  && EQ (Vmenu_accelerator_enabled, Qmenu_fallback))
 	result = command_builder_find_menu_accelerator (builder);
@@ -4864,7 +4864,9 @@ syms_of_event_stream (void)
   DEFSUBR (Fthis_command_keys);
   DEFSUBR (Freset_this_command_lengths);
   DEFSUBR (Fopen_dribble_file);
+#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBAR)
   DEFSUBR (Faccelerate_menu);
+#endif
 
   defsymbol (&Qpre_command_hook, "pre-command-hook");
   defsymbol (&Qpost_command_hook, "post-command-hook");

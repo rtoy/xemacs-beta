@@ -2831,11 +2831,11 @@ otherwise, display it in another buffer."
 	    (dired file))
       (view-file file))))
 
-(defun dired-find-file-other-window (&optional display)
+(defun dired-find-file-other-window (&optional displayp)
   "In dired, visit this file or directory in another window.
 With a prefix, the file is displayed, but the window is not selected."
   (interactive "P")
-  (if display
+  (if displayp
       (dired-display-file)
     (find-file-other-window (dired-get-filename))))
 
@@ -2954,6 +2954,10 @@ Optional arg NO-ERROR-IF-NOT-FILEP means return nil if no filename on
       (and
        (setq p1 (dired-move-to-filename (not no-error-if-not-filep) bol eol))
        (setq p2 (dired-move-to-end-of-filename no-error-if-not-filep bol eol))
+       ;; We seem to be picking up the carriage-return at the end of the
+       ;; line, so here's a quick fix to get dired working.
+       (if (eq system-type 'windows-nt)
+         (setq p2 (1- p2)))
        (setq file (buffer-substring p1 p2))
        ;; Check if ls quoted the names, and unquote them.
        ;; Using read to unquote is much faster than substituting

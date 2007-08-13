@@ -67,6 +67,14 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/times.h>
 #endif
 
+#ifdef WINDOWSNT
+#include <direct.h>
+/* In process.h which conflicts with the local copy.  */
+#define _P_WAIT 0
+int _CRTAPI1 _spawnlp (int, const char *, const char *, ...);
+int _CRTAPI1 _getpid (void);
+#endif
+
 /* ------------------------------- */
 /*           VMS includes          */
 /* ------------------------------- */
@@ -604,11 +612,17 @@ sys_subshell (void)
   str[len] = 0;
  xyzzy:
 
+#ifdef WINDOWSNT
+  pid = -1;
+#else /* not WINDOWSNT */
+
   pid = vfork ();
 
   if (pid == -1)
     error ("Can't spawn subshell");
   if (pid == 0)
+
+#endif /* not WINDOWSNT */
   {
       char *sh = 0;
 
@@ -644,9 +658,21 @@ sys_subshell (void)
 			   Fcons (build_string (sh), Qnil));
 #endif
 #else /* not MSDOS */
+#ifdef WINDOWSNT
+      /* Waits for process completion */
+      pid = _spawnlp (_P_WAIT, sh, sh, NULL);
+      if (pid == -1)
+        write (1, "Can't execute subshell", 22);
+
+#if 0
+/* This relates to the GNU Emacs console port, not required under X ? */
+      take_console ();
+#endif
+#else   /* not WINDOWSNT */
     execlp (sh, sh, 0);
     write (1, "Can't execute subshell", 22);
     _exit (1);
+#endif /* not WINDOWSNT */
 #endif /* not MSDOS */
   }
 
@@ -2640,7 +2666,7 @@ sys_do_signal (int signal_number, signal_handler_t action)
   new_action.sa_flags = 0;
 #endif
   sigaction (signal_number, &new_action, &old_action);
-  return (old_action.sa_handler);
+  return (signal_handler_t) (old_action.sa_handler);
 
 #endif /* not 0 */
 }

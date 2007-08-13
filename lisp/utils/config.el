@@ -48,7 +48,15 @@
 	(goto-char (point-min))
 	(condition-case nil
 	    (while t
-	      (puthash (read buf) (read buf) config-value-hash-table))
+	      (let* ((key (read buf))
+		     (value (read buf))
+		     (prev (gethash key config-value-hash-table)))
+		(cond ((null prev)
+		       (puthash key value config-value-hash-table))
+		      ((atom prev)
+		       (puthash key (list prev value) config-value-hash-table))
+		      (t
+		       (nconc prev (list value))))))
 	  (end-of-file nil)))
       (kill-buffer " *Config*")))
   config-value-hash-table)

@@ -817,18 +817,36 @@ For use as the value of `deselect-frame-hook'."
 (or deselect-frame-hook
     (add-hook 'deselect-frame-hook 'default-deselect-frame-hook))
 
-(defun default-drag-and-drop-functions (frame filepath &optional data)
+(defun default-drag-and-drop-functions (frame filepath &optional data type)
   "Implements the `drag-and-drop-functions' variable.
 For use as the value of `drag-and-drop-functions'.
-This default simply pops up the file in the selected frame or,
-if the dragged object is a buffer, inserts it at point."
-  (if data
-      (insert data)
-    (let ((x pop-up-windows))
-      (setq pop-up-windows nil)
-      (pop-to-buffer (find-file-noselect filepath) nil frame)
-      (make-frame-visible frame)
-      (setq pop-up-windows x))))
+A file is popped up in a new buffer, some data without
+is inserted at point, and data with a type is handled
+for it's type (NOTE: type is only set for OffiX DnD)."
+  (cond (type 
+	 (cond ((or (< type 2) (> type 9)) ;; this is raw data or unknown stuff
+		(let ((buf (generate-new-buffer "DndRawData")))
+		  (set-buffer buf)
+		  (pop-to-buffer buf nil frame)
+		  (insert data)
+		  (hexlify-buffer)
+		  (make-frame-visible frame)))
+	       ((= type 5) (dired data))
+	       ((= type 8) (funcall browse-url-browser-function data))
+	       ((= type 9)
+		(let ((buf (generate-new-buffer "DndMIME")))
+		  (set-buffer buf)
+		  (pop-to-buffer buf nil frame)
+		  (insert data)
+		  (make-frame-visible frame)))
+	       (t (ding))))
+	(data (insert data))
+	(t
+	 (let ((x pop-up-windows))
+	   (setq pop-up-windows nil)
+	   (pop-to-buffer (find-file-noselect filepath) nil frame)
+	   (make-frame-visible frame)
+	   (setq pop-up-windows x)))))
 
 (and (boundp 'drag-and-drop-functions)
      (or drag-and-drop-functions

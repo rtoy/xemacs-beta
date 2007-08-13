@@ -316,33 +316,30 @@ finalize_coding_system (void *header, int for_disksave)
     }
 }
 
-static int
+static enum eol_type
 symbol_to_eol_type (Lisp_Object symbol)
 {
   CHECK_SYMBOL (symbol);
-  if (NILP (symbol))           return EOL_AUTODETECT;
-  else if (EQ (symbol, Qlf))   return EOL_LF;
-  else if (EQ (symbol, Qcrlf)) return EOL_CRLF;
-  else if (EQ (symbol, Qcr))   return EOL_CR;
-  else
-    signal_simple_error ("Unrecognized eol type", symbol);
+  if (NILP (symbol))      return EOL_AUTODETECT;
+  if (EQ (symbol, Qlf))   return EOL_LF;
+  if (EQ (symbol, Qcrlf)) return EOL_CRLF;
+  if (EQ (symbol, Qcr))   return EOL_CR;
 
-  return 0; /* not reached */
+  signal_simple_error ("Unrecognized eol type", symbol);
+  return EOL_AUTODETECT; /* not reached */
 }
 
 static Lisp_Object
-eol_type_to_symbol (int eol_type)
+eol_type_to_symbol (enum eol_type type)
 {
-  switch (eol_type)
+  switch (type)
     {
     case EOL_LF:         return Qlf;
     case EOL_CRLF:       return Qcrlf;
     case EOL_CR:         return Qcr;
     case EOL_AUTODETECT: return Qnil;
-    default:             abort ();
+    default:             abort (); return Qnil; /* not reached */
     }
-
-  return Qnil; /* not reached */
 }
 
 static void
@@ -483,7 +480,7 @@ Return the name of the given coding system.
 }
 
 static struct Lisp_Coding_System *
-allocate_coding_system (int type, Lisp_Object name)
+allocate_coding_system (enum coding_system_type type, Lisp_Object name)
 {
   struct Lisp_Coding_System *codesys;
 
@@ -894,18 +891,17 @@ be created.
 }
 
 static Lisp_Object
-subsidiary_coding_system (Lisp_Object coding_system, int eol_type)
+subsidiary_coding_system (Lisp_Object coding_system, enum eol_type type)
 {
   struct Lisp_Coding_System *cs = XCODING_SYSTEM (coding_system);
   Lisp_Object new_coding_system;
 
   if (CODING_SYSTEM_EOL_TYPE (cs) != EOL_AUTODETECT)
     return coding_system;
-  if (eol_type == EOL_AUTODETECT)
-    return coding_system;
 
-  switch (eol_type)
+  switch (type)
     {
+    case EOL_AUTODETECT: return coding_system;
     case EOL_LF:   new_coding_system = CODING_SYSTEM_EOL_LF   (cs); break;
     case EOL_CR:   new_coding_system = CODING_SYSTEM_EOL_CR   (cs); break;
     case EOL_CRLF: new_coding_system = CODING_SYSTEM_EOL_CRLF (cs); break;
@@ -1210,7 +1206,7 @@ Return the coding system associated with a coding category.
 
 struct detection_state
 {
-  int eol_type;
+  enum eol_type eol_type;
   int seen_non_ascii;
   int mask;
   
@@ -1276,7 +1272,7 @@ mask_has_at_most_one_bit_p (int mask)
   return (mask & (mask - 1)) == 0;
 }
 
-static int
+static enum eol_type
 detect_eol_type (struct detection_state *st, CONST unsigned char *src,
 		 unsigned int n)
 {
@@ -1428,7 +1424,7 @@ coding_system_from_mask (int mask)
 
 static void
 determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
-			      int *eol_type_in_out)
+			      enum eol_type *eol_type_in_out)
 {
   struct detection_state decst;
 
@@ -1507,11 +1503,8 @@ defaults to the current buffer.
     }
 
   if (decst.mask == ~0)
-    {
-      val = subsidiary_coding_system (Fget_coding_system
-				      (Qautomatic_conversion),
-				      decst.eol_type);
-    }
+    val = subsidiary_coding_system (Fget_coding_system (Qautomatic_conversion),
+				    decst.eol_type);
   else
     {
       int i;
@@ -1645,7 +1638,7 @@ struct decoding_stream
      EOL type stored in CODESYS because the latter might indicate
      automatic EOL-type detection while the former will always
      indicate a particular EOL type. */
-  int eol_type;
+  enum eol_type eol_type;
 
   /* Additional ISO2022 information.  We define the structure above
      because it's also needed by the detection routines. */
@@ -3311,7 +3304,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 	default:
 	  if (0x28 <= c && c <= 0x2F)
 	    {
-	      iso->esc = c - 0x28 + ISO_ESC_2_8;
+	      iso->esc = (enum iso_esc_flag) (c - 0x28 + ISO_ESC_2_8);
 	      goto not_done;
 	    }
 
@@ -3414,7 +3407,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
     case ISO_ESC_2_4:
       if (0x28 <= c && c <= 0x2F)
 	{
-	  iso->esc = c - 0x28 + ISO_ESC_2_4_8;
+	  iso->esc = (enum iso_esc_flag) (c - 0x28 + ISO_ESC_2_4_8);
 	  goto not_done;
 	}
       if (0x40 <= c && c <= 0x42)
@@ -3430,7 +3423,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 
     default:
       {
-	int type;
+	int type =-1;
 
 	if (c < '0' || c > '~')
 	  return 0; /* bad final byte */
@@ -3448,6 +3441,11 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 	    type = ((iso->esc >= ISO_ESC_2_4_12) ?
 		    CHARSET_TYPE_96X96 : CHARSET_TYPE_94X94);
 	    reg = (iso->esc - ISO_ESC_2_4_8) & 3;
+	  }
+	else
+	  {
+	    /* Can this ever be reached? -slb */
+	    abort();
 	  }
 	
 	cs = CHARSET_BY_ATTRIBUTES (type, c,

@@ -62,6 +62,9 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif
 
+/* For PATH_EXEC */
+#include "paths.h"
+
 extern void memory_warnings (void *, void (*warnfun) (CONST char *));
 
 #ifndef SYSTEM_MALLOC
@@ -2360,7 +2363,7 @@ Codename of this version of Emacs (a string).
 List of directories configured for package searching.
 */ );
 #ifndef PACKAGE_PATH
-#define PACKAGE_PATH "/etc/xemacs:~/.xemacs"
+#define PACKAGE_PATH PATH_PREFIX "/lib/xemacs/packages:~/.xemacs"
 #endif
   Vpackage_path = decode_path(PACKAGE_PATH);
 

@@ -1,3 +1,37 @@
+Mon Jul 28 19:23:37 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9953 released.
+
+Mon Jul 28 18:04:46 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-field-add-space): Default to t on all
+	plaforms. 
+
+	* custom.el (defgroup): Doc fix.
+	Patch by karlheg+xemacs@inetarena.com (Karl M. Hegbloom).
+
+	* wid-edit.el (functionp): Use `byte-code-function-p' instead of
+	`compiled-function-p'. 
+	
+	* Version 1.9952 released.
+
+Mon Jul 28 17:52:55 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (functionp): Use `compiled-function-p' instead of
+	`byte-code-function-p'. 
+	(widget-map-buttons): Comment out `parent'.
+	(widget-insert): Don't bind `from'.
+	(widget-move): Dont' bind `new' at start.
+
+	* cus-edit.el (custom-buffer-create-internal): Refer to `mouse-2'
+	instead of `mouse-1'.
+	(customize-browse): Ditto.
+	(custom-mode-map): Don't bind `mouse-1'.
+	(custom-load-symbol): Check that `preloaded-file-list' is bound.
+	(custom-group-value-create): Comment out `indent'.
+
+	* all: Synched with FSF.
+
 Sat Jul 12 01:24:32 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.9951 released.

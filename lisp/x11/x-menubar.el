@@ -779,7 +779,9 @@ The name of the current buffer is only appended to the menu items if
 		 (aset item 2 (not (not (or buffer-file-name
 					    revert-buffer-function)))))
 	    (and (string= "Delete Frame" name)
-		 (aset item 2 (device-or-frame-p (second (frame-list)))))
+		 (aset item 2 (not (eq (next-frame (selected-frame)
+						   'nomini 'window-system)
+				       (selected-frame)))))
 	    )))
     result))
 

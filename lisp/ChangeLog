@@ -1,3 +1,16 @@
+1997-07-30  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/startup.el (find-emacs-root-internal-1): Remove diagnostic.
+
+	* prim/packages.el (packages-find-packages): Remove diagnostic.
+
+1997-07-27  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/config.el (config-value-hash-table): Only store the first
+	occurrence of a symbol.
+
+	* modes/make-mode.el: Remove imenu stuffs.
+
 Sat Jul 26 12:24:20 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode/  Release 5.14

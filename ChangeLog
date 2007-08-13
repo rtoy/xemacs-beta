@@ -1,3 +1,22 @@
+1997-07-31  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta16 is released.
+
+1997-07-31  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in: --with-x11=no --> --with-xface=no
+	* lisp/efs/dired-xemacs.el: Rationalize mouse file functions
+	* src/input-method-xlib.c: Allow xemacs to connect to kinput2
+	* event-Xt.c: Fix crashes when no input context available.
+	* src/mule-coding.c: Use enum eol_type instead of int consistently
+	* regex.c:  Use (void *) 0 instead of NULL in varargs function calls
+	* src/s/freebsd.h: Wrap #include X11/Xlocale.h inside #ifndef
+	NOT_C_CODE
+
+1997-07-27  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/BETA: Update patching instructions.
+
 1997-07-26  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta15 is released.

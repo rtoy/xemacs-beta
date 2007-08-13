@@ -1010,7 +1010,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
     (concat "lib/xemacs-" version)))
 
 (defun find-emacs-root-internal-1 (path lisp-p)
-  (prin1 (format "f-e-r-i-1:  %s\n" path))
+  ;; (prin1 (format "f-e-r-i-1:  %s\n" path))
   (let ((dir (file-name-directory path)))
     (or
      ;;

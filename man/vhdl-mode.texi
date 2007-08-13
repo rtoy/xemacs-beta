@@ -30,7 +30,7 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ifinfo
-Copyright @copyright{} 1995 Rodney J. Whitby
+Copyright @copyright{} 1995 - 1997 Rodney J. Whitby <rwhitby@@geocities.com>
 @end ifinfo
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -48,10 +48,10 @@ Copyright @copyright{} 1995 Rodney J. Whitby
 @center @titlefont{VHDL-MODE Version 2}
 @sp 2
 @center A GNU Emacs mode for editing VHDL code.
-@center (manual revision: 2.1)
+@center (manual revision: 2.2)
 @sp 2
 @center Rod Whitby
-@center @code{rwhitby@@asc.corp.mot.com}
+@center @code{rwhitby@@geocities.com}
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -61,7 +61,7 @@ Copyright @copyright{} 1995 Rodney J. Whitby
 
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1995 Rodney J. Whitby
+Copyright @copyright{} 1995 - 1997 Rodney J. Whitby <rwhitby@@geocities.com>
 @end titlepage
 
 
@@ -1104,10 +1104,8 @@ releases of @code{vhdl-mode}, you may also join the
 @code{vhdl-mode-victims} mailing list.  Send email to the author to join
 either of these lists.
 
-The canonical anonymous FTP URL for @code{vhdl-mode} is
-@code{ftp://ftp.eda.com.au/pub/emacs/vhdl-mode.tar.gz}.  Special thanks
-to Ken Wood <ken@@eda.com.au> for providing an FTP repository for
-@code{vhdl-mode}.
+The Official @code{VHDL-Mode} Home Page can be found at
+@code{http://www.geocities.com/SiliconValley/Park/8287/vhdl-mode.html}.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Sample .emacs File, Requirements, Getting the latest vhdl-mode release, Top
@@ -1217,16 +1215,16 @@ expose the bug.  Be especially sure to include any code that appears
 @emph{before} your bug example.
 
 For other help or suggestions, send a message to
-@code{rwhitby@@asc.corp.mot.com}.
+@code{rwhitby@@geocities.com}.
 
-Send an add message to @code{rwhitby@@asc.corp.mot.com} to get on the
+Send an add message to @code{rwhitby@@geocities.com} to get on the
 @code{vhdl-mode-victims} beta testers list where beta releases of
 @code{vhdl-mode} are posted.  Note that you shouldn't expect beta
 releases to be as stable as public releases.
 
 There is also an announce only list where the latest public releases of
 @code{vhdl-mode} are posted.  Send an add message to
-@code{rwhitby@@asc.corp.mot.com} to be added to this list.
+@code{rwhitby@@geocities.com} to be added to this list.
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Concept Index, Command Index,  Mailing Lists and Submitting Bug Reports, Top

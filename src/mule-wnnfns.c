@@ -702,7 +702,6 @@ Change length of BUN-NUMBER bunsetu to LEN. DAI is T if dai-bunsetsu.
 */
      (bunNo, len, dai))
 {
-  Lisp_Object	val;
   int		cnt, no;
   int	snum;
   CHECK_INT (bunNo);
@@ -728,7 +727,6 @@ Get bunsetsu information specified by BUN-NUMBER.
      (bunNo))
 {
   Lisp_Object		val;
-  struct wnn_jdata	*info_buf;
   unsigned char		cbuf[512];
   w_char		wbuf[256];
   int			bun_no, yomilen, jirilen, i;
@@ -833,7 +831,6 @@ Update frequency of bunsetsu specified by NUM-NUMBER.
      (bunNo))
 {
   int		no;
-  Lisp_Object	val;
   int	snum;
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (EQ(bunNo, Qnil)) no = -1;
@@ -978,7 +975,6 @@ Return list of (kanji hinshi freq dic_no serial).
   int			i, count;
   w_char			wbuf[256];
   unsigned char		kanji_buf[256];
-  int			kanji_len;
   int			snum;
   unsigned char		lb;
   CHECK_STRING (yomi);

@@ -1086,23 +1086,37 @@ init_callproc (void)
 
 #ifdef VMS
   Vshell_file_name = build_string ("*dcl*");
-#else /* not VMS */
-  sh = (char *) egetenv ("SHELL");
-#ifdef DOS_NT
-  if (!sh) sh = egetenv ("COMSPEC");
+#elif defined(WINDOWSNT)
+  /*
+  ** If NT then we look at COMSPEC for the shell program.
+  */
+  sh = egetenv ("COMSPEC");
   {
     char *tem;
+	/*
+	** If COMSPEC has been set, then convert the
+	** DOS formatted name into a UNIX format. Then 
+	** create a LISP object.
+	*/
     if (sh)
-      {
-	tem = (char *) alloca (strlen (sh) + 1);
-	sh = dostounix_filename (strcpy (tem, sh));
-      }
+    {
+		tem = (char *) alloca (strlen (sh) + 1);
+		dostounix_filename (strcpy (tem, sh));
+		Vshell_file_name = build_string (tem);
+	}
+	/*
+	** Odd, no COMSPEC, so let's default to our
+	** best guess for NT.
+	*/
+	else
+	{
+		Vshell_file_name = build_string ("/WINNT/system32/cmd.exe");
+	}
   }
-  Vshell_file_name = build_string (sh ? sh : "/command.com");
-#else /* not DOS_NT */
+#else /* not VMS or WINDOWSNT */
+  sh = (char *) egetenv ("SHELL");
   Vshell_file_name = build_string (sh ? sh : "/bin/sh");
-#endif /* not DOS_NT */
-#endif /* not VMS */
+#endif 
 }
 
 #if 0

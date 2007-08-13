@@ -5,7 +5,7 @@ LISP=$(XEMACS)/lisp
 
 EMACS_MAJOR_VERSION=20
 EMACS_MINOR_VERSION=3
-XEMACS_CODENAME=\"Copenhagen\"
+XEMACS_CODENAME=\"Stockholm\"
 
 #------------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ LASTFILE_SRC=$(XEMACS)/src
 LASTFILE_FLAGS=-nologo -w -Od $(INCLUDES) -Fo$@ -c
 LASTFILE_OBJS= \
 	$(OUTDIR)/lastfile.obj
-	
+
 $(LASTFILE): $(LASTFILE_OBJS)
 	link.exe -lib /nologo /out:$@ $(LASTFILE_OBJS)
 
@@ -338,7 +338,7 @@ RUNEMACS=$(XEMACS)/src/runemacs.exe
 $(RUNEMACS): $(OUTDIR)\runemacs.obj
 	link.exe /out:$@ /subsystem:windows /entry:WinMainCRTStartup \
 	/pdb:none /release /incremental:no $** \
- 	kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
+	kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
 	advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib \
 	odbccp32.lib libc.lib
 
@@ -370,7 +370,7 @@ TEMACS_LIBS=$(LASTFILE) $(LWLIB) Xaw.lib Xmu.lib Xt.lib SM.lib ICE.lib \
 TEMACS_LFLAGS=/nologo $(LIBRARIES) /base:0x1000000\
  /stack:0x800000 /entry:_start /subsystem:console /pdb:none\
  /map:$(TEMACS_DIR)/temacs.map /debug:full /debugtype:both /machine:I386\
- /nodefaultlib /force /out:$@\
+ /nodefaultlib /out:$@\
  /heap:0x00100000
 
 TEMACS_CPP=c:/usr/local/bin/cpp.exe
@@ -861,11 +861,11 @@ $(TEMACS_SRC)/paths.h: $(TEMACS_SRC)/paths.h.in
 
 # LISP bits 'n bobs
 
-dump-elcs: $(TEMACS)
-        $(LOADPATH) $(TEMACS) -batch -l ../prim/update-elc.el $(LISP)
+dump-elcs:
+	!"$(TEMACS) -batch -l update-elc.el $(LISP)"
 
-dump-xemacs: $(TEMACS)
-	$(TEMACS) -batch -l loadup.el dump
+dump-xemacs:
+	!"$(TEMACS) -batch -l loadup.el dump"
 
 #------------------------------------------------------------------------------
 

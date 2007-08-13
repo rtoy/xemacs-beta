@@ -86,7 +86,7 @@ This shouldn't match socket or symbolic link lines (which aren't editable).")
      ["Find in Other Window" dired-find-file-other-window t]
      ["Find in Other Frame" dired-find-file-other-frame t]
      ["View File" dired-view-file t]
-     ["Display in Other Window" dired-find-file-other-window t]))
+     ["Display in Other Window" dired-display-file t]))
 
   (setq
    dired-do-popup-menu
@@ -293,19 +293,38 @@ This shouldn't match socket or symbolic link lines (which aren't editable).")
 
 ;;; Mouse functions
 
-(defun dired-mouse-find-file (event)
-  "In dired, visit the file or directory name you click on."
-  (interactive "e")
+(defun dired-mouse-file-action (event fun)
+  "In dired, apply function FUN to the file or directory name you click on."
   (save-excursion
     (set-buffer (window-buffer (event-window event)))
     (if dired-subdir-alist
 	(save-excursion
 	  (goto-char (event-point event))
-	  (dired-find-file))
+	  (funcall fun))
       (error
        (concat "dired-subdir-alist seems to be mangled.  "
 	       (substitute-command-keys
 		"\\<dired-mode-map>Try dired-revert (\\[dired-revert])."))))))
+
+(defun dired-mouse-find-file (event)
+  "In dired, visit the file or directory name you click on."
+  (interactive "e")
+  (dired-mouse-file-action event 'dired-find-file))
+
+(defun dired-mouse-display-file (event)
+  "In dired, display the file or directory name you click on."
+  (interactive "e")
+  (dired-mouse-file-action event 'dired-display-file))
+
+(defun dired-mouse-find-file-other-window (event)
+  "In dired, visit the file or directory name you click on in another window."
+  (interactive "e")
+  (dired-mouse-file-action event 'dired-find-file-other-window))
+
+(defun dired-mouse-find-file-other-frame (event)
+  "In dired, visit the file or directory name you click on in another frame."
+  (interactive "e")
+  (dired-mouse-file-action event 'dired-find-file-other-frame))
 
 (defun dired-mouse-mark (event)
   "In dired, mark the file name that you click on.
@@ -404,11 +423,13 @@ If the file name is already flag, this unflags it."
 (defvar dired-filename-local-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-name map 'dired-filename-local-map)
-    (define-key map 'button2 'dired-mouse-find-file)
-    (define-key map 'button3 'dired-visit-popup-menu)
-    (define-key map '(control button2) 'dired-do-popup-menu)
-    (define-key map '(shift button1) 'dired-mouse-mark)
-    (define-key map '(control shift button1) 'dired-mouse-flag)
+    (define-key map [button2]           'dired-mouse-find-file)
+    (define-key map [(shift button2)]   'dired-mouse-display-file)
+    (define-key map [(meta button2)]    'dired-mouse-find-file-other-frame)
+    (define-key map [button3]           'dired-visit-popup-menu)
+    (define-key map [(control button2)] 'dired-do-popup-menu)
+    (define-key map [(shift button1)]   'dired-mouse-mark)
+    (define-key map [(control shift button1)] 'dired-mouse-flag)
     map)
   "Keymap used to activate actions on files in dired.")
 

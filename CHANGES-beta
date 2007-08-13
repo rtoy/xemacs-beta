@@ -1,4 +1,14 @@
 							-*- indented-text -*-
+to 20.3 beta16 "Budapest"
+-- New lisp finding functions courtesy of Jens Petersen
+   New keybindings:  C-c f -- find-function
+		     C-x 4 F -- find-function-other-window
+		     C-x 5 F -- find-function-other-frame
+-- vhdl-mode.el-2.74 Courtesy of Rod Whitby
+-- Custom-1.9953
+-- OffiX DnD extensions courtesy of Oliver Graf
+-- Miscellaneous bug fixes
+
 to 20.3 beta15 "Berlin"
 -- cc-mode-5.14
 -- hm--html-menus-5.8

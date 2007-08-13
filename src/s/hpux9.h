@@ -34,7 +34,7 @@
 #ifdef __hp9000s300
 #define C_SWITCH_SYSTEM "-Aa -D_HPUX_SOURCE"
 #else
-#define C_SWITCH_SYSTEM "-Ae -Wp,-H100000"
+#define C_SWITCH_SYSTEM "-Ae -Wp,-H100000 +Olibcalls"
 #endif
 /* XEmacs: commented out
 #else
