@@ -319,8 +319,8 @@ If the third argument is incorrect, Emacs may crash.
     (Emchar *) alloca (sizeof (Emchar) *
 		       (1 + string_char_length (XSTRING (bytestr))));
   massaged_code_len =
-    convert_bufbyte_string_into_emchar_string (string_data (XSTRING (bytestr)),
-				      string_length (XSTRING (bytestr)),
+    convert_bufbyte_string_into_emchar_string (XSTRING_DATA (bytestr),
+				      XSTRING_LENGTH (bytestr),
 				      massaged_code);
   massaged_code[massaged_code_len] = 0;
   pc = 0;
@@ -446,7 +446,7 @@ If the third argument is incorrect, Emacs may crash.
 		  Fput (v1, Qbyte_code_meter, v2);
 		}
 	    }
-#endif
+#endif /* BYTE_CODE_METER */
 	  TOP = Ffuncall (op + 1, &TOP);
 	  break;
 
@@ -656,7 +656,7 @@ If the third argument is incorrect, Emacs may crash.
 	  break;
 
 	case Btemp_output_buffer_setup:
-	  temp_output_buffer_setup ((char *) string_data (XSTRING (TOP)));
+	  temp_output_buffer_setup ((char *) XSTRING_DATA (TOP));
 	  TOP = Vstandard_output;
 	  break;
 
@@ -862,7 +862,7 @@ If the third argument is incorrect, Emacs may crash.
 	      TOP = (f1 == f2 ? Qt : Qnil);
 	    }
 	  else
-#endif
+#endif /* LISP_FLOAT_TYPE */
 	    TOP = (XINT (v1) == XINT (v2) ? Qt : Qnil);
 	  break;
 
@@ -1042,8 +1042,9 @@ If the third argument is incorrect, Emacs may crash.
 	case Bchar_syntax:
 	  CHECK_CHAR_COERCE_INT (TOP);
 	  TOP = make_char (syntax_code_spec
-			   [(int) SYNTAX (current_buffer->syntax_table,
-					  XCHAR (TOP))]);
+			   [(int) SYNTAX
+			    (current_buffer->syntax_table,
+			    XCHAR (TOP))]);
 	  break;
 
 	case Bbuffer_substring:

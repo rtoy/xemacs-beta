@@ -380,8 +380,8 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 	{
 	  Charcount eltlength = string_char_length (XSTRING (eltstring));
 	  if (slength <= eltlength
-	      && (0 > scmp (string_data (XSTRING (eltstring)),
-                            string_data (XSTRING (string)),
+	      && (0 > scmp (XSTRING_DATA (eltstring),
+                            XSTRING_DATA (string),
                             slength)))
 	    {
               {
@@ -408,8 +408,8 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 		{
 		  Charcount compare = min (bestmatchsize, eltlength);
 		  Charcount matchsize =
-		    scmp (string_data (XSTRING (bestmatch)),
-			  string_data (XSTRING (eltstring)),
+		    scmp (XSTRING_DATA (bestmatch),
+			  XSTRING_DATA (eltstring),
 			  compare);
 		  if (matchsize < 0)
 		    matchsize = compare;
@@ -431,11 +431,11 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 			  ((matchsize == eltlength)
 			   ==
 			   (matchsize == blength)
-			   && 0 > scmp_1 (string_data (XSTRING (eltstring)),
-					  string_data (XSTRING (string)),
+			   && 0 > scmp_1 (XSTRING_DATA (eltstring),
+					  XSTRING_DATA (string),
 					  slength, 0)
-			   && 0 <= scmp_1 (string_data (XSTRING (bestmatch)),
-					   string_data (XSTRING (string)), 
+			   && 0 <= scmp_1 (XSTRING_DATA (bestmatch),
+					   XSTRING_DATA (string), 
 					   slength, 0)))
                       {
 			bestmatch = eltstring;
@@ -462,8 +462,8 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
      it does not require any change to be made.  */
   if (matchcount == 1
       && bestmatchsize == slength
-      && 0 > scmp_1 (string_data (XSTRING (bestmatch)),
-		     string_data (XSTRING (string)),
+      && 0 > scmp_1 (XSTRING_DATA (bestmatch),
+		     XSTRING_DATA (string),
 		     bestmatchsize, 0))
     return Qt;
 
@@ -576,8 +576,8 @@ the symbol from the obarray.
 	  && ((string_char_length (XSTRING (string)) > 0 &&
 	       string_char (XSTRING (string), 0) == ' ')
 	      || string_char (XSTRING (eltstring), 0) != ' ')
-          && (0 > scmp (string_data (XSTRING (eltstring)),
-                        string_data (XSTRING (string)),
+          && (0 > scmp (XSTRING_DATA (eltstring),
+                        XSTRING_DATA (string),
                         slength)))
 	{
 	  /* Yes.  Now check whether predicate likes it. */
@@ -616,7 +616,7 @@ xxDEFUN ("minibuffer-prompt-width", Fminibuffer_prompt_width,
 {
   return (make_int (minibuf_prompt_width));
 }
-#endif
+#endif /* 0 */
 
 
 /************************************************************************/
@@ -640,7 +640,7 @@ clear_echo_area_internal (struct frame *f, Lisp_Object label, int from_print,
   else
     {
       write_string_to_stdio_stream (stderr, 0, (CONST Bufbyte *) "\n", 0, 1,
-				    FORMAT_DISPLAY);
+				    FORMAT_TERMINAL);
       return Qnil;
     }
 }
@@ -680,13 +680,12 @@ echo_area_append (struct frame *f, CONST Bufbyte *nonreloc, Lisp_Object reloc,
 
   if (!NILP (Ffboundp (Qappend_message)))
     {
-      if (STRINGP (reloc) && offset == 0 &&
-	  length == string_length (XSTRING (reloc)))
+      if (STRINGP (reloc) && offset == 0 && length == XSTRING_LENGTH (reloc))
 	obj = reloc;
       else
 	{
 	  if (STRINGP (reloc))
-	    nonreloc = string_data (XSTRING (reloc));
+	    nonreloc = XSTRING_DATA (reloc);
 	  obj = make_string (nonreloc + offset, length);
 	}
       
@@ -699,9 +698,9 @@ echo_area_append (struct frame *f, CONST Bufbyte *nonreloc, Lisp_Object reloc,
   else
     {
       if (STRINGP (reloc))
-	nonreloc = string_data (XSTRING (reloc));
+	nonreloc = XSTRING_DATA (reloc);
       write_string_to_stdio_stream (stderr, 0, nonreloc, offset, length,
-				    FORMAT_DISPLAY);
+				    FORMAT_TERMINAL);
     }
 }
 
@@ -720,8 +719,8 @@ echo_area_active (struct frame *f)
   /* By definition, the echo area is active if the echo-area buffer
      is not empty.  No need to call Lisp code. (Anyway, this function
      is called from redisplay.) */
-  return (BUF_BEGV (XBUFFER (Vecho_area_buffer)) !=
-	  BUF_ZV (XBUFFER (Vecho_area_buffer)));
+  struct buffer *echo_buffer = XBUFFER (Vecho_area_buffer);
+  return (BUF_BEGV (echo_buffer) != BUF_ZV (echo_buffer));
 }
 
 Lisp_Object

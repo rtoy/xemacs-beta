@@ -39,7 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_TTY
 #include "console-tty.h"
 #else
-#include "syssignal.h" /* Always include before systty.h */
+#include "syssignal.h"
 #include "systty.h"
 #endif /* HAVE_TTY */
 
@@ -602,9 +602,9 @@ sys_subshell (void)
     goto xyzzy;
   
   dir = expand_and_dir_to_file (Funhandled_file_name_directory (dir), Qnil);
-  str = (unsigned char *) alloca (string_length (XSTRING (dir)) + 2);
-  len = string_length (XSTRING (dir));
-  memcpy (str, string_data (XSTRING (dir)), len);
+  str = (unsigned char *) alloca (XSTRING_LENGTH (dir) + 2);
+  len = XSTRING_LENGTH (dir);
+  memcpy (str, XSTRING_DATA (dir), len);
   /* #### Unix specific */
   if (str[len - 1] != '/') str[len++] = '/';
   str[len] = 0;
@@ -2538,8 +2538,8 @@ init_system_name (void)
     Bufbyte *p;
     Bytecount i;
 
-    for (i = 0, p = string_data (XSTRING (Vsystem_name));
-	 i < string_length (XSTRING (Vsystem_name));
+    for (i = 0, p = XSTRING_DATA (Vsystem_name);
+	 i < XSTRING_LENGTH (Vsystem_name);
 	 i++, p++)
       {
 	if (*p == ' ' || *p == '\t')
@@ -2765,7 +2765,6 @@ strerror (int errnum)
    Jamie's home page (http://www.netscape.com/people/jwz). */
 
 #ifdef ENCAPSULATE_OPEN
-
 int
 sys_open (CONST char *path, int oflag, ...)
 {
@@ -2788,11 +2787,10 @@ sys_open (CONST char *path, int oflag, ...)
     return open (path, oflag, mode);
 #endif
 }
-
 #endif /* ENCAPSULATE_OPEN */
 
-#ifdef ENCAPSULATE_CLOSE
 
+#ifdef ENCAPSULATE_CLOSE
 int
 sys_close (int fd)
 {
@@ -2815,7 +2813,6 @@ sys_close (int fd)
   return close (fd);
 #endif
 }
-
 #endif /* ENCAPSULATE_CLOSE */
 
 int
@@ -2838,13 +2835,11 @@ sys_read_1 (int fildes, void *buf, unsigned int nbyte, int allow_quit)
 }
 
 #ifdef ENCAPSULATE_READ
-
 int
 sys_read (int fildes, void *buf, unsigned int nbyte)
 {
   return sys_read_1 (fildes, buf, nbyte, 0);
 }
-
 #endif /* ENCAPSULATE_READ */
 
 int
@@ -2881,13 +2876,11 @@ sys_write_1 (int fildes, CONST void *buf, unsigned int nbyte, int allow_quit)
 }
 
 #ifdef ENCAPSULATE_WRITE
-
 int
 sys_write (int fildes, CONST void *buf, unsigned int nbyte)
 {
   return sys_write_1 (fildes, buf, nbyte, 0);
 }
-
 #endif /* ENCAPSULATE_WRITE */
 
 
@@ -2901,7 +2894,6 @@ sys_write (int fildes, CONST void *buf, unsigned int nbyte)
    #### Should conceivably encapsulate getchar() etc.  What a pain! */
 
 #ifdef ENCAPSULATE_FOPEN
-
 FILE *
 sys_fopen (CONST char *path, CONST char *type)
 {
@@ -2916,11 +2908,10 @@ sys_fopen (CONST char *path, CONST char *type)
   return fopen (path, type);
 #endif
 }
-
 #endif /* ENCAPSULATE_FOPEN */
 
-#ifdef ENCAPSULATE_FCLOSE
 
+#ifdef ENCAPSULATE_FCLOSE
 int
 sys_fclose (FILE *stream)
 {
@@ -2935,11 +2926,10 @@ sys_fclose (FILE *stream)
   return fclose (stream);
 #endif
 }
-
 #endif /* ENCAPSULATE_FCLOSE */
 
-#ifdef ENCAPSULATE_FREAD
 
+#ifdef ENCAPSULATE_FREAD
 size_t
 sys_fread (void *ptr, size_t size, size_t nitem, FILE *stream)
 {
@@ -2967,11 +2957,10 @@ sys_fread (void *ptr, size_t size, size_t nitem, FILE *stream)
   return fread (ptr, size, nitem, stream);
 #endif
 }
-
 #endif /* ENCAPSULATE_FREAD */
 
-#ifdef ENCAPSULATE_FWRITE
 
+#ifdef ENCAPSULATE_FWRITE
 size_t
 sys_fwrite (CONST void *ptr, size_t size, size_t nitem, FILE *stream)
 {
@@ -3001,14 +2990,12 @@ sys_fwrite (CONST void *ptr, size_t size, size_t nitem, FILE *stream)
   return fwrite (ptr, size, nitem, stream);
 #endif
 }
-
 #endif /* ENCAPSULATE_FWRITE */
 
 
 /********************* directory calls *******************/
 
 #ifdef ENCAPSULATE_CHDIR
-
 int
 sys_chdir (CONST char *path)
 {
@@ -3019,22 +3006,20 @@ sys_chdir (CONST char *path)
   return chdir (path);
 #endif
 }
-
 #endif /* ENCAPSULATE_CHDIR */
 
-#ifdef ENCAPSULATE_MKDIR
 
+#ifdef ENCAPSULATE_MKDIR
 int
 sys_mkdir (CONST char *path, int mode)
 {
   PATHNAME_CONVERT_OUT (path);
   return mkdir (path, mode);
 }
-
 #endif /* ENCAPSULATE_MKDIR */
 
-#ifdef ENCAPSULATE_OPENDIR
 
+#ifdef ENCAPSULATE_OPENDIR
 DIR *
 sys_opendir (CONST char *filename)
 {
@@ -3046,11 +3031,10 @@ sys_opendir (CONST char *filename)
     ;
   return rtnval;
 }
-
 #endif /* ENCAPSULATE_OPENDIR */
 
-#ifdef ENCAPSULATE_READDIR
 
+#ifdef ENCAPSULATE_READDIR
 DIRENTRY *
 sys_readdir (DIR *dirp)
 { 
@@ -3063,11 +3047,10 @@ sys_readdir (DIR *dirp)
     ;
   return rtnval;
 }
-
 #endif /* ENCAPSULATE_READDIR */
 
-#ifdef ENCAPSULATE_CLOSEDIR
 
+#ifdef ENCAPSULATE_CLOSEDIR
 int
 sys_closedir (DIR *dirp)
 {
@@ -3078,25 +3061,22 @@ sys_closedir (DIR *dirp)
     ;
   return rtnval;
 }
-
 #endif /* ENCAPSULATE_CLOSEDIR */
 
-#ifdef ENCAPSULATE_RMDIR
 
+#ifdef ENCAPSULATE_RMDIR
 int
 sys_rmdir (CONST char *path)
 {
   PATHNAME_CONVERT_OUT (path);
   return rmdir (path);
 }
-
 #endif /* ENCAPSULATE_RMDIR */
 
 
 /***************** file-information calls ******************/
 
 #ifdef ENCAPSULATE_ACCESS
-
 int
 sys_access (CONST char *path, int mode)
 {
@@ -3107,36 +3087,32 @@ sys_access (CONST char *path, int mode)
   return access (path, mode);
 #endif
 }
-
 #endif /* ENCAPSULATE_ACCESS */
+
 
 #ifdef HAVE_EACCESS
 #ifdef ENCAPSULATE_EACCESS
-
 int
 sys_eaccess (CONST char *path, int mode)
 {
   PATHNAME_CONVERT_OUT (path);
   return eaccess (path, mode);
 }
-
 #endif /* ENCAPSULATE_EACCESS */
 #endif /* HAVE_EACCESS */
 
 
 #ifdef ENCAPSULATE_LSTAT
-
 int
 sys_lstat (CONST char *path, struct stat *buf)
 {
   PATHNAME_CONVERT_OUT (path);
   return lstat (path, buf);
 }
-
 #endif /* ENCAPSULATE_LSTAT */
 
-#ifdef ENCAPSULATE_READLINK
 
+#ifdef ENCAPSULATE_READLINK
 int
 sys_readlink (CONST char *path, char *buf, int bufsiz)
 {
@@ -3144,47 +3120,42 @@ sys_readlink (CONST char *path, char *buf, int bufsiz)
   /* #### currently we don't do conversions on the incoming data */
   return readlink (path, buf, bufsiz);
 }
-
 #endif /* ENCAPSULATE_READLINK */
 
-#ifdef ENCAPSULATE_STAT
 
+#ifdef ENCAPSULATE_STAT
 int
 sys_stat (CONST char *path, struct stat *buf)
 {
   PATHNAME_CONVERT_OUT (path);
   return stat (path, buf);
 }
-
 #endif /* ENCAPSULATE_STAT */
 
 
 /****************** file-manipulation calls *****************/
 
 #ifdef ENCAPSULATE_CHMOD
-
 int
 sys_chmod (CONST char *path, int mode)
 {
   PATHNAME_CONVERT_OUT (path);
   return chmod (path, mode);
 }
-
 #endif /* ENCAPSULATE_CHMOD */
 
-#ifdef ENCAPSULATE_CREAT
 
+#ifdef ENCAPSULATE_CREAT
 int
 sys_creat (CONST char *path, int mode)
 {
   PATHNAME_CONVERT_OUT (path);
   return creat (path, mode);
 }
-
 #endif /* ENCAPSULATE_CREAT */
 
-#ifdef ENCAPSULATE_LINK
 
+#ifdef ENCAPSULATE_LINK
 int
 sys_link (CONST char *existing, CONST char *new)
 {
@@ -3192,11 +3163,10 @@ sys_link (CONST char *existing, CONST char *new)
   PATHNAME_CONVERT_OUT (new);
   return link (existing, new);
 }
-
 #endif /* ENCAPSULATE_LINK */
 
-#ifdef ENCAPSULATE_RENAME
 
+#ifdef ENCAPSULATE_RENAME
 int
 sys_rename (CONST char *old, CONST char *new)
 {
@@ -3204,11 +3174,10 @@ sys_rename (CONST char *old, CONST char *new)
   PATHNAME_CONVERT_OUT (new);
   return rename (old, new);
 }
-
 #endif /* ENCAPSULATE_RENAME */
 
-#ifdef ENCAPSULATE_SYMLINK
 
+#ifdef ENCAPSULATE_SYMLINK
 int
 sys_symlink (CONST char *name1, CONST char *name2)
 {
@@ -3216,19 +3185,30 @@ sys_symlink (CONST char *name1, CONST char *name2)
   PATHNAME_CONVERT_OUT (name2);
   return symlink (name1, name2);
 }
-
 #endif /* ENCAPSULATE_SYMLINK */
 
-#ifdef ENCAPSULATE_UNLINK
 
+#ifdef ENCAPSULATE_UNLINK
 int
 sys_unlink (CONST char *path)
 {
   PATHNAME_CONVERT_OUT (path);
   return unlink (path);
 }
-
 #endif /* ENCAPSULATE_UNLINK */
+
+
+#ifdef ENCAPSULATE_EXECVP
+int
+sys_execvp (CONST char *path, char * CONST argv[])
+{
+  int i;
+  PATHNAME_CONVERT_OUT (path);
+  for (i = 0; argv[i]; i++)
+    PATHNAME_CONVERT_OUT (argv[i]);
+  return execvp (path, argv);
+}
+#endif /* ENCAPSULATE_EXECVP */
 
 
 /************************************************************************/
@@ -3238,12 +3218,11 @@ sys_unlink (CONST char *path)
 /***** (these are primarily required for USG, it seems) *****/
 
 /*
- *	Warning, this function may not duplicate 4.2 action properly
+ *	Warning, this function may not duplicate BSD 4.2 action properly
  *	under error conditions.
  */
 
 #ifndef HAVE_GETWD
-
 char *
 getwd (char *pathname)
 {
@@ -3263,7 +3242,6 @@ getwd (char *pathname)
   xfree (spath);                  /* getcwd uses malloc */
   return pathname;
 }
-
 #endif /* HAVE_GETWD */
 
 /*
@@ -3273,7 +3251,6 @@ getwd (char *pathname)
  */
 
 #ifndef HAVE_RENAME
-
 int
 rename (CONST char *from, CONST char *to)
 {
@@ -3286,8 +3263,7 @@ rename (CONST char *from, CONST char *to)
     }
   return (-1);
 }
-
-#endif
+#endif /* HAVE_RENAME */
 
 #ifdef HPUX
 #ifndef HAVE_PERROR

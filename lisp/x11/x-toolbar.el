@@ -20,6 +20,47 @@
 ;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;
+;; Miscellaneous toolbar functions, useful for users to redefine, in
+;; order to get different behaviour.
+;;
+
+(defun toolbar-open ()
+  (interactive)
+  (call-interactively 'find-file))
+
+(defun toolbar-dired ()
+  (interactive)
+  (call-interactively 'dired))
+
+(defun toolbar-save ()
+  (interactive)
+  (call-interactively 'save-buffer))
+
+(defun toolbar-print ()
+  (interactive)
+  (call-interactively 'lpr-buffer))
+
+(defun toolbar-cut ()
+  (interactive)
+  (call-interactively 'x-kill-primary-selection))
+
+(defun toolbar-copy ()
+  (interactive)
+  (call-interactively 'x-copy-primary-selection))
+
+(defun toolbar-paste ()
+  (interactive)
+  (call-interactively 'x-yank-clipboard-selection))
+
+(defun toolbar-undo ()
+  (interactive)
+  (call-interactively 'undo))
+
+(defun toolbar-replace ()
+  (interactive)
+  (call-interactively 'query-replace))
+
+;;
 ;; toolbar ispell variables and defuns
 ;;
 
@@ -34,36 +75,37 @@
 ;; toolbar mail variables and defuns
 ;;
 
-(defvar toolbar-use-separate-mail-frame nil
-  "If non-nil run mail in a separate frame.")
+(defmacro toolbar-external (process &rest args)
+  `(lambda () (interactive) (call-process ,process nil 0 nil ,@args)))
 
-(defvar toolbar-mail-frame nil
-  "The frame in which mail is displayed.")
+(defvar toolbar-mail-commands-alist
+  `((vm		. vm)
+    (gnus	. gnus-no-server)
+    (rmail	. rmail)
+    (mh		. mh-rmail)
+    (pine	. ,(toolbar-external "xterm" "-e" "pine")) ; *gag*
+    (elm	. ,(toolbar-external "xterm" "-e" "elm"))
+    (mutt	. ,(toolbar-external "xterm" "-e" "mutt"))
+    (exmh	. ,(toolbar-external "exmh"))
+    ;; How to turn on netscape mail, command-line??
+    (netscape	. ,(toolbar-external "netscape")))
+  "Alist of mail readers and their commands.
+The car of the alist is the mail reader, and the cdr is the form
+used to start it.")
 
-(defvar toolbar-mail-command 'vm
-  "The mail reader to run.")
+(defvar toolbar-mail-reader 'vm
+  "Mail reader toolbar will invoke.
+The legal values are `vm' and `gnus', but you can add your own values
+by customizing `toolbar-mail-commands-alist'.")
+
 
 (defun toolbar-mail ()
   "Run mail in a separate frame."
   (interactive)
-  (if (not toolbar-use-separate-mail-frame)
-      (funcall toolbar-mail-command)
-    (if (or (not toolbar-mail-frame)
-	    (not (frame-live-p toolbar-mail-frame)))
-	(progn
-	  (setq toolbar-mail-frame (make-frame))
-	  (add-hook 'vm-quit-hook
-		    (lambda ()
-		      (save-excursion
-			(if (frame-live-p toolbar-mail-frame)
-			    (delete-frame toolbar-mail-frame)))))
-	  (select-frame toolbar-mail-frame)
-	  (raise-frame toolbar-mail-frame)
-	  (funcall toolbar-mail-command)))
-    (if (frame-iconified-p toolbar-mail-frame)
-	(deiconify-frame toolbar-mail-frame))
-    (select-frame toolbar-mail-frame)
-    (raise-frame toolbar-mail-frame)))
+  (let ((command (assq toolbar-mail-reader toolbar-mail-commands-alist)))
+    (if (not command)
+	(error "Uknown mail reader %s" toolbar-mail-reader))
+    (funcall (cdr command))))
 
 ;;
 ;; toolbar info variables and defuns
@@ -254,15 +296,14 @@ One possibility for a different value would be `query-replace-regexp'.")
 				;		'window-config-unpop-stack)
 	;			t
 	;			"Undo \"Most recent window config\""]
-    [toolbar-file-icon		find-file	t	"Open a file"	]
-    [toolbar-folder-icon	dired		t	"View directory"]
-    [toolbar-disk-icon		save-buffer	t	"Save buffer"	]
+    [toolbar-file-icon		toolbar-open	t	"Open a file"	]
+    [toolbar-folder-icon	toolbar-dired	t	"View directory"]
+    [toolbar-disk-icon		toolbar-save	t	"Save buffer"	]
     [toolbar-printer-icon	toolbar-print	t	"Print buffer"	]
-    [toolbar-cut-icon		x-kill-primary-selection t "Kill region"]
-    [toolbar-copy-icon		x-copy-primary-selection t "Copy region"]
-    [toolbar-paste-icon		x-yank-clipboard-selection t
-				"Paste from clipboard"]
-    [toolbar-undo-icon		undo		t	"Undo edit"	]
+    [toolbar-cut-icon		toolbar-cut	t	"Kill region"]
+    [toolbar-copy-icon		toolbar-copy	t	"Copy region"]
+    [toolbar-paste-icon		toolbar-paste	t 	"Paste from clipboard"]
+    [toolbar-undo-icon		toolbar-undo	t	"Undo edit"	]
     [toolbar-spell-icon		toolbar-ispell	t	"Spellcheck"	]
     [toolbar-replace-icon	toolbar-replace	t	"Replace text"	]
     [toolbar-mail-icon		toolbar-mail	t	"Mail"		]

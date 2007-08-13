@@ -769,40 +769,41 @@ you may or may not want the visited file name to record the specific
 directory where the file was found.  If you *do not* want that, add the logical
 name to this list as a string.")
 
-;(defun find-buffer-visiting (filename)
-;  "Return the buffer visiting file FILENAME (a string).
-;This is like `get-file-buffer', except that it checks for any buffer
-;visiting the same file, possibly under a different name.
-;If there is no such live buffer, return nil."
-;  (let ((buf (get-file-buffer filename))
-;	(truename (abbreviate-file-name (file-truename filename))))
-;    (or buf
-;	(let ((list (buffer-list)) found)
-;	  (while (and (not found) list)
-;	    (save-excursion
-;	      (set-buffer (car list))
-;	      (if (and buffer-file-name
-;		       (string= buffer-file-truename truename))
-;		  (setq found (car list))))
-;	    (setq list (cdr list)))
-;	  found)
-;	(let ((number (nthcdr 10 (file-attributes truename)))
-;	      (list (buffer-list)) found)
-;	  (and buffer-file-numbers-unique
-;	       number
-;	       (while (and (not found) list)
-;		 (save-excursion
-;		   (set-buffer (car list))
-;		   (if (and buffer-file-name
-;			    (equal buffer-file-number number)
-;			    ;; Verify this buffer's file number
-;			    ;; still belongs to its file.
-;			    (file-exists-p buffer-file-name)
-;			    (equal (nthcdr 10 (file-attributes buffer-file-name))
-;				   number))
-;		       (setq found (car list))))
-;		 (setq list (cdr list))))
-;	  found))))
+;; XEmacs -- why was this commented out??  -- Hrv
+(defun find-buffer-visiting (filename)
+  "Return the buffer visiting file FILENAME (a string).
+This is like `get-file-buffer', except that it checks for any buffer
+visiting the same file, possibly under a different name.
+If there is no such live buffer, return nil."
+  (let ((buf (get-file-buffer filename))
+	(truename (abbreviate-file-name (file-truename filename))))
+    (or buf
+	(let ((list (buffer-list)) found)
+	  (while (and (not found) list)
+	    (save-excursion
+	      (set-buffer (car list))
+	      (if (and buffer-file-name
+		       (string= buffer-file-truename truename))
+		  (setq found (car list))))
+	    (setq list (cdr list)))
+	  found)
+	(let ((number (nthcdr 10 (file-attributes truename)))
+	      (list (buffer-list)) found)
+	  (and buffer-file-numbers-unique
+	       number
+	       (while (and (not found) list)
+		 (save-excursion
+		   (set-buffer (car list))
+		   (if (and buffer-file-name
+			    (equal buffer-file-number number)
+			    ;; Verify this buffer's file number
+			    ;; still belongs to its file.
+			    (file-exists-p buffer-file-name)
+			    (equal (nthcdr 10 (file-attributes buffer-file-name))
+				   number))
+		       (setq found (car list))))
+		 (setq list (cdr list))))
+	  found))))
 
 (defun insert-file-contents-literally (filename &optional visit beg end replace)
   "Like `insert-file-contents', q.v., but only reads in the file.
@@ -1053,19 +1054,21 @@ run `normal-mode' explicitly."
      ("\\.ltx\\'" . latex-mode)
      ("\\.el\\'" . emacs-lisp-mode)
      ("\\.l\\(i?sp\\)?\\'" . lisp-mode)
-     ("\\.f\\(or\\)?\\'" . fortran-mode)
+     ("\\.[Ff]\\(or\\)?\\'" . fortran-mode)
      ("\\.p\\(as\\)?\\'" . pascal-mode)
      ("\\.ad[abs]\\'" . ada-mode)
      ("\\.pl\\'" . perl-mode)
+     ("\\.pm\\'" . perl-mode)
      ("\\.\\([CH]\\|cc\\|hh\\)\\'" . c++-mode)
      ("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode)
      ("\\.java\\'" . java-mode)
      ("\\.ma?k\\'" . makefile-mode)
-     ("[Mm]akefile\\(.in\\)?\\(.in\\)?\\'" . makefile-mode)
+     ("\\(M\\|m\\|GNUm\\)akefile\\(.in\\)?\\(.in\\)?\\'" . makefile-mode)
 ;;; Less common extensions come here
 ;;; so more common ones above are found faster.
      ("\\.texi\\(nfo\\)?\\'" . texinfo-mode)
-     ("\\.s\\'" . asm-mode)
+     ("\\.[Ss]\\'" . asm-mode)
+     ("\\.asm\\'" . asm-mode)
      ("[Cc]hange.?[Ll]og?\\(.[0-9]+\\)?\\'" . change-log-mode)
      ("\\$CHANGE_LOG\\$\\.TXT" . change-log-mode)
      ("\\.scm\\(\\.[0-9]*\\)?\\'" . scheme-mode)
@@ -1090,10 +1093,12 @@ run `normal-mode' explicitly."
      ("\\.\\(tcl\\|exp\\)\\'" . tcl-mode)
      ("\\.wrl\\'" . vrml-mode)
      ("\\.f90\\'" . f90-mode)
+     ("\\.lsp\\'" . lisp-mode)
      ("\\.awk\\'" . awk-mode)
      ("\\.prolog\\'" . prolog-mode)
      ("\\.tar\\'" . tar-mode)
      ("\\.\\(arc\\|zip\\|lzh\\|zoo\\)\\'" . archive-mode)
+     ("\\.\\(ARC\\|ZIP\\|LZH\\|ZOO\\)\\'" . archive-mode)
      ;; Mailer puts message to be edited in
      ;; /tmp/Re.... or Message
      ("^/tmp/Re" . text-mode)
@@ -1128,15 +1133,18 @@ REGEXP and search the list again for another match.")
 
 (defconst interpreter-mode-alist
   (mapcar 'purecopy
-          '(("^#!.*[acjkwz]sh"	  . sh-mode)
+          '(("^#!.*[acjkwz]sh" . sh-mode)
             ("^#!.*sh\\b" . sh-mode)
-            ("^#!.*\\b\\(scope\\|wish\\|tcl\\|expect\\)" . tcl-mode)
-            ("perl"   . perl-mode)
+            ("^#!.*\\b\\(scope\\|wishx?\\|tcl\\|tclsh\\|expect\\)" . tcl-mode)
             ("python" . python-mode)
-            ("awk\\b" . awk-mode)
+            ("[mng]?awk\\b" . awk-mode)
             ("rexx"   . rexx-mode)
             ("scm"    . scheme-mode)
             ("^:"     . sh-mode)
+            ("tail" . text-mode)
+            ("more" . text-mode)
+            ("less" . text-mode)
+            ("pg" . text-mode)
             ))
   "Alist mapping interpreter names to major modes.
 This alist is used to guess the major mode of a file based on the
@@ -1250,7 +1258,7 @@ If `enable-local-variables' is nil, this function does not check for a
 	;; Parse the -*- line into the `result' alist.
 	(cond ((not (search-forward "-*-" end t))
 	       ;; doesn't have one.
-	       nil)
+	       (setq force t))
 	      ((looking-at "[ \t]*\\([^ \t\n\r:;]+\\)\\([ \t]*-\\*-\\)")
 	       ;; Antiquated form: "-*- ModeName -*-".
 	       (setq result
@@ -1286,21 +1294,22 @@ If `enable-local-variables' is nil, this function does not check for a
 		   (skip-chars-forward " \t;")))
 	       (setq result (nreverse result))))))
 	
-    (let ((set-any-p (or force (hack-local-variables-p t)))
-	  (mode-p nil))
-      (while result
-	(let ((key (car (car result)))
-	      (val (cdr (car result))))
-	  (cond ((eq key 'mode)
-		 (setq mode-p t)
-		 (funcall (intern (concat (downcase (symbol-name val))
-					  "-mode"))))
-		(set-any-p
-		 (hack-one-local-variable key val))
-		(t
-		 nil)))
-	(setq result (cdr result)))
-      mode-p)))
+    (if result
+	(let ((set-any-p (or force (hack-local-variables-p t)))
+	      (mode-p nil))
+	  (while result
+	    (let ((key (car (car result)))
+		  (val (cdr (car result))))
+	      (cond ((eq key 'mode)
+		     (setq mode-p t)
+		     (funcall (intern (concat (downcase (symbol-name val))
+					      "-mode"))))
+		    (set-any-p
+		     (hack-one-local-variable key val))
+		    (t
+		     nil)))
+	    (setq result (cdr result)))
+	  mode-p))))
 
 (defvar hack-local-variables-hook nil
   "Normal hook run after processing a file's local variables specs.

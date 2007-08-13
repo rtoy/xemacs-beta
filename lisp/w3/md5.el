@@ -48,7 +48,7 @@
 
 ;;; Copyright and licence: ----------------------------------------------------
 
-;; Copyright (C) 1995 by Gareth Rees
+;; Copyright (C) 1995, 1996, 1997 by Gareth Rees
 ;; Derived from the RSA Data Security, Inc. MD5 Message-Digest Algorithm
 ;; 
 ;; md5.el is free software; you can redistribute it and/or modify it

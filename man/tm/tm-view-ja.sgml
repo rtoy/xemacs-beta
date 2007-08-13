@@ -1,9 +1,9 @@
 <!doctype sinfo system>
-<!-- $Id: tm-view-ja.sgml,v 1.2 1996/12/29 00:15:33 steve Exp $ -->
+<!-- $Id: tm-view-ja.sgml,v 1.3 1997/02/02 05:06:56 steve Exp $ -->
 <head>
-<title>tm-view 7.79 Reference Manual（日本語版）
+<title>tm-view 7.80 Reference Manual（日本語版）
 <author>守岡 知彦 <mail>morioka@jaist.ac.jp</mail>
-<date>1996/12/25
+<date>1997/1/31
 
 <toc>
 </head>
@@ -343,7 +343,11 @@ mode に戻る (*1)）
 </kd>
 <kt>p<kd>前の part に移動する
 </kd>
+<kt>M-TAB<kd>前の part に移動する
+</kd>
 <kt>n<kd>次の part に移動する
+</kd>
+<kt>TAB<kd>次の part に移動する
 </kd>
 <kt>SPC<kd>scroll up する
 </kd>

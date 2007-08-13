@@ -1,12 +1,12 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/12/31 15:37:49
-;; Version: 1.19
+;; Created: 1997/01/21 20:54:49
+;; Version: 1.25
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -141,8 +141,22 @@ menubar.")
   (interactive)
   (cond
    (w3-running-xemacs
-    (set-frame-property (selected-frame) 'minibuffer
-                      (not (frame-property (selected-frame) 'minibuffer))))
+    (if (equal (frame-property (selected-frame) 'minibuffer) t)
+ 
+	;; frame has a minibuffer, so remove it
+	;; unfortunately, we must delete and redraw the frame
+	(let ((fp (frame-properties (selected-frame)))
+	      (frame (selected-frame))
+	      (buf (current-buffer)))
+	  (select-frame
+	   (make-frame (plist-put
+			(plist-remprop
+			 (plist-remprop fp 'window-id) 'minibuffer)
+			'minibuffer nil)))
+	  (delete-frame frame)
+	  (switch-to-buffer buf))
+      ;; no minibuffer so add one
+      (set-frame-property (selected-frame) 'minibuffer t)))
    (t nil)))
 
 (defun w3-toggle-location ()
@@ -308,8 +322,9 @@ menubar.")
 	  nil)
 	(if w3-running-xemacs
 	    ["Show Status Bar" w3-toggle-minibuffer
-	     :style toggle :selected nil]
-	  nil)
+	     :style toggle
+	     :selected (eq (frame-property (selected-frame) 'minibuffer) t)
+	     ])
 	["Incremental Display"
 	 (setq w3-do-incremental-display (not w3-do-incremental-display))
 	 :style toggle :selected w3-do-incremental-display]
@@ -337,10 +352,6 @@ menubar.")
    ["Allow Document Stylesheets" (setq w3-honor-stylesheets
 				       (not w3-honor-stylesheets))
     :style toggle :selected w3-honor-stylesheets]
-   ["IE 3.0 Compatible Parsing" (setq css-ie-compatibility
-				      (not css-ie-compatibility))
-    :style toggle :selected (and w3-honor-stylesheets
-				 css-ie-compatibility)]
    ["Honor Color Requests" (setq w3-user-colors-take-precedence
 				 (not w3-user-colors-take-precedence))
     :style toggle :selected (not w3-user-colors-take-precedence)]
@@ -376,14 +387,13 @@ menubar.")
   (list
    "Help"
    ["About Emacs-w3" (w3-fetch "about:") t]
-   ["Manual" (w3-fetch (concat w3-documentation-root "w3_toc.html")) t]
+   ["Manual" (w3-fetch (concat w3-documentation-root "docs/w3_toc.html")) t]
    "---"
    ["Version Information..."
     (w3-fetch
-     (concat w3-documentation-root "help_on_" w3-version-number ".html"))
+     (concat w3-documentation-root "help/version_" w3-version-number ".html"))
     t]
-   ["On Window" (w3-fetch (concat w3-documentation-root "help/window.html")) t]
-   ["On FAQ" (w3-fetch (concat w3-documentation-root"help/FAQ.html")) t]
+   ["On FAQ" (w3-fetch (concat w3-documentation-root "help/FAQ.html")) t]
    "---"
    ["Mail Developer(s)" w3-submit-bug t]
    )
@@ -638,7 +648,6 @@ menubar.")
 		  w3-preferences-ok-hook
 		  w3-preferences-setup-hook
 		  w3-source-file-hook
-		  css-ie-compatibility
 		  w3-toolbar-orientation
 		  w3-toolbar-type
 		  w3-use-menus

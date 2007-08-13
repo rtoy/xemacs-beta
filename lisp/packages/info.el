@@ -21,8 +21,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not synched with FSF.
 
@@ -833,17 +834,19 @@ to read a file name from the minibuffer."
 
 (defun Info-set-mode-line ()
   (setq modeline-buffer-identification
-	(concat
-	 "Info:  ("
-	 (if Info-current-file
-	     (let ((name (file-name-nondirectory Info-current-file)))
-	       (if (string-match "\\.info$" name)
-		   (substring name 0 -5)
-		 name))
-	   "")
-	 ")"
-	 (or Info-current-node ""))))
-
+	(list (cons modeline-buffer-id-left-extent "Info: ")
+	      (cons modeline-buffer-id-right-extent
+		    (concat
+		     "("
+		     (if Info-current-file
+			 (let ((name (file-name-nondirectory Info-current-file)))
+			   (if (string-match "\\.info$" name)
+			       (substring name 0 -5)
+			     name))
+		       "")
+		     ")"
+		     (or Info-current-node ""))))))
+	
 ;; Go to an info node specified with a filename-and-nodename string
 ;; of the sort that is found in pointers in nodes.
 

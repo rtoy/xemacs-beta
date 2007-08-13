@@ -27,12 +27,10 @@ INSTALL = install
 # --------- ONLY AUTHORIZED PERSONNEL BEYOND THIS POINT!!! ------------
 EDIFF    = ediff-init.el ediff-help.el ediff-diff.el ediff-merg.el \
            ediff-wind.el ediff-util.el ediff-mult.el ediff-vers.el \
-           ediff-ptch.el ediff.el ediff-hook.el
-# ediff-tbar.el
+           ediff-ptch.el ediff.el ediff-hook.el ediff-tbar.el
 EDIFFelc = ediff-init.elc ediff-help.elc ediff-diff.elc ediff-merg.elc \
            ediff-wind.elc ediff-util.elc ediff-mult.elc ediff-vers.elc \
-           ediff-ptch.elc ediff.elc ediff-hook.elc
-# ediff-tbar.elc
+           ediff-ptch.elc ediff.elc ediff-hook.elc ediff-tbar.elc
 
 
 all: hello elc goodbye dvi info

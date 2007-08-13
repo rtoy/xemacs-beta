@@ -83,7 +83,7 @@ static int interrupts_slowed_down;
    naturally interruptible. */
 
 JMP_BUF break_system_call_jump;
-int can_break_system_calls;
+volatile int can_break_system_calls;
 
 
 /**********************************************************************/
@@ -619,7 +619,7 @@ start_interrupts (void)
 }
 
 /* Cheesy but workable implementation of sleep() that doesn't
-   interfere with out periodic timers. */
+   interfere with our periodic timers. */
 
 void
 emacs_sleep (int secs)
@@ -643,9 +643,9 @@ init_signals_very_early (void)
       /* Don't catch these signals in batch mode if not initialized.
 	 On some machines, this sets static data that would make
 	 signal fail to work right when the dumped Emacs is run.  */
-      signal (SIGHUP, fatal_error_signal);
+      signal (SIGHUP,  fatal_error_signal);
       signal (SIGQUIT, fatal_error_signal);
-      signal (SIGILL, fatal_error_signal);
+      signal (SIGILL,  fatal_error_signal);
       signal (SIGTRAP, fatal_error_signal);
 #ifdef SIGABRT
       signal (SIGABRT, fatal_error_signal);
@@ -717,7 +717,8 @@ init_signals_very_early (void)
       signal (SIGVTALRM, fatal_error_signal);
 #endif
 #ifdef SIGPROF
-      signal (SIGPROF, fatal_error_signal);
+      /* Messes up the REAL profiler */
+      /* signal (SIGPROF, fatal_error_signal); */
 #endif
 #ifdef SIGUNUSED /* exists under Linux, and will kill process! */
       signal (SIGUNUSED, fatal_error_signal);
@@ -728,10 +729,10 @@ init_signals_very_early (void)
 #ifndef _I386
       signal (SIGIOINT, fatal_error_signal);
 #endif
-      signal (SIGGRANT, fatal_error_signal);
+      signal (SIGGRANT,   fatal_error_signal);
       signal (SIGRETRACT, fatal_error_signal);
-      signal (SIGSOUND, fatal_error_signal);
-      signal (SIGMSG, fatal_error_signal);
+      signal (SIGSOUND,   fatal_error_signal);
+      signal (SIGMSG,     fatal_error_signal);
 #endif /* AIX */
     }
 }

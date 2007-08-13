@@ -51,6 +51,8 @@ tm-MUA for GNUS (@ref{(tm-gnus-en)})
 @item
 tm-MUA for mh-e (@ref{(tm-mh-e-en)})
 @item
+tm-MUA for VM (@ref{(tm-vm-en)})
+@item
 mime/viewer-mode (@ref{(tm-view-en)})
 @item
 mime/editor-mode (@ref{(tm-edit-en)})
@@ -1866,7 +1868,7 @@ MUA (@ref{MUA}) or MUA extender using tm (@ref{tm-kernel}).@refill
 @item
 @strong{gnus-mime} (@ref{(gnus-mime-en)}) for Gnus
 @item
-@strong{tm-vm} (@ref{(tm-vm_en)}) for VM
+@strong{tm-vm} (@ref{(tm-vm-en)}) for VM
 @item
 @strong{tm-rmail} for RMAIL
 @end itemize

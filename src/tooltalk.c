@@ -197,10 +197,10 @@ make_tooltalk_message (Tt_message m)
 }
 
 Tt_message
-unbox_tooltalk_message (Lisp_Object message)
+unbox_tooltalk_message (Lisp_Object msg)
 {
-  CHECK_TOOLTALK_MESSAGE (message);
-  return XTOOLTALK_MESSAGE (message)->m;
+  CHECK_TOOLTALK_MESSAGE (msg);
+  return XTOOLTALK_MESSAGE (msg)->m;
 }
 
 DEFUN ("tooltalk-message-p", Ftooltalk_message_p, Stooltalk_message_p, 1, 1, 0 /*
@@ -324,13 +324,13 @@ This function is the process handler for the ToolTalk connection process.
 {
   /* This function can GC */
   Tt_message mess = tt_message_receive ();
-  Lisp_Object message = make_tooltalk_message (mess);
+  Lisp_Object msg = make_tooltalk_message (mess);
   struct gcpro gcpro1;
 
-  GCPRO1 (message);
+  GCPRO1 (msg);
   if (mess != NULL && !NILP (Vtooltalk_unprocessed_message_hook))
     va_run_hook_with_args (Qtooltalk_unprocessed_message_hook, 1,
-			   message);
+			   msg);
   UNGCPRO;
 
   /* see comment in event-stream.c about this return value. */
@@ -342,7 +342,7 @@ tooltalk_message_callback (Tt_message m, Tt_pattern p)
 {
   /* This function can GC */
   Lisp_Object cb;
-  Lisp_Object message;
+  Lisp_Object msg;
   Lisp_Object pattern;
   struct gcpro gcpro1, gcpro2;
 
@@ -360,22 +360,22 @@ tooltalk_message_callback (Tt_message m, Tt_pattern p)
   fflush (tooltalk_log_file);
 #endif
 
-  VOID_TO_LISP (message, tt_message_user (m, TOOLTALK_MESSAGE_KEY));
+  VOID_TO_LISP (msg, tt_message_user (m, TOOLTALK_MESSAGE_KEY));
   pattern = make_tooltalk_pattern (p);
-  cb = XTOOLTALK_MESSAGE (message)->callback;
-  GCPRO2 (message, pattern);
+  cb = XTOOLTALK_MESSAGE (msg)->callback;
+  GCPRO2 (msg, pattern);
   if (!NILP (Vtooltalk_message_handler_hook))
-    va_run_hook_with_args (Qtooltalk_message_handler_hook, 2, message,
+    va_run_hook_with_args (Qtooltalk_message_handler_hook, 2, msg,
 			   pattern);
 
   if ((SYMBOLP (cb) && EQ (Qt, Ffboundp (cb))) ||
       (CONSP (cb) && EQ (Qlambda, Fcar (cb)) &&
        !NILP (Flistp (Fcar (Fcdr (cb))))))
-    call2 (cb, message, pattern);
+    call2 (cb, msg, pattern);
   UNGCPRO;
 
   tt_message_destroy (m);
-  Fremhash (message, Vtooltalk_message_gcpro);
+  Fremhash (msg, Vtooltalk_message_gcpro);
 
   return TT_CALLBACK_PROCESSED;
 }
@@ -385,7 +385,7 @@ tooltalk_pattern_callback (Tt_message m, Tt_pattern p)
 {
   /* This function can GC */
   Lisp_Object cb;
-  Lisp_Object message;
+  Lisp_Object msg;
   Lisp_Object pattern;
   struct gcpro gcpro1, gcpro2;
 
@@ -403,16 +403,16 @@ tooltalk_pattern_callback (Tt_message m, Tt_pattern p)
   fflush (tooltalk_log_file);
 #endif
 
-  message = make_tooltalk_message (m);
+  msg = make_tooltalk_message (m);
   VOID_TO_LISP (pattern, tt_pattern_user (p, TOOLTALK_PATTERN_KEY));
   cb = XTOOLTALK_PATTERN (pattern)->callback;
-  GCPRO2 (message, pattern);
+  GCPRO2 (msg, pattern);
   if (!NILP (Vtooltalk_pattern_handler_hook))
-    va_run_hook_with_args (Qtooltalk_pattern_handler_hook, 2, message,
+    va_run_hook_with_args (Qtooltalk_pattern_handler_hook, 2, msg,
 			   pattern);
 
   if (SYMBOLP (cb) && EQ (Qt, Ffboundp (cb)))
-    call2 (cb, message, pattern);
+    call2 (cb, msg, pattern);
   UNGCPRO;
 
   tt_message_destroy (m);
@@ -582,12 +582,12 @@ define any semantics for the string value of 'arg_type.  Conventionally
 Emacs Lisp stores the lengths of strings explicitly (unlike C) so treating the
 value returned by 'arg_bval like a string is fine.
 */ )
-    (message, attribute, argn)
-    Lisp_Object message;
+    (msg, attribute, argn)
+    Lisp_Object msg;
     Lisp_Object attribute;
     Lisp_Object argn;
 {
-  Tt_message m = unbox_tooltalk_message (message);
+  Tt_message m = unbox_tooltalk_message (msg);
   int n = 0;
 
   CHECK_SYMBOL (attribute);
@@ -680,13 +680,13 @@ value returned by 'arg_bval like a string is fine.
     return make_int (tt_message_uid (m));
   
   else if (EQ (attribute, Qtt_callback))
-    return XTOOLTALK_MESSAGE (message)->callback;
+    return XTOOLTALK_MESSAGE (msg)->callback;
 
   else if (EQ (attribute, Qtt_prop))
-    return Fget (XTOOLTALK_MESSAGE (message)->plist_sym, argn, Qnil);
+    return Fget (XTOOLTALK_MESSAGE (msg)->plist_sym, argn, Qnil);
 
   else if (EQ (attribute, Qtt_plist))
-    return Fcopy_sequence (Fsymbol_plist (XTOOLTALK_MESSAGE (message)->
+    return Fcopy_sequence (Fsymbol_plist (XTOOLTALK_MESSAGE (msg)->
 					  plist_sym));
 
   else
@@ -717,13 +717,13 @@ If one of the argument attributes is specified, 'arg_val, 'arg_ival, or
 'arg_bval then argn must be the number of an already created argument.
 New arguments can be added to a message with add-tooltalk-message-arg.
 */ )
-    (value, message, attribute, argn)
+    (value, msg, attribute, argn)
     Lisp_Object value;
-    Lisp_Object message;
+    Lisp_Object msg;
     Lisp_Object attribute;
     Lisp_Object argn;
 {
-  Tt_message m = unbox_tooltalk_message (message);
+  Tt_message m = unbox_tooltalk_message (msg);
   int n = 0;
 
   CHECK_SYMBOL (attribute);
@@ -849,11 +849,11 @@ New arguments can be added to a message with add-tooltalk-message-arg.
   else if (EQ (attribute, Qtt_callback))
     {
       CHECK_SYMBOL (value);
-      XTOOLTALK_MESSAGE (message)->callback = value;
+      XTOOLTALK_MESSAGE (msg)->callback = value;
     }
   else if (EQ (attribute, Qtt_prop))
     {
-      return Fput (XTOOLTALK_MESSAGE (message)->plist_sym, argn, value);
+      return Fput (XTOOLTALK_MESSAGE (msg)->plist_sym, argn, value);
     }
   else
     signal_simple_error ("invalid value for `set-tooltalk-message-attribute'",
@@ -870,10 +870,10 @@ Send a reply to this message.  The second argument can be
 a reply all message arguments whose mode is TT_INOUT or TT_OUT should
 have been filled in - see set-tooltalk-message-attribute.
 */ )
-    (message, mode)
-    Lisp_Object message, mode;
+    (msg, mode)
+    Lisp_Object msg, mode;
 {
-  Tt_message m = unbox_tooltalk_message (message);
+  Tt_message m = unbox_tooltalk_message (msg);
 
   if (NILP (mode))
     mode = Qtt_reply;
@@ -909,14 +909,14 @@ calling `make-tooltalk-message'.
     Lisp_Object no_callback;
 {
   Tt_message m = tt_message_create ();
-  Lisp_Object message = make_tooltalk_message (m);
+  Lisp_Object msg = make_tooltalk_message (m);
   if (NILP (no_callback))
     {
       tt_message_callback_add (m, tooltalk_message_callback);
     }
   tt_message_session_set (m, tt_default_session ());
-  tt_message_user_set (m, TOOLTALK_MESSAGE_KEY, LISP_TO_VOID (message));
-  return message;
+  tt_message_user_set (m, TOOLTALK_MESSAGE_KEY, LISP_TO_VOID (msg));
+  return msg;
 }
 
 DEFUN ("destroy-tooltalk-message",
@@ -928,10 +928,10 @@ It's not necessary to destroy messages after they've been processed by
 a message or pattern callback; the Lisp/Tooltalk callback machinery does
 this for you.
 */ )
-     (message)
-     Lisp_Object message;
+     (msg)
+     Lisp_Object msg;
 {
-  Tt_message m = unbox_tooltalk_message (message);
+  Tt_message m = unbox_tooltalk_message (msg);
 
   if (VALID_TOOLTALK_MESSAGEP (m))
     /* #### Should we call Fremhash() here?  It seems that
@@ -970,10 +970,10 @@ Arguments can initialized by providing a value or with
 want to initialize the argument with a string that can contain
 embedded nulls (use 'arg_bval).
 */ )
-     (message, mode, vtype, value)
-     Lisp_Object message, mode, vtype, value;
+     (msg, mode, vtype, value)
+     Lisp_Object msg, mode, vtype, value;
 {
-  Tt_message m = unbox_tooltalk_message (message);
+  Tt_message m = unbox_tooltalk_message (msg);
   Tt_mode n;
 
   CHECK_STRING (vtype);
@@ -1010,15 +1010,15 @@ Send the message on its way.
 Once the message has been sent it's almost always a good idea to get rid of
 it with `destroy-tooltalk-message'.
 */ )
-     (message)
-     Lisp_Object message;
+     (msg)
+     Lisp_Object msg;
 {
-  Tt_message m = unbox_tooltalk_message (message);
+  Tt_message m = unbox_tooltalk_message (msg);
 
   if (VALID_TOOLTALK_MESSAGEP (m))
     {
       tt_message_send (m);
-      Fputhash (message, Qnil, Vtooltalk_message_gcpro);
+      Fputhash (msg, Qnil, Vtooltalk_message_gcpro);
     }
 
   return Qnil;

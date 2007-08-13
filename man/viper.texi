@@ -1829,6 +1829,12 @@ If non-nil, Viper will always use @code{vip-replace-region-end-delimiter} and
 @code{vip-replace-region-start-delimiter} to delimit replacement regions,
 even on color displays (where this is unnecessary). By default, this
 variable is non-nil only on TTYs or monochrome displays.
+@item vip-allow-multiline-replace-regions t
+If non-nil, multi-line text replacement regions, such as those produced by
+commands @kbd{c55w}, @kbd{3C}, etc., will stay around until the user exits
+the replacement mode. In this variable is set to @code{nil}, Viper will
+emulate the standard Vi behavior, which supports only intra-line
+replacement regions (and multi-line replacement regions are deleted).
 @item vip-toggle-key "\C-z"
 Specifies the key used to switch from Emacs to Vi and back.
 Must be set in @file{.vip} or prior to loading Viper. This variable can't be
@@ -1904,6 +1910,7 @@ can include a line like this in your @file{.vip} file:
 @vindex @code{vip-replace-overlay-pixmap}
 @vindex @code{vip-replace-region-end-symbol}
 @vindex @code{vip-replace-region-start-symbol}
+@vindex @code{vip-allow-multiline-replace-regions}
 @vindex @code{vip-toggle-key}
 @vindex @code{vip-ESC-key}
 @vindex @code{vip-buffer-search-char}

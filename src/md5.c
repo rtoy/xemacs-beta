@@ -398,8 +398,8 @@ hash of a portion of OBJECT.
       string = make_string_from_buffer (b, begv, endv - begv);
 
     /* Compute the digest */
-      MDUpdate (&context, (unsigned char *) string_data (XSTRING (string)),
-		string_length (XSTRING (string)));
+      MDUpdate (&context, (unsigned char *) XSTRING_DATA (string),
+		XSTRING_LENGTH (string));
     }
   else
     {
@@ -408,7 +408,7 @@ hash of a portion of OBJECT.
       get_string_range_byte (object, start, end, &bstart, &bend,
 			     GB_HISTORICAL_STRING_BEHAVIOR);
       len = bend - bstart;
-      MDUpdate (&context, ((unsigned char *) string_data (XSTRING (object))
+      MDUpdate (&context, ((unsigned char *) XSTRING_DATA (object)
 			   + bstart), len);
     }
 

@@ -333,14 +333,14 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 		      Bufbyte *temptemp;
 		      Lisp_Object string =
 			XIMAGE_INSTANCE_TEXT_STRING (instance);
-		      Bytecount len = string_length (XSTRING (string));
+		      Bytecount len = XSTRING_LENGTH (string);
 
 		      /* In the unlikely instance that a garbage-collect
 			 occurs during encoding, we at least need to
 			 copy the string.
 			 */
 		      temptemp = (Bufbyte *) alloca (len);
-		      memcpy (temptemp, string_data (XSTRING (string)), len);
+		      memcpy (temptemp, XSTRING_DATA (string), len);
 		      {
 			int i;
 
@@ -613,8 +613,8 @@ static void
 substitute_in_dynamic_color_string (Lisp_Object spec, Lisp_Object string)
 {
   int i;
-  Bufbyte *specdata = string_data (XSTRING (spec));
-  Bytecount speclen = string_length (XSTRING (spec));
+  Bufbyte *specdata = XSTRING_DATA   (spec);
+  Bytecount speclen = XSTRING_LENGTH (spec);
 
   if (!sidcs_dynarr)
     sidcs_dynarr = Dynarr_new (Bufbyte);
@@ -630,8 +630,9 @@ substitute_in_dynamic_color_string (Lisp_Object spec, Lisp_Object string)
 	}
       else if (specdata[i] == '%' && specdata[i+1] == 's')
 	{
-	  Dynarr_add_many (sidcs_dynarr, string_data (XSTRING (string)),
-			   string_length (XSTRING (string)));
+	  Dynarr_add_many (sidcs_dynarr,
+			   XSTRING_DATA   (string),
+			   XSTRING_LENGTH (string));
 	  i++;
 	}
       else
@@ -652,8 +653,8 @@ set_foreground_to (struct console *c, Lisp_Object sym)
   if (!NILP (result))
     {
       Lisp_Object esc_seq = XCAR (XCDR (result));
-      escseq = string_data (XSTRING (esc_seq));
-      escseqlen = string_length (XSTRING (esc_seq));
+      escseq    = XSTRING_DATA   (esc_seq);
+      escseqlen = XSTRING_LENGTH (esc_seq);
     }
 #if 0
   else if (STRINGP (Vtty_dynamic_color_fg))
@@ -682,8 +683,8 @@ set_background_to (struct console *c, Lisp_Object sym)
   if (!NILP (result))
     {
       Lisp_Object esc_seq = XCDR (XCDR (result));
-      escseq = string_data (XSTRING (esc_seq));
-      escseqlen = string_length (XSTRING (esc_seq));
+      escseq    = XSTRING_DATA   (esc_seq);
+      escseqlen = XSTRING_LENGTH (esc_seq);
     }
 #if 0
   else if (STRINGP (Vtty_dynamic_color_bg))
@@ -1067,8 +1068,11 @@ tty_ring_bell (struct device *d, int volume, int pitch, int duration)
 {
   struct console *c = XCONSOLE (DEVICE_CONSOLE (d));
 
-  OUTPUT1 (c, TTY_SD (c).audio_bell);
-  Lstream_flush (XLSTREAM (CONSOLE_TTY_DATA (c)->outstream));
+  if (volume)
+    {
+      OUTPUT1 (c, TTY_SD (c).audio_bell);
+      Lstream_flush (XLSTREAM (CONSOLE_TTY_DATA (c)->outstream));
+    }
 }
 
 

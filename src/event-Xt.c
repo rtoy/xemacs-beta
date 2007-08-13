@@ -1261,11 +1261,10 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
       break;
       
     case VisibilityNotify: /* window visiblity has changed */
-      if (event->xvisibility.state == VisibilityUnobscured)
-	FRAME_X_TOTALLY_VISIBLE_P (f) = 1;
-      else
-	FRAME_X_TOTALLY_VISIBLE_P (f) = 0;
-      break;
+     if (event->xvisibility.window == XtWindow (FRAME_X_SHELL_WIDGET (f)))
+ 	FRAME_X_TOTALLY_VISIBLE_P (f) =
+ 	  (event->xvisibility.state == VisibilityUnobscured);
+       break;
       
     case ConfigureNotify:
 #ifdef HAVE_XIM
@@ -1702,7 +1701,7 @@ describe_event_window (Window window, Display *display)
     char buf[500];
     sprintf (buf, " \"%s\"", XSTRING_DATA (f->name));
     write_string_to_stdio_stream (stderr, 0, (Bufbyte *) buf, 0, strlen (buf),
-                                  FORMAT_DISPLAY);
+                                  FORMAT_TERMINAL);
   }
   stderr_out ("\n");
 }

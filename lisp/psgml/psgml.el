@@ -1,5 +1,5 @@
 ;;; psgml.el --- SGML-editing mode with parsing support
-;; $Id: psgml.el,v 1.2 1997/01/04 21:20:08 steve Exp $
+;; $Id: psgml.el,v 1.3 1997/02/02 05:06:12 steve Exp $
 
 ;; Copyright (C) 1993, 1994, 1995, 1996 Lennart Staflin
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -71,19 +71,6 @@
 (defvar sgml-mode-abbrev-table nil
   "Abbrev table in use in sgml-mode.")
 (define-abbrev-table 'sgml-mode-abbrev-table ())
-
-;;; Wing addition
-(defvar sgml-mode-syntax-table nil
-  "Syntax table used in sgml mode.")
-
-(if sgml-mode-syntax-table
-    ()
-  (setq sgml-mode-syntax-table (make-syntax-table))
-  (modify-syntax-entry ?< "(>" sgml-mode-syntax-table)
-  (modify-syntax-entry ?> ")<" sgml-mode-syntax-table)
-  (modify-syntax-entry ?\" ".   " sgml-mode-syntax-table)
-  (modify-syntax-entry ?\\ ".   " sgml-mode-syntax-table)
-  (modify-syntax-entry ?'  "w   " sgml-mode-syntax-table))
 
 (defvar sgml-running-xemacs
   (not (not (string-match "Lucid\\|XEmacs" emacs-version))))
@@ -455,7 +442,9 @@ Example:
 ;;; Its error messages can be parsed by next-error.
 ;;; The -s option suppresses output.
 
-(defvar sgml-validate-command "nsgmls -s %s %s"
+(defvar sgml-validate-command (concat "nsgmls -s -m "
+				      sgml-data-directory
+				      "/CATALOG %s %s")
   "*The shell command to validate an SGML document.
 
 This is a `format' control string that by default should contain two

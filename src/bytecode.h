@@ -30,8 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_BYTECODE_H_
 #define _XEMACS_BYTECODE_H_
 
-/* Meanings of slots in a Lisp_Compiled_Function.
- */
+/* Meanings of slots in a Lisp_Compiled_Function. */
 #define COMPILED_ARGLIST 0
 #define COMPILED_BYTECODE 1
 #define COMPILED_CONSTANTS 2

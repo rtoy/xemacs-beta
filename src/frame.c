@@ -155,7 +155,7 @@ mark_frame (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (f->toolbar_visible_p[1]));
   ((markobj) (f->toolbar_visible_p[2]));
   ((markobj) (f->toolbar_visible_p[3]));
-#endif
+#endif /* HAVE_TOOLBARS */
 
   if (FRAME_LIVE_P (f)) /* device is nil for a dead frame */
     MAYBE_FRAMEMETH (f, mark_frame, (f, markobj));
@@ -171,7 +171,7 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   
   if (print_readably)
     error ("printing unreadable object #<frame %s 0x%x>",
-           string_data (XSTRING (frm->name)), frm->header.uid);
+           XSTRING_DATA (frm->name), frm->header.uid);
 
   sprintf (buf, "#<%s-frame ", !FRAME_LIVE_P (frm) ? "dead" :
 	   FRAME_TYPE_NAME (frm));
@@ -204,7 +204,7 @@ nuke_all_frame_slots (struct frame *f)
   f->toolbar_visible_p[1] = Qnil;
   f->toolbar_visible_p[2] = Qnil;
   f->toolbar_visible_p[3] = Qnil;
-#endif
+#endif /* HAVE_TOOLBARS */
 }
 
 /* Allocate a new frame object and set all its fields to reasonable
@@ -341,9 +341,9 @@ setup_minibuffer_frame (struct frame *f)
 
   mini_window = f->minibuffer_window = f->root_window;
   XWINDOW (mini_window)->mini_p = Qt;
-  XWINDOW (mini_window)->next = Qnil;
-  XWINDOW (mini_window)->prev = Qnil;
-  XWINDOW (mini_window)->frame = frame;
+  XWINDOW (mini_window)->next   = Qnil;
+  XWINDOW (mini_window)->prev   = Qnil;
+  XWINDOW (mini_window)->frame  = frame;
 
   /* Put the proper buffer in that window.  */
 
@@ -556,11 +556,9 @@ decode_frame (Lisp_Object frame)
 {
   if (NILP (frame))
     return selected_frame ();
-  else
-    {
-      CHECK_LIVE_FRAME (frame);
-      return (XFRAME (frame));
-    }
+  
+  CHECK_LIVE_FRAME (frame);
+  return (XFRAME (frame));
 }
 
 struct frame *
@@ -621,9 +619,7 @@ frame this is.  Use the cleaner function `frame-type' for that.
   (object)
      Lisp_Object object;
 {
-  if (!FRAMEP (object))
-    return Qnil;
-  return Qt;
+  return FRAMEP (object) ? Qt : Qnil;
 }
 
 DEFUN ("frame-live-p", Fframe_live_p, Sframe_live_p, 1, 1, 0 /*
@@ -632,9 +628,7 @@ Return non-nil if OBJECT is a frame which has not been deleted.
   (object)
      Lisp_Object object;
 {
-  if (FRAMEP (object) && FRAME_LIVE_P (XFRAME (object)))
-    return Qt;
-  return Qnil;
+  return FRAMEP (object) && FRAME_LIVE_P (XFRAME (object)) ? Qt : Qnil;
 }
 
 
@@ -925,7 +919,7 @@ frame_matches_frametype (Lisp_Object frame, Lisp_Object type)
   if (NILP (type))
     type = Qnomini;
   if (ZEROP (type))
-    type = Qiconic;
+    type = Qvisible_iconic;
 
   if (EQ (type, Qvisible))
     return FRAME_VISIBLE_P (f);
@@ -1204,7 +1198,7 @@ extern void free_line_insertion_deletion_costs (struct frame *f);
 static int
 other_visible_frames_internal (struct frame *f, int called_from_delete_device)
 {
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
 
   XSETFRAME (frame, f);
   if (FRAME_STREAM_P (f))
@@ -1242,7 +1236,7 @@ delete_frame_internal (struct frame *f, int force,
   int minibuffer_selected;
   struct device *d;
   struct console *con;
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
   Lisp_Object device;
   Lisp_Object console;
   struct gcpro gcpro1;
@@ -1304,6 +1298,42 @@ delete_frame_internal (struct frame *f, int force,
 	}
     }
 
+  /* Before here, we haven't made any dangerous changes (just checked for
+     error conditions).  Now run the delete-frame-hook.  Remember that
+     user code there could do any number of dangerous things, including
+     signalling an error. */
+
+  va_run_hook_with_args (Qdelete_frame_hook, 1, frame);
+
+  if (!FRAME_LIVE_P (f)) /* Make sure the delete-frame-hook didn't */
+    {		         /* go ahead and delete anything. */
+      UNGCPRO;
+      return;
+    }
+
+  /* Call the delete-device-hook and delete-console-hook now if
+     appropriate, before we do any dangerous things -- they too could
+     signal an error. */
+  if (XINT (Flength (DEVICE_FRAME_LIST (d))) == 1)
+    {
+      va_run_hook_with_args (Qdelete_device_hook, 1, device);
+      if (!FRAME_LIVE_P (f)) /* Make sure the delete-device-hook didn't */
+	{		     /* go ahead and delete anything. */
+	  UNGCPRO;
+	  return;
+	}
+
+      if (XINT (Flength (CONSOLE_DEVICE_LIST (con))) == 1)
+	{
+	  va_run_hook_with_args (Qdelete_console_hook, 1, console);
+	  if (!FRAME_LIVE_P (f)) /* Make sure the delete-console-hook didn't */
+	    {			 /* go ahead and delete anything. */
+	      UNGCPRO;
+	      return;
+	    }
+	}
+    }
+
   minibuffer_selected = EQ (minibuf_window, Fselected_window (Qnil));
 
   /* If we were focused on this frame, then we're not any more.
@@ -1329,13 +1359,12 @@ delete_frame_internal (struct frame *f, int force,
   if (EQ (frame, DEVICE_FRAME_THAT_OUGHT_TO_HAVE_FOCUS (d)))
     DEVICE_FRAME_THAT_OUGHT_TO_HAVE_FOCUS (d) = Qnil;
 
-  /* Don't allow deleted frame to remain selected.
+  /* Don't allow the deleted frame to remain selected.
      Note that in the former scheme of things, this would
      have caused us to regain the focus.  This no longer
      applies (see above); I think the new behavior is more
      logical.  If someone disagrees, it can always be
-     changed (or a new user variable can be introduced,
-     ugh.) */
+     changed (or a new user variable can be introduced, ugh.) */
   if (EQ (frame, DEVICE_SELECTED_FRAME (d)))
     {
       Lisp_Object next;
@@ -1384,47 +1413,6 @@ delete_frame_internal (struct frame *f, int force,
 	Fselect_window (minibuf_window);
     }
 
-  /* Before here, we haven't made any dangerous changes (just checked for
-     error conditions).  Now run the delete-frame-hook.  Remember that
-     user code there could do any number of dangerous things, including
-     signalling an error.
-   */
-
-  va_run_hook_with_args (Qdelete_frame_hook, 1, frame);
-
-  if (!FRAME_LIVE_P (f)) /* make sure the delete-frame-hook didn't
-			    go ahead and delete anything */
-    {
-      UNGCPRO;
-      return;
-    }
-
-  /* Call the delete-device-hook and delete-console-hook now if
-     appropriate, before we do any dangerous things -- they too could
-     signal an error. */
-  if (XINT (Flength (DEVICE_FRAME_LIST (d))) == 1)
-    {
-      va_run_hook_with_args (Qdelete_device_hook, 1, device);
-      if (!FRAME_LIVE_P (f)) /* make sure the delete-device-hook didn't
-				go ahead and delete anything */
-	{
-	  UNGCPRO;
-	  return;
-	}
-
-      if (XINT (Flength (CONSOLE_DEVICE_LIST (con))) == 1)
-	{
-	  va_run_hook_with_args (Qdelete_console_hook, 1, console);
-	  if (!FRAME_LIVE_P (f)) /* make sure the delete-console-hook didn't
-				    go ahead and delete anything */
-	    {
-	      UNGCPRO;
-	      return;
-	    }
-	}
-    }
-
-
   /* After this point, no errors must be allowed to occur. */
 
 #ifdef HAVE_MENUBARS
@@ -1447,16 +1435,13 @@ delete_frame_internal (struct frame *f, int force,
   f->root_window = Qnil;
 
   /* Remove the frame now from the list.  This way, any events generated
-     on this frame by the maneuvers below will disperse themselves.
-   */
+     on this frame by the maneuvers below will disperse themselves. */
 
-  {
-    /* This used to be Fdelq(), but that will cause a seg fault if the
-       QUIT checker happens to get invoked, because the frame list is
-       in an inconsistent state */
-    d->frame_list = delq_no_quit (frame, d->frame_list);
-    RESET_CHANGED_SET_FLAGS;
-  }
+  /* This used to be Fdelq(), but that will cause a seg fault if the
+     QUIT checker happens to get invoked, because the frame list is in
+     an inconsistent state. */
+  d->frame_list = delq_no_quit (frame, d->frame_list);
+  RESET_CHANGED_SET_FLAGS;
 
   f->dead = 1;
   f->visible = 0;
@@ -1498,8 +1483,7 @@ delete_frame_internal (struct frame *f, int force,
       Lisp_Object frmcons, devcons;
       /* The last frame we saw with a minibuffer, minibuffer-only or not.  */
       Lisp_Object frame_with_minibuf;
-      /* Some frame we found on the same console, or nil if there are
-         none.  */
+      /* Some frame we found on the same console, or nil if there are none. */
       Lisp_Object frame_on_same_console;
 
       frame_on_same_console = Qnil;
@@ -1532,7 +1516,7 @@ delete_frame_internal (struct frame *f, int force,
 	{
 	  /* We know that there must be some frame with a minibuffer out
 	     there.  If this were not true, all of the frames present
-	     would have to be minibufferless, which implies that at some
+	     would have to be minibuffer-less, which implies that at some
 	     point their minibuffer frames must have been deleted, but
 	     that is prohibited at the top; you can't delete surrogate
 	     minibuffer frames.  */
@@ -1548,9 +1532,9 @@ delete_frame_internal (struct frame *f, int force,
 
   nuke_all_frame_slots (f); /* nobody should be accessing the device
 			       or anything else any more, and making
-			       then Qnil allows for better GC'ing
+			       them Qnil allows for better GC'ing
 			       in case a pointer to the dead frame
-			       still hangs around. */
+			       continues to hang around. */
   f->framemeths = dead_console_methods;
   UNGCPRO;
 }
@@ -1661,7 +1645,7 @@ mouse_pixel_position_1 (struct device *d, Lisp_Object *frame,
       break;
 
     default:
-      abort (); /* hook is incorrectly written */
+      abort (); /* method is incorrectly written */
     }
 
   return 0;
@@ -1691,9 +1675,8 @@ the device's selected window for WINDOW and nil for X and Y.
 
   if (mouse_pixel_position_1 (d, &frame, &intx, &inty))
     {
-      struct window *w = find_window_by_pixel_pos (intx, inty,
-						   XFRAME (frame)->
-						   root_window);
+      struct window *w =
+	find_window_by_pixel_pos (intx, inty, XFRAME (frame)->root_window);
       if (!w)
 	window = Qnil;
       else
@@ -3011,9 +2994,7 @@ See `select-frame-hook'.
 
   DEFVAR_LISP ("delete-frame-hook", &Vdelete_frame_hook /*
 Function or functions to call when a frame is deleted.
-One argument, the to-be-deleted frame.
-When this hook is called, the selected frame is different from
-the to-be-deleted frame, and the hook should not change that.
+One argument, the about-to-be-deleted frame.
 */ );
   Vdelete_frame_hook = Qnil;
 
@@ -3024,29 +3005,29 @@ One argument, the newly-created frame.
   Vcreate_frame_hook = Qnil;
 
   DEFVAR_LISP ("mouse-enter-frame-hook", &Vmouse_enter_frame_hook /*
-Function or functions to call when mouse enters a frame.
+Function or functions to call when the mouse enters a frame.
 One argument, the frame.
-Be careful not to make assumptions about the window manger's focus model.
+Be careful not to make assumptions about the window manager's focus model.
 In most cases, the `deselect-frame-hook' is more appropriate.
 */ );
   Vmouse_enter_frame_hook = Qnil;
 
   DEFVAR_LISP ("mouse-leave-frame-hook", &Vmouse_leave_frame_hook /*
-Function or functions to call when mouse leaves frame.
+Function or functions to call when the mouse leaves a frame.
 One argument, the frame.
-Be careful not to make assumptions about the window manger's focus model.
+Be careful not to make assumptions about the window manager's focus model.
 In most cases, the `select-frame-hook' is more appropriate.
 */ );
   Vmouse_leave_frame_hook = Qnil;
 
   DEFVAR_LISP ("map-frame-hook", &Vmap_frame_hook /*
-Function or functions to call when frame is mapped.
+Function or functions to call when a frame is mapped.
 One argument, the frame.
 */ );
   Vmap_frame_hook = Qnil;
 
   DEFVAR_LISP ("unmap-frame-hook", &Vunmap_frame_hook /*
-Function or functions to call when frame is unmapped.
+Function or functions to call when a frame is unmapped.
 One argument, the frame.
 */ );
   Vunmap_frame_hook = Qnil;
@@ -3062,11 +3043,11 @@ One argument, the frame.
 Function or functions to run when an object is dropped on a frame.
 Each function is called with either two or three args.  If called with
 two args, the args are a frame and a pathname.  If with three, the
-args are a frame, a pathname (which is may be either a string or nil)
+args are a frame, a pathname (which will be either a string or nil)
 and the textual representation of the dragged object.
 */ );
   Vdrag_and_drop_functions = Qnil;
-#endif
+#endif /* HAVE_CDE */
 
   DEFVAR_LISP ("mouse-motion-handler", &Vmouse_motion_handler /*
 Handler for motion events.  One arg, the event.
@@ -3090,7 +3071,7 @@ This is the same format as `modeline-format' with the exception that
 
   DEFVAR_LISP ("frame-icon-title-format", &Vframe_icon_title_format /*
 Controls the title of the icon corresponding to the selected frame.
-See also the variable `frame-title-format'
+See also the variable `frame-title-format'.
 */ );
   Vframe_icon_title_format = Fpurecopy (build_string ("%b"));
 

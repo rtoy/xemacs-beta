@@ -18,8 +18,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
@@ -61,12 +62,14 @@ starting with the current one.  Deleted messages are skipped and don't count."
 	     ;; If not suggestions, use same file as last time.
 	     (or answer rmail-last-rmail-file))))
      (list (setq rmail-last-rmail-file
-		 (read-file-name
-			    (concat "Output message to Rmail file: (default "
-				    (file-name-nondirectory default-file)
-				    ") ")
-			    (file-name-directory default-file)
-			    default-file))
+		 (if default-file
+		     (read-file-name
+		      (concat "Output message to Rmail file: (default "
+			      (file-name-nondirectory default-file)
+			      ") ")
+		      (file-name-directory default-file)
+		      default-file)
+		   (read-file-name "Output message to Rmail file: ")))
 	   (prefix-numeric-value current-prefix-arg))))
   (or count (setq count 1))
   (setq file-name

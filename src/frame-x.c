@@ -941,8 +941,9 @@ void
 x_cde_transfer_callback (Widget widget, XtPointer clientData,
 			 XtPointer callData)
 {
-  char *filePath, *buf, *data;
+  char *filePath, *buf;
   int ii;
+  Lisp_Object data = Qnil;
   Lisp_Object path = Qnil;
   Lisp_Object frame = Qnil;
   struct gcpro gcpro1, gcpro2;

@@ -178,7 +178,7 @@ play_sound_file (sound_file, volume)
     char            *server;
 
     if (STRINGP(Vhp_play_server))
-      server = (char *) (string_data (XSTRING (Vhp_play_server)));
+      server = (char *) XSTRING_DATA (Vhp_play_server);
     server = "";
 
     /*
@@ -222,7 +222,7 @@ play_sound_data (data, length, volume)
     char            *server;
 
     if (STRINGP (Vhp_play_server))
-      server = (char *) (string_data (XSTRING (Vhp_play_server)));
+      server = (char *) XSTRING_DATA (Vhp_play_server);
     server = "";
 
     /* open audio connection */

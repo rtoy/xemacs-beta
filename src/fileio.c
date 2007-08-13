@@ -421,8 +421,8 @@ on VMS, perhaps instead a string ending in `:', `]' or `>'.
 #ifdef FILE_SYSTEM_CASE
   file = FILE_SYSTEM_CASE (file);
 #endif
-  beg = string_data (XSTRING (file));
-  p = beg + string_length (XSTRING (file));
+  beg = XSTRING_DATA (file);
+  p = beg + XSTRING_LENGTH (file);
 
   while (p != beg && !IS_ANY_SEP (p[-1])
 #ifdef VMS
@@ -488,8 +488,8 @@ or the entire name if it contains no slash.
     return (call2_check_string (handler, Qfile_name_nondirectory,
 				file));
 
-  beg = string_data (XSTRING (file));
-  end = p = beg + string_length (XSTRING (file));
+  beg = XSTRING_DATA (file);
+  end = p = beg + XSTRING_LENGTH (file);
 
   while (p != beg && !IS_ANY_SEP (p[-1])
 #ifdef VMS
@@ -628,9 +628,9 @@ On VMS, converts \"[X]FOO.DIR\" to \"[X.FOO]\", etc.
     return (call2_check_string (handler, Qfile_name_as_directory,
 				file));
 
-  buf = (char *) alloca (string_length (XSTRING (file)) + 10);
+  buf = (char *) alloca (XSTRING_LENGTH (file) + 10);
   return build_string (file_name_as_directory
-		       (buf, (char *) string_data (XSTRING (file))));
+		       (buf, (char *) XSTRING_DATA (file)));
 }
 
 /*
@@ -824,11 +824,11 @@ it returns a file name such as \"[X]Y.DIR.1\".
   /* 20 extra chars is insufficient for VMS, since we might perform a
      logical name translation. an equivalence string can be up to 255
      chars long, so grab that much extra space...  - sss */
-  buf = (char *) alloca (string_length (XSTRING (directory)) + 20 + 255);
+  buf = (char *) alloca (XSTRING_LENGTH (directory) + 20 + 255);
 #else
-  buf = (char *) alloca (string_length (XSTRING (directory)) + 20);
+  buf = (char *) alloca (XSTRING_LENGTH (directory) + 20);
 #endif
-  directory_file_name ((char *) string_data (XSTRING (directory)), buf);
+  directory_file_name ((char *) XSTRING_DATA (directory), buf);
   return build_string (buf);
 }
 
@@ -846,10 +846,10 @@ so there is no danger of generating a name being used by another process.
   Lisp_Object val;
 
   CHECK_STRING (prefix);
-  len = string_length (XSTRING (prefix));
+  len = XSTRING_LENGTH (prefix);
   val = make_uninit_string (len + countof (suffix) - 1);
-  data = string_data (XSTRING (val));
-  memcpy (data, string_data (XSTRING (prefix)), len);
+  data = XSTRING_DATA (val);
+  memcpy (data, XSTRING_DATA (prefix), len);
   memcpy (data + len, suffix, countof (suffix));
   /* !!#### does mktemp() Mule-encapsulate? */
   mktemp ((char *) data);
@@ -940,9 +940,9 @@ See also the function `substitute-in-file-name'.
      The EQ test avoids infinite recursion.  */
   if (! NILP (defalt) && !EQ (defalt, name)
       /* This saves time in a common case.  */
-      && ! (string_length (XSTRING (defalt)) >= 3
-	    && IS_DIRECTORY_SEP (string_byte (XSTRING (defalt), 0))
-	    && IS_DEVICE_SEP (string_byte (XSTRING (defalt), 1))))
+      && ! (XSTRING_LENGTH (defalt) >= 3
+	    && IS_DIRECTORY_SEP (XSTRING_BYTE (defalt, 0))
+	    && IS_DEVICE_SEP (XSTRING_BYTE (defalt, 1))))
     {
       struct gcpro gcpro1;
 
@@ -959,7 +959,7 @@ See also the function `substitute-in-file-name'.
   name = FILE_SYSTEM_CASE (name);
 #endif
 
-  nm = string_data (XSTRING (name));
+  nm = XSTRING_DATA (name);
   
 #ifdef MSDOS
   /* First map all backslashes to slashes.  */
@@ -1125,7 +1125,7 @@ See also the function `substitute-in-file-name'.
 	    return build_string (sys_translate_unix (nm));
 #endif /* VMS */
 #ifndef DOS_NT
-	  if (nm == string_data (XSTRING (name)))
+	  if (nm == XSTRING_DATA (name))
 	    return name;
 	  return build_string ((char *) nm);
 #endif /* not DOS_NT */
@@ -1204,7 +1204,7 @@ See also the function `substitute-in-file-name'.
       && !newdir
       && STRINGP (defalt))
     {
-      newdir = string_data (XSTRING (defalt));
+      newdir = XSTRING_DATA (defalt);
     }
 
 #ifdef DOS_NT
@@ -1426,12 +1426,12 @@ No component of the resulting pathname will be a symbolic link, as
     char resolved_path[MAXPATHLEN];
     char path[MAXPATHLEN];
     char *p = path;
-    int elen = string_length (XSTRING (expanded_name));
+    int elen = XSTRING_LENGTH (expanded_name);
     
     if (elen >= countof (path))
       goto toolong;
     
-    memcpy (path, string_data (XSTRING (expanded_name)), elen + 1);
+    memcpy (path, XSTRING_DATA (expanded_name), elen + 1);
     /* memset (resolved_path, 0, sizeof (resolved_path)); */
 
     /* Try doing it all at once. */
@@ -1490,7 +1490,7 @@ No component of the resulting pathname will be a symbolic link, as
 
     {
       int rlen = strlen (resolved_path);
-      if (elen > 0 && string_byte (XSTRING (expanded_name), elen - 1) == '/'
+      if (elen > 0 && XSTRING_BYTE (expanded_name, elen - 1) == '/'
           && !(rlen > 0 && resolved_path[rlen - 1] == '/'))
 	{
 	  if (rlen + 1 > countof (resolved_path))
@@ -1552,12 +1552,12 @@ duplicates what `expand-file-name' does.
       return retval;
     }
 
-  nm = string_data (XSTRING (string));
+  nm = XSTRING_DATA (string);
 #ifdef MSDOS
   dostounix_filename (nm = strcpy (alloca (strlen (nm) + 1), nm));
-  substituted = !strcmp (nm, string_data (XSTRING (string)));
+  substituted = !strcmp (nm, XSTRING_DATA (string));
 #endif
-  endp = nm + string_length (XSTRING (string));
+  endp = nm + XSTRING_LENGTH (string);
 
   /* If /~ or // appears, discard everything through first slash. */
 
@@ -1651,7 +1651,7 @@ duplicates what `expand-file-name' does.
 
   /* If substitution required, recopy the string and do it */
   /* Make space in stack frame for the new copy */
-  xnm = (Bufbyte *) alloca (string_length (XSTRING (string)) + total + 1);
+  xnm = (Bufbyte *) alloca (XSTRING_LENGTH (string) + total + 1);
   x = xnm;
 
   /* Copy the rest of the name through, replacing $ constructs with values */
@@ -1753,18 +1753,16 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
 #ifdef VMS
   {
     Bufbyte c =
-      string_byte (XSTRING (abspath), string_length (XSTRING (abspath)) - 1);
+      XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 1);
     if (c == ':' || c == ']' || c == '>')
       abspath = Fdirectory_file_name (abspath);
   }
 #else
   /* Remove final slash, if any (unless path is root).
      stat behaves differently depending!  */
-  if (string_length (XSTRING (abspath)) > 1
-      && IS_DIRECTORY_SEP (string_byte (XSTRING (abspath),
-					string_length (XSTRING (abspath)) - 1))
-      && !IS_DEVICE_SEP (string_byte (XSTRING (abspath),
-				      string_length (XSTRING (abspath)) - 2)))
+  if (XSTRING_LENGTH (abspath) > 1
+      && IS_DIRECTORY_SEP (XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 1))
+      && !IS_DEVICE_SEP (XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 2)))
     /* We cannot take shortcuts; they might be wrong for magic file names.  */
     abspath = Fdirectory_file_name (abspath);
 #endif
@@ -1788,7 +1786,7 @@ barf_or_query_if_file_exists (Lisp_Object absname, CONST char *querystring,
 
   /* stat is a good way to tell whether the file exists,
      regardless of what access permissions it has.  */
-  if (stat ((char *) string_data (XSTRING (absname)), &statbuf) >= 0)
+  if (stat ((char *) XSTRING_DATA (absname), &statbuf) >= 0)
     {
       Lisp_Object tem;
       struct gcpro gcpro1;
@@ -1799,7 +1797,7 @@ barf_or_query_if_file_exists (Lisp_Object absname, CONST char *querystring,
 	  (Qyes_or_no_p,
 	   (emacs_doprnt_string_c
 	    ((CONST Bufbyte *) GETTEXT ("File %s already exists; %s anyway? "),
-	     Qnil, -1, string_data (XSTRING (absname)),
+	     Qnil, -1, XSTRING_DATA (absname),
 	     GETTEXT (querystring))));
       else
         tem = Qnil;
@@ -1830,8 +1828,8 @@ Fourth arg KEEP-TIME non-nil means give the new file the same
 last-modified time as the old one.  (This works on only some systems.)
 A prefix arg makes KEEP-TIME non-nil.
 */ )
-  (filename, newname, ok_if_already_exists, keep_date)
-     Lisp_Object filename, newname, ok_if_already_exists, keep_date;
+  (filename, newname, ok_if_already_exists, keep_time)
+     Lisp_Object filename, newname, ok_if_already_exists, keep_time;
 {
   /* This function can GC */
   int ifd, ofd, n;
@@ -1859,7 +1857,7 @@ A prefix arg makes KEEP-TIME non-nil.
   {
     UNGCPRO;
     return call5 (handler, Qcopy_file, filename, newname,
-		  ok_if_already_exists, keep_date);
+		  ok_if_already_exists, keep_time);
   }
 
   /* When second argument is a directory, copy the file into it.
@@ -1875,8 +1873,7 @@ A prefix arg makes KEEP-TIME non-nil.
       args[1] = Qnil; args[2] = Qnil;
       NGCPRO1 (*args); 
       ngcpro1.nvars = 3;
-      if (string_byte (XSTRING (newname),
-		       string_length (XSTRING (newname)) - 1) != '/')
+      if (XSTRING_BYTE (newname, XSTRING_LENGTH (newname) - 1) != '/')
 	args[i++] = build_string ("/");
       args[i++] = Ffile_name_nondirectory (filename);
       newname = Fconcat (i, args);
@@ -1887,10 +1884,10 @@ A prefix arg makes KEEP-TIME non-nil.
       || INTP (ok_if_already_exists))
     barf_or_query_if_file_exists (newname, "copy to it",
 				  INTP (ok_if_already_exists), &out_st);
-  else if (stat ((CONST char *) string_data (XSTRING (newname)), &out_st) < 0)
+  else if (stat ((CONST char *) XSTRING_DATA (newname), &out_st) < 0)
     out_st.st_mode = 0;
 
-  ifd = open ((char *) string_data (XSTRING (filename)), O_RDONLY, 0);
+  ifd = open ((char *) XSTRING_DATA (filename), O_RDONLY, 0);
   if (ifd < 0)
     report_file_error ("Opening input file", Fcons (filename, Qnil));
 
@@ -1931,13 +1928,13 @@ A prefix arg makes KEEP-TIME non-nil.
 
 #ifdef VMS
   /* Create the copy file with the same record format as the input file */
-  ofd = sys_creat ((char *) string_data (XSTRING (newname)), 0666, ifd);
+  ofd = sys_creat ((char *) XSTRING_DATA (newname), 0666, ifd);
 #else
 #ifdef MSDOS
   /* System's default file type was set to binary by _fmode in emacs.c.  */
-  ofd = creat ((char *) string_data (XSTRING (newname)), S_IREAD | S_IWRITE);
+  ofd = creat ((char *) XSTRING_DATA (newname), S_IREAD | S_IWRITE);
 #else /* not MSDOS */
-  ofd = creat ((char *) string_data (XSTRING (newname)), 0666);
+  ofd = creat ((char *) XSTRING_DATA (newname), 0666);
 #endif /* not MSDOS */
 #endif /* VMS */
   if (ofd < 0)
@@ -1960,17 +1957,17 @@ A prefix arg makes KEEP-TIME non-nil.
 
     if (input_file_statable_p)
     {
-      if (!NILP (keep_date))
+      if (!NILP (keep_time))
       {
         EMACS_TIME atime, mtime;
         EMACS_SET_SECS_USECS (atime, st.st_atime, 0);
         EMACS_SET_SECS_USECS (mtime, st.st_mtime, 0);
-        if (set_file_times ((char *) string_data (XSTRING (newname)), atime,
+        if (set_file_times ((char *) XSTRING_DATA (newname), atime,
 			    mtime))
 	  report_file_error ("I/O error", Fcons (newname, Qnil));
       }
 #ifndef MSDOS
-      chmod ((CONST char *) string_data (XSTRING (newname)),
+      chmod ((CONST char *) XSTRING_DATA (newname),
 	     st.st_mode & 07777);
 #else /* MSDOS */
 #if defined (__DJGPP__) && __DJGPP__ > 1
@@ -1979,7 +1976,7 @@ A prefix arg makes KEEP-TIME non-nil.
          get only the READ bit, which will make the copied file read-only,
          so it's better not to chmod at all.  */
       if ((_djstat_flags & _STFAIL_WRITEBIT) == 0)
-	chmod ((char *) string_data (XSTRING (newname)), st.st_mode & 07777);
+	chmod ((char *) XSTRING_DATA (newname), st.st_mode & 07777);
 #endif /* DJGPP version 2 or newer */
 #endif /* MSDOS */
     }
@@ -2018,19 +2015,19 @@ Create a directory.  One argument, a file name string.
     return (call2 (handler, Qmake_directory_internal,
 		   dirname));
  
-  if (string_length (XSTRING (dirname)) > (sizeof (dir) - 1))
+  if (XSTRING_LENGTH (dirname) > (sizeof (dir) - 1))
     {
       return Fsignal (Qfile_error,
 		      list3 (build_translated_string ("Creating directory"),
 			     build_translated_string ("pathame too long"),
 			     dirname));
     }
-  strncpy (dir, (char *) string_data (XSTRING (dirname)),
-	   string_length (XSTRING (dirname)) + 1);
+  strncpy (dir, (char *) XSTRING_DATA (dirname),
+	   XSTRING_LENGTH (dirname) + 1);
 
 #ifndef VMS
-  if (dir [string_length (XSTRING (dirname)) - 1] == '/')
-    dir [string_length (XSTRING (dirname)) - 1] = 0;
+  if (dir [XSTRING_LENGTH (dirname) - 1] == '/')
+    dir [XSTRING_LENGTH (dirname) - 1] = 0;
 #endif
 
 #ifdef WINDOWSNT
@@ -2064,7 +2061,7 @@ Delete a directory.  One argument, a file name or directory name string.
   if (!NILP (handler))
     return (call2 (handler, Qdelete_directory, dirname));
 
-  if (rmdir ((char *) string_data (XSTRING (dirname))) != 0)
+  if (rmdir ((char *) XSTRING_DATA (dirname)) != 0)
     report_file_error ("Removing directory", list1 (dirname));
 
   return Qnil;
@@ -2090,7 +2087,7 @@ If file has multiple names, it continues to exist with the other names.
   if (!NILP (handler))
     return call2 (handler, Qdelete_file, filename);
 
-  if (0 > unlink ((char *) string_data (XSTRING (filename))))
+  if (0 > unlink ((char *) XSTRING_DATA (filename)))
     report_file_error ("Removing old name", list1 (filename));
   return Qnil;
 }
@@ -2157,8 +2154,7 @@ This is what happens in interactive use with M-x.
       args[1] = Qnil; args[2] = Qnil;
       NGCPRO1 (*args); 
       ngcpro1.nvars = 3;
-      if (string_byte (XSTRING (newname),
-		       string_length (XSTRING (newname)) - 1) != '/')
+      if (XSTRING_BYTE (newname, XSTRING_LENGTH (newname) - 1) != '/')
 	args[i++] = build_string ("/");
       args[i++] = Ffile_name_nondirectory (filename);
       newname = Fconcat (i, args);
@@ -2178,8 +2174,8 @@ This is what happens in interactive use with M-x.
        rename() succeeds where link()/unlink() fail, and we have
        configure check for rename() and emulate using link()/unlink()
        if necessary. */
-  if (0 > rename ((char *) string_data (XSTRING (filename)),
-		  (char *) string_data (XSTRING (newname))))
+  if (0 > rename ((char *) XSTRING_DATA (filename),
+		  (char *) XSTRING_DATA (newname)))
 #endif /* not WINDOWSNT */
     {
 #ifdef  WINDOWSNT
@@ -2250,9 +2246,9 @@ This is what happens in interactive use with M-x.
   report_file_error ("Adding new name", Flist (2, &filename));
 #else /* not WINDOWSNT */
 
-  unlink ((char *) string_data (XSTRING (newname)));
-  if (0 > link ((char *) string_data (XSTRING (filename)),
-		(char *) string_data (XSTRING (newname))))
+  unlink ((char *) XSTRING_DATA (newname));
+  if (0 > link ((char *) XSTRING_DATA (filename),
+		(char *) XSTRING_DATA (newname)))
     {
       report_file_error ("Adding new name",
 			 list2 (filename, newname));
@@ -2285,7 +2281,7 @@ This happens for interactive use with M-x.
   /* If the link target has a ~, we must expand it to get
      a truly valid file name.  Otherwise, do not expand;
      we want to permit links to relative file names.  */
-  if (string_byte (XSTRING (filename), 0) == '~') /* #### Un*x-specific */
+  if (XSTRING_BYTE (filename, 0) == '~') /* #### Un*x-specific */
     filename = Fexpand_file_name (filename, Qnil);
   linkname = Fexpand_file_name (linkname, Qnil);
 
@@ -2308,9 +2304,9 @@ This happens for interactive use with M-x.
     barf_or_query_if_file_exists (linkname, "make it a link",
 				  INTP (ok_if_already_exists), 0);
 
-  unlink ((char *) string_data (XSTRING (linkname)));
-  if (0 > symlink ((char *) string_data (XSTRING (filename)),
-		   (char *) string_data (XSTRING (linkname))))
+  unlink ((char *) XSTRING_DATA (linkname));
+  if (0 > symlink ((char *) XSTRING_DATA (filename),
+		   (char *) XSTRING_DATA (linkname)))
     {
       report_file_error ("Making symbolic link",
 			 list2 (filename, linkname));
@@ -2333,15 +2329,15 @@ If STRING is nil or a null string, the logical name NAME is deleted.
 {
   CHECK_STRING (varname);
   if (NILP (string))
-    delete_logical_name ((char *) string_data (XSTRING (varname)));
+    delete_logical_name ((char *) XSTRING_DATA (varname));
   else
     {
       CHECK_STRING (string);
 
-      if (string_length (XSTRING (string)) == 0)
-        delete_logical_name ((char *) string_data (XSTRING (varname)));
+      if (XSTRING_LENGTH (string) == 0)
+        delete_logical_name ((char *) XSTRING_DATA (varname));
       else
-        define_logical_name ((char *) string_data (XSTRING (varname)), (char *) string_data (XSTRING (string)));
+        define_logical_name ((char *) XSTRING_DATA (varname), (char *) XSTRING_DATA (string));
     }
 
   return string;
@@ -2391,7 +2387,7 @@ On Unix, this is a name starting with a `/' or a `~'.
   Bufbyte *ptr;
 
   CHECK_STRING (filename);
-  ptr = string_data (XSTRING (filename));
+  ptr = XSTRING_DATA (filename);
   if (IS_DIRECTORY_SEP (*ptr) || *ptr == '~'
 #ifdef VMS
 /* ??? This criterion is probably wrong for '<'.  */
@@ -2487,7 +2483,7 @@ See also `file-readable-p' and `file-attributes'.
   if (!NILP (handler))
     return call2 (handler, Qfile_exists_p, abspath);
 
-  if (stat ((char *) string_data (XSTRING (abspath)), &statbuf) >= 0)
+  if (stat ((char *) XSTRING_DATA (abspath), &statbuf) >= 0)
     return (Qt);
   else
     return (Qnil);
@@ -2519,7 +2515,7 @@ For a directory, this means you can access files in that directory.
   if (!NILP (handler))
     return call2 (handler, Qfile_executable_p, abspath);
 
-  return (check_executable ((char *) string_data (XSTRING (abspath)))
+  return (check_executable ((char *) XSTRING_DATA (abspath))
 	  ? Qt : Qnil);
 }
 
@@ -2549,7 +2545,7 @@ See also `file-exists-p' and `file-attributes'.
   if (!NILP (handler))
     return call2 (handler, Qfile_readable_p, abspath);
 
-  desc = open ((char *) string_data (XSTRING (abspath)), O_RDONLY, 0);
+  desc = open ((char *) XSTRING_DATA (abspath), O_RDONLY, 0);
   if (desc < 0)
     return Qnil;
   close (desc);
@@ -2583,8 +2579,8 @@ Return t if file FILENAME can be written or created by you.
   if (!NILP (handler))
     return call2 (handler, Qfile_writable_p, abspath);
 
-  if (stat ((char *) string_data (XSTRING (abspath)), &statbuf) >= 0)
-    return (check_writable ((char *) string_data (XSTRING (abspath)))
+  if (stat ((char *) XSTRING_DATA (abspath), &statbuf) >= 0)
+    return (check_writable ((char *) XSTRING_DATA (abspath))
 	    ? Qt : Qnil);
 
 
@@ -2593,7 +2589,7 @@ Return t if file FILENAME can be written or created by you.
   if (!NILP (dir))
     dir = Fdirectory_file_name (dir);
 #endif /* VMS or MSDOS */
-  return (check_writable (!NILP (dir) ? (char *) string_data (XSTRING (dir))
+  return (check_writable (!NILP (dir) ? (char *) XSTRING_DATA (dir)
 			  : "")
 	  ? Qt : Qnil);
 }
@@ -2631,7 +2627,7 @@ Otherwise returns nil.
     {
       buf = (char *) xmalloc (bufsize);
       memset (buf, 0, bufsize);
-      valsize = readlink ((char *) string_data (XSTRING (filename)),
+      valsize = readlink ((char *) XSTRING_DATA (filename),
 			  buf, bufsize);
       if (valsize < bufsize) break;
       /* Buffer was not long enough */
@@ -2678,7 +2674,7 @@ if the directory so specified exists and really is a directory.
   if (!NILP (handler))
     return call2 (handler, Qfile_directory_p, abspath);
 
-  if (stat ((char *) string_data (XSTRING (abspath)), &st) < 0)
+  if (stat ((char *) XSTRING_DATA (abspath), &st) < 0)
     return Qnil;
   return (st.st_mode & S_IFMT) == S_IFDIR ? Qt : Qnil;
 }
@@ -2736,7 +2732,7 @@ This is the sort of file that holds an ordinary stream of data bytes.
   if (!NILP (handler))
     return call2 (handler, Qfile_regular_p, abspath);
 
-  if (stat ((char *) string_data (XSTRING (abspath)), &st) < 0)
+  if (stat ((char *) XSTRING_DATA (abspath), &st) < 0)
     return Qnil;
   return (st.st_mode & S_IFMT) == S_IFREG ? Qt : Qnil;
 }
@@ -2766,7 +2762,7 @@ Return mode bits of FILE, as an integer.
   if (!NILP (handler))
     return call2 (handler, Qfile_modes, abspath);
 
-  if (stat ((char *) string_data (XSTRING (abspath)), &st) < 0)
+  if (stat ((char *) XSTRING_DATA (abspath), &st) < 0)
     return Qnil;
 #ifdef DOS_NT
   if (check_executable (XSTRING (abspath)->data))
@@ -2801,7 +2797,7 @@ Only the 12 low bits of MODE are used.
   if (!NILP (handler))
     return call3 (handler, Qset_file_modes, abspath, mode);
 
-  if (chmod ((char *) string_data (XSTRING (abspath)), XINT (mode)) < 0)
+  if (chmod ((char *) XSTRING_DATA (abspath), XINT (mode)) < 0)
     report_file_error ("Doing chmod", Fcons (abspath, Qnil));
 
   return Qnil;
@@ -2891,12 +2887,12 @@ otherwise, if FILE2 does not exist, the answer is t.
     return call3 (handler, Qfile_newer_than_file_p, abspath1,
 		  abspath2);
 
-  if (stat ((char *) string_data (XSTRING (abspath1)), &st) < 0)
+  if (stat ((char *) XSTRING_DATA (abspath1), &st) < 0)
     return Qnil;
 
   mtime1 = st.st_mtime;
 
-  if (stat ((char *) string_data (XSTRING (abspath2)), &st) < 0)
+  if (stat ((char *) XSTRING_DATA (abspath2), &st) < 0)
     return Qt;
 
   return (mtime1 > st.st_mtime) ? Qt : Qnil;
@@ -2971,7 +2967,7 @@ and (2) it puts less data in the undo list.
   if (!NILP (handler))
     {
       val = call6 (handler, Qinsert_file_contents, filename,
-                   visit, beg, end, replace);
+		   visit, beg, end, replace);
       goto handled;
     }
 
@@ -2989,9 +2985,9 @@ and (2) it puts less data in the undo list.
   fd = -1;
 
 #ifndef APOLLO
-  if (stat ((char *) string_data (XSTRING (filename)), &st) < 0)
+  if (stat ((char *) XSTRING_DATA (filename), &st) < 0)
 #else /* APOLLO */
-  if ((fd = open ((char *) string_data (XSTRING (filename)), O_RDONLY, 0)) < 0
+  if ((fd = open ((char *) XSTRING_DATA (filename), O_RDONLY, 0)) < 0
       || fstat (fd, &st) < 0)
 #endif /* APOLLO */
     {
@@ -3027,7 +3023,7 @@ and (2) it puts less data in the undo list.
 #endif
 
   if (fd < 0)
-    if ((fd = open ((char *) string_data (XSTRING (filename)), O_RDONLY, 0)) < 0)
+    if ((fd = open ((char *) XSTRING_DATA (filename), O_RDONLY, 0)) < 0)
       goto badopen;
 
   /* Replacement should preserve point as it preserves markers.  */
@@ -3051,11 +3047,11 @@ and (2) it puts less data in the undo list.
      with the file contents.  Avoid replacing text at the
      beginning or end of the buffer that matches the file contents;
      that preserves markers pointing to the unchanged parts.  */
-#if !defined (DOS_NT)
+#if !defined (DOS_NT) && !defined (MULE)
   /* The replace-mode code currently only works when the assumption
      'one byte == one char' holds true.  This fails under MSDOS and
      Windows NT (because newlines are represented as CR-LF in text
-     files). */
+     files). and under Mule because files may contain multibyte characters. */
 # define FSFMACS_SPEEDY_INSERT
 #endif
 #ifndef FSFMACS_SPEEDY_INSERT
@@ -3082,7 +3078,7 @@ and (2) it puts less data in the undo list.
 	  nread = read_allowing_quit (fd, buffer, sizeof buffer);
 	  if (nread < 0)
 	    error ("IO error reading %s: %s",
-		   string_data (XSTRING (filename)), strerror (errno));
+		   XSTRING_DATA (filename), strerror (errno));
 	  else if (nread == 0)
 	    break;
 	  bufpos = 0;
@@ -3130,7 +3126,7 @@ and (2) it puts less data in the undo list.
 					  trial - total_read);
 	      if (nread <= 0)
 		error ("IO error reading %s: %s",
-		       string_data (XSTRING (filename)), strerror (errno));
+		       XSTRING_DATA (filename), strerror (errno));
 	      total_read += nread;
 	    }
 	  /* Scan this bufferfull from the end, comparing with
@@ -3197,8 +3193,9 @@ and (2) it puts less data in the undo list.
 
     record_unwind_protect (close_stream_unwind, stream);
 
-    /* No need to limit the amount of stuff we attempt to read.
-       Instead, the limiting occurs inside of the filedesc stream. */
+    /* No need to limit the amount of stuff we attempt to read. (It would
+       be incorrect, anyway, when Mule is enabled.) Instead, the limiting
+       occurs inside of the filedesc stream. */
     while (1)
       {
 	Bytecount this_len;
@@ -3247,7 +3244,7 @@ and (2) it puts less data in the undo list.
   if (saverrno != 0)
     {
       error ("IO error reading %s: %s",
-	     string_data (XSTRING (filename)), strerror (saverrno));
+	     XSTRING_DATA (filename), strerror (saverrno));
     }
 
  notfound:
@@ -3260,7 +3257,7 @@ and (2) it puts less data in the undo list.
       if (!EQ (buf->undo_list, Qt))
 	buf->undo_list = Qnil;
 #ifdef APOLLO
-      stat ((char *) string_data (XSTRING (filename)), &st);
+      stat ((char *) XSTRING_DATA (filename), &st);
 #endif
       if (NILP (handler))
 	{
@@ -3476,21 +3473,21 @@ to the file, instead of any buffer contents, and END is ignored.
   desc = -1;
   if (!NILP (append))
 #ifdef DOS_NT
-    desc = open ((char *) string_data (XSTRING (fn)),
+    desc = open ((char *) XSTRING_DATA (fn),
                        (O_WRONLY | buffer_file_type), 0);
 #else /* not DOS_NT */
-    desc = open ((char *) string_data (XSTRING (fn)), O_WRONLY, 0);
+    desc = open ((char *) XSTRING_DATA (fn), O_WRONLY, 0);
 #endif /* not DOS_NT */
 
   if (desc < 0)
 #ifndef VMS
     {
 #ifdef DOS_NT
-      desc = open ((char *) string_data (XSTRING (fn)), 
+      desc = open ((char *) XSTRING_DATA (fn), 
                    (O_WRONLY | O_TRUNC | O_CREAT | buffer_file_type), 
                    (S_IREAD | S_IWRITE));
 #else /* not DOS_NT */
-      desc = creat ((char *) string_data (XSTRING (fn)),
+      desc = creat ((char *) XSTRING_DATA (fn),
 		    ((auto_saving) ? auto_save_mode_bits : 0666));
 #endif /* DOS_NT */
     }
@@ -3498,14 +3495,14 @@ to the file, instead of any buffer contents, and END is ignored.
   {
     if (auto_saving)	/* Overwrite any previous version of autosave file */
       {
-	char *fn_data = string_data (XSTRING (fn));
+	char *fn_data = XSTRING_DATA (fn);
 	/* if fn exists, truncate to zero length */
 	vms_truncate (fn_data);
 	desc = open (fn_data, O_RDWR, 0);
 	if (desc < 0)
 	  desc = creat_copy_attrs ((STRINGP (current_buffer->filename)
-				    ? (char *) string_data
-				    (XSTRING (current_buffer->filename))
+				    ? (char *)
+				    XSTRING_DATA (current_buffer->filename)
 				    : 0),
 				   fn_data);
       }
@@ -3523,7 +3520,7 @@ to the file, instead of any buffer contents, and END is ignored.
 	  temp_name = Ffile_name_directory (filename);
 
 	  if (NILP (temp_name))
-	    desc = creat ((char *) string_data (XSTRING (fn)), 0666);
+	    desc = creat ((char *) XSTRING_DATA (fn), 0666);
 	  else
 	    {
 	      temp_name =
@@ -3532,7 +3529,7 @@ to the file, instead of any buffer contents, and END is ignored.
 	      fname = filename;
 	      fn = temp_name;
 	      desc = creat_copy_attrs (fname,
-				       (char *) string_data (XSTRING (fn)));
+				       (char *) XSTRING_DATA (fn));
 	      if (desc < 0)
 		{
 		  char *fn_data;
@@ -3541,7 +3538,7 @@ to the file, instead of any buffer contents, and END is ignored.
 		     new version rather than truncating an existing file. */
 		  fn = fname;
 		  fname = Qnil;
-		  fn_data = string_data (XSTRING (fn));
+		  fn_data = XSTRING_DATA (fn);
 		  desc = creat (fn_data, 0666);
 #if 0                           /* This can clobber an existing file and fail
 				   to replace it, if the user runs out of
@@ -3702,8 +3699,8 @@ to the file, instead of any buffer contents, and END is ignored.
     {
       if (!failure)
 	{
-	  failure = (rename ((char *) string_data (XSTRING (fn)), 
-			     (char *) string_data (XSTRING (fname)))
+	  failure = (rename ((char *) XSTRING_DATA (fn), 
+			     (char *) XSTRING_DATA (fname))
 		     != 0);
 	  save_errno = errno;
 	}
@@ -3712,7 +3709,7 @@ to the file, instead of any buffer contents, and END is ignored.
 #endif /* VMS */
 
 #if 1 /* defined (VMS) || defined (APOLLO) */
-  stat ((char *) string_data (XSTRING (fn)), &st);
+  stat ((char *) XSTRING_DATA (fn), &st);
 #endif
 
 #ifdef CLASH_DETECTION
@@ -3728,7 +3725,7 @@ to the file, instead of any buffer contents, and END is ignored.
 
   if (failure)
     error ("IO error writing %s: %s", 
-           string_data (XSTRING (fn)), 
+           XSTRING_DATA (fn), 
            strerror (save_errno));
 
   if (visiting)
@@ -3746,7 +3743,7 @@ to the file, instead of any buffer contents, and END is ignored.
   if (!auto_saving)
     {
       if (visiting_other)
-        message ("Wrote %s", string_data (XSTRING (visit_file)));
+        message ("Wrote %s", XSTRING_DATA (visit_file));
       else
 	{
 	  struct gcpro gcpro1;
@@ -3755,10 +3752,10 @@ to the file, instead of any buffer contents, and END is ignored.
 
 	  fsp = Ffile_symlink_p (fn);
 	  if (NILP (fsp))
-	    message ("Wrote %s", string_data (XSTRING (fn)));
+	    message ("Wrote %s", XSTRING_DATA (fn));
 	  else
 	    message ("Wrote %s (symlink to %s)", 
-		     string_data (XSTRING (fn)), string_data (XSTRING (fsp)));
+		     XSTRING_DATA (fn), XSTRING_DATA (fsp));
 	  UNGCPRO;
 	}
     }
@@ -3905,8 +3902,8 @@ a_write (Lisp_Object outstream, Lisp_Object instream, int pos,
 	  tem = Fcdr (Fcar (*annot));
 	  if (STRINGP (tem))
 	    {
-	      if (Lstream_write (outstr, string_data (XSTRING (tem)),
-				 string_length (XSTRING (tem))) < 0)
+	      if (Lstream_write (outstr, XSTRING_DATA (tem),
+				 XSTRING_LENGTH (tem)) < 0)
 		return -1;
 	    }
 	  *annot = Fcdr (*annot);
@@ -3938,19 +3935,19 @@ Encrypt STRING using KEY.
   CHECK_STRING (string);
   CHECK_STRING (key);
 
-  extra = string_length (XSTRING (string)) % CRYPT_BLOCK_SIZE;
-  rounded_size = string_length (XSTRING (string)) + extra;
+  extra = XSTRING_LENGTH (string) % CRYPT_BLOCK_SIZE;
+  rounded_size = XSTRING_LENGTH (string) + extra;
   encrypted_string = alloca (rounded_size + 1);
-  memcpy (encrypted_string, string_data (XSTRING (string)), string_length (XSTRING (string)));
+  memcpy (encrypted_string, XSTRING_DATA (string), XSTRING_LENGTH (string));
   memset (encrypted_string + rounded_size - extra, 0, extra + 1);
 
-  if (string_length (XSTRING (key)) > CRYPT_KEY_SIZE)
+  if (XSTRING_LENGTH (key) > CRYPT_KEY_SIZE)
     key_size = CRYPT_KEY_SIZE;
   else
-    key_size = string_length (XSTRING (key));
+    key_size = XSTRING_LENGTH (key);
 
   raw_key = alloca (CRYPT_KEY_SIZE + 1);
-  memcpy (raw_key, string_data (XSTRING (key)), key_size);
+  memcpy (raw_key, XSTRING_DATA (key), key_size);
   memset (raw_key + key_size, 0, (CRYPT_KEY_SIZE + 1) - key_size);
 
   (void) ecb_crypt (raw_key, encrypted_string, rounded_size,
@@ -3970,18 +3967,18 @@ Decrypt STRING using KEY.
   CHECK_STRING (string);
   CHECK_STRING (key);
 
-  string_size = string_length (XSTRING (string)) + 1;
+  string_size = XSTRING_LENGTH (string) + 1;
   decrypted_string = alloca (string_size);
-  memcpy (decrypted_string, string_data (XSTRING (string)), string_size);
+  memcpy (decrypted_string, XSTRING_DATA (string), string_size);
   decrypted_string[string_size - 1] = '\0';
 
-  if (string_length (XSTRING (key)) > CRYPT_KEY_SIZE)
+  if (XSTRING_LENGTH (key) > CRYPT_KEY_SIZE)
     key_size = CRYPT_KEY_SIZE;
   else
-    key_size = string_length (XSTRING (key));
+    key_size = XSTRING_LENGTH (key);
 
   raw_key = alloca (CRYPT_KEY_SIZE + 1);
-  memcpy (raw_key, string_data (XSTRING (key)), key_size);
+  memcpy (raw_key, XSTRING_DATA (key), key_size);
   memset (raw_key + key_size, 0, (CRYPT_KEY_SIZE + 1) - key_size);
 
 
@@ -4018,7 +4015,7 @@ This means that the file has not been changed since it was visited or saved.
   if (!NILP (handler))
     return call2 (handler, Qverify_visited_file_modtime, buf);
 
-  if (stat ((char *) string_data (XSTRING (b->filename)), &st) < 0)
+  if (stat ((char *) XSTRING_DATA (b->filename), &st) < 0)
     {
       /* If the file doesn't exist now and didn't exist before,
 	 we say that it isn't modified, provided the error is a tame one.  */
@@ -4095,7 +4092,7 @@ An argument specifies the modification time value to use
       if (!NILP (handler))
 	/* The handler can find the file name the same way we did.  */
 	return call2 (handler, Qset_visited_file_modtime, Qnil);
-      else if (stat ((char *) string_data (XSTRING (filename)), &st) >= 0)
+      else if (stat ((char *) XSTRING_DATA (filename), &st) >= 0)
 	current_buffer->modtime = st.st_mtime;
     }
 
@@ -4165,7 +4162,7 @@ it will be used if it is either an integer or a cons of two integers.
 	    return (call2 (handler, Qset_buffer_modtime, Qnil));
 	  else
 	    {
-	      if (stat ((char *) string_data (XSTRING (filename)), &st) >= 0)
+	      if (stat ((char *) XSTRING_DATA (filename), &st) >= 0)
 		time_to_use = st.st_mtime;
 	      else
 		time_to_use = time ((time_t *) 0);
@@ -4189,14 +4186,11 @@ auto_save_error (Lisp_Object condition_object, Lisp_Object ignored)
     return Qnil;
   clear_echo_area (selected_frame (), Qauto_saving, 1);
   Fding (Qt, Qauto_save_error, Qnil);
-  message ("Auto-saving...error for %s",
-	   string_data (XSTRING (current_buffer->name)));
+  message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
   Fsleep_for (make_int (1));
-  message ("Auto-saving...error!for %s",
-	   string_data (XSTRING (current_buffer->name)));
+  message ("Auto-saving...error!for %s", XSTRING_DATA (current_buffer->name));
   Fsleep_for (make_int (1));
-  message ("Auto-saving...error for %s",
-	   string_data (XSTRING (current_buffer->name)));
+  message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
   Fsleep_for (make_int (1));
   return Qnil;
 }
@@ -4214,7 +4208,7 @@ auto_save_1 (Lisp_Object ignored)
 
   /* Get visited file's mode to become the auto save file's mode.  */
   if (STRINGP (fn) &&
-      stat ((char *) string_data (XSTRING (fn)), &st) >= 0)
+      stat ((char *) XSTRING_DATA (fn), &st) >= 0)
     /* But make sure we can overwrite it later!  */
     auto_save_mode_bits = st.st_mode | 0600;
   else
@@ -4361,7 +4355,7 @@ Non-nil second argument means save only current buffer.
 		     */
 		  message
 		    ("Buffer %s has shrunk a lot; auto save turned off there",
-		     string_data (XSTRING (b->name)));
+		     XSTRING_DATA (b->name));
 		  /* Turn off auto-saving until there's a real save,
 		     and prevent any more warnings.  */
 		  b->save_length = make_int (-1);
@@ -4385,14 +4379,11 @@ Non-nil second argument means save only current buffer.
 	      if (!auto_saved && GC_STRINGP (listfile) && listdesc < 0)
 		{
 #ifdef DOS_NT
-		  listdesc = open ((char *)
-				   string_data (XSTRING (listfile)), 
+		  listdesc = open ((char *) XSTRING_DATA (listfile), 
 				   O_WRONLY | O_TRUNC | O_CREAT | O_TEXT,
 				   S_IREAD | S_IWRITE);
 #else /* not DOS_NT */
-		  listdesc = creat ((char *)
-				    string_data (XSTRING (listfile)),
-				    0666);
+		  listdesc = creat ((char *) XSTRING_DATA (listfile), 0666);
 #endif /* not DOS_NT */
 
 		  /* Arrange to close that file whether or not we get
@@ -4457,7 +4448,7 @@ Non-nil second argument means save only current buffer.
      rather than before in case we get a crash attempting to autosave
      (in that case we'd still want the old one around). */
   if (listdesc < 0 && !auto_saved && GC_STRINGP (listfile))
-    unlink ((char *) string_data (XSTRING (listfile)));
+    unlink ((char *) XSTRING_DATA (listfile));
 
   /* Show "...done" only if the echo area would otherwise be empty. */
   if (auto_saved && NILP (no_message)

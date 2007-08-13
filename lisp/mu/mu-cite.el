@@ -1,15 +1,15 @@
 ;;; mu-cite.el --- yet another citation tool for GNU Emacs
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;;         MINOURA Makoto <minoura@netlaputa.or.jp>
 ;;         Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;; Maintainer: Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.4 $
 ;; Keywords: mail, news, citation
 
-;; This file is part of tl (Tiny Library).
+;; This file is part of MU (Message Utilities).
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -54,7 +54,7 @@
 ;;;
 
 (defconst mu-cite/RCS-ID
-  "$Id: mu-cite.el,v 1.3 1996/12/29 00:15:00 steve Exp $")
+  "$Id: mu-cite.el,v 1.4 1997/02/02 05:05:45 steve Exp $")
 (defconst mu-cite/version (get-version-string mu-cite/RCS-ID))
 
 
@@ -390,45 +390,74 @@ function according to the agreed upon standard."
 
 ;;; @ message editing utilities
 ;;;
+  
+(defvar citation-mark-chars ">}|"
+  "*String of characters for citation delimiter. [mu-cite.el]")
 
-(defvar cited-prefix-regexp "^[^ \t>]*[>|]+[ \t#]*"
-  "*Regexp to match the citation prefix.")
+(defun detect-paragraph-cited-prefix ()
+  (save-excursion
+    (goto-char (point-min))
+    (let ((i 0)
+	  (prefix
+	   (buffer-substring
+	    (progn (beginning-of-line)(point))
+	    (progn (end-of-line)(point))
+	    ))
+	  str ret)
+      (while (and (= (forward-line) 0)
+		  (setq str (buffer-substring
+			     (progn (beginning-of-line)(point))
+			     (progn (end-of-line)(point))))
+		  (setq ret (string-compare-from-top prefix str))
+		  )
+	(setq prefix
+	      (if (stringp ret)
+		  ret
+		(second ret)))
+	(setq i (1+ i))
+	)
+      (cond ((> i 1) prefix)
+	    ((> i 0)
+	     (goto-char (point-min))
+	     (save-restriction
+	       (narrow-to-region (point)
+				 (+ (point)(length prefix)))
+	       (goto-char (point-max))
+	       (if (re-search-backward
+		    (concat "[" citation-mark-chars "]") nil t)
+		   (progn
+		     (goto-char (match-end 0))
+		     (if (looking-at "[ \t]+")
+			 (goto-char (match-end 0))
+		       )
+		     (buffer-substring (point-min)(point))
+		     )
+		 prefix)))
+	    ((progn
+	       (goto-char (point-max))
+	       (re-search-backward (concat "[" citation-mark-chars "]")
+				   nil t)
+	       )
+	     (goto-char (match-end 0))
+	     (if (looking-at "[ \t]+")
+		 (goto-char (match-end 0))
+	       )
+	     (buffer-substring (point-min)(point))
+	     )
+	    (t ""))
+      )))
 
 (defun fill-cited-region (beg end)
   (interactive "*r")
   (save-excursion
     (save-restriction
       (goto-char end)
-      (while (not (eolp))
-	(backward-char)
-	)
-      (setq end (point))
+      (and (search-backward "\n" nil t)
+	   (setq end (match-end 0))
+	   )
       (narrow-to-region beg end)
-      (goto-char (point-min))
-      (let* ((fill-prefix
-	      (let* ((str1 (buffer-substring
-			    (progn (beginning-of-line)(point))
-			    (progn (end-of-line)(point))
-			    ))
-		     (str2 (let ((p0 (point)))
-			     (forward-line)
-			     (if (> (count-lines p0 (point)) 0)
-				 (buffer-substring
-				  (progn (beginning-of-line)(point))
-				  (progn (end-of-line)(point))
-				  ))))
-		     (ret (string-compare-from-top str1 str2))
-		     )
-		(if ret
-		    (let ((prefix (nth 1 ret)))
-		      (if (string-match cited-prefix-regexp prefix)
-			  (substring prefix 0 (match-end 0))
-			prefix))
-		  (goto-char (point-min))
-		  (if (re-search-forward cited-prefix-regexp nil t)
-		      (buffer-substring (match-beginning 0) (match-end 0))
-		    ))))
-	     (pat (concat "\n" fill-prefix))
+      (let* ((fill-prefix (detect-paragraph-cited-prefix))
+	     (pat (concat fill-prefix "\n"))
 	     )
 	(goto-char (point-min))
 	(while (search-forward pat nil t)
@@ -449,8 +478,6 @@ function according to the agreed upon standard."
 	(goto-char (point-min))
 	(fill-region (point-min) (point-max))
 	))))
-
-(defvar citation-mark-chars ">}|")
 
 (defun compress-cited-prefix ()
   (interactive)

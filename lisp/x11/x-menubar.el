@@ -184,17 +184,53 @@
 	:style toggle :selected ps-print-color-p]
        ("Pretty-Print Paper Size"
 	["Letter"
-	 (setq ps-paper-type 'ps-letter)
+	 (setq ps-paper-type 'letter)
 	 :style radio
-	 :selected (eq ps-paper-type 'ps-letter)]
+	 :selected (eq ps-paper-type 'letter)]
+	["Letter-small"
+	 (setq ps-paper-type 'letter-small)
+	 :style radio
+	 :selected (eq ps-paper-type 'letter-small)]
 	["Legal"
-	 (setq ps-paper-type 'ps-legal)
+	 (setq ps-paper-type 'legal)
 	 :style radio
-	 :selected (eq ps-paper-type 'ps-legal)]
+	 :selected (eq ps-paper-type 'legal)]
+	["Statement"
+	 (setq ps-paper-type 'statement)
+	 :style radio
+	 :selected (eq ps-paper-type 'statement)]
+	["Executive"
+	 (setq ps-paper-type 'executive)
+	 :style radio
+	 :selected (eq ps-paper-type 'executive)]
+	["Tabloid"
+	 (setq ps-paper-type 'tabloid)
+	 :style radio
+	 :selected (eq ps-paper-type 'tabloid)]
+	["Ledger"
+	 (setq ps-paper-type 'ledger)
+	 :style radio
+	 :selected (eq ps-paper-type 'ledger)]
+	["A3"
+	 (setq ps-paper-type 'a3)
+	 :style radio
+	 :selected (eq ps-paper-type 'a3)]
 	["A4"
-	 (setq ps-paper-type 'ps-a4)
+	 (setq ps-paper-type 'a4)
 	 :style radio
-	 :selected (eq ps-paper-type 'ps-a4)]
+	 :selected (eq ps-paper-type 'a4)]
+	["A4small"
+	 (setq ps-paper-type 'a4small)
+	 :style radio
+	 :selected (eq ps-paper-type 'a4small)]
+	["B4"
+	 (setq ps-paper-type 'b4)
+	 :style radio
+	 :selected (eq ps-paper-type 'b4)]
+	["B5"
+	 (setq ps-paper-type 'b5)
+	 :style radio
+	 :selected (eq ps-paper-type 'b5)]
 	)
        )
       ("\"Other Window\" Location"
@@ -552,15 +588,15 @@
      ("Help"
       ["About XEmacs..."	about-xemacs		t]
       ("Basics"
-       ["XEmacs Tutorial"	help-with-tutorial	t]
-       ["XEmacs News"		view-emacs-news		t]
-       ["Package Browser"	finder-by-keyword	t]
-       ["Splash Screen"		xemacs-splash-buffer	t])
+       ["Tutorial"		help-with-tutorial	t]
+       ["News"			view-emacs-news		t]
+       ["Packages"		finder-by-keyword	t]
+       ["Splash"		xemacs-splash-buffer	t])
       "-----"
-      ("XEmacs FAQ & Web Page"
-       ["XEmacs WWW Page"	xemacs-www-page		t]
-       ["Newest XEmacs FAQ via WWW"	xemacs-www-faq	t]
-       ["XEmacs FAQ (local)"	xemacs-local-faq	t])
+      ("XEmacs FAQ"
+       ["FAQ)"			xemacs-local-faq	t]
+       ["FAQ via WWW"		xemacs-www-faq		t]
+       ["Home Page"		xemacs-www-page		t])
       ("Samples"
        ["Sample .emacs"		(find-file
 				 (expand-file-name "sample.emacs"
@@ -576,31 +612,32 @@
 	t])
       "-----"
       ("Lookup in Info"
-       ["Key/Mouse Binding..."	Info-goto-emacs-key-command-node t]
+       ["Key Binding..."	Info-goto-emacs-key-command-node t]
        ["Command..."		Info-goto-emacs-command-node t]
-       ["Elisp Function..."	Info-elisp-ref		t]
+       ["Function..."		Info-elisp-ref		t]
        ["Topic..."		Info-query		t])
       ("Manuals"
-       ["Info (Detailed Docs)"	info			t]
+       ["Info"			info			t]
        ["Unix Manual..."	manual-entry		t])
       ("Commands & Keys"
-       ["Describe Mode"		describe-mode		t]
+       ["Mode"			describe-mode		t]
        ["Apropos..."		hyper-apropos		t]
-       ["Apropos Documentation..."	apropos-documentation		t]
+       ["Apropos Docs..."	apropos-documentation	t]
        "-----"
-       ["Describe Key/Mouse..."	describe-key		t]
-       ["List Key Bindings"	describe-bindings	t]
-       ["List Mouse Bindings"	describe-pointer	t]
+       ["Key..."		describe-key		t]
+       ["Bindings"		describe-bindings	t]
+       ["Mouse Bindings"	describe-pointer	t]
+       ["Recent Keys"		view-lossage		t]
        "-----"
-       ["Describe Function..."	describe-function	t]
-       ["Describe Variable..."	describe-variable	t]
-       ["Where Is Command..."	where-is		t])
+       ["Function..."		describe-function	t]
+       ["Variable..."		describe-variable	t]
+       ["Locate Command..."	where-is		t])
       "-----"
-      ["Recent Keystrokes/Messages" view-lossage	t]
+      ["Recent Messages" view-lossage	t]
       ("Misc"
-       ["Describe No Warranty"	describe-no-warranty	t]
-       ["Describe XEmacs License" describe-copying	t]
-       ["Getting the Latest Version"	describe-distribution	t])
+       ["No Warranty"		describe-no-warranty	t]
+       ["XEmacs License"	describe-copying	t]
+       ["The Latest Version"	describe-distribution	t])
       )
      )))
 

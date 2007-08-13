@@ -129,6 +129,7 @@ column_at_point (struct buffer *buf, Bufpos init_pos, int cur_col)
   int tab_width = XINT (buf->tab_width);
   int post_tab;
   Bufpos pos = init_pos;
+  Emchar c;
 
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
   col = tab_seen = post_tab = 0;
@@ -139,7 +140,8 @@ column_at_point (struct buffer *buf, Bufpos init_pos, int cur_col)
 	break;
 
       pos--;
-      if (BUF_FETCH_CHAR (buf, pos) == '\t')
+      c = BUF_FETCH_CHAR (buf, pos);
+      if (c == '\t')
 	{
 	  if (tab_seen)
 	    col = ((col + tab_width) / tab_width) * tab_width;
@@ -148,9 +150,8 @@ column_at_point (struct buffer *buf, Bufpos init_pos, int cur_col)
 	  col = 0;
 	  tab_seen = 1;
 	}
-      else if (BUF_FETCH_CHAR (buf, pos) == '\n' ||
-	       (EQ (buf->selective_display, Qt) &&
-		BUF_FETCH_CHAR (buf, pos) == '\r'))
+      else if (c == '\n' ||
+	       (EQ (buf->selective_display, Qt) && c == '\r'))
 	break;
       else
 	{
@@ -164,9 +165,9 @@ column_at_point (struct buffer *buf, Bufpos init_pos, int cur_col)
 	  col += (displayed_glyphs->columns
 		  - (displayed_glyphs->begin_columns
 		     + displayed_glyphs->end_columns));
-#else
-	  col++;
-#endif
+#else /* XEmacs */
+	  col ++;
+#endif /* XEmacs */
 	}
     }
 
@@ -358,7 +359,7 @@ Returns the actual column that it moved to.
   int tab_width = XINT (buf->tab_width);
 
   int prev_col = 0;
-  Emchar c = 0;
+  Emchar c;
 
   XSETBUFFER (buffer, buf);
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
@@ -403,9 +404,9 @@ Returns the actual column that it moved to.
 	  col += (displayed_glyphs->columns
 		  - (displayed_glyphs->begin_columns
 		     + displayed_glyphs->end_columns));
-#else
-	  col++;
-#endif
+#else /* XEmacs */
+	  col ++;
+#endif /* XEmacs */
 	}
 
       pos++;

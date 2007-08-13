@@ -1,13 +1,13 @@
 ;;; ediff.el --- a comprehensive visual interface to diff & patch
 
-;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.sunysb.edu>
 ;; Created: February 2, 1994
 ;; Keywords: comparing, merging, patching, version control.
 
 (defconst ediff-version "2.64" "The current version of Ediff")
-(defconst ediff-date "January 3, 1997" "Date of last update")  
+(defconst ediff-date "January 7, 1997" "Date of last update")  
 
 
 ;; This file is part of GNU Emacs.
@@ -109,9 +109,13 @@
 (provide 'ediff)
 
 ;; Compiler pacifier
+(and noninteractive
+     (eval-when-compile
+	 (load-library "dired")
+	 (load-library "info")
+	 (load "pcl-cvs" 'noerror)))
 (eval-when-compile
-  (let ((load-path (cons "." load-path)))
-    (load "dired")
+  (let ((load-path (cons (expand-file-name ".") load-path)))
     (or (featurep 'ediff-init)
 	(load "ediff-init.el" nil nil 'nosuffix))
     (or (featurep 'ediff-mult)
@@ -120,7 +124,6 @@
 	(load "ediff-ptch.el" nil nil 'nosuffix))
     (or (featurep 'ediff-vers)
 	(load "ediff-vers.el" nil nil 'nosuffix))
-    (load "pcl-cvs" 'noerror)
     ))
 ;; end pacifier
 
@@ -285,8 +288,8 @@
   
     (ediff-eval-in-buffer (symbol-value buffer-name)
       (widen) ; Make sure the entire file is seen
-      (cond (file-magic  ;; file has handler, such as jka-compr-handler or
-	     ;; ange-ftp-hook-function--arrange for temp file
+      (cond (file-magic  ;   file has a handler, such as jka-compr-handler or
+	     		 ;;; ange-ftp-hook-function--arrange for temp file
 	     (ediff-verify-file-buffer 'magic)
 	     (setq file
 		   (ediff-make-temp-file

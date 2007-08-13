@@ -1,10 +1,9 @@
 ;;; tl-str.el --- Emacs Lisp Library module about string
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version:
-;;	$Id: tl-str.el,v 1.2 1996/12/22 00:29:33 steve Exp $
+;; Version: $Id: tl-str.el,v 1.3 1997/02/02 05:06:17 steve Exp $
 ;; Keywords: string
 
 ;; This file is part of tl (Tiny Library).
@@ -206,7 +205,8 @@
       (substring filename 0 (match-beginning 0))
     filename))
 
-(autoload 'replace-as-filename "filename")
+(autoload 'replace-as-filename "filename"
+  "Return safety filename from STRING.")
 
 
 ;;; @ symbol

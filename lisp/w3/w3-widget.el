@@ -1,12 +1,12 @@
 ;;; w3-widget.el --- An image widget
 ;; Author: wmperry
-;; Created: 1996/12/29 01:27:32
-;; Version: 1.12
+;; Created: 1997/01/17 22:09:43
+;; Version: 1.16
 ;; Keywords: faces, images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -302,6 +302,13 @@
      (t					; Huh?
       "A very confused image widget."))))
 
+(defvar widget-image-auto-retrieve 'ask
+  "*Whether to automatically retrieve the source of an image widget
+if it is not an active hyperlink or imagemap.
+If `nil', don't do anything.
+If `t', automatically retrieve the source.
+Any other value means ask the user each time.")
+
 (defun widget-image-notify (widget widget-changed &optional event)
   ;; Happens when anything changes
   (let* ((glyph (and event (widget-mouse-event-p event) (event-glyph event)))
@@ -310,22 +317,40 @@
 	 (ismap  (widget-get widget 'ismap))
 	 (usemap (widget-image-usemap widget))
 	 (href   (widget-get widget 'href))
+	 (img-src (or (widget-get widget 'src)
+		      (and widget-changed (widget-get widget-changed 'src))))
 	 (value  (widget-value widget))
 	 )
     (cond
      ((and glyph usemap)		; Do the client-side imagemap stuff
       (setq href (w3-point-in-map (vector x y) usemap nil))
-      (if href
+      (if (stringp href)
 	  (w3-fetch href)
 	(message "No destination found for %d,%d" x y)))
      ((and glyph x y ismap)		; Do the server-side imagemap stuff
       (w3-fetch (format "%s?%d,%d" href x y)))
      (usemap				; Dummed-down tty client side imap
-      (w3-fetch value))
+      (let ((choices (mapcar (function
+			      (lambda (entry)
+				(cons
+				 (or (aref entry 3) (aref entry 2))
+				 (aref entry 3)))) usemap))
+	    (choice nil))
+	(setq choice (completing-read "Imagemap: " choices nil t))
+	(and (stringp choice) (w3-fetch choice))))
      (ismap				; Do server-side dummy imagemap for tty
       (w3-fetch (concat href "?0,0")))
      ((stringp href)			; Normal hyperlink
       (w3-fetch href))
+     ((stringp img-src)
+      (cond
+       ((null widget-image-auto-retrieve) nil)
+       ((eq t widget-image-auto-retrieve)
+	(w3-fetch img-src))
+       ((funcall url-confirmation-func
+		 (format "Retrieve image (%s)?"
+			 (url-truncate-url-for-viewing img-src)))
+	(w3-fetch img-src))))
      (t					; Huh?
       nil))))
 

@@ -1,12 +1,12 @@
 ;;; w3-xemac.el --- XEmacs specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/11/27 15:11:46
-;; Version: 1.7
+;; Created: 1997/01/19 20:06:02
+;; Version: 1.12
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -30,6 +30,7 @@
 (require 'images)
 (require 'w3-widget)
 (require 'w3-menu)
+(require 'w3-forms)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Enhancements For XEmacs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -41,11 +42,11 @@
 	 (widget (and good pt (number-or-marker-p pt) (widget-at pt)))
 	 (link (and widget (or (widget-get widget 'href)
 			       (widget-get widget 'name))))
-	 (form (and widget (widget-get widget 'w3-form-data)))
+	 (form (and widget (widget-get widget :w3-form-data)))
 	 (imag nil)
 	 )
     (cond
-     (link (w3-widget-echo widget))
+     (link (message "%s" (w3-widget-echo widget)))
      (form
       (cond
        ((eq 'submit (w3-form-element-type form))
@@ -131,12 +132,13 @@
 
 (defun w3-mode-version-specifics ()
   "XEmacs specific stuff for w3-mode"
-  (cond
-   ((not w3-track-mouse)
-    (setq inhibit-help-echo nil))
-   (inhibit-help-echo
-    (setq mode-motion-hook 'w3-mouse-handler))
-   (t nil))
+  (if (featurep 'mouse)
+      (cond
+       ((not w3-track-mouse)
+	(setq inhibit-help-echo nil))
+       (inhibit-help-echo
+	(setq mode-motion-hook 'w3-mouse-handler))
+       (t nil)))
   (if (eq (device-type) 'tty)
       nil
     (w3-add-toolbar-to-buffer))

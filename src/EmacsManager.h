@@ -41,18 +41,6 @@ Boston, MA 02111-1307, USA.  */
 #define XtCUserData (String) "UserData"
 #endif
 
-/* scrollbar placement types; like in ScrolledW.h */
-
-#define EM_TOP          1
-#define EM_BOTTOM       0
-#define EM_LEFT         2
-#define EM_RIGHT        0
- 
-#define XtTOP_LEFT      (EM_TOP | EM_LEFT)
-#define XtBOTTOM_LEFT   (EM_BOTTOM  | EM_LEFT)
-#define XtTOP_RIGHT     (EM_TOP | EM_RIGHT)
-#define XtBOTTOM_RIGHT  (EM_BOTTOM  | EM_RIGHT)
- 
 typedef struct _EmacsManagerClassRec *EmacsManagerWidgetClass;
 typedef struct _EmacsManagerRec *EmacsManagerWidget;
 extern WidgetClass emacsManagerWidgetClass;

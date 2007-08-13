@@ -75,7 +75,7 @@ void reset_poll_for_quit (void);
    naturally interruptible. */
 
 extern JMP_BUF break_system_call_jump;
-extern int can_break_system_calls;
+extern volatile int can_break_system_calls;
 
 int sys_write_1 (int fildes, CONST void *buf, unsigned int nbyte,
 		 int allow_quit);

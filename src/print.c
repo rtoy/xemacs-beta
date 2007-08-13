@@ -150,7 +150,7 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
   fixup_internal_substring (newnonreloc, reloc, offset, &len);
 
   if (STRINGP (reloc))
-    newnonreloc = string_data (XSTRING (reloc));
+    newnonreloc = XSTRING_DATA (reloc);
 
   ccoff = bytecount_to_charcount (newnonreloc, offset);
   cclen = bytecount_to_charcount (newnonreloc + offset, len);
@@ -209,7 +209,7 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
   else if (EQ (function, Qt) || EQ (function, Qnil))
     {
       write_string_to_stdio_stream (stdout, 0, newnonreloc, offset, len,
-				    FORMAT_DISPLAY);
+				    FORMAT_TERMINAL);
     }
   else
     {
@@ -220,7 +220,7 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
 	  call1 (function,
 		 make_char (charptr_emchar_n (newnonreloc, iii)));
 	  if (STRINGP (reloc))
-	    newnonreloc = string_data (XSTRING (reloc));
+	    newnonreloc = XSTRING_DATA (reloc);
 	}
     }
 
@@ -281,7 +281,7 @@ print_writer (Lstream *stream, CONST unsigned char *data, int size)
   if (ps->file)
     {
       write_string_to_stdio_stream (ps->file, 0, data, 0, size,
-				    FORMAT_DISPLAY);
+				    FORMAT_TERMINAL);
       /* Make sure it really gets written now. */
       if (print_unbuffered)
 	fflush (ps->file);
@@ -470,7 +470,7 @@ to get the buffer displayed.  It gets one argument, the buffer to display.
   UNGCPRO;
 
   CHECK_STRING (name);
-  temp_output_buffer_setup ((char *) string_data (XSTRING (name)));
+  temp_output_buffer_setup ((char *) XSTRING_DATA (name));
   buf = Vstandard_output;
 
   val = Fprogn (Fcdr (args));
@@ -631,7 +631,7 @@ float_to_string (char *buf, double data)
       /* Check that the spec we have is fully valid.
 	 This means not only valid for printf,
 	 but meant for floats, and reasonable.  */
-      cp = string_data (XSTRING (Vfloat_output_format));
+      cp = XSTRING_DATA (Vfloat_output_format);
 
       if (cp[0] != '%')
 	goto lose;
@@ -654,7 +654,7 @@ float_to_string (char *buf, double data)
       if (cp[1] != 0)
 	goto lose;
 
-      sprintf (buf, (char *) string_data (XSTRING (Vfloat_output_format)),
+      sprintf (buf, (char *) XSTRING_DATA (Vfloat_output_format),
 	       data);
     }
 
@@ -788,7 +788,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
     case Lisp_String:
       {
-	Bytecount size = string_length (XSTRING (obj));
+	Bytecount size = XSTRING_LENGTH (obj);
 	struct gcpro gcpro1, gcpro2;
 	int max = size;
 	GCPRO2 (obj, printcharfun);
@@ -1010,8 +1010,7 @@ print_compiled_function_internal (CONST char *start, CONST char *end,
   /* we don't really want to see that junk in the bytecode instructions. */
   if (STRINGP (b->bytecodes) && !print_readably)
     {
-      sprintf (buf, "\"...(%ld)\"",
-	       (long) string_length (XSTRING (b->bytecodes)));
+      sprintf (buf, "\"...(%ld)\"", (long) XSTRING_LENGTH (b->bytecodes));
       write_c_string (buf, printcharfun);
     }
   else
@@ -1179,7 +1178,7 @@ to 0.
 
   CHECK_CHAR_COERCE_INT (character);
   len = set_charptr_emchar (str, XCHAR (character));
-  GET_CHARPTR_EXT_DATA_ALLOCA (str, len, FORMAT_DISPLAY, extptr, extlen);
+  GET_CHARPTR_EXT_DATA_ALLOCA (str, len, FORMAT_TERMINAL, extptr, extlen);
   memcpy (alternate_do_string + alternate_do_pointer, extptr, extlen);
   alternate_do_pointer += extlen;
   alternate_do_string[alternate_do_pointer] = 0;
@@ -1226,9 +1225,9 @@ the output also will be logged to this file.
 
   if (STRINGP (char_or_string))
     write_string_to_stdio_stream (file, con,
-				  string_data (XSTRING (char_or_string)),
-				  0, string_length (XSTRING (char_or_string)),
-				  FORMAT_DISPLAY);
+				  XSTRING_DATA (char_or_string),
+				  0, XSTRING_LENGTH (char_or_string),
+				  FORMAT_TERMINAL);
   else
     {
       Bufbyte str[MAX_EMCHAR_LEN];
@@ -1236,7 +1235,7 @@ the output also will be logged to this file.
 
       CHECK_CHAR_COERCE_INT (char_or_string);
       len = set_charptr_emchar (str, XCHAR (char_or_string));
-      write_string_to_stdio_stream (file, con, str, 0, len, FORMAT_DISPLAY);
+      write_string_to_stdio_stream (file, con, str, 0, len, FORMAT_TERMINAL);
     }
 
   return char_or_string;
@@ -1258,7 +1257,7 @@ FILE = nil means just close any termscript file currently open.
   if (! NILP (file))
     {
       file = Fexpand_file_name (file, Qnil);
-      termscript = fopen ((char *) string_data (XSTRING (file)), "w");
+      termscript = fopen ((char *) XSTRING_DATA (file), "w");
       if (termscript == 0)
 	report_file_error ("Opening termscript", Fcons (file, Qnil));
     }

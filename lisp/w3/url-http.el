@@ -1,12 +1,12 @@
 ;;; url-http.el --- HTTP Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1996/12/18 00:38:45
-;; Version: 1.7
+;; Created: 1997/01/26 03:56:59
+;; Version: 1.11
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -133,9 +133,11 @@
 		       (let ((url-basic-auth-storage
 			      url-proxy-basic-authentication))
 			 (url-get-authentication url nil 'any nil))))
-	 (host (if (boundp 'proxy-info)
-		   (url-host (url-generic-parse-url proxy-info))
-		 url-current-server))
+	 (proxy-obj (if (boundp 'proxy-info)
+			(url-generic-parse-url proxy-info)))
+	 (real-fname (if proxy-obj (url-filename proxy-obj) fname))
+	 (host (or (and proxy-obj (url-host proxy-obj))
+		   url-current-server))
 	 (auth (if (cdr-safe (assoc "Authorization" url-request-extra-headers))
 		   nil
 		 (url-get-authentication (or
@@ -195,8 +197,8 @@
 	   url-mime-accept-string
 	   (url-http-user-agent-string)
 	   (or auth "")
-	   (url-cookie-generate-header-lines url-current-server
-					     fname
+	   (url-cookie-generate-header-lines host
+					     real-fname
 					     (string-match "https"
 							   url-current-type))
 	   (or proxy-auth "")
@@ -601,12 +603,9 @@ HTTP/1.0 specification for more details." x redir) 'error)
 		  (process-kill-without-query process)
 		  (process-send-string process request)
 		  (url-lazy-message "Request sent, waiting for response...")
-		  (if url-show-http2-transfer
-		      (progn
-			(make-local-variable 'after-change-functions)
-			(setq url-current-content-length nil)
-			(add-hook 'after-change-functions
-				  'url-after-change-function)))
+		  (setq url-current-content-length nil)
+		  (make-local-variable 'after-change-functions)
+		  (add-hook 'after-change-functions 'url-after-change-function)
 		  (if url-be-asynchronous
 		      (set-process-sentinel process 'url-sentinel)
 		    (unwind-protect

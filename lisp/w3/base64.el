@@ -1,18 +1,11 @@
 ;;; base64.el,v --- Base64 encoding functions
-;; Author: wmperry
-;; Created: 1996/04/22 15:08:08
-;; Version: 1.7
+;; Author: Kyle E. Jones
+;; Created: 1997/01/23 00:13:17
+;; Version: 1.4
 ;; Keywords: extensions
 
-;;; LCD Archive Entry:
-;;; base64.el|William M. Perry|wmperry@cs.indiana.edu|
-;;; Package for encoding/decoding base64 data (MIME)|
-;;; 1996/04/22 15:08:08|1.7|Location Undetermined
-;;;
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
-;;; Copyright (c) 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (C) 1997 Kyle E. Jones
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -32,162 +25,250 @@
 ;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Base 64 encoding functions
-;;; This code was converted to lisp code by me from the C code in
-;;; ftp://cs.utk.edu/pub/MIME/b64encode.c
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; For non-MULE
+(if (not (fboundp 'char-int))
+    (fset 'char-int 'identity))
 
-(defvar base64-code-string
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-  "Character set used for base64 decoding")
+(defvar base64-alphabet
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")
 
-(defvar base64-decode-vector
-  (let ((vec (make-vector 256 nil))
-	(i 0)
-	(case-fold-search nil))
-    (while (< i 256)
-      (aset vec i (string-match (regexp-quote (char-to-string i))
-				base64-code-string))
-      (setq i (1+ i)))
-    vec))
+(defvar base64-decoder-program nil
+  "*Non-nil value should be a string that names a MIME base64 decoder.
+The program should expect to read base64 data on its standard
+input and write the converted data to its standard output.")
 
-(defvar base64-max-line-length 64)
+(defvar base64-decoder-switches nil
+  "*List of command line flags passed to the command named by
+base64-decoder-program.")
 
-;(defun b0 (x) (aref base64-code-string (logand (lsh x -18) 63)))
-;(defun b1 (x) (aref base64-code-string (logand (lsh x -12) 63)))
-;(defun b2 (x) (aref base64-code-string (logand (lsh x -6) 63)))
-;(defun b3 (x) (aref base64-code-string (logand x 63)))
+(defvar base64-encoder-program nil
+  "*Non-nil value should be a string that names a MIME base64 encoder.
+The program should expect arbitrary data on its standard
+input and write base64 data to its standard output.")
 
-(defmacro b0 (x) (` (aref base64-code-string (logand (lsh (, x) -18) 63))))
-(defmacro b1 (x) (` (aref base64-code-string (logand (lsh (, x) -12) 63))))
-(defmacro b2 (x) (` (aref base64-code-string (logand (lsh (, x) -6) 63))))
-(defmacro b3 (x) (` (aref base64-code-string (logand (, x) 63))))
+(defvar base64-encoder-switches nil
+  "*List of command line flags passed to the command named by
+base64-encoder-program.")
 
-(defun base64-encode (str)
-  "Do base64 encoding on string STR and return the encoded string.
-This code was converted to lisp code by me from the C code in
-ftp://cs.utk.edu/pub/MIME/b64encode.c.  Returns a string that is
-broken into `base64-max-line-length' byte lines."
-  (or str (setq str (buffer-string)))
-  (let ((x (base64-encode-internal str))
-	(y ""))
-    (while (> (length x) base64-max-line-length)
-      (setq y (concat y (substring x 0 base64-max-line-length) "\n")
-	    x (substring x base64-max-line-length nil)))
-    (setq y (concat y x))
-    y))
+(defconst base64-alphabet-decoding-alist
+  '(
+    ( ?A . 00) ( ?B . 01) ( ?C . 02) ( ?D . 03) ( ?E . 04) ( ?F . 05)
+    ( ?G . 06) ( ?H . 07) ( ?I . 08) ( ?J . 09) ( ?K . 10) ( ?L . 11)
+    ( ?M . 12) ( ?N . 13) ( ?O . 14) ( ?P . 15) ( ?Q . 16) ( ?R . 17)
+    ( ?S . 18) ( ?T . 19) ( ?U . 20) ( ?V . 21) ( ?W . 22) ( ?X . 23)
+    ( ?Y . 24) ( ?Z . 25) ( ?a . 26) ( ?b . 27) ( ?c . 28) ( ?d . 29)
+    ( ?e . 30) ( ?f . 31) ( ?g . 32) ( ?h . 33) ( ?i . 34) ( ?j . 35)
+    ( ?k . 36) ( ?l . 37) ( ?m . 38) ( ?n . 39) ( ?o . 40) ( ?p . 41)
+    ( ?q . 42) ( ?r . 43) ( ?s . 44) ( ?t . 45) ( ?u . 46) ( ?v . 47)
+    ( ?w . 48) ( ?x . 49) ( ?y . 50) ( ?z . 51) ( ?0 . 52) ( ?1 . 53)
+    ( ?2 . 54) ( ?3 . 55) ( ?4 . 56) ( ?5 . 57) ( ?6 . 58) ( ?7 . 59)
+    ( ?8 . 60) ( ?9 . 61) ( ?+ . 62) ( ?/ . 63)
+   ))
 
-(defun base64-encode-internal (str)
-  "Do base64 encoding on string STR and return the encoded string.
-This code was converted to lisp code by me from the C code in
-ftp://cs.utk.edu/pub/MIME/b64encode.c.  Returns the entire string,
-not broken up into `base64-max-line-length' byte lines."
-  (let (
-	(word 0)			; The word to translate
-	w1 w2 w3
-	)
-    (cond
-     ((> (length str) 3)
-      (concat
-       (base64-encode-internal (substring str 0 3))
-       (base64-encode-internal (substring str 3 nil))))
-     ((= (length str) 3)
-      (setq w1 (aref str 0)
-	    w2 (aref str 1)
-	    w3 (aref str 2)
-	    word (logior
-		  (lsh (logand w1 255) 16)
-		  (lsh (logand w2 255) 8)
-		  (logand w3 255)))
-      (format "%c%c%c%c" (b0 word) (b1 word) (b2 word) (b3 word)))
-     ((= (length str) 2)
-      (setq w1 (aref str 0)
-	    w2 (aref str 1)
-	    word (logior
-		  (lsh (logand w1 255) 16)
-		  (lsh (logand w2 255) 8)
-		  0))
-      (format "%c%c%c=" (b0 word) (b1 word) (b2 word)))
-     ((= (length str) 1)
-      (setq w1 (aref str 0)
-	    word (logior
-		  (lsh (logand w1 255) 16)
-		  0))
-      (format "%c%c==" (b0 word) (b1 word)))
-     (t ""))))
+(defvar base64-alphabet-decoding-vector
+  (let ((v (make-vector 123 nil))
+	(p base64-alphabet-decoding-alist))
+    (while p
+      (aset v (car (car p)) (cdr (car p)))
+      (setq p (cdr p)))
+    v))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Base64 decoding functions
-;;; Most of the decoding code is courtesy Francesco Potorti`
-;;; <F.Potorti@cnuce.cnr.it>
-;;; this is much faster than my original code - thanks!
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun base64-decode-region (beg end)
+(defun base64-run-command-on-region (start end output-buffer command
+					   &rest arg-list)
+  (let ((tempfile nil) status errstring)
+    (unwind-protect
+	(progn
+	  (setq tempfile (make-temp-name "base64"))
+	  (setq status
+		(apply 'call-process-region
+		       start end command nil
+		       (list output-buffer tempfile)
+		       nil arg-list))
+	  (cond ((equal status 0) t)
+		((zerop (save-excursion
+			  (set-buffer (find-file-noselect tempfile))
+			  (buffer-size)))
+		 t)
+		(t (save-excursion
+		     (set-buffer (find-file-noselect tempfile))
+		     (setq errstring (buffer-string))
+		     (kill-buffer nil)
+		     (cons status errstring)))))
+      (condition-case ()
+	  (delete-file tempfile)
+	(error nil)))))
+
+(defun base64-insert-char (char &optional count ignored buffer)
+  (condition-case nil
+      (progn
+	(insert-char char count ignored buffer)
+	(fset 'vm-insert-char 'insert-char))
+    (wrong-number-of-arguments
+     (fset 'base64-insert-char 'base64-xemacs-insert-char)
+     (base64-insert-char char count ignored buffer))))
+
+(defun base64-xemacs-insert-char (char &optional count ignored buffer)
+  (if (and buffer (eq buffer (current-buffer)))
+      (insert-char char count)
+    (save-excursion
+      (set-buffer buffer)
+      (insert-char char count))))
+
+(defun base64-decode-region (start end)
   (interactive "r")
-  (barf-if-buffer-read-only)
-  (let
-      ((exchange (= (point) beg))
-       (endchars 0)
-       (list) (code))
-    (goto-char beg)
-    (while (< (point) end)
-      (setq list (mapcar
-		  (function
-		   (lambda (c)
-		     (cond
-		      ((aref base64-decode-vector c))
-		      ((char-equal c ?=)
-		       (setq endchars (1+ endchars))
-		       0)
-		      (nil
-		       (error
-			"Character %c does not match Mime base64 coding" c)))))
-		  (buffer-substring (point) (+ (point) 4))))
-      (setq code (+ (nth 3 list) (lsh (nth 2 list) 6)
-		    (lsh (nth 1 list) 12) (lsh (car list) 18)))
-      (delete-char 4)
-      (cond
-       ((zerop endchars)
-	(insert (% (lsh code -16) 256) (% (lsh code -8) 256) (% code 256)))
-       ((= endchars 1)
-	(insert (% (lsh code -16) 256) (% (lsh code -8) 256))
-	(setq end (point)))
-       ((= endchars 2)
-	(insert (% (lsh code -16) 256))
-	(setq end (point))))
-      (if (char-equal (following-char) ?\n)
-	  (progn (delete-char 1)
-		 (setq end (- end 2)))
-	(setq end (1- end))))
-    ))
-;    (if exchange
-;	(exchange-point-and-mark))))
+  (message "Decoding base64...")
+  (let ((work-buffer nil)
+	(done nil)
+	(counter 0)
+	(bits 0)
+	(lim 0) inputpos
+	(non-data-chars (concat "^=" base64-alphabet)))
+    (unwind-protect
+	(save-excursion
+	  (setq work-buffer (generate-new-buffer " *base64-work*"))
+	  (buffer-disable-undo work-buffer)
+	  (if base64-decoder-program
+	      (let* ((binary-process-output t) ; any text already has CRLFs
+		     (status (apply 'command-on-region
+				   start end work-buffer
+				   base64-decoder-program
+				   base64-decoder-switches)))
+		(if (not (eq status t))
+		    (error "%s" (cdr status))))
+	    (goto-char start)
+	    (skip-chars-forward non-data-chars end)
+	    (while (not done)
+	      (setq inputpos (point))
+	      (cond
+	       ((> (skip-chars-forward base64-alphabet end) 0)
+		(setq lim (point))
+		(while (< inputpos lim)
+		  (setq bits (+ bits 
+				(aref base64-alphabet-decoding-vector
+				      (char-int (char-after inputpos)))))
+		  (setq counter (1+ counter)
+			inputpos (1+ inputpos))
+		  (cond ((= counter 4)
+			 (base64-insert-char (lsh bits -16) 1 nil work-buffer)
+			 (base64-insert-char (logand (lsh bits -8) 255) 1 nil
+					 work-buffer)
+			 (base64-insert-char (logand bits 255) 1 nil
+					     work-buffer)
+			 (setq bits 0 counter 0))
+			(t (setq bits (lsh bits 6)))))))
+	      (cond
+	       ((= (point) end)
+		(if (not (zerop counter))
+		    (error "at least %d bits missing at end of base64 encoding"
+			   (* (- 4 counter) 6)))
+		(setq done t))
+	       ((= (char-after (point)) ?=)
+		(setq done t)
+		(cond ((= counter 1)
+		       (error "at least 2 bits missing at end of base64 encoding"))
+		      ((= counter 2)
+		       (base64-insert-char (lsh bits -10) 1 nil work-buffer))
+		      ((= counter 3)
+		       (base64-insert-char (lsh bits -16) 1 nil work-buffer)
+		       (base64-insert-char (logand (lsh bits -8) 255)
+					   1 nil work-buffer))
+		      ((= counter 0) t)))
+	       (t (skip-chars-forward non-data-chars end)))))
+	  (or (markerp end) (setq end (set-marker (make-marker) end)))
+	  (goto-char start)
+	  (insert-buffer-substring work-buffer)
+	  (delete-region (point) end))
+      (and work-buffer (kill-buffer work-buffer))))
+  (message "Decoding base64... done"))
 
-(defun base64-decode (st &optional nd)
-  "Do base64 decoding on string STR and return the original string.
-If given buffer positions, destructively decodes that area of the
-current buffer."
-  (let ((replace-p nil)
-	(retval nil))
-    (if (stringp st)
-	nil
-      (setq st (prog1
-		   (buffer-substring st (or nd (point-max)))
-		 (delete-region st (or nd (point-max))))
-	    replace-p t))
-    (setq retval
-	  (save-excursion
-	    (set-buffer (get-buffer-create " *b64decode*"))
-	    (erase-buffer)
-	    (insert st)
-	    (goto-char (point-min))
-	    (while (re-search-forward "\r*\n" nil t)
-	      (replace-match ""))
-	    (goto-char (point-min))
-	    (base64-decode-region (point-min) (point-max))
-	    (buffer-string)))
-    (if replace-p (insert retval))
-    retval))
+(defun base64-encode-region (start end)
+  (interactive "r")
+  (message "Encoding base64...")
+  (let ((work-buffer nil)
+	(counter 0)
+	(cols 0)
+	(bits 0)
+	(alphabet base64-alphabet)
+	inputpos)
+    (unwind-protect
+	(save-excursion
+	  (setq work-buffer (generate-new-buffer " *base64-work*"))
+	  (buffer-disable-undo work-buffer)
+	  (if base64-encoder-program
+	      (let ((status (apply 'base64-run-command-on-region
+				   start end work-buffer
+				   base64-encoder-program
+				   base64-encoder-switches)))
+		(if (not (eq status t))
+		    (error "%s" (cdr status))))
+	    (setq inputpos start)
+	    (while (< inputpos end)
+	      (setq bits (+ bits (char-int (char-after inputpos))))
+	      (setq counter (1+ counter))
+	      (cond ((= counter 3)
+		     (base64-insert-char (aref alphabet (lsh bits -18)) 1 nil
+					 work-buffer)
+		     (base64-insert-char
+		      (aref alphabet (logand (lsh bits -12) 63))
+		      1 nil work-buffer)
+		     (base64-insert-char
+		      (aref alphabet (logand (lsh bits -6) 63))
+		      1 nil work-buffer)
+		     (base64-insert-char
+		      (aref alphabet (logand bits 63))
+		      1 nil work-buffer)
+		     (setq cols (+ cols 4))
+		     (cond ((= cols 72)
+			    (base64-insert-char ?\n 1 nil work-buffer)
+			    (setq cols 0)))
+		     (setq bits 0 counter 0))
+		    (t (setq bits (lsh bits 8))))
+	      (setq inputpos (1+ inputpos)))
+	    ;; write out any remaining bits with appropriate padding
+	    (if (= counter 0)
+		nil
+	      (setq bits (lsh bits (- 16 (* 8 counter))))
+	      (base64-insert-char (aref alphabet (lsh bits -18)) 1 nil
+				  work-buffer)
+	      (base64-insert-char (aref alphabet (logand (lsh bits -12) 63))
+				  1 nil work-buffer)
+	      (if (= counter 1)
+		  (base64-insert-char ?= 2 nil work-buffer)
+		(base64-insert-char (aref alphabet (logand (lsh bits -6) 63))
+				    1 nil work-buffer)
+		(base64-insert-char ?= 1 nil work-buffer)))
+	    (if (> cols 0)
+		(base64-insert-char ?\n 1 nil work-buffer)))
+	  (or (markerp end) (setq end (set-marker (make-marker) end)))
+	  (goto-char start)
+	  (insert-buffer-substring work-buffer)
+	  (delete-region (point) end))
+      (and work-buffer (kill-buffer work-buffer))))
+  (message "Encoding base64... done"))
+
+(defun base64-encode (string)
+  (save-excursion
+    (set-buffer (get-buffer-create " *base64-encode*"))
+    (erase-buffer)
+    (insert string)
+    (base64-encode-region (point-min) (point-max))
+    (skip-chars-backward " \t\r\n")
+    (delete-region (point-max) (point))
+    (prog1
+	(buffer-string)
+      (kill-buffer (current-buffer)))))
+
+(defun base64-decode (string)
+  (save-excursion
+    (set-buffer (get-buffer-create " *base64-decode*"))
+    (erase-buffer)
+    (insert string)
+    (base64-decode-region (point-min) (point-max))
+    (goto-char (point-max))
+    (skip-chars-backward " \t\r\n")
+    (delete-region (point-max) (point))
+    (prog1
+	(buffer-string)
+      (kill-buffer (current-buffer)))))  
 
 (provide 'base64)

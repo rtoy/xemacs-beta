@@ -1,6 +1,6 @@
 ;;; viper-macs.el --- functions implementing keyboard macros for Viper
 
-;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -29,13 +29,15 @@
 (defvar vip-current-state)
 
 (eval-when-compile
-  (let ((load-path (cons "." load-path)))
+  (let ((load-path (cons (expand-file-name ".") load-path)))
     (or (featurep 'viper-util)
 	(load "viper-util.el" nil nil 'nosuffix))
     (or (featurep 'viper-keym)
 	(load "viper-keym.el" nil nil 'nosuffix))
     (or (featurep 'viper-mous)
 	(load "viper-mous.el" nil nil 'nosuffix))
+    (or (featurep 'viper)
+	(load "viper.el" nil nil 'nosuffix))
     ))
 ;; end pacifier
 

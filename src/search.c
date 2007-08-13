@@ -133,8 +133,8 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
   old = re_set_syntax (RE_SYNTAX_EMACS
 		       | (posix ? 0 : RE_NO_POSIX_BACKTRACKING));
   val = (CONST char *)
-    re_compile_pattern ((char *) string_data (XSTRING (pattern)),
-			string_length (XSTRING (pattern)), &cp->buf);
+    re_compile_pattern ((char *) XSTRING_DATA (pattern),
+			XSTRING_LENGTH (pattern), &cp->buf);
   re_set_syntax (old);
   if (val)
     {
@@ -248,13 +248,13 @@ fixup_search_regs_for_string (Lisp_Object string)
       if (search_regs.start[i] > 0)
 	{
 	  search_regs.start[i] =
-	    bytecount_to_charcount (string_data (XSTRING (string)),
+	    bytecount_to_charcount (XSTRING_DATA (string),
 				    search_regs.start[i]);
 	}
       if (search_regs.end[i] > 0)
 	{
 	  search_regs.end[i] =
-	    bytecount_to_charcount (string_data (XSTRING (string)),
+	    bytecount_to_charcount (XSTRING_DATA (string),
 				    search_regs.end[i]);
 	}
     }
@@ -379,12 +379,11 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
 			   : 0), 0, ERROR_ME);
   QUIT;
   {
-    Bytecount bis = charcount_to_bytecount (string_data (XSTRING (string)),
-					    s);
+    Bytecount bis = charcount_to_bytecount (XSTRING_DATA (string), s);
     regex_emacs_buffer = buf;
-    val = re_search (bufp, (char *) string_data (XSTRING (string)),
-		     string_length (XSTRING (string)), bis,
-		     string_length (XSTRING (string)) - bis,
+    val = re_search (bufp, (char *) XSTRING_DATA (string),
+		     XSTRING_LENGTH (string), bis,
+		     XSTRING_LENGTH (string) - bis,
 		     &search_regs);
   }
   if (val == -2)
@@ -392,8 +391,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   if (val < 0) return Qnil;
   last_thing_searched = Qt;
   fixup_search_regs_for_string (string);
-  return make_int (bytecount_to_charcount (string_data (XSTRING (string)),
-					   val));
+  return make_int (bytecount_to_charcount (XSTRING_DATA (string), val));
 }
 
 DEFUN ("string-match", Fstring_match, Sstring_match, 2, 4, 0 /*
@@ -410,8 +408,7 @@ tables) and defaults to the current buffer.
   (regexp, string, start, buffer)
      Lisp_Object regexp, string, start, buffer;
 {
-  return string_match_1 (regexp, string, start, decode_buffer (buffer, 0),
-			 0);
+  return string_match_1 (regexp, string, start, decode_buffer (buffer, 0), 0);
 }
 
 DEFUN ("posix-string-match", Fposix_string_match, Sposix_string_match, 2, 4, 0 /*
@@ -429,8 +426,7 @@ tables) and defaults to the current buffer.
   (regexp, string, start, buffer)
      Lisp_Object regexp, string, start, buffer;
 {
-  return string_match_1 (regexp, string, start, decode_buffer (buffer, 0),
-			 1);
+  return string_match_1 (regexp, string, start, decode_buffer (buffer, 0), 1);
 }
 
 /* Match REGEXP against STRING, searching all of STRING,
@@ -467,14 +463,14 @@ fast_string_match (Lisp_Object regexp,  CONST Bufbyte *nonreloc,
   if (!NILP (reloc))
     {
       if (no_quit)
-	newnonreloc = string_data (XSTRING (reloc));
+	newnonreloc = XSTRING_DATA (reloc);
       else
 	{
 	  /* QUIT could relocate RELOC.  Therefore we must alloca()
 	     and copy.  No way around this except some serious
 	     rewriting of re_search(). */
 	  newnonreloc = (Bufbyte *) alloca (length);
-	  memcpy (newnonreloc, string_data (XSTRING (reloc)), length);
+	  memcpy (newnonreloc, XSTRING_DATA (reloc), length);
 	}
     }
 
@@ -709,8 +705,8 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
   if (XINT (lim) < BUF_BEGV (buf))
     lim = make_int (BUF_BEGV (buf));
 
-  p = string_data (XSTRING (string));
-  pend = p + string_length (XSTRING (string));
+  p = XSTRING_DATA (string);
+  pend = p + XSTRING_LENGTH (string);
   memset (fastmap, 0, sizeof (fastmap));
 
   Fclear_range_table (Vskip_chars_range_table);
@@ -985,8 +981,8 @@ static int
 trivial_regexp_p (Lisp_Object regexp)
 {
   /* This function has been Mule-ized. */
-  Bytecount len = string_length (XSTRING (regexp));
-  Bufbyte *s = string_data (XSTRING (regexp));
+  Bytecount len = XSTRING_LENGTH (regexp);
+  Bufbyte *s = XSTRING_DATA (regexp);
   while (--len >= 0)
     {
       switch (*s++)
@@ -1033,8 +1029,8 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	       unsigned char *inverse_trt, int posix)
 {
   /* This function has been Mule-ized, except for the trt table handling. */
-  Bytecount len = string_length (XSTRING (string));
-  Bufbyte *base_pat = string_data (XSTRING (string));
+  Bytecount len = XSTRING_LENGTH (string);
+  Bufbyte *base_pat = XSTRING_DATA (string);
   register EMACS_INT *BM_tab;
   EMACS_INT *BM_tab_base;
   register int direction = ((n > 0) ? 1 : -1);
@@ -1525,7 +1521,7 @@ wordify (Lisp_Object buffer, Lisp_Object string)
     /* The following value is an upper bound on the amount of storage we
        need.  In non-Mule, it is exact. */
     Bufbyte *storage =
-      (Bufbyte *) alloca (string_length (XSTRING (string)) - punct_count +
+      (Bufbyte *) alloca (XSTRING_LENGTH (string) - punct_count +
                           5 * (word_count - 1) + 4);
     Bufbyte *o = storage;
 
@@ -2425,12 +2421,12 @@ Return a regexp string which matches exactly STRING and nothing else.
 
   CHECK_STRING (str);
 
-  temp = (Bufbyte *) alloca (string_length (XSTRING (str)) * 2);
+  temp = (Bufbyte *) alloca (XSTRING_LENGTH (str) * 2);
 
   /* Now copy the data into the new string, inserting escapes. */
 
-  in = string_data (XSTRING (str));
-  end = in + string_length (XSTRING (str));
+  in = XSTRING_DATA (str);
+  end = in + XSTRING_LENGTH (str);
   out = temp; 
 
   for (; in != end; in++)

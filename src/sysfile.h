@@ -289,3 +289,14 @@ extern int sys_unlink (CONST char *path);
 #if !defined (ENCAPSULATE_UNLINK) && defined (DONT_ENCAPSULATE)
 # define sys_unlink unlink
 #endif
+
+#ifdef ENCAPSULATE_EXECVP
+extern int sys_execvp (CONST char *, char * CONST *);
+#endif
+#if defined (ENCAPSULATE_EXECVP) && !defined (DONT_ENCAPSULATE)
+# undef execvp
+# define execvp sys_execvp
+#endif
+#if !defined (ENCAPSULATE_EXECVP) && defined (DONT_ENCAPSULATE)
+# define sys_execvp execvp
+#endif

@@ -2542,8 +2542,8 @@ Does not copy symbols.
       return pure_cons (XCAR (obj), XCDR (obj));
 
     case Lisp_String:
-      return make_pure_string (string_data (XSTRING (obj)),
-			       string_length (XSTRING (obj)),
+      return make_pure_string (XSTRING_DATA (obj),
+			       XSTRING_LENGTH (obj),
 			       XSTRING (obj)->plist,
                                0);
 

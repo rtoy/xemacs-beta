@@ -150,14 +150,14 @@ QueryGeometry (Widget w, XtWidgetGeometry *request, XtWidgetGeometry *reply)
   int mask = request->request_mode & (CWWidth | CWHeight);
 
   struc.request_mode = mask;
-  struc.proposed_width = request->width;
-  struc.proposed_height = request->height;
+  if (mask & CWWidth)  struc.proposed_width  = request->width;
+  if (mask & CWHeight) struc.proposed_height = request->height;
   XtCallCallbackList (w, emw->emacs_manager.query_geometry_callback, &struc);
   reply->request_mode = CWWidth | CWHeight;
-  reply->width = struc.proposed_width;
+  reply->width  = struc.proposed_width;
   reply->height = struc.proposed_height;
-  if (((mask & CWWidth) && (request->width != reply->width))
-      || ((mask & CWHeight) && (request->height != reply->height)))
+  if (((mask & CWWidth)  && (request->width  != reply->width)) ||
+      ((mask & CWHeight) && (request->height != reply->height)))
     return XtGeometryAlmost;
   return XtGeometryYes;
 }
@@ -168,7 +168,7 @@ Resize (Widget w)
   EmacsManagerWidget emw = (EmacsManagerWidget) w;
   EmacsManagerResizeStruct struc;
 
-  struc.width = w->core.width;
+  struc.width  = w->core.width;
   struc.height = w->core.height;
   XtCallCallbackList (w, emw->emacs_manager.resize_callback, &struc);
 }
@@ -232,9 +232,6 @@ ClassInitialize (void)
 void
 EmacsManagerChangeSize (Widget w, Dimension width, Dimension height)
 {
-  Dimension realwidth, realheight;
-  XtGeometryResult res;
-
   if (width == 0)
     width = w->core.width;
   if (height == 0)
@@ -242,13 +239,9 @@ EmacsManagerChangeSize (Widget w, Dimension width, Dimension height)
 
   /* do nothing if we're already that size */
   if (w->core.width != width || w->core.height != height)
-    {
-      res = XtMakeResizeRequest (w, width, height, &realwidth, &realheight);
-      if (res == XtGeometryAlmost)
-	XtMakeResizeRequest (w, realwidth, realheight, NULL, NULL);
-      w->core.width = realwidth;
-      w->core.height = realheight;
-    }
+    if (XtMakeResizeRequest (w, width, height, &w->core.width, &w->core.height)
+	== XtGeometryAlmost)
+      XtMakeResizeRequest (w, w->core.width, w->core.height, NULL, NULL);
 
   Resize (w);
 }

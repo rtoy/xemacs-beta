@@ -1693,6 +1693,9 @@ case "${canonical}" in
   ;;
 
   ## Data General AViiON Machines
+  i586-dg-dgux5.4R4* | i586-dg-dgux5.4.4* )
+    machine=aviion opsys=dgux5-4r4
+  ;;
   m88k-dg-dgux5.4R3* | m88k-dg-dgux5.4.3* )
     machine=aviion opsys=dgux5-4r3
   ;;
@@ -2082,7 +2085,7 @@ case "${canonical}" in
     machine=iris4d opsys=irix4-0
   ;;
   mips-sgi-irix6* )
-    machine=iris4d opsys=irix6-0  NON_GNU_CPP=/lib/cpp
+    machine=iris4d opsys=irix6-0
   ;;
   mips-sgi-irix5.[3-9]* )
     machine=iris4d opsys=irix5-3
@@ -3570,6 +3573,14 @@ if [ "${with_menubars}" = "motif" ] || [ "${with_scrollbars}" = "motif" ] \
    || [ "${with_dialogs}" = "motif" ]; then
   with_motif='yes'
 fi
+if [ "${with_menubars}" = "athena" ] || [ "${with_scrollbars}" = "athena" ] \
+   || [ "${with_dialogs}" = "athena" ]; then
+  with_athena='yes'
+fi
+if [ "${with_menubars}" = "athena3d" ] || [ "${with_scrollbars}" = "athena3d" ] \
+   || [ "${with_dialogs}" = "athena3d" ]; then
+  with_athena='yes'
+fi
 
 # Finish ensuring that we have values for the various toolkit items.
 if [ "x${with_menubars}" = "x" ] || [ "${with_menubars}" = "athena" ]; then
@@ -4096,6 +4107,9 @@ if [ "${LISP_FLOAT_TYPE}" = "yes" ] ; then
 fi
 if [ "${with_motif}" = "yes" ] ; then
   ] AC_DEFINE(LWLIB_USES_MOTIF) [
+fi
+if [ "${with_athena}" = "yes" ] ; then
+  ] AC_DEFINE(LWLIB_USES_ATHENA) [
 fi
 if [ "${with_menubars}" = "lucid" ] ; then
   ] AC_DEFINE(LWLIB_MENUBARS_LUCID) [

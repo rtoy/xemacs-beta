@@ -1,12 +1,12 @@
 ;;; url-irc.el --- IRC URL interface
 ;; Author: wmperry
-;; Created: 1996/10/09 19:00:59
-;; Version: 1.4
+;; Created: 1997/01/10 00:13:05
+;; Version: 1.5
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;

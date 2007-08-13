@@ -1,12 +1,12 @@
 ;;; w3-emulate.el --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/10/09 19:00:59
-;; Version: 1.4
+;; Created: 1997/01/22 16:28:30
+;; Version: 1.6
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -207,8 +207,8 @@
 (define-key w3-lynx-emulation-minor-mode-map "\C-w" 'w3-refresh-buffer)
 (define-key w3-lynx-emulation-minor-mode-map "\\"   'w3-source-document)
 (define-key w3-lynx-emulation-minor-mode-map "!"    'shell)
-(define-key w3-lynx-emulation-minor-mode-map [up]   'w3-back-link)
-(define-key w3-lynx-emulation-minor-mode-map [down] 'w3-forward-link)
+(define-key w3-lynx-emulation-minor-mode-map [up]   'w3-widget-backward)
+(define-key w3-lynx-emulation-minor-mode-map [down] 'w3-widget-forward)
 (define-key w3-lynx-emulation-minor-mode-map [right] 'w3-follow-link)
 (define-key w3-lynx-emulation-minor-mode-map [left] 'w3-backward-in-history)
 

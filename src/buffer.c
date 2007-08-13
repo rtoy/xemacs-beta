@@ -1585,7 +1585,9 @@ set_buffer_internal (struct buffer *b)
 	{
 	  /* Just reference the variable
 	     to cause it to become set for this buffer.  */
-	  (void) find_symbol_value (sym);
+	  /* Use find_symbol_value_quickly to avoid an unnecessary O(n)
+	     lookup. */
+	  (void) find_symbol_value_quickly (XCAR (tail), 1);
 	}
     }
 
@@ -1593,9 +1595,7 @@ set_buffer_internal (struct buffer *b)
 
   if (old_buf)
     {
-      for (tail = old_buf->local_var_alist; 
-           !NILP (tail);
-           tail = XCDR (tail))
+      LIST_LOOP (tail, old_buf->local_var_alist)
 	{
 	  Lisp_Object sym = XCAR (XCAR (tail));
 	  Lisp_Object valcontents = XSYMBOL (sym)->value;
@@ -1604,7 +1604,11 @@ set_buffer_internal (struct buffer *b)
 	    {
 	      /* Just reference the variable
 		 to cause it to become set for this buffer.  */
-	      (void) find_symbol_value (sym);
+	      /* Use find_symbol_value_quickly with find_it_p as 0 to avoid an
+		 unnecessary O(n) lookup which is guaranteed to be worst case.
+		 Any symbols which are local are guaranteed to have been
+		 handled in the previous loop, above. */
+	      (void) find_symbol_value_quickly (sym, 0);
 	    }
 	}
     }

@@ -1,12 +1,12 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/01/03 16:47:06
-;; Version: 1.64
+;; Created: 1997/01/31 04:28:42
+;; Version: 1.76
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -30,7 +30,7 @@
 ;;; Variable definitions for w3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defconst w3-version-number
-  (let ((x "p3.0.43"))
+  (let ((x "p3.0.52"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -38,7 +38,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/01/03 16:47:06"))
+(defconst w3-version-date (let ((x "1997/01/31 04:28:42"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -119,20 +119,25 @@ format as the Mosaic extra documents.menu.")
 (defvar w3-dump-to-disk nil
   "*If non-nil, all W3 pages loaded will be dumped to disk.")
 
-(defvar w3-echo-link 'url
-  "Whether to display the URL of a link when tabbing through links.
-Possible values are:
+(defvar w3-echo-link '(title url text name)
+  "*Whether to display the URL of a link when tabbing through links.
+Value is a list of one or more of the following symbols:
 
-  url    == show the url of the target in the minibuffer
-  text   == show the text of the link in the minibuffer
-  title  == show the title attribute of the link in the minibuffer,
-            or the url if there is no title
-  nil    == show nothing")
+  url    == url of the target
+  text   == text of the link
+  title  == title attribute of the link
+  name   == name or id attribute of the link
+
+If none of the information is available, nothing will be shown for the link
+in menus, etc.")
   
 (defvar w3-horizontal-rule-char ?-
   "*The character to use to create a horizontal rule.
 Must be the character's code, not a string.  This character is
 replicated across the screen to create a division.")
+
+(defvar w3-fetch-with-default t
+  "*Whether `w3-fetch' should determine a good starting URL as a default.")
 
 (defvar w3-hotlist-file nil
   "*Hotlist filename.
@@ -1036,6 +1041,7 @@ returns.")
 (define-key w3-mode-map "\M-s"	   'w3-search)
 (define-key w3-mode-map "\M-\r"    'w3-follow-inlined-image)
 (define-key w3-mode-map "\r"       'w3-widget-button-press)
+(define-key w3-mode-map "\n"       'w3-widget-button-press)
 (define-key w3-mode-map "b"	   'w3-widget-backward)
 (define-key w3-mode-map "c"        'w3-mail-document-author)
 (define-key w3-mode-map "f"	   'w3-widget-forward)

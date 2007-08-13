@@ -1,8 +1,8 @@
 ;;; mule-sysdp.el --- consolidate MULE-version dependencies in one file.
 
-;; Copyright (C) 1996 William Perry
+;; Copyright (c) 1996, 1997 William Perry
 
-;; Author: William Perry <wmperry@aventail.com>
+;; Author: William Perry <wmperry@cs.indiana.edu>
 ;; Keywords: lisp, tools
 
 ;; The purpose of this file is to eliminate the cruftiness that
@@ -51,6 +51,8 @@
     (otherwise nil)))
 
 (defun mule-code-convert-region (st nd code)
+  (if (and (listp code) (car code))
+      (setq code (car code)))
   (case mule-sysdep-version
     (2.3
      (setq mc-flag t)
@@ -58,11 +60,13 @@
      (set-file-coding-system code))
     (2.4
      (setq enable-multibyte-characters t)
-     (if (eq code 'coding-system-automatic)
+     (if (memq code '(autodetect coding-system-automatic))
 	 nil
        (decode-coding-region st nd code)
        (set-buffer-file-coding-system code)))
     (xemacs
+     (if (and (listp code) (not (car code)))
+	 (setq code 'autodetect))
      (decode-coding-region (point-min) (point-max) code)
      (set-file-coding-system code))
     (otherwise

@@ -554,7 +554,10 @@ See the variable `font-lock-keywords' for customization."
 	  (t
 	   (remove-hook 'after-change-functions
 			'font-lock-after-change-function t)
-	   (remove-hook 'pre-idle-hook 'font-lock-pre-idle-hook)
+	   ;; We have no business doing this here, since 
+	   ;; pre-idle-hook is global.	Other buffers may
+	   ;; still be in font-lock mode.  -dkindred@cs.cmu.edu
+	   ;; (remove-hook 'pre-idle-hook 'font-lock-pre-idle-hook)
 	   ))
     (set (make-local-variable 'font-lock-mode) on-p)
     (cond (on-p

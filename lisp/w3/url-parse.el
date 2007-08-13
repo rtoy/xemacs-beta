@@ -1,12 +1,12 @@
 ;;; url-parse.el --- Uniform Resource Locator parser
 ;; Author: wmperry
-;; Created: 1996/12/26 23:25:55
-;; Version: 1.3
+;; Created: 1997/01/23 16:48:58
+;; Version: 1.6
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -108,7 +108,8 @@
 
 (defun url-generic-parse-url (url)
   "Return a vector of the parts of URL.
-Format is [protocol username password hostname portnumber file reference]"
+Format is:
+[proto username password hostname portnumber file reference attributes fullp]"
   (cond
    ((null url)
     (make-vector 9 nil))
@@ -152,7 +153,6 @@ Format is [protocol username password hostname portnumber file reference]"
 	      (forward-char 2)
 	      (setq save-pos (point))
 	      (skip-chars-forward "^/")
-	      (downcase-region save-pos (point))
 	      (setq host (buffer-substring save-pos (point)))
 	      (if (string-match "^\\([^@]+\\)@" host)
 		  (setq user (url-match host 1)
@@ -165,7 +165,8 @@ Format is [protocol username password hostname portnumber file reference]"
 			host (substring host 0 (match-beginning 0))))
 	      (if (string-match ":$" host)
 		  (setq host (substring host 0 (match-beginning 0))))
-	      (setq save-pos (point))))
+	      (setq host (downcase host)
+		    save-pos (point))))
 	;; Now check for references
 	(setq save-pos (point))
 	(skip-chars-forward "^#")

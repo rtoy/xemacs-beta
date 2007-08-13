@@ -1,6 +1,6 @@
 ;;; viper-util.el --- Utilities used by viper.el
 
-;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -22,254 +22,32 @@
 
 ;; Code
 
-(require 'ring)
-
 ;; Compiler pacifier
 (defvar vip-overriding-map)
 (defvar pm-color-alist)
 (defvar zmacs-region-stays)
-(defvar vip-search-face)
 (defvar vip-minibuffer-current-face)
 (defvar vip-minibuffer-insert-face)
 (defvar vip-minibuffer-vi-face)
 (defvar vip-minibuffer-emacs-face)
 (defvar vip-replace-overlay-face)
-(defvar vip-minibuffer-overlay)
-(defvar vip-replace-overlay)
-(defvar vip-search-overlay)
-(defvar vip-replace-overlay-cursor-color)
-(defvar vip-intermediate-command)
-(defvar vip-use-replace-region-delimiters)
 (defvar vip-fast-keyseq-timeout)
-(defvar vip-related-files-and-buffers-ring)
-(defvar vip-saved-cursor-color)
 (defvar ex-unix-type-shell)
 (defvar ex-unix-type-shell-options)
 (defvar vip-ex-tmp-buf-name)
+
+(require 'cl)
+(require 'ring)
+
+(and noninteractive
+     (eval-when-compile
+       (let ((load-path (cons (expand-file-name ".") load-path)))
+	 (or (featurep 'viper-init)
+	     (load "viper-init.el" nil nil 'nosuffix))
+	 )))
 ;; end pacifier
 
-;; Is it XEmacs?
-(defconst vip-xemacs-p (string-match "\\(Lucid\\|XEmacs\\)" emacs-version))
-;; Is it Emacs?
-(defconst vip-emacs-p (not vip-xemacs-p))
-;; Tell whether we are running as a window application or on a TTY
-(defsubst vip-device-type ()
-  (if vip-emacs-p
-      window-system
-    (device-type (selected-device))))
-;; in XEmacs: device-type is tty on tty and stream in batch.
-(defun vip-window-display-p ()
-  (and (vip-device-type) (not (memq (vip-device-type) '(tty stream pc)))))
-
-(defvar vip-ms-style-os-p (memq system-type '(ms-dos windows-nt windows-95))
-  "Tells if Emacs is running under an MS-style OS: ms-dos, windows-nt, W95.")
-(defvar vip-vms-os-p (memq system-type '(vax-vms axp-vms))
-  "Tells if Emacs is running under VMS.")
-
-(defvar vip-force-faces nil
-  "If t, Viper will think that it is running on a display that supports faces.
-This is provided as a temporary relief for users of face-capable displays
-that Viper doesn't know about.")
-
-(defun vip-has-face-support-p ()
-  (cond ((vip-window-display-p))
-	(vip-force-faces)
-	(vip-emacs-p (memq (vip-device-type) '(pc)))
-	(vip-xemacs-p (memq (vip-device-type) '(tty pc)))))
-
-
-;;; Macros
-
-(defmacro vip-deflocalvar (var default-value &optional documentation)
-  (` (progn
-       (defvar (, var) (, default-value)
-	       (, (format "%s\n\(buffer local\)" documentation)))
-       (make-variable-buffer-local '(, var))
-     )))
-
-(defmacro vip-loop (count body)
-  "(vip-loop COUNT BODY) Execute BODY COUNT times."
-  (list 'let (list (list 'count count))
-	(list 'while '(> count 0)
-	      body
-	      '(setq count (1- count))
-	      )))
-
-(defmacro vip-buffer-live-p (buf)
-  (` (and (, buf) (get-buffer (, buf)) (buffer-name (get-buffer (, buf))))))
-  
-;; return buffer-specific macro definition, given a full macro definition
-(defmacro vip-kbd-buf-alist (macro-elt)
-  (` (nth 1 (, macro-elt))))
-;; get a pair: (curr-buffer . macro-definition)
-(defmacro vip-kbd-buf-pair (macro-elt)
-  (` (assoc (buffer-name) (vip-kbd-buf-alist (, macro-elt)))))
-;; get macro definition for current buffer
-(defmacro vip-kbd-buf-definition (macro-elt)
-  (` (cdr (vip-kbd-buf-pair (, macro-elt)))))
-  
-;; return mode-specific macro definitions, given a full macro definition
-(defmacro vip-kbd-mode-alist (macro-elt)
-  (` (nth 2 (, macro-elt))))
-;; get a pair: (major-mode . macro-definition)
-(defmacro vip-kbd-mode-pair (macro-elt)
-  (` (assoc major-mode (vip-kbd-mode-alist (, macro-elt)))))
-;; get macro definition for the current major mode
-(defmacro vip-kbd-mode-definition (macro-elt)
-  (` (cdr (vip-kbd-mode-pair (, macro-elt)))))
-  
-;; return global macro definition, given a full macro definition
-(defmacro vip-kbd-global-pair (macro-elt)
-  (` (nth 3 (, macro-elt))))
-;; get global macro definition from an elt of macro-alist
-(defmacro vip-kbd-global-definition (macro-elt)
-  (` (cdr (vip-kbd-global-pair (, macro-elt)))))
-  
-;; last elt of a sequence
-(defsubst vip-seq-last-elt (seq)
-  (elt seq (1- (length seq))))
-  
-;; Check if arg is a valid character for register
-;; TYPE is a list that can contain `letter', `Letter', and `digit'.
-;; Letter means lowercase letters, Letter means uppercase letters, and
-;; digit means digits from 1 to 9.
-;; If TYPE is nil, then down/uppercase letters and digits are allowed.
-(defun vip-valid-register (reg &optional type)
-  (or type (setq type '(letter Letter digit)))
-  (or (if (memq 'letter type)
-	  (and (<= ?a reg) (<= reg ?z)))
-      (if (memq 'digit type)
-	  (and (<= ?1 reg) (<= reg ?9)))
-      (if (memq 'Letter type)
-	  (and (<= ?A reg) (<= reg ?Z)))
-      ))
-      
-;; checks if object is a marker, has a buffer, and points to within that buffer
-(defun vip-valid-marker (marker)
-  (if (and (markerp marker) (marker-buffer marker))
-      (let ((buf (marker-buffer marker))
-	    (pos (marker-position marker)))
-	(save-excursion
-	  (set-buffer buf)
-	  (and (<= pos (point-max)) (<= (point-min) pos))))))
-  
-
-(defvar vip-minibuffer-overlay-priority 300)
-(defvar vip-replace-overlay-priority 400)
-(defvar vip-search-overlay-priority 500)
-  
-
-;;; Viper minor modes
-
-;; This is not local in Emacs, so we make it local.
-;; This must be local because although the stack of minor modes can be the same
-;; for all buffers, the associated *keymaps* can be different. In Viper,
-;; vip-vi-local-user-map, vip-insert-local-user-map, and others can have
-;; different keymaps for different buffers.
-;; Also, the keymaps associated with vip-vi/insert-state-modifier-minor-mode
-;; can be different.
-(make-variable-buffer-local 'minor-mode-map-alist)
-
-;; Mode for vital things like \e, C-z.
-(vip-deflocalvar vip-vi-intercept-minor-mode nil)
-
-(vip-deflocalvar vip-vi-basic-minor-mode nil
-  "Viper's minor mode for Vi bindings.")
-  
-(vip-deflocalvar vip-vi-local-user-minor-mode nil
-  "Auxiliary minor mode for user-defined local bindings in Vi state.")
-
-(vip-deflocalvar vip-vi-global-user-minor-mode nil
-  "Auxiliary minor mode for user-defined global bindings in Vi state.")
-
-(vip-deflocalvar vip-vi-state-modifier-minor-mode nil
-  "Minor mode used to make major-mode-specific modification to Vi state.")
-
-(vip-deflocalvar vip-vi-diehard-minor-mode nil
-  "This minor mode is in effect when the user wants Viper to be Vi.")
-
-(vip-deflocalvar vip-vi-kbd-minor-mode nil
-  "Minor mode for Ex command macros in Vi state.
-The corresponding keymap stores key bindings of Vi macros defined with
-the Ex command :map.")
-
-;; Mode for vital things like \e, C-z.
-(vip-deflocalvar vip-insert-intercept-minor-mode nil)
-
-(vip-deflocalvar vip-insert-basic-minor-mode nil
-  "Viper's minor mode for bindings in Insert mode.")
-
-(vip-deflocalvar vip-insert-local-user-minor-mode nil
-  "Auxiliary minor mode for buffer-local user-defined bindings in Insert state.
-This is a way to overshadow normal Insert mode bindings locally to certain
-designated buffers.")
-
-(vip-deflocalvar vip-insert-global-user-minor-mode nil
-  "Auxiliary minor mode for global user-defined bindings in Insert state.")
-
-(vip-deflocalvar vip-insert-state-modifier-minor-mode nil
-  "Minor mode used to make major-mode-specific modification to Insert state.")
-
-(vip-deflocalvar vip-insert-diehard-minor-mode nil
-  "Minor mode that simulates Vi very closely.
-Not recommened, except for the novice user.")
-
-(vip-deflocalvar vip-insert-kbd-minor-mode nil
-"Minor mode for Ex command macros Insert state.
-The corresponding keymap stores key bindings of Vi macros defined with
-the Ex command :map!.")
-
-(vip-deflocalvar vip-replace-minor-mode nil
-  "Minor mode in effect in replace state (cw, C, and the like commands).")
-
-;; Mode for vital things like \C-z and \C-x)
-;; This is t, by default. So, any new buffer will have C-z defined as
-;; switch to Vi, unless we switched states in this buffer
-(vip-deflocalvar vip-emacs-intercept-minor-mode t)
-  
-(vip-deflocalvar vip-emacs-local-user-minor-mode t
-  "Minor mode for local user bindings effective in Emacs state.
-Users can use it to override Emacs bindings when Viper is in its Emacs
-state.")  
-  
-(vip-deflocalvar vip-emacs-global-user-minor-mode t
-  "Minor mode for global user bindings in effect in Emacs state.
-Users can use it to override Emacs bindings when Viper is in its Emacs
-state.")  
-
-(vip-deflocalvar vip-emacs-kbd-minor-mode t
-  "Minor mode for Vi style macros in Emacs state.
-The corresponding keymap stores key bindings of Vi macros defined with
-`vip-record-kbd-macro' command. There is no Ex-level command to do this
-interactively.")
-
-(vip-deflocalvar vip-emacs-state-modifier-minor-mode t
-  "Minor mode used to make major-mode-specific modification to Emacs state.
-For instance, a Vi purist may want to bind `dd' in Dired mode to a function
-that deletes a file.")
-
-(vip-deflocalvar vip-vi-minibuffer-minor-mode nil
-   "Minor mode that forces Vi-style when the Minibuffer is in Vi state.")
-
-(vip-deflocalvar vip-insert-minibuffer-minor-mode nil
-   "Minor mode that forces Vi-style when the Minibuffer is in Insert state.")
-  
-
-
-;; Some common error messages
-
-(defconst vip-SpuriousText "Spurious text after command"  "")
-(defconst vip-BadExCommand "Not an editor command"   "")
-(defconst vip-InvalidCommandArgument "Invalid command argument"   "")
-(defconst vip-NoPrevSearch "No previous search string"   "")
-(defconst vip-EmptyRegister "`%c': Nothing in this register"   "")
-(defconst vip-InvalidRegister "`%c': Invalid register"   "")
-(defconst vip-EmptyTextmarker "`%c': Text marker doesn't point anywhere"   "")
-(defconst vip-InvalidTextmarker "`%c': Invalid text marker"   "")
-(defconst vip-InvalidViCommand "Invalid command"   "")
-(defconst vip-BadAddress "Ill-formed address"   "")
-(defconst vip-FirstAddrExceedsSecond "First address exceeds second"   "")
-(defconst vip-NoFileSpecified "No file specified"   "")
+(require 'viper-init)
 
 
 
@@ -360,7 +138,7 @@ that deletes a file.")
       (modify-frame-parameters
        (selected-frame) (list (cons 'cursor-color new-color)))))
 	 
-(defsubst vip-save-cursor-color ()
+(defun vip-save-cursor-color ()
   (if (and (vip-window-display-p) (vip-color-display-p))
       (let ((color (vip-get-cursor-color)))
 	(if (and (stringp color) (vip-color-defined-p color)
@@ -374,6 +152,115 @@ that deletes a file.")
 (defsubst vip-restore-cursor-color-after-insert ()
   (vip-change-cursor-color vip-saved-cursor-color))
 	 
+
+;; Face-saving tricks
+
+(defvar vip-search-face
+  (if (vip-has-face-support-p)
+      (progn
+	(make-face 'vip-search-face)
+	(vip-hide-face 'vip-search-face)
+	(or (face-differs-from-default-p 'vip-search-face)
+	    ;; face wasn't set in .vip or .Xdefaults
+	    (if (vip-can-use-colors "Black" "khaki")
+		(progn
+		  (set-face-background 'vip-search-face "khaki")
+		  (set-face-foreground 'vip-search-face "Black"))
+	      (set-face-underline-p 'vip-search-face t)
+	      (vip-set-face-pixmap 'vip-search-face vip-search-face-pixmap)))
+	'vip-search-face))
+  "*Face used to flash out the search pattern.")
+  
+(defvar vip-replace-overlay-face
+  (if (vip-has-face-support-p)
+      (progn
+	(make-face 'vip-replace-overlay-face)
+	(vip-hide-face 'vip-replace-overlay-face)
+	(or (face-differs-from-default-p 'vip-replace-overlay-face)
+	    (progn
+	      (if (vip-can-use-colors "darkseagreen2" "Black")
+		  (progn
+		    (set-face-background
+		     'vip-replace-overlay-face "darkseagreen2")
+		    (set-face-foreground 'vip-replace-overlay-face "Black")))
+	      (set-face-underline-p 'vip-replace-overlay-face t)
+	      (vip-set-face-pixmap
+	       'vip-replace-overlay-face vip-replace-overlay-pixmap)))
+	'vip-replace-overlay-face))
+  "*Face for highlighting replace regions on a window display.")
+
+(defvar vip-minibuffer-emacs-face
+  (if (vip-has-face-support-p)
+      (progn
+	(make-face 'vip-minibuffer-emacs-face)
+	(vip-hide-face 'vip-minibuffer-emacs-face)
+	(or (face-differs-from-default-p 'vip-minibuffer-emacs-face)
+	    ;; face wasn't set in .vip or .Xdefaults
+	    (if vip-vi-style-in-minibuffer
+		;; emacs state is an exception in the minibuffer
+		(if (vip-can-use-colors "darkseagreen2" "Black")
+		    (progn
+		      (set-face-background
+		       'vip-minibuffer-emacs-face "darkseagreen2")
+		      (set-face-foreground
+		       'vip-minibuffer-emacs-face "Black"))
+		  (copy-face 'modeline 'vip-minibuffer-emacs-face))
+	      ;; emacs state is the main state in the minibuffer
+	      (if (vip-can-use-colors "Black" "pink")
+		  (progn
+		    (set-face-background 'vip-minibuffer-emacs-face "pink") 
+		    (set-face-foreground
+		     'vip-minibuffer-emacs-face "Black"))
+		(copy-face 'italic 'vip-minibuffer-emacs-face))
+	      ))
+	'vip-minibuffer-emacs-face))
+  "Face used in the Minibuffer when it is in Emacs state.")
+    
+(defvar vip-minibuffer-insert-face
+  (if (vip-has-face-support-p)
+      (progn
+	(make-face 'vip-minibuffer-insert-face)
+	(vip-hide-face 'vip-minibuffer-insert-face)
+	(or (face-differs-from-default-p 'vip-minibuffer-insert-face)
+	    (if vip-vi-style-in-minibuffer
+		(if (vip-can-use-colors "Black" "pink")
+		    (progn
+		      (set-face-background 'vip-minibuffer-insert-face "pink") 
+		      (set-face-foreground
+		       'vip-minibuffer-insert-face "Black"))
+		  (copy-face 'italic 'vip-minibuffer-insert-face))
+	      ;; If Insert state is an exception
+	      (if (vip-can-use-colors "darkseagreen2" "Black")
+		  (progn
+		    (set-face-background
+		     'vip-minibuffer-insert-face "darkseagreen2")
+		    (set-face-foreground
+		     'vip-minibuffer-insert-face "Black"))
+		(copy-face 'modeline 'vip-minibuffer-insert-face))
+	      (vip-italicize-face 'vip-minibuffer-insert-face)))
+	'vip-minibuffer-insert-face))
+  "Face used in the Minibuffer when it is in Insert state.")
+    
+(defvar vip-minibuffer-vi-face
+  (if (vip-has-face-support-p)
+      (progn
+	(make-face 'vip-minibuffer-vi-face)
+	(vip-hide-face 'vip-minibuffer-vi-face)
+	(or (face-differs-from-default-p 'vip-minibuffer-vi-face)
+	    (if vip-vi-style-in-minibuffer
+		(if (vip-can-use-colors "Black" "grey")
+		    (progn
+		      (set-face-background 'vip-minibuffer-vi-face "grey")
+		      (set-face-foreground 'vip-minibuffer-vi-face "Black"))
+		  (copy-face 'bold 'vip-minibuffer-vi-face))
+	      (copy-face 'bold 'vip-minibuffer-vi-face)
+	      (invert-face 'vip-minibuffer-vi-face)))
+	'vip-minibuffer-vi-face))
+  "Face used in the Minibuffer when it is in Vi state.")
+    
+;; the current face to be used in the minibuffer
+(vip-deflocalvar vip-minibuffer-current-face vip-minibuffer-emacs-face "")
+   
 
 ;; Check the current version against the major and minor version numbers
 ;; using op: cur-vers op major.minor If emacs-major-version or
@@ -403,8 +290,8 @@ that deletes a file.")
 	  ((memq op '(< <=)) t))))
 	  
 ;;;; warn if it is a wrong version of emacs
-;;(if (or (vip-check-version '< 19 29 'emacs)
-;;	(vip-check-version '< 19 12 'xemacs))
+;;(if (or (vip-check-version '< 19 35 'emacs)
+;;	(vip-check-version '< 19 15 'xemacs))
 ;;    (progn
 ;;      (with-output-to-temp-buffer " *vip-info*"
 ;;	(switch-to-buffer " *vip-info*")
@@ -413,9 +300,9 @@ that deletes a file.")
 ;;
 ;;This version of Viper requires 
 ;;
-;;\t Emacs 19.29 and higher
+;;\t Emacs 19.35 and higher
 ;;\t OR
-;;\t XEmacs 19.12 and higher
+;;\t XEmacs 19.15 and higher
 ;;
 ;;It is unlikely to work under Emacs version %s
 ;;that you are using... " emacs-version))
@@ -674,13 +561,6 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
       (setq tmp (cdr tmp)))
     (reverse (apply 'append tmp2))))
 
-(defun vip-convert-standard-file-name (fname)
-  (if vip-emacs-p
-      (convert-standard-filename fname)
-    ;; hopefully, XEmacs adds this functionality
-    fname))
-
-
 
 ;;; Insertion ring
 
@@ -892,7 +772,15 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
     (vip-overlay-put
      vip-replace-overlay (if vip-emacs-p 'evaporate 'detachable) nil)
     (vip-overlay-put 
-     vip-replace-overlay 'priority vip-replace-overlay-priority)) 
+     vip-replace-overlay 'priority vip-replace-overlay-priority)
+    ;; If Emacs will start supporting overlay maps, as it currently supports
+    ;; text-property maps, we could do away with vip-replace-minor-mode and
+    ;; just have keymap attached to replace overlay.
+    ;;(vip-overlay-put
+    ;; vip-replace-overlay
+    ;; (if vip-xemacs-p 'keymap 'local-map)
+    ;; vip-replace-map)
+    ) 
   (if (vip-has-face-support-p)
       (vip-overlay-put vip-replace-overlay 'face vip-replace-overlay-face))
   (vip-save-cursor-color)
@@ -900,7 +788,7 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
   )
   
       
-(defsubst vip-set-replace-overlay-glyphs (before-glyph after-glyph)
+(defun vip-set-replace-overlay-glyphs (before-glyph after-glyph)
   (if (or (not (vip-has-face-support-p))
 	  vip-use-replace-region-delimiters)
       (let ((before-name (if vip-xemacs-p 'begin-glyph 'before-string))
@@ -908,7 +796,7 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
 	(vip-overlay-put vip-replace-overlay before-name before-glyph)
 	(vip-overlay-put vip-replace-overlay after-name after-glyph))))
   
-(defsubst vip-hide-replace-overlay ()
+(defun vip-hide-replace-overlay ()
   (vip-set-replace-overlay-glyphs nil nil)
   (vip-restore-cursor-color-after-replace)
   (vip-restore-cursor-color-after-insert)
@@ -979,7 +867,15 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
   (let ((ESC-keys '(?\e (control \[) escape))
 	(key (vip-event-key event)))
     (member key ESC-keys)))
-	
+
+;; checks if object is a marker, has a buffer, and points to within that buffer
+(defun vip-valid-marker (marker)
+  (if (and (markerp marker) (marker-buffer marker))
+      (let ((buf (marker-buffer marker))
+	    (pos (marker-position marker)))
+	(save-excursion
+	  (set-buffer buf)
+	  (and (<= pos (point-max)) (<= (point-min) pos))))))
   
 (defsubst vip-mark-marker ()
   (if vip-xemacs-p
@@ -1003,6 +899,21 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
 (defsubst vip-leave-region-active ()
   (if vip-xemacs-p
       (setq zmacs-region-stays t)))
+
+;; Check if arg is a valid character for register
+;; TYPE is a list that can contain `letter', `Letter', and `digit'.
+;; Letter means lowercase letters, Letter means uppercase letters, and
+;; digit means digits from 1 to 9.
+;; If TYPE is nil, then down/uppercase letters and digits are allowed.
+(defun vip-valid-register (reg &optional type)
+  (or type (setq type '(letter Letter digit)))
+  (or (if (memq 'letter type)
+	  (and (<= ?a reg) (<= reg ?z)))
+      (if (memq 'digit type)
+	  (and (<= ?1 reg) (<= reg ?9)))
+      (if (memq 'Letter type)
+	  (and (<= ?A reg) (<= reg ?Z)))
+      ))
 
     
 (defsubst vip-events-to-keys (events)
@@ -1103,40 +1014,44 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
 (defun vip-event-key (event)
   (or (and event (eventp event))
       (error "vip-event-key: Wrong type argument, eventp, %S" event))
-  (let ((mod (event-modifiers event))
-	basis)
-    (setq basis
-	  (cond
-	   (vip-xemacs-p
-	    (cond ((key-press-event-p event)
-		   (event-key event))
-		  ((button-event-p event)
-		   (concat "mouse-" (prin1-to-string (event-button event))))
-		  (t 
-		   (error "vip-event-key: Unknown event, %S" event))))
-	   (t 
-	    ;; Emacs doesn't handle capital letters correctly, since
-	    ;; \S-a isn't considered the same as A (it behaves as
-	    ;; plain `a' instead). So we take care of this here
-	    (cond ((and (vip-characterp event) (<= ?A event) (<= event ?Z))
-		   (setq mod nil
-			 event event))
-		  ;; Emacs has the oddity whereby characters 128+char
-		  ;; represent M-char *if* this appears inside a string.
-		  ;; So, we convert them manually to (meta char).
-		  ((and (vip-characterp event) (< ?\C-? event) (<= event 255))
-		   (setq mod '(meta)
-			 event (- event ?\C-? 1)))
-		  (t (event-basic-type event)))
-	    )))
-    (if (vip-characterp basis)
-	(setq basis
-	      (if (= basis ?\C-?)
-		  (list 'control '\?) ; taking care of an emacs bug
-		(intern (char-to-string basis)))))
-    (if mod
-	(append mod (list basis))
-      basis)))
+  (when (cond (vip-xemacs-p (or (key-press-event-p event)
+				(mouse-event-p event)))
+	      (t t))
+    (let ((mod (event-modifiers event))
+	  basis)
+      (setq basis
+	    (cond
+	     (vip-xemacs-p
+	      (cond ((key-press-event-p event)
+		     (event-key event))
+		    ((button-event-p event)
+		     (concat "mouse-" (prin1-to-string (event-button event))))
+		    (t 
+		     (error "vip-event-key: Unknown event, %S" event))))
+	     (t 
+	      ;; Emacs doesn't handle capital letters correctly, since
+	      ;; \S-a isn't considered the same as A (it behaves as
+	      ;; plain `a' instead). So we take care of this here
+	      (cond ((and (vip-characterp event) (<= ?A event) (<= event ?Z))
+		     (setq mod nil
+			   event event))
+		    ;; Emacs has the oddity whereby characters 128+char
+		    ;; represent M-char *if* this appears inside a string.
+		    ;; So, we convert them manually to (meta char).
+		    ((and (vip-characterp event)
+			  (< ?\C-? event) (<= event 255))
+		     (setq mod '(meta)
+			   event (- event ?\C-? 1)))
+		    (t (event-basic-type event)))
+	      )))
+      (if (vip-characterp basis)
+	  (setq basis
+		(if (= basis ?\C-?)
+		    (list 'control '\?) ; taking care of an emacs bug
+		  (intern (char-to-string basis)))))
+      (if mod
+	  (append mod (list basis))
+	basis))))
     
 (defun vip-key-to-emacs-key (key)
   (let (key-name char-p modifiers mod-char-list base-key base-key-name)
@@ -1303,7 +1218,7 @@ Must be called in order for changes to `vip-syntax-preference' to take effect."
 		    (append (vconcat vip-ALPHA-char-class) nil)))))
     ))
 
-(defsubst vip-looking-at-separator ()
+(defun vip-looking-at-separator ()
   (let ((char (char-after (point))))
     (if char
 	(or (eq char ?\n) ; RET is always a separator in Vi
@@ -1313,7 +1228,7 @@ Must be called in order for changes to `vip-syntax-preference' to take effect."
 (defsubst vip-looking-at-alphasep (&optional addl-chars)
   (or (vip-looking-at-separator) (vip-looking-at-alpha addl-chars)))
 
-(defsubst vip-skip-alpha-forward (&optional addl-chars)
+(defun vip-skip-alpha-forward (&optional addl-chars)
   (or (stringp addl-chars) (setq addl-chars ""))
   (vip-skip-syntax
    'forward 
@@ -1324,7 +1239,7 @@ Must be called in order for changes to `vip-syntax-preference' to take effect."
 	  (concat vip-strict-ALPHA-chars addl-chars))
 	 (t addl-chars))))
 
-(defsubst vip-skip-alpha-backward (&optional addl-chars)
+(defun vip-skip-alpha-backward (&optional addl-chars)
   (or (stringp addl-chars) (setq addl-chars ""))
   (vip-skip-syntax
    'backward 
@@ -1351,14 +1266,14 @@ Must be called in order for changes to `vip-syntax-preference' to take effect."
     (funcall func (concat "^" vip-SEP-char-class)
 	     (vip-line-pos (if (eq direction 'forward) 'end 'start)))))
 
-(defsubst vip-skip-nonalphasep-forward ()
+(defun vip-skip-nonalphasep-forward ()
   (if (eq vip-syntax-preference 'strict-vi)
       (skip-chars-forward
        (concat "^" vip-strict-SEP-chars vip-strict-ALPHA-chars))
     (skip-syntax-forward
      (concat
       "^" vip-ALPHA-char-class vip-SEP-char-class) (vip-line-pos 'end))))
-(defsubst vip-skip-nonalphasep-backward ()
+(defun vip-skip-nonalphasep-backward ()
   (if (eq vip-syntax-preference 'strict-vi)
       (skip-chars-backward
        (concat "^" vip-strict-SEP-chars vip-strict-ALPHA-chars))

@@ -347,8 +347,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 
   for (passcount = !!all_flag; NILP (bestmatch) && passcount < 2; passcount++)
     {
-      d = opendir ((char *)
-		   XSTRING_DATA (Fdirectory_file_name (dirname)));
+      d = opendir ((char *) XSTRING_DATA (Fdirectory_file_name (dirname)));
       if (!d)
 	report_file_error ("Opening directory", list1 (dirname));
 

@@ -91,7 +91,7 @@ wrong_type_argument (Lisp_Object predicate, Lisp_Object value)
 	 if (CHARP (value) && EQ (predicate, Qstringp))
 	   return Fchar_to_string (value);
 	}
-#endif
+#endif /* MOCKLISP_SUPPORT */
       value = Fsignal (Qwrong_type_argument, list2 (predicate, value));
       tem = call1 (predicate, value);
     }
@@ -178,7 +178,9 @@ sign_extend_lisp_int (EMACS_INT num)
 Lisp_Object
 make_char (Emchar num)
 {
-  return make_int (num);
+  Lisp_Object val;
+  val = make_int (num);
+  return val;
 }
 
 /* Data type predicates */
@@ -189,9 +191,7 @@ T if the two args are the same Lisp object.
   (obj1, obj2)
      Lisp_Object obj1, obj2;
 {
-  if (EQ (obj1, obj2))
-    return Qt;
-  return Qnil;
+  return EQ (obj1, obj2) ? Qt : Qnil;
 }
 
 DEFUN ("null", Fnull, Snull, 1, 1, 0 /*
@@ -200,9 +200,7 @@ T if OBJECT is nil.
   (object)
      Lisp_Object object;
 {
-  if (NILP (object))
-    return Qt;
-  return Qnil;
+  return NILP (object) ? Qt : Qnil;
 }
 
 DEFUN ("consp", Fconsp, Sconsp, 1, 1, 0 /*
@@ -211,9 +209,7 @@ T if OBJECT is a cons cell.
   (object)
      Lisp_Object object;
 {
-  if (CONSP (object))
-    return Qt;
-  return Qnil;
+  return CONSP (object) ? Qt : Qnil;
 }
 
 DEFUN ("atom", Fatom, Satom, 1, 1, 0 /*
@@ -222,9 +218,7 @@ T if OBJECT is not a cons cell.  This includes nil.
   (object)
      Lisp_Object object;
 {
-  if (CONSP (object))
-    return Qnil;
-  return Qt;
+  return CONSP (object) ? Qnil : Qt;
 }
 
 DEFUN ("listp", Flistp, Slistp, 1, 1, 0 /*
@@ -233,9 +227,7 @@ T if OBJECT is a list.  This includes nil.
   (object)
      Lisp_Object object;
 {
-  if (CONSP (object) || NILP (object))
-    return Qt;
-  return Qnil;
+  return (CONSP (object) || NILP (object)) ? Qt : Qnil;
 }
 
 DEFUN ("nlistp", Fnlistp, Snlistp, 1, 1, 0 /*
@@ -244,9 +236,7 @@ T if OBJECT is not a list.  Lists include nil.
   (object)
      Lisp_Object object;
 {
-  if (CONSP (object) || NILP (object))
-    return Qnil;
-  return Qt;
+  return (CONSP (object) || NILP (object)) ? Qnil : Qt;
 }
 
 DEFUN ("symbolp", Fsymbolp, Ssymbolp, 1, 1, 0 /*
@@ -255,9 +245,7 @@ T if OBJECT is a symbol.
   (object)
      Lisp_Object object;
 {
-  if (SYMBOLP (object))
-    return Qt;
-  return Qnil;
+  return SYMBOLP (object) ? Qt : Qnil;
 }
 
 DEFUN ("keywordp", Fkeywordp, Skeywordp, 1, 1, 0 /*
@@ -266,9 +254,7 @@ T if OBJECT is a keyword.
   (object)
      Lisp_Object object;
 {
-  if (KEYWORDP (object))
-    return Qt;
-  return Qnil;
+  return KEYWORDP (object) ? Qt : Qnil;
 }
 
 DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0 /*
@@ -277,9 +263,7 @@ T if OBJECT is a vector.
   (object)
      Lisp_Object object;
 {
-  if (VECTORP (object))
-    return Qt;
-  return Qnil;
+  return VECTORP (object) ? Qt : Qnil;
 }
 
 DEFUN ("bit-vector-p", Fbit_vector_p, Sbit_vector_p, 1, 1, 0 /*
@@ -288,9 +272,7 @@ T if OBJECT is a bit vector.
   (object)
      Lisp_Object object;
 {
-  if (BIT_VECTORP (object))
-    return Qt;
-  return Qnil;
+  return BIT_VECTORP (object) ? Qt : Qnil;
 }
 
 DEFUN ("stringp", Fstringp, Sstringp, 1, 1, 0 /*
@@ -299,9 +281,7 @@ T if OBJECT is a string.
   (object)
      Lisp_Object object;
 {
-  if (STRINGP (object))
-    return Qt;
-  return Qnil;
+  return STRINGP (object) ? Qt : Qnil;
 }
 
 DEFUN ("arrayp", Farrayp, Sarrayp, 1, 1, 0 /*
@@ -310,9 +290,10 @@ T if OBJECT is an array (string, vector, or bit vector).
   (object)
      Lisp_Object object;
 {
-  if (VECTORP (object) || STRINGP (object) || BIT_VECTORP (object))
-    return Qt;
-  return Qnil;
+  return (VECTORP     (object) ||
+	  STRINGP     (object) ||
+	  BIT_VECTORP (object))
+    ? Qt : Qnil;
 }
 
 DEFUN ("sequencep", Fsequencep, Ssequencep, 1, 1, 0 /*
@@ -321,10 +302,12 @@ T if OBJECT is a sequence (list or array).
   (object)
      Lisp_Object object;
 {
-  if (CONSP (object) || NILP (object) 
-      || VECTORP (object) || STRINGP (object) || BIT_VECTORP (object))
-    return Qt;
-  return Qnil;
+  return (CONSP       (object) ||
+	  NILP        (object) ||
+	  VECTORP     (object) ||
+	  STRINGP     (object) ||
+	  BIT_VECTORP (object))
+    ? Qt : Qnil;
 }
 
 DEFUN ("markerp", Fmarkerp, Smarkerp, 1, 1, 0 /*
@@ -333,9 +316,7 @@ T if OBJECT is a marker (editor pointer).
   (object)
      Lisp_Object object;
 {
-  if (MARKERP (object))
-    return Qt;
-  return Qnil;
+  return MARKERP (object) ? Qt : Qnil;
 }
 
 DEFUN ("subrp", Fsubrp, Ssubrp, 1, 1, 0 /*
@@ -344,9 +325,7 @@ T if OBJECT is a built-in function.
   (object)
      Lisp_Object object;
 {
-  if (SUBRP (object))
-    return Qt;
-  return Qnil;
+  return SUBRP (object) ? Qt : Qnil;
 }
 
 DEFUN ("subr-min-args", Fsubr_min_args, Ssubr_min_args, 1, 1, 0 /*
@@ -361,7 +340,7 @@ Return minimum number of args built-in function SUBR may be called with.
 
 DEFUN ("subr-max-args", Fsubr_max_args, Ssubr_max_args, 1, 1, 0 /*
 Return maximum number of args built-in function SUBR may be called with,
-or nil if it takes an arbitrary number of arguments (or is a special form).
+or nil if it takes an arbitrary number of arguments or is a special form.
 */ )
   (subr)
      Lisp_Object subr;
@@ -381,9 +360,7 @@ t if OBJECT is a byte-compiled function object.
   (object)
      Lisp_Object object;
 {
-  if (COMPILED_FUNCTIONP (object))
-    return Qt;
-  return Qnil;
+  return COMPILED_FUNCTIONP (object) ? Qt : Qnil;
 }
 
 
@@ -396,9 +373,7 @@ modded with 256 to get the actual character to use.
   (object)
      Lisp_Object object;
 {
-  if (CHARP (object))
-    return Qt;
-  return Qnil;
+  return CHARP (object) ? Qt : Qnil;
 }
 
 DEFUN ("char-or-string-p", Fchar_or_string_p, Schar_or_string_p, 1, 1, 0 /*
@@ -407,9 +382,7 @@ t if OBJECT is a character or a string.
   (object)
      Lisp_Object object;
 {
-  if (CHAR_OR_CHAR_INTP (object) || STRINGP (object))
-    return Qt;
-  return Qnil;
+  return CHAR_OR_CHAR_INTP (object) || STRINGP (object) ? Qt : Qnil;
 }
 
 DEFUN ("integerp", Fintegerp, Sintegerp, 1, 1, 0 /*
@@ -418,9 +391,7 @@ t if OBJECT is an integer.
   (object)
      Lisp_Object object;
 {
-  if (INTP (object))
-    return Qt;
-  return Qnil;
+  return INTP (object) ? Qt : Qnil;
 }
 
 DEFUN ("integer-or-marker-p", Finteger_or_marker_p, Sinteger_or_marker_p,
@@ -430,9 +401,7 @@ t if OBJECT is an integer or a marker (editor pointer).
   (object)
      Lisp_Object object;
 {
-  if (INTP (object) || MARKERP (object))
-    return Qt;
-  return Qnil;
+  return INTP (object) || MARKERP (object) ? Qt : Qnil;
 }
 
 DEFUN ("natnump", Fnatnump, Snatnump, 1, 1, 0 /*
@@ -441,9 +410,7 @@ t if OBJECT is a nonnegative integer.
   (object)
      Lisp_Object object;
 {
-  if (NATNUMP (object))
-    return Qt;
-  return Qnil;
+  return NATNUMP (object) ? Qt : Qnil;
 }
 
 DEFUN ("bitp", Fbitp, Sbitp, 1, 1, 0 /*
@@ -452,9 +419,7 @@ t if OBJECT is a bit (0 or 1).
   (object)
      Lisp_Object object;
 {
-  if (BITP (object))
-    return Qt;
-  return Qnil;
+  return BITP (object) ? Qt : Qnil;
 }
 
 DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0 /*
@@ -463,9 +428,7 @@ t if OBJECT is a number (floating point or integer).
   (object)
      Lisp_Object object;
 {
-  if (INT_OR_FLOATP (object))
-    return Qt;
-  return Qnil;
+  return INT_OR_FLOATP (object) ? Qt : Qnil;
 }
 
 DEFUN ("number-or-marker-p", Fnumber_or_marker_p, Snumber_or_marker_p, 1, 1, 0 /*
@@ -474,10 +437,7 @@ t if OBJECT is a number or a marker.
   (object)
      Lisp_Object object;
 {
-  if (INT_OR_FLOATP (object)
-      || MARKERP (object))
-    return Qt;
-  return Qnil;
+  return INT_OR_FLOATP (object) || MARKERP (object) ? Qt : Qnil;
 }
 
 #ifdef LISP_FLOAT_TYPE
@@ -487,9 +447,7 @@ t if OBJECT is a floating point number.
   (object)
      Lisp_Object object;
 {
-  if (FLOATP (object))
-    return Qt;
-  return Qnil;
+  return FLOATP (object) ? Qt : Qnil;
 }
 #endif /* LISP_FLOAT_TYPE */
 
@@ -499,18 +457,13 @@ Return a symbol representing the type of OBJECT.
   (object)
     Lisp_Object object;
 {
-  if (CONSP (object))
-    return Qcons;
-  if (SYMBOLP (object))
-    return Qsymbol;
-  if (KEYWORDP (object))
-    return Qkeyword;
-  if (INTP (object))
-    return Qinteger;
-  if (STRINGP (object))
-    return Qstring;
-  if (VECTORP (object))
-    return Qvector;
+  if (CONSP    (object)) return Qcons;
+  if (SYMBOLP  (object)) return Qsymbol;
+  if (KEYWORDP (object)) return Qkeyword;
+  if (INTP     (object)) return Qinteger;
+  if (STRINGP  (object)) return Qstring;
+  if (VECTORP  (object)) return Qvector;
+  
   assert (LRECORDP (object));
   return intern (XRECORD_LHEADER (object)->implementation->name);
 }
@@ -542,10 +495,7 @@ Return the car of OBJECT if it is a cons cell, or else nil.
   (object)
      Lisp_Object object;
 {
-  if (CONSP (object))
-    return XCAR (object);
-  else
-    return Qnil;
+  return CONSP (object) ? XCAR (object) : Qnil;
 }
 
 DEFUN ("cdr", Fcdr, Scdr, 1, 1, 0 /*
@@ -572,10 +522,7 @@ Return the cdr of OBJECT if it is a cons cell, or else  nil.
   (object)
      Lisp_Object object;
 {
-  if (CONSP (object))
-    return XCDR (object);
-  else
-    return Qnil;
+  return CONSP (object) ? XCDR (object) : Qnil;
 }
 
 DEFUN ("setcar", Fsetcar, Ssetcar, 2, 2, 0 /*
@@ -619,7 +566,7 @@ Lisp_Object
 indirect_function (Lisp_Object object, int errorp)
 {
   Lisp_Object tortoise = object; 
-  Lisp_Object hare = object;
+  Lisp_Object hare     = object;
 
   for (;;)
     {
@@ -964,92 +911,39 @@ This is only meaningful if I18N3 was enabled when emacs was compiled.
 enum comparison { equal, notequal, less, grtr, less_or_equal, grtr_or_equal };
 
 static Lisp_Object
-arithcompare (Lisp_Object num1, Lisp_Object num2, 
-              enum comparison comparison)
+arithcompare (Lisp_Object num1, Lisp_Object num2, enum comparison comparison)
 {
-  int floatp = 0;
-
   CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER (num1);
   CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER (num2);
 
 #ifdef LISP_FLOAT_TYPE
   if (FLOATP (num1) || FLOATP (num2))
     {
-      double f1, f2;
-
-      floatp = 1;
-      f1 = (FLOATP (num1)) ? float_data (XFLOAT (num1)) : XINT (num1);
-      f2 = (FLOATP (num2)) ? float_data (XFLOAT (num2)) : XINT (num2);
+      double f1 = (FLOATP (num1)) ? float_data (XFLOAT (num1)) : XINT (num1);
+      double f2 = (FLOATP (num2)) ? float_data (XFLOAT (num2)) : XINT (num2);
 
       switch (comparison)
-        {
-        case equal:
-          if (f1 == f2)
-            return Qt;
-          return Qnil;
-
-        case notequal:
-          if (f1 != f2)
-            return Qt;
-          return Qnil;
-
-        case less:
-          if (f1 < f2)
-            return Qt;
-          return Qnil;
-
-        case less_or_equal:
-          if (f1 <= f2)
-            return Qt;
-          return Qnil;
-
-        case grtr:
-          if (f1 > f2)
-            return Qt;
-          return Qnil;
-
-        case grtr_or_equal:
-          if (f1 >= f2)
-            return Qt;
-          return Qnil;
-        }
+	{
+	case equal:         return f1 == f2 ? Qt : Qnil;
+	case notequal:      return f1 != f2 ? Qt : Qnil;
+	case less:          return f1 <  f2 ? Qt : Qnil;
+	case less_or_equal: return f1 <= f2 ? Qt : Qnil;
+	case grtr:          return f1 >  f2 ? Qt : Qnil;
+	case grtr_or_equal: return f1 >= f2 ? Qt : Qnil;
+	}
     }
 #endif /* LISP_FLOAT_TYPE */
-  else
+    
+  switch (comparison)
     {
-      switch (comparison)
-        {
-        case equal:
-          if (XINT (num1) == XINT (num2))
-            return Qt;
-          return Qnil;
-
-        case notequal:
-          if (XINT (num1) != XINT (num2))
-            return Qt;
-          return Qnil;
-
-        case less:
-          if (XINT (num1) < XINT (num2))
-            return Qt;
-          return Qnil;
-
-        case less_or_equal:
-          if (XINT (num1) <= XINT (num2))
-            return Qt;
-          return Qnil;
-
-        case grtr:
-          if (XINT (num1) > XINT (num2))
-            return Qt;
-          return Qnil;
-
-        case grtr_or_equal:
-          if (XINT (num1) >= XINT (num2))
-            return Qt;
-          return Qnil;
-        }
+    case equal:         return XINT (num1) == XINT (num2) ? Qt : Qnil;
+    case notequal:      return XINT (num1) != XINT (num2) ? Qt : Qnil;
+    case less:          return XINT (num1) <  XINT (num2) ? Qt : Qnil;
+    case less_or_equal: return XINT (num1) <= XINT (num2) ? Qt : Qnil;
+    case grtr:          return XINT (num1) >  XINT (num2) ? Qt : Qnil;
+    case grtr_or_equal: return XINT (num1) >= XINT (num2) ? Qt : Qnil;
     }
+
   abort ();
   return Qnil;	/* suppress compiler warning */
 }
@@ -1064,7 +958,8 @@ T if two args, both numbers or markers, are equal.
 }
 
 DEFUN ("<", Flss, Slss, 2, 2, 0 /*
-T if first arg is less than second arg.  Both must be numbers or markers.
+T if first arg is less than second arg.
+Both must be numbers or markers.
 */ )
   (num1, num2)
      Lisp_Object num1, num2;
@@ -1073,7 +968,8 @@ T if first arg is less than second arg.  Both must be numbers or markers.
 }
 
 DEFUN (">", Fgtr, Sgtr, 2, 2, 0 /*
-T if first arg is greater than second arg.  Both must be numbers or markers.
+T if first arg is greater than second arg.
+Both must be numbers or markers.
 */ )
   (num1, num2)
      Lisp_Object num1, num2;
@@ -1102,7 +998,8 @@ Both must be numbers or markers.
 }
 
 DEFUN ("/=", Fneq, Sneq, 2, 2, 0 /*
-T if first arg is not equal to second arg.  Both must be numbers or markers.
+T if first arg is not equal to second arg.
+Both must be numbers or markers.
 */ )
   (num1, num2)
      Lisp_Object num1, num2;
@@ -1120,16 +1017,10 @@ T if NUMBER is zero.
 
 #ifdef LISP_FLOAT_TYPE
   if (FLOATP (number))
-    {
-      if (float_data (XFLOAT (number)) == 0.0)
-	return Qt;
-      return Qnil;
-    }
+    return (float_data (XFLOAT (number)) == 0.0) ? Qt : Qnil;
 #endif /* LISP_FLOAT_TYPE */
 
-  if (XINT (number) == 0)
-    return Qt;
-  return Qnil;
+  return (XINT (number) == 0) ? Qt : Qnil;
 }
 
 /* Convert between a 32-bit value and a cons of two 16-bit values.
@@ -1204,7 +1095,7 @@ It ignores leading spaces and tabs.
   char *p;
   CHECK_STRING (string);
 
-  p = (char *) string_data (XSTRING (string));
+  p = (char *) XSTRING_DATA (string);
   /* Skip any whitespace at the front of the number.  Some versions of
      atoi do this anyway, so we might as well make Emacs lisp consistent.  */
   while (*p == ' ' || *p == '\t')
@@ -1228,83 +1119,6 @@ enum arithop
   { Aadd, Asub, Amult, Adiv, Alogand, Alogior, Alogxor, Amax, Amin };
 
 #ifdef LISP_FLOAT_TYPE
-static Lisp_Object float_arith_driver (double accum, int argnum, 
-                                       enum arithop code, 
-                                       int nargs, Lisp_Object *args);
-#endif
-
-
-static Lisp_Object
-arith_driver (enum arithop code, int nargs, Lisp_Object *args)
-{
-  Lisp_Object val;
-  REGISTER int argnum;
-  REGISTER EMACS_INT accum = 0;
-  REGISTER EMACS_INT next;
-
-  switch (code)
-    {
-    case Alogior:
-    case Alogxor:
-    case Aadd:
-    case Asub:
-      accum = 0; break;
-    case Amult:
-      accum = 1; break;
-    case Alogand:
-      accum = -1; break;
-    case Adiv:
-    case Amax:
-    case Amin:
-      accum = 0;
-      break;
-    default:
-      abort ();
-    }
-
-  for (argnum = 0; argnum < nargs; argnum++)
-    {
-      val = args[argnum];    /* using args[argnum] as argument to CHECK_INT_OR_FLOAT_... */
-      CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER (val);
-
-#ifdef LISP_FLOAT_TYPE
-      if (FLOATP (val)) /* time to do serious math */
-	return (float_arith_driver ((double) accum, argnum, code,
-				    nargs, args));
-#endif /* LISP_FLOAT_TYPE */
-      args[argnum] = val;    /* runs into a compiler bug. */
-      next = XINT (args[argnum]);
-      switch (code)
-	{
-	case Aadd: accum += next; break;
-	case Asub:
-	  if (!argnum && nargs != 1)
-	    next = - next;
-	  accum -= next;
-	  break;
-	case Amult: accum *= next; break;
-	case Adiv:
-	  if (!argnum) accum = next;
-	  else
-	    {
-	      if (next == 0)
-		Fsignal (Qarith_error, Qnil);
-	      accum /= next;
-	    }
-	  break;
-	case Alogand: accum &= next; break;
-	case Alogior: accum |= next; break;
-	case Alogxor: accum ^= next; break;
-	case Amax: if (!argnum || next > accum) accum = next; break;
-	case Amin: if (!argnum || next < accum) accum = next; break;
-	}
-    }
-
-  XSETINT (val, accum);
-  return val;
-}
-
-#ifdef LISP_FLOAT_TYPE
 static Lisp_Object
 float_arith_driver (double accum, int argnum, enum arithop code, int nargs,
 		    Lisp_Object *args)
@@ -1314,7 +1128,8 @@ float_arith_driver (double accum, int argnum, enum arithop code, int nargs,
   
   for (; argnum < nargs; argnum++)
     {
-      val = args[argnum];    /* using args[argnum] as argument to CHECK_INT_OR_FLOAT_... */
+      /* using args[argnum] as argument to CHECK_INT_OR_FLOAT_... */
+      val = args[argnum];
       CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER (val);
 
       if (FLOATP (val))
@@ -1368,8 +1183,79 @@ float_arith_driver (double accum, int argnum, enum arithop code, int nargs,
 }
 #endif /* LISP_FLOAT_TYPE */
 
+static Lisp_Object
+arith_driver (enum arithop code, int nargs, Lisp_Object *args)
+{
+  Lisp_Object val;
+  REGISTER int argnum;
+  REGISTER EMACS_INT accum = 0;
+  REGISTER EMACS_INT next;
+
+  switch (code)
+    {
+    case Alogior:
+    case Alogxor:
+    case Aadd:
+    case Asub:
+      accum = 0; break;
+    case Amult:
+      accum = 1; break;
+    case Alogand:
+      accum = -1; break;
+    case Adiv:
+    case Amax:
+    case Amin:
+      accum = 0; break;
+    default:
+      abort ();
+    }
+
+  for (argnum = 0; argnum < nargs; argnum++)
+    {
+      /* using args[argnum] as argument to CHECK_INT_OR_FLOAT_... */
+      val = args[argnum];
+      CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER (val);
+
+#ifdef LISP_FLOAT_TYPE
+      if (FLOATP (val)) /* time to do serious math */
+	return (float_arith_driver ((double) accum, argnum, code,
+				    nargs, args));
+#endif /* LISP_FLOAT_TYPE */
+      args[argnum] = val;    /* runs into a compiler bug. */
+      next = XINT (args[argnum]);
+      switch (code)
+	{
+	case Aadd: accum += next; break;
+	case Asub:
+	  if (!argnum && nargs != 1)
+	    next = - next;
+	  accum -= next;
+	  break;
+	case Amult: accum *= next; break;
+	case Adiv:
+	  if (!argnum) accum = next;
+	  else
+	    {
+	      if (next == 0)
+		Fsignal (Qarith_error, Qnil);
+	      accum /= next;
+	    }
+	  break;
+	case Alogand: accum &= next; break;
+	case Alogior: accum |= next; break;
+	case Alogxor: accum ^= next; break;
+	case Amax: if (!argnum || next > accum) accum = next; break;
+	case Amin: if (!argnum || next < accum) accum = next; break;
+	}
+    }
+
+  XSETINT (val, accum);
+  return val;
+}
+
 DEFUN ("+", Fplus, Splus, 0, MANY, 0 /*
-Return sum of any number of arguments, which are numbers or markers.
+Return sum of any number of arguments.
+The arguments should all be numbers or markers.
 */ )
   (nargs, args)
      int nargs;
@@ -1391,7 +1277,8 @@ subtracts all but the first from the first.
 }
 
 DEFUN ("*", Ftimes, Stimes, 0, MANY, 0 /*
-Return product of any number of arguments, which are numbers or markers.
+Return product of any number of arguments.
+The arguments should all be numbers or markers.
 */ )
   (nargs, args)
      int nargs;
@@ -1495,7 +1382,8 @@ If either argument is a float, a float will be returned.
 
 
 DEFUN ("max", Fmax, Smax, 1, MANY, 0 /*
-Return largest of all the arguments (which must be numbers or markers).
+Return largest of all the arguments.
+All arguments must be numbers or markers.
 The value is always a number; markers are converted to numbers.
 */ )
   (nargs, args)
@@ -1506,7 +1394,8 @@ The value is always a number; markers are converted to numbers.
 }
 
 DEFUN ("min", Fmin, Smin, 1, MANY, 0 /*
-Return smallest of all the arguments (which must be numbers or markers).
+Return smallest of all the arguments.
+All arguments must be numbers or markers.
 The value is always a number; markers are converted to numbers.
 */ )
   (nargs, args)
@@ -1560,10 +1449,9 @@ In this case, the sign bit is duplicated.
   CHECK_INT_COERCE_CHAR (value);
   CHECK_INT (count);
 
-  if (XINT (count) > 0)
-    return (make_int (XINT (value) << XINT (count)));
-  else
-    return (make_int (XINT (value) >> -XINT (count)));
+  return make_int (XINT (count) > 0 ?
+		 XINT (value) << XINT (count) :
+		 XINT (value) >> -XINT (count));
 }
 
 DEFUN ("lsh", Flsh, Slsh, 2, 2, 0 /*
@@ -1681,11 +1569,8 @@ weak_list_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   struct weak_list *w1 = XWEAK_LIST (o1);
   struct weak_list *w2 = XWEAK_LIST (o2);
 
-  if (w1->type != w2->type ||
-      !internal_equal (w1->list, w2->list, depth + 1))
-    return 0;
-  else
-    return 1;
+  return (w1->type != w2->type &&
+    internal_equal (w1->list, w2->list, depth + 1));
 }
 
 static unsigned long
@@ -1962,14 +1847,10 @@ static enum weak_list_type
 decode_weak_list_type (Lisp_Object symbol)
 {
   CHECK_SYMBOL (symbol);
-  if (EQ (symbol, Qsimple))
-    return WEAK_LIST_SIMPLE;
-  if (EQ (symbol, Qassoc))
-    return WEAK_LIST_ASSOC;
-  if (EQ (symbol, Qkey_assoc))
-    return WEAK_LIST_KEY_ASSOC;
-  if (EQ (symbol, Qvalue_assoc))
-    return WEAK_LIST_VALUE_ASSOC;
+  if (EQ (symbol, Qsimple))	 return WEAK_LIST_SIMPLE;
+  if (EQ (symbol, Qassoc))	 return WEAK_LIST_ASSOC;
+  if (EQ (symbol, Qkey_assoc))	 return WEAK_LIST_KEY_ASSOC;
+  if (EQ (symbol, Qvalue_assoc)) return WEAK_LIST_VALUE_ASSOC;
 
   signal_simple_error ("Invalid weak list type", symbol);
   return WEAK_LIST_SIMPLE; /* not reached */
@@ -1980,19 +1861,15 @@ encode_weak_list_type (enum weak_list_type type)
 {
   switch (type)
     {
-    case WEAK_LIST_SIMPLE:
-      return Qsimple;
-    case WEAK_LIST_ASSOC:
-      return Qassoc;
-    case WEAK_LIST_KEY_ASSOC:
-      return Qkey_assoc;
-    case WEAK_LIST_VALUE_ASSOC:
-      return Qvalue_assoc;
+    case WEAK_LIST_SIMPLE:      return Qsimple;
+    case WEAK_LIST_ASSOC:       return Qassoc;
+    case WEAK_LIST_KEY_ASSOC:   return Qkey_assoc;
+    case WEAK_LIST_VALUE_ASSOC: return Qvalue_assoc;
     default:
       abort ();
     }
 
-  return Qnil;
+  return Qnil; /* not reached */
 }
 
 DEFUN ("weak-list-p", Fweak_list_p, Sweak_list_p, 1, 1, 0 /*

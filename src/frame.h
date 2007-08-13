@@ -169,7 +169,7 @@ struct frame
   unsigned int mirror_dirty :1;
 
   /* flag indicating if any window on this frame is displaying a subwindow */
-  int subwindows_being_displayed :1;
+  unsigned int subwindows_being_displayed :1;
 };
 
 /* If this is non-nil, it is the frame that make-frame is currently

@@ -1844,8 +1844,8 @@ A property list is an alternating list of keywords and values.
  Comparison between values is done using `eq'.  See also `plists-equal'.
 If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
  a nil value is ignored.  This feature is a virus that has infected
- old Lisp implementations (and thus E-Lisp, due to RMS's enamorment with
- old Lisps), but should not be used except for backward compatibility.
+ old Lisp implementations, but should not be used except for backward
+ compatibility.
 */ )
   (a, b, nil_means_not_present)
      Lisp_Object a, b, nil_means_not_present;
@@ -1862,8 +1862,8 @@ A property list is an alternating list of keywords and values.  This
  Comparison between values is done using `equal'.  See also `plists-eq'.
 If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
  a nil value is ignored.  This feature is a virus that has infected
- old Lisp implementations (and thus E-Lisp, due to RMS's enamorment with
- old Lisps), but should not be used except for backward compatibility.
+ old Lisp implementations, but should not be used except for backward
+ compatibility.
 */ )
   (a, b, nil_means_not_present)
      Lisp_Object a, b, nil_means_not_present;
@@ -1883,8 +1883,8 @@ A lax property list is like a regular one except that comparisons between
  keywords is done using `equal' instead of `eq'.
 If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
  a nil value is ignored.  This feature is a virus that has infected
- old Lisp implementations (and thus E-Lisp, due to RMS's enamorment with
- old Lisps), but should not be used except for backward compatibility.
+ old Lisp implementations, but should not be used except for backward
+ compatibility.
 */ )
   (a, b, nil_means_not_present)
      Lisp_Object a, b, nil_means_not_present;
@@ -1903,8 +1903,8 @@ A lax property list is like a regular one except that comparisons between
  keywords is done using `equal' instead of `eq'.
 If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
  a nil value is ignored.  This feature is a virus that has infected
- old Lisp implementations (and thus E-Lisp, due to RMS's enamorment with
- old Lisps), but should not be used except for backward compatibility.
+ old Lisp implementations, but should not be used except for backward
+ compatibility.
 */ )
   (a, b, nil_means_not_present)
      Lisp_Object a, b, nil_means_not_present;
@@ -2333,8 +2333,8 @@ In such cases, the first entry applies.
 
 If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
  a nil value is removed.  This feature is a virus that has infected
- old Lisp implementations (and thus E-Lisp, due to RMS's enamorment with
- old Lisps), but should not be used except for backward compatibility.
+ old Lisp implementations, but should not be used except for backward
+ compatibility.
 
 The new plist is returned.  If NIL-MEANS-NOT-PRESENT is given, the
  return value may not be EQ to the passed-in value, so make sure to
@@ -2439,8 +2439,8 @@ In such cases, the first entry applies.
 
 If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
  a nil value is removed.  This feature is a virus that has infected
- old Lisp implementations (and thus E-Lisp, due to RMS's enamorment with
- old Lisps), but should not be used except for backward compatibility.
+ old Lisp implementations, but should not be used except for backward
+ compatibility.
 
 The new plist is returned.  If NIL-MEANS-NOT-PRESENT is given, the
  return value may not be EQ to the passed-in value, so make sure to
@@ -3032,25 +3032,22 @@ Thus, \" \" as SEP results in spaces between the values returned by FN.
   (fn, seq, sep)
      Lisp_Object fn, seq, sep;
 {
-  Lisp_Object len;
-  int leni;
+  int len = XINT (Flength (seq));
   int nargs;
   Lisp_Object *args;
   int i;
   struct gcpro gcpro1;
 
-  len = Flength (seq);
-  leni = XINT (len);
-  nargs = leni + leni - 1;
+  nargs = len + len - 1;
   if (nargs < 0) return build_string ("");
 
   args = (Lisp_Object *) alloca (nargs * sizeof (Lisp_Object));
 
   GCPRO1 (sep);
-  mapcar1 (leni, args, fn, seq);
+  mapcar1 (len, args, fn, seq);
   UNGCPRO;
 
-  for (i = leni - 1; i >= 0; i--)
+  for (i = len - 1; i >= 0; i--)
     args[i + i] = args[i];
       
   for (i = 1; i < nargs; i += 2)
@@ -3067,17 +3064,12 @@ SEQUENCE may be a list, a vector, a bit vector, or a string.
   (fn, seq)
      Lisp_Object fn, seq;
 {
-  Lisp_Object len;
-  int leni;
-  Lisp_Object *args;
+  int len = XINT (Flength (seq));
+  Lisp_Object *args = (Lisp_Object *) alloca (len * sizeof (Lisp_Object));
 
-  len = Flength (seq);
-  leni = XINT (len);
-  args = (Lisp_Object *) alloca (leni * sizeof (Lisp_Object));
+  mapcar1 (len, args, fn, seq);
 
-  mapcar1 (leni, args, fn, seq);
-
-  return Flist (leni, args);
+  return Flist (len, args);
 }
 
 DEFUN ("mapc-internal", Fmapc_internal, Smapc_internal, 2, 2, 0 /*
@@ -3089,13 +3081,7 @@ which is more efficient if you do not use the results.
   (fn, seq)
      Lisp_Object fn, seq;
 {
-  Lisp_Object len;
-  int leni;
-
-  len = Flength (seq);
-  leni = XINT (len);
-
-  mapcar1 (leni, 0, fn, seq);
+  mapcar1 (XINT (Flength (seq)), 0, fn, seq);
 
   return Qnil;
 }
@@ -3145,10 +3131,8 @@ This function looks at the value of the variable `features'.
      (feature)
      Lisp_Object feature;
 {
-  Lisp_Object tem;
   CHECK_SYMBOL (feature);
-  tem = Fmemq (feature, Vfeatures);
-  return (NILP (tem)) ? Qnil : Qt;
+  return NILP (Fmemq (feature, Vfeatures)) ? Qnil : Qt;
 }
 
 DEFUN ("provide", Fprovide, Sprovide, 1, 1, 0 /*

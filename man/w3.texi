@@ -12,6 +12,11 @@
 @end tex
 @synindex cp fn
 @synindex vr fn
+@dircategory World Wide Web
+@dircategory GNU Emacs Lisp
+@direntry
+* W3: (w3).                       Emacs-W3 World Wide Web browser.
+@end direntry
 @ifinfo
 This file documents the Emacs-W3 World Wide Web browser.
 
@@ -221,9 +226,14 @@ Causes the enclosed text to .... ooops that one made it in.
 @chapter Stylesheets
 @cindex Stylesheets
 @cindex Cascading Style Sheets
+@cindex Aural Cascading Style Sheets
 @cindex CSS
 @cindex DSSSL
 :: WORK :: Document CSS support
+CSS Information at http://www.w3.org/pub/WWW/TR/REC-CSS1
+Style guide at http://www.htmlhelp.com/reference/css/
+:: WORK :: Document ACSS support
+ACSS Information at http://www.w3.org/pub/WWW/Style/CSS/Speech/NOTE-ACSS
 :: WORK :: Document DSSSL support
 
 @node Supported Protocols, , Stylesheets, Introduction
@@ -261,12 +271,17 @@ FTP is handled by either ange-ftp or efs.
 @item Local files
 Local files are of course handled, and MIME content-types are derived
 from the file extensions.
-@item Telnet, tn3270, rlogin
+@item telnet, tn3270, rlogin
 Telnet, tn3270, and rogin are handled by running the appropriate program
 in an emacs buffer, or running an external process.
-@item Mailto
+@item mailto
 Causes a mail message to be started to a specific address.  Supports the
 Netscape @i{extensions} to specify arbitrary headers on the message.
+@item data
+A quick and easy way to `inline' small pieces of information that you do
+not necessarily want to download over the net separately.  Can speed up
+display of small icons, stylesheet information, etc.  See the internet
+draft draft-masinter-url-data-02.txt for more information.
 @item mailserver
 A more powerful version of mailto, which allows the author to specify
 the subject and body text of the mail message.  This type of link is
@@ -274,7 +289,7 @@ never fully executed without user confirmation, because it is possible
 to insert insulting or threatening (and possibly illegal) data into the
 message.  The mail message is displayed, and the user must confirm the
 message before it is sent.
-@item X-exec
+@item x-exec
 A URL can cause a local executable to be run, and its output interpreted
 as if it had come from an HTTP server.  This is very useful, but is
 still an experimental protocol, hence the X- prefix.  This URL protocol
@@ -282,9 +297,8 @@ is deprecated, but might be useful in the future.
 @item NFS
 Retrieves information over NFS.  This requires that your operating
 system support auto-mounting of NFS volumes.
-@item Finger
-Retrieves information about a user via the 'finger' protocol, as defined
-in RFC ????? :: WORK ::
+@item finger
+Retrieves information about a user via the 'finger' protocol.
 @item Info
 Creates a link to an GNU-style info file.  @inforef{Info,Top,info}, for more
 information on the Info format.

@@ -414,7 +414,7 @@ static void
 find_context (struct buffer *buf, Bufpos pt)
 {
   /* This function can GC */
-  Lisp_Object syntax_table = buf->syntax_table;
+  Lisp_Object syntaxtab = buf->syntax_table;
   Emchar prev_c, c;
   Bufpos target = pt;
   setup_context_cache (buf, pt);
@@ -470,7 +470,7 @@ find_context (struct buffer *buf, Bufpos pt)
 	  continue;
 	}
 
-      switch (SYNTAX (syntax_table, c))
+      switch (SYNTAX (syntaxtab, c))
 	{
 	case Sescape:
 	  context_cache.backslash_p = 1;
@@ -491,13 +491,13 @@ find_context (struct buffer *buf, Bufpos pt)
 	    {
 	      context_cache.context = context_comment;
 	      context_cache.ccontext = ccontext_none;
-	      context_cache.style = SINGLE_SYNTAX_STYLE (syntax_table, c);
+	      context_cache.style = SINGLE_SYNTAX_STYLE (syntaxtab, c);
 	      if (context_cache.style == comment_style_none) abort ();
 	    }
 	  break;
 
 	case Sendcomment:
-	  if (context_cache.style != SINGLE_SYNTAX_STYLE (syntax_table, c))
+	  if (context_cache.style != SINGLE_SYNTAX_STYLE (syntaxtab, c))
 	    ;
 	  else if (context_cache.context == context_comment)
 	    {
@@ -524,7 +524,7 @@ find_context (struct buffer *buf, Bufpos pt)
 	      }
             else if (context_cache.context == context_none)
 	      {
-		Lisp_Object stringtermobj = syntax_match (syntax_table, c);
+		Lisp_Object stringtermobj = syntax_match (syntaxtab, c);
 		Emchar stringterm;
 
 		if (CHARP (stringtermobj))
@@ -545,18 +545,18 @@ find_context (struct buffer *buf, Bufpos pt)
 	 Now we've got to hack multi-char sequences that start
 	 and end block comments.
        */
-      if ((SYNTAX_COMMENT_BITS (syntax_table, c) &
+      if ((SYNTAX_COMMENT_BITS (syntaxtab, c) &
 	   SYNTAX_SECOND_CHAR_START) &&
 	  context_cache.context == context_none &&
 	  context_cache.ccontext == ccontext_start1 &&
-	  SYNTAX_START_P (syntax_table, prev_c, c) /* the two chars match */
+	  SYNTAX_START_P (syntaxtab, prev_c, c) /* the two chars match */
 	  )
 	{
 	  context_cache.ccontext = ccontext_start2;
-	  context_cache.style = SYNTAX_START_STYLE (syntax_table, prev_c, c);
+	  context_cache.style = SYNTAX_START_STYLE (syntaxtab, prev_c, c);
 	  if (context_cache.style == comment_style_none) abort ();
 	}
-      else if ((SYNTAX_COMMENT_BITS (syntax_table, c) &
+      else if ((SYNTAX_COMMENT_BITS (syntaxtab, c) &
 		SYNTAX_FIRST_CHAR_START) &&
 	       context_cache.context == context_none &&
 	       (context_cache.ccontext == ccontext_none ||
@@ -565,25 +565,25 @@ find_context (struct buffer *buf, Bufpos pt)
 	  context_cache.ccontext = ccontext_start1;
 	  context_cache.style = comment_style_none; /* should be this already*/
 	}
-      else if ((SYNTAX_COMMENT_BITS (syntax_table, c) &
+      else if ((SYNTAX_COMMENT_BITS (syntaxtab, c) &
 		SYNTAX_SECOND_CHAR_END) &&
 	       context_cache.context == context_block_comment &&
 	       context_cache.ccontext == ccontext_end1 &&
-	       SYNTAX_END_P (syntax_table, prev_c, c) &&
+	       SYNTAX_END_P (syntaxtab, prev_c, c) &&
 	       /* the two chars match */
 	       context_cache.style ==
-	       SYNTAX_END_STYLE (syntax_table, prev_c, c)
+	       SYNTAX_END_STYLE (syntaxtab, prev_c, c)
 	       )
 	{
 	  context_cache.context = context_none;
 	  context_cache.ccontext = ccontext_none;
 	  context_cache.style = comment_style_none;
 	}
-      else if ((SYNTAX_COMMENT_BITS (syntax_table, c) &
+      else if ((SYNTAX_COMMENT_BITS (syntaxtab, c) &
 		SYNTAX_FIRST_CHAR_END) &&
 	       context_cache.context == context_block_comment &&
 	       (context_cache.style ==
-		SYNTAX_END_STYLE (syntax_table, c,
+		SYNTAX_END_STYLE (syntaxtab, c,
 				  BUF_FETCH_CHAR (buf, pt+1))) &&
 	       (context_cache.ccontext == ccontext_start2 ||
 		context_cache.ccontext == ccontext_end1))

@@ -85,7 +85,8 @@ static XtResource resources[] = {
      offset (scrollbar_height), XtRImmediate, (XtPointer)-1},
   {XtNscrollBarPlacement, XtCScrollBarPlacement, XtRScrollBarPlacement,
       sizeof(unsigned char), offset(scrollbar_placement), XtRImmediate,
-#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
+#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
+    defined (LWLIB_SCROLLBARS_ATHENA3D)
       (XtPointer) XtBOTTOM_RIGHT
 #else
       (XtPointer) XtBOTTOM_LEFT
@@ -481,25 +482,25 @@ EmacsFrameQueryGeometry (Widget widget, XtWidgetGeometry *request,
   else
     return XtGeometryYes;
 }
-/**** string-to-scrollbar-placement converter: modelled after edge-type
-      converter in Xaw/Form.c ****/
 
-#define	done(address, type) \
-toVal->size = sizeof(type); \
-toVal->addr = (XtPointer) address; \
-return /* `;' supplied by caller */
+/* Xt string-to-scrollbar-placement converter */
+/* ### Convert this to a `new-style' converter (See XtAddTypeConverter) */
 
 /* This variable cannot be a stack variable. */
 static unsigned char cvt_string_scrollbar_placement;
 
 /* ARGSUSED */
 static void
-_CvtStringToScrollBarPlacement (args, num_args, fromVal, toVal)
-     XrmValuePtr args;		/* unused */
-     Cardinal *num_args;	/* unused */
-     XrmValuePtr fromVal;
-     XrmValuePtr toVal;
+_CvtStringToScrollBarPlacement (XrmValuePtr args,   /* unused */
+				Cardinal *num_args, /* unused */
+				XrmValuePtr fromVal,
+				XrmValuePtr toVal)
 {
+#define done(address, type) \
+toVal->size = sizeof(type); \
+toVal->addr = (XtPointer) address; \
+return /* `;' supplied by caller */
+
   XrmQuark q;
   char lowerName[1000];
   
@@ -528,6 +529,7 @@ _CvtStringToScrollBarPlacement (args, num_args, fromVal, toVal)
   XtStringConversionWarning (fromVal->addr, "scrollBarPlacement");
   toVal->addr = NULL;
   toVal->size = 0;
+#undef done
 }
 
 static void

@@ -2077,7 +2077,7 @@ case "${canonical}" in
     machine=iris4d opsys=irix4-0
   ;;
   mips-sgi-irix6* )
-    machine=iris4d opsys=irix6-0  NON_GNU_CPP=/lib/cpp
+    machine=iris4d opsys=irix6-0
   ;;
   mips-sgi-irix5.[3-9]* )
     machine=iris4d opsys=irix5-3
@@ -5138,6 +5138,14 @@ if [ "${with_menubars}" = "motif" ] || [ "${with_scrollbars}" = "motif" ] \
    || [ "${with_dialogs}" = "motif" ]; then
   with_motif='yes'
 fi
+if [ "${with_menubars}" = "athena" ] || [ "${with_scrollbars}" = "athena" ] \
+   || [ "${with_dialogs}" = "athena" ]; then
+  with_athena='yes'
+fi
+if [ "${with_menubars}" = "athena3d" ] || [ "${with_scrollbars}" = "athena3d" ] \
+   || [ "${with_dialogs}" = "athena3d" ]; then
+  with_athena='yes'
+fi
 
 # Finish ensuring that we have values for the various toolkit items.
 if [ "x${with_menubars}" = "x" ] || [ "${with_menubars}" = "athena" ]; then
@@ -7305,6 +7313,20 @@ DEFS="$DEFS -DLWLIB_USES_MOTIF=1"
 ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_USES_MOTIF\${ac_dB}LWLIB_USES_MOTIF\${ac_dC}1\${ac_dD}
 \${ac_uA}LWLIB_USES_MOTIF\${ac_uB}LWLIB_USES_MOTIF\${ac_uC}1\${ac_uD}
 \${ac_eA}LWLIB_USES_MOTIF\${ac_eB}LWLIB_USES_MOTIF\${ac_eC}1\${ac_eD}
+"
+}
+ 
+fi
+if [ "${with_athena}" = "yes" ] ; then
+   
+{
+test -n "$verbose" && \
+echo "	defining LWLIB_USES_ATHENA"
+echo "#define" LWLIB_USES_ATHENA "1" >> confdefs.h
+DEFS="$DEFS -DLWLIB_USES_ATHENA=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_USES_ATHENA\${ac_dB}LWLIB_USES_ATHENA\${ac_dC}1\${ac_dD}
+\${ac_uA}LWLIB_USES_ATHENA\${ac_uB}LWLIB_USES_ATHENA\${ac_uC}1\${ac_uD}
+\${ac_eA}LWLIB_USES_ATHENA\${ac_eB}LWLIB_USES_ATHENA\${ac_eC}1\${ac_eD}
 "
 }
  

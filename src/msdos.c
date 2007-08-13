@@ -2168,14 +2168,14 @@ run_msdos_command (unsigned char **argv, Lisp_Object dir,
 	tmp = Fcar (lst);
 	lst = Fcdr (lst);
 	CHECK_STRING (tmp);
-	envv[i] = alloca (string_length (XSTRING (tmp)) + 1);
-	strcpy (envv[i], string_data (XSTRING (tmp)));
+	envv[i] = alloca (XSTRING_LENGTH (tmp) + 1);
+	strcpy (envv[i], XSTRING_DATA (tmp));
       }
     envv[len] = (char *) 0;
   }
 
   if (STRINGP (dir))
-    chdir (string_data (XSTRING (dir)));
+    chdir (XSTRING_DATA (dir));
   inbak = dup (0);
   outbak = dup (1);
   errbak = dup (2);

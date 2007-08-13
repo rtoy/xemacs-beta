@@ -37,9 +37,9 @@ Boston, MA 02111-1307, USA.  */
    Ones defined so far include vax, m68000, ns16000, pyramid,
    orion, tahoe, APOLLO and many others */
 
-#ifndef m88k
-#define m88k
-#endif
+/*#ifndef m88k*/
+/*#define m88k*/
+/*#endif*/
 
 /* Define EXPLICIT_SIGN_EXTEND if XINT must explicitly sign-extend
    the bit field into an int.  In other words, if bit fields

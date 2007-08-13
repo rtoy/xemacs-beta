@@ -116,6 +116,7 @@ typedef unsigned short mode_t;
 
 #undef SYSV_SYSTEM_DIR
 #undef NONSYSTEM_DIR_LIBRARY
+#define signal_handler_t int
 #define pid_t int
 #undef BSD_TERMIOS
 #undef HAVE_TERMIOS

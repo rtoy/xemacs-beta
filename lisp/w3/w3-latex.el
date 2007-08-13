@@ -5,7 +5,7 @@
 ;; Keywords: hypermedia, printing, typesetting
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1996 by Stephen Peters <speters@cygnus.com>
+;;; Copyright (c) 1996, 1997 by Stephen Peters <speters@cygnus.com>
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;

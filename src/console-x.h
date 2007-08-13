@@ -259,7 +259,7 @@ struct x_frame
   int desired_psheet_count;
   Lisp_Object current_psheet_buffer;
   Lisp_Object desired_psheet_buffer;
-#endif
+#endif /* ENERGIZE */
 
   /*************************** Miscellaneous **************************/
 
@@ -278,12 +278,13 @@ struct x_frame
   /* geometry string that ought to be freed. */
   char *geom_free_me_please;
 
+
   int old_toolbar_size[4];
 
   /* 1 if the frame is completely visible on the display, 0 otherwise.
      if 0 the frame may have been iconified or may be totally
      or partially hidden by another X window */
-  int totally_visible_p :1;
+  unsigned int totally_visible_p :1;
 
   /* NB: Both of the following flags are derivable from the 'shell'
      field above, but it's easier if we also have them separately here. */
@@ -291,13 +292,13 @@ struct x_frame
   /* Are we a top-level frame?  This means that our shell is a
      TopLevelShell, and we should do certain things to interact with
      the window manager. */
-  int top_level_frame_p :1;
+  unsigned int top_level_frame_p :1;
 
 #ifdef EXTERNAL_WIDGET
   /* Are we using somebody else's window for our shell window?  This
      means that our shell is an ExternalShell.  If this flag is set, then
      `top_level_frame_p' will never be set. */
-  int external_window_p :1;
+  unsigned int external_window_p :1;
 #endif /* EXTERNAL_WIDGET */
 };
 

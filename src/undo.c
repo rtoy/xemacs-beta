@@ -303,7 +303,7 @@ truncate_undo_list (Lisp_Object list, int minsize, int maxsize)
 	  size_so_far += sizeof (struct Lisp_Cons);
 	  if (STRINGP (XCAR (elt)))
 	    size_so_far += (sizeof (struct Lisp_String) - 1
-			    + string_length (XSTRING (XCAR (elt))));
+			    + XSTRING_LENGTH (XCAR (elt)));
 	}
 
       /* Advance to next element.  */
@@ -338,7 +338,7 @@ truncate_undo_list (Lisp_Object list, int minsize, int maxsize)
 	  size_so_far += sizeof (struct Lisp_Cons);
 	  if (STRINGP (XCAR (elt)))
 	    size_so_far += (sizeof (struct Lisp_String) - 1
-                            + string_length (XSTRING (XCAR (elt))));
+                            + XSTRING_LENGTH (XCAR (elt)));
 	}
 
       /* Advance to next element.  */

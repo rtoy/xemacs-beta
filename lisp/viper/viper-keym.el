@@ -1,6 +1,6 @@
 ;;; viper-keym.el --- Viper keymaps
 
-;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -32,13 +32,14 @@
 (defvar vip-ex-style-motion)
 
 (eval-when-compile
-  (let ((load-path (cons "." load-path)))
+  (let ((load-path (cons (expand-file-name ".") load-path)))
     (or (featurep 'viper-util)
 	(load "viper-util.el" nil nil 'nosuffix))
     ))
 ;; end pacifier
 
 (require 'viper-util)
+
 
 ;;; Variables
 
@@ -239,8 +240,8 @@ vip-insert-basic-map. Not recommended, except for novice users.")
 
 ;; Replace keymap
 (define-key vip-replace-map "\C-t" 'vip-forward-indent)
-(define-key vip-replace-map "\C-j" 'vip-replace-state-exit-cmd)
-(define-key vip-replace-map "\C-m" 'vip-replace-state-exit-cmd)
+(define-key vip-replace-map "\C-j" 'vip-replace-state-carriage-return)
+(define-key vip-replace-map "\C-m" 'vip-replace-state-carriage-return)
 (define-key vip-replace-map "\C-?" 'vip-del-backward-char-in-replace)
 
 

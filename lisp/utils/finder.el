@@ -210,7 +210,7 @@ arguments compiles from `load-path'."
 
 (defun finder-insert-at-column (column &rest strings)
   "Insert list of STRINGS, at column COLUMN."
-  (if (> (current-column) column) (insert "\n"))
+  (if (>= (current-column) column) (insert "\n"))
   (move-to-column column)
   (let ((col (current-column)))
     (if (< col column)

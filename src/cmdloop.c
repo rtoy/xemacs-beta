@@ -82,7 +82,7 @@ default_error_handler (Lisp_Object data)
   Vexecuting_macro = Qnil;
   clear_echo_area (selected_frame (), Qnil, 0);
   data = Fprin1_to_string (data, Qnil);
-  message ("Error: %s", string_data (XSTRING (data)));
+  message ("Error: %s", XSTRING_DATA (data));
   check_quit (); /* make Vquit_flag accurate */
   Vquit_flag = Qnil;
   return (unbind_to (speccount, Qt));

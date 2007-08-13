@@ -527,9 +527,9 @@ enum external_data_format
   FORMAT_FILENAME,
 
   /* Format used for output to the terminal.  This should be controlled
-     by the `display-coding-system' variable.  Under kterm, this will
+     by the `terminal-coding-system' variable.  Under kterm, this will
      be some ISO2022 system.  On some DOS machines, this is Shift-JIS. */
-  FORMAT_DISPLAY,
+  FORMAT_TERMINAL,
 
   /* Format used for input from the terminal.  This should be controlled
      by the `keyboard-coding-system' variable. */
@@ -644,7 +644,7 @@ enum Lisp_Type
   /* Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol. */
   ,Lisp_Symbol
 #endif /* !LRECORD_SYMBOL */
-  };
+};
 
 /* unsafe! */
 #define POINTER_TYPE_P(type) ((type) != Lisp_Int)
@@ -779,9 +779,9 @@ DECLARE_NONRECORD (cons, Lisp_Cons, struct Lisp_Cons);
 /* For a list that's known to be in valid list format, where we may
    be deleting the current element out of the list --
    will abort() if the list is not in valid format */
-#define LIST_LOOP_DELETING(consvar, nextconsvar, list)		\
-  for (consvar = list;						\
-       !NILP (consvar) ? (nextconsvar = XCDR (consvar), 1) : 0;	\
+#define LIST_LOOP_DELETING(consvar, nextconsvar, list)			\
+  for (consvar = list;							\
+       !NILP (consvar) ? (nextconsvar = XCDR (consvar), 1) : 0;		\
        consvar = nextconsvar)
 
 /* For a list that may not be in valid list format --
@@ -1030,6 +1030,8 @@ DECLARE_NONRECORD (symbol, Lisp_Symbol, struct Lisp_Symbol);
 
 /*********** subr ***********/
 
+typedef Lisp_Object (*lisp_fn_t) (Lisp_Object, ...);
+
 struct Lisp_Subr
 {
   struct lrecord_header lheader;
@@ -1037,7 +1039,7 @@ struct Lisp_Subr
   CONST char *prompt;
   CONST char *doc;
   CONST char *name;
-  Lisp_Object (*subr_fn) ();
+  lisp_fn_t subr_fn;
 };
 
 DECLARE_LRECORD (subr, struct Lisp_Subr);
@@ -1137,24 +1139,25 @@ DECLARE_LRECORD (float, struct Lisp_Float);
 /* These are always continuable because they change their arguments
    even when no error is signalled. */
 
-#define CHECK_INT_OR_FLOAT_COERCE_MARKER(x)				\
-  do { if (INTP (x) || FLOATP (x))					\
-         ;								\
-       else if (MARKERP (x))						\
-         x = make_int (marker_position (x));				\
-       else								\
-         x = wrong_type_argument (Qnumber_or_marker_p, x); } while (0)
+#define CHECK_INT_OR_FLOAT_COERCE_MARKER(x) do				\
+{ if (INTP (x) || FLOATP (x))						\
+    ;									\
+  else if (MARKERP (x))							\
+    x = make_int (marker_position (x));					\
+  else									\
+    x = wrong_type_argument (Qnumber_or_marker_p, x);			\
+} while (0)
 
-#define CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER(x)			\
-  do { if (INTP (x) || FLOATP (x))					\
-         ;								\
-       else if (CHARP (x))						\
-	 x = make_int (XCHAR (x));					\
-       else if (MARKERP (x))						\
-         x = make_int (marker_position (x));				\
-       else								\
-         x = wrong_type_argument (Qnumber_char_or_marker_p, x);		\
-     } while (0)
+#define CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER(x) do			\
+{ if (INTP (x) || FLOATP (x))						\
+    ;									\
+  else if (CHARP (x))							\
+    x = make_int (XCHAR (x));						\
+  else if (MARKERP (x))							\
+    x = make_int (marker_position (x));					\
+  else									\
+    x = wrong_type_argument (Qnumber_char_or_marker_p, x);		\
+} while (0)
 
 # define INT_OR_FLOATP(x) (INTP (x) || FLOATP (x))
 # define GC_INT_OR_FLOATP(x) (GC_INTP (x) || GC_FLOATP (x))
@@ -1213,32 +1216,34 @@ XINT (Lisp_Object obj)
   do { if (!NATNUMP (x)) x = wrong_type_argument (Qnatnump, x); } while (0)
 
 /* next three always continuable because they coerce their arguments. */
-#define CHECK_INT_COERCE_CHAR(x)					\
-  do { if (INTP (x))							\
-         ;								\
-       else if (CHARP (x))						\
-         x = make_int (XCHAR (x));					\
-       else								\
-         x = wrong_type_argument (Qinteger_or_char_p, x); } while (0)
+#define CHECK_INT_COERCE_CHAR(x) do					\
+{ if (INTP (x))								\
+    ;									\
+  else if (CHARP (x))							\
+    x = make_int (XCHAR (x));						\
+  else									\
+    x = wrong_type_argument (Qinteger_or_char_p, x);			\
+} while (0)
 
-#define CHECK_INT_COERCE_MARKER(x)					\
-  do { if (INTP (x))							\
-         ;								\
-       else if (MARKERP (x))						\
-         x = make_int (marker_position (x));				\
-       else								\
-         x = wrong_type_argument (Qinteger_or_marker_p, x); } while (0)
+#define CHECK_INT_COERCE_MARKER(x) do					\
+{ if (INTP (x))								\
+    ;									\
+  else if (MARKERP (x))							\
+    x = make_int (marker_position (x));					\
+  else									\
+    x = wrong_type_argument (Qinteger_or_marker_p, x);			\
+} while (0)
 
-#define CHECK_INT_COERCE_CHAR_OR_MARKER(x)				\
-  do { if (INTP (x))							\
-         ;								\
-       else if (CHARP (x))						\
-	 x = make_int (XCHAR (x));					\
-       else if (MARKERP (x))						\
-         x = make_int (marker_position (x));				\
-       else								\
-         x = wrong_type_argument (Qinteger_char_or_marker_p, x);	\
-     } while (0)
+#define CHECK_INT_COERCE_CHAR_OR_MARKER(x) do				\
+{ if (INTP (x))								\
+    ;									\
+  else if (CHARP (x))							\
+    x = make_int (XCHAR (x));						\
+  else if (MARKERP (x))							\
+    x = make_int (marker_position (x));					\
+  else									\
+    x = wrong_type_argument (Qinteger_char_or_marker_p, x);		\
+} while (0)
 
 /*********** pure space ***********/
 
@@ -1354,11 +1359,12 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 /*         Definitions of primitive Lisp functions and variables        */
 /************************************************************************/
 
-/* Define a built-in function for calling from Lisp.
+
+/* DEFUN - Define a built-in Lisp-visible C function or `subr'.
  `lname' should be the name to give the function in Lisp,
     as a null-terminated C string.
- `fnname' should be the name of the function in C.
-    By convention, it starts with F.
+ `Fname' should be the C equivalent of `lname', using only characters
+    valid in a C identifier, with an "F" prepended.
  `sname' should be the name for the C constant structure
     that records information on this function for internal use.
     By convention, it should be the same as `fnname' but with S instead of F.
@@ -1370,11 +1376,15 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 	 in the form of an integer number-of-arguments
 	 followed by the address of a vector of Lisp_Objects
 	 which contains the argument values.
-    UNEVALLED means pass the list of unevaluated arguments
+    UNEVALLED means pass the list of unevaluated arguments.
  `prompt' says how to read arguments for an interactive call.
     See the doc string for `interactive'.
     A null string means call interactively with no arguments.
- `doc' is documentation for the user.
+ `arglist' are the comma-separated arguments (always Lisp_Objects) for
+    the function.
+  The docstring for the function is placed as a "C" comment between
+    the prompt and the `args' argument.  make-docfile reads the
+    comment and creates the DOC file form it.
 */
 
 #define SUBR_MAX_ARGS 8
@@ -1382,53 +1392,48 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 #define UNEVALLED -1
 
 /* Can't be const, because then subr->doc is read-only and
- *  FSnarf_documentation chokes */
-#define DEFUN(lname, fnname, sname, minargs, maxargs, prompt) \
-  Lisp_Object fnname DEFUN_ARGS_ ## maxargs ; /* See below */ \
-  static struct Lisp_Subr sname \
-     = { { lrecord_subr }, minargs, maxargs, prompt, 0, lname, fnname }; \
-  Lisp_Object fnname
+   Snarf_documentation chokes */
+#define DEFUN(lname, Fname, sname, minargs, maxargs, prompt)		\
+  Lisp_Object Fname ( DEFUN__ ## maxargs ) ; /* See below */		\
+  static struct Lisp_Subr sname						\
+     = { { lrecord_subr }, minargs, maxargs, prompt, 0, lname, (lisp_fn_t) Fname }; \
+  Lisp_Object Fname
 
-/* Scary ANSI C preprocessor hackery by Felix Lee <flee@guardian.cse.psu.edu>
-   to get DEFUN to declare a prototype that matches maxargs, so that the
-   compiler can complain if the "real" arglist doesn't match.  Clever hack
-   or repulsive kludge?  You be the judge.
- */
+/* Heavy ANSI C preprocessor hackery to get DEFUN to declare a
+   prototype that matches maxargs, and add the obligatory
+   `Lisp_Object' type declaration to the formal C arguments.  */
 
-/* WARNING: If you add defines below for higher values of maxargs,
-   make sure to also fix the clauses in primitive_funcall(). */
+#define DEFUN_MANY(named_int, named_Lisp_Object) int named_int, Lisp_Object *named_Lisp_Object
+#define DEFUN_UNEVALLED(args) Lisp_Object args
+#define DEFUN_0() void
+#define DEFUN_1(a)					 Lisp_Object a
+#define DEFUN_2(a,b)		 DEFUN_1(a),		 Lisp_Object b
+#define DEFUN_3(a,b,c)		 DEFUN_2(a,b),		 Lisp_Object c
+#define DEFUN_4(a,b,c,d)	 DEFUN_3(a,b,c),	 Lisp_Object d
+#define DEFUN_5(a,b,c,d,e)	 DEFUN_4(a,b,c,d),	 Lisp_Object e
+#define DEFUN_6(a,b,c,d,e,f)	 DEFUN_5(a,b,c,d,e),	 Lisp_Object f
+#define DEFUN_7(a,b,c,d,e,f,g)	 DEFUN_6(a,b,c,d,e,f),	 Lisp_Object g
+#define DEFUN_8(a,b,c,d,e,f,g,h) DEFUN_7(a,b,c,d,e,f,g), Lisp_Object h
 
-#define DEFUN_ARGS_MANY (int, Lisp_Object *)
-#define DEFUN_ARGS_UNEVALLED (Lisp_Object)
-#define DEFUN_ARGS_0 (void)
-#define DEFUN_ARGS_1 (Lisp_Object)
-#define DEFUN_ARGS_2 (Lisp_Object, Lisp_Object)
-#define DEFUN_ARGS_3 (Lisp_Object, Lisp_Object, Lisp_Object)
-#define DEFUN_ARGS_4 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object)
-#define DEFUN_ARGS_5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		      Lisp_Object)
-#define DEFUN_ARGS_6 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		      Lisp_Object, Lisp_Object)
-#define DEFUN_ARGS_7 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		      Lisp_Object, Lisp_Object, Lisp_Object)
-#define DEFUN_ARGS_8 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		      Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object)
-#define DEFUN_ARGS_9 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		      Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		      Lisp_Object)
-#define DEFUN_ARGS_10 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		       Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		       Lisp_Object, Lisp_Object)
-#define DEFUN_ARGS_11 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		       Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		       Lisp_Object, Lisp_Object, Lisp_Object)
-#define DEFUN_ARGS_12 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		       Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
-		       Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object)
+#define DEFUN__MANY		DEFUN_MANY(argc,argv)
+#define DEFUN__UNEVALLED	DEFUN_UNEVALLED(args)
+#define DEFUN__0		DEFUN_0()
+#define DEFUN__1		DEFUN_1(a)
+#define DEFUN__2		DEFUN_2(a,b)
+#define DEFUN__3		DEFUN_3(a,b,c)
+#define DEFUN__4		DEFUN_4(a,b,c,d)
+#define DEFUN__5		DEFUN_5(a,b,c,d,e)
+#define DEFUN__6		DEFUN_6(a,b,c,d,e,f)
+#define DEFUN__7		DEFUN_7(a,b,c,d,e,f,g)
+#define DEFUN__8		DEFUN_8(a,b,c,d,e,f,g,h)
+
+/* WARNING: If you add defines here for higher values of maxargs,
+   make sure to also fix the clauses in primitive_funcall(),
+   and change the define of SUBR_MAX_ARGS above.  */
 
 #include "symeval.h"
 
-/* Depth of special binding/unwind-protect stack.  Use as arg to unbind_to */
+/* Depth of special binding/unwind-protect stack.  Use as arg to `unbind_to' */
 int specpdl_depth (void);
 
 
@@ -1450,9 +1455,10 @@ int check_quit (void);
 void signal_quit (void);
 
 /* Nonzero if ought to quit now.  */
-#define QUITP ((quit_check_signal_happened ? check_quit () : 0), \
-	       (!NILP (Vquit_flag) && (NILP (Vinhibit_quit) \
-				       || EQ (Vquit_flag, Qcritical))))
+#define QUITP								\
+  ((quit_check_signal_happened ? check_quit () : 0),			\
+   (!NILP (Vquit_flag) && (NILP (Vinhibit_quit)				\
+			   || EQ (Vquit_flag, Qcritical))))
 
 /* QUIT used to call QUITP, but there are some places where QUITP
    is called directly, and check_what_happened() should only be called
@@ -1470,32 +1476,25 @@ void signal_quit (void);
 
 /* Check quit-flag and quit if it is non-nil.  Also do any other things
    that might have gotten queued until it was safe. */
-#define QUIT 								\
-  do { if (INTERNAL_QUITP) signal_quit (); } while (0)
+#define QUIT do { if (INTERNAL_QUITP) signal_quit (); } while (0)
 
-#define REALLY_QUIT							\
-  do { if (INTERNAL_REALLY_QUITP) signal_quit (); } while (0)
+#define REALLY_QUIT do { if (INTERNAL_REALLY_QUITP) signal_quit (); } while (0)
 
 
 /************************************************************************/
 /*                               hashing                                */
 /************************************************************************/
 
-/* #### for a 64-bit machine, we should substitute a prime just over
-   2^32 */
-#define GOOD_HASH_VALUE 65599 /* prime number just over 2^16;
-				 Dragon book, p. 435 */
-#define HASH2(a, b) ((a) * GOOD_HASH_VALUE + (b))
-#define HASH3(a, b, c) (HASH2 (a, b) * GOOD_HASH_VALUE + (c))
-#define HASH4(a, b, c, d) (HASH3 (a, b, c) * GOOD_HASH_VALUE + (d))
-#define HASH5(a, b, c, d, e) (HASH4 (a, b, c, d) * GOOD_HASH_VALUE + (e))
-#define HASH6(a, b, c, d, e, f) (HASH5 (a, b, c, d, e) * GOOD_HASH_VALUE + (f))
-#define HASH7(a, b, c, d, e, f, g) \
-  (HASH6 (a, b, c, d, e, f) * GOOD_HASH_VALUE + (g))
-#define HASH8(a, b, c, d, e, f, g, h) \
-  (HASH7 (a, b, c, d, e, f, g) * GOOD_HASH_VALUE + (h))
-#define HASH9(a, b, c, d, e, f, g, h, i) \
-  (HASH8 (a, b, c, d, e, f, g, h) * GOOD_HASH_VALUE + (i))
+/* #### for a 64-bit machine, we should substitute a prime just over 2^32 */
+#define GOOD_HASH 65599 /* prime number just over 2^16; Dragon book, p. 435 */
+#define HASH2(a,b)               (GOOD_HASH * (a)                     + (b))
+#define HASH3(a,b,c)             (GOOD_HASH * HASH2 (a,b)             + (c))
+#define HASH4(a,b,c,d)           (GOOD_HASH * HASH3 (a,b,c)           + (d))
+#define HASH5(a,b,c,d,e)         (GOOD_HASH * HASH4 (a,b,c,d)         + (e))
+#define HASH6(a,b,c,d,e,f)       (GOOD_HASH * HASH5 (a,b,c,d,e)       + (f))
+#define HASH7(a,b,c,d,e,f,g)     (GOOD_HASH * HASH6 (a,b,c,d,e,f)     + (g))
+#define HASH8(a,b,c,d,e,f,g,h)   (GOOD_HASH * HASH7 (a,b,c,d,e,f,g)   + (h))
+#define HASH9(a,b,c,d,e,f,g,h,i) (GOOD_HASH * HASH8 (a,b,c,d,e,f,g,h) + (i))
 
 /* Enough already! */
 
@@ -1577,8 +1576,12 @@ struct gcpro
 
 #ifdef DEBUG_GCPRO
 
-void debug_gcpro1 (), debug_gcpro2 (), debug_gcpro3 (), debug_gcpro4 ();
-void debug_gcpro_5 (), debug_ungcpro ();
+void debug_gcpro1 ();
+void debug_gcpro2 ();
+void debug_gcpro3 ();
+void debug_gcpro4 ();
+void debug_gcpro5 ();
+void debug_ungcpro();
 
 #define GCPRO1(v) \
  debug_gcpro1 (__FILE__, __LINE__,&gcpro1,&v)
@@ -1633,7 +1636,7 @@ void debug_gcpro_5 (), debug_ungcpro ();
 
 #define GCPRO2(varname1, varname2) \
  {gcpro1.next = gcprolist; gcpro1.var = &varname1; gcpro1.nvars = 1; \
-  gcpro2.next = &gcpro1; gcpro2.var = &varname2; gcpro2.nvars = 1; \
+  gcpro2.next = &gcpro1;   gcpro2.var = &varname2; gcpro2.nvars = 1; \
   gcprolist = &gcpro2; }
 
 #define GCPRO3(varname1, varname2, varname3) \
@@ -1727,14 +1730,6 @@ void debug_gcpro_5 (), debug_ungcpro ();
 
 /* Another try to fix SunPro C compiler warnings */
 /* "end-of-loop code not reached" */
-#ifdef __SUNPRO_C
-#define RETURN__ if (1) return
-#else
-#define RETURN__ return
-#endif
-
-/* Another try to fix SunPro C compiler warnings */
-/* "end-of-loop code not reached" */
 /* "statement not reached */
 #ifdef __SUNPRO_C
 #define RETURN__ if (1) return
@@ -1745,39 +1740,39 @@ void debug_gcpro_5 (), debug_ungcpro ();
 #endif
 
 /* Evaluate expr, UNGCPRO, and then return the value of expr.  */
-#define RETURN_UNGCPRO(expr) do	\
-{					\
-  Lisp_Object ret_ungc_val = (expr);	\
-  UNGCPRO;				\
-  RETURN__ ret_ungc_val;		\
+#define RETURN_UNGCPRO(expr) do						\
+{									\
+  Lisp_Object ret_ungc_val = (expr);					\
+  UNGCPRO;								\
+  RETURN__ ret_ungc_val;						\
 } while (0)
 
 /* Evaluate expr, NUNGCPRO, UNGCPRO, and then return the value of expr.  */
-#define RETURN_NUNGCPRO(expr) do	\
-{					\
-  Lisp_Object ret_ungc_val = (expr);	\
-  NUNGCPRO;				\
-  UNGCPRO;				\
-  RETURN__ ret_ungc_val;		\
+#define RETURN_NUNGCPRO(expr) do					\
+{									\
+  Lisp_Object ret_ungc_val = (expr);					\
+  NUNGCPRO;								\
+  UNGCPRO;								\
+  RETURN__ ret_ungc_val;						\
 } while (0)
 
 /* Evaluate expr, NNUNGCPRO, NUNGCPRO, UNGCPRO, and then return the
    value of expr.  */
-#define RETURN_NNUNGCPRO(expr)	do	\
-{					\
-  Lisp_Object ret_ungc_val = (expr);	\
-  NNUNGCPRO;				\
-  NUNGCPRO;				\
-  UNGCPRO;				\
-  RETURN__ ret_ungc_val;		\
+#define RETURN_NNUNGCPRO(expr) do					\
+{									\
+  Lisp_Object ret_ungc_val = (expr);					\
+  NNUNGCPRO;								\
+  NUNGCPRO;								\
+  UNGCPRO;								\
+  RETURN__ ret_ungc_val;						\
 } while (0)
 
 /* Evaluate expr, return it if it's not Qunbound. */
-#define RETURN_IF_NOT_UNBOUND(expr) do	\
-{					\
-  Lisp_Object ret_nunb_val = (expr);	\
-  if (!UNBOUNDP (ret_nunb_val))		\
-    RETURN__ ret_nunb_val;	 	\
+#define RETURN_IF_NOT_UNBOUND(expr) do					\
+{									\
+  Lisp_Object ret_nunb_val = (expr);					\
+  if (!UNBOUNDP (ret_nunb_val))						\
+    RETURN__ ret_nunb_val;	 					\
 } while (0)
 
 /* Call staticpro (&var) to protect static variable `var'. */

@@ -984,9 +984,11 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 }
 
 static int
-xbm_possible_dest_types ()
+xbm_possible_dest_types (void)
 {
-  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
+  return
+    IMAGE_MONO_PIXMAP_MASK  |
+    IMAGE_COLOR_PIXMAP_MASK |
     IMAGE_POINTER_MASK;
 }
 
@@ -1066,7 +1068,7 @@ jpeg_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-jpeg_possible_dest_types ()
+jpeg_possible_dest_types (void)
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -1547,7 +1549,7 @@ gif_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-gif_possible_dest_types ()
+gif_possible_dest_types (void)
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -1868,7 +1870,7 @@ png_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-png_possible_dest_types ()
+png_possible_dest_types (void)
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -2247,7 +2249,7 @@ tiff_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-tiff_possible_dest_types ()
+tiff_possible_dest_types (void)
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -2463,9 +2465,11 @@ xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-xpm_possible_dest_types ()
+xpm_possible_dest_types (void)
 {
-  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
+  return
+    IMAGE_MONO_PIXMAP_MASK  |
+    IMAGE_COLOR_PIXMAP_MASK |
     IMAGE_POINTER_MASK;
 }
 
@@ -2951,9 +2955,11 @@ xface_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-xface_possible_dest_types ()
+xface_possible_dest_types (void)
 {
-  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
+  return
+    IMAGE_MONO_PIXMAP_MASK  |
+    IMAGE_COLOR_PIXMAP_MASK |
     IMAGE_POINTER_MASK;
 }
 
@@ -2979,8 +2985,8 @@ xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
   char *p, *bits, *bp;
-  CONST char *emsg = 0;
-  CONST char *dstring;
+  CONST char * volatile emsg = 0;
+  CONST char * volatile dstring;
 
   assert (!NILP (data));
 
@@ -3127,10 +3133,13 @@ autodetect_normalize (Lisp_Object instantiator, Lisp_Object console_type)
 }
 
 static int
-autodetect_possible_dest_types ()
+autodetect_possible_dest_types (void)
 {
-  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
-    IMAGE_POINTER_MASK | IMAGE_TEXT_MASK;
+  return
+    IMAGE_MONO_PIXMAP_MASK  |
+    IMAGE_COLOR_PIXMAP_MASK |
+    IMAGE_POINTER_MASK      |
+    IMAGE_TEXT_MASK;
 }
 
 static void
@@ -3225,7 +3234,7 @@ safe_XLoadFont (Display *dpy, char *name)
 }
 
 static int
-font_possible_dest_types ()
+font_possible_dest_types (void)
 {
   return IMAGE_POINTER_MASK;
 }
@@ -3323,7 +3332,7 @@ cursor_font_validate (Lisp_Object instantiator)
 }
 
 static int
-cursor_font_possible_dest_types ()
+cursor_font_possible_dest_types (void)
 {
   return IMAGE_POINTER_MASK;
 }
@@ -3602,10 +3611,10 @@ Subwindows are not currently implemented.
   dpy = DisplayOfScreen (LISP_DEVICE_TO_X_SCREEN
 			 (FRAME_DEVICE (XFRAME (sw->frame))));
 
-  property_atom = XInternAtom (dpy, (char *) XSTRING_DATA (property),
-			       False);
+  property_atom = XInternAtom (dpy, (char *) XSTRING_DATA (property), False);
   XChangeProperty (dpy, sw->subwindow, property_atom, XA_STRING, 8,
-		   PropModeReplace, XSTRING_DATA (data),
+		   PropModeReplace,
+		   XSTRING_DATA   (data),
 		   XSTRING_LENGTH (data));
 
   return (property);

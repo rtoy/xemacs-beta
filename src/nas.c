@@ -52,15 +52,16 @@
  */
 
 #if __STDC__ || defined (STDC_HEADERS)
-
 #    include <stdlib.h>
-#    include <unistd.h>
 #    include <stdarg.h>
+#    include <string.h>
+#endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
 #include <stdio.h>
-#include <string.h>
 #include <config.h> /* for CONST in syssignal.h (neal@ctd.comsat.com) */
 #include "syssignal.h"
 

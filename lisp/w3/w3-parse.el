@@ -3,7 +3,7 @@
 ;; Filename: w3-parse.el
 ;; Purpose: Parse HTML and/or SGML for Emacs W3 browser.
 
-;; Copyright © 1995, 1996  Joseph Brian Wells
+;; Copyright © 1995, 1996, 1997  Joseph Brian Wells
 ;; Copyright © 1993, 1994, 1995 by William M. Perry (wmperry@cs.indiana.edu)
 ;; 
 ;; This program is free software; you can redistribute it and/or modify
@@ -1113,6 +1113,7 @@ skip-chars-forward."
 
        ;; client-side imagemaps
        (%imagemaps . (area map))
+       (%input.fields . (input select textarea keygen label))
        ;; special action is taken for %text inside %body.content in the
        ;; content model of each element.
        (%body.content . (%heading %block style hr div address %imagemaps))
@@ -1124,7 +1125,7 @@ skip-chars-forward."
 
        (%block . (p %list dl form %preformatted 
                     %blockquote isindex fn table fig note
-                    center %block-deprecated %block-obsoleted))
+                    multicol center %block-deprecated %block-obsoleted))
        (%list . (ul ol))
        (%preformatted . (pre))
        (%blockquote . (bq))
@@ -1134,7 +1135,7 @@ skip-chars-forward."
        ;; Why is IMG in this list?
        (%pre.exclusion . (*include img *discard tab math big small sub sup))
        
-       (%text . (*data b %notmath sub sup %emacsw3-crud))
+       (%text . (*data b %notmath sub sup %emacsw3-crud %input.fields))
        (%notmath . (%special %font %phrase %misc))
        (%font . (i u s strike tt big small sub sup font
                    roach secret wired)) ;; B left out for MATH
@@ -1251,7 +1252,7 @@ skip-chars-forward."
                             ((credit plaintext) *close))
                            nil)])
         (end-tag-omissible . t))
-       ((div banner center)
+       ((div banner center multicol)
         (content-model . [((%body.content)
                            nil
                            ;; Push <P> before data characters.  Non-SGML.

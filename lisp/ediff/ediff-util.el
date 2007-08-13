@@ -1,6 +1,6 @@
 ;;; ediff-util.el --- the core commands and utilities of ediff
 
-;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.sunysb.edu>
 
@@ -29,10 +29,14 @@
 (defvar ediff-patch-diagnostics)
 (defvar ediff-patchbufer)
 (defvar ediff-toolbar)
+(defvar ediff-toolbar-3way)
+(defvar bottom-toolbar)
+(defvar bottom-toolbar-visible-p)
+(defvar bottom-toolbar-height)
 (defvar mark-active)
 
 (eval-when-compile
-  (let ((load-path (cons "." load-path)))
+  (let ((load-path (cons (expand-file-name ".") load-path)))
     (or (featurep 'ediff-init)
 	(load "ediff-init.el" nil nil 'nosuffix))
     (or (featurep 'ediff-help)
@@ -515,8 +519,10 @@ to invocation.")
 		  ediff-split-window-function
 		  (ediff-multiframe-setup-p)
 		  ediff-wide-display-p))
+
+    ;; In multiframe, toolbar is set in ediff-setup-control-frame
     (if (not (ediff-multiframe-setup-p))
-	(ediff-make-bottom-toolbar))    ; checks if toolbar is requested
+	(ediff-make-bottom-toolbar)) ; this checks if toolbar is requested
     (goto-char (point-min))
     (skip-chars-forward ediff-whitespace)))
     
@@ -1181,33 +1187,21 @@ This is especially useful when comparing buffers side-by-side."
 	
 ;;;###autoload
 (defun ediff-toggle-multiframe ()
-  "Switch from the multiframe display to single-frame display and back.
-For a permanent change, set the variable `ediff-window-setup-function',
+  "Switch from multiframe display to single-frame display and back.
+To change the default, set the variable `ediff-window-setup-function',
 which see."
   (interactive)
-  (let (set-func window-setup-func)
+  (let (window-setup-func)
     (or (ediff-window-display-p)
 	(error "%sEmacs is not running as a window application"
 	       (if ediff-emacs-p "" "X")))
 
-  ;;(setq set-func (if (ediff-in-control-buffer-p) 'setq 'setq-default))
-
   (cond ((eq ediff-window-setup-function 'ediff-setup-windows-multiframe)
-	 ;; (eval
-	 ;;  (list
-	 ;;   set-func
-	 ;;   'ediff-window-setup-function ''ediff-setup-windows-plain))
-	 (setq window-setup-func 'ediff-setup-windows-plain)
-	 )
+	 (setq window-setup-func 'ediff-setup-windows-plain))
 	((eq ediff-window-setup-function 'ediff-setup-windows-plain)
 	 (if (ediff-in-control-buffer-p)
 	     (ediff-kill-bottom-toolbar))
-	 ;;(eval
-	 ;; (list
-	 ;;  set-func
-	 ;;  'ediff-window-setup-function 'ediff-setup-windows-multiframe))
-	 (setq window-setup-func 'ediff-setup-windows-multiframe)
-	 ))
+	 (setq window-setup-func 'ediff-setup-windows-multiframe)))
 
   ;; change default
   (setq-default ediff-window-setup-function window-setup-func)
@@ -1219,6 +1213,33 @@ which see."
 	  ediff-session-registry)
   (if (ediff-in-control-buffer-p)
       (ediff-recenter 'no-rehighlight))))
+
+
+;;;###autoload
+(defun ediff-toggle-use-toolbar ()
+  "Enable or disable Ediff toolbar.
+Works only in versions of Emacs that support toolbars.
+To change the default, set the variable `ediff-use-toolbar-p', which see."
+  (interactive)
+  (if (featurep 'ediff-tbar)
+      (progn
+	(or (ediff-window-display-p)
+	    (error "%sEmacs is not running as a window application"
+		   (if ediff-emacs-p "" "X")))
+	(if (ediff-use-toolbar-p)
+	    (ediff-kill-bottom-toolbar))
+	;; do this only after killing the toolbar
+	(setq ediff-use-toolbar-p (not ediff-use-toolbar-p))
+	
+	(mapcar (function (lambda(buf)
+			    (ediff-eval-in-buffer buf
+			      ;; force redisplay
+			      (setq ediff-window-config-saved "")
+			      )))
+		ediff-session-registry)
+	(if (ediff-in-control-buffer-p)
+	    (ediff-recenter 'no-rehighlight)))))
+
 
 ;; if was using toolbar, kill it
 (defun ediff-kill-bottom-toolbar ()
@@ -1233,13 +1254,25 @@ which see."
 	(set-specifier bottom-toolbar (list (selected-frame) nil))
 	(set-specifier bottom-toolbar-visible-p (list (selected-frame) nil)))))
 
-;; if wants to use toolbar, make it
-(defun ediff-make-bottom-toolbar ()
-  (if (ediff-use-toolbar-p)
+;; If wants to use toolbar, make it.
+;; If not, zero the toolbar for XEmacs.
+;; Do nothing for Emacs.
+(defun ediff-make-bottom-toolbar (&optional frame)
+  (if (ediff-window-display-p)
       (progn
-	(set-specifier bottom-toolbar (list (selected-frame) ediff-toolbar))
-	(set-specifier bottom-toolbar-visible-p (list (selected-frame) t)) 
-	(set-specifier bottom-toolbar-height (list (selected-frame) 34)))))
+	(setq frame (or frame (selected-frame)))
+	(cond ((ediff-use-toolbar-p) ; this checks for XEmacs
+	       (set-specifier
+		bottom-toolbar
+		(list frame (if (ediff-3way-comparison-job)
+				ediff-toolbar-3way ediff-toolbar)))
+	       (set-specifier bottom-toolbar-visible-p (list frame t)) 
+	       (set-specifier bottom-toolbar-height
+			      (list frame ediff-toolbar-height)))
+	      (ediff-xemacs-p
+	       (set-specifier bottom-toolbar-height (list frame 0)))
+	      ))
+    ))
 	       
 ;; Merging
 
@@ -2202,13 +2235,15 @@ If it is t, they will be preserved unconditionally. A prefix argument,
 temporarily reverses the meaning of this variable."
   (interactive "P")
   (ediff-barf-if-not-control-buffer)
-  (if (y-or-n-p (format "Quit this Ediff session%s? "
-			(if (ediff-buffer-live-p ediff-meta-buffer)
-			    " & show containing session group" "")))
-      (progn
-	(message "")
-	(ediff-really-quit reverse-default-keep-variants))
-    (message "")))
+  (let ((ctl-buf (current-buffer)))
+    (if (y-or-n-p (format "Quit this Ediff session%s? "
+			  (if (ediff-buffer-live-p ediff-meta-buffer)
+			      " & show containing session group" "")))
+	(progn
+	  (message "")
+	  (set-buffer ctl-buf)
+	  (ediff-really-quit reverse-default-keep-variants))
+      (message ""))))
 
 
 ;; Perform the quit operations.
@@ -2422,27 +2457,33 @@ buffer in another session as well."
 					(buffer-name ediff-buffer-C)))))
 	(ediff-kill-buffer-carefully ediff-buffer-C))))
 
-(defun ediff-maybe-save-and-delete-merge ()
+(defun ediff-maybe-save-and-delete-merge (&optional save-and-continue)
   "Default hook to run on quitting a merge job.
+This can also be used to save merge buffer in the middle of an Ediff session.
+
+If the optional SAVE-AND-CONTINUE argument is non-nil, save merge buffer and
+continue. Otherwise:
 If `ediff-autostore-merges' is nil, this does nothing.
 If it is t, it saves the merge buffer in the file `ediff-merge-store-file'
-or asks the user, if the latter is nil. It then then asks the user whether to
+or asks the user, if the latter is nil. It then asks the user whether to
 delete the merge buffer.
 If `ediff-autostore-merges' is neither nil nor t, the merge buffer is saved
 only if this merge job is part of a group, i.e., was invoked from within
 `ediff-merge-directories', `ediff-merge-directory-revisions', and such."
-  (let ((merge-store-file ediff-merge-store-file))
+  (let ((merge-store-file ediff-merge-store-file)
+	(ediff-autostore-merges ; fake ediff-autostore-merges, if necessary
+	 (if save-and-continue t ediff-autostore-merges)))
     (if ediff-autostore-merges
 	(cond ((stringp ediff-merge-store-file)
 	       ;; store, ask to delete
-	       (ediff-write-merge-buffer-then-kill
-		ediff-buffer-C merge-store-file 'show-file))
+	       (ediff-write-merge-buffer-and-maybe-kill
+		ediff-buffer-C merge-store-file 'show-file save-and-continue))
 	      ((eq ediff-autostore-merges t)
 	       ;; ask for file name
 	       (setq merge-store-file
-		     (read-file-name "Save the result of the merge in: "))
-	       (ediff-write-merge-buffer-then-kill
-		ediff-buffer-C merge-store-file))
+		     (read-file-name "Save the merge buffer in file: "))
+	       (ediff-write-merge-buffer-and-maybe-kill
+		ediff-buffer-C merge-store-file nil save-and-continue))
 	      ((and (ediff-buffer-live-p ediff-meta-buffer)
 		    (ediff-eval-in-buffer ediff-meta-buffer
 		      (ediff-merge-metajob)))
@@ -2451,12 +2492,16 @@ only if this merge job is part of a group, i.e., was invoked from within
 	       ;; of the merge.
 	       ;; Ask where to save anyway--will decide what to do here later.
 	       (setq merge-store-file
-		     (read-file-name "The result of the merge goes into: "))
-	       (ediff-write-merge-buffer-then-kill
-		ediff-buffer-C merge-store-file))))
+		     (read-file-name "Save the merge buffer in file: "))
+	       (ediff-write-merge-buffer-and-maybe-kill
+		ediff-buffer-C merge-store-file nil save-and-continue))))
     ))
 
-(defun ediff-write-merge-buffer-then-kill (buf file &optional show-file)
+;; write merge buffer. If the optional argument save-and-continue is non-nil,
+;; then don't kill the merge buffer
+(defun ediff-write-merge-buffer-and-maybe-kill (buf file
+					       &optional
+					       show-file save-and-continue)
   (ediff-eval-in-buffer buf
     (if (or (not (file-exists-p file))
 	    (y-or-n-p (format "File %s exists, overwrite? " file)))
@@ -2466,7 +2511,9 @@ only if this merge job is part of a group, i.e., was invoked from within
 	      (progn
 		(message "Merge buffer saved in: %s" file)
 		(sit-for 2)))
-	  (if (y-or-n-p "Merge buffer saved in file. Now kill the buffer? ")
+	  (if (and
+	       (not save-and-continue)
+	       (y-or-n-p "Merge buffer saved in file. Now kill the buffer? "))
 	      (ediff-kill-buffer-carefully buf))))))
 
 ;; The default way of suspending Ediff.

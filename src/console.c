@@ -131,7 +131,7 @@ print_console (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   if (print_readably)
     error ("printing unreadable object #<console %s 0x%x>",
-	   string_data (XSTRING (con->name)), con->header.uid);
+	   XSTRING_DATA (con->name), con->header.uid);
 
   sprintf (buf, "#<%s-console", !CONSOLE_LIVE_P (con) ? "dead" :
 	   CONSOLE_TYPE_NAME (con));

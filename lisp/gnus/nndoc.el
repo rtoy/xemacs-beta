@@ -1,5 +1,5 @@
 ;;; nndoc.el --- single file access for Gnus
-;; Copyright (C) 1995,96 Free Software Foundation, Inc.
+;; Copyright (C) 1995,96,97 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; 	Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
@@ -53,7 +53,6 @@ One of `mbox', `babyl', `digest', `news', `rnews', `mmdf', `forward',
      (article-begin . "^#! *rnews +\\([0-9]+\\) *\n")
      (body-end-function . nndoc-rnews-body-end))
     (mbox 
-     (article-begin . "^From \\([^ \n]*\\(\\|\".*\"[^ \n]*\\)\\)  ?\\([^ \n]*\\) *\\([^ ]*\\) *\\([0-9]*\\) *\\([0-9:]*\\) *\\([A-Z]?[A-Z]?[A-Z][A-Z]\\( DST\\)?\\|[-+]?[0-9][0-9][0-9][0-9]\\|\\) * [0-9][0-9]\\([0-9]*\\) *\\([A-Z]?[A-Z]?[A-Z][A-Z]\\( DST\\)?\\|[-+]?[0-9][0-9][0-9][0-9]\\|\\) *\\(remote from .*\\)?\n")
      (article-begin-function . nndoc-mbox-article-begin)
      (body-end-function . nndoc-mbox-body-end))
     (babyl 
@@ -64,38 +63,56 @@ One of `mbox', `babyl', `digest', `news', `rnews', `mmdf', `forward',
     (forward
      (article-begin . "^-+ Start of forwarded message -+\n+")
      (body-end . "^-+ End of forwarded message -+$")
-     (prepare-body . nndoc-unquote-dashes))
+     (prepare-body-function . nndoc-unquote-dashes))
     (clari-briefs
      (article-begin . "^ \\*")
      (body-end . "^\t------*[ \t]^*\n^ \\*")
      (body-begin . "^\t")
      (head-end . "^\t")
-     (generate-head . nndoc-generate-clari-briefs-head)
-     (article-transform . nndoc-transform-clari-briefs))
+     (generate-head-function . nndoc-generate-clari-briefs-head)
+     (article-transform-function . nndoc-transform-clari-briefs))
+    (mime-digest
+     (article-begin . "")
+     (head-end . "^ ?$")
+     (body-end . "")
+     (file-end . "")
+     (subtype digest guess))
+    (standard-digest
+     (first-article . ,(concat "^" (make-string 70 ?-) "\n\n+"))
+     (article-begin . ,(concat "^\n" (make-string 30 ?-) "\n\n+"))
+     (prepare-body-function . nndoc-unquote-dashes)
+     (body-end-function . nndoc-digest-body-end)
+     (head-end . "^ ?$")
+     (body-begin . "^ ?\n")
+     (file-end . "^End of .*digest.*[0-9].*\n\\*\\*\\|^End of.*Digest *$")
+     (subtype digest guess))
     (slack-digest
      (article-begin . "^------------------------------*[\n \t]+")
      (head-end . "^ ?$")
      (body-end-function . nndoc-digest-body-end)
      (body-begin . "^ ?$")
      (file-end . "^End of")
-     (prepare-body . nndoc-unquote-dashes))
-    (mime-digest
-     (article-begin . "")
-     (head-end . "^ ?$")
-     (body-end . "")
-     (file-end . ""))
-    (standard-digest
-     (first-article . ,(concat "^" (make-string 70 ?-) "\n\n+"))
-     (article-begin . ,(concat "\n\n" (make-string 30 ?-) "\n\n+"))
-     (prepare-body . nndoc-unquote-dashes)
-     (body-end-function . nndoc-digest-body-end)
-     (head-end . "^ ?$")
-     (body-begin . "^ ?\n")
-     (file-end . "^End of .*digest.*[0-9].*\n\\*\\*\\|^End of.*Digest *$"))
+     (prepare-body-function . nndoc-unquote-dashes)
+     (subtype digest guess))
+    (lanl-gov-announce
+      (article-begin . "^\\\\\\\\\n")
+      (head-begin . "^Paper.*:")
+      (head-end   . "\\(^\\\\\\\\.*\n\\|-----------------\\)")
+      (body-begin . "")
+      (body-end   . "-------------------------------------------------")
+      (file-end   . "^Title: Recent Seminal")
+      (generate-head-function . nndoc-generate-lanl-gov-head)
+      (article-transform-function . nndoc-transform-lanl-gov-announce)
+      (subtype preprints guess))
     (guess 
-     (guess . nndoc-guess-type))
+     (guess . t)
+     (subtype nil))
     (digest
-     (guess . nndoc-guess-digest-type))
+     (guess . t)
+     (subtype nil))
+    (preprints
+     (guess . t)
+     (subtype nil))
     ))
 
 
@@ -104,7 +121,6 @@ One of `mbox', `babyl', `digest', `news', `rnews', `mmdf', `forward',
 (defvoo nndoc-first-article nil)
 (defvoo nndoc-article-end nil)
 (defvoo nndoc-article-begin nil)
-(defvoo nndoc-article-begin-function nil)
 (defvoo nndoc-head-begin nil)
 (defvoo nndoc-head-end nil)
 (defvoo nndoc-file-end nil)
@@ -114,9 +130,10 @@ One of `mbox', `babyl', `digest', `news', `rnews', `mmdf', `forward',
 (defvoo nndoc-head-begin-function nil)
 (defvoo nndoc-body-end nil)
 (defvoo nndoc-dissection-alist nil)
-(defvoo nndoc-prepare-body nil)
-(defvoo nndoc-generate-head nil)
-(defvoo nndoc-article-transform nil)
+(defvoo nndoc-prepare-body-function nil)
+(defvoo nndoc-generate-head-function nil)
+(defvoo nndoc-article-transform-function nil)
+(defvoo nndoc-article-begin-function nil)
 
 (defvoo nndoc-status-string "")
 (defvoo nndoc-group-alist nil)
@@ -145,12 +162,13 @@ One of `mbox', `babyl', `digest', `news', `rnews', `mmdf', `forward',
 	    (when (setq entry (cdr (assq (setq article (pop articles))
 					 nndoc-dissection-alist)))
 	      (insert (format "221 %d Article retrieved.\n" article))
-	      (if nndoc-generate-head
-		  (funcall nndoc-generate-head article)
+	      (if nndoc-generate-head-function
+		  (funcall nndoc-generate-head-function article)
 		(insert-buffer-substring
 		 nndoc-current-buffer (car entry) (nth 1 entry)))
 	      (goto-char (point-max))
-	      (or (= (char-after (1- (point))) ?\n) (insert "\n"))
+	      (unless (= (char-after (1- (point))) ?\n)
+		(insert "\n"))
 	      (insert (format "Lines: %d\n" (nth 4 entry)))
 	      (insert ".\n")))
 
@@ -165,20 +183,21 @@ One of `mbox', `babyl', `digest', `news', `rnews', `mmdf', `forward',
 	  beg)
       (set-buffer buffer)
       (erase-buffer)
-      (if (stringp article)
-	  nil
-	(insert-buffer-substring 
-	 nndoc-current-buffer (car entry) (nth 1 entry))
-	(insert "\n")
-	(setq beg (point))
-	(insert-buffer-substring 
-	 nndoc-current-buffer (nth 2 entry) (nth 3 entry))
-	(goto-char beg)
-	(when nndoc-prepare-body
-	  (funcall nndoc-prepare-body))
-	(when nndoc-article-transform
-	  (funcall nndoc-article-transform article))
-	t))))
+      (when entry
+	(if (stringp article)
+	    nil
+	  (insert-buffer-substring 
+	   nndoc-current-buffer (car entry) (nth 1 entry))
+	  (insert "\n")
+	  (setq beg (point))
+	  (insert-buffer-substring 
+	   nndoc-current-buffer (nth 2 entry) (nth 3 entry))
+	  (goto-char beg)
+	  (when nndoc-prepare-body-function
+	    (funcall nndoc-prepare-body-function))
+	  (when nndoc-article-transform-function
+	    (funcall nndoc-article-transform-function article))
+	  t)))))
 
 (deffoo nndoc-request-group (group &optional server dont-check)
   "Select news GROUP."
@@ -253,7 +272,7 @@ One of `mbox', `babyl', `digest', `news', `rnews', `mmdf', `forward',
 	(buffer-disable-undo (current-buffer))
 	(erase-buffer)
 	(if (stringp nndoc-address)
-	    (insert-file-contents nndoc-address)
+	    (nnheader-insert-file-contents nndoc-address)
 	  (insert-buffer-substring nndoc-address)))))
     ;; Initialize the nndoc structures according to this new document.
     (when (and nndoc-current-buffer
@@ -267,65 +286,9 @@ One of `mbox', `babyl', `digest', `news', `rnews', `mmdf', `forward',
     ;; Return whether we managed to select a file.
     nndoc-current-buffer))
 
-;; MIME (RFC 1341) digest hack by Ulrik Dickow <dickow@nbi.dk>.
-(defun nndoc-guess-digest-type ()
-  "Guess what digest type the current document is."
-  (let ((case-fold-search t)		; We match a bit too much, keep it simple.
-	boundary-id b-delimiter entry)
-    (goto-char (point-min))
-    (cond 
-     ;; MIME digest.
-     ((and
-       (re-search-forward
-	(concat "^Content-Type: *multipart/digest;[ \t\n]*[ \t]"
-		"boundary=\"\\([^\"\n]*[^\" \t\n]\\)\"")
-	nil t)
-       (match-beginning 1))
-      (setq boundary-id (match-string 1)
-	    b-delimiter (concat "\n--" boundary-id "[\n \t]+"))
-      (setq entry (assq 'mime-digest nndoc-type-alist))
-      (setcdr entry
-	      (list
-	       (cons 'head-end "^ ?$")
-	       (cons 'body-begin "^ ?\n")
-	       (cons 'article-begin b-delimiter)
-	       (cons 'body-end-function 'nndoc-digest-body-end)
-;	       (cons 'body-end 
-;		     (concat "\n--" boundary-id "\\(--\\)?[\n \t]+"))
-	       (cons 'file-end (concat "\n--" boundary-id "--[ \t]*$"))))
-      'mime-digest)
-     ;; Standard digest.
-     ((and (re-search-forward (concat "^" (make-string 70 ?-) "\n\n") nil t)
-	   (re-search-forward 
-	    (concat "\n\n" (make-string 30 ?-) "\n\n") nil t))
-      'standard-digest)
-     ;; Stupid digest.
-     (t
-      'slack-digest))))
-
-(defun nndoc-guess-type ()
-  "Guess what document type is in the current buffer."
-  (goto-char (point-min))
-  (cond 
-   ((looking-at message-unix-mail-delimiter)
-    'mbox)
-   ((looking-at "\^A\^A\^A\^A$")
-    'mmdf)
-   ((looking-at "^Path:.*\n")
-    'news)
-   ((looking-at "#! *rnews")
-    'rnews)
-   ((re-search-forward "\^_\^L *\n" nil t)
-    'babyl)
-   ((save-excursion
-      (and (re-search-forward "^-+ Start of forwarded message -+\n+" nil t)
-	   (not (re-search-forward "^Subject:.*digest" nil t))))
-    'forward)
-   ((let ((case-fold-search nil))
-      (re-search-forward "^\t[^a-z]+ ([^a-z]+) --" nil t))
-    'clari-briefs)
-   (t 
-    'digest)))
+;;;
+;;; Deciding what document type we have
+;;;
 
 (defun nndoc-set-delims ()
   "Set the nndoc delimiter variables according to the type of the document."
@@ -334,87 +297,49 @@ One of `mbox', `babyl', `digest', `news', `rnews', `mmdf', `forward',
 		nndoc-article-end nndoc-head-begin nndoc-head-end
 		nndoc-file-end nndoc-article-begin
 		nndoc-body-begin nndoc-body-end-function nndoc-body-end
-		nndoc-prepare-body nndoc-article-transform
-		nndoc-generate-head nndoc-body-begin-function
-		nndoc-head-begin-function nndoc-article-begin-function)))
+		nndoc-prepare-body-function nndoc-article-transform-function
+		nndoc-generate-head-function nndoc-body-begin-function
+		nndoc-head-begin-function)))
     (while vars
       (set (pop vars) nil)))
-  (let* (defs guess)
+  (let (defs)
     ;; Guess away until we find the real file type.
-    (while (setq defs (cdr (assq nndoc-article-type nndoc-type-alist))
-		 guess (assq 'guess defs))
-      (setq nndoc-article-type (funcall (cdr guess))))
+    (while (assq 'guess (setq defs (cdr (assq nndoc-article-type 
+					      nndoc-type-alist))))
+      (setq nndoc-article-type (nndoc-guess-type nndoc-article-type)))
     ;; Set the nndoc variables.
     (while defs
       (set (intern (format "nndoc-%s" (caar defs)))
 	   (cdr (pop defs))))))
 
-(defun nndoc-search (regexp)
-  (prog1
-      (re-search-forward regexp nil t)
-    (beginning-of-line)))
+(defun nndoc-guess-type (subtype)
+  (let ((alist nndoc-type-alist)
+	results result entry)
+    (while (and (not result)
+		(setq entry (pop alist)))
+      (when (memq subtype (or (cdr (assq 'subtype entry)) '(guess)))
+	(goto-char (point-min))
+	(when (numberp (setq result (funcall (intern
+					      (format "nndoc-%s-type-p" 
+						      (car entry))))))
+	  (push (cons result entry) results)
+	  (setq result nil))))
+    (unless (or result results)
+      (error "Document is not of any recognized type"))
+    (if result
+	(car entry)
+      (cadar (sort results (lambda (r1 r2) (< (car r1) (car r2))))))))
 
-(defun nndoc-dissect-buffer ()
-  "Go through the document and partition it into heads/bodies/articles."
-  (let ((i 0)
-	(first t)
-	head-begin head-end body-begin body-end)
-    (setq nndoc-dissection-alist nil)
-    (save-excursion
-      (set-buffer nndoc-current-buffer)
-      (goto-char (point-min))
-      ;; Find the beginning of the file.
-      (when nndoc-file-begin
-	(nndoc-search nndoc-file-begin))
-      ;; Go through the file.
-      (while (if (and first nndoc-first-article)
-		 (nndoc-search nndoc-first-article)
-	       (if nndoc-article-begin-function
-		   (funcall nndoc-article-begin-function)
-		 (nndoc-search nndoc-article-begin)))
-	(setq first nil)
-	(cond (nndoc-head-begin-function
-	       (funcall nndoc-head-begin-function))
-	      (nndoc-head-begin 
-	       (nndoc-search nndoc-head-begin)))
- 	(if (and nndoc-file-end
-		 (looking-at nndoc-file-end))
-	    (goto-char (point-max))
-	  (setq head-begin (point))
-	  (nndoc-search (or nndoc-head-end "^$"))
-	  (setq head-end (point))
-	  (if nndoc-body-begin-function
-	      (funcall nndoc-body-begin-function)
-	    (nndoc-search (or nndoc-body-begin "^\n")))
-	  (setq body-begin (point))
-	  (or (and nndoc-body-end-function
-		   (funcall nndoc-body-end-function))
-	      (and nndoc-body-end
-		   (nndoc-search nndoc-body-end))
-	      (if nndoc-article-begin-function
-		  (funcall nndoc-article-begin-function)
-		(nndoc-search nndoc-article-begin))
-	      (progn
-		(goto-char (point-max))
-		(when nndoc-file-end
-		  (and (re-search-backward nndoc-file-end nil t)
-		       (beginning-of-line)))))
-	  (setq body-end (point))
-	  (push (list (incf i) head-begin head-end body-begin body-end
-		      (count-lines body-begin body-end))
-		nndoc-dissection-alist))))))
+;;; 
+;;; Built-in type predicates and functions
+;;;
 
-(defun nndoc-unquote-dashes ()
-  "Unquote quoted non-separators in digests."
-  (while (re-search-forward "^- -"nil t)
-    (replace-match "-" t t)))
-
-(defun nndoc-digest-body-end ()
-  (and (re-search-forward nndoc-article-begin nil t)
-       (goto-char (match-beginning 0))))
+(defun nndoc-mbox-type-p ()
+  (when (looking-at message-unix-mail-delimiter)
+    t))
 
 (defun nndoc-mbox-article-begin ()
-  (when (re-search-forward nndoc-article-begin nil t)
+  (when (re-search-forward (concat "^" message-unix-mail-delimiter) nil t)
     (goto-char (match-beginning 0))))
 
 (defun nndoc-mbox-body-end ()
@@ -422,23 +347,70 @@ One of `mbox', `babyl', `digest', `news', `rnews', `mmdf', `forward',
 	len end)
     (when
 	(save-excursion
-	  (and (re-search-backward nndoc-article-begin nil t)
+	  (and (re-search-backward 
+		(concat "^" message-unix-mail-delimiter) nil t)
 	       (setq end (point))
 	       (search-forward "\n\n" beg t)
 	       (re-search-backward
 		"^Content-Length:[ \t]*\\([0-9]+\\) *$" end t)
 	       (setq len (string-to-int (match-string 1)))
 	       (search-forward "\n\n" beg t)
-	       (or (= (setq len (+ (point) len)) (point-max))
-		   (and (< len (point-max))
-			(goto-char len)
-			(looking-at nndoc-article-begin)))))
+	       (unless (= (setq len (+ (point) len)) (point-max))
+		 (and (< len (point-max))
+		      (goto-char len)
+		      (looking-at message-unix-mail-delimiter)))))
       (goto-char len))))
+
+(defun nndoc-mmdf-type-p ()
+  (when (looking-at "\^A\^A\^A\^A$")
+    t))
+
+(defun nndoc-news-type-p ()
+  (when (looking-at "^Path:.*\n")
+    t))
+
+(defun nndoc-rnews-type-p ()
+  (when (looking-at "#! *rnews")
+    t))
 
 (defun nndoc-rnews-body-end ()
   (and (re-search-backward nndoc-article-begin nil t)
        (forward-line 1)
        (goto-char (+ (point) (string-to-int (match-string 1))))))
+
+(defun nndoc-babyl-type-p ()
+  (when (re-search-forward "\^_\^L *\n" nil t)
+    t))
+
+(defun nndoc-babyl-body-begin ()
+  (re-search-forward "^\n" nil t)
+  (when (looking-at "\*\*\* EOOH \*\*\*")
+    (let ((next (or (save-excursion
+		      (re-search-forward nndoc-article-begin nil t))
+		    (point-max))))
+      (unless (re-search-forward "^\n" next t)
+	(goto-char next)
+	(forward-line -1)
+	(insert "\n")
+	(forward-line -1)))))
+
+(defun nndoc-babyl-head-begin ()
+  (when (re-search-forward "^[0-9].*\n" nil t)
+    (when (looking-at "\*\*\* EOOH \*\*\*")
+      (forward-line 1))
+    t))
+
+(defun nndoc-forward-type-p ()
+  (when (and (re-search-forward "^-+ Start of forwarded message -+\n+" nil t)
+	     (not (re-search-forward "^Subject:.*digest" nil t))
+	     (not (re-search-backward "^From:" nil t 2))
+	     (not (re-search-forward "^From:" nil t 2)))
+    t))
+
+(defun nndoc-clari-briefs-type-p ()
+  (when (let ((case-fold-search nil))
+	  (re-search-forward "^\t[^a-z]+ ([^a-z]+) --" nil t))
+    t))
 
 (defun nndoc-transform-clari-briefs (article)
   (goto-char (point-min))
@@ -466,16 +438,168 @@ One of `mbox', `babyl', `digest', `news', `rnews', `mmdf', `forward',
     (insert "From: " "clari@clari.net (" (or from "unknown") ")"
 	    "\nSubject: " (or subject "(no subject)") "\n")))
 
-(defun nndoc-babyl-body-begin ()
-  (re-search-forward "^\n" nil t)
-  (when (looking-at "\*\*\* EOOH \*\*\*")
-    (re-search-forward "^\n" nil t)))
+(defun nndoc-mime-digest-type-p ()
+  (let ((case-fold-search t)
+	boundary-id b-delimiter entry)
+    (when (and
+	   (re-search-forward
+	    (concat "^Content-Type: *multipart/digest;[ \t\n]*[ \t]"
+		    "boundary=\"\\([^\"\n]*[^\" \t\n]\\)\"")
+	    nil t)
+	   (match-beginning 1))
+      (setq boundary-id (match-string 1)
+	    b-delimiter (concat "\n--" boundary-id "[\n \t]+"))
+      (setq entry (assq 'mime-digest nndoc-type-alist))
+      (setcdr entry
+	      (list
+	       (cons 'head-end "^ ?$")
+	       (cons 'body-begin "^ ?\n")
+	       (cons 'article-begin b-delimiter)
+	       (cons 'body-end-function 'nndoc-digest-body-end)
+	       (cons 'file-end (concat "\n--" boundary-id "--[ \t]*$"))))
+      t)))
 
-(defun nndoc-babyl-head-begin ()
-  (when (re-search-forward "^[0-9].*\n" nil t)
-    (when (looking-at "\*\*\* EOOH \*\*\*")
-      (forward-line 1))
+(defun nndoc-standard-digest-type-p ()
+  (when (and (re-search-forward (concat "^" (make-string 70 ?-) "\n\n") nil t)
+	     (re-search-forward 
+	      (concat "\n\n" (make-string 30 ?-) "\n\n") nil t))
     t))
+
+(defun nndoc-digest-body-end ()
+  (and (re-search-forward nndoc-article-begin nil t)
+       (goto-char (match-beginning 0))))
+
+(defun nndoc-slack-digest-type-p ()
+  0)
+
+(defun nndoc-lanl-gov-announce-type-p ()
+  (when (let ((case-fold-search nil))
+	  (re-search-forward "^\\\\\\\\\nPaper: [a-z-]+/[0-9]+" nil t))
+    t))
+
+(defun nndoc-transform-lanl-gov-announce (article)
+  (goto-char (point-max))
+  (when (re-search-backward "^\\\\\\\\ +(\\([^ ]*\\) , *\\([^ ]*\\))" nil t)
+    (replace-match "\n\nGet it at \\1 (\\2)" t nil))
+  ;;  (when (re-search-backward "^\\\\\\\\$" nil t)
+  ;;    (replace-match "" t t))
+  )
+ 
+(defun nndoc-generate-lanl-gov-head (article)
+  (let ((entry (cdr (assq article nndoc-dissection-alist)))
+ 	(e-mail "no address given")
+ 	subject from)
+    (save-excursion
+      (set-buffer nndoc-current-buffer)
+      (save-restriction
+ 	(narrow-to-region (car entry) (nth 1 entry))
+ 	(goto-char (point-min))
+ 	(when (looking-at "^Paper.*: \\([a-z-]+/[0-9]+\\)")
+ 	  (setq subject (concat " (" (match-string 1) ")"))
+ 	  (when (re-search-forward "^From: \\([^ ]+\\)" nil t)
+ 	    (setq e-mail (match-string 1)))
+ 	  (when (re-search-forward "^Title: \\([^\f]*\\)\nAuthors?: \\(.*\\)"
+ 				   nil t)
+ 	    (setq subject (concat (match-string 1) subject))
+ 	    (setq from (concat (match-string 2) " <" e-mail ">"))))
+ 	))
+    (while (and from (string-match "(\[^)\]*)" from))
+      (setq from (replace-match "" t t from)))
+    (insert "From: "  (or from "unknown")
+ 	    "\nSubject: " (or subject "(no subject)") "\n")))
+ 
+
+
+;;;
+;;; Functions for dissecting the documents
+;;;
+
+(defun nndoc-search (regexp)
+  (prog1
+      (re-search-forward regexp nil t)
+    (beginning-of-line)))
+
+(defun nndoc-dissect-buffer ()
+  "Go through the document and partition it into heads/bodies/articles."
+  (let ((i 0)
+	(first t)
+	head-begin head-end body-begin body-end)
+    (setq nndoc-dissection-alist nil)
+    (save-excursion
+      (set-buffer nndoc-current-buffer)
+      (goto-char (point-min))
+      ;; Find the beginning of the file.
+      (when nndoc-file-begin
+	(nndoc-search nndoc-file-begin))
+      ;; Go through the file.
+      (while (if (and first nndoc-first-article)
+		 (nndoc-search nndoc-first-article)
+	       (nndoc-article-begin))
+	(setq first nil)
+	(cond (nndoc-head-begin-function
+	       (funcall nndoc-head-begin-function))
+	      (nndoc-head-begin 
+	       (nndoc-search nndoc-head-begin)))
+ 	(if (or (>= (point) (point-max))
+		(and nndoc-file-end
+		     (looking-at nndoc-file-end)))
+	    (goto-char (point-max))
+	  (setq head-begin (point))
+	  (nndoc-search (or nndoc-head-end "^$"))
+	  (setq head-end (point))
+	  (if nndoc-body-begin-function
+	      (funcall nndoc-body-begin-function)
+	    (nndoc-search (or nndoc-body-begin "^\n")))
+	  (setq body-begin (point))
+	  (or (and nndoc-body-end-function
+		   (funcall nndoc-body-end-function))
+	      (and nndoc-body-end
+		   (nndoc-search nndoc-body-end))
+	      (nndoc-article-begin)
+	      (progn
+		(goto-char (point-max))
+		(when nndoc-file-end
+		  (and (re-search-backward nndoc-file-end nil t)
+		       (beginning-of-line)))))
+	  (setq body-end (point))
+	  (push (list (incf i) head-begin head-end body-begin body-end
+		      (count-lines body-begin body-end))
+		nndoc-dissection-alist))))))
+
+(defun nndoc-article-begin ()
+  (if nndoc-article-begin-function
+      (funcall nndoc-article-begin-function)
+    (ignore-errors
+      (nndoc-search nndoc-article-begin))))
+
+(defun nndoc-unquote-dashes ()
+  "Unquote quoted non-separators in digests."
+  (while (re-search-forward "^- -"nil t)
+    (replace-match "-" t t)))
+
+;;;###autoload
+(defun nndoc-add-type (definition &optional position)
+  "Add document DEFINITION to the list of nndoc document definitions.
+If POSITION is nil or `last', the definition will be added
+as the last checked definition, if t or `first', add as the
+first definition, and if any other symbol, add after that
+symbol in the alist."
+  ;; First remove any old instances.
+  (setq nndoc-type-alist
+	(delq (assq (car definition) nndoc-type-alist)
+	      nndoc-type-alist))
+  ;; Then enter the new definition in the proper place.
+  (cond
+   ((or (null position) (eq position 'last))
+    (setq nndoc-type-alist (nconc nndoc-type-alist (list definition))))
+   ((or (eq position t) (eq position 'first))
+    (push definition nndoc-type-alist))
+   (t
+    (let ((list (memq (assq position nndoc-type-alist)
+		      nndoc-type-alist)))
+      (unless list
+	(error "No such position: %s" position))
+      (setcdr list (cons definition (cdr list)))))))
 
 (provide 'nndoc)
 

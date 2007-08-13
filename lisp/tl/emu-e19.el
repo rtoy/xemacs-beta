@@ -1,9 +1,9 @@
 ;;; emu-e19.el --- emu module for Emacs 19 and XEmacs 19
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu-e19.el,v 1.2 1996/12/29 00:15:08 steve Exp $
+;; Version: $Id: emu-e19.el,v 1.3 1997/02/02 05:06:16 steve Exp $
 ;; Keywords: emulation, compatibility, mule, Latin-1
 
 ;; This file is part of emu.
@@ -131,6 +131,11 @@
        )))
 
 (defmacro as-binary-input-file (&rest body)
+  (` (let ((emx-binary-mode t)) ; Stop CRLF to LF conversion in OS/2
+       (,@ body)
+       )))
+
+(defmacro as-binary-output-file (&rest body)
   (` (let ((emx-binary-mode t)) ; Stop CRLF to LF conversion in OS/2
        (,@ body)
        )))

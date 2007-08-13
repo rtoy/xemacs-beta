@@ -46,25 +46,25 @@ split_up_display_spec (Lisp_Object display, int *hostname_length,
 {
   char *dotptr;
 
-  dotptr = strrchr ((char *) string_data (XSTRING (display)), ':');
+  dotptr = strrchr ((char *) XSTRING_DATA (display), ':');
   if (!dotptr)
     {
-      *hostname_length = string_length (XSTRING (display));
+      *hostname_length = XSTRING_LENGTH (display);
       *display_length = 0;
     }
   else
     {
-      *hostname_length = dotptr - (char *) string_data (XSTRING (display));
+      *hostname_length = dotptr - (char *) XSTRING_DATA (display);
 
       dotptr = strchr (dotptr, '.');
       if (dotptr)
-	*display_length = (dotptr - (char *) string_data (XSTRING (display))
+	*display_length = (dotptr - (char *) XSTRING_DATA (display)
 			   - *hostname_length);
       else
-	*display_length = string_length (XSTRING (display)) - *hostname_length;
+	*display_length = XSTRING_LENGTH (display) - *hostname_length;
     }
 
-  *screen_length = (string_length (XSTRING (display)) - *display_length
+  *screen_length = (XSTRING_LENGTH (display) - *display_length
 		    - *hostname_length);
 }
 
@@ -92,7 +92,7 @@ x_device_to_console_connection (Lisp_Object connection, Error_behavior errb)
 
       split_up_display_spec (connection, &hostname_length, &display_length,
 			     &screen_length);
-      connection = make_string (string_data (XSTRING (connection)),
+      connection = make_string (XSTRING_DATA (connection),
 				hostname_length + display_length);
     }
 
@@ -181,7 +181,7 @@ x_semi_canonicalize_console_connection (Lisp_Object connection,
   /* Check for a couple of standard special cases */
   if (string_byte (XSTRING (connection), 0) == ':')
     connection = concat2 (build_string ("localhost"), connection);
-  else if (!strncmp ((CONST char *) string_data (XSTRING (connection)),
+  else if (!strncmp ((CONST char *) XSTRING_DATA (connection),
 		     "unix:", 5))
     connection = concat2 (build_string ("localhost:"),
 			  Fsubstring (connection, make_int (5), Qnil));
@@ -209,7 +209,7 @@ x_canonicalize_console_connection (Lisp_Object connection, Error_behavior errb)
     hostname = Fsubstring (connection, Qzero, make_int (hostname_length));
     hostname = canonicalize_host_name (hostname);
     connection = concat2 (hostname,
-			  make_string (string_data (XSTRING (connection))
+			  make_string (XSTRING_DATA (connection)
 				       + hostname_length, display_length));
   }
 
@@ -260,7 +260,7 @@ x_canonicalize_device_connection (Lisp_Object connection, Error_behavior errb)
   split_up_display_spec (connection, &hostname_length, &display_length,
 			 &screen_length);
 
-  screen_str = build_string ((CONST char *) string_data (XSTRING (connection))
+  screen_str = build_string ((CONST char *) XSTRING_DATA (connection)
 			     + hostname_length + display_length);
   connection = x_canonicalize_console_connection (connection, errb);
 

@@ -140,6 +140,8 @@ int noninteractive1;
 char **initial_argv;
 int initial_argc;
 
+static void sort_args (int argc, char **argv);
+
 extern int always_gc;           /* hack */
 
 Lisp_Object Qkill_emacs_hook;
@@ -279,7 +281,7 @@ make_arg_list_1 (int argc, char **argv, int skip_args)
   for (i = argc - 1; i >= 0; i--)
     {
       if (i == 0 || i > skip_args)
-	result = Fcons (build_ext_string (argv [i], FORMAT_OS), result);
+	result = Fcons (build_ext_string (argv [i], FORMAT_FILENAME), result);
     }
   return result;
 }
@@ -343,6 +345,14 @@ Any directory names are omitted.
   return Fcopy_sequence (Vinvocation_name);
 }
 
+DEFUN ("invocation-directory", Finvocation_directory, Sinvocation_directory, 0, 0, 0 /*
+Return the directory name in which the Emacs executable was located.
+*/ )
+  ()
+{
+  return Fcopy_sequence (Vinvocation_directory);
+}
+
 
 #ifdef I18N4
 				/* #### - don't know why I18N4 on SunOS/JLE
@@ -351,6 +361,69 @@ Any directory names are omitted.
 # undef RUN_TIME_REMAP
 #endif
 
+/* Test whether the next argument in ARGV matches SSTR or a prefix of
+   LSTR (at least MINLEN characters).  If so, then if VALPTR is non-null
+   (the argument is supposed to have a value) store in *VALPTR either
+   the next argument or the portion of this one after the equal sign.
+   ARGV is read starting at position *SKIPPTR; this index is advanced
+   by the number of arguments used.
+
+   Too bad we can't just use getopt for all of this, but we don't have
+   enough information to do it right.  */
+
+static int
+argmatch (char **argv, int argc, char *sstr, char *lstr,
+	  int minlen, char **valptr, int *skipptr)
+{
+  char *p;
+  int arglen;
+  char *arg;
+
+  /* Don't access argv[argc]; give up in advance.  */
+  if (argc <= *skipptr + 1)
+    return 0;
+
+  arg = argv[*skipptr+1];
+  if (arg == NULL)
+    return 0;
+  if (strcmp (arg, sstr) == 0)
+    {
+      if (valptr != NULL)
+	{
+	  *valptr = argv[*skipptr+2];
+	  *skipptr += 2;
+	}
+      else
+	*skipptr += 1;
+      return 1;
+    }
+  arglen = (valptr != NULL && (p = strchr (arg, '=')) != NULL
+	    ? p - arg : strlen (arg));
+  if (lstr == 0 || arglen < minlen || strncmp (arg, lstr, arglen) != 0)
+    return 0;
+  else if (valptr == NULL)
+    {
+      *skipptr += 1;
+      return 1;
+    }
+  else if (p != NULL)
+    {
+      *valptr = p+1;
+      *skipptr += 1;
+      return 1;
+    }
+  else if (argv[*skipptr+2] != NULL)
+    {
+      *valptr = argv[*skipptr+2];
+      *skipptr += 2;
+      return 1;
+    }
+  else
+    {
+      return 0;
+    }
+}
+
 static DOESNT_RETURN
 main_1 (int argc, char **argv, char **envp)
 {
@@ -358,6 +431,8 @@ main_1 (int argc, char **argv, char **envp)
   int skip_args = 0;
   Lisp_Object load_me;
   int inhibit_window_system;
+
+  noninteractive = 0;
 
 #ifdef NeXT
   extern int malloc_cookie;
@@ -369,8 +444,7 @@ main_1 (int argc, char **argv, char **envp)
    * work with dumping.  But malloc_jumpstart() and malloc_freezedry() in
    * unexnext.c are both completely undocumented, even in NS header files!
    * But hey, it solves all NS related memory problems, so who's
-   * complaining?
-   */
+   * complaining? */
   if (initialized)
     if (malloc_jumpstart (malloc_cookie) != 0)
       printf ("malloc jumpstart failed!\n");
@@ -383,9 +457,11 @@ main_1 (int argc, char **argv, char **envp)
 #endif
 #endif
 
+  sort_args (argc, argv);
+
   /* Map in shared memory, if we are using that.  */
 #ifdef HAVE_SHM
-  if (argc > 1 && !strcmp (argv[1], "-nl"))
+  if (argmatch (argv, argc, "-nl", "--no-shared-memory", 6, NULL, &skip_args))
     {
       map_in_data (0);
       /* The shared memory was just restored, which clobbered this.  */
@@ -397,7 +473,7 @@ main_1 (int argc, char **argv, char **envp)
       /* The shared memory was just restored, which clobbered this.  */
       skip_args = 0;
     }
-#endif
+#endif /* HAVE_SHM */
 
 #ifdef VMS
   /* If -map specified, map the data file in */
@@ -456,19 +532,16 @@ main_1 (int argc, char **argv, char **envp)
 #endif /* HAVE_SOCKS */
 
 #ifndef SYSTEM_MALLOC
-
   if (!initialized)
-    {
-      /* Arrange to get warning messages as memory fills up.  */
-      memory_warnings (0, malloc_warning);
-    }
+    /* Arrange to get warning messages as memory fills up.  */
+    memory_warnings (0, malloc_warning);
 #endif	/* not SYSTEM_MALLOC */
 
 #ifdef MSDOS
   /* We do all file input/output as binary files.  When we need to translate
      newlines, we do that manually.  */
   _fmode = O_BINARY;
-  (stdin)->_flag &= ~_IOTEXT;
+  (stdin) ->_flag &= ~_IOTEXT;
   (stdout)->_flag &= ~_IOTEXT;
   (stderr)->_flag &= ~_IOTEXT;
 #endif /* MSDOS */
@@ -490,56 +563,42 @@ main_1 (int argc, char **argv, char **envp)
 #endif
 
   /* Handle the -t switch, which specifies filename to use as terminal */
-  if (skip_args + 2 < argc && !strcmp (argv[skip_args + 1], "-t"))
-    {
-      int result;
+  {
+    char *term;
+    if (argmatch (argv, argc, "-t", "--terminal", 4, &term, &skip_args))
+      {
+	close (0);
+	close (1);
+	if (open (term, O_RDWR, 2) < 0)
+	  fatal ("%s: %s", term, strerror (errno));
+	dup (0);
+	if (! isatty (0))
+	  fatal ("%s: not a tty", term);
 
-      skip_args += 2;
-      close (0);
-      close (1);
-      result = open (argv[skip_args], O_RDWR, 2 );
-      if (result < 0)
-	{
-	  fatal ("%s: %s", argv[skip_args], strerror (errno));
-	}
-      dup (0);
-      if (! isatty (0))
-	fatal ("%s: not a tty", argv[skip_args]);
+	stderr_out ("Using %s", ttyname (0));
+	inhibit_window_system = 1;	/* -t => -nw */
+      }
+  }
 
-      stderr_out ("Using %s", ttyname (0));
-#if 0
-      stderr_out ("Using %s", argv[skip_args]);
-#endif
-      inhibit_window_system = 1;	/* -t => -nw */
-    }
-
-  if (skip_args + 1 < argc
-      && (!strcmp (argv[skip_args + 1], "-nw")))
-    {
-      skip_args += 1;
-      inhibit_window_system = 1;
-    }
+  /* Handle -nw switch */
+  if (argmatch (argv, argc, "-nw", "--no-windows", 6, NULL, &skip_args))
+    inhibit_window_system = 1;
 
   /* Handle the -batch switch, which means don't do interactive display.  */
-  noninteractive = 0;
-  if (skip_args + 1 < argc &&
-      (!strcmp (argv[skip_args + 1], "-batch") ||
-       !strcmp (argv[skip_args + 1], "--batch")))
-    {
-      skip_args += 1;
-      noninteractive = 1;
-    }
-
-  /* Partially handle the -version and -help switches: they imply -batch,
-     but are not removed from the list.
-   */
-  if (skip_args + 1 < argc &&
-      (!strcmp (argv[skip_args + 1], "-version") ||
-       !strcmp (argv[skip_args + 1], "--version") ||
-       !strcmp (argv[skip_args + 1], "-help") ||
-       !strcmp (argv[skip_args + 1], "--help")))
+  if (argmatch (argv, argc, "-batch", "--batch", 5, NULL, &skip_args))
     noninteractive = 1;
+ 
+  /* Partially handle the -version and -help switches: they imply -batch,
+     but are not removed from the list. */
+  if (argmatch (argv, argc, "-help", "--help",   3, NULL, &skip_args) ||
+      argmatch (argv, argc, "-?",     0,         2, NULL, &skip_args) ||
+      argmatch (argv, argc, "-flags", "--flags", 6, NULL, &skip_args))
+    noninteractive = 1, skip_args--;
 
+  if (argmatch (argv, argc, "-version", "--version", 3, NULL, &skip_args) ||
+      argmatch (argv, argc, "-V",    0,              2, NULL, &skip_args))
+      noninteractive = 1, skip_args--;
+  
   /* Now, figure out which type of console is our first console. */
 
   display_arg = 0;
@@ -556,42 +615,62 @@ main_1 (int argc, char **argv, char **envp)
 
 #ifdef HAVE_WINDOW_SYSTEM
   /* Stupid kludge to catch command-line display spec.  We can't
-     handle this argument entirely in window system dependent code
-     because we don't even know which window system dependent code
+     handle this argument entirely in window-system-dependent code
+     because we don't even know which window-system-dependent code
      to run until we've recognized this argument.  */
   if (!inhibit_window_system && !noninteractive)
     {
-      int i;
-      char *disp;
+#ifdef HAVE_X_WINDOWS
+      char *dpy = 0;
+      int count_before = skip_args;
       
-      for (i = 1; (i < argc && !display_arg); i++)
+      if (argmatch (argv, argc, "-d", "--display", 3, &dpy, &skip_args) ||
+	  argmatch (argv, argc, "-display", 0,     3, &dpy, &skip_args))
 	{
-#ifdef HAVE_X_WINDOWS
-	  if (!strcmp (argv[i], "-d") || !strcmp (argv[i], "-display"))
-	    {
-	      display_arg = 1;
-	      display_use = "x";
-	    }
-#endif /* HAVE_X_WINDOWS */
-#ifdef HAVE_NEXTSTEP
-	  if (!strcmp (argv[i], "-NXHost") || !strcmp (argv[i], "-MachLaunch"))
-	    {
-	      display_arg = 1;
-	      display_use = "ns";
-	    }
-#endif /* HAVE_NEXTSTEP */
+	  display_arg = 1;
+	  display_use = "x";
 	}
-      
-#ifdef HAVE_X_WINDOWS
-      disp = getenv ("DISPLAY");
+      /* If we have the form --display=NAME,
+	 convert it into  -d name.
+	 This requires inserting a new element into argv.  */
+      if (dpy != 0 && skip_args - count_before == 1)
+	{
+	  char **new = (char **) xmalloc (sizeof (char *) * (argc + 2));
+	  int j;
 
-      /* null string doesn't count as a display */
-      if (disp && disp[0])
+	  for (j = 0; j < count_before + 1; j++)
+	    new[j] = argv[j];
+	  new[count_before + 1] = "-d";
+	  new[count_before + 2] = dpy;
+	  for (j = count_before + 2; j <argc; j++)
+	    new[j + 1] = argv[j];
+	  argv = new;
+	  argc++;
+	}
+      /* Change --display to -d, when its arg is separate.  */
+      else if (dpy != 0 && skip_args > count_before
+	       && argv[count_before + 1][1] == '-')
+	argv[count_before + 1] = "-d";
+
+      /* Don't actually discard this arg.  */
+      skip_args = count_before;
+
+      /* If there is a non-empty environment var DISPLAY, set
+         `display_use', but not `display_arg', which is only to be set
+         if the display was specified on the command line. */
+      if ((dpy = getenv ("DISPLAY")) && dpy[0])
 	display_use = "x";
 
-      /* Do not set display_arg here.  It is only to be set if the display
-	 was specified on the command line. */
-#endif
+#endif /* HAVE_X_WINDOWS */
+
+#ifdef HAVE_NEXTSTEP
+      if (argmatch (argv, argc, "-NXHost",     0, 6, 0, &skip_args) ||
+	  argmatch (argv, argc, "-MachLaunch", 0, 9, 0, &skip_args))
+	{
+	  display_arg = 1;
+	  display_use = "ns";
+	}
+#endif /* HAVE_NEXTSTEP */
     }
 #endif /* HAVE_WINDOW_SYSTEM */
 
@@ -648,7 +727,7 @@ main_1 (int argc, char **argv, char **envp)
 	 is call one of the following three functions:
 
 	 defsymbol()
-	 defsubr()
+	 defsubr() (i.e. DEFSUBR)
 	 deferror()
 	 defkeyword()
 
@@ -1293,7 +1372,7 @@ main_1 (int argc, char **argv, char **envp)
     {
       /* Handle -l loadup-and-dump, args passed by Makefile. */
       if (argc > 2 + skip_args && !strcmp (argv[1 + skip_args], "-l"))
-        load_me = build_string (argv[2 + skip_args]);
+	load_me = build_string (argv[2 + skip_args]);
 #ifdef CANNOT_DUMP
       /* Unless next switch is -nl, load "loadup.el" first thing.  */
       if (!(argc > 1 + skip_args && !strcmp (argv[1 + skip_args], "-nl")))
@@ -1311,6 +1390,217 @@ main_1 (int argc, char **argv, char **envp)
   /* This never returns.  */
   initial_command_loop (load_me);
   /* NOTREACHED */
+}
+
+
+/* Sort the args so we can find the most important ones
+   at the beginning of argv.  */
+
+/* First, here's a table of all the standard options.  */
+
+struct standard_args
+{
+  CONST char * CONST name;
+  CONST char * CONST longname;
+  int priority;
+  int nargs;
+};
+
+static struct standard_args standard_args[] =
+{
+  /* Handled by main_1 above: */
+  { "-nl", "--no-shared-memory", 100, 0 },
+#ifdef VMS
+  { "-map", "--map-data", 100, 0 },
+#endif
+  { "-t", "--terminal", 95, 1 },
+  { "-nw", "--no-windows", 90, 0 },
+  { "-batch", "--batch", 85, 0 },
+  { "-help", "--help", 80, 0 },
+  { "-flags", "--flags", 80, 0 },
+  { "-h", 0, 80, 0 },
+  { "-?", 0, 80, 0 },
+  { "-version", "--version", 75, 0 },
+  { "-V", 0, 75, 0 },
+  { "-d", "--display", 80, 1 },
+  { "-display", 0, 80, 1 },
+  { "-NXHost",  0, 79, 0 },
+  { "-MachLaunch", 0, 79, 0},
+
+  /* Handled by command-line-early in startup.el: */
+  { "-q", "--no-init-file", 50, 0 },
+  { "-unmapped", 0, 50, 0 },
+  { "-no-init-file", 0, 50, 0 },
+  { "-no-site-file", "--no-site-file", 40, 0 },
+  { "-u", "--user", 30, 1 },
+  { "-user", 0, 30, 1 },
+  { "-debug-init", "--debug-init", 20, 0 },
+
+  /* Xt options: */
+  { "-i", "--icon-type", 15, 0 },
+  { "-itype", 0, 15, 0 },
+  { "-iconic", "--iconic", 15, 0 },
+  { "-bg", "--background-color", 10, 1 },
+  { "-background", 0, 10, 1 },
+  { "-fg", "--foreground-color", 10, 1 },
+  { "-foreground", 0, 10, 1 },
+  { "-bd", "--border-color", 10, 1 },
+  { "-bw", "--border-width", 10, 1 },
+  { "-ib", "--internal-border", 10, 1 },
+  { "-ms", "--mouse-color", 10, 1 },
+  { "-cr", "--cursor-color", 10, 1 },
+  { "-fn", "--font", 10, 1 },
+  { "-font", 0, 10, 1 },
+  { "-g", "--geometry", 10, 1 },
+  { "-geometry", 0, 10, 1 },
+  { "-T", "--title", 10, 1 },
+  { "-title", 0, 10, 1 },
+  { "-name", "--name", 10, 1 },
+  { "-xrm", "--xrm", 10, 1 },
+  { "-r", "--reverse-video", 5, 0 },
+  { "-rv", 0, 5, 0 },
+  { "-reverse", 0, 5, 0 },
+  { "-hb", "--horizontal-scroll-bars", 5, 0 },
+  { "-vb", "--vertical-scroll-bars", 5, 0 },
+
+  /* These have the same priority as ordinary file name args,
+     so they are not reordered with respect to those.  */
+  { "-L", "--directory", 0, 1 },
+  { "-directory", 0, 0, 1 },
+  { "-l", "--load", 0, 1 },
+  { "-load", 0, 0, 1 },
+  { "-f", "--funcall", 0, 1 },
+  { "-funcall", 0, 0, 1 },
+  { "-eval", "--eval", 0, 1 },
+  { "-insert", "--insert", 0, 1 },
+  /* This should be processed after ordinary file name args and the like.  */
+  { "-kill", "--kill", -10, 0 },
+};
+
+/* Reorder the elements of ARGV (assumed to have ARGC elements)
+   so that the highest priority ones come first.
+   Do not change the order of elements of equal priority.
+   If an option takes an argument, keep it and its argument together.  */
+
+static void
+sort_args (int argc, char **argv)
+{
+  char **new = (char **) xmalloc (sizeof (char *) * argc);
+  /* For each element of argv,
+     the corresponding element of options is:
+     0 for an option that takes no arguments,
+     1 for an option that takes one argument, etc.
+     -1 for an ordinary non-option argument.  */
+  int *options  = (int *) xmalloc (sizeof (int) * argc);
+  int *priority = (int *) xmalloc (sizeof (int) * argc);
+  int to = 1;
+  int from;
+  int i;
+  int end_of_options_p = 0;
+
+  /* Categorize all the options,
+     and figure out which argv elts are option arguments.  */
+  for (from = 1; from < argc; from++)
+    {
+      options[from] = -1;
+      priority[from] = 0;
+      /* Pseudo options "--" and "run-temacs" indicate end of options */
+      if (!strcmp (argv[from], "--") ||
+	  !strcmp (argv[from], "run-temacs"))
+	end_of_options_p = 1;
+      if (!end_of_options_p && argv[from][0] == '-')
+	{
+	  int match, thislen;
+	  char *equals;
+
+	  /* Look for a match with a known old-fashioned option.  */
+	  for (i = 0; i < countof (standard_args); i++)
+	    if (!strcmp (argv[from], standard_args[i].name))
+	      {
+		options[from]  = standard_args[i].nargs;
+		priority[from] = standard_args[i].priority;
+		if (from + standard_args[i].nargs >= argc)
+		  fatal ("Option `%s' requires an argument\n", argv[from]);
+		from += standard_args[i].nargs;
+		goto done;
+	      }
+
+	  /* Look for a match with a known long option.
+	     MATCH is -1 if no match so far, -2 if two or more matches so far,
+	     >= 0 (the table index of the match) if just one match so far.  */
+	  if (argv[from][1] == '-')
+	    {
+	      match = -1;
+	      thislen = strlen (argv[from]);
+	      equals = strchr (argv[from], '=');
+	      if (equals != 0)
+		thislen = equals - argv[from];
+
+	      for (i = 0; i < countof (standard_args); i++)
+		if (standard_args[i].longname
+		    && !strncmp (argv[from], standard_args[i].longname,
+				 thislen))
+		  {
+		    if (match == -1)
+		      match = i;
+		    else
+		      match = -2;
+		  }
+
+	      /* If we found exactly one match, use that.  */
+	      if (match >= 0)
+		{
+		  options[from]  = standard_args[match].nargs;
+		  priority[from] = standard_args[match].priority;
+		  /* If --OPTION=VALUE syntax is used,
+		     this option uses just one argv element.  */
+		  if (equals != 0)
+		    options[from] = 0;
+		  if (from + options[from] >= argc)
+		    fatal ("Option `%s' requires an argument\n", argv[from]);
+		  from += options[from];
+		}
+	    }
+	done: ;
+	}
+    }
+
+  /* Copy the arguments, in order of decreasing priority, to NEW.  */
+  new[0] = argv[0];
+  while (to < argc)
+    {
+      int best = -1;
+      int best_priority = -9999;
+
+      /* Find the highest priority remaining option.
+	 If several have equal priority, take the first of them.  */
+      for (from = 1; from < argc; from++)
+	{
+	  if (argv[from] != 0 && priority[from] > best_priority)
+	    {
+	      best_priority = priority[from];
+	      best = from;
+	    }
+	  /* Skip option arguments--they are tied to the options.  */
+	  if (options[from] > 0)
+	    from += options[from];
+	}
+
+      if (best < 0)
+	abort ();
+
+      /* Copy the highest priority remaining option, with its args, to NEW.  */
+      new[to++] = argv[best];
+      for (i = 0; i < options[best]; i++)
+	new[to++] = argv[best + i + 1];
+
+      /* Clear out this option in ARGV.  */
+      argv[best] = 0;
+      for (i = 0; i < options[best]; i++)
+	argv[best + i + 1] = 0;
+    }
+
+  memcpy (argv, new, sizeof (char *) * argc);
 }
 
 static JMP_BUF run_temacs_catch;
@@ -1407,6 +1697,9 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
 DOESNT_RETURN
 main (int argc, char **argv, char **envp)
 {
+  int     volatile vol_argc = argc;
+  char ** volatile vol_argv = argv;
+  char ** volatile vol_envp = envp;
 #ifdef QUANTIFY
   quantify_stop_recording_data ();
   quantify_clear_data ();
@@ -1415,45 +1708,42 @@ main (int argc, char **argv, char **envp)
   suppress_early_backtrace = 0;
   lim_data = 0; /* force reinitialization of this variable */
 
-  if (sizeof (Lisp_Object) != sizeof (void *))
-    abort (); /* Lisp_Object must fit in a word;
-		 check VALBITS and GCTYPEBITS */
+  /* Lisp_Object must fit in a word; check VALBITS and GCTYPEBITS */
+  assert (sizeof (Lisp_Object) == sizeof (void *));
+
   if (!initialized)
-  {
-    run_temacs_argc = 0;
-    if (! SETJMP (run_temacs_catch))
-      main_1 (argc, argv, envp);
-    /* run-emacs-from-temacs called */
-    argc = run_temacs_argc;
-    run_temacs_argc = 0;
-    argv = run_temacs_argv;
-#ifdef _SCO_DS
-    /*
-    This makes absolutely no sense to anyone involved.
-    There are several people using this stuff.  We've
-    compared versions on everything we can think of.  We
-    can find no difference.  However, on both my systems
-    environ is a plain old global variable initialized to
-    zero.  _environ is the one that contains pointers to
-    the actual environment.
-    Since we can't figure out the difference (and we're
-    hours away from a release), this takes a very cowardly
-    approach and is bracketed with both a system specific
-    preprocessor test and a runtime "do you have this
-    problem" test
-    06/20/96 robertl@dgii.com
-    */
     {
-    extern char *_environ ;
-    if ((unsigned) environ == 0)
-      environ=_environ;
+      run_temacs_argc = 0;
+      if (! SETJMP (run_temacs_catch))
+	main_1 (vol_argc, vol_argv, vol_envp);
+      /* run-emacs-from-temacs called */
+      vol_argc = run_temacs_argc;
+      vol_argv = run_temacs_argv;
+#ifdef _SCO_DS
+      /* This makes absolutely no sense to anyone involved.  There are
+	 several people using this stuff.  We've compared versions on
+	 everything we can think of.  We can find no difference.
+	 However, on both my systems environ is a plain old global
+	 variable initialized to zero.  _environ is the one that
+	 contains pointers to the actual environment.
+
+	 Since we can't figure out the difference (and we're hours
+	 away from a release), this takes a very cowardly approach and
+	 is bracketed with both a system specific preprocessor test
+	 and a runtime "do you have this problem" test
+
+	 06/20/96 robertl@dgii.com */
+      {
+	extern char *_environ;
+	if ((unsigned) environ == 0)
+	  environ=_environ;
+      }
+#endif /* _SCO_DS */
+      vol_envp = environ;
     }
-#endif
-    envp = environ;
-  }
   run_temacs_argc = -1;
 
-  main_1 (argc, argv, envp);
+  main_1 (vol_argc, vol_argv, vol_envp);
 }
 
 
@@ -1883,6 +2173,7 @@ syms_of_emacs (void)
   defsubr (&Srun_emacs_from_temacs);
   defsubr (&Srunning_temacs_p);
   defsubr (&Sinvocation_name);
+  defsubr (&Sinvocation_directory);
   defsubr (&Skill_emacs);
   defsubr (&Snoninteractive);
 

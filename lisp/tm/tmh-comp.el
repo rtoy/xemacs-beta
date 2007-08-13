@@ -1,12 +1,12 @@
 ;;; tm-mh-e.el --- tm-mh-e functions for composing messages
 
-;; Copyright (C) 1993,1994,1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1993,1994,1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;;         OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/2/29 (separated from tm-mh-e.el)
-;; Version: $Id: tmh-comp.el,v 1.3 1996/12/29 00:15:15 steve Exp $
+;; Version: $Id: tmh-comp.el,v 1.4 1997/02/02 05:06:21 steve Exp $
 ;; Keywords: mail, MH, MIME, multimedia, encoded-word, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -464,14 +464,18 @@ yanked message will be deleted."
 	    (delete-windows-on mh-show-buffer))
 	(set-buffer mh-show-buffer)	; Find displayed message
 	(let ((mh-ins-str
-	       (let (mime-viewer/plain-text-preview-hook buf)
-		 (prog1
-		     (save-window-excursion
-		       (set-buffer mime::preview/article-buffer)
-		       (setq buf (mime/viewer-mode))
-		       (buffer-string)
-		       )
-		   (kill-buffer buf)))))
+	       (if mime::preview/article-buffer
+		   (let (mime-viewer/plain-text-preview-hook buf)
+		     (prog1
+			 (save-window-excursion
+			   (set-buffer mime::preview/article-buffer)
+			   (setq buf (mime/viewer-mode))
+			   (buffer-string)
+			   )
+		       (kill-buffer buf)
+		       ))
+		 (buffer-string)
+		 )))
 	  (set-buffer to-buffer)
 	  (save-restriction
 	    (narrow-to-region to-point to-point)

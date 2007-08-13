@@ -18,8 +18,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; 29-nov-89	created by Neil Mager <neilm@juliet.ll.mit.edu>.
 ;;; 23-feb-91	hacked upon by Jamie Zawinski <jwz@lucid.com>.

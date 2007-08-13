@@ -1,10 +1,10 @@
 ;;; file-detect.el --- Emacs Lisp file detection utility
 
-;; Copyright (C) 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: file-detect.el,v 1.3 1996/12/29 00:15:09 steve Exp $
+;;	$Id: file-detect.el,v 1.4 1997/02/02 05:06:17 steve Exp $
 ;; Keywords: install, module
 
 ;; This file is part of tl (Tiny Library).
@@ -63,6 +63,18 @@ You can specify following OPTIONS:
 		  (append load-path (list p))
 		(cons p load-path)
 		))
+      )))
+
+(defun add-latest-path (pattern &optional all-paths)
+  "Add latest path matched by PATTERN to `load-path'
+if it exists under `default-load-path' directories
+and it does not exist in `load-path'.
+
+If optional argument ALL-PATHS is specified, it is searched from all
+of load-path instead of default-load-path. [file-detect.el]"
+  (let ((path (get-latest-path pattern all-paths)))
+    (if path
+	(add-to-list 'load-path path)
       )))
 
 (defun get-latest-path (pat &optional all-paths)

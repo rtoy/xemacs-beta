@@ -2432,7 +2432,7 @@ Return non-nil iff we received any output before the timeout expired.
 	 || (!EQ (result, Qt) && event_stream_event_pending_p (0)))
     {
       /* If our timeout has arrived, we move along. */
-      if (!event_stream_wakeup_pending_p (timeout_id, 0))
+      if (timeout_enabled && !event_stream_wakeup_pending_p (timeout_id, 0))
 	{
 	  timeout_enabled = 0;
 	  process = Qnil;	/* We're  done. */

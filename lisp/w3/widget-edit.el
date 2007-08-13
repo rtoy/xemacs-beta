@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.13
+;; Version: 1.22
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -58,14 +58,23 @@ and `end-open' if it should sticky to the front."
 
 ;;; Compatibility.
 
-(or (fboundp 'event-point)
-    ;; XEmacs function missing in Emacs.
-    (defun event-point (event)
-      "Return the character position of the given mouse-motion, button-press,
+(unless (fboundp 'event-point)
+  ;; XEmacs function missing in Emacs.
+  (defun event-point (event)
+    "Return the character position of the given mouse-motion, button-press,
 or button-release event.  If the event did not occur over a window, or did
 not occur over text, then this returns nil.  Otherwise, it returns an index
 into the buffer visible in the event's window."
-      (posn-point (event-start event))))
+    (posn-point (event-start event))))
+
+(unless (fboundp 'error-message-string)
+  ;; Emacs function missing in XEmacs.
+  (defun error-message-string (obj)
+    "Convert an error value to an error message."
+    (let ((buf (get-buffer-create " *error-message*")))
+      (erase-buffer buf)
+      (display-error obj buf)
+      (buffer-string buf))))
 
 ;;; Customization.
 
@@ -77,7 +86,13 @@ into the buffer visible in the event's window."
   :prefix "widget-"
   :group 'emacs)
 
-(defface widget-documentation-face '((t ()))
+(defface widget-documentation-face '((((class color)
+				       (background dark))
+				      (:foreground "lime green"))
+				     (((class color)
+				       (background light))
+				      (:foreground "dark green"))
+				     (t nil))
   "Face used for documentation text."
   :group 'widgets)
 
@@ -90,12 +105,10 @@ into the buffer visible in the event's window."
   :type 'face
   :group 'widgets)
 
-(defface widget-field-face '((((type x)
-			       (class grayscale color)
+(defface widget-field-face '((((class grayscale color)
 			       (background light))
 			      (:background "light gray"))
-			     (((type x)
-			       (class grayscale color)
+			     (((class grayscale color)
 			       (background dark))
 			      (:background "dark gray"))
 			     (t 
@@ -106,6 +119,7 @@ into the buffer visible in the event's window."
 (defcustom widget-menu-max-size 40
   "Largest number of items allowed in a popup-menu.
 Larger menus are read through the minibuffer."
+  :group 'widgets
   :type 'integer)
 
 ;;; Utility functions.
@@ -236,15 +250,47 @@ minibuffer."
 (defun widget-specify-field-update (widget from to)
   ;; Specify editable button for WIDGET between FROM and TO.
   (let ((map (widget-get widget :keymap))
+	(secret (widget-get widget :secret))
+	(secret-to to)
+	(size (widget-get widget :size))
 	(face (or (widget-get widget :value-face)
 		  'widget-field-face)))
+
+    (when secret 
+      (while (and size
+		  (not (zerop size))
+		  (> secret-to from)
+		  (eq (char-after (1- secret-to)) ?\ ))
+	(setq secret-to (1- secret-to)))
+
+      (save-excursion
+	(goto-char from)
+	(while (< (point) secret-to)
+	  (let ((old (get-text-property (point) 'secret)))
+	    (when old
+	      (subst-char-in-region (point) (1+ (point)) secret old)))
+	  (forward-char))))
+
     (set-text-properties from to (list 'field widget
 				       'read-only nil
 				       'keymap map
 				       'local-map map
 				       'face face))
+
+    (when secret 
+      (save-excursion
+	(goto-char from)
+	(while (< (point) secret-to)
+	  (let ((old (following-char)))
+	    (subst-char-in-region (point) (1+ (point)) old secret)
+	    (put-text-property (point) (1+ (point)) 'secret old))
+	  (forward-char))))
+
     (unless (widget-get widget :size)
-      (put-text-property to (1+ to) 'face face))))
+      (add-text-properties to (1+ to) (list 'field widget
+					    'face face
+					    'local-map map
+					    'keymap map)))))
 
 (defun widget-specify-button (widget from to)
   ;; Specify button for WIDGET between FROM and TO.
@@ -254,6 +300,14 @@ minibuffer."
 				       'start-open t
 				       'end-open t
 				       'face face))))
+
+(defun widget-specify-sample (widget from to)
+  ;; Specify sample for WIDGET between FROM and TO.
+  (let ((face (widget-apply widget :sample-face-get)))
+    (when face
+      (add-text-properties from to (list 'start-open t
+					 'end-open t
+					 'face face)))))
 
 (defun widget-specify-doc (widget from to)
   ;; Specify documentation for WIDGET between FROM and TO.
@@ -435,10 +489,8 @@ The optional ARGS are additional keyword arguments."
   "Keymap containing useful binding for buffers containing widgets.
 Recommended as a parent keymap for modes using widgets.")
 
-(if widget-keymap 
-    ()
+(unless widget-keymap 
   (setq widget-keymap (make-sparse-keymap))
-  (set-keymap-parent widget-keymap global-map)
   (define-key widget-keymap "\t" 'widget-forward)
   (define-key widget-keymap "\M-\t" 'widget-backward)
   (define-key widget-keymap [(shift tab)] 'widget-backward)
@@ -454,6 +506,30 @@ Recommended as a parent keymap for modes using widgets.")
   "Keymap used for events the widget does not handle themselves.")
 (make-variable-buffer-local 'widget-global-map)
 
+(defvar widget-field-keymap nil
+  "Keymap used inside an editable field.")
+
+(unless widget-field-keymap 
+  (setq widget-field-keymap (copy-keymap widget-keymap))
+  (define-key widget-field-keymap "\C-m" 'widget-field-activate)
+  (set-keymap-parent widget-field-keymap global-map))
+
+(defvar widget-text-keymap nil
+  "Keymap used inside a text field.")
+
+(unless widget-text-keymap 
+  (setq widget-text-keymap (copy-keymap widget-keymap))
+  (set-keymap-parent widget-text-keymap global-map))
+
+(defun widget-field-activate (pos &optional event)
+  "Activate the ediable field at point."
+  (interactive "@d")
+  (let* ((field (get-text-property pos 'field)))
+    (if field
+	(widget-apply field :action event)
+      (call-interactively
+       (lookup-key widget-global-map (this-command-keys))))))
+
 (defun widget-button-click (event)
   "Activate button below mouse pointer."
   (interactive "@e")
@@ -468,10 +544,9 @@ Recommended as a parent keymap for modes using widgets.")
       (call-interactively
        (lookup-key widget-global-map (this-command-keys))))))
 
-(defun widget-forward (arg)
-  "Move point to the next field or button.
-With optional ARG, move across that many fields."
-  (interactive "p")
+(defun widget-move (arg)
+  "Move point to the ARG next field or button.
+ARG may be negative to move backward."
   (while (> arg 0)
     (setq arg (1- arg))
     (let ((next (cond ((get-text-property (point) 'button)
@@ -533,13 +608,22 @@ With optional ARG, move across that many fields."
 	     (goto-char (max button field)))
 	    (button (goto-char button))
 	    (field (goto-char field)))))
-  (widget-echo-help (point)))
+  (widget-echo-help (point))
+  (run-hooks 'widget-move-hook))
+
+(defun widget-forward (arg)
+  "Move point to the next field or button.
+With optional ARG, move across that many fields."
+  (interactive "p")
+  (run-hooks 'widget-forward-hook)
+  (widget-move arg))
 
 (defun widget-backward (arg)
   "Move point to the previous field or button.
 With optional ARG, move across that many fields."
   (interactive "p")
-  (widget-forward (- arg)))
+  (run-hooks 'widget-backward-hook)
+  (widget-move (- arg)))
 
 ;;; Setting up the buffer.
 
@@ -665,6 +749,7 @@ With optional ARG, move across that many fields."
   :offset 0
   :format-handler 'widget-default-format-handler
   :button-face-get 'widget-default-button-face-get 
+  :sample-face-get 'widget-default-sample-face-get 
   :delete 'widget-default-delete
   :value-set 'widget-default-value-set
   :value-inline 'widget-default-value-inline
@@ -680,6 +765,7 @@ With optional ARG, move across that many fields."
 	 (tag (widget-get widget :tag))
 	 (doc (widget-get widget :doc))
 	 button-begin button-end
+	 sample-begin sample-end
 	 doc-begin doc-end
 	 value-pos)
      (insert (widget-get widget :format))
@@ -694,6 +780,10 @@ With optional ARG, move across that many fields."
 		(setq button-begin (point)))
 	       ((eq escape ?\])
 		(setq button-end (point)))
+	       ((eq escape ?\{)
+		(setq sample-begin (point)))
+	       ((eq escape ?\})
+		(setq sample-end (point)))
 	       ((eq escape ?n)
 		(when (widget-get widget :indent)
 		  (insert "\n")
@@ -717,9 +807,11 @@ With optional ARG, move across that many fields."
 		  (setq value-pos (point))))
 	       (t 
 		(widget-apply widget :format-handler escape)))))
-     ;; Specify button and doc, and insert value.
+     ;; Specify button, sample, and doc, and insert value.
      (and button-begin button-end
 	  (widget-specify-button widget button-begin button-end))
+     (and sample-begin sample-end
+	  (widget-specify-sample widget sample-begin sample-end))
      (and doc-begin doc-end
 	  (widget-specify-doc widget doc-begin doc-end))
      (when value-pos
@@ -777,6 +869,10 @@ With optional ARG, move across that many fields."
 (defun widget-default-button-face-get (widget)
   ;; Use :button-face or widget-button-face
   (or (widget-get widget :button-face) 'widget-button-face))
+
+(defun widget-default-sample-face-get (widget)
+  ;; Use :sample-face.
+  (widget-get widget :sample-face))
 
 (defun widget-default-delete (widget)
   ;; Remove widget from the buffer.
@@ -877,6 +973,7 @@ With optional ARG, move across that many fields."
 
 (define-widget 'link 'item
   "An embedded link."
+  :help-echo "Push me to follow the link."
   :format "%[_%t_%]")
 
 ;;; The `info-link' Widget.
@@ -905,6 +1002,7 @@ With optional ARG, move across that many fields."
 (define-widget 'editable-field 'default
   "An editable text field."
   :convert-widget 'widget-item-convert-widget
+  :keymap widget-field-keymap
   :format "%v"
   :value ""
   :action 'widget-field-action
@@ -965,6 +1063,7 @@ With optional ARG, move across that many fields."
   (let ((from (widget-get widget :value-from))
 	(to (widget-get widget :value-to))
 	(size (widget-get widget :size))
+	(secret (widget-get widget :secret))
 	(old (current-buffer)))
     (if (and from to)
 	(progn 
@@ -976,8 +1075,15 @@ With optional ARG, move across that many fields."
 		      (> to from)
 		      (eq (char-after (1- to)) ?\ ))
 	    (setq to (1- to)))
-	  (prog1 (buffer-substring-no-properties from to)
-	    (set-buffer old)))
+	  (let ((result (buffer-substring-no-properties from to)))
+	    (when secret
+	      (let ((index 0))
+		(while (< (+ from index) to)
+		  (aset result index
+			(get-text-property (+ from index) 'secret))
+		  (setq index (1+ index)))))
+	    (set-buffer old)
+	    result))
       (widget-get widget :value))))
 
 (defun widget-field-match (widget value)
@@ -987,6 +1093,7 @@ With optional ARG, move across that many fields."
 ;;; The `text' Widget.
 
 (define-widget 'text 'editable-field
+  :keymap widget-text-keymap
   "A multiline text area.")
 
 ;;; The `menu-choice' Widget.
@@ -1873,7 +1980,7 @@ It will read a directory name from the minibuffer when activated."
   :tag "Character"
   :value 0
   :size 1 
-  :format "%t: %v\n"
+  :format "%{%t%}: %v\n"
   :type-error "This field should contain a character"
   :value-to-internal (lambda (widget value)
 		       (if (integerp value) 
@@ -1899,12 +2006,12 @@ It will read a directory name from the minibuffer when activated."
 (define-widget 'list 'group
   "A lisp list."
   :tag "List"
-  :format "%t:\n%v")
+  :format "%{%t%}:\n%v")
 
 (define-widget 'vector 'group
   "A lisp vector."
   :tag "Vector"
-  :format "%t:\n%v"
+  :format "%{%t%}:\n%v"
   :match 'widget-vector-match
   :value-to-internal (lambda (widget value) (append value nil))
   :value-to-external (lambda (widget value) (apply 'vector value)))
@@ -1917,7 +2024,7 @@ It will read a directory name from the minibuffer when activated."
 (define-widget 'cons 'group
   "A cons-cell."
   :tag "Cons-cell"
-  :format "%t:\n%v"
+  :format "%{%t%}:\n%v"
   :match 'widget-cons-match
   :value-to-internal (lambda (widget value)
 		       (list (car value) (cdr value)))
@@ -1937,22 +2044,22 @@ It will read a directory name from the minibuffer when activated."
 (define-widget 'radio 'radio-button-choice
   "A union of several sexp types."
   :tag "Choice"
-  :format "%t:\n%v")
+  :format "%{%t%}:\n%v")
 
 (define-widget 'repeat 'editable-list
   "A variable length homogeneous list."
   :tag "Repeat"
-  :format "%t:\n%v%i\n")
+  :format "%{%t%}:\n%v%i\n")
 
 (define-widget 'set 'checklist
   "A list of members from a fixed set."
   :tag "Set"
-  :format "%t:\n%v")
+  :format "%{%t%}:\n%v")
 
 (define-widget 'boolean 'toggle
   "To be nil or non-nil, that is the question."
   :tag "Boolean"
-  :format "%t: %v")
+  :format "%{%t%}: %v")
 
 ;;; The `color' Widget.
 

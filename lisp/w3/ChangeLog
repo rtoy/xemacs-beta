@@ -1,4 +1,410 @@
+Thu Jan 30 20:27:06 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-handle-image): When doing table auto layout, don't
+  start loading the images.
+
+Wed Jan 29 06:15:37 1997  William M. Perry  <wmperry@aventail.com>
+
+* font.el (x-font-create-name): Yet another fix for not screwing up the
+  line-height in Emacs 19.
+
+* w3-display.el (w3-face-for-element): Uhh, oblique seems to work.
+
+* font.el (set-font-style-by-keywords): now deals with arguments that
+  aren't lists, for the font-style and font-variant CSS stuff
+
+* w3-display.el (w3-display-node): Reimplemented <cookie> tag.
+(w3-display-node): Reimplemented <flame> tag.
+
+* url.el (url-insert-file-contents): url-insert-file-contents now
+  decodes/uncompresses the data before returning.
+
+* w3-display.el (w3-display-node): Reimplemented <pinhead> tag
+
+Tue Jan 28 06:22:08 1997  William M. Perry  <wmperry@aventail.com>
+
+* font.el (x-font-create-name): Never take font size into account under
+  Emacs - too much chance of totally screwing up the users leading by
+  choosing a bigger font than their default.  This sucks.  But I can't
+  find a better solution.
+
+* w3.el: w3-mode now turns on truncate-lines by default.
+
+* w3-forms.el (w3-form-create-image): Better image input type support.
+
+Mon Jan 27 08:21:58 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-forms.el (w3-form-create-password): Now uses real password entry
+  widgets provided by 'widget' - you _MUST_USE_ the widget library that
+  comes with Emacs-W3 for this, otherwise the info won't be hidden
+  correctly.
+  (w3-form-add-element): Deal with hidden text areas better when they are
+  in forms
+
+* Synch'd up to widget 1.22
+
+Sun Jan 26 16:50:09 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.51 released
+
+* w3-forms.el (w3-form-create-text): Now uses the real text entry widgets
+  provided by 'widget' - still can't do this for password fields yet
+  though.
+
+* Synch'd up to Widget 1.20
+
+Sat Jan 25 13:38:12 1997  William M. Perry  <wmperry@aventail.com>
+
+* url.el (url-expand-file-name): Now strips out spaces as well as
+  newlines/carriage returns. More fixes for that bastardized microsoft
+  home page.
+
+* url-http.el (url-create-mime-request): Make sure that we retrieve the
+  cookies for the real URL we are retrieving when going through a proxy.
+  Now the psychotic crap that is the microsoft home page should be
+  successfully retrieved if going through an HTTP proxy.
+
+* url-cookie.el (url-cookie-handle-set-cookie): Attempt to deal with
+  idiotic microsoft home page that sends out set-cookie headers that look
+  like MC1=ID=abc, and expects two cookies MC1='' and ID='abc'  *sigh*
+
+* w3-forms.el, w3-display.el: Form elements now keep all their attributes
+  with them.  Will be useful when we start allowing scripting.
+  (w3-form-create-custom): Rudimentary patches to allow embedding 'custom'
+  widgets into the buffer.  Interesting.
+
+* w3-forms.el (w3-form-determine-size): New function to calculate how big
+  a form field will be - option lists should look much better now.
+
+Thu Jan 23 08:48:59 1997  William M. Perry  <wmperry@aventail.com>
+
+* Synch'ed up to custom 1.19
+
+* url-parse.el: document extra slots of url-generic-parse-url
+
+Thu Jan 23 08:34:34 1997 Joe Wells <jbw@cs.bu.edu>
+
+* url-file.el (url-file): Patch to tell ange-ftp and/or efs the password
+  in a file/ftp URL so that you won't be prompted for the password, even
+  if one was specified in the URL 
+
+* url-parse.el (url-generic-parse-url): Fixed bug where specifying a
+  username and password in the URL would downcase the username and
+  password as well as the hostname.
+
+Wed Jan 22 08:28:13 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.50 released
+
+* base64.el (base64-encode-region): Pulled in code from VM for quicker
+  encoding/decoding
+
+* mm.el (mm-content-transfer-encodings): Better base64 decoding
+
+Wed Jan 22 07:31:03 1997  Alf-Ivar Holm <alfh@ifi.uio.no>
+
+* w3-emulate.el (w3-lynx-emulation-minor-mode-map): Lynx [up] and [down]
+  bound to non-existing functions.
+
+* w3.el (w3-do-setup): Fixed installation of lynx emulation modes keymap.
+
+Tue Jan 21 07:56:51 1997  William M. Perry  <wmperry@aventail.com>
+
+* url-misc.el (url-data): Make sure to url-decode the data before
+  inserting it into the buffer.
+
+* w3-menu.el (w3-toggle-minibuffer): better version
+
+* w3-forms.el (w3-form-create-integer): New form entry type
+  (w3-form-create-float): new form entry type
+  (w3-form-encode-helper): deal with the new integer/float types
+
+* w3-display.el (w3-display-node): Reimplemented <select multiple> as a
+  list of checkboxes
+
+Mon Jan 20 06:29:07 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-display-node): Keep track of the last form's action,
+  for theoretically 'naked' input fields that we want to try and handle as
+  best we can anyway.
+
+* w3-parse.el: Much more lenient about where form elements can be found.
+
+* w3-forms.el: summarizer functions now take the widget as an extra
+  parameter.
+
+* w3.el (w3-find-etc-directory): New function - not used yet.
+
+* w3.txi: Warning!  You now need a very new version of texinfo to compile
+  the .info or .dvi file yourself.
+
+* url-mail.el (url-mail): Now tries to use message-mail if it is bound
+  instead of just plain old 'mail'.
+
+* w3-forms.el (w3-form-add-element): Duh, fix hidden form fields.
+
+* font.el (font-normalize-color): Hopefully fixed color lossage under OS/2
+  and Windows
+
+* w3-forms.el (w3-form-summarize-field): Actually 'message' the string as
+  a workaround for emacspeak 5.0
+
+Sun Jan 19 09:32:15 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-xemac.el (w3-mouse-handler): Ditto
+
+* w3-e19.el (w3-mouse-handler): Protect against 'bad format string' errors
+  when showing a hexified URL
+
+* w3-forms.el (w3-form-mark-widget): Be super paranoid and mark all
+  children and their children's children, and the parents of a widget.
+  (w3-form-create-radio-button): Make sure radio button children always
+  get updated via w3-form-mark-widget.
+  (w3-form-summarize-radio-button): Slightly better summarization of radio
+  buttons.
+
+* Emacs-W3 3.0.49 released
+
+* Synch'ed up with widget 1.18
+
+Fri Jan 17 06:25:36 1997  Dave Love <d.love@dl.ac.uk>
+
+* w3-display.el: w3-echo-link now prefers the URL to the text of a link
+
+Fri Jan 17 06:25:36 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el: Fixed handling of inlined styles
+
+* w3-mouse.el: Some fixes for XEmacs when built with no X support
+
+* default.css: Now uses the new @media directives instead of the old
+  :blah: stuff
+
+* css.el (css-handle-media-directive): New function to handle @media
+  directives.
+  (css-parse): Deprecate the old :mediatype: way of specifying media
+  dependent styles.
+
+* w3-style.el (w3-handle-style): Now gets passed a plist instead of an
+  assoc list.
+  (w3-handle-style): Pay attention to the new 'media' attribute on
+  stylesheet links, and don't load the stylesheet if we aren't currently
+  running on that type of media.
+
+* css.el (css-properties): Added proposed printing properties from a W3C
+  draft.
+
+Thu Jan 16 06:06:45 1997  William M. Perry  <wmperry@aventail.com>
+
+* css.el (css-handle-media-directive): Implemented the @media processing
+  instruction.
+
+* w3-forms.el (w3-form-summarize-option-list): Changed the summarize
+  function for option lists.  Much saner now.
+
+* w3.el (w3-read-url-with-default): Use the URL at point before falling
+  back to http://www.
+  (w3-source-document): When sourcing a document, let set-auto-mode do the
+  right thing.  .html comes up in html-mode, or whatever now.
+
+* url-cookie.el: Fixed some compile warnings under Emacs
+
+* w3-forms.el (w3-form-summarize-option-list): Make each choice-item have
+  emacspeak-help set.
+
+* w3-speak.el (w3-widget-backward): New advice
+(w3-widget-forward): New advice
+
+* w3-forms.el (w3-form-create-option-list): Renamed function
+
+* Emacs-W3 3.0.48 released
+
+* w3-display.el (w3-face-for-element): Use background-color instead of
+  just background for css property.
+
+* w3-forms.el (w3-form-encode-helper): Fixed radio buttons, duh.
+
+* url-misc.el (url-do-terminal-emulator): Fixed bad var reference left
+  from old code.
+
+* url-gw.el: Moved all the gateway variables into their own namespace to
+  make it easier to turn this into a standalone package.
+
+* dist.Makefile (SOURCES): Added url-gw and w3 to the build targets.
+
+Wed Jan 15 08:00:37 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.47 released
+
+* url.el (url-expand-file-name): Make sure to remove \r from the URL as
+  well as \n
+
+* url-gw.el (url-open-stream): Added in 'telnet' and 'rlogin' methods for
+  url-gateway-method.  Code stolen from GNUS.  Thanks lars! :)  It would
+  be nice to make this file its own package and be able to override
+  open-network-stream so that all apps could get this for free.
+
+* url-misc.el (url-generic-emulator-loader): Consolidated the tn3270,
+  telnet, and rlogin URL loaders into one smarter function
+
+* url.el: Made cookie and auth modules autoloaded, removed some old autoloads
+(url-open-stream) Moved to url-gw.el
+
+Mon Jan 13 22:11:00 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-widget-echo): w3-echo-link can now be a list, so the
+  user can explicitly control fallback behaviour.
+
+* w3.txi: Added some pointers to CSS documentation
+
+* mule-sysdp.el (mule-code-convert-region): ditto
+
+* w3.el (w3-convert-code-for-mule): Fixed bug in XEmacs 20.0 mule
+
+Mon Jan 13 11:14:29 1997  T. V. Raman <raman@Adobe.COM>
+
+* w3.el (w3-widget-forward): Call widget-forward interactively so that
+  emacspeak will hook it correctly.
+
+Mon Jan 13 11:14:29 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-refresh-buffer): Finally reimplemented
+  w3-refresh-buffer.
+
+Sun Jan 12 10:32:50 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+* w3.txi: Add @dircategory and @direntry... @end.  `install-info'
+  from texinfo-3.9 know about those.
+
+Sun Jan 12 21:49:44 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-save-as): Can now save a page as postscript again
+
+* w3-display.el (w3-display-node): inline styles work again
+
+* url-misc.el (url-data): Updated data: URL to the spec.
+  ftp://ietf.org/internet-drafts/draft-masinter-url-data-02.txt
+
+Sat Jan 11 20:47:24 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-w3 3.0.45 released
+
+* url-misc.el (url-data): Now supports the 'data' URL type, which just
+  'fetches' everything after the data: chunk of the URL
+
+Fri Jan 10 11:49:43 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-display-node): Multicolumn works, but puts things
+  across instead of down
+
+* w3-parse.el: Basic support for parsing <multicol>
+
+* w3-display.el (w3-display-node): Make our semi-widgety hyperlinks
+  start/end open under XEmacs.
+
+* w3.el (w3-complete-link): Make sure we take case into account when doing
+  link completion.  The user can use 'test' to complete to link titled
+  'Test'.  Uses try-completion for this, which seems to work since we
+  require a match.  Is this the best way to do this?  Other than not being
+  case-insensitive at this point?
+
+* w3-forms.el (w3-form-default-widget-creator): Better way of handling
+  updates to text entry fields.
+  (w3-revert-form): Everything should be reverted correctly, both in
+  internal storage and in the buffer
+  (w3-form-create-radio-button): Get a more unique identifier to store
+  radio elements by - old way could theoretically get collisions.
+
+* w3-display.el (w3-display-handle-list-type): Updated use of 'list-style'
+  to use new property 'list-style-type'
+  (w3-prepare-buffer): Now kills the source buffer before it starts
+  drawing the tree, to avoid *URL-n* buffers when not really necessary.
+
+* css.el (css-properties): Updated all the properties to the W3C's latest
+  'recommendation' level CSS specification.
+  (css-handle-import): much better handling of @import
+  (css-parse): Better handling of '@' directives in general
+  (css-expand-value): General cleanup, reference the CSS and ACSS specs
+  for how/why we are parsing something the way we are.
+
+Thu Jan  9 06:17:08 1997  William M. Perry  <wmperry@aventail.com>
+
+* Updated all copyright notices.  Happy belated new year!
+
+* w3-display.el (w3-region): Fixed a few bugs with nuking too much of a
+  buffer when using w3-region
+
+* w3.el (w3-read-url-with-default): Use new variable.
+
+* w3-vars.el (w3-fetch-with-default): New variable to control whether or
+  not w3-fetch will figure out a good default value for the URL or not.
+
+* w3-forms.el (w3-form-mark-widget): New function to mark a widget and all
+  its children with an appropriate :emacspeak-help and 'w3-form-data
+  Now defines a few keywords to look more widget-y
+
+Wed Jan  8 09:27:47 1997  William M. Perry  <wmperry@aventail.com>
+
+* css.el (css-expand-value): Added elevation, angle, and time units.
+
+* w3-display.el (w3-display-node): Turn on voice-lock-mode by default in
+  all w3 buffers.
+
+* css.el (css-properties): Added in new speech properties from the ACSS
+  note from the W3C.  Please see
+  http://www.w3.org/pub/WWW/Style/CSS/Speech/NOTE-ACSS for more
+  information.
+
+* w3-forms.el: Moved all the form entry summarization functions from
+  w3-speak.el into w3-forms.  Easier to keep in synch this way.
+
+* w3-display.el (w3-display-node): Reimplimented the 'keygen' form entry
+  type for netscape compatibility.
+
+Tue Jan  7 07:20:08 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-region): New function that parses the HTML in a region
+  'in-place', so that things like MIME mailers/gnus readers can show HTML
+  inline a lot easier.
+
+* w3-forms.el (w3-form-resurrect-widgets): Fixed case where a widget goes
+  all the way to point-max and next-single-property-change will return
+  nil.  Would pass bad args to delete-region.
+  (w3-form-summarize-field): Moved some of the smarts about summarizing W3
+  widgets from w3-speak into the core forms code.
+
+* font.el (define-font-keywords): New function for defining keywords that
+  will actually work across Emacs and XEmacs
+
+* w3-display.el (w3-display-node): Reimplemented 'note' functionality, by
+  converting it into a two-cell table.
+  (w3-display-node): Implemented <dir> as multi-column, as-per the RFC and
+  HTML 3.x specifications
+
+* default.css: Added default display type for dir and menu
+
+Mon Jan  6 21:49:52 1997  William M. Perry  <wmperry@aventail.com>
+
+* url-http.el (url-create-mime-request): Fixed yet another stupid problem
+  in Host: header handling.  Was never sending the right information if
+  you were not going through a proxy this time.  *sigh*
+
+* w3-forms.el (w3-form-add-element): Fixed hidden form fields
+
+Sun Jan  5 22:38:54 1997  William M. Perry  <wmperry@aventail.com>
+
+* url-vars.el (url-proxy-services): updated documentation string
+
+* w3-widget.el (widget-image-notify): Fixed client side handling of
+imagemaps on a TTY or a delayed/broken image. Duhhh
+
+Fri Jan  3  Dave Love  <d.love@dl.ac.uk>
+
+* w3-e19.el (w3-mouse-handler): Fix link echoing.
+
 Fri Jan  3 08:43:56 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.43 released
 
 * font.el (make-font): Treat args as a plist, just for sanity's sake.
 

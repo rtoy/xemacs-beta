@@ -4,7 +4,7 @@
 ;; Copyright (C) 1994,1995,1996 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu-x20.el,v 1.2 1996/12/22 00:29:30 steve Exp $
+;; Version: $Id: emu-x20.el,v 1.3 1997/02/02 05:06:17 steve Exp $
 ;; Keywords: emulation, compatibility, Mule, XEmacs
 
 ;; This file is part of tl (Tiny Library).
@@ -170,24 +170,24 @@ in the region between START and END.
 ;;; @ character
 ;;;
 
-(defun char-bytes (chr) 1)
+;(defun char-bytes (chr) 1)
 
-(defun char-length (character)
-  "Return number of elements a CHARACTER occupies in a string or buffer.
-\[emu-x20.el]"
-  1)
+;(defun char-length (character)
+;  "Return number of elements a CHARACTER occupies in a string or buffer.
+;\[emu-x20.el]"
+;  1)
 
-(defun char-columns (character)
-  "Return number of columns a CHARACTER occupies when displayed.
-\[emu-x20.el]"
-  (charset-columns (char-charset character))
-  )
+;(defun char-columns (character)
+;  "Return number of columns a CHARACTER occupies when displayed.
+;\[emu-x20.el]"
+;  (charset-columns (char-charset character))
+;  )
 
 ;;; @@ Mule emulating aliases
 ;;;
 ;;; You should not use them.
 
-(defalias 'char-width 'char-columns)
+;(defalias 'char-width 'char-columns)
 
 (defalias 'char-leading-char 'char-charset)
 
@@ -206,34 +206,34 @@ TABLE defaults to the current buffer's category table.
 ;;; @ string
 ;;;
 
-(defun string-columns (string)
-  "Return number of columns STRING occupies when displayed.
-\[emu-x20.el]"
-  (let ((col 0)
-	(len (length string))
-	(i 0))
-    (while (< i len)
-      (setq col (+ col (char-columns (aref string i))))
-      (setq i (1+ i))
-      )
-    col))
+;(defun string-columns (string)
+;  "Return number of columns STRING occupies when displayed.
+;\[emu-x20.el]"
+;  (let ((col 0)
+;	(len (length string))
+;	(i 0))
+;    (while (< i len)
+;      (setq col (+ col (char-columns (aref string i))))
+;      (setq i (1+ i))
+;      )
+;    col))
 
-(defalias 'string-width 'string-columns)
+;(defalias 'string-width 'string-columns)
 
 (defun string-to-int-list (str)
   (mapcar #'char-int str)
   )
 
-(defalias 'sref 'aref)
+;(defalias 'sref 'aref)
 
-(defun truncate-string (str width &optional start-column)
-  "Truncate STR to fit in WIDTH columns.
-Optional non-nil arg START-COLUMN specifies the starting column.
-\[emu-x20.el; Mule 2.3 emulating function]"
-  (or start-column
-      (setq start-column 0))
-  (substring str start-column width)
-  )
+;(defun truncate-string (str width &optional start-column)
+;  "Truncate STR to fit in WIDTH columns.
+;Optional non-nil arg START-COLUMN specifies the starting column.
+;\[emu-x20.el; Mule 2.3 emulating function]"
+;  (or start-column
+;      (setq start-column 0))
+;  (substring str start-column width)
+;  )
 
 
 ;;; @ end

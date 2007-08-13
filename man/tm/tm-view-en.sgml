@@ -1,9 +1,9 @@
 <!doctype sinfo system>
-<!-- $Id: tm-view-en.sgml,v 1.2 1996/12/29 00:15:32 steve Exp $ -->
+<!-- $Id: tm-view-en.sgml,v 1.3 1997/02/02 05:06:56 steve Exp $ -->
 <head>
-<title>tm-view 7.79 Reference Manual (English Version)
+<title>tm-view 7.80 Reference Manual (English Version)
 <author>MORIOKA Tomohiko <mail>morioka@jaist.ac.jp</mail>
-<date>1996/12/25
+<date>1997/1/31
 
 <toc>
 </head>
@@ -353,7 +353,15 @@ is sitting on the top content (*1))
 <kd>
 goes to the previous content
 </kd>
+<kt>M-TAB
+<kd>
+goes to the previous content
+</kd>
 <kt>n
+<kd>
+goes to the next content
+</kd>
+<kt>TAB
 <kd>
 goes to the next content
 </kd>

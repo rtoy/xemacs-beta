@@ -16,15 +16,16 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not synched with FSF.
 
 ;;; Requires C-Scheme release 5 or later
 ;;; Changes to Control-G handler require runtime version 13.85 or later
 
-;;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/packages/xscheme.el,v 1.1.1.2 1996/12/18 03:45:01 steve Exp $
+;;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/packages/xscheme.el,v 1.2 1997/02/02 05:05:58 steve Exp $
 
 (require 'scheme)
 

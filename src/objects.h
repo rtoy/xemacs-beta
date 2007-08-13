@@ -154,6 +154,7 @@ DECLARE_LRECORD (font_instance, struct Lisp_Font_Instance);
 #define CHECK_FONT_INSTANCE(x) CHECK_RECORD (x, font_instance)
 #define CONCHECK_FONT_INSTANCE(x) CONCHECK_RECORD (x, font_instance)
 
+
 Lisp_Object Fmake_font_instance (Lisp_Object name, Lisp_Object device,
 				 Lisp_Object no_error);
 Lisp_Object Ffont_instance_p        (Lisp_Object obj);

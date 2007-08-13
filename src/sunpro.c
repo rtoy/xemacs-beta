@@ -61,7 +61,7 @@ function has no effect and always returns `nil'.  See function
     {
       xs = Fformat (nargs, args);
       CHECK_STRING (xs);
-      s = string_data (XSTRING (xs));
+      s = XSTRING_DATA (xs);
       ut_log_text ((char *) s);
     }
   return Vusage_tracking;
@@ -99,17 +99,12 @@ Has no effect if usage tracking support has not been compiled in.
 void
 init_sunpro (void)
 {
+  Vusage_tracking = Qnil;
 #ifdef USAGE_TRACKING
   if (!purify_flag)
     {	       /* Enabled only when not dumping an executable */
       Vusage_tracking = Qt;
       ut_initialize ("xemacs", NULL, NULL);
     }
-  else
-    {
-      Vusage_tracking = Qnil;
-    }
-#else
-  Vusage_tracking = Qnil;
 #endif
 }

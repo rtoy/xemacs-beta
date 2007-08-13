@@ -46,13 +46,13 @@ struct printf_spec
 		 is 2, etc.  This is to handle %##$x-type specs. */
   int minwidth;
   int precision;
-  int minus_flag:1;
-  int plus_flag:1;
-  int space_flag:1;
-  int number_flag:1;
-  int zero_flag:1;
-  int h_flag:1;
-  int l_flag:1;
+  unsigned int minus_flag:1;
+  unsigned int plus_flag:1;
+  unsigned int space_flag:1;
+  unsigned int number_flag:1;
+  unsigned int zero_flag:1;
+  unsigned int h_flag:1;
+  unsigned int l_flag:1;
   char converter; /* converter character or 0 for dummy marker
 		     indicating literal text at the end of the
 		     specification */

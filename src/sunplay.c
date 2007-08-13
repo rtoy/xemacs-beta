@@ -228,9 +228,9 @@ play_sound_file (char *sound_file, int volume)
 	}
       if (wrtn != rrtn)
 	{
-	  char buf [255];
-	  sprintf (buf, "play: rrtn = %d, wrtn = %d", rrtn, wrtn);
-	  warn (buf);
+	  char warn_buf [255];
+	  sprintf (warn_buf, "play: rrtn = %d, wrtn = %d", rrtn, wrtn);
+	  warn (warn_buf);
 	  goto END_OF_PLAY;
 	}
     }

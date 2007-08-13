@@ -47,6 +47,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysproc.h" /* for select() */
 
+
 /* X_DIVIDER_LINE_WIDTH is the width of the line drawn in the gutter.
    X_DIVIDER_SPACING is the amount of blank space on each side of the line.
    X_DIVIDER_WIDTH = X_DIVIDER_LINE_WIDTH + 2*X_DIVIDER_SPACING
@@ -825,6 +826,7 @@ x_output_string (struct window *w, struct display_line *dl,
          become invalid. */
       cachel = WINDOW_FACE_CACHEL (w, findex);
     }
+  
 
   bg_pmap = cachel->background_pixmap;
   if (!IMAGE_INSTANCEP (bg_pmap)
@@ -2056,6 +2058,7 @@ x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos)
   
   if (focus)
     {
+  
       if (NILP (bar_cursor_value))
 	{
 	  XFillRectangle (dpy, x_win, gc, x, cursor_y, width, cursor_height);

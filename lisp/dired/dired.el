@@ -16,8 +16,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;; Rewritten in 1990/1991 to add tree features, file marking and
 ;; sorting by Sebastian Kremer <sk@thp.uni-koeln.de>.
@@ -844,7 +845,9 @@ Keybindings:
 	case-fold-search nil
 	buffer-read-only t
 	selective-display t		; for subdirectory hiding
-	modeline-buffer-identification '("Dired: %17b"))
+	modeline-buffer-identification
+	(list (cons modeline-buffer-id-left-extent "Dired: ")
+	      (cons modeline-buffer-id-right-extent "%17b")))
   (set (make-local-variable 'revert-buffer-function)
        (function dired-revert))
   (set (make-local-variable 'page-delimiter)

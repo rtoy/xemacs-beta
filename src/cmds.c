@@ -211,9 +211,9 @@ If BUFFER is nil, the current buffer is assumed.
   (arg, buffer)
      Lisp_Object arg, buffer;
 {
-  struct buffer *buf = decode_buffer (buffer, 1);
+  struct buffer *b = decode_buffer (buffer, 1);
 
-  BUF_SET_PT(buf, XINT (Fpoint_at_eol (arg, buffer)));
+  BUF_SET_PT(b, XINT (Fpoint_at_eol (arg, buffer)));
   return Qnil;
 }
 

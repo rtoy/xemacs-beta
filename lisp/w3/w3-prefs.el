@@ -1,12 +1,12 @@
 ;;; w3-prefs.el --- Preferences panels for Emacs-W3
 ;; Author: wmperry
-;; Created: 1996/12/29 01:49:57
-;; Version: 1.12
+;; Created: 1997/01/17 04:34:13
+;; Version: 1.15
 ;; Keywords: hypermedia, preferences
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -274,8 +274,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-preferences-compatibility-variables
   '(
-    (css-ie-compatibility
-     . "Internet Explorer (tm) 3.0 compatible stylesheet parsing")
     (w3-netscape-compatible-comments
      . "Allow Netscape compatible comments")
     (w3-user-colors-take-precedence
@@ -483,6 +481,7 @@
 	    todo (cdr todo))
       (and (fboundp func) (funcall func)))))
 
+;;###autoload
 (defun w3-preferences-edit ()
   (interactive)
   (if (not w3-preferences-map)

@@ -26,9 +26,9 @@ INSTALL = install
 
 # --------- ONLY AUTHORIZED PERSONNEL BEYOND THIS POINT!!! ------------
 VIPER = viper.el viper-util.el viper-mous.el viper-ex.el \
-        viper-macs.el viper-keym.el
+        viper-macs.el viper-keym.el viper-init.el
 VIPERelc = viper-util.elc viper-mous.elc viper-ex.elc viper-macs.elc \
-	   viper-keym.elc viper.elc
+	   viper-keym.elc viper.elc viper-init.elc
 
 all: dvi info hello elc goodbye
 
@@ -89,27 +89,31 @@ viperCard.dvi: viperCard.tex
 	@echo ""
 	$(TeX) viperCard.tex
 
-viper-util.elc: viper-util.el
+viper-init.elc: viper-init.el
+	@echo ""
+	$(EMACS) -batch -f batch-byte-compile viper-init.el
+
+viper-util.elc: viper-util.el viper-init.el
 	@echo ""
 	$(EMACS) -batch -f batch-byte-compile viper-util.el
 
-viper-ex.elc: viper-ex.el viper-util.el
+viper-ex.elc: viper-ex.el viper-util.el viper-init.el
 	@echo ""
 	$(EMACS) -batch -f batch-byte-compile viper-ex.el
 
-viper-mous.elc: viper-mous.el viper-util.el
+viper-mous.elc: viper-mous.el viper-util.el viper-init.el
 	@echo ""
 	$(EMACS) -batch -f batch-byte-compile viper-mous.el
 
-viper-macs.elc: viper-macs.el viper-util.el
+viper-macs.elc: viper-macs.el viper-util.el viper-init.el
 	@echo ""
 	$(EMACS) -batch -f batch-byte-compile viper-macs.el
 
-viper-keym.elc: viper-keym.el viper-util.el
+viper-keym.elc: viper-keym.el viper-util.el viper-init.el
 	@echo ""
 	$(EMACS) -batch -f batch-byte-compile viper-keym.el
 
-viper.elc: viper.el viper-util.el
+viper.elc: viper.el viper-util.el viper-init.el
 	@echo ""
 	$(EMACS) -batch -f batch-byte-compile viper.el
 

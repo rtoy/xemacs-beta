@@ -111,15 +111,10 @@ comm -23 $tmp1 $tmp2 | sed '
 \!/site-init.el$!d
 \!/version.el$!d
 \!/sunpro/sunpro-load.el$!d
-\!/tm/!d
-\!/tl/!d
-\!/mel/!d
-\!/viper/!d
 \!/vm/!d
 \!/w3/!d
 \!/hyperbole/!d
 \!/oobr/!d
-\!/ediff/!d
 \!/egg/!d
 \!/its/!d
 \!/mule/!d

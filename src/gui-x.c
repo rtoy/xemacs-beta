@@ -430,7 +430,7 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
       /* the include specification says to ignore this item. */
       return 0;
     }
-#endif
+#endif /* HAVE_MENUBARS */
 
   CHECK_STRING (name);
   wv->name = (char *) XSTRING_DATA (name);

@@ -1,12 +1,12 @@
 ;;; url-cookie.el --- Netscape Cookie support
 ;; Author: wmperry
-;; Created: 1996/10/09 19:00:59
-;; Version: 1.5
+;; Created: 1997/01/26 00:40:23
+;; Version: 1.10
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -29,12 +29,13 @@
 (require 'timezone)
 (require 'cl)
 
-(let ((keywords 
-       '(:name :value :expires :path :domain :test :secure)))
-  (while keywords
-    (or (boundp (car keywords))
-	(set (car keywords) (car keywords)))
-    (setq keywords (cdr keywords))))
+(eval-and-compile
+  (let ((keywords 
+	 '(:name :value :expires :path :domain :test :secure)))
+    (while keywords
+      (or (boundp (car keywords))
+	  (set (car keywords) (car keywords)))
+      (setq keywords (cdr keywords)))))
 
 ;; See http://home.netscape.com/newsref/std/cookie_spec.html for the
 ;; 'open standard' defining this crap.
@@ -67,10 +68,6 @@
     (url-cookie-set-domain retval (url-cookie-retrieve-arg :domain args))
     (url-cookie-set-secure retval (url-cookie-retrieve-arg :secure args))
     retval))
-
-(defvar url-cookie-storage nil         "Where cookies are stored.")
-(defvar url-cookie-secure-storage nil  "Where secure cookies are stored.")
-(defvar url-cookie-file nil            "*Where cookies are stored on disk.")
 
 (defun url-cookie-p (obj)
   (and (vectorp obj) (= (length obj) 7) (eq (aref obj 0) 'cookie)))
@@ -110,6 +107,7 @@
 	(setq new (cons cur new))))
     (set var new)))
 
+;;###autoload
 (defun url-cookie-write-file (&optional fname)
   (setq fname (or fname url-cookie-file))
   (url-cookie-clean-up)
@@ -208,6 +206,7 @@
 			  (*   1 (string-to-int (aref exp-time 0))))))
 	(> (- cur-norm exp-norm) 1))))))
 
+;;###autoload
 (defun url-cookie-retrieve (host path &optional secure)
   "Retrieves all the netscape-style cookies for a specified HOST and PATH"
   (let ((storage (if secure
@@ -235,6 +234,7 @@
 		(setq retval (cons cur retval))))))
     retval))
 
+;;###autolaod
 (defun url-cookie-generate-header-lines (host path secure)
   (let* ((cookies (url-cookie-retrieve host path secure))
 	(retval nil)
@@ -290,6 +290,7 @@
 (defun url-header-comparison (x y)
   (string= (downcase x) (downcase y)))
 
+;;###autoload
 (defun url-cookie-handle-set-cookie (str)
   (let* ((args (mm-parse-args str nil t)) ; Don't downcase names
 	 (case-fold-search t)
@@ -334,10 +335,17 @@
       nil)
      ((url-cookie-host-can-set-p url-current-server domain)
       ;; Cookie is accepted by the user, and passes our security checks
-      (while rest
-	(url-cookie-store (car (car rest)) (cdr (car rest))
-			  expires domain path secure)
-	(setq rest (cdr rest))))
+      (let ((cur nil))
+	(while rest
+	  (setq cur (pop rest))
+	  ;; Oh gross, this is for microsoft & netscape.
+	  ;; Fuck them fuck them fuchk them fuck them.
+	  (if (string-match "^\\([^=]+\\)=\\(.*\\)" (cdr cur))
+	      (setq rest (cons (cons (match-string 1 (cdr cur))
+				     (match-string 2 (cdr cur))) rest)
+		    cur (cons (car cur) "")))
+	  (url-cookie-store (car cur) (cdr cur)
+			    expires domain path secure))))
      (t
       (url-warn 'url (format
 		      (concat "%s tried to set a cookie for domain %s\n"

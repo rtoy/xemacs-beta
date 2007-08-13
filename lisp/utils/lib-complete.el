@@ -5,7 +5,7 @@
 ;; Last Modified By: Heiko M|nkel <muenkel@tnt.uni-hannover.de>
 ;; Additional XEmacs integration By: Chuck Thompson <cthomp@cs.uiuc.edu>
 ;; Last Modified On: Thu Jul 1 14:23:00 1994
-;; RCS Info        : $Revision: 1.1.1.1 $ $Locker:  $
+;; RCS Info        : $Revision: 1.2 $ $Locker:  $
 ;; ========================================================================
 ;; NOTE: this file must be recompiled if changed.
 ;;
@@ -26,8 +26,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
 

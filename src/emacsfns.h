@@ -354,14 +354,16 @@ Lisp_Object Fcompiled_function_annotation (Lisp_Object function);
 Lisp_Object Fquo (int nargs, Lisp_Object *args);
 Lisp_Object Fsub1 (Lisp_Object num);
 Lisp_Object Fadd1 (Lisp_Object num);
+
 Lisp_Object Fgtr (Lisp_Object num1, Lisp_Object num2);
 Lisp_Object Flss (Lisp_Object num1, Lisp_Object num2);
 Lisp_Object Fleq (Lisp_Object num1, Lisp_Object num2);
 Lisp_Object Fgeq (Lisp_Object num1, Lisp_Object num2);
+
 Lisp_Object Fminus (int nargs, Lisp_Object *args);
-Lisp_Object Fplus (int nargs, Lisp_Object *args);
-Lisp_Object Fmin (int nargs, Lisp_Object *args);
-Lisp_Object Fmax (int nargs, Lisp_Object *args);
+Lisp_Object Fplus  (int nargs, Lisp_Object *args);
+Lisp_Object Fmin   (int nargs, Lisp_Object *args);
+Lisp_Object Fmax   (int nargs, Lisp_Object *args);
 Lisp_Object Ftimes (int nargs, Lisp_Object *args);
 Lisp_Object Frem (Lisp_Object num1, Lisp_Object num2);
 
@@ -673,7 +675,7 @@ Lisp_Object call2_trapping_errors (CONST char *warning_string,
 				   Lisp_Object function,
 				   Lisp_Object object1,
 				   Lisp_Object object2);
-Lisp_Object call_with_suspended_errors (Lisp_Object (*fun)(),
+Lisp_Object call_with_suspended_errors (lisp_fn_t fun,
 					Lisp_Object retval,
 					Lisp_Object class,
 					Error_behavior errb,
@@ -1683,6 +1685,7 @@ void kill_buffer_local_variables (struct buffer *buf);
 Lisp_Object Fmake_local_variable (Lisp_Object object);
 int symbol_value_buffer_local_info (Lisp_Object symbol, struct buffer *);
 Lisp_Object find_symbol_value (Lisp_Object symbol);
+Lisp_Object find_symbol_value_quickly (Lisp_Object symbol_cons, int find_it_p);
 Lisp_Object top_level_value (Lisp_Object symbol);
 Lisp_Object Fkill_local_variable (Lisp_Object symbol);
 Lisp_Object Fmake_variable_buffer_local (Lisp_Object variable);

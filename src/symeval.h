@@ -285,8 +285,9 @@ struct symbol_value_varalias
 #define symbol_value_varalias_aliasee(m) ((m)->aliasee)
 #define symbol_value_varalias_shadowed(m) ((m)->shadowed)
 
-/* defsubr (Sname);
- is how we define the symbol for function `name' at start-up time. */
+/* DEFSUBR (Fname);
+ is how we define the symbol for function `Fname' at start-up time. */
+#define DEFSUBR(Fname) defsubr (&S##Fname)
 extern void defsubr (struct Lisp_Subr *);
 
 extern void defsymbol (Lisp_Object *location, CONST char *name);

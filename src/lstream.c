@@ -122,7 +122,12 @@ void Lstream_reopen (Lstream *stream)
 
 void Lstream_rewind (Lstream *stream)
 	Rewind the stream to the beginning.
-*/   
+*/
+
+#ifdef MULE
+MAC_DEFINE (Emchar, MTlstream_emchar)
+MAC_DEFINE (int, MTlstream_emcint)
+#endif
 
 MAC_DEFINE (struct lstream *, MTlstream_data)
 
@@ -887,11 +892,11 @@ struct filedesc_stream
   int current_pos;
   int end_pos;
   int chars_sans_newline;
-  int closing :1;
-  int allow_quit :1;
-  int blocked_ok :1;
-  int pty_flushing :1;
-  int blocking_error_p :1;
+  unsigned int closing :1;
+  unsigned int allow_quit :1;
+  unsigned int blocked_ok :1;
+  unsigned int pty_flushing :1;
+  unsigned int blocking_error_p :1;
 };
 
 #define FILEDESC_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, filedesc)
@@ -1167,10 +1172,10 @@ make_lisp_string_input_stream (Lisp_Object string, Bytecount offset,
 
   CHECK_STRING (string);
   if (len < 0)
-    len = string_length (XSTRING (string)) - offset;
+    len = XSTRING_LENGTH (string) - offset;
   assert (offset >= 0);
   assert (len >= 0);
-  assert (offset + len <= string_length (XSTRING (string)));
+  assert (offset + len <= XSTRING_LENGTH (string));
 
   lstr = Lstream_new (lstream_lisp_string, "r");
   str = LISP_STRING_STREAM_DATA (lstr);
@@ -1187,8 +1192,8 @@ lisp_string_reader (Lstream *stream, unsigned char *data, int size)
 {
   struct lisp_string_stream *str = LISP_STRING_STREAM_DATA (stream);
   /* Don't lose if the string shrank past us ... */
-  Bytecount offset = min (str->offset, string_length (XSTRING (str->obj)));
-  Bufbyte *strstart = string_data (XSTRING (str->obj));
+  Bytecount offset = min (str->offset, XSTRING_LENGTH (str->obj));
+  Bufbyte *strstart = XSTRING_DATA (str->obj);
   Bufbyte *start = strstart + offset;
 
   /* ... or if someone changed the string and we ended up in the
@@ -1213,11 +1218,11 @@ lisp_string_rewinder (Lstream *stream)
   if (pos > str->end)
     pos = str->end;
   /* Don't lose if the string shrank past us ... */
-  pos = min (pos, string_length (XSTRING (str->obj)));
+  pos = min (pos, XSTRING_LENGTH (str->obj));
   /* ... or if someone changed the string and we ended up in the
      middle of a character. */
   {
-    Bufbyte *strstart = string_data (XSTRING (str->obj));
+    Bufbyte *strstart = XSTRING_DATA (str->obj);
     Bufbyte *start = strstart + pos;
     VALIDATE_CHARPTR_BACKWARD (start);
     pos = start - strstart;

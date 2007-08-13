@@ -367,6 +367,11 @@ hack_motif_clipboard_selection (Atom selection_atom,
       int dataid;	/* 1.2 wants long, but 1.1.5 wants int... */
 #endif
       XmString fmh;
+      String encoding = (String) "STRING";
+      Extbyte *data  = XSTRING_DATA   (selection_value);
+      Extcount bytes = XSTRING_LENGTH (selection_value);
+
+
       fmh = XmStringCreateLtoR ((String) "Clipboard",
 				XmSTRING_DEFAULT_CHARSET);
       while (ClipboardSuccess !=
@@ -380,17 +385,13 @@ hack_motif_clipboard_selection (Atom selection_atom,
 	;
       XmStringFree (fmh);
       while (ClipboardSuccess !=
-	     XmClipboardCopy (display, selecting_window, itemid,
-			      (String) "STRING",
+	     XmClipboardCopy (display, selecting_window, itemid, encoding,
 #ifdef MOTIF_INCREMENTAL_CLIPBOARDS_WORK
-			      /* O'Reilly examples say size can be 0, 
+			      /* O'Reilly examples say size can be 0,
 				 but this clearly is not the case. */
-			      0, string_length (XSTRING (selection_value)) + 1,
-			      (int) selecting_window, /* private id */
+			      0, bytes, (int) selecting_window, /* private id */
 #else /* !MOTIF_INCREMENTAL_CLIPBOARDS_WORK */
-			      (char *) string_data (XSTRING (selection_value)),
-			      string_length (XSTRING (selection_value)) + 1,
-			      0,
+			      (XtPointer) data, bytes, 0,
 #endif /* !MOTIF_INCREMENTAL_CLIPBOARDS_WORK */
 			      &dataid))
 	;
@@ -423,8 +424,8 @@ motif_clipboard_cb (Widget widget, int *data_id, int *private_id, int *reason)
 	selection = XCDR (selection);
 	if (!STRINGP (selection)) abort ();
 	XmClipboardCopyByName (dpy, window, *data_id,
-			       (char *) string_data (XSTRING (selection)),
-			       string_length (XSTRING (selection)) + 1,
+			       (char *) XSTRING_DATA (selection),
+			       XSTRING_LENGTH (selection) + 1,
 			       0);
       }
       break;
@@ -1820,7 +1821,7 @@ static int cut_buffers_initialized; /* Whether we're sure they all exist */
 static void
 initialize_cut_buffers (Display *display, Window window)
 {
-  unsigned CONST char *data = (unsigned CONST char *) "";
+  static unsigned CONST char * CONST data = (unsigned CONST char *) "";
 #define FROB(atom) XChangeProperty (display, window, atom, XA_STRING, 8, \
 				    PropModeAppend, data, 0)
   FROB (XA_CUT_BUFFER0);
@@ -1835,28 +1836,27 @@ initialize_cut_buffers (Display *display, Window window)
   cut_buffers_initialized = 1;
 }
 
-
 #define CHECK_CUTBUFFER(symbol)						\
   { CHECK_SYMBOL (symbol);						\
     if (!EQ((symbol),QCUT_BUFFER0) && !EQ((symbol),QCUT_BUFFER1) &&	\
 	!EQ((symbol),QCUT_BUFFER2) && !EQ((symbol),QCUT_BUFFER3) &&	\
 	!EQ((symbol),QCUT_BUFFER4) && !EQ((symbol),QCUT_BUFFER5) &&	\
 	!EQ((symbol),QCUT_BUFFER6) && !EQ((symbol),QCUT_BUFFER7))	\
-      signal_error (Qerror, list2 (build_string ("doesn't name a cutbuffer"), \
+      signal_error (Qerror, list2 (build_string ("Doesn't name a cutbuffer"), \
                                    (symbol))); \
   }
 
 DEFUN ("x-get-cutbuffer-internal", Fx_get_cutbuffer_internal,
        Sx_get_cutbuffer_internal, 1, 1, 0 /*
-Return the value of the named cutbuffer (typically CUT_BUFFER0).
+Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
 */ )
-     (buffer)
-     Lisp_Object buffer;
+     (cutbuffer)
+     Lisp_Object cutbuffer;
 {
   struct device *d = decode_x_device (Qnil);
   Display *display = DEVICE_X_DISPLAY (d);
   Window window = RootWindow (display, 0); /* Cutbuffers are on frame 0 */
-  Atom buffer_atom;
+  Atom cut_buffer_atom;
   unsigned char *data;
   int bytes;
   Atom type;
@@ -1864,19 +1864,22 @@ Return the value of the named cutbuffer (typically CUT_BUFFER0).
   unsigned long size;
   Lisp_Object ret;
 
-  CHECK_CUTBUFFER (buffer);
-  buffer_atom = symbol_to_x_atom (d, buffer, 0);
+  CHECK_CUTBUFFER (cutbuffer);
+  cut_buffer_atom = symbol_to_x_atom (d, cutbuffer, 0);
 
-  x_get_window_property (display, window, buffer_atom, &data, &bytes,
+  x_get_window_property (display, window, cut_buffer_atom, &data, &bytes,
 			 &type, &format, &size, 0);
   if (!data) return Qnil;
-  
+
   if (format != 8 || type != XA_STRING)
-    signal_simple_error_2 ("cut buffer doesn't contain 8-bit data",
+    signal_simple_error_2 ("Cut buffer doesn't contain 8-bit STRING data",
 			   x_atom_to_symbol (d, type),
 			   make_int (format));
 
-  ret = (bytes ? make_ext_string (data, bytes, FORMAT_BINARY) : Qnil);
+  ret = (bytes ?
+	 make_ext_string (data, bytes,
+			  FORMAT_BINARY)
+	 : Qnil);
   xfree (data);
   return ret;
 }
@@ -1884,37 +1887,38 @@ Return the value of the named cutbuffer (typically CUT_BUFFER0).
 
 DEFUN ("x-store-cutbuffer-internal", Fx_store_cutbuffer_internal,
        Sx_store_cutbuffer_internal, 2, 2, 0 /*
-Sets the value of the named cutbuffer (typically CUT_BUFFER0).
+Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
 */ )
-     (buffer, string)
-     Lisp_Object buffer, string;
+     (cutbuffer, string)
+     Lisp_Object cutbuffer, string;
 {
   struct device *d = decode_x_device (Qnil);
   Display *display = DEVICE_X_DISPLAY (d);
   Window window = RootWindow (display, 0); /* Cutbuffers are on frame 0 */
-  Atom buffer_atom;
-  unsigned char *data;
-  int bytes;
-  int bytes_remaining;
+  Atom cut_buffer_atom;
+  Extbyte *data  = XSTRING_DATA   (string);
+  Extcount bytes = XSTRING_LENGTH (string);
+  Extcount bytes_remaining;
   int max_bytes = SELECTION_QUANTUM (display);
-  if (max_bytes > MAX_SELECTION_QUANTUM) max_bytes = MAX_SELECTION_QUANTUM;
 
-  CHECK_CUTBUFFER (buffer);
+  if (max_bytes > MAX_SELECTION_QUANTUM)
+    max_bytes = MAX_SELECTION_QUANTUM;
+
+  CHECK_CUTBUFFER (cutbuffer);
   CHECK_STRING (string);
-  buffer_atom = symbol_to_x_atom (d, buffer, 0);
-  GET_STRING_BINARY_DATA_ALLOCA (string, data, bytes);
-  bytes_remaining = bytes;
+  cut_buffer_atom = symbol_to_x_atom (d, cutbuffer, 0);
 
-  if (! cut_buffers_initialized) initialize_cut_buffers (display, window);
+  if (! cut_buffers_initialized)
+    initialize_cut_buffers (display, window);
+
+  bytes_remaining = bytes;
 
   while (bytes_remaining)
     {
-      int chunk = (bytes_remaining < max_bytes
-		   ? bytes_remaining : max_bytes);
-      XChangeProperty (display, window, buffer_atom, XA_STRING, 8,
+      int chunk = bytes_remaining < max_bytes ? bytes_remaining : max_bytes;
+      XChangeProperty (display, window, cut_buffer_atom, XA_STRING, 8,
 		       (bytes_remaining == bytes
-			? PropModeReplace
-			: PropModeAppend),
+			? PropModeReplace : PropModeAppend),
 		       data, chunk);
       data += chunk;
       bytes_remaining -= chunk;
@@ -1953,7 +1957,7 @@ positive means move values forward, negative means backward.
   return n;
 }
 
-#endif
+#endif /* CUT_BUFFER_SUPPORT */
 
 
 /************************************************************************/
@@ -1973,7 +1977,7 @@ syms_of_xselect (void)
   defsubr (&Sx_get_cutbuffer_internal);
   defsubr (&Sx_store_cutbuffer_internal);
   defsubr (&Sx_rotate_cutbuffers_internal);
-#endif
+#endif /* CUT_BUFFER_SUPPORT */
 
   /* Unfortunately, timeout handlers must be lisp functions. */
   defsymbol (&Qx_selection_reply_timeout_internal,

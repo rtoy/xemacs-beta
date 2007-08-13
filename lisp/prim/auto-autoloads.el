@@ -1114,12 +1114,17 @@ Display Ediff's registry." t nil)
 
 ;;;***
 
-;;;### (autoloads (ediff-toggle-multiframe) "ediff-util" "ediff/ediff-util.el")
+;;;### (autoloads (ediff-toggle-use-toolbar ediff-toggle-multiframe) "ediff-util" "ediff/ediff-util.el")
 
 (autoload 'ediff-toggle-multiframe "ediff-util" "\
-Switch from the multiframe display to single-frame display and back.
-For a permanent change, set the variable `ediff-window-setup-function',
+Switch from multiframe display to single-frame display and back.
+To change the default, set the variable `ediff-window-setup-function',
 which see." t nil)
+
+(autoload 'ediff-toggle-use-toolbar "ediff-util" "\
+Enable or disable Ediff toolbar.
+Works only in versions of Emacs that support toolbars.
+To change the default, set the variable `ediff-use-toolbar-p', which see." t nil)
 
 ;;;***
 
@@ -1809,6 +1814,172 @@ Zippy goes to the analyst." t nil)
 
 ;;;***
 
+;;;### (autoloads (custom-make-dependencies custom-menu-update custom-buffer-create customize-apropos customize-customized customize-face customize-variable customize) "custom-edit" "gnus/custom-edit.el")
+
+(autoload 'customize "custom-edit" "\
+Customize SYMBOL, which must be a customization group." t nil)
+
+(autoload 'customize-variable "custom-edit" "\
+Customize SYMBOL, which must be a variable." t nil)
+
+(autoload 'customize-face "custom-edit" "\
+Customize FACE." t nil)
+
+(autoload 'customize-customized "custom-edit" "\
+Customize all already customized user options." t nil)
+
+(autoload 'customize-apropos "custom-edit" "\
+Customize all user options matching REGEXP.
+If ALL (e.g., started with a prefix key), include options which are not
+user-settable." t nil)
+
+(autoload 'custom-buffer-create "custom-edit" "\
+Create a buffer containing OPTIONS.
+OPTIONS should be an alist of the form ((SYMBOL WIDGET)...), where
+SYMBOL is a customization option, and WIDGET is a widget for editing
+that option." nil nil)
+
+(autoload 'custom-menu-update "custom-edit" "\
+Update customize menu." t nil)
+
+(autoload 'custom-make-dependencies "custom-edit" "\
+Batch function to extract custom dependencies from .el files.
+Usage: emacs -batch *.el -f custom-make-dependencies > deps.el" nil nil)
+
+;;;***
+
+;;;### (autoloads (custom-set-faces custom-set-variables custom-initialize-faces custom-add-to-group defgroup custom-declare-group defface custom-declare-face defcustom custom-declare-variable) "custom" "gnus/custom.el")
+
+(autoload 'custom-declare-variable "custom" "\
+Like `defcustom', but SYMBOL and VALUE are evaluated as notmal arguments." nil nil)
+
+(autoload 'defcustom "custom" "\
+Declare SYMBOL as a customizable variable that defaults to VALUE.
+DOC is the variable documentation.
+
+Neither SYMBOL nor VALUE needs to be quoted.
+If SYMBOL is not already bound, initialize it to VALUE.
+The remaining arguments should have the form
+
+   [KEYWORD VALUE]... 
+
+The following KEYWORD's are defined:
+
+:type	VALUE should be a widget type.
+:options VALUE should be a list of valid members of the widget type.
+:group  VALUE should be a customization group.  
+        Add SYMBOL to that group.
+
+Read the section about customization in the emacs lisp manual for more
+information." nil 'macro)
+
+(autoload 'custom-declare-face "custom" "\
+Like `defface', but FACE is evaluated as a normal argument." nil nil)
+
+(autoload 'defface "custom" "\
+Declare FACE as a customizable face that defaults to SPEC.
+FACE does not need to be quoted.
+
+Third argument DOC is the face documentation.
+
+If FACE has been set with `custom-set-face', set the face attributes
+as specified by that function, otherwise set the face attributes
+according to SPEC.
+
+The remaining arguments should have the form
+
+   [KEYWORD VALUE]...
+
+The following KEYWORD's are defined:
+
+:group  VALUE should be a customization group.
+        Add FACE to that group.
+
+SPEC should be an alist of the form ((DISPLAY ATTS)...).
+
+ATTS is a list of face attributes and their values.  The possible
+attributes are defined in the variable `custom-face-attributes'.
+Alternatively, ATTS can be a face in which case the attributes of that
+face is used.
+
+The ATTS of the first entry in SPEC where the DISPLAY matches the
+frame should take effect in that frame.  DISPLAY can either be the
+symbol `t', which will match all frames, or an alist of the form
+\((REQ ITEM...)...)
+
+For the DISPLAY to match a FRAME, the REQ property of the frame must
+match one of the ITEM.  The following REQ are defined:
+
+`type' (the value of (window-system))
+  Should be one of `x' or `tty'.
+
+`class' (the frame's color support)
+  Should be one of `color', `grayscale', or `mono'.
+
+`background' (what color is used for the background text)
+  Should be one of `light' or `dark'.
+
+Read the section about customization in the emacs lisp manual for more
+information." nil 'macro)
+
+(autoload 'custom-declare-group "custom" "\
+Like `defgroup', but SYMBOL is evaluated as a normal argument." nil nil)
+
+(autoload 'defgroup "custom" "\
+Declare SYMBOL as a customization group containing MEMBERS.
+SYMBOL does not need to be quoted.
+
+Third arg DOC is the group documentation.
+
+MEMBERS should be an alist of the form ((NAME WIDGET)...) where
+NAME is a symbol and WIDGET is a widget is a widget for editing that
+symbol.  Useful widgets are `custom-variable' for editing variables,
+`custom-face' for edit faces, and `custom-group' for editing groups.
+
+The remaining arguments should have the form
+
+   [KEYWORD VALUE]... 
+
+The following KEYWORD's are defined:
+
+:group  VALUE should be a customization group.
+        Add SYMBOL to that group.
+
+Read the section about customization in the emacs lisp manual for more
+information." nil 'macro)
+
+(autoload 'custom-add-to-group "custom" "\
+To existing GROUP add a new OPTION of type WIDGET,
+If there already is an entry for that option, overwrite it." nil nil)
+
+(autoload 'custom-initialize-faces "custom" "\
+Initialize all custom faces for FRAME.
+If FRAME is nil or omitted, initialize them for all frames." nil nil)
+
+(autoload 'custom-set-variables "custom" "\
+Initialize variables according to user preferences.  
+
+The arguments should be a list where each entry has the form:
+
+  (SYMBOL VALUE [NOW])
+
+The unevaluated VALUE is stored as the saved value for SYMBOL.
+If NOW is present and non-nil, VALUE is also evaluated and bound as
+the default value for the SYMBOL." nil nil)
+
+(autoload 'custom-set-faces "custom" "\
+Initialize faces according to user preferences.
+The arguments should be a list where each entry has the form:
+
+  (FACE SPEC [NOW])
+
+SPEC will be stored as the saved value for FACE.  If NOW is present
+and non-nil, FACE will also be created according to SPEC.
+
+See `defface' for the format of SPEC." nil nil)
+
+;;;***
+
 ;;;### (autoloads (gnus-earcon-display) "earcon" "gnus/earcon.el")
 
 (autoload 'gnus-earcon-display "earcon" "\
@@ -1816,16 +1987,55 @@ Play sounds in message buffers." t nil)
 
 ;;;***
 
+;;;### (autoloads (gnus-audio-play) "gnus-audio" "gnus/gnus-audio.el")
+
+(autoload 'gnus-audio-play "gnus-audio" "\
+Play a sound through the speaker." t nil)
+
+;;;***
+
 ;;;### (autoloads (gnus-cache-generate-nov-databases gnus-cache-generate-active gnus-jog-cache) "gnus-cache" "gnus/gnus-cache.el")
 
 (autoload 'gnus-jog-cache "gnus-cache" "\
-Go through all groups and put the articles into the cache." t nil)
+Go through all groups and put the articles into the cache.
+
+Usage:
+$ emacs -batch -l ~/.emacs -l gnus -f gnus-jog-cache" t nil)
 
 (autoload 'gnus-cache-generate-active "gnus-cache" "\
 Generate the cache active file." t nil)
 
 (autoload 'gnus-cache-generate-nov-databases "gnus-cache" "\
 Generate NOV files recursively starting in DIR." t nil)
+
+;;;***
+
+;;;### (autoloads (gnus-fetch-group) "gnus-group" "gnus/gnus-group.el")
+
+(autoload 'gnus-fetch-group "gnus-group" "\
+Start Gnus if necessary and enter GROUP.
+Returns whether the fetching was successful or not." t nil)
+
+;;;***
+
+;;;### (autoloads (gnus-batch-score) "gnus-kill" "gnus/gnus-kill.el")
+
+(defalias 'gnus-batch-kill 'gnus-batch-score)
+
+(autoload 'gnus-batch-score "gnus-kill" "\
+Run batched scoring.
+Usage: emacs -batch -l gnus -f gnus-batch-score <newsgroups> ...
+Newsgroups is a list of strings in Bnews format.  If you want to score
+the comp hierarchy, you'd say \"comp.all\".  If you would not like to
+score the alt hierarchy, you'd say \"!alt.all\"." t nil)
+
+;;;***
+
+;;;### (autoloads (gnus-change-server) "gnus-move" "gnus/gnus-move.el")
+
+(autoload 'gnus-change-server "gnus-move" "\
+Move from FROM-SERVER to TO-SERVER.
+Update the .newsrc.eld file to reflect the change of nntp server." t nil)
 
 ;;;***
 
@@ -1850,13 +2060,31 @@ $ emacs -batch -f gnus-batch-brew-soup ^nnml \".*emacs.*\"" t nil)
 
 ;;;***
 
-;;;### (autoloads (gnus-batch-score gnus-fetch-group gnus gnus-other-frame gnus-slave gnus-no-server gnus-slave-no-server gnus-add-configuration gnus-update-format) "gnus" "gnus/gnus.el")
+;;;### (autoloads (gnus-update-format) "gnus-spec" "gnus/gnus-spec.el")
 
-(autoload 'gnus-update-format "gnus" "\
+(autoload 'gnus-update-format "gnus-spec" "\
 Update the format specification near point." t nil)
 
-(autoload 'gnus-add-configuration "gnus" "\
+;;;***
+
+;;;### (autoloads (gnus-declare-backend gnus-unload) "gnus-start" "gnus/gnus-start.el")
+
+(autoload 'gnus-unload "gnus-start" "\
+Unload all Gnus features." t nil)
+
+(autoload 'gnus-declare-backend "gnus-start" "\
+Declare backend NAME with ABILITIES as a Gnus backend." nil nil)
+
+;;;***
+
+;;;### (autoloads (gnus-add-configuration) "gnus-win" "gnus/gnus-win.el")
+
+(autoload 'gnus-add-configuration "gnus-win" "\
 Add the window configuration CONF to `gnus-buffer-configuration'." nil nil)
+
+;;;***
+
+;;;### (autoloads (gnus gnus-other-frame gnus-slave gnus-no-server gnus-slave-no-server) "gnus" "gnus/gnus.el")
 
 (autoload 'gnus-slave-no-server "gnus" "\
 Read network news as a slave, without connecting to local server" t nil)
@@ -1881,193 +2109,31 @@ If ARG is non-nil and a positive number, Gnus will use that as the
 startup level.	If ARG is non-nil and not a positive number, Gnus will
 prompt the user for the name of an NNTP server to use." t nil)
 
-(autoload 'gnus-fetch-group "gnus" "\
-Start Gnus if necessary and enter GROUP.
-Returns whether the fetching was successful or not." t nil)
-
-(defalias 'gnus-batch-kill 'gnus-batch-score)
-
-(autoload 'gnus-batch-score "gnus" "\
-Run batched scoring.
-Usage: emacs -batch -l gnus -f gnus-batch-score <newsgroups> ...
-Newsgroups is a list of strings in Bnews format.  If you want to score
-the comp hierarchy, you'd say \"comp.all\".  If you would not like to
-score the alt hierarchy, you'd say \"!alt.all\"." t nil)
-
 ;;;***
 
 ;;;### (autoloads (unbold-region bold-region message-news-other-frame message-news-other-window message-mail-other-frame message-mail-other-window message-bounce message-resend message-forward message-recover message-supersede message-cancel-news message-followup message-wide-reply message-reply message-news message-mail message-mode) "message" "gnus/message.el")
 
-(defvar message-fcc-handler-function 'rmail-output "\
-*A function called to save outgoing articles.
-This function will be called with the name of the file to store the
-article in. The default function is `rmail-output' which saves in Unix
-mailbox format.")
+(defcustom message-fcc-handler-function 'message-output "*A function called to save outgoing articles.\nThis function will be called with the name of the file to store the\narticle in.  The default function is `rmail-output' which saves in Unix\nmailbox format." :type '(radio (function-item rmail-output) (function :tag "Other")) :group 'message-sending)
 
-(defvar message-courtesy-message "The following message is a courtesy copy of an article\nthat has been posted as well.\n\n" "\
-*This is inserted at the start of a mailed copy of a posted message.
-If this variable is nil, no such courtesy message will be added.")
+(defcustom message-from-style 'default "*Specifies how \"From\" headers look.\n\nIf `nil', they contain just the return address like:\n	king@grassland.com\nIf `parens', they look like:\n	king@grassland.com (Elvis Parsley)\nIf `angles', they look like:\n	Elvis Parsley <king@grassland.com>\n\nOtherwise, most addresses look like `angles', but they look like\n`parens' if `angles' would need quoting and `parens' would not." :type '(choice (const :tag "simple" nil) (const parens) (const angles) (const default)) :group 'message-headers)
 
-(defvar message-ignored-bounced-headers "^\\(Received\\|Return-Path\\):" "\
-*Regexp that matches headers to be removed in resent bounced mail.")
+(defcustom message-signature-separator "^-- *$" "Regexp matching the signature separator." :type 'regexp :group 'message-various)
 
-(defvar message-from-style 'default "\
-*Specifies how \"From\" headers look.
+(defcustom message-user-organization-file "/usr/lib/news/organization" "*Local news organization file." :type 'file :group 'message-headers)
 
-If `nil', they contain just the return address like:
-	king@grassland.com
-If `parens', they look like:
-	king@grassland.com (Elvis Parsley)
-If `angles', they look like:
-	Elvis Parsley <king@grassland.com>
+(defcustom message-send-mail-function 'message-send-mail-with-sendmail "Function to call to send the current buffer as mail.\nThe headers should be delimited by a line whose contents match the\nvariable `mail-header-separator'.\n\nLegal values include `message-send-mail-with-sendmail' (the default),\n`message-send-mail-with-mh' and `message-send-mail-with-qmail'." :type '(radio (function-item message-send-mail-with-sendmail) (function-item message-send-mail-with-mh) (function-item message-send-mail-with-qmail) (function :tag "Other")) :group 'message-sending :group 'message-mail)
 
-Otherwise, most addresses look like `angles', but they look like
-`parens' if `angles' would need quoting and `parens' would not.")
+(defcustom message-citation-line-function 'message-insert-citation-line "*Function called to insert the \"Whomever writes:\" line." :type 'function :group 'message-insertion)
 
-(defvar message-syntax-checks nil "\
-Controls what syntax checks should not be performed on outgoing posts.
-To disable checking of long signatures, for instance, add
- `(signature . disabled)' to this list.
+(defcustom message-yank-prefix "> " "*Prefix inserted on the lines of yanked messages.\nnil means use indentation." :type 'string :group 'message-insertion)
 
-Don't touch this variable unless you really know what you're doing.
+(defcustom message-cite-function (if (and (boundp 'mail-citation-hook) mail-citation-hook) mail-citation-hook 'message-cite-original) "*Function for citing an original message." :type '(radio (function-item message-cite-original) (function-item sc-cite-original) (function :tag "Other")) :group 'message-insertion)
 
-Checks include subject-cmsg multiple-headers sendsys message-id from
-long-lines control-chars size new-text redirected-followup signature
-approved sender empty empty-headers message-id from subject.")
+(defcustom message-indent-citation-function 'message-indent-citation "*Function for modifying a citation just inserted in the mail buffer.\nThis can also be a list of functions.  Each function can find the\ncitation between (point) and (mark t).  And each function should leave\npoint and mark around the citation text as modified." :type 'function :group 'message-insertion)
 
-(defvar message-required-news-headers '(From Newsgroups Subject Date Message-ID (optional . Organization) Lines (optional . X-Newsreader)) "\
-*Headers to be generated or prompted for when posting an article.
-RFC977 and RFC1036 require From, Date, Newsgroups, Subject,
-Message-ID.  Organization, Lines, In-Reply-To, Expires, and
-X-Newsreader are optional.  If don't you want message to insert some
-header, remove it from this list.")
+(defcustom message-signature t "*String to be inserted at the end of the message buffer.\nIf t, the `message-signature-file' file will be inserted instead.\nIf a function, the result from the function will be used instead.\nIf a form, the result from the form will be used instead." :type 'sexp :group 'message-insertion)
 
-(defvar message-required-mail-headers '(From Subject Date (optional . In-Reply-To) Message-ID Lines (optional . X-Mailer)) "\
-*Headers to be generated or prompted for when mailing a message.
-RFC822 required that From, Date, To, Subject and Message-ID be
-included.  Organization, Lines and X-Mailer are optional.")
-
-(defvar message-deletable-headers '(Message-ID Date) "\
-*Headers to be deleted if they already exist and were generated by message previously.")
-
-(defvar message-ignored-news-headers "^NNTP-Posting-Host:\\|^Xref:\\|^Bcc:\\|^Gcc:\\|^Fcc:" "\
-*Regexp of headers to be removed unconditionally before posting.")
-
-(defvar message-ignored-mail-headers "^Gcc:\\|^Fcc:" "\
-*Regexp of headers to be removed unconditionally before mailing.")
-
-(defvar message-ignored-supersedes-headers "^Path:\\|^Date\\|^NNTP-Posting-Host:\\|^Xref:\\|^Lines:\\|^Received:\\|^X-From-Line:\\|Return-Path:\\|^Supersedes:" "\
-*Header lines matching this regexp will be deleted before posting.
-It's best to delete old Path and Date headers before posting to avoid
-any confusion.")
-
-(defvar message-signature-separator "^-- *$" "\
-Regexp matching the signature separator.")
-
-(defvar message-interactive nil "\
-Non-nil means when sending a message wait for and display errors.
-nil means let mailer mail back a message to report errors.")
-
-(defvar message-generate-new-buffers t "\
-*Non-nil means that a new message buffer will be created whenever `mail-setup' is called.
-If this is a function, call that function with three parameters:  The type,
-the to address and the group name.  (Any of these may be nil.)  The function
-should return the new buffer name.")
-
-(defvar message-kill-buffer-on-exit nil "\
-*Non-nil means that the message buffer will be killed after sending a message.")
-
-(defvar message-user-organization-file "/usr/lib/news/organization" "\
-*Local news organization file.")
-
-(defvar message-signature-before-forwarded-message t "\
-*If non-nil, put the signature before any included forwarded message.")
-
-(defvar message-included-forward-headers "^From:\\|^Newsgroups:\\|^Subject:\\|^Date:\\|^Followup-To:\\|^Reply-To:\\|^Organization:\\|^Summary:\\|^Keywords:\\|^To:\\|^Cc:\\|^Posted-To:\\|^Mail-Copies-To:\\|^Apparently-To:\\|^Gnus-Warning:\\|^Resent-\\|^Message-ID:\\|^References:" "\
-*Regexp matching headers to be included in forwarded messages.")
-
-(defvar message-ignored-resent-headers "^Return-receipt" "\
-*All headers that match this regexp will be deleted when resending a message.")
-
-(defvar message-ignored-cited-headers "." "\
-Delete these headers from the messages you yank.")
-
-(defvar message-send-mail-function 'message-send-mail-with-sendmail "\
-Function to call to send the current buffer as mail.
-The headers should be delimited by a line whose contents match the
-variable `mail-header-separator'.
-
-Legal values include `message-send-mail-with-mh' and
-`message-send-mail-with-sendmail', which is the default.")
-
-(defvar message-send-news-function 'message-send-news "\
-Function to call to send the current buffer as news.
-The headers should be delimited by a line whose contents match the
-variable `mail-header-separator'.")
-
-(defvar message-reply-to-function nil "\
-Function that should return a list of headers.
-This function should pick out addresses from the To, Cc, and From headers
-and respond with new To and Cc headers.")
-
-(defvar message-wide-reply-to-function nil "\
-Function that should return a list of headers.
-This function should pick out addresses from the To, Cc, and From headers
-and respond with new To and Cc headers.")
-
-(defvar message-followup-to-function nil "\
-Function that should return a list of headers.
-This function should pick out addresses from the To, Cc, and From headers
-and respond with new To and Cc headers.")
-
-(defvar message-use-followup-to 'ask "\
-*Specifies what to do with Followup-To header.
-If nil, ignore the header. If it is t, use its value, but query before
-using the \"poster\" value.  If it is the symbol `ask', query the user
-whether to ignore the \"poster\" value.  If it is the symbol `use',
-always use the value.")
-
-(defvar message-post-method (cond ((and (boundp 'gnus-post-method) gnus-post-method) gnus-post-method) ((boundp 'gnus-select-method) gnus-select-method) (t '(nnspool ""))) "\
-Method used to post news.")
-
-(defvar message-generate-headers-first nil "\
-*If non-nil, generate all possible headers before composing.")
-
-(defvar message-citation-line-function 'message-insert-citation-line "\
-*Function called to insert the \"Whomever writes:\" line.")
-
-(defvar message-yank-prefix "> " "\
-*Prefix inserted on the lines of yanked messages.
-nil means use indentation.")
-
-(defvar message-cite-function 'message-cite-original "\
-*Function for citing an original message.")
-
-(defvar message-indent-citation-function 'message-indent-citation "\
-*Function for modifying a citation just inserted in the mail buffer.
-This can also be a list of functions.  Each function can find the
-citation between (point) and (mark t).  And each function should leave
-point and mark around the citation text as modified.")
-
-(defvar message-signature t "\
-*String to be inserted at the end of the message buffer.
-If t, the `message-signature-file' file will be inserted instead.
-If a function, the result from the function will be used instead.
-If a form, the result from the form will be used instead.")
-
-(defvar message-signature-file "~/.signature" "\
-*File containing the text inserted at end of message. buffer.")
-
-(defvar message-default-headers nil "\
-*A string containing header lines to be inserted in outgoing messages.
-It is inserted before you edit the message, so you can edit or delete
-these lines.")
-
-(defvar message-default-mail-headers nil "\
-*A string of header lines to be inserted in outgoing mails.")
-
-(defvar message-default-news-headers nil "\
-*A string of header lines to be inserted in outgoing news articles.")
+(defcustom message-signature-file "~/.signature" "*File containing the text inserted at end of message buffer." :type 'file :group 'message-insertion)
 
 (autoload 'message-mode "message" "\
 Major mode for editing mail and news to be sent.
@@ -2076,10 +2142,10 @@ C-c C-s  message-send (send the message)    C-c C-c  message-send-and-exit
 C-c C-f  move to a header field (and create it if there isn't):
 	 C-c C-f C-t  move to To	C-c C-f C-s  move to Subject
 	 C-c C-f C-c  move to Cc	C-c C-f C-b  move to Bcc
-	 C-c C-f C-f  move to Fcc	C-c C-f C-r  move to Reply-To
+	 C-c C-f C-w  move to Fcc	C-c C-f C-r  move to Reply-To
 	 C-c C-f C-u  move to Summary	C-c C-f C-n  move to Newsgroups
 	 C-c C-f C-k  move to Keywords	C-c C-f C-d  move to Distribution
-	 C-c C-f C-o  move to Followup-To
+	 C-c C-f C-f  move to Followup-To
 C-c C-t  message-insert-to (add a To header to a news followup)
 C-c C-n  message-insert-newsgroups (add a Newsgroup header to a news reply)
 C-c C-b  message-goto-body (move to beginning of message text).
@@ -2087,7 +2153,8 @@ C-c C-i  message-goto-signature (move to the beginning of the signature).
 C-c C-w  message-insert-signature (insert `message-signature-file' file).
 C-c C-y  message-yank-original (insert current message, if any).
 C-c C-q  message-fill-yanked-message (fill what was yanked).
-C-c C-r  message-ceasar-buffer-body (rot13 the message body)." t nil)
+C-c C-e  message-elide-region (elide the text between point and mark).
+C-c C-r  message-caesar-buffer-body (rot13 the message body)." t nil)
 
 (autoload 'message-mail "message" "\
 Start editing a mail message to be sent." t nil)
@@ -2098,9 +2165,12 @@ Start editing a news article to be sent." t nil)
 (autoload 'message-reply "message" "\
 Start editing a reply to the article in the current buffer." t nil)
 
-(autoload 'message-wide-reply "message" nil t nil)
+(autoload 'message-wide-reply "message" "\
+Make a \"wide\" reply to the message in the current buffer." t nil)
 
-(autoload 'message-followup "message" nil t nil)
+(autoload 'message-followup "message" "\
+Follow up to the message in the current buffer.
+If TO-NEWSGROUPS, use that as the new Newsgroups line." t nil)
 
 (autoload 'message-cancel-news "message" "\
 Cancel an article you posted." t nil)
@@ -2148,6 +2218,24 @@ which specify the range to operate on." t nil)
 Remove all boldness (overstruck characters) in the region.
 Called from program, takes two arguments START and END
 which specify the range to operate on." t nil)
+
+;;;***
+
+;;;### (autoloads nil "messcompat" "gnus/messcompat.el")
+
+(defvar message-signature-file mail-signature-file "\
+*File containing the text inserted at end of message. buffer.")
+
+;;;***
+
+;;;### (autoloads (nndoc-add-type) "nndoc" "gnus/nndoc.el")
+
+(autoload 'nndoc-add-type "nndoc" "\
+Add document DEFINITION to the list of nndoc document definitions.
+If POSITION is nil or `last', the definition will be added
+as the last checked definition, if t or `first', add as the
+first definition, and if any other symbol, add after that
+symbol in the alist." nil nil)
 
 ;;;***
 
@@ -3563,7 +3651,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.3 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.4 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4780,7 +4868,7 @@ First column's text    sSs  Second column's text
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.3 $
+vhdl-mode $Revision: 1.4 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -6839,13 +6927,14 @@ When active, typed text replaces the selection." t nil)
 
 ;;;***
 
-;;;### (autoloads (ps-despool ps-spool-region-with-faces ps-spool-region ps-spool-buffer-with-faces ps-spool-buffer ps-print-region-with-faces ps-print-region ps-print-buffer-with-faces ps-print-buffer) "ps-print" "packages/ps-print.el")
+;;;### (autoloads (ps-setup ps-nb-pages-region ps-nb-pages-buffer ps-line-lengths ps-despool ps-spool-region-with-faces ps-spool-region ps-spool-buffer-with-faces ps-spool-buffer ps-print-region-with-faces ps-print-region ps-print-buffer-with-faces ps-print-buffer) "ps-print" "packages/ps-print.el")
 
-(defvar ps-paper-type 'ps-letter "\
-*Specifies the size of paper to format for.  Should be one of
-`ps-letter', `ps-legal', or `ps-a4'.")
+(defvar ps-paper-type 'letter "\
+*Specifies the size of paper to format for.
+Should be one of the paper types defined in `ps-page-dimensions-database', for
+example `letter', `legal' or `a4'.")
 
-(defvar ps-print-color-p (and (or (fboundp 'x-color-values) (fboundp 'color-instance-rgb-components)) (fboundp 'float)) "\
+(defvar ps-print-color-p (or (fboundp 'x-color-values) (fboundp 'color-instance-rgb-components)) "\
 *If non-nil, print the buffer's text in color.")
 
 (autoload 'ps-print-buffer "ps-print" "\
@@ -6916,6 +7005,25 @@ More specifically, the FILENAME argument is treated as follows: if it
 is nil, send the image to the printer.  If FILENAME is a string, save
 the PostScript image in a file with that name.  If FILENAME is a
 number, prompt the user for the name of the file to save in." t nil)
+
+(autoload 'ps-line-lengths "ps-print" "\
+*Display the correspondence between a line length and a font size,
+using the current ps-print setup.
+Try: pr -t file | awk '{printf \"%3d %s
+\", length($0), $0}' | sort -r | head" t nil)
+
+(autoload 'ps-nb-pages-buffer "ps-print" "\
+*Display an approximate correspondence between a font size and the number
+of pages the current buffer would require to print
+using the current ps-print setup." t nil)
+
+(autoload 'ps-nb-pages-region "ps-print" "\
+*Display an approximate correspondence between a font size and the number
+of pages the current region would require to print
+using the current ps-print setup." t nil)
+
+(autoload 'ps-setup "ps-print" "\
+*Return the current setup" nil nil)
 
 ;;;***
 
@@ -8195,12 +8303,15 @@ TABs at the beginning of the line are not a part of the message:
 	--[[text/plain]]
 	This is also a plain text.  But, it is explicitly specified as
 	is.
-	--[[text/plain; charset=ISO-2022-JP]]
-	...Japanese text here....
-	--[[text/richtext]]
-	<center>This is a richtext.</center>
-	--[[image/gif][base64]]^M...image encoded in base64 here...
-	--[[audio/basic][base64]]^M...audio encoded in base64 here...
+	--[[text/plain; charset=ISO-8859-1]]
+	This is also a plain text.  But charset is specified as
+	iso-8859-1.
+
+	¡Hola!  Buenos días.  ¿Cómo está usted?
+	--[[text/enriched]]
+	This is a <bold>enriched text</bold>.
+	--[[image/gif][base64]]...image encoded in base64 here...
+	--[[audio/basic][base64]]...audio encoded in base64 here...
 
 User customizable variables (not documented all of them):
  mime-prefix
@@ -9070,6 +9181,12 @@ symmetrical ones, and the same character twice for the others." t nil)
 
 ;;;***
 
+;;;### (autoloads nil "timezone" "utils/timezone.el")
+
+(define-error 'invalid-date "Invalid date string")
+
+;;;***
+
 ;;;### (autoloads (tq-create) "tq" "utils/tq.el")
 
 (autoload 'tq-create "tq" "\
@@ -9324,13 +9441,8 @@ to disk." t nil)
 
 (autoload 'w3-fetch "w3" "\
 Retrieve a document over the World Wide Web.
-The World Wide Web is a global hypertext system started by CERN in
-Switzerland in 1991.
-
-The document should be specified by its fully specified
-Uniform Resource Locator.  The document will be parsed, printed, or
-passed to an external viewer as appropriate.  Variable
-`mm-mime-info' specifies viewers for particular file types." t nil)
+Defaults to URL of the current document, if any.
+With prefix argument, use the URL of the hyperlink under point instead." t nil)
 
 (autoload 'w3-maybe-follow-link-mouse "w3" "\
 Maybe follow a hypertext link under point.

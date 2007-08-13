@@ -1,12 +1,12 @@
 ;;; css.el -- Cascading Style Sheet parser
 ;; Author: wmperry
-;; Created: 1996/12/26 16:49:58
-;; Version: 1.18
+;; Created: 1997/01/17 14:30:54
+;; Version: 1.25
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -38,46 +38,110 @@
 
 (defconst css-properties
   '(;; Property name    Inheritable?   Type of data
-    [font-family      nil            string-list]
-    [font-style       nil            string]
-    [font-variant     nil            symbol-list]
-    [font-weight      nil            weight]
-    [font-size        nil            length]
+    ;; Base CSS level 1 properties: http://www.w3.org/pub/WWW/TR/REC-CSS1
+    ;; Font properties, Section 5.2
+    [font-family      t              string-list]
+    [font-style       t              symbol]
+    [font-variant     t              symbol]
+    [font-weight      t              weight]
+    [font-size        t              length]
     [font             nil            font]
-    [color            nil            color]
-    [background       nil            color]
-    [word-spacing     nil            length] ; CBI
-    [letter-spacing   nil            length] ; CBI
-    [text-decoration  nil            symbol-list]
-    [vertical-align   nil            symbol] ; CBI
-    [text-transform   nil            string]
+
+    ;; Color and background properties, Section 5.3
+    [color            t              color]
+    [background       nil            color-shorthand]
+    [background-color nil            color]
+    [background-image nil            url]    ; NYI
+    [background-repeat nil           symbol] ; CBI
+    [background-attachment nil       symbol] ; CBI
+    [background-position nil         symbol] ; CBI
+
+    ;; Text properties, Section 5.4
+    [word-spacing     t              length] ; CBI
+    [letter-spacing   t              length] ; CBI
+    [text-decoration  t              symbol-list]
+    [vertical-align   nil            symbol]
+    [text-transform   t              symbol]
     [text-align       t              symbol]
     [text-indent      t              length] ; NYI
     [line-height      t              length] ; CBI
-    [margin           nil            margin]
-    [margin-left      nil            margin]
-    [margin-right     nil            margin]
-    [margin-top       nil            margin]
-    [margin-bottom    nil            margin]
-    [padding          nil            padding]
-    [padding-left     nil            padding]
-    [padding-right    nil            padding]
-    [padding-top      nil            padding]
-    [padding-bottom   nil            padding]
-    [border           nil            border]
+
+    ;; Box properties, Section 5.5
+    [margin           nil            boundary-shorthand]
+    [margin-left      nil            length]
+    [margin-right     nil            length]
+    [margin-top       nil            length]
+    [margin-bottom    nil            length]
+    [padding          nil            boundary-shorthand]
+    [padding-left     nil            length]
+    [padding-right    nil            length]
+    [padding-top      nil            length]
+    [padding-bottom   nil            length]
+    [border           nil            border-shorthand]
     [border-left      nil            border]
     [border-right     nil            border]
     [border-top       nil            border]
     [border-bottom    nil            border]
+    [border-top-width nil            nil]
+    [border-right-width nil          nil]
+    [border-bottom-width nil         nil]
+    [border-left-width nil           nil]
+    [border-width     nil            boundary-shorthand]
+    [border-color     nil            color]
+    [border-style     nil            symbol]
     [width            nil            length] ; NYPI
     [height           nil            length] ; NYPI
     [float            nil            symbol]
     [clear            nil            symbol]
+
+    ;; Classification properties, Section 5.6
     [display          nil            symbol]
-    [list-style       t              symbol] ;!! can't specify 'inside|outside'
+    [list-style-type  t              symbol]
+    [list-style-image t              url]
+    [list-style-position t           symbol]
+    [list-style       nil            list-style]
     [white-space      t              symbol]
 
-    ;; These are for specifying speech properties
+    ;; These are for specifying speech properties (ACSS-style)
+    ;; http://www.w3.org/pub/WWW/Style/CSS/Speech/NOTE-ACSS
+
+    ;; General audio properties, Section 3
+    [volume           t              string] ; Needs its own type?
+    [pause-before     nil            time]
+    [pause-after      nil            time]
+    [pause            nil            pause]
+    [cue-before       nil            string]
+    [cue-after        nil            string]
+    [cue-during       nil            string]
+    [cue              nil            string] ; Needs its own type?
+
+    ;; Spatial properties, Section 4
+    [azimuth          t              angle]
+    [elevation        t              elevation]
+
+    ;; Speech properties, Section 5
+    [speed            t              string]
+    [voice-family     t              string-list]
+    [pitch            t              string]
+    [pitch-range      t              percentage]
+    [stress           t              percentage]
+    [richness         t              percentage]
+    [speak-punctuation t             symbol]
+    [speak-date       t              symbol]
+    [speak-numeral    t              symbol]
+    [speak-time       t              symbol]
+
+    ;; Proposed printing extensions
+    ;; http://www.w3.org/pub/WWW/Style/Group/WD-PRINT-961220
+    ;; These apply only to pages (@page directive)
+    [size             nil            symbol]
+    [orientation      nil            symbol]
+    [margin-inside    nil            length]
+    ;; These apply to the document
+    [page-break-before nil           symbol]
+    [page-break-after  nil           symbol]
+    
+    ;; These are for specifying speech properties (Raman-style)
     [voice-family     t              string]
     [gain             t              integer]
     [left-volume      t              integer]
@@ -88,6 +152,13 @@
     [richness         t              integer]
     )
   "A description of the various CSS properties and how to interpret them.")
+
+(put 'font 'css-shorthand t)
+(put 'background 'css-shorthand t)
+(put 'margin 'css-shorthand t)
+(put 'padding 'css-shorthand t)
+(put 'border 'css-shorthand t)
+(put 'list-style 'css-shorthand t)
 
 (mapcar
  (lambda (entry)
@@ -132,10 +203,6 @@
 (defconst css-running-xemacs
   (string-match "XEmacs" (emacs-version))
   "Whether we are running in XEmacs or not.")
-
-(defvar css-ie-compatibility t
-  "Whether we want to do Internet Explorer 3.0 compatible parsing of
-CSS stylesheets.")
 
 (defsubst css-replace-regexp (regexp to-string)
   (goto-char (point-min))
@@ -328,6 +395,13 @@ CSS stylesheets.")
 	    ord (1- ord)))
     rval))
 
+(defmacro css-symbol-list-as-regexp (&rest keys)
+  (` (eval-when-compile
+       (concat "^\\("
+	       (mapconcat 'symbol-name
+			  (quote (, keys))
+			  "\\|") "\\)$"))))
+
 (defun css-expand-color (color)
   (cond
    ((string-match "^#" color)
@@ -370,15 +444,6 @@ CSS stylesheets.")
 	    g (round (* g 2.55))
 	    b (round (* b 2.55))
 	    color (vector 'rgb r g b))))
-   ((string-match "url *(\\([^ )]+\\) *)" color)
-    ;; A picture in the background
-    (let ((pixmap (match-string 1 color))
-	  (attributes nil))
-      (setq color (concat (substring color 0 (match-beginning 0))
-			  (substring color (match-end 0) nil))
-	    attributes (split-string color " "))
-      )
-    )
     (t
      ;; Hmmm... pass it through unmangled and hope the underlying
      ;; windowing system can handle it.
@@ -388,50 +453,138 @@ CSS stylesheets.")
   )
 
 (defun css-expand-value (type value)
-  (case type
-    ((symbol integer)			; Read it in
-     (setq value (read (downcase value))))
-    (symbol-list
-     (setq value (downcase value)
-	   value (split-string value "[ ,]+")
-	   value (mapcar 'intern value)))
-    (string-list
-     (setq value (split-string value " *, *")))
-    (color				; A color, possibly with URLs
-     (setq value (css-expand-color value)))
-    (length				; Pixels, picas, ems, etc.
-     (setq value (css-expand-length value)))
-    (font				; Font shorthand
-     (setq value (css-split-font-shorthand value)))
-    ((margin padding)			; length|percentage|auto {1,4}
-     (setq value (split-string value "[ ,]+"))
-     (if (/= 1 (length value))
-	 ;; More than one value - a shortcut
+  (if value
+      (case type
+	(length				; CSS, Section 6.1
+	 (setq value (css-expand-length value)))
+	(percentage			; CSS, Section 6.2
+	 (setq value (/ (string-to-number value)
+			(if (fboundp 'float) (float 100) 1))))
+	(color				; CSS, Section 6.3
+	 (setq value (css-expand-color value)))
+	(url				; CSS, Section 6.4
+	 (declare (special url purl))
+	 (if (string-match "url *(\\([^ )]+\\) *)" value)
+	     (setq value (match-string 1 value)))
+	 (if (string-match " *\\([^ ]+\\) *" value)
+	     (setq value (match-string 1 value)))
+	 (setq value (url-expand-file-name value (or url purl))))
+	(angle				; ACSS, Section 2.2.1
+	 )
+	(time				; ACSS, Section 2.2.2
+	 (let ((val (string-to-number value))
+	       (units 'ms))
+	   (if (string-match "^[0-9]+ *\\([a-zA-Z.]+\\)" value)
+	       (setq units (intern (downcase (match-string 1 value)))))
+	   (setq value (case units
+			 ((s second seconds)
+			  val)
+			 ((min minute minutes)
+			  (* val 60))
+			 ((hr hour hours)
+			  (* val 60 60))
+			 ((day days)
+			  (* val 24 60 60))
+			 (otherwise
+			  (/ val (float 1000)))))))
+	(elevation			; ACSS, Section 4.2
+	 (if (string-match
+	      (css-symbol-list-as-regexp below level above higher lower) value)
+	     (setq value (intern (downcase (match-string value 1)))
+		   value (case value
+			   (below -90)
+			   (above 90)
+			   (level 0)
+			   (higher 45)
+			   (lower -45)
+			   ))
+	   (setq value (css-expand-value 'angle value))))
+	(color-shorthand		; CSS, Section 5.3.7
+	 ;; color|image|repeat|attach|position
+	 (let ((keys (split-string value " +"))
+	       cur color image repeat attach position)
+	   (while (setq cur (pop keys))
+	     (cond
+	      ((string-match "url" cur)	; Only image can have a URL
+	       (setq image (css-expand-value 'url cur)))
+	      ((string-match "%" cur)	; Only position can have a perc.
+	       (setq position (css-expand-value 'percentage cur)))
+	      ((string-match "repeat" cur) ; Only repeat
+	       (setq repeat (intern (downcase cur))))
+	      ((string-match "scroll\\|fixed" cur)
+	       (setq attach (intern (downcase (substring cur
+							 (match-beginning 0)
+							 (match-end 0))))))
+	      ((string-match (css-symbol-list-as-regexp
+			      top center bottom left right) cur)
+	       )
+	      (t
+	       (setq color cur))))
+	   (setq value (list (cons 'background-color color)
+			     (cons 'background-image image)
+			     (cons 'background-repeat repeat)
+			     (cons 'background-attachment attach)
+			     (cons 'background-position position)))))
+	(font				; CSS, Section 5.2.7
+	 ;; [style | variant | weight]? size[/line-height]? family
+	 (setq value (css-split-font-shorthand value)))
+	(border				; width | style | color
+	 ;; FIX
+	 )
+	(border-shorthand		; width | style | color
+	 ;; FIX
+	 )
+	(list-style			; CSS, Section 5.6.6
+	 ;; keyword | position | url
+	 (setq value (split-string value "[ ,]+"))
+	 (if (= (length value) 1)
+	     (setq value (list (cons 'list-style-type
+				     (intern (downcase (car value))))))
+	   (setq value (list (cons 'list-style-type
+				   (css-expand-value 'symbol (nth 0 value)))
+			     (cons 'list-style-position
+				   (css-expand-value 'symbol (nth 1 value)))
+			     (cons 'list-style-image
+				   (css-expand-value 'url (nth 2 value)))))))
+	(boundary-shorthand		; CSS, Section 5.5.x
+	 ;; length|percentage|auto {1,4}
+	 (setq value (split-string value "[ ,]+"))
 	 (let* ((top (intern (format "%s-top" type)))
 		(bottom (intern (format "%s-bottom" type)))
 		(left (intern (format "%s-left" type)))
 		(right (intern (format "%s-right" type))))
-	   (setq top (cons top (css-expand-length (nth 0 value)))
-		 right (cons right (css-expand-length (nth 1 value)))
-		 bottom (cons bottom (css-expand-length (nth 2 value)))
-		 left (cons left (css-expand-length (nth 3 value)))
-		 value (list top right bottom left)))
-       (setq value (css-expand-length (car value)))))
-    (border
-     (cond
-      ((member (downcase value) '("none" "dotted" "dashed" "solid"
-				  "double" "groove" "ridge" "inset" "outset"))
-       (setq value (intern (downcase value))))
-      ((string-match "^[0-9]+" value)
-       (setq value (font-spatial-to-canonical value)))
-      (t nil)))
-    (weight				; normal|bold|bolder|lighter|[1-9]00
-     (if (string-match "^[0-9]+" value)
-	 (setq value (/ (read value) 100)
-	       value (or (nth value css-weights) :bold))
-       (setq value (intern (downcase (concat ":" value))))))
-    (otherwise				; Leave it as is
-     t)
+	   (setq top (cons top (css-expand-value (get top 'css-type)
+						 (nth 0 value)))
+		 right (cons right (css-expand-value (get right 'css-type)
+						     (nth 1 value)))
+		 bottom (cons bottom (css-expand-value (get bottom 'css-type)
+						       (nth 2 value)))
+		 left (cons left (css-expand-value (get left 'css-type)
+						   (nth 3 value)))
+		 value (list top right bottom left))))
+	(weight				; CSS, Section 5.2.5
+	 ;; normal|bold|bolder|lighter|[1-9]00
+	 (cond
+	  ((string-match "^[0-9]+" value)
+	   (setq value (/ (string-to-number value) 100)
+		 value (or (nth value css-weights) :bold)))
+	  ((string-match (css-symbol-list-as-regexp normal bold bolder lighter)
+			 value)
+	   (setq value (intern (downcase (concat ":" value)))))
+	  (t setq value (intern ":bold"))))
+
+	;; The rest of these deal with how we handle things internally
+	((symbol integer)		; Read it in
+	 (setq value (read (downcase value))))
+	(symbol-list			; A space/comma delimited symlist
+	 (setq value (downcase value)
+	       value (split-string value "[ ,]+")
+	       value (mapcar 'intern value)))
+	(string-list			; A space/comma delimited list
+	 (setq value (split-string value " *, *")))
+	(otherwise			; Leave it as is
+	 t)
+	)
     )
   value
   )
@@ -485,43 +638,46 @@ CSS stylesheets.")
 		   (t
 		    (buffer-substring val-pos
 				      (progn
-					(if css-ie-compatibility
-					    (skip-chars-forward "^;")
-					  (skip-chars-forward "^,;"))
+					(skip-chars-forward "^;")
 					(skip-chars-backward " \t")
 					(point)))))))
 	  (setq value (css-expand-value (get name 'css-type) value))
-	  (if (eq (get name 'css-type) 'font)
+	  (if (get name 'css-shorthand)
 	      (setq results (append value results))
 	    (setq results (cons (cons name value) results)))
 	  (skip-chars-forward ";, \n\t"))
 	results))))
 
-(defun css-handle-import ()
-  (let ((url nil)
-	(save-pos (point)))
-    (if (looking-at "'\"")
-	(condition-case ()
-	    (forward-sexp 1)
-	  (error (skip-chars-forward "^ \t\r\n;")))
-      (skip-chars-forward "^ \t\r\n;"))
-    (setq url (url-expand-file-name (buffer-substring save-pos (point))))
-    (skip-chars-forward "\"; \t\r\n")
-    (setq save-pos (point))
-    (let ((url-working-buffer (generate-new-buffer-name " *styleimport*"))
-	  (url-mime-accept-string
-	   "text/css ; level=2")
-	  (sheet nil))
-      (save-excursion
-	(set-buffer (get-buffer-create url-working-buffer))
-	(setq url-be-asynchronous nil)
-	(url-retrieve url)
-	(css-clean-buffer)
-	(setq sheet (buffer-string))
-	(set-buffer-modified-p nil)
-	(kill-buffer (current-buffer)))
-      (insert sheet)
-      (goto-char save-pos))))
+(defun css-handle-media-directive (data active)
+  (let (type)
+    (if (string-match "\\([^ \t\r\n{]+\\)" data)
+	(setq type (intern (downcase (substring data (match-beginning 1)
+						(match-end 1))))
+	      data (substring data (match-end 1)))
+      (setq type 'unknown))
+    (if (string-match "^[ \t\r\n]*{" data)
+	(setq data (substring data (match-end 0))))
+    (if (memq type active)
+	(save-excursion
+	  (insert data)))))
+
+(defun css-handle-import (data)
+  (let (url)
+    (setq url (css-expand-value 'url data))
+    (and url
+	 (let ((url-working-buffer (generate-new-buffer-name " *styleimport*"))
+	       (url-mime-accept-string
+		"text/css ; level=2")
+	       (sheet nil))
+	   (save-excursion
+	     (set-buffer (get-buffer-create url-working-buffer))
+	     (setq url-be-asynchronous nil)
+	     (url-retrieve url)
+	     (css-clean-buffer)
+	     (setq sheet (buffer-string))
+	     (set-buffer-modified-p nil)
+	     (kill-buffer (current-buffer)))
+	   (insert sheet)))))
 
 (defun css-clean-buffer ()
   ;; Nuke comments, etc.
@@ -541,7 +697,7 @@ CSS stylesheets.")
   (goto-char (point-min)))
 
 (defun css-active-device-types (&optional device)
-  (let ((types (list 'normal 'default (if css-running-xemacs 'xemacs 'emacs)))
+  (let ((types (list 'all (if css-running-xemacs 'xemacs 'emacs)))
 	(type (device-type device)))
     (cond
      ((featurep 'emacspeak)
@@ -634,7 +790,7 @@ CSS stylesheets.")
     )
   )
 
-(defun css-parse (fname &optional string inherit)
+(defun css-parse (url &optional string inherit)
   (let (
 	(url-mime-accept-string
 	 "text/css ; level=2")
@@ -645,6 +801,7 @@ CSS stylesheets.")
 	(cur nil)
 	(val nil)
 	(device-type nil)
+	(purl (url-view-url t))
 	(active-device-types (css-active-device-types (selected-device)))
 	(sheet inherit))
     (if (not sheet)
@@ -654,7 +811,7 @@ CSS stylesheets.")
 		   (generate-new-buffer-name " *style*")))
       (set-syntax-table css-syntax-table)
       (erase-buffer)
-      (if fname (url-insert-file-contents fname))
+      (if url (url-insert-file-contents url))
       (goto-char (point-max))
       (if string (insert string))
       (css-clean-buffer)
@@ -668,25 +825,40 @@ CSS stylesheets.")
 	      (looking-at "--+>"))	; end
 	  (goto-char (match-end 0)))
 	 ;; C++ style comments, and we are doing IE compatibility
-	 ((and (looking-at "//") css-ie-compatibility)
+	 ((looking-at "//")
 	  (end-of-line))
 	 ;; Pre-Processor directives
 	 ((looking-at "[ \t\r]*@\\([^ \t\r\n]\\)")
-	  (let ((directive nil))
+	  (let (data directive)
 	    (skip-chars-forward " @\t\r") ; Past any leading whitespace
 	    (setq save-pos (point))
 	    (skip-chars-forward "^ \t\r\n") ; Past the @ directive
 	    (downcase-region save-pos (point))
-	    (setq directive (buffer-substring save-pos (point)))
-	    (skip-chars-forward " \t\r") ; Past any trailing whitespace
+	    (setq directive (intern (buffer-substring save-pos (point))))
+	    (skip-chars-forward " \t\r")
 	    (setq save-pos (point))
 	    (cond
-	     ((string= directive "import")
-	      (css-handle-import))
+	     ((looking-at ".*\\({\\)")
+	      (goto-char (match-beginning 1))
+	      (forward-sexp 1)
+	      (setq data (buffer-substring save-pos (1- (point)))))
+	     ((looking-at "[\"']+")
+	      (setq save-pos (1+ save-pos))
+	      (forward-sexp 1)
+	      (setq data (buffer-substring save-pos (1- (point)))))
 	     (t
-	      (message "Unknown directive in stylesheet: @%s" directive)))))
+	      (skip-chars-forward "^;")))
+	    (if (not data)
+		(setq data (buffer-substring save-pos (point))))
+	    (setq save-pos (point))
+	    (case directive
+	     (import (css-handle-import data))
+	     (media (css-handle-media-directive data active-device-types))
+	     (t (message "Unknown directive in stylesheet: @%s" directive)))))
 	 ;; Giving us some output device information
 	 ((looking-at "[ \t\r]*:\\([^: \n]+\\):")
+	  (message "You are using the old way of specifying device-dependent stylesheets!  Please upgrade!")
+	  (sleep-for 2)
 	  (downcase-region (match-beginning 1) (match-end 1))
 	  (setq device-type (intern (buffer-substring (match-beginning 1)
 						      (match-end 1))))

@@ -1,11 +1,12 @@
 ;;; url-misc.el --- Misc Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1996/10/09 19:00:59
-;; Version: 1.3
+;; Created: 1997/01/21 21:14:56
+;; Version: 1.9
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -78,152 +79,46 @@
 	      " </body>\n"
 	      "</html>\n"))))
 
-(defun url-rlogin (url)
-  ;; Open up an rlogin connection
-  (if (get-buffer url-working-buffer)
-      (kill-buffer url-working-buffer))
-  (or (string-match "rlogin:/*\\(.*@\\)*\\([^/]*\\)/*" url)
-      (error "Malformed RLOGIN URL."))
-  (let* ((server (substring url (match-beginning 2) (match-end 2)))
-	 (name (if (match-beginning 1)
-		   (substring url (match-beginning 1) (1- (match-end 1)))
-		 nil))
-	 (title (format "%s%s" (if name (concat name "@") "") server))
-	 (thebuf (string-match ":" server))
-	 (port (if thebuf
-		   (prog1
-		       (substring server (1+ thebuf) nil)
-		     (setq server (substring server 0 thebuf))) "23")))
-    (cond
-     ((not (eq (device-type) 'tty))
-      (apply 'start-process
-	     "htmlsub"
-	     nil
-	     (url-string-to-tokens
-	      (format url-xterm-command title 
-		      (if (and url-gateway-local-host-regexp
-			       (string-match url-gateway-local-host-regexp
-					     server))
-			  url-local-rlogin-prog
-			url-remote-rlogin-prog) server
-			(concat "-l " name)) ? )))
-     (url-use-transparent
-      (require 'transparent)
-      (sit-for 1)
-      (transparent-window (get-buffer-create
-			   (format "%s%s:%s" (if name (concat name "@") "")
-				   server port))
-			  (if (and url-gateway-local-host-regexp
-				   (string-match url-gateway-local-host-regexp
-						 server))
-			      url-local-rlogin-prog
-			    url-remote-rlogin-prog)
-			  (list server "-l" name) nil
-			  "Press any key to return to emacs"))
-     (t
-      (terminal-emulator
-       (get-buffer-create (format "%s%s:%s" (if name (concat name "@") "")
-				  server port))
-       (if (and url-gateway-local-host-regexp
-		(string-match url-gateway-local-host-regexp
-			      server))
-	   url-local-rlogin-prog
-	 url-remote-rlogin-prog)
-       (list server "-l" name))))))
+(defun url-do-terminal-emulator (type server port user)
+  (terminal-emulator
+   (generate-new-buffer (format "%s%s" (if user (concat user "@") "") server))
+   (case type
+     (rlogin "rlogin")
+     (telnet "telnet")
+     (tn3270 "tn3270")
+     (otherwise
+      (error "Unknown terminal emulator required: %s" type)))
+   (if user
+       (case type
+	 (rlogin
+	  (list server "-l" user))
+	 (telnet
+	  (if user (message "Please log in as user: %s" user))
+	  (if port
+	      (list server port)
+	    (list server)))
+	 (tn3270
+	  (if user (message "Please log in as user: %s" user))
+	  (list server))))))
 
-(defun url-telnet (url)
-  ;; Open up a telnet connection
+(defun url-generic-emulator-loader (url)
   (if (get-buffer url-working-buffer)
       (kill-buffer url-working-buffer))
-  (or (string-match "telnet:/*\\(.*@\\)*\\([^/]*\\)/*" url)
-      (error "Malformed telnet URL: %s" url))
-  (let* ((server (substring url (match-beginning 2) (match-end 2)))
-	 (name (if (match-beginning 1)
-		   (substring url (match-beginning 1) (1- (match-end 1)))
-		 nil))
-	 (title (format "%s%s" (if name (concat name "@") "") server))
-	 (thebuf (string-match ":" server))
-	 (port (if thebuf
+  (or (string-match "^\\([^:]+\\):/*\\(.*@\\)*\\([^/]*\\)/*" url)
+      (error "Invalid URL: %s" url))
+  (let* ((type (intern (downcase (match-string 1 url))))
+	 (server (match-string 3 url))
+	 (name (if (match-beginning 2)
+		   (substring url (match-beginning 2) (1- (match-end 2)))))
+	 (port (if (string-match ":" server)
 		   (prog1
-		       (substring server (1+ thebuf) nil)
-		     (setq server (substring server 0 thebuf))) "23")))
-    (cond
-     ((not (eq (device-type) 'tty))
-      (apply 'start-process
-	     "htmlsub"
-	     nil
-	     (url-string-to-tokens
-	      (format url-xterm-command title 
-		      (if (and url-gateway-local-host-regexp
-			       (string-match url-gateway-local-host-regexp
-					     server))
-			  url-local-telnet-prog
-			url-remote-telnet-prog) server port) ? ))
-      (if name (message "Please log in as %s" name)))
-     (url-use-transparent
-      (require 'transparent)
-      (if name (message "Please log in as %s" name))
-      (sit-for 1)
-      (transparent-window (get-buffer-create
-			   (format "%s%s:%s" (if name (concat name "@") "")
-				   server port))
-			  (if (and url-gateway-local-host-regexp
-				   (string-match url-gateway-local-host-regexp
-						 server))
-			      url-local-telnet-prog
-			    url-remote-telnet-prog)
-			  (list server port) nil
-			  "Press any key to return to emacs"))
-     (t
-      (terminal-emulator
-       (get-buffer-create (format "%s%s:%s" (if name (concat name "@") "")
-				  server port))
-       (if (and url-gateway-local-host-regexp
-		(string-match url-gateway-local-host-regexp
-			      server))
-	   url-local-telnet-prog
-	 url-remote-telnet-prog)
-       (list server port))
-      (if name (message "Please log in as %s" name))))))
+		       (substring server (match-end 0))
+		     (setq server (substring server 0 (match-beginning 0)))))))
+    (url-do-terminal-emulator type server port name)))
 
-(defun url-tn3270 (url)
-  ;; Open up a tn3270 connection
-  (if (get-buffer url-working-buffer)
-      (kill-buffer url-working-buffer))
-  (string-match "tn3270:/*\\(.*@\\)*\\([^/]*\\)/*" url)
-  (let* ((server (substring url (match-beginning 2) (match-end 2)))
-	 (name (if (match-beginning 1)
-		   (substring url (match-beginning 1) (1- (match-end 1)))
-		 nil))
-	 (thebuf (string-match ":" server))
-	 (title (format "%s%s" (if name (concat name "@") "") server))
-	 (port (if thebuf
-		   (prog1
-		       (substring server (1+ thebuf) nil)
-		     (setq server (substring server 0 thebuf))) "23")))
-    (cond
-     ((not (eq (device-type) 'tty))
-      (start-process "htmlsub" nil url-xterm-command
-		     "-title" title
-		     "-ut" "-e" url-tn3270-emulator server port)
-      (if name (message "Please log in as %s" name)))
-     (url-use-transparent
-      (require 'transparent)
-      (if name (message "Please log in as %s" name))
-      (sit-for 1)
-      (transparent-window (get-buffer-create
-			   (format "%s%s:%s" (if name (concat name "@") "")
-				   server port))
-			  url-tn3270-emulator
-			  (list server port) nil
-			  "Press any key to return to emacs"))
-     (t
-      (terminal-emulator
-       (get-buffer-create (format "%s%s:%s" (if name (concat name "@") "")
-				  server port))
-       url-tn3270-emulator
-       (list server port))
-      (if name (message "Please log in as %s" name))))))
+(fset 'url-rlogin 'url-generic-emulator-loader)
+(fset 'url-telnet 'url-generic-emulator-loader)
+(fset 'url-tn3270 'url-generic-emulator-loader)
 
 (defun url-proxy (url)
   ;; Retrieve URL from a proxy.
@@ -309,5 +204,26 @@
        (t				; Non-zero exit status is bad bad bad
 	(insert "HTTP/1.0 404 Not Found\n"
 		"Server: " url-package-name "/x-exec\n"))))))
+
+;; ftp://ietf.org/internet-drafts/draft-masinter-url-data-02.txt
+(defun url-data (url)
+  (set-buffer (get-buffer-create url-working-buffer))
+  (let ((content-type nil)
+	(encoding nil)
+	(data nil))
+    (cond
+     ((string-match "^data:\\([^;,]*\\);*\\([^,]*\\)," url)
+      (setq content-type (match-string 1 url)
+	    encoding (match-string 2 url)
+	    data (url-unhex-string (substring url (match-end 0))))
+      (if (= 0 (length content-type)) (setq content-type "text/plain"))
+      (if (= 0 (length encoding)) (setq encoding "8bit")))
+     (t nil))
+    (setq url-current-content-length (length data)
+	  url-current-mime-type content-type
+	  url-current-mime-encoding encoding
+	  url-current-mime-headers (list (cons "content-type" content-type)
+					 (cons "content-encoding" encoding)))
+    (and data (insert data))))
 
 (provide 'url-misc)

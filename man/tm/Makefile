@@ -40,7 +40,8 @@ info : $(INFOS)
 ../../info/%-ja.info : %-ja.texi
 	$(EMACS) -batch -q -no-site-file $< -eval '(cd "../../info")' \
 	    -l texinfmt -f texinfo-format-buffer \
-	    -eval '(setq file-coding-system (quote iso-2022-7))' -f save-buffer
+	    -eval '(setq file-coding-system (quote iso-2022-7))' \
+	    -eval '(save-buffer 0)'
 
 dvi: $(DVIS)
 .texi.dvi :

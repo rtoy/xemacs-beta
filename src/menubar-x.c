@@ -82,9 +82,7 @@ static int set_frame_menubar (struct frame *f,
 
    We do not have to worry about the pointers to Lisp_String data after
    this function successfully finishes.  lwlib copies all such data with
-   strdup().
-
-   */
+   strdup().  */
 
 static widget_value *
 menu_item_descriptor_to_widget_value_1 (Lisp_Object desc, 
@@ -109,7 +107,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 
   if (STRINGP (desc))
     {
-      char *string_chars = (char *) string_data (XSTRING (desc));
+      char *string_chars = (char *) XSTRING_DATA (desc);
       wv->type = (separator_string_p (string_chars) ? SEPARATOR_TYPE :
 		  TEXT_TYPE);
 #if 1
@@ -150,8 +148,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	  int included_spec = 0;
 	  wv->type = CASCADE_TYPE;
 	  wv->enabled = 1;
-	  wv->name =
-	    (char *) string_data (XSTRING (LISP_GETTEXT (XCAR (desc))));
+	  wv->name = (char *) XSTRING_DATA (LISP_GETTEXT (XCAR (desc)));
 	  desc = Fcdr (desc);
 
 	  while (key = Fcar (desc), KEYWORDP (key))
@@ -205,7 +202,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		  incr_wv->call_data = LISP_TO_VOID (incremental_data);
 		  goto menu_item_done;
 		}
-#endif
+#endif /* LWLIB_MENUBARS_LUCID */
 	    }
 	  if (menu_type == POPUP_TYPE && popup_menu_titles && depth == 0)
 	    {
@@ -256,11 +253,8 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		}
 	      else
 		{
-		  next = menu_item_descriptor_to_widget_value_1 (child,
-								 menu_type,
-								 deep_p,
-								 filter_p,
-								 depth + 1);
+		  next = menu_item_descriptor_to_widget_value_1
+		    (child, menu_type, deep_p, filter_p, depth + 1);
 		}
 	      if (! next)
 		continue;
@@ -342,12 +336,17 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
   struct device *d = get_device_from_display (XtDisplay (widget));
   struct frame *f = x_any_window_to_frame (d, XtWindow (widget));
   Lisp_Object rest = Qnil;
+  Lisp_Object frame;
   int any_changes = 0;
 
   if (!f)
     f = x_any_window_to_frame (d, XtWindow (XtParent (widget)));
   if (!f)
     return;
+
+  /* make sure f is the selected frame */
+  XSETFRAME (frame, f);
+  Fselect_frame (frame);
 
   if (client_data)
     {
@@ -439,12 +438,20 @@ compute_menubar_data (struct frame *f, Lisp_Object menubar, int deep_p)
     data = 0;
   else
     {
+      Lisp_Object old_buffer;
+      int count = specpdl_depth ();
+
+      old_buffer = Fcurrent_buffer ();
+      record_unwind_protect (Fset_buffer, old_buffer);
+      Fset_buffer ( XWINDOW (FRAME_SELECTED_WINDOW (f))->buffer);
       data = menu_item_descriptor_to_widget_value (menubar, MENUBAR_TYPE,
 						   deep_p, 0);
 #ifdef ENERGIZE
       if (data)
 	set_panel_button_sensitivity (f, data);
 #endif
+      Fset_buffer (old_buffer);
+      unbind_to (count, Qnil);
     }
   return data;
 }

@@ -44,7 +44,6 @@ DEFINE_CONSOLE_TYPE (tty);
 Lisp_Object Qterminal_type;
 
 extern Lisp_Object Vstdio_str; /* in console-stream.c */
-
 
 static void
 allocate_tty_console_struct (struct console *con)
@@ -98,9 +97,9 @@ tty_init_console (struct console *con, Lisp_Object props)
     }
   else
     {
-      infd = outfd = open ((char *) string_data (XSTRING (tty)), O_RDWR);
+      infd = outfd = open ((char *) XSTRING_DATA (tty), O_RDWR);
       if (infd < 0)
-	error ("Unable to open tty %s", string_data (XSTRING (tty)));
+	error ("Unable to open tty %s", XSTRING_DATA (tty));
       CONSOLE_TTY_DATA (con)->is_stdio = 0;
     }
   

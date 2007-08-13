@@ -1087,10 +1087,10 @@ check_valid_instantiator (Lisp_Object instantiator,
 	  struct gcpro gcpro1;
 
 	  GCPRO1 (opaque);
-	  retval = call_with_suspended_errors (call_validate_method,
-					       Qnil,
-					       Qspecifier, errb, 2,
-					       opaque, instantiator);
+	  retval = call_with_suspended_errors
+	    ((lisp_fn_t) call_validate_method,
+	     Qnil, Qspecifier, errb, 2, opaque, instantiator);
+	  
 	  free_opaque_ptr (opaque);
 	  UNGCPRO;
 	}
@@ -2073,8 +2073,8 @@ in the list.
 
 Only instantiators where TAG-SET (a list of zero or more tags) is a
 subset of (or possibly equal to) the instantiator's tag set are removed.
-(The default value of nil is a subset of all tag sets, so in this case
-no instantiators will be screened out.) If EXACT-P is non-nil, however,
+The default value of nil is a subset of all tag sets, so in this case
+no instantiators will be screened out. If EXACT-P is non-nil, however,
 TAG-SET must be equal to an instantiator's tag set for the instantiator
 to be removed.
 */ )
@@ -2138,8 +2138,8 @@ information about LOCALE.
 
 Only instantiators where TAG-SET (a list of zero or more tags) is a
 subset of (or possibly equal to) the instantiator's tag set are copied.
-(The default value of nil is a subset of all tag sets, so in this case
-no instantiators will be screened out.) If EXACT-P is non-nil, however,
+The default value of nil is a subset of all tag sets, so in this case
+no instantiators will be screened out. If EXACT-P is non-nil, however,
 TAG-SET must be equal to an instantiator's tag set for the instantiator
 to be copied.
 
@@ -2215,10 +2215,10 @@ check_valid_specifier_matchspec (Lisp_Object matchspec,
 	  struct gcpro gcpro1;
 
 	  GCPRO1 (opaque);
-	  retval = call_with_suspended_errors (call_validate_matchspec_method,
-					       Qnil,
-					       Qspecifier, errb, 2,
-					       opaque, matchspec);
+	  retval = call_with_suspended_errors
+	    ((lisp_fn_t) call_validate_matchspec_method,
+	     Qnil, Qspecifier, errb, 2, opaque, matchspec);
+	  
 	  free_opaque_ptr (opaque);
 	  UNGCPRO;
 	}
@@ -2347,11 +2347,10 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 	  Lisp_Object val = XCDR (tagged_inst);
 
 	  if (HAS_SPECMETH_P (sp, instantiate))
-	    val = call_with_suspended_errors (RAW_SPECMETH (sp, instantiate),
-					      Qunbound, Qspecifier, errb,
-					      5, specifier, matchspec, domain,
-					      XCDR (tagged_inst),
-					      depth);
+	    val = call_with_suspended_errors
+	      ((lisp_fn_t) RAW_SPECMETH (sp, instantiate),
+	       Qunbound, Qspecifier, errb, 5, specifier,
+	       matchspec, domain, XCDR (tagged_inst), depth);
 
 	  if (!UNBOUNDP (val))
 	    {

@@ -795,11 +795,11 @@ cases, the change will take place only after you execute one of the Ediff
 commands, such as going to the next difference or redisplaying.
 @item ediff-toggle-use-toolbar
 @findex ediff-toggle-use-toolbar
-Available in XEmacs only (in a forthcoming version). The Ediff toolbar
-provides quick access to some of the common Ediff functions. This function
-toggles the display of the toolbar. If invoked from the menubar, the function
-may take sometimes effect only after you execute an Ediff command, such as
-going to the next difference.
+Available in XEmacs only. The Ediff toolbar provides quick access to some
+of the common Ediff functions. This function toggles the display of the
+toolbar. If invoked from the menubar, the function may take sometimes
+effect only after you execute an Ediff command, such as going to the next
+difference.
 
 @item ediff-use-toolbar-p
 @vindex ediff-use-toolbar-p
@@ -2163,7 +2163,7 @@ by emerge.el written by Dale R. Worley <drw@@math.mit.edu>.  An idea due to
 Boris Goldowsky <boris@@cs.rochester.edu> made it possible to highlight
 fine differences in Ediff buffers. Alastair Burt <burt@@dfki.uni-kl.de>
 ported Ediff to XEmacs, Eric Freudenthal <freudent@@jan.ultra.nyu.edu>
-made it work with VC, and Marc Paquette <paquette@@crim.ca> wrote the
+made it work with VC, and Marc Paquette <marcpa@@cam.org> wrote the
 toolbar support package for Ediff.
 
 Many people provided help with bug reports, patches, and advice.

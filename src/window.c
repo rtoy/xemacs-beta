@@ -3136,7 +3136,7 @@ BUFFER can be a buffer or buffer name.
     {
       if (!NILP (w->dedicated) && !EQ (tem, buffer))
 	error ("Window is dedicated to buffer %s",
-	       string_data (XSTRING (XBUFFER (tem)->name)));
+	       XSTRING_DATA (XBUFFER (tem)->name));
 
       unshow_buffer (w);
     }
@@ -5448,7 +5448,7 @@ debug_print_window (Lisp_Object window, int level)
   if (!NILP (XWINDOW (window)->buffer) && BUFFERP (XWINDOW (window)->buffer))
     {
       struct buffer *b = XBUFFER (XWINDOW (window)->buffer);
-      fprintf (stderr, " on %s", string_data (XSTRING (b->name)));
+      fprintf (stderr, " on %s", XSTRING_DATA (b->name));
     }
   fprintf (stderr, " 0x%x>", XWINDOW (window)->header.uid);
 

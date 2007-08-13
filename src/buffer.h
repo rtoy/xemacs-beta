@@ -32,6 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_BUFFER_H_
 #define _XEMACS_BUFFER_H_
 
+
 /************************************************************************/
 /*                                                                      */
 /*                    definition of Lisp buffer object                  */
@@ -383,7 +384,7 @@ extern Lisp_Object Qbuffer_or_string_p;
 /* (A) For working with charptr's (pointers to internally-formatted text) */
 /* ---------------------------------------------------------------------- */
 
-#define VALID_CHARPTR_P(ptr) 1
+# define VALID_CHARPTR_P(ptr) 1
 
 #ifdef ERROR_CHECK_BUFPOS
 # define ASSERT_VALID_CHARPTR(ptr) assert (VALID_CHARPTR_P (ptr))
@@ -510,7 +511,7 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
        else								\
          x = wrong_type_argument (Qcharacterp, x); } while (0)
 
-#define MAX_EMCHAR_LEN 1
+# define MAX_EMCHAR_LEN 1
 
 
 /*----------------------------------------------------------------------*/
@@ -761,7 +762,7 @@ memind_to_bytind (struct buffer *buf, Memind x)
 /*                       working with byte indices                      */
 /*----------------------------------------------------------------------*/
 
-#define VALID_BYTIND_P(buf, x) 1
+# define VALID_BYTIND_P(buf, x) 1
 
 #ifdef ERROR_CHECK_BUFPOS
 
@@ -791,9 +792,9 @@ memind_to_bytind (struct buffer *buf, Memind x)
 
 #endif /* not ERROR_CHECK_BUFPOS */
 
-#define VALIDATE_BYTIND_BACKWARD(buf, x)
+# define VALIDATE_BYTIND_BACKWARD(buf, x)
 
-#define VALIDATE_BYTIND_FORWARD(buf, x)
+# define VALIDATE_BYTIND_FORWARD(buf, x)
 
 /* Note that in the simplest case (no MULE, no ERROR_CHECK_BUFPOS),
    this crap reduces down to simply (x)++. */
@@ -845,8 +846,8 @@ next_bytind (struct buffer *buf, Bytind x)
 /*         Converting between buffer positions and byte indices         */
 /*----------------------------------------------------------------------*/
 
-#define real_bufpos_to_bytind(buf, x)	((Bytind) x)
-#define real_bytind_to_bufpos(buf, x)	((Bufpos) x)
+# define real_bufpos_to_bytind(buf, x)	((Bytind) x)
+# define real_bytind_to_bufpos(buf, x)	((Bufpos) x)
 
 #ifdef ERROR_CHECK_BUFPOS
 
@@ -1072,7 +1073,7 @@ do									   \
   __gseda_ptr__ = convert_to_external_format (string_data (__gseda_s__),   \
 					      string_length (__gseda_s__), \
 					      &__gseda_len__, fmt);	   \
-  (stick_value_here) = alloca (1 + __gseda_len__);			   \
+  (stick_value_here) = (CONST Extbyte *) alloca (1 + __gseda_len__);			   \
   memcpy ((Extbyte *) stick_value_here, __gseda_ptr__, 1 + __gseda_len__); \
   (stick_len_here) = __gseda_len__;					   \
 } while (0)
@@ -1452,7 +1453,7 @@ int map_over_sharing_buffers (struct buffer *buf,
    0 - 255.  Bad lossage will happen otherwise. */
 
 # define MAKE_TRT_TABLE() Fmake_string (make_int (256), make_char (0))
-# define TRT_TABLE_AS_STRING(table) string_data (XSTRING (table))
+# define TRT_TABLE_AS_STRING(table) XSTRING_DATA (table)
 # define TRT_TABLE_CHAR_1(table, ch) \
   string_char (XSTRING (table), (Charcount) ch)
 # define SET_TRT_TABLE_CHAR_1(table, ch1, ch2) \

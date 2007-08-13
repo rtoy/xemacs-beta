@@ -57,6 +57,7 @@ Boston, MA 02111-1307, USA.  */
 #include "toolbar.h"
 #include "window.h"
 
+
 /* Note: We have to be careful throughout this code to properly handle
    and differentiate between Bufbytes and Emchars.
 
@@ -510,7 +511,7 @@ redisplay_text_width_string (struct window *w, int findex,
   
   fixup_internal_substring (nonreloc, reloc, offset, &len);
   if (STRINGP (reloc))
-    nonreloc = string_data (XSTRING (reloc));
+    nonreloc = XSTRING_DATA (reloc);
   convert_bufbyte_string_into_emchar_dynarr (nonreloc, len, rtw_emchar_dynarr);
   return redisplay_text_width_emchar_string
     (w, findex, Dynarr_atp (rtw_emchar_dynarr, 0),
@@ -532,7 +533,7 @@ redisplay_frame_text_width_string (struct frame *f, Lisp_Object face,
 
   fixup_internal_substring (nonreloc, reloc, offset, &len);
   if (STRINGP (reloc))
-    nonreloc = string_data (XSTRING (reloc));
+    nonreloc = XSTRING_DATA (reloc);
   convert_bufbyte_string_into_emchar_dynarr (nonreloc, len, rtw_emchar_dynarr);
   find_charsets_in_bufbyte_string (charsets, nonreloc, len);
   reset_face_cachel (&cachel);
@@ -872,6 +873,8 @@ add_emchar_rune (pos_data *data)
 	    data->last_char_width = -1;
 	  data->new_ascent  = max (data->new_ascent,  (int) fi->ascent);
 	  data->new_descent = max (data->new_descent, (int) fi->descent);
+	  /* The following line causes display goobers and I don't know why */
+	  /*data->last_charset = charset;*/
 	}
 
       width = data->last_char_width;
@@ -1268,8 +1271,8 @@ add_disp_table_entry_runes (pos_data *data, Lisp_Object entry)
 	      prop =
 		add_bufbyte_string_runes
 		  (data,
-		   string_data (XSTRING (de->contents[elt])),
-		   string_length (XSTRING (de->contents[elt])),
+		   XSTRING_DATA   (de->contents[elt]),
+		   XSTRING_LENGTH (de->contents[elt]),
 		   0);
 	    }
 	  else if (GLYPHP (de->contents[elt]))
@@ -1307,8 +1310,8 @@ add_disp_table_entry_runes (pos_data *data, Lisp_Object entry)
   else if (STRINGP (entry))
     {
       prop = add_bufbyte_string_runes (data,
-				       string_data (XSTRING (entry)),
-				       string_length (XSTRING (entry)),
+				       XSTRING_DATA   (entry),
+				       XSTRING_LENGTH (entry),
 				       0);
     }
   else if (GLYPHP (entry))
@@ -2645,8 +2648,8 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
     {
       add_bufbyte_string_runes
 	(&data,
-	 string_data (XSTRING (Voverlay_arrow_string)),
-	 string_length (XSTRING (Voverlay_arrow_string)),
+	 XSTRING_DATA   (Voverlay_arrow_string),
+	 XSTRING_LENGTH (Voverlay_arrow_string),
 	 1);
     }
   else if (GLYPHP (Voverlay_arrow_string))
@@ -3608,9 +3611,9 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
 
       detach_all_extents (result_str);
       resize_string (XSTRING (result_str), -1,
-		     data.bytepos - string_length (XSTRING (result_str)));
+		     data.bytepos - XSTRING_LENGTH (result_str));
 
-      strdata = string_data (XSTRING (result_str));
+      strdata = XSTRING_DATA (result_str);
 
       for (elt = 0, len = 0; elt < Dynarr_length (db->runes); elt++)
 	{
@@ -3754,7 +3757,7 @@ tail_recurse:
       /* A string.  Add to the display line and check for %-constructs
          within it. */
 
-      Bufbyte *this = string_data (XSTRING (elt));
+      Bufbyte *this = XSTRING_DATA (elt);
 
       while ((pos < max_pos || max_pos == -1) && *this)
 	{
@@ -3865,7 +3868,7 @@ tail_recurse:
             {
 	      pos =
 		add_string_to_fstring_db_runes
-		(data, string_data (XSTRING (tem)), pos, min_pos, max_pos);
+		(data, XSTRING_DATA (tem), pos, min_pos, max_pos);
             }
           /* Give up right away for nil or t.  */
           else if (!EQ (tem, elt))
@@ -4228,8 +4231,8 @@ regenerate_window (struct window *w, Bufpos start_pos, Bufpos point, int type)
       prop = Dynarr_new (struct prop_block);
 
       pb.type = PROP_MINIBUF_PROMPT;
-      pb.data.p_string.str = string_data (XSTRING (Vminibuf_prompt));
-      pb.data.p_string.len = string_length (XSTRING (Vminibuf_prompt));
+      pb.data.p_string.str = XSTRING_DATA   (Vminibuf_prompt);
+      pb.data.p_string.len = XSTRING_LENGTH (Vminibuf_prompt);
       Dynarr_add (prop, pb);
     }
   else
@@ -5720,6 +5723,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	goto decode_mode_spec_done;
       }
 
+
       /* print the current line number */
     case 'l':
       str = window_line_number (w, type);
@@ -5835,11 +5839,11 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
       Charcount total = BUF_ZV (b) - BUF_BEGV (b);
 
       /* botpos is only accurate as of the last redisplay, so we can
-	 only treat it as a hint.  In particular, after erase-buffer,
-	 botpos may be negative. */
+         only treat it as a hint.  In particular, after erase-buffer,
+         botpos may be negative. */
       if (botpos < toppos)
 	botpos = toppos;
-
+      
       if (botpos >= BUF_ZV (b))
 	{
 	  if (toppos <= BUF_BEGV (b))
@@ -5919,8 +5923,9 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
     }
 
   if (STRINGP (obj))
-    Dynarr_add_many (mode_spec_bufbyte_string, string_data (XSTRING (obj)),
-		     string_length (XSTRING (obj)));
+    Dynarr_add_many (mode_spec_bufbyte_string,
+		     XSTRING_DATA   (obj),
+		     XSTRING_LENGTH (obj));
   else if (str)
     Dynarr_add_many (mode_spec_bufbyte_string, (Bufbyte *) str, strlen (str));
 
@@ -5928,7 +5933,7 @@ decode_mode_spec_done:
   Dynarr_add (mode_spec_bufbyte_string, '\0');
 }
 
-/* Given a display line, free all if its data structures. */
+/* Given a display line, free all of its data structures. */
 
 static void
 free_display_line (struct display_line *dl)

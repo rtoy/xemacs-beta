@@ -75,6 +75,18 @@ Boston, MA 02111-1307, USA.  */
 # define X11_PURESIZE_EXTRA 10000
 #endif
 
+/* Extra amount of purespace needed for Mule. */
+
+#ifdef MULE
+# if (LONGBITS == 64)
+#  define MULE_PURESIZE_EXTRA 144000
+# else
+#  define MULE_PURESIZE_EXTRA 123000
+# endif
+#else
+# define MULE_PURESIZE_EXTRA 0
+#endif
+
 /* Extra amount of purespace needed for Tooltalk. */
 
 #ifdef TOOLTALK
@@ -105,7 +117,7 @@ Boston, MA 02111-1307, USA.  */
 
 #define PURESIZE ((BASE_PURESIZE) + (MENUBAR_PURESIZE_EXTRA) +		  \
 		  (X11_PURESIZE_EXTRA) +				  \
-		  (SYSTEM_PURESIZE_EXTRA) +				  \
+		  (SYSTEM_PURESIZE_EXTRA) + (MULE_PURESIZE_EXTRA) +	  \
 		  (TOOLTALK_PURESIZE_EXTRA) + (ENERGIZE_PURESIZE_EXTRA) + \
 		  (SUNPRO_PURESIZE_EXTRA))
 

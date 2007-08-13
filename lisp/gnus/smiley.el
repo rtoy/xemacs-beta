@@ -1,5 +1,5 @@
 ;;; smiley.el --- displaying smiley faces
-;; Copyright (C) 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1996,97 Free Software Foundation, Inc.
 
 ;; Author: Wes Hardaker <hardaker@ece.ucdavis.edu>
 ;; Keywords: fun
@@ -33,18 +33,25 @@
 ;; (require 'smiley)
 ;; (add-hook 'gnus-article-display-hook 'gnus-smiley-display t)
 
-;; The smilies were drawn by Joe Reiss <joe@jreiss.async.vt.edu>. 
+;; The smilies were drawn by Joe Reiss <jreiss@vt.edu>. 
 
 (require 'annotations)
 (require 'messagexmas)
-(eval-when-compile (require 'cl))
+(require 'cl)
+(require 'custom)
 
-(defvar smiley-data-directory (message-xmas-find-glyph-directory "smilies")
-  "Location of the smiley faces files.")
+(defgroup smiley nil
+  "Turn :-)'s into real images (XEmacs)."
+  :group 'gnus-visual)
 
-;; Notice the subtle differences in the regular expessions in the two alists below
+(defcustom smiley-data-directory (message-xmas-find-glyph-directory "smilies")
+  "Location of the smiley faces files."
+  :type 'directory
+  :group 'smiley)
 
-(defvar smiley-deformed-regexp-alist
+;; Notice the subtle differences in the regular expressions in the two alists below
+
+(defcustom smiley-deformed-regexp-alist
   '(("\\(:-*[<«]+\\)\\W" 1 "FaceAngry.xpm")
     ("\\(:-+\\]+\\)\\W" 1 "FaceGoofy.xpm")
     ("\\(:-*D\\)\\W" 1 "FaceGrinning.xpm")
@@ -58,16 +65,20 @@
     ("\\(:-*p\\)\\W" 1 "FaceTalking.xpm")
     ("\\(:-*d\\)\\W" 1 "FaceTasty.xpm")
     ("\\(;-*[>)}»]+\\)\\W" 1 "FaceWinking.xpm")
-    ("\\(:-*[Vvµ]\\)\\W" 1 "FaceWry.xpm")
+    ("\\(:-*[Vvµ]\\)\\W" 1 "FaceWry.xpm")  
     ("\\([:|]-*P\\)\\W" 1 "FaceYukky.xpm"))
-  "Normal and deformed faces for smilies.")
+  "Normal and deformed faces for smilies."
+  :type '(repeat (list regexp 
+		       (integer :tag "Match")
+		       (string :tag "Image")))
+  :group 'smiley)
 
-(defvar smiley-nosey-regexp-alist
+(defcustom smiley-nosey-regexp-alist
   '(("\\(:-+[<«]+\\)\\W" 1 "FaceAngry.xpm")
     ("\\(:-+\\]+\\)\\W" 1 "FaceGoofy.xpm")
     ("\\(:-+D\\)\\W" 1 "FaceGrinning.xpm")
     ("\\(:-+[}»]+\\)\\W" 1 "FaceHappy.xpm")
-    ("\\(:-*)+\\)\\W" 1 "FaceHappy.xpm") ;; The exception that confirms the rule
+    ("\\(:-*)+\\)\\W" 1 "FaceHappy.xpm")
     ("\\(:-+[/\\\"]+\\)\\W" 1 "FaceIronic.xpm")
     ("\\([8|]-+[|Oo%]\\)\\W" 1 "FaceKOed.xpm")
     ("\\([:|]-+#+\\)\\W" 1 "FaceNyah.xpm")
@@ -78,29 +89,64 @@
     ("\\(:-+d\\)\\W" 1 "FaceTasty.xpm")
     ("\\(;-+[>)}»]+\\)\\W" 1 "FaceWinking.xpm")
     ("\\(:-+[Vvµ]\\)\\W" 1 "FaceWry.xpm")
+    ("\\(][:8B]-[)>]\\)\\W" 1 "FaceDevilish.xpm")
     ("\\([:|]-+P\\)\\W" 1 "FaceYukky.xpm"))
-  "Smileys with noses. These get less false matches.")
+  "Smileys with noses.  These get less false matches."
+  :type '(repeat (list regexp 
+		       (integer :tag "Match")
+		       (string :tag "Image")))
+  :group 'smiley)
 
-(defvar smiley-regexp-alist smiley-deformed-regexp-alist
+(defcustom smiley-regexp-alist smiley-deformed-regexp-alist
   "A list of regexps to map smilies to real images.
 Defaults to the content of smiley-deformed-regexp-alist.
-An alternative smiley-nose-regexp-alist that
-matches less aggresively is available.")
+An alternative smiley-nosey-regexp-alist that
+matches less aggressively is available.
+If this is a symbol, take its value."
+  :type '(radio (variable-item smiley-deformed-regexp-alist)
+		(variable-item smiley-nosey-regexp-alist)
+		symbol 
+		(repeat (list regexp 
+			      (integer :tag "Match")
+			      (string :tag "Image"))))
+  :group 'smiley)
 
-(defvar smiley-flesh-color "yellow"
-  "Flesh color.")
+(defcustom smiley-flesh-color "yellow"
+  "Flesh color."
+  :type 'string
+  :group 'smiley)
 
-(defvar smiley-features-color "black"
-  "Features color.")
+(defcustom smiley-features-color "black"
+  "Features color."
+  :type 'string
+  :group 'smiley)
 
-(defvar smiley-tongue-color "red"
-  "Tongue color.")
+(defcustom smiley-tongue-color "red"
+  "Tongue color."
+  :type 'string
+  :group 'smiley)
 
-(defvar smiley-circle-color "black"
-  "Circle color.")
+(defcustom smiley-circle-color "black"
+  "Circle color."
+  :type 'string
+  :group 'smiley)
+
+(defcustom smiley-mouse-face 'highlight
+  "Face used for mouse highlighting in the smiley buffer.
+
+Smiley buttons will be displayed in this face when the cursor is
+above them."
+  :type 'face
+  :group 'smiley)
+
 
 (defvar smiley-glyph-cache nil)
 (defvar smiley-running-xemacs (string-match "XEmacs" emacs-version))
+
+(defvar smiley-map (make-sparse-keymap "smiley-keys")
+ "keymap to toggle smiley states")
+
+(define-key smiley-map [(button2)] 'smiley-toggle-extent)
 
 (defun smiley-create-glyph (smiley pixmap)
   (and
@@ -127,6 +173,23 @@ matches less aggresively is available.")
   (interactive "r")
   (smiley-buffer (current-buffer) beg end))
 
+(defun smiley-toggle-extent (event)
+  "Toggle smiley at given point"
+  (interactive "e")
+  (let* ((ant (event-glyph-extent event))
+	 (pt (event-closest-point event))
+	 ext)
+    (if (annotationp ant)
+	(when (extentp (setq ext (extent-property ant 'smiley-extent)))
+	  (set-extent-property ext 'invisible nil)
+	  (hide-annotation ant))
+      (when pt
+	(while (setq ext (extent-at pt (event-buffer event) nil ext 'at))
+	  (when (annotationp (setq ant 
+				   (extent-property ext 'smiley-annotation)))
+	    (reveal-annotation ant)
+	    (set-extent-property ext 'invisible t)))))))
+
 ;;;###autoload
 (defun smiley-buffer (&optional buffer st nd)
   (interactive)
@@ -135,7 +198,9 @@ matches less aggresively is available.")
       (when buffer
 	(set-buffer buffer))
       (let ((buffer-read-only nil)
-	    (alist smiley-regexp-alist)
+	    (alist (if (symbolp smiley-regexp-alist)
+		       (symbol-value smiley-regexp-alist)
+		     smiley-regexp-alist))
 	    entry regexp beg group file)
 	(goto-char (or st (point-min)))
 	(setq beg (point))
@@ -152,11 +217,21 @@ matches less aggresively is available.")
 					       file)))
 	      (when glyph
 		(mapcar 'delete-annotation (annotations-at end))
-		(let ((ext (make-extent start end)))
-		  (set-extent-property ext 'invisible t)
+		(let ((ext (make-extent start end))
+		      (ant (make-annotation glyph end 'text)))
+		  ;; set text extent params
 		  (set-extent-property ext 'end-open t)
-		  (set-extent-property ext 'intangible t))
-		(make-annotation glyph end 'text)
+		  (set-extent-property ext 'start-open t)
+		  (set-extent-property ext 'invisible t)
+		  (set-extent-property ext 'keymap smiley-map)
+		  (set-extent-property ext 'mouse-face 'smiley-mouse-face)
+		  (set-extent-property ext 'intangible t)
+		  ;; set annotation params
+		  (set-extent-property ant 'mouse-face 'smiley-mouse-face)
+		  (set-extent-property ant 'keymap smiley-map)
+		  ;; remember each other
+		  (set-extent-property ant 'smiley-extent ext)
+		  (set-extent-property ext 'smiley-annotation ant))
 		(when (smiley-end-paren-p start end)
 		  (make-annotation ")" end 'text))
 		(goto-char end)))))))))

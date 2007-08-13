@@ -1,6 +1,6 @@
 /* Get the system load averages.
-   Copyright (C) 1985, 1986, 1987, 1988, 1989, 1991, 1992, 1993, 1994, 1995
-   Free Software Foundation, Inc.
+   Copyright (C) 1985, 86, 87, 88, 89, 91, 92, 93, 1994, 1995
+	Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
@@ -150,7 +150,7 @@ extern int errno;
 #define decstation
 #endif
 
-#if defined(sun) && defined(USG)
+#if (defined(sun) && defined(USG)) || defined (SOLARIS2)
 #define SUNOS_5
 #endif
 

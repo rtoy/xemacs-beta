@@ -3011,7 +3011,7 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  if (BUFFER_LIVE_P (XBUFFER (obj2)))
 	    {
 	      title = "buffer ";
-	      name = (char *) string_data (XSTRING (XBUFFER (obj2)->name));
+	      name = (char *) XSTRING_DATA (XBUFFER (obj2)->name);
 	    }
 	  else
 	    {
@@ -3024,7 +3024,7 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  assert (STRINGP (obj2));
 	  title = "string \"";
 	  posttitle = "\"";
-	  name = (char *) string_data (XSTRING (obj2));
+	  name = (char *) XSTRING_DATA (obj2);
 	}
       
       if (print_readably)

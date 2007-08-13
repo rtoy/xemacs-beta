@@ -1,18 +1,18 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1996/12/19 21:53:03
-;; Version: 1.40
+;; Created: 1997/01/29 14:32:36
+;; Version: 1.48
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
-;;; Major mode for manipulating URLs|
-;;; 1996/12/19 21:53:03|1.40|Location Undetermined
+;;; Functions for retrieving/manipulating URLs|
+;;; 1997/01/29 14:32:36|1.48|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -36,11 +36,7 @@
 (require 'cl)
 (require 'url-vars)
 (require 'url-parse)
-(require 'urlauth)
-(require 'url-cookie)
 (require 'mm)
-(require 'md5)
-(require 'base64)
 (require 'mule-sysdp)
 (or (featurep 'efs)
     (featurep 'efs-auto)
@@ -91,6 +87,7 @@
 (autoload 'url-info "url-misc")
 (autoload 'url-shttp "url-http")
 (autoload 'url-https "url-http")
+(autoload 'url-data "url-misc")
 (autoload 'url-finger "url-misc")
 (autoload 'url-rlogin "url-misc")
 (autoload 'url-telnet "url-misc")
@@ -102,9 +99,7 @@
 (autoload 'url-decode-pgp/pem "url-pgp")
 (autoload 'url-wais "url-wais")
 
-(autoload 'url-save-newsrc "url-news")
-(autoload 'url-news-generate-reply-form "url-news")
-(autoload 'url-parse-newsrc "url-news")
+(autoload 'url-open-stream "url-gw")
 (autoload 'url-mime-response-p "url-http")
 (autoload 'url-parse-mime-headers "url-http")
 (autoload 'url-handle-refresh-header "url-http")
@@ -112,6 +107,16 @@
 (autoload 'url-create-message-id "url-http")
 (autoload 'url-create-multipart-request "url-http")
 (autoload 'url-parse-viewer-types "url-http")
+
+(autoload 'url-get-authentication "url-auth")
+(autoload 'url-register-auth-scheme "url-auth")
+(autoload 'url-cookie-write-file "url-cookie")
+(autoload 'url-cookie-retrieve "url-cookie")
+(autoload 'url-cookie-generate-header-lines "url-cookie")
+(autoload 'url-cookie-handle-set-cookie "url-cookie")
+
+(require 'md5)
+(require 'base64)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; File-name-handler-alist functions
@@ -592,6 +597,8 @@ accessible."
       (let ((buf (current-buffer))
 	    (url-working-buffer (cdr (url-retrieve url))))
 	(setq-default url-be-asynchronous old-asynch)
+	(set-buffer url-working-buffer)
+	(url-uncompress)
 	(set-buffer buf)
 	(insert-buffer url-working-buffer)
 	(setq buffer-file-name url)
@@ -743,18 +750,10 @@ Will not do anything if url-show-status is nil."
     (apply 'message args)))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Gateway Support
-;;; ---------------
-;;; Fairly good/complete gateway support
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun url-kill-process (proc)
   "Kill the process PROC - knows about all the various gateway types,
 and acts accordingly."
-  (cond
-   ((eq url-gateway-method 'native) (delete-process proc))
-   ((eq url-gateway-method 'program) (kill-process proc))
-   (t (error "Unknown url-gateway-method %s" url-gateway-method))))
+  (delete-process proc))
 
 (defun url-accept-process-output (proc)
   "Allow any pending output from subprocesses to be read by Emacs.
@@ -765,91 +764,7 @@ or 1 second has elapsed."
 
 (defun url-process-status (proc)
   "Return the process status of a url buffer"
-  (cond
-   ((memq url-gateway-method '(native ssl program)) (process-status proc))
-   (t (error "Unkown url-gateway-method %s" url-gateway-method))))  
-
-(defun url-open-stream (name buffer host service)
-  "Open a stream to a host"
-  (let ((tmp-gateway-method (if (and url-gateway-local-host-regexp
-				     (not (eq 'ssl url-gateway-method))
-				     (string-match
-				      url-gateway-local-host-regexp
-				      host))
-				'native
-			      url-gateway-method))
-	(tcp-binary-process-output-services (if (stringp service)
-						(list service)
-					      (list service
-						    (int-to-string service)))))
-    (and (eq url-gateway-method 'tcp)
-	 (require 'tcp)
-	 (setq url-gateway-method 'native
-	       tmp-gateway-method 'native))
-    (cond
-     ((eq tmp-gateway-method 'ssl)
-      (open-ssl-stream name buffer host service))
-     ((eq tmp-gateway-method 'native)
-      (if url-broken-resolution
-	  (setq host
-		(cond
-		 ((featurep 'ange-ftp) (ange-ftp-nslookup-host host))
-		 ((featurep 'efs) (efs-nslookup-host host))
-		 ((featurep 'efs-auto) (efs-nslookup-host host))
-		 (t host))))
-      (let ((max-retries url-connection-retries)
-	    (cur-retries 0)
-	    (retry t)
-	    (errobj nil)
-	    (conn nil))
-	(while (and (not conn) retry)
-	  (condition-case errobj
-	      (setq conn (open-network-stream name buffer host service))
-	    (error
-	     (url-save-error errobj)
-	     (save-window-excursion
-	       (save-excursion
-		 (switch-to-buffer-other-window " *url-error*")
-		 (shrink-window-if-larger-than-buffer)
-		 (goto-char (point-min))
-		 (if (and (re-search-forward "in use" nil t)
-			  (< cur-retries max-retries))
-		     (progn
-		       (setq retry t
-			     cur-retries (1+ cur-retries))
-		       (sleep-for 0.5))
-		   (setq cur-retries 0
-			 retry (funcall url-confirmation-func
-					(concat "Connection to " host
-						" failed, retry? "))))
-		 (kill-buffer (current-buffer)))))))
-	(if (not conn)
-	    (error "Unable to connect to %s:%s" host service)
-	  (mule-inhibit-code-conversion conn)
-	  conn)))
-     ((eq tmp-gateway-method 'program)
-      (let ((proc (start-process name buffer url-gateway-telnet-program host
-				 (int-to-string service)))
-	    (tmp nil))
-	(save-excursion
-	  (set-buffer buffer)
-	  (setq tmp (point))
-	  (while (not (progn
-			(goto-char (point-min))
-			(re-search-forward 
-			 url-gateway-telnet-ready-regexp nil t)))
-	    (url-accept-process-output proc))
-	  (delete-region tmp (point))
-	  (goto-char (point-min))
-	  (if (re-search-forward "connect:" nil t)
-	      (progn
-		(condition-case ()
-		    (delete-process proc)
-		  (error nil))
-		(url-replace-regexp ".*connect:.*" "")
-		nil)
-	    proc))))
-     (t (error "Unknown url-gateway-method %s" url-gateway-method)))))
+  (process-status proc))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -974,6 +889,7 @@ dumped with emacs."
     (url-register-protocol 'news       nil 'url-identity-expander "119")
     (url-register-protocol 'nntp       nil 'url-identity-expander "119")
     (url-register-protocol 'irc        nil 'url-identity-expander "6667")
+    (url-register-protocol 'data       nil 'url-identity-expander)
     (url-register-protocol 'rlogin)
     (url-register-protocol 'shttp      nil nil "80")
     (url-register-protocol 'telnet)
@@ -1425,7 +1341,9 @@ Path components that are `.' are removed, and
 path components followed by `..' are removed, along with the `..' itself."
   (if url
       (setq url (mapconcat (function (lambda (x)
-				       (if (= x ?\n) "" (char-to-string x))))
+				       (if (memq x '(?  ?\n ?\r))
+					   ""
+					 (char-to-string x))))
 			   (url-strip-leading-spaces
 			    (url-eat-trailing-space url)) "")))
   (cond

@@ -217,7 +217,7 @@ print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   
   if (print_readably)
     error ("printing unreadable object #<process %s>",
-           string_data (XSTRING (proc->name)));
+           XSTRING_DATA (proc->name));
       
   if (!escapeflag)
     {
@@ -470,7 +470,7 @@ get_process (Lisp_Object name)
   if (GC_NILP (name))
     error ("Current buffer has no process");
   else
-    error ("Process %s does not exist", string_data (XSTRING (name)));
+    error ("Process %s does not exist", XSTRING_DATA (name));
   /* NOTREACHED */
   return Qnil; /* warning suppression */
 }
@@ -708,34 +708,48 @@ get_eof_char (struct Lisp_Process *p)
    * The following code is similar to that in process_send_signal, and 
    * should probably be merged with that code somehow. */
 
+  CONST Bufbyte ctrl_d = (Bufbyte) '\004';
+  
+  if (!isatty (p->outfd))
+    return ctrl_d;
 #ifdef HAVE_TERMIOS
-  struct termios t;
-  tcgetattr (p->outfd, &t);
-  if (strlen ((CONST char *) t.c_cc) < (unsigned int) (VEOF + 1))
-    return (Bufbyte) '\004';
-  else
-    return (Bufbyte) t.c_cc[VEOF];
+  {
+    struct termios t;
+    tcgetattr (p->outfd, &t);
+#if 0
+    /* What is the following line designed to do??? -mrb */
+    if (strlen ((CONST char *) t.c_cc) < (unsigned int) (VEOF + 1))
+      return ctrl_d;
+    else
+      return (Bufbyte) t.c_cc[VEOF];
+#endif
+    return t.c_cc[VEOF] == CDISABLE ? ctrl_d : (Bufbyte) t.c_cc[VEOF];
+  }
 #else /* ! HAVE_TERMIOS */
   /* On Berkeley descendants, the following IOCTL's retrieve the
     current control characters.  */
 #if defined (TIOCGETC)
-  struct tchars c;
-  ioctl (p->outfd, TIOCGETC, &c);
-  return (Bufbyte) c.t_eofc;
+  {
+    struct tchars c;
+    ioctl (p->outfd, TIOCGETC, &c);
+    return (Bufbyte) c.t_eofc;
+  }
 #else /* ! defined (TIOCGLTC) && defined (TIOCGETC) */
   /* On SYSV descendants, the TCGETA ioctl retrieves the current control
      characters.  */
 #ifdef TCGETA
-  struct termio t;
-  ioctl (p->outfd, TCGETA, &t);
-  if (strlen ((CONST char *) t.c_cc) < (unsigned int) (VINTR + 1))
-    return (Bufbyte) '\004';
-  else
-    return (Bufbyte) t.c_cc[VINTR];
+  {
+    struct termio t;
+    ioctl (p->outfd, TCGETA, &t);
+    if (strlen ((CONST char *) t.c_cc) < (unsigned int) (VINTR + 1))
+      return ctrl_d;
+    else
+      return (Bufbyte) t.c_cc[VINTR];
+  }
 #else /* ! defined (TCGETA) */
   /* Rather than complain, we'll just guess ^D, which is what 
    * earlier emacsen always used. */
-  return (Bufbyte) '\004';
+  return ctrl_d;
 #endif /* ! defined (TCGETA) */
 #endif /* ! defined (TIOCGETC) */
 #endif /* ! defined (HAVE_TERMIOS) */
@@ -1143,21 +1157,21 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 #ifdef VMS
   /* Make a one member argv with all args concatenated
      together separated by a blank.  */
-  len = string_length (XSTRING (program)) + 2;
+  len = XSTRING_LENGTH (program) + 2;
   for (i = 3; i < nargs; i++)
     {
       tem = args[i];
       CHECK_STRING (tem);
-      len += string_length (XSTRING (tem)) + 1;	/* count the blank */
+      len += XSTRING_LENGTH (tem) + 1;	/* count the blank */
     }
   new_argv = (char *) alloca (len);
-  strcpy (new_argv, string_data (XSTRING (program)));
+  strcpy (new_argv, XSTRING_DATA (program));
   for (i = 3; i < nargs; i++)
     {
       tem = args[i];
       CHECK_STRING (tem);
       strcat (new_argv, " ");
-      strcat (new_argv, string_data (XSTRING (tem)));
+      strcat (new_argv, XSTRING_DATA (tem));
     }
   /* Need to add code here to check for program existence on VMS */
 
@@ -1165,12 +1179,12 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   new_argv = (char **)
     alloca ((nargs - 1) * sizeof (char *));
 
-  new_argv[0] = (char *) string_data (XSTRING (program));
+  new_argv[0] = (char *) XSTRING_DATA (program);
 
   /* If program file name is not absolute, search our path for it */
-  if (!IS_DIRECTORY_SEP (string_byte (XSTRING (program), 0))
-      && !(string_length (XSTRING (program)) > 1
-	   && IS_DEVICE_SEP (string_byte (XSTRING (program), 1))))
+  if (!IS_DIRECTORY_SEP (XSTRING_BYTE (program, 0))
+      && !(XSTRING_LENGTH (program) > 1
+	  && IS_DEVICE_SEP (XSTRING_BYTE (program, 1))))
     {
       struct gcpro gcpro1, gcpro2, gcpro3, gcpro4; /* Caller protects args[] */
       GCPRO4 (buffer, current_dir, name, program);
@@ -1182,7 +1196,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
       if (NILP (tem))
 	report_file_error ("Searching for program", list1 (program));
       tem = Fexpand_file_name (tem, Qnil);
-      new_argv[0] = (char *) string_data (XSTRING (tem));
+      new_argv[0] = (char *) XSTRING_DATA (tem);
     }
   else
     {
@@ -1194,8 +1208,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
     {
       tem = args[i];
       CHECK_STRING (tem);
-      new_argv[i - 2] =
-	(char *) string_data (XSTRING (tem));
+      new_argv[i - 2] = (char *) XSTRING_DATA (tem);
     }
   new_argv[i - 2] = 0;
 
@@ -1218,8 +1231,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
      itself; it's all taken care of here.  */
   record_unwind_protect (start_process_unwind, proc);
 
-  create_process (proc, new_argv,
-		  (char *) string_data (XSTRING (current_dir)));
+  create_process (proc, new_argv, (char *) XSTRING_DATA (current_dir));
 
   return unbind_to (speccount, proc);
 }
@@ -1297,7 +1309,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 #endif
       /* Some systems can't handle SIGIO/SIGALARM in gethostbyname. */
       slow_down_interrupts ();
-      host_info_ptr = gethostbyname ((char *) string_data (XSTRING (host)));
+      host_info_ptr = gethostbyname ((char *) XSTRING_DATA (host));
       speed_up_interrupts ();
 #ifdef TRY_AGAIN
       if (! (host_info_ptr == 0 && h_errno == TRY_AGAIN))
@@ -1314,11 +1326,11 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
     {
       IN_ADDR numeric_addr;
       /* Attempt to interpret host as numeric inet address */
-      numeric_addr = inet_addr ((char *) string_data (XSTRING (host)));
+      numeric_addr = inet_addr ((char *) XSTRING_DATA (host));
       if (NUMERIC_ADDR_ERROR)
 	{
 	  maybe_error (Qprocess, errb,
-		       "Unknown host \"%s\"", string_data (XSTRING (host)));
+		       "Unknown host \"%s\"", XSTRING_DATA (host));
 	  return 0;
 	}
 
@@ -1365,7 +1377,7 @@ Fourth arg SERVICE is name of the service desired, or an integer
   int s, outch, inch;
   int port;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-  int retry = 0;
+  volatile int retry = 0;
   int retval;
 
   GCPRO4 (name, buffer, host, service);
@@ -1377,14 +1389,13 @@ Fourth arg SERVICE is name of the service desired, or an integer
     {
       struct servent *svc_info;
       CHECK_STRING (service);
-      svc_info = getservbyname ((char *) string_data (XSTRING (service)),
-				"tcp");
+      svc_info = getservbyname ((char *) XSTRING_DATA (service), "tcp");
       if (svc_info == 0)
 #ifdef WIN32
 	error ("Unknown service \"%s\" (%d)",
-	       string_data (XSTRING (service)), WSAGetLastError ());
+	       XSTRING_DATA (service), WSAGetLastError ());
 #else
-	error ("Unknown service \"%s\"", string_data (XSTRING (service)));
+	error ("Unknown service \"%s\"", XSTRING_DATA (service));
 #endif
       port = svc_info->s_port;
     }
@@ -1463,7 +1474,7 @@ Fourth arg SERVICE is name of the service desired, or an integer
   s = connect_server (0);
   if (s < 0)
     report_file_error ("error creating socket", Fcons (name, Qnil));
-  send_command (s, C_PORT, 0, "%s:%d", string_data (XSTRING (host)), ntohs (port));
+  send_command (s, C_PORT, 0, "%s:%d", XSTRING_DATA (host), ntohs (port));
   send_command (s, C_DUMB, 1, 0);
 #endif /* HAVE_TERM */
 
@@ -1766,7 +1777,7 @@ send_process (volatile Lisp_Object proc,
   /* This function can GC */
   /* Use volatile to protect variables from being clobbered by longjmp.  */
   struct gcpro gcpro1, gcpro2;
-  SIGTYPE (*old_sigpipe) (int) = 0;
+  SIGTYPE (*volatile old_sigpipe) (int) = 0;
   Lisp_Object lstream = Qnil;
   volatile struct Lisp_Process *p = XPROCESS (proc);
 #if defined (NO_UNION_TYPE) /* || !defined (__GNUC__) GCC bug only??? */
@@ -1857,10 +1868,10 @@ send_process (volatile Lisp_Object proc,
       deactivate_process (proc);
 #ifdef VMS
       error ("Error writing to process %s; closed it",
-	     string_data (XSTRING (p->name)));
+	    XSTRING_DATA (p->name));
 #else
       error ("SIGPIPE raised on process %s; closed it",
-	     string_data (XSTRING (p->name)));
+	    XSTRING_DATA (p->name));
 #endif
     }
   Lstream_flush (XLSTREAM (p->outstream));
@@ -2684,10 +2695,10 @@ process_send_signal (Lisp_Object process0, int signo,
 
   if (network_connection_p (proc))
     error ("Network connection %s is not a subprocess",
-	   string_data (XSTRING (p->name)));
+	  XSTRING_DATA (p->name));
   if (p->infd < 0)
     error ("Process %s is not active",
-	   string_data (XSTRING (p->name)));
+	  XSTRING_DATA (p->name));
 
   if (!p->pty_flag)
     current_group = 0;
@@ -3019,8 +3030,7 @@ text to PROCESS after you call this function.
 
   /* Make sure the process is really alive.  */
   if (! EQ (XPROCESS (proc)->status_symbol, Qrun))
-    error ("Process %s not running",
-	   string_data (XSTRING (XPROCESS (proc)->name)));
+    error ("Process %s not running", XSTRING_DATA (XPROCESS (proc)->name));
 
 #ifdef VMS
   send_process (proc, Qnil, (Bufbyte *) "\032", 0, 1);   /* ^Z */

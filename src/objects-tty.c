@@ -222,7 +222,7 @@ static int
 tty_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
 			      Lisp_Object device, Error_behavior errb)
 {
-  Bufbyte *str = string_data (XSTRING (name));
+  Bufbyte *str = XSTRING_DATA (name);
   Lisp_Object charset = Qnil;
 
   if (strncmp ((CONST char *) str, "normal", 6))
@@ -236,7 +236,7 @@ tty_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
   /* Don't allocate the data until we're sure that we will succeed. */
   f->data = malloc_type (struct tty_font_instance_data);
   FONT_INSTANCE_TTY_CHARSET (f) = charset;
-  f->width = 1;
+    f->width = 1;
 
   f->proportional_p = 0;
   f->ascent = f->height = 1;

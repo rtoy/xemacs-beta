@@ -12,6 +12,18 @@
 *  3 Sep 90 - Version 1.1 by Gershon Elber (Support for Gif89, Unique names). *
 ******************************************************************************/
 
+#ifdef emacs
+#include <config.h>
+void *xmalloc (unsigned int size);
+void *xrealloc (void *ptr, unsigned int size);
+#ifdef ERROR_CHECK_MALLOC
+void *xfree_1 (void *);
+#define xfree xfree_1
+#else
+void *xfree (void *);
+#endif
+#endif /* emacs */
+
 #ifdef __MSDOS__
 #include <io.h>
 #include <alloc.h>
@@ -25,18 +37,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-
-#ifdef emacs
-#include <config.h>
-void *xmalloc (unsigned int size);
-void *xrealloc (void *ptr, unsigned int size);
-#ifdef ERROR_CHECK_MALLOC
-void *xfree_1 (void *);
-#define xfree xfree_1
-#else
-void *xfree (void *);
-#endif
-#endif
 
 #include "gif_lib.h"
 #ifndef emacs

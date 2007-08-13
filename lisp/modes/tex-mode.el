@@ -19,8 +19,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 (require 'comint)
 
@@ -64,12 +65,18 @@ this string.")
   "*User defined LaTeX block names.
 Combined with `standard-latex-block-names' for minibuffer completion.")
 
+(defvar tex-latex-document-regex "documentstyle\\|documentclass"
+  "matches the first command of a LaTeX document")
+
 (defvar slitex-run-command "slitex"
   "*Command used to run SliTeX subjob.
 If this string contains an asterisk (*), it will be replaced by the
 filename; if not, the name of the file, preceded by blank, will be added to
 this string.")
 
+(defvar tex-slitex-document-regex "documentstyle{slides}"
+  "Matches the first command of a slitex document")
+  
 (defvar tex-bibtex-command "bibtex"
   "*Command used by `tex-bibtex-file' to gather bibliographic data.
 If this string contains an asterisk (*), it will be replaced by the
@@ -214,8 +221,8 @@ is used."
 				    (beginning-of-line)
 				    (search-forward "%" search-end t))))))
       (if (and slash (not comment))
-	  (setq mode (if (looking-at "documentstyle")
-                         (if (looking-at "documentstyle{slides}")
+	  (setq mode (if (looking-at tex-latex-document-regex)
+                         (if (looking-at tex-slitex-document-regex)
                              'slitex-mode
                            'latex-mode)
 		       'plain-tex-mode))))

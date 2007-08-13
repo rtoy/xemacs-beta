@@ -1,6 +1,6 @@
 ;;; ediff-ptch.el --- Ediff's  patch support
 
-;; Copyright (C) 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1996, 1997 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.sunysb.edu>
 
@@ -34,13 +34,11 @@
 (defvar ediff-shell)
 
 (eval-when-compile
-  (let ((load-path (cons "." load-path)))
+  (let ((load-path (cons (expand-file-name ".") load-path)))
     (or (featurep 'ediff-init)
 	(load "ediff-init.el" nil nil 'nosuffix))
     (or (featurep 'ediff)
 	(load "ediff.el" nil nil 'nosuffix))
-    (or (featurep 'ange-ftp)
-	(load "ange-ftp" 'noerror))
     ))
 ;; end pacifier
 

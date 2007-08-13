@@ -133,6 +133,8 @@ static Lisp_Object Vread_buffer_stream;
 Lisp_Object Vcurrent_compiled_function_annotation;
 #endif
 
+static int load_byte_code_version;
+
 /* An array describing all known built-in structure types */
 static Structure_type_dynarr *the_structure_type_dynarr;
 
@@ -230,7 +232,16 @@ readchar (Lisp_Object readcharfun)
     }
   else if (LSTREAMP (readcharfun))
     {
-      return Lstream_get_emchar (XLSTREAM (readcharfun));
+      Emchar c = Lstream_get_emchar (XLSTREAM (readcharfun));
+#ifdef DEBUG_XEMACS /* testing Mule */
+      static int testing_mule = 0; /* Change via debugger */
+      if (testing_mule) {
+        if (c >= 0x20 && c <= 0x7E) fprintf (stderr, "%c", c);
+        else if (c == '\n')         fprintf (stderr, "\\n\n");
+        else                        fprintf (stderr, "\\%o ", c);
+      }
+#endif
+      return c;
     }
   else if (MARKERP (readcharfun))
     {
@@ -269,6 +280,15 @@ unreadchar (Lisp_Object readcharfun, Emchar c)
   else if (LSTREAMP (readcharfun))
     {
       Lstream_unget_emchar (XLSTREAM (readcharfun), c);
+#ifdef DEBUG_XEMACS /* testing Mule */
+      {
+        static int testing_mule = 0; /* Set this using debugger */
+        if (testing_mule)
+          fprintf (stderr,
+                   (c >= 0x20 && c <= 0x7E) ? "UU%c" :
+                   ((c == '\n') ? "UU\\n\n" : "UU\\%o"), c);
+      }
+#endif
     }
   else if (MARKERP (readcharfun))
     set_marker_position (readcharfun, marker_position (readcharfun) - 1);
@@ -477,7 +497,10 @@ Return t if file exists.
   Lisp_Object handler = Qnil;
   Lisp_Object found   = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
+  int reading_elc = 0;
+  int message_p = NILP (nomessage);
 #ifdef DEBUG_XEMACS
+  static Lisp_Object last_file_loaded;
   int pure_usage = 0;
 #endif
 #ifdef DOS_NT
@@ -489,26 +512,29 @@ Return t if file exists.
 
 #ifdef DEBUG_XEMACS
   if (purify_flag && noninteractive)
-    pure_usage = purespace_usage ();
-#endif
+    {
+      message_p = 1;
+      last_file_loaded = file;
+      pure_usage = purespace_usage ();
+    }
+#endif /* DEBUG_XEMACS */
 
   /* If file name is magic, call the handler.  */
   handler = Ffind_file_name_handler (file, Qload);
   if (!NILP (handler))
-    {
-      RETURN_UNGCPRO (call5 (handler, Qload, file, no_error, nomessage,
-			     nosuffix));
-    }
+    RETURN_UNGCPRO (call5 (handler, Qload, file, no_error,
+			  nomessage, nosuffix));
 
   /* Do this after the handler to avoid
      the need to gcpro noerror, nomessage and nosuffix.
      (Below here, we care only whether they are nil or not.)  */
   file = Fsubstitute_in_file_name (file);
 
+
   /* Avoid weird lossage with null string as arg,
      since it would try to load a directory as a Lisp file.
      Unix truly sucks. */
-  if (string_length (XSTRING (file)) > 0)
+  if (XSTRING_LENGTH (file) > 0)
     {
       char *foundstr;
       int foundlen;
@@ -531,8 +557,8 @@ Return t if file exists.
 	    }
 	}
 
-      foundstr = (char *) alloca (string_length (XSTRING (found)) + 1);
-      strcpy (foundstr, (char *) string_data (XSTRING (found)));
+      foundstr = (char *) alloca (XSTRING_LENGTH (found) + 1);
+      strcpy (foundstr, (char *) XSTRING_DATA (found));
       foundlen = strlen (foundstr);
 
       /* The omniscient JWZ thinks this is worthless, but I beg to
@@ -570,45 +596,43 @@ Return t if file exists.
 	       !memcmp (".el", foundstr + foundlen - 3, 3) &&
 	       /* `file' does not end in ".el" */
 	       memcmp (".el",
-		       string_data (XSTRING (file)) +
-		       string_length (XSTRING (file)) - 3,
+		       XSTRING_DATA (file) + XSTRING_LENGTH (file) - 3,
 		       3))
 	{
 	  source_only = 1;
 	}
+
+      if (!memcmp (".elc", foundstr + foundlen - 4, 4))
+	reading_elc = 1;
     }
 
 #ifdef DOS_NT
   /* The file was opened as binary, because that's what we'll
      encounter most of the time.  If we're loading a .el, we need
      to reopen it in text mode. */
-  if (!memcmp (".elc", foundstr + foundlen - 4, 4))
-    ;
-  else
+  if (!reading_elc)
     fd = open (foundstr, O_RDONLY | O_TEXT);
-#endif /* not DOS_NT */
+#endif /* DOS_NT */
 
-  if (load_ignore_elc_files)
-    {
-      if (noninteractive || NILP (nomessage))
-	message ("Loading %s...", string_data (XSTRING (newer)));
-    }
-  else if (!NILP (newer))
-    {
-      message ("Loading %s...  (file %s is newer)",
-	       string_data (XSTRING (file)),
-	       string_data (XSTRING (newer)));
-      nomessage = Qnil; /* we printed the first one, so print "done" too */
-    }
-  else if (source_only)
-    {
-      message ("Loading %s...  (file %s.elc does not exist)",
-	       string_data (XSTRING (file)),
-	       string_data (XSTRING (Ffile_name_nondirectory (file))));
-      nomessage = Qnil;
-    }
-  else if (noninteractive || NILP (nomessage))
-    message ("Loading %s...", string_data (XSTRING (file)));
+#define PRINT_LOADING_MESSAGE(done) do {				\
+  if (load_ignore_elc_files)						\
+    {									\
+      if (message_p)							\
+	message ("Loading %s..." done, XSTRING_DATA (newer));		\
+    }									\
+  else if (!NILP (newer))						\
+    message ("Loading %s..." done " (file %s is newer)",		\
+	     XSTRING_DATA (file),					\
+	     XSTRING_DATA (newer));					\
+  else if (source_only)							\
+    message ("Loading %s..." done " (file %s.elc does not exist)",	\
+	     XSTRING_DATA (file),					\
+	     XSTRING_DATA (Ffile_name_nondirectory (file)));		\
+  else if (message_p)							\
+    message ("Loading %s..." done, XSTRING_DATA (file));		\
+  } while (0)
+
+  PRINT_LOADING_MESSAGE ("");
 
   {
     /* Lisp_Object's must be malloc'ed, not stack-allocated */
@@ -635,8 +659,7 @@ Return t if file exists.
     Vload_file_name_internal = found;
     Vload_file_name_internal_the_purecopy = Qnil;
     specbind (Qload_file_name, found);
-    Vload_descriptor_list
-      = Fcons (make_int (fd), Vload_descriptor_list);
+    Vload_descriptor_list = Fcons (make_int (fd), Vload_descriptor_list);
     Vload_force_doc_string_list = Qnil;
 #ifdef I18N3
     record_unwind_protect (restore_file_domain, Vfile_domain);
@@ -667,22 +690,19 @@ Return t if file exists.
   }
 
 #ifdef DEBUG_XEMACS
-  if (noninteractive && purify_flag)
+  if (purify_flag && noninteractive)
     {
-      int this_pure_usage = purespace_usage () - pure_usage;
-      message_append (" (%d)", this_pure_usage);
+      if (EQ (last_file_loaded, file))
+	message_append (" (%d)", purespace_usage() - pure_usage);
+      else
+	message ("Loading %s ...done (%d)", XSTRING_DATA (file),
+		 purespace_usage() - pure_usage);
     }
 #endif
 
-  if (noninteractive || !NILP (nomessage))
-    ;
-  else if (!NILP (newer))
-    message ("Loading %s...done  (file %s is newer)",
-	     string_data (XSTRING (file)),
-	     string_data (XSTRING (newer)));
-  else
-    message ("Loading %s...done", string_data (XSTRING (file)));
-
+  if (!noninteractive)
+    PRINT_LOADING_MESSAGE ("done");
+  
   UNGCPRO;
   return Qt;
 }
@@ -693,9 +713,9 @@ Return t if file exists.
 static int
 complete_filename_p (Lisp_Object pathname)
 {
-  REGISTER unsigned char *s = string_data (XSTRING (pathname));
+  REGISTER unsigned char *s = XSTRING_DATA (pathname);
   return (IS_DIRECTORY_SEP (s[0])
-	  || (string_length (XSTRING (pathname)) > 2
+	  || (XSTRING_LENGTH (pathname) > 2
 	      && IS_DEVICE_SEP (s[1]) && IS_DIRECTORY_SEP (s[2]))
 #ifdef ALTOS
 	  || *s == '@'
@@ -734,7 +754,7 @@ for details.
     mode = wrong_type_argument (Qnatnump, mode);
   locate_file (path_list, filename, 
                ((NILP (suffixes)) ? "" :
-		(char *) (string_data (XSTRING (suffixes)))),
+		(char *) (XSTRING_DATA (suffixes))),
 	       &tp, (NILP (mode) ? R_OK : XINT (mode)));
   return tp;
 }
@@ -745,7 +765,7 @@ static Lisp_Object
 locate_file_refresh_hashing (Lisp_Object str)
 {
   Lisp_Object hash =
-    make_directory_hash_table ((char *) string_data (XSTRING (str)));
+    make_directory_hash_table ((char *) XSTRING_DATA (str));
   Fput (str, Qlocate_file_hash_table, hash);
   return hash;
 }
@@ -802,8 +822,7 @@ locate_file_in_directory (Lisp_Object path, Lisp_Object str,
     }
   /* Calculate maximum size of any filename made from
      this path element/specified file name and any possible suffix.  */
-  want_size = strlen (suffix) +
-    string_length (XSTRING (filename)) + 1;
+  want_size = strlen (suffix) + XSTRING_LENGTH (filename) + 1;
   if (fn_size < want_size)
     fn = (char *) alloca (fn_size = 100 + want_size);
   
@@ -816,9 +835,9 @@ locate_file_in_directory (Lisp_Object path, Lisp_Object str,
       int lsuffix = ((esuffix) ? (esuffix - nsuffix) : strlen (nsuffix));
       
       /* Concatenate path element/specified name with the suffix.  */
-      strncpy (fn, (char *) string_data (XSTRING (filename)), 
-	       string_length (XSTRING (filename)));
-      fn[string_length (XSTRING (filename))] = 0;
+      strncpy (fn, (char *) XSTRING_DATA (filename), 
+	       XSTRING_LENGTH (filename));
+      fn[XSTRING_LENGTH (filename)] = 0;
       if (lsuffix != 0)  /* Bug happens on CCI if lsuffix is 0.  */
 	strncat (fn, nsuffix, lsuffix);
       
@@ -910,7 +929,7 @@ locate_file_construct_suffixed_files (Lisp_Object str, CONST char *suffix)
   
   /* Calculate maximum size of any filename made from
      this path element/specified file name and any possible suffix.  */
-  want_size = strlen (suffix) + string_length (XSTRING (str)) + 1;
+  want_size = strlen (suffix) + XSTRING_LENGTH (str) + 1;
   if (fn_size < want_size)
     fn = (char *) alloca (fn_size = 100 + want_size);
   
@@ -922,9 +941,8 @@ locate_file_construct_suffixed_files (Lisp_Object str, CONST char *suffix)
       int lsuffix = ((esuffix) ? (esuffix - nsuffix) : strlen (nsuffix));
       
       /* Concatenate path element/specified name with the suffix.  */
-      strncpy (fn, (char *) string_data (XSTRING (str)), 
-	       string_length (XSTRING (str)));
-      fn[string_length (XSTRING (str))] = 0;
+      strncpy (fn, (char *) XSTRING_DATA (str), XSTRING_LENGTH (str));
+      fn[XSTRING_LENGTH (str)] = 0;
       if (lsuffix != 0)  /* Bug happens on CCI if lsuffix is 0.  */
 	strncat (fn, nsuffix, lsuffix);
       
@@ -1408,7 +1426,7 @@ START and END optionally delimit a substring of STRING from which to read;
   tem =
     (Fcons (tem, make_int
 	    (bytecount_to_charcount
-	     (string_data (XSTRING (string)),
+	     (XSTRING_DATA (string),
 	      startval + Lstream_byte_count (XLSTREAM (lispstream))))));
   Lstream_delete (XLSTREAM (lispstream));
   UNGCPRO;
@@ -1567,6 +1585,7 @@ read_escape (Lisp_Object readcharfun)
 	  }
 	return i;
       }
+
 
     default:
 	return c;
@@ -2627,10 +2646,10 @@ read_list (Lisp_Object readcharfun,
 		{
 		  if (NILP (Vdoc_file_name))
 		    /* We have not yet called Snarf-documentation, so
-		       assume this file is described in the DOC-MM.NN
-		       file and Snarf-documentation will fill in the
-		       right value later.  For now, replace the whole
-		       list with 0.  */
+		       assume this file is described in the DOC file
+		       and Snarf-documentation will fill in the right
+		       value later.  For now, replace the whole list
+		       with 0.  */
 		    XCAR (holding_cons) = Qzero;
 		  else
 		    /* We have already called Snarf-documentation, so
@@ -2798,9 +2817,9 @@ init_lread (void)
 	  if (!NILP (dirfile))
 	    {
 	      dirfile = Fdirectory_file_name (dirfile);
-	      if (access ((char *) string_data (XSTRING (dirfile)), 0) < 0)
+	      if (access ((char *) XSTRING_DATA (dirfile), 0) < 0)
 		stdout_out ("Warning: lisp library (%s) does not exist.\n",
-			    string_data (XSTRING (Fcar (normal_path))));
+			    XSTRING_DATA (Fcar (normal_path)));
 	    }
 	}
     }

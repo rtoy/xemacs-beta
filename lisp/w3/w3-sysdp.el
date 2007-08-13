@@ -1,8 +1,8 @@
 ;;; sysdep.el --- consolidate Emacs-version dependencies in one file.
 
-;; Copyright (C) 1995 Ben Wing.
+;; Copyright (c) 1995 - 1997 Ben Wing.
 
-;; Author: Ben Wing <wing@666.com>, William Perry <wmperry@aventail.com>
+;; Author: Ben Wing <wing@666.com>, William Perry <wmperry@cs.indiana.edu>
 ;; Keywords: lisp, tools
 ;; Version: 0.003
 

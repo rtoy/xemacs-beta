@@ -1044,7 +1044,7 @@ static CONST char *re_error_msgid[] =
 #if defined (MATCH_MAY_ALLOCATE)
 /* 4400 was enough to cause a crash on Alpha OSF/1,
    whose default stack limit is 2mb.  */
-int re_max_failures = 4000;
+int re_max_failures = 20000;
 #else
 int re_max_failures = 2000;
 #endif
@@ -1267,7 +1267,10 @@ typedef struct
 #endif
 
 /* We push at most this many items on the stack.  */
-#define MAX_FAILURE_ITEMS ((num_regs - 1) * NUM_REG_ITEMS + NUM_NONREG_ITEMS)
+/* We used to use (num_regs - 1), which is the number of registers
+   this regexp will save; but that was changed to 5
+   to avoid stack overflow for a regexp with lots of parens.  */
+#define MAX_FAILURE_ITEMS (5 * NUM_REG_ITEMS + NUM_NONREG_ITEMS)
 
 /* We actually push this many items.  */
 #define NUM_FAILURE_ITEMS						\

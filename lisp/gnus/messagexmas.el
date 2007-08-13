@@ -1,5 +1,5 @@
 ;;; messagexmas.el --- XEmacs extensions to message
-;; Copyright (C) 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1996,97 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Keywords: mail, news
@@ -27,7 +27,7 @@
 
 (require 'nnheader)
 
-(defvar message-xmas-dont-activate-region nil
+(defvar message-xmas-dont-activate-region t
   "If t, don't activate region after yanking.")
 
 (defvar message-xmas-glyph-directory nil

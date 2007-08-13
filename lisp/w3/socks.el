@@ -1,11 +1,11 @@
 ;;; socks.el --- A Socks v5 Client for Emacs
 ;; Author: wmperry
-;; Created: 1996/12/14 06:59:31
-;; Version: 1.2
+;; Created: 1997/01/10 00:13:05
+;; Version: 1.3
 ;; Keywords: comm, firewalls
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996, 1997 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;

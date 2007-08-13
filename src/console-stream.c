@@ -72,9 +72,9 @@ stream_init_console (struct console *con, Lisp_Object params)
     {
       CHECK_STRING (tty);
       infd = outfd = errfd =
-	fopen ((char *) string_data (XSTRING (tty)), "r+");
+	fopen ((char *) XSTRING_DATA (tty), "r+");
       if (!infd)
-	error ("Unable to open tty %s", string_data (XSTRING (tty)));
+	error ("Unable to open tty %s", XSTRING_DATA (tty));
     }
 
   allocate_stream_console_struct (con);

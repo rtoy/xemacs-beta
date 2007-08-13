@@ -1,12 +1,12 @@
 ;;; w3-about.el --- About pages for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/12/16 16:44:46
-;; Version: 1.6
+;; Created: 1997/01/10 00:13:05
+;; Version: 1.7
 ;; Keywords: hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
