@@ -1,3 +1,91 @@
+2001-01-07  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.13 is released
+
+2001-01-03  Adrian Aichner  <adrian@xemacs.org>
+
+	* texinfo.texi (First Node): fixing grammar.
+	* texinfo.texi (Other Info Files): changing reference from (emacs)
+	to (xemacs).
+
+2000-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/menus.texi:
+	* widget.texi:
+	Typo fixes and tiny clarifications.
+
+2000-11-13  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs/building.texi (Compilation): Correct INFO-FILE-NAME to
+	lispref and xemacs in broken (elisp, emacs) p?xefs, use
+	PRINTED-MANUAL-TITLE "XEmacs Lisp Reference Manual" and "XEmacs
+	User's Manual" respectively for all these.
+	* xemacs/calendar.texi (Calendar/Diary): Ditto.
+
+2000-11-13  Adrian Aichner  <adrian@xemacs.org>
+
+	* lispref/abbrevs.texi (Abbrevs): Ditto.
+	* lispref/backups.texi (Auto-Saving): Ditto.
+	* lispref/backups.texi (Reverting): Ditto.
+	* lispref/display.texi (The Echo Area): Ditto.
+	* lispref/help.texi (Documentation Basics): Ditto.
+	* lispref/keymaps.texi (Scanning Keymaps): Ditto.
+	* lispref/locals.texi (Standard Buffer-Local Variables): Ditto.
+	* lispref/modes.texi (Auto Major Mode): Ditto.
+	* lispref/positions.texi (List Motion): Ditto.
+	* lispref/searching.texi (Regexp Search): Ditto.
+	* lispref/symbols.texi (Symbol Components): Ditto.
+	* lispref/tips.texi (Comment Tips): Ditto.
+	* lispref/tips.texi (Library Headers): Ditto.
+
+2000-11-13  Adrian Aichner  <adrian@xemacs.org>
+
+	* info-stnd.texi: Ditto.
+	* info-stnd.texi (Top): Ditto.
+	* info-stnd.texi (Cursor Commands): Ditto.
+	* info-stnd.texi (The Echo Area): Ditto.
+	* info.texi (Getting Started): Ditto.
+	* info.texi (Help-^L): Ditto.
+	* info.texi (Advanced Info): Ditto.
+	* info.texi (Expert): Ditto.
+	* info.texi (Tags): Ditto.
+	* info.texi (Checking): Ditto.
+	* info.texi (XEmacs Info Variables): Ditto.
+	* info.texi (Create an Info File): Ditto.
+	* texinfo.texi (Using Texinfo): Ditto.
+	* texinfo.texi (Other Info Files): Ditto.
+	* texinfo.texi (Multitable Rows): Ditto.
+	* xemacs-faq.texi (Q1.2.1): Ditto.
+
+2000-10-28  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs-faq.texi (Q1.2.1): Use @html instead of @ifhtml to
+	incorporate raw HTML in the HTML version.
+
+2000-10-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi: Added Q2.0.13, Q2.0.14 - packages why and how.
+	Added Q2.1.25 - function not found due to package not installed.
+
+	* xemacs/xemacs.texi:
+	* xemacs/abbrevs.texi:
+	* xemacs/basic.texi:
+	* xemacs/building.texi:
+	* xemacs/packages.texi:
+	* xemacs/running.texi:
+	Moved "Packages" node to "Important General Concepts" section.
+
+	* xemacs/packages.texi: Added package list from etc/PACKAGES.
+
+2000-09-20  Martin Buchholz  <martin@xemacs.org>
+
+	* xemacs/startup.texi (Startup Paths): Minor fixes.
+
+2000-08-24  Martin Buchholz  <martin@xemacs.org>
+
+	* lispref/databases.texi (Connecting to a Database):
+	s/berkeley_db/berkeley-db/.  Too much C programming.
+
 2000-08-04  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.12 is released
@@ -342,7 +430,7 @@
 	* info.texi: Fixed @setfilename and a typo.
 	* standards.texi: Added NEXT to @node Preface. See ALL.
 	* texinfo.texi: Fixed section names, quoted usage of @TeX{},
-	changed some occurences of `:' to `colon'.
+	changed some occurrences of `:' to `colon'.
 	* xemacs-faq.texi: See ALL.
 	* internals/internals.texi: See ALL.
 	* lispref/back.texi: Fixed @setfilename.

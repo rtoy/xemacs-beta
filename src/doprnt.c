@@ -652,13 +652,14 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 		strcat (constructed_spec, " ");
 	      if (spec->number_flag)
 		strcat (constructed_spec, "#");
+	      tem = strlen (constructed_spec);
 	      if (spec->precision >= 0)
 		{
 		  strcat (constructed_spec, ".");
 		  long_to_string (constructed_spec + strlen (constructed_spec),
 				  spec->precision);
 		}
-	      sprintf (constructed_spec + (tem = strlen (constructed_spec)), "%c", ch);
+	      sprintf (constructed_spec + strlen (constructed_spec), "%c", ch);
 
 	      /* sprintf the mofo */
 	      /* we have to use separate calls to sprintf(), rather than

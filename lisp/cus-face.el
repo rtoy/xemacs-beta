@@ -54,6 +54,7 @@
 
 ;;; Font Attributes.
 
+;; Consider adding the stuff in the XML font model here.
 (defconst custom-face-attributes
   '((:foreground (color :tag "Foreground"
 			:value ""
@@ -98,14 +99,15 @@ Control whether the text should be inverted.  Works only on TTY-s")
 
 The elements are of the form (KEY TYPE SET GET) where KEY is a symbol
 identifying the attribute, TYPE is a widget type for editing the
-attibute, SET is a function for setting the attribute value, and GET is a function for getiing the attribute value. 
+attribute, SET is a function for setting the attribute value, and GET is
+a function for getting the attribute value. 
 
 The SET function should take three arguments, the face to modify, the
 value of the attribute, and optionally the frame where the face should
 be changed.
 
 The GET function should take two arguments, the face to examine, and
-optonally the frame where the face should be examined.")
+optionally the frame where the face should be examined.")
 
 (defun face-custom-attributes-set (face frame &rest atts)
   "For FACE on FRAME set the attributes [KEYWORD VALUE]....

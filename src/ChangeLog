@@ -1,3 +1,184 @@
+2001-01-07  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.13 is released
+
+2000-12-16  Stephen J. Turnbull <stephen@xemacs.org>
+
+	* file-coding.h (enum coding_category_type):  Reorder coding
+	priority list.  Works around crash in ISO-lock coding system
+	reported by M. Fabian.
+
+2000-12-18  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* callproc.c (Fcall_process_internal):
+	* event-stream.c (command_builder_find_menu_accelerator):
+	* fileio.c (Fset_visited_file_modtime):
+	* keymap.c (event_matches_key_specifier_p): Fix
+	  GCPROing uninitialized variables.
+
+2000-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib.h: Typo fixes and tiny clarifications.
+
+2000-11-22  Stephen J. Turnbull  <turnbull@xemacs.org>
+
+	* mule-charset.c (Fcharset_property):  improve type checking.
+
+2000-11-14  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* event-Xt.c:
+	* event-stream.c:
+	* fileio.c:
+	* menubar-msw.c: UNGCPRO before return.
+
+2000-11-01  Martin Buchholz  <martin@xemacs.org>
+
+	* config.h.in: Handle alloca with Compaq C on Alpha Linux.
+
+	* m/alpha.h: Let configure handle SYSTEM_MALLOC on Linux.
+
+2000-12-13  Martin Buchholz  <martin@xemacs.org>
+
+	* unexelfsgi.c: Sync from 21.2.
+
+2000-11-19  Golubev I. N. <gin@mo.msk.ru>
+
+	* doprnt.c: fix minwidth bug in format
+
+2000-10-03  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* search.c (Freplace_match): Set newtext to an empty string.
+
+2000-10-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* file-coding.c (decode_coding_iso2022):
+	  mule-coding.c (decode_coding_iso2022):
+	- Prevent crash when decoding ISO7/Lock detected files
+	(mule-coding.c is obsolete but synching just in case).
+
+2000-09-20  Martin Buchholz  <martin@xemacs.org>
+
+	* Makefile.in.in: Recent purify's require absolute paths for cache-dir.
+
+2000-09-14  Martin Buchholz  <martin@xemacs.org>
+
+	* make-src-depend: Fix typo.
+
+2000-09-14  Martin Buchholz  <martin@xemacs.org>
+
+	* s/gnu.h:
+	* s/linux.h:
+	* s/hpux.h:
+	Use EMACS_BLOCK_SIGNAL instead of sigblock.
+	From "Golubev I. N." <gin@mo.msk.ru>.
+
+2000-08-23  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* syntax.c (regex_emacs_buffer_p): New variable.
+	* syntax.h (regex_emacs_buffer_p): extern.
+	* search.c (looking_at_1):
+	(string_match_1):
+	(fast_string_match):
+	(search_buffer): Set regex_emacs_buffer_p.
+	* regex.c (re_match_2_internal): Reference regex_emacs_buffer_p
+	when before_dot, at_dot, after_dot.
+
+2000-09-10  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* event-msw.c (mswindows_key_to_emacs_keysym):
+	Add "pause" key, fix "menu" key.
+
+2000-05-09  Ben Wing  <ben@xemacs.org>
+
+	* ntheap.c (recreate_heap): Changed unknown (VC6 only?) SIZE_T to
+	DWORD.
+
+2000-09-09  Martin Buchholz  <martin@xemacs.org>
+
+	* eval.c (reinit_vars_of_eval):
+	Increase max_lisp_eval_depth to 1000, 
+	required for thai-xtis.el to byte-compile under some circumstances.
+
+2000-09-04  Martin Buchholz  <martin@xemacs.org>
+
+	* event-Xt.c (x_to_emacs_keysym): Increase size of `buffer' to 513.
+	From Kenichi Handa.
+
+2000-11-14  Golubev I. N.  <gin@mo.msk.ru>
+
+	* faces.c (get_extent_fragment_face_cache_index):
+	Fix cachel.merged_faces memory leak.
+
+2000-11-14  "Alec Wolman" <wolman@cs.washington.edu>
+
+	* emacs.c (kill-emacs): Kill auto-save list on normal exit.
+
+2000-10-27  Martin Buchholz  <martin@xemacs.org>
+
+	* sgiplay.c: #include <unistd.h>
+
+2000-09-14  Martin Buchholz  <martin@xemacs.org>
+
+	* frame.c (device_matches_console_spec): no longer takes a `frame' arg
+	(next_frame_internal): Removed.  We now just have next_frame.
+	(next_frame):
+	Write a simpler and cleaner one-pass algorithm.
+	Remove called_from_delete_device arg and #ifdefed-out code.
+	Fixes this crash:
+	(gdb) run -eval '(progn  (make-device (quote x) "polgar:0") (next-window (minibuffer-window) t (quote visible) (second (device-list))))'
+	Fixes this crash:
+	(gdb) run -eval '(progn (make-frame nil (make-device (quote x) "polgar:0")) (next-window (minibuffer-window) t (quote visible) (second (device-list))))'
+Fatal error: assertion failed, file /project/xemacs/ws/dev/src/frame.h, line 245, RECORD_TYPEP (obj, lrecord_type_frame)
+	(previous_frame):
+	Renamed from prev_frame.  Update callers.
+	Cleaned up to have an analogous implementation to next_frame.
+	(other_visible_frames_internal): Remove the
+	called_from_delete_device bogus arg, and hence, remove this
+	function.  Just use other_visible_frames().
+
+	* frame.h: Rename prev_frame to previous_frame.
+	device_matches_console_spec no longer takes a `frame' arg.
+
+	* window.c (Fnext_window): 
+	Prettify docstring.
+	Since next_frame() is guaranteed to return a frame, remove check
+	for nil inserted in previous patch.
+	(Fprevious_window): 
+	Prettify docstring.  
+	Make code look more like Fnext_window.
+	(window_loop):
+	Respect the `console' arg when iterating through windows.
+	Fixes bug: (get-buffer-window buffer t device) not respecting
+	the `device' arg.
+	This function needs more work, as others have pointed out.
+
+2000-09-01  Martin Buchholz  <martin@xemacs.org>
+
+	* sysdep.c (get_pty_max_bytes): 
+	Support pty input lines longer than 512 bytes on HP-UX 10.20.
+
+2000-08-12  Alexandre Oliva  <aoliva@redhat.com>
+
+	* s/hpux.h: Don't use undefined function sigunblock().
+
+2000-08-31  Martin Buchholz  <martin@xemacs.org>
+
+	* config.h.in: Add HAVE_BALLOON_HELP.
+	* emacs.c: Use HAVE_BALLOON_HELP.
+	* Makefile.in.in (x_objs):
+	Make Balloon Help conditional on finding shape.h.
+
+2000-08-07  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* eval.c (Ffunction_min_args): 
+	(Ffunction_max_args): GCPRO function.
+
+2000-08-06  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* eval.c (Ffunction_min_args): 
+	(Ffunction_max_args): If function needs to be autoloaded actually
+	use the loaded definition. 
+
 2000-08-04  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.12 is released
@@ -1503,7 +1684,7 @@
 1998-07-17  Olivier Galibert  <galibert@pobox.com>
 
 	* glyphs-x.c (convert_EImage_to_XImage):  Fix previous patch (conv
-	byte order is dependant  of  the local  byte order).
+	byte order is dependent  of  the local  byte order).
 	From Takeshi Hagiwara <hagiwara@ie.niigata-u.ac.jp>
 
 1998-07-18  SL Baur  <steve@altair.xemacs.org>

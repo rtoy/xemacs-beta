@@ -2253,7 +2253,8 @@ If nil, use `comment-end' instead."
   :group 'fill-comments)
 
 (defun indent-for-comment ()
-  "Indent this line's comment to comment column, or insert an empty comment."
+  "Indent this line's comment to comment column, or insert an empty
+comment.  Comments starting in column 0 are not moved."
   (interactive "*")
   (let* ((empty (save-excursion (beginning-of-line)
 				(looking-at "[ \t]*$")))
@@ -2280,13 +2281,19 @@ If nil, use `comment-end' instead."
 		     (skip-syntax-backward "^ " (match-beginning 0)))))
 	(setq begpos (point))
 	;; Compute desired indent.
-	(if (= (current-column)
-	       (setq indent (funcall comment-indent-function)))
-	    (goto-char begpos)
+        ;; XEmacs change: Preserve indentation of comments starting in
+        ;; column 0, as documented.
+	(cond
+	 ((= (current-column) 0)
+	  (goto-char begpos))
+	 ((= (current-column)
+	     (setq indent (funcall comment-indent-function)))
+	  (goto-char begpos))
+	 (t
 	  ;; If that's different from current, change it.
 	  (skip-chars-backward " \t")
 	  (delete-region (point) begpos)
-	  (indent-to indent))
+	  (indent-to indent)))
 	;; An existing comment?
 	(if cpos
 	    (progn (goto-char cpos)
@@ -2322,7 +2329,7 @@ With any other arg, set comment column to indentation of the previous comment
 (defun kill-comment (arg)
   "Kill the comment on this line, if any.
 With argument, kill comments on that many lines starting with this one."
-  ;; this function loses in a lot of situations.  it incorrectly recognises
+  ;; this function loses in a lot of situations.  it incorrectly recognizes
   ;; comment delimiters sometimes (ergo, inside a string), doesn't work
   ;; with multi-line comments, can kill extra whitespace if comment wasn't
   ;; through end-of-line, et cetera.
@@ -2610,7 +2617,7 @@ indicating whether soft newlines should be inserted.")
 			(= (point) fill-point))
 		      ;; 1999-09-17 hniksic: turn off Kinsoku until
 		      ;; it's debugged.
-		      (indent-new-comment-line)
+		      (funcall comment-line-break-function)
 		      ;; 97/3/14 jhod: Kinsoku processing
 ;		      ;(indent-new-comment-line)
 ;		      (let ((spacep (memq (char-before (point)) '(?\  ?\t))))
@@ -2760,6 +2767,7 @@ for `auto-fill-function' when turning Auto Fill mode on."
 
 (defun turn-on-auto-fill ()
   "Unconditionally turn on Auto Fill mode."
+  (interactive)
   (auto-fill-mode 1))
 
 (defun set-fill-column (arg)
@@ -3898,7 +3906,7 @@ See also `log-warning-minimum-level' and `display-warning-minimum-level'.")
   "List of classes of warnings that shouldn't be displayed.
 If any of the CLASS symbols associated with a warning is the same as
 any of the symbols listed here, the warning will not be displayed.
-The warning will still logged in the *Warnings* buffer (unless also
+The warning will still be logged in the *Warnings* buffer (unless also
 contained in `log-warning-suppressed-classes'), but the buffer will
 not be automatically popped up.
 

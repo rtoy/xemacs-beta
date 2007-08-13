@@ -1,3 +1,149 @@
+2001-01-07  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.13 is released
+
+2000-12-08  Adrian Aichner  <adrian@xemacs.org>
+
+	* simple.el (indent-for-comment): Preserve indentation of comments
+	starting in column 0, as documented in (Info-goto-node
+	"(xemacs)Comments").  Update docstring accordingly.
+	* simple.el (kill-comment): Typo fix.
+
+2000-12-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule/mule-coding.el: Reorder coding priority list.  Works around
+	crash in ISO-lock coding system reported by M. Fabian.
+
+2000-12-04  Didier Verna  <didier@xemacs.org>
+
+	* mouse.el (default-mouse-track-set-point-in-window): remove
+	spurious '+' operation detected by Martin.
+
+2000-12-01  Martin Bucholz <martin@xemacs.org>
+
+	* cl-extra.el (coerce): 
+	Implement char to integer coercion.
+	Remove extraneous (numberp) test.
+
+2000-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* cus-face.el: Typo fixes and tiny clarifications.
+
+2000-10-24  Didier Verna  <didier@xemacs.org>
+
+	* info.el (Info-emacs-info-file-name): defconst it.
+	* info.el (Info-footnote-tag): defcustom it.
+	* info.el (Info-no-description-string): ditto.
+	* info.el (Info-find-node): adapt to new semantics of
+	'Info-suffixed-file (don't do the case variants stuff).
+	* info.el (Info-insert-dir): rewrite the dir file variants code.
+	* info.el (Info-directory-files): New. Return the list of info
+	files in a directory.
+	* info.el (Info-dir-outdated-p): use it.
+	* info.el (Info-parse-dir-entries): ditto.
+	* info.el (Info-build-dir-anew): don't restrict to files ending
+	with a ".info.*" extension.
+	* info.el (Info-set-mode-line): ditto.
+	* info.el (Info-read-subfile): adapt to new semantics of
+	'Info-suffixed-file (append 'exact argument).
+	* info.el (Info-all-case-regexp): New. Return a regexp matching a
+	string independently of the case.
+	* info.el (Info-suffixed-file): use it (match all possible case
+	for the file name).
+	* info.el (Info-insert-file-contents): code cleanup.
+	* info.el (Info-rebuild-dir): cosmetics only. Fit code in 80
+	columns.
+	* info.el (Info-batch-rebuild-dir): ditto.
+	* info.el (Info-search): ditto.
+	* info.el (Info-fontify-node): ditto.
+
+2000-12-03  Jorma Laaksonen <jorma.laaksonen@hut.fi>
+
+	* package-admin.el: Allow package removal from
+	early-package-load-path.
+
+2000-10-16  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* byte-optimize.el (byte-after-unbind-pos): Remove byte-equal.
+
+2000-10-26  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* startup.el (normal-top-level): Set up auto-save-list-file-name
+	iff auto-save-list-prefix is non-nil.
+
+2000-04-18  Hrvoje Niksic  <hniksic@iskon.hr>
+
+	* code-files.el (convert-mbox-coding-system): Deleted.
+	(file-coding-system-alist): Removed reference to
+	convert-mbox-coding-system.
+
+1999-10-29  Hrvoje Niksic  <hniksic@iskon.hr>
+
+	* font-lock.el (font-lock-lisp-like): New function.
+	(font-lock-fontify-syntactically-region): Use it.
+
+2000-10-11  Martin Buchholz  <martin@xemacs.org>
+
+	* simple.el (turn-on-auto-fill):  Add (interactive).
+	* mwheel.el (mwheel-install): Add (interactive).
+	* font-lock.el (turn-on-font-lock): Add (interactive).
+	(turn-off-font-lock): Add (interactive).
+
+2000-10-08  Adrian Aichner  <adrian@xemacs.org>
+
+	* wid-edit.el (widget-specify-active): map over extents in current
+	buffer like `widget-specify-inactive' does.  Mapping over the
+	inactive extent object does not work since the current extent is
+	ignored by `map-extents'.
+
+1999-06-02  Oscar Figueiredo  <oscar@xemacs.org>
+
+        * subr.el (split-string): Avoid infinite looping
+
+2000-10-12  Daniel Pittman  <daniel@rimspace.net>
+
+	* simple.el (do-auto-fill): Use the function pointer to by
+	`comment-line-break-function', not `indent-new-comment-line'. This
+	fixes an issue with cc-mode comment continuation.
+
+2000-11-18  Stephen Carney <carney@scubadoo.com>
+
+	* etags.el: Prevent tag-search from going compute-bound.
+
+2000-09-19  Martin Buchholz  <martin@xemacs.org>
+
+	* easymenu.el: doc fixes.
+	(easy-menu-do-define): Use backquote.
+	(easy-menu-change): 
+	(easy-menu-add): 
+	`when' seems much clearer than `if' here.
+	(easy-menu-remove):
+	(easy-menu-add-item): 
+	(easy-menu-item-present-p): 
+	(easy-menu-remove-item): 
+	Wrap using (when (featurep 'menubar) ...)
+
+2000-09-12  Martin Buchholz  <martin@xemacs.org>
+
+	* bytecomp.el (byte-compile-file-form-defvar-or-defconst): 
+	Renamed from `byte-compile-file-form-defvar'.
+	* bytecomp.el (byte-compile-defvar-or-defconst):
+	Only cons onto current-load-list in top-level forms.
+	Else this leaks a cons cell every time a defun is called.
+	Renamed from `byte-compile-defvar', for clarity.
+	Warn when docstring of defvar is not a string.
+	Use consistent error messages.
+	Better comments.
+
+2000-09-11  Martin Buchholz  <martin@xemacs.org>
+
+	* cl-macs.el (cl-do-proclaim):
+	Fix (declare (special ...)) warning suppression syntax.
+
+2000-08-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule/mule-init.el (auto-language-alist):  Distinguish zh_CN, zh_TW.
+
 2000-08-04  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.12 is released
@@ -1154,7 +1300,7 @@
 	  in addition for .tar.gz files.  Tries to reload
 	  auto-autoloads, as a convenience when loading new packages,
 	  and also tries to add any new package paths to `load-path'.
- 	  Changed all occurences of `concat' to use `expand-file-name'.
+ 	  Changed all occurrences of `concat' to use `expand-file-name'.
 
 	* package-ui.el: New file which implements the main visual
 	  package browser/installer, which is started via a menu pick or 
@@ -1400,7 +1546,7 @@
 
 	* find-paths.el (paths-emacs-root-p):
 	  Relaxed emacs-root checking of an in-place installation to
-	  also accomodate the flat layout used on MS Windows.
+	  also accommodate the flat layout used on MS Windows.
 
 1998-06-29  John Jones  <jj@asu.edu>
 
@@ -2729,7 +2875,7 @@ Wed Apr 22 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
 
 1998-04-19  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
 
-	* info.el (Info-maybe-update-dir): Bug fix in `conservative' behaviour
+	* info.el (Info-maybe-update-dir): Bug fix in `conservative' behavior
 	(Info-build-dir-anew): Add a final newline.  
 	(Info-build-dir-anew): Do not issue warning when rebuilding policy 
 	is `always'
@@ -4110,7 +4256,7 @@ Tue Feb 17 12:50:37 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* dumped-lisp.el: x-menubar.el dumped along with mswindows native
 	  GUI XEmacs. Rename? x-menubar is rather window system
-	  independant, except for a couple of items.
+	  independent, except for a couple of items.
 
 1997-12-26  SL Baur  <steve@altair.xemacs.org>
 

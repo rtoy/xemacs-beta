@@ -101,7 +101,7 @@ value of the `user-full-name' variable.  The `user-full-name' variable
 is initialized using the environment variable NAME and (failing that)
 the user's system name.
 
-The behaviour of the `user-full-name' function with an argument
+The behavior of the `user-full-name' function with an argument
 specified is unchanged.
 
 ** The new command `M-x customize-changed-options' lets you customize
@@ -316,7 +316,7 @@ updated by the `gnus-start-date-timer' command.
 subsystem.  If the `dir' file does not exist in an Info directory, the
 relevant information will be generated on-the-fly.
 
-This behaviour can be customized, look for `Info-auto-generate-directory'
+This behavior can be customized, look for `Info-auto-generate-directory'
 and `Info-save-auto-generated-dir' in the `info' customization group.
 
 ** Version Control is no longer automatically loaded.  Users must
@@ -610,14 +610,14 @@ following XEmacs packages that used to break this have been changed.
 *** Loading `jka-compr' no longer enables on-the-fly compression.  Use
 `toggle-auto-compression' instead.
 
-*** Loading `id-select' no longer enables its behaviour.  Use
+*** Loading `id-select' no longer enables its behavior.  Use
 `id-select-install' instead.
 
 ** Zmacs region is not deactivated when an error is signaled.
 
 The behavior of the zmacs region can now be controlled in the event of
 a signaled error.  The new variable `errors-deactivate-region' may be
-set to nil to revert to the old behaviour.  As before, typing C-g
+set to nil to revert to the old behavior.  As before, typing C-g
 deactivates the region.
 
 ** Multiple Info `dir' functionality has been merged with GNU Emacs
@@ -727,7 +727,7 @@ can use Customize to add or remove the histories being saved.
 ** The default format for ChangeLog entries (as created by `C-x 4 a')
 is now the international ISO 8601 format.
 
-To revert to the old behaviour, use:
+To revert to the old behavior, use:
 
    (setq add-log-time-format 'current-time-string)
 

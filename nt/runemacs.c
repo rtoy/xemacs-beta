@@ -114,6 +114,12 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
                 else
                   {
                     strcat(new_cmdline, "\\");
+		    /* #### Horrible kludge to get round 1.1.6 bug in readlink. */
+                    p = strrchr (real_name, '.');
+                    if (p[1] == 'e' || p[1] == 'E'
+			&& p[2] == 'x' || p[2] == 'X'
+			&& p[3] == 'e' || p[3] == 'E')
+		      p[4] = 0;
                     strcat(new_cmdline, real_name);
                     strcat(new_cmdline, " ");
                   }

@@ -55,6 +55,7 @@ SHELL = /bin/sh
 LANG = C
 RM = rm -f
 pwd = /bin/pwd
+TAR = tar
 
 ## ==================== Things `configure' Might Edit ====================
 
@@ -424,8 +425,8 @@ install-arch-indep: mkdir info
 	     -a "`(cd $${dir} && $(pwd))`" != \
 		"`(cd $${dest} && $(pwd))`" \
 	   && (echo "Copying $${dir}..." ; \
-	       (cd $${dir} && tar -cf - . ) | \
-		(cd $${dest} && umask 022 && tar -xf - );\
+              (cd $${dir} && $(TAR) -cf - . ) | \
+               (cd $${dest} && umask 022 && $(TAR) -xf - );\
 	       chmod 0755 $${dest}; \
 	       for subdir in `find $${dest} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; do \
 		 (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; \

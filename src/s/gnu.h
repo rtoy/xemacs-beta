@@ -83,7 +83,7 @@ Boston, MA 02111-1307, USA.  */
   {						\
     char *ptsname(), *ptyname;			\
 						\
-    sigblock(sigmask(SIGCHLD));			\
+    EMACS_BLOCK_SIGNAL (SIGCHLD);		\
     if (grantpt(fd) == -1)			\
       fatal("could not grant slave pty");	\
     if (unlockpt(fd) == -1)			\
@@ -92,7 +92,7 @@ Boston, MA 02111-1307, USA.  */
       fatal ("could not enable slave pty");	\
     strncpy(pty_name, ptyname, sizeof(pty_name)); \
     pty_name[sizeof(pty_name) - 1] = 0;		\
-    sigsetmask(siggetmask() & ~sigmask(SIGCHLD));	\
+    EMACS_UNBLOCK_SIGNAL (SIGCHLD);		\
   }
 
 #endif

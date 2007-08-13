@@ -405,7 +405,7 @@ File name returned is relative to tag table file's directory."
 (defun buffer-tag-table-files ()
   "Returns a list of all files referenced by all TAGS tables that 
 this buffer uses."
-  (apply #'nconc
+  (apply #'append
 	 (mapcar #'tag-table-files (buffer-tag-table-list))))
 
 
@@ -1064,7 +1064,7 @@ See documentation of variable `tag-table-alist'."
 
 ;; Sample uses of find-tag-hook and find-tag-default-hook
 
-;; This is wrong.  We should either make this behaviour default and
+;; This is wrong.  We should either make this behavior default and
 ;; back it up, or not use it at all.  For now, I've commented it out.
 ;; --hniksic
 

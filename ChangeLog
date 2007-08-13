@@ -1,3 +1,59 @@
+2001-01-07  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.13 is released
+
+2000-12-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* PROBLEMS (Running/Linux):  Mandrake, use Alt for M-, color-gcc.
+
+1999-11-17  Isaac Hollander  <ysh@mindspring.com>
+
+	* Makefile.in: add and use TAR macro.  Sometimes tar only copies
+	symlinks instead of the actual files
+
+2000-11-01  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Handle alloca with Compaq C on Alpha Linux.
+
+2000-11-19  Vin Shelton  <acs@xemacs.org>
+
+	* ChangeLog, etc/xemacs-ja.1, etc/xemacs.1,
+	info/xemacs-faq.info-1, info/xemacs-faq.info-3, lib-src/etags.c,
+	lib-src/ootags.c, lisp/ChangeLog.1, man/xemacs-faq.texi:
+	Changed mly@adoc.xerox.com to Mly@POBox.COM.
+
+2000-10-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* README.packages: Add "uninstalled package" FAQ.
+
+	* etc/PACKAGES: Add details on os-utils contents.
+
+2000-09-13  Martin Buchholz  <martin@xemacs.org>
+
+	* frame.c (next_frame_internal):
+	We've passed a frame if we've passed its device.
+	Fixes this crash:
+	(gdb) run -eval '(progn (make-frame nil (make-device (quote x) "polgar:0")) (next-window (minibuffer-window) t (quote visible) (second (device-list))))'
+Fatal error: assertion failed, file /project/xemacs/ws/dev/src/frame.h, line 245, RECORD_TYPEP (obj, lrecord_type_frame)
+
+2000-08-24  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* find-paths.el (paths-decode-directory-path): Trivial typo fix.
+	* simple.el (display-warning-suppressed-classes): Ditto.
+
+2000-08-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etc/Emacs.ad (Fonts.):  Fix typo and clarify.
+
+2000-08-22  SL Baur  <steve@turbolinux.co.jp>
+
+	* configure.in (after_morecore_hook_exists): Don't add /usr/shlib
+	to link path if compiling on Alpha/Linux.
+
+2000-08-31  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Make Balloon Help conditional on finding shape.h
+
 2000-08-04  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.12 is released
@@ -823,7 +879,7 @@
 
 Sat Apr 24 1998  Andy Piper  <andyp@parallax.co.uk>
 
-	* configure.in: make graphic libraries tests be dependant on a
+	* configure.in: make graphic libraries tests be dependent on a
 	window system not X11 only.
 
 Fri Apr 24 19:38:19 1998  Andy Piper  <andyp@parallax.co.uk>
@@ -3560,7 +3616,7 @@ Sat Dec 28 15:33:27 1996 Steven L Baur  <steve@altair.xemacs.org>
 	* XEmacs 20.0 beta 33 is released.
 	* XEmacs 19.15 beta 6 is released.
 
-Fri Dec 27 20:34:58 1996  Richard Mlynarik  <mly@adoc.xerox.com>
+Fri Dec 27 20:34:58 1996  Richard Mlynarik  <Mly@POBox.COM>
 
 	* etc/yow.lines: 20k of new zippy quotes.
 

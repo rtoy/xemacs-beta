@@ -41,7 +41,7 @@
 ;;; Code:
 
 (defgroup minibuffer nil
-  "Controling the behaviour of the minibuffer."
+  "Controling the behavior of the minibuffer."
   :group 'environment)
 
 
@@ -52,7 +52,7 @@
 
 (defcustom minibuffer-history-uniquify t
   "*Non-nil means when adding an item to a minibuffer history, remove
-previous occurances of the same item from the history list first,
+previous occurrences of the same item from the history list first,
 rather than just consing the new element onto the front of the list."
   :type 'boolean
   :group 'minibuffer)

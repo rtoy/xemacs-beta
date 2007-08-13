@@ -276,7 +276,7 @@ recreate_heap (char *executable_path)
   /* Query the region at the end of the committed heap */
   void *tmp;
   MEMORY_BASIC_INFORMATION info;
-  SIZE_T size;
+  DWORD size;
   unsigned char* base = get_heap_end ();
   unsigned char* end  = base + get_reserved_heap_size () - get_committed_heap_size ();
   VirtualQuery (base, &info, sizeof info);

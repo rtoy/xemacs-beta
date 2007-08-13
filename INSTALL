@@ -83,11 +83,11 @@ what the local users need. Note that while XEmacs will compile and
 install without any packages present at least some additional lisp
 packages are needed to bring XEmacs up to "normal" editor
 functionality. Installation and upgrading of the packages can be done
-almost automatically when from inside XEmacs when it has been compiled
+almost automatically from inside XEmacs when it has been compiled
 and installed.
 
-More information and suggestions for which packages to install see the
-file README.packages.
+For more information and suggestions regarding packages to install see
+the file README.packages.
 
 IMPORTANT! The file README.packages contain information vital to have
 a fully working XEmacs. This information was not included in this file

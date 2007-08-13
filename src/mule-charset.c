@@ -947,10 +947,8 @@ Recognized properties are those listed in `make-charset', as well as
   if (EQ (prop, Qreverse_direction_charset))
     {
       Lisp_Object obj = CHARSET_REVERSE_DIRECTION_CHARSET (cs);
-      if (NILP (obj))
-	return Qnil;
-      else
-	return XCHARSET_NAME (obj);
+      /* #### Is this translation OK?  If so, error checking sufficient? */
+      return CHARSETP (obj) ? XCHARSET_NAME (obj) : obj;
     }
   signal_simple_error ("Unrecognized charset property name", prop);
   return Qnil; /* not reached */

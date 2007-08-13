@@ -2510,7 +2510,7 @@ A user event is a key press, button press, button release, or
    All of these routines install timeouts, so we clear the installed
    timeout as well.
 
-   Note: It's very easy to break the desired behaviours of these
+   Note: It's very easy to break the desired behaviors of these
    3 routines.  If you make any changes to anything in this area, run
    the regression tests at the bottom of the file.  -- dmoore */
 
@@ -3497,7 +3497,7 @@ command_builder_find_menu_accelerator (struct command_builder *builder)
   if (menubar_widget
       && CONSP (Vmenu_accelerator_modifiers))
     {
-      Lisp_Object fake;
+      Lisp_Object fake = Qnil;
       Lisp_Object last = Qnil;
       struct gcpro gcpro1;
       Lisp_Object matchp;
@@ -3878,7 +3878,6 @@ modify them.
   Lisp_Object val = Qnil;
   int nwanted;
   int start, nkeys, i, j;
-  GCPRO1 (val);
 
   if (NILP (number))
     nwanted = recent_keys_ring_size;
@@ -3918,6 +3917,7 @@ modify them.
   else
     nwanted = nkeys;
 
+  GCPRO1 (val);
   val = make_vector (nwanted, Qnil);
 
   for (i = 0, j = start; i < nkeys; i++)
@@ -3951,7 +3951,6 @@ Set the maximum number of events to be stored internally.
   Lisp_Object new_vector = Qnil;
   int i, j, nkeys, start, min;
   struct gcpro gcpro1;
-  GCPRO1 (new_vector);
 
   CHECK_INT (size);
   if (XINT (size) <= 0)
@@ -3959,11 +3958,13 @@ Set the maximum number of events to be stored internally.
   if (XINT (size) == recent_keys_ring_size)
     return size;
 
+  GCPRO1 (new_vector);
   new_vector = make_vector (XINT (size), Qnil);
 
   if (NILP (Vrecent_keys_ring))
     {
       Vrecent_keys_ring = new_vector;
+      UNGCPRO;
       return size;
     }
 

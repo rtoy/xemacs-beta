@@ -176,8 +176,14 @@
 ;; so that the remaining Lisp files can contain extended characters.
 ;; (They will be in ISO-7 format)
 
-(set-coding-priority-list '(iso-8-2 iso-8-designate iso-8-1
-			    iso-7 iso-lock-shift no-conversion))
+(set-coding-priority-list '(iso-8-2
+			    iso-8-1
+			    iso-7
+			    no-conversion
+			    ;; these two can cause core dump in some
+			    ;; circumstances
+			    iso-lock-shift
+			    iso-8-designate))
 
 (set-coding-category-system 'iso-7 'iso-2022-7)
 (set-coding-category-system 'iso-8-designate 'ctext)

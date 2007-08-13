@@ -1,3 +1,16 @@
+2001-01-07  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.13 is released
+
+2000-12-18  Andy Piper  <andy@xemacs.org>
+
+	* runemacs.c (WinMain): force a trailing 0 on the filename.
+
+2000-10-07  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* xemacs.mak (default): Enforce running nmake from xemacs.mak's
+	directory to avoid problems with relative paths.
+
 2000-08-04  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.12 is released

@@ -528,7 +528,7 @@ enum Lisp_Type
   Lisp_Type_Int,
 
   /* XRECORD_LHEADER (object) points to a struct lrecord_header
-     lheader->implementation determines the type (and GC behaviour)
+     lheader->implementation determines the type (and GC behavior)
      of the object. */
   Lisp_Type_Record,
 

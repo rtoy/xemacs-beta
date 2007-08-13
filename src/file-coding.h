@@ -417,28 +417,36 @@ do {						\
 
 
 /* For detecting the encoding of text */
+/* The order is chosen so that by default only ISO 2022 7-bit encodings
+   are auto-detected.  These are needed for Mule files. */
 enum coding_category_type
 {
 #ifdef MULE
-  CODING_CATEGORY_SHIFT_JIS,
   CODING_CATEGORY_ISO_7, /* ISO2022 system using only seven-bit bytes,
 			    no locking shift */
-  CODING_CATEGORY_ISO_8_DESIGNATE, /* ISO2022 system using eight-bit bytes,
-				      no locking shift, no single shift,
-				      using designation to switch charsets */
+  CODING_CATEGORY_NO_CONVERSION,
   CODING_CATEGORY_ISO_8_1, /* ISO2022 system using eight-bit bytes,
 			      no locking shift, no designation sequences,
 			      one-dimension characters in the upper half. */
   CODING_CATEGORY_ISO_8_2, /* ISO2022 system using eight-bit bytes,
 			      no locking shift, no designation sequences,
 			      two-dimension characters in the upper half. */
+  CODING_CATEGORY_ISO_8_DESIGNATE, /* ISO2022 system using eight-bit bytes,
+				      no locking shift, no single shift,
+				      using designation to switch charsets */
   CODING_CATEGORY_ISO_LOCK_SHIFT, /* ISO2022 system using locking shift */
   CODING_CATEGORY_BIG5,
-#endif /* MULE */
+  CODING_CATEGORY_SHIFT_JIS
+#else /* MULE */
   CODING_CATEGORY_NO_CONVERSION
+#endif /* not MULE */
 };
 
+#ifdef MULE
+#define CODING_CATEGORY_LAST CODING_CATEGORY_SHIFT_JIS
+#else
 #define CODING_CATEGORY_LAST CODING_CATEGORY_NO_CONVERSION
+#endif
 
 #ifdef MULE
 #define CODING_CATEGORY_SHIFT_JIS_MASK	\

@@ -772,7 +772,11 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
   
 #ifdef HAVE_XIM
   int len;
-  char buffer[64];
+  /* Some implementations of XmbLookupString don't return
+     XBufferOverflow correctly, so increase the size of the xim input
+     buffer from 64 to the more reasonable size 513, as Emacs has done.
+     From Kenichi Handa. */
+  char buffer[513];
   char *bufptr = buffer;
   int   bufsiz = sizeof (buffer);
   Status status;
@@ -1119,10 +1123,11 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	    Lisp_Object l_dndlist = Qnil, l_item = Qnil;
 	    struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
-	    GCPRO4 (l_type, l_data, l_dndlist, l_item);
-
 	    if (! frame)
 	      return 0;	/* not for us */
+
+	    GCPRO4 (l_type, l_data, l_dndlist, l_item);
+
 	    XSETFRAME (emacs_event->channel, frame);
 
 	    emacs_event->event_type = misc_user_event;

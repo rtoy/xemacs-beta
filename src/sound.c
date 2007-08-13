@@ -594,7 +594,7 @@ of sounds.  Otherwise, sounds are always played synchronously.
   DEFVAR_LISP ("native-sound-only-on-console", &Vnative_sound_only_on_console /*
 Non-nil value means play sounds only if XEmacs is running
 on the system console.
-Nil means always always play sounds, even if running on a non-console tty
+Nil means always play sounds, even if running on a non-console tty
 or a secondary X display.
 
 This variable only applies to native sound support.

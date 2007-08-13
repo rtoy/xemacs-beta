@@ -369,7 +369,7 @@ save_excursion_restore (Lisp_Object info)
 	 and cleaner never to alter the window/buffer connections.  */
       /* I'm certain some code somewhere depends on this behavior. --jwz */
       /* Even if it did, it certainly doesn't matter anymore, because
-         this has been the behaviour for countless XEmacs releases
+         this has been the behavior for countless XEmacs releases
          now.  --hniksic */
       if (visible
 	  && (current_buffer != XBUFFER (XWINDOW (selected_window)->buffer)))

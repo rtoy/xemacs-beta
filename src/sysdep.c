@@ -389,7 +389,7 @@ void wait_for_termination (int pid)
 			  pHandle);
 	}
     }
-  if (pHandle != NULL && !CloseHandle(pHandle)) 
+  if (pHandle != NULL && !CloseHandle(pHandle))
     {
       warn_when_safe (Qprocess, Qerror,
 		      "CloseHandle fails for process handle %p.", pHandle);
@@ -778,6 +778,11 @@ get_pty_max_bytes (int fd)
 #if defined (HAVE_FPATHCONF) && defined (_PC_MAX_CANON)
   {
     int max_canon = fpathconf (fd, _PC_MAX_CANON);
+#ifdef __hpux__
+    /* HP-UX 10.20 fpathconf returns 768, but this results in
+       truncated input lines, while 255 works. */
+    if (max_canon > 255) max_canon = 255;
+#endif
     return (max_canon < 0 ? SAFE_MAX_CANON :
 	    max_canon > SAFE_MAX_CANON ? max_canon - MAX_CANON_SLACK :
 	    max_canon);

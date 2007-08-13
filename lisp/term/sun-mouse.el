@@ -538,7 +538,7 @@ where each mouse-list is bound to the function in REGION."
 
 (defun describe-mouse-briefly (mouse-list)
   "Print a short description of the function bound to MOUSE-LIST."
-  (interactive "xDescibe mouse list briefly: ")
+  (interactive "xDescribe mouse list briefly: ")
   (let ((function (mouse-lookup (mouse-list-to-mouse-code mouse-list))))
     (if function
 	(message "%s runs the command %s" mouse-list function)

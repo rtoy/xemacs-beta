@@ -2330,7 +2330,6 @@ int mswindows_modifier_state (BYTE* keymap, int has_AltGr)
  * Translate a mswindows virtual key to a keysym.
  * Only returns non-Qnil for keys that don't generate WM_CHAR messages
  * or whose ASCII codes (like space) xemacs doesn't like.
- * Virtual key values are defined in winresrc.h
  */
 Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
 					   int extendedp)
@@ -2339,6 +2338,7 @@ Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
     {
       switch (mswindows_key)
         {
+	case VK_CANCEL:		return KEYSYM ("pause");
 	case VK_RETURN:		return KEYSYM ("kp-enter");
 	case VK_PRIOR:		return KEYSYM ("prior");
 	case VK_NEXT:		return KEYSYM ("next");
@@ -2350,6 +2350,11 @@ Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
 	case VK_DOWN:		return KEYSYM ("down");
 	case VK_INSERT:		return KEYSYM ("insert");
 	case VK_DELETE:		return QKdelete;
+#if 0	/* FSF Emacs allows these to return configurable syms/mods */
+	case VK_LWIN		return KEYSYM ("");
+	case VK_RWIN		return KEYSYM ("");
+#endif
+	case VK_APPS:		return KEYSYM ("menu");
 	}
     }
   else
@@ -2361,6 +2366,7 @@ Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
 	case '\n':		return QKlinefeed;
 	case VK_CLEAR:		return KEYSYM ("clear");
 	case VK_RETURN:		return QKreturn;
+	case VK_PAUSE:		return KEYSYM ("pause");
 	case VK_ESCAPE:		return QKescape;
 	case VK_SPACE:		return QKspace;
 	case VK_PRIOR:		return KEYSYM ("kp-prior");
@@ -2378,11 +2384,6 @@ Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
 	case VK_INSERT:		return KEYSYM ("kp-insert");
 	case VK_DELETE:		return KEYSYM ("kp-delete");
 	case VK_HELP:		return KEYSYM ("help");
-#if 0	/* FSF Emacs allows these to return configurable syms/mods */
-	case VK_LWIN		return KEYSYM ("");
-	case VK_RWIN		return KEYSYM ("");
-#endif
-	case VK_APPS:		return KEYSYM ("menu");
 	case VK_NUMPAD0:	return KEYSYM ("kp-0");
 	case VK_NUMPAD1:	return KEYSYM ("kp-1");
 	case VK_NUMPAD2:	return KEYSYM ("kp-2");

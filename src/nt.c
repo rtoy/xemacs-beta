@@ -1169,7 +1169,7 @@ sys_rename (const char * oldname, const char * newname)
 	return -1;
     }
 
-  /* Emulate Unix behaviour - newname is deleted if it already exists
+  /* Emulate Unix behavior - newname is deleted if it already exists
      (at least if it is a file; don't do this for directories).
      However, don't do this if we are just changing the case of the file
      name - we will end up deleting the file we are trying to rename!  */

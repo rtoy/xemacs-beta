@@ -4602,7 +4602,7 @@ various elisp commands, as for example @code{or},
 miscellaneous @code{gui_item_...} functions, everything related to
 @code{eval} (@code{Feval_buffer}, @code{call0}, ...) and inside
 @code{Fsignal}. The latter is used to handle signals, as for example the
-ones raised by every @code{QUITE}-macro triggered after pressing Ctrl-g.
+ones raised by every @code{QUIT}-macro triggered after pressing Ctrl-g.
 
 @node garbage_collect_1
 @subsection @code{garbage_collect_1}
@@ -6560,19 +6560,19 @@ Many are accessible indirectly in Lisp programs via Lisp primitives.
 @table @code
 @item name
 The buffer name is a string that names the buffer.  It is guaranteed to
-be unique.  @xref{Buffer Names,,, lispref, XEmacs Lisp Programmer's
+be unique.  @xref{Buffer Names,,, lispref, XEmacs Lisp Reference
 Manual}.
 
 @item save_modified
 This field contains the time when the buffer was last saved, as an
-integer.  @xref{Buffer Modification,,, lispref, XEmacs Lisp Programmer's
+integer.  @xref{Buffer Modification,,, lispref, XEmacs Lisp Reference
 Manual}.
 
 @item modtime
 This field contains the modification time of the visited file.  It is
 set when the file is written or read.  Every time the buffer is written
 to the file, this field is compared to the modification time of the
-file.  @xref{Buffer Modification,,, lispref, XEmacs Lisp Programmer's
+file.  @xref{Buffer Modification,,, lispref, XEmacs Lisp Reference
 Manual}.
 
 @item auto_save_modified
@@ -6584,39 +6584,39 @@ the last time the buffer was displayed in a window.
 
 @item undo_list
 This field points to the buffer's undo list.  @xref{Undo,,, lispref,
-XEmacs Lisp Programmer's Manual}.
+XEmacs Lisp Reference Manual}.
 
 @item syntax_table_v
 This field contains the syntax table for the buffer.  @xref{Syntax
-Tables,,, lispref, XEmacs Lisp Programmer's Manual}.
+Tables,,, lispref, XEmacs Lisp Reference Manual}.
 
 @item downcase_table
 This field contains the conversion table for converting text to lower
-case.  @xref{Case Tables,,, lispref, XEmacs Lisp Programmer's Manual}.
+case.  @xref{Case Tables,,, lispref, XEmacs Lisp Reference Manual}.
 
 @item upcase_table
 This field contains the conversion table for converting text to upper
-case.  @xref{Case Tables,,, lispref, XEmacs Lisp Programmer's Manual}.
+case.  @xref{Case Tables,,, lispref, XEmacs Lisp Reference Manual}.
 
 @item case_canon_table
 This field contains the conversion table for canonicalizing text for
 case-folding search.  @xref{Case Tables,,, lispref, XEmacs Lisp
-Programmer's Manual}.
+Reference Manual}.
 
 @item case_eqv_table
 This field contains the equivalence table for case-folding search.
-@xref{Case Tables,,, lispref, XEmacs Lisp Programmer's Manual}.
+@xref{Case Tables,,, lispref, XEmacs Lisp Reference Manual}.
 
 @item display_table
 This field contains the buffer's display table, or @code{nil} if it
 doesn't have one.  @xref{Display Tables,,, lispref, XEmacs Lisp
-Programmer's Manual}.
+Reference Manual}.
 
 @item markers
 This field contains the chain of all markers that currently point into
 the buffer.  Deletion of text in the buffer, and motion of the buffer's
 gap, must check each of these markers and perhaps update it.
-@xref{Markers,,, lispref, XEmacs Lisp Programmer's Manual}.
+@xref{Markers,,, lispref, XEmacs Lisp Reference Manual}.
 
 @item backed_up
 This field is a flag that tells whether a backup file has been made for
@@ -6625,7 +6625,7 @@ the visited file of this buffer.
 @item mark
 This field contains the mark for the buffer.  The mark is a marker,
 hence it is also included on the list @code{markers}.  @xref{The Mark,,,
-lispref, XEmacs Lisp Programmer's Manual}.
+lispref, XEmacs Lisp Reference Manual}.
 
 @item mark_active
 This field is non-@code{nil} if the buffer's mark is active.
@@ -6635,12 +6635,12 @@ This field contains the association list describing the variables local
 in this buffer, and their values, with the exception of local variables
 that have special slots in the buffer object.  (Those slots are omitted
 from this table.)  @xref{Buffer-Local Variables,,, lispref, XEmacs Lisp
-Programmer's Manual}.
+Reference Manual}.
 
 @item modeline_format
 This field contains a Lisp object which controls how to display the mode
 line for this buffer.  @xref{Modeline Format,,, lispref, XEmacs Lisp
-Programmer's Manual}.
+Reference Manual}.
 
 @item base_buffer
 This field holds the buffer's base buffer (if it is an indirect buffer),

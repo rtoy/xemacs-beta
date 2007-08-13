@@ -6616,7 +6616,7 @@ point_would_be_visible (struct window *w, Bufpos startp, Bufpos point)
    displayed.  The end of the last line is also know as the window end
    position.
 
-   WARNING: Under some circumstances it is possible that rediplay failed
+   WARNING: Under some circumstances it is possible that redisplay failed
    to layout any lines for the windows. In that case this function returns
    0 as an error condition when may_error is non-zero and a normalized
    value of startp otherwise.

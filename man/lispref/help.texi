@@ -94,7 +94,7 @@ information to read the documentation from the appropriate file; this is
 transparent to the user.
 
   For information on the uses of documentation strings, see @ref{Help, ,
-Help, emacs, The XEmacs Reference Manual}.
+Help, xemacs, The XEmacs Reference Manual}.
 
 @c Wordy to prevent overfull hbox.  --rjc 15mar92
   The @file{emacs/lib-src} directory contains two utilities that you can

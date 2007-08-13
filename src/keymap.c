@@ -1549,7 +1549,7 @@ int
 event_matches_key_specifier_p (struct Lisp_Event *event,
 			       Lisp_Object key_specifier)
 {
-  Lisp_Object event2;
+  Lisp_Object event2 = Qnil;
   int retval;
   struct gcpro gcpro1;
 
@@ -2226,7 +2226,7 @@ it takes to reach a non-prefix command.
    map of the buffer in which the mouse was clicked in event0 is a click.
 
    It would be kind of nice if this were in Lisp so that this semi-hairy
-   semi-heuristic command-lookup behaviour could be readily understood and
+   semi-heuristic command-lookup behavior could be readily understood and
    customised.  However, this needs to be pretty fast, or performance of
    keyboard macros goes to shit; putting this in lisp slows macros down
    2-3x.  And they're already slower than v18 by 5-6x.

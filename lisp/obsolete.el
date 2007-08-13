@@ -673,7 +673,7 @@ Multibyte characters are concerned."
 
 ;; ### This function is not compatible with FSF in some cases.  Hard
 ;; to fix, because it is hard to trace the logic of the FSF function.
-;; In case we need the exact behaviour, we can always copy the FSF
+;; In case we need the exact behavior, we can always copy the FSF
 ;; version, which is very long and does lots of unnecessary stuff.
 (defun truncate-string-to-width (str end-column &optional start-column padding)
   "Truncate string STR to end at column END-COLUMN.

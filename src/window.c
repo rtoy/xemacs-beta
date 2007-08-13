@@ -80,7 +80,7 @@ Lisp_Object Vvertical_divider_shadow_thickness;
 /* Divider surface width (not counting 3-d borders) */
 Lisp_Object Vvertical_divider_line_width;
 
-/* Spacing between outer egde of divider border and window edge */
+/* Spacing between outer edge of divider border and window edge */
 Lisp_Object Vvertical_divider_spacing;
 
 /* Scroll if point lands on the bottom line and that line is partially
@@ -1562,7 +1562,7 @@ top left corner of the window.
 
 DEFUN ("window-point", Fwindow_point, 0, 1, 0, /*
 Return current value of point in WINDOW.
-For a nonselected window, this is the value point would have
+For a non-selected window, this is the value point would have
 if that window were selected.
 
 Note that, when WINDOW is the selected window and its buffer
@@ -1980,7 +1980,7 @@ will automatically call `save-buffers-kill-emacs'.)
 
 
 DEFUN ("next-window", Fnext_window, 0, 4, 0, /*
-Return next window after WINDOW in canonical ordering of windows.
+Return the next window after WINDOW in the canonical ordering of windows.
 If omitted, WINDOW defaults to the selected window.
 
 Optional second arg MINIBUF t means count the minibuffer window even
@@ -2001,7 +2001,7 @@ ALL-FRAMES = 0 means include windows on all visible and iconified frames.
 If ALL-FRAMES is a frame, restrict search to windows on that frame.
 Anything else means restrict to WINDOW's frame.
 
-Optional fourth argument CONSOLE controls which consoles or devices the
+Optional fourth arg CONSOLE controls which consoles or devices the
 returned window may be on.  If CONSOLE is a console, return windows only
 on that console.  If CONSOLE is a device, return windows only on that
 device.  If CONSOLE is a console type, return windows only on consoles
@@ -2032,8 +2032,9 @@ windows, eventually ending up back at the window you started with.
     minibuf = (minibuf_level ? minibuf_window : Qlambda);
   else if (! EQ (minibuf, Qt))
     minibuf = Qlambda;
-  /* Now minibuf can be t => count all minibuffer windows,
-     lambda => count none of them,
+  /* Now `minibuf' is one of:
+     t      => count all minibuffer windows
+     lambda => count none of them
      or a specific minibuffer window (the active one) to count.  */
 
   /* all_frames == nil doesn't specify which frames to include.  */
@@ -2054,11 +2055,12 @@ windows, eventually ending up back at the window you started with.
     return frame_first_window (XFRAME (all_frames));
   else if (! EQ (all_frames, Qt))
     all_frames = Qnil;
-  /* Now all_frames is t meaning search all frames,
-     nil meaning search just current frame,
-     visible meaning search just visible frames,
-     0 meaning search visible and iconified frames,
-     or a window, meaning search the frame that window belongs to.  */
+  /* Now `all_frames' is one of:
+     t        => search all frames
+     nil      => search just the current frame
+     visible  => search just visible frames
+     0        => search visible and iconified frames
+     a window => search the frame that window belongs to.  */
 
   /* Do this loop at least once, to get the next window, and perhaps
      again, if we hit the minibuffer and that is not acceptable.  */
@@ -2077,10 +2079,9 @@ windows, eventually ending up back at the window you started with.
 
 	    if (! NILP (all_frames))
 	      {
-		Lisp_Object tem1;
-
-		tem1 = tem;
+		Lisp_Object tem1 = tem;
 		tem = next_frame (tem, all_frames, console);
+
 		/* In the case where the minibuffer is active,
 		   and we include its frame as well as the selected one,
 		   next_frame may get stuck in that frame.
@@ -2107,7 +2108,6 @@ windows, eventually ending up back at the window you started with.
 	  else break;
 	}
     }
-  /* "acceptable" is the correct spelling. */
   /* Which windows are acceptable?
      Exit the loop and accept this window if
      this isn't a minibuffer window,
@@ -2123,7 +2123,7 @@ windows, eventually ending up back at the window you started with.
 }
 
 DEFUN ("previous-window", Fprevious_window, 0, 4, 0, /*
-Return the window preceding WINDOW in canonical ordering of windows.
+Return the window preceding WINDOW in the canonical ordering of windows.
 If omitted, WINDOW defaults to the selected window.
 
 Optional second arg MINIBUF t means count the minibuffer window even
@@ -2135,16 +2135,16 @@ Several frames may share a single minibuffer; if the minibuffer
 counts, all windows on all frames that share that minibuffer count
 too.  Therefore, `previous-window' can be used to iterate through
 the set of windows even when the minibuffer is on another frame.  If
-the minibuffer does not count, only windows from WINDOW's frame count
+the minibuffer does not count, only windows from WINDOW's frame count.
 
-If optional third arg ALL-FRAMES t means include windows on all frames.
+Optional third arg ALL-FRAMES t means include windows on all frames.
 ALL-FRAMES nil or omitted means cycle within the frames as specified
 above.  ALL-FRAMES = `visible' means include windows on all visible frames.
 ALL-FRAMES = 0 means include windows on all visible and iconified frames.
 If ALL-FRAMES is a frame, restrict search to windows on that frame.
 Anything else means restrict to WINDOW's frame.
 
-Optional fourth argument CONSOLE controls which consoles or devices the
+Optional fourth arg CONSOLE controls which consoles or devices the
 returned window may be on.  If CONSOLE is a console, return windows only
 on that console.  If CONSOLE is a device, return windows only on that
 device.  If CONSOLE is a console type, return windows only on consoles
@@ -2175,8 +2175,9 @@ windows, eventually ending up back at the window you started with.
     minibuf = (minibuf_level ? minibuf_window : Qlambda);
   else if (! EQ (minibuf, Qt))
     minibuf = Qlambda;
-  /* Now minibuf can be t => count all minibuffer windows,
-     lambda => count none of them,
+  /* Now `minibuf' is one of:
+     t      => count all minibuffer windows
+     lambda => count none of them
      or a specific minibuffer window (the active one) to count.  */
 
   /* all_frames == nil doesn't specify which frames to include.
@@ -2198,11 +2199,12 @@ windows, eventually ending up back at the window you started with.
     return frame_first_window (XFRAME (all_frames));
   else if (! EQ (all_frames, Qt))
     all_frames = Qnil;
-  /* Now all_frames is t meaning search all frames,
-     nil meaning search just current frame,
-     visible meaning search just visible frames,
-     0 meaning search visible and iconified frames,
-     or a window, meaning search the frame that window belongs to.  */
+  /* Now `all_frames' is one of:
+     t        => search all frames
+     nil      => search just the current frame
+     visible  => search just visible frames
+     0        => search visible and iconified frames
+     a window => search the frame that window belongs to.  */
 
   /* Do this loop at least once, to get the next window, and perhaps
      again, if we hit the minibuffer and that is not acceptable.  */
@@ -2220,7 +2222,7 @@ windows, eventually ending up back at the window you started with.
 	    tem = WINDOW_FRAME (XWINDOW (window));
 
 	    if (! NILP (all_frames))
-	      /* It's actually important that we use prev_frame here,
+	      /* It's actually important that we use previous_frame here,
 		 rather than next_frame.  All the windows acceptable
 		 according to the given parameters should form a ring;
 		 Fnext_window and Fprevious_window should go back and
@@ -2230,10 +2232,8 @@ windows, eventually ending up back at the window you started with.
 		 window_loop assumes that these `ring' requirement are
 		 met.  */
 	      {
-		Lisp_Object tem1;
-
-		tem1 = tem;
-		tem = prev_frame (tem, all_frames, console);
+		Lisp_Object tem1 = tem;
+		tem = previous_frame (tem, all_frames, console);
 		/* In the case where the minibuffer is active,
 		   and we include its frame as well as the selected one,
 		   next_frame may get stuck in that frame.
@@ -2419,20 +2419,19 @@ window_loop (enum window_loop type,
   int lose_lose = 0;
   Lisp_Object devcons, concons;
 
-  /* FRAME_ARG is Qlambda to stick to one frame,
-     Qvisible to consider all visible frames,
-     or Qt otherwise.  */
-
   /* If we're only looping through windows on a particular frame,
      FRAME points to that frame.  If we're looping through windows
      on all frames, FRAME is 0.  */
-
   if (FRAMEP (frames))
     frame = XFRAME (frames);
   else if (NILP (frames))
     frame = selected_frame ();
   else
     frame = 0;
+
+  /* FRAME_ARG is Qlambda to stick to one frame,
+     Qvisible to consider all visible frames,
+     or Qt otherwise.  */
   if (frame)
     frame_arg = Qlambda;
   else if (ZEROP (frames))
@@ -2453,7 +2452,10 @@ window_loop (enum window_loop type,
       if (NILP (the_frame))
 	continue;
 
-      if (!device_matches_console_spec (the_frame, device, console))
+      if (!device_matches_console_spec (device,
+					NILP (console) ?
+					FRAME_CONSOLE (XFRAME (the_frame)) :
+					console))
 	continue;
 
       /* Pick a window to start with.  */
@@ -2479,7 +2481,7 @@ window_loop (enum window_loop type,
 
 	  /* Pick the next window now, since some operations will delete
 	     the current window.  */
-	  next_window = Fnext_window (w, mini ? Qt : Qnil, frame_arg, Qt);
+	  next_window = Fnext_window (w, mini ? Qt : Qnil, frame_arg, device);
 
 	  /* #### Still needed ?? */
 	  /* Given the outstanding quality of the rest of this code,
@@ -3202,7 +3204,7 @@ Select WINDOW.  Most editing will apply to WINDOW's buffer.
 The main editor command loop selects the buffer of the selected window
 before each command.
 
-With non-nil optional argument `norecord', do not modify the
+With non-nil optional argument NORECORD, do not modify the
 global or per-frame buffer ordering.
 */
        (window, norecord))
@@ -3364,7 +3366,7 @@ make_dummy_parent (Lisp_Object window)
 DEFUN ("split-window", Fsplit_window, 0, 3, "", /*
 Split WINDOW, putting SIZE lines in the first of the pair.
 WINDOW defaults to selected one and SIZE to half its size.
-If optional third arg HOR-FLAG is non-nil, split side by side
+If optional third arg HORFLAG is non-nil, split side by side
 and put SIZE columns in the first of the pair.
 */
        (window, chsize, horflag))
@@ -4447,7 +4449,7 @@ map_windows_1 (Lisp_Object window,
    non-zero, the mapping is halted.  Otherwise, map_windows() maps
    over all windows in F.
 
-   If MAPFUN creates or deletes windows, the behaviour is undefined.  */
+   If MAPFUN creates or deletes windows, the behavior is undefined.  */
 
 int
 map_windows (struct frame *f, int (*mapfun) (struct window *w, void *closure),

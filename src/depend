@@ -142,7 +142,7 @@ marker.o: $(LISP_H) buffer.h bufslots.h lisp-disunion.h lisp-union.h lrecord.h m
 md5.o: $(LISP_H) buffer.h bufslots.h file-coding.h lisp-disunion.h lisp-union.h lrecord.h lstream.h mule-charset.h symeval.h symsinit.h
 menubar.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h frame.h frameslots.h gui.h lisp-disunion.h lisp-union.h lrecord.h menubar.h mule-charset.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h toolbar.h window.h winslots.h
 minibuf.o: $(LISP_H) buffer.h bufslots.h commands.h conslots.h console-stream.h console.h device.h events.h frame.h frameslots.h insdel.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h systime.h toolbar.h window.h winslots.h
-nas.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h syssignal.h
+nas.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h sysdep.h syssignal.h
 nt.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h nt.h ntheap.h symeval.h symsinit.h sysproc.h syssignal.h systime.h
 ntheap.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h ntheap.h symeval.h symsinit.h
 ntplay.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h sysfile.h

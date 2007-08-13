@@ -341,7 +341,10 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       gui_parse_item_keywords (item, &gui_item);
 
       if (!gui_item_included_p (&gui_item, Vmenubar_configuration))
-	return;
+	{
+	  UNGCPRO;
+	  return;
+	}
 
       if (!gui_item_active_p (&gui_item))
 	item_info.fState = MFS_GRAYED;

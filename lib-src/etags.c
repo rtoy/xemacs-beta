@@ -3730,7 +3730,7 @@ Lisp_functions (inf)
 /*
  * Postscript tag functions
  * Just look for lines where the first character is '/'
- * Richard Mlynarik <mly@adoc.xerox.com>
+ * Richard Mlynarik <Mly@POBox.COM>
  */
 void 
 Postscript_functions (inf)

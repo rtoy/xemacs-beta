@@ -1568,7 +1568,16 @@ get_extent_fragment_face_cache_index (struct window *w,
       findex = get_builtin_face_cache_index (w, Vdefault_face);
       merge_face_cachel_data (w, findex, &cachel);
 
-      return get_merged_face_cache_index (w, &cachel);
+      findex = get_merged_face_cache_index (w, &cachel);
+      if (cachel.merged_faces &&
+	  /* merged_faces did not get stored and available via return value */
+	  Dynarr_at (w->face_cachels, findex).merged_faces !=
+	  cachel.merged_faces)
+	{
+	  Dynarr_free (cachel.merged_faces);
+	  cachel.merged_faces = 0;
+	}
+      return findex;
     }
 }
 

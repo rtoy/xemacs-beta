@@ -46,7 +46,7 @@ static Lisp_Object Vdialog_data_list;
   Button metrics
   --------------
   All buttons have height of 15 DLU. The minimum width for a button is 32 DLU, 
-  but it can be expanded to accomodate its text, so the width is calculated as
+  but it can be expanded to accommodate its text, so the width is calculated as
   8 DLU per button plus 4 DLU per character.
   max (32, 6 * text_lenght). The factor of six is rather empirical, but it
   works better than 8 which comes from the definition of a DLU. Buttons are

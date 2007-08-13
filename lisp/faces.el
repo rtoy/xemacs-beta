@@ -1235,7 +1235,7 @@ See `defface' for information about SPEC."
 
 (defvar default-custom-frame-properties nil
   "The frame properties used for the global faces.
-Frames not matching these propertiess should have frame local faces.
+Frames not matching these properties should have frame local faces.
 The value should be nil, if uninitialized, or a plist otherwise.
 See `defface' for a list of valid keys and values for the plist.")
 

@@ -419,12 +419,13 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
       (setq default-directory (abbreviate-file-name default-directory))
       ;; Specify the file for recording all the auto save files of
       ;; this session.  This is used by recover-session.
-      (setq auto-save-list-file-name
-	    (expand-file-name
-	     (format "%s%d-%s"
-		     auto-save-list-file-prefix
-		     (emacs-pid)
-		     (system-name))))
+      (if auto-save-list-file-prefix
+	  (setq auto-save-list-file-name
+		(expand-file-name
+		 (format "%s%d-%s"
+			 auto-save-list-file-prefix
+			 (emacs-pid)
+			 (system-name)))))
       (run-hooks 'emacs-startup-hook)
       (and term-setup-hook
 	   (run-hooks 'term-setup-hook))

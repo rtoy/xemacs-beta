@@ -1006,13 +1006,10 @@ frame_matches_frametype (Lisp_Object frame, Lisp_Object type)
 }
 
 int
-device_matches_console_spec (Lisp_Object frame, Lisp_Object device,
-			     Lisp_Object console)
+device_matches_console_spec (Lisp_Object device, Lisp_Object console)
 {
   if (EQ (console, Qwindow_system))
     return DEVICE_WIN_P (XDEVICE (device));
-  if (NILP (console))
-    console = (DEVICE_CONSOLE (XDEVICE (FRAME_DEVICE (XFRAME (frame)))));
   if (DEVICEP (console))
     return EQ (device, console);
   if (CONSOLEP (console))
@@ -1026,78 +1023,60 @@ device_matches_console_spec (Lisp_Object frame, Lisp_Object device,
    FRAMETYPE and CONSOLE control which frames and devices
    are considered; see `next-frame'. */
 
-static Lisp_Object
-next_frame_internal (Lisp_Object frame, Lisp_Object frametype,
-		     Lisp_Object console, int called_from_delete_device)
+Lisp_Object
+next_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
 {
+  Lisp_Object first = Qnil;
+  Lisp_Object devcons, concons;
   int passed = 0;
-  int started_over = 0;
 
-  /* If this frame is dead, it won't be in frame_list, and we'll loop
-     forever.  Forestall that.  */
   CHECK_LIVE_FRAME (frame);
-
-  while (1)
-    {
-      Lisp_Object devcons, concons;
 
       DEVICE_LOOP_NO_BREAK (devcons, concons)
 	{
 	  Lisp_Object device = XCAR (devcons);
 	  Lisp_Object frmcons;
 
-	  if (!device_matches_console_spec (frame, device, console))
+      if (!device_matches_console_spec (device, console))
+	    {
+	      if (EQ (device, FRAME_DEVICE (XFRAME (frame))))
+		passed = 1;
 	    continue;
+	    }
 
 	  DEVICE_FRAME_LOOP (frmcons, XDEVICE (device))
 	    {
 	      Lisp_Object f = XCAR (frmcons);
+
 	      if (passed)
 		{
-		  /* #### Doing this here is bad and is now
-                     unnecessary.  The real bug was that f->iconified
-                     was never, ever updated unless a user explicitly
-                     called frame-iconified-p.  That has now been
-                     fixed.  With this change removed all of the other
-                     changes made to support this routine having the
-                     called_from_delete_device arg could be removed.
-                     But it is too close to release to do that now. */
-#if 0
-		  /* Make sure the visibility and iconified flags are
-                     up-to-date unless we're being deleted. */
-		  if (!called_from_delete_device)
-		    {
-		      Fframe_iconified_p (f);
-		      Fframe_visible_p (f);
-		    }
-#endif
-
-		  /* Decide whether this frame is eligible to be returned.  */
-
-		  /* If we've looped all the way around without finding any
-		     eligible frames, return the original frame.  */
-		  if (EQ (f, frame))
-		    return f;
-
 		  if (frame_matches_frametype (f, frametype))
 		    return f;
 		}
-
+	  else
+	    {
 	      if (EQ (frame, f))
-		passed++;
+		{
+		passed = 1;
 	    }
+	      else
+		{
+		  if (NILP (first) && frame_matches_frametype (f, frametype))
+		    first = f;
+		}
 	}
-      /* We hit the end of the list, and need to start over again. */
-      if (started_over)
-	return Qnil;
-      started_over++;
     }
 }
 
-Lisp_Object
-next_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
-{
-  return next_frame_internal (frame, frametype, console, 0);
+  if (NILP (first))
+    /* We went through the whole frame list without finding a single
+       acceptable frame.  Return the original frame.  */
+    return frame;
+  else
+    /* There were no acceptable frames in the list after FRAME; otherwise,
+       we would have returned directly from the loop.  Since FIRST is the last
+       acceptable frame in the list, return it.  */
+    return first;
 }
 
 /* Return the previous frame in the frame list before FRAME.
@@ -1105,50 +1084,52 @@ next_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
    are considered; see `next-frame'. */
 
 Lisp_Object
-prev_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
+previous_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
 {
   Lisp_Object devcons, concons;
-  Lisp_Object prev;
+  Lisp_Object last = Qnil;
 
-  /* If this frame is dead, it won't be in frame_list, and we'll loop
-     forever.  Forestall that.  */
   CHECK_LIVE_FRAME (frame);
 
-  prev = Qnil;
   DEVICE_LOOP_NO_BREAK (devcons, concons)
     {
       Lisp_Object device = XCAR (devcons);
       Lisp_Object frmcons;
 
-      if (!device_matches_console_spec (frame, device, console))
+      if (!device_matches_console_spec (device, console))
+	{
+	  if (EQ (device, FRAME_DEVICE (XFRAME (frame)))
+	      && !NILP (last))
+	    return last;
 	continue;
+	}
 
       DEVICE_FRAME_LOOP (frmcons, XDEVICE (device))
 	{
 	  Lisp_Object f = XCAR (frmcons);
 
-	  if (EQ (frame, f) && !NILP (prev))
-	    return prev;
-
-	  /* Decide whether this frame is eligible to be returned,
-	     according to frametype.  */
-
+	  if (EQ (frame, f))
+	    {
+	      if (!NILP (last))
+		return last;
+	    }
+	  else
+	    {
 	  if (frame_matches_frametype (f, frametype))
-	    prev = f;
-
+		last = f;
 	}
     }
+    }
 
-  /* We've scanned the entire list.  */
-  if (NILP (prev))
+  if (NILP (last))
     /* We went through the whole frame list without finding a single
        acceptable frame.  Return the original frame.  */
     return frame;
   else
     /* There were no acceptable frames in the list before FRAME; otherwise,
-       we would have returned directly from the loop.  Since PREV is the last
+       we would have returned directly from the loop.  Since LAST is the last
        acceptable frame in the list, return it.  */
-    return prev;
+    return last;
 }
 
 DEFUN ("next-frame", Fnext_frame, 0, 3, 0, /*
@@ -1213,7 +1194,7 @@ arguments.
 {
   XSETFRAME (frame, decode_frame (frame));
 
-  return prev_frame (frame, frametype, console);
+  return previous_frame (frame, frametype, console);
 }
 
 /* Return any frame for which PREDICATE is non-zero, or return Qnil
@@ -1245,23 +1226,15 @@ find_some_frame (int (*predicate) (Lisp_Object, void *),
    (Exception: if F is a stream frame, it's OK to delete if
    any other frames exist.) */
 
-static int
-other_visible_frames_internal (struct frame *f, int called_from_delete_device)
+int
+other_visible_frames (struct frame *f)
 {
   Lisp_Object frame;
 
   XSETFRAME (frame, f);
   if (FRAME_STREAM_P (f))
-    return !EQ (frame, next_frame_internal (frame, Qt, Qt,
-					    called_from_delete_device));
-  return !EQ (frame, next_frame_internal (frame, Qvisible_iconic_nomini, Qt,
-					  called_from_delete_device));
-}
-
-int
-other_visible_frames (struct frame *f)
-{
-  return other_visible_frames_internal (f, 0);
+    return !EQ (frame, next_frame (frame, Qt, Qt));
+  return !EQ (frame, next_frame (frame, Qvisible_iconic_nomini, Qt));
 }
 
 /* Delete frame F.
@@ -1322,7 +1295,7 @@ delete_frame_internal (struct frame *f, int force,
      losing any way of communicating with the still running XEmacs process.
      So we put it back.  */
   if (!force && !allow_deletion_of_last_visible_frame &&
-      !other_visible_frames_internal (f, called_from_delete_device))
+      !other_visible_frames (f))
     error ("Attempt to delete the sole visible or iconified frame");
 
   /* Does this frame have a minibuffer, and is it the surrogate
@@ -1448,22 +1421,17 @@ delete_frame_internal (struct frame *f, int force,
 
       next = DEVMETH_OR_GIVEN (d, get_frame_parent, (f), Qnil);
       if (NILP (next) || EQ (next, frame) || ! FRAME_LIVE_P (XFRAME (next)))
-	next = next_frame_internal (frame, Qvisible, device,
-				    called_from_delete_device);
+	next = next_frame (frame, Qvisible, device);
       if (NILP (next) || EQ (next, frame))
-	next = next_frame_internal (frame, Qvisible, console,
-				    called_from_delete_device);
+	next = next_frame (frame, Qvisible, console);
       if (NILP (next) || EQ (next, frame))
-	next = next_frame_internal (frame, Qvisible, Qt,
-				    called_from_delete_device);
+	next = next_frame (frame, Qvisible, Qt);
       if (NILP (next) || EQ (next, frame))
-	next = next_frame_internal (frame, Qt, device,
-				    called_from_delete_device);
+	next = next_frame (frame, Qt, device);
       if (NILP (next) || EQ (next, frame))
-	next = next_frame_internal (frame, Qt, console,
-				    called_from_delete_device);
+	next = next_frame (frame, Qt, console);
       if (NILP (next) || EQ (next, frame))
-	next = next_frame_internal (frame, Qt, Qt, called_from_delete_device);
+	next = next_frame (frame, Qt, Qt);
 
       /* if we haven't found another frame at this point
 	 then there aren't any. */
@@ -1485,9 +1453,7 @@ delete_frame_internal (struct frame *f, int force,
 	   */
 	  if (!EQ (device, FRAME_DEVICE(XFRAME(next))))
 	    {
-		Lisp_Object next_f =
-		    next_frame_internal (frame, Qt, device,
-					 called_from_delete_device);
+		Lisp_Object next_f = next_frame (frame, Qt, device);
 		if (NILP (next_f) || EQ (next_f, frame))
 		  ;
 		else

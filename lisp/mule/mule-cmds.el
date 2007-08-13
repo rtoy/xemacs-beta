@@ -551,7 +551,7 @@ just inacitvated.")
   "Normal hook run just after an input method insert some chunk of text.")
 
 (defvar input-method-exit-on-invalid-key nil
-  "This flag controls the behaviour of an input method on invalid key input.
+  "This flag controls the behavior of an input method on invalid key input.
 Usually, when a user types a key which doesn't start any character
 handled by the input method, the key is handled by turning off the
 input method temporalily.  After the key is handled, the input method is 
@@ -613,7 +613,7 @@ and sometimes other things."
   (interactive
    (list (read-language-name
 	  'documentation
-	  "Describe language environment (default, current choise): ")))
+	  "Describe language environment (default, current choice): ")))
   (if (null language-name)
       (setq language-name current-language-environment))
   (if (or (null language-name)

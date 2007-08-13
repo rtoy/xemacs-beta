@@ -29,6 +29,7 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <string.h>
 #include <netinet/in.h>		/* for ntohl() etc. */
 

@@ -2054,7 +2054,7 @@ This is what happens in interactive use with M-x.
    on NT here. --marcpa */
 /* But FSF #defines link as sys_link which is supplied in nt.c. We can't do
    that because sysfile.h defines sys_link depending on ENCAPSULATE_LINK.
-   Reverted to previous behaviour pending a working fix. (jhar) */
+   Reverted to previous behavior pending a working fix. (jhar) */
 #if defined(WINDOWSNT)
   /* Windows does not support this operation.  */
   report_file_error ("Adding new name", Flist (2, &filename));
@@ -2779,9 +2779,9 @@ positions), even in Mule. (Fixing this is very difficult.)
 	{
 	  end_multiple_change (buf, mc_count);
 
-	  return Fsignal (Qfile_error,
-			  list2 (build_translated_string("not a regular file"),
-				 filename));
+	  RETURN_UNGCPRO (Fsignal (Qfile_error,
+				   list2 (build_translated_string("not a regular file"),
+					  filename)));
 	}
     }
 #endif /* S_IFREG */
@@ -3422,7 +3422,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
         message ("Wrote %s", XSTRING_DATA (visit_file));
       else
 	{
-	  Lisp_Object fsp;
+	  Lisp_Object fsp = Qnil;
 	  struct gcpro nngcpro1;
 
 	  NNGCPRO1 (fsp);
@@ -3757,7 +3757,7 @@ An argument specifies the modification time value to use
     }
   else
     {
-      Lisp_Object filename;
+      Lisp_Object filename = Qnil;
       struct stat st;
       Lisp_Object handler;
       struct gcpro gcpro1, gcpro2, gcpro3;

@@ -186,7 +186,7 @@ Boston, MA 02111-1307, USA.  */
     if (tty_group == NULL)                      \
       fatal ("group tty not found");            \
 						\
-    sigblock(sigmask(SIGCHLD));			\
+    EMACS_BLOCK_SIGNAL (SIGCHLD);		\
     if (grantpt(fd) == -1)			\
       fatal("could not grant slave pty");	\
     if (!(ptyname = ptsname(fd)))		\
@@ -197,7 +197,7 @@ Boston, MA 02111-1307, USA.  */
       fatal ("could not chown slave pty");      \
     if (unlockpt(fd) == -1)			\
       fatal("could not unlock slave pty");	\
-    sigunblock(sigmask(SIGCHLD));		\
+    EMACS_UNBLOCK_SIGNAL (SIGCHLD);		\
   }
 
 /* Push various streams modules onto a PTY channel. */

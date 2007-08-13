@@ -76,7 +76,7 @@
     (larsi    "Lars Magne Ingebrigtsen" "larsi@gnus.org")
     (marcpa   "Marc Paquette"	  "marcpa@CAM.ORG")
     (mcook    "Michael R. Cook"   "mcook@cognex.com")
-    (mly      "Richard Mlynarik"  "mly@adoc.xerox.com")
+    (mly      "Richard Mlynarik"  "Mly@POBox.COM")
     (morioka  "MORIOKA Tomohiko"  "morioka@jaist.ac.jp")
     (martin   "Martin Buchholz"   "martin@xemacs.org")
     (ograf    "Oliver Graf"       "ograf@fga.de")

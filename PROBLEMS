@@ -1026,7 +1026,7 @@ it only if it is undefined.
 Or you could set TERMCAP only when you set TERM--which should not
 happen in a non-login shell.
 
-*** The popup menu appears at the buttom/right of my screen.
+*** The popup menu appears at the bottom/right of my screen.
 
 You probably have something like the following in your ~/.Xdefaults
 
@@ -1239,6 +1239,52 @@ affected virtually all ioctl() calls.
 
 
 ** Linux
+*** Mandrake
+
+The Mandrake Linux distribution is attempting to comprehensively
+update the user interface, and make it consistent across
+applications.  This is very difficult, and will occasionally cause
+conflicts with applications like Emacs with their own long-established
+interfaces.  Known issues specific to Mandrake or especially common:
+
+Some versions of XEmacs distributed with Mandrake were patched to make
+the Meta and Alt keysyms synonymous.  These normally work as expected
+in the Mandrake environment.  However, custom-built XEmacsen will seem
+to "inexplicably" not respect the "Alt-invokes-Meta-commands" convention.
+See "I want XEmacs to use the Alt key" below.
+
+The color-gcc wrapper (see below) is in common use on the Mandrake
+platform.
+
+*** I want XEmacs to use the Alt key, not the XXX key, for Meta commands
+
+For historical reasons, XEmacs looks for a Meta key, then an Alt key.
+It binds Meta commands to the X11 modifier bit attached to the first
+of these it finds.  On PCs, the Windows key is often assigned the Meta
+bit, but many desktop environments go to great lengths to get all apps
+to use the Alt key, and reserve the Windows key to (sensibly enough)
+the window manager.
+
+One correct way to implement this was suggested on comp.emacs.xemacs
+(by Kilian Foth and in more detail by Michael Piotrowski): unmap the
+Meta modifier using xmodmap or xkb, and then map the Meta/Windows key
+to the Super or Hyper keysym and an appropriate mod bit.  XEmacs will
+not find the Meta keysym, and default to using the Alt key for Meta
+keybindings.  Typically few applications use the (X11) Meta modifier;
+it is tedious but not too much so to teach the ones you need to use
+Super instead of Meta.  There may be further useful hints in the
+discussion of keymapping on non-Linux platforms.
+
+*** The color-gcc wrapper
+
+This wrapper colorizes the error messages from gcc.  By default XEmacs
+does not interpret the escape sequences used to generate colors,
+resulting in a cluttered, hard-to-read buffer.  You can remove or
+defeat the wrapper, or you may get good results from the ansi-color.el
+library:
+
+http://www.geocities.com/kensanata/color-emacs.html#ansicolors
+
 *** `C-z', or `M-x suspend-emacs' hangs instead of suspending.
 
 If you build with `gpm' support on Linux, you cannot suspend XEmacs
@@ -1398,7 +1444,7 @@ Richard Cognot <cognot@ensg.u-nancy.fr> writes:
   launched. Forcing a static link of libc.a alone by adding
   /usr/lib/libc.a at the end of the link line solves this. Note that
   my 9.07 build of 19.14b17 and my (old) build of 19.13 both exhibit
-  the same behaviour. I've tried various hpux patches to no avail. If
+  the same behavior. I've tried various hpux patches to no avail. If
   this problem cannot be solved before the release date, binary kits
   for HP *must* be linked statically against libc, otherwise this
   problem will show up. (This is directed at whoever will volunteer

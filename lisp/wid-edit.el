@@ -439,7 +439,7 @@ new value."
 
 ;; For inactiveness to work on complex structures, it is not
 ;; sufficient to keep track of whether a button/field/glyph is
-;; inactive or not -- we must know how many time it was deactivated
+;; inactive or not -- we must know how many times it was deactivated
 ;; (inactiveness level).  Successive deactivations of the same button
 ;; increment its inactive-count, and activations decrement it.  When
 ;; inactive-count reaches 0, the button/field/glyph is reactivated.
@@ -512,14 +512,16 @@ Suitable for use with `map-extents'."
 
 (defun widget-specify-active (widget)
   "Make WIDGET active for user modifications."
-  (let ((inactive (widget-get widget :inactive)))
+  (let ((inactive (widget-get widget :inactive))
+        (from (widget-get widget :from))
+        (to (widget-get widget :to)))
     (when (and inactive (not (extent-detached-p inactive)))
       ;; Reactivate the buttons and fields covered by the extent.
       (map-extents 'widget-activation-widget-mapper
-		   inactive nil nil :activate nil 'button-or-field)
+                   nil from to :activate nil 'button-or-field)
       ;; Reactivate the glyphs.
       (map-extents 'widget-activation-glyph-mapper
-		   inactive nil nil :activate nil 'end-glyph)
+                   nil from to :activate nil 'end-glyph)
       (delete-extent inactive)
       (widget-put widget :inactive nil))))
 

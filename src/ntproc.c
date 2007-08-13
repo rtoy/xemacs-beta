@@ -59,7 +59,7 @@ Boston, MA 02111-1307, USA.
 
 /* Control whether spawnve quotes arguments as necessary to ensure
    correct parsing by child process.  Because not all uses of spawnve
-   are careful about constructing argv arrays, we make this behaviour
+   are careful about constructing argv arrays, we make this behavior
    conditional (off by default). */
 Lisp_Object Vwin32_quote_process_args;
 
@@ -719,7 +719,7 @@ sys_spawnve (int mode, CONST char *cmdname,
 #if 0
 	  /* This version does not escape quotes if they occur at the
 	     beginning or end of the arg - this could lead to incorrect
-	     behaviour when the arg itself represents a command line
+	     behavior when the arg itself represents a command line
 	     containing quoted args.  I believe this was originally done
 	     as a hack to make some things work, before
 	     `win32-quote-process-args' was added.  */

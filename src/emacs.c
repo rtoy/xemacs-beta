@@ -218,6 +218,7 @@ extern int always_gc;           /* hack */
 Lisp_Object Qkill_emacs_hook;
 Lisp_Object Qsave_buffers_kill_emacs;
 
+extern Lisp_Object Vauto_save_list_file_name;
 
 /* Signal code for the fatal signal that was received */
 static int fatal_error_code;
@@ -867,7 +868,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_abbrev ();
       syms_of_alloc ();
 #ifdef HAVE_X_WINDOWS
+#ifdef HAVE_BALLOON_HELP
       syms_of_balloon_x ();
+#endif
 #endif
       syms_of_buffer ();
       syms_of_bytecode ();
@@ -1259,7 +1262,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_abbrev ();
       vars_of_alloc ();
 #ifdef HAVE_X_WINDOWS
+#ifdef HAVE_BALLOON_HELP
       vars_of_balloon_x ();
+#endif
 #endif
       vars_of_buffer ();
       vars_of_bytecode ();
@@ -2206,6 +2211,12 @@ all of which are called before XEmacs is actually killed.
   UNGCPRO;
 
   shut_down_emacs (0, ((STRINGP (arg)) ? arg : Qnil));
+
+  /* If we have an auto-save list file,
+     kill it because we are exiting Emacs deliberately (not crashing).
+     Do it after shut_down_emacs, which does an auto-save.  */
+  if (STRINGP (Vauto_save_list_file_name))
+      unlink ((char *) XSTRING_DATA (Vauto_save_list_file_name));
 
 #if defined(GNU_MALLOC)
   __free_hook = voodoo_free_hook;

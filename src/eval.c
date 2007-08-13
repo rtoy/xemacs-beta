@@ -1193,10 +1193,10 @@ If FORM is not a macro call, it is returned unchanged.
 Otherwise, the macro is expanded and the expansion is considered
 in place of FORM.  When a non-macro-call results, it is returned.
 
-The second optional arg ENVIRONMENT species an environment of macro
+The second optional arg ENVIRONMENT specifies an environment of macro
 definitions to shadow the loaded ones for use in file byte-compilation.
 */
-       (form, env))
+       (form, environment))
 {
   /* This function can GC */
   /* With cleanups from Hallvard Furuseth.  */
@@ -1217,7 +1217,7 @@ definitions to shadow the loaded ones for use in file byte-compilation.
 	{
 	  QUIT;
 	  sym = def;
-	  tem = Fassq (sym, env);
+	  tem = Fassq (sym, environment);
 	  if (NILP (tem))
 	    {
 	      def = XSYMBOL (sym)->function;
@@ -1226,11 +1226,11 @@ definitions to shadow the loaded ones for use in file byte-compilation.
 	    }
 	  break;
 	}
-      /* Right now TEM is the result from SYM in ENV,
+      /* Right now TEM is the result from SYM in ENVIRONMENT,
 	 and if TEM is nil then DEF is SYM's function definition.  */
       if (NILP (tem))
 	{
-	  /* SYM is not mentioned in ENV.
+	  /* SYM is not mentioned in ENVIRONMENT.
 	     Look at its function definition.  */
 	  if (UNBOUNDP (def)
 	      || !CONSP (def))
@@ -3275,7 +3275,12 @@ form, or any macro.
 	}
       if (EQ (funcar, Qautoload))
 	{
+	  struct gcpro gcpro1;
+
+	  GCPRO1 (function);
 	  do_autoload (function, orig_function);
+	  UNGCPRO;
+	  function = orig_function;
 	  goto retry;
 	}
       if (EQ (funcar, Qlambda))
@@ -3338,7 +3343,12 @@ be passed to `funcall', any special form, or any macro.
 	}
       if (EQ (funcar, Qautoload))
 	{
+	  struct gcpro gcpro1;
+
+	  GCPRO1 (function);
 	  do_autoload (function, orig_function);
+	  UNGCPRO;
+	  function = orig_function;
 	  goto retry;
 	}
       if (EQ (funcar, Qlambda))
@@ -3635,7 +3645,7 @@ called to run the hook.  If the value is a function, it is called with
 the given arguments and its return value is returned.  If it is a list
 of functions, those functions are called, in order,
 with the given arguments ARGS.
-It is best not to depend on the value return by `run-hook-with-args',
+It is best not to depend on the value returned by `run-hook-with-args',
 as that may change.
 
 To make a hook variable buffer-local, use `make-local-hook',
@@ -5249,7 +5259,7 @@ If due to `eval' entry, one arg, t.
   specpdl = xnew_array (struct specbinding, specpdl_size);
   /* XEmacs change: increase these values. */
   max_specpdl_size = 3000;
-  max_lisp_eval_depth = 500;
+  max_lisp_eval_depth = 1000;
   throw_level = 0;
 
   reinit_eval ();
