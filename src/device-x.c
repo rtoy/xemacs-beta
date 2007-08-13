@@ -224,9 +224,6 @@ x_init_device (struct device *d, Lisp_Object props)
 
   allocate_x_device_struct (d);
 
-  if (NILP (Vdefault_x_device))
-    Vdefault_x_device = device;
-
   make_argc_argv (Vx_initial_argv_list, &argc, &argv);
 
   if (STRINGP (Vx_emacs_application_class) &&
@@ -249,6 +246,9 @@ x_init_device (struct device *d, Lisp_Object props)
       suppress_early_backtrace = 1;
       signal_simple_error ("X server not responding\n", display);
     }
+
+  if (NILP (Vdefault_x_device))
+    Vdefault_x_device = device;
 
   if (NILP (DEVICE_NAME (d)))
     DEVICE_NAME (d) = display;

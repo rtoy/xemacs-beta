@@ -1,6 +1,6 @@
 /* Synched up with: FSF 19.31. */
 
-#include "hpux9shr.h"
+#include "hpux9-shr.h"
 
 #undef  C_SWITCH_X_SYSTEM
 #define C_SWITCH_X_SYSTEM -I/usr/include/Motif1.1

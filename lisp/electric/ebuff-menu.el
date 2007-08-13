@@ -42,7 +42,7 @@
 (defvar electric-buffer-menu-mode-map nil)
 
 ;;;###autoload
-(defun electric-buffer-list (arg)
+(defun electric-buffer-list (&optional files-only)
   "Pops up a buffer describing the set of Emacs buffers.
 Vaguely like ITS lunar select buffer; combining typeoutoid buffer
 listing with menuoid buffer selection.
@@ -57,11 +57,16 @@ much like those of buffer-menu-mode.
 
 Calls value of `electric-buffer-menu-mode-hook' on entry if non-nil.
 
+Non-null optional arg FILES-ONLY means mention only file buffers.
+When called from Lisp code, FILES-ONLY may be a regular expression,
+in which case only buffers whose names match that expression are listed,
+or an arbitrary predicate function.
+
 \\{electric-buffer-menu-mode-map}" 
-  (interactive "P")
+  (interactive (list (if current-prefix-arg t nil)))
   (let (select buffer)
     (save-window-excursion
-      (save-window-excursion (list-buffers arg))
+      (save-window-excursion (list-buffers files-only))
       (setq buffer (window-buffer (Electric-pop-up-window "*Buffer List*")))
       (unwind-protect
 	  (progn

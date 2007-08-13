@@ -1134,6 +1134,11 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 		       (file-name-as-directory
 			(expand-file-name "../xemacs/lock" root))
 		       )))))
+
+    ;; 1996/12/6 by MORIOKA Tomohiko <morioka@jaist.ac.jp>
+    ;;	define `default-load-path' for file-detect.el
+    (setq default-load-path load-path)
+
     ;; add site-lisp dir to load-path
     (if site-lisp
 	(progn
@@ -1174,8 +1179,18 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 		  (setq load-path
 			(nconc load-path
 			       (list (file-name-as-directory file)))))
-	      (setq files (cdr files))))
-	  ))
+	      (setq files (cdr files))))))
+
+    ;; 1996/12/6 by MORIOKA Tomohiko <morioka@jaist.ac.jp>
+    ;;	define `default-load-path' for file-detect.el
+    (setq default-load-path
+	  (append default-load-path
+		  (if site-lisp
+		      (list site-lisp))
+		  (if lisp
+		      (list lisp)
+		    )
+		  ))
 
     ;; If running from the build directory, always prefer the exec-directory
     ;; that is here over the one that came from paths.h.

@@ -2360,13 +2360,13 @@ fi
 
 if [ "${dynamic}" = "yes" ]; then
   case "${opsys}" in
-    hpux8		) opsys=hpux8shr ;;
-    hpux9		) opsys=hpux9shr ;;
-    hpux10		) opsys=hpux10shr ;;
-    sunos4-0		) opsys=sunos4-0shr ;;
-    sunos4-1		) opsys=sunos4-1shr ;;
-    sunos4-1-2		) opsys=sunos4-1-2shr ;;
-    sunos4-1-3		) opsys=sunos4-1-3shr ;;
+    hpux8		) opsys=hpux8-shr ;;
+    hpux9		) opsys=hpux9-shr ;;
+    hpux10		) opsys=hpux10-shr ;;
+    sunos4-0		) opsys=sunos4-0-shr ;;
+    sunos4-1		) opsys=sunos4-1-shr ;;
+    sunos4-1-2		) opsys=sunos4-1-2-shr ;;
+    sunos4-1-3		) opsys=sunos4-1-3-shr ;;
     sco5		) opsys=sco5-shr ;;
   esac
 elif [ "${dynamic}" = "no" ]; then
@@ -2539,8 +2539,16 @@ fi
 #### Some systems specify a CPP to use unless we are using GCC.
 #### Now that we know whether we are using GCC, we can decide whether
 #### to use that one.
-if [ "x$NON_GNU_CPP" = x ] || [ x$GCC = x1 ]
-then true
+
+#### Also, GNU CPP by default defines certain add'l macros that could
+#### hurt us when generating makefiles. We want to switch off these
+#### add'l macros for the purpose of generating makefiles.
+
+CPPFLAGS_MAKEFILEGEN=""
+if [ "x$GCC" = x1 ] ; then
+  CPPFLAGS_MAKEFILEGEN=" -undef "
+elif [ "x$NON_GNU_CPP" = x ] ; then
+  true
 else
   if [ "x$CPP" = x ]; then
     if [ "${with_lcc}" = "yes" ] && [ "${NON_GNU_CPP}" = "yes" ] ; then
@@ -4456,7 +4464,7 @@ makefile_command='echo "creating src/Makefile";
 ( cd ./src;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -4473,7 +4481,7 @@ lwlib_makefile_command='echo "creating lwlib/Makefile";
 ( cd ./lwlib;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -4490,7 +4498,7 @@ lib_src_makefile_command='echo "creating lib-src/Makefile";
 ( cd ./lib-src;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -4507,7 +4515,7 @@ dynodump_makefile_command='echo "creating dynodump/Makefile";
 ( cd ./dynodump;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -4524,7 +4532,7 @@ man_makefile_command='echo "creating man/Makefile";
 ( cd ./man;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -4542,7 +4550,7 @@ energize_makefile_command='echo "creating lwlib/energize/Makefile";
 ( cd ./lwlib/energize;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\

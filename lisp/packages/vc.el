@@ -1415,6 +1415,11 @@ A prefix argument means do not revert the buffer afterwards."
   )
 
 ;;;###autoload
+(defun vc-rename-this-file (new)
+  (interactive "FVC rename file to: ")
+  (vc-rename-file buffer-file-name new))
+
+;;;###autoload
 (defun vc-update-change-log (&rest args)
   "Find change log file and add entries from recent RCS logs.
 The mark is left at the end of the text prepended to the change log.

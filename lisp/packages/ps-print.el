@@ -1900,6 +1900,8 @@ EndDSCPage\n"))
 	  (message "Formatting...done")))))
 
 ;; XEmacs change
+(require 'message)	; Until We can get some sensible autoloads, or
+			; message-flatten-list gets put somewhere decent.
 ;; Permit dynamic evaluation at print time of ps-lpr-switches
 (defun ps-do-despool (filename)
   (if (or (not (boundp 'ps-spool-buffer))

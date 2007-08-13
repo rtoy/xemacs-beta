@@ -1203,7 +1203,10 @@ If `enable-local-variables' is nil, this function does not check for a
 		  (setq alist (cdr alist))))
               ;; If we can't deduce a mode from the file name,
               ;; look for an interpreter specified in the first line.
-	      (if (null mode)
+	      (if (and (null mode)
+		       (save-excursion ; XEmacs
+			 (goto-char (point-min))
+			 (looking-at "#!")))
                   (let ((firstline
                          (buffer-substring
                           (point-min)

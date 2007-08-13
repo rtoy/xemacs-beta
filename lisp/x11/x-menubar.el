@@ -501,6 +501,7 @@
      ("Tools"
       ["Grep..."		grep			t]
       ["Compile..."		compile			t]
+      ["Shell"			shell			t]
       ["Shell Command..."	shell-command		t]
       ["Shell Command on Region..."
 				shell-command-on-region (region-exists-p)]
@@ -514,7 +515,7 @@
        ["Tags Search..."	tags-search		t]
        ["Tags Replace..."	tags-query-replace	t]
        "-----"
-       ["Continue"		tags-loop-continue	t]
+       ["Continue Search/Replace"	tags-loop-continue	t]
        ["Pop stack"		pop-tag-mark		t]
        ["Apropos..."		tags-apropos		t]))
 
@@ -530,6 +531,10 @@
       ["XEmacs News"		view-emacs-news		t]
       ["Sample .emacs"		(find-file
 				 (expand-file-name "sample.emacs"
+						   data-directory))
+							t]
+      ["Sample .Xdefaults"	(find-file
+				 (expand-file-name "sample.Xdefaults"
 						   data-directory))
 							t]
       "-----"
@@ -710,7 +715,9 @@ select that buffer.")
 
 (defvar buffers-menu-submenus-for-groups-p nil
   "*If true, the buffers menu will contain one submenu per group of buffers,
-if a grouping function is specified in `buffers-menu-grouping-function'.")
+if a grouping function is specified in `buffers-menu-grouping-function'.
+If this is an integer, do not build submenus if the number of buffers
+is not larger than this value.")
 
 (defvar buffers-menu-switch-to-buffer-function 'switch-to-buffer
   "*The function to call to select a buffer from the buffers menu.
@@ -876,12 +883,16 @@ items by redefining the function `format-buffers-menu-line'."
     (and (integerp buffers-menu-max-size)
 	 (> buffers-menu-max-size 1)
 	 (> (length buffers) buffers-menu-max-size)
-	 ;; shorten list of buffers
+	 ;; shorten list of buffers (not with submenus!)
+	 (not (and buffers-menu-grouping-function
+		   buffers-menu-submenus-for-groups-p))
 	 (setcdr (nthcdr buffers-menu-max-size buffers) nil))
     (if buffers-menu-sort-function
 	(setq buffers (sort buffers buffers-menu-sort-function)))
     (if (and buffers-menu-grouping-function
-	     buffers-menu-submenus-for-groups-p)
+	     buffers-menu-submenus-for-groups-p
+	     (or (not (integerp buffers-menu-submenus-for-groups-p))
+		 (> (length buffers) buffers-menu-submenus-for-groups-p)))
 	(let (groups groupnames current-group)
 	  (mapl
 	   #'(lambda (sublist)
@@ -1063,7 +1074,9 @@ items by redefining the function `format-buffers-menu-line'."
 					(face-property ',face ',property)
 					',(save-options-specifier-spec-list
 					   face property))))
-p			      built-in-face-specifiers)))
+			      (delq 'display-table
+				    (copy-sequence
+				     built-in-face-specifiers)))))
 		   (face-list))))
 
      ))

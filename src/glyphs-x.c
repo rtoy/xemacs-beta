@@ -1050,6 +1050,9 @@ xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 #include "jpeglib.h"
 #include "jerror.h"
 
+/* The in-core jpeg code doesn't work, so I'm avoiding it for now.  -sb  */
+#define USE_TEMP_FILES_FOR_JPEG_IMAGES 1
+
 static void
 jpeg_validate (Lisp_Object instantiator)
 {
@@ -1269,7 +1272,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   unwind.dpy = dpy;
   record_unwind_protect (jpeg_instantiate_unwind, make_opaque_ptr (&unwind));
 
-#ifdef USE_TEMP_FILES_FOR_IMAGES
+#ifdef USE_TEMP_FILES_FOR_JPEG_IMAGES
   /* Step 0: Write out to a temp file.
 
      The JPEG routines require you to read from a file unless
@@ -1325,7 +1328,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* Step 2: specify data source (eg, a file) */
 
-#ifdef USE_FILEIO_FOR_IMAGES
+#ifdef USE_TEMP_FILES_FOR_JPEG_IMAGES
   jpeg_stdio_src (&cinfo, unwind.instream);
 #else
   {

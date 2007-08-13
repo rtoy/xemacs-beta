@@ -1215,9 +1215,7 @@ If N is negative, find the previous or Nth previous match."
 	  (let ((elt (nth (1- minibuffer-history-position)
 			  (symbol-value minibuffer-history-variable))))
 	    (insert
-	     (if (and minibuffer-history-sexp-flag
-		      ;; total kludge
-		      (not (stringp elt)))
+	     (if (not (stringp elt))
 		 (let ((print-level nil))
 		   (condition-case nil
 		       (let ((print-readably t)

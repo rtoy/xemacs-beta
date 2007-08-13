@@ -303,7 +303,7 @@ write into the compilation buffer, and to put in its mode line.")
 (defvar grep-history nil)
 
 ;; XEmacs
-(defconst compilation-font-lock-keywords (purecopy
+(defvar compilation-font-lock-keywords (purecopy
   (list
    '("^[-_.\"A-Za-z0-9/+]+\\(:\\|, line \\)[0-9]+: \\([wW]arning:\\).*$" .
      font-lock-keyword-face)

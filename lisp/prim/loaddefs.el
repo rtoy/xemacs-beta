@@ -1252,7 +1252,7 @@ Otherwise, one argument `-i' is passed to the shell.
 
 ;;;***
 
-;;;### (autoloads (rsh telnet) "telnet" "comint/telnet.el" (12864 53480))
+;;;### (autoloads (rsh telnet) "telnet" "comint/telnet.el" (12974 22547))
 ;;; Generated autoloads from comint/telnet.el
 
 (add-hook 'same-window-regexps "\\*telnet-.*\\*\\(\\|<[0-9]+>\\)")
@@ -1832,7 +1832,7 @@ Display Ediff's manual." t nil)
 
 ;;;***
 
-;;;### (autoloads (electric-buffer-list) "ebuff-menu" "electric/ebuff-menu.el" (12863 14816))
+;;;### (autoloads (electric-buffer-list) "ebuff-menu" "electric/ebuff-menu.el" (12978 18989))
 ;;; Generated autoloads from electric/ebuff-menu.el
 
 (autoload 'electric-buffer-list "ebuff-menu" "\
@@ -1849,6 +1849,11 @@ the appropriate line of the buffer-list window.  Other commands are
 much like those of buffer-menu-mode.
 
 Calls value of `electric-buffer-menu-mode-hook' on entry if non-nil.
+
+Non-null optional arg FILES-ONLY means mention only file buffers.
+When called from Lisp code, FILES-ONLY may be a regular expression,
+in which case only buffers whose names match that expression are listed,
+or an arbitrary predicate function.
 
 \\{electric-buffer-menu-mode-map}" t nil)
 
@@ -4028,11 +4033,11 @@ of a string." t nil)
 ;;; Generated autoloads from ilisp/ilisp-mov.el
 
 ;;;***
-
-;;;### (autoloads nil "ilisp-out" "ilisp/ilisp-out.el" (12930 49586))
-;;; Generated autoloads from ilisp/ilisp-out.el
 
 ;;;***
+
+;;;### (autoloads nil "ilisp-out" "ilisp/ilisp-out.el" (12976 40472))
+;;; Generated autoloads from ilisp/ilisp-out.el
 
 ;;;### (autoloads nil "ilisp-prc" "ilisp/ilisp-prc.el" (12930 49354))
 ;;; Generated autoloads from ilisp/ilisp-prc.el
@@ -4329,6 +4334,31 @@ Decrypt the contents of the current MH message in the show buffer." t nil)
 (autoload 'mc-mh-snarf-keys "mc-toplev" nil t nil)
 
 ;;;***
+
+;;;***
+
+;;;### (autoloads nil "mel-b" "mel/mel-b.el" (12753 23908))
+;;; Generated autoloads from mel/mel-b.el
+
+;;;***
+
+;;;### (autoloads nil "mel-g" "mel/mel-g.el" (12753 25709))
+;;; Generated autoloads from mel/mel-g.el
+
+;;;***
+
+;;;### (autoloads nil "mel-q" "mel/mel-q.el" (12916 44214))
+;;; Generated autoloads from mel/mel-q.el
+
+;;;***
+
+;;;### (autoloads nil "mel-u" "mel/mel-u.el" (12753 25469))
+;;; Generated autoloads from mel/mel-u.el
+
+;;;***
+
+;;;### (autoloads nil "mel" "mel/mel.el" (12870 49280))
+;;; Generated autoloads from mel/mel.el
 
 ;;;### (autoloads (mh-letter-mode mh-smail-other-window mh-smail-batch mh-smail) "mh-comp" "mh-e/mh-comp.el" (12657 40772))
 ;;; Generated autoloads from mh-e/mh-comp.el
@@ -4695,8 +4725,83 @@ non-nil." t nil)
 
 ;;;***
 
-;;;### (autoloads nil "cc-mode" "modes/cc-mode.el" (12964 17751))
+;;;### (autoloads (c-set-style java-mode objc-mode c++-mode c-mode) "cc-mode" "modes/cc-mode.el" (12978 36702))
 ;;; Generated autoloads from modes/cc-mode.el
+
+(autoload 'c-mode "cc-mode" "\
+Major mode for editing K&R and ANSI C code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from a
+c-mode buffer.  This automatically sets up a mail buffer with version
+information already added.  You just need to add a description of the
+problem, including a reproducible test case and send the message.
+
+To see what version of cc-mode you are running, enter `\\[c-version]'.
+
+The hook variable `c-mode-hook' is run with no args, if that value is
+bound and has a non-nil value.  Also the hook `c-mode-common-hook' is
+run first.
+
+Key bindings:
+\\{c-mode-map}" t nil)
+
+(autoload 'c++-mode "cc-mode" "\
+Major mode for editing C++ code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from a
+c++-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case, and send the
+message.
+
+To see what version of cc-mode you are running, enter `\\[c-version]'.
+
+The hook variable `c++-mode-hook' is run with no args, if that
+variable is bound and has a non-nil value.  Also the hook
+`c-mode-common-hook' is run first.
+
+Key bindings:
+\\{c++-mode-map}" t nil)
+
+(autoload 'objc-mode "cc-mode" "\
+Major mode for editing Objective C code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+objc-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case, and send the
+message.
+
+To see what version of cc-mode you are running, enter `\\[c-version]'.
+
+The hook variable `objc-mode-hook' is run with no args, if that value
+is bound and has a non-nil value.  Also the hook `c-mode-common-hook'
+is run first.
+
+Key bindings:
+\\{objc-mode-map}" t nil)
+
+(autoload 'java-mode "cc-mode" "\
+Major mode for editing Java code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+java-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case and send the
+message.
+
+To see what version of cc-mode you are running, enter `\\[c-version]'.
+
+The hook variable `java-mode-hook' is run with no args, if that value
+is bound and has a non-nil value.  Also the common hook
+`c-mode-common-hook' is run first.  Note that this mode automatically
+sets the \"java\" style before calling any hooks so be careful if you
+set styles in `c-mode-common-hook'.
+
+Key bindings:
+\\{java-mode-map}" t nil)
+
+(autoload 'c-set-style "cc-mode" "\
+Set cc-mode variables to use one of several different indentation styles.
+STYLENAME is a string representing the desired style from the list of
+styles described in the variable `c-style-alist'.  See that variable
+for details of setting up styles." t nil)
 
 (fset 'set-c-style           'c-set-style)
 
@@ -4732,6 +4837,14 @@ For use inside Lisp programs, see also `c-macro-expansion'." t nil)
 
 ;;;### (autoloads nil "cperl-mode" "modes/cperl-mode.el" (12947 52528))
 ;;; Generated autoloads from modes/cperl-mode.el
+
+;;;### (autoloads (eiffel-mode) "eiffel3" "modes/eiffel3.el" (12975 20283))
+;;; Generated autoloads from modes/eiffel3.el
+
+(autoload 'eiffel-mode "eiffel3" "\
+Major mode for editing Eiffel programs." t nil)
+
+;;;***
 
 ;;;### (autoloads (enriched-decode enriched-encode enriched-mode) "enriched" "modes/enriched.el" (12860 19332))
 ;;; Generated autoloads from modes/enriched.el
@@ -5155,7 +5268,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;; Generated autoloads from modes/ksh-mode.el
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.1.1.3 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.1.1.4 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -7246,9 +7359,17 @@ corresponding bookmark function from Lisp (the one without the
 ;;;***
 
 ;;;***
+
+;;;***
 
-;;;### (autoloads nil "buff-menu" "packages/buff-menu.el" (12941 16898))
+;;;### (autoloads nil "buff-menu" "packages/buff-menu.el" (12979 22272))
 ;;; Generated autoloads from packages/buff-menu.el
+
+(defvar list-buffers-directory)
+
+(make-variable-buffer-local 'list-buffers-directory)
+
+;;;***
 
 ;;;### (autoloads (command-history-mode list-command-history repeat-matching-complex-command) "chistory" "packages/chistory.el" (12860 19367))
 ;;; Generated autoloads from packages/chistory.el
@@ -7321,7 +7442,7 @@ If `compare-ignore-case' is non-nil, changes in case are also ignored." t nil)
 
 ;;;***
 
-;;;### (autoloads (first-error previous-error next-error compilation-minor-mode grep compile) "compile" "packages/compile.el" (12906 48567))
+;;;### (autoloads (first-error previous-error next-error compilation-minor-mode grep compile) "compile" "packages/compile.el" (12976 36509))
 ;;; Generated autoloads from packages/compile.el
 
 (defvar compilation-mode-hook nil "\
@@ -8590,7 +8711,7 @@ do (setq lisp-mode-hook 'ledit-from-lisp-mode)" t nil)
 ;;;### (autoloads nil "lispm-fonts" "packages/lispm-fonts.el" (12376 19482))
 ;;; Generated autoloads from packages/lispm-fonts.el
 
-;;;### (autoloads (print-region lpr-region print-buffer lpr-buffer) "lpr" "packages/lpr.el" (12860 19392))
+;;;### (autoloads (print-region lpr-region print-buffer lpr-buffer) "lpr" "packages/lpr.el" (12974 16779))
 ;;; Generated autoloads from packages/lpr.el
 
 (defvar lpr-switches nil "\
@@ -8686,6 +8807,11 @@ Optional argument NODISPLAY non-nil means buffer is not
 redisplayed as output is inserted." t nil)
 
 ;;;***
+
+;;;***
+
+;;;### (autoloads nil "mic-paren" "packages/mic-paren.el" (12861 33586))
+;;; Generated autoloads from packages/mic-paren.el
 
 ;;;### (autoloads nil "mime-compose" "packages/mime-compose.el" (12727 30155))
 ;;; Generated autoloads from packages/mime-compose.el
@@ -8777,7 +8903,7 @@ When active, typed text replaces the selection." t nil)
 
 ;;;***
 
-;;;### (autoloads (ps-despool ps-spool-region-with-faces ps-spool-region ps-spool-buffer-with-faces ps-spool-buffer ps-print-region-with-faces ps-print-region ps-print-buffer-with-faces ps-print-buffer) "ps-print" "packages/ps-print.el" (12934 24347))
+;;;### (autoloads (ps-despool ps-spool-region-with-faces ps-spool-region ps-spool-buffer-with-faces ps-spool-buffer ps-print-region-with-faces ps-print-region ps-print-buffer-with-faces ps-print-buffer) "ps-print" "packages/ps-print.el" (12974 16330))
 ;;; Generated autoloads from packages/ps-print.el
 
 (defvar ps-paper-type 'ps-letter "\
@@ -9227,7 +9353,7 @@ Put this on write-file-hooks." nil nil)
 
 ;;;***
 
-;;;### (autoloads (vc-update-change-log vc-rename-file vc-cancel-version vc-revert-buffer vc-print-log vc-retrieve-snapshot vc-create-snapshot vc-directory vc-insert-headers vc-version-other-window vc-version-diff vc-diff vc-register vc-next-action vc-file-status) "vc" "packages/vc.el" (12851 23437))
+;;;### (autoloads (vc-update-change-log vc-rename-this-file vc-rename-file vc-cancel-version vc-revert-buffer vc-print-log vc-retrieve-snapshot vc-create-snapshot vc-directory vc-insert-headers vc-version-other-window vc-version-diff vc-diff vc-register vc-next-action vc-file-status) "vc" "packages/vc.el" (12976 37023))
 ;;; Generated autoloads from packages/vc.el
 
 (defvar vc-checkin-hook nil "\
@@ -9345,6 +9471,8 @@ A prefix argument means do not revert the buffer afterwards." t nil)
 
 (autoload 'vc-rename-file "vc" "\
 Rename file OLD to NEW, and rename its master file likewise." t nil)
+
+(autoload 'vc-rename-this-file "vc" nil t nil)
 
 (autoload 'vc-update-change-log "vc" "\
 Find change log file and add entries from recent RCS logs.
@@ -9636,11 +9764,11 @@ This function works by modifying `process-environment'." t nil)
 ;;;***
 
 ;;;***
-
-;;;### (autoloads nil "files" "prim/files.el" (12920 56154))
-;;; Generated autoloads from prim/files.el
 
 ;;;***
+
+;;;### (autoloads nil "files" "prim/files.el" (12975 35300))
+;;; Generated autoloads from prim/files.el
 
 ;;;### (autoloads nil "fill" "prim/fill.el" (12877 49271))
 ;;; Generated autoloads from prim/fill.el
@@ -9704,8 +9832,10 @@ This function works by modifying `process-environment'." t nil)
 ;;; Generated autoloads from prim/keymap.el
 
 ;;;***
+
+;;;***
 
-;;;### (autoloads nil "lisp" "prim/lisp.el" (12860 19424))
+;;;### (autoloads nil "lisp" "prim/lisp.el" (12976 34290))
 ;;; Generated autoloads from prim/lisp.el
 
 ;;;***
@@ -9717,9 +9847,23 @@ This function works by modifying `process-environment'." t nil)
 ;;;***
 
 ;;;***
+
+;;;***
+
+;;;***
+
+;;;***
+
+;;;***
+
+;;;***
+
+;;;***
 
-;;;### (autoloads nil "loaddefs" "prim/loaddefs.el" (12971 18885))
+;;;### (autoloads nil "loaddefs" "prim/loaddefs.el" (12978 37092))
 ;;; Generated autoloads from prim/loaddefs.el
+
+;;;***
 
 ;;;### (autoloads nil "loadup-el" "prim/loadup-el.el" (12639 8618))
 ;;; Generated autoloads from prim/loadup-el.el
@@ -9819,11 +9963,11 @@ and then select the region of un-tablified names and use
 ;;;***
 
 ;;;***
-
-;;;### (autoloads nil "minibuf" "prim/minibuf.el" (12929 30936))
-;;; Generated autoloads from prim/minibuf.el
 
 ;;;***
+
+;;;### (autoloads nil "minibuf" "prim/minibuf.el" (12977 40507))
+;;; Generated autoloads from prim/minibuf.el
 
 ;;;### (autoloads nil "misc" "prim/misc.el" (12860 19429))
 ;;; Generated autoloads from prim/misc.el
@@ -9835,8 +9979,10 @@ and then select the region of un-tablified names and use
 
 ;;;### (autoloads nil "modeline" "prim/modeline.el" (12860 31802))
 ;;; Generated autoloads from prim/modeline.el
+
+;;;***
 
-;;;### (autoloads nil "mouse" "prim/mouse.el" (12744 55115))
+;;;### (autoloads nil "mouse" "prim/mouse.el" (12976 36365))
 ;;; Generated autoloads from prim/mouse.el
 
 ;;;### (autoloads (disable-command enable-command disabled-command-hook) "novice" "prim/novice.el" (12869 1329))
@@ -9963,8 +10109,10 @@ When called from a program, requires two args which specify the corners." t nil)
 ;;;***
 
 ;;;***
+
+;;;***
 
-;;;### (autoloads nil "replace" "prim/replace.el" (12870 12308))
+;;;### (autoloads nil "replace" "prim/replace.el" (12967 11006))
 ;;; Generated autoloads from prim/replace.el
 
 ;;;### (autoloads (reposition-window) "reposition" "prim/reposition.el" (12868 64283))
@@ -10001,8 +10149,10 @@ first comment line visible (if point is in a comment)." t nil)
 ;;;***
 
 ;;;***
+
+;;;***
 
-;;;### (autoloads nil "simple" "prim/simple.el" (12971 16993))
+;;;### (autoloads nil "simple" "prim/simple.el" (12976 34445))
 ;;; Generated autoloads from prim/simple.el
 
 ;;;### (autoloads (reverse-region sort-columns sort-regexp-fields sort-fields sort-float-fields sort-numeric-fields sort-pages sort-paragraphs sort-lines sort-subr) "sort" "prim/sort.el" (12868 64792))
@@ -10144,11 +10294,11 @@ or HP9000s700, or running a NetAudio server." t nil)
 ;;; Generated autoloads from prim/specifier.el
 
 ;;;***
-
-;;;### (autoloads nil "startup" "prim/startup.el" (12851 23466))
-;;; Generated autoloads from prim/startup.el
 
 ;;;***
+
+;;;### (autoloads nil "startup" "prim/startup.el" (12975 23336))
+;;; Generated autoloads from prim/startup.el
 
 ;;;***
 
@@ -10783,11 +10933,11 @@ Convert Rmail file FILE to mailbox-format file TO-FILE." t nil)
 ;;; Generated autoloads from tl/file-detect.el
 
 ;;;***
-
-;;;### (autoloads nil "mime-setup" "tl/mime-setup.el" (12972 48090))
-;;; Generated autoloads from tl/mime-setup.el
 
 ;;;***
+
+;;;### (autoloads nil "mime-setup" "tl/mime-setup.el" (12972 55323))
+;;; Generated autoloads from tl/mime-setup.el
 
 ;;;### (autoloads nil "mu-comment" "tl/mu-comment.el" (12714 41382))
 ;;; Generated autoloads from tl/mu-comment.el
@@ -11980,7 +12130,7 @@ is nil, raise an error." t nil)
 
 ;;;***
 
-;;;### (autoloads (what-domain mail-extract-address-components) "mail-extr" "utils/mail-extr.el" (12851 23488))
+;;;### (autoloads (what-domain mail-extract-address-components) "mail-extr" "utils/mail-extr.el" (12976 37825))
 ;;; Generated autoloads from utils/mail-extr.el
 
 (autoload 'mail-extract-address-components "mail-extr" "\
@@ -12942,11 +13092,11 @@ or if you change your font path, you can call this to re-initialize the menus." 
 ;;;***
 
 ;;;***
-
-;;;### (autoloads nil "x-menubar" "x11/x-menubar.el" (12874 15306))
-;;; Generated autoloads from x11/x-menubar.el
 
 ;;;***
+
+;;;### (autoloads nil "x-menubar" "x11/x-menubar.el" (12976 37346))
+;;; Generated autoloads from x11/x-menubar.el
 
 ;;;### (autoloads nil "x-misc" "x11/x-misc.el" (12639 8659))
 ;;; Generated autoloads from x11/x-misc.el

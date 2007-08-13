@@ -1,4 +1,14 @@
 							-*- indented-text -*-
+to 19.15 beta4
+-- Default JPEG image loading is now old tempfile code, but should work again.
+-- Miscellaneous bug fixes courtesy of Christoph Wedler
+-- mic-paren.el courtesy of Mikael Sjödin
+-- lpr.el/ps-print.el - Allow dynamic expansion of
+   lpr-switches/ps-lpr-switches.
+-- Lisp Bug fixes
+-- Install info files compressed (courtesy of Joseph J Nuspl)
+-- Default locking for Linux is now .lock locking
+
 to 19.15 beta3
 
 -- EDT/TPU modes synched from GNU Emacs, should actually work for the first

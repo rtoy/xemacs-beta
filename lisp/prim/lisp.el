@@ -115,7 +115,7 @@ In Lisp programs, an argument is required."
 With argument, do this that many times.
 A negative argument means move forward but still to a less deep spot.
 In Lisp programs, an argument is required."
-  (interactive "p")
+  (interactive "_p")
   (up-list (- arg)))
 
 (defun up-list (arg) 

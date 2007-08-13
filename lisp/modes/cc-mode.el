@@ -1157,10 +1157,10 @@ behavior that users are familiar with.")
 ;; cmacexp is lame because it uses no preprocessor symbols.
 ;; It isn't very extensible either -- hardcodes /lib/cpp.
 ;; [I add it here only because c-mode has it -- BAW]
-;(autoload 'c-macro-expand "cmacexp"
-;  "Display the result of expanding all C macros occurring in the region.
-;The expansion is entirely correct because it uses the C preprocessor."
-;  t)
+(autoload 'c-macro-expand "cmacexp"
+  "Display the result of expanding all C macros occurring in the region.
+The expansion is entirely correct because it uses the C preprocessor."
+  t)
 
 
 ;; constant regular expressions for looking at various constructs
@@ -1261,6 +1261,7 @@ behavior that users are familiar with.")
 ;; main entry points for the modes
 (defconst c-list-of-mode-names nil)
 
+;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
@@ -1296,6 +1297,7 @@ Key bindings:
   (run-hooks 'c-mode-hook))
 (setq c-list-of-mode-names (cons "C" c-list-of-mode-names))
 
+;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
@@ -1334,6 +1336,7 @@ Key bindings:
   (run-hooks 'c++-mode-hook))
 (setq c-list-of-mode-names (cons "C++" c-list-of-mode-names))
 
+;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
@@ -1372,6 +1375,7 @@ Key bindings:
   (run-hooks 'objc-mode-hook))
 (setq c-list-of-mode-names (cons "ObjC" c-list-of-mode-names))
 
+;;;###autoload
 (defun java-mode ()
   "Major mode for editing Java code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
@@ -2332,6 +2336,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 	)))
    stylevars))
 
+;;;###autoload
 (defun c-set-style (stylename)
   "Set cc-mode variables to use one of several different indentation styles.
 STYLENAME is a string representing the desired style from the list of

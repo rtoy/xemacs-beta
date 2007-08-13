@@ -861,13 +861,13 @@ Repeating \\[universal-argument] without digits or minus sign
 ;; XEmacs -- shouldn't these functions keep the zmacs region active?
 (defun forward-to-indentation (arg)
   "Move forward ARG lines and position at first nonblank character."
-  (interactive "p")
+  (interactive "_p")
   (forward-line arg)
   (skip-chars-forward " \t"))
 
 (defun backward-to-indentation (arg)
   "Move backward ARG lines and position at first nonblank character."
-  (interactive "p")
+  (interactive "_p")
   (forward-line (- arg))
   (skip-chars-forward " \t"))
 
@@ -1227,8 +1227,10 @@ See also the command \\[yank-pop]."
       ;; This is like exchange-point-and-mark, but doesn't activate the mark.
       ;; It is cleaner to avoid activation, even though the command
       ;; loop would deactivate the mark because we inserted text.
-      (goto-char (prog1 (mark t)
-		   (set-marker (mark-marker) (point) (current-buffer)))))
+      ;; (But doesn't work in XEmacs)
+      ;(goto-char (prog1 (mark t)
+		   ;(set-marker (mark-marker) (point) (current-buffer)))))
+      (exchange-point-and-mark t))
   ;; If we do get all the way thru, make this-command indicate that.
   (setq this-command 'yank)
   nil)
