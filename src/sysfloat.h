@@ -34,7 +34,8 @@ Boston, MA 02111-1307, USA.  */
 #  define _NMAXLDBL THIS_FILENAME ## _nmaxldbl
 # endif
 
-#ifdef MSDOS
+#if defined(MSDOS) || (defined(LINUX) && \
+		       !(defined (__GLIBC__) && (__GLIBC__ >= 2)))
 /* These are redefined (correctly, but differently) in values.h.  */
 #undef INTBITS
 #undef LONGBITS

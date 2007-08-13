@@ -236,13 +236,20 @@ Boston, MA 02111-1307, USA.  */
 
 /* XEmacs addition: */
 /* Linux defines these in <values.h>, but they can't be used in #if's
-   Include values.h now so that we don't get complaints if it's included later. */
+   Include values.h now so that we don't get complaints if it's included
+   later.  This loses with glibc-2 (libc-6) */
+
+/* # include <features.h> */
+#if 0
+#if !(defined (__GLIBC__) && (__GLIBC__ >= 2))
 
 #include <values.h>
 #undef  SHORTBITS
 #undef  INTBITS
 #undef  LONGBITS
 
+#endif
+#endif
 /* The regex.o routines are a part of the GNU C-library used with Linux.  */
 /* However, sometimes they disagree with the src/regex.h that comes with Emacs,
    and that can make trouble in etags.c because it gets the regex.h from Emacs

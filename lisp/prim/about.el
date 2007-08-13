@@ -40,6 +40,8 @@
 ;;; 19.15 and 20.0 updating done by Steve Baur.
 
 (require 'browse-url)
+(require 'view-less)
+
 (defvar about-xref-map (let ((map (make-sparse-keymap)))
 			 (define-key map 'button1 'about-xemacs-xref)
 			 (define-key map 'button2 'about-xemacs-xref)
@@ -1130,3 +1132,5 @@
 	 ))
       (goto-char (point-min))
       ))))
+
+;;; about.el ends here

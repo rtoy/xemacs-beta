@@ -24,7 +24,7 @@
 ;; LCD Archive Entry:
 ;; ksh-mode|Gary F. Ellison|Gary.F.Ellison@ATT.COM
 ;; |Mode for editing sh/ksh/bash scripts
-;; |$Date: 1997/02/02 05:05:40 $|$Revision: 1.2 $|~/modes/ksh-mode.el.Z|
+;; |$Date: 1997/03/09 02:37:20 $|$Revision: 1.3 $|~/modes/ksh-mode.el.Z|
 
 ;; Author: Gary F. Ellison <Gary.F.Ellison@ATT.COM>
 ;;                   AT&T  Laboratories
@@ -33,10 +33,10 @@
 ;;
 ;; Maintainer: Gary F. Ellison <Gary.F.Ellison@ATT.COM>
 ;; Created: Fri Jun 19
-;; $Revision: 1.2 $
+;; $Revision: 1.3 $
 ;; Keywords: shell, korn, bourne, sh, ksh, bash
 ;;
-;; Delta On   $Date: 1997/02/02 05:05:40 $
+;; Delta On   $Date: 1997/03/09 02:37:20 $
 ;; Last Modified By: Gary Ellison
 ;; Last Modified On: Mon Sep 11 12:26:47 1995
 ;; Update Count    : 35
@@ -231,7 +231,7 @@
 ;;    Conception of this mode.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst ksh-mode-version "$Revision: 1.2 $"
+(defconst ksh-mode-version "$Revision: 1.3 $"
   "*Version numbers of this version of ksh-mode")
 
 ;;
@@ -468,7 +468,7 @@ while, for, until, and select")
 
 ;;;###autoload
 (defun ksh-mode ()
-  "ksh-mode $Revision: 1.2 $ - Major mode for editing (Bourne, Korn or Bourne again)
+  "ksh-mode $Revision: 1.3 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -1293,7 +1293,7 @@ there."
            (insert completion))
 	  ;;
 	  ;; write possible completion in the minibuffer,
-	  ;; use this instead of a seperate buffer (usual)
+	  ;; use this instead of a separate buffer (usual)
 	  ;;
           (t
            (let ((list (all-completions pattern ksh-completion-list predicate))

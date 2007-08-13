@@ -35,7 +35,7 @@
 ;;;	Note: This function is very time consuming ! Therefore you should
 ;;;	      call `tree-make-file-list' once and make several menus
 ;;;	      from the same list. And you should only rebuild the menu if 
-;;;	      it is neccessary, if you've a big directory tree.
+;;;	      it is necessary, if you've a big directory tree.
 ;;;
 ;;; Installation: 
 ;;;   

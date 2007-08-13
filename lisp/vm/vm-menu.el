@@ -193,6 +193,8 @@
     ["Unmark" vm-unmark-message vm-message-list]
     ["Mark All" vm-mark-all-messages vm-message-list]
     ["Clear All Marks" vm-clear-all-marks vm-message-list]
+    ["Mark Region in Summary" vm-mark-summary-region vm-message-list]
+    ["Unmark Region in Summary" vm-unmark-summary-region vm-message-list]
     "----"
     ["Mark Same Subject" vm-mark-messages-same-subject vm-message-list]
     ["Unmark Same Subject" vm-unmark-messages-same-subject vm-message-list]
@@ -376,21 +378,30 @@
 
 (defconst vm-menu-mime-dispose-menu
   (let ((title (if (vm-menu-fsfemacs-menus-p)
-		   (list "Send MIME body to ..."
-			 "Send MIME body to ..."
+		   (list "Take Action on MIME body ..."
+			 "Take Action on MIME body ..."
 			 "---"
 			 "---")
-		 (list "Send MIME body to ..."))))
+		 (list "Take Action on MIME body ..."))))
     (append
      title
-     (list ["File" (vm-mime-run-display-function-at-point
-		    'vm-mime-send-body-to-file) t]
-	   ["Shell Pipeline (display output)"
+     (list ["Display as US-ASCII Text"
 	    (vm-mime-run-display-function-at-point
-		    'vm-mime-pipe-body-to-command) t]
-	   ["Shell Pipeline (discard output)"
+	     'vm-mime-display-body-as-text) t]
+	   ["Display using External Viewer"
 	    (vm-mime-run-display-function-at-point
-	     'vm-mime-pipe-body-to-command-discard-output) t]))))
+	     'vm-mime-display-body-using-external-viewer) t]
+	   "---"
+	   ["Save to File" (vm-mime-run-display-function-at-point
+			    'vm-mime-send-body-to-file) t]
+	   ["Send to Printer" (vm-mime-run-display-function-at-point
+			       'vm-mime-send-body-to-printer) t]
+	   ["Feed to Shell Pipeline (display output)"
+	    (vm-mime-run-display-function-at-point
+	     'vm-mime-pipe-body-to-queried-command) t]
+	   ["Feed to Shell Pipeline (discard output)"
+	    (vm-mime-run-display-function-at-point
+	     'vm-mime-pipe-body-to-queried-command-discard-output) t]))))
 
 (defconst vm-menu-url-browser-menu
   (let ((title (if (vm-menu-fsfemacs-menus-p)
@@ -460,6 +471,33 @@
       ["Virtual Folder, Matching Author" vm-menu-create-author-virtual-folder
        vm-message-list]
       ))))
+
+(defconst vm-menu-content-disposition-menu
+  (let ((title (if (vm-menu-fsfemacs-menus-p)
+		   (list "Set Content Disposition"
+			 "Set Content Disposition"
+			 "---"
+			 "---")
+		 (list "Set Content Disposition"))))
+    (append
+     title
+     (list ["Unspecified"
+	    (vm-mime-set-attachment-disposition-at-point 'unspecified)
+	    :active vm-send-using-mime
+	    :style radio
+	    :selected (eq (vm-mime-attachment-disposition-at-point)
+			  'unspecified)]
+	   ["Inline"
+	    (vm-mime-set-attachment-disposition-at-point 'inline)
+	    :active vm-send-using-mime
+	    :style radio
+	    :selected (eq (vm-mime-attachment-disposition-at-point) 'inline)]
+	   ["Attachment"
+	    (vm-mime-set-attachment-disposition-at-point 'attachment)
+	    :active vm-send-using-mime
+	    :style radio
+	    :selected (eq (vm-mime-attachment-disposition-at-point)
+			  'attachment)]))))
 
 (defvar vm-menu-vm-menubar nil)
 
@@ -631,6 +669,10 @@ set to the command name so that window configuration will be done."
 	(vm-easy-menu-define vm-menu-fsfemacs-mime-dispose-menu
 			     (list dummy) nil
 			     vm-menu-mime-dispose-menu)
+	;; content disposition menu
+	(vm-easy-menu-define vm-menu-fsfemacs-content-disposition-menu
+			     (list dummy) nil
+			     vm-menu-content-disposition-menu)
 	;; block the global menubar entries in the map so that VM
 	;; can take over the menubar if necessary.
 	(define-key map [rootmenu] (make-sparse-keymap))
@@ -727,6 +769,7 @@ set to the command name so that window configuration will be done."
 	 (goto-char (posn-point (event-start event)))
 	 (vm-menu-popup-fsfemacs-menu event))))
 
+(defvar vm-menu-fsfemacs-content-disposition-menu)
 (defun vm-menu-popup-context-menu (event)
   (interactive "e")
   ;; We should not need to do anything here for XEmacs.  The
@@ -739,56 +782,66 @@ set to the command name so that window configuration will be done."
   (cond ((and (vm-menu-fsfemacs-menus-p) vm-use-menus)
 	 (set-buffer (window-buffer (posn-window (event-start event))))
 	 (goto-char (posn-point (event-start event)))
-	 (let (o-list o menu (found nil))
-	   (setq o-list (overlays-at (point)))
-	   (while (and o-list (not found))
-	     (cond ((overlay-get (car o-list) 'vm-url)
-		    (setq found t)
-		    (vm-menu-popup-url-browser-menu event))
-		   ((setq menu (overlay-get (car o-list) 'vm-header))
-		    (setq found t)
-		    (vm-menu-popup-fsfemacs-menu event menu))
-		   ((overlay-get (car o-list) 'vm-mime-layout)
-		    (setq found t)
-		    (vm-menu-popup-mime-dispose-menu event)))
-	     (setq o-list (cdr o-list)))
-	   (and (not found) (vm-menu-popup-fsfemacs-menu event))))))
+	 (if (get-text-property (point) 'vm-mime-object)
+	     (vm-menu-popup-fsfemacs-menu
+	      event vm-menu-fsfemacs-content-disposition-menu)
+	   (let (o-list o menu (found nil))
+	     (setq o-list (overlays-at (point)))
+	     (while (and o-list (not found))
+	       (cond ((overlay-get (car o-list) 'vm-url)
+		      (setq found t)
+		      (vm-menu-popup-url-browser-menu event))
+		     ((setq menu (overlay-get (car o-list) 'vm-header))
+		      (setq found t)
+		      (vm-menu-popup-fsfemacs-menu event menu))
+		     ((overlay-get (car o-list) 'vm-mime-layout)
+		      (setq found t)
+		      (vm-menu-popup-mime-dispose-menu event)))
+	       (setq o-list (cdr o-list)))
+	     (and (not found) (vm-menu-popup-fsfemacs-menu event)))))))
 
 ;; to quiet the byte-compiler
 (defvar vm-menu-fsfemacs-url-browser-menu)
 (defvar vm-menu-fsfemacs-mime-dispose-menu)
 
-(defun vm-menu-popup-url-browser-menu (event)
-  (interactive "e")
-  (cond ((and (vm-menu-xemacs-menus-p) vm-use-menus)
+(defun vm-menu-goto-event (event)
+  (cond ((vm-menu-xemacs-menus-p)
 	 ;; Must select window instead of just set-buffer because
 	 ;; popup-menu returns before the user has made a
 	 ;; selection.  This will cause the command loop to
 	 ;; resume which might undo what set-buffer does.
 	 (select-window (event-window event))
-	 (and (event-point event) (goto-char (event-point event)))
+	 (and (event-point event) (goto-char (event-point event))))
+	((vm-menu-fsfemacs-menus-p)
+	 (set-buffer (window-buffer (posn-window (event-start event))))
+	 (goto-char (posn-point (event-start event))))))
+
+(defun vm-menu-popup-url-browser-menu (event)
+  (interactive "e")
+  (vm-menu-goto-event event)
+  (cond ((and (vm-menu-xemacs-menus-p) vm-use-menus)
 	 (popup-menu vm-menu-url-browser-menu))
 	((and (vm-menu-fsfemacs-menus-p) vm-use-menus)
-	 (set-buffer (window-buffer (posn-window (event-start event))))
-	 (goto-char (posn-point (event-start event)))
 	 (vm-menu-popup-fsfemacs-menu
 	  event vm-menu-fsfemacs-url-browser-menu))))
 
 (defun vm-menu-popup-mime-dispose-menu (event)
   (interactive "e")
+  (vm-menu-goto-event event)
   (cond ((and (vm-menu-xemacs-menus-p) vm-use-menus)
-	 ;; Must select window instead of just set-buffer because
-	 ;; popup-menu returns before the user has made a
-	 ;; selection.  This will cause the command loop to
-	 ;; resume which might undo what set-buffer does.
-	 (select-window (event-window event))
-	 (and (event-point event) (goto-char (event-point event)))
 	 (popup-menu vm-menu-mime-dispose-menu))
 	((and (vm-menu-fsfemacs-menus-p) vm-use-menus)
-	 (set-buffer (window-buffer (posn-window (event-start event))))
-	 (goto-char (posn-point (event-start event)))
 	 (vm-menu-popup-fsfemacs-menu
 	  event vm-menu-fsfemacs-mime-dispose-menu))))
+
+(defun vm-menu-popup-content-disposition-menu (event)
+  (interactive "e")
+  (vm-menu-goto-event event)
+  (cond ((and (vm-menu-xemacs-menus-p) vm-use-menus)
+	 (popup-menu vm-menu-content-disposition-menu))
+	((and (vm-menu-fsfemacs-menus-p) vm-use-menus)
+	 (vm-menu-popup-fsfemacs-menu
+	  event vm-menu-fsfemacs-content-disposition-menu))))
 
 ;; to quiet the byte-compiler
 (defvar vm-menu-fsfemacs-mail-menu)
@@ -816,7 +869,8 @@ set to the command name so that window configuration will be done."
   (if (vm-menu-xemacs-menus-p)
       (cond ((eq major-mode 'mail-mode)
 	     vm-menu-mail-menu)
-	    ((memq major-mode '(vm-mode vm-summary-mode vm-virtual-mode))
+	    ((memq major-mode '(vm-mode vm-presentation-mode
+				vm-summary-mode vm-virtual-mode))
 	     vm-menu-dispose-menu)
 	    (t vm-menu-vm-menu))
     (cond ((eq major-mode 'mail-mode)
@@ -923,7 +977,7 @@ set to the command name so that window configuration will be done."
 	   (cons "Mail" vm-menu-fsfemacs-mail-menu))
 	 (if vm-popup-menu-on-mouse-3
 	     (define-key vm-mail-mode-map [down-mouse-3]
-	       'vm-menu-popup-mode-menu)))))
+	       'vm-menu-popup-context-menu)))))
 
 (defun vm-menu-install-menus ()
   (cond ((consp vm-use-menus)

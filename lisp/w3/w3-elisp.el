@@ -1,7 +1,7 @@
 ;;; w3-elisp.el --- Scripting support for emacs-lisp
 ;; Author: wmperry
-;; Created: 1997/02/19 23:44:26
-;; Version: 1.5
+;; Created: 1997/03/07 14:14:02
+;; Version: 1.7
 ;; Keywords: hypermedia, scripting
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -68,14 +68,6 @@
    ;; Interfacing to W3
    w3-fetch w3-refresh-buffer w3-view-this-url
 
-   ;; Face stuff - is this really safe?
-   make-face set-face-foreground set-face-underline-p
-   set-face-doc-string set-face-parent set-face-dim-p set-face-background
-   set-face-background-pixmap set-face-property set-face-blinking-p
-   set-face-font-family set-face-reverse-p set-face-strikethru-p
-   set-face-font-size set-face-font set-face-display-table
-   set-face-highlight-p
-   
    ;; All the XEmacs event manipulation functions
    event-live-p event-glyph-extent event-glyph-y-pixel event-x-pixel
    event-type event-glyph event-button event-over-text-area-p
@@ -127,6 +119,9 @@
    (t nil)))
 
 (defun w3-elisp-safe-eval (form)
-  (and (w3-elisp-safe-expression form) (eval form)))
+  (if (w3-elisp-safe-expression form)
+      (condition-case ()
+	  (eval form)
+	(error nil))))
 
 (provide 'w3-elisp)

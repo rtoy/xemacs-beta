@@ -129,7 +129,7 @@ With a numeric argument, move forward over that many forms."
   "If connected to Energize, the Energize database is used.  
 Otherwise, `find-tag' is invoked.
 The X selection is used as a default, if it exists and contains no 
-newlines.  Otherwise, the preceeding token is used as a default.  
+newlines.  Otherwise, the preceding token is used as a default.  
 If invoked from a mouse command, prompting happens with a dialog box; 
 otherwise, the minibuffer is used."
   (interactive
@@ -637,7 +637,7 @@ You cannot get them back until you recompile the file."
 	(error "no next project")))))
 
 (defun energize-top-prev-project ()
-  "Position the cursor at the beginning of the preceeding project."
+  "Position the cursor at the beginning of the preceding project."
   (interactive)
   (let ((p (point)))
     (let ((e (energize-next-extent-for "editproject" t t)))

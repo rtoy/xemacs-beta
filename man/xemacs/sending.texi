@@ -223,7 +223,7 @@ When you now type @samp{everybody} on the @samp{To} line, it will expand to:
 @end example
 
 Aliases may contain forward references; the alias of @samp{everybody} in the
-example above can preceed the aliases of @samp{group1} and @samp{group2}.
+example above can precede the aliases of @samp{group1} and @samp{group2}.
 
 In this version of Emacs, you can use the @code{source} @file{.mailrc} command
 for reading aliases from some other file as well.

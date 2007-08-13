@@ -1,5 +1,5 @@
 ;;; psgml.el --- SGML-editing mode with parsing support
-;; $Id: psgml.el,v 1.3 1997/02/02 05:06:12 steve Exp $
+;; $Id: psgml.el,v 1.4 1997/03/09 02:37:46 steve Exp $
 
 ;; Copyright (C) 1993, 1994, 1995, 1996 Lennart Staflin
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -410,7 +410,7 @@ Example:
 
 (defvar sgml-custom-dtd nil
   "Menu entries to be added to the DTD menu.
-The value should be a list of entrys to be added to the DTD menu.
+The value should be a list of entries to be added to the DTD menu.
 Every entry should be a list. The first element of the entry is a string
 used as the menu entry.  The second element is a string containing a
 doctype declaration (this can be nil if no doctype).  The rest of the
@@ -991,7 +991,7 @@ To tag a region with the mouse, use transient mark mode or secondary selection.
 
 Structure editing:
 \\[sgml-backward-element]  Moves backwards over the previous element.
-\\[sgml-forward-element]  Moves forward over the nex element.
+\\[sgml-forward-element]  Moves forward over the next element.
 \\[sgml-down-element]  Move forward and down one level in the element structure.
 \\[sgml-backward-up-element]  Move backward out of this element level.
 \\[sgml-beginning-of-element]  Move to after the start tag of the current element.
@@ -1035,7 +1035,7 @@ sgml-indent-step  How much to increament indent for every element level.
 sgml-indent-data  If non-nil, indent in data/mixed context also.
 sgml-set-face     If non-nil, psgml will set the face of parsed markup.
 sgml-markup-faces The faces used when the above variable is non-nil.
-sgml-system-path  List of directorys used to look for system identifiers.
+sgml-system-path  List of directories used to look for system identifiers.
 sgml-public-map  Mapping from public identifiers to file names.
 sgml-offer-save  If non-nil, ask about saving modified buffers before
 		\\[sgml-validate] is run.

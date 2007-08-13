@@ -1,6 +1,6 @@
 \input texinfo.tex
 
-@c $Id: widget.texi,v 1.6 1997/03/04 08:45:08 steve Exp $
+@c $Id: widget.texi,v 1.7 1997/03/09 02:38:24 steve Exp $
 
 @c %**start of header
 @setfilename widget
@@ -15,7 +15,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.50
+Version: 1.59
 
 @menu
 * Introduction::                
@@ -401,7 +401,7 @@ The inserted text will be read only.
 There is a standard widget keymap which you might find useful.
 
 @defvr Const widget-keymap
-A keymap with the global keymap as its parent.@br
+A keymap with the global keymap as its parent.@*
 @key{TAB} and @kbd{C-@key{TAB}} are bound to @code{widget-forward} and
 @code{widget-backward}, respectively.  @kbd{@key{RET}} and @kbd{mouse-2}
 are bound to @code{widget-button-press} and
@@ -533,6 +533,13 @@ return the widget containing the invalid data, and set that widgets
 @item :parent
 The parent of a nested widget (e.g. a @code{menu-choice} item or an element of a
 @code{editable-list} widget). 
+
+@item :sibling-args
+This keyword is only used for members of a @code{radio-button-choice} or
+@code{checklist}.  The value should be a list of extra keyword
+arguments, which will be used when creating the @code{radio-button} or
+@code{checkbox} associated with this item.
+
 @end table
 
 @deffn {User Option} widget-glyph-directory
@@ -635,7 +642,7 @@ The following extra properties are recognized.
 
 @table @code
 @item :size
-The width of the editable field.@br
+The width of the editable field.@*
 By default the field will reach to the end of the line.
 
 @item :value-face
@@ -753,6 +760,10 @@ Replace with the radio button.
 @item %%
 Insert a literal @samp{%}. 
 @end table
+
+@item button-args
+A list of keywords to pass to the radio buttons.  Useful for setting
+e.g. the @samp{:help-echo} for each button.
 
 @item :buttons
 The widgets representing the radio buttons.
@@ -881,6 +892,10 @@ Replace with the checkbox.
 Insert a literal @samp{%}. 
 @end table
 
+@item button-args
+A list of keywords to pass to the checkboxes.  Useful for setting
+e.g. the @samp{:help-echo} for each checkbox.
+
 @item :buttons
 The widgets representing the checkboxes.
 
@@ -921,6 +936,16 @@ Insert the @b{[DEL]} button.
 @item %%
 Insert a literal @samp{%}. 
 @end table
+
+@item :insert-button-args
+A list of keyword arguments to pass to the insert buttons.
+
+@item :delete-button-args
+A list of keyword arguments to pass to the delete buttons.
+
+@item :append-button-args
+A list of keyword arguments to pass to the trailing insert button.
+
 
 @item :buttons
 The widgets representing the insert and delete buttons.

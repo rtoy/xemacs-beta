@@ -1709,7 +1709,7 @@ If ADDRESS contains more than one RFC-822 address, only the first is
       
       ;; If the last thing in the name is 2 or more periods, or one or more
       ;; other sentence terminators (but not a single period) then keep them
-      ;; and the preceeding word.  This is for the benefit of whole sentences
+      ;; and the preceding word.  This is for the benefit of whole sentences
       ;; in the name field: it's better behavior than dropping the last word
       ;; of the sentence...
       (if (and (not suffix-flag)

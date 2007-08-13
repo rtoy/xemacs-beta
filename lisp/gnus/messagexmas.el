@@ -43,7 +43,7 @@ If it is non-nil, it must be a toolbar.  The five legal values are
 `default-toolbar', `top-toolbar', `bottom-toolbar',
 `right-toolbar', and `left-toolbar'.")
 
-(defvar message-toolbar 
+(defvar message-toolbar
   '([message-spell ispell-message t "Spell"]
     [message-help (Info-goto-node "(Message)Top") t "Message help"])
   "The message buffer toolbar.")
@@ -99,10 +99,10 @@ If it is non-nil, it must be a toolbar.  The five legal values are
 
 (defun message-xmas-make-caesar-translation-table (n)
   "Create a rot table with offset N."
-  (let ((i -1) 
+  (let ((i -1)
 	(table (make-string 256 0))
-	(a (char-int ?a))
-	(A (char-int ?A)))
+	(a (char-to-int ?a))
+	(A (char-to-int ?A)))
     (while (< (incf i) 256)
       (aset table i i))
     (concat

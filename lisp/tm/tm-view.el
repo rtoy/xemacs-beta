@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/7/13 (1994/8/31 obsolete tm-body.el)
-;; Version: $Revision: 1.4 $
+;; Version: $Revision: 1.5 $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -42,7 +42,7 @@
 ;;;
 
 (defconst mime-viewer/RCS-ID
-  "$Id: tm-view.el,v 1.4 1997/02/16 01:29:34 steve Exp $")
+  "$Id: tm-view.el,v 1.5 1997/03/09 02:37:51 steve Exp $")
 
 (defconst mime-viewer/version (get-version-string mime-viewer/RCS-ID))
 (defconst mime/viewer-version mime-viewer/version)
@@ -732,8 +732,10 @@ The compressed face will be piped to this command.")
 (defun mime-viewer/define-keymap (&optional mother)
   (let ((mime/viewer-mode-map (if mother
 				  (copy-keymap mother)
-				(make-keymap))))
-    (suppress-keymap mime/viewer-mode-map)
+				(make-keymap)
+				)))
+    (or mother
+	(suppress-keymap mime/viewer-mode-map))
     (define-key mime/viewer-mode-map
       "u"        (function mime-viewer/up-content))
     (define-key mime/viewer-mode-map

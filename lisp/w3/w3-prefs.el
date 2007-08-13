@@ -1,7 +1,7 @@
 ;;; w3-prefs.el --- Preferences panels for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/01/17 04:34:13
-;; Version: 1.15
+;; Created: 1997/03/04 14:33:41
+;; Version: 1.16
 ;; Keywords: hypermedia, preferences
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -35,8 +35,6 @@
 (eval-and-compile
   (require 'w3-widget))
 
-(defvar w3-preferences-glyph nil)
-(defvar w3-preferences-map nil)
 (defvar w3-preferences-panel-begin-marker nil)
 (defvar w3-preferences-panel-end-marker nil)
 (defvar w3-preferences-panels '(
@@ -46,21 +44,6 @@
 				(hooks         . "Various Hooks")
 				(compatibility . "Compatibility")
 				(proxy         . "Proxy")))
-
-(defun w3-preferences-setup-glyph-map ()
-  (let* ((x 0)
-	 (height (and w3-preferences-glyph
-		      (glyph-height w3-preferences-glyph)))
-	 (width (and height (/ (glyph-width w3-preferences-glyph)
-			       (length w3-preferences-panels)))))
-    (mapcar
-     (function
-      (lambda (region)
-	(vector "rect" (list (vector (if width (* x width) 0) 0)
-			     (vector (if width (* (setq x (1+ x)) width) 0)
-				     (or height 0)))
-		(car region) (cdr region))))
-     w3-preferences-panels)))     
 
 (defun w3-preferences-generic-variable-callback (widget &rest ignore)
   (condition-case ()
@@ -188,19 +171,6 @@
     :value (symbol-value 'w3-preferences-temp-w3-delay-image-loads))
    'variable 'w3-preferences-temp-w3-delay-image-loads)
   (widget-insert " Delay Image Loads\n"
-;;;		 "\nAllowed Image Types\n"
-;;;		 "-------------------\n")
-;;;  (set
-;;;   (make-local-variable 'w3-preferences-image-type-widget)
-;;;   (widget-create
-;;;    'repeat
-;;;    :entry-format "%i %d %v"
-;;;    :value (mapcar
-;;;	    (function
-;;;	     (lambda (x)
-;;;	       (list 'item :format "%t" :tag (car x) :value (cdr x))))
-;;;	    w3-image-mappings)
-;;;    '(item :tag "*/*" :value 'unknown)))
   ))
 
 (defun w3-preferences-save-images-panel ()
@@ -228,9 +198,7 @@
 ;;; The hooks panel
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-preferences-hooks-variables
-  '(w3-file-done-hook
-    w3-file-prepare-hook
-    w3-load-hook
+  '(w3-load-hook
     w3-mode-hook
     w3-preferences-cancel-hook
     w3-preferences-default-hook
@@ -484,8 +452,6 @@
 ;;###autoload
 (defun w3-preferences-edit ()
   (interactive)
-  (if (not w3-preferences-map)
-      (setq w3-preferences-map (w3-preferences-setup-glyph-map)))
   (let* ((prefs-buffer (get-buffer-create "W3 Preferences"))
 	 (widget nil)
 	 (inhibit-read-only t)
@@ -502,11 +468,18 @@
     (use-local-map widget-keymap)
     (erase-buffer)
     (run-hooks 'w3-preferences-setup-hook)
-    (setq widget (widget-create 'image
-				:notify 'w3-preferences-notify
-				:value 'appearance
-				:tag "Panel"
-				'usemap w3-preferences-map))
+    (setq widget (apply 'widget-create 'menu-choice
+			:tag "Panel"
+			:notify 'w3-preferences-notify
+			:value 'appearance
+			(mapcar
+			 (function
+			  (lambda (x)
+			    (list 'choice-item
+				  :format "%[%t%]"
+				  :tag (cdr x)
+				  :value (car x))))
+			 w3-preferences-panels)))
     (goto-char (point-max))
     (insert "\n\n")
     (set-marker w3-preferences-panel-begin-marker (point))

@@ -5254,7 +5254,7 @@ reset_buffer_changes (void)
     {
       struct frame *f = XFRAME (XCAR (frmcons));
 
-      if (FRAME_VISIBLE_P (f))
+      if (FRAME_REPAINT_P (f))
 	map_windows (f, reset_buffer_changes_mapfun, 0);
     }
 }
@@ -5459,7 +5459,7 @@ redisplay_device (struct device *d)
   if (f->icon_changed || f->windows_changed)
     update_frame_icon (f);
 
-  if (FRAME_VISIBLE_P (f))
+  if (FRAME_REPAINT_P (f))
     {
       if (f->buffers_changed || f->clip_changed || f->extents_changed
 	  || f->faces_changed || f->frame_changed || f->menubar_changed
@@ -5493,7 +5493,7 @@ redisplay_device (struct device *d)
       if (f->icon_changed || f->windows_changed)
 	update_frame_icon (f);
 
-      if (FRAME_VISIBLE_P (f))
+      if (FRAME_REPAINT_P (f))
 	{
 	  if (f->buffers_changed || f->clip_changed || f->extents_changed
 	      || f->faces_changed || f->frame_changed || f->menubar_changed
@@ -7739,7 +7739,7 @@ Ensure that all minibuffers are correctly showing the echo area.
 	{
 	  struct frame *f = XFRAME (XCAR (frmcons));
 
-	  if (FRAME_VISIBLE_P (f) && FRAME_HAS_MINIBUF_P (f))
+	  if (FRAME_REPAINT_P (f) && FRAME_HAS_MINIBUF_P (f))
 	    {
 	      Lisp_Object window = FRAME_MINIBUF_WINDOW (f);
 	      redisplay_window (window, 0);

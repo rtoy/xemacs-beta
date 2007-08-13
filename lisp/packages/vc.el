@@ -122,6 +122,10 @@ value of this flag.")
 (defvar vc-checkin-hook nil
   "*List of functions called after a checkin is done.  See `run-hooks'.")
 
+;;;###autoload
+(defvar vc-before-checkin-hook nil
+  "*List of functions called before a checkin is done.  See `run-hooks'.")
+
 (defvar vc-make-buffer-writable-hook nil
   "*List of functions called when a buffer is made writable.  See `run-hooks.'
 This hook is only used when the version control system is CVS.  It
@@ -681,13 +685,19 @@ lock steals will raise an error.
 	   (delete-window)
 	   (kill-buffer (current-buffer))))))
 
-(defun vc-start-entry (file rev comment msg action &optional after-hook)
+(defun vc-start-entry (file rev comment msg action &optional after-hook before-hook)
   ;; Accept a comment for an operation on FILE revision REV.  If COMMENT
   ;; is nil, pop up a VC-log buffer, emit MSG, and set the
   ;; action on close to ACTION; otherwise, do action immediately.
   ;; Remember the file's buffer in vc-parent-buffer (current one if no file).
   ;; AFTER-HOOK specifies the local value for vc-log-operation-hook.
+  ;; BEFORE-HOOK specifies a hook to run before even asking for the
+  ;; checkin comments.
   (let ((parent (if file (find-file-noselect file) (current-buffer))))
+    (when before-hook
+      (save-excursion
+	(set-buffer parent)
+	(run-hooks before-hook)))
     (if comment
 	(set-buffer (get-buffer-create "*VC-log*"))
       (pop-to-buffer (get-buffer-create "*VC-log*")))
@@ -718,7 +728,7 @@ level to check it in under.  COMMENT, if specified, is the checkin comment."
   (vc-start-entry file rev
 		  (or comment (not vc-initial-comment))
 		  "Enter initial comment." 'vc-backend-admin
-		  nil))
+		  nil 'vc-before-checkin-hook))
 
 (defun vc-checkout (file &optional writable)
   "Retrieve a copy of the latest version of the given file."
@@ -776,7 +786,7 @@ COMMENT is a comment string; if omitted, a buffer is
 popped up to accept a comment."
   (vc-start-entry file rev comment
 		  "Enter a change comment." 'vc-backend-checkin
-		  'vc-checkin-hook))
+		  'vc-checkin-hook 'vc-before-checkin-hook))
 
 ;;; Here is a checkin hook that may prove useful to sites using the
 ;;; ChangeLog facility supported by Emacs.

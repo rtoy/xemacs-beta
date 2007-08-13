@@ -160,7 +160,7 @@
 ; Minibuffer name matching improved.  Made `tcl-boundaries' smarter by
 ; use of new function `tcl-forward-sexp1'. `tcl-commands' list updated
 ; -- should be complete now.  A message is printed if the syntax scanner
-; matched or failed for known tcl/tk commands.  Seperated `tcl-commands'
+; matched or failed for known tcl/tk commands.  Separated `tcl-commands'
 ; from `tk-commands' -- `tk-commands' not yet complete.  New motion
 ; handler `raise-LaTeX' added, for tex-mode.
 ;
@@ -1312,7 +1312,7 @@ Arguments are:
 
 (defun mode-motion-insert-text (text)
   "Insert TEXT at point. Also insert one space if the 
-preceeding character is a word constituent or a closing paren."
+preceding character is a word constituent or a closing paren."
   (or text (error "No highlighted text to copy."))
   (let ((prec-char-syntax (char-syntax (preceding-char))))
     (if (memq  prec-char-syntax '(?w ?\))) (insert " "))

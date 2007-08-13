@@ -2604,11 +2604,9 @@ report_pure_usage (int report_impurities,
       CONST long report_round = 5000;
 
       message ("\n****\tPure Lisp storage exhausted!\n"
- "\tAn additional %ld bytes will guarantee enough pure space;\n"
- "\ta smaller increment may work (due to structure-sharing).\n"
+"\tPurespace usage: %ld of %ld\n"
  "****",
-               (((pure_lossage + report_round - 1)
-                 / report_round) * report_round));
+               PURESIZE+pure_lossage, PURESIZE);
       if (die_if_pure_storage_exceeded) {
 	PURESIZE_h(PURESIZE + pure_lossage);
 	rc = -1;

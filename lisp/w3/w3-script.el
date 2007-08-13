@@ -1,7 +1,7 @@
 ;;; w3-script.el --- Scripting support
 ;; Author: wmperry
-;; Created: 1997/02/18 23:32:46
-;; Version: 1.4
+;; Created: 1997/03/07 14:13:39
+;; Version: 1.5
 ;; Keywords: hypermedia, scripting
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -86,7 +86,7 @@ If you are ultra-paranoid, set this to `nil'")
 		   form (car form))
 	     (w3-elisp-safe-eval form))))
 	(otherwise
-	 (error "Unimplemented scripting language: %S"
-		w3-current-scripting-language)))))
+	 (message "Unimplemented scripting language: %S"
+		  w3-current-scripting-language)))))
 
 (provide 'w3-script)

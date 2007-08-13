@@ -32,7 +32,7 @@
 ;;; Corrections made by Ilya Zakharevich ilya@math.mps.ohio-state.edu
 ;;; XEmacs changes by Peter Arius arius@informatik.uni-erlangen.de
 
-;; $Id: cperl-mode.el,v 1.2 1997/02/09 23:51:33 steve Exp $
+;; $Id: cperl-mode.el,v 1.3 1997/03/09 02:37:19 steve Exp $
 
 ;;; To use this mode put the following into your .emacs file:
 
@@ -385,7 +385,7 @@ regardless of where in the line point is when the TAB command is used.")
 Can be overwritten by `cperl-hairy' if nil.")
 
 (defvar cperl-electric-lbrace-space nil
-  "*Non-nil (and non-null) means { after $ in CPerl buffers should be preceeded by ` '.
+  "*Non-nil (and non-null) means { after $ in CPerl buffers should be preceded by ` '.
 Can be overwritten by `cperl-hairy' if nil.")
 
 (defvar cperl-electric-parens-string "({[<"
@@ -2159,7 +2159,7 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
 		;;  "\\(\\`\n?\\|\n\n\\)=" 
 		(if (looking-at "\n*cut\\>")
 		    (progn
-		      (message "=cut is not preceeded by a pod section")
+		      (message "=cut is not preceded by a pod section")
 		      (setq err (point)))
 		  (beginning-of-line)
 		
@@ -2290,7 +2290,7 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
 ;;;	    (while (re-search-forward "\\(\\`\n?\\|\n\n\\)=" max t)
 ;;;	      (if (looking-at "\n*cut\\>")
 ;;;		  (progn
-;;;		    (message "=cut is not preceeded by a pod section")
+;;;		    (message "=cut is not preceded by a pod section")
 ;;;		    (setq err (point)))
 ;;;		(beginning-of-line)
 		

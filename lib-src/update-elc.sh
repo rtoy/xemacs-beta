@@ -2,10 +2,9 @@
 ### update-elc.sh --- recompile all missing or out-or-date .elc files
 
 # Author:	Jamie Zawinski <jwz@lucid.com>
-# Maintainer:	Ben Wing <ben.wing@Eng.Sun.COM>
+# Maintainer:	Steve Baur <steve@altair.xemacs.org>
 # Created:	?
 # Version:	1.0
-# Modified:     94/07/13 16:18:44
 # Keywords:	recompile .el .elc
 
 ### Commentary:
@@ -58,6 +57,8 @@ BYTECOMP="$REAL -batch -q -no-site-file "
 echo "Recompiling in `pwd|sed 's|^/tmp_mnt||'`"
 echo "          with $REAL..."
 
+$EMACS -batch -q -no-site-file -l cleantree -f batch-remove-old-elc lisp
+
 prune_vc="( -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 
 tmp1=/tmp/rcl1.$$
@@ -74,7 +75,6 @@ echon "Deleting .elc files without .el files... "
 comm -13 $tmp1 $tmp2 | sed 's/\(.*\)\.el$/echo \1.elc ; rm \1.elc/' | sh
 echo done.
 
-
 # first recompile the byte-compiler, so that the other compiles take place
 # with the latest version (assuming we're compiling the lisp dir of the emacs
 # we're running, which might not be the case, but often is.)
@@ -82,13 +82,19 @@ echo done.
 echon "Checking the byte compiler... "
 $BYTECOMP -f batch-byte-recompile-directory lisp/bytecomp
 
+# vm is hard, and must be done first ...
+#
+echon "Compiling VM... "
+( cd lisp/vm ; make EMACS=$REAL )
+echo done.
+
 echo Compiling files without .elc...
 
 # Isn't it wonderful the number of different ways you can
 # iterate over a list of files?
 
 #
-# First compile all files which don't have a .elc version, except for these:
+# Second compile all files which don't have a .elc version, except for these:
 #
 
 NUMTOCOMPILE=20			# compile up to 20 files with each invocation
@@ -124,12 +130,6 @@ comm -23 $tmp1 $tmp2 | sed '
 
 rm -f $tmp1 $tmp2
 echo Done.
-
-# vm is hard...
-#
-echon "Compiling VM... "
-( cd lisp/vm ; make EMACS=$REAL )
-echo done.
 
 if [ -d lisp/ediff ]; then
   echo Compiling EDIFF...

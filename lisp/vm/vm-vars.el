@@ -615,7 +615,7 @@ that can display all the buffer's characters.")
   "*Symbol specifying what kind of transfer encoding to use on 8bit
 text.  Characters with the high bit set cannot safely pass
 through all mail gateways and mail transport software.  MIME has
-two transfer encodings that convert 8-bit data to 7-bit for same
+two transfer encodings that convert 8-bit data to 7-bit for safe
 transport. Quoted-printable leaves the text mostly readable even
 if the recipient does not have a MIME-capable mail reader.  BASE64
 is unreadable without a MIME-capable mail reader, unless your name
@@ -625,12 +625,27 @@ A value of 'quoted-printable, means to use quoted-printable encoding.
 A value of 'base64 means to use BASE64 encoding.
 A value of '8bit means to send the message as is.
 
-Note that this only applies to textual MIME content types.  Images, audio,
-video, etc. will always use BASE64 encoding.
+Note that this variable usually only applies to textual MIME
+content types.  Images, audio, video, etc. typically will have
+some attribute that makes VM consider them to be \"binary\",
+which moves them outside the scope of this variable.  For
+example, messages with line lengths of 1000 characters or more
+are considered binary, as are messages that contain carriage
+returns (ascii code 13) or NULs (ascii code 0).")
 
-Note that lines of 1000 characters or longer will automatically
-trigger BASE64 encoding.  Carriage returns (ascii code 13) in the
-text will also trigger BASE64 encoding.")
+(defvar vm-mime-composition-armor-from-lines nil
+  "*Non-nil value means \"From \" lines should be armored before sending.
+A line beginning with \"From \" is considered a message separator
+by many mail delivery agents.  These agents will often insert a >
+before the word \"From\" to prevent mail readers from being
+confused.  This is proper behavior, but it breaks digitally signed
+messages, which require bit-perfect transport in order for the
+message contents to be considered genuine.
+
+If vm-mime-composition-armor-from-lines is non-nil, a line
+beginning with \"From \" will cause VM to encode the message
+using either quoted-printable or BASE64 encoding so that the From
+line can be protected.")
 
 (defvar vm-mime-attachment-auto-type-alist
   '(
@@ -3009,6 +3024,7 @@ that has a match.")
     ("application/postscript")
     ("application/octet-stream")
     ("message/rfc822")
+    ("message/news")
    ))
 (defconst vm-mime-encoded-word-regexp
   "=\\?\\([^?]+\\)\\?\\([BQ]\\)\\?\\([^?]+\\)\\?=")

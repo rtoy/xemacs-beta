@@ -532,7 +532,7 @@ A negative ARG moves in the opposite order."
 This is equivalent to the type of the frame's device.
 Value is `tty' for a tty frame (a character-only terminal),
 `x' for a frame that is an X window,
-`ns' for a frame that is a NeXTstep window (not yet implemeted),
+`ns' for a frame that is a NeXTstep window (not yet implemented),
 `win32' for a frame that is a Windows or Windows NT window (not yet
   implemented),
 `pc' for a frame that is a direct-write MS-DOS frame (not yet implemented),
@@ -741,9 +741,13 @@ all frames that were visible, and iconify all frames that were not."
 (defun suspend-or-iconify-emacs ()
   "Calls iconify-emacs if frame is an X frame, otherwise calls suspend-emacs"
   (interactive)
-  (if (eq (frame-type (selected-frame)) 'x)
-      (iconify-emacs)
-    (suspend-emacs)))
+  (cond
+   ((eq (frame-type (selected-frame)) 'x) (iconify-emacs))
+   ((and (eq (frame-type (selected-frame)) 'tty)
+	 (console-tty-controlling-process (selected-console)))
+    (suspend-console (selected-console)))
+   (t
+    (suspend-emacs))))
 
 
 ;;; auto-raise and auto-lower
@@ -848,6 +852,7 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 	;; Sort the list so that iconic frames will be found last.  They
 	;; will be used too, but mapped frames take precedence.  And
 	;; fully visible frames come before occluded frames.
+        ;; Hidden frames come after really visible ones
 	(setq frames
 	      (sort (frame-list)
 		    #'(lambda (s1 s2)
@@ -855,6 +860,8 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 			       nil)
 			      ((not (frame-visible-p s2))
 			       (frame-visible-p s1))
+			      ((eq (frame-visible-p s2) 'hidden)
+			       (eq (frame-visible-p s1) t ))
 			      ((not (frame-totally-visible-p s2))
 			       (and (frame-visible-p s1)
 				    (frame-totally-visible-p s1)))))))
@@ -902,6 +909,8 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 		    #'(lambda (s1 s2)
 			(cond ((and (frame-visible-p s1)
 				    (not (frame-visible-p s2))))
+			      ((and (eq (frame-visible-p s1) t)
+				    (eq (frame-visible-p s2) 'hidden)))
 			      ((and (frame-visible-p s2)
 				    (not (frame-visible-p s1)))
 			       nil)
@@ -1002,7 +1011,7 @@ is first in the list.  VISIBLE-ONLY will only list non-iconified frames."
 	    (setq save-frame next-frame)
 	  (and 
 	   (or (not visible-only)
-	       (eq t (frame-visible-p next-frame)))
+	       (frame-visible-p next-frame))
 	   (setq frames (append frames (list next-frame))))))
 	(setq list (cdr list)))
 

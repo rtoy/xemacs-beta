@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
-;; Version: $Revision: 1.5 $
+;; Version: $Revision: 1.6 $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -33,7 +33,7 @@
 ;;;
 
 (defconst gnus-mime-RCS-ID
-  "$Id: gnus-mime.el,v 1.5 1997/03/04 08:45:01 steve Exp $")
+  "$Id: gnus-mime.el,v 1.6 1997/03/09 02:37:48 steve Exp $")
 
 (defconst gnus-mime-version
   (get-version-string gnus-mime-RCS-ID))
@@ -65,7 +65,8 @@ The function is called from the article buffer.")
 
 (require 'gnus)
 (require 'gnus-charset)
-(require 'gnus-sum)
+(eval-when-compile
+ (require 'gnus-sum))
 
 ;;; @ for tm-partial
 ;;;

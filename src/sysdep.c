@@ -734,6 +734,20 @@ sys_suspend (void)
 #endif
 }
 
+/* Suspend a process if possible; give terminal to its superior.  */
+void
+sys_suspend_process (process)
+    int process;
+{
+    /* I don't doubt that it is possible to suspend processes on
+     * VMS machines or thost that use USG_JOBCTRL,
+     * but I don't know how to do it, so...
+     */
+#if defined (SIGTSTP) && !defined (MSDOS)
+    kill(process, SIGTSTP);
+#endif
+}
+
 /* Set the logical window size associated with descriptor FD
    to HEIGHT and WIDTH.  This is used mainly with ptys.  */
 

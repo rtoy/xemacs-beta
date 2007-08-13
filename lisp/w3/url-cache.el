@@ -1,7 +1,7 @@
 ;;; url-cache.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/02/20 15:33:47
-;; Version: 1.3
+;; Created: 1997/03/06 16:25:51
+;; Version: 1.7
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -27,6 +27,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'md5)
 
+(defvar url-cache-directory "~/.w3/cache/"
+  "*The directory where cache files should be stored.")
+
 ;; Cache manager
 (defun url-cache-file-writable-p (file)
   "Follows the documentation of file-writable-p, unlike file-writable-p."
@@ -35,7 +38,7 @@
            (not (file-directory-p file))
          (file-directory-p (file-name-directory file)))))
                 
-(defun url-prepare-cache-for-file (file)
+(defun url-cache-prepare (file)
   "Makes it possible to cache data in FILE.
 Creates any necessary parent directories, deleting any non-directory files
 that would stop this.  Returns nil if parent directories can not be
@@ -44,74 +47,13 @@ permissions of FILE or deletes FILE to make it possible to write a new
 version of FILE.  Returns nil if this can not be done.  Returns nil if
 FILE already exists as a directory.  Otherwise, returns t, indicating that
 FILE can be created or overwritten."
-
-  ;; COMMENT: We don't delete directories because that requires
-  ;; recursively deleting the directories's contents, which might
-  ;; eliminate a substantial portion of the cache.
-
   (cond
    ((url-cache-file-writable-p file)
     t)
    ((file-directory-p file)
     nil)
    (t
-    (catch 'upcff-tag
-      (let ((dir (file-name-directory file))
-            dir-parent dir-last-component)
-        (if (string-equal dir file)
-            ;; *** Should I have a warning here?
-            ;; FILE must match a pattern like /foo/bar/, indicating it is a
-            ;; name only suitable for a directory.  So presume we won't be
-            ;; able to overwrite FILE and return nil.
-            (throw 'upcff-tag nil))
-        
-        ;; Make sure the containing directory exists, or throw a failure
-        ;; if we can't create it.
-        (if (file-directory-p dir)
-            nil
-          (or (fboundp 'make-directory)
-              (throw 'upcff-tag nil))
-          (make-directory dir t)
-          ;; make-directory silently fails if there is an obstacle, so
-          ;; we must verify its results.
-          (if (file-directory-p dir)
-              nil
-            ;; Look at prefixes of the path to find the obstacle that is
-            ;; stopping us from making the directory.  Unfortunately, there
-            ;; is no portable function in Emacs to find the parent directory
-            ;; of a *directory*.  So this code may not work on VMS.
-            (while (progn
-                     (if (eq ?/ (aref dir (1- (length dir))))
-                         (setq dir (substring dir 0 -1))
-                       ;; Maybe we're on VMS where the syntax is different.
-                       (throw 'upcff-tag nil))
-                     (setq dir-parent (file-name-directory dir))
-                     (not (file-directory-p dir-parent)))
-              (setq dir dir-parent))
-            ;; We have found the longest path prefix that exists as a
-            ;; directory.  Deal with any obstacles in this directory.
-            (if (file-exists-p dir)
-                (condition-case nil
-                    (delete-file dir)
-                  (error (throw 'upcff-tag nil))))
-            (if (file-exists-p dir)
-                (throw 'upcff-tag nil))
-            ;; Try making the directory again.
-            (setq dir (file-name-directory file))
-            (make-directory dir t)
-            (or (file-directory-p dir)
-                (throw 'upcff-tag nil))))
-
-        ;; The containing directory exists.  Let's see if there is
-        ;; something in the way in this directory.
-        (if (url-cache-file-writable-p file)
-            (throw 'upcff-tag t)
-          (condition-case nil
-              (delete-file file)
-            (error (throw 'upcff-tag nil))))
-
-        ;; The return value, if we get this far.
-        (url-cache-file-writable-p file))))))
+    (make-directory (file-name-directory file) t))))
 
 (defvar url-cache-ignored-protocols
   '("www" "about" "https" "mailto")
@@ -131,23 +73,26 @@ FILE can be created or overwritten."
    ((member (url-type obj) '("http" "https"))
     (let* ((status (cdr-safe (assoc "status" url-current-mime-headers)))
 	   (class (if status (/ status 100) 0)))
-      (case class
-	(2				; Various 'OK' statuses
-	 (memq status '(200)))
-	(otherwise nil))))
+      (cond
+       ((string-match (eval-when-compile (regexp-quote "?"))
+		      (url-filename obj))
+	nil)
+       ((= class 2)
+	(memq status '(200)))
+       (t nil))))
    (t
     nil)))
 
 ;;;###autoload
 (defun url-store-in-cache (&optional buff)
   "Store buffer BUFF in the cache"
-  (if (and buff (get-buffer buff))
+  (if (not (and buff (get-buffer buff)))
       nil
     (save-excursion
       (and buff (set-buffer buff))
       (if (not (url-cache-cachable-p url-current-object))
 	  nil
-	(let* ((fname (url-create-cached-filename (url-view-url t)))
+	(let* ((fname (url-cache-create-filename (url-view-url t)))
 	       (fname-hdr (concat fname ".hdr"))
 	       (info (mapcar (function (lambda (var)
 					 (cons (symbol-name var)
@@ -159,8 +104,8 @@ FILE can be created or overwritten."
 				url-current-mime-headers
 				url-current-mime-type
 				))))
-	  (cond ((and (url-prepare-cache-for-file fname)
-		      (url-prepare-cache-for-file fname-hdr))
+	  (cond ((and (url-cache-prepare fname)
+		      (url-cache-prepare fname-hdr))
 		 (write-region (point-min) (point-max) fname nil 5)
 		 (set-buffer (get-buffer-create " *cache-tmp*"))
 		 (erase-buffer)
@@ -183,37 +128,27 @@ FILE can be created or overwritten."
 ;;;###autoload
 (defun url-is-cached (url)
   "Return non-nil if the URL is cached."
-  (let* ((fname (url-create-cached-filename url))
+  (let* ((fname (url-cache-create-filename url))
 	 (attribs (file-attributes fname)))
     (and fname				; got a filename
 	 (file-exists-p fname)		; file exists
 	 (not (eq (nth 0 attribs) t))	; Its not a directory
 	 (nth 5 attribs))))		; Can get last mod-time
-    
-(defun url-create-cached-filename-using-md5 (url)
-  (if url
-      (expand-file-name (md5 url)
-			(concat url-temporary-directory "/"
-				(user-real-login-name)))))
 
-;;;###autoload
-(defun url-create-cached-filename (url)
+(defun url-cache-create-filename-human-readable (url)
   "Return a filename in the local cache for URL"
   (if url
       (let* ((url url)
-	     (urlobj (if (vectorp url)
-			 url
-		       (url-generic-parse-url url)))
+	     (urlobj (url-generic-parse-url url))
 	     (protocol (url-type urlobj))
 	     (hostname (url-host urlobj))
 	     (host-components
 	      (cons
 	       (user-real-login-name)
 	       (cons (or protocol "file")
-		     (nreverse
-		      (delq nil
-			    (mm-string-to-tokens
-			     (or hostname "localhost") ?.))))))
+		     (split-string (or hostname "localhost")
+				   (eval-when-compile
+				     (regexp-quote "."))))))
 	     (fname    (url-filename urlobj)))
 	(if (and fname (/= (length fname) 0) (= (aref fname 0) ?/))
 	    (setq fname (substring fname 1 nil)))
@@ -234,11 +169,6 @@ FILE can be created or overwritten."
 			  (setq slash nil)
 			  (char-to-string x))))) fname ""))))
 
-	(if (and fname (memq system-type '(ms-windows ms-dos windows-nt))
-		 (string-match "\\([A-Za-z]\\):[/\\]" fname))
-	    (setq fname (concat (url-match fname 1) "/"
-				(substring fname (match-end 0)))))
-	
 	(setq fname (and fname
 			 (mapconcat
 			  (function (lambda (x)
@@ -256,33 +186,44 @@ FILE can be created or overwritten."
 		      (if (string= (substring fname -1 nil) "/")
 			  (concat fname url-directory-index-file)
 			fname))))
-
-	;; Honor hideous 8.3 filename limitations on dos and windows
-	;; we don't have to worry about this in Windows NT/95 (or OS/2?)
-	(if (and fname (memq system-type '(ms-windows ms-dos)))
-	    (let ((base (url-file-extension fname t))
-		  (ext  (url-file-extension fname nil)))
-	      (setq fname (concat (substring base 0 (min 8 (length base)))
-				  (substring ext  0 (min 4 (length ext)))))
-	      (setq host-components
-		    (mapcar
-		     (function
-		      (lambda (x)
-			(if (> (length x) 8)
-			    (concat 
-			     (substring x 0 8) "."
-			     (substring x 8 (min (length x) 11)))
-			  x)))
-		     host-components))))
-
 	(and fname
 	     (expand-file-name fname
 			       (expand-file-name
 				(mapconcat 'identity host-components "/")
-				url-temporary-directory))))))
+				url-cache-directory))))))
+
+(defun url-cache-create-filename-using-md5 (url)
+  "Create a cached filename using MD5.
+ Very fast if you are in XEmacs, suitably fast otherwise."
+  (if url
+      (let* ((checksum (md5 url))
+	     (urlobj (url-generic-parse-url url))
+	     (protocol (url-type urlobj))
+	     (hostname (url-host urlobj))
+	     (host-components
+	      (cons
+	       (user-real-login-name)
+	       (cons (or protocol "file")
+		     (nreverse
+		      (delq nil
+			    (split-string (or hostname "localhost")
+					  (eval-when-compile
+					    (regexp-quote "."))))))))
+	     (fname    (url-filename urlobj)))
+	(and fname
+	     (expand-file-name checksum
+			       (expand-file-name
+				(mapconcat 'identity host-components "/")
+				url-cache-directory))))))
+
+(defvar url-cache-creation-function 'url-cache-create-filename-using-md5
+  "*What function to use to create a cached filename.")
+
+(defun url-cache-create-filename (url)
+  (funcall url-cache-creation-function url))
 
 ;;;###autoload
-(defun url-extract-from-cache (fnam)
+(defun url-cache-extract (fnam)
   "Extract FNAM from the local disk cache"
   (set-buffer (get-buffer-create url-working-buffer))
   (erase-buffer)
@@ -301,10 +242,10 @@ FILE can be created or overwritten."
 	   (type (url-type urlobj)))
       (cond
        (url-standalone-mode
-	(not (file-exists-p (url-create-cached-filename urlobj))))
+	(not (file-exists-p (url-cache-create-filename urlobj))))
        ((string= type "http")
 	(if (not url-standalone-mode) t
-	  (not (file-exists-p (url-create-cached-filename urlobj)))))
+	  (not (file-exists-p (url-cache-create-filename urlobj)))))
        ((not (fboundp 'current-time))
 	t)
        ((member type '("file" "ftp"))

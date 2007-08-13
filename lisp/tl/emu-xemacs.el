@@ -5,7 +5,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: emu-xemacs.el,v 1.2 1996/12/22 00:29:30 steve Exp $
+;;	$Id: emu-xemacs.el,v 1.3 1997/03/09 02:37:47 steve Exp $
 ;; Keywords: emulation, compatibility, XEmacs
 
 ;; This file is part of emu.
@@ -54,10 +54,10 @@
 	    )))
     )
 
-(defun tl:add-text-properties (start end properties)
+(defun tl:add-text-properties (start end properties &optional object)
   (add-text-properties start end
 		       (append properties (list 'highlight t))
-		       )
+		       object)
   )
 
 (defalias 'tl:make-overlay 'make-extent)

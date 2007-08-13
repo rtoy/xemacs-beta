@@ -131,6 +131,7 @@
       )
 
      ("Options"
+      ,custom-help-menu
       ["Read Only" (toggle-read-only)
        :style toggle :selected buffer-read-only]
       ("Editing Options"
@@ -550,7 +551,7 @@
 	:selected (eq browse-url-browser-function 'browse-url-grail)]
       )
       "-----"
-      ["Edit Faces..." cu-edit-faces t]
+      ["Browse Faces..." edit-faces t]
       ("Font"   :filter font-menu-family-constructor)
       ("Size"	:filter font-menu-size-constructor)
       ("Weight"	:filter font-menu-weight-constructor)
@@ -640,7 +641,6 @@
        ["No Warranty"		describe-no-warranty	t]
        ["XEmacs License"	describe-copying	t]
        ["The Latest Version"	describe-distribution	t])
-      ,custom-help-menu
       )
      )))
 
@@ -1150,7 +1150,7 @@ of changing and saving faces via cu-edit-faces.el & custom.el.")
 	 (cons 'progn
 	       (mapcar #'(lambda (face)
 			   `(make-face ',face))
-		       (face-list))))
+		       (save-options-non-customized-face-list))))
      
      (if options-save-faces
 	 (cons 'progn
@@ -1169,12 +1169,21 @@ of changing and saving faces via cu-edit-faces.el & custom.el.")
 				  (delq 'display-table
 					(copy-sequence
 					 built-in-face-specifiers)))))
-		       (face-list)))))
+		       (save-options-non-customized-face-list)))))
      
      ))
   "The variables to save; or forms to evaluate to get forms to write out.
 This is used by `save-options-menu-settings' and should mirror the
 options listed in the Options menu.")
+
+(defun save-options-non-customized-face-list ()
+  "This function will return a list of all faces that have not been
+'customized'."
+  (delq nil (mapcar '(lambda (face)
+		      (if (not (or (get face 'saved-face)
+				   (get face 'factory-face)))
+			  face))
+		    (face-list))))
 
 (defun save-options-specifier-spec-list (face property)
   (if (not (or (eq property 'font) (eq property 'color)))

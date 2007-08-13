@@ -345,7 +345,10 @@ handle_response (void)
     fprintf(stderr,"%s: garbage after result\n",progname);
     exit(1);
   }
-  close(s);
+  /* send the newline */
+  buf[1] = '\0';
+  send_string(s,buf);
+  close(s); 
 
 } /* handle_response */
 #endif /* INTERNET_DOMAIN_SOCKETS || UNIX_DOMAIN_SOCKETS */

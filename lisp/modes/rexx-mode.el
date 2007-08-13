@@ -25,7 +25,7 @@
 ;;; AUTHOR
 ;;;	Anders Lindgren, d91ali@csd.uu.se
 ;;;
-;;;         Abbrevationtable due to:
+;;;         Abbreviation table due to:
 ;;;	Johan Bergkvist, nv91-jbe@nada.kth.se
 ;;;
 ;;; USAGE
@@ -352,7 +352,7 @@ If you have set rexx-end-indent to a nonzero value, you probably want to
 remap RETURN to rexx-indent-newline-indent. It makes sure that lines
 indents correctly when you press RETURN.
 
-An extensive abbrevation table consisting of all the keywords of REXX are
+An extensive abbreviation table consisting of all the keywords of REXX are
 supplied. Expanded keywords are converted into upper case making it
 easier to distinguish them. To use this feature the buffer must be in
 abbrev-mode. (See example below.)
@@ -370,8 +370,8 @@ For example:
 			))
 
 will make the END aligned with the DO/SELECT. It will indent blocks and
-IF-statenents four steps and make sure that the END jumps into the
-correct position when RETURN is pressed. Finaly it will use the abbrev
+IF-statements four steps and make sure that the END jumps into the
+correct position when RETURN is pressed. Finally it will use the abbrev
 table to convert all REXX keywords into upper case."
   (interactive)
   (kill-all-local-variables)

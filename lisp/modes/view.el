@@ -36,6 +36,10 @@
 
 ;;; Code:
 
+;; XEmacs (to try to forestall complaints).
+(when (featurep 'view-less)
+  (error "Can't load view.el and view-less.el in same session."))
+
 (defvar view-highlight-face 'highlight
   ;; XEmacs change
    "*The extent face used for highlighting the match found by View mode search.")

@@ -75,7 +75,7 @@ car is one of the ToolTalk mode values like TT_INOUT."
   "Initialize the tooltalk message attributes.  The value of 
 attributes must be a property list in the same form as for 
 make-tooltalk-message.  This function can be used to reset
-an existing message or to initailize a new one.  See 
+an existing message or to initialize a new one.  See 
 initialize-tooltalk-message-args for a description of how
 arguments are initialized."
   (let ((args attributes)
@@ -121,7 +121,7 @@ Tooltalk Programmer's Guide.
 
 The no-callback arg is a hack to prevent the registration of the
 C-level callback.  This hack is needed by the current SPARCworks
-tool startup mechanism.  Yuchho."
+tool startup mechanism.  Yucko."
   (let ((msg (create-tooltalk-message no-callback)))
     (initialize-tooltalk-message-attributes msg attributes)
     msg))
@@ -199,7 +199,7 @@ values is provided then the pattern will match messages with
 a corresponding attribute that matches any member of the list.
 
 This function can be used to add attribute values to an existing
-pattern or to initiallize a new one.  See
+pattern or to initialize a new one.  See
 `initialize-tooltalk-message/pattern-args' for a description of how
 arguments are initialized."
   (let ((args attributes)

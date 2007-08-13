@@ -1,6 +1,6 @@
 ;;; psgml-edit.el --- Editing commands for SGML-mode with parsing support
 ;;-*-byte-compile-warnings:(free-vars unused-vars unresolved callargs redefine)-*-
-;; $Id: psgml-edit.el,v 1.1.1.2 1996/12/18 03:47:14 steve Exp $
+;; $Id: psgml-edit.el,v 1.2 1997/03/09 02:37:45 steve Exp $
 
 ;; Copyright (C) 1994, 1995, 1996 Lennart Staflin
 
@@ -1083,7 +1083,7 @@ subelements."
 	   ((sgml-element-mixed c))
 	   (t
 	    ;; Put region before element on agenda.  Can't fill it now
-	    ;; that would mangel the parse tree that is beeing traversed.
+	    ;; that would mangel the parse tree that is being traversed.
 	    (push (cons last-pos (sgml-element-start c))
 		  agenda)
 	    (goto-char (sgml-element-start c))

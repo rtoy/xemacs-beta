@@ -1997,7 +1997,7 @@ See `comint-prompt-regexp'."
 ;;; want them present in specific modes.
 
 (defvar comint-completion-autolist nil
-  "*If non-nil, automatically list possiblities on partial completion.
+  "*If non-nil, automatically list possibilities on partial completion.
 This mirrors the optional behavior of tcsh.")
 
 (defvar comint-completion-addsuffix t

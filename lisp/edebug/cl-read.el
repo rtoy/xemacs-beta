@@ -83,7 +83,7 @@
 ;; Dispatch Character Macro" `#'
 ;;
 ;; #'<function>			function quoting
-;; #\<charcter>			character syntax
+;; #\<character>		character syntax
 ;; #.<form>    			read time evaluation
 ;; #p<path>, #P<path> 		paths
 ;; #+<feature>, #-<feature> 	conditional reading
@@ -208,8 +208,8 @@
 ; Change History
 ; 
 ; $Log: cl-read.el,v $
-; Revision 1.1.1.3  1996/12/18 03:54:28  steve
-; XEmacs 19.15-b3
+; Revision 1.2  1997/03/09 02:36:46  steve
+; Patches to beta98
 ;
 ; Revision 1.19  94/03/21  19:59:24  liberte
 ; Add invalid-cl-read-syntax error symbol.
@@ -382,8 +382,8 @@
 ;;    character is a macro character.
 ;;
 ;; 3. A vector of length `reader::readtable-size'. Elements of this vector
-;;    may be `nil' or a function (see 2.). It means the charater is a
-;;    dispatch character, and the vector its dispatch fucntion table.
+;;    may be `nil' or a function (see 2.). It means the character is a
+;;    dispatch character, and the vector its dispatch function table.
 
 (defvar *readtable*)
 (defvar reader::internal-standard-readtable)
@@ -1300,7 +1300,7 @@ This is the cl-read replacement of the standard elisp function
 ;; in lisp, and based on more primitive read functions we already
 ;; replaced. The reading happens during the interactive parameter
 ;; retrieval, which is written in lisp, too.  So this replacement of
-;; eval-expresssion is only required fro (FSF) Emacs 18 (and 19?).
+;; eval-expression is only required for (FSF) Emacs 18 (and 19?).
 
 (or (fboundp 'reader::original-eval-expression)
     (fset 'reader::original-eval-expression 

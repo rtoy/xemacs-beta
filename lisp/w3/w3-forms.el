@@ -1,7 +1,7 @@
 ;;; w3-forms.el --- Emacs-w3 forms parsing code for new display engine
 ;; Author: wmperry
-;; Created: 1997/02/20 21:40:42
-;; Version: 1.73
+;; Created: 1997/03/07 14:26:02
+;; Version: 1.77
 ;; Keywords: faces, help, comm, data, languages
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -35,7 +35,9 @@
 (eval-and-compile
   (require 'w3-display)
   (require 'widget)
-  (require 'widget-edit))
+  (condition-case nil
+      (require 'wid-edit)
+    (error (require 'widget-edit))))
 
 (require 'w3-vars)
 (require 'mule-sysdp)
@@ -323,6 +325,7 @@
 		 :notify 'w3-form-submit/reset-callback
 		 :value (or
 			 (plist-get (w3-form-element-plist el) 'alt)
+			 (w3-form-element-value el)
 			 "Form-Image")))
 
 (defun w3-form-create-submit-button (el face)
@@ -531,7 +534,10 @@ This can be used as the :help-echo property of all w3 form entry widgets."
 (defsubst w3-form-field-label (data)
   ;;; FIXXX!!! Need to reimplement using the new forms implementation!
   (declare (special w3-form-labels))
-  nil)
+  (cdr-safe
+   (assoc (or (plist-get (w3-form-element-plist data) 'id)
+	      (plist-get (w3-form-element-plist data) 'label))	      
+	  w3-form-labels)))
 
 (defun w3-form-summarize-default (data widget)
   (let ((label (w3-form-field-label data))

@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/02/20 21:50:57
-;; Version: 1.82
+;; Created: 1997/03/07 16:44:12
+;; Version: 1.93
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -445,7 +445,7 @@ If FILE, find the \".../etc/PACKAGE\" file instead."
     url))
 
 ;;;###autoload
-(defun w3-fetch (&optional url)
+(defun w3-fetch (&optional url target)
   "Retrieve a document over the World Wide Web.
 Defaults to URL of the current document, if any.
 With prefix argument, use the URL of the hyperlink under point instead."
@@ -467,6 +467,14 @@ With prefix argument, use the URL of the hyperlink under point instead."
   ;; In the common case, this is probably cheaper than searching.
   (while (= (string-to-char url) ? )
     (setq url (substring url 1)))
+  (or target (setq target w3-base-target))
+  (if (stringp target)
+      (setq target (intern (downcase target))))
+  (and target
+       (let ((window-distance (cdr-safe (assq target w3-target-window-distances))))
+	 (if (numberp window-distance)
+	     (other-window window-distance)
+	   (error "target %S not found." target))))
   (cond
    ((= (string-to-char url) ?#)
     (w3-relative-link url))
@@ -633,18 +641,28 @@ the cdr is the 'next' node."
       (let* ((url (url-view-url t))
 	     (cur-links w3-current-links)
 	     (title (buffer-name))
+	     (case-fold-search t)
+	     (possible-lastmod (save-excursion
+				 (goto-char (point-min))
+				 (if (re-search-forward "^Last modified:\\(.*\\)" nil t)
+				     (buffer-substring (match-beginning 1)
+						       (match-end 1)))))
+	     (attributes (url-file-attributes url))
 	     (lastmod (or (cdr-safe (assoc "last-modified"
-					   url-current-mime-headers))))
+					   url-current-mime-headers))
+			  (nth 5 attributes)))
 	     (hdrs url-current-mime-headers)
+	     (size (or (cdr (assoc "content-length" url-current-mime-headers))
+		       (point-max)))
 	     (info w3-current-metainfo))
 	(set-buffer (get-buffer-create url-working-buffer))
 	(setq url-current-can-be-cached nil)
 	(erase-buffer)
 	(cond
 	 ((stringp lastmod) nil)
-	 ((equal '(0 . 0) lastmod) (setq lastmod nil))
+	 ((equal '(0 . 0) lastmod) (setq lastmod possible-lastmod))
 	 ((consp lastmod) (setq lastmod (current-time-string lastmod)))
-	 (t (setq lastmod nil)))
+	 (t (setq lastmod possible-lastmod)))
 	(insert "<html>\n"
 		" <head>\n"
 		"  <title>Document Information</title>\n"
@@ -654,6 +672,10 @@ the cdr is the 'next' node."
 		"   <tr><th colspan=2>Document Information</th></tr>\n"
 		"   <tr><td>Title:</td><td>" title "</td></tr>\n"
 		"   <tr><td>Location:</td><td>" url "</td></tr>\n"
+		"   <tr><td>Size:</td><td>" (url-pretty-length
+					     (if (stringp size)
+						 (string-to-int size)
+					       size)) "</td></tr>\n"
 		"   <tr><td>Last Modified:</td><td>" (or lastmod "None Given")
 		"</td></tr>\n")
 	(if hdrs
@@ -828,24 +850,6 @@ and convert newlines into spaces."
   (interactive)
   (w3-source-document t))
 
-(defun w3-my-safe-copy-face (old new locale)
-  (let ((fore (face-foreground old))
-	(back (face-background old))
-	(bpxm (face-background-pixmap old))
-	(font (face-font old))
-	(font-spec (get old 'font-specification)))
-    (if (color-specifier-p fore)
-	(setq fore (color-name fore)))
-    (if (color-specifier-p back)
-	(setq back (color-name back)))
-    (if (font-specifier-p font)
-	(setq font (font-name font)))
-    (and fore (set-face-foreground new fore locale))
-    (and back (set-face-background new back locale))
-    (and bpxm (set-face-background-pixmap new bpxm locale))
-    (and (or font-spec font) (set-face-font new (or font-spec font) locale))
-    new))
-
 (defun w3-source-document (under)
   "View this document's source"
   (interactive "P")
@@ -910,6 +914,7 @@ and convert newlines into spaces."
 			("LaTeX Source")
 			)
 		  nil t)))
+	 (case-fold-search t)
 	 (url (cond
 	       ((stringp under) under)
 	       (under (w3-view-this-url t))
@@ -964,15 +969,23 @@ and convert newlines into spaces."
 	    (buffer-string))))
     (funcall w3-mail-command)
     (mail-subject)
-    (insert format " from URL " url "\n"
-	    "Mime-Version: 1.0\n"
-	    "Content-transfer-encoding: 8bit\n"
-	    "Content-type: " content-type)
+    (if (and (boundp 'mime/editor-mode-flag) mime/editor-mode-flag)
+        (insert format " from <URL: " url ">")
+      (insert format " from <URL: " url ">\n"
+              "Mime-Version: 1.0\n"
+              "Content-transfer-encoding: 8bit\n"
+              "Content-type: " content-type))
     (re-search-forward mail-header-separator nil)
     (forward-char 1)
-    (insert (if (equal "HTML Source" format)
-		(format "<BASE HREF=\"%s\">" url) "")
-	    str)
+    (if (and (boundp 'mime/editor-mode-flag) mime/editor-mode-flag)
+        (insert (format mime-tag-format content-type) "\n"))
+    (save-excursion
+      (insert str))
+    (cond ((equal "HTML Source" format)
+           (if (or (search-forward "<head>" nil t)
+		   (search-forward "<html>" nil t))
+	       (insert "\n"))
+           (insert (format "<base href=\"%s\">" url))))
     (mail-to)))
 
 (defun w3-internal-use-history (hist-item)
@@ -1585,6 +1598,8 @@ displayed in a new buffer."
     (if base
 	(setq base (url-generic-parse-url base)))
     (insert-buffer buffer)
+    (let ((inhibit-read-only t))
+      (set-text-properties (point-min) (point-max) nil))
     (if (not base)
 	(setq url-current-object
 	      (url-generic-parse-url (concat "file:"
@@ -1794,12 +1809,13 @@ No arg means whole window full.  Arg is number of lines to scroll."
 	    x (cdr x)
 	    found (cdr-safe (assoc "made" y))))
     (if found
-	(let ((possible nil))
+	(let ((possible nil)
+	      (href nil))
 	  (setq x (car found))		; Fallback if no mail(to|server) found
 	  (while found
-	    (if (string-match "^mail[^:]+:" (car found))
-		(setq possible (cons (car found) possible)))
-	    (setq found (cdr found)))
+	    (setq href (plist-get (pop found) 'href))
+	    (if (and href (string-match "^mail[^:]+:" href))
+		(setq possible (cons href possible))))
 	  (case (length possible)
 	    (0				; No mailto links found
 	     (w3-fetch x))		; fall back onto first 'made' link
@@ -1920,7 +1936,11 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
   (w3-find-default-stylesheets)
   )
 
+(defvar w3-loaded-stylesheets nil
+  "A list of all the stylesheets Emacs-W3 loaded at startup.")
+
 (defun w3-find-default-stylesheets ()
+  (setq w3-loaded-stylesheets nil)
   (let* ((lightp (w3-color-light-p 'default))
 	 (longname (if lightp "stylesheet-light" "stylesheet-dark"))
 	 (shortname (if lightp "light.css" "dark.css"))
@@ -1957,6 +1977,7 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
 		       (not (file-directory-p cur)) cur))
       (if found
 	  (setq total-found (1+ total-found)
+		w3-loaded-stylesheets (cons cur w3-loaded-stylesheets)
 		w3-user-stylesheet (css-parse (concat "file:" cur) nil
 				     w3-user-stylesheet))))
     (setq-default url-be-asynchronous old-asynch)
@@ -2188,20 +2209,24 @@ With optional ARG, move across that many fields."
 	  link-at-point (and
 			 link-at-point
 			 (widget-get link-at-point 'href)
+			 (widget-get link-at-point :from)
+			 (widget-get link-at-point :to)
 			 (w3-fix-spaces
 			  (buffer-substring
 			   (widget-get link-at-point :from)
 			   (widget-get link-at-point :to)))))
     (w3-map-links (function
 		   (lambda (widget arg)
-		     (setq links-alist	(cons
-					 (cons
-					  (w3-fix-spaces
-					   (buffer-substring-no-properties
-					    (widget-get widget :from)
-					    (widget-get widget :to)))
-					  (widget-get widget 'href))
-					 links-alist)))))
+		     (if (and (widget-get widget :from)
+			      (widget-get widget :to))
+			 (setq links-alist (cons
+					    (cons
+					     (w3-fix-spaces
+					      (buffer-substring-no-properties
+					       (widget-get widget :from)
+					       (widget-get widget :to)))
+					     (widget-get widget 'href))
+					    links-alist))))))
     (if (not links-alist) (error "No links in current document."))
     (setq links-alist (sort links-alist (function
 					 (lambda (x y)

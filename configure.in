@@ -2300,6 +2300,7 @@ case "${canonical}" in
       *-linux* )		opsys=linux ;;
       *-sco3.2v4* )		opsys=sco4 ; NON_GNU_CPP=/lib/cpp  ;;
       *-bsd386* | *-bsdi1* )	opsys=bsd386 ;;
+      *-bsdi3* )		opsys=bsdos2-1 ;;
       *-bsdi2.1* )		opsys=bsdos2-1 ;;
       *-bsdi2* )		opsys=bsdos2 ;;
       *-sco3.2v5* )		opsys=sco5 ; 

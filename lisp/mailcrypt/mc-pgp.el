@@ -55,7 +55,7 @@ use its default.")
   "Regular expression matching a PGP key snarf message")
 (defconst mc-pgp-nokey-re
   "Cannot find the public key matching userid '\\(.+\\)'$"
-  "Regular expression matching a PGP missing-key messsage")
+  "Regular expression matching a PGP missing-key message")
 (defconst mc-pgp-key-expected-re
   "Key matching expected Key ID \\(\\S +\\) not found")
 

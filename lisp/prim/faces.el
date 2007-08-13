@@ -1070,10 +1070,10 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
 
 
 (defvar init-face-from-resources t
-  "If non-nil, attempt to initialize faces from the reseource database.")
+  "If non-nil, attempt to initialize faces from the resource database.")
 
 (defun make-empty-face (name &optional doc-string temporary)
-  "Like `make-face', but doesn't query the reseource database."
+  "Like `make-face', but doesn't query the resource database."
   (let ((init-face-from-resources nil))
     (make-face name doc-string temporary)))
 
@@ -1228,7 +1228,7 @@ you want to add code to do stuff like this, use the create-device-hook."
 
   ;; similar for bold-italic.
   (or (face-differs-from-default-p 'bold-italic device)
-      (make-face-bold-italic 'bold-italic device))
+      (make-face-bold 'bold-italic device))
   ;; if we couldn't get a bold-italic version, try just bold.
   (or (face-differs-from-default-p 'bold-italic device)
       (make-face-bold-italic 'bold-italic device))

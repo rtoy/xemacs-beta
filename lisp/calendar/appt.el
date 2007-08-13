@@ -139,7 +139,7 @@
 ;;;     up so that you get a notification twenty minutes before each appt,
 ;;;     then a notification should come at 3:10 for the first appt, and at
 ;;;     3:15 for the second.  Currently, no notifications are generated for an
-;;;     appointment until all preceeding appointments have completely expired.
+;;;     appointment until all preceding appointments have completely expired.
 ;;;
 ;;;  o  If there are two appointments at the same time, all but the first are
 ;;;     ignored (not announced.)

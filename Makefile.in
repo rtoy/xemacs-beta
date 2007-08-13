@@ -400,6 +400,15 @@ install-arch-indep: mkdir
 	  ${INSTALL_DATA} ${srcdir}/etc/$${page}.1 ${mandir}/$${page}${manext} ; \
 	  chmod 0644 ${mandir}/$${page}${manext} ; \
 	done
+	@echo "If you would like to save approximately 15M of disk space, do"
+	@echo "make gzip-el"
+	@echo "or you may run"
+	@echo lib-src/gzip-el.sh lispdir " from the command line."
+	@echo "Where lispdir is where the lisp files were installed, i.e.,"
+	@echo "${lispdir}"
+
+gzip-el:
+	lib-src/gzip-el.sh ${lispdir}
 
 MAKEPATH=./lib-src/make-path
 ### Build all the directories we're going to install XEmacs in.	Since

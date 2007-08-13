@@ -75,7 +75,7 @@
 	      ((eq major-mode 'vm-virtual-mode)
 	       (vm-menu-popup-context-menu event))
 	      ((eq major-mode 'mail-mode)
-	       (vm-menu-popup-mode-menu event))))))
+	       (vm-menu-popup-context-menu event))))))
 
 (defun vm-mouse-3-help (object)
   nil
@@ -268,9 +268,9 @@
 		       nil arg-list))
 	  (cond ((equal status 0) t)
 		;; even if exit status non-zero, if there was no
-		;; diagnostic output the command probablyt
-		;; succeeded.  I have tried just use exit status
-		;; as the failure criteria and users complained.
+		;; diagnostic output the command probably
+		;; succeeded.  I have tried to just use exit status
+		;; as the failure criterion and users complained.
 		((equal (nth 7 (file-attributes tempfile)) 0)
 		 (message "%s exited non-zero (code %s)" command status)
 		 t)

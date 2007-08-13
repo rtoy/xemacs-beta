@@ -24,7 +24,7 @@
 
 ;;; Commentary:
 
-;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/modes/verilog-mode.el,v 1.1 1997/02/13 18:53:08 steve Exp $
+;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/modes/verilog-mode.el,v 1.2 1997/03/09 02:37:23 steve Exp $
 ;; For help figuring out what to do with this file, visit
 ;;  <http://www.silicon-sorcery.com/emacs_install.html>
 
@@ -325,7 +325,7 @@
 (provide 'verilog-mode)
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "$$Revision: 1.1 $$"
+(defconst verilog-mode-version "$$Revision: 1.2 $$"
   "Version of this verilog mode.")
 
 (defvar verilog-indent-level 3
@@ -864,7 +864,7 @@ Variables controlling indentation/edit style:
  verilog-case-indent            (default 2)
     Indentation for case statements.
  verilog-auto-newline           (default nil)
-    Non-nil means automatically newline after simcolons and the punctation mark
+    Non-nil means automatically newline after semicolons and the punctuation mark
     after an end.
  verilog-auto-indent-on-newline (default t)
     Non-nil means automatically indent line after newline
@@ -872,9 +872,9 @@ Variables controlling indentation/edit style:
     Non-nil means TAB in Verilog mode should always reindent the current line,
     regardless of where in the line point is when the TAB command is used.
  verilog-indent-begin-after-if  (default t)
-    Non-nil means to indent begin statements following a preceeding
+    Non-nil means to indent begin statements following a preceding
     if, else, while, for and repeat statements, if any. otherwise,
-    the begin is lined up with the preceeding token. If t, you get:
+    the begin is lined up with the preceding token. If t, you get:
       if (a)
          begin
     otherwise you get:

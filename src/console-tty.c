@@ -42,6 +42,7 @@ Boston, MA 02111-1307, USA.  */
 DEFINE_CONSOLE_TYPE (tty);
 
 Lisp_Object Qterminal_type;
+Lisp_Object Qcontrolling_process;
 
 extern Lisp_Object Vstdio_str; /* in console-stream.c */
 
@@ -62,14 +63,16 @@ allocate_tty_console_struct (struct console *con)
 static void
 tty_init_console (struct console *con, Lisp_Object props)
 {
-  Lisp_Object tty = CONSOLE_CONNECTION (con), terminal_type = Qnil;
+  Lisp_Object tty = CONSOLE_CONNECTION (con);
+  Lisp_Object terminal_type = Qnil, controlling_process = Qnil;
   int infd, outfd;
-  struct gcpro gcpro1;
+  struct gcpro gcpro1, gcpro2;
 
-  GCPRO1 (terminal_type);
+  GCPRO2 (terminal_type, controlling_process);
 
   terminal_type = Fplist_get (props, Qterminal_type, Qnil);
-
+  controlling_process = Fplist_get(props, Qcontrolling_process, Qnil);
+  
   /* Determine the terminal type */
 
   if (!NILP (terminal_type))
@@ -85,6 +88,10 @@ tty_init_console (struct console *con, Lisp_Object props)
       else
 	terminal_type = build_string (temp_type);
     }
+
+  /* Determine the controlling process */
+  if (!NILP (controlling_process))
+    CHECK_INT (controlling_process);
 
   /* Open the specified console */
 
@@ -110,6 +117,7 @@ tty_init_console (struct console *con, Lisp_Object props)
   CONSOLE_TTY_DATA (con)->outstream = make_filedesc_output_stream (outfd, 0,
 								   -1, 0);
   CONSOLE_TTY_DATA (con)->terminal_type = terminal_type;
+  CONSOLE_TTY_DATA (con)->controlling_process = controlling_process;
   if (NILP (CONSOLE_NAME (con)))
     CONSOLE_NAME (con) = Ffile_name_nondirectory (tty);
   {
@@ -197,6 +205,14 @@ Return the terminal type of TTY console CONSOLE.
   return CONSOLE_TTY_DATA (decode_tty_console (console))->terminal_type;
 }
 
+DEFUN ("console-tty-controlling-process", Fconsole_tty_controlling_process, 0, 1, 0, /*
+Return the controlling process of TTY console CONSOLE.
+*/
+       (console))
+{
+  return CONSOLE_TTY_DATA (decode_tty_console (console))->controlling_process;
+}
+
 extern Lisp_Object stream_semi_canonicalize_console_connection(Lisp_Object,
 							       Error_behavior);
 Lisp_Object
@@ -238,7 +254,9 @@ void
 syms_of_console_tty (void)
 {
   DEFSUBR (Fconsole_tty_terminal_type);
+  DEFSUBR (Fconsole_tty_controlling_process);
   defsymbol (&Qterminal_type, "terminal-type");
+  defsymbol (&Qcontrolling_process, "controlling-process");
 }
 
 void

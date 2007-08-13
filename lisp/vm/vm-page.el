@@ -412,7 +412,7 @@ Prefix N scrolls backward N lines."
 	  (progn
 	    (goto-char (match-beginning 0))
 	    (vm-match-header)
-	    (setq h (vm-matched-header))
+	    (setq h (concat "X-Face: " (vm-matched-header-contents)))
 	    (setq g (intern h vm-xface-cache))
 	    (if (boundp g)
 		(setq g (symbol-value g))
@@ -535,6 +535,7 @@ Use mouse button 3 to choose a Web browser for the URL."
    ;; at this point the current buffer is the presentation buffer
    ;; if we're using one for this message.
 
+   (vm-unbury-buffer (current-buffer))
    (vm-energize-urls-in-message-region)
    (vm-highlight-headers-maybe)
    (vm-energize-headers-and-xfaces)

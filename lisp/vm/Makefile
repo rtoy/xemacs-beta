@@ -58,8 +58,8 @@ OBJECTS = \
     vm-motion.elc vm-page.elc vm-pop.elc vm-reply.elc \
     vm-save.elc \
     vm-search.elc vm-sort.elc vm-summary.elc vm-startup.elc vm-thread.elc \
-    vm-toolbar.elc \
-    vm-undo.elc vm-vars.elc vm-version.elc vm-virtual.elc vm-window.elc
+    vm-toolbar.elc vm-undo.elc \
+    vm-user.elc vm-vars.elc vm-version.elc vm-virtual.elc vm-window.elc
 
 SOURCES = \
     vm-delete.el vm-digest.el vm-easymenu.el vm-edit.el vm-folder.el \
@@ -67,8 +67,8 @@ SOURCES = \
     vm-mime.el vm-minibuf.el vm-misc.el vm-mouse.el \
     vm-motion.el vm-page.el vm-pop.el vm-reply.el vm-save.el \
     vm-search.el vm-sort.el vm-startup.el vm-summary.el vm-thread.el \
-    vm-toolbar.el \
-    vm-undo.el vm-vars.el vm-version.el vm-virtual.el vm-window.el
+    vm-toolbar.el vm-undo.el \
+    vm-user.el vm-vars.el vm-version.el vm-virtual.el vm-window.el
 
 vm:	vm.elc
 
@@ -212,6 +212,10 @@ vm-toolbar.elc:	vm-toolbar.el $(CORE)
 vm-undo.elc:	vm-undo.el $(CORE)
 	@echo compiling vm-undo.el...
 	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-undo.el
+
+vm-user.elc:	vm-user.el $(CORE)
+	@echo compiling vm-user.el...
+	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-user.el
 
 vm-vars.elc:	vm-vars.el $(CORE)
 	@echo compiling vm-vars.el...

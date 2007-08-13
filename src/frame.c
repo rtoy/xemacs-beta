@@ -103,6 +103,8 @@ Lisp_Object Vdefault_frame_plist;
 
 Lisp_Object Vframe_icon_glyph;
 
+Lisp_Object Qhidden;
+
 Lisp_Object Qvisible, Qiconic, Qinvisible, Qvisible_iconic, Qinvisible_iconic;
 Lisp_Object Qnomini, Qvisible_nomini, Qiconic_nomini, Qinvisible_nomini;
 Lisp_Object Qvisible_iconic_nomini, Qinvisible_iconic_nomini;
@@ -1867,15 +1869,20 @@ Also raises the frame so that nothing obscures it.
 /* FSF returns 'icon for iconized frames.  What a crock! */
 
 DEFUN ("frame-visible-p", Fframe_visible_p, 0, 1, 0, /*
-Return t if FRAME is now \"visible\" (actually in use for display).
+Return non NIL if FRAME is now \"visible\" (actually in use for display).
 A frame that is not visible is not updated, and, if it works through a
 window system, may not show at all.
+N.B. Under X \"visible\" means Mapped. It the window is mapped but not
+actually visible on screen then frame_visible returns 'hidden.
 */
        (frame))
 {
+  int visible;
+  
   struct frame *f = decode_frame (frame);
-  return (FRAMEMETH_OR_GIVEN (f, frame_visible_p, (f), f->visible)
-			      ? Qt : Qnil);
+  visible = FRAMEMETH_OR_GIVEN (f, frame_visible_p, (f), f->visible);
+  return ( visible ? ( visible > 0 ? Qt : Qhidden )
+			     : Qnil);
 }
 
 DEFUN ("frame-totally-visible-p", Fframe_totally_visible_p, 0, 1, 0, /*
@@ -1908,6 +1915,8 @@ frame is iconified, it will not be visible.
 DEFUN ("visible-frame-list", Fvisible_frame_list, 0, 1, 0, /*
 Return a list of all frames now \"visible\" (being updated).
 If DEVICE is specified only frames on that device will be returned.
+Note that under virtual window managers not all these frame are necessarily
+really updated.
 */
        (device))
 {
@@ -1929,7 +1938,7 @@ If DEVICE is specified only frames on that device will be returned.
 	    {
 	      Lisp_Object frame = XCAR (frmcons);
 	      f = XFRAME (frame);
-	      if (f->visible)
+	      if (FRAME_VISIBLE_P(f))
 		value = Fcons (frame, value);
 	    }
 	}
@@ -2836,6 +2845,7 @@ syms_of_frame (void)
   defsymbol (&Qframe_title_format, "frame-title-format");
   defsymbol (&Qframe_icon_title_format, "frame-icon-title-format");
 
+  defsymbol (&Qhidden, "hidden");
   defsymbol (&Qvisible, "visible");
   defsymbol (&Qiconic, "iconic");
   defsymbol (&Qinvisible, "invisible");

@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/02/20 21:48:44
-;; Version: 1.135
+;; Created: 1997/03/06 04:12:42
+;; Version: 1.144
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -42,6 +42,7 @@
 (defmacro w3-d-s-var-def (var)
   (` (make-variable-buffer-local (defvar (, var) nil))))
 
+(w3-d-s-var-def w3-display-label-marker)
 (w3-d-s-var-def w3-display-open-element-stack)
 (w3-d-s-var-def w3-display-alignment-stack)
 (w3-d-s-var-def w3-display-list-stack)
@@ -258,11 +259,11 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 			"An Emacs-W3 face... don't edit by hand." t)
 	  w3-face-index (1+ w3-face-index))
     (if w3-face-font-spec
-	(set-face-font w3-face-face w3-face-font-spec))
+	(font-set-face-font w3-face-face w3-face-font-spec))
     (if (car w3-face-color)
-	(set-face-foreground w3-face-face (car w3-face-color)))
+	(font-set-face-foreground w3-face-face (car w3-face-color)))
     (if (car w3-face-background-color)
-	(set-face-background w3-face-face (car w3-face-background-color)))
+	(font-set-face-background w3-face-face (car w3-face-background-color)))
     ;;(set-face-background-pixmap w3-face-face w3-face-pixmap)
     (setq w3-face-cache (cons
 			 (cons w3-face-descr w3-face-face)
@@ -411,6 +412,7 @@ as the bullet character.")
       (while check
 	(and (boundp (car check))
 	     (stringp (symbol-value (car check)))
+	     (> (length (symbol-value (car check))) 0)
 	     (throw 'exit (symbol-value (car check))))
 	(pop check)))))
 
@@ -426,12 +428,7 @@ as the bullet character.")
        (delete-other-windows)
        (w3-fetch href))
       (otherwise
-       (and target
-	    (let ((window-distance (cdr-safe (assq target w3-target-window-distances))))
-	      (if (numberp window-distance)
-		  (other-window window-distance)
-		(error "target %S not found." target))))
-       (w3-fetch href)))))
+       (w3-fetch href target)))))
 
 (defun w3-balloon-help-callback (object &optional event)
   (let* ((widget (widget-at (extent-start-position object)))
@@ -622,7 +619,8 @@ as the bullet character.")
     (setq desc (and desc (intern dc-desc)))
     (case desc
       ((style stylesheet)
-       (w3-handle-style plist))
+       (if w3-honor-stylesheets
+	   (w3-handle-style plist)))
       (otherwise
        )
       )
@@ -742,6 +740,7 @@ as the bullet character.")
 	  (usemap (w3-get-attribute 'usemap))
 	  (base (w3-get-attribute 'base))
 	  (href (and hyperlink-info (widget-get (cadr hyperlink-info) 'href)))
+	  (target (and hyperlink-info (widget-get (cadr hyperlink-info) 'target)))
 	  (widget nil)
 	  (align (or (w3-get-attribute 'align)
 		     (w3-get-style-info 'vertical-align node))))
@@ -754,9 +753,14 @@ as the bullet character.")
 				   'ismap ismap ; Is it a server-side map?
 				   'usemap usemap ; Is it a client-side map?
 				   'href href ; Hyperlink destination
+				   'target target
 				   ))
        (widget-put widget 'buffer (current-buffer))
        (w3-maybe-start-image-download widget)
+       (if (widget-get widget :from)
+	   (add-text-properties (widget-get widget :from)
+				(widget-get widget :to)
+				(list 'html-stack w3-display-open-element-stack)))
        (goto-char (point-max))))))
 
 ;; The table handling
@@ -1078,8 +1082,8 @@ I haven't tried this on XEmacs or any window-system other than X."
 			(face-id 'w3-table-hack-x-face))
 		   (progn
 		     (make-face 'w3-table-hack-x-face)
-		     (set-face-font 'w3-table-hack-x-face
-				    (make-font :family "terminal"))
+		     (font-set-face-font 'w3-table-hack-x-face
+					 (make-font :family "terminal"))
 		     (face-id 'w3-table-hack-x-face)))))
        (if (not (face-differs-from-default-p 'w3-table-hack-x-face))
 	   nil
@@ -1516,13 +1520,15 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	cur
 	id
 	class
+	last-element
 	)
     (while content-stack
       (setq content (pop content-stack))
       (pop w3-active-faces)
       (pop w3-active-voices)
       (w3-display-progress-meter)
-      (case (car (pop w3-display-open-element-stack))
+      (setq last-element (pop w3-display-open-element-stack))
+      (case (car last-element)
 	;; Any weird, post-display-of-content stuff for specific tags
 	;; goes here.   Couldn't think of any better way to do this when we
 	;; are iterative.  *sigh*
@@ -1545,6 +1551,15 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	 (setq hyperlink-info nil))
 	((ol ul dl dir menu)
 	 (pop w3-display-list-stack))
+	(label
+	 (if (and (markerp w3-display-label-marker)
+		  (marker-position w3-display-label-marker)
+		  (marker-buffer w3-display-label-marker))
+	     (push (cons (or (cdr-safe (assq 'for (cdr last-element)))
+			     (cdr-safe (assq 'id (cdr last-element)))
+			     "unknown")
+			 (buffer-substring w3-display-label-marker (point)))
+		   w3-form-labels)))
 	(otherwise
 	 nil))
       (if (car insert-after)
@@ -1619,23 +1634,27 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 		    (face nil)
 		    (voice nil)
 		    (st nil))
-	       (setq st (point)
-		     hyperlink-info (list
-				     st
-				     (append 
-				      (list 'link :args nil
-					    :value "" :tag ""
-					    :action 'w3-follow-hyperlink
-					    :from (set-marker (make-marker) st)
-					    :help-echo 'w3-widget-echo
-					    :emacspeak-help 'w3-widget-echo
-					    )
-				      (alist-to-plist args))))
+	       (if (w3-get-attribute 'href)
+		   (setq st (point)
+			 hyperlink-info (list
+					 st
+					 (append 
+					  (list 'link :args nil
+						:value "" :tag ""
+						:action 'w3-follow-hyperlink
+						:from (set-marker
+						       (make-marker) st)
+						:help-echo 'w3-widget-echo
+						:emacspeak-help 'w3-widget-echo
+						)
+					  (alist-to-plist args)))))
 	       (w3-handle-content node)
 	       )
 	     )
 	    ((ol ul dl menu)
-	     (push 0 w3-display-list-stack)
+	     (push (if (w3-get-attribute 'seqnum)
+		       (1- (string-to-int (w3-get-attribute 'seqnum)))
+		     0) w3-display-list-stack)
 	     (w3-handle-content node))
 	    (dir
 	     (push 0 w3-display-list-stack)
@@ -1691,6 +1710,9 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	     (if w3-display-frames
 		 (w3-handle-empty-tag)
 	       (w3-handle-content node)))
+	    (applet			; Wow, Java
+	     (w3-handle-content node)
+	     )
 	    (script			; Scripts
 	     (w3-handle-empty-tag))
 	    ((embed object)		; Embedded images/content
@@ -1953,6 +1975,11 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 			       (cons (cons 'data (apply 'concat (nth 2 node)))
 				     (nth 1 node))))
 	     (w3-handle-empty-tag))
+	    (label
+	     (if (not (markerp w3-display-label-marker))
+		 (setq w3-display-label-marker (make-marker)))
+	     (set-marker w3-display-label-marker (point))
+	     (w3-handle-content node))
 	    ;; Emacs-W3 stuff that cannot be expressed in a stylesheet
 	    (pinhead
 	     ;; This check is so that we don't screw up table auto-layout
@@ -2050,7 +2077,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 (defun w3-region (st nd)
   (if (not w3-setup-done) (w3-do-setup))
   (let* ((source (buffer-substring st nd))
-	 (w3-dislplay-same-buffer t)
+	 (w3-display-same-buffer t)
 	 (parse nil))
     (save-window-excursion
       (save-excursion
@@ -2217,16 +2244,16 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	      (reverse dimensions)
 	    ;; substitute numbers for *
 	    (let ((star-replacement (/ remaining-available-dimension nb-stars))
-		    (star-dimensions dimensions))
-		(setq dimensions nil)
-		(while star-dimensions
-		  (push (if (eq '* (car star-dimensions))
-			    star-replacement
-			  (car star-dimensions))
-			dimensions)
-		  (pop star-dimensions))
-		;; push + push => in order
-		dimensions))))))
+		  (star-dimensions dimensions))
+	      (setq dimensions nil)
+	      (while star-dimensions
+		(push (if (eq '* (car star-dimensions))
+			  star-replacement
+			(car star-dimensions))
+		      dimensions)
+		(pop star-dimensions))
+	      ;; push + push => in order
+	      dimensions))))))
 
 
 (provide 'w3-display)

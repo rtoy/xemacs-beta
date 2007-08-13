@@ -73,6 +73,7 @@ vpath %.h @srcdir@
 vpath config.h
 vpath paths.h
 vpath Emacs.ad.h
+vpath puresize_adjust.h
 #else
 VPATH=@srcdir@
 #endif
@@ -1259,7 +1260,7 @@ ${libsrc}DOC: ${libsrc}make-docfile
 ${libsrc}DOC: ${libsrc}make-docfile ${obj_src} ${lisp}
 #endif
 	rm -f ${libsrc}DOC
-	${libsrc}make-docfile -d ${srcdir} -i ${lispdir}site-packages \
+	${libsrc}make-docfile -d ${srcdir} -i ${lispdir}../site-packages \
 		${obj_src} \
 	        ${mallocdocsrc} ${rallocdocsrc} ${lispdir}version.el \
 		${lisp} > ${libsrc}DOC

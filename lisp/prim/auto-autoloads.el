@@ -959,17 +959,6 @@ Browse the widget under point." t nil)
 
 ;;;***
 
-;;;### (autoloads (widget-delete widget-create) "wid-edit" "custom/wid-edit.el")
-
-(autoload 'widget-create "wid-edit" "\
-Create widget of TYPE.  
-The optional ARGS are additional keyword arguments." nil nil)
-
-(autoload 'widget-delete "wid-edit" "\
-Delete WIDGET." nil nil)
-
-;;;***
-
 ;;;### (autoloads (edebug-eval-top-level-form def-edebug-spec) "edebug" "edebug/edebug.el")
 
 (autoload 'def-edebug-spec "edebug" "\
@@ -2150,7 +2139,7 @@ header line with the old Message-ID." t nil)
 Reread contents of current buffer from its last auto-save file." t nil)
 
 (autoload 'message-forward "message" "\
-Forward the current message via mail.  
+Forward the current message via mail.
 Optional NEWS will use news to forward instead of mail." t nil)
 
 (autoload 'message-resend "message" "\
@@ -2471,6 +2460,21 @@ cannot be expanded via a tags file." nil nil)
 (autoload 'smart-tags-file "hmouse-tag" "\
 Return appropriate tags file name for CURR-FILENAME or `tags-file-name'.
 Optional NAME-OF-TAGS-FILE is the literal filename for which to look." nil nil)
+
+;;;***
+
+;;;### (autoloads (hyperbole) "hui-mini" "hyperbole/hui-mini.el")
+
+(autoload 'hyperbole "hui-mini" "\
+Invokes default Hyperbole menu user interface when not already active.
+Suitable for binding to a key, e.g. {C-h h}.
+Non-interactively, returns t if menu is actually invoked by call, else nil.
+
+Two optional arguments may be given to invoke alternative menus.
+MENU (a symbol) specifies the menu to invoke from MENU-LIST, (a
+Hyperbole menu list structure).  MENU defaults to 'hyperbole and MENU-LIST
+to `hui:menus'.  See `hui:menus' definition for the format of the menu list
+structure." t nil)
 
 ;;;***
 
@@ -3375,7 +3379,7 @@ Follow mode comes to its prime when used on a large screen and two
 side-by-side window are used. The user can, with the help of Follow
 mode, use two full-height windows as though they would have been
 one. Imagine yourself editing a large function, or section of text,
-and beeing able to use 144 lines instead of the normal 72... (your
+and being able to use 144 lines instead of the normal 72... (your
 mileage may vary).
 
 To split one large window into two side-by-side windows, the commands
@@ -3656,7 +3660,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.10 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.11 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4023,7 +4027,7 @@ Variables controlling indentation/edit style:
  pascal-case-indent       (default 2)
     Indentation for case statements.
  pascal-auto-newline      (default nil)
-    Non-nil means automatically newline after simcolons and the punctation mark
+    Non-nil means automatically newline after semicolons and the punctation mark
     after an end.
  pascal-tab-always-indent (default t)
     Non-nil means TAB in Pascal mode should always reindent the current line,
@@ -4032,7 +4036,7 @@ Variables controlling indentation/edit style:
     Non-nil means a comment { ... } is set after the ends which ends cases and
     functions. The name of the function or case will be set between the braces.
  pascal-auto-lineup       (default t)
-    List of contexts where auto lineup of :'s or ='s hould be done.
+    List of contexts where auto lineup of :'s or ='s should be done.
 
 See also the user variables pascal-type-keywords, pascal-start-keywords and
 pascal-separator-keywords.
@@ -4296,7 +4300,7 @@ If you have set rexx-end-indent to a nonzero value, you probably want to
 remap RETURN to rexx-indent-newline-indent. It makes sure that lines
 indents correctly when you press RETURN.
 
-An extensive abbrevation table consisting of all the keywords of REXX are
+An extensive abbreviation table consisting of all the keywords of REXX are
 supplied. Expanded keywords are converted into upper case making it
 easier to distinguish them. To use this feature the buffer must be in
 abbrev-mode. (See example below.)
@@ -4314,8 +4318,8 @@ For example:
 			))
 
 will make the END aligned with the DO/SELECT. It will indent blocks and
-IF-statenents four steps and make sure that the END jumps into the
-correct position when RETURN is pressed. Finaly it will use the abbrev
+IF-statements four steps and make sure that the END jumps into the
+correct position when RETURN is pressed. Finally it will use the abbrev
 table to convert all REXX keywords into upper case." t nil)
 
 ;;;***
@@ -4365,7 +4369,7 @@ The variable `resize-minibuffer-window-exactly' determines whether the
 minibuffer window should ever be shrunk to make it no larger than needed to
 display its contents.
 
-When using a window system, it is possible for a minibuffer to tbe the sole
+When using a window system, it is possible for a minibuffer to be the sole
 window in a frame.  Since that window is already its maximum size, the only
 way to make more text visible at once is to increase the size of the frame.
 The variable `resize-minibuffer-frame' controls whether this should be
@@ -4886,7 +4890,7 @@ Variables controlling indentation/edit style:
  verilog-case-indent            (default 2)
     Indentation for case statements.
  verilog-auto-newline           (default nil)
-    Non-nil means automatically newline after simcolons and the punctation mark
+    Non-nil means automatically newline after semicolons and the punctuation mark
     after an end.
  verilog-auto-indent-on-newline (default t)
     Non-nil means automatically indent line after newline
@@ -4894,9 +4898,9 @@ Variables controlling indentation/edit style:
     Non-nil means TAB in Verilog mode should always reindent the current line,
     regardless of where in the line point is when the TAB command is used.
  verilog-indent-begin-after-if  (default t)
-    Non-nil means to indent begin statements following a preceeding
+    Non-nil means to indent begin statements following a preceding
     if, else, while, for and repeat statements, if any. otherwise,
-    the begin is lined up with the preceeding token. If t, you get:
+    the begin is lined up with the preceding token. If t, you get:
       if (a)
          begin
     otherwise you get:
@@ -4928,11 +4932,11 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.10 $
+vhdl-mode $Revision: 1.11 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
-problem, including a reproducable test case and send the message.
+problem, including a reproducible test case and send the message.
 
 Note that the details of configuring vhdl-mode will soon be moved to the
 accompanying texinfo manual.  Until then, please read the README file
@@ -5448,7 +5452,7 @@ argument.  If called with two strings, then no prompting is done.  You
 must pass at least OLD when calling from Lisp.
 
 While you are entering the new name, consecutive C-w's insert
-consectutive words from the text of the buffer into the new bookmark
+consecutive words from the text of the buffer into the new bookmark
 name." t nil)
 
 (autoload 'bookmark-insert "bookmark" "\
@@ -5553,7 +5557,7 @@ passed as an argument.  If called with two strings, then no prompting
 is done.  You must pass at least OLD-BOOKMARK when calling from Lisp.
 
 While you are entering the new name, consecutive C-w's insert
-consectutive words from the text of the buffer into the new bookmark
+consecutive words from the text of the buffer into the new bookmark
 name.
 
 Warning: this function only takes an EVENT as argument.  Use the
@@ -6160,11 +6164,17 @@ Each element should be of the form:
  (MATCHER . FACENAME)
  (MATCHER . HIGHLIGHT)
  (MATCHER HIGHLIGHT ...)
+ (eval . FORM)
 
 where HIGHLIGHT should be either MATCH-HIGHLIGHT or MATCH-ANCHORED.
 
+FORM is an expression, whose value should be a keyword element,
+evaluated when the keyword is (first) used in a buffer.  This feature
+can be used to provide a keyword that can only be generated when Font
+Lock mode is actually turned on.
+
 For highlighting single items, typically only MATCH-HIGHLIGHT is required.
-However, if an item or (typically) items is to be hightlighted following the
+However, if an item or (typically) items is to be highlighted following the
 instance of another item (the anchor) then MATCH-ANCHORED may be required.
 
 MATCH-HIGHLIGHT should be of the form:
@@ -6457,7 +6467,7 @@ This discards the buffer's undo information." t nil)
 
 ;;;***
 
-;;;### (autoloads (hypropos-popup-menu hypropos-set-variable hyper-describe-function hyper-describe-variable hyper-apropos) "hyper-apropos" "packages/hyper-apropos.el")
+;;;### (autoloads (hypropos-popup-menu hypropos-set-variable hyper-set-variable hypropos-get-doc hypropos-read-variable-symbol hyper-describe-function hyper-describe-variable hyper-describe-face hyper-describe-key-briefly hyper-describe-key hyper-apropos) "hyper-apropos" "packages/hyper-apropos.el")
 
 (defvar hypropos-show-brief-docs t "\
 *If non-nil, `hyper-apropos' will display some documentation in the
@@ -6469,6 +6479,14 @@ in buffer \"*Hyper Apropos*\".  If optional prefix arg is given, then the value
 of `hypropos-programming-apropos' is toggled for this search.
 See also `hyper-apropos-mode'." t nil)
 
+(autoload 'hyper-describe-key "hyper-apropos" nil t nil)
+
+(autoload 'hyper-describe-key-briefly "hyper-apropos" nil t nil)
+
+(autoload 'hyper-describe-face "hyper-apropos" "\
+Describe face..
+See also `hyper-apropos' and `hyper-describe-function'." t nil)
+
 (autoload 'hyper-describe-variable "hyper-apropos" "\
 Hypertext drop-in replacement for `describe-variable'.
 See also `hyper-apropos' and `hyper-describe-function'." t nil)
@@ -6477,6 +6495,15 @@ See also `hyper-apropos' and `hyper-describe-function'." t nil)
 Hypertext replacement for `describe-function'.  Unlike `describe-function'
 in that the symbol under the cursor is the default if it is a function.
 See also `hyper-apropos' and `hyper-describe-variable'." t nil)
+
+(autoload 'hypropos-read-variable-symbol "hyper-apropos" "\
+Hypertext drop-in replacement for `describe-variable'.
+See also `hyper-apropos' and `hyper-describe-function'." nil nil)
+
+(autoload 'hypropos-get-doc "hyper-apropos" "\
+Toggle display of documentation for the symbol on the current line." t nil)
+
+(autoload 'hyper-set-variable "hyper-apropos" nil t nil)
 
 (autoload 'hypropos-set-variable "hyper-apropos" "\
 Interactively set the variable on the current line." t nil)
@@ -6989,11 +7016,11 @@ Valid values are nil, `blink-paren', `paren', and `sexp'.
 		and shell quoting.
 
 This variable is global by default, but you can make it buffer-local and
-highlight parentheses differrently in different major modes.")
+highlight parentheses differently in different major modes.")
 
 (autoload 'paren-set-mode "paren" "\
 Cycles through possible values for `paren-mode', force off with negative arg.
-When called from lisp, a symbolic value for `paren-mode' can be pased directly.
+When called from lisp, a symbolic value for `paren-mode' can be passed directly.
 See also `paren-mode' and `paren-highlight'." t nil)
 
 (make-obsolete 'blink-paren 'paren-set-mode)
@@ -7413,6 +7440,9 @@ Put this on write-file-hooks." nil nil)
 (defvar vc-checkin-hook nil "\
 *List of functions called after a checkin is done.  See `run-hooks'.")
 
+(defvar vc-before-checkin-hook nil "\
+*List of functions called before a checkin is done.  See `run-hooks'.")
+
 (autoload 'vc-file-status "vc" "\
 Display the current status of the file being visited.
 Currently, this is only defined for CVS.  The information provided in the
@@ -7642,6 +7672,12 @@ All Hail XEmacs!" t nil)
 
 (autoload 'describe-buffer-case-table "case-table" "\
 Describe the case table of the current buffer." t nil)
+
+;;;***
+
+;;;### (autoloads (batch-remove-old-elc) "cleantree" "prim/cleantree.el")
+
+(autoload 'batch-remove-old-elc "cleantree" nil nil nil)
 
 ;;;***
 
@@ -8126,7 +8162,7 @@ To tag a region with the mouse, use transient mark mode or secondary selection.
 
 Structure editing:
 \\[sgml-backward-element]  Moves backwards over the previous element.
-\\[sgml-forward-element]  Moves forward over the nex element.
+\\[sgml-forward-element]  Moves forward over the next element.
 \\[sgml-down-element]  Move forward and down one level in the element structure.
 \\[sgml-backward-up-element]  Move backward out of this element level.
 \\[sgml-beginning-of-element]  Move to after the start tag of the current element.
@@ -8170,7 +8206,7 @@ sgml-indent-step  How much to increament indent for every element level.
 sgml-indent-data  If non-nil, indent in data/mixed context also.
 sgml-set-face     If non-nil, psgml will set the face of parsed markup.
 sgml-markup-faces The faces used when the above variable is non-nil.
-sgml-system-path  List of directorys used to look for system identifiers.
+sgml-system-path  List of directories used to look for system identifiers.
 sgml-public-map  Mapping from public identifiers to file names.
 sgml-offer-save  If non-nil, ask about saving modified buffers before
 		\\[sgml-validate] is run.
@@ -9163,7 +9199,7 @@ If optional arg DEFAULT is provided, then it is a string to insert as
 the default choice (it is not, of course, displayed.)
 
 If running under X, the keyboard will be grabbed (with XGrabKeyboard())
-to reduce the possibility that evesdropping is occuring.
+to reduce the possibility that eavesdropping is occuring.
 
 When reading a password, all keys self-insert, except for:
 \\<read-passwd-map>
@@ -9235,13 +9271,13 @@ Ignores leading comment characters." t nil)
 ;;;### (autoloads (prettyexpand-all-sexp prettyexpand-sexp macroexpand-all-sexp macroexpand-sexp pp-plist pp-variable pp-function) "pretty-print" "utils/pretty-print.el")
 
 (autoload 'pp-function "pretty-print" "\
-Pretty print the function definition of SYMBOL in a seperate buffer" t nil)
+Pretty print the function definition of SYMBOL in a separate buffer" t nil)
 
 (autoload 'pp-variable "pretty-print" "\
-Pretty print the variable value of SYMBOL in a seperate buffer" t nil)
+Pretty print the variable value of SYMBOL in a separate buffer" t nil)
 
 (autoload 'pp-plist "pretty-print" "\
-Pretty print the property list of SYMBOL in a seperate buffer" t nil)
+Pretty print the property list of SYMBOL in a separate buffer" t nil)
 
 (autoload 'macroexpand-sexp "pretty-print" "\
 Macro expand the sexpression following point. Pretty print expansion in a
@@ -9577,7 +9613,23 @@ is a list of menu items, as above." nil 'macro)
 
 ;;;***
 
-;;;### (autoloads (url-cache-expired url-extract-from-cache url-create-cached-filename url-is-cached url-store-in-cache) "url-cache" "w3/url-cache.el")
+;;;### (autoloads (x-font-build-cache font-default-size-for-device font-default-family-for-device font-default-object-for-device font-default-font-for-device font-create-object) "font" "w3/font.el")
+
+(autoload 'font-create-object "font" nil nil nil)
+
+(autoload 'font-default-font-for-device "font" nil nil nil)
+
+(autoload 'font-default-object-for-device "font" nil nil nil)
+
+(autoload 'font-default-family-for-device "font" nil nil nil)
+
+(autoload 'font-default-size-for-device "font" nil nil nil)
+
+(autoload 'x-font-build-cache "font" nil nil nil)
+
+;;;***
+
+;;;### (autoloads (url-cache-expired url-cache-extract url-is-cached url-store-in-cache) "url-cache" "w3/url-cache.el")
 
 (autoload 'url-store-in-cache "url-cache" "\
 Store buffer BUFF in the cache" nil nil)
@@ -9585,10 +9637,7 @@ Store buffer BUFF in the cache" nil nil)
 (autoload 'url-is-cached "url-cache" "\
 Return non-nil if the URL is cached." nil nil)
 
-(autoload 'url-create-cached-filename "url-cache" "\
-Return a filename in the local cache for URL" nil nil)
-
-(autoload 'url-extract-from-cache "url-cache" "\
+(autoload 'url-cache-extract "url-cache" "\
 Extract FNAM from the local disk cache" nil nil)
 
 (autoload 'url-cache-expired "url-cache" "\
@@ -9723,6 +9772,17 @@ to disk." nil nil)
 Attempt to follow the hypertext reference under point.
 With prefix-arg P, ignore viewers and dump the link straight
 to disk." t nil)
+
+;;;***
+
+;;;### (autoloads (widget-delete widget-create) "wid-edit" "w3/wid-edit.el")
+
+(autoload 'widget-create "wid-edit" "\
+Create widget of TYPE.  
+The optional ARGS are additional keyword arguments." nil nil)
+
+(autoload 'widget-delete "wid-edit" "\
+Delete WIDGET." nil nil)
 
 ;;;***
 

@@ -9,7 +9,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    15-Oct-91 at 20:13:17
-;; LAST-MOD:     20-Feb-97 at 11:30:44 by Bob Weiner
+;; LAST-MOD:      6-Mar-97 at 14:08:46 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -309,6 +309,7 @@
 ;;; Used as autoloaded main entry point to Hyperbole (but hsite.el) is the
 ;;; file that is autoloaded when this is invoked.
 ;;; It brings up a menu of commands. 
+;;;###autoload
 (defun hyperbole (&optional menu menu-list)
   "Invokes default Hyperbole menu user interface when not already active.
 Suitable for binding to a key, e.g. {C-h h}.
@@ -325,6 +326,7 @@ structure."
       (progn (beep) nil)
     (unwind-protect
 	(progn
+	  (require 'hyperbole)
 	  (require 'hsite) ;; Since "hui-mini" may be loaded without loading
 			   ;; all of Hyperbole.
 	  (hyperb:init-menubar)

@@ -7,8 +7,8 @@
 ;; Author:	  Rodney J. Whitby <rwhitby@asc.corp.mot.com>
 ;; Maintainer:	  Rodney J. Whitby <rwhitby@asc.corp.mot.com>
 ;; Created:	  June 1994, adapted from cc-mode.el 4.29 by Barry A. Warsaw.
-;; Version:	  $Revision: 1.1 $
-;; Last Modified: $Date: 1996/12/29 00:14:59 $
+;; Version:	  $Revision: 1.2 $
+;; Last Modified: $Date: 1997/03/09 02:37:24 $
 ;; Keywords:	  languages VHDL
 ;; Archive:	  ftp.eda.com.au:/pub/emacs/vhdl-mode.tar.gz
 
@@ -69,7 +69,7 @@
 ;; LCD Archive Entry:
 ;; vhdl-mode.el|Rodney J. Whitby|rwhitby@asc.corp.mot.com
 ;; |Major mode for editing VHDL code
-;; |$Date: 1996/12/29 00:14:59 $|$Revision: 1.1 $
+;; |$Date: 1997/03/09 02:37:24 $|$Revision: 1.2 $
 ;; |ftp.eda.com.au:/pub/emacs/vhdl-mode.tar.gz
 
 
@@ -539,11 +539,11 @@ This does a lot more highlighting.")
 ;;;###autoload
 (defun vhdl-mode ()
   "Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.1 $
+vhdl-mode $Revision: 1.2 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
-problem, including a reproducable test case and send the message.
+problem, including a reproducible test case and send the message.
 
 Note that the details of configuring vhdl-mode will soon be moved to the
 accompanying texinfo manual.  Until then, please read the README file
@@ -2593,7 +2593,7 @@ ENDPOS is encountered.  (interactive)"
 
 ;; Defuns for submitting bug reports:
 
-(defconst vhdl-version "$Revision: 1.1 $"
+(defconst vhdl-version "$Revision: 1.2 $"
   "vhdl-mode version number.")
 (defconst vhdl-mode-help-address "rwhitby@asc.corp.mot.com"
   "Address accepting submission of bug reports.")

@@ -83,7 +83,8 @@
 	   ((and buffer (not display))
 	    (if (and vm-undisplay-buffer-hook
 		     (vm-get-visible-buffer-window buffer))
-		(progn (run-hooks 'vm-undisplay-buffer-hook)
+		(progn (set-buffer buffer)
+		       (run-hooks 'vm-undisplay-buffer-hook)
 		       (vm-record-current-window-configuration nil))
 	      (if (not (and (memq this-command commands)
 			    (apply 'vm-set-window-configuration configs)))

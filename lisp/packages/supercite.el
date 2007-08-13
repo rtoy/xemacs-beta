@@ -218,7 +218,12 @@ during the initial citing via `sc-cite-original'.")
   "*Value returned by `sc-mail-field' if field isn't in mail headers.")
 
 (defvar sc-name-filter-alist
-  '(("^\\(Mr\\|Mrs\\|Ms\\|Dr\\)[.]?$" . 0)
+  '(
+    ;; This first item removes any [bracketed] multi-word items in names.
+    ;; Each word is already split into a separate string when this filter is
+    ;; applied, hence the complexity of the expression.
+    ("\\[.*\\]\\|\\[[^\]]*\\|[^\[]*\\]" . any)
+    ("^\\(Mr\\|Mrs\\|Ms\\|Dr\\)[.]?$" . 0)
     ("^\\(Jr\\|Sr\\)[.]?$" . last)
     ("^ASTS$" . 0)
     ("^[I]+$" . last))

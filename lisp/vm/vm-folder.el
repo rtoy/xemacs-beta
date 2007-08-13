@@ -1035,8 +1035,16 @@ vm-folder-type is initialized here."
 			  (vm-text-of message))
 			 (goto-char (point-min))))
 		   (setq old-header-start (point))
-		   (while (and (not (= (following-char) ?\n))
-			       (vm-match-header))
+		   ;; as we loop through the headers, skip >From
+		   ;; lines.  these can occur anywhere in the
+		   ;; header section if the message has been
+		   ;; manhandled by some dumb delivery agents
+		   ;; (SCO and Solaris are the usual suspects.)
+		   ;; it's a tough ol' world.
+		   (while (progn (while (looking-at ">From ")
+				   (forward-line))
+				 (and (not (= (following-char) ?\n))
+				      (vm-match-header)))
 		     (setq end-of-header (vm-matched-header-end)
 			   list (vm-match-ordered-header header-alist))
 		     ;; don't display/keep this header if
@@ -2196,7 +2204,7 @@ The folder is not altered and Emacs is still visiting it."
       (if timer
 	  (timer-set-time timer (current-time) vm-mail-check-interval)
 	(set-itimer-restart current-itimer vm-mail-check-interval))
-    ;; user has changed the variable value to a something that
+    ;; user has changed the variable value to something that
     ;; isn't a number, make the timer go away.
     (if timer
 	(cancel-timer timer)
@@ -2209,7 +2217,15 @@ The folder is not altered and Emacs is still visiting it."
 	(set-buffer (car b-list))
 	(if (and (eq major-mode 'vm-mode)
 		 (setq found-one t)
-		 (not vm-block-new-mail))
+		 ;; to avoid reentrance into the pop code
+		 (not vm-block-new-mail)
+		 ;; Don't bother checking if we already know from
+		 ;; a previous check that there's mail waiting
+		 ;; and the user hasn't retrieved it yet.  Not
+		 ;; completely accurate, but saves network
+		 ;; connection build and tear down which is slow
+		 ;; for some users.
+		 (not vm-spooled-mail-waiting))
 	    (progn
 	      (setq oldval vm-spooled-mail-waiting)
 	      (vm-check-for-spooled-mail nil)
@@ -2235,7 +2251,7 @@ The folder is not altered and Emacs is still visiting it."
       (if timer
 	  (timer-set-time timer (current-time) vm-auto-get-new-mail)
 	(set-itimer-restart current-itimer vm-auto-get-new-mail))
-    ;; user has changed the variable value to a something that
+    ;; user has changed the variable value to something that
     ;; isn't a number, make the timer go away.
     (if timer
 	(cancel-timer timer)
@@ -2598,12 +2614,21 @@ run vm-expunge-folder followed by vm-save-folder."
 	 (kill-buffer crash-buf)
 	 (if (not (stringp vm-keep-crash-boxes))
 	     (vm-error-free-call 'delete-file crash-box)
-	   (let (name)
-	     (setq name (expand-file-name (format "Z%d" (vm-abs (random)))
-					  vm-keep-crash-boxes))
+	   (let ((time (decode-time (current-time)))
+		 name)
+	     (setq name
+		   (expand-file-name (format "Z-%02d-%02d-%05d"
+					     (nth 4 time)
+					     (nth 3 time)
+					     (% (vm-abs (random)) 100000))
+				     vm-keep-crash-boxes))
 	     (while (file-exists-p name)
-	       (setq name (expand-file-name (format "Z%d" (vm-abs (random)))
-					    vm-keep-crash-boxes)))
+	       (setq name
+		     (expand-file-name (format "Z-%02d-%02d-%05d"
+					       (nth 4 time)
+					       (nth 3 time)
+					       (% (vm-abs (random)) 100000))
+				       vm-keep-crash-boxes)))
 	     (rename-file crash-box name))))
        got-mail ))))
 
@@ -2754,6 +2779,16 @@ run vm-expunge-folder followed by vm-save-folder."
 					      'vm-spool-move-mail)
 					    error-data)
 				   (sleep-for 2)
+				   ;; we don't know if mail was
+				   ;; put into the crash box or
+				   ;; not, so return t just to be
+				   ;; safe.
+				   t )
+			    (quit (message "quitting from %s..."
+					    (if popdrop
+						'vm-pop-move-mail
+					      'vm-spool-move-mail))
+				   (sleep-for 1)
 				   ;; we don't know if mail was
 				   ;; put into the crash box or
 				   ;; not, so return t just to be

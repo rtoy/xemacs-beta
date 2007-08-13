@@ -251,8 +251,6 @@ static void maybe_kbd_translate (Lisp_Object event);
    Chained through event_next()
    command_event_queue_tail is a pointer to the last-added element.
  */
-static Lisp_Object process_event_queue;
-static Lisp_Object process_event_queue_tail;
 static Lisp_Object command_event_queue;
 static Lisp_Object command_event_queue_tail;
 
@@ -268,6 +266,13 @@ static int keystrokes_since_auto_save;
    undesirable. (#### This doesn't fully work.) */
 
 int emacs_is_blocking;
+
+/* Handlers which run during sit-for, sleep-for and accept-process-output
+   are not allowed to recursively call these routines.  We record here
+   if we are in that situation. */
+
+static Lisp_Object recursive_sit_for;
+
 
 
 /**********************************************************************/
@@ -1443,19 +1448,6 @@ It will not work to call this function on an id number returned by
 /*                    enqueuing and dequeuing events                  */
 /**********************************************************************/
 
-/* Add an event to the back of the process_event_queue */
-void
-enqueue_process_event (Lisp_Object event)
-{
-  enqueue_event (event, &process_event_queue, &process_event_queue_tail);
-}
-
-Lisp_Object
-dequeue_process_event (void)
-{
-  return dequeue_event (&process_event_queue, &process_event_queue_tail);
-}
-
 /* Add an event to the back of the command-event queue: it will be the next
    event read after all pending events.   This only works on keyboard,
    mouse-click, misc-user, and eval events.
@@ -1845,8 +1837,7 @@ in_single_console_state (void)
 Charcount num_input_chars;
 
 static void
-next_event_internal (Lisp_Object target_event, int allow_queued,
-                     int allow_deferred)
+next_event_internal (Lisp_Object target_event, int allow_queued)
 {
   struct gcpro gcpro1;
   /* QUIT;   This is incorrect - the caller must do this because some
@@ -1866,21 +1857,6 @@ next_event_internal (Lisp_Object target_event, int allow_queued,
       if (debug_emacs_events)
 	{
 	  write_c_string ("(command event queue) ",
-			  Qexternal_debugging_output);
-	  print_internal (target_event, Qexternal_debugging_output, 1);
-	  write_c_string ("\n", Qexternal_debugging_output);
-	}
-#endif
-    }
-  else if (allow_deferred && !NILP (process_event_queue))
-    {
-      Lisp_Object event = dequeue_process_event ();
-      Fcopy_event (event, target_event);
-      Fdeallocate_event (event);
-#ifdef DEBUG_EMACS
-      if (debug_emacs_events)
-	{
-	  write_c_string ("(process event queue) ",
 			  Qexternal_debugging_output);
 	  print_internal (target_event, Qexternal_debugging_output, 1);
 	  write_c_string ("\n", Qexternal_debugging_output);
@@ -2123,7 +2099,7 @@ The returned event will be one of the following types:
 	{
 	  run_pre_idle_hook ();
 	  redisplay ();
-	  next_event_internal (event, 1, 1);
+	  next_event_internal (event, 1);
 	  Vquit_flag = Qnil; /* Read C-g as an event. */
 	  store_this_key = 1;
 	}
@@ -2324,7 +2300,7 @@ A user event is a key press, button press, button release, or
       /* This will take stuff off the command_event_queue, or read it
 	 from the event_stream, but it will not block.
        */
-      next_event_internal (event, 1, 1);
+      next_event_internal (event, 1);
       Vquit_flag = Qnil; /* Treat C-g as a user event (ignore it).
 			    It is vitally important that we reset
 			    Vquit_flag here.  Otherwise, if we're
@@ -2378,6 +2354,31 @@ A user event is a key press, button press, button release, or
 /*                     pausing until an action occurs                 */
 /**********************************************************************/
 
+/* This is used in accept-process-output, sleep-for and sit-for.
+   Before running any process_events in these routines, we set
+   recursive_sit_for to Qt, and use this unwind protect to reset it to
+   Qnil upon exit.  When recursive_sit_for is Qt, calling any of these
+   three routines will cause them to return immediately no matter what
+   their arguments were. 
+   
+   All of these routines install timeouts, so we clear the installed
+   timeout as well.
+
+   Note: It's very easy to break the desired behaviours of these
+   3 routines.  If you make any changes to anything in this area, run
+   the regression tests at the bottom of the file.  -- dmoore */
+   
+
+static Lisp_Object
+sit_for_unwind (Lisp_Object timeout_id)
+{
+  if (!NILP(timeout_id))
+    Fdisable_timeout (timeout_id);
+
+  recursive_sit_for = Qnil;
+  return Qnil;
+}
+
 /* #### Is (accept-process-output nil 3) supposed to be like (sleep-for 3)?
  */
 
@@ -2394,6 +2395,13 @@ If the second arg is non-nil, it is the maximum number of seconds to wait:
 If the third arg is non-nil, it is a number of milliseconds that is added
  to the second arg.  (This exists only for compatibility.)
 Return non-nil iff we received any output before the timeout expired.
+
+If a filter function or timeout handler (such as installed by `add-timeout')
+ calls any of accept-process-output, sleep-for, or sit-for, those calls
+ will return nil immediately (regardless of their arguments) in recursive
+ situations.  It is recommended that you never call accept-process-output
+ from inside of a process filter function or timer event (either synchronous
+ or asynchronous).
 */
        (process, timeout_secs, timeout_msecs))
 {
@@ -2405,6 +2413,11 @@ Return non-nil iff we received any output before the timeout expired.
   int timeout_enabled = 0;
   int done = 0;
   struct buffer *old_buffer = current_buffer;
+  int count;
+
+  /* Recusive call from a filter function or timeout handler. */
+  if (!NILP(recursive_sit_for))
+    return Qnil;
 
   /* We preserve the current buffer but nothing else.  If a focus
      change alters the selected window then the top level event loop
@@ -2434,6 +2447,11 @@ Return non-nil iff we received any output before the timeout expired.
     }
 
   event = Fmake_event ();
+
+  count = specpdl_depth ();
+  record_unwind_protect (sit_for_unwind,
+			 timeout_enabled ? make_int (timeout_id) : Qnil);
+  recursive_sit_for = Qt;
 
   while (!done &&
          ((NILP (process) && timeout_enabled) ||
@@ -2467,7 +2485,7 @@ Return non-nil iff we received any output before the timeout expired.
 		   less likely that the filter will actually be aborted.
 		 */
 
-      next_event_internal (event, 0, 1);
+      next_event_internal (event, 0);
       /* If C-g was pressed while we were waiting, Vquit_flag got
 	 set and next_event_internal() also returns C-g.  When
 	 we enqueue the C-g below, it will get discarded.  The
@@ -2506,9 +2524,7 @@ Return non-nil iff we received any output before the timeout expired.
 	}
     }
 
-  /* If our timeout has not been signalled yet, disable it. */
-  if (timeout_enabled)
-    event_stream_disable_wakeup (timeout_id, 0);
+  unbind_to (count, timeout_enabled ? make_int (timeout_id) : Qnil);
 
   Fdeallocate_event (event);
   UNGCPRO;
@@ -2519,6 +2535,13 @@ Return non-nil iff we received any output before the timeout expired.
 DEFUN ("sleep-for", Fsleep_for, 1, 1, 0, /*
 Pause, without updating display, for ARG seconds.
 ARG may be a float, meaning pause for some fractional part of a second.
+
+If a filter function or timeout handler (such as installed by `add-timeout')
+ calls any of accept-process-output, sleep-for, or sit-for, those calls
+ will return nil immediately (regardless of their arguments) in recursive
+ situations.  It is recommended that you never call sleep-for from inside
+ of a process filter function or timer event (either synchronous or
+ asynchronous).
 */
        (seconds))
 {
@@ -2526,12 +2549,22 @@ ARG may be a float, meaning pause for some fractional part of a second.
   unsigned long msecs = lisp_number_to_milliseconds (seconds, 1);
   int id;
   Lisp_Object event = Qnil;
+  int count;
   struct gcpro gcpro1;
+
+  /* Recusive call from a filter function or timeout handler. */
+  if (!NILP(recursive_sit_for))
+    return Qnil;
 
   GCPRO1 (event);
 
   id = event_stream_generate_wakeup (msecs, 0, Qnil, Qnil, 0);
   event = Fmake_event ();
+
+  count = specpdl_depth ();
+  record_unwind_protect (sit_for_unwind, make_int (id));
+  recursive_sit_for = Qt;
+
   while (1)
     {
       /* If our timeout has arrived, we move along. */
@@ -2546,21 +2579,14 @@ ARG may be a float, meaning pause for some fractional part of a second.
 	 consumer as well.  We don't care about command and eval-events
 	 anyway.
        */
-      next_event_internal (event, 0, 0); /* blocks */
+      next_event_internal (event, 0); /* blocks */
       /* See the comment in accept-process-output about Vquit_flag */
       switch (XEVENT_TYPE (event))
 	{
-        case process_event:
-          {
-            /* Avoid calling filter functions recursively by squirreling
-               away process events */
-            enqueue_process_event (Fcopy_event (event, Qnil));
-            goto DONE_LABEL;
-          }
-
 	case timeout_event:
 	  /* We execute the event even if it's ours, and notice that it's
 	     happened above. */
+        case process_event:
 	case pointer_motion_event:
 	case magic_event:
           {
@@ -2576,6 +2602,7 @@ ARG may be a float, meaning pause for some fractional part of a second.
 	}
     }
  DONE_LABEL:
+  unbind_to (count, make_int (id));
   Fdeallocate_event (event);
   UNGCPRO;
   return Qnil;
@@ -2586,8 +2613,15 @@ Perform redisplay, then wait ARG seconds or until user input is available.
 ARG may be a float, meaning a fractional part of a second.
 Optional second arg non-nil means don't redisplay, just wait for input.
 Redisplay is preempted as always if user input arrives, and does not
-happen if input is available before it starts.
+ happen if input is available before it starts.
 Value is t if waited the full time with no input arriving.
+
+If a filter function or timeout handler (such as installed by `add-timeout')
+ calls any of accept-process-output, sleep-for, or sit-for, those calls
+ will return nil immediately (regardless of their arguments) in recursive
+ situations.  It is recommended that you never call sit-for from inside
+ of a process filter function or timer event (either synchronous or
+ asynchronous) with an argument other than 0.
 */
        (seconds, nodisplay))
 {
@@ -2596,6 +2630,11 @@ Value is t if waited the full time with no input arriving.
   Lisp_Object event, result;
   struct gcpro gcpro1;
   int id;
+  int count;
+
+  /* Recusive call from a filter function or timeout handler. */
+  if (!NILP(recursive_sit_for))
+    return Qnil;
 
   /* The unread-command-events count as pending input */
   if (!NILP (Vunread_command_events) || !NILP (Vunread_command_event))
@@ -2622,8 +2661,8 @@ Value is t if waited the full time with no input arriving.
      Do this loop at least once even if (sit-for 0) so that we
      redisplay when no input pending.
    */
-  event = Fmake_event ();
   GCPRO1 (event);
+  event = Fmake_event ();
 
   /* Generate the wakeup even if MSECS is 0, so that existing timeout/etc.
      events get processed.  The old (pre-19.12) code special-cased this
@@ -2632,6 +2671,10 @@ Value is t if waited the full time with no input arriving.
      the E-Lisp universe. */
 
   id = event_stream_generate_wakeup (msecs, 0, Qnil, Qnil, 0);
+
+  count = specpdl_depth ();
+  record_unwind_protect (sit_for_unwind, make_int (id));
+  recursive_sit_for = Qt;
 
   while (1)
     {
@@ -2658,11 +2701,16 @@ Value is t if waited the full time with no input arriving.
 	 consumer as well.  In fact, we know there's nothing on the
 	 command_event_queue that we didn't just put there.
        */
-      next_event_internal (event, 0, 0); /* blocks */
+      next_event_internal (event, 0); /* blocks */
       /* See the comment in accept-process-output about Vquit_flag */
 
       if (command_event_p (event))
 	{
+	  QUIT;			/* If the command was C-g check it here
+				   so that we abort out of the sit-for,
+				   not the next command.  sleep-for and
+				   accept-process-output continue looping
+				   so they check QUIT again implicitly.*/
 	  result = Qnil;
 	  goto DONE_LABEL;
 	}
@@ -2674,13 +2722,6 @@ Value is t if waited the full time with no input arriving.
 	    enqueue_command_event (Fcopy_event (event, Qnil));
 	    break;
 	  }
-
-        case process_event:
-          {
-            /* Avoid recursive calls to process filters */
-            enqueue_process_event (Fcopy_event (event, Qnil));
-            break;
-          }
           
 	case timeout_event:
 	  /* We execute the event even if it's ours, and notice that it's
@@ -2695,9 +2736,7 @@ Value is t if waited the full time with no input arriving.
     }
 
  DONE_LABEL:
-  /* If our timeout has not been signalled yet, disable it. */
-  if (NILP (result))
-    event_stream_disable_wakeup (id, 0);
+  unbind_to (count, make_int (id));
 
   /* Put back the event (if any) that made Fsit_for() exit before the
      timeout.  Note that it is being added to the back of the queue, which
@@ -2736,7 +2775,7 @@ wait_delaying_user_input (int (*predicate) (void *arg), void *predicate_arg)
 	 command_event_queue; there are only user and eval-events there,
 	 and we'd just have to put them back anyway.
        */
-      next_event_internal (event, 0, 1);
+      next_event_internal (event, 0);
       /* See the comment in accept-process-output about Vquit_flag */
       if (command_event_p (event)
           || (XEVENT_TYPE (event) == eval_event)
@@ -4156,10 +4195,6 @@ vars_of_event_stream (void)
   staticpro (&command_event_queue);
   command_event_queue_tail = Qnil;
 
-  process_event_queue = Qnil;
-  staticpro (&process_event_queue);
-  process_event_queue_tail = Qnil;
-
   Vlast_selected_frame = Qnil;
   staticpro (&Vlast_selected_frame);
 
@@ -4180,6 +4215,8 @@ vars_of_event_stream (void)
 
   last_point_position_buffer = Qnil;
   staticpro (&last_point_position_buffer);
+
+  recursive_sit_for = Qnil;
 
   DEFVAR_INT ("echo-keystrokes", &echo_keystrokes /*
 *Nonzero means echo unfinished commands after this many seconds of pause.
@@ -4514,8 +4551,9 @@ with the read-key-sequence:
 
 ;do it with sleep-for.  move cursor into foo, then back into *scratch*
 ;before typing.
+;repeat also with (accept-process-output nil 20)
 
-;make sure ^G aborts both sit-for and sleep-for.
+;make sure ^G aborts sit-for, sleep-for and accept-process-output:
 
  (defun tst ()
   (list (condition-case c
@@ -4526,6 +4564,9 @@ with the read-key-sequence:
  (tst)^Ja^G    ==>  ((quit) 97) with no signal
  (tst)^J^Ga    ==>  ((quit) 97) with no signal
  (tst)^Jabc^G  ==>  ((quit) 97) with no signal, and "bc" inserted in buffer
+
+; with sit-for only do the 2nd test.
+; Do all 3 tests with (accept-proccess-output nil 20)
 
 Do this:
   (setq enable-recursive-minibuffers t
@@ -4540,4 +4581,62 @@ however C-g before "Quit" is displayed should leave minibuffer active.
 
 ;do it all in both v18 and v19 and make sure all results are the same.
 ;all of these cases matter a lot, but some in quite subtle ways.
+*/
+
+/*
+Additional test cases for accept-process-output, sleep-for, sit-for.
+Be sure you do all of the above checking for C-g and focus, too!
+
+; Make sure that timer handlers are run during, not after sit-for:
+(defun timer-check ()
+  (add-timeout 2 '(lambda (ignore) (message "timer ran")) nil)
+  (sit-for 5)
+  (message "after sit-for"))
+
+; The first message should appear after 2 seconds, and the final message
+; 3 seconds after that.
+; repeat above test with (sleep-for 5) and (accept-process-output nil 5)
+
+
+
+; Make sure that process filters are run during, not after sit-for.
+(defun fubar ()
+  (message "sit-for = %s" (sit-for 30)))
+(add-hook 'post-command-hook 'fubar)
+
+; Now type M-x shell RET
+; wait for the shell prompt then send: ls RET
+; the output of ls should fill immediately, and not wait 30 seconds.
+
+; repeat above test with (sleep-for 30) and (accept-process-output nil 30)
+
+
+
+; Make sure that recursive invocations return immediately:
+(defmacro test-diff-time (start end)
+  `(+ (* (- (car ,end) (car ,start)) 65536.0)
+      (- (cadr ,end) (cadr ,start))
+      (/ (- (caddr ,end) (caddr ,start)) 1000000.0)))
+
+(defun testee (ignore)
+  ;; All three of these should return immediately.
+  (sit-for 10)
+  (sleep-for 10)
+  (accept-process-output nil 10))
+
+(defun test-them ()
+  (let ((start (current-time))
+        end)
+    (add-timeout 2 'testee nil)
+    (sit-for 5)
+    (add-timeout 2 'testee nil)
+    (sleep-for 5)
+    (add-timeout 2 'testee nil)
+    (accept-process-output nil 5)
+    (setq end (current-time))
+    (test-diff-time start end)))
+
+(test-them) should sit for 15 seconds, not 105 or 96.
+
+
 */

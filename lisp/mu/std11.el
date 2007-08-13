@@ -1,10 +1,10 @@
 ;;; std11.el --- STD 11 functions for GNU Emacs
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author:   MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Keywords: mail, news, RFC 822, STD 11
-;; Version: $Id: std11.el,v 1.2 1996/12/22 00:29:20 steve Exp $
+;; Version: $Id: std11.el,v 1.3 1997/03/09 02:37:25 steve Exp $
 
 ;; This file is part of MU (Message Utilities).
 
@@ -263,13 +263,14 @@ If BOUNDARY is not nil, it is used as message header separator.
 represents addr-spec of RFC 822. [std11.el]"
   (mapconcat (function
 	      (lambda (token)
-		(if (let ((name (car token)))
-		      (or (eq name 'spaces)
-			  (eq name 'comment)
-			  ))
-		    ""
-		  (cdr token)
-		  )))
+		(let ((name (car token)))
+                  (cond
+                   ((eq name 'spaces) "")
+                   ((eq name 'comment) "")
+                   ((eq name 'quoted-string)
+                    (concat "\"" (cdr token) "\""))
+                   (t (cdr token)))
+                  )))
 	     seq "")
   )
 

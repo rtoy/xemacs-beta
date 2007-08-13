@@ -114,8 +114,8 @@
 ; Change History
 ; 
 ; $Log: pretty-print.el,v $
-; Revision 1.2  1997/01/04 21:20:13  steve
-; beta6 to beta7 patches
+; Revision 1.3  1997/03/09 02:37:54  steve
+; Patches to beta98
 ;
 ; Revision 1.1  1997/01/01 21:45:30  steve
 ; *** empty log message ***
@@ -160,7 +160,7 @@
 ;; User level functions
 ;;;###autoload
 (defun pp-function (symbol)
-  "Pretty print the function definition of SYMBOL in a seperate buffer"
+  "Pretty print the function definition of SYMBOL in a separate buffer"
   (interactive 
    (list (pp-read-symbol 'fboundp "Pretty print function definition of: ")))
   (if (compiled-function-p (symbol-function symbol))
@@ -172,14 +172,14 @@
 
 ;;;###autoload
 (defun pp-variable (symbol)
-  "Pretty print the variable value of SYMBOL in a seperate buffer"
+  "Pretty print the variable value of SYMBOL in a separate buffer"
   (interactive
    (list (pp-read-symbol 'boundp "Pretty print variable value of: ")))
   (pp-symbol-cell symbol 'symbol-value))
 
 ;;;###autoload
 (defun pp-plist (symbol)
-  "Pretty print the property list of SYMBOL in a seperate buffer"
+  "Pretty print the property list of SYMBOL in a separate buffer"
   (interactive
    (list (pp-read-symbol 'symbol-plist "Pretty print property list of: ")))
   (pp-symbol-cell symbol 'symbol-plist))

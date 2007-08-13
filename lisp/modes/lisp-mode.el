@@ -316,7 +316,7 @@ if that value is non-nil."
 
 ;; XEmacs change: emacs-lisp-mode-map is a more appropriate parent.
 (defvar lisp-interaction-mode-map ()
-  "Keymap for Lisp Interaction moe.
+  "Keymap for Lisp Interaction mode.
 All commands in `shared-lisp-mode-map' are inherited by this map.")
 
 (if lisp-interaction-mode-map

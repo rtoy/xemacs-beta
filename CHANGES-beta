@@ -1,4 +1,26 @@
 							-*- indented-text -*-
+to 19.15 beta98
+-- filladapt.el-2.09 courtesy of Kyle Jones
+-- itimer.el-1.03
+-- more work on sit-for, etc. courtesy of David Moore
+-- describe-beta command added, etc/BETA, C-h B
+-- updates to hyper-apropos.el courtesy of Christoph Wedler
+-- texinfo manual updated to 2.23
+-- texinfo.tex update to 3.9
+-- Gnus-5.4.24
+-- tm-7.105.1
+-- W3-3.0.65
+-- Custom-1.59
+-- AUCTeX-9.7l
+-- VM-6.19
+-- Build fixes
+-- More work on Linux libc-5/libc-6 portability, it works out of the box now?
+-- more frame visibility patches courtesy of Jan Vroonhof
+-- graphical updates to time.el
+-- gnuattach fixes courtesy of Hunter Kelly
+-- dynamic PURESIZE fixes
+-- miscellaneous bug fixes
+
 to 19.15 beta97
 -- Gnus-5.4.17
 -- Freeze frame fixes Courtesy of Jan Vroonhof and Darrell Kindred [Mistakenly

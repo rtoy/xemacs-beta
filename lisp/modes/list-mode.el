@@ -113,7 +113,7 @@ This is called from `post-command-hook'."
 
 (defun next-list-mode-item (n)
   "Move to the next item in list-mode.
-WIth prefix argument N, move N items (negative N means move backward)."
+With prefix argument N, move N items (negative N means move backward)."
   (interactive "p")
   (while (and (> n 0) (not (eobp)))
     (let ((prop (get-char-property (point) 'list-mode-item))
@@ -190,7 +190,7 @@ If ACTIVATE-CALLBACK is non-nil, it should be a function of three
 
 
 (defvar completion-highlight-first-word-only nil
-  "*Completion will only hightlight the first blank delimited word if t.
+  "*Completion will only highlight the first blank delimited word if t.
 If the variable in not t or nil, the string is taken as a regexp to match for end
 of highlight")
 

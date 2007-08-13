@@ -62,6 +62,31 @@ tty_after_init_frame (struct frame *f, int first_on_device,
       call1 (Qinit_post_tty_win, FRAME_CONSOLE (f));
 }
 
+/* Change from withdrawn state to mapped state. */
+static void
+tty_make_frame_visible (struct frame *f)
+{
+  if (!FRAME_VISIBLE_P(f))
+    {
+      SET_FRAME_CLEAR(f);
+      f->visible = 1;
+    }
+  
+}
+
+/* Change from mapped state to withdrawn state. */
+static void
+tty_make_frame_invisible (struct frame *f)
+{
+    f->visible = 0;
+}
+
+static int
+tty_frame_visible_p (struct frame *f)
+{
+  return FRAME_VISIBLE_P(f);
+}
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -72,6 +97,9 @@ console_type_create_frame_tty (void)
 {
   CONSOLE_HAS_METHOD (tty, init_frame_1);
   CONSOLE_HAS_METHOD (tty, after_init_frame);
+  CONSOLE_HAS_METHOD (tty, make_frame_visible);
+  CONSOLE_HAS_METHOD (tty, make_frame_invisible);
+  CONSOLE_HAS_METHOD (tty, frame_visible_p);
 }
 
 void

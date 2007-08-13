@@ -59,6 +59,7 @@
 (define-key help-map "A" 'command-apropos)
 
 (define-key help-map "b" 'describe-bindings)
+(define-key help-map "B" 'describe-beta)
 (define-key help-map "\C-p" 'describe-pointer)
 
 (define-key help-map "c" 'describe-key-briefly)
@@ -388,7 +389,7 @@ the window.")
 (defun describe-key (key)
   "Display documentation of the function invoked by KEY.
 KEY is a string, or vector of events.
-When called interactvely, KEY may also be a menu selection."
+When called interactively, KEY may also be a menu selection."
   (interactive "kDescribe key: ")
   (let ((defn (key-or-menu-binding key)))
     (if (or (null defn) (integerp defn))
@@ -466,6 +467,13 @@ describes the minor mode."
   (interactive)
   (find-file-read-only
    (expand-file-name "DISTRIB" data-directory)))
+
+(defun describe-beta ()
+  "Display info on how to deal with Beta versions of XEmacs."
+  (interactive)
+  (find-file-read-only
+   (expand-file-name "BETA" data-directory))
+  (goto-char (point-min)))
 
 (defun describe-copying ()
   "Display info on how you may redistribute copies of XEmacs."

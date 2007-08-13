@@ -1,14 +1,14 @@
 \input texinfo
 @c
 @c Please note that this file uses some constructs not supported by earlier 
-@c versions of TeXinfo.  You must be running one of the newer TeXinfo 
+@c versions of TeX-info.  You must be running one of the newer TeX-info 
 @c releases (I currently use version 3.9 from ftp://prep.ai.mit.edu/pub/gnu/)
 @c
 @c Please do not send in bug reports about not being able to format the
 @c document with 'makeinfo' or 'tex', just upgrade your installation.
 @c
 @c Info formatted files are provided in the distribution, and you can
-@c retrieve dvi, postscript, and PDF versions from the web site or ftp 
+@c retrieve dvi, postscript, and PDF versions from the web site or FTP 
 @c site: http://www.cs.indiana.edu/elisp/w3/docs.html
 @c
 @setfilename w3.info
@@ -246,7 +246,7 @@ Goes to the end of document
 @kindex b
 @kindex Meta-tab
 @findex w3-widget-backward
-@item Meta-tab, b
+@item Meta-tab, Shift-tab, b
 Attempts to move backward one link area in the current document.
 Signals an error if no previous links are found.
 @kindex f
@@ -274,6 +274,7 @@ Return to the last buffer shown before this buffer.
 Kill this buffer.
 @kindex Q, u
 @findex w3-leave-buffer
+@item Q, u
 Bury this buffer, but don't kill it
 @end table
 
@@ -416,12 +417,11 @@ hypertext mode is the default, so that all the keys and functions remain
 the same.
 
 @kindex M-s
-@findex w3-search
+@findex w3-save-as
 @item M-s
-Perform a search, if this is a searchable index.  Searching requires a
-server - Emacs-W3 can not do local file searching, as there are too many
-possible types of searches people could want to do.  Generally, the only
-@sc{url} types that allow searching are @sc{http}, gopher, and X-EXEC.
+Save a document to the local disk as HTML Source, Formatted Text, LaTeX
+Source, or Binary.
+
 @kindex Hv
 @findex w3-show-history-list
 @vindex w3-keep-history
@@ -605,7 +605,7 @@ the keybindings used in other browsers.
 @vindex w3-mode-hook
 
 :: WORK :: Document lynx emulation
-@table @bullet
+@table @kbd
 @item Down arrow
 Highlight next topic
 @item Up arrow
@@ -976,7 +976,7 @@ Standard Generalized Markup Language, of which @sc{html} is an
 application.
 @item simple selector
 A selector that matches elements based on the element type and/or
-attributes, and not he element's position in the document
+attributes, and not the element's position in the document
 structure. E.g., 'H1.initial' is a simple selector.
 @item style sheet
 A collection of rules.
@@ -2890,36 +2890,6 @@ feature on, set the variable @code{url-standalone-mode} to
 non-@code{nil}, or choose the `Use Cache Only' menu item (under
 `Options')
 
-@cindex Caching options
-@cindex Alternate caching method
-Emacs-W3 caches files under the temporary directory specified by
-@code{url-temporary-directory}, in a user-specific subdirectory
-(determined by the @code{user-real-login-name} function).  The cache
-files are stored under their original names, so a @sc{url} like:
-http://www.aventail.com/foo/bar/baz.html would be stored in a cache file
-named: /tmp/wmperry/com/aventail/www/foo/bar/baz.html.  Sometimes,
-espcially with gopher links, there will be name conflicts, and an error
-will be signalled.  This cannot be avoided, and still have reasonable
-performance at startup time (reading in an index file of all the cached
-pages can take a long time on slow machines, or even fast machines with
-large caches).  When running XEmacs 19.12 or later, a different naming
-scheme can be used.  This avoids name conflicts, but loses the human
-readability of the cache file names.  The cache files will look like:
-/tmp/wmperry/acbd18db4cc2f85cedef654fccc4a4d8, which is certainly
-unique, but not very user-friendly.  To turn this on, add this to the
-@file{.emacs} file:
-
-
-@example
-(add-hook 'w3-load-hooks '(lambda ()
-                             (fset 'url-create-cached-filename
-                                   'url-create-cached-filename-using-md5)))
-@end example
-
-If other versions of emacs will not be sharing the cache, I highly
-recommend this method of creating the cache filename.
- 
-
 @node Interfacing to Mail/News, Debugging HTML, Disk Caching, Advanced Features
 @section Interfacing to Mail/News
 @cindex Interfacing to Mail/News
@@ -2976,31 +2946,20 @@ message is displayed.
 
 These are the various hooks that can be used to customize some of
 Emacs-W3's behavior.  They are arranged in the order in which they would
-happen when retrieving a document.  All of these are functions (or lists
-of functions) that are called consecutively.
+happen when retrieving a document.  These are all 'normal hooks' in
+standard Emacs-terminology, meaning they are functions (or lists of
+functions) that are called consecutively.
 
 @table @code
-@vindex w3-load-hooks
-@item w3-load-hooks
-These hooks are run by @code{w3-do-setup} the first time a @sc{url} is
-fetched.  All the w3 variables are initialized before this hook is
-run.
-@item w3-file-done-hooks
-These hooks are run by @code{w3-prepare-buffer} after all parsing on a
-document has been done.  All @code{url-current-}@var{*} and
-@code{w3-current-}@var{*} variables are initialized when this hook is run.
-This is run before the buffer is shown, and before any inlined images
-are downloaded and converted.
-@item w3-file-prepare-hooks
-These hooks are run by @code{w3-prepare-buffer} before any parsing is
-done on the @sc{html} file.  The @sc{http}/1.0 headers specified by
-@code{w3-show-headers} have been inserted, and the syntax table has been
-set to @code{w3-parse-args-syntax-table} by the time this hook is run.
-@item w3-mode-hooks
+@vindex w3-load-hook
+@item w3-load-hook
+These hooks are run the first time a @sc{url} is fetched.  All the
+Emacs-W3 variables are initialized before this hook is run.
+@item w3-mode-hook
 These hooks are run after a buffer has been parsed and displayed, but
 before any inlined images are downloaded and converted.
-@item w3-source-file-hooks
-These hooks are run after displaying a document's source
+@item w3-source-file-hook
+These hooks are run after displaying a document's source.
 @end table
 
 @node Other Variables,  , Hooks, Advanced Features

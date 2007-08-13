@@ -1,34 +1,22 @@
-;;; itimer.el -- Interval timers for XEmacs
-
-;; Copyright (C) 1988, 1991, 1993, 1997 Kyle E. Jones
-
-;; Author: Kyle Jones <kyle_jones@wonderworks.com>
-;; Keywords: extensions
-
-;; This file is part of XEmacs
-
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
-
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
-
-;; A copy of the GNU General Public License can be obtained from this
-;; program's author (send electronic mail to kyle@uunet.uu.net) or
-;; from the Free Software Foundation, Inc., 59 Temple Place - Suite
-;; 330, Boston, MA  02111-1307, USA.
-
-;;; Synched up with:  Not in FSF
-
-;;; Commentary:
-
-;; Send bug reports to kyle_jones@wonderworks.com
-
-;;; Code:
+;;; Interval timers for GNU Emacs
+;;; Copyright (C) 1988, 1991, 1993, 1997 Kyle E. Jones
+;;;
+;;; This program is free software; you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation; either version 2, or (at your option)
+;;; any later version.
+;;;
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;;
+;;; A copy of the GNU General Public License can be obtained from this
+;;; program's author (send electronic mail to kyle@uunet.uu.net) or from
+;;; the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+;;; 02139, USA.
+;;;
+;;; Send bug reports to kyle_jones@wonderworks.com
 
 (provide 'itimer)
 
@@ -37,16 +25,18 @@
 ;;    itimer-value
 ;;    itimer-restart
 ;;    itimer-function
-;;    itimer-function-argument
+;;    itimer-uses-arguments
+;;    itimer-function-arguments
 ;;    set-itimer-value
 ;;    set-itimer-restart
 ;;    set-itimer-function
-;;    set-itimer-uses-argument
-;;    set-itimer-function-argument
+;;    set-itimer-uses-arguments
+;;    set-itimer-function-arguments
 ;;    get-itimer
 ;;    start-itimer
 ;;    read-itimer
 ;;    delete-itimer
+;;    activate-itimer
 ;;
 ;; Interactive users get these commands:
 ;;    edit-itimers
@@ -55,7 +45,7 @@
 ;;
 ;; See the doc strings of these functions for more information.
 
-(defvar itimer-version "1.02"
+(defvar itimer-version "1.03"
   "Version number of the itimer package.")
 
 (defvar itimer-list nil
@@ -167,7 +157,7 @@ This is a macro."
 
 (defun itimerp (obj)
   "Returns non-nil iff OBJ is an itimer."
-  (and (consp obj) (stringp (car obj)) (eq (length obj) 6)))
+  (and (consp obj) (eq (length obj) 8)))
 
 (defun itimer-name (itimer)
   "Returns the name of ITIMER."
@@ -191,17 +181,30 @@ This function is called each time ITIMER expires."
   (check-itimer itimer)
   (nth 3 itimer))
 
-(defun itimer-uses-argument (itimer)
-  "Returns non-nil if the function of ITIMER will be called with an argment.
-ITIMER's function is called with this argument each timer ITIMER expires."
+(defun itimer-is-idle (itimer)
+  "Returns non-nil if ITIMER is an idle timer.
+Normal timers eexpire after a set interval.  Idle timers expire
+only after Emacs has been idle for a specific interval.  ``Idle''
+means no command events within the interval."
   (check-itimer itimer)
   (nth 4 itimer))
 
-(defun itimer-function-argument (itimer)
-  "Returns the function argument of ITIMER.
-ITIMER's function is called with this argument each timer ITIMER expires."
+(defun itimer-uses-arguments (itimer)
+  "Returns non-nil if the function of ITIMER will be called with arguments.
+ITIMER's function is called with the arguments each time ITIMER expires.
+The arguments themselves are retrievable with `itimer-function-arguments'."
   (check-itimer itimer)
   (nth 5 itimer))
+
+(defun itimer-function-arguments (itimer)
+  "Returns the function arguments of ITIMER as a list.
+ITIMER's function is called with these argument each timer ITIMER expires."
+  (check-itimer itimer)
+  (nth 6 itimer))
+
+(defun itimer-recorded-run-time (itimer)
+  (check-itimer itimer)
+  (nth 7 itimer))
 
 (defun set-itimer-value (itimer value)
   "Set the timeout value of ITIMER to be VALUE.
@@ -248,23 +251,33 @@ Returns RESTART."
 FUNCTION will be called when itimer expires.
 Returns FUNCTION."
   (check-itimer itimer)
-  (setcar (cdr (cdr (cdr itimer))) function))
+  (setcar (nthcdr 3 itimer) function))
 
-(defun set-itimer-uses-argument (itimer flag)
-  "Sets when the function of ITIMER is called with an argument.
-If FLAG is non-nil, then the function will be called with one argument,
-otherwise the function will be called with no arguments.
+(defun set-itimer-is-idle (itimer flag)
+  "Sets flag that says whether ITIMER is an idle timer.
+If FLAG is non-nil, then ITIMER will eb considered an idle timer.
 Returns FLAG."
   (check-itimer itimer)
   (setcar (nthcdr 4 itimer) flag))
 
-(defun set-itimer-function-argument (itimer argument)
-  "Set the function of ITIMER to be ARGUMENT.
-The function of ITIMER will be called with ARGUMENT as its solt argument
-when itimer expires.
-Returns ARGUMENT."
+(defun set-itimer-uses-arguments (itimer flag)
+  "Sets flag that says whether the function of ITIMER is called with arguments.
+If FLAG is non-nil, then the function will be called with one argument,
+otherwise the function will be called with no arguments.
+Returns FLAG."
   (check-itimer itimer)
-  (setcar (nthcdr 5 itimer) argument))
+  (setcar (nthcdr 5 itimer) flag))
+
+(defun set-itimer-function-arguments (itimer &rest arguments)
+  "Set the function arguments of ITIMER to be ARGUMENTS.
+The function of ITIMER will be called with ARGUMENTS when itimer expires.
+Returns ARGUMENTS."
+  (check-itimer itimer)
+  (setcar (nthcdr 6 itimer) arguments))
+
+(defun set-itimer-recorded-run-time (itimer time)
+  (check-itimer itimer)
+  (setcar (nthcdr 7 itimer) time))
 
 (defun get-itimer (name)
   "Return itimer named NAME, or nil if there is none."
@@ -284,16 +297,17 @@ Optional second arg INITIAL-INPUT non-nil is inserted into the
   (setq itimer-list (delq itimer itimer-list)))
 
 (defun start-itimer (name function value &optional restart
-		     with-arg function-argument)
+		     is-idle with-args &rest function-arguments)
   "Start an itimer.
-Args are NAME, FUNCTION, VALUE &optional RESTART, WITH-ARG, FUNCTION-ARGUMENT.
+Arguments are
+  NAME, FUNCTION, VALUE &optional RESTART, IS-IDLE, WITH-ARGS, &rest FUNCTION-ARGUMENTS.
 NAME is an identifier for the itimer.  It must be a string.  If an itimer
   already exists with this name, NAME will be modified slightly to until
   it is unique.
-FUNCTION should be a function (or symbol naming one) of one argument.  It
-  will be called each time the itimer expires with an argument of
-  FUNCTION-ARGUMENT.  The function can access the itimer that
-  invoked it through the variable `current-itimer'.  If WITH-ARG
+FUNCTION should be a function (or symbol naming one).  It
+  will be called each time the itimer expires with arguments of
+  FUNCTION-ARGUMENTS.  The function can access the itimer that
+  invoked it through the variable `current-itimer'.  If WITH-ARGS
   is nil then FUNCTION is called with no arguments.  This is for
   backward compatibility with older versions of the itimer
   package which always called FUNCTION with no arguments.
@@ -306,6 +320,10 @@ Optional fourth arg RESTART non-nil means that this itimer should be
   is deleted at expiration after its function has returned. 
   If non-nil RESTART should be a number indicating the value at which the
   itimer should be set at restart time.
+Optional fifth arg IS-IDLE specified if this is an idle timer.
+  Normal timers eexpire after a set interval.  Idle timers expire
+  only after Emacs has been idle for specific interval.  ``Idle''
+  means no command events within the interval.
 Returns the newly created itimer."
   (interactive
    (list (completing-read "Start itimer: " itimer-list)
@@ -331,23 +349,58 @@ Returns the newly created itimer."
     (while (get-itimer name)
       (setq name (concat oname "<" num ">"))
       (itimer-increment num)))
-  ;; If there's no itimer process, start one now.
-  ;; Otherwise wake up the itimer process so that seconds slept before
+  (activate-itimer (list name value restart function is-idle
+			 with-args function-arguments (list 0 0 0)))
+  (car itimer-list))
+
+(defun make-itimer ()
+  "Create an unactivated itimer.
+The itimer will not begin running until activated with `activate-itimer'.
+Set the itimer's expire interval with `set-itimer-value'.
+Set the itimer's function interval with `set-itimer-function'.
+Once this is done, the timer can be activated."
+  (list nil 0 nil 'ignore nil nil nil (list 0 0 0)))
+
+(defun activate-itimer (itimer)
+  "Activate ITIMER, which was previously created with `make-itimer'.
+ITIMER will be added to the global list of running itimers,
+its FUNCTION will be called when it expires, and so on."
+  (check-itimer itimer)
+  (if (memq itimer itimer-list)
+      (error "itimer already activated"))
+  (if (not (numberp (itimer-value itimer)))
+      (error "itimer timeout value not a number: %s" (itimer-value itimer)))
+  (if (<= (itimer-value itimer) 0)
+      (error "itimer timeout value not positive: %s" (itimer-value itimer)))
+  ;; If there's no itimer driver/process, start one now.
+  ;; Otherwise wake up the itimer driver so that seconds slept before
   ;; the new itimer is created won't be counted against it.
   (if (or itimer-process itimer-timer)
       (itimer-driver-wakeup)
     (itimer-driver-start))
+  ;; Roll a unique name for the timer if it doesn't have a name
+  ;; already.
+  (if (not (stringp (car itimer)))
+      (let ((name "itimer-0")
+	    (oname "itimer-")
+	    (num 1))
+	(while (get-itimer name)
+	  (setq name (concat oname "<" num ">"))
+	  (itimer-increment num))
+	(setcar itimer name))
+    ;; signal an error if the timer's name matches an already
+    ;; activated timer.
+    (if (get-itimer (itimer-name itimer))
+	(error "itimer named \"%s\" already existing and activated"
+	       (itimer-name itimer))))
   (let ((inhibit-quit t))
     ;; add the itimer to the global list
-    (setq itimer-list
-	  (cons (list name value restart function with-arg function-argument)
-		itimer-list))
-    ;; If the itimer process is scheduled to wake up too late for the itimer
-    ;; we wake it up to calculate a correct wakeup value giving consideration
-    ;; to the newly added itimer.
-    (if (< value itimer-next-wakeup)
-	(itimer-driver-wakeup)))
-  (car itimer-list))
+    (setq itimer-list (cons itimer itimer-list))
+    ;; If the itimer process is scheduled to wake up too late for
+    ;; the itimer we wake it up to calculate a correct wakeup
+    ;; value giving consideration to the newly added itimer.
+    (if (< (itimer-value itimer) itimer-next-wakeup)
+	(itimer-driver-wakeup))))
 
 ;; User level functions to list and modify existing itimers.
 ;; Itimer Edit major mode, and the editing commands thereof.
@@ -367,8 +420,9 @@ commands to manipulate itimers; see the documentation for
     (setq buffer-read-only nil)
     (erase-buffer)
     (insert
-"Name                  Value   Restart   Function                   Argument\n"
-"----                  -----   -------   --------                   --------")
+"Name                  Value   Restart   Function            Idle   Arguments"
+"\n"
+"----                  -----   -------   --------            ----   --------")
     (if (null itimer-edit-start-marker)
 	(setq itimer-edit-start-marker (point)))
     (while itimers
@@ -382,10 +436,14 @@ commands to manipulate itimers; see the documentation for
 	       (format "%5.5s" (itimer-restart (car itimers))) 5))
       (tab-to-tab-stop)
       (insert (itimer-truncate-string
-	       (format "%.26s" (itimer-function (car itimers))) 26))
+	       (format "%.19s" (itimer-function (car itimers))) 19))
       (tab-to-tab-stop)
-      (if (itimer-uses-argument (car itimers))
-	  (prin1 (itimer-function-argument (car itimers)))
+      (if (itimer-is-idle (car itimers))
+	  (insert "yes")
+	(insert "no"))
+      (tab-to-tab-stop)
+      (if (itimer-uses-arguments (car itimers))
+	  (prin1 (itimer-function-arguments (car itimers)))
 	(prin1 'NONE))
       (setq itimers (cdr itimers)))
     ;; restore point
@@ -416,7 +474,7 @@ for `itimer-edit-mode' for more information."
 ;; no point in making this interactive.
 (defun itimer-edit-mode ()
   "Major mode for manipulating itimers.
-Atrributes of running itimers are changed by moving the cursor to the
+Attributes of running itimers are changed by moving the cursor to the
 desired field and typing `s' to set that field.  The field will then be
 set to the value read from the minibuffer.
 
@@ -432,7 +490,7 @@ x      start a new itimer
   (setq major-mode 'itimer-edit-mode
 	mode-name "Itimer Edit"
 	truncate-lines t
-	tab-stop-list '(22 32 40 67))
+	tab-stop-list '(22 32 40 60 67))
   (abbrev-mode 0)
   (auto-fill-mode 0)
   (buffer-flush-undo (current-buffer))
@@ -478,7 +536,7 @@ x      start a new itimer
 		    ;; and use this info to determine which field the user
 		    ;; wants to modify.
 		    (beginning-of-line)
-		    (while (and (>= opoint (point)) (< n 5))
+		    (while (and (>= opoint (point)) (< n 6))
 		      (forward-sexp 2)
 		      (backward-sexp)
 		      (itimer-increment n))
@@ -486,6 +544,7 @@ x      start a new itimer
 			  ((eq n 2) 'value)
 			  ((eq n 3) 'restart)
 			  ((eq n 4) 'function)
+			  ((eq n 5) 'is-idle)
 			  (t 'function-argument)))))
     (cond ((eq field 'value)
 	   (let ((prompt "Set itimer value: "))
@@ -502,10 +561,16 @@ x      start a new itimer
 				  (memq (car field-value) '(lambda macro)))))
 	       (setq field-value
 		     (read (completing-read prompt obarray 'fboundp nil))))))
+	  ((eq field 'is-idle)
+	   (setq field-value (not (itimer-is-idle itimer))))
 	  ((eq field 'function-argument)
 	   (let ((prompt "Set itimer function argument: "))
 	     (setq field-value (read-expression prompt))
-	     (set-itimer-uses-argument itimer t))))
+	     (cond ((not (listp field-value))
+		    (setq field-value (list field-value))))
+	     (if (null field-value)
+		 (set-itimer-uses-arguments itimer nil)
+	       (set-itimer-uses-arguments itimer t)))))
     ;; set the itimer field
     (funcall (intern (concat "set-itimer-" (symbol-name field)))
 	     itimer field-value)
@@ -586,19 +651,44 @@ x      start a new itimer
   (let ((itimers (copy-sequence itimer-list))
 	(itimer)
 	(next-wakeup 600)
+	(idle-time)
+	(last-event-time)
+	(recorded-run-time)
 	;; process filters can be hit by stray C-g's from the user,
 	;; so we must protect this stuff appropriately.
 	;; Quit's are allowed from within itimer functions, but we
 	;; catch them and print a message.
 	(inhibit-quit t))
     (setq next-wakeup 600)
+    (if (and (boundp 'last-input-time) (consp last-input-time))
+	(setq last-event-time (list (car last-input-time)
+				    (cdr last-input-time)
+				    0)
+	      idle-time (itimer-time-difference (current-time)
+						last-event-time))
+      ;; no way to do this under FSF Emacs yet.
+      (setq last-event-time '(0 0 0)
+	    idle-time 0))
     (while itimers
       (setq itimer (car itimers))
-      (set-itimer-value-internal itimer (max 0 (- (itimer-value itimer)
-						  time-elapsed)))
-      (if (> (itimer-value itimer) 0)
+      (if (itimer-is-idle itimer)
+	  (setq recorded-run-time (itimer-recorded-run-time itimer))
+	(set-itimer-value-internal itimer (max 0 (- (itimer-value itimer)
+						    time-elapsed))))
+      (if (if (itimer-is-idle itimer)
+	      (or (> (itimer-time-difference recorded-run-time
+					     last-event-time)
+		     0)
+		  (< idle-time (itimer-value itimer)))
+	    (> (itimer-value itimer) 0))
 	  (setq next-wakeup
-		(min next-wakeup (itimer-value itimer)))
+		(if (itimer-is-idle itimer)
+		    (if (< idle-time (itimer-value itimer))
+			(min next-wakeup (- (itimer-value itimer) idle-time))
+		      (min next-wakeup (itimer-value itimer)))
+		  (min next-wakeup (itimer-value itimer))))
+	(and (itimer-is-idle itimer)
+	     (set-itimer-recorded-run-time itimer (current-time)))
 	;; itimer has expired, we must call its function.
 	;; protect our local vars from the itimer function.
 	;; allow keyboard quit to occur, but catch and report it.
@@ -610,9 +700,9 @@ x      start a new itimer
 		     (quit-flag nil)
 		     (inhibit-quit nil)
 		     itimer itimers time-elapsed)
-		(if (itimer-uses-argument current-itimer)
-		    (funcall (itimer-function current-itimer)
-			     (itimer-function-argument current-itimer))
+		(if (itimer-uses-arguments current-itimer)
+		    (apply (itimer-function current-itimer)
+			   (itimer-function-arguments current-itimer))
 		  (funcall (itimer-function current-itimer)))))
 	  (error (message "itimer \"%s\" signaled: %s" (itimer-name itimer)
 			  (prin1-to-string condition-data)))
@@ -701,7 +791,7 @@ x      start a new itimer
 				    'itimer-timer-driver nil nil))))
 
 (defun itimer-time-difference (t1 t2)
-  (let (usecs secs 65536-secs)
+  (let (usecs secs 65536-secs carry)
     (setq usecs (- (nth 2 t1) (nth 2 t2)))
     (if (< usecs 0)
 	(setq carry 1
@@ -709,8 +799,8 @@ x      start a new itimer
       (setq carry 0))
     (setq secs (- (nth 1 t1) (nth 1 t2) carry))
     (if (< secs 0)
-	(setq carry 1
-	      secs (+ secs 65536))
+	 (setq carry 1
+	       secs (+ secs 65536))
       (setq carry 0))
     (setq 65536-secs (- (nth 0 t1) (nth 0 t2) carry))
     ;; loses for interval larger than the maximum signed Lisp integer.
@@ -743,5 +833,3 @@ x      start a new itimer
   (if (fboundp 'add-timeout)
       (itimer-timer-wakeup)
     (itimer-process-wakeup)))
-
-;;; itimer.el ends here

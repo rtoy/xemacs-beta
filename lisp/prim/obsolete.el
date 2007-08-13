@@ -61,7 +61,7 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; device stuff
 
-(make-obsolete-variable 'window-system "use (console-type)")
+(make-compatible-variable 'window-system "use (console-type)")
 (make-obsolete-variable 'meta-flag
 			"use the `set-input-mode' function instead.")
 

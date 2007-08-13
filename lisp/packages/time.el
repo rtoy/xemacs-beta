@@ -2,7 +2,9 @@
 
 ;; Copyright (C) 1985, 86, 87, 93, 94, 1996 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: FSF,     XEmacs add-ons (C) by Jens T. Lautenbacher
+;;                      mail <jens@lemming0.lem.uni-karlsruhe.de>
+;;                      for comments/fixes about the enhancements.
 
 ;; This file is part of XEmacs.
 
@@ -32,9 +34,18 @@
 ;; This uses the XEmacs timeout-event mechanism, via a version
 ;; of Kyle Jones' itimer package.
 
+;;; JTL: This is in a wide part reworked for XEmacs so it won't use
+;;;      the old mechanism for specifying what is to be displayed.
+;;;      The starting variable to look at is `display-time-form-list'
+
 ;;; Code:
 
 (require 'itimer)
+
+(defvar display-time-compatible nil
+  "*This variable may be set to nil to get the old behaviour of display-time.
+This means no display of a spiffy mail icon or use of the display-time-form-list
+instead of the old display-time-string-form.")
 
 (defvar display-time-mail-file nil
   "*File name of mail inbox file, for indicating existence of new mail.
@@ -45,7 +56,7 @@ default, which is system-dependent, and is the same as used by Rmail.")
 (defvar display-time-day-and-date nil "\
 *Non-nil means \\[display-time] should display day and date as well as time.")
 
-(defvar display-time-interval 60
+(defvar display-time-interval 20
   "*Seconds between updates of time in the mode line.")
 
 (defvar display-time-24hr-format nil
@@ -77,6 +88,10 @@ echo area instead of in the mode-line."
   ;; if the "display-time" itimer already exists, nuke it first.
   (let ((old (get-itimer "display-time")))
     (if old (delete-itimer old)))
+
+  (if (memq 'display-time-string global-mode-string)
+      (setq global-mode-string
+	    (remove 'display-time-string global-mode-string)))
   ;; If we're not displaying the time in the echo area
   ;; and the global mode string does not have a non-nil value
   ;; then initialize the global mode string's value.
@@ -84,13 +99,11 @@ echo area instead of in the mode-line."
       global-mode-string
       (setq global-mode-string '("")))
   ;; If we're not displaying the time in the echo area
-  ;; and our display variable is not part of the global-mode-string list
-  ;; the we add our variable to the list.  This will make the time
+  ;; then we add our variable to the list.  This will make the time
   ;; appear on the modeline.
   (or display-time-echo-area
-      (memq 'display-time-string global-mode-string)
       (setq global-mode-string
-	    (append global-mode-string '(display-time-string))))
+		(append global-mode-string '(display-time-string))))
   ;; Display the time initially...
   (display-time-function)
   ;; ... and start an itimer to do it automatically thereafter.
@@ -103,50 +116,266 @@ echo area instead of in the mode-line."
   (start-itimer "display-time" 'display-time-function
 		display-time-interval display-time-interval))
 
-(defvar display-time-show-load t)
-
 (defvar display-time-show-icons-maybe t
-  "Use icons to indicate the mail status if we're running under X and
-XEmacs was compiled with xpm support")
+  "Use icons to indicate the mail status if possible")
 
-(defun display-time-get-icons-dir ()
-  (let ((path load-path)
-	dir elem)
-    (while (setq elem (pop path))
-      (setq dir (concat (directory-file-name elem) "/../etc/time/")) 
-      (if (file-directory-p dir) (setq path nil)
-	nil))
-    dir))
+(defvar display-time-icons-dir (concat data-directory "time/"))
 
-(defvar display-time-icons-dir (display-time-get-icons-dir))
+(defvar display-time-mail-sign-string " Mail"
+  "The string used as mail indicator in the echo area
+(and in the modeline if display-time-show-icons-maybe is nil)
+if display-time-echo-area is t")
 
-(defvar display-time-mail-sign 
+(defvar display-time-no-mail-sign-string ""
+  "The string used as no-mail indicator in the echo area
+(and in the modeline if display-time-show-icons-maybe is nil)
+if display-time-echo-area is t")
+ 
+(defvar display-time-mail-sign
   (progn
     (let* ((file (concat display-time-icons-dir "letter.xpm"))
-	   (glyph (if (featurep 'xpm) (make-glyph file) nil))
-	   (display-time-mail-ext (detach-extent (make-extent 1 1))))
-      (if (and (featurep 'x) glyph
-	       (file-exists-p file))
-	  (cons display-time-mail-ext glyph)
-	" Mail")))
-  "A variable holding a string or a cons cell (ext . glyph) which gives
-an indicator for unread mail. The default displays a xpm-file (a yellow letter)
-if (feturep 'xpm) and (featurep 'x) are both t, a string \" Mail\" otherwise")
+	   (glyph (if (featurep 'xpm) (make-glyph file)
+		    display-time-mail-sign-string))
+	   (ext (make-extent nil nil)))
+      (cons ext glyph)))
+  "A variable holding a cons cell (ext . glyph)
+which gives an indicator for new mail in the modeline") 
 
 (defvar display-time-no-mail-sign
     (progn
     (let* ((file (concat display-time-icons-dir "no-letter.xpm"))
-	   (glyph (if (featurep 'xpm) (make-glyph file) nil))
-	   (display-time-mail-ext (detach-extent (make-extent 1 1))))
-      (if (and (featurep 'x) glyph
-	       (file-exists-p file))
-	  (cons display-time-mail-ext glyph)
-	"")))
-      "A variable holding a string or a cons cell (ext . glyph) which gives
-an indicator for `no mail'. The default displays a xpm-file
-if (feturep 'xpm) and (featurep 'x) are both t, and nothing otherwise")
+	   (glyph (if (featurep 'xpm) (make-glyph file)
+		   display-time-no-mail-sign-string))
+	   (ext (make-extent nil nil)))
+      (cons ext glyph)))
+    "A variable holding a cons cell (ext . glyph) which gives
+an indicator for `no mail' in the modeline") 
+
+(defun display-time-string-to-char-list (str)
+  (mapcar (function identity) str))
 
 
+(if (featurep 'xpm)
+    (progn
+      (setq display-time-1-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "1.xpm"))))
+      (setq display-time-2-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "2.xpm"))))
+      (setq display-time-3-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "3.xpm"))))
+      (setq display-time-4-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "4.xpm"))))
+      (setq display-time-5-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "5.xpm"))))
+      (setq display-time-6-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "6.xpm"))))
+      (setq display-time-7-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "7.xpm"))))
+      (setq display-time-8-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "8.xpm"))))
+      (setq display-time-9-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "9.xpm"))))
+      (setq display-time-0-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "0.xpm"))))
+      (setq display-time-:-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "dp.xpm"))))
+      (setq display-time-load-0.0-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "l-0.0.xpm"))))
+      (setq display-time-load-0.5-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "l-0.5.xpm"))))
+      (setq display-time-load-1.0-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "l-1.0.xpm"))))
+      (setq display-time-load-1.5-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "l-1.5.xpm"))))
+      (setq display-time-load-2.0-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "l-2.0.xpm"))))
+      (setq display-time-load-2.5-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "l-2.5.xpm"))))
+      (setq display-time-load-3.0-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "l-3.0.xpm"))))
+      (setq display-time-am-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "am.xpm"))))
+      (setq display-time-pm-glyph
+	    (cons (make-extent nil nil)
+		  (make-glyph	(concat display-time-icons-dir "pm.xpm"))))
+      )) 
+
+
+(defun display-time-convert-num-to-pics (string)
+  (let ((list (display-time-string-to-char-list string))
+	elem result tmp)
+    (if (not (and display-time-show-icons-maybe
+		  (eq (console-type) 'x)
+		  (not display-time-echo-area))) string
+      (while (setq elem (pop list))
+	(push (eval (intern-soft (concat "display-time-"
+					 (char-to-string elem)
+					 "-glyph"))) tmp))
+      (setq result (reverse tmp))))) 
+
+(defvar display-time-load-list
+  (list 0.2 0.5 0.8 1.1 1.8 2.6)
+  "*A list giving six thresholds for the load which correspond
+to the six different icons to be displayed as a load indicator")
+
+(defun display-time-convert-load-to-glyph (n)
+  (let ((load-number (string-to-number n))
+	(alist (list (cons 0.0 0.0)
+		    (cons 0.5 (car display-time-load-list))
+		    (cons 1.0 (cadr display-time-load-list))
+		    (cons 1.5 (caddr display-time-load-list))
+		    (cons 2.0 (cadddr display-time-load-list))
+		    (cons 2.5 (cadr (cdddr display-time-load-list)))
+		    (cons 3.0 (caddr (cdddr display-time-load-list)))
+		    (cons 100000 100000)))
+	result elem)
+    (if (not (and display-time-show-icons-maybe
+		  (eq (console-type) 'x)
+		  (not display-time-echo-area))) n
+      (while (>= load-number (cdr (setq elem (pop alist))))
+	(setq result (eval (intern-soft (concat
+					 "display-time-load-"
+					 (number-to-string (car elem))
+					 "-glyph")))))
+      result)))
+
+(defun display-time-convert-am-pm (n)
+  (if (not (and display-time-show-icons-maybe
+		(eq (console-type) 'x)
+		(not display-time-echo-area))) n
+    (cond ((equal n "am") display-time-am-glyph)
+	  ((equal n "pm") display-time-pm-glyph))))
+
+
+(defun display-time-mail-sign ()
+  "*A function giving back the object indicating 'mail' which
+is the value of display-time-mail-sign when running under X,
+display-time-echo-area is nil and display-time-show-icons-maybe is t.
+It is the value of display-time-mail-sign-string otherwise." 
+  (if (or (not (eq (console-type) 'x))
+	  display-time-echo-area
+	  (not display-time-show-icons-maybe))
+      display-time-mail-sign-string
+    display-time-mail-sign))
+
+(defun display-time-no-mail-sign ()
+  "*A function giving back the object indicating 'no mail' which
+is the value of display-time-no-mail-sign when running under X,
+display-time-echo-area is nil and display-time-show-icons-maybe is t.
+It is the value of display-time-no-mail-sign-string otherwise." 
+  (if (or (not (eq (console-type) 'x))
+	  display-time-echo-area
+	  (not display-time-show-icons-maybe))
+      display-time-no-mail-sign-string
+    display-time-no-mail-sign))
+
+(defvar display-time-form-list
+  (list 'date-compatible 'time-compatible 'load 'mail)
+  "*This list describes the format of the strings/glyphs which are to be
+displayed by display-time. The old variable display-time-string-forms is
+only used if display-time-compatible is non-nil. It is a list consisting of
+strings or any of the following symbols:
+
+date-compatible:    This prints out the date in a manner compatible to
+                    the default value of the obsolete variable 
+                    display-time-string-forms. It respects the variable
+                    display-time-day-and-date. If this is t it will print
+                    out the current date in the form DAYNAME MONTH DAY
+                    otherwise it will print nothing.
+
+time-compatible:    This prints out the time in a manner compatible to 
+                    the default value of the obsolete variable
+                    display-time-string-forms. It respects the variable
+                    display-time-24hr-format. If this is t it will print
+                    out the current hours in 24-hour format, if nil the
+                    hours will be printed in 12-hour format and the
+                    minutes will be followed by 'AM' or 'PM'.
+
+24-hours:           This prints the hours in 24-hours format
+
+12-hours:           This prints the hours in 12-hours format
+
+am-pm:              This prints Am or Pm.
+
+dp:                 This prints a \":\", maybe as an icon
+
+minutes:            This prints the minutes.
+
+day:                This prints out the current day as a number. 
+
+dayname:            This prints out today's name.
+
+month:              This prints out the current month as a number
+
+monthname:          This prints out the current month's name
+
+load:               This prints out the system's load.
+
+mail:               This displays a mail indicator. Under X this will 
+                    normally be a small icon which changes depending if 
+                    there is new mail or not.")
+
+(defun display-time-evaluate-list ()
+  "Evalute the variable display-time-form-list"
+  (let ((list display-time-form-list) elem tmp result)
+    (while (setq elem (pop list))
+      (cond ((stringp elem) (push elem tmp))
+	    ((eq elem 'date-compatible)
+	     (push (if display-time-day-and-date
+		       (format "%s %s %s " dayname monthname day) "") tmp))
+	    ((eq elem 'time-compatible)
+	     (progn
+	       (push (display-time-convert-num-to-pics
+		      (format "%s:%s"
+			      (if display-time-24hr-format 24-hours 12-hours)
+			      minutes)) tmp)
+	       (if (not display-time-24hr-format)
+		   (push (display-time-convert-am-pm am-pm) tmp))))
+	    ((eq elem 'day) (push day tmp))
+	    ((eq elem 'dayname) (push dayname tmp))
+	    ((eq elem 'month) (push month tmp))
+	    ((eq elem 'monthname) (push monthname tmp))
+	    ((eq elem '24-hours) (push (display-time-convert-num-to-pics 24-hours)
+				       tmp))
+	    ((eq elem '12-hours) (push (display-time-convert-num-to-pics 12-hours)
+				       tmp))
+	    ((eq elem 'minutes)  (push (display-time-convert-num-to-pics minutes)
+				       tmp))
+	    ((eq elem 'am-pm) (push am-pm tmp))
+	    ((eq elem 'dp) (push (display-time-convert-num-to-pics ":") tmp))
+	    ((eq elem 'load)
+	     (push (display-time-convert-load-to-glyph load) tmp))
+	    ((eq elem 'mail) (push (if mail (display-time-mail-sign)
+				     (display-time-no-mail-sign))
+				   tmp))))
+    ;; We know that we have a list containing only of strings if
+    ;; display-time-echo-area is t. So we construct this string from
+    ;; the list. Else we just reverse the list and give it as result.
+    (if (not display-time-echo-area) (setq result (reverse tmp))
+      (while (setq elem (pop tmp))
+	(setq result (concat elem result))))
+    result))
+    
+	    
 (defvar display-time-string-forms
   '((if display-time-day-and-date
         (format "%s %s %s " dayname monthname day)
@@ -155,17 +384,14 @@ if (feturep 'xpm) and (featurep 'x) are both t, and nothing otherwise")
             (if display-time-24hr-format 24-hours 12-hours)
             minutes
             (if display-time-24hr-format "" am-pm))
-    (if display-time-show-load load)
-    (if (and (not display-time-show-icons-maybe) mail) " Mail" ""))
-    "*A list of expressions governing display of the time in the mode line.
+    load
+    (if mail " Mail" ""))
+    "*THIS IS OBSOLETE! It will only be used if display-time-compatible is t.
+A list of expressions governing display of the time in the mode line.
 This expression is a list of expressions that can involve the keywords
 `load', `day', `month', and `year', `12-hours', `24-hours', `minutes',
 `seconds', all numbers in string form, and `monthname', `dayname', `am-pm',
 and `time-zone' all alphabetic strings and `mail' a true/nil string value.
-Beware: if display-time-show-icons-maybe is non-nil, the `mail' spec is also
-evaluated after this form and depending on it's result display-time-mail-sign
-or display-time-no-mail-sign is appended to the modeline string.
-This was made so you can also use xpm-files as mail indicator.
 
 For example, the form
 
@@ -222,13 +448,9 @@ would give mode line times like `94/12/30 21:07:48 (UTC)'.")
               ("Sep" . "9") ("Oct" . "10") ("Nov" . "11") ("Dec" . "12")))))
          (dayname (substring time 0 3)))
     (setq display-time-string
-          (mapconcat 'eval display-time-string-forms ""))
-    (if (and mail display-time-show-icons-maybe)
-	(setq display-time-string
-	      (list display-time-string display-time-mail-sign))
-      (if display-time-show-icons-maybe
-	  (setq display-time-string
-		(list display-time-string display-time-no-mail-sign))))
+	  (if display-time-compatible
+	      (mapconcat 'eval display-time-string-forms "")
+	    (display-time-evaluate-list)))
     ;; This is inside the let binding, but we are not going to document
     ;; what variables are available.
     (run-hooks 'display-time-hook))
