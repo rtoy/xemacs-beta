@@ -2,7 +2,7 @@
 #
 # File:         Makefile
 # Release:      $efs release: 1.15 $
-# Version:      $Revision: 1.5 $
+# Version:      $Revision: 1.6 $
 # RCS:
 # Description:  Makefile for byte-compiling efs and dired.
 # Author:       Andy Norman, HPLabs, Bristol, UK.
@@ -145,7 +145,7 @@ OBJS = $(DOBJS) $(EFSOBJS) $(VMOBJS) $(GEOBJS) $(XEOBJS) \
 
 .el.elc:
 	BDIR=$(BDIR) CWD=$(CWD) VMDIR=$(VMDIR) \
-  $(EMACS) -batch -l $(CWD)/fixup -f batch-byte-compile $(CWD)/$<
+  $(EMACS) -batch -no-site-file -l $(CWD)/fixup -f batch-byte-compile $(CWD)/$<
 
 .texi.info:
 	$(EMACS) -batch -f batch-texinfo-format $(CWD)/$<

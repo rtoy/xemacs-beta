@@ -165,6 +165,7 @@ ignored."
 			 (and skeleton-autowrap
 			      (or (eq last-command 'mouse-drag-region)
 				  (and (boundp 'transient-mark-mode)
+				       (boundp 'mark-active)
 				       transient-mark-mode mark-active))
 			      -1)))
 		     (if (stringp str)
@@ -211,6 +212,7 @@ ignored."
 			   (and skeleton-autowrap
 				(or (eq last-command 'mouse-drag-region)
 				    (and (boundp 'transient-mark-mode)
+					 (boundp 'mark-active)
 					 transient-mark-mode mark-active))
 				-1)))
 		       (if (stringp str)
@@ -518,6 +520,7 @@ symmetrical ones, and the same character twice for the others."
   (let ((mark (and skeleton-autowrap
 		   (or (eq last-command 'mouse-drag-region)
 		       (and (boundp 'transient-mark-mode)
+			    (boundp 'mark-active)
 			    transient-mark-mode mark-active))))
 	(skeleton-end-hook))
     (if (or arg

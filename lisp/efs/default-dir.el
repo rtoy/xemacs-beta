@@ -340,22 +340,23 @@ Will use the variable default-directory-function if it non-nil."
 			'default-dir-view-file-other-frame)))
 
 
-(defun default-dir-shell-command (command &optional insert)
+(defun default-dir-shell-command (command &optional output-buffer)
   "Documented as original"
   (interactive
    (list
     (let ((prompt (format "Shell command in %s: " (default-directory))))
       (cond
-       ((memq  default-dir-emacs-variant '(fsf-19 xemacs))
-	(read-from-minibuffer prompt nil nil nil
-			      'shell-command-history))
+       ((eq default-dir-emacs-variant 'xemacs)
+	(read-shell-command "Shell command: "))
+       ((eq default-dir-emacs-variant 'fsf-19)
+	(read-from-minibuffer prompt nil nil nil 'shell-command-history))
        ((featurep 'gmhist)
 	(let ((minibuffer-history-symbol 'shell-command-history))
 	  (read-string prompt)))
        (t (read-string prompt))))
     current-prefix-arg))
   (let ((default-directory (expand-file-name (default-directory))))
-    (default-dir-real-shell-command command insert)))
+    (default-dir-real-shell-command command output-buffer)))
 
 (efs-overwrite-fn "default-dir" 'shell-command 'default-dir-shell-command)
 

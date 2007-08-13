@@ -268,6 +268,8 @@ Each minibuffer output is added with
   "If this variable is non-nil, a string will not be added to the
 minibuffer history if its length is less than that value.")
 
+(define-error 'input-error "Keyboard input error")
+
 (defun read-from-minibuffer (prompt &optional initial-contents
                                     keymap
                                     readp
@@ -420,7 +422,10 @@ See also the variable completion-highlight-first-word-only for control over
                            ;; total total kludge
                            (if (stringp v) (setq v (list 'quote v)))
                            (setq val v))
-                       (error (setq err e))))
+                       (end-of-file
+			(setq err
+			      '(input-error "End of input before end of expression")))
+		       (error (setq err e))))
                  ;; Add the value to the appropriate history list unless
                  ;; it's already the most recent element, or it's only
                  ;; two characters long.
@@ -1764,25 +1769,29 @@ whether it is a file(/result) or a directory (/result/)."
 
 (defun mouse-file-display-completion-list (window dir minibuf user-data)
   (let ((standard-output (window-buffer window)))
-    (display-completion-list 
-     (directory-files dir nil nil nil t)
-     :window-width (* 2 (window-width window))
-     :activate-callback
-     'mouse-read-file-name-activate-callback
-     :user-data user-data
-     :reference-buffer minibuf
-     :help-string "")))
+    (condition-case nil
+	(display-completion-list 
+	 (directory-files dir nil nil nil t)
+	 :window-width (* 2 (window-width window))
+	 :activate-callback
+	 'mouse-read-file-name-activate-callback
+	 :user-data user-data
+	 :reference-buffer minibuf
+	 :help-string "")
+      (t nil))))
 
 (defun mouse-directory-display-completion-list (window dir minibuf user-data)
   (let ((standard-output (window-buffer window)))
-    (display-completion-list
-     (delete "." (directory-files dir nil nil nil 1))
-     :window-width (window-width window)
-     :activate-callback
-     'mouse-read-file-name-activate-callback
-     :user-data user-data
-     :reference-buffer minibuf
-     :help-string "")))
+    (condition-case nil
+	(display-completion-list
+	 (delete "." (directory-files dir nil nil nil 1))
+	 :window-width (window-width window)
+	 :activate-callback
+	 'mouse-read-file-name-activate-callback
+	 :user-data user-data
+	 :reference-buffer minibuf
+	 :help-string "")
+      (t nil))))
 
 (defun mouse-read-file-name-activate-callback (event extent user-data)
   (let* ((file (extent-string extent))

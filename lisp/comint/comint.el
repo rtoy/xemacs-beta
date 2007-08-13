@@ -1034,7 +1034,7 @@ See `comint-magic-space' and `comint-replace-by-expanded-history-before-point'.
 Returns t if successful."
   (interactive)
   (if (and comint-input-autoexpand
-	   (string-match "[!^]" (funcall comint-get-old-input))
+	   (string-match "!\\|^\\^" (funcall comint-get-old-input))
 	   (save-excursion (beginning-of-line)
 			   (looking-at comint-prompt-regexp)))
       ;; Looks like there might be history references in the command.

@@ -97,7 +97,7 @@ don't define this value.")
 	  (backward-char 1)
 	  (setq delimline (point-marker))
 ;;	  (sendmail-synch-aliases)
-	  (if (and mail-aliases (fboundp expand-mail-aliases)) ; XEmacs
+	  (if (and mail-aliases (fboundp 'expand-mail-aliases)) ; XEmacs
 	      (expand-mail-aliases (point-min) delimline))
 	  (goto-char (point-min))
 	  ;; ignore any blank lines in the header
@@ -446,8 +446,7 @@ don't define this value.")
   "Get address list suitable for smtp RCPT TO: <address>."
   (require 'mail-utils)  ;; pick up mail-strip-quoted-names
   (let
-      ((case-fold-search t)
-       (simple-address-list "")
+      ((simple-address-list "")
        this-line
        this-line-end
        addr-regexp)
@@ -456,6 +455,7 @@ don't define this value.")
 	(save-excursion
 	  ;;
 	  (set-buffer smtpmail-address-buffer) (erase-buffer)
+	  (let ((case-fold-search t))
 	  (insert-buffer-substring smtpmail-text-buffer header-start header-end)
 	  (goto-char (point-min))
 	  ;; RESENT-* fields should stop processing of regular fields.
@@ -497,7 +497,7 @@ don't define this value.")
 	      )
 	    (setq smtpmail-recipient-address-list recipient-address-list))
 
-	  )
+	  ))
       )
     )
   )

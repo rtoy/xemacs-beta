@@ -3008,8 +3008,8 @@ then converted to integer.
 If the 5-minute or 15-minute load averages are not available, return a
 shortened list, containing only those averages which are available.
 
-On most systems, this won't work unless the emacs executable is installed
-as setgid kmem (assuming that /dev/kmem is in the group kmem).
+On some systems, this won't work due to permissions on /dev/kmem in
+which case you can't use this.
 */
        ())
 {

@@ -920,10 +920,11 @@ size_t emacs_strftime (char *string, size_t max, CONST char *format,
 static long difftm (CONST struct tm *a, CONST struct tm *b);
 
 
-DEFUN ("format-time-string", Fformat_time_string, 2, 2, 0, /*
+DEFUN ("format-time-string", Fformat_time_string, 1, 2, 0, /*
 Use FORMAT-STRING to format the time TIME.
 TIME is specified as (HIGH LOW . IGNORED) or (HIGH . LOW), as from
-`current-time' and `file-attributes'.
+`current-time' and `file-attributes'.  If TIME is not specified it
+defaults to the current time.
 FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %a is replaced by the abbreviated name of the day of week.
 %A is replaced by the full name of the day of week.

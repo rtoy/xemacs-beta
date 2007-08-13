@@ -277,8 +277,8 @@ static void create_right_glyph_block (struct window *w,
 				      struct display_line *dl);
 static void regenerate_window (struct window *w, Bufpos start_pos,
 			       Bufpos point, int type);
-static void regenerate_window_point_center (struct window *w, Bufpos point,
-					    int type);
+static Bufpos regenerate_window_point_center (struct window *w, Bufpos point,
+					      int type);
 int window_half_pixpos (struct window *w);
 int line_at_center (struct window *w, int type, Bufpos start, Bufpos point);
 Bufpos point_at_center (struct window *w, int type, Bufpos start,
@@ -4784,9 +4784,10 @@ regenerate_window_incrementally (struct window *w, Bufpos startp,
 }
 
 /* Given a window and a point, update the given display lines such
-   that point is displayed in the middle of the window. */
+   that point is displayed in the middle of the window. 
+   Return the window's new start position. */
 
-static void
+static Bufpos
 regenerate_window_point_center (struct window *w, Bufpos point, int type)
 {
   Bufpos startp;
@@ -4799,7 +4800,7 @@ regenerate_window_point_center (struct window *w, Bufpos point, int type)
   regenerate_window (w, startp, point, type);
   Fset_marker (w->start[type], make_int (startp), w->buffer);
 
-  return;
+  return startp;
 }
 
 /* Given a window and a set of display lines, return a boolean
@@ -5006,7 +5007,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
   if (!MINI_WINDOW_P (w)
       && !EQ (Fmarker_buffer (w->start[CURRENT_DISP]), w->buffer))
     {
-      regenerate_window_point_center (w, pointm, DESIRED_DISP);
+      startp = regenerate_window_point_center (w, pointm, DESIRED_DISP);
 
       goto regeneration_done;
     }
@@ -5140,7 +5141,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	       startp < marker_position (w->last_start[CURRENT_DISP]))
 	   || (startp == BUF_ZV (b)))
     {
-      regenerate_window_point_center (w, pointm, DESIRED_DISP);
+      startp = regenerate_window_point_center (w, pointm, DESIRED_DISP);
 
       goto regeneration_done;
     }
@@ -5178,11 +5179,9 @@ redisplay_window (Lisp_Object window, int skip_selected)
      back onto the screen. */
   if (scroll_step)
     {
-      Bufpos bufpos;
-
-      bufpos = vmotion (w, startp,
+      startp = vmotion (w, startp,
 			(pointm < startp) ? -scroll_step : scroll_step, 0);
-      regenerate_window (w, bufpos, pointm, DESIRED_DISP);
+      regenerate_window (w, startp, pointm, DESIRED_DISP);
 
       if (point_visible (w, pointm, DESIRED_DISP))
 	goto regeneration_done;
@@ -5190,7 +5189,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 
   /* We still haven't managed to get the screen drawn with point on
      the screen, so just center it and be done with it. */
-  regenerate_window_point_center (w, pointm, DESIRED_DISP);
+  startp = regenerate_window_point_center (w, pointm, DESIRED_DISP);
 
 
 regeneration_done:
@@ -7519,7 +7518,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 		      else
 			*closest =
 			  Dynarr_atp (db->runes,
-				      Dynarr_length (db->runes) - 1)->bufpos;
+				      Dynarr_length (db->runes) - 2)->bufpos;
 		    }
 
 		  if (dl->modeline)

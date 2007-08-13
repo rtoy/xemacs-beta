@@ -80,7 +80,7 @@
   (view-mode nil 'kill-buffer)		;; assume the new view-less
   (let* ((buffer-read-only nil)
          (emacs-short-version (concat emacs-major-version "." emacs-minor-version))
-         (emacs-about-version (format "version %s; March 1997" emacs-short-version))
+         (emacs-about-version (format "version %s; August 1997" emacs-short-version))
 	 (indent-tabs-mode t)
 	 )
     (erase-buffer)
@@ -129,7 +129,8 @@
     (insert "XEmacs is the result of the time and effort of many people.
 	The developers responsible for the " emacs-short-version " release are:
 
-		 * ") (about-xref "Steve Baur" 'steve "Find out more about Steve Baur") (insert "  <steve@altair.xemacs.org>
+		 * ") (about-xref "Vin Shelton" 'vin "Find out more about Vin Shelton") (insert "  <acs@acm.org>
+                 * ") (about-xref "Steve Baur" 'steve "Find out more about Steve Baur") (insert "  <steve@altair.xemacs.org>
 		 * ") (about-xref "Martin Buchholz" 'mrb "Find out more about Martin Buchholz") (insert "  <mrb@eng.sun.com>
 
 		 * ") (about-xref "And many other contributors..." 'others "Read about the legion of XEmacs hackers") (insert "
@@ -158,7 +159,7 @@
     (toggle-read-only 0)
 
     (let ((rest (if who-to-load (list who-to-load)
-		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle larsi jens)))
+		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle larsi jens vin)))
 	  (got-error nil))
       (while rest
 	(let* ((who (car rest))
@@ -241,6 +242,7 @@
     (w3-kyle     . "http://www.wonderworks.com/kyle/")
     (w3-larsi    . "http://www.ifi.uio.no/~larsi/")
     (w3-hrvoje   . "ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/")
+    (w3-upa      . "http://www.upa.org")
     ;; add more here
     )
   "Mappings between xref symbols and URLs")
@@ -307,6 +309,7 @@
 			       ((eq xref 'kyle) "About Kyle Jones")
 			       ((eq xref 'larsi) "About Lars Magne Ingebrigtsen")
 			       ((eq xref 'jens) "About Jens Lautenbacher")
+			       ((eq xref 'vin) "About Vin Shelton")
 			       ((eq xref 'others) "About Everyone")
 			       ((eq xref 'features) "New XEmacs Features")
 			       ((eq xref 'history) "XEmacs History")
@@ -548,12 +551,9 @@
 
 	Steve took over the maintenance of XEmacs in November of 1996
 	(it seemed like a good idea at the time ...).  In real life he is a
-	network administrator and Unix systems programmer for Miranova
-	Systems, Inc.
-
-	Steve's main contributions to XEmacs have been reviving the FAQ,
-	testing and integrating patches, tracking down and fixing bugs, and
-	answering hundreds of questions on Usenet.")
+	network administrator for Calag.com, Inc.  A small ISP in central
+        California.  His main hobby while not maintaining XEmacs or working
+        is ... you have got to be kidding ...")
 
 	  (insert "\n\n\tClick ")
 	  (about-xref "here" prev-page "Return to previous page")
@@ -818,6 +818,29 @@
 	  (insert " to go back to the previous page.\n")
 	  )
 
+	 ((eq xref 'vin)
+	  (about-face "Vin Shelton" 'bold)
+	  (insert " <acs@acm.org>
+
+    Vin maintains the XEmacs patch pages in order to bring ") (about-face "you" 'italic) (insert " a more
+    stable XEmacs.  (Actually, he does it 'cause it's fun and he's been
+    using emacs for a long, long time.)  Vin also contributed the detached
+    minibuffer code as well as a few minor enhancements to the menubar
+    options.
+
+    I own and operate my own consulting firm, EtherSoft.  Shhh, don't
+    tell anyone, but it's named after an Ultimate team I used to play
+    with in Austin, Texas - the Ether Bunnies.  I'm getting too old
+    to play competitive Ultimate any more, so now I've gotten roped
+    into serving on the board of directors of the Ultimate Players
+    Association.  See ")
+    (about-xref "http://www.upa.org/" 'w3-upa "Visit the UPA homepage")
+
+	  (insert ".\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
 	 ((eq xref 'others)
 	  (insert "Click ")
 	  (about-xref "here" 'about "Return to previous page")
@@ -915,6 +938,11 @@
 	  computers (and graphics). But because I have no deadline for
 	  the exams and XEmacs betas are released at a high rate this
 	  may take some time...
+
+	") (about-xref "Vin Shelton" 'vin "Find out more about Vin Shelton") (insert " <acs@acm.org>
+	  Vin maintains the XEmacs patch pages.  Vin also contributed the
+	  detached minibuffer code, as well as a few minor enhancements to
+	  the menubar options.
 
 	Darrell Kindred <Darrell.Kindred@cmu.edu>
 	  Unofficial maintainer of the xemacs-beta list of extant

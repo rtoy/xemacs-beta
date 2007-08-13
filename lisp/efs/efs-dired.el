@@ -3,14 +3,13 @@
 ;;
 ;; File:         efs-dired.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      #Revision: 1.31 $
+;; Version:      #Revision: 1.32 $
 ;; RCS:          
 ;; Description:  Extends much of Dired to work under efs.
 ;; Authors:      Sebastian Kremer <sk@thp.uni-koeln.de>, 
 ;;               Andy Norman <ange@hplb.hpl.hp.com>,
 ;;               Sandy Rutherford <sandy@ibm550.sissa.it>
 ;; Created:      Throughout the ages.
-;; Modified:     Sun Nov 27 12:19:46 1994 by sandy on gandalf
 ;; Language:     Emacs-Lisp
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -25,7 +24,7 @@
 (defconst efs-dired-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "#Revision: 1.31 $" 11 -2)))
+	  (substring "#Revision: 1.32 $" 11 -2)))
 
 ;;;; ----------------------------------------------------------------
 ;;;; User Configuration Variables
@@ -36,18 +35,6 @@
 
 (defvar efs-dired-verify-anonymous-modtime nil
   "If non-nil, dired modtimes are checked for anonymous logins.")
-
-(defvar efs-remote-shell-file-name
-  (if (memq system-type '(hpux usg-unix-v)) ; hope that's right
-      "remsh"
-    "rsh")
-  "Remote shell used by efs.")
-
-(defvar efs-remote-shell-takes-user
-  (null (null (memq system-type '(aix-v3 hpux silicon-graphics-unix
-					 berkeley-unix))))
-  ;; Complete? Doubt it.
-  "Set to non-nil if your remote shell command takes \"-l USER\".")
 
 ;;; Internal Variables
 
@@ -1530,14 +1517,17 @@ success, 1 or 2 on failure. If UNCOMPRESS is non-nil, does this instead."
 				(efs-host-type host user) (nth 2 parsed)))
 			 (abbr (efs-relativize-filename file))
 			 (result (efs-send-cmd host user
-						    (list 'quote 'site 'chmod
-							  mode path)
-						    (format "doing chmod %s"
-							    abbr))))
-		    (efs-del-from-ls-cache file t)
+					       (list 'quote 'site 'chmod
+						     mode path)
+					       (format "doing chmod %s"
+						       abbr))))
+
 		    (if (car result)
-			(efs-error host user (format "chmod: %s: \"%s\"" file 
-						     (nth 1 result)))))
+			(efs-dired-shell-call-process
+ 			 (concat "chmod " mode " " (file-name-nondirectory file))
+ 			 (file-name-directory file)))
+
+		    (efs-del-from-ls-cache file t))
 		(error (setq bombed t)))))))
      (cdr args))
     (if bombed 1 0)))                      ; return code

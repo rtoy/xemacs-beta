@@ -7,7 +7,7 @@
 ;;         Dan Rich <drich@morpheus.corp.sgi.com>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/12/15
-;; Version: $Id: tm-image.el,v 1.6 1997/03/16 05:55:42 steve Exp $
+;; Version: $Id: tm-image.el,v 1.7 1997/08/21 06:24:12 steve Exp $
 
 ;; Keywords: image, picture, X-Face, MIME, multimedia, mail, news
 
@@ -132,6 +132,7 @@
 	  ("image/x-xpixmap"		. xpm)
 	  ("image/x-pic"		. pic)
 	  ("image/x-mag"		. mag)
+	  ("image/png"			. png)
 	  ))
 
 (defvar mime-viewer/ps-to-gif-command "pstogif")

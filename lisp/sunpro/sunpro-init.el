@@ -77,6 +77,14 @@ Returns nil if the required files cannot be found."
      (setq exec-path (append exec-path (list (concat sunpro-dir "bin/"))))))))
 
 (defun sunpro-startup ()
+  "Runs at startup if support for Sun Workshop is compiled in.  Don't run this."
+  
+  ;; Sun distribution censors yow, among other things...
+  (unless (locate-file "yow.el" load-path)
+    (fmakunbound 'yow)
+    (delete-menu-item '("Apps" "Games" "Quote from Zippy"))
+    (delete-menu-item '("Apps" "Games" "Psychoanalyze Zippy!")))
+  
   (when (not (noninteractive))
 
     (flet
@@ -118,9 +126,10 @@ Returns nil if the required files cannot be found."
           (if (file-exists-p (concat doc-directory mule-doc-file-name))
               (setq internal-doc-file-name mule-doc-file-name))))
 
-    ;; Connect to tooltalk
+    ;; Connect to tooltalk, but only on an X server.
     (and (featurep 'tooltalk)
          (fboundp 'command-line-do-tooltalk)
+	 (eq 'x (device-type))
          (command-line-do-tooltalk nil))
     
     ;; Sun's pending-del default is like textedit's

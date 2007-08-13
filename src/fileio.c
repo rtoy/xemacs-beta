@@ -410,7 +410,7 @@ on VMS, perhaps instead a string ending in `:', `]' or `>'.
 */
        (file))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   Bufbyte *beg;
   Bufbyte *p;
   Lisp_Object handler;
@@ -478,7 +478,7 @@ or the entire name if it contains no slash.
 */
        (file))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   Bufbyte *beg, *p, *end;
   Lisp_Object handler;
 
@@ -514,7 +514,7 @@ get a current directory to run processes in.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   Lisp_Object handler;
 
   /* If the file name has special constructs in it,
@@ -614,7 +614,7 @@ On VMS, converts \"[X]FOO.DIR\" to \"[X.FOO]\", etc.
 */
        (file))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   char *buf;
   Lisp_Object handler;
 
@@ -800,7 +800,7 @@ it returns a file name such as \"[X]Y.DIR.1\".
 */
        (directory))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   char *buf;
   Lisp_Object handler;
 
@@ -868,7 +868,7 @@ See also the function `substitute-in-file-name'.
 */
        (name, defalt))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   Bufbyte *nm;
   
   Bufbyte *newdir, *p, *o;
@@ -890,7 +890,6 @@ See also the function `substitute-in-file-name'.
   Bufbyte *tmp, *defdir;
 #endif /* DOS_NT */
   Lisp_Object handler;
-  struct gcpro gcpro1;
   
   CHECK_STRING (name);
 
@@ -1398,10 +1397,10 @@ No component of the resulting pathname will be a symbolic link, as
 */
        (filename, defalt))
 {
-  /* This function can call lisp */
-  struct gcpro gcpro1;
+  /* This function can GC.  GC checked 1997.04.06. */
   Lisp_Object expanded_name;
   Lisp_Object handler;
+  struct gcpro gcpro1;
 
   CHECK_STRING (filename);
 
@@ -1525,7 +1524,7 @@ duplicates what `expand-file-name' does.
 */
        (string))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   Bufbyte *nm;
 
   Bufbyte *s, *p, *o, *x, *endp;
@@ -1828,7 +1827,7 @@ A prefix arg makes KEEP-TIME non-nil.
 */
        (filename, newname, ok_if_already_exists, keep_time))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   int ifd, ofd, n;
   char buf[16 * 1024];
   struct stat st, out_st;
@@ -1994,7 +1993,7 @@ Create a directory.  One argument, a file name string.
 */
        (dirname))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06 */
   char dir [MAXPATHLEN];
   Lisp_Object handler;
   struct gcpro gcpro1;
@@ -2038,7 +2037,7 @@ Delete a directory.  One argument, a file name or directory name string.
 */
        (dirname))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   Lisp_Object handler;
   struct gcpro gcpro1;
   
@@ -2065,7 +2064,7 @@ If file has multiple names, it continues to exist with the other names.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   Lisp_Object handler;
   struct gcpro gcpro1;
   
@@ -2094,7 +2093,7 @@ internal_delete_file_1 (Lisp_Object ignore, Lisp_Object ignore2)
 int
 internal_delete_file (Lisp_Object filename)
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   return NILP (condition_case_1 (Qt, Fdelete_file, filename,
 				 internal_delete_file_1, Qnil));
 }
@@ -2110,7 +2109,7 @@ This is what happens in interactive use with M-x.
 */
        (filename, newname, ok_if_already_exists))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2;
 
@@ -2203,7 +2202,7 @@ This is what happens in interactive use with M-x.
 */
        (filename, newname, ok_if_already_exists))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.06. */
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2;
 
@@ -2260,7 +2259,7 @@ This happens for interactive use with M-x.
 */
        (filename, linkname, ok_if_already_exists))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.06.04. */
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2;
 

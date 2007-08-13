@@ -6,7 +6,7 @@
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/08/21 renamed from mime.el
-;; Version: $Revision: 1.7 $
+;; Version: $Revision: 1.8 $
 ;; Keywords: mail, news, MIME, multimedia, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -120,7 +120,7 @@
 ;;;
 
 (defconst mime-editor/RCS-ID
-  "$Id: tm-edit.el,v 1.7 1997/03/22 05:29:22 steve Exp $")
+  "$Id: tm-edit.el,v 1.8 1997/08/21 06:24:11 steve Exp $")
 
 (defconst mime-editor/version (get-version-string mime-editor/RCS-ID))
 
@@ -210,6 +210,7 @@ To insert a signature file automatically, call the function
     ("image"
      ("gif")
      ("jpeg")
+     ("png")
      ("tiff")
      ("x-pic")
      ("x-mag")
@@ -242,6 +243,11 @@ To insert a signature file automatically, call the function
      )
     ("\\.gif$"
      "image"	"gif"		nil
+     "base64"
+     "inline"		(("filename" . file))
+     )
+    ("\\.png$"
+     "image"	"png"		nil
      "base64"
      "inline"		(("filename" . file))
      )

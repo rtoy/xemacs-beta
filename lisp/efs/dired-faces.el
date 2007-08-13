@@ -16,7 +16,7 @@
 
 (defgroup dired nil
   "Directory editing."
-  :group 'emacs)
+  :group 'environment)
 
 (defcustom dired-do-highlighting t
   "Set if we should use highlighting according to filetype."
@@ -57,14 +57,14 @@
   :group 'dired)
 
 (defface dired-face-boring '((((class color))
-			      (:foreground "Grey"))
+			      (:foreground "Gray65"))
 			     (((class grayscale))
-			      (:foreground "Grey")))
+			      (:foreground "Gray65")))
   "Face used for unimportant files."
   :group 'dired)
 
-(defface dired-face-permissions '((t (:background "grey75")
-				     (:foreground "black")))
+(defface dired-face-permissions '((t (:background "grey75"
+				      :foreground "black")))
   "Face used for interactive permissions."
   :group 'dired)
 

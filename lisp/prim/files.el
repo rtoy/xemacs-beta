@@ -1300,8 +1300,9 @@ If `enable-local-variables' is nil, this function does not check for a
 	      (val (cdr (car result))))
 	  (cond ((eq key 'mode)
 		 (setq mode-p t)
-		 (funcall (intern (concat (downcase (symbol-name val))
-					  "-mode"))))
+		 (and enable-local-variables
+		      (funcall (intern (concat (downcase (symbol-name val))
+					       "-mode")))))
 		(set-any-p
 		 (hack-one-local-variable key val))
 		(t
@@ -1949,7 +1950,7 @@ We don't want excessive versions piling up, so there are variables
 `dired-kept-versions' controls dired's clean-directory (.) command.
 If `delete-old-versions' is nil, system will query user
  before trimming versions.  Otherwise it does it silently."
-  (interactive "p")
+  (interactive "_p")
   (let ((modp (buffer-modified-p))
 	(large (> (buffer-size) 50000))
 	(make-backup-files (or (and make-backup-files (not (eq args 0)))

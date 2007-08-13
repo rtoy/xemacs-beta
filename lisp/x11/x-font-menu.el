@@ -452,10 +452,6 @@ or if you change your font path, you can call this to re-initialize the menus."
 			       (or weight from-weight)
 			       (or size   from-size)
 			       default-name))
-    (setq save-options-font-hack (list 'font-menu-set-font
-				       (or family from-family)
-				       (or weight from-weight)
-				       (or size from-size)))
     (while faces
       (cond ((face-font-instance (car faces))
 	     (message "Changing font of `%s'..." (car faces))

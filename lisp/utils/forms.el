@@ -300,10 +300,10 @@
 (provide 'forms)			;;; official
 (provide 'forms-mode)			;;; for compatibility
 
-(defconst forms-version (substring "$Revision: 1.1.1.2 $" 11 -2)
+(defconst forms-version (substring "$Revision: 1.2 $" 11 -2)
   "The version number of forms-mode (as string).  The complete RCS id is:
 
-  $Id: forms.el,v 1.1.1.2 1996/12/18 03:54:04 steve Exp $")
+  $Id: forms.el,v 1.2 1997/08/21 06:24:16 steve Exp $")
 
 (defvar forms-mode-hooks nil
   "Hook functions to be run upon entering Forms mode.")
@@ -1677,6 +1677,8 @@ Commands:                        Equivalent keys in read-only mode:
   (if forms-use-text-properties
       (let ((inhibit-read-only t))
 	(set-text-properties (point-min) (point-max) nil)))
+  (if forms-use-extents
+      (map-extents '(lambda (x ignore) (detach-extent x) nil)))
   (erase-buffer)
 
   ;; Verify the number of fields, extend forms--the-record-list if needed.

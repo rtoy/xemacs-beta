@@ -370,7 +370,8 @@ x_delete_device (struct device *d)
       Vdefault_x_device = Qnil;
       DEVICE_LOOP_NO_BREAK (devcons, concons)
 	{
-	  if (DEVICE_X_P (XDEVICE (XCAR (devcons))))
+	  if (DEVICE_X_P (XDEVICE (XCAR (devcons))) &&
+	      !EQ (device, XCAR (devcons)))
 	    {
 	      Vdefault_x_device = XCAR (devcons);
 	      goto double_break;

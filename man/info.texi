@@ -932,13 +932,15 @@ associated with nodes.  The Lisp code is executed when the node is
 selected.
 
 @item Info-directory-list
-The list of directories to search for Info files.  Each element is a
-string (directory name) or @code{nil} (try default directory).
+The list of directories to search for Info files.  This variable is set
+on startup automatically either from the @code{INFOPATH} environment
+variable (if it exists) or, else, @code{Info-default-directory-list}.
+Any user settings of this variable will be ignored.
 
-@item Info-directory
-The standard directory for Info documentation files.  Only used when the
-function @code{Info-directory} is called.
-@end table
+@item Info-default-directory-list
+List of default directories to search for Info documentation files.
+This value is used as the default for @code{Info-directory-list} in the
+absence of a setting for the @code{INFOPATH} environment variable.
 
 @node Create an Info File,  , Advanced Info, Top
 @comment  node-name,  next,  previous,  up

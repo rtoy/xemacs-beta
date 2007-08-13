@@ -106,12 +106,16 @@ nil means run no commands.")
   "Compile the current buffer's directory on HOST.  Log in as USER.
 See \\[compile]."
   (interactive
-   (let ((parsed (and (featurep 'ange-ftp)
-		      ;; XEmacs change
-		      (or (and (fboundp 'ange-ftp-ftp-name)
-			       (ange-ftp-ftp-name default-directory))
-			  (and (fboundp 'ange-ftp-ftp-path)
-			       (ange-ftp-ftp-path default-directory)))))
+   (let ((parsed 
+	  ;; XEmacs change
+	  (cond
+	   ((featurep 'efs)
+	    (efs-ftp-path default-directory))
+	   ((featurep 'ange-ftp)
+	    (if (fboundp 'ange-ftp-ftp-name)
+		(ange-ftp-ftp-name default-directory)
+	      (ange-ftp-ftp-path default-directory)))
+	   (t nil)))
          host user command prompt)
      (if parsed
          (setq host (nth 0 parsed)
@@ -145,12 +149,16 @@ See \\[compile]."
          (setq remote-compile-user user))
         ((null remote-compile-user)
          (setq remote-compile-user (user-login-name))))
-  (let* ((parsed (and (featurep 'ange-ftp)
-		      ;; XEmacs change
-		      (or (and (fboundp 'ange-ftp-ftp-name)
-			       (ange-ftp-ftp-name default-directory))
-			  (and (fboundp 'ange-ftp-ftp-path)
-			       (ange-ftp-ftp-path default-directory)))))
+  (let* ((parsed
+	  ;; XEmacs change
+	  (cond
+	   ((featurep 'efs)
+	    (efs-ftp-path default-directory))
+	   ((featurep 'ange-ftp)
+	    (if (fboundp 'ange-ftp-ftp-name)
+		(ange-ftp-ftp-name default-directory)
+	      (ange-ftp-ftp-path default-directory)))
+	   (t nil)))
          (compile-command
           (format "%s %s -l %s \"(%scd %s; %s)\""
 		  remote-shell-program

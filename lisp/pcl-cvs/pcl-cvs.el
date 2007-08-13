@@ -1,10 +1,10 @@
 ;;;
 ;;;#ident "@(#)OrigId: pcl-cvs.el,v 1.93 1993/05/31 22:44:00 ceder Exp "
 ;;;
-;;;#ident "@(#)cvs/contrib/pcl-cvs:$Name: r19-15b102 $:$Id: pcl-cvs.el,v 1.3 1997/03/21 03:43:23 steve Exp $"
+;;;#ident "@(#)cvs/contrib/pcl-cvs:$Name: r19-16b90 $:$Id: pcl-cvs.el,v 1.4 1997/08/21 06:24:01 steve Exp $"
 ;;;
 ;;; pcl-cvs.el -- A Front-end to CVS 1.3 or later.
-;;; Release 1.05-CVS-$Name: r19-15b102 $.
+;;; Release 1.05-CVS-$Name: r19-16b90 $.
 ;;; Copyright (C) 1991, 1992, 1993  Per Cederqvist
 
 ;;; This program is free software; you can redistribute it and/or modify
@@ -126,7 +126,7 @@ a modern version of CVS that stores the current repository in CVS/Root.")
 ;;;	     END OF THINGS TO CHECK WHEN INSTALLING
 ;;; --------------------------------------------------------
 
-(defconst pcl-cvs-version "1.05-CVS-$Name: r19-15b102 $"
+(defconst pcl-cvs-version "1.05-CVS-$Name: r19-16b90 $"
   "A string denoting the current release version of pcl-cvs.")
 
 ;; You are NOT allowed to disable this message by default.  However, you
@@ -139,8 +139,8 @@ a modern version of CVS that stores the current repository in CVS/Root.")
 
 (defconst cvs-startup-message
   (if cvs-inhibit-copyright-message
-      "PCL-CVS release 1.05-CVS-$Name: r19-15b102 $"
-    "PCL-CVS release 1.05 from CVS release $Name: r19-15b102 $.
+      "PCL-CVS release 1.05-CVS-$Name: r19-16b90 $"
+    "PCL-CVS release 1.05 from CVS release $Name: r19-16b90 $.
 Copyright (C) 1992, 1993 Per Cederqvist
 Pcl-cvs comes with absolutely no warranty; for details consult the manual.
 This is free software, and you are welcome to redistribute it under certain
@@ -507,7 +507,10 @@ If optional prefix argument LOCAL is non-nil, 'cvs update -l' is run."
   (interactive (list (read-file-name "CVS Update (directory): "
 				     nil default-directory nil)
 		     current-prefix-arg))
-  (cvs-do-update directory local nil)
+  ;; If the previous prompt was in a dialog box, the save-some-buffers
+  ;; call in cvs-do-update will lose.
+  (let ((use-dialog-box nil))
+    (cvs-do-update directory local nil))
   (switch-to-buffer cvs-buffer-name))
 
 ;;----------
@@ -724,7 +727,7 @@ Full documentation is in the Texinfo file.  Here are the most useful commands:
 \\[cvs-mode-undo-local-changes]   Revert the last checked in version - discard your changes to the file.
 
 Entry to this mode runs cvs-mode-hook.
-This description is updated for release 1.05-CVS-$Name: r19-15b102 $ of pcl-cvs.
+This description is updated for release 1.05-CVS-$Name: r19-16b90 $ of pcl-cvs.
 
 All bindings:
 \\{cvs-mode-map}"
@@ -1013,7 +1016,7 @@ ERR-BUF should be 'STDOUT or 'STDERR."
     (insert "Pcl-cvs Version: "
 	    "@(#)OrigId: pcl-cvs.el,v 1.93 1993/05/31 22:44:00 ceder Exp\n")
     (insert "CVS Version: "
-	    "@(#)lisp/pcl-cvs:$Name: r19-15b102 $:$Id: pcl-cvs.el,v 1.3 1997/03/21 03:43:23 steve Exp $\n\n")
+	    "@(#)lisp/pcl-cvs:$Name: r19-16b90 $:$Id: pcl-cvs.el,v 1.4 1997/08/21 06:24:01 steve Exp $\n\n")
     (insert (format "--- Contents of stdout buffer (%d chars) ---\n"
 		    (length stdout)))
     (insert stdout)

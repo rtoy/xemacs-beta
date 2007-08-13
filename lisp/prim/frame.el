@@ -721,6 +721,7 @@ all frames that were visible, and iconify all frames that were not."
 	  map-frame-hook 'deiconify-emacs)
     (iconify-frame me)))
 
+
 (defun deiconify-emacs (&optional ignore)
   (or iconification-data (error "not iconified?"))
   (setq frame-icon-title-format (car iconification-data)
@@ -728,9 +729,9 @@ all frames that were visible, and iconify all frames that were not."
 	iconification-data (car (cdr (cdr iconification-data))))
   (while iconification-data
     (let ((visibility (cdr (car iconification-data))))
-      (cond ((eq visibility 't)
+      (cond (visibility  ;; JV  (Note non-nil means visible in XEmacs)
 	     (make-frame-visible (car (car iconification-data))))
-;	    (t ;; (eq visibility 'icon)
+;	    (t ;; (eq visibility 'icon) ;; JV Not in XEmacs!!!
 ;	     (make-frame-visible (car (car iconification-data)))
 ;	     (sleep-for 500 t) ; process X events; I really want to XSync() here
 ;	     (iconify-frame (car (car iconification-data))))
@@ -810,9 +811,8 @@ if the dragged object is a buffer, inserts it at point."
     (or (get mode 'frame-name)
 	get-frame-for-buffer-default-frame-name)))
 
-
-(defun get-frame-for-buffer-make-new-frame (buffer &optional frame-name)
-  (let* ((fr (make-frame (and frame-name (list (cons 'name frame-name)))))
+(defun get-frame-for-buffer-make-new-frame (buffer &optional frame-name plist)
+  (let* ((fr (make-frame plist))
 	 (w (frame-root-window fr)))
     ;;
     ;; Make the one buffer being displayed in this newly created
@@ -847,6 +847,7 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
       ;; name.  That always takes priority.
       ;;
       (let ((limit (get name 'instance-limit))
+	    (defaults (get name 'frame-defaults))
 	    (matching-frames '())
 	    frames frame already-visible)
 	;; Sort the list so that iconic frames will be found last.  They
@@ -884,7 +885,11 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 	      ((or (null matching-frames)
 		   (eq limit 0) ; means create with reckless abandon
 		   (and limit (< (length matching-frames) limit)))
-	       (get-frame-for-buffer-make-new-frame buffer name))
+	       (get-frame-for-buffer-make-new-frame
+		buffer
+		name
+		(alist-to-plist (acons 'name name
+				       (plist-to-alist defaults)))))
 	      (t
 	       ;; do not switch any of the window/buffer associations in an
 	       ;; existing frame; this function only picks a frame; the

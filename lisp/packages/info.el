@@ -361,7 +361,7 @@ Each entry should be (SUFFIX . STRING); if STRING contains %s, that is
 changed to name of the file to decode, otherwise the file is given to
 the command as standard input.  If STRING is nil, no decoding is done.")
 
-(defvar Info-footnote-tag "See"
+(defvar Info-footnote-tag "Note"
   "*Symbol that identifies a footnote or cross-reference.
 All \"*Note\" references will be changed to use this word instead.")
 
@@ -1829,7 +1829,9 @@ Info-annotations-path) is to be edited; default is 1."
     (bury-buffer (current-buffer))
     (if (and (featurep 'toolbar)
 	     (eq toolbar-info-frame (selected-frame)))
-	(delete-frame toolbar-info-frame)
+	(condition-case nil
+	    (delete-frame toolbar-info-frame)
+	  (error (bury-buffer)))
       (switch-to-buffer (other-buffer (current-buffer))))))
 
 (defun Info-undefined ()

@@ -451,7 +451,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	close (fd[0]);
 	if (fd1 >= 0)
 	  close (fd1);
-	report_file_error ("Cannot open", error_file);
+	report_file_error ("Cannot open", Fcons(error_file, Qnil));
       }
 
     fork_error = Qnil;

@@ -2400,6 +2400,7 @@ elif [ "${dynamic}" = "no" ]; then
     decosf1-3		) opsys=decosf1-3-static ;;
     decosf3-1		) opsys=decosf3-1-static ;;
     decosf3-2		) opsys=decosf3-2-static ;;
+    decosf4-0		) opsys=decosf4-0-static ;;
     linux		) opsys=linux-static ;;
   esac
 fi

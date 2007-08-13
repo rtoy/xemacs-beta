@@ -1160,8 +1160,8 @@ scan the entire tree of subdirectories of the current directory."
 	  (vc-file-tree-walk subfunction)
 	(vc-dir-all-files subfunction)))
     (save-excursion
-      (dired (make-string-stringlist (cons dir (nreverse filelist)))
-     	     dired-listing-switches) 
+      (dired (cons dir (nreverse filelist))
+     	     dired-listing-switches)
       (rename-buffer (generate-new-buffer-name "VC-DIRED"))
       (setq dired-buf (current-buffer))
       (setq nonempty (not (zerop (buffer-size)))))

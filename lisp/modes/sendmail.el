@@ -290,7 +290,9 @@ actually occur.")
 ;; Emacs and XEmacs less stupid about default mail addresses.
 
 ;; We trust the administrator if he has set `mail-host-address'.
-(defcustom query-user-mail-address (not mail-host-address)
+;; We trust the user if he has already customized `user-mail-address'.
+(defcustom query-user-mail-address (and (not mail-host-address)
+					(not user-mail-address))
   "If non-nil, prompt the user for his mail address."
   :group 'message
   :type 'boolean)
@@ -1003,10 +1005,8 @@ back to the user from the mailer."
 	  t)
       (or soft
 	  (progn (goto-char end)
-		 ;; #### FSF has the next two clauses reversed.
-		 ;; which is correct?
-		 (skip-chars-backward "\n")
-		 (insert "\n" field ": ")))
+		 (insert field ": \n")
+		 (forward-char -1)))
       nil)))
 
 (defun mail-text ()

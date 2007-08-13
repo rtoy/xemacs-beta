@@ -29,11 +29,9 @@
 
 ; Parts were taken from html-helper-mode and from code by Alastair Burt.
 
-; Feb 18 1997, Heiko Muenkel: Added the hook variable html-mode-hook.
-;	With that you can now use the hm--html-minor-mode together
-;	with this mode. For that you've to add the following line
-;	to your ~/.emacs:
-;		(add-hook 'html-mode-hook 'hm--html-minor-mode)
+; If you'd like to use the hm--html-minor-mode together with this
+; mode, you have to put the following line to your ~/.emacs:
+;	(add-hook 'html-mode-hook 'hm--html-minor-mode)
 
 ;;; Code:
 
@@ -111,9 +109,6 @@ of the function `html-helper-insert-timestamp' if
   "*List of tag types to install when html-helper-mode is first loaded.
 If you want to not install some type of tag, override this variable.
 Order is significant: menus go in this order.")
-
-(defvar html-mode-hook nil
-  "*Hook called by `html-mode'.")
 
 ;;}}} end of user variables
 ;;{{{ type based keymap and menu variable and function setup
@@ -223,8 +218,7 @@ More specifically:
   ; sigh ...  need to call this now to get things working.
   (sgml-build-custom-menus)
   (add-submenu nil sgml-html-menu "SGML")
-  (delete-menu-item '("SGML"))
-  (run-hooks 'html-mode-hook))
+  (delete-menu-item '("SGML")))
 
 (defun html-helper-add-type-to-alist (type)
   "Add a type specification to the alist.

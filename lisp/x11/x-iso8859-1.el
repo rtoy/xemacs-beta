@@ -18,6 +18,7 @@
 ;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;; created by jwz, 13-jun-92.
+;; changed by Heiko Muenkel, 12-jun-1997: Added a grave keysym.
 
 ;; Under X, when the user types a character that is ISO-8859/1 but not ASCII,
 ;; it comes in as a symbol instead of as a character code.  This keeps things
@@ -92,6 +93,7 @@ possible, in the interest of portability.")
  ;; distributions.  If a vendor varies from this, adjustments will need
  ;; to be made...
 
+ (grave			?\140)
  (nobreakspace		?\240)
  (exclamdown		?\241)
  (cent			?\242)
@@ -115,9 +117,9 @@ possible, in the interest of portability.")
  (acute			?\264)	; Why is there an acute keysym that is 
  (mu			?\265)	; distinct from apostrophe/quote, but 
  (paragraph		?\266)	; no grave keysym that is distinct from
- (periodcentered	?\267)	; backquote?
- (cedilla		?\270)
- (onesuperior		?\271)
+ (periodcentered	?\267)	; backquote? 
+ (cedilla		?\270)  ; I've added the grave keysym, because it's
+ (onesuperior		?\271)  ; used in x-compose (Heiko Muenkel).
  (masculine		?\272)
  (guillemotright	?\273)
  (onequarter		?\274)

@@ -138,7 +138,7 @@
   (define-key hide-ifdef-mode-submap "\C-s" 'show-ifdef-block)
 
   (define-key hide-ifdef-mode-submap "\C-q" 'hide-ifdef-toggle-read-only)
-  (let ((where (where-is-internal 'toggle-read-only '(keymap) t)))
+  (let ((where (where-is-internal 'toggle-read-only nil t)))
     (if where
 	(define-key hide-ifdef-mode-submap
 	  where
@@ -168,8 +168,8 @@
 ;          (cons '(hide-ifdef-mode " Ifdef")
 ;                minor-mode-alist)))
 ;; XEmacs: do it right.
-;;;###autoload
-(add-minor-mode 'hide-ifdef-mode " Ifdef")
+;;;don't ###autoload because of startup code doesn't define the map
+(add-minor-mode 'hide-ifdef-mode " Ifdef" hide-ifdef-mode-map)
 
 ;; fix c-mode syntax table so we can recognize whole symbols.
 (defvar hide-ifdef-syntax-table

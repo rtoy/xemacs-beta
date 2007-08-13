@@ -1013,7 +1013,6 @@ items by redefining the function `format-buffers-menu-line'."
 
 
 ;;; The Options menu
-(defvar save-options-font-hack nil)
 
 (defvar options-save-faces nil
   "if t, save-options will save all the face information.
@@ -1282,25 +1281,6 @@ If this is a relative filename, it is put into the same directory as your
 			     (prin1 var))))
 		    (if var (princ "\n")))
 		options-menu-saved-forms)
-	(when save-options-font-hack
-	  (princ "(require 'x-font-menu)\n")
-	  (princ "(setq save-options-font-hack '(")
-	  (princ (car save-options-font-hack))
-	  (princ " ")
-	  (prin1 (cadr save-options-font-hack))
-	  (princ " ")
-	  (prin1 (caddr save-options-font-hack))
-	  (princ " ")
-	  (prin1 (format "%d" (cadddr save-options-font-hack)))
-	  (princ "))\n(")
-	  (princ (car save-options-font-hack))
-	  (princ " ")
-	  (prin1 (cadr save-options-font-hack))
-	  (princ " ")
-	  (prin1 (caddr save-options-font-hack))
-	  (princ " ")
-	  (prin1 (format "%d" (cadddr save-options-font-hack)))
-	  (princ ")\n"))
 	))
     (set-marker options-output-marker nil)
     (save-excursion

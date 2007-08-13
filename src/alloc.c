@@ -1604,9 +1604,12 @@ This is terrible behavior which is retained for compatibility with old
       b->annotated = Vload_file_name_internal_the_purecopy;
     else if (!NILP (Vload_file_name_internal))
       {
+	struct gcpro gcpro1;
+	GCPRO1(val);		/* don't let val or b get reaped */
 	Vload_file_name_internal_the_purecopy =
 	  Fpurecopy (Ffile_name_nondirectory (Vload_file_name_internal));
 	b->annotated = Vload_file_name_internal_the_purecopy;
+	UNGCPRO;
       }
 #endif
 

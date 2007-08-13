@@ -333,13 +333,23 @@ compare_display_blocks (struct window *w, struct display_line *cdl,
      full redraw of the block in order to make sure that the cursor is
      updated properly. */
   if (ddb->type != TEXT
+#if 0
+      /* I'm not sure exactly what this code wants to do, but it's
+       * not right--it doesn't update when cursor_elt changes from, e.g.,
+       * 0 to 8, and the new or old cursor loc overlaps this block.
+       * I've replaced it with the more conservative test below.
+       * -dkindred@cs.cmu.edu 23-Mar-1997 */
       && ((cdl->cursor_elt == -1 && ddl->cursor_elt != -1)
 	  || (cdl->cursor_elt != -1 && ddl->cursor_elt == -1))
       && (ddl->cursor_elt == -1 ||
 	  (cursor_start
 	   && cursor_width
 	   && (cursor_start + cursor_width) >= start_pixpos
-	   && cursor_start <= block_end)))
+	   && cursor_start <= block_end))
+#else
+      && (cdl->cursor_elt != ddl->cursor_elt)
+#endif
+      )
     force = 1;
 
   if (f->windows_structure_changed ||

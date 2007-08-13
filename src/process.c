@@ -1023,6 +1023,8 @@ create_process (Lisp_Object process,
     }
 
   p->pid = make_int (pid);
+  /* #### dmoore - why is this commented out, otherwise we leave
+     subtty = forkin, but then we close forkin just below. */
   /* p->subtty = -1; */
 
 #ifdef WINDOWSNT
@@ -1094,11 +1096,12 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 */
        (int nargs, Lisp_Object *args))
 {
+  /* This function can call lisp */
   /* !!#### This function has not been Mule-ized */
-  /* This function can GC */
   Lisp_Object buffer, name, program, proc, current_dir;
   Lisp_Object tem;
   int speccount = specpdl_depth ();
+  struct gcpro gcpro1, gcpro2, gcpro3;
 #ifdef VMS
   char *new_argv;
   int len;
@@ -1107,43 +1110,38 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 #endif
   int i;
 
+  name = args[0];
   buffer = args[1];
+  program = args[2];
+  current_dir = Qnil;
+
+  /* Protect against various file handlers doing GCs below. */
+  GCPRO3 (buffer, program, current_dir);
+
   if (!NILP (buffer))
     buffer = Fget_buffer_create (buffer);
 
-  CHECK_STRING (args[0]);    /* name */
-  CHECK_STRING (args[2]);    /* program */
+  CHECK_STRING (name);
+  CHECK_STRING (program);
 
   /* Make sure that the child will be able to chdir to the current
      buffer's current directory, or its unhandled equivalent.  We
      can't just have the child check for an error when it does the
      chdir, since it's in a vfork.
 
-     We have to GCPRO around this because Fexpand_file_name and
-     Funhandled_file_name_directory might call a file name handling
-     function.  The argument list is protected by the caller, so all
-     we really have to worry about is buffer.  */
-  {
-    struct gcpro gcpro1, gcpro2; /* Caller gc-protects args[] */
+     Note: these assignments and calls are like this in order to insure
+     "caller protects args" GC semantics. */
+  current_dir = current_buffer->directory;
+  current_dir = Funhandled_file_name_directory (current_dir);
+  current_dir = expand_and_dir_to_file (current_dir, Qnil);
 
-    current_dir = current_buffer->directory;
-
-    GCPRO2 (buffer, current_dir);
-
-    current_dir = 
-      expand_and_dir_to_file (Funhandled_file_name_directory (current_dir),
-			      Qnil);
 #if 0	/* This loser breaks ange-ftp */
-    if (NILP (Ffile_accessible_directory_p (current_dir)))
-      report_file_error ("Setting current directory",
-			 list1 (current_buffer->directory));
+  /* dmoore - if you re-enable this code, you have to gcprotect
+     current_buffer through the above calls. */
+  if (NILP (Ffile_accessible_directory_p (current_dir)))
+    report_file_error ("Setting current directory",
+		       list1 (current_buffer->directory));
 #endif /* 0 */
-
-    UNGCPRO;
-  }
-
-  name = args[0];
-  program = args[2];
 
 #ifdef VMS
   /* Make a one member argv with all args concatenated
@@ -1167,36 +1165,31 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   /* Need to add code here to check for program existence on VMS */
 
 #else /* not VMS */
-  new_argv = (char **)
-    alloca ((nargs - 1) * sizeof (char *));
-
-  new_argv[0] = (char *) XSTRING_DATA (program);
-
   /* If program file name is not absolute, search our path for it */
   if (!IS_DIRECTORY_SEP (XSTRING_BYTE (program, 0))
       && !(XSTRING_LENGTH (program) > 1
 	  && IS_DEVICE_SEP (XSTRING_BYTE (program, 1))))
     {
-      struct gcpro gcpro1, gcpro2, gcpro3, gcpro4; /* Caller protects args[] */
-      GCPRO4 (buffer, current_dir, name, program);
-
+      struct gcpro ngcpro1;
+      
       tem = Qnil;
+      NGCPRO1 (tem);
       locate_file (Vexec_path, program, EXEC_SUFFIXES, &tem,
 		   X_OK);
-      UNGCPRO;
       if (NILP (tem))
 	report_file_error ("Searching for program", list1 (program));
-      tem = Fexpand_file_name (tem, Qnil);
-      new_argv[0] = (char *) XSTRING_DATA (tem);
+      program = Fexpand_file_name (tem, Qnil);
+      NUNGCPRO;
     }
   else
     {
-      /* #### dmoore - file-directory-p can call lisp, make sure everything
-	 here protects itself. */
       if (!NILP (Ffile_directory_p (program)))
 	error ("Specified program for new process is a directory");
     }
 
+  /* Nothing below here GCs so our string pointers shouldn't move. */
+  new_argv = (char **) alloca ((nargs - 1) * sizeof (char *));
+  new_argv[0] = (char *) XSTRING_DATA (program);
   for (i = 3; i < nargs; i++)
     {
       tem = args[i];
@@ -1226,6 +1219,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 
   create_process (proc, new_argv, (char *) XSTRING_DATA (current_dir));
 
+  UNGCPRO;
   return unbind_to (speccount, proc);
 }
 
@@ -1728,12 +1722,24 @@ read_process_output (Lisp_Object proc)
 
       /* If the restriction isn't what it should be, set it.  */
       if (old_begv != BUF_BEGV (buf) || old_zv != BUF_ZV (buf))
-	Fnarrow_to_region (make_int (old_begv), make_int (old_zv),
-			   p->buffer);
+	{
+	  Fwiden(p->buffer);
+	  old_begv = bufpos_clip_to_bounds (BUF_BEG (buf),
+					    old_begv,
+					    BUF_Z (buf));
+	  old_zv = bufpos_clip_to_bounds (BUF_BEG (buf),
+					  old_zv,
+					  BUF_Z (buf));
+	  Fnarrow_to_region (make_int (old_begv), make_int (old_zv),
+			     p->buffer);
+	}
 
       /* Handling the process output should not deactivate the mark.  */
       zmacs_region_stays = old_zmacs_region_stays;
       buf->read_only = old_read_only;
+      old_point = bufpos_clip_to_bounds (BUF_BEGV (buf),
+					 old_point,
+					 BUF_ZV (buf));
       BUF_SET_PT (buf, old_point);
 
       UNGCPRO;
@@ -2508,6 +2514,9 @@ status_notify (void)
 	      Fset_marker (p->mark, make_int (BUF_PT (current_buffer)),
 			   p->buffer);
 
+	      opoint = bufpos_clip_to_bounds(BUF_BEGV (XBUFFER (p->buffer)),
+					     opoint,
+					     BUF_ZV (XBUFFER (p->buffer)));
 	      BUF_SET_PT (current_buffer, opoint);
 	      Fset_buffer (old);
               NUNGCPRO;

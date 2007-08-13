@@ -651,7 +651,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	 force anyone to remember them.
 	 The case of the other character sets is significant, however.
        */
-      if ((((unsigned int) keysym) & (~0xFF)) == ((unsigned int) 0xFF00))
+      if ((((unsigned int) keysym) & (~0x1FF)) == ((unsigned int) 0xFE00))
 	{
 	  char buf [255];
 	  char *s1, *s2;

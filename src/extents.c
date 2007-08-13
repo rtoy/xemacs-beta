@@ -6184,6 +6184,9 @@ put_text_prop (Bytind start, Bytind end, Lisp_Object object,
 		      ME_ALL_EXTENTS_CLOSED | ME_END_CLOSED |
 		      /* it might QUIT or error if the user has
 			 fucked with the extent plist. */
+		      /* #### dmoore - I think this should include
+			 ME_MIGHT_MOVE_SOE, since the callback function
+			 might recurse back into map_extents_bytind. */
 		      ME_MIGHT_THROW |
 		      ME_MIGHT_MODIFY_EXTENTS);
 

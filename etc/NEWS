@@ -168,7 +168,7 @@ Noteworthy new packages:
 *** overlay.el (Joseph Nuspl support for Emacs overlay API)
 *** browse-cltl2.el 1.1 (Holger Schauer)
 *** mine.el 1.17 (Jacques Duthen)
-*** igrep.el 2.56 (Kevin Rodger)
+*** igrep.el 2.56 (Kevin Rodgers)
 *** speedbar.el (Eric Ludlam)
 *** frame-icon.el (Michael Lamoureux)
 *** winmgr-mode.el (David Konerding, Stefan Strobel & Barry Warsaw)

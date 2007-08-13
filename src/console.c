@@ -273,12 +273,23 @@ time this function is called.
 */
        (console))
 {
+  Lisp_Object device;
+
   CHECK_LIVE_CONSOLE (console);
 
-  /* select the console's selected frame's selected window.  This will call
-     selected_frame_1(). */
-  if (!NILP (CONSOLE_SELECTED_DEVICE (XCONSOLE (console))))
-    Fselect_window (FRAME_SELECTED_WINDOW (XFRAME (DEVICE_SELECTED_FRAME (XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (console)))))));
+  device = CONSOLE_SELECTED_DEVICE (XCONSOLE (console));
+  if (!NILP (device))
+    {
+      struct device *d = XDEVICE (device);
+      Lisp_Object frame = DEVICE_SELECTED_FRAME (d);
+      if (!NILP (frame))
+	{
+	  struct frame *f = XFRAME(frame);
+	  Fselect_window (FRAME_SELECTED_WINDOW (f));
+	}
+      else
+	error ("Can't select console with no frames.");
+    }
   else
     error ("Can't select a console with no devices");
   return Qnil;

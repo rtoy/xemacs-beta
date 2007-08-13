@@ -81,6 +81,10 @@
   (interactive)
   (ow-find t))
 
+(defun x-initialize-compose ()
+  "Enable compose processing"
+  (require 'x-compose))
+
 ;;; Load X-server specific code.
 ;;; Specifically, load some code to repair the grievous damage that MIT and
 ;;; Sun have done to the default keymap for the Sun keyboards.
@@ -181,6 +185,7 @@
     ;; site-start-file or .emacs file, so sites and users have a
     ;; chance to override it.
     (add-hook 'before-init-hook 'x-initialize-keyboard)
+    (add-hook 'before-init-hook 'x-initialize-compose)
 
     (setq post-x-win-initted t)))
 

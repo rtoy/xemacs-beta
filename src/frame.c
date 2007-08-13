@@ -1400,12 +1400,39 @@ delete_frame_internal (struct frame *f, int force,
 				    called_from_delete_device);
       if (NILP (next) || EQ (next, frame))
 	next = next_frame_internal (frame, Qt, Qt, called_from_delete_device);
+
+      /* if we haven't found another frame at this point
+	 then there aren't any. */
       if (NILP (next) || EQ (next, frame))
 	;
-      else if (EQ (frame, Fselected_frame (Qnil)))
-	Fselect_frame (next);
       else
-	set_device_selected_frame (d, next);
+	{
+	  int did_select = 0;
+	  /* if this is the global selected frame, select another one. */
+	  if (EQ (frame, Fselected_frame (Qnil)))
+	    {
+		Fselect_frame (next);
+		did_select = 1;
+	    }
+	  /*
+	   * If the new frame we just selected is on a different
+	   * device then we still need to change DEVICE_SELECTED_FRAME(d) 
+	   * to a live frame, if there are any left on this device.
+	   */
+	  if (!EQ (device, FRAME_DEVICE(XFRAME(next))))
+	    {
+		Lisp_Object next_f =
+		    next_frame_internal (frame, Qt, device,
+					 called_from_delete_device);
+		if (NILP (next_f) || EQ (next_f, frame))
+		  ;
+		else
+		  set_device_selected_frame (d, next_f);
+	    }
+	  else if (! did_select)
+	    set_device_selected_frame (d, next);
+
+	}
     }
 
   /* Don't allow minibuf_window to remain on a deleted frame.  */

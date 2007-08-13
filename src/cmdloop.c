@@ -216,6 +216,26 @@ top_level_1 (Lisp_Object dummy)
 static DOESNT_RETURN
 command_loop_3 (void)
 {
+#ifdef LWLIB_MENUBARS_LUCID
+  extern int in_menu_callback;  /* defined in menubar-x.c */
+#endif /* LWLIB_MENUBARS_LUCID */
+
+#ifdef LWLIB_MENUBARS_LUCID
+  /*
+   * #### Fix the menu code so this isn't necessary.
+   *
+   * We cannot allow the lwmenu code to be reentered, because the
+   * code is not written to be reentrant and will crash.  Therefore
+   * paths from the menu callbacks back into the menu code have to
+   * be blocked.  Fnext_event is the normal path into the menu code,
+   * but waiting to signal an error there is too late in case where
+   * a new command loop has been started.  The error will be caught
+   * and Fnext_event will be called again, looping forever.  So we
+   * signal an error here to avoid the loop.
+   */
+  if (in_menu_callback)
+    error ("Attempt to enter command_loop_3 inside menu callback");
+#endif /* LWLIB_MENUBARS_LUCID */
   /* This function can GC */
   for (;;)
     {

@@ -460,7 +460,7 @@ the search will still be done on `buffer-file-name'.
 */
        (filename))
 {
-  /* This function can GC */
+  /* This function can GC.  GC checked 1997.04.06. */
   REGISTER Lisp_Object tail, buf, tem;
   struct gcpro gcpro1;
 
@@ -1237,6 +1237,10 @@ with `delete-process'.
 
   /* Or the echo area.  */
   if (EQ (buf, Vecho_area_buffer))
+    return Qnil;
+
+  /* Or the special invisible internal prin1 buffer. */
+  if (EQ (buf, Vprin1_to_string_buffer))
     return Qnil;
 
   /* Query if the buffer is still modified.  */

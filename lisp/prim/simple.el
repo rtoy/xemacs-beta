@@ -1077,7 +1077,7 @@ to make one entry in the kill ring."
    ;; just isn't aware of this.  However, there's no harm in putting
    ;; the region's text in the kill ring, anyway.
    ((or (and buffer-read-only (not inhibit-read-only))
-	(text-property-not-all beg end 'read-only nil))
+	(text-property-not-all (min beg end) (max beg end) 'read-only nil))
    ;; This is redundant.
    ;; (if verbose (message "Copying %d characters"
    ;;			 (- (max beg end) (min beg end))))
@@ -1104,11 +1104,13 @@ to make one entry in the kill ring."
       ;; Search back in buffer-undo-list for this string,
       ;; in case a change hook made property changes.
       (setq tail buffer-undo-list)
-      (while (not (stringp (car-safe (car-safe tail)))) ; XEmacs
-	(setq tail (cdr tail)))
+      (while (and tail
+		  (not (stringp (car-safe (car-safe tail))))) ; XEmacs
+	(pop tail))
       ;; Take the same string recorded for undo
       ;; and put it in the kill-ring.
-      (kill-new (car (car tail)))))
+      (and tail
+	   (kill-new (car (car tail))))))
 
    (t
     ;; if undo is not kept, grab the string then delete it (which won't
@@ -1205,7 +1207,7 @@ comes the newest one."
 	;; It is cleaner to avoid activation, even though the command
 	;; loop would deactivate the mark because we inserted text.
 	(goto-char (prog1 (mark t)
-		     (set-marker (mark-marker) (point) (current-buffer))))))
+		     (set-marker (mark-marker t) (point) (current-buffer))))))
   nil)
 
 
@@ -3131,6 +3133,7 @@ you should just use (message nil)."
   (let ((clear-stream (and message-stack (eq 'stream (frame-type frame)))))
     (remove-message label frame)
     (let ((buffer (get-buffer " *Echo Area*"))
+	  (inhibit-read-only t)
 	  (zmacs-region-stays zmacs-region-stays)) ; preserve from change
       (erase-buffer buffer))
     (if clear-stream
@@ -3169,7 +3172,8 @@ you should just use (message nil)."
 	(error (setq remove-message-hook nil)
 	       (message "remove-message-hook error: %s" e)
 	       (sit-for 2)
-	       (erase-buffer (get-buffer " *Echo Area*"))
+	       (let ((inhibit-read-only t))
+		 (erase-buffer (get-buffer " *Echo Area*")))
 	       (signal (car e) (cdr e))))
       (setq log (cdr log)))))
 
@@ -3189,7 +3193,8 @@ you should just use (message nil)."
 	  (zmacs-region-stays zmacs-region-stays)) ; preserve from change
       (save-excursion
 	(set-buffer buffer)
-	(insert message))
+	(let ((inhibit-read-only t))
+	  (insert message)))
       ;; Conditionalizing on the device type in this way is not that clean,
       ;; but neither is having a device method, as I originally implemented
       ;; it: all non-stream devices behave in the same way.  Perhaps

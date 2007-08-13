@@ -740,7 +740,7 @@ when reading the arguments.
 	  case 'n':		/* Read number from minibuffer.  */
 	    {
 	    read_number:
-	      args[argnum] = call2 (Qread_number, PROMPT (), Qt);
+	      args[argnum] = call2 (Qread_number, PROMPT (), Qnil);
 	      /* numbers are too boring to go on command history */
 	      /* arg_from_tty = 1; */
               break;

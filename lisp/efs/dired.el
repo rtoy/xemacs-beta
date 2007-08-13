@@ -221,7 +221,7 @@ setting of this variable.")
 
 ;;;###autoload
 (defvar dired-chown-program
-  (if (memq system-type '(hpux dgux usg-unix-v)) "chown" "/etc/chown")
+  (if (memq system-type '(hpux dgux usg-unix-v linux)) "chown" "/etc/chown")
   "*Name of chown command (usually `chown' or `/etc/chown').")
 
 ;;;###autoload
@@ -377,6 +377,10 @@ The symbols 'rmail and 'vm are the only two allowed values.")
   "*If non-nil dired will revert dired buffers for modified subdirectories.
 See also dired-no-confirm <V>.")
 
+;;;###autoload
+(defvar dired-refresh-automatically t
+  "*If non-nil, refresh dired buffers automatically after file operations.")
+
 ;;; File name regular expressions and extensions.
 
 (defvar dired-trivial-filenames "^\\.\\.?$\\|^#"
@@ -418,9 +422,9 @@ See also `dired-omit-extensions'.")
   "*File names matching these regexp may be omitted (buffer-local).
 This only has effect when the subdirectory is in omission mode.
 To make omission mode the default, set `dired-omit-files' to t.
-This only has effect when `dired-omit-files-p' is t.
+This only has effect when `dired-omit-files' is t.
 See also `dired-omit-extensions'.")
-(make-variable-buffer-local 'dired-omit-files-regexp)
+(make-variable-buffer-local 'dired-omit-regexps)
 
 (defvar dired-filename-re-ext "\\..+$"   ; start from the first dot. last dot?
   "*Defines what is the extension of a file name.
@@ -1559,7 +1563,7 @@ See variable `dired-local-variables-file'."
       (run-hooks 'dired-after-readin-hook)
       ;; I put omit-expunge after the dired-after-readin-hook
       ;; in case that hook marks files. Does this make sense? Also, users
-      ;; might want to set dired-omit-files-p in some incredibly clever
+      ;; might want to set dired-omit-files in some incredibly clever
       ;; way depending on the contents of the directory... I don't know...
       (if dired-omit-files
 	  (dired-omit-expunge nil t))
@@ -1641,7 +1645,7 @@ See variable `dired-local-variables-file'."
 	(widen)
 	(erase-buffer)
 	(dired-readin-insert dir-or-list wildcard)
-	(dired-indent-listing (point-min) (point-max))
+	(dired-indent-listing (point-min) (point-max-marker))
 	;; We need this to make the root dir have a header line as all
 	;; other subdirs have:
 	(goto-char (point-min))
@@ -3812,24 +3816,26 @@ Optional CHAR indicates a marker character to use."
   "Unmark the current (or next ARG) files.
 If looking at a subdir, unmark all its files except `.' and `..'."
   (interactive "p")
-  (let (buffer-read-only)
-    (dired-repeat-over-lines
-     arg
-     (function
-      (lambda ()
-	(let ((char (following-char)))
-	  (or (memq char '(?\  ?\n ?\r))
-	      (progn
-		(cond
-		 ((char-equal char dired-marker-char)
-		  (setq dired-marks-number (max (1- dired-marks-number) 0)))
-		 ((char-equal char dired-del-marker)
-		  (setq dired-del-flags-number
-			(max (1- dired-del-flags-number) 0)))
-		 ((setq dired-other-marks-number
-			(max (1- dired-other-marks-number) 0))))
-		(dired-substitute-marker (point) char ?\ )))))))
-    (dired-update-mode-line-modified)))
+  (if (dired-get-subdir)
+      (dired-mark-subdir-files ?\ )
+    (let (buffer-read-only)
+      (dired-repeat-over-lines
+       arg
+       (function
+	(lambda ()
+	  (let ((char (following-char)))
+	    (or (memq char '(?\  ?\n ?\r))
+		(progn
+		  (cond
+		   ((char-equal char dired-marker-char)
+		    (setq dired-marks-number (max (1- dired-marks-number) 0)))
+		   ((char-equal char dired-del-marker)
+		    (setq dired-del-flags-number
+			  (max (1- dired-del-flags-number) 0)))
+		   ((setq dired-other-marks-number
+			  (max (1- dired-other-marks-number) 0))))
+		  (dired-substitute-marker (point) char ?\ )))))))
+      (dired-update-mode-line-modified))))
 
 (defun dired-mark-prefix (&optional arg)
   "Mark the next ARG files with the next character typed.
@@ -5106,10 +5112,8 @@ This calls chmod, thus symbolic modes like `g+w' are allowed."
   ;; Assumes that it is on a valid file line. It's the caller's responsibility
   ;; to ensure this. Assumes that match 0 for dired-re-month-and-time is
   ;; at the end of the file size.
-  (dired-move-to-filename t)
-  ;; dired-move-to-filename must leave match-beginning 0 at the start of
-  ;; the date.
-  (goto-char (match-beginning 0))
+  (end-of-line)
+  (search-backward-regexp dired-re-month-and-time)
   (skip-chars-backward " ")
   (string-to-int (buffer-substring (point)
 				   (progn (skip-chars-backward "0-9")
@@ -5269,7 +5273,7 @@ a zero prefix redisplays all killed file lines."
 
 (defun dired-omit-toggle (&optional arg)
   "Toggle between displaying and omitting files matching
-`dired-omit-files-regexp' in the current subdirectory.
+`dired-omit-regexps' in the current subdirectory.
 With a positive prefix, omits files in the entire tree dired buffer.
 With a negative prefix, forces all files in the tree dired buffer to be
 displayed."
@@ -5313,7 +5317,7 @@ displayed."
 
 (defun dired-omit-expunge (&optional regexp full-buffer)
   ;; Hides all unmarked files matching REGEXP.
-  ;; If REGEXP is nil or not specified, uses `dired-omit-files-regexp',
+  ;; If REGEXP is nil or not specified, uses `dired-omit-regexps',
   ;; and also omits filenames ending in `dired-omit-extensions'.
   ;; If REGEXP is the empty string, this function is a no-op.
   (let ((omit-re (or regexp (dired-omit-regexp)))
@@ -5719,7 +5723,10 @@ Use \\[dired-hide-subdir] to (un)hide a particular subdirectory."
 	       (function
 		(lambda (x)
 		  (and (not (eq (current-buffer) (cdr x))) x)))
-	       dired-buffers))))
+	       dired-buffers)))
+  ;; If there are no more dired buffers, we are no longer needed in the
+  ;; file-name-handler-alist.
+  (or dired-buffers (dired-remove-from-file-name-handler-alist)))
 
 (defun dired-fun-in-all-buffers (directory fun &rest args)
   ;; In all buffers dired'ing DIRECTORY, run FUN with ARGS.
@@ -6185,11 +6192,12 @@ with the command \\[tags-loop-continue]."
 
 (defun dired-check-file-name-handler-alist ()
   ;; Verify that dired is installed as the first item in the alist
-  (or (eq (cdr (car file-name-handler-alist)) 'dired-handler-fn)
-      (setq file-name-handler-alist
-	    (cons
-	     '("." . dired-handler-fn)
-	     (dired-remove-from-file-name-handler-alist)))))
+  (and dired-refresh-automatically
+       (or (eq (cdr (car file-name-handler-alist)) 'dired-handler-fn)
+	   (setq file-name-handler-alist
+		 (cons
+		  '("." . dired-handler-fn)
+		  (dired-remove-from-file-name-handler-alist))))))
 
 (defun dired-handler-fn (op &rest args)
   ;; Function to update dired buffers after I/O.

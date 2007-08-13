@@ -424,18 +424,16 @@ tty_output_vertical_divider (struct window *w, int clear)
   int y2 = WINDOW_TEXT_BOTTOM (w);
   unsigned char divv = '|';
 
-  tty_turn_on_face (w, DEFAULT_INDEX);
+  tty_turn_on_face (w, MODELINE_INDEX);
   for (line = y1; line < y2; line++)
     {
       cmgoto (f, line, WINDOW_TEXT_LEFT (w) - 1);
       send_string_to_tty_console (c, &divv, 1);
       TTY_INC_CURSOR_X (c, 1);
     }
-  tty_turn_off_face (w, DEFAULT_INDEX);
 
   /* Draw the divider in the modeline. */
   cmgoto (f, y2, WINDOW_TEXT_LEFT (w) - 1);
-  tty_turn_on_face (w, MODELINE_INDEX);
   send_string_to_tty_console (c, &divv, 1);
   TTY_INC_CURSOR_X (c, 1);
   tty_turn_off_face (w, MODELINE_INDEX);
@@ -917,6 +915,7 @@ reset_tty_modes (struct console *c)
   if (!CONSOLE_TTY_P (c))
     return;
 
+  OUTPUT1_IF (c, TTY_SD (c).orig_pair);
   OUTPUT1_IF (c, TTY_SD (c).keypad_off);
   OUTPUT1_IF (c, TTY_SD (c).cursor_normal);
   OUTPUT1_IF (c, TTY_SD (c).end_motion);
@@ -1202,6 +1201,7 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
   TTY_SD (c).turn_on_bold = tgetstr ("md", &bufptr);
   TTY_SD (c).turn_on_dim = tgetstr ("mh", &bufptr);
   TTY_SD (c).turn_off_attributes = tgetstr ("me", &bufptr);
+  TTY_SD (c).orig_pair = tgetstr ("op", &bufptr);
 
   TTY_SD (c).visual_bell = tgetstr ("vb", &bufptr);
   TTY_SD (c).audio_bell = tgetstr ("bl", &bufptr);

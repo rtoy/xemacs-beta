@@ -3,12 +3,11 @@
 ;;
 ;; File:         efs-auto.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      #Revision: 1.7 $
+;; Version:      #Revision: 1.8 $
 ;; RCS:          
 ;; Description:  Simple way of autoloading efs
 ;; Author:       Andy Norman, Dawn
 ;; Created:      Thu Sep 24 09:50:08 1992
-;; Modified:     Sun Nov 27 11:45:28 1994 by sandy on gandalf
 ;; Language:     Emacs-Lisp
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -37,7 +36,7 @@
 (defconst efs-auto-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "#Revision: 1.7 $" 11 -2)))
+	  (substring "#Revision: 1.8 $" 11 -2)))
 
 ;;; Interactive functions that should be accessible from here.
 
@@ -47,5 +46,12 @@
  "For a given HOST and USER, set or change the associated PASSWORD." t)
 (autoload 'efs-nslookup-host "efs"
 	  "Attempt to resolve a hostname using nslookup if possible." t)
+(autoload 'efs-display-ftp-activity "efs"
+  "Displays the number of active background ftp sessions in the modeline.
+Uses the variable `efs-mode-line-format' to determine how this will be
+displayed." t)
+(autoload 'efs-ftp-path "efs-cu"
+  "Parse PATH according to efs-path-regexp.
+Returns a list (HOST USER PATH), or nil if PATH does not match the format.")
 
 ;;; end of efs-auto.el

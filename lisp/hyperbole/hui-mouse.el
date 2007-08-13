@@ -458,7 +458,7 @@ If assist-key is pressed:
 	 (goto-char (point-max)))
 	((looking-at "~") (dired-flag-backup-files))
 	((looking-at "#") (dired-flag-auto-save-files))
-	(t (dired-flag-file-deleted 1))))
+	(t (dired-flag-file-deletion 1))))
 
 ;;; ************************************************************************
 ;;; smart-gnus functions

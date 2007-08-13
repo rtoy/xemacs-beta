@@ -19,7 +19,6 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Synched up with: FSF 19.31. */
 
 /* Compile-time symbols that this file uses:
 
@@ -32,8 +31,6 @@ Boston, MA 02111-1307, USA.  */
 				Must be defined unless one of
 				apollo, DGUX, NeXT, or UMAX is defined;
 				otherwise, no load average is available.
-                                Does not need to be defined if HPUX is
-                                defined and HPUX_PRE_8_0 is not defined.
    NLIST_STRUCT			Include nlist.h, not a.out.h, and
 				the nlist n_name element is a pointer,
 				not an array.
@@ -83,10 +80,9 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/param.h>
 #endif
 
-
-#ifdef emacs
+#ifdef XEMACS
 #include "lisp.h" /* for encapsulated open, close, read, write */
-#endif
+#endif /* XEMACS */
 
 /* Exclude all the code except the test program at the end
    if the system has its own `getloadavg' function.
@@ -115,6 +111,12 @@ extern int errno;
 #if !defined(LDAV_CVT) && defined(LOAD_AVE_CVT)
 #define LDAV_CVT(n) (LOAD_AVE_CVT (n) / 100.0)
 #endif
+
+#ifdef XEMACS
+#if defined (HAVE_KSTAT_H)
+#include <kstat.h>
+#endif /* HAVE_KSTAT_H */
+#endif /* XEMACS */
 
 #if !defined (BSD) && defined (ultrix)
 /* Ultrix behaves like BSD on Vaxen.  */
@@ -150,7 +152,7 @@ extern int errno;
 #define decstation
 #endif
 
-#if (defined(sun) && defined(USG)) || defined (SOLARIS2)
+#if (defined(sun) && defined(SVR4)) || defined (SOLARIS2)
 #define SUNOS_5
 #endif
 
@@ -291,11 +293,6 @@ extern int errno;
 /* VAX C can't handle multi-line #ifs, or lines longer that 256 characters.  */
 #ifndef NLIST_STRUCT
 
-/* XEmacs addition */
-#ifdef _AIX
-#define NLIST_STRUCT
-#endif
-
 #ifdef MORE_BSD
 #define NLIST_STRUCT
 #endif
@@ -381,8 +378,9 @@ extern int errno;
 #define LDAV_SYMBOL "avenrun"
 #endif
 
-#include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include <stdio.h>
 
@@ -431,9 +429,6 @@ extern int errno;
 #endif /* LOAD_AVE_TYPE */
 
 #ifdef NeXT
-/* This undef is needed to shut up the NeXT compiler about a stupid
-   non-problem. */
-#undef index
 #ifdef HAVE_MACH_MACH_H
 #include <mach/mach.h>
 #else
@@ -472,10 +467,11 @@ extern int errno;
 #include <sys/dg_sys_info.h>
 #endif
 
-/* XEmacs addition */
-#if !defined(LDAV_DONE) && defined(HPUX) && !defined (HPUX_PRE_8_0)
+#ifdef XEMACS
+#if defined (HAVE_SYS_PSTAT_H)
 #include <sys/pstat.h>
-#endif
+#endif /* HAVE_SYS_PSTAT_H (on HPUX) */
+#endif /* XEMACS */
 
 #if defined(HAVE_FCNTL_H) || defined(_POSIX_VERSION)
 #include <fcntl.h>
@@ -500,10 +496,8 @@ static struct dg_sys_info_load_info load_info;	/* what-a-mouthful! */
 #endif /* DGUX */
 
 #ifdef LOAD_AVE_TYPE
-#if defined (VMS) || !defined (SUNOS_5)
 /* File descriptor open to /dev/kmem or VMS load ave driver.  */
 static int channel;
-#endif /* VMS || !SUNOS_5 */
 /* Nonzero iff channel is valid.  */
 static int getloadavg_initialized;
 /* Offset in kmem to seek to read load average, or 0 means invalid.  */
@@ -536,6 +530,64 @@ getloadavg (double loadavg[], int nelem)
   errno = 0;
   elem = -1;
 #endif
+
+#ifdef XEMACS
+#if ! defined (LDAV_DONE) && defined (HAVE_KSTAT_H) && defined (HAVE_LIBKSTAT)
+#define LDAV_DONE
+  
+/* getloadavg is best implemented using kstat (kernel stats),
+   on systems (like SunOS5) that support it,
+   since you don't have to be superusers to use it.
+   Thanks to Zlatko Calusic <zcalusic@srce.hr>.
+   Integrated to XEmacs by Hrvoje Niksic <hniksic@srce.hr>. */
+  static kstat_ctl_t *kc;
+  static kstat_t *ksp;
+  static kstat_named_t *buf;
+
+  if (!getloadavg_initialized)
+    {
+      kc = kstat_open();
+      if (!kc)
+        return -1;
+      getloadavg_initialized = 1;
+    }
+  ksp = kstat_lookup(kc, "unix", 0, "system_misc");
+  if (!ksp)
+      return -1;
+  if (kstat_read(kc, ksp, ksp->ks_data) < 0)
+    return -1;
+  buf = malloc(ksp->ks_data_size);
+  if (!buf)
+     return -1;
+  memcpy(buf, ksp->ks_data, ksp->ks_data_size);
+  if (nelem > 3)
+     nelem = 3;
+  for (elem = 0; elem < nelem; elem++)
+    loadavg[elem] = (buf + 6 + elem)->value.ul / 256.0;
+  free(buf);
+  
+#endif /* HAVE_KSTAT_H && HAVE_LIBKSTAT */
+
+#if !defined (LDAV_DONE) && defined (HAVE_SYS_PSTAT_H)
+#define LDAV_DONE
+  /* This is totally undocumented, and is not guaranteed to work, but
+     mayhap it might ....  If it does work, it will work only on HP-UX
+     8.0 or later.  -- Darryl Okahata <darrylo@sr.hp.com> */
+#undef LOAD_AVE_TYPE		/* Make sure these don't exist. */
+#undef LOAD_AVE_CVT
+#undef LDAV_SYMBOL
+  struct pst_dynamic	procinfo;
+  union pstun		statbuf;
+
+  statbuf.pst_dynamic = &procinfo;
+  if (pstat (PSTAT_DYNAMIC, statbuf, sizeof (struct pst_dynamic), 0, 0) == -1)
+    return (-1);
+  loadavg[elem++] = procinfo.psd_avg_1_min;
+  loadavg[elem++] = procinfo.psd_avg_5_min;
+  loadavg[elem++] = procinfo.psd_avg_15_min;
+#endif	/* HPUX */
+
+#endif /* XEMACS */
 
 #if !defined (LDAV_DONE) && defined (__linux__)
 #define LDAV_DONE
@@ -606,12 +658,8 @@ getloadavg (double loadavg[], int nelem)
   struct processor_set_basic_info info;
   unsigned info_count;
 
-  if (nelem > 1)
-    {
-      /* We only know how to get the 1-minute average for this system.  */
-      errno = EINVAL;
-      return -1;
-    }
+  /* We only know how to get the 1-minute average for this system,
+     so even if the caller asks for more than 1, we only return 1.  */
 
   if (!getloadavg_initialized)
     {
@@ -647,11 +695,11 @@ getloadavg (double loadavg[], int nelem)
   struct proc_summary proc_sum_data;
   struct stat_descr proc_info;
   double load;
-  unsigned int i, j;
+  register unsigned int i, j;
 
   if (cpus == 0)
     {
-      unsigned int c, i;
+      register unsigned int c, i;
       struct cpu_config conf;
       struct stat_descr desc;
 
@@ -754,12 +802,10 @@ getloadavg (double loadavg[], int nelem)
 
   struct tbl_loadavg load_ave;
   table (TBL_LOADAVG, 0, &load_ave, 1, sizeof (load_ave));
-  while (elem < nelem && elem < 3)
-    {
-      loadavg[elem++] = (load_ave.tl_lscale == 0
-	   ? load_ave.tl_avenrun.d[0]
-	   : (load_ave.tl_avenrun.l[0] / (double) load_ave.tl_lscale));
-    }
+  loadavg[elem++]
+    = (load_ave.tl_lscale == 0
+       ? load_ave.tl_avenrun.d[0]
+       : (load_ave.tl_avenrun.l[0] / (double) load_ave.tl_lscale));
 #endif	/* OSF_MIPS */
 
 #if !defined (LDAV_DONE) && (defined (MSDOS) || defined (WIN32))
@@ -823,27 +869,6 @@ getloadavg (double loadavg[], int nelem)
   if (!getloadavg_initialized)
     return -1;
 #endif /* VMS */
-
-#if !defined (LDAV_DONE) && defined (HPUX) && !defined (HPUX_PRE_8_0)
-#define LDAV_DONE
-  /*
-   * This is totally undocumented, and is not guaranteed to work, but
-   * mayhap it might ....  If it does work, it will work only on HP-UX
-   * 8.0 or later.  -- Darryl Okahata <darrylo@sr.hp.com>
-   */
-#undef LOAD_AVE_TYPE		/* Make sure these don't exist. */
-#undef LOAD_AVE_CVT
-#undef LDAV_SYMBOL
-  struct pst_dynamic	procinfo;
-  union pstun		statbuf;
-
-  statbuf.pst_dynamic = &procinfo;
-  if (pstat (PSTAT_DYNAMIC, statbuf, sizeof (struct pst_dynamic), 0, 0) == -1)
-    return (-1);
-  loadavg[elem++] = procinfo.psd_avg_1_min;
-  loadavg[elem++] = procinfo.psd_avg_5_min;
-  loadavg[elem++] = procinfo.psd_avg_15_min;
-#endif	/* HPUX */
 
 #if !defined (LDAV_DONE) && defined(LOAD_AVE_TYPE) && !defined(VMS)
 

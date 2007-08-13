@@ -543,8 +543,10 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
   DB_FUNCS *funcblock;
   struct database_struct *dbase = NULL;
   void *db = NULL;
+  struct gcpro gcpro1;
 
-  CHECK_STRING (file);
+  GCPRO1 (file);
+  file = Fexpand_file_name (file, Qnil);
 
   if (NILP (ackcess))
     {
@@ -622,6 +624,8 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
   dbase->db_handle = db;
   dbase->funcs = funcblock;
   XSETDATABASE (retval, dbase);
+
+  UNGCPRO;
 
   return (retval);
 }

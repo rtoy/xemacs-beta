@@ -341,9 +341,11 @@ Also accepts Space to mean yes, or Delete to mean no."
                   (inhibit-quit t))
               (message "%s%s%s" pre prompt yn)
               (setq event (next-command-event event))
-              (prog1
-		  (or quit-flag (eq 'keyboard-quit (key-binding event)))
-		(setq quit-flag nil)))
+	      (condition-case nil
+		  (prog1
+		      (or quit-flag (eq 'keyboard-quit (key-binding event)))
+		    (setq quit-flag nil))
+		(wrong-type-argument t)))
             (progn
               (message "%s%s%s%s" pre prompt yn (single-key-description event))
               (setq quit-flag nil)
