@@ -1027,6 +1027,10 @@ trivial_regexp_p (Lisp_Object regexp)
 	    case '|': case '(': case ')': case '`': case '\'': case 'b':
 	    case 'B': case '<': case '>': case 'w': case 'W': case 's':
 	    case 'S': case '=':
+#ifdef MULE
+	    /* 97/2/25 jhod Added for category matches */
+	    case 'c': case 'C':
+#endif /* MULE */
 	    case '1': case '2': case '3': case '4': case '5':
 	    case '6': case '7': case '8': case '9':
 	      return 0;

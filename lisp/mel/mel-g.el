@@ -9,7 +9,7 @@
 ;;; Maintainer: Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;;; Created: 1995/10/25
 ;;; Version:
-;;;	$Id: mel-g.el,v 1.2 1996/12/28 21:02:56 steve Exp $
+;;;	$Id: mel-g.el,v 1.3 1997/03/04 02:29:46 steve Exp $
 ;;; Keywords: MIME, base64, gzip
 ;;;
 ;;; This file is not part of MEL (MIME Encoding Library) yet.
@@ -36,10 +36,18 @@
 ;;; @ variables
 ;;;
 
-(defvar gzip64-external-encoder '("sh" "-c" "gzip -c | mmencode")
+(defvar gzip64-external-encoder `("sh" "-c"
+				  ,(concat
+				    "gzip -c | "
+				    (expand-file-name "mmencode"
+						      exec-directory)))
   "*list of gzip64 encoder program name and its arguments.")
 
-(defvar gzip64-external-decoder '("sh" "-c" "mmencode -u | gzip -dc")
+(defvar gzip64-external-decoder `("sh" "-c"
+				  ,(concat
+				    (expand-file-name "mmencode"
+						      exec-directory)
+				    " -u | gzip -dc"))
   "*list of gzip64 decoder program name and its arguments.")
 
 

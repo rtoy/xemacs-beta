@@ -1128,8 +1128,11 @@ If REGEXP, only list groups matching REGEXP."
   "Update all lines where GROUP appear.
 If VISIBLE-ONLY is non-nil, the group won't be displayed if it isn't
 already."
-  (save-excursion
+  ;; Can't use `save-excursion' here, so we do it manually.
+  (let ((buf (current-buffer))
+	mark)
     (set-buffer gnus-group-buffer)
+    (setq mark (point-marker))
     ;; The buffer may be narrowed.
     (save-restriction
       (widen)
@@ -1179,7 +1182,10 @@ already."
 	      (run-hooks 'gnus-group-update-group-hook))))
 	(when gnus-group-update-group-function
 	  (funcall gnus-group-update-group-function group))
-	(gnus-group-set-mode-line)))))
+	(gnus-group-set-mode-line)))
+    (goto-char mark)
+    (set-marker mark nil)
+    (set-buffer buf)))
 
 (defun gnus-group-set-mode-line ()
   "Update the mode line in the group buffer."
@@ -1538,6 +1544,8 @@ Returns whether the fetching was successful or not."
     (gnus))
   (gnus-group-read-group nil nil group))
 
+(defvar gnus-ephemeral-group-server 0)
+
 ;; Enter a group that is not in the group buffer.  Non-nil is returned
 ;; if selection was successful.
 (defun gnus-group-read-ephemeral-group (group method &optional activate 
@@ -1549,6 +1557,13 @@ ephemeral group.
 If REQUEST-ONLY, don't actually read the group; just request it.
 
 Return the name of the group is selection was successful."
+  ;; Transform the select method into a unique server.
+  (let ((saddr (intern (format "%s-address" (car method)))))
+    (setq method (gnus-copy-sequence method))
+    (unless (assq saddr method)
+      (nconc method `((,saddr ,(cadr method)))))
+    (setf (cadr method) (format "%s-%d" (cadr method)
+				(incf gnus-ephemeral-group-server))))
   (let ((group (if (gnus-group-foreign-p group) group
 		 (gnus-group-prefixed-name group method))))
     (gnus-sethash
@@ -1836,7 +1851,7 @@ and NEW-NAME will be prompted for."
 
   ;; We find the proper prefixed name.
   (setq new-name
-	(if (equal (gnus-group-real-name new-name) new-name)
+	(if (gnus-group-native-p group)
 	    ;; Native group.
 	    new-name
 	  ;; Foreign group.
@@ -2848,7 +2863,8 @@ re-scanning.  If ARG is non-nil and not a number, this will force
     (let ((gnus-read-active-file (if arg nil gnus-read-active-file)))
       (gnus-get-unread-articles arg)))
   (run-hooks 'gnus-after-getting-new-news-hook)
-  (gnus-group-list-groups))
+  (gnus-group-list-groups (and (numberp arg)
+			       (max (car gnus-group-list-mode) arg))))
 
 (defun gnus-group-get-new-news-this-group (&optional n)
   "Check for newly arrived news in the current group (and the N-1 next groups).

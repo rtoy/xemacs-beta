@@ -292,7 +292,7 @@ a list (ABSOLUTE-FILE-NAME . SIZE)."
       (setq value (insert-file-contents filename nil beg end))
       (setq size (nth 1 value)))
     (if format
-	(setq size (format-decode size format)
+	(setq size (format-decode format size)
 	      value (cons (car value) size)))
     value))
 

@@ -1,3 +1,92 @@
+Mon Mar  3 14:45:16 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/simple.el (newline): Attempt to not add newline to a
+	previous end-open extent.
+
+Sun Mar  2 10:10:31 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* hm--html-menus/tmpl-minor-mode.el (tmpl-sign): Remove nul byte.
+
+	* site-load.el: Move site-packages to the top level.
+
+Sun Mar  2 01:37:04 1997  Hrvoje Niksic  <hniksic@srce.hr>
+ 
+	* utils/mail-extr.el (all-top-level-domains): Added "hr" domain.
+
+	* packages/ps-print.el (ps-print-color-p): Default to nil.
+
+	* x11/x-menubar.el (default-menubar): Changed menubar entry for
+	color printing.
+
+	* prim/faces.el (init-other-random-faces): Use gray65 for
+	zmacs-region and primary-selection background.
+
+	* x11/x-faces.el (x-init-global-faces): New default background
+	gray80.
+
+Sat Mar  1 14:38:14 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/diff.el: (diff): Autoload.
+	(diff-backup): Autoload.
+	(diff-switches): Autoload.
+
+Sat Mar  1 01:09:08 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/tar-mode.el (tar-mode-map): Removed extraneous C-c
+	binding of tar-copy.
+
+	* prim/keydefs.el: Don't disable upcase-region and
+	downcase-region.
+
+Fri Feb 28 11:22:29 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/obsolete.el (char-to-int): Define as alias to `char-int'.
+
+	* prim/help.el (describe-function-1): Show annotation contents if
+	they exist.
+
+	* packages/man.el (Manual-mode): Don't turn off scrollbars if
+	XEmacs doesn't have them to begin with.
+
+	* prim/keydefs.el: Don't disable eval-expression by default now
+	that it is harder to type.
+
+Thu Feb 27 13:06:41 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/subr.el (with-string-as-buffer-contents): Moved from
+	mule/mule-coding.el.
+
+	* mule/mule-coding.el: Remove with-string-as-buffer-contents.
+
+	* prim/format.el (format-insert-file): Correct wrong order of args
+	passed to format-decode.
+
+	* prim/startup.el (load-user-init-file): Allow XEmacs to read a
+	bytecompiled .emacs if it exists.
+
+Thu Feb 27 17:41:57 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* subr.el (eval-after-load): Enable.
+	(eval-next-after-load): Ditto.
+
+Thu Feb 27 10:59:05 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/subr.el (with-temp-buffer): New function from Emacs 19.35,
+	courtesy of Erik Naggum  <erik@naggum.no>.
+
+Fri Feb 28 22:17:03 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/isearch-mode.el: Added "_" to the `interactive' forms of
+ 	most functions.
+	(isearch-mode-map): Define M-y.
+	(isearch-yank-kill): New function.
+
+	* prim/keydefs.el: Don't bind `C-x C-n' to `set-goal-column';
+ 	don't disable `set-goal-column'.
+
+	* mule/mule-init.el (ctl-x-map): Use `C-x C-n' as mule-prefix,
+	instead of `C-x C-k'.
+
 Wed Feb 26 18:09:56 1997  Andreas Jaeger <aj@arthur.pfalz.de>
 
 	* x11/x-menubar.el (default-menubar): `FAQ' should be `FAQ

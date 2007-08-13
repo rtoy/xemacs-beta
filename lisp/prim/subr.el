@@ -331,6 +331,36 @@ it as a string."
 	   (buffer-string)
 	 (erase-buffer)))))
 
+(defmacro with-temp-buffer (&rest forms)
+  "Create a temporary buffer, and evaluate FORMS there like `progn'."
+  (let ((temp-buffer (make-symbol "temp-buffer")))
+    `(let ((,temp-buffer
+	    (get-buffer-create (generate-new-buffer-name " *temp*"))))
+       (unwind-protect
+	   (save-excursion
+	     (set-buffer ,temp-buffer)
+	     ,@forms)
+	 (and (buffer-name ,temp-buffer)
+	      (kill-buffer ,temp-buffer))))))
+
+;; Moved from mule-coding.el.
+(defmacro with-string-as-buffer-contents (str &rest body)
+  "With the contents of the current buffer being STR, run BODY.
+Returns the new contents of the buffer, as modified by BODY.
+The original current buffer is restored afterwards."
+  `(let ((curbuf (current-buffer))
+         (tempbuf (get-buffer-create " *string-as-buffer-contents*")))
+     (unwind-protect
+         (progn
+           (set-buffer tempbuf)
+           (buffer-disable-undo (current-buffer))
+           (erase-buffer)
+           (insert ,str)
+           ,@body
+           (buffer-string))
+       (erase-buffer tempbuf)
+       (set-buffer curbuf))))
+
 (defun insert-face (string face)
   "Insert STRING and highlight with FACE.  Returns the extent created."
   (let ((p (point)) ext)
@@ -542,30 +572,32 @@ See also: `save-current-buffer' and `save-excursion'."
 
 ;;;; Specifying things to do after certain files are loaded.
 
-;(defun eval-after-load (file form)
-;  "Arrange that, if FILE is ever loaded, FORM will be run at that time.
-;This makes or adds to an entry on `after-load-alist'.
-;If FILE is already loaded, evaluate FORM right now.
-;It does nothing if FORM is already on the list for FILE.
-;FILE should be the name of a library, with no directory name."
-;  ;; Make sure there is an element for FILE.
-;  (or (assoc file after-load-alist)
-;      (setq after-load-alist (cons (list file) after-load-alist)))
-;  ;; Add FORM to the element if it isn't there.
-;  (let ((elt (assoc file after-load-alist)))
-;    (or (member form (cdr elt))
-;	(progn
-;	  (nconc elt (list form))
-;	  ;; If the file has been loaded already, run FORM right away.
-;	  (and (assoc file load-history)
-;	       (eval form)))))
-;  form)
-;
-;(defun eval-next-after-load (file)
-;  "Read the following input sexp, and run it whenever FILE is loaded.
-;This makes or adds to an entry on `after-load-alist'.
-;FILE should be the name of a library, with no directory name."
-;  (eval-after-load file (read)))
+(defun eval-after-load (file form)
+  "Arrange that, if FILE is ever loaded, FORM will be run at that time.
+This makes or adds to an entry on `after-load-alist'.
+If FILE is already loaded, evaluate FORM right now.
+It does nothing if FORM is already on the list for FILE.
+FILE should be the name of a library, with no directory name."
+  ;; Make sure there is an element for FILE.
+  (or (assoc file after-load-alist)
+      (setq after-load-alist (cons (list file) after-load-alist)))
+  ;; Add FORM to the element if it isn't there.
+  (let ((elt (assoc file after-load-alist)))
+    (or (member form (cdr elt))
+	(progn
+	  (nconc elt (list form))
+	  ;; If the file has been loaded already, run FORM right away.
+	  (and (assoc file load-history)
+	       (eval form)))))
+  form)
+(make-compatible 'eval-after-load "")
+
+(defun eval-next-after-load (file)
+  "Read the following input sexp, and run it whenever FILE is loaded.
+This makes or adds to an entry on `after-load-alist'.
+FILE should be the name of a library, with no directory name."
+  (eval-after-load file (read)))
+(make-compatible 'eval-next-after-load "")
 
 ; alternate names (not obsolete)
 (if (not (fboundp 'mod)) (define-function 'mod '%))

@@ -38,7 +38,7 @@
 ;; number decreases by one, even if you incorrectly mark a square.
 
 ;; To hit a square: Point to the square, and click the left button.
-;; If the square is a mine, you loose.
+;; If the square is a mine, you lose.
 ;; If the square isn't a mine, a number appears, which represents
 ;; the number of mines in the surrounding eight squares.
 
@@ -93,8 +93,9 @@
 (defvar mine-mines-%  16
   "*Percentage (between 0 and 100) of mines in the mine field.")
 
-(defvar mine-torus 't
-  "*Non-nil (the default) to play the game on a periodic board (a torus).")
+(defvar mine-torus (not mine-xemacs-p)
+  "*Non-nil to play the game on a periodic board (a torus).
+This is the default unless using graphics (XEmacs)")
 
 (defvar mine-nb-tiles-x 2
   "*Number of duplications in the x direction, when `mine-torus' is non-nil.
@@ -206,6 +207,32 @@ is greater than `mine-count1-max'.
 ;;; ================================================================
 ;;; Internal variables:
 
+;; XEmacs stuffs
+(defvar mine-glyph-directory (concat data-directory "mine")
+  "Directory where mine glyphs are kept.")
+(defun mine-make-glyph (file)
+  (when mine-xemacs-p
+    (make-glyph (list (cons 'x
+			    (expand-file-name file mine-glyph-directory))))))
+(defvar mine-default-glyphs
+  `((mine-face-unmarked . ,(mine-make-glyph "empty_16_up.gif"))
+    (mine-face-marked . ,(mine-make-glyph "flagged_16_up.gif"))
+    (0 . ,(mine-make-glyph "empty_16_flat.gif"))
+    (1 . ,(mine-make-glyph "1_16_flat.gif"))
+    (2 . ,(mine-make-glyph "2_16_flat.gif"))
+    (3 . ,(mine-make-glyph "3_16_flat.gif"))
+    (4 . ,(mine-make-glyph "4_16_flat.gif"))
+    (5 . ,(mine-make-glyph "5_16_flat.gif"))
+    (6 . ,(mine-make-glyph "6_16_flat.gif"))
+    (7 . ,(mine-make-glyph "7_16_flat.gif"))
+    (8 . ,(mine-make-glyph "8_16_flat.gif"))
+    (mine-face-pad . ,(mine-make-glyph "empty_16_down.gif"))
+    (mine-face-not-found . ,(mine-make-glyph "bomb_16_flat.gif"))
+    (mine-face-bogus . ,(mine-make-glyph "question_16_up.gif"))
+    )
+  "A-list of default graphics for various mine characters.  Unless you
+have an entire replacement set of graphics I wouldn't suggest changing it.")
+
 (defvar mine-user-variables
   '("Size"
     mine-xmax mine-ymax mine-mines-%
@@ -302,7 +329,7 @@ When you're sure a square does NOT contain a mine, you can hit it:
 move the mouse over the square and press `\\[mine-mouse-hit]' or 
 move the cursor with the usual keys and press `\\[mine-hit-curpoint]'.
 
-If the square is a mine, you loose.
+If the square is a mine, you lose.
 If the square isn't a mine, a number appears which represents
 the number of mines in the surrounding eight squares.  
 
@@ -486,7 +513,7 @@ this point."
 	((mine-mine-at-point-p (point) 'slowp)
 	 (setq mine-nb-mines-hit (1+ mine-nb-mines-hit))
 	 (mine-update-mines-hit)
-         (mine-message 'mine-msg-loose)
+         (mine-message 'mine-msg-lose)
 	 (mine-quit))
 	(t ;; the real job...
 	 (let* ((x.y (mine-top-left (mine-point-to-x.y (point))))
@@ -864,6 +891,10 @@ this point."
 (defun mine-get-face (key)
   (cdr (assoc key mine-faces)))
 
+(defun mine-get-glyph (key)
+  (if mine-xemacs-p
+      (cdr (assoc key mine-default-glyphs))
+    nil))
 ;;; ================================================================
 ;;; Init board
 
@@ -908,7 +939,9 @@ this point."
              (t (min window-ymax-int (* mine-ymax mine-nb-tiles-y))))))))
   (let ((buffer-read-only 'nil)
 	(face-unmarked (mine-get-face 'mine-face-unmarked))
+	(glyph-unmarked (mine-get-glyph 'mine-face-unmarked))
 	(face-pad      (mine-get-face 'mine-face-pad))
+	(glyph-pad (mine-get-glyph 'mine-face-pad))
         row col)
     (erase-buffer)
     (mine-insert-copyright)
@@ -919,16 +952,31 @@ this point."
     (while (>= (setq row (1- row)) 0)
       (setq col (1- mine-width))
       (insert mine-char-unmarked)
-      (when face-unmarked
+      (when (and (not glyph-unmarked) face-unmarked)
 	(put-text-property (1- (point)) (point) 'face face-unmarked))
+      (when glyph-unmarked
+	(let ((e))
+	  (setq e (make-extent (1- (point)) (point)))
+	  (set-extent-property e 'invisible t)
+	  (set-extent-property e 'end-open t)
+	  (set-extent-property e 'start-open nil)
+	  (set-extent-end-glyph e glyph-unmarked)))
       (while (>= (setq col (1- col)) 0)
         (when mine-char-pad
           (insert mine-char-pad)
           (when face-pad
             (put-text-property (1- (point)) (point) 'face face-pad)))
         (insert mine-char-unmarked)
-	(when face-unmarked
-	  (put-text-property (1- (point)) (point) 'face face-unmarked)))
+	(when (and (not glyph-unmarked) face-unmarked)
+	  (put-text-property (1- (point)) (point) 'face face-unmarked))
+	(when glyph-unmarked
+	  (let ((e))
+	    (setq e (make-extent (1- (point)) (point)))
+	    (set-extent-property e 'invisible t)
+	    (set-extent-property e 'end-open t)
+	    (set-extent-property e 'start-open nil)
+	    (set-extent-end-glyph e glyph-unmarked))))
+
       (insert ?\n))
     (setq mine-point-max (1- (point)))
     (mine-update-remaining-mines)
@@ -1000,24 +1048,32 @@ this point."
 (defun mine-update-board (point c key)
   (let ((buffer-read-only 'nil)
 	(face (mine-get-face key))
+	(glyph (mine-get-glyph key))
 	(x.y (mine-top-left (mine-point-to-x.y point)))
 	x y)
     (setq x (car x.y))
     (while (<= x mine-width)
       (setq y (cdr x.y))
       (while (<= y mine-height)
-	(mine-update-point (mine-xy-to-point x y) c face)
+	(mine-update-point (mine-xy-to-point x y) c face glyph)
 	(setq y (+ y mine-ymax)))
       (setq x (+ x mine-xmax)))
     (mine-reach-level 1) ; redisplay point and its periodic images
     (set-buffer-modified-p 'nil)))
 
-(defun mine-update-point (point c face)
+(defun mine-update-point (point c face &optional glyph)
   (goto-char point)
-  (delete-char 1)
-  (insert c)
-  (when face
+  (if glyph
+      (progn
+	(insert c)
+	(delete-char 1))
+    (delete-char 1)
+    (insert c))
+  (when (and (not glyph) face)
     (put-text-property point (point) 'face face))
+  (when glyph
+    ;; (set-extent-end-glyph (extent-at (point)) nil)
+    (set-extent-end-glyph (extent-at (point) nil 'end-glyph nil 'at) glyph))
   (mine-reach-level 0)) ; redisplay point
 
 (defun mine-reach-level (level)
@@ -1119,7 +1175,7 @@ this point."
     (message "Point has already been hit."))
    ((eq msg 'mine-msg-cannot-mark)
     (message "Can't (un)mark point..."))
-   ((eq msg 'mine-msg-loose)
+   ((eq msg 'mine-msg-lose)
     (message "Sorry... There's a mine here...")
     (sit-for 1)
     (message "Sorry... There's a mine here... You lost!"))

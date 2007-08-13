@@ -53,10 +53,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Need to define a differentiating symbol -- see sysfloat.h */
 #define THIS_FILENAME floatfns
-/* glibc chokes unless _GNU_SOURCE is defined */
-#if defined (__GLIBC__) && (__GLIBC__ >= 2)
-#define _GNU_SOURCE 1
-#endif
 #include "sysfloat.h"
 
 #ifndef HAVE_RINT

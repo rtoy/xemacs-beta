@@ -279,6 +279,7 @@ typedef enum
 #endif
 #ifdef MULE
   ,REG_ERANGESPAN	/* Ranges may not span charsets. */
+  ,REG_ECATEGORY	/* Invalid category designator */
 #endif
 } reg_errcode_t;
 

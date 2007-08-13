@@ -855,13 +855,14 @@ test -n "$verbose" && echo "	"setting LN_S to ${LN_S}""
 #### have stuck the source on a read-only partition.  Instead we'll
 #### create it as an actual directory later on if it doesn't already
 #### exist.
-for dir in  etc lisp man info
+for dir in lisp etc man info site-lisp
 do
   if test ! -d $dir ; then
     echo Making symbolic link to ${srcdir}/$dir
     ${LN_S} ${srcdir}/$dir .
   fi
 done
+
 
 #### Make srcdir absolute, if it isn't already.  It's important to
 #### avoid running the path through pwd unnecessary, since pwd can
@@ -6373,12 +6374,12 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}UNEXEC_SRC\${ac_dB}UNEXEC_SRC\${ac_dC}${UNEX
 test -n "${puresize}" && 
 {
 test -n "$verbose" && \
-echo "	defining" PURESIZE to be "${puresize}"
-echo "#define" PURESIZE "${puresize}" >> confdefs.h
-DEFS="$DEFS -DPURESIZE=${puresize}"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}PURESIZE\${ac_dB}PURESIZE\${ac_dC}${puresize}\${ac_dD}
-\${ac_uA}PURESIZE\${ac_uB}PURESIZE\${ac_uC}${puresize}\${ac_uD}
-\${ac_eA}PURESIZE\${ac_eB}PURESIZE\${ac_eC}${puresize}\${ac_eD}
+echo "	defining" RAW_PURESIZE to be "${puresize}"
+echo "#define" RAW_PURESIZE "${puresize}" >> confdefs.h
+DEFS="$DEFS -DRAW_PURESIZE=${puresize}"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}RAW_PURESIZE\${ac_dB}RAW_PURESIZE\${ac_dC}${puresize}\${ac_dD}
+\${ac_uA}RAW_PURESIZE\${ac_uB}RAW_PURESIZE\${ac_uC}${puresize}\${ac_uD}
+\${ac_eA}RAW_PURESIZE\${ac_eB}RAW_PURESIZE\${ac_eC}${puresize}\${ac_eD}
 "
 }
 

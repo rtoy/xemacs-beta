@@ -532,7 +532,7 @@ parameter.  It should return nil, `warn' or `delete'."
       (delete-file nnmail-crash-box))
     (let ((inbox (file-truename (expand-file-name inbox)))
 	  (tofile (file-truename (expand-file-name nnmail-crash-box)))
-	  movemail popmail errors)
+	  movemail popmail errors result)
       (if (setq popmail (string-match
 			 "^po:" (file-name-nondirectory inbox)))
 	  (setq inbox (file-name-nondirectory inbox))
@@ -582,16 +582,18 @@ parameter.  It should return nil, `warn' or `delete'."
 		(let ((default-directory "/"))
 		  (if (nnheader-functionp nnmail-movemail-program)
 		      (funcall nnmail-movemail-program inbox tofile)
-		    (apply 
-		     'call-process
-		     (append
-		      (list
-		       (expand-file-name 
-			nnmail-movemail-program exec-directory)
-		       nil errors nil inbox tofile)
-		      (when nnmail-internal-password
-			(list nnmail-internal-password))))))
-		(if (not (buffer-modified-p errors))
+		    (setq result
+			  (apply 
+			   'call-process
+			   (append
+			    (list
+			     (expand-file-name 
+			      nnmail-movemail-program exec-directory)
+			     nil errors nil inbox tofile)
+			    (when nnmail-internal-password
+			      (list nnmail-internal-password)))))))
+		(if (and (not (buffer-modified-p errors))
+			 (zerop result))
 		    ;; No output => movemail won
 		    (progn
 		      (unless popmail
@@ -617,8 +619,8 @@ parameter.  It should return nil, `warn' or `delete'."
 		    (when (looking-at "movemail: ")
 		      (delete-region (point-min) (match-end 0)))
 		    (unless (yes-or-no-p
-			     (format "movemail: %s.  Continue? "
-				     (buffer-string)))
+			     (format "movemail: %s (%d return).  Continue? "
+				     (buffer-string) result))
 		      (error "%s" (buffer-string)))
 		    (setq tofile nil)))))))
 	(message "Getting mail from %s...done" inbox)
@@ -707,12 +709,13 @@ is a spool.  If not using procmail, return GROUP."
       (goto-char (point-max))
       ;; Find the Message-ID header.
       (save-excursion
-	(if (re-search-backward "^Message-ID:[ \t]*\\(<[^>]*>\\)" nil t)
+	(if (re-search-backward
+	     "^Message-ID[ \t]*:[ \n\t]*\\(<[^>]*>\\)" nil t)
 	    (setq message-id (buffer-substring (match-beginning 1)
 					       (match-end 1)))
 	  ;; There is no Message-ID here, so we create one.
 	  (save-excursion
-	    (when (re-search-backward "^Message-ID:" nil t)
+	    (when (re-search-backward "^Message-ID[ \t]*:" nil t)
 	      (beginning-of-line)
 	      (insert "Original-")))
 	  (forward-line -1)
@@ -781,7 +784,7 @@ is a spool.  If not using procmail, return GROUP."
 		       (forward-line 1)
 		       (while (looking-at ">From ")
 			 (forward-line 1))
-		       (looking-at "[^ \t:]+[ \t]*:")))
+		       (looking-at "[^ \n\t:]+[ \n\t]*:")))
 	    (setq found 'yes)))))
     (beginning-of-line)
     (eq found 'yes)))
@@ -810,7 +813,7 @@ is a spool.  If not using procmail, return GROUP."
 		       (forward-line 1)
 		       (while (looking-at ">From ")
 			 (forward-line 1))
-		       (looking-at "[^ \t:]+[ \t]*:")))
+		       (looking-at "[^ \n\t:]+[ \n\t]*:")))
 	    (setq found 'yes)))))
     (beginning-of-line)
     (eq found 'yes)))
@@ -840,10 +843,10 @@ is a spool.  If not using procmail, return GROUP."
 	     (point))))
 	;; Find the Message-ID header.
 	(goto-char (point-min))
-	(if (re-search-forward "^Message-ID:[ \t]*\\(<[^>]+>\\)" nil t)
+	(if (re-search-forward "^Message-ID[ \t]*:[ \n\t]*\\(<[^>]+>\\)" nil t)
 	    (setq message-id (match-string 1))
 	  (save-excursion
-	    (when (re-search-forward "^Message-ID:" nil t)
+	    (when (re-search-forward "^Message-ID[ \t]*:" nil t)
 	      (beginning-of-line)
 	      (insert "Original-")))
 	  ;; There is no Message-ID here, so we create one.
@@ -924,11 +927,11 @@ is a spool.  If not using procmail, return GROUP."
 	     (point))))
 	;; Find the Message-ID header.
 	(goto-char (point-min))
-	(if (re-search-forward "^Message-ID:[ \t]*\\(<[^>]+>\\)" nil t)
+	(if (re-search-forward "^Message-ID[ \t]*:[ \n\t]*\\(<[^>]+>\\)" nil t)
 	    (setq message-id (match-string 1))
 	  ;; There is no Message-ID here, so we create one.
 	  (save-excursion
-	    (when (re-search-backward "^Message-ID:" nil t)
+	    (when (re-search-backward "^Message-ID[ \t]*:" nil t)
 	      (beginning-of-line)
 	      (insert "Original-")))
 	  (forward-line 1)
@@ -1443,7 +1446,7 @@ See the documentation for the variable `nnmail-split-fancy' for documentation."
       (let ((case-fold-search t)
 	    (newid (nnmail-message-id)))
 	(goto-char (point-min))
-	(when (re-search-forward "^message-id:" nil t)
+	(when (re-search-forward "^message-id[ \t]*:" nil t)
 	  (beginning-of-line)
 	  (insert "Original-"))
 	(beginning-of-line)
@@ -1572,7 +1575,8 @@ If ARGS, PROMPT is used as an argument to `format'."
     (unless nnmail-read-passwd
       (if (load "passwd" t)
 	  (setq nnmail-read-passwd 'read-passwd)
-	(autoload 'ange-ftp-read-passwd "ange-ftp")
+	(unless (fboundp 'ange-ftp-read-passwd)
+	  (autoload 'ange-ftp-read-passwd "ange-ftp"))
 	(setq nnmail-read-passwd 'ange-ftp-read-passwd)))
     (funcall nnmail-read-passwd prompt)))
 
@@ -1581,7 +1585,7 @@ If ARGS, PROMPT is used as an argument to `format'."
   (save-restriction
     (message-narrow-to-head)
     (let ((case-fold-search t))
-      (unless (re-search-forward "^Message-ID:" nil t)
+      (unless (re-search-forward "^Message-ID[ \t]*:" nil t)
 	(insert "Message-ID: " (nnmail-message-id) "\n")))))
 
 (defun nnmail-write-region (start end filename &optional append visit lockname)

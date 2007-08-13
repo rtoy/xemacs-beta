@@ -1,5 +1,5 @@
 ;;; mic-paren.el --- highlight matching parenthesises.
-;;; Version 1.3 - 97-02-25
+;;; Version 1.3.1 - 97-02-27
 ;;; Copyright (C) 1997 Mikael Sjödin (mic@docs.uu.se)
 ;;;
 ;;; Author: Mikael Sjödin  --  mic@docs.uu.se
@@ -71,6 +71,9 @@
 
 ;;; ----------------------------------------------------------------------
 ;;; Versions:
+;;;
+;;; v1.3.1  Some spelling corrected (from Vinicius Jose Latorre
+;;;	    <vinicius@cpqd.br> and Steven L Baur <steve@altair.xemacs.org>)
 ;;;
 ;;; v1.3    Added code from Vinicius Jose Latorre <vinicius@cpqd.br> to
 ;;;	    highlight unmathced parenthesises (useful in minibuffer)
@@ -187,9 +190,9 @@ deactivated.")
 						 emacs-version))
   "*If non-nil mic-paren will not try to load the timer-feature when loaded.
 
-(I have no idea why you'd ever want to set this to non-nil but I hate packages
-which loads/activates stuff I don't want to use so I provide this way to prevent
-the loading if someone doesn't want timers to be loaded.)")
+(I have no idea why Emacs user ever want to set this to non-nil but I hate
+packages which loads/activates stuff I don't want to use so I provide this way
+to prevent the loading if someone doesn't want timers to be loaded.)")
 
 ;;; ------------------------------
 
@@ -357,7 +360,7 @@ point. When in sexp-mode this is the overlay for the expression after point.")
       (input-pending-p)			;[This might cause trouble since the
                                         ; function is unreliable]
       (condition-case paren-error
-	  (mic-paren-highligt)
+	  (mic-paren-highlight)
 	(error 
 	 (if (not (window-minibuffer-p (selected-window)))
 	     (message "mic-paren catched error (please report): %s"
@@ -365,14 +368,14 @@ point. When in sexp-mode this is the overlay for the expression after point.")
 
 (defun mic-paren-command-idle-hook ()
   (condition-case paren-error
-      (mic-paren-highligt)
+      (mic-paren-highlight)
     (error 
      (if (not (window-minibuffer-p (selected-window)))
 	 (message "mic-paren catched error (please report): %s" 
 		  paren-error)))))
 
 
-(defun mic-paren-highligt ()
+(defun mic-paren-highlight ()
   "The main-function of mic-paren. Does all highlighting, dinging, messages,
 cleaning-up."
   ;; Remove any old highlighting
@@ -414,7 +417,7 @@ cleaning-up."
 				 (char-after open)))
 		   (visible (pos-visible-in-window-p open)))
 	       ;; If highlight is appropriate
-	       ;;    highligt
+	       ;;    highlight
 	       ;; else
 	       ;;    remove any old highlight
 	       (if (or visible paren-highlight-offscreen paren-sexp-mode)
@@ -496,14 +499,14 @@ cleaning-up."
 	 ;; If match found
 	 ;;    highlight expression and/or print messages
 	 ;; else
-	 ;;    highligt unmatched paren
+	 ;;    highlight unmatched paren
 	 ;;    print no-match message
 	 (if close
 	     (let ((mismatch (/= (matching-paren (following-char)) 
 				 (char-after (1- close))))
 		   (visible (pos-visible-in-window-p close)))
 	       ;; If highlight is appropriate
-	       ;;    highligt
+	       ;;    highlight
 	       ;; else
 	       ;;    remove any old highlight
 	       (if (or visible paren-highlight-offscreen paren-sexp-mode)

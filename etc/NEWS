@@ -1188,19 +1188,79 @@ up-to-date.
 ** Future Plans for XEmacs
 ==========================
 
-For the curious, the biggest changes in 19.15 will include integration
-of TM (a MIME package for VM and GNUS), EFS (the next generation of
-ange-ftp), and Auc-TeX, and a "lite" distribution that includes a
-minimal base and a set of optional packages (which will include TM,
-EFS, and Auc-TeX, as well as all of the large packages currently
-distributed with XEmacs).  There will also still be a full distribution
-that includes all the optional packages.
+The next `feature' will be the unbundling of XEmacs into constituent
+installable packages.
 
 We are working on improving the Mule support in future releases:
 
--- Other input methods, such as wnn, will be supported.
+-- Other input methods, such as skk, will be supported.
+
+-- Wnn support will be made more solid.
 
 -- More user-level documentation on using Mule.
+
+** Major Differences between 20.0 and 20.1
+
+Many packages have been add and upgraded.
+
+-- Gnus-5.4.17  Courtesy of Lars Magne Ingebrigtsen
+-- mic-paren.el-1.3.1  Courtesy of Mikael Sjödin
+-- hyperbole-4.022 Courtesy of Bob Weiner
+-- W3-3.0.62 Courtesy of William Perry
+-- AUCTeX-9.7k Courtesy of Per Abrahamsen
+-- hm--html-menus-5.3 Courtesy of Heiko Muenkel
+-- custom-1.46 Courtesy of Per Abrahamsen
+-- python-mode.el-2.90 Courtesy of Barry Warsaw
+-- balloon-help-1.04 Courtesy of Kyle Jones
+-- xrdb-mode.el-1.21 Courtesy of Barry Warsaw
+-- igrep.el-2.56 Courtesy of Kevin Rodgers
+-- frame-icon.el Courtesy of Michael Lamoureux and Bob Weiner
+-- itimer.el-1.01 Courtesy of Kyle Jones
+-- redo.el-1.01 Courtesy of Kyle Jones
+-- VM-6.15 Courtesy of Kyle Jones
+-- OO-Browser-2.10 Courtesy of Bob Weiner
+-- viper-2.93 Courtesy of Michael Kifer
+-- ediff-2.64 Courtesy of Michael Kifer
+-- edmacro.el-3.05 Courtesy of Dave Gillespie, port to XEmacs by
+   Hrvoje Niksic.
+-- detached-minibuf.el Courtesy of Alvin Shelton
+-- whitespace-mode.el Courtesy of Heiko Muenkel
+-- winmgr-mode.el Courtesy of David Konerding, Stefan Strobel & Barry Warsaw
+-- mine.el-1.17 Courtesy of Jacques Duthen
+-- fast-lock.el-3.11.01 Courtesy of Simon Marshall
+-- lazy-lock.el-1.16 Courtesy of Simon Marshall
+-- browse-cltl2.el-1.1 Courtesy of Holger Schauer
+-- eldoc.el-1.8 Courtesy of Noah Friedman
+-- tm-7.105 Courtesy of MORIOKA Tomohiko
+-- efs-1.15 courtesy of Andy Norman and Michael Sperber
+-- verilog-mode.el Courtesy of Michael McNamara & Adrian Aichner
+-- overlay.el Courtesy of Joseph Nuspl
+
+*** User Interface changes.
+
+The keysyms mouse-1, mouse-2, mouse-3 and down-mouse-1, down-mouse-2,
+and down-mouse-3 have been added for Emacs compatibility.
+
+A new user customizable variable `signal-error-on-buffer-boundary' has
+been added.  Set this to nil to avoid XEmacs usual lossage of zmacs
+region when moving up against a buffer boundary.
+
+The logo has been changed, and the default background color is now
+shade of gray instead of white.
+
+*** Other changes
+
+First alpha level support of MS Windows NT is available courtesy of
+David Hobley.
+
+Wnn/egg now has initial support Courtesy of Jareth Hein.
+
+The XEmacs build process has been changed to make site administration
+easier.  See lisp/site-load.el for details.
+
+Various functions that were previously disabled are now enabled like
+eval-expression (M-:) and upcase-region (C-x C-u)/downcase-region (C-x
+C-l).
 
 ** Major Differences Between 19.14 and 20.0
 

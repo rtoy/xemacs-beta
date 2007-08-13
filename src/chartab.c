@@ -29,6 +29,8 @@ Boston, MA 02111-1307, USA.  */
 
    Ben Wing: wrote, for 19.13 (Mule).  Some category table stuff
              loosely based on the original Mule.
+   Jareth Hein: fixed a couple of bugs in the implementation, and
+   	     added regex support for categories with check_category_at
  */
 
 #include <config.h>
@@ -786,24 +788,16 @@ get_non_ascii_char_table_value (struct Lisp_Char_Table *ct, int leading_byte,
 
 #endif /* MULE */
 
-DEFUN ("get-char-table", Fget_char_table, 2, 2, 0, /*
-Find value for char CH in TABLE.
-*/
-       (ch, table))
+static Lisp_Object
+get_char_table (Emchar ch, struct Lisp_Char_Table *ct) 
 {
-  struct Lisp_Char_Table *ct;
-
-  CHECK_CHAR_TABLE (table);
-  ct = XCHAR_TABLE (table);
-  CHECK_CHAR_COERCE_INT (ch);
-
 #ifdef MULE
   {
     Lisp_Object charset;
     int byte1, byte2;
     Lisp_Object val;
     
-    BREAKUP_CHAR (XCHAR (ch), charset, byte1, byte2);
+    BREAKUP_CHAR (ch, charset, byte1, byte2);
     
     if (EQ (charset, Vcharset_ascii))
       val = ct->ascii[byte1];
@@ -830,8 +824,25 @@ Find value for char CH in TABLE.
     return val;
   }
 #else /* not MULE */
-  return ct->ascii[(unsigned char) XCHAR (ch)];
+  return ct->ascii[(unsigned char)ch];
 #endif /* not MULE */
+}
+
+
+DEFUN ("get-char-table", Fget_char_table, 2, 2, 0, /*
+Find value for char CH in TABLE.
+*/
+       (ch, table))
+{
+  struct Lisp_Char_Table *ct;
+  Emchar chr;
+  
+  CHECK_CHAR_TABLE (table);
+  ct = XCHAR_TABLE (table);
+  CHECK_CHAR_COERCE_INT (ch);
+  chr = XCHAR(ch);
+  
+  return (get_char_table (chr, ct));
 }
 
 DEFUN ("get-range-char-table", Fget_range_char_table, 2, 3, 0, /*
@@ -1386,7 +1397,7 @@ map_char_table (struct Lisp_Char_Table *ct,
 
     case CHARTAB_RANGE_ROW:
       {
-	Lisp_Object val = ct->level1[XCHARSET_LEADING_BYTE (range->charset)];
+	Lisp_Object val = ct->level1[XCHARSET_LEADING_BYTE (range->charset) - MIN_LEADING_BYTE];
 	if (!CHAR_TABLE_ENTRYP (val))
 	  {
 	    struct chartab_range rainj;
@@ -1490,6 +1501,7 @@ the entire table.
 
   return slarg.retval;
 }
+
 
 
 /************************************************************************/
@@ -1605,7 +1617,7 @@ There are 95 different categories available, one for each printable
 character (including space) in the ASCII charset.  Each category
 is designated by one such character, called a \"category designator\".
 They are specified in a regexp using the syntax \"\\cX\", where X is
-a category designator. (This is not yet implemented.)
+a category designator.
 
 A category table specifies, for each character, the categories that
 the character is in.  Note that a character can be in more than one
@@ -1633,6 +1645,46 @@ check_category_table (Lisp_Object obj, Lisp_Object def)
     obj = wrong_type_argument (Qcategory_table_p, obj);
   return (obj);
 }   
+
+int
+check_category_at(Emchar ch, Lisp_Object table,
+		  unsigned int designator, unsigned int not)
+{
+  register Lisp_Object temp;
+  struct Lisp_Char_Table *ctbl;  
+#if 1 /* ifdef ERROR_CHECK_TYPECHECK */
+  if (NILP (Fcategory_table_p (table)))
+    signal_simple_error("Expected category table", table);
+#endif
+  ctbl = XCHAR_TABLE(table);
+  temp = get_char_table(ch, ctbl);
+  if (EQ (temp, Qnil)) return not;
+  
+  designator -= ' ';
+  return (bit_vector_bit(XBIT_VECTOR (temp), designator) ? !not : not);
+}
+
+DEFUN ("check-category-at", Fcheck_category_at, 2, 4, 0, /*
+Return t if category of a character at POS includes DESIGNATIOR,
+else return nil. Optional third arg specifies which buffer
+(defaulting to current), and fourth specifies the CATEGORY-TABLE,
+(defaulting to the buffer's category table).
+*/
+       (pos, designator, buffer, category_table))
+{
+  Lisp_Object ctbl;
+  Emchar ch;
+  unsigned int des;
+  struct buffer *buf = decode_buffer(buffer, 0);
+
+  CHECK_INT (pos);
+  CHECK_CATEGORY_DESIGNATOR (designator);
+  des = XREALINT(designator);
+  ctbl = check_category_table (category_table, Vstandard_category_table);
+  ch = BUF_FETCH_CHAR (buf, XINT(pos));
+  return (check_category_at(ch, ctbl, des, 0)
+	  ? Qt : Qnil);
+}
 
 DEFUN ("category-table", Fcategory_table, 0, 1, 0, /*
 Return the current category table.
@@ -1737,7 +1789,7 @@ syms_of_chartab (void)
   DEFSUBR (Fstandard_category_table);
   DEFSUBR (Fcopy_category_table);
   DEFSUBR (Fset_category_table);
-
+  DEFSUBR (Fcheck_category_at);
   DEFSUBR (Fcategory_designator_p);
   DEFSUBR (Fcategory_table_value_p);
 #endif /* MULE */

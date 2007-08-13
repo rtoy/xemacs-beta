@@ -1332,21 +1332,37 @@ release: temacs ${lisp} ${libsrc}DOC MOFILE OTHER_FILES
 	-if [ -w ${srcdir}/../lisp ]; then \
 	  w=`pwd`; cd ${srcdir} && $${w}/temacs -nl -batch -l inc-vers; \
 	else true; fi
-	$(DUMPENV) ./temacs -nl -batch -l loadup.el dump
+	@touch SATISFIED
+	-$(DUMPENV) ./temacs -nl -batch -l loadup.el dump
+	@if [ -f SATISFIED ]; then \
+		$(MAKE) release; \
+	fi
 #else /* ! defined (HAVE_SHM) */
 	-if [ -w ${srcdir}/../lisp ]; then \
 	  w=`pwd`; cd ${srcdir} && $${w}/temacs -batch -l inc-vers; \
 	else true; fi
-	$(DUMPENV) ./temacs -batch -l loadup.el dump
+	@touch SATISFIED
+	-$(DUMPENV) ./temacs -batch -l loadup.el dump
+	@if [ -f SATISFIED ]; then \
+		$(MAKE) release; \
+	fi
 #endif /* ! defined (HAVE_SHM) */
 	touch release
 #endif /* ! defined (CANNOT_DUMP) */
 
 xemacs: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
-	$(DUMPENV) ./temacs -batch -l loadup.el dump
+	@touch SATISFIED
+	-$(DUMPENV) ./temacs -batch -l loadup.el dump
+	@if [ -f SATISFIED ]; then \
+		$(MAKE) xemacs; \
+	fi
 
 xemacs-no-site-file: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
-	$(DUMPENV) ./temacs -batch -l loadup.el dump no-site-file
+	@touch SATISFIED
+	-$(DUMPENV) ./temacs -batch -l loadup.el dump no-site-file
+	@if [ -f SATISFIED ]; then \
+		$(MAKE) xemacs-no-site-file; \
+	fi
 
 obj_src = $(objs:.o=.c)
 
@@ -1598,6 +1614,11 @@ config.h: ${srcdir}/config.h.in
 	@echo "Consult the file \`INSTALL' for instructions for building Emacs."
 	exit 1
 
+puresize_adjust.h: ${srcdir}/puresize.h
+	@echo "The file puresize_adjust still needs to be generated."
+	@echo "Please run 'make' from the top-level."
+	exit 1
+
 paths.h: ${srcdir}/paths.h.in
 	@echo "The file paths.h needs to be set up from paths.h.in."
 	@echo "Consult the file \`INSTALL' for instructions for building Emacs."
@@ -1716,7 +1737,7 @@ clean: mostlyclean
 /**/# This is used in making a distribution.
 /**/# Do not use it on development directories!
 distclean: clean versionclean
-	rm -f config.h paths.h Emacs.ad.h Makefile Makefile.in .pure
+	rm -f config.h paths.h puresize_adjust.h Emacs.ad.h Makefile Makefile.in .pure
 realclean: distclean
 	rm -f TAGS
 versionclean:
@@ -2072,7 +2093,7 @@ alloc.o: extents.h
 alloc.o: frame.h
 alloc.o: frameslots.h
 alloc.o: glyphs.h
-alloc.o: puresize.h PURESIZE.h
+alloc.o: puresize.h puresize_adjust.h
 alloc.o: redisplay.h
 alloc.o: scrollbar.h
 alloc.o: specifier.h
@@ -3251,7 +3272,7 @@ profile.o: systime.h
 pure.o: blocktype.h
 pure.o: config.h
 pure.o: dynarr.h
-pure.o: puresize.h PURESIZE.h
+pure.o: puresize.h puresize_adjust.h
 ralloc.o: blocktype.h
 ralloc.o: config.h
 ralloc.o: dynarr.h

@@ -1265,8 +1265,8 @@ you want to add code to do stuff like this, use the create-device-hook."
   ;; specified.
   (unless (or (face-differs-from-default-p 'zmacs-region device)
 	      (face-background 'zmacs-region 'global))
-    (set-face-background 'zmacs-region "gray" 'global 'color)
-    (set-face-background 'zmacs-region "gray80" 'global 'grayscale))
+    (set-face-background 'zmacs-region "gray65" 'global 'color)
+    (set-face-background 'zmacs-region "gray65" 'global 'grayscale))
   (unless (or (face-differs-from-default-p 'zmacs-region device)
 	      (face-background-pixmap 'zmacs-region 'global))
     (set-face-background-pixmap 'zmacs-region [nothing] 'global 'color)
@@ -1296,8 +1296,8 @@ you want to add code to do stuff like this, use the create-device-hook."
   ;; Set the primary-selection color unless already specified.
   (unless (or (face-differs-from-default-p 'primary-selection device)
 	      (face-background 'primary-selection 'global))
-    (set-face-background 'primary-selection "gray" 'global 'color)
-    (set-face-background 'primary-selection "gray80" 'global 'grayscale))
+    (set-face-background 'primary-selection "gray65" 'global 'color)
+    (set-face-background 'primary-selection "gray65" 'global 'grayscale))
   (unless (or (face-differs-from-default-p 'secondary-selection device)
 	      (face-background-pixmap 'primary-selection 'global))
     (set-face-background-pixmap 'primary-selection "gray3" 'global 'mono))

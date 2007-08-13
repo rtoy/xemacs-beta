@@ -29,6 +29,7 @@
 
 ;; Written by Ben Wing <wing@666.com>.  The initialization code
 ;; at the end of this file comes from Mule.
+;; Some bugfixes by Jareth Hein <jhod@po.iijnet.or.jp>
 
 ;;; Code:
 
@@ -93,13 +94,14 @@ If optional fourth argument RESET is non-nil, previous categories associated
       (put-char-table char-range nil table))
   (map-char-table
    #'(lambda (key value)
-       ;; make sure that this range has a bit-vector assigned to it,
-       ;; and set the appropriate bit in that vector.
+       ;; make sure that this range has a bit-vector assigned to it
        (if (not (bit-vector-p value))
-	   (progn
-	     (setq value (make-bit-vector 95 0))
-	     (put-char-table key value table)))
-       (aset value (- designator 32) 1))
+	   (setq value (make-bit-vector 95 0))
+	 (setq value (copy-sequence value)))
+       ;; set the appropriate bit in that vector.
+       (aset value (- designator 32) 1)
+       ;; put the vector back, thus assuring we have a unique setting for this range
+       (put-char-table key value table))
    table char-range))
 
 (defun char-category-list (char &optional table)
@@ -246,7 +248,8 @@ Each element is a list of a charset, a designator, and maybe a doc string.")
     (setq i (1+ i)))
   (setq l predefined-category-list)
   (while l
-    (if (nth 2 (car l))
+    (if (and (nth 2 (car l))
+	     (not (defined-category-p (nth 2 (car l)))))
 	(define-category (nth 1 (car l)) (nth 2 (car l))))
     (modify-category-entry (car (car l)) (nth 1 (car l)))
     (setq l (cdr l))))

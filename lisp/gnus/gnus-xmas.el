@@ -137,9 +137,12 @@ It is provided only to ease porting of broken FSF Emacs programs."
     (set-extent-face gnus-newsgroup-selected-overlay
 		     gnus-summary-selected-face)))
 
-(defvar gnus-xmas-force-redisplay t
+(defvar gnus-xmas-force-redisplay nil
   "If non-nil, force a redisplay before recentering the summary buffer.
 This is ugly, but it works around a bug in `window-displayed-height'.")
+
+(defun gnus-xmas-switch-horizontal-scrollbar-off ()
+  (set-specifier scrollbar-height (cons (current-buffer) 0)))
 
 (defun gnus-xmas-summary-recenter ()
   "\"Center\" point in the summary window.
@@ -325,7 +328,9 @@ call it with the value of the `gnus-data' text property."
   (let ((event (next-command-event)))
     (sit-for 0)
     ;; We junk all non-key events.  Is this naughty?
-    (while (not (key-press-event-p event))
+    (while (not (or (key-press-event-p event)
+		    (button-press-event-p event)))
+      (dispatch-event event)
       (setq event (next-command-event)))
     (cons (and (key-press-event-p event) 
 	       (event-to-character event)) 
@@ -434,10 +439,6 @@ call it with the value of the `gnus-data' text property."
 	    (color-instance-rgb-components
 	     (make-color-instance color))))))
 
-(defun gnus-xmas-region-active-p ()
-  (and (fboundp 'region-active-p)
-       (region-active-p)))
-
 (defun gnus-xmas-redefine ()
   "Redefine lots of Gnus functions for XEmacs."
   (fset 'gnus-summary-make-display-table 'ignore)
@@ -458,7 +459,7 @@ call it with the value of the `gnus-data' text property."
   (fset 'gnus-mode-line-buffer-identification
 	'gnus-xmas-mode-line-buffer-identification)
   (fset 'gnus-key-press-event-p 'key-press-event-p)
-  (fset 'gnus-region-active-p 'gnus-xmas-region-active-p)
+  (fset 'gnus-region-active-p 'region-active-p)
   
   (add-hook 'gnus-group-mode-hook 'gnus-xmas-group-menu-add)
   (add-hook 'gnus-summary-mode-hook 'gnus-xmas-summary-menu-add)
@@ -475,6 +476,8 @@ call it with the value of the `gnus-data' text property."
 
   (add-hook 'gnus-group-mode-hook 'gnus-xmas-setup-group-toolbar)
   (add-hook 'gnus-summary-mode-hook 'gnus-xmas-setup-summary-toolbar)
+
+  (add-hook 'gnus-summary-mode-hook 'gnus-xmas-switch-horizontal-scrollbar-off)
 
   (when (and (<= emacs-major-version 19)
 	     (<= emacs-minor-version 13))

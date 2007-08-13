@@ -192,6 +192,8 @@ extern Lisp_Object Vall_syntax_tables;
 
 
 #ifdef MULE
+int check_category_at(Emchar ch, Lisp_Object ctbl,
+		      unsigned int designator, unsigned int not);
 
 extern Lisp_Object Qcategory_table_p, Qcategory_designator_p;
 extern Lisp_Object Qcategory_table_value_p;

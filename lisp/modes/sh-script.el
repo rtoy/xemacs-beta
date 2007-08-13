@@ -382,8 +382,8 @@ The actual command ends at the end of the first \\(grouping\\).")
   "Word to delimit here documents.")
 
 (defvar sh-test
-  '((sh "[  ]" . 3)
-    (ksh88 "[[  ]]" . 4))
+  '((sh "[  ]" . 2)
+    (ksh88 "[[  ]]" . 3))
   "Initial input in Bourne if, while and until skeletons.  See `sh-feature'.")
 
 

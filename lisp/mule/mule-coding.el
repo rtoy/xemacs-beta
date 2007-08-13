@@ -54,23 +54,6 @@ from a Lisp program, use `detect-coding-region' instead."
   (interactive "r\nP")
   (princ (detect-coding-region start end)))
 
-(defmacro with-string-as-buffer-contents (str &rest body)
-  "With the contents of the current buffer being STR, run BODY.
-Returns the new contents of the buffer, as modified by BODY.
-The original current buffer is restored afterwards."
-  `(let ((curbuf (current-buffer))
-         (tempbuf (get-buffer-create " *string-as-buffer-contents*")))
-     (unwind-protect
-         (progn
-           (set-buffer tempbuf)
-           (buffer-disable-undo (current-buffer))
-           (erase-buffer)
-           (insert ,str)
-           ,@body
-           (buffer-string))
-       (erase-buffer tempbuf)
-       (set-buffer curbuf))))
-
 (defun decode-coding-string (str coding-system)
   "Decode the string STR which is encoded in CODING-SYSTEM.
 Does not modify STR.  Returns the decoded string on successful conversion."

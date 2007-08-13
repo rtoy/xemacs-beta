@@ -1,3 +1,27 @@
+Mon Mar  3 18:09:17 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b4 is released.
+
+Sat Mar  1 15:38:30 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (distclean): Correct typos.
+
+	* XEmacs 19.15-b96 is released.
+
+	* configure.in: Symlink site-lisp when using --srcdir.
+	Add special handling of lisp directory to allow for multiple
+	site-packages files.
+
+Fri Feb 28 20:38:46 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (distclean): Create lock and site-lisp directories
+	when they don't exist (after being pruned by CVS).
+
+Tue Mar  4 00:41:38 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* etc/sample.Xdefaults: Added customization of foreground and
+	background colors for the `default' face.
+
 Wed Feb 26 22:12:12 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in (top_distclean): Reset src/PURESIZE.h for

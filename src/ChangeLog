@@ -1,3 +1,37 @@
+Sat Mar  1 01:20:39 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* doc.c (weird_doc): Don't print `duplicate' messages as they are
+	almost always due to symbols that are both autoloaded and dumped.
+
+	* data.c (syms_of_data): char-int and int-char -> char-to-int and
+	int-to-char.
+
+Thu Feb 27 21:48:32 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (xemacs): Loop when dumping until SATISFIED.
+
+	* lstream.c (signal_simple_internal_error): Remove the abort().
+
+	* alloc.c (Fpurecopy): Make it work for byte compiled functions.
+	(Fgarbage_collect): Disable garbage collection if we're dumping
+	XEmacs and we've overflowed purespace.
+
+Thu Feb 27 14:14:53 1997  Darrell Kindred  <dkindred@cmu.edu>
+
+	* event-Xt.c (change_frame_visibility): New function.
+	(handle_map_event): Use it.
+	(emacs_Xt_handle_magic_event): Correction of handling of
+	VisibilityNotify.
+
+Thu Feb 27 14:12:57 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* frame-x.c (x_frame_visible_p): Reverse previous change.
+
+Sun Mar  2 14:01:32 1997  David Moore  <dmoore@ucsd.edu>
+
+	* regex.c (re_search_2): Properly handle crossing the buffer gap
+	when doing a backwards search under MULE.
+
 Wed Feb 26 10:24:40 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in.in: make-docfile takes a "-i" parameter to pass

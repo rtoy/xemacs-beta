@@ -1282,7 +1282,8 @@ increase the score of each group you read."
     "r" gnus-summary-caesar-message
     "t" gnus-article-hide-headers
     "v" gnus-summary-verbose-headers
-    "m" gnus-summary-toggle-mime)
+    "m" gnus-summary-toggle-mime
+    "h" gnus-article-treat-html)
 
   (gnus-define-keys (gnus-summary-wash-hide-map "W" gnus-summary-wash-map)
     "a" gnus-article-hide
@@ -2073,7 +2074,7 @@ The following commands are available:
 
 ;; Some summary mode macros.
 
-(defmacro gnus-summary-article-number ()
+(defun gnus-summary-article-number ()
   "The article number of the article on the current line.
 If there isn's an article number here, then we return the current
 article number."
@@ -2913,7 +2914,19 @@ If NO-DISPLAY, don't generate a summary buffer."
        header level nil (gnus-article-mark article)
        (memq article gnus-newsgroup-replied)
        (memq article gnus-newsgroup-expirable)
-       (mail-header-subject header)
+       ;; Only insert the Subject string when it's different
+       ;; from the previous Subject string.
+       (unless (gnus-subject-equal
+		(condition-case ()
+		    (mail-header-subject
+		     (gnus-data-header
+		      (cadr 
+		       (gnus-data-find-list
+			article
+			(gnus-data-list t)))))
+		  (error ""))
+		(mail-header-subject header))
+	 (mail-header-subject header))
        nil (cdr (assq article gnus-newsgroup-scored))
        (memq article gnus-newsgroup-processable))
       (when length
@@ -3868,12 +3881,21 @@ If WHERE is `summary', the summary mode line format will be used."
 		    (gnus-mode-string-quote
 		     (mail-header-subject gnus-current-headers))
 		  ""))
-	       max-len
+	       bufname-length max-len
 	       gnus-tmp-header);; passed as argument to any user-format-funcs
 	  (setq mode-string (eval mformat))
+	  (setq bufname-length (if (string-match "%b" mode-string)
+				   (- (length
+				       (buffer-name
+					(if (eq where 'summary)
+					    nil
+					  (get-buffer gnus-article-buffer))))
+				      2)
+				 0))
 	  (setq max-len (max 4 (if gnus-mode-non-string-length
 				   (- (window-width)
-				      gnus-mode-non-string-length)
+				      gnus-mode-non-string-length
+				      bufname-length)
 				 (length mode-string))))
 	  ;; We might have to chop a bit of the string off...
 	  (when (> (length mode-string) max-len)
@@ -4299,9 +4321,9 @@ list of headers that match SEQUENCE (see `nntp-retrieve-headers')."
       ;; headers using HEAD.
       (if (or (not also-fetch-heads)
 	      (not sequence))
+	  ;; We (probably) got all the headers.
 	  (nreverse headers)
-	(let ((gnus-nov-is-evil t)
-	      (nntp-nov-is-evil t))
+	(let ((gnus-nov-is-evil t))
 	  (nconc
 	   (nreverse headers)
 	   (when (gnus-retrieve-headers sequence group)
@@ -5260,6 +5282,10 @@ If BACKWARD, the previous article is selected instead of the next."
     (unless (gnus-ephemeral-group-p gnus-newsgroup-name)
       (gnus-summary-jump-to-group gnus-newsgroup-name))
     (let ((cmd last-command-char)
+	  (point
+	   (save-excursion
+	     (set-buffer gnus-group-buffer)
+	     (point)))
 	  (group
 	   (if (eq gnus-keep-same-level 'best)
 	       (gnus-summary-best-group gnus-newsgroup-name)
@@ -5288,16 +5314,16 @@ If BACKWARD, the previous article is selected instead of the next."
        (t
 	(when (gnus-key-press-event-p last-input-event)
 	  (gnus-summary-walk-group-buffer
-	   gnus-newsgroup-name cmd unread backward))))))))
+	   gnus-newsgroup-name cmd unread backward point))))))))
 
-(defun gnus-summary-walk-group-buffer (from-group cmd unread backward)
+(defun gnus-summary-walk-group-buffer (from-group cmd unread backward start)
   (let ((keystrokes '((?\C-n (gnus-group-next-unread-group 1))
 		      (?\C-p (gnus-group-prev-unread-group 1))))
 	(cursor-in-echo-area t)
 	keve key group ended)
     (save-excursion
       (set-buffer gnus-group-buffer)
-      (gnus-summary-jump-to-group from-group)
+      (goto-char start)
       (setq group
 	    (if (eq gnus-keep-same-level 'best)
 		(gnus-summary-best-group gnus-newsgroup-name)
@@ -6967,9 +6993,7 @@ groups."
     (save-excursion
       (set-buffer gnus-article-buffer)
       (save-restriction
-	(goto-char (point-min))
-	(search-forward "\n\n")
-	(narrow-to-region (point-min) (point))
+	(gnus-narrow-to-body)
 	(message "This message would go to %s"
 		 (mapconcat 'car (nnmail-article-group 'identity) ", "))))))
 
@@ -7694,7 +7718,7 @@ with that article."
     (gnus-summary-goto-subject article)))
 
 (defun gnus-summary-reparent-thread ()
-  "Make current article child of the marked (or previous) article.
+  "Make the current article child of the marked (or previous) article.
 
 Note that the re-threading will only work if `gnus-thread-ignore-subject'
 is non-nil or the Subject: of both articles are the same."
@@ -7706,7 +7730,7 @@ is non-nil or the Subject: of both articles are the same."
   (save-window-excursion
     (let ((gnus-article-buffer " *reparent*")
 	  (current-article (gnus-summary-article-number))
-					; first grab the marked article, otherwise one line up.
+	  ;; First grab the marked article, otherwise one line up.
 	  (parent-article (if (not (null gnus-newsgroup-processable))
 			      (car gnus-newsgroup-processable)
 			    (save-excursion
@@ -7720,19 +7744,18 @@ is non-nil or the Subject: of both articles are the same."
 	(unless (and message-id (not (equal message-id "")))
 	  (error "No message-id in desired parent."))
 	(gnus-summary-select-article t t nil current-article)
-	(set-buffer gnus-article-buffer)
-	(setq buffer-read-only nil)
+	(set-buffer gnus-original-article-buffer)
 	(let ((buf (format "%s" (buffer-string))))
-	  (erase-buffer)
-	  (insert buf))
-	(goto-char (point-min))
-	(if (search-forward-regexp "^References: " nil t)
-	    (insert message-id " " )
-	  (insert "References: " message-id "\n"))
-	(unless (gnus-request-replace-article current-article
-					      (car gnus-article-current)
-					      gnus-article-buffer)
-	  (error "Couldn't replace article."))
+	  (nnheader-temp-write nil
+	    (insert buf)
+	    (goto-char (point-min))
+	    (if (search-forward-regexp "^References: " nil t)
+		(insert message-id " " )
+	      (insert "References: " message-id "\n"))
+	    (unless (gnus-request-replace-article
+		     current-article (car gnus-article-current)
+		     (current-buffer))
+	      (error "Couldn't replace article."))))
 	(set-buffer gnus-summary-buffer)
 	(gnus-summary-unmark-all-processable)
 	(gnus-summary-rethread-current)

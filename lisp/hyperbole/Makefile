@@ -4,7 +4,7 @@
 # AUTHOR:       Bob Weiner
 #
 # ORIG-DATE:    15-Jun-94 at 03:42:38
-# LAST-MOD:     21-Feb-97 at 18:04:02 by Bob Weiner
+# LAST-MOD:     23-Feb-97 at 23:22:48 by Bob Weiner
 #
 # This file is part of Hyperbole.
 # Available for use and distribution under the same terms as GNU Emacs.
@@ -98,7 +98,7 @@ DIST_DIR = /tmp
 #                     NO CHANGES REQUIRED BELOW HERE.                    #
 ##########################################################################
 
-HYPB_VERSION = 4.021
+HYPB_VERSION = 4.022
 
 # Libraries that must be pre-loaded before trying to byte-compile anything.
 PRELOADS = $(SITE_PRELOADS) -l ./hversion.el -l ./hyperbole.el -l ./hsite.el

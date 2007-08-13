@@ -143,9 +143,9 @@ Motif menubar. (In fact, the Motif menubar is currently broken.)  If
 
 The `--with-scrollbars=TYPE' option allows you to specify which X
 toolkit you wish to use for the scrollbars.  The valid options are
-`lucid', `motif', `athena' and `none'.  The default is `lucid' which
-is a Motif-lookalike scrollbar.  If `none' is specified then support
-for scrollbars will not be compiled in.
+`lucid', `motif', `athena', `athena3d', and `none'.  The default is
+`lucid' which is a Motif-lookalike scrollbar.  If `none' is specified
+then support for scrollbars will not be compiled in.
 
 The `--with-dialogs=TYPE' option allows you to specify which X toolkit
 you wish to use for the scrollbars.  The valid options are `athena',
@@ -233,7 +233,8 @@ The `--with-xmu=no' option can be used if your vendor doesn't ship
 the Xmu library.
 
 The `--puresize' option can be used to change the amount of purespace
-allocated for the dumped XEmacs.
+allocated for the dumped XEmacs.  As of XEmacs 20.1 usage of this
+parameter is deprecated and, in fact, ignored.
 
 The `--with-sound=TYPE' option specifies that XEmacs should be built
 with sound support.  Native (`--with-sound=native') sound support is
@@ -271,6 +272,17 @@ The `--verbose' and `--extra-verbose' options are intended for use
 only by the developers.  `--verbose' causes the results of all
 configure tests to be displayed.  `--extra-verbose' also displays the
 output of any compiler invocations done by configure.
+
+The `--with-wnn' and `--with-wnn6' options are for compiling with the
+Wnn multi-language input method.  `--with-wnn' is for compiling
+against Wnn-4.2 the free version of WNN.  This is beta level code.
+`--with-wnn6' is for compiling against WNN6 the commercial version of
+WNN.  This is alpha level code and very lightly tested at present.
+
+The `--wnn-includes=DIR' and `wnn-libraries=DIR' options are provided
+for specifying information about where to find WNN include directories
+and WNN libraries.  Currently you need to specify wnn-includes in most
+installations of Wnn-4.2.
 
 `configure' doesn't do any compilation or installation
 itself.  It just creates the files that influence those things:

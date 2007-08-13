@@ -534,6 +534,7 @@ typedef enum
 
 	/* Matches any character whose syntax is not that specified.  */
   notsyntaxspec
+
 #endif /* emacs */
 
 #ifdef MULE
@@ -547,6 +548,11 @@ typedef enum
 
   charset_mule_not   /* Same parameters as charset_mule, but match any
 			character that is not one of those specified.  */
+
+  /* 97/2/17 jhod: The following two were merged back in from the Mule
+     2.3 code to enable some language specific processing */
+  ,categoryspec,     /* Matches entries in the character category tables */
+  notcategoryspec    /* The opposite of the above */
 #endif
        
 } re_opcode_t;
@@ -919,6 +925,22 @@ print_partial_compiled_pattern (unsigned char *start, unsigned char *end)
 	  mcnt = *p++;
 	  printf ("/%d", mcnt);
 	  break;
+	  
+#ifdef MULE
+/* 97/2/17 jhod Mule category patch */  
+	case categoryspec:
+	  printf ("/categoryspec");
+	  mcnt = *p++;
+	  printf ("/%d", mcnt);
+	  break;
+
+	case notcategoryspec:
+	  printf ("/notcategoryspec");
+	  mcnt = *p++;
+	  printf ("/%d", mcnt);
+	  break;
+/* end of category patch */  
+#endif /* MULE */
 #endif /* emacs */
 
 	case wordchar:
@@ -972,6 +994,7 @@ print_compiled_pattern (struct re_pattern_buffer *bufp)
   printf ("not_eol: %d\t", bufp->not_eol);
   printf ("syntax: %d\n", bufp->syntax);
   /* Perhaps we should print the translate table?  */
+  /* and maybe the category table? */
 }
 
 
@@ -1065,6 +1088,7 @@ static CONST char *re_error_msgid[] =
 #endif
 #ifdef MULE
     "Ranges may not span charsets",		/* REG_ERANGESPAN */
+    "Invalid category designator",		/* REG_ECATEGORY */
 #endif
   };
 
@@ -2835,6 +2859,26 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
 		FREE_STACK_RETURN (REG_ESYNTAX);
               BUF_PUSH_2 (notsyntaxspec, syntax_spec_code[c]);
               break;
+
+#ifdef MULE
+/* 97.2.17 jhod merged in to XEmacs from mule-2.3 */
+	    case 'c':	
+	      laststart = b;
+	      PATFETCH_RAW (c);
+	      if (c < 32 || c > 127)
+		FREE_STACK_RETURN (REG_ECATEGORY);
+	      BUF_PUSH_2 (categoryspec, c);
+	      break;
+
+	    case 'C':
+	      laststart = b;
+	      PATFETCH_RAW (c);
+	      if (c < 32 || c > 127)
+		FREE_STACK_RETURN (REG_ECATEGORY);
+	      BUF_PUSH_2 (notcategoryspec, c);
+	      break;
+/* end of category patch */
+#endif /* MULE */
 #endif /* emacs */
 
 
@@ -3588,6 +3632,14 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 #endif /* ! MULE */
 	  break;
 
+#ifdef MULE
+/* 97/2/17 jhod category patch */
+	case categoryspec:
+	case notcategoryspec:
+	  bufp->can_be_null = 1;
+	  return;
+/* end if category patch */
+#endif /* MULE */
 
       /* All cases after this match the empty string.  These end with
          `continue'.  */
@@ -3819,6 +3871,8 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 #ifdef REGEX_BEGLINE_CHECK
   int anchored_at_begline = 0;
 #endif
+  CONST unsigned char *d;
+  Charcount d_size;
 
   /* Check for out-of-range STARTPOS.  */
   if (startpos < 0 || startpos > total_size)
@@ -3826,13 +3880,8 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
     
   /* Fix up RANGE if it might eventually take us outside
      the virtual concatenation of STRING1 and STRING2.  */
-#if 0
-  if (endpos < -1)
-    range = -1 - startpos;
-#else
   if (endpos < 0)
     range = 0 - startpos;
-#endif
   else if (endpos > total_size)
     range = total_size - startpos;
 
@@ -3880,7 +3929,6 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 	  /* whose stupid idea was it anyway to make this
 	     function take two strings to match?? */
 	  int lim = 0;
-	  register CONST unsigned char *d;
 	  int irange = range;
 
 	  if (startpos < size1 && startpos + range >= size1)
@@ -3888,7 +3936,8 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 
 	  d = ((CONST unsigned char *)
 	       (startpos >= size1 ? string2 - size1 : string1) + startpos);
-	  DEC_CHARPTR(d);
+	  DEC_CHARPTR(d);	/* Ok, since startpos != size1. */
+	  d_size = charcount_to_bytecount (d, 1);
 
 	  if (translate)
 #ifdef MULE
@@ -3897,14 +3946,16 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 	    while (range > lim && translate[*d] != '\n')
 #endif
 	      {
-		INC_CHARPTR(d);
-		range -= charcount_to_bytecount (d, 1);
+		d += d_size;	/* Speedier INC_CHARPTR(d) */
+		d_size = charcount_to_bytecount (d, 1);
+		range -= d_size;
 	      }
 	  else
 	    while (range > lim && *d != '\n')
 	      {
-		INC_CHARPTR(d);
-		range -= charcount_to_bytecount (d, 1);
+		d += d_size;	/* Speedier INC_CHARPTR(d) */
+		d_size = charcount_to_bytecount (d, 1);
+		range -= d_size;
 	      }
 
 	  startpos += irange - range;
@@ -3919,8 +3970,7 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 	{
 	  if (range > 0)	/* Searching forwards.  */
 	    {
-	      register CONST unsigned char *d;
-	      register int lim = 0;
+	      int lim = 0;
 	      int irange = range;
 
               if (startpos < size1 && startpos + range >= size1)
@@ -3928,7 +3978,7 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 
 	      d = ((CONST unsigned char *)
 		   (startpos >= size1 ? string2 - size1 : string1) + startpos);
-   
+
               /* Written out as an if-else to avoid testing `translate'
                  inside the loop.  */
 	      if (translate)
@@ -3938,23 +3988,25 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
                 while (range > lim && !fastmap[translate[*d]])
 #endif
 		  {
-		    range -= charcount_to_bytecount (d, 1);
-		    INC_CHARPTR(d);
+		    d_size = charcount_to_bytecount (d, 1);
+		    range -= d_size;
+		    d += d_size; /* Speedier INC_CHARPTR(d) */
 		  }
 	      else
                 while (range > lim && !fastmap[*d])
 		  {
-		    range -= charcount_to_bytecount (d, 1);
-		    INC_CHARPTR(d);
+		    d_size = charcount_to_bytecount (d, 1);
+		    range -= d_size;
+		    d += d_size; /* Speedier INC_CHARPTR(d) */
 		  }
 
 	      startpos += irange - range;
 	    }
 	  else				/* Searching backwards.  */
 	    {
-	      register unsigned char c = (size1 == 0 || startpos >= size1
-					  ? string2[startpos - size1] 
-					  : string1[startpos]);
+	      unsigned char c = (size1 == 0 || startpos >= size1
+				 ? string2[startpos - size1] 
+				 : string1[startpos]);
 #ifdef MULE
 	      if (c < 0x80 && !fastmap[(unsigned char) TRANSLATE (c)])
 #else
@@ -3990,27 +4042,25 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
     advance:
       if (!range) 
 	break;
-      else {
-	register CONST unsigned char *d;
-	Charcount d_size;
-
-	d = ((CONST unsigned char *)
-	     (startpos >= size1 ? string2 - size1 : string1) + startpos);
-
-	if (range > 0) 
-	  {
-	    d_size = charcount_to_bytecount (d, 1);
-	    range -= d_size;
-	    startpos += d_size;
-	  }
-	else
-	  {
-	    DEC_CHARPTR(d);
-	    d_size = charcount_to_bytecount (d, 1);
-	    range += d_size;
-	    startpos -= d_size;
-	  }
-      }
+      else if (range > 0) 
+	{
+	  d = ((CONST unsigned char *)
+	       (startpos >= size1 ? string2 - size1 : string1) + startpos);
+	  d_size = charcount_to_bytecount (d, 1);
+	  range -= d_size;
+	  startpos += d_size;
+	}
+      else
+	{
+	  /* Note startpos > size1 not >=.  If we are on the
+	     string1/string2 boundary, we want to backup into string1. */
+	  d = ((CONST unsigned char *)
+	       (startpos > size1 ? string2 - size1 : string1) + startpos);
+	  DEC_CHARPTR(d);
+	  d_size = charcount_to_bytecount (d, 1);
+	  range += d_size;
+	  startpos -= d_size;
+	}
     }
   return -1;
 } /* re_search_2 */
@@ -5124,19 +5174,10 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
                   = *p2 == (unsigned char) endline ? '\n' : p2[2];
 #endif
 
-#if 1
-                /* dmoore@ucsd.edu - emacs 19.34 uses this: */
-
                 if ((re_opcode_t) p1[3] == exactn
                     && ! ((int) p2[1] * BYTEWIDTH > (int) p1[5]
                           && (p2[2 + p1[5] / BYTEWIDTH]
                               & (1 << (p1[5] % BYTEWIDTH)))))
-#else
-                if ((re_opcode_t) p1[3] == exactn
-                    && ! ((int) p2[1] * BYTEWIDTH > (int) p1[4]
-                          && (p2[1 + p1[4] / BYTEWIDTH]
-                              & (1 << (p1[4] % BYTEWIDTH)))))
-#endif
                   {
   		    p[-3] = (unsigned char) pop_failure_jump;
                     DEBUG_PRINT3 ("  %c != %c => pop_failure_jump.\n",
@@ -5466,6 +5507,30 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
 	  should_succeed = 0;
 	  goto matchornotsyntax;
 
+#ifdef MULE
+/* 97/2/17 jhod Mule category code patch */
+	case categoryspec:
+	  should_succeed = 1;
+        matchornotcategory:
+	  {
+	    Emchar emch;
+
+	    mcnt = *p++;
+	    PREFETCH ();
+	    emch = charptr_emchar ((CONST Bufbyte *) d);
+	    INC_CHARPTR (d);
+	    if (check_category_at(emch, regex_emacs_buffer->category_table,
+				  mcnt, should_succeed))
+	      goto fail;
+	    SET_REGS_MATCHED ();
+	  }
+	  break;
+	  
+	case notcategoryspec:
+	  should_succeed = 0;
+	  goto matchornotcategory;
+/* end of category patch */
+#endif /* MULE */
 #else /* not emacs */
 	case wordchar:
           DEBUG_PRINT1 ("EXECUTING non-Emacs wordchar.\n");

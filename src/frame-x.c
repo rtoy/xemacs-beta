@@ -2287,18 +2287,8 @@ x_frame_visible_p (struct frame *f)
 			     XtWindow (FRAME_X_SHELL_WIDGET (f)),
 			     &xwa))
     result = 0;
-#ifdef 0
-  /* This is wrong. Under XEmacs visible means "Mapped" not really visible.
-     Under virtual window managers this causes freezes. JV
-
-     Fixme: This might be need to be changed, or another
-            frame->RealyVisible may need to be added to guide the actual
-	    redisplay. */
   else
     result = xwa.map_state == IsViewable;
-   For now this better.
-#endif
-    result = (xwa.map_state != IsUnmapped);
      
   f->visible = result;
   return result;

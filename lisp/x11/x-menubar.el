@@ -185,9 +185,6 @@
 	      (read-expression "Switches for `lpr'/`lp': "
 			       (format "%S" lpr-switches)))
 	t]
-       ["Pretty-Print With Color"
-	(setq ps-print-color-p (not ps-print-color-p))
-	:style toggle :selected ps-print-color-p]
        ("Pretty-Print Paper Size"
 	["Letter"
 	 (setq ps-paper-type 'letter)
@@ -238,6 +235,11 @@
 	 :style radio
 	 :selected (eq ps-paper-type 'b5)]
 	)
+       ["Enable Color Printing"
+	(progn
+	  (set-face-background 'default "white")
+	  (setq ps-print-color-p t))
+	t]
        )
       ("\"Other Window\" Location"
        ["Always in Same Frame"

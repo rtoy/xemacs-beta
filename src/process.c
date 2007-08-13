@@ -1446,8 +1446,11 @@ Fourth arg SERVICE is name of the service desired, or an integer
 	{
 	  /* A delay here is needed on some FreeBSD systems,
 	     and it is harmless, since this retrying takes time anyway
-	     and should be infrequent.  */
-	  Fsleep_for (make_int (1));
+	     and should be infrequent.
+             `sleep-for' allowed for quitting this loop with interrupts
+             slowed down so it can't be used here.  Async timers should
+             already be disabled at this point so we can use `sleep'. */
+          sleep (1);
 	  retry++;
 	  goto loop;
 	}

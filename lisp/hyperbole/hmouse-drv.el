@@ -7,7 +7,7 @@
 ;;
 ;; AUTHOR:       Bob Weiner
 ;; ORIG-DATE:    04-Feb-90
-;; LAST-MOD:      1-Nov-95 at 21:44:52 by Bob Weiner
+;; LAST-MOD:     22-Feb-97 at 14:16:55 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.

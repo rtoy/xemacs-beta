@@ -75,7 +75,7 @@ static int waiting_for_user_input_p;
 
 static int interrupts_slowed_down;
 
-#define SLOWED_DOWN_INTERRUPTS_SECS 5
+#define SLOWED_DOWN_INTERRUPTS_SECS 15
 #define NORMAL_QUIT_CHECK_TIMEOUT_MSECS 250
 #define NORMAL_SIGCHLD_CHECK_TIMEOUT_MSECS 250
 

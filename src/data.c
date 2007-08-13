@@ -227,7 +227,7 @@ Special kludge: A character is considered `old-eq' to its equivalent integer
 even though they are not the same object and are in fact of different
 types.  This is ABSOLUTELY AND UTTERLY HORRENDOUS but is necessary to
 preserve byte-code compatibility with v19.  This kludge is known as the
-\"char-int confoundance disease\" and appears in a number of other
+\"char-to-int confoundance disease\" and appears in a number of other
 functions with `old-foo' equivalents.
 
 Do not use this function!
@@ -396,9 +396,9 @@ DEFUN ("characterp", Fcharacterp, 1, 1, 0, /*
 t if OBJECT is a character.
 Unlike in FSF Emacs, a character is its own primitive type.
 Any character can be converted into an equivalent integer using
-`char-int'.  To convert the other way, use `int-char'; however,
+`char-to-int'.  To convert the other way, use `int-to-char'; however,
 only some integers can be converted into characters.  Such an integer
-is called a `char-int'; see `char-int-p'.
+is called a `char-to-int'; see `char-int-p'.
 
 Some functions that work on integers (e.g. the comparison functions
 <, <=, =, /=, etc. and the arithmetic functions +, -, *, etc.)
@@ -416,7 +416,7 @@ as `char='.
   return CHARP (object) ? Qt : Qnil;
 }
 
-DEFUN ("char-int", Fchar_int, 1, 1, 0, /*
+DEFUN ("char-to-int", Fchar_to_int, 1, 1, 0, /*
 Convert a character into an equivalent integer.
 The resulting integer will always be non-negative.  The integers in
 the range 0 - 255 map to characters as follows:
@@ -437,7 +437,7 @@ character sets were loaded, etc., and you should not depend on them.
   return make_int (XCHAR (ch));
 }
 
-DEFUN ("int-char", Fint_char, 1, 1, 0, /*
+DEFUN ("int-to-char", Fint_to_char, 1, 1, 0, /*
 Convert an integer into the equivalent character.
 Not all integers correspond to valid characters; use `char-int-p' to
 determine whether this is the case.  If the integer cannot be converted,
@@ -454,7 +454,7 @@ nil is returned.
 
 DEFUN ("char-int-p", Fchar_int_p, 1, 1, 0, /*
 t if OBJECT is an integer that can be converted into a character.
-See `char-int'.
+See `char-to-int'.
 */
        (object))
 {
@@ -2224,8 +2224,8 @@ syms_of_data (void)
   DEFSUBR (Fchar_or_string_p);
   DEFSUBR (Fcharacterp);
   DEFSUBR (Fchar_int_p);
-  DEFSUBR (Fchar_int);
-  DEFSUBR (Fint_char);
+  DEFSUBR (Fchar_to_int);
+  DEFSUBR (Fint_to_char);
   DEFSUBR (Fchar_or_char_int_p);
   DEFSUBR (Fintegerp);
   DEFSUBR (Finteger_or_marker_p);

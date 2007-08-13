@@ -48,7 +48,7 @@
 (defvar mule-keymap (make-sparse-keymap) "Keymap for Mule specific commands.")
 (fset 'mule-prefix mule-keymap)
 
-(define-key ctl-x-map "\C-k" 'mule-prefix)
+(define-key ctl-x-map "\C-n" 'mule-prefix)
 
 ;; Alternative key definitions
 ;; Original mapping will be altered by set-keyboard-coding-system.

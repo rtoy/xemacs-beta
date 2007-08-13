@@ -1572,7 +1572,8 @@ With argument, insert value in current buffer after the form."
   (save-excursion
     (end-of-defun)
     (beginning-of-defun)
-    (let* ((byte-compile-current-file nil)
+    (let* ((byte-compile-current-file (buffer-file-name))
+	   (load-file-name (buffer-file-name))
 	   (byte-compile-last-warned-form 'nothing)
 	   (value (eval (displaying-byte-compile-warnings
 			 (byte-compile-sexp (read (current-buffer))

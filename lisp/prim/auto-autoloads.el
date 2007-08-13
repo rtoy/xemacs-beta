@@ -1961,7 +1961,7 @@ When you're sure a square does NOT contain a mine, you can hit it:
 move the mouse over the square and press `\\[mine-mouse-hit]' or 
 move the cursor with the usual keys and press `\\[mine-hit-curpoint]'.
 
-If the square is a mine, you loose.
+If the square is a mine, you lose.
 If the square isn't a mine, a number appears which represents
 the number of mines in the surrounding eight squares.  
 
@@ -3736,7 +3736,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.11 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.12 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -5088,7 +5088,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.11 $
+vhdl-mode $Revision: 1.12 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5935,6 +5935,24 @@ The variable `dabbrev-backward-only' may be used to limit the
 direction of search to backward if set non-nil.
 
 See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]." t nil)
+
+;;;***
+
+;;;### (autoloads (diff-backup diff) "diff" "packages/diff.el")
+
+(defvar diff-switches nil "\
+*A list of switches (strings) to pass to the diff program.")
+
+(autoload 'diff "diff" "\
+Find and display the differences between OLD and NEW files.
+Interactively you are prompted with the current buffer's file name for NEW
+and what appears to be its backup for OLD." t nil)
+
+(autoload 'diff-backup "diff" "\
+Diff this file with its backup file or vice versa.
+Uses the latest backup, if there are several numerical backups.
+If this file is a backup, diff it with its original.
+The backup file is the first file given to `diff'." t nil)
 
 ;;;***
 

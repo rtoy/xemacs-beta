@@ -29,6 +29,13 @@
 ! The valid color names on your system can be found by looking in the file
 ! `rgb.txt', usually found in /usr/lib/X11/ or /usr/openwin/lib/X11/.
 
+! Set the foreground and background colors of the `default' face.
+! The default face colors are the base for most of the other faces'
+! colors.  The default background is gray80, and the default foreground
+! is black.
+Emacs.default.attributeBackground:	gray80
+Emacs.default.attributeForeground:	black
+
 ! Set the modeline colors.
 Emacs.modeline*attributeForeground:	Black
 Emacs.modeline*attributeBackground:	Gray75

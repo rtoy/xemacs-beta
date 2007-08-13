@@ -1,4 +1,17 @@
 							-*- indented-text -*-
+to 20.1 beta4
+-- mine.el (almost) fully ported to XEmacs
+-- time.el updated for XEmacs Courtesy of Jens Lautenbacher
+-- Gnus-5.4.17
+-- some historical files removed from etc for space
+-- id-select.el-1.4.5
+-- M-: (eval-expression) is now enabled by default
+-- Freeze frame fixes Courtesy of Jan Vroonhof and Darrell Kindred
+-- mule categories implemented Courtesy of Jareth Hein
+-- mic-paren.el-1.3.1
+-- builds with dynamic PURESIZE should work better
+-- hyperbole-4.022
+
 to 20.1 beta3
 -- Customized edit-faces Courtesy of Jens Lautenbacher
 -- W3-3.0.62

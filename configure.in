@@ -861,13 +861,14 @@ AC_VERBOSE("setting LN_S to ${LN_S}")
 #### have stuck the source on a read-only partition.  Instead we'll
 #### create it as an actual directory later on if it doesn't already
 #### exist.
-for dir in  etc lisp man info
+for dir in lisp etc man info site-lisp
 do
   if test ! -d $dir ; then
     echo Making symbolic link to ${srcdir}/$dir
     ${LN_S} ${srcdir}/$dir .
   fi
 done
+
 [
 #### Make srcdir absolute, if it isn't already.  It's important to
 #### avoid running the path through pwd unnecessary, since pwd can
@@ -3086,7 +3087,7 @@ dnl at the point where the autodetection occurs or would occur,
 dnl so that the user gets immediate feedback on the results of the
 dnl autodetection.
 
-test -n "${puresize}" && AC_DEFINE_UNQUOTED(PURESIZE, ${puresize})
+test -n "${puresize}" && AC_DEFINE_UNQUOTED(RAW_PURESIZE, ${puresize})
 IF_YES_AC_DEFINE(HAVE_X_WINDOWS,HAVE_X_WINDOWS)
 IF_YES_AC_DEFINE(HAVE_XFREE386, HAVE_XFREE386)
 

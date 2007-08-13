@@ -194,6 +194,7 @@ thing searched for.")
 
     (define-key map "\C-w" 'isearch-yank-word)
     (define-key map "\C-y" 'isearch-yank-line)
+    (define-key map "\M-y" 'isearch-yank-kill)
 
     ;; Define keys for regexp chars * ? |
     (define-key map "*" 'isearch-*-char)
@@ -351,7 +352,7 @@ The bindings, more precisely:
 ;; Type \\[isearch-edit-string] to edit the search string in the minibuffer.
 ;;  Terminate editing and return to incremental searching with CR.
 
-  (interactive "P")
+  (interactive "_P")
   (isearch-mode t (not (null regexp-p)) nil (not (interactive-p))))
 
 (defun isearch-forward-regexp ()
@@ -359,7 +360,7 @@ The bindings, more precisely:
 Do incremental search forward for regular expression.
 Like ordinary incremental search except that your input
 is treated as a regexp.  See \\[isearch-forward] for more info."
-  (interactive)
+  (interactive "_")
   (isearch-mode t t nil (not (interactive-p))))
 
 (defun isearch-backward (&optional regexp-p)
@@ -367,7 +368,7 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
 Do incremental search backward.
 With a prefix argument, do an incremental regular expression search instead.
 See \\[isearch-forward] for more information."
-  (interactive "P")
+  (interactive "_P")
   (isearch-mode nil (not (null regexp-p)) nil (not (interactive-p))))
 
 (defun isearch-backward-regexp ()
@@ -375,12 +376,14 @@ See \\[isearch-forward] for more information."
 Do incremental search backward for regular expression.
 Like ordinary incremental search except that your input
 is treated as a regexp.  See \\[isearch-forward] for more info."
-  (interactive)
+  (interactive "_")
   (isearch-mode nil t nil (not (interactive-p))))
 
-
+;; This function is way wrong, because you can't scroll the help
+;; screen; as soon as you press a key, it's gone.  I don't know of a
+;; good way to fix it, though.  -hniksic
 (defun isearch-mode-help ()
-  (interactive)
+  (interactive "_")
   (describe-function 'isearch-forward)
   (isearch-update))
 
@@ -828,7 +831,8 @@ If no previous match was done, just beep."
 
 
 (defun isearch-yank (chunk)
-  ;; Helper for isearch-yank-word and isearch-yank-line
+  ;; Helper for isearch-yank-* functions.  CHUNK can be a string or a
+  ;; function.
   (let ((word (if (stringp chunk)
 		  chunk
 		(save-excursion
@@ -864,6 +868,11 @@ If no previous match was done, just beep."
   "Pull rest of line from buffer into search string."
   (interactive)
   (isearch-yank 'end-of-line))
+
+(defun isearch-yank-kill ()
+  "Pull rest of line from kill ring into search string."
+  (interactive)
+  (isearch-yank (current-kill 0)))
 
 (defun isearch-yank-sexp ()
   "Pull next expression from buffer into search string."
@@ -1274,6 +1283,7 @@ If there is no completion possible, say so and continue searching."
 (put 'isearch-printing-char			'isearch-command t)
 (put 'isearch-yank-word				'isearch-command t)
 (put 'isearch-yank-line				'isearch-command t)
+(put 'isearch-yank-kill				'isearch-command t)
 (put 'isearch-yank-sexp				'isearch-command t)
 (put 'isearch-*-char				'isearch-command t)
 (put 'isearch-*-char				'isearch-command t)

@@ -28,8 +28,11 @@
 ;; make-docfiles, syntax is strict and unforgiving.  So sue me.  It
 ;; is still better than the way it used to be.
 
+;; Also note that site-packages belongs in the top level directory not the
+;; lisp directory for use with --srcdir configurations.
+
 ;;; Code:
-(defvar site-load-package-file "../lisp/site-packages"
+(defvar site-load-package-file "../site-packages"
   "File name containing the list of extra packages to dump with XEmacs.")
 (defvar site-load-packages nil
   "A list of .elc files that should be dumped with XEmacs.

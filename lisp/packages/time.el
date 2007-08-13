@@ -103,6 +103,50 @@ echo area instead of in the mode-line."
   (start-itimer "display-time" 'display-time-function
 		display-time-interval display-time-interval))
 
+(defvar display-time-show-load t)
+
+(defvar display-time-show-icons-maybe t
+  "Use icons to indicate the mail status if we're running under X and
+XEmacs was compiled with xpm support")
+
+(defun display-time-get-icons-dir ()
+  (let ((path load-path)
+	dir elem)
+    (while (setq elem (pop path))
+      (setq dir (concat (directory-file-name elem) "/../etc/time/")) 
+      (if (file-directory-p dir) (setq path nil)
+	nil))
+    dir))
+
+(defvar display-time-icons-dir (display-time-get-icons-dir))
+
+(defvar display-time-mail-sign 
+  (progn
+    (let* ((file (concat display-time-icons-dir "letter.xpm"))
+	   (glyph (if (featurep 'xpm) (make-glyph file) nil))
+	   (display-time-mail-ext (detach-extent (make-extent 1 1))))
+      (if (and (featurep 'x) glyph
+	       (file-exists-p file))
+	  (cons display-time-mail-ext glyph)
+	" Mail")))
+  "A variable holding a string or a cons cell (ext . glyph) which gives
+an indicator for unread mail. The default displays a xpm-file (a yellow letter)
+if (feturep 'xpm) and (featurep 'x) are both t, a string \" Mail\" otherwise")
+
+(defvar display-time-no-mail-sign
+    (progn
+    (let* ((file (concat display-time-icons-dir "no-letter.xpm"))
+	   (glyph (if (featurep 'xpm) (make-glyph file) nil))
+	   (display-time-mail-ext (detach-extent (make-extent 1 1))))
+      (if (and (featurep 'x) glyph
+	       (file-exists-p file))
+	  (cons display-time-mail-ext glyph)
+	"")))
+      "A variable holding a string or a cons cell (ext . glyph) which gives
+an indicator for `no mail'. The default displays a xpm-file
+if (feturep 'xpm) and (featurep 'x) are both t, and nothing otherwise")
+
+
 (defvar display-time-string-forms
   '((if display-time-day-and-date
         (format "%s %s %s " dayname monthname day)
@@ -111,20 +155,23 @@ echo area instead of in the mode-line."
             (if display-time-24hr-format 24-hours 12-hours)
             minutes
             (if display-time-24hr-format "" am-pm))
-    load
-    (if mail " Mail" ""))
-  "*A list of expressions governing display of the time in the mode line.
+    (if display-time-show-load load)
+    (if (and (not display-time-show-icons-maybe) mail) " Mail" ""))
+    "*A list of expressions governing display of the time in the mode line.
 This expression is a list of expressions that can involve the keywords
 `load', `day', `month', and `year', `12-hours', `24-hours', `minutes',
 `seconds', all numbers in string form, and `monthname', `dayname', `am-pm',
-and `time-zone' all alphabetic strings, and `mail' a true/nil value.
+and `time-zone' all alphabetic strings and `mail' a true/nil string value.
+Beware: if display-time-show-icons-maybe is non-nil, the `mail' spec is also
+evaluated after this form and depending on it's result display-time-mail-sign
+or display-time-no-mail-sign is appended to the modeline string.
+This was made so you can also use xpm-files as mail indicator.
 
 For example, the form
 
   '((substring year -2) \"/\" month \"/\" day
     \" \" 24-hours \":\" minutes \":\" seconds
-    (if time-zone \" (\") time-zone (if time-zone \")\")
-    (if mail \" Mail\" \"\"))
+    (if time-zone \" (\") time-zone (if time-zone \")\"))
 
 would give mode line times like `94/12/30 21:07:48 (UTC)'.")
 
@@ -176,6 +223,12 @@ would give mode line times like `94/12/30 21:07:48 (UTC)'.")
          (dayname (substring time 0 3)))
     (setq display-time-string
           (mapconcat 'eval display-time-string-forms ""))
+    (if (and mail display-time-show-icons-maybe)
+	(setq display-time-string
+	      (list display-time-string display-time-mail-sign))
+      (if display-time-show-icons-maybe
+	  (setq display-time-string
+		(list display-time-string display-time-no-mail-sign))))
     ;; This is inside the let binding, but we are not going to document
     ;; what variables are available.
     (run-hooks 'display-time-hook))

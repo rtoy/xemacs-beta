@@ -8,7 +8,7 @@
 
 ;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
-(defconst viper-version "2.93 of February 13, 1997"
+(defconst viper-version "2.93 of February 25, 1997"
   "The current version of Viper")
 
 ;; This file is part of GNU Emacs.
@@ -365,7 +365,7 @@
 (vip-test-com-defun vip-charpair-command)
 
 (defconst vip-movement-commands '(?b ?B ?e ?E ?f ?F ?G ?h ?H ?j ?k ?l
-				     ?H ?M ?n ?t ?T ?w ?W ?$ ?%
+				     ?H ?M ?L ?n ?t ?T ?w ?W ?$ ?%
 				     ?^ ?( ?) ?- ?+ ?| ?{ ?} ?[ ?] ?' ?`
 				     ?; ?, ?0 ?? ?/
 				     )
@@ -3836,7 +3836,8 @@ Null string will repeat previous search."
       (error "Buffer not killed"))))
 
 
-(defvar vip-smart-suffix-list '("" "tex" "c" "cc" "el" "p")
+(defvar vip-smart-suffix-list
+  '("" "tex" "c" "cc" "el" "java" "html" "pl" "P" "p")
   "*List of suffixes that Viper automatically tries to append to filenames ending with a `.'.
 This is useful when you the current directory contains files with the same
 prefix and many different suffixes. Usually, only one of the suffixes
