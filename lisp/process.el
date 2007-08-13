@@ -304,9 +304,7 @@ BUFFER is the buffer or (buffer-name) to associate with the process.
  BUFFER may be also nil, meaning that this process is not associated
  with any buffer
 Third arg is program file name.  It is searched for as in the shell.
-Remaining arguments are strings to give program as arguments.
-INCODE and OUTCODE specify the coding-system objects used in input/output
- from/to the process."
+Remaining arguments are strings to give program as arguments."
   (apply 'start-process-internal name buffer program program-args))
 
 (defun open-network-stream (name buffer host service)

@@ -121,7 +121,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Here override various assumptions in ymakefile */
 
-#define START_FILES 
+/* #undef START_FILES */
 /* #define HAVE_SYSVIPC */
 /* #define HAVE_GETWD */
 

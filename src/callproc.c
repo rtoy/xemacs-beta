@@ -881,9 +881,13 @@ init_callproc (void)
     */
     if (sh)
       {
+#if 0 /* This breaks everything -kkm */
 	tem = (char *) alloca (strlen (sh) + 1);
 	dostounix_filename (strcpy (tem, sh));
 	Vshell_file_name = build_string (tem);
+#else
+	Vshell_file_name = build_string (sh);
+#endif
       }
     /*
     ** Odd, no COMSPEC, so let's default to our
@@ -891,7 +895,7 @@ init_callproc (void)
     */
     else
       {
-	Vshell_file_name = build_string ("/WINNT/system32/cmd.exe");
+	Vshell_file_name = build_string ("\\WINNT\\system32\\cmd.exe");
       }
   }
 #else /* not WINDOWSNT */

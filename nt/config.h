@@ -311,18 +311,14 @@ Boston, MA 02111-1307, USA.  */
 
 #define LOWTAGS
 
+#ifdef DEBUG_XEMACS
+
 /* Define USE_ASSERTIONS if you want the abort() to be changed to assert()
    If the assertion fails, assert_failed() will be called.  This is
    recommended for general use because it gives more info about the crash
    than just the abort() message.  Too many people "Can't find the corefile"
    or have limited core dumps out of existence. */
 #define USE_ASSERTIONS
-
-/* Define one or more of the following if you want lots of extra checks
-   (e.g. structure validation) compiled in.  These should be turned
-   on during the beta-test cycle. */
-
-#ifdef DEBUG_XEMACS
 
 /* Check the entire extent structure of a buffer each time an extent
    change is done, and do other extent-related checks. */
@@ -343,10 +339,6 @@ Boston, MA 02111-1307, USA.  */
 #define ERROR_CHECK_MALLOC
 
 #endif /* DEBUG_XEMACS */
-
-/* Define DEBUG_XEMACS if you want extra debugging code compiled in.
-   This is mainly intended for use by developers. */
-/* #define DEBUG_XEMACS 0 */
 
 /* Define MEMORY_USAGE_STATS if you want extra code compiled in to
    determine where XEmacs's memory is going. */
@@ -648,6 +640,8 @@ on various systems. */
 #pragma warning ( disable : 4018 )
 
 #endif /* compiler understands #pragma warning*/
+
+#define enum_field(enumeration_type) enum enumeration_type
 
 /* We want to avoid saving the signal mask if possible, because
    that necessitates a system call. */

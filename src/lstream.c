@@ -899,7 +899,7 @@ make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
   fstr->blocking_error_p = 0;
   fstr->chars_sans_newline = 0;
   fstr->starting_pos = lseek (filedesc, offset, SEEK_CUR);
-  fstr->current_pos = max (fstr->current_pos, 0);
+  fstr->current_pos = max (fstr->starting_pos, 0);
   if (count < 0)
     fstr->end_pos = -1;
   else

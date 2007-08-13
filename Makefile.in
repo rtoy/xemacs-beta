@@ -117,14 +117,9 @@ manext=.1
 ## system, it is inappropriate to imply that it is part of XEmacs.
 infodir=@infodir@
 
-## This is set to 'yes' if the user specified the --infodir flag at
-## configuration time.
-infodir_user_defined=@infodir_user_defined@
-
 ## Document me.
 ## See callproc.c for code which references this.
 infopath=@infopath@
-infopath_user_defined=@infopath_user_defined@
 
 ## Where to find the source code.  The source code for XEmacs's C kernel is
 ## expected to be in ${srcdir}/src, and the source code for XEmacs's
@@ -147,18 +142,6 @@ progname=xemacs
 ## lisp files for different versions of XEmacs will install
 ## themselves in separate directories.
 lispdir=@lispdir@
-
-## This is set to 'yes' if the user specified the --lispdir or
-## --datadir flag at configuration time.
-lispdir_user_defined=@lispdir_user_defined@
-
-## Where packages are found.
-package_path=@package_path@
-
-## This is set to 'yes' if the user specified the --package_path
-## at configuration time.
-package_path_user_defined=@package_path_user_defined@
-
 
 ## Directory XEmacs should search for lisp files specific
 ## to this site (i.e. customizations), before consulting
@@ -183,18 +166,10 @@ buildlispdir=${srcdir}/lisp
 ## at once.
 etcdir=@etcdir@
 
-## This is set to 'yes' if the user specified the --etcdir or
-## --datadir flag at configuration time.
-etcdir_user_defined=@etcdir_user_defined@
-
 ## Where to create and expect the locking directory, where
 ## the XEmacs locking code keeps track of which files are
 ## currently being edited.
 lockdir=@lockdir@
-
-## This is set to 'yes' if the user specified the --lockdir or
-## --statedir flag at configuration time.
-lockdir_user_defined=@lockdir_user_defined@
 
 ## Where to put executables to be run by XEmacs rather than
 ## the user.  This path usually includes the XEmacs version
@@ -202,10 +177,6 @@ lockdir_user_defined=@lockdir_user_defined@
 ## for multiple versions of XEmacs may be installed at
 ## once.
 archlibdir=@archlibdir@
-
-## This is set to 'yes' if the user specified any of --exec-prefix,
-## --libdir or --archlibdir at configuration time.
-archlibdir_user_defined=@archlibdir_user_defined@
 
 ## ==================== Utility Programs for the Build ====================
 
@@ -259,10 +230,21 @@ beta: clean all-elc finder
 dist: all-elc info
 
 ## Convenience target for XEmacs maintainers
-## Updates configure from configure.in and updates config.values.in
-configure: configure.in
-	autoconf
-	/bin/sh lib-src/config.values.sh
+## Updates some rarely generated files:
+## - configure from configure.in
+## - config.values.in from configure
+## - src/depend from src/*.[ch]
+.PHONY: config configure depend
+config: configure depend
+configure: ${srcdir}/configure
+${srcdir}/configure: ${srcdir}/configure.in
+	cd ${srcdir} && autoconf
+	cd ${srcdir} && /bin/sh lib-src/config.values.sh
+
+depend ${srcdir}/src/depend:
+	cd ${srcdir}/src && \
+		perl ./make-src-depend > depend.tmp && \
+		$(RM) depend && mv depend.tmp depend
 
 ## Build XEmacs and recompile out-of-date and missing .elc files along
 ## the way.
@@ -294,50 +276,6 @@ lisp/finder-inf.el:
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
 	@echo "Building finder database ...(done)"
-
-## We force the rebuilding of src/paths.h because the user might give
-## different values for the various directories.  Since we use
-## move-if-change, src/paths.h only actually changes if the user did
-## something notable, so the only unnecessary work we do is in building
-## src/paths.h.tmp, which isn't much.  Note that sed is not in /bin on
-## 386bsd.
-src/paths.h: Makefile ${srcdir}/src/paths.h.in FRC.src.paths.h
-	@echo "Producing \`src/paths.h' from \`src/paths.h.in'."
-	@$(RM) src/paths.h.tmp
-	@cp ${srcdir}/src/paths.h.in src/paths.h.tmp
-	@-chmod 0644 src/paths.h.tmp
-	@(echo '#define PATH_PREFIX "${prefix}"'; \
-	 if test "${lispdir_user_defined}" = "yes"; \
-	   then echo    '#define PATH_LOADSEARCH "${lispdir}"'; \
-	   else echo '/* #define PATH_LOADSEARCH "${lispdir}" */'; \
-	 fi; \
-	 if test "${package_path_user_defined}" = "yes"; \
-	   then echo    '#define PATH_PACKAGEPATH "${package_path}"'; \
-	   else echo '/* #define PATH_PACKAGEPATH "${package_path}" */'; \
-	 fi; \
-	 if test "${sitelispdir_user_defined}" = "yes"; \
-	   then echo    '#define PATH_SITE "${sitelispdir}"'; \
-	   else echo '/* #define PATH_SITE "${sitelispdir}" */'; \
-	 fi; \
-	 if test "${archlibdir_user_defined}" = "yes"; \
-	   then echo    '#define PATH_EXEC "${archlibdir}"'; \
-	   else echo '/* #define PATH_EXEC "${archlibdir}" */'; \
-	 fi; \
-	 if test "${etcdir_user_defined}" = "yes"; \
-	   then echo    '#define PATH_DATA "${etcdir}"'; \
-	   else echo '/* #define PATH_DATA "${etcdir}" */'; \
-	 fi; \
-	 if test "${lockdir_user_defined}" = "yes"; \
-	   then echo    '#define PATH_LOCK "${lockdir}"'; \
-	   else echo '/* #define PATH_LOCK "${lockdir}" */'; \
-	 fi; \
-	 if test "${infodir_user_defined}" = "yes"; \
-	   then echo    '#define PATH_INFO "${infodir}"'; \
-	   else echo '/* #define PATH_INFO "${infodir}" */'; \
-	fi; \
-	echo    '#define PATH_INFOPATH "${infopath}"'; \
-	) >> src/paths.h.tmp; \
-	sh ${srcdir}/move-if-change src/paths.h.tmp src/paths.h
 
 ## We have to force the building of Emacs.ad.h as well in order to get it
 ## updated correctly when VPATH is being used.  Since we use move-if-change,
@@ -390,6 +328,9 @@ pkg-src/tree-x/Makefile: ${srcdir}/pkg-src/tree-x/Makefile.in.in config.status
 	./config.status
 
 src/config.h: ${srcdir}/src/config.h.in
+	./config.status && touch $@
+
+src/paths.h: ${srcdir}/src/paths.h.in.in
 	./config.status && touch $@
 
 lwlib/config.h: ${srcdir}/lwlib/config.h.in

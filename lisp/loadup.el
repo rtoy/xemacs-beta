@@ -60,7 +60,7 @@
 	;; has been found.  At this point, enough of XEmacs has been
 	;; initialized that we can start dumping "standard" lisp.
 	;; Dumped lisp from external packages is added when we search
-	;; the `package-path'.
+	;; the package path.
 	;; #### This code is duplicated in two other places.
 	(let ((temp-path (expand-file-name "." (car load-path))))
 	  (setq source-directory temp-path)
@@ -87,7 +87,7 @@
 	    (if full-path
 		(prog1
 		  (load full-path)
-		  '(garbage-collect))
+		  (garbage-collect))
 	      (external-debugging-output (format "\nLoad file %s: not found\n"
 						 file))
 	      ;; Uncomment in case of trouble

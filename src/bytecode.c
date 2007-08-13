@@ -246,10 +246,7 @@ Lisp_Object Qbyte_code;
 
 /* Push x onto the execution stack. */
 
-/* This used to be #define PUSH(x) (*++stackp = (x))
-   This oddity is necessary because Alliant can't be bothered to
-   compile the preincrement operator properly, as of 4/91.  -JimB  */
-#define PUSH(x) (stackp++, *stackp = (x))
+#define PUSH(x) (*++stackp = (x))
 
 /* Pop a value off the execution stack.  */
 
@@ -597,20 +594,25 @@ If the third argument is incorrect, Emacs may crash.
 	  v1 = POP;
 	  v2 = TOP;
 	/* nth_entry: */
-	  CHECK_INT (v2);
-	  op = XINT (v2);
-	  while (--op >= 0)
+	  CHECK_NATNUM (v2);
+	  for (op = XINT (v2); op; op--)
 	    {
 	      if (CONSP (v1))
 		v1 = XCDR (v1);
-	      else if (!NILP (v1))
+	      else if (NILP (v1))
+		{
+		  TOP = Qnil;
+		  goto Bnth_done;
+		}
+	      else
 		{
 		  v1 = wrong_type_argument (Qlistp, v1);
 		  op++;
 		}
-	      QUIT;
 	    }
 	  goto docar;
+	Bnth_done:
+	  break;
 
 	case Bsymbolp:
 	  TOP = SYMBOLP (TOP) ? Qt : Qnil;
@@ -657,14 +659,23 @@ If the third argument is incorrect, Emacs may crash.
 	docar:
 	  if (CONSP (v1)) TOP = XCAR (v1);
 	  else if (NILP (v1)) TOP = Qnil;
-	  else Fcar (wrong_type_argument (Qlistp, v1));
+	  else
+	    {
+	      TOP = wrong_type_argument (Qlistp, v1);
+	      goto docar;
+	    }
 	  break;
 
 	case Bcdr:
 	  v1 = TOP;
+	docdr:
 	  if (CONSP (v1)) TOP = XCDR (v1);
 	  else if (NILP (v1)) TOP = Qnil;
-	  else Fcdr (wrong_type_argument (Qlistp, v1));
+	  else
+	    {
+	      TOP = wrong_type_argument (Qlistp, v1);
+	      goto docdr;
+	    }
 	  break;
 
 	case Bcons:
@@ -1051,7 +1062,21 @@ If the third argument is incorrect, Emacs may crash.
 
 	case Bnthcdr:
 	  v1 = POP;
-	  TOP = Fnthcdr (TOP, v1);
+	  v2 = TOP;
+	  CHECK_NATNUM (v2);
+	  for (op = XINT (v2); op; op--)
+	    {
+	      if (CONSP (v1))
+		v1 = XCDR (v1);
+	      else if (NILP (v1))
+		break;
+	      else
+		{
+		  v1 = wrong_type_argument (Qlistp, v1);
+		  op++;
+		}
+	    }
+	  TOP = v1;
 	  break;
 
 	case Belt:

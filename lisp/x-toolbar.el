@@ -463,8 +463,69 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
    icon-list  )
   )
 
+(defvar toolbar-vector-open 
+  [toolbar-file-icon            toolbar-open	t       "Open a file"]
+  "Define the vector for the \"Open\" toolbar button")
+
+(defvar toolbar-vector-dired
+  [toolbar-folder-icon	        toolbar-dired	t	"View directory"]
+  "Define the vector for the \"Dired\" toolbar button")
+
+(defvar toolbar-vector-save
+  [toolbar-disk-icon		toolbar-save	t	"Save buffer"]
+  "Define the vector for the \"Save\" toolbar button")
+
+(defvar toolbar-vector-print
+  [toolbar-printer-icon	        toolbar-print	t	"Print buffer"]
+  "Define the vector for the \"Printer\" toolbar button")
+
+(defvar toolbar-vector-cut
+  [toolbar-cut-icon		toolbar-cut	t	"Kill region"]
+  "Define the vector for the \"Cut\" toolbar button")
+
+(defvar toolbar-vector-copy
+  [toolbar-copy-icon		toolbar-copy	t	"Copy region"]
+  "Define the vector for the \"Copy\" toolbar button")
+
+(defvar toolbar-vector-paste
+  [toolbar-paste-icon		toolbar-paste	t	"Paste from clipboard"]
+  "Define the vector for the \"Paste\" toolbar button")
+
+(defvar toolbar-vector-undo
+  [toolbar-undo-icon		toolbar-undo	t	"Undo edit"]
+  "Define the vector for the \"Undo\" toolbar button")
+
+(defvar toolbar-vector-spell
+  [toolbar-spell-icon		toolbar-ispell	t	"Spellcheck"]
+  "Define the vector for the \"Spell\" toolbar button")
+
+(defvar toolbar-vector-replace
+  [toolbar-replace-icon	        toolbar-replace	t	"Replace text"]  
+  "Define the vector for the \"Replace\" toolbar button")
+
+(defvar toolbar-vector-mail
+  [toolbar-mail-icon		toolbar-mail	t	"Mail"]
+  "Define the vector for the \"Mail\" toolbar button")
+
+(defvar toolbar-vector-info
+  [toolbar-info-icon		toolbar-info	t	"Information"]
+  "Define the vector for the \"Info\" toolbar button")
+
+(defvar toolbar-vector-compile
+  [toolbar-compile-icon	        toolbar-compile	t	"Compile"]
+  "Define the vector for the \"Compile\" toolbar button")
+
+(defvar toolbar-vector-debug
+  [toolbar-debug-icon		toolbar-debug	t	"Debug"]
+  "Define the vector for the \"Debug\" toolbar button")
+
+(defvar toolbar-vector-news
+  [toolbar-news-icon		toolbar-news	t	"News"]
+  "Define the vector for the \"News\" toolbar button")
+
 (defvar initial-toolbar-spec
-  '(;;[toolbar-last-win-icon	pop-window-configuration
+  (list
+    ;;[toolbar-last-win-icon	pop-window-configuration
     ;;(frame-property (selected-frame)
     ;;		'window-config-stack) t	"Most recent window config"]
     ;; #### Illicit knowledge?
@@ -478,23 +539,22 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
     ;;(frame-property (selected-frame)
     ;;	'window-config-unpop-stack) t "Undo \"Most recent window config\""]
     ;; #### Illicit knowledge?
-
-    [toolbar-file-icon		toolbar-open	t	"Open a file"]
-    [toolbar-folder-icon	toolbar-dired	t	"View directory"]
-    [toolbar-disk-icon		toolbar-save	t	"Save buffer"]
-    [toolbar-printer-icon	toolbar-print	t	"Print buffer"]
-    [toolbar-cut-icon		toolbar-cut	t	"Kill region"]
-    [toolbar-copy-icon		toolbar-copy	t	"Copy region"]
-    [toolbar-paste-icon		toolbar-paste	t	"Paste from clipboard"]
-    [toolbar-undo-icon		toolbar-undo	t	"Undo edit"]
-    [toolbar-spell-icon		toolbar-ispell	t	"Spellcheck"]
-    [toolbar-replace-icon	toolbar-replace	t	"Replace text"]
-    [toolbar-mail-icon		toolbar-mail	t	"Mail"]
-    [toolbar-info-icon		toolbar-info	t	"Information"]
-    [toolbar-compile-icon	toolbar-compile	t	"Compile"]
-    [toolbar-debug-icon		toolbar-debug	t	"Debug"]
-    [toolbar-news-icon		toolbar-news	t	"News"]
-)
+    toolbar-vector-open
+    toolbar-vector-dired
+    toolbar-vector-save
+    toolbar-vector-print
+    toolbar-vector-cut
+    toolbar-vector-copy
+    toolbar-vector-paste
+    toolbar-vector-undo
+    toolbar-vector-spell
+    toolbar-vector-replace
+    toolbar-vector-mail
+    toolbar-vector-info
+    toolbar-vector-compile
+    toolbar-vector-debug
+    toolbar-vector-news
+    )
   "The initial toolbar for a buffer.")
 
 (defun x-init-toolbar-from-resources (locale)

@@ -1,3 +1,39 @@
+1998-04-10  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* config.h: Do not USE_ASSERTION when DEBUG_XEMACS is not
+	defined. 
+
+	* xemacs.mak: Added new file process-nt.c
+
+1998-04-07  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Added build options which can be defined in nmake
+	command line (defaults are parentheses):
+	HAVE_MSW=0/1	(0)	Build with native GUI
+	HAVE_X=0/1	(0)	Build with X-Windows
+				** At least one must be defined
+	X11_DIR=path	()	Path to the root dir of X11R6 installation
+				** Must be defined when HAVE_X=1
+	HAVE_MULE=0/1	(0)	Compile in MULE
+	HAVE_MSW_C_DIRED=0/1(1)	Compile in fast dired
+	PATH_PACKAGEPATH=path	Package search path
+			("~/.xemacs")
+	DEBUG_XEMACS=0/1 (1)	Compile with symbols, assertions and
+				extra debugging checks
+	USE_UNION_TYPE=0/1 (0)
+	USE_MINIMAL_TAGBITS=0/1 (0)
+	USE_INDEXED_LRECORD_IMPLEMENTATION=0/1 (0)
+	GUNG_HO=0/1 (none)	When specified, overrides the above two.
+	: Added output of a configuration report
+	: Added copyright notice.
+	: Deleted remains of ImageMagick.
+	(distclean): Do not use mskedepend
+	(install): echo "Not yet implmented".
+
+1998-04-05  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* config.h (enum_field): Borrow new definition from config.h.in
+
 1998-04-01  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* config.h: Patial sync-up with config.h.in

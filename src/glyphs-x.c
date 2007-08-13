@@ -2696,7 +2696,7 @@ gif_memory_close(VoidPtr data)
 #endif
 struct gif_error_struct
 {
-  char *err_str;		/* return the error string */
+  CONST char *err_str;		/* return the error string */
   jmp_buf setjmp_buffer;	/* for return to caller */
 };
 
@@ -3535,6 +3535,7 @@ tiff_memory_read(thandle_t data, tdata_t buf, tsize_t size)
 static size_t tiff_memory_write(thandle_t data, tdata_t buf, tsize_t size)
 {
   abort();
+  return 0;			/* Shut up warnings. */
 }
 
 static toff_t tiff_memory_seek(thandle_t data, toff_t off, int whence)

@@ -378,7 +378,47 @@ mswindows_lower_frame (struct frame *f)
 static void
 mswindows_set_title_from_bufbyte (struct frame *f, Bufbyte *title) 
 {
-  SetWindowText (FRAME_MSWINDOWS_HANDLE(f), title);
+  unsigned int new_checksum = hash_string (title, strlen (title));
+  if (new_checksum != FRAME_MSWINDOWS_TITLE_CHECKSUM(f))
+    {
+      FRAME_MSWINDOWS_TITLE_CHECKSUM(f) = new_checksum;
+      SetWindowText (FRAME_MSWINDOWS_HANDLE(f), title);
+    }
+}
+
+static Lisp_Object
+mswindows_frame_property (struct frame *f, Lisp_Object property)
+{
+  if (EQ (Qleft, property) || EQ (Qtop, property))
+    {
+      RECT rc;
+      GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rc);
+      return make_int (EQ (Qtop,  property) ? rc.top : rc.left);
+    }
+  return Qunbound;
+}
+
+static int
+mswindows_internal_frame_property_p (struct frame *f, Lisp_Object property)
+{
+  return EQ (property, Qleft)
+    || EQ (property, Qtop);
+  /* #### frame-x.c has also this. Why?
+    || STRINGP (property);
+  */
+}
+
+static Lisp_Object
+mswindows_frame_properties (struct frame *f)
+{
+  Lisp_Object props = Qnil;
+  RECT rc;
+  GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rc);
+
+  props = cons3 (Qtop,  make_int (rc.top), props);
+  props = cons3 (Qleft, make_int (rc.left), props);
+
+  return props;
 }
 
 static void
@@ -518,13 +558,13 @@ mswindows_update_frame_external_traits (struct frame* frm, Lisp_Object name)
 	  int new_char_height, new_char_width;
           pixel_to_real_char_size (frm, FRAME_PIXWIDTH(frm), FRAME_PIXHEIGHT(frm),
 				   &new_char_width, &new_char_height);
-	  if (new_char_width != MSWINDOWS_FRAME_CHARWIDTH (frm)
-	      || new_char_height != MSWINDOWS_FRAME_CHARHEIGHT (frm))
+	  if (new_char_width != FRAME_MSWINDOWS_CHARWIDTH (frm)
+	      || new_char_height != FRAME_MSWINDOWS_CHARHEIGHT (frm))
 	    {
 	      Lisp_Object frame;
 	      XSETFRAME (frame, frm);
-	      Fset_frame_size (frame, MSWINDOWS_FRAME_CHARWIDTH (frm),
-			       MSWINDOWS_FRAME_CHARHEIGHT (frm), Qnil);
+	      Fset_frame_size (frame, FRAME_MSWINDOWS_CHARWIDTH (frm),
+			       FRAME_MSWINDOWS_CHARHEIGHT (frm), Qnil);
 	    }
 	}
 
@@ -558,9 +598,9 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, iconify_frame);
   CONSOLE_HAS_METHOD (mswindows, set_frame_size);
   CONSOLE_HAS_METHOD (mswindows, set_frame_position);
-/*  CONSOLE_HAS_METHOD (mswindows, frame_property); */
-/*  CONSOLE_HAS_METHOD (mswindows, internal_frame_property_p); */
-/*  CONSOLE_HAS_METHOD (mswindows, frame_properties); */
+  CONSOLE_HAS_METHOD (mswindows, frame_property);
+  CONSOLE_HAS_METHOD (mswindows, internal_frame_property_p);
+  CONSOLE_HAS_METHOD (mswindows, frame_properties);
   CONSOLE_HAS_METHOD (mswindows, set_frame_properties);
   CONSOLE_HAS_METHOD (mswindows, set_title_from_bufbyte);
 /*  CONSOLE_HAS_METHOD (mswindows, set_icon_name_from_bufbyte); */

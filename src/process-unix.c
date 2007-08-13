@@ -1358,7 +1358,7 @@ unix_kill_child_process (Lisp_Object proc, int signo,
 #if defined (TIOCSIGNAL) || defined (TIOCSIGSEND)
       if (current_group)
 	{
-#ifdef (TIOCSIGNAL)
+#ifdef TIOCSIGNAL
 	  kill_retval = ioctl (UNIX_DATA(p)->infd, TIOCSIGNAL, signo);
 #else /* ! defined (TIOCSIGNAL) */
 	  kill_retval = ioctl (UNIX_DATA(p)->infd, TIOCSIGSEND, signo);

@@ -1,3 +1,229 @@
+1998-04-10  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* callproc.c (init_callproc): Correctly initialize
+	`shell-file-name' for WINDOWSNT
+	
+	* emacs.c (main_1): Properly called new functions (see symsinit.h
+	entry for which).
+
+	* event-msw.c (struct ntpipe_slurp_stream): 
+	(slurp_thread): 
+	(make_ntpipe_input_stream): 
+	(get_ntpipe_input_stream_waitable): 
+	(get_ntpipe_input_stream_param): 
+	(ntpipe_slurp_reader): 
+	(ntpipe_slurp_closer): 
+	(init_slurp_stream): Win32 pipe input stream implementation.
+	(struct ntpipe_shove_stream): 
+	(shove_thread): 
+	(make_ntpipe_output_stream): 
+	(get_ntpipe_output_stream_param): 
+	(ntpipe_shove_writer): 
+	(ntpipe_shove_was_blocked_p): 
+	(ntpipe_shove_flusher): 
+	(ntpipe_shove_closer): 
+	(init_shove_stream): Win32 pipe output stream implementation.
+	(mswindows_enqueue_process_event): Dispatch helper.
+	(find_waitable_handle): 
+	(add_waitable_handle): 
+	(remove_waitable_handle): New three, waitable handles handling.
+	(mswindows_need_event_in_modal_loop): Simplified.
+	(mswindows_need_event): Simplified.
+	(mswindows_need_event): Generate process events on process output; 
+	kick status_notify when a process ends.
+	(mswindows_find_console): Simplified.
+	(emacs_mswindows_event_pending_p): Adjusted parameters to
+	mswindows_need_event().
+	(emacs_mswindows_next_event): Ditto.
+	(get_process_input_waitable): 
+	(get_process_handle): Process select/unselect helpers.
+	(emacs_mswindows_select_process): Implemented.
+	(emacs_mswindows_unselect_process): Implemented.
+	(emacs_mswindows_quit_p): Call mswindows_drain_windows_queue()
+	directly so do not even try do dequeue process events. Saved a
+	byte and a tick.
+	(emacs_mswindows_create_stream_pair): Implemented.
+	(emacs_mswindows_delete_stream_pair): Implemented.
+	(vars_of_event_mswindows): Registered the above two.
+	(lstream_type_create_mswindows_selectable): Function called from
+	emacs.c to create two pipe lstream types.
+
+	* ntproc.c (sys_select): Disgustful brain fart this file is.
+
+	* process-nt.c: New file: Asynchronous subprocess implemenation
+	for Win32.
+
+	* process.h: Declare Fprocess_id().
+
+	* signal.c (init_signals_very_early): Conditionalize possibly
+	nonexistent signals.
+
+	* symsinit.h: Declared:
+	lstream_type_create_mswindows_selectable ()
+	process_type_create_nt ()
+	vars_of_process_nt ()
+
+	* s/windowsnt.h: Defined HAVE_WIN32_PROCESSES.
+	Removed fake SIGTRAP, SIGPIPE and SIGCHLD.
+
+1998-04-10  Martin Buchholz  <martin@xemacs.org>
+
+	* fns.c (Fnthcdr): 
+	Most times through the loop will get a cons, so optimize for that.
+
+	* bytecode.c (Fbyte_code): Remove '91 vintage compiler bug workaround.
+	Add NATNUMP check for Bnth bytecode.
+	Bnth: Optimize case of n > length (list).
+	QUITs not necessary since even if list is circular, n will count
+	down to 0.
+	Bnthcdr: inline the code for nthcdr (we have a bytecode for it,
+	after all)
+	Bcdr, Bcar: Use tail recursion.
+
+1998-04-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* redisplay.c (redisplay_window): Don't lose with negative
+	scroll_step.
+
+1998-04-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Fmake_temp_name): Don't use `+' in generated file
+	names.
+	(Fmake_temp_name): Randomize the initial values of counters.
+
+1998-04-07  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* Makefile.in.in: paths.h.in is now generated from paths.h.in.in.
+
+	* emacs.c (decode_path): Removed parsing of "::" into nil component.
+
+1998-04-09  Martin Buchholz  <martin@xemacs.org>
+
+	* lstream.c (make_filedesc_stream_1): Fix another Martin blooper.
+
+1998-04-07  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (Fdump_emacs): Delete superfluous open comment.
+
+1998-04-06  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (Fdump_emacs): Move call to disable_free_hook back to
+	Fdump_emacs where it belongs.
+
+1998-04-07  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* nt.c (sys_mkdir): Added the second unused parameter, after UNIX
+	version. Suggested by Martin.
+
+1998-04-07  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* event-msw.c (mswindows_wnd_proc): Fix member access macro names.
+
+	* frame-msw.c (mswindows_frame_property): 
+	(mswindows_internal_frame_property_p): 
+	(mswindows_frame_properties): Implemented for the 'left and 'top
+	properties.
+	(console_type_create_frame_mswindows): Regsitered the above.
+	(mswindows_set_title_from_bufbyte): Update title only if it has
+	really changed. This avoids a bit of flashing.
+
+	* console-msw.h (FRAME_MSWINDOWS_TITLE_CHECKSUM): To update title
+	smoother.
+	(MSWINDOWS_FRAME_*(f)): Were MSWINDOWS_FRAME_*(f). Eeek!
+
+1998-04-06  Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+	* unexfreebsd.c: introduce FreeBSD port's patch to avoid
+	FreeBSD-current warns "Absurd new brk addr".
+
+1998-04-06  Colin Rafferty  <colin@xemacs.org>
+
+	* glyphs-x.c (struct gif_error_struct): Made the err_str point to
+	a CONST char* instead of non-const.
+	(tiff_memory_write): Add fake return statement to shut up warnings.
+
+1998-04-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Finsert_file_contents_internal): Correctly handle
+	special files larger than 32K.
+
+1998-04-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Fmake_temp_name): Don't call mktemp().
+
+1998-04-06  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* unexelf.c: include <config.h> first.
+
+1998-04-04  Martin Buchholz  <martin@xemacs.org>
+
+	* sysdep.c:  Add #include <sys/termio.h> for AIXHFT as suggested
+	on c.e.x.
+
+	* nt.c:
+	* ntproc.c:
+	Change "config.h" to <config.h>.  Add dire warnings to code since
+	config.h is not included first.
+
+	* powerpc.h: Avoid redefinition warning on START_FILES.
+
+	* window.c: Rename Vminibuf_scroll_window to Vminibuffer_scroll_window.
+	* hpplay.c: Rename play_gain to hp_play_gain in accordance with
+	coding standards.
+
+	* frame-x.c (x_lower_frame):
+	(x_raise_frame_1): Clarify code.  Save a nanosecond if frame not
+	visible.
+
+	* fileio.c (Fmake_temp_name): Use static CONST suffix; save a
+	nanosecond.
+
+1998-04-05  Amir J. Katz  <amir@ndsoft.com>
+
+	* sysproc.h: Added #include <sys/types.h> before <sys/socket.h>
+	otherwise callproc.c does not compile on SunOS 4.1.4 with gcc 2.8.1
+
+	* sysdep.h: strerror() does not return CONST in gcc 2.8.1
+
+1998-04-05  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* redisplay.c (generate_fstring_runes): Grok specifiers and
+	symbols indirecting to specifiers.
+
+1998-04-06  Olivier Galibert  <galibert@pobox.com>
+
+	* events.c (print_event): XINT() may return a long.
+
+	* insdel.c (make_gap): Thou shan't cast EMACS_INT_MAX to int.
+	(buffer_insert_string_1): ditto.
+
+	* regex.c (print_partial_compiled_pattern): Neither EMACS_INTs nor 
+	ptrdiff_t are portably printable as an int.
+
+	* redisplay.c (window_line_number): Don't assume that an EMACS_INT 
+	in an int.
+
+	* alloc.c (report_pure_usage): Don't assume that a size_t is
+	displayable as an int.
+
+1998-04-06  SL Baur  <steve@altair.xemacs.org>
+
+	* process-unix.c: Fix typo in #ifdef.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1998-04-06  Olivier Galibert  <galibert@pobox.com>
+
+	* unexelfsgi.c (unexec): Don't treat the sbss section as bss if it
+	isn't one. Needed for irix 6.5.
+
+1998-04-05  Martin Buchholz  <martin@xemacs.org>
+
+	* sysdep.h: Two prototypes that weren't properly size_t'ed
+
+1998-04-04  Martin Buchholz  <martin@xemacs.org>
+
+	* ralloc.c: mallopt <==> malloc.h.
+
 1998-04-04  Martin Buchholz  <martin@xemacs.org>
 
 	* emacs.c: #include <paths.h>, not "paths.h"

@@ -1,4 +1,25 @@
 							-*- indented-text -*-
+to 21.0 beta35 "Peacock Goat"
+-- info fixes from Oscar Figueiredo
+-- Various fixes from Hrvoje Niksic
+-- More clean up patches from Martin Buchholz
+-- MS Windows processes patches from Kirill Katsnelson
+-- path searching patches from Michael Sperber
+-- clean up patches from Martin Buchholz
+-- Various fixes from Hrvoje Niksic
+-- BSD fixes from IENAGA Kazuyuki
+-- glyphs-x.c cleanup from Colin Rafferty
+-- MS windows fixes from Kirill Katsnelson
+-- toolbar clean up from Jeff Miller
+-- Hunt the Wumpus 64 bit cleanness patches from Oliver Graf
+-- miscellaneous bug fixes
+-- info updates from Oscar Figueiredo
+-- Various patches from Andreas Jaegar, Olivier Galibert, Karl Hegbloom,
+   and Amir Katz
+-- FAQ update from Christian Nybø
+-- miscellaneous fixes from Martin Buchholz
+-- package-get-base.el updated
+
 to 21.0 beta34 "Oberhasli"
 -- defsymbol cleanup from Martin Buchholz
 -- miscellaneous patches from Martin Buchholz

@@ -1148,7 +1148,10 @@ main_1 (int argc, char **argv, char **envp, int restart)
       lstream_type_create_mule_coding ();
 #endif
       lstream_type_create_print ();
-
+#ifdef HAVE_MS_WINDOWS
+      lstream_type_create_mswindows_selectable ();
+#endif
+      
       /* Initialize processes implementation.
 	 The functions may make exactly the following function/macro calls:
 
@@ -1158,7 +1161,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       process_type_create_unix ();
 #endif
 #ifdef HAVE_WIN32_PROCESSES
-      process_type_create_mswindows ();
+      process_type_create_nt ();
 #endif
 
       /* Now initialize most variables.
@@ -1278,7 +1281,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_process_unix ();
 #endif
 #ifdef HAVE_WIN32_PROCESSES
-      vars_of_process_mswindows ();
+      vars_of_process_nt ();
 #endif
 #endif
 
@@ -2325,7 +2328,7 @@ and announce itself normally when it is run.
   Freally_free (Qnil);
 
   /* When we're dumping, we can't use the debugging free() */
-
+  disable_free_hook ();
 #endif
 #if 1 /* martin */
 #endif
@@ -2390,9 +2393,6 @@ and announce itself normally when it is run.
 #ifdef DOUG_LEA_MALLOC
     malloc_state_ptr = malloc_get_state ();
 #endif
-#ifdef ERROR_CHECK_MALLOC
-    disable_free_hook ();
-#endif
   /* here we break our rule that the filename conversion should
      be performed at the actual time that the system call is made.
      It's a whole lot easier to do the conversion here than to
@@ -2450,13 +2450,8 @@ decode_path (CONST char *path)
     {
       p = strchr (path, SEPCHAR);
       if (!p) p = path + strlen (path);
-      lpath = Fcons (((p != path)
-#if 1
-		      ? Ffile_name_as_directory(make_string ((CONST Bufbyte *) path, p - path))
-#else
-		      ? make_string ((CONST Bufbyte *) path, p - path)
-#endif
-		      : Qnil),
+      lpath = Fcons (Ffile_name_as_directory(make_string ((CONST Bufbyte *) path,
+							  p - path)),
 		     lpath);
       if (*p)
 	path = p + 1;

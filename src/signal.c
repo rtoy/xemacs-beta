@@ -643,7 +643,9 @@ init_signals_very_early (void)
       signal (SIGHUP,  fatal_error_signal);
       signal (SIGQUIT, fatal_error_signal);
       signal (SIGILL,  fatal_error_signal);
+#ifdef SIGTRAP
       signal (SIGTRAP, fatal_error_signal);
+#endif
 #ifdef SIGABRT
       signal (SIGABRT, fatal_error_signal);
 #endif
@@ -679,7 +681,9 @@ init_signals_very_early (void)
 #ifdef SIGSYS
       signal (SIGSYS, fatal_error_signal);
 #endif
+#ifdef SIGPIPE
       signal (SIGPIPE, fatal_error_signal);
+#endif
       signal (SIGTERM, fatal_error_signal);
 #ifdef SIGXCPU
       signal (SIGXCPU, fatal_error_signal);

@@ -29,12 +29,12 @@ file.
     particular version is implied, "Emacs" will be used.
 
 
-* Changes in XEmacs 20.5
+* Changes in XEmacs 21.0
 ========================
 
 ** XEmacs has been unbundled into constituent installable packages.
-
-#### Document me, please.
+See the file `etc/PACKAGES' in the distribution for a full
+description.
 
 ** Using the new `-private' option, you can make XEmacs use a private
 colormap.
@@ -74,18 +74,6 @@ If you don't specify a particular version number argument, then the
 customization buffer shows all the customizable options for which
 Emacs versions of changes are recorded.
 
-** defcustom now accepts the keyword `:version'.  Use this to specify
-in which version of Emacs a certain variable's default value changed.
-For example,
-
-   (defcustom foo-max 34 "*Maximum number of foo's allowed."
-     :type 'integer
-     :group 'foo
-     :version "20.5")
-
-This information is used to control the customize-changed-options
-command.
-
 ** The new command `add-log-convert' can be used to convert the
 old-style (pre-20.3) ChangeLog buffers to new style, for
 consistency.  A reminder: if you wish to revert to old-style
@@ -93,6 +81,8 @@ ChangeLogs instead, customize the value of `add-log-time-format'
 variable.
 
 ** XEmacs/Mule (internationalization) changes.
+
+*** Mule support now works on TTY's.  #### What, where, how?
 
 *** Egg/SJ3 input method is now officially supported.  Quail and
 Egg/Skk have been available through the generalized Leim since 20.3.
@@ -115,13 +105,14 @@ If you want spaces at the beginning of a line to start a paragraph,
 use the new mode, Paragraph Indent Text mode.
 
 
-* Lisp and internal changes in XEmacs 20.5
+* Lisp and internal changes in XEmacs 21.0
 ==========================================
 
-** There is initial support for 31-bit integers in elisp (normally,
-integers are only 28 bits wide on 32-bit machines.)  Compile with
--DUSE_MINIMAL_TAGBITS to test.  With this change, the maximum buffer
-size on 32-bit machines is bumped from 128M to 1G.
+** It is now possible to build XEmacs with support for 31-bit Lisp
+integers (normally, Lisp integers are only 28 bits wide on 32-bit
+machines.)  Configure with --use-minimal-tagbits to test.  With this
+change, the maximum buffer size on 32-bit machines is bumped from 128M
+to 1G.  This setting will be the default in a future XEmacs version.
 
 ** The XEmacs hashtables now have a consistent read/print syntax.
 This means that a hashtable will be readably printed in a
@@ -161,12 +152,42 @@ automatically applies `format' to its arguments.
 ** The new `lwarn' function, analogous to `lmessage', allows printing
 a formatted warning, with a non-default CLASS or LABEL.
 
+** Specifiers and symbols whose value is a specifier are now allowed
+as modeline specifications.  #### Provide an example.
+
+** defcustom now accepts the keyword `:version'.  Use this to specify
+in which version of Emacs a certain variable's default value changed.
+For example,
+
+   (defcustom foo-max 34 "*Maximum number of foo's allowed."
+     :type 'integer
+     :group 'foo
+     :version "20.5")
+
+This information is used to control the customize-changed-options
+command.
+
 ** The line number tracking in modeline is now efficient, even for
 very large buffers.  This is achieved by caching the line numbers of
 recent buffer positions, and reusing them.  This cache is used only in
 the buffers where `line-number-mode' is in effect.
 
-** When the new GNU Malloc aka Doug Lea Malloc is available, it will be used.
+** When the new GNU Malloc aka Doug Lea Malloc is available, it will
+be used.  This should result in better performance on Linux systems
+with libc6.
+
+** The code XEmacs uses to assemble its various paths into the directory
+   hierarchy has been completely rewritten to support the package system.
+
+*** Since site-lisp is now off by default, the variable `site-directory'
+    is now obsolete.  Code that depends on its value is probably wrong.
+    In a default setup, it is set to nil.
+
+*** `Info-default-directory-list' is obsolete.
+    It never served any useful function anyway.
+
+    If you want to change the path which XEmacs uses to search for
+    info files, set `Info-directory-list' instead.
 
 
 * Changes in XEmacs 20.4

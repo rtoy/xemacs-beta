@@ -75,6 +75,23 @@
 (defvar last-package-load-path nil
   "Load path for packages last in the load path.")
 
+(defvar package-locations
+  (list
+   (list "~/.xemacs"         'early #'(lambda () t))
+   (list "mule-packages"     'late  #'(lambda () (featurep 'mule)))
+   (list "packages"          'late  #'(lambda () t))
+   (list "infodock-packages" 'late  #'(lambda () (featurep 'infodock))))
+  "Locations of the various package directories.
+This is a list each of whose elements describes one directory.
+A directory description is a three-element list.
+The first element is either an absolute path or a subdirectory
+in the XEmacs hierarchy.
+The second component is one of the symbols EARLY, LATE, LAST,
+depending on the load-path segment the hierarchy is supposed to
+show up in.
+The third component is a thunk which, if it returns NIL, causes
+the directory to be ignored.")
+
 (defun package-get-key-1 (info key)
   "Locate keyword `key' in list."
   (cond ((null info)
@@ -298,52 +315,13 @@ This function is basically a wrapper over `locate-file'."
 
 ;; Path setup
 
-(defun packages-find-package-path (roots)
-  "Construct the package path underneath installation roots ROOTS."
-  (let ((envvar-value (getenv "EMACSPACKAGEPATH")))
-    (if envvar-value
-	(decode-path-internal envvar-value)
-      (let ((site-base-directory (paths-find-site-directory roots "packages"))
-	    (version-base-directory (paths-find-version-directory roots "packages")))
-	(if (or site-base-directory version-base-directory)
-	    (let ((site-mule-directory
-		   (and (featurep 'mule)
-			(paths-find-site-directory roots
-						   "mule-packages")))
-		  (version-mule-directory
-		   (and (featurep 'mule)
-			(paths-find-version-directory roots
-						      "mule-packages")))
-		  ;; There needs to be a cleverer way of doing this
-		  (site-infodock-directory
-		   (and (featurep 'infodock)
-			(paths-find-site-directory roots
-						   "infodock-packages")))
-		  (version-infodock-directory
-		   (and (featurep 'infodock)
-			(paths-find-version-directory roots
-						      "infodock-packages"))))
-	      (append '("~/.xemacs/")
-		      '(nil)
-		      (and version-infodock-directory
-			   (null (string-equal version-infodock-directory
-					       site-infodock-directory))
-			   (list version-infodock-directory))
-		      (and site-infodock-directory
-			   (list site-infodock-directory))
-		      (and version-mule-directory
-			   (null (string-equal version-mule-directory
-					      site-mule-directory))
-			   (list version-mule-directory))
-		      (and site-mule-directory
-			   (list site-mule-directory))
-		      (and version-base-directory
-			   (null (string-equal version-base-directory
-					      site-base-directory))
-			   (list version-base-directory))
-		      (and site-base-directory
-			   (list site-base-directory))))
-	  configure-package-path)))))
+(defun packages-find-package-directories (roots base)
+  "Find a set of package directories."
+  (let ((version-directory (paths-find-version-directory roots base))
+	(site-directory (paths-find-site-directory roots base)))
+    (paths-uniq-append
+     (and version-directory (list version-directory))
+     (and site-directory (list site-directory)))))
 
 (defvar packages-special-bases '("etc" "info" "lisp" "lib-src" "bin")
   "Special subdirectories of packages.")
@@ -355,35 +333,82 @@ This function is basically a wrapper over `locate-file'."
 				     packages-special-bases)))
 
 (defun packages-split-path (path)
-  "Split PATH at NIL, return pair with two components.
+  "Split PATH at \"/\", return pair with two components.
 The second component is shared with PATH."
   (let ((reverse-tail '())
 	(rest path))
-    (while (and rest (null (null (car rest))))
+    (while (and rest (null (string-equal "/" (car rest))))
       (setq reverse-tail (cons (car rest) reverse-tail))
       (setq rest (cdr rest)))
     (if (null rest)
 	(cons path nil)
       (cons (nreverse reverse-tail) (cdr rest)))))
 
-(defun packages-find-packages (package-path &optional inhibit)
-  "Search for all packages in PACKAGE-PATH.
-PACKAGE-PATH may distinguish (by NIL-separation) between early,
-late and last packages.
-If INHIBIT is non-NIL, return empty paths.
+(defun packages-split-package-path (package-path)
+  "Split up PACKAGE-PATH into early, late and last components.
+The separation is by \"/\" components.
 This returns (LIST EARLY-PACKAGES LATE-PACKAGES LAST-PACKAGES)."
+  ;; When in doubt, it's late
+  (let* ((stuff (packages-split-path package-path))
+	 (early (and (cdr stuff) (car stuff)))
+	 (late+last (or (cdr stuff) (car stuff)))
+	 (stuff (packages-split-path late+last))
+	 (late (car stuff))
+	 (last (cdr stuff)))
+    (list (packages-find-packages-in-directories early)
+	  (packages-find-packages-in-directories late)
+	  (packages-find-packages-in-directories last))))
+
+(defun packages-deconstruct (list consumer)
+  "Deconstruct LIST and feed it to CONSUMER."
+  (apply consumer list))
+
+(defun packages-find-packages-by-name (roots name)
+  "Find a package hierarchy by its name."
+  (packages-find-packages-in-directories
+   (if (and (file-name-absolute-p name)
+	    (file-name-directory (expand-file-name name)))
+       (list (file-name-as-directory (expand-file-name name)))
+    (packages-find-package-directories roots name))))
+
+(defun packages-find-packages-at-time
+  (roots package-locations time &optional default)
+  "Find packages at given time.
+For the format of PACKAGE-LOCATIONS, see the global variable of the same name.
+TIME is either 'EARLY, 'LATE, or 'LAST.
+DEFAULT is a default list of packages."
+  (let ((packages '()))
+    (while package-locations
+      (packages-deconstruct 
+       (car package-locations)
+       #'(lambda (name a-time thunk)
+	   (if (and (eq time a-time)
+		    (funcall thunk))
+	       (setq packages
+		     (nconc packages
+			    (packages-find-packages-by-name roots name))))))
+      (setq package-locations (cdr package-locations)))
+    (paths-uniq-append packages
+		       default)))
+
+(defun packages-find-packages (roots &optional inhibit)
+  "Find the packages."
   (if inhibit
       (list '() '() '())
-    ;; When in doubt, it's late
-    (let* ((stuff (packages-split-path package-path))
-	   (early (and (cdr stuff) (car stuff)))
-	   (late+last (or (cdr stuff) (car stuff)))
-	   (stuff (packages-split-path late+last))
-	   (late (car stuff))
-	   (last (cdr stuff)))
-      (list (packages-find-packages-in-directories early)
-	    (packages-find-packages-in-directories late)
-	    (packages-find-packages-in-directories last)))))
+    (let ((envvar-value (getenv "EMACSPACKAGEPATH")))
+      (if envvar-value
+	  (packages-split-package-path envvar-value)
+	(packages-deconstruct
+	 (packages-split-package-path configure-package-path)
+	 #'(lambda (configure-early-packages
+		    configure-late-packages
+		    configure-last-packages)
+	     (list (packages-find-packages-at-time roots package-locations 'early
+						   configure-early-packages)
+		   (packages-find-packages-at-time roots package-locations 'late
+						   configure-late-packages)
+		   (packages-find-packages-at-time roots package-locations 'last
+						   configure-last-packages))))))))
 
 (defun packages-find-package-library-path (packages suffixes)
   "Construct a path into a component of the packages hierarchy.

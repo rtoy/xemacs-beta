@@ -28,8 +28,8 @@ Boston, MA 02111-1307, USA.  */
    BUGS
      I have been unable to figure out how to use the volume feature, so no
      attempts has been made to honor the volume arg of play_sound_*
-     This means that all sounds is played at 100%.
-     The gain parameter can be set by using the play-gain variable.
+     This means that all sounds are played at 100%.
+     The gain parameter can be set by using the hp-play-gain variable.
 
    NOTES
      This file is mostly based on the player program found in the examples
@@ -63,7 +63,7 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Vhp_play_server;
 Lisp_Object Vhp_play_speaker;
-int         play_gain;
+int         hp_play_gain;
 
 /* Functions */
 
@@ -136,7 +136,7 @@ play_bucket_internal(audio, pSBucket, volume)
     playParams.gain_matrix.type = AGMTOutput;       /* gain matrix */
     playParams.gain_matrix.num_entries = 1;
     playParams.gain_matrix.gain_entries = &gainEntry;
-    playParams.play_volume = play_gain;            /* play volume */
+    playParams.play_volume = hp_play_gain;          /* play volume */
     playParams.pause_first = False;                 /* don't pause */
     playParams.start_offset.type = ATTSamples;      /* start offset 0 */
     playParams.start_offset.u.samples = 0;
@@ -273,7 +273,7 @@ not make your functions depend on it.
 
   Vhp_play_speaker = intern ("internal");
 
-  DEFVAR_INT("hp-play-gain", &play_gain /*
+  DEFVAR_INT("hp-play-gain", &hp_play_gain /*
 Global gain value for playing sounds.
 Default value is AUnityGain which means keep level.
 Please refer to the HP documentation, for instance in
@@ -283,7 +283,7 @@ Note that this is specific to the HP sound implementation, and you should
 not make your functions depend on it.
 */ );
 
-  play_gain = AUnityGain;
+  hp_play_gain = AUnityGain;
 }
 
 void

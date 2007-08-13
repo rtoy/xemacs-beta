@@ -305,11 +305,8 @@ char *getwd (char *dir);
 /* Defines that we need that aren't in the standard signal.h  */
 #define SIGHUP  1               /* Hang up */
 #define SIGQUIT 3               /* Quit process */
-#define SIGTRAP 5               /* Trace trap */
 #define SIGKILL 9               /* Die, die die */
-#define SIGPIPE 13              /* Write on pipe with no readers */
 #define SIGALRM 14              /* Alarm */
-#define SIGCHLD 18              /* Death of child */
 #define SIGPROF 29		/* Profiling timer exp */
 
 /* For integration with MSDOS support.  */
@@ -344,6 +341,9 @@ char *getwd (char *dir);
 /* For proper declaration of environ.  */
 #include <stdlib.h>
 #include <string.h>
+
+/* Define process implementation */
+#define HAVE_WIN32_PROCESSES
 
 #if 0
 /* Emacs takes care of ensuring that these are defined.  */

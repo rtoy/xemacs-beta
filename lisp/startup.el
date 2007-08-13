@@ -345,6 +345,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 		 stream))
 	(princ (format "\nexec-directory is %S" exec-directory) stream)
 	(princ (format "\ndata-directory is %S" data-directory) stream)
+	(princ (format "\ndata-directory-list is %S" data-directory-list) stream)
 	(princ (format "\ndoc-directory is %S" doc-directory) stream)
 	(princ (format "\nload-path is %S" load-path) stream)
 	(princ "\n\n" stream)))
@@ -1016,13 +1017,11 @@ If INHIBIT-PACKAGES is non-NIL, don't do packages.
 If INHIBIT-SITE-LISP is non-NIL, don't do site-lisp.
 It's idempotent, so call this as often as you like!"
 
-  (setq package-path (packages-find-package-path roots))
-
   (apply #'(lambda (early late last)
 	     (setq early-packages early)
 	     (setq late-packages late)
 	     (setq last-packages last))
-	 (packages-find-packages package-path inhibit-packages))
+	 (packages-find-packages roots inhibit-packages))
 
   (setq early-package-load-path (packages-find-package-load-path early-packages))
   (setq late-package-load-path (packages-find-package-load-path late-packages))

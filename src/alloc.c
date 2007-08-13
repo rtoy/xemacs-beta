@@ -2969,7 +2969,7 @@ report_pure_usage (int report_impurities,
 	       (long) get_PURESIZE(),
                (int) (pure_bytes_used / (get_PURESIZE() / 100.0) + 0.5));
       if (lost > ((slop ? slop : 1) / 1024)) {
-        sprintf (buf + strlen (buf), " -- %dk wasted", lost);
+        sprintf (buf + strlen (buf), " -- %ldk wasted", (long)lost);
 	if (die_if_pure_storage_exceeded) {
 	  puresize_adjust_h (pure_bytes_used + slop);
 #ifdef HEAP_IN_DATA

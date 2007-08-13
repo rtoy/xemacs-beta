@@ -184,7 +184,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 	     (setq cs-r ret
 		   cs-w ret))))
     (let ((coding-system-for-read
-	   (or coding-system-for-read cs-r))
+	   (or coding-system-for-read cs-r 'undecided))
 	  (coding-system-for-write
 	   (or coding-system-for-write cs-w)))
       (apply 'start-process-internal name buffer program program-args)

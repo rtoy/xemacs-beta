@@ -199,6 +199,19 @@ find that string, and take out the spaces.
 
 Compiler fixes in Irix 6.0.1 should eliminate this problem.
 
+** Coredumping in Irix 6.2
+
+Pete Forman <gsez020@compo.bedford.waii.com> writes:
+A problem noted by myself and others (I've lost the references) was
+that XEmacs coredumped when the cut or copy toolbar buttons were
+pressed.  This has been fixed by loading the SGI patchset (Feb 98)
+without having to recompile XEmacs.
+
+My versions are XEmacs 20.3 (problem first noted in 19.15) and IRIX
+6.2, compiled using -n32.  I'd guess that the relevant individual
+patch was "SG0002580: multiple fixes for X libraries".  SGI recommends
+that the complete patch set be installed rather than parts of it.
+
 ** Native cc on SCO OpenServer 5 is now OK.  Icc may still throw you
 a curve.  Here is what Robert Lipe <robertl@arnet.com> says:
 

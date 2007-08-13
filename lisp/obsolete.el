@@ -314,6 +314,18 @@ See `set-frame-properties' for built-in property names."
 (define-obsolete-variable-alias 'after-write-file-hooks 'after-save-hook)
 (define-obsolete-function-alias 'truename 'file-truename)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; paths
+
+(defvar site-directory nil
+  "This used to be the location of the site-lisp directory.")
+(make-obsolete-variable 'site-directory "call paths-find-site-lisp-directory instead.")
+
+(defvar Info-default-directory-list nil
+  "This used to be the initial value of Info-directory-list.
+If you want to change the locations where XEmacs looks for info files,
+set Info-directory-list.")
+(make-obsolete-variable 'Info-default-directory-list 'Info-directory-list)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; hooks
 
 (make-obsolete-variable 'auto-fill-hook 'auto-fill-function)

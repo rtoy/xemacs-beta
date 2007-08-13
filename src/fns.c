@@ -964,16 +964,21 @@ Take cdr N times on LIST, and return the result.
        (n, list))
 {
   REGISTER int i;
+  REGISTER Lisp_Object tail = list;
   CHECK_NATNUM (n);
   for (i = XINT (n); i; i--)
     {
-      if (NILP (list))
-	return list;
-      CHECK_CONS (list);
-      list = XCDR (list);
-      QUIT;
+      if (CONSP (tail))
+	tail = XCDR (tail);
+      else if (NILP (tail))
+	return Qnil;
+      else
+	{
+	  tail = wrong_type_argument (Qlistp, tail);
+	  i++;
+	}
     }
-  return list;
+  return tail;
 }
 
 DEFUN ("nth", Fnth, 2, 2, 0, /*
@@ -1006,7 +1011,7 @@ Return element of SEQUENCE at index N.
 	/* This is The Way It Has Always Been. */
 	return Qnil;
 #else
-        /* This is The Way Mly Says It Should Be. */
+        /* This is The Way Mly and Cltl2 say It Should Be. */
         args_out_of_range (sequence, n);
 #endif
     }

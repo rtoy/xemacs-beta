@@ -33,6 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #if !defined (NO_SUBPROCESSES)
 
 #ifdef HAVE_SOCKETS	/* TCP connection support, if kernel can do it */
+# include <sys/types.h>  /* AJK */
 # include <sys/socket.h>
 # include <netdb.h>
 # include <netinet/in.h>

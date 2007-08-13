@@ -35,7 +35,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <signal.h>
 
 /* must include CRT headers *before* config.h */
-#include "config.h"
+/* ### I don't believe it - martin */
+#include <config.h>
 #include "systime.h"
 #include "syssignal.h"
 #include "sysproc.h"
@@ -1377,7 +1378,7 @@ sys_link (const char * old, const char * new)
 }
 
 int
-sys_mkdir (const char * path)
+sys_mkdir (const char * path, int mode_unused)
 {
   return _mkdir (map_win32_filename (path, NULL));
 }

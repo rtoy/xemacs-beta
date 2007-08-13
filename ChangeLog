@@ -1,3 +1,41 @@
+1998-04-10  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta35 is released.
+
+1998-04-10  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* etc/NEWS: Documented that Info-default-directory-list and
+	site-directory are gone.
+
+	* configure.usage: Clarified --package-path documentation.
+
+1998-04-07  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* configure.in: Now generates src/paths.h from src/paths.h.in.in.
+	Removed defaults for infopath and package-path.
+
+	* Makefile.in (src/paths.h): ... is now generated from
+	src/paths.h.in.in.  Moved generation of paths.h to configure.
+
+	* paths.h.in: Removed.
+
+	* paths.h.in.in: Created.
+
+1998-04-06  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: png was still being used if png_version < 0.96
+
+	* configure.in: Fixed magic to handle AIX, X11R6, and gcc.
+
+1998-04-05  Amir J. Katz  <amir@ndsoft.com>
+
+	* INSTALL (Rationale): Offix support comment is wrong. To disable,
+	one must use --with-offix=no and not --without-offix
+
+1998-04-05  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (CPP): ppc.ldscript sits in $srcdir/src not $srcdir.
+
 1998-04-04  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-beta34 is released.

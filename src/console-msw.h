@@ -126,6 +126,9 @@ struct mswindows_frame
   /* Menu checksum. See menubar-msw.c */
   unsigned int menu_checksum;
 
+  /* Frame title hash value. See frame-msw.c */
+  unsigned int title_checksum;
+
   /* Real character width and height of the frame.
      FRAME_{HEIGHT,WIDTH} do not work for pixel geometry! */
   int charheight, charwidth;
@@ -146,8 +149,9 @@ struct mswindows_frame
 #define FRAME_MSWINDOWS_CDC(f)		  (FRAME_MSWINDOWS_DATA (f)->cdc)
 #define FRAME_MSWINDOWS_MENU_HASHTABLE(f) (FRAME_MSWINDOWS_DATA (f)->menu_hashtable)
 #define FRAME_MSWINDOWS_MENU_CHECKSUM(f)  (FRAME_MSWINDOWS_DATA (f)->menu_checksum)
-#define MSWINDOWS_FRAME_CHARWIDTH(f)	  (FRAME_MSWINDOWS_DATA (f)->charwidth)
-#define MSWINDOWS_FRAME_CHARHEIGHT(f)	  (FRAME_MSWINDOWS_DATA (f)->charheight)
+#define FRAME_MSWINDOWS_TITLE_CHECKSUM(f) (FRAME_MSWINDOWS_DATA (f)->title_checksum)
+#define FRAME_MSWINDOWS_CHARWIDTH(f)	  (FRAME_MSWINDOWS_DATA (f)->charwidth)
+#define FRAME_MSWINDOWS_CHARHEIGHT(f)	  (FRAME_MSWINDOWS_DATA (f)->charheight)
 
 /* Frame check and validation macros */
 #define FRAME_MSWINDOWS_P(frm) CONSOLE_TYPESYM_MSWINDOWS_P (FRAME_TYPE (frm))

@@ -76,20 +76,24 @@
 
 (defun paths-construct-info-path (roots early-packages late-packages last-packages)
   "Construct the info path."
-  (append
-   (packages-find-package-info-path early-packages)
-   (packages-find-package-info-path late-packages)
-   (let ((info-directory
-	  (paths-find-version-directory roots "info"
-					nil
-					configure-info-directory)))
-     (and info-directory
-	  (list info-directory)))
-   (packages-find-package-info-path last-packages)
-   (let ((info-path-envval (getenv "INFOPATH")))
-     (if info-path-envval
-	 (decode-path-internal info-path-envval)
-       (paths-directories-which-exist configure-info-path)))))
+  (let ((info-path-envval (getenv "INFOPATH")))
+    (paths-uniq-append
+     (append
+      (let ((info-directory
+	     (paths-find-version-directory roots "info"
+					   nil
+					   configure-info-directory)))
+	(and info-directory
+	     (list info-directory)))
+      (packages-find-package-info-path early-packages)
+      (packages-find-package-info-path late-packages)
+      (packages-find-package-info-path last-packages)
+      (and info-path-envval
+	   (decode-path-internal info-path-envval)))
+     (and (not info-path-envval)
+	  (paths-uniq-append
+	   (paths-directories-which-exist configure-info-path)
+	   (paths-directories-which-exist '("/usr/local/info/" "/usr/info/")))))))
 
 (defun paths-find-doc-directory (roots)
   "Find the documentation directory."
@@ -97,7 +101,7 @@
 
 (defun paths-find-lock-directory (roots)
   "Find the lock directory."
-  (paths-find-site-path roots "lock" "EMACSLOCKDIR" configure-lock-directory))
+  (paths-find-site-directory roots "lock" "EMACSLOCKDIR" configure-lock-directory))
 
 (defun paths-find-superlock-file (lock-directory)
   "Find the superlock file."

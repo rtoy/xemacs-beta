@@ -1,18 +1,118 @@
+#   Makefile for Microsoft NMAKE
+#   Copyright (C) 1995 Board of Trustees, University of Illinois.
+#   Copyright (C) 1995, 1996 Ben Wing.
+#   Copyright (C) 1995 Sun Microsystems, Inc.
+#   Copyright (C) 1998 Free Software Foundation, Inc.
+#
+# This file is part of XEmacs.
+#
+# XEmacs is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any
+# later version.
+#
+# XEmacs is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with XEmacs; see the file COPYING.  If not, write to
+# the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 02111-1307, USA.
+#
+# Synched up with: Not in FSF.
+#
+
 XEMACS=..
 LISP=$(XEMACS)\lisp
-PATH_PACKAGEPATH="~/.xemacs;;d:/src/xemacs/packages"
+
+#
+# Command line options defaults
+#
+!if !defined(PATH_PACKAGEPATH)
+PATH_PACKAGEPATH="~/.xemacs"
+!endif
+!if !defined(HAVE_MSW)
+HAVE_MSW=0
+!endif
+!if !defined(HAVE_X)
 HAVE_X=0
-HAVE_MSW=1
-
+!endif
+!if !defined(HAVE_MULE)
 HAVE_MULE=0
-HAVE_IMAGEMAGICK=0
-
+!endif
+!if !defined(HAVE_MSW_C_DIRED)
+HAVE_MSW_C_DIRED=1
+!endif
+!if !defined(DEBUG_XEMACS)
 DEBUG_XEMACS=1
+!endif
+!if !defined(USE_UNION_TYPE)
+USE_UNION_TYPE=0
+!endif
+!if !defined(USE_MINIMAL_TAGBITS)
+USE_MINIMAL_TAGBITS=0
+!endif
+!if !defined(USE_INDEXED_LRECORD_IMPLEMENTATION)
+USE_INDEXED_LRECORD_IMPLEMENTATION=0
+!endif
 
+#
+# Conf error checks
+#
+!if !$(HAVE_MSW) && !$(HAVE_X)
+!error Please specify at least one HAVE_MSW=1 and/or HAVE_X=1
+!endif
+!if $(HAVE_X) && !defined(X11_DIR)
+!error Please specify root directory for your X11 installation: X11_DIR=path
+!endif
+
+#
+# Handle GUNG_HO
+#
+!if defined(GUNG_HO)
+USE_MINIMAL_TAGBITS=$(GUNG_HO)
+USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
+!endif
+
+#
+# Small configuration report
+#
+!if !defined(CONF_REPORT_ALREADY_PRINTED)
+!if [set CONF_REPORT_ALREADY_PRINTED=1]
+!endif
+!message ------------------------------------------------
+!if $(HAVE_MSW)
+!message Compiling in support for native GUI.
+!endif
+!if $(HAVE_X)
+!message Compiling in support for X-Windows.
+!endif
+!if $(HAVE_MULE)
+!message Compiling in MULE.
+!endif
+!if $(HAVE_MSW_C_DIRED)
 # Define HAVE_MSW_C_DIRED to be non-zero if you want Xemacs to use C
 # primitives to significantly speed up dired, at the expense of an
 # additional ~4KB of code.
-HAVE_MSW_C_DIRED=1
+!message Compiling in fast dired implementation.
+!endif
+!if $(USE_MINIMAL_TAGBITS)
+!message Using minimal tagbits.
+!endif
+!if $(USE_INDEXED_LRECORD_IMPLEMENTATION)
+!message Using indexed lrecord implementation.
+!endif
+!if $(USE_UNION_TYPE)
+!message Using union type for Lisp object storage.
+!endif
+!if $(DEBUG_XEMACS)
+!message Compiling in extra debug checks. XEmacs will be slow!
+!endif
+!message ------------------------------------------------
+!message 
+!endif # !defined(CONF_REPORT_ALREADY_PRINTED)
 
 !if $(DEBUG_XEMACS)
 OPT=-Od -Zi
@@ -22,22 +122,10 @@ OPT=-O2 -G5 -Zi
 
 WARN_CPP_FLAGS = -W3
 
-#------------------------------------------------------------------------------
-
 !if $(HAVE_X)
-
-X11R6=h:\utils\X11R6
-
-!if $(HAVE_IMAGEMAGICK)
-MAGICK=e:\utils\ImageMagick
-
-MAGICK_INCLUDES=-I$(MAGICK)\Magick
-MAGICK_LIBS=Magick.dll.lib
-!endif
-
 X_DEFINES=-DHAVE_X_WINDOWS
-X_INCLUDES=-I$(X11R6)\include $(MAGICK_INCLUDES)
-X_LIBS=$(MAGICK_LIBS) Xaw.lib Xmu.lib Xt.lib SM.lib ICE.lib Xext.lib X11.lib
+X_INCLUDES=-I$(X11_DIR)\include
+X_LIBS=-libpath:$(X11_DIR)\lib Xaw.lib Xmu.lib Xt.lib SM.lib ICE.lib Xext.lib X11.lib
 !endif
 
 !if $(HAVE_MSW)
@@ -59,9 +147,6 @@ DEBUG_FLAGS= -debugtype:both -debug:full
 !endif
 
 !include "..\version.sh"
-
-# Nothing should need to be edited below this point.
-#------------------------------------------------------------------------------
 
 # Generic variables
 
@@ -242,6 +327,7 @@ DOC_SRC4=\
  $(XEMACS)\src\opaque.c \
  $(XEMACS)\src\print.c \
  $(XEMACS)\src\process.c \
+ $(XEMACS)\src\process-nt.c \
  $(XEMACS)\src\profile.c \
  $(XEMACS)\src\pure.c \
  $(XEMACS)\src\rangetab.c \
@@ -497,6 +583,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\opaque.obj \
 	$(OUTDIR)\print.obj \
 	$(OUTDIR)\process.obj \
+	$(OUTDIR)\process-nt.obj \
 	$(OUTDIR)\profile.obj \
 	$(OUTDIR)\pure.obj \
 	$(OUTDIR)\rangetab.obj \
@@ -607,10 +694,9 @@ temacs:  $(TEMACS)
 
 # use this rule to install the system
 install:
+	echo Not yet implemented.
 
-# The last line demands that you have a semi-decent shell
 distclean:
-	-mkdepend -f xemacs.mak
 	del *.bak
 	del *.orig
 	del *.rej

@@ -81,26 +81,30 @@ The returned list is sorted by pre-order and lexicographically."
     (file-directory-p (concat directory "lisp"))
     (file-directory-p (concat directory "src")))))
 
+(defun paths-chase-symlink (file-name)
+  "Chase a symlink until the bitter end."
+      (let ((maybe-symlink (file-symlink-p file-name)))
+	(if maybe-symlink
+	    (let* ((directory (file-name-directory file-name))
+		   (destination (expand-file-name maybe-symlink directory)))
+	      (paths-chase-symlink destination))
+	  file-name)))
+
 (defun paths-find-emacs-root
   (invocation-directory invocation-name)
   "Find the run-time root of XEmacs."
-  (let ((maybe-root-1 (file-name-as-directory
-		       (expand-file-name ".." invocation-directory)))
-	(maybe-root-2 (file-name-as-directory
-		       (expand-file-name "../.." invocation-directory))))
-    (cond
-     ((paths-emacs-root-p maybe-root-1)
-      maybe-root-1)
-     ((paths-emacs-root-p maybe-root-2)
-      maybe-root-2)
-     (t
-      (let ((maybe-symlink (file-symlink-p (concat invocation-directory
-						   invocation-name))))
-	(if maybe-symlink
-	    (let* ((symlink (expand-file-name maybe-symlink invocation-directory))
-		   (directory (file-name-directory symlink)))
-	      (paths-find-emacs-root directory invocation-name))
-	  nil))))))
+  (let* ((executable-file-name (paths-chase-symlink
+				(concat invocation-directory
+					invocation-name)))
+	 (executable-directory (file-name-directory executable-file-name))
+	 (maybe-root-1 (file-name-as-directory
+			(expand-file-name ".." executable-directory)))
+	 (maybe-root-2 (file-name-as-directory
+			(expand-file-name "../.." executable-directory))))
+    (or (and (paths-emacs-root-p maybe-root-1)
+	     maybe-root-1)
+	(and (paths-emacs-root-p maybe-root-2)
+	     maybe-root-2))))
 
 (defun paths-construct-emacs-directory (root suffix base)
   "Construct a directory name within the XEmacs hierarchy."
@@ -212,6 +216,16 @@ DEFAULT is a fall-back value."
 		      reverse-directories)))
       (setq directories (cdr directories)))
     (reverse reverse-directories)))
+
+(defun paths-uniq-append (list-1 list-2)
+  "Append LIST-1 and LIST-2, omitting duplicates."
+  (let ((reverse-survivors '()))
+    (while list-2
+      (if (null (member (car list-2) list-1))
+	  (setq reverse-survivors (cons (car list-2) reverse-survivors)))
+      (setq list-2 (cdr list-2)))
+    (append list-1
+	    (reverse reverse-survivors))))
 
 (defun paths-find-site-path (roots base &optional envvar default)
   "Find a path underneath the site hierarchy."

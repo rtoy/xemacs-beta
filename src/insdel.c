@@ -1874,7 +1874,7 @@ make_gap (struct buffer *buf, Bytecount increment)
 	 That won't work because so many places use `int'.  */
 
       if (BUF_Z (buf) - BUF_BEG (buf) + BUF_GAP_SIZE (buf) + increment
-	  > (int) EMACS_INT_MAX)
+	  > EMACS_INT_MAX)
 	error ("Maximum buffer size exceeded");
 
       result = BUFFER_REALLOC (buf->text->beg,
@@ -2388,7 +2388,7 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
 #endif
 
   /* Make sure that point-max won't exceed the size of an emacs int. */
-  if ((length + BUF_Z (buf)) > (int) EMACS_INT_MAX)
+  if ((length + BUF_Z (buf)) > EMACS_INT_MAX)
     error ("Maximum buffer size exceeded");
 
   /* theoretically not necessary -- caller should GCPRO */

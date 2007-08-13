@@ -44,10 +44,10 @@
 `file' should be the full path to the lisp file to install.
 `destdir' should be a simple directory name.
 The optional `pkg-dir' can be used to override the default package hierarchy
-\(last package-path)."
+\(car \(last late-packages))."
   (interactive "fLisp File: \nsDestination: ")
   (when (null pkg-dir)
-    (setq pkg-dir (cadr package-path)))
+    (setq pkg-dir (car (last late-packages))))
   (let ((destination (concat pkg-dir "/lisp/" destdir))
 	(buf (get-buffer-create package-admin-temp-buffer)))
     (call-process "add-little-package.sh"
@@ -62,10 +62,10 @@ The optional `pkg-dir' can be used to override the default package hierarchy
   "Install a pre-bytecompiled XEmacs package into package hierarchy."
   (interactive "fPackage tarball: ")
   (when (null pkg-dir)
-    (when (or (not (listp package-path))
-	      (not package-path))
+    (when (or (not (listp late-packages))
+	      (not late-packages))
       (error "No package path"))
-    (setq pkg-dir (car (last package-path))))
+    (setq pkg-dir (car (last late-packages))))
 
   (let ((buf (get-buffer-create package-admin-temp-buffer)))
     (call-process "add-big-package.sh"

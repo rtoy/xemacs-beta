@@ -1,3 +1,92 @@
+1998-04-10  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* code-process.el (start-process): Fallback to 'undecided instead
+	of 'binary for process input coding stream.
+
+	* process.el (start-process): Docstring fix.
+
+1998-04-09  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* info.el (Info-insert-dir): Do not insert temporary dir files
+	in Info-dir-file-attributes
+	(Info-build-dir-anew): Ensure temporary buffer is not read-only
+	(Info-rebuild-dir): Ditto.
+
+1998-04-09  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* obsolete.el: Added obsoleteness declarations for
+	`site-directory' and `Info-default-directory-list'.
+
+1998-04-08  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* find-paths.el (paths-find-emacs-root): Only look at the
+	executable at the end of the symlink chain for determining the
+	Emacs root.
+
+1998-04-07  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* setup-paths.el (paths-construct-info-path): Changed construction
+	to cater to gone default in configure.
+
+	* find-paths.el (paths-uniq-append): Added.
+
+	* packages.el: Rewritten package path construction once again.
+
+	* dump-paths.el, startup.el: Removed package-path as a global
+	variable.
+
+	* package-admin.el (package-admin-add-single-file-package): 
+	(package-admin-add-binary-package): Changed package-path to
+	late-packages.
+
+	* packages.el (packages-split-path): Split path at "/" rather than
+	nil according to change in emacs.c.
+
+1998-04-06  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* setup-paths.el (paths-construct-info-path): Changed info path
+	order so that directories come out right.
+	(paths-find-lock-directory): Fixed bug: It used to think
+	configure-lock-directory is a path.
+
+1998-04-06  Jeff Miller <jmiller@smart.net>
+
+	* x-toolbar.el:  Added toolbar-vector-xxxxxx defvars.  Modified
+	initial-toolbar-spec to use new toolbar-vector-xxxxxx defvars.  This
+	eases the use of toolbar-add/kill-item functions. 
+
+1998-04-07  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* code-files.el (file-coding-system-alist): Commented out
+	loaddefs.el magical treatment.
+
+1998-04-06  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* info.el (Info-rebuild-outdated-dir): Added new option
+	`conservative' and made it the default
+	(Info-rebuild-dir): Appropriately parse multi-line description
+	strings, and multi-section dir files. Issue warning when dir
+	is rebuilt as temporary
+	(Info-build-dir-anew): Issue warning when dir is built as 
+	temporary
+
+1998-04-04  Kirill M. Katsnelson  <kkm@kis.ru>
+ 
+	* list-mode.el (list-mode-map): Bind highlight motion commands to
+	standard keys left, right, C-b and C-f.
+
+1998-03-29  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* files.el (auto-mode-alist): allow .sc for Scheme->C
+
+1998-04-06  SL Baur  <steve@altair.xemacs.org>
+
+	* loadup.el (pureload): Don't quote (garbage-collect).
+
+1998-04-04  SL Baur  <steve@altair.xemacs.org>
+
+	* package-get-base.el: Updated.
+
 1998-04-04  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* isearch-mode.el (isearch-just-started): New variable.

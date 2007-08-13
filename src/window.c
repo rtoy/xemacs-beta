@@ -84,7 +84,7 @@ Lisp_Object minibuf_window;
 
 /* Non-nil means it is the window for C-M-v to scroll
    when the minibuffer is selected.  */
-Lisp_Object Vminibuf_scroll_window;
+Lisp_Object Vminibuffer_scroll_window;
 
 /* Non-nil means this is the buffer whose window C-M-v should scroll.  */
 Lisp_Object Vother_window_scroll_buffer;
@@ -3177,7 +3177,7 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
       if (!EQ (XWINDOW (window)->frame, Fselected_frame (Qnil)))
 	Fmake_frame_visible (WINDOW_FRAME (XWINDOW (window)));
 
-      Vminibuf_scroll_window = window;
+      Vminibuffer_scroll_window = window;
       w = XWINDOW (window);
       w->hscroll = 0;
       w->modeline_hscroll = 0;
@@ -4084,8 +4084,8 @@ showing that buffer is used.
   Lisp_Object selected_window = Fselected_window (Qnil);
 
   if (MINI_WINDOW_P (XWINDOW (selected_window))
-      && !NILP (Vminibuf_scroll_window))
-    window = Vminibuf_scroll_window;
+      && !NILP (Vminibuffer_scroll_window))
+    window = Vminibuffer_scroll_window;
   /* If buffer is specified, scroll that buffer.  */
   else if (!NILP (Vother_window_scroll_buffer))
     {
@@ -4122,7 +4122,7 @@ The next window is the one below the current one; or the one at the top
 if the current one is at the bottom.  Negative ARG means scroll downward.
 When calling from a program, supply a number as argument or nil.
 
-If in the minibuffer, `minibuf-scroll-window' if non-nil
+If in the minibuffer, `minibuffer-scroll-window' if non-nil
 specifies the window to scroll.
 If `other-window-scroll-buffer' is non-nil, scroll the window
 showing that buffer, popping the buffer up if necessary.
@@ -4572,7 +4572,7 @@ struct window_config
 #endif
   Lisp_Object current_window;
   Lisp_Object current_buffer;
-  Lisp_Object minibuf_scroll_window;
+  Lisp_Object minibuffer_scroll_window;
   Lisp_Object root_window;
   /* Record the values of window-min-width and window-min-height
      so that window sizes remain consistent with them.  */
@@ -4596,7 +4596,7 @@ mark_window_config (Lisp_Object obj, void (*markobj) (Lisp_Object))
   int i;
   ((markobj) (config->current_window));
   ((markobj) (config->current_buffer));
-  ((markobj) (config->minibuf_scroll_window));
+  ((markobj) (config->minibuffer_scroll_window));
   ((markobj) (config->root_window));
 
   for (i = 0; i < config->saved_windows_count; i++)
@@ -4731,10 +4731,10 @@ window_config_equal (Lisp_Object conf1, Lisp_Object conf2)
   fig2 = XWINDOW_CONFIGURATION (conf2);
 
   if (!((fig1->saved_windows_count == fig2->saved_windows_count) &&
-	EQ (fig1->current_window,        fig2->current_window) &&
-	EQ (fig1->current_buffer,        fig2->current_buffer) &&
-	EQ (fig1->root_window,           fig2->root_window) &&
-	EQ (fig1->minibuf_scroll_window, fig2->minibuf_scroll_window) &&
+	EQ (fig1->current_window,	    fig2->current_window) &&
+	EQ (fig1->current_buffer,	    fig2->current_buffer) &&
+	EQ (fig1->root_window,		    fig2->root_window) &&
+	EQ (fig1->minibuffer_scroll_window, fig2->minibuffer_scroll_window) &&
 	fig1->frame_width  == fig2->frame_width &&
 	fig1->frame_height == fig2->frame_height))
     return 0;
@@ -5155,7 +5155,7 @@ by `current-window-configuration' (which see).
     do_switch_frame (config->selected_frame, Qnil, 0);
 #endif
 
-  Vminibuf_scroll_window = config->minibuf_scroll_window;
+  Vminibuffer_scroll_window = config->minibuffer_scroll_window;
 
   if (FRAME_LIVE_P (f))
     {
@@ -5375,7 +5375,7 @@ its value is -not- saved.
   config->frame_height = FRAME_HEIGHT (f);
   config->current_window = FRAME_SELECTED_WINDOW (f);
   XSETBUFFER (config->current_buffer, current_buffer);
-  config->minibuf_scroll_window = Vminibuf_scroll_window;
+  config->minibuffer_scroll_window = Vminibuffer_scroll_window;
   config->root_window = FRAME_ROOT_WINDOW (f);
   config->min_height = window_min_height;
   config->min_width = window_min_width;
@@ -5582,10 +5582,10 @@ the buffer; `temp-buffer-show-hook' is not run unless this function runs it.
 */ );
   Vtemp_buffer_show_function = Qnil;
 
-  DEFVAR_LISP ("minibuffer-scroll-window", &Vminibuf_scroll_window /*
+  DEFVAR_LISP ("minibuffer-scroll-window", &Vminibuffer_scroll_window /*
 Non-nil means it is the window that \\<minibuffer-local-map>\\[scroll-other-window] in minibuffer should scroll.
 */ );
-  Vminibuf_scroll_window = Qnil;
+  Vminibuffer_scroll_window = Qnil;
 
   DEFVAR_LISP ("other-window-scroll-buffer", &Vother_window_scroll_buffer /*
 If non-nil, this is a buffer and \\[scroll-other-window] should scroll its window.

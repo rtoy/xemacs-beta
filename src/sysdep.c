@@ -135,6 +135,7 @@ static int baud_convert[] =
 #ifdef AIXHFT
 static void hft_init (struct console *c);
 static void hft_reset (struct console *c);
+#include <sys/termio.h>
 #endif
 
 /* ------------------------------- */

@@ -739,7 +739,7 @@ on various systems. */
    bitfield.  In practice, we would like to use enums as bitfields.
    The following should just result in warning avoidance:
    warning: nonportable bit-field type */
-#if !(defined (__SUNPRO_C) && __STDC__ == 1)
+#ifdef __GNUC__
 #define enum_field(enumeration_type) enum enumeration_type
 #else
 #define enum_field(enumeration_type) unsigned int

@@ -668,6 +668,9 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
   old_sbss_index = find_section (".sbss", old_section_names,
 				 old_name, old_file_h, old_section_h, 1);
 
+  if (old_sbss_index != -1 && (OLD_SECTION_H (old_sbss_index).sh_type == SHT_PROGBITS))
+    old_sbss_index = -1;
+
   /* Find the old .bss section. */
 
   old_bss_index = find_section (".bss", old_section_names,

@@ -641,32 +641,126 @@ In Unix-syntax, this function just removes the final slash.
   directory_file_name ((char *) XSTRING_DATA (directory), buf);
   return build_string (buf);
 }
+
+/* Fmake_temp_name used to be a simple wrapper around mktemp(), but it
+   proved too broken for our purposes (it supported only 26 or 62
+   unique names under some implementations).  For instance, the stupid
+   limit broke Gnus Incoming* files generation.
+
+   NB, this implementation is better than what one usually finds in
+   libc.  --hniksic */
+
+#define MTN_RANDOM(x) ((int) (random () % x))
+#define MTN_INC(var, limit) (var = ((var == (limit) - 1) ? 0 : (var + 1)))
+#define MTN_LOOP(var, limit, keep)				\
+for (keep = var = MTN_RANDOM (limit), MTN_INC (var, limit);	\
+     var != keep;						\
+     MTN_INC (var, limit))
 
 DEFUN ("make-temp-name", Fmake_temp_name, 1, 1, 0, /*
-Generate temporary file name (string) starting with PREFIX (a string).
-The Emacs process number forms part of the result,
-so there is no danger of generating a name being used by another process.
+Generate temporary file name starting with PREFIX.
+The Emacs process number forms part of the result, so there is no
+danger of generating a name being used by another process.
+
+In its current implementation, this function guarantees 262144 unique
+names per process per PREFIX (this is 54872 on case-insensitive
+filesystems.  However, if you want it to operate safely, PREFIX should
+have been passed through `expand-file-name'.
 */
        (prefix))
 {
-  CONST char suffix[] = "XXXXXX";
-  Bufbyte *data;
-  Bytecount len;
+  static char tbl[64] = {
+    'A','B','C','D','E','F','G','H',
+    'I','J','K','L','M','N','O','P',
+    'Q','R','S','T','U','V','W','X',
+    'Y','Z','a','b','c','d','e','f',
+    'g','h','i','j','k','l','m','n',
+    'o','p','q','r','s','t','u','v',
+    'w','x','y','z','0','1','2','3',
+    '4','5','6','7','8','9','-','_'
+  };
   Lisp_Object val;
+  Bytecount len;
+  int pid;
+  int i, j, k, keep1, keep2, keep3;
+  Bufbyte *p, *data;
 
   CHECK_STRING (prefix);
+
+  /* I was tempted to apply Fexpand_file_name on PREFIX here, but it's
+     a bad idea because:
+
+     1) It might change the prefix, so the resulting string might not
+     begin with PREFIX.  This violates the principle of least
+     surprise.
+
+     2) It breaks under many unforeseeable circumstances, such as with
+     the code that uses (make-temp-name "") instead of
+     (make-temp-name "./").
+
+     3) It might yield unexpected results in the presence of EFS and
+     file name handlers.  */
+
   len = XSTRING_LENGTH (prefix);
-  val = make_uninit_string (len + countof (suffix) - 1);
+  val = make_uninit_string (len + 6);
   data = XSTRING_DATA (val);
   memcpy (data, XSTRING_DATA (prefix), len);
-  memcpy (data + len, suffix, countof (suffix));
-  /* !!#### does mktemp() Mule-encapsulate? */
-  mktemp ((char *) data);
+  p = data + len;
 
-#ifdef WINDOWSNT
-  CORRECT_DIR_SEPS (XSTRING_DATA (val));
-#endif /* WINDOWSNT */
-  return val;
+  /* `val' is created by adding 6 characters to PREFIX.  The first
+     three are the PID of this process, in base 64, and the second
+     three are incremented if the file already exists.  This ensures
+     262144 unique file names per PID per PREFIX.  */
+
+  pid = (int)getpid ();
+  *p++ = tbl[pid & 63], pid >>= 6;
+  *p++ = tbl[pid & 63], pid >>= 6;
+  *p++ = tbl[pid & 63], pid >>= 6;
+
+  /* Here we employ some trickery to minimize useless stat'ing when
+     this function is invoked many times successively with the same
+     PREFIX.  Instead of looping from 0 to 63, each of the variables
+     is assigned a random number less than 64, and is incremented up
+     to 63 and back to zero, until the initial value is reached again.
+
+     In other words, MTN_LOOP (i, 64, keep1) is equivalent to
+     for (i = 0; i < 64; i++) with the difference that the beginning
+     value needn't be 0 -- all that matters is that i is guaranteed to
+     loop through all the values in the [0, 64) range.  */
+  MTN_LOOP (i, 64, keep1)
+    {
+      p[0] = tbl[i];
+      MTN_LOOP (j, 64, keep2)
+	{
+	  p[1] = tbl[j];
+	  MTN_LOOP (k, 64, keep3)
+	    {
+	      struct stat ignored;
+	      p[2] = tbl[k];
+	      if (stat (data, &ignored) < 0)
+		{
+		  /* We want to return only if errno is ENOENT.  */
+		  if (errno == ENOENT)
+		    return val;
+		  else
+		    /* The error here is dubious, but there is little
+		       else we can do.  The alternatives are to return
+		       nil, which is as bad as (and in many cases
+		       worse than) throwing the error, or to ignore
+		       the error, which will likely result in looping
+		       through 262144 stat's, which is not only SLOW,
+		       but also useless since it will fallback to the
+		       errow below, anyway.  */
+		    report_file_error
+		      ("Cannot create temporary name for prefix",
+		       list1 (prefix));
+		  /* not reached */
+		}
+	    }
+	}
+    }
+  signal_simple_error ("Cannot create temporary name for prefix", prefix);
+  RETURN_NOT_REACHED (Qnil);
 }
 
 DEFUN ("expand-file-name", Fexpand_file_name, 1, 2, 0, /*
@@ -2553,8 +2647,7 @@ otherwise, if FILE2 does not exist, the answer is t.
 /* #define READ_BUF_SIZE (2 << 16) */
 #define READ_BUF_SIZE (1 << 15)
 
-DEFUN ("insert-file-contents-internal",
-       Finsert_file_contents_internal, 1, 7, 0, /*
+DEFUN ("insert-file-contents-internal", Finsert_file_contents_internal, 1, 7, 0, /*
 Insert contents of file FILENAME after point; no coding-system frobbing.
 This function is identical to `insert-file-contents' except for the
 handling of the CODESYS and USED-CODESYS arguments under
@@ -2570,7 +2663,7 @@ if CODESYS specifies automatic encoding detection or end-of-line detection.
 Currently BEG and END refer to byte positions (as opposed to character
 positions), even in Mule. (Fixing this is very difficult.)
 */
-     (filename, visit, beg, end, replace, codesys, used_codesys))
+       (filename, visit, beg, end, replace, codesys, used_codesys))
 {
   /* This function can call lisp */
   /* #### dmoore - this function hasn't been checked for gc recently */
@@ -2836,8 +2929,9 @@ positions), even in Mule. (Fixing this is very difficult.)
 	error ("Maximum buffer size exceeded");
     }
   else
-    /* For a special file, all we can do is guess.  */
-    total = READ_BUF_SIZE;
+    /* For a special file, all we can do is guess.  The value of -1
+       will make the stream functions read as much as possible.  */
+    total = -1;
 
   if (XINT (beg) != 0
 #ifdef FSFMACS_SPEEDY_INSERT
@@ -2865,7 +2959,7 @@ positions), even in Mule. (Fixing this is very difficult.)
       (XLSTREAM (stream), Fget_coding_system (codesys));
     Lstream_set_character_mode (XLSTREAM (stream));
     Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
-#endif /* MULE */
+#endif /* FILE_CODING */
 
     record_unwind_protect (close_stream_unwind, stream);
 
@@ -2901,7 +2995,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	Fset (used_codesys,
 	      XCODING_SYSTEM_NAME (decoding_stream_coding_system (XLSTREAM (stream))));
       }
-#endif /* MULE */
+#endif /* FILE_CODING */
     NUNGCPRO;
   }
 
@@ -3052,7 +3146,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 
 #ifdef FILE_CODING
   codesys = Fget_coding_system (codesys);
-#endif /* MULE */
+#endif /* FILE_CODING */
 
   if (current_buffer->base_buffer && ! NILP (visit))
     error ("Cannot do file visiting in an indirect buffer");
@@ -3193,7 +3287,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
       make_encoding_output_stream (XLSTREAM (outstream), codesys);
     Lstream_set_buffering (XLSTREAM (outstream),
 			   LSTREAM_BLOCKN_BUFFERED, 65536);
-#endif /* MULE */
+#endif /* FILE_CODING */
     if (STRINGP (start))
       {
 	instream = make_lisp_string_input_stream (start, 0, -1);

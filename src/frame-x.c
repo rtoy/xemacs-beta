@@ -1995,11 +1995,9 @@ x_init_frame_1 (struct frame *f, Lisp_Object props)
 {
   /* This function can GC */
   Lisp_Object device = FRAME_DEVICE (f);
-  Lisp_Object lisp_window_id;
-  Lisp_Object popup;
+  Lisp_Object lisp_window_id = Fplist_get (props, Qwindow_id, Qnil);
+  Lisp_Object popup = Fplist_get (props, Qpopup, Qnil);
 
-  lisp_window_id = Fplist_get (props, Qwindow_id, Qnil);
-  popup = Fplist_get (props, Qpopup, Qnil);
   if (!NILP (popup))
     {
       if (EQ (popup, Qt))
@@ -2272,15 +2270,14 @@ x_cant_notify_wm_error (void)
 static void
 x_raise_frame_1 (struct frame *f, int force)
 {
-  Widget bottom_dialog;
-  Window emacs_window;
-  XWindowChanges xwc;
-  unsigned int flags;
-  Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
-
-  if (FRAME_VISIBLE_P(f) || force)
+  if (FRAME_VISIBLE_P (f) || force)
     {
-      emacs_window = XtWindow (FRAME_X_SHELL_WIDGET (f));
+      Widget bottom_dialog;
+      XWindowChanges xwc;
+      unsigned int flags;
+      Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
+      Window emacs_window = XtWindow (FRAME_X_SHELL_WIDGET (f));
+
       /* first raises all the dialog boxes, then put emacs just below the
        * bottom most dialog box */
       bottom_dialog = lw_raise_all_pop_up_widgets ();
@@ -2313,14 +2310,13 @@ x_raise_frame (struct frame *f)
 static void
 x_lower_frame (struct frame *f)
 {
-  Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
-  XWindowChanges xwc;
-  unsigned int flags;
-
-  if (FRAME_VISIBLE_P(f))
+  if (FRAME_VISIBLE_P (f))
     {
+      Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
+      XWindowChanges xwc;
+      unsigned int flags = CWStackMode;
+
       xwc.stack_mode = Below;
-      flags = CWStackMode;
       if (!XReconfigureWMWindow (display, XtWindow (FRAME_X_SHELL_WIDGET (f)),
 				 DefaultScreen (display), flags, &xwc))
 	x_cant_notify_wm_error ();

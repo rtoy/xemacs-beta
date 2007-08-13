@@ -289,7 +289,7 @@ dnl Maximum number of lines to put in a shell here document.
 ac_max_here_lines=12
 ])dnl
 AC_INIT(src/lisp.h)dnl
-AC_CONFIG_HEADER(src/config.h lwlib/config.h)
+AC_CONFIG_HEADER(src/config.h src/paths.h lwlib/config.h)
 dnl Remove any more than one leading "." element from the path name.
 dnl If we do not remove them, then another "./" will be prepended to
 dnl the file name each time we use config.status, and the program name
@@ -324,24 +324,14 @@ statedir='${prefix}/lib'
 libdir='${exec_prefix}/lib'
 mandir='${prefix}/man/man1'
 infodir='${datadir}/xemacs-${version}/info'
-infodir_user_defined='no'
-dnl BETA NOTE: ! Will you please add to this list?  Nonexistent dirs
-dnl are dropped from the list at runtime, so it is safe to add
-dnl directories to this list that you don't have at home.
-infopath='/usr/local/lib/texmf/doc/info:/usr/local/lib/texmf/info:/usr/lib/texmf/doc/info:/usr/lib/texmf/info:/usr/local/info:/usr/info'
+infopath=''
 lispdir='${datadir}/xemacs-${version}/lisp'
-lispdir_user_defined='no'
 sitelispdir='${datadir}/xemacs/site-lisp'
-sitelispdir_user_defined='no'
 pkgdir='${datadir}/xemacs-${version}/lisp'
-package_path='~/.xemacs::${datadir}/xemacs-${version}/mule-packages:${datadir}/xemacs/mule-packages:${datadir}/xemacs-${version}/packages:${datadir}/xemacs/packages'
-package_path_user_defined='no'
+package_path=''
 etcdir='${datadir}/xemacs-${version}/etc'
-etcdir_user_defined='no'
 lockdir='${statedir}/xemacs/lock'
-lockdir_user_defined='no'
 archlibdir='${libdir}/xemacs-${version}/${configuration}'
-archlibdir_user_defined='no'
 with_site_lisp='no'
 with_menubars=''
 with_scrollbars=''
@@ -433,15 +423,15 @@ while test $# != 0; do
         ;;
       esac
 
+      dnl translate "-" in option string to "_"
+      optname="$opt"
+      opt="`echo '' $opt | sed -e 's:^ ::' | tr - _`"
+
       dnl Support --without-FOO as a synonym for --with-FOO=no
       case "${valomitted}-${opt}" in yes-without_* )
 	opt=`echo $opt | sed 's/without/with/'`
 	valomitted="no" val="no" ;;
       esac
-
-      dnl translate "-" in option string to "_"
-      optname="$opt"
-      opt="`echo '' $opt | sed -e 's:^ ::' | tr - _`"
 
       dnl Process the option.
       case "$opt" in
@@ -706,14 +696,15 @@ while test $# != 0; do
            dnl of etcdir and lispdir.  Changing statedir will change the
            dnl default value of lockdir.
            case "$opt" in
-             lispdir ) lispdir_user_defined=yes ;;
-             sitelispdir ) sitelispdir_user_defined=yes ;;
-             etcdir  )  etcdir_user_defined=yes ;;
-             infodir ) infodir_user_defined=yes ;;
-             package_path ) package_path_user_defined=yes ;;
-             datadir ) lispdir_user_defined=yes etcdir_user_defined=yes ;;
-             statedir | lockdir ) lockdir_user_defined=yes ;;
-             exec_prefix | libdir | archlibdir ) archlibdir_user_defined=yes ;;
+             lispdir ) AC_DEFINE(LISPDIR_USER_DEFINED) ;;
+             sitelispdir ) AC_DEFINE(SITELISPDIR_USER_DEFINED) ;;
+             etcdir  )  AC_DEFINE(ETCDIR_USER_DEFINED) ;;
+             infodir ) AC_DEFINE(INFODIR_USER_DEFINED) ;;
+             infopath ) AC_DEFINE(INFOPATH_USER_DEFINED) ;;
+             package_path ) AC_DEFINE(PACKAGE_PATH_USER_DEFINED) ;;
+             datadir ) AC_DEFINE(ETCDIR_USER_DEFINED) ;;
+             statedir | lockdir ) AC_DEFINE(LOCKDIR_USER_DEFINED) ;;
+             exec_prefix | libdir | archlibdir ) AC_DEFINE(ARCHLIBDIR_USER_DEFINED) ;;
            esac
 	;;
 
@@ -762,11 +753,6 @@ test -n "$cpp"      && CPP="$cpp"
 test -n "$cppflags" && CPPFLAGS="$cppflags"
 test -n "$libs"     && LIBS="$libs"
 test -n "$ldflags"  && LDFLAGS="$ldflags"
-
-dnl Personal settings shouldn't affect the configuration process.
-dnl if test "$infopath_user_defined" = "no" -a -n "$INFOPATH" ; then
-dnl   infopath="$INFOPATH"
-dnl fi
 
 dnl Get the arguments back.  See the diatribe on Shell Magic above.
 eval set x "$quoted_arguments"; shift
@@ -1746,7 +1732,7 @@ fi
 dnl Feed s&m crud to src/Makefile
 
 dnl Linux/powerpc needs the following magic for some reason
-test "$machine$opsys" = "powerpclinux" && start_flags="-T $srcdir/ppc.ldscript"
+test "$machine$opsys" = "powerpclinux" && start_flags="-T $srcdir/src/ppc.ldscript"
 
 if test "$unexec" = "unexaix.o"; then
 dnl AIX needs various hacks to make static linking work.
@@ -2341,15 +2327,16 @@ EOF
   dnl Problem with the MIT distribution of X on AIX
   if test "$unexec" = "unexaix.o" -a "$x11_release" = "6"; then
     dnl X11R6 requires thread-safe code on AIX for some reason
-    case "$CC" in
-      "xlc" ) CC="xlc_r" ;;
-      "xlC" ) CC="xlC_r" ;;
-      "cc"  ) CC="cc_r" ;;
-      "gcc" )
-        XE_PREPEND(-mthreads, X_CFLAGS)
-        XE_PREPEND(-mthreads, libs_x)
-	;;
-    esac
+    if test "$GCC" = "yes"; then
+      XE_PREPEND(-mthreads, X_CFLAGS)
+      XE_PREPEND(-mthreads, libs_x)
+    else
+      case "$CC" in
+        "xlc" ) CC="xlc_r" ;;
+        "xlC" ) CC="xlC_r" ;;
+        "cc"  ) CC="cc_r" ;;
+      esac
+    fi
   fi
 
 fi dnl $with_x11 = yes
@@ -2467,8 +2454,10 @@ fi
 test -z "$with_offix" && with_offix=yes
 if test "$with_offix" = "yes"; then
   AC_DEFINE(HAVE_OFFIX_DND)
-  XE_ADD_OBJS(offix.o)
+  XE_APPEND(offix.o, dnd_objs)
 fi
+
+AC_SUBST(dnd_objs)
 
 dnl Autodetect tooltalk
 test "$with_cde" = "yes" && with_tooltalk=yes # CDE requires tooltalk
@@ -2617,7 +2606,7 @@ if test "$with_x11" = "yes"; then
 #if PNG_LIBPNG_VER >= 96
 yes
 #endif
-], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no); have_png=no])
+], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no); with_png=no])
   fi
   test -z "$with_png" && { AC_CHECK_FUNC(pow,                  ,with_png=no) }
   test -z "$with_png" && { AC_CHECK_LIB(png, png_read_image,[:],with_png=no) }
@@ -3487,11 +3476,11 @@ fi
 dnl There are no more compile tests; remove the core they created.
 rm -f core
 
-dnl -------------------------------------
-dnl Substitute into Makefile and config.h
-dnl -------------------------------------
+dnl ----------------------------------------------
+dnl Substitute into Makefile, config.h and paths.h
+dnl ----------------------------------------------
 
-dnl what sort of things to edit into Makefile and config.h.
+dnl what sort of things to edit into Makefile, config.h and paths.h
 dnl configuration here uncanonicalized to avoid exceeding size limits.
 
 AC_SUBST(version)
@@ -3506,21 +3495,96 @@ AC_SUBST(pkgdir)
 AC_SUBST(statedir)
 AC_SUBST(libdir)
 AC_SUBST(mandir)
+
 AC_SUBST(infodir)
-AC_SUBST(infodir_user_defined)
+AC_SUBST(INFODIR_USER_DEFINED)
+dnl Yo, Stephen Bourne!  I want to marry you!
+INFODIR=$infodir
+while true; do
+  case "$INFODIR" in
+    *\$* ) eval "INFODIR=$INFODIR" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(INFODIR)
+
 AC_SUBST(infopath)
+AC_SUBST(INFOPATH_USER_DEFINED)
+INFOPATH=$infopath
+while true; do
+  case "$INFOPATH" in
+    *\$* ) eval "INFOPATH=$INFOPATH" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(INFOPATH)
+
 AC_SUBST(package_path)
-AC_SUBST(package_path_user_defined)
+AC_SUBST(PACKAGE_PATH_USER_DEFINED)
+PACKAGE_PATH=$package_path
+while true; do
+  case "$PACKAGE_PATH" in
+    *\$* ) eval "PACKAGE_PATH=$PACKAGE_PATH" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(PACKAGE_PATH)
+
 AC_SUBST(lispdir)
-AC_SUBST(lispdir_user_defined)
+AC_SUBST(LISPDIR_USER_DEFINED)
+LISPDIR=$lispdir
+while true; do
+  case "$LISPDIR" in
+    *\$* ) eval "LISPDIR=$LISPDIR" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(LISPDIR)
+
 AC_SUBST(sitelispdir)
-AC_SUBST(sitelispdir_user_defined)
+AC_SUBST(SITELISPDIR_USER_DEFINED)
+SITELISPDIR=$sitelispdir
+while true; do
+  case "$SITELISPDIR" in
+    *\$* ) eval "SITELISPDIR=$SITELISPDIR" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(SITELISPDIR)
+
 AC_SUBST(etcdir)
-AC_SUBST(etcdir_user_defined)
+AC_SUBST(ETCDIR_USER_DEFINED)
+ETCDIR=$etcdir
+while true; do
+  case "$ETCDIR" in
+    *\$* ) eval "ETCDIR=$ETCDIR" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(ETCDIR)
+
 AC_SUBST(lockdir)
-AC_SUBST(lockdir_user_defined)
+AC_SUBST(LOCKDIR_USER_DEFINED)
+LOCKDIR=$lockdir
+while true; do
+  case "$LOCKDIR" in
+    *\$* ) eval "LOCKDIR=$LOCKDIR" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(LOCKDIR)
+
 AC_SUBST(archlibdir)
-AC_SUBST(archlibdir_user_defined)
+AC_SUBST(ARCHLIBDIR_USER_DEFINED)
+ARCHLIBDIR=$archlibdir
+while true; do
+  case "$ARCHLIBDIR" in
+    *\$* ) eval "ARCHLIBDIR=$ARCHLIBDIR" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(ARCHLIBDIR)
+
 AC_SUBST(docdir)
 AC_SUBST(bitmapdir)
 AC_SUBST(extra_objs)
@@ -3772,7 +3836,7 @@ for file in $internal_makefile_list; do
     file="src/Makefile.in:src/Makefile.in.in:src/depend"
   ac_output_files="${ac_output_files+$ac_output_files }$file"
 done
-ac_output_files="$ac_output_files lib-src/config.values"
+ac_output_files="$ac_output_files src/paths.h.in lib-src/config.values"
 
 AC_OUTPUT($ac_output_files,
 [for dir in $MAKE_SUBDIR; do

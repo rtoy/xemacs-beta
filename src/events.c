@@ -187,7 +187,7 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	assert (INTP (Vx));
 	Vy = Fevent_y_pixel (obj);
 	assert (INTP (Vy));
-	sprintf (buf, "#<motion-event %d, %d", XINT (Vx), XINT (Vy));
+	sprintf (buf, "#<motion-event %ld, %ld", (long)(XINT (Vx)), (long)(XINT (Vy)));
 	write_c_string (buf, printcharfun);
 	break;
       }

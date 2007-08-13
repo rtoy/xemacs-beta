@@ -409,6 +409,13 @@ Filesz      Memsz       Flags       Align
 
  */
 
+#ifndef emacs
+#define fatal(a, b, c) fprintf (stderr, a, b, c), exit (1)
+#else
+#include <config.h>
+extern void fatal (CONST char *, ...);
+#endif
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -430,13 +437,6 @@ Filesz      Memsz       Flags       Align
 # else
 #  define ElfW(type)	Elf32_/**/type
 # endif
-#endif
-
-#ifndef emacs
-#define fatal(a, b, c) fprintf (stderr, a, b, c), exit (1)
-#else
-#include <config.h>
-extern void fatal (CONST char *, ...);
 #endif
 
 #ifndef ELF_BSS_SECTION_NAME

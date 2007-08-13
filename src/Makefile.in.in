@@ -42,8 +42,6 @@ prefix=@prefix@
 srcdir=@srcdir@
 blddir=@blddir@
 version=@version@
-infodir=@infodir@
-infopath=@infopath@
 CC=@CC@
 CPP=@CPP@
 CFLAGS=@CFLAGS@
@@ -265,7 +263,11 @@ other_files=\
 all: ${other_files}
 # endif /* EXTERNAL_WIDGET */
 
-X11_objs =  EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o EmacsManager.o $(external_widget_objs)
+# if defined (HAVE_OFFIX_DND) || defined (HAVE_CDE)
+dnd_objs = @dnd_objs@
+# endif /* HAVE_OFFIX_DND || HAVE_CDE */
+
+X11_objs =  EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o EmacsManager.o $(external_widget_objs) $(dnd_objs)
 #endif /* HAVE_X_WINDOWS */
 
 ## define otherobjs as list of object files that make-docfile
@@ -583,7 +585,6 @@ libextcli_Xlib.so.1: ${external_client_xlib_objs_shared}
 
 config.h: ${srcdir}/config.h.in
 puresize-adjust.h: ${srcdir}/puresize.h
-paths.h: ${srcdir}/paths.h.in
 Emacs.ad.h: ${srcdir}/${etcdir}Emacs.ad
 
 config.h puresize-adjust.h sheap-adjust.h paths.h Emacs.ad.h :
@@ -657,7 +658,7 @@ clean: mostlyclean versionclean
 ## This is used in making a distribution.
 ## Do not use it on development directories!
 distclean: clean
-	$(RM) config.h paths.h Emacs.ad.h \
+	$(RM) config.h paths.h paths.h.in Emacs.ad.h \
 	  Makefile Makefile.in TAGS xemacs.*
 realclean: distclean
 versionclean:
@@ -666,7 +667,7 @@ extraclean: realclean
 	$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
 
 .PHONY : lock unlock
-SOURCES = *.[chm] *.pswm [sm]/* COPYING paths.h.in Makefile.in.in \
+SOURCES = *.[chm] *.pswm [sm]/* COPYING paths.h.in.in Makefile.in.in \
 	config.h.in README COPYING ChangeLog
 unlock:
 	chmod u+w $(SOURCES)

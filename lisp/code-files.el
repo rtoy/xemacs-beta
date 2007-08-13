@@ -58,7 +58,8 @@ global environment specification.")
 
 (defvar file-coding-system-alist
   '(("\\.elc$" . (binary . binary))
-    ("loaddefs.el$" . (binary . binary))
+;; This must not be neccessary, slb suggests -kkm
+;;  ("loaddefs.el$" . (binary . binary))
     ("\\.tar$" . (binary . binary))
     ("\\.\\(tif\\|tiff\\)$" . (binary . binary))
     ("\\.png$" . (binary . binary))

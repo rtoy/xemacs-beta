@@ -263,7 +263,7 @@ define `--with-cde' for you.
 The `--with-offix' option allows you to enable or disable OffiX drag
 and drop support.  This requires no external library support, so if
 X11 support is available, then this option defaults to `yes'.  OffiX
-support can be explicitly disabled via the `--without-offix' option.
+support can be explicitly disabled via the `--with-offix=no' option.
 
 The `--external-widget' option specifies that XEmacs should be built
 with support for being used as a widget by other X11 applications.

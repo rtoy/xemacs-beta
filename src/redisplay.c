@@ -3922,6 +3922,18 @@ tail_recurse:
 	    }
         }
     }
+  else if (GENERIC_SPECIFIERP (elt))
+    {
+      Lisp_Object window, tem;
+      XSETWINDOW (window, w);
+      tem = specifier_instance_no_quit (elt, Qunbound, window,
+					ERROR_ME_NOT, 0, Qzero);
+      if (!UNBOUNDP (tem))
+	{
+	  elt = tem;
+	  goto tail_recurse;
+	}
+    }
   else if (CONSP (elt))
     {
       /* A cons cell: four distinct cases.
@@ -4084,7 +4096,7 @@ tail_recurse:
 
   return pos;
 }
-#else /* MODELINE_IS_SCROLLABLE */
+#else /* not MODELINE_IS_SCROLLABLE */
 static void
 generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
                               struct window *w, struct display_line *dl,
@@ -4417,6 +4429,18 @@ tail_recurse:
               goto tail_recurse;
             }
         }
+    }
+  else if (GENERIC_SPECIFIERP (elt))
+    {
+      Lisp_Object window, tem;
+      XSETWINDOW (window, w);
+      tem = specifier_instance_no_quit (elt, Qunbound, window,
+					ERROR_ME_NOT, 0, Qzero);
+      if (!UNBOUNDP (tem))
+	{
+	  elt = tem;
+	  goto tail_recurse;
+	}
     }
   else if (CONSP (elt))
     {
@@ -5723,7 +5747,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
   /* We still haven't gotten the window regenerated with point
      visible.  Next we try scrolling a little and see if point comes
      back onto the screen. */
-  if (scroll_step)
+  if (scroll_step > 0)
     {
       int scrolled = scroll_conservatively;
       for (; scrolled >= 0; scrolled -= scroll_step)
@@ -6242,7 +6266,7 @@ window_line_number (struct window *w, int type)
 
   line = buffer_line_number (b, pos, 1);
 
-  sprintf (window_line_number_buf, "%d", line + 1);
+  sprintf (window_line_number_buf, "%ld", (long)(line + 1));
 
   return window_line_number_buf;
 }

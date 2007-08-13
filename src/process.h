@@ -51,6 +51,7 @@ DECLARE_LRECORD (process, struct Lisp_Process);
 #ifdef emacs
 
 EXFUN (Fprocess_kill_without_query, 2);
+EXFUN (Fprocess_id, 1);
 
 Lisp_Object connect_to_file_descriptor (Lisp_Object name,
 					Lisp_Object buffer,

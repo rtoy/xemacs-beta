@@ -38,7 +38,6 @@ Synched Up with:  FSF 20.2 (non-mmap portion only)
 #ifdef emacs
 
 #include "lisp.h"
-#include <malloc.h>
 
 /* The important properties of this type are that 1) it's a pointer, and
    2) arithmetic on it should work as if the size of the object pointed
@@ -58,6 +57,7 @@ typedef unsigned long SIZE;
 
 #ifdef DOUG_LEA_MALLOC
 #define M_TOP_PAD -2
+#include <malloc.h>
 #endif
 
 #include "getpagesize.h"

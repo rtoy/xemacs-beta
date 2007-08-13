@@ -32,9 +32,7 @@
 (let ((roots (paths-find-emacs-roots invocation-directory
 				     invocation-name)))
 
-  (setq package-path (packages-find-package-path roots))
-
-  (let ((stuff (packages-find-packages package-path inhibit-package-init)))
+  (let ((stuff (packages-find-packages roots inhibit-package-init)))
     (setq late-packages (car (cdr stuff))))
 
   (setq late-package-load-path (packages-find-package-load-path late-packages))

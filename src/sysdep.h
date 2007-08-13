@@ -78,9 +78,9 @@ void reset_poll_for_quit (void);
 extern JMP_BUF break_system_call_jump;
 extern volatile int can_break_system_calls;
 
-int sys_write_1 (int fildes, CONST void *buf, unsigned int nbyte,
+int sys_write_1 (int fildes, CONST void *buf, size_t nbyte,
 		 int allow_quit);
-int sys_read_1 (int fildes, void *buf, unsigned int nbyte,
+int sys_read_1 (int fildes, void *buf, size_t nbyte,
 		int allow_quit);
 
 /* Call these functions if you want to change some terminal parameter --
@@ -158,7 +158,15 @@ int dup2 (int oldd, int newd);
 # ifdef strerror
 # undef strerror
 # endif
+#if defined (__GNUC__) && defined (__GNUC_MINOR__)
+#if ((__GNUC__ == 2) && (__GNUC_MINOR__ > 7)) || ((__GNUC__ > 2))
+char *strerror (int);
+#else
 CONST char *strerror (int);
+#endif
+#else
+CONST char *strerror (int);
+#endif
 #endif
 
 #ifdef WINDOWSNT

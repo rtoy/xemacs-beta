@@ -1219,7 +1219,7 @@ run `normal-mode' explicitly."
     ("\\.[sS]\\'" . asm-mode)
     ("[Cc]hange.?[Ll]og?\\(.[0-9]+\\)?\\'" . change-log-mode)
     ("\\$CHANGE_LOG\\$\\.TXT" . change-log-mode)
-    ("\\.scm\\(\\.[0-9]*\\)?\\'" . scheme-mode)
+    ("\\.scm?\\(?:\\.[0-9]*\\)?\\'" . scheme-mode)
     ("\\.e\\'" . eiffel-mode)
     ("\\.mss\\'" . scribe-mode)
     ("\\.m\\([mes]\\|an\\)\\'" . nroff-mode)

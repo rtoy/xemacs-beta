@@ -680,6 +680,7 @@ run_time_remap (char *dummy)
 {
       unsigned long current_sbrk = (unsigned long) sbrk (0);
 
+#if __FreeBSD_version < 300000 /* 2.x can work with this code */
       if (sbrk_of_0_at_unexec < current_sbrk)
 	{
 	  if (sbrk_of_0_at_unexec != 0)
@@ -687,6 +688,8 @@ run_time_remap (char *dummy)
 		     sbrk_of_0_at_unexec, current_sbrk);
 	}
       else
+#endif
+	if (sbrk_of_0_at_unexec > current_sbrk)
         {
           errno = 0;
           if (brk ((caddr_t) sbrk_of_0_at_unexec))

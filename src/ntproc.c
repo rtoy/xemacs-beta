@@ -32,7 +32,8 @@ Boston, MA 02111-1307, USA.
 #include <signal.h>
 
 /* must include CRT headers *before* config.h */
-#include "config.h"
+/* ### I don't believe it - martin */
+#include <config.h>
 #undef signal
 #undef wait
 #undef spawnve
@@ -1189,7 +1190,10 @@ count_children:
 			 cp->pid));
 #endif
 	      dead_child = cp;
-	      msw_raise (SIGCHLD);
+	      /* msw_raise (SIGCHLD); -kkm: I will erase this file
+		 slowly, line by line, character by character,
+		 I will press undo often, to prolong this.
+		 Even such a revenge will not be enough for it!!! */
 	      dead_child = NULL;
 	    }
 	}

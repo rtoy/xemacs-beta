@@ -133,18 +133,21 @@ Additional features:
 --with-site-lisp        Allow for a site-lisp directory in the XEmacs hierarchy 
 			searched before the installation packages.
 --package-path=PATH     Directories to search for packages to dump with xemacs.
-                        Defaults to
-   `~/.xemacs::/usr/local/lib/xemacs-${version}/mule-packages:/usr/local/lib/xemacs/mule-packages:/usr/local/lib/xemacs-${version}/packages:/usr/local/lib/xemacs/packages'.
-	                Components before the double colon (::) will not
-                        be seen at dump time.  They will also show up
-                        as the first thing in the various paths.
+                        PATH splits into three parts separated
+                        by double colons (::), an early, a late, and a last part,
+                        corresponding to their position in the various
+                        system paths:  The early part is always first, 
+                        the late part somewhere in the middle, and the 
+                        last part at the very back.
+                        Only the late part gets seen at dump time.
+                        If PATH has only one component, that component 
+                        is late.
+                        If PATH has two components, the first is
+                        early, the second is late.
 --infodir=DIR		Directory to install the XEmacs Info manuals and dir in.
-    Defaults to: `'.
 --infopath=PATH		Directories to search for Info documents, info dir
 			and localdir files in case run-time searching
                         for them fails.
-    Defaults to the value of:
-    `/usr/local/lib/texmf/doc/info:/usr/local/lib/texmf/info:/usr/lib/texmf/doc/info:/usr/lib/texmf/info:/usr/local/info:/usr/info'.
 
 Internationalization options:
 

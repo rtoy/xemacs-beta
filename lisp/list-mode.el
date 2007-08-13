@@ -44,10 +44,24 @@
       (define-key map 'button2up 'list-mode-item-mouse-selected)
       (define-key map 'button2 'undefined)
       (define-key map "\C-m" 'list-mode-item-keyboard-selected)
-      (substitute-key-definition 'forward-char 'next-list-mode-item map
-				 global-map)
-      (substitute-key-definition 'backward-char 'previous-list-mode-item map
-				 global-map)))
+;;
+;; The following calls to `substitute-key-definition' losed because
+;; they were based on an incorrect assumption that `forward-char' and
+;; `backward-char' are bound to keys in the global map. This might not
+;; be the case if a user binds motion keys to different functions,
+;; and was not actually the case since 20.5 beta 28 or around.
+;;
+;;    (substitute-key-definition 'forward-char 'next-list-mode-item map
+;;				 global-map)
+;;    (substitute-key-definition 'backward-char 'previous-list-mode-item map
+;;				 global-map)
+;;
+;; We bind standard keys to motion commands instead.
+;;
+      (dolist (key '(kp-right right (control ?f)))
+	(define-key map key 'next-list-mode-item))
+      (dolist (key '(kp-left left (control ?b)))
+	(define-key map key 'previous-list-mode-item))))
 
 (defun list-mode ()
   "Major mode for buffer containing lists of items."

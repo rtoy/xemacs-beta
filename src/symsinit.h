@@ -192,10 +192,11 @@ void image_instantiator_format_create_glyphs_mswindows (void);
 void lstream_type_create (void);
 void lstream_type_create_mule_coding (void);
 void lstream_type_create_print (void);
+void lstream_type_create_mswindows_selectable (void);
 
 /* Initialize process types */
 
-void process_type_create_mswindows (void);
+void process_type_create_nt (void);
 void process_type_create_unix (void);
 
 /* Allow for Fprovide() (dump-time only). */
@@ -276,7 +277,7 @@ void vars_of_objects_mswindows (void);
 void vars_of_objects_x (void);
 void vars_of_print (void);
 void vars_of_process (void);
-void vars_of_process_mswindows (void);
+void vars_of_process_nt (void);
 void vars_of_process_unix (void);
 void vars_of_profile (void);
 void vars_of_ralloc (void);
