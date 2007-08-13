@@ -89,20 +89,20 @@ buffername.
 
 @item C-x 4 f @var{filename} @key{RET}
 Visit file @var{filename} and select its buffer in another window.  This
-runs @code{find-file-other-window}.  @xref{Visiting,,,,XEmacs
+runs @code{find-file-other-window}.  @xref{Visiting,,,xemacs,XEmacs User's
 Manual}. It will prompt you for a filename.
 
 @item C-x 4 d @var{directory} @key{RET}
 Select a Dired buffer for directory @var{directory} in another window.
-This runs @code{dired-other-window}.  @xref{Dired,,,,XEmacs User's
+This runs @code{dired-other-window}.  @xref{Dired,,,xemacs,XEmacs User's
 Manual}.
 
 @item C-x 4 m
 Start composing a mail message in another window.  This runs
 @code{mail-other-window}, and its same-window version is @kbd{C-x m}.
-@xref{Sending Mail,,,,XEmacs User's Manual}, for information on how
+@xref{Sending Mail,,,xemacs,XEmacs User's Manual}, for information on how
 to @b{S}end @b{M}ail using XEmacs. @xref{Reading Mail With
-Rmail,,,,XEmacs User's Manual}, for information on reading mail using
+Rmail,,,xemacs,XEmacs User's Manual}, for information on reading mail using
 @b{Rmail}.
 @end table
 
@@ -299,7 +299,7 @@ buffer.  Note that this is not necessarily the same as the Emacs
 selection are not the same thing.  You can paste in text you have placed
 in the clipboard using @b{Copy} or @b{Cut}.  You can also use @b{Paste}
 to insert text that was pasted into the clipboard from other
-applications. @xref{X Clipboard Selection,,,,XEmacs User's Manual},
+applications. @xref{X Clipboard Selection,,,xemacs,XEmacs User's Manual},
 for information on using Clipboard Selection.
 
 @item Clear
@@ -318,8 +318,8 @@ Selecting this tells emacs to stop remembering your keystrokes.
 Selecting this item will cause emacs to re-interpret all of the
 keystrokes which were saved between selections of the @b{Start Macro
 Recording} and @b{End Macro Recording} menu items.  You can now execute
-the most recent keyboard macro. @xref{Keyboard Macros,,,,XEmacs
-Reference Manual}, for further information.
+the most recent keyboard macro. @xref{Keyboard Macros,,,xemacs,XEmacs
+User's Manual}, for further information.
 @end table
 
 @comment  node-name,  next,  previous,  up
@@ -375,18 +375,18 @@ After you  select this item, any time you execute a command with
 @kbd{M-x} which has a shorter keybinding, you will be shown the 
 alternate binding before the command executes. For example if you type
 @kbd{M-x find-file-other-window} which performs the same function as the
-@b{Open in New Frame...} in @b{File} menu you will see the following
+@b{Open in Other Window...} in @b{File} menu you will see the following
 message:
 
 @example
-M-x find-file-other-frame (bound to keys: C-x 4 f, C-x 4 C-f)
+M-x find-file-other-window (bound to keys: C-x 4 f, C-x 4 C-f)
 @end example 
 
 @item Syntax Highlighting
 You can customize your @code{.emacs} file to include the font-lock mode
 so that when you select this item, the comments will be displayed in one
 face, strings in another, reserved words in another, and so
-on. @xref{Customization,,,,XEmacs User's Manual}, for more
+on. @xref{Customization,,,xemacs,XEmacs User's Manual}, for more
 information on customizing @code{.emacs} file.  After selecting this
 item, you will find your code a lot easier to read. When @b{Fonts} is
 selected, different parts of the program will appear in different

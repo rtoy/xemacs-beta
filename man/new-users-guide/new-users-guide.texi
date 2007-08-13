@@ -202,12 +202,12 @@ No sub menu for the node search and replace
 
   XEmacs is a @dfn{display} editor because normally the text
 being edited is visible on the screen and is updated automatically as you
-type.  @xref{Frame,Display, , ,XEmacs User's Manual}.
+type.  @xref{Frame,Display,,xemacs,XEmacs User's Manual}.
 
   It is a @dfn{real-time} editor because the display is updated very
 frequently, usually after each character or pair of characters you type.
 This minimizes the amount of information you must keep in your head as
-you edit.  @xref{Basic,Real-time,Basic Editing, ,XEmacs User's
+you edit.  @xref{Basic,Real-time,Basic Editing,xemacs,XEmacs User's
 Manual}.
 
   It is advanced because it provides facilities that go beyond
@@ -221,17 +221,17 @@ than to find that spot with simple cursor keys.
   @dfn{Self-documenting} means that at any time you can type a special
 character, @kbd{Control-h}, to find out what your options are.  You can
 also use @kbd{C-h} to find out what a command does, or to find all the
-commands relevant to a topic.  @xref{Help,,,,XEmacs User's Manual}.
+commands relevant to a topic.  @xref{Help,,,xemacs,XEmacs User's Manual}.
 
   @dfn{Customizable} means you can change the definitions of Emacs
 commands.  For example, if you use a programming language in which
 comments start with @samp{<**} and end with @samp{**>}, you can tell the
 Emacs comment manipulation commands to use those strings
-(@pxref{Comments,,,,XEmacs User's Manual}).  Another sort of
+(@pxref{Comments,,,xemacs,XEmacs User's Manual}).  Another sort of
 customization is rearrangement of the command set.  For example, you can
 set up the four basic cursor motion commands (up, down, left and right)
 on keys in a diamond pattern on the keyboard if you prefer.
-@xref{Customization,,,,XEmacs User's Manual}.
+@xref{Customization,,,xemacs,XEmacs User's Manual}.
 
   @dfn{Extensible} means you can go beyond simple customization and
 write entirely new commands, programs in the Lisp language to be run by

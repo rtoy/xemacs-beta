@@ -78,7 +78,7 @@ XEmacs loads the user's initialization file.")
 (defvar after-init-hook nil
   "*Functions to call after loading the init file (`.emacs').
 The call is not protected by a condition-case, so you can set `debug-on-error'
-in `init.el', and put all the actual code on `after-init-hook'.")
+in `.emacs', and put all the actual code on `after-init-hook'.")
 
 (defvar term-setup-hook nil
   "*Functions to be called after loading terminal-specific Lisp code.
@@ -110,8 +110,8 @@ the null string, meaning that the init file was taken from the user that
 originally logged in, or it may be a string containing a user's name.
 
 In either of the latter cases, `(concat \"~\" init-file-user \"/\")'
-evaluates to the name of the directory where the `init.el' file was
-looked for.
+evaluates to the name of the directory in which the `.emacs' file was
+searched for.
 
 Setting `init-file-user' does not prevent Emacs from loading
 `site-start.el'.  The only way to do that is to use `--no-site-file'.")
@@ -613,35 +613,36 @@ If this is nil, no message will be displayed.")
 	  (setq term nil))))))
 
 (defconst user-init-directory "/.xemacs/"
-  "Directory where user initialization and user-installed packages may go.")
+  "Directory where user-installed packages may go.")
 (define-obsolete-variable-alias
   'emacs-user-extension-dir
   'user-init-directory)
 
 (defun load-user-init-file (init-file-user)
-  "This function actually reads the init files.
-First try .xemacs/init, then try .emacs, but only load one of the two."
+  "This function actually reads the init file, .emacs."
   (when init-file-user
+;; purge references to init.el and options.el
+;; convert these to use paths-construct-path for eventual migration to init.el
+;; needs to be converted when idiom for constructing "~user" paths is created
+;    (setq user-init-file
+;	  (paths-construct-path (list (concat "~" init-file-user)
+;				      user-init-directory
+;				      "init.el")))
+;    (unless (file-exists-p (expand-file-name user-init-file))
     (setq user-init-file
-	  (cond
-	   ((eq system-type 'ms-dos)
-	    (concat "~" init-file-user user-init-directory "init.el"))
-	   (t
-	    (concat "~" init-file-user user-init-directory "init.el"))))
-    (unless (file-exists-p (expand-file-name user-init-file))
-      (setq user-init-file
-	    (cond
-	     ((eq system-type 'ms-dos)
-	      (concat "~" init-file-user "/_emacs"))
-	     (t
-	      (concat "~" init-file-user "/.emacs")))))
+	  (paths-construct-path (list (concat "~" init-file-user)
+				      (cond
+				       ((eq system-type 'ms-dos) "_emacs")
+				       (t ".emacs")))))
+;    )
     (load user-init-file t t t)
-    (let ((default-custom-file (concat "~"
-				       init-file-user
-				       user-init-directory
-				       "options.el")))
-      (when (string= custom-file default-custom-file)
-	(load default-custom-file t t)))
+;; This should not be loaded since custom stuff currently goes into .emacs
+;    (let ((default-custom-file
+;	    (paths-construct-path (list (concat "~" init-file-user)
+;				        user-init-directory
+;				        "options.el")))
+;      (when (string= custom-file default-custom-file)
+;	(load default-custom-file t t)))
     (unless inhibit-default-init
       (let ((inhibit-startup-message nil))
 	;; Users are supposed to be told their rights.
@@ -978,10 +979,14 @@ XEmacs, by either running the command `xemacs-mule', or by using the X resource
 For tips and answers to frequently asked questions, see the XEmacs FAQ.
 \(It's on the Help menu, or type " (key xemacs-local-faq) " [a capital F!].\)"))))
 
+(defvar xemacs-startup-logo-function nil
+  "If non-nil, function called to provide the startup logo.
+This function should return an initialized glyph if it is used.")
+
 (defun startup-splash-frame ()
   (let ((p (point))
-	(logo (cond ((featurep 'infodock)
-		     (make-glyph (locate-data-file "altrasoft-slogo.xpm")))
+	(logo (cond (xemacs-startup-logo-function
+		     (funcall xemacs-startup-logo-function))
 		    (t xemacs-logo)))
         (cramped-p (eq 'tty (console-type))))
     (unless cramped-p (insert "\n"))

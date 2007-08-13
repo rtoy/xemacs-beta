@@ -85,6 +85,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   XEMACS_RECT_WH rect_default;
   DWORD style, exstyle;
   HWND hwnd, hwnd_parent;
+  static BOOL first_frame = 1;
 
   /* Pick up relevant properties */
   initially_unmapped = Fplist_get (props, Qinitially_unmapped, Qnil);
@@ -142,6 +143,12 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
       style = MSWINDOWS_FRAME_STYLE;
       exstyle = MSWINDOWS_FRAME_EXSTYLE;
       hwnd_parent = NULL;
+
+      if (first_frame)
+        {
+	  style |= WS_VISIBLE;
+	  first_frame = 0;
+	}
 
       /* We always create am overlapped frame with default size,
 	 and later adjust only requested geometry parameters. */

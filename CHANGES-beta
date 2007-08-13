@@ -1,4 +1,20 @@
 							-*- indented-text -*-
+to 21.0 beta43 "Spanish"
+-- texinfo documentation synched from GNU texinfo-3.12
+-- Manual cleanup from Adrian Aichner
+-- Miscellaneous fixes from Rick Rankin
+-- D'n'D fixes from Oliver Graf
+-- startup changes from Stephen Turnbull
+-- Miscellaneous fixes from Kirill Katsnelson
+-- PNG Graphics fix from Gunnar Evermann
+-- Miscellaneous MS windows patches from Andy Piper
+-- Graphics update from Hrvoje Niksic
+-- Miscellaneous patches from Hrvoje Niksic
+-- NEWS updates from Hrvoje Niksic
+-- Grayscale JPEG fix from Jareth Hein
+-- Miscellaneous patches from Didier Verna
+-- Miscellaneous patches from Altrasoft
+
 to 21.0 beta42 "Somali"
 -- Sounds are no longer included in the core distribution
 -- Unexec fix for SGI from Olivier Galibert

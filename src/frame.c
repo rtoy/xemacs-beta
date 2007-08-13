@@ -35,9 +35,6 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "glyphs.h"
 #include "menubar.h"
-#ifdef MSDOS
-#include "msdos.h"
-#endif
 #include "redisplay.h"
 #include "scrollbar.h"
 #include "window.h"

@@ -231,7 +231,8 @@
        ["Saved..." customize-saved]
        ["Set..." customize-customized]
        ["Apropos..." customize-apropos]
-       ["Browse..." customize-browse])
+       ["Browse..." customize-browse]
+       ["Update Packages" package-get-custom])
       ("Editing Options"
        ["Overstrike"
 	(progn

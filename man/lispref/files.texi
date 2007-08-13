@@ -1633,31 +1633,43 @@ on VMS except discard superfluous initial components as shown above.
 construct a name for such a file:
 
 @example
-(make-temp-name (concat "/tmp/" @var{name-of-application}))
+(make-temp-name (expand-file-name @var{name-of-application} (temp-directory)))
 @end example
 
 @noindent
-Here we use the directory @file{/tmp/} because that is the standard
-place on Unix for temporary files.  The job of @code{make-temp-name} is
-to prevent two different users or two different processes from trying to
-use the same name.
+Here we use @code{(temp-directory)} to specify a directory for temporary
+files---under Unix, it will normally evaluate to @file{"/tmp/"}.  The
+job of @code{make-temp-name} is to prevent two different users or two
+different processes from trying to use the same name.
 
-@defun make-temp-name string
-This function generates a string that can be used as a unique name.  The
-name starts with @var{string}, and ends with a number that is different
-in each XEmacs process.
+@defun temp-directory
+This function returns the name of the directory to use for temporary
+files.  Under Unix, this will be the value of @code{TMPDIR}, defaulting
+to @file{/tmp}.  On Windows, this will be obtained from the @code{TEMP}
+or @code{TMP} environment variables, defaulting to @file{/}.
+
+Note that the @code{temp-directory} function does not exist under FSF
+Emacs.
+@end defun
+
+@defun make-temp-name prefix
+This function generates a temporary file name starting with
+@var{prefix}.  The Emacs process number forms part of the result, so
+there is no danger of generating a name being used by another process.
 
 @example
 @group
 (make-temp-name "/tmp/foo")
-     @result{} "/tmp/foo021304"
+     @result{} "/tmp/fooGaAQjC"
 @end group
 @end example
 
-To prevent conflicts among different libraries running in the same
-XEmacs, each Lisp program that uses @code{make-temp-name} should have its
-own @var{string}.  The number added to the end of the name distinguishes
-between the same application running in different XEmacs processes.
+In addition, this function makes an attempt to choose a name that does
+not specify an existing file.  To make this work, @var{prefix} should be 
+an absolute file name.
+
+To avoid confusion, each Lisp application should preferably use a unique
+@var{prefix} to @code{make-temp-name}.
 @end defun
 
 @node File Name Completion

@@ -417,7 +417,8 @@ string_width_u (XlwMenuWidget mw,
   int drop;
 # endif
 #endif
-  char newchars[64];
+  char* newchars;
+  int charslength;
   char *chars;
   int i, j;
 
@@ -429,8 +430,10 @@ string_width_u (XlwMenuWidget mw,
 #else
   chars = string;
 #endif
+  charslength = strlen (chars);
+  newchars = (char *) alloca (charslength + 1);
 
-  for (i = j = 0; chars[i] && (j < (int) sizeof (newchars)); i++)
+  for (i = j = 0; chars[i] && (j < charslength); i++)
     if (chars[i]=='%'&&chars[i+1]=='_')
 	    i++;
     else

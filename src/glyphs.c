@@ -1600,6 +1600,9 @@ xbm_validate (Lisp_Object instantiator)
    -- maybe return an error, or return Qnil.
  */
 
+#ifndef HAVE_X_WINDOWS
+#define XFree(data) free(data)
+#endif
 
 Lisp_Object
 bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,

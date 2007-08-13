@@ -1132,7 +1132,7 @@ argument implies the value @code{full} for @var{justify}.
 This command fills the paragraph at or after point.  If
 @var{justify} is non-@code{nil}, each line is justified as well.
 It uses the ordinary paragraph motion commands to find paragraph
-boundaries.  @xref{Paragraphs,,, emacs, The XEmacs User's Manual}.
+boundaries.  @xref{Paragraphs,,, xemacs, The XEmacs User's Manual}.
 @end deffn
 
 @deffn Command fill-region start end &optional justify

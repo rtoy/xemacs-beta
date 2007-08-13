@@ -1830,11 +1830,7 @@ Create a directory.  One argument, a file name string.
   if (dir [XSTRING_LENGTH (dirname_) - 1] == '/')
     dir [XSTRING_LENGTH (dirname_) - 1] = 0;
 
-#ifdef WINDOWSNT
-  if (mkdir (dir) != 0)
-#else
   if (mkdir (dir, 0777) != 0)
-#endif
     report_file_error ("Creating directory", list1 (dirname_));
 
   return Qnil;
@@ -4306,7 +4302,7 @@ Saving the buffer normally turns auto-save back on.
 
   DEFVAR_LISP ("directory-sep-char", &Vdirectory_sep_char /*
 Directory separator character for built-in functions that return file names.
-The value should be either ?/ or ?\ (any other value is treated as ?\).
+The value should be either ?/ or ?\\ (any other value is treated as ?\\).
 This variable affects the built-in functions only on Windows,
 on other platforms, it is initialized so that Lisp code can find out
 what the normal separator is.

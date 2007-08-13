@@ -139,7 +139,7 @@ If these settings affect the frame geometry and appearance, you'll see
 the frame appear with the wrong ones and then change to the specified
 ones.  If that bothers you, you can specify the same geometry and
 appearance with X resources; those do take affect before the frame is
-created.  @xref{Resources X,, X Resources, emacs, The XEmacs User's Manual}.
+created.  @xref{Resources X,, X Resources, xemacs, The XEmacs User's Manual}.
 
 X resource settings typically apply to all frames.  If you want to
 specify some X resources solely for the sake of the initial frame, and
@@ -170,7 +170,7 @@ See also @code{special-display-frame-plist}, in @ref{Choosing Window}.
 If you use options that specify window appearance when you invoke XEmacs,
 they take effect by adding elements to @code{default-frame-plist}.  One
 exception is @samp{-geometry}, which adds the specified position to
-@code{initial-frame-plist} instead.  @xref{Command Arguments,,, emacs,
+@code{initial-frame-plist} instead.  @xref{Command Arguments,,, xemacs,
 The XEmacs User's Manual}.
 
 @node X Frame Properties
@@ -670,19 +670,39 @@ This function selects frame @var{frame}, temporarily disregarding the
 focus of the X server if any.  The selection of @var{frame} lasts until
 the next time the user does something to select a different frame, or
 until the next time this function is called.
-@end defun
 
-Note that this does not actually cause the window-system focus to be set
-to this frame, or the @code{select-frame-hook} or
+Note that @code{select-frame} does not actually cause the window-system
+focus to be set to this frame, or the @code{select-frame-hook} or
 @code{deselect-frame-hook} to be run, until the next time that XEmacs is
 waiting for an event.
 
-Also note that when the variable @code{focus-follows-mouse} is non-nil,
-the frame selection is temporary and is reverted when the current
-command terminates, much like the buffer selected by @code{set-buffer}.
-In order to effect a permanent focus change use @code{focus-frame}.
+Also note that when the variable @code{focus-follows-mouse} is
+non-@code{nil}, the frame selection is temporary and is reverted when
+the current command terminates, much like the buffer selected by
+@code{set-buffer}.  In order to effect a permanent focus change use
+@code{focus-frame}.
+@end defun
 
-@ignore (FSF Emacs)
+@defun focus-frame frame
+This function selects @var{frame} and gives it the window system focus.
+The operation of @code{focus-frame} is not affected by the value of
+@code{focus-follows-mouse}.
+@end defun
+
+@defmac save-selected-frame forms@dots{}
+This macro records the selected frame, executes @var{forms} in sequence,
+then restores the earlier selected frame.  The value returned is the
+value of the last form.
+@end defmac
+
+@defmac with-selected-frame frame forms@dots{}
+This macro records the selected frame, then selects @var{frame} and
+executes @var{forms} in sequence.  After the last form is finished, the
+earlier selected frame is restored.  The value returned is the value of
+the last form.
+@end defmac
+
+@ignore (FSF Emacs, continued from defun select-frame)
 XEmacs cooperates with the X server and the window managers by arranging
 to select frames according to what the server and window manager ask
 for.  It does so by generating a special kind of input event, called a

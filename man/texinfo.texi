@@ -1,14 +1,15 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@c $Id: texinfo.texi,v 1.5 1997/08/10 04:40:35 steve Exp $
+@c $Id: texinfo.texi,v 1.6 1998/06/13 04:28:16 steve Exp $
 @c %**start of header
 
 @c All text is ignored before the setfilename.
 @setfilename texinfo
 @settitle Texinfo @value{edition}
 
-@set edition 2.24
-@set update-month July 1997
-@set update-date 25 @value{update-month}
+@c Edition number is now the same as the Texinfo distribution version number.
+@set edition 3.12
+@set update-month February 1998
+@set update-date 27 @value{update-month}
 
 @c Define a new index for options.
 @defcodeindex op
@@ -44,17 +45,16 @@
 @c @@clear smallbook
 
 @c Currently undocumented command, 5 December 1993:
-@c
 @c nwnode          (Same as node, but no warnings; for `makeinfo'.)
 
 @ifinfo
 This file documents Texinfo, a documentation system that can produce
 both on-line information and a printed manual from a single source file.
 
-Copyright (C) 1988, 90, 91, 92, 93, 95, 96, 97 Free Software Foundation, Inc.
+Copyright (C) 1988, 90, 91, 92, 93, 95, 96, 97, 98
+Free Software Foundation, Inc.
 
-This is the second edition of the Texinfo documentation,@*
-and is consistent with version 2 of @file{texinfo.tex}.
+This edition is for Texinfo version @value{edition}.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -86,7 +86,7 @@ by the Free Software Foundation.
 @c use the new format for titles
 @title Texinfo
 @subtitle The GNU Documentation Format
-@subtitle Edition @value{edition}, for Texinfo Version Three
+@subtitle for Texinfo version @value{edition}
 @subtitle @value{update-month}
 
 @author Robert J.@: Chassell
@@ -97,22 +97,16 @@ by the Free Software Foundation.
 
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1988, 90, 91, 92, 93, 95, 96, 97
+Copyright @copyright{} 1988, 90, 91, 92, 93, 95, 96, 97, 98
 Free Software Foundation, Inc.
-
-@sp 2
-This is the second edition of the Texinfo documentation,@*
-and is consistent with version 2 of @file{texinfo.tex}.
-@sp 2
 
 Published by the Free Software Foundation @*
 59 Temple Place Suite 330 @*
 Boston, MA 02111-1307 @*
 USA @*
-Printed copies are available for $15 each.@*
-ISBN 1-882114-64-7
+ISBN 1-882114-65-5
 @c ISBN 1-882114-63-9 is for edition 2.20 of 28 February 1995
-@c ISBN 1-882114-64-7 is for edition 2.23 of 1 October 1996.
+@c ISBN 1-882114-64-7 is for edition 2.24 of November 1996.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -143,7 +137,7 @@ document, including the @@-command and concept indices.  The rest of
 the menu lists all the lower level nodes in the document.@refill
 
 This is Edition @value{edition} of the Texinfo documentation,
-@w{@value{update-date},} for Texinfo Version Three.
+@w{@value{update-date}}.
 @end ifinfo
 
 @c Here is a spare copy of the chapter menu entry descriptions,
@@ -1470,7 +1464,7 @@ Please send suggestions and corrections to:
 @example
 @group
 @r{Internet address:}
-    bug-texinfo@@prep.ai.mit.edu
+    bug-texinfo@@gnu.org
 @end group
 @end example
 
@@ -2205,7 +2199,7 @@ print the file.  Optionally, you may also create indices.  To do this,
 you must run the @code{texindex} command after first running the
 @code{tex} typesetting command; and then you must run the @code{tex}
 command again.  Or else run the @code{texi2dvi} command which
-automatically creates indices as needed.@refill
+automatically creates indices as needed (@pxref{Format with texi2dvi}).
 
 Often, when you are writing a document, you want to typeset and print
 only part of a file to see what it will look like.  You can use the
@@ -6809,13 +6803,13 @@ the text to display if any.  In HTML output, @code{@@email} produces a
 For example:
 
 @example
-Send bug reports to @@email@{bug-texinfo@@@@prep.ai.mit.edu@}.
-Send suggestions to the @@email@{bug-texinfo@@@@prep.ai.mit.edu, same place@}.
+Send bug reports to @@email@{bug-texinfo@@@@gnu.org@}.
+Send suggestions to the @@email@{bug-texinfo@@@@gnu.org, same place@}.
 @end example
 @noindent produces
 @example
-Send bug reports to @email{bug-texinfo@@prep.ai.mit.edu}.
-Send suggestions to the @email{bug-texinfo@@prep.ai.mit.edu, same place}.
+Send bug reports to @email{bug-texinfo@@gnu.org}.
+Send suggestions to the @email{bug-texinfo@@gnu.org, same place}.
 @end example
 
 
@@ -10677,13 +10671,6 @@ The template is:
 @code{@@deftypefun} creates an entry in the index of functions for
 @var{name}.@refill
 
-@item @@deftypemethod @var{class} @var{data-type} @var{method-name} @var{arguments}@dots{}
-@findex deftypefun
-The @code{@@deftypemethod} command is the definition command for methods
-in object-oriented typed languages, such as C++ and Java.  It is similar
-to the @code{@@deftypefn} with the addition of the @var{class} parameter
-to specify the class containing the method.
-
 @end table
 
 
@@ -12071,24 +12058,27 @@ whatever sorted index files happen to exist from the previous use of
 @code{texindex}.  This is usually ok while you are
 debugging.@refill
 
+
 @node Format with texi2dvi, Print with lpr, Format with tex/texindex, Format/Print Hardcopy
 @comment  node-name,  next,  previous,  up
 @section Format using @code{texi2dvi}
 @pindex texi2dvi @r{(shell script)}
 
-The @code{texi2dvi} command is a shell script that automatically runs
-both @code{tex} and @code{texindex} as many times as necessary to
-produce a DVI file with up-to-date, sorted indices.  It simplifies the
+The @code{texi2dvi} command automatically runs both @code{tex} and
+@code{texindex} as many times as necessary to produce a DVI file with
+up-to-date, sorted indices.  It simplifies the
 @code{tex}---@code{texindex}---@code{tex} sequence described in the
 previous section.
 
-@need 1000
-The syntax for @code{texi2dvi} is like this (where @samp{prompt$} is the
+The syntax for @code{texi2dvi} is like this (where @samp{prompt$} is your
 shell prompt):@refill
 
 @example
 prompt$ @kbd{texi2dvi @var{filename}@dots{}}
 @end example
+
+For a list of options, run @samp{texi2dvi --help}.
+
 
 @node Print with lpr, Within Emacs, Format with texi2dvi, Format/Print Hardcopy
 @comment  node-name,  next,  previous,  up
@@ -15213,7 +15203,7 @@ Software Foundation permission notice reads as follows:@refill
 @example
 This file documents @dots{}
 
-Copyright 1997 Free Software Foundation, Inc.
+Copyright 1998 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim
 copies of this manual provided the copyright notice and
@@ -15473,7 +15463,7 @@ would insert a main or master menu:@refill
 @group
 @@page
 @@vskip 0pt plus 1filll
-Copyright @@copyright@{@} 1997 Free Software Foundation, Inc.
+Copyright @@copyright@{@} 1998 Free Software Foundation, Inc.
 @@end titlepage
 @end group
 
@@ -16686,19 +16676,20 @@ a line.@refill
 @cindex @TeX{}, how to obtain
 
 @c !!! Here is information about obtaining TeX.  Update it whenever.
-@c !!! Also consider updating TeX.README on prep.
+@c !!! Also consider updating TeX.README on ftp.gnu.org.
 @c     Updated by RJC on 1 March 1995, conversation with MacKay.
 @c     Updated by kb@cs.umb.edu on 29 July 1996.
 @c     Updated by kb@cs.umb.edu on 25 April 1997.
+@c     Updated by kb@cs.umb.edu on 27 February 1998.
 @TeX{} is freely redistributable.  You can obtain @TeX{} for Unix
 systems via anonymous ftp or on physical media.  The core material
-consists of the Web2c @TeX{} distribution (@uref{http://www.tug.org/web2c}).
+consists of the Web2c @TeX{} distribution (@uref{http://tug.org/web2c}).
 
 Instructions for retrieval by anonymous ftp and information on other
 available distributions:
 @example
-@uref{ftp://ftp.tug.org/tex/unixtex.ftp}
-@uref{http://www.tug.org/unixtex.ftp}
+@uref{ftp://tug.org/tex/unixtex.ftp}
+@uref{http://tug.org/unixtex.ftp}
 @end example
 
 The Free Software Foundation provides a core distribution on its Source
@@ -16718,12 +16709,12 @@ Free Software Foundation, Inc.
 59 Temple Place Suite 330
 Boston, MA @ @ 02111-1307
 USA
-Telephone: @w{@t{+}1--617--542--5942}
-Fax: (including Japan) @w{@t{+}1--617--542--2652}
+Telephone: @w{+1-617-542-5942}
+Fax: (including Japan) @w{+1-617-542-2652}
 Free Dial Fax (in Japan):
-@w{ } @w{ } @w{ } 0031--13--2473 (KDD)
-@w{ } @w{ } @w{ } 0066--3382--0158 (IDC)
-Electronic mail: @code{gnu@@prep.ai.mit.edu}
+@w{ } @w{ } @w{ } 0031-13-2473 (KDD)
+@w{ } @w{ } @w{ } 0066-3382-0158 (IDC)
+Electronic mail: @code{gnu@@gnu.org}
 @end group
 @end display
 @end iftex
@@ -16735,19 +16726,19 @@ Free Software Foundation, Inc.
 Boston, MA @w{ } 02111-1307
 USA
 
-Telephone: @w{@t{+}1-617-542-5942}
-Fax: (including Japan) @w{@t{+}1-617-542-2652}
+Telephone: @w{+1-617-542-5942}
+Fax: (including Japan) @w{+1-617-542-2652}
 Free Dial Fax (in Japan):
 @w{ } @w{ } @w{ } 0031-13-2473 (KDD)
 @w{ } @w{ } @w{ } 0066-3382-0158 (IDC)
-Electronic mail: @code{gnu@@prep.ai.mit.edu}
+Electronic mail: @code{gnu@@gnu.org}
 @end group
 @end display
 @end ifinfo
 
 @item
 To order a complete distribution on CD-ROM, please see
-@uref{http://www.tug.org/tex-live.html}.  (This distribution is also
+@uref{http://tug.org/tex-live.html}.  (This distribution is also
 available by FTP; see the URL's above.)
 
 @item
@@ -16762,7 +16753,7 @@ Denny Hall, Mail Stop DH-10
 University of Washington
 Seattle, WA @w{ } 98195
 USA
-Telephone: @t{+}1--206--543--2268
+Telephone: +1-206-543-2268
 Electronic mail: @code{mackay@@cs.washington.edu}
 @end group
 @end display
@@ -16775,7 +16766,7 @@ air parcel post, or $30.00 for shipment via courier.
 @end itemize
 
 Many other @TeX{} distributions are available; see
-@uref{http://www.tug.org/}.
+@uref{http://tug.org/}.
 
 
 @c These are no longer ``new'', and the explanations

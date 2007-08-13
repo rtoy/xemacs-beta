@@ -403,88 +403,97 @@ is no possibility for ambiguity and no need to go through the function
 	    how-to-add))))
   value)
 
-;; Note: you cannot replace the following macro with `letf' because
-;; `specifier-instance' does not have a setf method defined.  (I tried
-;; to use `set-specifier' as the setf method for `specifier-instance',
-;; but it doesn't work for `letf' because set-specifier to the old
-;; value cannot be used to "undo" a previous set-specifier, as letf
-;; expects.)
-;;
-;; This macro might perhaps be made simpler, with an addition to
-;; `remove-specifier'.  Example (simplified for clarity):
-;;
-;; (defmacro let-specifier (specifier value domain &rest body)
-;;   `(unwind-protect
-;;        (progn
-;;	    (add-spec-to-specifier ,specifier ,value ,domain nil 'prepend)
-;;	    ,@body)
-;;      (remove-specifier ,specifier ,domain)))
-;;
-;; So, the idea is to unconditionally prepend a specification for
-;; DOMAIN, and unconditionally remove it.  This does not work because
-;; `remove-specifier' removes *all* the specifications of DOMAIN,
-;; nuking the old ones, in the process.  (for this purpose, it might
-;; make sense for `remove-specifier' to have a HOW-TO-REMOVE
-;; argument.)
-;;
-;; The following version remembers the old speclist and returns it
-;; later.  It's probably less error-prone anyway.
-
 (defmacro let-specifier (specifier-list &rest body)
-  "(let-specifier SPECIFIER-LIST BODY): bind specifiers and evaluate BODY.
+  "Add specifier specs, evaluate forms in BODY and restore the specifiers.
+\(let-specifier SPECIFIER-LIST BODY...)
+
+Each element of SPECIFIER-LIST should look like this:
+\(SPECIFIER VALUE &optional LOCALE TAG-SET HOW-TO-ADD).
+
+SPECIFIER is the specifier to be temporarily modified.  VALUE is the
+instantiator to be temporarily added to SPECIFIER in LOCALE.  LOCALE,
+TAG-SET and HOW-TO-ADD have the same meaning as in
+`add-spec-to-specifier'.
+
+The code resulting from macro expansion will add specifications to
+specifiers using `add-spec-to-specifier'.  After BODY is finished, the
+temporary specifications are removed and old spec-lists are restored.
+
+LOCALE, TAG-SET and HOW-TO-ADD may be omitted, and default to nil.
 The value of the last form in BODY is returned.
-Each element of SPECIFIER-LIST should be a list of
-\(SPECIFIER VALUE DOMAIN).  VALUE and DOMAIN may be omitted, and default
-to nil.  The elements of SPECIFIER-LIST are evaluated sequentially.
 
-For meaning of DOMAIN, see `specifier-instance'."
-  ;; Error-checking
-  (dolist (listel specifier-list)
-    (or (and (consp listel)
-	     (<= (length listel) 3))
-	(signal 'error (list "Should be a 3-element list" listel))))
-  ;; Set up fresh symbols to avoid name clashes.
-  (let* ((specvarlist (mapcar #'(lambda (ignored) (gensym "specifier-"))
-			      specifier-list))
-	 (valvarlist (mapcar #'(lambda (ignored) (gensym "value-"))
-			     specifier-list))
-	 (domvarlist (mapcar #'(lambda (ignored) (gensym "domain-"))
-			     specifier-list))
-	 (oldvarlist (mapcar #'(lambda (ignored) (gensym "old-"))
-			     specifier-list)))
-    ;; Bind the appropriate variables.
-    `(let* (,@(mapcar* (lambda (symbol listel)
-			 (list symbol (nth 0 listel)))
-		       specvarlist specifier-list)
-	      ,@(mapcar* (lambda (symbol listel)
-			   (list symbol (nth 1 listel)))
-			 valvarlist specifier-list)
-	      ,@(mapcar* (lambda (symbol listel)
-			   (list symbol (nth 2 listel)))
-			 domvarlist specifier-list)
-	      ,@(mapcar* (lambda (symbol specifier domain)
-			   (list symbol `(specifier-spec-list
-					  ,specifier ,domain)))
-			 oldvarlist specvarlist domvarlist))
-       (unwind-protect
-	   (progn
-	     ,@(mapcar* (lambda (specifier value domain)
-			  `(add-spec-to-specifier
-			    ,specifier ,value ,domain
-			    nil 'prepend))
-			specvarlist valvarlist domvarlist)
-	     ,@body)
-	 ,@(apply
-	    #'nconc
-	    ;; Reverse the unwinding order for marginal safety gain.
-	    (nreverse
-	     (mapcar*
-	      (lambda (specifier domain oldvalue)
-		`((remove-specifier ,specifier ,domain)
-		  (add-spec-list-to-specifier ,specifier ,oldvalue)))
-	      specvarlist domvarlist oldvarlist)))))))
+NOTE: If you want the specifier's instance to change in all
+circumstances, use (selected-window) as the LOCALE.  If LOCALE is nil
+or omitted, it defaults to `global'.
 
-;; (cl-prettyexpand '(let-specifier ((modeline-shadow-thickness 0 (selected-window)) (fubar 0 baz)) (sit-for 1)))
+Example:
+    (let-specifier ((modeline-shadow-thickness 0 (selected-window)))
+      (sit-for 1))"
+  (check-argument-type 'listp specifier-list)
+  (flet ((gensym-frob (x name)
+	   (if (or (atom x) (eq (car x) 'quote))
+	       (list x)
+	     (list (gensym name) x))))
+    ;; VARLIST is a list of
+    ;; ((SPECIFIERSYM SPECIFIER) (VALUE) (LOCALESYM LOCALE)
+    ;;  (TAG-SET) (HOW-TO-ADD))
+    ;; If any of these is an atom, then a separate symbol is
+    ;; unnecessary, the CAR will contain the atom and CDR will be nil.
+    (let* ((varlist (mapcar #'(lambda (listel)
+				(or (and (consp listel)
+					 (<= (length listel) 5)
+					 (> (length listel) 1))
+				    (signal 'error
+					    (list
+					     "should be a list of 2-5 elements"
+					     listel)))
+				;; VALUE, TAG-SET and HOW-TO-ADD are
+				;; referenced only once, so we needn't
+				;; frob them with gensym.
+				(list (gensym-frob (nth 0 listel) "specifier-")
+				      (list (nth 1 listel))
+				      (gensym-frob (nth 2 listel) "locale-")
+				      (list (nth 3 listel))
+				      (list (nth 4 listel))))
+			    specifier-list))
+	   ;; OLDVALLIST is a list of (OLDVALSYM OLDVALFORM)
+	   (oldvallist (mapcar #'(lambda (varel)
+				   (list (gensym "old-")
+					 `(specifier-spec-list
+					   ,(car (nth 0 varel))
+					   ,(car (nth 2 varel)))))
+			       varlist)))
+      ;; Bind the appropriate variables.
+      `(let* (,@(mapcan #'(lambda (varel)
+			    (delq nil (mapcar
+				       #'(lambda (varcons)
+					   (and (cdr varcons) varcons))
+				       varel)))
+			varlist)
+		,@oldvallist)
+	 (unwind-protect
+	     (progn
+	       ,@(mapcar #'(lambda (varel)
+			     `(add-spec-to-specifier
+			       ,(car (nth 0 varel)) ,(car (nth 1 varel))
+			       ,(car (nth 2 varel)) ,(car (nth 3 varel))
+			       ,(car (nth 4 varel))))
+			 varlist)
+	       ,@body)
+	   ;; Reverse the unwinding order, so that using the same
+	   ;; specifier multiple times works.
+	   ,@(apply #'nconc (nreverse (mapcar*
+				       #'(lambda (oldval varel)
+					   `((remove-specifier
+					      ,(car (nth 0 varel))
+					      ,(car (nth 2 varel)))
+					     (add-spec-list-to-specifier
+					      ,(car (nth 0 varel))
+					      ,(car oldval))))
+				       oldvallist varlist))))))))
+
+;; Evaluate this for testing:
+; (cl-prettyexpand '(let-specifier ((modeline-shadow-thickness 0 (selected-window) 'x) (fubar (value) baz)) (sit-for 1)))
 
 (define-specifier-tag 'win 'device-on-window-system-p)
 

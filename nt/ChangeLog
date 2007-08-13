@@ -1,3 +1,17 @@
+1998-06-08  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* config.h: Undefined DONT_ENCAPSULATE.
+	Defined ENCAPSULATE_* for fopem, open, rename and mkdir.
+	Removed MS-DOS code remains.
+
+1998-06-03  Rick Rankin  <Rick_Rankin-P15254@email.mot.com>
+
+	* Makefile.cygwin: created to compile runemacs.c. This should
+	probably have a Makefile.in, but...
+
+	* runemacs.c: modified to check to see if xemacs is a symbolic
+	link when compiled under Cygwin.
+
 1998-05-31  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* xemacs.mak: Added lib-src/wakeup.exe

@@ -1,3 +1,72 @@
+1998-06-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lispref/windows.texi (Resizing Windows): Document
+	`enlarge-window-pixels' and `shrink-window-pixels'.
+
+	* lispref/positions.texi (Screen Lines): Update documentation of
+	`vertical-motion'.
+	(Screen Lines): Document `vertical-motion-pixels'.
+
+	* lispref/frames.texi (Input Focus): Document `focus-frame',
+	`save-selected-frame' and `with-selected-frame'.
+
+1998-06-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lispref/searching.texi (Regexp Search): Document `split-path'.
+
+	* lispref/files.texi (Unique File Names): Update docs for
+	`make-temp-name'; document `temp-directory'.
+
+1998-06-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lispref/os.texi (Recording Input): Update docs for `recent-keys'.
+
+	* lispref/specifiers.texi (Specifier Instancing): Correct
+	instantiation order.
+	(Specifier Instancing Functions): Ditto.
+
+1998-06-11  Oliver Graf <ograf@fga.de>
+
+	* lispref/lispref.texi: references to Drag'n'Drop fixed
+	* lispref/modes.texi: references to Drag'n'Drop fixed
+	* lispref/scrollbars.texi: references to Drag'n'Drop fixed
+	* lispref/dragndrop.texi: naming changed to Drag and Drop
+	added some docu about the drop procedure
+
+1998-06-09  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* info-stnd.texi: added ../info/ to @setfilename.
+	* info.texi: added ../info/ to @setfilename.
+	* lispref/commands.texi: see ALL.
+	* lispref/frames.texi: see ALL.
+	* lispref/os.texi: see ALL.
+	* lispref/text.texi: see ALL.
+	* new-users-guide/custom1.texi: broke line after enumerated @item.
+	* new-users-guide/custom2.texi: see ALL.
+	* new-users-guide/edit.texi: see ALL.
+	* new-users-guide/enter.texi: see ALL.
+	* new-users-guide/files.texi: see ALL.
+	* new-users-guide/help.texi
+	* new-users-guide/modes.texi: see ALL.
+	* new-users-guide/new-users-guide.texi: see ALL.
+	* new-users-guide/region.texi: see ALL.
+	* new-users-guide/search.texi: see ALL.
+	* new-users-guide/xmenu.texi: see ALL.
+	* standards.texi: added ../info/ to @setfilename.
+	* texinfo.texi: added ../info/ to @setfilename, broke line after
+	@noindent.  Changed @var{arg-not-used-by-@TeX{}} to
+	@var{arg-not-used-by-@@TeX{}} to make `texinfo-format-buffer'
+	happy.
+	* xemacs-faq.texi: added ../info/ to @setfilename.
+	* ALL: corrected INFO-FILE-NAME to lispref and xemacs in relevant
+	p?xefs (most were empty, some elisp and emacs), used
+	PRINTED-MANUAL-TITLE "XEmacs Lisp Reference Manual" and "XEmacs
+	User's Manual" respectively for all these.
+
+1998-06-01  Oliver Graf <ograf@fga.de>
+
+	* lispref/dragndrop.texi: added experimental
+
 1998-05-28  Oliver Graf <ograf@fga.de>
 
 	* lispref/dragndrop.texi: a warning, and a bit more text this time

@@ -1530,23 +1530,37 @@ static int flip_table[] =
    padded to a multiple of 16.  Scan lines are stored in increasing
    byte order from left to right, big-endian within a byte.  0 =
    black, 1 = white.  */
-static HBITMAP
-xbm_create_bitmap_from_data (char *data,
-			     unsigned int width, unsigned int height)
+HBITMAP
+xbm_create_bitmap_from_data (HDC hdc, char *data,
+			     unsigned int width, unsigned int height,
+			     int mask, COLORREF fg, COLORREF bg)
 {
   int old_width = (width + 7)/8;
   int new_width = 2*((width + 15)/16);
   unsigned char *offset;
+  void *bmp_buf = 0;
   unsigned char *new_data, *new_offset;
-  unsigned int i;
-  int j;
-  HBITMAP hb;
+  int i, j;
+  BITMAPINFO* bmp_info = 
+    xmalloc_and_zero (sizeof(BITMAPINFO) + sizeof(RGBQUAD));
+  HBITMAP bitmap;
 
-  new_data = (unsigned char *) xmalloc (height*new_width);
+  if (!bmp_info)
+    return NULL;
+  
+  new_data = (unsigned char *) xmalloc (height * new_width);
+      
+  if (!new_data)
+    {
+      xfree (bmp_info);
+      return NULL;
+    }
+  
   for (i=0; i<height; i++)
     {
       offset = data + i*old_width;
       new_offset = new_data + i*new_width;
+
       new_offset[new_width - 1] = 0; /* there may be an extra byte
                                         that needs to be padded */
       for (j=0; j<old_width; j++)
@@ -1556,10 +1570,54 @@ xbm_create_bitmap_from_data (char *data,
 	    ((flip_table[byte & 0xf] << 4) + flip_table[byte >> 4]);
 	}
     }
-  hb = CreateBitmap (width, height, 1, 1, new_data);
+
+  /* if we want a mask invert the bits */
+  if (!mask)
+    {
+      new_offset = &new_data[height * new_width];
+      while (new_offset-- != new_data)
+	{
+	  *new_offset ^= 0xff;
+	}
+    }
+
+  bmp_info->bmiHeader.biWidth=width;
+  bmp_info->bmiHeader.biHeight=-height;
+  bmp_info->bmiHeader.biPlanes=1;
+  bmp_info->bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
+  bmp_info->bmiHeader.biBitCount=1; 
+  bmp_info->bmiHeader.biCompression=BI_RGB;
+  bmp_info->bmiHeader.biClrUsed = 2; 
+  bmp_info->bmiHeader.biClrImportant = 2; 
+  bmp_info->bmiHeader.biSizeImage = height * new_width; 
+  bmp_info->bmiColors[0].rgbRed = GetRValue (fg);
+  bmp_info->bmiColors[0].rgbGreen = GetGValue (fg);
+  bmp_info->bmiColors[0].rgbBlue = GetBValue (fg);
+  bmp_info->bmiColors[0].rgbReserved = 0;
+  bmp_info->bmiColors[1].rgbRed = GetRValue (bg);
+  bmp_info->bmiColors[1].rgbGreen = GetGValue (bg);
+  bmp_info->bmiColors[1].rgbBlue = GetBValue (bg);
+  bmp_info->bmiColors[1].rgbReserved = 0;
+  
+  bitmap = CreateDIBSection (hdc,  
+			     bmp_info,
+			     DIB_RGB_COLORS,
+			     &bmp_buf, 
+			     0,0);
+
+  xfree (bmp_info);
+  
+  if (!bitmap || !bmp_buf)
+    {
+      xfree (new_data);
+      return NULL;
+    }
+  
+  /* copy in the actual bitmap */
+  memcpy (bmp_buf, new_data, height * new_width);
   xfree (new_data);
 
-  return hb;
+  return bitmap;
 }
 
 /* Given inline data for a mono pixmap, initialize the given
@@ -1578,9 +1636,14 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 				     Lisp_Object mask_filename)
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
+  struct frame* f = XFRAME (DEVICE_SELECTED_FRAME (XDEVICE (device)));
   Lisp_Object foreground = find_keyword_in_vector (instantiator, Q_foreground);
   Lisp_Object background = find_keyword_in_vector (instantiator, Q_background);
   enum image_instance_type type;
+  COLORREF black = PALETTERGB (0,0,0);
+  COLORREF white = PALETTERGB (255,255,255);
+
+  HDC hdc = FRAME_MSWINDOWS_CDC (f);
 
   if (!DEVICE_MSWINDOWS_P (XDEVICE (device)))
     signal_simple_error ("Not an MS-Windows device", device);
@@ -1605,26 +1668,30 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 			      | IMAGE_POINTER_MASK);
 
   mswindows_initialize_dibitmap_image_instance (ii, type);
-  IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = width;
-  IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = height;
+  
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) =
     find_keyword_in_vector (instantiator, Q_file);
+  IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = width;
+  IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = height;
+  IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = 1;
   XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), 0);
   XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), 0);
-  IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = 1;
-  IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = mask;
-  IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) =
-    xbm_create_bitmap_from_data ((Extbyte *) bits, width, height);
+  IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = mask ? mask :
+    xbm_create_bitmap_from_data (hdc, (Extbyte *) bits, width, height, 
+				 TRUE, black, white);
 
   switch (type)
     {
     case IMAGE_MONO_PIXMAP:
+      IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = 
+	xbm_create_bitmap_from_data (hdc, (Extbyte *) bits, width, height, 
+				     FALSE, black, black);
       break;
 
     case IMAGE_COLOR_PIXMAP:
       {
-	unsigned long fg = PALETTERGB (0,0,0);
-	unsigned long bg = PALETTERGB (255,255,255);
+	COLORREF fg = black;
+	COLORREF bg = white;
 
 	if (!NILP (foreground) && !COLOR_INSTANCEP (foreground))
 	  foreground =
@@ -1644,22 +1711,38 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 
 	IMAGE_INSTANCE_PIXMAP_FG (ii) = foreground;
 	IMAGE_INSTANCE_PIXMAP_BG (ii) = background;
+
+	IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = 
+	  xbm_create_bitmap_from_data (hdc, (Extbyte *) bits, width, height, 
+				       FALSE, fg, black);
       }
       break;
 
     case IMAGE_POINTER:
       {
+	COLORREF fg = black;
+	COLORREF bg = white;
+
 	if (NILP (foreground))
 	  foreground = pointer_fg;
 	if (NILP (background))
 	  background = pointer_bg;
 
+	XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), 
+		 find_keyword_in_vector (instantiator, Q_hotspot_x));
+	XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), 
+		 find_keyword_in_vector (instantiator, Q_hotspot_y));
 	IMAGE_INSTANCE_PIXMAP_FG (ii) = foreground;
 	IMAGE_INSTANCE_PIXMAP_BG (ii) = background;
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) =
-	  find_keyword_in_vector (instantiator, Q_hotspot_x);
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) =
-	  find_keyword_in_vector (instantiator, Q_hotspot_y);
+	if (COLOR_INSTANCEP (foreground))
+	  fg = COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (foreground));
+	if (COLOR_INSTANCEP (background))
+	  bg = COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (background));
+
+	IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = 
+	  xbm_create_bitmap_from_data (hdc, (Extbyte *) bits, width, height, 
+				       TRUE, fg, black);
+	mswindows_initialize_image_instance_icon (ii, TRUE);
       }
       break;
 
@@ -1678,6 +1761,9 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object mask_data = find_keyword_in_vector (instantiator, Q_mask_data);
   Lisp_Object mask_file = find_keyword_in_vector (instantiator, Q_mask_file);
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  struct frame* f = XFRAME (DEVICE_SELECTED_FRAME 
+			    (XDEVICE (IMAGE_INSTANCE_DEVICE (ii))));
+  HDC hdc = FRAME_MSWINDOWS_CDC (f);
   HBITMAP mask = 0;
   CONST char *gcc_may_you_rot_in_hell;
 
@@ -1686,10 +1772,13 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
       GET_C_STRING_BINARY_DATA_ALLOCA (XCAR (XCDR (XCDR (mask_data))),
 				       gcc_may_you_rot_in_hell);
       mask =
-	xbm_create_bitmap_from_data ( (unsigned char *)
+	xbm_create_bitmap_from_data ( hdc,
+				      (unsigned char *)
 				      gcc_may_you_rot_in_hell,
 				      XINT (XCAR (mask_data)),
-				      XINT (XCAR (XCDR (mask_data))));
+				      XINT (XCAR (XCDR (mask_data))), FALSE,
+				      PALETTERGB (0,0,0),
+				      PALETTERGB (255,255,255));
     }
 
   init_image_instance_from_xbm_inline (ii, width, height, bits,

@@ -565,8 +565,8 @@ contributed to the XEmacs development from late 1994 to early
 		     (make-glyph [string :data "[Error]"]))
 		    (file
 		     (make-glyph
-		      (if (featurep 'xbm)
-			  `([xbm :data ,data]
+		      (if (featurep 'xpm)
+			  `([xpm :file ,file]
 			    [string :data "[Image]"])
 			`([string :data "[Image]"]))))
 		    (t

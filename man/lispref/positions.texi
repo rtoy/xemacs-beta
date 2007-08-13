@@ -472,18 +472,24 @@ performance of your code.  @xref{Text Lines, cache-long-line-scans}.
 
 
 @defun vertical-motion count &optional window
-This function moves point to the start of the screen line @var{count}
-screen lines down from the screen line containing point.  If @var{count}
+This function moves point to the start of the frame line @var{count}
+frame lines down from the frame line containing point.  If @var{count}
 is negative, it moves up instead.
 
 @code{vertical-motion} returns the number of lines moved.  The value may
 be less in absolute value than @var{count} if the beginning or end of
 the buffer was reached.
 
-The window @var{window} is used for obtaining parameters such as the
-width, the horizontal scrolling, and the display table.  But
-@code{vertical-motion} always operates on the current buffer, even if
-@var{window} currently displays some other buffer.
+Note that @code{vertical-motion} sets @var{window}'s buffer's point, not
+@var{window}'s point. (This differs from FSF Emacs, which buggily always
+sets current buffer's point, regardless of @var{window}.)
+@end defun
+
+@defun vertical-motion-pixels count &optional window
+This function is identical to @code{vertical-motion}, except that it
+returns the vertical pixel height of the motino which took place,
+instead of the actual number of lines moved.  A motion of zero lines
+returns the height of the current line.
 @end defun
 
 @deffn Command move-to-window-line count &optional window

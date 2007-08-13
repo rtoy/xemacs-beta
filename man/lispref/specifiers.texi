@@ -141,7 +141,7 @@ window; in other words, it asks the specifier, ``What is your value in
 this window?''.
 
 More specifically, a specifier contains a set of @dfn{specifications},
-each of which associates a @dfn{locale} (a buffer object, a window
+each of which associates a @dfn{locale} (a window object, a buffer
 object, a frame object, a device object, or the symbol @code{global})
 with an @dfn{inst-list}, which is a list of one or more
 @dfn{inst-pairs}. (For each possible locale, there can be at most one
@@ -210,15 +210,15 @@ follows:
 @itemize @bullet
 @item
 First, XEmacs searches for a specification whose locale is the same as
-the window's buffer.  If that fails, the search is repeated, looking for
-a locale that is the same as the window itself.  If that fails, the
-search is repeated using the window's frame, then using the device that
-frame is on.  Finally, the specification whose locale is the symbol
-@code{global} (if there is such a specification) is considered.
+the window.  If that fails, the search is repeated, looking for a locale
+that is the same as the window's buffer.  If that fails, the search is
+repeated using the window's frame, then using the device that frame is
+on.  Finally, the specification whose locale is the symbol @code{global}
+(if there is such a specification) is considered.
 @item
 The inst-pairs contained in the specification that was found are
 considered in their order in the inst-list, looking for one whose tag
-set matches the device that is derived from the window domain. (The
+set matches the device that is derived from the window domain.  (The
 tag set is an unordered list of zero or more tag symbols.  For all
 tags that have predicates associated with them, the predicate must
 match the device.)
@@ -399,7 +399,7 @@ specifier.
 
 @defun add-spec-to-specifier specifier instantiator &optional locale tag-set how-to-add
 This function adds a specification to @var{specifier}.  The
-specification maps from @var{locale} (which should be a buffer, window,
+specification maps from @var{locale} (which should be a window, buffer,
 frame, device, or the symbol @code{global}, and defaults to
 @code{global}) to @var{instantiator}, whose allowed values depend on the
 type of the specifier.  Optional argument @var{tag-set} limits the
@@ -453,7 +453,7 @@ where
 
 @itemize @bullet
 @item
-@var{locale} := a buffer, a window, a frame, a device, or @code{global}
+@var{locale} := a window, a buffer, a frame, a device, or @code{global}
 @item
 @var{tag-set} := an unordered list of zero or more @var{tags}, each of
 which is a symbol
@@ -477,6 +477,46 @@ the existing ones, and has the same semantics as for
 In many circumstances, the higher-level function @code{set-specifier} is
 more convenient and should be used instead.
 @end defun
+
+@deffn Macro let-specifier specifier-list &rest body
+This special form temporarily adds specifications to specifiers,
+evaluates forms in @var{body} and restores the specifiers to their
+previous states.  The specifiers and their temporary specifications are
+listed in @var{specifier-list}.
+
+The format of @var{specifier-list} is
+
+@example
+((@var{specifier} @var{value} &optional @var{locale} @var{tag-set} @var{how-to-add}) ...)
+@end example
+
+@var{specifier} is the specifier to be temporarily modified.
+@var{value} is the instantiator to be temporarily added to specifier in
+@var{locale}.  @var{locale}, @var{tag-set} and @var{how-to-add} have the
+same meaning as in @code{add-spec-to-specifier}.
+
+This special form is implemented as a macro; the code resulting from
+macro expansion will add specifications to specifiers using
+@code{add-spec-to-specifier}.  After forms in @var{body} are evaluated,
+the temporary specifications are removed and old specifier spec-lists
+are restored.
+
+@var{locale}, @var{tag-set} and @var{how-to-add} may be omitted, and
+default to @code{nil}.  The value of the last form in @var{body} is
+returned.
+
+NOTE: If you want the specifier's instance to change in all
+circumstances, use @code{(selected-window)} as the @var{locale}.  If
+@var{locale} is @code{nil} or omitted, it defaults to @code{global}.
+
+The following example removes the 3D modeline effect in the currently
+selected window for the duration of a second:
+
+@example
+(let-specifier ((modeline-shadow-thickness 0 (selected-window)))
+  (sit-for 1))
+@end example
+@end deffn
 
 @defun set-specifier specifier value &optional how-to-add
 This function adds some specifications to @var{specifier}.  @var{value}
@@ -582,12 +622,12 @@ invalid; otherwise return @code{t}.
 This function returns the spec-list of specifications for
 @var{specifier} in @var{locale}.
 
-If @var{locale} is a particular locale (a buffer, window, frame, device,
+If @var{locale} is a particular locale (a window, buffer, frame, device,
 or the symbol @code{global}), a spec-list consisting of the
 specification for that locale will be returned.
 
-If @var{locale} is a locale type (i.e. a symbol @code{buffer},
-@code{window}, @code{frame}, or @code{device}), a spec-list of the
+If @var{locale} is a locale type (i.e. a symbol @code{window},
+@code{buffer}, @code{frame}, or @code{device}), a spec-list of the
 specifications for all locales of that type will be returned.
 
 If @var{locale} is @code{nil} or the symbol @code{all}, a spec-list of
@@ -753,9 +793,9 @@ specifications are searched for as follows:
 
 @enumerate
 @item
-A specification whose locale is the window's buffer;
-@item
 A specification whose locale is the window itself;
+@item
+A specification whose locale is the window's buffer;
 @item
 A specification whose locale is the window's frame;
 @item

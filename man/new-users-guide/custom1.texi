@@ -19,7 +19,7 @@ you start Emacs again i.e. for a new Emacs process. To try out some of
 the examples in this section, highlight that region and evaluate the
 region by giving the command @kbd{M-x eval-region}. You will be able to
 see the results of your customizations in that Emacs session only
-(@pxref{Lisp Eval,,,,XEmacs User's Manual}).
+(@pxref{Lisp Eval,,,xemacs,XEmacs User's Manual}).
 
 @comment  node-name,  next,  previous,  up
 @menu
@@ -32,17 +32,18 @@ see the results of your customizations in that Emacs session only
 @cindex key bindings
 @cindex keystrokes
 
-  Most of Emacs commands use key sequences. @xref{Keystrokes,,,,XEmacs
-Manual}, for more information about Keys and Commands. In Emacs, the
-keys themselves carry no meaning unless they are bound to a
-function. For example, @kbd{C-n} moves the cursor to the next line
-because its bound to the function @b{next-line}. Similarly, @kbd{C-p}
-moves to the previous line because its bound to the function
-@b{previous-line}. The functions themselves define a particular
-behavior. You can customize the key @kbd{C-n} to move to the previous
-line by binding it to @b{previous-line} and @kbd{C-p} to move to the
-next line by binding it to @b{next-line}. To bind keys to globally run
-commands you need to use the following syntax in your @b{.emacs} file:
+  Most of Emacs commands use key
+sequences. @xref{Keystrokes,,,xemacs,XEmacs User's Manual}, for more
+information about Keys and Commands. In Emacs, the keys themselves carry
+no meaning unless they are bound to a function. For example, @kbd{C-n}
+moves the cursor to the next line because its bound to the function
+@b{next-line}. Similarly, @kbd{C-p} moves to the previous line because
+its bound to the function @b{previous-line}. The functions themselves
+define a particular behavior. You can customize the key @kbd{C-n} to
+move to the previous line by binding it to @b{previous-line} and
+@kbd{C-p} to move to the next line by binding it to @b{next-line}. To
+bind keys to globally run commands you need to use the following syntax
+in your @b{.emacs} file:
 
 @cindex binding keys
 @example
@@ -142,9 +143,9 @@ Look at the following two examples:
 @findex make-symbolic-link
 @noindent
 Both the examples bind the key @kbd{C-xl} to run the function
-@code{make-symbolic-link} (@pxref{Misc File Ops,,,,XEmacs User's
+@code{make-symbolic-link} (@pxref{Misc File Ops,,,xemacs,XEmacs User's
 Manual}). However, the second example will bind the key only for C
-mode. @xref{Major Modes,,,,XEmacs User's Manual}, for more
+mode. @xref{Major Modes,,,xemacs,XEmacs User's Manual}, for more
 information on Major Modes in XEmacs.
 
 
@@ -166,7 +167,8 @@ Menus}.
   Some of the functions which are available to you for customization are:
 @enumerate
 
-@item add-menu-item: @var{(menu-name item-name function enabled-p
+@item
+add-menu-item: @var{(menu-name item-name function enabled-p
 &optional before)}
 
 This function will add a menu item to a menu, creating the menu first if
@@ -257,7 +259,8 @@ submenus: @b{Copy File}, @b{Delete File} and @b{Rename File}.
 
 @findex delete-menu-item
 @cindex deleting menu items
-@item delete-menu-item: @var{(menu-path)}
+@item
+delete-menu-item: @var{(menu-path)}
 This function will remove the menu item defined by @var{menu-name} from
 the menu hierarchy. Look at the following examples and the comments just
 above them which specify what the examples do.
@@ -282,7 +285,8 @@ above them which specify what the examples do.
 
 @findex disable-menu-item
 @cindex disabling menu items
-@item disable-menu-item: @var{(menu-name)}
+@item
+disable-menu-item: @var{(menu-name)}
 Disables the specified menu item. The following example 
 
 @example
@@ -296,7 +300,8 @@ be selected.
 
 @findex enable-menu-item
 @cindex enabling menu items
-@item enable-menu-item: @var{(menu-name)}
+@item
+enable-menu-item: @var{(menu-name)}
 Enables the specified previously disabled menu item. 
 
 @example
@@ -309,7 +314,8 @@ earlier command.
 
 @findex relabel-menu-items
 @cindex relabelling menu items
-@item relabel-menu-item: @var{(menu-name new-name)}
+@item
+relabel-menu-item: @var{(menu-name new-name)}
 Change the string of the menu item specified by @var{menu-name} to
 @var{new-name}. 
 

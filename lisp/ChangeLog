@@ -1,3 +1,102 @@
+1998-06-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* specifier.el (let-specifier): Tiny docfixes.
+
+1998-06-12  Andy Piper  <andyp@parallax.co.uk>
+
+	* msw-mouse.el: set selection-pointer-glyph to Normal.
+
+1998-06-09  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-specify-secret): New function.
+	(widget-after-change): Use it.
+	(widget-specify-field): Use it.
+
+1998-06-08  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* mouse.el (drag-window-divider): Use `(not done)' instead of
+	`doit'; reuse result of `window-pixel-edges'.
+
+	* modeline.el (drag-modeline-event-lag): Rename to
+	drag-divider-event-lag.
+
+1998-06-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* specifier.el (let-specifier): Rewritten not to generate needless
+	`let's; clarified documentation; support TAG-SET and HOW-TO-ADD
+	arguments.
+
+1998-05-28  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* minibuf.el (read-file-name-1): Setup buffer-local value of
+	`completion-ignore-case' in completions buffer under Windows.
+
+1998-06-06  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* about.el (about-maintainer-glyph): Fix support for not
+	compressed images.
+
+1998-06-04  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* cmdloop.el (cancel-mode-internal): Defined this do-nothing function.
+
+	* mouse.el (mouse-track): Cancel selection if misc-user event with
+	`cancel-mode-internal' function is fetched.
+
+1998-06-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* files.el (save-some-buffers-1): Fixed return value.
+
+1998-06-01  Oliver Graf <ograf@fga.de>
+
+	* dragdrop.el: added experimental
+
+1998-05-26  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* startup.el (after-init-hook, init-file-user,
+	user-init-directory, load-user-init-file):  Purge references
+	to "~/.xemacs/init.el" from docstrings.
+
+	(load-user-init-file) Use paths-construct-path to construct
+	paths to user init files.  Go directly to ~/.emacs, do not
+	search ~/.xemacs/, do not load `default-custom-file'.
+
+1998-06-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* files.el (interpreter-mode-alist): Catch wish and tclsh before
+	general	*sh.
+	(inhibit-first-line-modes-regexps): Added `.tar.gz'.
+
+1998-06-03  Andy Piper  <andyp@parallax.co.uk>
+
+	* menubar-items.el (default-menubar): add Update Packages to customize
+	menu.
+
+1998-06-02  Andy Piper  <andyp@parallax.co.uk>
+
+	* faces.el: use toolbar face as a fallback for toolbar properties
+	in xpm-color-symbols instead of default.
+
+	* msw-faces.el: rename 3d-object -> gui-element face.
+
+1998-06-06  SL Baur  <steve@altair.xemacs.org>
+
+	* startup.el (xemacs-startup-logo-function): New variable.
+	(startup-splash-frame): Use it.
+
+1998-06-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* files.el (save-some-buffers): Would wait 1 second.
+	(save-some-buffers-1): Delete other windows here instead of in
+	`save-some-buffers'.
+	(save-some-buffers): Force redisplay only if windows were deleted.
+
+1998-06-02  Didier Verna  <verna@inf.enst.fr>
+
+	* cus-face.el (custom-face-attributes): generalized the use of
+	toggle buttons for boolean attributes. 
+	Re-ordered the items a bit.
+
 1998-06-01  SL Baur  <steve@altair.xemacs.org>
 
 	* sound.el (default-sound-directory): Use `locate-data-directory'

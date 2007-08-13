@@ -39,13 +39,18 @@
   "Modeline customizations."
   :group 'environment)
 
-(defcustom drag-modeline-event-lag 150
-  "*The pause (in msecs) between drag modeline events before redisplaying.
+(defcustom drag-divider-event-lag 150
+  "*The pause (in msecs) between divider drag events before redisplaying.
 If this value is too small, dragging will be choppy because redisplay cannot
 keep up. If it is too large, dragging will be choppy because of the explicit
 redisplay delay specified."
   :type 'integer
+  ;; #### Fix group.
   :group 'modeline)
+
+(define-obsolete-variable-alias
+  'drag-modeline-event-lag
+  'drag-divider-event-lag)
 
 (defcustom modeline-click-swaps-buffers nil
   "*If non-nil, clicking on the modeline changes the current buffer.
@@ -123,7 +128,7 @@ make the clicked-on window taller or shorter."
 	;;   occurred in some other frame.
 	;; drag if this is a mouse motion event and the time
 	;;   between this event and the last event is greater than
-	;;   drag-modeline-event-lag.
+	;;   drag-divider-event-lag.
 	;; do nothing if this is any other kind of event.
 	(cond ((or (misc-user-event-p event)
 		   (key-press-event-p event))
@@ -145,7 +150,7 @@ make the clicked-on window taller or shorter."
 	      ((not (eq start-event-frame (event-frame event)))
 	       (setq done t))
 	      ((< (abs (- (event-timestamp event) last-timestamp))
-		  drag-modeline-event-lag)
+		  drag-divider-event-lag)
 	       nil)
 	      (t
 ;;		 (set-modeline-hscroll start-event-window

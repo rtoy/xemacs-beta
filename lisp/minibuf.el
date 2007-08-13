@@ -1606,6 +1606,10 @@ only existing buffer names are allowed."
 			      initial-contents completer)
     (let ((rfhookfun
 	   (lambda ()
+	     ;; #### SCREAM!  Create a `file-system-ignore-case'
+	     ;; function, so this kind of stuff is generalized!
+	     (and (eq system-type 'windows-nt)
+		  (set (make-local-variable 'completion-ignore-case) t))
 	     (set
 	      (make-local-variable
 	       'completion-display-completion-list-function)

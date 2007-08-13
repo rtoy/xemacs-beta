@@ -37,6 +37,16 @@ file.
 See the file `etc/PACKAGES' in the distribution for a full
 description.
 
+** XEmacs is now supported under Microsoft Windows 95/98 and Windows
+NT operating systems.  For starters, look at the XEmacs on Windows FAQ
+at <URL:http://jagor.srce.hr/~hniksic/xemacs-on-windows.txt>.  To
+discuss Windows-specific issues, subscribe to the mailing list at
+<xemacs-nt-request@xemacs.org>.
+
+** XEmacs will now use `XEmacs' as its application class if it finds
+any `XEmacs' resources in the resource database.  Otherwise, it will
+continue to use the `Emacs' class.
+
 ** When the Zmacs region is active, `M-x query-replace' and the other
 replace commands now operate on the region contents only.
 
@@ -123,13 +133,17 @@ XFONTSET and either the X11 libraries are built with X_LOCALE defined
 or the native C libraries support Japanese localization.  This has
 been available since 20.3, only it hasn't been announced before.
 
-** Jamie Zawinski's `gdb-highlight' program is now distributed with
+** Jamie Zawinski's `gdb-highlight' extension is now distributed with
 the `debug' package.  gdb-highlight makes most objects printed in a
 gdb buffer be mouse-sensitive: as text shows up in the buffer, it is
 parsed, and objects which are recognized have context-sensitive
 commands attached to them.  To use it, add the following to `.emacs':
 
   (add-hook 'gdb-mode-hook (lambda () (require 'gdb-highlight)))
+
+** The package popper.el is now included in the edit-utils package.
+It has been greatly enhanced with respect to the one once included
+with the ilisp package and should work well under XEmacs 21.0.
 
 ** C mode changes
 
@@ -178,18 +192,12 @@ and is an alias for it.
 If you want spaces at the beginning of a line to start a paragraph,
 use the new mode, Paragraph Indent Text mode.
 
-** In Info mode, dir files can be automatically rebuilt  
-when they do not exist or get out of date with respect to the info files
-in the same directory.
-
-The default behaviour is to ask the user if he wants to rebuild an
-outdated info file when doing so would overwrite the file.  When the
-user has no write access to an outdated info file or to an info
-directory containing no dir file, a temporary dir file is built and used
-instead without asking the user but issuing a warning.
+** The `dir' files are no longer essential for functioning of the Info
+subsystem.  If the `dir' file does not exist in an Info directory, the
+relevant information will be generated on-the-fly.
 
 This behaviour can be customized, look for `Info-rebuild-outdated-dir'
-in the `info' customization group.
+in the `info' customization group. #### Mention other variables!
 
 
 * Lisp and internal changes in XEmacs 21.0
@@ -208,11 +216,14 @@ version.
 precedence than the buffer locale.  This is because the window locale
 is more specific than the buffer locale.
 
+*** The new macro `let-specifier' can be used to temporarily add
+specifications to specifiers.  See the documentation for details.
+
 *** The new specifiers `vertical-scrollbar-visible-p' and
 `horizontal-scrollbar-visible-p' may be used to control scrollbar
-visibility.  Previously, the only way to toggle scrollbar visibility
-was to set a scrollbar's size to 0.  This method is still supported
-for backward compatibility.
+visibility.  Previously, the only way to remove a scrollbar was to set
+its size to 0.  This method is still supported for backward
+compatibility.
 
 *** The new specifiers `scrollbar-on-left-p' and `scrollbar-on-top-p'
 may be used to control the position of the vertical and horizontal
@@ -250,6 +261,26 @@ can now be used to temporarily change selected frame.
 
 *** The behavior of `other-frame' command (`C-x 5 o') is unaffected by
 these changes.
+
+** The function `select-window' now has an optional second argument
+NORECORD which if non-nil inhibits the recording of a buffer change.
+
+** The function `vertical-motion' now correctly handles the second,
+optional WINDOW argument.  A new third argument PIXELS, if non-nil,
+indicates that the returned motion should be in pixels.
+
+** The new function `vertical-motion-pixels' is similar to
+vertical-motion but takes as input a vertical motion in pixels.
+
+** The new functions window-text-area-pixel-{width,height,edges} can
+be used to obtain information about the text-displaying area of a
+window.
+
+** The new functions `shrink-window-pixels' and `enlarge-window-pixels'
+can be used to adjust the size of a window by a pixel amount.
+
+** The new function `window-displayed-text-pixel-height' can be used
+to determine the height of the text actually displayed in a window.
 
 ** The arithmetic comparison functions <, >, =, /= now accept a
 variable number of arguments.
@@ -300,6 +331,10 @@ these variables to themselves.
 ** The new function `string' concatenates all its argument characters
 and returns the resulting string.  This is consistent with other
 functions, like `list', `vector', etc.
+
+** The function `temp-directory' is now available to return the
+directory to store temporary files.  On Unix this will be obtained
+from TMPDIR, defaulting to `/tmp'.
 
 ** The function load-average now accepts an optional argument
 USE-FLOATS.  If it is non-nil, the load average values are returned as

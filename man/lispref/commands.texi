@@ -2298,7 +2298,7 @@ saying the command is disabled includes that string.  For example:
      "Text deleted this way cannot be yanked back!\n")
 @end example
 
-  @xref{Disabling,,, emacs, The XEmacs Reference Manual}, for the details on
+  @xref{Disabling,,, xemacs, The XEmacs User's Manual}, for the details on
 what happens when a disabled command is invoked interactively.
 Disabling a command has no effect on calling it as a function from Lisp
 programs.
@@ -2365,7 +2365,7 @@ expressions rather than strings.
   There are a number of commands devoted to the editing and recall of
 previous commands.  The commands @code{repeat-complex-command}, and
 @code{list-command-history} are described in the user manual
-(@pxref{Repetition,,, emacs, The XEmacs Reference Manual}).  Within the
+(@pxref{Repetition,,, xemacs, The XEmacs User's Manual}).  Within the
 minibuffer, the history commands used are the same ones available in any
 minibuffer.
 
@@ -2419,4 +2419,4 @@ macro.  Its value is a string or vector, or @code{nil}.
 
 @c Broke paragraph to prevent overfull hbox. --rjc 15mar92
   The commands are described in the user's manual (@pxref{Keyboard
-Macros,,, xemacs, The XEmacs Reference Manual}).
+Macros,,, xemacs, The XEmacs User's Manual}).

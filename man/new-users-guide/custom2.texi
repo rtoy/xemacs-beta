@@ -194,7 +194,7 @@ There are some other options available to make the value of a variable
 local to a buffer and then to switch to its global value. You can also
 have a @dfn{local variables list} in a file which specifies the values
 to use for certain Emacs variables when you edit that
-file. @xref{Variables,,,,XEmacs User's Manual}, for information on
+file. @xref{Variables,,,xemacs,XEmacs User's Manual}, for information on
 these options.
 
 
@@ -424,7 +424,7 @@ examples in
 @end itemize
 
    For more information on initializing your @file{.emacs} file,
-@xref{Init File,,,,XEmacs User's Manual}. You should also look at
+@xref{Init File,,,xemacs,XEmacs User's Manual}. You should also look at
 @file{/usr/local/lib/xemacs-20.0/etc/sample.emacs}, which is a sample
 @file{.emacs} file. It contains some of the commonly desired
 customizations in Emacs. 

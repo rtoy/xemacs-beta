@@ -151,11 +151,21 @@ echo "checking environment ..."
 if [ "$HOME" = "" ]; then
     echo -n "HOME is not set, rectify?"
     if yorn; then
-	echo "please enter your home path [/winnt/profiles/$userid]"
-	read HOME junk
-	if [ "$HOME" = "" ]; then
-	    HOME="/winnt/profiles/$userid"
+	if [ "$OS" = "Windows_NT" ]
+	then
+	    echo "please enter your home path [/winnt/profiles/$userid]"
+	    read HOME junk
+	    if [ "$HOME" = "" ]; then
+		HOME="/winnt/profiles/$userid"
+	    fi
+	else
+	    echo "please enter your home path [/]"
+	    read HOME junk
+	    if [ "$HOME" = "" ]; then
+		HOME="/"
+	    fi
 	fi
+
 	echo "HOME=$HOME; export HOME" >> $HOME/.bashrc
     fi
 else 
@@ -171,7 +181,7 @@ else
     echo "TERM is $TERM"
 fi
 
-if echo $CYGWIN32 | grep tty; then
+if echo $CYGWIN32 | grep -w tty; then
     echo "CYGWIN32 is $CYGWIN32"
 else 
     echo "CYGWIN32 does not contain \"tty\" terminal may be deficient"

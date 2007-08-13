@@ -629,7 +629,9 @@ at the initial click position."
 		      event mouse-track-click-count)
 		   (mouse-track-run-hook 'mouse-track-click-hook
 		    event mouse-track-click-count)))
-		((key-press-event-p event)
+		((or (key-press-event-p event)
+		     (and (misc-user-event-p event)
+			  (eq (event-function event) 'cancel-mode-internal)))
 		 (error "Selection aborted"))
 		(t
 		 (dispatch-event event))))
@@ -1424,12 +1426,14 @@ other mouse buttons."
     (let* ((window (event-window event))
 	   (frame (event-channel event))
 	   (last-timestamp (event-timestamp event))
-	   (doit t))
-      (while doit
-	(let ((old-right (caddr (window-pixel-edges window)))
-	      (old-left (car (window-pixel-edges window)))
-	      (backup-conf (current-window-configuration frame))
-	      (old-edges-all-windows (mapcar 'window-pixel-edges (window-list))))
+	   done)
+      (while (not done)
+	(let* ((edges (window-pixel-edges window))
+	       (old-right (caddr edges))
+	       (old-left (car edges))
+	       (backup-conf (current-window-configuration frame))
+	       (old-edges-all-windows (mapcar 'window-pixel-edges
+					      (window-list))))
 
 	  ;; This is borrowed from modeline.el:
 	  ;; requeue event and quit if this is a misc-user, eval or
@@ -1438,24 +1442,24 @@ other mouse buttons."
 	  ;;   occurred in some other frame.
 	  ;; drag if this is a mouse motion event and the time
 	  ;;   between this event and the last event is greater than
-	  ;;   drag-modeline-event-lag.
+	  ;;   drag-divider-event-lag.
 	  ;; do nothing if this is any other kind of event.
 	  (setq event (next-event event))
 	  (cond ((or (misc-user-event-p event)
 		     (key-press-event-p event))
 		 (setq unread-command-events (nconc unread-command-events
 						    (list event))
-		       doit nil))
+		       done t))
 		((button-release-event-p event)
-		 (setq doit nil))
+		 (setq done t))
 		((button-event-p event)
-		 (setq doit nil))
+		 (setq done t))
 		((not (motion-event-p event))
 		 (dispatch-event event))
 		((not (eq frame (event-frame event)))
-		 (setq doit nil))
+		 (setq done t))
 		((< (abs (- (event-timestamp event) last-timestamp))
-		    drag-modeline-event-lag))
+		    drag-divider-event-lag))
 		(t
 		 (setq last-timestamp (event-timestamp event))
 		 ;; Enlarge the window, calculating change in characters

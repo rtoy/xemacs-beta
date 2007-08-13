@@ -168,7 +168,7 @@ contain Lisp code.  It is called your @dfn{init file}.  The command line
 switches @samp{-q} and @samp{-u} affect the use of the init file;
 @samp{-q} says not to load an init file, and @samp{-u} says to load a
 specified user's init file instead of yours.  @xref{Entering XEmacs,,,
-emacs, The XEmacs Reference Manual}.
+xemacs, The XEmacs User's Manual}.
 
 @cindex default init file
   A site may have a @dfn{default init file}, which is the library named
@@ -195,7 +195,7 @@ should move it into another file named @file{@var{something}.el},
 byte-compile it (@pxref{Byte Compilation}), and make your @file{.emacs}
 file load the other file using @code{load} (@pxref{Loading}).
 
-  @xref{Init File Examples,,, emacs, The XEmacs Reference Manual}, for
+  @xref{Init File Examples,,, xemacs, The XEmacs User's Manual}, for
 examples of how to make various commonly desired customizations in your
 @file{.emacs} file.
 
@@ -363,8 +363,8 @@ arguments is in @code{command-line-args}.)
 
 The command line arguments are parsed by the @code{command-line-1}
 function in the @file{startup.el} file.  See also @ref{Command
-Switches, , Command Line Switches and Arguments, emacs, The XEmacs
-Reference Manual}.
+Switches, , Command Line Switches and Arguments, xemacs, The XEmacs
+User's Manual}.
 @end defvar
 
 @defvar command-line-args
@@ -1386,13 +1386,35 @@ inputting non-ASCII Latin-1 characters.
 @node Recording Input
 @subsection Recording Input
 
-@defun recent-keys
-This function returns a vector containing the last 100 input events
-from the keyboard or mouse.  All input events are included, whether or
-not they were used as parts of key sequences.  Thus, you always get the
-last 100 inputs, not counting keyboard macros.  (Events from keyboard
-macros are excluded because they are less interesting for debugging; it
-should be enough to see the events that invoked the macros.)
+@defun recent-keys &optional number
+This function returns a vector containing recent input events from the
+keyboard or mouse.  By default, 100 events are recorded, which is how
+many @code{recent-keys} returns.
+
+All input events are included, whether or not they were used as parts of
+key sequences.  Thus, you always get the last 100 inputs, not counting
+keyboard macros.  (Events from keyboard macros are excluded because they
+are less interesting for debugging; it should be enough to see the
+events that invoked the macros.)
+
+If @var{number} is specified, not more than @var{number} events will be
+returned.  You may change the number of stored events using
+@code{set-recent-keys-ring-size}.
+@end defun
+
+@defun recent-keys-ring-size
+This function returns the number of recent events stored internally.
+This is also the maximum number of events @code{recent-keys} can
+return.  By default, 100 events are stored.
+@end defun
+
+@defun set-recent-keys-ring-size size
+This function changes the number of events stored by XEmacs and returned 
+by @code{recent-keys}.
+
+For example, @code{(set-recent-keys-ring-size 250)} will make XEmacs
+remember last 250 events and will make @code{recent-keys} return last
+250 events by default.
 @end defun
 
 @deffn Command open-dribble-file  filename

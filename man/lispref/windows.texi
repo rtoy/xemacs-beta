@@ -1661,6 +1661,14 @@ It could be defined as follows:
 @end example
 @end deffn
 
+@deffn Command enlarge-window-pixels count &optional side window
+This function makes the selected window @var{count} pixels larger.  When
+called from Lisp, optional second argument @var{side} non-@code{nil}
+means to grow sideways @var{count} pixels, and optional third argument
+@var{window} specifies the window to change instead of the selected
+window.
+@end deffn
+
 @deffn Command shrink-window size &optional horizontal
 This function is like @code{enlarge-window} but negates the argument
 @var{size}, making the selected window smaller by giving lines (or
@@ -1681,6 +1689,14 @@ It could be defined as follows:
   (shrink-window columns t))
 @end group
 @end example
+@end deffn
+
+@deffn Command shrink-window-pixels count &optional side window
+This function makes the selected window @var{count} pixels smaller.
+When called from Lisp, optional second argument @var{side}
+non-@code{nil} means to shrink sideways @var{count} pixels, and optional
+third argument @var{window} specifies the window to change instead of
+the selected window.
 @end deffn
 
 @cindex minimum window size
@@ -1705,6 +1721,7 @@ created narrower than this.  The absolute minimum width is one; any
 value below that is ignored.  The default value is 10.
 @end defopt
 
+@c This is not yet implemented.  Why is it "documented"?
 @defvar window-size-change-functions
 This variable holds a list of functions to be called if the size of any
 window changes for any reason.  The functions are called just once per

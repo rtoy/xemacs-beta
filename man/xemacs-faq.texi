@@ -1,13 +1,13 @@
 \input texinfo.tex      @c -*-texinfo-*-
 @c %**start of header
-@setfilename xemacs-faq.info
+@setfilename ../info/xemacs-faq.info
 @settitle Frequently asked questions about XEmacs
 @setchapternewpage off
 @c %**end of header
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 1998/05/10 00:25:35 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 1998/06/13 04:28:18 $
 @sp 1
 @author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <wing@@666.com>
@@ -1022,10 +1022,12 @@ Solaris.  (XEmacs 20 will support XIM input).
 Egg consists of following parts:
 
 @enumerate
-@item Input character Translation System (ITS) layer.
+@item
+Input character Translation System (ITS) layer.
 It translates ASCII inputs to Kana/PinYin/Hangul characters.
 
-@item Kana/PinYin/Hangul to Kanji transfer layer.
+@item
+Kana/PinYin/Hangul to Kanji transfer layer.
 It is interface layer for network Kana-Kanji server (Wnn and Sj3).
 @end enumerate
 

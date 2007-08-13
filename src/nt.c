@@ -24,51 +24,28 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 /* Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au> */
 /* Sync'ed with Emacs 19.34.6 by Marc Paquette <marcpa@cam.org> */
 
-#include <stddef.h> /* for offsetof */
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <io.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <signal.h>
-#include <direct.h>
-
-/* must include CRT headers *before* config.h */
-/* ### I don't believe it - martin */
 #include <config.h>
-#include "systime.h"
-#include "syssignal.h"
-#include "sysproc.h"
 
-#undef access
-#undef chdir
-#undef chmod
-#undef creat
-#undef ctime
-#undef fopen
-#undef link
-#undef mkdir
-#undef mktemp
-#undef open
-#undef rename
-#undef rmdir
-#undef unlink
-
-#undef close
-#undef dup
-#undef dup2
-#undef pipe
-#undef read
-#undef write
-#undef closedir
-
+#undef signal
 #define getwd _getwd
 #include "lisp.h"
 #undef getwd
 
+#include "systime.h"
+#include "syssignal.h"
+#include "sysproc.h"
+
+#include <ctype.h>
+#include <direct.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <io.h>
 #include <pwd.h>
+#include <signal.h>
+#include <stddef.h> /* for offsetof */
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include <windows.h>
 #include <mmsystem.h>
@@ -1215,230 +1192,8 @@ readdir (DIR *dirp)
   return &dir_static;
 }
 
-/* Shadow some MSVC runtime functions to map requests for long filenames
-   to reasonable short names if necessary.  This was originally added to
-   permit running Emacs on NT 3.1 on a FAT partition, which doesn't support 
-   long file names.  */
-
-int
-sys_access (const char * path, int mode)
-{
-  return _access (map_win32_filename (path, NULL), mode);
-}
-
-int
-sys_chdir (const char * path)
-{
-  return _chdir (map_win32_filename (path, NULL));
-}
-
-int
-sys_chmod (const char * path, mode_t mode)
-{
-  return _chmod (map_win32_filename (path, NULL), mode);
-}
-
-int
-sys_creat (const char * path, mode_t mode)
-{
-  return _creat (map_win32_filename (path, NULL), mode);
-}
-
-FILE *
-sys_fopen(const char * path, const char * mode)
-{
-  int fd;
-  int oflag;
-  const char * mode_save = mode;
-
-  /* Force all file handles to be non-inheritable.  This is necessary to
-     ensure child processes don't unwittingly inherit handles that might
-     prevent future file access. */
-
-  if (mode[0] == 'r')
-    oflag = O_RDONLY;
-  else if (mode[0] == 'w' || mode[0] == 'a')
-    oflag = O_WRONLY | O_CREAT | O_TRUNC;
-  else
-    return NULL;
-
-  /* Only do simplistic option parsing. */
-  while (*++mode)
-    if (mode[0] == '+')
-      {
-	oflag &= ~(O_RDONLY | O_WRONLY);
-	oflag |= O_RDWR;
-      }
-    else if (mode[0] == 'b')
-      {
-	oflag &= ~O_TEXT;
-	oflag |= O_BINARY;
-      }
-    else if (mode[0] == 't')
-      {
-	oflag &= ~O_BINARY;
-	oflag |= O_TEXT;
-      }
-    else break;
-
-  fd = _open (map_win32_filename (path, NULL), oflag | _O_NOINHERIT, 0644);
-  if (fd < 0)
-    return NULL;
-
-  return _fdopen (fd, mode_save);
-}
-
-/* This only works on NTFS volumes, but is useful to have.  */
-int
-sys_link (const char * old, const char * new)
-{
-  HANDLE fileh;
-  int   result = -1;
-  char oldname[MAX_PATH], newname[MAX_PATH];
-
-  if (old == NULL || new == NULL)
-{
-      errno = ENOENT;
-  return -1;
-}
-
-  strcpy (oldname, map_win32_filename (old, NULL));
-  strcpy (newname, map_win32_filename (new, NULL));
-
-  fileh = CreateFile (oldname, 0, 0, NULL, OPEN_EXISTING,
-		      FILE_FLAG_BACKUP_SEMANTICS, NULL);
-  if (fileh != INVALID_HANDLE_VALUE)
-    {
-      int wlen;
-
-      /* Confusingly, the "alternate" stream name field does not apply
-         when restoring a hard link, and instead contains the actual
-         stream data for the link (ie. the name of the link to create).
-         The WIN32_STREAM_ID structure before the cStreamName field is
-         the stream header, which is then immediately followed by the
-         stream data.  */
-
-      struct {
-	WIN32_STREAM_ID wid;
-	WCHAR wbuffer[MAX_PATH];	/* extra space for link name */
-      } data;
-
-      wlen = MultiByteToWideChar (CP_ACP, MB_PRECOMPOSED, newname, -1,
-				  data.wid.cStreamName, MAX_PATH);
-      if (wlen > 0)
-	{
-	  LPVOID context = NULL;
-	  DWORD wbytes = 0;
-
-	  data.wid.dwStreamId = BACKUP_LINK;
-	  data.wid.dwStreamAttributes = 0;
-	  data.wid.Size.LowPart = wlen * sizeof(WCHAR);
-	  data.wid.Size.HighPart = 0;
-	  data.wid.dwStreamNameSize = 0;
-
-	  if (BackupWrite (fileh, (LPBYTE)&data,
-			   offsetof (WIN32_STREAM_ID, cStreamName)
-			   + data.wid.Size.LowPart,
-			   &wbytes, FALSE, FALSE, &context)
-	      && BackupWrite (fileh, NULL, 0, &wbytes, TRUE, FALSE, &context))
-	    {
-	      /* succeeded */
-	      result = 0;
-	    }
-	  else
-	    {
-	      /* Should try mapping GetLastError to errno; for now just
-		 indicate a general error (eg. links not supported).  */
-	      errno = EINVAL;  // perhaps EMLINK?
-	    }
-	}
-
-      CloseHandle (fileh);
-    }
-  else
-    errno = ENOENT;
-
-  return result;
-}
-
-int
-sys_mkdir (const char * path, int mode_unused)
-{
-  return _mkdir (map_win32_filename (path, NULL));
-}
-
-/* Because of long name mapping issues, we need to implement this
-   ourselves.  Also, MSVC's _mktemp returns NULL when it can't generate
-   a unique name, instead of setting the input template to an empty
-   string.
-
-   Standard algorithm seems to be use pid or tid with a letter on the
-   front (in place of the 6 X's) and cycle through the letters to find a
-   unique name.  We extend that to allow any reasonable character as the
-   first of the 6 X's.  */
-char *
-sys_mktemp (char * template)
-{
-  char * p;
-  int i;
-  unsigned uid = GetCurrentThreadId ();
-  static char first_char[] = "abcdefghijklmnopqrstuvwyz0123456789!%-_@#";
-
-  if (template == NULL)
-    return NULL;
-  p = template + strlen (template);
-  i = 5;
-  /* replace up to the last 5 X's with uid in decimal */
-  while (--p >= template && p[0] == 'X' && --i >= 0)
-    {
-      p[0] = '0' + uid % 10;
-      uid /= 10;
-    }
-
-  if (i < 0 && p[0] == 'X')
-    {
-      i = 0;
-      do
-	{
-	  int save_errno = errno;
-	  p[0] = first_char[i];
-	  if (sys_access (template, 0) < 0)
-	    {
-	      errno = save_errno;
-	      return template;
-	    }
-	}
-      while (++i < sizeof (first_char));
-    }
-
-  /* Template is badly formed or else we can't generate a unique name,
-     so return empty string */
-  template[0] = 0;
-  return template;
-}
-
-int
-sys_open (const char * path, int oflag, int mode)
-{
-  int fd;
-
-  /* Force all file handles to be non-inheritable. */
-  fd = _open (map_win32_filename (path, NULL), oflag | _O_NOINHERIT, mode);
-
-  if (fd >= MAXDESC)
-    {
-      _close (fd);
-      errno = EMFILE;
-      return -1;
-    }
-
-  if (fd >= 0)
-    {
-      fd_info[fd].cp = 0;
-    }
-  return (fd);
-}
-
+#if 0
+/* #### Have to check if all that sad story about '95 is true - kkm */
 int
 sys_rename (const char * oldname, const char * newname)
 {
@@ -1494,18 +1249,7 @@ sys_rename (const char * oldname, const char * newname)
 
   return rename (temp, newname);
 }
-
-int
-sys_rmdir (const char * path)
-{
-  return _rmdir (map_win32_filename (path, NULL));
-}
-
-int
-sys_unlink (const char * path)
-{
-  return _unlink (map_win32_filename (path, NULL));
-}
+#endif /* 0 */
 
 static FILETIME utc_base_ft;
 static long double utc_base;
@@ -1812,95 +1556,6 @@ stat (const char * path, struct stat * buf)
   return 0;
 }
 
-/* Shadow main io functions: we need to handle pipes and sockets more
-   intelligently, and implement non-blocking mode as well. */
-
-int
-sys_close (int fd)
-{
-  int rc;
-
-  if (fd < 0 || fd >= MAXDESC)
-    {
-      errno = EBADF;
-      return -1;
-    }
-
-  if (fd_info[fd].cp)
-    {
-      child_process * cp = fd_info[fd].cp;
-
-      fd_info[fd].cp = NULL;
-
-      if (CHILD_ACTIVE (cp))
-        {
-	  /* if last descriptor to active child_process then cleanup */
-	  int i;
-	  for (i = 0; i < MAXDESC; i++)
-	    {
-	      if (i == fd)
-		continue;
-	      if (fd_info[i].cp == cp)
-		break;
-	    }
-	  if (i == MAXDESC)
-	    {
-	      delete_child (cp);
-	    }
-	}
-    }
-
-  /* Note that sockets do not need special treatment here (at least on
-     NT and Win95 using the standard tcp/ip stacks) - it appears that
-     closesocket is equivalent to CloseHandle, which is to be expected
-     because socket handles are fully fledged kernel handles. */
-  rc = _close (fd);
-
-  if (rc == 0)
-    fd_info[fd].flags = 0;
-
-  return rc;
-}
-
-int
-sys_dup (int fd)
-{
-  int new_fd;
-
-  new_fd = _dup (fd);
-  if (new_fd >= 0)
-    {
-      /* duplicate our internal info as well */
-      fd_info[new_fd] = fd_info[fd];
-    }
-  return new_fd;
-}
-
-
-int
-sys_dup2 (int src, int dst)
-{
-  int rc;
-
-  if (dst < 0 || dst >= MAXDESC)
-    {
-      errno = EBADF;
-      return -1;
-    }
-
-  /* make sure we close the destination first if it's a pipe or socket */
-  if (src != dst && fd_info[dst].flags != 0)
-    sys_close (dst);
-  
-  rc = _dup2 (src, dst);
-  if (rc == 0)
-    {
-      /* duplicate our internal info as well */
-      fd_info[dst] = fd_info[src];
-    }
-  return rc;
-}
-
 /* From callproc.c  */
 extern Lisp_Object Vbinary_process_input;
 extern Lisp_Object Vbinary_process_output;
@@ -1994,182 +1649,6 @@ _sys_read_ahead (int fd)
 
   return cp->status;
 }
-
-int
-sys_read (int fd, char * buffer, size_t count)
-{
-  int nchars;
-  int to_read;
-  DWORD waiting;
-  char * orig_buffer = buffer;
-
-  if (fd < 0 || fd >= MAXDESC)
-    {
-      errno = EBADF;
-      return -1;
-    }
-
-  if (fd_info[fd].flags & (FILE_PIPE | FILE_SOCKET))
-    {
-      child_process *cp = fd_info[fd].cp;
-
-      if ((fd_info[fd].flags & FILE_READ) == 0)
-        {
-	  errno = EBADF;
-	  return -1;
-	}
-
-      nchars = 0;
-
-      /* re-read CR carried over from last read */
-      if (fd_info[fd].flags & FILE_LAST_CR)
-	{
-	  if (fd_info[fd].flags & FILE_BINARY) abort ();
-	  *buffer++ = 0x0d;
-	  count--;
-	  nchars++;
-	  fd_info[fd].flags &= ~FILE_LAST_CR;
-	}
-
-      /* presence of a child_process structure means we are operating in
-	 non-blocking mode - otherwise we just call _read directly.
-	 Note that the child_process structure might be missing because
-	 reap_subprocess has been called; in this case the pipe is
-	 already broken, so calling _read on it is okay. */
-      if (cp)
-        {
-	  int current_status = cp->status;
-
-	  switch (current_status)
-	    {
-	    case STATUS_READ_FAILED:
-	    case STATUS_READ_ERROR:
-	      /* report normal EOF if nothing in buffer */
-	      if (nchars <= 0)
-		fd_info[fd].flags |= FILE_AT_EOF;
-	      return nchars;
-
-	    case STATUS_READ_READY:
-	    case STATUS_READ_IN_PROGRESS:
-	      errno = EWOULDBLOCK;
-	      return -1;
-
-	    case STATUS_READ_SUCCEEDED:
-	      /* consume read-ahead char */
-	      *buffer++ = cp->chr;
-	      count--;
-	      nchars++;
-	      cp->status = STATUS_READ_ACKNOWLEDGED;
-	      ResetEvent (cp->char_avail);
-
-	    case STATUS_READ_ACKNOWLEDGED:
-	      break;
-
-	    default:
-	      errno = EBADF;
-	      return -1;
-	    }
-
-	  if (fd_info[fd].flags & FILE_PIPE)
-	    {
-	      PeekNamedPipe ((HANDLE) _get_osfhandle (fd), NULL, 0, NULL, &waiting, NULL);
-	      to_read = min (waiting, (DWORD) count);
-      
-	      if (to_read > 0)
-		nchars += _read (fd, buffer, to_read);
-	    }
-	}
-      else
-	{
-	  int nread = _read (fd, buffer, count);
-	  if (nread >= 0)
-	    nchars += nread;
-	  else if (nchars == 0)
-	    nchars = nread;
-	}
-
-      if (nchars <= 0)
-	fd_info[fd].flags |= FILE_AT_EOF;
-      /* Perform text mode translation if required.  */
-      else if ((fd_info[fd].flags & FILE_BINARY) == 0)
-	{
-	  unsigned lf_count = 0;
-	  nchars = crlf_to_lf (nchars, orig_buffer, &lf_count);
-	  /* If buffer contains only CR, return that.  To be absolutely
-	     sure we should attempt to read the next char, but in
-	     practice a CR to be followed by LF would not appear by
-	     itself in the buffer.  */
-	  if (nchars > 1 && orig_buffer[nchars - 1] == 0x0d)
-	    {
-	      fd_info[fd].flags |= FILE_LAST_CR;
-	      nchars--;
-	    }
-    }
-    }
-  else
-    nchars = _read (fd, buffer, count);
-
-  return nchars;
-}
-
-/* For now, don't bother with a non-blocking mode */
-int
-sys_write (int fd, const void * buffer, size_t count)
-{
-  int nchars;
-
-  if (fd < 0 || fd >= MAXDESC)
-    {
-      errno = EBADF;
-      return -1;
-    }
-
-  if (fd_info[fd].flags & (FILE_PIPE | FILE_SOCKET))
-    {
-    if ((fd_info[fd].flags & FILE_WRITE) == 0)
-      {
-	errno = EBADF;
-	return -1;
-      }
-
-      /* Perform text mode translation if required.  */
-      if ((fd_info[fd].flags & FILE_BINARY) == 0)
-	{
-	  char * tmpbuf = alloca (count * 2);
-	  unsigned char * src = (void *)buffer;
-	  unsigned char * dst = tmpbuf;
-	  int nbytes = count;
-
-	  while (1)
-	    {
-	      unsigned char *next;
-	      /* copy next line or remaining bytes */
-	      next = _memccpy (dst, src, '\n', nbytes);
-	      if (next)
-		{
-		  /* copied one line ending with '\n' */
-		  int copied = next - dst;
-		  nbytes -= copied;
-		  src += copied;
-		  /* insert '\r' before '\n' */
-		  next[-1] = '\r';
-		  next[0] = '\n';
-		  dst = next + 1;
-		  count++;
-		}	    
-	      else
-		/* copied remaining partial line -> now finished */
-		break;
-	    }
-	  buffer = tmpbuf;
-	}
-    }
-
-  nchars = _write (fd, buffer, count);
-
-  return nchars;
-}
-
 
 void
 term_ntproc (int unused)

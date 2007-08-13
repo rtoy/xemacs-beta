@@ -2347,7 +2347,6 @@ A string is printed verbatim in the modeline except for %-constructs:
   %P -- print percent of buffer above bottom of window, perhaps plus Top,
         or print Bottom or All.
   %n -- print Narrow if appropriate.
-  %t -- Under MS-DOS, print T if files is text, B if binary.
   %C -- under XEmacs/mule, print the mnemonic for `buffer-file-coding-system'.
   %[ -- print one [ for each recursive editing level.  %] similar.
   %% -- print %.                %- -- print infinitely many dashes.

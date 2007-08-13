@@ -422,7 +422,7 @@ static void
 signal_cannot_launch (Lisp_Object image_file, DWORD err)
 {
   mswindows_set_errno (err);
-  error ("Starting \"%S\": %s", image_file, strerror (errno));
+  signal_simple_error_2 ("Error starting", image_file, lisp_strerror (errno));
 }
 
 static int

@@ -174,7 +174,7 @@ push_lisp_string_as_unicode (unsigned_char_dynarr* dynarr, Lisp_Object string)
 }
 
 /* Given button TEXT, return button width in DLU */
-static inline unsigned int
+static unsigned int
 button_width (Lisp_Object text)
 {
   unsigned int width = X_DLU_PER_CHAR * XSTRING_CHAR_LENGTH (text);

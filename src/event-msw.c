@@ -1824,6 +1824,14 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     break;
 
+  case WM_CANCELMODE:
+    ReleaseCapture ();
+    /* Queue a `cancel-mode-internal' misc user event, so mouse
+       selection would be canceled if any */
+    mswindows_enqueue_misc_user_event (mswindows_find_frame (hwnd),
+				       Qcancel_mode_internal, Qnil);
+    break;
+
 #ifdef HAVE_TOOLBARS
   case WM_NOTIFY:
     {

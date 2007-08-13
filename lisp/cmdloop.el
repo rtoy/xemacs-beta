@@ -105,6 +105,17 @@ or go back to just one window (by deleting all but the selected window)."
 	 (delete-other-windows))
 	((string-match "^ \\*" (buffer-name (current-buffer)))
 	 (bury-buffer))))
+
+;; `cancel-mode-internal' is a function of a misc-user event, which is
+;; queued when window system directs XEmacs frame to cancel any modal
+;; behavior it exposes, like mouse pointer grabbing.
+;;
+;; This function does nothing at the top level, but the code which
+;; runs modal event loops, such as selection drag loop in `mouse-track',
+;; check if misc-user function symbol is `cancel-mode-internal', and
+;; takes necessary cleanup actions.
+(defun cancel-mode-internal (object)
+  (setq zmacs-region-stays t))
 
 ;; Someone wrote: "This should really be a ring of last errors."
 ;;

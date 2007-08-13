@@ -72,7 +72,7 @@ direction.
 @end table
 
   For information on how Emacs searches for words and regular
-expressions, @xref{Search,,,,XEmacs User's Manual}. 
+expressions, @xref{Search,,,xemacs,XEmacs User's Manual}. 
 
   To replace all occurrences of a string in Emacs, you can use the
 following command: 
@@ -102,8 +102,8 @@ Now type the string which you want to replace "FOO" with and press
 @key{RET}. After all the occurrences are replaced you will see the
 message "Done" in the echo area.  If you want only some occurrences of
 the string to be replaced, use @kbd{M-x query-replace RET <string> RET
-<newstring> RET}. For more information, @xref{Query Replace,,,,XEmacs
-Manual}. 
+<newstring> RET}. For more information, @xref{Query
+Replace,,,xemacs,XEmacs User's Manual}.
 
    XEmacs also provides a utility for checking spellings. Use @kbd{M-x
 ispell-buffer} to check for spellings in the whole buffer. You can also

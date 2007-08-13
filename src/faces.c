@@ -54,13 +54,12 @@ Lisp_Object Qinit_global_faces;
 /* These faces are used directly internally.  We use these variables
    to be able to reference them directly and save the overhead of
    calling Ffind_face. */
-Lisp_Object Vdefault_face, Vmodeline_face, V3d_object_face;
+Lisp_Object Vdefault_face, Vmodeline_face, Vgui_element_face;
 Lisp_Object Vleft_margin_face, Vright_margin_face, Vtext_cursor_face;
-Lisp_Object Vpointer_face;
-Lisp_Object Vvertical_divider_face;
+Lisp_Object Vpointer_face, Vvertical_divider_face, Vtoolbar_face;
 
 /* Qdefault, Qhighlight defined in general.c */
-Lisp_Object Qmodeline, Q3d_object, Qleft_margin, Qright_margin, Qtext_cursor;
+Lisp_Object Qmodeline, Qgui_element, Qleft_margin, Qright_margin, Qtext_cursor;
 Lisp_Object Qvertical_divider;
 
 /* In the old implementation Vface_list was a list of the face names,
@@ -1752,7 +1751,7 @@ syms_of_faces (void)
 {
   /* Qdefault defined in general.c */
   defsymbol (&Qmodeline, "modeline");
-  defsymbol (&Q3d_object, "3d-object");
+  defsymbol (&Qgui_element, "gui-element");
   defsymbol (&Qleft_margin, "left-margin");
   defsymbol (&Qright_margin, "right-margin");
   defsymbol (&Qtext_cursor, "text-cursor");
@@ -1805,10 +1804,12 @@ vars_of_faces (void)
 
   staticpro (&Vdefault_face);
   Vdefault_face = Qnil;
-  staticpro (&V3d_object_face);
-  V3d_object_face = Qnil;
+  staticpro (&Vgui_element_face);
+  Vgui_element_face = Qnil;
   staticpro (&Vmodeline_face);
   Vmodeline_face = Qnil;
+  staticpro (&Vtoolbar_face);
+  Vtoolbar_face = Qnil;
 
   staticpro (&Vvertical_divider_face);
   Vvertical_divider_face = Qnil;
@@ -1936,39 +1937,54 @@ complex_vars_of_faces (void)
 			 list1 (Fcons (Qnil, Qnil)));
   set_specifier_fallback (Fget (Vdefault_face, Qreverse, Qnil),
 			 list1 (Fcons (Qnil, Qnil)));
-
-  /* mustn't inherit bg pixmaps from the default face */
-  V3d_object_face = Fmake_face (Q3d_object, build_string ("3d object face"),
-				Qnil);
+  
+  /* gui-element is the parent face of all gui elements such as
+     modeline, vertical divider and toolbar. */
+  Vgui_element_face = Fmake_face (Qgui_element,
+				  build_string ("gui element face"),
+				  Qnil);
 
   /* Now create the other faces that redisplay needs to refer to
      directly.  We could create them in Lisp but it's simpler this
      way since we need to get them anyway. */
+
+  /* modeline is gui element. */
   Vmodeline_face = Fmake_face (Qmodeline, build_string ("modeline face"),
 			       Qnil);
 
-  /* modeline-face should not inherit colors from the default face. */
   set_specifier_fallback (Fget (Vmodeline_face, Qforeground, Qunbound),
-			  Fget (V3d_object_face, Qforeground, Qunbound));
+			  Fget (Vgui_element_face, Qforeground, Qunbound));
   set_specifier_fallback (Fget (Vmodeline_face, Qbackground, Qunbound),
-			  Fget (V3d_object_face, Qbackground, Qunbound));
-  set_specifier_fallback (Fget (Vmodeline_face, Qbackground_pixmap,
-				Qnil),
-			  Fget (V3d_object_face, Qbackground_pixmap, Qunbound));
+			  Fget (Vgui_element_face, Qbackground, Qunbound));
+  set_specifier_fallback (Fget (Vmodeline_face, Qbackground_pixmap, Qnil),
+			  Fget (Vgui_element_face, Qbackground_pixmap,
+				Qunbound));
+  
+  /* toolbar is another gui element */
+  Vtoolbar_face = Fmake_face (Qtoolbar,
+			      build_string ("toolbar face"),
+			      Qnil);
+  set_specifier_fallback (Fget (Vtoolbar_face, Qforeground, Qunbound),
+			  Fget (Vgui_element_face, Qforeground, Qunbound));
+  set_specifier_fallback (Fget (Vtoolbar_face, Qbackground, Qunbound),
+			  Fget (Vgui_element_face, Qbackground, Qunbound));
+  set_specifier_fallback (Fget (Vtoolbar_face, Qbackground_pixmap, Qnil),
+			  Fget (Vgui_element_face, Qbackground_pixmap,
+				Qunbound));
 
+  /* vertical divider is another gui element */
   Vvertical_divider_face = Fmake_face (Qvertical_divider,
 				       build_string ("vertical divider face"),
 				       Qnil);
-  /* #### vertical-divider-face should not inherit from modeline face.
-     Perhaps there must be a 3d-object-face to supply default foreground,
-     background and pixmap. */
+
   set_specifier_fallback (Fget (Vvertical_divider_face, Qforeground, Qunbound),
-			  Fget (V3d_object_face, Qforeground, Qunbound));
+			  Fget (Vgui_element_face, Qforeground, Qunbound));
   set_specifier_fallback (Fget (Vvertical_divider_face, Qbackground, Qunbound),
-			  Fget (V3d_object_face, Qbackground, Qunbound));
+			  Fget (Vgui_element_face, Qbackground, Qunbound));
   set_specifier_fallback (Fget (Vvertical_divider_face, Qbackground_pixmap,
 				Qunbound),
-			  Fget (V3d_object_face, Qbackground_pixmap, Qunbound));
+			  Fget (Vgui_element_face, Qbackground_pixmap,
+				Qunbound));
 
   Vleft_margin_face = Fmake_face (Qleft_margin,
 				  build_string ("left margin face"),

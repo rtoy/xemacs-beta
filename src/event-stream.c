@@ -157,6 +157,9 @@ Lisp_Object Vlast_input_char;
 
 Lisp_Object Vcurrent_mouse_event;
 
+/* This is fbound in cmdloop.el, see the commentary there */
+Lisp_Object Qcancel_mode_internal;
+
 /* If not Qnil, event objects to be read as the next command input */
 Lisp_Object Vunread_command_events;
 Lisp_Object Vunread_command_event; /* obsoleteness support */
@@ -3864,7 +3867,7 @@ command_builder_find_leaf (struct command_builder *builder,
 DEFUN ("recent-keys", Frecent_keys, 0, 1, 0, /*
 Return a vector of recent keyboard or mouse button events read.
 If NUMBER is non-nil, not more than NUMBER events will be returned.
-Change number of events stored using `set-recent-keys-size'.
+Change number of events stored using `set-recent-keys-ring-size'.
 
 This copies the event objects into a new vector; it is safe to keep and
 modify them.
@@ -4959,6 +4962,8 @@ syms_of_event_stream (void)
   defsymbol (&Qmenu_right, "menu-right");
   defsymbol (&Qmenu_select, "menu-select");
   defsymbol (&Qmenu_escape, "menu-escape");
+
+  defsymbol (&Qcancel_mode_internal, "cancel-mode-internal");
 }
 
 void

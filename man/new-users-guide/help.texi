@@ -171,8 +171,8 @@ on Emacs !
 
 @end table
 
-For more information on the Help facility, @xref{Help,,,,XEmacs
-Reference Manual}.
+For more information on the Help facility, @xref{Help,,,xemacs,XEmacs
+User's Manual}.
 
 
 

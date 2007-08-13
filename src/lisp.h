@@ -1142,13 +1142,15 @@ XCHAR (Lisp_Object obj)
 
 #ifdef LISP_FLOAT_TYPE
 
-/* Note: the 'next' field is there to ensure that there is enough room
-   for the next pointer float type's free list. */
+/* Note: the 'unused__next__' field exists only to ensure that the
+   `next' pointer fits within the structure, for the purposes of the
+   free list.  This makes a difference in the unlikely case of
+   sizeof(double) being smaller than sizeof(void *). */
 
 struct Lisp_Float
 {
   struct lrecord_header lheader;
-  union { double d; struct Lisp_Float *next; } data;
+  union { double d; struct Lisp_Float *unused__next__; } data;
 };
 
 DECLARE_LRECORD (float, struct Lisp_Float);
@@ -1159,7 +1161,6 @@ DECLARE_LRECORD (float, struct Lisp_Float);
 #define CHECK_FLOAT(x) CHECK_RECORD (x, float)
 #define CONCHECK_FLOAT(x) CONCHECK_RECORD (x, float)
 
-#define float_next(f) ((f)->data.next)
 #define float_data(f) ((f)->data.d)
 
 #define XFLOATINT(n) extract_float (n)

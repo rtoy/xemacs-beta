@@ -35,7 +35,7 @@ Boston, MA 02111-1307, USA.  */
    Improved GIF/JPEG support added by Bill Perry for 19.14
    Cleanup/simplification of error handling by Ben Wing for 19.14
    Pointer/icon overhaul, more restructuring by Ben Wing for 19.14
-   GIF support changed to external GIFlib 3.1 by Jareth Hein for 21.0
+   GIF support changed to external Gifreader lib by Jareth Hein for 21.0
    Many changes for color work and optimizations by Jareth Hein for 21.0
    Switch of GIF/JPEG/PNG to new EImage intermediate code by Jareth Hein for 21.0
    TIFF code by Jareth Hein for 21.0
@@ -403,10 +403,23 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
    */
 
   {
+    int jpeg_gray = 0;		/* if we're dealing with a grayscale */
     /* Step 4: set parameters for decompression.   */
 
-    /* Now that we're using EImages, use the default of all data in 24bit color.
-       The backend routine will take care of any necessary reductions. */
+    /* Now that we're using EImages, send all data as 24bit color.
+       The backend routine will take care of any necessary reductions.
+       We do have to handle the grayscale case ourselves, however. */
+    if (cinfo.jpeg_color_space == JCS_GRAYSCALE)
+      {
+	cinfo.out_color_space = JCS_GRAYSCALE;
+	jpeg_gray = 1;
+      }
+    else
+      {
+	/* we're relying on the jpeg driver to do any other conversions,
+	   or signal an error if the conversion isn't supported. */
+	cinfo.out_color_space = JCS_RGB;	
+      }
 
     /* Step 5: Start decompressor */
     jpeg_start_decompress (&cinfo);
@@ -451,13 +464,26 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	  for (i = 0; i < cinfo.output_width; i++)
 	    {
 	      int clr;
+	      if (jpeg_gray) 
+		{
+		  unsigned char val;
 #if (BITS_IN_JSAMPLE == 8)
-	      for (clr = 0; clr < 3; clr++)
-		*op++ = (unsigned char)*jp++;
+		  val = (unsigned char)*jp++;
 #else /* other option is 12 */
-	      for (clr = 0; clr < 3; clr++)
-		*op++ = (unsigned char)(*jp++ >> 4);
+		  val = (unsigned char)(*jp++ >> 4);
 #endif
+		  for (clr = 0; clr < 3; clr++) /* copy the same value into RGB */
+		      *op++ = val;
+		}
+	      else
+		{
+		  for (clr = 0; clr < 3; clr++)
+#if (BITS_IN_JSAMPLE == 8)
+		    *op++ = (unsigned char)*jp++;
+#else /* other option is 12 */
+		    *op++ = (unsigned char)(*jp++ >> 4);
+#endif
+		}
 	    }
 	}
     }
@@ -490,7 +516,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
  *                               GIF                                  *
  **********************************************************************/
 
-#include <gif_lib.h>
+#include <gifrlib.h>
 
 static void
 gif_validate (Lisp_Object instantiator)
@@ -798,6 +824,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   struct png_unwind_data unwind;
   int speccount = specpdl_depth ();
   int height, width;
+  struct png_memory_storage tbr;  /* Data to be read */
 
   /* PNG variables */
   png_structp png_ptr;
@@ -844,7 +871,6 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
     CONST Extbyte *bytes;
     Extcount len;
-    struct png_memory_storage tbr; /* Data to be read */
 
     assert (!NILP (data));
 

@@ -122,6 +122,7 @@ mswindows_update_scrollbar_instance_values (struct window *w,
 
   /* These might be optimized, but since at least one will change at each
      call, it's probably not worth it. */
+  SCROLLBAR_MSW_INFO (sb).cbSize = sizeof(SCROLLINFO);
   SCROLLBAR_MSW_INFO (sb).nMin = new_minimum;
   SCROLLBAR_MSW_INFO (sb).nMax = new_maximum;
   SCROLLBAR_MSW_INFO (sb).nPage = new_slider_size + 1; /* for DISABLENOSCROLL */

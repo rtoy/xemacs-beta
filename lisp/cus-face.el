@@ -55,18 +55,7 @@
 ;;; Font Attributes.
 
 (defconst custom-face-attributes
-  '((:bold (boolean :tag "Bold"
-		    :help-echo "Control whether a bold font should be used.")
-	   custom-set-face-bold custom-face-bold)
-    (:italic (boolean :tag "Italic"
-		      :help-echo "\
-Control whether an italic font should be used.")
-	     custom-set-face-italic custom-face-italic)
-    (:underline (boolean :tag "Underline"
-			 :help-echo "\
-Control whether the text should be underlined.")
-		set-face-underline-p face-underline-p)
-    (:foreground (color :tag "Foreground"
+  '((:foreground (color :tag "Foreground"
 			:value ""
 			:help-echo "Set foreground color.")
 		 set-face-foreground face-foreground-name)
@@ -74,11 +63,10 @@ Control whether the text should be underlined.")
 			:value ""
 			:help-echo "Set background color.")
 		 set-face-background face-background-name)
-    ;; #### Should make it work on X
-    (:inverse-video (boolean :tag "Inverse"
-			     :help-echo "\
-Control whether the text should be inverted.  Works only on TTY-s")
-		    set-face-reverse-p face-reverse-p)
+    (:size (editable-field :format "Size: %v"
+			   :help-echo "\
+Text size (e.g. 9pt or 2mm).")
+	   custom-set-face-font-size custom-face-font-size)
     (:stipple (editable-field :format "Stipple: %v"
 			      :help-echo "Name of background bitmap file.")
 	      set-face-stipple custom-face-stipple)
@@ -86,14 +74,26 @@ Control whether the text should be inverted.  Works only on TTY-s")
 			     :help-echo "\
 Name of font family to use (e.g. times).") 
 	     custom-set-face-font-family custom-face-font-family)
-    (:size (editable-field :format "Size: %v"
-			   :help-echo "\
-Text size (e.g. 9pt or 2mm).")
-	   custom-set-face-font-size custom-face-font-size)
+    (:bold (toggle :format "%[Bold%]: %v\n"
+		   :help-echo "Control whether a bold font should be used.")
+	   custom-set-face-bold custom-face-bold)
+    (:italic (toggle :format "%[Italic%]: %v\n"
+		     :help-echo "\
+Control whether an italic font should be used.")
+	     custom-set-face-italic custom-face-italic)
+    (:underline (toggle :format "%[Underline%]: %v\n"
+			:help-echo "\
+Control whether the text should be underlined.")
+		set-face-underline-p face-underline-p)
+    ;; #### Should make it work on X
     (:strikethru (toggle :format "%[Strikethru%]: %v\n"
 			 :help-echo "\
 Control whether the text should be strikethru.")
-		 set-face-strikethru-p face-strikethru-p))
+		 set-face-strikethru-p face-strikethru-p)
+    (:inverse-video (toggle :format "%[Inverse Video%]: %v\n"
+			    :help-echo "\
+Control whether the text should be inverted.  Works only on TTY-s")
+		    set-face-reverse-p face-reverse-p))
   "Alist of face attributes. 
 
 The elements are of the form (KEY TYPE SET GET) where KEY is a symbol

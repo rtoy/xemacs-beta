@@ -39,29 +39,29 @@
 ;; Anyway: is dragdrop- a good prefix for all this?
 ;; What if someone trys drop<TAB> in the minibuffer?
 (defgroup drag-n-drop nil
-  "Window system-independent drag'n'drop support."
+  "*{EXPERIMENTAL} Window system-independent drag'n'drop support."
   :group 'editing)
 
 (defcustom dragdrop-drop-at-point nil
-  "*If non-nil, the drop handler functions will drop text at the cursor location.
+  "*{EXPERIMENTAL} If non-nil, drop text at the cursor location.
 Otherwise, the cursor will be moved to the location of the pointer drop before
 text is inserted."
   :type 'boolean
   :group 'drag-n-drop)
 
 (defcustom dragdrop-autoload-tm-view nil
-  "*If non-nil, autoload tm-view if a MIME buffer needs to be decoded.
+  "*{EXPERIMENTAL} If non-nil, autoload tm-view to decode MIME data.
 Otherwise, the buffer is only decoded if tm-view is already avaiable."
   :type 'boolean
   :group 'drag-n-drop)
 
 ;; the widget for editing the drop-functions
 (define-widget 'dragdrop-function-widget 'list
-  "Widget for editing drop dispatch functions."
+  "*{EXPERIMENTAL} Widget for editing drop dispatch functions."
   :args `((choice :tag "Function"
-		  (function-item dragdrop-drop-url-default)
-		  (function-item dragdrop-drop-mime-default)
-		  (function-item dragdrop-drop-log-function)
+		  (function-item experimental-dragdrop-drop-url-default)
+		  (function-item experimental-dragdrop-drop-mime-default)
+		  (function-item experimental-dragdrop-drop-log-function)
 		  (function :tag "Other" nil))
 	  (choice :tag "Button" :value t
 		  (choice-item :tag "Ignore" t)
@@ -83,9 +83,9 @@ Otherwise, the buffer is only decoded if tm-view is already avaiable."
 		  (sexp :tag "Arg" :value nil)))
   :value '(nil t t))
 
-(defcustom dragdrop-drop-functions '((dragdrop-drop-url-default t t)
-				     (dragdrop-drop-mime-default t t))
-  "This is the standart drop function search list.
+(defcustom experimental-dragdrop-drop-functions '((experimental-dragdrop-drop-url-default t t)
+						  (experimental-dragdrop-drop-mime-default t t))
+  "*{EXPERIMENTAL} This is the standart drop function search list.
 Each element is a list of a function, a button selector, a modifier
 selector and optional argumets to the function call.
 The function must accept at least two arguments: first is the event
@@ -96,39 +96,39 @@ The functions are called in order, until one returns t."
   :type '(repeat dragdrop-function-widget))
 
 (defgroup dnd-debug nil
-  "Drag'n'Drop debugging options."
+  "*{EXPERIMENTAL} Drag'n'Drop debugging options."
   :group 'drag-n-drop)
 
 (defcustom dragdrop-drop-log nil
-  "If non-nil, every drop is logged.
+  "*{EXPERIMENTAL} If non-nil, every drop is logged.
 The name of the buffer is set in the custom 'dragdrop-drop-log-name"
   :group 'dnd-debug
   :type 'boolean)
 
 (defcustom dragdrop-drop-log-name "*drop log buffer*"
-  "The name of the buffer used to log drops.
+  "*{EXPERIMENTAL} The name of the buffer used to log drops.
 Set dragdrop-drop-log to non-nil to enable this feature."
   :group 'dnd-debug
   :type 'string)
 
 (defvar dragdrop-drop-log-buffer nil
-  "Buffer to log drops in debug mode.")
+  "*{EXPERIMENTAL} Buffer to log drops in debug mode.")
 
 ;;
 ;; Drop API
 ;;
 (defun dragdrop-drop-dispatch (object)
-  "This function identifies DROP type misc-user-events.
+  "*{EXPERIMENTAL} This function identifies DROP type misc-user-events.
 It calls functions which will handle the drag."
   (let ((event current-mouse-event))
     (and dragdrop-drop-log
-	 (dragdrop-drop-log-function event object))
+	 (experimental-dragdrop-drop-log-function event object))
     (dragdrop-drop-find-functions event object)))
 
 (defun dragdrop-drop-find-functions (event object)
   "Finds valid drop-handle functions and executes them to dispose the drop.
-It does this by looking for extent-properties called 'dragdrop-drop-functions
-and for variables named like this."
+It does this by looking for extent-properties called
+'experimental-dragdrop-drop-functions and for variables named like this."
   (catch 'dragdrop-drop-is-done
     (and (event-over-text-area-p event)
 	 ;; let's search the extents
@@ -141,15 +141,17 @@ and for variables named like this."
 	     (or pos (setq pos cpos))
 	     (select-window window)
 	     (setq buffer (window-buffer))
-	     (let ((ext (extent-at pos buffer 'dragdrop-drop-functions)))
+	     (let ((ext (extent-at pos buffer 'experimental-dragdrop-drop-functions)))
 	       (while (not (eq ext nil))
 		 (dragdrop-drop-do-functions
-		  (extent-property ext 'dragdrop-drop-functions)
+		  (extent-property ext 'experimental-dragdrop-drop-functions)
 		  event
 		  object)
-		 (setq ext (extent-at pos buffer 'dragdrop-drop-functions ext)))))))
-    ;; now look into the variable dragdrop-drop-functions
-    (dragdrop-drop-do-functions dragdrop-drop-functions event object)))
+		 (setq ext (extent-at pos buffer
+				      'experimental-dragdrop-drop-functions
+				      ext)))))))
+    ;; now look into the variable experimental-dragdrop-drop-functions
+    (dragdrop-drop-do-functions experimental-dragdrop-drop-functions event object)))
 
 (defun dragdrop-compare-mods (first-mods second-mods)
   "Returns t if both first-mods and second-mods contain the same elements.
@@ -181,8 +183,8 @@ Returns t if one of drop-funs returns t. Otherwise returns nil."
       (setq drop-funs (cdr drop-funs))))
   nil)
 
-(defun dragdrop-drop-log-function (event object &optional message buffer)
-  "Logs any drops into a buffer.
+(defun experimental-dragdrop-drop-log-function (event object &optional message buffer)
+  "*{EXPERIMENTAL} Logs any drops into a buffer.
 If buffer is nil, it inserts the data into a buffer called after
 dragdrop-drop-log-name.
 If dragdrop-drop-log is non-nil, this is done automatically for each drop.
@@ -223,8 +225,8 @@ The function always returns nil."
     (insert "----------\n"))
   nil)
 
-(defun dragdrop-drop-url-default (event object)
-  "Default handler for dropped URL data.
+(defun experimental-dragdrop-drop-url-default (event object)
+  "*{EXPERIMENTAL} Default handler for dropped URL data.
 Finds files and URLs. Returns nil if object does not contain URL data."
   (cond ((eq (car object) 'dragdrop-URL)
 	 (let ((data (cdr object))
@@ -253,8 +255,8 @@ Finds files and URLs. Returns nil if object does not contain URL data."
 	   t))
 	(t nil)))
 
-(defun dragdrop-drop-mime-default (event object)
-  "Default handler for dropped MIME data.
+(defun experimental-dragdrop-drop-mime-default (event object)
+  "*{EXPERIMENTAL} Default handler for dropped MIME data.
 Inserts text into buffer, creates MIME buffers for other types.
 Returns nil if object does not contain MIME data."
   (cond ((eq (car object) 'dragdrop-MIME)
@@ -342,29 +344,29 @@ compare."
 ;;
 ;; Drag API
 ;;
-(defun dragdrop-drag (event object)
-  "The generic drag function.
+(defun experimental-dragdrop-drag (event object)
+  "*{EXPERIMENTAL} The generic drag function.
 Tries to do the best with object in the selected protocol.
 Object must comply to the standart drag'n'drop object 
 format."
   (error "Not implemented"))
 
-(defun dragdrop-drag-region (event begin end)
-  "Drag a region.
+(defun experimental-dragdrop-drag-region (event begin end)
+  "*{EXPERIMENTAL} Drag a region.
 This function uses special data types if the low-level
 protocol requires it. It does so by calling
 dragdrop-drag-pure-text."
   (dragdrop-drag-pure-text event
 			   (buffer-substring-no-properties begin end)))
 
-(defun dragdrop-drag-pure-text (event text)
-  "Drag text-only data.
+(defun experimental-dragdrop-drag-pure-text (event text)
+  "*{EXPERIMENTAL} Drag text-only data.
 Takes care of special low-level protocol data types.
 Text must be a list of strings."
   (error "Not implemented"))
 
-(defun dragdrop-drag-pure-file (event file)
-  "Drag filepath-only data.
+(defun experimental-dragdrop-drag-pure-file (event file)
+  "*{EXPERIMENTAL} Drag filepath-only data.
 Takes care of special low-level protocol data types.
 file must be a list of strings."
   (error "Not implemented"))

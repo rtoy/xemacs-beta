@@ -976,12 +976,41 @@ maybe_set_frame_title_format (Widget shell)
 #include <Dt/Dnd.h>
 
 static Widget CurrentDragWidget = NULL;
+static XtCallbackRec dnd_convert_cb_rec[2];
+static XtCallbackRec dnd_destroy_cb_rec[2];
+static int drag_not_done = 0;
 
 static void
 x_cde_destroy_callback (Widget widget, XtPointer clientData,
 			XtPointer callData)
 {
+  DtDndDragFinishCallbackStruct *dragFinishInfo =
+    (DtDndDragFinishCallbackStruct *)callData;
+  DtDndContext *dragData = dragFinishInfo->dragData;
+  int i;
+
+  /* free the items */
+  if (callData != NULL && dragData != NULL)
+    {
+      if (dragData->protocol == DtDND_BUFFER_TRANSFER)
+	{
+	  for (i = 0; i < dragData->numItems; i++)
+	    {
+	      XtFree(dragData->data.buffers[i].bp);
+	      if (dragData->data.buffers[i].name)
+		XtFree(dragData->data.buffers[i].name);
+	    }
+	}
+      else
+	{
+	  for (i = 0; i < dragData->numItems; i++)
+	    XtFree(dragData->data.files[i]);
+	}
+    }
+
+  /* free the data string */
   xfree (clientData);
+
   CurrentDragWidget = NULL;
 }
 
@@ -995,12 +1024,12 @@ x_cde_convert_callback (Widget widget, XtPointer clientData,
   char *textptr = NULL;
   int i;
 
-  if(convertInfo == NULL)
+  if (convertInfo == NULL)
     {
       return;
     }
 
-  if((convertInfo->dragData->protocol != DtDND_BUFFER_TRANSFER
+  if ((convertInfo->dragData->protocol != DtDND_BUFFER_TRANSFER
       && convertInfo->dragData->protocol != DtDND_FILENAME_TRANSFER) ||
      (convertInfo->reason != DtCR_DND_CONVERT_DATA))
     {
@@ -1026,15 +1055,10 @@ x_cde_convert_callback (Widget widget, XtPointer clientData,
   convertInfo->status = DtDND_SUCCESS;
 }
 
-
-static XtCallbackRec dnd_convert_cb_rec[2];
-static XtCallbackRec dnd_destroy_cb_rec[2];
-static int drag_not_done = 0;
-
 static Lisp_Object
 abort_current_drag(Lisp_Object arg)
 {
-  if(CurrentDragWidget && drag_not_done)
+  if (CurrentDragWidget && drag_not_done)
     {
       XmDragCancel(CurrentDragWidget);
       CurrentDragWidget = NULL;
@@ -1061,6 +1085,7 @@ WARNING: can only handle plain/text and file: transfers!
       Display *display = XtDisplayOfObject (wid);
       struct device *d    = get_device_from_display (display);
       struct x_device *xd = DEVICE_X_DATA (d);
+      XWindowAttributes win_attrib;
       unsigned int modifier = 0, state = 0;
       char *Ctext;
       int numItems = 0, textlen = 0, pos = 0;
@@ -1083,14 +1108,23 @@ WARNING: can only handle plain/text and file: transfers!
       x_event.xbutton.send_event = False;
       x_event.xbutton.display = XtDisplayOfObject(wid);
       x_event.xbutton.window = XtWindowOfObject(wid);
-      x_event.xbutton.root = XRootWindow(x_event.xkey.display, 0);
+      x_event.xbutton.root = XRootWindow(x_event.xbutton.display, 0);
       x_event.xbutton.subwindow = 0;
       x_event.xbutton.time = lisp_event->timestamp;
       x_event.xbutton.x = lisp_event->event.button.x;
       x_event.xbutton.y = lisp_event->event.button.y;
-      x_event.xbutton.x_root = lisp_event->event.button.x; /* this is wrong */
-      x_event.xbutton.y_root = lisp_event->event.button.y;
-
+      if (Success == XGetWindowAttributes (x_event.xbutton.display,
+					   x_event.xbutton.window,
+					   &win_attrib))
+	{
+	  x_event.xbutton.x_root = win_attrib.x + lisp_event->event.button.x;
+	  x_event.xbutton.y_root = win_attrib.y + lisp_event->event.button.y;
+	}
+      else
+	{
+	  x_event.xbutton.x_root = lisp_event->event.button.x; /* this is wrong */
+	  x_event.xbutton.y_root = lisp_event->event.button.y;
+	}
       modifier = lisp_event->event.button.modifiers;
       if (modifier & MOD_SHIFT)   state |= ShiftMask;
       if (modifier & MOD_CONTROL) state |= ControlMask;
@@ -1277,6 +1311,7 @@ The type defaults to DndText (4).
       Display *display = XtDisplayOfObject (wid);
       struct device *d    = get_device_from_display (display);
       struct x_device *xd = DEVICE_X_DATA (d);
+      XWindowAttributes win_attrib;
       unsigned int modifier = 0, state = 0;
       char *dnd_data = NULL;
       unsigned long dnd_len = 0;
@@ -1345,8 +1380,18 @@ The type defaults to DndText (4).
       x_event.xbutton.time = lisp_event->timestamp;
       x_event.xbutton.x = lisp_event->event.button.x;
       x_event.xbutton.y = lisp_event->event.button.y;
-      x_event.xbutton.x_root = lisp_event->event.button.x; /* this is wrong */
-      x_event.xbutton.y_root = lisp_event->event.button.y;
+      if (Success == XGetWindowAttributes (x_event.xbutton.display,
+					   x_event.xbutton.window,
+					   &win_attrib))
+	{
+	  x_event.xbutton.x_root = win_attrib.x + lisp_event->event.button.x;
+	  x_event.xbutton.y_root = win_attrib.y + lisp_event->event.button.y;
+	}
+      else
+	{
+	  x_event.xbutton.x_root = lisp_event->event.button.x; /* this is wrong */
+	  x_event.xbutton.y_root = lisp_event->event.button.y;
+	}
 
       modifier = lisp_event->event.button.modifiers;
       if (modifier & MOD_SHIFT)   state |= ShiftMask;
@@ -1365,6 +1410,7 @@ The type defaults to DndText (4).
       if (dnd_dealloc)
 	xfree (dnd_data);
 
+      /* the next thing blocks everything... */
       if (DndHandleDragging(wid, &x_event))
 	return Qt;
     }

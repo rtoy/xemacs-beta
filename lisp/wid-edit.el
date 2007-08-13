@@ -338,7 +338,26 @@ new value."
     (set-extent-property extent 'button-or-field t)
     (set-extent-property extent 'keymap map)
     (set-extent-property extent 'face face)
-    (widget-handle-help-echo extent help-echo)))
+    (widget-handle-help-echo extent help-echo))
+  (widget-specify-secret widget))
+
+(defun widget-specify-secret (field)
+  "Replace text in FIELD with value of `:secret', if non-nil."
+  (let ((secret (widget-get field :secret))
+	(size (widget-get field :size)))
+    (when secret
+      (let ((begin (widget-field-start field))
+	    (end (widget-field-end field)))
+	(when size 
+	  (while (and (> end begin)
+		      (eq (char-after (1- end)) ?\ ))
+	    (setq end (1- end))))
+	(while (< begin end)
+	  (let ((old (char-after begin)))
+	    (unless (eq old secret)
+	      (subst-char-in-region begin (1+ begin) old secret)
+	      (put-text-property begin (1+ begin) 'secret old))
+	    (setq begin (1+ begin))))))))
 
 (defun widget-specify-button (widget from to)
   "Specify button for WIDGET between FROM and TO."
@@ -1481,8 +1500,7 @@ Unlike (get-char-property POS 'field) this, works with empty fields too."
 	(when field
 	  (unless (eq field other)
 	    (debug "Change in different fields"))
-	  (let ((size (widget-get field :size))
-		(secret (widget-get field :secret)))
+	  (let ((size (widget-get field :size)))
 	    (when size
 	      (let ((begin (widget-field-start field))
 		    (end (widget-field-end field)))
@@ -1504,19 +1522,7 @@ Unlike (get-char-property POS 'field) this, works with empty fields too."
 			 (while (and (eq (preceding-char) ?\ )
 				     (> (point) begin))
 			   (delete-backward-char 1)))))))
-	    (when secret
-	      (let ((begin (widget-field-start field))
-		    (end (widget-field-end field)))
-		(when size
-		  (while (and (> end begin)
-			      (eq (char-after (1- end)) ?\ ))
-		    (setq end (1- end))))
-		(while (< begin end)
-		  (let ((old (char-after begin)))
-		    (unless (eq old secret)
-		      (subst-char-in-region begin (1+ begin) old secret)
-		      (put-text-property begin (1+ begin) 'secret old))
-		    (incf begin))))))
+	    (widget-specify-secret field))
 	  (widget-apply field :notify field)))
     (error (debug "After Change"))))
 

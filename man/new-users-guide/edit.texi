@@ -82,7 +82,7 @@ joining the line with the preceding line.
 
   Emacs automatically splits lines when they become too long, if you
 turn on a special mode called @dfn{Auto Fill} mode.
-@xref{Filling,,,,XEmacs User's Manual}, for information on using Auto Fill
+@xref{Filling,,,xemacs,XEmacs User's Manual}, for information on using Auto Fill
 mode.
 
 
@@ -262,8 +262,8 @@ M--10 C-n RET
 @end example
 @noindent
 You can obviously use @kbd{C-b} to move backward rather than giving
-negative arguments to @kbd{C-n}. @xref{Numeric Arguments,,,,XEmacs
-Manual}, for more information on numeric arguments.
+negative arguments to @kbd{C-n}. @xref{Numeric Arguments,,,xemacs,XEmacs
+User's Manual}, for more information on numeric arguments.
 
 @comment  node-name,  next,  previous,  up
 @node Undo,  , Numeric Argument, Edit
@@ -287,7 +287,7 @@ The same as above, but this command might not be obvious to type on some
 keyboards so it might be better to use the above command.
 @end table
 
-  @xref{Undoing Changes,,,,XEmacs User's Manual}, for more information on
+  @xref{Undoing Changes,,,xemacs,XEmacs User's Manual}, for more information on
 undoing changes.
   
   

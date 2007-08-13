@@ -71,7 +71,7 @@ new directory, then simply press @kbd{C-g} to quit the
 command. Similarly, you can also remove a directory by using the command
 @kbd{remove-directory}. The command @kbd{M-x pwd} will print the current
 buffer's default directory. For more information on file names,
-@xref{File Names,,,,XEmacs User's Manual}.
+@xref{File Names,,,xemacs,XEmacs User's Manual}.
  
 
 @node Visiting, Saving Files, File Names, Files
@@ -197,7 +197,7 @@ command.
    You can also undo all the changes made since the file was visited or
 saved by reading the text from the file again (called
 @dfn{reverting}). For more information on this option,
-@xref{Reverting,,,,XEmacs User's Manual}. 
+@xref{Reverting,,,xemacs,XEmacs User's Manual}. 
 
 @vindex make-backup-files
    When you save a file in Emacs, it destroys its old contents. However,
@@ -209,7 +209,7 @@ documentation for this variable. Its default value should be
 to @samp{t} (@pxref{Setting Variables}). The backup file will contain
 the contents from the last time you visited the file. Emacs also
 provides options for creating numbered backups. For more information on
-backups, @xref{Backup,,,,XEmacs User's Manual}. 
+backups, @xref{Backup,,,xemacs,XEmacs User's Manual}. 
 
 @cindex auto saving
    Emacs also saves all the files from time to time so that in case of a
@@ -219,7 +219,7 @@ being saved automatically. The auto saved files are named by putting the
 character @samp{#} in front and back. For example a file called
 "myfile.texinfo" would be named as @file{#myfile.texinfo#}. For
 information on controlling auto-saving and recovering data from
-auto-saving, @xref{Auto Save Files,,,,XEmacs User's Manual}. 
+auto-saving, @xref{Auto Save Files,,,xemacs,XEmacs User's Manual}. 
 
 @cindex simultaneous editing
    Emacs provides protection from simultaneous editing which occurs if
@@ -228,7 +228,7 @@ changes. It will put a lock on a file which is being visited and
 modified. If any other user tries to modify that file, it will inform
 the user about the lock and provide some
 options. For more information on protection against simultaneous
-editing, @xref{Interlocking,,,,XEmacs User's Manual}.
+editing, @xref{Interlocking,,,xemacs,XEmacs User's Manual}.
 
    
 

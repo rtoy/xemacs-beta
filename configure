@@ -12013,7 +12013,7 @@ test "$with_i18n3"    = yes && echo "  Compiling in I18N support, level 3 (doesn
 test "$with_cde"      = yes && echo "  Compiling in support for CDE."
 test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
-test "$with_dragndrop" = yes && echo "  Compiling in support for Drag'n'Drop ($dragndrop_proto )."
+test "$with_dragndrop" = yes && echo "  Compiling in EXPERIMENTAL support for Drag'n'Drop ($dragndrop_proto )."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_session"  != no && echo "  Compiling in support for proper session-management."
 case "$with_menubars" in

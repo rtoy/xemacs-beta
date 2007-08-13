@@ -1671,19 +1671,18 @@ in that frame; otherwise change each frame."
 		       (or
 			(and 
 			 (featurep 'x)
-			 (or 
-			  (x-get-resource "backgroundToolBarColor"
-					  "BackgroundToolBarColor" 'string)
-			  (x-get-resource "background" "Background" 'string)))
+			 (x-get-resource "backgroundToolBarColor"
+					 "BackgroundToolBarColor" 'string))
+
+			(face-background 'toolbar)
 			"Gray80")))
 	   (purecopy '("foregroundToolBarColor"
 		       (or
 			(and 
 			 (featurep 'x)
-			 (or
-			  (x-get-resource "foregroundToolBarColor"
-					  "ForegroundToolBarColor" 'string)
-			  (x-get-resource "foreground" "Foreground" 'string)))
+			 (x-get-resource "foregroundToolBarColor"
+					 "ForegroundToolBarColor" 'string))
+			(face-foreground 'toolbar)
 			"Black")))
 	   )))
 

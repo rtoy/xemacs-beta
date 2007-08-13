@@ -79,6 +79,8 @@ Window-system options:
 --with-dragndrop (*)	Compile in the generic drag and drop API. This is
 			automatically added if one of the drag and drop
 			protocols is found (currently CDE, OffiX, MSWindows).
+			*WARNING*  The Drag'n'drop support is under development
+				   and is considered experimental.
 --with-cde (*)		Compile in support for CDE drag and drop.
 --with-offix (*)	Compile in support for OffiX drag and drop.
 --without-xmu (*)	For those unfortunates whose vendors don't ship Xmu.

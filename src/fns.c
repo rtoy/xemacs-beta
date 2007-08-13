@@ -478,10 +478,10 @@ Concatenate all the arguments and make the result a string.
 The result is a string whose elements are the elements of all the arguments.
 Each argument may be a string or a list or vector of characters.
 
-Do not use individual integers as arguments!
-The behavior of `concat' in that case will be changed later!
-If your program passes an integer as an argument to `concat',
-you should change it right away not to do so.
+As of XEmacs 21.0, this function does NOT accept individual integers
+as arguments.  Old code that relies on, for example, (concat "foo" 50)
+returning "foo50" will fail.  To fix such code, either apply
+`int-to-string' to the integer argument, or use `format'.
 */
        (int nargs, Lisp_Object *args))
 {

@@ -23,6 +23,21 @@
 	   (funcall (intern "cde-start-drag-internal") event t what)))
 	(t display-message 'error "no valid drag protocols implemented")))
 
+(defun start-region-drag (event)
+  (interactive "_e")
+  (if (click-inside-extent-p event zmacs-region-extent)
+      ;; okay, this is a drag
+      (cond ((featurep 'offix)
+	     (offix-start-drag-region event
+				      (extent-start-position zmacs-region-extent)
+				      (extent-end-position zmacs-region-extent)))
+	    ((featurep 'cde)
+	     ;; should also work with CDE
+	     (cde-start-drag-region event
+				    (extent-start-position zmacs-region-extent)
+				    (extent-end-position zmacs-region-extent)))
+	    (t (error "No offix or CDE support compiled in")))))
+
 (defun make-drop-targets ()
   (let ((buf (get-buffer-create "*DND misc-user extent test buffer*"))
 	(s nil)
@@ -34,7 +49,7 @@
     (setq e (point))
     (setq ext (make-extent s e))
     (set-extent-property ext
-			 'dragdrop-drop-functions
+			 'experimental-dragdrop-drop-functions
 			 '((do-nothing t t)
 			   (dnd-drop-message t t "on target 1")))
     (set-extent-property ext 'mouse-face 'highlight)
@@ -44,7 +59,7 @@
     (setq e (point))
     (setq ext (make-extent s e))
     (set-extent-property ext
-			 'dragdrop-drop-functions
+			 'experimental-dragdrop-drop-functions
 			 '((dnd-drop-message t t "on target 2")))
     (set-extent-property ext 'mouse-face 'highlight)
     (insert "    ")
@@ -53,7 +68,7 @@
     (setq e (point))
     (setq ext (make-extent s e))
     (set-extent-property ext
-			 'dragdrop-drop-functions
+			 'experimental-dragdrop-drop-functions
 			 '((dnd-drop-message t t "on target 3")))
     (set-extent-property ext 'mouse-face 'highlight)
     (newline 2)))
@@ -125,11 +140,11 @@
 
 (defun file-drag (event)
   (interactive "@e")
-  (start-drag event "/tmp/printcap" 2))
+  (start-drag event "/tmp/DropTest.xpm" 2))
 
 (defun cde-file-drag (event)
   (interactive "@e")
-  (start-drag event '("/tmp/printcap") t))
+  (start-drag event '("/tmp/DropTest.xpm") t))
 
 (defun url-drag (event)
   (interactive "@e")
@@ -137,9 +152,9 @@
 
 (defun files-drag (event)
   (interactive "@e")
-  (start-drag event '("/tmp/dragtest" "/tmp/droptest" "/tmp/printcap") 3))
+  (start-drag event '("/tmp/DropTest.html" "/tmp/DropTest.xpm" "/tmp/DropTest.tex") 3))
 
-(setq dragdrop-drop-functions '((do-nothing t t)
+(setq experimental-dragdrop-drop-functions '((do-nothing t t)
 				;; CDE does not have any button info...
 				(dnd-drop-message 0 t "cde-drop somewhere else")
 				(dnd-drop-message 2 t "region somewhere else")
@@ -158,4 +173,4 @@
 (use-local-map lmap)
 (local-set-key [q] 'end-dnd-demo)
 (setq button2-func (lookup-key global-map [button2]))
-(global-unset-key [button2])
+(global-set-key [button2] 'start-region-drag)

@@ -413,7 +413,6 @@ flush_pending_output (int channel)
 #endif
 }
 
-#ifndef MSDOS
 #ifndef WINDOWSNT
 /*  Set up the terminal at the other end of a pseudo-terminal that
     we will be controlling an inferior through.
@@ -526,7 +525,6 @@ child_setup_tty (int out)
 #endif /* RTU */
 }
 #endif /* WINDOWSNT */
-#endif /* not MSDOS */
 
 #endif /* not NO_SUBPROCESSES */
 
@@ -579,10 +577,6 @@ sys_getpid (void)
 static void
 sys_subshell (void)
 {
-#ifdef MSDOS
-  int st;
-  char oldwd[MAXPATHLEN+1]; /* Fixed length is safe on MSDOS.  */
-#endif /* MSDOS */
   int pid;
   struct save_signal saved_handlers[5];
   Lisp_Object dir;
@@ -635,11 +629,6 @@ sys_subshell (void)
   {
       char *sh = 0;
 
-#ifdef MSDOS    /* MW, Aug 1993 */
-      getwd (oldwd);
-      if (sh == 0)
-	sh = (char *) egetenv ("SUSPEND");	/* KFS, 1994-12-14 */
-#endif
       if (sh == 0)
 	sh = (char *) egetenv ("SHELL");
       if (sh == 0)
@@ -658,38 +647,22 @@ sys_subshell (void)
       nice (-emacs_priority);   /* Give the new shell the default priority */
 #endif
 
-#ifdef MSDOS
-    st = system (sh);
-    sys_chdir (oldwd);
-#if 0	/* This is also reported if last command executed in subshell failed, KFS */
-      if (st)
-	report_file_error ("Can't execute subshell",
-			   Fcons (build_string (sh), Qnil));
-#endif
-#else /* not MSDOS */
 #ifdef WINDOWSNT
       /* Waits for process completion */
       pid = _spawnlp (_P_WAIT, sh, sh, NULL);
       if (pid == -1)
         write (1, "Can't execute subshell", 22);
 
-#if 0
-/* This relates to the GNU Emacs console port, not required under X ? */
-      take_console ();
-#endif
 #else   /* not WINDOWSNT */
     execlp (sh, sh, 0);
     write (1, "Can't execute subshell", 22);
     _exit (1);
 #endif /* not WINDOWSNT */
-#endif /* not MSDOS */
   }
 
   save_signal_handlers (saved_handlers);
   synch_process_alive = 1;
-#ifndef MSDOS
   wait_for_termination (pid);
-#endif
   restore_signal_handlers (saved_handlers);
 }
 
@@ -701,7 +674,7 @@ sys_subshell (void)
 void
 sys_suspend (void)
 {
-#if defined (SIGTSTP) && !defined (MSDOS)
+#if defined (SIGTSTP)
   {
     int pgrp = EMACS_GET_PROCESS_GROUP ();
     EMACS_KILLPG (pgrp, SIGTSTP);
@@ -730,7 +703,7 @@ sys_suspend_process (int process)
      * VMS machines or thost that use USG_JOBCTRL,
      * but I don't know how to do it, so...
      */
-#if defined (SIGTSTP) && !defined (MSDOS)
+#if defined (SIGTSTP)
     kill(process, SIGTSTP);
 #endif
 }
@@ -928,7 +901,7 @@ init_baud_rate (struct device *d)
   assert (DEVICE_TTY_P (d));
   {
     int input_fd = CONSOLE_TTY_DATA (con)->infd;
-#if defined (MSDOS) || defined(WIN32)
+#if defined (WINDOWSNT)
     DEVICE_TTY_DATA (d)->ospeed = 15;
 #elif defined (HAVE_TERMIOS)
     struct termios sg;
@@ -1373,7 +1346,7 @@ emacs_get_tty (int fd, struct emacs_tty *settings)
   if (ioctl (fd, TCGETA, &settings->main) < 0)
     return -1;
 
-#elif !defined MSDOS && !defined(WIN32)
+#elif !defined (WINDOWSNT)
   /* I give up - I hope you have the BSD ioctls.  */
   if (ioctl (fd, TIOCGETP, &settings->main) < 0)
     return -1;
@@ -1446,7 +1419,7 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
   if (ioctl (fd, flushp ? TCSETAF : TCSETAW, &settings->main) < 0)
     return -1;
 
-#elif !defined(MSDOS) && !defined(WIN32)
+#elif !defined (WINDOWSNT)
   /* I give up - I hope you have the BSD ioctls.  */
   if (ioctl (fd, (flushp) ? TIOCSETP : TIOCSETN, &settings->main) < 0)
     return -1;
@@ -1629,14 +1602,14 @@ tty_init_sys_modes_on_device (struct device *d)
   tty.main.c_iflag &= ~BRKINT;
 #endif /* AIX */
 #else /* if not HAVE_TERMIO */
-#if !defined(MSDOS) && !defined(WIN32)
+#if !defined (WINDOWSNT)
   con->tty_erase_char = make_char (tty.main.sg_erase);
   tty.main.sg_flags &= ~(ECHO | CRMOD | XTABS);
   if (TTY_FLAGS (con).meta_key)
     tty.main.sg_flags |= ANYP;
   /* #### should we be using RAW mode here? */
   tty.main.sg_flags |= /* interrupt_input ? RAW : */ CBREAK;
-#endif /* not MSDOS or WIN32 */
+#endif /* not WINDOWSNT */
 #endif /* not HAVE_TERMIO */
 
   /* If going to use CBREAK mode, we must request C-g to interrupt
@@ -1674,10 +1647,6 @@ tty_init_sys_modes_on_device (struct device *d)
 #ifdef HAVE_LTCHARS
   tty.ltchars = new_ltchars;
 #endif /* HAVE_LTCHARS */
-#ifdef MSDOS
-  internal_terminal_init ();
-  dos_ttraw ();
-#endif
 
   EMACS_SET_TTY (input_fd, &tty, 0);
 
@@ -1832,10 +1801,6 @@ get_tty_device_size (struct device *d, int *widthp, int *heightp)
 	*heightp = size.ts_lines;
       }
   }
-#elif defined MSDOS
-  *widthp = FrameCols ();
-  *heightp = FrameRows ();
-
 #else /* system doesn't know size */
 
   *widthp = 0;
@@ -1916,10 +1881,6 @@ tty_reset_sys_modes_on_device (struct device *d)
   while (EMACS_SET_TTY (input_fd, &CONSOLE_TTY_DATA (con)->old_tty, 0)
 	 < 0 && errno == EINTR)
     ;
-
-#ifdef MSDOS
-  dos_ttcooked ();
-#endif
 
 #ifdef SET_LINE_DISCIPLINE
   /* Ultrix's termios *ignores* any line discipline except TERMIODISC.
@@ -2594,8 +2555,6 @@ mswindows_set_last_errno (void)
 #define PATHNAME_CONVERT_OUT(path) \
   GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA ((CONST Bufbyte *) path, path)
 
-/***** MSDOS versions are in msdos.c *****/
-
 /***************** low-level calls ****************/
 
 /*
@@ -2628,7 +2587,10 @@ sys_open (CONST char *path, int oflag, ...)
   va_end (ap);
 
   PATHNAME_CONVERT_OUT (path);
-#ifdef INTERRUPTIBLE_OPEN
+#if defined (WINDOWSNT)
+  /* Make all handles non-inheritable */
+  return open (path, oflag | _O_NOINHERIT, mode);
+#elif defined (INTERRUPTIBLE_OPEN)
   {
     int rtnval;
     while ((rtnval = open (path, oflag, mode)) == -1
@@ -2636,7 +2598,7 @@ sys_open (CONST char *path, int oflag, ...)
     return rtnval;
   }
 #else
-    return open (path, oflag, mode);
+  return open (path, oflag, mode);
 #endif
 }
 #endif /* ENCAPSULATE_OPEN */
@@ -2772,7 +2734,49 @@ FILE *
 sys_fopen (CONST char *path, CONST char *type)
 {
   PATHNAME_CONVERT_OUT (path);
-#ifdef INTERRUPTIBLE_OPEN
+#if defined (WINDOWSNT)
+  {
+    int fd;
+    int oflag;
+    const char * type_save = type;
+
+    /* Force all file handles to be non-inheritable.  This is necessary to
+       ensure child processes don't unwittingly inherit handles that might
+       prevent future file access. */
+
+    if (type[0] == 'r')
+      oflag = O_RDONLY;
+    else if (type[0] == 'w' || type[0] == 'a')
+      oflag = O_WRONLY | O_CREAT | O_TRUNC;
+    else
+      return 0;
+
+    /* Only do simplistic option parsing. */
+    while (*++type)
+      if (type[0] == '+')
+	{
+	  oflag &= ~(O_RDONLY | O_WRONLY);
+	  oflag |= O_RDWR;
+	}
+      else if (type[0] == 'b')
+	{
+	  oflag &= ~O_TEXT;
+	  oflag |= O_BINARY;
+	}
+      else if (type[0] == 't')
+	{
+	  oflag &= ~O_BINARY;
+	  oflag |= O_TEXT;
+	}
+      else break;
+
+    fd = open (path, oflag | _O_NOINHERIT, 0644);
+    if (fd < 0)
+      return NULL;
+
+    return _fdopen (fd, type_save);
+  }
+#elif defined (INTERRUPTIBLE_OPEN)
   {
     FILE *rtnval;
     while (!(rtnval = fopen (path, type)) && (errno == EINTR));
@@ -2872,11 +2876,7 @@ int
 sys_chdir (CONST char *path)
 {
   PATHNAME_CONVERT_OUT (path);
-#ifdef MSDOS
-  return dos_chdir (path);
-#else
   return chdir (path);
-#endif
 }
 #endif /* ENCAPSULATE_CHDIR */
 
@@ -2886,7 +2886,11 @@ int
 sys_mkdir (CONST char *path, mode_t mode)
 {
   PATHNAME_CONVERT_OUT (path);
+#ifdef WINDOWSNT
+  return mkdir (path);
+#else
   return mkdir (path, mode);
+#endif
 }
 #endif /* ENCAPSULATE_MKDIR */
 
@@ -3080,6 +3084,14 @@ sys_rename (CONST char *old, CONST char *new)
 {
   PATHNAME_CONVERT_OUT (old);
   PATHNAME_CONVERT_OUT (new);
+#ifdef WINDOWSNT
+  /* Windows rename fails if NEW exists */
+  if (rename (old, new) == 0)
+    return 0;
+  if (errno != EEXIST)
+    return -1;
+  unlink (new);
+#endif /* WINDOWSNT */
   return rename (old, new);
 }
 #endif /* ENCAPSULATE_RENAME */
@@ -3347,7 +3359,7 @@ get_process_times (double *user_time, double *system_time, double *real_time)
     }
   else
     {
-      /* MS-DOS or equally lame OS */
+      /* A lame OS */
       *user_time = *real_time;
       *system_time = 0;
     }

@@ -1,6 +1,6 @@
 \input texinfo @c -*-texinfo-*-
 @c %**start of header
-@setfilename standards.info
+@setfilename ../info/standards.info
 @settitle GNU Coding Standards
 @c UPDATE THIS DATE WHENEVER YOU MAKE CHANGES!
 @set lastupdate 17 May 1996

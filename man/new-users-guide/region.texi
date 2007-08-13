@@ -66,7 +66,7 @@ changing the position of your cursor.
 @end table
 @noindent
 You can also give arguments to @kbd{C-<} or @kbd{C->}. @xref{The Mark
-and the Region,,,,XEmacs User's Manual}, for more information.
+and the Region,,,xemacs,XEmacs User's Manual}, for more information.
 
 @comment  node-name,  next,  previous,  up
 @node Mouse, Region Operation, Selecting Text, Select and Move
@@ -82,7 +82,7 @@ just double-click with the left-mouse-button on the word. To select a
 whole line triple-click anywhere on the line with the
 left-mouse-button. You can also use the @b{Copy} item from the @b{Edit}
 menu on the menu-bar to select text. This kind of selection is called
-@b{Clipboard} selection, @xref{X Clipboard Selection,,,,XEmacs User's
+@b{Clipboard} selection, @xref{X Clipboard Selection,,,xemacs,XEmacs User's
 Manual}, for more information. To select an arbitrary region, follow
 these steps:
 
@@ -100,7 +100,7 @@ Release the left mouse button.
 @end enumerate
 The selected region of text is highlighted.
 
-  @xref{Selecting Text with the Mouse,,,,XEmacs User's Manual}, for
+  @xref{Selecting Text with the Mouse,,,xemacs,XEmacs User's Manual}, for
 more information regarding the Mouse and additional mouse operations.
 
 @comment  node-name,  next,  previous,  up
@@ -122,23 +122,24 @@ paragraph, position the cursor to the beginning of the paragraph and
 type @kbd{C-SPC}. Then go to the end of the paragraph and type
 @kbd{C-w}. The entire paragraph will be deleted. You can also select the
 text with a mouse and type @kbd{C-w} to kill the entire
-region. @xref{Killing,,,,XEmacs User's Manual}, for more information.
+region. @xref{Killing,,,xemacs,XEmacs User's Manual}, for more information.
 
 @item
-Save the text in a buffer or a file (@pxref{Accumulating Text,,,,XEmacs
-Manual}). 
+Save the text in a buffer or a file (@pxref{Accumulating
+Text,,,xemacs,XEmacs User's Manual}).
 @item
 You can convert the case of the text with @kbd{C-x C-l} or @kbd{C-x C-u}
 If you type @kbd{C-x C-u} the selected text will become all
 upper-case. If you type @kbd{C-x C-l} the selected text will become all
 lower-case. 
 @item
-Print hardcopy with @kbd{M-x print-region}. @xref{Hardcopy,,,,XEmacs
-Manual}, for more information. This command will print a hardcopy of only
-the selected text.
+Print hardcopy with @kbd{M-x
+print-region}. @xref{Hardcopy,,,xemacs,XEmacs User's Manual}, for more
+information. This command will print a hardcopy of only the selected
+text.
 @item
 Indent it with @kbd{C-x @key{TAB}} or @kbd{C-M-\}
-@xref{Indentation,,,,XEmacs User's Manual}, for more information.
+@xref{Indentation,,,xemacs,XEmacs User's Manual}, for more information.
 @end itemize
 
 
@@ -224,11 +225,11 @@ the end of the contents of the specified file.
 @end table
 
 @noindent
-@xref{Accumulating Text,,,,XEmacs User's Manual}, for more
+@xref{Accumulating Text,,,xemacs,XEmacs User's Manual}, for more
 information regarding this topic.
   
   You can also use @dfn{rectangle commands} for operating on rectangular
-areas of text. @xref{Rectangles,,,,XEmacs User's Manual}, for more
+areas of text. @xref{Rectangles,,,xemacs,XEmacs User's Manual}, for more
 information regarding rectangle commands.
 
   Emacs also provides @dfn{registers} which serve as temporary storage for
@@ -236,7 +237,7 @@ text or positions. Each register has a one character name and they can
 store @dfn{regions}, a @dfn{rectangle}, or a @dfn{mark} i.e. a cursor
 position. Whatever you store in register stays there until you store
 something else in that register. To find out about commands which
-manipulate registers @xref{Registers,,,,XEmacs User's Manual}. 
+manipulate registers @xref{Registers,,,xemacs,XEmacs User's Manual}. 
 
 
 

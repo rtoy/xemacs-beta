@@ -34,6 +34,8 @@
 		 [resource :resource-type cursor :resource-id "Ibeam"])
 (set-glyph-image nontext-pointer-glyph
 		 [resource :resource-type cursor :resource-id "Normal"])
+(set-glyph-image selection-pointer-glyph
+		 [resource :resource-type cursor :resource-id "Normal"])
 (set-glyph-image modeline-pointer-glyph
 		 [resource :resource-type cursor :resource-id "SizeNS"])
 (set-glyph-image divider-pointer-glyph

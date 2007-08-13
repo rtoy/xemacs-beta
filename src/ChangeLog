@@ -1,3 +1,134 @@
+1998-06-10  Samuel Mikes  <smikes@alumni.hmc.edu>
+
+	* fileio.c (directory-sep-char): Escape backslashes.
+
+1998-06-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* event-stream.c: Fix docstring reference.
+
+1998-06-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* alloc.c (make_float): Remove useless initialization of `next'
+ 	field.
+	(make_pure_float): Ditto.
+
+	* lisp.h (struct Lisp_Float): Rename `next' to `__unused__next'.
+
+1998-06-08  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* fileio.c (Fmake_directory_internal): Remove conditionals
+	on WINDOWSNT when calling mkdir.
+
+	* ntproc.c: Deleted the following unused functions:
+	register_child, reap_subprocess, sys_wait.
+
+	* nt.c (sys_rename): Ifzeroed this implementation.
+	Deleted the following unused functions:
+	sys_access, sys_chdir, sys_chmod, sys_creat, sys_link, sys_mkdir,
+	sys_mktemp, sys_rmdir, sys_unlink, sys_close, sys_dup, sys_dup2,
+	sys_read, sys_write.
+	Merger sys_fopen and sys_open with sysdep.c implementation.
+
+	* sysdep.c: Removed MS-DOS code.
+	(sys_rename): Deal with Microsoft rename weirdness.
+	(sys_open): Implemented for Windows.
+	(sys_fopen): Ditto.
+	(sys_mkdir): Ditto.
+
+1998-06-08  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* buffer.c (complex_vars_of_buffer): Removed %t description from
+	the docstring.
+
+1998-06-04  Rick Rankin  <Rick_Rankin-P15254@email.mot.com>
+
+	* scrollbar-msw.c: initialize the cbSize element of the
+	SCROLLINFO struct before calling SetScrollInfo. WinNT seems
+	to ignore the value of cbSize, but Win95 (and I presume Win98)
+	appear to want it set to sizeof(SCROLLINFO).
+
+1998-06-04  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* event-stream.c: Defined Qcancel_mode_internal.
+	(syms_of_event_stream): defsymbol'ed it.
+
+	* events.h: Externed it.
+
+	* event-msw.c (mswindows_wnd_proc, WM_CANCELMODE): Added this handler.
+
+1998-06-04  Oliver Graf <ograf@fga.de>
+
+	* frame-x.c (x_cde_destroy_callback): free the data
+	(cde-start-drag-internal) corrected root position, 21.1 needs this
+	hardcoded in Button events
+	(offix-start-drag-internal) corrected root position
+
+1998-06-03  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* process-nt.c (signal_cannot_launch): Use signal_simple_error()
+	instead of error().
+
+1998-06-03  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* dialog-msw.c (button_width): Removed `inline' from the function
+	declaration.
+
+1998-06-03  Rick Rankin  <Rick_Rankin-P15254@email.mot.com>
+
+	* frame-msw.c: add WS_VISIBLE flag to the first frame created.
+	Note that adding this flag to subsequent frames causes problems.
+
+1998-06-03  Gunnar Evermann  <Gunnar.Evermann@nats.informatik.uni-hamburg.de>
+
+	* glyphs-eimage.c (png_instantiate) move 'struct
+	png_memory_storage tbr' out of nested block to avoid dangling
+	reference
+
+1998-06-02  Andy Piper  <andyp@parallax.co.uk>
+
+	* faces.h:
+	* faces.c: rename 3d-object -> gui-element. add toolbar face which
+	inherits from gui-element.
+
+	* glyphs-msw.c: use DIBitmaps for xbm bitmaps to be consistent
+	with existing code, generate masks correctly.
+
+1998-06-03  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-eimage.c: Changed included header for gifs to use
+	Gifreader instead of giflib.
+
+	* glyphs-x.c: removed the image-related functions that were
+	moved into glyphs-eimage.
+
+1998-06-02  David Bush  <david.bush@adnb.alcatel.com>
+
+	* glyphs.c (bitmap_to_lisp_data) Define XFree to be free
+	if built without X Windows support.
+
+1998-06-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fns.c (Fconcat): Synch docstring with new reality.
+
+1998-06-03  SL Baur  <steve@altair.xemacs.org>
+
+	* frame.c: Remove reference to msdos.h (which is going away).
+	Suggested by Hrvoje Niksic and Kirill Katsnelson.
+
+1998-06-02  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-eimage.c (jpeg_instantiate): Fix handling of
+	grayscale images/
+
+
+1998-05-30  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* events.h: Fixed commentary about misc-user scrollbar events.
+
+	* scrollbar-x.c (x_update_vertical_scrollbar_callback): Use frame
+	object as an event channel, instead of window object.
+	(x_update_horizontal_scrollbar_callback): Ditto.
+
 1998-05-29  Andy Piper  <andyp@parallax.co.uk>
 
 	* ntplay.c (play_sound_data_1) new function. convert alloca data
@@ -207,6 +338,17 @@ Wed May 27, 1998  Darryl Okahata  <darrylo@sr.hp.com>
 	* frame-x.c: include event-mod.h also with CDE
 	(x_cde_convert_callback) made the thing working
 	(cde-start-drag-internal) also debugging
+
+1998-05-25  Hans Guenter Weigand  <hgweigand@wiesbaden.netsurf.de>
+
+	* m/sparc.h:
+	* getloadavg.c:
+	* malloc.c:
+	* unexec.c:
+	* mem-limits.h:
+	  - add __OpenBSD__ where __NetBSD__ was found.
+	  - TODO: replace platform-specific conditional compilation by
+	    feature tests in configure.in.
 
 1998-05-15  Greg Klanderman  <greg@alphatech.com>
 

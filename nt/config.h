@@ -547,65 +547,14 @@ Boston, MA 02111-1307, USA.  */
 circumstances; this can be used to make sure things compile OK
 on various systems. */
 #undef DEBUG_ENCAPSULATION
-#define DONT_ENCAPSULATE
 
-/* basic system calls */
+/* System calls that are encapsulated */
+#define ENCAPSULATE_RENAME
+#define ENCAPSULATE_OPEN
+#define ENCAPSULATE_FOPEN
+#define ENCAPSULATE_MKDIR
 
-#if defined (INTERRUPTIBLE_IO) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_READ
-# define ENCAPSULATE_WRITE
-#endif
-#if defined (INTERRUPTIBLE_OPEN) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_OPEN
-#endif
-#if defined (INTERRUPTIBLE_CLOSE) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_CLOSE
-#endif
-
-/* stdio calls */
-
-#if defined (INTERRUPTIBLE_IO) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_FREAD
-# define ENCAPSULATE_FWRITE
-#endif
-#if defined (INTERRUPTIBLE_OPEN) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_FOPEN
-#endif
-#if defined (INTERRUPTIBLE_CLOSE) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_FCLOSE
-#endif
-
-/* directory calls */
-
-#if defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_CHDIR
-# define ENCAPSULATE_MKDIR
-# define ENCAPSULATE_OPENDIR
-# define ENCAPSULATE_READDIR
-# define ENCAPSULATE_RMDIR
-#endif
-
-/* file-information calls */
-
-#if defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_ACCESS
-# define ENCAPSULATE_LSTAT
-# define ENCAPSULATE_READLINK
-# define ENCAPSULATE_STAT
-#endif
-
-/* file-manipulation calls */
-
-#if defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_CHMOD
-# define ENCAPSULATE_CREAT
-# define ENCAPSULATE_LINK
-# define ENCAPSULATE_RENAME
-# define ENCAPSULATE_SYMLINK
-# define ENCAPSULATE_UNLINK
-#endif
-
-#if (defined (MSDOS) && defined (FEPCTRL)) || (defined (WIN32) && defined (USE_IME))
+#if defined (WIN32) && defined (USE_IME)
 #define HAVE_FEP
 #endif
 

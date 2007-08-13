@@ -1,3 +1,9 @@
+1998-06-04  Andy Piper  <andyp@parallax.co.uk>
+
+	* Makefile.in.in (runemacs): add runemacs as a build target if
+	HAVE_MS_WINDOWS is defined. move cpp stuff up slightly so that
+	build targets can benefit from it.
+
 1998-05-31  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* wakeup.c (sleep): Added NT preprocessor quirkfest.

@@ -1,3 +1,33 @@
+1998-06-11  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta 43 is released.
+
+1998-06-04  Oliver Graf <ograf@fga.de>
+
+	* tests/Dnd/README: a step-by-step test run
+	* tests/Dnd/droptest.el: some clarifications
+	* tests/Dnd/droptest.sh: created, creates test files
+
+1998-06-01  Oliver Graf <ograf@fga.de>
+
+	* configure.in (summary): added experimental to dragndrop option
+	* configure.usage: added experimental note to --with-dragndrop
+	* tests/Dnd/droptest.el: extra start-drag-region function
+	changed the experimental- stuff
+
+1998-06-02  Andy Piper  <andyp@parallax.co.uk>
+
+	* etc/check_cygwin_setup.sh: set more intelligent defaults for
+	windows 95.
+
+1998-06-07  SL Baur  <steve@altair.xemacs.org>
+
+	* lwlib/xlwmenu.c: Add room for the 0 byte sentinel.
+
+1998-06-05  Colin Rafferty   <colin@xemacs.org>
+
+	* lwlib/xlwmenu.c: Made newchars be as large as it needs to be.
+
 1998-06-01  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-beta42 is released.
@@ -16,7 +46,7 @@
 	* configure.in: Switch from giflib to gifreader for
 	our GIF image support (no other mods needed)
 
-1998-05-28  Oliver Graf <ograf@fga.de>
+1998-05-28  Oliver Graf  <ograf@fga.de>
 
 	* configure.in: only one DnD protocol, CDE has priority over OffiX
 
@@ -24,9 +54,14 @@
 	* tests/Dnd/dragtest.el: removed
 	* tests/Dnd/droptest.el: cosmetics and comments
 
-1998-05-26  Oliver Graf <ograf@fga.de>
+1998-05-26  Oliver Graf  <ograf@fga.de>
 
 	* tests/Dnd/droptest.el: adapted to CDE extensions
+
+1998-05-25  Hans Guenter Weigand  <hgweigand@wiesbaden.netsurf.de>
+
+	* configure.in:
+	* config.sub: add initial OpenBSD support
 
 1998-05-21  Andy Piper  <andyp@parallax.co.uk>
 

@@ -786,6 +786,13 @@ splits @var{string} by white--space.
 @end example
 @end defun
 
+@defun split-path path
+This function splits a search path into a list of strings.  The path
+components are separated with the characters specified with
+@code{path-separator}.  Under Unix, @code{path-separator} will normally
+be @samp{:}, while under Windows, it will be @samp{;}.
+@end defun
+
 @defun looking-at regexp
 This function determines whether the text in the current buffer directly
 following point matches the regular expression @var{regexp}.  ``Directly

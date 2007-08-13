@@ -12,7 +12,7 @@ While using Emacs you should be familiar with the following three terms:
 A @b{buffer} is a region of memory holding characters. It is the basic
 editing unit; one buffer corresponds to one piece of text being
 edited. You can have multiple buffers but you can edit only one buffer
-at any one time. For more information, @xref{Buffers,,,,XEmacs User's
+at any one time. For more information, @xref{Buffers,,,xemacs,XEmacs User's
 Manual}.
 
 @item File
@@ -71,7 +71,7 @@ commands from the keyboard also. For many of the options, their
 corresponding key commands are displayed right besides them. The five
 default menus on the menubar that you will see on the frame are
 @b{File}, @b{Edit}, @b{Options}, @b{Buffers} and @b{Help}. @xref{XEmacs
-Pull-down Menus,,,,XEmacs User's Manual}, for detailed information on
+Pull-down Menus,,,xemacs,XEmacs User's Manual}, for detailed information on
 the functions provided by the pull-down menus.
 
   The Emacs frame has a rectangle shaped box at the extreme right and you can
@@ -121,7 +121,7 @@ editing session after it has been killed.
 Suspend Emacs (@code{suspend-emacs}).  If used under the X window system,
 this command will shrink the X window containing the Emacs frame to an 
 icon. Clicking on the icon will resume that Emacs process
-again. @xref{Exiting Emacs,,,,XEmacs User's Manual}. 
+again. @xref{Exiting Emacs,,,xemacs,XEmacs User's Manual}. 
 
 @item C-x C-c
 Kill Emacs (@code{save-buffers-kill-emacs}). You can also select 
@@ -168,7 +168,7 @@ if the buffer is a read-only-buffer i.e. it cannot be edited
 
   @var{buf} is the name of the window's chosen @dfn{buffer}. If you are
 editing a file (which is the selected buffer), the file name appears
-in @var{buf}.  @xref{Buffers,,,,XEmacs User's Manual}.
+in @var{buf}.  @xref{Buffers,,,xemacs,XEmacs User's Manual}.
 
   @var{pos} contains :
 @table @samp
@@ -188,18 +188,18 @@ of the file is above the top of the screen.
 buffer.  At any time, each buffer is in one and only one major mode.
 The available major modes include Fundamental mode (the least
 specialized), Text mode, Lisp mode, and C mode.  @xref{Major
-Modes,,,,XEmacs User's Manual}, for details on how the modes differ
+Modes,,,xemacs,XEmacs User's Manual}, for details on how the modes differ
 and how you select one.
 
    @var{minor} is a list of some of the @dfn{minor modes} that are
 turned on in the window's chosen buffer.  For example, @samp{Fill} means
 that Auto Fill mode is on which means that lines are broken
-automatically when they become too wide. @xref{Minor Modes,,,,XEmacs
-Reference Manual}, for more information on various minor modes and how
-to enable them.
+automatically when they become too wide. @xref{Minor
+Modes,,,xemacs,XEmacs User's Manual}, for more information on various
+minor modes and how to enable them.
 
   You can also display time in the mode line. @xref{The Mode
-Line,,,,XEmacs User's Manual}, for more information regarding the
+Line,,,xemacs,XEmacs User's Manual}, for more information regarding the
 mode line.
 
 
@@ -241,7 +241,7 @@ directory, the @dfn{echo area} will say:
 @noindent
 This error message will be accompanied by a beep. Some XEmacs commands
 will print informative messages in the @dfn{echo area}. @xref{The Echo
-Area,,,,XEmacs User's Manual}, for more information on the @dfn{echo
+Area,,,xemacs,XEmacs User's Manual}, for more information on the @dfn{echo
 area}.
 @end itemize
 

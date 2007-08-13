@@ -66,15 +66,15 @@ mode. This mode has no special definitions or settings.
 @cindex nroff-mode
 Use this mode when you have to format a text with nroff before it can be
 available in readable form. It redefines some indentation
-commands. @xref{Nroff Mode,,,,XEmacs User's Manual}, for information
+commands. @xref{Nroff Mode,,,xemacs,XEmacs User's Manual}, for information
 on this mode.
 
 @item tex-mode
 @cindex tex-mode
 Use this mode if you are using the LaTeX text-formatter. It provides
 commands for insertion of quotes, braces and other characters. It also
-allows you to format the buffer for printing. @xref{TeX Mode,,,,XEmacs
-Manual}, for information on this mode.
+allows you to format the buffer for printing. @xref{TeX
+Mode,,,xemacs,XEmacs User's Manual}, for information on this mode.
 
 @item texinfo-mode
 @cindex texinfo-mode
@@ -94,13 +94,13 @@ This manual itself is produced by 'Texinfo'
 @cindex outline-mode
 Use this mode for editing outlines. When you enable this mode, you can
 make part of the text temporarily invisible so that you can see the
-overall structure of the outline. @xref{Outline Mode,,,,XEmacs User's
+overall structure of the outline. @xref{Outline Mode,,,xemacs,XEmacs User's
 Manual}, for information on this mode.
 
 @item c-mode
 @cindex c-mode
 Use this mode for C programs. It will redefine some indentation
-commands. @xref{C Indent,,,,XEmacs User's Manual}.
+commands. @xref{C Indent,,,xemacs,XEmacs User's Manual}.
 
 @item lisp-mode
 @cindex lisp-mode
@@ -111,12 +111,12 @@ more information.
 @cindex fortran-mode
 Use this mode for Fortran programs. This mode provides special commands
 to move around and some other indentation commands.  For more
-information on this mode, @xref{Fortran,,,,XEmacs User's Manual}.
+information on this mode, @xref{Fortran,,,xemacs,XEmacs User's Manual}.
 
 @item edit-picture
 @cindex edit-picture
 This is the picture mode which you can use to create a picture out of
-text characters. @xref{Picture,,,,XEmacs User's Manual}, for more
+text characters. @xref{Picture,,,xemacs,XEmacs User's Manual}, for more
 information.
 
 @item asm-mode
@@ -204,7 +204,7 @@ can enable this mode by selecting @b{Overstrike} menu-item from the
 @b{Options} menu from the menu-bar. 
 
 @item abbrev-mode
-@cindex abbrev-modex
+@cindex abbrev-mode
 After you enable this mode, you can define words which will expand into
 some different text i.e. you can define abbreviations. For example, you
 might define "expand" to "expand will eventually expand to this
@@ -216,7 +216,7 @@ expand @key{SPC}
 @end example
 
 @noindent
- @xref{Abbrevs,,,,XEmacs User's Manual}, for more information on this
+ @xref{Abbrevs,,,xemacs,XEmacs User's Manual}, for more information on this
 mode and on defining abbreviations.
 
 @item auto-save-mode

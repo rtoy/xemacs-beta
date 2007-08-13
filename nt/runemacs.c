@@ -26,6 +26,11 @@
 #include <string.h>
 #include <malloc.h>
 
+#if defined(__CYGWIN32__)
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
+
 int WINAPI
 WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
 {
@@ -79,7 +84,43 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
     strcat (p, " ");
   }
 #else
+#if defined(__CYGWIN32__)
+  {
+    struct stat stbuf;
+    char sym_link_name[MAX_PATH+1], real_name[MAX_PATH+1];
+    
+    strcpy(sym_link_name, new_cmdline);
+    strcat(sym_link_name, "\\xemacs");
+    if (lstat(sym_link_name, &stbuf) == 0)
+      {
+        if ((stbuf.st_mode & S_IFLNK) == S_IFLNK)
+          {
+	    if (readlink(sym_link_name, real_name, sizeof(real_name)) == -1)
+              {
+                MessageBox (NULL, "Error reading symbolic link for xemacs",
+                            "Error", MB_ICONSTOP);
+                return 1;
+              }
+            else
+              {
+		strcat(new_cmdline, "\\");
+                strcat(new_cmdline, real_name);
+		strcat(new_cmdline, " ");
+	      }
+          }
+        else
+          strcat(new_cmdline, "\\xemacs ");
+      }
+    else
+      {
+        MessageBox (NULL, "can't locate XEmacs executable",
+                    "Error", MB_ICONSTOP);
+	return 1;
+      }
+  }
+#else					
   strcat (new_cmdline, "\\xemacs.exe ");
+#endif
 #endif
 
   /* Append original arguments if any; first look for -wait as first
