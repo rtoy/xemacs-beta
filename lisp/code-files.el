@@ -32,7 +32,7 @@
 
 ;;; Code:
 
-(setq-default buffer-file-coding-system 'undecided)
+(setq-default buffer-file-coding-system 'no-conversion)
 (put 'buffer-file-coding-system 'permanent-local t)
 
 (define-obsolete-variable-alias

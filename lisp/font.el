@@ -47,7 +47,7 @@
     (defun try-font-name (fontname &rest args)
       (case window-system
 	((x pm) (car-safe (x-list-fonts fontname)))
-	(mswindows (car-safe (x-list-fonts fontname))) ; XXX FIXME
+	(mswindows (car-safe (mswindows-list-fonts fontname)))
 	(ns (car-safe (ns-list-fonts fontname)))
 	(otherwise nil))))
 

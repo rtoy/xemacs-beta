@@ -112,13 +112,6 @@ call_process_kill (Lisp_Object fdpid)
 static Lisp_Object
 call_process_cleanup (Lisp_Object fdpid)
 {
-#ifdef MSDOS
-  /* for MSDOS fdpid is really (fd . tempfile)  */
-  Lisp_Object file = Fcdr (fdpid);
-  close (XINT (Fcar (fdpid)));
-  if (strcmp (XSTRING_DATA (file), NULL_DEVICE) != 0)
-    unlink (XSTRING_DATA (file));
-#else /* not MSDOS */
   int fd = XINT (Fcar (fdpid));
   int pid = XINT (Fcdr (fdpid));
 
@@ -142,7 +135,6 @@ call_process_cleanup (Lisp_Object fdpid)
   }
   synch_process_alive = 0;
   close (fd);
-#endif /* not MSDOS */
   return Qnil;
 }
 
@@ -199,10 +191,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   /* File to use for stderr in the child.
      t means use same as standard output.  */
   Lisp_Object error_file;
-#ifdef MSDOS
-  char *outf, *tempfile;
-  int outfilefd;
-#endif /* MSDOS */
 
   CHECK_STRING (args[0]);
 
@@ -320,36 +308,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   if (filefd < 0)
     report_file_error ("Opening process input file", Fcons (infile, Qnil));
 
-#ifdef MSDOS
-  /* These vars record information from process termination.
-     Clear them now before process can possibly terminate,
-     to avoid timing error if process terminates soon.  */
-  synch_process_death = 0;
-  synch_process_retcode = 0;
-
-  if ((outf = egetenv ("TMP")) || (outf = egetenv ("TEMP")))
-    strcpy (tempfile = alloca (strlen (outf) + 20), outf);
-  else
-    {
-      tempfile = alloca (20);
-      *tempfile = '\0';
-    }
-  dostounix_filename (tempfile);
-  if (*tempfile == '\0' || tempfile[strlen (tempfile) - 1] != '/')
-    strcat (tempfile, "/");
-  strcat (tempfile, "detmp.XXX");
-  mktemp (tempfile);
-
-  outfilefd = creat (tempfile, S_IREAD | S_IWRITE);
-  if (outfilefd < 0)
-    {
-      close (filefd);
-      report_file_error ("Opening process output file",
-			 Fcons (tempfile, Qnil));
-    }
-#endif /* MSDOS */
-
-#ifndef MSDOS
   if (INTP (buffer))
     {
       fd[1] = open (NULL_DEVICE, O_WRONLY | OPEN_BINARY, 0);
@@ -363,40 +321,9 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       set_exclusive_use (fd[0]);
 #endif
     }
-#else /* MSDOS */
+
   {
-    char *outf;
-
-  if (INTP (buffer))
-    outf = NULL_DEVICE;
-  else
-    {
-	/* DOS can't create pipe for interprocess communication,
-	   so redirect child process's standard output to temporary file
-	   and later read the file. */
-
-      if ((outf = egetenv ("TMP")) || (outf = egetenv ("TEMP")))
-	{
-	  strcpy (tempfile, outf);
-	  dostounix_filename (tempfile);
-	}
-      else
-        *tempfile = '\0';
-      if (strlen (tempfile) == 0 || tempfile[strlen (tempfile) - 1] != '/')
-	strcat (tempfile, "/");
-      strcat (tempfile, "demacs.XXX");
-      mktemp (tempfile);
-      outf = tempfile;
-    }
-
-    if ((fd[1] = creat (outf, S_IREAD | S_IWRITE)) < 0)
-      report_file_error ("Can't open temporary file", Qnil);
-    fd[0] = -1;
-    }
-#endif /* MSDOS */
-
-   {
-     /* child_setup must clobber environ in systems with true vfork.
+    /* child_setup must clobber environ in systems with true vfork.
 	Protect it from permanent change.  */
      REGISTER char **save_environ = environ;
      REGISTER int fd1 = fd[1];
@@ -422,21 +349,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     synch_process_death = 0;
     synch_process_retcode = 0;
 
-#ifdef MSDOS
-    /* ??? Someone who knows MSDOG needs to check whether this properly
-       closes all descriptors that it opens.  */
-    pid = run_msdos_command (new_argv, current_dir, filefd, outfilefd);
-    close (outfilefd);
-    fd1 = -1; /* No harm in closing that one!  */
-    fd[0] = open (tempfile, NILP (Vbinary_process_output) ? O_TEXT :
-			O_BINARY);
-    if (fd[0] < 0)
-      {
-	unlink (tempfile);
-	close (filefd);
-	report_file_error ("Cannot re-open temporary file", Qnil);
-      }
-#else /* not MSDOS */
     if (NILP (error_file))
       fd_error = open (NULL_DEVICE, O_WRONLY | OPEN_BINARY);
     else if (STRINGP (error_file))
@@ -490,7 +402,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     if (fd_error >= 0)
       close (fd_error);
 
-#endif /* not MSDOS */
 #endif /* not WINDOWSNT */
 
     environ = save_environ;
@@ -535,15 +446,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     /* Enable sending signal if user quits below.  */
     call_process_exited = 0;
 
-#ifdef MSDOS
-    /* MSDOS needs different cleanup information.  */
-    record_unwind_protect (call_process_cleanup,
-                           Fcons (make_int (fd[0]),
-                                  build_string (tempfile)));
-#else /* not MSDOS */
     record_unwind_protect (call_process_cleanup,
                            Fcons (make_int (fd[0]), make_int (pid)));
-#endif /* not MSDOS */
 
     /* FSFmacs calls Fset_buffer() here.  We don't have to because
        we can insert into buffers other than the current one. */
@@ -624,10 +528,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     NUNGCPRO;
 
     QUIT;
-#ifndef MSDOS
     /* Wait for it to terminate, unless it already has.  */
     wait_for_termination (pid);
-#endif
 
     /* Don't kill any children that the subprocess may have left behind
        when exiting.  */
@@ -672,10 +574,6 @@ void
 child_setup (int in, int out, int err, char **new_argv,
 	     CONST char *current_dir)
 {
-#ifdef MSDOS
-  /* The MSDOS port of gcc cannot fork, vfork, ... so we must call system
-     instead.  */
-#else /* not MSDOS */
   char **env;
   char *pwd;
 #ifdef WINDOWSNT
@@ -688,7 +586,7 @@ child_setup (int in, int out, int err, char **new_argv,
     nice (- emacs_priority);
 #endif
 
-#if !defined (NO_SUBPROCESSES)
+#if !defined (NO_SUBPROCESSES) && !defined (WINDOWSNT)
   /* Close Emacs's descriptors that this process should not have.  */
   close_process_descs ();
 #endif /* not NO_SUBPROCESSES */
@@ -860,7 +758,6 @@ child_setup (int in, int out, int err, char **new_argv,
   stdout_out ("Cant't exec program %s\n", new_argv[0]);
   _exit (1);
 #endif /* not WINDOWSNT */
-#endif /* not MSDOS */
 }
 
 /* Move the file descriptor FD so that its number is not less than MIN.

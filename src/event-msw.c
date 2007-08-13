@@ -1142,7 +1142,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 
 #ifdef HAVE_TOOLBARS
-      O Toolbar Implementor, this place may have something for you!;
+      /* O Toolbar Implementor, this place may have something for you!;*/
 #endif
 
       /* Bite me - a spurious command. No abort(), for safety */
@@ -1583,6 +1583,7 @@ emacs_mswindows_quit_p (void)
     }
 }
 
+#ifndef HAVE_X_WINDOWS
 /* This is called from GC when a process object is about to be freed.
    If we've still got pointers to it in this file, we're gonna lose hard.
  */
@@ -1590,20 +1591,17 @@ void
 debug_process_finalization (struct Lisp_Process *p)
 {
 #if 0 /* #### */
-  int i;
-  int infd, outfd;
-  get_process_file_descriptors (p, &infd, &outfd);
+  Lisp_Object instr, outstr;
+
+  get_process_streams (p, &instr, &outstr);
   /* if it still has fds, then it hasn't been killed yet. */
-  assert (infd < 0);
-  assert (outfd < 0);
-  /* Better not still be in the "with input" table; we know it's got no fds. */
-  for (i = 0; i < MAXDESC; i++)
-    {
-      Lisp_Object process = filedesc_fds_with_input [i];
-      assert (!PROCESSP (process) || XPROCESS (process) != p);
-    }
+  assert (NILP(instr));
+  assert (NILP(outstr));
+
+  /* #### More checks here */
 #endif
 }
+#endif
 
 /************************************************************************/
 /*                            initialization                            */

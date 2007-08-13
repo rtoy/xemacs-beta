@@ -2660,12 +2660,12 @@ Used to construct the menubar submenu and popup menu."
 			(list (vector (one-space (cadr in)) in t)
 			      "--:shadowEtchedIn"))
 		    (list
-		     ["Goto Info Top-level" Info-directory t]
-		     (vector "Next Node" 'Info-next next-p)
-		     (vector "Previous Node" 'Info-prev prev-p)
-		     (vector "Parent Node (Up)" 'Info-up up-p)
-		     ["Goto Node..." Info-goto-node t]
-		     ["Goto Last Visited Node " Info-last t])))
+		     ["Goto Info Top-level" Info-directory]
+		     (vector "Next Node" 'Info-next :active next-p)
+		     (vector "Previous Node" 'Info-prev :active prev-p)
+		     (vector "Parent Node (Up)" 'Info-up :active up-p)
+		     ["Goto Node..." Info-goto-node]
+		     ["Goto Last Visited Node " Info-last])))
 	;; Find the xrefs and make a list
 	(while (re-search-forward xref-regexp nil t)
 	  (setq xrefs (cons (one-space (buffer-substring (match-beginning 1)
@@ -2690,8 +2690,7 @@ Used to construct the menubar submenu and popup menu."
 			   (if (eq xref 'more)
 			       "...more..."
 			     (vector xref
-				     (list 'Info-follow-reference xref)
-				     t)))
+				     (list 'Info-follow-reference xref))))
 		       xrefs)))
     (if subnodes
 	(nconc menu (list "--:shadowDoubleEtchedIn"
@@ -2700,8 +2699,7 @@ Used to construct the menubar submenu and popup menu."
 	       (mapcar #'(lambda (node)
 			   (if (eq node 'more)
 			       "...more..."
-			     (vector node (list 'Info-menu node)
-				     t)))
+			     (vector node (list 'Info-menu node))))
 		       subnodes)))
     menu))
 

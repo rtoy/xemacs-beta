@@ -324,6 +324,7 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
   HDC hdc = FRAME_MSWINDOWS_DC (f);
   int real_char_p = (rb->type == RUNE_CHAR && rb->object.chr.ch != '\n');
+  unsigned int face_index=0;
   char *p_char = NULL;
   int n_char = 0;
   RECT rect = { xpos,
@@ -352,10 +353,8 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 
   /* Use cursor fg/bg for block cursor, or character fg/bg for the bar.
      Output nothing at eol if bar cursor */
-  cachel = WINDOW_FACE_CACHEL (w,
-		   (bar_p
-		   ? rb->findex
-		   : get_builtin_face_cache_index (w, Vtext_cursor_face)));
+  face_index = get_builtin_face_cache_index (w, Vtext_cursor_face);
+  cachel = WINDOW_FACE_CACHEL (w, (bar_p ? rb->findex : face_index));
   mswindows_update_dc (hdc, font, cachel->foreground,
 		       cachel->background, Qnil);
   ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE|ETO_CLIPPED, &rect, p_char, n_char, NULL);
@@ -363,8 +362,8 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
   if (focus && bar_p)
     {
       rect.right = rect.left + (EQ (bar, Qt) ? 1 : 2);
-      cachel = WINDOW_FACE_CACHEL (w,
-		 get_builtin_face_cache_index (w, Vtext_cursor_face));
+      face_index = get_builtin_face_cache_index (w, Vtext_cursor_face);
+      cachel = WINDOW_FACE_CACHEL (w, face_index);
       mswindows_update_dc (hdc, Qnil, Qnil, cachel->background, Qnil);
       ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE, &rect, NULL, 0, NULL);
     }
@@ -381,8 +380,8 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 	  n_char = 1;
 	}
 
-      cachel = WINDOW_FACE_CACHEL (w, (real_char_p ? rb->findex
-				       : get_builtin_face_cache_index (w, Vdefault_face)));
+      face_index = get_builtin_face_cache_index (w, Vdefault_face);
+      cachel = WINDOW_FACE_CACHEL (w, (real_char_p ? rb->findex : face_index));
       mswindows_update_dc (hdc, Qnil, cachel->foreground,
 			   cachel->background, Qnil);
       ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE | ETO_CLIPPED,

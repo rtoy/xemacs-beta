@@ -358,7 +358,7 @@ DEVICE defaults to the selected device if omitted.
 extern Lisp_Object Vdefault_x_device;
 #endif
 
-#ifdef HAVE_X_WINDOWS
+#ifdef HAVE_WINDOW_SYSTEM
 
 static void
 init_global_resources (struct device *d)

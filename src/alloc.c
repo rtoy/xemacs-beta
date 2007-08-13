@@ -2848,7 +2848,7 @@ Does not copy symbols.
 	     */
 	    if (!NILP (XSYMBOL (obj)->obarray))
 	      return obj;
-	    Fputhash (obj, obj, Vpure_uninterned_symbol_table);
+	    Fputhash (obj, Qnil, Vpure_uninterned_symbol_table);
 	    return obj;
 	  }
 	else
@@ -3035,7 +3035,11 @@ struct gcpro *gcprolist;
 
 /* 415 used Mly 29-Jun-93 */
 /* 1327 used slb 28-Feb-98 */
-#define NSTATICS 1500
+#ifdef HAVE_SHLIB
+#define NSTATICS 4000
+#else
+#define NSTATICS 2000
+#endif
 /* Not "static" because of linker lossage on some systems */
 Lisp_Object *staticvec[NSTATICS]
      /* Force it into data space! */
@@ -3048,6 +3052,8 @@ void
 staticpro (Lisp_Object *varaddress)
 {
   if (staticidx >= countof (staticvec))
+    /* #### This is now a dubious abort() since this routine may be called */
+    /* by Lisp attempting to load a DLL. */
     abort ();
   staticvec[staticidx++] = varaddress;
 }

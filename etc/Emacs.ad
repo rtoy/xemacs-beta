@@ -31,11 +31,11 @@
 ! `rgb.txt', usually found in /usr/lib/X11/ or /usr/openwin/lib/X11/.
 
 ! Set the modeline colors.
-!Emacs.modeline*attributeForeground:	Black
-!Emacs.modeline*attributeBackground:	Gray75
+!.modeline*attributeForeground:	Black
+!.modeline*attributeBackground:	Gray75
 
 ! Set the color of the text cursor.
-Emacs.text-cursor*attributeBackground:	Red3
+.text-cursor*attributeBackground:	Red3
 
 ! If you want to set the color of the mouse pointer, do this:
 ! Emacs.pointer*attributeForeground:	Black

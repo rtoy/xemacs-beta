@@ -451,10 +451,12 @@ determined.  Else assume binary coding if all else fails.
 	{
 	  coding_system = Ffind_coding_system (coding);
 	  if (NILP(coding_system))
-	    if (NILP(error_me_not))
-	      signal_simple_error("No such coding system", coding);
-	    else
-	      coding_system = Fget_coding_system(Qbinary); /* default to binary */
+	    {
+	      if (NILP(error_me_not))
+		signal_simple_error("No such coding system", coding);
+	      else
+		coding_system = Fget_coding_system(Qbinary); /* default to binary */
+	    }
 	}
 #endif
 

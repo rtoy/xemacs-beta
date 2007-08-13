@@ -66,6 +66,8 @@
   ;; we don't do this at startup here so that the user can
   ;; override term-file-prefix. (startup.el does it after
   ;; loading the init file.)
+  (if (featurep 'mule)
+      (init-mule-tty-win))
   (when init-file-loaded
     ;; temporarily select the console so that the changes
     ;; to function-key-map are made for the right console.

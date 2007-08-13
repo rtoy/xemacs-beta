@@ -78,6 +78,14 @@ Boston, MA 02111-1307, USA.  */
 #endif
 extern void cygwin32_win32_to_posix_path_list(const char*, char*);
 extern int cygwin32_win32_to_posix_path_list_buf_size(const char*);
+struct timeval;
+struct timezone;
+extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
+extern int gethostname (char* name, int namelen);
+extern char*	mktemp(char *);
+extern double	logb(double);
+extern void	sync();
+extern int	ioctl(int, int, ...);
 #endif
 
 #ifdef HAVE_MS_WINDOWS
@@ -89,7 +97,7 @@ extern int cygwin32_win32_to_posix_path_list_buf_size(const char*);
 #define ORDINARY_LINK
 #endif
 
-#define C_SWITCH_SYSTEM -Wno-sign-compare
+#define C_SWITCH_SYSTEM -Wno-sign-compare -Wno-implicit
 #undef MOD_ALT
 #undef MOD_CONTROL
 #undef MOD_SHIFT

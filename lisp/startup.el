@@ -651,8 +651,18 @@ First try .xemacs/init, then try .emacs, but only load one of the two."
 	      (load-user-init-file init-file-user)
 	      (setq init-file-had-error nil))
           (error
-           (message "Error in init file: ")
-           (display-error error nil)
+	   (message "Error in init file: %s" (error-message-string error))
+	   (display-warning 'initialization
+	     (format "\
+An error has occured while loading %s:
+
+%s
+
+To ensure normal operation, you should investigate the cause of the error
+in your initialization file and remove it.  Use the `-debug-init' option
+to XEmacs to view a complete error backtrace."
+		     user-init-file (error-message-string error))
+	     'error)
 	   (setq init-file-had-error t))))
       ;; If we can tell that the init file altered debug-on-error,
       ;; arrange to preserve the value that it set up.

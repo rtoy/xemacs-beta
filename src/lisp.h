@@ -449,6 +449,10 @@ typedef struct
 
 typedef unsigned int glyph_index;
 
+/* This is shared by process.h, events.h and others in future. 
+   See events.h for description */
+typedef unsigned int USID;
+
 typedef struct
 {
   Dynarr_declare (struct glyph_cachel);

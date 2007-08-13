@@ -1,3 +1,7 @@
+1998-03-02  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh: Change all -q -no-site-file to -vanilla
+
 1998-02-27  SL Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh (ignore_pattern): Add Installation.el, remove old

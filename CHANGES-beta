@@ -1,4 +1,21 @@
 							-*- indented-text -*-
+to 20.5 beta30 "Moxotó"
+-- find-gc.el fixes courtesy of Markus Linnala
+-- mousewheel support courtesy of William Perry
+-- Mule tty initialization courtesy of Kazuyuki IENAGA
+-- backspace mapping fixing from Kyle Jones
+-- New function `temp-directory' courtesy of Glynn Clements
+-- miscellaneous patches from Jens UH Petersen, Greg Klanderman, Kirill
+   Katsnelson and Kyle Jones
+-- miscellaneous cygwin cleanup from Andy Piper
+-- dired in C changes courtesy of Darryl Okahata
+-- process abstraction changes courtesy of Kirill Katsnelson
+-- Added an example of a DLL
+-- Coding system cleanup courtesy of Andy Piper
+-- Build fixes for --srcdir
+-- Miscellaneous fixes
+-- Fix localized menubars to work when the application class changes name.
+
 to 20.5 beta29 "Loashan"
 -- Add autodetection of DLL support
 -- bug fixes from Kyle Jones

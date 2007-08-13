@@ -419,6 +419,20 @@ Otherwise, it returns the next larger version of this font that is defined."
   ;; hysterical reasons. (jwz)
 
   (let* ((append (if set-anyway nil 'append))
+	 ;; Some faces are initialized before XEmacs is dumped.
+	 ;; In order for the X resources to be able to override
+	 ;; those settings, such initialization always uses the
+	 ;; `default' tag.  We remove all specifier specs
+	 ;; containing the `default' tag in the locale before
+	 ;; adding new specs.
+	 (tag-set '(default))
+	 ;; The tag order matters here.  The spec removal
+	 ;; function uses the list cdrs.  We want to remove (x
+	 ;; default) and (default) specs, not (default x) and (x)
+	 ;; specs.
+	 (x-tag-set '(x default))
+	 (tty-tag-set '(tty default))
+	 (device-class nil)
 	 (face-sym (face-name face))
 	 (name (symbol-name face-sym))
 	 (fn (x-get-resource-and-maybe-bogosity-check
@@ -467,6 +481,16 @@ Otherwise, it returns the next larger version of this font that is defined."
 	      'boolean locale))
 	 )
 
+    (cond ((framep locale)
+	   (setq device-class (device-class (frame-device locale))))
+	  ((devicep locale)
+	   (setq device-class (device-class locale))))
+
+    (if device-class
+	(setq tag-set (cons device-class tag-set)
+	      x-tag-set (cons device-class x-tag-set)
+	      tty-tag-set (cons device-class tty-tag-set)))
+
     ;;
     ;; If this is the default face, then any unspecified properties should
     ;; be defaulted from the global properties.  Can't do this for
@@ -493,33 +517,72 @@ Otherwise, it returns the next larger version of this font that is defined."
     ;; #### should issue warnings?  I think this should be
     ;; done when the instancing actually happens, but I'm not
     ;; sure how it should actually be dealt with.
-    (if fn
-	(set-face-font face fn locale nil append))
+    (when fn
+      ;; Always use the x-tag-set to remove specs, since we don't
+      ;; know whether the predumped face was initialized with an
+      ;; 'x tag or not.
+      (remove-specifier-specs-matching-tag-set-cdrs (face-font face)
+						    locale
+						    x-tag-set)
+      (set-face-font face fn locale nil append))
     ;; Kludge-o-rooni.  Set the foreground and background resources for
     ;; X devices only -- otherwise things tend to get all messed up
     ;; if you start up an X frame and then later create a TTY frame.
-    (if fg
-	(set-face-foreground face fg locale 'x append))
-    (if bg
-	(set-face-background face bg locale 'x append))
-    (if bgp
-	(set-face-background-pixmap face bgp locale nil append))
-    (if ulp
-	(set-face-underline-p face ulp locale nil append))
-    (if stp
-	(set-face-strikethru-p face stp locale nil append))
-    (if hp
-	(set-face-highlight-p face hp locale nil append))
-    (if dp
-	(set-face-dim-p face dp locale nil append))
-    (if bp
-	(set-face-blinking-p face bp locale nil append))
-    (if rp
-	(set-face-reverse-p face rp locale nil append))
+    (when fg
+      (remove-specifier-specs-matching-tag-set-cdrs (face-foreground face)
+						    locale
+						    x-tag-set)
+      (set-face-foreground face fg locale 'x append))
+    (when bg
+      (remove-specifier-specs-matching-tag-set-cdrs (face-background face)
+						    locale
+						    x-tag-set)
+      (set-face-background face bg locale 'x append))
+    (when bgp
+      (remove-specifier-specs-matching-tag-set-cdrs (face-background-pixmap
+						     face)
+						    locale
+						    x-tag-set)
+      (set-face-background-pixmap face bgp locale nil append))
+    (when ulp
+      (remove-specifier-specs-matching-tag-set-cdrs (face-underline-p face)
+						    locale
+						    tty-tag-set)
+      (set-face-underline-p face ulp locale nil append))
+    (when stp
+      (remove-specifier-specs-matching-tag-set-cdrs (face-strikethru-p face)
+						    locale
+						    tty-tag-set)
+      (set-face-strikethru-p face stp locale nil append))
+    (when hp
+      (remove-specifier-specs-matching-tag-set-cdrs (face-highlight-p face)
+						    locale
+						    tty-tag-set)
+      (set-face-highlight-p face hp locale nil append))
+    (when dp
+      (remove-specifier-specs-matching-tag-set-cdrs (face-dim-p face)
+						    locale
+						    tty-tag-set)
+      (set-face-dim-p face dp locale nil append))
+    (when bp
+      (remove-specifier-specs-matching-tag-set-cdrs (face-blinking-p face)
+						    locale
+						    tty-tag-set)
+      (set-face-blinking-p face bp locale nil append))
+    (when rp
+      (remove-specifier-specs-matching-tag-set-cdrs (face-reverse-p face)
+						    locale
+						    tty-tag-set)
+      (set-face-reverse-p face rp locale nil append))
     ))
 
 ;; GNU Emacs compatibility. (move to obsolete.el?)
 (defalias 'make-face-x-resource-internal 'x-init-face-from-resources)
+
+(defun remove-specifier-specs-matching-tag-set-cdrs (specifier locale tag-set)
+  (while tag-set
+    (remove-specifier specifier locale tag-set)
+    (setq tag-set (cdr tag-set))))
 
 ;;; x-init-global-faces is responsible for ensuring that the
 ;;; default face has some reasonable fallbacks if nothing else is

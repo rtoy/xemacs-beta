@@ -40,6 +40,7 @@ etcdir = ../etc/
 ## Here are the things that we expect ../configure to edit.
 prefix=@prefix@
 srcdir=@srcdir@
+blddir=@blddir@
 version=@version@
 infodir=@infodir@
 infopath=@infopath@
@@ -59,6 +60,7 @@ ld_switch_all=@ld_switch_all@
 ld_libs_general=@ld_libs_general@
 ld_libs_window_system=@ld_libs_window_system@
 ld_libs_all=@ld_libs_all@
+ld_dynamic_link_flags=@ld_dynamic_link_flags@
 
 extra_objs=@extra_objs@
 LN_S=@LN_S@
@@ -136,7 +138,7 @@ sheap_obj=sheap.o
 
 cppflags = $(CPPFLAGS) -Demacs -I. $(c_switch_all)
 cflags   = $(CFLAGS) $(cppflags)
-ldflags  = $(ld_switch_all)
+ldflags  = $(ld_switch_all) $(ld_dynamic_link_flags)
 
 #ifdef SOLARIS2
 %.o : %.c
@@ -155,6 +157,10 @@ ldflags  = $(ld_switch_all)
 ## Create preprocessor output (debugging purposes only)
 .c.i:
 	$(CC) -P $(cppflags) $<
+
+## Create RTL files
+%.c.rtl : %.c
+	$(CC) -dr -c $(cflags) $<
 
 ## lastfile must follow all files whose initialized data areas should
 ## be dumped as pure by dump-emacs.
@@ -180,6 +186,8 @@ objs=\
  search.o $(sheap_obj) signal.o sound.o\
  specifier.o strftime.o symbols.o syntax.o sysdep.o\
  undo.o $(x_objs) widget.o window.o
+
+obj_rtl = $(objs:.o=.c.rtl)
 
 #ifdef REL_ALLOC
 rallocdocsrc = ralloc.c
@@ -271,6 +279,8 @@ X11_objs =  $(OFFIX_O) EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientE
 ## define otherobjs as list of object files that make-docfile
 ## should not be told about.
 otherobjs = $(BTL_objs) lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs)
+otherrtls = $(otherobjs:.o=.c.rtl)
+othersrcs = $(otherobjs:.o=.c)
 
 LIBES = $(lwlib_libs) $(quantify_libs) $(malloclib) $(ld_libs_all) $(lib_gcc)
 
@@ -279,7 +289,7 @@ mo_dir = ${etcdir}
 mo_file = ${mo_dir}emacs.mo
 #endif
 
-LOADPATH =  EMACSLOADPATH="${lispdir}"
+LOADPATH =  EMACSLOADPATH="${lispdir}:${blddir}"
 DUMPENV = $(LOADPATH)
 
 release: temacs ${libsrc}DOC $(mo_file) ${other_files}
@@ -324,6 +334,13 @@ update-elc.stamp : temacs FRC.update-elc.stamp
 	 $(RM) NOBYTECOMPILE
 
 obj_src = $(objs:.o=.c)
+
+dortl : $(obj_rtl) $(otherrtls)
+	echo "(defvar source-files '(" > ${srcdir}/../lisp/source-files.el 
+	(for a in $(obj_src) $(othersrcs);do \
+	echo -n "\""$$a"\"" >> ${srcdir}/../lisp/source-files.el ;\
+	done) 
+	echo "))" >> ${srcdir}/../lisp/source-files.el
 
 #ifdef DYNODUMP
 dynodump_deps = ../dynodump/dynodump.so
@@ -464,9 +481,17 @@ TopLevelEmacsShell.o : ${srcdir}/EmacsShell-sub.c config.h xintrinsicp.h EmacsSh
 	$(CC) -c $(cflags) -DDEFINE_TOP_LEVEL_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
 	mv EmacsShell-sub.o TopLevelEmacsShell.o
 
+TopLevelEmacsShell.c.rtl : ${srcdir}/EmacsShell-sub.c config.h xintrinsicp.h EmacsShellP.h
+	$(CC) -dr -c $(cflags) -DDEFINE_TOP_LEVEL_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
+	mv EmacsShell-sub.c.rtl TopLevelEmacsShell.c.rtl
+
 TransientEmacsShell.o : ${srcdir}/EmacsShell-sub.c TopLevelEmacsShell.o config.h xintrinsicp.h EmacsShellP.h
 	$(CC) -c $(cflags) -DDEFINE_TRANSIENT_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
 	mv EmacsShell-sub.o TransientEmacsShell.o
+
+TransientEmacsShell.c.rtl : ${srcdir}/EmacsShell-sub.c TopLevelEmacsShell.o config.h xintrinsicp.h EmacsShellP.h
+	$(CC) -dr -c $(cflags) -DDEFINE_TRANSIENT_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
+	mv EmacsShell-sub.c.rtl TransientEmacsShell.c.rtl
 
 ## Position-independent code for shared library creation
 #if USE_GCC
@@ -936,6 +961,156 @@ offix.o: offix-cursors.h
 offix.o: offix.h
 offix.o: offix-types.h
 offix.o: xintrinsic.h
+#endif
+
+#ifdef HAVE_MS_WINDOWS
+console-msw.o: blocktype.h
+console-msw.o: config.h
+console-msw.o: conslots.h
+console-msw.o: console-msw.h
+console-msw.o: console.h
+console-msw.o: dynarr.h
+device-msw.o: blocktype.h
+device-msw.o: buffer.h
+device-msw.o: bufslots.h
+device-msw.o: config.h
+device-msw.o: conslots.h
+device-msw.o: console-msw.h
+device-msw.o: console-stream.h
+device-msw.o: console.h
+device-msw.o: device.h
+device-msw.o: dynarr.h
+device-msw.o: events.h
+device-msw.o: faces.h
+device-msw.o: frame.h
+device-msw.o: frameslots.h
+device-msw.o: scrollbar.h
+device-msw.o: specifier.h
+device-msw.o: sysdep.h
+device-msw.o: systime.h
+device-msw.o: toolbar.h
+event-msw.o: blocktype.h
+event-msw.o: config.h
+event-msw.o: conslots.h
+event-msw.o: console-msw.h
+event-msw.o: console.h
+event-msw.o: device.h
+event-msw.o: dynarr.h
+event-msw.o: events-mod.h
+event-msw.o: events.h
+event-msw.o: frame.h
+event-msw.o: frameslots.h
+event-msw.o: menubar-msw.h
+event-msw.o: process.h
+event-msw.o: redisplay.h
+event-msw.o: scrollbar-msw.h
+event-msw.o: scrollbar.h
+event-msw.o: specifier.h
+event-msw.o: sysproc.h
+event-msw.o: systime.h
+event-msw.o: syswait.h
+event-msw.o: toolbar.h
+frame-msw.o: blocktype.h
+frame-msw.o: buffer.h
+frame-msw.o: bufslots.h
+frame-msw.o: config.h
+frame-msw.o: conslots.h
+frame-msw.o: console-msw.h
+frame-msw.o: console.h
+frame-msw.o: device.h
+frame-msw.o: dynarr.h
+frame-msw.o: events.h
+frame-msw.o: faces.h
+frame-msw.o: frame.h
+frame-msw.o: frameslots.h
+frame-msw.o: scrollbar.h
+frame-msw.o: specifier.h
+frame-msw.o: systime.h
+frame-msw.o: toolbar.h
+menubar-msw.o: blocktype.h
+menubar-msw.o: buffer.h
+menubar-msw.o: bufslots.h
+menubar-msw.o: commands.h
+menubar-msw.o: config.h
+menubar-msw.o: conslots.h
+menubar-msw.o: console-msw.h
+menubar-msw.o: console.h
+menubar-msw.o: device.h
+menubar-msw.o: dynarr.h
+menubar-msw.o: elhash.h
+menubar-msw.o: events.h
+menubar-msw.o: frame.h
+menubar-msw.o: frameslots.h
+menubar-msw.o: gui.h
+menubar-msw.o: menubar-msw.h
+menubar-msw.o: menubar.h
+menubar-msw.o: opaque.h
+menubar-msw.o: redisplay.h
+menubar-msw.o: scrollbar.h
+menubar-msw.o: specifier.h
+menubar-msw.o: systime.h
+menubar-msw.o: toolbar.h
+menubar-msw.o: window.h
+objects-msw.o: blocktype.h
+objects-msw.o: buffer.h
+objects-msw.o: bufslots.h
+objects-msw.o: config.h
+objects-msw.o: conslots.h
+objects-msw.o: console-msw.h
+objects-msw.o: console.h
+objects-msw.o: device.h
+objects-msw.o: dynarr.h
+objects-msw.o: insdel.h
+objects-msw.o: objects-msw.h
+objects-msw.o: objects.h
+objects-msw.o: specifier.h
+redisplay-msw.o: blocktype.h
+redisplay-msw.o: buffer.h
+redisplay-msw.o: bufslots.h
+redisplay-msw.o: config.h
+redisplay-msw.o: conslots.h
+redisplay-msw.o: console-msw.h
+redisplay-msw.o: console.h
+redisplay-msw.o: debug.h
+redisplay-msw.o: device.h
+redisplay-msw.o: dynarr.h
+redisplay-msw.o: events.h
+redisplay-msw.o: faces.h
+redisplay-msw.o: frame.h
+redisplay-msw.o: frameslots.h
+redisplay-msw.o: glyphs.h
+redisplay-msw.o: objects-msw.h
+redisplay-msw.o: objects.h
+redisplay-msw.o: redisplay.h
+redisplay-msw.o: scrollbar.h
+redisplay-msw.o: specifier.h
+redisplay-msw.o: sysdep.h
+redisplay-msw.o: systime.h
+redisplay-msw.o: toolbar.h
+redisplay-msw.o: window.h
+scrollbar-msw.o: blocktype.h
+scrollbar-msw.o: config.h
+scrollbar-msw.o: conslots.h
+scrollbar-msw.o: console-msw.h
+scrollbar-msw.o: console.h
+scrollbar-msw.o: device.h
+scrollbar-msw.o: dynarr.h
+scrollbar-msw.o: events.h
+scrollbar-msw.o: frame.h
+scrollbar-msw.o: frameslots.h
+scrollbar-msw.o: redisplay.h
+scrollbar-msw.o: scrollbar-msw.h
+scrollbar-msw.o: scrollbar.h
+scrollbar-msw.o: specifier.h
+scrollbar-msw.o: systime.h
+scrollbar-msw.o: toolbar.h
+scrollbar-msw.o: window.h
+select-msw.o: blocktype.h
+select-msw.o: config.h
+select-msw.o: conslots.h
+select-msw.o: console-msw.h
+select-msw.o: console.h
+select-msw.o: dynarr.h
 #endif
 
 EmacsFrame.o: $(LWLIB_SRCDIR)/lwlib.h

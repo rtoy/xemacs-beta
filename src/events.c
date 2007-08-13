@@ -963,7 +963,7 @@ command_event_p (Lisp_Object event)
 
 void
 character_to_event (Emchar c, struct Lisp_Event *event, struct console *con,
-		    int use_console_meta_flag)
+		    int use_console_meta_flag, int do_backspace_mapping)
 {
   Lisp_Object k = Qnil;
   unsigned int m = 0;
@@ -1000,23 +1000,25 @@ character_to_event (Emchar c, struct Lisp_Event *event, struct console *con,
 	case 'J': k = QKlinefeed; m &= ~MOD_CONTROL; break;
 	case 'M': k = QKreturn;	  m &= ~MOD_CONTROL; break;
 	case '[': k = QKescape;	  m &= ~MOD_CONTROL; break;
-#ifdef HAVE_TTY
 	default:
-	  if (CHARP (con->tty_erase_char) &&
-	      c - '@' == XCHAR (con->tty_erase_char)) {
-	    k = QKbackspace;
-	    m &= ~MOD_CONTROL;
-	  }
+#if defined(HAVE_TTY) && !defined(__CYGWIN32__)
+	  if (do_backspace_mapping &&
+	      CHARP (con->tty_erase_char) &&
+	      c - '@' == XCHAR (con->tty_erase_char))
+	    {
+	      k = QKbackspace;
+	      m &= ~MOD_CONTROL;
+	    }
+#endif /* defined(HAVE_TTY) && !defined(__CYGWIN32__) */
 	  break;
-#endif
 	}
       if (c >= 'A' && c <= 'Z') c -= 'A'-'a';
     }
-#ifdef HAVE_TTY
-  else if (CHARP (con->tty_erase_char) &&
-	   c == XCHAR(con->tty_erase_char))
+#if defined(HAVE_TTY) && !defined(__CYGWIN32__)
+  else if (do_backspace_mapping &&
+	   CHARP (con->tty_erase_char) && c == XCHAR (con->tty_erase_char))
     k = QKbackspace;
-#endif
+#endif /* defined(HAVE_TTY) && !defined(__CYGWIN32__) */
   else if (c == 127)
     k = QKdelete;
   else if (c == ' ')
@@ -1172,7 +1174,7 @@ ASCII character set can encode.
     {
       CHECK_CHAR_COERCE_INT (ch);
       character_to_event (XCHAR (ch), XEVENT (event), con,
-			  !NILP (use_console_meta_flag));
+			  !NILP (use_console_meta_flag), 1);
     }
   return event;
 }

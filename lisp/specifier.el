@@ -421,4 +421,12 @@ is no possibility for ambiguity and no need to go through the function
     (define-specifier-tag 'mswindows (lambda (dev)
 				       (eq (device-type dev) 'mswindows))))
 
+;; Add special tag for use by initialization code.  Code that
+;; sets up default specs should use this tag.  Code that needs to
+;; override default specs (e.g. the X resource initialization
+;; code) can safely clear specs with this tag without worrying
+;; about clobbering user settings.
+
+(define-specifier-tag 'default)
+
 ;;; specifier.el ends here

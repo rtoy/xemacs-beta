@@ -744,9 +744,20 @@ redisplay_move_cursor (struct window *w, Bufpos new_point, int no_output_end)
   struct display_line *dl;
   struct display_block *db;
   struct rune *rb;
-
   int x = w->last_point_x[CURRENT_DISP];
   int y = w->last_point_y[CURRENT_DISP];
+
+  extern int cursor_in_echo_area;
+
+  /*
+   * Bail if cursor_in_echo_area is non-zero and we're fiddling
+   * with the cursor in a minibuffer window, since that is a
+   * special case that is handled elsewhere and this function
+   * need not handle it.  Return 1 so the caller will assume we
+   * succeeded.
+   */
+  if (cursor_in_echo_area && MINI_WINDOW_P (w))
+    return 1;
 
   if (y < 0 || y >= Dynarr_length (cla))
     return 0;
@@ -958,7 +969,15 @@ void
 redisplay_redraw_cursor (struct frame *f, int run_end_begin_meths)
 {
   struct window *w = XWINDOW (FRAME_SELECTED_WINDOW (f));
-
+  extern int cursor_in_echo_area; 
+ 
+  if (cursor_in_echo_area)
+    if (FRAME_HAS_MINIBUF_P (f)) 
+      { 
+	w = XWINDOW (FRAME_MINIBUF_WINDOW (f)); 
+      }
+    else
+      return;
   redraw_cursor_in_window (w, run_end_begin_meths);
 }
 

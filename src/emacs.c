@@ -86,6 +86,14 @@ int initialized;
 /* Preserves a pointer to the memory allocated that copies that
    static data inside glibc's malloc.  */
 void *malloc_state_ptr;
+/*#define SLB_MEMORY_CHECKING 1*/
+/* I have observed free being passed the value 0x01 in gdb from somewhere */
+/* in the locale initialization, except that as soon as the following */
+/* monitoring code was added, the problem went away.  I don't trust gdb */
+/* at all with glibc, sigh.  -slb */
+#ifdef SLB_MEMORY_CHECKING
+void slb_memory_checker(__malloc_ptr_t);
+#endif
 #endif
 
 /* Variable whose value is symbol giving operating system type. */
@@ -500,7 +508,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
      hook for a gmalloc of a potentially incompatible version. */
   __malloc_hook = NULL;
   __realloc_hook = NULL;
+#ifndef SLB_MEMORY_CHECKING
   __free_hook = NULL;
+#endif
 #endif /* not SYSTEM_MALLOC */
 
   noninteractive = 0;
@@ -743,7 +753,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
 #endif /* HAVE_X_WINDOWS */
 #ifdef HAVE_MS_WINDOWS
-      if (!noninteractive)
+      if (strcmp(display_use, "x") != 0)
 	display_use = "mswindows";
 #endif /* HAVE_MS_WINDOWS */
     }
@@ -935,7 +945,10 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_MENUBARS
       syms_of_menubar_mswindows ();
 #endif
+#ifdef HAVE_MSW_C_DIRED
+      syms_of_dired_mswindows ();
 #endif
+#endif	/* HAVE_MS_WINDOWS */
 
 #ifdef MULE
       syms_of_mule ();
@@ -1106,6 +1119,18 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
       lstream_type_create_print ();
 
+      /* Initialize processes implementation.
+	 The functions may make exactly the following function/macro calls:
+
+	 PROCESS_HAS_METHOD()
+      */
+#ifdef HAVE_UNIX_PROCESSES
+      process_type_create_unix ();
+#endif
+#ifdef HAVE_WIN32_PROCESSES
+      process_type_create_mswindows ();
+#endif
+
       /* Now initialize most variables.
 
 	 These functions may do exactly the following:
@@ -1216,9 +1241,17 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_minibuf ();
       vars_of_objects ();
       vars_of_print ();
+
 #ifndef NO_SUBPROCESSES
       vars_of_process ();
+#ifdef HAVE_UNIX_PROCESSES
+      vars_of_process_unix ();
 #endif
+#ifdef HAVE_WIN32_PROCESSES
+      vars_of_process_mswindows ();
+#endif
+#endif
+
       vars_of_profile ();
 #if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined(DOUG_LEA_MALLOC)
       vars_of_ralloc ();
@@ -1282,7 +1315,10 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_MENUBARS
       vars_of_menubar_mswindows ();
 #endif
+#ifdef HAVE_MSW_C_DIRED
+      vars_of_dired_mswindows ();
 #endif
+#endif	/* HAVE_MS_WINDOWS */
 
 #ifdef MULE
       vars_of_mule ();
@@ -1859,6 +1895,25 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   return Qnil; /* not reached; warning suppression */
 }
 
+#ifdef SLB_MEMORY_CHECKING
+void
+slb_memory_checker(__malloc_ptr_t mem)
+{
+  unsigned int u = (unsigned int)mem;
+  /*        08f6b0a8 */
+  if (u < 0x08000000) {
+    printf("free(%08x)\n", u);
+    /* abort(); */
+  } else {
+    __free_hook = 0;
+
+    free(mem);
+
+    __free_hook = slb_memory_checker;
+  }
+}
+#endif
+
 /* ARGSUSED */
 int
 main (int argc, char **argv, char **envp)
@@ -1894,6 +1949,9 @@ main (int argc, char **argv, char **envp)
   quantify_clear_data ();
 #endif /* QUANTIFY */
 
+#ifdef SLB_MEMORY_CHECKING
+      __free_hook = slb_memory_checker;
+#endif
   suppress_early_backtrace = 0;
   lim_data = 0; /* force reinitialization of this variable */
 
@@ -2050,12 +2108,21 @@ shut_down_emacs (int sig, Lisp_Object stuff)
   quantify_stop_recording_data ();
 #endif /* QUANTIFY */
 
+#if 0
   /* This is absolutely the most important thing to do, so make sure
      we do it now, before anything else.  We might have crashed and
      be in a weird inconsistent state, and potentially anything could
      set off another protection fault and cause us to bail out
      immediately. */
+  /* I'm not removing the code entirely, yet.  We have run up against
+     a spate of problems in diagnosing crashes due to crashes within
+     crashes.  It has very definitely been determined that code called
+     during auto-saving cannot work if XEmacs crashed inside of GC.
+     We already auto-save on an itimer so there cannot be too much
+     unsaved stuff around, and if we get better crash reports we might
+     be able to get more problems fixed so I'm disabling this.  -slb */
   Fdo_auto_save (Qt, Qnil); /* do this before anything hazardous */
+#endif
 
   fflush (stdout);
   reset_all_consoles ();

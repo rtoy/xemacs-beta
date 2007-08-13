@@ -350,6 +350,7 @@ puresize=''
 cflags='UNSPECIFIED'
 dynamic=''
 with_x11=''
+with_msw=''
 with_gung='no'
 with_minimal_tagbits='no'
 rel_alloc='default'
@@ -449,6 +450,7 @@ while test $# != 0; do
 	run_in_place	| \
 	with_x		| \
 	with_x11	| \
+	with_msw	| \
 	with_gcc	| \
 	with_gnu_make	| \
 	dynamic		| \
@@ -2153,21 +2155,27 @@ case "$with_x11" in
   no  ) window_system=none HAVE_X_WINDOWS=no  ;;
 esac
 
-if test "$window_system" = "none" && test -z "$with_tty"; then
+if test "$with_msw" != "no"; then
   AC_CHECKING(for MS-Windows)
-  AC_CHECK_LIB(gdi32,main,have_msw=yes)
-  if test "$have_msw" = "yes"; then
+  AC_CHECK_LIB(gdi32,main,with_msw=yes)
+  if test "$with_msw" = "yes"; then
     AC_DEFINE(HAVE_MS_WINDOWS)
     XE_APPEND(-lshell32 -lgdi32 -luser32, libs_system)
-    window_system=msw
-    test "$with_scrollbars"   != "no" && with_scrollbars=msw && XE_ADD_OBJS(scrollbar-msw.o)
-    test "$with_menubars"   != "no" && with_menubars=msw && XE_ADD_OBJS(menubar-msw.o)
-    with_dialogs=msw
-    with_toolbars=no
-    with_tty=no
+    if test "$window_system" != x11; then
+ 	window_system=msw
+	test "$with_scrollbars" != "no" && with_scrollbars=msw \
+	    && XE_ADD_OBJS(scrollbar-msw.o)
+	test "$with_menubars"   != "no" && with_menubars=msw \
+	    && XE_ADD_OBJS(menubar-msw.o)
+	with_dialogs=msw
+	with_toolbars=no
+    else
+	test "$with_scrollbars"   != "no" && XE_ADD_OBJS(scrollbar-msw.o)
+	test "$with_menubars"   != "no" && XE_ADD_OBJS(menubar-msw.o)
+    fi
     const_is_losing=no
     with_file_coding=yes
-    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o gif_err.o gifalloc.o dgif_lib.o)
+    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o)
   fi
 fi
 
@@ -3224,20 +3232,26 @@ fi
 
 dnl autodetect dll support
 test -z "$with_shlib" && { AC_CHECK_HEADER(dlfcn.h, ,with_shlib=no) }
-test -z "$with_shlib" && { AC_CHECK_LIB(dl, dlopen,[:],with_shlib=no) }
+test -z "$with_shlib" && { AC_CHECK_LIB(dl, dlopen, XE_PREPEND(-ldl, LIBS),
+			   AC_CHECK_LIB(c, dlopen, with_shlib=yes, with_shlib=no)) }
 test -z "$with_shlib" && with_shlib=yes
 if test "$with_shlib" = "yes"; then
   AC_DEFINE(HAVE_SHLIB)
   XE_ADD_OBJS(dlopen.o)
-  XE_PREPEND(-ldl, LIBS)
+  ld_dynamic_link_flags=
+  dnl Fill this in with other values as this gets more testing
+  case "$opsys" in
+  linux*) ld_dynamic_link_flags="-rdynamic" ;;
+  *) ;;
+  esac
 fi
 
 dnl Process support (hardcoded)
 dnl every system that supports this runs configure, the others don't
 
 dnl We're not ready for this yet.
-dnl AC_DEFINE(HAVE_UNIX_PROCESSES)
-dnl XE_ADD_OBJS(process-unix.o)
+AC_DEFINE(HAVE_UNIX_PROCESSES)
+XE_ADD_OBJS(process-unix.o)
 
 dnl --------------------------------
 dnl Compute SUBST-itutable variables
@@ -3347,6 +3361,7 @@ AC_SUBST(archlibdir_user_defined)
 AC_SUBST(docdir)
 AC_SUBST(bitmapdir)
 AC_SUBST(extra_objs)
+AC_SUBST(ld_dynamic_link_flags)
 
 dnl The following flags combine all the information from:
 dnl - command line options (user always gets priority)

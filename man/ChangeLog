@@ -1,3 +1,7 @@
+1998-03-01  Aki Vehtari  <Aki.Vehtari@hut.fi>
+
+	* lispref/menus.texi: Use recommended forms in examples.
+
 1998-02-22  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
 
 	* cl.texi (Creating Symbols): Tell a little bit about the new

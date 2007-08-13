@@ -33,14 +33,19 @@ A general advice:
 
 gcc will generate incorrect code otherwise.  This bug is present in at
 least 2.6.x and 2.7.[0-2].  This bug has been fixed in GCC 2.7.2.1 and
-later.  This bug is also O/S independent.
+later.  This bug is O/S independent, but is limited to x86 architectures.
+
+This problem is known to be fixed in egcs (or pgcc) 1.0 or later.
 
 ** Don't use -O2 with gcc 2.7.2 under Intel architectures without also
 using `-fno-caller-saves'.
 
-gcc will generate incorrect code otherwise.  This bug is still present
-in gcc 2.7.2.3.  There have been no reports to indicate the bug is
-present in egcs 1.0 (or pgcc 1.0) or later.  This bug is O/S independent.
+gcc will generate incorrect code otherwise.  This bug is still
+present in gcc 2.7.2.3.  There have been no reports to indicate the
+bug is present in egcs 1.0 (or pgcc 1.0) or later.  This bug is O/S
+independent, but limited to x86 architectures.
+
+This problem is known to be fixed in egcs (or pgcc) 1.0 or later.
 
 ** Excessive optimization with pgcc can break XEmacs
 

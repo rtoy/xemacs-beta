@@ -98,7 +98,8 @@
   (while preloaded-file-list
     (let ((arg (car preloaded-file-list)))
       ;; (print (prin1-to-string arg))
-      (if (null (member arg packages-unbytecompiled-lisp))
+      (if (null (member (file-name-nondirectory arg)
+			packages-unbytecompiled-lisp))
 	  (progn
 	    (setq arg (locate-library arg))
 	    (if (null arg)

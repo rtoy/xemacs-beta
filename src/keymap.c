@@ -1054,7 +1054,7 @@ get_keyelt (Lisp_Object object, int accept_default)
 	  struct Lisp_Event event;
 	  event.event_type = empty_event;
 	  character_to_event (XCHAR (idx), &event,
-			      XCONSOLE (Vselected_console), 0);
+			      XCONSOLE (Vselected_console), 0, 0);
 	  indirection = event.event.key;
 	}
       else if (CONSP (idx))
@@ -1392,7 +1392,7 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
       struct Lisp_Event event;
       event.event_type = empty_event;
       character_to_event (XCHAR_OR_CHAR_INT (spec), &event,
-			  XCONSOLE (Vselected_console), 0);
+			  XCONSOLE (Vselected_console), 0, 0);
       returned_value->keysym    = event.event.key.keysym;
       returned_value->modifiers = event.event.key.modifiers;
     }
@@ -3244,7 +3244,7 @@ of a key read from the user rather than a character from a buffer.
 	  event.event_type = empty_event;
 	  CHECK_CHAR_COERCE_INT (key);
 	  character_to_event (XCHAR (key), &event,
-			      XCONSOLE (Vselected_console), 0);
+			      XCONSOLE (Vselected_console), 0, 1);
 	  format_event_object (buf, &event, 1);
 	}
       else

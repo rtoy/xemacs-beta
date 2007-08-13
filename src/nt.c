@@ -89,9 +89,11 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "ntheap.h"
 
 
-extern Lisp_Object Vwin32_downcase_file_names;
+extern Lisp_Object Vmswindows_downcase_file_names;
+#if 0
 extern Lisp_Object Vwin32_generate_fake_inodes;
-extern Lisp_Object Vwin32_get_true_file_attributes;
+#endif
+extern Lisp_Object Vmswindows_get_true_file_attributes;
 
 static char startup_dir[ MAXPATHLEN ];
 
@@ -324,7 +326,7 @@ normalize_filename (fp, path_sep)
       fp += 2;
     }
 
-  if (NILP (Vwin32_downcase_file_names))
+  if (NILP (Vmswindows_downcase_file_names))
     {
       while (*fp)
 	{
@@ -1215,7 +1217,7 @@ readdir (DIR *dirp)
   strcpy (dir_static.d_name, dir_find_data.cFileName);
   if (dir_is_fat)
     _strlwr (dir_static.d_name);
-  else if (!NILP (Vwin32_downcase_file_names))
+  else if (!NILP (Vmswindows_downcase_file_names))
     {
       REGISTER char *p;
       for (p = dir_static.d_name; *p; p++)
@@ -1524,7 +1526,7 @@ static FILETIME utc_base_ft;
 static long double utc_base;
 static int init = 0;
 
-static time_t
+time_t
 convert_time (FILETIME ft)
 {
   long double ret;
@@ -1719,7 +1721,7 @@ stat (const char * path, struct stat * buf)
       buf->st_nlink = 2;	/* doesn't really matter */
       fake_inode = 0;		/* this doesn't either I think */
     }
-  else if (!NILP (Vwin32_get_true_file_attributes))
+  else if (!NILP (Vmswindows_get_true_file_attributes))
     {
       /* This is more accurate in terms of gettting the correct number
 	 of links, but is quite slow (it is noticable when Emacs is

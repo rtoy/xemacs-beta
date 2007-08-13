@@ -66,7 +66,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   /* This function can GC.  GC checked 1997.04.06. */
   DIR *d;
   Bytecount name_as_dir_length;
-  Lisp_Object list, name, dirfilename = Qnil;
+  Lisp_Object list = Qnil, name, dirfilename = Qnil;
   Lisp_Object handler;
   struct re_pattern_buffer *bufp = NULL;
   Lisp_Object name_as_dir = Qnil;

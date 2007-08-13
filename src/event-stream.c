@@ -528,7 +528,7 @@ maybe_read_quit_event (struct Lisp_Event *event)
       int ch = CONSOLE_QUIT_CHAR (con);
       sigint_happened = 0;
       Vquit_flag = Qnil;
-      character_to_event (ch, event, con, 1);
+      character_to_event (ch, event, con, 1, 1);
       event->channel = make_console (con);
       return 1;
     }
@@ -642,6 +642,22 @@ event_stream_unselect_process (struct Lisp_Process *proc)
       event_stream->unselect_process_cb (proc);
       set_process_selected_p (proc, 0);
     }
+}
+
+USID
+event_stream_create_stream_pair (void* inhandle, void* outhandle,
+		Lisp_Object* instream, Lisp_Object* outstream, int flags)
+{
+  check_event_stream_ok (EVENT_STREAM_PROCESS);
+  return event_stream->create_stream_pair_cb
+		(inhandle, outhandle, instream, outstream, flags);
+}
+
+USID
+event_stream_delete_stream_pair (Lisp_Object instream, Lisp_Object outstream)
+{
+  check_event_stream_ok (EVENT_STREAM_PROCESS);
+  return event_stream->delete_stream_pair_cb (instream, outstream);
 }
 
 void
@@ -789,7 +805,7 @@ maybe_kbd_translate (Lisp_Object event)
 	     This way is safer. */
 	  zero_event (&ev2);
 	  character_to_event (XCHAR (traduit), &ev2,
-			      XCONSOLE (EVENT_CHANNEL (XEVENT (event))), 1);
+			      XCONSOLE (EVENT_CHANNEL (XEVENT (event))), 1, 1);
 	  XEVENT (event)->event.key.keysym = ev2.event.key.keysym;
 	  XEVENT (event)->event.key.modifiers = ev2.event.key.modifiers;
 	  did_translate = 1;
@@ -4170,7 +4186,7 @@ lookup_command_event (struct command_builder *command_builder,
 	  struct console *con = XCONSOLE (Fselected_console ());
 	  int ch = CONSOLE_QUIT_CHAR (con);
 
-	  character_to_event (ch, e, con, 1);
+	  character_to_event (ch, e, con, 1, 1);
 	  e->channel = make_console (con);
 
 	  enqueue_command_event (quit_event);
@@ -4816,7 +4832,7 @@ If FILE is nil, close any open dribble file.
       if (fd < 0)
 	error ("Unable to create dribble file");
       Vdribble_file = make_filedesc_output_stream (fd, 0, 0, LSTR_CLOSING);
-#ifdef FILE_CODING
+#ifdef MULE
       Vdribble_file =
 	make_encoding_output_stream (XLSTREAM (Vdribble_file),
 				     Fget_coding_system (Qescape_quoted));
@@ -5310,14 +5326,15 @@ init_event_stream (void)
   if (initialized)
     {
 #ifdef HAVE_UNIXOID_EVENT_LOOP
-      init_event_unixoid ();
+      if (strcmp (display_use, "mswindows") != 0)
+	init_event_unixoid ();
 #endif
-
 #ifdef HAVE_X_WINDOWS
       if (!strcmp (display_use, "x"))
 	init_event_Xt_late ();
       else
-#elif defined(HAVE_MS_WINDOWS)
+#endif
+#ifdef HAVE_MS_WINDOWS
       if (!strcmp (display_use, "mswindows"))
 	init_event_mswindows_late ();
       else
@@ -5329,8 +5346,6 @@ init_event_stream (void)
 	    init_event_Xt_late ();
 #elif defined (HAVE_TTY)
 	    init_event_tty_late ();
-#elif defined(HAVE_MS_WINDOWS)
-	    init_event_mswindows_late ();
 #endif
 	  }
       init_interrupts_late ();

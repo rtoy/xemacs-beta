@@ -1,3 +1,9 @@
+Fri Feb 20 21:22:34 1998  Darryl Okahata  <darrylo@sr.hp.com>
+
+	* xemacs.mak: Added entry for src/dired-msw.c.  Use of the
+	  dired-in-C enhancements is optional, and is determined by
+	  HAVE_MSW_C_DIRED.  See comments in xemacs.mak.
+
 1998-02-18  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* xemacs.mak: Fixed lost docstrings

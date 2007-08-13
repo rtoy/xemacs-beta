@@ -158,7 +158,7 @@ emacs_tty_next_event (struct Lisp_Event *emacs_event)
 		{
 		  Lisp_Object process;
 		  struct Lisp_Process *p =
-		    get_process_from_input_descriptor (i);
+		    get_process_from_usid (FD_TO_USID(i));
 
 		  assert (p);
 		  XSETPROCESS (process, p);
@@ -226,6 +226,20 @@ emacs_tty_quit_p (void)
      This could change. */
 }
 
+static USID
+emacs_tty_create_stream_pair (void* inhandle, void* outhandle,
+		Lisp_Object* instream, Lisp_Object* outstream, int flags)
+{
+  return event_stream_unixoid_create_stream_pair
+		(inhandle, outhandle, instream, outstream, flags);
+}
+
+static USID
+emacs_tty_delete_stream_pair (Lisp_Object instream, Lisp_Object outstream)
+{
+  return event_stream_unixoid_delete_stream_pair (instream, outstream);
+}
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -246,6 +260,8 @@ vars_of_event_tty (void)
   tty_event_stream->select_process_cb 	= emacs_tty_select_process;
   tty_event_stream->unselect_process_cb = emacs_tty_unselect_process;
   tty_event_stream->quit_p_cb		= emacs_tty_quit_p;
+  tty_event_stream->create_stream_pair_cb = emacs_tty_create_stream_pair;
+  tty_event_stream->delete_stream_pair_cb = emacs_tty_delete_stream_pair;
 }
 
 void

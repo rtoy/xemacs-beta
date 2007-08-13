@@ -1872,6 +1872,24 @@ emacs_Xt_unselect_process (struct Lisp_Process *p)
   unselect_filedesc (infd);
 }
 
+static USID
+emacs_Xt_create_stream_pair (void* inhandle, void* outhandle,
+		Lisp_Object* instream, Lisp_Object* outstream, int flags)
+{
+  USID u = event_stream_unixoid_create_stream_pair
+		(inhandle, outhandle, instream, outstream, flags);
+  if (u != USID_ERROR)
+    u = USID_DONTHASH;
+  return u;
+}
+
+static USID
+emacs_Xt_delete_stream_pair (Lisp_Object instream, Lisp_Object outstream)
+{
+  event_stream_unixoid_delete_stream_pair (instream, outstream);
+  return USID_DONTHASH;
+}
+
 /* This is called from GC when a process object is about to be freed.
    If we've still got pointers to it in this file, we're gonna lose hard.
  */
@@ -1880,11 +1898,12 @@ debug_process_finalization (struct Lisp_Process *p)
 {
 #if 0 /* #### */
   int i;
-  int infd, outfd;
-  get_process_file_descriptors (p, &infd, &outfd);
+  Lisp_Object instr, outstr;
+
+  get_process_streams (p, &instr, &outstr);
   /* if it still has fds, then it hasn't been killed yet. */
-  assert (infd < 0);
-  assert (outfd < 0);
+  assert (NILP(instr));
+  assert (NILP(outstr));
   /* Better not still be in the "with input" table; we know it's got no fds. */
   for (i = 0; i < MAXDESC; i++)
     {
@@ -2829,6 +2848,8 @@ vars_of_event_Xt (void)
   Xt_event_stream->select_process_cb 	= emacs_Xt_select_process;
   Xt_event_stream->unselect_process_cb 	= emacs_Xt_unselect_process;
   Xt_event_stream->quit_p_cb		= emacs_Xt_quit_p;
+  Xt_event_stream->create_stream_pair_cb= emacs_Xt_create_stream_pair;
+  Xt_event_stream->delete_stream_pair_cb= emacs_Xt_delete_stream_pair;
 
   DEFVAR_BOOL ("modifier-keys-are-sticky", &modifier_keys_are_sticky /*
 *Non-nil makes modifier keys sticky.

@@ -205,7 +205,8 @@ current buffer set to the visiting buffer."
   :type 'boolean
   :group 'gnuserv)
 
-(defcustom gnuserv-temp-file-regexp "^/tmp/Re\\|/draft$"
+(defcustom gnuserv-temp-file-regexp
+  (concat "^" (temp-directory) "/Re\\|/draft$")
   "*Regexp which should match filenames of temporary files deleted
 and reused by the programs that invoke the Emacs server."
   :type 'regexp
@@ -459,7 +460,7 @@ If a flag is `view', view the files read-only."
 	    ;; Add the "Done" button to the menubar, only in this buffer.
 	    (if (and (featurep 'menubar) current-menubar)
 	      (progn (set-buffer-menubar current-menubar)
-	      (add-menu-button nil ["Done" gnuserv-edit t]))
+	      (add-menu-button nil ["Done" gnuserv-edit]))
 	      ))
 	  (run-hooks 'gnuserv-visit-hook)
 	  (pop list)))

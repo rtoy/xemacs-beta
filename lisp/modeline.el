@@ -256,11 +256,12 @@ the buffer of the window whose modeline was clicked upon.")
 (define-key modeline-map 'button3 'modeline-menu)
 
 (make-face 'modeline-mousable "Face for mousable portions of the modeline.")
-(set-face-parent 'modeline-mousable 'modeline)
+(set-face-parent 'modeline-mousable 'modeline nil '(default))
 (when (featurep 'x)
-  (set-face-foreground 'modeline-mousable "firebrick" 'global '(color x))
-  (set-face-font 'modeline-mousable [bold] nil '(mono x))
-  (set-face-font 'modeline-mousable [bold] nil '(grayscale x)))
+  (set-face-foreground 'modeline-mousable "firebrick" 'global
+		       '(default color x))
+  (set-face-font 'modeline-mousable [bold] nil '(default mono x))
+  (set-face-font 'modeline-mousable [bold] nil '(default grayscale x)))
 
 (defmacro make-modeline-command-wrapper (command)
   `#'(lambda (event)
@@ -291,11 +292,12 @@ in the list takes precedence.")
 
 (make-face 'modeline-mousable-minor-mode
 	   "Face for mousable minor-mode strings in the modeline.")
-(set-face-parent 'modeline-mousable-minor-mode 'modeline-mousable)
+(set-face-parent 'modeline-mousable-minor-mode 'modeline-mousable nil
+		 '(default))
 (when (featurep 'x)
   (set-face-foreground 'modeline-mousable-minor-mode
-		       '(((color x) . "green4")
-			 ((color x) . "forestgreen")) 'global))
+		       '(((default color x) . "green4")
+			 ((default color x) . "forestgreen")) 'global))
 
 (defvar modeline-mousable-minor-mode-extent (make-extent nil nil)
   ;; alliteration at its finest.
@@ -503,14 +505,14 @@ parentheses on the modeline."
 
 (make-face 'modeline-buffer-id
 	   "Face for the buffer ID string in the modeline.")
-(set-face-parent 'modeline-buffer-id 'modeline)
+(set-face-parent 'modeline-buffer-id 'modeline nil '(default))
 (when (featurep 'x)
-  (set-face-foreground 'modeline-buffer-id "blue4" 'global '(color x)))
+  (set-face-foreground 'modeline-buffer-id "blue4" 'global '(default color x)))
 (when (featurep 'x)
-  (set-face-font 'modeline-buffer-id [bold-italic] nil '(mono x))
-  (set-face-font 'modeline-buffer-id [bold-italic] nil '(grayscale x)))
+  (set-face-font 'modeline-buffer-id [bold-italic] nil '(default mono x))
+  (set-face-font 'modeline-buffer-id [bold-italic] nil '(default grayscale x)))
 (when (featurep 'tty)
-  (set-face-font 'modeline-buffer-id [bold-italic] nil 'tty))
+  (set-face-font 'modeline-buffer-id [bold-italic] nil '(default tty)))
 
 (defvar modeline-buffer-id-extent (make-extent nil nil)
   "Extent covering the whole of the buffer-id string.")

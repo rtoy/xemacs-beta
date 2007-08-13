@@ -633,7 +633,7 @@ sys_subshell (void)
     if (str)
       sys_chdir (str);
 
-#if !defined (NO_SUBPROCESSES)
+#if !defined (NO_SUBPROCESSES) && !defined (WINDOWSNT)
     close_process_descs ();	/* Close Emacs's pipes/ptys */
 #endif
 
@@ -717,6 +717,79 @@ sys_suspend_process (int process)
 #if defined (SIGTSTP) && !defined (MSDOS)
     kill(process, SIGTSTP);
 #endif
+}
+
+
+/* Given FD, obtain pty buffer size. When no luck, a good guess is made,
+   so that the function works even fd is not a pty. */
+
+int
+get_pty_max_bytes (int fd)
+{
+  int pty_max_bytes;
+
+#if defined (HAVE_FPATHCONF) && defined (_PC_MAX_CANON)
+  pty_max_bytes = fpathconf (fd, _PC_MAX_CANON);
+  if (pty_max_bytes < 0)
+#endif
+    pty_max_bytes = 250;
+
+  /* Deduct one, to leave space for the eof.  */
+  pty_max_bytes--;
+
+  return pty_max_bytes;
+}
+
+/* Figure out the eof character for the FD. */
+
+Bufbyte
+get_eof_char (int fd)
+{
+  CONST Bufbyte ctrl_d = (Bufbyte) '\004';
+
+  if (!isatty (fd))
+    return ctrl_d;
+#ifdef HAVE_TERMIOS
+  {
+    struct termios t;
+    tcgetattr (fd, &t);
+#if 0
+    /* What is the following line designed to do??? -mrb */
+    if (strlen ((CONST char *) t.c_cc) < (unsigned int) (VEOF + 1))
+      return ctrl_d;
+    else
+      return (Bufbyte) t.c_cc[VEOF];
+#endif
+    return t.c_cc[VEOF] == CDISABLE ? ctrl_d : (Bufbyte) t.c_cc[VEOF];
+  }
+#else /* ! HAVE_TERMIOS */
+  /* On Berkeley descendants, the following IOCTL's retrieve the
+    current control characters.  */
+#if defined (TIOCGETC)
+  {
+    struct tchars c;
+    ioctl (fd, TIOCGETC, &c);
+    return (Bufbyte) c.t_eofc;
+  }
+#else /* ! defined (TIOCGLTC) && defined (TIOCGETC) */
+  /* On SYSV descendants, the TCGETA ioctl retrieves the current control
+     characters.  */
+#ifdef TCGETA
+  {
+    struct termio t;
+    ioctl (fd, TCGETA, &t);
+    if (strlen ((CONST char *) t.c_cc) < (unsigned int) (VINTR + 1))
+      return ctrl_d;
+    else
+      return (Bufbyte) t.c_cc[VINTR];
+  }
+#else /* ! defined (TCGETA) */
+  /* Rather than complain, we'll just guess ^D, which is what
+   * earlier emacsen always used. */
+  return ctrl_d;
+#endif /* ! defined (TCGETA) */
+#endif /* ! defined (TIOCGETC) */
+#endif /* ! defined (HAVE_TERMIOS) */
 }
 
 /* Set the logical window size associated with descriptor FD

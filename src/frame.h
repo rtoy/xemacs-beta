@@ -403,11 +403,13 @@ extern int frame_changed;
 
 #ifdef HAVE_TOOLBARS
 #define FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE(f, pos) \
-  (!NILP ((f)->toolbar_visible_p[pos]))
+  (!NILP((f)->toolbar_data[pos]) && !NILP ((f)->toolbar_visible_p[pos]))
 #define FRAME_RAW_THEORETICAL_TOOLBAR_SIZE(f, pos) \
-  (XINT ((f)->toolbar_size[pos]))
+  (!NILP ((f)->toolbar_data[pos]) ? \
+   (XINT ((f)->toolbar_size[pos])) : 0)
 #define FRAME_RAW_THEORETICAL_TOOLBAR_BORDER_WIDTH(f, pos) \
-  (XINT ((f)->toolbar_border_width[pos]))
+  (!NILP ((f)->toolbar_data[pos]) ? \
+   (XINT ((f)->toolbar_border_width[pos])) : 0)
 #else
 #define FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE(f, pos) 0
 #define FRAME_RAW_THEORETICAL_TOOLBAR_SIZE(f, pos) 0
@@ -481,18 +483,18 @@ extern int frame_changed;
    to look into this. --ben */
 
 #define FRAME_REAL_TOOLBAR_VISIBLE(f, pos)	\
-  (FRAME_RAW_REAL_TOOLBAR_SIZE (f, pos) > 0	\
-   && !NILP (FRAME_REAL_TOOLBAR (f, pos))	\
+  ((!NILP (FRAME_REAL_TOOLBAR (f, pos))	        \
+  && FRAME_RAW_REAL_TOOLBAR_SIZE (f, pos) > 0)	\
    ? FRAME_RAW_REAL_TOOLBAR_VISIBLE (f, pos)	\
    : 0)
 #define FRAME_REAL_TOOLBAR_SIZE(f, pos)		\
-  (FRAME_RAW_REAL_TOOLBAR_VISIBLE (f, pos)	\
-   && !NILP (FRAME_REAL_TOOLBAR (f, pos))	\
+  ((!NILP (FRAME_REAL_TOOLBAR (f, pos))	        \
+  && FRAME_RAW_REAL_TOOLBAR_VISIBLE (f, pos))	\
    ? FRAME_RAW_REAL_TOOLBAR_SIZE (f, pos)	\
    : 0)
 #define FRAME_REAL_TOOLBAR_BORDER_WIDTH(f, pos)		\
-  (FRAME_RAW_REAL_TOOLBAR_VISIBLE (f, pos)		\
-   && !NILP (FRAME_REAL_TOOLBAR (f, pos))		\
+  ((!NILP (FRAME_REAL_TOOLBAR (f, pos))		\
+  && FRAME_RAW_REAL_TOOLBAR_VISIBLE (f, pos))		\
    ? FRAME_RAW_REAL_TOOLBAR_BORDER_WIDTH (f, pos)	\
    : 0)
 

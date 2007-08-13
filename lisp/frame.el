@@ -902,6 +902,11 @@ This always assumes DndText as type."
 	(set-window-buffer w buffer))
     fr))
 
+(defcustom get-frame-for-buffer-default-to-current nil
+  "*When non-nil, `get-frame-for-buffer' will default to the current frame."
+  :type 'boolean
+  :group 'frames)
+
 (defun get-frame-for-buffer-noselect (buffer
 				      &optional not-this-window-p on-frame)
   "Return a frame in which to display BUFFER.
@@ -1011,7 +1016,9 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
       (let ((w-list (windows-of-buffer buffer))
 	    f w
 	    (first-choice nil)
-	    (second-choice nil)
+	    (second-choice (if get-frame-for-buffer-default-to-current
+			       (selected-frame)
+			     nil))
 	    (last-resort nil))
 	(while (and w-list (null first-choice))
 	  (setq w (car w-list)
@@ -1019,13 +1026,16 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 	  (cond ((eq w (selected-window)) nil)
 		((not (frame-visible-p f))
 		 (if (null last-resort)
-		     (setq last-resort w)))
+		     (setq last-resort f)))
 		((eq f (selected-frame))
-		 (setq first-choice w))
+		 (setq first-choice f))
 		((null second-choice)
-		 (setq second-choice w)))
+		 (setq second-choice f)))
 	  (setq w-list (cdr w-list)))
 	(or first-choice second-choice last-resort)))
+
+     (get-frame-for-buffer-default-to-current (selected-frame))
+
      (t
       ;;
       ;; This buffer's mode did not express a preference for a frame of a

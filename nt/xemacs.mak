@@ -9,6 +9,11 @@ HAVE_IMAGEMAGICK=0
 
 DEBUG_XEMACS=1
 
+# Define HAVE_MSW_C_DIRED to be non-zero if you want Xemacs to use C
+# primitives to significantly speed up dired, at the expense of an
+# additional ~4KB of code.
+HAVE_MSW_C_DIRED=1
+
 !if $(DEBUG_XEMACS)
 OPT=-Od -Zi
 !else
@@ -37,6 +42,11 @@ X_LIBS=$(MAGICK_LIBS) Xaw.lib Xmu.lib Xt.lib SM.lib ICE.lib Xext.lib X11.lib
 
 !if $(HAVE_MSW)
 MSW_DEFINES=-DHAVE_MS_WINDOWS -DHAVE_SCROLLBARS -DHAVE_MENUBARS
+!if $(HAVE_MSW_C_DIRED)
+MSW_C_DIRED_DEFINES=-DHAVE_MSW_C_DIRED
+MSW_C_DIRED_SRC=$(XEMACS)\src\dired-msw.c
+MSW_C_DIRED_OBJ=$(OUTDIR)\dired-msw.obj
+!endif
 !endif
 
 !if $(HAVE_MULE)
@@ -57,7 +67,8 @@ DEBUG_FLAGS= -debugtype:both -debug:full
 
 INCLUDES=$(X_INCLUDES) -I$(XEMACS)\nt\inc -I$(XEMACS)\src -I$(XEMACS)\lwlib -I"$(MSVCDIR)\include"
 
-DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MULE_DEFINES) -DWIN32 -D_WIN32 \
+DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MSW_C_DIRED_DEFINES) $(MULE_DEFINES) \
+	-DWIN32 -D_WIN32 \
 	-DWIN32_LEAN_AND_MEAN -DWINDOWSNT -Demacs -DHAVE_CONFIG_H \
 	-D_DEBUG
 
@@ -294,7 +305,8 @@ DOC_SRC7=\
  $(XEMACS)\src\objects-msw.c \
  $(XEMACS)\src\redisplay-msw.c \
  $(XEMACS)\src\scrollbar-msw.c \
- $(XEMACS)\src\select-msw.c
+ $(XEMACS)\src\select-msw.c \
+ $(MSW_C_DIRED_SRC)
 !endif
 
 !if $(HAVE_MULE)
@@ -395,7 +407,8 @@ TEMACS_MSW_OBJS=\
 	$(OUTDIR)\objects-msw.obj \
 	$(OUTDIR)\redisplay-msw.obj \
 	$(OUTDIR)\scrollbar-msw.obj \
-	$(OUTDIR)\select-msw.obj
+	$(OUTDIR)\select-msw.obj \
+	$(MSW_C_DIRED_OBJ)
 !endif
 
 !if $(HAVE_MULE)

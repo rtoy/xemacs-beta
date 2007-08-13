@@ -1,3 +1,29 @@
+1998-03-07  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta30 is released.
+
+1998-03-05  SL Baur  <steve@altair.xemacs.org>
+
+	* PROBLEMS: Update wording of x86 GCC 2.7 problems.
+
+Wed Mar 04 08:55:12 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: add a --with-msw option. Make X and msw work
+	together if the user asks.
+
+1998-03-02  SL Baur  <steve@altair.xemacs.org>
+
+	* PROBLEMS: Update documentation of gcc bugs that impact XEmacs.
+
+1998-03-01  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Add substitutable variable ld_dynamic_link_flags
+	for special required linker flags for building DLL capable
+	binaries.
+
+	* etc/Emacs.ad: Remove explicit `Emacs' application resource
+	name.
+
 1998-02-28  SL Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in (top_distclean): Remove Installation.el.

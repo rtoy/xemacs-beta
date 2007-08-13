@@ -145,7 +145,7 @@ recent to least recent -- in other words, the version names don't have to
 be lexically ordered.  It is debatable if it makes sense to have more than
 one version of a package available.")
 
-(defvar package-get-dir "/tmp"
+(defvar package-get-dir (temp-directory)
   "*Where to store temporary files for staging.")
 
 (defvar package-get-remote
@@ -160,6 +160,16 @@ order until the package is found.")
 (defvar package-get-remove-copy nil
   "*After copying and installing a package, if this is T, then remove the
 copy.  Otherwise, keep it around.")
+
+(defun package-get-update-all ()
+  "Fetch and install the latest versions of all currently installed packages."
+  (interactive)
+  ;; Load a fresh copy
+  (load "package-get-base.el")
+  (mapcar (lambda (pkg)
+						(package-get-all
+						 (car pkg) nil))
+          packages-package-list))
 
 (defun package-get-all (package version &optional fetched-packages)
   "Fetch PACKAGE with VERSION and all other required packages.
@@ -260,7 +270,7 @@ of the package, an error is signalled."
       (message "Retrieved package %s" filename) (sit-for 0)
       (let ((status
 	     (if (eq (package-get-info-prop this-package 'type) 'single)
-		 (package-admin-add-single-file-package
+					 (package-admin-add-single-file-package filename
 		  (package-get-staging-dir filename))
 	       (package-admin-add-binary-package
 		(package-get-staging-dir filename)))))
@@ -361,11 +371,12 @@ words
 (defun package-get-installedp (package version)
   "Determine if PACKAGE with VERSION has already been installed.
 I'm not sure if I want to do this by searching directories or checking 
-some built in variables.  For now, use `locate-library'."
-  ;; Use pacakges-package-list which contains name and version
-  (if (not (floatp version))
-      (setq version (string-to-number version)))
-  (member (cons package version) packages-package-list))
+some built in variables.  For now, use packages-package-list."
+  ;; Use packages-package-list which contains name and version
+	(equal (plist-get
+			 (package-get-info-find-package packages-package-list
+																			package) ':version)
+				 (if (floatp version) version (string-to-number version))))
 
 (defun package-get-package-provider (sym)
   "Search for a package that provides SYM and return the name and

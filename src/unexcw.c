@@ -199,7 +199,7 @@ static void get_section_info (int a_out, char* a_name)
   /* The .idata section.  */
   if (read (a_out, &f_idata, sizeof (f_idata)) != sizeof (f_idata)
       &&
-      strcmp (f_idata.s_name, ".idata"))
+      strcmp (f_idata.s_name, ".rdata"))
     {
       PERROR ("no .idata section");
     }
@@ -238,12 +238,13 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
   f_data_s_vaddr = f_data.s_vaddr;
   f_data.s_vaddr = f_bss.s_vaddr;
   f_data.s_paddr += new_bss_size;
-
+#if 0 
   if (f_data.s_size + f_idata.s_size != f_ohdr.dsize)
     {
       printf("section size doesn't tally with dsize %lx != %lx\n", 
 	     f_data.s_size + f_idata.s_size, f_ohdr.dsize);
     }
+#endif
   f_data.s_size += new_bss_size;
   lseek (a_new, 0, SEEK_SET);
   /* write file header */
@@ -283,7 +284,7 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
     {
       PERROR("failed to write data header");
     }
-  
+
   printf("writing .idata header\n");
   f_idata.s_scnptr += file_sz_change;
   if (f_idata.s_lnnoptr != 0) f_idata.s_lnnoptr += file_sz_change;
@@ -292,7 +293,7 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
     {
       PERROR("failed to write idata header");
     }
-  
+
   /* copy other section headers adjusting the file offset */
   for (i=0; i<(f_hdr.f_nscns-3); i++)
     {

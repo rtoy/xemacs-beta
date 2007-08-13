@@ -49,20 +49,24 @@
 (defvar lisp-interaction-mode-popup-menu nil)
 (defvar lisp-interaction-mode-popup-menu-1
   (purecopy '("Lisp-Interaction"
-	      ["Evaluate Last S-expression" eval-last-sexp      t]
-	      ["Evaluate Entire Buffer"     eval-current-buffer t]
-	      ["Evaluate Region"	eval-region	(region-exists-p)]
+	      ["Evaluate Last S-expression" eval-last-sexp]
+	      ["Evaluate Entire Buffer"     eval-current-buffer]
+	      ["Evaluate Region"	eval-region
+	       :active (region-exists-p)]
 	      "---"
-	      ["Evaluate This Defun"      eval-defun          t]
+	      ["Evaluate This Defun"      eval-defun]
 	      ;; FSF says "Instrument Function for Debugging"
-	      ["Debug This Defun"         edebug-defun        t]
+	      ["Debug This Defun"         edebug-defun]
 	      "---"
-	      ["Trace a Function"   trace-function-background t]
-	      ["Untrace All Functions"    untrace-all (fboundp 'untrace-all)]
+	      ["Trace a Function"   trace-function-background]
+	      ["Untrace All Functions"    untrace-all
+	       :active (fboundp 'untrace-all)]
 	      "---"
-	      ["Comment Out Region"	comment-region	(region-exists-p)]
-	      ["Indent Region"		indent-region	(region-exists-p)]
-	      ["Indent Line"		lisp-indent-line t]
+	      ["Comment Out Region"	comment-region
+	       :active (region-exists-p)]
+	      ["Indent Region"		indent-region
+	       :active (region-exists-p)]
+	      ["Indent Line"		lisp-indent-line]
 	      "---"
 	      ["Debug On Error" (setq debug-on-error (not debug-on-error))
 	       :style toggle :selected debug-on-error]
@@ -77,8 +81,8 @@
   (purecopy
    (nconc
     '("Emacs-Lisp"
-      ["Byte-compile This File" emacs-lisp-byte-compile t]
-      ["Byte-recompile Directory..." byte-recompile-directory t]
+      ["Byte-compile This File" emacs-lisp-byte-compile]
+      ["Byte-recompile Directory..." byte-recompile-directory]
       "---")
     (cdr lisp-interaction-mode-popup-menu-1))))
 

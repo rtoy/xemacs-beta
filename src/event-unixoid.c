@@ -33,6 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 #include "device.h"
 #include "events.h"
+#include "lstream.h"
 #include "process.h"
 
 #include "sysdep.h"
@@ -100,7 +101,7 @@ read_event_from_tty_or_stream_desc (struct Lisp_Event *event,
     }
   else
     {
-      character_to_event (ch, event, con, 1);
+      character_to_event (ch, event, con, 1, 1);
       event->channel = console;
       return 1;
     }
@@ -182,13 +183,19 @@ event_stream_unixoid_unselect_console (struct console *con)
   return infd;
 }
 
+static int
+get_process_infd (struct Lisp_Process *p)
+{
+  Lisp_Object instr, outstr;
+  get_process_streams (p, &instr, &outstr);
+  assert (!NILP (instr));
+  return filedesc_stream_fd (XLSTREAM (instr));
+}
+
 int
 event_stream_unixoid_select_process (struct Lisp_Process *proc)
 {
-  int infd, outfd;
-
-  get_process_file_descriptors (proc, &infd, &outfd);
-  assert (infd >= 0);
+  int infd = get_process_infd (proc);
 
   FD_SET (infd, &input_wait_mask);
   FD_SET (infd, &non_fake_input_wait_mask);
@@ -199,10 +206,7 @@ event_stream_unixoid_select_process (struct Lisp_Process *proc)
 int
 event_stream_unixoid_unselect_process (struct Lisp_Process *proc)
 {
-  int infd, outfd;
-
-  get_process_file_descriptors (proc, &infd, &outfd);
-  assert (infd >= 0);
+  int infd = get_process_infd (proc);
 
   FD_CLR (infd, &input_wait_mask);
   FD_CLR (infd, &non_fake_input_wait_mask);
@@ -238,6 +242,95 @@ poll_fds_for_input (SELECT_TYPE mask)
     }
 
   RETURN_NOT_REACHED(0) /* not reached */
+}
+
+/****************************************************************************/
+/*     Unixoid (file descriptors based) process I/O streams routines        */
+/****************************************************************************/
+
+USID
+event_stream_unixoid_create_stream_pair (void* inhandle, void* outhandle,
+					 Lisp_Object* instream,
+					 Lisp_Object* outstream,
+					 int flags)
+{
+  int infd, outfd;
+  /* Decode inhandle and outhandle. Their meaning depends on
+     the process implementation being used. */
+#ifdef HAVE_WIN32_PROCESSES
+  /* We're passed in Windows handles. Open new fds for them */
+  if ((HANDLE)inhandle != INVALID_HANDLE_VALUE)
+    {
+      infd = open_osfhandle ((HANDLE)inhandle, 0);
+      if (infd < 0)
+	return USID_ERROR;
+    }
+  else
+    infd = -1;
+
+  if ((HANDLE)outhandle != INVALID_HANDLE_VALUE)
+    {
+      outfd = open_osfhandle ((HANDLE)outhandle, 0);
+      if (outfd < 0)
+	{
+	  if (infd >= 0)
+	    close (infd);
+	  return USID_ERROR;
+	}
+    }
+  else
+    outfd = -1;
+
+  flags = 0;
+#endif
+
+#ifdef HAVE_UNIX_PROCESSES
+  /* We are passed plain old file descs */
+  infd  = (int)inhandle;
+  outfd = (int)outhandle;
+#endif
+
+  *instream = (infd >= 0
+	       ? make_filedesc_input_stream (infd, 0, -1, 0)
+	       : Qnil);
+
+  *outstream = (outfd >= 0
+		? make_filedesc_output_stream (outfd, 0, -1, LSTR_BLOCKED_OK)
+		: Qnil);
+
+#if defined(HAVE_UNIX_PROCESSES) && defined(HAVE_PTYS)
+  /* FLAGS is process->pty_flag for UNIX_PROCESSES */
+  if (flags && outfd >= 0)
+    {
+      Bufbyte eof_char = get_eof_char (outfd);
+      int pty_max_bytes = get_pty_max_bytes (outfd);
+      filedesc_stream_set_pty_flushing (XLSTREAM(*outstream), pty_max_bytes, eof_char);
+    }
+#endif
+
+  return FD_TO_USID (infd);
+}
+
+USID
+event_stream_unixoid_delete_stream_pair (Lisp_Object instream,
+					 Lisp_Object outstream)
+{
+  int in = (NILP(instream) ? -1
+	    : filedesc_stream_fd (XLSTREAM (instream)));
+  int out = (NILP(outstream) ? -1
+	     : filedesc_stream_fd (XLSTREAM (outstream)));
+
+  if (in >= 0)
+    close (in);
+  if (out != in && out >= 0)
+    close (out);
+
+  if (!NILP (instream))
+    Lstream_close (XLSTREAM (instream));
+  if (!NILP (outstream))
+    Lstream_close (XLSTREAM (outstream));
+
+  return FD_TO_USID (in);
 }
 
 

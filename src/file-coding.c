@@ -70,11 +70,10 @@ Lisp_Object Qforce_g0_on_output, Qforce_g1_on_output;
 Lisp_Object Qforce_g2_on_output, Qforce_g3_on_output;
 Lisp_Object Qno_iso6429;
 Lisp_Object Qinput_charset_conversion, Qoutput_charset_conversion;
-Lisp_Object Qctext;
-#endif
+Lisp_Object Qctext, Qescape_quoted;
 Lisp_Object Qshort, Qno_ascii_eol, Qno_ascii_cntl, Qseven, Qlock_shift;
-
-Lisp_Object Qencode, Qdecode, Qescape_quoted;
+#endif
+Lisp_Object Qencode, Qdecode;
 
 Lisp_Object Vcoding_system_hashtable;
 
@@ -394,8 +393,8 @@ setup_eol_coding_systems (struct Lisp_Coding_System *codesys)
 } while (0)
 
   DEFINE_SUB_CODESYS("unix", "", EOL_LF);
-  DEFINE_SUB_CODESYS("dos",  "(T)", EOL_CRLF);
-  DEFINE_SUB_CODESYS("mac",  "(t)", EOL_CR);
+  DEFINE_SUB_CODESYS("dos",  ":T", EOL_CRLF);
+  DEFINE_SUB_CODESYS("mac",  ":t", EOL_CR);
 }
 
 DEFUN ("coding-system-p", Fcoding_system_p, 1, 1, 0, /*
@@ -4496,11 +4495,18 @@ static Bufbyte_dynarr *conversion_in_dynarr;
   Qnil : Fget_coding_system (Vfile_name_coding_system))
 
 /* #### not correct for all values of `fmt'! */
+#ifdef MULE
 #define FMT_CODING_SYSTEM(fmt)					\
  (((fmt) == FORMAT_FILENAME) ? FILE_NAME_CODING_SYSTEM     :	\
   ((fmt) == FORMAT_CTEXT   ) ? Fget_coding_system (Qctext) :	\
   ((fmt) == FORMAT_TERMINAL) ? FILE_NAME_CODING_SYSTEM     :	\
   Qnil)
+#else
+#define FMT_CODING_SYSTEM(fmt)					\
+ (((fmt) == FORMAT_FILENAME) ? FILE_NAME_CODING_SYSTEM     :	\
+  ((fmt) == FORMAT_TERMINAL) ? FILE_NAME_CODING_SYSTEM     :	\
+  Qnil)
+#endif
 
 extern CONST Extbyte *
 convert_to_external_format (CONST Bufbyte *ptr,
@@ -4508,11 +4514,7 @@ convert_to_external_format (CONST Bufbyte *ptr,
 			    Extcount *len_out,
 			    enum external_data_format fmt)
 {
-#ifdef MULE
   Lisp_Object coding_system = FMT_CODING_SYSTEM (fmt);
-#else
-  Lisp_Object coding_system = Qnil;
-#endif
 
   if (!conversion_out_dynarr)
     conversion_out_dynarr = Dynarr_new (Extbyte);
@@ -4580,11 +4582,7 @@ convert_from_external_format (CONST Extbyte *ptr,
 			      Bytecount *len_out,
 			      enum external_data_format fmt)
 {
-#ifdef MULE
   Lisp_Object coding_system = FMT_CODING_SYSTEM (fmt);
-#else
-  Lisp_Object coding_system = Qnil;
-#endif
 
   if (!conversion_in_dynarr)
     conversion_in_dynarr = Dynarr_new (Bufbyte);
@@ -4709,14 +4707,13 @@ syms_of_mule_coding (void)
   defsymbol (&Qno_iso6429, "no-iso6429");
   defsymbol (&Qinput_charset_conversion, "input-charset-conversion");
   defsymbol (&Qoutput_charset_conversion, "output-charset-conversion");
-#endif
   defsymbol (&Qshort, "short");
   defsymbol (&Qno_ascii_eol, "no-ascii-eol");
   defsymbol (&Qno_ascii_cntl, "no-ascii-cntl");
   defsymbol (&Qseven, "seven");
   defsymbol (&Qlock_shift, "lock-shift");
   defsymbol (&Qescape_quoted, "escape-quoted");
-
+#endif
   defsymbol (&Qencode, "encode");
   defsymbol (&Qdecode, "decode");
 

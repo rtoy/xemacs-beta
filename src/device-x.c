@@ -325,7 +325,7 @@ x_init_device (struct device *d, Lisp_Object props)
 #if defined(LWLIB_MENUBARS_MOTIF) || defined(HAVE_XIM) || defined (USE_XFONTSET)
   {
     /* Read in locale-specific resources from
-       data-directory/app-defaults/$LANG/emacs-application-class.
+       data-directory/app-defaults/$LANG/Emacs.
        This is in addition to the standard app-defaults files, and
        does not override resources defined elsewhere */
     CONST char *data_dir;
@@ -337,14 +337,14 @@ x_init_device (struct device *d, Lisp_Object props)
 	XSTRING_LENGTH (Vx_app_defaults_directory) > 0)
       {
 	GET_C_STRING_FILENAME_DATA_ALLOCA(Vx_app_defaults_directory, data_dir);
-	sprintf (path, "%s%s/%s", data_dir, locale, app_class);
+	sprintf (path, "%s%s/Emacs", data_dir, locale);
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
       }
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
 	GET_C_STRING_FILENAME_DATA_ALLOCA (Vdata_directory, data_dir);
-	sprintf (path, "%sapp-defaults/%s/%s", data_dir, locale, app_class);
+	sprintf (path, "%sapp-defaults/%s/Emacs", data_dir, locale);
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
       }

@@ -111,12 +111,13 @@ you quit again before the process exits."
 			 (eq system-type 'windows-nt))
 		     (make-temp-name
 		      (concat (file-name-as-directory
-			       (or (getenv "TMP")
-				   (getenv "TEMP")
-				   ""))
+			       (temp-directory))
 			       "em")))
                     (t
-                     (make-temp-name "/tmp/emacs")))))
+		     (make-temp-name
+		      (concat (file-name-as-directory
+			       (temp-directory))
+			      "emacs"))))))
     (unwind-protect
 	(let (cs-r cs-w)
 	  (let (ret)

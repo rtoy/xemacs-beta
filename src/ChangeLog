@@ -1,4 +1,279 @@
+1998-03-07  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* events.h: Add do_backspace_mapping parameter to
+	  function prototype of character_to_event.
+
+	* events.c: Add fifth parameter to character_to_event to
+	  control the backspace mapping.  In character_to_event map most
+	  characters that match tty-erase-char to the backspace keysym,
+	  but only if do_backspace_mapping paramter is non-zero.
+
+	  (Fcharacter_to_event): Tell character_to_event() to DO
+	  backspace mapping.
+
+	* event-stream.c:
+	  (maybe_read_quit_event): Tell character_to_event() to DO
+	  backspace mapping.
+
+	  (maybe_kbd_translate): Tell character_to_event() to DO backspace
+	  mapping.
+
+	  (lookup_command_event): Tell character_to_event() to DO backspace
+	  mapping.
+
+	* event-unixoid.c:
+	  (read_event_from_tty_or_stream_desc): Tell character_to_event()
+	  to DO backspace mapping.
+
+	* keymap.c:
+	  (get_keyelt): Tell character_to_event() to NOT DO backspace
+	  mapping.
+
+	  (define_key_parser): Tell character_to_event() to NOT DO backspace
+	  mapping.
+
+	  (Fsingle_key_description): Tell character_to_event() to DO
+	  backspace mapping.
+
+1998-03-04  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* alloc.c (Fpurecopy): Do not mark symbols through
+	Vpure_uninterned_symbol_table twice: hash (OBJ, nil) instead of
+	(OBJ, OBJ).
+
+1998-03-07  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (shut_down_emacs): Disable forced auto-save in a crash.
+	It causes more problems than it solves.
+
+1998-03-02  Greg Klanderman  <greg@alphatech.com>
+
+	* window.c (Fwindow_displayed_pixel_height) New function.
+	(Fenlarge_window_pixels): New function.
+	(Fshrink_window_pixels): New function.
+	(window_displayed_pixel_height): New, helper for
+	Fwindow_displayed_pixel_height. 
+	(change_window_height): Add `inpixels' argument.
+	(syms_of_window): 3 new DEFSUBR's.
+
+Thu Mar 05 12:01:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* redisplay-msw.c (mswindows_output_cursor): separate getting
+	cachel index from retrieving cachel to work around apparent bug in
+	gcc.
+
+1998-03-06  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* events.c (character_to_event): The tty_erase_char test
+	doesn't do anything because it's in the wrong place.
+	Moved it to where it can take effect.
+
+	* dired.c (Fdirectory_files): Initialize GCPRO'ed variable.
+
+	* events.c (character_to_event): Never map '(control
+	  foo) to QKbackspace.  Only map ASCII 8 to QKbackspace;
+	  don't map any other key.
+
+1998-03-05  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* src/redisplay-output.c (redisplay_move_cursor): Bail if
+	  cursor_in_echo_area is non-zero and we're fiddling
+	  with the cursor in a minibuffer window, since that is a
+	  special case that is handled elsewhere and this function
+	  need not handle it.  Return 1 so the caller will assume we
+	  succeeded.
+
+Wed Mar 04 08:55:12 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* device.c (init_global_resources): compile in based on window
+	system not just x.
+
+	* console.c (select_console_1): add mswindows console type.
+
+1998-03-04  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* redisplay-output.c (redisplay_redraw_cursor): Redraw
+	  the cursor in the minibuffer window if cursor_in_echo_area
+	  is non-zero.
+
+Wed Mar 04 08:55:12 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* emacs.c (main_1): predicate display_use to mswindows only if x
+	is not already selected.
+
+	* event-msw.c: comment out non-code for HAVE_TOOLBAR case. don't
+	compile debug_process_finalisation if x is compiled in.
+
+	* event-stream.c (init_event_stream): don't make X and mswindows
+	mutually exclusive. Select msw event loop if started that way,
+	X/tty event loop otherwise.
+
+	* frame.h: protect toolbar #defines from assuming ints are in
+	toolbar_data. This happens if you have two display types compiled
+	in and one supports toolbars and the other doesn't.
+
+	* s/cygwin32.h: warning elimination.
+
+1998-03-03  SL Baur  <steve@altair.xemacs.org>
+
+	* editfns.c (Ftemp_directory): New function.
+	From Glynn Clements <glynn@sensei.co.uk>
+
+	* editfns.c (Ftemp_directory): Use build_ext_string.
+
+1998-03-02  Martin Buchholz  <Martin Buchholz <martin@xemacs.org>>
+
+	* symsinit.h: add prototype for syms_of_dlopen
+
+1998-03-02  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* window.c (save_window_save): save value of
+	  default_toolbar_height slot.
+
+	  (Fset_window_configuration): restore value of
+	  default_toolbar_height slot.
+
+Fri Feb 20 21:22:34 1998  Darryl Okahata  <darrylo@sr.hp.com>
+
+	* "Fast" dired-in-C enhancements for Windows 95/NT:
+
+	* ntproc.c:
+	* device-msw.c:
+	  Moved definition of `Vwin32_downcase_file_names' from ntproc.c
+	  to device-msw.c, and renamed it to
+	  `Vmswindows_downcase_file_names'.  It doesn't really belong
+	  here, but I didn't want to create a new file, just for this one
+	  variable.  This fixes a bug in `expand-file-name' that caused
+	  all returned filenames to be lowercased (this was supposed to be
+	  conditional upon Vmswindows_downcase_file_names, but wasn't, as
+	  it was never initialized due to obsolescence of ntproc.c).  This
+	  variable is also used by the dired-in-C enhancements.
+
+	  Also moved and renamed `Vwin32_get_true_file_attributes' to
+	  `Vmswindows_get_true_file_attributes'.  This affects stat() in
+	  nt.c, and so it really does need to be initialized.
+
+	  However, there's still one more variable in ntproc.c that still
+	  needs to be moved/renamed, `Vwin32_pipe_read_delay', but I
+	  didn't touch this, as this is a subprocess issue.
+
+	* dired-msw.c: New file for dired-in-C enhancements for
+	  Windows 96/NT.
+
+	* emacs.c: Initialization calls for dired-msw.c.
+
+	* nt.c (convert_time): make into public function (dired-in-C
+	  functions use it).
+
+1998-02-28  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* sysdep.h: Prototypes for the above 2 functions
+
+	* sysdep.c (get_pty_max_bytes): Moved here from process.c
+	(get_eof_char): Ditto
+
+	* symsinit.h: Prototypes for initialization functions called from
+	emacs.c: process_type_create_mswindows, process_type_create_unix, 
+	vars_of_process_mswindows, vars_of_process_unix.
+
+	* procimpl.h: New file. Includes prototypes and other stuff shared 
+	by process.c and implementation files (process-unix.c,
+	process-msw.c in future).
+
+	* process.h (PROCESS_LIVE_P): Changed to test against stream
+	existence, to avoid dependency on fds.
+	
+	* process.c: Only process implementation independent code is now
+	in this file. Moved the rest into process-unix.c
+	(Fopen_network_stream_internal): Added 5th parameter, protocol
+	family. Defaults to 'tcp/ip when unspecified.
+
+	* process-unix.c: New file, implementation of UNIX
+	processes. UNIX-specific code from the old process.c is here.
+
+	* Lstream.c (Lstream_was_blocked_p): New function. Replaces
+	filedesc_stream_was_blocked_p. 
+	(filedesc_was_blocked_p): Implementation of the method for
+	filedesc stream
+	(filedesc_stream_set_pty_flushing): set pty_flushing flag
+	(filedesc_stream_fd): New function, returns fd of the stream
+
+	* lstream.h (lstream_implementation): was_blocked_p is a new
+	optional lstream method.
+	Added prototypes for functions in lstream.c
+
+	* lisp.h: (USID): Typedef for Unique Stream IDentifier. Reuqired 
+	by the new code in many places.
+
+	* events.h (struct event_stream): Declaration of the two mandatory 
+	event stream methods, required by process support.
+
+	* event-unixoid.c (event_stream_unixoid_create_stream_pair):
+	Implementation of the method shared by TTY and X
+	(event_stream_unixoid_delete_stream_pair): Ditto
+
+	* event-tty.c (emacs_tty_next_event): get_process_from_usid()
+	instead of get_process_from_fd()
+	(emacs_tty_create_stream_pair): New events tream method
+	(emacs_tty_delete_stream_pair): New events tream method
+
+	* event-stream.c (event_stream_create_stream_pair): New event
+	stream method
+	(event_stream_delete_stream_pair): Ditto
+
+	* event-msw.c (debug_process_finalization): Although if0'ed,
+	removed obsolete code
+
+	* event-Xt.c (emacs_Xt_create_stream_pair): Implementation if the
+	new event stream method
+	(emacs_Xt_delete_stream_pair): Ditto
+
+	* emacs.c (main_1): Added calls to process_type_create*() and
+	vars_of_process() 
+
+	* callproc.c: (many places): removed DOS support
+
+1998-03-02  SL Baur  <steve@altair.xemacs.org>
+
+	* process.c (Fprocess_status): Restore old behavior -- call
+	Fget_process on a string argument.
+
+Mon Mar 02 11:37:36 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* file-coding.h:
+	* file-coding.c: more cleanup by only including iso2022 stuff in a
+	mule build. (setup_eol_coding_systems) move (T) -> :T etc.
+
+	* event-stream.c: (Fopen_dribble_file) Qescape_quoted only exists in
+	mule.
+
+	* md5.c: remove warning.
+
+	* unexcw.c: move .idata -> .rdata for cygwin b19.
+
+	* Makefile.in.in: add msw dependencies.
+
+	* sheap.c: up static heap parameters.
+
+	* s/cygwin32.h: add prototypes to eliminate warnings.
+
+1998-03-02  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (blddir): Import blddir.
+	Add blddir to dump-time load-path.
+
+	* nas.c (play_sound_data): Add braces for clarity.
+	(play_sound_file): Ditto.
+
 1998-03-01  SL Baur  <steve@altair.xemacs.org>
+
+	* alloc.c: Boost static vector size for breathing room.  Double
+	the size if we may be dynamically linking.
+
+	* dlopen.c (Fdl_open): Use RTLD_GLOBAL flag on dlopen if available.
+
+	* device-x.c (x_init_device): Hardcode `Emacs' as the filename
+	containing localized menubars.
 
 	* config.h.in: Add HAVE_UNIX_PROCESSES for 20.6.
 

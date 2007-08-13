@@ -67,6 +67,7 @@ void syms_of_device (void);
 void syms_of_dialog_x (void);
 void syms_of_dialog (void);
 void syms_of_dired (void);
+void syms_of_dlopen (void);
 void syms_of_doc (void);
 void syms_of_editfns (void);
 void syms_of_elhash (void);
@@ -189,6 +190,11 @@ void lstream_type_create (void);
 void lstream_type_create_mule_coding (void);
 void lstream_type_create_print (void);
 
+/* Initialize process types */
+
+void process_type_create_mswindows (void);
+void process_type_create_unix (void);
+
 /* Allow for Fprovide() (dump-time only). */
 
 void init_provide_once (void);
@@ -266,6 +272,8 @@ void vars_of_objects_mswindows (void);
 void vars_of_objects_x (void);
 void vars_of_print (void);
 void vars_of_process (void);
+void vars_of_process_mswindows (void);
+void vars_of_process_unix (void);
 void vars_of_profile (void);
 void vars_of_ralloc (void);
 void vars_of_redisplay (void);

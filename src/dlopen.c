@@ -89,7 +89,10 @@ available for use.
   /* #### Is this right? */
   GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (file, file);
 
-  handle = dlopen (file, RTLD_LAZY);
+#ifndef RTLD_GLOBAL
+#define RTLD_GLOBAL 0
+#endif
+  handle = dlopen (file, RTLD_LAZY|RTLD_GLOBAL);
   if (handle == NULL)
     {
       signal_error (Qerror,

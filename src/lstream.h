@@ -107,6 +107,10 @@ typedef struct lstream_implementation
      non-blocking file descriptor and are getting EWOULDBLOCK errors.)
      This function can be NULL if the stream is input-only. */
   int (*writer) (Lstream *stream, CONST unsigned char *data, int size);
+  /* Return non-zero if the last write operation on the stream resulted
+     in an attempt to block (EWOULDBLOCK). If this method does not
+     exists, the implementation returns 0 */
+  int (*was_blocked_p) (Lstream *stream);
   /* Rewind the stream.  If this is NULL, the stream is not seekable. */
   int (*rewinder) (Lstream *stream);
   /* Indicate whether this stream is seekable -- i.e. it can be rewound.
@@ -202,6 +206,7 @@ int Lstream_fgetc (Lstream *lstr);
 void Lstream_fungetc (Lstream *lstr, int c);
 int Lstream_read (Lstream *lstr, void *data, int size);
 int Lstream_write (Lstream *lstr, CONST void *data, int size);
+int Lstream_was_blocked_p (Lstream *lstr);
 void Lstream_unread (Lstream *lstr, CONST void *data, int size);
 int Lstream_rewind (Lstream *lstr);
 int Lstream_seekable_p (Lstream *lstr);
@@ -324,7 +329,7 @@ Lisp_Object make_filedesc_output_stream (int filedesc, int offset, int count,
 void filedesc_stream_set_pty_flushing (Lstream *stream,
 				       int pty_max_bytes,
 				       Bufbyte eof_char);
-int filedesc_stream_was_blocked (Lstream *stream);
+int filedesc_stream_fd (Lstream *stream);
 Lisp_Object make_lisp_string_input_stream (Lisp_Object string,
 					   Bytecount offset,
 					   Bytecount len);

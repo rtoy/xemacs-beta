@@ -45,7 +45,18 @@ HSZ mswindows_dde_service;
 HSZ mswindows_dde_topic_system;
 HSZ mswindows_dde_item_open;
 
+
+/* Control conversion of upper case file names to lower case.
+   nil means no, t means yes. */
+Lisp_Object Vmswindows_downcase_file_names;
+
+/* Control whether stat() attempts to determine file type and link count
+   exactly, at the expense of slower operation.  Since true hard links
+   are supported on NTFS volumes, this is only relevant on NT.  */
+Lisp_Object Vmswindows_get_true_file_attributes;
+
 Lisp_Object Qinit_pre_mswindows_win, Qinit_post_mswindows_win;
+
 
 static void
 mswindows_init_device (struct device *d, Lisp_Object props)
@@ -164,6 +175,19 @@ syms_of_device_mswindows (void)
 {
   defsymbol (&Qinit_pre_mswindows_win, "init-pre-mswindows-win");
   defsymbol (&Qinit_post_mswindows_win, "init-post-mswindows-win");
+
+  DEFVAR_LISP ("mswindows-downcase-file-names", &Vmswindows_downcase_file_names /*
+Non-nil means convert all-upper case file names to lower case.
+This applies when performing completions and file name expansion.*/ );
+  Vmswindows_downcase_file_names = Qnil;
+
+  DEFVAR_LISP ("mswindows-get-true-file-attributes", &Vmswindows_get_true_file_attributes /*
+    "Non-nil means determine accurate link count in file-attributes.
+This option slows down file-attributes noticeably, so is disabled by
+default.  Note that it is only useful for files on NTFS volumes,
+where hard links are supported.
+*/ );
+  Vmswindows_get_true_file_attributes = Qnil;
 }
 
 void

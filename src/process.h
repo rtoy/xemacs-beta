@@ -18,8 +18,6 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Synched up with: FSF 19.30. */
-
 #ifndef _XEMACS_PROCESS_H_
 #define _XEMACS_PROCESS_H_
 
@@ -48,7 +46,7 @@ DECLARE_LRECORD (process, struct Lisp_Process);
 #define PROCESSP(x) RECORDP (x, process)
 #define GC_PROCESSP(x) GC_RECORDP (x, process)
 #define CHECK_PROCESS(x) CHECK_RECORD (x, process)
-#define PROCESS_LIVE_P(x) (XPROCESS(x)->infd >= 0)
+#define PROCESS_LIVE_P(x) (!NILP (XPROCESS(x)->pipe_instream))
 
 #ifdef emacs
 
@@ -62,7 +60,8 @@ Lisp_Object Fdelete_process (Lisp_Object process);
 Lisp_Object Fopen_network_stream_internal (Lisp_Object name,
 					   Lisp_Object buffer,
 					   Lisp_Object host,
-					   Lisp_Object service);
+					   Lisp_Object service,
+					   Lisp_Object family);
 Lisp_Object Fopen_multicast_group_internal (Lisp_Object name,
 					    Lisp_Object buffer,
 					    Lisp_Object dest,
@@ -97,12 +96,12 @@ void update_process_status (Lisp_Object p,
 			    Lisp_Object status_symbol,
 			    int exit_code, int core_dumped);
 
-void get_process_file_descriptors (struct Lisp_Process *p,
-				   int *infd, int *outfd);
+void get_process_streams (struct Lisp_Process *p,
+			  Lisp_Object *instr, Lisp_Object *outstr);
 int get_process_selected_p (struct Lisp_Process *p);
 void set_process_selected_p (struct Lisp_Process *p, int selected_p);
 
-struct Lisp_Process *get_process_from_input_descriptor (int infd);
+struct Lisp_Process *get_process_from_usid (USID usid);
 
 #ifdef HAVE_SOCKETS
 int network_connection_p (Lisp_Object process);

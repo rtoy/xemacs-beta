@@ -66,7 +66,9 @@ static int window_pixel_height_to_char_height (struct window *w,
 static int window_char_height_to_pixel_height (struct window *w,
 					       int char_height,
 					       int include_gutters_p);
-static void change_window_height (struct window *w, int delta, int widthflag);
+static void change_window_height (struct window *w, int delta, int widthflag,
+                                  int inpixels);
+static int window_displayed_pixel_height (struct window *);
 
 
 /* Thickness of shadow border around 3d modelines. */
@@ -1327,6 +1329,16 @@ This includes the window's modeline and horizontal scrollbar (if any).
        (window))
 {
   return make_int (decode_window (window)->pixel_height);
+}
+
+DEFUN ("window-displayed-pixel-height", Fwindow_displayed_pixel_height, 0, 1, 0, /*
+Return the height in pixels of the buffer-displaying portion of WINDOW.
+Unlike `window-pixel-height', the space occupied by the gutters
+(modeline, horizontal scrollbar, ...) is not counted.  
+*/
+     (window))
+{
+  return make_int (window_displayed_pixel_height (decode_window (window)));
 }
 
 DEFUN ("window-width", Fwindow_width, 0, 1, 0, /*
@@ -3400,7 +3412,21 @@ selected window.
 {
   struct window *w = decode_window (window);
   CHECK_INT (n);
-  change_window_height (w, XINT (n), !NILP (side));
+  change_window_height (w, XINT (n), !NILP (side), /* inpixels */ 0);
+  return Qnil;
+}
+
+DEFUN ("enlarge-window-pixels", Fenlarge_window_pixels, 1, 3, "_p", /*
+Make the selected window ARG pixels bigger.
+From program, optional second arg non-nil means grow sideways ARG pixels,
+and optional third ARG specifies the window to change instead of the
+selected window.
+*/
+       (n, side, window))
+{
+  struct window *w = decode_window (window);
+  CHECK_INT (n);
+  change_window_height (w, XINT (n), !NILP (side), /* inpixels */ 1);
   return Qnil;
 }
 
@@ -3413,7 +3439,22 @@ selected window.
        (n, side, window))
 {
   CHECK_INT (n);
-  change_window_height (decode_window (window), -XINT (n), !NILP (side));
+  change_window_height (decode_window (window), -XINT (n), !NILP (side),
+                        /* inpixels */ 0);
+  return Qnil;
+}
+
+DEFUN ("shrink-window-pixels", Fshrink_window_pixels, 1, 3, "_p", /*
+Make the selected window ARG pixels smaller.
+From program, optional second arg non-nil means shrink sideways ARG pixels,
+and optional third ARG specifies the window to change instead of the
+selected window.
+*/
+       (n, side, window))
+{
+  CHECK_INT (n);
+  change_window_height (decode_window (window), -XINT (n), !NILP (side),
+                        /* inpixels */ 1);
   return Qnil;
 }
 
@@ -3566,6 +3607,18 @@ window_displayed_height (struct window *w)
   return num_lines;
 }
 
+/*
+ * Return height in pixels of buffer-displaying portion of window w. 
+ * Does not include the gutters (modeline, scrollbars, ...)
+ */
+int
+window_displayed_pixel_height (struct window *w)
+{
+  return (WINDOW_HEIGHT (w)
+          - window_top_gutter_height (w)
+          - window_bottom_gutter_height (w));
+}
+
 static int
 window_pixel_width (Lisp_Object window)
 {
@@ -3667,7 +3720,8 @@ window_char_width (struct window *w, int include_margins_p)
    keep everything consistent. */
 
 static void
-change_window_height (struct window *win, int delta, int widthflag)
+change_window_height (struct window *win, int delta, int widthflag,
+                      int inpixels)
 {
   Lisp_Object parent;
   Lisp_Object window = Qnil;
@@ -3717,7 +3771,8 @@ change_window_height (struct window *win, int delta, int widthflag)
   sizep = &CURSIZE (w);
   dim = CURCHARSIZE (w);
 
-  if ((dim + delta) < MINCHARSIZE (window))
+  if ((inpixels  && (*sizep + delta) < MINSIZE (window)) ||
+      (!inpixels && (dim + delta) < MINCHARSIZE (window)))
     {
       if (MINI_WINDOW_P (XWINDOW (window)))
 	return;
@@ -3728,7 +3783,8 @@ change_window_height (struct window *win, int delta, int widthflag)
 	}
     }
 
-  delta *= (widthflag ? defwidth : defheight);
+  if (!inpixels)
+    delta *= (widthflag ? defwidth : defheight);
 
   {
     int maxdelta;
@@ -5003,6 +5059,7 @@ by `current-window-configuration' (which see).
 	  w->toolbar_buttons_captioned_p = p->toolbar_buttons_captioned_p;
 	  w->default_toolbar = p->default_toolbar;
 	  w->default_toolbar_width = p->default_toolbar_width;
+	  w->default_toolbar_height = p->default_toolbar_height;
 	  w->default_toolbar_visible_p = p->default_toolbar_visible_p;
 	  w->default_toolbar_border_width = p->default_toolbar_border_width;
 #endif /* HAVE_TOOLBARS */
@@ -5271,6 +5328,7 @@ save_window_save (Lisp_Object window, struct window_config *config, int i)
       p->toolbar_buttons_captioned_p = w->toolbar_buttons_captioned_p;
       p->default_toolbar = w->default_toolbar;
       p->default_toolbar_width = w->default_toolbar_width;
+      p->default_toolbar_height = w->default_toolbar_height;
       p->default_toolbar_visible_p = w->default_toolbar_visible_p;
       p->default_toolbar_border_width = w->default_toolbar_border_width;
 #endif /* HAVE_TOOLBARS */
@@ -5503,6 +5561,7 @@ syms_of_window (void)
   DEFSUBR (Fwindow_frame);
   DEFSUBR (Fwindow_height);
   DEFSUBR (Fwindow_displayed_height);
+  DEFSUBR (Fwindow_displayed_pixel_height);
   DEFSUBR (Fwindow_width);
   DEFSUBR (Fwindow_pixel_height);
   DEFSUBR (Fwindow_pixel_width);
@@ -5539,7 +5598,9 @@ syms_of_window (void)
   DEFSUBR (Fselect_window);
   DEFSUBR (Fsplit_window);
   DEFSUBR (Fenlarge_window);
+  DEFSUBR (Fenlarge_window_pixels);
   DEFSUBR (Fshrink_window);
+  DEFSUBR (Fshrink_window_pixels);
   DEFSUBR (Fscroll_up);
   DEFSUBR (Fscroll_down);
   DEFSUBR (Fscroll_left);

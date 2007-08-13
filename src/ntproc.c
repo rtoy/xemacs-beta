@@ -74,20 +74,11 @@ Lisp_Object Vwin32_start_process_share_console;
    but is useful for Win32 processes on both Win95 and NT as well.  */
 Lisp_Object Vwin32_pipe_read_delay;
 
-/* Control conversion of upper case file names to lower case.
-   nil means no, t means yes. */
-Lisp_Object Vwin32_downcase_file_names;
-
 /* Control whether stat() attempts to generate fake but hopefully
    "accurate" inode values, by hashing the absolute truenames of files.
    This should detect aliasing between long and short names, but still
    allows the possibility of hash collisions.  */
 Lisp_Object Vwin32_generate_fake_inodes;
-
-/* Control whether stat() attempts to determine file type and link count
-   exactly, at the expense of slower operation.  Since true hard links
-   are supported on NTFS volumes, this is only relevant on NT.  */
-Lisp_Object Vwin32_get_true_file_attributes;
 
 Lisp_Object Qhigh, Qlow;
 
@@ -1879,11 +1870,6 @@ process temporarily).  A value of zero disables waiting entirely.
 */ );
   Vwin32_pipe_read_delay = 50;
 
-  DEFVAR_LISP ("win32-downcase-file-names", &Vwin32_downcase_file_names /*
-Non-nil means convert all-upper case file names to lower case.
-This applies when performing completions and file name expansion.*/ );
-  Vwin32_downcase_file_names = Qnil;
-
 #if 0
   DEFVAR_LISP ("win32-generate-fake-inodes", &Vwin32_generate_fake_inodes /*
     "Non-nil means attempt to fake realistic inode values.
@@ -1894,13 +1880,5 @@ the truename of a file can be slow.
 */ );
   Vwin32_generate_fake_inodes = Qnil;
 #endif
-
-  DEFVAR_LISP ("win32-get-true-file-attributes", &Vwin32_get_true_file_attributes /*
-    "Non-nil means determine accurate link count in file-attributes.
-This option slows down file-attributes noticeably, so is disabled by
-default.  Note that it is only useful for files on NTFS volumes,
-where hard links are supported.
-*/ );
-  Vwin32_get_true_file_attributes = Qnil;
 }
 /* end of ntproc.c */

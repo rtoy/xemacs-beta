@@ -609,6 +609,31 @@ if POS is nil, the value of point is assumed.
 }
 
 
+DEFUN ("temp-directory", Ftemp_directory, 0, 0, 0, /*
+Return the pathname to the directory to use for temporary files.
+On NT/MSDOS, this is obtained from the TEMP or TMP environment variables,
+defaulting to / if they are both undefined.
+On Unix it is obtained from TMPDIR, with /tmp as the default
+*/
+       ())
+{
+  char *tmpdir;
+
+#if defined(WINDOWSNT) || defined(MSDOS)
+  tmpdir = (char *) getenv ("TEMP");
+  if (!tmpdir)
+    tmpdir = (char *) getenv ("TMP");
+  if (!tmpdir)
+    tmpdir = "/";	/* what should this be on NT/MSDOS ? */
+#else /* WINDOWSNT || MSDOS */
+  tmpdir = (char *) getenv ("TMPDIR");
+  if (!tmpdir)
+    tmpdir = "/tmp";
+#endif
+
+  return build_ext_string (tmpdir, FORMAT_FILENAME);
+}
+
 DEFUN ("user-login-name", Fuser_login_name, 0, 1, 0, /*
 Return the name under which the user logged in, as a string.
 This is based on the effective uid, not the real uid.
@@ -2137,6 +2162,7 @@ syms_of_editfns (void)
   DEFSUBR (Finsert_before_markers);
   DEFSUBR (Finsert_char);
 
+  DEFSUBR (Ftemp_directory);
   DEFSUBR (Fuser_login_name);
   DEFSUBR (Fuser_real_login_name);
   DEFSUBR (Fuser_uid);

@@ -25,10 +25,10 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "sheap-adjust.h"
 
 #ifdef MULE
-#define STATIC_HEAP_BASE	0x500000
+#define STATIC_HEAP_BASE	0x600000
 #define STATIC_HEAP_SLOP	0x30000
 #else
-#define STATIC_HEAP_BASE	0x400000
+#define STATIC_HEAP_BASE	0x500000
 #define STATIC_HEAP_SLOP	0x30000
 #endif
 #define STATIC_HEAP_SIZE \

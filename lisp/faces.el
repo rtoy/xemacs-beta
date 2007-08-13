@@ -966,11 +966,11 @@ circumstances."
        (set-face-highlight-p face t locale 'tty)))
    (lambda ()
      ;; handle X specific entries
-     (cond ((featurep 'x)
-	    (frob-face-property face 'font 'x-make-font-bold locale))
-	   ((featurep 'mswindows)
-	    (frob-face-property face 'font 'mswindows-make-font-bold locale))
-	   ))
+     (when (featurep 'x)
+       (frob-face-property face 'font 'x-make-font-bold locale))
+     (when (featurep 'mswindows)
+       (frob-face-property face 'font 'mswindows-make-font-bold locale))
+     )
    '(([default] . [bold])
      ([bold] . t)
      ([italic] . [bold-italic])
@@ -991,11 +991,11 @@ for more specifics on exactly how this function works."
        (set-face-underline-p face t locale 'tty)))
    (lambda ()
      ;; handle X specific entries
-     (cond ((featurep 'x)
-	    (frob-face-property face 'font 'x-make-font-italic locale))
-	   ((featurep 'mswindows)
-	    (frob-face-property face 'font 'mswindows-make-font-italic locale))
-	   ))
+     (when (featurep 'x)
+       (frob-face-property face 'font 'x-make-font-italic locale))
+     (when (featurep 'mswindows)
+       (frob-face-property face 'font 'mswindows-make-font-italic locale))
+     )
    '(([default] . [italic])
      ([bold] . [bold-italic])
      ([italic] . t)
@@ -1017,11 +1017,11 @@ for more specifics on exactly how this function works."
        (set-face-underline-p face t locale 'tty)))
    (lambda ()
      ;; handle X specific entries
-     (cond ((featurep 'x)
-	    (frob-face-property face 'font 'x-make-font-bold-italic locale))
-	   ((featurep 'mswindows)
-	    (frob-face-property face 'font 'mswindows-make-font-bold-italic locale))
-	   ))
+     (when (featurep 'x)
+       (frob-face-property face 'font 'x-make-font-bold-italic locale))
+     (when (featurep 'mswindows)
+       (frob-face-property face 'font 'mswindows-make-font-bold-italic locale))
+     )
    '(([default] . [italic])
      ([bold] . [bold-italic])
      ([italic] . [bold-italic])
@@ -1042,11 +1042,11 @@ for more specifics on exactly how this function works."
        (set-face-highlight-p face nil locale 'tty)))
    (lambda ()
      ;; handle X specific entries
-     (cond ((featurep 'x)
-	    (frob-face-property face 'font 'x-make-font-unbold locale))
-	   ((featurep 'mswindows)
-	    (frob-face-property face 'font 'mswindows-make-font-unbold locale))
-	   ))
+     (when (featurep 'x)
+       (frob-face-property face 'font 'x-make-font-unbold locale))
+     (when (featurep 'mswindows)
+       (frob-face-property face 'font 'mswindows-make-font-unbold locale))
+     )
    '(([default] . t)
      ([bold] . [default])
      ([italic] . t)
@@ -1067,11 +1067,11 @@ for more specifics on exactly how this function works."
        (set-face-underline-p face nil locale 'tty)))
    (lambda ()
      ;; handle X specific entries
-     (cond ((featurep 'x)
-	    (frob-face-property face 'font 'x-make-font-unitalic locale))
-	   ((featurep 'mswindows)
-	    (frob-face-property face 'font 'mswindows-make-font-unitalic locale))
-	   ))
+     (when (featurep 'x)
+       (frob-face-property face 'font 'x-make-font-unitalic locale))
+     (when (featurep 'mswindows)
+       (frob-face-property face 'font 'mswindows-make-font-unitalic locale))
+     )
    '(([default] . t)
      ([bold] . t)
      ([italic] . [default])
@@ -1088,20 +1088,20 @@ from-the-bold-face'' operations described there are not done
 because they don't make sense in this context."
   (interactive (list (read-face-name "Shrink which face: ")))
   ;; handle X specific entries
-  (cond ((featurep 'x)
-	 (frob-face-property face 'font 'x-find-smaller-font locale))
-	((featurep 'mswindows)
-	 (frob-face-property face 'font 'mswindows-find-smaller-font locale))))
+  (when (featurep 'x)
+    (frob-face-property face 'font 'x-find-smaller-font locale))
+  (when (featurep 'mswindows)
+    (frob-face-property face 'font 'mswindows-find-smaller-font locale)))
 
 (defun make-face-larger (face &optional locale)
   "Make the font of the given face be larger, if possible.
 See `make-face-smaller' for the semantics of the LOCALE argument."
   (interactive (list (read-face-name "Enlarge which face: ")))
   ;; handle X specific entries
-  (cond ((featurep 'x)
-	 (frob-face-property face 'font 'x-find-larger-font locale))
-	((featurep 'mswindows)
-	 (frob-face-property face 'font 'mswindows-find-larger-font locale))))
+  (when (featurep 'x)
+    (frob-face-property face 'font 'x-find-larger-font locale))
+  (when (featurep 'mswindows)
+    (frob-face-property face 'font 'mswindows-find-larger-font locale)))
 
 (defun invert-face (face &optional locale)
   "Swap the foreground and background colors of the face."
@@ -1384,7 +1384,9 @@ and 'global)."
   (loop for face in (face-list) do
 	(init-face-from-resources face 'global))
   ;; Further X frobbing.
-  (x-init-global-faces)
+  (case window-system
+    (x (x-init-global-faces))
+    (mswindows (mswindows-init-global-faces)))
   ;; for bold and the like, make the global specification be bold etc.
   ;; if the user didn't already specify a value.  These will also be
   ;; frobbed further in init-other-random-faces.

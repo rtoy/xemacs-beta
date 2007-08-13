@@ -529,6 +529,15 @@ Lstream_write (Lstream *lstr, CONST void *data, int size)
   return i == 0 ? -1 : 0;
 }
 
+int
+Lstream_was_blocked_p (Lstream *lstr)
+{
+  if (lstr->imp->was_blocked_p)
+    return (lstr->imp->was_blocked_p) (lstr);
+  else
+    return 0;
+}
+
 static int
 Lstream_raw_read (Lstream *lstr, unsigned char *buffer, int size)
 {
@@ -1170,6 +1179,13 @@ filedesc_closer (Lstream *stream)
     return 0;
 }
 
+static int
+filedesc_was_blocked_p (Lstream *stream)
+{
+  struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
+  return str->blocking_error_p;
+}
+
 void
 filedesc_stream_set_pty_flushing (Lstream *stream, int pty_max_bytes,
 				  Bufbyte eof_char)
@@ -1177,13 +1193,14 @@ filedesc_stream_set_pty_flushing (Lstream *stream, int pty_max_bytes,
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   str->pty_max_bytes = pty_max_bytes;
   str->eof_char = eof_char;
+  str->pty_flushing = 1;
 }
 
 int
-filedesc_stream_was_blocked (Lstream *stream)
+filedesc_stream_fd (Lstream *stream)
 {
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
-  return str->blocking_error_p;
+  return str->fd;
 }
 
 /*********** read from a Lisp string ***********/
@@ -1707,6 +1724,7 @@ lstream_type_create (void)
 
   LSTREAM_HAS_METHOD (filedesc, reader);
   LSTREAM_HAS_METHOD (filedesc, writer);
+  LSTREAM_HAS_METHOD (filedesc, was_blocked_p);
   LSTREAM_HAS_METHOD (filedesc, rewinder);
   LSTREAM_HAS_METHOD (filedesc, seekable_p);
   LSTREAM_HAS_METHOD (filedesc, closer);

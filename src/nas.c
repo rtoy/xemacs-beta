@@ -346,7 +346,7 @@ play_sound_file (char *sound_file,
     }
 #endif
 
-  if (aud==NULL)
+  if (aud==NULL) {
     if (aud_server != NULL)
       {
 	char *m;
@@ -368,6 +368,7 @@ play_sound_file (char *sound_file,
 #endif
 	return 0;
       }
+  }
 
 #ifndef CACHE_SOUNDS
   sounds_in_play++;
@@ -445,7 +446,7 @@ play_sound_data (unsigned char *data,
 #endif
 
 
-  if (aud == NULL)
+  if (aud == NULL) {
     if (aud_server != NULL)
       {
 	char *m;
@@ -466,6 +467,7 @@ play_sound_data (unsigned char *data,
 #endif
 	return 0;
       }
+  }
 
   if ((s=SoundOpenDataForReading (data, length))==NULL)
     {

@@ -43,6 +43,9 @@ void set_descriptor_non_blocking (int fd);
 
 void wait_without_blocking (void);
 
+int get_pty_max_bytes (int fd);
+Bufbyte get_eof_char (int fd);
+
 /* Wait for subprocess with process id `pid' to terminate and
    make sure it will get eliminated (not remain forever as a zombie) */
 void wait_for_termination (int pid);

@@ -130,8 +130,11 @@ This variable is relevant only if `backup-by-copying' is nil."
 
 (defvar backup-enable-predicate
   '(lambda (name)
-     (or (< (length name) 5)
-	 (not (string-equal "/tmp/" (substring name 0 5)))))
+     (not (or (string-equal "/tmp/" (substring name 0 5))
+	      (let ((tmpdir (temp-directory)))
+		(and tmpdir
+		     (string-equal (concat tmpdir "/")
+				   (substring name 0 (1+ (length tmpdir)))))))))
   "Predicate that looks at a file name and decides whether to make backups.
 Called with an absolute file name as argument, it returns t to enable backup.")
 
@@ -974,7 +977,7 @@ problems will be suppressed."
 			    filename))
 	(error "%s is a directory." filename))
     (let* ((buf (get-file-buffer filename))
-;	   (truename (abbreviate-file-name (file-truename filename)))
+	   (truename (abbreviate-file-name (file-truename filename)))
 	   (number (nthcdr 10 (file-attributes (file-truename filename))))
 ;	   (number (and buffer-file-truename
 ;			(nthcdr 10 (file-attributes buffer-file-truename))))
@@ -1064,8 +1067,9 @@ problems will be suppressed."
 		   ;; If they fail too, set error.
 		   (setq error e)))))
 	  ;; Find the file's truename, and maybe use that as visited name.
-	  ;; automatically computed in XEmacs.
-;         (setq buffer-file-truename truename)
+	  ;; automatically computed in XEmacs, unless jka-compr was used!
+	  (unless buffer-file-truename
+	    (setq buffer-file-truename truename))
 	  (setq buffer-file-number number)
 	  ;; On VMS, we may want to remember which directory in a search list
 	  ;; the file was found in.
@@ -2939,6 +2943,73 @@ FILENAME should lack slashes.
 You can redefine this for customization."
   (string-match "\\`#.*#\\'" filename))
 
+(defun wildcard-to-regexp (wildcard)
+  "Given a shell file name pattern WILDCARD, return an equivalent regexp.
+The generated regexp will match a filename iff the filename
+matches that wildcard according to shell rules.  Only wildcards known
+by `sh' are supported."
+  (let* ((i (string-match "[[.*+\\^$?]" wildcard))
+	 ;; Copy the initial run of non-special characters.
+	 (result (substring wildcard 0 i))
+	 (len (length wildcard)))
+    ;; If no special characters, we're almost done.
+    (if i
+	(while (< i len)
+	  (let ((ch (aref wildcard i))
+		j)
+	    (setq
+	     result
+	     (concat result
+		     (cond
+		      ((eq ch ?\[)	; [...] maps to regexp char class
+		       (progn
+			 (setq i (1+ i))
+			 (concat
+			  (cond
+			   ((eq (aref wildcard i) ?!) ; [!...] -> [^...]
+			    (progn
+			      (setq i (1+ i))
+			      (if (eq (aref wildcard i) ?\])
+				  (progn
+				    (setq i (1+ i))
+				    "[^]")
+				"[^")))
+			   ((eq (aref wildcard i) ?^)
+			    ;; Found "[^".  Insert a `\0' character
+			    ;; (which cannot happen in a filename)
+			    ;; into the character class, so that `^'
+			    ;; is not the first character after `[',
+			    ;; and thus non-special in a regexp.
+			    (progn
+			      (setq i (1+ i))
+			      "[\000^"))
+			   ((eq (aref wildcard i) ?\])
+			    ;; I don't think `]' can appear in a
+			    ;; character class in a wildcard, but
+			    ;; let's be general here.
+			    (progn
+			      (setq i (1+ i))
+			      "[]"))
+			   (t "["))
+			  (prog1	; copy everything upto next `]'.
+			      (substring wildcard
+					 i
+					 (setq j (string-match
+						  "]" wildcard i)))
+			    (setq i (if j (1- j) (1- len)))))))
+		      ((eq ch ?.)  "\\.")
+		      ((eq ch ?*)  "[^\000]*")
+		      ((eq ch ?+)  "\\+")
+		      ((eq ch ?^)  "\\^")
+		      ((eq ch ?$)  "\\$")
+		      ((eq ch ?\\) "\\\\") ; probably cannot happen...
+		      ((eq ch ??)  "[^\000]")
+		      (t (char-to-string ch)))))
+	    (setq i (1+ i)))))
+    ;; Shell wildcards should match the entire filename,
+    ;; not its part.  Make the regexp say so.
+    (concat "\\`" result "\\'")))
+
 (defcustom list-directory-brief-switches
   (if (eq system-type 'vax-vms) "" "-CF")
   "*Switches for list-directory to pass to `ls' for brief listing."
@@ -3017,8 +3088,13 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
     (if handler
 	(funcall handler 'insert-directory file switches
 		 wildcard full-directory-p)
-      (if (eq system-type 'vax-vms)
-	  (vms-read-directory file switches (current-buffer))
+      (cond
+       ((eq system-type 'vax-vms)
+	(vms-read-directory file switches (current-buffer)))
+       ((and (fboundp 'mswindows-insert-directory)
+	     (eq system-type 'windows-nt))
+	(mswindows-insert-directory file switches wildcard full-directory-p))
+       (t
 	(if wildcard
 	    ;; Run ls in the directory of the file pattern we asked for.
 	    (let ((default-directory 
@@ -3070,7 +3146,7 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 				(concat (file-name-as-directory file)
 					;;#### Unix-specific
 					".")
-			      file))))))))))
+			      file)))))))))))
 
 (defvar kill-emacs-query-functions nil
   "Functions to call with no arguments to query about killing XEmacs.

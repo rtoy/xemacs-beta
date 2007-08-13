@@ -244,8 +244,8 @@ For example:
   :filter file-menu-filter	; file-menu-filter is a function that takes
 				; one argument (a list of menu items) and
 				; returns a list of menu items
-  [ "Save As..."    write-file  t ]
-  [ "Revert Buffer" revert-buffer (buffer-modified-p) ]
+  [ "Save As..."    write-file]
+  [ "Revert Buffer" revert-buffer :active (buffer-modified-p) ]
   [ "Read Only"     toggle-read-only :style toggle :selected buffer-read-only ]
   )
 @end example
@@ -621,8 +621,8 @@ For example, the command
 @example
 (add-submenu nil '("%_Test"
 		   ["One" (insert "1") :accelerator ?1 :active t]
-		   ["%_Two" (insert "2") t]
-		   ["%_3" (insert "3") t]))
+		   ["%_Two" (insert "2")]
+		   ["%_3" (insert "3")]))
 @end example
 
 will add a new menu to the top level menubar.  The new menu can be reached
@@ -709,8 +709,8 @@ The default value is @code{nil}.
 (setq menu-accelerator-enabled 'menu-force)
 (add-submenu nil '("%_Test"
 		   ["One" (insert "1") :accelerator ?1 :active t]
-		   ["%_Two" (insert "2") t]
-		   ["%_3" (insert "3") t]))
+		   ["%_Two" (insert "2")]
+		   ["%_3" (insert "3")]))
 @end example
 
 will add the menu "Test" to the top level menubar.  Pressing C-x followed by

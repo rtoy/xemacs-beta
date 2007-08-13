@@ -373,6 +373,7 @@ use the standard functions without calling themselves recursively.
        (filename, operation))
 {
   /* This function does not GC */
+  /* This function can be called during GC */
   /* This function must not munge the match data.  */
   Lisp_Object chain, inhibited_handlers;
 

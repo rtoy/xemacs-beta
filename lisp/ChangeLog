@@ -1,3 +1,83 @@
+1998-03-07  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* specifier.el: Define new specifier tag `default'.
+
+	* modeline.el: Initialize faces using `default' tag.
+
+	* x-faces.el (x-init-face-from-resources): Remove
+	  specifier specs containing the `default' tag before
+	  adding new specs.
+
+1998-03-02  John Jones  <jj@asu.edu>
+
+	* package-get.el (package-get-all): fixed arguments on call to
+	package-admin-add-single-file-package.
+	* package-get.el (package-get-installedp): fixed to match
+	advertised behavior.
+	* package-get.el: added function package-get-update-all which
+	installs newest versions of all the current packages (if they are
+	not already installed).
+
+1998-03-04  Jens-Ulrik Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* files.el (find-file-noselect): Uncommented `truename' binding in
+	`let*' and use it later to set `buffer-file-truename' iff it's
+	still nil, as happens for example when finding a compressed
+	file with "jka-compr".
+
+Wed Mar 04 08:55:12 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* faces.el: in make-face-* type functions do the operation for all
+	window systems, not just the first one found.
+
+	* font.el: call mswindows-list-fonts for mswindows.
+
+1998-03-02  Glynn Clements  <glynn@sensei.co.uk>
+
+	* code-process.el (call-process-region):
+	* process.el (call-process-region):
+	* package-get.el (package-get-dir):
+	* files.el (backup-enable-predicate):
+	* gnuserv.el (gnuserv-temp-file-regexp):
+	Use temp-directory in place of `/tmp'.
+
+Fri Feb 20 21:22:34 1998  Darryl Okahata  <darrylo@sr.hp.com>
+
+	* "Fast" dired-in-C enhancements for Windows 95/NT:
+
+	* files.el: Added function, `wildcard-to-regexp', from GNU
+ 	  Emacs.
+
+	* files.el (insert-directory): Modified to use special
+	  dired-in-C enhancements if present.
+
+Mon Mar 02 11:37:36 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* code-files.el: make default coding no-conversion.
+
+1998-03-02  SL Baur  <steve@altair.xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list): Find Installation.el from
+	the load-path.
+
+	* update-elc.el: Strip directory when testing for files not to
+	bytecompile.
+
+1998-03-02  Aki Vehtari  <Aki.Vehtari@hut.fi>
+
+	* lisp-mode.el: Use recommended form for menus.
+
+	* info.el (Info-construct-menu): Use recommended form for menus.
+
+	* gnuserv.el (gnuserv-edit-files): Use recommended form for menu
+	entry.
+
+1998-02-28  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame.el: Resurrect get-frame-for-buffer-default-to-current.
+	  (get-frame-for-buffer-noselect): Always return frames
+	  in the not-this-window-p cond clause.
+
 1998-02-27  SL Baur  <steve@altair.xemacs.org>
 
 	* help.el (describe-installation): New function.

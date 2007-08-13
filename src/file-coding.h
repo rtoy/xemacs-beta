@@ -62,6 +62,7 @@ enum eol_type
   EOL_CR
 };
 
+#ifdef MULE
 typedef struct charset_conversion_spec charset_conversion_spec;
 struct charset_conversion_spec
 {
@@ -73,6 +74,7 @@ typedef struct
 {
   Dynarr_declare (charset_conversion_spec);
 } charset_conversion_spec_dynarr;
+#endif
 
 struct Lisp_Coding_System
 {
@@ -97,7 +99,7 @@ struct Lisp_Coding_System
      marking, rather than autodetecting it.  These will only be non-nil
      if (eol_type == EOL_AUTODETECT). */
   Lisp_Object eol_lf, eol_crlf, eol_cr;
-
+#ifdef MULE
   struct
   {
     /* What are the charsets to be initially designated to G0, G1,
@@ -121,13 +123,13 @@ struct Lisp_Coding_System
     unsigned int no_iso6429	:1;
     unsigned int escape_quoted	:1;
   } iso2022;
-
   struct
   {
     /* For a CCL coding system, these specify the CCL programs used for
        decoding (input) and encoding (output). */
     Lisp_Object decode, encode;
   } ccl;
+#endif
 };
 
 DECLARE_LRECORD (coding_system, struct Lisp_Coding_System);
@@ -150,6 +152,8 @@ DECLARE_LRECORD (coding_system, struct Lisp_Coding_System);
 #define CODING_SYSTEM_EOL_LF(codesys)   ((codesys)->eol_lf)
 #define CODING_SYSTEM_EOL_CRLF(codesys) ((codesys)->eol_crlf)
 #define CODING_SYSTEM_EOL_CR(codesys)   ((codesys)->eol_cr)
+
+#ifdef MULE
 #define CODING_SYSTEM_ISO2022_INITIAL_CHARSET(codesys, g) \
   ((codesys)->iso2022.initial_charset[g])
 #define CODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT(codesys, g) \
@@ -168,6 +172,7 @@ DECLARE_LRECORD (coding_system, struct Lisp_Coding_System);
   ((codesys)->iso2022.escape_quoted)
 #define CODING_SYSTEM_CCL_DECODE(codesys) ((codesys)->ccl.decode)
 #define CODING_SYSTEM_CCL_ENCODE(codesys) ((codesys)->ccl.encode)
+#endif /* MULE */
 
 #define XCODING_SYSTEM_NAME(codesys) \
   CODING_SYSTEM_NAME (XCODING_SYSTEM (codesys))
@@ -189,6 +194,8 @@ DECLARE_LRECORD (coding_system, struct Lisp_Coding_System);
   CODING_SYSTEM_EOL_CRLF (XCODING_SYSTEM (codesys))
 #define XCODING_SYSTEM_EOL_CR(codesys) \
   CODING_SYSTEM_EOL_CR (XCODING_SYSTEM (codesys))
+
+#ifdef MULE
 #define XCODING_SYSTEM_ISO2022_INITIAL_CHARSET(codesys, g) \
   CODING_SYSTEM_ISO2022_INITIAL_CHARSET (XCODING_SYSTEM (codesys), g)
 #define XCODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT(codesys, g) \
@@ -211,6 +218,7 @@ DECLARE_LRECORD (coding_system, struct Lisp_Coding_System);
   CODING_SYSTEM_CCL_DECODE (XCODING_SYSTEM (codesys))
 #define XCODING_SYSTEM_CCL_ENCODE(codesys) \
   CODING_SYSTEM_CCL_ENCODE (XCODING_SYSTEM (codesys))
+#endif /* MULE */
 
 extern Lisp_Object Qbuffer_file_coding_system, Qcoding_system_error;
 
@@ -235,7 +243,7 @@ extern Lisp_Object Qescape_quoted;
 
 
 /* Used by Big 5 on output. */
-
+#ifdef MULE
 #define CODING_STATE_BIG5_1	(1 << 2) /* If set, we just encountered
 					    LEADING_BYTE_BIG5_1. */
 #define CODING_STATE_BIG5_2	(1 << 3) /* If set, we just encountered
@@ -353,6 +361,7 @@ enum iso_esc_flag
 #define ISO_CODE_SS2	0x8E		/* single-shift-2 */
 #define ISO_CODE_SS3	0x8F		/* single-shift-3 */
 #define ISO_CODE_CSI	0x9B		/* control-sequence-introduce */
+#endif /* MULE */
 
 /* Macros to access an encoding stream or decoding stream */
 
@@ -393,6 +402,7 @@ enum coding_category_type
 
 #define CODING_CATEGORY_LAST CODING_CATEGORY_NO_CONVERSION
 
+#ifdef MULE
 #define CODING_CATEGORY_SHIFT_JIS_MASK	\
   (1 << CODING_CATEGORY_SHIFT_JIS)
 #define CODING_CATEGORY_ISO_7_MASK \
@@ -407,11 +417,13 @@ enum coding_category_type
   (1 << CODING_CATEGORY_ISO_LOCK_SHIFT)
 #define CODING_CATEGORY_BIG5_MASK \
   (1 << CODING_CATEGORY_BIG5)
+#endif
 #define CODING_CATEGORY_NO_CONVERSION_MASK \
   (1 << CODING_CATEGORY_NO_CONVERSION)
 #define CODING_CATEGORY_NOT_FINISHED_MASK \
   (1 << 30)
 
+#ifdef MULE
 /* Convert shift-JIS code (sj1, sj2) into internal string
    representation (c1, c2). (The leading byte is assumed.) */
 
@@ -440,6 +452,7 @@ do {							\
     sj1 = (I1 >> 1) + ((I1 < 0xdf) ? 0x30 : 0x70),	\
     sj2 = I2 - 2;					\
 } while (0)
+#endif /* MULE */
 
 extern Lisp_Object make_decoding_input_stream (Lstream *stream,
 					       Lisp_Object codesys);

@@ -6,7 +6,7 @@
 	"replace" 		; match-string used in version.el.
 	; Ignore compiled-by-mistake version.elc
 	"version.el"
-	#-infodock "../Installation.el"
+	#-infodock "Installation.el"
 	"cl"
 	"cl-extra"
 	"cl-seq"
@@ -101,6 +101,7 @@
 	#+mule "mule-misc"
 	#+mule "kinsoku"
 	#+(and mule x) "mule-x-init"
+	#+(and mule tty) "mule-tty-init"
 	#+mule "mule-cmds" ; to sync with Emacs 20.1
 
 ;; after this goes the specific lisp routines for a particular input system
