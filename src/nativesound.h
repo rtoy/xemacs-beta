@@ -1,5 +1,5 @@
-/* Lwlib site configuration template file.  -*- C -*-
-   Copyright (C) 1997 Sun Microsystems, Inc.
+/* Sound functions.
+   Copyright (C) 2000 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
@@ -18,23 +18,10 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Not in FSF. */
+/* Synched up with: Not in FSF. */
 
-#ifndef _LWLIB_CONFIG_H_
-#define _LWLIB_CONFIG_H_
+/* These are defined in the appropriate file (sunplay.c, sgiplay.c,
+   or hpplay.c). */
 
-#include <../src/config.h>
-
-#undef NEED_MOTIF
-#undef NEED_ATHENA
-#undef NEED_LUCID
-
-/* The path to the Athena widgets - the usual value is `X11/Xaw' */
-#undef ATHENA_H_PATH
-#ifdef ATHENA_H_PATH
-# define ATHENA_INCLUDE(file) SMART_INCLUDE (ATHENA_H_PATH,file)
-#else
-# define ATHENA_INCLUDE(file) <file>
-#endif
-
-#endif /* _LWLIB_CONFIG_H_ */
+void play_sound_file (char *name, int volume);
+int play_sound_data (unsigned char *data, int length, int volume);
