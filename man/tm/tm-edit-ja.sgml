@@ -1,9 +1,9 @@
 <!doctype sinfo system>
-<!-- $Id: tm-edit-ja.sgml,v 1.1.1.1 1996/12/21 20:51:39 steve Exp $ -->
+<!-- $Id: tm-edit-ja.sgml,v 1.2 1996/12/28 21:03:29 steve Exp $ -->
 <head>
-<title>tm-edit 7.90 説明書（日本語版）
+<title>tm-edit 7.100 説明書（日本語版）
 <author>守岡 知彦 <mail>morioka@jaist.ac.jp</mail>
-<date>1996/10/11
+<date>1996/12/25
 
 <toc>
 </head>
@@ -122,7 +122,9 @@ text part を表す single-part tag を挿入します。
 </kd>
 <kt>C-c C-x C-i
 <kd>
-file を MIME part として添付します。
+file を MIME part として添付します。前に <kbd>C-u</kbd> を付けた場合、
+常に media-type, subtype 等を聞いて来ます。<cf node="tag specification
+for inserted file">
 </kd>
 <kt>C-c C-x C-e
 <kd>
@@ -180,11 +182,11 @@ enclosure を作るための操作としては以下のようなものがあります。
 </kd>
 <kt>C-c C-x s
 <kd>
-指定した region に電子署名を行います。(<ref node="PGP">)
+指定した region に電子署名を行います。<cf node="PGP">
 </kd>
 <kt>C-c C-x e
 <kd>
-指定した region を暗号化します。(<ref node="PGP">)
+指定した region を暗号化します。<cf node="PGP">
 <kt>C-c C-x q
 <kd>
 指定した region 内の tag を無効にし、その tag を文字列として利用できる
@@ -205,8 +207,8 @@ mime/editor-mode におけるその他の操作を説明します。
 </kd>
 <kt>C-c C-x C-p
 <kd>
-編集中の message を preview します。(<ref file="tm-view-ja"
-node="mime/viewer-mode">)
+編集中の message を preview します。<cf file="tm-view-ja"
+node="mime/viewer-mode">
 </kd>
 <kt>C-c C-x C-z
 <kd>
@@ -231,15 +233,76 @@ help message を表示します。
 </kd>
 <kt>C-c C-x v
 <kd>
-message 全体を電子署名するかどうかを決めます。(<ref node="PGP">)
+message 全体を電子署名するかどうかを決めます。<cf node="PGP">
 </kd>
 <kt>C-c C-x h
 <kd>
-message 全体を暗号化するかどうかを決めます。(<ref node="PGP">)
+message 全体を暗号化するかどうかを決めます。<cf node="PGP">
 <kt>C-c C-x ?
 <kd>
 help message を表示します。
 </kl>
+
+
+<h1> 挿入される file に対する tag の決定
+<node> tag specification for inserted file
+<p>
+<kbd>C-c C-x C-i</kbd> (<code>mime-editor/insert-file</code>) を実行し
+た時、挿入される file に対する media-type や encoding などの tag の情
+報は変数 <code>mime-file-types</code> によって file 名から推測されます。
+<p>
+前に <kbd>C-u</kbd> を付けた時、および、適当な値が見付からなかった場合、
+user に対して値の入力を促します。（前に <kbd>C-u</kbd> を付けた時、推
+測された値が既定値として用いられます）
+<p>
+file 名に対する既定値を変えたい場合は変数 <code>mime-file-types</code>
+を設定して下さい。
+
+<defvar name="mime-file-types">
+<p>
+挿入される file の file 名に対する tag の既定値を与える。
+<p>
+この変数は
+
+<lisp>
+	(FILE_PAT TYPE SUBTYPE PARAMS ENCODING
+	 DISPOSITION_TYPE DISPOSITION_PARAMS)
+</lisp>
+
+という list の list で、各要素は以下の通りである：
+
+<dl>
+<dt>FILE_PAT
+<dd>file 名を表す正規表現
+<dt>TYPE
+<dd>media type
+<dt>SUBTYPE
+<dd>media subtype
+<dt>PARAMS
+<dd>Content-Type field の parameter
+<dt>ENCODING
+<dd>Content-Transfer-Encoding
+<dt>DISPOSITION_TYPE
+<dd>disposition-type
+<dt>DISPOSITION_PARAMS
+<dd>Content-Disposition field の parameter
+</dl>
+
+<noindent>
+設定例： <file>*.rtf</file> に対する media type を application/rtf に
+する場合
+
+<lisp>
+(call-after-loaded
+ 'tm-edit
+ (lambda ()
+   (set-alist 'mime-file-types
+	      "\\.rtf$"
+	      '("application" "rtf" nil nil
+		"attachment" (("filename" . file)))
+	      )))
+</lisp>
+</defvar>
 
 
 <h1> transfer level
@@ -445,6 +508,18 @@ PGP での暗号化の形式を指定します。
 <p>
 既定値は <code>nil</code> です。
 </defvar>
+
+
+<h1> 謝辞
+<node> Acknowledgments
+<p>
+最初に、tm-edit の前身となった <file>mime.el</file> を書き、その配布と
+改造をお許し下さった、梅田政信さんに感謝します。tm-edit の user
+interface の基本的な設計は梅田さんの手によるもので、とても良い設計であっ
+たと思います。
+<p>
+次に、beta test に協力して下さった日本語版、英語版双方の tm mailing
+list の member に感謝します。
 
 
 <h1> 概念索引

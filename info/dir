@@ -77,7 +77,11 @@ Packages:
 * Vhdl-mode::	A major mode for editing VHDL files.
 * VM::		View Mail, a replacement for Rmail.
 * W3::		A browser for the World Wide Web global hypertext system.
-* tm_en::	Tools for Mime (English version)
-* tm-mh-e_en::	Tools for Mime for MH-E (English version)
-* gnus-mime_en::Tools for Mime for Gnus (English version)
+* tm-en::	Tools for Mime (English version)
+* tm-ja::	Tools for Mime (Japanese version)
+* tm-mh-e-en::	MIME extender for mh-e (English version)
+* tm-mh-e-ja::	MIME extender for mh-e (Japanese version)
+* tm-vm_en::	MIME extender for VM.
+* gnus-mime-en::MIME extender for Gnus (English version)
+* gnus-mime-ja::MIME extender for Gnus (Japanese version)
 * Locals:

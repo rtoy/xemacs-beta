@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/9/4
 ;; Version:
-;;	$Id: gnus-mime-old.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;;	$Id: gnus-mime-old.el,v 1.2 1996/12/28 21:03:11 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.

@@ -3,7 +3,7 @@
 ;; Copyright (C) 1996 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: texi-util.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;; Version: $Id: texi-util.el,v 1.2 1996/12/28 21:03:09 steve Exp $
 ;; Keywords: Texinfo
 
 ;; This file is part of tl (Tiny Library).

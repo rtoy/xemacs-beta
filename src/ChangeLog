@@ -1,3 +1,19 @@
+Fri Dec 27 21:13:33 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
+
+	* event-Xt.c (x_to_emacs_keysym): Corrections to SUNOS_GCC_LO_BUG.
+
+Mon Dec 23 11:37:16 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
+
+	* fns.c (Ffillarray): Fix for (fillarray #*10 0)
+
+Mon Dec 23 10:27:14 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* bitmaps.h: Change to unsigned char.
+
+	* frame-x.c (x_cde_transfer_callback): Typecast fix.
+
+	* keymap.c (define_key_check_and_coerce_keysym): Typecast fix.
+
 Fri Dec 20 19:21:56 1996  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in.in (lisp): Remove cc-mode as a dumped package.

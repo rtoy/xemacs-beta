@@ -1031,6 +1031,7 @@ is normally set to `get-frame-for-buffer' (which see)."
       (setq minibuffer-scroll-window window)
       (set-window-start window 1) ; obeys narrowing
       (set-window-point window 1)
+      (shrink-window-if-larger-than-buffer window)
       nil)))
 
 (setq pre-display-buffer-function 'get-frame-for-buffer)

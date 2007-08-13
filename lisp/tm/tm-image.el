@@ -7,7 +7,7 @@
 ;;         Dan Rich <drich@morpheus.corp.sgi.com>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/12/15
-;; Version: $Id: tm-image.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;; Version: $Id: tm-image.el,v 1.2 1996/12/28 21:03:14 steve Exp $
 
 ;; Keywords: mail, news, MIME, multimedia, image, picture, X-Face
 

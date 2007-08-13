@@ -7,7 +7,7 @@
 ;;         and Neal Becker <neal@neal.ctd.comsat.com>
 ;; Maintainer: KOBAYASHI Shuhei <shuhei-k@jaist.ac.jp>
 ;; Created: 1995/11/27
-;; Version: $Id: tm-mail.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;; Version: $Id: tm-mail.el,v 1.2 1996/12/28 21:03:15 steve Exp $
 ;; Keywords: mail, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).

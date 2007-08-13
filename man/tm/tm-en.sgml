@@ -1,9 +1,9 @@
 <!doctype sinfo system>
-<!-- $Id: tm-en.sgml,v 1.1.1.1 1996/12/21 20:51:39 steve Exp $ -->
+<!-- $Id: tm-en.sgml,v 1.2 1996/12/28 21:03:29 steve Exp $ -->
 <head>
-<title>tm 7.90 Manual (English Version)
+<title>tm 7.100 Manual (English Version)
 <author>MORIOKA Tomohiko <mail>morioka@jaist.ac.jp</mail>
-<date>1996/10/15
+<date>1996/12/25
 
 <toc>
 </head>
@@ -20,7 +20,7 @@ This file documents tm, a MIME package for GNU Emacs.
 <p>
 The tm package is a set of modules to enjoy MIME on GNU Emacs.  Using
 tm, you can
-
+<p>
 <ul>
 <li> playback or view the MIME messages using tm-view
 <li> compose MIME message using tm-edit
@@ -128,9 +128,10 @@ X0208</dref>, <dref>GB 2312</dref>)
 <h3> ASCII
 <node> ASCII
 <p>
-$B%"%a%j%+O"K.$G;H$o$l$kJ8;z$rId9f2=$7$?(B <dref>94-character set</dref>.
-A-Z, a-z $B$N(B Latin $BJ8;z$H?t;z!"4v$D$+$N5-9f$+$i$J$k!#(B<a node="ISO
-646">ISO 646</a> $B$N0l$D!#(B
+<concept>ASCII</concept> is a <dref>94-character set</dref> contains
+primary latin characters (A-Z, a-z), numbers and some characters.  It
+is a standard of the United States of America.  It is a variant of <a
+node="ISO 646">ISO 646</a>.
 
 <standard abbrev="ASCII" title-en="Coded Character Set -- 7-Bit
 	      American Standard Code for Information Interchange"
@@ -156,65 +157,65 @@ translated by non-Internet gateways.
 <h3> binary
 <node> binary
 <p>
-$BG$0U$N(B byte $BNs$r(B <concept>binary</concept> $B$H8F$V$3$H$K$7$^$9!#(B
+Any byte stream is called <concept>binary</concept>.
 <p>
-<a node="8bit">8bit</a> $B$H0[$J$k$N$O(B data $B$K9T$N9=B$$r2>Dj$7$J$$$3$H$G(B
-$B$9!#(B
+It does not require structureof lines.  It differs from from <a
+node="8bit">8bit</a>.
 <p>
-$B$^$?!"9T$N9=B$$,$"$C$F$b!"(B999 byte $B0J>e$+$i$J$k9T$,$"$k>l9g$b(B binary
-$B$H8F$V$3$H$K$7$^$9!#(B
-<p>
-$B$A$J$_$K!"(B<a node="7bit">7bit</a> $B$d(B 8bit $B$GI=8=$G$-$k(B data $B$O(B binary 
-$B$G$bI=8=$G$-$^$9!#$h$C$F!"(B<concept>binary data</concept> $B$H8@$C$?>l9g!"(B
-$BG$0U$N(B data $B$r;X$9$3$H$,$"$j$^$9!#(B
-
-
-<h3> Graphic Character Set
-<node> graphic character set
-<p>
-<dref>Coded character set</dref> for graphic characters.
+In addition, if line structured data contain too long line (more than
+998 bytes), it is regarded as binary.
 
 
 <h3> cn-gb, gb2312
 <node> cn-gb
 <p>
-$BCf9qBgN&$G$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B <a
-node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+A <a node="MIME charset">MIME charset</a> for simplified Chinese
+mainly used in the Chinese mainland.
 <p>
-<dref>ISO 2022</dref> $B$K4p$$$F(B <dref>ASCII</dref> $B$K(B <dref>GB
-2312</dref> $B$r(B <dref>8bit</dref> $B$G(B<a node="Code extension">$BId9f(B
-$B3HD%(B</a>$B$7$F$$$k!#(B
+It is a <dref>8bit</dref> <dref>coded character set</dref> based on
+<dref>ISO 2022</dref>.  It extends <dref>ASCII</dref> to combine
+<dref>GB 2312</dref>.
 <p>
-<a node="RFC 1922">RFC 1922</a> $B$GDj5A$5$l$F$$$k!#(B
+It is defined in <a node="RFC 1922">RFC 1922</a>.
 
 
 <h3> cn-big5, big5
 <node> cn-big5
 <p>
-$BBfOQ$d9a9A$GMQ$$$i$l$F$$$k<g$KHKBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B 
-<a node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+A <a node="MIME charset">MIME charset</a> for traditional Chinese
+mainly used in Taiwan and Hon Kong.
 <p>
-<dref>ISO 2022</dref> $B$K4p$+$J$$(B <dref>8bit</dref> $B$N(B
-<dref>coded character set</dref>$B$G(B de-fact standard $B$G(B
-$B$"$k!#(B<a node="RFC 1922">RFC 1922</a> $B$GDj5A$5$l$F$$$k!#(B
+It is a <dref>8bit</dref> <dref>coded character set</dref> not based
+on <dref>ISO 2022</dref>.  It is a de-fact standard.
+<p>
+It is defined in <a node="RFC 1922">RFC 1922</a>.
 <p>
 cf. <report abbrev="BIG5" author="Institute for Information Industry"
 	      title-en="Chinese Coded Character Set in Computer"
 	      date="March 1984">
 <p>
-<a node="CNS">CNS 11643-1986</a> $B$HBP1~4X78$,$"$k!#(B
+It corresponds to <dref>CNS 11643</dref>.
 
 
 <h3> CNS 11643-1992
-<node> CNS
+<node> CNS 11643
 <p>
-$BBfOQ$d9a9A$GMQ$$$i$l$F$$$k<g$KHKBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B 
-<a node="Character set">$BJ8;z=89g(B</a>$B!#BfOQ$NI8=`!#8=:_!"(B<a node="94x94
-character set">94$B!_(B94</a> $B$NLL$,Bh#1LL$+$iBh#7LL$^$G$"$k!#(B
+<a node="graphic character set">Graphic character sets</a> for Chinese
+mainly written by traditional Chinese mainly used in Taiwan and Hong
+Kong.  It is a standard of Taiwan.  Currently there are seven
+<dref>94x94-character set</dref>.
 <p>
-<dref>ISO 2022</dref> $B$G$N=*C<J8;z$O!"Bh#1LL$,(B `G', $BBh#2LL$,(B 
-`H', $BBh#3LL$,(B `I', $BBh#4LL$,(B `J', $BBh#5LL$,(B `K', $BBh#6LL$,(B `L', $BBh#7LL$,(B 
-`M' $B$G$"$k!#(B
+Final byte of <dref>ISO 2022</dref> are following:
+
+<dl>
+<dt>plane 1<dd>04/07 (`G')
+<dt>plane 2<dd>04/08 (`H')
+<dt>plane 3<dd>04/09 (`I')
+<dt>plane 4<dd>04/10 (`J')
+<dt>plane 5<dd>04/11 (`K')
+<dt>plane 6<dd>04/12 (`L')
+<dt>plane 7<dd>04/13 (`M')
+</dl>
 
 <standard abbrev="CNS 11643-1992" title-en="Standard Interchange Code
 	      for Generally-Used Chinese Characters" number="CNS
@@ -239,55 +240,13 @@ the character set of a given code. (ex. <dref>ISO 2022</dref>)
 <h3> Content-Disposition field
 <node> Content-Disposition
 <p>
-Content $B$NI=<($N;EJ}$d(B file $BL>$rI=8=$9$k$?$a$N(B field. <a
-node="MIME">MIME</a> $B$N3HD%$N#1$D!#(B
+A field to specify presentation of entity or file name.  It is an
+extension for <dref>MIME</dref>.
 <p>
 <rfc number="1806" type="Experimental" author="E R. Troost and
 	      S. Dorner" title="Communicating Presentation Information
 	      in Internet Messages: The Content-Disposition Header"
 	      date="June 1995">
-
-
-<h3> media type
-<node> media type
-<p>
-<concept>media type</concept> specifies the nature of the data in the
-body of <dref>MIME</dref> <dref>entity</dref>.  It consists of
-<concept>type</> and <concept>subtype</concept>.  It is defined in
-<dref>RFC 2046</dref>.
-<p>
-Currently there are following types:
-
-<ul>
-<li><concept>text</concept>
-</li>
-<li><concept>image</concept>
-</li>
-<li><concept>audio</concept>
-</li>
-<li><concept>video</concept>
-</li>
-<li><concept>application</concept>
-</li>
-<li><a node="multipart"><concept>multipart</concept></a>
-</li>
-<li><concept>message</concept>
-</ul>
-
-<p>
-And there are various subtypes, for example, application/octet-stream,
-audio/basic, image/jpeg, <dref>multipart/mixed</dref>,
-<dref>text/plain</dref>, video/mpeg...
-<p>
-You can refer registered media types at <a
-href="ftp://ftp.isi.edu/in-notes/iana/assignments/media-types">MEDIA
-TYPES</a>.
-<p>
-In addition, you can use private type or subtype using
-<concept>x-token</concept>, which as the prefix `x-'.  However you can
-not use them in public.
-<p>
-<cf node="Content-Type field">
 
 
 <h3> Content-Type field
@@ -355,8 +314,8 @@ Content-Type: application/octet-stream
 <h3> Emacs
 <node> Emacs
 <p>
-$B$3$3$G$O(B `Emacs' $B$G(B FSF $B$,G[I[$7$F$$$k(B GNU Emacs $B$r;X$7!"(B`emacs' $B$G(B
-GNU Emacs $B$NJQ<o$NAm>N$H$9$k!#(B
+In this document, `Emacs' means GNU Emacs released by FSF, and `emacs'
+means any variants of GNU Emacs.
 
 
 <h3> encoded-word
@@ -374,23 +333,36 @@ is defined in <concept>RFC 2047</concept>.
 <h3> encapsulation
 <node> encapsulation
 <p>
-<a node="RFC 822">Internet mail</a> $B$rB>$N5-;v$K$^$k$4$HF~$l$kJ}K!!#(B
+Method to insert whole <a node="RFC 822">Internet message</a> into
+another Internet message.
 <p>
-$BNc$($P!"5-;v$rE>Aw$7$?$j$9$k$N$KMQ$$$k!#(B
+For example, it is used to forward a message.
 <p>
 <cf node="message/rfc822">
+
+
+<h3> Entity
+<node> entity
+<p>
+Header fields and contents of a message or one of the parts in the
+body of a <dref>multipart</dref> entity.
+
+<memo>
+<p>
+In this document, `entity' might be called ``part''.
+</memo>
 
 
 <h3> euc-kr
 <node> euc-kr
 <p>
-$B4Z9q8l$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+A <dref>MIME charset</dref> for Korean.
 <p>
-<dref>ISO 2022</dref> $B$K4p$$$F(B <dref>ASCII</dref> $B$K(B
-<a node="KS C5601">KS C5601</a> $B$r(B <dref>8bit</dref> $B$G(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+It is a <dref>8bit</dref> <dref>coded character set</dref> based on
+<dref>ISO 2022</dref>.  It extends <dref>ASCII</dref> to combine
+<dref>KS C5601</dref>.
 <p>
-<a node="RFC 1557">RFC 1557</a> $B$GDj5A$5$l$F$$$k!#(B
+It is defined in <dref>RFC 1557</dref>.
 <p>
 cf. <standard abbrev="euc-kr" org="Korea Industrial Standards
 	      Association" title-en="Hangul Unix Environment"
@@ -398,9 +370,6 @@ cf. <standard abbrev="euc-kr" org="Korea Industrial Standards
 
 
 <h3> FTP <node> FTP
-<p>
-Internet $B$G(B file $B$rE>Aw$9$k$?$a$N(B protocol $B$N#1$D!#(BRFC 959 $B$GDj5A$5$l(B
-$B$F$$$k!#(B
 <p>
 <rfc name="FTP" number="959" type="STD 9" author="Postel, J. and
 	      J. Reynolds" title="File Transfer Protocol"
@@ -410,14 +379,13 @@ Internet $B$G(B file $B$rE>Aw$9$k$?$a$N(B protocol $B$N#1$D!#(BRFC 959 $B
 <h3> GB 2312-1980
 <node> GB 2312
 <p>
-$BCf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=$9$?$a$N(B 
-<dref>94x94-character set</dref>$B!#Cf9q$N9q2HI8=`!#(B<a node="ISO
-2022">ISO 2022</a> $B$G$N=*C<J8;z$O(B `A'.
+A <dref>94x94-character set</dref> for Chinese mainly written by
+simplified Chinese mainly used in the Chinese mainland.  It is a
+standard of China.
 <p>
-$B$3$l$O(B GB $B$K$*$1$k4pK\=8$G$"$k!#(B
+Final byte of <dref>ISO 2022</dref> is 04/01 (`A').
 
 <standard abbrev="GB 2312"
-	      title-cn="$B?.B)8r49MQ4A;zJTb{;zId=8(B -- $B4pK\=8(B"
 	      title-en="Code of Chinese Graphic Character Set for
 	      Information Interchange - Primary Set" number="GB 2312"
 	      year="1980">
@@ -426,9 +394,8 @@ Internet $B$G(B file $B$rE>Aw$9$k$?$a$N(B protocol $B$N#1$D!#(BRFC 959 $B
 <h3> GB 8565.2-1988
 <node> GB 8565.2
 <p>
-$BCf9q8l$N$?$a$NJd=u(B<a node="Character set">$BJ8;z=89g(B</a>$B!#Cf9q$N9q2HI8=`!#(B
-<a node="GB 2312">GB 2312</a> $B$N6u$-ItJ,$KJd=<$9$k$h$&$KDj5A$5$l$?$i$7(B
-$B$$!#(B
+A <dref>94x94-character set</dref> for Chinese as supplement to
+<dref>GB 2312</dref>.  It is a standard of China.
 
 <standard abbrev="GB 8565.2" title-en="Information Processing - Coded
 	      Character Sets for Text Communication - Part 2: Graphic
@@ -436,17 +403,25 @@ Internet $B$G(B file $B$rE>Aw$9$k$?$a$N(B protocol $B$N#1$D!#(BRFC 959 $B
 	      year="1988">
 
 
+<h3> Graphic Character Set
+<node> graphic character set
+<p>
+<a node="coded character set">Coded character set</a> for graphic
+characters.
+
+
 <h3> hz-gb2312
 <node> hz-gb2312
 <p>
-$BCf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B <a
-node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+A <a node="MIME charset">MIME charset</a> for simplified Chinese
+mainly used in the Chinese mainland.
 <p>
-<dref>ASCII</dref> $B$K(B <a node="GB 2312">GB 2312</a> $B$r(B 7bit $B$G(B
-<a node="Code extension">$BId9f3HD%(B</a>$B$7$?$b$N$r(B ASCII printable $B$K$J$k(B
-$B$h$&$K9)IW$7$F$$$k!#(B
+It extends <dref>ASCII</dref> to combine <dref>GB 2312</dref>, its
+technique is like <dref>iso-2022-jp</dref>, but it is designed to be 
+ASCII printable to use special form for ESC sequence to designate GB
+2312 to G0.
 <p>
-RFC 1842, 1843 $B$GDj5A$5$l$F$$$k!#(B
+It is defined in RFC 1842 and 1843.
 
 <rfc number="1842" type="Informational" author="Y. Wei, Y. Zhang,
 	      J. Li, J. Ding and Y. Jiang" title="ASCII Printable
@@ -460,11 +435,8 @@ RFC 1842, 1843 $B$GDj5A$5$l$F$$$k!#(B
 <h3> ISO 2022
 <node> ISO 2022
 <p>
-<a node="Code extension">$BId9f3HD%(B</a>$B$N$?$a$N9q:]I8=`!#(B
-<p>
-$B$3$l$rMQ$$$FJ#?t$N(B<a node="Character set">$BJ8;z=89g(B</a>$B$rAH9g$;$F(B <a
-node="7bit">7bit</a> $B$J$$$7(B <dref>8bit</dref> $B$N(B <a node="Coded
-character set">$BId9f2=J8;z=89g(B</a> $B$r:n$k$3$H$,$G$-$k!#(B
+It is a standard for character code structure and <dref>code
+extension</dref> technique.
 
 <standard abbrev="ISO 2022" org="International Organization for
 	      Standardization (ISO)" title-en="Information Processing:
@@ -475,50 +447,50 @@ character set">$BId9f2=J8;z=89g(B</a> $B$r:n$k$3$H$,$G$-$k!#(B
 <h3> iso-2022-cn
 <node> iso-2022-cn
 <p>
-$BCf9q8l$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+A <dref>MIME charset</dref> for Chinese.
 <p>
-<dref>ISO 2022</dref> $B$K4p$$$F(B <dref>ASCII</dref> $B$K(B 
-<a node="GB 2312">GB 2312</a>, <a node="CNS">CNS 11643 plain 1, plain
-2</a> $B$r(B <a node="7bit">7bit</a> $B$G(B<a node="Code extension">$BId9f3HD%(B
-</a>$B$7$F$$$k!#(B
+It is a <dref>7bit</dref> <dref>coded character set</dref> based on
+<dref>ISO 2022</dref>.  It extends <dref>ASCII</dref> to combine
+<dref>GB 2312</dref> and/or <a node="CNS 11643">CNS 11643 plain 1,
+plain 2</a>.
 <p>
-<a node="RFC 1922">RFC 1922</a> $B$GDj5A$5$l$F$$$k!#(B
+It is defined in <dref>RFC 1922</dref>.
 
 
 <h3> iso-2022-cn-ext
 <node> iso-2022-cn-ext
 <p>
-$BCf9q8l$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+A <dref>MIME charset</dref> for Chinese.
 <p>
-<dref>ISO 2022</dref> $B$K4p$$$F(B <dref>ASCII</dref> $B$K(B 
-<a node="GB 2312">GB 2312</a>, <a node="CNS">CNS 11643 plain 1
-.. 7</a>, <a node="ISO-IR-165">ISO-IR-165</a> $BEy$r(B <a
-node="7bit">7bit</a> $B$G(B<a node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+It is a <dref>7bit</dref> <dref>coded character set</dref> based on
+<dref>ISO 2022</dref>.  It extends <dref>ASCII</dref> to combine
+<dref>GB 2312</dref>, <a node="CNS 11643">CNS 11643 plain 1 .. 7</a>, 
+<dref>ISO-IR-165</dref> and other Chinese graphic character sets.
 <p>
-<a node="RFC 1922">RFC 1922</a> $B$GDj5A$5$l$F$$$k!#(B
+It is defined in <dref>RFC 1922</dref>.
 <p>
 <memo>
-MULE 2.3 $B$*$h$S!"8=:_$N(B XEmacs/mule $B$G$O@5$7$/07$&$3$H$O$G$-$J$$!#(B
+MULE 2.3 and current XEmacs/mule can not use it correctly.
 <p>
-Emacs/mule $B$G$OMxMQ2DG=$G$"$k!#(B
+Emacs/mule can use it.
 </memo>
 
 
 <h3> iso-2022-jp
 <node> iso-2022-jp
 <p>
-$BF|K\8l$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N0l$D!#(B
+A <dref>MIME charset</dref> for Japanese.
 <p>
-$B8E$$(B <dref>ISO 2022</dref> $B$K4p$$$F(B <a
-node="ASCII">ASCII</a>, JIS X0201-Latin, <a node="JIS C6226-1978">JIS
-X0208-1978</a>, <a node="JIS X0208">JIS X0208-1983</a> $B$r@Z$jBX$($k(B <a
-node="7bit">7bit</a> $BJ8;zId9f!#(B
+It is a <dref>7bit</dref> <dref>coded character set</dref> based on
+old <dref>ISO 2022</dref>.  It switches <dref>ASCII</dref>, JIS
+X0201-Latin, <a node="JIS C6226">JIS X0208-1978</a> and <a node="JIS
+X0208">JIS X0208-1983</a>.
 <p>
-RFC 1468 $B$GDj5A$5$l$F$$$k!#(B
+It is defined in RFC 1468.
 <p>
 <memo>
-JIS X0208-1996? $B$G$O(B <dref>ISO 2022</dref> $B$HFHN)$KDj5A$5$l(B
-$B$kM=Dj!#(B
+JIS X0208-1997? will define it in annex as non-<dref>ISO 2022</dref>
+encoding.
 </memo>
 
 <rfc name="iso-2022-jp" number="1468" author="Murai J., M. Crispin,
@@ -547,8 +519,8 @@ A <a node="MIME charset">MIME charset</a> for Korean language (Hangul
 script).
 <p>
 It is based on <dref>ISO 2022</dref> <dref>code extension</dref>
-technique to extends <dref>ASCII</dref> to use <dref>KS C5601</dref>
-as <dref>7bit</dref> text.
+technique to extend <dref>ASCII</dref> to use <dref>KS C5601</dref> as
+<dref>7bit</dref> text.
 <p>
 It is defined in <dref>RFC 1557</dref>.
 
@@ -556,12 +528,6 @@ It is defined in <dref>RFC 1557</dref>.
 <h3> ISO 646
 <node> ISO 646
 <p>
-$B3F9q$G6&DL$K;H$($k:G>.8BEY$N(B<a node="Character set">$BJ8;z=89g(B</a>$B$rDj$a(B
-$B$?$b$N!#(B<a node="94 character set">94 $BJ8;z=89g(B</a>$B$N#1$D!#(BISO 646 IRV
-$B!J9q:]4p=`HG!K$r85$K4v$D$+$NJ8;z$O3F9q$G0c$&J8;z$r3dEv$k$3$H$r5v$7$F$$(B
-$B$F!"4v$D$+$NJQ<o$,B8:_$9$k!#(B<dref>ASCII</dref> $B$d(B JIS
-X0201-Latin $B$O$=$N0l<o!#(B
-
 <standard abbrev="ISO 646" org="International Organization for
 	      Standardization (ISO)" title-en="Information technology:
 	      ISO 7-bit coded character set for information
@@ -584,9 +550,9 @@ X0201-Latin $B$O$=$N0l<o!#(B
 <concept>iso-8859-1</concept> is a <dref>MIME charset</dref> for
 west-European languages written by Latin script.
 <p>
-<dref>ISO 2022</dref> $B$K4p$$$F!"(B<dref>ASCII</dref> $B$K(B 
-<a node="ISO 8859-1">ISO 8859-1</a> $B$r(B <dref>8bit</dref> $B$G(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+It is a <dref>8bit</dref> <dref>coded character set</dref> based on
+<dref>ISO 2022</dref>.  It extends <dref>ASCII</dref> to combine
+<dref>ISO 8859-1</dref>.
 <p>
 It is defined in <dref>RFC 2046</dref>.
 
@@ -607,9 +573,9 @@ It is defined in <dref>RFC 2046</dref>.
 <concept>iso-8859-2</concept> is a <dref>MIME charset</dref> for
 east-European languages written by Latin script.
 <p>
-<dref>ISO 2022</dref> $B$K4p$$$F!"(B<dref>ASCII</dref> $B$K(B 
-<a node="ISO 8859-2">ISO 8859-2</a> $B$r(B <dref>8bit</dref> $B$G(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+It is a <dref>8bit</dref> <dref>coded character set</dref> based on
+<dref>ISO 2022</dref>.  It extends <dref>ASCII</dref> to combine
+<dref>ISO 8859-2</dref>.
 <p>
 It is defined in <dref>RFC 2046</dref>.
 
@@ -650,9 +616,9 @@ It is defined in <dref>RFC 2046</dref>.
 <concept>iso-8859-5</concept> is a <dref>MIME charset</dref> for
 Cyrillic script.
 <p>
-<dref>ISO 2022</dref> $B$K4p$$$F!"(B<dref>ASCII</dref> $B$K(B 
-<a node="ISO 8859-5">ISO 8859-5</a> $B$r(B <dref>8bit</dref> $B$G(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+It is a <dref>8bit</dref> <dref>coded character set</dref> based on
+<dref>ISO 2022</dref>.  It extends <dref>ASCII</dref> to combine
+<dref>ISO 8859-5</dref>.
 <p>
 It is defined in <dref>RFC 2046</dref>.
 
@@ -683,9 +649,9 @@ It is defined in <dref>RFC 2046</dref>.
 <concept>iso-8859-7</concept> is a <dref>MIME charset</dref> for
 Greek script.
 <p>
-<dref>ISO 2022</dref> $B$K4p$$$F!"(B<dref>ASCII</dref> $B$K(B 
-<a node="ISO 8859-7">ISO 8859-7</a> $B$r(B <dref>8bit</dref> $B$G(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+It is a <dref>8bit</dref> <dref>coded character set</dref> based on
+<dref>ISO 2022</dref>.  It extends <dref>ASCII</dref> to combine
+<dref>ISO 8859-7</dref>.
 <p>
 It is defined in RFC 1947.
 
@@ -716,44 +682,42 @@ It is defined in RFC 1947.
 
 <h3> ISO-IR-165, CCITT Extended GB <node> ISO-IR-165
 <p>
-CCITT $B$,EPO?$7$?!"Cf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=(B
-$B8=$9$k$?$a$N(B <dref>94x94-character set</dref>$B!#(B
+A <dref>94x94-character set</dref> for Chinese mainly written by
+simplified Chinese mainly used in the Chinese mainland registered by
+CCITT.
 <p>
-<a node="GB 2312">GB 2312</a> $B$H(B <a node="GB 8865.2">GB 8565 $BI=#2(B</a> 
-$B$K(B 150 $BJ8;z$[$I$rDI2C$7$?$b$N$i$7$$!#(B
+It consists of <dref>GB 2312</dref>, <dref>GB 8565.2</dref> and
+additional 150 characters.
 <p>
-<dref>ISO 2022</dref> $B$G$N=*C<J8;z$O(B `E' $B$G$"$k!#(B
+Final byte of <dref>ISO 2022</dref> is 04/05 (`E').
 
 
 <h3> JIS X0201
 <node> JIS X0201
 <p>
-<a node="ISO 646">ISO 646</a> $B$NJQ<o$N#1$D$G$"$k(B Latin $BJ8;z=89g$H(B 1
-byte $B$N%+%?%+%JJ8;z=89g$+$i$J$k!#(B
+It defines two <dref>94-character set</dref>, for Latin script (a
+variant of <dref>ISO 646</dref>) and Katakana script, and 7bit and
+8bit <dref>coded character set</dref>s.
 <p>
-$B85$O(B <concept>JIS C6220-1976</concept> $B$H8@$C$?$,(B <concept>JIS
-X0201</concept> $B$KHV9f$,JQ99$5$l$?!#(B
+It was renamed from <concept>JIS C6220-1976</concept>.
 
-<standard abbrev="JIS X0201-1976" org="$BF|K\5,3J6(2q(B (Japanese
-	      Standards Association)" title-ja="$B>pJs8r49MQId9f(B"
+<standard abbrev="JIS X0201-1976" org="Japanese Standards Association"
 	      title-en="Code for Information Interchange" number="JIS
 	      X 0201-1976">
 
-$B$^$?!"(B1996 $BG/$K2~DjHG$,=P$kM=Dj!#(B
+In addition, revised version will be published in 1997.
 
-<standard abbrev="JIS X0201-1996?" org="$BF|K\5,3J6(2q(B (Japanese
-	      Standards Association)"
-	      title-ja="$B#7%S%C%H5Z$S#8%S%C%H$N>pJs8r49MQId9f2=J8;z=89g(B"
-	      title-en="7-bit and 8-bit coded character sets for
-	      information interchange" number="JIS X 0201" year="1996?
-	      draft">
+<standard abbrev="JIS X0201-1997?" org="Japanese Standards
+	      Association" title-en="7-bit and 8-bit coded character
+	      sets for information interchange" number="JIS X 0201"
+	      year="1997?  draft">
 
 
 <h3> JIS C6226-1978
 <node> JIS C6226
 <p>
-$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B <dref>94x94-character set</dref>$B!#F|K\$N9q(B
-$B2HI8=`!#(BJIS X0208-1978 $B$H$b$$$&!#(B
+A <dref>94x94-character set</dref> for Japanese.  It was renamed to
+JIS X0208-1978.
 <p>
 <cf node="JIS X0208">
 
@@ -761,45 +725,46 @@ X0201</concept> $B$KHV9f$,JQ99$5$l$?!#(B
 <h3> JIS X0208
 <node> JIS X0208
 <p>
-$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B <dref>94x94-character set</dref>$B!#F|K\$N9q(B
-$B2HI8=`!#(B1978 $BG/HG!"(B1983 $BG/HG!"(B1990 $BG/HG$,$"$k$,!"(BInternet $B$G$O(B 1983 $BG/(B
-$BHG$,$b$C$H$bNI$/;H$o$l$F$$$k!#(B
+A <dref>94x94-character set</dref> for Japanese.  Japanese standard.
+It was published in 1978, and revised in 1983 and 1990.  In the
+Internet message, 1983 edition is major.
 <p>
-JIS X0208 $B$O5-9f!"?t;z!"%m!<%^;z!"$R$i$,$J!"%+%?%+%J!"%.%j%7%cJ8;z!"%-(B
-$B%j%kJ8;z!"7S@~AG!"Bh#1?e=`!"Bh#2?e=`$N4A;z$,4^$^$l$k!#C"$7!"(B1983 $BG/HG(B
-$B$N0lIt$N5-9f$H7S@~AG$O(B 1978 $BG/HG$K$O$J$$!#$^$?!"0lIt$N4A;z$N;z7A$,(B 
-1983 $BG/HG$G$OJQ99$5$l!"$^$?!"Bh#1?e=`$HBh#2?e=`$,F~$lBX$o$C$F$$$?$j$9(B
-$B$k!#$3$N$?$a!"(B1978 $BG/HG$H(B 1983 $BG/HG$O0[$J$kJ8;z=89g$H$7$F07$o$l$k!#(B
+JIS X0208 contains some symbols, numbers, primary Latin script,
+Hiragana script, Katakana script, Greek script, Cyrillic script, box
+drawing parts, Kanji (Ideographic characters used in Japanese).
+Notice that some symbols and box drawing parts were added in 1983 and
+some Kanjis were changed or swapped code points.  So 1978 edition and
+1983 edition are regarded as different graphic character set.
 <p>
-1990 $BG/$N2~Dj$G$O(B 1983 $BG/HG$KBP$9$kDI2C$,9T$o$l$?!#$3$N$?$a!"(B1990 $BG/HG(B
-$B$r;X<($9$k>l9g$OA0$K99?7%7!<%1%s%9$rMQ$$$k!#(B
+1990 edition added some characters, so designation of 1990 edition
+requires `identify revised registration' sequence, ESC 02/06 4/0 as
+prefix of designation sequence.
 
-<standard abbrev="JIS X0208-1978" org="$BF|K\5,3J6(2q(B (Japanese Standards
-	      Association)" title-ja="$B>pJs8r49MQ4A;zId9f7O(B"
+<standard abbrev="JIS X0208-1978" org="Japanese Standards Association"
 	      title-en="Code of the Japanese graphic character set for
 	      information interchange" number="JIS C6226" year="1978">
-<standard abbrev="JIS X0208-1983,1990" org="$BF|K\5,3J6(2q(B (Japanese Standards
-	      Association)" title-ja="$B>pJs8r49MQ4A;zId9f7O(B"
-	      title-en="Code of the Japanese graphic character set for
-	      information interchange" number="JIS X0208" year="1983,1990">
+<standard abbrev="JIS X0208-1983,1990" org="Japanese Standards
+	      Association" title-en="Code of the Japanese graphic
+	      character set for information interchange" number="JIS
+	      X0208" year="1983,1990">
 
 <p>
-$B$^$?!"(B1996 $BG/$K2~DjHG$,=PHG$5$l$kM=Dj!#!J;z7A$NJQ99$O9T$o$l$J$$$N$GJ8(B
-$B;z=89g$H$7$F$O(B 1990 $BG/HG$HF10l$G$"$k!K(B
+In addition, revised version will be published in 1997. (It does not
+change graphic character set)
 
-<standard abbrev="JIS X0208-1996?" org="$BF|K\5,3J6(2q(B (Japanese
-	      Standards Association)" title-ja="$B#7%S%C%H5Z$S#8%S%C%H$N(B
-	      $B#2%P%$%H>pJs8r49MQId9f2=4A;z=89g(B" title-en="7-bit and
-	      8-bit double byte coded Kanji sets for information
-	      interchange" number="JIS X 0208" year="1996? draft">
+<standard abbrev="JIS X0208-1997?" org="Japanese Standards
+	      Association" title-en="7-bit and 8-bit double byte coded
+	      Kanji sets for information interchange" number="JIS X
+	      0208" year="1997? draft">
 
 
 <h3> JIS X0212-1990
 <node> JIS X0212
 <p>
-<a node="JIS X0208">JIS X0208</a> $B$K$J$+$C$?J8;z$r=8$a$?(B 
-<dref>94x94-character set</dref>$B!#!VJd=u4A;z!W$H$b8F$P$l$k!#F|K\$N9q2H(B
-$BI8=`!#(B<dref>ISO 2022</dref> $B$G$N=*C<J8;z$O(B `D'.
+A <dref>94x94-character set</dref> for Japanese as supplement to
+<dref>JIS X0208</dref>.  It is a standard of Japan.
+<p>
+Final byte of <dref>ISO 2022</dref> is 04/04 (`D').
 
 
 <h3> koi8-r
@@ -822,18 +787,60 @@ It is defined in RFC 1489.
 <p>
 A <dref>94x94-character set</dref> for Korean language (Hangul
 script).  Korean Standard.  Final byte of <dref>ISO 2022</dref> is
-`C'.
+04/03 (`C').
 
 <standard abbrev="KS C5601" org="Korea Industrial Standards
 	      Association" title-en="Code for Information Interchange
 	      (Hangul and Hanja)" number="KS C 5601" year="1987">
 
 
+<h3> media type
+<node> media type
+<p>
+<concept>media type</concept> specifies the nature of the data in the
+body of <dref>MIME</dref> <dref>entity</dref>.  It consists of
+<concept>type</concept> and <concept>subtype</concept>.  It is defined
+in <dref>RFC 2046</dref>.
+<p>
+Currently there are following types:
+
+<ul>
+<li><concept>text</concept>
+</li>
+<li><concept>image</concept>
+</li>
+<li><concept>audio</concept>
+</li>
+<li><concept>video</concept>
+</li>
+<li><concept>application</concept>
+</li>
+<li><a node="multipart"><concept>multipart</concept></a>
+</li>
+<li><concept>message</concept>
+</ul>
+
+<p>
+And there are various subtypes, for example, application/octet-stream,
+audio/basic, image/jpeg, <dref>multipart/mixed</dref>,
+<dref>text/plain</dref>, video/mpeg...
+<p>
+You can refer registered media types at <a
+href="ftp://ftp.isi.edu/in-notes/iana/assignments/media-types">MEDIA
+TYPES</a>.
+<p>
+In addition, you can use private type or subtype using
+<concept>x-token</concept>, which as the prefix `x-'.  However you can
+not use them in public.
+<p>
+<cf node="Content-Type field">
+
+
 <h3> message
 <node> message
 <p>
-$B$3$3$G$O(B <dref>RFC 822</dref> $B$GDj5A$5$l$k(B mail $B$H(B <dref>RFC
-1036</dref> $B$GDj5A$5$l$k(B news $B5-;v$NAm>N$H$7$FMQ$$$k!#(B
+In this document, it means mail defined in <dref>RFC 822</dref> and
+news message defined in <dref>RFC 1036</dref>.
 
 
 <h3> message/rfc822
@@ -848,9 +855,13 @@ encapsulation.  It is defined in <dref>RFC 2046</dref>.
 <h3> method
 <node> method
 <p>
-tm $B$GFCDj$N<oN`$N(B data $B$r:F@8$7$?$H$-<B:]$K$=$N=hM}$r9T$J$&(B
-program. Emacs Lisp $B$G=q$+$l$?(B <concept>internal method</concept> $B$H(B C 
-$B$d(B script $B8@8l$J$I$G=q$+$l$?(B <concept>external method</concept> $B$,$"$k!#(B
+Application program of tm-view to process for specified <dref>media
+type</dref> when user plays an entity.
+<p>
+There are two kinds of methods, <concept>internal method</concept> and
+<concept>external method</concept>.  Internal method is written by
+Emacs Lisp.  External method is written by C or script languages and
+called by asynchronous process call.
 <p>
 <cf file="tm-view-en" node="method">
 
@@ -889,22 +900,23 @@ node="encoded-word">RFC 2047</a>, <dref>RFC 2048</dref> and <dref>RFC
 <h3> MIME charset
 <node> MIME charset
 <p>
-<dref>Coded character set</dref> used in <dref>Content-Type
-field</dref> or charset parameter of <a
+<a node="coded character set">Coded character set</a> used in
+<dref>Content-Type field</dref> or charset parameter of <a
 node="encoded-word">encoded-word</a>.
 <p>
 It is defined in <dref>RFC 2045</dref>.
 <p>
-<dref>iso-2022-jp</dref> $B$d(B <a node="euc-kr">euc-kr</a> $B$O$=$N#1$D!#(B
-$B!J$3$3$G$O!"(BMIME charset $B$O(B<a node="Character set">$BJ8;z=89g(B</a>$B$H6hJL(B
-$B$7$F>.J8;z$G=q$$$F$$$k!K(B
+<dref>iso-2022-jp</dref> or <dref>euc-kr</dref> are kinds of it.  (In
+this document, MIME charsets are written by small letters to
+distinguish <dref>graphic character set</dref>.  For example, ISO
+8859-1 is a graphic character set, and iso-8859-1 is a MIME charset)
 
 
 <h3> MTA
 <node> MTA
 <p>
-<concept>Message Transfer Agent</concept> $B$NN,$G!"(Bsendmail $B$J$I$N(B mail 
-$BG[Aw(B program $B$H(B news server $B$NAm>N!#(B
+<concept>Message Transfer Agent</concept>.  It means mail transfer
+programs (ex. sendmail) and news servers.
 <p>
 <cf node="MUA">
 
@@ -912,8 +924,8 @@ It is defined in <dref>RFC 2045</dref>.
 <h3> MUA
 <node> MUA
 <p>
-<concept>Message User Agent</concept> $B$NN,$G!"(Bmail reader $B$H(B news
-reader $B$NAm>N!#(B
+<concept>Message User Agent</concept>.  It means mail readers and news
+readers.
 <p>
 <cf node="MTA">
 
@@ -921,32 +933,34 @@ reader $B$NAm>N!#(B
 <h3> MULE
 <node> MULE
 <p>
-$BH>ED(B $B7u0l;a$i$,:n$C$?!"B?8@8l$5$l$?(B <a node="Emacs">Emacs</a>.
+Multilingual extension of GNU <dref>Emacs</dref> by HANDA Ken'ichi et
+al.
+
+<inproc abbrev="MULE" author="Nishikimi M., Handa K. and Tomura S."
+	      title-en="Mule: MULtilingual Enhancement to GNU Emacs"
+	      book-en="Proc. of INET'93" date="August, 1993">
 <p>
-[MULE] Nishikimi M., Handa K. and Tomura S., ``Mule: MULtilingual
-Enhancement to GNU Emacs'', Proc. of INET'93, August, 1993.
+Now, FSF and HANDA Ken'ichi et al. are working to merge MULE feature
+into Emacs, there is <a
+href="ftp://etlport.etl.go.jp/pub/mule/mule-19.33-delta.taz">alpha
+version of mule merged emacs</a>.
 <p>
-$B8=:_!"(BMULE $B$N5!G=$r(B Emacs $B$K(B merge $B$9$k:n6H$,9T$o$l$F$*$j!"(B<a
-href="ftp://etlport.etl.go.jp/pub/mule/mule-19.33-gamma.taz"> alpha $BHG(B
-</a> $B$,B8:_$9$k!#(B
+In addition, there is XEmacs with mule feature.
 <p>
-$B$=$NB>!"(BXEmacs $B$K(B merge $B$7$?$b$N$bB8:_$9$k!#(B
+So now, there are 3 kinds of mule variants.
 <p>
-$B$3$N$?$a!"8=:_$G$OB?8@8l(B Emacs $B$O!"85!9$N(B MULE $B$r4^$a$F#3<oN`$"$k$3$H(B
-$B$K$J$k!#(B
-<p>
-$B$=$3$G!"$3$3$G$O!"B?8@8l(B Emacs $B$NAm>N$r(B <concept>mule</concept>, $B85!9(B
-$B$N(B MULE $B$r(B <concept>MULE</concept>, mule $B5!G=$r(B merge $B$7$?(B Emacs $B$r(B
-<concept>Emacs/mule</concept>, mule $B5!G=$r(B merge $B$7$?(B XEmacs $B$r(B 
-<concept>XEmacs/mule</concept> $B$H8F$V$3$H$K$9$k!#(B
+In this document, <concept>mule</concept> means any mule variants,
+<concept>MULE</concept> means original MULE (..2.3),
+<concept>Emacs/mule</concept> means mule merged Emacs,
+<concept>XEmacs/mule</concept> means XEmacs with mule feature.
 
 
 <h3> Multipart
 <node> multipart
 <p>
 <concept>multipart</concept> means <dref>media type</dref> to insert
-multiple <dref>entities</dref> in a single body.  Or it also indicates
-a message consists of multiple entities.
+multiple <a node="entity">entities</a> in a single body.  Or it also
+indicates a message consists of multiple entities.
 <p>
 There are following subtypes registered in <dref>RFC 2046</dref>:
 
@@ -997,8 +1011,8 @@ This is the replacement of traditional <dref>RFC 1153</dref> based
 <h3> multipart/encrypted
 <node> multipart/encrypted
 <p>
-RFC 1847 $B$GDj5A$5$l$?(B <dref>Security multipart</dref> $B$N#1$D$G!"0E9f2=(B
-$B$5$l$?(B message $B$rI=8=$9$k$N$KMQ$$$k!#(B
+It is a <dref>Security multipart</dref> defined in 
+RFC 1847, used to represent encrypted message.
 <p>
 <cf node="PGP/MIME">
 
@@ -1028,8 +1042,8 @@ significant.
 <h3> multipart/signed
 <node> multipart/signed
 <p>
-RFC 1847 $B$GDj5A$5$l$?(B <dref>Security multipart</dref> $B$N#1$D$G!"EE;R=p(B
-$BL>$rI=8=$9$k$N$KMQ$$$k!#(B
+It is a <dref>Security multipart</dref> defined in 
+RFC 1847, used to represent signed message.
 <p>
 <cf node="PGP/MIME">
 
@@ -1037,15 +1051,14 @@ RFC 1847 $B$GDj5A$5$l$?(B <dref>Security multipart</dref> $B$N#1$D$G!"EE;R=p
 <h3> PGP
 <node> PGP
 <p>
-Phil Zimmermann $B;a$,:n@.$7$?8x3+800E9f=hM}7O$N#1$D!#(B
-<dref>message</dref> $B$N0E9f2=$dEE;R=pL>$r9T$&$3$H$,$G$-$k!#(BPretty Good
-Privacy $B$NN,!#(B
+A public key encryption program by Phil Zimmermann.  It provides
+encryption and signature for <dref>message</dref>.  PGP stands for
+<concept>Pretty Good Privacy</concept>.
 <p>
-$BEAE}E*$J(B PGP $B$G$O(B <dref>encapsulation</dref> $B$K(B <dref>RFC 934</dref>$B$K(B
-$B=`$8$?J}K!$rMQ$$$k!#$3$l$O(B <dref>MIME</dref> $B$HL7=b$9$k$N$G(B 
-<dref>PGP/MIME</dref> $B$,Ds0F$5$l$F$$$k!#0lJ}!"(BMIME $B$K$*$$$F(B PGP $B$N(B
-encapsulation $B$rMQ$$$kJ}K!(B <cf node="PGP-kazu"> $B$bMxMQ$5$l$F$-$?!#$7$+(B
-$B$7!":#8e$O(B PGP/MIME $B$KE}0l$7$F$$$/J}$,K>$^$7$$!#(B
+Traditional PGP uses <dref>RFC 934</dref> <dref>encapsulation</dref>.
+It is conflict with <dref>MIME</dref>.  So <dref>PGP/MIME</dref> is
+defined.  On the other hand, <dref>PGP-kazu</dref> was proposed to use
+PGP encapsulation in MIME.  But it is obsoleted.
 <p>
 <rfc name="PGP" number="1991" type="Informational" author="D. Atkins,
 	      W. Stallings and P. Zimmermann" title="PGP Message
@@ -1056,50 +1069,33 @@ encapsulation $B$rMQ$$$kJ}K!(B <cf node="PGP-kazu"> $B$bMxMQ$5$l$F$-$?!#$7$+
 <h3> PGP-kazu
 <node> PGP-kazu
 <p>
-$B;3K\(B $BOBI'(B $B;a$,Ds0F$7$?(B <a node="MIME">MIME</a> $B$G(B <a
-node="PGP">PGP</a> $B$rMxMQ$9$k$?$a$NJ}K!$r$3$3$G$O(B 
-<concept>PGP-kazu</concept> $B$H8F$V$3$H$K$9$k!#(B
+In this document, <concept>PGP-kazu</concept> means a method to use
+traditional PGP encapsulation in <dref>MIME</dref>, proposed by
+YAMAMOTO Kazuhiko.
 <p>
-PGP-kazu $B$O(B <concept>application/pgp</concept> $B$H$$$&(B 
-<dref>content-type</dref> $B$rDj5A$9$k!#(B
+PGP-kazu defines a <dref>media type</dref>,
+<concept>application/pgp</concept>.
 <p>
-application/pgp $B$N(B part $B$G$O(B PGP $B$N(B <dref>encapsulation</dref> $B$,MQ$$(B
-$B$i$l$k!#(BPGP $B$N(B encapsulation <cf node="RFC 934"> $B$H(B MIME $B$N(B 
-encapsulation $B$OL7=b$9$k$N$G!"(BPGP $B$N(B encapsulation $B$r2r$+$J$$8B$j!"Cf(B
-$B$K4^$^$l$?(B MIME message $B$rFI$`$3$H$,$G$-$J$/$J$k!#B($A!"(BPGP-kazu $B$KBP(B
-$B1~$7$F$$$J$$(B MIME $B$KBP1~$7$?(B <dref>MUA</dref> $B$O$=$N(B part $B$,FI$a$J$/$J(B
-$B$k!#$=$NBe$o$j!"(BMIME $B$KBP1~$7$F$$$J$$(B PGP $BBP1~$N(B <dref>MUA</dref> $B$G$b(B 
-message $B$rFI$`$3$H$,$G$-$k!#(B
+In application/pgp entity, PGP <dref>encapsulation</dref> is used.
+PGP encapsulation conflicts with MIME, so it requires PGP-processing
+to read as MIME message.
 <p>
-PGP-kazu $B$G$O(B MUA $B$O(B PGP $B$N$H(B MIME $B$N$H$$$&#2$D$N(B encapsulation $B$rCN$i(B
-$B$J$1$l$P$J$i$J$$!#$^$?!"(Bapplication/pgp part $B$r(B parse $B$9$k$?$a$K$O!"$^(B
-$B$:!"(Bpgp $B$N=hM}$r9T$o$J$1$l$P$J$i$J$$$N$G!"(Bparse $B=hM}$,J#;($K$J$k!#(B
-<p>
-$B$^$?!"(BInternet $B$G$O:#8e(B <dref>PGP/MIME</dref> $B$NJ}8~$GI8=`2=$7$F$$$3$&(B
-$B$H$$$&$3$H$G9g0U$,<h$l$F$$$k!#$h$C$F!":#8e$O(B PGP-kazu $B$OMQ$$$J$$$N$,K>(B
-$B$^$7$$!#(B
-<p>
-[draft-kazu-pgp-mime-00.txt] Yamamoto K., ``PGP MIME Integration'',
-October, 1995
+It was obsoleted, so you should use <dref>PGP/MIME</dref>.  However if
+you want to use traditional PGP message, it might be available.
 
 
 <h3> PGP/MIME
 <node> PGP/MIME
 <p>
-Michael Elkins $B;a$,Ds0F$7$?(B <a node="MIME">MIME</a> $B$G(B <a
-node="PGP">PGP</a> $B$rMxMQ$9$k$?$a$NJ}K!!#(B
+<dref>PGP</dref> and <dref>MIME</dref> integration proposed by Michael
+Elkins.
 <p>
-<a node="Security multipart">RFC 1847</a> $B$K4p$-!"(BMIME $B$N(B multipart $B$K(B
-$B$h$k(B <dref>encapsulation</dref> $B$r9T$&!#$3$N$?$a!"(BMIME $B$N<+A3$J3HD%$K(B
-$B$J$C$F$$$k!#$7$+$7!"EAE}E*$J(B PGP$B$H$N8_49@-$,<:$o$l$F$$$k!#(B
+It is based on <a node="Security multipart">RFC 1847</a>, so it is
+harmonious with MIME, but it is not compatible with traditional PGP
+encapsulation.  However MIME MUA can read PGP/MIME signed message even
+if it does not support PGP/MIME.
 <p>
-PGP/MIME $B$G$O(B <dref>PGP-kazu</dref> $B$H0[$J$j!"(BMIME $B$N(B encapsulation $B$N(B
-$B$_$rMQ$$$k!#$^$?!"$3$N$?$a!"(BPGP $B$N=hM}$r9T$&A0$K(B message $B$N(B parse $B$r9T(B
-$B$&$3$H$,$G$-$k!#(B
-<p>
-Internet $B$G$O:#8e(B <dref>PGP/MIME</dref> $B$NJ}8~$GI8=`2=$7$F$$$3$&$H$$$&(B
-$B$3$H$G9g0U$,<h$l$F$$$k!#$h$C$F!":#8e$O(B PGP $B$rMQ$$$k>l9g$O(B PGP/MIME$B$rMQ(B
-$B$$$k$N$,K>$^$7$$!#(B
+<dref>PGP/MIME</dref> will be standard of PGP message.
 
 <rfc name="PGP/MIME" number="2015" type="Standards Track"
 	      author="M. Elkins" title="MIME Security with Pretty Good
@@ -1121,9 +1117,6 @@ of the data remains largely recognizable by humans.
 <h3> RFC 821
 <node> RFC 821
 <p>
-<concept>SMTP</concept> $B$H8F$P$l$k(B Internet mail $B$NG[AwK!$NI8=`$rDj$a(B
-$B$F$$$k(B RFC.
-
 <rfc name="SMTP" number="821" type="STD 10" author="J. Postel"
 	      title="Simple Mail Transfer Protocol" date="August
 	      1982">
@@ -1132,14 +1125,14 @@ of the data remains largely recognizable by humans.
 <h3> RFC 822
 <node> RFC 822
 <p>
-Internet mail $B$N<g$K(B <concept>message header</concept> $B$K4X$9$k7A<0$K(B
-$B4X$9$kI8=`$rDj$a$F$$$k(B RFC.
+A RFC defines format of Internet mail message, mainly <concept>message
+header</concept>.
 
 <memo>
 <p>
-news message $B$b$3$l$K=`$8$F$$$k$N$G!"(B<concept>Internet mail</concept> 
-$B$H=q$/$h$j$b!"(B<concept>Internet message</concept> $B$H=q$$$?J}$,NI$$$+$b(B
-$B$7$l$J$$!#(B
+news message is based on RFC 822, so <concept>Internet
+message</concept> may be more suitable than <concept>Internet
+mail</concept> .
 </memo>
 
 <rfc number="822" type="STD 11" author="D. Crocker" title="Standard
@@ -1150,12 +1143,12 @@ news message $B$b$3$l$K=`$8$F$$$k$N$G!"(B<concept>Internet mail</concept>
 <h3> RFC 934
 <node> RFC 934
 <p>
-<a node="RFC 822">Internet mail</a> $B$N(B <a node="encapsulation">
-<concept>encapsulation</concept></a> $B$NJ}K!$rDj$a$?(B RFC.
+A RFC defines an <a node="encapsulation">
+<concept>encapsulation</concept></a> method for <a node="RFC
+822">Internet mail</a>.
 <p>
-<dref>MIME</dref> $B$HL7=b$9$k$N$G!"8=:_$G$O(B <dref>message/rfc822</dref> 
-$B$rMQ$$$k$Y$-$G$"$k!#(B
-
+It conflicts with <dref>MIME</dref>, so you should use
+<dref>message/rfc822</dref>.
 
 <rfc number="934" author="Marshall T. Rose and Einar A. Stefferud"
 	      title="Proposed Standard for Message Encapsulation"
@@ -1165,9 +1158,9 @@ news message $B$b$3$l$K=`$8$F$$$k$N$G!"(B<concept>Internet mail</concept>
 <h3> RFC 1036
 <node> RFC 1036
 <p>
-USENET $B$G$N(B message $B$N7A<0$rDj$a$?(B RFC. <a node="RFC 822">RFC 822</a>
-$B$N(B subset $B$K$J$C$F$$$k!#(BInternet $B$NI8=`$G$O$J$$$,!"(BUSENET $B0J30$N(B 
-netnews $B$G$b$3$l$K=`$8$F$$$k$b$N$,B?$$!#(B
+A RFC defines format of USENET message.  It is a subset of <dref>RFC
+822</dref>.  It is not Internet standard, but a lot of netnews
+excepting Usenet uses it.
 
 <rfc name="USENET" number="1036" author="M. Horton and R. Adams"
 	      title="Standard for Interchange of USENET Messages"
@@ -1177,15 +1170,6 @@ netnews $B$G$b$3$l$K=`$8$F$$$k$b$N$,B?$$!#(B
 <h3> RFC 1153
 <node> RFC 1153
 <p>
-$BJ#?t$N(B <a node="RFC 822">Internet mail</a> $B$r(B <a node="encapsulation">
-<concept>encapsulation</concept></a> $B$9$k$?$a$NJ}K!$rDj$a$?(B 
-RFC. <dref>RFC 934</dref> $B$rMQ$$$k!#(B
-<p>
-<dref>MIME</dref> $B$HL7=b$9$k$N$G!"8=:_$G$O(B <dref>message/rfc822</dref> 
-$B$rMQ$$$?(B <dref>multipart</dref> $B$rMQ$$$k$Y$-$G$"$k!#(B
-<p>
-<cf node="multipart/digest">
-
 <rfc number="1153" author="F. Wancho" title="Digest Message Format"
 	      date="April 1990">
 
@@ -1193,8 +1177,8 @@ RFC. <dref>RFC 934</dref> $B$rMQ$$$k!#(B
 <h3> RFC 1557
 <node> RFC 1557
 <p>
-<dref>euc-kr</dref> $B$H(B <dref>iso-2022-kr</dref> $B$H$$$&4Z9q8l$N$?$a$N(B 
-<a node="MIME charset">MIME charset</a> $B$rDj5A$7$F$$$k(B RFC.
+A RFC defines <dref>MIME charset</dref>s for Korean,
+<dref>euc-kr</dref> and <dref>iso-2022-kr</dref>.
 
 <rfc number="1557" type="Informational" author="U. Choi, K. Chon and
 	      H. Park" title="Korean Character Encoding for Internet
@@ -1204,13 +1188,13 @@ RFC. <dref>RFC 934</dref> $B$rMQ$$$k!#(B
 <h3> RFC 1922
 <node> RFC 1922
 <p>
+A RFC defines <dref>MIME charset</dref>s for Chinese,
 <dref>iso-2022-cn</dref>, <dref>iso-2022-cn-ext</dref>,
-<dref>cn-gb</dref>, <dref>cn-big5</dref> $B$H$$$C$?Cf9q8l$N$?$a$N(B <a
-node="MIME charset">MIME charset</a> $B$rDj5A$7$F$$$k(B RFC.
+<dref>cn-gb</dref>, <dref>cn-big5</dref>, etc.
 <p>
-$B$3$l$K2C$($F!"(B<concept>charset-edition</concept> $B$H(B 
-<concept>charset-extension</concept> $B$H$$$&(B <dref>Content-Type
-field</dref> $B$N(B parameter $B$rDj5A$7$F$$$k!#(B
+In addition, it defines additional parameters of <dref>Content-Type
+field</dref> field, <concept>charset-edition</concept> and
+<concept>charset-extension</concept>.
 
 <rfc number="1922" type="Informational" author="Zhu, HF., Hu, DY.,
 	      Wang, ZG., Kao, TC., Chang, WCH. and Crispin, M."
@@ -1259,18 +1243,21 @@ field</dref> $B$N(B parameter $B$rDj5A$7$F$$$k!#(B
 <h3> plain text
 <node> plain text
 <p>
-$B=qBN$dAHHG$K4X$9$k>pJs$r;}$?$J$$(B <a node="Coded character set">$BJ8;zId(B
-$B9f(B</a>$B$N$_$GI=8=$5$l$k(B text $B>pJs!#(B<cf node="text/plain">
+A textual data represented by only <dref>coded character set</dref>.
+It does not have information about font or typesetting.
+<cf node="text/plain">
 
 
 <h3> Security multipart
 <node> Security multipart
 <p>
-<a node="MIME">MIME</a> $B$G0E9f$dEE;R=qL>$rMQ$$$k$?$a$N7A<0!#(B<a
-node="multipart/signed"><concept>multipart/signed</concept></a> $B$H(B <a
-node="multipart/encrypted"><concept>multipart/encrypted</concept></a> 
-$B$H$$$&(B multipart $B$rMQ$$$k!#(BMOSS $B$d(B <a node="PGP/MIME">PGP/MIME</a> $B$O(B
-$B$3$l$K4p$$$F$$$k!#(B
+A format to represent signed/encrypted message in <dref>MIME</dref>.
+<p>
+It defines two multipart media types, <a
+node="multipart/signed"><concept>multipart/signed</concept></a> and <a
+node="multipart/encrypted"><concept>multipart/encrypted</concept></a>.
+<p>
+MOSS and <dref>PGP/MIME</dref> are based on it.
 
 <rfc name="Security multipart" number="1847" type="Standards Track"
 	      author="James Galvin, Gale Murphy, Steve Crocker and Ned
@@ -1282,10 +1269,6 @@ node="multipart/encrypted"><concept>multipart/encrypted</concept></a>
 <h3> text/enriched
 <node> text/enriched
 <p>
-RFC 1521 $B$GDj5A$5$l$?(B <concept>text/richtext</concept> $B$KBe$o$C$F!"=q(B
-$BBN$dAHHG$K4X$9$k>pJs$r;}$C$?(B text$B$rI=8=$9$k$?$a$N(B <dref>media
-type</dref>.
-
 <rfc name="text/enriched" number="1896" author="P. Resnick and
 	      A. Walker" title="The text/enriched MIME Content-type"
 	      date="February 1996" obsolete="1563">
@@ -1307,15 +1290,15 @@ the type of body defined by <dref>RFC 822</dref>.
 <h3> tm-kernel, tm
 <node> tm-kernel
 <p>
-Emacs $B$G(B <a node="MIME">MIME</a> $B$rMxMQ$9$k$?$a$N(B user interface $B$rDs(B
-$B6!$9$k(B library $B72!#(B`tools for MIME' $B$NN,!#(B
+A libraries to provide user interface about <dref>MIME</dref> for
+emacs.  tm stands for `tools for MIME'.
 
-<memo title="$B$I$&$G$bNI$$$3$H(B(^-^;">
+<memo title="Unimportant notice(^-^;">
 <p>
 <ul>
-  <li> tm $B$O(B ``tiny-mime'' $B$NN,$8$c$J$$$i$7$$$>(B (^-^;
-  <li> tm $B$O:n<T$N%$%K%7%c%k$8$c$J$$$i$7$$$>(B (^-^;
-  <li> ``Tools for MIME'' $B$NN,$H$$$&$N$O$3$8$D$1$i$7$$$>(B (^-^;
+  <li> tm may not stand for ``tiny-mime''(^-^;
+  <li> tm may not stand for initial of an author (^-^;
+  <li> ``Tools for MIME'' may be strained (^-^;
 </ul>
 </memo>
 
@@ -1323,40 +1306,35 @@ Emacs $B$G(B <a node="MIME">MIME</a> $B$rMxMQ$9$k$?$a$N(B user interface $B
 <h3> tm-MUA
 <node> tm-MUA
 <p>
-<a node="tm-kernel">tm</a> $B$rMQ$$$?(B <a node="MUA">MUA</a> $B$b$7$/$O(B MUA 
-$B$KBP$9$k(B extender.
+<dref>MUA</dref> or MUA extender using <a node="tm-kernel">tm</a>.
 <p>
-<concept>tm $BBg@9$j(B package</concept> $B$K$O(B
+<concept>tm oomori package</concept> has following extenders:
 
 <ul>
-<li><a file="mh-e">mh-e</a> $BMQ$N(B <concept>tm-mh-e</concept>
-<li>GNUS $BMQ$N(B <concept>tm-gnus</concept>
-<li>Gnus $BMQ$N(B <a file="gnus-mime-en"><concept>gnus-mime</concept></a>
-<li>VM $BMQ$N(B <concept>tm-vm</concept>
-<li>RMAIL $BMQ$N(B <concept>tm-rmail</concept>
+<li><a file="tm-mh-e-en"><concept>tm-mh-e</concept></a>
+ for <a file="mh-e">mh-e</a>
+<li><a file="tm-gnus_en"><concept>tm-gnus</concept></a> for GNUS
+<li><a file="gnus-mime-en"><concept>gnus-mime</concept></a> for Gnus
+<li><a file="tm-vm_en"><concept>tm-vm</concept></a> for VM
+<li><concept>tm-rmail</concept> for RMAIL
 </ul>
-
-<noindent>
-$B$,4^$^$l$F$$$k!#(B
-<p>
-$BFHN)$7$?(B MUA $B$H$7$F$O(B <a file="cmail">cmail</a> $B$,(B tm $B$rMxMQ2DG=$G$"$k!#(B
 
 
 <h3> us-ascii
 <node> us-ascii
 <p>
-$B%"%a%j%+O"K.$J$I$G;H$o$l$k1Q8l$J$I$rI=8=$9$k$?$a$N(B <a node="MIME
-charset">MIME charset</a> $B$N#1$D!#(B
+A <a node="MIME charset">MIME charset</a> for primary Latin script
+mainly written by English or other languages.
 <p>
-<dref>ASCII</dref> $B$N$_$+$i$J$j(B <dref>ISO 2022</dref> $B$K$h$k(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$O5v$5$l$J$$!#(B
+It is a 7bit <dref>coded character set</dref> based on <dref>ISO
+2022</dref>, it contains only
+<dref>ASCII</dref> and <dref>code extension</dref> is not allowed.
 <p>
-Internet mail $B$K$*$1$kI8=`$N(B<a node="Coded character set">$BId9f2=J8;z=8(B
-$B9g(B</a>$B$G$"$j!"L@<(E*$K(B MIME charset $B$,<($5$l$J$$>l9g$O86B'$H$7$F(B 
-<concept>us-ascii</concept> $B$,;H$o$l$k!#(B
+It is standard coded character set of Internet mail.  If MIME charset
+is not specified, <concept>us-ascii</concept> is used as default.
 <p>
-$B$^$?!"(B<a node="RFC 822">RFC 822</a> $B$K$*$1$k(B <concept>ASCII</concept> 
-$B$O(B us-ascii $B$r;X$9$b$N$H2r<a$9$Y$-$G$"$k!#(B
+In addition, <concept>ASCII</concept> of <dref>RFC 822</dref> should
+be interpreted as us-ascii.
 
 
 <h1> Setting
@@ -1566,6 +1544,34 @@ e-mail to:
 <noindent>
 Since the user registration is done manually, please write the mail
 body in human-recognizable language (^_^).
+
+
+<h1> Acknowledgments
+<node> Acknowledgments
+<p>
+I thank MASUTANI Yasuhiro.  He requested me a lot of important
+features and gave me a lot of suggestions when tm-view was born.
+tm-view is based on his influence.
+<p>
+I thank ENAMI Tsugutomo for work of <file>mime.el</file>, which is an
+origin of <file>tm-ew-d.el</file> and <file>mel-b.el</file>, and
+permission to rewrite for tm.
+<p>
+I thank OKABE Yasuo for work of internal method for LaTeX and
+automatic assembling method for message/partial.  I thank UENO
+Hiroshi for work of internal method for tar archive.
+<p>
+I thank UMEDA Masanobu for his work of <file>mime.el</file>, which is
+the origin of tm-edit, and permission to rewrite his work as tm-edit.
+<p>
+I thank KOBAYASHI Shuhei for his work as a tm maintainer.  In
+addition, he often points out or suggests about conformity with RFCs.
+<p>
+I thank Oscar Figueiredo for his work as the maintainer of tm-vm.  He
+improves tm-vm and wrote a good manual of tm-vm.
+<p>
+Last of all, I thank members of two tm mailing lists, Japanese and
+English version.
 
 
 <h1> Concept Index

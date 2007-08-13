@@ -1,3 +1,102 @@
+Sat Dec 28 11:15:55 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el (default-menubar): Move Frame-local font menu
+	option to Frame Appearance submenu.
+
+Fri Dec 27 20:30:00 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* x11/x-font-menu.el (font-menu-this-frame-only-p): Default to
+	nil, because everyone was confused by it defaulting to t.
+
+Fri Dec 27 12:30:37 1996  Richard Mlynarik  <mly@adoc.xerox.com>
+
+	* prim/sort.el (sort-subr): Document use of `sort-fold-case'.
+	(sort-lines): Ditto.
+	(sort-paragraphs): Ditto.
+	(sort-pages): Ditto.
+	(sort-regexp-fields): Ditto.
+	(sort-numeric-fields): Ditto.
+	(sort-regexp-fields): Ditto.
+	(sort-columns): Ditto.
+	(sort-regexp-fields): Use compare-buffer-substrings if available.
+
+Fri Dec 27 12:09:23 1996  Noah Friedman  <friedman@gnu.ai.mit.edu>
+
+	* modes/mail-abbrevs.el (mail-abbrev-expand-hook): Prevent abbrev
+	expansion from happening multiple times.
+
+Fri Dec 27 02:31:15 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/help.el (help-for-help): Don't confuse help character `b'
+	with scrolling character `b' in view-less help buffer.
+
+	* packages/scroll-in-place.el: Synch with 19.15.
+
+Thu Dec 26 15:25:09 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el (xemacs-splash-buffer): New function.
+	(default-menubar): Use it.
+	(default-menubar): Reorganize help menus.
+
+	* prim/startup.el (startup-message-timeout): More or less disable
+	the timeout of the splash screen.
+
+	* packages/man.el (Manual-use-rosetta-man): For Neal Becker's
+	Rosetta Man patch.
+	(Manual-nuke-nroff-bs): Use it.
+
+Tue Dec 24 12:46:22 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/frame.el (show-temp-buffer-in-current-frame): Shrink temp
+	buffer to fit.
+
+Mon Dec 23 15:44:49 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/delbackspace.el: Correct rebindings so they work properly
+	when cc-mode is not dumped with XEmacs.
+
+	* packages/apropos.el (apropos-print): Minimize size of *Apropos*
+	window if it is small.
+
+	* prim/lisp.el (lisp-complete-symbol): Minimize size of
+	*Completions* window.
+
+	* prim/help.el (with-displaying-help-buffer): (Based on an idea
+	from Sudish Joseph) minimize size of displayed help window.
+
+	* modes/fortran.el (fortran-window-create-momentarily): Fix
+	lossage from synch with Emacs 19.34.
+	(fortran-abbrev-start): Ditto.
+
+Sun Dec 22 15:33:25 1996  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* x11/x-toolbar.el (toolbar-news): Check whether this is the last
+	frame before deleting it.
+
+Sun Dec 22 00:37:42 1996  Sudish Joseph  <sudish@mindspring.com>
+
+	* eterm/tgud.el (tgud-gdb-complete-filter): Match carriage returns
+	as well as linefeeds.
+
+	* eterm/term.el (term-dynamic-list-completions): Correct Emacsism
+	in setting unread-command-events.
+
+Sat Dec 21 23:37:02 1996  Bob Weiner  <weiner@infodock.com>
+
+	* packages/font-lock.el: Update Java support.
+
+Sat Dec 21 22:48:59 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/fontl-hooks.el: Add provide (synch with 19.15).
+
+	* x11/x-toolbar.el: Don't quote lambda macro.
+
+	* packages/session.el: Removed from distribution.
+
+Sat Dec 21 22:37:37 1996  Neal Becker  <neal@ctd.comsat.com>
+
+	* pcl-cvs/pcl-cvs.el: Synched with pcl-cvs.el from cvs-1.9.
+
 Fri Dec 20 15:19:36 1996  Steven L Baur  <steve@altair.xemacs.org>
 
 	* packages/compile.el (compilation-error-regexp-alist): Complete

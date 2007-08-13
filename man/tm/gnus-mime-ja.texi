@@ -29,10 +29,11 @@ tm $B$r;H$C$F(B Gnus $B$N(B MIME $B5!G=$r6/2=$9$k$?$a$N(B package $B$G$"$
 
 @node Introduction, Automatic MIME Preview, Top, Top
 @chapter gnus-mime $B$C$F2?!)(B
+@cindex gnus-mime
 
-@cindex{gnus-mime}@strong{gnus-mime} $B$O(B tm (@ref{(tm-ja)tm-kernel}) $B$r;H$C(B
-$B$F(B Gnus (@ref{(gnus)}) $B$N(B MIME (@ref{(tm-ja)MIME}) $B5!G=$r6/2=$9$k$?$a$N(B 
-package $B$G$9!#(B
+@strong{gnus-mime} $B$O(B tm (@ref{(tm-ja)tm-kernel}) $B$r;H$C$F(B Gnus
+(@ref{(gnus)}) $B$N(B MIME (@ref{(tm-ja)MIME}) $B5!G=$r6/2=$9$k$?$a$N(B package 
+$B$G$9!#(B
 
 @noindent
 @strong{[$BCm0U(B]}
@@ -65,11 +66,13 @@ iso-2022-kr (@ref{(tm-ja)iso-2022-kr}), hz-gb-2312
 
 @node Automatic MIME Preview, mule, Introduction, Top
 @chapter MIME message $B$N(B inline $BI=<((B
+@cindex XEmacs
+@cindex automatic MIME preview
 
-gnus-mime $B$G$O(B @cindex{automatic MIME preview}@strong{automatic MIME
-preview} $B5!G=$rMxMQ$9$k$3$H$,$G$-$^$9!#$3$N5!G=$r;H$&$H(B Summary mode $B$G(B
-$B5-;v$rFI$`;~!"DL>oI=<($5$l$k(B Article buffer $B$NBe$o$j$K(B tm-view $B$G=hM}$5(B
-$B$l$?(B preview buffer $B$rI=<($7$^$9!#(B(cf. @ref{(tm-view-ja)}) @refill
+gnus-mime $B$G$O(B @strong{automatic MIME preview} $B5!G=$rMxMQ$9$k$3$H$,$G$-(B
+$B$^$9!#$3$N5!G=$r;H$&$H(B Summary mode $B$G5-;v$rFI$`;~!"DL>oI=<($5$l$k(B 
+Article buffer $B$NBe$o$j$K(B tm-view $B$G=hM}$5$l$?(B preview buffer $B$rI=<($7$^(B
+$B$9!#(B(cf. @ref{(tm-view-ja)}) @refill
 
 $B$3$N$?$a!"(BBase64 (@ref{(tm-ja)Base64}) $B$d(B Quoted-Printable
 (@ref{(tm-ja)Quoted-Printable}) $B$G(B encode $B$5$l$?5-;v$r(B decode $B$7$FI=<($9(B
@@ -78,8 +81,8 @@ preview} $B5!G=$rMxMQ$9$k$3$H$,$G$-$^$9!#$3$N5!G=$r;H$&$H(B Summary mode $B$G
 $BA3$N$3$H$J$,$i!"(Bmultipart (@ref{(tm-ja)multipart}) $B$N5-;v$b@5$7$/=hM}$G(B
 $B$-$^$9!#(B@refill
 
-$B$^$?!"(B@cindex{XEmacs}@strong{XEmacs} $B$G$O(B text $B$HF1MM$K3($b(B preview
-buffer $BFb$GI=<($9$k$3$H$,$G$-$^$9!#(B@refill
+$B$^$?!"(B@strong{XEmacs} $B$G$O(B text $B$HF1MM$K3($b(B preview buffer $BFb$GI=<($9$k(B
+$B$3$H$,$G$-$^$9!#(B@refill
 
 metamail $B$r;H$C$?>l9g$H0[$J$j!"2;$NF~$C$?5-;v$rFI$s$@$H$?$s!"$$$-$J$j!"(B
 $B2;$,LD$j=P$7$?$j!"(Bvideo $B$NF~$C$?5-;v$rFI$`$?$S$K(B video $B$,:F@8$5$l$?$j!"(B
@@ -178,13 +181,14 @@ gnus-mime $B$N5!G=$OI8=`$G$OF/$+$J$$$3$H$r0UL#$7$F$$$^$9!#$h$C$F!"(B
 
 @node Two buffers for an article,  , MIME processing, Automatic MIME Preview
 @section Automatic MIME preview $B$N;EAH$_(B
+@cindex preview buffer
+@cindex raw article buffer
 
 Gnus 5.2 $B0J9_$G$O(B Gnus $B$O#1$D$N(B article $B$KBP$7$F(B 
 @code{gnus-original-article-buffer} (@code{" *Original Article*"}) $B$H(B
 @code{gnus-article-buffer} (@code{"*Article*"}) $B$H$$$&#2$D$N(B buffer $B$r;}$C(B
-$B$F$$$^$9!#$3$3$G$OA0<T$r(B @cindex{raw article buffer}@strong{raw article
-buffer}, $B8e<T$r(B @cindex{preview buffer}@strong{preview buffer} $B$H8F$V$3(B
-$B$H$K$7$^$9!#(B@refill
+$B$F$$$^$9!#$3$3$G$OA0<T$r(B @strong{raw article buffer}, $B8e<T$r(B 
+@strong{preview buffer} $B$H8F$V$3$H$K$7$^$9!#(B@refill
 
 raw article buffer $B$K$O2?$b=hM}$r$5$l$F$$$J$$!X@8$N(B article$B!Y$,F~$C$F$$(B
 $B$^$9!#FC$K!"(Bmule (@ref{(tm-ja)mule}) $B$G$O(B code $BJQ49$r9T$J$o$J$$>uBV$N5-(B
@@ -207,8 +211,7 @@ Gnus 5.0.* $B$*$h$S(B Gnus 5.1 $B$G$O(B raw article buffer $B$H(B preview 
 @chapter $B9q:]2=(B
 
 MULE (@ref{(tm-ja)mule}), XEmacs/mule, $B$*$h$S!"(Bmule $BE}9gHG(B Emacs (*1) $B$J(B
-$B$I$N(B mule $B5!G=$r;}$C$?(B emacs $B$G$O(B MIME charset (@ref{(tm-ja)MIME
-charset}) $B$*$h$S!"Hs(B MIME message/part $B$KBP$9$k(B newsgroup $BKh$K;XDj$5$l$?(B 
+$B$I$N(B mule $B5!G=$r;}$C$?(B emacs $B$G$O(B MIME charset (@ref{(tm-ja)MIME charset}) $B$*$h$S!"Hs(B MIME message/part $B$KBP$9$k(B newsgroup $BKh$K;XDj$5$l$?(B 
 @code{default-mime-charset} $B$G$N(B code $BJQ49$,9T$o$l$^$9!#(B
 
 @noindent

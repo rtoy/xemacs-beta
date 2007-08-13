@@ -359,7 +359,10 @@ line."
 	(insert "\n")
 	(delete-horizontal-space)
  	(setq p (point))
-	(indent-relative)
+	;; Prevent abbrev expansion from happening again, since
+	;; sendmail-pre-abbrev-expand-hook will already have done it.
+	(let ((abbrev-mode nil))
+	  (indent-relative))
 	(setq fp (buffer-substring p (point)))
 	;; Go to the end of the new line.
 	(end-of-line)

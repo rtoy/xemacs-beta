@@ -1,5 +1,5 @@
 ;;;
-;;; $Id: tl-num.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;;; $Id: tl-num.el,v 1.2 1996/12/28 21:03:10 steve Exp $
 ;;;
 ;;; by MORIOKA Tomohiko <morioka@jaist.ac.jp>, 1993/10/4
 ;;;

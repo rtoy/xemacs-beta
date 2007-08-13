@@ -9,7 +9,7 @@
 ;; Maintainer: Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;; Created: 1994/7/11
 ;; Version:
-;;	$Id: signature.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
+;;	$Id: signature.el,v 1.2 1996/12/28 21:03:13 steve Exp $
 ;; Keywords: mail, news, signature
 
 ;; This file is part of tm (Tools for MIME).

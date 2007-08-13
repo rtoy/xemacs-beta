@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/6/25
-;; Version: $Id: mel-q.el,v 1.1.1.1 1996/12/18 22:43:39 steve Exp $
+;; Version: $Id: mel-q.el,v 1.2 1996/12/28 21:02:56 steve Exp $
 ;; Keywords: MIME, Quoted-Printable, Q-encoding
 
 ;; This file is part of MEL (MIME Encoding Library).

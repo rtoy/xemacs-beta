@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Rodney J. Whitby
 @center (manual revision: 2.1)
 @sp 2
 @center Rod Whitby
-@center @code{rwhitby@asc.corp.mot.com}
+@center @code{rwhitby@@asc.corp.mot.com}
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

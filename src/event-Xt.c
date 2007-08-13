@@ -640,7 +640,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 #else /* XIM_XLIB */
 #define LOOKUPSTRING \
   len = XmbLookupString \
-    (FRAME_X_XIC (x_window_to_frame \
+    (FRAME_X_XIC (x_any_window_to_frame \
 		  (get_device_from_display (event->display), event->window)), \
      event, bufptr, bufsiz, &keysym, &status);
 #endif /* XIM_XLIB */
@@ -708,9 +708,9 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
             enqueue_Xt_dispatch_event (emacs_event);
           }
         Lstream_close (XLSTREAM (instream));
-	return Qnil;
+	return (Qnil);
       }
-    case XLookupNone: return Qnil;
+    case XLookupNone: return (Qnil);
     case XBufferOverflow:
       bufptr = alloca (len+1);
       bufsiz = len+1;

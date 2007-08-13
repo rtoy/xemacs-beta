@@ -498,9 +498,11 @@ not to both.
 @display
 Mail list for discussion of all Hyperbole issues.  Bug reports and
 suggestions may also be sent here.@refill
+@end display
 
 @cindex e-mail, effective communication
 @cindex effective communication
+@display
 Always use your Subject and/or Summary: lines to state the position that
 your message takes on the topic that it addresses.
 
@@ -516,10 +518,12 @@ Statements end with periods, questions with question marks (typically),
 and high energy, high impact declarations with exclamation points.  This
 simple rule makes all e-mail communication much easier for recipients to
 handle appropriately.@refill
+@end display
 
 @cindex Hyperbole version
 @cindex Emacs version
 @vindex emacs-version
+@display
 If you ask a question, your subject line should end with a ?,
 e.g@. "Subject: How can man page SEE ALSOs be made implicit buttons?"  A
 "Subject: Re: How can ..." then indicates an answer to the question.
@@ -2317,8 +2321,6 @@ commands available in the outliner.
 The Otl/ menu entry on the Hyperbole top-level menu provides access to
 a number of major outliner commands:
 
-@example
-@group
 @cindex outliner commands
 @cindex Koutliner commands
 @findex kotl-mode:show-all
@@ -2333,6 +2335,8 @@ a number of major outliner commands:
 @findex kotl-mode:top-cells
 @findex kvspec:activate
 @cindex menu, Outline
+@example
+@group
 Menu Item    Command                    Description
 ====================================================================
 All          kotl-mode:show-all         Expand all cells
@@ -3347,8 +3351,6 @@ The Rolo/ menu entry on the Hyperbole top-level menu provides the
 user interface to the rolodex.  The rolo menu provides access to the
 following commands:
 
-@example
-@group
 @cindex rolodex commands
 @cindex Wrolo commands
 @findex rolo-add
@@ -3361,6 +3363,8 @@ following commands:
 @findex rolo-fgrep
 @findex rolo-word
 @findex rolo-yank
+@example
+@group
 Menu Item       Command               Description
 ====================================================================
 Add             rolo-add              Adds a rolodex entry
@@ -3588,10 +3592,10 @@ window configuration commands:
 WinConfig>  AddName  DeleteName  RestoreName  PopRing  SaveRing  YankRing
 @end display
 
-@example
-@group
 @cindex wconfig commands
 @cindex window configuration commands
+@example
+@group
 @findex wconfig-add-by-name
 @findex wconfig-delete-by-name
 @findex wconfig-restore-by-name
@@ -4576,10 +4580,10 @@ operations in this section apply only if you have mouse support within
 Hyperbole.  The Smart Key operations in, @ref{Smart Keyboard Keys},
 apply to both mouse and keyboard Smart Key usage.
 
-@format
-@group
 @cindex drag, side edge
 @cindex side drag
+@format
+@group
 If dragged from a side-by-side window edge or from the immediate left of
 a vertical scroll bar:
   ACTION or ASSIST
@@ -4587,9 +4591,9 @@ a vertical scroll bar:
 @end group
 @end format
 
+@cindex drag, between windows
 @format
 @group
-@cindex drag, between windows
 If dragged from inside one window to another:
   ACTION
      Creates a new link button at the drag start location, linked to the
@@ -4601,10 +4605,10 @@ If dragged from inside one window to another:
 @end format
 
 @page
-@format
-@group
 @cindex drag, horizontal
 @cindex horizontal drag
+@format
+@group
 If dragged horizontally within a single window while depressed
 (hmouse-x-drag-sensitivity sets the minimal horizontal movement which
 registers a drag):
@@ -4616,10 +4620,10 @@ registers a drag):
 @end group
 @end format
 
-@format
-@group
 @cindex depress, modeline
 @cindex modeline depress
+@format
+@group
 If depressed within a window mode line:
   ACTION
      (1) clicked on left edge of a window's modeline,
@@ -4650,10 +4654,10 @@ If depressed within a window mode line:
 @end format
 
 @page
-@format
-@group
 @cindex drag, vertical
 @cindex vertical drag
+@format
+@group
 If dragged vertically within a single window while depressed
 (hmouse-y-drag-sensitivity sets the minimal vertical movement which
 registers a drag):
@@ -4662,10 +4666,10 @@ registers a drag):
 @end group
 @end format
 
-@format
-@group
 @cindex drag, diagonal
 @cindex diagonal drag
+@format
+@group
 If dragged diagonally within a single window while depressed
 (hmouse-x-diagonal-sensitivity and hmouse-y-diagonal-sensitivity set the
 minimal diagonal movement which registers a drag):
@@ -4710,10 +4714,10 @@ When reading a Hyperbole menu item or a Hyperbole completion-based argument:
 @vindex smart-scroll-proportional
 @cindex proportional scrolling
 @cindex scrolling
-@format
-@group
 @cindex click, end of line
 @cindex end of line click
+@format
+@group
 When pressed at the end of a line but not the end of a buffer:
   ACTION
      Scrolls up according to value of smart-scroll-proportional.  If
@@ -4730,10 +4734,10 @@ When pressed at the end of a line but not the end of a buffer:
 @end group
 @end format
 
-@format
-@group
 @cindex click, button
 @cindex button click
+@format
+@group
 When pressed on a Hyperbole button:
   ACTION
      Activates button.
@@ -5046,10 +5050,10 @@ non-nil:
 @end group
 @end format
 
-@format
-@group
 @cindex click, Info
 @cindex Info browsing
+@format
+@group
 If pressed within an Info manual node:
   ACTION
      (1) the first line of an Info Menu Entry or Cross Reference, the desired
@@ -5106,10 +5110,10 @@ summary mode, 'hmail:lister', buffer at:
 @end group
 @end format
 
-@format
-@group
 @cindex click, GNUS
 @cindex GNUS browsing
+@format
+@group
 If pressed within a GNUS listing of newsgroups buffer at:
   ACTION
      (1) a GNUS-GROUP line, that newsgroup is read;
@@ -5159,10 +5163,10 @@ If pressed within a GNUS newsreader article buffer at:
 @end format
 
 @page
-@format
-@group
 @cindex click, buffer menu
 @cindex buffer menu
+@format
+@group
 If pressed within a listing of buffers (Buffer-menu-mode):
   ACTION
      (1) on the first column of an entry, the selected buffer is marked for
@@ -5184,10 +5188,10 @@ If pressed within a listing of buffers (Buffer-menu-mode):
 @end group
 @end format
 
-@format
-@group
 @cindex click, dired
 @cindex dired browsing
+@format
+@group
 If pressed within a dired-mode buffer:
   ACTION
      (1) within an entry line, the selected file/directory is displayed
@@ -5208,11 +5212,11 @@ If pressed within a dired-mode buffer:
 @end format
 
 @page
-@format
-@group
 @cindex click, tar
 @cindex tar archive browsing
 @cindex extracting from tar files
+@format
+@group
 If pressed within a tar-mode buffer:
   ACTION
      (1) within an entry line, the selected file/directory is displayed
@@ -5227,9 +5231,9 @@ If pressed within a tar-mode buffer:
 @end group
 @end format
 
+@cindex man page references
 @format
 @group
-@cindex man page references
 If pressed on a cross reference within a man page entry section labeled
 NAME, SEE ALSO, or PACKAGES USED, or within a man page C routine
 specification (see 'smart-man-c-routine-ref') and man page buffer
@@ -5240,12 +5244,12 @@ containing its pathname:
 @end group
 @end format
 
-@format
-@group
 @cindex click, world-wide web
 @cindex W3
 @cindex URL
 @cindex world-wide web
+@format
+@group
 If pressed on a world-wide web universal resource locator:
   ACTION
      Displays the URL referent at point.
@@ -5254,10 +5258,10 @@ If pressed on a world-wide web universal resource locator:
 @end group
 @end format
 
-@format
-@group
 @cindex game, gomoku
 @cindex gomoku
+@format
+@group
 If pressed in a Gomoku game buffer.
   ACTION
      Makes a move at the space pointed to.
@@ -5266,10 +5270,10 @@ If pressed in a Gomoku game buffer.
 @end group
 @end format
 
-@format
-@group
 @cindex click, wrolo matches
 @cindex wrolo matches
+@format
+@group
 If pressed within an entry in the wrolo match display buffer:
   ACTION or ASSIST
      The entry is edited in the other window.

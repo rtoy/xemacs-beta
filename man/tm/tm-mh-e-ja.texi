@@ -28,10 +28,11 @@ mh-e $B$G(B MIME $B$r3Z$7$`$?$a$N(B package $B$G$"$k(B `tm-mh-e' $B$K$D$$
 
 @node Introduction, mh-folder-mode, Top, Top
 @chapter tm-mh-e $B$C$F2?!)(B
+@cindex tm-mh-e
 
-@cindex{tm-mh-e}@strong{tm-mh-e} $B$O(B tm (@ref{(tm-ja)tm-kernel}) $B$r;H$C$F(B 
-mh-e (@ref{(mh-e)}) $B$N(B MIME (@ref{(tm-ja)MIME}) $B5!G=$r6/2=$9$k$?$a$N(B 
-package $B$G$9!#(B@refill
+@strong{tm-mh-e} $B$O(B tm (@ref{(tm-ja)tm-kernel}) $B$r;H$C$F(B mh-e
+(@ref{(mh-e)}) $B$N(B MIME (@ref{(tm-ja)MIME}) $B5!G=$r6/2=$9$k$?$a$N(B package 
+$B$G$9!#(B@refill
 
 tm-mh-e $B$K$h$C$F6/2=$5$l$k5!G=$O<!$NDL$j$G$9!'(B
 
@@ -73,12 +74,13 @@ mime/viewer-mode (@ref{(tm-view-ja)mime/viewer-mode}) $B$O(B MIME message $B$
 
 @node Automatic MIME Preview, mule, mh-folder-mode, Top
 @chapter MIME message $B$N(B inline $BI=<((B
+@cindex XEmacs
+@cindex automatic MIME preview
 
-tm-mh-e $B$G$O(B @cindex{automatic MIME preview}@strong{automatic MIME
-preview} $B5!G=$rMxMQ$9$k$3$H$,$G$-$^$9!#$3$N5!G=$r;H$&$H(B MH-Folder mode
-(@ref{(mh-e)Reading Mail}) $B$G5-;v$rFI$`;~!"DL>oI=<($5$l$k(B show buffer $B$N(B
-$BBe$o$j$K(B tm-view (@ref{(tm-view-ja)}) $B$G=hM}$5$l$?(B preview buffer $B$rI=<((B
-$B$7$^$9!#(B@refill
+tm-mh-e $B$G$O(B @strong{automatic MIME preview} $B5!G=$rMxMQ$9$k$3$H$,$G$-$^(B
+$B$9!#$3$N5!G=$r;H$&$H(B MH-Folder mode (@ref{(mh-e)Reading Mail}) $B$G5-;v$r(B
+$BFI$`;~!"DL>oI=<($5$l$k(B show buffer $B$NBe$o$j$K(B tm-view
+(@ref{(tm-view-ja)}) $B$G=hM}$5$l$?(B preview buffer $B$rI=<($7$^$9!#(B@refill
 
 
 $B$3$N$?$a!"(BQuoted-Printable (@ref{(tm-ja)Quoted-Printable}) $B$d(B Base64
@@ -87,8 +89,8 @@ preview} $B5!G=$rMxMQ$9$k$3$H$,$G$-$^$9!#$3$N5!G=$r;H$&$H(B MH-Folder mode
 $B$J=qBN$dAHHG$K4X$9$k>pJs$r;}$C$?5-;v$r@07A$7$FI=<($G$-$^$9!#EvA3$N$3$H$J(B
 $B$,$i!"(Bmultipart (@ref{(tm-ja)multipart}) $B$N5-;v$b@5$7$/=hM}$G$-$^$9!#(B
 
-$B$^$?!"(B@cindex{XEmacs}@strong{XEmacs} $B$G$O(B text $B$HF1MM$K3($b(B preview
-buffer $BFb$GI=<($9$k$3$H$,$G$-$^$9!#(B@refill
+$B$^$?!"(B@strong{XEmacs} $B$G$O(B text $B$HF1MM$K3($b(B preview buffer $BFb$GI=<($9$k(B
+$B$3$H$,$G$-$^$9!#(B@refill
 
 metamail $B$r;H$C$?>l9g$H0[$J$j!"2;$NF~$C$?5-;v$rFI$s$@$H$?$s!"$$$-$J$j!"(B
 $B2;$,LD$j=P$7$?$j!"(Bvideo $B$NF~$C$?5-;v$rFI$`$?$S$K(B video $B$,:F@8$5$l$?$j!"(B
@@ -112,8 +114,7 @@ mail $B$rAw$C$?$j$9$k$3$H$,KI$2$^$9!#$3$&$7$?(B content $B$O(B preview buffe
 @chapter $B9q:]2=(B
 
 MULE (@ref{(tm-ja)mule}), XEmacs/mule, $B$*$h$S!"(Bmule $BE}9gHG(B Emacs (*1) $B$J(B
-$B$I$N(B mule $B5!G=$r;}$C$?(B emacs $B$G$O(B MIME charset (@ref{(tm-ja)MIME
-charset}) $B$*$h$S!"Hs(B MIME message/part $B$KBP$9$k(B newsgroup $BKh$K;XDj$5$l$?(B 
+$B$I$N(B mule $B5!G=$r;}$C$?(B emacs $B$G$O(B MIME charset (@ref{(tm-ja)MIME charset}) $B$*$h$S!"Hs(B MIME message/part $B$KBP$9$k(B newsgroup $BKh$K;XDj$5$l$?(B 
 @code{default-mime-charset} $B$G$N(B code $BJQ49$,9T$o$l$^$9!#(B
 
 @noindent

@@ -393,12 +393,7 @@ install-arch-indep: mkdir
 	   if [ ! -f ${infodir}/dir ] && [ -f dir ]; then \
 	     ${INSTALL_DATA} ${srcdir}/info/dir ${infodir}/dir ; \
 	   fi ; \
-	   for f in ange-ftp* cc-mode* cl* dired* ediff* external-widget* \
-		    forms* gnus* hyperbole* ilisp* info* internals* \
-		    ispell* lispref* mailcrypt* message* mh-e* \
-                    new-users-guide* oo-browser* pcl-cvs* psgml* rmail* \
-                    standards* supercite* term.* termcap* texinfo* viper* \
-                    vm* w3* xemacs* ; do \
+	   for f in *.info ; do \
 	     ${INSTALL_DATA} ${srcdir}/info/$$f ${infodir}/$$f ; \
 	     chmod 0644 ${infodir}/$$f; \
 	     gzip -9 ${infodir}/$$f; \

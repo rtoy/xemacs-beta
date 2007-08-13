@@ -9,7 +9,7 @@
 ;;; Maintainer: Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;;; Created: 1995/10/25
 ;;; Version:
-;;;	$Id: mel-g.el,v 1.1.1.1 1996/12/18 22:43:39 steve Exp $
+;;;	$Id: mel-g.el,v 1.2 1996/12/28 21:02:56 steve Exp $
 ;;; Keywords: MIME, base64, gzip
 ;;;
 ;;; This file is not part of MEL (MIME Encoding Library) yet.

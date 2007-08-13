@@ -54,7 +54,7 @@
 	(progn
 	  (setq toolbar-mail-frame (make-frame))
 	  (add-hook 'vm-quit-hook
-		    '(lambda ()
+		    (lambda ()
 		       (save-excursion
 			 (if (frame-live-p toolbar-mail-frame)
 			     (delete-frame toolbar-mail-frame)))))
@@ -121,19 +121,20 @@
   "The frame in which news is displayed.")
 
 (defun toolbar-news ()
-  "Run GNUS in a separate frame."
+  "Run Gnus in a separate frame."
   (interactive)
-  (if (or (not toolbar-news-frame)
-	  (not (frame-live-p toolbar-news-frame)))
-      (progn
-	(setq toolbar-news-frame (make-frame))
-	(add-hook 'gnus-exit-gnus-hook
-		  '(lambda ()
-		     (if (frame-live-p toolbar-news-frame)
-			 (delete-frame toolbar-news-frame))))
-	(select-frame toolbar-news-frame)
-	(raise-frame toolbar-news-frame)
-	(gnus)))
+  (when (or (not toolbar-news-frame)
+	    (not (frame-live-p toolbar-news-frame)))
+    (setq toolbar-news-frame (make-frame))
+    (add-hook 'gnus-exit-gnus-hook
+	      (lambda ()
+		(when (frame-live-p toolbar-news-frame)
+		  (if (cdr (frame-list))
+		      (delete-frame toolbar-news-frame))
+                  (setq toolbar-news-frame nil))))
+    (select-frame toolbar-news-frame)
+    (raise-frame toolbar-news-frame)
+    (gnus))
   (if (frame-iconified-p toolbar-news-frame)
       (deiconify-frame toolbar-news-frame))
   (select-frame toolbar-news-frame)

@@ -1327,7 +1327,9 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	strncpy(temp, name, sizeof (temp));
 	temp[sizeof (temp) - 1] = '\0';
 	temp[2] = '-';
-	*keysym = Fintern_soft(make_string(temp, strlen(temp)), Qnil);
+	*keysym = Fintern_soft(make_string((Bufbyte *)temp,
+					   strlen(temp)),
+			       Qnil);
       } else if (EQ (*keysym, QLFD))
 	*keysym = QKlinefeed;
       else if (EQ (*keysym, QTAB))

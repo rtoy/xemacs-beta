@@ -39,7 +39,7 @@
 
 (defvar command-line-processed nil "t once command line has been processed")
 
-(defconst startup-message-timeout 120)
+(defconst startup-message-timeout 1200)	; More or less disable the timeout
 
 (defconst inhibit-startup-message nil
   "*Non-nil inhibits the initial startup message.

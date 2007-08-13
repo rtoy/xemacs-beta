@@ -8,7 +8,7 @@
 ;;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;;; Created: 1995/10/25
 ;;; Version:
-;;;	$Id: mel-u.el,v 1.1.1.1 1996/12/18 22:43:39 steve Exp $
+;;;	$Id: mel-u.el,v 1.2 1996/12/28 21:02:57 steve Exp $
 ;;; Keywords: uuencode
 ;;;
 ;;; This file is part of MEL (MIME Encoding Library).

@@ -1,13 +1,13 @@
 \input texinfo.tex
 @setfilename tm-ja.info
-@settitle{tm 7.90 Manual$B!JF|K\8lHG!K(B}
+@settitle{tm 7.100 Manual$B!JF|K\8lHG!K(B}
 @titlepage
-@title tm 7.90 Manual$B!JF|K\8lHG!K(B
+@title tm 7.100 Manual$B!JF|K\8lHG!K(B
 @author $B<i2,(B $BCNI'(B <morioka@@jaist.ac.jp>
-@subtitle 1996/10/15
+@subtitle 1996/12/25
 @end titlepage
 @node Top, Introduction, (dir), (dir)
-@top tm 7.90 Manual$B!JF|K\8lHG!K(B
+@top tm 7.100 Manual$B!JF|K\8lHG!K(B
 
 @ifinfo
 
@@ -20,6 +20,7 @@ GNU Emacs $B$G(B MIME $B$r3Z$7$`$?$a$N(B package $B$G$"$k(B `tm' $B$K$D$$
 * Introduction::                tm $B$C$F2?!)(B
 * Setting::                     $B@_Dj(B
 * Bug report::                  bug $BJs9p$N;EJ}(B
+* Acknowledgments::             $B<U<-(B
 * Concept Index::               $B35G0:w0z(B
 * Variable Index::              $BJQ?t:w0z(B
 @end menu
@@ -70,28 +71,28 @@ tm $B$G;H$o$l$F$$$kMQ8l$K$D$$$F2r@b$7$^$9!#(B
 @menu
 * 7bit::                        
 * 8bit::                        
-* 94 character set::            94 $BJ8;z=89g(B
-* 96 character set::            96 $BJ8;z=89g(B
-* 94x94 character set::         94$B!_(B94 $BJ8;z=89g(B
+* 94-character set::            94 $BJ8;z=89g(B
+* 96-character set::            96 $BJ8;z=89g(B
+* 94x94-character set::         94$B!_(B94 $BJ8;z=89g(B
 * ASCII::                       
 * Base64::                      
 * binary::                      
-* Character Set::               Character Set$B!JJ8;z=89g!K(B
 * cn-gb::                       cn-gb, gb2312
 * cn-big5::                     cn-big5, big5
-* CNS::                         CNS 11643-1992
+* CNS 11643::                   CNS 11643-1992
 * Coded character set::         Coded character set$B!JId9f2=J8;z=89g!K(B, Character code$B!JJ8;zId9f!K(B
 * Code extension::              Code extension$B!JId9f3HD%!K(B
 * Content-Disposition::         Content-Disposition field
-* media type::                  
 * Content-Type field::          
 * Emacs::                       
 * encoded-word::                
 * encapsulation::               
+* entity::                      Entity
 * euc-kr::                      
 * FTP::                         FTP 
 * GB 2312::                     GB 2312-1980
 * GB 8565.2::                   GB 8565.2-1988
+* Graphic character set::       Graphic character set$B!J?^7AJ8;z=89g!K(B
 * hz-gb2312::                   
 * ISO 2022::                    
 * iso-2022-cn::                 
@@ -113,13 +114,14 @@ tm $B$G;H$o$l$F$$$kMQ8l$K$D$$$F2r@b$7$^$9!#(B
 * iso-8859-7::                  
 * ISO 8859-8::                  
 * ISO 8859-9::                  
-* ISO-IR-165::                  ISO-IR-165, CCITT Extended GB 
+* ISO-IR-165::                  ISO-IR-165, CCITT Extended GB
 * JIS X0201::                   
 * JIS C6226::                   JIS C6226-1978
 * JIS X0208::                   
 * JIS X0212::                   JIS X0212-1990
 * koi8-r::                      
 * KS C5601::                    KS C5601-1987
+* media type::                  
 * message::                     
 * message/rfc822::              
 * method::                      
@@ -162,95 +164,93 @@ tm $B$G;H$o$l$F$$$kMQ8l$K$D$$$F2r@b$7$^$9!#(B
 @node 7bit, 8bit, Glossary, Glossary
 @subsection 7bit
 
-$B$3$3$G$O(B 0 $B$+$i(B 127 $B$N@0?t$r;X$7$^$9!#(B@refill
+$B$3$3$G$O(B 0 $B$+$i(B 127 $B$N@0?t$r;X$9!#(B@refill
 
-0 $B$+$i(B 127 $B$N@0?t$NNs$GI=8=$G$-$k$h$&$J(B data $B$r(B ``7bit $B$N(B data'' $B$H8F$S(B
-$B$^$9!#(B@refill
+0 $B$+$i(B 127 $B$N@0?t$NNs$GI=8=$G$-$k$h$&$J(B data $B$r(B ``7bit $B$N(B data'' $B$H8F$V!#(B
+@refill
 
 $B$^$?!"(B0 $B$+$i(B 31 $B$*$h$S(B 127 $B$GI=8=$5$l$k@)8fJ8;z$H(B 32 $B$GI=8=$5$l$k6uGr$H(B 
 33 $B$+$i(B 126 $B$GI=8=$5$l$k?^7AJ8;z$+$i$J$kJ8;zNs$N$3$H$r(B ``7bit $B$NJ8;zNs(B'' 
-$B$H8F$S$^$9!J$3$l$O(B ISO 2022 (@ref{ISO 2022}) $B$N!V(B7 $BC10L7O!W$HF1MM$G$9!K!#(B
+$B$H8F$V!J$3$l$O(B ISO 2022 (@ref{ISO 2022}) $B$N!V(B7 $BC10L7O!W$HF1MM!K!#(B
 
 $BEAE}E*$J(B Internet $B$N(B MTA (@ref{MTA}) $B$O(B 7bit $B$N(B data $B$rE>Aw$G$-$k$N$G!"(B
 7bit $B$N(B data $B$O(B Quoted-Printable (@ref{Quoted-Printable}) $B$d(B Base64
-(@ref{Base64}) $B$H$$$C$?JQ49$r9T$o$J$/$F$b$=$N$^$^E>Aw$G$-$^$9!#(B@refill
+(@ref{Base64}) $B$H$$$C$?JQ49$r9T$o$J$/$F$b$=$N$^$^E>Aw$G$-$k!#(B@refill
 
-$B$7$+$7!"(B7bit $B$G$"$l$P$I$s$J(B data $B$G$bNI$$$H$O$$$($^$;$s!#$J$<$J$i!"#19T(B
-$B$ND9$5$,$"$^$j$KD9$$$H!"(BMTA $B$O$=$N(B message $B$rE>Aw$9$k$3$H$,$G$-$J$$$+$i(B
-$B$G$9!#$A$J$_$K!"(BRFC 821 (@ref{RFC 821}) $B$O#19T$O2~9TJ8;z$r=|$$$F(B 998
-byte $B0JFb$G$"$k$3$H$r5a$a$F$$$^$9!#$h$C$F!"$3$l0J>e$N9T$,4^$^$l$k2DG=@-(B
-$B$N$"$k(B data, $BNc$($P!"(BPostscript $B$N(B data $B$J$I$O(B Quoted-Printable $BEy$G(B 
-encode$B$9$kI,MQ$,$"$j$^$9!#(B
+$B$7$+$7!"(B7bit $B$G$"$l$P$I$s$J(B data $B$G$bNI$$$H$O$$$($J$$!#$J$<$J$i!"#19T$N(B
+$BD9$5$,$"$^$j$KD9$$$H!"(BMTA $B$O$=$N(B message $B$rE>Aw$9$k$3$H$,$G$-$J$$$+$i$G(B
+$B$"$k!#$A$J$_$K!"(BRFC 821 (@ref{RFC 821}) $B$O#19T$O2~9TJ8;z$r=|$$$F(B 998
+byte $B0JFb$G$"$k$3$H$r5a$a$F$$$k!#$h$C$F!"$3$l0J>e$N9T$,4^$^$l$k2DG=@-$N(B
+$B$"$k(B data, $BNc$($P!"(BPostscript $B$N(B data $B$J$I$O(B Quoted-Printable $BEy$G(B 
+encode$B$9$kI,MQ$,$"$k!#(B
 
 
-@node 8bit, 94 character set, 7bit, Glossary
+@node 8bit, 94-character set, 7bit, Glossary
 @subsection 8bit
+@cindex binary
 
-$B$3$3$G$O(B 0 $B$+$i(B 255 $B$N@0?t$r;X$7$^$9!#(B@refill
+$B$3$3$G$O(B 0 $B$+$i(B 255 $B$N@0?t$r;X$9!#(B@refill
 
-0 $B$+$i(B 255 $B$N@0?t$NNs$GI=8=$G$-$k$h$&$J(B data $B$r(B ``8bit $B$N(B data'' $B$H8F$S(B
-$B$^$9!#(B@refill
+0 $B$+$i(B 255 $B$N@0?t$NNs$GI=8=$G$-$k$h$&$J(B data $B$r(B ``8bit $B$N(B data'' $B$H8F$V!#(B
+@refill
 
 $B$^$?!"(B0 $B$+$i(B 31, 127 $B$*$h$S(B 128 $B$+$i(B 159 $B$GI=8=$5$l$k@)8fJ8;z$H(B 32 $B$GI=(B
 $B8=$5$l$k6uGr$H(B 33 $B$+$i(B 126 $B$H(B 160 $B$+$i(B 255 $B$GI=8=$5$l$k?^7AJ8;z$+$i$J$k(B
-$BJ8;zNs$N$3$H$r(B ``8bit $B$NJ8;zNs(B'' $B$H8F$S$^$9!J$3$l$O(B ISO 2022 (@ref{ISO
-2022}) $B$N!V(B8 $BC10L7O!W$HF1MM$G$9!K!#(B@refill
+$BJ8;zNs$N$3$H$r(B ``8bit $B$NJ8;zNs(B'' $B$H8F$V!J$3$l$O(B ISO 2022 (@ref{ISO 2022}) $B$N!V(B8 $BC10L7O!W$HF1MM!K!#(B@refill
 
 iso-8859-1 (@ref{iso-8859-1}) $B$d(B euc-kr (@ref{euc-kr}) $B$H$$$C$?Id9f2=J8(B
-$B;z=89g$O(B 8bit $B$NJ8;zNs$G$9!#(B@refill
+$B;z=89g$O(B 8bit $B$NJ8;zNs$G$"$k!#(B@refill
 
 $BEAE}E*$J(B Internet $B$N(B MTA (@ref{MTA}) $B$O(B 7bit (@ref{7bit}) $B$N(B data $B$7$+E>(B
 $BAw$G$-$J$$$N$G!"$=$&$7$?(B MTA $B$r7PM3$9$k>l9g!"(BQuoted-Printable
 (@ref{Quoted-Printable}) $B$d(B Base64 (@ref{Base64}) $B$H$$$C$?JQ49$r9T$o$J$/(B
-$B$F$O$J$j$^$;$s!#(B@refill
+$B$F$O$J$i$J$$!#(B@refill
 
 $B$7$+$7!":G6a$G$O(B 8bit $B$NJ8;zNs$r$=$N$^$^DL$9$3$H$,$G$-$k(B MTA $B$bEP>l$7$F(B
-$B$-$?$N$G!"$=$N$^$^Aw$k$3$H$,$G$-$k>l9g$bA}$($F$-$^$7$?!#(B@refill
+$B$-$?$N$G!"$=$N$^$^Aw$k$3$H$,$G$-$k>l9g$bA}$($F$-$?!#(B@refill
 
-$B$7$+$7!"(B8bit $B$G$"$l$P$I$s$J(B data $B$G$bNI$$$H$O$$$($^$;$s!#$J$<$J$i!"#19T(B
-$B$ND9$5$,$"$^$j$KD9$$$H!"(BMTA $B$O$=$N(B message $B$rE>Aw$9$k$3$H$,$G$-$J$$$+$i(B
-$B$G$9!#$A$J$_$K!"(BRFC 821 $B$O#19T$O2~9TJ8;z$r=|$$$F(B 998 byte $B0JFb$G$"$k$3$H(B
-$B$r5a$a$F$$$^$9!#$h$C$F!"$3$l0J>e$N9T$,4^$^$l$k2DG=@-$N$"$k(B data, $BNc$($P!"(B
-Postscript $B$N(B data $B$J$I$O(B Quoted-Printable $BEy$G(B encode$B$9$kI,MQ$,$"$j$^$9!#(B
-@refill
+$B$7$+$7!"(B8bit $B$G$"$l$P$I$s$J(B data $B$G$bNI$$$H$O$$$($J$$!#$J$<$J$i!"#19T$N(B
+$BD9$5$,$"$^$j$KD9$$$H!"(BMTA $B$O$=$N(B message $B$rE>Aw$9$k$3$H$,$G$-$J$$$+$i$G(B
+$B$"$k!#$A$J$_$K!"(BRFC 821 (@ref{RFC 821}) $B$O#19T$O2~9TJ8;z$r=|$$$F(B 998
+byte $B0JFb$G$"$k$3$H$r5a$a$F$$$k!#$h$C$F!"$3$l0J>e$N9T$,4^$^$l$k2DG=@-$N(B
+$B$"$k(B data, $BNc$($P!"(BPostscript $B$N(B data $B$J$I$O(B Quoted-Printable $BEy$G(B 
+encode$B$9$kI,MQ$,$"$k!#(B@refill
 
 $B$^$?!"$3$&$7$?M}M3$+$i!"#19T$,(B 999 byte $B0J>e$N9T$,B8:_$9$k2DG=@-$N$"$k(B
-data $B$O(B @cindex{binary}@strong{binary} (@ref{binary}) $B$H8F$V$3$H$K$7$^$9!#(B
+data $B$O(B @strong{binary} (@ref{binary}) $B$H8F$V$3$H$K$9$k!#(B@refill
 
-$B$A$J$_$K!"(B7bit $B$GI=8=$G$-$k(B data $B$O(B 8bit $B$G$bI=8=$G$-$^$9!#$h$C$F!"(B
+$B$A$J$_$K!"(B7bit $B$GI=8=$G$-$k(B data $B$O(B 8bit $B$G$bI=8=$G$-$k!#$h$C$F!"(B
 ``8bit'' $B$H8@$C$?>l9g!"#19T$,(B 998 byte $B0J2<$NG$0U$N(B data $B$r;X$9$3$H$,(B
-$B$"$j$^$9!#(B
+$B$"$k!#(B
 
 
-@node 94 character set, 96 character set, 8bit, Glossary
+@node 94-character set, 96-character set, 8bit, Glossary
 @subsection 94 $BJ8;z=89g(B
 
-33 $B$+$i(B 126 $B$NHO0O$N(B 1 byte $B$+$i$J$k(B $BJ8;z=89g(B(@ref{Character set})$B!#(B
-ASCII (@ref{ASCII}) $B$d(B JIS X0201-Latin $B$O$=$N0l<o!#(B
+33 $B$+$i(B 126 $B$NHO0O$N(B 1 byte $B$+$i$J$k(B $B?^7AJ8;z=89g(B(@ref{Graphic character set})$B!#(BASCII (@ref{ASCII}) $B$d(B JIS X0201-Latin $B$O$=$N0l<o!#(B
 
 
-@node 96 character set, 94x94 character set, 94 character set, Glossary
+@node 96-character set, 94x94-character set, 94-character set, Glossary
 @subsection 96 $BJ8;z=89g(B
 
-32 $B$+$i(B 127 $B$NHO0O$N(B 1 byte $B$+$i$J$k(B $BJ8;z=89g(B(@ref{Character set})$B!#(BISO
-8859 $B%7%j!<%:$O$=$N0l<o!#(B
+32 $B$+$i(B 127 $B$NHO0O$N(B 1 byte $B$+$i$J$k(B $B?^7AJ8;z=89g(B(@ref{Graphic character set})$B!#(BISO 8859 $B%7%j!<%:$O$=$N0l<o!#(B
 
 
-@node 94x94 character set, ASCII, 96 character set, Glossary
+@node 94x94-character set, ASCII, 96-character set, Glossary
 @subsection 94$B!_(B94 $BJ8;z=89g(B
 
-33 $B$+$i(B 126 $B$NHO0O$N(B 2 byte $B$+$i$J$k(B $BJ8;z=89g(B(@ref{Character set})$B!#(BJIS
-X0208 (@ref{JIS X0208}) $B$d(B GB 2312 (@ref{GB 2312}) $B$O$=$N0l<o!#(B
+33 $B$+$i(B 126 $B$NHO0O$N(B 2 byte $B$+$i$J$k(B $B?^7AJ8;z=89g(B(@ref{Graphic character set})$B!#(BJIS X0208 (@ref{JIS X0208}) $B$d(B GB 2312 (@ref{GB 2312}) $B$O$=$N0l<o!#(B
 
 
-@node ASCII, Base64, 94x94 character set, Glossary
+@node ASCII, Base64, 94x94-character set, Glossary
 @subsection ASCII
+@cindex ANSI X3.4:1986
+@cindex ASCII
 
-$B%"%a%j%+O"K.$G;H$o$l$kJ8;z$rId9f2=$7$?(B 94 $BJ8;z=89g(B(@ref{94 character
-set})$B!#(BA-Z, a-z $B$N(B Latin $BJ8;z$H?t;z!"4v$D$+$N5-9f$+$i$J$k!#(BISO 646
+$B%"%a%j%+O"K.$G;H$o$l$kJ8;z$rId9f2=$7$?(B 94 $BJ8;z=89g(B(@ref{94-character set})$B!#(BA-Z, a-z $B$N(B Latin $BJ8;z$H?t;z!"4v$D$+$N5-9f$+$i$J$k!#(BISO 646
 (@ref{ISO 646}) $B$N0l$D!#(B
 
-@cindex{ASCII}@cindex{ANSI X3.4:1986}
+
 @noindent
 [ASCII]
 @quotation
@@ -262,44 +262,38 @@ Interchange'', ANSI X3.4:1986.
 
 @node Base64, binary, ASCII, Glossary
 @subsection Base64
+@cindex pad
 
 RFC 2045 (@ref{RFC 2045}) $B$GDj5A$5$l$F$$$k(B MIME (@ref{MIME}) $B$K$*$1$k(B 
 binary data (@ref{binary}) $B$N(B network $B$G$NJQ49K!$N#1$D!#(B@refill
 
 $B!X(B64 $B?J?t!Y$H$$$&0UL#$G!"(B3 byte $B$N(B data $B$r(B 0 $B$+$i(B 63 $B$N?t$rI=$9(B ASCII
 (@ref{ASCII}) 4 $BJ8;z$KJQ49$9$kJ}K!!#!J$b$7!"(B4 $BJ8;z$K$J$i$J$1$l$P(B 
-@cindex{pad}@strong{pad} $B$H8F$P$l$k5M$aJ*$r$7$FD9$5$rD4@0$9$k!K(B@refill
+@strong{pad} $B$H8F$P$l$k5M$aJ*$r$7$FD9$5$rD4@0$9$k!K(B@refill
 
 $B$3$N(B 65 $B<oN`$NJ8;z$O(B ASCII $B$H(B EBCDIC $B$N6&DLItJ,$+$iA*$P$l$F$*$j!"(B
 Internet $B0J30$N(B network $B$r7PM3$9$k>l9g$G$b0BA4$KE>Aw$G$-$k$h$&$K@_7W$5(B
 $B$l$F$$$k!#(B
 
 
-@node binary, Character Set, Base64, Glossary
+@node binary, cn-gb, Base64, Glossary
 @subsection binary
+@cindex binary data
+@cindex binary
 
-$BG$0U$N(B byte $BNs$r(B @cindex{binary}@strong{binary} $B$H8F$V$3$H$K$7$^$9!#(B
-@refill
+$BG$0U$N(B byte $BNs$r(B @strong{binary} $B$H8F$V!#(B@refill
 
-8bit (@ref{8bit}) $B$H0[$J$k$N$O(B data $B$K9T$N9=B$$r2>Dj$7$J$$$3$H$G$9!#(B
+8bit (@ref{8bit}) $B$H0[$J$k$N$O(B data $B$K9T$N9=B$$r2>Dj$7$J$$$3$H$G$"$k!#(B
 
-$B$^$?!"9T$N9=B$$,$"$C$F$b!"(B999 byte $B0J>e$+$i$J$k9T$,$"$k>l9g$b(B binary$B$H8F(B
-$B$V$3$H$K$7$^$9!#(B@refill
+$B$^$?!"9T$N9=B$$,$"$C$F$b!"(B999 byte $B0J>e$+$i$J$k9T$,$"$k>l9g$b(B binary $B$H(B
+$B8F$V$3$H$K$9$k!#(B@refill
 
 $B$A$J$_$K!"(B7bit (@ref{7bit}) $B$d(B 8bit $B$GI=8=$G$-$k(B data $B$O(B binary $B$G$bI=8=(B
-$B$G$-$^$9!#$h$C$F!"(B@cindex{binary data}@strong{binary data} $B$H8@$C$?>l9g!"(B
-$BG$0U$N(B data $B$r;X$9$3$H$,$"$j$^$9!#(B
+$B$G$-$k!#$h$C$F!"(B@strong{binary data} $B$H8@$C$?>l9g!"G$0U$N(B data $B$r;X$9$3(B
+$B$H$,$"$k!#(B
 
 
-@node Character Set, cn-gb, binary, Glossary
-@subsection Character Set$B!JJ8;z=89g!K(B
-
-$BId9f2=J8;z=89g(B(@ref{Coded character set})$B!#C"$7!"$3$3$G$O(B $BId9f3HD%(B
-(@ref{Code extension}) $B$5$l$F$J$$J8;z=89g$H$$$&%K%e%"%s%9$r9~(B
-$B$a$F$$$k!#(B
-
-
-@node cn-gb, cn-big5, Character Set, Glossary
+@node cn-gb, cn-big5, binary, Glossary
 @subsection cn-gb, gb2312
 
 $BCf9qBgN&$G$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B MIME
@@ -312,8 +306,9 @@ ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F(B ASCII (@ref{ASCII}) $B$K(B GB 2312
 RFC 1922 (@ref{RFC 1922}) $B$GDj5A$5$l$F$$$k!#(B
 
 
-@node cn-big5, CNS, cn-gb, Glossary
+@node cn-big5, CNS 11643, cn-gb, Glossary
 @subsection cn-big5, big5
+@cindex BIG5
 
 $BBfOQ$d9a9A$GMQ$$$i$l$F$$$k<g$KHKBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B 
 MIME charset (@ref{MIME charset}) $B$N#1$D!#(B@refill
@@ -322,7 +317,7 @@ ISO 2022 (@ref{ISO 2022}) $B$K4p$+$J$$(B 8bit (@ref{8bit}) $B$NId9f2=J8;z=89g
 (@ref{Coded character set})$B$G(B de-fact standard $B$G$"$k!#(BRFC 1922
 (@ref{RFC 1922}) $B$GDj5A$5$l$F$$$k!#(B@refill
 
-cf. @cindex{BIG5}
+cf. 
 @noindent
 [BIG5]
 @quotation
@@ -330,21 +325,48 @@ Institute for Information Industry, ``Chinese Coded Character Set in
 Computer'', March 1984.
 @end quotation
 
-CNS 11643-1986 (@ref{CNS}) $B$HBP1~4X78$,$"$k!#(B
+CNS 11643 (@ref{CNS 11643}) $B$HBP1~4X78$,$"$k!#(B
 
 
-@node CNS, Coded character set, cn-big5, Glossary
+@node CNS 11643, Coded character set, cn-big5, Glossary
 @subsection CNS 11643-1992
+@cindex CNS        11643:1992
+@cindex CNS 11643-1992
 
 $BBfOQ$d9a9A$GMQ$$$i$l$F$$$k<g$KHKBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B 
-$BJ8;z=89g(B(@ref{Character set})$B!#BfOQ$NI8=`!#8=:_!"(B94$B!_(B94 (@ref{94x94
-character set}) $B$NLL$,Bh#1LL$+$iBh#7LL$^$G$"$k!#(B@refill
+$B?^7AJ8;z=89g(B(@ref{Graphic character set})$B!#BfOQ$NI8=`!#8=:_!"(B94$B!_(B94
+(@ref{94x94 character set}) $B$NLL$,Bh#1LL$+$iBh#7LL$^$G$"$k!#(B@refill
 
-ISO 2022 (@ref{ISO 2022}) $B$G$N=*C<J8;z$O!"Bh#1LL$,(B `G', $BBh#2LL$,(B `H', $BBh(B
-$B#3LL$,(B `I', $BBh#4LL$,(B `J', $BBh#5LL$,(B `K', $BBh#6LL$,(B `L', $BBh#7LL$,(B `M' $B$G$"(B
-$B$k!#(B
+ISO 2022 (@ref{ISO 2022}) $B$G$N=*C<J8;z$O(B
 
-@cindex{CNS 11643-1992}@cindex{CNS        11643:1992}
+@table @samp
+@item plane 1
+04/07 (`G')
+
+@item plane 2
+04/08 (`H')
+
+@item plane 3
+04/09 (`I')
+
+@item plane 4
+04/10 (`J')
+
+@item plane 5
+04/11 (`K')
+
+@item plane 6
+04/12 (`L')
+
+@item plane 7
+04/13 (`M')
+
+@end table
+
+@noindent
+$B$G$"$k!#(B
+
+
 @noindent
 [CNS 11643-1992]
 @quotation
@@ -354,7 +376,7 @@ ISO 2022 (@ref{ISO 2022}) $B$G$N=*C<J8;z$O!"Bh#1LL$,(B `G', $BBh#2LL$,(B `H'
 
 
 
-@node Coded character set, Code extension, CNS, Glossary
+@node Coded character set, Code extension, CNS 11643, Glossary
 @subsection Coded character set$B!JId9f2=J8;z=89g!K(B, Character code$B!JJ8;zId9f!K(B
 
 $BJ8;z$H(B byte $BNs$H#1BP#1$KBP1~IU$1$k[#Kf$G$J$$5,B'$N=89g!#(B
@@ -363,17 +385,19 @@ ISO 2022 (@ref{ISO 2022}) $B$G$N=*C<J8;z$O!"Bh#1LL$,(B `G', $BBh#2LL$,(B `H'
 @node Code extension, Content-Disposition, Coded character set, Glossary
 @subsection Code extension$B!JId9f3HD%!K(B
 
-$BM?$($i$l$?J8;z=89g(B(@ref{Character set})$B$K4^$^$l$F$$$J$$J8;z$NId9f2=$N$?(B
-$B$a$KMQ$$$k<jK!!#(BISO 2022 (@ref{ISO 2022}) $B$O$=$N#1$D!#(B
+$BM?$($i$l$??^7AJ8;z=89g(B(@ref{Graphic character set})$B$K4^$^$l$F$$$J$$J8;z(B
+$B$NId9f2=$N$?$a$KMQ$$$k<jK!!#(BISO 2022 (@ref{ISO 2022}) $B$O$=$N#1$D!#(B
 
 
-@node Content-Disposition, media type, Code extension, Glossary
+@node Content-Disposition, Content-Type field, Code extension, Glossary
 @subsection Content-Disposition field
+@cindex RFC 1806
+@cindex Experimental
 
-Content $B$NI=<($N;EJ}$d(B file $BL>$rI=8=$9$k$?$a$N(B field. MIME (@ref{MIME}) 
-$B$N3HD%$N#1$D!#(B@refill
+Content $B$NI=<($N;EJ}$d(B file $BL>$rI=8=$9$k$?$a$N(B field.  MIME (@ref{MIME}) 
+$B$N3HD%$N#1$D!#(B
 
-@cindex{Experimental}@cindex{RFC 1806}
+
 @noindent
 [RFC 1806]
 @quotation
@@ -384,66 +408,15 @@ Experimental.
 
 
 
-@node media type, Content-Type field, Content-Disposition, Glossary
-@subsection media type
-
-MIME (@ref{MIME}) $B$K$*$1$k(B entity (@ref{entity}) $B$N<oN`!#(B
-@cindex{type}@strong{type} $B$H(B @cindex{subtype}@strong{subtype} $B$+$i$J$k!#(B
-RFC 2046 (@ref{RFC 2046}) $B$GDj5A$5$l$F$$$k!#(B@refill
-
-type $B$OI8=`$G$O(B
-
-@itemize @bullet
-@item
-@cindex{text}@strong{text}
-@item
-@cindex{image}@strong{image}
-@item
-@cindex{audio}@strong{audio}
-@item
-@cindex{video}@strong{video}
-@item
-@cindex{application}@strong{application}
-@item
-@cindex{multipart}@strong{multipart} (@ref{multipart})
-@item
-@cindex{message}@strong{message}
-@end itemize
-
-@noindent
-$B$,Dj5A$5$l!"$=$l$>$l$K$O(B application/octet-stream, audio/basic,
-image/jpeg, multipart/mixed (@ref{multipart/mixed}), text/plain
-(@ref{text/plain}), video/mpeg $B$J$I$N$5$^$6$^$J(B subtype $B$,Dj5A$5$l$F$$$k!#(B
-
-@noindent
-@strong{[$BCm0U(B]}
-@quotation
-
-$B$3$3$G$O!"(Btext/plain $B$J$I$N(B type/subtype $B$NAH$r$7$P$7$P(B 
-@cindex{content-type/subtype}@strong{content-type/subtype} $B$H=q$/!#(B
-@end quotation
-
-
-media type $B$O!"(BRFC 2046 $B$GDj5A$5$l$F$$$k$b$N$K2C$($F!"EPO?$9$k$3$H$b$G$-(B
-$B$k!#8=:_!"EPO?$5$l$F$$$k$b$N$O(B MEDIA TYPES
-(ftp://ftp.isi.edu/in-notes/iana/assignments/media-types) $B$G;2>H$G$-$k!#(B
-
-$B$^$?!"(Btype $B$b$7$/$O(B subtype $B$K!"A0$K(B `x-' $B$rIU$1$?(B 
-@cindex{x-token}@strong{x-token} $B$rMQ$$$k$3$H$K$h$j!"EPO?$5$l$F$$$J$$$b(B
-$B$N$r;dE*$KMQ$$$k$3$H$b$G$-$k!#$7$+$7!"EvA3$N$3$H$J$,$i!"$3$&$7$?;dE*$J(B 
-content-type $B$ONJ2r$rF@$?<T$N4V$G$7$+2r<a$G$-$J$$$N$GMxMQ$K$OCm0U$9$k$3(B
-$B$H!#(B@refill
-
-(cf. @ref{Content-Type field})
-
-
-
-@node Content-Type field, Emacs, media type, Glossary
+@node Content-Type field, Emacs, Content-Disposition, Glossary
 @subsection Content-Type field
+@cindex parameter
+@cindex subtype
+@cindex type
 
 media type (@ref{media type}) $B$d(B MIME charset (@ref{MIME charset}) $B$J$I(B
-$B$N(B part $B$K4X$9$k>pJs$rI=8=$9$k$?$a$N(B field. RFC 2045 (@ref{RFC 2045}) $B$G(B
-$BDj5A$5$l$F$$$k!#(B
+$B$N(B body $B$K4X$9$k>pJs$rI=8=$9$k$?$a$N(B field.  RFC 2045 (@ref{RFC 2045}) 
+$B$GDj5A$5$l$F$$$k!#(B
 
 @noindent
 @strong{[Memo]}
@@ -459,8 +432,8 @@ parse $B$G$-$k$@$m$&!#(B
 Content-Type field $B$O(B
 
 @quotation
-``Content-Type'' ``:'' @cindex{type}@strong{type} ``/''
-@cindex{subtype}@strong{subtype} *( ``;'' @cindex{parameter}@strong{parameter} )
+``Content-Type'' ``:'' @strong{type} ``/''
+@strong{subtype} *( ``;'' @strong{parameter} )
 @end quotation
 
 @noindent
@@ -513,11 +486,14 @@ GNU Emacs $B$NJQ<o$NAm>N$H$9$k!#(B
 
 @node encoded-word, encapsulation, Emacs, Glossary
 @subsection encoded-word
+@cindex RFC 2047
+@cindex Standards Track
+@cindex RFC 2047
 
-header $B$K$*$1$kHs(B ASCII (@ref{ASCII}) $BJ8;z$NI=8=!#(B@cindex{RFC
-2047}@strong{RFC 2047} $B$GDj5A$5$l$F$$$k!#(B@refill
+header $B$K$*$1$kHs(B ASCII (@ref{ASCII}) $BJ8;z$NI=8=!#(B@strong{RFC 2047} $B$GDj(B
+$B5A$5$l$F$$$k!#(B@refill
 
-@cindex{Standards Track}@cindex{RFC 2047}
+
 @noindent
 [RFC 2047]
 @quotation
@@ -528,7 +504,7 @@ Track (obsolete RFC 1521,1522,1590).
 
 
 
-@node encapsulation, euc-kr, encoded-word, Glossary
+@node encapsulation, entity, encoded-word, Glossary
 @subsection encapsulation
 
 Internet mail (@ref{RFC 822}) $B$rB>$N5-;v$K$^$k$4$HF~$l$kJ}K!!#(B@refill
@@ -539,8 +515,25 @@ Internet mail (@ref{RFC 822}) $B$rB>$N5-;v$K$^$k$4$HF~$l$kJ}K!!#(B@refill
 
 
 
-@node euc-kr, FTP, encapsulation, Glossary
+@node entity, euc-kr, encapsulation, Glossary
+@subsection Entity
+
+$B$"$k(B message $B$b$7$/$O(B multipart (@ref{multipart}) message $B$N#1$D$N(B part 
+$B$N(B header $B$H(B body $B$rJ;$;$?$b$N!#(B
+
+@noindent
+@strong{[Memo]}
+@quotation
+
+$B$3$3$G$O(B part $B$H8F$V$3$H$b$"$k!#(B
+@end quotation
+
+
+
+@node euc-kr, FTP, entity, Glossary
 @subsection euc-kr
+@cindex KS C 5861:1992
+@cindex euc-kr
 
 $B4Z9q8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
@@ -550,7 +543,7 @@ ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F(B ASCII (@ref{ASCII}) $B$K(BKS C5601
 
 RFC 1557 (@ref{RFC 1557}) $B$GDj5A$5$l$F$$$k!#(B@refill
 
-cf. @cindex{euc-kr}@cindex{KS C 5861:1992}
+cf. 
 @noindent
 [euc-kr]
 @quotation
@@ -562,11 +555,14 @@ C 5861:1992.
 
 @node FTP, GB 2312, euc-kr, Glossary
 @subsection FTP 
+@cindex RFC 959
+@cindex STD 9
+@cindex FTP
 
 Internet $B$G(B file $B$rE>Aw$9$k$?$a$N(B protocol $B$N#1$D!#(BRFC 959 $B$GDj5A$5$l$F(B
 $B$$$k!#(B@refill
 
-@cindex{FTP}@cindex{STD 9}@cindex{RFC 959}
+
 @noindent
 [FTP: RFC 959]
 @quotation
@@ -578,14 +574,15 @@ STD 9.
 
 @node GB 2312, GB 8565.2, FTP, Glossary
 @subsection GB 2312-1980
+@cindex GB 2312:1980
+@cindex GB 2312
 
 $BCf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=$9$?$a$N(B 94$B!_(B94 $BJ8;z(B
-$B=89g(B(@ref{94x94 character set})$B!#Cf9q$N9q2HI8=`!#(BISO 2022 (@ref{ISO
-2022}) $B$G$N=*C<J8;z$O(B `A'.@refill
+$B=89g(B(@ref{94x94-character set})$B!#Cf9q$N9q2HI8=`!#(BISO 2022 (@ref{ISO 2022}) $B$G$N=*C<(B byte $B$O(B 04/01 (`A').@refill
 
 $B$3$l$O(B GB $B$K$*$1$k4pK\=8$G$"$k!#(B
 
-@cindex{GB 2312}@cindex{GB 2312:1980}
+
 @noindent
 [GB 2312]
 @quotation
@@ -595,13 +592,15 @@ Character Set for Information Interchange - Primary Set'', GB 2312:1980.
 
 
 
-@node GB 8565.2, hz-gb2312, GB 2312, Glossary
+@node GB 8565.2, Graphic character set, GB 2312, Glossary
 @subsection GB 8565.2-1988
+@cindex GB 8565.2:1988
+@cindex GB 8565.2
 
-$BCf9q8l$N$?$a$NJd=uJ8;z=89g(B(@ref{Character set})$B!#Cf9q$N9q2HI8=`!#(BGB 2312
-(@ref{GB 2312}) $B$N6u$-ItJ,$KJd=<$9$k$h$&$KDj5A$5$l$?$i$7$$!#(B
+$BCf9q8l$N$?$a$NJd=u?^7AJ8;z=89g(B(@ref{Graphic character set})$B!#Cf9q$N9q2H(B
+$BI8=`!#(BGB 2312 (@ref{GB 2312}) $B$N6u$-ItJ,$KJd=<$9$k$h$&$KDj5A$5$l$?$i$7$$!#(B
 
-@cindex{GB 8565.2}@cindex{GB 8565.2:1988}
+
 @noindent
 [GB 8565.2]
 @quotation
@@ -611,8 +610,18 @@ Part 2: Graphic Characters used with Primary Set'', GB 8565.2:1988.
 
 
 
-@node hz-gb2312, ISO 2022, GB 8565.2, Glossary
+@node Graphic character set, hz-gb2312, GB 8565.2, Glossary
+@subsection Graphic character set$B!J?^7AJ8;z=89g!K(B
+
+$B?^7AJ8;z$+$i$J$k(B $BId9f2=J8;z=89g(B(@ref{Coded character set})$B!#(B
+
+
+@node hz-gb2312, ISO 2022, Graphic character set, Glossary
 @subsection hz-gb2312
+@cindex RFC 1843
+@cindex Informational
+@cindex RFC 1842
+@cindex Informational
 
 $BCf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B MIME
 charset (@ref{MIME charset}) $B$N#1$D!#(B@refill
@@ -623,7 +632,7 @@ ASCII (@ref{ASCII}) $B$K(B GB 2312 (@ref{GB 2312}) $B$r(B 7bit $B$GId9f3HD%
 
 RFC 1842, 1843 $B$GDj5A$5$l$F$$$k!#(B
 
-@cindex{Informational}@cindex{RFC 1842}
+
 @noindent
 [RFC 1842]
 @quotation
@@ -632,7 +641,7 @@ Characters-Based Chinese Character Encoding for Internet Messages'',
 August 1995, Informational.
 @end quotation
 
-@cindex{Informational}@cindex{RFC 1843}
+
 @noindent
 [RFC 1843]
 @quotation
@@ -644,14 +653,15 @@ Chinese and ASCII characters'', August 1995, Informational.
 
 @node ISO 2022, iso-2022-cn, hz-gb2312, Glossary
 @subsection ISO 2022
+@cindex ISO/IEC 2022:1994
+@cindex ISO 2022
 
-$BId9f3HD%(B(@ref{Code extension})$B$N$?$a$N9q:]I8=`!#(B@refill
+$BId9f2=J8;z=89g$N9=B$$HId9f3HD%(B(@ref{Code extension})$BK!$rDj$a$?9q:]I8=`!#(B
 
-$B$3$l$rMQ$$$FJ#?t$NJ8;z=89g(B(@ref{Character set})$B$rAH9g$;$F(B 7bit
-(@ref{7bit}) $B$J$$$7(B 8bit (@ref{8bit}) $B$N(B $BId9f2=J8;z=89g(B(@ref{Coded
-character set}) $B$r:n$k$3$H$,$G$-$k!#(B
+$B$3$l$rMQ$$$FJ#?t$N?^7AJ8;z=89g(B(@ref{Graphic character set})$B$rAH9g$;$F(B 
+7bit (@ref{7bit}) $B$J$$$7(B 8bit (@ref{8bit}) $B$N(B $BId9f2=J8;z=89g(B(@ref{Coded character set}) $B$r:n$k$3$H$,$G$-$k!#(B
 
-@cindex{ISO 2022}@cindex{ISO/IEC 2022:1994}
+
 @noindent
 [ISO 2022]
 @quotation
@@ -668,7 +678,7 @@ techniques'', ISO/IEC 2022:1994.
 $BCf9q8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
 ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F(B ASCII (@ref{ASCII}) $B$K(B GB 2312
-(@ref{GB 2312}), CNS 11643 plain 1, plain 2 (@ref{CNS}) $B$r(B 7bit
+(@ref{GB 2312}), CNS 11643 plain 1, plain 2 (@ref{CNS 11643}) $B$r(B 7bit
 (@ref{7bit}) $B$GId9f3HD%(B (@ref{Code extension})$B$7$F$$$k!#(B@refill
 
 RFC 1922 (@ref{RFC 1922}) $B$GDj5A$5$l$F$$$k!#(B
@@ -680,9 +690,8 @@ RFC 1922 (@ref{RFC 1922}) $B$GDj5A$5$l$F$$$k!#(B
 $BCf9q8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
 ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F(B ASCII (@ref{ASCII}) $B$K(B GB 2312
-(@ref{GB 2312}), CNS 11643 plain 1 .. 7 (@ref{CNS}), ISO-IR-165
-(@ref{ISO-IR-165}) $BEy$r(B 7bit (@ref{7bit}) $B$GId9f3HD%(B (@ref{Code
-extension})$B$7$F$$$k!#(B@refill
+(@ref{GB 2312}), CNS 11643 plain 1 .. 7 (@ref{CNS 11643}), ISO-IR-165
+(@ref{ISO-IR-165}) $BEy$r(B 7bit (@ref{7bit}) $B$GId9f3HD%(B (@ref{Code extension})$B$7$F$$$k!#(B@refill
 
 RFC 1922 (@ref{RFC 1922}) $B$GDj5A$5$l$F$$$k!#(B@refill
 
@@ -698,23 +707,24 @@ Emacs/mule $B$G$OMxMQ2DG=$G$"$k!#(B
 
 @node iso-2022-jp, iso-2022-jp-2, iso-2022-cn-ext, Glossary
 @subsection iso-2022-jp
+@cindex RFC 1468
+@cindex iso-2022-jp
 
 $BF|K\8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N0l$D!#(B
 
 $B8E$$(B ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F(B ASCII (@ref{ASCII}), JIS
-X0201-Latin, JIS X0208-1978 (@ref{JIS C6226-1978}), JIS X0208-1983
-(@ref{JIS X0208}) $B$r@Z$jBX$($k(B 7bit (@ref{7bit}) $BJ8;zId9f!#(B@refill
+X0201-Latin, JIS X0208-1978 (@ref{JIS C6226}), JIS X0208-1983 (@ref{JIS X0208}) $B$r@Z$jBX$($k(B 7bit (@ref{7bit}) $BJ8;zId9f!#(B@refill
 
 RFC 1468 $B$GDj5A$5$l$F$$$k!#(B@refill
 
 @noindent
 @strong{[Memo]}
 @quotation
-JIS X0208-1996? $B$G$O(B ISO 2022 (@ref{ISO 2022}) $B$HFHN)$KDj5A$5$l$kM=Dj!#(B
+JIS X0208-1997? $B$G$O(B ISO 2022 (@ref{ISO 2022}) $B$HFHN)$KDj5A$5$l$kM=Dj!#(B
 @end quotation
 
 
-@cindex{iso-2022-jp}@cindex{RFC 1468}
+
 @noindent
 [iso-2022-jp: RFC 1468]
 @quotation
@@ -726,13 +736,15 @@ for Internet Messages'', June 1993.
 
 @node iso-2022-jp-2, iso-2022-kr, iso-2022-jp, Glossary
 @subsection iso-2022-jp-2
+@cindex RFC 1554
+@cindex Informational
+@cindex iso-2022-jp-2
 
-iso-2022-jp (@ref{iso-2022-jp}) $B$r3HD%$7$?(B MIME charset (@ref{MIME
-charset}) $B$N0l$D!#(B@refill
+iso-2022-jp (@ref{iso-2022-jp}) $B$r3HD%$7$?(B MIME charset (@ref{MIME charset}) $B$N0l$D!#(B@refill
 
 RFC 1554 $B$GDj5A$5$l$F$$$k!#(B
 
-@cindex{iso-2022-jp-2}@cindex{Informational}@cindex{RFC 1554}
+
 @noindent
 [iso-2022-jp-2: RFC 1554]
 @quotation
@@ -756,13 +768,15 @@ RFC 1557 (@ref{RFC 1557}) $B$GDj5A$5$l$F$$$k!#(B
 
 @node ISO 646, ISO 8859-1, iso-2022-kr, Glossary
 @subsection ISO 646
+@cindex ISO/IEC 646:1991
+@cindex ISO 646
 
-$B3F9q$G6&DL$K;H$($k:G>.8BEY$NJ8;z=89g(B(@ref{Character set})$B$rDj$a$?$b$N!#(B
-94 $BJ8;z=89g(B (@ref{94 character set})$B$N#1$D!#(BISO 646 IRV$B!J9q:]4p=`HG!K$r(B
-$B85$K4v$D$+$NJ8;z$O3F9q$G0c$&J8;z$r3dEv$k$3$H$r5v$7$F$$$F!"4v$D$+$NJQ<o$,(B
-$BB8:_$9$k!#(BASCII (@ref{ASCII}) $B$d(B JIS X0201-Latin $B$O$=$N0l<o!#(B
+$B3F9q$G6&DL$K;H$($k:G>.8BEY$N?^7AJ8;z=89g(B(@ref{Graphic character set})$B$r(B
+$BDj$a$?$b$N!#(B94 $BJ8;z=89g(B (@ref{94-character set})$B$N#1$D!#(BISO 646 IRV$B!J9q(B
+$B:]4p=`HG!K$r85$K4v$D$+$NJ8;z$O3F9q$G0c$&J8;z$r3dEv$k$3$H$r5v$7$F$$$F!"4v(B
+$B$D$+$NJQ<o$,B8:_$9$k!#(BASCII (@ref{ASCII}) $B$d(B JIS X0201-Latin $B$O$=$N0l<o!#(B
 
-@cindex{ISO 646}@cindex{ISO/IEC 646:1991}
+
 @noindent
 [ISO 646]
 @quotation
@@ -775,11 +789,13 @@ ISO/IEC 646:1991.
 
 @node ISO 8859-1, iso-8859-1, ISO 646, Glossary
 @subsection ISO 8859-1
+@cindex ISO 8859-1:1987
+@cindex ISO 8859-1
 
-$B@>2$=t8l$GMQ$$$i$l$k3HD%(B Latin $BJ8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B(@ref{96
-character set})$B!#(B
+$B@>2$=t8l$GMQ$$$i$l$k3HD%(B Latin $BJ8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B
+(@ref{96-character set})$B!#(B
 
-@cindex{ISO 8859-1}@cindex{ISO 8859-1:1987}
+
 @noindent
 [ISO 8859-1]
 @quotation
@@ -796,19 +812,20 @@ Latin Alphabet No.1'', ISO 8859-1:1987.
 $B@>2$=t8l$J$I$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
 ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F!"(BASCII (@ref{ASCII}) $B$K(B ISO 8859-1
-(@ref{ISO 8859-1}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code
-extension})$B$7$F$$$k!#(B@refill
+(@ref{ISO 8859-1}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code extension})$B$7$F$$$k!#(B@refill
 
 RFC 2046 (@ref{RFC 2046}) $B$GDj5A$5$l$F$$$k!#(B
 
 
 @node ISO 8859-2, iso-8859-2, iso-8859-1, Glossary
 @subsection ISO 8859-2
+@cindex ISO 8859-2:1987
+@cindex ISO 8859-2
 
-$BEl2$=t8l$GMQ$$$i$l$k3HD%(B Latin $BJ8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B(@ref{96
-character set})$B!#(B
+$BEl2$=t8l$GMQ$$$i$l$k3HD%(B Latin $BJ8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B
+(@ref{96-character set})$B!#(B
 
-@cindex{ISO 8859-2}@cindex{ISO 8859-2:1987}
+
 @noindent
 [ISO 8859-2]
 @quotation
@@ -825,16 +842,17 @@ Latin alphabet No.2'', ISO 8859-2:1987.
 $BEl2$=t8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
 ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F!"(BASCII (@ref{ASCII}) $B$K(B ISO 8859-2
-(@ref{ISO 8859-2}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code
-extension})$B$7$F$$$k!#(B@refill
+(@ref{ISO 8859-2}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code extension})$B$7$F$$$k!#(B@refill
 
 RFC 2046 (@ref{RFC 2046}) $B$GDj5A$5$l$F$$$k!#(B
 
 
 @node ISO 8859-3, ISO 8859-4, iso-8859-2, Glossary
 @subsection ISO 8859-3
+@cindex ISO 8859-3:1988
+@cindex ISO 8859-3
 
-@cindex{ISO 8859-3}@cindex{ISO 8859-3:1988}
+
 @noindent
 [ISO 8859-3]
 @quotation
@@ -847,8 +865,10 @@ Latin alphabet No.3'', ISO 8859-3:1988.
 
 @node ISO 8859-4, ISO 8859-5, ISO 8859-3, Glossary
 @subsection ISO 8859-4
+@cindex ISO 8859-4:1988
+@cindex ISO 8859-4
 
-@cindex{ISO 8859-4}@cindex{ISO 8859-4:1988}
+
 @noindent
 [ISO 8859-4]
 @quotation
@@ -861,10 +881,12 @@ Latin alphabet No.4'', ISO 8859-4:1988.
 
 @node ISO 8859-5, iso-8859-5, ISO 8859-4, Glossary
 @subsection ISO 8859-5
+@cindex ISO 8859-5:1988
+@cindex ISO 8859-5
 
-$B%-%j%kJ8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B(@ref{96 character set})$B!#(B
+$B%-%j%kJ8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B(@ref{96-character set})$B!#(B
 
-@cindex{ISO 8859-5}@cindex{ISO 8859-5:1988}
+
 @noindent
 [ISO 8859-5]
 @quotation
@@ -881,16 +903,17 @@ Latin/Cyrillic alphabet'', ISO 8859-5:1988.
 $B%-%j%kJ8;z$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
 ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F!"(BASCII (@ref{ASCII}) $B$K(B ISO 8859-5
-(@ref{ISO 8859-5}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code
-extension})$B$7$F$$$k!#(B@refill
+(@ref{ISO 8859-5}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code extension})$B$7$F$$$k!#(B@refill
 
 RFC 2046 (@ref{RFC 2046}) $B$GDj5A$5$l$F$$$k!#(B
 
 
 @node ISO 8859-6, ISO 8859-7, iso-8859-5, Glossary
 @subsection ISO 8859-6
+@cindex ISO 8859-6:1987
+@cindex ISO 8859-6
 
-@cindex{ISO 8859-6}@cindex{ISO 8859-6:1987}
+
 @noindent
 [ISO 8859-6]
 @quotation
@@ -903,10 +926,12 @@ Latin/Arabic alphabet'', ISO 8859-6:1987.
 
 @node ISO 8859-7, iso-8859-7, ISO 8859-6, Glossary
 @subsection ISO 8859-7
+@cindex ISO 8859-7:1987
+@cindex ISO 8859-7
 
-$B%.%j%7%"J8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B(@ref{96 character set})$B!#(B
+$B%.%j%7%"J8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B(@ref{96-character set})$B!#(B
 
-@cindex{ISO 8859-7}@cindex{ISO 8859-7:1987}
+
 @noindent
 [ISO 8859-7]
 @quotation
@@ -919,16 +944,18 @@ Latin/Greek alphabet'', ISO 8859-7:1987.
 
 @node iso-8859-7, ISO 8859-8, ISO 8859-7, Glossary
 @subsection iso-8859-7
+@cindex RFC 1947
+@cindex Informational
+@cindex iso-8859-7
 
 $B%.%j%7%"8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
 ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F!"(BASCII (@ref{ASCII}) $B$K(B ISO 8859-7
-(@ref{ISO 8859-7}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code
-extension})$B$7$F$$$k!#(B@refill
+(@ref{ISO 8859-7}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code extension})$B$7$F$$$k!#(B@refill
 
 RFC 1947 $B$GDj5A$5$l$F$$$k!#(B
 
-@cindex{iso-8859-7}@cindex{Informational}@cindex{RFC 1947}
+
 @noindent
 [iso-8859-7: RFC 1947]
 @quotation
@@ -940,8 +967,10 @@ May 1996, Informational.
 
 @node ISO 8859-8, ISO 8859-9, iso-8859-7, Glossary
 @subsection ISO 8859-8
+@cindex ISO 8859-8:1988
+@cindex ISO 8859-8
 
-@cindex{ISO 8859-8}@cindex{ISO 8859-8:1988}
+
 @noindent
 [ISO 8859-8]
 @quotation
@@ -954,8 +983,10 @@ Latin/Hebrew alphabet'', ISO 8859-8:1988.
 
 @node ISO 8859-9, ISO-IR-165, ISO 8859-8, Glossary
 @subsection ISO 8859-9
+@cindex ISO 8859-9:1990
+@cindex ISO 8859-9
 
-@cindex{ISO 8859-9}@cindex{ISO 8859-9:1990}
+
 @noindent
 [ISO 8859-9]
 @quotation
@@ -967,28 +998,33 @@ Latin alphabet No.5'', ISO 8859-9:1990.
 
 
 @node ISO-IR-165, JIS X0201, ISO 8859-9, Glossary
-@subsection ISO-IR-165, CCITT Extended GB 
+@subsection ISO-IR-165, CCITT Extended GB
 
 CCITT $B$,EPO?$7$?!"Cf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=(B
-$B$9$k$?$a$N(B 94$B!_(B94 $BJ8;z=89g(B(@ref{94x94 character set})$B!#(B@refill
+$B$9$k$?$a$N(B94$B!_(B94 $BJ8;z=89g(B(@ref{94x94-character set})$B!#(B@refill
 
-GB 2312 (@ref{GB 2312}) $B$H(B GB 8565 $BI=#2(B (@ref{GB 8865.2}) $B$K(B 150 $BJ8;z$[(B
+GB 2312 (@ref{GB 2312}) $B$H(B GB 8565 $BI=#2(B (@ref{GB 8565.2}) $B$K(B 150 $BJ8;z$[(B
 $B$I$rDI2C$7$?$b$N$i$7$$!#(B@refill
 
-ISO 2022 (@ref{ISO 2022}) $B$G$N=*C<J8;z$O(B `E' $B$G$"$k!#(B
+ISO 2022 (@ref{ISO 2022}) $B$G$N=*C<(B byte $B$O(B 04/05 (`E') $B$G$"$k!#(B
 
 
 @node JIS X0201, JIS C6226, ISO-IR-165, Glossary
 @subsection JIS X0201
+@cindex JIS X 0201:1997?  draft
+@cindex JIS X0201-1997?
+@cindex JIS        X 0201-1976:
+@cindex JIS X0201-1976
+@cindex JIS X0201
+@cindex JIS C6220-1976
 
 ISO 646 (@ref{ISO 646}) $B$NJQ<o$N#1$D$G$"$k(B Latin $BJ8;z=89g$H(B 1 byte $B$N%+(B
-$B%?%+%JJ8;z=89g$+$i$J$k!#(B@refill
+$B%?%+%JJ8;z=89g$H!"$3$l$i$+$i$J$k(B 7bit $B$*$h$S(B 8bit $BId9f2=J8;z=89g(B
+(@ref{Coded character set}) $B$rDj5A$7$F$$$k!#(B@refill
 
-$B85$O(B @cindex{JIS C6220-1976}@strong{JIS C6220-1976} $B$H8@$C$?$,(B @cindex{JIS
-X0201}@strong{JIS
-X0201} $B$KHV9f$,JQ99$5$l$?!#(B
+$B85$O(B @strong{JIS C6220-1976} $B$H8@$C$?$,(B @strong{JIS X0201} $B$KHV9f$,JQ99$5$l$?!#(B
 
-@cindex{JIS X0201-1976}@cindex{JIS        X 0201-1976:}
+
 @noindent
 [JIS X0201-1976]
 @quotation
@@ -997,15 +1033,15 @@ for Information Interchange'', JIS X 0201-1976:.
 @end quotation
 
 
-$B$^$?!"(B1996 $BG/$K2~DjHG$,=P$kM=Dj!#(B
+$B$^$?!"(B1997 $BG/$K2~DjHG$,=P$kM=Dj!#(B
 
-@cindex{JIS X0201-1996?}@cindex{JIS X 0201:1996?        draft}
+
 @noindent
-[JIS X0201-1996?]
+[JIS X0201-1997?]
 @quotation
-$BF|K\5,3J6(2q(B (Japanese Standards Association),$B!X#7%S%C%H5Z$S#8%S%C%H$N>p(B
-$BJs8r49MQId9f2=J8;z=89g!Y(B, ``7-bit and 8-bit coded character sets for
-information interchange'', JIS X 0201:1996?  draft.
+$BF|K\5,3J6(2q(B (Japanese Standards Association),$B!X#7%S%C%H5Z$S#8%S%C%H$N(B 
+$B>pJs8r49MQId9f2=J8;z=89g!Y(B, ``7-bit and 8-bit coded character sets for
+information interchange'', JIS X 0201:1997?  draft.
 @end quotation
 
 
@@ -1013,8 +1049,8 @@ information interchange'', JIS X 0201:1996?  draft.
 @node JIS C6226, JIS X0208, JIS X0201, Glossary
 @subsection JIS C6226-1978
 
-$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B 94$B!_(B94 $BJ8;z=89g(B(@ref{94x94 character set})$B!#(B
-$BF|K\$N9q2HI8=`!#(BJIS X0208-1978 $B$H$b$$$&!#(B@refill
+$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B94$B!_(B94 $BJ8;z=89g(B(@ref{94x94-character set})$B!#F|(B
+$BK\$N9q2HI8=`!#(BJIS X0208-1978 $B$H$b$$$&!#(B@refill
 
 (cf. @ref{JIS X0208})
 
@@ -1022,9 +1058,15 @@ information interchange'', JIS X 0201:1996?  draft.
 
 @node JIS X0208, JIS X0212, JIS C6226, Glossary
 @subsection JIS X0208
+@cindex JIS X 0208:1997? draft
+@cindex JIS X0208-1997?
+@cindex JIS X0208:1983,1990
+@cindex JIS X0208-1983,1990
+@cindex JIS C6226:1978
+@cindex JIS X0208-1978
 
-$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B 94$B!_(B94 $BJ8;z=89g(B(@ref{94x94 character set})$B!#(B
-$BF|K\$N9q2HI8=`!#(B1978 $BG/HG!"(B1983 $BG/HG!"(B1990 $BG/HG$,$"$k$,!"(BInternet $B$G$O(B 
+$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B94$B!_(B94 $BJ8;z=89g(B(@ref{94x94-character set})$B!#F|(B
+$BK\$N9q2HI8=`!#(B1978 $BG/HG!"(B1983 $BG/HG!"(B1990 $BG/HG$,$"$k$,!"(BInternet $B$G$O(B 
 1983 $BG/HG$,$b$C$H$bNI$/;H$o$l$F$$$k!#(B@refill
 
 JIS X0208 $B$O5-9f!"?t;z!"%m!<%^;z!"$R$i$,$J!"%+%?%+%J!"%.%j%7%cJ8;z!"%-%j(B
@@ -1034,9 +1076,9 @@ JIS X0208 $B$O5-9f!"?t;z!"%m!<%^;z!"$R$i$,$J!"%+%?%+%J!"%.%j%7%cJ8;z!"%-%j(B
 1978 $BG/HG$H(B 1983 $BG/HG$O0[$J$kJ8;z=89g$H$7$F07$o$l$k!#(B@refill
 
 1990 $BG/$N2~Dj$G$O(B 1983 $BG/HG$KBP$9$kDI2C$,9T$o$l$?!#$3$N$?$a!"(B1990 $BG/HG(B
-$B$r;X<($9$k>l9g$OA0$K99?7%7!<%1%s%9$rMQ$$$k!#(B
+$B$r;X<($9$k>l9g$OA0$K99?7%7!<%1%s%9(B (ESC 02/06 4/0) $B$rMQ$$$k!#(B
 
-@cindex{JIS X0208-1978}@cindex{JIS C6226:1978}
+
 @noindent
 [JIS X0208-1978]
 @quotation
@@ -1045,7 +1087,7 @@ JIS X0208 $B$O5-9f!"?t;z!"%m!<%^;z!"$R$i$,$J!"%+%?%+%J!"%.%j%7%cJ8;z!"%-%j(B
 interchange'', JIS C6226:1978.
 @end quotation
 
-@cindex{JIS X0208-1983,1990}@cindex{JIS X0208:1983,1990}
+
 @noindent
 [JIS X0208-1983,1990]
 @quotation
@@ -1055,16 +1097,16 @@ interchange'', JIS X0208:1983,1990.
 @end quotation
 
 
-$B$^$?!"(B1996 $BG/$K2~DjHG$,=PHG$5$l$kM=Dj!#!J;z7A$NJQ99$O9T$o$l$J$$$N$GJ8(B
+$B$^$?!"(B1997 $BG/$K2~DjHG$,=PHG$5$l$kM=Dj!#!J;z7A$NJQ99$O9T$o$l$J$$$N$GJ8(B
 $B;z=89g$H$7$F$O(B 1990 $BG/HG$HF10l$G$"$k!K(B
 
-@cindex{JIS X0208-1996?}@cindex{JIS X 0208:1996? draft}
+
 @noindent
-[JIS X0208-1996?]
+[JIS X0208-1997?]
 @quotation
 $BF|K\5,3J6(2q(B (Japanese Standards Association),$B!X#7%S%C%H5Z$S#8%S%C%H$N(B 
 $B#2%P%$%H>pJs8r49MQId9f2=4A;z=89g!Y(B, ``7-bit and 8-bit double byte coded
-Kanji sets for information interchange'', JIS X 0208:1996? draft.
+Kanji sets for information interchange'', JIS X 0208:1997? draft.
 @end quotation
 
 
@@ -1072,23 +1114,23 @@ Kanji sets for information interchange'', JIS X 0208:1996? draft.
 @node JIS X0212, koi8-r, JIS X0208, Glossary
 @subsection JIS X0212-1990
 
-JIS X0208 (@ref{JIS X0208}) $B$K$J$+$C$?J8;z$r=8$a$?(B 94$B!_(B94 $BJ8;z=89g(B
-(@ref{94x94 character set})$B!#!VJd=u4A;z!W$H$b8F$P$l$k!#F|K\$N9q2HI8=`!#(B
-ISO 2022 (@ref{ISO 2022}) $B$G$N=*C<J8;z$O(B `D'.
+JIS X0208 (@ref{JIS X0208}) $B$K$J$+$C$?J8;z$r=8$a$?(B94$B!_(B94 $BJ8;z=89g(B
+(@ref{94x94-character set})$B!#!VJd=u4A;z!W$H$b8F$P$l$k!#F|K\$N9q2HI8=`!#(B
+ISO 2022 (@ref{ISO 2022}) $B$G$N=*C<(B byte $B$O(B 04/04 (`D').
 
 
 @node koi8-r, KS C5601, JIS X0212, Glossary
 @subsection koi8-r
+@cindex RFC 1489
 
-$B%m%7%d8lEy$GMQ$$$i$l$k%-%j%kJ8;z$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME
-charset}) $B$N#1$D!#(B@refill
+$B%m%7%d8lEy$GMQ$$$i$l$k%-%j%kJ8;z$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B@refill
 
 ISO 2022 (@ref{ISO 2022}) $B$K4p$+$J$$(B 8bit (@ref{8bit}) $B$NId9f2=J8;z=89g(B
 (@ref{Coded character set})$B$G(B de-fact standard $B$G$"$k!#(B
 
 RFC 1489 $B$GDj5A$5$l$F$$$k!#(B@refill
 
-@cindex{RFC 1489}
+
 @noindent
 [RFC 1489]
 @quotation
@@ -1097,13 +1139,15 @@ A. Chernov, ``Registration of a Cyrillic Character Set'', July 1993.
 
 
 
-@node KS C5601, message, koi8-r, Glossary
+@node KS C5601, media type, koi8-r, Glossary
 @subsection KS C5601-1987
+@cindex KS C 5601:1987
+@cindex KS C5601
 
-$B4Z9q8l$rI=$9$?$a$N(B 94$B!_(B94 $BJ8;z=89g(B(@ref{94x94 character set})$B!#4Z9q$N9q(B
-$B2HI8=`!#(BISO 2022 (@ref{ISO 2022}) $B$G$N=*C<J8;z$O(B `C'.
+$B4Z9q8l$rI=$9$?$a$N(B 94$B!_(B94 $BJ8;z=89g(B(@ref{94x94-character set})$B!#4Z9q$N9q(B
+$B2HI8=`!#(BISO 2022 (@ref{ISO 2022}) $B$G$N=*C<(B byte $B$O(B 04/03 (`C').
 
-@cindex{KS C5601}@cindex{KS C 5601:1987}
+
 @noindent
 [KS C5601]
 @quotation
@@ -1113,11 +1157,73 @@ Interchange (Hangul and Hanja)'', KS C 5601:1987.
 
 
 
-@node message, message/rfc822, KS C5601, Glossary
+@node media type, message, KS C5601, Glossary
+@subsection media type
+@cindex x-token
+@cindex content-type/subtype
+@cindex message
+@cindex multipart
+@cindex application
+@cindex video
+@cindex audio
+@cindex image
+@cindex text
+@cindex subtype
+@cindex type
+
+MIME (@ref{MIME}) $B$K$*$1$k(B entity (@ref{entity}) $B$N<oN`!#(B@strong{type} 
+$B$H(B @strong{subtype} $B$+$i$J$k!#(BRFC 2046 (@ref{RFC 2046}) $B$GDj5A$5$l$F$$$k!#(B
+
+type $B$OI8=`$G$O(B
+
+@itemize @bullet
+@item
+@strong{text}
+@item
+@strong{image}
+@item
+@strong{audio}
+@item
+@strong{video}
+@item
+@strong{application}
+@item
+@strong{multipart} (@ref{multipart})
+@item
+@strong{message}
+@end itemize
+
+@noindent
+$B$,Dj5A$5$l!"$=$l$>$l$K$O(B application/octet-stream, audio/basic,
+image/jpeg, multipart/mixed (@ref{multipart/mixed}), text/plain
+(@ref{text/plain}), video/mpeg $B$J$I$N$5$^$6$^$J(B subtype $B$,Dj5A$5$l$F$$$k!#(B
+
+@noindent
+@strong{[$BCm0U(B]}
+@quotation
+
+$B$3$3$G$O!"(Btext/plain $B$J$I$N(B type/subtype $B$NAH$r$7$P$7$P(B 
+@strong{content-type/subtype} $B$H=q$/!#(B
+@end quotation
+
+
+media type $B$O!"(BRFC 2046 $B$GDj5A$5$l$F$$$k$b$N$K2C$($F!"EPO?$9$k$3$H$b$G$-(B
+$B$k!#8=:_!"EPO?$5$l$F$$$k$b$N$O(B MEDIA TYPES
+(ftp://ftp.isi.edu/in-notes/iana/assignments/media-types) $B$G;2>H$G$-$k!#(B
+
+$B$^$?!"(Btype $B$b$7$/$O(B subtype $B$K!"A0$K(B `x-' $B$rIU$1$?(B @strong{x-token} $B$rMQ(B
+$B$$$k$3$H$K$h$j!"EPO?$5$l$F$$$J$$$b$N$r;dE*$KMQ$$$k$3$H$b$G$-$k!#$7$+$7!"(B
+$BEvA3$N$3$H$J$,$i!"$3$&$7$?;dE*$J(B content-type $B$ONJ2r$rF@$?<T$N4V$G$7$+2r(B
+$B<a$G$-$J$$$N$GMxMQ$K$OCm0U$9$k$3$H!#(B@refill
+
+(cf. @ref{Content-Type field})
+
+
+
+@node message, message/rfc822, media type, Glossary
 @subsection message
 
-$B$3$3$G$O(B RFC 822 (@ref{RFC 822}) $B$GDj5A$5$l$k(B mail $B$H(B RFC 1036 (@ref{RFC
-1036}) $B$GDj5A$5$l$k(B news $B5-;v$NAm>N$H$7$FMQ$$$k!#(B
+$B$3$3$G$O(B RFC 822 (@ref{RFC 822}) $B$GDj5A$5$l$k(B mail $B$H(B RFC 1036 (@ref{RFC 1036}) $B$GDj5A$5$l$k(B news $B5-;v$NAm>N$H$7$FMQ$$$k!#(B
 
 
 @node message/rfc822, method, message, Glossary
@@ -1130,11 +1236,12 @@ Interchange (Hangul and Hanja)'', KS C 5601:1987.
 
 @node method, MIME, message/rfc822, Glossary
 @subsection method
+@cindex external method
+@cindex internal method
 
-tm $B$GFCDj$N<oN`$N(B data $B$r:F@8$7$?$H$-<B:]$K$=$N=hM}$r9T$J$&(B
-program. Emacs Lisp $B$G=q$+$l$?(B @cindex{internal method}@strong{internal
-method} $B$H(B C $B$d(B script $B8@8l$J$I$G=q$+$l$?(B @cindex{external
-method}@strong{external method} $B$,$"$k!#(B@refill
+tm $B$GFCDj$N<oN`$N(B data $B$r:F@8$7$?$H$-<B:]$K$=$N=hM}$r9T$J$&(B program.
+Emacs Lisp $B$G=q$+$l$?(B @strong{internal method} $B$H(B C $B$d(B script $B8@8l$J$I$G(B
+$B=q$+$l$?(B @strong{external method} $B$,$"$k!#(B@refill
 
 (cf. @ref{(tm-view-ja)method})
 
@@ -1142,11 +1249,11 @@ method}@strong{external method} $B$,$"$k!#(B@refill
 
 @node MIME, MIME charset, method, Glossary
 @subsection MIME
+@cindex Multipurpose Internet Mail Extensions
 
-@cindex{Multipurpose Internet Mail Extensions}@strong{Multipurpose
-Internet Mail Extensions} $B$NN,$G!"(BInternet $B$N(B mail $B$d(B news $B$G(B us-ascii
-plain text (@ref{us-ascii}) $B0J30$NJ8;z$r;H$&$?$a$N(B RFC 822 (@ref{RFC
-822}) $B$KBP$9$k3HD%!#(B@refill
+@strong{Multipurpose Internet Mail Extensions} $B$NN,$G!"(BInternet $B$N(B mail 
+$B$d(B news $B$G(B us-ascii plain text (@ref{us-ascii}) $B0J30$NJ8;z$r;H$&$?$a$N(B 
+RFC 822 (@ref{RFC 822}) $B$KBP$9$k3HD%!#(B@refill
 
 RFC 2045 $B$OKAF,$G<!$N$h$&$K=R$Y$F$$$k!'(B@refill
 
@@ -1170,8 +1277,7 @@ US-ASCII $B0J30$NJ8;z=89g$+$i$J$kJ8=q(B header $B>pJs(B
 
 
 RFC 2045 (@ref{RFC 2045}), RFC 2046 (@ref{RFC 2046}), RFC 2047
-(@ref{encoded-word}), RFC 2048 (@ref{RFC 2048}), RFC 2049 (@ref{RFC
-2049}) $B$GDj5A$5$l$F$$$k!#(B
+(@ref{encoded-word}), RFC 2048 (@ref{RFC 2048}), RFC 2049 (@ref{RFC 2049}) $B$GDj5A$5$l$F$$$k!#(B
 
 
 @node MIME charset, MTA, MIME, Glossary
@@ -1184,15 +1290,16 @@ Content-Type field (@ref{Content-Type field}) $B$d(B encoded-word
 RFC 2045 (@ref{RFC 2045}) $B$GDj5A$5$l$F$$$k!#(B@refill
 
 iso-2022-jp (@ref{iso-2022-jp}) $B$d(B euc-kr (@ref{euc-kr}) $B$O$=$N#1$D!#(B
-$B!J$3$3$G$O!"(BMIME charset $B$OJ8;z=89g(B (@ref{Character set})$B$H6hJL$7$F>.J8(B
-$B;z$G=q$$$F$$$k!K(B
+$B!J$3$3$G$O!"(BMIME charset $B$O?^7AJ8;z=89g(B (@ref{Graphic character set})$B$H(B
+$B6hJL$7$F>.J8;z$G=q$$$F$$$k!K(B
 
 
 @node MTA, MUA, MIME charset, Glossary
 @subsection MTA
+@cindex Message Transfer Agent
 
-@cindex{Message Transfer Agent}@strong{Message Transfer Agent} $B$NN,$G!"(B
-sendmail $B$J$I$N(B mail $BG[Aw(B program $B$H(B news server $B$NAm>N!#(B@refill
+@strong{Message Transfer Agent} $B$NN,$G!"(Bsendmail $B$J$I$N(B mail $BG[Aw(B 
+program $B$H(B news server $B$NAm>N!#(B@refill
 
 (cf. @ref{MUA})
 
@@ -1200,9 +1307,10 @@ sendmail $B$J$I$N(B mail $BG[Aw(B program $B$H(B news server $B$NAm>N!#(
 
 @node MUA, MULE, MTA, Glossary
 @subsection MUA
+@cindex Message User Agent
 
-@cindex{Message User Agent}@strong{Message User Agent} $B$NN,$G!"(Bmail
-reader $B$H(B news reader $B$NAm>N!#(B@refill
+@strong{Message User Agent} $B$NN,$G!"(Bmail reader $B$H(B news reader $B$NAm>N!#(B
+@refill
 
 (cf. @ref{MTA})
 
@@ -1210,35 +1318,45 @@ reader $B$H(B news reader $B$NAm>N!#(B@refill
 
 @node MULE, multipart, MUA, Glossary
 @subsection MULE
+@cindex XEmacs/mule
+@cindex Emacs/mule
+@cindex MULE
+@cindex mule
+@cindex MULE
 
-$BH>ED(B $B7u0l;a$i$,:n$C$?!"B?8@8l$5$l$?(B Emacs (@ref{Emacs}).@refill
+$BH>ED(B $B7u0l;a$i$,:n$C$?!"B?8@8l$5$l$?(B GNU Emacs (@ref{Emacs}).
 
-[MULE] Nishikimi M., Handa K. and Tomura S., ``Mule: MULtilingual
-Enhancement to GNU Emacs'', Proc. of INET'93, August, 1993.@refill
+
+@noindent
+[MULE]
+@quotation
+Nishikimi M., Handa K. and Tomura S., ``Mule: MULtilingual Enhancement
+to GNU Emacs'', Proc. of INET'93, August, 1993.
+@end quotation
 
 $B8=:_!"(BMULE $B$N5!G=$r(B Emacs $B$K(B merge $B$9$k:n6H$,9T$o$l$F$*$j!"(Balpha $BHG(B
-(ftp://etlport.etl.go.jp/pub/mule/mule-19.33-gamma.taz) $B$,B8:_$9$k!#(B
+(ftp://etlport.etl.go.jp/pub/mule/mule-19.33-delta.taz)$B$,B8:_$9$k!#(B
 
 $B$=$NB>!"(BXEmacs $B$K(B merge $B$7$?$b$N$bB8:_$9$k!#(B@refill
 
 $B$3$N$?$a!"8=:_$G$OB?8@8l(B Emacs $B$O!"85!9$N(B MULE $B$r4^$a$F#3<oN`$"$k$3$H$K(B
 $B$J$k!#(B@refill
 
-$B$=$3$G!"$3$3$G$O!"B?8@8l(B Emacs $B$NAm>N$r(B @cindex{mule}@strong{mule}, $B85!9(B
-$B$N(B MULE $B$r(B @cindex{MULE}@strong{MULE}, mule $B5!G=$r(B merge $B$7$?(B Emacs $B$r(B
-@cindex{Emacs/mule}@strong{Emacs/mule}, mule $B5!G=$r(B merge $B$7$?(B XEmacs $B$r(B 
-@cindex{XEmacs/mule}@strong{XEmacs/mule} $B$H8F$V$3$H$K$9$k!#(B
+$B$=$3$G!"$3$3$G$O!"B?8@8l(B Emacs $B$NAm>N$r(B @strong{mule}, $B85!9(B
+$B$N(B MULE $B$r(B @strong{MULE}, mule $B5!G=$r(B merge $B$7$?(B Emacs $B$r(B
+@strong{Emacs/mule}, mule $B5!G=$r(B merge $B$7$?(B XEmacs $B$r(B 
+@strong{XEmacs/mule} $B$H8F$V$3$H$K$9$k!#(B
 
 
 @node multipart, multipart/alternative, MULE, Glossary
 @subsection Multipart
+@cindex multipart
 
 $B#1$D$N(B message (@ref{message}) $B$KJ#?t$N(B entity (@ref{entity}) $B$rF~$l$k$?(B
 $B$a$N(B MIME (@ref{MIME}) $B$K$*$1$k(B media type (@ref{media type}) $B$N#1$D!"$b(B
 $B$7$/$O!"J#?t$N(B entity $B$+$i$J$k(B message $B$r;X$9!#(B@refill
 
-$B8=:_!"Dj5A$5$l$F$$$k(B @cindex{multipart}@strong{multipart} $B$H$7$F$O!"(BRFC
-2046 (@ref{RFC 2046}) $B$GDj5A$5$l$?(B
+$B8=:_!"Dj5A$5$l$F$$$k(B @strong{multipart} $B$H$7$F$O!"(BRFC 2046 (@ref{RFC 2046}) $B$GDj5A$5$l$?(B
 
 @itemize @bullet
 @item
@@ -1277,12 +1395,13 @@ multipart (@ref{multipart}) $B$N#1$D$G!"F1$8>pJs$r0[$C$?7A<0$GF~$l!"A*Br;h(B
 
 @node multipart/digest, multipart/encrypted, multipart/alternative, Glossary
 @subsection multipart/digest
+@cindex multipart/digest
 
 multipart (@ref{multipart}) $B$N#1$D$G!"4^$^$l$k(B entity (@ref{entity}) $B$N(B 
 default $B$N(Bmedia type (@ref{media type}) $B$,(B multipart/mixed
 (@ref{multipart/mixed}) $B$J$I$N>l9g(B text/plain (@ref{text/plain}) $B$G$"$k(B
-$B$N$KBP$7!"(B@cindex{multipart/digest}@strong{multipart/digest}$B$G$O(B 
-message/rfc822 (@ref{message/rfc822}) $B$,MQ$$$i$l$kE@$,0[$J$k!#(B@refill
+$B$N$KBP$7!"(B@strong{multipart/digest}$B$G$O(B message/rfc822
+(@ref{message/rfc822}) $B$,MQ$$$i$l$kE@$,0[$J$k!#(B@refill
 
 $B$3$l$OEAE}E*$J(B RFC 1153 (@ref{RFC 1153}) $B$K4p$E$/(B encapsulation
 (@ref{encapsulation}) $B$KBe$o$k$b$N$G$"$k!#(B@refill
@@ -1333,6 +1452,9 @@ RFC 1847 $B$GDj5A$5$l$?(B Security multipart (@ref{Security multipart}) $B$N#
 
 @node PGP, PGP-kazu, multipart/signed, Glossary
 @subsection PGP
+@cindex RFC 1991
+@cindex Informational
+@cindex PGP
 
 Phil Zimmermann $B;a$,:n@.$7$?8x3+800E9f=hM}7O$N#1$D!#(Bmessage
 (@ref{message}) $B$N0E9f2=$dEE;R=pL>$r9T$&$3$H$,$G$-$k!#(BPretty Good
@@ -1345,7 +1467,7 @@ Privacy $B$NN,!#(B@refill
  $B$bMxMQ$5$l$F$-$?!#$7$+$7!":#8e$O(B PGP/MIME $B$KE}0l$7$F$$$/J}$,K>$^$7$$!#(B
 @refill
 
-@cindex{PGP}@cindex{Informational}@cindex{RFC 1991}
+
 @noindent
 [PGP: RFC 1991]
 @quotation
@@ -1358,12 +1480,14 @@ Formats'', August 1996, Informational.
 
 @node PGP-kazu, PGP/MIME, PGP, Glossary
 @subsection PGP-kazu
+@cindex application/pgp
+@cindex PGP-kazu
 
 $B;3K\(B $BOBI'(B $B;a$,Ds0F$7$?(B MIME (@ref{MIME}) $B$G(B PGP (@ref{PGP}) $B$rMxMQ$9$k$?(B
-$B$a$NJ}K!$r$3$3$G$O(B @cindex{PGP-kazu}@strong{PGP-kazu} $B$H8F$V$3$H$K$9$k!#(B
+$B$a$NJ}K!$r$3$3$G$O(B @strong{PGP-kazu} $B$H8F$V$3$H$K$9$k!#(B@refill
 
-PGP-kazu $B$O(B @cindex{application/pgp}@strong{application/pgp} $B$H$$$&(B 
-content-type (@ref{content-type}) $B$rDj5A$9$k!#(B@refill
+PGP-kazu $B$O(B @strong{application/pgp} $B$H$$$&(B content-type
+(@ref{content-type}) $B$rDj5A$9$k!#(B@refill
 
 application/pgp $B$N(B part $B$G$O(B PGP $B$N(B encapsulation (@ref{encapsulation}) 
 $B$,MQ$$$i$l$k!#(BPGP $B$N(B encapsulation (cf. @ref{RFC 934})
@@ -1379,14 +1503,14 @@ pgp $B$N=hM}$r9T$o$J$1$l$P$J$i$J$$$N$G!"(Bparse $B=hM}$,J#;($K$J$k!#(B@refil
 
 $B$^$?!"(BInternet $B$G$O:#8e(B PGP/MIME (@ref{PGP/MIME}) $B$NJ}8~$GI8=`2=$7$F$$$3(B
 $B$&$H$$$&$3$H$G9g0U$,<h$l$F$$$k!#$h$C$F!":#8e$O(B PGP-kazu $B$OMQ$$$J$$$N$,K>(B
-$B$^$7$$!#(B@refill
-
-[draft-kazu-pgp-mime-00.txt] Yamamoto K., ``PGP MIME Integration'',
-October, 1995
+$B$^$7$$!#(B
 
 
 @node PGP/MIME, Quoted-Printable, PGP-kazu, Glossary
 @subsection PGP/MIME
+@cindex RFC 2015
+@cindex Standards Track
+@cindex PGP/MIME
 
 Michael Elkins $B;a$,Ds0F$7$?(B MIME (@ref{MIME}) $B$G(B PGP (@ref{PGP}) $B$rMxMQ(B
 $B$9$k$?$a$NJ}K!!#(B@refill
@@ -1403,7 +1527,7 @@ Internet $B$G$O:#8e(B PGP/MIME (@ref{PGP/MIME}) $B$NJ}8~$GI8=`2=$7$F$$$3$&$H$
 $B$&$3$H$G9g0U$,<h$l$F$$$k!#$h$C$F!":#8e$O(B PGP $B$rMQ$$$k>l9g$O(B PGP/MIME$B$rMQ(B
 $B$$$k$N$,K>$^$7$$!#(B
 
-@cindex{PGP/MIME}@cindex{Standards Track}@cindex{RFC 2015}
+
 @noindent
 [PGP/MIME: RFC 2015]
 @quotation
@@ -1430,11 +1554,15 @@ Base64 (@ref{Base64}) $B$KHf$Y$k$H2DFI@-$,9b$/$J$k2DG=@-$,$"$k!#(B@refill
 
 @node RFC 821, RFC 822, Quoted-Printable, Glossary
 @subsection RFC 821
+@cindex RFC 821
+@cindex STD 10
+@cindex SMTP
+@cindex SMTP
 
-@cindex{SMTP}@strong{SMTP} $B$H8F$P$l$k(B Internet mail $B$NG[AwK!$NI8=`$rDj$a(B
+@strong{SMTP} $B$H8F$P$l$k(B Internet mail $B$NG[AwK!$NI8=`$rDj$a(B
 $B$F$$$k(B RFC.
 
-@cindex{SMTP}@cindex{STD 10}@cindex{RFC 821}
+
 @noindent
 [SMTP: RFC 821]
 @quotation
@@ -1445,21 +1573,25 @@ J. Postel, ``Simple Mail Transfer Protocol'', August 1982, STD 10.
 
 @node RFC 822, RFC 934, RFC 821, Glossary
 @subsection RFC 822
+@cindex RFC 822
+@cindex STD 11
+@cindex Internet message
+@cindex Internet mail
+@cindex message header
 
-Internet mail $B$N<g$K(B @cindex{message header}@strong{message header} $B$K4X$9$k7A<0$K(B
+Internet mail $B$N<g$K(B @strong{message header} $B$K4X$9$k7A<0$K(B
 $B4X$9$kI8=`$rDj$a$F$$$k(B RFC.
 
 @noindent
 @strong{[Memo]}
 @quotation
 
-news message $B$b$3$l$K=`$8$F$$$k$N$G!"(B@cindex{Internet
-mail}@strong{Internet mail} $B$H=q$/$h$j$b!"(B@cindex{Internet
-message}@strong{Internet message} $B$H=q$$$?J}$,NI$$$+$b$7$l$J$$!#(B
+news message $B$b$3$l$K=`$8$F$$$k$N$G!"(B@strong{Internet mail} $B$H=q$/$h$j$b!"(B
+@strong{Internet message} $B$H=q$$$?J}$,NI$$$+$b$7$l$J$$!#(B
 @end quotation
 
 
-@cindex{STD 11}@cindex{RFC 822}
+
 @noindent
 [RFC 822]
 @quotation
@@ -1471,16 +1603,17 @@ August 1982, STD 11.
 
 @node RFC 934, RFC 1036, RFC 822, Glossary
 @subsection RFC 934
+@cindex RFC 934
+@cindex encapsulation
 
-Internet mail (@ref{RFC 822}) $B$N(B 
-@cindex{encapsulation}@strong{encapsulation} (@ref{encapsulation}) $B$NJ}(B
-$BK!$rDj$a$?(B RFC.@refill
+Internet mail (@ref{RFC 822}) $B$N(B @strong{encapsulation}
+(@ref{encapsulation}) $B$NJ}K!$rDj$a$?(B RFC.@refill
 
 MIME (@ref{MIME}) $B$HL7=b$9$k$N$G!"8=:_$G$O(B message/rfc822
 (@ref{message/rfc822}) $B$rMQ$$$k$Y$-$G$"$k!#(B
 
 
-@cindex{RFC 934}
+
 @noindent
 [RFC 934]
 @quotation
@@ -1492,12 +1625,14 @@ Encapsulation'', January 1985.
 
 @node RFC 1036, RFC 1153, RFC 934, Glossary
 @subsection RFC 1036
+@cindex RFC 1036
+@cindex USENET
 
-USENET $B$G$N(B message $B$N7A<0$rDj$a$?(B RFC. RFC 822 (@ref{RFC 822})$B$N(B subset 
-$B$K$J$C$F$$$k!#(BInternet $B$NI8=`$G$O$J$$$,!"(BUSENET $B0J30$N(B netnews $B$G$b$3$l(B
-$B$K=`$8$F$$$k$b$N$,B?$$!#(B
+USENET $B$G$N(B message $B$N7A<0$rDj$a$?(B RFC.  RFC 822 (@ref{RFC 822}) $B$N(B 
+subset $B$K$J$C$F$$$k!#(BInternet $B$NI8=`$G$O$J$$$,!"(BUSENET $B0J30$N(B netnews $B$G(B
+$B$b$3$l$K=`$8$F$$$k$b$N$,B?$$!#(B
 
-@cindex{USENET}@cindex{RFC 1036}
+
 @noindent
 [USENET: RFC 1036]
 @quotation
@@ -1509,10 +1644,11 @@ December 1987, (obsolete RFC 850).
 
 @node RFC 1153, RFC 1557, RFC 1036, Glossary
 @subsection RFC 1153
+@cindex RFC 1153
+@cindex encapsulation
 
-$BJ#?t$N(B Internet mail (@ref{RFC 822}) $B$r(B 
-@cindex{encapsulation}@strong{encapsulation} (@ref{encapsulation}) $B$9$k(B
-$B$?$a$NJ}K!$rDj$a$?(B RFC. RFC 934 (@ref{RFC 934}) $B$rMQ$$$k!#(B@refill
+$BJ#?t$N(B Internet mail (@ref{RFC 822}) $B$r(B @strong{encapsulation}
+(@ref{encapsulation}) $B$9$k$?$a$NJ}K!$rDj$a$?(B RFC.@refill
 
 MIME (@ref{MIME}) $B$HL7=b$9$k$N$G!"8=:_$G$O(B message/rfc822
 (@ref{message/rfc822}) $B$rMQ$$$?(B multipart (@ref{multipart}) $B$rMQ$$$k$Y$-(B
@@ -1521,7 +1657,7 @@ MIME (@ref{MIME}) $B$HL7=b$9$k$N$G!"8=:_$G$O(B message/rfc822
 (cf. @ref{multipart/digest})
 
 
-@cindex{RFC 1153}
+
 @noindent
 [RFC 1153]
 @quotation
@@ -1532,11 +1668,13 @@ F. Wancho, ``Digest Message Format'', April 1990.
 
 @node RFC 1557, RFC 1922, RFC 1153, Glossary
 @subsection RFC 1557
+@cindex RFC 1557
+@cindex Informational
 
 euc-kr (@ref{euc-kr}) $B$H(B iso-2022-kr (@ref{iso-2022-kr}) $B$H$$$&4Z9q8l$N(B
 $B$?$a$N(B MIME charset (@ref{MIME charset}) $B$rDj5A$7$F$$$k(B RFC.
 
-@cindex{Informational}@cindex{RFC 1557}
+
 @noindent
 [RFC 1557]
 @quotation
@@ -1548,17 +1686,21 @@ Messages'', December 1993, Informational.
 
 @node RFC 1922, RFC 2045, RFC 1557, Glossary
 @subsection RFC 1922
+@cindex RFC 1922
+@cindex Informational
+@cindex charset-extension
+@cindex charset-edition
 
 iso-2022-cn (@ref{iso-2022-cn}), iso-2022-cn-ext
 (@ref{iso-2022-cn-ext}), cn-gb (@ref{cn-gb}), cn-big5 (@ref{cn-big5}) $B$H(B
 $B$$$C$?Cf9q8l$N$?$a$N(B MIME charset (@ref{MIME charset}) $B$rDj5A$7$F$$$k(B 
 RFC.@refill
 
-$B$3$l$K2C$($F!"(B@cindex{charset-edition}@strong{charset-edition} $B$H(B 
-@cindex{charset-extension}@strong{charset-extension} $B$H$$$&(B Content-Type
-field (@ref{Content-Type field}) $B$N(B parameter $B$rDj5A$7$F$$$k!#(B
+$B$3$l$K2C$($F!"(B@strong{charset-edition} $B$H(B @strong{charset-extension} $B$H(B
+$B$$$&(B Content-Type field (@ref{Content-Type field}) $B$N(B parameter $B$rDj5A$7(B
+$B$F$$$k!#(B
 
-@cindex{Informational}@cindex{RFC 1922}
+
 @noindent
 [RFC 1922]
 @quotation
@@ -1571,8 +1713,10 @@ Informational.
 
 @node RFC 2045, RFC 2046, RFC 1922, Glossary
 @subsection RFC 2045
+@cindex RFC 2045
+@cindex Standards Track
 
-@cindex{Standards Track}@cindex{RFC 2045}
+
 @noindent
 [RFC 2045]
 @quotation
@@ -1585,8 +1729,10 @@ Standards Track (obsolete RFC 1521, 1522, 1590).
 
 @node RFC 2046, RFC 2048, RFC 2045, Glossary
 @subsection RFC 2046
+@cindex RFC 2046
+@cindex Standards Track
 
-@cindex{Standards Track}@cindex{RFC 2046}
+
 @noindent
 [RFC 2046]
 @quotation
@@ -1599,8 +1745,10 @@ RFC 1521, 1522, 1590).
 
 @node RFC 2048, RFC 2049, RFC 2046, Glossary
 @subsection RFC 2048
+@cindex RFC 2048
+@cindex Standards Track
 
-@cindex{Standards Track}@cindex{RFC 2048}
+
 @noindent
 [RFC 2048]
 @quotation
@@ -1613,8 +1761,10 @@ Standards Track (obsolete RFC 1521, 1522, 1590).
 
 @node RFC 2049, plain text, RFC 2048, Glossary
 @subsection RFC 2049
+@cindex RFC 2049
+@cindex Standards Track
 
-@cindex{Standards Track}@cindex{RFC 2049}
+
 @noindent
 [RFC 2049]
 @quotation
@@ -1628,22 +1778,28 @@ Standards Track (obsolete RFC 1521, 1522, 1590).
 @node plain text, Security multipart, RFC 2049, Glossary
 @subsection plain text
 
-$B=qBN$dAHHG$K4X$9$k>pJs$r;}$?$J$$(B $BJ8;zId9f(B(@ref{Coded character set})$B$N$_(B
+$B=qBN$dAHHG$K4X$9$k>pJs$r;}$?$J$$J8;zId9f(B(@ref{Coded character set})$B$N$_(B
 $B$GI=8=$5$l$k(B text $B>pJs!#(B(cf. @ref{text/plain})
 
 
 
 @node Security multipart, text/enriched, plain text, Glossary
 @subsection Security multipart
+@cindex RFC 1847
+@cindex Standards Track
+@cindex Security multipart
+@cindex multipart/encrypted
+@cindex multipart/signed
 
-MIME (@ref{MIME}) $B$G0E9f$dEE;R=qL>$rMQ$$$k$?$a$N7A<0!#(B
-@cindex{multipart/signed}@strong{multipart/signed}
-(@ref{multipart/signed}) $B$H(B 
-@cindex{multipart/encrypted}@strong{multipart/encrypted}
-(@ref{multipart/encrypted}) $B$H$$$&(B multipart $B$rMQ$$$k!#(BMOSS $B$d(B PGP/MIME
-(@ref{PGP/MIME}) $B$O$3$l$K4p$$$F$$$k!#(B
+MIME (@ref{MIME}) $B$G0E9f$dEE;R=qL>$rMQ$$$k$?$a$N7A<0!#(B@refill
 
-@cindex{Security multipart}@cindex{Standards Track}@cindex{RFC 1847}
+@strong{multipart/signed} (@ref{multipart/signed}) $B$H(B 
+@strong{multipart/encrypted} (@ref{multipart/encrypted}) $B$H$$$&(B 
+multipart $B$rMQ$$$k!#(B@refill
+
+MOSS $B$d(B PGP/MIME (@ref{PGP/MIME}) $B$O$3$l$K4p$$$F$$$k!#(B
+
+
 @noindent
 [Security multipart: RFC 1847]
 @quotation
@@ -1656,12 +1812,14 @@ Multiparts for MIME: Multipart/Signed and Multipart/Encrypted'', October
 
 @node text/enriched, text/plain, Security multipart, Glossary
 @subsection text/enriched
+@cindex RFC 1896
+@cindex text/enriched
+@cindex text/richtext
 
-RFC 1521 $B$GDj5A$5$l$?(B @cindex{text/richtext}@strong{text/richtext} $B$KBe(B
-$B$o$C$F!"=qBN$dAHHG$K4X$9$k>pJs$r;}$C$?(B text$B$rI=8=$9$k$?$a$N(B media type
-(@ref{media type}).
+RFC 1521 $B$GDj5A$5$l$?(B @strong{text/richtext} $B$KBe$o$C$F!"=qBN$dAHHG$K4X(B
+$B$9$k>pJs$r;}$C$?(B text$B$rI=8=$9$k$?$a$N(B media type (@ref{media type}).
 
-@cindex{text/enriched}@cindex{RFC 1896}
+
 @noindent
 [text/enriched: RFC 1896]
 @quotation
@@ -1673,14 +1831,14 @@ February 1996, (obsolete RFC 1563).
 
 @node text/plain, tm-kernel, text/enriched, Glossary
 @subsection text/plain
+@cindex text/plain
 
 RFC 2046 (@ref{RFC 2046}) $B$GDj5A$5$l$?!"(Bplain text (@ref{plain text}) $B$r(B
 $BI=8=$9$k$?$a$N(B media type (@ref{media type}).@refill
 
-$BHs(B MIME message $B$J$I$N(B content-type $B$,Dj5A$5$l$J$$(B part $B$O(B MIME charset
-(@ref{MIME charset}) $B$,(B us-ascii (@ref{us-ascii}) $B$G$"$k(B 
-@cindex{text/plain}@strong{text/plain} $B$N(B part $B$G$"$k$H8+Pv$5$l$k$3$H$K(B
-$B$J$C$F$$$k!#(B
+$BHs(B MIME message $B$J$I$N(B content-type $B$,Dj5A$5$l$J$$(B entity (@ref{entity}) 
+$B$O(B MIME charset (@ref{MIME charset}) $B$,(B us-ascii (@ref{us-ascii}) $B$G$"$k(B 
+@strong{text/plain} $B$N(B entity $B$G$"$k$H8+Pv$5$l$k$3$H$K$J$C$F$$$k!#(B
 
 
 @node tm-kernel, tm-MUA, text/plain, Glossary
@@ -1709,23 +1867,29 @@ library $B72!#(B`tools for MIME' $B$NN,!#(B
 
 @node tm-MUA, us-ascii, tm-kernel, Glossary
 @subsection tm-MUA
+@cindex tm-rmail
+@cindex tm-vm
+@cindex gnus-mime
+@cindex tm-gnus
+@cindex tm-mh-e
+@cindex tm $BBg@9$j(B package
 
 tm (@ref{tm-kernel}) $B$rMQ$$$?(B MUA (@ref{MUA}) $B$b$7$/$O(B MUA $B$KBP$9$k(B 
 extender.@refill
 
-@cindex{tm $BBg@9$j(B package}@strong{tm $BBg@9$j(B package} $B$K$O(B
+@strong{tm $BBg@9$j(B package} $B$K$O(B
 
 @itemize @bullet
 @item
-mh-e (@ref{(mh-e)}) $BMQ$N(B @cindex{tm-mh-e}@strong{tm-mh-e}
+mh-e (@ref{(mh-e)}) $BMQ$N(B @strong{tm-mh-e}
 @item
-GNUS $BMQ$N(B @cindex{tm-gnus}@strong{tm-gnus}
+GNUS $BMQ$N(B @strong{tm-gnus}
 @item
-Gnus $BMQ$N(B @cindex{gnus-mime}@strong{gnus-mime} (@ref{(gnus-mime-ja)})
+Gnus $BMQ$N(B @strong{gnus-mime} (@ref{(gnus-mime-ja)})
 @item
-VM $BMQ$N(B @cindex{tm-vm}@strong{tm-vm}
+VM $BMQ$N(B @strong{tm-vm}
 @item
-RMAIL $BMQ$N(B @cindex{tm-rmail}@strong{tm-rmail}
+RMAIL $BMQ$N(B @strong{tm-rmail}
 @end itemize
 
 @noindent
@@ -1736,6 +1900,8 @@ RMAIL $BMQ$N(B @cindex{tm-rmail}@strong{tm-rmail}
 
 @node us-ascii,  , tm-MUA, Glossary
 @subsection us-ascii
+@cindex ASCII
+@cindex us-ascii
 
 $B%"%a%j%+O"K.$J$I$G;H$o$l$k1Q8l$J$I$rI=8=$9$k$?$a$N(B MIME charset
 (@ref{MIME charset}) $B$N#1$D!#(B@refill
@@ -1745,10 +1911,10 @@ ASCII (@ref{ASCII}) $B$N$_$+$i$J$j(B ISO 2022 (@ref{ISO 2022}) $B$K$h$kId9f3H
 
 Internet mail $B$K$*$1$kI8=`$NId9f2=J8;z=89g(B(@ref{Coded character set})$B$G(B
 $B$"$j!"L@<(E*$K(B MIME charset $B$,<($5$l$J$$>l9g$O86B'$H$7$F(B 
-@cindex{us-ascii}@strong{us-ascii} $B$,;H$o$l$k!#(B@refill
+@strong{us-ascii} $B$,;H$o$l$k!#(B@refill
 
-$B$^$?!"(BRFC 822 (@ref{RFC 822}) $B$K$*$1$k(B @cindex{ASCII}@strong{ASCII} $B$O(B 
-us-ascii $B$r;X$9$b$N$H2r<a$9$Y$-$G$"$k!#(B
+$B$^$?!"(BRFC 822 (@ref{RFC 822}) $B$K$*$1$k(B @strong{ASCII} $B$O(B us-ascii $B$r;X$9(B
+$B$b$N$H2r<a$9$Y$-$G$"$k!#(B
 
 
 @node Setting, Bug report, Introduction, Top
@@ -1772,10 +1938,10 @@ message $B$N:n@.$b4^$a$?(B MIME $BA4HL$N@_Dj$r9T$J$$!"(B
 
 @node mime-setup, tm-setup, Setting, Setting
 @section $BI8=`E*$J@_Dj(B
+@cindex mime-setup
 
-tm $B$N0lHLE*$J@_Dj$r9T$$$?$$>l9g$O!"(B
-@cindex{mime-setup}@strong{mime-setup} $B$H$$$&I8=`@_Dj(B file $B$r;H$C$F$/$@(B
-$B$5$$!#Nc$($P!"(B@file{~/.emacs} $BEy$G!"(B@refill
+tm $B$N0lHLE*$J@_Dj$r9T$$$?$$>l9g$O!"(B@strong{mime-setup} $B$H$$$&I8=`@_Dj(B 
+file $B$r;H$C$F$/$@$5$$!#Nc$($P!"(B@file{~/.emacs} $BEy$G!"(B@refill
 
 @lisp
 (load "mime-setup")
@@ -1796,8 +1962,9 @@ Gnus FAQ $B$N5-=R$O4V0c$C$F$$$^$9!*!K(B
 
 @node signature, Notice about GNUS, mime-setup, mime-setup
 @subsection signature.el
+@cindex signature
 
-tm $B$K$O(B @cindex{signature}@strong{signature} $B$H$$$&(B signature $B$N<+F0@ZBX$((B 
+tm $B$K$O(B @strong{signature} $B$H$$$&(B signature $B$N<+F0@ZBX$((B 
 tool $B$,ImB0$7$F$*$j!"(B@file{mime-setup.el} $B$O$3$N@_Dj$b9T$J$$$^$9!#(B
 message header $B$N(B field $B$K9g$o$;$F(B signature $B$N<+F0@ZBX$r9T$J$$$?$$>l(B
 $B9g$O(B @file{~/.emacs} $B$K0J2<$N$h$&$J$b$N$rF~$l$F2<$5$$!#!J>\$7$/(B
@@ -1883,14 +2050,15 @@ message $B$H$7$F@5$7$/=hM}$5$l$F$$$^$;$s!#Nc$($P(B multipart message $B$N>l(
 
 @node tm-setup, setting for VM, mime-setup, Setting
 @section tm-edit $B$r;H$o$J$$@_Dj(B
+@cindex tm-setup
 
 
-@cindex{tm-setup}@strong{tm-setup} $B$O(B tm-MUA (@ref{tm-MUA}) $B$N@_Dj$N$_$r(B
-$B9T$J$&(B module $B$G$9!#$3$N@_Dj(B file $B$G$O(B tm-edit (@ref{(tm-edit-ja)}) $B$r;H$C(B
-$B$?(B MIME message $B$N:n@.$K4X$9$k@_Dj$O9T$o$l$:!"(BMIME message $B$N1\Mw$K4X$9(B
-$B$k@_Dj$N$_$,9T$o$l$^$9!#(BMIME message $B$rFI$_$?$$$,<+J,$G$O:n@.$7$J$$$H$+!"(B
-tm-edit $B0J30$N(B MIME composer $B$r;H$$$?$$>l9g$K$O(B mime-setup.el $B$NBe$o$j$K(B
-$B$3$N@_Dj(B file $B$r;H$C$F$/$@$5$$!#(B@refill
+@strong{tm-setup} $B$O(B tm-MUA (@ref{tm-MUA}) $B$N@_Dj$N$_$r9T$J$&(B module $B$G(B
+$B$9!#$3$N@_Dj(B file $B$G$O(B tm-edit (@ref{(tm-edit-ja)}) $B$r;H$C$?(B MIME
+message $B$N:n@.$K4X$9$k@_Dj$O9T$o$l$:!"(BMIME message $B$N1\Mw$K4X$9$k@_Dj$N(B
+$B$_$,9T$o$l$^$9!#(BMIME message $B$rFI$_$?$$$,<+J,$G$O:n@.$7$J$$$H$+!"(Btm-edit 
+$B0J30$N(B MIME composer $B$r;H$$$?$$>l9g$K$O(B mime-setup.el $B$NBe$o$j$K$3$N@_Dj(B 
+file $B$r;H$C$F$/$@$5$$!#(B@refill
 
 $BNc$($P!"(B@file{~/.emacs} $BEy$K(B
 
@@ -1914,9 +2082,11 @@ tm-edit $B0J30$N(B MIME composer $B$r;H$$$?$$>l9g$K$O(B mime-setup.el $B$NB
 
 @node setting for VM, manual setting, tm-setup, Setting
 @section VM $B$r;H$&>l9g$N@_Dj(B
+@cindex BBDB
+@cindex vm
 
 
-@cindex{vm}@strong{vm} $B$r;H$&>l9g$O(B @file{~/.vm} $B$K(B
+@strong{vm} $B$r;H$&>l9g$O(B @file{~/.vm} $B$K(B
 
 @lisp
 (require 'tm-vm)
@@ -1930,8 +2100,8 @@ tm-edit $B0J30$N(B MIME composer $B$r;H$$$?$$>l9g$K$O(B mime-setup.el $B$NB
 @strong{[$BCm0U(B]}
 @quotation
 
-@cindex{BBDB}@strong{BBDB} $B$r;H$&>l9g$O(B @code{(bbdb-insinuate-vm)} $B$N(B 
-@strong{$B8e(B} $B$K(B @code{(require 'tm-vm)} $B$rF~$l$F$/$@$5$$!#(B
+@strong{BBDB} $B$r;H$&>l9g$O(B @code{(bbdb-insinuate-vm)} $B$N(B @strong{$B8e(B} $B$K(B 
+@code{(require 'tm-vm)} $B$rF~$l$F$/$@$5$$!#(B
 @end quotation
 
 
@@ -1962,7 +2132,7 @@ tm-edit $B0J30$N(B MIME composer $B$r;H$$$?$$>l9g$K$O(B mime-setup.el $B$NB
 
 
 
-@node Bug report, Concept Index, Setting, Top
+@node Bug report, Acknowledgments, Setting, Top
 @chapter bug $BJs9p$N;EJ}(B
 
 tm $B$N%P%0$r8+$D$1$?$i!"0J2<$N(B address $B$K(B mail $B$rAw$C$F$/$@$5$$!'(B
@@ -2004,7 +2174,37 @@ tm ML $B$G$O(B tm $B$N%P%0>pJs$N8r49$d:G?7HG$NG[I[!"(Btm $B$N2~NI$K4X$9$k5D
 $B$F2<$5$$!#(B(^_^)
 
 
-@node Concept Index, Variable Index, Bug report, Top
+@node Acknowledgments, Concept Index, Bug report, Top
+@chapter $B<U<-(B
+
+$B;d$,(B tm-view $B$r:G=i$K:n$C$?;~$K!"87$7$$CmJ8$HM-1W$J=u8@$r2<$5$j!"$=$N@_(B
+$B7W$KB?Bg$JM?$($i$l$?>#C+J]Gn$5$s$K46<U$7$^$9!#(B@refill
+
+@file{tm-ew-d.el} $B$H(B @file{mel-b.el} $B$NA0?H$KEv$?$k(B@file{mime.el} $B$r=q$-!"(B
+$B$=$NG[I[$H2~B$$r$*5v$72<$5$C$?1]JB;LCR$5$s$K46<U$7$^$9!#(B@refill
+
+$B$^$?!"(BLaTeX $BMQ$NFbIt(B method $B$H(B message/partial $BMQ$N<+F07k9g(B method $B$rDs(B
+$B6!$7$F2<$5$C$?2,It<wCK$5$s!"(Btar archive $BMQ$NFbIt(B method $B$rDs6!$7$F2<$5$C(B
+$B$?>eLnGn$5$s$K46<U$7$^$9!#(B@refill
+
+tm-edit $B$NA0?H$H$J$C$?(B @file{mime.el} $B$r=q$-!"$=$NG[I[$H2~B$$r$*5v$72<$5$C(B
+$B$?!"G_ED@/?.$5$s$K46<U$7$^$9!#(Btm-edit $B$N(B user interface $B$N4pK\E*$J@_7W$O(B
+$BG_ED$5$s$N<j$K$h$k$b$N$G!"$H$F$bNI$$@_7W$G$"$C$?$H;W$$$^$9!#(B@refill
+
+tm $B$N4v$D$+$N(B module $B$N(B maintainer $B$r0z$-<u$1$F2<$5$C$?>.NS=$J?$5$s!"H`(B
+$B$O$^$?!"(BRFC $B$KBP$9$kE,9g@-$KBP$7$F1T$$;XE&$rB?!99T$&$3$H$G(B tm $B$NF0:n$N5,(B
+$B3J$KBP$9$kCi<BEY$r>e$2$k$N$KHs>o$J9W8%$r9T$$$^$7$?!#(B@refill
+
+$B$^$?!"(Btm-vm $B$N(B maintainer $B$r0z$-<u$1$F2<$5$C$?(B Oscar Figueiredo $B$5$s$K46(B
+$B<U$7$^$9!#@:NOE*$K(B tm-vm $B$r2~NI$7!"$^$?!"N)GI$J@bL@=q$r=q$$$F2<$5$$$^$7(B
+$B$?!#(B@refill
+
+$B:G8e$K!"(Bbeta test $B$K6(NO$7$F2<$5$C$?F|K\8lHG!"1Q8lHGAPJ}$N(B tm mailing
+list $B$N(B member $B$K46<U$7$^$9!#$^$?!"(Bpatch $B$rAw$C$F2<$5$C$?A4$F$NJ}$K46(B
+$B<U$7$^$9!#(B
+
+
+@node Concept Index, Variable Index, Acknowledgments, Top
 @chapter $B35G0:w0z(B
 
 @printindex cp

@@ -70,21 +70,20 @@ The new version of the list, minus the deleted strings, is returned."
 		      (if (or (null (string-match "^[\t\f\n\r ]+$" s))
 			      (not (string= s "")))
 			  (setq list (cons s list)))
-		      (forward-char 1)
-		      (skip-chars-forward "\t\f\n\r ")
+		      (skip-chars-forward ",\t\f\n\r ")
 		      (setq start (point)))
 		     ((= char ?\")
-		      (forward-char 1)
 		      (re-search-forward "[^\\]\"" nil 0))
 		     ((= char ?\()
 		      (let ((parens 1))
 			(forward-char 1)
 			(while (and (not (eobp)) (not (zerop parens)))
-			  (re-search-forward "[^\\][()]" nil 0)
-			  (cond ((eobp))
+			  (re-search-forward "[()]" nil 0)
+			  (cond ((or (eobp)
+				     (= (char-after (- (point) 2)) ?\\)))
 				((= (preceding-char) ?\()
 				 (setq parens (1+ parens)))
-				((= (preceding-char) ?\))
+				(t
 				 (setq parens (1- parens)))))))))
 	     (setq s (buffer-substring start (point)))
 	     (if (and (null (string-match "^[\t\f\n\r ]+$" s))
@@ -140,8 +139,8 @@ The new version of the list, minus the deleted strings, is returned."
   '(while vm-folder-read-only
      (signal 'folder-read-only (list (current-buffer)))))
 
-;; XEmacs change
-(define-error 'folder-read-only "Folder is read-only")
+(put 'folder-read-only 'error-conditions '(folder-read-only error))
+(put 'folder-read-only 'error-message "Folder is read-only")
 
 (defmacro vm-error-if-virtual-folder ()
   '(and (eq major-mode 'vm-virtual-mode)
@@ -292,9 +291,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (set-buffer buffer)
       (vm-mapc 'set variables values))))
 
-;; XEmacs change
-(define-error 'folder-empty  "Folder is empty")
-(define-error 'unrecognized-folder-type "Unrecognized folder type")
+(put 'folder-empty 'error-conditions '(folder-empty error))
+(put 'folder-empty 'error-message "Folder is empty")
+(put 'unrecognized-folder-type 'error-conditions
+     '(unrecognized-folder-type error))
+(put 'unrecognized-folder-type 'error-message "Unrecognized folder type")
 
 (defun vm-error-if-folder-empty ()
   (while (null vm-message-list)
@@ -343,7 +344,9 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
   (vm-multiple-frames-possible-p))
 
 (defun vm-menu-support-possible-p ()
-  (or (and (boundp 'window-system) (eq window-system 'x))
+  (or (and (boundp 'window-system)
+	   (or (eq window-system 'x)
+	       (eq window-system 'win32)))
       (and (fboundp 'device-type) (eq (device-type) 'x))))
 
 (defun vm-toolbar-support-possible-p ()
@@ -365,9 +368,10 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (apply function args)
     (error nil)))
 
-;; XEmacs change
-(define-error 'beginning-of-folder "Beginning of folder")
-(define-error 'end-of-folder "End of folder")
+(put 'beginning-of-folder 'error-conditions '(beginning-of-folder error))
+(put 'beginning-of-folder 'error-message "Beginning of folder")
+(put 'end-of-folder 'error-conditions '(end-of-folder error))
+(put 'end-of-folder 'error-message "End of folder")
 
 (defun vm-trace (&rest args)
   (save-excursion

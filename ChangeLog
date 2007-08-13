@@ -1,3 +1,17 @@
+Fri Dec 27 20:34:58 1996  Richard Mlynarik  <mly@adoc.xerox.com>
+
+	* etc/yow.lines: 20k of new zippy quotes.
+
+Fri Dec 27 01:02:41 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* Makefile.in (install-arch-indep): Simplify installation of info
+	pages.
+
+Sat Dec 21 15:20:20 1996  Steven L Baur  <steve@altair.xemacs.org>
+	* XEmacs 20.0-b32 released.
+
+	* XEmacs 19.15-b5 released.
+
 Wed Dec 18 20:22:08 1996  Martin Buchholz  <mrb@eng.sun.com>
 
 	* configure.in: Reformat.  Fix shared include file rename

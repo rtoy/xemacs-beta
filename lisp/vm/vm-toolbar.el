@@ -18,7 +18,6 @@
 (provide 'vm-toolbar)
 
 (defvar vm-toolbar-specifier nil)
-(defvar vm-toolbar nil)
 
 (defvar vm-toolbar-next-button
   [vm-toolbar-next-icon
@@ -156,7 +155,7 @@ file then this button will run `recover-file'."])
 
 (defvar vm-toolbar-quit-button
   [vm-toolbar-quit-icon vm-toolbar-quit-command t
-   "Quit VM.\n
+   "Quit visiting this folder.\n
 The command `vm-toolbar-quit-command' is run, which is normally
 bound to `vm-quit'.
 You can make this button run some other command by using a Lisp
@@ -235,39 +234,41 @@ s-expression like this one in your .vm file:
 			       'vm-toolbar-helper-icon))
   (and vm-toolbar-specifier
        (progn
-	 (let ((locale (if (memq 'vm-delete-buffer-frame kill-buffer-hook)
-			   (selected-frame)
-			 (current-buffer))))
-	   (set-specifier vm-toolbar-specifier (cons locale nil))
-	   (set-specifier vm-toolbar-specifier (cons locale vm-toolbar))))))
+	 (set-specifier vm-toolbar-specifier (cons (current-buffer) nil))
+	 (set-specifier vm-toolbar-specifier (cons (current-buffer)
+						   vm-toolbar)))))
 
 (defun vm-toolbar-install-toolbar ()
   (vm-toolbar-initialize)
-  (let ((toolbar (vm-toolbar-make-toolbar-spec))
-	(height (+ 4 (glyph-height (car vm-toolbar-help-icon))))
+  (let ((height (+ 4 (glyph-height (car vm-toolbar-help-icon))))
 	(width (+ 4 (glyph-width (car vm-toolbar-help-icon))))
-	(locale (if (memq 'vm-delete-buffer-frame kill-buffer-hook)
-		    (selected-frame)
-		  (current-buffer))))
-    (setq vm-toolbar toolbar)
+	toolbar )
+    ;; honor user setting of vm-toolbar if they are daring enough
+    ;; to set it.
+    (if vm-toolbar
+	(setq toolbar vm-toolbar)
+      (setq toolbar (vm-toolbar-make-toolbar-spec)
+	    vm-toolbar toolbar))
     (cond ((eq vm-toolbar-orientation 'right)
 	   (setq vm-toolbar-specifier right-toolbar)
-	   (set-specifier right-toolbar (cons locale toolbar))
-	   (set-specifier right-toolbar-width (cons (selected-frame) width)))
+	   (set-specifier right-toolbar (cons (current-buffer) toolbar))
+	   (set-specifier right-toolbar-width
+			  (cons (selected-frame) width)))
 	  ((eq vm-toolbar-orientation 'left)
 	   (setq vm-toolbar-specifier left-toolbar)
-	   (set-specifier left-toolbar (cons locale toolbar))
-	   (set-specifier left-toolbar-width (cons (selected-frame) width)))
+	   (set-specifier left-toolbar (cons (current-buffer) toolbar))
+	   (set-specifier left-toolbar-width
+			  (cons (selected-frame) width)))
 	  ((eq vm-toolbar-orientation 'bottom)
 	   (setq vm-toolbar-specifier bottom-toolbar)
-	   (set-specifier bottom-toolbar (cons locale toolbar))
-	   (set-specifier bottom-toolbar-height (cons (selected-frame)
-						      height)))
+	   (set-specifier bottom-toolbar (cons (current-buffer) toolbar))
+	   (set-specifier bottom-toolbar-height
+			  (cons (selected-frame) height)))
 	  (t
 	   (setq vm-toolbar-specifier top-toolbar)
-	   (set-specifier top-toolbar (cons locale toolbar))
-	   (set-specifier top-toolbar-height (cons (selected-frame)
-						   height))))))
+	   (set-specifier top-toolbar (cons (current-buffer) toolbar))
+	   (set-specifier top-toolbar-height
+			  (cons (selected-frame) height))))))
 
 (defun vm-toolbar-make-toolbar-spec ()
   (let ((button-alist '(

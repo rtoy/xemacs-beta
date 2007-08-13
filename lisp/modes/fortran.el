@@ -713,7 +713,7 @@ Any other key combination is executed normally."
     ;; insert char if not equal to `?'
     (if (or (= c ??) (eq c help-char))
 	(fortran-abbrev-help)
-      (setq unread-command-events e))))
+      (setq unread-command-events (list e)))))
 
 (defun fortran-abbrev-help ()
   "List the currently defined abbrevs in Fortran mode."
@@ -780,7 +780,7 @@ See also `fortran-window-create'."
 		   ;; XEmacs change
 		   (let ((char (next-command-event)))
 		     (or (equal (event-to-character char) ? )
-			 (setq unread-command-events char))))))
+			 (setq unread-command-events (list char)))))))
     (fortran-window-create)))
 
 (defun fortran-split-line ()

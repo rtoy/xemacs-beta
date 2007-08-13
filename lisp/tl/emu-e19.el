@@ -3,10 +3,10 @@
 ;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu-e19.el,v 1.1.1.1 1996/12/18 22:53:09 steve Exp $
+;; Version: $Id: emu-e19.el,v 1.2 1996/12/28 21:03:08 steve Exp $
 ;; Keywords: emulation, compatibility, mule, Latin-1
 
-;; This file is part of tl (Tiny Library).
+;; This file is part of emu.
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -39,13 +39,13 @@
 ;;;
 
 (defconst charset-ascii 0 "Character set of ASCII")
-(defconst charset-latin-1 129 "Character set of ISO-8859-1")
+(defconst charset-latin-iso8859-1 129 "Character set of ISO-8859-1")
 
 (defun charset-description (charset)
   "Return description of CHARSET. [emu-e19.el]"
   (if (< charset 128)
       (documentation-property 'charset-ascii 'variable-documentation)
-    (documentation-property 'charset-latin-1 'variable-documentation)
+    (documentation-property 'charset-latin-iso8859-1 'variable-documentation)
     ))
 
 (defun charset-registry (charset)
@@ -68,7 +68,7 @@
   "Return a list of charsets in the string.
 \[emu-e19.el; Mule emulating function]"
   (if (string-match "[\200-\377]" str)
-      (list lc-ltn1)
+      (list charset-latin-iso8859-1)
     ))
 
 (defalias 'find-non-ascii-charset-string 'find-charset-string)
@@ -82,16 +82,10 @@
 	  (goto-char start)
 	  (re-search-forward "[\200-\377]" nil t)
 	  ))
-      (list lc-ltn1)
+      (list charset-latin-iso8859-1)
     ))
 
 (defalias 'find-non-ascii-charset-region 'find-charset-region)
-
-;;; @@ for old MULE emulation
-;;;
-
-(defconst lc-ascii 0)
-(defconst lc-ltn1 129)
 
 
 ;;; @ coding-system
@@ -213,7 +207,7 @@ else returns nil. [emu-e19.el; old MULE emulating function]"
 \[emu-e19.el; XEmacs 20 emulating function]"
   (if (< chr 128)
       charset-ascii
-    charset-latin-1))
+    charset-latin-iso8859-1))
 
 (defun char-bytes (char)
   "Return number of bytes a character in CHAR occupies in a buffer.

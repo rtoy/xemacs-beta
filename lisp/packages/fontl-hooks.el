@@ -82,3 +82,6 @@ used to initialize the Font Lock variables."
        font-lock-keywords)
     (turn-on-font-lock)))
 
+(provide 'fontl-hooks)
+
+;;; fontl-hooks.el ends here

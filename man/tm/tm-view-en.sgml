@@ -1,9 +1,9 @@
 <!doctype sinfo system>
-<!-- $Id: tm-view-en.sgml,v 1.1.1.1 1996/12/21 20:51:39 steve Exp $ -->
+<!-- $Id: tm-view-en.sgml,v 1.2 1996/12/28 21:03:31 steve Exp $ -->
 <head>
-<title>tm-view 7.77 Reference Manual (English Version)
+<title>tm-view 7.79 Reference Manual (English Version)
 <author>MORIOKA Tomohiko <mail>morioka@jaist.ac.jp</mail>
-<date>1996/10/11
+<date>1996/12/25
 
 <toc>
 </head>
@@ -972,6 +972,25 @@ If <var>must-fold</var> is non-nil and decoded result of an
 encoded-word has folding or raw CR or LF, it unfolds or delete raw CR
 or LF.
 </defun>
+
+
+<h1> Acknowledgments
+<node> Acknowledgments
+<p>
+First of all, I thank MASUTANI Yasuhiro.  He requested me a lot of
+important features and gave me a lot of suggestions when tm-view was
+born.  tm-view is based on his influence.
+<p>
+I thank ENAMI Tsugutomo for work of <file>mime.el</file>, which is an
+origin of <file>tm-ew-d.el</file> and <file>mel-b.el</file>, and
+permission to rewrite for tm.
+<p>
+I thank OKABE Yasuo for work of internal method for LaTeX and
+automatic assembling method for message/partial.  I thank UENO
+Hiroshi for work of internal method for tar archive.
+<p>
+Last of all, I thank members of two tm mailing lists, Japanese and
+English version.
 
 
 <h1> Concept Index

@@ -6,7 +6,7 @@
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/08/21 renamed from mime.el
-;; Version: $Revision: 1.1.1.2 $
+;; Version: $Revision: 1.2 $
 ;; Keywords: mail, news, MIME, multimedia, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -120,7 +120,7 @@
 ;;;
 
 (defconst mime-editor/RCS-ID
-  "$Id: tm-edit.el,v 1.1.1.2 1996/12/21 20:50:44 steve Exp $")
+  "$Id: tm-edit.el,v 1.2 1996/12/28 21:03:13 steve Exp $")
 
 (defconst mime-editor/version (get-version-string mime-editor/RCS-ID))
 
@@ -292,42 +292,42 @@ To insert a signature file automatically, call the function
      )
     ("\\.tar\\.gz$"
      "application" "octet-stream" (("type" . "tar+gzip"))
-     nil
+     "base64"
      "attachment"	(("filename" . file))
      )
     ("\\.tgz$"
      "application" "octet-stream" (("type" . "tar+gzip"))
-     nil
+     "base64"
      "attachment"	(("filename" . file))
      )
     ("\\.tar\\.Z$"
      "application" "octet-stream" (("type" . "tar+compress"))
-     nil
+     "base64"
      "attachment"	(("filename" . file))
      )
     ("\\.taz$"
      "application" "octet-stream" (("type" . "tar+compress"))
-     nil
+     "base64"
      "attachment"	(("filename" . file))
      )
     ("\\.gz$"
      "application" "octet-stream" (("type" . "gzip"))
-     nil
+     "base64"
      "attachment"	(("filename" . file))
      )
     ("\\.Z$"
      "application" "octet-stream" (("type" . "compress"))
-     nil
+     "base64"
      "attachment"	(("filename" . file))
      )
     ("\\.lzh$"
      "application" "octet-stream" (("type" . "lha"))
-     nil
+     "base64"
      "attachment"	(("filename" . file))
      )
     ("\\.zip$"
      "application" "zip" nil
-     nil
+     "base64"
      "attachment"	(("filename" . file))
      )
     ("\\.diff$"
@@ -355,7 +355,7 @@ If encoding is nil, it is determined from its contents.")
 ;;;
 
 (defvar mime-editor/transfer-level 7
-  "*A number of network transfer level. It should be bigger than 7.")
+  "*A number of network transfer level.  It should be bigger than 7.")
 (make-variable-buffer-local 'mime-editor/transfer-level)
 
 (defvar mime-editor/transfer-level-string
@@ -650,6 +650,14 @@ Tspecials means any character that matches with it in header must be quoted.")
 ;;; @ functions
 ;;;
 
+;; The following text was removed from the docstring of the subsequent
+;; functions due to problems with the resulting autoload file. -sb
+
+;;	--[[text/plain; charset=ISO-2022-JP]]
+;;	これは charset を ISO-2022-JP に指定した日本語の plain テキス
+;;	トです.
+
+
 ;;;###autoload
 (defun mime/editor-mode ()
   "MIME minor mode for editing the tagged MIME message.
@@ -657,7 +665,7 @@ Tspecials means any character that matches with it in header must be quoted.")
 In this mode, basically, the message is composed in the tagged MIME
 format. The message tag looks like:
 
-	`--[[text/plain; charset=ISO-2022-JP][7bit]]'.
+	--[[text/plain; charset=ISO-2022-JP][7bit]]
 
 The tag specifies the MIME content type, subtype, optional parameters
 and transfer encoding of the message following the tag. Messages
@@ -697,6 +705,8 @@ coding-system is different as MIME charset, please set variable
 which key is MIME charset and value is coding-system.
 
 Following commands are available in addition to major mode commands:
+
+\[make single part\]
 \\[mime-editor/insert-text]	insert a text message.
 \\[mime-editor/insert-file]	insert a (binary) file.
 \\[mime-editor/insert-external]	insert a reference to external body.
@@ -704,18 +714,28 @@ Following commands are available in addition to major mode commands:
 \\[mime-editor/insert-message]	insert a mail or news message.
 \\[mime-editor/insert-mail]	insert a mail message.
 \\[mime-editor/insert-signature]	insert a signature file at end.
+\\[mime-editor/insert-key]	insert PGP public key.
 \\[mime-editor/insert-tag]	insert a new MIME tag.
+
+\[make enclosure (maybe multipart)\]
 \\[mime-editor/enclose-alternative-region]	enclose as multipart/alternative.
 \\[mime-editor/enclose-parallel-region]	enclose as multipart/parallel.
 \\[mime-editor/enclose-mixed-region]	enclose as multipart/mixed.
 \\[mime-editor/enclose-digest-region]	enclose as multipart/digest.
 \\[mime-editor/enclose-signed-region]	enclose as PGP signed.
 \\[mime-editor/enclose-encrypted-region]	enclose as PGP encrypted.
-\\[mime-editor/insert-key]	insert PGP public key.
+\\[mime-editor/enclose-quote-region]	enclose as verbose mode (to avoid to expand tags)
+
+\[other commands\]
+\\[mime-editor/set-transfer-level-7bit]	set transfer-level as 7.
+\\[mime-editor/set-transfer-level-8bit]	set transfer-level as 8.
+\\[mime-editor/set-split]	set message splitting mode.
+\\[mime-editor/set-sign]	set PGP-sign mode.
+\\[mime-editor/set-encrypt]	set PGP-encryption mode.
 \\[mime-editor/preview-message]	preview editing MIME message.
 \\[mime-editor/exit]	exit and translate into a MIME compliant message.
-\\[mime-editor/maybe-translate]	exit and translate if in MIME mode, then split.
 \\[mime-editor/help]	show this help.
+\\[mime-editor/maybe-translate]	exit and translate if in MIME mode, then split.
 
 Additional commands are available in some major modes:
 C-c C-c		exit, translate and run the original command.
@@ -729,9 +749,6 @@ TABs at the beginning of the line are not a part of the message:
 	--[[text/plain]]
 	This is also a plain text.  But, it is explicitly specified as
 	is.
-	--[[text/plain; charset=ISO-2022-JP]]
-	これは charset を ISO-2022-JP に指定した日本語の plain テキス
-	トです.
 	--[[text/richtext]]
 	<center>This is a richtext.</center>
 	--[[image/gif][base64]]^M...image encoded in base64 here...
@@ -747,12 +764,13 @@ User customizable variables (not documented all of them):
  mime-ignore-trailing-spaces
     Trailing white spaces in a message body are ignored if non-nil.
 
- mime-auto-fill-header
-    Fill header fields that contain encoded-words if non-nil.
-
  mime-auto-hide-body
     Hide a non-textual body message encoded in base64 after insertion
     if non-nil.
+
+ mime-editor/transfer-level
+    A number of network transfer level.  It should be bigger than 7.
+    If you are in 8bit-through environment, please set 8.
 
  mime-editor/voice-recorder
     Specifies a function to record a voice message and encode it.
@@ -883,32 +901,24 @@ Charset is automatically obtained from the `mime/lc-charset-alist'."
 	      (enriched-mode nil)
 	    ))))))
 
-(defun mime-editor/insert-file (file)
+(defun mime-editor/insert-file (file &optional verbose)
   "Insert a message from a file."
-  (interactive "fInsert file as MIME message: ")
+  (interactive "fInsert file as MIME message: \nP")
   (let*  ((guess (mime-find-file-type file))
-	  (pritype (nth 0 guess))
+	  (type (nth 0 guess))
 	  (subtype (nth 1 guess))
 	  (parameters (nth 2 guess))
-	  (default (nth 3 guess))	;Guess encoding from its file name.
+	  (encoding (nth 3 guess))
 	  (disposition-type (nth 4 guess))
 	  (disposition-params (nth 5 guess))
-	  (encoding
-	   (if (not (interactive-p))
-	       default
-	     (completing-read
-	      (concat "What transfer encoding"
-		      (if default
-			  (concat " (default "
-				  (if (string-equal default "")
-				      "\"\""
-				    default)
-				  ")"
-				  ))
-		      ": ")
-	      mime-file-encoding-method-alist nil t nil))))
-    (if (string-equal encoding "")
-	(setq encoding default))
+	  )
+    (if verbose
+	(setq type    (mime-prompt-for-type type)
+	      subtype (mime-prompt-for-subtype type subtype)
+	      ))
+    (if (or (interactive-p) verbose)
+	(setq encoding (mime-prompt-for-encoding encoding))
+      )
     (if (or (consp parameters) (stringp disposition-type))
 	(let ((rest parameters) cell attribute value)
 	  (setq parameters "")
@@ -943,7 +953,7 @@ Charset is automatically obtained from the `mime/lc-charset-alist'."
 		  )
 		))
 	  ))
-    (mime-editor/insert-tag pritype subtype parameters)
+    (mime-editor/insert-tag type subtype parameters)
     (mime-editor/insert-binary-file file encoding)
     ))
 
@@ -1296,7 +1306,7 @@ Nil if no such parameter."
     guess
     ))
 
-(defun mime-prompt-for-type ()
+(defun mime-prompt-for-type (&optional default)
   "Ask for Content-type."
   (let ((type ""))
     ;; Repeat until primary content type is specified.
@@ -1306,7 +1316,7 @@ Nil if no such parameter."
 			     mime-content-types
 			     nil
 			     'require-match ;Type must be specified.
-			     nil
+			     default
 			     ))
       (if (string-equal type "")
 	  (progn
@@ -1315,19 +1325,22 @@ Nil if no such parameter."
 	    (sit-for 1)
 	    ))
       )
-    type
-    ))
+    type))
 
-(defun mime-prompt-for-subtype (pritype)
-  "Ask for Content-type subtype of Content-Type PRITYPE."
-  (let* ((default (car (car (cdr (assoc pritype mime-content-types)))))
-	 (answer
+(defun mime-prompt-for-subtype (type &optional default)
+  "Ask for subtype of media-type TYPE."
+  (let ((subtypes (cdr (assoc type mime-content-types))))
+    (or (and default
+	     (assoc default subtypes))
+	(setq default (car (car subtypes)))
+	))
+  (let* ((answer
 	  (completing-read
 	   (if default
 	       (concat
 		"What content subtype: (default " default ") ")
 	     "What content subtype: ")
-	   (cdr (assoc pritype mime-content-types))
+	   (cdr (assoc type mime-content-types))
 	   nil
 	   'require-match		;Subtype must be specified.
 	   nil
@@ -1390,17 +1403,17 @@ Parameter must be '(PROMPT CHOICE1 (CHOISE2 ...))."
 	  (mime-prompt-for-parameters-1 (cdr (assoc answer (cdr parameter)))))
     ))
 
-(defun mime-flag-region (from to flag)
-  "Hides or shows lines from FROM to TO, according to FLAG.
-If FLAG is `\\n' (newline character) then text is shown,
-while if FLAG is `\\^M' (control-M) the text is hidden."
-  (let ((buffer-read-only nil)		;Okay even if write protected.
-	(modp (buffer-modified-p)))
-    (unwind-protect
-        (subst-char-in-region from to
-			      (if (= flag ?\n) ?\^M ?\n)
-			      flag t)
-      (set-buffer-modified-p modp))))
+(defun mime-prompt-for-encoding (default)
+  "Ask for Content-Transfer-Encoding. [tm-edit.el]"
+  (let (encoding)
+    (while (string=
+	    (setq encoding
+		  (completing-read
+		   "What transfer encoding: "
+		   mime-file-encoding-method-alist nil t default)
+		  )
+	    ""))
+    encoding))
 
 
 ;;; @ Translate the tagged MIME messages into a MIME compliant message.

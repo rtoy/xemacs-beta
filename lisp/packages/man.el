@@ -170,6 +170,72 @@ This makes manual-entry work correctly on SGI machines but it
 imposes a large startup cost which is why it is not simply on by
 default on all systems.")
 
+(defvar Manual-use-rosetta-man (not (null (locate-file "rman" exec-path))) "\
+If non-nil, use RosettaMan (rman) to filter man pages.
+This makes man-page cleanup virtually instantaneous, instead of
+potentially taking a long time.
+
+Here is information on RosettaMan, from Neal.Becker@comsat.com (Neal Becker):
+
+RosettaMan is a filter for UNIX manual pages.  It takes as input man
+pages formatted for a variety of UNIX flavors (not [tn]roff source)
+and produces as output a variety of file formats.  Currently
+RosettaMan accepts man pages as formatted by the following flavors of
+UNIX: Hewlett-Packard HP-UX, AT&T System V, SunOS, Sun Solaris, OSF/1,
+DEC Ultrix, SGI IRIX, Linux, SCO; and produces output for the following
+formats: printable ASCII only (stripping page headers and footers),
+section and subsection headers only, TkMan, [tn]roff, Ensemble, RTF,
+SGML (soon--I finally found a DTD), HTML, MIME, LaTeX, LaTeX 2e, Perl 5's pod.
+
+RosettaMan improves on other man page filters in several ways: (1) its
+analysis recognizes the structural pieces of man pages, enabling high
+quality output, (2) its modular structure permits easy augmentation of
+output formats, (3) it accepts man pages formatted with the varient
+macros of many different flavors of UNIX, and (4) it doesn't require
+modification or cooperation with any other program.
+
+RosettaMan is a rewrite of TkMan's man page filter, called bs2tk.  (If
+you haven't heard about TkMan, a hypertext man page browser, you
+should grab it via anonymous ftp from ftp.cs.berkeley.edu:
+/ucb/people/phelps/tkman.tar.Z.)  Whereas bs2tk generated output only for
+TkMan, RosettaMan generalizes the process so that the analysis can be
+leveraged to new output formats.  A single analysis engine recognizes
+section heads, subsection heads, body text, lists, references to other
+man pages, boldface, italics, bold italics, special characters (like
+bullets), tables (to a degree) and strips out page headers and
+footers.  The engine sends signals to the selected output functions so
+that an enhancement in the engine improves the quality of output of
+all of them.  Output format functions are easy to add, and thus far
+average about about 75 lines of C code each.
+
+
+
+*** NOTES ON CURRENT VERSION ***
+
+Help!  I'm looking for people to help with the following projects.
+\(1) Better RTF output format.  The current one works, but could be
+made better.  (2) Roff macros that produce text that is easily
+parsable.  RosettaMan handles a great variety, but some things, like
+H-P's tables, are intractable.  If you write an output format or
+otherwise improve RosettaMan, please send in your code so that I may
+share the wealth in future releases.
+
+This version can try to identify tables (turn this on with the -T
+switch) by looking for lines with a large amount of interword spacing,
+reasoning that this is space between columns of a table.  This
+heuristic doesn't always work and sometimes misidentifies ordinary
+text as tables.  In general I think it is impossible to perfectly
+identify tables from nroff formatted text.  However, I do think the
+heuristics can be tuned, so if you have a collection of manual pages
+with unrecognized tables, send me the lot, in formatted form (i.e.,
+after formatting with nroff -man), and uuencode them to preserve the
+control characters.  Better, if you can think of heuristics that
+distinguish tables from ordinary text, I'd like to hear them.
+
+
+Notes for HTML consumers: This filter does real (heuristic)
+parsing--no <PRE>!  Man page references are turned into hypertext links.")
+
 (make-face 'man-italic)
 (or (face-differs-from-default-p 'man-italic)
     (copy-face 'italic 'man-italic))
@@ -780,45 +846,48 @@ This pattern is used to prune those files.")
 ;; Hint: BS stands form more things than "back space"
 (defun Manual-nuke-nroff-bs (&optional apropos-mode)
   (interactive "*")
-  ;;
-  ;; turn underlining into italics
-  ;;
-  (goto-char (point-min))
-  (while (search-forward "_\b" nil t)
-    ;; searching for underscore-backspace and then comparing the following
-    ;; chars until the sequence ends turns out to be much faster than searching
-    ;; for a regexp which matches the whole sequence.
-    (let ((s (match-beginning 0)))
-      (goto-char s)
-      (while (and (= (following-char) ?_)
-		  (= (char-after (1+ (point))) ?\b))
-	(Manual-delete-char 2)
-	(forward-char 1))
-      (set-extent-face (make-extent s (point)) 'man-italic)))
-  ;;
-  ;; turn overstriking into bold
-  ;;
-  (goto-char (point-min))
-  (while (re-search-forward "\\([^\n]\\)\\(\b\\1\\)" nil t)
-    ;; Surprisingly, searching for the above regexp is faster than searching
-    ;; for a backspace and then comparing the preceding and following chars,
-    ;; I presume because there are many false matches, meaning more funcalls
-    ;; to re-search-forward.
-    (let ((s (match-beginning 0)))
-      (goto-char s)
-      ;; Some systems (SGI) overstrike multiple times, eg, "M\bM\bM\bM".
-      (while (looking-at "\\([^\n]\\)\\(\b\\1\\)+")
-	(delete-region (+ (point) 1) (match-end 0))
-	(forward-char 1))
-      (set-extent-face (make-extent s (point)) 'man-bold)))
-  ;;
-  ;; hack bullets: o^H+ --> +
-  (goto-char (point-min))
-  (while (search-forward "\b" nil t)
-    (Manual-delete-char -2))
+  (if Manual-use-rosetta-man
+      (call-process-region (point-min) (point-max) "rman" t t nil)
+    ;;
+    ;; turn underlining into italics
+    ;;
+    (goto-char (point-min))
+    (while (search-forward "_\b" nil t)
+      ;; searching for underscore-backspace and then comparing the following
+      ;; chars until the sequence ends turns out to be much faster than searching
+      ;; for a regexp which matches the whole sequence.
+      (let ((s (match-beginning 0)))
+	(goto-char s)
+	(while (and (= (following-char) ?_)
+		    (= (char-after (1+ (point))) ?\b))
+	  (Manual-delete-char 2)
+	  (forward-char 1))
+	(set-extent-face (make-extent s (point)) 'man-italic)))
+    ;;
+    ;; turn overstriking into bold
+    ;;
+    (goto-char (point-min))
+    (while (re-search-forward "\\([^\n]\\)\\(\b\\1\\)" nil t)
+      ;; Surprisingly, searching for the above regexp is faster than searching
+      ;; for a backspace and then comparing the preceding and following chars,
+      ;; I presume because there are many false matches, meaning more funcalls
+      ;; to re-search-forward.
+      (let ((s (match-beginning 0)))
+	(goto-char s)
+	;; Some systems (SGI) overstrike multiple times, eg, "M\bM\bM\bM".
+	(while (looking-at "\\([^\n]\\)\\(\b\\1\\)+")
+	  (delete-region (+ (point) 1) (match-end 0))
+	  (forward-char 1))
+	(set-extent-face (make-extent s (point)) 'man-bold)))
+    ;;
+    ;; hack bullets: o^H+ --> +
+    (goto-char (point-min))
+    (while (search-forward "\b" nil t)
+      (Manual-delete-char -2))
 
-  (if (> (buffer-size) 100) ; minor kludge
-      (Manual-nuke-nroff-bs-footers))
+    (if (> (buffer-size) 100) ; minor kludge
+	(Manual-nuke-nroff-bs-footers))
+    ) ;; not Manual-use-rosetta-man
   ;;
   ;; turn subsection header lines into bold
   ;;
@@ -850,12 +919,14 @@ This pattern is used to prune those files.")
       (forward-line 1))
     )
 
-  ;; Zap ESC7,  ESC8, and ESC9
-  ;; This is for Sun man pages like "man 1 csh"
-  (goto-char (point-min))
-  (while (re-search-forward "\e[789]" nil t)
-    (replace-match ""))
-  
+  (if Manual-use-rosetta-man
+      nil
+    ;; Zap ESC7,  ESC8, and ESC9
+    ;; This is for Sun man pages like "man 1 csh"
+    (goto-char (point-min))
+    (while (re-search-forward "\e[789]" nil t)
+      (replace-match "")))
+
   ;; Nuke blanks lines at start.
   ;;  (goto-char (point-min))
   ;;  (skip-chars-forward "\n")

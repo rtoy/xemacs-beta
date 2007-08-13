@@ -1,3 +1,8 @@
+Sun Dec 22 00:38:46 1996  Sudish Joseph  <sudish@mindspring.com>
+
+	* tgud.el (tgud-gdb-complete-filter): Match carriage returns as
+	well as line feeds.
+
 Tue Jun 13 16:38:40 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 
 	* term.el:  Various optimizations.  The main one is to optimize for

@@ -107,13 +107,13 @@ static unsigned char truncator_bits[] = {
 /* A Right pointing Arrow */
 #define truncator_width 6
 #define truncator_height 10
-static char truncator_bits[] = {
+static unsigned char truncator_bits[] = {
  0xc0,0xc4,0xc8,0xd0,0xff,0xd0,0xc8,0xc4,0xc0,0xc0};
 
 /* A Left pointing Arrow */
 #define hscroll_width 6
 #define hscroll_height 10
-static char hscroll_bits[] = {
+static unsigned char hscroll_bits[] = {
  0xc0,0xc8,0xc4,0xc2,0xff,0xc2,0xc4,0xc8,0xc0,0xc0};
 
 #if 0

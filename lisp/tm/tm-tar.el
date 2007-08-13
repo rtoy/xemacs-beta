@@ -1,5 +1,5 @@
 ;;;
-;;; $Id: tm-tar.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
+;;; $Id: tm-tar.el,v 1.2 1996/12/28 21:03:15 steve Exp $
 ;;;
 ;;; tm-tar.el
 ;;;

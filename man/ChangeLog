@@ -1,3 +1,11 @@
+Sat Dec 28 11:08:07 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
+
+	* vhdl-mode.texi: Correct typo in email address.
+
+Mon Dec 23 09:47:24 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
+
+	* Makefile (srcs): Add vhdl-mode.
+
 Wed Dec 18 20:21:06 1996  Martin Buchholz  <mrb@eng.sun.com>
 
 	* Makefile (realclean): Don't delete itself `make distclean'

@@ -3,7 +3,7 @@
 ;; Copyright (C) 1996 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-edit-mc.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;; Version: $Id: tm-edit-mc.el,v 1.2 1996/12/28 21:03:13 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, multilingual, security, PGP
 
 ;; This file is part of tm (Tools for MIME).

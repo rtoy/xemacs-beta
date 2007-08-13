@@ -1,13 +1,13 @@
 \input texinfo.tex
 @setfilename tm-view-ja.info
-@settitle{tm-view 7.77 Reference Manual$B!JF|K\8lHG!K(B}
+@settitle{tm-view 7.79 Reference Manual$B!JF|K\8lHG!K(B}
 @titlepage
-@title tm-view 7.77 Reference Manual$B!JF|K\8lHG!K(B
+@title tm-view 7.79 Reference Manual$B!JF|K\8lHG!K(B
 @author $B<i2,(B $BCNI'(B <morioka@@jaist.ac.jp>
-@subtitle 1996/10/11
+@subtitle 1996/12/25
 @end titlepage
 @node Top, Introduction, (dir), (dir)
-@top tm-view 7.77 Reference Manual$B!JF|K\8lHG!K(B
+@top tm-view 7.79 Reference Manual$B!JF|K\8lHG!K(B
 
 @ifinfo
 
@@ -23,6 +23,7 @@ GNU Emacs $BMQ$N(B MIME Viewer $B$G$"$k(B `tm-view' $B$K$D$$$F@bL@$7$^$9!#
 * method::                      $B:F@8=hM}$N<B8=(B
 * Two buffers for an article::  raw-article-buffer $B$H(B preview-buffer
 * API::                         MIME message $B$N(B decode $B$K4X$9$k4X?t(B
+* Acknowledgments::             $B<U<-(B
 * Concept Index::               $B35G0:w0z(B
 * Function Index::              $B4X?t:w0z(B
 * Variable Index::              $BJQ?t:w0z(B
@@ -30,6 +31,8 @@ GNU Emacs $BMQ$N(B MIME Viewer $B$G$"$k(B `tm-view' $B$K$D$$$F@bL@$7$^$9!#
 
 @node Introduction, MIME display, Top, Top
 @chapter tm-view $B$C$F2?!)(B
+@cindex filter
+@cindex method
 
 tm-view $B$O(B GNU Emacs $B$GF0:n$9$kHFMQE*$J(B MIME viewer $B$G$9!#(B@refill
 
@@ -40,12 +43,10 @@ message $B$r8+$k$?$a$N(B major-mode $B$r(B MUA (@ref{(tm-ja)MUA}) $B$KBP$7$
 
 tm-view $B$O(B MIME message $B$r1\Mw$9$k$?$a$N(B user interface $B$N3K$G$"$j!"$=$N(B
 $B>e$G3F(B content-type (@ref{(tm-ja)content-type}) $B$r07$&$?$a$N(B 
-@cindex{method}@strong{method} (@ref{method}) $B$H8F$P$l$k%W%m%0%i%`$rF0:n(B
-$B$5$;$^$9!#$^$?!"(BMIME message $B$NI=<($N;EJ}$r7h$a$k(B 
-@cindex{filter}@strong{filter} (@ref{Two buffers for an article}) $B$H8F$P(B
-$B$l$k%W%m%0%i%`$r5/F0;~$K8F$S=P$7$^$9!#(Bmethod $B$H(B filter $B$r(B tm-view $B$KAH$_(B
-$B9~$`;v$K$h$C$F!"(B@code{mime/viewer-mode} $B$G$5$^$6$^$J(B MIME content-type 
-$B$r07$&;v$,$G$-$^$9!#(B
+@strong{method} (@ref{method}) $B$H8F$P$l$k%W%m%0%i%`$rF0:n$5$;$^$9!#$^$?!"(B
+MIME message $B$NI=<($N;EJ}$r7h$a$k(B @strong{filter} (@ref{Two buffers for an article}) $B$H8F$P$l$k%W%m%0%i%`$r5/F0;~$K8F$S=P$7$^$9!#(Bmethod $B$H(B 
+filter $B$r(B tm-view $B$KAH$_9~$`;v$K$h$C$F!"(B@code{mime/viewer-mode} $B$G$5$^$6(B
+$B$^$J(B MIME content-type $B$r07$&;v$,$G$-$^$9!#(B
 
 
 @node MIME display, mime/viewer-mode, Introduction, Top
@@ -127,9 +128,11 @@ C-c C-x C-p	preview editing MIME message.
 
 @node content-button, content-header, MIME display, MIME display
 @section content-button
+@cindex content-number
+@cindex content-button
 
-@cindex{content-button}@strong{content-button} $B$O(B part $B$N@hF,$K$"$C$F!"(B
-$B$=$N(B part $B$K4X$9$kBg$^$+$J>pJs$rI=<($9$kItJ,$G$9!#(B@refill
+@strong{content-button} $B$O(B part $B$N@hF,$K$"$C$F!"$=$N(B part $B$K4X$9$kBg$^$+(B
+$B$J>pJs$rI=<($9$kItJ,$G$9!#(B@refill
 
 $BI8=`$G$O(B
 
@@ -141,7 +144,7 @@ C-c C-x C-p	preview editing MIME message.
 $B$N$h$&$J46$8$KI=<($5$l$^$9!#(B
 
 $B:G=i$N?t;z$O(B message $BCf$N$3$N(B part $B$N0LCV$r@aHV9f$N$h$&$KI=$7$?$b$N$G!"(B
-@cindex{content-number}@strong{content-number} $B$H8F$S$^$9!#(B@refill
+@strong{content-number} $B$H8F$S$^$9!#(B@refill
 
 $B#2HVL\$NJ8;zNs$OI=Bj$rI=$7$^$9!#$3$N>pJs$O!"(B
 
@@ -190,11 +193,12 @@ content-button $B$rI=<($7$J$$(B content-type $B$rMWAG$H$9$k(B list.
 
 @node content-header, content-body, content-button, MIME display
 @section content-header
+@cindex content-header-filter
+@cindex content-header
 
-@cindex{content-header}@strong{content-header} $B$O$"$k(B part $B$N(B header $B$r(B
-$BI=<($9$kItJ,$G$9!#$7$+$7!"A4$F$N(B part $B$N(B content-header $B$rI=<($9$k$N$O]5(B
-$BF+$7$$$N$G!"0J2<$N$h$&$J(B mechanism $B$K$h$C$FI=<($9$k$+$7$J$$$+$r7h$a$F$$(B
-$B$^$9!#(B@refill
+@strong{content-header} $B$O$"$k(B part $B$N(B header $B$rI=<($9$kItJ,$G$9!#$7$+$7!"(B
+$BA4$F$N(B part $B$N(B content-header $B$rI=<($9$k$N$O]5F+$7$$$N$G!"0J2<$N$h$&$J(B 
+mechanism $B$K$h$C$FI=<($9$k$+$7$J$$$+$r7h$a$F$$$^$9!#(B@refill
 
 $B$"$k(B part $B$N(B reversed-content-number $B$r4X?t(B 
 @code{mime-viewer/header-visible-p} $B$KM?$($?;~$NJV$jCM$,(B @code{t} $B$K$J$k(B
@@ -211,11 +215,11 @@ content-button $B$rI=<($7$J$$(B content-type $B$rMWAG$H$9$k(B list.
 $B$$!#(B@refill
 
 content-header $B$,I=<($5$l$k>l9g!"(Bcontent-header $B$O(B 
-@cindex{content-header-filter}@strong{content-header-filter} $B$H8F$P$l$k(B 
-program $B$K$h$C$F@07A$5$l$^$9!#(Bcontent-header-filter $B$O(B 
-raw-article-buffer (@ref{raw-article-buffer}) $B$N(B major-mode $B$r(B key $B$H$7(B
-$B$FJQ?t(B @code{mime-viewer/content-header-filter-alist} $B$+$iC5$5$l$^$9!#$b(B
-$B$7!"(Bcontent-header-filter $B$,8+$D$+$i$J$+$C$?>l9g!"4X?t(B
+@strong{content-header-filter} $B$H8F$P$l$k(B program $B$K$h$C$F@07A$5$l$^$9!#(B
+content-header-filter $B$O(B raw-article-buffer (@ref{raw-article-buffer}) 
+$B$N(B major-mode $B$r(B key $B$H$7$FJQ?t(B 
+@code{mime-viewer/content-header-filter-alist} $B$+$iC5$5$l$^$9!#$b$7!"(B
+content-header-filter $B$,8+$D$+$i$J$+$C$?>l9g!"4X?t(B
 @code{mime-viewer/default-content-header-filter} $B$,8F$P$l$^$9!#(B@refill
 
 
@@ -274,9 +278,10 @@ content-header $B$rI=<($9$k;~$K!"I=<($7$J$$(B field $B$r;XDj$9$k!#(B@refill
 
 @node content-body, content-separator, content-header, MIME display
 @section content-body
+@cindex content-filter
+@cindex content-body
 
-@cindex{content-body}@strong{content-body} $B$O(B part $B$NFbMF$rI=<($9$kItJ,(B
-$B$G$9!#(B@refill
+@strong{content-body} $B$O(B part $B$NFbMF$rI=<($9$kItJ,$G$9!#(B@refill
 
 $BA4$F$N(B part $B$NFbMF$rI=<($G$-$k$H$O8B$i$J$$$7!"$^$?!"I=<($7$?$/$J$$(B part 
 $B$bB8:_$9$k$N$G!"0J2<$N$h$&$JJ}K!$GI=<($9$k$+$7$J$$$+$r7h$a$F$$$^$9!#(B
@@ -289,12 +294,12 @@ content-header $B$rI=<($9$k;~$K!"I=<($7$J$$(B field $B$r;XDj$9$k!#(B@refill
 $B$KI=<($5$l$^$9!#(B@refill
 
 $B$"$k(B part $B$N(B content-body $B$,I=<($5$l$k;~!"(Bpreview buffer $B$K$O(B part $B$NFb(B
-$BMF$r(B @cindex{content-filter}@strong{content-filter} $B$H8F$P$l$k(B program 
-$B$K$h$C$F@07A$5$l$?$b$N$,I=<($5$l$^$9!#8F$P$l$k(B content-filter $B$O(B 
-raw-article-buffer (@ref{raw-article-buffer}) $B$N(B major-mode $B$r(B key $B$H$7(B
-$B$FJQ?t(B @code{mime-viewer/content-filter-alist} $B$+$iC5$5$l$^$9!#$b$7!"$3(B
-$B$NJQ?t$KEPO?$5$l$F$$$J$+$C$?>l9g!"4X?t(B 
-@code{mime-viewer/default-content-filter} $B$,8F$P$l$^$9!#(B
+$BMF$r(B @strong{content-filter} $B$H8F$P$l$k(B program $B$K$h$C$F@07A$5$l$?$b$N$,(B
+$BI=<($5$l$^$9!#8F$P$l$k(B content-filter $B$O(B raw-article-buffer
+(@ref{raw-article-buffer}) $B$N(B major-mode $B$r(B key $B$H$7$FJQ?t(B 
+@code{mime-viewer/content-filter-alist} $B$+$iC5$5$l$^$9!#$b$7!"$3$NJQ?t$K(B
+$BEPO?$5$l$F$$$J$+$C$?>l9g!"4X?t(B @code{mime-viewer/default-content-filter} 
+$B$,8F$P$l$^$9!#(B
 
 
 @defvar mime-viewer/default-showing-Content-Type-list
@@ -335,9 +340,10 @@ content-filter $B$,F~$C$F$$$k!#(B
 
 @node content-separator,  , content-body, MIME display
 @section content-separator
+@cindex content-separator
 
-@cindex{content-separator}@strong{content-separator} $B$O(B part $B$N0lHV:G8e(B
-$B$K(B part $B4V$N6-L\$rL@$i$+$K$9$k$?$a$KI=<($5$l$^$9!#(B@refill
+@strong{content-separator} $B$O(B part $B$N0lHV:G8e$K(B part $B4V$N6-L\$rL@$i$+$K(B
+$B$9$k$?$a$KI=<($5$l$^$9!#(B@refill
 
 content-separator $B$O4X?t(B @code{mime-viewer/default-content-separator}$B$K(B
 $B$h$C$FI=<($5$l$^$9!#I8=`$G$O!"(Bcontent-header $B$b(B content-body $B$bI=<($5$l(B
@@ -431,20 +437,24 @@ URL-button $B$r2!$;$P!"$=$N(B WWW browser $B$,5/F0$5$l$k(B@refill
 
 @node method, Two buffers for an article, mime/viewer-mode, Top
 @chapter $B:F@8=hM}$N<B8=(B
+@cindex $B30It(B method
+@cindex $BFbIt(B method
+@cindex method
+@cindex decoding-mode
 
 @code{mime/viewer-mode} $B$G$O!"3F(B part $B$KBP$7$F!"(Bplay (@kbd{v}), extract
 (@kbd{e}), print (@kbd{C-c C-p}) $B$H$$$&A`:n$r9T$J$&$3$H$,$G$-$^$9!#$3$&(B
 $B$7$?A`:n$N$3$H$r!X!J(Bpart $B$KBP$9$k!K(Bdecode $BA`:n!Y$H8F$V$3$H$K$7$^$9!#$^$?!"(B
 play, extract, print $B$H$$$&(B decode $BA`:n$N<oN`$N$3$H$r(B 
-@cindex{decoding-mode}@strong{decoding-mode} $B$H8F$V$3$H$K$7$^$9!#(B@refill
+@strong{decoding-mode} $B$H8F$V$3$H$K$7$^$9!#(B@refill
 
 decode $BA`:n$,9T$J$o$l$?;~!"$=$N(B part $B$N(B content-type
 (@ref{(tm-ja)content-type}) $B$J$I$N>r7o$d$=$N>l$N4D6-$K1~$8$F<B:]$K$=$NA`(B
-$B:n$r<B9T$9$k<jB3$-$,8F$P$l$^$9!#$3$N<jB3$-$N$3$H$r(B 
-@cindex{method}@strong{method} $B$H8F$S$^$9!#(B@refill
+$B:n$r<B9T$9$k<jB3$-$,8F$P$l$^$9!#$3$N<jB3$-$N$3$H$r(B @strong{method} $B$H8F(B
+$B$S$^$9!#(B@refill
 
-method $B$K$O!"(BEmacs Lisp $B$G=q$+$l$?(B @cindex{$BFbIt(B method}@strong{$BFbIt(B method} $B$H!"(B
-$B30It(B program $B$G<B8=$5$l$?(B @cindex{$B30It(B method}@strong{$B30It(B method} $B$,$"$j$^$9!#(B
+method $B$K$O!"(BEmacs Lisp $B$G=q$+$l$?(B @strong{$BFbIt(B method} $B$H!"(B
+$B30It(B program $B$G<B8=$5$l$?(B @strong{$B30It(B method} $B$,$"$j$^$9!#(B
 $BFbIt(B method $B$O(B Emacs $B$N5!G=$r;H$C$F$-$a:Y$+$$=hM}$r9T$J$&$3$H$,$G$-$^(B
 $B$9!#30It(B method $B$OHsF14|%W%m%;%98F$S=P$7$r;H$C$F<B8=$5$l$F$$$k$N$G!"<B(B
 $B9TCfBT$?$5$l$:$K$9$_$^$9!#$3$N$?$a!"@E;_2h$dF02h$J$I$N5pBg$J(B data $B$r:F(B
@@ -702,13 +712,17 @@ WWW browser $B$r;XDj$9$k!#4{DjCM$O(B `netscape'.
 
 @node Two buffers for an article, API, method, Top
 @chapter raw-article-buffer $B$H(B preview-buffer
+@cindex filter
+@cindex content-filter
+@cindex header-filter
+@cindex preview-buffer
+@cindex raw-article-buffer
 
 tm-view $B$O!"(BMIME $B=hM}$r9T$J$&A0$N@8$N(B message $B$,F~$C$F$$$k(B 
-@cindex{raw-article-buffer}@strong{raw-article-buffer} $B$H$=$NFbMF$r(B user 
-$B$K4J7i$KI=<($7!"(Buser $B$,A`:n$9$k$?$a$N(B 
-@cindex{preview-buffer}@strong{preview-buffer} $B$H$$$&#2$D$N(B buffer $B$r4I(B
-$BM}$7$^$9!#(Braw-article-buffer $B$N(B major-mode $B$O$b$H$b$H$N(B MUA $B$N(B article 
-$BI=<(MQ$N(B major-mode $B$G$"$j!"(Bpreview-buffer $B$N(B major-mode $B$O(B 
+@strong{raw-article-buffer} $B$H$=$NFbMF$r(B user $B$K4J7i$KI=<($7!"(Buser $B$,A`(B
+$B:n$9$k$?$a$N(B @strong{preview-buffer} $B$H$$$&#2$D$N(B buffer $B$r4IM}$7$^$9!#(B
+raw-article-buffer $B$N(B major-mode $B$O$b$H$b$H$N(B MUA $B$N(B article $BI=<(MQ$N(B 
+major-mode $B$G$"$j!"(Bpreview-buffer $B$N(B major-mode $B$O(B 
 @code{mime/viewer-mode} (@ref{mime/viewer-mode}) $B$H$J$j$^$9!#(B@refill
 
 @code{mime/viewer-mode} $B$r<B9T$9$k$H!"(Btm-view $B$O$^$:(B raw-article-buffer 
@@ -718,10 +732,9 @@ tm-view $B$O!"(BMIME $B=hM}$r9T$J$&A0$N@8$N(B message $B$,F~$C$F$$$k(B
 $B<!$K!"$3$N7k2L$r85$K(B raw-article-buffer $B$KBP1~$9$k(B preview-buffer $B$r:n$j(B
 $B$^$9!#$3$N:]!"(Bcontent-type $B$K1~$8$F!"(Bpart $BC10L$G(B header $B$d(B body $B$r2C9)$9(B
 $B$k$3$H$,$G$-$^$9!#$3$N(B header $B$r2C9)$9$k%W%m%0%i%`$r(B 
-@cindex{header-filter}@strong{header-filter} (@ref{content-header}),
-body $B$r2C9)$9$k%W%m%0%i%`$r(B 
-@cindex{content-filter}@strong{content-filter} (@ref{content-body}) $B$H8F(B
-$B$S!"$3$l$i$rAm>N$7$F(B @cindex{filter}@strong{filter} $B$H8F$S$^$9!#(B
+@strong{header-filter} (@ref{content-header}), body $B$r2C9)$9$k%W%m%0%i%`(B
+$B$r(B @strong{content-filter} (@ref{content-body}) $B$H8F$S!"$3$l$i$rAm>N$7$F(B 
+@strong{filter} $B$H8F$S$^$9!#(B@refill
 
 preview-buffer $B$r:n@.$9$k;~$K!"(Bmessage $B$NI=<(>e$N9=B$$r5-O?$7$?(B 
 preview-buffer $B$N(B buffer local $BJQ?t(B @code{mime::preview/content-list} $B$,(B
@@ -745,11 +758,12 @@ preview-buffer $B$N(B buffer local $BJQ?t(B @code{mime::preview/content-list
 
 @node raw-article-buffer, preview-buffer, Two buffers for an article, Two buffers for an article
 @section raw-article-buffer $B$N(B buffer local $BJQ?t(B
+@cindex content-info
 
 @deffn{Structure} mime::content-info rcnum point-min point-max type parameters encoding children
 
 raw-article-buffer $B$K$*$1$k(B MIME part $B$K4X$9$k>pJs$r3JG<$9$k$?$a$N9=B$BN!#(B
-$BC1$K(B @cindex{content-info}@strong{content-info} $B$H$b8F$V!#(B@refill
+$BC1$K(B @strong{content-info} $B$H$b8F$V!#(B@refill
 
 $B$3$N9=B$BN$r;2>H$9$k$K$O!"(B@code{mime::content-info/$B%9%m%C%HL>(B} $B$H$$$&(B 
 content-info $B$r0z?t$K$H$k4X?t$rMQ$$$k!#(B@refill
@@ -842,6 +856,7 @@ content-info @var{cinfo} $BCf$KG<$a$i$l$?A4(B part $B$N(B content-info $B$N
 
 @node preview-buffer,  , raw-article-buffer, Two buffers for an article
 @section preview-buffer $B$N(B buffer local $BJQ?t(B
+@cindex preview-content-info
 
 @defvar mime::preview/mother-buffer
 
@@ -852,8 +867,7 @@ content-info @var{cinfo} $BCf$KG<$a$i$l$?A4(B part $B$N(B content-info $B$N
 @deffn{Structure} mime::preview-content-info point-min point-max buffer content-info
 
 preview-buffer $B$K$*$1$k(B MIME content $B$K4X$9$k>pJs$r3JG<$9$k$?$a$N9=B$BN!#(B
-$BC1$K(B @cindex{preview-content-info}@strong{preview-content-info} $B$H$b8F$V!#(B
-@refill
+$BC1$K(B @strong{preview-content-info} $B$H$b8F$V!#(B@refill
 
 $B$3$N9=B$BN$r;2>H$9$k$K$O!"(B@code{mime::content-info/$B%9%m%C%HL>(B} $B$H$$$&(B
 content-info $B$r0z?t$K$H$k4X?t$rMQ$$$k!#(B@refill
@@ -913,7 +927,7 @@ preview-content-info @var{pcl} $B$G4IM}$5$l$k(B preview-buffer $BCf$NNN0h$K$*
 
 
 
-@node API, Concept Index, Two buffers for an article, Top
+@node API, Acknowledgments, Two buffers for an article, Top
 @chapter MIME message $B$N(B decode $B$K4X$9$k4X?t(B
 
 tm-view $B$NDs6!$9$k4X?t$r3F(B MUA (@ref{(tm-ja)MUA}) $B$KAH$_9~$`;v$K$h$C$F!"(B
@@ -1023,7 +1037,24 @@ current buffer $B$N(B message header $BCf$N(B encoded-word $B$r(B decode 
 
 
 
-@node Concept Index, Function Index, API, Top
+@node Acknowledgments, Concept Index, API, Top
+@chapter $B<U<-(B
+
+$B:G=i$K!";d$,(B tm-view $B$r:G=i$K:n$C$?;~$K!"87$7$$CmJ8$HM-1W$J=u8@$r2<$5$j!"(B
+$B$=$N@_7W$KB?Bg$JM?$($i$l$?>#C+J]Gn$5$s$K46<U$7$^$9!#(B@refill
+
+$B<!$K!"(B@file{tm-ew-d.el} $B$H(B @file{mel-b.el} $B$NA0?H$KEv$?$k(B@file{mime.el} 
+$B$r=q$-!"$=$NG[I[$H2~B$$r$*5v$72<$5$C$?1]JB;LCR$5$s$K46<U$7$^$9!#(B@refill
+
+$B$^$?!"(BLaTeX $BMQ$NFbIt(B method $B$H(B message/partial $BMQ$N<+F07k9g(B method $B$rDs(B
+$B6!$7$F2<$5$C$?2,It<wCK$5$s!"(Btar archive $BMQ$NFbIt(B method $B$rDs6!$7$F2<$5$C(B
+$B$?>eLnGn$5$s$K46<U$7$^$9!#(B@refill
+
+$B:G8e$K!"(Bbeta test $B$K6(NO$7$F2<$5$C$?F|K\8lHG!"1Q8lHGAPJ}$N(B tm mailing
+list $B$N(B member $B$K46<U$7$^$9!#(B
+
+
+@node Concept Index, Function Index, Acknowledgments, Top
 @chapter $B35G0:w0z(B
 
 @printindex cp

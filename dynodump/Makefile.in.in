@@ -94,7 +94,7 @@ all::
 #endif
 
 dynodump.so: ${srcdir}/_dynodump.h $(OBJS)
-	$(CC) -o dynodump.so -G $(OBJS) -lelf -lmapmalloc
+	PATH=/usr/ccs/bin:$PATH ld -o dynodump.so -G $(OBJS) -lelf -lmapmalloc
 
 _relocate.o: ${srcdir}/$(ARCH)/_relocate.c
 	$(CC) -c $(ALL_CFLAGS) ${srcdir}/$(ARCH)/_relocate.c

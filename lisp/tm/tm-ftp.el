@@ -6,7 +6,7 @@
 ;;; modified by MORIOKA Tomohiko <morioka@jaist.ac.jp>  (1994/11/ 8)
 ;;;         and OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp> (1994/11/11)
 ;;;
-;;; $Id: tm-ftp.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;;; $Id: tm-ftp.el,v 1.2 1996/12/28 21:03:14 steve Exp $
 ;;;
 
 (require 'tm-view)

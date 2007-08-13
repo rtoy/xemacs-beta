@@ -26,16 +26,16 @@ SHELL = /bin/sh
 .SUFFIXES: .info .texi .dvi
 
 # Subdirectories to make recursively.
-SUBDIR = xemacs lispref new-users-guide internals
+SUBDIR = xemacs lispref new-users-guide internals tm
 
 ../info/%.info : %.texi
 	makeinfo -o $@ $<
 
 # hyperbole and oo-browser manuals broken - do not TeX properly
 srcs = ange-ftp cc-mode cl dired ediff external-widget forms gnus \
-       ilisp info ispell mailcrypt message mh-e \
+       hyperbole ilisp info ispell mailcrypt message mh-e oo-browser \
        pcl-cvs psgml psgml-api rmail standards supercite term \
-       termcap texinfo viper vm w3 xemacs-faq
+       termcap texinfo vhdl-mode viper vm w3 xemacs-faq
 
 info = $(srcs:%=../info/%.info)
 dvi  = $(srcs:%=%.dvi)

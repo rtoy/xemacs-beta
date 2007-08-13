@@ -6,7 +6,7 @@
 ;;         MINOURA Makoto <minoura@netlaputa.or.jp>
 ;;         Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;; Maintainer: Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
-;; Version: $Revision: 1.1.1.1 $
+;; Version: $Revision: 1.2 $
 ;; Keywords: mail, news, citation
 
 ;; This file is part of tl (Tiny Library).
@@ -54,7 +54,7 @@
 ;;;
 
 (defconst mu-cite/RCS-ID
-  "$Id: mu-cite.el,v 1.1.1.1 1996/12/18 22:43:39 steve Exp $")
+  "$Id: mu-cite.el,v 1.2 1996/12/28 21:02:58 steve Exp $")
 (defconst mu-cite/version (get-version-string mu-cite/RCS-ID))
 
 

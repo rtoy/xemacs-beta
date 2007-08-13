@@ -1122,7 +1122,7 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	{
 	  filePath = transferInfo->dropData->data.files[ii];
           /* ### Mule-izing required */
-	  path = make_string (filePath, strlen (filePath));
+	  path = make_string ((Bufbyte *)filePath, strlen (filePath));
 	  va_run_hook_with_args (Qdrag_and_drop_functions, 2, frame, path);
 	}
     }
@@ -1137,9 +1137,9 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
  	  filePath = transferInfo->dropData->data.buffers[ii].name;
 	  /* ### Mule-izing required */
  	  path = (filePath == NULL) ? Qnil
-	    : make_string (filePath, strlen (filePath));
+	    : make_string ((Bufbyte *)filePath, strlen (filePath));
  	  buf = transferInfo->dropData->data.buffers[ii].bp;
- 	  data = make_string(buf,
+ 	  data = make_string((Bufbyte *)buf,
  			     transferInfo->dropData->data.buffers[ii].size);
  	  va_run_hook_with_args(Qdrag_and_drop_functions, 3, frame, path,
  				data);

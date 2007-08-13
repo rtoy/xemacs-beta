@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; modified by Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;; Created: 1995/6/25
-;; Version: $Id: mel.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;; Version: $Id: mel.el,v 1.2 1996/12/28 21:02:57 steve Exp $
 ;; Keywords: MIME, Base64, Quoted-Printable, uuencode, gzip64
 
 ;; This file is part of MEL (MIME Encoding Library).
@@ -43,7 +43,12 @@
     ("7bit")
     ("8bit")
     ("binary")
-    ))
+    )
+  "Alist of encoding vs. corresponding method to encode region.
+Each element looks like (STRING . FUNCTION) or (STRING . nil).
+STRING is content-transfer-encoding.
+FUNCTION is region encoder and nil means not to encode. [mel.el]")
+
 
 (autoload 'base64-decode-region           "mel-b" nil t)
 (autoload 'quoted-printable-decode-region "mel-q" nil t)
@@ -54,8 +59,14 @@
   '(("base64"           . base64-decode-region)
     ("quoted-printable" . quoted-printable-decode-region)
     ("x-uue"            . uuencode-decode-region)
+    ("x-uuencode"       . uuencode-decode-region)
     ("x-gzip64"         . gzip64-decode-region)
-    ))
+    )
+  "Alist of encoding vs. corresponding method to decode region.
+Each element looks like (STRING . FUNCTION).
+STRING is content-transfer-encoding.
+FUNCTION is region decoder. [mel.el]")
+
 
 (defun mime-encode-region (beg end encoding)
   "Encode region BEG to END of current buffer using ENCODING. [mel.el]"
@@ -100,7 +111,12 @@
     ("7bit"		. insert-binary-file-contents-literally)
     ("8bit"		. insert-binary-file-contents-literally)
     ("binary"		. insert-binary-file-contents-literally)
-    ))
+    )
+  "Alist of encoding vs. corresponding method to insert encoded file.
+Each element looks like (STRING . FUNCTION).
+STRING is content-transfer-encoding.
+FUNCTION is function to insert encoded file. [mel.el]")
+
 
 (defun mime-insert-encoded-file (filename encoding)
   "Encode region BEG to END of current buffer using ENCODING. [mel.el]"

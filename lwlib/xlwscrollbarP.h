@@ -14,11 +14,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+along with XEmacs; see the file COPYING.  If not, write to
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
 
 /* Created by Douglas Keller <dkeller@vnet.ibm.com> */
-/* Last changed 02/05/95 */
 
 #ifndef _XlwScrollBarP_h
 #define _XlwScrollBarP_h
@@ -43,63 +43,66 @@ typedef struct _XlwScrollbarClassRec {
 typedef struct {
 
     /* resources */
-    XtCallbackList      valueChangedCBL;
-    XtCallbackList      incrementCBL;
-    XtCallbackList      decrementCBL;
-    XtCallbackList      pageIncrementCBL;
-    XtCallbackList      pageDecrementCBL;
-    XtCallbackList      toTopCBL;
-    XtCallbackList      toBottomCBL;
-    XtCallbackList      dragCBL;
+    XtCallbackList	valueChangedCBL;
+    XtCallbackList	incrementCBL;
+    XtCallbackList	decrementCBL;
+    XtCallbackList	pageIncrementCBL;
+    XtCallbackList	pageDecrementCBL;
+    XtCallbackList	toTopCBL;
+    XtCallbackList	toBottomCBL;
+    XtCallbackList	dragCBL;
 
-    Pixel               foreground;
+    Pixel		foreground;
 
-    Pixel               topShadowColor;
-    Pixel               bottomShadowColor;
+    Pixel		topShadowColor;
+    Pixel		bottomShadowColor;
 
-    Pixel               troughColor;
+    Pixel		troughColor;
 
-    Pixel               armColor;
-    Pixel               armTopShadowColor;
-    Pixel               armBottomShadowColor;
+    Pixel		armColor;
+    Pixel		armTopShadowColor;
+    Pixel		armBottomShadowColor;
 
-    Pixmap              topShadowPixmap;
-    Pixmap              bottomShadowPixmap;
+    Pixmap		topShadowPixmap;
+    Pixmap		bottomShadowPixmap;
 
-    int                 shadowThickness;
+    int			shadowThickness;
 
-    Boolean             showArrows;
+    Boolean		showArrows;
 
-    int                 minimum;
-    int                 maximum;
-    int                 sliderSize;
-    int                 value;
-    int                 pageIncrement;
-    int                 increment;
+    int			minimum;
+    int			maximum;
+    int			sliderSize;
+    int			value;
+    int			pageIncrement;
+    int			increment;
 
-    int                 initialDelay;
-    int                 repeatDelay;
+    int			initialDelay;
+    int			repeatDelay;
 
-    unsigned char       orientation;
+    unsigned char	orientation;
 
-    char               *knobStyle;
-    char               *arrowPosition;
+    char		*knobStyle;
+    char		*arrowPosition;
 
     /* private */
-    Pixmap              grayPixmap;
+    Pixmap		grayPixmap;
 
-    GC                  backgroundGC;
-    GC                  topShadowGC;
-    GC                  bottomShadowGC;
+    GC			backgroundGC;
+    GC			topShadowGC;
+    GC			bottomShadowGC;
 
-    int                 above, ss, below;
-    int                 lastY;
+    int			above, ss, below;
+    int			lastY;
 
-    int                 armed;
+    int			armed;
 
-    int                 savedValue;
+    int			savedValue;
 
-    Boolean             fullRedrawNext;
+    Boolean		fullRedrawNext;
+
+    Boolean		timerActive;
+    XtIntervalId	timerId;
 
 } XlwScrollBarPart;
 

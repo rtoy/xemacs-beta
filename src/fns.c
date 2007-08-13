@@ -3043,42 +3043,43 @@ ARRAY is a vector, bit vector, or string.
        (array, item))
 {
  retry:
-  if (VECTORP (array))
+  if (STRINGP (array))
     {
-      Lisp_Object *p;
-      int size;
-      int indecks;
+      Charcount size;
+      Charcount i;
+      Emchar charval;
+      struct Lisp_String *s;
+      CHECK_CHAR_COERCE_INT (item);
       CHECK_IMPURE (array);
-      size = vector_length (XVECTOR (array));
-      p = vector_data (XVECTOR (array));
-      for (indecks = 0; indecks < size; indecks++)
-	p[indecks] = item;
+      charval = XCHAR (item);
+      s = XSTRING (array);
+      size = string_char_length (s);
+      for (i = 0; i < size; i++)
+	set_string_char (s, i, charval);
+      bump_string_modiff (array);
     }
   else if (VECTORP (array))
     {
+      Lisp_Object *p;
+      int size;
+      int i;
+      CHECK_IMPURE (array);
+      size = vector_length (XVECTOR (array));
+      p = vector_data (XVECTOR (array));
+      for (i = 0; i < size; i++)
+	p[i] = item;
+    }
+  else if (BIT_VECTORP (array))
+    {
       struct Lisp_Bit_Vector *v;
       int size;
-      int indecks;
-
+      int i;
       CHECK_BIT (item);
       CHECK_IMPURE (array);
       v = XBIT_VECTOR (array);
       size = bit_vector_length (v);
-      for (indecks = 0; indecks < size; indecks++)
-	set_bit_vector_bit (v, indecks, XINT (item));
-    }
-  else if (STRINGP (array))
-    {
-      Charcount size;
-      Charcount indecks;
-      Emchar charval;
-      CHECK_CHAR_COERCE_INT (item);
-      CHECK_IMPURE (array);
-      charval = XCHAR (item);
-      size = string_char_length (XSTRING (array));
-      for (indecks = 0; indecks < size; indecks++)
-	set_string_char (XSTRING (array), indecks, charval);
-      bump_string_modiff (array);
+      for (i = 0; i < size; i++)
+	set_bit_vector_bit (v, i, XINT (item));
     }
   else
     {

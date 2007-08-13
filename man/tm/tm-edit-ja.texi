@@ -1,13 +1,13 @@
 \input texinfo.tex
 @setfilename tm-edit-ja.info
-@settitle{tm-edit 7.90 $B@bL@=q!JF|K\8lHG!K(B}
+@settitle{tm-edit 7.100 $B@bL@=q!JF|K\8lHG!K(B}
 @titlepage
-@title tm-edit 7.90 $B@bL@=q!JF|K\8lHG!K(B
+@title tm-edit 7.100 $B@bL@=q!JF|K\8lHG!K(B
 @author $B<i2,(B $BCNI'(B <morioka@@jaist.ac.jp>
-@subtitle 1996/10/11
+@subtitle 1996/12/25
 @end titlepage
 @node Top, Introduction, (dir), (dir)
-@top tm-edit 7.90 $B@bL@=q!JF|K\8lHG!K(B
+@top tm-edit 7.100 $B@bL@=q!JF|K\8lHG!K(B
 
 @ifinfo
 
@@ -22,9 +22,11 @@ GNU Emacs $BMQ$N(B MIME composer $B$G$"$k(B `tm-edit' $B$K$D$$$F@bL@$7$^$9!
 * single-part operations::      single-part $B$KBP$9$kA`:n(B
 * enclosure operation::         enclosure $B$KBP$9$kA`:n(B
 * other operations of mime/editor-mode::  mime/editor-mode $B$K$*$1$k$=$NB>$NA`:n(B
+* tag specification for inserted file::  $BA^F~$5$l$k(B file $B$KBP$9$k(B tag $B$N7hDj(B
 * transfer level::              
 * header::                      header $B$G$NHs(B ASCII $BJ8;z$N;HMQ(B
 * PGP::                         
+* Acknowledgments::             $B<U<-(B
 * Concept Index::               $B35G0:w0z(B
 * Function Index::              $B4X?t:w0z(B
 * Variable Index::              $BJQ?t:w0z(B
@@ -32,9 +34,10 @@ GNU Emacs $BMQ$N(B MIME composer $B$G$"$k(B `tm-edit' $B$K$D$$$F@bL@$7$^$9!
 
 @node Introduction, mime/editor-mode, Top, Top
 @chapter What is tm-edit?
+@cindex tm-edit
 
-@cindex{tm-edit}@strong{tm-edit} $B$O(B GNU Emacs $B$GF0:n$9$kHFMQE*$J(B MIME
-composer $B$G$9!#(B@refill
+@strong{tm-edit} $B$O(B GNU Emacs $B$GF0:n$9$kHFMQE*$J(B MIME composer $B$G$9!#(B
+@refill
 
 tm-edit $B$O(B GNUS $B$N:n<T$H$7$F$bM-L>$J(B $BG_ED(B $B@/?.(B
 <umerin@@mse.kyutech.ac.jp> $B$5$s$,=q$+$l$?(B 
@@ -63,11 +66,16 @@ message $B$r:n@.$G$-$^$9!#(B
 
 @node mime/editor-mode, single-part operations, Introduction, Top
 @chapter mime/editor-mode
+@cindex enclosure
+@cindex multi-part $B=*N;(B tag
+@cindex multi-part $B3+;O(B tag
+@cindex tag
+@cindex mime/editor-mode
 
-@cindex{mime/editor-mode}@strong{mime/editor-mode} $B$O(B MIME message $B$r:n(B
-$B@.$9$k$?$a$N(B minor mode $B$G$9!#$3$N(B mode $B$G$O(B @cindex{tag}@strong{tag} $B$r(B
-$B;H$C$F$5$^$6$^$J<oN`$N(B data $B$rI=8=$7!"J#?t$NItJ,$+$i$J$k(B message
-(@ref{(tm-ja)multipart}) $B$rJT=8$9$k$3$H$r2DG=$K$7$F$$$^$9!#(B@refill
+@strong{mime/editor-mode} $B$O(B MIME message $B$r:n@.$9$k$?$a$N(B minor mode $B$G(B
+$B$9!#$3$N(B mode $B$G$O(B @strong{tag} $B$r;H$C$F$5$^$6$^$J<oN`$N(B data $B$rI=8=$7!"(B
+$BJ#?t$NItJ,$+$i$J$k(B message (@ref{(tm-ja)multipart}) $B$rJT=8$9$k$3$H$r2DG=(B
+$B$K$7$F$$$^$9!#(B@refill
 
 tag $B$K$O(B
 
@@ -109,7 +117,7 @@ tag $B$G!"(B@refill
 @end example
 
 @noindent
-$B$H$$$&7A$N(B @cindex{multi-part $B3+;O(B tag}@strong{multi-part $B3+;O(B tag} $B$H8F$P$l$k(B multi
+$B$H$$$&7A$N(B @strong{multi-part $B3+;O(B tag} $B$H8F$P$l$k(B multi
 part $B$N3+;O$r<($9(B tag $B$H(B
 
 @example
@@ -117,11 +125,11 @@ part $B$N3+;O$r<($9(B tag $B$H(B
 @end example
 
 @noindent
-$B$H$$$&7A$N(B @cindex{multi-part $B=*N;(B tag}@strong{multi-part $B=*N;(B tag} $B$H8F$P$l$k(B multi
+$B$H$$$&7A$N(B @strong{multi-part $B=*N;(B tag} $B$H8F$P$l$k(B multi
 part $B$N=*N;$r<($9(B tag $B$,$"$j$^$9!#(B
 
 $B$^$?!"(Bmulti-part $B3+;O(B tag $B$H(B multi-part $B=*N;(B tag $B$G0O$^$l$?ItJ,$r(B 
-@cindex{enclosure}@strong{enclosure} $B$H8F$S$^$9!#(B
+@strong{enclosure} $B$H8F$S$^$9!#(B
 
 
 @node single-part operations, enclosure operation, mime/editor-mode, Top
@@ -134,7 +142,8 @@ single-part $B$r:n$k$?$a$NA`:n$K$O0J2<$N$h$&$J$b$N$,$"$j$^$9!#(B
 text part $B$rI=$9(B single-part tag $B$rA^F~$7$^$9!#(B
 
 @item @key{C-c C-x C-i}
-file $B$r(B MIME part $B$H$7$FE:IU$7$^$9!#(B
+file $B$r(B MIME part $B$H$7$FE:IU$7$^$9!#A0$K(B @kbd{C-u} $B$rIU$1$?>l9g!">o$K(B 
+media-type, subtype $BEy$rJ9$$$FMh$^$9!#(B(cf. @ref{tag specification for inserted file})
 
 @item @key{C-c C-x C-e}
 external part $B$rA^F~$7$^$9!#(B
@@ -182,10 +191,10 @@ enclosure $B$r:n$k$?$a$NA`:n$H$7$F$O0J2<$N$h$&$J$b$N$,$"$j$^$9!#(B
 $B;XDj$7$?(B region $B$r(B multipart/digest $B$H$7$F0O$_$^$9!#(B
 
 @item @key{C-c C-x s}
-$B;XDj$7$?(B region $B$KEE;R=pL>$r9T$$$^$9!#(B(@ref{PGP})
+$B;XDj$7$?(B region $B$KEE;R=pL>$r9T$$$^$9!#(B(cf. @ref{PGP})
 
 @item @key{C-c C-x e}
-$B;XDj$7$?(B region $B$r0E9f2=$7$^$9!#(B(@ref{PGP})
+$B;XDj$7$?(B region $B$r0E9f2=$7$^$9!#(B(cf. @ref{PGP})
 
 @item @key{C-c C-x q}
 $B;XDj$7$?(B region $BFb$N(B tag $B$rL58z$K$7!"$=$N(B tag $B$rJ8;zNs$H$7$FMxMQ$G$-$k(B
@@ -196,7 +205,7 @@ enclosure $B$r:n$k$?$a$NA`:n$H$7$F$O0J2<$N$h$&$J$b$N$,$"$j$^$9!#(B
 
 
 
-@node other operations of mime/editor-mode, transfer level, enclosure operation, Top
+@node other operations of mime/editor-mode, tag specification for inserted file, enclosure operation, Top
 @chapter mime/editor-mode $B$K$*$1$k$=$NB>$NA`:n(B
 
 mime/editor-mode $B$K$*$1$k$=$NB>$NA`:n$r@bL@$7$^$9!#(B
@@ -206,7 +215,8 @@ mime/editor-mode $B$K$*$1$k$=$NB>$NA`:n$r@bL@$7$^$9!#(B
 $BJT=8Cf$N(B message $B$rAw?.$7$^$9!#(B
 
 @item @key{C-c C-x C-p}
-$BJT=8Cf$N(B message $B$r(B preview $B$7$^$9!#(B(@ref{(tm-view-ja)mime/viewer-mode})
+$BJT=8Cf$N(B message $B$r(B preview $B$7$^$9!#(B
+(cf. @ref{(tm-view-ja)mime/viewer-mode})
 
 @item @key{C-c C-x C-z}
 $BJT=8Cf$N(B message $B$rAw?.$9$k$3$H$J$/!"(Bmime/editor-mode $B$r=*N;$7$^$9!#(B
@@ -227,10 +237,10 @@ transfer level (@ref{transfer level}) $B$r(B 8bit (@ref{(tm-ja)8bit}) $B$K$7$
 $B$9!#(B
 
 @item @key{C-c C-x v}
-message $BA4BN$rEE;R=pL>$9$k$+$I$&$+$r7h$a$^$9!#(B(@ref{PGP})
+message $BA4BN$rEE;R=pL>$9$k$+$I$&$+$r7h$a$^$9!#(B(cf. @ref{PGP})
 
 @item @key{C-c C-x h}
-message $BA4BN$r0E9f2=$9$k$+$I$&$+$r7h$a$^$9!#(B(@ref{PGP})
+message $BA4BN$r0E9f2=$9$k$+$I$&$+$r7h$a$^$9!#(B(cf. @ref{PGP})
 
 @item @key{C-c C-x ?}
 help message $B$rI=<($7$^$9!#(B
@@ -239,8 +249,79 @@ help message $B$rI=<($7$^$9!#(B
 
 
 
-@node transfer level, header, other operations of mime/editor-mode, Top
+@node tag specification for inserted file, transfer level, other operations of mime/editor-mode, Top
+@chapter $BA^F~$5$l$k(B file $B$KBP$9$k(B tag $B$N7hDj(B
+
+@kbd{C-c C-x C-i} (@code{mime-editor/insert-file}) $B$r<B9T$7$?;~!"A^F~$5(B
+$B$l$k(B file $B$KBP$9$k(B media-type $B$d(B encoding $B$J$I$N(B tag $B$N>pJs$OJQ?t(B 
+@code{mime-file-types} $B$K$h$C$F(B file $BL>$+$i?dB,$5$l$^$9!#(B@refill
+
+$BA0$K(B @kbd{C-u} $B$rIU$1$?;~!"$*$h$S!"E,Ev$JCM$,8+IU$+$i$J$+$C$?>l9g!"(Buser 
+$B$KBP$7$FCM$NF~NO$rB%$7$^$9!#!JA0$K(B @kbd{C-u} $B$rIU$1$?;~!"?dB,$5$l$?CM$,(B
+$B4{DjCM$H$7$FMQ$$$i$l$^$9!K(B@refill
+
+file $BL>$KBP$9$k4{DjCM$rJQ$($?$$>l9g$OJQ?t(B @code{mime-file-types}
+$B$r@_Dj$7$F2<$5$$!#(B
+
+@defvar mime-file-types
+
+$BA^F~$5$l$k(B file $B$N(B file $BL>$KBP$9$k(B tag $B$N4{DjCM$rM?$($k!#(B@refill
+
+$B$3$NJQ?t$O(B
+
+@lisp
+	(FILE_PAT TYPE SUBTYPE PARAMS ENCODING
+	 DISPOSITION_TYPE DISPOSITION_PARAMS)
+@end lisp
+
+
+$B$H$$$&(B list $B$N(B list $B$G!"3FMWAG$O0J2<$NDL$j$G$"$k!'(B
+
+@table @samp
+@item FILE_PAT
+file $BL>$rI=$9@55,I=8=(B
+
+@item TYPE
+media type
+
+@item SUBTYPE
+media subtype
+
+@item PARAMS
+Content-Type field $B$N(B parameter
+
+@item ENCODING
+Content-Transfer-Encoding
+
+@item DISPOSITION_TYPE
+disposition-type
+
+@item DISPOSITION_PARAMS
+Content-Disposition field $B$N(B parameter
+
+@end table
+
+@noindent
+$B@_DjNc!'(B @file{*.rtf} $B$KBP$9$k(B media type $B$r(B application/rtf $B$K(B
+$B$9$k>l9g(B
+
+@lisp
+(call-after-loaded
+ 'tm-edit
+ (lambda ()
+   (set-alist 'mime-file-types
+	      "\\.rtf$"
+	      '("application" "rtf" nil nil
+		"attachment" (("filename" . file)))
+	      )))
+@end lisp
+@end defvar
+
+
+
+@node transfer level, header, tag specification for inserted file, Top
 @chapter transfer level
+@cindex transfer level
 
 message $B$KA^F~$9$k(B data $B$O(B 7bit (@ref{(tm-ja)7bit}) $B$J$$$7(B 8bit
 (@ref{(tm-ja)8bit}) $B$b$7$/$O(B binary (@ref{(tm-ja)binary}) $B$GI=8=$9$k$3$H(B
@@ -267,7 +348,7 @@ binary $B$bDL$9(B MTA $B$bB8:_$9$k$s$G$7$g$&$,!":#$N$H$3$m$"$^$j0lHLE*$H$O$$$
 $B$J$$$G$7$g$&!#(B
 @end quotation
 
-@cindex{transfer level}@strong{transfer level} $B$H$$$&$N$O$I$NHO0O$N(B data $B$^$GAw$l$k(B
+@strong{transfer level} $B$H$$$&$N$O$I$NHO0O$N(B data $B$^$GAw$l$k(B
 $B$+$H$$$&$3$H$rI=$9$b$N$G$9!#(Btm-edit $B$O(B 
 @code{mime-editor/transfer-level} $B$H$$$&JQ?t$r;}$C$F$*$j!"$3$l$G(B 
 transfer level $B$rI=8=$7$^$9!#(B
@@ -292,8 +373,7 @@ EBCDIC $B$r(B 5, ASCII printable $B$N$_$r(B 6, binary $B$r(B 9 $B$H$9$k$3
 @strong{[Memo]}
 @quotation
 transfer level $B$O(B message header (@ref{header}) $B$K$O4X78$7$J$$!#(BRFC 1521 
-$B$O(B body $B$K$*$$$F!"(B8bit $B$N(B data $B$r;H$($k$h$&$K(B RFC 822 (@ref{(tm-ja)RFC
-822}) $B$r3HD%$7$F$$$k$,!"(Bmessage header $B$G$O(B us-ascii
+$B$O(B body $B$K$*$$$F!"(B8bit $B$N(B data $B$r;H$($k$h$&$K(B RFC 822 (@ref{(tm-ja)RFC 822}) $B$r3HD%$7$F$$$k$,!"(Bmessage header $B$G$O(B us-ascii
 (@ref{(tm-ja)us-ascii}) $B$N$_$rMQ$$$k$3$H$r5a$a$F$$$k!#(B
 @end quotation
 
@@ -301,14 +381,14 @@ transfer level $B$O(B message header (@ref{header}) $B$K$O4X78$7$J$$!#(BRFC 
 
 @node header, PGP, transfer level, Top
 @chapter header $B$G$NHs(B ASCII $BJ8;z$N;HMQ(B
+@cindex encoded-word
 
 RFC 1522 (@ref{(tm-ja)RFC 1522}) $B$G$O(B header $B$GHs(B ASCII $BJ8;z$rI=8=$9$k$?(B
 $B$a$NJ}K!$rDj5A$7$F$$$^$9!#(B@refill
 
-$B$3$l$O(B @cindex{encoded-word}@strong{encoded-word}
-(@ref{(tm-ja)encoded-word}) $B$H8F$P$l$k7?<0$G!"(BMIME charset
-(@ref{(tm-ja)MIME charset}) $B$r@k8@$7!"$+$D!"(B7bit (@ref{(tm-ja)7bit}) $B$G(B
-$BI=8=$9$k$3$H$r2DG=$K$7$F$$$^$9!#(B
+$B$3$l$O(B @strong{encoded-word} (@ref{(tm-ja)encoded-word}) $B$H8F$P$l$k7?<0(B
+$B$G!"(BMIME charset (@ref{(tm-ja)MIME charset}) $B$r@k8@$7!"$+$D!"(B7bit
+(@ref{(tm-ja)7bit}) $B$GI=8=$9$k$3$H$r2DG=$K$7$F$$$^$9!#(B
 
 
 @menu
@@ -416,13 +496,14 @@ MIME charset $B$rI=$9(B symbol $B$H(B nil, $B$b$7$/$O!"(B@code{"B"} $B$+
 
 
 
-@node PGP, Concept Index, header, Top
+@node PGP, Acknowledgments, header, Top
 @chapter PGP
+@cindex PGP-kazu
+@cindex PGP/MIME
 
-tm-edit $B$G$O(B @cindex{PGP/MIME}@strong{PGP/MIME} (@ref{(tm-ja)PGP/MIME})
-(RFC 2015) $B$*$h$S(B @cindex{PGP-kazu}@strong{PGP-kazu}
-(@ref{(tm-ja)PGP-kazu}) (draft-kazu-pgp-mime-00.txt) $B$K$h$k0E9f2=!&EE;R(B
-$B=pL>!&8x3+80$NA^F~5!G=$rMxMQ$9$k$3$H$,$G$-$^$9!#(B@refill
+tm-edit $B$G$O(B @strong{PGP/MIME} (@ref{(tm-ja)PGP/MIME}) (RFC 2015) $B$*$h$S(B 
+@strong{PGP-kazu} (@ref{(tm-ja)PGP-kazu}) (draft-kazu-pgp-mime-00.txt) 
+$B$K$h$k0E9f2=!&EE;R=pL>!&8x3+80$NA^F~5!G=$rMxMQ$9$k$3$H$,$G$-$^$9!#(B
 
 $BC"$7!"$3$N5!G=$rMxMQ$9$k$K$O(B Mailcrypt package (@ref{(mailcrypt)}) $B$H(B 
 pgp command $B$,I,MW$G$9!#(B@refill
@@ -456,7 +537,19 @@ PGP $B$G$N0E9f2=$N7A<0$r;XDj$7$^$9!#(B@refill
 
 
 
-@node Concept Index, Function Index, PGP, Top
+@node Acknowledgments, Concept Index, PGP, Top
+@chapter $B<U<-(B
+
+$B:G=i$K!"(Btm-edit $B$NA0?H$H$J$C$?(B @file{mime.el} $B$r=q$-!"$=$NG[I[$H2~B$$r$*(B
+$B5v$72<$5$C$?!"G_ED@/?.$5$s$K46<U$7$^$9!#(Btm-edit $B$N(B user interface $B$N4pK\(B
+$BE*$J@_7W$OG_ED$5$s$N<j$K$h$k$b$N$G!"$H$F$bNI$$@_7W$G$"$C$?$H;W$$$^$9!#(B
+@refill
+
+$B<!$K!"(Bbeta test $B$K6(NO$7$F2<$5$C$?F|K\8lHG!"1Q8lHGAPJ}$N(B tm mailing
+list $B$N(B member $B$K46<U$7$^$9!#(B
+
+
+@node Concept Index, Function Index, Acknowledgments, Top
 @chapter $B35G0:w0z(B
 
 @printindex cp

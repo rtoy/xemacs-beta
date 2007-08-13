@@ -3,7 +3,7 @@
 ;; Copyright (C) 1996 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: filename.el,v 1.1.1.1 1996/12/21 20:50:51 steve Exp $
+;; Version: $Id: filename.el,v 1.2 1996/12/28 21:03:09 steve Exp $
 ;; Keywords: string, file name
 
 ;; This file is part of tl (Tiny Library).
@@ -130,8 +130,9 @@
 
 (defun replace-as-filename (string)
   "Return safety filename from STRING. [filename.el]"
-  (poly-funcall filename-filters string)
-  )
+  (and string
+       (poly-funcall filename-filters string)
+       ))
 
 
 ;;; @ end
