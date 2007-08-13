@@ -40,7 +40,6 @@ Boston, MA 02111-1307, USA.  */
 #include "glyphs-msw.h"
 #include "objects-msw.h"
 
-/* Why did Kirill choose this range ? */
 #define TOOLBAR_ITEM_ID_MIN 0x4000
 #define TOOLBAR_ITEM_ID_MAX 0x7FFF
 #define TOOLBAR_ITEM_ID_BITS(x) (((x) & 0x3FFF) | 0x4000)
@@ -150,7 +149,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
   window = FRAME_LAST_NONMINIBUF_WINDOW (f);
   w = XWINDOW (window);
 
-  toolbarwnd = TOOLBAR_HANDLE(f,pos);
+  toolbarwnd = TOOLBAR_HANDLE (f,pos);
   
   /* set button sizes based on bar size */
   if (vert)
@@ -166,7 +165,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
       bmwidth = bmheight = width - (border_width + shadow_thickness) * 2; 
     }
 
-  button = FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons;
+  button = FRAME_TOOLBAR_BUTTONS (f, pos);
 
   /* First loop over all of the buttons to determine how many there
      are. This loop will also make sure that all instances are
@@ -174,10 +173,12 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
      immediately. */
   while (!NILP (button))
     {
+
       struct toolbar_button *tb = XTOOLBAR_BUTTON (button);
-      checksum = HASH3 (checksum, 
+      checksum = HASH4 (checksum, 
 			internal_hash (get_toolbar_button_glyph(w, tb), 0),
-			internal_hash (tb->callback, 0));
+			internal_hash (tb->callback, 0),
+			width);
       button = tb->next;
       nbuttons++;
     }
@@ -192,12 +193,13 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 
       /* build up the data required by win32 fns. */
       button_tbl = xnew_array_and_zero (TBBUTTON, nbuttons);
-      button = FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons;
+      button = FRAME_TOOLBAR_BUTTONS (f, pos);
       tbbutton = button_tbl;
 
       while (!NILP (button))
 	{
 	  struct toolbar_button *tb = XTOOLBAR_BUTTON (button);
+	  HBITMAP bitmap=NULL, mask=NULL;
 	  
 	  tbbutton->idCommand = allocate_toolbar_item_id (f, tb, pos);
 	  tbbutton->fsState=tb->enabled ? TBSTATE_ENABLED 
@@ -230,18 +232,21 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 		  /* we are going to honour the toolbar settings and
 		     resize the bitmaps accordingly */
 		  
-		  if (IMAGE_INSTANCE_PIXMAP_WIDTH (p) > bmwidth
+		  if (IMAGE_INSTANCE_PIXMAP_WIDTH (p) != bmwidth
 		      ||
-		      IMAGE_INSTANCE_PIXMAP_HEIGHT (p) > bmheight)
+		      IMAGE_INSTANCE_PIXMAP_HEIGHT (p) != bmheight)
 		    {
-		      if (!mswindows_resize_dibitmap_instance 
-			  (p, f, bmwidth, bmheight))
+		      if (! (bitmap = mswindows_create_resized_bitmap 
+			     (p, f, bmwidth, bmheight)))
 			{
 			  xfree (button_tbl);
 			  if (ilist) ImageList_Destroy (ilist);
 			  signal_simple_error ("couldn't resize pixmap", 
 					       instance);
 			}
+		      /* we don't care if the mask fails */
+		      mask = mswindows_create_resized_mask 
+			(p, f, bmwidth, bmheight);
 		    }
 		  else 
 		    {
@@ -250,32 +255,27 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 		    }
 	      
 		  /* need to build an image list for the bitmaps */
-		  if (!ilist)
+		  if (!ilist && !(ilist = ImageList_Create 
+				  ( bmwidth, bmheight,
+				    ILC_COLOR24, nbuttons, nbuttons * 2 )))
 		    {
-		      if (!(ilist = ImageList_Create 
-			    ( IMAGE_INSTANCE_PIXMAP_WIDTH (p),
-			      IMAGE_INSTANCE_PIXMAP_HEIGHT (p),
-			      ILC_COLOR24, 	
-			      nbuttons,
-			      nbuttons * 2 )))
-			{
-			  xfree (button_tbl);
-			  signal_simple_error ("couldn't create image list",
-					       instance);
-			}
+		      xfree (button_tbl);
+		      signal_simple_error ("couldn't create image list",
+					   instance);
 		    }
-  
+		  
 		  /* add a bitmap to the list */
 		  if ((tbbutton->iBitmap =
-		       ImageList_Add (ilist, 
-				      IMAGE_INSTANCE_MSWINDOWS_BITMAP (p),
-				      IMAGE_INSTANCE_MSWINDOWS_MASK (p))) < 0)
+		       ImageList_Add (ilist, bitmap, mask)) < 0)
 		    {
 		      xfree (button_tbl);
 		      if (ilist) ImageList_Destroy (ilist);
 		      signal_simple_error ("image list creation failed", 
 					   instance);
 		    }
+		  /* we're done with these now */
+		  DeleteObject (bitmap);
+		  DeleteObject (mask);
 		}
 	    }
 
@@ -286,17 +286,18 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	  button = tb->next;
 	}
 
-      button = FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons;
+      button = FRAME_TOOLBAR_BUTTONS (f, pos);
 
-  /* create the toolbar window? */
+      /* create the toolbar window? */
       if (!toolbarwnd 
 	  &&
 	  (toolbarwnd = 
 	   CreateWindowEx ( WS_EX_WINDOWEDGE,
 			    TOOLBARCLASSNAME,
 			    NULL,
-			    WS_CHILD | WS_VISIBLE | WS_DLGFRAME | TBSTYLE_TOOLTIPS 
-			    | CCS_NORESIZE | CCS_NOPARENTALIGN | CCS_NODIVIDER,
+			    WS_CHILD | WS_VISIBLE | WS_DLGFRAME
+			    | TBSTYLE_TOOLTIPS | CCS_NORESIZE
+			    | CCS_NOPARENTALIGN | CCS_NODIVIDER,
 			    x, y, bar_width, bar_height,
 			    FRAME_MSWINDOWS_HANDLE (f),
 			    (HMENU)(TOOLBAR_ID_BIAS + pos),
@@ -307,6 +308,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	  ImageList_Destroy (ilist);
 	  error ("couldn't create toolbar");
 	}
+
 #if 0
       SendMessage (toolbarwnd, TB_SETPADDING,
 		   0, MAKELPARAM(border_width, border_width));
@@ -322,10 +324,13 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
       /* set the size of buttons */
       SendMessage (toolbarwnd, TB_SETBUTTONSIZE, 0, 
 		   (LPARAM)MAKELONG (width, height));
-		   
+
       /* set the size of bitmaps */
       SendMessage (toolbarwnd, TB_SETBITMAPSIZE, 0, 
 		   (LPARAM)MAKELONG (bmwidth, bmheight));
+
+      /* tell it we've done it */
+      SendMessage (toolbarwnd, TB_AUTOSIZE, 0, 0);
 		   
       /* finally populate with images */
       if (!SendMessage (toolbarwnd, TB_ADDBUTTONS,
@@ -385,7 +390,7 @@ mswindows_move_toolbar (struct frame *f, enum toolbar_pos pos)
 	{
 	case TOP_TOOLBAR:
 	  bar_x -= 2; bar_y--;
-	  bar_width += 2; bar_height++;
+	  bar_width++; bar_height++;
 	  break;
 	case LEFT_TOOLBAR:
 	  bar_x -= 2; bar_y--;
@@ -474,21 +479,8 @@ mswindows_free_frame_toolbars (struct frame *f)
 /* map toolbar hwnd to pos*/
 int mswindows_find_toolbar_pos(struct frame* f, HWND ctrl)
 {
-#if 1
   int id = GetDlgCtrlID(ctrl);
   return id ? id - TOOLBAR_ID_BIAS : -1;
-#else
-  if (GetDlgItem(FRAME_MSWINDOWS_HANDLE(f), TOOLBAR_ID_BIAS) == ctrl)
-    return 0;
-  else if (GetDlgItem(FRAME_MSWINDOWS_HANDLE(f), TOOLBAR_ID_BIAS +1) == ctrl)
-    return 1;
-  else if (GetDlgItem(FRAME_MSWINDOWS_HANDLE(f), TOOLBAR_ID_BIAS +2) == ctrl)
-    return 2;
-  else if (GetDlgItem(FRAME_MSWINDOWS_HANDLE(f), TOOLBAR_ID_BIAS +3) == ctrl)
-    return 3;
-  else
-    assert(0);
-#endif
 }
 
 Lisp_Object 
@@ -515,43 +507,30 @@ Lisp_Object
 mswindows_handle_toolbar_wm_command (struct frame* f, HWND ctrl, WORD id)
 {
   /* Try to map the command id through the proper hash table */
-  Lisp_Object button, command, funcsym, frame;
-  struct gcpro gcpro1;
-  
+  Lisp_Object button, data, fn, arg, frame;
+
   button = Fgethash (make_int (id), 
 		     FRAME_MSWINDOWS_TOOLBAR_HASHTABLE (f), Qnil);
 
   if (NILP (button))
     return Qnil;
 
-  command = XTOOLBAR_BUTTON(button)->callback;
-  
-  if (UNBOUNDP(command))
+  data = XTOOLBAR_BUTTON (button)->callback;
+
+  /* #### ? */
+  if (UNBOUNDP (data))
     return Qnil;
-  
-  /* Need to gcpro because the hashtable may get destroyed
-     by menu_cleanup(), and will not gcpro the command
-     any more */
-  GCPRO1 (command);
-  
+
   /* Ok, this is our one. Enqueue it. */
-  if (SYMBOLP (command))
-      funcsym = Qcall_interactively;
-  else if (CONSP (command))
-      funcsym = Qeval;
-  else
-    signal_simple_error ("Callback must be either evallable form or a symbol",
-			 command);
+  get_callback (data, &fn, &arg);
 
   XSETFRAME (frame, f);
-  enqueue_misc_user_event (frame, funcsym, command);
+  enqueue_misc_user_event (frame, fn, arg);
 
   /* Needs good bump also, for WM_COMMAND may have been dispatched from
      mswindows_need_event, which will block again despite new command
      event has arrived */
   mswindows_bump_queue ();
-  
-  UNGCPRO; /* command */
   return Qt;
 }
 

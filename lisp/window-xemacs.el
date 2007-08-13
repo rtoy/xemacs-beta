@@ -137,11 +137,7 @@ Each frame has its own window-config stack."
 	(stack (window-config-stack)))
     (if (or (= 0 (undoable-stack-a-length stack))
 	    (not (equal (undoable-stack-a-top stack) wc)))
-	(progn
-	  (undoable-stack-push stack wc)
-	  ;; kludge.
-	  (if (featurep 'toolbar)
-	      (set-specifier-dirty-flag default-toolbar))))))
+	(undoable-stack-push stack wc))))
 
 (defun pop-window-configuration ()
   "Pop the top window configuration off the window-config stack and set it.
@@ -161,9 +157,6 @@ Each frame has its own window-config and \"unpop\" stack."
 	  (undoable-stack-push stack wc)
 	  (undoable-stack-undo stack)
 	  (set-window-configuration popped)
-	  ;; probably not necessary:
-	  (if (featurep 'toolbar)
-	      (set-specifier-dirty-flag default-toolbar))
 	  popped)
       (trunc-stack-bottom
        (error "Bottom of window config stack")))))
@@ -191,9 +184,6 @@ Each frame has its own window-config and \"unpop\" stack."
 		    (undoable-stack-pop stack))))
 	  (undoable-stack-push stack wc)
 	  (set-window-configuration popped)
-	  ;; probably not necessary:
-	  (if (featurep 'toolbar)
-	      (set-specifier-dirty-flag default-toolbar))
 	  popped)
       (trunc-stack-bottom
        (error "Top of window config stack")))))

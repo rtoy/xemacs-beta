@@ -2396,78 +2396,89 @@ Optional second argument EXITING means ask about certain non-file buffers
  as well as about file buffers."
   (interactive "P")
   (save-excursion
-    (save-window-excursion
-      ;; This can bomb during autoloads generation
-      (when (and (not noninteractive)
-		 (not (eq (selected-window) (minibuffer-window)))
-		 save-some-buffers-query-display-buffer)
-	(delete-other-windows))
-      ;; XEmacs - do not use queried flag
-      (let ((files-done
-	     (map-y-or-n-p
-	      (function
-	       (lambda (buffer)
-		 (and (buffer-modified-p buffer)
-		      (not (buffer-base-buffer buffer))
-		      ;; XEmacs addition:
-		      (not (symbol-value-in-buffer 'save-buffers-skip buffer))
-		      (or
-		       (buffer-file-name buffer)
-		       (and exiting
-			    (progn
-			      (set-buffer buffer)
-			      (and buffer-offer-save (> (buffer-size) 0)))))
-		      (if arg
-			  t
-			(when save-some-buffers-query-display-buffer
-			  (condition-case nil
-			      (switch-to-buffer buffer t)
-			    (error nil)))
-			(if (buffer-file-name buffer)
-			    (format "Save file %s? "
-				    (buffer-file-name buffer))
-			  (format "Save buffer %s? "
-				  (buffer-name buffer)))))))
-	      (function
-	       (lambda (buffer)
-		 (set-buffer buffer)
-		 (condition-case ()
-		     (save-buffer)
-		   (error nil))))
-	      (buffer-list)
-	      '("buffer" "buffers" "save")
-	      ;;instead of this we just say "yes all", "no all", etc.
-	      ;;"save all the rest"
-	      ;;"save only this buffer" "save no more buffers")
-	      ;; this is rather bogus. --ben
-	      ;; (it makes the dialog box too big, and you get an error
-	      ;; "wrong type argument: framep, nil" when you hit q after
-	      ;; choosing the option from the dialog box)
+    ;; `delete-other-windows' can bomb during autoloads generation, so
+    ;; guard it well.
+    (if (or noninteractive
+	    (eq (selected-window) (minibuffer-window))
+	    (not save-some-buffers-query-display-buffer))
+	;; If playing with windows is unsafe or undesired, just do the
+	;; usual drill.
+	(save-some-buffers-1 arg exiting nil)
+      ;; Else, protect the windows.
+      (delete-other-windows)
+      (save-window-excursion
+	(save-some-buffers-1 arg exiting t))
+      ;; Force redisplay.  #### Perhaps this should be handled
+      ;; automatically by `save-window-excursion'.
+      (sit-for 1))))
 
-	      ;; We should fix the dialog box rather than disabling
-	      ;; this!  --hniksic
-	    (list (list ?\C-r (lambda (buf)
-				;; FSF has an EXIT-ACTION argument to
-				;; `view-buffer'.
-				(view-buffer buf)
-				(setq view-exit-action
-				      (lambda (ignore)
-					(exit-recursive-edit)))
-				(recursive-edit)
-				;; Return nil to ask about BUF again.
-				nil)
-			"display the current buffer"))))
-	    (abbrevs-done
-	     (and save-abbrevs abbrevs-changed
-		  (progn
-		    (if (or arg
-			    (y-or-n-p (format "Save abbrevs in %s? " abbrev-file-name)))
-			(write-abbrev-file nil))
-		    ;; Don't keep bothering user if he says no.
-		    (setq abbrevs-changed nil)
-		    t))))
-	(or (> files-done 0) abbrevs-done
-	    (display-message 'no-log "(No files need saving)"))))))
+;; XEmacs - do not use queried flag
+(defun save-some-buffers-1 (arg exiting switch-buffer)
+  (let ((files-done
+	 (map-y-or-n-p
+	  (lambda (buffer)
+	    (and (buffer-modified-p buffer)
+		 (not (buffer-base-buffer buffer))
+		 ;; XEmacs addition:
+		 (not (symbol-value-in-buffer 'save-buffers-skip buffer))
+		 (or
+		  (buffer-file-name buffer)
+		  (and exiting
+		       (progn
+			 (set-buffer buffer)
+			 (and buffer-offer-save (> (buffer-size) 0)))))
+		 (if arg
+		     t
+		   ;; #### We should provide a per-buffer means to
+		   ;; disable the switching.
+		   (when switch-buffer
+		     ;; #### Consider using `display-buffer' here for 21.1!
+		     ;(display-buffer buffer nil (selected-frame)))
+		     (switch-to-buffer buffer t))
+		   (if (buffer-file-name buffer)
+		       (format "Save file %s? "
+			       (buffer-file-name buffer))
+		     (format "Save buffer %s? "
+			     (buffer-name buffer))))))
+	  (lambda (buffer)
+	    (set-buffer buffer)
+	    (condition-case ()
+		(save-buffer)
+	      (error nil)))
+	  (buffer-list)
+	  '("buffer" "buffers" "save")
+	  ;;instead of this we just say "yes all", "no all", etc.
+	  ;;"save all the rest"
+	  ;;"save only this buffer" "save no more buffers")
+	  ;; this is rather bogus. --ben
+	  ;; (it makes the dialog box too big, and you get an error
+	  ;; "wrong type argument: framep, nil" when you hit q after
+	  ;; choosing the option from the dialog box)
+
+	  ;; We should fix the dialog box rather than disabling
+	  ;; this!  --hniksic
+	  (list (list ?\C-r (lambda (buf)
+			      ;; #### FSF has an EXIT-ACTION argument
+			      ;; to `view-buffer'.
+			      (view-buffer buf)
+			      (setq view-exit-action
+				    (lambda (ignore)
+				      (exit-recursive-edit)))
+			      (recursive-edit)
+			      ;; Return nil to ask about BUF again.
+			      nil)
+		      "display the current buffer"))))
+	(abbrevs-done
+	 (and save-abbrevs abbrevs-changed
+	      (progn
+		(if (or arg
+			(y-or-n-p (format "Save abbrevs in %s? " abbrev-file-name)))
+		    (write-abbrev-file nil))
+		;; Don't keep bothering user if he says no.
+		(setq abbrevs-changed nil)
+		t))))
+    (or (> files-done 0) abbrevs-done
+	(display-message 'no-log "(No files need saving)"))))
 
 
 (defun not-modified (&optional arg)

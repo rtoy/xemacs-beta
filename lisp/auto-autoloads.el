@@ -88,7 +88,7 @@ be used only with -batch and kills XEmacs on completion." nil nil)
 
 ;;;***
 
-;;;### (autoloads (batch-byte-recompile-directory batch-byte-recompile-directory-norecurse batch-byte-compile display-call-tree byte-compile-sexp byte-compile compile-defun byte-compile-file byte-recompile-file byte-recompile-directory byte-force-recompile) "bytecomp" "lisp/bytecomp.el")
+;;;### (autoloads (batch-byte-recompile-directory batch-byte-recompile-directory-norecurse batch-byte-compile display-call-tree byte-compile-sexp byte-compile compile-defun byte-compile-buffer byte-compile-and-load-file byte-compile-file byte-recompile-file byte-recompile-directory byte-force-recompile) "bytecomp" "lisp/bytecomp.el")
 
 (autoload 'byte-force-recompile "bytecomp" "\
 Recompile every `.el' file in DIRECTORY that already has a `.elc' file.
@@ -122,6 +122,14 @@ whether to compile it.  Prefix argument 0 don't ask and recompile anyway." t nil
 Compile a file of Lisp code named FILENAME into a file of byte code.
 The output file's name is made by appending `c' to the end of FILENAME.
 With prefix arg (noninteractively: 2nd arg), load the file after compiling." t nil)
+
+(autoload 'byte-compile-and-load-file "bytecomp" "\
+Compile a file of Lisp code named FILENAME into a file of byte code,
+and then load it.  The output file's name is made by appending \"c\" to
+the end of FILENAME." t nil)
+
+(autoload 'byte-compile-buffer "bytecomp" "\
+Byte-compile and evaluate contents of BUFFER (default: the current buffer)." t nil)
 
 (autoload 'compile-defun "bytecomp" "\
 Compile and evaluate the current top-level form.
@@ -637,7 +645,7 @@ that option." nil nil)
 (autoload 'customize-browse "cus-edit" "\
 Create a tree browser for the customize hierarchy." t nil)
 
-(defcustom custom-file (if (boundp 'user-init-directory) (concat "~" init-file-user user-init-directory "options.el") "~/.emacs") "File used for storing customization information.\nIf you change this from the default \"~/.emacs\" you need to\nexplicitly load that file for the settings to take effect." :type 'file :group 'customize)
+(defcustom custom-file "~/.emacs" "File used for storing customization information.\nIf you change this from the default \"~/.emacs\" you need to\nexplicitly load that file for the settings to take effect." :type 'file :group 'customize)
 
 (autoload 'customize-save-customized "cus-edit" "\
 Save all user options which have been set in this session." t nil)
@@ -826,7 +834,6 @@ Display list of tags in FILE." t nil)
 
 (autoload 'tags-apropos "etags" "\
 Display list of all tags in tag table REGEXP matches." t nil)
-
 (define-key esc-map "*" 'pop-tag-mark)
 
 ;;;***

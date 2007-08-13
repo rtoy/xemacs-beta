@@ -430,40 +430,46 @@ get_section_info (file_data *p_infile)
 
 /* The dump routines.  */
 
+#ifdef DEBUG_XEMACS
+#define DUMP_MSG(x) printf x
+#else
+#define DUMP_MSG(x)
+#endif
+
 static void
-copy_executable_and_dump_data_section (file_data *p_infile, 
+copy_executable_and_dump_data_section (file_data *p_infile,
 				       file_data *p_outfile)
 {
   unsigned char *data_file, *data_va;
   unsigned long size, index;
-  
+
   /* Get a pointer to where the raw data should go in the executable file.  */
   data_file = (char *) p_outfile->file_base + data_start_file;
 
   /* Get a pointer to the raw data in our address space.  */
   data_va = data_start_va;
-    
+
   size = (DWORD) data_file - (DWORD) p_outfile->file_base;
-  printf ("Copying executable up to data section...\n");
-  printf ("\t0x%08x Offset in input file.\n", 0);
-  printf ("\t0x%08x Offset in output file.\n", 0);
-  printf ("\t0x%08x Size in bytes.\n", size);
+  DUMP_MSG (("Copying executable up to data section...\n"));
+  DUMP_MSG (("\t0x%08x Offset in input file.\n", 0));
+  DUMP_MSG (("\t0x%08x Offset in output file.\n", 0));
+  DUMP_MSG (("\t0x%08x Size in bytes.\n", size));
   memcpy (p_outfile->file_base, p_infile->file_base, size);
-  
+
   size = data_size;
-  printf ("Dumping .data section...\n");
-  printf ("\t0x%08x Address in process.\n", data_va);
-  printf ("\t0x%08x Offset in output file.\n", 
-	  data_file - p_outfile->file_base);
-  printf ("\t0x%08x Size in bytes.\n", size);
+  DUMP_MSG (("Dumping .data section...\n"));
+  DUMP_MSG (("\t0x%08x Address in process.\n", data_va));
+  DUMP_MSG (("\t0x%08x Offset in output file.\n", 
+	     data_file - p_outfile->file_base));
+  DUMP_MSG (("\t0x%08x Size in bytes.\n", size));
   memcpy (data_file, data_va, size);
-  
+
   index = (DWORD) data_file + size - (DWORD) p_outfile->file_base;
   size = p_infile->size - index;
-  printf ("Copying rest of executable...\n");
-  printf ("\t0x%08x Offset in input file.\n", index);
-  printf ("\t0x%08x Offset in output file.\n", index);
-  printf ("\t0x%08x Size in bytes.\n", size);
+  DUMP_MSG (("Copying rest of executable...\n"));
+  DUMP_MSG (("\t0x%08x Offset in input file.\n", index));
+  DUMP_MSG (("\t0x%08x Offset in output file.\n", index));
+  DUMP_MSG (("\t0x%08x Size in bytes.\n", size));
   memcpy ((char *) p_outfile->file_base + index, 
 	  (char *) p_infile->file_base + index, size);
 }
@@ -474,30 +480,31 @@ dump_bss_and_heap (file_data *p_infile, file_data *p_outfile)
     unsigned char *heap_data, *bss_data;
     unsigned long size, index;
 
-    printf ("Dumping heap into executable...\n");
+    DUMP_MSG (("Dumping heap into executable...\n"));
 
     index = heap_index_in_executable;
     size = get_committed_heap_size ();
     heap_data = get_heap_start ();
 
-    printf ("\t0x%08x Heap start in process.\n", heap_data);
-    printf ("\t0x%08x Heap offset in executable.\n", index);
-    printf ("\t0x%08x Heap size in bytes.\n", size);
+    DUMP_MSG (("\t0x%08x Heap start in process.\n", heap_data));
+    DUMP_MSG (("\t0x%08x Heap offset in executable.\n", index));
+    DUMP_MSG (("\t0x%08x Heap size in bytes.\n", size));
 
     memcpy ((PUCHAR) p_outfile->file_base + index, heap_data, size);
 
-    printf ("Dumping .bss into executable...\n");
+    DUMP_MSG (("Dumping .bss into executable...\n"));
     
     index += size;
     size = bss_size;
     bss_data = bss_start;
-    
-    printf ("\t0x%08x BSS start in process.\n", bss_data);
-    printf ("\t0x%08x BSS offset in executable.\n", index);
-    printf ("\t0x%08x BSS size in bytes.\n", size);
+
+    DUMP_MSG (("\t0x%08x BSS start in process.\n", bss_data));
+    DUMP_MSG (("\t0x%08x BSS offset in executable.\n", index));
+    DUMP_MSG (("\t0x%08x BSS size in bytes.\n", size));
     memcpy ((char *) p_outfile->file_base + index, bss_data, size);
 }
 
+#undef DUMP_MSG
 
 /* Reload and remap routines.  */
 

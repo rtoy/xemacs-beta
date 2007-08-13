@@ -2572,7 +2572,7 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
   Charcount numdel;
   Bytind bi_from, bi_to;
   Bytecount bc_numdel;
-  int shortage;
+  EMACS_INT shortage;
   Lisp_Object bufobj;
 
   /* Defensive steps just in case a buffer gets deleted and a calling

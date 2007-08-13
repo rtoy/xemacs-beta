@@ -61,7 +61,7 @@ extern int etext, __data_start; weak_symbol (__data_start)
 #include <sys/resource.h>
 #endif
 
-#if defined(__bsdi__) || defined(__NetBSD__) || defined(__linux__)
+#if defined(__bsdi__) || defined(__NetBSD__) || defined(__linux__) || defined(__OpenBSD__)
 #if defined(__linux__) && defined (powerpc)	/*Added by Fukui*/
 #else					/*Added by Fukui*/
 #define BSD4_2

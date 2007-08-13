@@ -2582,13 +2582,13 @@ x_update_frame_external_traits (struct frame* frm, Lisp_Object name)
 
   XtSetValues (FRAME_X_TEXT_WIDGET (frm), av, ac);
 
-  #ifdef HAVE_TOOLBARS
+#ifdef HAVE_TOOLBARS
   /* Setting the background clears the entire frame area
     including the toolbar so we force an immediate redraw of
     it. */
   if (EQ (name, Qbackground))
     MAYBE_DEVMETH (XDEVICE (frm->device), redraw_frame_toolbars, (frm));
-  #endif /* HAVE_TOOLBARS */
+#endif /* HAVE_TOOLBARS */
 
   /* Set window manager resize increment hints according to
      the new character size */

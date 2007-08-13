@@ -63,8 +63,18 @@ for dialog box buttons is `:active'.
 {
   struct frame *f = selected_frame ();
   struct device *d = XDEVICE (f->device);
-  
-  MAYBE_DEVMETH (d, popup_dialog_box, (f, dbox_desc));
+
+  if (!HAS_DEVMETH_P (d, popup_dialog_box))
+    signal_simple_error ("Device does not support dialogs", f->device);
+
+  if (SYMBOLP (dbox_desc))
+    dbox_desc = Fsymbol_value (dbox_desc);
+  CHECK_CONS (dbox_desc);
+  CHECK_STRING (XCAR (dbox_desc));
+  if (!CONSP (XCDR (dbox_desc)))
+    signal_simple_error ("Dialog descriptor must supply at least one button", dbox_desc);
+
+  DEVMETH (d, popup_dialog_box, (f, dbox_desc));
 
   return Qnil;
 }

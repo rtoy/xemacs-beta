@@ -115,7 +115,7 @@ If BUFFER is nil, the current buffer is assumed.
   struct buffer *buf = decode_buffer (buffer, 1);
   Bufpos pos2 = BUF_PT (buf);
   Bufpos pos;
-  int count, shortage, negp;
+  EMACS_INT count, shortage, negp;
 
   if (NILP (arg))
     count = 1;

@@ -1692,8 +1692,12 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf selected-device select-device t)
 (defsetf device-baud-rate (&optional d) (v)
   `(set-device-baud-rate ,d ,v))
-(defsetf specifier-instance (spec &optional dom def nof) (val)
-  `(set-specifier ,spec ,val ,dom))
+;; This setf method is a bad idea, because set-specifier *adds* a
+;; specification, rather than just setting it.  The net effect is that
+;; it makes specifier-instance return VAL, but other things don't work
+;; as expected -- letf, to name one.
+;(defsetf specifier-instance (spec &optional dom def nof) (val)
+;  `(set-specifier ,spec ,val ,dom))
 
 ;; Annotations
 (defsetf annotation-glyph set-annotation-glyph)

@@ -205,35 +205,39 @@ in `substitute-in-file-name'."
   :type 'boolean
   :group 'minibuffer)
 
-(defun minibuffer-electric-slash ()
-  ;; by Stig@hackvan.com
+;; originally by Stig@hackvan.com
+(defun minibuffer-electric-separator ()
   (interactive)
-  (and minibuffer-electric-file-name-behavior
-       (eq ?/ (char-before (point)))
-       (not (save-excursion
+  (let ((c last-command-char))
+    (and minibuffer-electric-file-name-behavior
+	 (eq c directory-sep-char)
+	 (eq c (char-before (point)))
+	 (not (save-excursion
 	      (goto-char (point-min))
-	      (and (looking-at "^/.+:~?[^/]*/.+")
+	      (and (looking-at "/.+:~?[^/]*/.+")
 		   (re-search-forward "^/.+:~?[^/]*" nil t)
 		   (progn
 		     (delete-region (point) (point-max))
 		     t))))
-       (not (save-excursion
-	      (goto-char (point-min))
-	      (and (looking-at "^.+://[^/]*/.+")
-		   (re-search-forward "^.+:/" nil t)
-		   (progn
-		     (delete-region (point) (point-max))
-		     t))))
-       (not (eq (point) (1+ (point-min)))) ; permit `//hostname/path/to/file'
-       (or (not (eq ?: (char-after (- (point) 2)))) ; permit `http://url/goes/here'
-	   (eq ?/ (char-after (point-min))))
+	 (not (save-excursion
+		(goto-char (point-min))
+		(and (looking-at ".+://[^/]*/.+")
+		     (re-search-forward "^.+:/" nil t)
+		     (progn
+		       (delete-region (point) (point-max))
+		       t))))
+	 ;; permit `//hostname/path/to/file'
+	 (not (eq (point) (1+ (point-min))))
+	 ;; permit `http://url/goes/here'
+	 (or (not (eq ?: (char-after (- (point) 2))))
+	     (eq ?/ (char-after (point-min))))
        (delete-region (point-min) (point)))
-  (insert ?/))
+    (insert c)))
 
 (defun minibuffer-electric-tilde ()
   (interactive)
   (and minibuffer-electric-file-name-behavior
-       (eq ?/ (char-before (point)))
+       (eq directory-sep-char (char-before (point)))
        ;; permit URL's with //, for e.g. http://hostname/~user
        (not (save-excursion (search-backward "//" nil t)))
        (delete-region (point-min) (point)))
@@ -242,7 +246,7 @@ in `substitute-in-file-name'."
 (defvar read-file-name-map
   (let ((map (make-sparse-keymap 'read-file-name-map)))
     (set-keymap-parents map (list minibuffer-local-completion-map))
-    (define-key map "/" 'minibuffer-electric-slash)
+    (define-key map (vector directory-sep-char) 'minibuffer-electric-separator)
     (define-key map "~" 'minibuffer-electric-tilde)
     map
     ))
@@ -250,7 +254,7 @@ in `substitute-in-file-name'."
 (defvar read-file-name-must-match-map
   (let ((map (make-sparse-keymap 'read-file-name-map)))
     (set-keymap-parents map (list minibuffer-local-must-match-map))
-    (define-key map "/" 'minibuffer-electric-slash)
+    (define-key map (vector directory-sep-char) 'minibuffer-electric-separator)
     (define-key map "~" 'minibuffer-electric-tilde)
     map
     ))

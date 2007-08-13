@@ -3344,10 +3344,13 @@ C_entries (c_ext, inf)
                         set_construct(C_VARIABLE);
                         break;
                     }
-                  /* We need this hack because *tags doesn't really parse */
-                  /* the input, and the OO Browser scanning has slightly */
-                  /* more context. -slb */
+
+                  /* ootags categorizes each tag found whereas etags doesn't.
+                     Set the is_method flag if this tag has been marked as
+                     such by an earlier section of code.
+                     -- Steve Baur, Altrasoft, 5/7/1998 */
 		  is_method = (oo_browser_construct == C_METHOD);
+
 		  make_C_tag (FALSE);
                   /* Force reset of st_C_enum structtype value. */
                   structtype = st_none;
@@ -3381,8 +3384,11 @@ C_entries (c_ext, inf)
 	  if (!cplpl)
 	    {
 #endif
-              /* These surely cannot follow a function tag. */
-              /* Not if the language is C++ -slb */
+              /* The above characters cannot follow a function tag in C, so
+                 unmark this as a function entry.  For C++, these characters
+                 may follow an `operator' function construct, so skip the
+                 unmarking conditional below.
+                 -- Steve Baur, Altrasoft, 5/7/1998 */
               if (fvdef != finlist && fvdef != fignore && fvdef != vignore)
                 fvdef = fvnone;
 #ifdef OO_BROWSER

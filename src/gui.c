@@ -26,6 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 #include "gui.h"
+#include "bytecode.h"		/* for struct Lisp_Compiled_Function */
 
 Lisp_Object Q_active, Q_suffix, Q_keys, Q_style, Q_selected;
 Lisp_Object Q_filter, Q_config, Q_included;
@@ -61,6 +62,36 @@ separator_string_p (CONST char *s)
     ;
 
   return (*p == '!' || *p == ':' || *p == '\0');
+}
+
+/* Massage DATA to find the correct function and argument.  Used by
+   popup_selection_callback() and the msw code. */
+void
+get_callback (Lisp_Object data, Lisp_Object *fn, Lisp_Object *arg)
+{
+  if (SYMBOLP (data)
+      || (COMPILED_FUNCTIONP (data)
+	  && XCOMPILED_FUNCTION (data)->flags.interactivep)
+      || (EQ (XCAR (data), Qlambda)
+	  && !NILP (Fassq (Qinteractive, Fcdr (Fcdr (data))))))
+    {
+      *fn = Qcall_interactively;
+      *arg = data;
+    }
+  else if (CONSP (data))
+    {
+      *fn = Qeval;
+      *arg = data;
+    }
+  else
+    {
+      *fn = Qeval;
+      *arg = list3 (Qsignal,
+		    list2 (Qquote, Qerror),
+		    list2 (Qquote, list2 (build_translated_string
+					  ("illegal callback"),
+					  data)));
+    }
 }
 
 /*

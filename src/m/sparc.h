@@ -50,7 +50,7 @@ NOTE-END  */
 
 #define SEGMENT_MASK (SEGSIZ - 1)
 
-#if ! defined (__NetBSD__) && ! defined (__linux__)
+#if ! defined (__NetBSD__) && ! defined (__linux__) && !defined (__OpenBSD__)
 /* This really belongs in s/sun.h.  */
 
 /* Data type of load average, as read out of kmem.  */
@@ -71,4 +71,4 @@ NOTE-END  */
 
 #define A_TEXT_SEEK(HDR) (N_TXTOFF (hdr) + sizeof (hdr))
 
-#endif /* not Linux or NetBSD */
+#endif /* not Linux or NetBSD or OpenBSD */

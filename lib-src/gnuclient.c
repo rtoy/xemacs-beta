@@ -323,10 +323,12 @@ main (int argc, char *argv[])
     tmpdir = "/tmp";
 
   display = getenv ("DISPLAY");
-  if (!display)
-    suppress_windows_system = 1;
-  else
+  if (display)
     display = my_strdup (display);
+#ifndef HAVE_MS_WINDOWS
+  else
+    suppress_windows_system = 1;
+#endif
 
   for (i = 1; argv[i] && !errflg; i++)
     {
@@ -594,8 +596,13 @@ main (int argc, char *argv[])
 	}
       else /* !suppress_windows_system */
 	{
-	  sprintf (command, "(gnuserv-edit-files '(x %s) '(",
-		   clean_string (display));
+	  if (display)
+	    sprintf (command, "(gnuserv-edit-files '(x %s) '(",
+		     clean_string (display));
+#ifdef HAVE_MS_WINDOWS
+	  else
+	    sprintf (command, "(gnuserv-edit-files '(mswindows nil) '(");
+#endif
 	} /* !suppress_windows_system */
       send_string (s, command);
 

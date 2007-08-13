@@ -163,10 +163,6 @@
 	 (concat font which))
 	(t nil)))
 
-(defun try-font-name (name &optional device)
-  ;; yes, name really should be here twice.
-  (and name (make-font-instance name device t) name))
-
 (defun x-make-font-bold (font &optional device)
   "Given an X font specification, this attempts to make a `bold' font.
 If it fails, it returns nil."

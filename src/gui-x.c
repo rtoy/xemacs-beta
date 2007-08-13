@@ -36,7 +36,6 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "gui.h"
 #include "opaque.h"
-#include "bytecode.h"		/* for struct Lisp_Compiled_Function */
 
 #ifdef HAVE_POPUPS
 Lisp_Object Qmenu_no_selection_hook;
@@ -259,31 +258,8 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
       fn = Qrun_hooks;
       arg = Qmenu_no_selection_hook;
     }
-  else if (SYMBOLP (data)
-	   /* poor man's commandp
-	      #### should abstract it out! */
-	   || (COMPILED_FUNCTIONP (data)
-	       && XCOMPILED_FUNCTION (data)->flags.interactivep)
-	   || (EQ (XCAR (data), Qlambda)
-	       && !NILP (Fassq (Qinteractive, Fcdr (Fcdr (data))))))
-    {
-      fn = Qcall_interactively;
-      arg = data;
-    }
-  else if (CONSP (data))
-    {
-      fn = Qeval;
-      arg = data;
-    }
   else
-    {
-      fn = Qeval;
-      arg = list3 (Qsignal,
-                   list2 (Qquote, Qerror),
-                   list2 (Qquote, list2 (build_translated_string
-					 ("illegal popup callback"),
-                                         data)));
-    }
+    get_callback (data, &fn, &arg);
 
   /* This is the timestamp used for asserting focus so we need to get an
      up-to-date value event if no events has been dispatched to emacs

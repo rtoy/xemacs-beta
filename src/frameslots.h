@@ -21,6 +21,18 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30.  Split out of frame.h.  */
 
+#ifdef FRAME_SLOT_DECLARATION
+#define MARKED_SLOT_ARRAY(slot, size) MARKED_SLOT(slot[size])
+#else
+#define MARKED_SLOT_ARRAY(slot, size) do {		\
+    int mslotidx;					\
+    for (mslotidx = 0; mslotidx < size; mslotidx++)	\
+      {							\
+	MARKED_SLOT (slot[mslotidx]);			\
+      }							\
+  } while (0);
+#endif
+
   /* device frame belongs to. */
   MARKED_SLOT (device);
 
@@ -117,8 +129,23 @@ Boston, MA 02111-1307, USA.  */
   MARKED_SLOT (default_toolbar_height);
   MARKED_SLOT (default_toolbar_visible_p);
   MARKED_SLOT (default_toolbar_border_width);
+
+  /* List of toolbar buttons of current toolbars */
+  MARKED_SLOT_ARRAY (toolbar_buttons, 4);
+  /* Size of the toolbars.  The frame-local toolbar space is
+     subtracted before the windows are arranged.  Window and buffer
+     local toolbars overlay their windows. */
+  MARKED_SLOT_ARRAY (toolbar_size, 4);
+  /* Visibility of the toolbars.  This acts as a valve for toolbar_size. */
+  MARKED_SLOT_ARRAY (toolbar_visible_p, 4);
+  /* Thickness of the border around the toolbar. */
+  MARKED_SLOT_ARRAY (toolbar_border_width, 4);
 #endif
 
   /* Possible frame-local default for outside margin widths. */
   MARKED_SLOT (left_margin_width);
   MARKED_SLOT (right_margin_width);
+
+#undef MARKED_SLOT
+#undef MARKED_SLOT_ARRAY
+#undef FRAME_SLOT_DECLARATION

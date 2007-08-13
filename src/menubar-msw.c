@@ -615,40 +615,33 @@ Lisp_Object
 mswindows_handle_wm_command (struct frame* f, WORD id)
 {
   /* Try to map the command id through the proper hash table */
-  Lisp_Object command, funcsym, frame;
+  Lisp_Object data, fn, arg, frame;
   struct gcpro gcpro1;
 
-  command = Fgethash (make_int (id), current_hashtable, Qunbound);
-  if (UNBOUNDP (command))
+  data = Fgethash (make_int (id), current_hashtable, Qunbound);
+  if (UNBOUNDP (data))
     {
       menu_cleanup (f);
       return Qnil;
     }
 
-  /* Need to gcpro because the hashtable may get destroyed
-     by menu_cleanup(), and will not gcpro the command
-     any more */
-  GCPRO1 (command);
+  /* Need to gcpro because the hashtable may get destroyed by
+     menu_cleanup(), and will not gcpro the data any more */
+  GCPRO1 (data);
   menu_cleanup (f);
 
   /* Ok, this is our one. Enqueue it. */
-  if (SYMBOLP (command))
-      funcsym = Qcall_interactively;
-  else if (CONSP (command))
-      funcsym = Qeval;
-  else
-    signal_simple_error ("Callback must be either evallable form or a symbol",
-			 command);
+  get_callback (data, &fn, &arg);
 
   XSETFRAME (frame, f);
-  enqueue_misc_user_event (frame, funcsym, command);
+  enqueue_misc_user_event (frame, fn, arg);
 
   /* Needs good bump also, for WM_COMMAND may have been dispatched from
      mswindows_need_event, which will block again despite new command
      event has arrived */
   mswindows_bump_queue ();
 
-  UNGCPRO; /* command */
+  UNGCPRO; /* data */
   return Qt;
 }
 

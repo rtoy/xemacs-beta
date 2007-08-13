@@ -357,7 +357,7 @@ Returns the newly created itimer."
   (let ((oname name)
 	(num 2))
     (while (get-itimer name)
-      (setq name (concat oname "<" num ">"))
+      (setq name (format "%s<%d>" oname num))
       (itimer-increment num)))
   (activate-itimer (list name value restart function is-idle
 			 with-args function-arguments (list 0 0 0)))
@@ -395,7 +395,7 @@ its FUNCTION will be called when it expires, and so on."
 	    (oname "itimer-")
 	    (num 1))
 	(while (get-itimer name)
-	  (setq name (concat oname "<" num ">"))
+	  (setq name (format "%s<%d>" oname num))
 	  (itimer-increment num))
 	(setcar itimer name))
     ;; signal an error if the timer's name matches an already

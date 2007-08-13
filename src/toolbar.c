@@ -57,18 +57,6 @@ Lisp_Object Qinit_toolbar_from_resources;
 
 
 static Lisp_Object
-mark_toolbar_data (Lisp_Object obj, void (*markobj) (Lisp_Object))
-{
-  struct toolbar_data *data = (struct toolbar_data *) XPNTR (obj);
-  ((markobj) (data->last_toolbar_buffer));
-  return data->toolbar_buttons;
-}
-
-DEFINE_LRECORD_IMPLEMENTATION ("toolbar-data", toolbar_data,
-			       mark_toolbar_data, internal_object_printer,
-			       0, 0, 0, struct toolbar_data);
-
-static Lisp_Object
 mark_toolbar_button (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
   struct toolbar_button *data = (struct toolbar_button *) XPNTR (obj);
@@ -601,7 +589,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 void
 mark_frame_toolbar_buttons_dirty (struct frame *f, enum toolbar_pos pos)
 {
-  Lisp_Object button = FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons;
+  Lisp_Object button = FRAME_TOOLBAR_BUTTONS (f, pos);
 
   while (!NILP (button))
     {
@@ -621,7 +609,7 @@ compute_frame_toolbar_buttons (struct frame *f, enum toolbar_pos pos,
   int pushright_seen = 0;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
 
-  first_button = FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons;
+  first_button = FRAME_TOOLBAR_BUTTONS (f, pos);
   buttons = prev_button = first_button;
 
   /* Yes, we're being paranoid. */
@@ -724,36 +712,15 @@ compute_frame_toolbar_buttons (struct frame *f, enum toolbar_pos pos,
 static void
 set_frame_toolbar (struct frame *f, enum toolbar_pos pos)
 {
-  Lisp_Object toolbar, buttons;
   struct window *w = XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f));
-  Lisp_Object buffer = w->buffer;
-
-  if (!f->toolbar_changed
-      && !NILP (f->toolbar_data[pos])
-      && EQ (FRAME_TOOLBAR_DATA (f, pos)->last_toolbar_buffer, buffer))
-    return;
-  
-  toolbar = w->toolbar[pos];
-
-  if (NILP (f->toolbar_data[pos]))
-    {
-      struct toolbar_data *td = alloc_lcrecord_type (struct toolbar_data,
-						     lrecord_toolbar_data);
-
-      td->last_toolbar_buffer = Qnil;
-      td->toolbar_buttons = Qnil;
-      XSETTOOLBAR_DATA (f->toolbar_data[pos], td);
-    }
-
-  buttons = (FRAME_REAL_TOOLBAR_VISIBLE (f, pos)
-	     ? compute_frame_toolbar_buttons (f, pos, toolbar) : Qnil);
-
-  FRAME_TOOLBAR_DATA (f, pos)->last_toolbar_buffer = buffer;
-  FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons = buttons;
+  Lisp_Object toolbar = w->toolbar[pos];
+  f->toolbar_buttons[pos] = (FRAME_REAL_TOOLBAR_VISIBLE (f, pos)
+			     ? compute_frame_toolbar_buttons (f, pos, toolbar)
+			     : Qnil);
 }
 
 static void
-compute_frame_toolbars_data (struct frame *f, int first_time_p)
+compute_frame_toolbars_data (struct frame *f)
 {
   set_frame_toolbar (f, TOP_TOOLBAR);			 
   set_frame_toolbar (f, BOTTOM_TOOLBAR);			 
@@ -765,33 +732,39 @@ void
 update_frame_toolbars (struct frame *f)
 {
   struct device *d = XDEVICE (f->device);
-  Lisp_Object buffer = XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer;
 
-  /* If the buffer of the selected window is not equal to the
-     last_toolbar_buffer value for any of the toolbars, then the
-     toolbars need to be recomputed. */
-  if ((HAS_DEVMETH_P (d, output_frame_toolbars))
-      && (f->toolbar_changed || f->frame_changed || f->clear
-	  || !EQ (FRAME_TOOLBAR_BUFFER (f, TOP_TOOLBAR), buffer)
-	  || !EQ (FRAME_TOOLBAR_BUFFER (f, BOTTOM_TOOLBAR), buffer)
-	  || !EQ (FRAME_TOOLBAR_BUFFER (f, LEFT_TOOLBAR), buffer)
-	  || !EQ (FRAME_TOOLBAR_BUFFER (f, RIGHT_TOOLBAR), buffer)))
+  if (DEVICE_SUPPORTS_TOOLBARS_P (d)
+      && (f->toolbar_changed || f->frame_changed || f->clear))
     {
-      int width, height;
+      int pos;
+      
+      /* We're not officially "in redisplay", so we still have a
+	 chance to re-layout toolbars and windows. This is done here,
+	 because toolbar is the only thing which currently might
+	 necesseritate this layout, as it is outside any windows. We
+	 take care not to change size if toolbar geometry is really
+	 unchanged, as it will hose windows whose pixsizes are not
+	 multiple of character sizes */
 
-      /* We're not officially "in redisplay", so we still have a chance
-	 to re-layout toolbars and windows. This is done here, because
-	 toolbar is the only thing which currently might necesseritate
-	 this layout, as it is outside any windows */
-      pixel_to_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
-			  &width, &height);
-      change_frame_size (f, height, width, 0);
+      for (pos = 0; pos < 4; pos++)
+	if (FRAME_REAL_TOOLBAR_SIZE (f, pos)
+	    != FRAME_CURRENT_TOOLBAR_SIZE (f, pos))
+	  {
+	    int width, height;
+	    pixel_to_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
+				&width, &height);
+	    change_frame_size (f, height, width, 0);
+	    break;
+	  }
+
+      for (pos = 0; pos < 4; pos++)
+	f->current_toolbar_size[pos] = FRAME_REAL_TOOLBAR_SIZE (f, pos);
 
       /* Removed the check for the minibuffer here.  We handle this
 	 more correctly now by consistently using
 	 FRAME_LAST_NONMINIBUF_WINDOW instead of FRAME_SELECTED_WINDOW
 	 throughout the toolbar code. */
-      compute_frame_toolbars_data (f, 0);
+      compute_frame_toolbars_data (f);
 
       DEVMETH (d, output_frame_toolbars, (f));
     }
@@ -804,18 +777,24 @@ init_frame_toolbars (struct frame *f)
 {
   struct device *d = XDEVICE (f->device);
 
-  /* If there isn't any output routine, then this device type doesn't
-     support toolbars. */
-  if (HAS_DEVMETH_P (d, output_frame_toolbars))
+  if (DEVICE_SUPPORTS_TOOLBARS_P (d))
     {
       Lisp_Object frame;
+      int pos;
 
-      compute_frame_toolbars_data (f, 1);
+      compute_frame_toolbars_data (f);
       XSETFRAME (frame, f);
       call_critical_lisp_code (XDEVICE (FRAME_DEVICE (f)),
 			       Qinit_toolbar_from_resources,
 			       frame);
       MAYBE_DEVMETH (d, initialize_frame_toolbars, (f));
+
+      /* We are here as far in frame creation so cached specifiers are
+	 already recomputed, and possibly modified by resource
+	 initialization. Remember current toolbar geometry so next
+	 redisplay will not needlessly relayout toolbars. */
+      for (pos = 0; pos < 4; pos++)
+	f->current_toolbar_size[pos] = FRAME_REAL_TOOLBAR_SIZE (f, pos);
     }
 }
 
@@ -825,7 +804,7 @@ init_device_toolbars (struct device *d)
   Lisp_Object device;
 
   XSETDEVICE (device, d);
-  if (HAS_DEVMETH_P (d, output_frame_toolbars))
+  if (DEVICE_SUPPORTS_TOOLBARS_P (d))
     call_critical_lisp_code (d,
 			     Qinit_toolbar_from_resources,
 			     device);
@@ -834,7 +813,7 @@ init_device_toolbars (struct device *d)
 void
 init_global_toolbars (struct device *d)
 {
-  if (HAS_DEVMETH_P (d, output_frame_toolbars))
+  if (DEVICE_SUPPORTS_TOOLBARS_P (d))
     call_critical_lisp_code (d,
 			     Qinit_toolbar_from_resources,
 			     Qglobal);
@@ -922,7 +901,7 @@ get_toolbar_coords (struct frame *f, enum toolbar_pos pos, int *x, int *y,
       if ((x_coord >= x) && (x_coord < (x + width)))			\
 	{								\
 	  if ((y_coord >= y) && (y_coord < (y + height)))		\
-	    return FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons;	\
+	    return FRAME_TOOLBAR_BUTTONS (f, pos);			\
 	}								\
     } while (0)
 

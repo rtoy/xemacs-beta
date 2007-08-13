@@ -219,15 +219,7 @@ x_popup_dialog_box (struct frame* f, Lisp_Object dbox_desc)
   int dbox_id;
   widget_value *data;
   Widget parent, dbox;
-  Lisp_Object frame;
 
-  XSETFRAME (frame, f);
-
-  CHECK_X_FRAME (frame);
-  if (SYMBOLP (dbox_desc))
-    dbox_desc = Fsymbol_value (dbox_desc);
-  CHECK_CONS (dbox_desc);
-  CHECK_STRING (XCAR (dbox_desc));
   data = dbox_descriptor_to_widget_value (dbox_desc);
 
   parent = FRAME_X_SHELL_WIDGET (f);

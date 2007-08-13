@@ -753,6 +753,7 @@ of the start of the containing expression."
 (put 'save-selected-window 'lisp-indent-function 0)
 (put 'save-selected-frame 'lisp-indent-function 0)
 (put 'with-selected-frame 'lisp-indent-function 1)
+(put 'with-specifier-instance 'lisp-indent-function 3)
 (put 'save-restriction 'lisp-indent-function 0)
 (put 'save-match-data 'lisp-indent-function 0)
 (put 'let 'lisp-indent-function 1)

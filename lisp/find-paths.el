@@ -36,40 +36,52 @@
 
 ;;; Code:
 
-(defvar paths-version-control-bases '("RCS" "CVS" "SCCS")
+(defvar paths-version-control-filename-regexp
+  "^\\(RCS\\|CVS\\|SCCS\\)$"
   "File bases associated with version control.")
 
-(defun paths-find-recursive-path (directories &optional max-depth exclude)
+(defvar paths-lisp-filename-regexp
+  "^\\(.*\\.elc?\\)$"
+  "File bases that contain Lisp file.")
+
+(defvar paths-no-lisp-directory-regexp
+  (concat "\\(" paths-version-control-filename-regexp "\\)"
+	  "\\|"
+	  "\\(" paths-lisp-filename-regexp "\\)")
+  "File bases that may not be directories containing Lisp code.")
+
+(defun paths-find-recursive-path (directories &optional max-depth exclude-regexp)
   "Return a list of the directory hierarchy underneath DIRECTORIES.
 The returned list is sorted by pre-order and lexicographically.
 MAX-DEPTH limits the depth of the search to MAX-DEPTH level,
 if it is a number.  If MAX-DEPTH is NIL, the search depth is unlimited.
-EXCLUDE is a list of directory names to exclude from the search."
+EXCLUDE-REGEXP is a regexp that matches directory names to exclude
+from the search."
   (let ((path '()))
     (while directories
       (let ((directory (file-name-as-directory
 			(expand-file-name
 			 (car directories)))))
 	(if (file-directory-p directory)
-	    (let ((raw-dirs
+	    (let ((raw-entries
 		   (if (equal 0 max-depth)
 		       '()
-		     (directory-files directory nil "^[^-.]" nil 'dirs-only)))
+		       (directory-files directory nil "^[^.-]")))
 		  (reverse-dirs '()))
 
-	      (while raw-dirs
-		(if (null (member (car raw-dirs) exclude))
+	      (while raw-entries
+		(if (null (string-match exclude-regexp (car raw-entries)))
 		    (setq reverse-dirs
-			  (cons (expand-file-name (car raw-dirs) directory)
+			  (cons (expand-file-name (car raw-entries) directory)
 				reverse-dirs)))
-		(setq raw-dirs (cdr raw-dirs)))
+		(setq raw-entries (cdr raw-entries)))
 
 	      (let ((sub-path
 		     (paths-find-recursive-path (reverse reverse-dirs)
 						(if (numberp max-depth)
 						    (- max-depth 1)
 						  max-depth)
-						exclude)))
+						exclude-regexp)))
 		(setq path (nconc path
 				  (list directory)
 				  sub-path))))))
@@ -79,7 +91,7 @@ EXCLUDE is a list of directory names to exclude from the search."
 (defun paths-find-recursive-load-path (directories &optional max-depth)
   "Construct a recursive load path underneath DIRECTORIES."
   (paths-find-recursive-path directories
-			     max-depth  paths-version-control-bases))
+			     max-depth paths-no-lisp-directory-regexp))
 
 (defun paths-emacs-root-p (directory)
   "Check if DIRECTORY is a plausible installation root for XEmacs."

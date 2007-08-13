@@ -930,6 +930,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_print ();
 #if !defined (NO_SUBPROCESSES)
       syms_of_process ();
+#ifdef HAVE_WIN32_PROCESSES
+      syms_of_process_nt ();
+#endif
 #endif
       syms_of_profile ();
 #if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined(DOUG_LEA_MALLOC)
@@ -1108,6 +1111,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
 #ifdef HAVE_TOOLBARS
       console_type_create_toolbar_mswindows ();
+#endif
+#ifdef HAVE_DIALOGS
+      console_type_create_dialog_mswindows ();
 #endif
 #endif
 
@@ -1381,6 +1387,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
 #ifdef HAVE_MSW_C_DIRED
       vars_of_dired_mswindows ();
+#endif
+#ifdef HAVE_DIALOGS
+      vars_of_dialog_mswindows ();
 #endif
 #endif	/* HAVE_MS_WINDOWS */
 

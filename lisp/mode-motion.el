@@ -32,6 +32,7 @@
 
 (defvar mode-motion-hook nil
   "Function or functions which are called whenever the mouse moves.
+Each function must take a single argument of the motion event.
 You should normally use this rather than `mouse-motion-handler', which 
 does some additional window-system-dependent things.  This hook is local
 to every buffer, and should normally be set up by major-modes which want

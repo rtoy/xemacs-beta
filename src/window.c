@@ -719,7 +719,7 @@ window_truncation_on (struct window *w)
   return 0;
 }
 
-int
+static int
 have_undivided_common_edge (struct window *w_right, void *closure)
 {
   struct window *w_left = (struct window *) closure;
@@ -754,8 +754,8 @@ window_needs_vertical_divider_1 (struct window *w)
 #endif
 
   /* Ok. to determine whether we need a divider on the left, we must
-     check that out right neighbor windows have scrollbars on their
-     left sides. We mist check all such windows which have common
+     check that our right neighbor windows have scrollbars on their
+     left sides. We must check all such windows which have common
      left edge with our window's right edge. */
   return map_windows (XFRAME (WINDOW_FRAME (w)),
 		      have_undivided_common_edge, (void*)w);
@@ -4359,7 +4359,7 @@ map_windows_1 (Lisp_Object window,
    non-zero, the mapping is halted.  Otherwise, map_windows() maps
    over all windows in F.
 
-   If MAPFUN create or delete windows, the behaviour is undefined.  */
+   If MAPFUN creates or deletes windows, the behaviour is undefined.  */
 
 int
 map_windows (struct frame *f, int (*mapfun) (struct window *w, void *closure),
@@ -4379,6 +4379,8 @@ map_windows (struct frame *f, int (*mapfun) (struct window *w, void *closure),
 	    return v;
 	}
     }
+
+  return 0;
 }
 
 
@@ -5586,7 +5588,6 @@ instance of this specifier is zero in a TTY window, no divider is
 drawn at all between windows. When non-zero, one character wide
 divider is displayed.
 
-*Whether the modeline should be displayed.
 This is a specifier; use `set-specifier' to change it.
 */ );
 
@@ -5627,7 +5628,7 @@ This is a specifier; use `set-specifier' to change it.
 #endif
 #ifdef HAVE_X_WINDOWS
     /* #### 3D dividers look great on MS Windows with spacing = 0.
-       Shoud not the same value be the fallback under X? - kkm */
+       Should not the same value be the fallback under X? - kkm */
     fb = Fcons (Fcons (list1 (Qx), make_int (2)), fb);
 #endif
 #ifdef HAVE_MS_WINDOWS

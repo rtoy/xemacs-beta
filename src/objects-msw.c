@@ -815,7 +815,6 @@ mswindows_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object 
     {
       c->data = xnew (struct mswindows_color_instance_data);
       COLOR_INSTANCE_MSWINDOWS_COLOR (c) = color;
-      COLOR_INSTANCE_MSWINDOWS_BRUSH (c) = CreateSolidBrush (color);
       return 1;
     }
   maybe_signal_simple_error ("unrecognized color", name, Qcolor, errb);
@@ -847,7 +846,6 @@ mswindows_finalize_color_instance (struct Lisp_Color_Instance *c)
 {
   if (c->data)
     {
-      DeleteObject (COLOR_INSTANCE_MSWINDOWS_BRUSH (c));
       xfree (c->data);
       c->data = 0;
     }
@@ -913,7 +911,7 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
    * mswindows fonts look like:
    *	fontname[:[weight ][style][:pointsize[:effects[:charset]]]]
    * The font name field shouldn't be empty.
-   * XXX Windows will substitute a default (monospace) font if the font name
+   * #### Windows will substitute a default (monospace) font if the font name
    * specifies a non-existent font. We don't catch this.
    * effects and charset are currently ignored.
    *
@@ -1005,7 +1003,7 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
 
     if (style)
     {
-      /* XXX what about oblique? */
+      /* #### what about oblique? */
       if (stricmp (style,"italic") == 0)
 	logfont.lfItalic = TRUE;
       else if (stricmp (style,"roman") == 0)
@@ -1028,7 +1026,7 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
     logfont.lfItalic = FALSE;
   }
 
-  /* XXX Should we reject strings that don't specify a size? */
+  /* #### Should we reject strings that don't specify a size? */
   if (fields < 3 || !strlen(points) || (pt=atoi(points))==0)
     pt = 10;
 
@@ -1039,13 +1037,55 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
   /* Default to monospaced if the specified font name is not found */
   logfont.lfPitchAndFamily = FF_MODERN;
 
-  /* XXX: FIXME? */
+  /* ####: FIXME? */
   logfont.lfUnderline = FALSE;
   logfont.lfStrikeOut = FALSE;
 
-  /* XXX: FIXME: we ignore charset */
-  logfont.lfCharSet = DEFAULT_CHARSET;
 
+#define FROB(cs)				\
+  else if (stricmp (charset, #cs) == 0)		\
+    logfont.lfCharSet = cs##_CHARSET
+
+  /* Charset aliases. Hangeul = Hangul is defined in windows.h.
+     We do not use the name "russian", only "cyrillic", as it is
+     the common name of this charset, used in other languages
+     than Russian. */
+#define CYRILLIC_CHARSET RUSSIAN_CHARSET
+#define CENTRALEUROPEAN_CHARSET EASTEUROPE_CHARSET
+
+  if (fields > 4)
+    {
+      if (charset[0] == '\0' || stricmp (charset, "ansi") == 0)
+	logfont.lfCharSet = ANSI_CHARSET;
+      FROB (DEFAULT); /* #### Should we alow this? */
+      FROB (SYMBOL);
+      FROB (SHIFTJIS);
+      FROB (GB2312);
+      FROB (HANGEUL);
+      FROB (CHINESEBIG5);
+      FROB (OEM);
+      FROB (JOHAB);
+      FROB (HEBREW);
+      FROB (ARABIC);
+      FROB (GREEK);
+      FROB (TURKISH);
+      FROB (THAI);
+      FROB (EASTEUROPE);
+      FROB (CENTRALEUROPEAN);
+      FROB (CYRILLIC);
+      FROB (MAC);
+      FROB (BALTIC);
+      else
+	{
+	  maybe_signal_simple_error ("Invalid charset name", f->name, Qfont, errb);
+	  return 0;
+	}
+    }
+  else
+    logfont.lfCharSet = ANSI_CHARSET;
+
+#undef FROB
+      
   /* Misc crud */
   logfont.lfEscapement = logfont.lfOrientation = 0;
 #if 1
@@ -1111,7 +1151,7 @@ mswindows_print_font_instance (struct Lisp_Font_Instance *f,
 static Lisp_Object
 mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device)
 {
-  /* XXX Implement me */
+  /* #### Implement me */
   return list1 (build_string ("Courier New:Regular:10"));
 }
 
@@ -1122,7 +1162,7 @@ mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 			     CONST Bufbyte *nonreloc, Lisp_Object reloc,
 			     Bytecount offset, Bytecount length)
 {
-  /* XXX Implement me */
+  /* #### Implement me */
   if (UNBOUNDP (charset))
     return 1;
   
@@ -1135,7 +1175,7 @@ static Lisp_Object
 mswindows_find_charset_font (Lisp_Object device, Lisp_Object font,
 		     Lisp_Object charset)
 {
-  /* XXX Implement me */
+  /* #### Implement me */
   return build_string ("Courier New:Regular:10");
 }
 

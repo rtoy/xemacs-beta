@@ -105,6 +105,10 @@ result to the current buffer.
 ** The `C-h c' command, when given a prefix argument, will now insert
 the message into the current buffer.
 
+** Horizontally split windows may now be dragged using the mouse.  The
+draggable vertical dividers may be turned off using the
+`vertical-divider-draggable-p' specifier.
+
 ** XEmacs/Mule (internationalization) changes.
 
 *** Mule support now works on TTY's.  Use `set-terminal-coding-system'
@@ -125,7 +129,7 @@ gdb buffer be mouse-sensitive: as text shows up in the buffer, it is
 parsed, and objects which are recognized have context-sensitive
 commands attached to them.  To use it, add the following to `.emacs':
 
-  (add-hook 'gdb-mode-hook '(lambda () (require 'gdb-highlight)))
+  (add-hook 'gdb-mode-hook (lambda () (require 'gdb-highlight)))
 
 ** C mode changes
 
@@ -198,6 +202,32 @@ change, the maximum buffer size on 32-bit machines is increased from
 128M to 1G.  This setting will be made default in a future XEmacs
 version.
 
+** Specifier changes.
+
+*** When instantiating a specifier, the window locale now has a higher
+precedence than the buffer locale.  This is because the window locale
+is more specific than the buffer locale.
+
+*** The new specifiers `vertical-scrollbar-visible-p' and
+`horizontal-scrollbar-visible-p' may be used to control scrollbar
+visibility.  Previously, the only way to toggle scrollbar visibility
+was to set a scrollbar's size to 0.  This method is still supported
+for backward compatibility.
+
+*** The new specifiers `scrollbar-on-left-p' and `scrollbar-on-top-p'
+may be used to control the position of the vertical and horizontal
+toolbar.  Previously, their position could be changed only through the
+use of X resources.
+
+*** The new draggable vertical dividers between windows may be turned
+off using the `vertical-divider-draggable-p' specifier.  When this is
+set to nil, the vertical dividers between windows are shown only when
+needed, and they are not draggable.
+
+Other properties of the vertical dividers may be controlled using
+`vertical-divider-shadow-thickness', `vertical-divider-line-width' and 
+`vertical-divider-spacing' specifiers, which see.
+
 ** Frame focus management changes.
 
 *** When the variable focus-follows-mouse is non-nil, `select-frame'
@@ -220,14 +250,6 @@ can now be used to temporarily change selected frame.
 
 *** The behavior of `other-frame' command (`C-x 5 o') is unaffected by
 these changes.
-
-** It is now possible to build XEmacs with LDAP support
-You need to install a LDAP library first.  The following have been
-tested: 
-  - LDAP 3.3 from the University of Michigan 
-    (http://www.umich.edu/~dirsvcs/ldap/)
-  - LDAP SDK 1.0 from Netscape Corp.
-    (http://developer.netscape.com)
 
 ** The arithmetic comparison functions <, >, =, /= now accept a
 variable number of arguments.
@@ -252,21 +274,18 @@ instance:
 
    #<hashtable size 2/13 data (key1 value1 key2 value2) 0x874d>
 
-** The new specifiers `vertical-scrollbar-visible-p' and
-`horizontal-scrollbar-visible-p' may be used to control scrollbar
-visibility.  Previously, the only way to toggle scrollbar visibility
-was to set a scrollbar's size to 0.  This method is still supported
-for backward compatibility.
-
-** The new specifiers `scrollbar-on-left-p' and `scrollbar-on-top-p'
-may be used to control the position of the vertical and horizontal
-toolbar.  Previously, their position could be changed only through the
-use of X resources.
+** It is now possible to build XEmacs with LDAP support.
+You will need to install a LDAP library first.  The following have
+been tested:
+  - LDAP 3.3 from the University of Michigan 
+    (get it from <URL:http://www.umich.edu/~dirsvcs/ldap/>)
+  - LDAP SDK 1.0 from Netscape Corp.
+    (get it from <URL:http://developer.netscape.com/>)
 
 ** When profiling is in effect, a call-count of all recorded functions
 is now calculated.  This information is stored in
 `call-count-profile-table', and is utilized by `profile-results' as
-well as the new function `profile-call-count-results'.
+well as the new command `profile-call-count-results'.
 
 ** It is now an error to change the value of a symbol whose name
 starts with a colon, if it is interned in the standard obarray.

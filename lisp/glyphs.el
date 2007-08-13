@@ -660,6 +660,12 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
   (set-glyph-image invisible-text-glyph " ...")
   ;; (set-glyph-image hscroll-glyph "$")
 
+  (let ((face (make-face 'border-glyph
+			 "Truncation and continuation glyphs face")))
+    (set-glyph-face continuation-glyph face)
+    (set-glyph-face truncation-glyph face)
+    (set-glyph-face hscroll-glyph face))
+
   ;; finish initializing xemacs logo -- created internally because it
   ;; has a built-in bitmap
   (if (featurep 'xpm)

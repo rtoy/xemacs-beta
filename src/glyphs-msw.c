@@ -26,6 +26,8 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 #include "lstream.h"
+
+#define OEMRESOURCE /* Define OCR_ and friend constants */
 #include "console-msw.h"
 #include "glyphs-msw.h"
 #include "objects-msw.h"
@@ -47,8 +49,8 @@ Lisp_Object Qbmp;
 Lisp_Object Vmswindows_bitmap_file_path;
 static	COLORREF transparent_color = RGB (1,1,1);
 
-DEFINE_IMAGE_INSTANTIATOR_FORMAT (cursor);
-Lisp_Object Qcursor;
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (resource);
+Lisp_Object Qresource;
 Lisp_Object Q_resource_type, Q_resource_id;
 
 static void
@@ -160,9 +162,9 @@ static BITMAPINFO* convert_EImage_to_DIBitmap (Lisp_Object device,
       
       /* build up an RGBQUAD colortable */
       for (i = 0; i < qtable->num_active_colors; i++) {
-	colortbl[i].rgbRed = qtable->rm[i];
-	colortbl[i].rgbGreen = qtable->gm[i];
-	colortbl[i].rgbBlue = qtable->bm[i];
+	colortbl[i].rgbRed = (BYTE) qtable->rm[i];
+	colortbl[i].rgbGreen = (BYTE) qtable->gm[i];
+	colortbl[i].rgbBlue = (BYTE) qtable->bm[i];
 	colortbl[i].rgbReserved = 0;
       }
 
@@ -448,20 +450,21 @@ mswindows_initialize_image_instance_icon (struct Lisp_Image_Instance* image,
     CreateIconIndirect (&x_icon);
 }
 
-int
-mswindows_resize_dibitmap_instance (struct Lisp_Image_Instance* ii,
-				    struct frame* f,
-				    int newx, int newy)
+HBITMAP
+mswindows_create_resized_bitmap (struct Lisp_Image_Instance* ii,
+				 struct frame* f,
+				 int newx, int newy)
 {
-  HBITMAP newbmp, newmask=NULL;
+  HBITMAP newbmp;
+  HGDIOBJ old1, old2;
   HDC hcdc = FRAME_MSWINDOWS_CDC (f);
   HDC hdcDst = CreateCompatibleDC (hcdc);  
   
-  SelectObject (hcdc, IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii)); 
+  old1 = SelectObject (hcdc, IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii)); 
   
   newbmp = CreateCompatibleBitmap (hcdc, newx, newy);
 
-  DeleteObject (SelectObject (hdcDst, newbmp) );
+  old2 = SelectObject (hdcDst, newbmp);
   
   if (!StretchBlt (hdcDst, 0, 0, newx, newy,
 		   hcdc, 0, 0, 
@@ -469,14 +472,31 @@ mswindows_resize_dibitmap_instance (struct Lisp_Image_Instance* ii,
 		   IMAGE_INSTANCE_PIXMAP_HEIGHT (ii), 
 		   SRCCOPY))
     {
-      return FALSE;
+      return 0;
     }
 
+  SelectObject (hdcDst, old2);
+  SelectObject (hcdc, old1);
+  DeleteDC (hdcDst);
+
+  return newbmp;
+}
+
+HBITMAP
+mswindows_create_resized_mask (struct Lisp_Image_Instance* ii,
+			       struct frame* f,
+			       int newx, int newy)
+{
   if (IMAGE_INSTANCE_MSWINDOWS_MASK (ii))
     {
-      SelectObject (hcdc, IMAGE_INSTANCE_MSWINDOWS_MASK (ii)); 
+      HBITMAP newmask;
+      HGDIOBJ old1, old2;
+      HDC hcdc = FRAME_MSWINDOWS_CDC (f);
+      HDC hdcDst = CreateCompatibleDC (hcdc);  
+  
+      old1 = SelectObject (hcdc, IMAGE_INSTANCE_MSWINDOWS_MASK (ii)); 
       newmask = CreateCompatibleBitmap(hcdc, newx, newy);
-      SelectObject (hdcDst, newmask);
+      old2 = SelectObject (hdcDst, newmask);
 
       if (!StretchBlt(hdcDst, 0, 0, newx, newy,
 		      hcdc, 0, 0, 
@@ -484,12 +504,30 @@ mswindows_resize_dibitmap_instance (struct Lisp_Image_Instance* ii,
 		      IMAGE_INSTANCE_PIXMAP_HEIGHT (ii), 
 		      SRCCOPY))
 	{
-	  return FALSE;
+	  return NULL;
 	}
+      
+      SelectObject (hdcDst, old2);
+      SelectObject (hcdc, old1);
+
+      DeleteDC (hdcDst);
+
+      return newmask;
     }
 
-  SelectObject (hdcDst, 0);
-  SelectObject (hcdc, 0);
+  return NULL;
+}
+
+int
+mswindows_resize_dibitmap_instance (struct Lisp_Image_Instance* ii,
+				    struct frame* f,
+				    int newx, int newy)
+{
+  HBITMAP newbmp = mswindows_create_resized_bitmap (ii, f, newx, newy);
+  HBITMAP newmask = mswindows_create_resized_mask (ii, f, newx, newy);
+
+  if (!newbmp)
+    return FALSE;
   
   if (IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii))
     DeleteObject (IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii));
@@ -500,8 +538,6 @@ mswindows_resize_dibitmap_instance (struct Lisp_Image_Instance* ii,
   IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = newmask;
   IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = newx;
   IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = newy;
-
-  DeleteDC (hdcDst);
 
   return TRUE;
 }
@@ -839,11 +875,11 @@ bmp_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 
 /**********************************************************************
- *                               CURSORS                              *
+ *                             RESOURCES                              *
  **********************************************************************/
 
 static void
-cursor_validate (Lisp_Object instantiator)
+resource_validate (Lisp_Object instantiator)
 {
   if ((NILP (find_keyword_in_vector (instantiator, Q_file)) 
        &&
@@ -855,7 +891,7 @@ cursor_validate (Lisp_Object instantiator)
 }
 
 static Lisp_Object
-cursor_normalize (Lisp_Object inst, Lisp_Object console_type)
+resource_normalize (Lisp_Object inst, Lisp_Object console_type)
 {
   /* This function can call lisp */
   Lisp_Object file = Qnil;
@@ -883,14 +919,14 @@ cursor_normalize (Lisp_Object inst, Lisp_Object console_type)
   }
 
   {
-    Lisp_Object result = alist_to_tagged_vector (Qcursor, alist);
+    Lisp_Object result = alist_to_tagged_vector (Qresource, alist);
     free_alist (alist);
     RETURN_UNGCPRO (result);
   }
 }
 
 static int
-cursor_possible_dest_types (void)
+resource_possible_dest_types (void)
 {
   return IMAGE_POINTER_MASK | IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -912,7 +948,7 @@ typedef struct
 #define LR_SHARED           0x8000
 #endif
 
-static CONST resource_t resource_table[] = 
+static CONST resource_t bitmap_table[] = 
 {
   /* bitmaps */
   { "close", OBM_CLOSE },
@@ -941,6 +977,11 @@ static CONST resource_t resource_table[] =
   { "check", OBM_CHECK },
   { "cehckboxes", OBM_CHECKBOXES },
   { "btncorners" , OBM_BTNCORNERS },
+  {0}
+};
+
+static CONST resource_t cursor_table[] = 
+{
   /* cursors */
   { "normal", OCR_NORMAL },
   { "ibeam", OCR_IBEAM },
@@ -955,6 +996,11 @@ static CONST resource_t resource_table[] =
   { "sizeall", OCR_SIZEALL },
   /* { "icour", OCR_ICOCUR }, */
   { "no", OCR_NO },
+  { 0 }
+};
+
+static CONST resource_t icon_table[] = 
+{
   /* icons */
   { "sample", OIC_SAMPLE },
   { "hand", OIC_HAND },
@@ -965,9 +1011,11 @@ static CONST resource_t resource_table[] =
   {0}
 };
 
-static int cursor_name_to_resource (Lisp_Object name)
+static int resource_name_to_resource (Lisp_Object name, int type)
 {
-  CONST resource_t* res = resource_table;
+  CONST resource_t* res = (type == IMAGE_CURSOR ? cursor_table 
+			   : type == IMAGE_ICON ? icon_table 
+			   : bitmap_table);
 
   if (INTP (name))
     {
@@ -985,8 +1033,21 @@ static int cursor_name_to_resource (Lisp_Object name)
   return 0;
 }
 
+static int
+resource_symbol_to_type (Lisp_Object data)
+{
+  if (EQ (data, Qcursor))
+    return IMAGE_CURSOR;
+  else if (EQ (data, Qicon))
+    return IMAGE_ICON;
+  else if (EQ (data, Qbitmap))
+    return IMAGE_BITMAP;
+  else
+    return 0;
+}
+
 static void
-cursor_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+resource_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		    Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		    int dest_mask, Lisp_Object domain)
 {
@@ -994,7 +1055,10 @@ cursor_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   unsigned int type = 0;
   HANDLE himage = NULL;
   LPCTSTR resid=0;
+  HINSTANCE hinst = NULL;
+  ICONINFO iconinfo;
   int iitype=0;
+  char* fname=0;
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
 
   Lisp_Object file = find_keyword_in_vector (instantiator, Q_file);
@@ -1003,27 +1067,12 @@ cursor_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object resource_id = find_keyword_in_vector (instantiator, 
 						    Q_resource_id);
 
+  xzero (iconinfo);
+
   if (!DEVICE_MSWINDOWS_P (XDEVICE (device)))
     signal_simple_error ("Not an mswindows device", device);
 
-  assert (!NILP (resource_type) && !NILP (resource_id));
-
-  /* check the resource type */
-  if (!SYMBOLP (resource_type))
-    {
-      signal_simple_error ("invalid resource type", resource_type);
-    }
-  if (!strcmp ((char *) string_data (XSYMBOL (resource_type)->name),
-	       "bitmap"))
-    type = IMAGE_BITMAP;
-  else if (!strcmp ((char *) string_data (XSYMBOL (resource_type)->name),
-	       "cursor"))
-    type = IMAGE_CURSOR;
-  else if (!strcmp ((char *) string_data (XSYMBOL (resource_type)->name),
-	       "icon"))
-    type = IMAGE_ICON;
-  else
-    signal_simple_error ("invalid resource type", resource_type);
+  type = resource_symbol_to_type (resource_type);
 
   if (dest_mask & IMAGE_POINTER_MASK && type == IMAGE_CURSOR)
     iitype = IMAGE_POINTER;
@@ -1033,13 +1082,35 @@ cursor_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     incompatible_image_types (instantiator, dest_mask,
 			      IMAGE_COLOR_PIXMAP_MASK | IMAGE_POINTER_MASK);
 
+  /* mess with the keyword info we were provided with */
   if (!NILP (file))
-    resid = (LPCTSTR)XSTRING_DATA (file);
-  else if (!(resid = MAKEINTRESOURCE(cursor_name_to_resource (resource_id))))
-    signal_simple_error ("invalid resource id", resource_id);
+    {
+#ifdef __CYGWIN32__
+      CYGWIN_WIN32_PATH (XSTRING_DATA (file), fname);
+#else
+      /* #### FIXME someone who knows ... */
+      fname = XSTRING_DATA (file);
+#endif
+      
+      if (NILP (resource_id))
+	resid = (LPCTSTR)fname;
+      else
+	{
+	  hinst = LoadLibraryEx (fname, NULL,
+				 LOAD_LIBRARY_AS_DATAFILE);
+	  resid = MAKEINTRESOURCE (resource_name_to_resource (resource_id,
+							   type));
+	  
+	  if (!resid)
+	    resid = XSTRING_DATA (resource_id);
+	}
+    }
+  else if (!(resid = MAKEINTRESOURCE (resource_name_to_resource (resource_id,
+							       type))))
+    signal_simple_error ("invalid resource identifier", resource_id);
   
   /* load the image */
-  if (!(himage = LoadImage (NULL, resid, type, 0, 0,
+  if (!(himage = LoadImage (hinst, resid, type, 0, 0,
 			    LR_CREATEDIBSECTION | LR_DEFAULTSIZE | 
 			    LR_SHARED |      
 			    (!NILP (file) ? LR_LOADFROMFILE : 0))))
@@ -1047,25 +1118,56 @@ cursor_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       signal_simple_error ("cannot load image", instantiator);
     }
 
+  if (hinst)
+    FreeLibrary (hinst);
+
   mswindows_initialize_dibitmap_image_instance (ii, iitype);
 
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) = file;
-  IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = (type==IMAGE_BITMAP ? himage : NULL);
-  IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = NULL;
-  IMAGE_INSTANCE_MSWINDOWS_ICON (ii) = (type!=IMAGE_BITMAP ? himage : NULL);
   IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = 
-    (type == IMAGE_CURSOR ? SM_CXCURSOR : SM_CXICON);
+    GetSystemMetrics (type == IMAGE_CURSOR ? SM_CXCURSOR : SM_CXICON);
   IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = 
-    (type == IMAGE_CURSOR ? SM_CYCURSOR : SM_CYICON);
-  IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = 0;
-  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), 0);
-  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), 0);
+    GetSystemMetrics (type == IMAGE_CURSOR ? SM_CYCURSOR : SM_CYICON);
+  IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = 1;
+
+  /* hey, we've got an icon type thing so we can reverse engineer the
+     bitmap and mask */
+  if (type != IMAGE_BITMAP)
+    {
+      GetIconInfo (himage, &iconinfo);
+      IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = iconinfo.hbmColor;
+      IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = iconinfo.hbmMask;
+      XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), iconinfo.xHotspot);
+      XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), iconinfo.yHotspot);
+      IMAGE_INSTANCE_MSWINDOWS_ICON (ii) = himage;
+    }
+  else
+    {
+      IMAGE_INSTANCE_MSWINDOWS_ICON (ii) = NULL;
+      IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = himage;
+      IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = NULL;
+      XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), 0);
+      XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), 0);
+    }
 }
 
-void
-check_valid_symbol (Lisp_Object data)
+static void
+check_valid_resource_symbol (Lisp_Object data)
 {
   CHECK_SYMBOL (data);
+  if (!resource_symbol_to_type (data))
+    signal_simple_error ("invalid resource type", data);
+}
+
+static void
+check_valid_resource_id (Lisp_Object data)
+{
+  if (!resource_name_to_resource (data, IMAGE_CURSOR)
+      &&
+      !resource_name_to_resource (data, IMAGE_ICON)
+      &&
+      !resource_name_to_resource (data, IMAGE_BITMAP))
+    signal_simple_error ("invalid resource identifier", data);
 }
 
 void
@@ -1230,23 +1332,24 @@ image_instantiator_format_create_glyphs_mswindows (void)
   IIFORMAT_VALID_KEYWORD (bmp, Q_data, check_valid_string);
   IIFORMAT_VALID_KEYWORD (bmp, Q_file, check_valid_string);
 
-  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (cursor, "cursor");
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (resource, "resource");
 
-  IIFORMAT_HAS_METHOD (cursor, validate);
-  IIFORMAT_HAS_METHOD (cursor, normalize);
-  IIFORMAT_HAS_METHOD (cursor, possible_dest_types);
-  IIFORMAT_HAS_METHOD (cursor, instantiate);
+  IIFORMAT_HAS_METHOD (resource, validate);
+  IIFORMAT_HAS_METHOD (resource, normalize);
+  IIFORMAT_HAS_METHOD (resource, possible_dest_types);
+  IIFORMAT_HAS_METHOD (resource, instantiate);
 
-  IIFORMAT_VALID_KEYWORD (cursor, Q_resource_type, check_valid_symbol);
-  IIFORMAT_VALID_KEYWORD (cursor, Q_resource_id, check_valid_string_or_int);
-  IIFORMAT_VALID_KEYWORD (cursor, Q_file, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (resource, Q_resource_type, 
+			  check_valid_resource_symbol);
+  IIFORMAT_VALID_KEYWORD (resource, Q_resource_id, check_valid_resource_id);
+  IIFORMAT_VALID_KEYWORD (resource, Q_file, check_valid_string);
 }
 
 void
 vars_of_glyphs_mswindows (void)
 {
   Fprovide (Qbmp);
-  Fprovide (Qcursor);
+  Fprovide (Qresource);
   DEFVAR_LISP ("mswindows-bitmap-file-path", &Vmswindows_bitmap_file_path /*
 A list of the directories in which mswindows bitmap files may be found.
 This is used by the `make-image-instance' function.

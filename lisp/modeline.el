@@ -65,10 +65,9 @@ make the clicked-on window taller or shorter."
   (or (event-over-modeline-p event)
       (error "not over a modeline"))
   ;; Give the modeline a "pressed" look.  --hniksic
-  (letf (((specifier-instance modeline-shadow-thickness
-			      (event-window event))
-	  (- (specifier-instance modeline-shadow-thickness
-				 (event-window event)))))
+  (with-specifier-instance modeline-shadow-thickness
+      (- (specifier-instance modeline-shadow-thickness (event-window event)))
+      (event-window event)
     (let ((done nil)
 	  (depress-line (event-y event))
 	  (start-event-frame (event-frame event))
@@ -396,14 +395,17 @@ Example: (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
 		 (cons toggle keymap)
 		 'minor-mode-map-alist)))))
 
-(put 'abbrev-mode :menu-tag "Abbreviation Expansion")
+;; #### TODO: Add `:menu-tag' keyword to add-minor-mode.  Or create a
+;; separate function to manage the minor mode menu.
+
+;(put 'abbrev-mode :menu-tag "Abbreviation Expansion")
 (add-minor-mode 'abbrev-mode " Abbrev")
 ;; only when visiting a file...
 (add-minor-mode 'overwrite-mode 'overwrite-mode)
-(put 'auto-fill-function :menu-tag "Auto Fill")
+;(put 'auto-fill-function :menu-tag "Auto Fill")
 (add-minor-mode 'auto-fill-function " Fill" nil nil 'auto-fill-mode)
 
-(put 'defining-kbd-macro :menu-tag "Keyboard Macro")
+;(put 'defining-kbd-macro :menu-tag "Keyboard Macro")
 (add-minor-mode 'defining-kbd-macro " Def" nil nil
 		(lambda ()
 		  (interactive)
@@ -435,15 +437,14 @@ parentheses on the modeline."
 						 'modeline-toggle-function)
 					    (and (commandp toggle-sym)
 						 toggle-sym)))
-			    (menu-tag (or (get toggle-sym :menu-tag nil)
-					  (symbol-name (if (symbolp toggle-fun)
-							   toggle-fun
-							 toggle-sym))
-					  ;; Here a function should
-					  ;; maybe be invoked to
-					  ;; beautify the symbol's
-					  ;; menu appearance.
-					  )))
+			    (menu-tag (symbol-name (if (symbolp toggle-fun)
+						       toggle-fun
+						     toggle-sym))
+				      ;; Here a function should
+				      ;; maybe be invoked to
+				      ;; beautify the symbol's
+				      ;; menu appearance.
+				      ))
 		       (and toggle-fun
 			    (vector menu-tag
 				    toggle-fun
@@ -538,22 +539,12 @@ Its default value is \"XEmacs: %17b\" (NOT!).  Major modes that edit things
 other than ordinary files may change this (e.g. Info, Dired,...)")
 (make-variable-buffer-local 'modeline-buffer-identification)
 
-(defvar modeline-line-number-map
-  (make-sparse-keymap 'modeline-line-number-map)
-"Keymap consulted for mouse-clicks on the line number in the modeline.")
-
-(define-key modeline-line-number-map 'button2 'goto-line)
-
-(defvar modeline-line-number-extent (make-extent nil nil)
-  "Extent covering the modeline-line-number string.")
-(set-extent-face modeline-line-number-extent 'modeline-mousable)
-(set-extent-keymap modeline-line-number-extent modeline-line-number-map)
-(set-extent-property modeline-line-number-extent 'help-echo
-		     "button2 to goto a specific line")
-
-(put 'line-number-mode :menu-tag "Line Number")
+;; These are for the sake of minor mode menu.  #### All of this is
+;; kind of dirty.  `add-minor-mode' started out as a simple substitute
+;; for (or (assq ...) ...) FSF stuff, but now is used for all kind of
+;; stuff.  There should perhaps be a separate function to add toggles
+;; to the minor-mode-menu.
 (add-minor-mode 'line-number-mode "")
-(put 'column-number-mode :menu-tag "Column Number")
 (add-minor-mode 'column-number-mode "")
 
 (defconst modeline-process nil
@@ -602,7 +593,7 @@ Normally nil in most modes, since there is no process to display.")
   (cons modeline-narrowed-extent "%n")
   'modeline-process
   (purecopy ")%]----")
-  (cons modeline-line-number-extent (list 'line-number-mode (purecopy "L%l--")))
+  (purecopy '(line-number-mode "L%l--"))
   (purecopy '(column-number-mode "C%c--"))
   (purecopy '(-3 . "%p"))
   (purecopy "-%-")))

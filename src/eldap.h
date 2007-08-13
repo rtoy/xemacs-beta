@@ -21,15 +21,26 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_ELDAP_H_
 #define _XEMACS_ELDAP_H_
 
-#ifndef HAVE_LDAP
-#undef XLDAP
-#undef XSETLDAP
-#define LDAPP(x) 0
-#undef CHECK_LDAP
+#include <lber.h>
+#include <ldap.h>
 
-#else /* HAVE_LDAP */
+/*
+ * The following structure records pertinent information about a
+ * LDAP connection.
+ */
 
-struct Lisp_LDAP;
+struct Lisp_LDAP
+{
+  /* lcrecord header */
+  struct lcrecord_header header;
+  /* The LDAP connection handle used by the LDAP API */
+  LDAP *ld;
+  /* Name of the host we connected to */
+  Lisp_Object host;
+  /* Status of the LDAP connection.  */
+  int livep;
+};
+
 
 DECLARE_LRECORD (ldap, struct Lisp_LDAP);
 #define XLDAP(x) XRECORD (x, ldap, struct Lisp_LDAP)
@@ -47,10 +58,6 @@ DECLARE_LRECORD (ldap, struct Lisp_LDAP);
 } while (0)
 
 
-
-
-#ifdef emacs
-
 Lisp_Object Fldapp (Lisp_Object object);
 Lisp_Object Fldap_host (Lisp_Object ldap);
 Lisp_Object Fldap_status (Lisp_Object ldap);
@@ -63,11 +70,5 @@ Lisp_Object Fldap_search_internal (Lisp_Object ldap,
                                    Lisp_Object scope,
                                    Lisp_Object attrs,
                                    Lisp_Object attrsonly);
-
-#endif /* emacs */
-
-
-#endif
-
 
 #endif /* _XEMACS_ELDAP_H_ */

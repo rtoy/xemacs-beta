@@ -39,15 +39,12 @@ Boston, MA 02111-1307, USA.  */
 struct mswindows_color_instance_data
 {
   COLORREF  color;
-  HBRUSH    brush;
 };
 
 #define MSWINDOWS_COLOR_INSTANCE_DATA(c)	\
 	((struct mswindows_color_instance_data *) (c)->data)
 #define COLOR_INSTANCE_MSWINDOWS_COLOR(c)	\
 	(MSWINDOWS_COLOR_INSTANCE_DATA (c)->color)
-#define COLOR_INSTANCE_MSWINDOWS_BRUSH(c)	\
-	(MSWINDOWS_COLOR_INSTANCE_DATA (c)->brush)
 
 #define FONT_INSTANCE_MSWINDOWS_HFONT(c)	((HFONT) (c)->data)
 

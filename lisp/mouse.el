@@ -949,10 +949,10 @@ at the initial click position."
 	     ;; would help guarantee success with the price that the
 	     ;; delay would start to become noticable.
 	     ;;
-	     (sit-for 0.15 t)
+	     (and (eq (console-type) 'x)
+		  (sit-for 0.15 t))
 	     (zmacs-activate-region)))
-	  ((or (eq 'x (console-type))
-	       (eq 'mswindows (console-type)))
+	  ((console-on-window-system-p)
 	   (if (= start end)
 	       (disown-selection type)
 	     (if (consp default-mouse-track-extent)
@@ -1049,8 +1049,8 @@ at the initial click position."
 	(if (not adjust)
 	    (cond (zmacs-regions
 		   (zmacs-deactivate-region))
-		  ((eq 'x (console-type))
-		   (x-disown-selection)))))
+		  ((console-on-window-system-p)
+		   (disown-selection)))))
       (setq default-mouse-track-down-event nil))))
 
 (defun default-mouse-track-down-hook (event click-count)
@@ -1417,89 +1417,92 @@ other mouse buttons."
   (if (not (specifier-instance vertical-divider-draggable-p
 			       (event-window event)))
       (error "Not over a window!"))
-  (letf* ((window (event-window event))
-	  (frame (event-channel event))
-	  (last-timestamp (event-timestamp event))
-	  (doit t)
-	  ((specifier-instance vertical-divider-shadow-thickness window)
-	   (- (specifier-instance vertical-divider-shadow-thickness window))))
-    (while doit
-      (let ((old-right (caddr (window-pixel-edges window)))
-	    (old-left (car (window-pixel-edges window)))
-	    (backup-conf (current-window-configuration frame))
-	    (old-edges-all-windows (mapcar 'window-pixel-edges (window-list))))
+  (with-specifier-instance
+      vertical-divider-shadow-thickness
+      (- (specifier-instance vertical-divider-shadow-thickness
+			     (event-window event)))
+      (event-window event)
+    (let* ((window (event-window event))
+	   (frame (event-channel event))
+	   (last-timestamp (event-timestamp event))
+	   (doit t))
+      (while doit
+	(let ((old-right (caddr (window-pixel-edges window)))
+	      (old-left (car (window-pixel-edges window)))
+	      (backup-conf (current-window-configuration frame))
+	      (old-edges-all-windows (mapcar 'window-pixel-edges (window-list))))
 
-	;; This is borrowed from modeline.el:
-	;; requeue event and quit if this is a misc-user, eval or
-	;;   keypress event.
-	;; quit if this is a button press or release event, or if the event
-	;;   occurred in some other frame.
-	;; drag if this is a mouse motion event and the time
-	;;   between this event and the last event is greater than
-	;;   drag-modeline-event-lag.
-	;; do nothing if this is any other kind of event.
-	(setq event (next-event event))
-	(cond ((or (misc-user-event-p event)
-		   (key-press-event-p event))
-	       (setq unread-command-events (nconc unread-command-events
-						  (list event))
-		     doit nil))
-	      ((button-release-event-p event)
-	       (setq doit nil))
-	      ((button-event-p event)
-	       (setq doit nil))
-	      ((not (motion-event-p event))
-	       (dispatch-event event))
-	      ((not (eq frame (event-frame event)))
-	       (setq doit nil))
-	      ((< (abs (- (event-timestamp event) last-timestamp))
-		  drag-modeline-event-lag))
-	      (t
-	       (setq last-timestamp (event-timestamp event))
-	       ;; Enlarge the window, calculating change in characters
-	       ;; of default font. Do not let the window to become
-	       ;; less than alolwed minimum (not because that's critical
-	       ;; for the code performance, just the visual effect is
-	       ;; better: when cursor goes to the left of the next left
-	       ;; divider, the vindow being resized shrinks to minimal
-	       ;; size.
-	       (enlarge-window (max (- window-min-width (window-width window))
-				    (/ (- (event-x-pixel event) old-right)
-				       (face-width 'default window)))
-			       t window)
-	       ;; Backout the change if some windows got deleted, or
-	       ;; if the change caused more than two windows to resize
-	       ;; (shifting the whole stack right is ugly), or if the
-	       ;; left window side has slipped (right side cannot be
-	       ;; moved any funrther to the right, so enlarge-window
-	       ;; plays bad games with the left edge.
-	       (if (or (/= (count-windows) (length old-edges-all-windows))
-		       (/= old-left (car (window-pixel-edges window)))
-		       ;; This check is very hairy. We allow any number
-		       ;; of left edges to change, but only to the same
-		       ;; new value. Similar procedure is for the right edges.
-		       (let ((all-that-bad nil)
-			     (new-left-ok nil)
-			     (new-right-ok nil))
-			 (mapcar* (lambda (window old-edges)
-				    (let ((new (car (window-pixel-edges window))))
-				      (if (/= new (car old-edges))
-					  (if (and new-left-ok
-						   (/= new-left-ok new))
-					      (setq all-that-bad t)
-					    (setq new-left-ok new)))))
-				  (window-list) old-edges-all-windows)
-			 (mapcar* (lambda (window old-edges)
-				    (let ((new (caddr (window-pixel-edges window))))
-				      (if (/= new (caddr old-edges))
-					  (if (and new-right-ok
-						   (/= new-right-ok new))
-					      (setq all-that-bad t)
-					    (setq new-right-ok new)))))
-				  (window-list) old-edges-all-windows)
-			 all-that-bad))
-		   (set-window-configuration backup-conf))))
-	))))
+	  ;; This is borrowed from modeline.el:
+	  ;; requeue event and quit if this is a misc-user, eval or
+	  ;;   keypress event.
+	  ;; quit if this is a button press or release event, or if the event
+	  ;;   occurred in some other frame.
+	  ;; drag if this is a mouse motion event and the time
+	  ;;   between this event and the last event is greater than
+	  ;;   drag-modeline-event-lag.
+	  ;; do nothing if this is any other kind of event.
+	  (setq event (next-event event))
+	  (cond ((or (misc-user-event-p event)
+		     (key-press-event-p event))
+		 (setq unread-command-events (nconc unread-command-events
+						    (list event))
+		       doit nil))
+		((button-release-event-p event)
+		 (setq doit nil))
+		((button-event-p event)
+		 (setq doit nil))
+		((not (motion-event-p event))
+		 (dispatch-event event))
+		((not (eq frame (event-frame event)))
+		 (setq doit nil))
+		((< (abs (- (event-timestamp event) last-timestamp))
+		    drag-modeline-event-lag))
+		(t
+		 (setq last-timestamp (event-timestamp event))
+		 ;; Enlarge the window, calculating change in characters
+		 ;; of default font. Do not let the window to become
+		 ;; less than alolwed minimum (not because that's critical
+		 ;; for the code performance, just the visual effect is
+		 ;; better: when cursor goes to the left of the next left
+		 ;; divider, the vindow being resized shrinks to minimal
+		 ;; size.
+		 (enlarge-window (max (- window-min-width (window-width window))
+				      (/ (- (event-x-pixel event) old-right)
+					 (face-width 'default window)))
+				 t window)
+		 ;; Backout the change if some windows got deleted, or
+		 ;; if the change caused more than two windows to resize
+		 ;; (shifting the whole stack right is ugly), or if the
+		 ;; left window side has slipped (right side cannot be
+		 ;; moved any funrther to the right, so enlarge-window
+		 ;; plays bad games with the left edge.
+		 (if (or (/= (count-windows) (length old-edges-all-windows))
+			 (/= old-left (car (window-pixel-edges window)))
+			 ;; This check is very hairy. We allow any number
+			 ;; of left edges to change, but only to the same
+			 ;; new value. Similar procedure is for the right edges.
+			 (let ((all-that-bad nil)
+			       (new-left-ok nil)
+			       (new-right-ok nil))
+			   (mapcar* (lambda (window old-edges)
+				      (let ((new (car (window-pixel-edges window))))
+					(if (/= new (car old-edges))
+					    (if (and new-left-ok
+						     (/= new-left-ok new))
+						(setq all-that-bad t)
+					      (setq new-left-ok new)))))
+				    (window-list) old-edges-all-windows)
+			   (mapcar* (lambda (window old-edges)
+				      (let ((new (caddr (window-pixel-edges window))))
+					(if (/= new (caddr old-edges))
+					    (if (and new-right-ok
+						     (/= new-right-ok new))
+						(setq all-that-bad t)
+					      (setq new-right-ok new)))))
+				    (window-list) old-edges-all-windows)
+			   all-that-bad))
+		     (set-window-configuration backup-conf))))
+	  )))))
 
 (setq vertical-divider-map (make-keymap))
 (define-key vertical-divider-map 'button1 'drag-window-divider)

@@ -83,10 +83,15 @@ void* more_static_core ( ptrdiff_t increment )
 	  printf(
 
 "\nRequested %d bytes, static heap exhausted!  base is %p, current ptr
-is %p. You have exhausted the static heap, if you want to run temacs,
-adjust sheap-adjust.h to 0 or a +ve number.  If you are dumping then
-STATIC_HEAP_SLOP is too small.  Generally you should *not* try to run
-temacs with a static heap, you should dump first.\n", size,
+is %p. You have exhausted the static heap. 
+
+If you are simply trying to compile, remove sheap-adjust.h and
+puresize-adjust.h and recompile from the top level. If this doesn't
+work then STATIC_HEAP_SLOP (defined in this file) is too small.
+
+If you want to run temacs, change SHEAP_ADJUSTMENT in sheap-adjust.h
+to 0 or a +ve number. Generally you should *not* try to run temacs
+with a static heap, you should dump first.\n", size,
 static_heap_base, static_heap_ptr);
 
 	  exit(-1);

@@ -189,7 +189,7 @@ delete_invalidate_line_number_cache (struct buffer *b, Bufpos from, Bufpos to)
     invalidate_line_number_cache (b, from);
   else
     {
-      int shortage;
+      EMACS_INT shortage;
       scan_buffer (b, '\n', from, to, 1, &shortage, 0);
       if (!shortage)
 	invalidate_line_number_cache (b, from);
@@ -298,8 +298,7 @@ buffer_line_number (struct buffer *b, Bufpos pos, int cachep)
   /* An EMACS_MAXINT would be cool to have. */
 #define LOTS 999999999
 
-  scan_buffer (b, '\n', beg, pos, pos > beg ? LOTS : -LOTS,
-	       (int *)&shortage, 0);
+  scan_buffer (b, '\n', beg, pos, pos > beg ? LOTS : -LOTS, &shortage, 0);
 
   line = LOTS - shortage;
   if (beg > pos)

@@ -1009,7 +1009,6 @@ reset_sigio_on_device (struct device *d)
 
 #if defined (FIOSSAIOOWN)
   { /* HPUX stuff */
-    int owner = getpid ();
     int ioctl_status;
     if (DEVICE_TTY_P (d))
       {

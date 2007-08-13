@@ -252,63 +252,6 @@ into Emacs."
 
 ;;; Random utility functions
 
-(defun x-cut-copy-clear-internal (mode)
-  (or (memq mode '(cut copy clear)) (error "unkown mode %S" mode))
-  (or (x-selection-owner-p)
-      (error "emacs does not own the primary selection"))
-  (setq last-command nil)
-  (or primary-selection-extent
-      (error "the primary selection is not an extent?"))
-  (save-excursion
-    (let (rect-p b s e)
-      (cond
-       ((consp primary-selection-extent)
-	(setq rect-p t
-	      b (extent-object (car primary-selection-extent))
-	      s (extent-start-position (car primary-selection-extent))
-	      e (extent-end-position (car (reverse primary-selection-extent)))))
-       (t
-	(setq rect-p nil
-	      b (extent-object primary-selection-extent)
-	      s (extent-start-position primary-selection-extent)
-	      e (extent-end-position primary-selection-extent))))
-      (set-buffer b)
-      (cond ((memq mode '(cut copy))
-	     (if rect-p
-		 (progn
-		   ;; why is killed-rectangle free?  Is it used somewhere?
-		   ;; should it be defvarred?
-		   (setq killed-rectangle (extract-rectangle s e))
-		   (kill-new (mapconcat 'identity killed-rectangle "\n")))
-	       (copy-region-as-kill s e))
-	     ;; Maybe killing doesn't own clipboard.  Make sure it happens.
-	     ;; This memq is kind of grody, because they might have done it
-	     ;; some other way, but owning the clipboard twice in that case
-	     ;; wouldn't actually hurt anything.
-	     (or (and (consp kill-hooks) (memq 'x-own-clipboard kill-hooks))
-		 (x-own-clipboard (car kill-ring)))))
-      (cond ((memq mode '(cut clear))
-	     (if rect-p
-		 (delete-rectangle s e)
-	       (delete-region s e))))
-      (x-disown-selection nil)
-      )))
-
-(defun x-copy-primary-selection ()
-  "Copy the selection to the Clipboard and the kill ring."
-  (interactive)
-  (x-cut-copy-clear-internal 'copy))
-
-(defun x-kill-primary-selection ()
-  "Copy the selection to the Clipboard and the kill ring, then delete it."
-  (interactive "*")
-  (x-cut-copy-clear-internal 'cut))
-
-(defun x-delete-primary-selection ()
-  "Delete the selection without copying it to the Clipboard or the kill ring."
-  (interactive "*")
-  (x-cut-copy-clear-internal 'clear))
-
 (defun x-yank-clipboard-selection ()
   "Insert the current Clipboard selection at point."
   (interactive "*")

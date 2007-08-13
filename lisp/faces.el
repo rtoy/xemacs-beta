@@ -770,6 +770,11 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (not (face-equal face 'default domain)))
 
+; moved from x-faces.el
+(defun try-font-name (name &optional device)
+  ;; yes, name really should be here twice.
+  (and name (make-font-instance name device t) name))
+
 
 ;; This function is a terrible, disgusting hack!!!!  Need to
 ;; separate out the font elements as separate face properties!

@@ -402,11 +402,11 @@ popular alternate setting."
   :type 'function
   :group 'editing-basics)
 
-(eval-when-compile
-  (defmacro delete-forward-p ()
-    '(and delete-key-deletes-forward
-	  (or (eq 'tty (device-type))
-	      (x-keysym-on-keyboard-sans-modifiers-p 'backspace)))))
+;; Trash me, baby.
+(defsubst delete-forward-p ()
+  (and delete-key-deletes-forward
+       (or (not (eq (device-type) 'x))
+	   (x-keysym-on-keyboard-sans-modifiers-p 'backspace))))
 
 (defun backward-or-forward-delete-char (arg)
   "Delete either one character backwards or one character forwards.

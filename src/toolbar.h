@@ -29,32 +29,12 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_TOOLBARS
 
-/* There are 4 of these per frame.  They don't really need to be an
-   lrecord (they're not lisp-accessible) but it makes marking slightly
-   more modular.  */
-struct toolbar_data
-{
-  struct lcrecord_header header;
-
-  /* The last buffer for which the toolbars were displayed. */
-  Lisp_Object last_toolbar_buffer;
-
-  /* The actual buttons are chained through this. */
-  Lisp_Object toolbar_buttons;
-};
-
-DECLARE_LRECORD (toolbar_data, struct toolbar_data);
-#define XTOOLBAR_DATA(x) XRECORD (x, toolbar_data, struct toolbar_data)
-#define XSETTOOLBAR_DATA(x, p) XSETRECORD (x, p, toolbar_data)
-#define TOOLBAR_DATAP(x) RECORDP (x, toolbar_data)
-#define GC_TOOLBAR_DATAP(x) GC_RECORDP (x, toolbar_data)
-#define CHECK_TOOLBAR_DATA(x) CHECK_RECORD (x, toolbar_data)
-#define CONCHECK_TOOLBAR_DATA(x) CONCHECK_RECORD (x, toolbar_data)
-
-#define FRAME_TOOLBAR_DATA(frame, position)				\
-  (XTOOLBAR_DATA ((frame)->toolbar_data[position]))
-#define FRAME_TOOLBAR_BUFFER(frame, position)				 \
-  (XTOOLBAR_DATA ((frame)->toolbar_data[position])->last_toolbar_buffer)
+#define FRAME_TOOLBAR_BUTTONS(frame, pos)	\
+  ((frame)->toolbar_buttons[pos])
+#define FRAME_CURRENT_TOOLBAR_SIZE(frame, pos)	\
+  ((frame)->current_toolbar_size[pos])
+#define DEVICE_SUPPORTS_TOOLBARS_P(d)		\
+  (HAS_DEVMETH_P ((d), output_frame_toolbars))
 
 /* These are chained together through toolbar_buttons in struct
    toolbar_data.  These don't need to be an lrecord either, but again,

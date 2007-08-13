@@ -329,15 +329,20 @@ This function is basically a wrapper over `locate-file'."
      (and version-directory (list version-directory))
      (and site-directory (list site-directory)))))
 
-(defvar packages-special-bases '("etc" "info" "lisp" "lib-src" "bin")
+(defvar packages-special-base-regexp "^\\(etc\\|info\\|lisp\\|lib-src\\|bin\\)$"
   "Special subdirectories of packages.")
+
+(defvar packages-no-package-hierarchy-regexp
+  (concat "\\(" paths-version-control-filename-regexp "\\)"
+	  "\\|"
+	  "\\(" packages-special-base-regexp "\\)")
+  "Directories which can't be the roots of package hierarchies.")
 
 (defun packages-find-packages-in-directories (directories)
   "Find all packages underneath directories in DIRECTORIES."
   (paths-find-recursive-path directories
 			     packages-hierarchy-depth
-			     (append paths-version-control-bases
-				     packages-special-bases)))
+			     packages-no-package-hierarchy-regexp))
 
 (defun packages-split-path (path)
   "Split PATH at \"\", return pair with two components.

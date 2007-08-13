@@ -34,7 +34,7 @@ LISP=$(XEMACS)\lisp
 PATH_PACKAGEPATH="~/.xemacs"
 !endif
 !if !defined(HAVE_MSW)
-HAVE_MSW=0
+HAVE_MSW=1
 !endif
 !if !defined(HAVE_X)
 HAVE_X=0
@@ -47,6 +47,9 @@ HAVE_XPM=0
 !endif
 !if !defined(HAVE_TOOLBARS)
 HAVE_TOOLBARS=$(HAVE_XPM)
+!endif
+!if !defined(HAVE_DIALOGS)
+HAVE_DIALOGS=1
 !endif
 !if !defined(HAVE_MSW_C_DIRED)
 HAVE_MSW_C_DIRED=1
@@ -126,6 +129,9 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !if $(HAVE_TOOLBARS)
 !message Compiling in support for toolbars.
 !endif
+!if $(HAVE_DIALOGS)
+!message Compiling in support for dialogs.
+!endif
 !if $(HAVE_MSW_C_DIRED)
 # Define HAVE_MSW_C_DIRED to be non-zero if you want Xemacs to use C
 # primitives to significantly speed up dired, at the expense of an
@@ -193,6 +199,11 @@ MSW_DEFINES=$(MSW_DEFINES) -DHAVE_TOOLBARS
 MSW_TOOLBAR_SRC=$(XEMACS)\src\toolbar.c $(XEMACS)\src\toolbar-msw.c
 MSW_TOOLBAR_OBJ=$(OUTDIR)\toolbar.obj $(OUTDIR)\toolbar-msw.obj
 MSW_LIBS=$(MSW_LIBS) comctl32.lib
+!endif
+!if $(HAVE_DIALOGS)
+MSW_DEFINES=$(MSW_DEFINES) -DHAVE_DIALOGS
+MSW_DIALOG_SRC=$(XEMACS)\src\dialog.c $(XEMACS)\src\dialog-msw.c
+MSW_DIALOG_OBJ=$(OUTDIR)\dialog.obj $(OUTDIR)\dialog-msw.obj
 !endif
 !endif
 
@@ -386,7 +397,6 @@ DOC_SRC3=\
  $(XEMACS)\src\hash.c \
  $(XEMACS)\src\imgproc.c \
  $(XEMACS)\src\indent.c \
- $(XEMACS)\src\inline.c \
  $(XEMACS)\src\insdel.c \
  $(XEMACS)\src\intl.c \
  $(XEMACS)\src\keymap.c \
@@ -471,7 +481,8 @@ DOC_SRC7=\
  $(XEMACS)\src\scrollbar-msw.c \
  $(XEMACS)\src\select-msw.c \
  $(MSW_C_DIRED_SRC) \
- $(MSW_TOOLBAR_SRC)
+ $(MSW_TOOLBAR_SRC) \
+ $(MSW_DIALOG_SRC)
 !endif
 
 !if $(HAVE_MULE)
@@ -575,7 +586,8 @@ TEMACS_MSW_OBJS=\
 	$(OUTDIR)\scrollbar-msw.obj \
 	$(OUTDIR)\select-msw.obj \
 	$(MSW_C_DIRED_OBJ) \
-	$(MSW_TOOLBAR_OBJ)
+	$(MSW_TOOLBAR_OBJ) \
+	$(MSW_DIALOG_OBJ)
 !endif
 
 
@@ -647,7 +659,6 @@ TEMACS_OBJS= \
 	$(OUTDIR)\hash.obj \
 	$(OUTDIR)\indent.obj \
 	$(OUTDIR)\imgproc.obj \
-	$(OUTDIR)\inline.obj \
 	$(OUTDIR)\insdel.obj \
 	$(OUTDIR)\intl.obj \
 	$(OUTDIR)\keymap.obj \
@@ -787,7 +798,7 @@ distclean:
 	del *.obj
 	del *.sbr
 	del *.lib
-	cd ..\$(TEMACS_DIR)
+	cd $(XEMACS)\$(TEMACS_DIR)
 	del config.h
 	del paths.h
 	del Emacs.ad.h

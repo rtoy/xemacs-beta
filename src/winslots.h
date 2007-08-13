@@ -25,15 +25,15 @@ Boston, MA 02111-1307, USA.  */
    by Kirill Katsnelson <kkm@kis.ru>, May 1998 */
 
 #ifdef WINDOW_SLOT_DECLARATION
-#define WINDOW_SLOT_ARRAY(slot, size, compare) WINDOW_SLOT(slot[size], compare)
+#define WINDOW_SLOT_ARRAY(slot, size, compare) WINDOW_SLOT (slot[size], compare)
 #else
-#define WINDOW_SLOT_ARRAY(slot, size, compare) do {		\
-    int i;							\
-    for (i = 0; i < size; i++) 					\
-      {								\
-	WINDOW_SLOT (slot[i], compare);				\
-      }								\
-  } while (0);
+#define WINDOW_SLOT_ARRAY(slot, size, compare) do {	\
+  int wsaidx;						\
+  for (wsaidx = 0; wsaidx < size; wsaidx++)		\
+    {							\
+      WINDOW_SLOT (slot[wsaidx], compare);		\
+    }							\
+} while (0);
 #endif
 
 #define EQUAL_WRAPPED(x,y) internal_equal ((x), (y), 0)

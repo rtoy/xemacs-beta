@@ -738,6 +738,8 @@ be an absolute file name.
       count += 25229;
       count %= 225307;
 
+      QUIT;
+
       if (stat ((CONST char *) data, &ignored) < 0)
 	{
 	  /* We want to return only if errno is ENOENT.  */
@@ -748,15 +750,12 @@ be an absolute file name.
 	       can do.  The alternatives are to return nil, which is
 	       as bad as (and in many cases worse than) throwing the
 	       error, or to ignore the error, which will likely result
-	       in looping through 225307 stat's, which is not only
-	       dog-slow, but also useless since it will fallback to
-	       the errow below, anyway.  */
+	       in inflooping.  */
 	    report_file_error ("Cannot create temporary name for prefix",
 			       list1 (prefix));
 	  /* not reached */
 	}
     }
-  signal_simple_error ("Cannot create temporary name for prefix", prefix);
   RETURN_NOT_REACHED (Qnil);
 }
 

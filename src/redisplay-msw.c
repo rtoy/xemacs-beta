@@ -1335,7 +1335,6 @@ mswindows_clear_region (Lisp_Object locale, face_index findex, int x, int y,
   Lisp_Object background_pixmap = Qunbound;
   Lisp_Object temp;
   RECT rect = { x, y, x+width, y+height };
-  HBRUSH brush;
 
   if (!(width && height))   /* We often seem to get called with width==0 */
     return;
@@ -1396,7 +1395,11 @@ mswindows_clear_region (Lisp_Object locale, face_index findex, int x, int y,
 
       if (XIMAGE_INSTANCE_PIXMAP_DEPTH (background_pixmap) == 0)
 	{
+	  /* is this expensive? - I haven't seen it used as yet. */
+	  HBRUSH brush = CreateSolidBrush 
+	    (COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (bcolor)));
 	  FillRect (FRAME_MSWINDOWS_DC(f), &rect, brush);
+	  DeleteObject (brush);
 	}
       else
 	{

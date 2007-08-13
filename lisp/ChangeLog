@@ -1,3 +1,177 @@
+1998-05-23  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* glyphs.el (init-glyphs): Created `border-glyph' face, with no
+	attributes, and assinged it to continuation, truncation and
+	hscroll glyphs.
+
+	* msw-glyphs.el: Assigned WinDings font to `border-glyph' face,
+	and made continuation, truncation and hscroll glyphs arrow
+	characters out of that font.
+
+1998-05-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* minibuf.el (minibuffer-electric-separator): Play nicely with
+	directory-sep-char being \.
+	(minibuffer-electric-tilde): Ditto.
+	(read-file-name-map): Ditto.
+
+1998-05-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* mouse.el (default-mouse-track-maybe-own-selection): Pause only
+	on X devices.
+	(default-mouse-track-deal-with-down-event): Avoid
+	`x-disown-selection'; use `disown-selection' instead.
+
+1998-05-21  Andy Piper  <andyp@parallax.co.uk>
+
+	* select.el:
+	* x-select.el: selection cleanup. (x-cut-copy-clear-internal)
+	moved to (cut-copy-clear-internal) in select.el. Ditto for
+	(x-delete-primary-selection) (x-kill-primary-selection)
+	(x-copy-primary-selection). 
+	(own-clipboard): new function.
+
+	* msw-select.el: use the new kill/delete/copy/cut-copy-clear
+	functions in select.el. remove old ones.
+	(mswindows-own-clipboard): new function.
+
+1998-05-21  Andy Piper  <andyp@parallax.co.uk>
+
+	* gnuserv.el: allow connections from mswindows type devices.
+
+1998-05-20  Andy Piper  <andyp@parallax.co.uk>
+
+	* msw-glyphs.el: change image type used from cursor to resource.
+
+1998-05-20  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* x-scrollbar.el (x-init-scrollbar-from-resources): Added support
+	for {top,bottom}-{left,right} values in addition to
+	{top,bottom}_{left,right}.
+	Use x-get-resource instead of x-get-resource-and-bogosity-check.
+
+1998-05-20  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cl-macs.el (specifier-instance): Undefine its setf method.
+
+	* specifier.el (with-specifier-instance): Added docstring.
+
+	* mouse.el (drag-window-divider): Ditto.
+
+	* modeline.el (mouse-drag-modeline): Use it.
+
+	* lisp-mode.el (with-specifier-instance): Define its indentation
+ 	level.
+
+	* specifier.el (with-specifier-instance): New macro.
+
+1998-05-19  Andy Piper  <andyp@parallax.co.uk>
+
+	* package-get.el (package-get-create-custom): new function to
+	auto-generate package-get-custom.el from package-get-base.el.
+	* (package-get-ever-installedp): new function.
+	* (package-get-custom): new function to get all packages specified
+	by customize.
+
+1998-05-19  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cus-edit.el (custom-file): Revert to `~/.emacs'.
+
+1998-05-23  SL Baur  <steve@altair.xemacs.org>
+
+	* cl-extra.el: Reverse previous float change.
+
+1998-05-17  Andy Piper  <andyp@parallax.co.uk>
+
+	* x-faces.el:
+	* faces.el (try-font-name): moved from x-faces.el since it is
+	required by w3 under mswindows as well X.
+
+1998-05-18  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* window-xemacs.el (push-window-configuration): Remove kludgery of
+	recaching default-toolbar specifier.
+	(pop-window-configuration): Ditto.
+	(unpop-window-configuration): Ditto.
+
+1998-05-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* modeline.el (modeline-minor-mode-menu): Don't use :menu-tag.
+
+1998-05-17  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* winnt.el (nt-quote-args-verbatim): Added function.
+	(nt-quote-args-prefix-quote): Added function.
+	(nt-quote-args-backslash-quote): Added function.
+	(nt-quote-args-double-quote): Added function.
+	(nt-quote-args-functions-alist): New variable.
+	(nt-quote-process-args): Added function. This is the main quoting
+	work horse called from process-nt.c
+
+1998-05-16  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* winnt.el: Removed duplicate definitions for backspace,
+	delete, M-backspace and C-M-backspace.
+	(file-name-buffer-file-type-alist): Removed this variable.
+	(find-buffer-file-type): Removed function.
+	(find-file-binary):  Removed function.
+	(find-file-text): Removed function.
+	(find-file-not-found-set-buffer-file-type): Removed function.
+	(save-to-unix-hook): Removed function.
+	(revert-from-unix-hook): Removed function.
+	(using-unix-filesystems): Removed function.
+	(original-make-auto-save-file-name): DEFSUBR to avoid doc snarf
+	warning.
+	(x-set-selection): Removed function.
+	(x-get-selection): Removed function.
+	Removed commented FSFisms.
+	Replaced copyright notice (this file is not part of GNU Emacs).
+	(nt-shell-mode-hook): Moved here from a lambda expression. Added
+	comint-process-echoes setting to t.
+
+1998-05-17  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+	
+	* packages.el (packages-no-package-hierarchy-regexp): Introduced
+	and used following the interface change of
+	`paths-find-recursive-path'.
+
+	* find-paths.el (paths-find-recursive-path): Exclusion is now by a
+	regexp instead of a list of base names.
+ 	(paths-version-control-filename-regexp):
+	(paths-lisp-filename-regexp): (paths-no-lisp-directory-regexp):
+	Introduced and used following the interface change of
+	`paths-find-recursive-path'.
+
+1998-05-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* simple.el (delete-forward-p): Make it a defun; do X garbage only 
+	on X devices, rather than on all non-TTY devices.
+
+1998-05-16  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* msw-mouse.el: New file. Sets up cursor shapes for Windows.
+
+	* dumped-lisp.el (preloaded-file-list): Added msw-mouse.el
+
+1998-05-17  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* itimer.el (activate-itimer): Fixed usage of integers
+	as argument to `concat'.
+
+1998-05-17  Glynn Clements  <glynn@sensei.co.uk>
+
+	* itimer.el (start-itimer): replace the use of `concat' with
+	`format'
+
+1998-05-16  SL Baur  <steve@altair.xemacs.org>
+
+	* mode-motion.el (mode-motion-hook): Clarify docstring.
+	From Bob Weiner <weiner@altrasoft.com>
+
+	* loadhist.el (symbol-file): Supply prompt string when used
+	interactively.
+	From Bob Weiner <weiner@altrasoft.com>
+
 1998-05-16  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* loadup.el (really-early-error-handler): Ditto.

@@ -516,45 +516,40 @@ If STATE is t, return a new state object seeded from the time of day."
 (defvar float-epsilon)
 (defvar float-negative-epsilon)
 
-;;(defun cl-float-limits ()
-(or most-positive-float
-    (not (featurep 'lisp-float-type))
-    (let ((x '2e0) y z)
-      ;; Find maximum exponent (first two loops are optimizations)
-      (while (cl-finite-do '* x x) (setq x (* x x)))
-      (while (cl-finite-do '* x (/ x 2)) (setq x (* x (/ x 2))))
-      (while (cl-finite-do '+ x x) (setq x (+ x x)))
-      (setq z x y (/ x 2))
-      ;; Now fill in 1's in the mantissa.
-      (while (and (cl-finite-do '+ x y) (/= (+ x y) x))
-	(setq x (+ x y) y (/ y 2)))
-      (setq most-positive-float x
-	    most-negative-float (- x))
-      ;; Divide down until mantissa starts rounding.
-      (setq x (/ x z) y (/ 16 z) x (* x y))
-      (while (condition-case err (and (= x (* (/ x 2) 2)) (> (/ y 2) 0))
-	       (arith-error nil))
-	(setq x (/ x 2) y (/ y 2)))
-      (setq least-positive-normalized-float y
-	    least-negative-normalized-float (- y))
-      ;; Divide down until value underflows to zero.
-      (setq x (/ 1 z) y x)
-      (while (condition-case err (> (/ x 2) 0) (arith-error nil))
-	(setq x (/ x 2)))
-      (setq least-positive-float x
-	    least-negative-float (- x))
-      (setq x '1e0)
-      (while (/= (+ '1e0 x) '1e0) (setq x (/ x 2)))
-      (setq float-epsilon (* x 2))
-      (setq x '1e0)
-      (while (/= (- '1e0 x) '1e0) (setq x (/ x 2)))
-      (setq float-negative-epsilon (* x 2))))
-;;)
-
 (defun cl-float-limits ()
-  ;; No-op, defined for old code that calls this to setup the
-  ;; constants.
-  )
+  (or most-positive-float (not (numberp '2e1))
+      (let ((x '2e0) y z)
+	;; Find maximum exponent (first two loops are optimizations)
+	(while (cl-finite-do '* x x) (setq x (* x x)))
+	(while (cl-finite-do '* x (/ x 2)) (setq x (* x (/ x 2))))
+	(while (cl-finite-do '+ x x) (setq x (+ x x)))
+	(setq z x y (/ x 2))
+	;; Now fill in 1's in the mantissa.
+	(while (and (cl-finite-do '+ x y) (/= (+ x y) x))
+	  (setq x (+ x y) y (/ y 2)))
+	(setq most-positive-float x
+	      most-negative-float (- x))
+	;; Divide down until mantissa starts rounding.
+	(setq x (/ x z) y (/ 16 z) x (* x y))
+	(while (condition-case err (and (= x (* (/ x 2) 2)) (> (/ y 2) 0))
+		 (arith-error nil))
+	  (setq x (/ x 2) y (/ y 2)))
+	(setq least-positive-normalized-float y
+	      least-negative-normalized-float (- y))
+	;; Divide down until value underflows to zero.
+	(setq x (/ 1 z) y x)
+	(while (condition-case err (> (/ x 2) 0) (arith-error nil))
+	  (setq x (/ x 2)))
+	(setq least-positive-float x
+	      least-negative-float (- x))
+	(setq x '1e0)
+	(while (/= (+ '1e0 x) '1e0) (setq x (/ x 2)))
+	(setq float-epsilon (* x 2))
+	(setq x '1e0)
+	(while (/= (- '1e0 x) '1e0) (setq x (/ x 2)))
+	(setq float-negative-epsilon (* x 2))))
+  nil)
+
 
 ;;; Sequence functions.
 

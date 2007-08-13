@@ -270,7 +270,8 @@ Each element is a gnuclient structure that identifies a client.")
 
 (defun gnuserv-main-frame-function (type)
   "Return a sensible value for the main Emacs frame."
-  (if (eq type 'x)
+  (if (or (eq type 'x)
+	  (eq type 'mswindows))
       (car (frame-list))
     nil))
 
@@ -278,7 +279,8 @@ Each element is a gnuclient structure that identifies a client.")
   "Return a frame if there is a frame that is truly visible, nil otherwise.
 This is meant in the X sense, so it will not return frames that are on another
 visual screen.  Totally visible frames are preferred.  If none found, return nil."
-  (if (eq type 'x)
+  (if (or (eq type 'x)
+	  (eq type 'mswindows))
       (cond ((car (filtered-frame-list 'frame-totally-visible-p
 				       (selected-device))))
 	    ((car (filtered-frame-list (lambda (frame)
@@ -424,6 +426,7 @@ If a flag is `view', view the files read-only."
 			  (case (car type)
 			    (tty (apply 'make-tty-device (cdr type)))
 			    (x   (make-x-device (cadr type)))
+			    (mswindows   (make-mswindows-device))
 			    (t   (error "Invalid device type"))))
 			 (t
 			  (selected-device))))

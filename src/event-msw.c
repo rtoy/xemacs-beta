@@ -1600,23 +1600,16 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	  TranslateMessage (&msg);
 
 	  while (PeekMessage (&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE)
-		 ||PeekMessage (&msg, hwnd, WM_SYSCHAR, WM_SYSCHAR, PM_REMOVE))
+		 || PeekMessage (&msg, hwnd, WM_SYSCHAR, WM_SYSCHAR, PM_REMOVE))
 	    {
-	      int ch = msg.wParam;
+	      WPARAM ch = msg.wParam;
 	      /* CH is a character code for the key: 
 		 'C' for Shift+C and Ctrl+Shift+C
 		 'c' for c and Ctrl+c */
 
-	      /* #### If locale is not C, US or other latin-1,
-		 isalpha() maybe not what do we mean */
-	      
 	      /* XEmacs doesn't seem to like Shift on non-alpha keys */
-	      if (!isalpha(ch))
+	      if (!IsCharAlpha ((TCHAR)ch))
 		mods &= ~MOD_SHIFT;
-
-	      /* Un-capitalise alpha control keys */
-	      if ((mods & MOD_CONTROL) && isalpha(ch))
-		ch |= ('A' ^ 'a');
 
 	      /* If a quit char with no modifiers other than control and
 		 shift, then mark it with a fake modifier, which is removed

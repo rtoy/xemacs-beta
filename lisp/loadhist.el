@@ -37,7 +37,7 @@
 (defun symbol-file (sym)
   "Return the input source from which SYM was loaded.
 This is a file name, or nil if the source was a buffer with no associated file."
-  (interactive "S") ; XEmacs
+  (interactive "SFind source file for symbol: ") ; XEmacs
   (catch 'foundit
     (mapcar
      (function (lambda (x) (if (memq sym (cdr x)) (throw 'foundit (car x)))))

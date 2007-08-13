@@ -79,20 +79,20 @@
 
   ;; Now do ScrollBarPlacement.scrollBarPlacement
   (let ((case-fold-search t)
-	(resval (x-get-resource-and-maybe-bogosity-check
-		 "ScrollBarPlacement" "scrollBarPlacement" 'string locale)))
+	(resval (x-get-resource "ScrollBarPlacement" "scrollBarPlacement"
+				'string locale)))
     (cond
      ((null resval))
-     ((string-match "^top_left$" resval)
+     ((string-match "^top[_-]left$" resval)
       (set-specifier scrollbar-on-top-p t locale)
       (set-specifier scrollbar-on-left-p t locale))
-     ((string-match "^top_right$" resval)
+     ((string-match "^top[_-]right$" resval)
       (set-specifier scrollbar-on-top-p t locale)
       (set-specifier scrollbar-on-left-p nil locale))
-     ((string-match "^bottom_left$" resval)
+     ((string-match "^bottom[_-]left$" resval)
       (set-specifier scrollbar-on-top-p nil locale)
       (set-specifier scrollbar-on-left-p t locale))
-     ((string-match "^bottom_right$" resval)
+     ((string-match "^bottom[_-]right$" resval)
       (set-specifier scrollbar-on-top-p nil locale)
       (set-specifier scrollbar-on-left-p nil locale))
      (t

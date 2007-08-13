@@ -1,3 +1,12 @@
+1998-05-23  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta41 is released.
+
+1998-05-17  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (CPP): Change -O2 to -O3.
+	Suggested by Martin Buchholz <martin@xemacs.org>
+
 1998-05-15  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-beta40 is released.

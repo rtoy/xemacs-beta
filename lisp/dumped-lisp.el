@@ -177,6 +177,7 @@
 ;; preload the mswindows code.
 	#+mswindows "msw-glyphs"
 	#+mswindows "msw-faces"
+	#+mswindows "msw-mouse"
 	#+mswindows "msw-init"
 	#+mswindows "msw-select"
 ;; preload the TTY init code.

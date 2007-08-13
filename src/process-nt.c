@@ -39,6 +39,9 @@ Boston, MA 02111-1307, USA.  */
 #include <winsock.h>
 #endif
 
+/* Bound by winnt.el */
+Lisp_Object Qnt_quote_process_args;
+
 /* Implemenation-specific data. Pointed to by Lisp_Process->process_data */
 struct nt_process_data
 {
@@ -364,7 +367,7 @@ validate_signal_number (int signo)
 {
   if (signo != SIGKILL && signo != SIGTERM
       && signo != SIGQUIT && signo != SIGINT)
-    error ("Signal number %d not supported", signo);
+    signal_simple_error ("Signal number not supported", make_int (signo));
 }
   
 /*-----------------------------------------------------------------------*/
@@ -469,30 +472,32 @@ nt_create_process (struct Lisp_Process *p,
       hmyslurp = htmp;
     }
 
-  /* Convert an argv vector into Win32 style command line.
-
-     #### This works only for cmd, and not for cygwin bash.  Perhaps,
-     instead of ad-hoc fiddling with different methods for quoting
-     process arguments in ntproc.c (disgust shudder), this must call a
-     smart lisp routine. The code here will be a fallback, if the
-     lisp function is not specified.
-  */
+  /* Convert an argv vector into Win32 style command line by a call to
+     lisp function `nt-quote-process-args' which see (in winnt.el)*/
   {
     char** thisarg;
-    size_t size = 1;
+    Lisp_Object args_or_ret = Qnil;
+    struct gcpro gcpro1;
+    
+    GCPRO1 (args_or_ret);
 
     for (thisarg = argv; *thisarg; ++thisarg)
-      size += strlen (*thisarg) + 1;
+      args_or_ret = Fcons (build_string (*thisarg), args_or_ret);
+    args_or_ret = Fnreverse (args_or_ret);
 
-    command_line = alloca_array (char, size);
-    *command_line = 0;
+    args_or_ret = call1 (Qnt_quote_process_args, args_or_ret);
 
-    for (thisarg = argv; *thisarg; ++thisarg)
-      {
-	if (thisarg != argv)
-	  strcat (command_line, " ");
-	strcat (command_line, *thisarg);
-      }
+    if (!STRINGP (args_or_ret))
+      /* Luser wrote his/her own clever version */
+      error ("Bogus return value from `nt-quote-process-args'");
+
+    command_line = alloca_array (char, (strlen (argv[0])
+					+ XSTRING_LENGTH (args_or_ret) + 2));
+    strcpy (command_line, argv[0]);
+    strcat (command_line, " ");
+    strcat (command_line, XSTRING_DATA (args_or_ret));
+
+    UNGCPRO; /* args_or_ret */
   }
 
   /* Create process */
@@ -626,6 +631,7 @@ nt_send_process (Lisp_Object proc, struct lstream* lstream)
 	 unwritten data. */
       writeret = Lstream_write (XLSTREAM (DATA_OUTSTREAM(p)), chunkbuf,
 				chunklen);
+      Lstream_flush (XLSTREAM (DATA_OUTSTREAM(p)));
       if (writeret < 0)
 	{
 	  p->status_symbol = Qexit;
@@ -638,15 +644,18 @@ nt_send_process (Lisp_Object proc, struct lstream* lstream)
 		 XSTRING_DATA (p->name));
 	}
 
-      while (Lstream_was_blocked_p (XLSTREAM (p->pipe_outstream)))
-	{
-	  /* Buffer is full.  Wait, accepting input; that may allow
-	     the program to finish doing output and read more.  */
-	  Faccept_process_output (Qnil, make_int (1), Qnil);
-	  Lstream_flush (XLSTREAM (p->pipe_outstream));
-	}
+      {
+	int wait_ms = 25;
+	while (Lstream_was_blocked_p (XLSTREAM (p->pipe_outstream)))
+	  {
+	    /* Buffer is full.  Wait, accepting input; that may allow
+	       the program to finish doing output and read more.  */
+	    Faccept_process_output (Qnil, Qzero, make_int (wait_ms));
+	    Lstream_flush (XLSTREAM (p->pipe_outstream));
+	    wait_ms = min (1000, 2 * wait_ms);
+	  }
+      }
     }
-  Lstream_flush (XLSTREAM (DATA_OUTSTREAM(p)));
 }
 
 /*
@@ -924,6 +933,12 @@ process_type_create_nt (void)
   PROCESS_HAS_METHOD (nt, open_multicast_group);
 #endif
 #endif
+}
+
+void
+syms_of_process_nt (void)
+{
+  defsymbol (&Qnt_quote_process_args, "nt-quote-process-args");
 }
 
 void

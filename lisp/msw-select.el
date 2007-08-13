@@ -49,21 +49,9 @@ replacing the active selection if there is one."
 	(insert-rectangle clip)
       (insert clip))))
 
-(defun mswindows-clear-clipboard ()
-  "Delete the selection without copying it to the clipboard or the kill ring."
-  (interactive "*")
-  (mswindows-cut-copy-clear-clipboard 'clear))
-
-(defun mswindows-copy-clipboard ()
-  "Copy the selection to the mswindows clipboard and to the kill ring."
-  (interactive)
-  (mswindows-cut-copy-clear-clipboard 'copy))
-
-(defun mswindows-cut-clipboard ()
-  "Copy the selection to the mswindows clipboard and to the kill ring,
-then delete it."
-  (interactive "*")
-  (mswindows-cut-copy-clear-clipboard 'cut))
+(defun mswindows-own-clipboard (string)
+  "Paste the given string to the mswindows clipboard."
+  (mswindows-set-clipboard string))
 
 (defun mswindows-cut-copy-clear-clipboard (mode)
   "Don't use this function.
@@ -134,7 +122,8 @@ Interactively, the text of the region is used as the selection value."
 (defun mswindows-disown-selection (&optional secondary-p)
   "Assuming we own the selection, disown it.  With an argument, discard the
 secondary selection instead of the primary selection."
-  (setq mswindows-selection-owned-p nil))
+  (setq mswindows-selection-owned-p nil)
+  (mswindows-delete-selection))
 
 (defun mswindows-selection-owner-p (&optional selection)
   "Return t if current emacs process owns the given Selection.

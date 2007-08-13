@@ -39,12 +39,12 @@
 #endif
 #include <sys/param.h>
 /* Kludge to work around setlocale(LC_ALL,...) not working after 01/1997 */
-#if __FreeBSD_version >= 199701
+#if __FreeBSD_version >= 199701 && __FreeBSD_version < 226000
 #ifdef HAVE_X_WINDOWS
 #include <X11/Xlocale.h>
 #define setlocale(locale_category, locale_spec) setlocale(LC_CTYPE, locale_spec)
 #endif /* HAVE X */
-#endif /* FreeBSD >= 199701 */
+#endif /* FreeBSD >= 199701 && < 226000 */
 #endif /* C code */
 
 #define LIBS_TERMCAP "-ltermcap"

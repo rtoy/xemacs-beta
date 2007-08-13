@@ -47,7 +47,6 @@ Boston, MA 02111-1307, USA.  */
 #include "chartab.h"
 #include "console.h"
 #include "device.h"
-#include "eldap.h"
 #include "elhash.h"
 #include "events.h"
 #include "extents.h"
@@ -64,6 +63,10 @@ Boston, MA 02111-1307, USA.  */
 #include "syntax.h"
 #include "window.h"
 
+#ifdef HAVE_LDAP
+#include "eldap.h"
+#endif
+
 #ifdef HAVE_TOOLBARS
 #include "toolbar.h"
 #endif
@@ -71,7 +74,6 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_DATABASE
 #include "database.h"
 #endif
-
 
 #ifdef HAVE_X_WINDOWS
 #include "glyphs-x.h"
@@ -82,9 +84,6 @@ Boston, MA 02111-1307, USA.  */
 #include "file-coding.h"
 #endif
 
-
 #ifdef TOOLTALK
-#include TT_C_H_PATH
 #include "tooltalk.h"
 #endif
-

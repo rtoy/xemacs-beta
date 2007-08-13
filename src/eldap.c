@@ -32,10 +32,9 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 #include "opaque.h"
+#include "sysdep.h"
 
 #include <errno.h>
-#include <lber.h>
-#include <ldap.h>
 
 #include "eldap.h"
 
@@ -82,25 +81,8 @@ signal_ldap_error (LDAP *ld)
 
 
 /************************************************************************/
-/*                          The ldap Lisp object                        */
+/*                        ldap lrecord basic functions                  */
 /************************************************************************/
-
-/*
- * Structure records pertinent information about an open LDAP connection.
- */
-
-struct Lisp_LDAP
-{
-  /* lcrecord header */
-  struct lcrecord_header header;
-  /* The LDAP connection handle used by the LDAP API */
-  LDAP *ld;
-  /* Name of the host we connected to */
-  Lisp_Object host;
-  /* Status of the LDAP connection.  */
-  int livep;
-};
-
 
 static Lisp_Object
 make_ldap (struct Lisp_LDAP *ldap)
@@ -131,7 +113,7 @@ print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   print_internal (ldap->host, printcharfun, 1);
   if (!ldap->livep)
     write_c_string ("(dead) ",printcharfun);
-  sprintf (buf, " 0x%x>", ldap);
+  sprintf (buf, " 0x%x>", (unsigned int)ldap);
   write_c_string (buf, printcharfun);
 }
 
@@ -387,6 +369,7 @@ ldap_search_unwind (Lisp_Object unwind_obj)
     ldap_msgfree (unwind->res);
   if (unwind->vals)
     ldap_value_free (unwind->vals);
+  return Qnil;
 }
 
 DEFUN ("ldap-search-internal", Fldap_search_internal, 2, 6, 0, /*
@@ -413,7 +396,7 @@ an alist of attribute/values.
   LDAPMessage *e;
   BerElement *ptr;
   char *a;
-  int i, rc, err;
+  int i, rc;
   int  matches;
   struct ldap_unwind_struct unwind;
 

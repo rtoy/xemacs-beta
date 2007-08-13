@@ -549,7 +549,7 @@ newline_cache_on_off (struct buffer *buf)
 
 static Bytind
 bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
-		int count, int *shortage, int allow_quit)
+		EMACS_INT count, EMACS_INT *shortage, int allow_quit)
 {
   /* This function has been Mule-ized. */
   Bytind lim = en > 0 ? en :
@@ -668,7 +668,7 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
 
 Bufpos
 scan_buffer (struct buffer *buf, Emchar target, Bufpos start, Bufpos end,
-	     int count, int *shortage, int allow_quit)
+	     EMACS_INT count, EMACS_INT *shortage, int allow_quit)
 {
   Bytind bi_retval;
   Bytind bi_start, bi_end;
@@ -686,19 +686,19 @@ scan_buffer (struct buffer *buf, Emchar target, Bufpos start, Bufpos end,
 Bytind
 bi_find_next_newline_no_quit (struct buffer *buf, Bytind from, int cnt)
 {
-  return bi_scan_buffer (buf, '\n', from, 0, cnt, (int *) 0, 0);
+  return bi_scan_buffer (buf, '\n', from, 0, cnt, 0, 0);
 }
 
 Bufpos
 find_next_newline_no_quit (struct buffer *buf, Bufpos from, int cnt)
 {
-  return scan_buffer (buf, '\n', from, 0, cnt, (int *) 0, 0);
+  return scan_buffer (buf, '\n', from, 0, cnt, 0, 0);
 }
 
 Bufpos
 find_next_newline (struct buffer *buf, Bufpos from, int cnt)
 {
-  return scan_buffer (buf, '\n', from, 0, cnt, (int *) 0, 1);
+  return scan_buffer (buf, '\n', from, 0, cnt, 0, 1);
 }
 
 /* Like find_next_newline, but returns position before the newline,
@@ -707,7 +707,7 @@ find_next_newline (struct buffer *buf, Bufpos from, int cnt)
 Bufpos
 find_before_next_newline (struct buffer *buf, Bufpos from, Bufpos to, int cnt)
 {
-  int shortage;
+  EMACS_INT shortage;
   Bufpos pos = scan_buffer (buf, '\n', from, to, cnt, &shortage, 1);
 
   if (shortage == 0)
@@ -746,7 +746,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 
   p = XSTRING_DATA (string);
   pend = p + XSTRING_LENGTH (string);
-  xzero (fastmap);
+  memset (fastmap, 0, sizeof (fastmap));
 
   Fclear_range_table (Vskip_chars_range_table);
 

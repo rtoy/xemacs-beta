@@ -144,6 +144,22 @@ Return the contents of the mswindows clipboard.
   return ret;
 }
 
+DEFUN ("mswindows-selection-exists-p", Fmswindows_selection_exists_p, 0, 0, 0, /*
+Whether there is an mswindows selection.
+*/
+       ())
+{
+  return IsClipboardFormatAvailable (CF_TEXT) ? Qt : Qnil;
+}
+
+DEFUN ("mswindows-delete-selection", Fmswindows_delete_selection, 0, 0, 0, /*
+Whether there is an mswindows selection.
+*/
+       ())
+{
+  return EmptyClipboard () ? Qt : Qnil;
+}
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -154,6 +170,8 @@ syms_of_select_mswindows (void)
 {
   DEFSUBR (Fmswindows_set_clipboard);
   DEFSUBR (Fmswindows_get_clipboard);
+  DEFSUBR (Fmswindows_selection_exists_p);
+  DEFSUBR (Fmswindows_delete_selection);
 }
 
 void

@@ -133,24 +133,6 @@ mark_frame (Lisp_Object obj, void (*markobj) (Lisp_Object))
 
 #define MARKED_SLOT(x) ((markobj) (f->x));
 #include "frameslots.h"
-#undef MARKED_SLOT
-
-#ifdef HAVE_TOOLBARS
-  ((markobj) (f->toolbar_data[0]));
-  ((markobj) (f->toolbar_data[1]));
-  ((markobj) (f->toolbar_data[2]));
-  ((markobj) (f->toolbar_data[3]));
-
-  ((markobj) (f->toolbar_size[0]));
-  ((markobj) (f->toolbar_size[1]));
-  ((markobj) (f->toolbar_size[2]));
-  ((markobj) (f->toolbar_size[3]));
-
-  ((markobj) (f->toolbar_visible_p[0]));
-  ((markobj) (f->toolbar_visible_p[1]));
-  ((markobj) (f->toolbar_visible_p[2]));
-  ((markobj) (f->toolbar_visible_p[3]));
-#endif /* HAVE_TOOLBARS */
 
   if (FRAME_LIVE_P (f)) /* device is nil for a dead frame */
     MAYBE_FRAMEMETH (f, mark_frame, (f, markobj));
@@ -185,24 +167,6 @@ nuke_all_frame_slots (struct frame *f)
 {
 #define MARKED_SLOT(x)	f->x = Qnil;
 #include "frameslots.h"
-#undef MARKED_SLOT
-
-#ifdef HAVE_TOOLBARS
-  f->toolbar_data[0] = Qnil;
-  f->toolbar_data[1] = Qnil;
-  f->toolbar_data[2] = Qnil;
-  f->toolbar_data[3] = Qnil;
-
-  f->toolbar_size[0] = Qnil;
-  f->toolbar_size[1] = Qnil;
-  f->toolbar_size[2] = Qnil;
-  f->toolbar_size[3] = Qnil;
-
-  f->toolbar_visible_p[0] = Qnil;
-  f->toolbar_visible_p[1] = Qnil;
-  f->toolbar_visible_p[2] = Qnil;
-  f->toolbar_visible_p[3] = Qnil;
-#endif /* HAVE_TOOLBARS */
 }
 
 /* Allocate a new frame object and set all its fields to reasonable
@@ -927,7 +891,13 @@ set_frame_selected_window (struct frame *f, Lisp_Object window)
   assert (XFRAME (WINDOW_FRAME (XWINDOW (window))) == f);
   f->selected_window = window;
   if (!MINI_WINDOW_P (XWINDOW (window)) || FRAME_MINIBUF_ONLY_P (f))
-    f->last_nonminibuf_window = window;
+    {
+#ifdef HAVE_TOOLBARS
+      if (!EQ (f->last_nonminibuf_window, window))
+	MARK_TOOLBAR_CHANGED;
+#endif      
+      f->last_nonminibuf_window = window;
+    }
 }
 
 DEFUN ("set-frame-selected-window", Fset_frame_selected_window, 2, 2, 0, /*

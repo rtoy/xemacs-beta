@@ -29,6 +29,8 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_POPUPS
 int separator_string_p (CONST char *s);
+void get_callback (Lisp_Object, Lisp_Object *, Lisp_Object *);
+
 extern int popup_up_p;
 
 /* This structure describes gui button,

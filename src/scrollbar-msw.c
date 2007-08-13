@@ -152,8 +152,6 @@ mswindows_update_scrollbar_instance_status (struct window *w,
 					    int active, int size,
 					    struct scrollbar_instance *sb)
 {
-  struct frame *f = XFRAME (w->frame);
-  
   if (SCROLLBAR_MSW_SIZE (sb) != size)
     {
       SCROLLBAR_MSW_SIZE (sb) = size;

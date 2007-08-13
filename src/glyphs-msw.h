@@ -63,6 +63,14 @@ int
 mswindows_resize_dibitmap_instance (struct Lisp_Image_Instance* ii,
 				    struct frame* f,
 				    int newx, int newy);
+HBITMAP
+mswindows_create_resized_bitmap (struct Lisp_Image_Instance* ii,
+				 struct frame* f,
+				 int newx, int newy);
+HBITMAP
+mswindows_create_resized_mask (struct Lisp_Image_Instance* ii,
+			       struct frame* f,
+			       int newx, int newy);
 void
 mswindows_initialize_image_instance_icon (struct Lisp_Image_Instance* image,
 					  int cursor);

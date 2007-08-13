@@ -571,13 +571,17 @@ Xt_StringToScrollBarPlacement (XrmValuePtr args,   /* unused */
   toVal->size = sizeof (cvt_string_scrollbar_placement);
   toVal->addr = (XPointer) &cvt_string_scrollbar_placement;
 
-  if      (q == XrmStringToQuark ("top_left"))
+  if      (q == XrmStringToQuark ("top-left")
+	   || q == XrmStringToQuark ("top_left"))
     cvt_string_scrollbar_placement = XtTOP_LEFT;
-  else if (q == XrmStringToQuark ("bottom_left"))
+  else if (q == XrmStringToQuark ("bottom-left")
+	   || q == XrmStringToQuark ("bottom_left"))
     cvt_string_scrollbar_placement = XtBOTTOM_LEFT;
-  else if (q == XrmStringToQuark ("top_right"))
+  else if (q == XrmStringToQuark ("top-right")
+	   || q == XrmStringToQuark ("top_right"))
     cvt_string_scrollbar_placement = XtTOP_RIGHT;
-  else if (q == XrmStringToQuark ("bottom_right"))
+  else if (q == XrmStringToQuark ("bottom-right")
+	   || q == XrmStringToQuark ("bottom_right"))
     cvt_string_scrollbar_placement = XtBOTTOM_RIGHT;
   else
     {

@@ -95,6 +95,7 @@ void copy_file (int old, int new, int size);
 void update_file_ptrs(int file, struct header *hdr,
 		      struct som_exec_auxhdr *auxhdr,
 		      unsigned int location, int offset);
+int calculate_checksum(struct header *hdr);
 
 /* Create a new a.out file, same as old but with current data space */
 int

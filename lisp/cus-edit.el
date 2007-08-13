@@ -2973,12 +2973,7 @@ Optional EVENT is the location for the menu."
 
 ;;; The `custom-save-all' Function.
 ;;;###autoload
-(defcustom custom-file (if (boundp 'user-init-directory)
-			   (concat "~"
-				   init-file-user
-				   user-init-directory
-				   "options.el")
-			 "~/.emacs")
+(defcustom custom-file "~/.emacs"
   "File used for storing customization information.
 If you change this from the default \"~/.emacs\" you need to
 explicitly load that file for the settings to take effect."

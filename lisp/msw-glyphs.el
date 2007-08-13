@@ -60,9 +60,11 @@
      ;; strings are not allowed so they will be ignored.
      ("" [nothing])))
 
-  (set-glyph-image truncation-glyph "$" 'global 'mswindows)
-  (set-glyph-image continuation-glyph "\\" 'global 'mswindows)
-  (set-glyph-image hscroll-glyph "$" 'global 'mswindows)
+  (set-face-font 'border-glyph "WingDings:regular:11: :symbol"
+		 'global 'mswindows)
+  (set-glyph-image continuation-glyph "\xC3" 'global 'mswindows)
+  (set-glyph-image truncation-glyph "\xF0" 'global 'mswindows)
+  (set-glyph-image hscroll-glyph "\xEF" 'global 'mswindows)
 
   (set-glyph-image octal-escape-glyph "\\")
   (set-glyph-image control-arrow-glyph "^")

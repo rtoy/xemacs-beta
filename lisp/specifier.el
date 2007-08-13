@@ -403,6 +403,53 @@ is no possibility for ambiguity and no need to go through the function
 	    how-to-add))))
   value)
 
+;; Note: you cannot replace the following macro with `letf' because
+;; `specifier-instance' does not have a setf method defined.  (I tried
+;; to use `set-specifier' as the setf method for `specifier-instance',
+;; but it doesn't work for `letf' because set-specifier to the old
+;; value cannot be used to "undo" a previous set-specifier, as letf
+;; expects.)
+;;
+;; This macro might perhaps be made simpler, with an addition to
+;; `remove-specifier'.  Example (modulo gensyms for clarity):
+;;
+;; (defmacro with-specifier-instance (specifier value domain &rest body)
+;;   `(unwind-protect
+;;        (progn
+;;	    (add-spec-to-specifier ,specifier ,value ,domain nil 'prepend)
+;;	    ,@body)
+;;      (remove-specifier ,specifier ,domain)))
+;;
+;; So, the idea is to unconditionally prepend a specification for
+;; DOMAIN, and unconditionally remove it.  This does not work because
+;; `remove-specifier' removes *all* the specifications of DOMAIN,
+;; nuking the old ones, in the process.  (for this purpose, it might
+;; make sense for `remove-specifier' to have a HOW-TO-REMOVE
+;; argument.)
+;;
+;; The following version remembers the old speclist and returns it
+;; later.  It's probably less error-prone anyway.
+
+(defmacro with-specifier-instance (specifier value domain &rest body)
+  "Evaluate forms in BODY with SPECIFIER instantiating to VALUE in DOMAIN.
+The value returned is the value of the last form in BODY.
+For meaning of DOMAIN, see `specifier-instance'."
+  (let ((specvar (gensym "wsi-"))
+	(valvar (gensym "wsi-"))
+	(domvar (gensym "wsi-"))
+	(oldvar (gensym "wsi-")))
+    ;; Remember the arguments to prevent multiple evaluation.
+    `(let* ((,specvar ,specifier)
+	    (,valvar ,value)
+	    (,domvar ,domain)
+	    (,oldvar (specifier-spec-list ,specvar ,domvar)))
+       (unwind-protect
+	   (progn
+	     (add-spec-to-specifier ,specvar ,valvar ,domvar nil 'prepend)
+	     ,@body)
+	 (remove-specifier ,specvar ,domvar nil t)
+	 (add-spec-list-to-specifier ,specvar ,oldvar)))))
+
 (define-specifier-tag 'win 'device-on-window-system-p)
 
 ;; Add tags for device types that don't have support compiled

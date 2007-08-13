@@ -1,4 +1,37 @@
 							-*- indented-text -*-
+to 21.0 beta41 "San Clemente"
+-- MS Windows font charset support from Kirill Katsnelson
+-- Special glyph fixes from Kirill Katsnelson
+-- MS Windows Dialog boxes from Kirill Katsnelson
+-- allow electric slash to be a backslash from Hrvoje Niksic
+-- Selection cleanup from Andy Piper
+-- LDAP compilation fixes from Martin Buchholz and Oscar Figueiredo
+-- MS Windows NT dump fix from Kirill Katsnelson
+-- gnuserv for MS Windows NT and Cygwin from Andy Piper
+-- Cursor resource update from Andy Piper
+-- save-some-buffers fix from Hrvoje Niksic
+-- Specifier fixes from Hrvoje Niksic
+-- Various warning fixes from Martin Buchholz
+-- face fix from Andy Piper
+-- Various MS Windows fixes from Kirill Katsnelson
+-- etags.c-13.6 courtesy of Francesco Potortì
+-- FreeBSD 2.2.6 now supports LC_ALL from Kazuyuki IENAGA
+-- Toolbar fixes from Kirill Katsnelson
+-- Ignore most recent libtiff from Martin Buchholz
+-- minor mode menu cleanup from Hrvoje Niksic
+-- OpenBSD support from Hans Guenter Weigand
+-- MS Windows NT process fixes from Kirill Katsnelson
+-- miscellaneous patches from Martin Buchholz
+-- MS Windows toolbar hasing fix from Andy Piper
+-- MS Windows cursor resources update from Andy Piper
+-- AIX initialization fixes from Michael Sperber
+-- Startup optimization from Michael Sperber
+-- MS Windows cursor initialization from Kirill Katsnelson
+-- miscellaneous patches from Kirill Katsnelson
+-- 64 bit clean fixes from Olivier Galibert
+-- Interactive compiled functions and anonymous forms fixes from Hrvoje Niksic
+-- Miscellaneous cleanup fixes from Altrasoft
+
 to 21.0 beta40 "Saanen"
 -- Vertical divider hacking from Didier Verna and Kirill Katsnelson
 -- Bind cut'n'paste keys to generic functions from Jonathan Harris

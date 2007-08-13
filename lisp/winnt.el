@@ -2,153 +2,70 @@
 
 ;; Copyright (C) 1994 Free Software Foundation, Inc.
 
-;; Author: Geoff Voelker (voelker@cs.washington.edu)
+;; Maintainer: XEmacs Development Team
+;; Keywords: mouse, dumped
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; along with XEmacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
+
+;;; Synched up with: Not synched with FSF.  Almost completely divergent.
 
 ;;; Commentary:
 
-;; (August 12, 1993)
-;; Created.
+;; This file is dumped with XEmacs for MS Windows (without cygwin).
 
-;; (November 21, 1994)
-;; [C-M-backspace] defined.
-;; mode-line-format defined to show buffer file type.
-;; audio bell initialized.
-;;
-;; (March 18, 1997)
+;; Based on NT Emacs version by Geoff Voelker (voelker@cs.washington.edu)
 ;; Ported to XEmacs by Marc Paquette <marcpa@cam.org>
-;; 
+;; Largely modified by Kirill M. Katsnelson <kkm@kis.ru>
 
 ;;; Code:
 
-;; Map delete and backspace
-;; Not sure this is really needed in XEmacs... --marcpa
-(define-key global-map [(backspace)] 'backward-delete-char)
-(define-key global-map [(delete)] 'delete-char)
-(define-key global-map [(meta backspace)] 'backward-kill-word)
-(define-key global-map [(control meta backspace)] 'backward-kill-sexp)
-
-;; Ignore case on file-name completion
-(setq completion-ignore-case t)
-
 ;; The cmd.exe shell uses the "/c" switch instead of the "-c" switch
 ;; for executing its command line argument (from simple.el).
+;; #### Oh if we had an alist of shells and their command switches.
 (setq shell-command-switch "/c")
 
 ;; For appending suffixes to directories and files in shell completions.
-(add-hook 'shell-mode-hook 
-	  '(lambda () (setq comint-completion-addsuffix '("\\" . " "))))
+(defun nt-shell-mode-hook ()
+  (setq comint-completion-addsuffix '("\\" . " ")
+	comint-process-echoes t))
+(add-hook 'shell-mode-hook 'nt-shell-mode-hook)
 
 ;; Use ";" instead of ":" as a path separator (from files.el).
 (setq path-separator ";")
 
 ;; Set the null device (for compile.el).
+;; #### There should be such a global thingy as null-device - kkm
 (setq grep-null-device "NUL")
 
 ;; Set the grep regexp to match entries with drive letters.
 (setq grep-regexp-alist
   '(("^\\(\\([a-zA-Z]:\\)?[^:( \t\n]+\\)[:( \t]+\\([0-9]+\\)[:) \t]" 1 3)))
 
-;; Taken from dos-fn.el ... don't want all that's in the file, maybe
-;; separate it out someday.
+;;----------------------------------------------------------------------
+;; Autosave hack
+;;--------------------
 
-(defvar file-name-buffer-file-type-alist
-  '(
-    ("[:/].*config.sys$" . nil)		; config.sys text
-    ("\\.elc$" . t)			; emacs stuff
-    ("\\.\\(obj\\|exe\\|com\\|lib\\|sys\\|chk\\|out\\|bin\\|ico\\|pif\\)$" . t)
-					; MS-Dos stuff
-    ("\\.\\(arc\\|zip\\|pak\\|lzh\\|zoo\\)$" . t)
-					; Packers
-    ("\\.\\(a\\|o\\|tar\\|z\\|gz\\|taz\\)$" . t)
-					; Unix stuff
-    ("\\.tp[ulpw]$" . t)
-					; Borland Pascal stuff
-    )
-  "*Alist for distinguishing text files from binary files.
-Each element has the form (REGEXP . TYPE), where REGEXP is matched
-against the file name, and TYPE is nil for text, t for binary.")
-
-(defun find-buffer-file-type (filename)
-  (let ((alist file-name-buffer-file-type-alist)
-	(found nil)
-	(code nil))
-    (let ((case-fold-search t))
-      (setq filename (file-name-sans-versions filename))
-      (while (and (not found) alist)
-	(if (string-match (car (car alist)) filename)
-	    (setq code (cdr (car alist))
-		  found t))
-	(setq alist (cdr alist))))
-    (if found
-	(cond((memq code '(nil t)) code)
-	     ((and (symbolp code) (fboundp code))
-	      (funcall code filename)))
-      default-buffer-file-type)))
-
-(defun find-file-binary (filename) 
-  "Visit file FILENAME and treat it as binary."
-  (interactive "FFind file binary: ")
-  (let ((file-name-buffer-file-type-alist '(("" . t))))
-    (find-file filename)))
-
-(defun find-file-text (filename) 
-  "Visit file FILENAME and treat it as a text file."
-  (interactive "FFind file text: ")
-  (let ((file-name-buffer-file-type-alist '(("" . nil))))
-    (find-file filename)))
-
-(defun find-file-not-found-set-buffer-file-type ()
-  (save-excursion
-    (set-buffer (current-buffer))
-    (setq buffer-file-type (find-buffer-file-type (buffer-file-name))))
-  nil)
-
-;;; To set the default file type on new files.
-(add-hook 'find-file-not-found-hooks 'find-file-not-found-set-buffer-file-type)
-
-;;; For using attached Unix filesystems.
-(defun save-to-unix-hook ()
-  (save-excursion
-    (setq buffer-file-type t))
-  nil)
-
-(defun revert-from-unix-hook ()
-  (save-excursion
-    (setq buffer-file-type (find-buffer-file-type (buffer-file-name))))
-  nil)
-
-;; Really should provide this capability at the drive letter granularity.
-(defun using-unix-filesystems (flag)
-  "Read and write files without CR/LF translation, if FLAG is non-nil.
-This is in effect assuming the files are on a remote Unix file system.
-If FLAG is nil, resume using CR/LF translation as usual."
-  (if flag
-      (progn
-	(add-hook 'write-file-hooks 'save-to-unix-hook)
-	(add-hook 'after-save-hook 'revert-from-unix-hook))
-    (progn
-      (remove-hook 'write-file-hooks 'save-to-unix-hook)
-      (remove-hook 'after-save-hook 'revert-from-unix-hook))))
-
-;;; Avoid creating auto-save file names containing invalid characters
-;;; (primarily "*", eg. for the *mail* buffer).
+;; Avoid creating auto-save file names containing invalid characters
+;; (primarily "*", eg. for the *mail* buffer).
+;; Avoid "doc lost for function" warning
+(defun original-make-auto-save-file-name (&optional junk)
+  "You do not want to call this."
+  )
 (fset 'original-make-auto-save-file-name
       (symbol-function 'make-auto-save-file-name))
 
@@ -165,25 +82,56 @@ See also `auto-save-file-name-p'."
       (setq start (1+ (match-end 0))))
     name))
 
-;; ### FIX ME: need to look at XEmacs xmouse.el versus FSF mouse.el
-;; and adjust accordingly: I think 'x-selections is an FSFism.
-;; --marcpa 
-;;; Fix interface to (X-specific) mouse.el
-(defun x-set-selection (type data)
-  (or type (setq type 'PRIMARY))
-  (put 'x-selections type data))
+;;----------------------------------------------------------------------
+;; Quoting process args
+;;--------------------
 
-(defun x-get-selection (&optional type data-type)
-  (or type (setq type 'PRIMARY))
-  (get 'x-selections type))
+(defun nt-quote-args-verbatim (args)
+  "Copy ARG list verbatim, separating each arg with space."
+  (mapconcat 'identity args " "))
 
-;; FSFisms
-;(fmakunbound 'font-menu-add-default)
-;(global-unset-key [C-down-mouse-1])
-;(global-unset-key [C-down-mouse-2])
-;(global-unset-key [C-down-mouse-3])
+(defun nt-quote-args-prefix-quote (prefix args)
+  (mapconcat (lambda (str)
+	       (concat "\""
+		       (mapconcat (lambda (ch)
+				    (concat (if (eq ch ?\") prefix)
+					    (char-to-string ch)))
+				  str nil)
+		       "\""))
+	       args " "))
 
-;;; Set to a system sound if you want a fancy bell.
-;(set-message-beep nil)
+(defun nt-quote-args-backslash-quote (args)
+  "Place ARG list in quotes, prefixing quotes in args with backslashes."
+  (nt-quote-args-prefix-quote "\\" args))
+
+(defun nt-quote-args-double-quote (args)
+  "Place ARG list in quotes, doubling quotes in args."
+  (nt-quote-args-prefix-quote "\"" args))
+
+(defvar nt-quote-args-functions-alist
+  '(("^.?.?sh\\." . nt-quote-args-double-quote))
+  "An alist for determining proper argument quoting given executable file name.
+Car of each cons must be a string, a regexp against which a file name sans 
+directory is matched.  Cdr is a function symbol.  The list is mathced in
+forward order, and mathcing entry cdr's funcrion is called with a list of
+strings, process arguments.  It must return a string which is passed to
+the newly created process.
+
+If not found, then `nt-quote-args-verbatim' is called on the argument list.")
+
+(defun nt-quote-process-args (args)
+  ;;Properly quote process ARGS for executing (car ARGS).
+  (let ((fname (file-name-nondirectory (car args)))
+	(alist nt-quote-args-functions-alist)
+	(case-fold-search nil)
+	(return-me nil)
+	(assoc nil))
+    (while (and alist
+		(null return-me))
+      (setq assoc (pop alist))
+      (if (string-match (car assoc) fname)
+	  (setq return-me (funcall (cdr assoc) (cdr args)))))
+    (or return-me
+	(nt-quote-args-verbatim args))))
 
 ;;; winnt.el ends here

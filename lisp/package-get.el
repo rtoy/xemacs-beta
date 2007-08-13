@@ -96,7 +96,6 @@
 
 ;;; Code:
 
-(provide 'package-get)
 (require 'package-admin)
 
 (defvar package-get-base nil
@@ -167,8 +166,8 @@ copy.  Otherwise, keep it around.")
   ;; Load a fresh copy
   (load "package-get-base.el")
   (mapcar (lambda (pkg)
-						(package-get-all
-						 (car pkg) nil))
+	    (package-get-all
+	     (car pkg) nil))
           packages-package-list))
 
 (defun package-get-all (package version &optional fetched-packages)
@@ -401,5 +400,91 @@ some built in variables.  For now, use packages-package-list."
 	    (setq this-package (cdr this-package)))))
       (setq packages (cdr packages)))
     found))
+
+;;
+;; customize interfaces.
+;; The group is in this file so that custom loads includes this file.
+;;
+(defgroup packages nil
+  "Configure XEmacs packages."
+  :group 'emacs)
+
+(defun package-get-custom ()
+  "Fetch and install the latest versions of all customized packages."
+  (interactive)
+  ;; Load a fresh copy
+  (load "package-get-base.el")
+  (load "package-get-custom.el")
+  (mapcar (lambda (pkg)
+	    (if (eval (intern (concat (symbol-name (car pkg)) "-package")))
+		(package-get-all (car pkg) nil))
+	    t)
+	  package-get-base))
+
+(defun package-get-ever-installedp (pkg &optional notused)
+  (string-match "-package$" (symbol-name pkg))
+  (custom-initialize-set 
+   pkg 
+   (if (package-get-info-find-package 
+	packages-package-list 
+	(intern (substring (symbol-name pkg) 0 (match-beginning 0))))
+       t)))
+
+(defun package-get-create-custom ()
+  "Creates a package customization file package-get-custom.el.
+Entries in the customization file are retrieved from package-get-base.el."
+  (interactive)
+  ;; Load a fresh copy
+  (load "package-get-base.el")
+  (let ((custom-buffer (find-file-noselect 
+			(or (file-installed-p "package-get-custom.el")
+			    (concat (file-name-directory 
+				     (file-installed-p "package-get-base.el"))
+				    "package-get-custom.el"))))
+	(pkg-groups nil))
+
+    ;; clear existing stuff
+    (delete-region (point-min custom-buffer) 
+		   (point-max custom-buffer) custom-buffer)
+    (insert-string "(require 'package-get)\n" custom-buffer)
+
+    (mapcar (lambda (pkg)
+	      (let ((category (plist-get (car (cdr pkg)) 'category)))
+		(or (memq (intern category) pkg-groups)
+		    (progn
+		      (setq pkg-groups (cons (intern category) pkg-groups))
+		      (insert-string 
+		       (concat "(defgroup " category "-packages nil\n"
+			       "  \"" category " package group\"\n"
+			       "  :group 'packages)\n\n") custom-buffer)))
+		
+		(insert-string 
+		 (concat "(defcustom " (symbol-name (car pkg)) 
+			 "-package nil \n"
+			 "  \"" (plist-get (car (cdr pkg)) 'description) "\"\n"
+			 "  :group '" category "-packages\n"
+			 "  :initialize 'package-get-ever-installedp\n"
+			 "  :type 'boolean)\n\n") custom-buffer)))
+	      package-get-base) custom-buffer)
+  )
+
+;; need this first to avoid infinite dependency loops
+(provide 'package-get)
+
+;; potentially update the custom dependencies every time we load this
+(let ((custom-file (file-installed-p "package-get-custom.el"))
+      (package-file (file-installed-p "package-get-base.el")))
+  ;; update custom file if it doesn't exist
+  (if (or (not custom-file)
+	  (and (< (car (nth 5 (file-attributes custom-file)))
+		  (car (nth 5 (file-attributes package-file))))
+	       (< (car (nth 5 (file-attributes custom-file)))
+		  (car (nth 5 (file-attributes package-file))))))
+      (save-excursion
+	(message "generating package customizations...")
+	(set-buffer (package-get-create-custom))
+	(save-buffer)
+	(message "generating package customizations...done")))
+  (load "package-get-custom.el"))
 
 ;;; package-get.el ends here

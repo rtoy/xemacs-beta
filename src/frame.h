@@ -93,32 +93,19 @@ struct frame
 #endif
 
 #ifdef HAVE_TOOLBARS
-  /* We handle these specially rather than putting them in
-     frameslots.h because we want them to be arrays. */
-
-  /* Data representing each currently displayed toolbar.  See
-     toolbar.c */
-  Lisp_Object toolbar_data[4];
-
-  /* Cached specifiers: */
-
-  /* Size of the toolbars.  The frame-local toolbar space is
-     subtracted before the windows are arranged.  Window and buffer
-     local toolbars overlay their windows. */
-  Lisp_Object toolbar_size[4];
-  /* Visibility of the toolbars.  This acts as a valve for toolbar_size. */
-  Lisp_Object toolbar_visible_p[4];
-  /* Thickness of the border around the toolbar. */
-  Lisp_Object toolbar_border_width[4];
+  /* Size of toolbars as seen by redisplay. This is used to determine
+     whether to re-layout windows by a call to change_frame_size early
+     in redisplay_frame. */
+  unsigned int current_toolbar_size[4];
 #endif
 
   /* A structure of auxiliary data specific to the device type.
      struct x_frame is used for X window frames; defined in console-x.h */
   void *frame_data;
 
+#define FRAME_SLOT_DECLARATION
 #define MARKED_SLOT(x) Lisp_Object x
 #include "frameslots.h"
-#undef MARKED_SLOT
 
     /* Nonzero if frame is currently displayed.
        Mutally exclusive with iconfied
@@ -494,12 +481,12 @@ extern int frame_changed;
 
 #ifdef HAVE_TOOLBARS
 #define FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE(f, pos) \
-  (!NILP((f)->toolbar_data[pos]) && !NILP ((f)->toolbar_visible_p[pos]))
+  (!NILP((f)->toolbar_buttons[pos]) && !NILP ((f)->toolbar_visible_p[pos]))
 #define FRAME_RAW_THEORETICAL_TOOLBAR_SIZE(f, pos) \
-  (!NILP ((f)->toolbar_data[pos]) && INTP((f)->toolbar_size[pos]) ? \
+  (!NILP ((f)->toolbar_buttons[pos]) && INTP((f)->toolbar_size[pos]) ? \
    (XINT ((f)->toolbar_size[pos])) : 0)
 #define FRAME_RAW_THEORETICAL_TOOLBAR_BORDER_WIDTH(f, pos) \
-  (!NILP ((f)->toolbar_data[pos]) && INTP((f)->toolbar_border_width[pos]) ? \
+  (!NILP ((f)->toolbar_buttons[pos]) && INTP((f)->toolbar_border_width[pos]) ? \
    (XINT ((f)->toolbar_border_width[pos])) : 0)
 #else
 #define FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE(f, pos) 0

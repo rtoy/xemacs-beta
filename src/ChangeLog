@@ -1,3 +1,275 @@
+1998-05-23  SL Baur  <steve@altair.xemacs.org>
+
+	* getloadavg.c (getloadavg): Fix typo.
+
+1998-05-23  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* objects-msw.c (mswindows_initialize_font_instance): Added support
+	for font character sets.
+	Replaced 'XXX' with '####' in comments throughout the file.
+
+1998-05-23  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* emacs.c (main_1): Added calls to vars_of_dialog_mswindows() and
+	console_type_create_dialog_mswindows(), to initialize Windows dialog
+	support.
+
+	* symsinit.h: Prototyped the above functions.
+
+	* dialog-x.c (x_popup_dialog_box): Moved dialog descriptor consistency 
+	checks to dialog.c...
+
+	* dialog.c (Fpopup_dialog_box): ...right here. Added more checks: a
+	device must support dialog boxes, and the descriptor must supply at
+	least one button.
+
+	* dialog-msw.c: New file, dialogs for Windows.
+
+1998-05-21  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* eldap.c (ldap_search_unwind): Return Qnil instead of nothing
+	(Fldap_search_internal): Removed unused variable `err'
+
+	* eldap.h: Moved Lisp_LDAP declaration here instead of using a
+	forward declaration
+
+1998-05-17  Martin Buchholz  <martin@xemacs.org>
+
+	* eldap.h: eldap.[ch] should never be used unless HAVE_LDAP is
+	defined.  Therefore there is no need to handle the case when
+	HAVE_LDAP is undefined.  Similarily, there is no reason to have
+	any code wrapped within `#ifdef emacs', since this code is only
+	useful within an emacs.  This simplifies the code significantly.
+
+	* inline.c: Include eldap.h only if HAVE_LDAP.
+	* inline.c: Don't bother including TT_C_H_PATH, since tooltalk.h
+	already does that.
+
+1998-05-21  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* unexnt.c (copy_executable_and_dump_data_section): Suppress
+	printing dump stats when building without DEBUG_XEMACS.
+	(dump_bss_and_heap): Ditto.
+
+1998-05-21  Andy Piper  <andyp@parallax.co.uk>
+
+	* gnuclient.c: don't suppress window system if there is no display
+	and we are running under mswindows. send 'mswindows device type if
+	we are in this situation.
+
+1998-05-20  Andy Piper  <andyp@parallax.co.uk>
+
+	* general.c:
+	* lisp.h: Qbitmap, Qcursor, Qicon moved here from glyphs-msw.c.
+
+	* glyphs-msw.c: change cursor imgae type name to resource. Fix
+	some nits.
+
+1998-05-20  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* EmacsFrame.c (Xt_StringToScrollBarPlacement):  Added support for
+	{top,bottom}-{left,right} values in addition to
+	{top,bottom}_{left,right}. 
+
+1998-05-18  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Fmake_temp_name): Remove unreached code.
+
+	* process-nt.c (validate_signal_number): Use
+	signal_simple_error().
+
+1998-05-19  Martin Buchholz  <martin@xemacs.org>
+
+	* unexhp9k800.c: 
+	* sound.c (vars_of_sound): 
+	* sysdep.c (reset_sigio_on_device): 
+	* window.c (window_bottom_gutter_height): 
+	unexhp9k800.c:258: warning: implicit declaration of function
+	`calculate_checksum'
+	sound.c:604: warning: implicit declaration of function `vars_of_hpplay'
+	sysdep.c:1012: warning: unused variable `owner'
+	window.c:993: warning: `window_right_toolbar_width' defined but not used
+
+1998-05-19  Andy Piper  <andyp@parallax.co.uk>
+
+	* glyphs-msw.c (mswindows_create_resized_mask)
+	(mswindows_create_resized_bitmap): new funnctions split out from
+	mswindows_resize_dibitmap_instance.
+
+	* glyphs-msw.h: declare new resize functions.
+
+	* toolbar-msw.c (mswindows_output_toolbar): use new bitmap resize
+	functions so that the original bitmaps are preserved.
+
+	* sheap.c: fixup static heap exhausted error to avoid FAQs.
+
+	* redisplay-msw.c (mswindows_output_blank): fixup brush from bg
+	color if we are trying to output 0 depth bg pixmap.
+
+	* scrollbar-msw.c: warning elimination.
+
+1998-05-18  Martin Buchholz  <martin@xemacs.org>
+
+	* frame-x.c (x_update_frame_external_traits): Start preprocessor
+	directives in column 1.
+
+	* search.c (skip_chars): Avoid using xzero with arrays, since some 
+	compilers get confused by the construct &array.
+
+1998-05-18  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* objects-msw.h:
+	* objects-msw.c: Changed the charset value for a new font from
+	"don't care" to "ansi".
+
+	* glyphs-msw.c (convert_EImage_to_DIBitmap): Warnings fix.
+
+1998-05-18  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* event-msw.c (mswindows_wnd_proc, WM_KEYDOWN): Do not clear shift
+	modifier on control chars.
+	Use IsCharAlpha() instead of isaplha().
+
+1998-05-19  Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+	* s/freebsd.h: FreeBSD 2.2.6 now supports setlocale(LC_ALL, "").
+
+1998-05-18  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* toolbar.c: Removed toolbar_data lrecord implementation.
+	(mark_frame_toolbar_buttons_dirty): Replase usage of toolbar_data
+	with toolbar_buttons (via FRAME_TOOLBAR_BUTTONS).
+	(compute_frame_toolbar_buttons): Ditto.
+	(CHECK_TOOLBAR): Ditto.
+	(set_frame_toolbar): Removed allocation of toolbar_data lrecord.
+	(update_frame_toolbars): Do not check for changed buffer
+	here. Toolbar information is provided by cached specs in
+	windows. The check for buffer is eliminated becuase toolbars are
+	marked changed in set_frame_selected_window() in frame.c
+	Added check for changed toolbars geometry.
+	(compute_frame_toolbars_data): Removed unused second parameter;
+	Adjusted callers of this static function throughout the file.
+	(init_frame_toolbars): Initialize current_toolbar_size.
+	(update_frame_toolbars): Use DEVICE_SUPPORTS_TOOLBARS_P instead of 
+	what is its current expansion, for clarity.
+	(init_frame_toolbars): Ditto.
+	(init_device_toolbars): Ditto.
+	(init_global_toolbars): Ditto.
+
+	* toolbar.h: Removed definition of toolbar_data lrecord.
+	Added accessor macros FRAME_TOOLBAR_BUTTONS and
+	FRAME_CURRENT_TOOLBAR_SIZE.
+	Added macro DEVICE_SUPPORTS_TOOLBARS_P.
+
+	* toolbar-x.c (x_output_toolbar): The same change as in
+	toolbar-msw.c
+	(x_output_toolbar): Ditto.
+	(x_redraw_exposed_toolbar): Ditto.
+
+	* toolbar-msw.c (mswindows_output_toolbar): Retrieve current
+	buttons from toolbar_buttons using FRAME_TOOLBAR_BUTTONS macro.
+	(mswindows_output_toolbar): Ditto.
+	(mswindows_output_toolbar): Ditto.
+
+	* frame.c (mark_frame): Removed marking of arrays, according to
+	frameslots.h change.
+	(nuke_all_frame_slots): Ditto.
+	(set_frame_selected_window): Mark toolbars changed when
+	last_nonminibuf_window changes.
+
+	* frame.h (struct frame): Moved some slots to frameslots.h.
+	Added current_toolbar_size array.
+	Changed references from toolbar_data to toolbar_buttons in macros
+	FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE,
+	FRAME_RAW_THEORETICAL_TOOLBAR_SIZE and
+	FRAME_RAW_THEORETICAL_TOOLBAR_BORDER_WIDTH.
+
+	* frameslots.h: Added macro MARKED_SLOT_ARRAY a la winslots.h
+	Moved arrays of lisp objects here from frame.h: toolbar_size,
+	toolbar_visible_p, toolbar_border_width.
+	Removed toolbar_data slot and added toolbar_buttons.
+
+1998-05-17  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* symsinit.h: Externed syms_of_process_nt()
+
+	* emacs.c (main_1): Call syms_of_process_nt()
+
+	* process-nt.c: Quote process arguments by a call to Lisp function 
+	`nt-quote-process-args'.
+	(syms_of_process_nt): New function.
+	(nt_send_process): Flush data stream after each write, to avoid
+	leaving buffered data.
+	(nt_send_process): When blocked on process output, wait for
+	process to slurp more for progressively increasing time intervals.
+
+1998-05-17  Martin Buchholz  <martin@xemacs.org>
+
+	* window.c (have_undivided_common_edge): Make file-local function
+	static.
+	(map_windows): Return 0 if all map functions successful.
+	Fix typos.
+
+	* winslots.h: Use unlikely names for local variables in macros to
+	avoid shadowing warnings.
+
+1998-05-17  Andy Piper  <andyp@parallax.co.uk>
+
+	* toolbar-msw.c (mswindows_output_toolbar): hash on toolbar width
+	so that we re-output if the toolbar size has changed.
+
+1998-05-17  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* s/aix4-2.h (ALIGN_DATA_RELOC): Undefined to support new unexaix.c. 
+
+	* s/aix3-1.h (ALIGN_DATA_RELOC): Defined to support new unexaix.c.
+
+	* unexaix.c: Massive cleanup and support of AIX 4.2 (and hopefully
+	greater).
+
+1998-05-16  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* glyphs-msw.c: Defined OEMRESOURCE before including windows.h to
+	get bitmap manifest constants defined.
+
+	* console-msw.h: Include system files in angle brackets, not in
+	quotes.
+
+	* window.c (specifier_vars_of_window): Fixed a typo in
+	`vertical-divider-line-width' docstirng.
+
+1998-05-16  Olivier Galibert  <galibert@pobox.com>
+
+	* line-number.c (delete_invalidate_line_number_cache): Use an
+	EMACS_INT.
+	(buffer_line_number): Remove dangerous, plain wrong when using
+	64bits emacs ints, cast.
+
+	* insdel.c (buffer_delete_range): Use an EMACS_INT.
+
+	* cmds.c (Fforward_line): Use EMACS_INTs.
+
+	* search.c (bi_scan_buffer): Change to use EMACS_INTs.
+	(scan_buffer): Ditto.
+	(bi_find_next_newline_no_quit): Remove useless cast.
+	(find_next_newline_no_quit): Ditto.
+	(find_next_newline): Ditto.
+	(find_before_next_newline): Use an EMACS_INT.
+
+	* lisp.h: Change scan_buffer to pass EMACS_INTs.
+
+1998-05-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* menubar-msw.c (mswindows_handle_wm_command): Ditto.
+
+	* toolbar-msw.c (mswindows_handle_toolbar_wm_command): Ditto.
+
+	* gui-x.c (popup_selection_callback): Use it.
+
+	* gui.h (get_callback): Declare it.
+
+	* gui.c (get_callback): New function.
+
 1998-05-15  SL Baur  <steve@altair.xemacs.org>
 
 	* window.c (have_undivided_common_edge): Guard scrollbar specific

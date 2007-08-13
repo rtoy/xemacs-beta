@@ -36,11 +36,11 @@ Boston, MA 02111-1307, USA.  */
 #ifdef CONST			/* I suspect this is safe */
 #undef CONST
 #endif
-#include "windows.h"
-#include "ddeml.h"	/* DDE management library */
+#include <windows.h>
+#include <ddeml.h>	/* DDE management library */
 #ifndef __CYGWIN32__
-#include "shellapi.h"	/* FileManager/Explorer drag and drop */
-#include "commctrl.h"
+#include <shellapi.h>	/* FileManager/Explorer drag and drop */
+#include <commctrl.h>
 #endif
 
 #ifdef HAVE_XPM

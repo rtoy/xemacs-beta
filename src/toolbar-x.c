@@ -438,7 +438,7 @@ x_output_toolbar (struct frame *f, enum toolbar_pos pos)
       x += border_width;
     }
 
-  button = FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons;
+  button = FRAME_TOOLBAR_BUTTONS (f, pos);
   right_size = 0;
 
   /* First loop over all of the buttons to determine how much room we
@@ -456,7 +456,7 @@ x_output_toolbar (struct frame *f, enum toolbar_pos pos)
       button = tb->next;
     }
 
-  button = FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons;
+  button = FRAME_TOOLBAR_BUTTONS (f, pos);
 
   /* Loop over the left buttons, updating and outputting them. */
   X_OUTPUT_BUTTONS_LOOP (1);
@@ -579,7 +579,7 @@ x_redraw_exposed_toolbar (struct frame *f, enum toolbar_pos pos, int x, int y,
 			  int width, int height)
 {
   int bar_x, bar_y, bar_width, bar_height, vert;
-  Lisp_Object button = FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons;
+  Lisp_Object button = FRAME_TOOLBAR_BUTTONS (f, pos);
 
   get_toolbar_coords (f, pos, &bar_x, &bar_y, &bar_width, &bar_height,
 		      &vert, 1);
