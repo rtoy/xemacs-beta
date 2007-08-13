@@ -134,7 +134,7 @@
 	    (set-buffer (setq work-buffer (get-buffer-create "*vm-wconfig*")))
 	    ;; for XEmacs/MULE
 	    (and vm-xemacs-mule-p
-		 (set-file-coding-system 'no-conversion))
+		 (set-buffer-file-coding-system 'no-conversion))
 	    (erase-buffer)
 	    (print vm-window-configurations (current-buffer))
 	    (write-region (point-min) (point-max) file nil 0))

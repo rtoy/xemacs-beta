@@ -438,19 +438,19 @@ as replied to, forwarded, etc, if appropriate."
       (let ((this-command this-command))
 	(save-excursion
 	  (mail-send))))
+    ;; be careful, something could have killed the composition
+    ;; buffer inside mail-send.
+    (if (eq (current-buffer) composition-buffer)
+	(progn
+	  (vm-rename-current-mail-buffer)
+	  (vm-keep-mail-buffer (current-buffer))))
     (cond ((eq vm-system-state 'replying)
 	   (vm-mail-mark-replied))
 	  ((eq vm-system-state 'forwarding)
 	   (vm-mail-mark-forwarded))
 	  ((eq vm-system-state 'redistributing)
 	   (vm-mail-mark-redistributed)))
-    (vm-display nil nil '(vm-mail-send) '(vm-mail-send))
-    ;; be careful, something could have killed the composition
-    ;; buffer inside mail-send.
-    (if (eq (current-buffer) composition-buffer)
-	(progn
-	  (vm-rename-current-mail-buffer)
-	  (vm-keep-mail-buffer (current-buffer))))))
+    (vm-display nil nil '(vm-mail-send) '(vm-mail-send))))
 
 (defun vm-mail-mode-get-header-contents (header-name-regexp)
   (let ((contents nil)

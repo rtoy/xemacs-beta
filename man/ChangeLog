@@ -1,3 +1,7 @@
+Wed Apr 30 18:13:16 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lispref/lispref.texi: Correct release dates.
+
 Sat Apr 19 20:48:00 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* lispref/files.texi (File Name Expansion): Update documentation

@@ -3616,7 +3616,7 @@ Subwindows are not currently implemented.
   XSetWindowAttributes xswa;
   Mask valueMask = 0;
 
-  error ("subwindows are not functional in 19.14; they will be in 19.15");
+  error ("subwindows are not functional in 20.2; they may be again someday");
 
   f = decode_x_frame (frame);
 

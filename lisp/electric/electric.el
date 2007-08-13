@@ -143,6 +143,13 @@
 				(prin1-to-string conditions)))
 		     (sit-for 2))))
 	(ding))
+      (and (not (eq (current-buffer) electrified-buffer)) ; XEmacs -
+	   (not (eq (selected-window) (minibuffer-window)))
+	   (progn (ding nil 'quit)
+		  (message "Leaving electric command loop %s."
+			   "because buffer has changed")
+		  (sit-for 2)
+		  (throw return-tag nil)))
       (if loop-function (funcall loop-function loop-state err))))
   ;; XEmacs - huh?  It should be impossible to ever get here...
   (ding nil 'alarm)

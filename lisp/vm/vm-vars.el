@@ -454,9 +454,9 @@ that type are assumed to be included.
 Note that some types are processed specially, and this variable does not
 apply to them.
 
-   multipart/digest, message/news and message/rfc822 messages are
-   always displayed as a button to avoid automatically visiting a
-   new folder while you are moving around in the current folder.
+   multipart/digest messages are always displayed as a button to
+   avoid automatically visiting a new folder while you are moving
+   around in the current folder.
 
    message/partial messages are always displayed as a button,
    because there always needs to be a way to trigger the assembly

@@ -574,10 +574,6 @@
         "alternate summary mode interfaces for Gnus"
         nil
         "lisp/gnus/")
-    ("gnus-score.el"
-        "scoring code for Gnus"
-        (news)
-        "lisp/gnus/")
     ("gnus-setup.el"
         "Initialization & Setup for Gnus 5"
         (news)
@@ -1602,6 +1598,10 @@
         "Lisp interface to the C \"face\" structure"
         (faces internal)
         "lisp/prim/")
+    ("featurep.el"
+        "Support functions for reader conditionals"
+        (internal)
+        "lisp/prim/")
     ("files-nomule.el"
         "file I/O stubs when not under Mule."
         nil
@@ -2198,6 +2198,10 @@
         "rebind backspace and delete to be correct"
         (terminals)
         "lisp/utils/")
+    ("delbs.el"
+        "a small lisp package to allow you to swap around DEL/BS keys"
+        (lisp  terminals)
+        "lisp/utils/")
     ("derived.el"
         "allow inheritance of major modes."
         nil
@@ -2265,6 +2269,10 @@
     ("highlight-headers.el"
         "highlighting message headers."
         (mail  news)
+        "lisp/utils/")
+    ("lib-complete.el"
+        "Completion on the lisp search path"
+        (lisp  extensions)
         "lisp/utils/")
     ("live-icon.el"
         "make frame icons represent the current frame contents"
@@ -2404,6 +2412,14 @@
         "lisp/w3/")
     ("css.el"
         "Cascading Style Sheet parser"
+        nil
+        "lisp/w3/")
+    ("devices.el"
+        "XEmacs device API emulation"
+        nil
+        "lisp/w3/")
+    ("dsssl-flow.el"
+        "DSSSL flow objects"
         nil
         "lisp/w3/")
     ("dsssl.el"
@@ -2565,6 +2581,10 @@
     ("w3-print.el"
         "Printing support for emacs-w3"
         (faces  help  printing  hypermedia)
+        "lisp/w3/")
+    ("w3-props.el"
+        "Additional text property stuff"
+        (faces)
         "lisp/w3/")
     ("w3-script.el"
         "Scripting support"

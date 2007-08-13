@@ -44,8 +44,8 @@
 (require 'calendar)
 
 (defconst french-calendar-month-name-array
-  ["Vende'miaire" "Brumaire" "Frimaire" "Nivo^se" "Pluvio^se" "Vento^se"
-   "Germinal" "Flore'al" "Prairial" "Messidor" "Thermidor" "Fructidor"])
+  ["Vendémiaire" "Brumaire" "Frimaire" "Nivôse" "Pluviôse" "Ventôse"
+   "Germinal" "Floréal" "Prairial" "Messidor" "Thermidor" "Fructidor"])
 
 (defconst french-calendar-day-name-array
   ["Primidi" "Duodi" "Tridi" "Quartidi" "Quintidi" "Sextidi" "Septidi"
@@ -138,10 +138,10 @@ Defaults to today's date if DATE is not given."
          (d (extract-calendar-day french-date)))
     (cond
      ((< y 1) "")
-     ((= m 13) (format "Jour %s de l'Anne'e %d de la Revolution"
+     ((= m 13) (format "Jour %s de l'Année %d de la Revolution"
                        (aref french-calendar-special-days-array (1- d))
                        y))
-     (t (format "Decade %s, %s de %s de l'Anne'e %d de la Revolution"
+     (t (format "Decade %s, %s de %s de l'Année %d de la Revolution"
                 (make-string (1+ (/ (1- d) 10)) ?I)
                 (aref french-calendar-day-name-array (% (1- d) 10))
                 (aref french-calendar-month-name-array (1- m))
@@ -160,7 +160,7 @@ Defaults to today's date if DATE is not given."
 Echo French Revolutionary date unless NOECHO is t."
   (interactive
    (let* ((year (calendar-read
-                 "Anne'e de la Revolution (>0): "
+                 "Année de la Revolution (>0): "
                  '(lambda (x) (> x 0))
                  (int-to-string
                   (extract-calendar-year
@@ -194,7 +194,7 @@ Echo French Revolutionary date unless NOECHO is t."
           (decade (if (> month 12)
                       1
                     (calendar-read
-                     "De'cade (1-3): "
+                     "Décade (1-3): "
                      '(lambda (x) (memq x '(1 2 3))))))
           (day (if (> month 12)
                    (- month 12)

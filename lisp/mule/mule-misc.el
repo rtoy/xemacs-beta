@@ -266,9 +266,9 @@ Returns nil if `set-language-environment' has not been called."
     (if (not (null func))
 	(funcall func)))
   (setq current-language-environment env)
-  (if (fboundp 'egg)
+  (if (featurep 'egg)
       (egg-lang-switch-callback))
-;;  (if (fboundp 'quail)
+;;  (if (featurep 'quail)
 ;;      (quail-lang-switch-callback))
 )
 

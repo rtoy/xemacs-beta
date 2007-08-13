@@ -4851,6 +4851,7 @@ gnus-exit-group-hook is called with no arguments if that value is non-nil."
   (let* ((group gnus-newsgroup-name)
 	 (quit-config (gnus-group-quit-config gnus-newsgroup-name))
 	 (mode major-mode)
+         (group-point nil)
 	 (buf (current-buffer)))
     (run-hooks 'gnus-summary-prepare-exit-hook)
     ;; If we have several article buffers, we kill them at exit.
@@ -4877,6 +4878,7 @@ gnus-exit-group-hook is called with no arguments if that value is non-nil."
     (run-hooks 'gnus-summary-exit-hook)
     (unless quit-config
       (gnus-group-next-unread-group 1))
+    (setq group-point (point))
     (if temporary
 	nil				;Nothing to do.
       ;; If we have several article buffers, we kill them at exit.
@@ -4906,8 +4908,7 @@ gnus-exit-group-hook is called with no arguments if that value is non-nil."
       ;; Clear the current group name.
       (if (not quit-config)
 	  (progn
-	    (gnus-group-jump-to-group group)
-	    (gnus-group-next-unread-group 1)
+	    (goto-char group-point)
 	    (gnus-configure-windows 'group 'force))
 	(gnus-handle-ephemeral-exit quit-config))
       (unless quit-config
@@ -6155,9 +6156,9 @@ or `gnus-select-method', no matter what backend the article comes from."
 			 (mail-header-number header)))))
       (if header
 	  (prog1
-	      ;; The article is present in the buffer, to we just go to it.
+              ;; The article is present in the buffer, so we just go to it.
 	      (gnus-summary-goto-article
-	       (mail-header-number header) nil header)
+               (mail-header-number header) nil t)
 	    (when sparse
 	      (gnus-summary-update-article (mail-header-number header))))
 	;; We fetch the article
@@ -8640,6 +8641,7 @@ save those articles instead."
 	(push (cons prev (cdr active)) read))
       (save-excursion
 	(set-buffer gnus-group-buffer)
+	(gnus-undo-force-boundary)
 	(gnus-undo-register
 	  `(progn
 	     (gnus-info-set-marks ',info ',(gnus-info-marks info) t)

@@ -25,7 +25,7 @@
 (defconst emacs-version "20.2"
   "Version numbers of this version of Emacs.")
 
-(setq emacs-version (purecopy (concat emacs-version " XEmacs Lucid (beta3)")))
+(setq emacs-version (purecopy (concat emacs-version " XEmacs Lucid (beta4)")))
 
 (defconst emacs-major-version
   (progn (or (string-match "^[0-9]+" emacs-version)
@@ -61,7 +61,10 @@ to the system configuration; look at `system-configuration' instead."
 	  "XEmacs %s [Lucid] (%s%s) of %s %s on %s"
 	  (substring emacs-version 0 (string-match " XEmacs" emacs-version))
 	  system-configuration
-	  (cond ((featurep 'mule) ", Mule") (t ""))
+	  (cond ((or (and (fboundp 'featurep)
+			  (featurep 'mule))
+		     (memq 'mule features)) ", Mule")
+		(t ""))
 	  (substring emacs-build-time 0
 		     (string-match " *[0-9]*:" emacs-build-time))
 	  (substring emacs-build-time

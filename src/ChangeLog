@@ -1,3 +1,24 @@
+Thu May  1 18:59:20 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c (Fmake_subwindow): Update error message.
+
+Wed Apr 30 18:07:18 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lread.c: New variable featurep.
+	(read1): Add processing for #- and #+.
+	(read_list_conser): Handle case where a feature test has removed a 
+	portion of the input stream.
+	(vars_of_lread): New feature `xemacs'.
+
+	* fns.c (Ffeaturep): Remove function when using #-, #+ feature
+	reader syntax.
+
+	* Makefile.in.in (lisp): Put features.elc in the dump list.
+
+Thu May  1 05:24:25 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* buffer.c (Fmake_indirect_buffer): Don't pretend it's there.
+
 Fri Apr 25 10:53:07 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* glyphs-x.c: libpng already includes setjmp.h, so don't attempt

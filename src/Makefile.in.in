@@ -1199,7 +1199,7 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
     here because we do not want things to appear to be out-of-date just 
     because the version number has been incremented. -- D.N.G. 8/28/93]
  */
-lisp=   ${lispdir}paths.el \
+lisp=   ${lispdir}paths.el ${lispdir}prim/featurep.elc \
 	${lispdir}prim/loaddefs.elc ${lispdir}prim/auto-autoloads.elc \
         ${lispdir}prim/loadup.el ${lispdir}prim/subr.elc \
         ${lispdir}prim/cmdloop.elc CMDLOOP_LISP \

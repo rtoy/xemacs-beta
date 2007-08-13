@@ -648,6 +648,7 @@ The value is never nil.
   return finish_init_buffer (b, name);
 }
 
+#if 0 /* #### implement this!  Need various changes in insdel.c */
 DEFUN ("make-indirect-buffer", Fmake_indirect_buffer, 2, 2,
        "bMake indirect buffer (to buffer): \nBName of indirect buffer: ", /*
 Create and return an indirect buffer for buffer BASE, named NAME.
@@ -659,10 +660,6 @@ If BASE is an indirect buffer itself, the base buffer for that buffer
 */
        (base_buffer, name))
 {
-  error ("make-indirect-buffer not yet implemented, oops");
-  return Qnil;
-
-#if 0 /* #### implement this!  Need various changes in insdel.c */
   Lisp_Object buf;
   REGISTER struct buffer *b;
 
@@ -699,8 +696,8 @@ If BASE is an indirect buffer itself, the base buffer for that buffer
   init_buffer_text (b, 1);
 
   return finish_init_buffer (b, name);
-#endif /* 0 */
 }
+#endif /* 0 */
 
 
 static void
@@ -1917,7 +1914,9 @@ syms_of_buffer (void)
   DEFSUBR (Fget_buffer);
   DEFSUBR (Fget_file_buffer);
   DEFSUBR (Fget_buffer_create);
+#if 0
   DEFSUBR (Fmake_indirect_buffer);
+#endif
 
   DEFSUBR (Fgenerate_new_buffer_name);
   DEFSUBR (Fbuffer_name);

@@ -1,4 +1,13 @@
 							-*- indented-text -*-
+to 20.2 beta4
+-- Miscellaneous Mule/ Egg/Quail patches courtesy of Jareth Hein
+-- featurep reader macro code introduced and enabled for this beta only.
+-- Do not default with-xim to Motif if Motif libraries are availble
+-- Delete/Backspace correction from Gary Foster
+-- Gnus-5.4.50
+-- VM-6.30
+-- miscellaneous bug fixes
+
 to 20.2 beta3
 -- Miscellaneous Mule/ Egg/Quail patches courtesy of Jareth Hein
 -- Various hyperbole fixes courtesy of Bob Weiner

@@ -77,11 +77,8 @@ mule_p="`$EMACS -batch -no-site-file -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
   echo No
   ignore_dirs="$ignore_dirs its egg mule"
-elif test "$mule_p" = t; then
-  echo Yes
 else
-  echo "Error -- call Martin"
-  exit 1;
+  echo Yes
 fi
 
 # first recompile the byte-compiler, so that the other compiles take place

@@ -63,7 +63,7 @@ which is intended to be used for global environment specification.")
   'buffer-file-coding-system-for-read)
 
 (defvar buffer-file-coding-system-alist
-  '(("\\.\\(el\\|emacs\\|info\\|texi\\)$" . iso-2022-8)
+  '(("\\.\\(el\\|emacs\\|info\\(-[0-9]+\\)?\\|texi\\)$" . iso-2022-8)
     ("\\(ChangeLog\\|CHANGES-beta\\)$" . iso-2022-8)
     ("\\.\\(gz\\|Z\\)$" . no-conversion)
     ("/spool/mail/.*$" . convert-mbox-coding-system))

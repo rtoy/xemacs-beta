@@ -49,6 +49,7 @@
 ;; #### This is far from working in XEmacs.
 
 (eval-when-compile (require 'quail))
+(eval-when-compile (require 'egg))
 
 
 ;;;###autoload
@@ -68,7 +69,18 @@
 (define-key isearch-mode-map "\C-\\" 'isearch-fep-egg)
 (define-key isearch-mode-map "\M-k"  'isearch-fep-egg)
 (define-key isearch-mode-map "\C-o"  'isearch-fep-canna)
-;;  (define-key isearch-mode-map "\C-\]" 'isearch-fep-quail)
+;(define-key isearch-mode-map "\C-\]" 'isearch-fep-quail)
+
+(put 'isearch-fep-string	'isearch-command t)
+(put 'isearch-fep-egg		'isearch-command t)
+(put 'isearch-fep-canna		'isearch-command t)
+(put 'isearch-fep-prompt-string	'isearch-command t)
+(put 'isearch-fep-prompt-egg	'isearch-command t)
+(put 'isearch-fep-prompt-canna	'isearch-comnand t)
+(put 'isearch-fep-read-string	'isearch-command t)
+(put 'isearch-fep-read-egg	'isearch-command t)
+(put 'isearch-fep-read-canna	'isearch-command t)
+;(put 'isearch-fep-quail		'isearch-command t)
 
 (defun isearch-fep-mode ()
   (let ((command this-command)
@@ -101,6 +113,7 @@
 		       (message "%s%s"
 				(isearch-message-prefix) isearch-message))
 		      (t
+		       (ding)
 		       (call-interactively current-command))))
 	    (setq isearch-fep-prompt nil)
 	    (message "%s%s" (isearch-message-prefix) isearch-message)))))))
@@ -153,7 +166,7 @@
 
 (defun isearch-fep-prompt-egg ()
   (if (featurep 'egg)
-      (format "[%s]" (map-indicator its:*current-map*))
+      (format "[%s]->" (map-indicator its:*current-map*))
     (setq isearch-fep-mode nil)
     (message "No EGG!! ")
     (sit-for 1)
@@ -180,11 +193,12 @@
 		(egg:*input-mode* t)
 		(egg:*mode-on* t)
 		(self-insert-after-hook 'isearch-exit-minibuffer-egg))
-	    (setq unread-command-events (listify-key-sequence first-str))
+	    (setq unread-command-events (mil-listify-key-sequence first-str))
 	    (unwind-protect
 		(read-from-minibuffer (isearch-message))
 	      (setq egg:henkan-mode-in-use nil)
-	      (setq disable-undo nil)))))
+	      ;;(setq disable-undo nil)
+	      ))))
     ""))
 
 
@@ -218,7 +232,7 @@
 	      (canna:*japanese-mode-in-minibuffer* t)
 	      (canna:*fence-mode* nil)
 	      (self-insert-after-hook 'isearch-exit-minibuffer-canna))
-	  (setq unread-command-events (listify-key-sequence first-str))
+	  (setq unread-command-events (mil-listify-key-sequence first-str))
 	  (unwind-protect
 	      (read-from-minibuffer (isearch-message))
 	    ;XEmacs change:
@@ -250,7 +264,7 @@
     (setq unread-command-events
 	  (nconc unread-command-events
 		 (cons (character-to-event ?\\)
-		       (listify-key-sequence first-str)))
+		       (mil-listify-key-sequence first-str)))
     (unwind-protect
 	(read-from-minibuffer
 	 (concat isearch-fep-prompt (isearch-message)))

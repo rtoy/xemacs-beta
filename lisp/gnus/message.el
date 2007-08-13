@@ -751,7 +751,7 @@ Defaults to `text-mode-abbrev-table'.")
       (,(concat "^\\([Nn]ewsgroups:\\|Followup-[Tt]o:\\)" content)
        (1 'message-header-name-face)
        (2 'message-header-newsgroups-face nil t))
-      (,(concat "^\\([^: \n\t]+:\\)" content)
+      (,(concat "^\\([A-Z][^: \n\t]+:\\)" content)
        (1 'message-header-name-face)
        (2 'message-header-other-face nil t))
       (,(concat "^\\(X-[A-Za-z0-9-]+\\|In-Reply-To\\):" content)
@@ -1737,8 +1737,10 @@ the user from the mailer."
     (run-hooks 'message-send-hook)
     (message "Sending...")
     (let ((alist message-send-method-alist)
+	  (success t)
 	  elem sent)
-      (while (setq elem (pop alist))
+      (while (and success
+		  (setq elem (pop alist)))
 	(when (and (or (not (funcall (cadr elem)))
 		       (and (or (not (memq (car elem)
 					   message-sent-message-via))
@@ -1746,9 +1748,9 @@ the user from the mailer."
 				 (format
 				  "Already sent message via %s; resend? "
 				  (car elem))))
-			    (funcall (caddr elem) arg))))
+			    (setq success (funcall (caddr elem) arg)))))
 	  (setq sent t)))
-      (when sent
+      (when (and success sent)
 	(message-do-fcc)
 	;;(when (fboundp 'mail-hist-put-headers-into-history)
 	;; (mail-hist-put-headers-into-history))

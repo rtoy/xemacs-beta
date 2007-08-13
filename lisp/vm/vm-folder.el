@@ -508,7 +508,7 @@ like a From_ folder."
 		  (set-buffer temp-buffer)
 		  (if (file-readable-p file)
 		      (condition-case nil
-			  (let ((overriding-file-coding-system 'binary))
+			  (let ((coding-system-for-read 'binary))
 			    (insert-file-contents file nil 0 4096))
 			(wrong-number-of-arguments
 			 (call-process "sed" file temp-buffer nil
@@ -2618,7 +2618,7 @@ run vm-expunge-folder followed by vm-save-folder."
 	     ;; enable-local-variables == nil disables them for newer Emacses
 	     (let ((inhibit-local-variables t)
 		   (enable-local-variables nil)
-		   (overriding-file-coding-system 'no-conversion))
+		   (coding-system-for-read 'no-conversion))
 	       (find-file-noselect crash-box)))
        (save-excursion
 	 (set-buffer crash-buf)
@@ -2949,7 +2949,7 @@ spool files."
 	     (vm-save-restriction
 	      (widen)
 	      (goto-char (point-max))
-	      (let ((overriding-file-coding-system 'binary))
+	      (let ((coding-system-for-read 'binary))
 		(insert-file-contents folder))))
 	   (setq mcount (length vm-message-list))
 	   (if (vm-assimilate-new-messages)

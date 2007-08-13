@@ -130,8 +130,8 @@ SSymbol to name this sound: \n\
 nVolume (0 for default): ")
   (unless (symbolp sound-name)
     (error "sound-name not a symbol"))
-  (unless (null volume)
-    (integerp volume) (error "volume not an integer or nil"))
+  (unless (or (null volume) (integerp volume))
+    (error "volume not an integer or nil"))
   (let (buf
 	data
 	(file (locate-file filename  default-sound-directory-list  sound-ext)))

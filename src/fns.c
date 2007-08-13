@@ -45,6 +45,9 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "systime.h"
 
+/* NOTE: This symbol is also used in lread.c */
+#define FEATUREP_SYNTAX
+
 Lisp_Object Qstring_lessp;
 Lisp_Object Qidentity;
 
@@ -3320,6 +3323,7 @@ which case you can't use this.
 
 Lisp_Object Vfeatures;
 
+#ifndef FEATUREP_SYNTAX
 DEFUN ("featurep", Ffeaturep, 1, 1, 0, /*
 Return t if FEATURE is present in this Emacs.
 Use this to conditionalize execution of lisp code based on the
@@ -3332,6 +3336,7 @@ This function looks at the value of the variable `features'.
   CHECK_SYMBOL (feature);
   return NILP (Fmemq (feature, Vfeatures)) ? Qnil : Qt;
 }
+#endif
 
 DEFUN ("provide", Fprovide, 1, 1, 0, /*
 Announce that FEATURE is a feature of the current Emacs.
@@ -3467,7 +3472,9 @@ syms_of_fns (void)
   DEFSUBR (Fmapc_internal);
   DEFSUBR (Fmapconcat);
   DEFSUBR (Fload_average);
+#ifndef FEATUREP_SYNTAX
   DEFSUBR (Ffeaturep);
+#endif
   DEFSUBR (Frequire);
   DEFSUBR (Fprovide);
 }

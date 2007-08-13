@@ -825,7 +825,7 @@
 	     (make-local-variable 'scroll-in-place)
 	     (setq scroll-in-place nil)
 	     (and vm-xemacs-mule-p
-		  (set-file-coding-system 'binary t))
+		  (set-buffer-file-coding-system 'binary t))
 	     (cond (vm-fsfemacs-19-p
 		    ;; need to do this outside the let because
 		    ;; loading disp-table initializes
@@ -859,6 +859,8 @@
 	(set-buffer b)
 	(widen)
 	(let ((buffer-read-only nil)
+	      ;; disable read-only text properties
+	      (inhibit-read-only t)
 	      (modified (buffer-modified-p)))
 	  (unwind-protect
 	      (progn
@@ -890,7 +892,7 @@
 (fset 'vm-presentation-mode 'vm-mode)
 (put 'vm-presentation-mode 'mode-class 'special)
 
-(defvar file-coding-system)
+(defvar buffer-file-coding-system)
 
 (defun vm-determine-proper-charset (beg end)
   (save-excursion
@@ -904,8 +906,9 @@
 		     "us-ascii")
 		    ((cdr charsets)
 		     (or (car (cdr
-			       (assoc (coding-system-name file-coding-system)
-				      vm-mime-mule-coding-to-charset-alist)))
+			       (assq (coding-system-name
+				      buffer-file-coding-system)
+				     vm-mime-mule-coding-to-charset-alist)))
 			 "iso-2022-jp"))
 		    (t
 		     (or (car (cdr
@@ -1341,15 +1344,15 @@ in the buffer.  The function is expected to make the message
 	     (vm-mime-transfer-decode-region layout start end)
 	     (setq tempfile (vm-make-tempfile-name))
 	     (let ((buffer-file-type buffer-file-type)
-		   file-coding-system)
+		   buffer-file-coding-system)
 	       ;; Tell DOS/Windows NT whether the file is binary
 	       (setq buffer-file-type (not (vm-mime-text-type-p layout)))
 	       ;; Tell XEmacs/MULE not to mess with the bits unless
 	       ;; this is a text type.
 	       (if vm-xemacs-mule-p
 		   (if (vm-mime-text-type-p layout)
-		       (set-file-coding-system 'no-conversion nil)
-		     (set-file-coding-system 'binary t)))
+		       (set-buffer-file-coding-system 'no-conversion nil)
+		     (set-buffer-file-coding-system 'binary t)))
 	       (write-region start end tempfile nil 0))
 	     (delete-region start end)
 	     (save-excursion
@@ -1532,7 +1535,13 @@ in the buffer.  The function is expected to make the message
 
 (defun vm-mime-display-internal-message/rfc822 (layout)
   (if (vectorp layout)
-      (vm-mime-display-internal-text/plain layout)
+      (let ((start (point)))
+	(vm-mime-insert-mime-headers layout)
+	(insert ?\n)
+	(save-restriction
+	  (narrow-to-region start (point))
+	  (vm-decode-mime-encoded-words))
+	(vm-mime-display-internal-multipart/mixed layout))
     (goto-char (vm-extent-start-position layout))
     (setq layout (vm-extent-property layout 'vm-mime-layout))
     (set-buffer (generate-new-buffer
@@ -1931,8 +1940,8 @@ in the buffer.  The function is expected to make the message
 	    ;; this is a text type.
 	    (if vm-xemacs-mule-p
 		(if (vm-mime-text-type-p layout)
-		    (set-file-coding-system 'no-conversion nil)
-		  (set-file-coding-system 'binary t)))
+		    (set-buffer-file-coding-system 'no-conversion nil)
+		  (set-buffer-file-coding-system 'binary t)))
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
 	    (or (not (file-exists-p file))
@@ -2458,6 +2467,8 @@ and the approriate content-type and boundary markup information is added."
 	 (error "don't know how to MIME encode composition for %s"
 		(emacs-version)))))
 
+(defvar enriched-mode)
+
 (defun vm-mime-xemacs-encode-composition ()
   (save-restriction
     (widen)
@@ -2468,6 +2479,7 @@ and the approriate content-type and boundary markup information is added."
     (let ((8bit nil)
 	  (just-one nil)
 	  (boundary-positions nil)
+	  (enriched (and (boundp 'enriched-mode) enriched-mode))
 	  already-mimed layout e e-list boundary
 	  type encoding charset params description disposition object
 	  opoint-min)
@@ -2495,8 +2507,15 @@ and the approriate content-type and boundary markup information is added."
       (if (null e-list)
 	  (progn
 	    (narrow-to-region (point) (point-max))
+	    ;; support enriched-mode for text/enriched composition
+	    (if enriched
+		(let ((enriched-initial-annotation ""))
+		  (enriched-encode (point-min) (point-max))))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
+	    (if vm-xemacs-mule-p
+		(encode-coding-region (point-min) (point-max)
+				      buffer-file-coding-system))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
 			    (point-min)
 			    (point-max))
@@ -2510,7 +2529,9 @@ and the approriate content-type and boundary markup information is added."
 	    (vm-reorder-message-headers
 	     nil nil "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
 	    (insert "MIME-Version: 1.0\n")
-	    (insert "Content-Type: text/plain; charset=" charset "\n")
+	    (if enriched
+		(insert "Content-Type: text/enriched; charset=" charset "\n")
+	      (insert "Content-Type: text/plain; charset=" charset "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n")
 	    (vm-add-mail-mode-header-separator))
 	(while e-list
@@ -2518,8 +2539,14 @@ and the approriate content-type and boundary markup information is added."
 	  (if (or just-one (= (point) (extent-start-position e)))
 	      nil
 	    (narrow-to-region (point) (extent-start-position e))
+	    (if enriched
+		(let ((enriched-initial-annotation ""))
+		  (enriched-encode (point-min) (point-max))))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
+	    (if vm-xemacs-mule-p
+		(encode-coding-region (point-min) (point-max)
+				      buffer-file-coding-system))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
 			    (point-min)
 			    (point-max))
@@ -2528,7 +2555,9 @@ and the approriate content-type and boundary markup information is added."
 							   (point-max)
 							   t))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
-	    (insert "Content-Type: text/plain; charset=" charset "\n")
+	    (if enriched
+		(insert "Content-Type: text/enriched; charset=" charset "\n")
+	      (insert "Content-Type: text/plain; charset=" charset "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n\n")
 	    (widen))
 	  (goto-char (extent-start-position e))
@@ -2538,11 +2567,11 @@ and the approriate content-type and boundary markup information is added."
 	  (cond ((bufferp object)
 		 (insert-buffer-substring object))
 		((stringp object)
-		 (let ((overriding-file-coding-system 'no-conversion)
-		       ;; don't let file-coding-system be changed
+		 (let ((coding-system-for-read 'no-conversion)
+		       ;; don't let buffer-file-coding-system be changed
 		       ;; by insert-file-contents-literally.  The
 		       ;; value we bind to it to here isn't important.
-		       (file-coding-system 'no-conversion))
+		       (buffer-file-coding-system 'no-conversion))
 		   (insert-file-contents-literally object))))
 	  ;; gather information about the object from the extent.
 	  (if (setq already-mimed (extent-property e 'vm-mime-encoded))
@@ -2652,8 +2681,14 @@ and the approriate content-type and boundary markup information is added."
 	;; extent, if any.
 	(if (or just-one (= (point) (point-max)))
 	    nil
+	  (if enriched
+	      (let ((enriched-initial-annotation ""))
+		(enriched-encode (point) (point-max))))
 	  (setq charset (vm-determine-proper-charset (point)
 						     (point-max)))
+	  (if vm-xemacs-mule-p
+	      (encode-coding-region (point) (point-max)
+				    buffer-file-coding-system))
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
 			  (point)
 			  (point-max))
@@ -2663,7 +2698,9 @@ and the approriate content-type and boundary markup information is added."
 							 t))
 	  (setq 8bit (or 8bit (equal encoding "8bit")))
 	  (setq boundary-positions (cons (point-marker) boundary-positions))
-	  (insert "Content-Type: text/plain; charset=" charset "\n")
+	  (if enriched
+	      (insert "Content-Type: text/enriched; charset=" charset "\n")
+	    (insert "Content-Type: text/plain; charset=" charset "\n"))
 	  (insert "Content-Transfer-Encoding: " encoding "\n\n")
 	  (goto-char (point-max)))
 	(setq boundary (vm-mime-make-multipart-boundary))
@@ -2742,6 +2779,7 @@ and the approriate content-type and boundary markup information is added."
     (let ((8bit nil)
 	  (just-one nil)
 	  (boundary-positions nil)
+	  (enriched (and (boundp 'enriched-mode) enriched-mode))
 	  already-mimed layout o o-list boundary
 	  type encoding charset params description disposition object
 	  opoint-min)
@@ -2769,6 +2807,10 @@ and the approriate content-type and boundary markup information is added."
       (if (null o-list)
 	  (progn
 	    (narrow-to-region (point) (point-max))
+	    ;; support enriched-mode for text/enriched composition
+	    (if enriched
+		(let ((enriched-initial-annotation ""))
+		  (enriched-encode (point-min) (point-max))))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -2784,7 +2826,9 @@ and the approriate content-type and boundary markup information is added."
 	    (vm-reorder-message-headers
 	     nil nil "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
 	    (insert "MIME-Version: 1.0\n")
-	    (insert "Content-Type: text/plain; charset=" charset "\n")
+	    (if enriched
+		(insert "Content-Type: text/enriched; charset=" charset "\n")
+	      (insert "Content-Type: text/plain; charset=" charset "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n")
 	    (vm-add-mail-mode-header-separator))
 	(while o-list
@@ -2792,6 +2836,21 @@ and the approriate content-type and boundary markup information is added."
 	  (if (or just-one (= (point) (overlay-start o)))
 	      nil
 	    (narrow-to-region (point) (overlay-start o))
+	    ;; support enriched-mode for text/enriched composition
+	    (if enriched
+		(let ((enriched-initial-annotation ""))
+		  (save-excursion
+		    ;; insert/delete trick needed to avoid
+		    ;; enriched-mode tags from seeping into the
+		    ;; attachment overlays.  I really wish
+		    ;; front-advance / rear-aadvance overlay
+		    ;; endpoint properties actually worked.
+		    (goto-char (point-max))
+		    (insert-before-markers "\n")
+		    (enriched-encode (point-min) (1- (point)))
+		    (goto-char (point-max))
+		    (delete-char -1)
+		    '(goto-char (point-min)))))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -2802,7 +2861,9 @@ and the approriate content-type and boundary markup information is added."
 							   (point-max)
 							   t))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
-	    (insert "Content-Type: text/plain; charset=" charset "\n")
+	    (if enriched
+		(insert "Content-Type: text/enriched; charset=" charset "\n")
+	      (insert "Content-Type: text/plain; charset=" charset "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n\n")
 	    (widen))
 	  (goto-char (overlay-start o))
@@ -2935,6 +2996,10 @@ and the approriate content-type and boundary markup information is added."
 	;; extent, if any.
 	(if (or just-one (= (point) (point-max)))
 	    nil
+	  ;; support enriched-mode for text/enriched composition
+	  (if enriched
+	      (let ((enriched-initial-annotation ""))
+		(enriched-encode (point) (point-max))))
 	  (setq charset (vm-determine-proper-charset (point)
 						     (point-max)))
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -2946,7 +3011,9 @@ and the approriate content-type and boundary markup information is added."
 							 t))
 	  (setq 8bit (or 8bit (equal encoding "8bit")))
 	  (setq boundary-positions (cons (point-marker) boundary-positions))
-	  (insert "Content-Type: text/plain; charset=" charset "\n")
+	  (if enriched
+	      (insert "Content-Type: text/enriched; charset=" charset "\n")
+	    (insert "Content-Type: text/plain; charset=" charset "\n"))
 	  (insert "Content-Transfer-Encoding: " encoding "\n\n")
 	  (goto-char (point-max)))
 	(setq boundary (vm-mime-make-multipart-boundary))

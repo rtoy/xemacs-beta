@@ -73,6 +73,13 @@ Lisp_Object Qfset;
 
 int puke_on_fsf_keys;
 
+/* This symbol is also used in fns.c */
+#define FEATUREP_SYNTAX
+
+#ifdef FEATUREP_SYNTAX
+static Lisp_Object Qfeaturep;
+#endif
+
 /* non-zero if inside `load' */
 int load_in_progress;
 
@@ -2369,7 +2376,26 @@ retry:
 	      return Fsignal (Qinvalid_read_syntax,
 		    list1 (build_string ("Cannot read unreadable object")));
 	    }
+#ifdef FEATUREP_SYNTAX
+	  case '+':
+	  case '-':
+	    {
+	      Lisp_Object fexp, obj, tem;
+	      struct gcpro gcpro1, gcpro2;
 
+	      fexp = read0(readcharfun);
+	      obj = read0(readcharfun);
+
+	      /* the call to `featurep' may GC. */
+	      GCPRO2(fexp, obj);
+	      tem = call1(Qfeaturep, fexp);
+	      UNGCPRO;
+
+	      if (c == '+' && NILP(tem)) goto retry;
+	      if (c == '-' && !NILP(tem)) goto retry;
+	      return obj;
+	    }
+#endif
 	  default:
 	    {
 	      unreadchar (readcharfun, c);
@@ -2583,10 +2609,12 @@ sequence_reader (Lisp_Object readcharfun,
 	return (state);
       else
 	unreadchar (readcharfun, ch);
+#ifdef FEATUREP_SYNTAX
       if (ch == ']')
 	syntax_error ("\"]\" in a list");
       else if (ch == ')')
 	syntax_error ("\")\" in a vector");
+#endif
       state = ((conser) (readcharfun, state, len));
     }
 }
@@ -2618,6 +2646,18 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
       free_cons (XCONS (tem));
       tem = Qnil;
       ch = XCHAR (elt);
+#ifdef FEATUREP_SYNTAX
+      if (ch == s->terminator) /* deal with #+, #- reader macros */
+	{
+	  unreadchar (readcharfun, s->terminator);
+	  goto done;
+	}
+      else if (ch == ']')
+	syntax_error ("']' in a list");
+      else if (ch == ')')
+	syntax_error ("')' in a vector");
+      else
+#endif
       if (ch != '.')
 	signal_simple_error ("BUG! Internal reader error", elt);
       else if (!s->allow_dotted_lists)
@@ -3129,6 +3169,12 @@ character escape syntaxes or just read them incorrectly.
 
   /* So that early-early stuff will work */
   Ffset (Qload, intern ("load-internal"));
+
+#ifdef FEATUREP_SYNTAX
+  Qfeaturep = intern("featurep");
+  staticpro(&Qfeaturep);
+  Fprovide(intern("xemacs"));
+#endif
 
 #ifdef LISP_BACKQUOTES
   old_backquote_flag = new_backquote_flag = 0;

@@ -440,11 +440,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
   (vm-multiple-frames-possible-p))
 
 (defun vm-menu-support-possible-p ()
-  (or (and (boundp 'window-system)
-	   (or (eq window-system 'x)
-	       (eq window-system 'ns)      ;; NextStep
-	       (eq window-system 'win32)))
-      (and (fboundp 'device-type) (eq (device-type) 'x))))
+  (cond (vm-xemacs-p
+	 (featurep 'menubar))
+	(vm-fsfemacs-19-p
+	 (fboundp 'menu-bar-mode))
+	(t nil)))
 
 (defun vm-toolbar-support-possible-p ()
   (and vm-xemacs-p

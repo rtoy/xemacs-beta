@@ -433,19 +433,22 @@ RFC 1153.  Otherwise assume RFC 934 digests."
 						    nil t))))))
 		   (setq prev-sep (point)
 			 after-prev-sep (point))
-		 ;; eat preceding newlines
-		 (while (= (preceding-char) ?\n)
-		   (delete-char -1))
-		 ;; put one back
-		 (insert ?\n)
-		 ;; delete the digest separator
-		 ;; insert a trailing message separator
-		 ;; insert the leading separator
+		 ;; if this isn't the first message, delete the
+		 ;; digest separator goop and insert a trailing message
+		 ;; separator of the proper type.
 		 (if prev-sep
 		     (progn
+		       ;; eat preceding newlines
+		       (while (= (preceding-char) ?\n)
+			 (delete-char -1))
+		       ;; put one back
+		       (insert ?\n)
+		       ;; delete the digest separator
 		       (delete-region (match-beginning 0) (point))
+		       ;; insert a trailing message separator
 		       (insert (vm-trailing-message-separator folder-type))))
 		 (setq prev-sep (point))
+		 ;; insert the leading separator
 		 (insert (vm-leading-message-separator folder-type))
 		 (setq after-prev-sep (point))
 		 ;; eat trailing newlines

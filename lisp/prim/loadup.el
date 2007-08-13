@@ -78,6 +78,7 @@
      (load-gc "replace") 		; match-string used in version.el.
      (load-gc "version.el")		; Ignore compiled-by-mistake version.elc
      (load-gc "cl")
+     (load-gc "featurep")
      (load-gc "widget")
      (load-gc "custom") ; Before the world so everything can be customized
      (load-gc "cus-start") ; for customization of builtin variables

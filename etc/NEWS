@@ -112,65 +112,27 @@ denizen of the free software community.
 * Changes in XEmacs 20.2
 ========================
 
+** configure no longer defaults to using --with-xim=motif if Motif libraries
+are linked.
+
+There are many bugs in the Xlib XIM support in X11R6.3.
+
+** Why XEmacs 20.1 is called 20.2
+
 Testing of XEmacs 20.1 revealed a number of showstopping bugs at the
 very final moment.  Instead of confusing the version numbers further,
 the `20.1' designation was abandoned, and the release was renamed to
 `20.2'.
 
-** The `C-z' key now iconifies only the current X frame.  You can use
-`C-x C-z' to get the old behavior.
+** Delete/backspace keysyms have been separated
 
-On the tty frames `C-z' behaves as before.
-
-** Several Egg/Wnn-related crashes were fixed.
-
-** lib-complete.el was MULE-ized.
-
-The commands `find-library', `find-library-other-window' and
-`find-library-other-frame' now take an optional coding system
-argument.
+The Delete and Backspace keysyms are now no longer identical.  A better
+version of delbackspace.el has been added called delbs.el.
 
 ** XEmacs 20.0 MULE API supported for backwards compatibilty
 
 XEmacs 20.2 primarily supports the MULE 3 API.  It now also supports
 the XEmacs 20.0 MULE API.
-
-** `values' now has a setf method
-
-** W3-3.0.85 Courtesy of William Perry
-
-Bug fixes.  See the 20.1 notes for further details.
-
-** Gnus-5.4.47 Courtesy of Lars Magne Ingebrigtsen
-
-Bug fixes.  See the 20.1 notes for further details.
-
-** edmacro.el-3.10 Courtesy of Hrvoje Niksic
-
-Interface changes to maintain Emacs compatibility.
-
-** live-icon.el-1.3
-
-Bug fixes.
-
-** tpu-edt.el
-
-Restoration of proper behavior with respect to the zmacs region.
-
-** xmine.el-1.8
-
-** balloon-help.el-1.06 Courtesy of Kyle Jones
-
-** VM-6.29
-
-** Verilog.el-2.25 Courtesy of Michael McNamara
-
-** etags.c-11.83 Courtesy of F. Potortì
-
-** Further support of Custom package by Hrvoje Niksic
-
-* Changes in XEmacs 20.1 (never publicly released)
-========================
 
 ** The logo has been changed, and the default background color is
 now a shade of gray instead of the eye-burning white.
@@ -223,7 +185,7 @@ expressions in C mode.
 ** A number of new packages are added, and many packages were
 updated.
 
-** Gnus-5.4.45, courtesy of Lars Magne Ingebrigtsen
+** Gnus-5.4.50, courtesy of Lars Magne Ingebrigtsen
 
 *** nntp.el has been totally rewritten in an asynchronous fashion.
 
@@ -347,7 +309,7 @@ See the "Lisp Changes" section later for a short description of why
 and how to add custom support to your Lisp packages.  Custom is also
 documented in the XEmacs info manuals.
 
-** W3-3.0.80, courtesy of William Perry
+** W3-3.0.85, courtesy of William Perry
 
 Version 3 of Emacs/W3, the Emacs World Wide Web browser, has been
 included.  It is significantly faster than any of the previous
@@ -416,12 +378,12 @@ last 100 keystrokes and insert them into a macro to be bound to a key
 or named as a command.  The recorded/edited macros can be dumped to
 `.emacs' file.
 
-** xmine.el-1.7, courtesy of Jens Lautenbacher
+** xmine.el-1.8, courtesy of Jens Lautenbacher
 
 XEmacs now includes a minesweeper game with a full-featured graphics
 and mouse interface.  Invoke with `M-x xmine'.
 
-** efs-1.15 courtesy of Andy Norman and Michael Sperber
+** efs-1.15-x5 courtesy of Andy Norman and Michael Sperber
 
 EFS is now integrated with XEmacs, and replaces the old ange-ftp.  It
 has many more features, including info documentation, support for many
@@ -431,12 +393,12 @@ different FTP servers, and integration with dired.
 ** hyperbole-4.022, courtesy of Bob Weiner
 ** hm--html-menus-5.3, courtesy of Heiko Muenkel
 ** python-mode.el-2.90, courtesy of Barry Warsaw
-** balloon-help-1.05, courtesy of Kyle Jones
+** balloon-help-1.06, courtesy of Kyle Jones
 ** xrdb-mode.el-1.21, courtesy of Barry Warsaw
 ** igrep.el-2.56, courtesy of Kevin Rodgers
 ** frame-icon.el, courtesy of Michael Lamoureux and Bob Weiner
 ** itimer.el-1.05, courtesy of Kyle Jones
-** VM-6.26, courtesy of Kyle Jones
+** VM-6.30, courtesy of Kyle Jones
 ** OO-Browser-2.10, courtesy of Bob Weiner
 ** viper-2.93, courtesy of Michael Kifer
 ** ediff-2.64, courtesy of Michael Kifer
@@ -448,12 +410,34 @@ different FTP servers, and integration with dired.
 ** browse-cltl2.el-1.1, courtesy of Holger Schauer
 ** eldoc.el-1.10, courtesy of Noah Friedman
 ** tm-7.105, courtesy of MORIOKA Tomohiko
-** verilog-mode.el, courtesy of Michael McNamara & Adrian Aichner
+** verilog-mode.el-2.25, courtesy of Michael McNamara & Adrian Aichner
 ** overlay.el, courtesy of Joseph Nuspl
+** live-icon.el-1.3, fixes courtesy of Karl Hegbloom
+** tpu-edt.el, fixes courtesy of R. Kevin Oberman
+** etags.c-11.83 Courtesy of F. Potortì
+
 
 
 * Lisp and internal changes in XEmacs 20.2
 ==========================================
+
+** lib-complete.el was MULE-ized.
+
+The commands `find-library', `find-library-other-window' and
+`find-library-other-frame' now take an optional coding system
+argument.
+
+** Experimental support for Lisp reader macros #-, #+.
+
+The Common Lisp reader macros for feature test are now supported.  This
+feature is present for evaluation purposes and is subject to change.
+
+** `values' now has a setf method
+
+** The `C-z' key now iconifies only the current X frame.  You can use
+`C-x C-z' to get the old behavior.
+
+On the tty frames `C-z' behaves as before.
 
 ** `defcustom' and `defgroup' can now be used to specify types and
 placement of the user-settable variables.
@@ -562,7 +546,7 @@ submenus.
 ** Many bugs in the scrollbar code have been fixed.
 
 ** First alpha level support of MS Windows NT is available, courtesy
-of David Hobley.
+of David Hobley and Marc Paquette.
 
 ** Wnn/egg now has initial support Courtesy of Jareth Hein.
 
@@ -576,13 +560,6 @@ likely to be removed in the future.
 
 If you still need the purged files, look for them in the GNU Emacs
 distribution.
-
-
-* Changes in XEmacs 20.1
-========================
-
-XEmacs 20.1 has not been released to the net.  Please consult the 20.2
-entries instead.
 
 
 * Major Differences Between 19.14 and 20.0

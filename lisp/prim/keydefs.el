@@ -369,12 +369,11 @@ Keymap for characters following C-c.")
 
 (define-key global-map "\M-\C-l" 'switch-to-other-buffer)
 
-;; Default binding of "Backspace" is the same as delete.
+;; Default binding of "Backspace" is no longer the same as delete.
 ;; Default binding of "Control-h" is help.
-(define-key global-map 'backspace '[delete])
-(define-key global-map '(meta backspace) '[(meta delete)])
-(define-key global-map '(control backspace) '[(control delete)])
-(define-key global-map '(control meta backspace) '[(control meta delete)])
+(define-key global-map 'backspace "\C-?")
+(define-key global-map '(meta backspace) "\e\C-?")
+
 
 (define-key global-map "\M-\C-z" 'activate-region)
 

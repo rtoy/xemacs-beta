@@ -247,28 +247,28 @@ After changing, its:select-mode-hook is called."
       (no-rcfile "No egg-startup-file on %s")
       (file-saved "Wnn dictionary and frequency data recorded.")
       (henkan-mode-indicator "漢")
-      (begin-henkan "変換開始文字列: ")
-      (end-henkan "変換終了文字列: ")
-      (kugiri-dai "大文節区切り文字列: ")
-      (kugiri-sho "小文節区切り文字列: ")
-      (face-henkan "変換区間表示属性: ")
-      (face-dai "大文節区間表示属性: ")
-      (face-sho "小文節区間表示属性: ")
-      (jikouho "次候補:")
+      (begin-henkan "Fence starting character: ")
+      (end-henkan "Fence ending character: ")
+      (kugiri-dai "Large bunsetsu separator: ")
+      (kugiri-sho "Small bunsetsu separator: ")
+      (face-henkan "Face for conversion: ")
+      (face-dai "Face for large bunsetsu: ")
+      (face-sho "Face for small bunsetsu: ")
+      (jikouho "Entries:")
       (off-msg "%s %s(%s:%s) turned off.")
       (henkan-help "Kanji conversion mode:
-文節移動
-  \\[henkan-first-bunsetu]\t先頭文節\t\\[henkan-last-bunsetu]\t後尾文節  
-  \\[henkan-backward-bunsetu]\t直前文節\t\\[henkan-forward-bunsetu]\t直後文節
-変換変更
-  大文節次候補    \\[henkan-next-kouho-dai]\t小文節次候補    \\[henkan-next-kouho-sho]
-  前候補    \\[henkan-previous-kouho]  \t次候補    \\[henkan-next-kouho]
-  大文節伸し  \\[henkan-bunsetu-nobasi-dai]  \t大文節縮め  \\[henkan-bunsetu-chijime-dai]
-  小文節伸し  \\[henkan-bunsetu-nobasi-sho]  \t小文節縮め  \\[henkan-bunsetu-chijime-sho]
-  大文節変換候補選択  \\[henkan-select-kouho-dai]  \t小文節変換候補選択  \\[henkan-select-kouho-sho]
-変換確定
-  全文節確定  \\[henkan-kakutei]  \t直前文節まで確定  \\[henkan-kakutei-before-point]
-変換中止    \\[henkan-quit]
+Bunsetsu motion commands
+  \\[henkan-first-bunsetu]\tFirst bunsetsu\t\\[henkan-last-bunsetu]\tLast bunsetsu
+  \\[henkan-backward-bunsetu]\tPrevious bunsetsu\t\\[henkan-forward-bunsetu]\tNext bunsetsu
+Bunsetsu conversion commands
+  \\[henkan-next-kouho-dai]\tNext larger match\t\\[henkan-next-kouho-sho]\tNext smaller match
+  \\[henkan-previous-kouho]\tPrevious match\t\\[henkan-next-kouho]\tNext match
+  \\[henkan-bunsetu-nobasi-dai]\tExtend bunsetsu largest\t\\[henkan-bunsetu-chijime-dai]\tShrink bunsetsu smallest
+  \\[henkan-bunsetu-nobasi-sho]\tExtend bunsetsu\t\\[henkan-bunsetu-chijime-sho]\tShrink bunsetsu
+  \\[henkan-select-kouho-dai]\tMenu select largest match\t\\[henkan-select-kouho-sho]\tMenu select smallest match
+Conversion commands
+  \\[henkan-kakutei]\tComplete conversion commit\t\\[henkan-kakutei-before-point]\tCommit before point
+  \\[henkan-quit]\tAbort conversion
 ")
       (hinsimei "Hinshi (product/noun) name:")
       (jishotouroku-yomi "Dictionary entry for『%s』 reading:")

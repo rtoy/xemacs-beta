@@ -63,7 +63,7 @@ See the documentation for vm-mode for more information."
 			    (inhibit-local-variables t)
 			    (enable-local-variables nil)
 			    ;; for XEmacs/Mule
-			    (overriding-file-coding-system 'no-conversion))
+			    (coding-system-for-read 'no-conversion))
 			(message "Reading %s..." file)
 			(prog1 (find-file-noselect file)
 			  ;; update folder history
@@ -80,25 +80,25 @@ See the documentation for vm-mode for more information."
       ;; the file coding system and decoding it.
       ;; This is only possible if a file is visited and then vm-mode
       ;; is run on it afterwards.
-      (defvar file-coding-system)
+      (defvar buffer-file-coding-system)
       (if (and vm-xemacs-mule-p
-	       (not (eq (get-coding-system file-coding-system)
+	       (not (eq (get-coding-system buffer-file-coding-system)
 			(get-coding-system 'no-conversion-unix)))
-	       (not (eq (get-coding-system file-coding-system)
+	       (not (eq (get-coding-system buffer-file-coding-system)
 			(get-coding-system 'no-conversion-dos)))
-	       (not (eq (get-coding-system file-coding-system)
+	       (not (eq (get-coding-system buffer-file-coding-system)
 			(get-coding-system 'no-conversion-mac)))
-	       (not (eq (get-coding-system file-coding-system)
+	       (not (eq (get-coding-system buffer-file-coding-system)
 			(get-coding-system 'binary))))
 	  (let ((buffer-read-only nil)
 		(omodified (buffer-modified-p)))
 	    (unwind-protect
 		(progn
 		  (encode-coding-region (point-min) (point-max)
-					file-coding-system)
-		  (set-file-coding-system 'no-conversion nil)
+					buffer-file-coding-system)
+		  (set-buffer-file-coding-system 'no-conversion nil)
 		  (decode-coding-region (point-min) (point-max)
-					file-coding-system))
+					buffer-file-coding-system))
 	      (set-buffer-modified-p omodified))))
       (vm-check-for-killed-summary)
       (vm-check-for-killed-presentation)
@@ -276,7 +276,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 6.29.
+This is VM 6.30.
 
 Commands:
    h - summarize folder contents

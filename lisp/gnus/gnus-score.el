@@ -1,4 +1,4 @@
-;;; gnus-score.el --- scoring code for Gnus
+1;;; gnus-score.el --- scoring code for Gnus
 ;; Copyright (C) 1995,96,97 Free Software Foundation, Inc.
 
 ;; Author: Per Abrahamsen <amanda@iesd.auc.dk>
@@ -526,7 +526,8 @@ used as score."
 
 	  (gnus-score-kill-help-buffer)
 	  (unless (setq entry (assq (downcase hchar) char-to-header))
-	    (if mimic (error "%c %c" prefix hchar) (error "")))
+	    (if mimic (error "%c %c" prefix hchar)
+	      (error "Illegal header type")))
 
 	  (when (/= (downcase hchar) hchar)
 	    ;; This was a majuscule, so we end reading and set the defaults.
@@ -534,36 +535,32 @@ used as score."
 	    (setq tchar (or tchar ?s)
 		  pchar (or pchar ?t)))
 
-	  ;; We continue reading - the type.
-	  (while (not tchar)
-	    (if mimic
-		(progn
-		  (sit-for 1) (message "%c %c-" prefix hchar))
-	      (message "%s header '%s' with match type (%s?): "
-		       (if increase "Increase" "Lower")
-		       (nth 1 entry)
-		       (mapconcat (lambda (s)
-				    (if (eq (nth 4 entry)
-					    (nth 3 s))
-					(char-to-string (car s))
-				      ""))
-				  char-to-type "")))
-	    (setq tchar (read-char))
-	    (when (or (= tchar ??) (= tchar ?\C-h))
-	      (setq tchar nil)
-	      (gnus-score-insert-help
-	       "Match type"
-	       (delq nil
-		     (mapcar (lambda (s)
-			       (if (eq (nth 4 entry)
-				       (nth 3 s))
-				   s nil))
-			     char-to-type))
-	       2)))
+	  (let ((legal-types
+		 (delq nil
+		       (mapcar (lambda (s)
+				 (if (eq (nth 4 entry)
+					 (nth 3 s))
+				     s nil))
+			       char-to-type))))
+	    ;; We continue reading - the type.
+	    (while (not tchar)
+	      (if mimic
+		  (progn
+		    (sit-for 1) (message "%c %c-" prefix hchar))
+		(message "%s header '%s' with match type (%s?): "
+			 (if increase "Increase" "Lower")
+			 (nth 1 entry)
+			 (mapconcat (lambda (s) (char-to-string (car s)))
+				    legal-types "")))
+	      (setq tchar (read-char))
+	      (when (or (= tchar ??) (= tchar ?\C-h))
+		(setq tchar nil)
+		(gnus-score-insert-help "Match type" legal-types 2)))
 
-	  (gnus-score-kill-help-buffer)
-	  (unless (setq type (nth 1 (assq (downcase tchar) char-to-type)))
-	    (if mimic (error "%c %c" prefix hchar) (error "")))
+	    (gnus-score-kill-help-buffer)
+	    (unless (setq type (nth 1 (assq (downcase tchar) legal-types)))
+	      (if mimic (error "%c %c" prefix hchar)
+		(error "Illegal match type"))))
 
 	  (when (/= (downcase tchar) tchar)
 	    ;; It was a majuscule, so we end reading and use the default.
@@ -596,7 +593,7 @@ used as score."
 	      (error "You rang?"))
 	    (if mimic
 		(error "%c %c %c %c" prefix hchar tchar pchar)
-	      (error ""))))
+	      (error "Illegal match duration"))))
       ;; Always kill the score help buffer.
       (gnus-score-kill-help-buffer))
 
@@ -2455,8 +2452,8 @@ GROUP using BNews sys file syntax."
 	  (if (looking-at "not.")
 	      (progn
 		(setq not-match t)
-		(setq regexp (concat "^" (buffer-substring 5 (point-max)))))
-	    (setq regexp (concat "^" (buffer-substring 1 (point-max))))
+		(setq regexp (concat "^" (buffer-substring 5 (point-max)) "$")))
+	    (setq regexp (concat "^" (buffer-substring 1 (point-max)) "$"))
 	    (setq not-match nil))
 	  ;; Finally - if this resulting regexp matches the group name,
 	  ;; we add this score file to the list of score files

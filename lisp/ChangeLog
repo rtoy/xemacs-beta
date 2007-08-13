@@ -1,11 +1,24 @@
+Wed Apr 30 18:06:35 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/loadup.el: Put features.elc in the dump list.
+
+	* prim/about.el (about-xemacs): Change date.
+
+Tue Apr 29 18:51:31 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* mule/mule-files.el (buffer-file-coding-system-alist): Regexp for 
+	handling info files didn't match the right pattern.
+
+Sun Apr 27 18:09:48 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/sound.el (load-sound-file): Fix typo.
+
 Sat Apr 26 16:25:49 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* utils/lib-complete.el: Make conformant to Lisp coding standards
 	MULE-ize by allowing for coding system argument.
 
 Fri Apr 25 08:39:50 1997  Steven L Baur  <steve@altair.xemacs.org>
-
-	* packages/info.el: Remove mouse-1 binding.
 
 	* modes/sh-script.el (sh-indent-line): Deal with pathological case 
 	of indenting a first line containing a `#' as first non-white

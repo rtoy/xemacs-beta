@@ -292,6 +292,8 @@ Internationalization options:
 			the Motif XmIm* routines (when available).
 			If the XmIm* routines are autodetected,
 			then the default is --with-xim=motif, else --with-xim=no.
+			NOTE:  On some systems like SunOS4 use of this option
+			will cause XEmacs to crash at startup.
 --with-canna		Compile with support for Canna (a Japanese input method
 			used in conjunction with Mule support).
 --with-wnn		Compile with support for WNN (a multi-language input method
@@ -2643,7 +2645,7 @@ if test "$with_mule" = "yes" ; then
     LIBS="${motif_libs} ${LIBS}"
     AC_FUNC_CHECK(XmImMbLookupString, have_XmIm=yes, have_XmIm=no)
     LIBS="$xim_save_libs"
-    if   test "$have_XmIm" = "yes"; then with_xim=motif
+    if test "$with_xim" = "yes" -a "$have_XmIm" = "yes"; then with_xim=motif
     elif test "$with_xim"  = "yes"; then with_xim=xlib
     else                                 with_xim=no
     fi

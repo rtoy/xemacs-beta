@@ -80,7 +80,7 @@
   (view-mode nil 'kill-buffer)		;; assume the new view-less
   (let* ((buffer-read-only nil)
          (emacs-short-version (concat emacs-major-version "." emacs-minor-version))
-         (emacs-about-version (format "version %s; April 1997" emacs-short-version))
+         (emacs-about-version (format "version %s; May 1997" emacs-short-version))
 	 (indent-tabs-mode t)
 	 )
     (erase-buffer)
