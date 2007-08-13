@@ -157,6 +157,59 @@ Boston, MA 02111-1307, USA.  */
 /* This is needed for HPUX version 6.2; it may not be needed for 6.2.1.  */
 #define SHORT_CAST_BUG
 
+#if defined(HAVE_GRANTPT) && defined(HAVE_UNLOCKPT) && defined(HAVE_PTSNAME)
+/* UNIX98 PTYs are available.
+   Added by Florian Weimer <Florian.Weimer@RUS.Uni-Stuttgart.DE>,
+   RUS-CERT, University of Stuttgart.  Based on Emacs code for DGUX. */
+
+#ifdef emacs
+#include <grp.h>
+#include <sys/stropts.h>
+#endif
+
+#define PTY_ITERATION for (i = 0; i < 1; i++)
+/* no iteration at all */
+
+/* the master PTY device */
+#define PTY_NAME_SPRINTF strcpy (pty_name, "/dev/ptmx");
+
+/* This sets the name of the slave side of the PTY.  grantpt(3) and
+   unlockpt(3) may fork a subprocess, so keep sigchld_handler() from
+   intercepting that death.  grantpt() behavior on HP-UX differs from
+   what's specified in the man page: the group of the slave PTY is set
+   to the user's primary group, and we fix that.  */
+
+#define PTY_TTY_NAME_SPRINTF			\
+  {						\
+    char *ptsname(), *ptyname;			\
+    struct group *getgrnam (), *tty_group = getgrnam ("tty"); \
+    if (tty_group == NULL)                      \
+      fatal ("group tty not found");            \
+						\
+    sigblock(sigmask(SIGCHLD));			\
+    if (grantpt(fd) == -1)			\
+      fatal("could not grant slave pty");	\
+    if (!(ptyname = ptsname(fd)))		\
+      fatal ("could not enable slave pty");	\
+    strncpy(pty_name, ptyname, sizeof(pty_name)); \
+    pty_name[sizeof(pty_name) - 1] = 0;		\
+    if (chown (pty_name, (uid_t) -1, tty_group->gr_gid) == -1) \
+      fatal ("could not chown slave pty");      \
+    if (unlockpt(fd) == -1)			\
+      fatal("could not unlock slave pty");	\
+    sigunblock(sigmask(SIGCHLD));		\
+  }
+
+/* Push various streams modules onto a PTY channel. */
+
+#define SETUP_SLAVE_PTY \
+  if (ioctl (xforkin, I_PUSH, "ptem") == -1)	\
+    fatal ("ioctl I_PUSH ptem", errno);		\
+  if (ioctl (xforkin, I_PUSH, "ldterm") == -1)	\
+    fatal ("ioctl I_PUSH ldterm", errno);
+
+#else /* no UNIX98 PTYs */
+
 /* This is how to get the device name of the tty end of a pty.  */
 #define PTY_TTY_NAME_SPRINTF \
             sprintf (pty_name, "/dev/pty/tty%c%x", c, i);
@@ -164,6 +217,8 @@ Boston, MA 02111-1307, USA.  */
 /* This is how to get the device name of the control end of a pty.  */
 #define PTY_NAME_SPRINTF \
 	sprintf (pty_name, "/dev/ptym/pty%c%x", c, i);
+
+#endif /* UNIX 98 PTYs */
 
 /* This triggers a conditional in xfaces.c.  */
 #define XOS_NEEDS_TIME_H

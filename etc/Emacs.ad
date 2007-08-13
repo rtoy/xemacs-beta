@@ -188,6 +188,13 @@
 ! Note that the menubar resources do not use the `face' syntax, since they
 ! are X toolkit widgets and thus outside the domain of XEmacs proper.
 ! 
+! When X Font Sets are enabled with ./configure --with-xfs (eg, for
+! multilingual menubars and XIM), some .font resources are ignored in favor
+! of .fontSet resources.  This examples is for Japanese menubars):
+!
+! *menubar*FontSet:	-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*, \
+!			-*-*-*-*-*-*-*-120-*-jisx0208.1983-0
+!
 *menubar*Font: 			-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*
 *popup*Font:			-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*
 

@@ -504,7 +504,7 @@ correctly if you are using ash instead of bash (see below).
 
 This is usually because xmkmf is not in your path or because you are
 using the default cygwin shell. The default cygwin shell (/bin/sh.exe)
-is ash which appears to work in most circumstances but has some wierd
+is ash which appears to work in most circumstances but has some weird
 failure modes. I recommend replacing sh.exe with bash.exe, this will
 mean configure is slower but more reliable.
 

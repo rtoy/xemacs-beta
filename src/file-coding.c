@@ -619,7 +619,7 @@ nil or 'undecided
      JIS (the Japanese encoding commonly used for e-mail), EUC (the
      standard Unix encoding for Japanese and other languages), and
      Compound Text (the encoding used in X11).  You can specify more
-     specific information about the conversion with the FLAGS argument.
+     specific information about the conversion with the PROPS argument.
 'big5
      Big5 (the encoding commonly used for Taiwanese).
 'ccl

@@ -4957,10 +4957,10 @@ by `current-window-configuration' (which see).
 	 font size change happened between saving and restoring, the
 	 frame "sizes" maybe equal but the windows still should be
 	 resized. This is tickled alot by the new "character size
-	 stays constant" policy in 21.0. It leads to very wierd
+	 stays constant" policy in 21.0. It leads to very weird
 	 glitches (and possibly craches when asserts are tickled).
 
-	 Just changing the units doens't help because changing the
+	 Just changing the units doesn't help because changing the
 	 toolbar configuration can also change the pixel positions.
 	 Luckily there is a much simpler way of doing this, see below.
        */

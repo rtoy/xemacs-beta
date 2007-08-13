@@ -1,3 +1,19 @@
+2000-08-04  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.12 is released
+
+2000-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+	* etc/Emacs.ad: Document usage of FontSet resource for menubar.
+
+2000-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in: Check for NAS_BIG_ENDIAN in <audio/fileutil.h>.
+
+2000-07-29  Vin Shelton  <acs@xemacs.org>
+
+	* configure.in: Check for UNIX98 PTYs.  Patch from Florian Weimer
+	<Florian.Weimer@RUS.Uni-Stuttgart.DE>.
+
 2000-07-17  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.11 is released

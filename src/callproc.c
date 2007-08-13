@@ -372,10 +372,12 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
     if (fd_error < 0)
       {
+	int save_errno = errno;
 	close (filefd);
 	close (fd[0]);
 	if (fd1 >= 0)
 	  close (fd1);
+	errno = save_errno;
 	report_file_error ("Cannot open", Fcons(error_file, Qnil));
       }
 
@@ -438,8 +440,10 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 #ifndef WINDOWSNT
   if (pid < 0)
     {
+      int save_errno = errno;
       if (fd[0] >= 0)
 	close (fd[0]);
+      errno = save_errno;
       report_file_error ("Doing fork", Qnil);
     }
 #endif

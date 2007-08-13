@@ -297,6 +297,14 @@ char *alloca();
 #undef HAVE_UTIMES
 #undef HAVE_WAITPID
 #undef HAVE_VSNPRINTF
+/* UNIX98 PTY support functions
+   getpt is a glibc addition which emulates the master device on
+   systems without kernel support. */
+#undef HAVE_GRANTPT
+#undef HAVE_UNLOCKPT
+#undef HAVE_GETPT
+#undef HAVE_PTSNAME
+
 #undef HAVE_SOCKETS
 #undef HAVE_SOCKADDR_SUN_LEN
 #undef HAVE_MULTICAST
@@ -571,9 +579,12 @@ extern "C" {
 
 /* Compile in support for NAS (Network Audio System)?
    NAS_NO_ERROR_JUMP means that the NAS libraries don't include some
-   error handling changes. */
+   error handling changes.
+   NAS_USES_OWN_NAMESPACE means NAS headers define NAS_LITTLE_ENDIAN
+   instead of LITTLE_ENDIAN etc. */
 #undef HAVE_NAS_SOUND
 #undef NAS_NO_ERROR_JUMP
+#undef NAS_USES_OWN_NAMESPACE
 
 /* Compile in support for SunPro usage-tracking code? */
 #undef USAGE_TRACKING

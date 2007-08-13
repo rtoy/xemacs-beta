@@ -75,6 +75,10 @@ define decode_object
       set $imp = lrecord_implementations_table[$lheader->type]
     else
       set $imp = $lheader->implementation
+      if $imp->finalizer == this_marks_a_marked_record
+	set $imp = $imp -1
+	printf "marked lrecord:\n"
+      end
     end
   else
     set $imp = -1
@@ -320,7 +324,7 @@ define pobj
     pstruct Lisp_Glyph
   else
   if $imp == lrecord_hashtable
-    pstruct Lisp_Hash_Table
+    pstruct hashtable
   else
   if $imp == lrecord_image_instance
     pstruct Lisp_Image_Instance
@@ -484,6 +488,8 @@ define test_pobj
   pobj Vobarray
   printf "Vall_weak_lists: "
   pobj Vall_weak_lists
+  printf "Vall_weak_hashtables: "
+  pobj Vall_weak_hashtables
   printf "Vxemacs_codename: "
   pobj Vxemacs_codename
 end

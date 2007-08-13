@@ -245,7 +245,7 @@
 	:filter (lambda (&rest junk)
 		  (if package-get-base
 		      (cdr (custom-menu-create 'packages))
-		    '(["Please load Package Index" (lamda (&rest junk) ()) nil]))))
+		    '(["Please load Package Index" #'ignore nil]))))
        
        ["Help" (Info-goto-node "(xemacs)Packages")])
 
@@ -480,7 +480,7 @@
 	    (font-lock-recompute-variables)))
 	:style radio
 	:active (fboundp 'font-lock-mode)
-	:selected (and (boundp 'font-lock-maximium-decoration)
+	:selected (and (boundp 'font-lock-maximum-decoration)
 		       (or (and (not (integerp font-lock-maximum-decoration))
 				(not (eq t font-lock-maximum-decoration)))
 			   (and (integerp font-lock-maximum-decoration)
@@ -495,7 +495,7 @@
 	    (font-lock-recompute-variables)))
 	:style radio
 	:active (fboundp 'font-lock-mode)
-	:selected (and (boundp 'font-lock-maximium-decoration)
+	:selected (and (boundp 'font-lock-maximum-decoration)
 		       (integerp font-lock-maximum-decoration)
 		       (= 1 font-lock-maximum-decoration))]
        ["Even More" 

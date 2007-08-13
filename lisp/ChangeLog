@@ -1,3 +1,24 @@
+2000-08-04  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.12 is released
+
+2000-08-02  Martin Buchholz  <martin@xemacs.org>
+
+	* menubar-items.el (default-menubar): Fix typo.
+	(default-menubar): `lambda' was mispelled as `lamda'.
+
+2000-07-28  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* files.el (insert-file-contents-literally): Fix second let
+	binding for `coding-system-for-read' to `coding-system-for-write'
+	as suggested by Dan Holmsand <dan@innehallsbolaget.com>.
+
+1999-06-15  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* files.el (insert-file-contents-literally): Use binary coding
+	system (from Morioka san).
+	(insert-file-contents-literally): Make file-name-handler method.
+
 2000-07-17  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.11 is released

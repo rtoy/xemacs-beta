@@ -270,8 +270,8 @@ void
 recreate_heap (char *executable_path)
 {
   /* First reserve the upper part of our heap.  (We reserve first
-	 because there have been problems in the past where doing the
-	 mapping first has loaded DLLs into the VA space of our heap.)  */
+     because there have been problems in the past where doing the
+     mapping first has loaded DLLs into the VA space of our heap.)  */
 
   /* Query the region at the end of the committed heap */
   void *tmp;
@@ -281,32 +281,48 @@ recreate_heap (char *executable_path)
   unsigned char* end  = base + get_reserved_heap_size () - get_committed_heap_size ();
   VirtualQuery (base, &info, sizeof info);
   if (info.State != MEM_FREE)
-	{
-	  /* Oops, something has already reserved or commited it, nothing we can do but exit */
-	  char buf[256];
-	  wsprintf(buf,
-			   "XEmacs cannot start because the memory region required by the heap is not available.\n"
-			   "(BaseAddress = 0x%lx, AllocationBase = 0x%lx, Size = 0x%lx, State = %s, Type = %s)",
-			   info.BaseAddress, info.AllocationBase, info.RegionSize,
-			   info.State == MEM_COMMIT ? "COMMITED" : "RESERVED",
-			   info.Type == MEM_IMAGE ? "IMAGE" : info.Type == MEM_MAPPED ? "MAPPED" : "PRIVATE");
-	  MessageBox(NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
-	  exit(1);
-	}
+    {
+      /* Oops, something has already reserved or commited it, nothing we can do but exit */
+      char buf[256];
+      char modnambuf[80];
+
+      /* Find the filename of any DLL mapped at that address. This is a bit
+	 of a hack in that it relies on HMODULEs being pointers to the image
+	 base. However, this will almost certainly be the case for the
+	 forseeable future in MS operating systems.
+
+	 Note that we don't check for MEM_IMAGE first because it doesn't
+	 exist on Win95 AFAIK - ajh */
+      if (!GetModuleFileName ((HMODULE) info.AllocationBase,
+			      modnambuf,
+			      sizeof (modnambuf)))
+	strcpy (modnambuf, "<unknown>");
+
+      wsprintf(buf,
+	       "XEmacs cannot start because the memory region required by the heap is not available.\n"
+	       "(BaseAddress = 0x%lx, AllocationBase = 0x%lx, Size = 0x%lx, State = %s, Type = %s, ModuleName = \"%s\")",
+	       info.BaseAddress, info.AllocationBase, info.RegionSize,
+	       info.State == MEM_COMMIT ? "COMMITED" : "RESERVED",
+	       info.Type == MEM_IMAGE ? "IMAGE" : info.Type == MEM_MAPPED ? "MAPPED" : "PRIVATE",
+	       modnambuf);
+
+      MessageBox(NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
+      exit(1);
+    }
 
   /* Now try and reserve as much as possible */
   size = min (info.RegionSize, end - base);
   tmp = VirtualAlloc (base, size, MEM_RESERVE, PAGE_NOACCESS);
   if (!tmp)
-	{
-	  /* Can't reserve it, nothing we can do but exit */
-	  char buf[256];
-	  wsprintf(buf,
-			   "XEmacs cannot start because it couldn't reserve space required for the heap.\n"
-			   "(VirtualAlloc at 0x%lx of 0x%lx failed (%d))", base, size, GetLastError());
-	  MessageBox(NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
-	  exit (1);
-	}
+    {
+      /* Can't reserve it, nothing we can do but exit */
+      char buf[256];
+      wsprintf(buf,
+	       "XEmacs cannot start because it couldn't reserve space required for the heap.\n"
+	       "(VirtualAlloc at 0x%lx of 0x%lx failed (%d))", base, size, GetLastError());
+      MessageBox(NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
+      exit (1);
+    }
 
   /* We read in the data for the .bss section from the executable
      first and map in the heap from the executable second to prevent

@@ -194,3 +194,49 @@ Boston, MA 02111-1307, USA.  */
 
 /* XEmacs: removed setpgrp() definition because we use setpgid() when
    it's available, and autodetect it. */
+
+#if defined(HAVE_GRANTPT) && defined(HAVE_UNLOCKPT) && defined(HAVE_PTSNAME)
+/* UNIX98 PTYs are available.
+   Added by Florian Weimer <Florian.Weimer@RUS.Uni-Stuttgart.DE>,
+   RUS-CERT, University of Stuttgart.  Based on Emacs code for DGUX. */
+
+#define PTY_ITERATION for (i = 0; i < 1; i++)
+/* no iteration at all */
+
+/* Use getpt() if it's available, because it provides Unix98 PTY
+   emulation for kernels which doesn't support it natively. */
+
+#ifdef HAVE_GETPT
+#define PTY_OPEN                                 \
+  do {                                           \
+    fd = getpt();                             \
+    if (fcntl (fd, F_SETFL, O_NDELAY) == -1)  \
+      fatal ("could not set master PTY to non-block mode"); \
+  } while (0)
+
+#else
+/* the master PTY device */
+#define PTY_NAME_SPRINTF strcpy (pty_name, "/dev/ptmx");
+#endif
+
+/* This sets the name of the slave side of the PTY.  grantpt(3) and
+   unlockpt(3) may fork a subprocess, so keep sigchld_handler() from
+   intercepting that death. */
+
+#define PTY_TTY_NAME_SPRINTF			\
+  {						\
+    char *ptsname(), *ptyname;			\
+						\
+    sigblock(sigmask(SIGCHLD));			\
+    if (grantpt(fd) == -1)			\
+      fatal("could not grant slave pty");	\
+    if (unlockpt(fd) == -1)			\
+      fatal("could not unlock slave pty");	\
+    if (!(ptyname = ptsname(fd)))		\
+      fatal ("could not enable slave pty");	\
+    strncpy(pty_name, ptyname, sizeof(pty_name)); \
+    pty_name[sizeof(pty_name) - 1] = 0;		\
+    sigsetmask(siggetmask() & ~sigmask(SIGCHLD));	\
+  }
+
+#endif

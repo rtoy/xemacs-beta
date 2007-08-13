@@ -2802,9 +2802,9 @@ Boolean EmacsXtCvtStringToPixel (
   if ((d = get_device_from_display_1(dpy))) {
     visual = DEVICE_X_VISUAL(d);
     if (colormap != DEVICE_X_COLORMAP(d)) {
-      XtAppWarningMsg(the_app_con, "wierdColormap", "cvtStringToPixel",
+      XtAppWarningMsg(the_app_con, "weirdColormap", "cvtStringToPixel",
 		      "XtToolkitWarning",
-		      "The colormap passed to cvtStringToPixel doesn't match the one registerd to the device.\n",
+		      "The colormap passed to cvtStringToPixel doesn't match the one registered to the device.\n",
 		      NULL, 0);
       status = XAllocNamedColor(dpy, colormap, (char*)str, &screenColor, &exactColor);
     } else {

@@ -954,7 +954,9 @@ unix_create_process (struct Lisp_Process *p,
 
   if (pid < 0)
     {
+      int save_errno = errno;
       close_descriptor_pair (forkin, forkout);
+      errno = save_errno;
       report_file_error ("Doing fork", Qnil);
     }
 

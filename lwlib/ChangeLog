@@ -1,3 +1,12 @@
+2000-08-04  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.12 is released
+
+2000-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+	* xlwmenu.c: Comment suggesting treatment of X Font Set
+	resources like Motif FontLists.  Make comment on Motif
+	algorithm for setting FontList match code.
+
 2000-07-17  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.11 is released

@@ -88,6 +88,8 @@ xlwMenuResources[] =
   {XtNfont,  XtCFont, XtRFontStruct, sizeof(XFontStruct *),
      offset(menu.font), XtRString, "XtDefaultFont"},
 # ifdef USE_XFONTSET
+  /* #### Consider using the same method as for Motif; see the comment in
+     XlwMenuInitialize(). */
   {XtNfontSet,  XtCFontSet, XtRFontSet, sizeof(XFontSet),
      offset(menu.font_set), XtRString, "XtDefaultFontSet"},
 # endif
@@ -3009,10 +3011,12 @@ XlwMenuInitialize (Widget request, Widget new, ArgList args,
 				 gray_width, gray_height, 1, 0, 1);
 
 #ifdef NEED_MOTIF
+  /* #### Even if it's a kludge!!!, we should consider doing the same for
+     X Font Sets. */
   /* The menu.font_list slot came from the *fontList resource (Motif standard.)
      The menu.font_list_2 slot came from the *font resource, for backward
      compatibility with older versions of this code, and consistency with the
-     rest of emacs.  If both font and fontList are specified, we use font.
+     rest of emacs.  If both font and fontList are specified, we use fontList.
      If only one is specified, we use that.  If neither are specified, we
      use the "fallback" value.  What a kludge!!!
 
