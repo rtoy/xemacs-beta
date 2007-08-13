@@ -1,3 +1,14 @@
+1999-03-25  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.67 is released
+
+1999-03-12  giacomo boffi  <giacomo.boffi@polimi.it>
+
+	* sorted-doc.c: corrected the outdated or plainly wrong
+	texinfo headers. Broken up the mega-@table that crashes (at
+	least RedHat's) TeX with:
+	 "! TeX capacity exceeded, sorry [save size=4000]."
+
 1999-03-12  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.66 is released

@@ -63,8 +63,18 @@ will have to set them all again through the menu, and remove the code loading
 ** When the Zmacs region is active, `M-x query-replace' and the other
 replace commands now operate on the region contents only.
 
-** Using the new `-private' option, you can make XEmacs use a private
-colormap.
+** XEmacs now is able to choose X visuals and use private colormaps.
+The '-visual <visualStr>' command line option or the '.EmacsVisual'
+Xresource controls which visual XEmacs will use, and
+'-privateColormap' or '.privateColormap' will force XEmacs to create a
+private colormap for use.  The syntax for the visual string is
+"<visual><bitdepth>" where <visual> is one of 'StaticColor',
+'TrueColor', 'GrayScale', 'PseudoColor' or 'DirectColor' and
+<bitdepth> is the appropriate number of bits per pixel.  If an invalid
+or non-supported combination is entered, XEmacs attempts to find a happy
+medium.  The X creation mechanism will then determine if it needs to
+create a colormap for use, or the presence of the private flags will
+force it to create it.
 
 ** The `imenu' package has been ported to XEmacs and is available as a
 package.
@@ -161,8 +171,7 @@ with the ilisp package and should work well under XEmacs 21.0.
 
 *** Like the old 'gnudoit' program. Gnuclient -batch now can read from stdin.
 
-*** Again like the old 'gnudoit' program, gnuclient now can return multiple
-lines.
+*** Gnuclient -batch no longer breaks off the output at the first LF.
 
 ** C mode changes
 

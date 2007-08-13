@@ -9,8 +9,7 @@ Real Real Quickstart FAQ
 ------------------------
 
 Q. Do I need to have the packages to compile XEmacs?
-A. If you want to compile with MULE, you need the mule-base package installed.
-   Otherwise, no package is required before compilation.
+A. No.
 
 Q. I really liked the old way that packages were bundled and do not
    want to mess with packages at all.
@@ -132,7 +131,8 @@ and optionally:
 
    mailcrypt    - If you have PGP installed and want to verify the
                   signature of the index file.
-   mule-base    - Needed if you want to compile XEmacs with MULE.
+   mule-base    - Needed if you want to run XEmacs with MULE with a
+                  non-English language environment.
 
 After installing these by hand, you can start XEmacs. (It is a good
 idea to use 'xemacs -vanilla' here as your startup files might need
@@ -173,10 +173,10 @@ New packages can only be used by XEmacs after a restart.
 Note to MULE users
 ------------------
 
-Unlike all other packages the mule-base package is used at build/dump 
-time. This means that you need this available before compiling XEmacs
-with MULE. Also it is a good idea to keep packages that are
-MULE-only separate by putting them in the mule-packages hierarchy.
+It is a good idea to keep packages that are MULE-only separate by
+putting them in the mule-packages hierarchy.  Non-Mule XEmacsen will
+ignore packages in mule-packages so it is safe to have that directory
+in the package path of a Non-Mule XEmacs.
 
 Which Packages to install?
 --------------------------
