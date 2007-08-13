@@ -1,3 +1,21 @@
+1998-12-11  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.60 is released
+
+1998-11-04  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* xemacs.mak: Creating minimal versions of Installation,
+	  Installation.el, and config.values to make
+	  (describe-installation) and (config-value ...) work in Windows
+	  NT native builds.  Incorporating rule for movemail.exe courtesy
+	  of Andy Piper.
+
+1998-12-03  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* config.h: HAVE_LONG_FILE_NAMES no longer causes CLASH_DETECTION
+	to be defined.	File-locking is implemented using symbolic links,
+	which Windows NT dearly misses.
+
 1998-12-08  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.59 is released

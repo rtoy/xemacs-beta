@@ -320,10 +320,12 @@ If NO-REMOTE is non-nil never search remote locations."
           (and (not nil-if-not-found)
                file)))))
 
-(defun package-get-locate-index-file (no-remote)
-  "Locate the package-get index file.  Do not return remote paths if NO-REMOTE
-is non-nil."
-  (or (package-get-locate-file package-get-base-filename t no-remote)
+(defun package-get-locate-index-file (force-current)
+  "Locate the package-get index file.
+If FORCE-CURRENT is non-nil, require a current copy to be found."
+  (when (and force-current (not package-get-remote))
+    (error "No remote package sites specified in `package-get-remote'"))
+  (or (package-get-locate-file package-get-base-filename t (not force-current))
       (locate-data-file package-get-base-filename)
       package-get-base-filename))
 
@@ -332,7 +334,7 @@ is non-nil."
 (defun package-get-maybe-save-index (filename)
   "Offer to save the current buffer as the local package index file,
 if different."
-  (let ((location (package-get-locate-index-file t)))
+  (let ((location (package-get-locate-index-file nil)))
     (unless (and filename (equal filename location))
       (unless (equal (md5 (current-buffer))
 		     (with-temp-buffer
@@ -350,7 +352,7 @@ if different."
   "Update the package-get database file with entries from DB-FILE.
 Unless FORCE-CURRENT is non-nil never try to update the database."
   (interactive
-   (let ((dflt (package-get-locate-index-file nil)))
+   (let ((dflt (package-get-locate-index-file t)))
      (list (read-file-name "Load package-get database: "
                            (file-name-directory dflt)
                            dflt
@@ -358,7 +360,7 @@ Unless FORCE-CURRENT is non-nil never try to update the database."
                            (file-name-nondirectory dflt)))))
   (setq db-file (expand-file-name (or db-file
                                       (package-get-locate-index-file
-				         (not force-current)))))
+                                       force-current))))
   (if (not (file-exists-p db-file))
       (error "Package-get database file `%s' does not exist" db-file))
   (if (not (file-readable-p db-file))

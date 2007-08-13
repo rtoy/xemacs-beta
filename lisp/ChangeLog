@@ -1,3 +1,53 @@
+1998-12-11  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.60 is released
+
+1998-12-04  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* wid-edit.el (widget-echo-this-extent): Set
+	help-echo-owns-message to t.
+
+1998-12-10  SL Baur  <steve@altair.xemacs.org>
+
+	* package-admin.el (package-admin-add-binary-package): Grammar
+	fix.
+
+1998-12-01  Greg Klanderman  <greg@alphatech.com>
+
+	* package-get.el (package-get-locate-index-file): change argument
+	to `force-current'.  error out if force-current is set and no
+	download sites are specified.
+
+1998-12-01  Jan Vroonhof <vroonhof@math.ethz.ch>
+
+	* package-get.el (package-get): If we cannot find a package
+	  because package-get-remote is not set, give a more helpful
+	  error message.
+
+1998-11-30  Greg Klanderman  <greg@alphatech.com>
+
+	* package-get.el (package-get-remote-filename): use an EFS path
+	with user anonymous if no user is specified.
+
+1998-12-01  Didier Verna  <verna@inf.enst.fr>
+
+	* hyper-apropos.el (hyper-where-is): added the missing autoload.
+
+1998-12-10  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* faces.el (face-spec-set): Re-init fallfacks for default after
+	calling reset-face on the default face.
+
+1998-12-10  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* package-admin.el (package-admin-default-install-function):
+	Behave as advertised.  Make sure the pkg-dir is proper for
+	default-directory.
+	(package-admin-add-binary-package): Make sure the pkg-dir is
+	proper for default-directory.
+	(package-admin-install-function-mswindows): Make sure the pkg-dir
+	is proper for default-directory.
+
 1998-12-08  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.59 is released
@@ -307,7 +357,7 @@
 	  mswindows-make-font-bold / -bold-italic: Supplied device was
 	  not being passed into call to mswindows-find-smaller-font.
 
-1998-09-10  Björn Torkelsson  <torkel@hpc2n.umu.se>
+1998-09-10  Bjrn Torkelsson  <torkel@hpc2n.umu.se>
 
 	* package-get.el (package-get-remote): Fix the path where to find
 	  the packages on xemacs.org.

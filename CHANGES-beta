@@ -1,5 +1,15 @@
 							-*- indented-text -*-
 to 21.0 "Pyrenean"
+-- help-echo message fix from Hrvoje Niksic
+-- Fix building with union type on MS Windows NT from Andy Piper
+-- Installation/Installation.el/config.values for MS Windows from Adrian
+   Aichner
+-- Package get cleanups from Greg Klanderman and Jan Vroonhof
+-- Avoid defining CLASH_DETECTION on MS Windows NT from Adrian Aichner
+-- Package UI fixes from Jan Vroonhof
+
+to 21.0 "Poitou59"
+-- Menu accelerator bug fix from Didier Verna
 -- easymenu.el synch with FSF from Jan Vroonhof
 -- chartable bug fixes from Hrvoje Niksic
 -- Various MULE filenaming/localization bug fixes from Didier Verna

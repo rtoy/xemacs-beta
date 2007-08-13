@@ -1,3 +1,12 @@
+1998-12-11  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.60 is released
+
+1998-12-03  Andy Piper  <andy@xemacs.org>
+
+	* glyphs-msw.c (init_image_instance_from_xbm_inline): assign
+	hotspot lisp objects rather than erronously using XSETINT.
+
 1998-12-08  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.59 is released
