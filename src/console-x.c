@@ -271,7 +271,7 @@ void
 console_type_create_x (void)
 {
   INITIALIZE_CONSOLE_TYPE (x, "x", "console-x-p");
-  
+
   CONSOLE_HAS_METHOD (x, semi_canonicalize_console_connection);
   CONSOLE_HAS_METHOD (x, canonicalize_console_connection);
   CONSOLE_HAS_METHOD (x, semi_canonicalize_device_connection);

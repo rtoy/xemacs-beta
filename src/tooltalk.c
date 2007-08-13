@@ -41,7 +41,7 @@ Lisp_Object Vtooltalk_fd;
 static FILE *tooltalk_log_file;
 #endif
 
-static Lisp_Object 
+static Lisp_Object
   Vtooltalk_message_handler_hook,
   Vtooltalk_pattern_handler_hook,
   Vtooltalk_unprocessed_message_hook;
@@ -51,7 +51,7 @@ static Lisp_Object
   Qtooltalk_pattern_handler_hook,
   Qtooltalk_unprocessed_message_hook;
 
-static Lisp_Object 
+static Lisp_Object
   Qreceive_tooltalk_message,
   Qtt_address,
   Qtt_args_count,
@@ -78,7 +78,7 @@ static Lisp_Object
   Qtt_state,
   Qtt_status,
   Qtt_status_string,
-  Qtt_uid, 
+  Qtt_uid,
   Qtt_callback,
   Qtt_plist,
   Qtt_prop,
@@ -154,7 +154,7 @@ struct Lisp_Tooltalk_Message
 static Lisp_Object mark_tooltalk_message (Lisp_Object, void (*) (Lisp_Object));
 static void print_tooltalk_message (Lisp_Object, Lisp_Object, int);
 DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-message", tooltalk_message,
-                               mark_tooltalk_message, print_tooltalk_message, 
+                               mark_tooltalk_message, print_tooltalk_message,
                                0, 0, 0,
 			       struct Lisp_Tooltalk_Message);
 
@@ -170,7 +170,7 @@ print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
 			int escapeflag)
 {
   struct Lisp_Tooltalk_Message *p = XTOOLTALK_MESSAGE (obj);
-  
+
   char buf[200];
 
   if (print_readably)
@@ -184,23 +184,23 @@ print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
 static Lisp_Object
 make_tooltalk_message (Tt_message m)
 {
-  struct Lisp_Tooltalk_Message *message_
-    = alloc_lcrecord (sizeof (struct Lisp_Tooltalk_Message),
-		      lrecord_tooltalk_message);
+  struct Lisp_Tooltalk_Message *msg =
+    alloc_lcrecord_type (struct Lisp_Tooltalk_Message,
+			 lrecord_tooltalk_message);
   Lisp_Object val;
 
-  message_->m = m;
-  message_->callback = Qnil;
-  message_->plist_sym = Fmake_symbol (Tooltalk_Message_plist_str);
-  XSETTOOLTALK_MESSAGE (val, message_);
+  msg->m = m;
+  msg->callback = Qnil;
+  msg->plist_sym = Fmake_symbol (Tooltalk_Message_plist_str);
+  XSETTOOLTALK_MESSAGE (val, msg);
   return val;
 }
 
 Tt_message
-unbox_tooltalk_message (Lisp_Object message_)
+unbox_tooltalk_message (Lisp_Object msg)
 {
-  CHECK_TOOLTALK_MESSAGE (message_);
-  return XTOOLTALK_MESSAGE (message_)->m;
+  CHECK_TOOLTALK_MESSAGE (msg);
+  return XTOOLTALK_MESSAGE (msg)->m;
 }
 
 DEFUN ("tooltalk-message-p", Ftooltalk_message_p, 1, 1, 0, /*
@@ -230,7 +230,7 @@ struct Lisp_Tooltalk_Pattern
 static Lisp_Object mark_tooltalk_pattern (Lisp_Object, void (*) (Lisp_Object));
 static void print_tooltalk_pattern (Lisp_Object, Lisp_Object, int);
 DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-pattern", tooltalk_pattern,
-                               mark_tooltalk_pattern, print_tooltalk_pattern, 
+                               mark_tooltalk_pattern, print_tooltalk_pattern,
                                0, 0, 0,
 			       struct Lisp_Tooltalk_Pattern);
 
@@ -246,7 +246,7 @@ print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
 			int escapeflag)
 {
   struct Lisp_Tooltalk_Pattern *p = XTOOLTALK_PATTERN (obj);
-  
+
   char buf[200];
 
   if (print_readably)
@@ -260,15 +260,15 @@ print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
 static Lisp_Object
 make_tooltalk_pattern (Tt_pattern p)
 {
-  struct Lisp_Tooltalk_Pattern *pat
-    = alloc_lcrecord (sizeof (struct Lisp_Tooltalk_Pattern),
-		      lrecord_tooltalk_pattern);
+  struct Lisp_Tooltalk_Pattern *pat =
+    alloc_lcrecord_type (struct Lisp_Tooltalk_Pattern,
+			 lrecord_tooltalk_pattern);
   Lisp_Object val;
 
   pat->p = p;
   pat->callback = Qnil;
   pat->plist_sym = Fmake_symbol (Tooltalk_Pattern_plist_str);
-  
+
   XSETTOOLTALK_PATTERN (val, pat);
   return val;
 }
@@ -291,7 +291,7 @@ Return non-nil if OBJECT is a tooltalk pattern.
 
 
 
-static int 
+static int
 tooltalk_constant_value (Lisp_Object s)
 {
   if (INTP (s))
@@ -418,7 +418,7 @@ tt_mode_symbol (Tt_mode n)
   switch (n)
     {
     case TT_MODE_UNDEFINED:	return Q_TT_MODE_UNDEFINED;
-    case TT_IN:			return Q_TT_IN;			
+    case TT_IN:			return Q_TT_IN;
     case TT_OUT:		return Q_TT_OUT;
     case TT_INOUT:		return Q_TT_INOUT;
     case TT_MODE_LAST:		return Q_TT_MODE_LAST;
@@ -426,7 +426,7 @@ tt_mode_symbol (Tt_mode n)
     }
 }
 
-static Lisp_Object 
+static Lisp_Object
 tt_scope_symbol (Tt_scope n)
 {
   switch (n)
@@ -548,10 +548,10 @@ Return the indicated Tooltalk message attribute.  Attributes are
 identified by symbols with the same name (underscores and all) as the
 suffix of the Tooltalk tt_message_<attribute> function that extracts the value.
 String attribute values are copied, enumerated type values (except disposition)
-are converted to symbols - e.g. TT_HANDLER is 'TT_HANDLER, uid and gid are 
+are converted to symbols - e.g. TT_HANDLER is 'TT_HANDLER, uid and gid are
 represented by fixnums (small integers), opnum is converted to a string,
-and disposition is converted to a fixnum.  We convert opnum (a C int) to a 
-string, e.g. 123 => \"123\" because there's no guarantee that opnums will fit
+and disposition is converted to a fixnum.  We convert opnum (a C int) to a
+string, e.g. 123 => "123" because there's no guarantee that opnums will fit
 within the range of Lisp integers.
 
 Use the 'plist attribute instead of the C API 'user attribute
@@ -569,7 +569,7 @@ For example to get the integer value of the third argument:
 As you can see, argument numbers are zero based.  The type of each argument
 can be retrieved with the 'arg_type attribute; however, Tooltalk doesn't
 define any semantics for the string value of 'arg_type.  Conventionally
-\"string\" is used for strings and \"int\" for 32 bit integers.  Note that
+"string" is used for strings and "int" for 32 bit integers.  Note that
 Emacs Lisp stores the lengths of strings explicitly (unlike C) so treating the
 value returned by 'arg_bval like a string is fine.
 */
@@ -579,10 +579,10 @@ value returned by 'arg_bval like a string is fine.
   int n = 0;
 
   CHECK_SYMBOL (attribute);
-  if (EQ (attribute, (Qtt_arg_bval))  || 
-      EQ (attribute, (Qtt_arg_ival))  || 
-      EQ (attribute, (Qtt_arg_mode))  || 
-      EQ (attribute, (Qtt_arg_type))  || 
+  if (EQ (attribute, (Qtt_arg_bval))  ||
+      EQ (attribute, (Qtt_arg_ival))  ||
+      EQ (attribute, (Qtt_arg_mode))  ||
+      EQ (attribute, (Qtt_arg_type))  ||
       EQ (attribute, (Qtt_arg_val)))
     {
       CHECK_INT (argn);
@@ -666,7 +666,7 @@ value returned by 'arg_bval like a string is fine.
 
   else if (EQ (attribute, Qtt_uid))
     return make_int (tt_message_uid (m));
-  
+
   else if (EQ (attribute, Qtt_callback))
     return XTOOLTALK_MESSAGE (message_)->callback;
 
@@ -709,8 +709,8 @@ New arguments can be added to a message with add-tooltalk-message-arg.
   int n = 0;
 
   CHECK_SYMBOL (attribute);
-  if (EQ (attribute, (Qtt_arg_bval))  || 
-      EQ (attribute, (Qtt_arg_ival))  || 
+  if (EQ (attribute, (Qtt_arg_bval))  ||
+      EQ (attribute, (Qtt_arg_ival))  ||
       EQ (attribute, (Qtt_arg_val)))
     {
       CHECK_INT (argn);
@@ -723,17 +723,18 @@ New arguments can be added to a message with add-tooltalk-message-arg.
   else if (EQ (attribute, Qtt_address))
     {
       CHECK_TOOLTALK_CONSTANT (value);
-      tt_message_address_set (m, tooltalk_constant_value (value));
+      tt_message_address_set (m, (Tt_address) tooltalk_constant_value (value));
     }
   else if (EQ (attribute, Qtt_class))
     {
       CHECK_TOOLTALK_CONSTANT (value);
-      tt_message_class_set (m, tooltalk_constant_value (value));
+      tt_message_class_set (m, (Tt_class) tooltalk_constant_value (value));
     }
   else if (EQ (attribute, Qtt_disposition))
     {
       CHECK_TOOLTALK_CONSTANT (value);
-      tt_message_disposition_set (m, tooltalk_constant_value (value));
+      tt_message_disposition_set (m, ((Tt_disposition)
+				      tooltalk_constant_value (value)));
     }
   else if (EQ (attribute, Qtt_file))
     {
@@ -780,10 +781,10 @@ New arguments can be added to a message with add-tooltalk-message-arg.
   else if (EQ (attribute, Qtt_scope))
     {
       CHECK_TOOLTALK_CONSTANT (value);
-      tt_message_scope_set (m, tooltalk_constant_value (value));
+      tt_message_scope_set (m, (Tt_scope) tooltalk_constant_value (value));
     }
   else if (EQ (attribute, Qtt_sender_ptype))
-    { 
+    {
       CONST char *value_ext;
       CHECK_STRING (value);
       GET_C_STRING_OS_DATA_ALLOCA (value, value_ext);
@@ -931,7 +932,7 @@ MODE must be one of TT_IN, TT_INOUT, or TT_OUT; VTYPE must be a string;
 and VALUE can be a string or an integer.   Tooltalk doesn't
 define any semantics for VTYPE, so only the participants in the
 protocol you're using need to agree what types mean (if anything).
-Conventionally \"string\" is used for strings and \"int\" for 32 bit integers.
+Conventionally "string" is used for strings and "int" for 32 bit integers.
 Arguments can initialized by providing a value or with
 `set-tooltalk-message-attribute'.  The latter is necessary if you
 want to initialize the argument with a string that can contain
@@ -1025,7 +1026,7 @@ DEFUN ("add-tooltalk-pattern-attribute", Fadd_tooltalk_pattern_attribute, 3, 3, 
 Add one value to the indicated pattern attribute.
 All Tooltalk pattern attributes are supported except 'user.  The names
 of attributes are the same as the Tooltalk accessors used to set them
-less the \"tooltalk_pattern_\" prefix and the \"_add\" ...
+less the "tooltalk_pattern_" prefix and the "_add" ...
 */
        (value, pattern, attribute))
 {
@@ -1039,22 +1040,25 @@ less the \"tooltalk_pattern_\" prefix and the \"_add\" ...
   else if (EQ (attribute, Qtt_category))
     {
       CHECK_TOOLTALK_CONSTANT (value);
-      tt_pattern_category_set (p, tooltalk_constant_value (value));
+      tt_pattern_category_set (p, ((Tt_category)
+				   tooltalk_constant_value (value)));
     }
   else if (EQ (attribute, Qtt_address))
     {
       CHECK_TOOLTALK_CONSTANT (value);
-      tt_pattern_address_add (p, tooltalk_constant_value (value));
+      tt_pattern_address_add (p, ((Tt_address)
+				  tooltalk_constant_value (value)));
     }
   else if (EQ (attribute, Qtt_class))
     {
       CHECK_TOOLTALK_CONSTANT (value);
-      tt_pattern_class_add (p, tooltalk_constant_value (value));
+      tt_pattern_class_add (p, (Tt_class) tooltalk_constant_value (value));
     }
   else if (EQ (attribute, Qtt_disposition))
     {
       CHECK_TOOLTALK_CONSTANT (value);
-      tt_pattern_disposition_add (p, tooltalk_constant_value (value));
+      tt_pattern_disposition_add (p, ((Tt_disposition)
+				      tooltalk_constant_value (value)));
     }
   else if (EQ (attribute, Qtt_file))
     {
@@ -1087,7 +1091,7 @@ less the \"tooltalk_pattern_\" prefix and the \"_add\" ...
   else if (EQ (attribute, Qtt_scope))
     {
       CHECK_TOOLTALK_CONSTANT (value);
-      tt_pattern_scope_add (p, tooltalk_constant_value (value));
+      tt_pattern_scope_add (p, (Tt_scope) tooltalk_constant_value (value));
     }
   else if (EQ (attribute, Qtt_sender))
     {
@@ -1113,7 +1117,7 @@ less the \"tooltalk_pattern_\" prefix and the \"_add\" ...
   else if (EQ (attribute, Qtt_state))
     {
       CHECK_TOOLTALK_CONSTANT (value);
-      tt_pattern_state_add (p, tooltalk_constant_value (value));
+      tt_pattern_state_add (p, (Tt_state) tooltalk_constant_value (value));
     }
   else if (EQ (attribute, Qtt_callback))
     {
@@ -1144,7 +1148,7 @@ is added.  At present there's no way to add a binary data argument.
 
   if (!VALID_TOOLTALK_PATTERNP (p))
     return Qnil;
-  
+
   {
     CONST char *vtype_ext;
 
@@ -1237,9 +1241,7 @@ Return current default process identifier for your process.
        ())
 {
   char *procid = tt_default_procid ();
-  if (!procid)
-    return Qnil;
-  return build_string (procid);
+  return procid ? build_string (procid) : Qnil;
 }
 
 DEFUN ("tooltalk-default-session", Ftooltalk_default_session, 0, 0, 0, /*
@@ -1248,9 +1250,7 @@ Return current default session identifier for the current default procid.
        ())
 {
   char *session = tt_default_session ();
-  if (!session)
-    return Qnil;
-  return build_string (session);
+  return session ? build_string (session) : Qnil;
 }
 
 static void
@@ -1264,7 +1264,7 @@ init_tooltalk (void)
   retval = tt_open ();
   if (tt_ptr_error (retval) != TT_OK)
     return;
-    
+
   Vtooltalk_fd = make_int (tt_fd ());
 
   tt_session_join (tt_default_session ());
@@ -1291,7 +1291,7 @@ init_tooltalk (void)
      No big deal if we don't do the following under those systems. */
   {
     Tt_message exit_msg = tt_message_create ();
-    
+
     tt_message_op_set (exit_msg, "emacs-aborted");
     tt_message_scope_set (exit_msg, TT_SESSION);
     tt_message_class_set (exit_msg, TT_NOTICE);
@@ -1337,11 +1337,11 @@ syms_of_tooltalk (void)
   DEFSUBR (Fsend_tooltalk_message);
   DEFSUBR (Freturn_tooltalk_message);
   DEFSUBR (Fcreate_tooltalk_pattern);
-  DEFSUBR (Fdestroy_tooltalk_pattern);  
-  DEFSUBR (Fadd_tooltalk_pattern_attribute);  
-  DEFSUBR (Fadd_tooltalk_pattern_arg);  
-  DEFSUBR (Fregister_tooltalk_pattern);  
-  DEFSUBR (Funregister_tooltalk_pattern);  
+  DEFSUBR (Fdestroy_tooltalk_pattern);
+  DEFSUBR (Fadd_tooltalk_pattern_attribute);
+  DEFSUBR (Fadd_tooltalk_pattern_arg);
+  DEFSUBR (Fregister_tooltalk_pattern);
+  DEFSUBR (Funregister_tooltalk_pattern);
   DEFSUBR (Ftooltalk_pattern_plist_get);
   DEFSUBR (Ftooltalk_pattern_prop_set);
   DEFSUBR (Ftooltalk_pattern_prop_get);
@@ -1396,7 +1396,7 @@ File descriptor returned by tt_initialize; nil if not connected to ToolTalk.
 */ );
   Vtooltalk_fd = Qnil;
 
-  DEFVAR_LISP ("tooltalk-message-handler-hook", 
+  DEFVAR_LISP ("tooltalk-message-handler-hook",
 	      &Vtooltalk_message_handler_hook /*
 List of functions to be applied to each ToolTalk message reply received.
 This will always occur as a result of our sending a request message.
@@ -1407,7 +1407,7 @@ message was created without a C-level callback function (see
 */ );
   Vtooltalk_message_handler_hook = Qnil;
 
-  DEFVAR_LISP ("tooltalk-pattern-handler-hook", 
+  DEFVAR_LISP ("tooltalk-pattern-handler-hook",
 	      &Vtooltalk_pattern_handler_hook /*
 List of functions to be applied to each pattern-matching ToolTalk message.
 This is all messages except those handled by `tooltalk-message-handler-hook'.
@@ -1424,13 +1424,13 @@ Unprocessed messages are messages that didn't match any patterns.
   Vtooltalk_unprocessed_message_hook = Qnil;
 
   Tooltalk_Message_plist_str = build_string ("Tooltalk Message plist");
-  Tooltalk_Pattern_plist_str = build_string ("Tooltalk Pattern plist");
+  Tooltalk_Pattern_plist_str = build_string ("Tooltalk Pattern p plist");
 
 #define MAKE_CONSTANT(name) do { \
     defsymbol (&Q_ ## name, #name); \
     Fset (Q_ ## name, make_int (name)); \
   } while (0)
-  
+
   MAKE_CONSTANT (TT_MODE_UNDEFINED);
   MAKE_CONSTANT (TT_IN);
   MAKE_CONSTANT (TT_OUT);

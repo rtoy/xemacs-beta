@@ -126,7 +126,7 @@ gcpro_popup_callbacks (LWLIB_ID id)
   Lisp_Object lpdata = Qnil;
 
   assert (NILP (assq_no_quit (lid, Vpopup_callbacks)));
-  pdata = alloc_lcrecord (sizeof (struct popup_data), lrecord_popup_data);
+  pdata = alloc_lcrecord_type (struct popup_data, lrecord_popup_data);
   pdata->id = id;
   pdata->last_menubar_buffer = Qnil;
   pdata->menubar_contents_up_to_date = 0;
@@ -478,7 +478,7 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
   if (NILP (accel))
     accel = menu_name_to_accelerator (wv->name);
   wv->accel = LISP_TO_VOID (accel);
-  
+
   if (!NILP (suffix))
     {
       CONST char *const_bogosity;

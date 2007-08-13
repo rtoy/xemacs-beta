@@ -112,7 +112,7 @@ int _CRTAPI1 _getpid (void);
 #endif /* USG */
 
 #ifdef HAVE_SYS_STROPTS_H
-#include <sys/stropts.h> 
+#include <sys/stropts.h>
 #endif /* HAVE_SYS_STROPTS_H */
 
 /* LPASS8 is new in 4.3, and makes cbreak mode provide all 8 bits.  */
@@ -401,7 +401,7 @@ wait_for_termination (int pid)
  *	flush any pending output
  *      (may flush input as well; it does not matter the way we use it)
  */
- 
+
 void
 flush_pending_output (int channel)
 {
@@ -646,7 +646,7 @@ sys_subshell (void)
 
 #ifdef SET_EMACS_PRIORITY
     if (emacs_priority != 0)
-      nice (-emacs_priority);   /* Give the new shell the default priority */ 
+      nice (-emacs_priority);   /* Give the new shell the default priority */
 #endif
 
 #ifdef MSDOS
@@ -755,8 +755,7 @@ sys_suspend (void)
 
 /* Suspend a process if possible; give terminal to its superior.  */
 void
-sys_suspend_process (process)
-    int process;
+sys_suspend_process (int process)
 {
     /* I don't doubt that it is possible to suspend processes on
      * VMS machines or thost that use USG_JOBCTRL,
@@ -788,7 +787,7 @@ set_window_size (int fd, int height, int width)
 #elif defined (TIOCSSIZE)
 
   /* SunOS - style.  */
-  struct ttysize size;  
+  struct ttysize size;
   size.ts_lines = height;
   size.ts_cols = width;
 
@@ -822,13 +821,13 @@ setup_pty (int fd)
      does this.  Also it is known that telnet mode will hang
      in such a way that Emacs must be stopped (perhaps this
      is the same problem).
-     
+
      If TIOCREMOTE is turned off, then there is a bug in
      hp-ux which sometimes loses data.  Apparently the
      code which blocks the master process when the internal
      buffer fills up does not work.  Other than this,
      though, everything else seems to work fine.
-     
+
      Since the latter lossage is more benign, we may as well
      lose that way.  -- cph */
 #if defined (FIONBIO) && defined (SYSV_PTYS)
@@ -891,13 +890,13 @@ init_baud_rate (struct device *d)
     DEVICE_TTY_DATA (d)->ospeed = 15;
 #elif defined (VMS)
     struct vms_sensemode sg;
-    
+
     SYS$QIOW (0, input_fd, IO$_SENSEMODE, &sg, 0, 0,
 	      &sg.class, 12, 0, 0, 0, 0 );
     DEVICE_TTY_DATA (d)->ospeed = sg.xmit_baud;
 #elif defined (HAVE_TERMIOS)
     struct termios sg;
-    
+
     sg.c_cflag = B9600;
     tcgetattr (input_fd, &sg);
     DEVICE_TTY_DATA (d)->ospeed = cfgetospeed (&sg);
@@ -908,7 +907,7 @@ init_baud_rate (struct device *d)
 # endif
 #elif defined (HAVE_TERMIO)
     struct termio sg;
-    
+
     sg.c_cflag = B9600;
 # ifdef HAVE_TCATTR
     tcgetattr (input_fd, &sg);
@@ -918,14 +917,14 @@ init_baud_rate (struct device *d)
     DEVICE_TTY_DATA (d)->ospeed = sg.c_cflag & CBAUD;
 #else /* neither VMS nor TERMIOS nor TERMIO */
     struct sgttyb sg;
-    
+
     sg.sg_ospeed = B9600;
     if (ioctl (input_fd, TIOCGETP, &sg) < 0)
       abort ();
     DEVICE_TTY_DATA (d)->ospeed = sg.sg_ospeed;
 #endif
   }
-  
+
   DEVICE_BAUD_RATE (d) =
     (DEVICE_TTY_DATA (d)->ospeed < sizeof baud_convert / sizeof baud_convert[0]
      ? baud_convert[DEVICE_TTY_DATA (d)->ospeed]
@@ -1091,7 +1090,7 @@ unrequest_sigio_on_device (struct device *d)
       {
 	ioctl_status = ioctl (filedesc, FIOSSAIOSTAT, &off);
       }
-    else 
+    else
       {
 	ioctl_status = ioctl (filedesc, FIOASYNC, &off);
       }
@@ -1255,7 +1254,7 @@ unmunge_process_groups (void)
    Also record whether we were in our own process group. (In general,
    we will already be in our own process group if we were started from
    a job-control shell like csh, but not if we were started from sh).
-   
+
    If we succeeded in changing our process group, then we will no
    longer be in the foreground process group of our controlling
    terminal.  Therefore, if we have a console open onto this terminal,
@@ -1312,7 +1311,7 @@ disconnect_controlling_terminal (void)
      disconnect our controlling terminal.  Here is
      what the man page for termio(7) from a SYSV 3.2
      system says:
-     
+
      "The first terminal file opened by the process group leader
      of a terminal file not already associated with a process
      group becomes the control terminal for that process group.
@@ -1321,7 +1320,7 @@ disconnect_controlling_terminal (void)
      terminal is inherited by a child process during a fork(2).
      A process can break this association by changing its process
      group using setpgrp(2)."
-     
+
      */
 #  endif /* not HAVE_SETSID */
 }
@@ -1470,7 +1469,7 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
       || ioctl (fd, TIOCLSET, &settings->lmode) < 0)
     return -1;
 #endif
-  
+
   /* We have survived the tempest.  */
   return 0;
 }
@@ -1494,7 +1493,7 @@ extern unsigned char _sobuf[BUFSIZ+8];
 #else
 char _sobuf[BUFSIZ];
 #endif
- 
+
 #if defined (TIOCGLTC) && defined (HAVE_LTCHARS) /* HAVE_LTCHARS */
 static struct ltchars new_ltchars = {-1,-1,-1,-1,-1,-1};
 #endif
@@ -1502,7 +1501,7 @@ static struct ltchars new_ltchars = {-1,-1,-1,-1,-1,-1};
 #ifdef HAVE_TCHARS
 static struct tchars new_tchars = {-1,-1,-1,-1,-1,-1};
 #endif
-#endif 
+#endif
 
 static void
 tty_init_sys_modes_on_device (struct device *d)
@@ -1546,7 +1545,7 @@ tty_init_sys_modes_on_device (struct device *d)
     }
   else
     tty.main.c_iflag &= ~IXON;	/* Disable start/stop output control */
-  tty.main.c_oflag &= ~ONLCR;	/* Disable map of NL to CR-NL 
+  tty.main.c_oflag &= ~ONLCR;	/* Disable map of NL to CR-NL
 				   on output */
   tty.main.c_oflag &= ~TAB3;	/* Disable tab expansion */
 #ifdef CS8
@@ -1615,7 +1614,7 @@ tty_init_sys_modes_on_device (struct device *d)
      Ultrix's termios does not work correctly.  */
   tty.main.c_line = SET_LINE_DISCIPLINE;
 #endif
-  
+
 #ifdef AIX
 #ifndef IBMR2AIX
   /* AIX enhanced edit loses NULs, so disable it. */
@@ -1644,7 +1643,7 @@ tty_init_sys_modes_on_device (struct device *d)
   tty.main.sg_flags |= /* interrupt_input ? RAW : */ CBREAK;
 #endif /* not MSDOS */
 #endif /* not HAVE_TERMIO */
-  
+
   /* If going to use CBREAK mode, we must request C-g to interrupt
      and turn off start and stop chars, etc.  If not going to use
      CBREAK mode, do this anyway so as to turn off local flow
@@ -1661,10 +1660,10 @@ tty_init_sys_modes_on_device (struct device *d)
       tty.tchars.t_startc = '\021';
       tty.tchars.t_stopc = '\023';
     }
-  
+
   tty.lmode = LDECCTQ | LLITOUT | LPASS8 | LNOFLSH |
     CONSOLE_TTY_DATA (con)->old_tty.lmode;
-  
+
 #if defined (ultrix) || defined (__bsdi__)
   /* Under Ultrix 4.2a, leaving this out doesn't seem to hurt
      anything, and leaving it in breaks the meta key.  Go figure.  */
@@ -1673,10 +1672,10 @@ tty_init_sys_modes_on_device (struct device *d)
      doesn't get reset after XEmacs goes away. */
   tty.lmode &= ~LLITOUT;
 #endif
-  
+
 #endif /* HAVE_TCHARS */
 #endif /* not HAVE_TERMIO */
-  
+
 #ifdef HAVE_LTCHARS
   tty.ltchars = new_ltchars;
 #endif /* HAVE_LTCHARS */
@@ -1684,12 +1683,12 @@ tty_init_sys_modes_on_device (struct device *d)
   internal_terminal_init ();
   dos_ttraw ();
 #endif
-  
+
   EMACS_SET_TTY (input_fd, &tty, 0);
-  
+
   /* This code added to insure that, if flow-control is not to be used,
      we have an unlocked terminal at the start. */
-  
+
 #ifdef TCXONC
   if (!TTY_FLAGS (con).flow_control) ioctl (input_fd, TCXONC, 1);
 #endif
@@ -1698,7 +1697,7 @@ tty_init_sys_modes_on_device (struct device *d)
   if (!TTY_FLAGS (con).flow_control) ioctl (input_fd, TIOCSTART, 0);
 #endif
 #endif
-  
+
 #if defined (HAVE_TERMIOS) || defined (HPUX9)
 #ifdef TCOON
   if (!TTY_FLAGS (con).flow_control) tcflow (input_fd, TCOON);
@@ -1712,7 +1711,7 @@ tty_init_sys_modes_on_device (struct device *d)
        We need it to be only LF.  This is the way that is
        done. */
     struct termio tty;
-    
+
     if (ioctl (output_fd, HFTGETID, &tty) != -1)
       write (output_fd, "\033[20l", 5);
   }
@@ -1766,7 +1765,7 @@ init_one_console (struct console *con)
   CONSOLE_DEVICE_LOOP (devcons, con)
     {
       struct device *d = XDEVICE (XCAR (devcons));
-      
+
       init_one_device (d);
     }
 }
@@ -1791,7 +1790,7 @@ reinit_initial_console (void)
 
 /* Return nonzero if safe to use tabs in output.
    At the time this is called, init_sys_modes has not been done yet.  */
-   
+
 int
 tabs_safe_p (struct device *d)
 {
@@ -1799,7 +1798,7 @@ tabs_safe_p (struct device *d)
   if (DEVICE_TTY_P (d))
     {
       struct emacs_tty tty;
-      
+
       EMACS_GET_TTY (DEVICE_INFD (d), &tty);
       return EMACS_TTY_TABS_OK (&tty);
     }
@@ -1824,7 +1823,7 @@ get_tty_device_size (struct device *d, int *widthp, int *heightp)
   {
     /* BSD-style.  */
     struct winsize size;
-    
+
     if (ioctl (input_fd, TIOCGWINSZ, &size) == -1)
       *widthp = *heightp = 0;
     else
@@ -1837,8 +1836,8 @@ get_tty_device_size (struct device *d, int *widthp, int *heightp)
 #ifdef TIOCGSIZE
   {
     /* SunOS - style.  */
-    struct ttysize size;  
-    
+    struct ttysize size;
+
     if (ioctl (input_fd, TIOCGSIZE, &size) == -1)
       *widthp = *heightp = 0;
     else
@@ -1851,7 +1850,7 @@ get_tty_device_size (struct device *d, int *widthp, int *heightp)
 #ifdef VMS
   {
     struct vms_sensemode tty;
-    
+
     SYS$QIOW (0, input_fd, IO$_SENSEMODE, &tty, 0, 0,
 	      &tty.class, 12, 0, 0, 0, 0);
     *widthp = tty.scr_wid;
@@ -1925,10 +1924,10 @@ tty_reset_sys_modes_on_device (struct device *d)
 
 #if defined (IBMR2AIX) && defined (AIXHFT)
   {
-    /* HFT consoles normally use ^J as a LF/CR.  We forced it to 
+    /* HFT consoles normally use ^J as a LF/CR.  We forced it to
        do the LF only.  Now, we need to reset it. */
     struct termio tty;
-    
+
     if (ioctl (output_fd, HFTGETID, &tty) != -1)
       write (output_fd, "\033[20h", 5);
   }
@@ -1937,7 +1936,7 @@ tty_reset_sys_modes_on_device (struct device *d)
   tty_redisplay_shutdown (con);
   /* reset_tty_modes() flushes the connection at its end. */
   reset_tty_modes (con);
-  
+
 #if defined (BSD)
   /* Avoid possible loss of output when changing terminal modes.  */
   fsync (output_fd);
@@ -1946,11 +1945,11 @@ tty_reset_sys_modes_on_device (struct device *d)
   while (EMACS_SET_TTY (input_fd, &CONSOLE_TTY_DATA (con)->old_tty, 0)
 	 < 0 && errno == EINTR)
     ;
-  
+
 #ifdef MSDOS
   dos_ttcooked ();
 #endif
-  
+
 #ifdef SET_LINE_DISCIPLINE
   /* Ultrix's termios *ignores* any line discipline except TERMIODISC.
      A different old line discipline is therefore not restored, yet.
@@ -1997,7 +1996,7 @@ reset_one_console (struct console *con)
   CONSOLE_DEVICE_LOOP (devcons, con)
     {
       struct device *d = XDEVICE (XCAR (devcons));
-      
+
       reset_one_device (d);
     }
 }
@@ -2011,7 +2010,7 @@ reset_all_consoles (void)
   CONSOLE_LOOP (concons)
     {
       struct console *con = XCONSOLE (XCAR (concons));
-      
+
       reset_one_console (con);
     }
 
@@ -2046,7 +2045,7 @@ hft_init (struct console *con)
 
   /* If we're not on an HFT we shouldn't do any of this.  We determine
      if we are on an HFT by trying to get an HFT error code.  If this
-     call fails, we're not on an HFT. */ 
+     call fails, we're not on an HFT. */
 #ifdef IBMR2AIX
   if (ioctl (input_fd, HFQERROR, &junk) < 0)
     return;
@@ -2157,7 +2156,7 @@ init_vms_input (void)
 {
   /* #### broken. */
   int status;
-  
+
   if (input_fd == 0)
     {
       status = SYS$ASSIGN (&vms_input_dsc, &input_fd, 0, 0);
@@ -2213,7 +2212,7 @@ vms_kbd_input_ast (struct console *con)
     exit (1);
   printf ("Ast # %d,", vms_input_count);
   printf (" iosb = %x, %x, %x, %x",
-	  vms_input_iosb.offset, vms_input_iosb.status, 
+	  vms_input_iosb.offset, vms_input_iosb.status,
           vms_input_iosb.termlen, vms_input_iosb.term);
 #endif
   if (vms_input_iosb.offset)
@@ -2378,6 +2377,12 @@ vms_input_wait_timeout (int timeval) /* Time to wait, in seconds */
  *
  */
 
+#ifdef __cplusplus
+  extern "C" int _start ();
+#else
+  extern int _start ();
+#endif
+
 #ifndef HAVE_TEXT_START
 char *
 start_of_text (void)
@@ -2389,7 +2394,6 @@ start_of_text (void)
   extern csrt ();
   return ((char *) csrt);
 #else /* not GOULD */
-  extern int _start ();
   return ((char *) _start);
 #endif /* GOULD */
 #endif /* TEXT_START */
@@ -2421,7 +2425,7 @@ start_of_text (void)
  *	will be patched by unexec to the correct value.
  *
  */
- 
+
 void *
 start_of_data (void)
 {
@@ -2453,7 +2457,7 @@ start_of_data (void)
  *	Return the address of the end of the text segment prior to
  *	doing an unexec.  After unexec the return value is undefined.
  */
- 
+
 char *
 end_of_text (void)
 {
@@ -2464,7 +2468,7 @@ end_of_text (void)
   return ((char *) &etext);
 #endif
 }
- 
+
 /*
  *	Return the address of the end of the data segment prior to
  *	doing an unexec.  After unexec the return value is undefined.
@@ -2616,7 +2620,7 @@ ERROR: XEmacs requires a working select().
    You can't use X under it (I think) because there's no select().
    Anyway, the signal stuff has all been changed.  If someone wants to
    get this stuff working again, look in the FSF Emacs sources. */
-   
+
 /* POSIX signals support - DJB */
 
 #ifdef HAVE_SIGPROCMASK
@@ -2815,7 +2819,7 @@ sys_open (CONST char *path, int oflag, ...)
 {
   int mode;
   va_list ap;
-  
+
   va_start (ap, oflag);
   mode = va_arg (ap, int);
   va_end (ap);
@@ -2895,7 +2899,7 @@ sys_write_1 (int fildes, CONST void *buf, unsigned int nbyte, int allow_quit)
 #else
   int rtnval;
   int bytes_written = 0;
-  CONST char *b = buf;
+  CONST char *b = (CONST char *) buf;
 
   /* No harm in looping regardless of the INTERRUPTIBLE_IO setting. */
   while (nbyte > 0)
@@ -3082,7 +3086,7 @@ sys_opendir (CONST char *filename)
 #ifdef ENCAPSULATE_READDIR
 DIRENTRY *
 sys_readdir (DIR *dirp)
-{ 
+{
   DIRENTRY *rtnval;
 
   /* Apparently setting errno is necessary on some systems?
@@ -3099,7 +3103,7 @@ sys_readdir (DIR *dirp)
     Extcount external_len;
     int ascii_filename_p = 1;
     CONST Extbyte * CONST external_name = (CONST Extbyte *) rtnval->d_name;
-    
+
     /* Optimize for the common all-ASCII case, computing len en passant */
     for (external_len = 0; external_name[external_len] ; external_len++)
       {
@@ -3110,7 +3114,7 @@ sys_readdir (DIR *dirp)
       return rtnval;
 
     { /* Non-ASCII filename */
-      static bufbyte_dynarr *internal_DIRENTRY;
+      static Bufbyte_dynarr *internal_DIRENTRY;
       CONST Bufbyte *internal_name;
       Bytecount internal_len;
       if (!internal_DIRENTRY)
@@ -3289,11 +3293,11 @@ sys_execvp (CONST char *path, char * CONST * argv)
 {
   int i, argc;
   CONST char ** new_argv;
-  
+
   PATHNAME_CONVERT_OUT (path);
   for (argc = 0; argv[argc]; argc++)
     ;
-  new_argv = (CONST char **) alloca ( (argc + 1) * sizeof (* new_argv));
+  new_argv = alloca_array (CONST char *, argc + 1);
   for (i = 0; i < argc; i++)
     GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (argv[i], new_argv[i]);
   new_argv[argc] = NULL;
@@ -3392,7 +3396,7 @@ int
 dup2 (int oldd, int newd)
 {
   int fd, ret;
-  
+
   sys_close (newd);
 
 #ifdef F_DUPFD
@@ -3419,21 +3423,21 @@ dup2 (int oldd, int newd)
  */
 
 #if !defined (HAVE_GETTIMEOFDAY)
- 
+
 int
 gettimeofday (struct timeval *tp, struct timezone *tzp)
 {
   extern long time ();
 
-  tp->tv_sec = time ((long *)0);    
+  tp->tv_sec = time ((long *)0);
   tp->tv_usec = 0;
   if (tzp != 0)
     tzp->tz_minuteswest = -1;
   return (0);
 }
- 
+
 #endif /* !HAVE_GETTIMEOFDAY */
-  
+
 /* No need to encapsulate utime and utimes explicitly because all
    access to those functions goes through the following. */
 
@@ -4173,7 +4177,7 @@ vmserrstr (int status)	/* VMS status code */
 
 #ifdef access
 #undef access
-  
+
 /* The following is necessary because 'access' emulation by VMS C (2.0) does
  * not work correctly.  (It also doesn't work well in version 2.3.)
  */
@@ -4212,7 +4216,7 @@ vms_access (CONST char *path, int mode)
    * access can treat the directory like a file.  */
   if (directory_file_name (path, dir_fn))
     path = dir_fn;
-  
+
   if (mode == F_OK)
     return access (path, mode);
   if (user == NULL && (user = (char *) getenv ("USER")) == NULL)
@@ -4226,7 +4230,7 @@ vms_access (CONST char *path, int mode)
     static int constant = ACL$C_FILE;
     DESCRIPTOR (path_desc, path);
     DESCRIPTOR (user_desc, user);
- 
+
     flags = 0;
     acces = 0;
     if ((mode & X_OK) && ((stat = access (path, mode)) < 0 || mode == X_OK))
@@ -4288,7 +4292,7 @@ vms_access (CONST char *filename, int type)
     return access (filename, type);
 
   /* Check write protection. */
-    
+
 #define	CHECKPRIV(bit)    (prvmask.bit)
 #define	WRITEABLE(field)  (! ((xab.xab$w_pro >> field) & XAB$M_NOWRITE))
 
@@ -4350,7 +4354,7 @@ vms_access (CONST char *filename, int type)
 }
 #endif /* not VMS4_4 */
 #endif /* access */
-  
+
 static char vtbuf[NAM$C_MAXRSS+1];
 
 /* translate a vms file spec to a unix path */
@@ -4390,7 +4394,7 @@ sys_translate_vms (char *vfile)
 	    *targ++ = '.';
 	    *targ++ = '.';
 	    break;
-	    
+
 	  default:
 	    *targ++ = *vfile;
 	    break;
@@ -4482,7 +4486,7 @@ sys_translate_unix (char *ufile)
       ufile++;
     }
   *targ = '\0';
-  
+
   return utbuf;
 }
 
@@ -4806,7 +4810,7 @@ vms_fwrite (CONST void *ptr, int size, int num, FILE *fp)
  * when this is not the desired behavior, for instance, when writing an
  * auto save file (you only want one version), or when you don't have
  * write permission in the directory containing the file (but the file
- * itself is writable).  Hence this routine, which is equivalent to 
+ * itself is writable).  Hence this routine, which is equivalent to
  * "close (creat (fn, 0));" on Unix if fn already exists.
  */
 int
@@ -4861,7 +4865,7 @@ get_uaf_name (char *uname)
   status;
   struct FAB uaf_fab;
   struct RAB uaf_rab;
-  
+
   uaf_fab = cc$rms_fab;
   uaf_rab = cc$rms_rab;
   /* initialize fab fields */
@@ -4924,7 +4928,7 @@ get_uaf_uic (unsigned long uic)
   status;
   struct FAB uaf_fab;
   struct RAB uaf_rab;
-  
+
   uaf_fab = cc$rms_fab;
   uaf_rab = cc$rms_rab;
   /* initialize fab fields */
@@ -5195,7 +5199,7 @@ rename (char *from, char *to)
    bits).  To maintain portability, the VMS implementation of `chmod' wires
    the W and D bits together.  */
 
- 
+
 static char vms_file_written[NAM$C_MAXRSS];
 
 int

@@ -1,7 +1,7 @@
 ;;; socks.el --- A Socks v5 Client for Emacs
 ;; Author: wmperry
-;; Created: 1997/06/25 16:25:12
-;; Version: 1.4
+;; Created: 1997/08/08 21:08:34
+;; Version: 1.5
 ;; Keywords: comm, firewalls
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -249,9 +249,13 @@
   (let ((route (cons socks-host socks-port))
 	(noproxy socks-noproxy))
     (while noproxy
-      (if (string-match (car noproxy) host)
-	  (setq route nil
-		noproxy nil))
+      (if (eq ?! (aref (car noproxy) 0))
+	  (if (string-match (substring (car noproxy) 1) host)
+	      (setq route nil
+		    noproxy nil))
+	(if (string-match (car noproxy) host)
+	    (setq route nil
+		  noproxy nil)))
       (setq noproxy (cdr noproxy)))
     route))
 

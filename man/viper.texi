@@ -15,7 +15,7 @@
 @titlepage
 @title Viper Is a Package for Emacs Rebels
 @subtitle a Vi emulator for GNU Emacs 20 and XEmacs 20
-@subtitle August 1997, Viper Version 2.96
+@subtitle August 1997, Viper Version 3.0 (Polyglot)
 
 @author Michael Kifer (Viper)
 @author Aamod Sane (VIP 4.4)
@@ -533,14 +533,20 @@ function instead.
 @cindex Meta key
 
 Viper uses @key{ESC} as a switch between Insert and Vi states. Emacs uses
-@key{ESC} for Meta. We need a Meta key to call the Meta key functions such
-as @kbd{M-x function name}. This role is played by the key @kbd{C-\}.
-Thus, to get @kbd{M-x}, you should type @kbd{C-\ x} (if the keyboard has no
-Meta key).  This works both in the Vi state and the Insert state.
-Alternatively, you can use @kbd{\ @key{ESC}} in Vi state to simulate the
-meta key.  It is possible to use @key{ESC} as Meta, but then you cannot
-press @key{ESC} multiple times in Vi state. @xref{Customization}, to find
-out how to rebind @key{ESC} to be Meta.@refill
+@key{ESC} for Meta. The Meta key is very important in Emacs since many
+finctions are accessible only via that key as @kbd{M-x function-name}.
+Therefore, we need to simulate it somehow.  In Viper's Vi, Insert, and
+Replace states, the meta key is set to be @kbd{C-\}.  Thus, to get
+@kbd{M-x}, you should type @kbd{C-\ x} (if the keyboard has no Meta key).
+This works both in the Vi command state and in the Insert and Replace
+states.  In Vi command state, you can also use @kbd{\ @key{ESC}} as the
+meta key.
+
+Note: Emacs binds @kbd{C-\} to a function that offers to change the
+keyboard input method in the multilingual environment. Viper overrides this
+binding. However, it is still possible to switch the input method by typing
+@kbd{\ C-\} in the Vi command state and @kbd{C-z \ C-\} in the Insert state.
+Or you can use the MULE menu in the menubar.
 @end table
 @noindent
 Other differences are mostly improvements. The ones you should know
@@ -695,6 +701,11 @@ Meta key and then typing @kbd{f} and @kbd{b}, respectively. On displays
 without the Meta key, these functions are invoked by typing
 @kbd{C-\ f} and @kbd{C-\ b} (@kbd{C-\} simulates the Meta key in Insert
 state, as explained above).
+
+The key @kbd{C-z} is sometimes also useful in Insert state: it allows you
+to execute a single command in Vi state without leaving the Insert state!
+For instance, @kbd{C-z d2w} will delete the next two words without leaving
+the Insert state.
 
 When Viper is in Insert state, you will see <I> in the mode line.
 
@@ -1215,12 +1226,17 @@ were on the last character.
 The word-movement commands @kbd{w}, @kbd{e}, etc., and the associated
 deletion/yanking commands, @kbd{dw}, @kbd{yw}, etc., can be made to
 understand Emacs syntax tables. If the variable
-@code{viper-syntax-preference} is set to @code{strict-vi} (the default) then
+@code{viper-syntax-preference} is set to @code{strict-vi} then
 the meaning of @emph{word} is the same as in
-Vi. However, if the value is @code{reformed-vi} then the alphanumeric
-symbols will be those specified by the current Emacs syntax table (which
-may be different for different major modes) plus the underscore symbol
-@kbd{_}. The user can also specify the value @code{emacs}, which would
+Vi. However, if the value is @code{reformed-vi} (the default) then the
+alphanumeric symbols will be those specified by the current Emacs syntax
+table (which may be different for different major modes) plus the
+underscore symbol @kbd{_}, minus some non-word symbols, like '.;,|, etc.
+Both @code{strict-vi} and @code{reformed-vi} work close to Vi in
+traditional cases, but @code{reformed-vi} does a better job when editing
+text in non-Latin alphabets.
+
+The user can also specify the value @code{emacs}, which would
 make Viper use exactly the Emacs notion of word. In particular, the
 underscore may not be part of a word. Finally, if
 @code{viper-syntax-preference} is set to @code{extended}, Viper words would
@@ -1235,9 +1251,14 @@ characters, such as European (non-English) letters, Cyrillic letters, etc.,
 the value can be @code{reformed-vi} or @code{emacs}.
 
 Changes to @code{viper-syntax-preference} should be done in the hooks to
-various major modes. Furthermore, for these changes to take effect, you
-should execute @code{(viper-update-alphanumeric-class)} right after changing
-the value of @code{viper-syntax-preference}.
+various major modes by executing @code{viper-set-syntax-preference} as in
+the following example:
+
+@example
+(viper-set-syntax-preference nil "emacs")
+@end example
+
+@findex @code{viper-set-syntax-preference}
 
 The above discussion of the meaning of Viper's words concerns only Viper's
 movement commands. In regular expressions, words remain the same as in
@@ -1263,17 +1284,13 @@ These commands have no Vi analogs.
 @item C-x, C-c
 @kindex @kbd{C-x}
 @kindex @kbd{C-c}
-@kbd{C-x} will exit from Vi state and return to Emacs state
-@emph{temporarily}. If you hit one of these keys, Emacs will believe
-that you hit that key in Emacs state. For example, if you hit @kbd{C-x}
-followed by @kbd{2}, then the current window will be split into 2 and you
-will be in Vi state again. Except for novice users, @kbd{C-c} is also set
-to temporarily escape to Emacs and execute a command from the current
-major mode.
-@key{ESC} will do the same, if
-you configure @key{ESC} as Meta by setting @code{viper-no-multiple-ESC} to nil
-in @file{.viper}. @xref{Customization}. @kbd{C-\}
-in Insert or Vi states will make Emacs think @kbd{Meta} has been hit.@refill
+These two keys invoke many important Emacs functions.  For example, if you
+hit @kbd{C-x} followed by @kbd{2}, then the current window will be split
+into 2. Except for novice users, @kbd{C-c} is also set to execute an Emacs
+command from the current major mode.  @key{ESC} will do the same, if you
+configure @key{ESC} as Meta by setting @code{viper-no-multiple-ESC} to nil
+in @file{.viper}. @xref{Customization}. @kbd{C-\} in Insert, Replace, or Vi
+states will make Emacs think @kbd{Meta} has been hit.@refill
 @item \
 @kindex @kbd{\}
 Escape to Emacs to execute a single Emacs command. For instance,
@@ -1701,10 +1718,11 @@ low may make it hard to type macros quickly enough.
 @item viper-ex-style-motion t
 Set this to @code{nil}, if you want @kbd{l,h} to cross
 lines, etc. @xref{Movement and Markers}, for more info.
-@item viper-ex-style-editing-in-insert t
+@item viper-ex-style-editing t
 Set this to to @code{nil}, if you want 
 @kbd{C-h} and @key{DEL} to not stop
-at the beginning of a line in Insert state.
+at the beginning of a line in Insert state, @key{X} and @key{x} to delete
+characters across lines in Vi command state, etc.
 @item viper-ESC-moves-cursor-back t
 It t, cursor moves back 1 character when switching from insert state to vi
 state. If nil, the cursor stays where it was before the switch.
@@ -1745,12 +1763,6 @@ window, if one exists.
 @item ex-cycle-through-non-files nil
 @kbd{:n} does not normally cycle through buffers. Set this to get
 buffers also.
-@item viper-automatic-iso-accents nil
-If @kbd{t}, ISO accents will be turned on in insert/replace Viper states
-and turned off in Vi state. This is useful for editing text in European
-languages. This variable is buffer-local. If used, it should be set in the
-hooks to the appropriate major modes (usually setting it in
-@code{text-mode-hook} is enough).
 @item viper-want-emacs-keys-in-insert 
 This is set to @code{nil} for user levels 1 and 2 and to @code{t} for user
 levels 3 and 4. Users who specify level 5 are allowed to set this variable
@@ -1899,13 +1911,12 @@ can include a line like this in your @file{.viper} file:
 @vindex @code{viper-ESC-keyseq-timeout}
 @vindex @code{viper-fast-keyseq-timeout}
 @vindex @code{viper-ex-style-motion}
-@vindex @code{viper-ex-style-editing-in-insert}
+@vindex @code{viper-ex-style-editing}
 @vindex @code{viper-ESC-moves-cursor-back}
 @vindex @code{viper-custom-file-name}
 @vindex @code{viper-spell-function}
 @vindex @code{ex-cycle-other-window}
 @vindex @code{ex-cycle-through-non-files}
-@vindex @code{viper-automatic-iso-accents}
 @vindex @code{viper-want-emacs-keys-in-insert}
 @vindex @code{viper-want-emacs-keys-in-vi}
 @vindex @code{viper-keep-point-on-repeat}
@@ -1959,8 +1970,8 @@ first). Then you can bind those sequences to their preferred forms using
 
 @lisp
 (cond ((string= (getenv "TERM") "xterm")
-       (define-key function-key-map "\e[192z" [f11])    ; L1
-       (define-key function-key-map "\e[195z" [f14])    ; L4, Undo
+(define-key function-key-map "\e[192z" [f11])    ; L1
+(define-key function-key-map "\e[195z" [f14])    ; L4, Undo
 @end lisp
 
 The above illustrates how to do this for Xterm. On VT100, you would have to
@@ -2093,7 +2104,7 @@ that should be in effect in the current buffer only and for a specific Viper
 state. For instance,
 @lisp
 (viper-add-local-keys 'vi-state '(("ZZ" . TeX-command-master) 
-                                ("ZQ" . viper-save-kill-buffer)))
+                                 ("ZQ" . viper-save-kill-buffer)))
 @end lisp
 @noindent
 redefines @kbd{ZZ} to invoke @code{TeX-command-master} in @code{vi-state}
@@ -2746,9 +2757,9 @@ available in Viper's Insert state (and Replace state) in buffer @code{my-buf}
 only: 
 
 @example
- (viper-record-kbd-macro "gg" 'insert-state 
-        [l up (meta x) n e x t - l i n e return]
-        "my-buf")
+(viper-record-kbd-macro "gg" 'insert-state 
+       [l up (meta x) n e x t - l i n e return]
+       "my-buf")
 @end example
 
 @noindent
@@ -2756,9 +2767,9 @@ To do the same for Vi state and all buffers with the major mode
 @code{cc-mode}, use:
 
 @example
- (viper-record-kbd-macro "gg" 'vi-state 
-        [l up (meta x) n e x t - l i n e return]
-        'cc-mode)
+(viper-record-kbd-macro "gg" 'vi-state 
+       [l up (meta x) n e x t - l i n e return]
+       'cc-mode)
 @end example
 
 @noindent
@@ -2772,7 +2783,7 @@ If all members of a vectors are printable characters (or sequences, such as
 strings:
 
 @example
- (viper-record-kbd-macro "aa" 'vi-state  "aaa\e"  "my-buffer")
+(viper-record-kbd-macro "aa" 'vi-state  "aaa\e"  "my-buffer")
 @end example
 
 @noindent
@@ -3096,36 +3107,53 @@ Viper's idea of Vi's words is slightly different from Vi. First, Viper
 words understand Emacs symbol tables. Therefore, all symbols declared to be
 alphanumeric in a symbol table can automatically be made part of the Viper
 word.  This is useful when, for instance, editing text containing European,
-Cyrillic, etc., letters.
+Cyrillic, Japanese, etc., texts.
 
-Second, Viper lets you depart from Vi's idea of a word by changing the
-value of @code{viper-syntax-preference}. By default, this variable is set to
-@code{strict-vi}, which means that alphanumeric symbols are exactly as
-in Vi.
-However, if the value is @code{reformed-vi} then alphanumeric
-symbols will be those specified by the current Emacs syntax table (which
-may be different for different major modes) plus the underscore symbol
-@kbd{_}. The user can also specify the value @code{emacs}, which would
-make Viper use exactly the Emacs notion of word. In particular, the
-underscore may not be part of a word. Finally, if
-@code{viper-syntax-preference} is set to @code{extended}, Viper words would
-consist of characters that are classified as alphanumeric @emph{or} as
-parts of symbols. This is convenient for writing programs and in many other
-situations.
+Second, Viper lets you depart from Vi's idea of a word by changing the a
+syntax preference via the customization widget (the variable
+@code{viper-syntax-preference}) or by executing
+@code{viper-set-syntax-preference} interactively.
 
-@vindex @code{viper-syntax-preference}
-@cindex syntax table
+By default, Viper syntax preference is @code{reformed-vi}, which means that
+Viper considers only those symbols to be part of a word that are specified
+as word-symbols by the current Emacs syntax table (which may be different
+for different major modes) plus the underscore symbol @kbd{_}, minus the
+symbols that are not considered words in Vi (e.g., `,',;, etc.), but may be
+considered as word-symbols by various Emacs major modes.  Reformed-Vi works
+very close to Vi, and it also recognizes words in other
+alphabets. Therefore, this is the most appropriate mode for editing text
+and is likely to fit all your needs. 
+
+You can also set Viper syntax preference to @code{strict-vi}, which would
+cause Viper to view all non-English letters as non-word-symbols.
+
+You can also specify @code{emacs} as your preference, which would
+make Viper use exactly the same notion of a word as Emacs does. In
+particular, the underscore may not be part of a word in some major modes.
+
+Finally, if @code{viper-syntax-preference} is set to @code{extended}, Viper
+words would consist of characters that are classified as alphanumeric
+@emph{or} as parts of symbols. This is convenient for editing programs.
 
 @code{viper-syntax-preference} is a local variable, so it can have different
 values for different major modes. For instance, in programming modes it can
 have the value @code{extended}. In text modes where words contain special
 characters, such as European (non-English) letters, Cyrillic letters, etc.,
 the value can be @code{reformed-vi} or @code{emacs}.
+If you consider using different syntactic preferences for different major
+modes, you should execute, for example,
 
-Changes to @code{viper-syntax-preference} should be done in the hooks to
-various major modes. Furthermore, for these changes to take effect, you
-should execute @code{(viper-update-alphanumeric-class)} right after changing
-the value of @code{viper-syntax-preference}.
+@example
+(viper-set-syntax-preference nil "extended")
+@end example
+
+in the appropriate major mode hooks.
+
+@vindex @code{viper-syntax-preference}
+@findex @code{viper-set-syntax-preference}
+@cindex syntax table
+
+
 
 The above discussion concerns only the movement commands. In regular
 expressions, words remain the same as in Emacs.  That is, the expressions
@@ -3373,9 +3401,9 @@ Set the Emacs mark at end of buffer.
 @item m ,
 Jump to the Emacs mark.
 @item :mark <char>
- Mark position with text marker named <char>. This is an Ex command.
+Mark position with text marker named <char>. This is an Ex command.
 @item :k <char>
- Same as @kbd{:mark}.
+Same as @kbd{:mark}.
 @item ``
 Exchange point and mark.
 @item ''
@@ -3592,11 +3620,11 @@ In Emacs, @samp{\&} stands for the last matched expression, so
 @kbd{s/[ab]+/\&\&/} will double the string matched by @kbd{[ab]}.
 Viper doesn't treat @samp{&} specially, unlike Vi: use @samp{\&} instead.
 @item  :[x,y]copy [z]
- Copy text between @kbd{x} and @kbd{y} to the position after @kbd{z}.
+Copy text between @kbd{x} and @kbd{y} to the position after @kbd{z}.
 @item  :[x,y]t [z]
- Same as @kbd{:copy}.
+Same as @kbd{:copy}.
 @item  :[x,y]move [z]
- Move text between @kbd{x} and @kbd{y} to the position after @kbd{z}.
+Move text between @kbd{x} and @kbd{y} to the position after @kbd{z}.
 @item  &
 Repeat latest Ex substitute command, e.g.
 @kbd{:s/wrong/right}.
@@ -3687,7 +3715,7 @@ substitution, else @samp{n}).  Instead of @kbd{/} any
 punctuation character other than <space> <tab> and <lf> can be used as
 delimiter. 
 @item  &
- Repeat latest Ex substitute command, e.g. @kbd{:s/wrong/right}.
+Repeat latest Ex substitute command, e.g. @kbd{:s/wrong/right}.
 @item :global /<pattern>/<ex-command>
 @itemx :g /<pattern>/<ex-command>
 Execute <ex-command> on all lines that match <pattern>.
@@ -3991,51 +4019,51 @@ is typed in Minibuffer. File completion and history are supported.
 
 @table @kbd
 @item :map <string>
- Start defining a Vi-style keyboard macro.
- For instance, typing
- @kbd{:map www} followed by @kbd{:!wc %} and then typing @kbd{C-x )}
- will cause @kbd{www} to run wc on
- current file (Vi replaces @samp{%} with the current file name).
+Start defining a Vi-style keyboard macro.
+For instance, typing
+@kbd{:map www} followed by @kbd{:!wc %} and then typing @kbd{C-x )}
+will cause @kbd{www} to run wc on
+current file (Vi replaces @samp{%} with the current file name).
 @item C-x )
- Finish defining a keyboard macro.
- In Viper, this command completes the process of defining all keyboard
+Finish defining a keyboard macro.
+In Viper, this command completes the process of defining all keyboard
 macros, whether they are Emacs-style or Vi-style.
 This is a departure from Vi, needed to allow WYSIWYG mapping of
 keyboard macros and to permit the use of function keys and arbitrary Emacs
 functions in the macros.
 @item :unmap <string>
- Deprive <string> of its mappings in Vi state.
+Deprive <string> of its mappings in Vi state.
 @item :map! <string>
- Map a macro for Insert state.
+Map a macro for Insert state.
 @item :unmap! <string>
- Deprive <string> of its mapping in Insert state (see @kbd{:unmap}).
+Deprive <string> of its mapping in Insert state (see @kbd{:unmap}).
 @item @@<a-z>
- In Vi state,
- execute the contents of register as a command.
+In Vi state,
+execute the contents of register as a command.
 @item @@@@
- In Vi state,
- repeat last register command. 
+In Vi state,
+repeat last register command. 
 @item @@#
 In Vi state,
- begin keyboard macro. End with @@<a-z>. This will
- put the macro in the proper register. Register will
- be automatically downcased.
- @xref{Macros and Registers}, for more info.
+begin keyboard macro. End with @@<a-z>. This will
+put the macro in the proper register. Register will
+be automatically downcased.
+@xref{Macros and Registers}, for more info.
 @item @@!<a-z>
- In Vi state,
- yank anonymous macro to register
+In Vi state,
+yank anonymous macro to register
 @item *
- In Vi state,
- execute anonymous macro (defined by C-x( and C-x )).
+In Vi state,
+execute anonymous macro (defined by C-x( and C-x )).
 @item C-x e
- Like @kbd{*}, but works in all Viper states.
+Like @kbd{*}, but works in all Viper states.
 @item #g<move>
- Execute the last keyboard macro for each line in the region.
- @xref{Macros and Registers}, for more info.
+Execute the last keyboard macro for each line in the region.
+@xref{Macros and Registers}, for more info.
 @item [<a-z>
- Show contents of textmarker.
+Show contents of textmarker.
 @item ]<a-z>
- Show contents of register.
+Show contents of register.
 @end table
 @kindex @kbd{]<a-z>}
 @kindex @kbd{[<a-z>}
@@ -4235,6 +4263,12 @@ Set <option> to <value>.
 @table @kbd
 @item C-\
 Begin Meta command in Vi or Insert states. Most often used as C-\ x (M-x).
+
+Note: Emacs binds @kbd{C-\} to a function that offers to change the
+keyboard input method in the multilingual environment. Viper overrides this
+binding. However, it is still possible to switch the input method by typing
+@kbd{\ C-\} in the Vi command state and @kbd{C-z \ C-\} in the Insert state.
+Or you can use the MULE menu on the menubar.
 @item C-z
 In Insert and Replace states, prepare Viper to accept the next command and
 execute it as if Viper was in Vi state. Then return to Insert state.

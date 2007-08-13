@@ -932,6 +932,8 @@ mail-text:     The same as above, but will not use a glyph"
 	     (push (display-time-convert-num 12-hours t) tmp))
 	    ((eq elem 'minutes)
 	     (push (display-time-convert-num minutes) tmp))
+	    ((eq elem 'seconds)
+	     (push (display-time-convert-num seconds) tmp))
 	    ((eq elem 'minutes-text)
 	     (push (display-time-convert-num minutes t) tmp))
 	    ((eq elem 'am-pm)

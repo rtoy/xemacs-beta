@@ -1,7 +1,7 @@
 ;;; w3-e19.el --- Emacs 20.xx specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/06/27 15:28:39
-;; Version: 1.1
+;; Created: 1997/08/08 14:44:42
+;; Version: 1.2
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,3 +26,4 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'w3-e19)
+(provide 'w3-e20)

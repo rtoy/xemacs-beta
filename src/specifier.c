@@ -52,15 +52,16 @@ Lisp_Object Vuser_defined_tags;
 MAC_DEFINE (struct Lisp_Specifier *, MTspecmeth_or_given)
 MAC_DEFINE (struct Lisp_Specifier *, MTspecifier_data)
 
+typedef struct specifier_type_entry specifier_type_entry;
 struct specifier_type_entry
 {
   Lisp_Object symbol;
   struct specifier_methods *meths;
 };
 
-typedef struct specifier_type_entry_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct specifier_type_entry);
+  Dynarr_declare (specifier_type_entry);
 } specifier_type_entry_dynarr;
 
 specifier_type_entry_dynarr *the_specifier_type_entry_dynarr;
@@ -76,7 +77,7 @@ Lisp_Object Vall_specifiers;
    not yet implemented.
 
    #### Look into this for 19.14. */
-lisp_dynarr current_specifiers;
+Lisp_Object_dynarr current_specifiers;
 
 static void recompute_cached_specifier_everywhere (Lisp_Object specifier);
 
@@ -401,12 +402,11 @@ add_entry_to_specifier_type_list (Lisp_Object symbol,
 static Lisp_Object
 make_specifier (struct specifier_methods *spec_meths)
 {
-  struct Lisp_Specifier *sp;
   Lisp_Object specifier = Qnil;
   struct gcpro gcpro1;
-
-  sp = alloc_lcrecord (sizeof (struct Lisp_Specifier) +
-		       spec_meths->extra_data_size - 1, lrecord_specifier);
+  struct Lisp_Specifier *sp = (struct Lisp_Specifier *)
+    alloc_lcrecord (sizeof (struct Lisp_Specifier) +
+		    spec_meths->extra_data_size - 1, lrecord_specifier);
 
   sp->methods = spec_meths;
   sp->global_specs = Qnil;
@@ -672,7 +672,7 @@ added by a particular package so that they can be later removed.
 A specifier tag set consists of a list of zero of more specifier tags,
 each of which is a symbol that is recognized by XEmacs as a tag.
 (The valid device types and device classes are always tags, as are
-any tags defined by `define-specifier-tag'.) It is called a \"tag set\"
+any tags defined by `define-specifier-tag'.) It is called a "tag set"
 (as opposed to a list) because the order of the tags or the number of
 times a particular tag occurs does not matter.
 
@@ -727,7 +727,7 @@ canonicalize_tag_set (Lisp_Object tag_set)
     /* most common case */
     return tag_set;
 
-  tags = (Lisp_Object *) alloca (len * sizeof (Lisp_Object));
+  tags = alloca_array (Lisp_Object, len);
 
   i = 0;
   LIST_LOOP (rest, tag_set)
@@ -1185,43 +1185,38 @@ Return non-nil if SPEC-LIST is valid for specifier type TYPE.
 enum spec_add_meth
 decode_how_to_add_specification (Lisp_Object how_to_add)
 {
-  enum spec_add_meth add_meth = 0;
-
   if (NILP (how_to_add) || EQ (Qremove_tag_set_prepend, how_to_add))
-    add_meth = SPEC_REMOVE_TAG_SET_PREPEND;
-  else if (EQ (Qremove_tag_set_append, how_to_add))
-    add_meth = SPEC_REMOVE_TAG_SET_APPEND;
-  else if (EQ (Qappend, how_to_add))
-    add_meth = SPEC_APPEND;
-  else if (EQ (Qprepend, how_to_add))
-    add_meth = SPEC_PREPEND;
-  else if (EQ (Qremove_locale, how_to_add))
-    add_meth = SPEC_REMOVE_LOCALE;
-  else if (EQ (Qremove_locale_type, how_to_add))
-    add_meth = SPEC_REMOVE_LOCALE_TYPE;
-  else if (EQ (Qremove_all, how_to_add))
-    add_meth = SPEC_REMOVE_ALL;
-  else
-    signal_simple_error ("Invalid `how-to-add' flag", how_to_add);
-  return add_meth;
+    return SPEC_REMOVE_TAG_SET_PREPEND;
+  if (EQ (Qremove_tag_set_append, how_to_add))
+    return SPEC_REMOVE_TAG_SET_APPEND;
+  if (EQ (Qappend, how_to_add))
+    return SPEC_APPEND;
+  if (EQ (Qprepend, how_to_add))
+    return SPEC_PREPEND;
+  if (EQ (Qremove_locale, how_to_add))
+    return SPEC_REMOVE_LOCALE;
+  if (EQ (Qremove_locale_type, how_to_add))
+    return SPEC_REMOVE_LOCALE_TYPE;
+  if (EQ (Qremove_all, how_to_add))
+    return SPEC_REMOVE_ALL;
+
+  signal_simple_error ("Invalid `how-to-add' flag", how_to_add);
+
+  return SPEC_PREPEND;		/* not reached */
 }
 
 /* This gets hit so much that the function call overhead had a
    measurable impact (according to Quantify).  #### We should figure
    out the frequency with which this is called with the various types
    and reorder the check accordingly. */
-#define SPECIFIER_GET_SPEC_LIST(specifier, type) \
-(type == LOCALE_GLOBAL				\
- ? &(XSPECIFIER (specifier)->global_specs)	\
- : (type == LOCALE_DEVICE			\
-    ? &(XSPECIFIER (specifier)->device_specs)	\
-    : (type == LOCALE_FRAME			\
-       ? &(XSPECIFIER (specifier)->frame_specs)	\
-       : (type == LOCALE_WINDOW			\
-	  ? &(XWEAK_LIST_LIST (XSPECIFIER (specifier)->window_specs)) \
-	  : (type == LOCALE_BUFFER		\
-	     ? &(XSPECIFIER (specifier)->buffer_specs) \
-	     : 0)))))
+#define SPECIFIER_GET_SPEC_LIST(specifier, type)			\
+(type == LOCALE_GLOBAL ? &(XSPECIFIER (specifier)->global_specs)   :	\
+ type == LOCALE_DEVICE ? &(XSPECIFIER (specifier)->device_specs)   :	\
+ type == LOCALE_FRAME  ? &(XSPECIFIER (specifier)->frame_specs)    :	\
+ type == LOCALE_WINDOW ? &(XWEAK_LIST_LIST				\
+			   (XSPECIFIER (specifier)->window_specs)) :	\
+ type == LOCALE_BUFFER ? &(XSPECIFIER (specifier)->buffer_specs)   :	\
+ 0)
 
 static Lisp_Object *
 specifier_get_inst_list (Lisp_Object specifier, Lisp_Object locale,
@@ -1746,8 +1741,8 @@ It should be one of
   'remove-tag-set-prepend (this is the default)
 			Remove any existing instantiators whose tag set is
 			the same as TAG-SET; then put the new instantiator
-			at the beginning of the current list. (\"Same tag
-			set\" means that they contain the same elements.
+			at the beginning of the current list. ("Same tag
+			set" means that they contain the same elements.
 			The order may be different.)
   'remove-tag-set-append
 			Remove any existing instantiators whose tag set is
@@ -1938,11 +1933,11 @@ DEFUN ("specifier-specs", Fspecifier_specs, 1, 4, 0, /*
 Return the specification(s) for SPECIFIER in LOCALE.
 
 If LOCALE is a single locale or is a list of one element containing a
-single locale, then a \"short form\" of the instantiators for that locale
+single locale, then a "short form" of the instantiators for that locale
 will be returned.  Otherwise, this function is identical to
 `specifier-spec-list'.
 
-The \"short form\" is designed for readability and not for ease of use
+The "short form" is designed for readability and not for ease of use
 in Lisp programs, and is as follows:
 
 1. If there is only one instantiator, then an inst-pair (i.e. cons of
@@ -2436,8 +2431,8 @@ provide enough information to identify a particular device (see
 `valid-specifier-domain-p').  DOMAIN defaults to the selected window
 if omitted.
 
-\"Instantiating\" a specifier in a particular domain means determining
-the specifier's \"value\" in that domain.  This is accomplished by
+"Instantiating" a specifier in a particular domain means determining
+the specifier's "value" in that domain.  This is accomplished by
 searching through the specifications in the specifier that correspond
 to all locales that can be derived from the given domain, from specific
 to general.  In most cases, the domain is an Emacs window.  In that case
@@ -2491,7 +2486,7 @@ If no instance can be generated for this domain, return DEFAULT.
 
 This function is identical to `specifier-instance' except that a
 specification will only be considered if it matches MATCHSPEC.
-The definition of \"match\", and allowed values for MATCHSPEC, are
+The definition of "match", and allowed values for MATCHSPEC, are
 dependent on the particular type of specifier.  Here are some examples:
 
 -- For chartable (e.g. display table) specifiers, MATCHSPEC should be a
@@ -2608,7 +2603,7 @@ set_specifier_caching (Lisp_Object specifier, int struct_window_offset,
   struct Lisp_Specifier *sp = XSPECIFIER (specifier);
 
   if (!sp->caching)
-    sp->caching = malloc_type_and_zero (struct specifier_caching);
+    sp->caching = xnew_and_zero (struct specifier_caching);
   sp->caching->offset_into_struct_window = struct_window_offset;
   sp->caching->value_changed_in_window = value_changed_in_window;
   sp->caching->offset_into_struct_frame = struct_frame_offset;
@@ -2979,7 +2974,7 @@ syms_of_specifier (void)
 void
 specifier_type_create (void)
 {
-  the_specifier_type_entry_dynarr = Dynarr_new (struct specifier_type_entry);
+  the_specifier_type_entry_dynarr = Dynarr_new (specifier_type_entry);
 
   Vspecifier_type_list = Qnil;
   staticpro (&Vspecifier_type_list);

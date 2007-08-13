@@ -109,7 +109,7 @@ extern int cursor_in_echo_area;
 
 extern Lisp_Object recent_keys_ring;
 extern int recent_keys_ring_index;
-  
+
 /* #ifndef LISP_COMMAND_LOOP */
 extern Lisp_Object Vtop_level;
 /* #else */

@@ -76,7 +76,7 @@ typedef char *pointer;
 /* XEmacs: With ERROR_CHECK_MALLOC defined, there is no xfree -- it's
    a macro that does some stuff to try and trap invalid frees,
    and then calls xfree_1 to actually do the work. */
-   
+
 #ifdef emacs
 # ifdef ERROR_CHECK_MALLOC
 void xfree_1 (pointer);

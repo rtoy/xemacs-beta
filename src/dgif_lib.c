@@ -14,8 +14,8 @@
 
 #ifdef emacs
 #include <config.h>
-void *xmalloc (unsigned int size);
-void *xrealloc (void *ptr, unsigned int size);
+void *xmalloc (size_t size);
+void *xrealloc (void *ptr, size_t size);
 #ifdef ERROR_CHECK_MALLOC
 void *xfree_1 (void *);
 #define xfree xfree_1
@@ -325,7 +325,7 @@ int DGifGetImageDesc(GifFileType *GifFile)
 	    FreeMapObject(GifFile->Image.ColorMap);
 
 	GifFile->Image.ColorMap = MakeMapObject(1 << BitsPerPixel, NULL);
-    
+
 	/* Get the image local color map: */
 	for (i = 0; i < GifFile->Image.ColorMap->ColorCount; i++) {
 	    if (fread(Buf, 1, 3, Private->File) != 3) {
@@ -983,7 +983,7 @@ int DGifSlurp(GifFileType *GifFile)
 		}
 #else
 	        /* Skip any extension blocks in the file. */
-	        if (DGifGetExtension (GifFile, &ExtCode, &ExtData) 
+	        if (DGifGetExtension (GifFile, &ExtCode, &ExtData)
 		    == GIF_ERROR)
 		    return GIF_ERROR;
 

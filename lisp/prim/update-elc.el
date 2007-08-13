@@ -47,9 +47,6 @@
 (defvar processed nil)
 (defvar update-elc-files-to-compile nil)
 
-;; BOGUS
-(defvar find-file-hooks nil)
-
 ;(setq update-elc-files-to-compile
 ;      (delq nil
 ;	    (mapcar (function
@@ -138,7 +135,7 @@
       (load "loadup-el.el"))
   (condition-case nil
       (delete-file "./NOBYTECOMPILE")
-    (t nil)))
+    (file-error nil)))
 
 (kill-emacs)
 

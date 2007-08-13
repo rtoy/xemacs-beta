@@ -29,7 +29,7 @@ Boston, MA 02111-1307, USA.  */
    subwindow support added by Chuck Thompson
    additional XPM support added by Chuck Thompson
    initial X-Face support added by Stig
-   rewritten/restructured by Ben Wing for 19.12/19.13 
+   rewritten/restructured by Ben Wing for 19.12/19.13
    GIF/JPEG support added by Ben Wing for 19.14
    PNG support added by Bill Perry for 19.14
    Improved GIF/JPEG support added by Bill Perry for 19.14
@@ -58,7 +58,13 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 
 #ifdef HAVE_PNG
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <png.h>
+#ifdef __cplusplus
+}
+#endif
 #else
 #include <setjmp.h>
 #endif
@@ -249,7 +255,7 @@ static void
 x_initialize_pixmap_image_instance (struct Lisp_Image_Instance *ii,
 				    enum image_instance_type type)
 {
-  ii->data = malloc_type_and_zero (struct x_image_instance_data);
+  ii->data = xnew_and_zero (struct x_image_instance_data);
   IMAGE_INSTANCE_TYPE (ii) = type;
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) = Qnil;
   IMAGE_INSTANCE_PIXMAP_MASK_FILENAME (ii) = Qnil;
@@ -370,7 +376,7 @@ potential_pixmap_file_instantiator (Lisp_Object instantiator,
   Lisp_Object data;
 
   assert (VECTORP (instantiator));
-  
+
   data = find_keyword_in_vector (instantiator, data_keyword);
   file = find_keyword_in_vector (instantiator, file_keyword);
 
@@ -395,7 +401,7 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
   Lisp_Object file = Qnil;
   struct gcpro gcpro1, gcpro2;
   Lisp_Object alist = Qnil;
-  
+
   GCPRO2 (file, alist);
 
   /* Now, convert any file data into inline data.  At the end of this,
@@ -439,7 +445,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
   Extbyte *bytes;
   Extcount len;
   FILE *stream;
-  
+
   /* #### This is a definite problem under Mule due to the amount of
      stack data it might allocate.  Need to be able to convert and
      write out to a file. */
@@ -516,7 +522,7 @@ generate_cursor_fg_bg (Lisp_Object device, Lisp_Object *foreground,
       xfg->pixel = 0;
       xfg->red = xfg->green = xfg->blue = 0;
     }
-  
+
   if (!NILP (*background) && !COLOR_INSTANCEP (*background))
     *background =
       Fmake_color_instance (*background, device,
@@ -598,7 +604,7 @@ init_image_instance_from_x_image (struct Lisp_Image_Instance *ii,
   if (!(dest_mask & IMAGE_COLOR_PIXMAP_MASK))
     incompatible_image_types (instantiator, dest_mask,
 			      IMAGE_COLOR_PIXMAP_MASK);
-  
+
   pixmap = XCreatePixmap (dpy, d, ximage->width,
 			  ximage->height, ximage->depth);
   if (!pixmap)
@@ -610,17 +616,17 @@ init_image_instance_from_x_image (struct Lisp_Image_Instance *ii,
       XFreePixmap (dpy, pixmap);
       signal_simple_error ("Unable to create GC", instantiator);
     }
-  
+
   XPutImage (dpy, pixmap, gc, ximage, 0, 0, 0, 0,
 	     ximage->width, ximage->height);
-  
+
   XFreeGC (dpy, gc);
 
   x_initialize_pixmap_image_instance (ii, IMAGE_COLOR_PIXMAP);
 
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) =
     find_keyword_in_vector (instantiator, Q_file);
-  
+
   IMAGE_INSTANCE_X_PIXMAP (ii) = pixmap;
   IMAGE_INSTANCE_X_MASK (ii) = 0;
   IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = ximage->width;
@@ -688,7 +694,7 @@ xbm_validate (Lisp_Object instantiator)
       return Qt.
    -- maybe return an error, or return Qnil.
  */
-   
+
 
 static Lisp_Object
 bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
@@ -787,7 +793,7 @@ xbm_normalize (Lisp_Object inst, Lisp_Object console_type)
   Lisp_Object file = Qnil, mask_file = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
   Lisp_Object alist = Qnil;
-  
+
   GCPRO3 (file, mask_file, alist);
 
   /* Now, convert any file data into inline data for both the regular
@@ -1060,8 +1066,14 @@ xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
  *                             JPEG                                   *
  **********************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <jpeglib.h>
 #include <jerror.h>
+#ifdef __cplusplus
+}
+#endif
 
 /* The in-core jpeg code doesn't work, so I'm avoiding it for now.  -sb  */
 /* Late-breaking update, we're going to give it a try, I think it's */
@@ -1237,7 +1249,7 @@ static void
 jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data, unsigned int len)
 {
   struct jpeg_source_mgr *src = NULL;
-  
+
   if (cinfo->src == NULL) {	/* first time for this JPEG object? */
     cinfo->src = (struct jpeg_source_mgr *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
@@ -1332,7 +1344,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			 list1 (build_string (unwind.tempfile)));
   }
 #endif
-  
+
   /* Step 1: allocate and initialize JPEG decompression object */
 
   /* We set up the normal JPEG error routines, then override error_exit. */
@@ -1349,11 +1361,11 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       {
 	Lisp_Object errstring;
 	char buffer[JMSG_LENGTH_MAX];
-	
+
 	/* Create the message */
 	(*cinfo.err->format_message) ((j_common_ptr) &cinfo, buffer);
 	errstring = build_string (buffer);
-	
+
 	signal_simple_error_2 ("JPEG decoding error",
 			       errstring, instantiator);
       }
@@ -1372,7 +1384,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
     Extbyte *bytes;
     Extcount len;
-  
+
     /* #### This is a definite problem under Mule due to the amount of
        stack data it might allocate.  Need to be able to convert and
        write out to a file. */
@@ -1431,7 +1443,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     /* Just in case the image contains out-of-range pixels, we go
        ahead and allocate space for all of them. */
-    unwind.pixels = (unsigned long *) xmalloc (256 * sizeof (unsigned long));
+    unwind.pixels = xnew_array (unsigned long, 256);
     unwind.npixels = cinfo.actual_number_of_colors;
 
     for (i = 0; i < 256; i++)
@@ -1466,17 +1478,14 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     int width = cinfo.output_width;
     int depth;
     int bitmap_pad;
-    
+
     depth = DefaultDepthOfScreen (scr);
-    
+
     /* first get bitmap_pad (from XPM) */
-    if (depth > 16)
-      bitmap_pad = 32;
-    else if (depth > 8)
-      bitmap_pad = 16;
-    else
-      bitmap_pad = 8;
-    
+    bitmap_pad = ((depth > 16) ? 32 :
+		  (depth >  8) ? 16 :
+		  8);
+
     unwind.ximage = XCreateImage (dpy, DefaultVisualOfScreen (scr),
 				  depth, ZPixmap, 0, 0, width, height,
 				  bitmap_pad, 0);
@@ -1499,7 +1508,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
      * output image dimensions available, as well as the output colormap
      * if we asked for color quantization.
      * In this example, we need to make an output work buffer of the right size.
-     */ 
+     */
     /* JSAMPLEs per row in output buffer.
        Since we asked for quantized output, cinfo.output_components
        will always be 1. */
@@ -1508,7 +1517,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
        with image */
     row_buffer = ((*cinfo.mem->alloc_sarray)
 		  ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1));
-    
+
     /* Here we use the library's state variable cinfo.output_scanline as the
      * loop counter, so that we don't have to keep track ourselves.
      */
@@ -1662,7 +1671,7 @@ our_own_dgif_slurp_from_gif2x11_c (GifFileType *GifFile)
   GifPixelType *ScreenBuffer =
     (GifPixelType *) xmalloc (GifFile->SHeight * GifFile->SWidth *
 			      sizeof (GifPixelType));
-  GifFile->SavedImages = (SavedImage *) xmalloc (sizeof(SavedImage));
+  GifFile->SavedImages = xnew (SavedImage);
 
   for (i = 0; i < GifFile->SHeight * GifFile->SWidth; i++)
     ScreenBuffer[i] = GifFile->SBackGroundColor;
@@ -1690,7 +1699,7 @@ our_own_dgif_slurp_from_gif2x11_c (GifFileType *GifFile)
 
 	  sp->RasterBits = (GifPixelType*) xmalloc(Width * Height *
 						   sizeof (GifPixelType));
-	  
+
 	  if (GifFile->Image.Interlace)
 	    {
 	      /* Need to perform 4 passes on the images: */
@@ -1800,7 +1809,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     if (our_own_dgif_slurp_from_gif2x11_c(unwind.giffile) != GIF_OK)
 #else
     /* DGifSlurp() doesn't handle interlaced files. */
-    /* Actually, it does, sort of.  It just sets the Interlace flag 
+    /* Actually, it does, sort of.  It just sets the Interlace flag
        and stores RasterBits in interlaced order.  We handle that below. */
     if (DGifSlurp (unwind.giffile) != GIF_OK)
 #endif
@@ -1813,7 +1822,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     ColorMapObject *cmap = unwind.giffile->SColorMap;
     /* Just in case the image contains out-of-range pixels, we go
        ahead and allocate space for all of them. */
-    unwind.pixels = (unsigned long *) xmalloc (256 * sizeof (unsigned long));
+    unwind.pixels = xnew_array (unsigned long, 256);
     unwind.npixels = cmap->ColorCount;
 
     for (i = 0; i < 256; i++)
@@ -1846,17 +1855,14 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     static int InterlacedOffset[] = { 0, 4, 2, 1 };
     static int InterlacedJumps[] = { 8, 8, 4, 2 };
 
-    
+
     depth = DefaultDepthOfScreen (scr);
-    
+
     /* first get bitmap_pad (from XPM) */
-    if (depth > 16)
-      bitmap_pad = 32;
-    else if (depth > 8)
-      bitmap_pad = 16;
-    else
-      bitmap_pad = 8;
-    
+    bitmap_pad = ((depth > 16) ? 32 :
+		  (depth >  8) ? 16 :
+		  8);
+
     unwind.ximage = XCreateImage (dpy, DefaultVisualOfScreen (scr),
 				  depth, ZPixmap, 0, 0, width, height,
 				  bitmap_pad, 0);
@@ -1877,8 +1883,8 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
        to be a bottleneck here, maybe we should just copy the
        optimization routines from XPM (they're in turn mostly
        copied from the Xlib source code). */
-    
-    /* Note: We just use the first image in the file and ignore the rest. 
+
+    /* Note: We just use the first image in the file and ignore the rest.
              We check here that that image covers the full "screen" size.
 	     I don't know whether that's always the case.
              -dkindred@cs.cmu.edu  */
@@ -2053,8 +2059,8 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
   scr = DefaultScreenOfDisplay (dpy);
 
-  png_ptr = (png_struct *) xmalloc (sizeof (png_struct));
-  info_ptr = (png_info *) xmalloc (sizeof (png_info));
+  png_ptr  = xnew (png_struct);
+  info_ptr = xnew (png_info);
 
   memset (&unwind, 0, sizeof (unwind));
   unwind.png_ptr = png_ptr;
@@ -2111,9 +2117,9 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     Extbyte *bytes;
     Extcount len;
     struct png_memory_storage tbr; /* Data to be read */
-    
+
     assert (!NILP (data));
-    
+
     /* #### This is a definite problem under Mule due to the amount of
        stack data it might allocate.  Need to be able to convert and
        write out to a file. */
@@ -2149,9 +2155,9 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     png_color static_color_cube[216];
 
     /* Wow, allocate all the memory.  Truly, exciting. */
-    unwind.pixels = (unsigned long *) xmalloc (256 * sizeof (unsigned long));
-    png_pixels = (png_byte *) xmalloc (linesize * height * sizeof (png_byte*));
-    row_pointers = (png_byte **) xmalloc (height * sizeof (png_byte *));
+    unwind.pixels = xnew_array (unsigned long, 256);
+    png_pixels    = xnew_array (png_byte, linesize * height);
+    row_pointers  = xnew_array (png_byte *, height);
 
     for (y = 0; y < 256; y++)
       unwind.pixels[y] = 0;
@@ -2195,7 +2201,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			    info_ptr->num_palette, info_ptr->hist, 1);
 	  }
       }
-    
+
     png_read_image (png_ptr, row_pointers);
     png_read_end (png_ptr, info_ptr);
 
@@ -2254,17 +2260,14 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 #endif
 
     /* Now create the image */
-    
+
     depth = DefaultDepthOfScreen (scr);
-    
+
     /* first get bitmap_pad (from XPM) */
-    if (depth > 16)
-      bitmap_pad = 32;
-    else if (depth > 8)
-      bitmap_pad = 16;
-    else
-      bitmap_pad = 8;
-    
+    bitmap_pad = ((depth > 16) ? 32 :
+		  (depth >  8) ? 16 :
+		  8);
+
     unwind.ximage = XCreateImage (dpy, DefaultVisualOfScreen (scr),
 				  depth, ZPixmap, 0, 0, width, height,
 				  bitmap_pad, 0);
@@ -2284,7 +2287,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	  XPutPixel (unwind.ximage, j, i,
 		     unwind.pixels[png_pixels[i * width + j]]);
     }
-    
+
     xfree (row_pointers);
     xfree (png_pixels);
   }
@@ -2346,7 +2349,7 @@ static void
 check_valid_xpm_color_symbols (Lisp_Object data)
 {
   Lisp_Object rest;
-  
+
   for (rest = data; !NILP (rest); rest = XCDR (rest))
     {
       if (!CONSP (rest) ||
@@ -2485,7 +2488,7 @@ xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
   Lisp_Object color_symbols;
   struct gcpro gcpro1, gcpro2;
   Lisp_Object alist = Qnil;
-  
+
   GCPRO2 (file, alist);
 
   /* Now, convert any file data into inline data.  At the end of this,
@@ -2603,7 +2606,7 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
 
   if (i == 0) return 0;
 
-  symbols = (XpmColorSymbol *) xmalloc (i * sizeof (XpmColorSymbol));
+  symbols = xnew_array (XpmColorSymbol, i);
   xpmattrs->valuemask |= XpmColorSymbols;
   xpmattrs->colorsymbols = symbols;
   xpmattrs->numsymbols = i;
@@ -2701,7 +2704,7 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       xpmattrs.closeness = 65535;
       xpmattrs.valuemask |= XpmCloseness;
     }
-  
+
   color_symbols = extract_xpm_color_names (&xpmattrs, device, domain,
 					   color_symbol_alist);
 
@@ -2771,15 +2774,15 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   {
     int npixels = xpmattrs.npixels;
-    Pixel *pixels = 0;
+    Pixel *pixels;
 
     if (npixels != 0)
       {
-	pixels = xmalloc (npixels * sizeof (Pixel));
+	pixels = xnew_array (Pixel, npixels);
 	memcpy (pixels, xpmattrs.pixels, npixels * sizeof (Pixel));
       }
     else
-      pixels = 0;
+      pixels = NULL;
 
     IMAGE_INSTANCE_X_PIXMAP (ii) = pixmap;
     IMAGE_INSTANCE_X_MASK (ii) = mask;
@@ -2849,7 +2852,7 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	       and which is background, or rather, it's implicit: in
 	       an XBM file, a 1 bit is foreground, and a 0 bit is
 	       background.
-	 
+
 	       XCreatePixmapCursor() assumes this property of the
 	       pixmap it is called with as well; the `foreground'
 	       color argument is used for the 1 bits.
@@ -2861,25 +2864,25 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	       background.  We do it by comparing RGB and assuming
 	       that the darker color is the foreground.  This works
 	       with the result of xbmtopbm|ppmtoxpm, at least.
-	 
+
 	       It might be nice if there was some way to tag the
 	       colors in the XPM file with whether they are the
 	       foreground - perhaps with logical color names somehow?
-	 
+
 	       Once we have decided which color is the foreground, we
 	       need to ensure that that color corresponds to a `1' bit
 	       in the Pixmap.  The XPM library wrote into the (1-bit)
 	       pixmap with XPutPixel, which will ignore all but the
 	       least significant bit.
-	 
+
 	       This means that a 1 bit in the image corresponds to
 	       `fg' only if `fg.pixel' is odd.
-	 
+
 	       (This also means that the image will be all the same
 	       color if both `fg' and `bg' are odd or even, but we can
 	       safely assume that that won't happen if the XPM file is
 	       sensible I think.)
-	 
+
 	       The desired result is that the image use `1' to
 	       represent the foreground color, and `0' to represent
 	       the background color.  So, we may need to invert the
@@ -2924,7 +2927,7 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  bg = swap;
 		}
 	    }
-      
+
 	    /* If the fg pixel corresponds to a `0' in the bitmap, invert it.
 	       (This occurs (only?) on servers with Black=0, White=1.)
 	       */
@@ -2958,7 +2961,7 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     default:
       abort ();
     }
-  
+
   xpm_free (&xpmattrs);	/* after we've read pixels and hotspot */
 }
 
@@ -2984,7 +2987,7 @@ xface_normalize (Lisp_Object inst, Lisp_Object console_type)
   Lisp_Object file = Qnil, mask_file = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
   Lisp_Object alist = Qnil;
-  
+
   GCPRO3 (file, mask_file, alist);
 
   /* Now, convert any file data into inline data for both the regular
@@ -3043,7 +3046,13 @@ xface_possible_dest_types (void)
 /* We have to define SYSV32 so that compface.h includes string.h
    instead of strings.h. */
 #define SYSV32
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <compface.h>
+#ifdef __cplusplus
+}
+#endif
 /* JMP_BUF cannot be used here because if it doesn't get defined
    to jmp_buf we end up with a conflicting type error with the
    definition in compface.h */
@@ -3151,7 +3160,7 @@ autodetect_normalize (Lisp_Object instantiator,
 	 if the given file is not a valid XPM file.  Instead, they
 	 just seg fault.  It is definitely caused by passing a
 	 bitmap.  To try and avoid this we check for bitmaps first.  */
-      
+
       data = bitmap_to_lisp_data (filename, &xhot, &yhot, 1);
 
       if (!EQ (data, Qt))
@@ -3541,7 +3550,7 @@ print_subwindow (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   /* This is stolen from frame.c.  Subwindows are strange in that they
      are specific to a particular frame so we want to print in their
      description what that frame is. */
-  
+
   write_c_string (" on #<", printcharfun);
   if (!FRAME_LIVE_P (frm))
     write_c_string ("dead", printcharfun);
@@ -3641,8 +3650,8 @@ Subwindows are not currently implemented.
     }
 
   {
-    struct Lisp_Subwindow *sw = alloc_lcrecord (sizeof (struct Lisp_Subwindow),
-						lrecord_subwindow);
+    struct Lisp_Subwindow *sw =
+      alloc_lcrecord_type (struct Lisp_Subwindow, lrecord_subwindow);
     Lisp_Object val;
     sw->frame = frame;
     sw->xscreen = xs;
@@ -3898,7 +3907,7 @@ image_instantiator_format_create_glyphs_x (void)
   IIFORMAT_VALID_KEYWORD (png, Q_data, check_valid_string);
   IIFORMAT_VALID_KEYWORD (png, Q_file, check_valid_string);
 #endif
-  
+
 #ifdef HAVE_TIFF
   INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (tiff, "tiff");
 
@@ -3938,7 +3947,7 @@ image_instantiator_format_create_glyphs_x (void)
   IIFORMAT_VALID_KEYWORD (xface, Q_hotspot_y, check_valid_int);
   IIFORMAT_VALID_KEYWORD (xface, Q_foreground, check_valid_string);
   IIFORMAT_VALID_KEYWORD (xface, Q_background, check_valid_string);
-#endif 
+#endif
 
   INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (autodetect,
 					"autodetect");
@@ -3965,7 +3974,7 @@ vars_of_glyphs_x (void)
 #ifdef HAVE_PNG
   Fprovide (Qpng);
 #endif
-  
+
 #ifdef HAVE_TIFF
   Fprovide (Qtiff);
 #endif
@@ -3985,15 +3994,15 @@ The default value of this variable defines the logical color names
 \"foreground\" and \"background\" to be the colors of the `default' face.
 */ );
   Vxpm_color_symbols = Qnil; /* initialized in x-faces.el */
-#endif 
+#endif
 
 #ifdef HAVE_XFACE
   Fprovide (Qxface);
-#endif 
+#endif
 
   DEFVAR_LISP ("x-bitmap-file-path", &Vx_bitmap_file_path /*
 A list of the directories in which X bitmap files may be found.
-If nil, this is initialized from the \"*bitmapFilePath\" resource.
+If nil, this is initialized from the "*bitmapFilePath" resource.
 This is used by the `make-image-instance' function (however, note that if
 the environment variable XBMLANGPATH is set, it is consulted first).
 */ );

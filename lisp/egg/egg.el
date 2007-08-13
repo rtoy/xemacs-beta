@@ -2847,7 +2847,7 @@ correspoding to character position.")
       (setq egg:*input-mode* t
 	    egg:*mode-on*    t
 	    its:*current-map* (its:get-mode-map "roma-kana"))
-      (mode-line-egg-mode-update (its:get-mode-indicator its:*current-map*))))
+      (mode-line-egg-mode-update (its:get-mode-indicator "roma-kana"))))
   (read-from-minibuffer prompt initial-input
 		       egg:*minibuffer-local-hiragana-map*))
 

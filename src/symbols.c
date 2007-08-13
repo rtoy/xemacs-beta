@@ -2017,8 +2017,8 @@ sets it.
 
   {
     struct symbol_value_buffer_local *bfwd
-      = alloc_lcrecord (sizeof (struct symbol_value_buffer_local),
-			lrecord_symbol_value_buffer_local);
+      = alloc_lcrecord_type (struct symbol_value_buffer_local,
+			     lrecord_symbol_value_buffer_local);
     Lisp_Object foo = Qnil;
     bfwd->magic.type = SYMVAL_BUFFER_LOCAL;
 
@@ -2124,8 +2124,8 @@ Use `make-local-hook' instead.
     }
 
   /* Make sure variable is set up to hold per-buffer values */
-  bfwd = alloc_lcrecord (sizeof (struct symbol_value_buffer_local),
-			 lrecord_symbol_value_buffer_local);
+  bfwd = alloc_lcrecord_type (struct symbol_value_buffer_local,
+			      lrecord_symbol_value_buffer_local);
   bfwd->magic.type = SYMVAL_SOME_BUFFER_LOCAL;
 
   bfwd->current_buffer = Qnil;
@@ -2662,12 +2662,12 @@ which behavior is being controlled, and HANDLER is the function
 that will be called to control this behavior.  HARG is a
 value that will be passed to HANDLER but is otherwise
 uninterpreted.  KEEP-EXISTING specifies what to do with existing
-handlers of the same type; nil means \"erase them all\", t means
-\"keep them but insert at the beginning\", the list (t) means
-\"keep them but insert at the end\", a function means \"keep
-them but insert before the specified function\", a list containing
-a function means \"keep them but insert after the specified
-function\".
+handlers of the same type; nil means "erase them all", t means
+"keep them but insert at the beginning", the list (t) means
+"keep them but insert at the end", a function means "keep
+them but insert before the specified function", a list containing
+a function means "keep them but insert after the specified
+function".
 
 You can specify magic behavior for any type of variable at all,
 and for any handler types that are unspecified, the standard
@@ -2878,8 +2878,8 @@ pity, thereby invalidating your code.
   valcontents = XSYMBOL (variable)->value;
   if (!SYMBOL_VALUE_LISP_MAGIC_P (valcontents))
     {
-      bfwd = alloc_lcrecord (sizeof (struct symbol_value_lisp_magic),
-			     lrecord_symbol_value_lisp_magic);
+      bfwd = alloc_lcrecord_type (struct symbol_value_lisp_magic,
+				  lrecord_symbol_value_lisp_magic);
       bfwd->magic.type = SYMVAL_LISP_MAGIC;
       for (i = 0; i < MAGIC_HANDLER_MAX; i++)
 	{
@@ -3018,8 +3018,8 @@ has a buffer-local value in any buffer, or the symbols nil or t.
     signal_simple_error ("Variable is magic and cannot be aliased", variable);
   reject_constant_symbols (variable, Qunbound, 0, Qt);
 
-  bfwd = alloc_lcrecord (sizeof (struct symbol_value_varalias),
-			 lrecord_symbol_value_varalias);
+  bfwd = alloc_lcrecord_type (struct symbol_value_varalias,
+			      lrecord_symbol_value_varalias);
   bfwd->magic.type = SYMVAL_VARALIAS;
   bfwd->aliasee = alias;
   bfwd->shadowed = valcontents;
@@ -3139,7 +3139,7 @@ init_symbols_once_early (void)
       /* abort (); */
       /* Can't represent a pointer to constant C data using a Lisp_Object.
 	 So heap-allocate it. */
-      struct symbol_value_magic *urk = xmalloc (sizeof (*urk));
+      struct symbol_value_magic *urk = xnew (struct symbol_value_magic);
       memcpy (urk, &guts_of_unbound_marker, sizeof (*urk));
       XSETSYMBOL_VALUE_MAGIC (Qunbound, urk);
     }
@@ -3298,7 +3298,7 @@ defvar_mumble (CONST char *namestring,
 			     Qnil);
 
   /* Check that magic points somewhere we can represent as a Lisp pointer */
-  XSETOBJ (kludge, Lisp_Record, magic);
+  XSETOBJ (kludge, Lisp_Type_Record, magic);
   if (magic != (CONST void *) XPNTR (kludge))
     {
       /* This might happen on DATA_SEG_BITS machines. */
@@ -3306,10 +3306,10 @@ defvar_mumble (CONST char *namestring,
       /* Copy it to somewhere which is representable. */
       void *f = xmalloc (sizeof_magic);
       memcpy (f, magic, sizeof_magic);
-      XSETOBJ (XSYMBOL (sym)->value, Lisp_Record, f);
+      XSETOBJ (XSYMBOL (sym)->value, Lisp_Type_Record, f);
     }
   else
-    XSETOBJ (XSYMBOL (sym)->value, Lisp_Record, magic);
+    XSETOBJ (XSYMBOL (sym)->value, Lisp_Type_Record, magic);
 }
 
 void

@@ -161,7 +161,7 @@ tty_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
     }
 
   /* Don't allocate the data until we're sure that we will succeed. */
-  c->data = malloc_type (struct tty_color_instance_data);
+  c->data = xnew (struct tty_color_instance_data);
   COLOR_INSTANCE_TTY_SYMBOL (c) = name;
 
   return 1;
@@ -239,7 +239,7 @@ tty_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
     }
 
   /* Don't allocate the data until we're sure that we will succeed. */
-  f->data = malloc_type (struct tty_font_instance_data);
+  f->data = xnew (struct tty_font_instance_data);
   FONT_INSTANCE_TTY_CHARSET (f) = charset;
 #ifdef MULE
   if (CHARSETP (charset))
@@ -290,21 +290,20 @@ tty_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 			       Bytecount offset, Bytecount length)
 {
   CONST Bufbyte *the_nonreloc = nonreloc;
-  
+
   if (!the_nonreloc)
     the_nonreloc = XSTRING_DATA (reloc);
   fixup_internal_substring (nonreloc, reloc, offset, &length);
   the_nonreloc += offset;
-  
+
   if (UNBOUNDP (charset))
     return !memchr (the_nonreloc, '/', length);
-  the_nonreloc = memchr (the_nonreloc, '/', length);
+  the_nonreloc = (CONST Bufbyte *) memchr (the_nonreloc, '/', length);
   if (!the_nonreloc)
     return 0;
   the_nonreloc++;
   {
-    struct Lisp_String *s =
-      symbol_name (XSYMBOL (XCHARSET_NAME (charset)));
+    struct Lisp_String *s = symbol_name (XSYMBOL (XCHARSET_NAME (charset)));
     return !strcmp ((CONST char *) the_nonreloc,
 		    (CONST char *) string_data (s));
   }

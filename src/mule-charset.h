@@ -251,7 +251,7 @@ Boston, MA 02111-1307, USA.  */
    following bytes of all characters is in the range 0xA0 - 0xFF.
    This means that it is impossible to get out of sync, or more
    specifically:
-   
+
    1. Given any byte position, the beginning of the character it is
       within can be determined in constant time.
    2. Given any byte position at the beginning of a character, the
@@ -450,7 +450,7 @@ struct Lisp_Charset
   Lisp_Object reverse_direction_charset;
 
   Lisp_Object ccl_program;
-  
+
   unsigned int leading_byte :8;
 
   /* Number of bytes (1 - 4) required in the internal representation

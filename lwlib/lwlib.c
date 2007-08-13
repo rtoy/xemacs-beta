@@ -4,13 +4,13 @@
 
 This file is part of the Lucid Widget Library.
 
-The Lucid Widget Library is free software; you can redistribute it and/or 
+The Lucid Widget Library is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
 The Lucid Widget Library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
+but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
@@ -114,7 +114,7 @@ malloc_widget_value (void)
 }
 
 /* this is analogous to free().  It frees only what was allocated
-   by malloc_widget_value(), and no substructures. 
+   by malloc_widget_value(), and no substructures.
  */
 void
 free_widget_value (widget_value *wv)
@@ -130,9 +130,9 @@ static void free_widget_value_tree (widget_value *wv);
 static void
 free_widget_value_contents (widget_value *wv)
 {
-  if (wv->name) free (wv->name);
+  if (wv->name)  free (wv->name);
   if (wv->value) free (wv->value);
-  if (wv->key) free (wv->key);
+  if (wv->key)   free (wv->key);
 
   /* #### - all of this 0xDEADBEEF stuff should be unnecessary
      in production code...  it should be conditionalized. */
@@ -140,7 +140,7 @@ free_widget_value_contents (widget_value *wv)
 
   if (wv->toolkit_data && wv->free_toolkit_data)
     {
-      XtFree (wv->toolkit_data);
+      XtFree ((char *) wv->toolkit_data);
       wv->toolkit_data = (void *) 0xDEADBEEF;
     }
 #ifdef NEED_SCROLLBARS
@@ -238,7 +238,7 @@ static widget_value *
 copy_widget_value_tree (widget_value *val, change_type change)
 {
   widget_value *copy;
-  
+
   if (!val)
     return NULL;
   if (val == (widget_value *) 1)
@@ -515,7 +515,7 @@ merge_widget_value (widget_value *val1, widget_value *val2, int level)
       free_widget_value_tree (val1);
       return NULL;
     }
-  
+
   change = NO_CHANGE;
 
   if (val1->type != val2->type)
@@ -589,7 +589,7 @@ merge_widget_value (widget_value *val1, widget_value *val2, int level)
     {
       merged_contents =
 	merge_widget_value (val1->contents, val2->contents, level - 1);
-      
+
       if (val1->contents && !merged_contents)
 	{
 	  EXPLAIN (val1->name, change, INVISIBLE_CHANGE, "(contents gone)",
@@ -602,7 +602,7 @@ merge_widget_value (widget_value *val1, widget_value *val2, int level)
 		   0, 0);
 	  change = max (change, INVISIBLE_CHANGE);
 	}
-      
+
       val1->contents = merged_contents;
     }
 
@@ -627,11 +627,11 @@ merge_widget_value (widget_value *val1, widget_value *val2, int level)
   val1->next = merged_next;
 
   val1->change = change;
-  
+
   if (change > NO_CHANGE && val1->toolkit_data)
     {
       if (val1->free_toolkit_data)
-	XtFree (val1->toolkit_data);
+	XtFree ((char *) val1->toolkit_data);
       val1->toolkit_data = NULL;
     }
 
@@ -656,7 +656,7 @@ name_to_widget (widget_instance *instance, CONST char *name)
       char *real_name = (char *) alloca (length);
       real_name [0] = '*';
       strcpy (real_name + 1, name);
-      
+
       widget = XtNameToWidget (instance->widget, real_name);
     }
   return widget;
@@ -666,7 +666,7 @@ static void
 set_one_value (widget_instance *instance, widget_value *val, Boolean deep_p)
 {
   Widget widget = name_to_widget (instance, val->name);
-  
+
   if (widget)
     {
 #ifdef NEED_LUCID
@@ -790,11 +790,11 @@ find_in_table (CONST char *type, widget_creation_entry *table)
 static Boolean
 dialog_spec_p (CONST char *name)
 {
-  /* return True if name matches [EILPQeilpq][1-9][Bb] or 
+  /* return True if name matches [EILPQeilpq][1-9][Bb] or
      [EILPQeilpq][1-9][Bb][Rr][1-9] */
   if (!name)
     return False;
-  
+
   switch (name [0])
     {
     case 'E': case 'I': case 'L': case 'P': case 'Q':
@@ -814,7 +814,7 @@ dialog_spec_p (CONST char *name)
 	}
       else
 	return False;
-    
+
     default:
       return False;
     }
@@ -855,7 +855,7 @@ instantiate_widget_instance (widget_instance *instance)
 #endif
 	}
     }
-  
+
   if (!function)
     {
       fprintf (stderr, "No creation function for widget type %s\n",
@@ -871,7 +871,7 @@ instantiate_widget_instance (widget_instance *instance)
   /*   XtRealizeWidget (instance->widget);*/
 }
 
-void 
+void
 lw_register_widget (CONST char *type, CONST char *name,
                     LWLIB_ID id, widget_value *val,
 		    lw_callback pre_activate_cb, lw_callback selection_cb,
@@ -886,7 +886,7 @@ Widget
 lw_get_widget (LWLIB_ID id, Widget parent, Boolean pop_up_p)
 {
   widget_instance *instance;
-  
+
   instance = find_instance (id, parent, pop_up_p);
   return instance ? instance->widget : NULL;
 }
@@ -896,7 +896,7 @@ lw_make_widget (LWLIB_ID id, Widget parent, Boolean pop_up_p)
 {
   widget_instance *instance;
   widget_info *info;
-  
+
   instance = find_instance (id, parent, pop_up_p);
   if (!instance)
     {
@@ -921,7 +921,7 @@ lw_create_widget (CONST char *type, CONST char *name,
 		      post_activate_cb);
   return lw_make_widget (id, parent, pop_up_p);
 }
-		  
+
 
 /* destroying the widgets */
 static void
@@ -972,7 +972,7 @@ void
 lw_destroy_widget (Widget w)
 {
   widget_instance *instance = get_widget_instance (w, True);
-  
+
   if (instance)
     {
       widget_info *info = instance->info;
@@ -1128,7 +1128,7 @@ static Boolean
 get_one_value (widget_instance *instance, widget_value *val)
 {
   Widget widget = name_to_widget (instance, val->name);
-      
+
   if (widget)
     {
 #ifdef NEED_LUCID
@@ -1197,7 +1197,7 @@ lw_get_widget_value_for_widget (widget_instance *instance, Widget w)
 
 
 /* update other instances value when one thing changed */
-/* This function can be used as a an XtCallback for the widgets that get 
+/* This function can be used as a an XtCallback for the widgets that get
   modified to update other instances of the widgets.  Closure should be the
   widget_instance. */
 void
@@ -1206,7 +1206,7 @@ lw_internal_update_other_instances (Widget widget, XtPointer closure,
 {
   /* To forbid recursive calls */
   static Boolean updating;
-  
+
   widget_instance *instance = (widget_instance*)closure;
   char *name = XtName (widget);
   widget_info *info;
@@ -1272,7 +1272,7 @@ show_one_widget_busy (Widget w, Boolean flag)
   Pixel background = 1;
   Widget widget_to_invert = XtNameToWidget (w, "*sheet");
   Arg al [2];
-  
+
   if (!widget_to_invert)
     widget_to_invert = w;
 

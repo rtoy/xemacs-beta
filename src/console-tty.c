@@ -49,12 +49,8 @@ extern Lisp_Object Vstdio_str; /* in console-stream.c */
 static void
 allocate_tty_console_struct (struct console *con)
 {
-  con->console_data =
-    (struct tty_console *) xmalloc (sizeof (struct tty_console));
-
-  /* zero out all slots. */
-  memset (con->console_data, 0, sizeof (struct tty_console));
-  /* except the lisp ones ... */
+  /* zero out all slots except the lisp ones ... */
+  con->console_data = xnew_and_zero (struct tty_console);
   CONSOLE_TTY_DATA (con)->terminal_type = Qnil;
   CONSOLE_TTY_DATA (con)->instream = Qnil;
   CONSOLE_TTY_DATA (con)->outstream = Qnil;
@@ -72,7 +68,7 @@ tty_init_console (struct console *con, Lisp_Object props)
 
   terminal_type = Fplist_get (props, Qterminal_type, Qnil);
   controlling_process = Fplist_get(props, Qcontrolling_process, Qnil);
-  
+
   /* Determine the terminal type */
 
   if (!NILP (terminal_type))
@@ -109,7 +105,7 @@ tty_init_console (struct console *con, Lisp_Object props)
 	error ("Unable to open tty %s", XSTRING_DATA (tty));
       CONSOLE_TTY_DATA (con)->is_stdio = 0;
     }
-  
+
   CONSOLE_TTY_DATA (con)->infd  = infd;
   CONSOLE_TTY_DATA (con)->outfd = outfd;
   CONSOLE_TTY_DATA (con)->instream  = make_filedesc_input_stream  (infd, 0,

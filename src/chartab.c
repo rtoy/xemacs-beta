@@ -590,8 +590,7 @@ and 'syntax.  See `valid-char-table-type-p'.
   Lisp_Object obj = Qnil;
   enum char_table_type ty = symbol_to_char_table_type (type);
 
-  ct = (struct Lisp_Char_Table *)
-    alloc_lcrecord (sizeof (struct Lisp_Char_Table), lrecord_char_table);
+  ct = alloc_lcrecord_type (struct Lisp_Char_Table, lrecord_char_table);
   ct->type = ty;
   if (ty == CHAR_TABLE_TYPE_SYNTAX)
     {
@@ -619,9 +618,8 @@ make_char_table_entry (Lisp_Object initval)
   Lisp_Object obj = Qnil;
   int i;
 
-  cte = (struct Lisp_Char_Table_Entry *)
-    alloc_lcrecord (sizeof (struct Lisp_Char_Table_Entry),
-		    lrecord_char_table_entry);
+  cte = alloc_lcrecord_type (struct Lisp_Char_Table_Entry,
+			     lrecord_char_table_entry);
   for (i = 0; i < 96; i++)
     cte->level2[i] = initval;
   XSETCHAR_TABLE_ENTRY (obj, cte);
@@ -632,13 +630,12 @@ static Lisp_Object
 copy_char_table_entry (Lisp_Object entry)
 {
   struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (entry);
-  struct Lisp_Char_Table_Entry *ctenew;
   Lisp_Object obj = Qnil;
   int i;
+  struct Lisp_Char_Table_Entry *ctenew =
+    alloc_lcrecord_type (struct Lisp_Char_Table_Entry,
+			 lrecord_char_table_entry);
 
-  ctenew = (struct Lisp_Char_Table_Entry *)
-    alloc_lcrecord (sizeof (struct Lisp_Char_Table_Entry),
-		    lrecord_char_table_entry);
   for (i = 0; i < 96; i++)
     {
       Lisp_Object new = cte->level2[i];
@@ -667,8 +664,7 @@ as OLD-TABLE.  The values will not themselves be copied.
 
   CHECK_CHAR_TABLE (old_table);
   ct = XCHAR_TABLE (old_table);
-  ctnew = (struct Lisp_Char_Table *)
-    alloc_lcrecord (sizeof (struct Lisp_Char_Table), lrecord_char_table);
+  ctnew = alloc_lcrecord_type (struct Lisp_Char_Table, lrecord_char_table);
   ctnew->type = ct->type;
 
   for (i = 0; i < NUM_ASCII_CHARS; i++)
@@ -1561,8 +1557,8 @@ faster).
 
 There are 95 different categories available, one for each printable
 character (including space) in the ASCII charset.  Each category
-is designated by one such character, called a \"category designator\".
-They are specified in a regexp using the syntax \"\\cX\", where X is
+is designated by one such character, called a "category designator".
+They are specified in a regexp using the syntax "\\cX", where X is
 a category designator.
 
 A category table specifies, for each character, the categories that

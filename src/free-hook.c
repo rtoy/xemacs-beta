@@ -203,7 +203,7 @@ check_free (void *ptr)
 {
 #ifdef SAVE_STACK
   FRAME start_frame;
-  
+
   init_frame (&start_frame);
 #endif
 
@@ -218,7 +218,8 @@ check_free (void *ptr)
       unsigned long rounded_up_size;
 #endif
 
-      EMACS_INT present = (EMACS_INT) gethash (ptr, pointer_table, (void *) &size);
+      EMACS_INT present = (EMACS_INT) gethash (ptr, pointer_table,
+					       (void **) &size);
 
       if (!present)
 	/* This can only happen if you try to free something that didn't
@@ -291,7 +292,7 @@ check_free (void *ptr)
 
  end:
   return;
-}  
+}
 
 static void *
 check_malloc (unsigned long size)
@@ -337,8 +338,8 @@ check_realloc (void * ptr, unsigned long size)
   EMACS_INT present;
   unsigned long old_size;
   void *result = malloc (size);
-  
-  present = (EMACS_INT) gethash (ptr, pointer_table, (void *) &old_size);
+
+  present = (EMACS_INT) gethash (ptr, pointer_table, (void **) &old_size);
   if (!present)
     /* This can only happen by reallocing a pointer that didn't
        come from malloc. */
@@ -351,14 +352,14 @@ check_realloc (void * ptr, unsigned long size)
   return result;
 }
 
-void enable_strict_free_check (void);  
+void enable_strict_free_check (void);
 void
 enable_strict_free_check (void)
 {
   strict_free_check = 1;
 }
 
-void disable_strict_free_check (void);  
+void disable_strict_free_check (void);
 void
 disable_strict_free_check (void)
 {
@@ -445,7 +446,7 @@ A no-op if the free hook is disabled.
       count[0] = 0;
       count[1] = 0;
       __free_hook = 0;
-      maphash ((maphash_function)really_free_one_entry, 
+      maphash ((maphash_function)really_free_one_entry,
                pointer_table, (void *)&count);
       memset (free_queue, 0, sizeof (free_queue_entry) * FREE_QUEUE_LIMIT);
       current_free = 0;
@@ -494,7 +495,8 @@ typedef enum {
   gcpro1_type, gcpro2_type, gcpro3_type, gcpro4_type, ungcpro_type
 } blocktype;
 
-struct block_input_history_struct {
+struct block_input_history_struct
+{
   char *file;
   int line;
   blocktype type;
@@ -539,7 +541,7 @@ note_block (char *file, int line, blocktype type)
 
   init_frame (&start_frame);
 #endif
-  
+
   blhist[blhistptr].file = file;
   blhist[blhistptr].line = line;
   blhist[blhistptr].type = type;

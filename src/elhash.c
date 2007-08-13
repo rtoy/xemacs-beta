@@ -31,7 +31,7 @@ Lisp_Object Qhashtablep;
 
 #define LISP_OBJECTS_PER_HENTRY (sizeof (hentry) / sizeof (Lisp_Object))/* 2 */
 
-struct hashtable_struct
+struct hashtable
 {
   struct lcrecord_header header;
   unsigned int fullness;
@@ -50,12 +50,12 @@ static Lisp_Object mark_hashtable (Lisp_Object, void (*) (Lisp_Object));
 static void print_hashtable (Lisp_Object, Lisp_Object, int);
 DEFINE_LRECORD_IMPLEMENTATION ("hashtable", hashtable,
                                mark_hashtable, print_hashtable, 0, 0, 0,
-			       struct hashtable_struct);
+			       struct hashtable);
 
 static Lisp_Object
 mark_hashtable (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
-  struct hashtable_struct *table = XHASHTABLE (obj);
+  struct hashtable *table = XHASHTABLE (obj);
 
   if (table->type != HASHTABLE_NONWEAK)
     {
@@ -69,11 +69,11 @@ mark_hashtable (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (table->zero_entry));
   return table->harray;
 }
-  
+
 static void
 print_hashtable (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  struct hashtable_struct *table = XHASHTABLE (obj);
+  struct hashtable *table = XHASHTABLE (obj);
   char buf[200];
   if (print_readably)
     error ("printing unreadable object #<hashtable 0x%x>",
@@ -92,12 +92,11 @@ print_hashtable (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static void
-ht_copy_to_c (struct hashtable_struct *ht,
-              c_hashtable c_table)
+ht_copy_to_c (struct hashtable *ht, c_hashtable c_table)
 {
   int len = XVECTOR_LENGTH (ht->harray);
 
-  c_table->harray = (void *) XVECTOR_DATA (ht->harray);
+  c_table->harray = (hentry *) XVECTOR_DATA (ht->harray);
   c_table->zero_set = (!GC_UNBOUNDP (ht->zero_entry));
   c_table->zero_entry = LISP_TO_VOID (ht->zero_entry);
   if (len < 0)
@@ -118,13 +117,12 @@ ht_copy_to_c (struct hashtable_struct *ht,
 }
 
 static void
-ht_copy_from_c (c_hashtable c_table, 
-                struct hashtable_struct *ht)
+ht_copy_from_c (c_hashtable c_table, struct hashtable *ht)
 {
   struct Lisp_Vector dummy;
   /* C is truly hateful */
   void *vec_addr
-    = ((char *) c_table->harray 
+    = ((char *) c_table->harray
        - ((char *) &(dummy.contents[0]) - (char *) &dummy));
 
   XSETVECTOR (ht->harray, vec_addr);
@@ -136,11 +134,11 @@ ht_copy_from_c (c_hashtable c_table,
 }
 
 
-static struct hashtable_struct *
+static struct hashtable *
 allocate_hashtable (void)
 {
-  struct hashtable_struct *table
-    = alloc_lcrecord (sizeof (struct hashtable_struct), lrecord_hashtable);
+  struct hashtable *table =
+    alloc_lcrecord_type (struct hashtable, lrecord_hashtable);
   table->harray        = Qnil;
   table->zero_entry    = Qunbound;
   table->fullness      = 0;
@@ -153,9 +151,8 @@ void *
 elisp_hvector_malloc (unsigned int bytes, Lisp_Object table)
 {
   Lisp_Object new_vector;
-  struct hashtable_struct *ht;
+  struct hashtable *ht = XHASHTABLE (table);
 
-  ht = XHASHTABLE (table);
   assert (bytes > XVECTOR_LENGTH (ht->harray) * sizeof (Lisp_Object));
   new_vector = make_vector ((bytes / sizeof (Lisp_Object)), Qzero);
   return (void *) XVECTOR_DATA (new_vector);
@@ -164,7 +161,7 @@ elisp_hvector_malloc (unsigned int bytes, Lisp_Object table)
 void
 elisp_hvector_free (void *ptr, Lisp_Object table)
 {
-  struct hashtable_struct *ht = XHASHTABLE (table);
+  struct hashtable *ht = XHASHTABLE (table);
 #if defined (USE_ASSERTIONS) || defined (DEBUG_XEMACS)
   Lisp_Object current_vector = ht->harray;
 #endif
@@ -252,7 +249,7 @@ make_lisp_hashtable (int size,
 		     enum hashtable_test_fun test)
 {
   Lisp_Object result;
-  struct hashtable_struct *table = allocate_hashtable ();
+  struct hashtable *table = allocate_hashtable ();
 
   table->harray = make_vector ((compute_harray_size (size)
 				* LISP_OBJECTS_PER_HENTRY),
@@ -303,7 +300,7 @@ decode_hashtable_test_fun (Lisp_Object sym)
   if (EQ (sym, Qeq))    return HASHTABLE_EQ;
   if (EQ (sym, Qequal)) return HASHTABLE_EQUAL;
   if (EQ (sym, Qeql))   return HASHTABLE_EQL;
-  
+
   signal_simple_error ("Invalid hashtable test fun", sym);
   return HASHTABLE_EQ; /* not reached */
 }
@@ -333,8 +330,8 @@ as the given table.  The keys and values will not themselves be copied.
 {
   struct _C_hashtable old_htbl;
   struct _C_hashtable new_htbl;
-  struct hashtable_struct *old_ht;
-  struct hashtable_struct *new_ht;
+  struct hashtable *old_ht;
+  struct hashtable *new_ht;
   Lisp_Object result;
 
   CHECK_HASHTABLE (old_table);
@@ -385,7 +382,7 @@ If there is no corresponding value, return DEFAULT (defaults to nil).
       CVOID_TO_LISP (val, vval);
       return val;
     }
-  else 
+  else
     return default_;
 }
 
@@ -410,7 +407,7 @@ Hash KEY to VAL in TABLE.
 */
        (key, val, table))
 {
-  struct hashtable_struct *ht;
+  struct hashtable *ht;
   void *vkey = LISP_TO_VOID (key);
 
   CHECK_HASHTABLE (table);
@@ -471,8 +468,8 @@ verify_function (Lisp_Object function, CONST char *description)
   else if (CONSP (function))
   {
     Lisp_Object funcar = Fcar (function);
-    if ((SYMBOLP (funcar)) 
-        && (EQ (funcar, Qlambda) 
+    if ((SYMBOLP (funcar))
+        && (EQ (funcar, Qlambda)
             || EQ (funcar, Qautoload)))
       return;
   }
@@ -621,7 +618,7 @@ marking_mapper (CONST void *key, void *contents, void *closure)
      We complete the marking for semi-weak hashtables. */
   CVOID_TO_LISP (keytem, key);
   CVOID_TO_LISP (valuetem, contents);
-  
+
   switch (fmh->type)
     {
     case HASHTABLE_KEY_WEAK:
@@ -677,7 +674,7 @@ marking_mapper (CONST void *key, void *contents, void *closure)
     default:
       abort (); /* Huh? */
     }
-      
+
   return;
 }
 
@@ -747,8 +744,7 @@ static int
 pruning_mapper (CONST void *key, CONST void *contents, void *closure)
 {
   Lisp_Object keytem, valuetem;
-  struct pruning_closure *fmh =
-    (struct pruning_closure *) closure;
+  struct pruning_closure *fmh = (struct pruning_closure *) closure;
 
   /* This function is called over each pair in the hashtable.
      We remove the pairs that aren't completely marked (everything
@@ -804,13 +800,13 @@ internal_array_hash (Lisp_Object *arr, int size, int depth)
 	hash = HASH2 (hash, internal_hash (arr[i], depth + 1));
       return hash;
     }
-  
+
   /* just pick five elements scattered throughout the array.
      A slightly better approach would be to offset by some
      noise factor from the points chosen below. */
   for (i = 0; i < 5; i++)
     hash = HASH2 (hash, internal_hash (arr[i*size/5], depth + 1));
-  
+
   return hash;
 }
 

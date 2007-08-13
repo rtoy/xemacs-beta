@@ -1,7 +1,7 @@
 ;;; url-misc.el --- Misc Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/04/21 23:59:58
-;; Version: 1.17
+;; Created: 1997/08/12 22:58:50
+;; Version: 1.20
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -133,10 +133,9 @@
 (defun url-proxy (url)
   ;; Retrieve URL from a proxy.
   ;; Expects `url-using-proxy' to be bound to the specific proxy to use."
-  (let (
-	(urlobj (url-generic-parse-url url))
-	(proxyobj (url-generic-parse-url url-using-proxy)))
-    (url-http url-using-proxy url)))
+  (let ((urlobj (url-generic-parse-url url)))
+    (url-set-target urlobj nil)
+    (url-http url-using-proxy (url-recreate-url urlobj))))
 
 (defvar url-webmail-gateway "w3mail@gmd.de"
   "*Where to send webmail requests")

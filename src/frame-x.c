@@ -227,7 +227,7 @@ void
 x_wm_set_cell_size (Widget wmshell, int cw, int ch)
 {
   Arg al [2];
-  
+
   if (!XtIsWMShell (wmshell))
     abort ();
   if (cw <= 0 || ch <= 0)
@@ -242,7 +242,7 @@ void
 x_wm_set_variable_size (Widget wmshell, int width, int height)
 {
   Arg al [2];
-  
+
   if (!XtIsWMShell (wmshell))
     abort ();
 #ifdef DEBUG_GEOMETRY_MANAGEMENT
@@ -456,7 +456,7 @@ init_x_prop_symbols (void)
   defi(Qheight, XtNheight);
   defi(Qleft, XtNx);
   defi(Qtop, XtNy);
-  
+
 #undef def
 }
 
@@ -504,7 +504,7 @@ x_smash_bastardly_shell_position (Widget shell)
      to learn about race conditions and such.  We can't trust
      the X and Y values to have any semblance of correctness,
      so we smash the right values in place. */
- 
+
  /* We might be called before we've actually realized the window (if
      we're checking for the minibuffer resource).  This will bomb in
      that case so we don't bother calling it. */
@@ -611,7 +611,7 @@ do {							\
     x = y = 0;
   else
     x_get_top_level_position (XtDisplay (shell), XtWindow (shell), &x, &y);
-  
+
   FROB (Qleft, make_int (x));
   FROB (Qtop,  make_int (y));
 
@@ -676,7 +676,7 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
     }
 }
 
-static void 
+static void
 x_set_title_from_bufbyte (struct frame *f, Bufbyte *name)
 {
   x_set_frame_text_value (f, name, XtNtitle, XtNtitleEncoding);
@@ -713,23 +713,23 @@ x_set_initial_frame_size (struct frame *f, int flags, int x, int y,
   /* and also set the WMShell's geometry */
   (flags & XNegative) ? (xval = -x, xsign = '-') : (xval = x, xsign = '+');
   (flags & YNegative) ? (yval = -y, ysign = '-') : (yval = y, ysign = '+');
-  
+
   if (uspos && ussize)
     sprintf (shell_geom, "=%dx%d%c%d%c%d", w, h, xsign, xval, ysign, yval);
   else if (uspos)
     sprintf (shell_geom, "=%c%d%c%d", xsign, xval, ysign, yval);
   else if (ussize)
     sprintf (shell_geom, "=%dx%d", w, h);
-  
+
   if (uspos || ussize)
     {
-      temp = xmalloc (1 + strlen (shell_geom));
+      temp = (char *) xmalloc (1 + strlen (shell_geom));
       strcpy (temp, shell_geom);
       FRAME_X_GEOM_FREE_ME_PLEASE (f) = temp;
     }
   else
     temp = NULL;
-  
+
   XtSetArg (al [0], XtNgeometry, temp);
   XtSetValues (FRAME_X_SHELL_WIDGET (f), al, 1);
 }
@@ -751,16 +751,16 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
   Lisp_Object tail;
   Widget w = FRAME_X_TEXT_WIDGET (f);
   Arg al [10];
-  
+
   for (tail = plist; !NILP (tail); tail = Fcdr (Fcdr (tail)))
     {
       Lisp_Object prop = Fcar (tail);
       Lisp_Object val = Fcar (Fcdr (tail));
-      
+
       if (STRINGP (prop))
 	{
 	  CONST char *extprop;
-	  
+
 	  if (XSTRING_LENGTH (prop) == 0)
 	    continue;
 
@@ -898,7 +898,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
       width = FRAME_WIDTH (f);
     if (!height_specified_p)
       height = FRAME_HEIGHT (f);
-    
+
     /* Kludge kludge kludge kludge. */
     if (position_specified_p &&
 	(!x_position_specified_p || !y_position_specified_p))
@@ -913,7 +913,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	y = (int) (FRAME_X_SHELL_WIDGET (f)->core.y);
 #endif
       }
-      
+
     if (!f->init_finished)
       {
 	int flags = (size_specified_p ? WidthValue | HeightValue : 0) |
@@ -951,7 +951,7 @@ maybe_set_frame_title_format (Widget shell)
 {
 
   /* Only do this if this is the first X frame we're creating.
-     
+
      If the *title resource (or -title option) was specified, then
      set frame-title-format to its value.
      */
@@ -1092,7 +1092,7 @@ Start a CDE drag from a buffer.
       dnd_convert_cb_rec[0].closure  = (XtPointer) Ctext;
       dnd_convert_cb_rec[1].callback = NULL;
       dnd_convert_cb_rec[1].closure  = NULL;
-      
+
       dnd_destroy_cb_rec[0].callback = x_cde_destroy_callback;
       dnd_destroy_cb_rec[0].closure  = (XtPointer) Ctext;
       dnd_destroy_cb_rec[1].callback = NULL;
@@ -1118,19 +1118,19 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
   Lisp_Object frame = Qnil;
   Lisp_Object data  = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
-    
+
   DtDndTransferCallbackStruct *transferInfo =
     (DtDndTransferCallbackStruct *) callData;
 
   if (transferInfo == NULL)
     return;
-	
+
   GCPRO3 (path, frame, data);
-    
+
   frame = make_frame ((struct frame *) clientData);
   if (transferInfo->dropData->protocol == DtDND_FILENAME_TRANSFER)
     {
-      for (ii = 0; ii < transferInfo->dropData->numItems; ii++) 
+      for (ii = 0; ii < transferInfo->dropData->numItems; ii++)
 	{
 	  filePath = transferInfo->dropData->data.files[ii];
           /* ### Mule-izing required */
@@ -1141,7 +1141,7 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
   else if (transferInfo->dropData->protocol == DtDND_BUFFER_TRANSFER)
     {
       int speccount = specpdl_depth();
- 
+
       record_unwind_protect(abort_current_drag, Qnil);
       drag_not_done = 1;
       for (ii = 0; ii < transferInfo->dropData->numItems; ii++)
@@ -1168,11 +1168,11 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 #ifdef HAVE_OFFIX_DND
 #include <OffiX/DragAndDrop.h>
 
-void 
+void
 x_offix_drop_event_handler (Widget widget, XtPointer data, XEvent *event,
 			    Boolean *b)
 {
-  int i, len, Type;	
+  int i, len, Type;
   unsigned char *Data;
   unsigned long Size;
 
@@ -1188,16 +1188,16 @@ x_offix_drop_event_handler (Widget widget, XtPointer data, XEvent *event,
       stderr_out("DndDropHandler: pseudo drop received (ignore me!)\n");
       return;
     }
-    
-  Type = DndDataType (event); 
+
+  Type = DndDataType (event);
   DndGetData (&Data, &Size);
-  
+
   GCPRO4 (path, frame, dnd_data, dnd_type);
 
   frame = make_frame ((struct frame *) data);
 
   stderr_out("DndDropHandler: valid drop received (T%d S%u)\n",Type,Size);
-  
+
   switch (Type)
     {
     case DndFiles:
@@ -1337,7 +1337,7 @@ This fun is heavily stolen from the CDE Dnd stuff.
 	ApplicationShell	EmacsShell	EmacsManager	EmacsFrame
 
 #ifdef EXTERNAL_WIDGET
-   The ExternalShell widget is simply a replacement for the Shell widget 
+   The ExternalShell widget is simply a replacement for the Shell widget
    which is able to deal with using an externally-supplied window instead
    of always creating its own.
 #endif
@@ -1393,14 +1393,14 @@ x_initialize_frame_size (struct frame *f)
   int app_y = 0;
   unsigned int app_w = 0;
   unsigned int app_h = 0;
-  
+
   /* Geometry of the EmacsFrame */
   int frame_flags = 0;
   int frame_x = 0;
   int frame_y = 0;
   unsigned int frame_w = 0;
   unsigned int frame_h = 0;
-  
+
   /* Hairily merged geometry */
   int x = 0;
   int y = 0;
@@ -1490,7 +1490,7 @@ x_initialize_frame_size (struct frame *f)
 	  XtSetArg (al [0], XtNwidth,  &frame_w);
 	  XtSetArg (al [1], XtNheight, &frame_h);
 	  XtGetValues (ew, al, 2);
-	  
+
 	  if (frame_flags & XNegative)
 	    frame_x += frame_w;
 	  if (frame_flags & YNegative)
@@ -1552,7 +1552,7 @@ x_initialize_frame_size (struct frame *f)
     frame_flags = XParseGeometry (ew_geom,
 				  &frame_x, &frame_y,
 				  &frame_w, &frame_h);
-  
+
   if (first_x_frame_p (f))
     {
       /* If this is the first frame created:
@@ -1691,7 +1691,7 @@ x_layout_widgets (Widget w, XtPointer client_data, XtPointer call_data)
        just need to know which sides they are supposed to go on. */
     unsigned char scrollbar_placement;
     Arg al [1];
-    
+
     XtSetArg (al [0], XtNscrollBarPlacement, &scrollbar_placement);
     XtGetValues (text, al, 1);
     f->scrollbar_on_left = (scrollbar_placement == XtTOP_LEFT ||
@@ -1766,7 +1766,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
     GET_C_STRING_CTEXT_DATA_ALLOCA (f->name, name);
   else
     name = "emacs";
-       
+
   /* The widget hierarchy is
 
 	argv[0]			shell		pane		FRAME-NAME
@@ -1869,12 +1869,12 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
   text = XtCreateWidget (name, emacsFrameClass, container, al, 2);
   FRAME_X_TEXT_WIDGET (f) = text;
 
-#ifdef HAVE_MENUBARS  
+#ifdef HAVE_MENUBARS
   /* Create the initial menubar widget. */
   menubar_visible = x_initialize_frame_menubar (f);
   FRAME_X_TOP_WIDGETS (f)[0] = menubar = FRAME_X_MENUBAR_WIDGET (f);
   FRAME_X_NUM_TOP_WIDGETS (f) = 1;
-  
+
   if (menubar_visible)
     XtManageChild (menubar);
 #endif /* HAVE_MENUBARS */
@@ -1978,7 +1978,7 @@ x_popup_frame (struct frame *f)
 #ifdef HAVE_XIM
   XIM_init_frame (f);
 #endif /* HAVE_XIM */
-  
+
 #ifdef HACK_EDITRES
   /* Allow XEmacs to respond to EditRes requests.  See the O'Reilly Xt */
   /* Instrinsics Programming Manual, Motif Edition, Aug 1993, Sect 14.14, */
@@ -1986,7 +1986,7 @@ x_popup_frame (struct frame *f)
   XtAddEventHandler (shell_widget,           /* the shell widget in question */
 		     (EventMask) NoEventMask,/* OR with existing mask */
 		     True,                   /* called on non-maskable events? */
-		     _XEditResCheckMessages, /* the handler */
+		     (XtEventHandler) _XEditResCheckMessages, /* the handler */
 		     NULL);
 #endif /* HACK_EDITRES */
 
@@ -2010,7 +2010,7 @@ x_popup_frame (struct frame *f)
   {
     DndInitialize (FRAME_X_SHELL_WIDGET (f));
     DndRegisterDropWidget (FRAME_X_TEXT_WIDGET (f),
-			   x_offix_drop_event_handler, 
+			   x_offix_drop_event_handler,
 			   (XtPointer) f);
 
   }
@@ -2023,7 +2023,7 @@ x_popup_frame (struct frame *f)
   XChangeProperty (XtDisplay (frame_widget), XtWindow (frame_widget),
 		   DEVICE_XATOM_WM_PROTOCOLS (d), XA_ATOM, 32, PropModeAppend,
 		   (unsigned char*) NULL, 0);
-  
+
   x_send_synthetic_mouse_event (f);
 }
 
@@ -2031,7 +2031,7 @@ static void
 allocate_x_frame_struct (struct frame *f)
 {
   /* zero out all slots. */
-  f->frame_data = malloc_type_and_zero (struct x_frame);
+  f->frame_data = xnew_and_zero (struct x_frame);
 
   /* yeah, except the lisp ones */
   FRAME_X_ICON_PIXMAP (f) = Qnil;
@@ -2222,7 +2222,7 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
   XtSetArg (al [1], XtNx, xoff);
   XtSetArg (al [2], XtNy, yoff);
   XtSetValues (w, al, 3);
-  
+
   /* Sometimes you will find that
 
      (set-frame-position (selected-frame) -50 -50)
@@ -2336,7 +2336,7 @@ x_raise_frame_1 (struct frame *f, int force)
   if (FRAME_VISIBLE_P(f) || force)
     {
       emacs_window = XtWindow (FRAME_X_SHELL_WIDGET (f));
-      /* first raises all the dialog boxes, then put emacs just below the 
+      /* first raises all the dialog boxes, then put emacs just below the
        * bottom most dialog box */
       bottom_dialog = lw_raise_all_pop_up_widgets ();
       if (bottom_dialog && XtWindow (bottom_dialog))
@@ -2371,7 +2371,7 @@ x_lower_frame (struct frame *f)
   Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
   XWindowChanges xwc;
   unsigned int flags;
-  
+
   if (FRAME_VISIBLE_P(f))
     {
       xwc.stack_mode = Below;
@@ -2509,7 +2509,7 @@ x_focus_on_frame (struct frame *f)
     f->visible = xwa.map_state == IsViewable; */
     viewable = xwa.map_state == IsViewable;
 
-      
+
   if (viewable)
     {
       Window focus;
@@ -2671,7 +2671,7 @@ set at any time, except as otherwise noted):
 				frame.  May be set only at startup, and
 				only if external widget support was
 				compiled in; doing so causes the frame
-				to be created as an \"external widget\"
+				to be created as an "external widget"
 				in another program that uses an existing
 				window in the program rather than creating
 				a new one.
@@ -2680,7 +2680,7 @@ set at any time, except as otherwise noted):
 				need to call `make-frame-visible' to make
 				the frame appear.
   popup				If non-nil, it should be a frame, and this
-				frame will be created as a \"popup\" frame
+				frame will be created as a "popup" frame
 				whose parent is the given frame.  This
 				will make the window manager treat the
 				frame as a dialog box, which may entail

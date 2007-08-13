@@ -67,7 +67,7 @@ allocate_nearest_color (Display *display, Colormap screen_colormap,
       int x;
 
       no_cells = XDisplayCells (display, XDefaultScreen (display));
-      cells = (XColor *) alloca (sizeof (XColor) * no_cells);
+      cells = alloca_array (XColor, no_cells);
 
       for (x = 0; x < no_cells; x++)
 	cells[x].pixel = x;
@@ -116,11 +116,11 @@ x_parse_nearest_color (struct device *d, XColor *color, Bufbyte *name,
   Screen *xs;
   Colormap cmap;
   int result;
-  
+
   dpy = DEVICE_X_DISPLAY (d);
   xs = DefaultScreenOfDisplay (dpy);
   cmap = DefaultColormapOfScreen (xs);
-  
+
   memset (color, 0, sizeof (*color));
   {
     CONST Extbyte *extname;
@@ -163,7 +163,7 @@ x_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
 
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
-  c->data = malloc_type (struct x_color_instance_data);
+  c->data = xnew (struct x_color_instance_data);
   COLOR_INSTANCE_X_COLOR (c) = color;
   return 1;
 }
@@ -188,7 +188,7 @@ x_finalize_color_instance (struct Lisp_Color_Instance *c)
       if (DEVICE_LIVE_P (XDEVICE (c->device)))
 	{
 	  Display *dpy = DEVICE_X_DISPLAY (XDEVICE (c->device));
-  
+
 	  XFreeColors (dpy,
 		       DefaultColormapOfScreen (DefaultScreenOfDisplay (dpy)),
 		       &COLOR_INSTANCE_X_COLOR (c).pixel, 1, 0);
@@ -226,7 +226,7 @@ static Lisp_Object
 x_color_instance_rgb_components (struct Lisp_Color_Instance *c)
 {
   XColor color = COLOR_INSTANCE_X_COLOR (c);
-  return (list3 (make_int (color.red), 
+  return (list3 (make_int (color.red),
 		 make_int (color.green),
 		 make_int (color.blue)));
 }
@@ -237,7 +237,7 @@ x_valid_color_name_p (struct device *d, Lisp_Object color)
   XColor c;
   Display *dpy = DEVICE_X_DISPLAY (d);
   CONST char *extname;
-  
+
   GET_C_STRING_CTEXT_DATA_ALLOCA (color, extname);
 
   return XParseColor (dpy,
@@ -257,18 +257,18 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
   Display *dpy;
   XFontStruct *xf;
   CONST char *extname;
-  
+
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
   GET_C_STRING_CTEXT_DATA_ALLOCA (f->name, extname);
   xf = XLoadQueryFont (dpy, extname);
-  
+
   if (!xf)
     {
       maybe_signal_simple_error ("couldn't load font", f->name,
 				 Qfont, errb);
       return 0;
     }
-  
+
   if (!xf->max_bounds.width)
     {
       /* yes, this has been known to happen. */
@@ -277,10 +277,10 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
 				 Qfont, errb);
       return 0;
     }
-  
+
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
-  f->data = malloc_type (struct x_font_instance_data);
+  f->data = xnew (struct x_font_instance_data);
   FONT_INSTANCE_X_TRUENAME (f) = Qnil;
   FONT_INSTANCE_X_FONT (f) = xf;
   f->ascent = xf->ascent;
@@ -310,7 +310,7 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
       }
     else
       f->width = xf->max_bounds.width;
-    
+
     /* Some fonts have a default char whose width is 0.  This is no good.
        If that's the case, first try 'n' as the default char, and if n has
        0 width too (unlikely) then just use the max width. */
@@ -363,7 +363,7 @@ x_print_font_instance (struct Lisp_Font_Instance *f,
 static void
 x_finalize_font_instance (struct Lisp_Font_Instance *f)
 {
-  
+
   if (f->data)
     {
       if (DEVICE_LIVE_P (XDEVICE (f->device)))
@@ -452,7 +452,7 @@ x_finalize_font_instance (struct Lisp_Font_Instance *f)
 
    So this is yet another example of XListFonts() and XOpenFont() using
    completely different algorithms.  This, however, is a goofier example of
-   this bug, because in this case, it's not just the search order that is 
+   this bug, because in this case, it's not just the search order that is
    different -- the sets don't even intersect.
 
    If anyone has any better ideas how to do this, or any insights on what it is
@@ -550,7 +550,7 @@ truename_via_random_props (Display *dpy, XFontStruct *font)
   if (ok)
     {
       int L = strlen (composed_name) + 1;
-      result = xmalloc (L);
+      result = (char *) xmalloc (L);
       strncpy (result, composed_name, L);
     }
   else
@@ -608,7 +608,7 @@ x_font_truename (Display *dpy, char *name, XFontStruct *font)
   char *truename_FONT = 0;
   char *truename_random = 0;
   char *truename = 0;
-  
+
   /* The search order is:
      - if FONT property exists, and is a valid name, return it.
      - if the other props exist, and add up to a valid name, return it.
@@ -696,7 +696,7 @@ x_font_instance_properties (struct Lisp_Font_Instance *f)
   Lisp_Object result = Qnil;
   XFontProp *props;
   Display *dpy;
-  
+
   dpy = DEVICE_X_DISPLAY (d);
   props = FONT_INSTANCE_X_FONT (f)->properties;
   for (i = FONT_INSTANCE_X_FONT (f)->n_properties - 1; i >= 0; i--)
@@ -750,7 +750,7 @@ x_list_fonts (Lisp_Object pattern, Lisp_Object device)
   CONST char *patternext;
 
   GET_C_STRING_BINARY_DATA_ALLOCA (pattern, patternext);
-  
+
   names = XListFonts (DEVICE_X_DISPLAY (XDEVICE (device)),
 		      patternext, MAX_FONT_COUNT, &count);
   while (count--)
@@ -779,7 +779,7 @@ x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
       CONST Bufbyte *the_nonreloc = nonreloc;
       int i;
       Bytecount the_length = length;
-      
+
       if (!the_nonreloc)
 	the_nonreloc = XSTRING_DATA (reloc);
       fixup_internal_substring (nonreloc, reloc, offset, &the_length);
@@ -788,7 +788,7 @@ x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 	{
 	  for (i = 0;; i++)
 	    {
-	      CONST Bufbyte *new_nonreloc =
+	      CONST Bufbyte *new_nonreloc = (CONST Bufbyte *)
 		memchr (the_nonreloc, '-', the_length);
 	      if (!new_nonreloc)
 		break;
@@ -796,7 +796,7 @@ x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 	      the_length -= new_nonreloc - the_nonreloc;
 	      the_nonreloc = new_nonreloc;
 	    }
-	  
+
 	  /* If it has less than 5 dashes, it's a short font.
 	     Of course, long fonts always have 14 dashes or so, but short
 	     fonts never have more than 1 or 2 dashes, so this is some
@@ -805,7 +805,7 @@ x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 	    return 1;
 	}
     }
-    
+
   return (fast_string_match (XCHARSET_REGISTRY (charset),
 			     nonreloc, reloc, offset, length, 1,
 			     ERROR_ME, 0) >= 0);
@@ -824,7 +824,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font,
   int i;
 
   GET_C_STRING_BINARY_DATA_ALLOCA (font, patternext);
-  
+
   names = XListFonts (DEVICE_X_DISPLAY (XDEVICE (device)),
 		      patternext, MAX_FONT_COUNT, &count);
   for (i = 0; i < count; i ++)
@@ -912,7 +912,7 @@ void
 Xatoms_of_objects_x (struct device *d)
 {
   Display *D = DEVICE_X_DISPLAY (d);
-  
+
   DEVICE_XATOM_FOUNDRY         (d) = XInternAtom (D, "FOUNDRY",         False);
   DEVICE_XATOM_FAMILY_NAME     (d) = XInternAtom (D, "FAMILY_NAME",     False);
   DEVICE_XATOM_WEIGHT_NAME     (d) = XInternAtom (D, "WEIGHT_NAME",     False);

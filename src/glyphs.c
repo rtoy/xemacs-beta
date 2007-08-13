@@ -76,13 +76,14 @@ Lisp_Object Qformatted_string;
 
 MAC_DEFINE (struct image_instantiator_methods *, MTiiformat_meth_or_given)
 
+typedef struct image_instantiator_format_entry image_instantiator_format_entry;
 struct image_instantiator_format_entry
 {
   Lisp_Object symbol;
   struct image_instantiator_methods *meths;
 };
 
-typedef struct image_instantiator_format_entry_dynarr_type
+typedef struct
 {
   Dynarr_declare (struct image_instantiator_format_entry);
 } image_instantiator_format_entry_dynarr;
@@ -267,7 +268,7 @@ instantiators for the specified console type.  See
   return Fcopy_tree (*get_image_conversion_list (console_type), Qt);
 }
 
-/* Process an string instantiator according to the image-conversion-list for
+/* Process a string instantiator according to the image-conversion-list for
    CONSOLE_TYPE.  Returns a vector. */
 
 static Lisp_Object
@@ -437,7 +438,7 @@ Lisp_Object
 alist_to_tagged_vector (Lisp_Object tag, Lisp_Object alist)
 {
   int len = 1 + 2 * XINT (Flength (alist));
-  Lisp_Object *elt = (Lisp_Object *) alloca (len * sizeof (Lisp_Object));
+  Lisp_Object *elt = alloca_array (Lisp_Object, len);
   int i;
   Lisp_Object rest;
 
@@ -615,7 +616,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 	  write_c_string (" @", printcharfun);
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
 	    {
-	      sprintf (buf, "%ld", 
+	      sprintf (buf, "%ld",
 		       (long) XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)));
 	      write_c_string (buf, printcharfun);
 	    }
@@ -624,7 +625,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 	  write_c_string (",", printcharfun);
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
 	    {
-	      sprintf (buf, "%ld", 
+	      sprintf (buf, "%ld",
 		       (long) XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)));
 	      write_c_string (buf, printcharfun);
 	    }
@@ -783,8 +784,7 @@ static Lisp_Object
 allocate_image_instance (Lisp_Object device)
 {
   struct Lisp_Image_Instance *lp =
-    alloc_lcrecord (sizeof (struct Lisp_Image_Instance),
-		    lrecord_image_instance);
+    alloc_lcrecord_type (struct Lisp_Image_Instance, lrecord_image_instance);
   Lisp_Object val = Qnil;
 
   zero_lcrecord (lp);
@@ -801,22 +801,17 @@ decode_image_instance_type (Lisp_Object type, Error_behavior errb)
   if (ERRB_EQ (errb, ERROR_ME))
     CHECK_SYMBOL (type);
 
-  if (EQ (type, Qnothing))
-    return IMAGE_NOTHING;
-  if (EQ (type, Qtext))
-    return IMAGE_TEXT;
-  if (EQ (type, Qmono_pixmap))
-    return IMAGE_MONO_PIXMAP;
-  if (EQ (type, Qcolor_pixmap))
-    return IMAGE_COLOR_PIXMAP;
-  if (EQ (type, Qpointer))
-    return IMAGE_POINTER;
-  if (EQ (type, Qsubwindow))
-    return IMAGE_SUBWINDOW;
+  if (EQ (type, Qnothing))      return IMAGE_NOTHING;
+  if (EQ (type, Qtext))         return IMAGE_TEXT;
+  if (EQ (type, Qmono_pixmap))  return IMAGE_MONO_PIXMAP;
+  if (EQ (type, Qcolor_pixmap)) return IMAGE_COLOR_PIXMAP;
+  if (EQ (type, Qpointer))      return IMAGE_POINTER;
+  if (EQ (type, Qsubwindow))    return IMAGE_SUBWINDOW;
 
   maybe_signal_simple_error ("Invalid image-instance type", type,
 			     Qimage, errb);
-  return IMAGE_UNKNOWN;
+
+  return IMAGE_UNKNOWN; /* not reached */
 }
 
 static Lisp_Object
@@ -824,18 +819,12 @@ encode_image_instance_type (enum image_instance_type type)
 {
   switch (type)
     {
-    case IMAGE_NOTHING:
-      return Qnothing;
-    case IMAGE_TEXT:
-      return Qtext;
-    case IMAGE_MONO_PIXMAP:
-      return Qmono_pixmap;
-    case IMAGE_COLOR_PIXMAP:
-      return Qcolor_pixmap;
-    case IMAGE_POINTER:
-      return Qpointer;
-    case IMAGE_SUBWINDOW:
-      return Qsubwindow;
+    case IMAGE_NOTHING:      return Qnothing;
+    case IMAGE_TEXT:         return Qtext;
+    case IMAGE_MONO_PIXMAP:  return Qmono_pixmap;
+    case IMAGE_COLOR_PIXMAP: return Qcolor_pixmap;
+    case IMAGE_POINTER:      return Qpointer;
+    case IMAGE_SUBWINDOW:    return Qsubwindow;
     default:
       abort ();
     }
@@ -916,9 +905,7 @@ incompatible_image_types (Lisp_Object instantiator, int given_dest_mask,
 static int
 valid_image_instance_type_p (Lisp_Object type)
 {
-  if (!NILP (memq_no_quit (type, Vimage_instance_type_list)))
-    return 1;
-  return 0;
+  return !NILP (memq_no_quit (type, Vimage_instance_type_list));
 }
 
 DEFUN ("valid-image-instance-type-p", Fvalid_image_instance_type_p, 1, 1, 0, /*
@@ -928,10 +915,7 @@ Valid types are some subset of 'nothing, 'text, 'mono-pixmap, 'color-pixmap,
 */
        (image_instance_type))
 {
-  if (valid_image_instance_type_p (image_instance_type))
-    return Qt;
-  else
-    return Qnil;
+  return valid_image_instance_type_p (image_instance_type) ? Qt : Qnil;
 }
 
 DEFUN ("image-instance-type-list", Fimage_instance_type_list, 0, 0, 0, /*
@@ -945,12 +929,9 @@ Return a list of valid image-instance types.
 Error_behavior
 decode_error_behavior_flag (Lisp_Object no_error)
 {
-  if (NILP (no_error))
-    return ERROR_ME;
-  else if (EQ (no_error, Qt))
-    return ERROR_ME_NOT;
-  else
-    return ERROR_ME_WARN;
+  if (NILP (no_error))        return ERROR_ME;
+  else if (EQ (no_error, Qt)) return ERROR_ME_NOT;
+  else                        return ERROR_ME_WARN;
 }
 
 Lisp_Object
@@ -1030,7 +1011,7 @@ be generated.  The recognized image instance types are
   Not currently implemented.
 
 The DEST-TYPES list is unordered.  If multiple destination types
-are possible for a given instantiator, the \"most natural\" type
+are possible for a given instantiator, the "most natural" type
 for the instantiator's format is chosen. (For XBM, the most natural
 types are `mono-pixmap', followed by `color-pixmap', followed by
 `pointer'.  For the other normal image formats, the most natural
@@ -1772,8 +1753,8 @@ resulting image instances also come in many types -- `mono-pixmap',
 `color-pixmap', `text', `pointer', etc.  This refers to the behavior of
 the image and the sorts of places it can appear. (For example, a
 color-pixmap image has fixed colors specified for it, while a
-mono-pixmap image comes in two unspecified shades \"foreground\" and
-\"background\" that are determined from the face of the glyph or
+mono-pixmap image comes in two unspecified shades "foreground" and
+"background" that are determined from the face of the glyph or
 surrounding text; a text image appears as a string of text and has an
 unspecified foreground, background, and font; a pointer image behaves
 like a mono-pixmap image but can only be used as a mouse pointer
@@ -1829,15 +1810,15 @@ pairs.  FORMAT should be one of
 'tiff
   (A TIFF image; not currently implemented.)
 'cursor-font
-  (One of the standard cursor-font names, such as \"watch\" or
-   \"right_ptr\" under X.  Under X, this is, more specifically, any
+  (One of the standard cursor-font names, such as "watch" or
+   "right_ptr" under X.  Under X, this is, more specifically, any
    of the standard cursor names from appendix B of the Xlib manual
    [also known as the file <X11/cursorfont.h>] minus the XC_ prefix.
    On other window systems, the valid names will be specific to the
    type of window system.  Can only be instanced as `pointer'.)
 'font
   (A glyph from a font; i.e. the name of a font, and glyph index into it
-   of the form \"FONT fontname index [[mask-font] mask-index]\".
+   of the form "FONT fontname index [[mask-font] mask-index]".
    Currently can only be instanced as `pointer', although this should
    probably be fixed.)
 'subwindow
@@ -1886,10 +1867,10 @@ The valid keywords are:
   (For `xbm' and `xface'.  This specifies a file containing the mask data.
   If neither a mask file nor inline mask data is given for an XBM image,
   and the XBM image comes from a file, XEmacs will look for a mask file
-  with the same name as the image file but with \"Mask\" or \"msk\"
-  appended.  For example, if you specify the XBM file \"left_ptr\"
-  [usually located in \"/usr/include/X11/bitmaps\"], the associated
-  mask file \"left_ptrmsk\" will automatically be picked up.)
+  with the same name as the image file but with "Mask" or "msk"
+  appended.  For example, if you specify the XBM file "left_ptr"
+  [usually located in "/usr/include/X11/bitmaps"], the associated
+  mask file "left_ptrmsk" will automatically be picked up.)
 :hotspot-x
 :hotspot-y
   (For `xbm' and `xface'.  These keywords specify a hotspot if the image
@@ -1990,48 +1971,33 @@ glyph_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 
   depth++;
 
-  if (!internal_equal (g1->image, g2->image, depth) ||
-      !internal_equal (g1->contrib_p, g2->contrib_p, depth) ||
-      !internal_equal (g1->baseline, g2->baseline, depth) ||
-      !internal_equal (g1->face, g2->face, depth) ||
-      plists_differ (g1->plist, g2->plist, 0, 0, depth + 1))
-    return 0;
-
-  return 1;
+  return (internal_equal (g1->image,     g2->image,     depth) &&
+	  internal_equal (g1->contrib_p, g2->contrib_p, depth) &&
+	  internal_equal (g1->baseline,  g2->baseline,  depth) &&
+	  internal_equal (g1->face,      g2->face,      depth) &&
+	  !plists_differ (g1->plist,     g2->plist, 0, 0, depth + 1));
 }
 
 static unsigned long
 glyph_hash (Lisp_Object obj, int depth)
 {
-  struct Lisp_Glyph *g = XGLYPH (obj);
-
   depth++;
 
   /* No need to hash all of the elements; that would take too long.
      Just hash the most common ones. */
-  return HASH2 (internal_hash (g->image, depth),
-		internal_hash (g->face, depth));
+  return HASH2 (internal_hash (XGLYPH (obj)->image, depth),
+		internal_hash (XGLYPH (obj)->face,  depth));
 }
 
 static Lisp_Object
 glyph_getprop (Lisp_Object obj, Lisp_Object prop)
 {
   struct Lisp_Glyph *g = XGLYPH (obj);
-
-#define FROB(propprop) 							\
-do {									\
-  if (EQ (prop, Q##propprop))						\
-    {									\
-      return g->propprop;						\
-    }									\
-} while (0)
-
-  FROB (image);
-  FROB (contrib_p);
-  FROB (baseline);
-  FROB (face);
-
-#undef FROB
+  
+  if (EQ (prop, Qimage))     return g->image;
+  if (EQ (prop, Qcontrib_p)) return g->contrib_p;
+  if (EQ (prop, Qbaseline))  return g->baseline;
+  if (EQ (prop, Qface))      return g->face;
 
   return external_plist_get (&g->plist, prop, 0, ERROR_ME);
 }
@@ -2039,54 +2005,36 @@ do {									\
 static int
 glyph_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
 {
-  struct Lisp_Glyph *g = XGLYPH (obj);
-
-#define FROB(propprop) 							\
-do {									\
-  if (EQ (prop, Q##propprop))						\
-    return 0;								\
-} while (0)
-
-  FROB (image);
-  FROB (contrib_p);
-  FROB (baseline);
-
-#undef FROB
+  if ((EQ (prop, Qimage))     ||
+      (EQ (prop, Qcontrib_p)) ||
+      (EQ (prop, Qbaseline)))
+    return 0;
 
   if (EQ (prop, Qface))
     {
-      value = Fget_face (value);
-      g->face = value;
+      XGLYPH (obj)->face = Fget_face (value);
       return 1;
     }
 
-  external_plist_put (&g->plist, prop, value, 0, ERROR_ME);
+  external_plist_put (&XGLYPH (obj)->plist, prop, value, 0, ERROR_ME);
   return 1;
 }
 
 static int
 glyph_remprop (Lisp_Object obj, Lisp_Object prop)
 {
-  struct Lisp_Glyph *g = XGLYPH (obj);
-
-#define FROB(propprop) 							\
-do {									\
-  if (EQ (prop, Q##propprop))						\
-    return -1;								\
-} while (0)
-
-  FROB (image);
-  FROB (contrib_p);
-  FROB (baseline);
+  if ((EQ (prop, Qimage))     ||
+      (EQ (prop, Qcontrib_p)) ||
+      (EQ (prop, Qbaseline)))
+    return -1;
 
   if (EQ (prop, Qface))
     {
-      g->face = Qnil;
+      XGLYPH (obj)->face = Qnil;
       return 1;
     }
 
-#undef FROB
-  return external_remprop (&g->plist, prop, 0, ERROR_ME);
+  return external_remprop (&XGLYPH (obj)->plist, prop, 0, ERROR_ME);
 }
 
 static Lisp_Object
@@ -2095,18 +2043,12 @@ glyph_plist (Lisp_Object obj)
   struct Lisp_Glyph *g = XGLYPH (obj);
   Lisp_Object result = Qnil;
 
-#define FROB(propprop) 							\
-do {									\
-  /* backwards order; we reverse it below */				\
-  result = Fcons (g->propprop, Fcons (Q##propprop, result));		\
-} while (0)
+  /* backwards order; we reverse it below */
+  result = Fcons (g->image,     Fcons (Qimage,     result));
+  result = Fcons (g->contrib_p, Fcons (Qcontrib_p, result));
+  result = Fcons (g->baseline,  Fcons (Qbaseline,  result));
+  result = Fcons (g->face,      Fcons (Qface,      result));
 
-  FROB (image);
-  FROB (contrib_p);
-  FROB (baseline);
-  FROB (face);
-
-#undef FROB
   return nconc2 (Fnreverse (result), g->plist);
 }
 
@@ -2117,7 +2059,7 @@ allocate_glyph (enum glyph_type type,
 {
   Lisp_Object obj = Qnil;
   struct Lisp_Glyph *g =
-    alloc_lcrecord (sizeof (struct Lisp_Glyph), lrecord_glyph);
+    alloc_lcrecord_type (struct Lisp_Glyph, lrecord_glyph);
 
   g->type = type;
   g->image = Fmake_specifier (Qimage);
@@ -2165,23 +2107,19 @@ decode_glyph_type (Lisp_Object type, Error_behavior errb)
   if (ERRB_EQ (errb, ERROR_ME))
     CHECK_SYMBOL (type);
 
-  if (EQ (type, Qbuffer))
-    return GLYPH_BUFFER;
-  if (EQ (type, Qpointer))
-    return GLYPH_POINTER;
-  if (EQ (type, Qicon))
-    return GLYPH_ICON;
+  if (EQ (type, Qbuffer))  return GLYPH_BUFFER;
+  if (EQ (type, Qpointer)) return GLYPH_POINTER;
+  if (EQ (type, Qicon))    return GLYPH_ICON;
 
   maybe_signal_simple_error ("Invalid glyph type", type, Qimage, errb);
+
   return GLYPH_UNKNOWN;
 }
 
 static int
 valid_glyph_type_p (Lisp_Object type)
 {
-  if (!NILP (memq_no_quit (type, Vglyph_type_list)))
-    return 1;
-  return 0;
+  return !NILP (memq_no_quit (type, Vglyph_type_list));
 }
 
 DEFUN ("valid-glyph-type-p", Fvalid_glyph_type_p, 1, 1, 0, /*
@@ -2190,10 +2128,7 @@ Valid types are `buffer', `pointer', and `icon'.
 */
        (glyph_type))
 {
-  if (valid_glyph_type_p (glyph_type))
-    return Qt;
-  else
-    return Qnil;
+  return valid_glyph_type_p (glyph_type) ? Qt : Qnil;
 }
 
 DEFUN ("glyph-type-list", Fglyph_type_list, 0, 0, 0, /*
@@ -2254,17 +2189,13 @@ The return value will be one of 'buffer, 'pointer, or 'icon.
   CHECK_GLYPH (glyph);
   switch (XGLYPH_TYPE (glyph))
     {
-    case GLYPH_BUFFER:
-      return Qbuffer;
-    case GLYPH_POINTER:
-      return Qpointer;
-    case GLYPH_ICON:
-      return Qicon;
+    case GLYPH_BUFFER:  return Qbuffer;
+    case GLYPH_POINTER: return Qpointer;
+    case GLYPH_ICON:    return Qicon;
     default:
       abort ();
+      return Qnil; /* not reached */
     }
-
-  return Qnil; /* not reached */
 }
 
 /*****************************************************************************
@@ -2402,15 +2333,15 @@ glyph_height_internal (Lisp_Object glyph, Lisp_Object frame_face,
 
 	face_cachel_charset_font_metric_info (cachel, charsets, &fm);
 
-	if (function == RETURN_ASCENT)
-	  return fm.ascent;
-	else if (function == RETURN_DESCENT)
-	  return fm.descent;
-	else if (function == RETURN_HEIGHT)
-	  return fm.ascent + fm.descent;
-	else
-	  abort ();
-	return 0;
+	switch (function)
+	  {
+	  case RETURN_ASCENT:  return fm.ascent;
+	  case RETURN_DESCENT: return fm.descent;
+	  case RETURN_HEIGHT:  return fm.ascent + fm.descent;
+	  default:
+	    abort ();
+	    return 0; /* not reached */
+	  }
       }
 
     case IMAGE_MONO_PIXMAP:
@@ -2535,10 +2466,7 @@ Lisp_Object
 glyph_face (Lisp_Object glyph, Lisp_Object domain)
 {
   /* #### Domain parameter not currently used but it will be */
-  if (!GLYPHP (glyph))
-    return Qnil;
-  else
-    return GLYPH_FACE (XGLYPH (glyph));
+  return GLYPHP (glyph) ? GLYPH_FACE (XGLYPH (glyph)) : Qnil;
 }
 
 int
@@ -2598,23 +2526,13 @@ update_glyph_cachel_data (struct window *w, Lisp_Object glyph,
       Lisp_Object window = Qnil;
 
       XSETWINDOW (window, w);
-      cachel->glyph = glyph;
-
-#define FROB(field)							\
-  do {									\
-    unsigned short new_val = glyph_##field (glyph, Qnil, DEFAULT_INDEX, \
-					    window); 			\
-    if (cachel->field != new_val)					\
-      cachel->field = new_val;						\
-  } while (0)
 
     /* #### This could be sped up if we redid things to grab the glyph
        instantiation and passed it to the size functions. */
-      FROB (width);
-      FROB (ascent);
-      FROB (descent);
-#undef FROB
-
+      cachel->glyph   = glyph;
+      cachel->width   = glyph_width   (glyph, Qnil, DEFAULT_INDEX, window);
+      cachel->ascent  = glyph_ascent  (glyph, Qnil, DEFAULT_INDEX, window);
+      cachel->descent = glyph_descent (glyph, Qnil, DEFAULT_INDEX, window);
     }
 
   cachel->updated = 1;
@@ -2849,7 +2767,7 @@ image_instantiator_format_create (void)
   /* image instantiators */
 
   the_image_instantiator_format_entry_dynarr =
-    Dynarr_new (struct image_instantiator_format_entry);
+    Dynarr_new (image_instantiator_format_entry);
 
   Vimage_instantiator_format_list = Qnil;
   staticpro (&Vimage_instantiator_format_list);
@@ -2920,7 +2838,7 @@ What to use as an arrow for control characters.
 What to use to indicate the presence of invisible text.
 This is the glyph that is displayed when an ellipsis is called for
 \(see `selective-display-ellipses' and `buffer-invisibility-spec').
-Normally this is three dots (\"...\").
+Normally this is three dots ("...").
 */);
   Vinvisible_text_glyph = allocate_glyph (GLYPH_BUFFER,
 					  redisplay_glyph_changed);

@@ -135,12 +135,12 @@ init_editfns (void)
 	getpwnam ((char *) XSTRING_DATA (Vuser_login_name));
       speed_up_interrupts ();
     }
-  
+
   p = (Bufbyte *) ((pw) ? USER_FULL_NAME : "unknown"); /* don't gettext here */
   q = (Bufbyte *) strchr ((char *) p, ',');
   Vuser_full_name = make_ext_string (p, (q ? q - p : strlen ((char *) p)),
 				     FORMAT_OS);
-  
+
 #ifdef AMPERSAND_FULL_NAME
   p = XSTRING_DATA (Vuser_full_name);
   q = (Bufbyte *) strchr ((char *) p, '&');
@@ -462,7 +462,7 @@ save_excursion_restore (Lisp_Object info)
 	 and cleaner never to alter the window/buffer connections.  */
 /* #### I'm certain some code somewhere depends on this behavior. --jwz */
 
-  if (visible 
+  if (visible
       && (current_buffer != XBUFFER (XWINDOW (selected_window)->buffer)))
     switch_to_buffer (Fcurrent_buffer (), Qnil);
 #endif
@@ -489,7 +489,7 @@ even in case of abnormal exit (throw or error).
   int speccount = specpdl_depth ();
 
   record_unwind_protect (save_excursion_restore, save_excursion_save ());
-			 
+
   return unbind_to (speccount, Fprogn (args));
 }
 
@@ -688,7 +688,7 @@ if POS is nil, the value of point is assumed.
 	       get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD)));
 
   n--;
-  
+
   if (n < BUF_BEGV (b))
     return Qnil;
   return make_char (BUF_FETCH_CHAR (b, n));
@@ -782,11 +782,11 @@ user is returned, or nil.  USER may be either a login name or a uid.
   struct passwd *pw = NULL;
   Lisp_Object tem;
   char *p, *q;
-  
+
   if (!NILP (user_name))	/* nil when nonexistent UID passed as arg */
     {
       CONST char *user_name_ext;
-      
+
       /* Fuck me.  getpwnam() can call select() and (under IRIX at least)
 	 things get wedged if a SIGIO arrives during this time. */
       GET_C_STRING_OS_DATA_ALLOCA (user_name, user_name_ext);
@@ -955,12 +955,12 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %A is replaced by the full name of the day of week.
 %b is replaced by the abbreviated name of the month.
 %B is replaced by the full name of the month.
-%c is a synonym for \"%x %X\".
-%C is a locale-specific synonym, which defaults to \"%A, %B %e, %Y\" in the C locale.
+%c is a synonym for "%x %X".
+%C is a locale-specific synonym, which defaults to "%A, %B %e, %Y" in the C locale.
 %d is replaced by the day of month, zero-padded.
-%D is a synonym for \"%m/%d/%y\".
+%D is a synonym for "%m/%d/%y".
 %e is replaced by the day of month, blank-padded.
-%h is a synonym for \"%b\".
+%h is a synonym for "%b".
 %H is replaced by the hour (00-23).
 %I is replaced by the hour (00-12).
 %j is replaced by the day of the year (001-366).
@@ -968,18 +968,18 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %l is replaced by the hour (1-12), blank padded.
 %m is replaced by the month (01-12).
 %M is replaced by the minute (00-59).
-%n is a synonym for \"\\n\".
+%n is a synonym for "\\n".
 %p is replaced by AM or PM, as appropriate.
-%r is a synonym for \"%I:%M:%S %p\".
-%R is a synonym for \"%H:%M\".
+%r is a synonym for "%I:%M:%S %p".
+%R is a synonym for "%H:%M".
 %S is replaced by the second (00-60).
-%t is a synonym for \"\\t\".
-%T is a synonym for \"%H:%M:%S\".
+%t is a synonym for "\\t".
+%T is a synonym for "%H:%M:%S".
 %U is replaced by the week of the year (00-53), first day of week is Sunday.
 %w is replaced by the day of week (0-6), Sunday is day 0.
 %W is replaced by the week of the year (00-53), first day of week is Monday.
-%x is a locale-specific synonym, which defaults to \"%D\" in the C locale.
-%X is a locale-specific synonym, which defaults to \"%T\" in the C locale.
+%x is a locale-specific synonym, which defaults to "%D" in the C locale.
+%X is a locale-specific synonym, which defaults to "%T" in the C locale.
 %y is replaced by the year without century (00-99).
 %Y is replaced by the year with century.
 %Z is replaced by the time zone abbreviation.
@@ -1036,7 +1036,7 @@ ZONE is an integer indicating the number of seconds east of Greenwich.
   struct tm save_tm;
   struct tm *decoded_time;
   Lisp_Object list_args[9];
-  
+
   if (! lisp_to_time (specified_time, &time_spec))
     error ("Invalid time specification");
 
@@ -1104,7 +1104,7 @@ If you want them to stand for years in this century, you must do that yourself.
       char tzbuf[100];
       char *tzstring;
       char **oldenv = environ, **newenv;
-      
+
       if (STRINGP (zone))
 	tzstring = (char *) XSTRING_DATA (zone);
       else if (INTP (zone))
@@ -1117,7 +1117,7 @@ If you want them to stand for years in this century, you must do that yourself.
       else
 	error ("Invalid time zone specification");
 
-      /* Set TZ before calling mktime; merely adjusting mktime's returned 
+      /* Set TZ before calling mktime; merely adjusting mktime's returned
 	 value doesn't suffice, since that would mishandle leap seconds.  */
       set_time_zone_rule (tzstring);
 
@@ -1451,7 +1451,7 @@ text into.  If BUFFER is nil, the current buffer is assumed.
   if (n <= 0)
     return Qnil;
   slen = min (n, 768);
-  string = (Bufbyte *) alloca (slen * sizeof (Bufbyte));
+  string = alloca_array (Bufbyte, slen);
   /* Write as many copies of the character into the temp string as will fit. */
   for (i = 0; i + charlen <= slen; i += charlen)
     for (j = 0; j < charlen; j++)
@@ -1836,7 +1836,7 @@ save_restriction_restore (Lisp_Object data)
 
     start = BUF_BEG (buf) + newhead;
     end = BUF_Z (buf) - newtail;
-    
+
     bi_start = bufpos_to_bytind (buf, start);
     bi_end = bufpos_to_bytind (buf, end);
 
@@ -1906,7 +1906,7 @@ It may contain %-sequences meaning to substitute the next argument.
 %f means print as a floating-point number in fixed notation (e.g. 785.200).
 %e or %E means print as a floating-point number in scientific notation
   (e.g. 7.85200e+03).
-%g or %G means print as a floating-point number in \"pretty format\";
+%g or %G means print as a floating-point number in "pretty format";
   depending on the number, either %f or %e/%E format will be used, and
   trailing zeroes are removed from the fractional part.
 The argument used for all but %s and %S must be a number.  It will be
@@ -1999,7 +1999,7 @@ The optional buffer argument is for symmetry and is ignored.
    Traverses the entire marker list of the buffer to do so, adding an
    appropriate amount to some, subtracting from some, and leaving the
    rest untouched.  Most of this is copied from adjust_markers in insdel.c.
-  
+
    It's the caller's job to see that (start1 <= end1 <= start2 <= end2).  */
 
 void
@@ -2030,7 +2030,7 @@ transpose_markers (Bufpos start1, Bufpos end1, Bufpos start2, Bufpos end2)
 
   /* The difference between the region's lengths */
   diff = (end2 - start2) - (end1 - start1);
-  
+
   /* For shifting each marker in a region by the length of the other
    * region plus the distance between the regions.
    */
@@ -2188,7 +2188,7 @@ vars_of_editfns (void)
   staticpro (&Vuser_full_name);
   staticpro (&Vuser_name);
   staticpro (&Vuser_real_name);
-#endif 
+#endif
   DEFVAR_BOOL ("zmacs-regions", &zmacs_regions /*
 *Whether LISPM-style active regions should be used.
 This means that commands which operate on the region (the area between the
@@ -2203,7 +2203,7 @@ More specifically:
  - Only a very small set of commands cause the region to become active:
    Those commands whose semantics are to mark an area, like mark-defun.
  - The region is deactivated after each command that is executed, except that:
- - \"Motion\" commands do not change whether the region is active or not.
+ - "Motion" commands do not change whether the region is active or not.
 
 set-mark-command (C-SPC) pushes a mark and activates the region.  Moving the
 cursor with normal motion commands (C-n, C-p, etc) will cause the region

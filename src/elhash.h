@@ -23,9 +23,9 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_ELHASH_H_
 #define _XEMACS_ELHASH_H_
 
-DECLARE_LRECORD (hashtable, struct hashtable_struct);
+DECLARE_LRECORD (hashtable, struct hashtable);
 
-#define XHASHTABLE(x) XRECORD (x, hashtable, struct hashtable_struct)
+#define XHASHTABLE(x) XRECORD (x, hashtable, struct hashtable)
 #define XSETHASHTABLE(x, p) XSETRECORD (x, p, hashtable)
 #define HASHTABLEP(x) RECORDP (x, hashtable)
 #define GC_HASHTABLEP(x) GC_RECORDP (x, hashtable)

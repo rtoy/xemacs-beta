@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/07/10 23:41:29
-;; Version: 1.139
+;; Created: 1997/07/14 16:57:04
+;; Version: 1.140
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2279,7 +2279,17 @@ With optional ARG, move across that many fields."
       (while todo
 	(goto-char (point-min))
 	(insert "\n" (car todo))
-	(setq todo (cdr todo))))
+	(setq todo (cdr todo)))
+      (if url
+	  (progn
+	    (goto-char (point-min))
+	    (insert (format "HTML Errors for: <URL:%s>\n" url))))
+      (set (make-local-variable 'font-lock-keywords) w3-html-errors-font-lock-keywords)
+      (set (make-local-variable 'font-lock-keywords-only) nil)
+      (set (make-local-variable 'font-lock-keywords-case-fold-search) nil)
+      (set (make-local-variable 'font-lock-syntax-table) nil)
+      (set (make-local-variable 'font-lock-beginning-of-syntax-function) 'beginning-of-line)
+      (run-hooks 'w3-display-errors-hook))
     (w3-notify-when-ready buffer)))
 
 (defun w3-mode ()

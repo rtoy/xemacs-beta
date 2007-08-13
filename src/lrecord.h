@@ -66,12 +66,12 @@ struct lrecord_header
      table of lrecord-implementations rather than a direct pointer.
      There would be 24 (or 16) bits left over for datatype-specific
      per-instance flags.
-     
+
      The below is the simplest thing to do for the present,
      and doesn't incur that much overhead as most Emacs records
      are of such a size that the overhead isn't too bad.
      (The marker datatype is the worst case.)
-     
+
      It also has the very very very slight advantage that type-checking
      involves one memory read (of the "implementation" slot) and a
      comparison against a link-time constant address rather than a
@@ -90,7 +90,7 @@ struct lcrecord_header
   /* The "next" field is normally used to chain all lrecords together
      so that the GC can find (and free) all of them.
      "alloc_lcrecord" threads records together.
-     
+
      The "next" field may be used for other purposes as long as some
      other mechanism is provided for letting the GC do its work.  (For
      example, the event and marker datatypes allocate members out of
@@ -118,7 +118,7 @@ struct free_lcrecord_header
   Lisp_Object chain;
 };
 
-/* This as the value of lheader->implementation->finalizer 
+/* This as the value of lheader->implementation->finalizer
  *  means that this record is already marked */
 extern void this_marks_a_marked_record (void *, int);
 
@@ -147,7 +147,7 @@ struct lrecord_implementation
      case).  It should perform any necessary cleanup (e.g. freeing
      malloc()ed memory.  This can be NULL, meaning no special
      finalization is necessary.
-       
+
      WARNING: remember that the finalizer is called at dump time even
      though the object is not being freed. */
   void (*finalizer) (void *header, int for_disksave);
@@ -259,7 +259,7 @@ CONST_IF_NOT_DEBUG struct lrecord_implementation lrecord_##c_name[2] =	\
       &(lrecord_##c_name##_lrecord_type_index), 0 },			\
     { 0, 0, 0, this_marks_a_marked_record, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
 
-#define LRECORDP(a) (XTYPE ((a)) == Lisp_Record)
+#define LRECORDP(a) (XTYPE ((a)) == Lisp_Type_Record)
 #define XRECORD_LHEADER(a) ((struct lrecord_header *) XPNTR (a))
 #define RECORD_TYPEP(x, ty) \
   (LRECORDP (x) && XRECORD_LHEADER (x)->implementation == (ty))
@@ -305,7 +305,7 @@ extern Lisp_Object Q##c_name##p
 
 # define XSETRECORD(var, p, c_name) do				\
 {								\
-  XSETOBJ (var, Lisp_Record, p);				\
+  XSETOBJ (var, Lisp_Type_Record, p);				\
   assert (RECORD_TYPEP (var, lrecord_##c_name) ||		\
 	  MARKED_RECORD_P (var));				\
 } while (0)
@@ -321,7 +321,7 @@ extern Lisp_Object Q##c_name##p
 # define XRECORD(x, c_name, structtype) ((structtype *) XPNTR (x))
 # define XNONRECORD(x, c_name, type_enum, structtype)		\
   ((structtype *) XPNTR (x))
-# define XSETRECORD(var, p, c_name) XSETOBJ (var, Lisp_Record, p)
+# define XSETRECORD(var, p, c_name) XSETOBJ (var, Lisp_Type_Record, p)
 
 #endif /* not ERROR_CHECK_TYPECHECK */
 
@@ -331,7 +331,7 @@ extern Lisp_Object Q##c_name##p
 /* Note: we now have two different kinds of type-checking macros.
    The "old" kind has now been renamed CONCHECK_foo.  The reason for
    this is that the CONCHECK_foo macros signal a continuable error,
-   allowing the user (through debug-on-error) to subsitute a different
+   allowing the user (through debug-on-error) to substitute a different
    value and return from the signal, which causes the lvalue argument
    to get changed.  Quite a lot of code would crash if that happened,
    because it did things like
@@ -351,24 +351,27 @@ extern Lisp_Object Q##c_name##p
    FSF Emacs does not have this problem because RMS took the cheesy
    way out and disabled returning from a signal entirely. */
 
-#define CONCHECK_RECORD(x, c_name) do				\
-{ if (!RECORD_TYPEP (x, lrecord_##c_name))			\
-    x = wrong_type_argument (Q##c_name##p, x); }		\
-  while (0)
-#define CONCHECK_NONRECORD(x, lisp_enum, predicate) do		\
-{ if (XTYPE (x) != lisp_enum)					\
-    x = wrong_type_argument (predicate, x); }			\
-  while (0)
-#define CHECK_RECORD(x, c_name) do				\
-{ if (!RECORD_TYPEP (x, lrecord_##c_name))			\
-    dead_wrong_type_argument (Q##c_name##p, x); }		\
-  while (0)
-#define CHECK_NONRECORD(x, lisp_enum, predicate) do		\
-{ if (XTYPE (x) != lisp_enum)					\
-    dead_wrong_type_argument (predicate, x); }			\
-  while (0)
+#define CONCHECK_RECORD(x, c_name) do {			\
+ if (!RECORD_TYPEP (x, lrecord_##c_name))		\
+   x = wrong_type_argument (Q##c_name##p, x);		\
+}  while (0)
+#define CONCHECK_NONRECORD(x, lisp_enum, predicate) do {\
+ if (XTYPE (x) != lisp_enum)				\
+   x = wrong_type_argument (predicate, x);		\
+ } while (0)
+#define CHECK_RECORD(x, c_name) do {			\
+ if (!RECORD_TYPEP (x, lrecord_##c_name))		\
+   dead_wrong_type_argument (Q##c_name##p, x);		\
+ } while (0)
+#define CHECK_NONRECORD(x, lisp_enum, predicate) do {	\
+ if (XTYPE (x) != lisp_enum)				\
+   dead_wrong_type_argument (predicate, x);		\
+ } while (0)
 
 void *alloc_lcrecord (int size, CONST struct lrecord_implementation *);
+
+#define alloc_lcrecord_type(type, lrecord_implementation) \
+  ((type *) alloc_lcrecord (sizeof (type), lrecord_implementation))
 
 int gc_record_type_p (Lisp_Object frob,
 		      CONST struct lrecord_implementation *type);

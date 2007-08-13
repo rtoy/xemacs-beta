@@ -33,8 +33,14 @@ Boston, MA 02111-1307, USA.  */
 
 #define	EXPENSIVE 2000
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern char *tgoto (CONST char *cm, int hpos, int vpos);
 extern void tputs (CONST char *, int, void (*)(int));
+#ifdef __cplusplus
+}
+#endif
 
 static void cmgoto_for_real (struct console *c, int row, int col);
 
@@ -215,7 +221,7 @@ calccost (struct frame *f, int srcy, int srcx, int dsty, int dstx, int doit)
     while (--deltay >= 0)
       tputs (motion, 1, cmputc);
 
-calculate_x: 
+calculate_x:
 
   deltax = dstx - srcx;
   if (!deltax)
@@ -246,7 +252,7 @@ calculate_x:
     while (--deltax >= 0)
       tputs (motion, 1, cmputc);
 
-done: 
+done:
     return totalcost;
 }
 #endif /* NOT_YET */
@@ -289,7 +295,7 @@ cmgoto (struct frame *f, int row, int col)
 #if 0
   if (frame_y >= 0 && frame_x >= 0)
     {
-      /* 
+      /*
        * Pick least-cost motions
        */
 
@@ -351,7 +357,7 @@ cmgoto (struct frame *f, int row, int col)
       dcm = TTY_CM (c).abs;
     }
 
-  /* 
+  /*
    * In the following comparison, the = in <= is because when the costs
    * are the same, it looks nicer (I think) to move directly there.
    */
@@ -374,20 +380,20 @@ cmgoto (struct frame *f, int row, int col)
 
   switch (use)
     {
-    case USEHOME: 
+    case USEHOME:
       tputs (TTY_CM (c).home, 1, cmputc);
       FRAME_CURSOR_X (f) = 0;
       FRAME_CURSOR_Y (f) = 0;
       break;
 
-    case USELL: 
+    case USELL:
       tputs (TTY_CM (c).low_left, 1, cmputc);
       FRAME_CURSOR_Y (f) = FRAME_HEIGHT (f) - 1;
       FRAME_CURSOR_X (f) = 0;
       break;
 
 #if 0
-    case USECR: 
+    case USECR:
       tputs (Wcm.cm_cr, 1, cmputc);
       if (Wcm.cm_autolf)
 	curY++;

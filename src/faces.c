@@ -383,7 +383,7 @@ static struct Lisp_Face *
 allocate_face (void)
 {
   struct Lisp_Face *result =
-    alloc_lcrecord (sizeof (struct Lisp_Face), lrecord_face);
+    alloc_lcrecord_type (struct Lisp_Face, lrecord_face);
 
   reset_face (result);
   return result;
@@ -405,7 +405,8 @@ add_face_to_list_mapper (CONST void *hash_key, void *hash_contents,
   /* This function can GC */
   Lisp_Object key, contents;
   Lisp_Object *face_list;
-  struct face_list_closure *fcl = face_list_closure;
+  struct face_list_closure *fcl =
+    (struct face_list_closure *) face_list_closure;
   CVOID_TO_LISP (key, hash_key);
   VOID_TO_LISP (contents, hash_contents);
   face_list = fcl->face_list;
@@ -511,7 +512,8 @@ update_face_inheritance_mapper (CONST void *hash_key, void *hash_contents,
 				void *face_inheritance_closure)
 {
   Lisp_Object key, contents;
-  struct face_inheritance_closure *fcl = face_inheritance_closure;
+  struct face_inheritance_closure *fcl =
+    (struct face_inheritance_closure *) face_inheritance_closure;
 
   CVOID_TO_LISP (key, hash_key);
   VOID_TO_LISP (contents, hash_contents);

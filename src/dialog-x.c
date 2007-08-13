@@ -223,9 +223,9 @@ The rest of the elements are descriptions of the dialog box's buttons.
 Each of these is a vector, the syntax of which is essentially the same as
 that of popup menu items.  They may have any of the following forms:
 
- [ \"name\" callback <active-p> ]
- [ \"name\" callback <active-p> \"suffix\" ]
- [ \"name\" callback :<keyword> <value>  :<keyword> <value> ... ]
+ [ "name" callback <active-p> ]
+ [ "name" callback <active-p> "suffix" ]
+ [ "name" callback :<keyword> <value>  :<keyword> <value> ... ]
 
 The name is the string to display on the button; it is filtered through the
 resource database, so it is possible for resources to override what string
@@ -238,7 +238,7 @@ evaluated with `eval'.
 One (and only one) of the buttons may be `nil'.  This marker means that all
 following buttons should be flushright instead of flushleft.
 
-Though the keyword/value syntax is supported for dialog boxes just as in 
+Though the keyword/value syntax is supported for dialog boxes just as in
 popup menus, the only keyword which is both meaningful and fully implemented
 for dialog box buttons is `:active'.
 */
@@ -277,7 +277,7 @@ for dialog box buttons is `:active'.
      for the dialog widget) to begin.  Eventually, a dialog item is
      selected, and a misc-user-event blip is pushed onto the end of
      the input stream, which is then executed by the event loop.
-     
+
      So there are two command-events, with a bunch of magic-events
      between them.  We don't want the *first* command event to alter
      the state of the region, so that the region can be available as

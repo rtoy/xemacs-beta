@@ -46,15 +46,16 @@ Boston, MA 02111-1307, USA.  */
    end buffer positions for a contiguous set of lines on that piece
    of paper. */
 
+typedef struct line_start_cache line_start_cache;
 struct line_start_cache
 {
   Bufpos start, end;
   int height;
 };
 
-typedef struct line_start_cache_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct line_start_cache);
+  Dynarr_declare (line_start_cache);
 } line_start_cache_dynarr;
 
 /* The possible types of runes.
@@ -88,7 +89,8 @@ typedef struct line_start_cache_dynarr_type
    (Printable characters typically have one rune associated with them,
    but control characters have two -- a ^ and a letter -- and other
    non-printing characters (those displayed in octal) have four. */
-   
+
+typedef struct rune rune;
 struct rune
 {
   face_index findex;		/* face rune is displayed with.  The
@@ -132,13 +134,13 @@ struct rune
 				   glyph to the left while still clipping
 				   at XPOS. */
     } dglyph;
-    
+
     /* CHAR */
     struct
     {
       Emchar ch;		/* Cbaracter of this rune. */
     } chr;
-    
+
     /* HLINE */
     struct
     {
@@ -148,9 +150,9 @@ struct rune
   } object;			/* actual rune object */
 };
 
-typedef struct rune_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct rune);
+  Dynarr_declare (rune);
 } rune_dynarr;
 
 /* These must have distinct values.  Note that the ordering actually
@@ -188,6 +190,7 @@ enum display_type
    reduce the amount of X traffic, which will help things significantly
    on a slow line. */
 
+typedef struct display_block display_block;
 struct display_block
 {
   enum display_type type;	/* type of display block */
@@ -198,9 +201,9 @@ struct display_block
   rune_dynarr *runes;		/* Dynamic array of runes */
 };
 
-typedef struct display_block_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct display_block);
+  Dynarr_declare (display_block);
 } display_block_dynarr;
 
 typedef struct layout_bounds_type
@@ -213,6 +216,7 @@ typedef struct layout_bounds_type
   int right_out;
 } layout_bounds;
 
+typedef struct glyph_block glyph_block;
 struct glyph_block
 {
   Lisp_Object glyph;
@@ -223,11 +227,12 @@ struct glyph_block
   int width;
 };
 
-typedef struct glyph_block_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct glyph_block);
+  Dynarr_declare (glyph_block);
 } glyph_block_dynarr;
 
+typedef struct display_line display_line;
 struct display_line
 {
   short ypos;				/* vertical position in pixels
@@ -264,19 +269,19 @@ struct display_line
   glyph_block_dynarr *right_glyphs;
 };
 
-typedef struct display_line_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct display_line);
+  Dynarr_declare (display_line);
 } display_line_dynarr;
 
 /* It could be argued that the following two structs belong in
    extents.h, but they're only used by redisplay and it simplifies
    the header files to put them here. */
 
-typedef struct extent_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct extent *);
-} extent_dynarr;
+  Dynarr_declare (EXTENT);
+} EXTENT_dynarr;
 
 struct font_metric_info
 {
@@ -296,7 +301,7 @@ struct extent_fragment
   Lisp_Object object; /* buffer or string */
   struct frame *frm;
   Bytind pos, end;
-  extent_dynarr *extents;
+  EXTENT_dynarr *extents;
   glyph_block_dynarr *begin_glyphs, *end_glyphs;
   unsigned int invisible:1;
   unsigned int invisible_ellipses:1;

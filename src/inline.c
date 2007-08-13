@@ -33,7 +33,7 @@ Boston, MA 02111-1307, USA.  */
    Some compilers that recognize `inline' may not do the same
    `extern inline' business, so on those we just do `static inline'.
    */
-   
+
 #define DONT_EXTERN_INLINE_FUNCTIONS
 
 #include <config.h>

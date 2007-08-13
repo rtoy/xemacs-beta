@@ -53,8 +53,7 @@ accept a pattern compiled by 'regexp-compile' with word-option t.
       CHECK_STRING (XVECTOR_DATA (temp)[0]);
       s = XSTRING (XVECTOR_DATA (temp)[0]);
       if (!wordbuf[i])
-	wordbuf[i] = (struct re_pattern_buffer *)
-	  xmalloc (sizeof (struct re_pattern_buffer));
+	wordbuf[i] = xnew (struct re_pattern_buffer);
       else
 	if (wordbuf[i]->buffer) xfree (wordbuf[i]->buffer);
       wordbuf[i]->buffer = (char *) xmalloc (s->size + 1);
@@ -74,7 +73,7 @@ accept a pattern compiled by 'regexp-compile' with word-option t.
       wordbuf[i]->category_version = 0;
 
       wordbuf[i]->regs_allocated = REGS_UNALLOCATED;
-      wordbuf[i]->re_nsub = 0;				
+      wordbuf[i]->re_nsub = 0;
       wordbuf[i]->no_sub = 0;
       wordbuf[i]->newline_anchor = 1;
 
@@ -88,7 +87,7 @@ accept a pattern compiled by 'regexp-compile' with word-option t.
       if (wordbuf[i]->buffer) xfree (wordbuf[i]->buffer);
       xfree (wordbuf[i]);
       wordbuf[i] = (struct re_pattern_buffer *) 0;
-    }    
+    }
   return Qnil;
 }
 

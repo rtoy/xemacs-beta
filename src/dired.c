@@ -45,7 +45,7 @@ If FULL is non-nil, absolute pathnames of the files are returned.
 If MATCH is non-nil, only pathnames containing that regexp are returned.
 If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
  NOSORT is useful if you plan to sort the result yourself.
-If FILES-ONLY is the symbol t, then only the \"files\" in the directory
+If FILES-ONLY is the symbol t, then only the "files" in the directory
  will be returned; subdirectories will be excluded.  If FILES-ONLY is not
  nil and not t, then only the subdirectories will be returned.  Otherwise,
  if FILES-ONLY is nil (the default) then both files and subdirectories will
@@ -207,8 +207,8 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
   return Fsort (Fnreverse (list), Qstring_lessp);
 }
 
-static Lisp_Object file_name_completion (Lisp_Object file, 
-                                         Lisp_Object dirname, 
+static Lisp_Object file_name_completion (Lisp_Object file,
+                                         Lisp_Object dirname,
                                          int all_flag, int ver_flag);
 
 DEFUN ("file-name-completion", Ffile_name_completion, 2, 2, 0, /*
@@ -473,7 +473,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
                      an exact match.  This way, we get the case pattern
                      of the actual match.  */
                   if ((matchsize == cclen
-                       && matchsize + !!directoryp 
+                       && matchsize + !!directoryp
                        < string_char_length (XSTRING (bestmatch)))
                       ||
                       /* If there is no exact match ignoring case,
@@ -481,7 +481,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
                          of the input.  */
                       (((matchsize == cclen)
                         ==
-                        (matchsize + !!directoryp 
+                        (matchsize + !!directoryp
                          == string_char_length (XSTRING (bestmatch))))
                        /* If there is more than one exact match aside from
                           case, and one of them is exact including case,
@@ -654,7 +654,7 @@ If file does not exist, returns nil.
     char *tmpnam = (char *) XSTRING_DATA (Ffile_name_nondirectory (filename));
     int l = strlen (tmpnam);
 
-    if (l >= 5 
+    if (l >= 5
 	&& S_ISREG (s.st_mode)
 	&& (stricmp (&tmpnam[l - 4], ".com") == 0 ||
 	    stricmp (&tmpnam[l - 4], ".exe") == 0 ||

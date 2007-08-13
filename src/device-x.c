@@ -66,7 +66,7 @@ Lisp_Object Vx_initial_argv_list; /* #### ugh! */
 static XrmOptionDescRec emacs_options[] =
 {
   {"-geometry", ".geometry", XrmoptionSepArg, NULL},
-  {"-iconic", ".iconic", XrmoptionNoArg, (XtPointer) "yes"},
+  {"-iconic", ".iconic", XrmoptionNoArg, "yes"},
 
   {"-internal-border-width", "*EmacsFrame.internalBorderWidth",
    XrmoptionSepArg, NULL},
@@ -152,10 +152,7 @@ get_x_display (Lisp_Object device)
 static void
 allocate_x_device_struct (struct device *d)
 {
-  d->device_data = (struct x_device *) xmalloc (sizeof (struct x_device));
-
-  /* zero out all slots. */
-  memset (d->device_data, 0, sizeof (struct x_device));
+  d->device_data = xnew_and_zero (struct x_device);
 }
 
 static void
@@ -299,21 +296,23 @@ x_init_device (struct device *d, Lisp_Object props)
 #endif /* HAVE_XIM */
 
 #ifdef HAVE_SESSION
-  XtVaSetValues(DEVICE_XT_APP_SHELL (d),
-                XtNmappedWhenManaged, False,
-                XtNwidth, 1,
-                XtNheight, 1,
-                NULL);
-  XtRealizeWidget(DEVICE_XT_APP_SHELL (d));
   {
-    int argc;
-    char **argv;
+    Arg al[3];
+    Widget shell = DEVICE_XT_APP_SHELL (d);
 
-    make_argc_argv (Vcommand_line_args, &argc, &argv);
-    XSetCommand (XtDisplay (DEVICE_XT_APP_SHELL (d)),
-                 XtWindow (DEVICE_XT_APP_SHELL (d)), argv, argc);
-    free_argc_argv (argv);
+    XtSetArg (al [0], XtNmappedWhenManaged, False);
+    XtSetArg (al [1],XtNwidth,  1);
+    XtSetArg (al [2],XtNheight, 1);
+    XtSetValues (shell, al, 3);
+    XtRealizeWidget (shell);
 
+    {
+      int new_argc;
+      char **new_argv;
+      make_argc_argv (Vcommand_line_args, &new_argc, &new_argv);
+      XSetCommand (XtDisplay (shell), XtWindow (shell), new_argv, new_argc);
+      free_argc_argv (new_argv);
+    }
   }
 #endif /* HAVE_SESSION */
 

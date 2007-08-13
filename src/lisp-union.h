@@ -21,87 +21,63 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30.  Split out from lisp.h. */
 
+typedef
+union Lisp_Object
+{
+  struct
+  {
 #if (!!defined (WORDS_BIGENDIAN) != !!defined (LOWTAGS))
-
-/* Big-endian lowtags, little-endian hightags */
-typedef
-union Lisp_Object
-  {
-    struct
-      {
-	unsigned EMACS_INT type_mark: GCTYPEBITS + 1;
-	signed EMACS_INT val: VALBITS;
-      } s;
-    struct
-      {
-#ifdef __GNUC__ /* Non-ANSI extension */
-        enum Lisp_Type type: GCTYPEBITS;
-#else
-	unsigned EMACS_INT type: GCTYPEBITS;
-#endif /* __GNUC__ */
-	/* The markbit is not really part of the value of a Lisp_Object,
-	   and is always zero except during garbage collection.  */
-	unsigned EMACS_INT markbit: 1;
-	unsigned EMACS_INT val: VALBITS;
-      } gu;
-    EMACS_INT i;
-    /* GCC bites yet again.  I fart in the general direction of
-       the GCC authors.
-
-       This was formerly declared 'void *v' etc. but that causes
-       GCC to accept any (yes, any) pointer as the argument of
-       a function declared to accept a Lisp_Object. */
-    struct __nosuchstruct__ *v;
-    CONST struct __nosuchstruct__ *cv;             /* C wanks */
-  }
-Lisp_Object;
-
+    /* Big-endian lowtags, little-endian hightags */
+    unsigned EMACS_INT type_mark: GCTYPEBITS + 1;
+    signed EMACS_INT val: VALBITS;
 #else /* If WORDS_BIGENDIAN, or little-endian hightags */
-
-/* Big-endian hightags, little-endian lowtags */
-typedef
-union Lisp_Object
-  {
-    struct
-      {
-	signed EMACS_INT val: VALBITS;
-	unsigned EMACS_INT mark_type: GCTYPEBITS + 1;
-      } s;
-    struct
-      {
-	unsigned EMACS_INT val: VALBITS;
-#ifdef __GNUC__ /* Non-ANSI extension */
-        enum Lisp_Type type: GCTYPEBITS;
-#else
-	unsigned EMACS_INT type: GCTYPEBITS;
-#endif /* __GNUC__ */
-	/* The markbit is not really part of the value of a Lisp_Object,
-	   and is always zero except during garbage collection.  */
-	unsigned EMACS_INT markbit: 1;
-      } gu;
-    EMACS_INT i;
-    struct __nosuchstruct__ *v;
-    CONST struct __nosuchstruct__ *cv;             /* C sucks */
-  }
-Lisp_Object;
-
+    signed EMACS_INT val: VALBITS;
+    unsigned EMACS_INT mark_type: GCTYPEBITS + 1;
 #endif /* BIG/LITTLE_ENDIAN vs HIGH/LOWTAGS */
+  } s;
+  struct
+  {
+#if (!!defined (WORDS_BIGENDIAN) == !!defined (LOWTAGS))
+    unsigned EMACS_INT val: VALBITS;
+#endif
+#ifdef __GNUC__ /* Non-ANSI extension */
+    enum Lisp_Type type: GCTYPEBITS;
+#else
+    unsigned EMACS_INT type: GCTYPEBITS;
+#endif /* __GNUC__ */
+    /* The markbit is not really part of the value of a Lisp_Object,
+       and is always zero except during garbage collection.  */
+    unsigned EMACS_INT markbit: 1;
+#if (!!defined (WORDS_BIGENDIAN)  != !!defined (LOWTAGS))
+    unsigned EMACS_INT val: VALBITS;
+#endif
+  } gu;
+  EMACS_INT i;
+  /* GCC bites yet again.  I fart in the general direction of
+     the GCC authors.
 
+     This was formerly declared 'void *v' etc. but that causes
+     GCC to accept any (yes, any) pointer as the argument of
+     a function declared to accept a Lisp_Object. */
+  struct __nosuchstruct__ *v;
+  CONST struct __nosuchstruct__ *cv;             /* C wanks */
+}
+Lisp_Object;
 
 #ifndef XMAKE_LISP
 #if (__GNUC__ > 1)
 /* Use GCC's struct initializers feature */
-#define XMAKE_LISP(vartype,ptr) \
+#define XMAKE_LISP(vartype,value) \
    ((union Lisp_Object) { gu: { markbit: 0, \
                                 type: (vartype), \
-                                val: ((unsigned EMACS_INT) ptr) } })
+                                val: ((unsigned EMACS_INT) value) } })
 #endif /* __GNUC__ */
 #endif /* !XMAKE_LISP */
 
 
 #ifdef XMAKE_LISP
-#define Qzero (XMAKE_LISP (Lisp_Int, 0))
-#define make_int(a) (XMAKE_LISP (Lisp_Int, (a)))
+#define Qzero (XMAKE_LISP (Lisp_Type_Int, 0))
+#define make_int(a) (XMAKE_LISP (Lisp_Type_Int, (a)))
 #else
 extern Lisp_Object Qzero;
 #endif
@@ -111,7 +87,6 @@ extern Lisp_Object Qzero;
 #define GC_EQ(x,y) ((x).gu.val == (y).gu.val && (x).gu.type == (y).gu.type)
 
 #define XTYPE(a) ((enum Lisp_Type) (a).gu.type)
-#define XSETTYPE(a,b) ((a).gu.type = (b))
 #define XGCTYPE(a) XTYPE (a)
 
 /* This was commented out a long time ago.  I uncommented it, but it
@@ -123,14 +98,6 @@ extern Lisp_Object Qzero;
 #else
 #define XREALINT(a) ((a).s.val)
 #endif /* EXPLICIT_SIGN_EXTEND */
-
-#if 0
-/* XFASTINT is error-prone and saves a few instructions at best,
-   so there's really no point to it.  Just use XINT() or make_int()
-   instead. --ben */
-/* The + 0 is to prevent XFASTINT being used on the LHS of an assignment */
-#define XFASTINT(a) ((a).gu.val + 0)
-#endif /* 0 */
 
 #define XUINT(a) ((a).gu.val)
 #ifdef HAVE_SHM
@@ -150,20 +117,17 @@ extern int pure_size;
 # else /* not DATA_SEG_BITS */
 #  define XPNTR(a) ((void *) ((a).gu.val))
 # endif /* not DATA_SEG_BITS */
-#endif /* not HAVE_SHM */        
-#define XSETINT(a, b) do { ((a) = make_int (b)); } while (0)
-#define XSETUINT(a, b) XSETINT (a, b)
-#define XSETPNTR(a, b) XSETINT (a, b)
+#endif /* not HAVE_SHM */
+#define XSETINT(a, b) ((void) ((a) = make_int (b)))
 
-#define XSETCHAR(a, b) do { ((a) = make_char (b)); } while (0)
+#define XSETCHAR(a, b) ((void) ((a) = make_char (b)))
 
 /* XSETOBJ was formerly named XSET.  The name change was made to catch
    C code that attempts to use this macro.  You should always use the
    individual settor macros (XSETCONS, XSETBUFFER, etc.) instead. */
 
 #ifdef XMAKE_LISP
-#define XSETOBJ(var,vartype,ptr) \
-  do { ((var) = XMAKE_LISP (vartype, ptr)); } while (0)
+#define XSETOBJ(a, type, b) ((void) ((a) = XMAKE_LISP (type, b)))
 #else
 /* This is haired up to avoid evaluating var twice...
    This is necessary only in the "union" version.
@@ -171,34 +135,31 @@ extern int pure_size;
  */
 /* XEmacs change: put the assignment to val first; otherwise you
    can trip up the error_check_*() stuff */
-#define XSETOBJ(var, vartype, ptr)				\
-   do {								\
-	 Lisp_Object *tmp_xset_var = &(var);			\
-	 (*tmp_xset_var).s.val = ((EMACS_INT) (ptr));		\
-	 (*tmp_xset_var).gu.markbit = 0;			\
-	 (*tmp_xset_var).gu.type = (vartype);			\
+#define XSETOBJ(var, vartype, value)			\
+   do {							\
+	 Lisp_Object *tmp_xset_var = &(var);		\
+	 (*tmp_xset_var).s.val = ((EMACS_INT) (value));	\
+	 (*tmp_xset_var).gu.markbit = 0;		\
+	 (*tmp_xset_var).gu.type = (vartype);		\
       } while (0)
 #endif /* undefined XMAKE_LISP */
 
 /* During garbage collection, XGCTYPE must be used for extracting types
- so that the mark bit is ignored.  XMARKBIT access the markbit.
- Markbits are used only in particular slots of particular structure types.
- Other markbits are always zero.
- Outside of garbage collection, all mark bits are always zero.  */
-
+   so that the mark bit is ignored.  XMARKBIT access the markbit.
+   Markbits are used only in particular slots of particular structure types.
+   Other markbits are always zero.
+   Outside of garbage collection, all mark bits are always zero.  */
 
 #define XMARKBIT(a) ((a).gu.markbit)
-#define XSETMARKBIT(a,b) do { (XMARKBIT (a) = (b)); } while (0)
-#define XMARK(a) do { XMARKBIT (a) = 1; } while (0)
-/* no 'do {} while' because this is used in a mondo macro in lrecord.h */
-#define XUNMARK(a) (XMARKBIT (a) = 0)
+#define XMARK(a) ((void) (XMARKBIT (a) = 1))
+#define XUNMARK(a) ((void) (XMARKBIT (a) = 0))
 
 /* Use this for turning a (void *) into a Lisp_Object, as when the
   Lisp_Object is passed into a toolkit callback function */
 #define VOID_TO_LISP(larg,varg) \
-  do { ((larg).v = (struct __nosuchstruct__ *) (varg)); } while (0)
+     ((void) ((larg).v = (struct __nosuchstruct__ *) (varg)))
 #define CVOID_TO_LISP(larg,varg) \
-  do { ((larg).cv = (CONST struct __nosuchstruct__ *) (varg)); } while (0)
+     ((void) ((larg).cv = (CONST struct __nosuchstruct__ *) (varg)))
 
 /* Use this for turning a Lisp_Object into a  (void *), as when the
   Lisp_Object is passed into a toolkit callback function */
@@ -215,4 +176,3 @@ extern int pure_size;
    will catch errors. */
 #define NON_LVALUE(larg) (larg)
 #endif
-

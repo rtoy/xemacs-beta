@@ -226,7 +226,7 @@ all:	${GENERATED_HEADERS} ${MAKE_SUBDIR}
 .SUFFIXES:
 
 .NO_PARALLEL:	${GENERATED_HEADERS} ${MAKE_SUBDIR} dump-elcs
-.PHONY: ${SUBDIR} all beta all-elc all-elcs dump-elc dump-elcs autoloads
+.PHONY: ${SUBDIR} all beta all-elc all-elcs dump-elc dump-elcs autoloads finder
 
 ## Convenience target for XEmacs beta testers
 beta: clean all-elc
@@ -247,6 +247,11 @@ dump-elc dump-elcs: ${GENERATED_HEADERS} FRC.dump-elcs
 
 autoloads: src
 	MAKE='$(MAKE)' sh ${srcdir}/lib-src/update-autoloads.sh
+
+finder: src
+	@(cd lisp/utils; \
+		../../src/xemacs -batch -q -no-site-file \
+		-l finder -f finder-compile-keywords )
 
 ## We force the rebuilding of src/paths.h because the user might give
 ## different values for the various directories.  Since we use
@@ -424,12 +429,12 @@ install-arch-indep: mkdir
 	@echo "If you would like to save approximately 15M of disk space, do"
 	@echo "make gzip-el"
 	@echo "or you may run "
-	@echo lib-src/gzip-el.sh lispdir " from the command line."
+	@echo ${srcdir}/lib-src/gzip-el.sh lispdir " from the command line."
 	@echo "Where lispdir is where the lisp files were installed, i.e.,"
 	@echo "${lispdir}"
 
 gzip-el:
-	lib-src/gzip-el.sh ${lispdir}
+	${srcdir}/lib-src/gzip-el.sh ${lispdir}
 
 MAKEPATH=./lib-src/make-path
 ## Build all the directories to install XEmacs in.

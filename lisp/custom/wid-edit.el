@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.9954
+;; Version: 1.9956
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -1275,18 +1275,19 @@ Unlike (get-char-property POS 'field) this, works with empty fields too."
 (defun widget-before-change (from to)
   ;; This is how, for example, a variable changes its state to `modified'.
   ;; when it is being edited.
-  (let ((from-field (widget-field-find from))
-	(to-field (widget-field-find to)))
-    (cond ((not (eq from-field to-field))
-	   (add-hook 'post-command-hook 'widget-add-change nil t)
-	   (error "Change should be restricted to a single field"))
-	  ((null from-field)
-	   (add-hook 'post-command-hook 'widget-add-change nil t)
-	   (error "Attempt to change text outside editable field"))
-	  (widget-field-use-before-change
-	   (condition-case nil
-	       (widget-apply from-field :notify from-field)
-	     (error (debug "Before Change")))))))
+  (unless inhibit-read-only
+    (let ((from-field (widget-field-find from))
+	  (to-field (widget-field-find to)))
+      (cond ((not (eq from-field to-field))
+	     (add-hook 'post-command-hook 'widget-add-change nil t)
+	     (error "Change should be restricted to a single field"))
+	    ((null from-field)
+	     (add-hook 'post-command-hook 'widget-add-change nil t)
+	     (error "Attempt to change text outside editable field"))
+	    (widget-field-use-before-change
+	     (condition-case nil
+		 (widget-apply from-field :notify from-field)
+	       (error (debug "Before Change"))))))))
 
 (defun widget-add-change ()
   (make-local-hook 'post-command-hook)

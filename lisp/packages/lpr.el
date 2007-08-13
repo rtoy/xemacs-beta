@@ -115,8 +115,27 @@ The variable `lpr-page-header-program' specifies the program to use."
   (print-region-1 start end lpr-switches t))
 
 ;; XEmacs change
-(require 'message)	; Until We can get some sensible autoloads, or
+;; (require 'message)	; Until We can get some sensible autoloads, or
 			; message-flatten-list gets put somewhere decent.
+;; Sigh ...
+;; `ps-flatten-list' is defined here (copied from "message.el" and
+;; enhanced to handle dotted pairs as well) until we can get some
+;; sensible autoloads, or `flatten-list' gets put somewhere decent.
+
+;; (ps-flatten-list '((a . b) c (d . e) (f g h) i . j))
+;; => (a b c d e f g h i j)
+
+(defun lpr-flatten-list (&rest list)
+  (lpr-flatten-list-1 list))
+
+(defun lpr-flatten-list-1 (list)
+  (cond
+    ((null list) (list))
+    ((consp list)
+     (append (lpr-flatten-list-1 (car list))
+	     (lpr-flatten-list-1 (cdr list))))
+    (t (list list))))
+
 (defun print-region-1 (start end switches page-headers)
   ;; On some MIPS system, having a space in the job name
   ;; crashes the printer demon.  But using dashes looks ugly
@@ -139,7 +158,7 @@ The variable `lpr-page-header-program' specifies the program to use."
 					 (list lpr-headers-switches)
 				        lpr-headers-switches)
 				     switches))))
-      (setq nswitches (message-flatten-list    ; XEmacs
+      (setq nswitches (lpr-flatten-list    ; XEmacs
 		       (mapcar '(lambda (arg)  ; Dynamic evaluation
 				  (cond ((stringp arg) arg)
 					((functionp arg) (apply arg nil))

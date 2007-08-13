@@ -533,7 +533,7 @@ int XmuSimpleErrorHandler (Display *dpy, XErrorEvent *errorp)
     return XmuPrintDefaultErrorMessage (dpy, errorp, stderr);
 }
 
-void XmuCopyISOLatin1Lowered(char *dst, char *src)
+void XmuCopyISOLatin1Lowered(char *dst, CONST char *src)
 {
     unsigned char *dest   = (unsigned char *) dst;
     unsigned char *source = (unsigned char *) src;

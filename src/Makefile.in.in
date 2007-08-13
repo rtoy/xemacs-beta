@@ -285,8 +285,6 @@ release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 	touch release
 #endif /* ! defined (CANNOT_DUMP) */
 
-FRC.DOC:
-
 xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
 	@$(RM) $@ && touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
@@ -310,10 +308,7 @@ dynodump_deps = ../dynodump/dynodump.so
 	cd ../dynodump && $(RECURSIVE_MAKE)
 #endif /* DYNODUMP */
 
-${libsrc}DOC: temacs
-#ifdef NO_DOC_FILE
-	if test -f $@; then touch $@ && exit 0; fi; \
-#endif
+${libsrc}DOC: temacs update-elc.stamp
 	$(RM) ${libsrc}DOC; \
 	${DUMPENV} ./temacs -batch -l ../prim/make-docfile.el -- \
 		-o ${libsrc}DOC -d ${srcdir} -i ${libsrc}../site-packages \

@@ -141,10 +141,7 @@ Valid classes are 'color, 'grayscale, and 'mono.
 */
        (device_class))
 {
-  if (valid_device_class_p (device_class))
-    return Qt;
-  else
-    return Qnil;
+  return valid_device_class_p (device_class) ? Qt : Qnil;
 }
 
 DEFUN ("device-class-list", Fdevice_class_list, 0, 0, 0, /*
@@ -158,8 +155,8 @@ Return a list of valid device classes.
 static struct device *
 allocate_device (Lisp_Object console)
 {
-  Lisp_Object device = Qnil;
-  struct device *d = alloc_lcrecord (sizeof (struct device), lrecord_device);
+  Lisp_Object device;
+  struct device *d = alloc_lcrecord_type (struct device, lrecord_device);
   struct gcpro gcpro1;
 
   zero_lcrecord (d);
@@ -253,7 +250,7 @@ select_device_1 (Lisp_Object device)
 {
   struct device *dev = XDEVICE (device);
   Lisp_Object old_selected_device = Fselected_device (Qnil);
-  
+
   if (EQ (device, old_selected_device))
     return;
 
@@ -299,7 +296,9 @@ If DEVICE is the selected device, this makes FRAME the selected frame.
 */
        (device, frame))
 {
-  XSETDEVICE (device, decode_device (device));
+  struct device *d = decode_device (device);
+
+  XSETDEVICE (device, d);
   CHECK_LIVE_FRAME (frame);
 
   if (! EQ (device, FRAME_DEVICE (XFRAME (frame))))
@@ -317,9 +316,7 @@ Return non-nil if OBJECT is a device.
 */
        (object))
 {
-  if (!DEVICEP (object))
-    return Qnil;
-  return Qt;
+  return DEVICEP (object) ? Qt : Qnil;
 }
 
 DEFUN ("device-live-p", Fdevice_live_p, 1, 1, 0, /*
@@ -327,9 +324,7 @@ Return non-nil if OBJECT is a device that has not been deleted.
 */
        (object))
 {
-  if (!DEVICEP (object) || !DEVICE_LIVE_P (XDEVICE (object)))
-    return Qnil;
-  return Qt;
+  return DEVICEP (object) && DEVICE_LIVE_P (XDEVICE (object)) ? Qt : Qnil;
 }
 
 DEFUN ("device-name", Fdevice_name, 0, 1, 0, /*
@@ -499,7 +494,7 @@ static Lisp_Object
 delete_deviceless_console(Lisp_Object console)
 {
   if (NILP (XCONSOLE (console)->device_list))
-    Fdelete_console(console, Qnil);
+    Fdelete_console (console, Qnil);
   return Qnil;
 }
 
@@ -888,13 +883,9 @@ Return the width in pixels of DEVICE, or nil if unknown.
        (device))
 {
   struct device *d = decode_device (device);
-  int retval;
+  int retval = DEVMETH_OR_GIVEN (d, device_pixel_width, (d), 0);
 
-  retval = DEVMETH_OR_GIVEN (d, device_pixel_width, (d), 0);
-  if (retval <= 0)
-    return Qnil;
-
-  return make_int (retval);
+  return retval <= 0 ? Qnil : make_int (retval);
 }
 
 DEFUN ("device-pixel-height", Fdevice_pixel_height, 0, 1, 0, /*
@@ -903,13 +894,9 @@ Return the height in pixels of DEVICE, or nil if unknown.
        (device))
 {
   struct device *d = decode_device (device);
-  int retval;
+  int retval = DEVMETH_OR_GIVEN (d, device_pixel_height, (d), 0);
 
-  retval = DEVMETH_OR_GIVEN (d, device_pixel_height, (d), 0);
-  if (retval <= 0)
-    return Qnil;
-
-  return make_int (retval);
+  return retval <= 0 ? Qnil : make_int (retval);
 }
 
 DEFUN ("device-mm-width", Fdevice_mm_width, 0, 1, 0, /*
@@ -918,13 +905,9 @@ Return the width in millimeters of DEVICE, or nil if unknown.
        (device))
 {
   struct device *d = decode_device (device);
-  int retval;
+  int retval = DEVMETH_OR_GIVEN (d, device_mm_width, (d), 0);
 
-  retval = DEVMETH_OR_GIVEN (d, device_mm_width, (d), 0);
-  if (retval <= 0)
-    return Qnil;
-
-  return make_int (retval);
+  return retval <= 0 ? Qnil : make_int (retval);
 }
 
 DEFUN ("device-mm-height", Fdevice_mm_height, 0, 1, 0, /*
@@ -933,13 +916,9 @@ Return the height in millimeters of DEVICE, or nil if unknown.
        (device))
 {
   struct device *d = decode_device (device);
-  int retval;
+  int retval = DEVMETH_OR_GIVEN (d, device_mm_height, (d), 0);
 
-  retval = DEVMETH_OR_GIVEN (d, device_mm_height, (d), 0);
-  if (retval <= 0)
-    return Qnil;
-
-  return make_int (retval);
+  return retval <= 0 ? Qnil : make_int (retval);
 }
 
 DEFUN ("device-bitplanes", Fdevice_bitplanes, 0, 1, 0, /*
@@ -948,13 +927,9 @@ Return the number of bitplanes of DEVICE, or nil if unknown.
        (device))
 {
   struct device *d = decode_device (device);
-  int retval;
+  int retval = DEVMETH_OR_GIVEN (d, device_bitplanes, (d), 0);
 
-  retval = DEVMETH_OR_GIVEN (d, device_bitplanes, (d), 0);
-  if (retval <= 0)
-    return Qnil;
-
-  return make_int (retval);
+  return retval <= 0 ? Qnil : make_int (retval);
 }
 
 DEFUN ("device-color-cells", Fdevice_color_cells, 0, 1, 0, /*
@@ -963,13 +938,9 @@ Return the number of color cells of DEVICE, or nil if unknown.
        (device))
 {
   struct device *d = decode_device (device);
-  int retval;
+  int retval = DEVMETH_OR_GIVEN (d, device_color_cells, (d), 0);
 
-  retval = DEVMETH_OR_GIVEN (d, device_color_cells, (d), 0);
-  if (retval <= 0)
-    return Qnil;
-
-  return make_int (retval);
+  return retval <= 0 ? Qnil : make_int (retval);
 }
 
 DEFUN ("set-device-baud-rate", Fset_device_baud_rate, 2, 2, 0, /*
@@ -1040,7 +1011,7 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
     call1_with_handler (Qreally_early_error_handler, function, object);
   else
     call0_with_handler (Qreally_early_error_handler, function);
-      
+
   UNLOCK_DEVICE (d);
   Vinhibit_quit = old_inhibit_quit;
   gc_currently_forbidden = old_gc_currently_forbidden;

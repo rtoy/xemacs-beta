@@ -72,15 +72,15 @@ Lisp_Object Vconsole_defaults;
    as well as a default value which is used to initialize newly-created
    consoles and as a reset-value when local-vars are killed.
 
-   If a slot is -2, there is no DEFVAR_CONSOLE_LOCAL for it. 
+   If a slot is -2, there is no DEFVAR_CONSOLE_LOCAL for it.
    (The slot is always local, but there's no lisp variable for it.)
-   The default value is only used to initialize newly-creation consoles. 
-   
+   The default value is only used to initialize newly-creation consoles.
+
    If a slot is -3, then there is no DEFVAR_CONSOLE_LOCAL for it but
    there is a default which is used to initialize newly-creation
    consoles and as a reset-value when local-vars are killed.
 
-   
+
    */
 struct console console_local_flags;
 
@@ -150,8 +150,7 @@ static struct console *
 allocate_console (void)
 {
   Lisp_Object console = Qnil;
-  struct console *con = alloc_lcrecord (sizeof (struct console),
-					lrecord_console);
+  struct console *con = alloc_lcrecord_type (struct console, lrecord_console);
   struct gcpro gcpro1;
 
   copy_lcrecord (con, XCONSOLE (Vconsole_defaults));
@@ -535,7 +534,7 @@ find_other_console (Lisp_Object console)
       if (!CONSOLE_STREAM_P (XCONSOLE (con))
 	  && !EQ (con, console)
 	  && !NILP (CONSOLE_SELECTED_DEVICE (XCONSOLE (con)))
-	  && !NILP (DEVICE_SELECTED_FRAME 
+	  && !NILP (DEVICE_SELECTED_FRAME
 		    (XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (con))))))
 	break;
     }
@@ -548,7 +547,7 @@ find_other_console (Lisp_Object console)
       Lisp_Object con = XCAR (concons);
       if (!EQ (con, console)
 	  && !NILP (CONSOLE_SELECTED_DEVICE (XCONSOLE (con)))
-	  && !NILP (DEVICE_SELECTED_FRAME 
+	  && !NILP (DEVICE_SELECTED_FRAME
 		    (XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (con))))))
 	break;
     }
@@ -595,7 +594,7 @@ find_nonminibuffer_frame_not_on_console (Lisp_Object console)
 
 void
 delete_console_internal (struct console *con, int force,
-			 int called_from_kill_emacs, int from_io_error) 
+			 int called_from_kill_emacs, int from_io_error)
 {
   /* This function can GC */
   Lisp_Object console = Qnil;
@@ -695,11 +694,11 @@ delete_console_internal (struct console *con, int force,
 	  }
       }
   }
-  
+
   CONSOLE_SELECTED_DEVICE (con) = Qnil;
-  
+
   /* try to select another console */
-  
+
   if (EQ (console, Fselected_console ()))
     {
       Lisp_Object other_dev = find_other_console (console);
@@ -715,7 +714,7 @@ delete_console_internal (struct console *con, int force,
 
   if (con->input_enabled)
     event_stream_unselect_console (con);
-  
+
   MAYBE_CONMETH (con, delete_console, (con));
 
   Vconsole_list = delq_no_quit (console, Vconsole_list);
@@ -870,7 +869,7 @@ On such systems, Emacs will start a subshell and wait for it to exit.
   /* Call value of suspend-resume-hook
      if it is bound and value is non-nil.  */
   run_hook (Qsuspend_resume_hook);
-  
+
   UNGCPRO;
   return Qnil;
 }
@@ -930,7 +929,7 @@ On such systems, who knows what will happen.
 #ifdef HAVE_TTY
   c = decode_console (console);
 
-  if (CONSOLE_TTY_P (c)) 
+  if (CONSOLE_TTY_P (c))
   {
     /*
      * hide all the unhidden frames so the display code won't update
@@ -969,7 +968,7 @@ do stuff to the tty to make it sane again.
 #ifdef HAVE_TTY
   c = decode_console (console);
 
-  if (CONSOLE_TTY_P (c)) 
+  if (CONSOLE_TTY_P (c))
   {
     /* raise the selected frame */
     Lisp_Object device = CONSOLE_SELECTED_DEVICE (c);
@@ -1065,13 +1064,13 @@ The elements of this list correspond to the arguments of
 {
   Lisp_Object val[4];
   struct console *con = decode_console (console);
- 
+
   val[0] = Qnil;
   val[1] = CONSOLE_TTY_P (con) && TTY_FLAGS (con).flow_control ? Qt : Qnil;
   val[2] = (!CONSOLE_TTY_P (con) || TTY_FLAGS (con).meta_key == 1) ?
     Qt : TTY_FLAGS (con).meta_key == 2 ? make_int (0) : Qnil;
   val[3] = make_char (CONSOLE_QUIT_CHAR (con));
- 
+
   return Flist (sizeof (val) / sizeof (val[0]), val);
 }
 
@@ -1103,7 +1102,7 @@ syms_of_console (void)
   DEFSUBR (Fconsole_on_window_system_p);
   DEFSUBR (Fsuspend_console);
   DEFSUBR (Fresume_console);
-  
+
   DEFSUBR (Fsuspend_emacs);
   DEFSUBR (Fset_input_mode);
   DEFSUBR (Fcurrent_input_mode);
@@ -1121,7 +1120,7 @@ syms_of_console (void)
 void
 console_type_create (void)
 {
-  the_console_type_entry_dynarr = Dynarr_new (struct console_type_entry);
+  the_console_type_entry_dynarr = Dynarr_new (console_type_entry);
 
   Vconsole_type_list = Qnil;
   staticpro (&Vconsole_type_list);
@@ -1163,61 +1162,61 @@ One argument, the to-be-deleted console.
 #endif
 }
 
-/* DOC is ignored because it is snagged and recorded externally 
+/* DOC is ignored because it is snagged and recorded externally
  *  by make-docfile */
 /* Declaring this stuff as const produces 'Cannot reinitialize' messages
    from SunPro C's fix-and-continue feature (a way neato feature that
    makes debugging unbelievably more bearable) */
-#define DEFVAR_CONSOLE_LOCAL(lname, field_name)				\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(console_local_flags.field_name), 69 },	\
-             SYMVAL_SELECTED_CONSOLE_FORWARD }, 0 };			\
-      defvar_console_local ((lname), &I_hate_C);			\
- } while (0)
+#define DEFVAR_CONSOLE_LOCAL(lname, field_name) do {			\
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+    (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
+     SYMVAL_SELECTED_CONSOLE_FORWARD }, 0 };				\
+     defvar_console_local ((lname), &I_hate_C);				\
+} while (0)
 
-#define DEFVAR_CONSOLE_LOCAL_MAGIC(lname, field_name, magicfun)	\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(console_local_flags.field_name), 69 },	\
-             SYMVAL_SELECTED_CONSOLE_FORWARD }, magicfun };		\
-      defvar_console_local ((lname), &I_hate_C);			\
- } while (0)
+#define DEFVAR_CONSOLE_LOCAL_MAGIC(lname, field_name, magicfun)	do {	\
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+    (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
+     SYMVAL_SELECTED_CONSOLE_FORWARD }, magicfun };			\
+     defvar_console_local ((lname), &I_hate_C);				\
+} while (0)
 
-#define DEFVAR_CONST_CONSOLE_LOCAL(lname, field_name)			\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(console_local_flags.field_name), 69 },	\
-             SYMVAL_CONST_SELECTED_CONSOLE_FORWARD }, 0 };		\
-      defvar_console_local ((lname), &I_hate_C);			\
- } while (0)
+#define DEFVAR_CONST_CONSOLE_LOCAL(lname, field_name) do {		\
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+    (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
+     SYMVAL_CONST_SELECTED_CONSOLE_FORWARD }, 0 };			\
+     defvar_console_local ((lname), &I_hate_C);				\
+} while (0)
 
-#define DEFVAR_CONST_CONSOLE_LOCAL_MAGIC(lname, field_name, magicfun)	\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(console_local_flags.field_name), 69 },	\
-             SYMVAL_CONST_SELECTED_CONSOLE_FORWARD }, magicfun };	\
-      defvar_console_local ((lname), &I_hate_C);			\
- } while (0)
+#define DEFVAR_CONST_CONSOLE_LOCAL_MAGIC(lname, field_name, magicfun) do { \
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+    (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
+     SYMVAL_CONST_SELECTED_CONSOLE_FORWARD }, magicfun };		\
+     defvar_console_local ((lname), &I_hate_C);			\
+} while (0)
 
-#define DEFVAR_CONSOLE_DEFAULTS(lname, field_name)			\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(console_local_flags.field_name), 69 },	\
-             SYMVAL_DEFAULT_CONSOLE_FORWARD }, 0 };			\
-      defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));		\
- } while (0)
+#define DEFVAR_CONSOLE_DEFAULTS(lname, field_name) do {			\
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+    (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
+     SYMVAL_DEFAULT_CONSOLE_FORWARD }, 0 };				\
+     defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));		\
+} while (0)
 
-#define DEFVAR_CONSOLE_DEFAULTS_MAGIC(lname, field_name, magicfun)	\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(console_local_flags.field_name), 69 },	\
-             SYMVAL_DEFAULT_CONSOLE_FORWARD }, magicfun };		\
-      defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));		\
- } while (0)
+#define DEFVAR_CONSOLE_DEFAULTS_MAGIC(lname, field_name, magicfun) do {	\
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+    (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
+     SYMVAL_DEFAULT_CONSOLE_FORWARD }, magicfun };			\
+     defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));		\
+} while (0)
 
 static void
-defvar_console_local (CONST char *namestring, 
+defvar_console_local (CONST char *namestring,
 		       CONST struct symbol_value_forward *m)
 {
   int offset = ((char *)symbol_value_forward_forward (m)
@@ -1225,7 +1224,7 @@ defvar_console_local (CONST char *namestring,
 
   defvar_mumble (namestring, m, sizeof (*m));
 
-  *((Lisp_Object *)(offset + (char *)XCONSOLE (Vconsole_local_symbols))) 
+  *((Lisp_Object *)(offset + (char *)XCONSOLE (Vconsole_local_symbols)))
     = intern (namestring);
 }
 
@@ -1245,24 +1244,22 @@ complex_vars_of_console (void)
   /* Make sure all markable slots in console_defaults
      are initialized reasonably, so mark_console won't choke.
    */
-  struct console *defs = alloc_lcrecord (sizeof (struct console),
-					 lrecord_console);
-  struct console *syms = alloc_lcrecord (sizeof (struct console),
-					 lrecord_console);
+  struct console *defs = alloc_lcrecord_type (struct console, lrecord_console);
+  struct console *syms = alloc_lcrecord_type (struct console, lrecord_console);
 
   staticpro (&Vconsole_defaults);
   staticpro (&Vconsole_local_symbols);
   XSETCONSOLE (Vconsole_defaults, defs);
   XSETCONSOLE (Vconsole_local_symbols, syms);
-  
+
   nuke_all_console_slots (syms, Qnil);
   nuke_all_console_slots (defs, Qnil);
-  
+
   /* Set up the non-nil default values of various console slots.
      Must do these before making the first console.
      */
   /* #### Anything needed here? */
-  
+
   {
     /*  0 means var is always local.  Default used only at creation.
      * -1 means var is always local.  Default used only at reset and
@@ -1282,13 +1279,13 @@ complex_vars_of_console (void)
     Lisp_Object always_local_no_default = make_int (0);
     Lisp_Object resettable = make_int (-3);
 #endif
-    
+
     /* Assign the local-flags to the slots that have default values.
        The local flag is a bit that is used in the console
        to say that it has its own local value for the slot.
        The local flag bits are in the local_var_flags slot of the
        console.  */
-    
+
     nuke_all_console_slots (&console_local_flags, make_int (-2));
     console_local_flags.defining_kbd_macro = always_local_resettable;
     console_local_flags.last_kbd_macro = always_local_resettable;
@@ -1297,9 +1294,9 @@ complex_vars_of_console (void)
     console_local_flags.overriding_terminal_local_map =
       always_local_resettable;
     console_local_flags.tty_erase_char = always_local_resettable;
-    
+
     console_local_flags.function_key_map = make_int (1);
-    
+
     /* #### Warning, 0x4000000 (that's six zeroes) is the largest number
        currently allowable due to the XINT() handling of this value.
        With some rearrangement you can get 4 more bits. */
@@ -1360,7 +1357,7 @@ or nil if no argument has been specified.
 You cannot examine this variable to find the argument for this command
 since it has been set to nil by the time you can look.
 Instead, you should use the variable `current-prefix-arg', although
-normally commands can get this prefix argument with (interactive \"P\").
+normally commands can get this prefix argument with (interactive "P").
 */ );
 
   DEFVAR_CONSOLE_LOCAL ("default-minibuffer-frame",

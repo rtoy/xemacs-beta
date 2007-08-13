@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
    Then assume that one stipple or background is used for text selections,
    and another is used for highlighting mousable regions.  That makes 16
    GCs already.  Add in the fact that another GC may be needed to display
-   the text cursor in any of those regions, and you've got 32.  Add in 
+   the text cursor in any of those regions, and you've got 32.  Add in
    more fonts, and it keeps increasing exponentially.
 
    We used to keep these GCs in a cache of merged (fully qualified) faces.
@@ -37,7 +37,7 @@ Boston, MA 02111-1307, USA.  */
    was changed, which caused an unpleasant amount of flicker (since faces are
    created/destroyed (= changed) whenever a frame is created/destroyed.
 
-   So this code maintains a cache at the GC level instead of at the face 
+   So this code maintains a cache at the GC level instead of at the face
    level.  There is an upper limit on the size of the cache, after which we
    will stop creating GCs and start reusing them (reusing the least-recently-
    used ones first).  So if faces get changed, their GCs will eventually be
@@ -92,7 +92,7 @@ struct gc_cache {
 };
 
 #ifdef GCCACHE_HASH
-static unsigned long 
+static unsigned long
 gc_cache_hash (CONST void *arg)
 {
   CONST struct gcv_and_mask *gcvm = (CONST struct gcv_and_mask *) arg;
@@ -111,18 +111,17 @@ gc_cache_hash (CONST void *arg)
 
 #endif /* GCCACHE_HASH */
 
-static int 
+static int
 gc_cache_eql (CONST void *arg1, CONST void *arg2)
 {
   /* See comment in gc_cache_hash */
-  return (!memcmp (arg1, arg2, sizeof (struct gcv_and_mask)));
+  return !memcmp (arg1, arg2, sizeof (struct gcv_and_mask));
 }
 
 struct gc_cache *
 make_gc_cache (Display *dpy, Window window)
 {
-  struct gc_cache *cache =
-    (struct gc_cache *) xmalloc (sizeof (struct gc_cache));
+  struct gc_cache *cache = xnew (struct gc_cache);
   cache->dpy = dpy;
   cache->window = window;
   cache->size = 0;
@@ -167,7 +166,7 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
 
 #ifdef GCCACHE_HASH
 
-  if (gethash (&gcvm, cache->table, (void *) &cell))
+  if (gethash (&gcvm, cache->table, (void **) &cell))
 
 #else /* !GCCACHE_HASH */
 
@@ -235,9 +234,8 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
     abort ();
   else
     {
-      /* Allocate a new cell (don't put it in the list or table yet).
-       */
-      cell = (struct gc_cache_cell *) xmalloc (sizeof (struct gc_cache_cell));
+      /* Allocate a new cell (don't put it in the list or table yet). */
+      cell = xnew (struct gc_cache_cell);
       cache->size++;
     }
 

@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/07/12 04:58:34
-;; Version: 1.149
+;; Created: 1997/08/12 14:44:46
+;; Version: 1.150
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -34,7 +34,7 @@
 (require 'wid-edit)			; For `widget-keymap'
 
 (defconst w3-version-number
-  (let ((x "p3.0.94"))
+  (let ((x "p3.0.103"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -42,7 +42,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/07/12 04:58:34"))
+(defconst w3-version-date (let ((x "1997/08/12 14:44:46"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -372,6 +372,12 @@ the buffer.")
 
 (defvar w3-target-window-distances nil
   "Target window distances")
+
+(defvar w3-tty-char-width 8
+  "*Char width to use when in a tty")
+
+(defvar w3-tty-char-height 15
+  "*Char height to use when in a tty")
 
 (defvar w3-form-radio-elements nil "Internal variable - do not touch!")
 (defvar w3-form-elements nil "Internal variable - do not touch!")

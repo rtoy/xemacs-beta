@@ -113,14 +113,15 @@ is used instead of `load-path'."
               ;; consider all combinations of library suffixes
               ;; and compression suffixes.
               (if (or (rassq 'jka-compr-handler file-name-handler-alist)
-                      (member 'crypt-find-file-hook find-file-hooks))
-                  (apply 'nconc
-                         (mapcar (lambda (compelt)
-                                   (mapcar (lambda (baselt)
-                                             (concat baselt compelt))
-                                           basic))
-                                 compressed))
-                basic)))))
+		      (and (boundp 'find-file-hooks)
+			   (member 'crypt-find-file-hook find-file-hooks)))
+		  (apply 'nconc
+			 (mapcar (lambda (compelt)
+				   (mapcar (lambda (baselt)
+					     (concat baselt compelt))
+					   basic))
+				 compressed))
+		basic)))))
        (or path load-path)))
     (and interactive-call
          (if result
@@ -183,13 +184,13 @@ lisp/           Contain directories which either have straight lisp code
   ;; Lisp files
   (if (file-directory-p (concat package "/lisp"))
       (progn
-	(setq load-path (cons (concat package "/lisp") load-path))
+	(setq load-path (cons (concat package "/lisp/") load-path))
 	(let ((dirs (directory-files (concat package "/lisp/")
 				     t "^[^-.]" nil 'dirs-only))
 	      dir)
 	  (while dirs
 	    (setq dir (car dirs))
-	    (setq load-path (cons dir load-path))
+	    (setq load-path (cons (concat dir "/") load-path))
 	    (packages-find-packages-1 dir path-only)
 	    (setq dirs (cdr dirs)))))))
 

@@ -294,7 +294,7 @@ If the third argument is incorrect, Emacs may crash.
     vector = wrong_type_argument (Qvectorp, vector);
   CHECK_NATNUM (maxdepth);
 
-  stackp = (Lisp_Object *) alloca (XINT (maxdepth) * sizeof (Lisp_Object));
+  stackp = alloca_array (Lisp_Object, XINT (maxdepth));
   memset (stackp, 0, XINT (maxdepth) * sizeof (Lisp_Object));
   GCPRO3 (bytestr, vector, *stackp);
   gcpro3.nvars = XINT (maxdepth);
@@ -305,9 +305,8 @@ If the third argument is incorrect, Emacs may crash.
 
   /* Initialize the pc-register and convert the string into a fixed-width
      format for easier processing.  */
-  massaged_code =
-    (Emchar *) alloca (sizeof (Emchar) *
-		       (1 + string_char_length (XSTRING (bytestr))));
+  massaged_code = alloca_array (Emchar,
+				1 + string_char_length (XSTRING (bytestr)));
   massaged_code_len =
     convert_bufbyte_string_into_emchar_string (XSTRING_DATA (bytestr),
 				      XSTRING_LENGTH (bytestr),
@@ -1055,7 +1054,7 @@ If the third argument is incorrect, Emacs may crash.
 #if 0
 	  /* probably this code is OK, but nth_entry is commented
 	     out above --ben */
-	  if (XTYPE (TOP) == Lisp_Cons)
+	  if (XTYPE (TOP) == Lisp_Type_Cons)
 	    {
 	      /* Exchange args and then do nth.  */
 	      v2 = POP;

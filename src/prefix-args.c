@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void
+int
 main (int argc, char **argv)
 {
   char *progname;
@@ -51,5 +51,5 @@ main (int argc, char **argv)
   for (; argc > 0; argc--, argv++)
     printf ("%s %s%c", prefix, argv[0], (argc > 1) ? ' ' : '\n');
 
-  exit (0);
+  return 0;
 }

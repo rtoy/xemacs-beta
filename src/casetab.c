@@ -84,7 +84,7 @@ check_case_table (Lisp_Object obj)
   while (tem = Fcase_table_p (obj), NILP (tem))
     obj = wrong_type_argument (Qcase_table_p, obj);
   return (obj);
-}   
+}
 
 DEFUN ("current-case-table", Fcurrent_case_table, 0, 1, 0, /*
 Return the case table of BUFFER, which defaults to the current buffer.
@@ -93,7 +93,7 @@ Return the case table of BUFFER, which defaults to the current buffer.
 {
   Lisp_Object down, up, canon, eqv;
   struct buffer *buf = decode_buffer (buffer, 0);
-  
+
   down = buf->downcase_table;
   up = buf->upcase_table;
   canon = buf->case_canon_table;
@@ -327,7 +327,7 @@ complex_vars_of_casetab (void)
 
       SET_TRT_TABLE_CHAR_1 (tem, i, lowered);
     }
-  
+
 #ifdef MULE
   tem = make_mirror_trt_table (tem);
   Vmirror_ascii_downcase_table = tem;
@@ -337,7 +337,7 @@ complex_vars_of_casetab (void)
   tem = MAKE_TRT_TABLE ();
   Vascii_upcase_table = tem;
   Vascii_eqv_table = tem;
-  
+
   for (i = 0; i < 256; i++)
     {
       unsigned char flipped = (isupper (i) ? tolower (i)

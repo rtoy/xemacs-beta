@@ -1,3 +1,70 @@
+1997-08-30  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/info.el (Info-mouse-track-double-click-hook): Added,
+ 	and placed an `add-hook' into (Info-mode)
+
+1997-08-29  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* packages/hyper-apropos.el (hyper-apropos-help-map): add
+	keybinding to `hyper-apropos-find-function'.
+	(hyper-apropos-map): removed unnecessary double binding to
+	`hyper-apropos-set-variable'.
+	(hyper-apropos-find-function): new function.
+	(hyper-apropos-popup-menu): if in the help mode, look for symbol
+	at top of the buffer if necessary.  Added menu entry for
+	`hyper-apropos-find-function'.
+
+1997-08-29  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* prim/files.el (switch-to-buffer-other-frame): make it select-frame
+
+1997-09-01  SL Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el (default-menubar): Put tetris in the game menu, 
+	and move it and the mine game to the top of the menu.
+
+1997-08-29  SL Baur  <steve@altair.xemacs.org>
+
+	* packages/lpr.el: Clone message-flatten-list.
+
+1997-08-25  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* apel/emu-x20.el (mime-charset-coding-system-alist):
+	iso-2022-jp-2 is defined as coding-system.
+
+	* mule/mule-coding.el: Rename `iso-2022-ss2-{7|8}' ->
+	`iso-2022-{7|8}bit-ss2' to sync with Emacs 20.0.96.
+
+	(iso-2022-jp-2): New coding system.
+
+1997-08-23  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* prim/about.el (about-maintainer-glyph): Fix problem with
+	jka-compr.el.
+
+1997-08-25  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/help.el (find-function): ff-read-function was renamed.
+	(find-function-other-window): Ditto.
+	(find-function-other-frame): Ditto.
+
+1997-08-21  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/packages.el (packages-find-packages-1): Append trailing
+	slash to directories added to the load-path.
+
+1997-08-17  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/autoload.el (fixup-autoload-buffer): Replace lost guard
+	statement.
+
+	* prim/make-docfile.el: Remove BOGUS redefinition of
+	find-file-hooks.
+	* prim/update-elc.el: Ditto.
+
+	* prim/packages.el (locate-library): Put guard on usage of
+	`find-file-hooks' (it doesn't exist when temacs is being run).
+
 Fri Aug 15 17:26:05 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode/Release 5.16

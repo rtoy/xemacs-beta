@@ -2404,8 +2404,7 @@ omitted, a default message listing FORM itself is used."
 (defmacro ignore-errors (&rest body)
   "Execute FORMS; if an error occurs, return nil.
 Otherwise, return result of last FORM."
-  (let ((err (gensym)))
-    (list 'condition-case err (cons 'progn body) '(error nil))))
+  (list 'condition-case nil (cons 'progn body) '(error nil)))
 
 
 ;;; Some predicates for analyzing Lisp forms.  These are used by various

@@ -569,7 +569,7 @@ Decode XPM image between START and END." nil nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.8 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.9 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -1558,7 +1558,7 @@ with your script for an edit-interpret-debug cycle." t nil)
 
 ;;;***
 
-;;;### (autoloads (strokes-mode strokes-list-strokes strokes-edit-strokes strokes-load-user-strokes strokes-help strokes-describe-stroke strokes-do-complex-stroke strokes-do-stroke strokes-read-complex-stroke strokes-read-stroke strokes-global-set-stroke) "strokes" "modes/strokes.el")
+;;;### (autoloads (strokes-compose-complex-stroke strokes-decode-buffer strokes-mode strokes-list-strokes strokes-load-user-strokes strokes-help strokes-describe-stroke strokes-do-complex-stroke strokes-do-stroke strokes-read-stroke strokes-global-set-stroke) "strokes" "modes/strokes.el")
 
 (defvar strokes-mode nil "\
 Non-nil when `strokes' is globally enabled")
@@ -1578,18 +1578,10 @@ Optional PROMPT in minibuffer displays before and during stroke reading.
 This function will display the stroke interactively as it is being
 entered in the strokes buffer if the variable
 `strokes-use-strokes-buffer' is non-nil.
-Optional EVENT is currently not used, but hopefully will be soon." nil nil)
-
-(autoload 'strokes-read-complex-stroke "strokes" "\
-Read a complex stroke (interactively) and return the stroke.
-Optional PROMPT in minibuffer displays before and during stroke reading.
-Note that a complex stroke allows the user to pen-up and pen-down.  This
-is implemented by allowing the user to paint with button1 or button2 and
-then complete the stroke with button3.
-Optional EVENT is currently not used, but hopefully will be soon." nil nil)
+Optional EVENT is acceptable as the starting event of the stroke" nil nil)
 
 (autoload 'strokes-do-stroke "strokes" "\
-Read a simple stroke from the user and then exectute its comand.
+Read a simple stroke from the user and then exectute its command.
 This must be bound to a mouse event." t nil)
 
 (autoload 'strokes-do-complex-stroke "strokes" "\
@@ -1609,16 +1601,6 @@ Load user-defined strokes from file named by `strokes-file'." t nil)
 
 (defalias 'load-user-strokes 'strokes-load-user-strokes)
 
-(autoload 'strokes-edit-strokes "strokes" "\
-Edit strokes in a pop-up buffer containing strokes and their definitions.
-If STROKES-MAP is not given, `strokes-global-map' will be used instead.
-
-Editing commands:
-
-\\{edit-faces-mode-map}" t nil)
-
-(defalias 'edit-strokes 'strokes-edit-strokes)
-
 (autoload 'strokes-list-strokes "strokes" "\
 Pop up a buffer containing an alphabetical listing of strokes in STROKES-MAP.
 With CHRONOLOGICAL prefix arg (\\[universal-argument]) list strokes
@@ -1635,7 +1617,22 @@ mode in all buffers when activated.
 By default, strokes are invoked with mouse button-2.  You can define
 new strokes with
 
-> M-x global-set-stroke" t nil)
+> M-x global-set-stroke
+
+To use strokes for pictographic editing, such as Chinese/Japanese, use
+Sh-button-2, which draws strokes and inserts them.  Encode/decode your
+strokes with
+
+> M-x strokes-encode-buffer
+> M-x strokes-decode-buffer" t nil)
+
+(autoload 'strokes-decode-buffer "strokes" "\
+Decode stroke strings in BUFFER and display their corresponding glyphs.
+Optional BUFFER defaults to the current buffer.
+Optional FORCE non-nil will ignore the buffer's read-only status." t nil)
+
+(autoload 'strokes-compose-complex-stroke "strokes" "\
+Read a complex stroke and insert its glyph into the current buffer." t nil)
 
 ;;;***
 
@@ -1938,7 +1935,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.8 $
+vhdl-mode $Revision: 1.9 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

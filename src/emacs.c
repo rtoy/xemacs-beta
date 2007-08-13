@@ -1565,14 +1565,14 @@ static struct standard_args standard_args[] =
 static void
 sort_args (int argc, char **argv)
 {
-  char **new = (char **) xmalloc (sizeof (char *) * argc);
+  char **new = xnew_array (char *, argc);
   /* For each element of argv,
      the corresponding element of options is:
      0 for an option that takes no arguments,
      1 for an option that takes one argument, etc.
      -1 for an ordinary non-option argument.  */
-  int *options  = (int *) xmalloc (sizeof (int) * argc);
-  int *priority = (int *) xmalloc (sizeof (int) * argc);
+  int *options  = xnew_array (int, argc);
+  int *priority = xnew_array (int, argc);
   int to = 1;
   int from;
   int i;
@@ -1713,7 +1713,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
    much as long as your filesystem is local, and you don't end up with
    a dumped version in case you want to rerun it.  This function is most
    useful when used as part of the `make all-elc' command. --ben]
-   This will \"restart\" emacs with the specified command-line arguments.
+   This will "restart" emacs with the specified command-line arguments.
  */
      (int nargs, Lisp_Object *args))
 {
@@ -1722,8 +1722,8 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   int namesize;
   int total_len;
   Lisp_Object orig_invoc_name = Fcar (Vcommand_line_args);
-  Extbyte **wampum_all = (Extbyte **) alloca (nargs * sizeof (Extbyte *));
-  int *wampum_all_len = (int *) alloca (nargs * sizeof (int));
+  Extbyte **wampum_all = alloca_array (Extbyte *, nargs);
+  int *wampum_all_len  = alloca_array (int, nargs);
 
   assert (!gc_in_progress);
 

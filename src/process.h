@@ -56,7 +56,7 @@ Lisp_Object Fget_process (Lisp_Object name);
 Lisp_Object Fget_buffer_process (Lisp_Object name);
 Lisp_Object Fprocessp (Lisp_Object object);
 Lisp_Object Fprocess_status (Lisp_Object process);
-Lisp_Object Fkill_process (Lisp_Object process, 
+Lisp_Object Fkill_process (Lisp_Object process,
 			   Lisp_Object current_group);
 Lisp_Object Fdelete_process (Lisp_Object process);
 Lisp_Object Fopen_network_stream_internal (Lisp_Object name,
@@ -125,7 +125,7 @@ int
 #else
 void
 #endif
-child_setup (int in, int out, int err, 
+child_setup (int in, int out, int err,
 		  char **new_argv, CONST char *current_dir);
 
 Charcount read_process_output (Lisp_Object proc);

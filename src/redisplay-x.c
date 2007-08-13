@@ -263,8 +263,7 @@ x_text_width (struct face_cachel *cachel, CONST Emchar *str,
 {
   int width_so_far = 0;
   unsigned char *text_storage = (unsigned char *) alloca (2 * len);
-  struct textual_run *runs =
-    (struct textual_run *) alloca (len * sizeof (struct textual_run));
+  struct textual_run *runs = alloca_array (struct textual_run, len);
   int nruns;
   int i;
 
@@ -349,7 +348,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 			int cursor_width, int cursor_height)
 {
   struct frame *f = XFRAME (w->frame);
-  emchar_dynarr *buf = Dynarr_new (Emchar);
+  Emchar_dynarr *buf = Dynarr_new (Emchar);
   Lisp_Object window;
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
@@ -778,7 +777,7 @@ x_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
  ****************************************************************************/
 void
 x_output_string (struct window *w, struct display_line *dl,
-		 emchar_dynarr *buf, int xpos, int xoffset, int clip_start,
+		 Emchar_dynarr *buf, int xpos, int xoffset, int clip_start,
 		 int width, face_index findex, int cursor,
 		 int cursor_start, int cursor_width, int cursor_height)
 {
@@ -804,8 +803,8 @@ x_output_string (struct window *w, struct display_line *dl,
   GC bgc, gc;
   int height;
   int len = Dynarr_length (buf);
-  unsigned char *text_storage = alloca (2 * len);
-  struct textual_run *runs = alloca (len * sizeof (struct textual_run));
+  unsigned char *text_storage = (unsigned char *) alloca (2 * len);
+  struct textual_run *runs = alloca_array (struct textual_run, len);
   int nruns;
   int i;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
@@ -1707,16 +1706,16 @@ x_generate_shadow_pixels (struct frame *f, unsigned long *top_shadow,
   XColor topc, botc;
   int top_frobbed = 0, bottom_frobbed = 0;
 
-  /* If the top shadow is the same color as the background, try and
+  /* If the top shadow is the same color as the background, try to
      adjust it. */
   if (*top_shadow == background)
     {
       topc.pixel = background;
       XQueryColor (dpy, cmap, &topc);
       /* don't overflow/wrap! */
-      topc.red   = MINL (65535, topc.red   * 1.2);
-      topc.green = MINL (65535, topc.green * 1.2);
-      topc.blue  = MINL (65535, topc.blue  * 1.2);
+      topc.red   = MINL (65535, (unsigned long) topc.red   * 6 / 5);
+      topc.green = MINL (65535, (unsigned long) topc.green * 6 / 5);
+      topc.blue  = MINL (65535, (unsigned long) topc.blue  * 6 / 5);
       if (allocate_nearest_color (dpy, cmap, &topc))
 	{
 	  *top_shadow = topc.pixel;
@@ -1724,15 +1723,15 @@ x_generate_shadow_pixels (struct frame *f, unsigned long *top_shadow,
 	}
     }
 
-  /* If the bottom shadow is the same color as the background, try and
+  /* If the bottom shadow is the same color as the background, try to
      adjust it. */
   if (*bottom_shadow == background)
     {
       botc.pixel = background;
       XQueryColor (dpy, cmap, &botc);
-      botc.red   *= 0.6;
-      botc.green *= 0.6;
-      botc.blue  *= 0.6;
+      botc.red   = (unsigned short) ((unsigned long) botc.red   * 3 / 5);
+      botc.green = (unsigned short) ((unsigned long) botc.green * 3 / 5);
+      botc.blue  = (unsigned short) ((unsigned long) botc.blue  * 3 / 5);
       if (allocate_nearest_color (dpy, cmap, &botc))
 	{
 	  *bottom_shadow = botc.pixel;

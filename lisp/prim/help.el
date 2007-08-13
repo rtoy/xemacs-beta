@@ -411,22 +411,23 @@ When called interactively, KEY may also be a menu selection."
        (lambda ()
 	 (princ (key-description key))
 	 (princ " runs ")
-	 (princ (format "`%s'" defn))
+	 (if (symbolp defn) (princ (format "`%S'" defn))
+	   (prin1 defn))
 	 (princ "\n\n")
 	 (cond ((or (stringp defn) (vectorp defn))
 		(let ((cmd (key-binding defn)))
 		  (if (not cmd)
 		      (princ "a keyboard macro")
 		    (progn
-		      (princ (format "a keyboard macro which runs the command %s:\n\n"
-				     cmd))
-		      (princ cmd)
-		      (princ "\n")
+		      (princ "a keyboard macro which runs the command ")
+		      (prin1 cmd)
+		      (princ ":\n\n")
 		      (if (documentation cmd) (princ (documentation cmd)))))))
 	       ((and (consp defn) (not (eq 'lambda (car-safe defn))))
-		(princ "\n")
 		(let ((describe-function-show-arglist nil))
 		  (describe-function-1 (car defn) standard-output)))
+	       ((symbolp defn)
+		(describe-function-1 defn standard-output))
 	       ((documentation defn)
 		(princ (documentation defn)))
 	       (t
@@ -557,6 +558,9 @@ then only the mouse bindings are displayed."
     (insert "Global Bindings:\n" heading)
     (describe-bindings-internal (current-global-map)
                                 nil shadow prefix mouse-only-p)
+    (when (and prefix function-key-map (not mouse-only-p))
+      (insert "\nFunction key map translations:\n" heading)
+      (describe-bindings-internal function-key-map nil nil prefix mouse-only-p))
     (set-buffer buffer)))
 
 (defun describe-prefix-bindings ()
@@ -860,19 +864,21 @@ unless the function is autoloaded."
   (princ (format "`%S' is " function) stream)
   (let* ((def function)
 	 file-name
-         (doc (or (documentation function)
-                  (gettext "not documented")))
+         (doc (condition-case nil
+		  (or (documentation function)
+		      (gettext "not documented"))
+		(void-function "")))
 	 aliases home kbd-macro-p fndef macrop)
-    (while (symbolp def)
-      (or (eq def function)
-	  (if aliases
-	      ;; I18N3 Need gettext due to concat
-	      (setq aliases (concat aliases 
-				    (format
-				     "\n     which is an alias for `%s', "
-					    (symbol-name def))))
-	    (setq aliases (format "an alias for `%s', "
-				  (symbol-name def)))))
+    (while (and (symbolp def) (fboundp def))
+      (when (not (eq def function))
+	(setq aliases
+	      (if aliases
+		  ;; I18N3 Need gettext due to concat
+		  (concat aliases 
+			  (format
+			   "\n     which is an alias for `%s', "
+			   (symbol-name def)))
+		(format "an alias for `%s', " (symbol-name def)))))
       (setq def (symbol-function def)))
     (if (compiled-function-p def)
 	(setq home (compiled-function-annotation def)))
@@ -910,6 +916,8 @@ unless the function is autoloaded."
             ((eq (car-safe def) 'autoload)
 	     (setq file-name (elt def 1))
 	     (funcall int "autoloaded Lisp" t (elt def 4)))
+	    ((and (symbolp def) (not (fboundp def)))
+	     (princ "a symbol with a void (unbound) function definition." stream))
             (t
              nil)))
     (princ "\n")
@@ -961,22 +969,19 @@ unless the function is autoloaded."
 	   ;; encouragement to use the new function.
 	   (let ((obsolete (function-obsoleteness-doc function))
 		 (compatible (function-compatibility-doc function)))
-	     (if obsolete
-		 (progn
-		   (princ obsolete stream)
-		   (terpri stream)
-		   (terpri stream)))
-	     (if compatible
-		 (progn
-		   (princ compatible stream)
-		   (terpri stream)
-		   (terpri stream)))
-	     (if (not (and obsolete aliases))
-		 (progn
-		   (princ doc stream)
-		   (or (equal doc "")
-		       (eq ?\n (aref doc (1- (length doc))))
-		       (terpri stream)))))))))
+	     (when obsolete
+	       (princ obsolete stream)
+	       (terpri stream)
+	       (terpri stream))
+	     (when compatible
+	       (princ compatible stream)
+	       (terpri stream)
+	       (terpri stream))
+	     (unless (and obsolete aliases)
+	       (princ doc stream)
+	       (unless (or (equal doc "")
+			   (eq ?\n (aref doc (1- (length doc)))))
+		 (terpri stream))))))))
 
 
 (defun describe-function-arglist (function)
@@ -999,20 +1004,19 @@ unless the function is autoloaded."
 
 
 (defun variable-at-point ()
-  (condition-case ()
-      (let ((stab (syntax-table)))
-	(unwind-protect
-	    (save-excursion
-	      (set-syntax-table emacs-lisp-mode-syntax-table)
-	      (or (not (zerop (skip-syntax-backward "_w")))
-		  (eq (char-syntax (char-after (point))) ?w)
-		  (eq (char-syntax (char-after (point))) ?_)
-		  (forward-sexp -1))
-	      (skip-chars-forward "'")
-	      (let ((obj (read (current-buffer))))
-		(and (symbolp obj) (boundp obj) obj)))
-	  (set-syntax-table stab)))
-    (error nil)))
+  (ignore-errors
+    (let ((stab (syntax-table)))
+      (unwind-protect
+	  (save-excursion
+	    (set-syntax-table emacs-lisp-mode-syntax-table)
+	    (or (not (zerop (skip-syntax-backward "_w")))
+		(eq (char-syntax (char-after (point))) ?w)
+		(eq (char-syntax (char-after (point))) ?_)
+		(forward-sexp -1))
+	    (skip-chars-forward "'")
+	    (let ((obj (read (current-buffer))))
+	      (and (symbolp obj) (boundp obj) obj)))
+	(set-syntax-table stab)))))
 
 (defun variable-obsolete-p (variable)
   "Return non-nil if VARIABLE is obsolete."
@@ -1433,7 +1437,7 @@ before the definition.
 
 If the optional argument PATH is given, the library where FUNCTION is
 defined is searched in PATH instead of `load-path'"
-  (interactive (ff-read-function))
+  (interactive (find-function-read-function))
   (let ((buffer-point (find-function-noselect function path)))
     (if buffer-point
 	(progn
@@ -1450,7 +1454,7 @@ before the definition.
 
 If the optional argument PATH is given, the library where FUNCTION is
 defined is searched in PATH instead of `load-path'"
-  (interactive (ff-read-function))
+  (interactive (find-function-read-function))
   (let ((buffer-point (find-function-noselect function path)))
     (if buffer-point
 	(progn
@@ -1467,7 +1471,7 @@ before the definition.
 
 If the optional argument PATH is given, the library where FUNCTION is
 defined is searched in PATH instead of `load-path'"
-  (interactive (ff-read-function))
+  (interactive (find-function-read-function))
   (let ((buffer-point (find-function-noselect function path)))
     (if buffer-point
 	(progn

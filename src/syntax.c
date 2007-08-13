@@ -74,7 +74,7 @@ int no_quit_in_re_search;
 /* Tell the regex routines which buffer to access for SYNTAX() lookups
    and the like. */
 struct buffer *regex_emacs_buffer;
-  
+
 Lisp_Object Vstandard_syntax_table;
 
 Lisp_Object Vsyntax_designator_chars_string;
@@ -354,7 +354,7 @@ scan_words (struct buffer *buf, Bufpos from, int count)
   while (count > 0)
     {
       QUIT;
-  
+
       while (1)
 	{
 	  if (from == limit)
@@ -372,7 +372,7 @@ scan_words (struct buffer *buf, Bufpos from, int count)
 	}
       count--;
     }
-  
+
   while (count < 0)
     {
       QUIT;
@@ -421,7 +421,7 @@ and nil is returned.
 
 static void scan_sexps_forward (struct buffer *buf,
 				struct lisp_parse_state *,
-				Bufpos from, Bufpos end, 
+				Bufpos from, Bufpos end,
 				int targetdepth, int stopbefore,
 				Lisp_Object oldstate,
 				int commentstop);
@@ -438,7 +438,7 @@ find_start_of_comment (struct buffer *buf, Bufpos from, Bufpos stop, int mask)
      When we reach a safe place, assume that's not in a string;
      then step the main scan to the earliest comment-starter seen
      an even number of string quotes away from the safe place.
-     
+
      OFROM[I] is position of the earliest comment-starter seen
      which is I+2X quotes from the comment-end.
      PARITY is current parity of quotes from the comment end.  */
@@ -477,7 +477,7 @@ find_start_of_comment (struct buffer *buf, Bufpos from, Bufpos stop, int mask)
 				       BUF_FETCH_CHAR (buf, from+1),
 				       mask);
 	}
-			
+
       /* or are we looking at a 1-char comment start sequence
 	 of the style matching mask? */
       else if (code == Scomment
@@ -485,7 +485,7 @@ find_start_of_comment (struct buffer *buf, Bufpos from, Bufpos stop, int mask)
 	{
 	  styles_match_p = 1;
 	}
-		    
+
       /* or possibly, a 2-char comment start sequence */
       else if (from >= stop
 	       && SYNTAX_STYLES_MATCH_START_P (mirrortab, c,
@@ -656,7 +656,7 @@ Optional argument BUFFER defaults to the current buffer.
 	  else if (from < stop
 		   && SYNTAX_START_P (mirrortab, c, BUF_FETCH_CHAR (buf, from+1)))
 	    {
-	      /* we have encountered a 2char comment start sequence and we 
+	      /* we have encountered a 2char comment start sequence and we
 		 are ignoring all text inside comments. we must record
 		 the comment style this sequence begins so that later,
 		 only a comment end of the same style actually ends
@@ -712,7 +712,7 @@ Optional argument BUFFER defaults to the current buffer.
 	      from--;
 	      continue;
 	    }
-	      
+
 	  c = BUF_FETCH_CHAR (buf, from);
 	  code = SYNTAX (mirrortab, c);
 
@@ -800,7 +800,7 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 		   && SYNTAX_START_P (mirrortab, c, BUF_FETCH_CHAR (buf, from))
 		   && parse_sexp_ignore_comments)
 	    {
-	      /* we have encountered a comment start sequence and we 
+	      /* we have encountered a comment start sequence and we
 		 are ignoring all text inside comments. we must record
 		 the comment style this sequence begins so that later,
 		 only a comment end of the same style actually ends
@@ -810,7 +810,7 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 						BUF_FETCH_CHAR (buf, from));
 	      from++;
 	    }
-	  
+
 	  if (SYNTAX_PREFIX_UNSAFE (mirrortab, c))
 	    continue;
 
@@ -900,7 +900,7 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 		  stringterm = XCHAR (stermobj);
 		else
 		  stringterm = ch;
-              
+
                 while (1)
 		  {
 		    if (from >= stop)
@@ -922,7 +922,7 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
                 if (!depth && sexpflag) goto done;
                 break;
               }
-	      
+
             default:
               break;
 	    }
@@ -987,13 +987,13 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 	    case Sword:
 	    case Ssymbol:
 	      if (depth || !sexpflag) break;
-	      /* This word counts as a sexp; count object finished after 
+	      /* This word counts as a sexp; count object finished after
 		 passing it. */
 	      while (from > stop)
 		{
 		  enum syntaxcode syncode;
 		  quoted = char_quoted (buf, from - 1);
-		  
+
 		  if (quoted)
 		    from--;
 		  if (! (quoted
@@ -1164,7 +1164,7 @@ signalling an error.
 
 DEFUN ("backward-prefix-chars", Fbackward_prefix_chars, 0, 1, 0, /*
 Move point backward over any number of chars with prefix syntax.
-This includes chars with \"quote\" or \"prefix\" syntax (' or p).
+This includes chars with "quote" or "prefix" syntax (' or p).
 
 Optional arg BUFFER defaults to the current buffer.
 */
@@ -1193,7 +1193,7 @@ Optional arg BUFFER defaults to the current buffer.
 
 static void
 scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
-		    Bufpos from, Bufpos end, 
+		    Bufpos from, Bufpos end,
 		    int targetdepth, int stopbefore,
 		    Lisp_Object oldstate,
 		    int commentstop)
@@ -1287,7 +1287,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	  state.comstyle = (mask == SYNTAX_COMMENT_STYLE_B);
 	  state.comstart = from - 1;
 	}
-      
+
       else if (from < end &&
 	       SYNTAX_START_P (mirrortab, BUF_FETCH_CHAR (buf, from-1),
 			       BUF_FETCH_CHAR (buf, from)))
@@ -1577,7 +1577,7 @@ update_just_this_syntax_table (struct Lisp_Char_Table *ct)
 {
   struct chartab_range range;
   struct cmst_arg arg;
-  
+
   arg.mirrortab = ct->mirror_table;
   arg.check_inherit = (CHAR_TABLEP (Vstandard_syntax_table)
 		       && ct != XCHAR_TABLE (Vstandard_syntax_table));
@@ -1718,7 +1718,7 @@ complex_vars_of_syntax (void)
 		     Vstandard_syntax_table);
     Fput_char_table (make_char ('\\'), make_int ((int) Sescape),
 		     Vstandard_syntax_table);
-    
+
     {
       CONST char *p;
       for (p = "_-+*/&|<>="; *p; p++)

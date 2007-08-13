@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/07/08 13:58:52
-;; Version: 1.195
+;; Created: 1997/08/12 22:51:19
+;; Version: 1.200
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -249,8 +249,7 @@
 
 (defun w3-make-face-emacs19 (name &optional doc-string temporary)
   "Defines and returns a new FACE described by DOC-STRING.
-If the face already exists, it is unmodified.
-If TEMPORARY is non-nil, this face will cease to exist if not in use."
+If the face already exists, it is unmodified."
   (make-face name))
 
 (cond
@@ -366,7 +365,9 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 (defsubst w3-munge-line-breaks-p ()
   (eq (car w3-display-whitespace-stack) 'pre))
 
-(defvar w3-display-nil-face (w3-make-face nil "Stub face... don't ask." t))
+(defvar w3-display-nil-face (if w3-running-xemacs
+				(w3-make-face nil "Stub face... don't ask." t)
+			      nil))
 
 (defvar w3-scratch-start-point nil)
 
@@ -424,8 +425,8 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 (defun w3-widget-echo (widget &rest ignore)
   (let* ((url (widget-get widget :href))
 	 (name (widget-get widget :name))
-	 (text (buffer-substring (widget-get widget :from)
-				 (widget-get widget :to)))
+	 (text (buffer-substring-no-properties (widget-get widget :from)
+					       (widget-get widget :to)))
 	 (title (widget-get widget :title))
 	 (check w3-echo-link)
 	 (msg nil))
@@ -856,11 +857,24 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
        (goto-char (point-max))))))
 
 ;; The table handling
-
-(if (and w3-running-xemacs (featurep 'mule)
-	 (not (find-charset 'w3-dingbats)))
+(eval-and-compile
+  (cond
+   ((and w3-running-xemacs (featurep 'mule) (not (find-charset 'w3-dingbats)))
     (make-charset 'w3-dingbats "Dingbats character set for Emacs/W3"
 		  '(registry "" dimension 1 chars 96 final ?:)))
+   ((and (featurep 'mule) (not (charsetp 'w3-dingbats)))
+    (define-charset nil 'w3-dingbats
+      (vector
+       1				; dimension
+       96				; chars
+       1				; width
+       0				; direction
+       ?:				; iso-final-char
+       1				; iso-graphic-plane (whats this?)
+       "dingbats" "emacs/w3-dingbats"
+       "Dingbats character set for Emacs/W3")))
+   (t
+    nil)))
 
 (defun w3-make-char (oct)
   (if (and w3-running-xemacs (featurep 'mule))
@@ -868,7 +882,7 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
     oct))
 
 (defvar w3-table-ascii-border-chars
-  [nil  nil  nil  ?' nil  ?- ?` ?- nil ?\\ ?| ?| ?/ ?- ?| ?+]
+  [nil  nil  nil  ?+ nil  ?- ?+ ?- nil ?+ ?| ?| ?+ ?- ?| ?+]
   "*Vector of ascii characters to use to draw table borders.
 This vector is used when terminal characters are unavailable")
 
@@ -1905,9 +1919,17 @@ Can sometimes make the structure of a document clearer")
 	     (w3-handle-empty-tag))
 	    (frameset
 	     (if w3-display-frames
-		 (progn
+		 (let ((frames (nth 2 node))
+		       (frameset-cardinal 0)
+		       (cols (cdr-safe (assq 'cols args))))
+		   (while (and frames (memq (car (car frames)) '(frame frameset)))
+		      (setq frameset-cardinal (1+ frameset-cardinal)
+			    frames (cdr frames)))
 		   (push (list 'frameset
-			       (or (assq 'cols args) (assq 'rows args)))
+			       frameset-cardinal
+			       (if (and cols (not (string-equal cols "*")))
+				   (assq 'cols args)
+				 (assq 'rows args)))
 			 w3-frameset-structure)
 		   (w3-handle-content node))
 	       (w3-handle-content node)))
@@ -2421,41 +2443,7 @@ Can sometimes make the structure of a document clearer")
     ;; set up frames
     (while structure
       (if (eq (car (car structure)) 'frameset)
-	  (let* ((current-dims (cdr (car structure)))
-		 (cols (cdr-safe (assq 'cols current-dims)))
-		 (rows (cdr-safe (assq 'rows current-dims))))
-	    (pop structure)
-	    ;; columns ?
-	    (if cols
-		(setq cols (w3-decode-frameset-dimensions cols (window-width) window-min-width))
-	      ;; rows ?
-	      (if rows
-		  (setq rows (w3-decode-frameset-dimensions rows (window-height) window-min-height))
-		;; default: columns of equal width
-		(let ((nb-windows 0)
-		      (frames structure))
-		  (while (and frames (eq (car (car frames)) 'frame))
-		      (setq nb-windows (1+ nb-windows)))
-		  (let ((fwidth (/ (window-width) nb-windows)))
-		    (while (> nb-windows 0)
-		      (push fwidth cols)
-		      (setq nb-windows (1- nb-windows)))))))
-	    (while (eq (car (car structure)) 'frame)
-	      (cond ((cdr cols)
-		     (split-window-horizontally (car cols))
-		     (pop cols))
-		    ((cdr rows)
-		     (split-window-vertically (car rows))
-		     (pop rows)))
-	      (let ((href (nth 2 (car structure)))
-		    (name (nth 1 (car structure)))
-		    (url-working-buffer url-default-working-buffer) ; in case url-multiple-p is t
-		    (w3-notify 'semibully))
-		(w3-fetch href)
-		(setq w3-frame-name name
-		      w3-target-window-distances nil))
-	      (other-window 1)
-	      (pop structure)))
+	  (setq structure (w3-display-frameset structure))
 	(pop structure)))
     ;; compute target window distances
     (let ((origin-buffer (current-buffer))
@@ -2468,6 +2456,54 @@ Can sometimes make the structure of a document clearer")
 	(if (eq (current-buffer) origin-buffer)
 	    (setq stop t))))
     (setq-default url-be-asynchronous old-asynch)))
+
+(defun w3-display-frameset (frameset-structure)
+  (let* ((structure frameset-structure)
+	 (frameset-cardinal (nth 1 (car structure)))
+	 (current-dims (cdr (cdr (car structure))))
+	 (cols (cdr-safe (assq 'cols current-dims)))
+	 (rows (cdr-safe (assq 'rows current-dims)))
+	 (char-width (if (> (frame-char-width) 1)
+			  (frame-char-width)
+			w3-tty-char-width))
+	 (char-height (if (> (frame-char-height) 1)
+			  (frame-char-height)
+			w3-tty-char-height)))
+    (pop structure)
+    ;; columns ?
+    (if (and cols (not (string-equal cols "*")))
+	(setq cols (w3-decode-frameset-dimensions
+		    cols (window-width) window-min-width char-width))
+      ;; rows ?
+      (if (and rows (not (string-equal rows "*")))
+	  (setq rows (w3-decode-frameset-dimensions
+		      rows (window-height) window-min-height char-height))
+	;; default: columns of equal width
+	(let ((fwidth (/ (window-width) frameset-cardinal)))
+	  (while (> frameset-cardinal 0)
+	    (push fwidth cols)
+	    (setq frameset-cardinal (1- frameset-cardinal))))))
+    (while (> frameset-cardinal 0)
+      (cond ((cdr cols)
+	     (split-window-horizontally (car cols))
+	     (pop cols))
+	    ((cdr rows)
+	     (split-window-vertically (car rows))
+	     (pop rows)))
+      (cond ((eq (car (car structure)) 'frame)
+	     (let ((href (nth 2 (car structure)))
+		   (name (nth 1 (car structure)))
+		   (url-working-buffer url-default-working-buffer) ; in case url-multiple-p is t
+		   (w3-notify 'semibully))
+	       (pop structure)
+	       (w3-fetch href)
+	       (setq w3-frame-name name
+		     w3-target-window-distances nil)
+	       (other-window 1)))
+	    ((eq (car (car structure)) 'frameset)
+	     (setq structure (w3-display-frameset structure))))
+      (setq frameset-cardinal (1- frameset-cardinal)))
+    structure))
 
 (defun w3-compute-target-window-distances ()
   "Compute an alist of target names and window distances"
@@ -2499,7 +2535,7 @@ If FRAME is omitted, the selected frame is used.
 For a terminal screen, the value is always 1."
       (font-width (face-font 'default frame))))
 
-(defun w3-decode-frameset-dimensions (dims available-dimension min-dim)
+(defun w3-decode-frameset-dimensions (dims available-dimension min-dim pixel-dim)
   "Returns numbers of lines or columns in Emacs, computed from specified frameset dimensions"
   (let ((dimensions nil))
     (if dims
@@ -2522,7 +2558,7 @@ For a terminal screen, the value is always 1."
 			   (t
 			    ;; absolute number: pixel height
 			    (push (max (1+ (/ (car (read-from-string match))
-					      (frame-char-height)))
+					      pixel-dim))
 				       min-dim)
 				  dimensions)))
 		     (setq remaining-available-dimension

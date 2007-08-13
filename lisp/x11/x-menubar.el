@@ -154,6 +154,8 @@
        ["Sunrise/Sunset"	sunrise-sunset		t]
        )
       ("Games"
+       ["Mine Game"		xmine			t]
+       ["Tetris"		tetris			t]
        ["Quote from Zippy"	yow			t]
        ["Psychoanalyst"		doctor			t]
        ["Psychoanalyze Zippy!"	psychoanalyze-pinhead	t]
@@ -162,7 +164,6 @@
        ["Towers of Hanoi"	hanoi			t]
        ["Game of Life"		life			t]
        ["Multiplication Puzzle"	mpuz			t]
-       ["Mine Game"		xmine			t]
        )
       )
 

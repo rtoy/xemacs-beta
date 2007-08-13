@@ -1,4 +1,46 @@
+Wed Aug 13 13:04:36 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9956 released.
+
+Wed Aug 13 00:28:59 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-face.el (make-empty-face): Make it work on Emacsen compiled
+	without X support.
+
+	* Version 1.9955 released.
+
+Wed Aug 13 00:28:15 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-before-change): Don't complain if
+	`inhibit-read-only' is non-nil.
+
+Mon Aug 11 17:55:02 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-face.el (custom-face-attributes): Don't initialize fg/bg
+	fields. 
+
+Wed Jul 30 14:04:28 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el: Synched with FSF.
+
+Tue Jul 29 07:17:54 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.texi (Programming Example): Also delete overlays.
+
+Mon Jul 28 20:31:22 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9954 released.
+
 Mon Jul 28 19:23:37 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (hook): Support hooks whose value is just a symbol.
+
+	* cus-edit.el (custom-magic-value-create): Support `mismatch'
+	form. 
+	(custom-variable-value-create): Ditto.
+	(custom-variable-set): Ditto.
+	(custom-variable-save): Ditto.
+	(custom-variable-menu): Ditto.
 
 	* Version 1.9953 released.
 

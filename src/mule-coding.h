@@ -72,15 +72,16 @@ struct ccl_program
   int status;
 };
 
+typedef struct charset_conversion_spec charset_conversion_spec;
 struct charset_conversion_spec
 {
   Lisp_Object from_charset;
   Lisp_Object to_charset;
 };
 
-typedef struct charset_conversion_spec_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct charset_conversion_spec);
+  Dynarr_declare (charset_conversion_spec);
 } charset_conversion_spec_dynarr;
 
 struct Lisp_Coding_System

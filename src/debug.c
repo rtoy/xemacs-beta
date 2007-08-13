@@ -89,7 +89,7 @@ xemacs_debug_loop (enum debug_loop op, Lisp_Object class, Lisp_Object type)
   FROB (frames);
   FROB (devices);
   FROB (byte_code);
-    
+
   return retval;
 #undef FROB
 }

@@ -47,11 +47,7 @@ Lisp_Object Vstdio_str;
 static void
 allocate_stream_console_struct (struct console *con)
 {
-  con->console_data =
-    (struct stream_console *) xmalloc (sizeof (struct stream_console));
-
-  /* zero out all slots. */
-  memset (con->console_data, 0, sizeof (struct stream_console));
+  con->console_data = xnew_and_zero (struct stream_console);
 }
 
 static void
@@ -114,7 +110,7 @@ static void
 stream_delete_console (struct console *con)
 {
   if (/* CONSOLE_STREAM_DATA (con)->needs_newline */
-      stdout_needs_newline) /* #### clean this up */    
+      stdout_needs_newline) /* #### clean this up */
     {
       fputc ('\n', CONSOLE_STREAM_DATA (con)->outfd);
       fflush (CONSOLE_STREAM_DATA (con)->outfd);

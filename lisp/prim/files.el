@@ -635,6 +635,7 @@ bottom of the buffer stack."
 	 (frame (make-frame (if name
 				  (list (cons 'name (symbol-name name)))))))
     (pop-to-buffer buffer t frame)
+    (select-frame frame)
     (make-frame-visible frame)
     buffer))
 
@@ -946,7 +947,7 @@ find-file-hooks, etc.
 If a buffer exists visiting FILENAME, return that one, but
 verify that the file has not changed since visited or saved.
 The buffer is not selected, just returned to the caller.
-If NOWARN is non-nil warning messages about several potential
+If NOWARN is non-nil, warning messages about several potential
 problems will be suppressed."
   (setq filename (abbreviate-file-name (expand-file-name filename)))
   (if (file-directory-p filename)
@@ -976,15 +977,15 @@ problems will be suppressed."
 ;      (if (or find-file-existing-other-name find-file-visit-truename)
 ;	  (setq buf (or same-truename same-number)))
 
-      (if (and buf
-               (or find-file-compare-truenames find-file-use-truenames)
-	       (not nowarn))
-	  (save-excursion
-	    (set-buffer buf)
-	    (if (not (string-equal buffer-file-name filename))
-		(message "%s and %s are the same file (%s)"
-			 filename buffer-file-name
-			 buffer-file-truename))))
+      (when (and buf
+		 (or find-file-compare-truenames find-file-use-truenames)
+		 (not nowarn))
+	(save-excursion
+	  (set-buffer buf)
+	  (if (not (string-equal buffer-file-name filename))
+	      (message "%s and %s are the same file (%s)"
+		       filename buffer-file-name
+		       buffer-file-truename))))
 
       (if buf
 	  (or nowarn
@@ -1008,6 +1009,7 @@ problems will be suppressed."
 		     (save-excursion
 		       (set-buffer buf)
 		       (revert-buffer t t)))))
+	;; Else: we must create a new buffer for filename
 	(save-excursion
 ;;; The truename stuff makes this obsolete.
 ;;;	  (let* ((link-name (car (file-attributes filename)))
@@ -1066,7 +1068,8 @@ problems will be suppressed."
 		 (setq backup-inhibited t)))
 	  (if rawfile
 	      nil
-	    (after-find-file error (not nowarn)))))
+	    (after-find-file error (not nowarn))
+	    (setq buf (current-buffer)))))
       buf)))
 
 (defvar after-find-file-from-revert-buffer nil)
@@ -1935,6 +1938,7 @@ You may need to redefine `file-name-sans-versions' as well."
   "Given the name of a numeric backup file, return the backup number.
 Uses the free variable `bv-length', whose value should be
 the index in the name where the version number begins."
+  (declare (special bv-length))
   (if (and (string-match "[0-9]+~\\'" fn bv-length)
 	   (= (match-beginning 0) bv-length))
       (string-to-int (substring fn bv-length -1))

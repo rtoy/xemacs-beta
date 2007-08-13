@@ -277,7 +277,7 @@ initial_command_loop (Lisp_Object load_me)
       (!CONSOLEP (Vselected_console) ||
        CONSOLE_STREAM_P (XCONSOLE (Vselected_console))))
     Fkill_emacs (make_int (-1));
-  
+
   /* End of -batch run causes exit here. */
   if (noninteractive)
     Fkill_emacs (Qt);
@@ -417,7 +417,7 @@ call_command_loop (Lisp_Object catch_errors)
   XCONSOLE (Vselected_console)->prefix_arg = Qnil;
   if (NILP (catch_errors))
     Fcommand_loop_1 ();
-  else 
+  else
     internal_catch (Qtop_level,
                     cold_load_command_loop, Qnil, 0);
   goto loop;
@@ -434,7 +434,7 @@ initial_error_handler (Lisp_Object datum, Lisp_Object ignored)
   if (CONSP (datum) && EQ (XCAR (datum), Qquit))
     /* Don't bother with the message */
     return (Qt);
-      
+
   message ("Error in command-loop!!");
   Fset (intern ("last-error"), datum); /* #### Better/different name? */
   Fsit_for (make_int (2), Qnil);
@@ -561,7 +561,7 @@ Don't call this unless you know what you're doing.
 
       if (!was_locked)
 	any_console_state ();
-#if defined (__SUNPRO_C) || (defined (DEC_ALPHA) && defined (OSF1))
+#if defined (__SUNPRO_C) || defined (__SUNPRO_CC) || (defined (DEC_ALPHA) && defined (OSF1))
       if (0) return Qnil; /* Shut up compiler */
 #endif
     }

@@ -1,5 +1,5 @@
 ;;; psgml.el --- SGML-editing mode with parsing support
-;; $Id: psgml.el,v 1.7 1997/04/10 05:55:50 steve Exp $
+;; $Id: psgml.el,v 1.8 1997/09/03 02:55:43 steve Exp $
 
 ;; Copyright (C) 1993, 1994, 1995, 1996 Lennart Staflin
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -384,7 +384,7 @@ addition to the directories listed here."
 				;; Wing change
 				(concat "%S:" (directory-file-name
 					       sgml-data-directory)
-					"%o/%c/%d")))
+					"/%o/%c/%d")))
   
   "*Mapping from public identifiers to file names.
 This is a list of possible file names.  To find the file for a public

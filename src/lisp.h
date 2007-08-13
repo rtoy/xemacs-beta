@@ -167,12 +167,22 @@ Boston, MA 02111-1307, USA.  */
 # define sys_fclose fclose
 #endif
 
+/* Memory allocation */
+void malloc_warning (CONST char *);
+void *xmalloc (size_t size);
+void *xmalloc_and_zero (size_t size);
+void *xrealloc (void *, size_t size);
+char *xstrdup (CONST char *);
 /* generally useful */
 #define countof(x) (sizeof(x)/sizeof(x[0]))
 #define slot_offset(type, slot_name) \
   ((unsigned) (((char *) (&(((type *)0)->slot_name))) - ((char *)0)))
-#define malloc_type(type) ((type *) xmalloc (sizeof (type)))
-#define malloc_type_and_zero(type) ((type *) xmalloc_and_zero (sizeof (type)))
+#define xnew(type) ((type *) xmalloc (sizeof (type)))
+#define xnew_array(type, len) ((type *) xmalloc ((len) * sizeof (type)))
+#define xnew_and_zero(type) ((type *) xmalloc_and_zero (sizeof (type)))
+#define xnew_array_and_zero(type, len) ((type *) xmalloc_and_zero ((len) * sizeof (type)))
+#define XREALLOC_ARRAY(ptr, type, len) ((void) (ptr = (type *) xrealloc (ptr, (len) * sizeof (type))))
+#define alloca_array(type, len) ((type *) alloca ((len) * sizeof (type)))
 
 /* also generally useful if you want to avoid arbitrary size limits
    but don't need a full dynamic array.  Assumes that BASEVAR points
@@ -181,34 +191,35 @@ Boston, MA 02111-1307, USA.  */
    macro will realloc BASEVAR as necessary so that it can hold at
    least NEEDED_SIZE objects.  The reallocing is done by doubling,
    which ensures constant amortized time per element. */
-#define DO_REALLOC(basevar, sizevar, needed_size, type)	do		\
-{									\
-  /* Avoid side-effectualness. */					\
-  /* Dammit! Macros suffer from dynamic scope! */			\
-  /* We demand inline functions! */					\
-  int do_realloc_needed_size = (needed_size);				\
-  int newsize = 0;							\
-  while ((sizevar) < (do_realloc_needed_size)) {			\
-    newsize = 2*(sizevar);						\
-    if (newsize < 32)							\
-      newsize = 32;							\
-    (sizevar) = newsize;						\
-  }									\
-  if (newsize)								\
-    (basevar) = (type *) xrealloc (basevar,				\
-				(newsize)*sizeof(type));		\
+#define DO_REALLOC(basevar, sizevar, needed_size, type)	do	\
+{								\
+  /* Avoid side-effectualness. */				\
+  /* Dammit! Macros suffer from dynamic scope! */		\
+  /* We demand inline functions! */				\
+  int do_realloc_needed_size = (needed_size);			\
+  int newsize = 0;						\
+  while ((sizevar) < (do_realloc_needed_size)) {		\
+    newsize = 2*(sizevar);					\
+    if (newsize < 32)						\
+      newsize = 32;						\
+    (sizevar) = newsize;					\
+  }								\
+  if (newsize)							\
+    XREALLOC_ARRAY (basevar, type, newsize);			\
 } while (0)
 
 #ifdef ERROR_CHECK_MALLOC
-#define xfree(lvalue) do						\
-{									\
-  void **ptr = (void **) &(lvalue);					\
-  xfree_1 (*ptr);							\
-  *ptr = (void *) 0xDEADBEEF;						\
+void xfree_1 (void *);
+#define xfree(lvalue) do		\
+{					\
+  void **ptr = (void **) &(lvalue);	\
+  xfree_1 (*ptr);			\
+  *ptr = (void *) 0xDEADBEEF;		\
 } while (0)
 #else
+void xfree (void *);
 #define xfree_1 xfree
-#endif
+#endif /* ERROR_CHECK_MALLOC */
 
 /* We assume an ANSI C compiler and libraries and memcpy, memset, memcmp */
 /*  (This definition is here because system header file macros may want
@@ -431,13 +442,15 @@ typedef int Extcount;
 typedef struct lstream Lstream;
 
 typedef unsigned int face_index;
-typedef struct face_cachel_dynarr_type
+
+typedef struct
 {
   Dynarr_declare (struct face_cachel);
 } face_cachel_dynarr;
 
 typedef unsigned int glyph_index;
-typedef struct glyph_cachel_dynarr_type
+
+typedef struct
 {
   Dynarr_declare (struct glyph_cachel);
 } glyph_cachel_dynarr;
@@ -447,6 +460,7 @@ struct console;			/* "console.h" */
 struct device;			/* "device.h" */
 struct extent_fragment;
 struct extent;
+typedef struct extent *EXTENT;
 struct frame;			/* "frame.h" */
 struct window;                  /* "window.h" */
 struct Lisp_Event;              /* "events.h" */
@@ -464,52 +478,53 @@ struct font_metric_info;
 struct face_cachel;
 struct console_type_entry;
 
-typedef struct bufbyte_dynarr_type
+typedef struct
 {
   Dynarr_declare (Bufbyte);
-} bufbyte_dynarr;
+} Bufbyte_dynarr;
 
-typedef struct extbyte_dynarr_type
+typedef struct
 {
   Dynarr_declare (Extbyte);
-} extbyte_dynarr;
+} Extbyte_dynarr;
 
-typedef struct emchar_dynarr_type
+typedef struct
 {
   Dynarr_declare (Emchar);
-} emchar_dynarr;
+} Emchar_dynarr;
 
-typedef struct unsigned_char_dynarr_type
+typedef unsigned char unsigned_char;
+typedef struct
 {
   Dynarr_declare (unsigned char);
 } unsigned_char_dynarr;
 
-typedef struct int_dynarr_type
+typedef struct
 {
   Dynarr_declare (int);
 } int_dynarr;
 
-typedef struct bufpos_dynarr_type
+typedef struct
 {
   Dynarr_declare (Bufpos);
-} bufpos_dynarr;
+} Bufpos_dynarr;
 
-typedef struct bytind_dynarr_type
+typedef struct
 {
   Dynarr_declare (Bytind);
-} bytind_dynarr;
+} Bytind_dynarr;
 
-typedef struct charcount_dynarr_type
+typedef struct
 {
   Dynarr_declare (Charcount);
-} charcount_dynarr;
+} Charcount_dynarr;
 
-typedef struct bytecount_dynarr_type
+typedef struct
 {
   Dynarr_declare (Bytecount);
-} bytecount_dynarr;
+} Bytecount_dynarr;
 
-typedef struct console_type_entry_dynarr_type
+typedef struct
 {
   Dynarr_declare (struct console_type_entry);
 } console_type_entry_dynarr;
@@ -627,37 +642,37 @@ enum munge_me_out_the_door
 enum Lisp_Type
 {
   /* Integer.  XINT(obj) is the integer value. */
-  Lisp_Int                    /* 0  DTP-FIXNUM */
+  Lisp_Type_Int,		/* 0  DTP-FIXNUM */
 
   /* XRECORD_LHEADER (object) points to a struct lrecord_header
      lheader->implementation determines the type (and GC behaviour)
      of the object. */
-  ,Lisp_Record                /* 1  DTP-OTHER-POINTER */
+  Lisp_Type_Record,		/* 1  DTP-OTHER-POINTER */
 
   /* Cons.  XCONS (object) points to a struct Lisp_Cons. */
-  ,Lisp_Cons                  /* 2  DTP-LIST */
+  Lisp_Type_Cons,		/* 2  DTP-LIST */
 
   /* LRECORD_STRING is NYI */
   /* String.  XSTRING (object) points to a struct Lisp_String.
      The length of the string, and its contents, are stored therein. */
-  ,Lisp_String                /* 3  DTP-STRING */
+  Lisp_Type_String,		/* 3  DTP-STRING */
 
 #ifndef LRECORD_VECTOR
   /* Vector of Lisp objects.  XVECTOR(object) points to a struct Lisp_Vector.
      The length of the vector, and its contents, are stored therein. */
-  ,Lisp_Vector                /* 4  DTP-SIMPLE-ARRAY */
-#endif
+  Lisp_Type_Vector,		/* 4  DTP-SIMPLE-ARRAY */
+#endif /* !LRECORD_VECTOR */
 
 #ifndef LRECORD_SYMBOL
   /* Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol. */
-  ,Lisp_Symbol
+  Lisp_Type_Symbol,
 #endif /* !LRECORD_SYMBOL */
 
-  ,Lisp_Char			/* 5 DTP-CHAR */
+  Lisp_Type_Char		/* 5 DTP-CHAR */
 };
 
 /* unsafe! */
-#define POINTER_TYPE_P(type) ((type) != Lisp_Int && (type) != Lisp_Char)
+#define POINTER_TYPE_P(type) ((type) != Lisp_Type_Int && (type) != Lisp_Type_Char)
 
 /* This should be the underlying type into which a Lisp_Object must fit.
    In a strict ANSI world, this must be `int', since ANSI says you can't
@@ -696,10 +711,10 @@ enum Lisp_Type
 
 /* WARNING WARNING WARNING.  You must ensure on your own that proper
    GC protection is provided for the elements in this array. */
-typedef struct lisp_dynarr_type
+typedef struct
 {
   Dynarr_declare (Lisp_Object);
-} lisp_dynarr;
+} Lisp_Object_dynarr;
 
 /* Close your eyes now lest you vomit or spontaneously combust ... */
 
@@ -757,13 +772,13 @@ struct Lisp_Buffer_Cons
 };
 #endif
 
-DECLARE_NONRECORD (cons, Lisp_Cons, struct Lisp_Cons);
-#define XCONS(a) XNONRECORD (a, cons, Lisp_Cons, struct Lisp_Cons)
-#define XSETCONS(c, p) XSETOBJ (c, Lisp_Cons, p)
-#define CONSP(x) (XTYPE (x) == Lisp_Cons)
-#define GC_CONSP(x) (XGCTYPE (x) == Lisp_Cons)
-#define CHECK_CONS(x) CHECK_NONRECORD (x, Lisp_Cons, Qconsp)
-#define CONCHECK_CONS(x) CONCHECK_NONRECORD (x, Lisp_Cons, Qconsp)
+DECLARE_NONRECORD (cons, Lisp_Type_Cons, struct Lisp_Cons);
+#define XCONS(a) XNONRECORD (a, cons, Lisp_Type_Cons, struct Lisp_Cons)
+#define XSETCONS(c, p) XSETOBJ (c, Lisp_Type_Cons, p)
+#define CONSP(x) (XTYPE (x) == Lisp_Type_Cons)
+#define GC_CONSP(x) (XGCTYPE (x) == Lisp_Type_Cons)
+#define CHECK_CONS(x) CHECK_NONRECORD (x, Lisp_Type_Cons, Qconsp)
+#define CONCHECK_CONS(x) CONCHECK_NONRECORD (x, Lisp_Type_Cons, Qconsp)
 
 /* Define these because they're used in a few places, inside and
    out of alloc.c */
@@ -843,17 +858,17 @@ DECLARE_LRECORD (string, struct Lisp_String);
 #define CHECK_STRING(x) CHECK_RECORD (x, string)
 #define CONCHECK_STRING(x) CONCHECK_RECORD (x, string)
 
-#else
+#else /* ! LRECORD_STRING */
 
-DECLARE_NONRECORD (string, Lisp_String, struct Lisp_String);
-#define XSTRING(x) XNONRECORD (x, string, Lisp_String, struct Lisp_String)
-#define XSETSTRING(x, p) XSETOBJ (x, Lisp_String, p)
-#define STRINGP(x) (XTYPE (x) == Lisp_String)
-#define GC_STRINGP(x) (XGCTYPE (x) == Lisp_String)
-#define CHECK_STRING(x) CHECK_NONRECORD (x, Lisp_String, Qstringp)
-#define CONCHECK_STRING(x) CONCHECK_NONRECORD (x, Lisp_String, Qstringp)
+DECLARE_NONRECORD (string, Lisp_Type_String, struct Lisp_String);
+#define XSTRING(x) XNONRECORD (x, string, Lisp_Type_String, struct Lisp_String)
+#define XSETSTRING(x, p) XSETOBJ (x, Lisp_Type_String, p)
+#define STRINGP(x) (XTYPE (x) == Lisp_Type_String)
+#define GC_STRINGP(x) (XGCTYPE (x) == Lisp_Type_String)
+#define CHECK_STRING(x) CHECK_NONRECORD (x, Lisp_Type_String, Qstringp)
+#define CONCHECK_STRING(x) CONCHECK_NONRECORD (x, Lisp_Type_String, Qstringp)
 
-#endif
+#endif /* ! LRECORD_STRING */
 
 #ifdef MULE
 
@@ -874,9 +889,9 @@ Bytecount charcount_to_bytecount (CONST Bufbyte *ptr, Charcount len);
 #define string_byte(s, i) ((s)->_data[i] + 0)
 #define XSTRING_BYTE(s, i) string_byte (XSTRING (s), i)
 #define string_byte_addr(s, i) (&((s)->_data[i]))
-#define set_string_length(s, len) do { (s)->_size = (len); } while (0)
-#define set_string_data(s, ptr) do { (s)->_data = (ptr); } while (0)
-#define set_string_byte(s, i, c) do { (s)->_data[i] = (c); } while (0)
+#define set_string_length(s, len) ((void) ((s)->_size = (len)))
+#define set_string_data(s, ptr) ((void) ((s)->_data = (ptr)))
+#define set_string_byte(s, i, c) ((void) ((s)->_data[i] = (c)))
 
 void resize_string (struct Lisp_String *s, Bytecount pos, Bytecount delta);
 
@@ -928,13 +943,13 @@ DECLARE_LRECORD (vector, struct Lisp_Vector);
 
 #else
 
-DECLARE_NONRECORD (vector, Lisp_Vector, struct Lisp_Vector);
-#define XVECTOR(x) XNONRECORD (x, vector, Lisp_Vector, struct Lisp_Vector)
-#define XSETVECTOR(x, p) XSETOBJ (x, Lisp_Vector, p)
-#define VECTORP(x) (XTYPE (x) == Lisp_Vector)
-#define GC_VECTORP(x) (XGCTYPE (x) == Lisp_Vector)
-#define CHECK_VECTOR(x) CHECK_NONRECORD (x, Lisp_Vector, Qvectorp)
-#define CONCHECK_VECTOR(x) CONCHECK_NONRECORD (x, Lisp_Vector, Qvectorp)
+DECLARE_NONRECORD (vector, Lisp_Type_Vector, struct Lisp_Vector);
+#define XVECTOR(x) XNONRECORD (x, vector, Lisp_Type_Vector, struct Lisp_Vector)
+#define XSETVECTOR(x, p) XSETOBJ (x, Lisp_Type_Vector, p)
+#define VECTORP(x) (XTYPE (x) == Lisp_Type_Vector)
+#define GC_VECTORP(x) (XGCTYPE (x) == Lisp_Type_Vector)
+#define CHECK_VECTOR(x) CHECK_NONRECORD (x, Lisp_Type_Vector, Qvectorp)
+#define CONCHECK_VECTOR(x) CONCHECK_NONRECORD (x, Lisp_Type_Vector, Qvectorp)
 
 #endif
 
@@ -1047,13 +1062,13 @@ DECLARE_LRECORD (symbol, struct Lisp_Symbol);
 
 #else
 
-DECLARE_NONRECORD (symbol, Lisp_Symbol, struct Lisp_Symbol);
-#define XSYMBOL(x) XNONRECORD (x, symbol, Lisp_Symbol, struct Lisp_Symbol)
-#define XSETSYMBOL(s, p) XSETOBJ ((s), Lisp_Symbol, (p))
-#define SYMBOLP(x) (XTYPE (x) == Lisp_Symbol)
-#define GC_SYMBOLP(x) (XGCTYPE (x) == Lisp_Symbol)
-#define CHECK_SYMBOL(x) CHECK_NONRECORD (x, Lisp_Symbol, Qsymbolp)
-#define CONCHECK_SYMBOL(x) CONCHECK_NONRECORD (x, Lisp_Symbol, Qsymbolp)
+DECLARE_NONRECORD (symbol, Lisp_Type_Symbol, struct Lisp_Symbol);
+#define XSYMBOL(x) XNONRECORD (x, symbol, Lisp_Type_Symbol, struct Lisp_Symbol)
+#define XSETSYMBOL(s, p) XSETOBJ ((s), Lisp_Type_Symbol, (p))
+#define SYMBOLP(x) (XTYPE (x) == Lisp_Type_Symbol)
+#define GC_SYMBOLP(x) (XGCTYPE (x) == Lisp_Type_Symbol)
+#define CHECK_SYMBOL(x) CHECK_NONRECORD (x, Lisp_Type_Symbol, Qsymbolp)
+#define CONCHECK_SYMBOL(x) CONCHECK_NONRECORD (x, Lisp_Type_Symbol, Qsymbolp)
 
 #endif
 
@@ -1115,8 +1130,8 @@ DECLARE_LRECORD (marker, struct Lisp_Marker);
 
 /*********** char ***********/
 
-#define CHARP(x) (XTYPE (x) == Lisp_Char)
-#define GC_CHARP(x) (XGCTYPE (x) == Lisp_Char)
+#define CHARP(x) (XTYPE (x) == Lisp_Type_Char)
+#define GC_CHARP(x) (XGCTYPE (x) == Lisp_Type_Char)
 
 #ifdef ERROR_CHECK_TYPECHECK
 
@@ -1134,8 +1149,8 @@ XCHAR (Lisp_Object obj)
 
 #endif
 
-#define CHECK_CHAR(x) CHECK_NONRECORD (x, Lisp_Char, Qcharacterp)
-#define CONCHECK_CHAR(x) CONCHECK_NONRECORD (x, Lisp_Char, Qcharacterp)
+#define CHECK_CHAR(x) CHECK_NONRECORD (x, Lisp_Type_Char, Qcharacterp)
+#define CONCHECK_CHAR(x) CONCHECK_NONRECORD (x, Lisp_Type_Char, Qcharacterp)
 
 
 /*********** float ***********/
@@ -1171,24 +1186,24 @@ DECLARE_LRECORD (float, struct Lisp_Float);
 /* These are always continuable because they change their arguments
    even when no error is signalled. */
 
-#define CHECK_INT_OR_FLOAT_COERCE_MARKER(x) do				\
-{ if (INTP (x) || FLOATP (x))						\
-    ;									\
-  else if (MARKERP (x))							\
-    x = make_int (marker_position (x));					\
-  else									\
-    x = wrong_type_argument (Qnumber_or_marker_p, x);			\
+#define CHECK_INT_OR_FLOAT_COERCE_MARKER(x) do		\
+{ if (INTP (x) || FLOATP (x))				\
+    ;							\
+  else if (MARKERP (x))					\
+    x = make_int (marker_position (x));			\
+  else							\
+    x = wrong_type_argument (Qnumber_or_marker_p, x);	\
 } while (0)
 
-#define CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER(x) do			\
-{ if (INTP (x) || FLOATP (x))						\
-    ;									\
-  else if (CHARP (x))							\
-    x = make_int (XCHAR (x));						\
-  else if (MARKERP (x))							\
-    x = make_int (marker_position (x));					\
-  else									\
-    x = wrong_type_argument (Qnumber_char_or_marker_p, x);		\
+#define CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER(x) do		\
+{ if (INTP (x) || FLOATP (x))					\
+    ;								\
+  else if (CHARP (x))						\
+    x = make_int (XCHAR (x));					\
+  else if (MARKERP (x))						\
+    x = make_int (marker_position (x));				\
+  else								\
+    x = wrong_type_argument (Qnumber_char_or_marker_p, x);	\
 } while (0)
 
 # define INT_OR_FLOATP(x) (INTP (x) || FLOATP (x))
@@ -1214,8 +1229,8 @@ DECLARE_LRECORD (float, struct Lisp_Float);
 
 #endif /* not LISP_FLOAT_TYPE */
 
-#define INTP(x) (XTYPE (x) == Lisp_Int)
-#define GC_INTP(x) (XGCTYPE (x) == Lisp_Int)
+#define INTP(x) (XTYPE (x) == Lisp_Type_Int)
+#define GC_INTP(x) (XGCTYPE (x) == Lisp_Type_Int)
 
 #define ZEROP(x) EQ (x, Qzero)
 #define GC_ZEROP(x) GC_EQ (x, Qzero)
@@ -1236,8 +1251,8 @@ XINT (Lisp_Object obj)
 
 #endif
 
-#define CHECK_INT(x) CHECK_NONRECORD (x, Lisp_Int, Qintegerp)
-#define CONCHECK_INT(x) CONCHECK_NONRECORD (x, Lisp_Int, Qintegerp)
+#define CHECK_INT(x) CHECK_NONRECORD (x, Lisp_Type_Int, Qintegerp)
+#define CONCHECK_INT(x) CONCHECK_NONRECORD (x, Lisp_Type_Int, Qintegerp)
 
 #define NATNUMP(x) (INTP (x) && XINT (x) >= 0)
 #define GC_NATNUMP(x) (GC_INTP (x) && XINT (x) >= 0)
@@ -1248,33 +1263,33 @@ XINT (Lisp_Object obj)
   do { if (!NATNUMP (x)) x = wrong_type_argument (Qnatnump, x); } while (0)
 
 /* next three always continuable because they coerce their arguments. */
-#define CHECK_INT_COERCE_CHAR(x) do					\
-{ if (INTP (x))								\
-    ;									\
-  else if (CHARP (x))							\
-    x = make_int (XCHAR (x));						\
-  else									\
-    x = wrong_type_argument (Qinteger_or_char_p, x);			\
+#define CHECK_INT_COERCE_CHAR(x) do			\
+{ if (INTP (x))						\
+    ;							\
+  else if (CHARP (x))					\
+    x = make_int (XCHAR (x));				\
+  else							\
+    x = wrong_type_argument (Qinteger_or_char_p, x);	\
 } while (0)
 
-#define CHECK_INT_COERCE_MARKER(x) do					\
-{ if (INTP (x))								\
-    ;									\
-  else if (MARKERP (x))							\
-    x = make_int (marker_position (x));					\
-  else									\
-    x = wrong_type_argument (Qinteger_or_marker_p, x);			\
+#define CHECK_INT_COERCE_MARKER(x) do			\
+{ if (INTP (x))						\
+    ;							\
+  else if (MARKERP (x))					\
+    x = make_int (marker_position (x));			\
+  else							\
+    x = wrong_type_argument (Qinteger_or_marker_p, x);	\
 } while (0)
 
-#define CHECK_INT_COERCE_CHAR_OR_MARKER(x) do				\
-{ if (INTP (x))								\
-    ;									\
-  else if (CHARP (x))							\
-    x = make_int (XCHAR (x));						\
-  else if (MARKERP (x))							\
-    x = make_int (marker_position (x));					\
-  else									\
-    x = wrong_type_argument (Qinteger_char_or_marker_p, x);		\
+#define CHECK_INT_COERCE_CHAR_OR_MARKER(x) do			\
+{ if (INTP (x))							\
+    ;								\
+  else if (CHARP (x))						\
+    x = make_int (XCHAR (x));					\
+  else if (MARKERP (x))						\
+    x = make_int (marker_position (x));				\
+  else								\
+    x = wrong_type_argument (Qinteger_char_or_marker_p, x);	\
 } while (0)
 
 /*********** pure space ***********/
@@ -1284,6 +1299,7 @@ XINT (Lisp_Object obj)
 
 /*********** structures ***********/
 
+typedef struct structure_keyword_entry structure_keyword_entry;
 struct structure_keyword_entry
 {
   Lisp_Object keyword;
@@ -1291,23 +1307,24 @@ struct structure_keyword_entry
 		   Error_behavior errb);
 };
 
-typedef struct structure_keyword_entry_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct structure_keyword_entry);
-} Structure_keyword_entry_dynarr;
+  Dynarr_declare (structure_keyword_entry);
+} structure_keyword_entry_dynarr;
 
+typedef struct structure_type structure_type;
 struct structure_type
 {
   Lisp_Object type;
-  Structure_keyword_entry_dynarr *keywords;
+  structure_keyword_entry_dynarr *keywords;
   int (*validate) (Lisp_Object data, Error_behavior errb);
   Lisp_Object (*instantiate) (Lisp_Object data);
 };
 
-typedef struct structure_type_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct structure_type);
-} Structure_type_dynarr;
+  Dynarr_declare (structure_type);
+} structure_type_dynarr;
 
 struct structure_type *define_structure_type (Lisp_Object type,
 					      int (*validate)
@@ -1759,39 +1776,39 @@ void debug_ungcpro();
 #endif
 
 /* Evaluate expr, UNGCPRO, and then return the value of expr.  */
-#define RETURN_UNGCPRO(expr) do						\
-{									\
-  Lisp_Object ret_ungc_val = (expr);					\
-  UNGCPRO;								\
-  RETURN__ ret_ungc_val;						\
+#define RETURN_UNGCPRO(expr) do			\
+{						\
+  Lisp_Object ret_ungc_val = (expr);		\
+  UNGCPRO;					\
+  RETURN__ ret_ungc_val;			\
 } while (0)
 
 /* Evaluate expr, NUNGCPRO, UNGCPRO, and then return the value of expr.  */
-#define RETURN_NUNGCPRO(expr) do					\
-{									\
-  Lisp_Object ret_ungc_val = (expr);					\
-  NUNGCPRO;								\
-  UNGCPRO;								\
-  RETURN__ ret_ungc_val;						\
+#define RETURN_NUNGCPRO(expr) do		\
+{						\
+  Lisp_Object ret_ungc_val = (expr);		\
+  NUNGCPRO;					\
+  UNGCPRO;					\
+  RETURN__ ret_ungc_val;			\
 } while (0)
 
 /* Evaluate expr, NNUNGCPRO, NUNGCPRO, UNGCPRO, and then return the
    value of expr.  */
-#define RETURN_NNUNGCPRO(expr) do					\
-{									\
-  Lisp_Object ret_ungc_val = (expr);					\
-  NNUNGCPRO;								\
-  NUNGCPRO;								\
-  UNGCPRO;								\
-  RETURN__ ret_ungc_val;						\
+#define RETURN_NNUNGCPRO(expr) do		\
+{						\
+  Lisp_Object ret_ungc_val = (expr);		\
+  NNUNGCPRO;					\
+  NUNGCPRO;					\
+  UNGCPRO;					\
+  RETURN__ ret_ungc_val;			\
 } while (0)
 
 /* Evaluate expr, return it if it's not Qunbound. */
-#define RETURN_IF_NOT_UNBOUND(expr) do					\
-{									\
-  Lisp_Object ret_nunb_val = (expr);					\
-  if (!UNBOUNDP (ret_nunb_val))						\
-    RETURN__ ret_nunb_val;	 					\
+#define RETURN_IF_NOT_UNBOUND(expr) do		\
+{						\
+  Lisp_Object ret_nunb_val = (expr);		\
+  if (!UNBOUNDP (ret_nunb_val))			\
+    RETURN__ ret_nunb_val;			\
 } while (0)
 
 /* Call staticpro (&var) to protect static variable `var'. */

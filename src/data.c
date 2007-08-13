@@ -167,7 +167,7 @@ make_int (EMACS_INT num)
 {
   Lisp_Object val;
   /* Don't use XSETINT here -- it's defined in terms of make_int ().  */
-  XSETOBJ (val, Lisp_Int, num);
+  XSETOBJ (val, Lisp_Type_Int, num);
   return val;
 }
 #endif /* ! defined (make_int) */
@@ -195,8 +195,7 @@ Lisp_Object
 make_char (Emchar num)
 {
   Lisp_Object val;
-  /* Don't use XSETCHAR here -- it's defined in terms of make_char ().  */
-  XSETOBJ (val, Lisp_Char, num);
+  XSETOBJ (val, Lisp_Type_Char, num);
   return val;
 }
 
@@ -1757,9 +1756,9 @@ Lisp_Object
 make_weak_list (enum weak_list_type type)
 {
   Lisp_Object result = Qnil;
-
   struct weak_list *wl =
-    alloc_lcrecord (sizeof (struct weak_list), lrecord_weak_list);
+    alloc_lcrecord_type (struct weak_list, lrecord_weak_list);
+
   wl->list = Qnil;
   wl->type = type;
   XSETWEAK_LIST (result, wl);

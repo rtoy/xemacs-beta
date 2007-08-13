@@ -78,7 +78,7 @@ void
 Initialize_Locale (void)
 {
   char *locale;
-  
+
   XtSetLanguageProc (NULL, (XtLanguageProc) NULL, NULL);
   if ((locale = setlocale (LC_ALL, "")) == NULL)
     {
@@ -110,7 +110,7 @@ Initialize_Locale (void)
           return;
         }
     }
-  
+
   if (XSetLocaleModifiers ("") == NULL)
     {
       stderr_out ("XSetLocaleModifiers(\"\") failed\n");
@@ -127,9 +127,9 @@ XIM_init_device (struct device *d)
   XIM xim;
 
   XtGetApplicationNameAndClass (dpy, &name, &class);
-  
+
   DEVICE_X_XIM (d) = xim = XOpenIM (dpy, XtDatabase (dpy), name, class);
-  
+
   if (xim == NULL)
     {
       stderr_out ("Warning: XOpenIM() failed...no input server available\n");
@@ -168,7 +168,7 @@ XIM_init_frame (struct frame *f)
   } xic_vars_t;
 
   xic_vars_t xic_vars;
-  
+
   /* mrb: #### Fix so that background and foreground is set from
      default face, rather than foreground and background resources, or
      that the user can use set-frame-parameters to set xic attributes */
@@ -187,17 +187,17 @@ XIM_init_frame (struct frame *f)
   };
 
   assert (win != 0 && w != NULL && d != NULL);
-  
+
   if (!xim)
     {                   /* No input method? */
       FRAME_X_XIC (f) = NULL;
       return;
     }
-  
+
   XtGetApplicationResources (w, &xic_vars,
 			     resources, XtNumber (resources),
 			     NULL, 0);
-  
+
   if (!xic_vars.fontset)
     {
       stderr_out ("Can't get fontset resource for Input Method\n");
@@ -207,7 +207,7 @@ XIM_init_frame (struct frame *f)
 
   FRAME_X_XIC_STYLE (f) = style =
     best_style (&xic_vars.styles, DEVICE_X_XIM_STYLES (d));
-  
+
   /* Hopefully we don't have to conditionalize the following based on
      style; the IM should ignore values it doesn't use */
   p_list = XVaCreateNestedList (0,
@@ -234,7 +234,7 @@ XIM_init_frame (struct frame *f)
                NULL);
   XFree (p_list);
   XFree (s_list);
-  
+
   if (!xic)
     {
       stderr_out ("Warning: XCreateIC failed\n");
@@ -248,7 +248,7 @@ XIM_init_frame (struct frame *f)
     }
 
   XIM_SetGeometry (f);
-  
+
   XSetICFocus (xic);
 
 #ifdef DEBUG_XIM
@@ -262,17 +262,17 @@ XIM_SetGeometry (struct frame *f)
   XIC      xic   = FRAME_X_XIC (f);
   XIMStyle style = FRAME_X_XIC_STYLE (f);
   XRectangle area;
-  
+
   if (!xic || !f)
     return;
-  
+
   if (style & XIMStatusArea)
     {
       /* Place Status Area in bottom right corner */
       /* Negotiate geometry of status area */
       /* See O'Reilly Xlib XIM chapter (but beware, it's buggy) */
       XRectangle *needed;
-      
+
       /* If input method has existing status area, use its current size */
       /* The following at least works for Sun's htt */
       area.x = area.y = area.width = area.height = 0;
@@ -280,17 +280,17 @@ XIM_SetGeometry (struct frame *f)
       XIC_Value (Get, xic, XNStatusAttributes, XNAreaNeeded, &needed);
       if (needed->width == 0)   /* Use XNArea instead of XNAreaNeeded */
         XIC_Value (Get, xic, XNStatusAttributes, XNArea, &needed);
-    
+
       area.width  = needed->width;
       area.height = needed->height;
       area.x = FRAME_RIGHT_BORDER_START  (f) - area.width;
       area.y = FRAME_BOTTOM_BORDER_START (f) - area.height;
-      
+
 #ifdef DEBUG_XIM
       stderr_out ("Putting StatusArea in x=%d y=%d w=%d h=%d\n",
                   area.x, area.y, area.width, area.height);
 #endif /* DEBUG_XIM */
-      
+
       XIC_Value (Set, xic, XNStatusAttributes, XNArea, &area);
     }
 
@@ -306,7 +306,7 @@ XIM_SetGeometry (struct frame *f)
       area.height = FRAME_BOTTOM_BORDER_END (f) - area.y;
       XIC_Value(Set, xic, XNPreeditAttributes, XNArea, &area);
     }
-  
+
 #ifdef DEBUG_XIM
   describe_XIC (xic);
 #endif
@@ -325,7 +325,7 @@ XIM_SetSpotLocation (struct frame *f, int x, int y)
       (spot->x == (short) x &&
        spot->y == (short) y))
     return;
-  
+
   spot->x = (short) x;
   spot->y = (short) y;
 
@@ -377,7 +377,7 @@ get_XIM_input (XKeyPressedEvent *x_key_event, XIC ic, Display *dpy)
   int len;
   int i;
   XClientMessageEvent new_event;
-  
+
 try_again:
   len = XwcLookupString (ic, x_key_event, composed_input_buf.data,
 			 composed_input_buf.size, &keysym, &status);
@@ -391,7 +391,7 @@ try_again:
     default:
       abort ();
     }
-  
+
   new_event.type = ClientMessage;
   new_event.display = x_key_event->display;
   new_event.window = x_key_event->window;
@@ -472,7 +472,7 @@ EmacsXtCvtStringToXIMStyles (
     STYLE_INFO (XIMPreeditNone|XIMStatusNone)
   };
 #undef STYLE_INFO
-   
+
   CONST char *s   = (char *) fromVal->addr;
   CONST char *end = s + fromVal->size;
   XIMStyles * CONST p = (XIMStyles *) toVal->addr;
@@ -485,7 +485,7 @@ EmacsXtCvtStringToXIMStyles (
   stderr_out ("EmacsCvtStringToXIMStyles called with size=%d, string=\"%s\"\n",
               fromVal->size, (char *) fromVal->addr);
 #endif /* DEBUG_XIM */
-  
+
   if (*num_args != 0)
     {
       XtAppContext the_app_con = XtDisplayToApplicationContext (dpy);
@@ -505,7 +505,7 @@ EmacsXtCvtStringToXIMStyles (
 #endif /* DEBUG_XEMACS */
 
   p->count_styles = 0;
-  p->supported_styles = xmalloc (max_styles * sizeof (XIMStyle));
+  p->supported_styles = xnew_array (XIMStyle, max_styles);
 
   /*
    * The following routine assumes that the style name resource is
@@ -517,7 +517,7 @@ EmacsXtCvtStringToXIMStyles (
 
   if ((c = strtok(s, delimiter)) == NULL)
     c = end;
-  
+
   while (c < end)
     {
       for(i=0 ; i<max_styles ; i++)
@@ -533,13 +533,13 @@ EmacsXtCvtStringToXIMStyles (
         break ;
       }
     }
-  
+
   if (p->count_styles == 0)
     {   /* No valid styles? */
       char buf[1024];
       XrmValue new_from;
       XtAppContext the_app_con = XtDisplayToApplicationContext (dpy);
-      
+
       sprintf(buf, "Cannot convert string \"%s\" to type XIMStyles.\n"
               "Using default string \"%s\" instead.\n",
               fromVal->addr, DefaultXIMStyles);
@@ -551,8 +551,7 @@ EmacsXtCvtStringToXIMStyles (
       return EmacsXtCvtStringToXIMStyles (dpy, args, num_args,
                                           &new_from, toVal, converter_data);
     }
-  p->supported_styles = xrealloc (p->supported_styles,
-                                  p->count_styles * sizeof(XIMStyle));
+  XREALLOC_ARRAY (p->supported_styles, XIMStyle, p->count_styles);
   *converter_data = (char *) True;
   return True;
 }
@@ -570,7 +569,7 @@ EmacsFreeXIMStyles (
   stderr_out ("Converter data: %x\n", converter_data);
   stderr_out ("EmacsFreeXIMStyles called\n");
 #endif /* DEBUG_XIM */
-  
+
   if (*num_args != 0)
     {
       XtAppWarningMsg(app, "wrongParameters","freeXIMStyles","XtToolkitError",
@@ -578,7 +577,7 @@ EmacsFreeXIMStyles (
                       (String *)NULL, (Cardinal *)NULL);
       return;
     }
-  
+
   if (converter_data)
     {
       Boolean free_p    = (Boolean) (int) converter_data;
@@ -597,7 +596,7 @@ BetterStyle (XIMStyle s, XIMStyle t)
 {
 #define CHECK_XIMStyle_BIT(bit)  \
   if ((s ^ t) & bit) { return (s & bit) ? s : t; }
-  
+
   CHECK_XIMStyle_BIT (XIMPreeditCallbacks);
   CHECK_XIMStyle_BIT (XIMPreeditPosition);
   CHECK_XIMStyle_BIT (XIMPreeditArea);
@@ -678,7 +677,7 @@ describe_XFontSet (XFontSet fontset)
       stderr_out ("NULL\n");
       return;
     }
-      
+
   count = XFontsOfFontSet (fontset, &font_struct_list, &font_name_list);
   stderr_out ( "%d font(s) available:\n", count);
   for (i=0 ; i < count ; i++)
@@ -690,7 +689,7 @@ describe_Status (Status status)
 {
 #define DESCRIBE_STATUS(value) \
   if (status == value) stderr_out ("Status: " #value "\n")
-                         
+
   DESCRIBE_STATUS (XBufferOverflow);
   DESCRIBE_STATUS (XLookupNone);
   DESCRIBE_STATUS (XLookupKeySym);
@@ -700,7 +699,7 @@ describe_Status (Status status)
 }
 
 void
-describe_Window (Window win) 
+describe_Window (Window win)
 {
   char xwincmd[64];
   sprintf (xwincmd, "xwininfo -id 0x%x >&2; xwininfo -events -id 0x%x >&2",
@@ -727,10 +726,10 @@ describe_XIC (XIC xic)
   /* Check for valid input context and method */
   if (!xic)
     stderr_out ("Input method is NULL\n");
-  
+
   if (!XIMOfIC(xic))
     stderr_out ("XIMOfIC() returns NULL\n");
-  
+
   /* Print out Input Context Attributes */
   p_list = XVaCreateNestedList (0,
                                 XNFontSet,      &p_fontset,
@@ -748,7 +747,7 @@ describe_XIC (XIC xic)
                                 XNForeground,   &s_fg,
                                 XNBackground,   &s_bg,
                                 NULL);
- 
+
   bad_arg = XGetICValues(xic,
                          XNInputStyle,        &style,
                          XNFilterEvents,      &filter_mask,
@@ -761,10 +760,10 @@ describe_XIC (XIC xic)
                          NULL);
   XFree(p_list);
   XFree(s_list);
-  
+
   if (bad_arg != NULL)
     stderr_out ("Couldn't get IC value: %s\n", bad_arg);
-  
+
   stderr_out ("\nInput method context attributes:\n");
   stderr_out ("Style: "); describe_XIMStyle (style);
   stderr_out ("Client window: %x\n", client_win);
@@ -838,7 +837,7 @@ describe_XIMStyle (XIMStyle style)
 #define DESCRIBE_STYLE(bit) \
   if (bit & style)          \
     stderr_out (#bit " ");
-  
+
   DESCRIBE_STYLE (XIMPreeditArea);
   DESCRIBE_STYLE (XIMPreeditCallbacks);
   DESCRIBE_STYLE (XIMPreeditPosition);
@@ -878,7 +877,7 @@ Unit_Test (struct frame *f, char * s)
   fromVal.size = strlen (s);
   toVal.addr = (XtPointer) &user_preferred_XIMStyles;
   toVal.size = sizeof (XIMStyles);
-  
+
   if (XtConvertAndStore (FRAME_X_TEXT_WIDGET (f), XtRString, &fromVal,
 			 XtRXimStyles, &toVal) != False)
     {
@@ -903,7 +902,7 @@ x_init_fontset (struct device *d)
   char * default_string;
   /*  char * font_set_string = "-dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*";*/
   char * font_set_string = "-dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*, -misc-fixed-medium-r-normal--14-130-75-75-c-70-jisx0201.1976-0,-misc-fixed-medium-r-normal--14-130-75-75-c-140-jisx0208.1983-0, -misc-fixed-medium-r-normal--14-130-75-75-c-70-jisx0201.1976-0" ;
-  
+
   DEVICE_X_FONTSET (d) = fontset =
     XCreateFontSet (dpy,
 		    font_set_string,
@@ -927,7 +926,7 @@ x_init_fontset (struct device *d)
       XFreeStringList (missing_charsets);
       stderr_out ("Default string: %s\n", default_string);
     }
-  
+
 #ifdef DEBUG_XIM
   describe_XFontSet (fontset);
 #endif

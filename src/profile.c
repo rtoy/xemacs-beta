@@ -104,11 +104,11 @@ sigprof_handler (int signo)
 	/* #### see comment about memory allocation in start-profiling.
 	   Allocating memory in a signal handler is BAD BAD BAD.
 	   If you are using the non-mmap rel-alloc code, you might
-	   lose because of this.  Even worse, if the memory allocation 
+	   lose because of this.  Even worse, if the memory allocation
 	   fails, the `error' generated whacks everything hard. */
 	long count;
 	CONST void *vval;
-    
+
 	if (gethash (LISP_TO_VOID (fun), big_profile_table, &vval))
 	  count = (long) vval;
 	else
@@ -117,7 +117,7 @@ sigprof_handler (int signo)
 	vval = (CONST void *) count;
 	puthash (LISP_TO_VOID (fun), (void *) vval, big_profile_table);
       }
-      
+
       inside_profiling = 0;
     }
 }
@@ -187,7 +187,7 @@ Stop profiling.
 static Lisp_Object
 profile_lock_unwind (Lisp_Object ignore)
 {
-  inside_profiling = 0;	
+  inside_profiling = 0;
   return Qnil;
 }
 
@@ -203,14 +203,14 @@ get_profiling_info_maphash (CONST void *void_key,
 {
   /* This function does not GC */
   Lisp_Object key;
-  struct get_profiling_info_closure *closure = void_closure;
+  struct get_profiling_info_closure *closure
+    = (struct get_profiling_info_closure *) void_closure;
   EMACS_INT val;
 
   CVOID_TO_LISP (key, void_key);
   val = (EMACS_INT) void_val;
 
-  closure->accum = Fcons (Fcons (key, make_int (val)),
-			  closure->accum);
+  closure->accum = Fcons (Fcons (key, make_int (val)), closure->accum);
 }
 
 DEFUN ("get-profiling-info", Fget_profiling_info, 0, 0, 0, /*
@@ -244,10 +244,9 @@ mark_profiling_info_maphash (CONST void *void_key,
 			     void *void_closure)
 {
   Lisp_Object key;
-  struct mark_profiling_info_closure *closure = void_closure;
 
   CVOID_TO_LISP (key, void_key);
-  (closure->markfun) (key);
+  (((struct mark_profiling_info_closure *) void_closure)->markfun) (key);
 }
 
 void

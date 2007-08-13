@@ -359,55 +359,40 @@ Optional arg NO-MICE means that button events are not allowed."
 
 ;FSFmacs ####
 ;;; Support keyboard commands to turn on various modifiers.
-;
+
 ;;; These functions -- which are not commands -- each add one modifier
 ;;; to the following event.
-;
-;(defun event-apply-alt-modifier (ignore-prompt)
-;  (vector (event-apply-modifier (read-event) 'alt 22 "A-")))
-;(defun event-apply-super-modifier (ignore-prompt)
-;  (vector (event-apply-modifier (read-event) 'super 23 "s-")))
-;(defun event-apply-hyper-modifier (ignore-prompt)
-;  (vector (event-apply-modifier (read-event) 'hyper 24 "H-")))
-;(defun event-apply-shift-modifier (ignore-prompt)
-;  (vector (event-apply-modifier (read-event) 'shift 25 "S-")))
-;(defun event-apply-control-modifier (ignore-prompt)
-;  (vector (event-apply-modifier (read-event) 'control 26 "C-")))
-;(defun event-apply-meta-modifier (ignore-prompt)
-;  (vector (event-apply-modifier (read-event) 'meta 27 "M-")))
-;
-;(defun event-apply-modifier (event symbol lshiftby prefix)
-;  "Apply a modifier flag to event EVENT.
-;SYMBOL is the name of this modifier, as a symbol.
-;LSHIFTBY is the numeric value of this modifier, in keyboard events.
-;PREFIX is the string that represents this modifier in an event type symbol."
-;  (if (numberp event)
-;      (cond ((eq symbol 'control)
-;	      (if (and (<= (downcase event) ?z)
-;		       (>= (downcase event) ?a))
-;		  (- (downcase event) ?a -1)
-;		(if (and (<= (downcase event) ?Z)
-;			 (>= (downcase event) ?A))
-;		    (- (downcase event) ?A -1)
-;		  (logior (lsh 1 lshiftby) event))))
-;	     ((eq symbol 'shift)
-;	      (if (and (<= (downcase event) ?z)
-;		       (>= (downcase event) ?a))
-;		  (upcase event)
-;		(logior (lsh 1 lshiftby) event)))
-;	     (t
-;	      (logior (lsh 1 lshiftby) event)))
-;    (if (memq symbol (event-modifiers event))
-;	 event
-;      (let ((event-type (if (symbolp event) event (car event))))
-;	 (setq event-type (intern (concat prefix (symbol-name event-type))))
-;	 (if (symbolp event)
-;	     event-type
-;	   (cons event-type (cdr event)))))))
-;
-;(define-key function-key-map [?\C-x ?@ ?h] 'event-apply-hyper-modifier)
-;(define-key function-key-map [?\C-x ?@ ?s] 'event-apply-super-modifier)
-;(define-key function-key-map [?\C-x ?@ ?m] 'event-apply-meta-modifier)
-;(define-key function-key-map [?\C-x ?@ ?a] 'event-apply-alt-modifier)
-;(define-key function-key-map [?\C-x ?@ ?S] 'event-apply-shift-modifier)
-;(define-key function-key-map [?\C-x ?@ ?c] 'event-apply-control-modifier)
+
+(defun event-apply-alt-modifier (ignore-prompt)
+  (event-apply-modifier 'alt))
+(defun event-apply-super-modifier (ignore-prompt)
+  (event-apply-modifier 'super))
+(defun event-apply-hyper-modifier (ignore-prompt)
+  (event-apply-modifier 'hyper))
+(defun event-apply-shift-modifier (ignore-prompt)
+  (event-apply-modifier 'shift))
+(defun event-apply-control-modifier (ignore-prompt)
+  (event-apply-modifier 'control))
+(defun event-apply-meta-modifier (ignore-prompt)
+  (event-apply-modifier 'meta))
+
+(defun event-apply-modifier (symbol)
+  "Return the next key event, with a modifier flag applied.
+SYMBOL is the name of this modifier, as a symbol."
+  (let (event)
+    (while (not (key-press-event-p (setq event (next-command-event))))
+      (dispatch-event event))
+    (vector (append (list symbol)
+		    (delq symbol (event-modifiers event))
+		    (list (event-key event))))))
+
+(add-hook
+ 'create-console-hook
+ (lambda (console)
+   (letf (((selected-console) console))
+     (define-key function-key-map [?\C-x ?@ ?h] 'event-apply-hyper-modifier)
+     (define-key function-key-map [?\C-x ?@ ?s] 'event-apply-super-modifier)
+     (define-key function-key-map [?\C-x ?@ ?m] 'event-apply-meta-modifier)
+     (define-key function-key-map [?\C-x ?@ ?S] 'event-apply-shift-modifier)
+     (define-key function-key-map [?\C-x ?@ ?c] 'event-apply-control-modifier)
+     (define-key function-key-map [?\C-x ?@ ?a] 'event-apply-alt-modifier))))

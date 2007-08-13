@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -78,13 +78,140 @@
     (zmacs-activate-region)))
 
 (defun ow-find-backward ()
-  "Search backward the previous occurrence of the text of the selection."
+  "Search backward for the previous occurrence of the text of the selection."
   (interactive)
   (ow-find t))
 
 ;;; Load X-server specific code.
 ;;; Specifically, load some code to repair the grievous damage that MIT and
 ;;; Sun have done to the default keymap for the Sun keyboards.
+
+(eval-when-compile
+  (defmacro x-define-dead-key (key map)
+    `(when (x-keysym-on-keyboard-p ,(symbol-name key))
+       (define-key function-key-map [,key] ',map))))
+
+(defun x-initialize-compose ()
+  "Enable compose processing"
+  (autoload 'compose-map	    "x-compose" nil t 'keymap)
+  (autoload 'compose-acute-map	    "x-compose" nil t 'keymap)
+  (autoload 'compose-grave-map	    "x-compose" nil t 'keymap)
+  (autoload 'compose-cedilla-map    "x-compose" nil t 'keymap)
+  (autoload 'compose-diaeresis-map  "x-compose" nil t 'keymap)
+  (autoload 'compose-circumflex-map "x-compose" nil t 'keymap)
+  (autoload 'compose-tilde-map	    "x-compose" nil t 'keymap)
+
+  (when (x-keysym-on-keyboard-p "Multi_key")
+    (define-key function-key-map [multi-key] 'compose-map))
+
+  ;; The dead keys might really be called just about anything, depending
+  ;; on the vendor.  MIT thinks that the prefixes are "SunFA_", "D", and
+  ;; "hpmute_" for Sun, DEC, and HP respectively.  However, OpenWindows 3
+  ;; thinks that the prefixes are "SunXK_FA_", "DXK_", and "hpXK_mute_".
+  ;; And HP (who don't mention Sun and DEC at all) use "XK_mute_".
+  ;; Go figure.
+
+  ;; Presumably if someone is running OpenWindows, they won't be using
+  ;; the DEC or HP keysyms, but if they are defined then that is possible,
+  ;; so in that case we accept them all.
+
+  ;; If things seem not to be working, you might want to check your
+  ;; /usr/lib/X11/XKeysymDB file to see if your vendor has an equally
+  ;; mixed up view of what these keys should be called.
+
+  ;; Canonical names:
+  (x-define-dead-key acute			compose-acute-map)
+  (x-define-dead-key grave			compose-grave-map)
+  (x-define-dead-key cedilla			compose-cedilla-map)
+  (x-define-dead-key diaeresis			compose-diaeresis-map)
+  (x-define-dead-key circumflex			compose-circumflex-map)
+  (x-define-dead-key tilde			compose-tilde-map)
+  (x-define-dead-key degree			compose-ring-map)
+
+  ;; Sun according to MIT:
+  (when (x-valid-keysym-name-p "SunFA_Acute")
+    (x-define-dead-key SunFA_Acute		compose-acute-map)
+    (x-define-dead-key SunFA_Grave		compose-grave-map)
+    (x-define-dead-key SunFA_Cedilla		compose-cedilla-map)
+    (x-define-dead-key SunFA_Diaeresis		compose-diaeresis-map)
+    (x-define-dead-key SunFA_Circum		compose-circumflex-map)
+    (x-define-dead-key SunFA_Tilde		compose-tilde-map))
+
+  ;; Sun according to OpenWindows 2:
+  (when (x-valid-keysym-name-p "Dead_Grave")
+    (x-define-dead-key Dead_Grave		compose-grave-map)
+    (x-define-dead-key Dead_Circum		compose-circumflex-map)
+    (x-define-dead-key Dead_Tilde		compose-tilde-map))
+
+  ;; Sun according to OpenWindows 3:
+  (when (x-valid-keysym-name-p "SunXK_FA_Acute")
+    (x-define-dead-key SunXK_FA_Acute		compose-acute-map)
+    (x-define-dead-key SunXK_FA_Grave		compose-grave-map)
+    (x-define-dead-key SunXK_FA_Cedilla		compose-cedilla-map)
+    (x-define-dead-key SunXK_FA_Diaeresis	compose-diaeresis-map)
+    (x-define-dead-key SunXK_FA_Circum		compose-circumflex-map)
+    (x-define-dead-key SunXK_FA_Tilde		compose-tilde-map))
+
+  ;; DEC according to MIT:
+  (when (x-valid-keysym-name-p "Dacute_accent")
+    (x-define-dead-key Dacute_accent		compose-acute-map)
+    (x-define-dead-key Dgrave_accent		compose-grave-map)
+    (x-define-dead-key Dcedilla_accent		compose-cedilla-map)
+    (x-define-dead-key Dcircumflex_accent	compose-circumflex-map)
+    (x-define-dead-key Dtilde			compose-tilde-map)
+    (x-define-dead-key Dring_accent		compose-ring-map))
+
+  ;; DEC according to OpenWindows 3:
+  (when (x-valid-keysym-name-p "DXK_acute_accent")
+    (x-define-dead-key DXK_acute_accent		compose-acute-map)
+    (x-define-dead-key DXK_grave_accent		compose-grave-map)
+    (x-define-dead-key DXK_cedilla_accent	compose-cedilla-map)
+    (x-define-dead-key DXK_circumflex_accent	compose-circumflex-map)
+    (x-define-dead-key DXK_tilde		compose-tilde-map)
+    (x-define-dead-key DXK_ring_accent		compose-ring-map))
+
+  ;; HP according to MIT:
+  (when (x-valid-keysym-name-p "hpmute_acute")
+    (x-define-dead-key hpmute_acute		compose-acute-map)
+    (x-define-dead-key hpmute_grave		compose-grave-map)
+    (x-define-dead-key hpmute_diaeresis		compose-diaeresis-map)
+    (x-define-dead-key hpmute_asciicircum	compose-circumflex-map)
+    (x-define-dead-key hpmute_asciitilde	compose-tilde-map))
+
+  ;; HP according to OpenWindows 3:
+  (when (x-valid-keysym-name-p "hpXK_mute_acute")
+    (x-define-dead-key hpXK_mute_acute		compose-acute-map)
+    (x-define-dead-key hpXK_mute_grave		compose-grave-map)
+    (x-define-dead-key hpXK_mute_diaeresis	compose-diaeresis-map)
+    (x-define-dead-key hpXK_mute_asciicircum	compose-circumflex-map)
+    (x-define-dead-key hpXK_mute_asciitilde	compose-tilde-map))
+
+  ;; HP according to HP-UX 8.0:
+  (when (x-valid-keysym-name-p "XK_mute_acute")
+    (x-define-dead-key XK_mute_acute		compose-acute-map)
+    (x-define-dead-key XK_mute_grave		compose-grave-map)
+    (x-define-dead-key XK_mute_diaeresis	compose-diaeresis-map)
+    (x-define-dead-key XK_mute_asciicircum	compose-circumflex-map)
+    (x-define-dead-key XK_mute_asciitilde	compose-tilde-map))
+
+  ;; Xfree86 seems to use lower case and a hyphen
+  (when (x-valid-keysym-name-p "dead-acute")
+    (x-define-dead-key dead-acute		compose-acute-map)
+    (x-define-dead-key dead-grave		compose-grave-map)
+    (x-define-dead-key dead-cedilla		compose-cedilla-map)
+    (x-define-dead-key dead-diaeresis		compose-diaeresis-map)
+    (x-define-dead-key dead-circum		compose-circumflex-map)
+    (x-define-dead-key dead-tilde		compose-tilde-map))
+
+  ;;  and AIX uses underscore, sigh....
+  (when (x-valid-keysym-name-p "dead_acute")
+    (x-define-dead-key dead_acute		compose-acute-map)
+    (x-define-dead-key dead_grave		compose-grave-map)
+    (x-define-dead-key dead_cedilla		compose-cedilla-map)
+    (x-define-dead-key dead_diaeresis		compose-diaeresis-map)
+    (x-define-dead-key dead_circum		compose-circumflex-map)
+    (x-define-dead-key dead_tilde		compose-tilde-map))
+)
 
 (defun x-initialize-keyboard ()
   "Perform X-Server-specific initializations.  Don't call this."
@@ -139,7 +266,7 @@
     (make-x-device nil)
     (setq command-line-args-left (cdr x-initial-argv-list))
     (setq x-win-initted t)))
-    
+
 (defvar post-x-win-initted nil)
 
 (defun init-post-x-win ()
@@ -153,13 +280,13 @@
     (if (featurep 'mule)
         (init-mule-x-win))
     ;; these are only ever called if zmacs-regions is true.
-    (add-hook 'zmacs-deactivate-region-hook 
-	      (lambda () 
-		(if (console-on-window-system-p) 
+    (add-hook 'zmacs-deactivate-region-hook
+	      (lambda ()
+		(if (console-on-window-system-p)
 		    (x-disown-selection))))
     (add-hook 'zmacs-activate-region-hook
-	      (lambda () 
-		(if (console-on-window-system-p) 
+	      (lambda ()
+		(if (console-on-window-system-p)
 		    (x-activate-region-as-selection))))
     (add-hook 'zmacs-update-region-hook
 	      (lambda ()
@@ -181,15 +308,16 @@
 
     (setq post-x-win-initted t)))
 
-
+;;; Keyboard initialization needs to be done differently for each X
+;;; console, so use create-console-hook.
 (when (featurep 'x)
   (add-hook
    'create-console-hook
    (lambda (console)
      (letf (((selected-console) console))
        (when (eq 'x (console-type console))
-	 (x-initialize-keyboard))))))
-
+	 (x-initialize-keyboard)
+	 (x-initialize-compose))))))
 
 (defun make-frame-on-display (display &optional props)
   "Create a frame on the X display named DISPLAY.

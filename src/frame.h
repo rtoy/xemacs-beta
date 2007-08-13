@@ -152,7 +152,7 @@ Value : Emacs meaning                           :f-v-p : X meaning
   /* True if frame actually has a  minibuffer window on it.
      0 if using a minibuffer window that isn't on this frame.  */
   unsigned int has_minibuffer :1;
-     
+
   /* True if frame's root window can't be split.  */
   unsigned int no_split :1;
 
@@ -340,7 +340,7 @@ extern int frame_changed;
 #define FRAME_CURSOR_X(f) ((f)->cursor_x)
 #define FRAME_CURSOR_Y(f) ((f)->cursor_y)
 #define FRAME_VISIBLE_P(f) ((f)->visible)
-#define FRAME_REPAINT_P(f) ((f)->visible>0)      
+#define FRAME_REPAINT_P(f) ((f)->visible>0)
 #define FRAME_NO_SPLIT_P(f) ((f)->no_split)
 #define FRAME_ICONIFIED_P(f) ((f)->iconified)
 #define FRAME_FOCUS_FRAME(f) ((f)->focus_frame)
@@ -529,8 +529,8 @@ Lisp_Object next_frame (Lisp_Object f, Lisp_Object frametype,
 			Lisp_Object console);
 Lisp_Object prev_frame (Lisp_Object f, Lisp_Object frametype,
 			Lisp_Object console);
-void store_in_alist (Lisp_Object *alistptr, 
-		     CONST char *propname, 
+void store_in_alist (Lisp_Object *alistptr,
+		     CONST char *propname,
 		     Lisp_Object val);
 void pixel_to_char_size (struct frame *f, int pixel_width, int pixel_height,
 			 int *char_width, int *char_height);
@@ -539,7 +539,7 @@ void char_to_pixel_size (struct frame *f, int char_width, int char_height,
 void round_size_to_char (struct frame *f, int in_width, int in_height,
 			 int *out_width, int *out_height);
 void change_frame_size (struct frame *frame,
-			int newlength, int newwidth, 
+			int newlength, int newwidth,
 			int delay);
 void hold_frame_size_changes (void);
 void unhold_one_frame_size_changes (struct frame *f);

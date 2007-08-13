@@ -561,7 +561,7 @@ get_truename_buffer (REGISTER Lisp_Object filename)
 static struct buffer *
 allocate_buffer (void)
 {
-  struct buffer *b = alloc_lcrecord (sizeof (struct buffer), lrecord_buffer);
+  struct buffer *b = alloc_lcrecord_type (struct buffer, lrecord_buffer);
 
   copy_lcrecord (b, XBUFFER (Vbuffer_defaults));
 
@@ -1428,7 +1428,7 @@ with `delete-process'.
 
 DEFUN ("record-buffer", Frecord_buffer, 1, 1, 0, /*
 Place buffer BUF first in the buffer order.
-Call this function when a buffer is selected \"visibly\".
+Call this function when a buffer is selected "visibly".
 
 This function changes the global buffer order and the per-frame buffer
 order for the selected frame.  The buffer order keeps track of recency
@@ -2094,35 +2094,35 @@ List of functions called with no args to query before killing a buffer.
 /* Declaring this stuff as const produces 'Cannot reinitialize' messages
    from SunPro C's fix-and-continue feature (a way neato feature that
    makes debugging unbelievably more bearable) */
-#define DEFVAR_BUFFER_LOCAL(lname, field_name)				\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(buffer_local_flags.field_name), 69 },		\
-             SYMVAL_CURRENT_BUFFER_FORWARD }, 0 };			\
+#define DEFVAR_BUFFER_LOCAL(lname, field_name) do {			\
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+     (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
+      SYMVAL_CURRENT_BUFFER_FORWARD }, 0 };				\
       defvar_buffer_local ((lname), &I_hate_C);				\
  } while (0)
 
-#define DEFVAR_BUFFER_LOCAL_MAGIC(lname, field_name, magicfun)		\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(buffer_local_flags.field_name), 69 },		\
-             SYMVAL_CURRENT_BUFFER_FORWARD }, magicfun };		\
+#define DEFVAR_BUFFER_LOCAL_MAGIC(lname, field_name, magicfun) do {	\
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+     (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
+      SYMVAL_CURRENT_BUFFER_FORWARD }, magicfun };			\
       defvar_buffer_local ((lname), &I_hate_C);				\
  } while (0)
 
-#define DEFVAR_CONST_BUFFER_LOCAL(lname, field_name)			\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(buffer_local_flags.field_name), 69 },		\
-             SYMVAL_CONST_CURRENT_BUFFER_FORWARD }, 0 };		\
+#define DEFVAR_CONST_BUFFER_LOCAL(lname, field_name) do {		\
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+     (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
+      SYMVAL_CONST_CURRENT_BUFFER_FORWARD }, 0 };			\
       defvar_buffer_local ((lname), &I_hate_C);				\
  } while (0)
 
-#define DEFVAR_CONST_BUFFER_LOCAL_MAGIC(lname, field_name, magicfun)	\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(buffer_local_flags.field_name), 69 },		\
-             SYMVAL_CONST_CURRENT_BUFFER_FORWARD }, magicfun };		\
+#define DEFVAR_CONST_BUFFER_LOCAL_MAGIC(lname, field_name, magicfun) do{\
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+     (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
+      SYMVAL_CONST_CURRENT_BUFFER_FORWARD }, magicfun };		\
       defvar_buffer_local ((lname), &I_hate_C);				\
  } while (0)
 
@@ -2141,19 +2141,19 @@ defvar_buffer_local (CONST char *namestring,
 
 /* DOC is ignored because it is snagged and recorded externally
  *  by make-docfile */
-#define DEFVAR_BUFFER_DEFAULTS(lname, field_name)			\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(buffer_local_flags.field_name), 69 },		\
-             SYMVAL_DEFAULT_BUFFER_FORWARD }, 0 };			\
+#define DEFVAR_BUFFER_DEFAULTS(lname, field_name) do {			\
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+     (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
+      SYMVAL_DEFAULT_BUFFER_FORWARD }, 0 };				\
       defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));		\
  } while (0)
 
-#define DEFVAR_BUFFER_DEFAULTS_MAGIC(lname, field_name, magicfun)	\
- do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
-       = { { { { lrecord_symbol_value_forward },			\
-               (void *) &(buffer_local_flags.field_name), 69 },		\
-             SYMVAL_DEFAULT_BUFFER_FORWARD }, magicfun };		\
+#define DEFVAR_BUFFER_DEFAULTS_MAGIC(lname, field_name, magicfun) do {	\
+static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+  = { { { { lrecord_symbol_value_forward },				\
+     (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
+      SYMVAL_DEFAULT_BUFFER_FORWARD }, magicfun };			\
       defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));		\
  } while (0)
 
@@ -2171,12 +2171,9 @@ void
 complex_vars_of_buffer (void)
 {
   /* Make sure all markable slots in buffer_defaults
-     are initialized reasonably, so mark_buffer won't choke.
-   */
-  struct buffer *defs = alloc_lcrecord (sizeof (struct buffer),
-					lrecord_buffer);
-  struct buffer *syms = alloc_lcrecord (sizeof (struct buffer),
-					lrecord_buffer);
+     are initialized reasonably, so mark_buffer won't choke. */
+  struct buffer *defs = alloc_lcrecord_type (struct buffer, lrecord_buffer);
+  struct buffer *syms = alloc_lcrecord_type (struct buffer, lrecord_buffer);
 
   staticpro (&Vbuffer_defaults);
   staticpro (&Vbuffer_local_symbols);
@@ -2189,8 +2186,7 @@ complex_vars_of_buffer (void)
   syms->text = &syms->own_text;
 
   /* Set up the non-nil default values of various buffer slots.
-     Must do these before making the first buffer.
-     */
+     Must do these before making the first buffer. */
   defs->major_mode = Qfundamental_mode;
   defs->mode_name = QSFundamental;
   defs->abbrev_table = Qnil;    /* real default setup by Lisp code */
@@ -2531,7 +2527,7 @@ sequences for other charsets.  Another reasonable choice is
 `escape-quoted', which is equivalent to `iso-2022-8' but prefixes
 certain control characters with ESC to make sure they are not
 interpreted as escape sequences when read in.  This latter coding
-system results in more \"correct\" output in the presence of control
+system results in more "correct" output in the presence of control
 characters in the buffer, in the sense that when read in again using
 the same coding system, the result will virtually always match the
 original contents of the buffer, which is not the case with
@@ -2658,7 +2654,7 @@ from (abs POSITION).  If POSITION is positive, point was at the front
 of the text being deleted; if negative, point was at the end.
 
 An entry (t HIGH . LOW) indicates that the buffer previously had
-\"unmodified\" status.  HIGH and LOW are the high and low 16-bit portions
+"unmodified" status.  HIGH and LOW are the high and low 16-bit portions
 of the visited file's modification time, as of that time.  If the
 modification time of the most recent save is different, this entry is
 obsolete.
@@ -2739,7 +2735,7 @@ If an element is a cons cell of the form (PROP . ELLIPSIS),
 then characters with property value PROP are invisible,
 and they have an ellipsis as well if ELLIPSIS is non-nil.
 Note that the actual characters used for the ellipsis are controllable
-using `invisible-text-glyph', and default to \"...\".
+using `invisible-text-glyph', and default to "...".
 */, redisplay_variable_changed);
 
   DEFVAR_CONST_BUFFER_LOCAL ("generated-modeline-string",

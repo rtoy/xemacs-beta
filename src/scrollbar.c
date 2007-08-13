@@ -168,9 +168,8 @@ create_scrollbar_instance (struct frame *f, int vertical)
 {
   struct device *d = XDEVICE (f->device);
   struct scrollbar_instance *instance =
-    (struct scrollbar_instance *) xmalloc (sizeof (*instance));
+    xnew_and_zero (struct scrollbar_instance);
 
-  memset (instance, 0, sizeof (*instance));
   MAYBE_DEVMETH (d, create_scrollbar_instance, (f, vertical, instance));
 
   return instance;
@@ -705,7 +704,7 @@ behavior.
 }
 
 DEFUN ("scrollbar-page-up", Fscrollbar_page_up, 1, 1, 0, /*
-Function called when the user gives the \"page-up\" scrollbar action.
+Function called when the user gives the "page-up" scrollbar action.
 (The way this is done can vary from scrollbar to scrollbar.) One argument,
 a cons containing the scrollbar's window and a value (#### document me!
 This value is nil for Motif/Lucid scrollbars and a number for Athena
@@ -746,7 +745,7 @@ behavior.
 }
 
 DEFUN ("scrollbar-page-down", Fscrollbar_page_down, 1, 1, 0, /*
-Function called when the user gives the \"page-down\" scrollbar action.
+Function called when the user gives the "page-down" scrollbar action.
 (The way this is done can vary from scrollbar to scrollbar.) One argument,
 a cons containing the scrollbar's window and a value (#### document me!
 This value is nil for Motif/Lucid scrollbars and a number for Athena
@@ -778,7 +777,7 @@ behavior.
 }
 
 DEFUN ("scrollbar-to-top", Fscrollbar_to_top, 1, 1, 0, /*
-Function called when the user invokes the \"to-top\" scrollbar action.
+Function called when the user invokes the "to-top" scrollbar action.
 The way this is done can vary from scrollbar to scrollbar, but
 C-button1 on the up-arrow is very common. One argument, the
 scrollbar's window.  You can advise this function to change the
@@ -795,7 +794,7 @@ scrollbar behavior.
 }
 
 DEFUN ("scrollbar-to-bottom", Fscrollbar_to_bottom, 1, 1, 0, /*
-Function called when the user invokes the \"to-bottom\" scrollbar action.
+Function called when the user invokes the "to-bottom" scrollbar action.
 The way this is done can vary from scrollbar to scrollbar, but
 C-button1 on the down-arrow is very common. One argument, the
 scrollbar's window.  You can advise this function to change the
@@ -885,7 +884,7 @@ syms_of_scrollbar (void)
   defsymbol (&Qscrollbar_to_top, "scrollbar-to-top");
   defsymbol (&Qscrollbar_to_bottom, "scrollbar-to-bottom");
   defsymbol (&Qscrollbar_vertical_drag, "scrollbar-vertical-drag");
-  
+
   defsymbol (&Qscrollbar_char_left, "scrollbar-char-left");
   defsymbol (&Qscrollbar_char_right, "scrollbar-char-right");
   defsymbol (&Qscrollbar_page_left, "scrollbar-page-left");

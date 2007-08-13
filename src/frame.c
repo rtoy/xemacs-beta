@@ -219,7 +219,7 @@ allocate_frame_core (Lisp_Object device)
   /* This function can GC */
   Lisp_Object frame = Qnil;
   Lisp_Object root_window;
-  struct frame *f = alloc_lcrecord (sizeof (struct frame), lrecord_frame);
+  struct frame *f = alloc_lcrecord_type (struct frame, lrecord_frame);
 
   zero_lcrecord (f);
   nuke_all_frame_slots (f);
@@ -1899,10 +1899,10 @@ Also raises the frame so that nothing obscures it.
 /* FSF returns 'icon for iconized frames.  What a crock! */
 
 DEFUN ("frame-visible-p", Fframe_visible_p, 0, 1, 0, /*
-Return non NIL if FRAME is now \"visible\" (actually in use for display).
+Return non NIL if FRAME is now "visible" (actually in use for display).
 A frame that is not visible is not updated, and, if it works through a
 window system, may not show at all.
-N.B. Under X \"visible\" means Mapped. It the window is mapped but not
+N.B. Under X "visible" means Mapped. It the window is mapped but not
 actually visible on screen then frame_visible returns 'hidden.
 */
        (frame))
@@ -1940,7 +1940,7 @@ frame is iconified, it will not be visible.
 }
 
 DEFUN ("visible-frame-list", Fvisible_frame_list, 0, 1, 0, /*
-Return a list of all frames now \"visible\" (being updated).
+Return a list of all frames now "visible" (being updated).
 If DEVICE is specified only frames on that device will be returned.
 Note that under virtual window managers not all these frame are necessarily
 really updated.

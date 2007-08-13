@@ -50,11 +50,7 @@ Lisp_Object Qinit_pre_tty_win, Qinit_post_tty_win;
 static void
 allocate_tty_device_struct (struct device *d)
 {
-  d->device_data =
-    (struct tty_device *) xmalloc (sizeof (struct tty_device));
-
-  /* zero out all slots. */
-  memset (d->device_data, 0, sizeof (struct tty_device));
+  d->device_data = xnew_and_zero (struct tty_device);
 }
 
 static void
@@ -171,7 +167,7 @@ tty_asynch_device_change (void)
 	       tail = XCDR (tail))
 	    {
 	      struct frame *f = XFRAME (XCAR (tail));
-	      
+
 	      /* We know the frame is tty because we made sure that the
 		 device is tty. */
 	      change_frame_size (f, height, width, 1);

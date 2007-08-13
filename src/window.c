@@ -42,7 +42,6 @@ Lisp_Object Qwindowp, Qwindow_live_p;
 Lisp_Object Qwindow_configurationp;
 Lisp_Object Qscroll_up;
 Lisp_Object Qscroll_down;
-Lisp_Object Qtemp_buffer_show_hook;
 Lisp_Object Qdisplay_buffer;
 
 #ifdef MEMORY_USAGE_STATS
@@ -224,7 +223,7 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     error ("printing unreadable object #<window 0x%x>",
            XWINDOW (obj)->header.uid);
-      
+
   write_c_string ("#<window", printcharfun);
   if (!NILP (XWINDOW (obj)->buffer))
     {
@@ -289,8 +288,7 @@ Lisp_Object
 allocate_window (void)
 {
   Lisp_Object val = Qnil;
-  struct window *p = alloc_lcrecord (sizeof (struct window),
-				     lrecord_window);
+  struct window *p = alloc_lcrecord_type (struct window, lrecord_window);
 
   zero_lcrecord (p);
   XSETWINDOW (val, p);
@@ -300,8 +298,8 @@ allocate_window (void)
   p->mini_p = Qnil;
   p->next = Qnil;
   p->prev = Qnil;
-  p->hchild = Qnil;  
-  p->vchild = Qnil; 
+  p->hchild = Qnil;
+  p->vchild = Qnil;
   p->parent = Qnil;
   p->buffer = Qnil;
   INIT_DISP_VARIABLE (start, Fmake_marker ());
@@ -312,9 +310,9 @@ allocate_window (void)
   INIT_DISP_VARIABLE (last_point, Fmake_marker ());
   INIT_DISP_VARIABLE (last_start, Fmake_marker ());
   INIT_DISP_VARIABLE (last_facechange, Qzero);
-  p->face_cachels = Dynarr_new (struct face_cachel);
-  p->glyph_cachels = Dynarr_new (struct glyph_cachel);
-  p->line_start_cache = Dynarr_new (struct line_start_cache);
+  p->face_cachels     = Dynarr_new (face_cachel);
+  p->glyph_cachels    = Dynarr_new (glyph_cachel);
+  p->line_start_cache = Dynarr_new (line_start_cache);
   p->line_cache_last_updated = Qzero;
   INIT_DISP_VARIABLE (last_point_x, 0);
   INIT_DISP_VARIABLE (last_point_y, 0);
@@ -381,16 +379,12 @@ allocate_window (void)
 static struct window_mirror *
 new_window_mirror (struct frame *f)
 {
-  struct window_mirror *t;
-
-  t = (struct window_mirror *)
-    xmalloc (sizeof (struct window_mirror));
-  memset (t, 0, sizeof (struct window_mirror));
+  struct window_mirror *t = xnew_and_zero (struct window_mirror);
 
   t->frame = f;
 
-  t->current_display_lines = Dynarr_new (struct display_line);
-  t->desired_display_lines = Dynarr_new (struct display_line);
+  t->current_display_lines = Dynarr_new (display_line);
+  t->desired_display_lines = Dynarr_new (display_line);
   t->buffer = NULL;
 
 #ifdef HAVE_SCROLLBARS
@@ -438,8 +432,8 @@ update_mirror_internal (Lisp_Object win, struct window_mirror *mir)
          non-leaf windows can add up to a lot of wasted space.  So
          don't do it. */
       free_display_structs (mir);
-      mir->current_display_lines = Dynarr_new (struct display_line);
-      mir->desired_display_lines = Dynarr_new (struct display_line);
+      mir->current_display_lines = Dynarr_new (display_line);
+      mir->desired_display_lines = Dynarr_new (display_line);
 
 #ifdef HAVE_SCROLLBARS
       update_window_scrollbars (XWINDOW (win), mir, 0, 0);
@@ -1027,7 +1021,7 @@ window_top_gutter_height (struct window *w)
 int
 window_bottom_gutter_height (struct window *w)
 {
-  int other_height;    
+  int other_height;
 
   if (!NILP (w->hchild) || !NILP (w->vchild))
     return 0;
@@ -1408,7 +1402,7 @@ If it is a buffer position, then if redisplay in WINDOW reaches a position
 beyond VALUE, the functions in `redisplay-end-trigger-functions' are called
 with two arguments: WINDOW, and the end trigger value.
 Afterwards the end-trigger value is reset to nil.
-*/ 
+*/
 	 (window, value))
 {
   return (decode_window (window)->redisplay_end_trigger = value);
@@ -1754,9 +1748,9 @@ will automatically call `save-buffers-kill-emacs'.)
      WINDOW.  */
   {
     Lisp_Object pwindow;
-    
+
     pwindow = FRAME_SELECTED_WINDOW (f);
-    
+
     while (!NILP (pwindow))
       {
 	if (EQ (window, pwindow))
@@ -1769,7 +1763,7 @@ will automatically call `save-buffers-kill-emacs'.)
 	/* OK, we found it. */
 	Lisp_Object alternative;
 	alternative = Fnext_window (window, Qlambda, Qnil, Qnil);
-	
+
 	/* If we're about to delete the selected window on the
 	   selected frame, then we should use Fselect_window to select
 	   the new window.  On the other hand, if we're about to
@@ -1798,7 +1792,7 @@ will automatically call `save-buffers-kill-emacs'.)
 	 configuration get deleted and multiple frames are in use. */
       /* w->buffer = Qnil; */
     }
-    
+
   /* close up the hole in the sibling list */
   if (!NILP (w->next))
     XWINDOW (w->next)->prev = w->prev;
@@ -1822,7 +1816,7 @@ will automatically call `save-buffers-kill-emacs'.)
 	WINDOW_TOP (XWINDOW (sib)) = WINDOW_TOP (w);
 	WINDOW_LEFT (XWINDOW (sib)) = WINDOW_LEFT (w);
       }
-    
+
     /* Stretch that sibling.  */
     if (!NILP (par->vchild))
       set_window_pixheight
@@ -2279,7 +2273,7 @@ enum window_loop
 
 static Lisp_Object
 window_loop (enum window_loop type,
-             Lisp_Object obj, 
+             Lisp_Object obj,
              int mini,
              Lisp_Object frames,
 	     int dedicated_too,
@@ -2296,7 +2290,7 @@ window_loop (enum window_loop type,
   /* #### I think the change of "precomputing" last_window and next_window
    * ####  catch the lossage this is meant(?) to punt on...
    */
-  int lose_lose = 0; 
+  int lose_lose = 0;
   Lisp_Object devcons, concons;
 
   /* FRAME_ARG is Qlambda to stick to one frame,
@@ -2319,7 +2313,7 @@ window_loop (enum window_loop type,
     frame_arg = frames;
   else if (EQ (frames, Qvisible))
     frame_arg = frames;
-      
+
   DEVICE_LOOP_NO_BREAK (devcons, concons)
     {
       Lisp_Object device = XCAR (devcons);
@@ -2362,7 +2356,7 @@ window_loop (enum window_loop type,
 	  next_window = Fnext_window (w, mini ? Qt : Qnil, frame_arg, Qt);
 
 	  /* #### Still needed ?? */
-	  /* Given the outstanding quality of the rest of this code, 
+	  /* Given the outstanding quality of the rest of this code,
 	     I feel no shame about putting this piece of shit in. */
 	  if (++lose_lose >= 500)
 	    return Qnil;
@@ -2556,7 +2550,7 @@ window_loop (enum window_loop type,
 		  break;
 		}
 
-	      default: 
+	      default:
 		abort ();
 	      }
 
@@ -2587,7 +2581,7 @@ buffer_window_count (struct buffer *b, struct frame *f)
 int
 buffer_window_mru (struct window *w)
 {
-  Lisp_Object window = 
+  Lisp_Object window =
     window_loop (GET_BUFFER_MRU_WINDOW, w->buffer, 0, w->frame, 1, Qnil);
 
   if (NILP (window))
@@ -3077,7 +3071,7 @@ before each command.
 {
   struct window *w;
   Lisp_Object old_selected_window = Fselected_window (Qnil);
-  
+
   CHECK_LIVE_WINDOW (window);
   w = XWINDOW (window);
 
@@ -3109,7 +3103,7 @@ before each command.
 
   /* now select the window's frame */
   set_frame_selected_window (XFRAME (WINDOW_FRAME (w)), window);
-    
+
   select_frame_1 (WINDOW_FRAME (w));
 
   /* also select the window's buffer */
@@ -3176,7 +3170,7 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
       set_marker_restricted (w->pointm[CURRENT_DISP], make_int (1), buf);
       set_marker_restricted (w->sb_point, make_int (1), buf);
 
-      /* Run temp-buffer-show-hook, with the chosen window selected.  */ 
+      /* Run temp-buffer-show-hook, with the chosen window selected.  */
       if (!preparing_for_armageddon)
 	{
 	  Lisp_Object tem;
@@ -3207,17 +3201,16 @@ make_dummy_parent (Lisp_Object window)
 {
   Lisp_Object new = Qnil;
   struct window *o = XWINDOW (window);
-  struct window *p = alloc_lcrecord (sizeof (struct window), 
-				     lrecord_window);
+  struct window *p = alloc_lcrecord_type (struct window, lrecord_window);
 
   XSETWINDOW (new, p);
   copy_lcrecord (p, o);
 
   /* Don't copy the pointers to the line start cache or the face
      instances. */
-  p->line_start_cache = Dynarr_new (struct line_start_cache);
-  p->face_cachels = Dynarr_new (struct face_cachel);
-  p->glyph_cachels = Dynarr_new (struct glyph_cachel);
+  p->line_start_cache = Dynarr_new (line_start_cache);
+  p->face_cachels     = Dynarr_new (face_cachel);
+  p->glyph_cachels    = Dynarr_new (glyph_cachel);
 
   /* Put new into window structure in place of window */
   replace_window (window, new);
@@ -3297,7 +3290,7 @@ and put SIZE columns in the first of the pair.
       if (size < window_min_height)
 	error ("Window height %d too small (after splitting)", size);
       if (size + window_min_height > window_char_height (o, 1))
-	error ("Window height %d too small (after splitting)", 
+	error ("Window height %d too small (after splitting)",
 	       window_char_height (o, 1) - size);
       if (NILP (o->parent)
 	  || NILP (XWINDOW (o->parent)->vchild))
@@ -3314,7 +3307,7 @@ and put SIZE columns in the first of the pair.
       if (size < window_min_width)
 	error ("Window width %d too small (after splitting)", size);
       if (size + window_min_width > window_char_width (o, 0))
-	error ("Window width %d too small (after splitting)", 
+	error ("Window width %d too small (after splitting)",
 	       window_char_width (o, 0) - size);
       if (NILP (o->parent)
 	  || NILP (XWINDOW (o->parent)->hchild))
@@ -3346,7 +3339,7 @@ and put SIZE columns in the first of the pair.
 
   reset_face_cachels (p);
   reset_glyph_cachels (p);
-  
+
 
   /* Apportion the available frame space among the two new windows */
 
@@ -3417,14 +3410,14 @@ window_pixel_height_to_char_height (struct window *w, int pixel_height,
   int defheight, defwidth;
   int char_height;
   Lisp_Object window;
-  
+
   XSETWINDOW (window, w);
-  
+
   avail_height = (pixel_height -
 		  (include_gutters_p ? 0 :
 		   window_top_gutter_height (w) +
 		   window_bottom_gutter_height (w)));
-  
+
   default_face_height_and_width (window, &defheight, &defwidth);
 
   char_height = avail_height / defheight;
@@ -3449,9 +3442,9 @@ window_char_height_to_pixel_height (struct window *w, int char_height,
   int pixel_height;
 
   Lisp_Object window;
-  
+
   XSETWINDOW (window, w);
-  
+
   default_face_height_and_width (window, &defheight, &defwidth);
 
   avail_height = char_height * defheight;
@@ -3566,17 +3559,17 @@ window_pixel_width_to_char_width (struct window *w, int pixel_width,
   int char_width;
   int defheight, defwidth;
   Lisp_Object window;
-  
+
   XSETWINDOW (window, w);
-  
+
   avail_width = (pixel_width -
 		 window_left_gutter_width (w, 0) -
 		 window_right_gutter_width (w, 0) -
 		 (include_margins_p ? 0 : window_left_margin_width (w)) -
 		 (include_margins_p ? 0 : window_right_margin_width (w)));
-  
+
   default_face_height_and_width (window, &defheight, &defwidth);
-  
+
   char_width = (avail_width / defwidth);
 
   /* It's the calling function's responsibility to check these values
@@ -3725,7 +3718,7 @@ change_window_height (struct window *win, int delta, int widthflag)
                    ? (*sizefun) (w->next) - MINSIZE (w->next)
                    : ((!NILP (w->prev))
                       ? (*sizefun) (w->prev) - MINSIZE (w->prev)
-                      /* This is a frame with only one window, 
+                      /* This is a frame with only one window,
                          a minibuffer-only or a minibufferless frame.  */
                       : (delta = 0))));
 
@@ -4040,7 +4033,7 @@ loss of zmacs region is suppressed when moving past end of buffer.
 }
 
 DEFUN ("other-window-for-scrolling", Fother_window_for_scrolling, 0, 0, 0, /*
-Return the other window for \"other window scroll\" commands.
+Return the other window for "other window scroll" commands.
 If in the minibuffer, `minibuffer-scroll-window' if non-nil
 specifies the window.
 If `other-window-scroll-buffer' is non-nil, a window
@@ -4180,7 +4173,7 @@ If WINDOW is nil, the selected window is used.
     }
 
   Fset_marker (w->start[CURRENT_DISP], make_int (startp), w->buffer);
-  
+
   w->start_at_line_beg = beginning_of_line_p (b, startp);
   w->force_start = 1;
   MARK_WINDOWS_CHANGED (w);
@@ -4308,7 +4301,7 @@ map_windows_1 (Lisp_Object window,
 	       int (*mapfun) (struct window *w, void *closure),
 	       void *closure)
 {
-  int retval; 
+  int retval;
 
   for (; !NILP (window); window = XWINDOW (window)->next)
     {
@@ -4533,7 +4526,7 @@ static unsigned int sizeof_window_config (CONST void *);
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("window-configuration",
 					window_configuration,
 					mark_window_config,
-					print_window_config, 
+					print_window_config,
 					0, 0, 0, sizeof_window_config,
 					struct window_config);
 
@@ -4574,7 +4567,7 @@ sizeof_window_config_for_n_windows (int n)
 static unsigned int
 sizeof_window_config (CONST void *h)
 {
-  CONST struct window_config *c = h;
+  CONST struct window_config *c = (CONST struct window_config *) h;
   return sizeof_window_config_for_n_windows (c->saved_windows_count);
 }
 
@@ -4763,17 +4756,17 @@ by `current-window-configuration' (which see).
       if (FRAME_X_P (f))
 	{
 	  Lisp_Object new_desired = config->p_sheet_buffer;
-    
+
 	  if (BUFFERP (new_desired) &&
 	      !BUFFER_LIVE_P (XBUFFER (new_desired)))
 	    new_desired = Qnil;	/* the desired buffer was killed */
-    
+
 	  /* need to restore the desired buffer */
 	  if (!EQ (new_desired, desired_psheet_buffer (f)))
 	    make_psheets_desired (f, new_desired);
 	}
 #endif
-    
+
       new_current_buffer = config->current_buffer;
       if (!BUFFER_LIVE_P (XBUFFER (new_current_buffer)))
 	new_current_buffer = Qnil;
@@ -4849,13 +4842,13 @@ by `current-window-configuration' (which see).
 	     structures were freed, so we need to reallocate them. */
 	  if (!w->face_cachels)
 	    {
-	      w->face_cachels = Dynarr_new (struct face_cachel);
+	      w->face_cachels = Dynarr_new (face_cachel);
 	      reset_face_cachels (w);
 	    }
 	  if (!w->glyph_cachels)
-	    w->glyph_cachels = Dynarr_new (struct glyph_cachel);
+	    w->glyph_cachels = Dynarr_new (glyph_cachel);
 	  if (!w->line_start_cache)
-	    w->line_start_cache = Dynarr_new (struct line_start_cache);
+	    w->line_start_cache = Dynarr_new (line_start_cache);
 	  w->dead = 0;
 
 	  if (p->parent_index >= 0)
@@ -5237,8 +5230,9 @@ its value is -not- saved.
 			      [n_windows - 1]));
   else
     /* More than ten windows; just allocate directly */
-    config = alloc_lcrecord (sizeof_window_config_for_n_windows (n_windows),
-			     lrecord_window_configuration);
+    config = (struct window_config *)
+      alloc_lcrecord (sizeof_window_config_for_n_windows (n_windows),
+		      lrecord_window_configuration);
   XSETWINDOW_CONFIGURATION (result, config);
 
   config->frame_width = FRAME_WIDTH (f);
@@ -5516,7 +5510,7 @@ This is a specifier; use `set-specifier' to change it.
 				      modeline_shadow_thickness),
 			 modeline_shadow_thickness_changed,
 			 0, 0);
-  
+
   DEFVAR_SPECIFIER ("has-modeline-p", &Vhas_modeline_p /*
 *Whether the modeline should be displayed.
 This is a specifier; use `set-specifier' to change it.

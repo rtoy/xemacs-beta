@@ -223,7 +223,7 @@ signal_failure (Lisp_Object arg)
    called.  However, this complexifies the code a lot (e.g. the buffer
    could have changed and the Bytinds stored might be invalid) and is
    probably not a great time-saver. */
-   
+
 static void
 fixup_search_regs_for_buffer (struct buffer *buf)
 {
@@ -551,12 +551,12 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
     ((count > 0) ? BI_BUF_ZV (buf) : BI_BUF_BEGV (buf));
 
   /* #### newline cache stuff in this function not yet ported */
-  
+
   assert (count != 0);
 
   if (shortage)
     *shortage = 0;
-  
+
   if (count > 0)
     {
 #ifdef MULE
@@ -581,7 +581,7 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
 	    {
 	      Bytind ceil;
 	      Bufbyte *bufptr;
-	      
+
 	      ceil = BI_BUF_CEILING_OF (buf, st);
 	      ceil = min (lim, ceil);
 	      bufptr = (Bufbyte *) memchr (BI_BUF_BYTE_ADDRESS (buf, st),
@@ -622,7 +622,7 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
 	      Bytind floor;
 	      Bufbyte *bufptr;
 	      Bufbyte *floorptr;
-	      
+
 	      floor = BI_BUF_FLOOR_OF (buf, st);
 	      floor = max (lim, floor);
 	      /* No memrchr() ... */
@@ -707,7 +707,7 @@ find_before_next_newline (struct buffer *buf, Bufpos from, Bufpos to, int cnt)
 
   if (shortage == 0)
     pos--;
-  
+
   return pos;
 }
 
@@ -744,7 +744,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
   memset (fastmap, 0, sizeof (fastmap));
 
   Fclear_range_table (Vskip_chars_range_table);
-  
+
   if (p != pend && *p == '^')
     {
       negate = 1;
@@ -778,7 +778,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	  if (p != pend && *p == '-')
 	    {
 	      Emchar cend;
-	      
+
 	      p++;
 	      if (p == pend) break;
 	      cend = charptr_emchar (p);
@@ -834,7 +834,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	else
 	  {
 	    while (BUF_PT (buf) > XINT (lim)
-		   && fastmap[(unsigned char) 
+		   && fastmap[(unsigned char)
                               syntax_code_spec
 			      [(int) SYNTAX (syntax_table,
 					     BUF_FETCH_CHAR
@@ -863,7 +863,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	  {
 	    while (BUF_PT (buf) > XINT (lim))
 	      {
-		Emchar ch = BUF_FETCH_CHAR (buf, BUF_PT (buf) - 1); 
+		Emchar ch = BUF_FETCH_CHAR (buf, BUF_PT (buf) - 1);
 		if ((ch < 0400) ? fastmap[ch] :
 		    (NILP (Fget_range_table (make_int (ch),
 					     Vskip_chars_range_table,
@@ -884,8 +884,8 @@ DEFUN ("skip-chars-forward", Fskip_chars_forward, 1, 3, 0, /*
 Move point forward, stopping before a char not in STRING, or at pos LIM.
 STRING is like the inside of a `[...]' in a regular expression
 except that `]' is never special and `\\' quotes `^', `-' or `\\'.
-Thus, with arg \"a-zA-Z\", this skips letters stopping before first nonletter.
-With arg \"^a-zA-Z\", skips nonletters stopping before first letter.
+Thus, with arg "a-zA-Z", this skips letters stopping before first nonletter.
+With arg "^a-zA-Z", skips nonletters stopping before first letter.
 Returns the distance traveled, either zero or positive.
 
 Optional argument BUFFER defaults to the current buffer.
@@ -1074,7 +1074,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
   EMACS_INT k;
   Bytecount stride_for_teases = 0;
   register Bufbyte *pat = 0;
-  register Bufbyte *cursor, *p_limit, *ptr2;  
+  register Bufbyte *cursor, *p_limit, *ptr2;
   register EMACS_INT i, j;
   Bytind p1, p2;
   Bytecount s1, s2;
@@ -1110,7 +1110,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
       p2 = BI_BUF_CEILING_OF (buf, p1);
       s1 = p2 - p1;
       s2 = BI_BUF_ZV (buf) - p2;
-  
+
       while (n < 0)
 	{
 	  Bytecount val;
@@ -1221,10 +1221,10 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
       EMACS_INT BM_tab_space[0400];
       BM_tab = &BM_tab_space[0];
 #else
-      BM_tab = (EMACS_INT *) alloca (0400 * sizeof (EMACS_INT));
+      BM_tab = alloca_array (EMACS_INT, 256);
 #endif
       {
-	Bufbyte *patbuf = (Bufbyte *) alloca (len);
+	Bufbyte *patbuf = alloca_array (Bufbyte, len);
 	pat = patbuf;
 	while (--len >= 0)
 	  {
@@ -1259,14 +1259,14 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
       /* a single test, a test for having gone past the end of the */
       /* permissible match region, to test for both possible matches (when */
       /* the stride goes past the end immediately) and failure to */
-      /* match (where you get nudged past the end one stride at a time). */ 
+      /* match (where you get nudged past the end one stride at a time). */
 
       /* Here we make a "mickey mouse" BM table.  The stride of the search */
       /* is determined only by the last character of the putative match. */
       /* If that character does not match, we will stride the proper */
       /* distance to propose a match that superimposes it on the last */
       /* instance of a character that matches it (per trt), or misses */
-      /* it entirely if there is none. */  
+      /* it entirely if there is none. */
 
       dirlen = len * direction;
       infinity = dirlen - (lim + pos + len + len) * direction;
@@ -1296,7 +1296,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 		stride_for_teases = BM_tab[j];
 	      BM_tab[j] = dirlen - i;
 	      /* A translation table is accompanied by its inverse -- see */
-	      /* comment following downcase_table for details */ 
+	      /* comment following downcase_table for details */
 
 	      while ((j = inverse_trt[j]) != k)
 		BM_tab[j] = dirlen - i;
@@ -1409,7 +1409,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 					    ? 1 - len : 0));
 			Bufpos bufstart = bytind_to_bufpos (buf, bytstart);
 			Bufpos bufend = bytind_to_bufpos (buf, bytstart + len);
-			
+
 			set_search_regs (buf, bufstart, bufend - bufstart);
 		      }
 
@@ -1443,7 +1443,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 		  /* This loop can be coded for space rather than */
 		  /* speed because it will usually run only once. */
 		  /* (the reach is at most len + 21, and typically */
-		  /* does not exceed len) */    
+		  /* does not exceed len) */
 		  while ((limit - pos) * direction >= 0)
 		    /* *not* BI_BUF_FETCH_CHAR.  We are working here
 		       with bytes, not characters. */
@@ -1479,7 +1479,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 					    ? 1 - len : 0));
 			Bufpos bufstart = bytind_to_bufpos (buf, bytstart);
 			Bufpos bufend = bytind_to_bufpos (buf, bytstart + len);
-			
+
 			set_search_regs (buf, bufstart, bufend - bufstart);
 		      }
 
@@ -1512,9 +1512,8 @@ set_search_regs (struct buffer *buf, Bufpos beg, Charcount len)
      the match position.  */
   if (search_regs.num_regs == 0)
     {
-      /* #### XEmacs: the ones were twos before, which is surely broken. */
-      search_regs.start = (regoff_t *) xmalloc (1 * sizeof (regoff_t));
-      search_regs.end = (regoff_t *) xmalloc (1 * sizeof (regoff_t));
+      search_regs.start = xnew (regoff_t);
+      search_regs.end   = xnew (regoff_t);
       search_regs.num_regs = 1;
     }
 
@@ -1566,7 +1565,7 @@ wordify (Lisp_Object buffer, Lisp_Object string)
     for (i = 0; i < len; i++)
       {
 	Emchar ch = string_char (XSTRING (string), i);
-	
+
 	if (WORD_SYNTAX_P (syntax_table, ch))
 	  o += set_charptr_emchar (o, ch);
 	else if (i > 0
@@ -1828,7 +1827,7 @@ and you do not need to specify it.)
     }
 
   syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
-  
+
   case_action = nochange;	/* We tried an initialization */
 				/* but some C compilers blew it */
 
@@ -2044,7 +2043,7 @@ and you do not need to specify it.)
 	  int cur_action = 'E';
 	  Charcount stlen = string_char_length (XSTRING (newtext));
 	  Charcount strpos;
-	  
+
 	  for (strpos = 0; strpos < stlen; strpos++)
 	    {
 	      Emchar curchar = string_char (XSTRING (newtext), strpos);
@@ -2086,7 +2085,7 @@ and you do not need to specify it.)
   /* begin_multiple_change() records an unwind-protect, so we need to
      record this value now. */
   speccount = specpdl_depth ();
-  
+
   /* We insert the replacement text before the old text, and then
      delete the original text.  This means that markers at the
      beginning or end of the original will float to the corresponding
@@ -2109,7 +2108,7 @@ and you do not need to specify it.)
 	    {
 	      c = string_char (XSTRING (newtext), ++strpos);
 	      if (c == '&')
-		Finsert_buffer_substring 
+		Finsert_buffer_substring
                   (buffer,
                    make_int (search_regs.start[0] + offset),
                    make_int (search_regs.end[0] + offset));
@@ -2241,7 +2240,7 @@ Zero means the entire text matched by the whole regexp or whole string.
        (num))
 {
   return match_limit (num, 0);
-} 
+}
 
 DEFUN ("match-data", Fmatch_data, 0, 0, 0, /*
 Return a list containing all info on what the last regexp search matched.
@@ -2260,8 +2259,7 @@ Use `store-match-data' to reinstate the data in this list.
   if (NILP (last_thing_searched))
     error ("match-data called before any match found");
 
-  data = (Lisp_Object *) alloca ((2 * search_regs.num_regs)
-				 * sizeof (Lisp_Object));
+  data = alloca_array (Lisp_Object, 2 * search_regs.num_regs);
 
   len = -1;
   for (i = 0; i < search_regs.num_regs; i++)
@@ -2282,7 +2280,7 @@ Use `store-match-data' to reinstate the data in this list.
 			   last_thing_searched);
 	      data[2 * i + 1] = Fmake_marker ();
 	      Fset_marker (data[2 * i + 1],
-			   make_int (search_regs.end[i]), 
+			   make_int (search_regs.end[i]),
 			   last_thing_searched);
 	    }
 	  else
@@ -2314,7 +2312,7 @@ LIST should have been created by calling `match-data' previously.
   if (!CONSP (list) && !NILP (list))
     list = wrong_type_argument (Qconsp, list);
 
-  /* Unless we find a marker with a buffer in LIST, assume that this 
+  /* Unless we find a marker with a buffer in LIST, assume that this
      match data came from a string.  */
   last_thing_searched = Qt;
 
@@ -2326,19 +2324,13 @@ LIST should have been created by calling `match-data' previously.
       {
 	if (search_regs.num_regs == 0)
 	  {
-	    search_regs.start
-	      = (regoff_t *) xmalloc (length * sizeof (regoff_t));
-	    search_regs.end
-	      = (regoff_t *) xmalloc (length * sizeof (regoff_t));
+	    search_regs.start = xnew_array (regoff_t, length);
+	    search_regs.end   = xnew_array (regoff_t, length);
 	  }
 	else
 	  {
-	    search_regs.start
-	      = (regoff_t *) xrealloc (search_regs.start,
-				       length * sizeof (regoff_t));
-	    search_regs.end
-	      = (regoff_t *) xrealloc (search_regs.end,
-				       length * sizeof (regoff_t));
+	    XREALLOC_ARRAY (search_regs.start, regoff_t, length);
+	    XREALLOC_ARRAY (search_regs.end,   regoff_t, length);
 	  }
 
 	search_regs.num_regs = length;
@@ -2377,7 +2369,7 @@ LIST should have been created by calling `match-data' previously.
       list = Fcdr (list);
     }
 
-  return Qnil;  
+  return Qnil;
 }
 
 /* If non-zero the match data have been saved in saved_search_regs
@@ -2441,7 +2433,7 @@ Return a regexp string which matches exactly STRING and nothing else.
 
   in = XSTRING_DATA (str);
   end = in + XSTRING_LENGTH (str);
-  out = temp; 
+  out = temp;
 
   for (; in != end; in++)
     {

@@ -145,10 +145,11 @@ to invocation.")
 
   (define-key ediff-mode-map "p" 'ediff-previous-difference)
   (define-key ediff-mode-map "\C-?" 'ediff-previous-difference)
-  (define-key ediff-mode-map [backspace] 'ediff-previous-difference)
   (define-key ediff-mode-map [delete] 'ediff-previous-difference)
   (define-key ediff-mode-map "\C-h" (if ediff-no-emacs-help-in-control-buffer
 					'ediff-previous-difference nil))
+  ;; must come after C-h, or else C-h wipes out backspace's binding in XEmacs
+  (define-key ediff-mode-map [backspace] 'ediff-previous-difference)
   (define-key ediff-mode-map "n" 'ediff-next-difference)
   (define-key ediff-mode-map " " 'ediff-next-difference)
   (define-key ediff-mode-map "j" 'ediff-jump-to-difference)

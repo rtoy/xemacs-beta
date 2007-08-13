@@ -218,21 +218,21 @@ extern __malloc_size_t _heaplimit;
 
 /* Doubly linked lists of free fragments.  */
 struct list
-  {
-    struct list *next;
-    struct list *prev;
-  };
+{
+  struct list *next;
+  struct list *prev;
+};
 
 /* Free list headers for each fragment size.  */
 extern struct list _fraghead[];
 
 /* List of blocks allocated with `memalign' (or `valloc').  */
 struct alignlist
-  {
-    struct alignlist *next;
-    __ptr_t aligned;		/* The address that memaligned returned.  */
-    __ptr_t exact;		/* The address that malloc returned.  */
-  };
+{
+  struct alignlist *next;
+  __ptr_t aligned;		/* The address that memaligned returned.  */
+  __ptr_t exact;		/* The address that malloc returned.  */
+};
 extern struct alignlist *_aligned_blocks;
 
 /* Instrumentation.  */
@@ -268,13 +268,13 @@ extern __ptr_t (*__realloc_hook) __P ((__ptr_t __ptr, size_t __size));
 /* Return values for `mprobe': these are the kinds of inconsistencies that
    `mcheck' enables detection of.  */
 enum mcheck_status
-  {
-    MCHECK_DISABLED = -1,	/* Consistency checking is not turned on.  */
-    MCHECK_OK,			/* Block is fine.  */
-    MCHECK_FREE,		/* Block freed twice.  */
-    MCHECK_HEAD,		/* Memory before the block was clobbered.  */
-    MCHECK_TAIL			/* Memory after the block was clobbered.  */
-  };
+{
+  MCHECK_DISABLED = -1,		/* Consistency checking is not turned on.  */
+  MCHECK_OK,			/* Block is fine.  */
+  MCHECK_FREE,			/* Block freed twice.  */
+  MCHECK_HEAD,			/* Memory before the block was clobbered.  */
+  MCHECK_TAIL			/* Memory after the block was clobbered.  */
+};
 
 /* Activate a standard collection of debugging hooks.  This must be called
    before `malloc' is ever called.  ABORTFUNC is called with an error code
@@ -293,13 +293,13 @@ extern void muntrace __P ((void));
 
 /* Statistics available to the user.  */
 struct mstats
-  {
-    __malloc_size_t bytes_total; /* Total size of the heap. */
-    __malloc_size_t chunks_used; /* Chunks allocated by the user. */
-    __malloc_size_t bytes_used;	/* Byte total of user-allocated chunks. */
-    __malloc_size_t chunks_free; /* Chunks in the free list. */
-    __malloc_size_t bytes_free;	/* Byte total of chunks in the free list. */
-  };
+{
+  __malloc_size_t bytes_total;	/* Total size of the heap. */
+  __malloc_size_t chunks_used;	/* Chunks allocated by the user. */
+  __malloc_size_t bytes_used;	/* Byte total of user-allocated chunks. */
+  __malloc_size_t chunks_free;	/* Chunks in the free list. */
+  __malloc_size_t bytes_free;	/* Byte total of chunks in the free list. */
+};
 
 /* Pick up the current statistics. */
 extern struct mstats mstats __P ((void));
@@ -367,8 +367,7 @@ extern size_t __getpagesize __P ((void));
 static __malloc_size_t pagesize;
 
 __ptr_t
-valloc (size)
-     __malloc_size_t size;
+valloc (__malloc_size_t size)
 {
   if (pagesize == 0)
     pagesize = __getpagesize ();
@@ -440,8 +439,7 @@ void (*__after_morecore_hook) __P ((void));
 /* Aligned allocation.  */
 static __ptr_t align __P ((__malloc_size_t));
 static __ptr_t
-align (size)
-     __malloc_size_t size;
+align (__malloc_size_t size)
 {
   __ptr_t result;
   unsigned long int adj;
@@ -489,8 +487,7 @@ initialize ()
    growing the heap info table as necessary. */
 static __ptr_t morecore __P ((__malloc_size_t));
 static __ptr_t
-morecore (size)
-     __malloc_size_t size;
+morecore (__malloc_size_t size)
 {
   __ptr_t result;
   malloc_info *newinfo, *oldinfo;
@@ -533,8 +530,7 @@ morecore (size)
 
 /* Allocate memory from the heap.  */
 __ptr_t
-malloc (size)
-     __malloc_size_t size;
+malloc (__malloc_size_t size)
 {
   __ptr_t result;
   __malloc_size_t block, blocks, lastblocks, start;
@@ -781,8 +777,7 @@ struct alignlist *_aligned_blocks = NULL;
 /* Return memory to the heap.
    Like `free' but don't call a __free_hook if there is one.  */
 void
-_free_internal (ptr)
-     __ptr_t ptr;
+_free_internal (__ptr_t ptr)
 {
   int type;
   __malloc_size_t block, blocks;
@@ -934,8 +929,7 @@ _free_internal (ptr)
 
 /* Return memory to the heap.  */
 __free_ret_t
-free (ptr)
-     __ptr_t ptr;
+free (__ptr_t ptr)
 {
   struct alignlist *l;
 
@@ -1040,9 +1034,7 @@ Boston, MA 02111-1307, USA.
 /* Like bcopy except never gets confused by overlap.  */
 
 static void
-safe_bcopy (from, to, size)
-     char *from, *to;
-     int size;
+safe_bcopy (char *from, char *to, int size)
 {
   if (size <= 0 || from == to)
     return;
@@ -1090,7 +1082,7 @@ safe_bcopy (from, to, size)
 	  bcopy (from, to, endt - from);
 	}
     }
-}     
+}
 #endif	/* Not emacs.  */
 
 #define memmove(to, from, size) safe_bcopy ((from), (to), (size))
@@ -1114,9 +1106,7 @@ __ptr_t (*__realloc_hook) __P ((__ptr_t __ptr, __malloc_size_t __size));
    new region.  This module has incestuous knowledge of the
    internals of both free and malloc. */
 __ptr_t
-realloc (ptr, size)
-     __ptr_t ptr;
-     __malloc_size_t size;
+realloc (__ptr_t ptr, __malloc_size_t size)
 {
   __ptr_t result;
   int type;
@@ -1254,9 +1244,7 @@ Boston, MA 02111-1307, USA.
 /* Allocate an array of NMEMB elements each SIZE bytes long.
    The entire array is initialized to zeros.  */
 __ptr_t
-calloc (nmemb, size)
-     __malloc_size_t nmemb;
-     __malloc_size_t size;
+calloc (__malloc_size_t nmemb, __malloc_size_t size)
 {
   __ptr_t result = malloc (nmemb * size);
 
@@ -1313,16 +1301,17 @@ extern __ptr_t __sbrk __P ((int increment));
    and return the start of data space, or NULL on errors.
    If INCREMENT is negative, shrink data space.  */
 __ptr_t
-__default_morecore (increment)
+__default_morecore (
 #ifdef __STDC__
-     ptrdiff_t increment;
+     ptrdiff_t increment
 #else
 #ifdef OSF1
-     long increment;
+     long increment
 #else
-     int increment;
+     int increment
 #endif
 #endif
+     )
 {
 #ifdef OSF1
   __ptr_t result = (__ptr_t) __sbrk ((ssize_t) increment);
@@ -1356,9 +1345,7 @@ Boston, MA 02111-1307, USA. */
 #endif
 
 __ptr_t
-memalign (alignment, size)
-     __malloc_size_t alignment;
-     __malloc_size_t size;
+memalign (__malloc_size_t alignment, __malloc_size_t size)
 {
   __ptr_t result;
   unsigned long int adj;

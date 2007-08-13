@@ -101,7 +101,7 @@ x_create_scrollbar_instance (struct frame *f, int vertical,
   char buffer[32];
 
   /* initialize the X specific data section. */
-  instance->scrollbar_data = malloc_type_and_zero (struct x_scrollbar_data);
+  instance->scrollbar_data = xnew_and_zero (struct x_scrollbar_data);
 
   SCROLLBAR_X_ID (instance) = new_lwlib_id ();
   sprintf (buffer, "scrollbar_%d", SCROLLBAR_X_ID (instance));
@@ -196,7 +196,7 @@ update_one_scrollbar_bs (struct frame *f, Widget sb_widget)
     {
       unsigned long mask = CWBackingStore;
       XSetWindowAttributes attrs;
-	      
+
       attrs.backing_store = Always;
       XChangeWindowAttributes (XtDisplay (sb_widget),
 			       XtWindow (sb_widget),
@@ -215,8 +215,7 @@ scrollbar_instance_to_widget_value (struct scrollbar_instance *instance)
 
   wv = xmalloc_widget_value ();
   /* #### maybe should add malloc_scrollbar_values to resource these? */
-  wv->scrollbar_data = (scrollbar_values *)
-    xmalloc (sizeof (scrollbar_values));
+  wv->scrollbar_data = xnew (scrollbar_values);
 
   wv->name = SCROLLBAR_X_NAME (instance);
   wv->value = 0;
@@ -238,7 +237,7 @@ update_one_widget_scrollbar_pointer (struct window *w, Widget wid)
 {
   if (POINTER_IMAGE_INSTANCEP (w->scrollbar_pointer))
     {
-      XDefineCursor (XtDisplay (wid), XtWindow (wid), 
+      XDefineCursor (XtDisplay (wid), XtWindow (wid),
 		     XIMAGE_INSTANCE_X_CURSOR (w->scrollbar_pointer));
       XSync (XtDisplay (wid), False);
     }
@@ -325,7 +324,7 @@ x_scrollbar_width_changed_in_frame (Lisp_Object specifier, struct frame *f,
       f->scrollbar_width = oldval;
       XtQueryGeometry (FRAME_X_CONTAINER_WIDGET (f), &req, &repl);
       f->scrollbar_width = newval;
-      
+
       repl.width += XINT (newval) - XINT (oldval);
       EmacsManagerChangeSize (FRAME_X_CONTAINER_WIDGET (f), repl.width,
 			      repl.height);
@@ -370,7 +369,7 @@ x_scrollbar_height_changed_in_frame (Lisp_Object specifier, struct frame *f,
       f->scrollbar_height = oldval;
       XtQueryGeometry (FRAME_X_CONTAINER_WIDGET (f), &req, &repl);
       f->scrollbar_height = newval;
-      
+
       repl.height += XINT (newval) - XINT (oldval);
       EmacsManagerChangeSize (FRAME_X_CONTAINER_WIDGET (f), repl.width,
 			      repl.height);
@@ -551,7 +550,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 		      (double) SCROLLBAR_X_POS_DATA(instance).scrollbar_height);
 	double line = tmp *
 	  (double) window_displayed_height (XWINDOW (win));
-    
+
 	if (line > -1.0)
 	  line = -1.0;
 	signal_special_Xt_user_event (win, Qscrollbar_page_up,
@@ -624,8 +623,8 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	   we get line-based scrolling. */
 
 	vertical_drag_in_progress = 1;
-	
-	if (SCROLLBAR_X_VDRAG_ORIG_VALUE (instance) < 0) 
+
+	if (SCROLLBAR_X_VDRAG_ORIG_VALUE (instance) < 0)
 	  {
 	    SCROLLBAR_X_VDRAG_ORIG_VALUE (instance) = data->slider_value;
 	    SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance) =
@@ -635,13 +634,13 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	/* Could replace this piecewise linear scrolling with a
 	   quadratic through the three points, but I'm not sure that
 	   would feel any nicer in practice. */
-	if (data->slider_value < SCROLLBAR_X_VDRAG_ORIG_VALUE (instance)) 
+	if (data->slider_value < SCROLLBAR_X_VDRAG_ORIG_VALUE (instance))
 	  {
 	    /* We've dragged up; slide linearly from original position to
 	       window-start=data.minimum, slider-value=data.minimum. */
 
 	    if (SCROLLBAR_X_VDRAG_ORIG_VALUE (instance)
-		<= SCROLLBAR_X_POS_DATA (instance).minimum) 
+		<= SCROLLBAR_X_POS_DATA (instance).minimum)
 	      {
 		/* shouldn't get here, but just in case */
 		value = SCROLLBAR_X_POS_DATA (instance).minimum;
@@ -650,33 +649,33 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	      {
 		value = (SCROLLBAR_X_POS_DATA (instance).minimum
 			 + (((double)
-			     (SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance) 
+			     (SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance)
 			      - SCROLLBAR_X_POS_DATA (instance).minimum)
 			     * (data->slider_value -
-				SCROLLBAR_X_POS_DATA (instance).minimum)) 
+				SCROLLBAR_X_POS_DATA (instance).minimum))
 			    / (SCROLLBAR_X_VDRAG_ORIG_VALUE (instance)
 			       - SCROLLBAR_X_POS_DATA (instance).minimum)));
 	      }
 	  }
-	else 
+	else
 	  {
 	    /* We've dragged down; slide linearly from original position to
 	       window-start=data.maximum, slider-value=data.maximum. */
 
-	    if (SCROLLBAR_X_VDRAG_ORIG_VALUE (instance) 
+	    if (SCROLLBAR_X_VDRAG_ORIG_VALUE (instance)
 		>= (SCROLLBAR_X_POS_DATA (instance).maximum -
 		    SCROLLBAR_X_POS_DATA (instance).slider_size))
 	      {
 		/* avoid divide by zero */
 		value = SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance);
-	      } 
-	    else 
+	      }
+	    else
 	      {
 		value = (SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance)
 			 + (((double) (SCROLLBAR_X_POS_DATA (instance).maximum
 				       - SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance))
-			     * (data->slider_value 
-				- SCROLLBAR_X_VDRAG_ORIG_VALUE (instance))) 
+			     * (data->slider_value
+				- SCROLLBAR_X_VDRAG_ORIG_VALUE (instance)))
 			    / (SCROLLBAR_X_POS_DATA (instance).maximum
 			       - SCROLLBAR_X_POS_DATA (instance).slider_size
 			       - SCROLLBAR_X_VDRAG_ORIG_VALUE (instance))));

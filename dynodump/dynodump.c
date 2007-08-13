@@ -73,7 +73,7 @@
  * N.B. The above commentary is not quite correct in the flags have been hardwired
  *      to RTLD_SAVREL.
  */
-#pragma ident	"@(#) $Id: dynodump.c,v 1.4 1997/07/13 22:40:53 steve Exp $ - SMI"
+#pragma ident	"@(#) $Id: dynodump.c,v 1.5 1997/09/03 03:39:06 steve Exp $ - SMI"
 
 #define __EXTENSIONS__ 1
 
@@ -215,7 +215,7 @@ dynodump(const char * file)
 	return (elferr("elf_getscn"));
     if ((data = elf_getdata(scn, NULL)) == NULL)
 	return (elferr("elf_getdata"));
-    istrs = data->d_buf;
+    istrs = (char *) data->d_buf;
 
     /*
      * Construct a cache to maintain the input files section information.
@@ -450,7 +450,7 @@ dynodump(const char * file)
 	return (elferr("elf_getscn"));
     if ((data = elf_getdata(scn, NULL)) == NULL)
 	return (elferr("elf_getdata"));
-    ostrs = _ostrs = data->d_buf;
+    ostrs = _ostrs = (char *) data->d_buf;
     *_ostrs++ = '\0';
 
     /*

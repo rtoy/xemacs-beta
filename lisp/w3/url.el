@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/06/10 05:26:37
-;; Version: 1.79
+;; Created: 1997/07/14 05:15:29
+;; Version: 1.80
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/06/10 05:26:37|1.79|Location Undetermined
+;;; 1997/07/14 05:15:29|1.80|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1902,7 +1902,9 @@ retrieve a URL by its HTML source."
     ;; Not sure how I should handle gracefully degrading from one proxy to
     ;; another, so for now just deal with the first one
     ;; (while proxies
-    (setq proxy (pop proxies))
+    (if (listp proxies)
+	(setq proxy (pop proxies))
+      (setq proxy proxies))
     (cond
      ((string-match "^direct" proxy) nil)
      ((string-match "^proxy +" proxy)

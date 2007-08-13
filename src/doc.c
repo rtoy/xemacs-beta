@@ -92,7 +92,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       nread = read (fd, p, space_left);
       if (nread < 0)
 	{
-	  return_me = list1 (build_string 
+	  return_me = list1 (build_string
 			     ("Read error on documentation file"));
 	  goto done;
 	}
@@ -121,7 +121,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       else
 	{
 	  int c = *(++from);
-	  
+
 	  from++;
           switch (c)
             {
@@ -190,7 +190,7 @@ get_doc_string (Lisp_Object filepos)
 
   if (!STRINGP (file))
     return Qnil;
-    
+
   /* Put the file name in NAME as a C string.
      If it is relative, combine it with Vdoc_directory.  */
 
@@ -381,7 +381,7 @@ translation.
       else
 	doc = Fdgettext (domain, doc);
     }
-#endif    
+#endif
   if (NILP (raw) && STRINGP (doc))
     doc = Fsubstitute_command_keys (doc);
   return doc;
@@ -430,7 +430,7 @@ when doc strings are referred to in the dumped Emacs.
   strcpy (name, "../lib-src/");
 #else /* CANNOT_DUMP */
   CHECK_STRING (Vdoc_directory);
-  name = (char *) alloca (XSTRING_LENGTH (filename) 
+  name = (char *) alloca (XSTRING_LENGTH (filename)
                           + XSTRING_LENGTH (Vdoc_directory)
                           + 1);
   strcpy (name, (char *) XSTRING_DATA (Vdoc_directory));
@@ -481,7 +481,7 @@ when doc strings are referred to in the dumped Emacs.
 			goto weird;
 		    }
 		  Fput (sym, Qvariable_documentation,
-                        ((end[1] == '*') 
+                        ((end[1] == '*')
                          ? make_int (- XINT (offset))
                          : offset));
 		}
@@ -669,7 +669,7 @@ verify_doc_mapper (Lisp_Object sym, Lisp_Object closure)
 	      doc = -1;
 	      tem = Fcdr (Fcdr (fun));
 	      if (CONSP (tem) &&
-		  INTP (XCAR (tem)))		  
+		  INTP (XCAR (tem)))
 		doc = XINT (XCAR (tem));
 	    }
 	}
@@ -728,7 +728,7 @@ DEFUN ("substitute-command-keys", Fsubstitute_command_keys, 1, 1, 0, /*
 Substitute key descriptions for command names in STRING.
 Return a new string which is STRING with substrings of the form \\=\\[COMMAND]
 replaced by either:  a keystroke sequence that will invoke COMMAND,
-or \"M-x COMMAND\" if COMMAND is not on any keys.
+or "M-x COMMAND" if COMMAND is not on any keys.
 Substrings of the form \\=\\{MAPVAR} are replaced by summaries
 \(made by describe-bindings) of the value of MAPVAR, taken as a keymap.
 Substrings of the form \\=\\<MAPVAR> specify to use the value of MAPVAR
@@ -794,7 +794,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
   for (idx = 0; idx < strlength; )
     {
       Bufbyte *strp = strdata + idx;
-  
+
       if (strp[0] != '\\')
 	{
 	  /* just copy other chars */
@@ -834,9 +834,9 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
 	    while ((idx < strlength)
 		   && *strp != ']')
-	      { 
-		strp++; 
-		idx++; 
+	      {
+		strp++;
+		idx++;
 	      }
 	    length = strp - start;
 	    idx++;		/* skip ] */
@@ -885,9 +885,9 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
 	    while ((idx < strlength)
 		   && *strp != '}' && *strp != '>')
-	      { 
-		strp++; 
-		idx++; 
+	      {
+		strp++;
+		idx++;
 	      }
 	    length = strp - start;
 	    idx++;		/* skip } or > */

@@ -102,7 +102,7 @@ sync_display_line_structs (struct window *w, int line, int do_blocks,
   if (line >= Dynarr_largest (cdla))
     {
       clp = &dl;
-      clp->display_blocks = Dynarr_new (struct display_block);
+      clp->display_blocks = Dynarr_new (display_block);
     }
   else
     {
@@ -144,7 +144,7 @@ sync_display_line_structs (struct window *w, int line, int do_blocks,
 	{
 	  cdb = &db;
 	  memcpy (cdb, ddb, sizeof (struct display_block));
-	  cdb->runes = Dynarr_new (struct rune);
+	  cdb->runes = Dynarr_new (rune);
 	  Dynarr_add (clp->display_blocks, *cdb);
 	}
       else
@@ -869,7 +869,7 @@ redisplay_move_cursor (struct window *w, Bufpos new_point, int no_output_end)
 		{
 		  rb->cursor_type = CURSOR_ON;
 		  dl->cursor_elt = cur_rb;
-		  
+
 
 		  output_display_line (w, 0, cla, cur_dl, rb->xpos,
 				       rb->xpos + rb->width);
@@ -989,7 +989,7 @@ redisplay_clear_top_of_window (struct window *w)
 	}
       if (window_is_rightmost (w))
 	width += FRAME_BORDER_WIDTH (f);
-      
+
       y = FRAME_TOP_BORDER_START (f) - 1;
       height = FRAME_BORDER_HEIGHT (f) + 1;
 

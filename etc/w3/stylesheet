@@ -126,8 +126,8 @@ input:image   { text-decoration: none; }
        dl { display: block;     }
       dir { display: block;     }
      menu { display: block;     }
-       dt { font-weight: bold; display: list-item }
-       dd { display: list-item; margin-left: 5em; }
+       dt { font-weight: bold; display: line }
+       dd { display: line; margin-left: 5em; }
        li { display: list-item; margin-left: 5em; }
        ol { list-style: decimal; }
        ul { list-style: circle; }

@@ -38,6 +38,22 @@ typedef struct _XlwScrollbarClassRec
   XlwScrollBarClassPart scrollbar_class;
 } XlwScrollBarClassRec;
 
+enum XlwScrollbarArm
+{
+  ARM_NONE,
+  ARM_SLIDER,
+  ARM_UP,
+  ARM_DOWN,
+  ARM_PAGEUP,
+  ARM_PAGEDOWN
+};
+
+enum XlwScrollbarForcedScroll
+{
+  FORCED_SCROLL_NONE,
+  FORCED_SCROLL_DOWNRIGHT,
+  FORCED_SCROLL_UPLEFT
+};
 
 /*
 ** Widget instance
@@ -98,20 +114,9 @@ typedef struct
   int		above, ss, below;
   int		lastY;
 
-  enum {
-    ARM_NONE,
-    ARM_SLIDER,
-    ARM_UP,
-    ARM_DOWN,
-    ARM_PAGEUP,
-    ARM_PAGEDOWN
-  } 		armed;
+  enum XlwScrollbarArm armed;
 
-  enum {
-    FORCED_SCROLL_NONE,
-    FORCED_SCROLL_DOWNRIGHT,
-    FORCED_SCROLL_UPLEFT
-  } 		forced_scroll;
+  enum XlwScrollbarForcedScroll forced_scroll;
 
   int		savedValue;
 

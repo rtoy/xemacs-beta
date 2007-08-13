@@ -57,7 +57,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/xpm.h>
 #endif
 
-/* R5 defines the XPointer type, but R4 doesn't.  
+/* R5 defines the XPointer type, but R4 doesn't.
    R4 also doesn't define a version number, but R5 does. */
 #if (XlibSpecificationRelease < 5)
 # define XPointer char *
@@ -143,8 +143,8 @@ struct x_device
      dispatched to emacs or widgets. */
   Time global_mouse_timestamp;
 
-  /* This is the last known timestamp received from the server.  It is 
-     maintained by x_event_to_emacs_event and used to patch bogus 
+  /* This is the last known timestamp received from the server.  It is
+     maintained by x_event_to_emacs_event and used to patch bogus
      WM_TAKE_FOCUS messages sent by Mwm. */
   Time last_server_timestamp;
 
@@ -163,7 +163,7 @@ struct x_device
   /* XComposeStatus x_compose_status; */
 
 #ifdef HAVE_XIM
-  XIM	     xim;		
+  XIM	     xim;
   XIMStyles *xim_styles;
 #endif /* HAVE_XIM */
 
@@ -425,7 +425,7 @@ int x_IO_error_handler (Display *disp);
 void x_redraw_exposed_area (struct frame *f, int x, int y,
 			    int width, int height);
 void x_output_string (struct window *w, struct display_line *dl,
-		      emchar_dynarr *buf, int xpos, int xoffset,
+		      Emchar_dynarr *buf, int xpos, int xoffset,
 		      int start_pixpos, int width, face_index findex,
 		      int cursor, int cursor_start, int cursor_width,
 		      int cursor_height);

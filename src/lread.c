@@ -146,7 +146,7 @@ Lisp_Object Vcurrent_compiled_function_annotation;
 static int load_byte_code_version;
 
 /* An array describing all known built-in structure types */
-static Structure_type_dynarr *the_structure_type_dynarr;
+static structure_type_dynarr *the_structure_type_dynarr;
 
 #if 0 /* FSFmacs defun hack */
 /* When nonzero, read conses in pure space */
@@ -830,7 +830,7 @@ complete_filename_p (Lisp_Object pathname)
 
 DEFUN ("locate-file", Flocate_file, 2, 4, 0, /*
 Search for FILENAME through PATH-LIST, expanded by one of the optional
-SUFFIXES (string of suffixes separated by \":\"s), checking for access
+SUFFIXES (string of suffixes separated by ":"s), checking for access
 MODE (0|1|2|4 = exists|executable|writeable|readable), default readable.
 
 `locate-file' keeps hash tables of the directories it searches through,
@@ -1909,7 +1909,7 @@ read_integer (Lisp_Object readcharfun, int base)
 static Lisp_Object
 read_bit_vector (Lisp_Object readcharfun)
 {
-  unsigned_char_dynarr *dyn = Dynarr_new (unsigned char);
+  unsigned_char_dynarr *dyn = Dynarr_new (unsigned_char);
   Emchar c;
 
   while (1)
@@ -1940,7 +1940,7 @@ define_structure_type (Lisp_Object type,
   struct structure_type st;
 
   st.type = type;
-  st.keywords = Dynarr_new (struct structure_keyword_entry);
+  st.keywords = Dynarr_new (structure_keyword_entry);
   st.validate = validate;
   st.instantiate = instantiate;
   Dynarr_add (the_structure_type_dynarr, st);
@@ -2625,7 +2625,7 @@ struct read_list_state
 static void *
 read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
 {
-  struct read_list_state *s = state;
+  struct read_list_state *s = (struct read_list_state *) state;
   Lisp_Object elt;
 
   elt = read1 (readcharfun);
@@ -2823,7 +2823,7 @@ read_vector (Lisp_Object readcharfun,
   GCPRO2 (s.head, s.tail);
 
   sequence_reader (readcharfun, terminator, &s, read_list_conser);
-  
+
   UNGCPRO;
   tem = s.head;
   len = XINT (Flength (tem));
@@ -2930,7 +2930,7 @@ init_lread (void)
 #if 0
 #ifndef WINDOWSNT
   /* When Emacs is invoked over network shares on NT, PATH_LOADSEARCH is
-     almost never correct, thereby causing a warning to be printed out that 
+     almost never correct, thereby causing a warning to be printed out that
      confuses users.  Since PATH_LOADSEARCH is always overriden by the
      EMACSLOADPATH environment variable below, disable the warning on NT.  */
 
@@ -3013,7 +3013,7 @@ syms_of_lread (void)
 void
 structure_type_create (void)
 {
-  the_structure_type_dynarr = Dynarr_new (struct structure_type);
+  the_structure_type_dynarr = Dynarr_new (structure_type);
 }
 
 void
@@ -3034,7 +3034,7 @@ See documentation of `read' for possible values.
 *List of directories to search for files to load.
 Each element is a string (directory name) or nil (try default directory).
 
-Note that the elements of this list *may not* begin with \"~\", so you must
+Note that the elements of this list *may not* begin with "~", so you must
 call `expand-file-name' on them before adding them to this list.
 
 Initialized based on EMACSLOADPATH environment variable, if any,
@@ -3169,7 +3169,7 @@ character escape syntaxes or just read them incorrectly.
 #ifdef LISP_BACKQUOTES
   old_backquote_flag = new_backquote_flag = 0;
 #endif
-  
+
 #ifdef I18N3
   Vfile_domain = Qnil;
 #endif

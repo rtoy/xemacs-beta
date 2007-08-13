@@ -1,3 +1,9 @@
+1997-08-25  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* emu-x20.el (mime-charset-coding-system-alist): iso-2022-jp-2 is
+	defined as coding-system.
+
+
 1997-07-14  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
 	* emu: Version 7.44 was released.

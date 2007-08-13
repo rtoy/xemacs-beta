@@ -401,6 +401,6 @@ hash of a portion of OBJECT."
 		;; viewing, make sure we leave it behind.
 		(buffer-substring (point-min) (+ (point-min) 32)))
 	    (kill-buffer buffer)))
-      (and buffer (kill-buffer buffer) nil))))
+      (and buffer (buffer-name buffer) (kill-buffer buffer) nil))))
 
 (provide 'md5)

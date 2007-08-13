@@ -72,7 +72,7 @@ int Lstream_putc (Lstream *stream, int c)
 	it is very efficient.  The C argument is only evaluated once
 	but the STREAM argument is evaluated more than once.  Returns
 	0 on success, -1 on error.
-	
+
 int Lstream_getc (Lstream *stream)
 	Read one byte from the stream.  This is a macro and so it
 	is very efficient.  The STREAM argument is evaluated more
@@ -92,7 +92,7 @@ void Lstream_ungetc (Lstream *stream, int c)
 int Lstream_fputc (Lstream *stream, int c)
 int Lstream_fgetc (Lstream *stream)
 void Lstream_fungetc (Lstream *stream, int c)
-	Function equivalents of the above macros. 
+	Function equivalents of the above macros.
 
 int Lstream_read (Lstream *stream, void *data, int size)
 	Read SIZE bytes of DATA from the stream.  Return the number of
@@ -109,6 +109,11 @@ void Lstream_unread (Lstream *stream, void *data, int size)
 	next call to Lstream_read() with the same size will read the
 	same bytes back.  Note that this will be the case even if
 	there is other pending unread data.
+
+int Lstream_delete (Lstream *stream)
+	Frees all memory associated with the stream is freed.  Calling
+	this is not strictly necessary, but it is much more efficient
+	than having the Lstream be garbage-collected.
 
 int Lstream_close (Lstream *stream)
 	Close the stream.  All data will be flushed out.
@@ -429,7 +434,7 @@ Lstream_adding (Lstream *lstr, int num, int force)
 static int
 Lstream_write_1 (Lstream *lstr, CONST void *data, int size)
 {
-  CONST unsigned char *p = data;
+  CONST unsigned char *p = (CONST unsigned char *) data;
   int off = 0;
   if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
     {
@@ -500,7 +505,7 @@ int
 Lstream_write (Lstream *lstr, CONST void *data, int size)
 {
   int i;
-  CONST unsigned char *p = data;
+  CONST unsigned char *p = (CONST unsigned char *) data;
 
   assert (size >= 0);
   if (size == 0)
@@ -539,7 +544,7 @@ Lstream_raw_read (Lstream *lstr, unsigned char *buffer, int size)
       signal_simple_internal_error
 	("Internal error: lstream has no reader", obj);
     }
-  
+
   return (lstr->imp->reader) (lstr, buffer, size);
 }
 
@@ -562,7 +567,7 @@ Lstream_read_more (Lstream *lstr)
   lstr->in_buffer_current = max (0, size_gotten);
   lstr->in_buffer_ind = 0;
   return size_gotten < 0 ? -1 : size_gotten;
-}  
+}
 
 int
 Lstream_read (Lstream *lstr, void *data, int size)
@@ -672,7 +677,7 @@ Lstream_rewind (Lstream *lstr)
   lstr->byte_count = 0;
   return (lstr->imp->rewinder) (lstr);
 }
-  
+
 int
 Lstream_seekable_p (Lstream *lstr)
 {
@@ -974,7 +979,7 @@ filedesc_writer (Lstream *stream, CONST unsigned char *data, int size)
 {
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   int retval;
-  int need_newline = 0; 
+  int need_newline = 0;
 
   /* This function would be simple if it were not for the blasted
      PTY max-bytes stuff.  Why the hell can't they just have written
@@ -1182,7 +1187,7 @@ make_lisp_string_input_stream (Lisp_Object string, Bytecount offset,
   XSETLSTREAM (obj, lstr);
   return obj;
 }
-			      
+
 static int
 lisp_string_reader (Lstream *stream, unsigned char *data, int size)
 {
@@ -1264,7 +1269,7 @@ make_fixed_buffer_input_stream (CONST unsigned char *buf, int size)
   XSETLSTREAM (obj, lstr);
   return obj;
 }
-			      
+
 Lisp_Object
 make_fixed_buffer_output_stream (unsigned char *buf, int size)
 {
@@ -1351,7 +1356,7 @@ make_resizing_buffer_output_stream (void)
   XSETLSTREAM (obj, Lstream_new (lstream_resizing_buffer, "w"));
   return obj;
 }
-			      
+
 static int
 resizing_buffer_writer (Lstream *stream, CONST unsigned char *data, int size)
 {
@@ -1413,7 +1418,7 @@ make_dynarr_output_stream (unsigned_char_dynarr *dyn)
   DYNARR_STREAM_DATA (XLSTREAM (obj))->dyn = dyn;
   return obj;
 }
-			      
+
 static int
 dynarr_writer (Lstream *stream, CONST unsigned char *data, int size)
 {
@@ -1469,7 +1474,7 @@ make_lisp_buffer_stream_1 (struct buffer *buf, Bufpos start, Bufpos end,
   /* Make sure the luser didn't pass "w" in. */
   if (!strcmp (mode, "w"))
     abort ();
-  
+
   if (flags & LSTR_IGNORE_ACCESSIBLE)
     {
       bmin = BUF_BEG (buf);
@@ -1562,7 +1567,7 @@ lisp_buffer_reader (Lstream *stream, unsigned char *data, int size)
       end = bytind_clip_to_bounds (BI_BUF_BEGV (buf), end,
 				   BI_BUF_ZV (buf));
     }
-  
+
   size = min (size, end - start);
   end = start + size;
   /* We cannot return a partial character. */

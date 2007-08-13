@@ -1,3 +1,8 @@
+1997-08-28  SL Baur  <steve@altair.xemacs.org>
+
+	* pcl-cvs.el (cvs-changelog-ours-p): correct for drift in
+	`user-full-name' semantics.
+
 Fri May  2 20:04:35 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* pcl-cvs.el (cvs-update): Inhibit dialog box usage in call to

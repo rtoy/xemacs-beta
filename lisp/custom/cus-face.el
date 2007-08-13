@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9954
+;; Version: 1.9956
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -86,10 +86,12 @@ If FRAME is omitted or nil, use the selected frame."
 
 (unless (fboundp 'make-empty-face)
   ;; This should be moved to `faces.el'.
-  (if (string-match "XEmacs" emacs-version)
-      ;; Give up for old XEmacs pre 19.15/20.1.
-      (defalias 'make-empty-face 'make-face)
-    ;; Define for Emacs pre 19.35.
+  (cond
+   ((string-match "XEmacs" emacs-version)
+    ;; Give up for old XEmacs pre 19.15/20.1.
+    (defalias 'make-empty-face 'make-face))
+   ((fboundp 'internal-find-face)
+    ;; We can do faces...
     (defun make-empty-face (name)
       "Define a new FACE on all frames, ignoring X resources."
       (interactive "SMake face: ")
@@ -112,7 +114,9 @@ If FRAME is omitted or nil, use the selected frame."
 	    (if (fboundp 'facemenu-add-new-face)
 		(facemenu-add-new-face name))
 	    face))
-      name)))
+      name))
+   (t
+    (fset 'make-empty-face 'ignore))))
 
 (defcustom initialize-face-resources t
   "If non nil, allow X resources to initialize face properties.
@@ -270,12 +274,12 @@ Control whether the text should be underlined.")
 		set-face-underline-p
 		face-underline-p)
     (:foreground (color :tag "Foreground"
-			:value "black"
+			:value ""
 			:help-echo "Set foreground color.")
 		 set-face-foreground
 		 custom-face-foreground)
     (:background (color :tag "Background"
-			:value "white"
+			:value ""
 			:help-echo "Set background color.")
 		 set-face-background
 		 custom-face-background)

@@ -832,7 +832,7 @@ actually get any text from."
 		  (goto-char (+ pt len))
 		  (save-excursion
 		    (goto-char pt)
-		    (if (search-forward "* menu:" (+ pt len) t)
+		    (if (search-forward "* Menu:" (+ pt len) t)
 			(progn
 			  (forward-line 1)
 			  (delete-region pt (point)))))))
@@ -855,7 +855,7 @@ actually get any text from."
 	  (setq others (cdr others))))
       
       ;; Add to the main menu a menu item for each other node.
-      (re-search-forward "^\\* Menu:")
+      (re-search-forward "^\\* Menu:" nil t)
       (forward-line 1)
       (let ((menu-items '("top"))
 	    (nodes nodes)
@@ -2239,6 +2239,40 @@ At end of the node's text, moves to the next node."
 	  (and name (nth 1 data))))
     (error nil)))
 
+(defun Info-mouse-track-double-click-hook (event click-count)
+  "Handle double-clicks by turning pages, like the `gv' ghostscript viewer"
+  (if (/= click-count 2)
+      ;; Return nil so any other hooks are performed.
+      nil
+      (let* ((x (event-x-pixel event))
+	     (y (event-y-pixel event))
+	     (w (window-pixel-width (event-window event)))
+	     (h (window-pixel-height (event-window event)))
+	     (w/3 (/ w 3))
+	     (w/2 (/ w 2))
+	     (h/4 (/ h 4)))
+	(cond
+	  ;; In the top 1/4 and inside the middle 1/3
+	  ((and (<= y h/4)
+		(and (>= x w/3) (<= x (+ w/3 w/3))))
+	   (Info-up)
+	   t)
+	  ;; In the lower 3/4 and the right 1/2
+	  ;; OR in the upper 1/4 and the right 1/3
+	  ((or (and (>= y h/4) (>= x w/2))
+	       (and (< y h/4) (>= x (+ w/3 w/3))))
+	   (Info-next)
+	   t)
+	  ;; In the lower 3/4 and the left 1/2
+	  ;; OR in the upper 1/4 and the left 1/3
+	  ((or (and (>= y h/4) (< x w/2))
+	       (and (< y h/4) (<= x w/3)))
+	   (Info-prev)
+	   t)
+	  ;; This shouldn't happen.
+	  (t
+	   (error "event out of bounds: %s %s" x y))))))
+
 (defvar Info-mode-map nil
   "Keymap containing Info commands.")
 (if Info-mode-map
@@ -2385,6 +2419,7 @@ e	Edit the contents of the current node."
 	    (copy-face 'bold 'info-xref))))
   (make-local-variable 'mouse-track-click-hook)
   (add-hook 'mouse-track-click-hook 'Info-maybe-follow-clicked-node)
+  (add-hook 'mouse-track-click-hook 'Info-mouse-track-double-click-hook)
   ;; #### The console-on-window-system-p check is to allow this to
   ;; work on tty's.  The real problem here is that featurep really
   ;; needs to have some device/console domain knowledge added to it.

@@ -42,7 +42,7 @@ typedef struct {
   /* The rest of this is crap and should be deleted.
    */
   Boolean	minibuffer;	/* 0: normal frames with minibuffers.
-				 * 1: frames without minibuffers 
+				 * 1: frames without minibuffers
 				 * 2: minibuffer only. */
   Boolean	unsplittable;	/* frame can only have one window */
 

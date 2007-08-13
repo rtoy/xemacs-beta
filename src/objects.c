@@ -43,7 +43,7 @@ void
 finalose (void *ptr)
 {
   Lisp_Object obj;
-  XSETOBJ (obj, Lisp_Record, ptr);
+  XSETOBJ (obj, Lisp_Type_Record, ptr);
 
   signal_simple_error
     ("Can't dump an emacs containing window system objects", obj);
@@ -158,8 +158,7 @@ is deallocated as well.
   CHECK_STRING (name);
   XSETDEVICE (device, decode_device (device));
 
-  c = alloc_lcrecord (sizeof (struct Lisp_Color_Instance),
-		      lrecord_color_instance);
+  c = alloc_lcrecord_type (struct Lisp_Color_Instance, lrecord_color_instance);
   c->name = name;
   c->device = device;
 
@@ -336,8 +335,7 @@ these objects are GCed, the underlying X data is deallocated as well.
 
   XSETDEVICE (device, decode_device (device));
 
-  f = alloc_lcrecord (sizeof (struct Lisp_Font_Instance),
-		      lrecord_font_instance);
+  f = alloc_lcrecord_type (struct Lisp_Font_Instance, lrecord_font_instance);
   f->name = name;
   f->device = device;
 
@@ -630,12 +628,12 @@ Return non-nil if OBJECT is a color specifier.
 
 Valid instantiators for color specifiers are:
 
--- a string naming a color (e.g. under X this might be \"lightseagreen2\"
-   or \"#F534B2\")
+-- a string naming a color (e.g. under X this might be "lightseagreen2"
+   or "#F534B2")
 -- a color instance (use that instance directly if the device matches,
    or use the string that generated it)
 -- a vector of no elements (only on TTY's; this means to set no color
-   at all, thus using the \"natural\" color of the terminal's text)
+   at all, thus using the "natural" color of the terminal's text)
 -- a vector of one or two elements: a face to inherit from, and
    optionally a symbol naming which property of that face to inherit,
    either `foreground' or `background' (if omitted, defaults to the same
@@ -841,12 +839,12 @@ Return non-nil if OBJECT is a font specifier.
 Valid instantiators for font specifiers are:
 
 -- a string naming a font (e.g. under X this might be
-   \"-*-courier-medium-r-*-*-*-140-*-*-*-*-iso8859-*\" for a 14-point
+   "-*-courier-medium-r-*-*-*-140-*-*-*-*-iso8859-*" for a 14-point
    upright medium-weight Courier font)
 -- a font instance (use that instance directly if the device matches,
    or use the string that generated it)
 -- a vector of no elements (only on TTY's; this means to set no font
-   at all, thus using the \"natural\" font of the terminal's text)
+   at all, thus using the "natural" font of the terminal's text)
 -- a vector of one element (a face to inherit from)
 */
        (object))
@@ -1071,10 +1069,8 @@ vars_of_objects (void)
 {
   staticpro (&Vthe_null_color_instance);
   {
-    struct Lisp_Color_Instance *c;
-
-    c = alloc_lcrecord (sizeof (struct Lisp_Color_Instance),
-			lrecord_color_instance);
+    struct Lisp_Color_Instance *c =
+      alloc_lcrecord_type (struct Lisp_Color_Instance, lrecord_color_instance);
     c->name = Qnil;
     c->device = Qnil;
     c->data = 0;
@@ -1084,10 +1080,8 @@ vars_of_objects (void)
 
   staticpro (&Vthe_null_font_instance);
   {
-    struct Lisp_Font_Instance *f;
-
-    f = alloc_lcrecord (sizeof (struct Lisp_Font_Instance),
-		      lrecord_font_instance);
+    struct Lisp_Font_Instance *f =
+      alloc_lcrecord_type (struct Lisp_Font_Instance, lrecord_font_instance);
     f->name = Qnil;
     f->device = Qnil;
     f->data = 0;

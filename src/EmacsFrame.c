@@ -53,7 +53,7 @@ static XtGeometryResult EmacsFrameQueryGeometry (Widget, XtWidgetGeometry*,
 						  XtWidgetGeometry*);
 
 extern void
-emacs_Xt_mapping_action (Widget w, XMappingEvent* event);
+emacs_Xt_mapping_action (Widget w, XEvent* event);
 
 #undef XtOffset
 #define XtOffset(p_type,field) \
@@ -501,7 +501,7 @@ Xt_StringToScrollBarPlacement (XrmValuePtr args,   /* unused */
   q = XrmStringToQuark (lowerName);
 
   toVal->size = sizeof (cvt_string_scrollbar_placement);
-  toVal->addr = (XtPointer) &cvt_string_scrollbar_placement;
+  toVal->addr = (XPointer) &cvt_string_scrollbar_placement;
 
   if      (q == XrmStringToQuark ("top_left"))
     cvt_string_scrollbar_placement = XtTOP_LEFT;

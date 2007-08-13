@@ -144,7 +144,7 @@ emacs_tty_next_event (struct Lisp_Event *emacs_event)
 	      if (FD_ISSET (i, &temp_mask) && FD_ISSET (i, &tty_only_mask))
 		{
 		  struct console *c = find_console_from_fd (i);
-		  
+
 		  assert (c);
 		  if (read_event_from_tty_or_stream_desc (emacs_event, c, i))
 		    return;
@@ -159,7 +159,7 @@ emacs_tty_next_event (struct Lisp_Event *emacs_event)
 		  Lisp_Object process;
 		  struct Lisp_Process *p =
 		    get_process_from_input_descriptor (i);
-		  
+
 		  assert (p);
 		  XSETPROCESS (process, p);
 		  emacs_event->event_type = process_event;
@@ -234,8 +234,7 @@ emacs_tty_quit_p (void)
 void
 vars_of_event_tty (void)
 {
-  tty_event_stream =
-    (struct event_stream *) xmalloc (sizeof (struct event_stream));
+  tty_event_stream = xnew (struct event_stream);
 
   tty_event_stream->event_pending_p 	= emacs_tty_event_pending_p;
   tty_event_stream->next_event_cb	= emacs_tty_next_event;

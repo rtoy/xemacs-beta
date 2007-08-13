@@ -167,6 +167,7 @@ Otherwise, only the interactive functions and user variables will be listed."
     (define-key map "t"     'hyper-apropos-find-tag)
     (define-key map "l"     'hyper-apropos-last-help)
     (define-key map "c"     'hyper-apropos-customize-variable)
+    (define-key map "f"     'hyper-apropos-find-function)
     (define-key map [button2] 'hyper-apropos-mouse-get-doc)
     (define-key map [button3] 'hyper-apropos-popup-menu)
     ;; for the totally hardcore...
@@ -192,7 +193,8 @@ Otherwise, only the interactive functions and user variables will be listed."
     ;; act on the current line...
     (define-key map "w"     'hyper-apropos-where-is)
     (define-key map "i"     'hyper-apropos-invoke-fn)
-    (define-key map "s"     'hyper-apropos-set-variable)
+;; this is already defined in the parent-keymap above, isn't it?
+;;     (define-key map "s"     'hyper-apropos-set-variable)
     ;; more administrativa...
     (define-key map "P"     'hyper-apropos-toggle-programming-flag)
     (define-key map "k"     'hyper-apropos-add-keyword)
@@ -1203,6 +1205,24 @@ source is found for the \"*Hyper Apropos*\" buffer."
 
 ;; ---------------------------------------------------------------------- ;;
 
+(defun hyper-apropos-find-function (fn)
+  "Find the function for the symbol on the current line in other
+window.  (See also `find-function'.)"
+  (interactive
+   (let ((fn (hyper-apropos-this-symbol)))
+     (or (fboundp fn)
+	 (and (setq fn (and (eq major-mode 'hyper-apropos-help-mode)
+			    (save-excursion
+			      (goto-char (point-min))
+			      (hyper-apropos-this-symbol))))
+	      (fboundp fn))
+	 (setq fn nil))
+     (list fn)))
+  (if fn
+      (find-function-other-window fn)))
+
+;; ---------------------------------------------------------------------- ;;
+
 (defun hyper-apropos-disassemble (sym)
   "Disassemble FUN if it is byte-coded.  If it's a lambda, prettyprint it."
   (interactive (list (hyper-apropos-this-symbol)))
@@ -1251,7 +1271,11 @@ source is found for the \"*Hyper Apropos*\" buffer."
 (defun hyper-apropos-popup-menu (event)
   (interactive "e")
   (mouse-set-point event)
-  (let* ((sym (hyper-apropos-this-symbol))
+  (let* ((sym (or (hyper-apropos-this-symbol)
+		  (and (eq major-mode 'hyper-apropos-help-mode)
+		       (save-excursion
+			 (goto-char (point-min))
+			 (hyper-apropos-this-symbol)))))
 	 (notjunk (not (null sym)))
 	 (command-p (if (commandp sym) t))
 	 (variable-p (and sym (boundp sym)))
@@ -1268,11 +1292,12 @@ source is found for the \"*Hyper Apropos*\" buffer."
 	   nil
 	   (list (concat "Hyper-Help: " name)
 	    (vector "Display documentation" 'hyper-apropos-get-doc   notjunk)
-	    (vector "Set variable"	'hyper-apropos-set-variable	variable-p)
+	    (vector "Set variable"	'hyper-apropos-set-variable variable-p)
 	    (vector "Customize variable" 'hyper-apropos-customize-variable
 		    customizable-p)
 	    (vector "Show keys for"     'hyper-apropos-where-is      command-p)
-	    (vector "Invoke command"	'hyper-apropos-invoke-fn	command-p)
+	    (vector "Invoke command"	'hyper-apropos-invoke-fn     command-p)
+	    (vector "Find function"    'hyper-apropos-find-function function-p)
 	    (vector "Find tag"		'hyper-apropos-find-tag	notjunk)
 	    (and apropos-p
 		 ["Add keyword..." hyper-apropos-add-keyword	t])

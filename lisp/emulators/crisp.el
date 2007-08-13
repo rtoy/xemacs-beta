@@ -1,8 +1,16 @@
 ;; @(#) crisp.el -- CRiSP/Brief Emacs emulator
 
 ;; Author: Gary D. Foster <Gary.Foster@corp.sun.com>
-;; 1.19
+;; Created: 01 Mar 1996
+;; Version: 1.20
 ;; Keywords: emulations brief crisp
+;; X-Modified-by:
+;;	crisp.el,v
+;;	Revision 1.20  1997/08/22 18:49:11  gfoster
+;;	Added next-buffer/previous-buffer keybindings (bound to M-n/M-p)
+;;	Added crisp-unbury-buffer function
+;;	Standardized headers for Steve
+;;
 
 ;; This file is part of XEmacs.
 
@@ -55,6 +63,10 @@
 
 ;; All these overrides should go *before* the (require 'crisp) statement.
 
+;; Code:
+
+(require 'cl)
+
 ;; local variables
 
 (defgroup emulations-crisp nil
@@ -99,7 +111,7 @@ does not load the scroll-lock package.")
 (defvar crisp-load-hook nil
   "Hooks to run after loading the CRiSP emulator package.")
 
-(defconst crisp-version "crisp.el release 1.1/1.19"
+(defconst crisp-version "crisp.el release 1.1/1.20"
   "The release number and RCS version for the CRiSP emulator.")
 
 (if (string-match "XEmacs\\Lucid" emacs-version)
@@ -154,6 +166,8 @@ does not load the scroll-lock package.")
 (define-key crisp-mode-map [(meta h)]       'help)
 (define-key crisp-mode-map [(meta i)]       'overwrite-mode)
 (define-key crisp-mode-map [(meta j)]       'bookmark-jump)
+(define-key crisp-mode-map [(meta n)]       'bury-buffer)
+(define-key crisp-mode-map [(meta p)]       'crisp-unbury-buffer)
 (define-key crisp-mode-map [(meta u)]       'advertised-undo)
 (define-key crisp-mode-map [(f14)]          'advertised-undo)
 (define-key crisp-mode-map [(meta w)]       'save-buffer)
@@ -210,6 +224,11 @@ consecutive use moves point to the end of the buffer."
      (end-of-line)))
   (setq last-last-command last-command))
 
+(defun crisp-unbury-buffer ()
+  "Go back one buffer"
+  (interactive)
+  (switch-to-buffer (car (last (buffer-list)))))
+ 
 (defun crisp-meta-x-wrapper ()
   "Wrapper function to conditionally override the normal M-x bindings.
 When `crisp-override-meta-x' is non-nil, M-x will exit Emacs (the

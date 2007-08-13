@@ -188,7 +188,7 @@ init_syntax_once (void)
    if (done)
      return;
 
-   bzero (re_syntax_table, sizeof re_syntax_table);
+   memset (re_syntax_table, 0, sizeof (re_syntax_table));
 
    for (c = 'a'; c <= 'z'; c++)
      re_syntax_table[c] = Sword;
@@ -248,7 +248,7 @@ init_syntax_once (void)
 #define ISASCII(c) (((unsigned EMACS_INT) (c)) < 0x100 && ISASCII_1 (c))
 #else
 #define ISASCII(c) ISASCII_1 (c)
-#endif
+#endif /* MULE */
 
 #ifdef isblank
 #define ISBLANK(c) (ISASCII (c) && isblank (c))
@@ -550,7 +550,7 @@ typedef enum
      2.3 code to enable some language specific processing */
   ,categoryspec,     /* Matches entries in the character category tables */
   notcategoryspec    /* The opposite of the above */
-#endif
+#endif /* MULE */
 
 } re_opcode_t;
 
@@ -1806,7 +1806,7 @@ static reg_errcode_t compile_extended_range (CONST char **p_ptr,
 					     char *translate,
 					     reg_syntax_t syntax,
 					     Lisp_Object rtab);
-#endif
+#endif /* MULE */
 static boolean group_match_null_string_p (unsigned char **p,
 					  unsigned char *end,
 					  register_info_type *reg_info);
@@ -2058,32 +2058,26 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
             }
 
           {
-            /* Are we optimizing this jump?  */
-            boolean keep_string_p = false;
+	    /* true means zero/many matches are allowed. */
+	    boolean zero_times_ok = c != '+';
+            boolean many_times_ok = c != '?';
 
-            /* 1 means zero (many) matches is allowed.  */
-            char zero_times_ok = 0, many_times_ok = 0;
+            /* true means match shortest string possible. */
+            boolean minimal = false;
 
             /* If there is a sequence of repetition chars, collapse it
                down to just one (the right one).  We can't combine
                interval operators with these because of, e.g., `a{2}*',
-               which should only match an even number of `a's.  */
-
-            for (;;)
+               which should only match an even number of `a's.	*/
+            while (p != pend)
               {
-                zero_times_ok |= c != '+';
-                many_times_ok |= c != '?';
-
-                if (p == pend)
-                  break;
-
                 PATFETCH (c);
 
-                if (c == '*'
-                    || (!(syntax & RE_BK_PLUS_QM) && (c == '+' || c == '?')))
+                if (c == '*' || (!(syntax & RE_BK_PLUS_QM)
+                                 && (c == '+' || c == '?')))
                   ;
 
-                else if (syntax & RE_BK_PLUS_QM  &&  c == '\\')
+                else if (syntax & RE_BK_PLUS_QM && c == '\\')
                   {
                     if (p == pend) FREE_STACK_RETURN (REG_EESCAPE);
 
@@ -2104,73 +2098,137 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
                   }
 
                 /* If we get here, we found another repeat character.  */
-               }
+                if (!(syntax & RE_NO_MINIMAL_MATCHING))
+                  {
+                    /* `*?' and `+?' and `??' are okay (and mean match
+                       minimally), but other sequences (such as `*??' and
+                       `+++') are rejected (reserved for future use). */
+                    if (minimal || c != '?')
+                      FREE_STACK_RETURN (REG_BADRPT);
+                    minimal = true;
+                  }
+                else
+                  {
+                    zero_times_ok |= c != '+';
+                    many_times_ok |= c != '?';
+                  }
+              }
 
             /* Star, etc. applied to an empty pattern is equivalent
                to an empty pattern.  */
             if (!laststart)
               break;
 
-            /* Now we know whether or not zero matches is allowed
-               and also whether or not two or more matches is allowed.  */
-            if (many_times_ok)
-              { /* More than one repetition is allowed, so put in at the
-                   end a backward relative jump from `b' to before the next
-                   jump we're going to put in below (which jumps from
-                   laststart to after this jump).
-
-                   But if we are at the `*' in the exact sequence `.*\n',
-                   insert an unconditional jump backwards to the .,
-                   instead of the beginning of the loop.  This way we only
-                   push a failure point once, instead of every time
-                   through the loop.  */
-                assert (p - 1 > pattern);
-
-                /* Allocate the space for the jump.  */
-                GET_BUFFER_SPACE (3);
-
-                /* We know we are not at the first character of the pattern,
-                   because laststart was nonzero.  And we've already
-                   incremented `p', by the way, to be the character after
-                   the `*'.  Do we have to do something analogous here
-                   for null bytes, because of RE_DOT_NOT_NULL?  */
-                if (TRANSLATE (*(p - 2)) == TRANSLATE ('.')
-		    && zero_times_ok
-                    && p < pend && TRANSLATE (*p) == TRANSLATE ('\n')
-                    && !(syntax & RE_DOT_NEWLINE))
-                  { /* We have .*\n.  */
-                    STORE_JUMP (jump, b, laststart);
-                    keep_string_p = true;
+	    /* Now we know whether zero matches is allowed
+	       and whether two or more matches is allowed
+               and whether we want minimal or maximal matching. */
+            if (minimal)
+              {
+                if (!many_times_ok)
+                  {
+                    /* "a??" becomes:
+                       0: /on_failure_jump to 6
+                       3: /jump to 9
+                       6: /exactn/1/A
+                       9: end of pattern.
+                     */
+                    GET_BUFFER_SPACE (6);
+                    INSERT_JUMP (jump, laststart, b + 3);
+                    b += 3;
+                    INSERT_JUMP (on_failure_jump, laststart, laststart + 6);
+                    b += 3;
+                  }
+                else if (zero_times_ok)
+                  {
+                    /* "a*?" becomes:
+                       0: /jump to 6
+                       3: /exactn/1/A
+                       6: /on_failure_jump to 3
+                       9: end of pattern.
+                     */
+                    GET_BUFFER_SPACE (6);
+                    INSERT_JUMP (jump, laststart, b + 3);
+                    b += 3;
+                    STORE_JUMP (on_failure_jump, b, laststart + 3);
+                    b += 3;
                   }
                 else
-                  /* Anything else.  */
-                  STORE_JUMP (maybe_pop_jump, b, laststart - 3);
-
-                /* We've added more stuff to the buffer.  */
-                b += 3;
+                  {
+                    /* "a+?" becomes:
+                       0: /exactn/1/A
+                       3: /on_failure_jump to 0
+                       6: end of pattern.
+                     */
+                    GET_BUFFER_SPACE (3);
+                    STORE_JUMP (on_failure_jump, b, laststart);
+                    b += 3;
+                  }
               }
-
-            /* On failure, jump from laststart to b + 3, which will be the
-               end of the buffer after this jump is inserted.  */
-            GET_BUFFER_SPACE (3);
-            INSERT_JUMP (keep_string_p ? on_failure_keep_string_jump
-                                       : on_failure_jump,
-                         laststart, b + 3);
-            pending_exact = 0;
-            b += 3;
-
-            if (!zero_times_ok)
+            else
               {
-                /* At least one repetition is required, so insert a
-                   `dummy_failure_jump' before the initial
-                   `on_failure_jump' instruction of the loop. This
-                   effects a skip over that instruction the first time
-                   we hit that loop.  */
+                /* Are we optimizing this jump?  */
+                boolean keep_string_p = false;
+
+                if (many_times_ok)
+                  { /* More than one repetition is allowed, so put in at the
+                       end a backward relative jump from `b' to before the next
+                       jump we're going to put in below (which jumps from
+                       laststart to after this jump).
+
+                       But if we are at the `*' in the exact sequence `.*\n',
+                       insert an unconditional jump backwards to the .,
+                       instead of the beginning of the loop.  This way we only
+                       push a failure point once, instead of every time
+                       through the loop.  */
+                    assert (p - 1 > pattern);
+
+                    /* Allocate the space for the jump.  */
+                    GET_BUFFER_SPACE (3);
+
+                    /* We know we are not at the first character of the
+                       pattern, because laststart was nonzero.  And we've
+                       already incremented `p', by the way, to be the
+                       character after the `*'.  Do we have to do something
+                       analogous here for null bytes, because of
+                       RE_DOT_NOT_NULL? */
+                    if (TRANSLATE (*(p - 2)) == TRANSLATE ('.')
+                        && zero_times_ok
+                        && p < pend && TRANSLATE (*p) == TRANSLATE ('\n')
+                        && !(syntax & RE_DOT_NEWLINE))
+                      { /* We have .*\n.  */
+                        STORE_JUMP (jump, b, laststart);
+                        keep_string_p = true;
+                      }
+                    else
+                      /* Anything else.  */
+                      STORE_JUMP (maybe_pop_jump, b, laststart - 3);
+
+                    /* We've added more stuff to the buffer.  */
+                    b += 3;
+                  }
+
+                /* On failure, jump from laststart to b + 3, which will be the
+                   end of the buffer after this jump is inserted.  */
                 GET_BUFFER_SPACE (3);
-                INSERT_JUMP (dummy_failure_jump, laststart, laststart + 6);
+                INSERT_JUMP (keep_string_p ? on_failure_keep_string_jump
+					   : on_failure_jump,
+                             laststart, b + 3);
                 b += 3;
+
+                if (!zero_times_ok)
+                  {
+                    /* At least one repetition is required, so insert a
+                       `dummy_failure_jump' before the initial
+                       `on_failure_jump' instruction of the loop. This
+                       effects a skip over that instruction the first time
+                       we hit that loop.  */
+                    GET_BUFFER_SPACE (3);
+                    INSERT_JUMP (dummy_failure_jump, laststart, laststart + 6);
+                    b += 3;
+                  }
               }
-            }
+            pending_exact = 0;
+          }
 	  break;
 
 
@@ -2502,47 +2560,72 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
                 goto normal_backslash;
 
             handle_open:
-              bufp->re_nsub++;
-              regnum++;
+              {
+                regnum_t r;
 
-              if (COMPILE_STACK_FULL)
-                {
-                  RETALLOC (compile_stack.stack, compile_stack.size << 1,
-                            compile_stack_elt_t);
-                  if (compile_stack.stack == NULL) return REG_ESPACE;
+                if (!(syntax & RE_NO_SHY_GROUPS)
+                    && p != pend
+                    && TRANSLATE(*p) == TRANSLATE('?'))
+                  {
+                    p++;
+                    PATFETCH(c);
+                    switch (c)
+                      {
+                      case ':': /* shy groups */
+                        r = MAX_REGNUM + 1;
+                        break;
 
-                  compile_stack.size <<= 1;
-                }
+                      /* All others are reserved for future constructs. */
+                      default:
+                        FREE_STACK_RETURN (REG_BADPAT);
+                      }
+                  }
+                else
+                  {
+                    bufp->re_nsub++;
+                    r = ++regnum;
+                  }
 
-              /* These are the values to restore when we hit end of this
-                 group.  They are all relative offsets, so that if the
-                 whole pattern moves because of realloc, they will still
-                 be valid.  */
-              COMPILE_STACK_TOP.begalt_offset = begalt - bufp->buffer;
-              COMPILE_STACK_TOP.fixup_alt_jump
-                = fixup_alt_jump ? fixup_alt_jump - bufp->buffer + 1 : 0;
-              COMPILE_STACK_TOP.laststart_offset = b - bufp->buffer;
-              COMPILE_STACK_TOP.regnum = regnum;
+                if (COMPILE_STACK_FULL)
+                  {
+                    RETALLOC (compile_stack.stack, compile_stack.size << 1,
+                              compile_stack_elt_t);
+                    if (compile_stack.stack == NULL) return REG_ESPACE;
 
-              /* We will eventually replace the 0 with the number of
-                 groups inner to this one.  But do not push a
-                 start_memory for groups beyond the last one we can
-                 represent in the compiled pattern.  */
-              if (regnum <= MAX_REGNUM)
-                {
-                  COMPILE_STACK_TOP.inner_group_offset = b - bufp->buffer + 2;
-                  BUF_PUSH_3 (start_memory, regnum, 0);
-                }
+                    compile_stack.size <<= 1;
+                  }
 
-              compile_stack.avail++;
+                /* These are the values to restore when we hit end of this
+                   group.  They are all relative offsets, so that if the
+                   whole pattern moves because of realloc, they will still
+                   be valid.  */
+                COMPILE_STACK_TOP.begalt_offset = begalt - bufp->buffer;
+                COMPILE_STACK_TOP.fixup_alt_jump
+                  = fixup_alt_jump ? fixup_alt_jump - bufp->buffer + 1 : 0;
+                COMPILE_STACK_TOP.laststart_offset = b - bufp->buffer;
+                COMPILE_STACK_TOP.regnum = r;
 
-              fixup_alt_jump = 0;
-              laststart = 0;
-              begalt = b;
-	      /* If we've reached MAX_REGNUM groups, then this open
-		 won't actually generate any code, so we'll have to
-		 clear pending_exact explicitly.  */
-	      pending_exact = 0;
+                /* We will eventually replace the 0 with the number of
+                   groups inner to this one.  But do not push a
+                   start_memory for groups beyond the last one we can
+                   represent in the compiled pattern.  */
+                if (r <= MAX_REGNUM)
+                  {
+                    COMPILE_STACK_TOP.inner_group_offset
+                      = b - bufp->buffer + 2;
+                    BUF_PUSH_3 (start_memory, r, 0);
+                  }
+
+                compile_stack.avail++;
+
+                fixup_alt_jump = 0;
+                laststart = 0;
+                begalt = b;
+                /* If we've reached MAX_REGNUM groups, then this open
+                   won't actually generate any code, so we'll have to
+                   clear pending_exact explicitly.  */
+                pending_exact = 0;
+              }
               break;
 
 
@@ -3408,10 +3491,10 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 	  /* And all extended characters must be allowed, too. */
 	  for (j = 0x80; j < 0xA0; j++)
 	    fastmap[j] = 1;
-#else
+#else /* ! MULE */
 	  for (j = *p * BYTEWIDTH; j < (1 << BYTEWIDTH); j++)
             fastmap[j] = 1;
-#endif
+#endif /* ! MULE */
 
 	  for (j = *p++ * BYTEWIDTH - 1; j >= 0; j--)
 	    if (!(p[j / BYTEWIDTH] & (1 << (j % BYTEWIDTH))))
@@ -4299,6 +4382,13 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
   unsigned num_regs_pushed = 0;
 #endif
 
+  /* 1 if this match ends in the same string (string1 or string2)
+     as the best previous match.  */
+  boolean same_str_p;
+
+  /* 1 if this match is the best seen so far.  */
+  boolean best_match_p;
+
   DEBUG_PRINT1 ("\n\nEntering re_match_2.\n");
 
   INIT_FAIL_STACK ();
@@ -4311,14 +4401,14 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
      array indexing.  We should fix this.  */
   if (bufp->re_nsub)
     {
-      regstart = REGEX_TALLOC (num_regs, CONST char *);
-      regend = REGEX_TALLOC (num_regs, CONST char *);
-      old_regstart = REGEX_TALLOC (num_regs, CONST char *);
-      old_regend = REGEX_TALLOC (num_regs, CONST char *);
-      best_regstart = REGEX_TALLOC (num_regs, CONST char *);
-      best_regend = REGEX_TALLOC (num_regs, CONST char *);
-      reg_info = REGEX_TALLOC (num_regs, register_info_type);
-      reg_dummy = REGEX_TALLOC (num_regs, CONST char *);
+      regstart       = REGEX_TALLOC (num_regs, CONST char *);
+      regend         = REGEX_TALLOC (num_regs, CONST char *);
+      old_regstart   = REGEX_TALLOC (num_regs, CONST char *);
+      old_regend     = REGEX_TALLOC (num_regs, CONST char *);
+      best_regstart  = REGEX_TALLOC (num_regs, CONST char *);
+      best_regend    = REGEX_TALLOC (num_regs, CONST char *);
+      reg_info       = REGEX_TALLOC (num_regs, register_info_type);
+      reg_dummy      = REGEX_TALLOC (num_regs, CONST char *);
       reg_info_dummy = REGEX_TALLOC (num_regs, register_info_type);
 
       if (!(regstart && regend && old_regstart && old_regend && reg_info
@@ -4421,12 +4511,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
              longest match, try backtracking.  */
           if (d != end_match_2)
 	    {
-	      /* 1 if this match ends in the same string (string1 or string2)
-		 as the best previous match.  */
-	      boolean same_str_p = (FIRST_STRING_P (match_end)
-				    == MATCHING_IN_FIRST_STRING);
-	      /* 1 if this match is the best seen so far.  */
-	      boolean best_match_p;
+	      same_str_p = (FIRST_STRING_P (match_end)
+			    == MATCHING_IN_FIRST_STRING);
 
 	      /* AIX compiler got confused when this was combined
 		 with the previous declaration.  */
@@ -4687,7 +4773,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
 	    INC_CHARPTR (d);
 	    break;
 	  }
-#endif
+#endif /* MULE */
 
 
         /* The beginning of a group is represented by start_memory.
@@ -5016,7 +5102,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
           EXTRACT_NUMBER_AND_INCR (mcnt, p);
           DEBUG_PRINT3 (" %d (to 0x%p):\n", mcnt, p + mcnt);
 
-          PUSH_FAILURE_POINT (p + mcnt, (void *) 0, -2);
+          PUSH_FAILURE_POINT (p + mcnt, (char *) 0, -2);
           break;
 
 
@@ -5272,7 +5358,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
           DEBUG_PRINT1 ("EXECUTING dummy_failure_jump.\n");
           /* It doesn't matter what we push for the string here.  What
              the code at `fail' tests is the value for the pattern.  */
-          PUSH_FAILURE_POINT ((void *) 0, (void *) 0, -2);
+          PUSH_FAILURE_POINT ((unsigned char *) 0, (char *) 0, -2);
           goto unconditional_jump;
 
 
@@ -5285,7 +5371,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
           DEBUG_PRINT1 ("EXECUTING push_dummy_failure.\n");
           /* See comments just above at `dummy_failure_jump' about the
              two zeroes.  */
-          PUSH_FAILURE_POINT ((void *) 0, (void *) 0, -2);
+          PUSH_FAILURE_POINT ((unsigned char *) 0, (char *) 0, -2);
           break;
 
         /* Have to succeed matching what follows at least n times.

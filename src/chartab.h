@@ -136,9 +136,8 @@ Lisp_Object get_non_ascii_char_table_value (struct Lisp_Char_Table *ct,
 					   int leading_byte,
 					   Emchar c);
 
-INLINE Lisp_Object CHAR_TABLE_NON_ASCII_VALUE_UNSAFE (struct
-						      Lisp_Char_Table *ct,
-						      Emchar ch);
+INLINE Lisp_Object
+CHAR_TABLE_NON_ASCII_VALUE_UNSAFE (struct Lisp_Char_Table *ct, Emchar ch);
 INLINE Lisp_Object
 CHAR_TABLE_NON_ASCII_VALUE_UNSAFE (struct Lisp_Char_Table *ct, Emchar ch)
 {

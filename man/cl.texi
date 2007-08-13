@@ -818,7 +818,7 @@ The type symbols @code{character} and @code{string-char} match
 characters.  In Emacs-19 and XEmacs-19, characters are the same thing as
 integers in the range 0-255.  In XEmacs-20, where characters are a
 first-class data type, this checks for actual characters, and
-+@code{(typep 8bit-integer 'character)} will return @code{nil}.
+@code{(typep @var{8bit-integer} 'character)} will return @code{nil}.
 
 @item
 The type symbol @code{float} uses the @code{floatp-safe} predicate

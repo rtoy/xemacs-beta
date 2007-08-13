@@ -43,7 +43,7 @@ void Dynarr_insert_many (void *d, CONST void *el, int len, int start);
 void Dynarr_delete_many (void *d, int start, int len);
 void Dynarr_free (void *d);
 
-#define Dynarr_new(type) Dynarr_newf (sizeof(* (type *) NULL))
+#define Dynarr_new(type) ((type##_dynarr *) Dynarr_newf (sizeof(type)))
 #define Dynarr_at(d, pos) ((d)->base[pos])
 #define Dynarr_atp(d, pos) (&Dynarr_at (d, pos))
 #define Dynarr_length(d) ((d)->cur)

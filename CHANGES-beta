@@ -1,4 +1,19 @@
 							-*- indented-text -*-
+to 20.3 beta19 "Kiev"
+-- Mega Martin Buccholz patch
+-- Major Viper update, Viper is now Mule aware
+-- ediff updates courtesy of Michael Kifer
+-- tpu-edt.el/tpu-extras.el synched with Emacs 19.34/XEmacs 19.16 courtesy of
+   Kevin Oberman
+-- strokes.el-2.4beta
+-- crisp.el-1.20 courtesy of Gary D. Foster
+-- New regex syntax changes courtesy of Michael Cook
+-- improved color terminal detection
+-- tetris.el-1.4 Courtesy of Glynn Clements
+-- Custom-1.9956
+-- Miscellaneous bug fixes
+-- W3-3.0.103
+
 to 20.3 beta18 "Bratislava"
 -- enhancements to help.el courtesy of Jens Petersen
 -- Mega Martin Buchholz patch

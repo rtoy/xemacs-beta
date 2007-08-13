@@ -172,7 +172,7 @@ casify_region_internal (enum case_action flag, Lisp_Object b, Lisp_Object e,
   end_multiple_change (buf, mccount);
 }
 
-INLINE Lisp_Object
+static Lisp_Object
 casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e,
 	       Lisp_Object buffer)
 {

@@ -537,7 +537,7 @@ getloadavg (double loadavg[], int nelem)
 #ifdef XEMACS
 #if ! defined (LDAV_DONE) && defined (HAVE_KSTAT_H) && defined (HAVE_LIBKSTAT)
 #define LDAV_DONE
-  
+
 /* getloadavg is best implemented using kstat (kernel stats),
    on systems (like SunOS5) that support it,
    since you don't have to be superusers to use it.
@@ -559,7 +559,7 @@ getloadavg (double loadavg[], int nelem)
       return -1;
   if (kstat_read(kc, ksp, ksp->ks_data) < 0)
     return -1;
-  buf = malloc(ksp->ks_data_size);
+  buf = (kstat_named_t *) malloc (ksp->ks_data_size);
   if (!buf)
      return -1;
   memcpy(buf, ksp->ks_data, ksp->ks_data_size);
@@ -568,7 +568,7 @@ getloadavg (double loadavg[], int nelem)
   for (elem = 0; elem < nelem; elem++)
     loadavg[elem] = (buf + 6 + elem)->value.ul / 256.0;
   free(buf);
-  
+
 #endif /* HAVE_KSTAT_H && HAVE_LIBKSTAT */
 
 #if !defined (LDAV_DONE) && defined (HAVE_SYS_PSTAT_H)

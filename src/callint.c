@@ -83,9 +83,9 @@ Lisp_Object Qread_non_nil_coding_system;
 DEFUN ("interactive", Finteractive, 0, UNEVALLED, 0, /*
 Specify a way of parsing arguments for interactive use of a function.
 For example, write
-  (defun foo (arg) \"Doc string\" (interactive \"p\") ...use arg...)
+  (defun foo (arg) "Doc string" (interactive "p") ...use arg...)
 to make ARG be the prefix argument when `foo' is called as a command.
-The \"call\" to `interactive' is actually a declaration rather than a function;
+The "call" to `interactive' is actually a declaration rather than a function;
  it tells `call-interactively' how to read arguments
  to pass to the function.
 When actually called, `interactive' just returns nil.
@@ -194,7 +194,7 @@ callint_prompt (CONST Bufbyte *prompt_start, Bytecount prompt_length,
   struct gcpro gcpro1;
 
   /* Fformat no longer smashes its arg vector, so no need to copy it. */
-  
+
   if (!strchr ((char *) XSTRING_DATA (s), '%'))
     return s;
   GCPRO1 (s);
@@ -372,10 +372,10 @@ when reading the arguments.
 		      if (CONSP (elt))
 			{
 			  Lisp_Object eltcar = Fcar (elt);
-			  if (EQ (eltcar, Qpoint)
-			      || EQ (eltcar, Qmark)
-			      || EQ (eltcar, Qregion_beginning)
-			      || EQ (eltcar, Qregion_end))
+			  if (EQ (eltcar, Qpoint) ||
+			      EQ (eltcar, Qmark)  ||
+			      EQ (eltcar, Qregion_beginning) ||
+			      EQ (eltcar, Qregion_end))
 			    Fsetcar (valtail, Fcar (intail));
 			}
 		    }
@@ -420,7 +420,7 @@ when reading the arguments.
       {
 	if (STRINGP (specs))
 	  prompt_data = (CONST char *) XSTRING_DATA (specs);
-    
+
 	if (prompt_data[prompt_index] == '+')
 	  error ("`+' is not used in `interactive' for ordinary commands");
 	else if (prompt_data[prompt_index] == '*')
@@ -443,7 +443,7 @@ when reading the arguments.
 	      /* Doesn't work; see below */
 	      event = Vcurrent_mouse_event;
 #endif
-	    if (! NILP (event)) 
+	    if (! NILP (event))
 	      {
 		Lisp_Object window = Fevent_window (event);
 		if (!NILP (window))
@@ -533,11 +533,9 @@ when reading the arguments.
                        + argcount /* visargs */
                        + argcount /* varies */
                        );
-    Lisp_Object *args
-      = (((Lisp_Object *) alloca (sizeof (Lisp_Object) * alloca_size))
-         + 1);
+    Lisp_Object *args = alloca_array (Lisp_Object, alloca_size) + 1;
     /* visargs is an array of either Qnil or user-friendlier versions (often
-     *  strings) of previous arguments, to use in prompts for succesive
+     *  strings) of previous arguments, to use in prompts for successive
      *  arguments.  ("Often strings" because emacs didn't used to have
      *  format %S and prin1-to-string.) */
     Lisp_Object *visargs = args + argcount;
@@ -564,7 +562,7 @@ when reading the arguments.
 	CONST char *prompt_start = prompt_data + prompt_index + 1;
 	CONST char *prompt_limit = (CONST char *) strchr (prompt_start, '\n');
 	int prompt_length;
-	prompt_length = ((prompt_limit) 
+	prompt_length = ((prompt_limit)
 			 ? (prompt_limit - prompt_start)
 			 : strlen (prompt_start));
 	if (prompt_limit && prompt_limit[1] == 0)
@@ -815,7 +813,7 @@ when reading the arguments.
 		  args[argnum] = tem;
 		  if (string_length (XSYMBOL (tem)->name) > 0)
 		    /* Don't accept the empty-named symbol.  If the loser
-		       really wants this s/he can call completing-read 
+		       really wants this s/he can call completing-read
                        directly */
 		    break;
 		}
@@ -852,7 +850,7 @@ when reading the arguments.
 		{
 		  args[argnum] = Qnil;
 		}
-	      else 
+	      else
 		{
 		  args[argnum] =
 		    call1 (Qread_non_nil_coding_system, PROMPT ());
@@ -902,7 +900,7 @@ when reading the arguments.
       {
 	RETURN_UNGCPRO (Flist (argcount, args));
       }
-      
+
     if (arg_from_tty || !NILP (record_flag))
       {
         /* Reuse visargs as a temporary for constructing the command history */
@@ -935,26 +933,21 @@ when reading the arguments.
 
 DEFUN ("prefix-numeric-value", Fprefix_numeric_value, 1, 1, 0, /*
 Return numeric meaning of raw prefix argument ARG.
-A raw prefix argument is what you get from `(interactive \"P\")'.
-Its numeric meaning is what you would get from `(interactive \"p\")'.
+A raw prefix argument is what you get from `(interactive "P")'.
+Its numeric meaning is what you would get from `(interactive "p")'.
 */
        (raw))
 {
-  int val;
-
   if (NILP (raw))
-    val = 1;
-  else if (EQ (raw, Qminus))
-    val = -1;
-  else if (INTP (raw))
-    val = XINT (raw);
-  else if (CONSP (raw) && INTP (XCAR (raw)))
-    val = XINT (XCAR (raw));
-  else
-    val = 1;
+    return make_int (1);
+  if (EQ (raw, Qminus))
+    return make_int (-1);
+  if (INTP (raw))
+    return raw;
+  if (CONSP (raw) && INTP (XCAR (raw)))
+    return XCAR (raw);
 
-  return make_int (val);
-
+  return make_int (1);
 }
 
 void
@@ -1003,7 +996,7 @@ The value of the prefix argument for this editing command.
 It may be a number, or the symbol `-' for just a minus sign as arg,
 or a list whose car is a number for just one or more C-U's
 or nil if no argument has been specified.
-This is what `(interactive \"P\")' returns.
+This is what `(interactive "P")' returns.
 */ );
   Vcurrent_prefix_arg = Qnil;
 
@@ -1021,7 +1014,7 @@ may be set by the debugger as a reminder for itself.
   Vcommand_debug_status = Qnil;
 
 #if 0 /* FSFmacs */
-  xxDEFVAR_LISP ("mark-even-if-inactive", &Vmark_even_if_inactive /* 
+  xxDEFVAR_LISP ("mark-even-if-inactive", &Vmark_even_if_inactive /*
 *Non-nil means you can use the mark even when inactive.
 This option makes a difference in Transient Mark mode.
 When the option is non-nil, deactivation of the mark

@@ -79,7 +79,7 @@ struct block_internal
 void *
 Blocktype_newf (int elsize)
 {
-  Blocktype *b = (Blocktype *) xmalloc (sizeof (*b));
+  Blocktype *b = xnew (Blocktype);
   b->elsize = max (elsize, sizeof (void *));
   b->free = 0;
   return (void *) b;

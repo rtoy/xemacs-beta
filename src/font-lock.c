@@ -28,14 +28,14 @@ Boston, MA 02111-1307, USA.  */
 
    Two caches are used: one caches the last point computed, and the other
    caches the last point at the beginning of a line.  This makes there
-   be little penalty for moving left-to-right on a line a character at a 
+   be little penalty for moving left-to-right on a line a character at a
    time; makes starting over on a line be cheap; and makes random-accessing
-   within a line relatively cheap.  
+   within a line relatively cheap.
 
    When we move to a different line farther down in the file (but within the
    current top-level form) we simply continue computing forward.  If we move
    backward more than a line, or move beyond the end of the current tlf, or
-   switch buffers, then we call `beginning-of-defun' and start over from 
+   switch buffers, then we call `beginning-of-defun' and start over from
    there.
 
    #### We should really rewrite this to keep extents over the buffer
@@ -400,7 +400,7 @@ setup_context_cache (struct buffer *buf, Bufpos pt)
    SYNTAX_STYLES_MATCH_END_P (table, c1, c2, SYNTAX_COMMENT_STYLE_B) ?	\
    comment_style_b :							\
    comment_style_none)
-      
+
 #define SINGLE_SYNTAX_STYLE(table, c)					\
       (SYNTAX_STYLES_MATCH_1CHAR_P (table, c, SYNTAX_COMMENT_STYLE_A) ?	\
        comment_style_a :						\

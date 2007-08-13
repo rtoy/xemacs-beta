@@ -7,6 +7,7 @@
 ;; Keywords: emulations
 
 ;; This file is part of XEmacs.
+;; XEmacs modifications by Kevin Oberman <oberman@es.net>
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by
@@ -15,15 +16,15 @@
 
 ;; XEmacs is distributed in the hope that it will be useful, but
 ;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34
+;;; Synced up with FSF 19.34 and XEmacs 19.16
 
 ;;; Commentary:
 
@@ -102,9 +103,6 @@
 ;;  important aspects of the real TPU/edt.  Those who miss free cursor mode
 ;;  and/or scroll margins will appreciate these implementations.
 
-;; NOTE: There was a very old tpu-edt in XEmacs 19.14 so I deleted it and
-;;  replaced it with the one in Emacs 19.34. -sb
-
 ;;; Code:
 
 
@@ -171,11 +169,13 @@ the previous line when starting from a line beginning.")
 (defun tpu-forward-char (num)
   "Move right ARG characters (left if ARG is negative)."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (if tpu-cursor-free (picture-forward-column num) (forward-char num)))
 
 (defun tpu-backward-char (num)
   "Move left ARG characters (right if ARG is negative)."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (cond ((not tpu-cursor-free)
 	 (backward-char num))
 	(tpu-backward-char-like-tpu
@@ -194,6 +194,7 @@ the previous line when starting from a line beginning.")
   "Move to next line.
 Prefix argument serves as a repeat count."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (tpu-current-line)))
     (if tpu-cursor-free (or (eobp) (picture-move-down num))
       (next-line-internal num))
@@ -204,6 +205,7 @@ Prefix argument serves as a repeat count."
   "Move to previous line.
 Prefix argument serves as a repeat count."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (tpu-current-line)))
     (if tpu-cursor-free (picture-move-up num) (next-line-internal (- num)))
     (tpu-top-check beg num)
@@ -213,6 +215,7 @@ Prefix argument serves as a repeat count."
   "Move to beginning of line; if at beginning, move to beginning of next line.
 Accepts a prefix argument for the number of lines to move."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (tpu-current-line)))
     (backward-char 1)
     (forward-line (- 1 num))
@@ -222,6 +225,7 @@ Accepts a prefix argument for the number of lines to move."
   "Move to end of line; if at end, move to end of next line.
 Accepts a prefix argument for the number of lines to move."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (tpu-current-line)))
     (cond (tpu-cursor-free
 	   (let ((beg (point)))
@@ -237,6 +241,7 @@ Accepts a prefix argument for the number of lines to move."
   "Move EOL upward.
 Accepts a prefix argument for the number of lines to move."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (tpu-current-line)))
     (cond (tpu-cursor-free
 	   (picture-end-of-line (- 1 num)))
@@ -247,6 +252,7 @@ Accepts a prefix argument for the number of lines to move."
 (defun tpu-current-end-of-line nil
   "Move point to end of current line."
   (interactive)
+  (setq zmacs-region-stays t)
   (let ((beg (point)))
     (if tpu-cursor-free (picture-end-of-line) (end-of-line))
     (if (= beg (point)) (message "You are already at the end of a line."))))
@@ -264,6 +270,7 @@ Prefix argument serves as a repeat count."
   "Move to beginning of previous line.
 Prefix argument serves as repeat count."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (tpu-current-line)))
     (or (bolp) (>= 0 num) (setq num (- num 1)))
     (next-line-internal (- num))
@@ -277,6 +284,7 @@ Prefix argument serves as repeat count."
   "Move to the next paragraph in the current direction.
 A repeat count means move that many paragraphs."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let* ((left nil)
 	 (beg (tpu-current-line))
 	 (height (window-height))
@@ -310,6 +318,7 @@ A repeat count means move that many paragraphs."
   "Move to the next page in the current direction.
 A repeat count means move that many pages."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let* ((left nil)
 	 (beg (tpu-current-line))
 	 (height (window-height))
@@ -343,6 +352,7 @@ A repeat count means move that many pages."
   "Scroll the display down to the next section.
 A repeat count means scroll that many sections."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let* ((beg (tpu-current-line))
 	 (height (1- (window-height)))
 	 (lines (* num (/ (* height tpu-percent-scroll) 100))))
@@ -353,6 +363,7 @@ A repeat count means scroll that many sections."
   "Scroll the display up to the next section.
 A repeat count means scroll that many sections."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let* ((beg (tpu-current-line))
 	 (height (1- (window-height)))
 	 (lines (* num (/ (* height tpu-percent-scroll) 100))))
@@ -404,6 +415,7 @@ A repeat count means scroll that many sections."
 In Auto Fill mode, can break the preceding line if no numeric arg.
 This is the TPU-edt version that respects the bottom scroll margin."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (tpu-current-line)))
     (or num (setq num 1))
     (tpu-old-newline num)
@@ -417,6 +429,7 @@ In some text modes, where TAB inserts a tab, this indents
 to the specified left-margin column.  This is the TPU-edt
 version that respects the bottom scroll margin."
   (interactive)
+  (setq zmacs-region-stays t)
   (let ((beg (tpu-current-line)))
     (tpu-old-newline-and-indent)
     (tpu-bottom-check beg 1)))
@@ -436,6 +449,7 @@ version that respects the bottom scroll margin."
   (interactive
    "sEnter top scroll margin (N lines or N%% or RETURN for current value): \
 \nsEnter bottom scroll margin (N lines or N%% or RETURN for current value): ")
+  (setq zmacs-region-stays t)
   ;; set top scroll margin
   (or (string= top "")
       (if (string= "%" (substring top -1))
@@ -462,6 +476,7 @@ version that respects the bottom scroll margin."
 (defun tpu-set-cursor-free nil
   "Allow the cursor to move freely about the screen."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-cursor-free t)
   (substitute-key-definition 'tpu-set-cursor-free
 			     'tpu-set-cursor-bound
@@ -472,6 +487,7 @@ version that respects the bottom scroll margin."
 (defun tpu-set-cursor-bound nil
   "Constrain the cursor to the flow of the text."
   (interactive)
+  (setq zmacs-region-stays t)
   (picture-clean)
   (setq tpu-cursor-free nil)
   (substitute-key-definition 'tpu-set-cursor-bound

@@ -444,8 +444,7 @@ make_charset (Lisp_Object name, Bufbyte leading_byte, unsigned char rep_bytes,
   struct Lisp_Charset *cs;
   Lisp_Object obj = Qnil;
 
-  cs = (struct Lisp_Charset *) alloc_lcrecord (sizeof (struct Lisp_Charset),
-					       lrecord_charset);
+  cs = alloc_lcrecord_type (struct Lisp_Charset, lrecord_charset);
   XSETCHARSET (obj, cs);
 
   CHARSET_NAME		(cs) = name;
@@ -568,7 +567,8 @@ add_charset_to_list_mapper (CONST void *hash_key, void *hash_contents,
   /* This function can GC */
   Lisp_Object key, contents;
   Lisp_Object *charset_list;
-  struct charset_list_closure *chcl = charset_list_closure;
+  struct charset_list_closure *chcl =
+    (struct charset_list_closure*) charset_list_closure;
   CVOID_TO_LISP (key, hash_key);
   VOID_TO_LISP (contents, hash_contents);
   charset_list = chcl->charset_list;

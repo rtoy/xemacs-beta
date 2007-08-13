@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
    There are three possible ways to specify positions in a buffer.  All
    of these are one-based: the beginning of the buffer is position or
    index 1, and 0 is not a valid position.
-   
+
    As a "buffer position" (typedef Bufpos):
 
       This is an index specifying an offset in characters from the
@@ -161,7 +161,7 @@ Boston, MA 02111-1307, USA.  */
         Similar to a Charcount but represents a count of bytes.
 	The difference between two Bytind's is a Bytecount.
 
-	
+
    Usage of the various representations:
    =====================================
 
@@ -194,7 +194,7 @@ Boston, MA 02111-1307, USA.  */
    Strings are always passed around internally using internal format.
    Conversions between external format are performed at the time
    that the data goes in or out of Emacs.
-   
+
    Working with the various representations:
    ========================================= */
 
@@ -239,14 +239,14 @@ short three_to_one_table[1 + MAX_BYTIND_GAP_SIZE_3];
 #define SET_BUF_END_GAP_SIZE(buf, value) \
   do { (buf)->text->end_gap_size = (value); } while (0)
 
-/* Gap location.  */ 
+/* Gap location.  */
 #define BI_BUF_GPT(buf) ((buf)->text->gpt + 0)
 #define BUF_GPT_ADDR(buf) (BUF_BEG_ADDR (buf) + BI_BUF_GPT (buf) - 1)
 
 /* Set gap location.  */
 #define SET_BI_BUF_GPT(buf, value) do { (buf)->text->gpt = (value); } while (0)
 
-/* Set end of buffer.  */ 
+/* Set end of buffer.  */
 #define SET_BOTH_BUF_Z(buf, val, bival)		\
 do						\
 {						\
@@ -268,7 +268,7 @@ do						\
    Every time we change the total size (characters plus gap)
    of the buffer, we have to call SET_END_SENTINEL().
  */
-   
+
 
 #ifdef MULE
 # define GAP_CAN_HOLD_SIZE_P(buf, len) (BUF_GAP_SIZE (buf) >= (len) + 1)
@@ -345,7 +345,7 @@ bytecount_to_charcount (CONST Bufbyte *ptr, Bytecount len)
       /* Now do it. */
       while (ptr < aligned_end)
 	{
-	  
+
 	  if ((* (unsigned long *) ptr) & HIGH_BIT_MASK)
 	    goto bail;
 	  ptr += LONG_BYTES;
@@ -398,7 +398,7 @@ charcount_to_bytecount (CONST Bufbyte *ptr, Charcount len)
 
    Similar considerations apply to bytind_to_bufpos_func(), although
    less so because the function is not called so often.
-   
+
    #### At some point this should use a more sophisticated method;
    see buffer.h. */
 
@@ -453,7 +453,7 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
 
       /* Check if the position is closer to PT or ZV than to the
 	 end of the known region. */
-      
+
       if (diffpt < 0)
 	diffpt = -diffpt;
       if (diffzv < 0)
@@ -465,7 +465,7 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
 	 which might be annoying if the known region is large and
 	 PT or ZV is not that much closer than the end of the known
 	 region. */
-      
+
       diffzv += heuristic_hack;
       diffpt += heuristic_hack;
       if (diffpt < diffmax && diffpt <= diffzv)
@@ -506,7 +506,7 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
 
       /* But also implement a heuristic that favors the known region --
 	 see above. */
-      
+
       diffbegv += heuristic_hack;
       diffpt += heuristic_hack;
 
@@ -575,7 +575,7 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
       while (x > bufmax)
 	{
 	  newmax = bytmax;
-	  
+
 	  INC_BYTIND (buf, newmax);
 	  newsize = newmax - bytmax;
 	  if (newsize != size)
@@ -601,7 +601,7 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
       while (x < bufmin)
 	{
 	  newmin = bytmin;
-	  
+
 	  DEC_BYTIND (buf, newmin);
 	  newsize = bytmin - newmin;
 	  if (newsize != size)
@@ -730,7 +730,7 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
 
       /* Check if the position is closer to PT or ZV than to the
 	 end of the known region. */
-      
+
       if (diffpt < 0)
 	diffpt = -diffpt;
       if (diffzv < 0)
@@ -742,7 +742,7 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
 	 which might be annoying if the known region is large and
 	 BI_PT or BI_ZV is not that much closer than the end of the known
 	 region. */
-      
+
       diffzv += heuristic_hack;
       diffpt += heuristic_hack;
       if (diffpt < diffmax && diffpt <= diffzv)
@@ -783,7 +783,7 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
 
       /* But also implement a heuristic that favors the known region --
 	 see above. */
-      
+
       diffbegv += heuristic_hack;
       diffpt += heuristic_hack;
 
@@ -852,7 +852,7 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
       while (x > bytmax)
 	{
 	  newmax = bytmax;
-	  
+
 	  INC_BYTIND (buf, newmax);
 	  newsize = newmax - bytmax;
 	  if (newsize != size)
@@ -878,7 +878,7 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
       while (x < bytmin)
 	{
 	  newmin = bytmin;
-	  
+
 	  DEC_BYTIND (buf, newmin);
 	  newsize = bytmin - newmin;
 	  if (newsize != size)
@@ -969,6 +969,7 @@ buffer_mule_signal_inserted_region (struct buffer *buf, Bufpos start,
   /* Adjust the cache of known positions. */
   for (i = 0; i < 16; i++)
     {
+
       if (buf->text->mule_bufpos_cache[i] > start)
 	{
 	  buf->text->mule_bufpos_cache[i] += charlength;
@@ -1200,7 +1201,7 @@ get_buffer_pos_char (struct buffer *b, Lisp_Object pos, unsigned int flags)
   ind = XINT (pos);
   min_allowed = flags & GB_ALLOW_PAST_ACCESSIBLE ? BUF_BEG (b) : BUF_BEGV (b);
   max_allowed = flags & GB_ALLOW_PAST_ACCESSIBLE ? BUF_Z   (b) : BUF_ZV   (b);
-    
+
   if (ind < min_allowed || ind > max_allowed)
     {
       if (flags & GB_COERCE_RANGE)
@@ -1576,7 +1577,7 @@ do_marker_adjustment (Memind mpos, Memind from,
   if (mpos > from && mpos <= to)
     mpos += amount;
   return mpos;
-}  
+}
 
 /* Do the following:
 
@@ -1597,7 +1598,7 @@ do_marker_adjustment (Memind mpos, Memind from,
    `from' and `to' are the same, both pointing to the boundary
    between the gap and the deleted region, and there are no markers
    affected by (1)).
-   
+
    The reason for the use of exclusive and inclusive is that markers at
    the gap always sit at the beginning, not at the end.
 */
@@ -1793,7 +1794,7 @@ gap_right (struct buffer *buf, Bytind pos)
       SET_BUF_END_GAP_SIZE (buf, 0);
       SET_END_SENTINEL (buf);
     }
-  
+
   QUIT;
 }
 
@@ -1823,7 +1824,7 @@ merge_gap_with_end_gap (struct buffer *buf)
 
   increment = BUF_END_GAP_SIZE (buf);
   SET_BUF_END_GAP_SIZE (buf, 0);
-  
+
   if (increment > 0)
     {
       /* Prevent quitting in move_gap.  */
@@ -1873,7 +1874,7 @@ make_gap (struct buffer *buf, Bytecount increment)
       /* Don't allow a buffer size that won't fit in an int
 	 even if it will fit in a Lisp integer.
 	 That won't work because so many places use `int'.  */
-      
+
       if (BUF_Z (buf) - BUF_BEG (buf) + BUF_GAP_SIZE (buf) + increment
 	  >= ((unsigned) 1 << (min (INTBITS, VALBITS) - 1)))
 	error ("Buffer exceeds maximum size");
@@ -1884,12 +1885,12 @@ make_gap (struct buffer *buf, Bytecount increment)
 			       BUF_END_SENTINEL_SIZE);
       if (result == 0)
 	memory_full ();
-      
+
       SET_BUF_BEG_ADDR (buf, result);
     }
   else
     increment = BUF_END_GAP_SIZE (buf);
-  
+
   /* Prevent quitting in move_gap.  */
   tem = Vinhibit_quit;
   Vinhibit_quit = Qt;
@@ -1969,6 +1970,7 @@ static void
 signal_after_change (struct buffer *buf, Bufpos start, Bufpos orig_end,
 		     Bufpos new_end);
 
+
 /* Call the after-change-functions according to the changes made so far
    and treat all further changes as single until the outermost
    multiple change exits.  This is called when the outermost multiple
@@ -2036,7 +2038,7 @@ multiple_change_finish_up (Lisp_Object buffer)
 
    begin_multiple_change() returns a number (actually a specpdl depth)
    that you must pass to end_multiple_change() when you are done. */
-   
+
 int
 begin_multiple_change (struct buffer *buf, Bufpos start, Bufpos end)
 {
@@ -2390,7 +2392,7 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
   /* Make sure that point-max won't exceed the size of an emacs int. */
   {
     Lisp_Object temp;
-  
+
     XSETINT (temp, (int) (length + BUF_Z (buf)));
     if ((int) (length + BUF_Z (buf)) != XINT (temp))
       error ("maximum buffer size exceeded");
@@ -2523,7 +2525,7 @@ buffer_insert_c_string_1 (struct buffer *buf, Bufpos pos, CONST char *s,
 			  int flags)
 {
   /* This function can GC */
-     
+
   CONST char *translated = GETTEXT (s);
   return buffer_insert_string_1 (buf, pos, (CONST Bufbyte *) translated, Qnil,
 				 0, strlen (translated), flags);
@@ -2549,7 +2551,7 @@ buffer_insert_c_char_1 (struct buffer *buf, Bufpos pos, char c,
   return buffer_insert_emacs_char_1 (buf, pos, (Emchar) (unsigned char) c,
 				     flags);
 }
-  
+
 Charcount
 buffer_insert_from_buffer_1 (struct buffer *buf, Bufpos pos,
 			     struct buffer *buf2, Bufpos pos2,
@@ -2627,20 +2629,17 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
       bi_from > BI_BUF_GPT (buf))
     {
       /* avoid moving the gap just to delete from the bottom. */
-      
+
       record_delete (buf, from, numdel);
       BUF_MODIFF (buf)++;
       MARK_BUFFERS_CHANGED;
 
-      /* Relocate point as if it were a marker.  */
-      if (bi_from < BI_BUF_PT (buf))
-	{
-	  if (BI_BUF_PT (buf) < bi_to)
-	    JUST_SET_POINT (buf, from, bi_from);
-	  else
-	    JUST_SET_POINT (buf, BUF_PT (buf) - numdel,
-			    BI_BUF_PT (buf) - bc_numdel);
-	}
+      /* ### Point used to be modified here, but this causes problems with MULE,
+	 as point is used to calculate bytinds, and if the offset in bc_numdel causes
+	 point to move to a non first-byte location, causing some other function to 
+	 throw an assertion in ASSERT_VALID_BYTIND. I've moved the code to right after
+	  the other movements and adjustments, but before the gap is moved.
+	  -- jh 970813 */
 
       /* Detach any extents that are completely within the range [FROM, TO],
 	 if the extents are detachable.
@@ -2660,8 +2659,19 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
       /* Relocate any extent endpoints just like markers. */
       adjust_extents_for_deletion (bufobj, bi_from, bi_to,
 				   BUF_GAP_SIZE (buf), bc_numdel, 0);
+
+      /* Relocate point as if it were a marker.  */
+      if (bi_from < BI_BUF_PT (buf))
+	{
+	  if (BI_BUF_PT (buf) < bi_to)
+	    JUST_SET_POINT (buf, from, bi_from);
+	  else
+	    JUST_SET_POINT (buf, BUF_PT (buf) - numdel,
+			    BI_BUF_PT (buf) - bc_numdel);
+	}
+
       SET_BUF_END_GAP_SIZE (buf, BUF_END_GAP_SIZE (buf) + bc_numdel);
-      
+
       SET_BOTH_BUF_ZV (buf, BUF_ZV (buf) - numdel, BI_BUF_ZV (buf) - bc_numdel);
       SET_BOTH_BUF_Z (buf, BUF_Z (buf) - numdel, BI_BUF_Z (buf) - bc_numdel);
       SET_GAP_SENTINEL (buf);
@@ -2680,7 +2690,7 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
 
       /* ### Point used to be modified here, but this causes problems with MULE,
 	 as point is used to calculate bytinds, and if the offset in bc_numdel causes
-	 point to move to a non first-byte location, causing some other function to 
+	 point to move to a non first-byte location, causing some other function to
 	 throw an assertion in ASSERT_VALID_BYTIND. I've moved the code to right after
 	  the other movements and adjustments, but before the gap is moved.
 	  -- jh 970813 */
@@ -2959,6 +2969,7 @@ emchar_string_displayed_columns (CONST Emchar *str, Charcount len)
   int i;
 
   for (i = 0; i < len; i++)
+
     cols += XCHARSET_COLUMNS (CHAR_CHARSET (str[i]));
 
   return cols;
@@ -2968,7 +2979,7 @@ emchar_string_displayed_columns (CONST Emchar *str, Charcount len)
 
 void
 convert_bufbyte_string_into_emchar_dynarr (CONST Bufbyte *str, Bytecount len,
-					   emchar_dynarr *dyn)
+					   Emchar_dynarr *dyn)
 {
   CONST Bufbyte *strend = str + len;
 
@@ -3001,7 +3012,7 @@ convert_bufbyte_string_into_emchar_string (CONST Bufbyte *str, Bytecount len,
 
 void
 convert_emchar_string_into_bufbyte_dynarr (Emchar *arr, int nels,
-					  bufbyte_dynarr *dyn)
+					  Bufbyte_dynarr *dyn)
 {
   Bufbyte str[MAX_EMCHAR_LEN];
   int i;
@@ -3027,14 +3038,14 @@ convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
   Bufbyte *str = (Bufbyte *) alloca (nels * MAX_EMCHAR_LEN + 1);
   Bufbyte *strorig = str;
   Bytecount len;
-  
+
   int i;
 
   for (i = 0; i < nels; i++)
     str += set_charptr_emchar (str, arr[i]);
   *str = '\0';
   len = str - strorig;
-  str = xmalloc (1 + len);
+  str = (Bufbyte *) xmalloc (1 + len);
   memcpy (str, strorig, 1 + len);
   if (len_out)
     *len_out = len;
@@ -3076,12 +3087,12 @@ init_buffer_text (struct buffer *b, int indirect_p)
 #ifdef MULE
       {
 	int i;
-	
+
 	b->text->mule_bufmin = b->text->mule_bufmax = 1;
 	b->text->mule_bytmin = b->text->mule_bytmax = 1;
 	b->text->mule_shifter = 0;
 	b->text->mule_three_p = 0;
-	
+
 	for (i = 0; i < 16; i++)
 	  {
 	    b->text->mule_bufpos_cache[i] = 1;
@@ -3097,10 +3108,7 @@ init_buffer_text (struct buffer *b, int indirect_p)
       SET_BOTH_BUF_BEGV (b, 1, 1);
       SET_BOTH_BUF_ZV (b, 1, 1);
 
-      b->text->changes =
-	(struct buffer_text_change_data *)
-	  xmalloc (sizeof (*b->text->changes));
-      memset (b->text->changes, 0, sizeof (*b->text->changes));
+      b->text->changes = xnew_and_zero (struct buffer_text_change_data);
     }
   else
     {
@@ -3111,9 +3119,7 @@ init_buffer_text (struct buffer *b, int indirect_p)
 			 BI_BUF_ZV (b->base_buffer));
     }
 
-  b->changes =
-    (struct each_buffer_change_data *) xmalloc (sizeof (*b->changes));
-  memset (b->changes, 0, sizeof (*b->changes));
+  b->changes = xnew_and_zero (struct each_buffer_change_data);
   BUF_FACECHANGE (b) = 1;
 
 #ifdef REGION_CACHE_NEEDS_WORK

@@ -76,7 +76,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct buffer_text
 {
-  Bufbyte *beg;		/* Actual address of buffer contents. */    
+  Bufbyte *beg;		/* Actual address of buffer contents. */
   Bytind gpt;		/* Index of gap in buffer. */
   Bytind z;		/* Index of end of buffer. */
   Bufpos bufz;		/* Equivalent as a Bufpos. */
@@ -627,19 +627,19 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
 /* None of these are lvalues.  Use the settor macros below to change
    the positions. */
 
-/* Beginning of buffer.  */ 
+/* Beginning of buffer.  */
 #define BI_BUF_BEG(buf) ((Bytind) 1)
 #define BUF_BEG(buf) ((Bufpos) 1)
 
-/* Beginning of accessible range of buffer.  */ 
+/* Beginning of accessible range of buffer.  */
 #define BI_BUF_BEGV(buf) ((buf)->begv + 0)
 #define BUF_BEGV(buf) ((buf)->bufbegv + 0)
 
-/* End of accessible range of buffer.  */ 
+/* End of accessible range of buffer.  */
 #define BI_BUF_ZV(buf) ((buf)->zv + 0)
 #define BUF_ZV(buf) ((buf)->bufzv + 0)
 
-/* End of buffer.  */ 
+/* End of buffer.  */
 #define BI_BUF_Z(buf) ((buf)->text->z + 0)
 #define BUF_Z(buf) ((buf)->text->bufz + 0)
 
@@ -1017,7 +1017,7 @@ Bufpos bytind_to_bufpos_func (struct buffer *buf, Bytind x);
    means that the size of the known region can be at most
    64K for width-three characters.
    */
-   
+
 extern short three_to_one_table[];
 
 INLINE int real_bufpos_to_bytind (struct buffer *buf, Bufpos x);
@@ -1164,11 +1164,11 @@ CONST Bufbyte *convert_from_external_format (CONST Extbyte *ptr,
       safety of knowing your string data won't be relocated out from
       under you.
       */
-   
-     
+
+
 /* Maybe convert charptr's data into ext-format and store the result in
    alloca()'ed space.
-   
+
    You may wonder why this is written in this fashion and not as a
    function call.  With a little trickery it could certainly be
    written this way, but it won't work because of those DAMN GCC WANKERS
@@ -1177,7 +1177,7 @@ CONST Bufbyte *convert_from_external_format (CONST Extbyte *ptr,
    a function call, the stack space gets allocated right in the
    middle of the arguments to the function call and you are unbelievably
    hosed.) */
-     
+
 #ifdef MULE
 
 #define GET_CHARPTR_EXT_DATA_ALLOCA(ptr, len, fmt, stick_value_here, stick_len_here) \
@@ -1257,7 +1257,7 @@ do									\
 
 /* Maybe convert external charptr's data into internal format and store
    the result in alloca()'ed space.
-   
+
    You may wonder why this is written in this fashion and not as a
    function call.  With a little trickery it could certainly be
    written this way, but it won't work because of those DAMN GCC WANKERS
@@ -1266,7 +1266,7 @@ do									\
    a function call, the stack space gets allocated right in the
    middle of the arguments to the function call and you are unbelievably
    hosed.) */
-     
+
 #ifdef MULE
 
 #define GET_CHARPTR_INT_DATA_ALLOCA(ptr, len, fmt, stick_value_here, stick_len_here)\
@@ -1456,7 +1456,7 @@ do						\
 /*           Settor macros for important positions in a buffer          */
 /*----------------------------------------------------------------------*/
 
-/* Set beginning of accessible range of buffer.  */ 
+/* Set beginning of accessible range of buffer.  */
 #define SET_BOTH_BUF_BEGV(buf, val, bival)	\
 do						\
 {						\
@@ -1464,7 +1464,7 @@ do						\
   (buf)->bufbegv = (val);			\
 } while (0)
 
-/* Set end of accessible range of buffer.  */ 
+/* Set end of accessible range of buffer.  */
 #define SET_BOTH_BUF_ZV(buf, val, bival)	\
 do						\
 {						\
@@ -1624,21 +1624,21 @@ extern struct buffer buffer_local_flags;
 
 #ifdef REL_ALLOC
 
-char *r_alloc (char **, unsigned long);
-char *r_re_alloc (char **, unsigned long);
-void r_alloc_free (void **);
+char *r_alloc (unsigned char **, unsigned long);
+char *r_re_alloc (unsigned char **, unsigned long);
+void r_alloc_free (unsigned char **);
 
-#define BUFFER_ALLOC(data,size) \
-  ((Bufbyte *) r_alloc ((char **) &data, (size) * sizeof(Bufbyte)))
-#define BUFFER_REALLOC(data,size) \
-  ((Bufbyte *) r_re_alloc ((char **) &data, (size) * sizeof(Bufbyte)))
-#define BUFFER_FREE(data) r_alloc_free ((void **) &(data))
+#define BUFFER_ALLOC(data, size) \
+  ((Bufbyte *) r_alloc ((unsigned char **) &data, (size) * sizeof(Bufbyte)))
+#define BUFFER_REALLOC(data, size) \
+  ((Bufbyte *) r_re_alloc ((unsigned char **) &data, (size) * sizeof(Bufbyte)))
+#define BUFFER_FREE(data) r_alloc_free ((unsigned char **) &(data))
 #define R_ALLOC_DECLARE(var,data) r_alloc_declare (&(var), data)
 
 #else /* !REL_ALLOC */
 
 #define BUFFER_ALLOC(data,size)\
-	(data = (Bufbyte *) xmalloc ((size) * sizeof(Bufbyte)))
+	((void) (data = xnew_array (Bufbyte, size)))
 #define BUFFER_REALLOC(data,size)\
 	((Bufbyte *) xrealloc (data, (size) * sizeof(Bufbyte)))
 /* Avoid excess parentheses, or syntax errors may rear their heads. */
@@ -1667,12 +1667,12 @@ int bufbyte_string_displayed_columns (CONST Bufbyte *str, Bytecount len);
 int emchar_string_displayed_columns (CONST Emchar *str, Charcount len);
 void convert_bufbyte_string_into_emchar_dynarr (CONST Bufbyte *str,
 						Bytecount len,
-						emchar_dynarr *dyn);
+						Emchar_dynarr *dyn);
 int convert_bufbyte_string_into_emchar_string (CONST Bufbyte *str,
 					       Bytecount len,
 					       Emchar *arr);
 void convert_emchar_string_into_bufbyte_dynarr (Emchar *arr, int nels,
-						bufbyte_dynarr *dyn);
+						Bufbyte_dynarr *dyn);
 Bufbyte *convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
 						    Bytecount *len_out);
 

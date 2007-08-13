@@ -2792,10 +2792,9 @@ extract_font_extents (XlwMenuWidget mw)
        older function doesn't. */
     while ((fontentry = XmFontListNextEntry (context)))
       {
-	char *one_of_them;
 	XmFontType rettype;
 
-	one_of_them = XmFontListEntryGetFont (fontentry, &rettype);
+	XtPointer one_of_them = XmFontListEntryGetFont (fontentry, &rettype);
 	if (rettype == XmFONT_IS_FONTSET)
 	  {
 	    XFontSet fontset = (XFontSet) one_of_them;
@@ -2873,7 +2872,7 @@ default_font_of_font_list (XmFontList font_list)
 #if (XmVersion >= 1002)
     XmFontListEntry fontentry;
     XmFontType rettype;
-    char *one_of_them;
+    XtPointer one_of_them;
 #else
     XmStringCharSet charset;
 #endif

@@ -80,7 +80,7 @@ undo_prelude (struct buffer *b, int hack_pending_boundary)
     undo_boundary (b);
     XSETBUFFER (last_undo_buffer, b);
   }
-  
+
   /* Allocate a cons cell to be the undo boundary after this command.  */
   if (hack_pending_boundary && NILP (pending_boundary))
     pending_boundary = Fcons (Qnil, Qnil);
@@ -136,7 +136,7 @@ record_insert (struct buffer *b, Bufpos beg, Charcount length)
 	}
     }
 
-  b->undo_list = Fcons (Fcons (make_int (beg), 
+  b->undo_list = Fcons (Fcons (make_int (beg),
                                make_int (beg + length)),
                         b->undo_list);
 }
@@ -172,7 +172,7 @@ record_delete (struct buffer *b, Bufpos beg, Charcount length)
   else
     sbeg = make_int (beg);
 
-  /* If we are just after an undo boundary, and 
+  /* If we are just after an undo boundary, and
      point wasn't at start of deleted range, record where it was.  */
   if (at_boundary
       && BUFFERP (last_point_position_buffer)
@@ -448,7 +448,7 @@ Return what remains of the list.
 		  /* Element (extent start end) means that EXTENT was
 		     detached, and we need to reattach it. */
 		  Lisp_Object extent_obj, start, end;
-		  
+
 		  extent_obj = car;
 		  start = Fcar (cdr);
 		  end = Fcar (Fcdr (cdr));
@@ -512,7 +512,7 @@ Return what remains of the list.
 			 track of the mark, this isn't really necessary,
 			 but it may lead to better behavior in certain
 			 situations.
-			 
+
 			 I'm doubtful that this is safe; you could mess
 			 up the process-output mark in shell buffers, so
 			 until I hear a compelling reason for this change,

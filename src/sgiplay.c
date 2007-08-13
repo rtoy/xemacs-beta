@@ -324,7 +324,7 @@ audio_initialize (data, length, volume)
   audio_port_state[2] = make_int (saved_device_state[5]);
   record_unwind_protect (restore_audio_port,
 			 Fvector (3, &audio_port_state[0]));
-      
+
   ac = initialize_audio_port (& desc);
   desc = * ac;
   return ac;
@@ -397,7 +397,7 @@ write_mulaw_8_chunk (buffer, chunklimit, ac)
   short * obuf, * bufp;
   long n_samples = limit - data;
 
-  obuf = alloca (n_samples * sizeof (short));
+  obuf = alloca_array (short, n_samples);
   bufp = &obuf[0];
 
   while (data < limit)
@@ -436,7 +436,7 @@ write_linear_32_chunk (buffer, chunklimit, ac)
   long * obuf, * bufp;
   long n_samples = limit-data;
 
-  obuf = alloca (n_samples * sizeof (long));
+  obuf = alloca_array (long, n_samples);
   bufp = &obuf[0];
 
   while (data < limit)

@@ -114,9 +114,9 @@ item representing this menu on the parent.
 Otherwise, the element must be a vector, which describes a menu item.
 A menu item can have any of the following forms:
 
- [ \"name\" callback <active-p> ]
- [ \"name\" callback <active-p> \"suffix\" ]
- [ \"name\" callback :<keyword> <value>  :<keyword> <value> ... ]
+ [ "name" callback <active-p> ]
+ [ "name" callback <active-p> "suffix" ]
+ [ "name" callback :<keyword> <value>  :<keyword> <value> ... ]
 
 The name is the string to display on the menu; it is filtered through the
 resource database, so it is possible for resources to override what string
@@ -133,12 +133,12 @@ The possible keywords are this:
                      displayed, and the menu will be selectable only if
                      the result is non-nil.
 
- :suffix   \"string\"  Same as \"suffix\" in the second form: the suffix is
+ :suffix   "string"  Same as "suffix" in the second form: the suffix is
                      appended to the displayed name, providing a convenient
                      way of adding the name of a command's ``argument'' to
                      the menu, like ``Kill Buffer NAME''.
 
- :keys     \"string\"  Normally, the keyboard equivalents of commands in
+ :keys     "string"  Normally, the keyboard equivalents of commands in
                      menus are displayed when the `callback' is a symbol.
                      This can be used to specify keys for more complex menu
                      items.  It is passed through `substitute-command-keys'
@@ -165,9 +165,9 @@ The possible keywords are this:
 
 For example:
 
- [ \"Save As...\"    write-file  t ]
- [ \"Revert Buffer\" revert-buffer (buffer-modified-p) ]
- [ \"Read Only\"     toggle-read-only :style toggle :selected buffer-read-only ]
+ [ "Save As..."    write-file  t ]
+ [ "Revert Buffer" revert-buffer (buffer-modified-p) ]
+ [ "Read Only"     toggle-read-only :style toggle :selected buffer-read-only ]
 
 See menubar.el for many more examples.
 */
@@ -207,8 +207,8 @@ vars_of_menubar (void)
     menu_item[0] = build_string ("");
     menu_item[1] = Qnil;
     menu_item[2] = Qnil;
-    Vblank_menubar = Fcons (Fcons (build_string (blank_msg), 
-				   Fcons (Fvector (3, &menu_item[0]), 
+    Vblank_menubar = Fcons (Fcons (build_string (blank_msg),
+				   Fcons (Fvector (3, &menu_item[0]),
 					  Qnil)),
 			    Qnil);
     Vblank_menubar = Fpurecopy (Vblank_menubar);
@@ -261,9 +261,9 @@ which are flushright.
 Otherwise, the element must be a vector, which describes a menu item.
 A menu item can have any of the following forms:
 
- [ \"name\" callback <active-p> ]
- [ \"name\" callback <active-p> \"suffix\" ]
- [ \"name\" callback :<keyword> <value>  :<keyword> <value> ... ]
+ [ "name" callback <active-p> ]
+ [ "name" callback <active-p> "suffix" ]
+ [ "name" callback :<keyword> <value>  :<keyword> <value> ... ]
 
 The name is the string to display on the menu; it is filtered through the
 resource database, so it is possible for resources to override what string
@@ -280,12 +280,12 @@ The possible keywords are this:
                      displayed, and the menu will be selectable only if
                      the result is non-nil.
 
- :suffix   \"string\"  Same as \"suffix\" in the second form: the suffix is
+ :suffix   "string"  Same as "suffix" in the second form: the suffix is
                      appended to the displayed name, providing a convenient
                      way of adding the name of a command's ``argument'' to
                      the menu, like ``Kill Buffer NAME''.
 
- :keys     \"string\"  Normally, the keyboard equivalents of commands in
+ :keys     "string"  Normally, the keyboard equivalents of commands in
                      menus are displayed when the `callback' is a symbol.
                      This can be used to specify keys for more complex menu
                      items.  It is passed through `substitute-command-keys'
@@ -336,13 +336,13 @@ The possible keywords are this:
 
 For example:
 
- (\"File\"
+ ("File"
   :filter file-menu-filter	; file-menu-filter is a function that takes
 				; one argument (a list of menu items) and
 				; returns a list of menu items
-  [ \"Save As...\"    write-file  t ]
-  [ \"Revert Buffer\" revert-buffer (buffer-modified-p) ]
-  [ \"Read Only\"     toggle-read-only :style toggle
+  [ "Save As..."    write-file  t ]
+  [ "Revert Buffer" revert-buffer (buffer-modified-p) ]
+  [ "Read Only"     toggle-read-only :style toggle
 		      :selected buffer-read-only ]
   )
 

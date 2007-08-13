@@ -169,7 +169,7 @@ x_output_toolbar_button (struct frame *f, Lisp_Object button)
 	  struct display_line dl;
 	  Lisp_Object string = IMAGE_INSTANCE_TEXT_STRING (p);
 	  unsigned char charsets[NUM_LEADING_BYTES];
-	  emchar_dynarr *buf;
+	  Emchar_dynarr *buf;
 	  struct font_metric_info fm;
 
 	  /* This could be true if we were called via the Expose event
@@ -188,7 +188,7 @@ x_output_toolbar_button (struct frame *f, Lisp_Object button)
 					  Dynarr_length (buf));
 	  ensure_face_cachel_complete (cachel, window, charsets);
 	  face_cachel_charset_font_metric_info (cachel, charsets, &fm);
-	  
+
 	  dl.ascent = fm.ascent;
 	  dl.descent = fm.descent;
 	  dl.ypos = tb->y + y_offset + fm.ascent;
@@ -457,7 +457,7 @@ x_clear_toolbar (struct frame *f, enum toolbar_pos pos, int thickness_change)
 	  height = -thickness_change;
 	}
     }
- 
+
   SET_TOOLBAR_WAS_VISIBLE_FLAG (f, pos, 0);
 
   DEVMETH (d, clear_region, (frame, DEFAULT_INDEX, x, y, width, height));
@@ -632,7 +632,7 @@ x_toolbar_size_changed_in_frame_1 (struct frame *f, enum toolbar_pos pos,
       f->toolbar_size[pos] = make_int (newval);
       if (!EQ (old_visibility, Qzero))
 	f->toolbar_visible_p[pos] = new_visibility;
-      
+
       if (change < 0)
 	x_clear_toolbar (f, pos, change);
       if (pos == LEFT_TOOLBAR || pos == RIGHT_TOOLBAR)

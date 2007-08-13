@@ -73,17 +73,7 @@ Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 Lisp_Object list6 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 		   Lisp_Object, Lisp_Object);
 
-void malloc_warning (CONST char *);
 DECLARE_DOESNT_RETURN (memory_full (void));
-void *xmalloc (int size);
-void *xmalloc_and_zero (int size);
-void *xrealloc (void *, int size);
-#ifdef ERROR_CHECK_MALLOC
-void xfree_1 (void *);
-#else
-void xfree (void *);
-#endif
-char *xstrdup (CONST char *);
 void disksave_object_finalization (void);
 extern int purify_flag;
 extern int gc_currently_forbidden;
@@ -195,8 +185,8 @@ extern Lisp_Object Qpermanent_local, Qprotected_field;
 
 /* Defined in bytecode.c */
 extern Lisp_Object Qbyte_code;
-Lisp_Object Fbyte_code (Lisp_Object bytestr, 
-			Lisp_Object constants_vector, 
+Lisp_Object Fbyte_code (Lisp_Object bytestr,
+			Lisp_Object constants_vector,
 			Lisp_Object maxdepth);
 
 
@@ -268,7 +258,7 @@ extern Lisp_Object Qself_insert_command;
 
 /* Defined in console.c */
 Lisp_Object Fset_input_mode (Lisp_Object interrupt,
-			     Lisp_Object flow, 
+			     Lisp_Object flow,
 			     Lisp_Object meta,
 			     Lisp_Object quit,
 			     Lisp_Object console);
@@ -480,7 +470,7 @@ Lisp_Object Finsert_char (Lisp_Object ch, Lisp_Object count,
 			  Lisp_Object ignored, Lisp_Object buffer);
 void buffer_insert1 (struct buffer *buf, Lisp_Object arg);
 Lisp_Object Finsert_before_markers (int nargs, Lisp_Object *args);
-Lisp_Object Finsert_buffer_substring (Lisp_Object buffer, 
+Lisp_Object Finsert_buffer_substring (Lisp_Object buffer,
 				      Lisp_Object b, Lisp_Object e);
 Lisp_Object Fdelete_region (Lisp_Object b, Lisp_Object e,
 			    Lisp_Object buffer);
@@ -700,7 +690,7 @@ Lisp_Object call_with_suspended_errors (lisp_fn_t fun,
 /* Lisp_Object Funwind_protect (Lisp_Object args); */
 /* Lisp_Object Fcondition_case (Lisp_Object args); */
 Lisp_Object Fthrow (Lisp_Object tag, Lisp_Object val);
-Lisp_Object internal_catch (Lisp_Object tag, 
+Lisp_Object internal_catch (Lisp_Object tag,
 			    Lisp_Object (*func) (Lisp_Object arg),
 			    Lisp_Object arg,
 			    int *threw);
@@ -710,8 +700,8 @@ Lisp_Object condition_case_1 (Lisp_Object handlers,
 			      Lisp_Object (*hfun) (Lisp_Object val,
 						   Lisp_Object harg),
 			      Lisp_Object harg);
-Lisp_Object Fcondition_case_3 (Lisp_Object bodyform, 
-			       Lisp_Object var, 
+Lisp_Object Fcondition_case_3 (Lisp_Object bodyform,
+			       Lisp_Object var,
 			       Lisp_Object handlers);
 Lisp_Object unbind_to (int n, Lisp_Object val);
 void specbind (Lisp_Object symbol, Lisp_Object value);
@@ -744,10 +734,10 @@ void wait_delaying_user_input (int (*predicate) (void *arg),
 int detect_input_pending (void);
 void enqueue_command_event (Lisp_Object event);
 Lisp_Object dequeue_command_event (void);
-Lisp_Object Fadd_timeout (Lisp_Object secs, 
-			  Lisp_Object function, Lisp_Object object, 
+Lisp_Object Fadd_timeout (Lisp_Object secs,
+			  Lisp_Object function, Lisp_Object object,
 			  Lisp_Object resignal);
-Lisp_Object Fdisable_timeout (Lisp_Object id); 
+Lisp_Object Fdisable_timeout (Lisp_Object id);
 void reset_this_command_keys (Lisp_Object console, int clear_echo_area_p);
 Lisp_Object Fenqueue_eval_event (Lisp_Object function,
 				 Lisp_Object object);
@@ -819,14 +809,14 @@ Lisp_Object Fset_extent_endpoints (Lisp_Object, Lisp_Object,
 				   Lisp_Object, Lisp_Object);
 Lisp_Object Fdelete_extent (Lisp_Object extent);
 Lisp_Object Fdetach_extent (Lisp_Object);
-Lisp_Object Fmap_extents (Lisp_Object function, 
-			  Lisp_Object buffer, 
+Lisp_Object Fmap_extents (Lisp_Object function,
+			  Lisp_Object buffer,
 			  Lisp_Object from, Lisp_Object to,
 			  Lisp_Object maparg,
 			  Lisp_Object flags,
 			  Lisp_Object property,
 			  Lisp_Object value);
-Lisp_Object Fextent_at (Lisp_Object pos, Lisp_Object buffer, 
+Lisp_Object Fextent_at (Lisp_Object pos, Lisp_Object buffer,
 			Lisp_Object flag, Lisp_Object before,
 			Lisp_Object at_flag);
 Lisp_Object Fextent_face (Lisp_Object);
@@ -966,12 +956,12 @@ Lisp_Object Ffloat (Lisp_Object n);
 
 
 /* Defined in fns.c */
-Lisp_Object list_sort (Lisp_Object list, 
+Lisp_Object list_sort (Lisp_Object list,
 		       Lisp_Object lisp_arg,
 		       int (*pred_fn) (Lisp_Object first,
 				       Lisp_Object second,
 				       Lisp_Object lisp_arg));
-Lisp_Object Fsort (Lisp_Object list, 
+Lisp_Object Fsort (Lisp_Object list,
 		   Lisp_Object pred);
 Lisp_Object merge (Lisp_Object org_l1, Lisp_Object org_l2,
 		   Lisp_Object pred);
@@ -1110,11 +1100,11 @@ Lisp_Object Fset_frame_height (Lisp_Object frame,
 			       Lisp_Object rows, Lisp_Object pretend);
 Lisp_Object Fset_frame_width  (Lisp_Object frame,
 			       Lisp_Object cols, Lisp_Object pretend);
-Lisp_Object Fset_frame_size (Lisp_Object frame, 
-			     Lisp_Object cols, Lisp_Object rows, 
+Lisp_Object Fset_frame_size (Lisp_Object frame,
+			     Lisp_Object cols, Lisp_Object rows,
 			     Lisp_Object pretend);
 Lisp_Object Fset_frame_position (Lisp_Object frame,
-				 Lisp_Object xoffset, 
+				 Lisp_Object xoffset,
 				 Lisp_Object yoffset);
 Lisp_Object Fdelete_frame (Lisp_Object frame, Lisp_Object force);
 Lisp_Object Fset_frame_properties (Lisp_Object frame, Lisp_Object plist);
@@ -1335,7 +1325,7 @@ Lisp_Object Fcolorize_image_instance (Lisp_Object, Lisp_Object,
 Lisp_Object Fvertical_motion (Lisp_Object lines, Lisp_Object window);
 Lisp_Object Findent_to (Lisp_Object col, Lisp_Object mincol,
 			Lisp_Object buffer);
-Lisp_Object Fcurrent_column (Lisp_Object buffer); 
+Lisp_Object Fcurrent_column (Lisp_Object buffer);
 int bi_spaces_at_point (struct buffer *b, Bytind pos);
 int column_at_point (struct buffer *buf, Bufpos pos, int cur_col);
 int current_column (struct buffer *buf);
@@ -1381,7 +1371,7 @@ extern Lisp_Object Vcurrent_compiled_function_annotation;
 extern Lisp_Object Vload_file_name_internal;
 extern Lisp_Object Vload_file_name_internal_the_purecopy;
 Lisp_Object Fread (Lisp_Object readcharfun);
-Lisp_Object Fread_from_string (Lisp_Object string, 
+Lisp_Object Fread_from_string (Lisp_Object string,
 			       Lisp_Object start, Lisp_Object end);
 Lisp_Object Fload_internal (Lisp_Object filename,
 			    Lisp_Object missing_ok,
@@ -1391,8 +1381,8 @@ Lisp_Object Fload_internal (Lisp_Object filename,
 			    Lisp_Object used_codesys);
 void ebolify_bytecode_constants (Lisp_Object vector);
 void close_load_descs (void);
-int locate_file (Lisp_Object path, 
-		 Lisp_Object str, CONST char *suffix, 
+int locate_file (Lisp_Object path,
+		 Lisp_Object str, CONST char *suffix,
 		 Lisp_Object *storeptr, int mode);
 Lisp_Object Flocate_file_clear_hashing (Lisp_Object path);
 int isfloat_string (CONST char *);
@@ -1412,7 +1402,7 @@ extern Lisp_Object Vload_history;
 
 
 /* Defined in macros.c */
-Lisp_Object Fexecute_kbd_macro (Lisp_Object macro, 
+Lisp_Object Fexecute_kbd_macro (Lisp_Object macro,
 				Lisp_Object prefixarg);
 
 
@@ -1422,7 +1412,7 @@ Bufpos marker_position (Lisp_Object marker);
 void set_bi_marker_position (Lisp_Object marker, Bytind pos);
 void set_marker_position (Lisp_Object marker, Bufpos pos);
 void unchain_marker (Lisp_Object marker);
-Lisp_Object Fset_marker (Lisp_Object marker, 
+Lisp_Object Fset_marker (Lisp_Object marker,
 			 Lisp_Object pos, Lisp_Object buffer);
 Lisp_Object Fmarker_position (Lisp_Object m);
 Lisp_Object Fmarker_buffer (Lisp_Object m);
@@ -1459,7 +1449,7 @@ extern int minibuf_level;
 Charcount scmp_1 (CONST Bufbyte *s1, CONST Bufbyte *s2, Charcount len,
 		  int ignore_case);
 #define scmp(s1, s2, len) scmp_1 (s1, s2, len, completion_ignore_case)
-Lisp_Object Fread_from_minibuffer (Lisp_Object prompt, 
+Lisp_Object Fread_from_minibuffer (Lisp_Object prompt,
 				   Lisp_Object init,
 				   Lisp_Object keymap,
 				   Lisp_Object read_crock,
@@ -1474,10 +1464,10 @@ int regexp_ignore_completion_p (CONST Bufbyte *nonreloc,
 extern Lisp_Object Vminibuffer_zero;
 
 extern Lisp_Object Vecho_area_buffer;
-Lisp_Object clear_echo_area (struct frame *f, Lisp_Object label, 
+Lisp_Object clear_echo_area (struct frame *f, Lisp_Object label,
 			     int no_restore);
-Lisp_Object clear_echo_area_from_print (struct frame *f, 
-					Lisp_Object label, 
+Lisp_Object clear_echo_area_from_print (struct frame *f,
+					Lisp_Object label,
 					int no_restore);
 void echo_area_append (struct frame *f, CONST Bufbyte *nonreloc,
 		       Lisp_Object reloc, Bytecount offset,
@@ -1542,17 +1532,17 @@ void temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_scrn);
  *  (eg Qnil means stdout, not Vstandard_output, etc) */
 void write_c_string (CONST char *s, Lisp_Object printcharfun);
 /* Same goes for this function. */
-void write_string_1 (CONST Bufbyte *s, Bytecount size, 
+void write_string_1 (CONST Bufbyte *s, Bytecount size,
 		     Lisp_Object printcharfun);
-void print_internal (Lisp_Object obj, 
-		     Lisp_Object printcharfun, 
+void print_internal (Lisp_Object obj,
+		     Lisp_Object printcharfun,
 		     int escapeflag);
 extern Lisp_Object Vprint_level;
 extern Lisp_Object Vprint_length;
 extern int print_escape_newlines;
 extern int print_readably;
 extern Lisp_Object Qprint_escape_newlines;
-Lisp_Object internal_with_output_to_temp_buffer  (CONST char *bufname, 
+Lisp_Object internal_with_output_to_temp_buffer  (CONST char *bufname,
 						  Lisp_Object (*function)
 						  (Lisp_Object args),
 						  Lisp_Object args,
@@ -1714,7 +1704,7 @@ int hash_string (CONST Bufbyte *, Bytecount len);
 Lisp_Object intern (CONST char *);
 Lisp_Object oblookup (Lisp_Object obarray,
 		      CONST Bufbyte *, Bytecount len);
-void map_obarray (Lisp_Object obarray, 
+void map_obarray (Lisp_Object obarray,
 		  void (*fn) (Lisp_Object sym, Lisp_Object arg),
 		  Lisp_Object arg);
 Lisp_Object Fboundp (Lisp_Object sym);
@@ -1796,8 +1786,8 @@ extern Lisp_Object Qinhibit_read_only;
 
 /* Defined in unex*.c */
 int unexec (char *new_name, char *a_name,
-	    uintptr_t data_start, 
-	    uintptr_t bss_start, 
+	    uintptr_t data_start,
+	    uintptr_t bss_start,
 	    uintptr_t entry_address);
 #ifdef RUN_TIME_REMAP
 int run_time_remap (char *);
@@ -1815,28 +1805,28 @@ Lisp_Object Fselected_window (Lisp_Object device);
 Lisp_Object Fwindow_buffer (Lisp_Object window);
 Lisp_Object Fwindow_lowest_p (Lisp_Object window);
 Lisp_Object Fwindow_highest_p (Lisp_Object window);
-Lisp_Object Fget_buffer_window (Lisp_Object buffer, 
+Lisp_Object Fget_buffer_window (Lisp_Object buffer,
 				Lisp_Object frame,
 				Lisp_Object ignored);
 Lisp_Object Fsave_window_excursion (Lisp_Object body);
 Lisp_Object Fset_window_configuration (Lisp_Object config);
 Lisp_Object save_window_excursion_unwind (Lisp_Object window_config);
 Lisp_Object Fcurrent_window_configuration (Lisp_Object frame);
-Lisp_Object display_buffer (Lisp_Object buffer, 
-			    Lisp_Object notthiswindow, 
+Lisp_Object display_buffer (Lisp_Object buffer,
+			    Lisp_Object notthiswindow,
 			    Lisp_Object overrideframe);
 Lisp_Object Freplace_buffer_in_windows (Lisp_Object buffer);
 Lisp_Object Fwindow_dedicated_p (Lisp_Object window);
-Lisp_Object Fnext_window (Lisp_Object window, 
-			  Lisp_Object minibuf, 
+Lisp_Object Fnext_window (Lisp_Object window,
+			  Lisp_Object minibuf,
 			  Lisp_Object all_frames,
 			  Lisp_Object device);
 Lisp_Object Fdelete_window (Lisp_Object window, Lisp_Object force);
 Lisp_Object Fselect_window (Lisp_Object window);
-Lisp_Object Fset_window_buffer (Lisp_Object window, 
+Lisp_Object Fset_window_buffer (Lisp_Object window,
 				Lisp_Object buffer);
-Lisp_Object Fsplit_window (Lisp_Object window, 
-			   Lisp_Object chsize, 
+Lisp_Object Fsplit_window (Lisp_Object window,
+			   Lisp_Object chsize,
 			   Lisp_Object horflag);
 Lisp_Object Frecenter (Lisp_Object arg, Lisp_Object window);
 Lisp_Object Fmove_to_window_line (Lisp_Object arg, Lisp_Object window);

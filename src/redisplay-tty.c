@@ -53,11 +53,17 @@ Boston, MA 02111-1307, USA.  */
    invoking them correctly. */
 /* # include <curses.h> */
 /* # include <term.h> */
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern int tgetent (CONST char *, CONST char *);
 extern int tgetflag (CONST char *);
 extern int tgetnum (CONST char *);
 extern char *tgetstr (CONST char *, char **);
 extern void tputs (CONST char *, int, void (*)(int));
+#ifdef __cplusplus
+}
+#endif
 #define FORCE_CURSOR_UPDATE(c) send_string_to_tty_console (c, 0, 0)
 #define OUTPUTN(c, a, n)			\
   do {						\
@@ -77,7 +83,7 @@ extern void tputs (CONST char *, int, void (*)(int));
 
 static void tty_output_emchar_dynarr (struct window *w,
 				      struct display_line *dl,
-				      emchar_dynarr *buf, int xpos,
+				      Emchar_dynarr *buf, int xpos,
 				      face_index findex,
 				      int cursor);
 static void tty_output_bufbyte_string (struct window *w,
@@ -194,7 +200,7 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 			  int cursor_height)
 {
   struct frame *f = XFRAME (w->frame);
-  emchar_dynarr *buf = Dynarr_new (Emchar);
+  Emchar_dynarr *buf = Dynarr_new (Emchar);
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
   rune_dynarr *rba = db->runes;
@@ -370,7 +376,7 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 
 		      tty_output_bufbyte_string (w, dl, temptemp, len,
 						 xpos, findex, 0);
-		    
+
 		      if (xpos >= cursor_start
 			  && (cursor_start <
 			      xpos + (bufbyte_string_displayed_columns
@@ -580,7 +586,7 @@ tty_output_bufbyte_string (struct window *w, struct display_line *dl,
   tty_turn_off_face (w, findex);
 }
 
-static bufbyte_dynarr *tty_output_emchar_dynarr_dynarr;
+static Bufbyte_dynarr *tty_output_emchar_dynarr_dynarr;
 
 /*****************************************************************************
  tty_output_emchar_dynarr
@@ -590,7 +596,7 @@ static bufbyte_dynarr *tty_output_emchar_dynarr_dynarr;
  ****************************************************************************/
 static void
 tty_output_emchar_dynarr (struct window *w, struct display_line *dl,
-			  emchar_dynarr *buf, int xpos, face_index findex,
+			  Emchar_dynarr *buf, int xpos, face_index findex,
 			  int cursor)
 {
   if (!tty_output_emchar_dynarr_dynarr)
@@ -610,7 +616,7 @@ tty_output_emchar_dynarr (struct window *w, struct display_line *dl,
 
 #if 0
 
-static bufbyte_dynarr *sidcs_dynarr;
+static Bufbyte_dynarr *sidcs_dynarr;
 
 static void
 substitute_in_dynamic_color_string (Lisp_Object spec, Lisp_Object string)
@@ -775,7 +781,7 @@ tty_turn_on_face (struct window *w, face_index findex)
   struct frame *f = XFRAME (w->frame);
   struct console *c = XCONSOLE (FRAME_CONSOLE (f));
 
-  tty_turn_on_face_1 (c, 
+  tty_turn_on_face_1 (c,
 		      WINDOW_FACE_CACHEL_HIGHLIGHT_P (w, findex),
 		      WINDOW_FACE_CACHEL_BLINKING_P (w, findex),
 		      WINDOW_FACE_CACHEL_DIM_P (w, findex),
@@ -838,9 +844,9 @@ tty_turn_on_frame_face (struct frame *f, Lisp_Object face)
 {
   Lisp_Object frame = Qnil;
   struct console *c = XCONSOLE (FRAME_CONSOLE (f));
-  
+
   XSETFRAME (frame, f);
-  tty_turn_on_face_1 (c, 
+  tty_turn_on_face_1 (c,
 		      FACE_HIGHLIGHT_P (face, frame),
 		      FACE_BLINKING_P (face, frame),
 		      FACE_DIM_P (face, frame),
@@ -1094,7 +1100,7 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
      doing this after all the tgetstr()s and adjusting all the
      pointers. */
   CONSOLE_TTY_DATA (c)->term_entry_buffer = (char *) xmalloc (2044);
-  bufptr = CONSOLE_TTY_DATA (c)->term_entry_buffer; 
+  bufptr = CONSOLE_TTY_DATA (c)->term_entry_buffer;
 
   EMACS_BLOCK_SIGNAL (SIGTTOU);
   status = tgetent (entry_buffer, terminal_type);
@@ -1241,10 +1247,10 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
   if (TTY_FLAGS (c).underline_width == -1)
     TTY_FLAGS (c).underline_width = 0;
 
-   TTY_FLAGS (c).meta_key = 
+   TTY_FLAGS (c).meta_key =
      eight_bit_tty (d) ? tgetflag ("km") || tgetflag ("MT") ? 1 : 2 : 0;
-    
-    
+
+
   /*
    * Setup the costs tables for this tty console.
    */
@@ -1274,7 +1280,9 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
        color, too. */
     char foobuf[500];
     char *fooptr = foobuf;
-    if (tgetstr ("AB", &fooptr) && tgetstr ("AF", &fooptr))
+    if ((tgetstr ("AB", &fooptr) && tgetstr ("AF", &fooptr)) ||
+        (tgetstr ("Sf", &fooptr) && tgetstr ("Sb", &fooptr)) ||
+        ((tgetnum ("Co") > 0) && (tgetnum ("pa") > 0)))
       DEVICE_CLASS (d) = Qcolor;
     else
       DEVICE_CLASS (d) = Qmono;
@@ -1378,7 +1386,7 @@ static Lisp_Object term_get_fkeys_1 (Lisp_Object keymap);
 static Lisp_Object term_get_fkeys_error (Lisp_Object err, Lisp_Object arg);
 
 /* Find the escape codes sent by the function keys for Vfunction_key_map.
-   This function scans the termcap function key sequence entries, and 
+   This function scans the termcap function key sequence entries, and
    adds entries to Vfunction_key_map for each function key it finds.  */
 
 static void
@@ -1483,7 +1491,7 @@ term_get_fkeys_1 (Lisp_Object function_key_map)
 			 build_string (sequence),			\
 			 vector1 (intern (sym)));			\
 	}
-	  
+
       /* if there's no key_next keycap, map key_npage to `next' keysym */
       CONDITIONAL_REASSIGN ("%5", "kN", "next");
       /* if there's no key_prev keycap, map key_ppage to `previous' keysym */

@@ -40,9 +40,6 @@
 (defvar site-file-list nil)
 (defvar docfile-out-of-date nil)
 
-;; BOGUS
-(defvar find-file-hooks nil)
-
 ;; Gobble up the stuff we don't wish to pass on.
 (setq command-line-args (cdr (cdr (cdr (cdr command-line-args)))))
 

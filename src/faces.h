@@ -115,6 +115,7 @@ struct Lisp_Face
 
 #define NUM_STATIC_CACHEL_FACES 4
 
+typedef struct face_cachel face_cachel;
 struct face_cachel
 {
   /* There are two kinds of cachels; those created from a single face

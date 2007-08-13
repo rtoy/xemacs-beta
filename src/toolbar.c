@@ -309,8 +309,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 
   if (!tb)
     {
-      tb = alloc_lcrecord (sizeof (struct toolbar_button),
-			   lrecord_toolbar_button);
+      tb = alloc_lcrecord_type (struct toolbar_button, lrecord_toolbar_button);
       tb->next = Qnil;
       XSETFRAME (tb->frame, f);
       tb->up_glyph = Qnil;
@@ -714,18 +713,15 @@ set_frame_toolbar (struct frame *f, enum toolbar_pos pos, int first_time_p)
 
   if (NILP (f->toolbar_data[pos]))
     {
-      struct toolbar_data *td = alloc_lcrecord (sizeof (struct toolbar_data),
-						lrecord_toolbar_data);
+      struct toolbar_data *td = alloc_lcrecord_type (struct toolbar_data,
+						     lrecord_toolbar_data);
 
       td->last_toolbar_buffer = Qnil;
       td->toolbar_buttons = Qnil;
       XSETTOOLBAR_DATA (f->toolbar_data[pos], td);
     }
 
-  if (visible)
-    buttons = compute_frame_toolbar_buttons (f, pos, toolbar);
-  else
-    buttons = Qnil;
+  buttons = visible ? compute_frame_toolbar_buttons (f, pos, toolbar) : Qnil;
 
   FRAME_TOOLBAR_DATA (f, pos)->last_toolbar_buffer = buffer;
   FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons = buttons;
@@ -1195,7 +1191,7 @@ The values of the variables `default-toolbar', `top-toolbar',
 `left-toolbar', `right-toolbar', and `bottom-toolbar' are always
 toolbar specifiers.
 
-Valid toolbar instantiators are called \"toolbar descriptors\"
+Valid toolbar instantiators are called "toolbar descriptors"
 and are lists of vectors.  See `default-toolbar' for a description
 of the exact format.
 */
@@ -1238,7 +1234,7 @@ toolbar_size_changed_in_frame (Lisp_Object specifier, struct frame *f,
   assert (pos < countof (Vtoolbar_size));
 
   MAYBE_FRAMEMETH (f, toolbar_size_changed_in_frame,
-		   (f, pos, oldval));
+		   (f, (enum toolbar_pos) pos, oldval));
 
   /* Let redisplay know that something has possibly changed. */
   MARK_TOOLBAR_CHANGED;
@@ -1257,7 +1253,7 @@ toolbar_visible_p_changed_in_frame (Lisp_Object specifier, struct frame *f,
   assert (pos < countof (Vtoolbar_visible_p));
 
   MAYBE_FRAMEMETH (f, toolbar_visible_p_changed_in_frame,
-		   (f, pos, oldval));
+		   (f, (enum toolbar_pos) pos, oldval));
 
   /* Let redisplay know that something has possibly changed. */
   MARK_TOOLBAR_CHANGED;
@@ -1402,9 +1398,9 @@ For the first vector format:
 -- GLYPH-LIST should be a list of one to six glyphs (as created by
    `make-glyph') or a symbol whose value is such a list.  The first
    glyph, which must be provided, is the glyph used to display the
-   toolbar button when it is in the \"up\" (not pressed) state.  The
+   toolbar button when it is in the "up" (not pressed) state.  The
    optional second glyph is for displaying the button when it is in
-   the \"down\" (pressed) state.  The optional third glyph is for when
+   the "down" (pressed) state.  The optional third glyph is for when
    the button is disabled.  The optional fourth, fifth and sixth glyphs
    are used to specify captioned versions for the up, down and disabled
    states respectively.  The function `toolbar-make-button-list' is

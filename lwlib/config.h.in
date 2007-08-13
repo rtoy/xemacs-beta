@@ -97,4 +97,4 @@ Boston, MA 02111-1307, USA.  */
 #define NEED_LUCID
 #endif
 
-#endif /* _CONFIG_H_ */
+#endif /* _LWLIB_CONFIG_H_ */

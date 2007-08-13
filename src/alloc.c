@@ -369,18 +369,16 @@ memory_full (void)
 #endif
 
 void *
-xmalloc (int size)
+xmalloc (size_t size)
 {
-  void *val;
-
-  val = (void *) malloc (size);
+  void *val = (void *) malloc (size);
 
   if (!val && (size != 0)) memory_full ();
   return val;
 }
 
 void *
-xmalloc_and_zero (int size)
+xmalloc_and_zero (size_t size)
 {
   void *val = xmalloc (size);
   memset (val, 0, size);
@@ -392,16 +390,11 @@ xmalloc_and_zero (int size)
 #endif
 
 void *
-xrealloc (void *block, int size)
+xrealloc (void *block, size_t size)
 {
-  void *val;
-
   /* We must call malloc explicitly when BLOCK is 0, since some
      reallocs don't do this.  */
-  if (! block)
-    val = (void *) malloc (size);
-  else
-    val = (void *) realloc (block, size);
+  void *val = (void *) (block ? realloc (block, size) : malloc (size));
 
   if (!val && (size != 0)) memory_full ();
   return val;
@@ -469,13 +462,12 @@ deadbeef_memory (void *ptr, unsigned long size)
 char *
 xstrdup (CONST char *str)
 {
-  char *val;
   int len = strlen (str) + 1;   /* for stupid terminating 0 */
 
-  val = xmalloc (len);
+  void *val = xmalloc (len);
   if (val == 0) return 0;
   memcpy (val, str, len);
-  return val;
+  return (char *) val;
 }
 
 #ifdef NEED_STRDUP
@@ -534,7 +526,7 @@ alloc_lcrecord (int size, CONST struct lrecord_implementation *implementation)
   else if (implementation->static_size != size)
     abort ();
 
-  lcheader = allocate_lisp_storage (size);
+  lcheader = (struct lcrecord_header *) allocate_lisp_storage (size);
   lcheader->lheader.implementation = implementation;
   lcheader->next = all_lcrecords;
 #if 1                           /* mly prefers to see small ID numbers */
@@ -626,9 +618,9 @@ this_one_is_unmarkable (Lisp_Object obj, void (*markobj) (Lisp_Object))
 int
 gc_record_type_p (Lisp_Object frob, CONST struct lrecord_implementation *type)
 {
-  return (XGCTYPE (frob) == Lisp_Record
-          && (XRECORD_LHEADER (frob)->implementation == type
-              || XRECORD_LHEADER (frob)->implementation == type + 1));
+  return (XGCTYPE (frob) == Lisp_Type_Record
+          && (XRECORD_LHEADER (frob)->implementation == type ||
+              XRECORD_LHEADER (frob)->implementation == type + 1));
 }
 
 
@@ -831,8 +823,8 @@ static int gc_count_num_##type##_in_use, gc_count_num_##type##_freelist
     if (current_##type##_block_index					\
 	== countof (current_##type##_block->block))			\
     {									\
-      struct type##_block *__new__					\
-         = allocate_lisp_storage (sizeof (struct type##_block));	\
+      struct type##_block *__new__ = (struct type##_block *)		\
+         allocate_lisp_storage (sizeof (struct type##_block));		\
       __new__->prev = current_##type##_block;				\
       current_##type##_block = __new__;					\
       current_##type##_block_index = 0;					\
@@ -1155,7 +1147,7 @@ make_vector_internal (EMACS_INT sizei)
                 * +1 to account for vector_next */
                + (sizei - 1 + 1) * sizeof (Lisp_Object)
                );
-  struct Lisp_Vector *p = allocate_lisp_storage (sizem);
+  struct Lisp_Vector *p = (struct Lisp_Vector *) allocate_lisp_storage (sizem);
 #ifdef LRECORD_VECTOR
   set_lheader_implementation (&(p->lheader), lrecord_vector);
 #endif
@@ -1342,7 +1334,8 @@ make_bit_vector_internal (EMACS_INT sizei)
   EMACS_INT sizem = (sizeof (struct Lisp_Bit_Vector) +
                /* -1 because struct Lisp_Bit_Vector includes 1 slot */
 	       sizeof (long) * (BIT_VECTOR_LONG_STORAGE (sizei) - 1));
-  struct Lisp_Bit_Vector *p = allocate_lisp_storage (sizem);
+  struct Lisp_Bit_Vector *p =
+    (struct Lisp_Bit_Vector *) allocate_lisp_storage (sizem);
   set_lheader_implementation (&(p->lheader), lrecord_bit_vector);
 
   INCREMENT_CONS_COUNTER (sizem, "bit-vector");
@@ -1850,8 +1843,7 @@ struct unused_string_chars
 static void
 init_string_chars_alloc (void)
 {
-  first_string_chars_block =
-    (struct string_chars_block *) xmalloc (sizeof (struct string_chars_block));
+  first_string_chars_block = xnew (struct string_chars_block);
   first_string_chars_block->prev = 0;
   first_string_chars_block->next = 0;
   first_string_chars_block->pos = 0;
@@ -1882,9 +1874,7 @@ allocate_string_chars_struct (struct Lisp_String *string_it_goes_with,
   else
     {
       /* Make a new current string chars block */
-      struct string_chars_block *new
-	= (struct string_chars_block *)
-	  xmalloc (sizeof (struct string_chars_block));
+      struct string_chars_block *new = xnew (struct string_chars_block);
 
       current_string_chars_block->next = new;
       new->prev = current_string_chars_block;
@@ -2084,8 +2074,7 @@ set_string_char (struct Lisp_String *s, Charcount i, Emchar c)
 
   if (oldlen != newlen)
     resize_string (s, bytoff, newlen - oldlen);
-  /* Remember, string_data (s) might have changed so we can't
-     cache it. */
+  /* Remember, string_data (s) might have changed so we can't cache it. */
   memcpy (string_data (s) + bytoff, newstr, newlen);
 }
 
@@ -2156,29 +2145,15 @@ make_ext_string (CONST Extbyte *contents, EMACS_INT length,
 Lisp_Object
 build_string (CONST char *str)
 {
-  Bytecount length;
-
-  /* Some strlen crash and burn if passed null. */
-  if (!str)
-    length = 0;
-  else
-    length = strlen (str);
-
-  return make_string ((CONST Bufbyte *) str, length);
+  /* Some strlen's crash and burn if passed null. */
+  return make_string ((CONST Bufbyte *) str, (str ? strlen(str) : 0));
 }
 
 Lisp_Object
 build_ext_string (CONST char *str, enum external_data_format fmt)
 {
-  Bytecount length;
-
-  /* Some strlen crash and burn if passed null. */
-  if (!str)
-    length = 0;
-  else
-    length = strlen (str);
-
-  return make_ext_string ((Extbyte *) str, length, fmt);
+  /* Some strlen's crash and burn if passed null. */
+  return make_ext_string ((Extbyte *) str, (str ? strlen(str) : 0), fmt);
 }
 
 Lisp_Object
@@ -2265,8 +2240,8 @@ Lisp_Object
 make_lcrecord_list (int size,
 		    CONST struct lrecord_implementation *implementation)
 {
-  struct lcrecord_list *p = alloc_lcrecord (sizeof (*p),
-					    lrecord_lcrecord_list);
+  struct lcrecord_list *p = alloc_lcrecord_type (struct lcrecord_list,
+						 lrecord_lcrecord_list);
   Lisp_Object val = Qnil;
 
   p->implementation = implementation;
@@ -2310,11 +2285,11 @@ allocate_managed_lcrecord (Lisp_Object lcrecord_list)
     }
   else
     {
-      Lisp_Object foo = Qnil;
+      Lisp_Object val = Qnil;
 
-      XSETOBJ (foo, Lisp_Record,
+      XSETOBJ (val, Lisp_Type_Record,
 	       alloc_lcrecord (list->size, list->implementation));
-      return foo;
+      return val;
     }
 }
 
@@ -2562,16 +2537,17 @@ Does not copy symbols.
 
   switch (XTYPE (obj))
     {
-    case Lisp_Cons:
+    case Lisp_Type_Cons:
       return pure_cons (XCAR (obj), XCDR (obj));
 
-    case Lisp_String:
+    case Lisp_Type_String:
       return make_pure_string (XSTRING_DATA (obj),
 			       XSTRING_LENGTH (obj),
 			       XSTRING (obj)->plist,
                                0);
 
-    case Lisp_Vector:
+#ifndef LRECORD_VECTOR
+    case Lisp_Type_Vector:
       {
         struct Lisp_Vector *o = XVECTOR (obj);
         Lisp_Object new = make_pure_vector (vector_length (o), Qnil);
@@ -2579,6 +2555,7 @@ Does not copy symbols.
 	  XVECTOR_DATA (new)[i] = Fpurecopy (o->contents[i]);
         return new;
       }
+#endif /* !LRECORD_VECTOR */
 
     default:
       {
@@ -2803,7 +2780,7 @@ mark_object (Lisp_Object obj)
     return;
   switch (XGCTYPE (obj))
     {
-    case Lisp_Cons:
+    case Lisp_Type_Cons:
       {
 	struct Lisp_Cons *ptr = XCONS (obj);
 	if (CONS_MARKED_P (ptr))
@@ -2822,7 +2799,7 @@ mark_object (Lisp_Object obj)
 	goto tail_recurse;
       }
 
-    case Lisp_Record:
+    case Lisp_Type_Record:
     /* case Lisp_Symbol_Value_Magic: */
       {
 	struct lrecord_header *lheader = XRECORD_LHEADER (obj);
@@ -2846,7 +2823,7 @@ mark_object (Lisp_Object obj)
       }
       break;
 
-    case Lisp_String:
+    case Lisp_Type_String:
       {
 	struct Lisp_String *ptr = XSTRING (obj);
 
@@ -2862,7 +2839,8 @@ mark_object (Lisp_Object obj)
       }
       break;
 
-    case Lisp_Vector:
+#ifndef LRECORD_VECTOR
+    case Lisp_Type_Vector:
       {
 	struct Lisp_Vector *ptr = XVECTOR (obj);
 	int len = vector_length (ptr);
@@ -2880,9 +2858,10 @@ mark_object (Lisp_Object obj)
         }
       }
       break;
+#endif /* !LRECORD_VECTOR */
 
 #ifndef LRECORD_SYMBOL
-    case Lisp_Symbol:
+    case Lisp_Type_Symbol:
       {
 	struct Lisp_Symbol *sym = XSYMBOL (obj);
 
@@ -2972,7 +2951,7 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
 
   switch (XTYPE (obj))
     {
-    case Lisp_String:
+    case Lisp_Type_String:
       {
 	struct Lisp_String *ptr = XSTRING (obj);
         int size = string_length (ptr);
@@ -2993,7 +2972,8 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
       }
       break;
 
-    case Lisp_Vector:
+#ifndef LRECORD_VECTOR
+    case Lisp_Type_Vector:
       {
         struct Lisp_Vector *ptr = XVECTOR (obj);
         int len = vector_length (ptr);
@@ -3016,8 +2996,9 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
 #endif /* unused */
       }
       break;
+#endif /* !LRECORD_SYMBOL */
 
-    case Lisp_Record:
+    case Lisp_Type_Record:
       {
 	struct lrecord_header *lheader = XRECORD_LHEADER (obj);
 	CONST struct lrecord_implementation *implementation
@@ -3047,7 +3028,7 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
       }
       break;
 
-    case Lisp_Cons:
+    case Lisp_Type_Cons:
       {
         struct Lisp_Cons *ptr = XCONS (obj);
         total += sizeof (*ptr);
@@ -3809,16 +3790,18 @@ marked_p (Lisp_Object obj)
   if (PURIFIED (XPNTR (obj))) return 1;
   switch (XGCTYPE (obj))
     {
-    case Lisp_Cons:
+    case Lisp_Type_Cons:
       return XMARKBIT (XCAR (obj));
-    case Lisp_Record:
+    case Lisp_Type_Record:
       return MARKED_RECORD_HEADER_P (XRECORD_LHEADER (obj));
-    case Lisp_String:
+    case Lisp_Type_String:
       return XMARKBIT (XSTRING (obj)->plist);
-    case Lisp_Vector:
+#ifndef LRECORD_VECTOR
+    case Lisp_Type_Vector:
       return XVECTOR_LENGTH (obj) < 0;
+#endif /* !LRECORD_VECTOR */
 #ifndef LRECORD_SYMBOL
-    case Lisp_Symbol:
+    case Lisp_Type_Symbol:
       return XMARKBIT (XSYMBOL (obj)->plist);
 #endif
     default:

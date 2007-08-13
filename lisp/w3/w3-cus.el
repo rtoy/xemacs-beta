@@ -1,7 +1,7 @@
 ;;; w3-cus.el --- Customization support for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/07/06 22:30:54
-;; Version: 1.10
+;; Created: 1997/07/14 16:56:45
+;; Version: 1.11
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -464,5 +464,42 @@ visited links, etc."
   "*Hooks to be run after getting document source."
   :group 'w3-hooks
   :type 'hook)
+
+(defcustom w3-display-errors-hook nil
+  "*Hooks to be run after displaying HTML errors for a page."
+  :group 'w3-hooks
+  :type 'hook)
+
+(defcustom w3-html-errors-font-lock-keywords
+  '(("\\(HTML errors for\\) \\(.*\\)"
+     (1 font-lock-function-name-face) (2 font-lock-reference-face))
+    ("Empty \\([A-Z0-9]+\\) element." (1 font-lock-type-face))
+    ("Bad attribute name syntax: \\(.*\\)" (1 font-lock-type-face))
+    ("Bad attribute value syntax: \\(.*\\)" (1 font-lock-type-face))
+    ("Evil attribute value syntax: \\(.*\\)" (1 font-lock-type-face))
+    ("Attribute value missing end quote: \\(.*\\)" (1 font-lock-type-face))
+    ("Bad start-tag \\([A-Z0-9]+\\)" (1 font-lock-type-face))
+    ("\\([A-Z0-9]+\\) element has no \\([A-Z0-9]+\\) attribute"
+     (1 font-lock-type-face) (2 font-lock-type-face))
+    (", inferring \\(</?[A-Z0-9]+>\\)" (1 font-lock-type-face))
+    ("Bad unclosed \\([A-Z0-9]+\\) tag" (1 font-lock-type-face))
+    ("Bad comment (unterminated or unbalanced \"\\(--\\)\" pairs)" (1 font-lock-type-face t))
+    ("Obsolete element \\(.*\\)" (1 font-lock-type-face))
+    ("Deprecated element \\(.*\\)" (1 font-lock-type-face))
+    ("\\[deprecated inside \\([A-Z0-9]+\\)\\]" (1 font-lock-type-face))
+    ("\\(</[A-Z0-9]+>\\) end-tag not omissible (required due to \\(</?[A-Z0-9]+>\\) end-tag)"
+     (1 font-lock-type-face) (2 font-lock-type-face))
+    ("Bad data characters [\\([^][]\\)], " (1 font-lock-comment-face))
+    ("Bad \\(<!\\) syntax." (1 font-lock-type-face))
+    ("Unterminated IGNORE marked section.")
+    ("Invalid SGML character: \\(.\\)" (1 font-lock-type-face))
+    ("Unmatched end-tag \\(</[A-Z0-9]+>\\)" (1 font-lock-type-face))
+    ;;("</?[A-Z0-9]+>" . font-lock-type-face)
+    ("^  [A-Z][a-zA-Z0-9 ]*: .*" . font-lock-comment-face)
+    ("^  [A-Z][a-zA-Z0-9 ]*: " . font-lock-comment-face)
+    ("\\*ERROR\\*" 0 font-lock-keyword-face t))
+  "*Font locking keywords used for HTML error display"
+  :group 'w3
+  :type 'list)
 
 (provide 'w3-cus)

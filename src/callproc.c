@@ -99,7 +99,7 @@ call_process_kill (Lisp_Object fdpid)
 
   if (!NILP (pid))
     EMACS_KILLPG (XINT (pid), SIGKILL);
-  
+
   synch_process_alive = 0;
   return Qnil;
 }
@@ -187,8 +187,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   int bufsize = 16384;
   int speccount = specpdl_depth ();
   struct gcpro gcpro1;
-  char **new_argv = (char **) alloca ((max (2, nargs - 2)) * sizeof (char *));
-  
+  char **new_argv = alloca_array (char *, max (2, nargs - 2));
+
   /* File to use for stderr in the child.
      t means use same as standard output.  */
   Lisp_Object error_file;
@@ -196,7 +196,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   char *outf, *tempfile;
   int outfilefd;
 #endif /* MSDOS */
-  
+
   CHECK_STRING (args[0]);
 
   error_file = Qt;
@@ -217,7 +217,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
      chdir, since it's in a vfork. */
   {
     struct gcpro ngcpro1, ngcpro2;
-    /* Do this test before building new_argv because GC in Lisp code 
+    /* Do this test before building new_argv because GC in Lisp code
      *  called by various filename-hacking routines might relocate strings */
     /* Make sure that the child will be able to chdir to the current
        buffer's current directory.  We can't just have the child check
@@ -285,7 +285,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	  CHECK_BUFFER (buffer);
 	}
     }
-  else 
+  else
     buffer = Qnil;
 
   UNGCPRO;
@@ -306,7 +306,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   if (NILP (path))
     report_file_error ("Searching for program", Fcons (args[0], Qnil));
   new_argv[0] = (char *) XSTRING_DATA (path);
-  
+
   filefd = open ((char *) XSTRING_DATA (infile), O_RDONLY, 0);
   if (filefd < 0)
     report_file_error ("Opening process input file", Fcons (infile, Qnil));
@@ -326,7 +326,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       *tempfile = '\0';
     }
   dostounix_filename (tempfile);
-  if (*tempfile == '\0' || tempfile[strlen (tempfile) - 1] != '/') 
+  if (*tempfile == '\0' || tempfile[strlen (tempfile) - 1] != '/')
     strcat (tempfile, "/");
   strcat (tempfile, "detmp.XXX");
   mktemp (tempfile);
@@ -360,12 +360,12 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
   if (INTP (buffer))
     outf = NULL_DEVICE;
-  else 
+  else
     {
-	/* DOS can't create pipe for interprocess communication, 
+	/* DOS can't create pipe for interprocess communication,
 	   so redirect child process's standard output to temporary file
 	   and later read the file. */
-	
+
       if ((outf = egetenv ("TMP")) || (outf = egetenv ("TEMP")))
 	{
 	  strcpy (tempfile, outf);
@@ -453,7 +453,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
     fork_error = Qnil;
 #ifdef WINDOWSNT
-    pid = child_setup (filefd, fd1, fd_error, new_argv, 
+    pid = child_setup (filefd, fd1, fd_error, new_argv,
                        (char *) XSTRING_DATA (current_dir));
 #else  /* not WINDOWSNT */
     pid = fork ();
@@ -576,7 +576,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	  break;
 
 	total_read += nread;
-	
+
 	if (!NILP (buffer))
 	  buffer_insert_raw_string (XBUFFER (buffer), (Bufbyte *) bufptr,
 				    nread);
@@ -681,7 +681,7 @@ child_setup (int in, int out, int err, char **new_argv,
     REGISTER int i;
 
     i = strlen (current_dir);
-    pwd = (char *) alloca (i + 6);
+    pwd = alloca_array (char, i + 6);
     memcpy (pwd, "PWD=", 4);
     memcpy (pwd + 4, current_dir, i);
     i += 4;
@@ -723,7 +723,7 @@ child_setup (int in, int out, int err, char **new_argv,
       new_length++;
 
     /* new_length + 2 to include PWD and terminating 0.  */
-    env = new_env = (char **) alloca ((new_length + 2) * sizeof (char *));
+    env = new_env = alloca_array (char *, new_length + 2);
 
     /* If we have a PWD envvar and we know the real current directory,
        pass one down, but with corrected value.  */
@@ -797,7 +797,7 @@ child_setup (int in, int out, int err, char **new_argv,
   dup2 (in,  0);
   dup2 (out, 1);
   dup2 (err, 2);
-  
+
   close (in);
   close (out);
   close (err);
@@ -875,7 +875,7 @@ getenv_internal (CONST Bufbyte *var,
   for (scan = Vprocess_environment; CONSP (scan); scan = XCDR (scan))
     {
       Lisp_Object entry = XCAR (scan);
-      
+
       if (STRINGP (entry)
 	  && XSTRING_LENGTH (entry) > varlen
 	  && XSTRING_BYTE (entry, varlen) == '='
@@ -973,7 +973,7 @@ init_callproc (void)
       char *data_dir = egetenv ("EMACSDATA");
       char *site_dir = egetenv ("EMACSSITE");
       char *doc_dir  = egetenv ("EMACSDOC");
-    
+
 #ifdef PATH_DATA
       if (!data_dir)
 	data_dir = (char *) PATH_DATA;
@@ -986,7 +986,7 @@ init_callproc (void)
       if (!site_dir)
 	site_dir = (char *) PATH_SITE;
 #endif
-    
+
       if (data_dir)
 	Vdata_directory = Ffile_name_as_directory
 	  (build_string (data_dir));
@@ -1059,7 +1059,7 @@ init_callproc (void)
 #endif
 	}
     }
-  
+
   if (!NILP (Vsite_directory))
     {
       tempdir = Fdirectory_file_name (Vsite_directory);
@@ -1077,7 +1077,7 @@ init_callproc (void)
 #endif
 	}
     }
-  
+
 #ifdef PATH_PREFIX
   Vprefix_directory = build_string ((char *) PATH_PREFIX);
 #else
@@ -1095,7 +1095,7 @@ init_callproc (void)
     char *tem;
 	/*
 	** If COMSPEC has been set, then convert the
-	** DOS formatted name into a UNIX format. Then 
+	** DOS formatted name into a UNIX format. Then
 	** create a LISP object.
 	*/
     if (sh)
@@ -1116,7 +1116,7 @@ init_callproc (void)
 #else /* not VMS or WINDOWSNT */
   sh = (char *) egetenv ("SHELL");
   Vshell_file_name = build_string (sh ? sh : "/bin/sh");
-#endif 
+#endif
 }
 
 #if 0

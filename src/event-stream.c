@@ -35,6 +35,30 @@ Boston, MA 02111-1307, USA.  */
  *
  */
 
+/* TODO:
+   This stuff is way too hard to maintain - needs rework.
+
+   (global-set-key "\C-p" global-map) causes a crash - need recursion check.
+
+   C-x @ h <scrollbar-drag> x causes a crash.
+
+   The command builder should deal only with key and button events.
+   Other command events should be able to come in the MIDDLE of a key
+   sequence, without disturbing the key sequence composition, or the
+   command builder structure representing it.
+
+   Someone should rethink univeral-argument and figure out how an
+   arbitrary command can influence the next command (universal-argument
+   or univeral-coding-system-argument) or the next key (hyperify).
+
+   Both C-h and Help in the middle of a key sequence should trigger
+   prefix-help-command.  help-char is stupid.  Maybe we need
+   keymap-of-last-resort?
+
+   After prefix-help is run, one should be able to CONTINUE TYPING,
+   instead of RETYPING, the key sequence.
+ */
+
 #include <config.h>
 #include "lisp.h"
 
@@ -153,8 +177,7 @@ Lisp_Object Vlast_selected_frame;
 /* The buffer that was current when the last command was started.  */
 Lisp_Object last_point_position_buffer;
 
-/* A (16bit . 16bit) representation of the time of the last-command-event.
- */
+/* A (16bit . 16bit) representation of the time of the last-command-event. */
 Lisp_Object Vlast_input_time;
 
 /* Character to recognize as the help char.  */
@@ -163,12 +186,12 @@ Lisp_Object Vhelp_char;
 /* Form to execute when help char is typed.  */
 Lisp_Object Vhelp_form;
 
+/* Command to run when the help character follows a prefix key.  */
+Lisp_Object Vprefix_help_command;
+
 /* Flag to tell QUIT that some interesting occurrence (e.g. a keypress)
    may have happened. */
 volatile int something_happened;
-
-/* Command to run when the help character follows a prefix key.  */
-Lisp_Object Vprefix_help_command;
 
 /* Hash table to translate keysyms through */
 Lisp_Object Vkeyboard_translate_table;
@@ -230,13 +253,29 @@ extern Lisp_Object Fmake_keymap (Lisp_Object name);
 
 #ifdef DEBUG_XEMACS
 int debug_emacs_events;
+
+static void
+external_debugging_print_event (char *event_description, Lisp_Object event)
+{
+  write_c_string ("(",		     Qexternal_debugging_output);
+  write_c_string (event_description, Qexternal_debugging_output);
+  write_c_string (") ",		     Qexternal_debugging_output);
+  print_internal (event,	     Qexternal_debugging_output, 1);
+  write_c_string ("\n",		     Qexternal_debugging_output);
+}
+#define DEBUG_PRINT_EMACS_EVENT(event_description, event) do {	\
+  if (debug_emacs_events)					\
+    external_debugging_print_event (event_description, event);	\
+} while (0)
+#else
+#define DEBUG_PRINT_EMACS_EVENT(string, event)
 #endif
 
 
 /* The callback routines for the window system or terminal driver */
 struct event_stream *event_stream;
 
-/* This structure is what we use to excapsulate the state of a command sequence
+/* This structure is what we use to encapsulate the state of a command sequence
    being composed; key events are executed by adding themselves to the command
    builder; if the command builder is then complete (does not still represent
    a prefix key sequence) it executes the corresponding command.
@@ -256,30 +295,28 @@ struct command_builder
   Lisp_Object current_events;
   /* Last elt of above  */
   Lisp_Object most_current_event;
-  /* Last elt before function map code took over.
-     What this means is: All prefixes up to (but not including)
-     this event have non-nil bindings, but the prefix including
-     this event has a nil binding.  Any events in the chain after
-     this one were read solely because we're part of a possible
-     function key.  If we end up with something that's not part
-     of a possible function key, we have to unread all of those
-     events. */
+  /* Last elt before function map code took over. What this means is:
+     All prefixes up to (but not including) this event have non-nil
+     bindings, but the prefix including this event has a nil binding.
+     Any events in the chain after this one were read solely because
+     we're part of a possible function key.  If we end up with
+     something that's not part of a possible function key, we have to
+     unread all of those events. */
   Lisp_Object last_non_munged_event;
   /* One set of values for function-key-map, one for key-translation-map */
   struct munging_key_translation
-    {
-      /* First event that can begin a possible function key sequence
-	 (to be translated according to function-key-map).  Normally
-	 this is the first event in the chain.  However, once we've
-	 translated a sequence through function-key-map, this will
-	 point to the first event after the translated sequence:
-	 we don't ever want to translate any events twice through
-	 function-key-map, or things could get really screwed up
-	 (e.g. if the user created a translation loop).  If this
-	 is nil, then the next-read event is the first that can
-	 begin a function key sequence. */
-      Lisp_Object first_mungeable_event;
-    } munge_me[2];
+  {
+    /* First event that can begin a possible function key sequence
+       (to be translated according to function-key-map).  Normally
+       this is the first event in the chain.  However, once we've
+       translated a sequence through function-key-map, this will point
+       to the first event after the translated sequence: we don't ever
+       want to translate any events twice through function-key-map, or
+       things could get really screwed up (e.g. if the user created a
+       translation loop).  If this is nil, then the next-read event is
+       the first that can begin a function key sequence. */
+    Lisp_Object first_mungeable_event;
+  } munge_me[2];
 
   Bufbyte *echo_buf;
   Bytecount echo_buf_length;          /* size of echo_buf */
@@ -361,12 +398,10 @@ mark_command_builder (Lisp_Object obj, void (*markobj) (Lisp_Object))
 static void
 finalize_command_builder (void *header, int for_disksave)
 {
-  struct command_builder *c = (struct command_builder *) header;
-
   if (!for_disksave)
     {
-      xfree (c->echo_buf);
-      c->echo_buf = 0;
+      xfree (((struct command_builder *) header)->echo_buf);
+      ((struct command_builder *) header)->echo_buf = 0;
     }
 }
 
@@ -386,14 +421,12 @@ allocate_command_builder (Lisp_Object console)
 {
   Lisp_Object builder_obj = Qnil;
   struct command_builder *builder =
-    alloc_lcrecord (sizeof (struct command_builder),
-		    lrecord_command_builder);
+    alloc_lcrecord_type (struct command_builder, lrecord_command_builder);
 
   builder->console = console;
   reset_command_builder_event_chain (builder);
   builder->echo_buf_length = 300; /* #### Kludge */
-  builder->echo_buf =
-    (Bufbyte *) xmalloc (builder->echo_buf_length);
+  builder->echo_buf = xnew_array (Bufbyte, builder->echo_buf_length);
   builder->echo_buf[0] = 0;
   builder->echo_buf_index = -1;
   builder->echo_buf_index = -1;
@@ -510,15 +543,7 @@ event_stream_next_event (struct Lisp_Event *event)
      which will unblock us. */
   if (maybe_read_quit_event (event))
     {
-#ifdef DEBUG_XEMACS
-      if (debug_emacs_events)
-	{
-	  write_c_string ("(SIGINT) ",
-			  Qexternal_debugging_output);
-	  print_internal (event_obj, Qexternal_debugging_output, 1);
-	  write_c_string ("\n", Qexternal_debugging_output);
-	}
-#endif
+      DEBUG_PRINT_EMACS_EVENT ("SIGINT", event_obj);
       return;
     }
 
@@ -538,18 +563,10 @@ event_stream_next_event (struct Lisp_Event *event)
   emacs_is_blocking = 0;
 
 #ifdef DEBUG_XEMACS
-  if (debug_emacs_events)
-    {
-      write_c_string ("(real) ",
-		      Qexternal_debugging_output);
-      /* timeout events have more info set later, so
-	 print the event out in next_event_internal(). */
-      if (event->event_type != timeout_event)
-	{
-	  print_internal (event_obj, Qexternal_debugging_output, 1);
-	  write_c_string ("\n", Qexternal_debugging_output);
-	}
-    }
+  /* timeout events have more info set later, so
+     print the event out in next_event_internal(). */
+  if (event->event_type != timeout_event)
+    DEBUG_PRINT_EMACS_EVENT ("real", event_obj);
 #endif
   maybe_kbd_translate (event_obj);
 }
@@ -777,13 +794,8 @@ maybe_kbd_translate (Lisp_Object event)
     }
 
 #ifdef DEBUG_XEMACS
-  if (did_translate && debug_emacs_events)
-    {
-      write_c_string ("(->keyboard-translate-table) ",
-		      Qexternal_debugging_output);
-      print_internal (event, Qexternal_debugging_output, 1);
-      write_c_string ("\n", Qexternal_debugging_output);
-    }
+  if (did_translate)
+    DEBUG_PRINT_EMACS_EVENT ("->keyboard-translate-table", event);
 #endif
 }
 
@@ -1155,10 +1167,7 @@ event_stream_resignal_wakeup (int interval_id, int async_p,
   GCPRO1 (op); /* just in case ...  because it's removed from the list
 		  for awhile. */
 
-  if (async_p)
-    timeout_list = &pending_async_timeout_list;
-  else
-    timeout_list = &pending_timeout_list;
+  timeout_list = async_p ? &pending_async_timeout_list : &pending_timeout_list;
 
   /* Find the timeout on the list of pending ones. */
   LIST_LOOP (rest, *timeout_list)
@@ -1534,9 +1543,7 @@ enqueue_command_event_1 (Lisp_Object event_to_copy)
 void
 enqueue_magic_eval_event (void (*fun) (Lisp_Object), Lisp_Object object)
 {
-  Lisp_Object event;
-
-  event = Fmake_event ();
+  Lisp_Object event = Fmake_event ();
 
   XEVENT (event)->event_type = magic_eval_event;
   /* channel for magic_eval events is nil */
@@ -1554,9 +1561,7 @@ are received.
 */
        (function, object))
 {
-  Lisp_Object event;
-
-  event = Fmake_event ();
+  Lisp_Object event = Fmake_event ();
 
   XEVENT (event)->event_type = eval_event;
   /* channel for eval events is nil */
@@ -1571,9 +1576,7 @@ Lisp_Object
 enqueue_misc_user_event (Lisp_Object channel, Lisp_Object function,
 			 Lisp_Object object)
 {
-  Lisp_Object event;
-
-  event = Fmake_event ();
+  Lisp_Object event = Fmake_event ();
 
   XEVENT (event)->event_type = misc_user_event;
   XEVENT (event)->channel = channel;
@@ -1884,8 +1887,7 @@ in_single_console_state (void)
   return in_single_console;
 }
 
-/* the number of keyboard characters read.  callint.c wants this.
- */
+/* the number of keyboard characters read.  callint.c wants this. */
 Charcount num_input_chars;
 
 static void
@@ -1905,15 +1907,7 @@ next_event_internal (Lisp_Object target_event, int allow_queued)
       Lisp_Object event = dequeue_command_event ();
       Fcopy_event (event, target_event);
       Fdeallocate_event (event);
-#ifdef DEBUG_XEMACS
-      if (debug_emacs_events)
-	{
-	  write_c_string ("(command event queue) ",
-			  Qexternal_debugging_output);
-	  print_internal (target_event, Qexternal_debugging_output, 1);
-	  write_c_string ("\n", Qexternal_debugging_output);
-	}
-#endif
+      DEBUG_PRINT_EMACS_EVENT ("command event queue", target_event);
     }
   else
     {
@@ -1934,15 +1928,9 @@ next_event_internal (Lisp_Object target_event, int allow_queued)
 
 	  e->event.timeout.function = tristan;
 	  e->event.timeout.object = isolde;
-#ifdef DEBUG_XEMACS
 	  /* next_event_internal() doesn't print out timeout events
 	     because of the extra info we just set. */
-	  if (debug_emacs_events)
-	    {
-	      print_internal (target_event, Qexternal_debugging_output, 1);
-	      write_c_string ("\n", Qexternal_debugging_output);
-	    }
-#endif
+	  DEBUG_PRINT_EMACS_EVENT ("real, timeout", target_event);
 	}
 
       /* If we read a ^G, then set quit-flag but do not discard the ^G.
@@ -1985,7 +1973,7 @@ DEFUN ("next-event", Fnext_event, 0, 2, 0, /*
 Return the next available event.
 Pass this object to `dispatch-event' to handle it.
 In most cases, you will want to use `next-command-event', which returns
-the next available \"user\" event (i.e. keypress, button-press,
+the next available "user" event (i.e. keypress, button-press,
 button-release, or menu selection) instead of this function.
 
 If EVENT is non-nil, it should be an event object and will be filled in
@@ -2014,7 +2002,7 @@ The returned event will be one of the following types:
    event is dispatched.  Eval events are generated by `enqueue-eval-event'
    or by certain other conditions happening.
 -- a magic event, indicating that some window-system-specific event
-   happened (such as an focus-change notification) that must be handled
+   happened (such as a focus-change notification) that must be handled
    synchronously with other events.  `dispatch-event' knows what to do with
    these events.
 */
@@ -2101,20 +2089,11 @@ The returned event will be one of the following types:
 	  redisplay ();
 	  if (!EQ (e, event))
 	    Fcopy_event (e, event);
-#ifdef DEBUG_XEMACS
-	  if (debug_emacs_events)
-	    {
-	      write_c_string ("(unread-command-events) ",
-			      Qexternal_debugging_output);
-	      print_internal (event, Qexternal_debugging_output, 1);
-	      write_c_string ("\n", Qexternal_debugging_output);
-	    }
-#endif
+	  DEBUG_PRINT_EMACS_EVENT ("unread-command-events", event);
 	}
     }
 
-  /* Do similar for unread-command-event (obsoleteness support).
-   */
+  /* Do similar for unread-command-event (obsoleteness support). */
   else if (!NILP (Vunread_command_event))
     {
       Lisp_Object e = Vunread_command_event;
@@ -2128,15 +2107,7 @@ The returned event will be one of the following types:
       if (!EQ (e, event))
 	Fcopy_event (e, event);
       redisplay ();
-#ifdef DEBUG_XEMACS
-      if (debug_emacs_events)
-	{
-	  write_c_string ("(unread-command-event) ",
-			  Qexternal_debugging_output);
-	  print_internal (event, Qexternal_debugging_output, 1);
-	  write_c_string ("\n", Qexternal_debugging_output);
-	}
-#endif
+      DEBUG_PRINT_EMACS_EVENT ("unread-command-event", event);
     }
 
   /* If we're executing a keyboard macro, take the next event from that,
@@ -2151,15 +2122,7 @@ The returned event will be one of the following types:
 	  pop_kbd_macro_event (event);  /* This throws past us at
 					   end-of-macro. */
 	  store_this_key = 1;
-#ifdef DEBUG_XEMACS
-	  if (debug_emacs_events)
-	    {
-	      write_c_string ("(keyboard macro) ",
-			      Qexternal_debugging_output);
-	      print_internal (event, Qexternal_debugging_output, 1);
-	      write_c_string ("\n", Qexternal_debugging_output);
-	    }
-#endif
+	  DEBUG_PRINT_EMACS_EVENT ("keyboard macro", event);
 	}
       /* Otherwise, read a real event, possibly from the
 	 command_event_queue, and update this-command-keys and
@@ -2245,10 +2208,8 @@ The returned event will be one of the following types:
     EMACS_GET_TIME (t);
     if (!CONSP (Vlast_input_time))
       Vlast_input_time = Fcons (Qnil, Qnil);
-    XCAR (Vlast_input_time)
-      = make_int ((EMACS_SECS (t) >> 16) & 0xffff);
-    XCDR (Vlast_input_time)
-      = make_int ((EMACS_SECS (t) >> 0)  & 0xffff);
+    XCAR (Vlast_input_time) = make_int ((EMACS_SECS (t) >> 16) & 0xffff);
+    XCDR (Vlast_input_time) = make_int ((EMACS_SECS (t) >> 0)  & 0xffff);
   }
 
   /* If this key came from the keyboard or from a keyboard macro, then
@@ -2284,7 +2245,7 @@ The returned event will be one of the following types:
 }
 
 DEFUN ("next-command-event", Fnext_command_event, 0, 2, 0, /*
-Return the next available \"user\" event.
+Return the next available "user" event.
 Pass this object to `dispatch-event' to handle it.
 
 If EVENT is non-nil, it should be an event object and will be filled in
@@ -2336,10 +2297,10 @@ reset_current_events (struct command_builder *command_builder)
 }
 
 DEFUN ("discard-input", Fdiscard_input, 0, 0, 0, /*
-Discard any pending \"user\" events.
+Discard any pending "user" events.
 Also cancel any kbd macro being defined.
 A user event is a key press, button press, button release, or
-\"other-user\" event (menu selection or scrollbar action).
+"misc-user" event (menu selection or scrollbar action).
 */
        ())
 {
@@ -3027,7 +2988,7 @@ menu_move_up (void)
 {
   widget_value *current, *prev;
   widget_value *entries;
-  
+
   current = lw_get_entries (False);
   entries = lw_get_entries (True);
   prev = NULL;
@@ -3069,16 +3030,16 @@ menu_move_down (void)
 {
   widget_value *current;
   widget_value *new;
-  
+
   current = lw_get_entries (False);
   new = current;
-  
+
   while (new->next)
     {
       new = new->next;
       if (new->name /*&& new->enabled*/) break;
     }
-  
+
   if (new==current||!(new->name/*||new->enabled*/))
     {
       new = lw_get_entries (True);
@@ -3093,7 +3054,7 @@ menu_move_down (void)
 	  return;
 	}
     }
-  
+
   lw_set_item (new);
 }
 
@@ -3103,7 +3064,7 @@ menu_move_left (void)
   int level = lw_menu_level ();
   int l = level;
   widget_value *current;
-  
+
   while (level >= 3)
     {
       --level;
@@ -3121,7 +3082,7 @@ menu_move_right (void)
   int level = lw_menu_level ();
   int l = level;
   widget_value *current;
-  
+
   while (level >= 3)
     {
       --level;
@@ -3138,13 +3099,13 @@ menu_select_item (widget_value *val)
 {
   if (val == NULL)
     val = lw_get_entries (False);
-  
+
   /* is match a submenu? */
-  
+
   if (val->contents)
     {
       /* enter the submenu */
-      
+
       lw_set_item (val);
       lw_push_menu (val->contents);
     }
@@ -3161,12 +3122,12 @@ static Lisp_Object
 command_builder_operate_menu_accelerator (struct command_builder *builder)
 {
   /* this function can GC */
-  
+
   struct console *con = XCONSOLE (Vselected_console);
   Lisp_Object evee = builder->most_current_event;
   Lisp_Object binding;
   widget_value *entries;
-  
+
   extern int lw_menu_accelerate; /* lwlib.c */
 
 #if 0
@@ -3174,7 +3135,7 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
     int i;
     Lisp_Object t;
     char buf[50];
-    
+
     t = builder->current_events;
     i = 0;
     while (!NILP (t))
@@ -3188,14 +3149,14 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
       }
   }
 #endif
-  
+
   /* menu accelerator keys don't go into keyboard macros */
   if (!NILP (con->defining_kbd_macro) && NILP (Vexecuting_macro))
     con->kbd_macro_ptr = con->kbd_macro_end;
-  
+
   /* don't echo menu accelerator keys */
   /*reset_key_echo (builder, 1);*/
-  
+
   if (!lw_menu_accelerate)
     {
       /* `convert' mouse display to keyboard display
@@ -3208,11 +3169,11 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
 	  lw_display_menu (CurrentTime);
 	}
     }
-  
+
   /* compare event to the current menu accelerators */
-  
+
   entries=lw_get_entries (True);
-  
+
   while (entries)
     {
       Lisp_Object accel;
@@ -3222,11 +3183,11 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
 	  if (event_matches_key_specifier_p (XEVENT (evee), accel))
 	    {
 	      /* a match! */
-	      
+
 	      menu_select_item (entries);
-	      
+
 	      if (lw_menu_active) lw_display_menu (CurrentTime);
-	      
+
 	      reset_this_command_keys (Vselected_console, 1);
 	      /*reset_command_builder_event_chain (builder);*/
 	      return Vmenu_accelerator_map;
@@ -3234,11 +3195,11 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
 	}
       entries = entries->next;
     }
-  
+
   /* try to look up event in menu-accelerator-map */
-  
+
   binding = event_binding_in (evee, Vmenu_accelerator_map, 1);
-  
+
   if (NILP (binding))
     {
       /* beep at user for undefined key */
@@ -3295,7 +3256,7 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
       else if (EQ (binding, Qmenu_escape))
 	{
 	  int level = lw_menu_level ();
-	  
+
 	  if (level > 2)
 	    {
 	      lw_pop_menu ();
@@ -3323,25 +3284,25 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
 	  return binding;
 	}
     }
-  
+
   if (lw_menu_active) lw_display_menu (CurrentTime);
-  
+
   reset_this_command_keys (Vselected_console, 1);
   /*reset_command_builder_event_chain (builder);*/
-  
+
   return Vmenu_accelerator_map;
 }
 
 static Lisp_Object
 menu_accelerator_junk_on_error (Lisp_Object errordata, Lisp_Object ignored)
 {
-  Vmenu_accelerator_prefix = Qnil;
+  Vmenu_accelerator_prefix    = Qnil;
   Vmenu_accelerator_modifiers = Qnil;
-  Vmenu_accelerator_enabled = Qnil;
+  Vmenu_accelerator_enabled   = Qnil;
   if (!NILP (errordata))
     {
       Lisp_Object args[2];
-      
+
       args[0] = build_string ("Error in menu accelerators (setting to nil)");
       /* #### This should call
 	 (with-output-to-string (display-error errordata))
@@ -3352,7 +3313,7 @@ menu_accelerator_junk_on_error (Lisp_Object errordata, Lisp_Object ignored)
 	 emacs_doprnt_string_lisp ((CONST Bufbyte *) "%s: %s",
 				   Qnil, -1, 2, args));
     }
-  
+
   return Qnil;
 }
 
@@ -3398,13 +3359,13 @@ command_builder_find_menu_accelerator (struct command_builder *builder)
   struct console *con = XCONSOLE (Vselected_console);
   struct frame *f = XFRAME (CONSOLE_SELECTED_FRAME (con));
   Widget menubar_widget;
-  
+
   /* compare entries in event0 against the menu prefix */
-  
+
   if ((!CONSOLE_X_P (XCONSOLE (builder->console))) || NILP (event0) ||
       XEVENT (event0)->event_type != key_press_event)
     return Qnil;
-  
+
   if (!NILP (Vmenu_accelerator_prefix))
     {
       event0 = condition_case_1 (Qerror,
@@ -3413,39 +3374,39 @@ command_builder_find_menu_accelerator (struct command_builder *builder)
 				 menu_accelerator_junk_on_error,
 				 Qnil);
     }
-  
+
   if (NILP (event0))
     return Qnil;
-  
+
   menubar_widget = FRAME_X_MENUBAR_WIDGET (f);
   if (menubar_widget
       && CONSP (Vmenu_accelerator_modifiers))
     {
       Lisp_Object fake;
-      Lisp_Object last;
+      Lisp_Object last = Qnil;
       struct gcpro gcpro1;
       Lisp_Object matchp;
-      
+
       widget_value *val;
       LWLIB_ID id = XPOPUP_DATA (f->menubar_data)->id;
-      
+
       val = lw_get_all_values (id);
       if (val)
 	{
 	  val = val->contents;
-	  
+
 	  fake = Fcopy_sequence (Vmenu_accelerator_modifiers);
 	  last = fake;
-	  
+
 	  while (!NILP (Fcdr (last)))
 	    last = Fcdr (last);
-	  
+
 	  Fsetcdr (last, Fcons (Qnil, Qnil));
 	  last = Fcdr (last);
 	}
-      
+
       fake = Fcons (Qnil, fake);
-      
+
       GCPRO1 (fake);
 
       while (val)
@@ -3464,35 +3425,35 @@ command_builder_find_menu_accelerator (struct command_builder *builder)
 	      if (!NILP (matchp))
 		{
 		  /* we found one! */
-		  
+
 		  lw_set_menu (menubar_widget, val);
 		  /* yah - yet another hack.
 		     pretend emacs timestamp is the same as an X timestamp,
 		     which for the moment it is.  (read events.h)
 		     */
 		  lw_map_menu (XEVENT (event0)->timestamp);
-		  
+
 		  if (val->contents)
 		    lw_push_menu (val->contents);
-		  
+
 		  lw_display_menu (CurrentTime);
-		  
+
 		  /* menu accelerator keys don't go into keyboard macros */
 		  if (!NILP (con->defining_kbd_macro) && NILP (Vexecuting_macro))
 		    con->kbd_macro_ptr = con->kbd_macro_end;
-		  
+
 		  /* don't echo menu accelerator keys */
 		  /*reset_key_echo (builder, 1);*/
 		  reset_this_command_keys (Vselected_console, 1);
 		  UNGCPRO;
-		  
+
 		  return Vmenu_accelerator_map;
 		}
 	    }
-	  
+
 	  val = val->next;
 	}
-      
+
       UNGCPRO;
     }
   return Qnil;
@@ -3509,17 +3470,17 @@ or by actions defined in menu-accelerator-map.
   struct frame *f = XFRAME (CONSOLE_SELECTED_FRAME (con));
   LWLIB_ID id = XPOPUP_DATA (f->menubar_data)->id;
   widget_value *val = lw_get_all_values (id);
-  
+
   val = val->contents;
   lw_set_menu (FRAME_X_MENUBAR_WIDGET (f), val);
   lw_map_menu (CurrentTime);
-  
+
   lw_display_menu (CurrentTime);
-  
+
   /* menu accelerator keys don't go into keyboard macros */
   if (!NILP (con->defining_kbd_macro) && NILP (Vexecuting_macro))
     con->kbd_macro_ptr = con->kbd_macro_end;
-  
+
   return Qnil;
 }
 #endif /* HAVE_X_WINDOWS && HAVE_MENUBARS */
@@ -3539,83 +3500,81 @@ munge_keymap_translate (struct command_builder *builder,
     {
       Lisp_Object result = munging_key_map_event_binding (suffix, munge);
 
-      if (!NILP (result))
+      if (NILP (result))
+	continue;
+
+      if (KEYMAPP (result))
 	{
-	  if (KEYMAPP (result))
-	    {
-	      if (NILP (builder->last_non_munged_event)
-		  && !has_normal_binding_p)
-		builder->last_non_munged_event =
-		  builder->most_current_event;
-	    }
-	  else
-	    builder->last_non_munged_event = Qnil;
-
-	  if (!KEYMAPP (result) && !VECTORP (result)
-	      && !STRINGP (result))
-	  {
-	    struct gcpro gcpro1;
-	    GCPRO1 (suffix);
-	    result = call1 (result, Qnil);
-	    UNGCPRO;
-	  }
-
-	  if (KEYMAPP (result))
-	    return result;
-
-	  if (VECTORP (result) || STRINGP (result))
-	    {
-	      Lisp_Object new_chain =
-		key_sequence_to_event_chain (result);
-	      Lisp_Object tempev;
-	      int n, tckn;
-
-	      /* If the first_mungeable_event of the other munger
-		 is within the events we're munging, then it will
-		 point to deallocated events afterwards, which is
-		 bad -- so make it point at the beginning of the
-		 munged events. */
-	      EVENT_CHAIN_LOOP (tempev, suffix)
-		{
-		  if (EQ (tempev, builder->munge_me[1 - munge].
-			  first_mungeable_event))
-		    {
-		      builder->munge_me[1 - munge].first_mungeable_event =
-			new_chain;
-		      break;
-		    }
-		}
-
-	      n = event_chain_count (suffix);
-	      command_builder_replace_suffix (builder, suffix, new_chain);
-	      builder->munge_me[munge].first_mungeable_event = Qnil;
-	      /* Now hork this-command-keys as well. */
-
-	      /* We just assume that the events we just replaced
-		 are sitting in copied form at the end of this-command-keys.
-		 If the user did weird things with `dispatch-event'
-		 this may not be the case, but at least we make
-		 sure we won't crash. */
-	      new_chain = copy_event_chain (new_chain);
-	      tckn = event_chain_count (Vthis_command_keys);
-	      if (tckn >= n)
-		{
-		  this_command_keys_replace_suffix
-		    (event_chain_nth (Vthis_command_keys, tckn - n),
-		     new_chain);
-		}
-
-	      result = command_builder_find_leaf_1 (builder);
-	      return result;
-	    }
-
-	  if (munge == MUNGE_ME_FUNCTION_KEY)
-	    signal_simple_error ("Invalid binding in function-key-map",
-				 result);
-	  else
-	    signal_simple_error ("Invalid binding in key-translation-map",
-				 result);
+	  if (NILP (builder->last_non_munged_event)
+	      && !has_normal_binding_p)
+	    builder->last_non_munged_event = builder->most_current_event;
 	}
+      else
+	builder->last_non_munged_event = Qnil;
+
+      if (!KEYMAPP (result) &&
+	  !VECTORP (result) &&
+	  !STRINGP (result))
+	{
+	  struct gcpro gcpro1;
+	  GCPRO1 (suffix);
+	  result = call1 (result, Qnil);
+	  UNGCPRO;
+	  if (NILP (result))
+	    return Qnil;
+	}
+
+      if (KEYMAPP (result))
+	return result;
+
+      if (VECTORP (result) || STRINGP (result))
+	{
+	  Lisp_Object new_chain = key_sequence_to_event_chain (result);
+	  Lisp_Object tempev;
+	  int n, tckn;
+
+	  /* If the first_mungeable_event of the other munger is
+	     within the events we're munging, then it will point to
+	     deallocated events afterwards, which is bad -- so make it
+	     point at the beginning of the munged events. */
+	  EVENT_CHAIN_LOOP (tempev, suffix)
+	    {
+	      Lisp_Object *mungeable_event =
+		&builder->munge_me[1 - munge].first_mungeable_event;
+	      if (EQ (tempev, *mungeable_event))
+		{
+		  *mungeable_event = new_chain;
+		  break;
+		}
+	    }
+
+	  n = event_chain_count (suffix);
+	  command_builder_replace_suffix (builder, suffix, new_chain);
+	  builder->munge_me[munge].first_mungeable_event = Qnil;
+	  /* Now hork this-command-keys as well. */
+
+	  /* We just assume that the events we just replaced are
+	     sitting in copied form at the end of this-command-keys.
+	     If the user did weird things with `dispatch-event' this
+	     may not be the case, but at least we make sure we won't
+	     crash. */
+	  new_chain = copy_event_chain (new_chain);
+	  tckn = event_chain_count (Vthis_command_keys);
+	  if (tckn >= n)
+	    {
+	      this_command_keys_replace_suffix
+		(event_chain_nth (Vthis_command_keys, tckn - n),
+		 new_chain);
+	    }
+
+	  result = command_builder_find_leaf_1 (builder);
+	  return result;
+	}
+
+      signal_simple_error ((munge == MUNGE_ME_FUNCTION_KEY ?
+			    "Invalid binding in function-key-map" :
+			    "Invalid binding in key-translation-map"),
+			   result);
     }
 
   return Qnil;
@@ -3638,29 +3597,24 @@ command_builder_find_leaf (struct command_builder *builder,
   Lisp_Object result;
   Lisp_Object evee = builder->current_events;
 
-  if (allow_misc_user_events_p
-      && (NILP (XEVENT_NEXT (evee)))
-      && (XEVENT_TYPE (evee) == misc_user_event))
-    {
-      Lisp_Object fn  = XEVENT (evee)->event.eval.function;
-      Lisp_Object arg = XEVENT (evee)->event.eval.object;
-      return list2 (fn, arg);
-    }
-
-  
   if (XEVENT_TYPE (evee) == misc_user_event)
-    return Qnil;
+    {
+      if (allow_misc_user_events_p && (NILP (XEVENT_NEXT (evee))))
+	return list2 (XEVENT (evee)->event.eval.function,
+		      XEVENT (evee)->event.eval.object);
+      else
+	return Qnil;
+    }
 
   /* if we're currently in a menu accelerator, check there for further events */
 #if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBARS)
   if (lw_menu_active)
     {
-      result = command_builder_operate_menu_accelerator (builder);
-      return result;
+      return command_builder_operate_menu_accelerator (builder);
     }
   else
     {
-      result=Qnil;
+      result = Qnil;
       if (EQ (Vmenu_accelerator_enabled, Qmenu_force))
 	result = command_builder_find_menu_accelerator (builder);
       if (NILP (result))
@@ -4168,20 +4122,16 @@ lookup_command_event (struct command_builder *command_builder,
 	      maybe_echo_keys (command_builder, 0);
 	  }
 	else if (!NILP (Vquit_flag)) {
-	  Lisp_Object event = Fmake_event();
-	  struct Lisp_Event *e = XEVENT (event);
-	  struct console *con;
-	  int ch;
-	  
+	  Lisp_Object quit_event = Fmake_event();
+	  struct Lisp_Event *e = XEVENT (quit_event);
 	  /* if quit happened during menu acceleration, pretend we read it */
-	  con = XCONSOLE (Fselected_console ());
-	  
-	  ch = CONSOLE_QUIT_CHAR (con);
-	  
+	  struct console *con = XCONSOLE (Fselected_console ());
+	  int ch = CONSOLE_QUIT_CHAR (con);
+
 	  character_to_event (ch, e, con, 1);
 	  e->channel = make_console (con);
-	  
-	  enqueue_command_event (event);
+
+	  enqueue_command_event (quit_event);
 	  Vquit_flag = Qnil;
 	}
       }
@@ -4213,16 +4163,21 @@ execute_command_event (struct command_builder *command_builder,
   GCPRO1 (event); /* event may be freshly created */
   reset_current_events (command_builder);
 
-  if (XEVENT (event)->event_type == key_press_event)
-    Vcurrent_mouse_event = Qnil;
-  else if (XEVENT (event)->event_type == button_press_event
-	   || XEVENT (event)->event_type == button_release_event
-	   || XEVENT (event)->event_type == misc_user_event)
-    Vcurrent_mouse_event = Fcopy_event (event, Qnil);
+  switch (XEVENT (event)->event_type)
+    {
+    case key_press_event:
+      Vcurrent_mouse_event = Qnil;
+      break;
+    case button_press_event:
+    case button_release_event:
+    case misc_user_event:
+      Vcurrent_mouse_event = Fcopy_event (event, Qnil);
+      break;
+    default: break;
+    }
 
-  /* Store the last-command-event.  The semantics of this is that it is
-     the last event most recently involved in command-lookup.
-     */
+  /* Store the last-command-event.  The semantics of this is that it
+     is the last event most recently involved in command-lookup. */
   if (!EVENTP (Vlast_command_event))
     Vlast_command_event = Fmake_event ();
   if (XEVENT (Vlast_command_event)->event_type == dead_event)
@@ -4235,20 +4190,16 @@ execute_command_event (struct command_builder *command_builder,
     Fcopy_event (event, Vlast_command_event);
 
   /* Note that last-command-char will never have its high-bit set, in
-     an effort to sidestep the ambiguity between M-x and oslash.
-     */
+     an effort to sidestep the ambiguity between M-x and oslash. */
   Vlast_command_char = Fevent_to_character (Vlast_command_event,
 					    Qnil, Qnil, Qnil);
 
   /* Actually call the command, with all sorts of hair to preserve or clear
      the echo-area and region as appropriate and call the pre- and post-
-     command-hooks.
-     */
+     command-hooks. */
   {
     int old_kbd_macro = con->kbd_macro_end;
-    struct window *w;
-
-    w = XWINDOW (Fselected_window (Qnil));
+    struct window *w = XWINDOW (Fselected_window (Qnil));
 
     /* We're executing a new command, so the old value is irrelevant. */
     zmacs_region_stays = 0;
@@ -4272,29 +4223,28 @@ execute_command_event (struct command_builder *command_builder,
       }
     else
       {
-#if 0
-	call3 (Qcommand_execute, Vthis_command, Qnil, Qnil);
-#else
 	Fcommand_execute (Vthis_command, Qnil, Qnil);
-#endif
       }
 
     post_command_hook ();
 
-    if (!NILP (con->prefix_arg))
+#if 0 /* #### here was an attempted fix that didn't work */
+    if (XEVENT (event)->event_type == misc_user_event)
+      ;
+    else
+#endif
+      if (!NILP (con->prefix_arg))
       {
 	/* Commands that set the prefix arg don't update last-command, don't
 	   reset the echoing state, and don't go into keyboard macros unless
-	   followed by another command.
-	   */
+	   followed by another command. */
 	maybe_echo_keys (command_builder, 0);
 
 	/* If we're recording a keyboard macro, and the last command
 	   executed set a prefix argument, then decrement the pointer to
 	   the "last character really in the macro" to be just before this
 	   command.  This is so that the ^U in "^U ^X )" doesn't go onto
-	   the end of macro.
-	   */
+	   the end of macro. */
 	if (!NILP (con->defining_kbd_macro))
 	  con->kbd_macro_end = old_kbd_macro;
       }
@@ -4449,9 +4399,8 @@ Magic events are handled as necessary.
     case button_release_event:
     case key_press_event:
       {
-	Lisp_Object leaf;
+	Lisp_Object leaf = lookup_command_event (command_builder, event, 1);
 
-	leaf = lookup_command_event (command_builder, event, 1);
 	if (KEYMAPP (leaf))
 	  /* Incomplete key sequence */
 	  break;
@@ -4486,8 +4435,7 @@ Magic events are handled as necessary.
 		XEVENT_TYPE (terminal) = button_release_event;
 		/* If the "up" version is bound, don't complain. */
 		no_bitching
-		  = !NILP (command_builder_find_leaf
-			   (command_builder, 0));
+		  = !NILP (command_builder_find_leaf (command_builder, 0));
 		/* Undo the temporary changes we just made. */
 		XEVENT_TYPE (terminal) = button_press_event;
 		if (no_bitching)
@@ -4516,15 +4464,13 @@ Magic events are handled as necessary.
 	      }
 
 	    /* Complain that the typed sequence is not defined, if this is the
-	       kind of sequence that warrants a complaint.
-	       */
+	       kind of sequence that warrants a complaint. */
 	    XCONSOLE (console)->defining_kbd_macro = Qnil;
 	    XCONSOLE (console)->prefix_arg = Qnil;
 	    /* Don't complain about undefined button-release events */
 	    if (XEVENT_TYPE (terminal) != button_release_event)
 	      {
-		Lisp_Object keys =
-		  current_events_into_vector (command_builder);
+		Lisp_Object keys = current_events_into_vector (command_builder);
 		struct gcpro gcpro1;
 
 		/* Run the pre-command-hook before barfing about an undefined
@@ -4610,7 +4556,7 @@ Magic events are handled as necessary.
 
 	/* clear the echo area */
 	reset_key_echo (command_builder, 1);
-	
+
 	command_builder->self_insert_countdown = 0;
 	if (NILP (XCONSOLE (console)->prefix_arg)
 	    && NILP (Vexecuting_macro)
@@ -4886,7 +4832,7 @@ syms_of_event_stream (void)
 
   defsymbol (&Qmenu_force, "menu-force");
   defsymbol (&Qmenu_fallback, "menu-fallback");
-  
+
   defsymbol (&Qmenu_quit, "menu-quit");
   defsymbol (&Qmenu_up, "menu-up");
   defsymbol (&Qmenu_down, "menu-down");
@@ -5056,7 +5002,7 @@ to this value, you must use `copy-event'.
 
   DEFVAR_LISP ("current-mouse-event", &Vcurrent_mouse_event /*
 The mouse-button event which invoked this command, or nil.
-This is usually what `(interactive \"e\")' returns.
+This is usually what `(interactive "e")' returns.
 */ );
   Vcurrent_mouse_event = Qnil;
 
@@ -5228,7 +5174,7 @@ menu to become active.
 See also menu-accelerator-enabled and menu-accelerator-prefix.
 */ );
   Vmenu_accelerator_modifiers = list1 (Qmeta);
-  
+
   DEFVAR_LISP ("menu-accelerator-enabled", &Vmenu_accelerator_enabled /*
 Whether menu accelerator keys can cause the menubar to become active.
 If 'menu-force or 'menu-fallback, then menu accelerator keys can
@@ -5238,7 +5184,7 @@ accelerator keys can be used regardless of the value of this variable.
 menu-force is used to indicate that the menu accelerator key takes
 precedence over bindings in the current keymap(s).  menu-fallback means
 that bindings in the current keymap take precedence over menu accelerator keys.
-Thus a top level menu with an accelerator of \"T\" would be activated on a
+Thus a top level menu with an accelerator of "T" would be activated on a
 keypress of Meta-t if menu-accelerator-enabled is menu-force.
 However, if menu-accelerator-enabled is menu-fallback, then
 Meta-t will not activate the menubar and will instead run the function

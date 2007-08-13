@@ -257,6 +257,8 @@ verbose=
 x_includes=NONE
 x_libraries=NONE
 CDPATH=.; export CDPATH
+dnl this will serve for testing if a default value sould be given
+package_path=NONE
 
 dnl Allow this script to work with zsh, by setting sh emulation options
 if test -n "$ZSH_VERSION"; then
@@ -279,8 +281,6 @@ sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
 libdir='${{exec_prefix}}/lib'
-dnl The following gives NONE/lib/xemacs/packages as the first package
-dnl package_path=${prefix}/lib/xemacs/packages:~/.xemacs
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 infodir='${prefix}/info'
@@ -489,6 +489,9 @@ Additional features:
 --mail-locking=TYPE (*)	Specify the locking to be used by movemail to prevent
 			concurrent updates of mail spool files. Valid types
 			are \`lockf', \`flock', and \`file'.
+--package-path=PATH     A list of blank separated directories for finding 
+                        packages to dump with xemacs.
+			Defaults to \`$prefix/lib/xemacs/packages ~/.xemacs'
 
 Internationalization options:
 
@@ -2361,9 +2364,11 @@ EOF
   dnl autodetect -lXmu
   test -z "$with_xmu" && { AC_CHECK_LIB(Xmu, XmuReadBitmapDataFromFile,
                            with_xmu=yes, with_xmu=no) }
-  if test "$with_xmu" = "no"
-  then XE_ADD_OBJS(xmu.o)
-  else XE_PREPEND(-lXmu, libs_x)
+  if test "$with_xmu" = "no"; then
+    XE_ADD_OBJS(xmu.o)
+  else 
+    XE_PREPEND(-lXmu, libs_x)
+    AC_DEFINE(HAVE_XMU)
   fi
 
   dnl Autodetect -lXbsd
@@ -3368,11 +3373,13 @@ AC_SUBST(RANLIB)
 AC_SUBST(dynodump_arch)
 
 
-dnl change blanks to colons in package path, and make available to config.h
-if test -n "$package_path"; then
-  package_path=`echo $package_path | sed 'y/ /:/'`
-  AC_DEFINE_UNQUOTED(PACKAGE_PATH, "$package_path")
+dnl if --package-path wasn't passed to configure, give the default value
+if test "x${package_path}" = "xNONE" ; then
+	package_path="${prefix}/lib/xemacs/packages:~/.xemacs"
 fi
+dnl change blanks to colons in package path, and make available to config.h
+package_path=`echo $package_path | sed 'y/ /:/'`
+AC_DEFINE_UNQUOTED(PACKAGE_PATH, "$package_path")
 
 AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION, "$canonical")
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "${ac_configure_args}")

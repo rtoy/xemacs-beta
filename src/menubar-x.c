@@ -85,7 +85,7 @@ static int set_frame_menubar (struct frame *f,
    strdup().  */
 
 static widget_value *
-menu_item_descriptor_to_widget_value_1 (Lisp_Object desc, 
+menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 					int menu_type, int deep_p,
 					int filter_p,
 					int depth)
@@ -118,7 +118,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
       if (wv->type == SEPARATOR_TYPE)
 	{
 	  wv->value = menu_separator_style (string_chars);
-	} 
+	}
       else
 	{
 	  wv->name = string_chars;
@@ -162,7 +162,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      desc = Fcdr (desc);
 	      if (NILP (desc))
 		signal_simple_error ("keyword in menu lacks a value",
-				     cascade); 
+				     cascade);
 	      val = Fcar (desc);
 	      desc = Fcdr (desc);
 	      if (EQ (key, Q_included))
@@ -179,7 +179,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		  else
 		    signal_simple_error ("bad keyboard accelerator", val);
 		}
-	      else 
+	      else
 		signal_simple_error ("unknown menu cascade keyword", cascade);
 	    }
 
@@ -195,7 +195,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 #ifdef LWLIB_MENUBARS_LUCID
 	      if (filter_p || depth == 0)
 		{
-#endif 
+#endif
 		  desc = call1_trapping_errors ("Error in menubar filter",
 						hook_fn, desc);
 		  if (UNBOUNDP (desc))
@@ -231,7 +231,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      sep_wv->type = SEPARATOR_TYPE;
 	      sep_wv->value = menu_separator_style ("==");
 	      sep_wv->next = 0;
-		  
+
 	      wv->contents = title_wv;
 	      prev = sep_wv;
 	    }
@@ -301,12 +301,12 @@ menu_item_done:
 }
 
 static widget_value *
-menu_item_descriptor_to_widget_value (Lisp_Object desc, 
+menu_item_descriptor_to_widget_value (Lisp_Object desc,
 				      int menu_type, /* if this is a menubar,
 						     popup or sub menu */
 				      int deep_p,    /*  */
 				      int filter_p)  /* if :filter forms
-							should run now */ 
+							should run now */
 {
   widget_value *wv;
   int count = specpdl_depth ();
@@ -345,7 +345,7 @@ restore_in_menu_callback (Lisp_Object val)
    If client_data != NULL, then client_data is a (widget_value *) and
    client_data->data is a Lisp_Object pointing to a lisp submenu description
    that must be converted into widget_values.  *client_data is destructively
-   modified. 
+   modified.
 
    #### Stig thinks that there may be a GC problem here due to the
    fact that pre_activate_callback() is called multiple times, but I
@@ -429,7 +429,7 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 	  (!CONSP (Vactivate_menubar_hook) ||
 	   EQ (XCAR (Vactivate_menubar_hook), Qlambda)))
 	Vactivate_menubar_hook = Fcons (Vactivate_menubar_hook, Qnil);
-      
+
       GCPRO1 (rest);
       for (rest = Vactivate_menubar_hook; !NILP (rest); rest = Fcdr (rest))
 	if (!EQ (call0 (XCAR (rest)), Qt))
@@ -445,7 +445,7 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 	 that an INCREMENTAL_TYPE widget_value can be recreated...  Hmmmmm. */
       if (any_changes ||
 	  !XFRAME_MENUBAR_DATA (f)->menubar_contents_up_to_date)
-#endif 
+#endif
 	set_frame_menubar (f, 1, 0);
       DEVICE_X_MOUSE_TIMESTAMP (XDEVICE (FRAME_DEVICE (f))) =
 	DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (XDEVICE (FRAME_DEVICE (f))) =
@@ -542,11 +542,11 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
   data = compute_menubar_data (f, menubar, deep_p);
   if (!data || (!data->next && !data->contents))
     abort ();
-  
+
   if (NILP (FRAME_MENUBAR_DATA (f)))
     {
       struct popup_data *mdata =
-	alloc_lcrecord (sizeof (struct popup_data), lrecord_popup_data);
+	alloc_lcrecord_type (struct popup_data, lrecord_popup_data);
 
       mdata->id = new_lwlib_id ();
       mdata->last_menubar_buffer = Qnil;
@@ -584,7 +584,7 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
       lw_modify_all_widgets (id, data, deep_p ? True : False);
     }
   free_popup_widget_value_tree (data);
-	  
+
   XFRAME_MENUBAR_DATA (f)->menubar_contents_up_to_date = deep_p;
   XFRAME_MENUBAR_DATA (f)->last_menubar_buffer =
     XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer;
@@ -632,7 +632,7 @@ popup_menu_down_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 
 static void
 make_dummy_xbutton_event (XEvent *dummy,
-			  Widget daddy,	
+			  Widget daddy,
 			  struct Lisp_Event *eev)
      /* NULL for eev means query pointer */
 {
@@ -703,7 +703,7 @@ x_update_frame_menubar_internal (struct frame *f)
   Boolean menubar_visibility_changed;
   Cardinal new_num_top_widgets = 1; /* for the menubar */
   Widget container = FRAME_X_CONTAINER_WIDGET (f);
-  
+
 #ifdef ENERGIZE
   int *old_sheets = FRAME_X_CURRENT_PSHEETS (f);
   int *new_sheets = FRAME_X_DESIRED_PSHEETS (f);
@@ -743,7 +743,7 @@ x_update_frame_menubar_internal (struct frame *f)
   if (menubar_visibility_changed)
     (menubar_will_be_visible ? XtManageChild : XtUnmanageChild)
       (FRAME_X_MENUBAR_WIDGET (f));
-		 
+
 
 #ifdef ENERGIZE
   /* Set debugger panel visibility */
@@ -859,7 +859,7 @@ x_free_frame_menubars (struct frame *f)
   Widget menubar_widget;
 
   assert (FRAME_X_P (f));
-  
+
   menubar_widget = FRAME_X_MENUBAR_WIDGET (f);
   if (menubar_widget)
     {
@@ -948,7 +948,7 @@ x_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   data = menu_item_descriptor_to_widget_value (menu_desc, POPUP_TYPE, 1, 1);
 
   if (! data) error ("no menu");
-  
+
   menu_id = new_lwlib_id ();
   menu = lw_create_widget ("popup", "popup" /* data->name */, menu_id, data,
 			   parent, 1, 0,
@@ -964,7 +964,7 @@ x_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
      sequence of magic-events (destined for the popup-menu widget) to begin.
      Eventually, a menu item is selected, and a menu-event blip is pushed onto
      the end of the input stream, which is then executed by the event loop.
-     
+
      So there are two command-events, with a bunch of magic-events between
      them.  We don't want the *first* command event to alter the state of the
      region, so that the region can be available as an argument for the second

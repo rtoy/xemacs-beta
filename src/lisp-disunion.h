@@ -25,12 +25,9 @@ Boston, MA 02111-1307, USA.  */
 
 #define Qzero 0
 
-/* #define Lisp_Object int */
 typedef EMACS_INT Lisp_Object;
 
-#ifndef VALMASK
-# define VALMASK ((1L << (VALBITS)) - 1L)
-#endif
+#define VALMASK ((1L << (VALBITS)) - 1L)
 #define GCTYPEMASK ((1L << (GCTYPEBITS)) - 1L)
 
 /* comment from FSFmacs (perhaps not accurate here):
@@ -48,32 +45,16 @@ typedef EMACS_INT Lisp_Object;
 
 
 /* These macros extract various sorts of values from a Lisp_Object.
- For example, if tem is a Lisp_Object whose type is Lisp_Cons,
- XCONS (tem) is the struct Lisp_Cons * pointing to the memory for that cons. */
+   For example, if tem is a Lisp_Object whose type is Lisp_Type_Cons,
+   XCONS (tem) is the struct Lisp_Cons * pointing to the memory for that cons. */
 
-/* One need to override this if there must be high bits set in data space
+/* One needs to override this if there must be high bits set in data space
    (doing the result of the below & ((1 << (GCTYPE + 1)) - 1) would work
-    on all machines, but would penalise machines which don't need it)
- */
-#ifndef XTYPE
-# define XTYPE(a) ((enum Lisp_Type) ((a) >> VALBITS))
-#endif
-
-#ifndef XSETTYPE
-# define XSETTYPE(a,b) ((a)  =  XUINT (a) | ((EMACS_INT)(b) << VALBITS))
-#endif
+   on all machines, but would penalize machines which don't need it) */
+#define XTYPE(a) ((enum Lisp_Type) ((a) >> VALBITS))
 
 #define EQ(x,y) ((x) == (y))
 #define GC_EQ(x,y) (XGCTYPE (x) == XGCTYPE (y) && XPNTR (x) == XPNTR (y))
-
-#if 0
-/* XFASTINT is error-prone and saves a few instructions at best,
-   so there's really no point to it.  Just use XINT() or make_int()
-   instead. --ben */
-/* Use XFASTINT for fast retrieval and storage of integers known
-  to be positive.  This takes advantage of the fact that Lisp_Int is 0.  */
-#define XFASTINT(a) (a)
-#endif /* 0 */
 
 /* Extract the value of a Lisp_Object as a signed integer.  */
 
@@ -84,12 +65,9 @@ typedef EMACS_INT Lisp_Object;
 /* Extract the value as an unsigned integer.  This is a basis
    for extracting it as a pointer to a structure in storage.  */
 
-#ifndef XUINT
-# define XUINT(a) ((a) & VALMASK)
-#endif
+#define XUINT(a) ((a) & VALMASK)
 
-#ifndef XPNTR
-# ifdef HAVE_SHM
+#ifdef HAVE_SHM
 /* In this representation, data is found in two widely separated segments.  */
 extern int pure_size;
 #  define XPNTR(a) \
@@ -100,52 +78,30 @@ extern int pure_size;
    In the diffs I was given, it checked for ptr = 0
    and did not adjust it in that case.
    But I don't think that zero should ever be found
-   in a Lisp object whose data type says it points to something.
- */
+   in a Lisp object whose data type says it points to something. */
 #   define XPNTR(a) (XUINT (a) | DATA_SEG_BITS)
 #  else
 #   define XPNTR(a) XUINT (a)
 #  endif
-# endif /* not HAVE_SHM */
-#endif /* no XPNTR */
+#endif /* not HAVE_SHM */
 
-#ifndef XSETINT
-# if 1 /* Back in the dark ages, this def "broke things" */
-#  define XSETINT(a, b) do { XSETOBJ (a, Lisp_Int, b); } while (0)
-# else /* alternate def to work around some putative bug with the above */
-#  define XSETINT(a, b) do { (a) = (((a) & ~VALMASK) | ((b) & VALMASK)); \
-			   } while (0)
-# endif
-#endif /* !XSETINT */
+#define XSETINT(a, b) XSETOBJ (a, Lisp_Type_Int, b)
 
-#ifndef XSETUINT
-#define XSETUINT(a, b) XSETINT (a, b)
-#endif
-
-#ifndef XSETPNTR
-#define XSETPNTR(a, b) XSETINT (a, b)
-#endif
-
-/* characters do not need to sign extend so there's no need for special
-   futzing like with ints. */
-#define XSETCHAR(a, b) do { XSETOBJ (a, Lisp_Char, b); } while (0)
+#define XSETCHAR(var, value) XSETOBJ (var, Lisp_Type_Char, value)
 
 /* XSETOBJ was formerly named XSET.  The name change was made to catch
    C code that attempts to use this macro.  You should always use the
    individual settor macros (XSETCONS, XSETBUFFER, etc.) instead. */
 
-#ifndef XSETOBJ
-# define XSETOBJ(var,type,ptr)						\
-   do { (var) = (((EMACS_INT) (type) << VALBITS)			\
-                 + ((EMACS_INT) (ptr) & VALMASK));			\
-      } while(0)
-#endif
+#define XSETOBJ(var, type_tag, value)			\
+ ((void) ((var) = (((EMACS_INT) (type_tag) << VALBITS)	\
+                 + ((EMACS_INT) (value) & VALMASK))))
 
 /* During garbage collection, XGCTYPE must be used for extracting types
- so that the mark bit is ignored.  XMARKBIT accesses the markbit.
- Markbits are used only in particular slots of particular structure types.
- Other markbits are always zero.
- Outside of garbage collection, all mark bits are always zero.  */
+   so that the mark bit is ignored.  XMARKBIT accesses the markbit.
+   Markbits are used only in particular slots of particular structure types.
+   Other markbits are always zero.
+   Outside of garbage collection, all mark bits are always zero.  */
 
 #ifndef XGCTYPE
 # define XGCTYPE(a) ((enum Lisp_Type) (((a) >> VALBITS) & GCTYPEMASK))
@@ -153,36 +109,20 @@ extern int pure_size;
 
 #if ((VALBITS) + (GCTYPEBITS)) == ((LONGBITS) - 1L)
 /* Make XMARKBIT faster if mark bit is sign bit.  */
-# ifndef XMARKBIT
-#  define XMARKBIT(a) ((a) < 0L)
-# endif
+# define XMARKBIT(a) ((a) < 0L)
+#else
+# define XMARKBIT(a) ((a) & (MARKBIT))
 #endif /* markbit is sign bit */
 
-#ifndef XMARKBIT
-# define XMARKBIT(a) ((a) & (MARKBIT))
-#endif
-
-#ifndef XSETMARKBIT
-#define XSETMARKBIT(a,b) \
-  do { ((a) = ((a) & ~(MARKBIT)) | ((b) ? (MARKBIT) : 0)); } while (0)
-#endif
-
-#ifndef XMARK
-# define XMARK(a) do { ((a) |= (MARKBIT)); } while (0)
-#endif
-
-#ifndef XUNMARK
-/* no 'do {} while' because this is used in a mondo macro in lrecord.h */
-# define XUNMARK(a) ((a) &= (~(MARKBIT)))
-#endif
+# define XMARK(a) ((void) ((a) |= (MARKBIT)))
+# define XUNMARK(a) ((void) ((a) &= (~(MARKBIT))))
 
 /* Use this for turning a (void *) into a Lisp_Object, as when the
   Lisp_Object is passed into a toolkit callback function */
-#define VOID_TO_LISP(larg,varg) \
-  do { ((larg) = ((Lisp_Object) (varg))); } while (0)
+#define VOID_TO_LISP(larg,varg) ((void) ((larg) = ((Lisp_Object) (varg))))
 #define CVOID_TO_LISP VOID_TO_LISP
 
-/* Use this for turning a Lisp_Object into a  (void *), as when the
+/* Use this for turning a Lisp_Object into a (void *), as when the
    Lisp_Object is passed into a toolkit callback function */
 #define LISP_TO_VOID(larg) ((void *) (larg))
 #define LISP_TO_CVOID(varg) ((CONST void *) (larg))

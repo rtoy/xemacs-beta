@@ -185,7 +185,7 @@ If nil, such files are not marked.")
 (defun dired-shell-quote (filename)
   ;; Quote a file name for inferior shell (see variable shell-file-name).
   ;; Quote everything except POSIX filename characters.
-  ;; This should be safe enough even for really wierd shells.
+  ;; This should be safe enough even for really weird shells.
   (let ((result "") (start 0) end)
     (while (string-match "[^---0-9a-zA-Z_./]" filename start)
       (setq end (match-beginning 0)

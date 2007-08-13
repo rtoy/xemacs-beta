@@ -1113,17 +1113,18 @@ Return the timestamp of the event object EVENT.
 		      XEVENT (event)->timestamp);
 }
 
-#define CHECK_EVENT_TYPE(e,t1,sym)		\
-{ CHECK_LIVE_EVENT (e);				\
+#define CHECK_EVENT_TYPE(e,t1,sym) do {		\
+  CHECK_LIVE_EVENT (e);				\
   if (XEVENT(e)->event_type != (t1))		\
-     e = wrong_type_argument ((sym),(e));	\
-}
+    e = wrong_type_argument ((sym),(e));	\
+} while (0)
 
-#define CHECK_EVENT_TYPE2(e,t1,t2,sym)					\
-{ CHECK_LIVE_EVENT (e);							\
-  if (XEVENT(e)->event_type != (t1) && XEVENT(e)->event_type != (t2))	\
-     e = wrong_type_argument ((sym),(e));				\
-}
+#define CHECK_EVENT_TYPE2(e,t1,t2,sym) do {	\
+  CHECK_LIVE_EVENT (e);				\
+  if (XEVENT(e)->event_type != (t1) &&		\
+      XEVENT(e)->event_type != (t2))		\
+    e = wrong_type_argument ((sym),(e));	\
+} while (0)
 
 DEFUN ("event-key", Fevent_key, 1, 1, 0, /*
 Return the Keysym of the key-press event EVENT.
@@ -1374,7 +1375,7 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
     ret_w = 0;
 
   /* #### pixel_to_glyph_translation() sometimes returns garbage...
-     The word has type Lisp_Record (presumably meaning `extent') but the
+     The word has type Lisp_Type_Record (presumably meaning `extent') but the
      pointer points to random memory, often filled with 0, sometimes not.
    */
   /* #### Chuck, do we still need this crap? */

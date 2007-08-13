@@ -114,7 +114,7 @@ width_run_cache_on_off (struct buffer *buf)
 
 
 /* Cancel any recorded value of the horizontal position.  */
- 
+
 void
 invalidate_current_column (void)
 {
@@ -243,7 +243,7 @@ If BUFFER is nil, the current buffer is assumed.
     CHECK_INT (minimum);
 
   XSETBUFFER (buffer, buf);
-  
+
   fromcol = current_column (buf);
   mincol = fromcol + XINT (minimum);
   if (mincol < XINT (col)) mincol = XINT (col);
@@ -252,7 +252,7 @@ If BUFFER is nil, the current buffer is assumed.
     return make_int (mincol);
 
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
-  
+
   if (!NILP (Fextent_at (make_int (BUF_PT (buf)), buffer, Qinvisible,
 			 Qnil, Qnil)))
     {
@@ -261,7 +261,7 @@ If BUFFER is nil, the current buffer is assumed.
       opoint = BUF_PT (buf);
       if (last_visible >= BUF_BEGV (buf))
 	BUF_SET_PT (buf, last_visible);
-      else 
+      else
         error ("Visible portion of buffer not modifiable");
     }
 

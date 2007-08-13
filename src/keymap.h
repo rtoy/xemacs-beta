@@ -42,7 +42,7 @@ extern Lisp_Object munging_key_map_event_binding (Lisp_Object event0,
 
 extern Lisp_Object Fkey_description (Lisp_Object keys);
 extern Lisp_Object Fsingle_key_description (Lisp_Object key);
-extern Lisp_Object Fwhere_is_internal (Lisp_Object definition, 
+extern Lisp_Object Fwhere_is_internal (Lisp_Object definition,
                                        Lisp_Object keymaps,
                                        Lisp_Object firstonly,
                                        Lisp_Object noindirect,

@@ -187,15 +187,16 @@ static void mule_decode (Lstream *decoding, CONST unsigned char *src,
 static void mule_encode (Lstream *encoding, CONST unsigned char *src,
 			 unsigned_char_dynarr *dst, unsigned int n);
 
+typedef struct codesys_prop codesys_prop;
 struct codesys_prop
 {
   Lisp_Object sym;
   int prop_type;
 };
 
-typedef struct codesys_prop_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct codesys_prop);
+  Dynarr_declare (codesys_prop);
 } codesys_prop_dynarr;
 
 codesys_prop_dynarr *the_codesys_prop_dynarr;
@@ -383,8 +384,8 @@ same format when it is written out to a file or process.
 For example, many ISO2022-compliant coding systems (such as Compound
 Text, which is used for inter-client data under the X Window System)
 use escape sequences to switch between different charsets -- Japanese
-Kanji, for example, is invoked with \"ESC $ ( B\"; ASCII is invoked
-with \"ESC ( B\"; and Cyrillic is invoked with \"ESC - L\".  See
+Kanji, for example, is invoked with "ESC $ ( B"; ASCII is invoked
+with "ESC ( B"; and Cyrillic is invoked with "ESC - L".  See
 `make-coding-system' for more information.
 
 Coding systems are normally identified using a symbol, and the
@@ -444,10 +445,11 @@ add_coding_system_to_list_mapper (CONST void *hash_key, void *hash_contents,
   /* This function can GC */
   Lisp_Object key, contents;
   Lisp_Object *coding_system_list;
-  struct coding_system_list_closure *chcl = coding_system_list_closure;
+  struct coding_system_list_closure *cscl =
+    (struct coding_system_list_closure *) coding_system_list_closure;
   CVOID_TO_LISP (key, hash_key);
   VOID_TO_LISP (contents, hash_contents);
-  coding_system_list = chcl->coding_system_list;
+  coding_system_list = cscl->coding_system_list;
 
   *coding_system_list = Fcons (XCODING_SYSTEM (contents)->name,
 			       *coding_system_list);
@@ -483,10 +485,8 @@ Return the name of the given coding system.
 static struct Lisp_Coding_System *
 allocate_coding_system (enum coding_system_type type, Lisp_Object name)
 {
-  struct Lisp_Coding_System *codesys;
-
-  codesys = (struct Lisp_Coding_System *)
-    alloc_lcrecord (sizeof (struct Lisp_Coding_System), lrecord_coding_system);
+  struct Lisp_Coding_System *codesys =
+    alloc_lcrecord_type (struct Lisp_Coding_System, lrecord_coding_system);
 
   zero_lcrecord (codesys);
   CODING_SYSTEM_PRE_WRITE_CONVERSION (codesys) = Qnil;
@@ -676,9 +676,9 @@ The following additional properties are recognized if TYPE is 'iso2022:
      using the specified register.
 
 'short
-     If non-nil, use the short forms \"ESC $ @\", \"ESC $ A\", and
-     \"ESC $ B\" on output in place of the full designation sequences
-     \"ESC $ ( @\", \"ESC $ ( A\", and \"ESC $ ( B\".
+     If non-nil, use the short forms "ESC $ @", "ESC $ A", and
+     "ESC $ B" on output in place of the full designation sequences
+     "ESC $ ( @", "ESC $ ( A", and "ESC $ ( B".
 
 'no-ascii-eol
      If non-nil, don't designate ASCII to G0 at each end of line on output.
@@ -703,7 +703,7 @@ The following additional properties are recognized if TYPE is 'iso2022:
      If non-nil, literal control characters that are the same as
      the beginning of a recognized ISO2022 or ISO6429 escape sequence
      (in particular, ESC (0x1B), SO (0x0E), SI (0x0F), SS2 (0x8E),
-     SS3 (0x8F), and CSI (0x9B)) are \"quoted\" with an escape character
+     SS3 (0x8F), and CSI (0x9B)) are "quoted" with an escape character
      so that they can be properly distinguished from an escape sequence.
      (Note that doing this results in a non-portable encoding.) This
      encoding flag is used for byte-compiled files.  Note that ESC
@@ -738,7 +738,7 @@ if TYPE is 'ccl:
 {
   struct Lisp_Coding_System *codesys;
   Lisp_Object rest, key, value;
-  int ty;
+  enum coding_system_type ty;
   int need_to_setup_eol_systems = 1;
 
   /* Convert type to constant */
@@ -817,14 +817,14 @@ if TYPE is 'ccl:
 	  else if (EQ (key, Qinput_charset_conversion))
 	    {
 	      codesys->iso2022.input_conv =
-		Dynarr_new (struct charset_conversion_spec);
+		Dynarr_new (charset_conversion_spec);
 	      parse_charset_conversion_specs (codesys->iso2022.input_conv,
 					      value);
 	    }
 	  else if (EQ (key, Qoutput_charset_conversion))
 	    {
 	      codesys->iso2022.output_conv =
-		Dynarr_new (struct charset_conversion_spec);
+		Dynarr_new (charset_conversion_spec);
 	      parse_charset_conversion_specs (codesys->iso2022.output_conv,
 					      value);
 	    }
@@ -1480,23 +1480,25 @@ defaults to the current buffer.
   Lisp_Object val = Qnil;
   struct buffer *buf = decode_buffer (buffer, 0);
   Bufpos b, e;
-  Lisp_Object instream;
+  Lisp_Object instream, lb_instream;
+  Lstream *istr, *lb_istr;
   struct detection_state decst;
+  struct gcpro gcpro1, gcpro2;
 
   get_buffer_range_char (buf, start, end, &b, &e, 0);
-  instream = make_lisp_buffer_input_stream (buf, b, e, 0);
-  instream = make_encoding_input_stream (XLSTREAM (instream),
-					 Fget_coding_system (Qbinary));
+  lb_instream = make_lisp_buffer_input_stream (buf, b, e, 0);
+  lb_istr = XLSTREAM (lb_instream);
+  instream = make_encoding_input_stream (lb_istr, Fget_coding_system (Qbinary));
+  istr = XLSTREAM (instream);
+  GCPRO2 (instream, lb_instream);
   memset (&decst, 0, sizeof (decst));
   decst.eol_type = EOL_AUTODETECT;
   decst.mask = ~0;
   while (1)
     {
       unsigned char random_buffer[4096];
-      int nread;
+      int nread = Lstream_read (istr, random_buffer, sizeof (random_buffer));
 
-      nread = Lstream_read (XLSTREAM (instream), random_buffer,
-			    sizeof (random_buffer));
       if (!nread)
 	break;
       if (detect_coding_type (&decst, random_buffer, nread, 0))
@@ -1526,6 +1528,10 @@ defaults to the current buffer.
 	    }
 	}
     }
+  Lstream_close (istr);
+  UNGCPRO;
+  Lstream_delete (istr);
+  Lstream_delete (lb_istr);
   return val;
 }
 
@@ -1862,7 +1868,7 @@ make_decoding_stream_1 (Lstream *stream, Lisp_Object codesys,
 
   memset (str, 0, sizeof (*str));
   str->other_end = stream;
-  str->runoff = (unsigned_char_dynarr *) Dynarr_new (unsigned char);
+  str->runoff = (unsigned_char_dynarr *) Dynarr_new (unsigned_char);
   str->eol_type = EOL_AUTODETECT;
   if (!strcmp (mode, "r")
       && Lstream_seekable_p (stream))
@@ -1964,21 +1970,11 @@ mule_decode (Lstream *decoding, CONST unsigned char *src,
     }
 }
 
-static Lisp_Object
-close_both_streams (Lisp_Object cons)
-{
-  Lisp_Object instream  = XCAR (cons);
-  Lisp_Object outstream = XCDR (cons);
-  Lstream_close (XLSTREAM (outstream));
-  Lstream_close (XLSTREAM (instream));
-  return Qnil;
-}
-
 DEFUN ("decode-coding-region", Fdecode_coding_region, 3, 4, 0, /*
 Decode the text between START and END which is encoded in CODING-SYSTEM.
 This is useful if you've read in encoded text from a file without decoding
 it (e.g. you read in a JIS-formatted file but used the `binary' or
-`no-conversion' coding system, so that it shows up as \"^[$B!<!+^[(B\").
+`no-conversion' coding system, so that it shows up as "^[$B!<!+^[(B").
 Return length of decoded text.
 BUFFER defaults to the current buffer if unspecified.
 */
@@ -1986,23 +1982,24 @@ BUFFER defaults to the current buffer if unspecified.
 {
   Bufpos b, e;
   struct buffer *buf = decode_buffer (buffer, 0);
-  Lisp_Object instream, outstream;
-  int speccount = specpdl_depth ();
-  struct gcpro gcpro1, gcpro2;
+  Lisp_Object instream, lb_outstream, de_outstream, outstream;
+  Lstream *istr, *ostr;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
   get_buffer_range_char (buf, start, end, &b, &e, 0);
 
   barf_if_buffer_read_only (buf, b, e);
 
   coding_system = Fget_coding_system (coding_system);
-  instream  = make_lisp_buffer_input_stream  (buf, b, e, 0);
-  outstream = make_lisp_buffer_output_stream (buf, b, 0);
-  outstream = make_decoding_output_stream (XLSTREAM (outstream),
-					   coding_system);
-  outstream = make_encoding_output_stream (XLSTREAM (outstream),
+  instream = make_lisp_buffer_input_stream  (buf, b, e, 0);
+  lb_outstream = make_lisp_buffer_output_stream (buf, b, 0);
+  de_outstream = make_decoding_output_stream (XLSTREAM (lb_outstream),
+					      coding_system);
+  outstream = make_encoding_output_stream (XLSTREAM (de_outstream),
 					   Fget_coding_system (Qbinary));
-  GCPRO2 (instream, outstream);
-  record_unwind_protect (close_both_streams, Fcons (instream, outstream));
+  istr = XLSTREAM (instream);
+  ostr = XLSTREAM (outstream);
+  GCPRO4 (instream, lb_outstream, de_outstream, outstream);
 
   /* The chain of streams looks like this:
 
@@ -2012,28 +2009,28 @@ BUFFER defaults to the current buffer if unspecified.
 			             ------> [BUFFER]
    */
 
-  {
-    char tempbuf[1024]; /* some random amount */
-    Lstream *in  = XLSTREAM(instream);
-    Lstream *out = XLSTREAM(outstream);
-    Bufpos newpos, even_newer_pos;
+  while (1)
+    {
+      char tempbuf[1024]; /* some random amount */
+      Bufpos newpos, even_newer_pos;
+      Bufpos oldpos = lisp_buffer_stream_startpos (istr);
+      int size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
 
-    while (1)
-      {
-        Bufpos oldpos = lisp_buffer_stream_startpos (in);
-        int size_in_bytes = Lstream_read (in, tempbuf, sizeof (tempbuf));
-        if (!size_in_bytes)
-          break;
-        newpos = lisp_buffer_stream_startpos (in);
-        Lstream_write (out, tempbuf, size_in_bytes);
-        even_newer_pos = lisp_buffer_stream_startpos (in);
-        buffer_delete_range (buf, even_newer_pos - (newpos - oldpos),
-                             even_newer_pos, 0);
-      }
-  }
-
-  unbind_to (speccount, Qnil);
+      if (!size_in_bytes)
+	break;
+      newpos = lisp_buffer_stream_startpos (istr);
+      Lstream_write (ostr, tempbuf, size_in_bytes);
+      even_newer_pos = lisp_buffer_stream_startpos (istr);
+      buffer_delete_range (buf, even_newer_pos - (newpos - oldpos),
+			   even_newer_pos, 0);
+    }
+  Lstream_close (istr);
+  Lstream_close (ostr);
   UNGCPRO;
+  Lstream_delete (istr);
+  Lstream_delete (ostr);
+  Lstream_delete (XLSTREAM (de_outstream));
+  Lstream_delete (XLSTREAM (lb_outstream));
   return Qnil;
 }
 
@@ -2314,7 +2311,7 @@ make_encoding_stream_1 (Lstream *stream, Lisp_Object codesys,
   Lisp_Object obj;
 
   memset (str, 0, sizeof (*str));
-  str->runoff = (unsigned_char_dynarr *) Dynarr_new (unsigned char);
+  str->runoff = Dynarr_new (unsigned_char);
   str->other_end = stream;
   set_encoding_stream_coding_system (lstr, codesys);
   XSETLSTREAM (obj, lstr);
@@ -2376,17 +2373,16 @@ mule_encode (Lstream *encoding, CONST unsigned char *src,
 DEFUN ("encode-coding-region", Fencode_coding_region, 3, 4, 0, /*
 Encode the text between START and END using CODING-SYSTEM.
 This will, for example, convert Japanese characters into stuff such as
-\"^[$B!<!+^[(B\" if you use the JIS encoding.  Return length of encoded
+"^[$B!<!+^[(B" if you use the JIS encoding.  Return length of encoded
 text.  BUFFER defaults to the current buffer if unspecified.
 */
        (start, end, coding_system, buffer))
 {
   Bufpos b, e;
   struct buffer *buf = decode_buffer (buffer, 0);
-  Lisp_Object instream, outstream;
-  char tempbuf[1024]; /* some random amount */
-  int speccount = specpdl_depth ();
-  struct gcpro gcpro1, gcpro2;
+  Lisp_Object instream, lb_outstream, de_outstream, outstream;
+  Lstream *istr, *ostr;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
   get_buffer_range_char (buf, start, end, &b, &e, 0);
 
@@ -2394,13 +2390,14 @@ text.  BUFFER defaults to the current buffer if unspecified.
 
   coding_system = Fget_coding_system (coding_system);
   instream  = make_lisp_buffer_input_stream  (buf, b, e, 0);
-  outstream = make_lisp_buffer_output_stream (buf, b, 0);
-  outstream = make_decoding_output_stream (XLSTREAM (outstream),
-					   Fget_coding_system (Qbinary));
-  outstream = make_encoding_output_stream (XLSTREAM (outstream),
+  lb_outstream = make_lisp_buffer_output_stream (buf, b, 0);
+  de_outstream = make_decoding_output_stream (XLSTREAM (lb_outstream),
+					      Fget_coding_system (Qbinary));
+  outstream = make_encoding_output_stream (XLSTREAM (de_outstream),
 					   coding_system);
-  GCPRO2 (instream, outstream);
-  record_unwind_protect (close_both_streams, Fcons (instream, outstream));
+  istr = XLSTREAM (instream);
+  ostr = XLSTREAM (outstream);
+  GCPRO4 (instream, outstream, de_outstream, lb_outstream);
   /* The chain of streams looks like this:
 
      [BUFFER] <----- send through
@@ -2410,17 +2407,16 @@ text.  BUFFER defaults to the current buffer if unspecified.
    */
   while (1)
     {
-      int size_in_bytes;
-      Bufpos oldpos, newpos, even_newer_pos;
+      char tempbuf[1024]; /* some random amount */
+      Bufpos newpos, even_newer_pos;
+      Bufpos oldpos = lisp_buffer_stream_startpos (istr);
+      int size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
 
-      oldpos = lisp_buffer_stream_startpos (XLSTREAM (instream));
-      size_in_bytes = Lstream_read (XLSTREAM (instream), tempbuf,
-				    sizeof (tempbuf));
       if (!size_in_bytes)
 	break;
-      newpos = lisp_buffer_stream_startpos (XLSTREAM (instream));
-      Lstream_write (XLSTREAM (outstream), tempbuf, size_in_bytes);
-      even_newer_pos = lisp_buffer_stream_startpos (XLSTREAM (instream));
+      newpos = lisp_buffer_stream_startpos (istr);
+      Lstream_write (ostr, tempbuf, size_in_bytes);
+      even_newer_pos = lisp_buffer_stream_startpos (istr);
       buffer_delete_range (buf, even_newer_pos - (newpos - oldpos),
 			   even_newer_pos, 0);
     }
@@ -2428,8 +2424,13 @@ text.  BUFFER defaults to the current buffer if unspecified.
   {
     Charcount retlen =
       lisp_buffer_stream_startpos (XLSTREAM (instream)) - b;
-    unbind_to (speccount, Qnil);
+    Lstream_close (istr);
+    Lstream_close (ostr);
     UNGCPRO;
+    Lstream_delete (istr);
+    Lstream_delete (ostr);
+    Lstream_delete (XLSTREAM (de_outstream));
+    Lstream_delete (XLSTREAM (lb_outstream));
     return make_int (retlen);
   }
 }
@@ -3771,7 +3772,7 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 		  if (str->iso2022.composite_chars)
 		    Dynarr_reset (str->iso2022.composite_chars);
 		  else
-		    str->iso2022.composite_chars = Dynarr_new (unsigned char);
+		    str->iso2022.composite_chars = Dynarr_new (unsigned_char);
 		  dst = str->iso2022.composite_chars;
 		  break;
 		case ISO_ESC_END_COMPOSITE:
@@ -4440,8 +4441,8 @@ encode_coding_no_conversion (Lstream *encoding, CONST unsigned char *src,
 /*                   Simple internal/external functions                 */
 /************************************************************************/
 
-static extbyte_dynarr *conversion_out_dynarr;
-static bufbyte_dynarr *conversion_in_dynarr;
+static Extbyte_dynarr *conversion_out_dynarr;
+static Bufbyte_dynarr *conversion_in_dynarr;
 
 /* Determine coding system from coding format */
 
@@ -4492,27 +4493,32 @@ convert_to_external_format (CONST Bufbyte *ptr,
     }
   else
     {
-      Lisp_Object instream =
-        make_fixed_buffer_input_stream ((unsigned char *) ptr, len);
-      Lisp_Object outstream = make_dynarr_output_stream
-        ((unsigned_char_dynarr *) conversion_out_dynarr);
-      struct gcpro gcpro1, gcpro2;
+      Lisp_Object instream, outstream, da_outstream;
+      Lstream *istr, *ostr;
+      struct gcpro gcpro1, gcpro2, gcpro3;
       char tempbuf[1024]; /* some random amount */
 
+      instream = make_fixed_buffer_input_stream ((unsigned char *) ptr, len);
+      da_outstream = make_dynarr_output_stream
+        ((unsigned_char_dynarr *) conversion_out_dynarr);
       outstream =
-        make_encoding_output_stream (XLSTREAM (outstream), coding_system);
-      GCPRO2 (instream, outstream); /* Necessary?? */
+        make_encoding_output_stream (XLSTREAM (da_outstream), coding_system);
+      istr = XLSTREAM (instream);
+      ostr = XLSTREAM (outstream);
+      GCPRO3 (instream, outstream, da_outstream);
       while (1)
         {
-          int size_in_bytes = Lstream_read (XLSTREAM (instream),
-                                            tempbuf, sizeof (tempbuf));
+          int size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
           if (!size_in_bytes)
             break;
-          Lstream_write (XLSTREAM (outstream), tempbuf, size_in_bytes);
+          Lstream_write (ostr, tempbuf, size_in_bytes);
         }
-      Lstream_close (XLSTREAM (instream));
-      Lstream_close (XLSTREAM (outstream));
+      Lstream_close (istr);
+      Lstream_close (ostr);
       UNGCPRO;
+      Lstream_delete (istr);
+      Lstream_delete (ostr);
+      Lstream_delete (XLSTREAM (da_outstream));
     }
 
   *len_out = Dynarr_length (conversion_out_dynarr);
@@ -4544,27 +4550,32 @@ convert_from_external_format (CONST Extbyte *ptr,
     }
   else
     {
-      Lisp_Object instream =
-        make_fixed_buffer_input_stream ((unsigned char *) ptr, len);
-      Lisp_Object outstream = make_dynarr_output_stream
-        ((unsigned_char_dynarr *) conversion_in_dynarr);
-      struct gcpro gcpro1, gcpro2;
+      Lisp_Object instream, outstream, da_outstream;
+      Lstream *istr, *ostr;
+      struct gcpro gcpro1, gcpro2, gcpro3;
       char tempbuf[1024]; /* some random amount */
 
+      instream = make_fixed_buffer_input_stream ((unsigned char *) ptr, len);
+      da_outstream = make_dynarr_output_stream
+        ((unsigned_char_dynarr *) conversion_in_dynarr);
       outstream =
-        make_decoding_output_stream (XLSTREAM (outstream), coding_system);
-      GCPRO2 (instream, outstream); /* Necessary?? */
+        make_decoding_output_stream (XLSTREAM (da_outstream), coding_system);
+      istr = XLSTREAM (instream);
+      ostr = XLSTREAM (outstream);
+      GCPRO3 (instream, outstream, da_outstream);
       while (1)
         {
-          int size_in_bytes = Lstream_read (XLSTREAM (instream),
-                                            tempbuf, sizeof (tempbuf));
+          int size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
           if (!size_in_bytes)
             break;
-          Lstream_write (XLSTREAM (outstream), tempbuf, size_in_bytes);
+          Lstream_write (ostr, tempbuf, size_in_bytes);
         }
-      Lstream_close (XLSTREAM (instream));
-      Lstream_close (XLSTREAM (outstream));
+      Lstream_close (istr);
+      Lstream_close (ostr);
       UNGCPRO;
+      Lstream_delete (istr);
+      Lstream_delete (ostr);
+      Lstream_delete (XLSTREAM (da_outstream));
     }
 
   *len_out = Dynarr_length (conversion_in_dynarr);
@@ -4759,7 +4770,7 @@ complex_vars_of_mule_coding (void)
   Vcoding_system_hashtable = make_lisp_hashtable (50, HASHTABLE_NONWEAK,
 						  HASHTABLE_EQ);
 
-  the_codesys_prop_dynarr = Dynarr_new (struct codesys_prop);
+  the_codesys_prop_dynarr = Dynarr_new (codesys_prop);
 
 #define DEFINE_CODESYS_PROP(Prop_Type, Sym) do	\
 {						\

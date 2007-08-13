@@ -107,8 +107,8 @@ sizeof_opaque (CONST void *header)
 Lisp_Object
 make_opaque (int size, CONST void *data)
 {
-  struct Lisp_Opaque *p = alloc_lcrecord (sizeof (*p) + size - sizeof (int),
-					  lrecord_opaque);
+  struct Lisp_Opaque *p = (struct Lisp_Opaque *)
+    alloc_lcrecord (sizeof (*p) + size - sizeof (int), lrecord_opaque);
   Lisp_Object val;
 
   p->markfun = 0;
@@ -140,9 +140,9 @@ make_opaque_list (int size,
 		  Lisp_Object (*markfun) (Lisp_Object obj,
 					  void (*markobj) (Lisp_Object)))
 {
-  struct Lisp_Opaque_List *p = alloc_lcrecord (sizeof (*p),
-					       lrecord_opaque_list);
   Lisp_Object val = Qnil;
+  struct Lisp_Opaque_List *p =
+    alloc_lcrecord_type (struct Lisp_Opaque_List, lrecord_opaque_list);
 
   p->markfun = markfun;
   p->size = size;

@@ -1,3 +1,32 @@
+1997-09-02  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta19 is released.
+
+	* Makefile.in (finder): New target.
+
+1997-08-29  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-beta91 is released.
+
+1997-08-25  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/apel/emu-x20.el (mime-charset-coding-system-alist):
+	iso-2022-jp-2 is defined as coding-system.
+
+	* lisp/mule/mule-coding.el: Rename `iso-2022-ss2-{7|8}' ->
+	`iso-2022-{7|8}bit-ss2' to sync with Emacs 20.0.96.
+
+	(iso-2022-jp-2): New coding system.
+
+1997-08-23  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/prim/about.el (about-maintainer-glyph): Fix problem with
+	jka-compr.el.
+
+1997-08-20  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-beta90 is released.
+
 1997-08-16  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta18 is released.

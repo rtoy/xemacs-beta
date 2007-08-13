@@ -89,17 +89,14 @@ memory_hash (CONST void *xv, int size)
 }
 
 static int
-string_eq (CONST void *st1v, CONST void *st2v)
+string_eq (CONST void *st1, CONST void *st2)
 {
-  CONST char *st1 = (CONST char *)st1v;
-  CONST char *st2 = (CONST char *)st2v;
-
   if (!st1)
-    return (st2)?0:1;
+    return st2 ? 0 : 1;
   else if (!st2)
     return 0;
   else
-    return !strcmp (st1, st2);
+    return !strcmp ( (CONST char *) st1, (CONST char *) st2);
 }
 
 
@@ -181,10 +178,9 @@ free_hashtable (c_hashtable hash)
 c_hashtable
 make_hashtable (unsigned int hsize)
 {
-  c_hashtable res = (c_hashtable) xmalloc (sizeof (struct _C_hashtable));
-  memset (res, 0, sizeof (struct _C_hashtable));
+  c_hashtable res = xnew_and_zero (struct _C_hashtable);
   res->size = prime_size ((13 * hsize) / 10);
-  res->harray = (hentry *) xmalloc (sizeof (hentry) * res->size);
+  res->harray = xnew_array (hentry, res->size);
 #ifdef emacs
   res->elisp_table = Qnil;
 #endif
@@ -197,10 +193,9 @@ make_general_hashtable (unsigned int hsize,
 			unsigned long (*hash_function) (CONST void *),
 			int (*test_function) (CONST void *, CONST void *))
 {
-  c_hashtable res = (c_hashtable) xmalloc (sizeof (struct _C_hashtable));
-  memset (res, 0, sizeof (struct _C_hashtable));
+  c_hashtable res = xnew_and_zero (struct _C_hashtable);
   res->size = prime_size ((13 * hsize) / 10);
-  res->harray = (hentry *) xmalloc (sizeof (hentry) * res->size);
+  res->harray = xnew_array (hentry, res->size);
   res->hash_function = hash_function;
   res->test_function = test_function;
 #ifdef emacs
@@ -253,7 +248,7 @@ copy_hash (c_hashtable dest, c_hashtable src)
 				dest->elisp_table);
       else
 #endif
-        dest->harray = (hentry *) xmalloc (sizeof (hentry) * dest->size);
+        dest->harray = xnew_array (hentry, dest->size);
     }
   dest->fullness = src->fullness;
   dest->zero_entry = src->zero_entry;

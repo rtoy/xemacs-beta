@@ -119,8 +119,8 @@ static CONST char *float_error_fn_name;
   Fsignal (Qdomain_error, list3 (build_string ((op)), (a1), (a2)))
 
 
-/* Convert float to Lisp_Int if it fits, else signal a range error
-   using the given arguments.  */
+/* Convert float to Lisp Integer if it fits, else signal a range
+   error using the given arguments.  */
 static Lisp_Object
 float_to_int (double x, CONST char *name, Lisp_Object num, Lisp_Object num2)
 {
@@ -141,7 +141,7 @@ in_float_error (void)
 {
   switch (errno)
   {
-  case 0: 
+  case 0:
     break;
   case EDOM:
     if (in_float == 2)
@@ -158,7 +158,7 @@ in_float_error (void)
   }
 }
 
-  
+
 
 static Lisp_Object mark_float (Lisp_Object, void (*) (Lisp_Object));
 extern void print_float (Lisp_Object, Lisp_Object, int);
@@ -438,7 +438,7 @@ Return the exponential ARG1 ** ARG2.
       EMACS_INT acc, x, y;
       x = XINT (arg1);
       y = XINT (arg2);
-      
+
       if (y < 0)
 	{
 	  if (x == 1)
@@ -710,7 +710,7 @@ This is the same as the exponent of a float.
 #else
 #ifdef HAVE_FREXP
   {
-    int exqp;  
+    int exqp;
     IN_FLOAT (frexp (f, &exqp), "logb", arg);
     return (make_int (exqp - 1));
   }
@@ -936,7 +936,7 @@ float_error (int signo)
 #endif /* FLOAT_CATCH_SIGILL */
 
 #ifdef HAVE_MATHERR
-int 
+int
 matherr (struct exception *x)
 {
   Lisp_Object args;
@@ -971,7 +971,7 @@ init_floatfns_very_early (void)
 #ifdef LISP_FLOAT_TYPE
 # ifdef FLOAT_CATCH_SIGILL
   signal (SIGILL, float_error);
-# endif 
+# endif
   in_float = 0;
 #endif /* LISP_FLOAT_TYPE */
 }
@@ -979,9 +979,9 @@ init_floatfns_very_early (void)
 void
 syms_of_floatfns (void)
 {
-  
+
   /* Trig functions.  */
-  
+
 #ifdef LISP_FLOAT_TYPE
   DEFSUBR (Facos);
   DEFSUBR (Fasin);
@@ -992,7 +992,7 @@ syms_of_floatfns (void)
 #endif /* LISP_FLOAT_TYPE */
 
   /* Bessel functions */
-  
+
 #if 0
   DEFSUBR (Fbessel_y0);
   DEFSUBR (Fbessel_y1);

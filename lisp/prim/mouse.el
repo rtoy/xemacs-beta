@@ -32,7 +32,11 @@
 (global-set-key '(control shift button1) 'mouse-track-delete-and-insert)
 (global-set-key '(meta button1) 'mouse-track-do-rectangle)
 
-(global-set-key 'button2 'mouse-yank)
+;; enable drag regions (ograf@fga.de)
+(if (or (featurep 'offix) ;; do we have DnD support?
+	(featurep 'cde))
+    (global-set-key 'button2 'mouse-drag-or-yank)
+  (global-set-key 'button2 'mouse-yank))
 
 (defcustom mouse-track-rectangle-p nil
   "*If true, then dragging out a region with the mouse selects rectangles
@@ -141,16 +145,30 @@ primary selection-extent, nil otherwise."
   (or (point-inside-extent-p primary-selection-extent)
       (point-inside-extent-p zmacs-region-extent)))
 
-;;; #### - finish this...
-;;; (defun mouse-drag-or-yank (event)
-;;;   "Either drag or paste the current selection.  If the variable
-;;; `mouse-yank-at-point' is non-nil, then moves the cursor to the location of
-;;; the click before pasting."
-;;;   (interactive "e")
-;;;   (if (click-inside-selection-p event)
-;;;       ;; okay, this is a drag
-;;;       )
-;;;   )
+(defun mouse-drag-or-yank (event)
+  "Either drag or paste the current selection.  If the variable
+ `mouse-yank-at-point' is non-nil, then moves the cursor to the location of
+ the click before pasting.
+ This functions has to be improved. Until now it is just a (working) test."
+  ;; by ograf@fga.de
+  (interactive "e")
+  (if (click-inside-extent-p event zmacs-region-extent)
+      ;; okay, this is a drag
+      (cond ((featurep 'offix)
+	     (offix-start-drag-region event
+				      (extent-start-position zmacs-region-extent)
+				      (extent-end-position zmacs-region-extent)))
+	    ((featurep 'cde)
+	     ;; should also work with CDE
+	     (cde-start-drag
+	      (extent-start-position zmacs-region-extent)
+	      (extent-end-position zmacs-region-extent)))
+	    (t ding))
+    ;; no drag, call region-funct
+    (and (not mouse-yank-at-point)
+	 (mouse-set-point event))
+    (funcall mouse-yank-function))
+  )
 
 (defun mouse-eval-sexp (click force-window)
   "Evaluate the sexp under the mouse.  Usually, this is the last sexp before

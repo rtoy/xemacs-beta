@@ -421,8 +421,6 @@ int mouse_highlight_priority;
 Lisp_Object Qextentp;
 Lisp_Object Qextent_live_p;
 
-Lisp_Object Qend_closed;
-Lisp_Object Qstart_open;
 Lisp_Object Qall_extents_closed;
 Lisp_Object Qall_extents_open;
 Lisp_Object Qall_extents_closed_open;
@@ -546,8 +544,8 @@ gap_array_make_gap (Gap_Array *ga, int increment)
      a geometric progession that saves on realloc space. */
   increment += 100 + ga->numels / 8;
 
-  ptr = xrealloc (ptr,
-		  (ga->numels + ga->gapsize + increment)*ga->elsize);
+  ptr = (char *) xrealloc (ptr,
+			   (ga->numels + ga->gapsize + increment)*ga->elsize);
   if (ptr == 0)
     memory_full ();
   ga->array = ptr;
@@ -637,7 +635,7 @@ gap_array_make_marker (Gap_Array *ga, int pos)
       gap_array_marker_freelist = gap_array_marker_freelist->next;
     }
   else
-    m = (Gap_Array_Marker *) xmalloc (sizeof (*m));
+    m = xnew (Gap_Array_Marker);
 
   m->pos = GAP_ARRAY_ARRAY_TO_MEMORY_POS (ga, pos);
   m->next = ga->markers;
@@ -689,8 +687,7 @@ gap_array_move_marker (Gap_Array *ga, Gap_Array_Marker *m, int pos)
 static Gap_Array *
 make_gap_array (int elsize)
 {
-  Gap_Array *ga = (Gap_Array *) xmalloc (sizeof(*ga));
-  memset (ga, 0, sizeof(*ga));
+  Gap_Array *ga = xnew_and_zero (Gap_Array);
   ga->elsize = elsize;
   return ga;
 }
@@ -864,7 +861,7 @@ extent_list_make_marker (Extent_List *el, int pos, int endp)
       extent_list_marker_freelist = extent_list_marker_freelist->next;
     }
   else
-    m = (Extent_List_Marker *) xmalloc (sizeof (*m));
+    m = xnew (Extent_List_Marker);
 
   m->m = gap_array_make_marker (endp ? el->end : el->start, pos);
   m->endp = endp;
@@ -899,7 +896,7 @@ extent_list_delete_marker (Extent_List *el, Extent_List_Marker *m)
 static Extent_List *
 allocate_extent_list (void)
 {
-  Extent_List *el = (Extent_List *) xmalloc (sizeof(*el));
+  Extent_List *el = xnew (Extent_List);
   el->start = make_gap_array (sizeof(EXTENT));
   el->end = make_gap_array (sizeof(EXTENT));
   el->markers = 0;
@@ -928,8 +925,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("extent-auxiliary", extent_auxiliary,
 static Lisp_Object
 mark_extent_auxiliary (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
-  struct extent_auxiliary *data =
-    (struct extent_auxiliary *) XEXTENT_AUXILIARY (obj);
+  struct extent_auxiliary *data = XEXTENT_AUXILIARY (obj);
   ((markobj) (data->begin_glyph));
   ((markobj) (data->end_glyph));
   ((markobj) (data->invisible));
@@ -944,8 +940,7 @@ allocate_extent_auxiliary (EXTENT ext)
 {
   Lisp_Object extent_aux = Qnil;
   struct extent_auxiliary *data =
-    alloc_lcrecord (sizeof (struct extent_auxiliary),
-		    lrecord_extent_auxiliary);
+    alloc_lcrecord_type (struct extent_auxiliary, lrecord_extent_auxiliary);
 
   copy_lcrecord (data, &extent_auxiliary_defaults);
   XSETEXTENT_AUXILIARY (extent_aux, data);
@@ -1049,8 +1044,7 @@ allocate_extent_info (void)
 {
   Lisp_Object extent_info = Qnil;
   struct extent_info *data =
-    alloc_lcrecord (sizeof (struct extent_info),
-		    lrecord_extent_info);
+    alloc_lcrecord_type (struct extent_info, lrecord_extent_info);
 
   XSETEXTENT_INFO (extent_info, data);
   data->extents = allocate_extent_list ();
@@ -1524,8 +1518,7 @@ soe_invalidate (Lisp_Object obj)
 static struct stack_of_extents *
 allocate_soe (void)
 {
-  struct stack_of_extents *soe =
-    malloc_type_and_zero (struct stack_of_extents);
+  struct stack_of_extents *soe = xnew_and_zero (struct stack_of_extents);
   soe->extents = allocate_extent_list ();
   soe->pos = -1;
   return soe;
@@ -2364,7 +2357,7 @@ adjust_extents (Lisp_Object obj, Memind from, Memind to, int amount)
 
 struct adjust_extents_for_deletion_arg
 {
-  extent_dynarr *list;
+  EXTENT_dynarr *list;
 };
 
 static int
@@ -2404,7 +2397,7 @@ adjust_extents_for_deletion (Lisp_Object object, Bytind from,
 #ifdef ERROR_CHECK_EXTENTS
   sledgehammer_extent_check (object);
 #endif
-  closure.list = (extent_dynarr *) Dynarr_new (EXTENT);
+  closure.list = Dynarr_new (EXTENT);
 
   /* We're going to be playing weird games below with extents and the SOE
      and such, so compute the list now of all the extents that we're going
@@ -2600,15 +2593,13 @@ extent_find_beginning_of_run (Lisp_Object obj, Bytind pos,
 struct extent_fragment *
 extent_fragment_new (Lisp_Object buffer_or_string, struct frame *frm)
 {
-  struct extent_fragment *ef = (struct extent_fragment *)
-    xmalloc (sizeof (struct extent_fragment));
+  struct extent_fragment *ef = xnew_and_zero (struct extent_fragment);
 
-  memset (ef, 0, sizeof (*ef));
   ef->object = buffer_or_string;
   ef->frm = frm;
   ef->extents = Dynarr_new (EXTENT);
-  ef->begin_glyphs = Dynarr_new (struct glyph_block);
-  ef->end_glyphs = Dynarr_new (struct glyph_block);
+  ef->begin_glyphs = Dynarr_new (glyph_block);
+  ef->end_glyphs   = Dynarr_new (glyph_block);
 
   return ef;
 }
@@ -2633,7 +2624,7 @@ extent_priority_sort_function (const void *humpty, const void *dumpty)
 }
 
 static void
-extent_fragment_sort_by_priority (extent_dynarr *extarr)
+extent_fragment_sort_by_priority (EXTENT_dynarr *extarr)
 {
   int i;
 
@@ -3037,16 +3028,16 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  if (!EXTENT_LIVE_P (XEXTENT (obj)))
 	    error ("printing unreadable object #<destroyed extent>");
 	  else
-	    error ("printing unreadable object #<extent 0x%lx>",
-		   (long)XEXTENT (obj));
+	    error ("printing unreadable object #<extent 0x%p>",
+		   XEXTENT (obj));
 	}
 
       if (!EXTENT_LIVE_P (XEXTENT (obj)))
 	write_c_string ("#<destroyed extent", printcharfun);
       else
 	{
-	  char *buf = alloca (strlen (title) + strlen (name)
-			      + strlen (posttitle));
+	  char *buf = (char *)
+	    alloca (strlen (title) + strlen (name) + strlen (posttitle) + 1);
 	  write_c_string ("#<extent ", printcharfun);
 	  print_extent_1 (obj, printcharfun, escapeflag);
 	  write_c_string (extent_detached_p (XEXTENT (obj))
@@ -3293,7 +3284,7 @@ DEFUN ("next-extent", Fnext_extent, 1, 1, 0, /*
 Find next extent after EXTENT.
 If EXTENT is a buffer return the first extent in the buffer; likewise
  for strings.
-Extents in a buffer are ordered in what is called the \"display\"
+Extents in a buffer are ordered in what is called the "display"
  order, which sorts by increasing start positions and then by *decreasing*
  end positions.
 If you want to perform an operation on a series of extents, use
@@ -3344,7 +3335,7 @@ This function is analogous to `next-extent'.
 #ifdef DEBUG_XEMACS
 
 DEFUN ("next-e-extent", Fnext_e_extent, 1, 1, 0, /*
-Find next extent after EXTENT using the \"e\" order.
+Find next extent after EXTENT using the "e" order.
 If EXTENT is a buffer return the first extent in the buffer; likewise
  for strings.
 */
@@ -3365,7 +3356,7 @@ If EXTENT is a buffer return the first extent in the buffer; likewise
 }
 
 DEFUN ("previous-e-extent", Fprevious_e_extent, 1, 1, 0, /*
-Find last extent before EXTENT using the \"e\" order.
+Find last extent before EXTENT using the "e" order.
 If EXTENT is a buffer return the last extent in the buffer; likewise
  for strings.
 This function is analogous to `next-e-extent'.
@@ -3428,7 +3419,7 @@ If OBJECT is nil, the current buffer is assumed.
 DEFUN ("extent-parent", Fextent_parent, 1, 1, 0, /*
 Return the parent (if any) of EXTENT.
 If an extent has a parent, it derives all its properties from that extent
-and has no properties of its own. (The only \"properties\" that the
+and has no properties of its own. (The only "properties" that the
 extent keeps are the buffer/string it refers to and the start and end
 points.) It is possible for an extent's parent to itself have a parent.
 */
@@ -3641,8 +3632,8 @@ copy_extent (EXTENT original, Bytind from, Bytind to, Lisp_Object object)
 	 this extent to share the same aux struct as the original
 	 one. */
       struct extent_auxiliary *data =
-	alloc_lcrecord (sizeof (struct extent_auxiliary),
-			lrecord_extent_auxiliary);
+	alloc_lcrecord_type (struct extent_auxiliary,
+			     lrecord_extent_auxiliary);
 
       copy_lcrecord (data, XEXTENT_AUXILIARY (XCAR (original->plist)));
       XSETEXTENT_AUXILIARY (XCAR (e->plist), data);
@@ -4347,10 +4338,10 @@ extent_at_bytind (Bytind position, Lisp_Object object, Lisp_Object property,
 }
 
 DEFUN ("extent-at", Fextent_at, 1, 5, 0, /*
-Find \"smallest\" extent at POS in OBJECT having PROPERTY set.
-Normally, an extent is \"at\" POS if it overlaps the region (POS, POS+1);
+Find "smallest" extent at POS in OBJECT having PROPERTY set.
+Normally, an extent is "at" POS if it overlaps the region (POS, POS+1);
  i.e. if it covers the character after POS. (However, see the definition
- of AT-FLAG.) \"Smallest\" means the extent that comes last in the display
+ of AT-FLAG.) "Smallest" means the extent that comes last in the display
  order; this normally means the extent whose start position is closest to
  POS.  See `next-extent' for more information.
 OBJECT specifies a buffer or string and defaults to the current buffer.
@@ -5873,7 +5864,7 @@ DEFUN ("get-text-property", Fget_text_property, 2, 4, 0, /*
 Returns the value of the PROP property at the given position.
 Optional arg OBJECT specifies the buffer or string to look in, and
  defaults to the current buffer.
-Optional arg AT-FLAG controls what it means for a property to be \"at\"
+Optional arg AT-FLAG controls what it means for a property to be "at"
  a position, and has the same meaning as in `extent-at'.
 This examines only those properties added with `put-text-property'.
 See also `get-char-property'.
@@ -5887,7 +5878,7 @@ DEFUN ("get-char-property", Fget_char_property, 2, 4, 0, /*
 Returns the value of the PROP property at the given position.
 Optional arg OBJECT specifies the buffer or string to look in, and
  defaults to the current buffer.
-Optional arg AT-FLAG controls what it means for a property to be \"at\"
+Optional arg AT-FLAG controls what it means for a property to be "at"
  a position, and has the same meaning as in `extent-at'.
 This examines properties on all extents.
 See also `get-text-property'.

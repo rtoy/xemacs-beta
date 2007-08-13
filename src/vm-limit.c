@@ -25,8 +25,8 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 #endif
 
-#ifndef emacs
 #include <stddef.h>
+#ifndef emacs
 typedef size_t SIZE;
 typedef void *POINTER;
 #define EXCEEDS_LISP_PTR(x) 0
@@ -52,7 +52,7 @@ static void (*warn_function) (CONST char *);
 static void
 check_memory_limits (void)
 {
-  extern POINTER (*__morecore) ();
+  extern POINTER (*__morecore) (ptrdiff_t size);
 
   POINTER cp;
   unsigned long five_percent;
@@ -69,7 +69,7 @@ check_memory_limits (void)
   if (warn_function)
     switch (warnlevel)
       {
-      case 0: 
+      case 0:
 	if (data_size > five_percent * 15)
 	  {
 	    warnlevel++;
@@ -77,7 +77,7 @@ check_memory_limits (void)
 	  }
 	break;
 
-      case 1: 
+      case 1:
 	if (data_size > five_percent * 17)
 	  {
 	    warnlevel++;
@@ -85,7 +85,7 @@ check_memory_limits (void)
 	  }
 	break;
 
-      case 2: 
+      case 2:
 	if (data_size > five_percent * 19)
 	  {
 	    warnlevel++;
@@ -121,7 +121,7 @@ check_memory_limits (void)
 void
 memory_warnings (void *start, void (*warnfun) (CONST char *))
 {
-  extern void (* __after_morecore_hook) ();     /* From gmalloc.c */
+  extern void (* __after_morecore_hook) (void);	/* From gmalloc.c */
 
   if (start)
     data_space_start = start;

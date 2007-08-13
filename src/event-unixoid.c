@@ -252,18 +252,18 @@ init_event_unixoid (void)
       exit (-1);
     }
   signal_event_pipe_initialized = 1;
-  
+
   /* Set it non-blocking so we can drain its output. */
   set_descriptor_non_blocking (signal_event_pipe[0]);
-  
+
   /* Also set the write descriptor non-blocking so we don't
      hang in case a long time passes between times when
      we drain the pipe. */
   set_descriptor_non_blocking (signal_event_pipe[1]);
-  
+
   /* WARNING: In order for the signal-event pipe to work correctly
      and not cause lockups, the following need to be followed:
-     
+
      1) event_pending_p() must ignore input on the signal-event pipe.
      2) As soon as next_event() notices input on the signal-event
      pipe, it must drain it. */
@@ -271,6 +271,6 @@ init_event_unixoid (void)
   FD_ZERO (&non_fake_input_wait_mask);
   FD_ZERO (&process_only_mask);
   FD_ZERO (&tty_only_mask);
-  
+
   FD_SET (signal_event_pipe[0], &input_wait_mask);
 }

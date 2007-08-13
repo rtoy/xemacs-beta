@@ -55,19 +55,27 @@ struct image_instantiator_methods;
 					text
 */
 
-typedef struct ii_keyword_entry_dynarr_type
-{
-  Dynarr_declare (struct ii_keyword_entry);
-} Ii_keyword_entry_dynarr;
-
 /* These are methods specific to a particular format of image instantiator
    (e.g. xpm, string, etc.). */
+
+typedef struct ii_keyword_entry ii_keyword_entry;
+struct ii_keyword_entry
+{
+  Lisp_Object keyword;
+  void (*validate) (Lisp_Object data);
+  int multiple_p;
+};
+
+typedef struct
+{
+  Dynarr_declare (ii_keyword_entry);
+} ii_keyword_entry_dynarr;
 
 struct image_instantiator_methods
 {
   Lisp_Object symbol;
 
-  Ii_keyword_entry_dynarr *keywords;
+  ii_keyword_entry_dynarr *keywords;
   /* Implementation specific methods: */
 
   /* Validate method: Given an instantiator vector, signal an error if
@@ -99,13 +107,6 @@ struct image_instantiator_methods
 			      Lisp_Object domain);
 };
 
-struct ii_keyword_entry
-{
-  Lisp_Object keyword;
-  void (*validate) (Lisp_Object data);
-  int multiple_p;
-};
-
 /***** Calling an image-instantiator method *****/
 
 #define HAS_IIFORMAT_METH_P(mstruc, m) ((mstruc)->m##_method)
@@ -135,23 +136,23 @@ MAC_END
 
 /***** Defining new image-instantiator types *****/
 
-#define DECLARE_IMAGE_INSTANTIATOR_FORMAT(format)			     \
+#define DECLARE_IMAGE_INSTANTIATOR_FORMAT(format)		\
 extern struct image_instantiator_methods *format##_image_instantiator_methods
 
-#define DEFINE_IMAGE_INSTANTIATOR_FORMAT(format)			\
+#define DEFINE_IMAGE_INSTANTIATOR_FORMAT(format)		\
 struct image_instantiator_methods *format##_image_instantiator_methods
 
 #define INITIALIZE_IMAGE_INSTANTIATOR_FORMAT(format, obj_name)	\
-  do {								\
-    format##_image_instantiator_methods =			\
-      malloc_type_and_zero (struct image_instantiator_methods);	\
-    defsymbol (&Q##format, obj_name);				\
-    format##_image_instantiator_methods->symbol = Q##format;	\
-    format##_image_instantiator_methods->keywords =		\
-      Dynarr_new (struct ii_keyword_entry);			\
-    add_entry_to_image_instantiator_format_list			\
-      (Q##format, format##_image_instantiator_methods);		\
-  } while (0)
+do {								\
+  format##_image_instantiator_methods =				\
+    xnew_and_zero (struct image_instantiator_methods);	\
+  defsymbol (&Q##format, obj_name);				\
+  format##_image_instantiator_methods->symbol = Q##format;	\
+  format##_image_instantiator_methods->keywords =		\
+    Dynarr_new (ii_keyword_entry);				\
+  add_entry_to_image_instantiator_format_list			\
+    (Q##format, format##_image_instantiator_methods);		\
+} while (0)
 
 /* Declare that image-instantiator format FORMAT has method M; used in
    initialization routines */
@@ -507,6 +508,7 @@ Lisp_Object allocate_glyph (enum glyph_type type,
  *                          Glyph Cachels                             	     *
  *****************************************************************************/
 
+typedef struct glyph_cachel glyph_cachel;
 struct glyph_cachel
 {
   Lisp_Object glyph;

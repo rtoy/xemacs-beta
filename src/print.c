@@ -928,14 +928,14 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   switch (XTYPE (obj))
     {
-    case Lisp_Int:
+    case Lisp_Type_Int:
       {
 	sprintf (buf, "%ld", (long) XINT (obj));
 	write_c_string (buf, printcharfun);
 	break;
       }
 
-    case Lisp_Char:
+    case Lisp_Type_Char:
       {
 	/* God intended that this be #\..., you know. */
 	Emchar ch = XCHAR (obj);
@@ -974,7 +974,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	break;
       }
 
-    case Lisp_String:
+    case Lisp_Type_String:
       {
 	Bytecount size = XSTRING_LENGTH (obj);
 	struct gcpro gcpro1, gcpro2;
@@ -1041,7 +1041,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	break;
       }
 
-    case Lisp_Cons:
+    case Lisp_Type_Cons:
       {
 	struct gcpro gcpro1, gcpro2;
 
@@ -1104,7 +1104,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       }
 
 #ifndef LRECORD_VECTOR
-    case Lisp_Vector:
+    case Lisp_Type_Vector:
       {
 	/* If deeper than spec'd depth, print placeholder.  */
 	if (INTP (Vprint_level)
@@ -1121,14 +1121,14 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 #endif /* !LRECORD_VECTOR */
 
 #ifndef LRECORD_SYMBOL
-    case Lisp_Symbol:
+    case Lisp_Type_Symbol:
       {
         print_symbol (obj, printcharfun, escapeflag);
         break;
       }
 #endif /* !LRECORD_SYMBOL */
 
-    case Lisp_Record:
+    case Lisp_Type_Record:
       {
 	struct lrecord_header *lheader = XRECORD_LHEADER (obj);
 	struct gcpro gcpro1, gcpro2;
@@ -1640,8 +1640,8 @@ but with some restrictions.  It must start with the two characters `%.'.
 After that comes an integer precision specification,
 and then a letter which controls the format.
 The letters allowed are `e', `f' and `g'.
-Use `e' for exponential notation \"DIG.DIGITSeEXPT\"
-Use `f' for decimal point notation \"DIGITS.DIGITS\".
+Use `e' for exponential notation "DIG.DIGITSeEXPT"
+Use `f' for decimal point notation "DIGITS.DIGITS".
 Use `g' to choose the shorter of those two formats for the number at hand.
 The precision in any of these cases is the number of digits following
 the decimal point.  With `f', a precision of 0 means to omit the
@@ -1697,7 +1697,7 @@ Uninterned symbols are those which are not present in `obarray', that is,
 those which were made with `make-symbol' or by calling `intern' with a
 second argument.
 
-When print-gensym is true, such symbols will be preceded by \"#:\", which
+When print-gensym is true, such symbols will be preceded by "#:", which
 causes the reader to create a new symbol instead of interning and returning
 an existing one.  Beware: the #: syntax creates a new symbol each time it is
 seen, so if you print an object which contains two pointers to the same

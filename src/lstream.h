@@ -126,7 +126,7 @@ typedef struct lstream_implementation
   /* Mark this object for garbage collection.  Same semantics as
      a standard Lisp_Object marker.  This function can be NULL. */
   Lisp_Object (*marker) (Lisp_Object lstream, void (*markfun) (Lisp_Object));
-} Lstream_implementation; 
+} Lstream_implementation;
 
 #define DEFINE_LSTREAM_IMPLEMENTATION(name,c_name,size)	\
  Lstream_implementation c_name[1] =			\
@@ -211,7 +211,7 @@ void Lstream_set_character_mode (Lstream *str);
 /* Call the function equivalent if the out buffer is full.  Otherwise,
    add to the end of the out buffer and, if line buffering is called for
    and the character marks the end of a line, write out the buffer. */
-   
+
 #define Lstream_putc(stream, c) 					\
   ((stream)->out_buffer_ind >= (stream)->out_buffer_size ?		\
    Lstream_fputc (stream, c) :						\

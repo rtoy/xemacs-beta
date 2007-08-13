@@ -1,6 +1,8 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (featurep 'viper-autoloads) (error "Already loaded"))
 
+
+(provide 'viper-autoloads)
 
 ;;;### (autoloads (viper-mode toggle-viper-mode) "viper" "viper/viper.el")
 
@@ -10,5 +12,3 @@
 Turn on Viper emulation of Vi." t nil)
 
 ;;;***
-
-(provide 'viper-autoloads)

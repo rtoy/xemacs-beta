@@ -343,7 +343,7 @@ internal_self_insert (Emchar c1, int noautofill)
   Lisp_Object overwrite;
   struct Lisp_Char_Table *syntax_table;
   struct buffer *buf = current_buffer;
-  
+
   overwrite = buf->overwrite_mode;
   syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
 

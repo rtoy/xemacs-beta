@@ -39,7 +39,7 @@ Boston, MA 02111-1307, USA.  */
    the Lisp variables we use. */
 
 /* The name of the directory in which we keep lock files, with a '/'
-   appended.  */  
+   appended.  */
 Lisp_Object Vlock_directory;
 
 #if 0 /* FSFmacs */
@@ -85,7 +85,7 @@ fill_in_lock_short_file_name (REGISTER char *lockfile, REGISTER Lisp_Object fn)
   REGISTER unsigned char *p, new;
 
   CHECK_STRING (Vlock_directory);
-  
+
   /* 7-bytes cyclic code for burst correction on byte-by-byte basis.
      the used polynomial is D^7 + D^6 + D^3 +1. pot@cnuce.cnr.it */
 
@@ -442,7 +442,7 @@ or else nothing is done if current buffer isn't visiting a file.
   if (BUF_SAVE_MODIFF (current_buffer) < BUF_MODIFF (current_buffer)
       && !NILP (fn))
     lock_file (fn);
-  return Qnil;    
+  return Qnil;
 }
 
 DEFUN ("unlock-buffer", Funlock_buffer, 0, 0, 0, /*
@@ -500,7 +500,7 @@ t if it is locked by you, else a string of the name of the locker.
     return (Qnil);
   else if (owner == getpid ())
     return (Qt);
-  
+
   return (lock_file_owner_name (lfname));
 }
 

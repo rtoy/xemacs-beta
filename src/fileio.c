@@ -599,7 +599,7 @@ a directory is different from its name as a file.
 The result can be used as the value of `default-directory'
 or passed as second argument to `expand-file-name'.
 For a Unix-syntax file name, just appends a slash.
-On VMS, converts \"[X]FOO.DIR\" to \"[X.FOO]\", etc.
+On VMS, converts "[X]FOO.DIR" to "[X.FOO]", etc.
 */
        (file))
 {
@@ -783,8 +783,8 @@ This is the name of the file that holds the data for the directory DIR.
 This operation exists because a directory is also a file, but its name as
 a directory is different from its name as a file.
 In Unix-syntax, this function just removes the final slash.
-On VMS, given a VMS-syntax directory name such as \"[X.Y]\",
-it returns a file name such as \"[X]Y.DIR.1\".
+On VMS, given a VMS-syntax directory name such as "[X.Y]",
+it returns a file name such as "[X]Y.DIR.1".
 */
        (directory))
 {
@@ -2583,8 +2583,7 @@ Otherwise returns nil.
   bufsize = 100;
   while (1)
     {
-      buf = (char *) xmalloc (bufsize);
-      memset (buf, 0, bufsize);
+      buf = xnew_array_and_zero (char, bufsize);
       valsize = readlink ((char *) XSTRING_DATA (filename),
 			  buf, bufsize);
       if (valsize < bufsize) break;
@@ -3627,7 +3626,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 			   LSTREAM_BLOCKN_BUFFERED, 65536);
 #ifdef MULE
     outstream =
-      make_encoding_output_stream ( XLSTREAM (outstream), codesys);
+      make_encoding_output_stream (XLSTREAM (outstream), codesys);
     Lstream_set_buffering (XLSTREAM (outstream),
 			   LSTREAM_BLOCKN_BUFFERED, 65536);
 #endif /* MULE */

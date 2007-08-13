@@ -634,8 +634,8 @@ x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
   switch (keysym)
     {
       /* These would be handled correctly by the default case, but by
-	 special-casing them here we don't garbage a string or call intern().
-	 */
+	 special-casing them here we don't garbage a string or call
+	 intern().  */
     case XK_BackSpace:	return QKbackspace;
     case XK_Tab:	return QKtab;
     case XK_Linefeed:	return QKlinefeed;
@@ -700,15 +700,12 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 #endif /* XIM_XLIB */
 #endif /* HAVE_XIM */
 
-  if (
-#ifndef HAVE_XIM
-      1
-#elif defined (XIM_MOTIF)
-      0
-#else /* XIM_XLIB */
-      !xic
-#endif
-      )
+  /* We use XLookupString if we're not using XIM, or are using
+     XIM_XLIB but input context creation failed. */
+#if ! (defined (HAVE_XIM) && defined (XIM_MOTIF))
+#if defined (HAVE_XIM) && defined (XIM_XLIB)
+     if (!xic)
+#endif /* XIM_XLIB */
     {
       /* Apparently it's necessary to specify a dummy here (rather
          than passing in 0) to avoid crashes on German IRIX */
@@ -716,6 +713,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
       XLookupString (event, dummy, 200, &keysym, 0);
       return x_keysym_to_emacs_keysym (keysym, simple_p);
     }
+#endif /* ! XIM_MOTIF */
 
 #ifdef HAVE_XIM
  Lookup_String: /* Come-From XBufferOverflow */
@@ -724,7 +722,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 			    event, bufptr, bufsiz, &keysym, &status);
 #else /* XIM_XLIB */
   len = XmbLookupString (xic, event, bufptr, bufsiz, &keysym, &status);
-#endif /* XIM_XLIB */
+#endif /* HAVE_XIM */
 
 #ifdef DEBUG_XEMACS
   if (x_debug_events > 0)
@@ -769,33 +767,45 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	/* Generate multiple emacs events */
 	struct device *d = get_device_from_display (event->display);
         Emchar ch;
-        Lisp_Object instream =
+	Lisp_Object instream, fb_instream;
+	Lstream *istr;
+	struct gcpro gcpro1, gcpro2;
+
+	fb_instream =
           make_fixed_buffer_input_stream ((unsigned char *) bufptr, len);
 
         /* ### Use Fget_coding_system (Vcomposed_input_coding_system) */
-        instream =
-	  make_decoding_input_stream (XLSTREAM (instream),
+	instream =
+	  make_decoding_input_stream (XLSTREAM (fb_instream),
 				      Fget_coding_system (Qautomatic_conversion));
 
-        while ((ch = Lstream_get_emchar (XLSTREAM (instream))) != EOF)
+	istr = XLSTREAM (instream);
+
+	GCPRO2 (instream, fb_instream);
+        while ((ch = Lstream_get_emchar (istr)) != EOF)
           {
             Lisp_Object emacs_event = Fmake_event ();
-            XEVENT (emacs_event)->channel	      = DEVICE_CONSOLE (d);
-            XEVENT (emacs_event)->event_type	      = key_press_event;
-            XEVENT (emacs_event)->timestamp	      = event->time;
-            XEVENT (emacs_event)->event.key.modifiers = 0;
-            XEVENT (emacs_event)->event.key.keysym    = make_char (ch);
+	    struct Lisp_Event *ev = XEVENT (emacs_event);
+            ev->channel	            = DEVICE_CONSOLE (d);
+            ev->event_type	    = key_press_event;
+            ev->timestamp	    = event->time;
+            ev->event.key.modifiers = 0;
+            ev->event.key.keysym    = make_char (ch);
             enqueue_Xt_dispatch_event (emacs_event);
           }
-        Lstream_close (XLSTREAM (instream));
+	Lstream_close (istr);
+	UNGCPRO;
+	Lstream_delete (istr);
+	Lstream_delete (XLSTREAM (fb_instream));
 	return Qnil;
       }
     case XLookupNone: return Qnil;
     case XBufferOverflow:
-      bufptr = alloca (len+1);
+      bufptr = (char *) alloca (len+1);
       bufsiz = len+1;
       goto Lookup_String;
     }
+  return Qnil; /* not reached */
 #endif /* HAVE_XIM */
 }
 
@@ -1233,7 +1243,7 @@ handle_map_event (struct frame *f, XEvent *event)
 	 inaccurate) state flag.  Therefore, ignoring the MapNotify
 	 is correct. */
       if (!FRAME_VISIBLE_P (f) && NILP (Fframe_iconified_p (frame)))
-#endif
+#endif /* 0 */
 	change_frame_visibility (f, 1);
     }
   else
@@ -1406,25 +1416,6 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
 #ifdef HAVE_XIM
       XIM_SetGeometry (f);
 #endif
-#if 0
-      /* ### If the following code fails to work, simply always call
-         x_smash_bastardly_shell_position always.  In this case we no
-         longer rely on the data in the events, merely on their
-         occurrence.  */
-      /* ### Well, actually we shouldn't have to ever call
-         x_smash_bastardly_shell_position.  We should just call
-         XtTranslateCoordinates and only access the core.{x,y} fields
-         using XtGetValue -- mrb */
-      {
-        XConfigureEvent *ev = &event->xconfigure;
-      if (ev->window == XtWindow (FRAME_X_SHELL_WIDGET (f)) &&
-          ! (ev->x == 0 && ev->y == 0 && !ev->send_event))
-        {
-          FRAME_X_SHELL_WIDGET (f)->core.x = ev->x;
-          FRAME_X_SHELL_WIDGET (f)->core.y = ev->y;
-        }
-      }
-#endif
       break;
 
     default:
@@ -1558,10 +1549,9 @@ init_what_input_once (void)
 {
   int i;
 
-  filedesc_with_input = (Lisp_Object *)
-    xmalloc (MAXDESC * sizeof (Lisp_Object));
-  filedesc_to_what_closure = (struct what_is_ready_closure **)
-    xmalloc (MAXDESC * sizeof (struct what_is_ready_closure *));
+  filedesc_with_input = xnew_array (Lisp_Object, MAXDESC);
+  filedesc_to_what_closure =
+    xnew_array (struct what_is_ready_closure *, MAXDESC);
 
   for (i = 0; i < MAXDESC; i++)
     {
@@ -1634,7 +1624,7 @@ select_filedesc (int fd, Lisp_Object what)
      detect this and error before here. */
   assert (!filedesc_to_what_closure[fd]);
 
-  closure = (struct what_is_ready_closure *) xmalloc (sizeof (*closure));
+  closure = xnew (struct what_is_ready_closure);
   closure->fd = fd;
   closure->what = what;
   closure->id =
@@ -2276,7 +2266,7 @@ x_check_for_quit_char (Display *display)
   XEventsQueued (display, QueuedAfterReading);
   queued = XCheckIfEvent (display, &event,
 			  quit_char_predicate,
-			  (XtPointer)&critical_quit);
+			  (char *) &critical_quit);
   if (queued)
     {
       Vquit_flag = (critical_quit ? Qcritical : Qt);
@@ -2636,8 +2626,7 @@ vars_of_event_Xt (void)
   /* this function only makes safe calls */
   init_what_input_once ();
 
-  Xt_event_stream =
-    (struct event_stream *) xmalloc (sizeof (struct event_stream));
+  Xt_event_stream = xnew (struct event_stream);
   Xt_event_stream->event_pending_p 	= emacs_Xt_event_pending_p;
   Xt_event_stream->next_event_cb	= emacs_Xt_next_event;
   Xt_event_stream->handle_magic_event_cb= emacs_Xt_handle_magic_event;

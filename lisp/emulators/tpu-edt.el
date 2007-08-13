@@ -7,9 +7,8 @@
 ;; Version: 4.2
 ;; Keywords: emulations
 
-;; Modified for XEmacs by R. Kevin Oberman <oberman@es.net>
-
 ;; This file is part of XEmacs.
+;; Modified for XEmacs by Kevin Oberman <oberman@es.net>
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by
@@ -18,15 +17,15 @@
 
 ;; XEmacs is distributed in the hope that it will be useful, but
 ;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34
+;;; Synced up with FSF 19.34 and XEmacs 19.16
 
 ;; TPU-edt is based on tpu.el by Jeff Kowalski and Bob Covey.
 
@@ -65,7 +64,7 @@
 ;;    Please note that TPU-edt does NOT emulate TPU.  It emulates TPU's EDT
 ;;    emulation.  Very few TPU line-mode commands are supported.
 
-;;    TPU-edt, like it's VMS cousin, works on VT-series terminals with DEC
+;;    TPU-edt, like its VMS cousin, works on VT-series terminals with DEC
 ;;    style keyboards.  VT terminal emulators, including xterm with the
 ;;    appropriate key translations, work just fine too.
 
@@ -130,7 +129,7 @@
 ;;    a small help file showing the default keypad layout, control key
 ;;    functions, and Gold key functions.  Pressing any key inside of help
 ;;    splits the screen and prints a description of the function of the
-;;    pressed key.  Gold-PF2 invokes the native emacs help, with it's
+;;    pressed key.  Gold-PF2 invokes the native emacs help, with its
 ;;    zillions of options.
 
 ;;    Thanks to emacs, TPU-edt has some extensions that may make your life
@@ -268,16 +267,13 @@
 ;;    than the emulated TPU commands.  Also, it works only in the forward
 ;;    direction, regardless of the current TPU-edt direction.
 
-;; NOTE: There was a very old tpu-edt in XEmacs 19.14 so I deleted it and
-;;  replaced it with the one in Emacs 19.34. -sb
-
 ;;; Code:
 
 
 ;;;
 ;;;  Version Information
 ;;;
-(defconst tpu-version "4.2" "TPU-edt version number.")
+(defconst tpu-version "4.2X" "TPU-edt version number.")
 
 
 ;;;
@@ -430,8 +426,9 @@ GOLD is the ASCII 7-bit escape sequence <ESC>OP.")
 	 (setq minor-mode-alist tpu-original-mm-alist))
 	(t
 	 (setq-default mode-line-format
-		       (list (purecopy "")
+		       (list (purecopy "-")
 			     'mode-line-modified
+			     'mode-line-frame-identification
 			     'mode-line-buffer-identification
 			     (purecopy "  ")
 			     'global-mode-string
@@ -679,8 +676,8 @@ With argument, fill and justify."
   "Sets the screen size."
   (interactive "nnew screen height: \nnnew screen width: ")
   (setq zmacs-region-stays t)
-  (set-screen-height height)
-  (set-screen-width width))
+  (set-frame-height height)
+  (set-frame-width width))
 
 (defun tpu-toggle-newline-and-indent nil
   "Toggle between 'newline and indent' and 'simple newline'."
@@ -822,6 +819,8 @@ This is useful for inserting control characters."
 (fset 'replace 'tpu-lm-replace)
 (fset 'REPLACE 'tpu-lm-replace)
 
+;; Apparently TPU users really expect to do M-x help RET to get help.
+;; So it is really necessary to redefine this.
 (fset 'help 'tpu-help)
 (fset 'HELP 'tpu-help)
 
@@ -973,10 +972,12 @@ This is useful for inserting control characters."
 	(if split
 	    (setq key
 		  (read-key-sequence
-		   "Press the key you want help on (RET=exit, ENTER=redisplay, N=next, P=prev): "))
+		   "Press the key you want help on (RET=exit, ENTER=redisplay, N=next, 
+P=prev): "))
 	  (setq key
 		(read-key-sequence
-		 "Press the key you want help on (RET to exit, N next screen, P prev screen): ")))
+		 "Press the key you want help on (RET to exit, N next screen, P prev 
+screen): ")))
 
 	;; Process the read key
 	;;
@@ -1090,7 +1091,8 @@ kills modified buffers without asking."
     (switch-to-buffer (car (reverse list)))))
 
 (defun tpu-make-file-buffer-list (buffer-list)
-  "Returns names from BUFFER-LIST excluding those beginning with a space or star."
+  "Returns names from BUFFER-LIST excluding those beginning with a space or 
+star."
   (delq nil (mapcar '(lambda (b)
                        (if (or (= (aref (buffer-name b) 0) ? )
                                (= (aref (buffer-name b) 0) ?*)) nil b))
@@ -1674,7 +1676,7 @@ or each line in the entire buffer if no region is selected."
 or each line of the entire buffer if no region is selected."
   (interactive
    (list (tpu-string-prompt "String to add: " 'tpu-add-at-eol-hist)))
-  (set zmacs-region-stays t)
+  (setq zmacs-region-stays t)
   (if (string= "" text) (error "No string specified."))
   (cond ((tpu-mark)
 	 (save-excursion
@@ -1817,7 +1819,7 @@ With argument, do this that many times."
 Prefix argument serves as a repeat count."
   (interactive "p")
   (setq zmacs-region-stays t)
-  (next-line-internal num)
+  (line-move num)
   (setq this-command 'next-line))
 
 (defun tpu-previous-line (num)
@@ -1825,7 +1827,7 @@ Prefix argument serves as a repeat count."
 Prefix argument serves as a repeat count."
   (interactive "p")
   (setq zmacs-region-stays t)
-  (next-line-internal (- num))
+  (line-move (- num))
   (setq this-command 'previous-line))
 
 (defun tpu-next-beginning-of-line (num)
@@ -1959,10 +1961,12 @@ A repeat count means scroll that many sections."
 A repeat count means scroll that many sections."
   (interactive "p")
   (setq zmacs-region-stays t)
-  (let* ((beg (tpu-current-line))
+  (let* (
+	 (beg (tpu-current-line))
 	 (height (1- (window-height)))
 	 (lines (* num (/ (* height tpu-percent-scroll) 100))))
-    (next-line-internal (- lines))
+    (setq zmacs-region-stays t)
+    (line-move (- lines))
     (if (> lines beg) (recenter 0))))
 
 (defun tpu-scroll-window-up (num)
@@ -1970,10 +1974,12 @@ A repeat count means scroll that many sections."
 A repeat count means scroll that many sections."
   (interactive "p")
   (setq zmacs-region-stays t)
-  (let* ((beg (tpu-current-line))
+  (let* (
+	 (beg (tpu-current-line))
 	 (height (1- (window-height)))
 	 (lines (* num (/ (* height tpu-percent-scroll) 100))))
-    (next-line-internal lines)
+    (setq zmacs-region-stays t)
+    (line-move lines)
     (if (>= (+ lines beg) height) (recenter -1))))
 
 (defun tpu-pan-right (num)
@@ -2337,7 +2343,8 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 (define-key minibuffer-local-map "\eOM" 'exit-minibuffer)
 (define-key minibuffer-local-ns-map "\eOM" 'exit-minibuffer)
 (define-key minibuffer-local-completion-map "\eOM" 'exit-minibuffer)
-(define-key minibuffer-local-must-match-map "\eOM" 'minibuffer-complete-and-exit)
+(define-key minibuffer-local-must-match-map "\eOM" 
+'minibuffer-complete-and-exit)
 (and (boundp 'repeat-complex-command-map)
      (define-key repeat-complex-command-map "\eOM" 'exit-minibuffer))
 
@@ -2431,8 +2438,10 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
       (define-key read-expression-map cur 'tpu-previous-history-element)
       (define-key minibuffer-local-map cur 'tpu-previous-history-element)
       (define-key minibuffer-local-ns-map cur 'tpu-previous-history-element)
-      (define-key minibuffer-local-completion-map cur 'tpu-previous-history-element)
-      (define-key minibuffer-local-must-match-map cur 'tpu-previous-history-element)
+      (define-key minibuffer-local-completion-map cur 
+'tpu-previous-history-element)
+      (define-key minibuffer-local-must-match-map cur 
+'tpu-previous-history-element)
       (setq loc (cdr loc)))
 
     (setq loc (where-is-internal 'tpu-next-line))
@@ -2440,8 +2449,10 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
       (define-key read-expression-map cur 'tpu-next-history-element)
       (define-key minibuffer-local-map cur 'tpu-next-history-element)
       (define-key minibuffer-local-ns-map cur 'tpu-next-history-element)
-      (define-key minibuffer-local-completion-map cur 'tpu-next-history-element)
-      (define-key minibuffer-local-must-match-map cur 'tpu-next-history-element)
+      (define-key minibuffer-local-completion-map cur 
+'tpu-next-history-element)
+      (define-key minibuffer-local-must-match-map cur 
+'tpu-next-history-element)
       (setq loc (cdr loc)))))
 
 
@@ -2481,7 +2492,7 @@ If FILE is nil, try to load a default file.  The default file names are
      Ack!!  You're running TPU-edt under X-windows without loading an
      X  key definition file.   To create a  TPU-edt X  key definition
      file, run the tpu-mapper.el program.  It  came with TPU-edt.  It
-     even includes directions on how to  use it!  Perhaps it's laying
+     even includes directions on how to  use it!   Perhaps it's lying
      around here someplace.  ")
 	 (let ((file "tpu-mapper.el")
 	       (found nil)
@@ -2550,8 +2561,10 @@ If FILE is nil, try to load a default file.  The default file names are
 	   (tpu-arrow-history))
 	  (t
 	   ;; define ispell functions
-	   (autoload 'ispell-word "ispell" "Check spelling of word at or before point" t)
-	   (autoload 'ispell-complete-word "ispell" "Complete word at or before point" t)
+	   (autoload 'ispell-word "ispell" "Check spelling of word at or before 
+point" t)
+	   (autoload 'ispell-complete-word "ispell" "Complete word at or before 
+point" t)
 	   (autoload 'ispell-buffer "ispell" "Check spelling of entire buffer" t)
 	   (autoload 'ispell-region "ispell" "Check spelling of region" t)))
     (tpu-set-mode-line t)

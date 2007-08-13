@@ -1,4 +1,4 @@
-/* Block-relocating memory allocator. 
+/* Block-relocating memory allocator.
    Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -97,7 +97,7 @@ static POINTER page_break_value;
 /* This is the size of a page.  We round memory requests to this boundary.  */
 static int page_size;
 
-/* Whenever we get memory from the system, get this many extra bytes.  This 
+/* Whenever we get memory from the system, get this many extra bytes.  This
    must be a multiple of page_size.  */
 static int extra_bytes;
 
@@ -164,7 +164,7 @@ relinquish (SIZE size)
   break_value -= size;
   new_page_break = (POINTER) ROUNDUP (break_value);
   excess = (char *) page_break_value - (char *) new_page_break;
-  
+
   if (excess > extra_bytes * 2)
     {
       /* Keep extra_bytes worth of empty space.
@@ -273,7 +273,7 @@ relocate_some_blocs (bloc_ptr bloc, POINTER address)
       SIZE offset = address - bloc->data;
       SIZE data_size = 0;
       bloc_ptr b;
-      
+
       for (b = bloc; b != NIL_BLOC; b = b->next)
 	{
 	  data_size += b->size;
@@ -331,7 +331,7 @@ static int use_relocatable_buffers;
    __morecore hook values - in particular, __default_morecore in the
    GNU malloc package.  */
 
-POINTER 
+POINTER
 r_alloc_sbrk (long size)
 {
   /* This is the first address not currently available for the heap.  */
@@ -510,7 +510,7 @@ init_ralloc (void)
 }
 #else /* HAVE_MMAP */
 
-/* 
+/*
    A relocating allocator built using the mmap(2) facility available
    in some OSes.  Based on another version written by Paul Flinders,
    from which code (and comments) are snarfed.
@@ -523,7 +523,7 @@ init_ralloc (void)
    Unfortunately, such a scheme doesn't work for certain systems like
    HP-UX that have a system-wide virtual->real address map, and
    consequently impose restrictions on the virtual address values
-   permitted.  
+   permitted.
 
    NB: The mapping scheme in HP-UX is motivated by the inverted page
    table design in some HP processors.
@@ -720,7 +720,7 @@ free_mmap_handle (MMAP_HANDLE h)
       UNDERLYING_FREE( h );		/* Free the sole item */
       mmap_start = 0; return;
     }
-  else if (h == mmap_start) 
+  else if (h == mmap_start)
     {
       mmap_start = nex;		/* Make sure mmap_start isn't bogus. */
     }
@@ -745,7 +745,7 @@ static void
 init_MHASH_table (void)
 {
   int i = 0;
-  for (; i < MHASH_PRIME; i++) 
+  for (; i < MHASH_PRIME; i++)
     {
       MHASH_HITS[i].n_hits = 0;
       MHASH_HITS[i].addr = 0;
@@ -762,7 +762,7 @@ MHASH (VM_ADDR addr)
 #else
   unsigned int addr_shift = (unsigned int)(addr) >> USELESS_LOWER_ADDRESS_BITS;
 #endif
-  int hval = addr_shift % MHASH_PRIME; /* We could have addresses which are -ve 
+  int hval = addr_shift % MHASH_PRIME; /* We could have addresses which are -ve
 					  when converted to signed ints */
   return ((hval >= 0) ? hval : MHASH_PRIME + hval);
 }
@@ -834,10 +834,10 @@ static int meter[N_Meterables];
 DEFUN ("mmap-allocator-status", Fmmap_allocator_status, 0, 0, 0, /*
 Return some information about mmap-based allocator.
 
-  mmap-addrlist-size: number of entries in address picking list. 
-  mmap-times-mapped: number of times r_alloc was called. 
-  mmap-pages-mapped: number of pages mapped by r_alloc calls only. 
-  mmap-times-unmapped: number of times r_free was called. 
+  mmap-addrlist-size: number of entries in address picking list.
+  mmap-times-mapped: number of times r_alloc was called.
+  mmap-pages-mapped: number of pages mapped by r_alloc calls only.
+  mmap-times-unmapped: number of times r_free was called.
   mmap-times-remapped: number of times r_re_alloc was called.
   mmap-didnt-copy: number of times  re-alloc didn\'t have to move the block.
   mmap-pages-copied: total number of pages copied.
@@ -868,7 +868,7 @@ Return some information about mmap-based allocator.
 
 #else /* !MMAP_METERING */
 
-#define MEMMETER(x) 
+#define MEMMETER(x)
 #define MVAL(x)
 
 #endif /* MMAP_METERING */
@@ -885,8 +885,8 @@ find_mmap_handle (POINTER *alias)
       return 0;
 
     case 1:
-      if (*alias == MHASH_HITS[kval].addr) 
-	{ 
+      if (*alias == MHASH_HITS[kval].addr)
+	{
 	  MEMMETER( MVAL( M_Hash_Worked) ++ );
 	  return MHASH_HITS[kval].handle;
 	}
@@ -896,7 +896,7 @@ find_mmap_handle (POINTER *alias)
     } /* switch */
 }
 
-/* 
+/*
    Some kernels don't like being asked to pick addresses for mapping
    themselves---IRIX is known to become extremely slow if mmap is
    passed a ZERO as the first argument.  In such cases, we use an
@@ -946,7 +946,7 @@ static ADDRESS_CHAIN addr_chain = 0;
 /* Start off the address block chain with a humongous address block
    which is empty to start with.  Note that addr_chain is invariant
    WRT the addition/deletion of address blocks because of the assert
-   in Coalesce() and the strict ordering of blocks by their address 
+   in Coalesce() and the strict ordering of blocks by their address
    */
 static void Addr_Block_initialize()
 {
@@ -973,8 +973,8 @@ static void Coalesce_Addr_Blocks()
 	  if (p->flag == occupied) break; /* No cigar */
 
 	  /* Check if the addresses are contiguous. */
-	  if (p->addr + p->sz != np->addr) break; 
-	  
+	  if (p->addr + p->sz != np->addr) break;
+
 	  MEMMETER( MVAL( M_Addrlist_Size )--)
 	  /* We can coalesce these two. */
 	  p->sz += np->sz;
@@ -1002,7 +1002,7 @@ static VM_ADDR New_Addr_Block( SIZE sz )
 	  remainder->sz = p->sz - sz;
 
 	  MEMMETER( MVAL( M_Addrlist_Size )++)
-	  
+
 	  /* Now make p become an occupied block with the appropriate size */
 	  p->next = remainder;
 	  p->sz = sz;
@@ -1036,7 +1036,7 @@ static void Free_Addr_Block( VM_ADDR addr, SIZE sz )
 	  break;
 	}
     }
-  if (!p) abort(); /* Can't happen... we've got a block to free which is not in 
+  if (!p) abort(); /* Can't happen... we've got a block to free which is not in
 		      the address list. */
   Coalesce_Addr_Blocks();
 }
@@ -1051,13 +1051,13 @@ static void Addr_Block_initialize(void)
 
 static VM_ADDR New_Addr_Block( SIZE sz )
 {
-  return mmap( 0, sz, PROT_READ|PROT_WRITE, MAP_FLAGS,
+  return mmap (0, sz, PROT_READ|PROT_WRITE, MAP_FLAGS,
 	       DEV_ZERO_FD, 0 );
 }
 
 static void Free_Addr_Block( VM_ADDR addr, SIZE sz )
 {
-  munmap( addr, sz );
+  munmap ((caddr_t) addr, sz );
 }
 
 #endif /* MMAP_GENERATE_ADDRESSES */
@@ -1067,7 +1067,7 @@ static void Free_Addr_Block( VM_ADDR addr, SIZE sz )
 
 /*
  r_alloc( POINTER, SIZE ): Allocate a relocatable area with the start
- address aliased to the first parameter. 
+ address aliased to the first parameter.
  */
 
 POINTER r_alloc (POINTER *ptr, SIZE size);
@@ -1075,7 +1075,7 @@ POINTER
 r_alloc (POINTER *ptr, SIZE size)
 {
   MMAP_HANDLE mh;
-  
+
   switch(r_alloc_initialized)
     {
     case 0:
@@ -1102,7 +1102,7 @@ r_alloc (POINTER *ptr, SIZE size)
 	  MHASH_ADD( mh->vm_addr, mh );
 	  mh->space_for = mmapped_size;
 	  mh->aliased_address = ptr;
-	  *ptr = mh->vm_addr;
+	  *ptr = (POINTER) mh->vm_addr;
 	}
       else
 	*ptr = 0;		/* Malloc of block failed */
@@ -1196,16 +1196,16 @@ r_re_alloc (POINTER *ptr, SIZE sz)
 	{			/* Also, if a shrinkage was asked for. */
 	  MEMMETER( MVAL(M_Didnt_Copy)++ )
           MEMMETER( MVAL(M_Wastage) -= (sz - h->size))
-	  /* We're pretty dumb at handling shrinkage.  We should check for 
+	  /* We're pretty dumb at handling shrinkage.  We should check for
 	     a larger gap than the standard hysteresis allowable, and if so,
 	     shrink the number of pages.  Right now, we simply reset the size
 	     component and return. */
 	  h->size = sz;
 	  return *ptr;
 	}
-      
+
       new_vm_addr = New_Addr_Block( actual_sz );
-      if (new_vm_addr == VM_FAILURE_ADDR) 
+      if (new_vm_addr == VM_FAILURE_ADDR)
 	{/* Failed to realloc. */
           /* *ptr = 0; */
 	  return 0;
@@ -1229,7 +1229,7 @@ r_re_alloc (POINTER *ptr, SIZE sz)
       h->size = sz;		/* New (requested) size */
       h->vm_addr = new_vm_addr;	/* New VM start address */
       h->aliased_address = ptr;	/* Change alias to reflect block relocation. */
-      *ptr = h->vm_addr;
+      *ptr = (POINTER) h->vm_addr;
       return *ptr;
     }
 }
@@ -1291,11 +1291,11 @@ vars_of_ralloc (void)
 {
   DEFVAR_INT ("mmap-hysteresis", &mmap_hysteresis /*
 Extra room left at the end of an allocated arena,
-so that a re-alloc requesting extra space smaller than this 
+so that a re-alloc requesting extra space smaller than this
 does not actually cause a new arena to be allocated.
 
-A negative value is considered equal to zero.  This is the 
-minimum amount of space guaranteed to be left at the end of 
+A negative value is considered equal to zero.  This is the
+minimum amount of space guaranteed to be left at the end of
 the arena.  Because allocation happens in multiples of the OS
 page size, it is possible for more space to be left unused.
 */ );

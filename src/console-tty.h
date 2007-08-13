@@ -66,135 +66,135 @@ struct tty_console
 
   /* flags indicating presence, absence or value of various features */
   struct
-    {
-      unsigned int must_write_spaces :1;/* terminal inserts nulls, not
-					   spaces to fill whitespace
-					   on screen */
-      unsigned int insert_mode_motion :1;/* cursor movement commands
-					    work while in insert mode */
-      unsigned int standout_motion :1;	/* cursor movement is graceful
+  {
+    unsigned int must_write_spaces :1; /* terminal inserts nulls, not
+					  spaces to fill whitespace on
+					  screen */
+    unsigned int insert_mode_motion :1; /* cursor movement commands
+					   work while in insert mode */
+    unsigned int standout_motion :1;	/* cursor movement is graceful
 					   in standout or underline mode */
-      unsigned int memory_above_frame :1;/* display retained above screen */
-      unsigned int memory_below_frame :1;/* display retained below screen */
-      unsigned int meta_key :2;		/* 0 == mask off top bit;
+    unsigned int memory_above_frame :1; /* display retained above screen */
+    unsigned int memory_below_frame :1; /* display retained below screen */
+    unsigned int meta_key :2;		/* 0 == mask off top bit;
 					   1 == top bit is meta;
 					   2 == top bit is useful as
 					   character info */
-      unsigned int flow_control :1;	/* Nonzero means use ^S/^Q as
+    unsigned int flow_control :1;	/* Nonzero means use ^S/^Q as
 					   cretinous flow control.  */
-      int standout_width;		/* # of spaces printed when
-					   change to standout mode */
-      int underline_width;		/* # of spaces printed when
+    int standout_width;		        /* # of spaces printed when
+				           change to standout mode */
+    int underline_width;		/* # of spaces printed when
 					   change to underline mode */
-    } flags;
+  } flags;
 
   /* cursor motion entries - each entry is commented with the terminfo
      and the termcap entry */
   struct
-    {
-      /* local cursor movement */
-      CONST char *up;			/* cuu1, up */
-      CONST char *down;			/* cud1, do */
-      CONST char *left;			/* cub1, le */
-      CONST char *right;		/* cuf1, nd */
-      CONST char *home;			/* home, ho */
-      CONST char *low_left;		/* ll, ll */
-      CONST char *car_return;		/* cr, cr */
-      
-      /* parameterized local cursor movement */
-      CONST char *multi_up;		/* cuu, UP */
-      CONST char *multi_down;		/* cud, DO */
-      CONST char *multi_left;		/* cub, LE */
-      CONST char *multi_right;		/* cuf, RI */
-      
-      /* absolute cursor motion */
-      CONST char *abs;			/* cup, cm */
-      CONST char *hor_abs;		/* hpa, ch */
-      CONST char *ver_abs;		/* vpa, cv */
-      
-      /* scrolling */
-      CONST char *scroll_forw;		/* ind, sf */
-      CONST char *scroll_back;		/* ri, sr */
-      CONST char *multi_scroll_forw;	/* indn, SF */
-      CONST char *multi_scroll_back;	/* rin, SR */
-      CONST char *set_scroll_region;	/* csr, cs */
-    } cm;
-  
+  {
+    /* local cursor movement */
+    CONST char *up;			/* cuu1, up */
+    CONST char *down;			/* cud1, do */
+    CONST char *left;			/* cub1, le */
+    CONST char *right;			/* cuf1, nd */
+    CONST char *home;			/* home, ho */
+    CONST char *low_left;		/* ll, ll */
+    CONST char *car_return;		/* cr, cr */
+    
+    /* parameterized local cursor movement */
+    CONST char *multi_up;		/* cuu, UP */
+    CONST char *multi_down;		/* cud, DO */
+    CONST char *multi_left;		/* cub, LE */
+    CONST char *multi_right;		/* cuf, RI */
+
+    /* absolute cursor motion */
+    CONST char *abs;			/* cup, cm */
+    CONST char *hor_abs;		/* hpa, ch */
+    CONST char *ver_abs;		/* vpa, cv */
+
+    /* scrolling */
+    CONST char *scroll_forw;		/* ind, sf */
+    CONST char *scroll_back;		/* ri, sr */
+    CONST char *multi_scroll_forw;	/* indn, SF */
+    CONST char *multi_scroll_back;	/* rin, SR */
+    CONST char *set_scroll_region;	/* csr, cs */
+  } cm;
+
   /* screen editing entries - each entry is commented with the
      terminfo and the termcap entry */
   struct
-    {
-      /* adding to the screen */
-      CONST char *ins_line;		/* il1, al */
-      CONST char *multi_ins_line;	/* il, AL */
-      CONST char *repeat;		/* rep, rp */
-      CONST char *begin_ins_mode;	/* smir, im */
-      CONST char *end_ins_mode;		/* rmir, ei */
-      CONST char *ins_char;		/* ich1, ic */
-      CONST char *multi_ins_char;	/* ich, IC */
-      CONST char *insert_pad;		/* ip, ip */
-      
-      /* deleting from the screen */
-      CONST char *clr_frame;		/* clear, cl */
-      CONST char *clr_from_cursor;	/* ed, cd */
-      CONST char *clr_to_eol;		/* el, ce */
-      CONST char *del_line;		/* dl1, dl */
-      CONST char *multi_del_line;	/* dl, DL */
-      CONST char *del_char;		/* dch1, dc */
-      CONST char *multi_del_char;	/* dch, DC */
-      CONST char *begin_del_mode;	/* smdc, dm */
-      CONST char *end_del_mode;		/* rmdc, ed */
-      CONST char *erase_at_cursor;	/* ech, ec */
-    } se;
+  {
+    /* adding to the screen */
+    CONST char *ins_line;		/* il1, al */
+    CONST char *multi_ins_line;		/* il, AL */
+    CONST char *repeat;			/* rep, rp */
+    CONST char *begin_ins_mode;		/* smir, im */
+    CONST char *end_ins_mode;		/* rmir, ei */
+    CONST char *ins_char;		/* ich1, ic */
+    CONST char *multi_ins_char;		/* ich, IC */
+    CONST char *insert_pad;		/* ip, ip */
+
+    /* deleting from the screen */
+    CONST char *clr_frame;		/* clear, cl */
+    CONST char *clr_from_cursor;	/* ed, cd */
+    CONST char *clr_to_eol;		/* el, ce */
+    CONST char *del_line;		/* dl1, dl */
+    CONST char *multi_del_line;		/* dl, DL */
+    CONST char *del_char;		/* dch1, dc */
+    CONST char *multi_del_char;		/* dch, DC */
+    CONST char *begin_del_mode;		/* smdc, dm */
+    CONST char *end_del_mode;		/* rmdc, ed */
+    CONST char *erase_at_cursor;	/* ech, ec */
+  } se;
 
   /* screen display entries - each entry is commented with the
      terminfo and termcap entry */
   struct
-    {
-      CONST char *begin_standout;	/* smso, so */
-      CONST char *end_standout;		/* rmso, se */
-      CONST char *begin_underline;	/* smul, us */
-      CONST char *end_underline;	/* rmul, ue */
-      CONST char *begin_alternate;	/* smacs, as */
-      CONST char *end_alternate;	/* rmacs, ae */
-      
-      CONST char *turn_on_reverse;	/* rev, mr */
-      CONST char *turn_on_blinking;	/* blink, mb */
-      CONST char *turn_on_bold;		/* bold, md */
-      CONST char *turn_on_dim;		/* dim, mh */
-      CONST char *turn_off_attributes;	/* sgr0, me */
-      
-      CONST char *visual_bell;		/* flash, vb */
-      CONST char *audio_bell;		/* bel, bl */
-      
-      CONST char *cursor_visible;	/* cvvis, vs */
-      CONST char *cursor_normal;	/* cnorm, ve */
-      CONST char *init_motion;		/* smcup, ti */
-      CONST char *end_motion;		/* rmcup, te */
-      CONST char *keypad_on;		/* smkx, ks */
-      CONST char *keypad_off;		/* rmkx, ke */
+  {
+    CONST char *begin_standout;		/* smso, so */
+    CONST char *end_standout;		/* rmso, se */
+    CONST char *begin_underline;	/* smul, us */
+    CONST char *end_underline;		/* rmul, ue */
+    CONST char *begin_alternate;	/* smacs, as */
+    CONST char *end_alternate;		/* rmacs, ae */
+    
+    CONST char *turn_on_reverse;	/* rev, mr */
+    CONST char *turn_on_blinking;	/* blink, mb */
+    CONST char *turn_on_bold;		/* bold, md */
+    CONST char *turn_on_dim;		/* dim, mh */
+    CONST char *turn_off_attributes;	/* sgr0, me */
 
-      CONST char *orig_pair;		/* op, op */
-    } sd;
+    CONST char *visual_bell;		/* flash, vb */
+    CONST char *audio_bell;		/* bel, bl */
+
+    CONST char *cursor_visible;		/* cvvis, vs */
+    CONST char *cursor_normal;		/* cnorm, ve */
+    CONST char *init_motion;		/* smcup, ti */
+    CONST char *end_motion;		/* rmcup, te */
+    CONST char *keypad_on;		/* smkx, ks */
+    CONST char *keypad_off;		/* rmkx, ke */
+
+    CONST char *orig_pair;		/* op, op */
+  } sd;
   
   /* costs of various operations */
   struct
-    {
-      int cm_up;
-      int cm_down;
-      int cm_left;
-      int cm_right;
-      int cm_home;
-      int cm_low_left;
-      int cm_car_return;
-      int cm_abs;
-      int cm_hor_abs;
-      int cm_ver_abs;
-    } cost;
+  {
+    int cm_up;
+    int cm_down;
+    int cm_left;
+    int cm_right;
+    int cm_home;
+    int cm_low_left;
+    int cm_car_return;
+    int cm_abs;
+    int cm_hor_abs;
+    int cm_ver_abs;
+  } cost;
 
   /* The initial tty mode bits */
   struct emacs_tty old_tty;
-  
+
   /* Is this TTY our controlling terminal? */
   unsigned int controlling_terminal :1;
   unsigned int is_stdio :1;

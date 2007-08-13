@@ -44,17 +44,19 @@ until the next operation that changes the length of the array.
 This is a container object.  Declare a dynamic array of a specific type
 as follows:
 
-struct mytype_dynarr
+typdef struct
 {
   Dynarr_declare (mytype);
-};
+} mytype_dynarr;
 
 Use the following functions/macros:
 
    void *Dynarr_new(type)
       [MACRO] Create a new dynamic-array object, with each element of the
-      specified type.  The return value is a void * and must be cast to the
-      proper dynamic array type.
+      specified type.  The return value is cast to (type##_dynarr).
+      This requires following the convention that types are declared in
+      such a way that this type concatenation works.  In particular, TYPE
+      must be a symbol, not an arbitrary C type.
 
    Dynarr_add(d, el)
       [MACRO] Add an element to the end of a dynamic array.  EL is a pointer
@@ -75,6 +77,10 @@ Use the following functions/macros:
 
    int Dynarr_length(d)
       [MACRO] Return the number of elements currently in a dynamic array.
+
+   int Dynarr_largest(d)
+      [MACRO] Return the maximum value that Dynarr_length(d) would
+      ever have returned.
 
    type Dynarr_at(d, i)
       [MACRO] Return the element at the specified index (no bounds checking
@@ -108,9 +114,7 @@ int Dynarr_min_size = 1;
 void *
 Dynarr_newf (int elsize)
 {
-  Dynarr *d = (Dynarr *) xmalloc (sizeof (Dynarr));
-
-  memset (d, 0, sizeof (*d));
+  Dynarr *d = xnew_and_zero (Dynarr);
   d->elsize = elsize;
 
   return d;
@@ -229,4 +233,4 @@ Dynarr_memory_usage (void *d, struct overhead_stats *stats)
   return total;
 }
 
-#endif
+#endif /* MEMORY_USAGE_STATS */

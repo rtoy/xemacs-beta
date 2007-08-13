@@ -33,7 +33,7 @@ Boston, MA 02111-1307, USA.  */
    be a better name than "EmacsShell".  What it does is work around
    a limitation in Xt in correctly dealing with the window-manager
    size hints with applications that
-   
+
    (a) dynamically change their window size
    (b) have a cell size (width-inc and height-inc) other than 1
 
@@ -55,7 +55,7 @@ Boston, MA 02111-1307, USA.  */
    current size in cells (you must keep this up-to-date),
    and "minWidthCells" and "minHeightCells" to specify the
    minimum size in cells.
-   
+
    Every time that the program issues a size command, the
    "baseWidth", "baseHeight", "minWidth", and "minHeight" fields
    of the WM_NORMAL_HINTS property will be updated to stay in
@@ -116,8 +116,8 @@ DEFINE_TRANSIENT_EMACS_SHELL.
 #endif
 
 typedef struct {
-    XtPointer           next_extension;           
-    XrmQuark            record_type;             
+    XtPointer           next_extension;
+    XrmQuark            record_type;
     long                version;
     Cardinal            record_size;
 } GenericClassExtRec;
@@ -128,7 +128,7 @@ static void ChangeManaged (Widget w);
 
 /* snarfed from Shell.c */
 #define BIGSIZE ((Dimension)32767)
- 
+
 static XtResource resources[] = {
 #define offset(field) XtOffset(EMACS_SHELL_WIDGET, emacs_shell.field)
 #define coreoffset(field) XtOffset(EMACS_SHELL_WIDGET, core.field)
@@ -194,9 +194,9 @@ EMACS_SHELL_CLASS_REC_TYPE EMACS_SHELL_CLASS_REC = {
     /* resize		  */	XtInheritResize,
     /* expose		  */	NULL,
     /* set_values	  */	NULL, /* XtInheritSetValues, */
-    /* set_values_hook	  */	NULL,			
-    /* set_values_almost  */	XtInheritSetValuesAlmost,  
-    /* get_values_hook	  */	NULL,			
+    /* set_values_hook	  */	NULL,
+    /* set_values_almost  */	XtInheritSetValuesAlmost,
+    /* get_values_hook	  */	NULL,
     /* accept_focus	  */	NULL,
     /* intrinsics version */	XtVersion,
     /* callback offsets	  */	NULL,
@@ -353,7 +353,7 @@ ChangeManaged (Widget wid)
     {
       Widget child = NULL;
       int i;
-      
+
       /* the managed child indicates what our size is */
       for (i = 0; i < w->composite.num_children; i++) {
 	if (XtIsManaged(w->composite.children[i])) {
@@ -361,7 +361,7 @@ ChangeManaged (Widget wid)
 	  break;
 	}
       }
-      
+
       update_size_hints_internal (w, child->core.width, child->core.height);
     }
 
@@ -369,7 +369,7 @@ ChangeManaged (Widget wid)
   (((ShellWidgetClass) SUPERCLASS_WIDGET_CLASS)->
    composite_class.change_managed)(wid);
 }
-    
+
 
 /******************* external entry points *********************/
 

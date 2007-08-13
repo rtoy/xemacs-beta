@@ -37,7 +37,7 @@ Boston, MA 02111-1307, USA.  */
 # define BASE_PURESIZE 938000
 #else
 # define BASE_PURESIZE 563000
-#endif 
+#endif
 */
 
 #define BASE_PURESIZE 1400000
@@ -169,7 +169,7 @@ Boston, MA 02111-1307, USA.  */
 		      (TOOLTALK_PURESIZE_EXTRA) +			\
 		      (ENERGIZE_PURESIZE_EXTRA) +			\
 		      (SUNPRO_PURESIZE_EXTRA))
-  
+
 #endif /* !RAW_PURESIZE */
 
 extern long int get_PURESIZE(void);

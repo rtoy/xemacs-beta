@@ -12,7 +12,7 @@
 @c site: http://www.cs.indiana.edu/elisp/w3/docs.html
 @c
 @setfilename w3.info
-@settitle Emacs/W3 v3.0.94 User's Manual
+@settitle Emacs/W3 v3.0.103 User's Manual
 @iftex
 @finalout
 @end iftex
@@ -27,7 +27,7 @@
 @dircategory World Wide Web
 @dircategory GNU Emacs Lisp
 @direntry
-* W3: (w3).                       Emacs/W3 World Wide Web browser.
+* Emacs/W3: (w3).                 Emacs/W3 World Wide Web browser.
 @end direntry
 @ifinfo
 This file documents the Emacs/W3 World Wide Web browser.
@@ -53,9 +53,9 @@ notice identical to this one except for the removal of this paragraph
 @center @titlefont{Emacs/W3}
 @center @titlefont{User's Manual}
 @sp 4
-@center Third Edition, Emacs/W3 Version 3.0
+@center Third Edition, Emacs/W3 Version 4.0
 @sp 1
-@center March 1997
+@center June 1997
 @sp 5
 @center William M. Perry
 @center @i{wmperry@@cs.indiana.edu}
@@ -90,7 +90,7 @@ cannot be modified to your satisfaction, please send mail to the
 @t{w3-beta@@indiana.edu} mailing list with any suggestions.
 @xref{Reporting Bugs}
 
-This manual corresponds to Emacs/W3 v3.0.94
+This manual corresponds to Emacs/W3 v3.0.103
 
 @menu
 * Getting Started::             Getting up and running with Emacs/W3
@@ -228,7 +228,7 @@ control scrolling, and @kbd{return} or the middle mouse button follows a
 hypertext link.  The @kbd{tab} and @kbd{Meta-tab} keys maneuver around the
 various links on the page.
 
-@b{NOTE:} Starting with Emacs/W3 3.0, form entry areas in a page can be
+@b{NOTE:} Starting with Emacs/W3 4.0, form entry areas in a page can be
 typed directly into.  This is one of the main differences in navigation
 from version 2.0.  If you are used to using the @kbd{f} and @kbd{b} keys
 to navigate around a buffer, I suggest training yourself to always use
@@ -388,10 +388,7 @@ or being parsed as @sc{html}.
 Pressing return when over a form input field can cause auto-submission
 of the form.  This is for Mosaic and Netscape compatibility.  If there
 is only one item in the form other than submit or reset buttons, then
-
-minibuffer for the data to insert into the input field.  Type checking
-is done, and the data is only entered into the form when data of the
-correct type is entered (ie: cannot enter 44 for 'date' field, etc).
+the form will be submitted.
 
 @kindex Middle Mouse Button
 @findex w3-follow-mouse

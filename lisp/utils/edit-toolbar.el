@@ -57,10 +57,12 @@
 ;;  - Added context sensitivity to `edit-toolbar-menu'.
 ;;  - Added support for `nil' toolbar item (left/right divider).
 ;;  - Enabled editing of empty toolbars.
+;; Modified by Jeff Miller <jmiller@smart.net> 17 Aug 1997
+;;  - Modfied how added toolbar buttons are created and saved.  
 
 ;;; Code:
 
-(defvar edit-toolbar-version "1.02"
+(defvar edit-toolbar-version "1.03"
   "Version of Edit Toolbar.")
 
 (defvar edit-toolbar-temp-toolbar-name nil
@@ -78,6 +80,16 @@
 					 "/")
 				       ".toolbar")
   "File name to save toolbars to.  Defaults to \"~/.xemacs/.toolbar\"")
+
+(defvar edit-toolbar-button-prefix "edit-toolbar-button"
+  "Prefix to use when naming new buttons created by edit-toolbar.
+The new buttons will be stored in the file named by edit-toolbar-file-name")
+
+(defvar edit-toolbar-added-buttons-alist nil
+  "Buttons added by edit-toolbar.
+A list of cons cells.  The car is the variable which stores the glyph data.
+The cdr is a list of filenames to be passed as arguments to 
+toolbar-make-button-list when the toolbar file is read at startup.")
 
 (defvar edit-toolbar-menu
   '("Edit Toolbar"
@@ -303,7 +315,17 @@ Editing commands:
   "Remove the current toolbar button."
   (interactive)
   (let* ((toolbar (specifier-instance edit-toolbar-temp-toolbar))
-	 (index (- (count-lines (point-min) (point)) 2)))
+	 (index (- (count-lines (point-min) (point)) 2))
+	 (etk-scratch-list)
+	 (button (elt (nth index toolbar) 0 )))
+    
+    (mapcar
+     (lambda (cons)
+       (if (not (memq button cons))
+	   (setq etk-scratch-list (append etk-scratch-list cons)))
+       )
+     edit-toolbar-added-buttons-alist)
+    (setq edit-toolbar-added-buttons-alist etk-scratch-list)
     (if (eq index 0)
 	(setq toolbar (cdr toolbar))
       (setcdr (nthcdr (1- index) toolbar)
@@ -432,22 +454,28 @@ Completion is available to the known toolbar buttons."
 			 "UP CAPTIONED glyph (RET for no glyph): "
 			 "DOWN CAPTIONED glyph (RET for no glyph): "
 			 "DISABLED CAPTIONED glyph (RET for no glyph): "))
-	      (glyphs nil)
+	      (glyphs-list nil)
 	      (count 0))
 	  (let ((glyph-file (read-file-name (car prompts) nil "")))
 	    (if (string-equal glyph-file "")
 		(error "You must specify at least the UP glyph.")
-	      (setq glyphs (list (make-glyph glyph-file)))
+	      (setq glyphs-list (list  glyph-file))
 	      (setq prompts (cdr prompts))))
 	  (while prompts
 	    (let ((glyph-file (read-file-name (car prompts) nil "")))
 	      (if (not (string-equal glyph-file ""))
-		  (setq glyphs
-			(append glyphs (list (make-glyph glyph-file))))))
+		  (setq glyphs-list
+			(append glyphs-list (list  glyph-file)))))
 	    (setq prompts (cdr prompts)))
+	  (setq added-button (gentemp edit-toolbar-button-prefix ))
+	  (setf (symbol-value added-button) 
+		(toolbar-make-button-list glyphs-list))
+	  (setq edit-toolbar-added-buttons-alist 
+		(append edit-toolbar-added-buttons-alist 
+		(list	(cons added-button glyphs-list))))
 	  (let ((func (read-string "Function to call: "))
 		(help (read-string "Help String: ")))
-	    (setq new-button (vector glyphs (intern func) t help))))
+	    (setq new-button (vector added-button  (intern func) t help))))
       (let ((match (assoc button edit-toolbar-button-alist)))
 	(if match
 	    (setq new-button (cdr match))
@@ -492,6 +520,14 @@ Alternatively, I can do this for you now."
 	   (standard-output buf))
       (set-buffer buf)
       (erase-buffer)
+      (insert "(setq edit-toolbar-added-buttons-alist '")
+      (prin1 edit-toolbar-added-buttons-alist)
+      (insert ")\n")
+      (insert "(mapcar
+  (lambda (cons)
+         (setf (symbol-value (car cons)) (toolbar-make-button-list (cdr cons)))
+      )
+ edit-toolbar-added-buttons-alist)\n")
       (insert (concat "(set-specifier " edit-toolbar-temp-toolbar-name) " '")
       (prin1 (specifier-instance edit-toolbar-temp-toolbar))
       (insert ")")

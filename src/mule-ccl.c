@@ -544,7 +544,7 @@ Returns the resulting string.
   set_ccl_program_from_lisp_values (&ccl, ccl_program, status);
   CHECK_STRING (str);
 
-  outbuf = Dynarr_new (unsigned char);
+  outbuf = Dynarr_new (unsigned_char);
   len = ccl_driver (&ccl, XSTRING_DATA (str), outbuf, XSTRING_LENGTH (str), 0);
   ccl_driver (&ccl, (unsigned char *) "", outbuf, 0, 1);
   set_lisp_status_from_ccl_program (status, &ccl);

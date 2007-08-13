@@ -167,8 +167,6 @@ extern int debuggerpanel_sheet;
 
 /**************************** Macros *****************************/
 
-#define xnew(type) ((type*)xmalloc (sizeof (type)))
-
 #define BUFFER_NOTIFY_BACKGROUND_BIT_SET_P(buffer) 1
 
 #define get_extent_data(id,binfo) (Energize_Extent_Data*)get_object(id, binfo)
@@ -343,8 +341,7 @@ free_object (void *key, void *contents, void *arg)
 static GDataClass *
 alloc_GDataclass (EId id, BufferInfo *binfo)
 {
-  GDataClass *cl = xnew (GDataClass);
-  memset (cl, 0, sizeof (GDataClass));
+  GDataClass *cl = xnew_and_zero (GDataClass);
   cl->seal = GDATA_CLASS_SEAL;
   cl->id = id;
   put_class (cl->id, binfo, cl);
@@ -443,7 +440,7 @@ alloc_BufferInfo (EId id, Lisp_Object name, Lisp_Object filename,
       nw = XtWindowToWidget (get_x_display (Qnil), win);
       if (nw)
 	nw = XtParent (nw);
-      
+
       if (nw)
 	sprintf (win_as_string, "w%x", nw);
       else
@@ -491,7 +488,7 @@ alloc_BufferInfo (EId id, Lisp_Object name, Lisp_Object filename,
   binfo->wcmap.valid = 0;
   binfo->wcmap.modiff_stamp = -1;
   binfo->wcmap.map = NULL;
-#endif   
+#endif
   put_buffer_info (id, binfo->emacs_buffer, binfo, editor);
 
   Venergize_buffers_list = Fcons (buffer, Venergize_buffers_list);
@@ -531,7 +528,7 @@ free_buffer_info (BufferInfo *binfo)
     binfo->wcmap.valid= 0;
     xfree(binfo->wcmap.map);
   }
-#endif 
+#endif
   SET_OBJECT_FREE (binfo);
 }
 
@@ -560,7 +557,7 @@ get_buffer_info_for_emacs_buffer (Lisp_Object emacs_buf, Editor *editor)
    an extent object to be in an Energize_Extent_Data structure that is pointed
    at by the binfo->id_to_object table.  Since Energize may still reference
    this object by its id (in fact, I think it may even "ressurect" a detached
-   extent) we must prevent the extent from being garbage collected.  Aside 
+   extent) we must prevent the extent from being garbage collected.  Aside
    from the obvious lossage (that the extent itself would be trashed) this
    would also cause us to free the Energize_Extent_Data which the server still
    believes we have.  The buffers all get marked because they're on the
@@ -575,7 +572,7 @@ get_buffer_info_for_emacs_buffer (Lisp_Object emacs_buf, Editor *editor)
 
 /* FUCK!!  It's not standard-conforming to cast pointers to functions
    to or from void*.  Give me a fucking break! */
-struct markobj_kludge_fmh 
+struct markobj_kludge_fmh
 {
   void (*markobj) (Lisp_Object);
 };
@@ -779,7 +776,7 @@ remove_buffer_info (EId id, Lisp_Object emacs_buf, Editor *editor)
 
 #ifndef MB_LEN_MAX
 #define MB_LEN_MAX 10		/* arbitrarily large enough */
-#endif 
+#endif
 
 static char wcsize_buf[MB_LEN_MAX];
 #define WCSIZE(wc)	     (isascii(wc) ? 1 : wctomb(wcsize_buf,wc))
@@ -787,7 +784,7 @@ static char wcsize_buf[MB_LEN_MAX];
 #define SANITY_CHECK_NOT
 #ifdef SANITY_CHECK
 static int sanity=0;
-#endif 
+#endif
 
 static void
 sync_buffer_widechar_map (BufferInfo *binfo)
@@ -818,13 +815,13 @@ sync_buffer_widechar_map (BufferInfo *binfo)
 #ifdef SANITY_CHECK
       stderr_out ("rebuilding widechar map for %s\n", XSTRING_DATA (current_buffer->name));
 #endif
-      
+
       /* #### this is not gonna compile.  move_gap() is now a private function
 	 inside of insdel.c and it should stay that way. */
       if (BUF_BEGV (current_buffer) < GPT && BUF_ZV (current_buffer) > GPT)
 	move_gap (current_buffer, BUF_BEGV (current_buffer));
       binfo->wcmap.modiff_stamp = BUF_MODIFF (current_buffer);
-      
+
       buf = BUF_BEG_ADDR (current_buffer);
       maxpos= (BUF_Z (current_buffer) - 1);
       wctomb (NULL, 0);		/* reset shift state of wctomb() */
@@ -880,7 +877,7 @@ EnergizePosForBufpos (Bufpos char_pos, BufferInfo *binfo)
 	      char_pos, byte_pos, byte_pos, check_pos);
     }
   }
-#endif 
+#endif
   return byte_pos;
 }
 
@@ -915,13 +912,13 @@ BufposForEnergizePos (EnergizePos ez_pos, BufferInfo *binfo)
     sanity=1;
     check_pos= EnergizePosForBufpos(char_pos);
     sanity=0;
-    
+
     if (check_pos != ez_pos) {
       stderr_out ("Bufpos(%d) = %d, EnergizePosForBufpos(%d) = %d\n",
 	      ez_pos, char_pos, char_pos, check_pos);
     }
   }
-#endif 
+#endif
   return char_pos;
 }
 
@@ -930,7 +927,7 @@ BufposForEnergizePos (EnergizePos ez_pos, BufferInfo *binfo)
 static Bufpos
 BufposForEnergizePos (EnergizePos energizePos, BufferInfo *binfo)
 {
-  return ((energizePos >= (1 << VALBITS)) ? BUF_Z (current_buffer) : 
+  return ((energizePos >= (1 << VALBITS)) ? BUF_Z (current_buffer) :
 	  (energizePos + 1));
 }
 
@@ -981,7 +978,7 @@ notify_delayed_requests (void)
       && !NILP (energize_connection->proc)
       && energize_connection->conn
       && CRequestDelayedP (energize_connection->conn))
-    this function no longer exists. 
+    this function no longer exists.
     (Replaced by mark_what_as_being_ready, with different arguments.)
     Rewrite this.
     mark_process_as_being_ready (XPROCESS (energize_connection->proc));
@@ -1403,7 +1400,7 @@ string_buffer_compare (char *string, int string_len,
     char *first_section_chars = (char *) BUF_BYTE_ADDRESS (buf, bufpos);
     int comp = strncmp (string, first_section_chars,
 			first_section_end - bufpos);
-    
+
     if (comp) return comp;
   }
 
@@ -1571,8 +1568,8 @@ read_energize_buffer_data (Connection *conn, CBuffer *cbu, Editor *editor,
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
   /* For some reason calling the GC before parsing the buffer data
-     makes a better usage of memory and emacs leaks less when 
-     creating/deleting LE browser buffers.  
+     makes a better usage of memory and emacs leaks less when
+     creating/deleting LE browser buffers.
      However you don't want to call GC all the tiem so we only do it if the request
      will create more than a given number of extents. */
   if (cbu->nExtent > energize_extent_gc_threshold)
@@ -1718,7 +1715,7 @@ read_energize_buffer_data (Connection *conn, CBuffer *cbu, Editor *editor,
   else
     get_chars_from_file = binfo->flags &  CBFileYourself;
 #endif
-  
+
   /* Even when we get the chars from a file there is an empty text string */
   if (get_chars_from_file)
     {
@@ -1730,7 +1727,7 @@ read_energize_buffer_data (Connection *conn, CBuffer *cbu, Editor *editor,
     {
       text = CGetVstring (conn, &text_len);
     }
-  
+
   /* updates the visited file modtime */
   if (modifying_p && (from != to || text_len)
       /* but only when we do not read the file ourselves */
@@ -1878,7 +1875,7 @@ read_energize_buffer_data (Connection *conn, CBuffer *cbu, Editor *editor,
   else
     extent_offset = EnergizePosForBufpos (BUF_Z(XBUFFER(binfo->emacs_buffer)),
 					   binfo);
-  
+
 #if 1
   if (text_len || !text)
     hack_window_point (display_window,
@@ -2149,7 +2146,7 @@ write_energize_buffer_data (BufferInfo *binfo)
       map_extents (BUF_BEG (current_buffer), BUF_Z (current_buffer),
 		   write_energize_extent_data_mapper, &bane,
 		   binfo->emacs_buffer, 0, ME_END_CLOSED);
-      
+
     }
 
   /* update nextent in request's header */
@@ -2350,7 +2347,7 @@ execute_energize_menu (Lisp_Object buffer, Energize_Extent_Data* ext,
     }
   else if (!NILP (selection))
     error ("unrecognized energize selection");
-  
+
   if (!NILP (no_confirm))
     conn->header->data |= CECnoConfirm;
   CWriteLength (conn);
@@ -2478,7 +2475,7 @@ DEFUN ("energize-list-menu", Fenergize_list_menu, 3, 4, 0, /*
 Request the set of menu options from the Energize server that are
 appropriate to the buffer and the extent.  Extent can be (), in which case
 the options are requested for the whole buffer.	 Selection-p tells
-if the selection is available on the dislpay emacs is using. 
+if the selection is available on the dislpay emacs is using.
 Returns the options as
 a list that can be passed to energize-activate-menu.  Items
 in the list can also be passed to energize-execute-menu-item.
@@ -2508,7 +2505,7 @@ Item is a vector received by energize-list-menu.  Sends a request to
 execute the code associated to this menu inside the Energize server.
 Optional fourth argument is a string or a vector to be used as the selection
 for entry disabled because they need the selection.
-Optional fifth argument, if non NIL, tells Energize to not request 
+Optional fifth argument, if non NIL, tells Energize to not request
 confirmation before executing the command.
 */
        (buffer, extent_obj, item, selection, no_confirm))
@@ -2540,7 +2537,7 @@ DEFUN ("energize-execute-command-internal",
 Command is a string naming an energize command.	 Sends a request to
 execute this command inside the Energize server.
 Optional fourth argument is a string or a vector to be used as the selection.
-Optional fifth argument, if non NIL, tells Energize to not request 
+Optional fifth argument, if non NIL, tells Energize to not request
 confirmation before executing the command.
 
 See also 'energize-list-menu'.
@@ -4664,7 +4661,7 @@ make_psheets_desired (struct frame *f, Lisp_Object buffer)
       /* Do not show the debugger panel in this function.  The
        * debugger panel should never be listed in the visible psheets. */
       extern int debuggerpanel_sheet;
-      
+
       if (count == 1 && psheets [0] == debuggerpanel_sheet)
 	return;
 
@@ -4762,8 +4759,8 @@ find_buffer_in_different_window (window, buffer, not_in)
 
 /* returns 1 if the buffer is only visible in window on frame f */
 static int
-buffer_only_visible_in_this_window_p (Lisp_Object buffer, 
-				      struct frame* f, 
+buffer_only_visible_in_this_window_p (Lisp_Object buffer,
+				      struct frame* f,
 				      struct window* window)
 {
   return !find_buffer_in_different_window (XWINDOW (f->root_window), buffer,
@@ -5160,11 +5157,11 @@ search_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
       data->name = "matchWord";
       if (! lw_get_some_values (id, data)) abort ();
       match_word_p = (data->selected ? Qt : Qnil);
-      
+
       data->name = "directionForward";
       if (! lw_get_some_values (id, data)) abort ();
       direction = data->selected ? Qt : Qnil;
-      
+
       if (!strcmp (name, "search"))
 	replace = Qnil;
       else if (!strcmp (name, "replace"))
@@ -5176,9 +5173,9 @@ search_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 	}
       else
 	abort ();
-      
+
       free_widget_value (data);
-      
+
       signal_special_Xt_user_event (device,
 				    intern ("energize-search-internal"),
 				 (NILP (replace)
@@ -5335,7 +5332,7 @@ The Lisp object representing the Energize connection, or nil
   Venergize_process = Qnil;
 
   DEFVAR_LISP ("energize-create-buffer-hook", &Venergize_create_buffer_hook /*
-Hook called when buffer is created by energize; takes 
+Hook called when buffer is created by energize; takes
 BUFFER as its only argument.
 */ );
   Venergize_create_buffer_hook = Qnil;
@@ -5377,7 +5374,7 @@ A-list to map kernel attributes indexes to Emacs attributes
 Number of  extents in a ModifyBuffer request above which to do a GC
 */ );
   energize_extent_gc_threshold = 20;
-  
+
   pure_put (Qbuffer_locked_by_energize, Qerror_conditions,
 	    list2 (Qbuffer_locked_by_energize, Qerror));
   pure_put (Qbuffer_locked_by_energize, Qerror_message,

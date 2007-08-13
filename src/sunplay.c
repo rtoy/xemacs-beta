@@ -61,8 +61,8 @@
 # define warn(str) fprintf (stderr, "%s\n", (str))
 #endif /* emacs */
 
-static SIGTYPE (*sighup_handler) ();
-static SIGTYPE (*sigint_handler) ();
+static SIGTYPE (*sighup_handler) (int sig);
+static SIGTYPE (*sigint_handler) (int sig);
 static SIGTYPE sighandler (int sig);
 
 static int audio_fd;
@@ -85,7 +85,7 @@ init_device (int volume, unsigned char *data, int fd,
   return 0;
 #else
   Audio_hdr file_hdr;
-  
+
   reset_volume_p = 0;
   reset_device_p = 0;
 
@@ -96,7 +96,7 @@ init_device (int volume, unsigned char *data, int fd,
       perror ("Not a valid audio device");
       return 1;
     }
-  
+
   if (AUDIO_SUCCESS != (data
 			? audio_decode_filehdr (data, &file_hdr, header_length)
 			: audio_read_filehdr (fd, &file_hdr, 0, 0)))
@@ -107,7 +107,7 @@ init_device (int volume, unsigned char *data, int fd,
 	perror ("invalid audio file");
       return 1;
     }
-  
+
   audio_flush_play (audio_fd);
 
   if (0 != audio_cmp_hdr (&dev_hdr, &file_hdr))
@@ -166,7 +166,7 @@ play_sound_file (char *sound_file, int volume)
   int rrtn, wrtn;
   unsigned char buf [255];
   int file_fd;
-  
+
   audio_fd = audio_open ();
 
   if (audio_fd < 0)
@@ -178,7 +178,7 @@ play_sound_file (char *sound_file, int volume)
   /* where to find the proto for signal()... */
   sighup_handler = (SIGTYPE (*) (int)) signal (SIGHUP, sighandler);
   sigint_handler = (SIGTYPE (*) (int)) signal (SIGINT, sighandler);
-  
+
   file_fd = open (sound_file, O_RDONLY, 0);
   if (file_fd < 0)
     {
@@ -188,7 +188,7 @@ play_sound_file (char *sound_file, int volume)
 
   if (init_device (volume, (unsigned char *) 0, file_fd, (unsigned int *) 0))
     goto END_OF_PLAY;
-    
+
   while (1)
     {
       rrtn = read (file_fd, (char *) buf, sizeof (buf));
@@ -199,7 +199,7 @@ play_sound_file (char *sound_file, int volume)
 	}
       if (rrtn == 0)
 	break;
-	
+
       while (1)
 	{
 	  wrtn = write (audio_fd, (char *) buf, rrtn);
@@ -222,7 +222,7 @@ play_sound_file (char *sound_file, int volume)
 	  goto END_OF_PLAY;
 	}
     }
-  
+
  END_OF_PLAY:
 
   if (file_fd > 0)
@@ -271,15 +271,15 @@ play_sound_data (unsigned char *data, int length, int volume)
   /* where to find the proto for signal()... */
   sighup_handler = (SIGTYPE (*) (int)) signal (SIGHUP, sighandler);
   sigint_handler = (SIGTYPE (*) (int)) signal (SIGINT, sighandler);
-    
+
   if (init_device (volume, data, 0, &ilen))
     goto END_OF_PLAY;
-      
+
   data   += (ilen<<2);
   length -= (ilen<<2);
   if (length <= 1)
     goto END_OF_PLAY;
-    
+
   while (1)
     {
       wrtn = write (audio_fd, (char *) (data+start), length-start);
@@ -303,7 +303,7 @@ play_sound_data (unsigned char *data, int length, int volume)
       warn (buf);
       goto END_OF_PLAY;
     }
-  
+
  END_OF_PLAY:
 
   if (audio_fd > 0)

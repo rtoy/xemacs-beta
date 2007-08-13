@@ -35,7 +35,7 @@
 (let ((dir load-path))
   (while dir
     (condition-case nil
-	(load (concat (car dir) "/custom-load") nil t)
+	(load (concat (car dir) "custom-load") nil nil)
       (file-error nil))
     (pop dir)))
 

@@ -187,7 +187,7 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 (copy-coding-system 'ctext 'iso-8859-1)
 
 (make-coding-system
- 'iso-2022-ss2-8 'iso2022
+ 'iso-2022-8bit-ss2 'iso2022
  "ISO-2022 coding system using SS2 for 96-charset in 8-bit code."
  '(charset-g0 ascii
    charset-g1 latin-iso8859-1
@@ -197,7 +197,7 @@ Does not modify STR.  Returns the encoded string on successful conversion."
    ))
 
 (make-coding-system
- 'iso-2022-ss2-7 'iso2022
+ 'iso-2022-7bit-ss2 'iso2022
  "ISO-2022 coding system using SS2 for 96-charset in 7-bit code."
  '(charset-g0 ascii
    charset-g2 t ;; unspecified but can be used later.
@@ -205,6 +205,8 @@ Does not modify STR.  Returns the encoded string on successful conversion."
    short t
    mnemonic "ISO7/SS"
    ))
+
+(copy-coding-system 'iso-2022-7bit-ss2 'iso-2022-jp-2)
 
 (make-coding-system
  'iso-2022-7 'iso2022

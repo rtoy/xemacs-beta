@@ -40,7 +40,7 @@ void
 Initialize_Locale (void)
 {
   char *locale;
-  
+
   XtSetLanguageProc (NULL, (XtLanguageProc) NULL, NULL);
   if ((locale = setlocale (LC_ALL, "")) == NULL)
     {
@@ -72,7 +72,7 @@ Initialize_Locale (void)
           return;
         }
     }
-  
+
   if (XSetLocaleModifiers ("") == NULL)
     {
       stderr_out ("XSetLocaleModifiers(\"\") failed\n");
@@ -103,9 +103,9 @@ XIM_init_frame (struct frame *f)
       Pixel     fg;
       Pixel     bg;
     } xim_resources_t;
-    
+
   xim_resources_t xim_resources;
-    
+
   /* mrb: #### Fix so that background and foreground is set from
      default face, rather than foreground and background resources, or
      that the user can use set-frame-parameters to set xic attributes */

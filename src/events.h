@@ -41,8 +41,8 @@ Boston, MA 02111-1307, USA.  */
    example, then it will be necessary to construct an event_stream structure
    that can cope with the given types.  Currently, the only implemented
    event_streams are for dumb-ttys, and for X11 plus dumb-ttys.
-   
-   To implement this for one window system is relatively simple.  
+
+   To implement this for one window system is relatively simple.
    To implement this for multiple window systems is trickier and may
    not be possible in all situations, but it's been done for X and TTY.
 
@@ -67,8 +67,8 @@ Boston, MA 02111-1307, USA.  */
 			block.  If called with an argument of 1, then this
 			should say whether there are user-generated events
 			pending (that is, keypresses or mouse-clicks).  This
-			is used for redisplay optimization, among other 
-			things.  On dumb ttys, these two results are the 
+			is used for redisplay optimization, among other
+			things.  On dumb ttys, these two results are the
 			same, but under a window system, they are not.
 
 			If this function is not sure whether there are events
@@ -94,7 +94,7 @@ Boston, MA 02111-1307, USA.  */
 			granularity, it should round up to the closest
 			value it can deal with.
 
- remove_timeout_cb	Called with an int, the id number of a wakeup to 
+ remove_timeout_cb	Called with an int, the id number of a wakeup to
  			discard.  This id number must have been returned by
 			the add_timeout_cb.  If the given wakeup has
 			already expired, this should do nothing.
@@ -106,7 +106,7 @@ Boston, MA 02111-1307, USA.  */
 			connection, an event of type "process" should be
 			generated.
 
- select_console_cb	These callbacks tell the underlying implementation 
+ select_console_cb	These callbacks tell the underlying implementation
  unselect_console_cb	to add or remove a console from the list of consoles
                         which are polled for user-input.
 
@@ -162,14 +162,14 @@ Boston, MA 02111-1307, USA.  */
 			   will be a frame.
 			-- for magic events, channel will be a frame
 			   (usually) or a device.
-			   
+
  timestamp		When this event occurred -- if not known, this
 			is made up.
 
  In addition, the following structures are specific to particular event
  types:
 
- key_press_event	
+ key_press_event
     key			What keysym this is; an integer or a symbol.
 			If this is an integer, it will be in the printing
 			ASCII range: >32 and <127.
@@ -239,10 +239,10 @@ Boston, MA 02111-1307, USA.  */
 			the window system.
 
 			Magic_events are handled somewhat asynchronously, just
-			like subprocess filters.  However, occasionally a 
+			like subprocess filters.  However, occasionally a
 			magic_event needs to be handled synchronously; in that
 			case, the asynchronous handling of the magic_event will
-			push an eval_event back onto the queue, which will be 
+			push an eval_event back onto the queue, which will be
 			handled synchronously later.  This is one of the
 			reasons why eval_events exist; I'm not entirely happy
 			with this aspect of this event model.

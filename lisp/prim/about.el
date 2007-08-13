@@ -512,7 +512,7 @@ contributed to the XEmacs development from late 1994 to early
 			  (erase-buffer)
 			  (let ((coding-system-for-read 'binary)
 				(coding-system-for-write 'binary))
-			    (insert-file-contents file)
+			    (insert-file-contents-literally file)
 			    (call-process-region (point-min) (point-max)
 						 "zcat" t t nil)
 			    (setq data

@@ -946,8 +946,7 @@ static int
 expect_property_change (Display *display, Window window,
 			Atom property, int state)
 {
-  struct prop_location *pl = (struct prop_location *)
-    xmalloc (sizeof (struct prop_location));
+  struct prop_location *pl = xnew (struct prop_location);
   pl->tick = ++prop_location_tick;
   pl->display = display;
   pl->window = window;
@@ -1394,7 +1393,7 @@ selection_data_to_lisp_data (struct device *d,
 			    type == DEVICE_XATOM_COMPOUND_TEXT (d)
 			    ? FORMAT_CTEXT : FORMAT_BINARY);
 
-  /* Convert a single atom to a Lisp_Symbol.  Convert a set of atoms to
+  /* Convert a single atom to a Lisp Symbol.  Convert a set of atoms to
      a vector of symbols.
    */
   else if (type == XA_ATOM)
@@ -1413,7 +1412,7 @@ selection_data_to_lisp_data (struct device *d,
 	}
     }
 
-  /* Convert a single 16 or small 32 bit number to a Lisp_Int.
+  /* Convert a single 16 or small 32 bit number to a Lisp Int.
      If the number is > 16 bits, convert it to a cons of integers,
      16 bits in each half.
    */
@@ -1557,7 +1556,7 @@ lisp_data_to_selection_data (struct device *d,
     }
   else if (VECTORP (obj))
     {
-      /* Lisp_Vectors may represent a set of ATOMs;
+      /* Lisp Vectors may represent a set of ATOMs;
 	 a set of 16 or 32 bit INTEGERs;
 	 or a set of ATOM_PAIRs (represented as [[A1 A2] [A3 A4] ...]
        */

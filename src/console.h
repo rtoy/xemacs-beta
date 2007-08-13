@@ -304,31 +304,28 @@ MAC_END
 
 /******** Defining new console types ********/
 
+typedef struct console_type_entry console_type_entry;
 struct console_type_entry
 {
   Lisp_Object symbol;
   struct console_methods *meths;
 };
 
-#define DECLARE_CONSOLE_TYPE(type)				\
+#define DECLARE_CONSOLE_TYPE(type) \
 extern struct console_methods * type##_console_methods
 
-#define DEFINE_CONSOLE_TYPE(type)				\
+#define DEFINE_CONSOLE_TYPE(type) \
 struct console_methods * type##_console_methods
 
-#define INITIALIZE_CONSOLE_TYPE(type, obj_name, pred_sym)	\
-  do {								\
-    type##_console_methods =					\
-      malloc_type_and_zero (struct console_methods);		\
-    type##_console_methods->name = obj_name;			\
-    type##_console_methods->symbol = Q##type;			\
-    defsymbol (&type##_console_methods->predicate_symbol,	\
-	       pred_sym);					\
-    add_entry_to_console_type_list (Q##type,			\
-				   type##_console_methods);	\
-    type##_console_methods->image_conversion_list = Qnil;	\
-    staticpro (&type##_console_methods->image_conversion_list);	\
-  } while (0)
+#define INITIALIZE_CONSOLE_TYPE(type, obj_name, pred_sym) do {		\
+    type##_console_methods = xnew_and_zero (struct console_methods);	\
+    type##_console_methods->name = obj_name;				\
+    type##_console_methods->symbol = Q##type;				\
+    defsymbol (&type##_console_methods->predicate_symbol, pred_sym);	\
+    add_entry_to_console_type_list (Q##type, type##_console_methods);	\
+    type##_console_methods->image_conversion_list = Qnil;		\
+    staticpro (&type##_console_methods->image_conversion_list);		\
+} while (0)
 
 /* Declare that console-type TYPE has method M; used in
    initialization routines */

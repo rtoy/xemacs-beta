@@ -624,7 +624,7 @@ example, to change the location of the lock directory, you might use
 
 The `configure' script is built from `configure.in' by the `autoconf'
 program.  However, since XEmacs has configuration requirements that
-autoconf can't meet, `configure.in' uses an marriage of custom-baked
+autoconf can't meet, `configure.in' uses a marriage of custom-baked
 configuration code and autoconf macros.  New versions of autoconf
 could very well break this arrangement, so it may be wise to avoid
 rebuilding `configure' from `configure.in' when possible.

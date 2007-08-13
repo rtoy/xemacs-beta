@@ -223,11 +223,11 @@ static void
 print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   struct Lisp_Process *proc = XPROCESS (obj);
-  
+
   if (print_readably)
     error ("printing unreadable object #<process %s>",
            XSTRING_DATA (proc->name));
-      
+
   if (!escapeflag)
     {
       print_internal (proc->name, printcharfun, 0);
@@ -541,8 +541,8 @@ make_process_internal (Lisp_Object name)
 {
   Lisp_Object val, name1;
   int i;
-  struct Lisp_Process *p
-    = alloc_lcrecord (sizeof (struct Lisp_Process), lrecord_process);
+  struct Lisp_Process *p =
+    alloc_lcrecord_type (struct Lisp_Process, lrecord_process);
 
   /* If name is already in use, modify it until it is unused.  */
   name1 = name;
@@ -550,7 +550,7 @@ make_process_internal (Lisp_Object name)
     {
       char suffix[10];
       Lisp_Object tem = Fget_process (name1);
-      if (NILP (tem)) 
+      if (NILP (tem))
         break;
       sprintf (suffix, "<%d>", i);
       name1 = concat2 (name, build_string (suffix));
@@ -707,11 +707,11 @@ static Bufbyte
 get_eof_char (struct Lisp_Process *p)
 {
   /* Figure out the eof character for the outfd of the given process.
-   * The following code is similar to that in process_send_signal, and 
+   * The following code is similar to that in process_send_signal, and
    * should probably be merged with that code somehow. */
 
   CONST Bufbyte ctrl_d = (Bufbyte) '\004';
-  
+
   if (!isatty (p->outfd))
     return ctrl_d;
 #ifdef HAVE_TERMIOS
@@ -749,7 +749,7 @@ get_eof_char (struct Lisp_Process *p)
       return (Bufbyte) t.c_cc[VINTR];
   }
 #else /* ! defined (TCGETA) */
-  /* Rather than complain, we'll just guess ^D, which is what 
+  /* Rather than complain, we'll just guess ^D, which is what
    * earlier emacsen always used. */
   return ctrl_d;
 #endif /* ! defined (TCGETA) */
@@ -807,7 +807,7 @@ init_process_fds (struct Lisp_Process *p, int in, int out)
 }
 
 static void
-create_process (Lisp_Object process, 
+create_process (Lisp_Object process,
                 char **new_argv, CONST char *current_dir)
 {
   /* This function rewritten by wing@666.com. */
@@ -959,11 +959,11 @@ create_process (Lisp_Object process,
 	    /* Miscellaneous setup required for some systems.
                Must be done before using tc* functions on xforkin.
                This guarantees that isatty(xforkin) is true. */
-            
+
 # ifdef SETUP_SLAVE_PTY
 	    SETUP_SLAVE_PTY;
 # endif /* SETUP_SLAVE_PTY */
-            
+
 #  ifdef TIOCSCTTY
 	    /* We ignore the return value
 	       because faith@cs.unc.edu says that is necessary on Linux.  */
@@ -1022,7 +1022,7 @@ create_process (Lisp_Object process,
 #ifdef WINDOWSNT
 	pid = child_setup (xforkin, xforkout, xforkout,
 			   new_argv, current_dir);
-#else  /* not WINDOWSNT */	
+#else  /* not WINDOWSNT */
 	child_setup (xforkin, xforkout, xforkout, new_argv, current_dir);
 #endif /* not WINDOWSNT */
 #endif /* not MSDOS */
@@ -1207,7 +1207,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
     }
 
   /* Nothing below here GCs so our string pointers shouldn't move. */
-  new_argv = (char **) alloca ((nargs - 1) * sizeof (char *));
+  new_argv = alloca_array (char *, nargs - 1);
   new_argv[0] = (char *) XSTRING_DATA (program);
   for (i = 3; i < nargs; i++)
     {
@@ -1411,7 +1411,7 @@ Fourth arg SERVICE is name of the service desired, or an integer
   address.sin_port = port;
 
   s = socket (address.sin_family, SOCK_STREAM, 0);
-  if (s < 0) 
+  if (s < 0)
     report_file_error ("error creating socket", list1 (name));
 
   /* Turn off interrupts here -- see comments below.  There used to
@@ -1894,7 +1894,7 @@ send_process (volatile Lisp_Object proc,
 			       list1 (proc));
 	  while (filedesc_stream_was_blocked (XLSTREAM (p->filedesc_stream)))
 	    {
-	      /* Buffer is full.  Wait, accepting input; 
+	      /* Buffer is full.  Wait, accepting input;
 		 that may allow the program
 		 to finish doing output and read more.  */
 	      Faccept_process_output (Qnil, make_int (1), Qnil);
@@ -1925,6 +1925,7 @@ send_process (volatile Lisp_Object proc,
     }
   Lstream_flush (XLSTREAM (p->outstream));
   UNGCPRO;
+  Lstream_delete (XLSTREAM (lstream));
 }
 
 DEFUN ("process-tty-name", Fprocess_tty_name, 1, 1, 0, /*
@@ -2314,7 +2315,7 @@ reap_exited_processes (void)
 	  p->tick++;
 	  process_tick++;
 	  update_status_from_wait_code (p, &w);
-	  
+
           /* If process has terminated, stop waiting for its output.  */
 	  if (WIFSIGNALED (w) || WIFEXITED (w))
 	    {
@@ -2348,7 +2349,7 @@ reap_exited_processes (void)
     }
 
   exited_processes_index = 0;
-      
+
   EMACS_UNBLOCK_SIGNAL (SIGCHLD);
 }
 
@@ -2381,9 +2382,9 @@ record_exited_processes (int block_sigchld)
     {
       int pid;
       int w;
-      
+
       /* Keep trying to get a status until we get a definitive result.  */
-      do 
+      do
 	{
 	  errno = 0;
 #ifdef WNOHANG
@@ -2400,17 +2401,17 @@ record_exited_processes (int block_sigchld)
 #endif /* not WNOHANG */
 	}
       while (pid <= 0 && errno == EINTR);
-      
+
       if (pid <= 0)
 	break;
-      
+
       if (exited_processes_index < MAX_EXITED_PROCESSES)
 	{
 	  exited_processes[exited_processes_index] = pid;
 	  exited_processes_status[exited_processes_index] = w;
 	  exited_processes_index++;
 	}
-      
+
       /* On systems with WNOHANG, we just ignore the number
 	 of times that SIGCHLD was signalled, and keep looping
 	 until there are no more processes to wait on.  If we
@@ -2435,7 +2436,7 @@ record_exited_processes (int block_sigchld)
  and the signal-catching function will be continually reentered until
  the queue is empty".  Invoking signal() causes the kernel to reexamine
  the SIGCLD queue.   Fred Fish, UniSoft Systems Inc.
- 
+
  (Note that now this only applies in SYS V Release 2 and before.
  On SYS V Release 3, we use sigset() to set the signal handler for
  the first time, and so we don't have to reestablish the signal handler
@@ -2464,7 +2465,7 @@ sigchld_handler (int signo)
 
 /* Return a string describing a process status list.  */
 
-static Lisp_Object 
+static Lisp_Object
 status_message (struct Lisp_Process *p)
 {
   Lisp_Object symbol = p->status_symbol;
@@ -2593,7 +2594,7 @@ status_notify (void)
 	  /* If process is terminated, deactivate it or delete it.  */
 	  symbol = p->status_symbol;
 
-	  if (EQ (symbol, Qsignal) 
+	  if (EQ (symbol, Qsignal)
               || EQ (symbol, Qexit))
 	    {
 	      if (delete_exited_processes)
@@ -2835,7 +2836,7 @@ process_send_signal (Lisp_Object process0, int signo,
       }
 #endif /* ! defined (SIGNALS_VIA_CHARACTERS) */
 
-#ifdef TIOCGPGRP 
+#ifdef TIOCGPGRP
       /* Get the pgrp using the tty itself, if we have that.
 	 Otherwise, use the pty to get the pgrp.
 	 On pfa systems, saka@pfu.fujitsu.co.JP writes:
@@ -3201,7 +3202,7 @@ deactivate_process (Lisp_Object proc)
 #ifdef VMS
 	  {
 	    VMS_PROC_STUFF *get_vms_process_pointer (), *vs;
-	    if (outchannel >= 0) 
+	    if (outchannel >= 0)
 	      sys$dassgn (outchannel);
 	    vs = get_vms_process_pointer (XINT (p->pid));
 	    if (vs)
@@ -3369,7 +3370,7 @@ syms_of_process (void)
   defsymbol (&Qstop, "stop");
   defsymbol (&Qsignal, "signal");
   /* Qexit is already defined by syms_of_eval
-   * defsymbol (&Qexit, "exit"); 
+   * defsymbol (&Qexit, "exit");
    */
   defsymbol (&Qopen, "open");
   defsymbol (&Qclosed, "closed");

@@ -49,15 +49,15 @@ init_input (CONST char *res_name, CONST char *res_class, Display *display)
 {
   XIMStyles *styles;
   unsigned short i;
-  
+
   input_method = 0;
   input_method_style = 0;
   initial_input_context = 0;
   input_method_event_mask = 0;
-  
+
   input_method = XOpenIM (display, NULL,
 			  (char *) res_name, (char *) res_class);
-  
+
   if (!input_method)
     {
       stderr_out ("WARNING: XOpenIM() failed...no input server\n");
@@ -75,7 +75,7 @@ init_input (CONST char *res_name, CONST char *res_class, Display *display)
 	  break;
 	}
     }
-  
+
   if (!input_method_style)
     {
       stderr_out ("WARNING: Could not find suitable input style.\n");
@@ -90,11 +90,11 @@ init_input (CONST char *res_name, CONST char *res_class, Display *display)
       stderr_out ("WARNING: Could not create input context.\n");
       return;
     }
-  
+
   XGetICValues (initial_input_context,
 		XNFilterEvents, &input_method_event_mask,
 		NULL);
-  
+
   /* Get a new atom for wide character client messages. */
   wc_atom = XInternAtom (display, "Wide Character Event", False);
 }
@@ -169,7 +169,7 @@ Lisp_Object Qdomain;
 Lisp_Object Qdefer_gettext;
 
 DEFUN ("ignore-defer-gettext", Fignore_defer_gettext, 1, 1, 0, /*
-If OBJ is of the form (defer-gettext \"string\"), return the string.
+If OBJ is of the form (defer-gettext "string"), return the string.
 The purpose of the defer-gettext symbol is to identify strings which
 are translated when they are referenced instead of when they are defined.
 */

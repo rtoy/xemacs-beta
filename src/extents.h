@@ -90,8 +90,6 @@ struct extent
   Lisp_Object plist;
 };
 
-typedef struct extent *EXTENT;
-
 /* Basic properties of an extent (not affected by the extent's parent) */
 #define extent_object(e) ((e)->object)
 #define extent_start(e) ((e)->start + 0)
@@ -114,6 +112,7 @@ typedef struct extent *EXTENT;
    most extents won't have this set on them, we usually don't need to
    have this structure around and thus the size of an extent is smaller. */
 
+typedef struct extent_auxiliary extent_auxiliary;
 struct extent_auxiliary
 {
   struct lcrecord_header header;
@@ -221,7 +220,7 @@ MAC_BEGIN						\
   MAC_DECLARE (EXTENT, MTensure_extent, e)		\
   (MTensure_extent->flags.has_aux ? (void) 0 :		\
     allocate_extent_auxiliary (MTensure_extent))	\
-MAC_END  
+MAC_END
 
 #define set_extent_no_chase_aux_field(e, field, value)		\
 MAC_BEGIN							\
@@ -293,7 +292,7 @@ MAC_BEGIN					\
   (MTplist_extent->flags.has_aux ?		\
    &XCONS (MTplist_extent->plist)->cdr :	\
    &MTplist_extent->plist)			\
-MAC_END  
+MAC_END
 #define extent_no_chase_plist(e) (*extent_no_chase_plist_addr (e))
 
 #define extent_plist_addr(e) extent_no_chase_plist_addr (extent_ancestor (e))

@@ -39,6 +39,7 @@ static CONST char *unsigned_int_converters = "ouxX";
 static CONST char *double_converters = "feEgG";
 static CONST char *string_converters = "sS";
 
+typedef struct printf_spec printf_spec;
 struct printf_spec
 {
   int argnum; /* which argument does this spec want?  This is one-based:
@@ -61,6 +62,7 @@ struct printf_spec
   Bytecount text_before_len; /* length of that text */
 };
 
+typedef union printf_arg printf_arg;
 union printf_arg
 {
   int i;
@@ -120,7 +122,7 @@ doprnt_1 (Lisp_Object stream, CONST Bufbyte *string, Bytecount len,
 	  to_add--;
 	}
     }
-  
+
   if (maxlen >= 0)
     len = charcount_to_bytecount (string, min (maxlen, cclen));
   Lstream_write (lstr, string, len);
@@ -142,7 +144,7 @@ parse_off_posnum (CONST Bufbyte *start, CONST Bufbyte *end, int *returned_num)
 {
   Bufbyte arg_convert[100];
   REGISTER Bufbyte *arg_ptr = arg_convert;
-  
+
   *returned_num = -1;
   while (start != end && isdigit (*start))
     {
@@ -171,7 +173,7 @@ parse_doprnt_spec (CONST Bufbyte *format, Bytecount format_length)
 {
   CONST Bufbyte *fmt = format;
   CONST Bufbyte *fmt_end = format + format_length;
-  printf_spec_dynarr *specs = Dynarr_new (struct printf_spec);
+  printf_spec_dynarr *specs = Dynarr_new (printf_spec);
   int prev_argnum = 0;
 
   while (1)
@@ -235,7 +237,7 @@ parse_doprnt_spec (CONST Bufbyte *format, Bytecount format_length)
 		}
 	      NEXT_ASCII_BYTE (ch);
 	    }
-	  
+
 	  /* Parse off the minimum field width */
 	  fmt--; /* back up */
 	  fmt = parse_off_posnum (fmt, fmt_end, &spec.minwidth);
@@ -310,7 +312,7 @@ get_args_needed (printf_spec_dynarr *specs)
 static printf_arg_dynarr *
 get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
 {
-  printf_arg_dynarr *args = Dynarr_new (union printf_arg);
+  printf_arg_dynarr *args = Dynarr_new (printf_arg);
   union printf_arg arg;
   REGISTER int i;
   int args_needed = get_args_needed (specs);
@@ -379,7 +381,7 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
 static Bytecount
 emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 		Lisp_Object format_reloc, Bytecount format_length,
-		int nargs, 
+		int nargs,
 		/* #### Gag me, gag me, gag me */
 		CONST Lisp_Object *largs, va_list vargs)
 {
@@ -445,6 +447,15 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 	  if (!largs)
 	    {
 	      string = Dynarr_at (args, spec->argnum - 1).bp;
+	      /* error() can be called with null string arguments.
+		 E.g., in fileio.c, the return value of strerror()
+		 is never checked.  We'll print (null), like some
+		 printf implementations do.  Would it be better (and safe)
+		 to signal an error instead?  Or should we just use the 
+                 empty string?  -dkindred@cs.cmu.edu 8/1997
+	      */
+	      if (!string)
+		string = "(null)";
 	      string_len = strlen ((char *) string);
 	    }
 	  else
@@ -532,7 +543,7 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 		a = (Emchar) arg.l;
 	      else
 		a = (Emchar) arg.i;
-		
+
 	      if (!valid_char_p (a))
 		error ("invalid character value %d to %%c spec", a);
 
@@ -690,16 +701,15 @@ emacs_doprnt_lisp_2 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 		     Lisp_Object format_reloc, Bytecount format_length,
 		     int nargs, ...)
 {
-  Lisp_Object *foo;
   va_list vargs;
   int i;
+  Lisp_Object *foo = alloca_array (Lisp_Object, nargs);
 
-  foo = (Lisp_Object *) alloca (nargs * sizeof (Lisp_Object));
   va_start (vargs, nargs);
   for (i = 0; i < nargs; i++)
     foo[i] = va_arg (vargs, Lisp_Object);
   va_end (vargs);
-      
+
   return emacs_doprnt_2 (stream, format_nonreloc, format_reloc,
 			 format_length, nargs, foo);
 }
@@ -782,16 +792,15 @@ emacs_doprnt_string_lisp_2 (CONST Bufbyte *format_nonreloc,
   Lisp_Object obj;
   Lisp_Object stream = make_resizing_buffer_output_stream ();
   struct gcpro gcpro1;
-  Lisp_Object *foo;
   va_list vargs;
   int i;
+  Lisp_Object *foo = alloca_array (Lisp_Object, nargs);
 
-  foo = (Lisp_Object *) alloca (nargs * sizeof (Lisp_Object));
   va_start (vargs, nargs);
   for (i = 0; i < nargs; i++)
     foo[i] = va_arg (vargs, Lisp_Object);
   va_end (vargs);
-      
+
   GCPRO1 (stream);
   emacs_doprnt_2 (stream, format_nonreloc, format_reloc,
 		  format_length, nargs, foo);

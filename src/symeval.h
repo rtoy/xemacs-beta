@@ -26,56 +26,53 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_SYMEVAL_H_
 #define _XEMACS_SYMEVAL_H_
 
+enum symbol_value_type
+{
+  /* The following tags use the 'symbol_value_forward' structure
+     and are strictly for variables DEFVARed on the C level. */
+  SYMVAL_FIXNUM_FORWARD,	/* Forward C "int" */
+  SYMVAL_CONST_FIXNUM_FORWARD,	/* Same, but can't be set */
+  SYMVAL_BOOLEAN_FORWARD,	/* Forward C boolean ("int") */
+  SYMVAL_CONST_BOOLEAN_FORWARD,	/* Same, but can't be set */
+  SYMVAL_OBJECT_FORWARD,	/* Forward C Lisp_Object */
+  SYMVAL_CONST_OBJECT_FORWARD,	/* Same, but can't be set */
+  SYMVAL_CONST_SPECIFIER_FORWARD, /* Same, can't be set, but gives a
+                                     different message when attempting to
+				     set that says "use set-specifier" */
+  SYMVAL_DEFAULT_BUFFER_FORWARD, /* Forward Lisp_Object into Vbuffer_defaults */
+  SYMVAL_CURRENT_BUFFER_FORWARD, /* Forward Lisp_Object into current_buffer */
+  SYMVAL_CONST_CURRENT_BUFFER_FORWARD, /* Forward Lisp_Object into
+					  current_buffer, can't be set */
+  SYMVAL_DEFAULT_CONSOLE_FORWARD, /* Forward Lisp_Object into
+				     Vconsole_defaults */
+  SYMVAL_SELECTED_CONSOLE_FORWARD, /* Forward Lisp_Object into
+				      Vselected_console */
+  SYMVAL_CONST_SELECTED_CONSOLE_FORWARD, /* Forward Lisp_Object into
+					    Vselected_console,
+					    can't be set */
+  SYMVAL_UNBOUND_MARKER,	/* Only Qunbound actually has this tag */
+
+  /* The following tags use the 'symbol_value_buffer_local' structure */
+  SYMVAL_BUFFER_LOCAL,		/* make-variable-buffer-local */
+  SYMVAL_SOME_BUFFER_LOCAL,	/* make-local-variable */
+
+  /* The following tag uses the 'symbol_value_lisp_magic' structure */
+  SYMVAL_LISP_MAGIC,		/* Forward to lisp callbacks */
+
+  /* The following tag uses the 'symbol_value_varalias' structure */
+  SYMVAL_VARALIAS		/* defvaralias */
+
+#if 0
+  /* NYI */
+  SYMVAL_CONSTANT_SYMBOL,	/* Self-evaluating symbol */
+  /* NYI */
+#endif
+};
+
 struct symbol_value_magic
 {
   struct lcrecord_header lcheader;
-  enum
-    {
-      /* The following tags use the 'symbol_value_forward' structure
-	 and are strictly for variables DEFVARed on the C level. */
-      SYMVAL_FIXNUM_FORWARD,           /* Forward C "int" */
-      SYMVAL_CONST_FIXNUM_FORWARD,     /* Same, but can't be set */
-      SYMVAL_BOOLEAN_FORWARD,          /* Forward C boolean ("int") */
-      SYMVAL_CONST_BOOLEAN_FORWARD,    /* Same, but can't be set */
-      SYMVAL_OBJECT_FORWARD,           /* Forward C Lisp_Object */
-      SYMVAL_CONST_OBJECT_FORWARD,     /* Same, but can't be set */
-      SYMVAL_CONST_SPECIFIER_FORWARD,  /* Same, can't be set, but gives
-					  a different message when attempting
-					  to set that says "use set-specifier"
-					  */
-      SYMVAL_DEFAULT_BUFFER_FORWARD,   /* Forward Lisp_Object into
-					  Vbuffer_defaults */
-      SYMVAL_CURRENT_BUFFER_FORWARD,   /* Forward Lisp_Object into
-					  current_buffer */
-      SYMVAL_CONST_CURRENT_BUFFER_FORWARD,   /* Forward Lisp_Object into
-						current_buffer, can't
-						be set */
-      SYMVAL_DEFAULT_CONSOLE_FORWARD,	/* Forward Lisp_Object into
-					   Vconsole_defaults */
-      SYMVAL_SELECTED_CONSOLE_FORWARD,   /* Forward Lisp_Object into
-					     Vselected_console */
-      SYMVAL_CONST_SELECTED_CONSOLE_FORWARD,   /* Forward Lisp_Object into
-						   Vselected_console, can't
-						   be set */
-      SYMVAL_UNBOUND_MARKER,           /* Only Qunbound actually has this
-					  tag */
-
-      /* The following tags use the 'symbol_value_buffer_local' structure */
-      SYMVAL_BUFFER_LOCAL,             /* make-variable-buffer-local */
-      SYMVAL_SOME_BUFFER_LOCAL,        /* make-local-variable */
-
-      /* The following tag uses the 'symbol_value_lisp_magic' structure */
-      SYMVAL_LISP_MAGIC,	       /* Forward to lisp callbacks */
-
-      /* The following tag uses the 'symbol_value_varalias' structure */
-      SYMVAL_VARALIAS		       /* defvaralias */
-
-#if 0
-      /* NYI */
-      SYMVAL_CONSTANT_SYMBOL,	       /* Self-evaluating symbol */
-      /* NYI */
-#endif
-    } type;
+  enum symbol_value_type type;
 };
 #define SYMBOL_VALUE_MAGIC_P(x)				\
   (LRECORDP (x)						\
@@ -83,7 +80,7 @@ struct symbol_value_magic
        == print_symbol_value_magic))
 #define XSYMBOL_VALUE_MAGIC_TYPE(v) \
 	(((struct symbol_value_magic *) XPNTR (v))->type)
-#define XSETSYMBOL_VALUE_MAGIC(s, p) XSETOBJ (s, Lisp_Record, p)
+#define XSETSYMBOL_VALUE_MAGIC(s, p) XSETOBJ (s, Lisp_Type_Record, p)
 extern void print_symbol_value_magic (Lisp_Object, Lisp_Object, int);
 
 /********** The various different symbol-value-magic types ***********/
@@ -98,7 +95,7 @@ extern void print_symbol_value_magic (Lisp_Object, Lisp_Object, int);
    Then, the symbol's value field contains a symbol-value-buffer-local,
    whose CURRENT-VALUE field then contains a symbol-value-forward.
  */
-     
+
 extern CONST_IF_NOT_DEBUG struct lrecord_implementation
   lrecord_symbol_value_forward[];
 struct symbol_value_forward
@@ -140,7 +137,7 @@ struct symbol_value_forward
      or implicitly by the current buffer being changed.
 
      */
-     
+
   int (*magicfun) (Lisp_Object sym, Lisp_Object *val, Lisp_Object in_object,
 		   int flags);
 };
@@ -206,7 +203,7 @@ struct symbol_value_buffer_local
 
     These slots are called CURRENT-BUFFER, CURRENT-VALUE, and
     CURRENT-ALIST-ELEMENT, respectively.
-   
+
     If we want to examine or set the value in BUFFER and CURRENT-BUFFER
     equals BUFFER, we just examine or set CURRENT-VALUE.  Otherwise,
     we store CURRENT-VALUE value into CURRENT-ALIST-ELEMENT (or maybe
@@ -214,17 +211,17 @@ struct symbol_value_buffer_local
     BUFFER and set up CURRENT-ALIST-ELEMENT.  Then we set CURRENT-VALUE
     out of that element (or maybe out of DEFAULT-VALUE), and store
     BUFFER into CURRENT-BUFFER.
-    
+
     If we are setting the variable and the current buffer does not have
     an alist entry for this variable, an alist entry is created.
-    
+
     Note that CURRENT-BUFFER's local_var_alist value for this variable
     might be out-of-date (the correct value is stored in CURRENT-VALUE).
     Similarly, if CURRENT-BUFFER sees the default value, then
     DEFAULT-VALUE might be out-of-date.
-    
+
     Note that CURRENT-VALUE (but not DEFAULT-VALUE) can be a
-    forwarding pointer.  Each time it is examined or set, 
+    forwarding pointer.  Each time it is examined or set,
     forwarding must be done.
    */
   Lisp_Object default_value;
@@ -303,58 +300,52 @@ extern void deferror (Lisp_Object *symbol, CONST char *name,
 extern void defvar_mumble (CONST char *names,
                            CONST void *magic, int sizeof_magic);
 
-#define DEFVAR_HEADER(lname, c_location, forward_type)			  \
-  static CONST struct symbol_value_forward I_hate_C			  \
-   = { { { { lrecord_symbol_value_forward }, (void *) (c_location), 69 }, \
-         forward_type }, 0 };						  \
-  defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C))
+#define DEFVAR_HEADER(lname, c_location, forward_type) do {	\
+  static CONST struct symbol_value_forward I_hate_C		\
+   = { { { { lrecord_symbol_value_forward },			\
+	   (struct lcrecord_header *) (c_location), 69 },	\
+         forward_type }, 0 };					\
+  defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));	\
+} while (0)
 
-#define DEFVAR_MAGIC_HEADER(lname, c_location, forward_type, magicfun)	  \
-  static CONST struct symbol_value_forward I_hate_C			  \
-   = { { { { lrecord_symbol_value_forward }, (void *) (c_location), 69 }, \
-         forward_type }, magicfun };					  \
-  defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C))
+#define DEFVAR_MAGIC_HEADER(lname, c_location, forward_type, magicfun) do {	\
+  static CONST struct symbol_value_forward I_hate_C				\
+   = { { { { lrecord_symbol_value_forward },					\
+	   (struct lcrecord_header *) (c_location), 69 }, 			\
+         forward_type }, magicfun };						\
+  defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));			\
+} while (0)
 
 /* These discard their DOC arg because it is snarfed by make-docfile
  *  and stored in an external file. */
 
-#define DEFVAR_LISP(lname, c_location)				\
- do { DEFVAR_HEADER (lname, c_location, SYMVAL_OBJECT_FORWARD);	\
-      staticpro (c_location);					\
- } while (0)
-#define DEFVAR_CONST_LISP(lname, c_location)				\
- do { DEFVAR_HEADER (lname, c_location, SYMVAL_CONST_OBJECT_FORWARD);	\
-      staticpro (c_location);						\
- } while (0)
-#define DEFVAR_SPECIFIER(lname, c_location)				 \
- do { DEFVAR_HEADER (lname, c_location, SYMVAL_CONST_SPECIFIER_FORWARD); \
-      staticpro (c_location);						 \
- } while (0)
-#define DEFVAR_INT(lname, c_location)				\
- do { DEFVAR_HEADER (lname, c_location, SYMVAL_FIXNUM_FORWARD);	\
- } while (0)
-#define DEFVAR_CONST_INT(lname, c_location)			\
- do { DEFVAR_HEADER (lname, c_location, SYMVAL_CONST_FIXNUM_FORWARD);	\
- } while (0)
-#define DEFVAR_BOOL(lname, c_location)				\
- do { DEFVAR_HEADER (lname, c_location, SYMVAL_BOOLEAN_FORWARD);\
- } while (0)
-#define DEFVAR_CONST_BOOL(lname, c_location)			\
- do { DEFVAR_HEADER (lname, c_location, SYMVAL_CONST_BOOLEAN_FORWARD);	\
- } while (0)
+#define DEFVAR_HEADER_GCPRO(lname, c_location, symbol_value_type) do {	\
+  DEFVAR_HEADER (lname, c_location, symbol_value_type);			\
+  staticpro (c_location);						\
+} while (0)
 
-#define DEFVAR_LISP_MAGIC(lname, c_location, magicfun)		\
- do { DEFVAR_MAGIC_HEADER (lname, c_location,			\
-      SYMVAL_OBJECT_FORWARD, magicfun);				\
-      staticpro (c_location);					\
- } while (0)
-#define DEFVAR_INT_MAGIC(lname, c_location, magicfun)		\
- do { DEFVAR_MAGIC_HEADER (lname, c_location,			\
-      SYMVAL_FIXNUM_FORWARD, magicfun);				\
- } while (0)
-#define DEFVAR_BOOL_MAGIC(lname, c_location, magicfun)		\
- do { DEFVAR_MAGIC_HEADER (lname, c_location,			\
-      SYMVAL_BOOLEAN_FORWARD, magicfun);			\
- } while (0)
+#define DEFVAR_LISP(lname, c_location)	\
+	DEFVAR_HEADER_GCPRO (lname, c_location, SYMVAL_OBJECT_FORWARD)
+#define DEFVAR_CONST_LISP(lname, c_location) \
+	DEFVAR_HEADER_GCPRO (lname, c_location, SYMVAL_CONST_OBJECT_FORWARD)
+#define DEFVAR_SPECIFIER(lname, c_location) \
+	DEFVAR_HEADER_GCPRO (lname, c_location, SYMVAL_CONST_SPECIFIER_FORWARD)
+#define DEFVAR_INT(lname, c_location) \
+	DEFVAR_HEADER (lname, c_location, SYMVAL_FIXNUM_FORWARD)
+#define DEFVAR_CONST_INT(lname, c_location) \
+	DEFVAR_HEADER (lname, c_location, SYMVAL_CONST_FIXNUM_FORWARD)
+#define DEFVAR_BOOL(lname, c_location) \
+	DEFVAR_HEADER (lname, c_location, SYMVAL_BOOLEAN_FORWARD)
+#define DEFVAR_CONST_BOOL(lname, c_location) \
+	DEFVAR_HEADER (lname, c_location, SYMVAL_CONST_BOOLEAN_FORWARD)
+
+#define DEFVAR_LISP_MAGIC(lname, c_location, magicfun) do {	           \
+ DEFVAR_MAGIC_HEADER (lname, c_location, SYMVAL_OBJECT_FORWARD, magicfun); \
+ staticpro (c_location);						   \
+} while (0)
+#define DEFVAR_INT_MAGIC(lname, c_location, magicfun) \
+  DEFVAR_MAGIC_HEADER (lname, c_location, SYMVAL_FIXNUM_FORWARD, magicfun);
+#define DEFVAR_BOOL_MAGIC(lname, c_location, magicfun) \
+  DEFVAR_MAGIC_HEADER (lname, c_location, SYMVAL_BOOLEAN_FORWARD, magicfun);
 
 #endif /* _XEMACS_SYMEVAL_H_ */

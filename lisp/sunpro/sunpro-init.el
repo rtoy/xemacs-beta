@@ -127,24 +127,24 @@ Returns nil if the required files cannot be found."
               (setq internal-doc-file-name mule-doc-file-name))))
 
     ;; Connect to tooltalk, but only on an X server.
-    (and (featurep 'tooltalk)
-         (fboundp 'command-line-do-tooltalk)
-	 (eq 'x (device-type))
-         (command-line-do-tooltalk nil))
+    (when (and (featurep 'tooltalk)
+	       (fboundp 'command-line-do-tooltalk)
+	       (eq 'x (device-type)))
+      (command-line-do-tooltalk nil))
     
     ;; Sun's pending-del default is like textedit's
     (require 'pending-del)
-    (pending-delete-on nil)
+    (turn-on-pending-delete)
     
     ;; Bar cursor 2 pixels wide
     (setq bar-cursor 2)
 
     ;; Nice CDE compliant icon -- now the default...
-    ;(if (featurep 'xpm)
-    ;    (set-glyph-image
-    ;     frame-icon-glyph
-    ;     (format "%s%s" data-directory "xemacs-icon3.xpm")
-    ;     'global 'x))
+    ;;(if (featurep 'xpm)
+    ;;    (set-glyph-image
+    ;;     frame-icon-glyph
+    ;;     (format "%s%s" data-directory "xemacs-icon3.xpm")
+    ;;     'global 'x))
     
     (cond
      ;; Use Sun WorkShop if available

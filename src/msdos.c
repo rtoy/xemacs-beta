@@ -1639,7 +1639,7 @@ XMenuActivate (Display *foo, XMenu *menu, int *pane, int *selidx,
   if (have_mouse <= 0)
     return XM_IA_SELECT;
 
-  state = alloca (menu->panecount * sizeof (struct IT_menu_state));
+  state = alloca_array (struct IT_menu_state, menu->panecount);
   screensize = screen_size * 2;
   faces[0]
     = compute_glyph_face (&the_only_frame,
@@ -2161,7 +2161,7 @@ run_msdos_command (unsigned char **argv, Lisp_Object dir,
     lst = Vprocess_environment;
     len = XINT (Flength (lst));
 
-    envv = alloca ((len + 1) * sizeof (char *));
+    envv = alloca_array (char *, len + 1);
     for (i = 0; i < len; i++)
       {
 	tmp = Fcar (lst);

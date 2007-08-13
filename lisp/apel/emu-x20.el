@@ -3,7 +3,7 @@
 ;; Copyright (C) 1994,1995,1996,1997 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu-x20.el,v 1.2 1997/06/11 19:25:42 steve Exp $
+;; Version: $Id: emu-x20.el,v 1.3 1997/09/03 02:55:28 steve Exp $
 ;; Keywords: emulation, compatibility, Mule, XEmacs
 
 ;; This file is part of XEmacs.
@@ -110,9 +110,9 @@ find-file-hooks, etc.
 (defvar default-mime-charset 'x-ctext)
 
 (defvar mime-charset-coding-system-alist
-  '((x-ctext		. ctext)
-    (iso-2022-jp-2	. iso-2022-ss2-7)
-    ))
+  '((x-ctext . ctext))
+  "Alist MIME CHARSET vs CODING-SYSTEM.
+MIME CHARSET and CODING-SYSTEM must be symbol.")
 
 (defun mime-charset-to-coding-system (charset)
   "Return coding-system by MIME charset."

@@ -152,22 +152,18 @@ MAC_END
 
 /***** Defining new specifier types *****/
 
-#define DECLARE_SPECIFIER_TYPE(type)				\
+#define DECLARE_SPECIFIER_TYPE(type) \
 extern struct specifier_methods * type##_specifier_methods
 
-#define DEFINE_SPECIFIER_TYPE(type)			\
+#define DEFINE_SPECIFIER_TYPE(type) \
 struct specifier_methods * type##_specifier_methods
 
-#define INITIALIZE_SPECIFIER_TYPE(type, obj_name, pred_sym)		\
-  do {									\
-    type##_specifier_methods =						\
-      malloc_type_and_zero (struct specifier_methods);			\
-    type##_specifier_methods->name = obj_name;				\
-    defsymbol (&type##_specifier_methods->predicate_symbol,		\
-	       pred_sym);						\
-    add_entry_to_specifier_type_list (Q##type,				\
-				      type##_specifier_methods);	\
-  } while (0)								\
+#define INITIALIZE_SPECIFIER_TYPE(type, obj_name, pred_sym) do {	\
+ type##_specifier_methods = xnew_and_zero (struct specifier_methods);	\
+ type##_specifier_methods->name = obj_name;				\
+ defsymbol (&type##_specifier_methods->predicate_symbol, pred_sym);	\
+ add_entry_to_specifier_type_list (Q##type, type##_specifier_methods);	\
+} while (0)								\
 
 #define INITIALIZE_SPECIFIER_TYPE_WITH_DATA(type, obj_name, pred_sym)	\
   do {									\

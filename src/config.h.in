@@ -463,8 +463,15 @@ Boston, MA 02111-1307, USA.  */
    configuration names to use for them.
 
    See s/template.h for documentation on writing s/...h files. */
+
+#if defined (__cplusplus) && !defined (NOT_C_CODE)
+extern "C" {
+#endif
 #undef config_opsysfile
 #include config_opsysfile
+#if defined (__cplusplus) && !defined (NOT_C_CODE)
+}
+#endif
 
 /* The configuration script defines machfile to be the name of the
    m/...h file that describes the machine you are using.  The file is
@@ -723,4 +730,4 @@ on various systems. */
 #define MAIL_USE_LOCKF
 #endif
 
-#endif /* _CONFIG_H_ */
+#endif /* _SRC_CONFIG_H_ */

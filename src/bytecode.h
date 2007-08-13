@@ -42,29 +42,29 @@ Boston, MA 02111-1307, USA.  */
 #define COMPILED_FUNCTION_ANNOTATION_HACK
 
 struct Lisp_Compiled_Function
+{
+  struct lrecord_header lheader;
+  unsigned short maxdepth;
+  struct
   {
-    struct lrecord_header lheader;
-    unsigned short maxdepth;
-    struct 
-      {
-        unsigned int documentationp: 1;
-        unsigned int interactivep: 1;
-	/* Only used if I18N3, but always defined for simplicity. */
-	unsigned int domainp: 1;
-	/* Non-zero if this bytecode came from a v18 or v19 file.
-	   We need to Ebolify the `assoc', `delq', etc. functions. */
-	unsigned int ebolified: 1;
-      } flags;
-    Lisp_Object bytecodes;
-    Lisp_Object constants;
-    Lisp_Object arglist;
-    /* This uses the minimal number of conses; see accessors in data.c. */
-    Lisp_Object doc_and_interactive;
+    unsigned int documentationp: 1;
+    unsigned int interactivep: 1;
+    /* Only used if I18N3, but always defined for simplicity. */
+    unsigned int domainp: 1;
+    /* Non-zero if this bytecode came from a v18 or v19 file.
+       We need to Ebolify the `assoc', `delq', etc. functions. */
+    unsigned int ebolified: 1;
+  } flags;
+  Lisp_Object bytecodes;
+  Lisp_Object constants;
+  Lisp_Object arglist;
+  /* This uses the minimal number of conses; see accessors in data.c. */
+  Lisp_Object doc_and_interactive;
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
-    /* Something indicating where the bytecode came from */
-    Lisp_Object annotated;
+  /* Something indicating where the bytecode came from */
+  Lisp_Object annotated;
 #endif
-  };
+};
 
 Lisp_Object compiled_function_documentation (struct Lisp_Compiled_Function *b);
 Lisp_Object compiled_function_interactive (struct Lisp_Compiled_Function *b);
@@ -91,15 +91,15 @@ DECLARE_LRECORD (compiled_function, struct Lisp_Compiled_Function);
     neither     args                : (*  559 0) =    0 = 3962
  combined
     overhead                        : (* 1765 1) = 1765
-    doc-and-int (doc . int)         : (*  775 2) = 1550 
+    doc-and-int (doc . int)         : (*  775 2) = 1550
     doc-only    doc                 : (*  389 0) =    0
-    int-only    int                 : (*   42 0) =    0 
+    int-only    int                 : (*   42 0) =    0
     neither     -                   : (*  559 0) =    0 = 3315
  both
     overhead                        : (* 1765 2) = 3530
     doc-and-int -                   : (*  775 0) =    0
     doc-only    -                   : (*  389 0) =    0
-    int-only    -                   : (*   42 0) =    0 
+    int-only    -                   : (*   42 0) =    0
     neither     -                   : (*  559 0)  =   0 = 3530
 */
 

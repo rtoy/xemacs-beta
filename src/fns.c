@@ -573,11 +573,7 @@ concat (int nargs, Lisp_Object *args,
      the result in the returned string's `string-translatable' property. */
 #endif
   if (target_type == c_string)
-    {
-      args_mse = ((struct merge_string_extents_struct *)
-		  alloca (nargs *
-			  sizeof (struct merge_string_extents_struct)));
-    }
+    args_mse = alloca_array (struct merge_string_extents_struct, nargs);
 
   /* In append, the last arg isn't treated like the others */
   if (last_special && nargs > 0)
@@ -1808,7 +1804,7 @@ DEFUN ("sort", Fsort, 2, 2, 0, /*
 Sort LIST, stably, comparing elements using PREDICATE.
 Returns the sorted list.  LIST is modified by side effects.
 PREDICATE is called with two elements of LIST, and should return T
-if the first element is \"less\" than the second.
+if the first element is "less" than the second.
 */
        (list, pred))
 {
@@ -1917,9 +1913,9 @@ plists_differ (Lisp_Object a, Lisp_Object b, int nil_means_not_present,
   lb = XINT (Flength (b));
   m = (la > lb ? la : lb);
   fill = 0;
-  keys = (Lisp_Object *) alloca (m * sizeof (Lisp_Object));
-  vals = (Lisp_Object *) alloca (m * sizeof (Lisp_Object));
-  flags = (char *) alloca (m * sizeof (char));
+  keys  = alloca_array (Lisp_Object, m);
+  vals  = alloca_array (Lisp_Object, m);
+  flags = alloca_array (char, m);
 
   /* First extract the pairs from A. */
   for (rest = a; !NILP (rest); rest = XCDR (XCDR (rest)))
@@ -3009,7 +3005,7 @@ DEFUN ("old-equal", Fold_equal, 2, 2, 0, /*
 T if two Lisp objects have similar structure and contents.
 They must have the same data type.
 \(Note, however, that an exception is made for characters and integers;
-this is known as the \"char-int confoundance disease.\" See `eq' and
+this is known as the "char-int confoundance disease." See `eq' and
 `old-eq'.)
 This function is provided only for byte-code compatibility with v19.
 Do not use it.
@@ -3218,7 +3214,7 @@ mapcar1 (int leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq)
 DEFUN ("mapconcat", Fmapconcat, 3, 3, 0, /*
 Apply FN to each element of SEQ, and concat the results as strings.
 In between each pair of results, stick in SEP.
-Thus, \" \" as SEP results in spaces between the values returned by FN.
+Thus, " " as SEP results in spaces between the values returned by FN.
 */
        (fn, seq, sep))
 {
@@ -3231,7 +3227,7 @@ Thus, \" \" as SEP results in spaces between the values returned by FN.
   nargs = len + len - 1;
   if (nargs < 0) return build_string ("");
 
-  args = (Lisp_Object *) alloca (nargs * sizeof (Lisp_Object));
+  args = alloca_array (Lisp_Object, nargs);
 
   GCPRO1 (sep);
   mapcar1 (len, args, fn, seq);
@@ -3254,7 +3250,7 @@ SEQUENCE may be a list, a vector, a bit vector, or a string.
        (fn, seq))
 {
   int len = XINT (Flength (seq));
-  Lisp_Object *args = (Lisp_Object *) alloca (len * sizeof (Lisp_Object));
+  Lisp_Object *args = alloca_array (Lisp_Object, len);
 
   mapcar1 (len, args, fn, seq);
 
@@ -3269,7 +3265,7 @@ SEQUENCE may be a list, a vector or a string.
        (fn, seq))
 {
   int len = XINT (Flength (seq));
-  Lisp_Object *args = (Lisp_Object *) alloca (len * sizeof (Lisp_Object));
+  Lisp_Object *args = alloca_array (Lisp_Object, len);
 
   mapcar1 (len, args, fn, seq);
 

@@ -26,6 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+typedef struct range_table_entry range_table_entry;
 struct range_table_entry
 {
   EMACS_INT first;
@@ -33,9 +34,9 @@ struct range_table_entry
   Lisp_Object val;
 };
 
-typedef struct range_table_entry_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct range_table_entry);
+  Dynarr_declare (range_table_entry);
 } range_table_entry_dynarr;
 
 struct Lisp_Range_Table
@@ -117,7 +118,7 @@ range_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 
   if (Dynarr_length (rt1->entries) != Dynarr_length (rt2->entries))
     return 0;
-  
+
   for (i = 0; i < Dynarr_length (rt1->entries); i++)
     {
       struct range_table_entry *rte1 = Dynarr_atp (rt1->entries, i);
@@ -155,7 +156,7 @@ range_table_hash (Lisp_Object obj, int depth)
 					      depth));
       return hash;
     }
-  
+
   /* just pick five elements scattered throughout the array.
      A slightly better approach would be to offset by some
      noise factor from the points chosen below. */
@@ -202,7 +203,7 @@ get_range_table (EMACS_INT pos, int nentries, struct range_table_entry *tab,
 		 Lisp_Object default_)
 {
   int left = 0, right = nentries;
-  
+
   /* binary search for the entry.  Based on similar code in
      extent_list_locate(). */
   while (left != right)
@@ -237,12 +238,10 @@ You can manipulate it using `put-range-table', `get-range-table',
 */
        ())
 {
-  struct Lisp_Range_Table *rt;
   Lisp_Object obj;
-
-  rt = (struct Lisp_Range_Table *)
-    alloc_lcrecord (sizeof (struct Lisp_Range_Table), lrecord_range_table);
-  rt->entries = Dynarr_new (struct range_table_entry);
+  struct Lisp_Range_Table *rt = alloc_lcrecord_type (struct Lisp_Range_Table,
+						     lrecord_range_table);
+  rt->entries = Dynarr_new (range_table_entry);
   XSETRANGE_TABLE (obj, rt);
   return obj;
 }
@@ -258,9 +257,9 @@ ranges as the given table.  The values will not themselves be copied.
 
   CHECK_RANGE_TABLE (old_table);
   rt = XRANGE_TABLE (old_table);
-  rtnew = (struct Lisp_Range_Table *)
-    alloc_lcrecord (sizeof (struct Lisp_Range_Table), lrecord_range_table);
-  rtnew->entries = Dynarr_new (struct range_table_entry);
+
+  rtnew = alloc_lcrecord_type (struct Lisp_Range_Table, lrecord_range_table);
+  rtnew->entries = Dynarr_new (range_table_entry);
 
   Dynarr_add_many (rtnew->entries, Dynarr_atp (rt->entries, 0),
 		   Dynarr_length (rt->entries));
@@ -331,12 +330,12 @@ put_range_table (Lisp_Object table, EMACS_INT first,
 
 	         [ NEW ]
 	       [ EXISTING ]
-	       
+
 	 */
 	/* need to split this one in two. */
 	{
 	  struct range_table_entry insert_me_too;
-	      
+
 	  insert_me_too.first = last + 1;
 	  insert_me_too.last = entry->last;
 	  insert_me_too.val = entry->val;
@@ -346,7 +345,7 @@ put_range_table (Lisp_Object table, EMACS_INT first,
       else if (entry->last > last)
 	{
 	  /* looks like:
-	     
+
 	       [ NEW ]
 	         [ EXISTING ]
 
@@ -365,15 +364,15 @@ put_range_table (Lisp_Object table, EMACS_INT first,
   /* Someone asked us to delete the range, not insert it. */
   if (UNBOUNDP (val))
     return;
-  
+
   /* Now insert the new entry, maybe at the end. */
-  
+
   if (insert_me_here < 0)
     insert_me_here = i;
 
   {
     struct range_table_entry insert_me;
-	      
+
     insert_me.first = first;
     insert_me.last = last;
     insert_me.val = val;
@@ -383,7 +382,7 @@ put_range_table (Lisp_Object table, EMACS_INT first,
 
   /* Now see if we can combine this entry with adjacent ones just
      before or after. */
-  
+
   if (insert_me_here > 0)
     {
       struct range_table_entry *entry = Dynarr_atp (rt->entries,
@@ -500,7 +499,7 @@ rangetab_instantiate (Lisp_Object data)
 	{
 	  Lisp_Object range = Fcar (data);
 	  Lisp_Object val = Fcar (Fcdr (data));
-	  
+
 	  data = Fcdr (Fcdr (data));
 	  if (CONSP (range))
 	    Fput_range_table (Fcar (range), Fcar (Fcdr (range)), val,
@@ -556,7 +555,7 @@ rangetab_instantiate (Lisp_Object data)
 
    -- look up a value
    -- retrieve all the ranges in an iterative fashion
-   
+
 */
 
 /* The format of a unified range table is as follows:
@@ -579,7 +578,7 @@ struct unified_range_table
   int nentries;
   struct range_table_entry first;
 };
-   
+
 /* Return size in bytes needed to store the data in a range table. */
 
 int
@@ -632,7 +631,7 @@ unified_range_table_bytes_used (void *unrangetab)
 	  + ((* ((unsigned char *) unrangetab + 3)) << 16));
 }
 
-/* Make sure the table is aligned, and move it around if it's not. */  
+/* Make sure the table is aligned, and move it around if it's not. */
 static void
 align_the_damn_table (void *unrangetab)
 {
@@ -653,7 +652,7 @@ align_the_damn_table (void *unrangetab)
       * (char *) unrangetab = (char) ((char *) new_dest - (char *) unrangetab);
     }
 }
-  
+
 /* Look up a value in a unified range table. */
 
 Lisp_Object

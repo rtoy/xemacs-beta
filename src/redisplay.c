@@ -192,6 +192,7 @@ enum prop_type
    #### It's unclean that both Emchars and Bufbytes are here.
    */
 
+typedef struct prop_block prop_block;
 struct prop_block
 {
   enum prop_type type;
@@ -219,9 +220,9 @@ struct prop_block
     } data;
 };
 
-typedef struct prop_block_dynarr_type
+typedef struct
 {
-  Dynarr_declare (struct prop_block);
+  Dynarr_declare (prop_block);
 } prop_block_dynarr;
 
 
@@ -284,8 +285,8 @@ static void create_right_glyph_block (struct window *w,
 				      struct display_line *dl);
 static void regenerate_window (struct window *w, Bufpos start_pos,
 			       Bufpos point, int type);
-static void regenerate_window_point_center (struct window *w, Bufpos point,
-					    int type);
+static Bufpos regenerate_window_point_center (struct window *w, Bufpos point,
+					      int type);
 int window_half_pixpos (struct window *w);
 int line_at_center (struct window *w, int type, Bufpos start, Bufpos point);
 Bufpos point_at_center (struct window *w, int type, Bufpos start,
@@ -329,7 +330,7 @@ display_line_dynarr *cmotion_display_lines;
 
 /* Used by generate_formatted_string.  Global because they get used so
    much that the dynamic allocation time adds up. */
-emchar_dynarr *formatted_string_emchar_dynarr;
+Emchar_dynarr *formatted_string_emchar_dynarr;
 struct display_line formatted_string_display_line;
 /* We store the extents that we need to generate in a Dynarr and then
    frob them all on at the end of generating the string.  We do it
@@ -338,9 +339,9 @@ struct display_line formatted_string_display_line;
    (to avoid having to resize the string multiple times), and we don't
    want to go around adding extents to a string when the extents might
    stretch off the end of the string. */
-extent_dynarr *formatted_string_extent_dynarr;
-bytecount_dynarr *formatted_string_extent_start_dynarr;
-bytecount_dynarr *formatted_string_extent_end_dynarr;
+EXTENT_dynarr *formatted_string_extent_dynarr;
+Bytecount_dynarr *formatted_string_extent_start_dynarr;
+Bytecount_dynarr *formatted_string_extent_end_dynarr;
 
 
 /* #### probably temporary */
@@ -348,7 +349,7 @@ int cache_adjustment;
 
 /* This holds a string representing the text corresponding to a single
    modeline % spec. */
-static bufbyte_dynarr *mode_spec_bufbyte_string;
+static Bufbyte_dynarr *mode_spec_bufbyte_string;
 
 int in_display;		/* 1 if in redisplay.  */
 
@@ -509,7 +510,7 @@ redisplay_text_width_emchar_string (struct window *w, int findex,
 			       str, len));
 }
 
-static emchar_dynarr *rtw_emchar_dynarr;
+static Emchar_dynarr *rtw_emchar_dynarr;
 
 int
 redisplay_text_width_string (struct window *w, int findex,
@@ -594,14 +595,14 @@ get_display_block_from_line (struct display_line *dl, enum display_type type)
     {
       /* This line doesn't have any display blocks, so initialize the display
          bock array. */
-      dl->display_blocks = Dynarr_new (struct display_block);
+      dl->display_blocks = Dynarr_new (display_block);
     }
 
   /* The line doesn't have a block of the desired type so go ahead and create
      one and add it to the line. */
   memset (&db, 0, sizeof (struct display_block));
   db.type = type;
-  db.runes = Dynarr_new (struct rune);
+  db.runes = Dynarr_new (rune);
   Dynarr_add (dl->display_blocks, db);
 
   /* Return the newly added display block. */
@@ -996,11 +997,10 @@ add_bufbyte_string_runes (pos_data *data, Bufbyte *c_string,
 	    {
 	      struct prop_block pb;
 	      Bytecount len = end - pos;
-	      prop = Dynarr_new (struct prop_block);
+	      prop = Dynarr_new (prop_block);
 
 	      pb.type = PROP_STRING;
-	      pb.data.p_string.str =
-		(Bufbyte *) xmalloc (sizeof (Bufbyte) * len);
+	      pb.data.p_string.str = xnew_array (Bufbyte, len);
 	      strncpy ((char *) pb.data.p_string.str, (char *) pos, len);
 	      pb.data.p_string.len = len;
 
@@ -1108,7 +1108,7 @@ add_blank_rune (pos_data *data, struct window *w, int char_tab_width)
     {								\
       struct prop_block pb;					\
       if (!prop)						\
-	prop = Dynarr_new (struct prop_block);			\
+	prop = Dynarr_new (prop_block);				\
 								\
       pb.type = PROP_CHAR;					\
       pb.data.p_char.ch = data->ch;				\
@@ -1243,7 +1243,7 @@ add_control_char_runes (pos_data *data, struct buffer *b)
 	{
 	  struct prop_block pb;
 	  if (!prop)
-	    prop = Dynarr_new (struct prop_block);
+	    prop = Dynarr_new (prop_block);
 
 	  pb.type = PROP_CHAR;
 	  pb.data.p_char.ch = data->ch;
@@ -1716,14 +1716,14 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
       if (pos_type == BEGIN_GLYPHS)
 	{
 	  if (!data->dl->left_glyphs)
-	    data->dl->left_glyphs = Dynarr_new (struct glyph_block);
+	    data->dl->left_glyphs = Dynarr_new (glyph_block);
 	  Dynarr_add (data->dl->left_glyphs, *gb);
 	  return NULL;
 	}
       else if (pos_type == END_GLYPHS)
 	{
 	  if (!data->dl->right_glyphs)
-	    data->dl->right_glyphs = Dynarr_new (struct glyph_block);
+	    data->dl->right_glyphs = Dynarr_new (glyph_block);
 	  Dynarr_add (data->dl->right_glyphs, *gb);
 	  return NULL;
 	}
@@ -2300,7 +2300,7 @@ create_text_block (struct window *w, struct display_line *dl,
 	      if (prop_width)
 		{
 		  struct prop_block pb;
-		  *prop = Dynarr_new (struct prop_block);
+		  *prop = Dynarr_new (prop_block);
 
 		  pb.type = PROP_BLANK;
 		  pb.data.p_blank.width = prop_width;
@@ -2917,7 +2917,7 @@ create_left_glyph_block (struct window *w, struct display_line *dl,
 
     elt = 0;
     used_in = used_out = 0;
-    ib = Dynarr_new (struct glyph_block);
+    ib = Dynarr_new (glyph_block);
     while (elt < Dynarr_length (dl->left_glyphs))
       {
 	struct glyph_block *gb = Dynarr_atp (dl->left_glyphs, elt);
@@ -3236,7 +3236,7 @@ create_right_glyph_block (struct window *w, struct display_line *dl)
 
     elt = 0;
     used_in = used_out = 0;
-    ib = Dynarr_new (struct glyph_block);
+    ib = Dynarr_new (glyph_block);
     while (elt < Dynarr_length (dl->right_glyphs))
       {
 	struct glyph_block *gb = Dynarr_atp (dl->right_glyphs, elt);
@@ -4162,28 +4162,21 @@ ensure_modeline_generated (struct window *w, int type)
 int
 real_current_modeline_height (struct window *w)
 {
-  Fset_marker (w->start[CMOTION_DISP], w->start[CURRENT_DISP], w->buffer);
+  Fset_marker (w->start[CMOTION_DISP],  w->start[CURRENT_DISP],  w->buffer);
   Fset_marker (w->pointm[CMOTION_DISP], w->pointm[CURRENT_DISP], w->buffer);
 
   if (ensure_modeline_generated (w, CMOTION_DISP))
     {
-      display_line_dynarr *dla;
-
-      dla = window_display_lines (w, CMOTION_DISP);
+      display_line_dynarr *dla = window_display_lines (w, CMOTION_DISP);
 
       if (Dynarr_length (dla))
 	{
 	  if (Dynarr_atp (dla, 0)->modeline)
 	    return (Dynarr_atp (dla, 0)->ascent +
 		    Dynarr_atp (dla, 0)->descent);
-	  else
-	    return 0;
 	}
-      else
-	return 0;
     }
-  else
-    return 0;
+  return 0;
 }
 
 
@@ -4248,7 +4241,7 @@ regenerate_window (struct window *w, Bufpos start_pos, Bufpos point, int type)
     {
       struct prop_block pb;
       Lisp_Object string;
-      prop = Dynarr_new (struct prop_block);
+      prop = Dynarr_new (prop_block);
 
       string = concat2(Vminibuf_preprompt, Vminibuf_prompt);
       pb.type = PROP_MINIBUF_PROMPT;
@@ -4797,9 +4790,10 @@ regenerate_window_incrementally (struct window *w, Bufpos startp,
 }
 
 /* Given a window and a point, update the given display lines such
-   that point is displayed in the middle of the window. */
+   that point is displayed in the middle of the window. 
+   Return the window's new start position. */
 
-static void
+static Bufpos
 regenerate_window_point_center (struct window *w, Bufpos point, int type)
 {
   Bufpos startp;
@@ -4812,7 +4806,7 @@ regenerate_window_point_center (struct window *w, Bufpos point, int type)
   regenerate_window (w, startp, point, type);
   Fset_marker (w->start[type], make_int (startp), w->buffer);
 
-  return;
+  return startp;
 }
 
 /* Given a window and a set of display lines, return a boolean
@@ -5024,7 +5018,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
   if (!MINI_WINDOW_P (w)
       && !EQ (Fmarker_buffer (w->start[CURRENT_DISP]), w->buffer))
     {
-      regenerate_window_point_center (w, pointm, DESIRED_DISP);
+      startp = regenerate_window_point_center (w, pointm, DESIRED_DISP);
 
       goto regeneration_done;
     }
@@ -5158,7 +5152,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	       startp < marker_position (w->last_start[CURRENT_DISP]))
 	   || (startp == BUF_ZV (b)))
     {
-      regenerate_window_point_center (w, pointm, DESIRED_DISP);
+      startp = regenerate_window_point_center (w, pointm, DESIRED_DISP);
 
       goto regeneration_done;
     }
@@ -5196,11 +5190,9 @@ redisplay_window (Lisp_Object window, int skip_selected)
      back onto the screen. */
   if (scroll_step)
     {
-      Bufpos bufpos;
-
-      bufpos = vmotion (w, startp,
+      startp = vmotion (w, startp,
 			(pointm < startp) ? -scroll_step : scroll_step, 0);
-      regenerate_window (w, bufpos, pointm, DESIRED_DISP);
+      regenerate_window (w, startp, pointm, DESIRED_DISP);
 
       if (point_visible (w, pointm, DESIRED_DISP))
 	goto regeneration_done;
@@ -5208,7 +5200,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 
   /* We still haven't managed to get the screen drawn with point on
      the screen, so just center it and be done with it. */
-  regenerate_window_point_center (w, pointm, DESIRED_DISP);
+  startp = regenerate_window_point_center (w, pointm, DESIRED_DISP);
 
 
 regeneration_done:
@@ -5416,17 +5408,17 @@ redisplay_frame (struct frame *f, int preemption_check)
 
   update_frame_title (f);
 
-  f->buffers_changed = 0;
-  f->clip_changed = 0;
-  f->extents_changed = 0;
-  f->faces_changed = 0;
-  f->frame_changed = 0;
-  f->icon_changed = 0;
-  f->menubar_changed = 0;
+  f->buffers_changed  = 0;
+  f->clip_changed     = 0;
+  f->extents_changed  = 0;
+  f->faces_changed    = 0;
+  f->frame_changed    = 0;
+  f->icon_changed     = 0;
+  f->menubar_changed  = 0;
   f->modeline_changed = 0;
-  f->point_changed = 0;
-  f->toolbar_changed = 0;
-  f->windows_changed = 0;
+  f->point_changed    = 0;
+  f->toolbar_changed  = 0;
+  f->windows_changed  = 0;
   f->windows_structure_changed = 0;
   f->window_face_cache_reset = 0;
 
@@ -5479,11 +5471,11 @@ redisplay_device (struct device *d)
 
   if (FRAME_REPAINT_P (f))
     {
-      if (f->buffers_changed || f->clip_changed || f->extents_changed
-	  || f->faces_changed || f->frame_changed || f->menubar_changed
-	  || f->modeline_changed || f->point_changed || f->size_changed
-	  || f->toolbar_changed || f->windows_changed
-	  || f->windows_structure_changed)
+      if (f->buffers_changed  || f->clip_changed  || f->extents_changed ||
+	  f->faces_changed    || f->frame_changed || f->menubar_changed ||
+	  f->modeline_changed || f->point_changed || f->size_changed    ||
+	  f->toolbar_changed  || f->windows_changed ||
+	  f->windows_structure_changed)
 	{
 	  preempted = redisplay_frame (f, 0);
 	}
@@ -5513,11 +5505,11 @@ redisplay_device (struct device *d)
 
       if (FRAME_REPAINT_P (f))
 	{
-	  if (f->buffers_changed || f->clip_changed || f->extents_changed
-	      || f->faces_changed || f->frame_changed || f->menubar_changed
-	      || f->modeline_changed || f->point_changed || f->size_changed
-	      || f->toolbar_changed || f->windows_changed
-	      || f->windows_structure_changed)
+	  if (f->buffers_changed  || f->clip_changed  || f->extents_changed ||
+	      f->faces_changed    || f->frame_changed || f->menubar_changed ||
+	      f->modeline_changed || f->point_changed || f->size_changed    ||
+	      f->toolbar_changed  || f->windows_changed ||
+	      f->windows_structure_changed)
 	    {
 	      preempted = redisplay_frame (f, 0);
 	    }
@@ -5532,17 +5524,17 @@ redisplay_device (struct device *d)
 
   /* If we get here then we redisplayed all of our frames without
      getting preempted so mark ourselves as clean. */
-  d->buffers_changed = 0;
-  d->clip_changed = 0;
-  d->extents_changed = 0;
-  d->faces_changed = 0;
-  d->frame_changed = 0;
-  d->icon_changed = 0;
-  d->menubar_changed = 0;
+  d->buffers_changed  = 0;
+  d->clip_changed     = 0;
+  d->extents_changed  = 0;
+  d->faces_changed    = 0;
+  d->frame_changed    = 0;
+  d->icon_changed     = 0;
+  d->menubar_changed  = 0;
   d->modeline_changed = 0;
-  d->point_changed = 0;
-  d->toolbar_changed = 0;
-  d->windows_changed = 0;
+  d->point_changed    = 0;
+  d->toolbar_changed  = 0;
+  d->windows_changed  = 0;
   d->windows_structure_changed = 0;
 
   if (!size_change_failed)
@@ -5582,11 +5574,12 @@ redisplay_without_hooks (void)
   if (asynch_device_change_pending)
     handle_asynch_device_change ();
 
-  if (!buffers_changed && !clip_changed && !extents_changed && !faces_changed
-      && !frame_changed && !icon_changed && !menubar_changed
-      && !modeline_changed && !point_changed && !size_changed
-      && !toolbar_changed && !windows_changed && !windows_structure_changed
-      && !disable_preemption && preemption_count < max_preempts)
+  if (!buffers_changed && !clip_changed     && !extents_changed &&
+      !faces_changed   && !frame_changed    && !icon_changed    &&
+      !menubar_changed && !modeline_changed && !point_changed   &&
+      !size_changed    && !toolbar_changed  && !windows_changed &&
+      !windows_structure_changed && !disable_preemption &&
+      preemption_count < max_preempts)
     goto done;
 
   DEVICE_LOOP_NO_BREAK (devcons, concons)
@@ -5594,12 +5587,11 @@ redisplay_without_hooks (void)
       struct device *d = XDEVICE (XCAR (devcons));
       int preempted;
 
-      if (d->buffers_changed || d->clip_changed || d->extents_changed
-	  || d->faces_changed || d->frame_changed
-	  || d->icon_changed || d->menubar_changed
-	  || d->modeline_changed || d->point_changed || d->size_changed
-	  || d->toolbar_changed || d->windows_changed
-	  || d->windows_structure_changed)
+      if (d->buffers_changed  || d->clip_changed     || d->extents_changed ||
+	  d->faces_changed    || d->frame_changed    || d->icon_changed    ||
+	  d->menubar_changed  || d->modeline_changed || d->point_changed   ||
+	  d->size_changed     || d->toolbar_changed  || d->windows_changed ||
+	  d->windows_structure_changed)
 	{
 	  preempted = redisplay_device (d);
 
@@ -5618,16 +5610,16 @@ redisplay_without_hooks (void)
   preemption_count = 0;
 
   /* Mark redisplay as accurate */
-  buffers_changed = 0;
-  clip_changed = 0;
-  extents_changed = 0;
-  frame_changed = 0;
-  icon_changed = 0;
-  menubar_changed = 0;
+  buffers_changed  = 0;
+  clip_changed     = 0;
+  extents_changed  = 0;
+  frame_changed    = 0;
+  icon_changed     = 0;
+  menubar_changed  = 0;
   modeline_changed = 0;
-  point_changed = 0;
-  toolbar_changed = 0;
-  windows_changed = 0;
+  point_changed    = 0;
+  toolbar_changed  = 0;
+  windows_changed  = 0;
   windows_structure_changed = 0;
   RESET_CHANGED_SET_FLAGS;
 
@@ -5747,7 +5739,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	    size++;
 	  }
 
-	buf = (char *) alloca (size * sizeof (char));
+	buf = alloca_array (char, size);
 	sprintf (buf, "%d", col);
 
 	Dynarr_add_many (mode_spec_bufbyte_string,
@@ -5789,7 +5781,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	struct frame *f = XFRAME (w->frame);
 	if (FRAME_TTY_P (f) && f->order_count > 1)
 	  {
-	    str = alloca (10);
+	    str = (CONST char *) alloca (10);
 	    sprintf (str, "-%d", f->order_count);
 	  }
       }
@@ -6012,19 +6004,19 @@ free_display_line (struct display_line *dl)
 	}
 
       Dynarr_free (dl->display_blocks);
-      dl->display_blocks = 0;
+      dl->display_blocks = NULL;
     }
 
   if (dl->left_glyphs)
     {
       Dynarr_free (dl->left_glyphs);
-      dl->left_glyphs = 0;
+      dl->left_glyphs = NULL;
     }
 
   if (dl->right_glyphs)
     {
       Dynarr_free (dl->right_glyphs);
-      dl->right_glyphs = 0;
+      dl->right_glyphs = NULL;
     }
 }
 
@@ -6065,54 +6057,53 @@ free_display_structs (struct window_mirror *mir)
 
 
 static void
-mark_redisplay_structs (display_line_dynarr *dla,
-			void (*markobj) (Lisp_Object))
+mark_glyph_block_dynarr (glyph_block_dynarr *gba, void (*markobj) (Lisp_Object))
 {
-  int line;
-
-  for (line = 0; line < Dynarr_length (dla); line++)
+  if (gba)
     {
-      int block, loop;
-      struct display_line *dl = Dynarr_atp (dla, line);
+      glyph_block *gb = Dynarr_atp (gba, 0);
+      glyph_block *gb_last = Dynarr_atp (gba, Dynarr_length (gba));
 
-      for (block = 0; block < Dynarr_length (dl->display_blocks); block++)
+      for (; gb < gb_last; gb++)
 	{
-	  int rune;
-	  struct display_block *db = Dynarr_atp (dl->display_blocks, block);
+	  if (!NILP (gb->glyph))  ((markobj) (gb->glyph));
+	  if (!NILP (gb->extent)) ((markobj) (gb->extent));
+	}
+    }
+}
 
-	  for (rune = 0; rune < Dynarr_length (db->runes); rune++)
+static void
+mark_redisplay_structs (display_line_dynarr *dla, void (*markobj) (Lisp_Object))
+{
+  display_line *dl = Dynarr_atp (dla, 0);
+  display_line *dl_last = Dynarr_atp (dla, Dynarr_length (dla));
+
+  for (; dl < dl_last; dl++)
+    {
+      display_block_dynarr *dba = dl->display_blocks;
+      display_block *db = Dynarr_atp (dba, 0);
+      display_block *db_last = Dynarr_atp (dba, Dynarr_length (dba));
+
+      for (; db < db_last; db++)
+	{
+	  rune_dynarr *ra = db->runes;
+	  rune *r = Dynarr_atp (ra, 0);
+	  rune *r_last = Dynarr_atp (ra, Dynarr_length (ra));
+
+	  for (; r < r_last; r++)
 	    {
-	      struct rune *rb = Dynarr_atp (db->runes, rune);
-
-	      if (rb->type == RUNE_DGLYPH)
+	      if (r->type == RUNE_DGLYPH)
 		{
-		  if (!NILP (rb->object.dglyph.glyph))
-		    ((markobj) (rb->object.dglyph.glyph));
-		  if (!NILP (rb->object.dglyph.extent))
-		    ((markobj) (rb->object.dglyph.extent));
+		  if (!NILP (r->object.dglyph.glyph))
+		    ((markobj) (r->object.dglyph.glyph));
+		  if (!NILP (r->object.dglyph.extent))
+		    ((markobj) (r->object.dglyph.extent));
 		}
 	    }
 	}
 
-      for (loop = 0; loop < 2; loop++)
-	{
-	  glyph_block_dynarr *gba = (loop
-				     ? dl->right_glyphs
-				     : dl->left_glyphs);
-
-	  if (gba != NULL)
-	    {
-	      for (block = 0; block < Dynarr_length (gba); block++)
-		{
-		  struct glyph_block *gb = Dynarr_atp (gba, block);
-
-		  if (!NILP (gb->glyph))
-		    ((markobj) (gb->glyph));
-		  if (!NILP (gb->extent))
-		    ((markobj) (gb->extent));
-		}
-	    }
-	}
+      mark_glyph_block_dynarr (dl->left_glyphs,  markobj);
+      mark_glyph_block_dynarr (dl->right_glyphs, markobj);
     }
 }
 
@@ -7189,9 +7180,9 @@ glyph_to_pixel_translation (struct window *w, int char_x, int char_y,
     }
 
   if (*pix_x > w->pixel_left + w->pixel_width)
-    *pix_x = w->pixel_left + w->pixel_width;
+      *pix_x = w->pixel_left + w->pixel_width;
   if (*pix_y > w->pixel_top + w->pixel_height)
-    *pix_y = w->pixel_top + w->pixel_height;
+      *pix_y = w->pixel_top + w->pixel_height;
 
   *pix_x -= w->pixel_left;
   *pix_y -= w->pixel_top;
@@ -8085,13 +8076,13 @@ init_redisplay (void)
 
   if (!initialized)
     {
-      cmotion_display_lines = Dynarr_new (struct display_line);
+      cmotion_display_lines = Dynarr_new (display_line);
       mode_spec_bufbyte_string = Dynarr_new (Bufbyte);
       formatted_string_emchar_dynarr = Dynarr_new (Emchar);
-      formatted_string_extent_dynarr = Dynarr_new (struct extent *);
+      formatted_string_extent_dynarr = Dynarr_new (EXTENT);
       formatted_string_extent_start_dynarr = Dynarr_new (Bytecount);
       formatted_string_extent_end_dynarr = Dynarr_new (Bytecount);
-      internal_cache = Dynarr_new (struct line_start_cache);
+      internal_cache = Dynarr_new (line_start_cache);
       memset (&formatted_string_display_line, 0, sizeof (struct display_line));
     }
 
@@ -8192,7 +8183,7 @@ Only pixmap glyph instances are currently allowed to be clipped.
   horizontal_clip = 5;
 
   DEFVAR_LISP ("global-mode-string", &Vglobal_mode_string /*
-String displayed by modeline-format's \"%m\" specification.
+String displayed by modeline-format's "%m" specification.
 */ );
   Vglobal_mode_string = Qnil;
 
