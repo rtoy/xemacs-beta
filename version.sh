@@ -1,8 +1,8 @@
 #!/bin/sh
 emacs_major_version=21
 emacs_minor_version=1
-emacs_beta_version=13
-xemacs_codename="Crater Lake"
+emacs_beta_version=14
+xemacs_codename="Cuyahoga Valley"
 infodock_major_version=4
 infodock_minor_version=0
 infodock_build_version=7

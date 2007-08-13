@@ -1,3 +1,44 @@
+2001-01-27  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.14 is released
+
+2001-01-21  Steve Youngs  <youngs@xemacs.org>
+
+	* ./etc/PACKAGES: Doc fix.
+
+	* README.packages: Doc fix.
+
+2001-01-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+    * xemacs-faq.texi (Q3.5.12): New FAQ.  XEmacs bitches about xmodmap.
+
+2001-01-21  Steve Youngs  <youngs@xemacs.org>
+
+    * etc/PACKAGES: Sync with 21.2 version, because everyone uses the
+    same packages.
+
+    * README.packages: Ditto.
+
+2001-01-18  Martin Buchholz  <martin@xemacs.org>
+
+	* PROBLEMS (Sun/Solaris): Yet another microimprovement.
+
+2001-01-18  Martin Buchholz  <martin@xemacs.org>
+
+	* xemacs-faq.texi (Q1.0.11): Change XEmacs for MacOS URL.
+
+2001-01-16  Martin Buchholz  <martin@xemacs.org>
+
+	* PROBLEMS: Document MIPSpro ICE problem workaround.
+
+2001-01-12  Martin Buchholz  <martin@xemacs.org>
+
+	Pty fixes for HP-UX and AIX and BSD and SunOS4 backported from 21.2.
+	Makes ``M-x shell; sleep 1000; Signals->Send KILL'' work.
+	(See src/ChangeLog for more detail.)
+
+	* configure.in: Detect killpg.
+
 2001-01-07  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.13 is released
@@ -594,7 +635,7 @@ Fatal error: assertion failed, file /project/xemacs/ws/dev/src/frame.h, line 245
 
 	* config.guess: Synched with latest FSF version.
 
-1998-07-12  Bjrn Torkelsson  <torkel@hpc2n.umu.se>
+1998-07-12  Björn Torkelsson  <torkel@hpc2n.umu.se>
 
 	* Makefile.in: added LDFLAGS. 
 

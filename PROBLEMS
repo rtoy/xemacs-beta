@@ -168,6 +168,37 @@ Valdis.Kletnieks@vt.edu writes:
 
 
 ** SunOS/Solaris
+*** Dumping error when using GNU binutils / GNU ld on a Sun.
+
+Errors similar to the following:
+
+   Dumping under the name xemacs unexec():
+   dldump(/space/rpluim/xemacs-obj/src/xemacs): ld.so.1: ./temacs:
+   fatal: /space/rpluim/xemacs-obj/src/xemacs: unknown dynamic entry:
+   1879048176
+
+are caused by using GNU ld.  There are several workarounds available:
+
+In XEmacs 21.2 or later, configure using the new portable dumper
+(--pdump).
+
+Alternatively, you can link using the Sun version of ld, which is
+normally held in /usr/ccs/bin.  This can be done by one of:
+
+- building gcc with these configure flags:
+  configure --with-ld=/usr/ccs/bin/ld --with-as=/usr/ccs/bin/as
+
+- adding -B/usr/ccs/bin/ to CFLAGS used to configure XEmacs
+  (Note: The trailing '/' there is significant.)
+
+- uninstalling GNU ld.
+
+The Solaris2 FAQ claims:
+
+    When you install gcc, don't make the mistake of installing
+    GNU binutils or GNU libc, they are not as capable as their
+    counterparts you get with Solaris 2.x.
+
 *** Link failure when using acc on a Sun.
 
 To use acc, you need additional options just before the libraries, such as
@@ -279,6 +310,14 @@ This is a Linux problem where you've compiled the XEmacs binary on a libc
 an earlier version.  The solution is to upgrade your old library.
 
 ** IRIX
+
+*** On Irix 6.5, the MIPSpro compiler gets an internal compiler error
+
+The MIPSpro Compiler (at least version 7.2.1) can't seem to handle the
+union type properly, and fails to compile src/glyphs.c.  To avoid this
+problem, always build ---use-union-type=3Dno (but that's the default, so
+you should only see this problem if you're an XEmacs maintainer).
+
 *** Linking with -rpath on IRIX.
 
 Darrell Kindred <dkindred@cmu.edu> writes:

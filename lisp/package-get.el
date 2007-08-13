@@ -184,6 +184,7 @@ order until the package is found.  As a special case, `site-name' can be
 (defcustom package-get-download-sites
   '(
     ;; North America
+    ("Pre-Releases" "ftp.xemacs.org" "pub/xemacs/beta/experimental/packages")
     ("xemacs.org" "ftp.xemacs.org" "pub/xemacs/packages")
     ("crc.ca (Canada)" "ftp.crc.ca" "pub/packages/editors/xemacs/packages")
     ("ualberta.ca (Canada)" "sunsite.ualberta.ca" "pub/Mirror/xemacs/packages")

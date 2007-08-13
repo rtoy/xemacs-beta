@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2000/12/17 02:08:31 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/01/20 20:49:32 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -231,6 +231,7 @@ The Keyboard:
 * Q3.5.9::      How do I make the Delete key delete forward?
 * Q3.5.10::     Can I turn on @dfn{sticky} modifier keys?
 * Q3.5.11::     How do I map the arrow keys?
+* Q3.5.12::     XEmacs complains about my xmodmap (I hate the default X keymap).
 
 The Cursor:
 * Q3.6.1::      Is there a way to make the bar cursor thicker?
@@ -698,7 +699,7 @@ Yes, @xref{MS Windows}.
 
 Yes, there is a port of XEmacs 19.14, tested on MacOS 7.6.1 and MacOS
 8.5.1 by @email{pjarvis@@ispchannel.com, Pitts Jarvis}.  It's available
-at @uref{http://my.ispchannel.com/~pjarvis/xemacs.html}.
+at @uref{http://homepage.mac.com/pjarvis/xemacs.html}.
 
 @node Q1.0.12, Q1.0.13, Q1.0.11, Introduction
 @unnumberedsubsec Q1.0.12: Is there a port of XEmacs to NextStep?
@@ -2393,6 +2394,7 @@ The Modeline:
 * Q3.5.9::      How do I make the Delete key delete forward?
 * Q3.5.10::     Can I turn on @dfn{sticky} modifier keys?
 * Q3.5.11::     How do I map the arrow keys?
+* Q3.5.12::     XEmacs complains about my xmodmap (I hate the default X keymap).
 
 The Cursor:
 * Q3.6.1::      Is there a way to make the bar cursor thicker?
@@ -3205,6 +3207,7 @@ Generally, the simplest way is to define a key as Multi_key with
 xmodmap, e.g.
 @c hey, show some respect, willya -- there's xkeycaps, isn't there? --
 @c chr ;)
+@c Fixed.  sjt ;)
 @example
         xmodmap -e 'keycode 0xff20 = Multi_key'
 @end example
@@ -3235,6 +3238,10 @@ etc.
 
 Running @samp{xmodmap -pk} will list all of the defined keysyms.
 @end quotation
+
+Actually, the simplest way to define keys on the X server is to use
+XKeyCaps (@pxref{Q3.5.12}), which provides an efficient GUI interface
+and will write correct @samp{xmodmap} scripts for you.
 
 @node Q3.5.8, Q3.5.9, Q3.5.7, Customization
 @unnumberedsubsec Q3.5.8: Why does @code{(global-set-key [delete-forward] 'delete-char)} complain?
@@ -3296,7 +3303,7 @@ One thing about the sticky modifiers is that if you move the mouse out
 of the frame and back in, it cancels all currently ``stuck'' modifiers.
 @end quotation
 
-@node Q3.5.11, Q3.6.1, Q3.5.10, Customization
+@node Q3.5.11, Q3.5.12, Q3.5.10, Customization
 @unnumberedsubsec Q3.5.11: How do I map the arrow keys?
 @c New
 Say you want to map @kbd{C-@key{right}} to forward-word:
@@ -3320,9 +3327,27 @@ or
 @end lisp
 @end quotation
 
+@node Q3.5.12, Q3.6.1, Q3.5.11, Customization
+@unnumberedsubsec Q3.5.12: XEmacs complains about my xmodmap (I hate the default X keymap).
+@c New
+
+Get XKeyCaps from @uref{http://www.jwz.org/xkeycaps/}.  It knows more
+than 200 keyboards by name, and provides nice pictures so you can tell
+if yours is a lookalike OEM version.  It sports an efficient GUI
+interface for remapping, and it knows how to write correct
+@samp{xmodmap} scripts.
+
+Most Linux and BSD distributions provide packages or ports.
+
+If you haven't tried XKeyCaps for your X11 keymapping problems, then
+you're wasting your time.  It is highly unlikely that a human being will
+be able to give you as good advice as XKeyCaps will for most problems.
+Even XKeyCaps's author has forgotten the details of the X11 keyboard
+mechanism.  There are a few problems it can't handle, but try it first.
 
 
-@node Q3.6.1, Q3.6.2, Q3.5.11, Customization
+
+@node Q3.6.1, Q3.6.2, Q3.5.12, Customization
 @unnumberedsec 3.6: The Cursor
 @unnumberedsubsec Q3.6.1: Is there a way to make the bar cursor thicker?
 

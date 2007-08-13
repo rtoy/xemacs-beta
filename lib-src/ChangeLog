@@ -1,3 +1,16 @@
+2001-01-27  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.14 is released
+
+2001-01-23  Jan Vroonhof  <jan@xemacs.org>
+
+	* gnuserv.c: Add version number to object file.
+
+2001-01-20  Klaus Frank <klausf@i3.informatik.rwth-aachen.de>
+
+	* gnuserv.c (permitted): Completed the checks of the authentication
+	data length, replaced memcmp() by constant-time comparision.
+
 2001-01-07  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.13 is released

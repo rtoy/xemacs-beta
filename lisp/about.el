@@ -63,7 +63,7 @@
     (cthomp   "Chuck Thompson"    "cthomp@xemacs.org")
     (dmoore   "David Moore"       "dmoore@ucsd.edu")
     (dkindred "Darrell Kindred"	  "dkindred@cmu.edu")
-    (dv       "Didier Verna"      "verna@inf.enst.fr")
+    (dv       "Didier Verna"      "didier@xemacs.org")
     (hniksic  "Hrvoje Niksic"     "hniksic@srce.hr")
     (jareth   "Jareth Hein"       "jareth@camelot.co.jp")
     (jason    "Jason Mastaler"	  "jason@xemacs.org")
@@ -108,6 +108,7 @@
     (chr       . "http://www.xemacs.org/faq/")
     (dkindred  . "http://www.cs.cmu.edu/People/dkindred/me.html")
     (dmoore    . "http://oj.egbt.org/dmoore/")
+    (dv        . "http://www.lrde.epita.fr/~didier/")
     (jason     . "http://www.mastaler.com/")
     (juhp      . "http://www.kurims.kyoto-u.ac.jp/~petersen/")
     (jwz       . "http://people.netscape.com/jwz/")
@@ -901,14 +902,23 @@ a software development firm.  See ")
      (widget-insert ".\n"))
     (dv
      (widget-insert "\
-I'm currently working (Ph.D.) on the cognitive aspects of
-Human-Machine Interaction in Virtual Environments, and especialy on
-the possibility of adding (artificial) intelligence between the system
-and the operator, in order to detect the intentions of the latter.
+I gratuated at ENST (an engineering school in Paris) and have a Ph.D.
+in computer science. I'm currently a teacher at EPITA (another
+engineering school, still in Paris) and a researcher at LRDE (EPITA's
+research and development laboratory). Our research topics include
+generic programming and distributed virtual reality.
 
-Otherwise, I'm, say, 35.82% professional Jazz guitar player,
-which means that's not the way I earn my crust, but things may very
-well reverse in the future ...\n"))
+Appart from XEmacs, I'm also involved in other free software projects,
+including Gnus, BBDB, and the GNU \"autotools\". I also wrote some
+LaTeX packages (ugh :-).
+
+All of this, actually, is only 60% true. Two days per week, I'm also a
+semi-professional Jazz guitar player (and singer), which means that it
+is not the way I earn my crust, but things may very well reverse in
+the future ...\n\n")
+     (widget-insert "Visit Didier's home page: ")
+     (about-url-link 'dv "Visit Didier's home page")
+     (widget-insert "\n"))
     (rossini
      (widget-insert "\
 Author of the first XEmacs FAQ, as well as minor priest in the
@@ -1168,14 +1178,16 @@ Darrell is currently a doctoral student in computer science at
 Carnegie Mellon University, but he's trying hard to kick that
 habit.\n")
     (about-show-linked-info 'dv "\
-I'm currently working (Ph.D.) on the cognitive aspects of
-Human-Machine Interaction in Virtual Environments, and especialy on
-the possibility of adding (artificial) intelligence between the system
-and the operator, in order to detect the intentions of the latter.
+I joined the development of XEmacs in 1996, and have been one of the
+core maintainers since 1998. Although I'm mostly interested in the
+GUI, ergonomics, redisplay and autoconf issues, it's probably simpler
+to describe what I'm *not* involved in: I've never touched the Lisp
+implementation, and I probably never will...
 
-Otherwise, I'm, say, 35.82% professional Jazz guitar player,
-which means that's not the way I earn my crust, but things may very
-well reverse in the future ...\n")
+I'm the author of the multicast support, I wrote and maintain some
+external Emacs Lisp packages (including mchat) and I'm also
+responsible for some of the core Lisp code (including the rectangle
+library which I rewrote for both XEmacs and GNU Emacs).\n")
     (about-show-linked-info 'marcpa "\
 I work for Positron Industries Inc., Public Safety Division.\n")
     (about-show-linked-info 'pez "\
@@ -1209,7 +1221,7 @@ Beta tester and last hacker of calendar.\n")
     (about-show-linked-info 'chr "\
 Maintainer of the XEmacs FAQ and proud author of `zap-up-to-char'.\n")
     (about-show-linked-info 'aj "\
-`Package Patch Tender', beta tester and GNU libc developer.\n")
+Former `Package Patch Tender', beta tester and GNU libc developer.\n")
 
     (flet ((print-short (name addr &optional shortinfo)
 	     (concat (about-with-face name 'italic)

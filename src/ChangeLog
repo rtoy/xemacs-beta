@@ -1,3 +1,61 @@
+2001-01-27  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.14 is released
+
+2001-01-18  Martin Buchholz  <martin@xemacs.org>
+
+	* alloc.c (INVALID_POINTER_VALUE): Use SIZEOF_LONG, not SIZEOF_INT.
+	Fixes crashes on 64-bit systems.  
+	Delete "support" for 48-bit systems.
+
+2001-01-13  Martin Buchholz  <martin@xemacs.org>
+
+	Port XEmacs to AIX xlC -O3 -qansialias.
+	* alloc.c (ALIASING_VOIDPP_DEREFERENCE): New.  From 21.2.
+	(FREE_STRUCT_P): Make aliasing-optimization-resistant.
+	(MARK_STRUCT_AS_FREE): Make aliasing-optimization-resistant.
+	(MARK_STRUCT_AS_NOT_FREE): Make aliasing-optimization-resistant.
+
+2000-11-06  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* cmdloop.c (Fcommand_loop_1): Just add C-g to event queue.
+
+2000-10-30  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* console.c (Fset_input_method): Trigger redisplay on tty.
+
+2001-01-12  Martin Buchholz  <martin@xemacs.org>
+
+	Pty fixes for HP-UX and AIX and BSD and SunOS4 backported from 21.2.
+	Makes ``M-x shell; sleep 1000; Signals->Send KILL'' work.
+
+	* ../configure.in: Detect killpg.
+	* config.h.in: Define HAVE_KILLPG.
+	* syssignal.h (EMACS_KILLPG): Autoconfiscate using HAVE_KILLPG.
+	Needed to have EMACS_KILLPG work on SunOS4.  An ancient bug.
+
+	* process-unix.c (try_to_initialize_subtty): New, from 21.2.
+	* process-unix.c (unix_kill_child_process):  Backported from 21.2.
+
+	* sysproc.h: Include <stropts.h> and <strtio.h>.
+	* config.h.in: Define HAVE_STROPTS_H and STRTIO_H
+	* ../configure.in: Detect <stropts.h> and <strtio.h>.
+	So that TIOCSIGNAL is defined on HP-UX.
+
+2001-01-09  Martin Buchholz  <martin@xemacs.org>
+
+	* process-unix.c (unix_create_process): 
+	Always disconnect_controlling_terminal() for subprocesses, whether
+	using ptys or not.
+	Fixes failure to create useful shell buffer via
+	(let ((process-connection-type nil)) (shell))
+
+2001-01-08  Martin Buchholz  <martin@xemacs.org>
+
+	Port to Netbsd 1.5.
+	* unexelf.c: Remove (never used) bogus Netbsd-specific cruft.
+	* s/netbsd.c: Use unexelf.o if __ELF__ is defined.
+
 2001-01-07  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.13 is released

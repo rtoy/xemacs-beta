@@ -817,17 +817,15 @@ unix_create_process (struct Lisp_Process *p,
 	int xforkin = forkin;
 	int xforkout = forkout;
 
-	if (!pty_flag)
-	  EMACS_SEPARATE_PROCESS_GROUP ();
-#ifdef HAVE_PTYS
-	else
-	  {
 	    /* Disconnect the current controlling terminal, pursuant to
 	       making the pty be the controlling terminal of the process.
 	       Also put us in our own process group. */
 
 	    disconnect_controlling_terminal ();
 
+#ifdef HAVE_PTYS
+	if (pty_flag)
+	  {
 	    /* Open the pty connection and make the pty's terminal
 	       our controlling terminal.
 
@@ -1289,7 +1287,17 @@ unix_deactivate_process (struct Lisp_Process *p)
   return usid;
 }
 
-/* send a signal number SIGNO to PROCESS.
+/* If the subtty field of the process data is not filled in, do so now. */
+static void
+try_to_initialize_subtty (struct unix_process_data *upd)
+{
+  if (upd->pty_flag
+      && (upd->subtty == -1 || ! isatty (upd->subtty))
+      && STRINGP (upd->tty_name))
+    upd->subtty = open ((char *) XSTRING_DATA (upd->tty_name), O_RDWR, 0);
+}
+
+/* Send signal number SIGNO to PROCESS.
    CURRENT_GROUP means send to the process group that currently owns
    the terminal being used to communicate with PROCESS.
    This is used for various commands in shell mode.
@@ -1298,70 +1306,18 @@ unix_deactivate_process (struct Lisp_Process *p)
 
    If we can, we try to signal PROCESS by sending control characters
    down the pty.  This allows us to signal inferiors who have changed
-   their uid, for which killpg would return an EPERM error.
+   their uid, for which killpg would return an EPERM error,
+   or processes running on other machines via remote login.
 
-   The method signals an error if the given SIGNO is not valid
-*/
+   The method signals an error if the given SIGNO is not valid. */
 
 static void
 unix_kill_child_process (Lisp_Object proc, int signo,
 			 int current_group, int nomsg)
 {
-  int gid;
-  int no_pgrp = 0;
-  int kill_retval;
+  pid_t pgid = -1;
   struct Lisp_Process *p = XPROCESS (proc);
-
-  if (!UNIX_DATA(p)->pty_flag)
-    current_group = 0;
-
-  /* If we are using pgrps, get a pgrp number and make it negative.  */
-  if (current_group)
-    {
-#ifdef SIGNALS_VIA_CHARACTERS
-      /* If possible, send signals to the entire pgrp
-	 by sending an input character to it.  */
-      {
-        char sigchar = process_signal_char(UNIX_DATA(p)->subtty, signo);
-        if (sigchar) {
-          send_process (proc, Qnil, (Bufbyte *) &sigchar, 0, 1);
-          return;
-        }
-      }
-#endif /* ! defined (SIGNALS_VIA_CHARACTERS) */
-
-#ifdef TIOCGPGRP
-      /* Get the pgrp using the tty itself, if we have that.
-	 Otherwise, use the pty to get the pgrp.
-	 On pfa systems, saka@pfu.fujitsu.co.JP writes:
-	 "TIOCGPGRP symbol defined in sys/ioctl.h at E50.
-	 But, TIOCGPGRP does not work on E50 ;-P works fine on E60"
-	 His patch indicates that if TIOCGPGRP returns an error, then
-	 we should just assume that p->pid is also the process group id.  */
-      {
-	int err;
-
-        err = ioctl ( (UNIX_DATA(p)->subtty != -1
-		       ? UNIX_DATA(p)->subtty
-		       : UNIX_DATA(p)->infd), TIOCGPGRP, &gid);
-
-#ifdef pfa
-	if (err == -1)
-	  gid = - XINT (p->pid);
-#endif /* ! defined (pfa) */
-      }
-      if (gid == -1)
-	no_pgrp = 1;
-      else
-	gid = - gid;
-#else /* ! defined (TIOCGPGRP ) */
-      /* Can't select pgrps on this system, so we know that
-	 the child itself heads the pgrp.  */
-      gid = - XINT (p->pid);
-#endif /* ! defined (TIOCGPGRP ) */
-    }
-  else
-    gid = - XINT (p->pid);
+  struct unix_process_data *d = UNIX_DATA (p);
 
   switch (signo)
     {
@@ -1378,38 +1334,100 @@ unix_kill_child_process (Lisp_Object proc, int signo,
     case SIGINT:
     case SIGQUIT:
     case SIGKILL:
-      flush_pending_output (UNIX_DATA(p)->infd);
+      flush_pending_output (d->infd);
       break;
     }
 
-  /* If we don't have process groups, send the signal to the immediate
-     subprocess.  That isn't really right, but it's better than any
-     obvious alternative.  */
-  if (no_pgrp)
-    {
-      kill_retval = kill (XINT (p->pid), signo) ? errno : 0;
-    }
-  else
-    {
-      /* gid may be a pid, or minus a pgrp's number */
-#if defined (TIOCSIGNAL) || defined (TIOCSIGSEND)
-      if (current_group)
-	{
-#ifdef TIOCSIGNAL
-	  kill_retval = ioctl (UNIX_DATA(p)->infd, TIOCSIGNAL, signo);
-#else /* ! defined (TIOCSIGNAL) */
-	  kill_retval = ioctl (UNIX_DATA(p)->infd, TIOCSIGSEND, signo);
-#endif /* ! defined (TIOCSIGNAL) */
-	}
-      else
-	kill_retval = kill (- XINT (p->pid), signo) ? errno : 0;
-#else /* ! (defined (TIOCSIGNAL) || defined (TIOCSIGSEND)) */
-      kill_retval = EMACS_KILLPG (-gid, signo) ? errno : 0;
-#endif /* ! (defined (TIOCSIGNAL) || defined (TIOCSIGSEND)) */
-    }
+  if (! d->pty_flag)
+    current_group = 0;
 
-  if (kill_retval < 0 && errno == EINVAL)
-    error ("Signal number %d is invalid for this system", signo);
+  /* If current_group is true, we want to send a signal to the
+     foreground process group of the terminal our child process is
+     running on.  You would think that would be easy.
+
+     The BSD people invented the TIOCPGRP ioctl to get the foreground
+     process group of a tty.  That, combined with killpg, gives us
+     what we want.
+
+     However, the POSIX standards people, in their infinite wisdom,
+     have seen fit to only allow this for processes which have the
+     terminal as controlling terminal, which doesn't apply to us.
+
+     Sooo..., we have to do something non-standard.  The ioctls
+     TIOCSIGNAL, TIOCSIG, and TIOCSIGSEND send the signal directly on
+     many systems.  POSIX tcgetpgrp(), since it is *documented* as not
+     doing what we want, is actually less likely to work than the BSD
+     ioctl TIOCGPGRP it is supposed to obsolete.  Sometimes we have to
+     use TIOCGPGRP on the master end, sometimes the slave end
+     (probably an AIX bug).  So we better get a fd for the slave if we
+     haven't got it yet.
+
+     Anal operating systems like SGI Irix and Compaq Tru64 adhere
+     strictly to the letter of the law, so our hack doesn't work.
+     The following fragment from an Irix header file is suggestive:
+
+     #ifdef __notdef__
+     // this is not currently supported
+     #define TIOCSIGNAL      (tIOC|31)       // pty: send signal to slave
+     #endif
+
+     On those systems where none of our tricks work, we just fall back
+     to the non-current_group behavior and kill the process group of
+     the child.
+  */
+  if (current_group)
+    {
+      try_to_initialize_subtty (d);
+
+#ifdef SIGNALS_VIA_CHARACTERS
+      /* If possible, send signals to the entire pgrp
+	 by sending an input character to it.  */
+    {
+        char sigchar = process_signal_char (d->subtty, signo);
+        if (sigchar)
+	{
+	    send_process (proc, Qnil, (Bufbyte *) &sigchar, 0, 1);
+	    return;
+	}
+    }
+#endif /* SIGNALS_VIA_CHARACTERS */
+
+#ifdef TIOCGPGRP
+      if (pgid == -1)
+	ioctl (d->infd, TIOCGPGRP, &pgid); /* BSD */
+      if (pgid == -1 && d->subtty != -1)
+	ioctl (d->subtty, TIOCGPGRP, &pgid); /* Only this works on AIX! */
+#endif /* TIOCGPGRP */
+
+      if (pgid == -1)
+	{
+	  /* Many systems provide an ioctl to send a signal directly */
+#ifdef TIOCSIGNAL /* Solaris, HP-UX */
+	  if (ioctl (d->infd, TIOCSIGNAL, signo) != -1)
+	    return;
+#endif /* TIOCSIGNAL */
+
+#ifdef TIOCSIG /* BSD */
+	  if (ioctl (d->infd, TIOCSIG, signo) != -1)
+	    return;
+#endif /* TIOCSIG */
+	}
+    } /* current_group */
+
+  if (pgid == -1)
+    /* Either current_group is 0, or we failed to get the foreground
+       process group using the trickery above.  So we fall back to
+       sending the signal to the process group of our child process.
+       Since this is often a shell that ignores signals like SIGINT,
+       the shell's subprocess is killed, which is the desired effect.
+       The process group of p->pid is always p->pid, since it was
+       created as a process group leader. */
+    pgid = XINT (p->pid);
+
+  /* Finally send the signal. */
+  if (EMACS_KILLPG (pgid, signo) == -1)
+    error ("kill (%ld, %ld) failed: %s",
+	   (long) pgid, (long) signo, strerror (errno));
 }
 
 /*

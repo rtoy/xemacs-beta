@@ -309,6 +309,9 @@ char *alloca();
 #undef HAVE_UNLOCKPT
 #undef HAVE_GETPT
 #undef HAVE_PTSNAME
+#undef HAVE_KILLPG
+#undef HAVE_STROPTS_H	/* SysV streams */
+#undef HAVE_STRTIO_H	/* SysV streams TIOCSIGNAL */
 
 #undef HAVE_SOCKETS
 #undef HAVE_SOCKADDR_SUN_LEN

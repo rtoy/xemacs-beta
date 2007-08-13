@@ -1,3 +1,12 @@
+2001-01-27  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.14 is released
+
+2001-01-27  Martin Buchholz  <martin@xemacs.org>
+
+	* lispref/variables.texi (max-specpdl-size): Correct default value.
+	* lispref/eval.texi (max-lisp-eval-depth): Correct default value.
+
 2001-01-07  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.13 is released

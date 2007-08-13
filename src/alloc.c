@@ -1022,22 +1022,28 @@ do								\
    byte-aligned pointers, this pointer is at the very top of the address
    space and so it's almost inconceivable that it could ever be valid. */
 
-#if INTBITS == 32
-# define INVALID_POINTER_VALUE 0xFFFFFFFF
-#elif INTBITS == 48
-# define INVALID_POINTER_VALUE 0xFFFFFFFFFFFF
-#elif INTBITS == 64
-# define INVALID_POINTER_VALUE 0xFFFFFFFFFFFFFFFF
+#if SIZEOF_LONG == 4
+# define INVALID_POINTER_VALUE 0xFFFFFFFFUL
+#elif SIZEOF_LONG == 8
+# define INVALID_POINTER_VALUE 0xFFFFFFFFFFFFFFFFUL
 #else
 You have some weird system and need to supply a reasonable value here.
 #endif
 
+/* The construct (* (void **) (ptr)) would cause aliasing problems
+   with modern optimizing compilers like `gcc -O3 -fstrict-aliasing'.
+   But `char *' can legally alias any pointer.  Hence this union trick...
+
+   It turned out that the union trick was not good enough for xlC -O3;
+   and it is questionable whether it really complies with the C standard.
+   so we use memset instead, which should be safe from optimizations. */
+typedef union { char c; void *p; } *aliasing_voidpp;
+#define ALIASING_VOIDPP_DEREFERENCE(ptr) \
+  (((aliasing_voidpp) (ptr))->p)
 #define FREE_STRUCT_P(ptr) \
-  (* (void **) ptr == (void *) INVALID_POINTER_VALUE)
-#define MARK_STRUCT_AS_FREE(ptr) \
-  (* (void **) ptr = (void *) INVALID_POINTER_VALUE)
-#define MARK_STRUCT_AS_NOT_FREE(ptr) \
-  (* (void **) ptr = 0)
+  (ALIASING_VOIDPP_DEREFERENCE (ptr) == (void *) INVALID_POINTER_VALUE)
+#define MARK_STRUCT_AS_FREE(ptr) memset (ptr, 0xff, sizeof (void *))
+#define MARK_STRUCT_AS_NOT_FREE(ptr) memset (ptr, 0x00, sizeof (void *))
 
 #ifdef ERROR_CHECK_GC
 

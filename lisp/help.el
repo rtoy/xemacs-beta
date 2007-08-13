@@ -256,7 +256,7 @@ otherwise it is killed."
 
 ;; This is a grody hack of the same genotype as `advertised-undo'; if the
 ;; bindings of Backspace and C-h are the same, we want the menubar to claim
-;; that `info' in invoked with `C-h i', not `BS i'.
+;; that `info' is invoked with `C-h i', not `BS i'.
 
 (defun deprecated-help-command ()
   (interactive)

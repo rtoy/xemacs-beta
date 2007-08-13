@@ -3128,7 +3128,15 @@ AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp ftime gethostname
 # Check for UNIX98 PTYs.
 # getpt is a glibc addition which emulates the master device on
 # systems without kernel support.
-AC_CHECK_FUNCS(grantpt unlockpt getpt ptsname)
+AC_CHECK_FUNCS(grantpt unlockpt getpt ptsname killpg)
+
+dnl Check for STREAM support functions.
+dnl Confusingly, "str" means both "string" and "SysV Streams".
+AC_CHECK_HEADERS(stropts.h)
+if test "$ac_cv_header_stropts_h" = "yes"; then
+  AC_CHECK_FUNCS(isastream)
+  AC_CHECK_HEADERS(strtio.h) dnl TIOCSIGNAL
+fi
 
 dnl realpath is buggy on linux, decosf and aix4
 

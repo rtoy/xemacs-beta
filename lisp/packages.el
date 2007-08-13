@@ -203,8 +203,8 @@ is used instead of `load-path'."
 			  (member 'crypt-find-file-hook find-file-hooks)))
 		 ;; Compression involved.
 		 (if nosuffix
-		     ":.gz:.Z"
-		   ".elc:.elc.gz:elc.Z:.el:.el.gz:.el.Z::.gz:.Z"))
+		     ":.gz:.bz2:.Z"
+		   ".elc:.elc.gz:.elc.bz2:.elc.Z:.el:.el.gz:.el.bz2:.el.Z::.gz:.bz2:.Z"))
 		(t
 		 ;; No compression.
 		 (if nosuffix

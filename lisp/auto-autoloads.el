@@ -1036,10 +1036,10 @@ size, you can use \\[font-lock-fontify-buffer].
 See the variable `font-lock-keywords' for customization." t nil)
 
 (autoload 'turn-on-font-lock "font-lock" "\
-Unconditionally turn on Font Lock mode." nil nil)
+Unconditionally turn on Font Lock mode." t nil)
 
 (autoload 'turn-off-font-lock "font-lock" "\
-Unconditionally turn off Font Lock mode." nil nil)
+Unconditionally turn off Font Lock mode." t nil)
 
 (autoload 'font-lock-fontify-buffer "font-lock" "\
 Fontify the current buffer the way `font-lock-mode' would.
@@ -1173,11 +1173,12 @@ to read a file name from the minibuffer." t nil)
 Enter Info, the documentation browser.  Prompt for name of Info file." t nil)
 
 (autoload 'Info-batch-rebuild-dir "info" "\
-(Re)build info `dir' files in the directories remaining on the command line.
-Use this from the command line, with `-batch';
-it won't work in an interactive Emacs.
-Each file is processed even if an error occurred previously.
-For example, invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\"" nil nil)
+(Re)build `dir' files in the directories remaining on the command line.
+Use this from the command line, with `-batch', it won't work in an
+interactive XEmacs.
+
+Each file is processed even if an error occurred previously. For example,
+invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\"" nil nil)
 
 (autoload 'Info-goto-node "info" "\
 Go to info node named NAME.  Give just NODENAME or (FILENAME)NODENAME.
@@ -1233,7 +1234,7 @@ This command is designed to be used whether you are already in Info or not." t n
 ;;;### (autoloads (mwheel-install) "mwheel" "lisp/mwheel.el")
 
 (autoload 'mwheel-install "mwheel" "\
-Enable mouse wheel support." nil nil)
+Enable mouse wheel support." t nil)
 
 ;;;***
 
@@ -1299,7 +1300,7 @@ recent to least recent -- in other words, the version names don't have to
 be lexically ordered.  It is debatable if it makes sense to have more than
 one version of a package available.")
 
-(defcustom package-get-download-sites '(("xemacs.org" "ftp.xemacs.org" "pub/xemacs/packages") ("crc.ca (Canada)" "ftp.crc.ca" "pub/packages/editors/xemacs/packages") ("ualberta.ca (Canada)" "sunsite.ualberta.ca" "pub/Mirror/xemacs/packages") ("uiuc.edu (United States)" "uiarchive.uiuc.edu" "pub/packages/xemacs/packages") ("unc.edu (United States)" "metalab.unc.edu" "pub/packages/editors/xemacs/packages") ("utk.edu (United States)" "ftp.sunsite.utk.edu" "pub/xemacs/packages") ("unicamp.br (Brazil)" "ftp.unicamp.br" "pub/xemacs/packages") ("tuwien.ac.at (Austria)" "gd.tuwien.ac.at" "editors/xemacs/packages") ("auc.dk (Denmark)" "sunsite.auc.dk" "pub/emacs/xemacs/packages") ("doc.ic.ac.uk (England)" "sunsite.doc.ic.ac.uk" "packages/xemacs/packages") ("mirror.ac.uk (England)" "ftp.mirror.ac.uk" "sites/ftp.xemacs.org/pub/xemacs/packages") ("funet.fi (Finland)" "ftp.funet.fi" "pub/mirrors/ftp.xemacs.org/pub/tux/xemacs/packages") ("pasteur.fr (France)" "ftp.pasteur.fr" "pub/computing/xemacs/packages") ("tls.cena.fr (France)" "ftp.tls.cena.fr" "Emacs/xemacs/packages") ("freenet.de (Germany)" "ftp.freenet.de" "pub/ftp.xemacs.org/tux/xemacs/packages") ("tu-darmstadt.de (Germany)" "ftp.tu-darmstadt.de" "pub/editors/xemacs/packages") ("kfki.hu (Hungary)" "ftp.kfki.hu" "pub/packages/xemacs/packages") ("eunet.ie (Ireland)" "ftp.eunet.ie" "mirrors/ftp.xemacs.org/pub/xemacs/packages") ("uniroma2.it (Italy)" "ftp.uniroma2.it" "unix/misc/dist/XEMACS/packages") ("uio.no (Norway)" "sunsite.uio.no" "pub/xemacs/packages") ("icm.edu.pl (Poland)" "ftp.icm.edu.pl" "pub/unix/editors/xemacs/packages") ("srcc.msu.su (Russia)" "ftp.srcc.msu.su" "mirror/ftp.xemacs.org/packages") ("sunet.se (Sweden)" "ftp.sunet.se" "pub/gnu/xemacs/packages") ("cnlab-switch.ch (Switzerland)" "sunsite.cnlab-switch.ch" "mirror/xemacs/packages") ("aist.go.jp (Japan)" "ring.aist.go.jp" "pub/text/xemacs/packages") ("asahi-net.or.jp (Japan)" "ring.asahi-net.or.jp" "pub/text/xemacs/packages") ("dti.ad.jp (Japan)" "ftp.dti.ad.jp" "pub/unix/editor/xemacs/packages") ("jaist.ac.jp (Japan)" "ftp.jaist.ac.jp" "pub/GNU/xemacs/packages") ("nucba.ac.jp (Japan)" "mirror.nucba.ac.jp" "mirror/xemacs/packages") ("sut.ac.jp (Japan)" "sunsite.sut.ac.jp" "pub/archives/packages/xemacs/packages") ("tsukuba.ac.jp (Japan)" "ftp.netlab.is.tsukuba.ac.jp" "pub/GNU/xemacs/packages") ("kreonet.re.kr (Korea)" "ftp.kreonet.re.kr" "pub/tools/emacs/xemacs/packages") ("nctu.edu.tw (Taiwan)" "coda.nctu.edu.tw" "Editors/xemacs/packages") ("sun.ac.za (South Africa)" "ftp.sun.ac.za" "xemacs/packages") ("isu.net.sa (Saudi Arabia)" "ftp.isu.net.sa" "pub/mirrors/ftp.xemacs.org/packages") ("aarnet.edu.au (Australia)" "mirror.aarnet.edu.au" "pub/xemacs/packages")) "*List of remote sites available for downloading packages.\nList format is '(site-description site-name directory-on-site).\nSITE-DESCRIPTION is a textual description of the site.  SITE-NAME\nis the internet address of the download site.  DIRECTORY-ON-SITE\nis the directory on the site in which packages may be found.\nThis variable is used to initialize `package-get-remote', the\nvariable actually used to specify package download sites." :tag "Package download sites" :type '(repeat (list (string :tag "Name") host-name directory)) :group 'package-get)
+(defcustom package-get-download-sites '(("Pre-Releases" "ftp.xemacs.org" "pub/xemacs/beta/experimental/packages") ("xemacs.org" "ftp.xemacs.org" "pub/xemacs/packages") ("crc.ca (Canada)" "ftp.crc.ca" "pub/packages/editors/xemacs/packages") ("ualberta.ca (Canada)" "sunsite.ualberta.ca" "pub/Mirror/xemacs/packages") ("uiuc.edu (United States)" "uiarchive.uiuc.edu" "pub/packages/xemacs/packages") ("unc.edu (United States)" "metalab.unc.edu" "pub/packages/editors/xemacs/packages") ("utk.edu (United States)" "ftp.sunsite.utk.edu" "pub/xemacs/packages") ("unicamp.br (Brazil)" "ftp.unicamp.br" "pub/xemacs/packages") ("tuwien.ac.at (Austria)" "gd.tuwien.ac.at" "editors/xemacs/packages") ("auc.dk (Denmark)" "sunsite.auc.dk" "pub/emacs/xemacs/packages") ("doc.ic.ac.uk (England)" "sunsite.doc.ic.ac.uk" "packages/xemacs/packages") ("mirror.ac.uk (England)" "ftp.mirror.ac.uk" "sites/ftp.xemacs.org/pub/xemacs/packages") ("funet.fi (Finland)" "ftp.funet.fi" "pub/mirrors/ftp.xemacs.org/pub/tux/xemacs/packages") ("pasteur.fr (France)" "ftp.pasteur.fr" "pub/computing/xemacs/packages") ("tls.cena.fr (France)" "ftp.tls.cena.fr" "Emacs/xemacs/packages") ("freenet.de (Germany)" "ftp.freenet.de" "pub/ftp.xemacs.org/tux/xemacs/packages") ("tu-darmstadt.de (Germany)" "ftp.tu-darmstadt.de" "pub/editors/xemacs/packages") ("kfki.hu (Hungary)" "ftp.kfki.hu" "pub/packages/xemacs/packages") ("eunet.ie (Ireland)" "ftp.eunet.ie" "mirrors/ftp.xemacs.org/pub/xemacs/packages") ("uniroma2.it (Italy)" "ftp.uniroma2.it" "unix/misc/dist/XEMACS/packages") ("uio.no (Norway)" "sunsite.uio.no" "pub/xemacs/packages") ("icm.edu.pl (Poland)" "ftp.icm.edu.pl" "pub/unix/editors/xemacs/packages") ("srcc.msu.su (Russia)" "ftp.srcc.msu.su" "mirror/ftp.xemacs.org/packages") ("sunet.se (Sweden)" "ftp.sunet.se" "pub/gnu/xemacs/packages") ("cnlab-switch.ch (Switzerland)" "sunsite.cnlab-switch.ch" "mirror/xemacs/packages") ("aist.go.jp (Japan)" "ring.aist.go.jp" "pub/text/xemacs/packages") ("asahi-net.or.jp (Japan)" "ring.asahi-net.or.jp" "pub/text/xemacs/packages") ("dti.ad.jp (Japan)" "ftp.dti.ad.jp" "pub/unix/editor/xemacs/packages") ("jaist.ac.jp (Japan)" "ftp.jaist.ac.jp" "pub/GNU/xemacs/packages") ("nucba.ac.jp (Japan)" "mirror.nucba.ac.jp" "mirror/xemacs/packages") ("sut.ac.jp (Japan)" "sunsite.sut.ac.jp" "pub/archives/packages/xemacs/packages") ("tsukuba.ac.jp (Japan)" "ftp.netlab.is.tsukuba.ac.jp" "pub/GNU/xemacs/packages") ("kreonet.re.kr (Korea)" "ftp.kreonet.re.kr" "pub/tools/emacs/xemacs/packages") ("nctu.edu.tw (Taiwan)" "coda.nctu.edu.tw" "Editors/xemacs/packages") ("sun.ac.za (South Africa)" "ftp.sun.ac.za" "xemacs/packages") ("isu.net.sa (Saudi Arabia)" "ftp.isu.net.sa" "pub/mirrors/ftp.xemacs.org/packages") ("aarnet.edu.au (Australia)" "mirror.aarnet.edu.au" "pub/xemacs/packages")) "*List of remote sites available for downloading packages.\nList format is '(site-description site-name directory-on-site).\nSITE-DESCRIPTION is a textual description of the site.  SITE-NAME\nis the internet address of the download site.  DIRECTORY-ON-SITE\nis the directory on the site in which packages may be found.\nThis variable is used to initialize `package-get-remote', the\nvariable actually used to specify package download sites." :tag "Package download sites" :type '(repeat (list (string :tag "Name") host-name directory)) :group 'package-get)
 
 (autoload 'package-get-download-menu "package-get" "\
 Build the `Add Download Site' menu." nil nil)
