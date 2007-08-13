@@ -245,6 +245,7 @@
     (w3-hrvoje   . "ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/")
     (w3-upa      . "http://www.upa.org")
     ;; add more here
+    (w3-ajc	 . "http://www-personal.monash.edu.au/~ajc/")
     )
   "Mappings between xref symbols and URLs")
 
@@ -312,6 +313,9 @@
 			       ((eq xref 'jens) "About Jens Lautenbacher")
 			       ((eq xref 'vin) "About Vin Shelton")
 			       ((eq xref 'dkindred) "About Darrell Kindred")
+			       ((eq xref 'ajc) "About Andrew Cosgriff")
+			       ((eq xref 'rickc) "About Rick Campbell")
+			       ((eq xref 'thiessel) "About Marcus Thiessel")
 			       ((eq xref 'others) "About Everyone")
 			       ((eq xref 'features) "New XEmacs Features")
 			       ((eq xref 'history) "XEmacs History")
@@ -644,6 +648,20 @@
 	  (about-xref "here" prev-page "Return to previous page")
 	  (insert " to go back to the previous page.\n")
 	  )
+	 ((eq xref 'rickc)
+	  (about-face "Rick Campbell" 'bold)
+	  (insert " <rickc@lehman.com>
+
+	The hacker formerly known as Rick Busdiecker develops and maintains
+	libraries for financial applications at Lehman Brothers during
+	daylight hours.  In the evenings he maintains three children, and
+	when he ought to be sleeping he co-maintains ILISP, builds XEmacs
+	betas, and tinkers with various personal hacking projects.\n")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
 	 ((eq xref 'vladimir)
 	  (about-face "Vladimir Ivanovic" 'bold)
 	  (insert " <vladimir@mri.com>
@@ -863,6 +881,44 @@
 	  (insert " to go back to the previous page.\n")
 	  )
 
+	 ((eq xref 'thiessel)
+	  (about-face "Marcus Thiessel" 'bold)
+	  (insert " <thiessel@rhrk.uni-kl.de>
+
+	On May 1, 1996 he started working at University of Kaiserslautern in
+	the field of computer aided analog circuit design. His
+	responsibilities include the development and design of a CAD-Tool for
+	analog integrated circuits with special emphasis on distributed
+	software concepts.
+
+	When all the daily hacking is done he tries to take care of XEmacs
+	website at <http://www.xemacs.org>.\n")
+	  (insert ".\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
+	 ((eq xref 'ajc)
+	  (about-face "Andrew Cosgriff" 'bold)
+	  (insert " <ajc@bing.wattle.id.au>
+
+	When not helping maintain the XEmacs website, Andrew is a Network
+	Software Engineer(tm) for Monash University in Australia, maintaining
+	webservers and doing random other things.  As well as spending spare
+	time being an Eager Young Space Cadet and fiddling with XEmacs/Gnus
+	et. al., he spends his time pursuing, among other things, a Life.
+	Some of this currently involves doing an A-Z (by country) of
+	restaurants with friends, and has, in the past, involved dyeing his
+	hair various colours.
+
+	See ")
+	  (about-xref "http://www-personal.monash.edu.au/~ajc/"
+		      'w3-ajc "Visit Andrew's WWW page")
+	  (insert ".\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
 	 ((eq xref 'others)
 	  (insert "Click ")
 	  (about-xref "here" 'about "Return to previous page")
@@ -966,9 +1022,31 @@
 	  detached minibuffer code, as well as a few minor enhancements to
 	  the menubar options.
 
+	") (about-xref "Marcus Thiessel" 'thiessel "Find out more about Marcus Thiessel") (insert " <thiessel@rhrk.uni-kl.de>
+	  Marcus is one of the XEmacs Webmasters.
+
 	") (about-xref "Darrell Kindred" 'dkindred "Find out more about Darrell Kindred") (insert " <dkindred@cmu.edu>
 	  Long-time bug tracker and exterminator for XEmacs and 
           Lucid Emacs.
+
+	") (about-xref "Andrew Cosgriff" 'ajc "Find out more about Andrew Cosgriff") (insert " <ajc@bing.wattle.id.au>
+	  Andrew is one of the XEmacs Webmasters.
+
+	") (about-xref "Rick Campbell" 'rickc "Find out more about Rick Campbell") (insert " <rickc@lehman.com>
+	  The hacker formerly named Rick Busdiecker, author of ILISP.
+
+	Anthony Rossini <rossini@stat.sc.edu>
+	  Author of the first XEmacs FAQ, as well as minor priest in
+	  the movement to get every statistician in the world to use
+	  XEmacs for statistical programming and data analysis.
+	  Current development lead for ESS (Emacs Speaks Statistics),
+	  a mode and inferior mode for statistical programming and
+	  data analysis for SAS, S, S-PLUS, R, XLispStat; configurable
+	  for nearly any other statistical language/package one might
+	  want.  In spare time, acts as a Ph.D. (bio)statistician for
+	  money and amusement.  Current position: Assistant Professor
+	  of Statistics at the University of South Carolina.
+
 
 	Eduardo Pelegri-Llopart <pelegri@eng.sun.com>
 	  Author of EOS, a package included in the standard XEmacs
@@ -1051,7 +1129,6 @@
 	  Rick Braumoeller <rickb@mti.sgi.com>
 	  Matthew J. Brown <mjb@doc.ic.ac.uk>
 	  Alastair Burt <burt@dfki.uni-kl.de>
-	  Rick Busdiecker <rfb@lehman.com>
 	  Richard Caley <rjc@cstr.edinburgh.ac.uk>
 	  Stephen Carney <carney@gvc.dec.com>
 	  Philippe Charton <charton@lmd.ens.fr>
@@ -1061,7 +1138,6 @@
 	  Serenella Ciongoli <czs00@ladybug.oes.amdahl.com>
 	  Richard Cognot <cognot@ensg.u-nancy.fr>
 	  Andy Cohen <cohen@andy.bu.edu>
-	  Andrew J Cosgriff <ajc@bing.wattle.id.au>
 	  Nick J. Crabtree <nickc@scopic.com>
 	  Christopher Davis <ckd@kei.com>
 	  Soren Dayton <csdayton@cs.uchicago.edu>
@@ -1080,6 +1156,7 @@
 	  Jerry Frain <jerry@sneffels.tivoli.com>
 	  Benjamin Fried <bf@morgan.com>
 	  Barry Friedman <friedman@bnr.ca>
+	  Noah Friedman  <friedman@splode.com>
 	  Lew Gaiter III <lew@StarFire.com>
 	  Itay Gat <itay@cs.huji.ac.il>
 	  Tim Geisler <Tim.Geisler@informatik.uni-muenchen.de>

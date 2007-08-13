@@ -1,4 +1,9 @@
 							-*- indented-text -*-
+to 19.16 -- "Nancy"
+-- about.el touch up, new faces, new entries
+-- BSD build fix
+-- Irix build fix
+
 to 19.16 -- "Bordeaux"
 -- about.el touch up
 -- TM and MH-e PGP problem documented in PROBLEMS
