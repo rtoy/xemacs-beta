@@ -1701,6 +1701,7 @@ dnl Feed s&m crud to src/Makefile
 if test "$unexec" = "unexaix.o"; then
 dnl AIX needs various hacks to make static linking work.
 dnl This can go away if we ever figure out how to get dynamic linking on AIX.
+  if   test "$dynamic" = "no"; then
   start_flags="-Wl,-bnso,-bnodelcsect"
   test "$GCC" = "yes" && start_flags="-B/bin/ ${start_flags}"
   for f in "/lib/syscalls.exp" "$srcdir/src/m/ibmrs6000.inp"; do
@@ -1709,6 +1710,9 @@ dnl This can go away if we ever figure out how to get dynamic linking on AIX.
   for f in "/usr/lpp/X11/bin/smt.exp" "/usr/bin/X11/smt.exp"; do
     if test -r "$f"; then start_flags="${start_flags},-bI:${f}"; break; fi
   done
+  dnl elif
+    dnl Put any AIX/gcc/dynamic flags here - xlc needs none added
+  fi
 elif test -n "$ld_text_start_addr"; then
   start_flags="-T $ld_text_start_addr -e __start"
 fi
@@ -2380,11 +2384,11 @@ if test "$with_x11" = "yes"; then
 
   dnl Autodetect -lXaw
   AC_CHECK_LIB(Xaw, XawScrollbarSetThumb, have_xaw=yes, have_xaw=no)
-  if test "$have_xaw" = "yes"; then
-    AC_CHECK_HEADER(X11/Xaw/Reports.h, [
-      XE_APPEND(pkg-src/tree-x, MAKE_SUBDIR)
-      XE_APPEND(pkg-src/tree-x, INSTALL_ARCH_DEP_SUBDIR)])
-  fi
+  dnl if test "$have_xaw" = "yes"; then
+    dnl AC_CHECK_HEADER(X11/Xaw/Reports.h, [
+      dnl XE_APPEND(pkg-src/tree-x, MAKE_SUBDIR)
+      dnl XE_APPEND(pkg-src/tree-x, INSTALL_ARCH_DEP_SUBDIR)])
+  dnl fi
 
   dnl autodetect Motif - but only add to libs_x later (if necessary)
   AC_CHECK_HEADER(Xm/Xm.h,
@@ -2427,6 +2431,7 @@ case "$all_widgets" in *motif* )
 esac
 
 test "$with_menubars"   = "lucid" && XE_APPEND(xlwmenu.o, lwlib_objs)
+test "$with_menubars"   = "motif" && XE_APPEND(xlwmenu.o, lwlib_objs)
 test "$with_scrollbars" = "lucid" && XE_APPEND(xlwscrollbar.o, lwlib_objs)
 case "$all_widgets" in *lucid* )
   AC_DEFINE(NEED_LUCID)
@@ -3337,7 +3342,7 @@ test "$with_cde"      = yes && echo "  Compiling in support for CDE."
 test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
-test "$with_session"  != no && echo "  Compiling in support for proper session-management."
+test "$with_session"  = yes && echo "  Compiling in support for proper session-management."
 case "$with_menubars" in
   lucid ) echo "  Using Lucid menubars." ;;
   motif ) echo "  Using Motif menubars."

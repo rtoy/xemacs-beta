@@ -489,7 +489,7 @@ the search will still be done on `buffer-file-name'.
       NUNGCPRO;
     }
 
-  for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
+  LIST_LOOP (tail, Vbuffer_alist)
     {
       buf = Fcdr (XCAR (tail));
       if (!BUFFERP (buf)) continue;
@@ -1205,10 +1205,6 @@ with `delete-process'.
   if (EQ (buf, Vecho_area_buffer))
     return Qnil;
 
-  /* Or the special invisible internal prin1 buffer. */
-  if (EQ (buf, Vprin1_to_string_buffer))
-    return Qnil;
-
   /* Query if the buffer is still modified.  */
   if (INTERACTIVE && !NILP (b->filename)
       && BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
@@ -1241,9 +1237,7 @@ with `delete-process'.
 
       /* First run the query functions; if any query is answered no,
          don't kill the buffer.  */
-      for (tail = Vkill_buffer_query_functions;
-           !NILP (tail);
-           tail = Fcdr (tail))
+      EXTERNAL_LIST_LOOP (tail, Vkill_buffer_query_functions)
 	{
 	  if (NILP (call0 (Fcar (tail))))
 	    {
@@ -2758,14 +2752,6 @@ handled:
   abort ()
 #include "bufslots.h"
 #undef MARKED_SLOT
-
-  Vprin1_to_string_buffer
-    = Fget_buffer_create (Fpurecopy (build_string (" prin1")));
-  /* Reset Vbuffer_alist again so that the above buf is magically
-     invisible */
-  Vbuffer_alist = Qnil;
-  /* Want no undo records for prin1_to_string_buffer */
-  Fbuffer_disable_undo (Vprin1_to_string_buffer);
 
   {
     Lisp_Object scratch =

@@ -49,6 +49,10 @@ Boston, MA 02111-1307, USA.  */
 /* The name of the main window class */
 #define XEMACS_CLASS "XEmacs"
 
+/* Granularity of timeouts in milliseconds & max number of active timeouts */
+#define MSW_TIMEOUT_GRANULARITY 25
+#define MSW_TIMEOUT_MAX	32
+
 /* Random globals shared between main and message-processing thread */
 extern DWORD mswindows_main_thread_id;
 extern DWORD mswindows_win_thread_id;
@@ -61,8 +65,9 @@ extern CRITICAL_SECTION mswindows_dispatch_crit;
 #define WM_XEMACS_BASE		(WM_APP + 0)
 #define WM_XEMACS_ACK		(WM_XEMACS_BASE + 0x00)
 #define WM_XEMACS_CREATEWINDOW	(WM_XEMACS_BASE + 0x01)
-#define WM_XEMACS_SETTIMER	(WM_XEMACS_BASE + 0x02)
-#define WM_XEMACS_KILLTIMER	(WM_XEMACS_BASE + 0x03)
+#define WM_XEMACS_DESTROYWINDOW	(WM_XEMACS_BASE + 0x02)
+#define WM_XEMACS_SETTIMER	(WM_XEMACS_BASE + 0x03)
+#define WM_XEMACS_KILLTIMER	(WM_XEMACS_BASE + 0x04)
 #define WM_XEMACS_END		(WM_XEMACS_BASE + 0x10)
 
 typedef struct mswindows_request_type
@@ -110,10 +115,11 @@ mswindows_waitable_info_type *mswindows_add_waitable(mswindows_waitable_info_typ
 void mswindows_remove_waitable(mswindows_waitable_info_type *info);
 
 /*
- * Some random function declarations in mswindows-proc.c
+ * Some random function declarations in msw-proc.c
  */
 DWORD mswindows_win_thread();
 extern void mswindows_enqeue_dispatch_event (Lisp_Object event);
+Lisp_Object mswindows_cancel_dispatch_event (Lisp_Object event);
 
 
 /*

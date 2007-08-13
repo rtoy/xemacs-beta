@@ -500,6 +500,9 @@ version 20.1 (not released to the net) April 15, 1997.
 version 20.2 released May 16, 1997.
 @item
 version 19.16 released October 31, 1997.
+@item
+version 20.3 (the first stable version of XEmacs 20.x) released November 30,
+1997.
 @end itemize
 
 @node GNU Emacs 19
@@ -651,14 +654,24 @@ soon renamed to 20.0.  In 1996 Martin Buchholz of Sun Microsystems took
 over the care and feeding of it and worked on it in parallel with the
 19.14 development that was occurring at the same time.  After much work
 by Martin, it was decided to release 20.0 ahead of 19.15 in February
-1997.  The source tree remained divided until 20.1 when the version 19
-source was finally retired.
+1997.  The source tree remained divided until 20.2 when the version 19
+source was finally retired at version 19.16.
+
+@cindex Baur, Steve
+@cindex Buchholz, Martin
+@cindex Jones, Kyle
+@cindex Niksic, Hrvoje
+@cindex XEmacs goes it alone
+  In 1997, Sun finally dropped all pretense of support for XEmacs and
+Martin Buchholz left the company in November.  Since then, and mostly
+for the previous year, because Steve Baur was never paid to work on
+XEmacs, XEmacs has existed solely on the contributions of volunteers
+from the Free Software Community.  Starting from 1997, Hrvoje Niksic and
+Kyle Jones have figured prominently in XEmacs development.
 
 @cindex merging attempts
   Many attempts have been made to merge XEmacs and GNU Emacs, but they
-have consistently run into the same technical disagreements and other
-problems that Lucid ran into when originally attempting to merge Lucid
-Emacs into GNU Emacs.
+have consistently failed.
 
   A more detailed history is contained in the XEmacs About page.
 

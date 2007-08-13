@@ -1,4 +1,4 @@
-/* Line number cache routines.
+/* Line number cache.
    Copyright (C) 1997 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -38,7 +38,11 @@ Boston, MA 02111-1307, USA.  */
    Insertion and deletions that contain/delete newlines invalidate the
    cached positions after the insertion point.  This guarantees
    relatively fast line numbers caching (even in buffers where point
-   moves a lot), and low memory usage.
+   moves a lot), and low memory usage.  All of this is done only in
+   the buffers where the cache is actually initialized -- i.e. where
+   line-numbering is on, and you move the point farther than
+   LINE_NUMBER_FAR from the beginning of buffer.  In this sense, the
+   cache is lazy.  If you don't use it, you don't pay for it.
 
    NOTE: line-number cache should not be confused with line-start
    cache.  Line-start cache (a part of redisplay) works with the
@@ -54,7 +58,8 @@ Boston, MA 02111-1307, USA.  */
 
 
 /* #### The following three values could use some tweaking, to get the
-   best performance.  */
+   best performance.  I suspect LINE_NUMBER_FAR and
+   LINE_NUMBER_LARGE_STRING could be made bigger.  */
 
 /* Size of the ring.  The current code expects this to be a small
    number.  If you make it much bigger, you should probably tr yto
@@ -96,13 +101,11 @@ allocate_line_number_cache (struct buffer *b)
   narrow_line_number_cache (b);
 }
 
-/* Update line_number_begv.  Do it only if the line number cache is
-   already initialized.  */
+/* Update line_number_begv, or flag it as dirty.  Do it only if the
+   line number cache is already initialized.  */
 void
 narrow_line_number_cache (struct buffer *b)
 {
-  EMACS_INT lots = 999999999, shortage;
-
   if (NILP (b->line_number_cache))
     return;
   /* Optimization: if BUF_BEG == BUF_BEGV (as is the case after Fwiden
@@ -112,11 +115,10 @@ narrow_line_number_cache (struct buffer *b)
       LINE_NUMBER_BEGV (b) = Qzero;
       return;
     }
-  /* Count the newlines between beginning of buffer and beginning of
-     the visible portion of the buffer.  */
-  scan_buffer (b, '\n', BUF_BEG (b), BUF_BEGV (b), lots,
-	       (int *)&shortage, 0);
-  LINE_NUMBER_BEGV (b) = make_int (lots - shortage);
+  /* Calculating the line number of BUF_BEGV here is a bad idea,
+     because there is absolutely no reason to do it before the next
+     redisplay.  We simply mark it as dirty instead.  */
+  LINE_NUMBER_BEGV (b) = make_int (-1);
 }
 
 /* Invalidate the line number cache positions that lie after POS. */
@@ -131,7 +133,10 @@ invalidate_line_number_cache (struct buffer *b, Bufpos pos)
     {
       if (!CONSP (ring[i]))
 	break;
-      if (marker_position (XCAR (ring[i])) > pos)
+      /* As the marker stays behind the insertions, this check might
+         as well be >=.  However, Finsert_before_markers can move the
+         marker anyway, which bites in shell buffers.  */
+      if (marker_position (XCAR (ring[i])) >= pos)
 	{
 	  /* Get the marker out of the way.  */
 	  Fset_marker (XCAR (ring[i]), Qnil, lisp_buffer);
@@ -139,7 +144,7 @@ invalidate_line_number_cache (struct buffer *b, Bufpos pos)
 	  for (j = i; !NILP (ring[j]) && j < LINE_NUMBER_RING_SIZE - 1; j++)
 	    ring[j] = ring[j + 1];
 	  ring[j] = Qnil;
-	  /* Must reevaluate the thing at position i. */
+	  /* Must recheck position i. */
 	  i--;
 	}
     }
@@ -186,7 +191,6 @@ delete_invalidate_line_number_cache (struct buffer *b, Bufpos from, Bufpos to)
       int shortage;
       scan_buffer (b, '\n', from, to, 1, &shortage, 0);
       if (!shortage)
-	/* The same as above applies. */
 	invalidate_line_number_cache (b, from);
     }
 }
@@ -194,7 +198,8 @@ delete_invalidate_line_number_cache (struct buffer *b, Bufpos from, Bufpos to)
 
 /* Get the nearest known position we know the line number of
    (i.e. BUF_BEGV, and cached positions).  The return position will be
-   either closer than BEG, or BEG.
+   either closer than BEG, or BEG.  The line of this known position
+   will be stored in LINE.
 
    *LINE should be initialized to the line number of BEG (normally,
    BEG will be BUF_BEGV, and *LINE will be XINT (LINE_NUMBER_BEGV).
@@ -245,10 +250,11 @@ add_line_number (struct buffer *b, Bufpos pos, int line)
   ring[0] = Fcons (marker, make_int (line));
 }
 
-/* Calculate the buffer line number.  If CACHEP is non-zero,
-   initialize the line-number cache for future use.  The line number
-   of the first line is 0.  If narrowing is in effect, count the lines
-   from the beginning of the visible portion of the buffer.
+/* Calculate the line number in buffer B at position POS.  If CACHEP
+   is non-zero, initialize and facilitate the line-number cache.  The
+   line number of the first line is 0.  If narrowing is in effect,
+   count the lines are counted from the beginning of the visible
+   portion of the buffer.
 
    The cache works as follows: To calculate the line number, we need
    two positions: position of point (POS) and the position from which
@@ -265,21 +271,34 @@ buffer_line_number (struct buffer *b, Bufpos pos, int cachep)
 {
   Bufpos beg = BUF_BEGV (b);
   EMACS_INT cached_lines = 0;
-  EMACS_INT lots = 999999999;
   EMACS_INT shortage, line;
+
+  if ((pos > beg ? pos - beg : beg - pos) <= LINE_NUMBER_FAR)
+    cachep = 0;
 
   if (cachep)
     {
       if (NILP (b->line_number_cache))
 	allocate_line_number_cache (b);
+      /* If we don't know the line number of BUF_BEGV, calculate it now.  */
+      if (XINT (LINE_NUMBER_BEGV (b)) == -1)
+	{
+	  LINE_NUMBER_BEGV (b) = Qzero;
+	  /* #### This has a side-effect of changing the cache.  */
+	  LINE_NUMBER_BEGV (b) =
+	    make_int (buffer_line_number (b, BUF_BEGV (b), 1));
+	}
       cached_lines = XINT (LINE_NUMBER_BEGV (b));
       get_nearest_line_number (b, &beg, pos, &cached_lines);
     }
 
-  scan_buffer (b, '\n', beg, pos, pos > beg ? lots : -lots,
+  /* An EMACS_MAXINT would be cool to have. */
+#define LOTS 999999999
+
+  scan_buffer (b, '\n', beg, pos, pos > beg ? LOTS : -LOTS,
 	       (int *)&shortage, 0);
 
-  line = lots - shortage;
+  line = LOTS - shortage;
   if (beg > pos)
     line = -line;
   line += cached_lines;
@@ -291,8 +310,7 @@ buffer_line_number (struct buffer *b, Bufpos pos, int cachep)
 	add_line_number (b, pos, line);
       /* Account for narrowing.  If CACHEP is nil, this is
 	 unnecessary, because we counted from BUF_BEGV anyway.  */
-      if (cachep)
-	line -= XINT (LINE_NUMBER_BEGV (b));
+      line -= XINT (LINE_NUMBER_BEGV (b));
     }
 
   return line;

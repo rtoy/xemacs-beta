@@ -76,6 +76,7 @@ A value of nil means skip the middle step, so that
   :type 'boolean
   :group 'help-appearance)
 
+;;;###autoload
 (defun help-read-key (prompt)
   (let (events)
     (while (not (key-press-event-p

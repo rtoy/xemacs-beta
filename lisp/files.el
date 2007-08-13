@@ -1324,9 +1324,13 @@ If `enable-local-variables' is nil, this function does not check for a
     ;; Look for -*-MODENAME-*- or -*- ... mode: MODENAME; ... -*-
     ;; Do this by calling the hack-local-variables helper to avoid redundancy.
     ;; We bind enable-local-variables to nil this time because we're going to
-    ;; call hack-local-variables-prop-line again later, "for real."
-    (or (let ((enable-local-variables nil))
-	  (hack-local-variables-prop-line nil))
+    ;; call hack-local-variables-prop-line again later, "for real."  Note that
+    ;; this temporary binding does not prevent hack-local-variables-prop-line
+    ;; from setting the major mode.
+    (or (and enable-local-variables
+	     (let ((enable-local-variables nil))
+	       (hack-local-variables-prop-line nil))
+	     )
 	;; It's not in the -*- line, so check the auto-mode-alist, unless
 	;; this buffer isn't associated with a file.
 	(null buffer-file-name)
@@ -1572,16 +1576,36 @@ for current buffer."
 		   (skip-chars-forward " \t;")))
 	       (setq result (nreverse result))))))
 	
-    (let ((set-any-p (or force (hack-local-variables-p t)))
+    (let ((set-any-p (or force
+			 ;; It's OK to force null specifications.
+			 (null result)
+			 ;; It's OK to force mode-only specifications.
+			 (let ((remaining result)
+			       (mode-specs-only t))
+			   (while remaining
+			     (if (eq (car (car remaining)) 'mode)
+				 (setq remaining (cdr remaining))
+			       ;; Otherwise, we have a real local.
+			       (setq mode-specs-only nil
+				     remaining nil))
+			     )
+			   mode-specs-only)
+			 ;; Otherwise, check.
+			 (hack-local-variables-p t)))
 	  (mode-p nil))
       (while result
 	(let ((key (car (car result)))
 	      (val (cdr (car result))))
 	  (cond ((eq key 'mode)
-		 (and enable-local-variables
-		      (setq mode-p t)
-		      (funcall (intern (concat (downcase (symbol-name val))
-					       "-mode")))))
+		 (setq mode-p t)
+		 (let ((mode (intern (concat (downcase (symbol-name val))
+					     "-mode"))))
+		   ;; Without this guard, `normal-mode' would potentially run
+		   ;; the major mode function twice: once via `set-auto-mode'
+		   ;; and once via `hack-local-variables'.
+		   (if (not (eq mode major-mode))
+		       (funcall mode))
+		   ))
 		(set-any-p
 		 (hack-one-local-variable key val))
 		(t
@@ -2696,6 +2720,8 @@ previous sessions that you could recover from.
 To choose one, move point to the proper line and then type C-c C-c.
 Then you'll be asked about a number of files to recover."
   (interactive)
+  (unless (fboundp 'dired)
+    (error "recover-session requires dired"))
   (dired (concat auto-save-list-file-prefix "*"))
   (goto-char (point-min))
   (or (looking-at "Move to the session you want to recover,")
@@ -3096,6 +3122,7 @@ absolute one."
   "Test whether FILE-NAME is looked for on a remote system."
   (cond ((not allow-remote-paths) nil)
 	((featurep 'ange-ftp) (ange-ftp-ftp-path file-name))
-	(t (efs-ftp-path file-name))))
+	((fboundp 'efs-ftp-path) (efs-ftp-path file-name))
+	(t nil)))
 
 ;;; files.el ends here

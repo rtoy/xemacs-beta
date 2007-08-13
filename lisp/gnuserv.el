@@ -137,9 +137,7 @@ only argument, and its return value will be interpreted as above."
 
 (defcustom gnuserv-frame-plist nil
   "*Plist of frame properties for creating a gnuserv frame."
-  :type '(repeat (group :inline t
-			(symbol :tag "Property")
-			(sexp :tag "Value")))
+  :type 'plist
   :group 'gnuserv
   :group 'frames)
 

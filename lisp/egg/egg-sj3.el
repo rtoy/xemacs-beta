@@ -31,9 +31,9 @@
 ;;;                                                石井 清次
 
 (require 'egg)
-(provide 'sj3-egg)
-(if (not (boundp 'SJ3))
-    (require 'sj3-client))
+(provide 'egg-sj3)
+(when (not (boundp 'SJ3))
+  (require 'egg-sj3-client))
 
 ;;;;  修正メモ；；
 ;;;; Jul-20-93 by age@softlab.is.tsukuba.ac.jp (Eiji FURUKAWA)
@@ -61,12 +61,6 @@
 ;;;; May-14-92 by K.Ishii
 ;;;;  Mule の wnn-egg.el を sj3serv との通信用に修正
 
-;; XEmacs addition: (and remove disable-undo variable)
-;; For Emacs V18 compatibility
-(and (not (fboundp 'buffer-disable-undo))
-     (fboundp 'buffer-flush-undo)
-     (defalias 'buffer-disable-undo 'buffer-flush-undo))
-
 ;;;----------------------------------------------------------------------
 ;;;
 ;;; Version control routine
@@ -75,29 +69,6 @@
 
 (defvar sj3-egg-version "3.00" "Version number of this version of Egg. ")
 ;;; Last modified date: Thu Aug  4 21:18:11 1994
-
-(and (equal (user-full-name) "Kiyoji Ishii")
-     (defun sj3-egg-version-update (arg)
-       (interactive "P")
-       (if (equal (buffer-name (current-buffer)) "sj3-egg.el")
-	   (save-excursion
-	    (goto-char (point-min))
-	    (re-search-forward "(defvar sj3-egg-version \"[0-9]+\\.")
-	    (let ((point (point))
-		  (minor))
-	      (search-forward "\"")
-	      (backward-char 1)
-	      (setq minor (string-to-int (buffer-substring point (point))))
-	      (delete-region point (point))
-	      (if (<= minor 8) (insert "0"))
-	      (insert  (int-to-string (1+ minor)))
-	      (re-search-forward "Last modified date: ")
-	      (kill-line)
-	      (insert (current-time-string)))
-	    (save-buffer)
-	    (if arg (byte-compile-file (buffer-file-name)))
-	 )))
-     )
 
 ;;;----------------------------------------------------------------------
 ;;;
@@ -301,7 +272,9 @@
 ;;; Entry functions for egg-startup-file
 ;;;
 
-(defvar *default-sys-dic-directory* "/usr/sony/dict/sj3")
+(defvar *default-sys-dic-directory* (if (file-directory-p "/usr/sony/dict")
+					"/usr/sony/dict/sj3"
+				      "/usr/local/lib/sj3/dict"))
 
 (defun set-default-sys-dic-directory (pathname)
   "システム辞書の標準directory PATHNAMEを指定する。
@@ -309,14 +282,17 @@ PATHNAMEは環境変数を含んでよい。"
 
   (setq pathname (substitute-in-file-name pathname))
 
-  (if (not (file-name-absolute-p pathname))
-      (error "Default directory must be absolute pathname")
-    (if (null (KKCP:file-access pathname 0))
-	(error 
-	 (format "System Default directory(%s) がありません。" pathname))
-      (setq *default-sys-dic-directory* (file-name-as-directory pathname)))))
+  (if (file-name-absolute-p pathname)
+      (if (null (KKCP:file-access pathname 0))
+	  (error
+	   (format "System Default directory(%s) がありません。" pathname))
+	(setq *default-sys-dic-directory* (file-name-as-directory pathname)))
+    (error "Default directory must be absolute pathname")))
 
-(defvar *default-usr-dic-directory* "/usr/sony/dict/sj3/user/$USER")
+(defvar *default-usr-dic-directory*
+  (if (file-directory-p "/usr/sony/dict/sj3/user")
+      "/usr/sony/dict/sj3/user/$USER"
+    "/usr/local/lib/sj3/dict/user/$USER"))
 
 (defun set-default-usr-dic-directory (pathname)
   "利用者辞書の標準directory PATHNAMEを指定する。
@@ -324,46 +300,44 @@ PATHNAMEは環境変数を含んでよい。"
 
   (setq pathname (file-name-as-directory (substitute-in-file-name pathname)))
 
-  (if (not (file-name-absolute-p pathname))
-      (error "Default directory must be absolute pathname")
-    (if (null (KKCP:file-access  pathname 0))
-	(let ((updir (file-name-directory (substring pathname 0 -1))))
-	  (if (null (KKCP:file-access updir 0))
-	      (error 
-	       (format "User Default directory(%s) がありません。" pathname))
-	    (if (yes-or-no-p (format "User Default directory(%s) を作りますか？" pathname))
-		(progn
-		  (KKCP:make-directory (directory-file-name pathname))
-		  (notify "User Default directory(%s) を作りました。" pathname))
-	      nil ;;; do nothing
-	      ))))
-      (setq *default-usr-dic-directory* pathname)))
+  (if (file-name-absolute-p pathname)
+      (if (null (KKCP:file-access pathname 0))
+	  (let ((updir (file-name-directory (substring pathname 0 -1))))
+	    (if (null (KKCP:file-access updir 0))
+		(error
+		 (format "User Default directory(%s) がありません。" pathname))
+	      (when
+		  (yes-or-no-p
+		   (format "User Default directory(%s) を作りますか？"
+			   pathname))
+		(KKCP:make-directory (directory-file-name pathname))
+		(notify "User Default directory(%s) を作りました。"
+			pathname))))
+	(setq *default-usr-dic-directory* pathname))
+    (error "Default directory must be absolute pathname")))
 
 (defun setsysdic (dict)
-  (let ((dictfile
-	 (concat (if (not (file-name-absolute-p dict)) 
-		     *default-sys-dic-directory*
-		   "")
-		 dict)))
-    (egg:setsysdict (expand-file-name dictfile))))
+  (egg:setsysdict (expand-file-name
+		   (concat (if (file-name-absolute-p dict)
+			       ""
+			     *default-sys-dic-directory*)
+			   dict))))
 
 (defun setusrdic (dict)
-  (let ((dictfile
-	 (concat (if (not (file-name-absolute-p dict))
-		     *default-usr-dic-directory*
-		   "")
-		 dict)))
-  (egg:setusrdict (expand-file-name dictfile))))
+  (egg:setusrdict (expand-file-name
+		   (concat (if (file-name-absolute-p dict)
+			       ""
+			     *default-usr-dic-directory*)
+			   dict))))
 
 (defvar egg:*dict-list* nil)
 
 (defun setusrstdy (stdy)
-  (let ((stdyfile
-	 (concat (if (not (file-name-absolute-p stdy))
-		     *default-usr-dic-directory*
-		   "")
-		 stdy)))
-  (egg:setusrstdy (expand-file-name stdyfile))))
+  (egg:setusrstdy (expand-file-name
+		   (concat (if (file-name-absolute-p stdy)
+			       ""
+			     *default-usr-dic-directory*)
+			   stdy))))
 
 (defun egg:setsysdict (dict)
   (cond((assoc (file-name-nondirectory dict) egg:*dict-list*)
@@ -460,22 +434,22 @@ PATHNAMEは環境変数を含んでよい。"
 
 (defun set-sj3-host-name (name)
   (interactive "sHost name: ")
-  (let ((*KKCP:error-flag* nil))
+  (let (*KKCP:error-flag*)
     (disconnect-sj3))
   (setq sj3-host-name name)
   )
 
-(defvar egg-default-startup-file "eggrc-sj3"
+(defvar egg-default-startup-file "eggrc"
   "*Egg startup file name (system default)")
 
-(defvar egg-startup-file ".eggrc-sj3"
+(defvar egg-startup-file ".eggrc"
   "*Egg startup file name.")
 
 (defvar egg-startup-file-search-path (append '("~" ".") load-path)
   "*List of directories to search for start up file to load.")
 
 (defun egg:search-file (filename searchpath)
-  (let ((result nil))
+  (let (result)
     (if (null (file-name-directory filename))
 	(let ((path searchpath))
 	  (while (and path (null result ))
@@ -523,18 +497,20 @@ PATHNAMEは環境変数を含んでよい。"
 (defun bunsetu-length (number)
   (sj3-bunsetu-yomi-moji-suu number))
 
+;; #### This looks like a stupid multi-byte kludge.
 (defun kanji-moji-suu (str)
-  (let ((max (length str)) (count 0) (i 0))
-    (while (< i max)
-      (setq count (1+ count))
-      (if (< (aref str i) 128) (setq i (1+ i)) (setq i (+ i 3))))
-    count))
+  "Do Not Call This."
+  (length str))
 
 (defun bunsetu-position (number)
-  (let ((pos egg:*region-start*) (i 0))
+  (let ((pos egg:*region-start*)
+	(i 0))
     (while (< i number)
-      (setq pos (+ pos (bunsetu-kanji-length  i) (length egg:*bunsetu-kugiri*)))
-      (setq i (1+ i)))
+      (setq pos
+	    (+ pos
+	       (or (bunsetu-kanji-length  i) 0)
+	       (length egg:*bunsetu-kugiri*)))
+      (incf i))
     pos))
 
 (defun bunsetu-kanji-length (bunsetu-no)
@@ -579,27 +555,37 @@ PATHNAMEは環境変数を含んでよい。"
 
 (defconst egg:*bunsetu-face* nil "*文節表示に用いる face または nil")
 (make-variable-buffer-local
- (defvar egg:*bunsetu-overlay* nil "文節の表示に使う overlay"))
+ (defvar egg:*bunsetu-extent* nil "文節の表示に使う extent"))
 
 (defconst egg:*bunsetu-kugiri* " " "*文節の区切りを示す文字列")
 
 
 (defconst egg:*henkan-face* nil "*変換領域を表示する face または nil")
 (make-variable-buffer-local
- (defvar egg:*henkan-overlay* nil "変換領域の表示に使う overlay"))
+ (defvar egg:*henkan-extent* nil "変換領域の表示に使う extent"))
 
 (defconst egg:*henkan-open*  "|" "*変換の始点を示す文字列")
 (defconst egg:*henkan-close* "|" "*変換の終点を示す文字列")
+(defvar egg:henkan-mode-in-use nil)
 
 (defun egg:henkan-face-on ()
-  (if (overlayp egg:*henkan-overlay*) nil
-    (setq egg:*henkan-overlay* (make-overlay 1 1 nil))
-    (overlay-put egg:*henkan-overlay* 'face egg:*henkan-face*) )
-  (move-overlay egg:*henkan-overlay* egg:*region-start* egg:*region-end* (current-buffer)) )
+  (when egg:*henkan-face*
+    (if (extentp egg:*henkan-extent*)
+	(set-extent-endpoints egg:*henkan-extent*
+			      egg:*region-start* egg:*region-end*)
+      (setq egg:*henkan-extent*
+	    (make-extent egg:*region-start* egg:*region-end*))
+      (mapcar
+       (lambda (prop)
+	 (set-extent-property egg:*henkan-extent* prop nil))
+       '(start-open end-open detachable)))
+    (set-extent-face egg:*henkan-extent* egg:*henkan-face*)))
 
 (defun egg:henkan-face-off ()
-  (and (overlayp egg:*henkan-overlay*)
-       (delete-overlay egg:*henkan-overlay*) ))
+  ;; detach henkan extent from the current buffer.
+  (and egg:*henkan-face*
+       (extentp egg:*henkan-extent*)
+       (detach-extent egg:*henkan-extent*)))
 
 (defun henkan-region (start end)
   (interactive "r")
@@ -610,59 +596,63 @@ PATHNAMEは環境変数を含んでよい。"
 
 (defun henkan-region-internal (start end)
   "regionをかな漢字変換する。"
-  (setq egg:*kanji-kanabuff* (buffer-substring start end))
-  (if overwrite-mode
-      (setq egg:*overwrite-mode-deleted-chars* 
-	    (if egg:*henkan-fence-mode* 0
-	      (length egg:*kanji-kanabuff*))))
-  (setq *bunsetu-number* nil)
-  (let ((result (KKCP:henkan-begin egg:*kanji-kanabuff*)))
-    (if  result
-	(progn
-	  (mode-line-egg-mode-update henkan-mode-indicator)
-	  (goto-char start)
-	  (or (markerp egg:*region-start*)
-	      (setq egg:*region-start* (make-marker)))
-	  (or (markerp egg:*region-end*)
-	      (setq egg:*region-end* (set-marker-type (make-marker) t)))
-	  (if (null (marker-position egg:*region-start*))
-	      (progn
-		;;;(setq egg:*global-map-backup* (current-global-map))
-		(setq egg:*local-map-backup* (current-local-map))
-		;; XEmacs change:
-		(buffer-disable-undo (current-buffer))
-		(goto-char start)
-		(delete-region start end)
-		(insert egg:*henkan-open*)
-		(set-marker egg:*region-start* (point))
-		(insert egg:*henkan-close*)
-		(set-marker egg:*region-end* egg:*region-start*)
-		(egg:henkan-face-on)
-		(goto-char egg:*region-start*)
-		)
+  (or egg:henkan-mode-in-use
+      (let ((finished nil))
+	(unwind-protect
 	    (progn
-	      (egg:fence-face-off)
-	      (delete-region (- egg:*region-start* (length egg:*fence-open*)) 
-			     egg:*region-start*)
-	      (delete-region egg:*region-end* (+ egg:*region-end* (length egg:*fence-close*)))
-	      (goto-char egg:*region-start*)
-	      (insert egg:*henkan-open*)
-	      (set-marker egg:*region-start* (point))
-	      (goto-char egg:*region-end*)
-	      (let ((point (point)))
-		(insert egg:*henkan-close*)
-		(set-marker egg:*region-end* point))
-	      (goto-char start)
-	      (delete-region start end)
-	      (egg:henkan-face-on))
-	    )
-	  (henkan-insert-kouho 0)
-	  (henkan-goto-bunsetu 0)
-	  ;;;(use-global-map henkan-mode-map)
-	  ;;;(use-local-map nil)
-	  (use-local-map henkan-mode-map)
-	  )))
-  )
+	      (setq egg:henkan-mode-in-use t
+		    egg:*kanji-kanabuff* (buffer-substring start end))
+	      (setq *bunsetu-number* 0)
+	      (let ((result (KKCP:henkan-begin egg:*kanji-kanabuff*)))
+		(when result
+		  (mode-line-egg-mode-update henkan-mode-indicator)
+		  (goto-char start)
+		  (or (markerp egg:*region-start*)
+		      (setq egg:*region-start* (make-marker)))
+		  (or (markerp egg:*region-end*)
+		      (setq egg:*region-end*
+			    (set-marker-insertion-type (make-marker) t)))
+		  (if (null (marker-position egg:*region-start*))
+		      (progn
+                      ;;;(setq egg:*global-map-backup* (current-global-map))
+			(setq egg:*local-map-backup* (current-local-map))
+			;; XEmacs change:
+			(buffer-disable-undo (current-buffer))
+			(goto-char start)
+			(delete-region start end)
+			(insert egg:*henkan-open*)
+			(set-marker egg:*region-start* (point))
+			(insert egg:*henkan-close*)
+			(set-marker egg:*region-end* egg:*region-start*)
+			(goto-char egg:*region-start*)
+			)
+		    (egg:fence-face-off)
+		    (delete-region
+		     (- egg:*region-start* (length egg:*fence-open*))
+		     egg:*region-start*)
+		    (delete-region
+		     egg:*region-end*
+		     (+ egg:*region-end* (length egg:*fence-close*)))
+		    (goto-char egg:*region-start*)
+		    (insert egg:*henkan-open*)
+		    (set-marker egg:*region-start* (point))
+		    (goto-char egg:*region-end*)
+		    (let ((point (point)))
+		      (insert egg:*henkan-close*)
+		      (set-marker egg:*region-end* point))
+		    (goto-char start)
+		    (delete-region start end)
+		    (henkan-insert-kouho 0)
+		    (egg:henkan-face-on)
+		    (egg:bunsetu-face-on *bunsetu-number*)
+		    (henkan-goto-bunsetu 0)
+		    ;;(use-global-map henkan-mode-map)
+		    ;;(use-local-map nil)
+		    (use-local-map henkan-mode-map)))
+		(setq finished t))
+	      (or finished
+		  (setq egg:henkan-mode-in-use nil)))))))
+
 
 (defun henkan-paragraph ()
   "Kana-kanji henkan  paragraph at or after point."
@@ -722,10 +712,12 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
 	      egg:*bunsetu-kugiri* (or kugiri "")
 	      egg:*henkan-face* henkan-face
 	      egg:*bunsetu-face* bunsetu-face)
-	(if (overlayp egg:*henkan-overlay*)
-	    (overlay-put egg:*henkan-overlay* 'face egg:*henkan-face*))
-	(if (overlayp egg:*bunsetu-overlay*)
-	    (overlay-put egg:*bunsetu-overlay* 'face egg:*bunsetu-face*))
+	(and (extentp egg:*henkan-extent*)
+	     (set-extent-property
+	      egg:*henkan-extent* 'face egg:*henkan-face*))
+	(and (extentp egg:*bunsetu-extent*)
+	     (set-extent-property
+	      egg:*bunsetu-extent* 'face egg:*bunsetu-face*))
 
 	t)
     (error "Wrong type of arguments: %1 %2 %3 %4 %5" open close kugiri henkan-face bunsetu-face)))
@@ -740,7 +732,7 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
 
 (defun henkan-kakutei ()
   (interactive)
-  (egg:bunsetu-face-off *bunsetu-number*)
+  (egg:bunsetu-face-off)
   (egg:henkan-face-off)
   (delete-region (- egg:*region-start* (length egg:*henkan-open*))
 		 egg:*region-start*)
@@ -756,12 +748,13 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
       (setq i (1+ i))
       ))
   (KKCP:henkan-end)
+  (setq egg:henkan-mode-in-use nil)
   (egg:quit-egg-mode)
   )
 
 (defun henkan-kakutei-before-point ()
   (interactive)
-  (egg:bunsetu-face-off *bunsetu-number*)
+  (egg:bunsetu-face-off)
   (egg:henkan-face-off)
   (delete-region egg:*region-start* egg:*region-end*)
   (goto-char egg:*region-start*)
@@ -797,34 +790,35 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
   (setq egg:*mode-on* t)
   ;;;(use-global-map fence-mode-map)
   ;;;(use-local-map  nil)
+  (setq egg:henkan-mode-in-use nil)
   (use-local-map fence-mode-map)
   (egg:mode-line-display))
 
 (defun egg:set-bunsetu-face (no face switch)
   (if (not switch)
-      (egg:bunsetu-face-off no) ;; JIC
-    (if (overlayp egg:*bunsetu-overlay*) nil
-      (setq egg:*bunsetu-overlay* (make-overlay 1 1 nil))
-      (overlay-put egg:*bunsetu-overlay* 'face egg:*bunsetu-face*))
-    (move-overlay egg:*bunsetu-overlay*
-		  (if (eq face 'modeline)
-		      (let ((point (bunsetu-position no)))
-			(+ point (1+ (char-boundary-p point))))
-		    (bunsetu-position no))
+      (egg:bunsetu-face-off) ;; JIC
+    (unless (extentp egg:*bunsetu-extent*)
+      (setq egg:*bunsetu-extent* (make-extent 1 1 nil))
+      (set-extent-property egg:*bunsetu-extent* 'face egg:*bunsetu-face*))
+    (set-extent-endpoints egg:*bunsetu-extent*
+			  (if (eq face 'modeline)
+			      (let ((point (bunsetu-position no)))
+				(1+ point))
+			    (bunsetu-position no))
 
-		  (if (= no (1- (bunsetu-su)))
-		      egg:*region-end*
-		    (- (bunsetu-position (1+ no))
-		       (length egg:*bunsetu-kugiri*)))
-		  (current-buffer))))
+			  (if (= no (1- (bunsetu-su)))
+			      egg:*region-end*
+			    (- (bunsetu-position (1+ no))
+			       (length egg:*bunsetu-kugiri*)))
+			  (current-buffer))))
 
 (defun egg:bunsetu-face-on (no)
   (egg:set-bunsetu-face no egg:*bunsetu-face* t))
 
-(defun egg:bunsetu-face-off (no)
-  ;; ``no'' will be ignored
-  (and (overlayp egg:*bunsetu-overlay*)
-       (delete-overlay egg:*bunsetu-overlay*)) )
+(defun egg:bunsetu-face-off ()
+  ;; detach henkan extent from the current buffer.
+  (and (extentp egg:*bunsetu-extent*)
+       (detach-extent egg:*bunsetu-extent*)))
 
 (defun henkan-goto-bunsetu (number)
   (setq *bunsetu-number*
@@ -930,7 +924,7 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
 
 (defun henkan-quit ()
   (interactive)
-  (egg:bunsetu-face-off *bunsetu-number*)
+  (egg:bunsetu-face-off)
   (egg:henkan-face-off)
   (delete-region (- egg:*region-start* (length egg:*henkan-open*))
 		 egg:*region-start*)
@@ -950,6 +944,7 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
   (setq egg:*mode-on* t)
   ;;;(use-global-map fence-mode-map)
   ;;;(use-local-map  nil)
+  (setq egg:henkan-mode-in-use nil)
   (use-local-map fence-mode-map)
   (egg:mode-line-display)
   )
@@ -974,7 +969,7 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
 
 (defun henkan-kakutei-and-self-insert ()
   (interactive)
-  (setq unread-command-events (list last-command-char))
+  (setq unread-command-events (list last-command-event))
   (henkan-kakutei))
 
 
@@ -984,7 +979,8 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
 
 (let ((ch 0))
   (while (<= ch 127)
-    (define-key henkan-mode-map (make-string 1 ch) 'undefined)
+    (unless (eq ch 27)
+      (define-key henkan-mode-map (make-string 1 ch) 'undefined))
     (define-key henkan-mode-esc-map (make-string 1 ch) 'undefined)
     (setq ch (1+ ch))))
 
@@ -992,8 +988,10 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
   (while (< ch 127)
     (define-key henkan-mode-map (make-string 1 ch) 'henkan-kakutei-and-self-insert)
     (setq ch (1+ ch))))
-	
-(define-key henkan-mode-map "\e"    henkan-mode-esc-map)
+
+(condition-case ()
+    (define-key henkan-mode-map "\e"    henkan-mode-esc-map)
+  (error nil))
 (define-key henkan-mode-map "\ei"  'undefined) ;; henkan-inspect-bunsetu
 					       ;; not support for sj3
 (define-key henkan-mode-map "\es"  'henkan-select-kouho)
@@ -1050,7 +1048,7 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
   全文節確定  \\[henkan-kakutei]  \t直前文節まで確定  \\[henkan-kakutei-before-point]
 変換中止    \\[henkan-quit]
 ")
-  
+
 ;;;----------------------------------------------------------------------
 ;;;
 ;;; Dictionary management Facility
@@ -1285,8 +1283,8 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
 (defun diced-add ()
   (interactive)
   (diced-execute t)
-  (let*((kanji  (read-from-minibuffer "漢字："))
-	(yomi  (read-from-minibuffer "読み："))
+  (let*((kanji (read-kanji-string "漢字："))
+	(yomi (read-hiragana-string "読み："))
 	(bunpo (menu:select-from-menu *sj3-bunpo-menu*))
 	(gobi   (nth 2 (assq bunpo *sj3-bunpo-code*)))
 	(hinshi (nth 1 (assq bunpo *sj3-bunpo-code*)))
@@ -1300,18 +1298,18 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
 	  (notify "辞書項目『%s』(%s: %s)を%sに登録しました。" 
 		  item item-yomi hinshi dict-name)
 	  (diced-redisplay)))))
-	      
+
 (defun diced-delete ()
   (interactive)
   (beginning-of-line)
-  (if (= (following-char) ?  )
+  (if (eq (char-after) ?  )
       (let ((buffer-read-only nil))
 	(delete-char 1) (insert "D") (backward-char 1))))
-    
+
 (defun diced-undelete ()
   (interactive)
   (beginning-of-line)
-  (if (= (following-char) ?D)
+  (if (eq (char-after) ?D)
       (let ((buffer-read-only nil))
 	(delete-char 1) (insert " ") (backward-char 1))
     (beep)))
@@ -1330,7 +1328,7 @@ BUNSETU-FACE が指定されて nil でなければ、注目している文節を表示する
   (goto-char (point-min))
   (let ((no  0))
     (while (not (eobp))
-      (if (= (following-char) ?D)
+      (if (eq (char-after) ?D)
 	  (let* ((dict-item (nth no *diced-dict-info*))
 		 (yomi (nth 0 dict-item))
 		 (kanji (nth 1 dict-item))
@@ -1403,7 +1401,4 @@ Type  x to eXecute the deletions requested.
 (define-key diced-mode-map "\e>"  'diced-end-of-buffer)
 (define-key diced-mode-map "\ev"  'diced-scroll-down)
 
-;;; End of sj3-egg.el
-;; 92.7.7 by Y.Kawabe -- commented out
-;; (if (boundp 'SJ3) 
-;;    (load-library "sj3fns"))
+;;; egg-sj3.el ends here

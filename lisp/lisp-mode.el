@@ -753,6 +753,8 @@ of the start of the containing expression."
 (put 'with-output-to-temp-buffer 'lisp-indent-function 1)
 (put 'display-message 'lisp-indent-function 1)
 (put 'display-warning 'lisp-indent-function 1)
+(put 'lmessage 'lisp-indent-function 2)
+(put 'lwarn 'lisp-indent-function 2)
 (put 'global-set-key 'lisp-indent-function 1)
 
 (defun indent-sexp (&optional endpos)

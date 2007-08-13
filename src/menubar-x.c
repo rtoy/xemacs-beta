@@ -192,7 +192,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	    }
 	  if (!NILP (hook_fn))
 	    {
-#ifdef LWLIB_MENUBARS_LUCID
+#if defined LWLIB_MENUBARS_LUCID || defined LWLIB_MENUBARS_MOTIF
 	      if (filter_p || depth == 0)
 		{
 #endif
@@ -200,7 +200,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 						hook_fn, desc);
 		  if (UNBOUNDP (desc))
 		    desc = Qnil;
-#ifdef LWLIB_MENUBARS_LUCID
+#if defined LWLIB_MENUBARS_LUCID || defined LWLIB_MENUBARS_MOTIF
 		}
 	      else
 		{
@@ -321,7 +321,7 @@ menu_item_descriptor_to_widget_value (Lisp_Object desc,
 }
 
 
-#ifdef LWLIB_MENUBARS_LUCID
+#if defined LWLIB_MENUBARS_LUCID || defined LWLIB_MENUBARS_MOTIF
 int in_menu_callback;
 
 static Lisp_Object

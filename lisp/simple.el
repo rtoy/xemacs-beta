@@ -105,6 +105,7 @@ In Auto Fill mode, if no numeric arg, break the preceding line if it's long."
   ;; try_window_id than inserting at the beginning of a line, and the textual
   ;; result is the same.  So, if we're at beginning of line, pretend to be at
   ;; the end of the previous line.
+  ;; #### Does this have any relevance in XEmacs?
   (let ((flag (and (not (bobp)) 
 		   (bolp)
 		   ;; Make sure the newline before point isn't intangible.
@@ -1191,14 +1192,10 @@ to make one entry in the kill ring."
 			(error "The region is not active now")
 		      (error "The mark is not set now")))
   (if verbose (if buffer-read-only
-		  (display-message
-		   'command
-		   (format "Copying %d characters"
-			   (- (max beg end) (min beg end))))
-		(display-message
-		 'command
-		 (format "Killing %d characters"
-			 (- (max beg end) (min beg end))))))
+		  (lmessage 'command "Copying %d characters"
+			    (- (max beg end) (min beg end)))
+		(lmessage 'command "Killing %d characters"
+			  (- (max beg end) (min beg end)))))
   (cond
 
    ;; I don't like this large change in behavior -- jwz
@@ -1308,7 +1305,7 @@ visual feedback indicating the extent of the region being copied."
       (progn
 	(setq this-command 'kill-region)
 	(display-message 'command
-			 "If the next command is a kill, it will append"))
+	  "If the next command is a kill, it will append"))
     (setq last-command 'kill-region)))
 
 (defun yank-pop (arg)
@@ -1763,6 +1760,7 @@ The beginning of a blank line does not count as the end of a line."
 It is the column where point was
 at the start of current run of vertical motion commands.
 When the `track-eol' feature is doing its job, the value is 9999.")
+(make-variable-buffer-local 'temporary-goal-column)
 
 ;XEmacs: not yet ported, so avoid compiler warnings
 (eval-when-compile
@@ -2174,14 +2172,10 @@ With any other arg, set comment column to indentation of the previous comment
 	    (re-search-forward comment-start-skip)
 	    (goto-char (match-beginning 0))
 	    (setq comment-column (current-column))
-	    (display-message
-	     'command
-	     (format "Comment column set to %d" comment-column)))
+	    (lmessage 'command "Comment column set to %d" comment-column))
 	  (indent-for-comment))
       (setq comment-column (current-column))
-      (display-message
-       'command
-       (format "Comment column set to %d" comment-column)))))
+      (lmessage 'command "Comment column set to %d" comment-column))))
 
 (defun kill-comment (arg)
   "Kill the comment on this line, if any.
@@ -2632,7 +2626,7 @@ The variable `fill-column' has a separate value for each buffer."
 	;; Disallow missing argument; it's probably a typo for C-x C-f.
 	(t
 	 (error "set-fill-column requires an explicit argument")))
-  (display-message 'command (format "fill-column set to %d" fill-column)))
+  (lmessage 'command "fill-column set to %d" fill-column))
 
 (defcustom comment-multi-line t ; XEmacs - this works well with adaptive fill
   "*Non-nil means \\[indent-new-comment-line] should continue same comment
@@ -2918,10 +2912,7 @@ when it is off screen."
 			   (auto-show-make-point-visible)
 			   (sit-for blink-matching-delay)))
 		  (goto-char blinkpos)
-		  (display-message
-		   'command
-		   (format
-		    "Matches %s"
+		  (lmessage 'command "Matches %s"
 		    ;; Show what precedes the open in its line, if anything.
 		    (if (save-excursion
 			  (skip-chars-backward " \t")
@@ -2952,7 +2943,7 @@ when it is off screen."
 			     "..."
 			     (buffer-substring blinkpos (1+ blinkpos)))
 			  ;; There is nothing to show except the char itself.
-			  (buffer-substring blinkpos (1+ blinkpos)))))))))
+			  (buffer-substring blinkpos (1+ blinkpos))))))))
 	     (cond (mismatch
 		    (display-message 'no-log "Mismatched parentheses"))
 		   ((not blink-matching-paren-distance)
@@ -3500,10 +3491,11 @@ Mesages whose text matches one of the log-message-ignore-regexps
 or whose label appears in log-message-ignore-labels are not saved."
   (let ((r  log-message-ignore-regexps)
 	(ok (not (memq label log-message-ignore-labels))))
-    (while (and r ok)
-      (if (save-match-data (string-match (car r) message))
+    (save-match-data
+      (while (and r ok)
+	(when (string-match (car r) message)
 	  (setq ok nil))
-      (setq r (cdr r)))
+	(setq r (cdr r))))
     ok))
 
 (defun log-message-filter-errors-only (label message)
@@ -3515,21 +3507,19 @@ or whose label appears in log-message-ignore-labels are not saved."
 if it satisfies the log-message-filter-function.
 
 For use on remove-message-hook."
-  (if (and (not noninteractive)
-	   (funcall log-message-filter-function label message))
-      (save-excursion
-	(set-buffer (get-buffer-create " *Message-Log*"))
-	(goto-char (point-max))
-	;; (insert (concat (upcase (symbol-name label)) ": "  message "\n"))
-	(insert message "\n")
-	(if (> (point-max) (max log-message-max-size (point-min)))
-	    (progn
-	      ;; trim log to ~90% of max size
-	      (goto-char (max (- (point-max)
-				 (truncate (* 0.9 log-message-max-size)))
-			      (point-min)))
-	      (forward-line 1)
-	      (delete-region (point-min) (point)))))))
+  (when (and (not noninteractive)
+	     (funcall log-message-filter-function label message))
+    (with-current-buffer (get-buffer-create " *Message-Log*")
+      (goto-char (point-max))
+      ;; (insert (concat (upcase (symbol-name label)) ": "  message "\n"))
+      (insert message "\n")
+      (when (> (point-max) (max log-message-max-size (point-min)))
+	;; trim log to ~90% of max size
+	(goto-char (max (- (point-max)
+			   (truncate (* 0.9 log-message-max-size)))
+			(point-min)))
+	(forward-line 1)
+	(delete-region (point-min) (point))))))
 
 (defun message-displayed-p (&optional return-string frame)
   "Return a non-nil value if a message is presently displayed in the\n\
@@ -3569,7 +3559,7 @@ you should just use (message nil)."
     (if no-restore
 	nil			; just preparing to put another msg up
       (if message-stack
-	  (let ((oldmsg  (cdr (car message-stack))))
+	  (let ((oldmsg (cdr (car message-stack))))
 	    (raw-append-message oldmsg frame stdout-p)
 	    oldmsg)
 	;; ### should we (redisplay-echo-area) here?  messes some things up.
@@ -3598,8 +3588,9 @@ you should just use (message nil)."
 	  (run-hook-with-args 'remove-message-hook
 			      (car (car log)) (cdr (car log)))
 	(error (setq remove-message-hook nil)
-	       (message "remove-message-hook error: %s" e)
-	       (sit-for 2)
+	       (lwarn 'message-log 'warning
+		 "Error caught in `remove-message-hook': %s"
+		 (error-message-string e))
 	       (let ((inhibit-read-only t))
 		 (erase-buffer (get-buffer " *Echo Area*")))
 	       (signal (car e) (cdr e))))
@@ -3619,8 +3610,7 @@ you should just use (message nil)."
   (if (eq message "") nil
     (let ((buffer (get-buffer " *Echo Area*"))
 	  (zmacs-region-stays zmacs-region-stays)) ; preserve from change
-      (save-excursion
-	(set-buffer buffer)
+      (with-current-buffer buffer
 	(let ((inhibit-read-only t))
 	  (insert message)))
       ;; Conditionalizing on the device type in this way is not that clean,
@@ -3671,12 +3661,25 @@ minibuffer contents show."
   ;; (if (framep default-minibuffer-frame)
   ;;     (make-frame-visible default-minibuffer-frame))
   (if (and (null fmt) (null args))
-      (progn
-	(clear-message nil)
-	nil)
+      (prog1 nil
+	(clear-message nil))
     (let ((str (apply 'format fmt args)))
       (display-message 'message str)
       str)))
+
+(defun lmessage (label fmt &rest args)
+  "Print a one-line message at the bottom of the frame.
+First argument LABEL is an identifier for this message.  The rest of the
+arguments are the same as to `format'.
+
+See `display-message' for a list of standard labels."
+  (if (and (null fmt) (null args))
+      (prog1 nil
+	(clear-message label nil))
+    (let ((str (apply 'format fmt args)))
+      (display-message label str)
+      str)))
+
 
 ;;;;;;
 ;;;;;; warning stuff
@@ -3786,7 +3789,7 @@ suppression in the .emacs file will be honored."
 CLASS should be a symbol describing what sort of warning this is, such
 as `resource' or `key-mapping'.  A list of such symbols is also
 accepted. (Individual classes can be suppressed; see
-`display-warning-suppressed-classes'.) Optional argument LEVEL can
+`display-warning-suppressed-classes'.)  Optional argument LEVEL can
 be used to specify a priority for the warning, other than default priority
 `warning'. (See `display-warning-minimum-level').  The message is
 inserted into the *Warnings* buffer, which is made visible at appropriate
@@ -3806,27 +3809,27 @@ times."
 	    (throw 'ignored nil))
 	(if (intersection class log-warning-suppressed-classes)
 	    (throw 'ignored nil))
-	
+
 	(if (< level-num (cdr (assq display-warning-minimum-level
 				    warning-level-alist)))
 	    (setq display-p nil))
 	(if (and display-p
 		 (intersection class display-warning-suppressed-classes))
 	    (setq display-p nil))
-	(save-excursion
-	  (let ((buffer (get-buffer-create "*Warnings*")))
-	    (when display-p
-	      ;; The C code looks at display-warning-tick to determine
-	      ;; when it should call `display-warning-buffer'.  Change it
-	      ;; to get the C code's attention.
-	      (incf display-warning-tick))
-	    (set-buffer buffer)
+	(let ((buffer (get-buffer-create "*Warnings*")))
+	  (when display-p
+	    ;; The C code looks at display-warning-tick to determine
+	    ;; when it should call `display-warning-buffer'.  Change it
+	    ;; to get the C code's attention.
+	    (incf display-warning-tick))
+	  (with-current-buffer buffer
 	    (goto-char (point-max))
-	    (setq warning-count (1+ warning-count))
+	    (incf warning-count)
 	    (princ (format "(%d) (%s/%s) "
 			   warning-count
 			   (mapconcat 'symbol-name class ",")
-			   level) buffer)
+			   level)
+		   buffer)
 	    (princ message buffer)
 	    (terpri buffer)
 	    (terpri buffer)))))))
@@ -3838,6 +3841,21 @@ is placed in the *Warnings* buffer, which will be popped up at the next
 redisplay.  The class of the warning is `warning'.  See also
 `display-warning'."
   (display-warning 'warning (apply 'format args)))
+
+(defun lwarn (class level &rest args)
+  "Display a labeled warning message.
+CLASS should be a symbol describing what sort of warning this is, such
+as `resource' or `key-mapping'.  A list of such symbols is also
+accepted. (Individual classes can be suppressed; see
+`display-warning-suppressed-classes'.)  If non-nil, LEVEL can be used
+to specify a priority for the warning, other than default priority
+`warning'. (See `display-warning-minimum-level').  The message is
+inserted into the *Warnings* buffer, which is made visible at appropriate
+times.
+
+The rest of the arguments are passed to `format'."
+  (display-warning class (apply 'format args)
+		   (or level 'warning)))
 
 (defvar warning-marker nil)
 

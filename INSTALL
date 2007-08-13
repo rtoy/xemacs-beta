@@ -195,7 +195,7 @@ toolkit you wish to use for the scrollbars.  The valid options are
 then support for scrollbars will not be compiled in.
 
 The `--with-dialogs=TYPE' option allows you to specify which X toolkit
-you wish to use for the scrollbars.  The valid options are `athena',
+you wish to use for the dialog boxes.  The valid options are `athena',
 `motif, and `no.  The `lucid' option is accepted and will result in
 the `athena' toolkit being used.  If the Motif toolkit can be found
 the default is `motif'.  Otherwise, the default is `athena'.  If

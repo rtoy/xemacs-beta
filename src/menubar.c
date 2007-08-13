@@ -203,23 +203,31 @@ Menu item names should be converted to normal form before being compared.
 
   string_result = (Bufbyte *) alloca (end * MAX_EMCHAR_LEN);
   string_result_ptr = string_result;
-  for (i = 0; i < end ; i++)
+  for (i = 0; i < end; i++)
     {
-      elt = charptr_emchar_n (name_data, i);
+      elt = charptr_emchar (name_data);
       elt = DOWNCASE (buf, elt);
-      if (elt == '%')
-	expecting_underscore = 1;
-      else if (expecting_underscore)
+      if (expecting_underscore)
 	{
 	  expecting_underscore = 0;
-	  if (elt != '_')
+	  switch (elt)
 	    {
+	    case '%':
+	      /* Allow `%%' to mean `%'.  */
+	      string_result_ptr += set_charptr_emchar (string_result_ptr, '%');
+	      break;
+	    case '_':
+	      break;
+	    default:
 	      string_result_ptr += set_charptr_emchar (string_result_ptr, '%');
 	      string_result_ptr += set_charptr_emchar (string_result_ptr, elt);
 	    }
 	}
+      else if (elt == '%')
+	expecting_underscore = 1;
       else
 	string_result_ptr += set_charptr_emchar (string_result_ptr, elt);
+      INC_CHARPTR (name_data);
     }
 
   return make_string (string_result, string_result_ptr - string_result);

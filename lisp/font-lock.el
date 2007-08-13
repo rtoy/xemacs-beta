@@ -10,7 +10,7 @@
 ;; Next Author: RMS
 ;; Next Author: Simon Marshall <simon@gnu.ai.mit.edu>
 ;; Latest XEmacs Author: Ben Wing
-;; Maintainer: XEmacs Development Team (sigh :-( )
+;; Maintainer: XEmacs Development Team
 ;; Keywords: languages, faces
 
 ;; This file is part of XEmacs.
@@ -144,11 +144,33 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;      user variables       ;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar font-lock-verbose t
-  "*If non-nil, means show status messages when fontifying.
-See also `font-lock-message-threshold'.")
+(defgroup font-lock nil
+  "Decorate source files with fonts/colors based on syntax.
+Font-lock-mode is a minor mode that causes your comments to be
+displayed in one face, strings in another, reserved words in another,
+documentation strings in another, and so on.
 
-(defvar font-lock-message-threshold 6000
+Comments will be displayed in `font-lock-comment-face'.
+Strings will be displayed in `font-lock-string-face'.
+Doc strings will be displayed in `font-lock-doc-string-face'.
+Function and variable names (in their defining forms) will be
+ displayed in `font-lock-function-name-face'.
+Reserved words will be displayed in `font-lock-keyword-face'."
+  :group 'languages)
+
+(defgroup font-lock-faces nil
+  "Faces used by the font-lock package."
+  :group 'font-lock
+  :group 'faces)
+
+
+(defcustom font-lock-verbose t
+  "*If non-nil, means show status messages when fontifying.
+See also `font-lock-message-threshold'."
+  :type 'boolean
+  :group 'font-lock)
+
+(defcustom font-lock-message-threshold 6000
   "*Minimum size of region being fontified for status messages to appear.
 
 The size is measured in characters.  This affects `font-lock-fontify-region'
@@ -159,26 +181,34 @@ chunk of text or revert a buffer, you will see status messages only if the
 changed region is large enough.)
 
 Note that setting `font-lock-verbose' to nil disables the status
-messages entirely.")
+messages entirely."
+  :type 'integer
+  :group 'font-lock)
 
 ;;;###autoload
-(defvar font-lock-auto-fontify t
+(defcustom font-lock-auto-fontify t
   "*Whether font-lock should automatically fontify files as they're loaded.
 This will only happen if font-lock has fontifying keywords for the major
 mode of the file.  You can get finer-grained control over auto-fontification
 by using this variable in combination with `font-lock-mode-enable-list' or
-`font-lock-mode-disable-list'.")
+`font-lock-mode-disable-list'."
+  :type 'boolean
+  :group 'font-lock)
 
 ;;;###autoload
-(defvar font-lock-mode-enable-list nil
-  "*List of modes to auto-fontify, if `font-lock-auto-fontify' is nil.")
+(defcustom font-lock-mode-enable-list nil
+  "*List of modes to auto-fontify, if `font-lock-auto-fontify' is nil."
+  :type '(repeat (symbol :tag "Mode"))
+  :group 'font-lock)
 
 ;;;###autoload
-(defvar font-lock-mode-disable-list nil
-  "*List of modes not to auto-fontify, if `font-lock-auto-fontify' is t.")
+(defcustom font-lock-mode-disable-list nil
+  "*List of modes not to auto-fontify, if `font-lock-auto-fontify' is t."
+  :type '(repeat (symbol :tag "Mode"))
+  :group 'font-lock)
 
 ;;;###autoload
-(defvar font-lock-use-colors '(color)
+(defcustom font-lock-use-colors '(color)
   "*Specification for when Font Lock will set up color defaults.
 Normally this should be '(color), meaning that Font Lock will set up
 color defaults that are only used on color displays.  Set this to nil
@@ -198,10 +228,13 @@ values before or after loading Font Lock.)
 
 See also `font-lock-use-fonts'.  If you want more control over the faces
 used for fontification, see the documentation of `font-lock-mode' for
-how to do it.")
+how to do it."
+  ;; Hard to do right.
+  :type 'sexp
+  :group 'font-lock)
 
 ;;;###autoload
-(defvar font-lock-use-fonts '(or (mono) (grayscale))
+(defcustom font-lock-use-fonts '(or (mono) (grayscale))
   "*Specification for when Font Lock will set up non-color defaults.
 
 Normally this should be '(or (mono) (grayscale)), meaning that Font
@@ -222,10 +255,12 @@ values before or after loading Font Lock.)
 
 See also `font-lock-use-colors'.  If you want more control over the faces
 used for fontification, see the documentation of `font-lock-mode' for
-how to do it.")
+how to do it."
+  :type 'sexp
+  :group 'font-lock)
 
 ;;;###autoload
-(defvar font-lock-maximum-decoration nil
+(defcustom font-lock-maximum-decoration t
   "*If non-nil, the maximum decoration level for fontifying.
 If nil, use the minimum decoration (equivalent to level 0).
 If t, use the maximum decoration available.
@@ -234,14 +269,28 @@ If a list, each element should be a cons pair of the form (MAJOR-MODE . LEVEL),
 where MAJOR-MODE is a symbol or t (meaning the default).  For example:
  ((c++-mode . 2) (c-mode . t) (t . 1))
 means use level 2 decoration for buffers in `c++-mode', the maximum decoration
-available for buffers in `c-mode', and level 1 decoration otherwise.")
+available for buffers in `c-mode', and level 1 decoration otherwise."
+  :type '(choice (const :tag "default" nil)
+		 (const :tag "maximum" t)
+		 (integer :tag "level" 1)
+		 (repeat :menu-tag "mode specific" :tag "mode specific"
+			 :value ((t . t))
+			 (cons :tag "Instance"
+			       (radio :tag "Mode"
+				      (const :tag "all" t)
+				      (symbol :tag "name"))
+			       (radio :tag "Decoration"
+				      (const :tag "default" nil)
+				      (const :tag "maximum" t) 
+				      (integer :tag "level" 1)))))
+  :group 'font-lock)
 
 ;;;###autoload
 (define-obsolete-variable-alias 'font-lock-use-maximal-decoration
   'font-lock-maximum-decoration)
 
 ;;;###autoload
-(defvar font-lock-maximum-size (* 250 1024)
+(defcustom font-lock-maximum-size (* 250 1024)
   "*If non-nil, the maximum size for buffers for fontifying.
 Only buffers less than this can be fontified when Font Lock mode is turned on.
 If nil, means size is irrelevant.
@@ -249,13 +298,26 @@ If a list, each element should be a cons pair of the form (MAJOR-MODE . SIZE),
 where MAJOR-MODE is a symbol or t (meaning the default).  For example:
  ((c++-mode . 256000) (c-mode . 256000) (rmail-mode . 1048576))
 means that the maximum size is 250K for buffers in `c++-mode' or `c-mode', one
-megabyte for buffers in `rmail-mode', and size is irrelevant otherwise.")
+megabyte for buffers in `rmail-mode', and size is irrelevant otherwise."
+  :type '(choice (const :tag "none" nil)
+		 (integer :tag "size")
+		 (repeat :menu-tag "mode specific" :tag "mode specific"
+			 :value ((t . nil))
+			 (cons :tag "Instance"
+			       (radio :tag "Mode"
+				      (const :tag "all" t)
+				      (symbol :tag "name"))
+			       (radio :tag "Size"
+				      (const :tag "none" nil)
+				      (integer :tag "size")))))
+  :group 'font-lock)
+
 
 ;; Fontification variables:
 
 ;;;###autoload
 (defvar font-lock-keywords nil
-  "*A list of the keywords to highlight.
+  "A list of the keywords to highlight.
 Each element should be of the form:
 
  MATCHER
@@ -451,6 +513,9 @@ This is normally set via `font-lock-defaults'.")
 (defvar font-lock-defaults-computed nil)
 (make-variable-buffer-local 'font-lock-defaults-computed)
 
+
+;;; Initialization of faces.
+
 ;; #### barf gag retch.  Horrid FSF lossage that we need to
 ;; keep around for compatibility with font-lock-keywords that
 ;; forget to properly quote their faces.
@@ -472,6 +537,149 @@ This is normally set via `font-lock-defaults'.")
   "Don't even think of using this.")
 (defvar font-lock-preprocessor-face 'font-lock-preprocessor-face
   "Don't even think of using this.")
+
+(defconst font-lock-face-list
+  '(font-lock-comment-face
+    font-lock-string-face
+    font-lock-doc-string-face
+    font-lock-keyword-face
+    font-lock-function-name-face
+    font-lock-variable-name-face
+    font-lock-type-face
+    font-lock-reference-face
+    font-lock-preprocessor-face
+    font-lock-warning-face))
+
+;; #### There should be an emulation for the old font-lock-use-*
+;; settings!
+
+(defface font-lock-comment-face
+  '((((class color) (background dark)) (:foreground "gray80"))
+    (((class color) (background light)) (:foreground "blue4"))
+    (((class grayscale) (background light))
+     (:foreground "DimGray" :bold t :italic t))
+    (((class grayscale) (background dark))
+     (:foreground "LightGray" :bold t :italic t))
+    (t (:bold t)))
+  "Font Lock mode face used to highlight comments."
+  :group 'font-lock-faces)
+
+(defface font-lock-string-face
+  '((((class color) (background dark)) (:foreground "tan"))
+    (((class color) (background light)) (:foreground "green4"))
+    (((class grayscale) (background light)) (:foreground "DimGray" :italic t))
+    (((class grayscale) (background dark)) (:foreground "LightGray" :italic t))
+    (t (:bold t)))
+  "Font Lock mode face used to highlight strings."
+  :group 'font-lock-faces)
+
+(defface font-lock-doc-string-face
+  '((((class color) (background dark)) (:foreground "light coral"))
+    (((class color) (background light)) (:foreground "green4"))
+    (t (:bold t)))
+  "Font Lock mode face used to highlight documentation strings."
+  :group 'font-lock-faces)
+
+(defface font-lock-keyword-face
+  '((((class color) (background dark)) (:foreground "cyan"))
+    (((class color) (background light)) (:foreground "red4"))
+    (((class grayscale) (background light)) (:foreground "LightGray" :bold t))
+    (((class grayscale) (background dark)) (:foreground "DimGray" :bold t))
+    (t (:bold t)))
+  "Font Lock mode face used to highlight keywords."
+  :group 'font-lock-faces)
+
+(defface font-lock-function-name-face
+  '((((class color) (background dark)) (:foreground "aquamarine"))
+    (((class color) (background light)) (:foreground "brown4"))
+    (t (:bold t :underline t)))
+  "Font Lock mode face used to highlight function names."
+  :group 'font-lock-faces)
+
+(defface font-lock-variable-name-face
+  '((((class color) (background dark)) (:foreground "cyan3"))
+    (((class color) (background light)) (:foreground "magenta4"))
+    (((class grayscale) (background light))
+     (:foreground "Gray90" :bold t :italic t))
+    (((class grayscale) (background dark))
+     (:foreground "DimGray" :bold t :italic t))
+    (t (:underline t)))
+  "Font Lock mode face used to highlight variable names."
+  :group 'font-lock-faces)
+
+(defface font-lock-type-face
+  '((((class color) (background dark)) (:foreground "wheat"))
+    (((class color) (background light)) (:foreground "steelblue"))
+    (((class grayscale) (background light)) (:foreground "Gray90" :bold t))
+    (((class grayscale) (background dark)) (:foreground "DimGray" :bold t))
+    (t (:bold t)))
+  "Font Lock mode face used to highlight types."
+  :group 'font-lock-faces)
+
+(defface font-lock-reference-face
+  '((((class color) (background dark)) (:foreground "cadetblue2"))
+    (((class color) (background light)) (:foreground "red3"))
+    (((class grayscale) (background light))
+     (:foreground "LightGray" :bold t :underline t))
+    (((class grayscale) (background dark))
+     (:foreground "Gray50" :bold t :underline t)))
+  "Font Lock mode face used to highlight references."
+  :group 'font-lock-faces)
+
+;; #### FSF has font-lock-builtin-face.
+
+(defface font-lock-preprocessor-face
+  '((((class color) (background dark)) (:foreground "steelblue1"))
+    (((class color) (background black)) (:foreground "blue3"))
+    (t (:underline t)))
+  "Font Lock Mode face used to highlight preprocessor conditionals."
+  :group 'font-lock-faces)
+
+;; #### Currently unused
+(defface font-lock-warning-face
+  '((((class color) (background light)) (:foreground "Red" :bold t))
+    (((class color) (background dark)) (:foreground "Pink" :bold t))
+    (t (:inverse-video t :bold t)))
+  "Font Lock mode face used to highlight warnings."
+  :group 'font-lock-faces)
+
+(defun font-lock-recompute-variables ()
+  ;; Is this a Draconian thing to do?
+  (mapc #'(lambda (buffer)
+	    (with-current-buffer buffer
+	      (font-lock-mode 0)
+	      (font-lock-set-defaults t)))
+	(buffer-list)))
+
+;; Backwards-compatible crud.
+
+(defun font-lock-reset-all-faces ()
+  (dolist (face font-lock-face-list)
+    (face-spec-set face (get face 'face-defface-spec))))
+
+(defun font-lock-use-default-fonts ()
+  "Reset the font-lock faces to a default set of fonts."
+  (interactive)
+  ;; #### !!!!
+  (font-lock-reset-all-faces))
+
+(defun font-lock-use-default-colors ()
+  "Reset the font-lock faces to a default set of colors."
+  (interactive)
+  ;; #### !!!!
+  (font-lock-reset-all-faces))
+
+(defun font-lock-use-default-minimal-decoration ()
+  "Reset the font-lock patterns to a fast, minimal set of decorations."
+  (and font-lock-maximum-decoration
+       (setq font-lock-maximum-decoration nil)
+       (font-lock-recompute-variables)))
+
+(defun font-lock-use-default-maximal-decoration ()
+  "Reset the font-lock patterns to a larger set of decorations."
+  (and (not (eq t font-lock-maximum-decoration))
+       (setq font-lock-maximum-decoration t)
+       (font-lock-recompute-variables)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;        actual code        ;;;;;;;;;;;;;;;;;;;;;;
@@ -588,9 +796,8 @@ See the variable `font-lock-keywords' for customization."
 		 ((or (null maximum-size) (<= (buffer-size) maximum-size))
 		  (font-lock-fontify-buffer))
 		 (font-lock-verbose
-		  (display-message
-		   'command
-		   (format "Fontifying %s... buffer too big." (buffer-name))))))
+		  (lmessage 'command "Fontifying %s... buffer too big."
+		    (buffer-name)))))
 	  (font-lock-fontified
 	   (setq font-lock-fontified nil)
 	   (remove-hook 'before-revert-hook 'font-lock-revert-setup t)
@@ -651,10 +858,8 @@ This can take a while for large buffers."
 	(let ((font-lock-fontified nil)) ; kludge to prevent defontification
 	  (font-lock-mode 0)))
     (set (make-local-variable 'font-lock-fontified) t)
-    (if (and aborted font-lock-verbose)
-	(display-message 'command
-			 (format "Fontifying %s... aborted." (buffer-name))))
-    )
+    (when (and aborted font-lock-verbose)
+	(lmessage 'command  "Fontifying %s... aborted." (buffer-name))))
   (run-hooks 'font-lock-after-fontify-buffer-hook))
 
 ;; Fontification functions.
@@ -731,11 +936,9 @@ This can take a while for large buffers."
 ;	  (font-lock-fontify-keywords-region beg end))
 
 (defun font-lock-unfontify-region (beg end &optional maybe-loudly)
-  (if (and maybe-loudly font-lock-verbose
-	   (>= (- end beg) font-lock-message-threshold))
-      (display-message
-       'progress
-       (format "Fontifying %s..." (buffer-name))))
+  (when (and maybe-loudly font-lock-verbose
+	     (>= (- end beg) font-lock-message-threshold))
+    (lmessage 'progress "Fontifying %s..." (buffer-name)))
   (let ((modified (buffer-modified-p))
 	(buffer-undo-list t) (inhibit-read-only t)
 	buffer-file-name buffer-file-truename)
@@ -984,11 +1187,10 @@ This can take a while for large buffers."
 START should be at the beginning of a line."
   (if font-lock-keywords-only
       nil
-    (if (and font-lock-verbose
-	     (>= (- end start) font-lock-message-threshold))
-	(display-message
-	 'progress
-	 (format "Fontifying %s... (syntactically...)" (buffer-name))))
+    (when (and font-lock-verbose
+	       (>= (- end start) font-lock-message-threshold))
+      (lmessage 'progress "Fontifying %s... (syntactically...)"
+	(buffer-name)))
     (font-lock-unfontify-region start end loudly)
     (goto-char start)
     (if (> end (point-max)) (setq end (point-max)))
@@ -1177,10 +1379,9 @@ START should be at the beginning of a line."
       ;;
       ;; Fontify each item in `font-lock-keywords' from `start' to `end'.
       (while keywords
-	(if loudly (display-message
-		    'progress
-		    (format "Fontifying %s... (regexps..%s)" bufname
-			    (make-string (setq count (1+ count)) ?.))))
+	(when loudly (lmessage 'progress "Fontifying %s... (regexps..%s)"
+		       bufname
+		       (make-string (setq count (1+ count)) ?.)))
 	;;
 	;; Find an occurrence of `matcher' from `start' to `end'.
 	(setq keyword (car keywords) matcher (car keyword))
@@ -1203,9 +1404,7 @@ START should be at the beginning of a line."
 	      (font-lock-fontify-anchored-keywords (car highlights) end))
 	    (setq highlights (cdr highlights))))
 	(setq keywords (cdr keywords))))
-    (if loudly (display-message
-		'progress
-		(format "Fontifying %s... done." (buffer-name))))))
+    (if loudly (lmessage 'progress "Fontifying %s... done." (buffer-name)))))
 
 
 ;; Various functions.
@@ -1405,130 +1604,6 @@ START should be at the beginning of a line."
 		       'beginning-of-defun)))))
 
     (setq font-lock-defaults-computed t)))
-
-
-;;; Initialization of faces.
-
-(defconst font-lock-face-list
-  '(font-lock-comment-face
-    font-lock-doc-string-face
-    font-lock-string-face
-    font-lock-keyword-face
-    font-lock-function-name-face
-    font-lock-variable-name-face
-    font-lock-type-face
-    font-lock-reference-face
-    font-lock-preprocessor-face))
-
-(defun font-lock-reset-face (face)
-  "Reset FACE its default state (from the X resource database).
-Returns whether it is indistinguishable from the default face."
-  (reset-face face)
-  (init-face-from-resources face)
-  (face-differs-from-default-p face))
-
-(defun font-lock-reset-all-faces ()
-  (mapcar 'font-lock-reset-face font-lock-face-list))
-
-(defun font-lock-add-fonts (tag-list)
-  ;; Underling comments looks terrible on tty's
-  (if (featurep 'tty)
-      (progn
-	(set-face-underline-p 'font-lock-comment-face nil 'global
-			      (append '(tty) tag-list) 'append)
-	(set-face-highlight-p 'font-lock-comment-face t 'global
-			      (append '(tty) tag-list)  'append)))
-  (set-face-font 'font-lock-comment-face [italic] 'global tag-list 'append)
-  (set-face-font 'font-lock-string-face [italic] 'global tag-list 'append)
-  (set-face-font 'font-lock-doc-string-face [italic] 'global tag-list 'append)
-  (set-face-font 'font-lock-function-name-face [bold] 'global tag-list 'append)
-  (set-face-font 'font-lock-variable-name-face [bold] 'global tag-list 'append)
-  (set-face-font 'font-lock-keyword-face [bold] 'global tag-list 'append)
-  (set-face-font 'font-lock-preprocessor-face [bold-italic] 'global tag-list
-		  'append)
-  (set-face-font 'font-lock-type-face [italic] 'global tag-list 'append)
-  (set-face-font 'font-lock-reference-face [bold] 'global tag-list 'append)
-  nil)
-
-(defun font-lock-add-colors (tag-list)
-  (set-face-foreground 'font-lock-comment-face "red" 'global tag-list 'append)
-  ;(set-face-font 'font-lock-comment-face [italic] 'global tag-list 'append)
-  (set-face-foreground 'font-lock-string-face "green4" 'global tag-list
-		       'append)
-  (set-face-foreground 'font-lock-string-face "green" 'global tag-list
-		       'append)
-  (set-face-foreground 'font-lock-doc-string-face "green4" 'global tag-list
-		       'append)
-  (set-face-foreground 'font-lock-doc-string-face "green" 'global tag-list
-		       'append)
-  (set-face-foreground 'font-lock-function-name-face "blue3" 'global tag-list
-		       'append)
-  (set-face-foreground 'font-lock-function-name-face "blue" 'global tag-list
-		       'append)
-  (set-face-foreground 'font-lock-variable-name-face "blue3" 'global tag-list
-		       'append)
-  (set-face-foreground 'font-lock-variable-name-face "blue" 'global tag-list
-		       'append)
-  (set-face-foreground 'font-lock-reference-face "red3" 'global
-		       tag-list 'append)
-  (set-face-foreground 'font-lock-reference-face "red" 'global tag-list
-		       'append)
-  (set-face-foreground 'font-lock-keyword-face "orange" 'global tag-list
-		       'append)
-  ;(set-face-font 'font-lock-keyword-face [bold] 'global tag-list 'append)
-  (set-face-foreground 'font-lock-preprocessor-face "blue3" 'global tag-list
-		       'append)
-  (set-face-foreground 'font-lock-preprocessor-face "blue" 'global tag-list
-		       'append)
-  ;(set-face-font 'font-lock-preprocessor-face [bold] 'global tag-list 'append)
-  (set-face-foreground 'font-lock-type-face "#6920ac" 'global tag-list 'append)
-  nil)
-
-(defun font-lock-apply-defaults (function tag-list)
-  (if (and (listp tag-list)
-	   (eq 'or (car tag-list)))
-      (mapcar #'(lambda (x)
-		  (font-lock-apply-defaults function x))
-	      (cdr tag-list))
-    (if tag-list
-	(if (not (valid-specifier-tag-set-p tag-list))
-	    (warn "Invalid tag set found: %s" tag-list)
-	  (funcall function tag-list)))))
-
-(defun font-lock-recompute-variables ()
-  ;; Is this a Draconian thing to do?
-  (mapcar #'(lambda (buffer)
-	      (save-excursion
-		(set-buffer buffer)
-		(font-lock-mode 0)
-		(font-lock-set-defaults t)))
-	  (buffer-list)))
-
-;; Backwards-compatible crud.
-
-(defun font-lock-use-default-fonts ()
-  "Reset the font-lock faces to a default set of fonts."
-  (interactive)
-  (font-lock-reset-all-faces)
-  (font-lock-add-fonts nil))
-
-(defun font-lock-use-default-colors ()
-  "Reset the font-lock faces to a default set of colors."
-  (interactive)
-  (font-lock-reset-all-faces)
-  (font-lock-add-colors nil))
-
-(defun font-lock-use-default-minimal-decoration ()
-  "Reset the font-lock patterns to a fast, minimal set of decorations."
-  (and font-lock-maximum-decoration
-       (setq font-lock-maximum-decoration nil)
-       (font-lock-recompute-variables)))
-
-(defun font-lock-use-default-maximal-decoration ()
-  "Reset the font-lock patterns to a larger set of decorations."
-  (and (not (eq t font-lock-maximum-decoration))
-       (setq font-lock-maximum-decoration t)
-       (font-lock-recompute-variables)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;         keywords         ;;;;;;;;;;;;;;;;;;;;;;
@@ -2587,28 +2662,6 @@ The name is assumed to begin with a capital letter.")
 ;; Install ourselves:
 
 (add-hook 'find-file-hooks 'font-lock-set-defaults t)
-
-(make-face 'font-lock-comment-face "Face to use for comments.")
-(make-face 'font-lock-doc-string-face "Face to use for documentation strings.")
-(make-face 'font-lock-string-face "Face to use for strings.")
-(make-face 'font-lock-keyword-face "Face to use for keywords.")
-(make-face 'font-lock-function-name-face "Face to use for function names.")
-(make-face 'font-lock-variable-name-face "Face to use for variable names.")
-(make-face 'font-lock-type-face "Face to use for type names.")
-(make-face 'font-lock-reference-face "Face to use for reference names.")
-(make-face 'font-lock-preprocessor-face
-	   "Face to use for preprocessor commands.")
-
-;; Backwards compatibility?
-
-(if (eq t font-lock-use-colors)
-    (setq font-lock-use-colors '(color)))
-
-(if (eq t font-lock-use-fonts)
-    (setq font-lock-use-fonts '(or (mono) (grayscale))))
-
-(font-lock-apply-defaults 'font-lock-add-fonts font-lock-use-fonts)
-(font-lock-apply-defaults 'font-lock-add-colors font-lock-use-colors)
 
 ;;;###autoload
 (add-minor-mode 'font-lock-mode " Font")

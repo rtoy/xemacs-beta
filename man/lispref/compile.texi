@@ -60,24 +60,30 @@ Here is an example:
 @end group
 
 @group
-(silly-loop 100000)
-@result{} ("Fri Mar 18 17:25:57 1994"
-    "Fri Mar 18 17:26:28 1994")  ; @r{31 seconds}
+(silly-loop 5000000)
+@result{} ("Fri Nov 28 20:56:16 1997"
+    "Fri Nov 28 20:56:39 1997")  ; @r{23 seconds}
 @end group
 
 @group
 (byte-compile 'silly-loop)
-@result{} #<compiled-function ...>
+@result{} #<compiled-function
+(from "loadup.el")
+(n)
+"...(23)"
+[current-time-string t1 n 0]
+2
+"Return time before and after N iterations of a loop.">
 @end group
 
 @group
-(silly-loop 100000)
-@result{} ("Fri Mar 18 17:26:52 1994"
-    "Fri Mar 18 17:26:58 1994")  ; @r{6 seconds}
+(silly-loop 5000000)
+@result{} ("Fri Nov 28 20:57:49 1997"
+    "Fri Nov 28 20:57:55 1997")  ; @r{6 seconds}
 @end group
 @end example
 
-  In this example, the interpreted code required 31 seconds to run,
+  In this example, the interpreted code required 23 seconds to run,
 whereas the byte-compiled code required 6 seconds.  These results are
 representative, but actual results will vary greatly.
 
@@ -134,11 +140,13 @@ way to ``compile the same definition again.''
 
 @group
 (byte-compile 'factorial)
-     @result{}
-#<compiled-function (integer)
-  "ÁU«‚Á‡ÂS!_‡"
-  [integer 1 factorial]
-  3 "Compute factorial of INTEGER.">
+@result{} #<compiled-function
+(from "loadup.el")
+(integer)
+"...(21)"
+[integer 1 factorial]
+3
+"Compute factorial of INTEGER.">
 @end group
 @end example
 
@@ -463,12 +471,9 @@ representation.  It is the definition of the command
 
 @example
 #<compiled-function
-  (&optional arg)
-  "¬‚ÁÂ[!‡"
-  [arg 1 forward-sexp]
-  2
-  579173
-  "_p">
+(from "lisp.elc")
+(&optional arg)
+"...(15)" [arg 1 forward-sexp] 2 854740 "_p">
 @end example
 
   The primitive way to create a compiled-function object is with

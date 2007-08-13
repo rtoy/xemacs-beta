@@ -2167,7 +2167,6 @@ signal_before_change (struct buffer *buf, Bufpos start, Bufpos end)
       /* Now in any case run the before-change-functions if any.  */
 
       if (!preparing_for_armageddon &&
-	  !EQ (buffer, Vprin1_to_string_buffer) &&
 	  (!NILP (symbol_value_in_buffer (Qbefore_change_functions, buffer)) ||
 	   /* Obsolete, for compatibility */
 	   !NILP (symbol_value_in_buffer (Qbefore_change_function, buffer))))
@@ -2226,7 +2225,6 @@ signal_after_change (struct buffer *buf, Bufpos start, Bufpos orig_end,
 	}
 
       if (!preparing_for_armageddon &&
-	  !EQ (buffer, Vprin1_to_string_buffer) &&
 	  (!NILP (symbol_value_in_buffer (Qafter_change_functions, buffer)) ||
 	   /* Obsolete, for compatibility */
 	   !NILP (symbol_value_in_buffer (Qafter_change_function, buffer))))

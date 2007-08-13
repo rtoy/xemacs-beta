@@ -44,67 +44,148 @@ int handle_nonfull_spec_fonts;
 /************************************************************************/
 
 /* Replacement for XAllocColor() that tries to return the nearest
-   available color if the colormap is full.  From FSF Emacs. */
+   available color if the colormap is full.  Original was from FSFmacs,
+   but rewritten by Jareth Hein <jareth@camelot-soft.com> 97/11/25 */
 
+/* Return value is 1 for normal success, 2 for nearest color success,
+   3 for Non-deallocable sucess, and 0 for absolute failure (shouldn't
+   happen?) */
 int
-allocate_nearest_color (Display *display, Colormap screen_colormap,
+allocate_nearest_color (Display *display, Colormap colormap, Visual *visual,
 		        XColor *color_def)
 {
   int status;
 
-  status = XAllocColor (display, screen_colormap, color_def);
-  if (!status)
+  if (visual->class == DirectColor || visual->class == TrueColor)
     {
-      /* If we got to this point, the colormap is full, so we're
-	 going to try and get the next closest color.
-	 The algorithm used is a least-squares matching, which is
-	 what X uses for closest color matching with StaticColor visuals.  */
-
-      XColor *cells;
-      int no_cells;
-      int nearest;
-      long nearest_delta, trial_delta;
-      int x;
-
-      no_cells = XDisplayCells (display, XDefaultScreen (display));
-      cells = alloca_array (XColor, no_cells);
-
-      for (x = 0; x < no_cells; x++)
-	cells[x].pixel = x;
-
-      XQueryColors (display, screen_colormap, cells, no_cells);
-      nearest = 0;
-      /* I'm assuming CSE so I'm not going to condense this. */
-      nearest_delta = ((((color_def->red >> 8) - (cells[0].red >> 8))
-			* ((color_def->red >> 8) - (cells[0].red >> 8)))
-		       +
-		       (((color_def->green >> 8) - (cells[0].green >> 8))
-			* ((color_def->green >> 8) - (cells[0].green >> 8)))
-		       +
-		       (((color_def->blue >> 8) - (cells[0].blue >> 8))
-			* ((color_def->blue >> 8) - (cells[0].blue >> 8))));
-      for (x = 1; x < no_cells; x++)
+      if (XAllocColor (display, colormap, color_def) != 0)
 	{
-	  trial_delta = ((((color_def->red >> 8) - (cells[x].red >> 8))
-			  * ((color_def->red >> 8) - (cells[x].red >> 8)))
-			 +
-			 (((color_def->green >> 8) - (cells[x].green >> 8))
-			  * ((color_def->green >> 8) - (cells[x].green >> 8)))
-			 +
-			 (((color_def->blue >> 8) - (cells[x].blue >> 8))
-			  * ((color_def->blue >> 8) - (cells[x].blue >> 8))));
-	  if (trial_delta < nearest_delta)
-	    {
-	      nearest = x;
-	      nearest_delta = trial_delta;
+	  status = 1;
+	}
+      else
+	{
+	  /* We're dealing with a TrueColor/DirectColor visual, so play games
+	     with the RGB values in the XColor struct. */
+	  /* ### JH: I'm not sure how a call to XAllocColor can fail in a
+	     TrueColor or DirectColor visual, so I will just reformat the
+	     request to match the requirements of the visual, and re-issue
+	     the request.  If this fails for anybody, I wanna know about it
+	     so I can come up with a better plan */
+
+	  unsigned long rshift,gshift,bshift,rbits,gbits,bbits,junk;
+	  junk = visual->red_mask;
+	  rshift = 0;
+	  while ((junk & 0x1) == 0) {
+	    junk = junk >> 1;
+	    rshift ++;
+	  }
+	  rbits = 0;
+	  while (junk != 0) {
+	    junk = junk >> 1;
+	    rbits++;
+	  }
+	  junk = visual->green_mask;
+	  gshift = 0;
+	  while ((junk & 0x1) == 0) {
+	    junk = junk >> 1;
+	    gshift ++;
+	  }
+	  gbits = 0;
+	  while (junk != 0) {
+	    junk = junk >> 1;
+	    gbits++;
+	  }
+	  junk = visual->blue_mask;
+	  bshift = 0;
+	  while ((junk & 0x1) == 0) {
+	    junk = junk >> 1;
+	    bshift ++;
+	  }
+	  bbits = 0;
+	  while (junk != 0) {
+	    junk = junk >> 1;
+	    bbits++;
+ 	  }
+
+	  color_def->red = color_def->red >> (16 - rbits);
+	  color_def->green = color_def->green >> (16 - gbits);
+	  color_def->blue = color_def->blue >> (16 - bbits);
+	  if (XAllocColor (display, colormap, color_def) != 0)
+	    status = 1;
+	  else
+  	    {
+	      /* ### JH: I'm punting here, knowing that doing this will at
+		 least draw the color correctly.  However, unless we convert
+		 all of the functions that allocate colors (graphics
+		 libraries, etc) to use this function doing this is very
+		 likely to cause problems later... */
+	      color_def->pixel = (color_def->red << rshift) | (color_def->green << gshift) |
+				   (color_def->blue << bshift);
+	      status = 3;
 	    }
 	}
-      color_def->red = cells[nearest].red;
-      color_def->green = cells[nearest].green;
-      color_def->blue = cells[nearest].blue;
-      status = XAllocColor (display, screen_colormap, color_def);
     }
+  else
+    {
+      if (XAllocColor (display, colormap, color_def) != 0)
+	status = 1;
+      else
+	{
+	  /* If we got to this point, the colormap is full, so we're
+	     going to try and get the next closest color.  The algorithm used
+	     is a least-squares matching, which is what X uses for closest
+	     color matching with StaticColor visuals. */
+	  XColor *cells;
+	  /* JH: I can't believe there's no way to go backwards from a
+	     colormap ID and get its visual and number of entries, but X
+	     apparently isn't built that way... */
+	  int no_cells = visual->map_entries; 
+	  int nearest;
+	  long nearest_delta, trial_delta;
+	  int x;
 
+	  cells = alloca_array (XColor, no_cells);
+
+	  for (x = 0; x < no_cells; x++)
+	    cells[x].pixel = x;
+ 
+	  /* read the current colormap */
+	  XQueryColors (display, colormap, cells, no_cells);
+	  nearest = 0;
+	  /* I'm assuming CSE so I'm not going to condense this. */
+	  nearest_delta = ((((color_def->red >> 8) - (cells[0].red >> 8))
+			    * ((color_def->red >> 8) - (cells[0].red >> 8)))
+			   +
+			   (((color_def->green >> 8) - (cells[0].green >> 8))
+			    * ((color_def->green >> 8) - (cells[0].green >> 8)))
+			   +
+			   (((color_def->blue >> 8) - (cells[0].blue >> 8))
+			    * ((color_def->blue >> 8) - (cells[0].blue >> 8))));
+	  for (x = 1; x < no_cells; x++)
+	    {
+	      trial_delta = ((((color_def->red >> 8) - (cells[x].red >> 8))
+			      * ((color_def->red >> 8) - (cells[x].red >> 8)))
+			     +
+			     (((color_def->green >> 8) - (cells[x].green >> 8))
+			      * ((color_def->green >> 8) - (cells[x].green >> 8)))
+			     +
+			     (((color_def->blue >> 8) - (cells[x].blue >> 8))
+			      * ((color_def->blue >> 8) - (cells[x].blue >> 8))));
+	      if (trial_delta < nearest_delta)
+		{
+		  nearest = x;
+		  nearest_delta = trial_delta;
+		}
+	    }
+	  color_def->red = cells[nearest].red;
+	  color_def->green = cells[nearest].green;
+	  color_def->blue = cells[nearest].blue;
+	  if (XAllocColor (display, colormap, color_def) != 0)
+	    status = 2;
+	  else
+	    status = 0; /* JH: how does this happen??? DOES this happen??? */
+	}
+    }
   return status;
 }
 
@@ -115,11 +196,13 @@ x_parse_nearest_color (struct device *d, XColor *color, Bufbyte *name,
   Display *dpy;
   Screen *xs;
   Colormap cmap;
+  Visual *visual;
   int result;
 
   dpy = DEVICE_X_DISPLAY (d);
   xs = DefaultScreenOfDisplay (dpy);
-  cmap = DefaultColormapOfScreen (xs);
+  cmap = DEVICE_X_COLORMAP(d);
+  visual = DEVICE_X_VISUAL (d);
 
   memset (color, 0, sizeof (*color));
   {
@@ -135,7 +218,7 @@ x_parse_nearest_color (struct device *d, XColor *color, Bufbyte *name,
 				 Qcolor, errb);
       return 0;
     }
-  result = allocate_nearest_color (dpy, cmap, color);
+  result = allocate_nearest_color (dpy, cmap, visual, color);
   if (!result)
     {
       maybe_signal_simple_error ("couldn't allocate color",
@@ -143,7 +226,7 @@ x_parse_nearest_color (struct device *d, XColor *color, Bufbyte *name,
       return 0;
     }
 
-  return 1;
+  return result;
 }
 
 static int
@@ -164,6 +247,10 @@ x_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
   c->data = xnew (struct x_color_instance_data);
+  if (result == 3) 
+    COLOR_INSTANCE_X_DEALLOC (c) = 0;
+  else
+    COLOR_INSTANCE_X_DEALLOC (c) = 1;
   COLOR_INSTANCE_X_COLOR (c) = color;
   return 1;
 }
@@ -187,11 +274,11 @@ x_finalize_color_instance (struct Lisp_Color_Instance *c)
     {
       if (DEVICE_LIVE_P (XDEVICE (c->device)))
 	{
-	  Display *dpy = DEVICE_X_DISPLAY (XDEVICE (c->device));
-
-	  XFreeColors (dpy,
-		       DefaultColormapOfScreen (DefaultScreenOfDisplay (dpy)),
-		       &COLOR_INSTANCE_X_COLOR (c).pixel, 1, 0);
+	  if (COLOR_INSTANCE_X_DEALLOC (c)) 
+	    {
+	      XFreeColors (DEVICE_X_DISPLAY (XDEVICE (c->device)), DEVICE_X_COLORMAP (XDEVICE (c->device)),
+			   &COLOR_INSTANCE_X_COLOR (c).pixel, 1, 0);
+	    }
 	}
       xfree (c->data);
       c->data = 0;
@@ -200,8 +287,8 @@ x_finalize_color_instance (struct Lisp_Color_Instance *c)
 
 /* Color instances are equal if they resolve to the same color on the
    screen (have the same RGB values).  I imagine that
-   "same RGV values" == "same cell in the colormap."  Arguably we should
-   be comparing their names instead. */
+   "same RGB values" == "same cell in the colormap."  Arguably we should
+   be comparing their names or pixel values instead. */
 
 static int
 x_color_instance_equal (struct Lisp_Color_Instance *c1,
@@ -236,12 +323,13 @@ x_valid_color_name_p (struct device *d, Lisp_Object color)
 {
   XColor c;
   Display *dpy = DEVICE_X_DISPLAY (d);
+  Colormap cmap = DEVICE_X_COLORMAP (d);
+
   CONST char *extname;
 
   GET_C_STRING_CTEXT_DATA_ALLOCA (color, extname);
 
-  return XParseColor (dpy,
-		      DefaultColormapOfScreen (DefaultScreenOfDisplay (dpy)),
+  return XParseColor (dpy, cmap,
 		      extname, &c);
 }
 

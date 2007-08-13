@@ -53,8 +53,6 @@
 ;;   added "Exact match, then inexact" code
 ;;   added support for include directive.
 
-(require 'thing)
-
 
 ;; Auxiliary functions
 
@@ -160,12 +158,10 @@ You can set this with meta-x set-buffer-tag-table.  See the documentation
 for the variable `tag-table-alist' for more information.")
 (make-variable-buffer-local 'buffer-tag-table)
 
-(defcustom tags-file-name nil
-  "*The name of the tags-table used by all buffers.
+(defvar tags-file-name nil
+  "The name of the tags-table used by all buffers.
 This is for backwards compatibility, and is largely supplanted by the
-variable tag-table-alist."
-  :type '(choice (const nil) string)
-  :group 'etags)
+variable tag-table-alist.")
 
 
 ;; XEmacs change: added tags-auto-read-changed-tag-files
@@ -178,59 +174,59 @@ then prompt if changed TAGS file should be re-read."
 (defun buffer-tag-table-list ()
   "Returns a list (ordered) of the tags tables which should be used for 
 the current buffer."
-  (let (result expression)
+  (let (result)
     (when buffer-tag-table
       (push buffer-tag-table result))
+    ;; Current directory
     (when (file-readable-p (concat default-directory "TAGS"))
       (push (concat default-directory "TAGS") result))
+    ;; Parent directory
+    (let ((parent-tag-file (expand-file-name "../TAGS" default-directory)))
+      (when (file-readable-p parent-tag-file)
+	(push parent-tag-file result)))
+    ;; tag-table-alist
     (let ((key (or buffer-file-name
 		   (concat default-directory (buffer-name))))
-	  (alist tag-table-alist))
-      (while alist
-	(setq expression (car (car alist)))
+	  expression)
+      (dolist (item tag-table-alist)
+	(setq expression (car item))
 	;; If the car of the alist item is a string, apply it as a regexp
 	;; to the buffer-file-name.  Otherwise, evaluate it.  If the
 	;; regexp matches, or the expression evaluates non-nil, then this
 	;; item in tag-table-alist applies to this buffer.
 	(when (if (stringp expression)
 		  (string-match expression key)
-		(condition-case nil
-		    (eval expression)
-		  (error nil)))
+		(ignore-errors
+		  (eval expression)))
 	  ;; Now evaluate the cdr of the alist item to get the name of
 	  ;; the tag table file.
-	  (setq expression 
-		(condition-case nil
-		    (eval (cdr (car alist)))
-		  (error nil)))
+	  (setq expression (ignore-errors
+			     (eval (cdr item))))
 	  (if (stringp expression)
-	      (setq result (cons expression result))
-	    (error "Expression in tag-table-alist evaluated to non-string")))
-	(pop alist)))
-    (or result tags-file-name
-	;; **** I don't know if this is the right place to do this,
-	;; **** Maybe it would be better to do this after (delq nil result).
-	(call-interactively 'visit-tags-table))
-    (when tags-file-name
-      (setq result (nconc result (list tags-file-name))))
+	      (push expression result)
+	    (error "Expression in tag-table-alist evaluated to non-string")))))
     (setq result
 	  (mapcar
 	   (lambda (name)
-	     (if (file-directory-p name)
-		 (setq name (concat (file-name-as-directory name) "TAGS")))
-	     (if (file-readable-p name)
-		 (save-current-buffer
-		   ;; get-tag-table-buffer has side-effects
-		   (set-buffer (get-tag-table-buffer name))
-		   buffer-file-name)))
+	     (when (file-directory-p name)
+	       (setq name (concat (file-name-as-directory name) "TAGS")))
+	     (and (file-readable-p name)
+		  ;; get-tag-table-buffer has side-effects
+		  (symbol-value-in-buffer 'buffer-file-name
+					  (get-tag-table-buffer name))))
 	   result))
     (setq result (delq nil result))
+    ;; #### tags-file-name is *evil*.
+    (or result tags-file-name
+	(call-interactively 'visit-tags-table))
+    (when tags-file-name
+      (setq result (nconc result (list tags-file-name))))
     (or result (error "Buffer has no associated tag tables"))
     (tags-remove-duplicates (nreverse result))))
 
 ;;;###autoload
 (defun visit-tags-table (file)
-  "Tell tags commands to use tags table file FILE first.
+  "Tell tags commands to use tags table file FILE when all else fails.
 FILE should be the name of a file created with the `etags' program.
 A directory name is ok too; it means file TAGS in that directory."
   (interactive (list (read-file-name "Visit tags table: (default TAGS) "
@@ -239,10 +235,13 @@ A directory name is ok too; it means file TAGS in that directory."
 				     t)))
   (if (string-equal file "") 
       (setq tags-file-name nil)
-    (progn
-      (setq file (expand-file-name file))
-      (if (file-directory-p file)
-	  (setq file (expand-file-name "TAGS" file)))
+    (setq file (expand-file-name file))
+    (when (file-directory-p file)
+      (setq file (expand-file-name "TAGS" file)))
+    ;; It used to be that, if a user pressed RET by mistake, the bogus
+    ;; `tags-file-name' would remain, causing the error at
+    ;; `buffer-tag-table'.
+    (when (file-readable-p file)
       (setq tags-file-name file))))
 
 (defun set-buffer-tag-table (file)
@@ -577,9 +576,7 @@ Make it buffer-local in a mode hook.  The function is called with no
 	      (warn "Error in find-tag-default-hook signalled error: %s"
 		    (error-message-string data))
 	      nil)))
-      (let ((pair (thing-symbol (point))))
-	(and pair
-	     (buffer-substring (car pair) (cdr pair))))))
+      (symbol-near-point)))
 
 ;; This function depends on the following symbols being bound properly:
 ;; buffer-tag-table-list,

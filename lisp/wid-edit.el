@@ -34,7 +34,6 @@
 
 (require 'widget)
 
-(autoload 'pp-to-string "pp")
 (autoload 'finder-commentary "finder" nil t)
 
 ;;; Customization.
@@ -152,6 +151,14 @@ This exists as a variable so it can be set locally in certain buffers.")
   (with-current-buffer (get-buffer-create " *widget-tmp*")
     (erase-buffer)
     (princ object (current-buffer))
+    (buffer-string)))
+
+(defun widget-prettyprint-to-string (object)
+  ;; Like pp-to-string, but uses `cl-prettyprint'
+  ;; #### FIX ME!!!!
+  (with-current-buffer (get-buffer-create " *widget-tmp*")
+    (erase-buffer)
+    (cl-prettyprint object)
     (buffer-string)))
 
 (defun widget-clear-undo ()
@@ -632,10 +639,12 @@ automatically."
 		       (repeat :tag "Suffixes"
 			       (string :format "%v")))))
 
-(defvar widget-glyph-pointer-glyph
-  (make-pointer-glyph [cursor-font :data "hand2"])
-  "Glyph to be used as the mouse pointer shape over glyphs.
-Use `set-glyph-image' to change this.")
+;; Don't use this, because we cannot yet distinguish between widget
+;; glyphs associated with user action, and actionless ones.
+;(defvar widget-glyph-pointer-glyph
+;  (make-pointer-glyph [cursor-font :data "hand2"])
+;  "Glyph to be used as the mouse pointer shape over glyphs.
+;Use `set-glyph-image' to change this.")
 
 (defvar widget-glyph-cache nil
   "Cache of glyphs associated with strings (files).")
@@ -745,7 +754,7 @@ glyphs used when the widget is pushed and inactive, respectively."
     (set-extent-property extent 'start-open t)
     (set-extent-property extent 'end-open t)
     (set-extent-property extent 'keymap map)
-    (set-extent-property extent 'pointer widget-glyph-pointer-glyph)
+    ;;(set-extent-property extent 'pointer widget-glyph-pointer-glyph)
     (set-extent-end-glyph extent glyph)
     (unless (or (stringp help-echo) (null help-echo))
       (setq help-echo 'widget-mouse-help))
@@ -1951,8 +1960,9 @@ If END is omitted, it defaults to the length of LIST."
 
 (defun widget-url-link-action (widget &optional event)
   "Open the url specified by WIDGET."
-  (require 'browse-url)
-  (funcall browse-url-browser-function (widget-value widget)))
+  (if (boundp 'browse-url-browser-function)
+      (funcall browse-url-browser-function (widget-value widget))
+    (error "Cannot follow URLs in this XEmacs")))
 
 ;;; The `function-link' Widget.
 
@@ -3343,14 +3353,14 @@ It will read a directory name from the minibuffer when invoked."
   :prompt-value 'widget-sexp-prompt-value)
 
 (defun widget-sexp-value-to-internal (widget value)
-  ;; Use pp for printer representation.
+  ;; Use cl-prettyprint for printer representation.
   (let ((pp (if (symbolp value)
 		(prin1-to-string value)
-	      (pp-to-string value))))
+	      (widget-prettyprint-to-string value))))
     (while (string-match "\n\\'" pp)
       (setq pp (substring pp 0 -1)))
-    (if (or (string-match "\n\\'" pp)
-	    (> (length pp) 40))
+    (if (and (> (length pp) 40)
+	     (not (string-match "\\`\n" pp)))
 	(concat "\n" pp)
       pp)))
 

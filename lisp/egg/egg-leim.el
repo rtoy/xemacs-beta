@@ -1,4 +1,4 @@
-;;; egg-leim.el --- Egg-related code for LEIM
+;;; egg-leim.el --- Egg/Wnn-related code for LEIM
 ;; Copyright (C) 1997 Stephen Turnbull <turnbull@sk.tsukuba.ac.jp>
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;;
@@ -37,6 +37,7 @@
       (require 'egg)
     (error "Wnn is not built into this XEmacs"))
   (setq inactivate-current-input-method-function 'egg-inactivate)
+  (setq egg-default-startup-file "eggrc-wnn")
   (require 'egg-wnn)
   (let ((func (get 'japanese 'set-egg-environ)))
     (when func

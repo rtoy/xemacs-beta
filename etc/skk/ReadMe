@@ -1,0 +1,547 @@
+目次
+====
+
+1. SKK とは
+2. SKK パッケージの内容
+3. SKK のインストール法
+4. ユーザの個人環境設定
+5. SKK 辞書について
+6. SKK メーリングリスト
+7. 謝辞とお願い
+
+1. SKK とは
+===========
+
+SKK は Nemacs, Mule, Demacs 上に高速で効率的な日本語入力環境を提供する
+システムで, GNU General Public License に従った free software として配
+布されます.
+
+SKK は単純な基本原理のもとで設計, 作成されているので, 短時間で使用法を
+マスターすることができます.
+
+SKK は以下のような特徴を持ちます.
+
+   1. Nemacs の中で閉じており、漢字が表示できるどの端末でも使用できる。
+
+	サーバに依存しないで使用できるので, Nemacs が動いている限りい
+	つでも日本語の入力ができます.
+
+   2. 特権ユーザになることのできない一般ユーザでも完全な SKK システム
+      を容易にインストールすることができる。
+
+	SKK の使用に最低限必要なファイルは skk.el と SKK-JISYO.L だけ
+	です. このふたつのファイルがあれば後は個人環境を設定するだけで 
+	SKK を利用できます.
+
+   3. 変換のアルゴリズムは文法的な知識を用いないので、ユーザの意図し
+      た日本語の文字列がそのまま容易に入力できる。また古語、現代語、
+      方言、文語、口語等、いずれについても同様に効率的な変換ができる。
+
+	SKK では『Sukiyanen』を変換すれば, 「好きやねん」となり, 「好
+	きや年」のような変換はしません.
+
+   4. copy free な辞書としては最大規模の辞書を備えている。
+
+	今回配布する辞書は15万以上の項目からなります.
+
+   5. 変換に失敗すると自動的に辞書登録モードになるので、辞書登録のた
+      めに改めて読みを入力する必要がない。
+
+   6. 再帰的な辞書登録が可能。
+
+   7. 日本語の インクリメンタルサーチをアスキー文字のときと同様に行える。
+
+	探索したい文字列が改行や引用で分断されていても見つけることがで
+	きるように改造してあります.
+
+   8. 読みのコンプリーションにより、長い見出し語の入力の一部を省略できる。
+
+   9. 『file』 ⇒ 「ファイル」のように英語の綴による変換ができる.
+
+  10. Emacs との親和性が高い。Emacs の大抵のモードの下で使用できる。
+
+  11. Emacs の Vi モード(vip-mode)と共存して使える。
+
+SKK の基本的な使用法はチュートリアルプログラム	で学習できます. より詳
+しい使用法についてはマニュアル(skk.texi, skk.dvi, skk.ps)を参照して下さい.
+
+2. SKK パッケージの内容
+=======================
+
+この ReadMe ファイルは SKK バージョン 9.6 に対応するものです. パッケー
+ジには以下のファイルがあります.
+
+	doc/gpl.texi
+	doc/skk.texi
+	doc/Makefile.in
+	doc/skk.info
+	doc/jtexindex/Perl/jptexindex
+	doc/jtexindex/C/Makefile.in
+	doc/jtexindex/C/alloca.c
+	doc/jtexindex/C/bzero.c
+	doc/jtexindex/C/configure
+	doc/jtexindex/C/configure.in
+	doc/jtexindex/C/getopt.c
+	doc/jtexindex/C/getopt.h
+	doc/jtexindex/C/getopt1.c
+	doc/jtexindex/C/install.sh
+	doc/jtexindex/C/jtexindex.diff
+	doc/jtexindex/C/texindex.c
+	doc/jtexindex/C/texindex.c.old
+	doc/skk.toc
+	doc/skk.cp
+	doc/skk.fn
+	doc/skk.vr
+	doc/skk.tp
+	doc/skk.ky
+	doc/skk.pg
+	doc/skk.ps
+	doc/skk.cps
+	doc/skk.fns
+	doc/skk.kys
+	doc/skk.vrs
+	doc/texinfo.tex
+	doc/skk.info-1
+	doc/skk.info-2
+	doc/skk.info-3
+	doc/skk.info-4
+	doc/skk.info-5
+	doc/skk.info-6
+	doc/texi-jp.tex
+	doc/skk.log
+	doc/skk.dvi
+	doc/skk.aux
+	etc/SKK.tut
+	etc/SKK.tut.E
+	etc/Makefile.in
+	jisyo/SKK-JISYO.JIS2
+	jisyo/SKK-JISYO.L
+	jisyo/SKK-JISYO.M
+	jisyo/SKK-JISYO.S
+	skkserv/skkserv.c
+	skkserv/skkserv.h
+	skkserv/README
+	skkserv/add-rc.local
+	skkserv/add-services
+	skkserv/Makefile.bak
+	skkserv/Makefile.in
+	jisyo-tools/README
+	jisyo-tools/skkdic-expr.c
+	jisyo-tools/skkdic-sort.c
+	jisyo-tools/skkdic-count.c
+	jisyo-tools/README.1st
+	jisyo-tools/Makefile.in
+	vip/vip.el.diff
+	vip/unsupported/skk-viper.el
+	vip/unsupported/README.jpn
+	lisp/avltree.el
+	lisp/elib-node.el
+	lisp/queue-m.el
+	lisp/skk-auto.el
+	lisp/skk-comp.el
+	lisp/skk-e18.el
+	lisp/skk-e19.el
+	lisp/skk-gadget.el
+	lisp/skk-is-n.el
+	lisp/skk-isearch.el
+	lisp/skk-kakasi.el
+	lisp/skk-kcode.el
+	lisp/skk-num.el
+	lisp/skk-server.el
+	lisp/skk-tools.el
+	lisp/skk-tree.el
+	lisp/skk-tut.el
+	lisp/skk-vip.el
+	lisp/skk.el
+	lisp/stack-m.el
+	lisp/string.el
+	lisp/Makefile.18
+	lisp/bytecomp-2.07/mule.dif
+	lisp/bytecomp-2.07/README
+	lisp/bytecomp-2.07/bytecomp.el
+	lisp/bytecomp-2.07/byte-optimize.el
+	lisp/bytecomp-2.07/bytecomp-runtime.el
+	lisp/bytecomp-2.07/disass.el
+	lisp/bytecomp-2.07/bytecode.c
+	lisp/bytecomp-2.07/data.c.patch
+	lisp/bytecomp-2.07/eval.c.patch
+	lisp/bytecomp-2.07/lread.c.patch
+	lisp/bytecomp-2.07/print.c.patch
+	lisp/bytecomp-2.07/make-docfile.c
+	lisp/bytecomp-2.07/README.jpn
+	lisp/Makefile.in
+	contrib/dbskkd/compat/include/machine/ansi.h
+	contrib/dbskkd/compat/include/err.h
+	contrib/dbskkd/compat/strerror.c
+	contrib/dbskkd/compat/err.c
+	contrib/dbskkd/makeskkdb.c
+	contrib/dbskkd/dbskkd.c
+	contrib/dbskkd/Release-Notes
+	contrib/pskkserv/perl4/makedbmdic
+	contrib/pskkserv/perl4/pskkserv
+	contrib/pskkserv/perl5/makedbmdic
+	contrib/pskkserv/perl5/pskkserv
+	contrib/skktools/READ.ME
+	contrib/skktools/README
+	contrib/skktools/adddummy.t
+	contrib/skktools/alpha-kana.pl
+	contrib/skktools/atok2skk.pl
+	contrib/skktools/codeconv.pl
+	contrib/skktools/convprog.t
+	contrib/skktools/kana2roma.pl
+	contrib/skktools/list2skk.t
+	contrib/skktools/pubdic2list.t
+	contrib/skktools/removedummy.t
+	contrib/skktools/roma2kana.pl
+	contrib/skktools/skk2list.t
+	contrib/skktools/skkconv.t
+	contrib/skktools/sub.t
+	contrib/skktools/wx2skk.pl
+	contrib/kakasi-2.2.5/src/78_83.c
+	contrib/kakasi-2.2.5/src/ANNOUNCE
+	contrib/kakasi-2.2.5/src/CHANGES
+	contrib/kakasi-2.2.5/src/COPYING
+	contrib/kakasi-2.2.5/src/E2.c
+	contrib/kakasi-2.2.5/src/H2.c
+	contrib/kakasi-2.2.5/src/J2.c
+	contrib/kakasi-2.2.5/src/J2.h
+	contrib/kakasi-2.2.5/src/JISYO
+	contrib/kakasi-2.2.5/src/K2.c
+	contrib/kakasi-2.2.5/src/a2.c
+	contrib/kakasi-2.2.5/src/atoc-conv.c
+	contrib/kakasi-2.2.5/src/conv-util.c
+	contrib/kakasi-2.2.5/src/dict.c
+	contrib/kakasi-2.2.5/src/g2.c
+	contrib/kakasi-2.2.5/src/itaiji.c
+	contrib/kakasi-2.2.5/src/itaijidict
+	contrib/kakasi-2.2.5/src/j2.c
+	contrib/kakasi-2.2.5/src/k2.c
+	contrib/kakasi-2.2.5/src/kakasi.1
+	contrib/kakasi-2.2.5/src/kakasi.c
+	contrib/kakasi-2.2.5/src/kakasi.cat
+	contrib/kakasi-2.2.5/src/kakasi.h
+	contrib/kakasi-2.2.5/src/kanji.h
+	contrib/kakasi-2.2.5/src/kanjiio.c
+	contrib/kakasi-2.2.5/src/mkkanwa.c
+	contrib/kakasi-2.2.5/src/rdic-conv.c
+	contrib/kakasi-2.2.5/src/furigana.h
+	contrib/kakasi-2.2.5/src/conv-util.h
+	contrib/kakasi-2.2.5/IAFA-PACKAGE
+	contrib/kakasi-2.2.5/README
+	contrib/kakasi-2.2.5/README.jpn
+	contrib/skkinput-0.99/dot.skkinput
+	contrib/skkinput-0.99/skkel.c
+	contrib/skkinput-0.99/Imakefile
+	contrib/skkinput-0.99/Makefile.std
+	contrib/skkinput-0.99/README.euc
+	contrib/skkinput-0.99/CHANGES.euc
+	contrib/skkinput-0.99/skkconv.c
+	contrib/skkinput-0.99/skkel.h
+	contrib/skkinput-0.99/SkkInput.c
+	contrib/skkinput-0.99/SkkInput.h
+	contrib/skkinput-0.99/SkkInputP.h
+	contrib/skkinput-0.99/skkkey.h
+	contrib/skkinput-0.99/skkkeymap.c
+	contrib/skkinput-0.99/skkkip.c
+	contrib/skkinput-0.99/skkldic.c
+	contrib/skkinput-0.99/skkldrec.c
+	contrib/skkinput-0.99/skkmain.c
+	contrib/skkinput-0.99/skkmain.h
+	contrib/skkinput-0.99/skkmarker.c
+	contrib/skkinput-0.99/skkmbuf.c
+	contrib/skkinput-0.99/skkproto.h
+	contrib/skkinput-0.99/skksoc.c
+	contrib/skkinput-0.99/skksvect.c
+	contrib/skkinput-0.99/table.h
+	contrib/skkinput-0.99/skksvect.h
+	contrib/skkinput-0.99/skkwin.c
+	contrib/skkinput-0.99/version.h
+	contrib/skkinput-0.99/config.h
+	contrib/skkinput-0.99/mytime.h
+	contrib/skkinput-0.99/skkconfig.c
+	contrib/skkinput-0.99/skkinput.man
+	contrib/skkinput-0.99/skkinput.doc
+	contrib/skkinput-0.99/.depend
+	contrib/skkinput-0.99/COPYING
+	Makefile.18
+	mkinstalldirs
+	install-sh
+	configure.in
+	configure
+	config.h.in
+	Makefile.in
+	ReadMe
+	ReadMe.English
+
+3. SKK のインストール法
+=======================
+
+3.1 Emacs19 base の Mule 上で skk を利用する場合
+------------------------------------------------ 
+
+配布されたパッケージのあるディレクトリで以下のコマンドを実行してくださ
+い。
+	
+	% ./configure
+	% make 
+	% make install
+
+その際必要に応じて Makefile を修正してください。
+make install により Emacs Lisp プログラム、辞書、info ドキュメントなど
+がそれぞれ指定のディレクトリにインストールされます。
+
+3.2 Nemacs または Emacs 18 base の Mule 上で skk を利用する場合
+---------------------------------------------------------------
+
+配布されたパッケージのあるディレクトリで make -f Makefile.18 を実行し
+てください。
+
+
+4. ユーザの個人環境設定
+=======================
+
+バージョン5以前からのユーザも以下を読んで必要な変更を加えてください.
+
+バージョン6からは共用辞書の使用形態として以下のふたつのいずれかをユー
+ザが選択できるようになりました.
+
+	(イ) Emacs のバッファに取り込んで利用する.
+	(ロ) 辞書サーバによりアクセスする.
+
+(イ)の方式は, 最初にアクセスするときにファイルをバッファに読み込むのに
+少し時間がかかることと, Emacs の使用するメモリが大きくなるという欠点が
+あります. 一方, この方式の長所は変換の速度が速いことと, サーバに依存し
+ないために Emacs が動いている限りいつでも使用できるということです.
+
+(ロ)の方式は(イ)と相補的な関係にあります. したがって, その長所は, 1回
+目のアクセスが速いことと, Emacs の使用するメモリを増加させないことで, 
+欠点は変換の速度が遅いこととサーバがダウンしているときには使えないとい
+うことです. (ただし, サーバがダウンしていたり, 途中でダウンすると自動
+的に(イ)の方式に切り替わるようになっています.) また, サーバホストをあ
+らかじめ複数指定しておけば, 障害時にはホストを自動的に切り替えるように
+もできます.
+
+以上を考慮してどちらの方式にするかを決めて以下の設定を行ってください.
+
+4.1 (イ)の方式での設定
+----------------------
+
+[イ-1] .emacs に以下の行を追加する.
+
+        (global-set-key "\C-x\C-j" 'skk-mode)
+        (global-set-key "\C-xj" 'skk-auto-fill-mode)
+        (global-set-key "\C-xt" 'skk-tutorial)
+        (autoload 'skk-mode "skk" nil t)
+        (autoload 'skk-tutorial "skk-tut" nil t)
+        (autoload 'skk-check-jisyo "skk-tools" nil t)
+        (autoload 'skk-merge "skk-tools" nil t)
+        (autoload 'skk-diff "skk-tools" nil t)
+
+この他, Nemacs または Emacs18 base の Mule の上で skk を利用する場合に
+は以下を加える.
+
+        (global-set-key "\C-s" 'skk-isearch-forward)
+        (global-set-key "\C-r" 'skk-isearch-backward)
+        (autoload 'skk-isearch-forward "skk-isearch" nil t)
+        (autoload 'skk-isearch-backward "skk-isearch" nil t)
+
+また, Emacs19 base の Mule の上で skk を利用する場合には以下を加える.
+
+        (autoload 'skk-isearch-mode-setup "skk-isearch" nil t)
+        (autoload 'skk-isearch-mode-cleanup "skk-isearch" nil t)
+        (add-hook 'isearch-mode-hook
+                  (function (lambda ()
+                              (and (boundp 'skk-mode) skk-mode
+                              (skk-isearch-mode-setup)))))
+        (add-hook 'isearch-mode-end-hook
+                  (function (lambda ()
+                              (and (boundp 'skk-mode) skk-mode
+                              (skk-isearch-mode-cleanup)
+                              (skk-set-cursor-color-properly)))))
+
+[イ-2] ~/.skk を作成し以下の行を挿入する.
+
+        (setq skk-large-jisyo ".../SKK-JISYO.L")
+
+ここで「...」の部分には共用辞書ファイルのあるディレクトリを指定する.
+
+4.2 (ロ)の方式での設定
+----------------------
+
+[ロ-1] .emacs に以下の行を追加する.
+
+        (global-set-key "\C-x\C-j" 'skk-mode)
+        (global-set-key "\C-xj" 'skk-auto-fill-mode)
+        (global-set-key "\C-xt" 'skk-tutorial)
+        (autoload 'skk-mode "skk" nil t)
+        (autoload 'skk-tutorial "skk-tut" nil t)
+        (autoload 'skk-check-jisyo "skk-tools" nil t)
+        (autoload 'skk-merge "skk-tools" nil t)
+        (autoload 'skk-diff "skk-tools" nil t)
+
+この他, Nemacs または Emacs18 base の Mule の上で skk を利用する場合に
+は以下を加える.
+
+        (global-set-key "\C-s" 'skk-isearch-forward)
+        (global-set-key "\C-r" 'skk-isearch-backward)
+        (autoload 'skk-isearch-forward "skk-isearch" nil t)
+        (autoload 'skk-isearch-backward "skk-isearch" nil t)
+
+また, Emacs19 base の Mule の上で skk を利用する場合には以下を加える.
+
+        (autoload 'skk-isearch-mode-setup "skk-isearch" nil t)
+        (autoload 'skk-isearch-mode-cleanup "skk-isearch" nil t)
+        (add-hook 'isearch-mode-hook
+                  (function (lambda ()
+                              (and (boundp 'skk-mode) skk-mode
+                              (skk-isearch-mode-setup)))))
+        (add-hook 'isearch-mode-end-hook
+                  (function (lambda ()
+                              (and (boundp 'skk-mode) skk-mode
+                              (skk-isearch-mode-cleanup)
+                              (skk-set-cursor-color-properly)))))
+
+[ロ-2] ~/.skk に以下の行を追加する.
+
+        (setq skk-server-host "...") ;; ... は辞書サーバのホスト名
+        (setq skk-serv "/usr/local/soft/nemacs/etc/skkserv")
+        (setq skk-aux-large-jisyo ".../SKK-JISYO.L") ;; ... は共用辞書
+        ;; ファイルのあるディレクトリ
+	(setq skk-server-portnum 1178) ;; この変数は、バージョン8までは
+	;; 'skk-portnum'という名前だったので注意
+
+[ロ-3] 複数のサーバを指定する場合はさらに, 以下の例のように設定をする.
+
+        (setq skk-server-list
+              '(("mars" . "/usr/local/soft/nemacs/etc/skkserv")
+                ("venus" . "/usr/local/nemacs/etc/skkserv")))
+
+(<ホスト名> . <サーバプログラムへのパス>) の形の対をリストにすればよい.
+
+4.3 Demacs で SKK を使うユーザへの注意.
+---------------------------------------
+
+Demacs の場合は Emacs の環境設定用ファイルは _emacs です. また, DOS で
+のファイル名の制限があるために, _emacs で
+
+        (setq skk-init-file "~/_skk")
+
+とする必要があります. その他の設定は上の(イ)の設定を行ってください.
+
+4.4 その他
+----------
+
+『C-x t』により SKK のチュートリアルプログラムを起動して, SKKの使用法
+を知ることができます.
+
+5. SKK 辞書について
+===================
+
+SKK version 9 で配布する辞書は, (1)約 80 名の SKK ユーザの方々から提供
+していただいた辞書, (2)最近の JUNET の記事で使用頻度の高い単語に読みを
+与えたものをもとに作成しました. この辞書に含まれている項目の総数は 
+130019 です.
+
+6. SKK メイリングリスト
+=======================
+
+SKKに関する意見交換の場としてSKKメイリングリストが開設されています. こ
+れまでメイリングリストで話題になったこととしては, SKKの虫の報告/修正,
+質問/回答, SKK改良のための提案等があります. また, 最新のSKKもメイリン
+グリストを通して配布し, 参加者の協力を得て, テスト, 改良を重ねています.
+現在の参加者数は約330名になっています.
+
+メイリングリストへの参加は,
+
+	skk-join@kuis.kyoto-u.ac.jp
+
+へメールを送れば, 自動的に行われます. メイリングリストへの記事の投稿先は,
+
+	skk@kuis.kyoto-u.ac.jp
+	
+です. また,
+
+	skk-leave@kuis.kyoto-u.ac.jp
+
+へメールを送るとリストから削除されます.
+
+7. 謝辞とお願い
+===============
+
+謝辞
+----
+
+SKK の設計方針は TAO/ELIS 上の日本語入力システム Kanzen の影響を受けて
+います. Kanzen のデモを行ってくださり, また Kanzen を使う機会を与えてくだ
+さった NTT の竹内郁雄さんに感謝します.
+
+第1版の辞書作成のための読みの入力を行ってくださった佐藤研究室の亀山幸義
+君, 佐々木昭彦君, 猪岡美紀さん, 安藤大君, 奥川淳一君, 佐藤克志君, 山岸
+信寛君に感謝します.
+
+SKK 辞書第6, 7版作成にあたり協力してくださった高橋裕信氏に感謝します.
+
+SKK 辞書第2, 3, 4, 5, 6, 7, 8, 9版作成のためのデータを提供してくださった
+方々に感謝します.
+
+SKK 改良のためにプログラム等を提供してくださった, 下記の方々に感謝しま
+す.
+
+    芦澤 秀治        （株）図研 研究開発部CRN課
+    飯田 義朗        セコム情報システム
+    榎並 嗣智        ソニー(株) 生産技術本部開発部システム開発課
+    大谷 武          株式会社富士通研究所
+    川口 貢司        株式会社ＰＦＵ
+    木村 親弘        神戸日本電気ソフトウェア(株)
+    黒田 寿男        数理システム
+    郡司 隆男        大阪大学言語文化研究科言語情報科学講座
+    小林 修平        北陸先端科学技術大学院大学
+    酒井 清隆        NTTアドバンステクノロジ株式会社
+    　　 　　        ネットワーキング事業部SI技術部
+    桜井 貴文        千葉大学理学部数学・情報数理学科
+    鈴木 雅彦        ソニー(株)インフォコム プロダクト カンパニー
+    高橋 伸尚        ＹＨＰ
+    高橋 裕信        つくばインターネットクラブ
+    高橋 正和        (株) アスキー出版技術部
+    竹村 純　        System House ＣＡＴ
+    土手口 正裕      富士通(株) オープンシステム事業本部 
+    　　 　　        アーキテクチャ部
+    富岡 克哉        千葉大学文学部哲学教室
+    Brian Thomson   トロント大学 コンピューター・システム研究所
+    豊福ちかのぶ     パパイヤジュース
+    中島 幹夫
+    中津山 恒        富士ゼロックス(株)
+    　　 　　        システム・コミュニケーション研究所
+    中村 順一        九州工業大学
+    橋本 亮一        工業技術院 生命工学工業技術研究所
+    　　 　　        人間情報部 行動制御研究室
+    浜田 直樹        北陸先端科学技術大学院大学
+    広  朋之         岡山大学大学院  情報工学専攻(知能情報処理)
+    広川 一夫        (株) 計算機科学研究所
+    前田 憲男
+    増井 俊之        シャープ株式会社
+    松井  渉         ＡＴＲ光電波通信研究所
+    丸川 一志        奈良先端科学技術大学院大学
+    三好 力　        Laboratory for International Fuzzy Engineering Research
+    水野 晴之        沖電気工業株式会社
+    毛利 元彦        北陸先端科学技術大学院大学
+    森  浩一         東京大学医学部附属音声・言語医学研究施設
+
+お願い
+------
+
+毎年 2 月頃を目途にアナウンスしますが, SKK辞書の充実にご協力いただける
+方は, 随時以下のアドレスまで個人辞書と SKK-JISYO.L との差分をお送りく
+ださい. お送りいただいた辞書を整理して次年度の辞書に含めさせていただき
+ます. 差分ファイルの作成方法については (skk.texi, skk.dvi, skk.ps) または 
+jisyo-tools/README を参照してください.
+
+また, SKK-JISYO.L の誤りを発見された方は多少にかかわらず, 下記のアドレ
+スまでお知らせください.
+
+        skk-jisyo@kuis.kyoto-u.ac.jp
+
+
+				佐藤 雅彦 (京都大学大学院情報工学専攻)
+				Masahiko Sato, Dept. Info. Sci., Kyoto U.
+				masahiko@kuis.kyoto-u.ac.jp

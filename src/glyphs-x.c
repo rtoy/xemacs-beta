@@ -146,26 +146,26 @@ x_finalize_image_instance (struct Lisp_Image_Instance *p)
 
   if (DEVICE_LIVE_P (XDEVICE (p->device)))
     {
-      Screen *scr = LISP_DEVICE_TO_X_SCREEN (IMAGE_INSTANCE_DEVICE (p));
+      Display *dpy = DEVICE_X_DISPLAY (XDEVICE (p->device));
 
       if (IMAGE_INSTANCE_X_PIXMAP (p))
-	XFreePixmap (DisplayOfScreen (scr), IMAGE_INSTANCE_X_PIXMAP (p));
+	XFreePixmap (dpy, IMAGE_INSTANCE_X_PIXMAP (p));
       if (IMAGE_INSTANCE_X_MASK (p) &&
 	  IMAGE_INSTANCE_X_MASK (p) != IMAGE_INSTANCE_X_PIXMAP (p))
-	XFreePixmap (DisplayOfScreen (scr), IMAGE_INSTANCE_X_MASK (p));
+	XFreePixmap (dpy, IMAGE_INSTANCE_X_MASK (p));
       IMAGE_INSTANCE_X_PIXMAP (p) = 0;
       IMAGE_INSTANCE_X_MASK (p) = 0;
 
       if (IMAGE_INSTANCE_X_CURSOR (p))
 	{
-	  XFreeCursor (DisplayOfScreen (scr), IMAGE_INSTANCE_X_CURSOR (p));
+	  XFreeCursor (dpy, IMAGE_INSTANCE_X_CURSOR (p));
 	  IMAGE_INSTANCE_X_CURSOR (p) = 0;
 	}
 
       if (IMAGE_INSTANCE_X_NPIXELS (p) != 0)
 	{
-	  XFreeColors (DisplayOfScreen (scr),
-		       DefaultColormapOfScreen (scr),
+	  XFreeColors (dpy,
+		       DEVICE_X_COLORMAP (XDEVICE(p->device)),
 		       IMAGE_INSTANCE_X_PIXELS (p),
 		       IMAGE_INSTANCE_X_NPIXELS (p), 0);
 	  IMAGE_INSTANCE_X_NPIXELS (p) = 0;
@@ -567,7 +567,6 @@ init_image_instance_from_x_image (struct Lisp_Image_Instance *ii,
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Display *dpy;
-  Screen *xs;
   GC gc;
   Drawable d;
   Pixmap pixmap;
@@ -576,8 +575,7 @@ init_image_instance_from_x_image (struct Lisp_Image_Instance *ii,
     signal_simple_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
-  xs = DefaultScreenOfDisplay (dpy);
-  d = RootWindowOfScreen (xs);
+  d = XtWindow(DEVICE_XT_APP_SHELL (XDEVICE (device)));
 
   if (!(dest_mask & IMAGE_COLOR_PIXMAP_MASK))
     incompatible_image_types (instantiator, dest_mask,
@@ -831,9 +829,8 @@ pixmap_from_xbm_inline (Lisp_Object device, int width, int height,
 			/* Note that data is in ext-format! */
 			CONST Extbyte *bits)
 {
-  Screen *screen = LISP_DEVICE_TO_X_SCREEN (device);
-  return XCreatePixmapFromBitmapData (DisplayOfScreen (screen),
-				      RootWindowOfScreen (screen),
+  return XCreatePixmapFromBitmapData (DEVICE_X_DISPLAY (XDEVICE(device)),
+				      XtWindow (DEVICE_XT_APP_SHELL (XDEVICE (device))),
 				      (char *) bits, width, height,
 				      1, 0, 1);
 }
@@ -858,12 +855,14 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
   Lisp_Object background = find_keyword_in_vector (instantiator, Q_background);
   Display *dpy;
   Screen *scr;
+  Drawable draw;
   enum image_instance_type type;
 
   if (!DEVICE_X_P (XDEVICE (device)))
     signal_simple_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
+  draw = XtWindow(DEVICE_XT_APP_SHELL (XDEVICE (device)));
   scr = DefaultScreenOfDisplay (dpy);
 
   if ((dest_mask & IMAGE_MONO_PIXMAP_MASK) &&
@@ -902,7 +901,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 
     case IMAGE_COLOR_PIXMAP:
       {
-	Dimension d = DefaultDepthOfScreen (scr);
+	Dimension d = DEVICE_X_DEPTH (XDEVICE(device));
 	unsigned long fg = BlackPixelOfScreen (scr);
 	unsigned long bg = WhitePixelOfScreen (scr);
 
@@ -929,8 +928,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 	IMAGE_INSTANCE_PIXMAP_FG (ii) = foreground;
 	IMAGE_INSTANCE_PIXMAP_BG (ii) = background;
 	IMAGE_INSTANCE_X_PIXMAP (ii) =
-	  XCreatePixmapFromBitmapData (DisplayOfScreen (scr),
-				       RootWindowOfScreen (scr),
+	  XCreatePixmapFromBitmapData (dpy, draw,
 				       (char *) bits, width, height,
 				       fg, bg, d);
 	IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = d;
@@ -945,8 +943,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 	check_pointer_sizes (scr, width, height, instantiator);
 
 	source =
-	  XCreatePixmapFromBitmapData (DisplayOfScreen (scr),
-				       RootWindowOfScreen (scr),
+	  XCreatePixmapFromBitmapData (dpy, draw,
 				       (char *) bits, width, height,
 				       1, 0, 1);
 
@@ -1264,9 +1261,8 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
 			 Lisp_Object color_symbol_alist)
 {
   /* This function can GC */
-  Screen *xs = LISP_DEVICE_TO_X_SCREEN (device);
-  Display *dpy = DisplayOfScreen (xs);
-  Colormap cmap = DefaultColormapOfScreen (xs);
+  Display *dpy =  DEVICE_X_DISPLAY (XDEVICE(device));
+  Colormap cmap = DEVICE_X_COLORMAP (XDEVICE(device));
   XColor color;
   Lisp_Object rest;
   Lisp_Object results = Qnil;
@@ -1351,6 +1347,8 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Display *dpy;
   Screen *xs;
+  Colormap cmap;
+  int depth;
   Pixmap pixmap;
   Pixmap mask = 0;
   XpmAttributes xpmattrs;
@@ -1366,6 +1364,8 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     signal_simple_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
+  cmap = DEVICE_X_COLORMAP (XDEVICE(device));
+  depth = DEVICE_X_DEPTH (XDEVICE(device));
   xs = DefaultScreenOfDisplay (dpy);
 
   if (dest_mask & IMAGE_COLOR_PIXMAP_MASK)
@@ -1402,13 +1402,19 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     {
       xpmattrs.closeness = 65535;
       xpmattrs.valuemask |= XpmCloseness;
+      xpmattrs.depth = depth;
+      xpmattrs.valuemask |= XpmDepth;
+      xpmattrs.visual = DEVICE_X_VISUAL (XDEVICE(device));
+      xpmattrs.valuemask |= XpmVisual;
+      xpmattrs.colormap = cmap;
+      xpmattrs.valuemask |= XpmColormap;
     }
 
   color_symbols = extract_xpm_color_names (&xpmattrs, device, domain,
 					   color_symbol_alist);
 
   result = XpmCreatePixmapFromBuffer (dpy,
-				      RootWindowOfScreen (xs),
+				      XtWindow(DEVICE_XT_APP_SHELL (XDEVICE(device))),
 				      (char *) XSTRING_DATA (data),
 				      &pixmap, &mask, &xpmattrs);
 
@@ -1500,24 +1506,7 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     case IMAGE_COLOR_PIXMAP:
       {
-	/* XpmReadFileToPixmap() doesn't return the depth (bogus!) so
-	   we need to get it ourself.  (No, xpmattrs.depth is not it;
-	   that's an input slot, not output.)  We could just assume
-	   that it has the same depth as the root window, but some
-	   devices allow more than one depth, so that isn't
-	   necessarily correct (I guess?) */
-	Window root;
-	int x, y;
-	unsigned int w2, h2, bw;
-
-	unsigned int d;
-
-	if (!XGetGeometry (dpy, pixmap, &root, &x, &y, &w2, &h2, &bw, &d))
-	  abort ();
-	if (w != w2 || h != h2)
-	  abort ();
-
-	IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = d;
+	IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = depth;
       }
       break;
 
@@ -1606,8 +1595,8 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	       gone wrong, but I don't think signalling an error would
 	       be appropriate. */
 
-	    XQueryColor (dpy, DefaultColormapOfScreen (xs), &fg);
-	    XQueryColor (dpy, DefaultColormapOfScreen (xs), &bg);
+	    XQueryColor (dpy, cmap, &fg);
+	    XQueryColor (dpy, cmap, &bg);
 
 	    /* If the foreground is lighter than the background, swap them.
 	       (This occurs semi-randomly, depending on the ordering of the
@@ -1740,6 +1729,7 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
 	Display *dpy;
 	Screen *scr;
+	Visual *visual;
 	Dimension depth;
 	struct imagick_unwind_data unwind;
 	int speccount = specpdl_depth ();
@@ -1753,7 +1743,9 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 	dpy = DEVICE_X_DISPLAY (XDEVICE (device));
 	scr = DefaultScreenOfDisplay (dpy);
-	depth = DefaultDepthOfScreen (scr);
+	depth = DEVICE_X_DEPTH (XDEVICE (device));
+	visual = DEVICE_X_VISUAL (XDEVICE (device));
+
 	/* Set up the unwind */
 	memset (&unwind, 0, sizeof (unwind));
 	unwind.dpy = dpy;
@@ -1787,13 +1779,12 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	DescribeImage(unwind.image,stderr,1);
 #endif
 
-	unwind.ximage = XCreateImage(dpy, DefaultVisualOfScreen (scr),
-								 depth,
-								 (depth == 1) ? XYPixmap : ZPixmap,
-								 0, 0,
-								 unwind.image->columns,
-								 unwind.image->rows,
-								 XBitmapPad(dpy), 0);
+	unwind.ximage = XCreateImage(dpy, visual, depth,
+				     (depth == 1) ? XYPixmap : ZPixmap,
+				     0, 0,
+				     unwind.image->columns,
+				     unwind.image->rows,
+				     XBitmapPad(dpy), 0);
 
 	if (!unwind.ximage) {
 		signal_simple_error("Unable to allocate XImage structure",
@@ -1843,7 +1834,7 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			  color.green = p->green;
 			  color.blue = p->blue;
 			  color.flags = DoRed | DoGreen | DoBlue;
-			  allocate_nearest_color (dpy, DefaultColormapOfScreen (scr), &color);
+			  allocate_nearest_color (dpy, DefaultColormapOfScreen (scr), visual, &color);
 			  unwind.pixels[i] = color.pixel;
 
 			  for (j=0; j <= ((int) p->length); j++)
@@ -2413,9 +2404,9 @@ x_colorize_image_instance (Lisp_Object image_instance,
 
   {
     Display *dpy = DEVICE_X_DISPLAY (XDEVICE (IMAGE_INSTANCE_DEVICE (p)));
-    Screen *scr = DefaultScreenOfDisplay (dpy);
-    Dimension d = DefaultDepthOfScreen (scr);
-    Pixmap new = XCreatePixmap (dpy, RootWindowOfScreen (scr),
+    Drawable draw = XtWindow(DEVICE_XT_APP_SHELL (XDEVICE (IMAGE_INSTANCE_DEVICE (p))));
+    Dimension d = DEVICE_X_DEPTH (XDEVICE (IMAGE_INSTANCE_DEVICE (p)));
+    Pixmap new = XCreatePixmap (dpy, draw,
 				IMAGE_INSTANCE_PIXMAP_WIDTH (p),
 				IMAGE_INSTANCE_PIXMAP_HEIGHT (p), d);
     XColor color;

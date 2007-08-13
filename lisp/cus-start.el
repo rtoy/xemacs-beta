@@ -43,21 +43,6 @@
 
 (require 'custom)
 
-(defun custom-start-quote (sexp)
-  ;; This is copied from `cus-edit.el'.
-  "Quote SEXP iff it is not self quoting."
-  (if (or (memq sexp '(t nil))
-	  (and (symbolp sexp)
-	       (eq (aref (symbol-name sexp) 0) ?:))
-	  (and (listp sexp)
-	       (memq (car sexp) '(lambda)))
-	  (stringp sexp)
-	  (numberp sexp)
-	  (and (fboundp 'characterp)
-	       (characterp sexp)))
-      sexp
-    (list 'quote sexp)))
-
 (let ((all '(;; boolean
 	     (abbrev-all-caps abbrev boolean)
 	     (allow-deletion-of-last-visible-frame frames boolean)
@@ -142,11 +127,9 @@
 					 (const :tag "Bar Cursor (1 pixel)" t)
 					 (sexp :tag "Bar Cursor (2 pixels)"
 					       :format "%t\n" 'other)))
-	     (default-frame-plist frames (repeat
-					  (list :inline t
-						:format "%v"
-						(symbol :tag "Parameter")
-						(sexp :tag "Value"))))
+	     (default-frame-plist frames plist)
+	     (default-tty-frame-plist frames plist)
+	     (default-x-frame-plist frames plist)
 	     (disable-auto-save-when-buffer-shrinks auto-save boolean)
 	     (find-file-use-truenames find-file boolean)
 	     (find-file-compare-truenames find-file boolean)
@@ -179,8 +162,18 @@
 	     (case-replace matching boolean)
 	     (query-replace-highlight matching boolean)
 	     (list-matching-lines-default-context-lines matching integer)))
-      this symbol group type)
-  (while all 
+      this symbol group type
+      (quoter (lambda (sexp)
+		;; A copy of `custom-quote'
+		(if (or (memq sexp '(t nil))
+			(keywordp sexp)
+			(eq (car-safe sexp) 'lambda)
+			(stringp sexp)
+			(numberp sexp)
+			(characterp sexp))
+		    sexp
+		  (list 'quote sexp)))))
+  (while all
     (setq this (car all)
 	  all (cdr all)
 	  symbol (nth 0 this)
@@ -193,7 +186,7 @@
 	    (message "Intrinsic `%S' not bound" symbol))
       ;; This is called before any user can have changed the value.
       (put symbol 'standard-value 
-	   (list (custom-start-quote (default-value symbol))))
+	   (list (funcall quoter (default-value symbol))))
       ;; Add it to the right group.
       (custom-add-to-group group symbol 'custom-variable)
       ;; Set the type.

@@ -1654,6 +1654,20 @@ update_EmacsFrame (Lisp_Object frame, Lisp_Object name)
 	 }
      }
 #endif /* HAVE_X_WINDOWS */
+#ifdef HAVE_MS_WINDOWS
+  if (CONSOLE_TYPESYM_MSWINDOWS_P (FRAME_TYPE (frm)))
+    {
+      /* Cause the frame size in characters to remain the same when the font
+       * changes, at the expense of changing the frame size in pixels. */
+      if (EQ (name, Qfont))
+	{
+	  Fset_frame_size (frame,
+			   make_int (frm->width),
+			   make_int (frm->height),
+			   Qnil);
+	}
+    }
+#endif /* HAVE_MS_WINDOWS */
 }
 
 static void

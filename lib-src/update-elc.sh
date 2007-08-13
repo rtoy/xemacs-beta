@@ -94,7 +94,7 @@ lisp_prog='(princ (featurep (quote mule)))'
 mule_p="`$EMACS -batch -vanilla -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
 	echo No
-	ignore_dirs="$ignore_dirs its egg mule language leim"
+	ignore_dirs="$ignore_dirs its egg mule language leim skk"
 	ignore_pattern='\!/tl/char-table.el$!d
 \!/tl/chartblxmas.el$!d
 \!/mu/latex-math-symbol.el$!d
@@ -112,15 +112,19 @@ fi
 # Prepare for byte-compiling directories with directory-specific instructions
 # Not necessary any more, but I want to keep the text current to cut & paste
 # into the package lisp maintenance tree.
-#make_special_commands=''
-#make_special () {
-#  dir="$1"; shift;
-#  ignore_dirs="$ignore_dirs $dir"
-#  make_special_commands="$make_special_commands \
-#echo \"Compiling in lisp/$dir\"; \
-#(cd \"lisp/$dir\" && ${MAKE:-make} EMACS=$REAL ${1+$*}); \
-#echo \"lisp/$dir done.\";"
-#}
+make_special_commands=''
+make_special () {
+  dir="$1"; shift;
+  ignore_dirs="$ignore_dirs $dir"
+  make_special_commands="$make_special_commands \
+echo \"Compiling in lisp/$dir\"; \
+(cd \"lisp/$dir\" && ${MAKE:-make} EMACS=$REAL ${1+$*}); \
+echo \"lisp/$dir done.\";"
+}
+
+if test "$mule_p" != nil; then
+	make_special skk all
+fi
 
 ## AUCTeX is a package now
 # if test "$mule_p" = nil ; then
@@ -192,4 +196,6 @@ comm -23 $els $elcs | \
  xargs -t -n$NUMTOCOMPILE $BYTECOMP -f batch-byte-compile
 echo "Compiling files without .elc... Done"
 
-#eval "$make_special_commands"
+if test "$mule_p" != nil; then
+	eval "$make_special_commands"
+fi

@@ -521,8 +521,8 @@ Output stream is STREAM, or value of `standard-output' (which see).
   return object;
 }
 
-/* a buffer which is used to hold output being built by prin1-to-string */
-Lisp_Object Vprin1_to_string_buffer;
+/* Stream to which prin1-to-string prints. */
+static Lisp_Object Vprin1_to_string_stream;
 
 DEFUN ("prin1-to-string", Fprin1_to_string, 1, 2, 0, /*
 Return a string containing the printed representation of OBJECT,
@@ -533,23 +533,27 @@ second argument NOESCAPE is non-nil.
        (object, noescape))
 {
   /* This function can GC */
-  struct buffer *out = XBUFFER (Vprin1_to_string_buffer);
-  Lisp_Object stream = Qnil;
-  struct gcpro gcpro1, gcpro2;
+  Lisp_Object result = Qnil;
+  Lstream *stream;
+  struct gcpro gcpro1;
 
-  GCPRO2 (object, stream);
-  stream = print_prepare (Vprin1_to_string_buffer);
-  Ferase_buffer (Vprin1_to_string_buffer);
+  /* We avoid creating a new stream for every invocation of
+     prin1_to_string, for better memory usage.  */
+
+  if (NILP (Vprin1_to_string_stream))
+    Vprin1_to_string_stream = make_resizing_buffer_output_stream ();
+  stream = XLSTREAM (Vprin1_to_string_stream);
+  Lstream_rewind (stream);
+
+  /* In case a caller forgot to protect. */
+  GCPRO1 (object);
   print_depth = 0;
-  print_internal (object, stream, NILP (noescape));
-  print_finish (stream);
-  stream = Qnil;                /* No GC surprises! */
-  object = make_string_from_buffer (out,
-				    BUF_BEG (out),
-				    BUF_Z (out) - 1);
-  Ferase_buffer (Vprin1_to_string_buffer);
+  print_internal (object, Vprin1_to_string_stream, NILP (noescape));
+  Lstream_flush (stream);
   UNGCPRO;
-  return object;
+  result = make_string (resizing_buffer_stream_ptr (stream),
+			Lstream_byte_count (stream));
+  return result;
 }
 
 DEFUN ("princ", Fprinc, 1, 2, 0, /*
@@ -606,21 +610,18 @@ Convert an error value (ERROR-SYMBOL . DATA) to an error message.
   (data))
 {
   /* This function can GC */
-  struct buffer *pbuf;
-  Lisp_Object value;
+
+  /* This should maybe use Vprin1_to_string_stream...  However, it's
+     called sufficiently rarely, so I don't think it should matter.  */
+  Lisp_Object stream = make_resizing_buffer_output_stream ();
   struct gcpro gcpro1;
+  GCPRO1 (stream);
 
-  print_error_message (data, Vprin1_to_string_buffer);
-
-  pbuf = XBUFFER (Vprin1_to_string_buffer);
-  value = make_string_from_buffer (pbuf,
-				   BUF_BEGV (pbuf),
-				   BUF_ZV (pbuf) - BUF_BEGV (pbuf));
-  GCPRO1 (value);
-  Ferase_buffer (Vprin1_to_string_buffer);
+  print_error_message (data, stream);
+  Lstream_flush (XLSTREAM (stream));
   UNGCPRO;
-
-  return value;
+  return make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
+		      Lstream_byte_count (XLSTREAM (stream)));
 }
 
 /* Print an error message for the error DATA onto Lisp output stream
@@ -1770,6 +1771,6 @@ generally be bound with `let' rather than set.  (See `display-message'.)
 */ );
   Vprint_message_label = Qprint;
 
-  /* prin1_to_string_buffer initialized in init_buffer_once in buffer.c */
-  staticpro (&Vprin1_to_string_buffer);
+  Vprin1_to_string_stream = Qnil;
+  staticpro (&Vprin1_to_string_stream);
 }

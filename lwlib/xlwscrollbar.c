@@ -691,7 +691,7 @@ static void
 make_trough_pixel (XlwScrollBarWidget w)
 {
   Display *dpy = XtDisplay((Widget) w);
-  Colormap cmap = DefaultColormapOfScreen (XtScreen ((Widget) w));
+  Colormap cmap = w->core.colormap;
   XColor troughC;
 
   if (w->sb.troughColor == (Pixel)~0) w->sb.troughColor = w->core.background_pixel;

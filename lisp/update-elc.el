@@ -108,7 +108,7 @@
 	    (setq arg (locate-library arg))
 	    (if (null arg)
 		(progn
-		  (print (format "Library file %s: not found"
+		  (print (format "Error: Library file %s not found"
 				 (car preloaded-file-list)))
 		  (kill-emacs)))
 	    (if (string-match "\\.elc?\\'" arg)

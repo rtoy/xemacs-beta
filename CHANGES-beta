@@ -1,4 +1,17 @@
 							-*- indented-text -*-
+to 20.4 beta8 "Arapawa Island"
+-- build-report 1.35 courtesy of Adrian Aichner
+-- MS Windows stuffs from David Hobley, Jonathon Harris, August Hill,
+   Jeff Sparkes
+-- various patches from Jareth Hein
+-- refcard update courtesy of Aki Vehtari
+-- Egg-SJ3 Input Method support ported
+-- SKK Input Method added
+-- Various patches from Kyle Jones and Hrvoje Niksic
+-- Various fixes to build in minimal configuration
+-- Fixes to x-menubar.el to guard against possibly absent packages
+-- Miscellaneous bug fixes
+
 to 20.4 beta7 "Appenzell"
 -- Miscellaneous MS Windows patches from David Hobley and Jeff Sparkes
 -- ImageMagick is not autodetected by configure courtesy of IENAGA Kazuyuki

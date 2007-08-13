@@ -60,6 +60,9 @@ Lisp_Object Qcommand_error;
 /* The emergency error handler, before we're ready.  */
 Lisp_Object Qreally_early_error_handler;
 
+/* Variable defined in Lisp. */
+Lisp_Object Qerrors_deactivate_region;
+
 static Lisp_Object command_loop_1 (Lisp_Object dummy);
 
 /* There are two possible command loops -- one written entirely in
@@ -73,16 +76,24 @@ default_error_handler (Lisp_Object data)
 {
   int speccount = specpdl_depth ();
 
+  /* None of this is invoked, normally.  This code is almost identical
+     to the `command-error' function, except `command-error' does cool
+     tricks with sounds.  This function is a fallback, invoked if
+     command-error is unavailable.  */
+
   Fding (Qnil, Qnil, Qnil);
-  zmacs_deactivate_region ();
+
+  if (!NILP (Fboundp (Qerrors_deactivate_region))
+      && !NILP (Fsymbol_value (Qerrors_deactivate_region)))
+    zmacs_deactivate_region ();
   Fdiscard_input ();
   specbind (Qinhibit_quit, Qt);
   Vstandard_output = Qt;
   Vstandard_input = Qt;
   Vexecuting_macro = Qnil;
+  Fset (intern ("last-error"), data);
   clear_echo_area (selected_frame (), Qnil, 0);
-  data = Fprin1_to_string (data, Qnil);
-  message ("Error: %s", XSTRING_DATA (data));
+  Fdisplay_error (data, Qt);
   check_quit (); /* make Vquit_flag accurate */
   Vquit_flag = Qnil;
   return (unbind_to (speccount, Qt));
@@ -582,6 +593,7 @@ syms_of_cmdloop (void)
   defsymbol (&Qcommand_error, "command-error");
   defsymbol (&Qreally_early_error_handler, "really-early-error-handler");
   defsymbol (&Qtop_level, "top-level");
+  defsymbol (&Qerrors_deactivate_region, "errors-deactivate-region");
 
 #ifndef LISP_COMMAND_LOOP
   DEFSUBR (Frecursive_edit);

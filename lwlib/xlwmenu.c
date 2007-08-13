@@ -38,6 +38,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/Xos.h>
 #endif
 #include <X11/IntrinsicP.h>
+#include <X11/ShellP.h>
 #include <X11/StringDefs.h>
 #include <X11/cursorfont.h>
 #include <X11/bitmaps/gray>
@@ -2344,15 +2345,30 @@ make_windows_if_needed (XlwMenuWidget mw, int n)
   int i;
   int start_at;
   XSetWindowAttributes xswa;
+  Widget p;
   int mask;
-#define ROOT_PARENT
-#ifdef ROOT_PARENT
-  Window root = RootWindowOfScreen (DefaultScreenOfDisplay (XtDisplay (mw)));
-#endif
+  int depth;
+  Visual *visual;
   window_state *windows;
+  Window root;
 
   if (mw->menu.windows_length >= n)
     return;
+
+  root = RootWindowOfScreen (XtScreen(mw));
+  /* grab the visual and depth from the nearest shell ancestor */
+  visual = CopyFromParent;
+  depth = CopyFromParent;
+  p = XtParent(mw);
+  while (visual == CopyFromParent && p)
+    {
+      if (XtIsShell(p))
+	{
+	  visual = ((ShellWidget)p)->shell.visual;
+	  depth = p->core.depth;
+	}
+      p = XtParent(p);
+    }
 
   xswa.save_under = True;
   xswa.override_redirect = True;
@@ -2361,8 +2377,9 @@ make_windows_if_needed (XlwMenuWidget mw, int n)
   xswa.event_mask = (ExposureMask | ButtonMotionMask
 		     | ButtonReleaseMask | ButtonPressMask);
   xswa.cursor = mw->menu.cursor_shape;
+  xswa.colormap = mw->core.colormap;
   mask = CWSaveUnder | CWOverrideRedirect | CWBackPixel | CWBorderPixel
-    | CWEventMask | CWCursor;
+    | CWEventMask | CWCursor | CWColormap;
 
   if (mw->menu.use_backing_store)
     {
@@ -2395,15 +2412,9 @@ make_windows_if_needed (XlwMenuWidget mw, int n)
      windows [i].height = 1;
      windows [i].window =
        XCreateWindow (XtDisplay (mw),
-#ifdef ROOT_PARENT
 		      root,
-#else
-		      ((i >  0)
-		       ? windows[0].window
-		       : XtWindow (XtParent (mw))),
-#endif
 		      0, 0, 1, 1,
-		      0, 0, CopyFromParent, CopyFromParent, mask, &xswa);
+		      0, depth, CopyFromParent, visual, mask, &xswa);
   }
 }
 
@@ -2658,7 +2669,7 @@ make_drawing_gcs (XlwMenuWidget mw)
       else
 	{ /* color */
 	  XColor xcolor;
-	  Colormap cmap = DefaultColormapOfScreen (XtScreen ((Widget) mw));
+	  Colormap cmap = mw->core.colormap;
 	  xcolor.pixel = mw->core.background_pixel;
 	  XQueryColor (dpy, cmap, &xcolor);
 	  xcolor.red   *= 0.85;
@@ -2729,7 +2740,7 @@ make_shadow_gcs (XlwMenuWidget mw)
   XGCValues xgcv;
   unsigned long pm = 0;
   Display *dpy = XtDisplay ((Widget) mw);
-  Colormap cmap = DefaultColormapOfScreen (XtScreen ((Widget) mw));
+  Colormap cmap = mw->core.colormap;
   XColor topc, botc;
   int top_frobbed = 0, bottom_frobbed = 0;
 

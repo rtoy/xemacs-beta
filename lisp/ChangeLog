@@ -1,3 +1,249 @@
+1997-11-30  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* build-report.el:
+	Making better use of `custom'-features to represent various
+	`build-report' variables.
+	build-report-*-regexp have become lists which are or-ed together
+	internally.
+	customized group `build-report' is now a child of group `build' which is
+	not release as of this version.
+	Including comment now into build-report stating wheter all or just the
+	most recent ./configure output is being inserted.
+
+1997-12-01  Jonathon Harris <jhar@tardis.ed.ac.uk>
+
+	* msw-init.el: Provide default bindings for cut, paste, copy and undo
+
+1997-12-05  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* wid-edit.el: Ditto.
+	(widget-prettyprint-to-string): Use `cl-prettyprint'.
+	(widget-sexp-value-to-internal): Handle printed object beginning
+	with newline.
+
+	* cus-edit.el: Avoid `pp-to-string'.
+
+1997-12-04  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* simple.el (display-warning): Use `with-current-buffer'.
+
+	* font-lock.el (font-lock-mode): Use `lmessage'.
+	(font-lock-fontify-buffer): Ditto.
+	(font-lock-unfontify-region): Ditto.
+	(font-lock-fontify-syntactically-region): Ditto.
+	(font-lock-fontify-keywords-region): Ditto.
+	(font-lock-fontify-keywords-region): Ditto.
+
+	* simple.el (raw-append-message): Use `with-current-buffer'.
+	(log-message-filter): Place `save-match-data' outside the loop.
+	(log-message): Use `with-current-buffer'.
+	(remove-message): Use `lwarn' to warn about the hook error.
+
+	* lisp-mode.el: Indent `lmessage' and `lwarn' properly.
+
+	* simple.el (lmessage): New function.
+	(lwarn): Ditto.
+	(kill-region): Use `lmessage' instead of `display-message'.
+	(set-comment-column): Ditto.
+	(set-fill-column): Ditto.
+
+	* faces.el (get-custom-frame-properties): Don't use
+ 	`default-custom-frame-properties'.
+
+	* font-lock.el: Customized variables.
+
+	* font-lock.el: Customized faces.
+
+	* font-lock.el: (font-lock-maximum-decoration): Default to t.
+
+	* cus-edit.el (vms): Removed.
+
+1997-12-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cus-start.el: Ditto.
+
+	* gui.el (dialog-frame-plist): Ditto.
+
+	* gnuserv.el (gnuserv-frame-plist): Ditto.
+
+	* frame.el: Use the `plist' widget type in defcustoms.
+
+	* cus-edit.el (plist): New widget type.
+	(custom-plist-convert-widget): New function.
+	(custom-quote): Vectors and bit-vectors are also self-printable.
+
+1997-12-05  Mark Borges  <mdb@cdc.noaa.gov>
+
+	* mail/mail-extr.el (all-top-level-domains):
+	Two letter country codes synched with 
+	  http://www.iana.org/in-notes/iana/assignments/country-codes
+	as updated by the RIPE Network Coordination Centre.
+	Source: ISO 3166 Maintenance Agency 
+	Latest change: Thu Aug  7 17:59:51 MET DST 1997
+
+1997-12-03  Eric Eide  <eeide@cs.utah.edu>
+
+	* files.el (set-auto-mode): Don't invoke
+	  `hack-local-variables-prop-line' if `enable-local-variables'
+	   is nil.
+
+	* files.el (hack-local-variables-prop-line): Don't invoke
+	  `hack-local-variables-p' for mode-only or empty -*- lines.
+	  Don't test `enable-local-variables' before setting the mode;
+	  instead, just verify that the specified major mode isn't the
+	  current major mode.
+
+1997-12-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* startup.el (load-init-file): Use a warning buffer in case of
+ 	error.
+
+1997-12-05  SL Baur  <steve@altair.xemacs.org>
+
+	* buffer.el (switch-to-buffer): Update docstring.
+	Suggested by Adrian Aichner <aichner@ecf.teradyne.com>
+
+1997-12-01  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* cus-edit.el (custom-unlispify-remove-prefixes): Reference to
+	related variables added.
+	(custom-variable-default-form): New variable controlling default
+	display form for customization of variables.
+	(custom-variable): widget `:form' is nil before initialization.
+	(custom-variable-value-create): Initialize `:form' to
+	`custom-variable-default-form'.
+	(custom-face-default-form): New variable controlling default
+	display form for customization of faces.
+	(custom-face): widget `:form' is nil before initialization.
+	(custom-face-value-create): Initialize `:form' to
+	`custom-face-default-form'.
+
+1997-11-28  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* misc/mic-paren.el: Define faces with `defface'.  Colors
+	given for both dark and light backgrounds.  Keep face
+	variables for backward compatibility.
+
+1997-12-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* simple.el (temporary-goal-column): Made buffer-local.
+
+1997-12-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cus-edit.el (Custom-move-and-invoke): Removed.
+	(custom-mode): Ditto for doc.
+
+1997-12-02  SL Baur  <steve@altair.xemacs.org>
+
+	* egg/egg-sj3-client.el (sj3-command-reset): Initial port to XEmacs.
+
+	* egg/egg-sj3.el: Initial port to XEmacs.
+
+	* egg/egg-leim.el (egg-activate): Define
+	`egg-default-startup-file'.
+
+	* language/japanese.el (japanese): Remove definition of
+	`egg-default-startup-file'.
+
+	* dumped-lisp.el (preloaded-file-list): Dump egg-sj3 and skk LEIM
+	support.
+
+	* egg/egg-sj3-leim.el: New file -- Add Egg/SJ3 support to LEIM.
+
+1997-12-01  SL Baur  <steve@altair.xemacs.org>
+
+	* locale/ja/locale-start.el (startup-splash-frame-body): Fix typo
+	on advertised-undo.
+	Suggested by: Hajime Saitou
+	- Comment cleanup.
+
+1997-11-30  SL Baur  <steve@altair.xemacs.org>
+
+	* help-macro.el (help-read-key): Autoload.
+
+1997-11-29  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* etags.el (buffer-tag-table-list): Check for `../TAGS'.
+	(visit-tags-table): Disallow setting `tags-file-name' to a
+	nonexistent file.
+
+1997-11-29  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.el ((preloaded-file-list site-load-packages)): Modify 
+	error message to be more build-report.el friendly.
+
+	* dumped-lisp.el (preloaded-file-list): Remove tooltalk/ prefix
+	from tooltalk dumped files.
+
+	* symbol-syntax.el: Modify comments.
+
+1997-11-29  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* etags.el (find-tag-default): Use symbol-near-point
+	  instead of thing-symbol to remove the dependency on
+	  thing.el.
+
+1997-11-29  SL Baur  <steve@altair.xemacs.org>
+
+	* symbol-syntax.el: Unpackaged.
+	* disp-table.el: Unpackaged.
+	* picture.el: Unpackaged.
+	* rect.el: Unpackaged.
+	* lisp-mnt.el: Unpackaged.
+
+	* mule/canna.el: Don't require emu.
+	(canna:enter-canna-mode): Inline code for compatibility function
+	`minibuffer-prompt-width'.
+
+	* info.el (Info-find-node): Guard call to browse-url.
+	* wid-edit.el (widget-url-link-action): Ditto.
+
+	* hyper-apropos.el (hyper-apropos-get-doc): Use cl-prettyprint
+	instead of pp.
+	(hyper-apropos-disassemble): Ditto.
+
+	* x-menubar.el (default-menubar): Disable WWW items in help menu
+	if no browse-url.
+
+	* help.el (xemacs-www-page): Print error message intead of bombing 
+	if not browse-url.
+	(xemacs-www-faq): Ditto.
+
+	* files.el (recover-session): Print error message instead of
+	bombing if no dired.
+	(file-remote-p): Return nil if no ange-ftp and no efs.
+
+	* format.el (format-encode-run-method): `shell-command-on-region'
+	called with wrong number of args.
+	(format-decode-run-method): Ditto.
+
+	* buff-menu.el (Buffer-menu-toggle-read-only): Call
+	modeline-toggle-read-only.
+
+	* register.el (copy-rectangle-to-register): Check for rectangle
+	functions.
+	(insert-register): Ditto.
+
+	* x-toolbar.el (pending-delete): Don't (require 'pending-del).
+	* x-menubar.el (pending-delete): Don't (require 'pending-del).
+
+	* x-menubar.el (bookmark-menu-filter): Add guards against bookmark 
+	package not being loaded.
+
+	* mule/char-table.el: Imported from tm.
+	* mule/chartblxmas.el: Ditto.
+	* alist.el: Ditto.
+	* overlay.el: Unpackaged for Quail.
+	
+	* x-menubar.el (default-menubar): Put guard on evaluation of
+	`ps-paper-type'.
+	(default-menubar): Put guard on `paren-mode'.
+	- Put guard on `mouse-avoidance-mode'.
+	- Guard `font-lock' stuffs.
+	- Guard browse-url stuffs.
+	- Clean up old deprecated syntax.
+	- Put guards on File, Edit, Apps, and Tools menus.
+
 1997-11-28  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* x-toolbar.el (toolbar-news-frame-properties): Made customizable.
@@ -90,7 +336,7 @@
 
 1997-11-20  Kyle Jones  <kyle_jones@wonderworks.com>
 
-	* lisp/x-faces.el: Add expression to xpm-color-symbols to
+	* x-faces.el: Add expression to xpm-color-symbols to
 	  look for the global background resource when supporting
 	  the backgroundToolBarColor XPM symbolic name.
 
@@ -141,25 +387,25 @@
 
 1997-11-17  Kyle Jones  <kyle_jones@wonderworks.com>
 
-	* lisp/x-toolbar.el (x-init-toolbar-from-resources):
+	* x-toolbar.el (x-init-toolbar-from-resources):
 	  Initialize the toolbar border width specifiers.
 
 1997-11-17  SL Baur  <steve@altair.xemacs.org>
 
-	* lisp/mule/mule-files.el: Add TUTORIAL.pl to
+	* mule/mule-files.el: Add TUTORIAL.pl to
 	`file-coding-system-alist'.
-	* lisp/language/european.el: Add Polish language environment.
+	* language/european.el: Add Polish language environment.
 
-	* lisp/loadup.el: set inhibit-package-init when running from temacs.
+	* loadup.el: set inhibit-package-init when running from temacs.
 
 1997-11-16  SL Baur  <steve@altair.xemacs.org>
 
-	* lisp/prim/options.el: Fix comment typo.
+	* prim/options.el: Fix comment typo.
 	From Peter Pezaris <pez@dwwc.com>
 
 1997-11-16  Kyle Jones  <kyle_jones@wonderworks.com>
 
-	* lisp/prim/minibuf.el (reset-buffer): Make inhibit-read-only
+	* prim/minibuf.el (reset-buffer): Make inhibit-read-only
 	  local to the current buffer and set it to t to prevent
 	  read-only text from permanently wedging the minibuffer.
 
@@ -528,11 +774,11 @@ Sun Nov 01 12:00:00 1997 Jonathan Harris  <jhar@tardis.ed.ac.uk>
 
 1997-11-07  Kyle Jones  <kyle_jones@wonderworks.com>
 
-	* lisp/prim/modeline.el (mouse-drag-modeline): Don't
+	* prim/modeline.el (mouse-drag-modeline): Don't
 	  allow the window size to shrink to a size that is not a 
 	  multiple of the height of the default face's font.
 
-	* lisp/prim/modeline.el (mouse-drag-modeline): Don't
+	* prim/modeline.el (mouse-drag-modeline): Don't
 	  discard timeout events.
 
 1997-11-07  SL Baur  <steve@altair.xemacs.org>
@@ -2294,7 +2540,7 @@ Mon Sep 29 02:11:35 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 
 1997-09-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
-	* lisp/mule/mule-files.el: Implement `file-coding-system-alist' of
+	* mule/mule-files.el: Implement `file-coding-system-alist' of
 	Emacs 20.0.97 to sync; abolish variable
 	`buffer-file-coding-system-alist'.
 
@@ -4951,14 +5197,14 @@ Fri Jun 13 13:20:39 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 
 1997-06-10  Gary D. Foster  <Gary.Foster@corp.sun.com>
 	
-	* lisp/modes/view-less.el: Changed \177 bindings to 'delete
-	* lisp/modes/help.el: Changed \177 bindings to 'delete
+	* modes/view-less.el: Changed \177 bindings to 'delete
+	* modes/help.el: Changed \177 bindings to 'delete
 
 1997-06-10  Gary D. Foster  <Gary.Foster@corp.sun.com>
 
-	* lisp/prim/keydefs.el: Changed all 'delete key bindings to point to
+	* prim/keydefs.el: Changed all 'delete key bindings to point to
 	  the `backward-or-forward-foo' functions.
-	* lisp/prim/simple.el:
+	* prim/simple.el:
 	- Renamed `delete-erases-forward' to `delete-key-deletes-forward'.
 	- Removed `backspace-or-delete-hook'
 	- Renamed `backspace-or-delete' to `backward-or-forward-delete-char'
@@ -4967,8 +5213,8 @@ Fri Jun 13 13:20:39 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 	 `backward-or-forward-kill-sexp'
 	- Removed the zmacs hacks from all the `b-or-f-foo' functions and
 	  began playing nicely with pending-del.
-	* lisp/modes/cc-mode.el:
-	* lisp/modes/cperl-mode.el: Fixed references to delete functions
+	* modes/cc-mode.el:
+	* modes/cperl-mode.el: Fixed references to delete functions
 	  to use the new names.
 	
 1997-06-11  Karl M Hegbloom  <karlheg@inetarena.com>
@@ -5079,9 +5325,9 @@ Fri Jun 13 13:20:39 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 
 1997-06-04  Gary D. Foster  <Gary.Foster@corp.sun.com>
 
-	* lisp/modes/cc-mode.el: Modified `c-electric-delete' to honor the 
+	* modes/cc-mode.el: Modified `c-electric-delete' to honor the 
 	  desired delete direction in both normal and "hungry" modes.
-	* lisp/modes/cperl-mode.el: Modified `cperl-electric-backspace' to 
+	* modes/cperl-mode.el: Modified `cperl-electric-backspace' to 
 	  honor the desired delete direction.
 
 1997-06-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
@@ -5097,14 +5343,14 @@ Fri Jun 13 13:20:39 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 
 1997-05-16  Gary D. Foster  <Gary.Foster@corp.sun.com>
 
-	* lisp/prim/simple.el: Created `backspace-or-delete' function and
+	* prim/simple.el: Created `backspace-or-delete' function and
 	  `backspace-or-delete-hook'
-	* lisp/prim/keydefs.el: Changed \177 bindings to point to new
+	* prim/keydefs.el: Changed \177 bindings to point to new
 	  delete function.
-	* lisp/modes/*.el: Removed conflicting \177 bindings.
-	* lisp/modes/cc-mode.el: Modified `c-electric-delete' to use new
+	* modes/*.el: Removed conflicting \177 bindings.
+	* modes/cc-mode.el: Modified `c-electric-delete' to use new
 	  delete bindings.
-	* lisp/modes/cperl-mode.el: Modified `cperl-electric-backspace' to 
+	* modes/cperl-mode.el: Modified `cperl-electric-backspace' to 
 	  use new delete bindings.
 	
 1997-06-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
@@ -5219,60 +5465,60 @@ Fri Jun 13 13:20:39 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 
 1997-06-02  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
-	* lisp/mule/korean.el was abolished because it seems not to be used.
+	* mule/korean.el was abolished because it seems not to be used.
 
-	* lisp/mule/japanese.el was abolished because it seems not to be used.
+	* mule/japanese.el was abolished because it seems not to be used.
 
 1997-06-01  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
-	* lisp/tm/gnus-mime-old.el was abolished because XEmacs 20.3 has Gnus
+	* tm/gnus-mime-old.el was abolished because XEmacs 20.3 has Gnus
  	5.4.
 
-	* lisp/tm/tm-edit.el: updated to 7.108.
+	* tm/tm-edit.el: updated to 7.108.
 
-	* lisp/tm/tm-view.el: updated to 7.83.
+	* tm/tm-view.el: updated to 7.83.
 
-	* lisp/leim/quail.el: modified for XEmacs.
-	
-	* lisp/mule/mule-load.el, lisp/mule/mule-process.el: delete
+	* leim/quail.el: modified for XEmacs.
+
+	* mule/mule-load.el, lisp/mule/mule-process.el: delete
 	mule-process.el because it is not used.
 
-	* lisp/mule/european.el was abolished because it seems not to be used.
+	* mule/european.el was abolished because it seems not to be used.
 
-	* lisp/mule/mule-load.el: must load mule-cmds before setting for
+	* mule/mule-load.el: must load mule-cmds before setting for
  	language-environment.
 
-	* lisp/mule/mule-cmds.el, lisp/mule/european-hooks.el: Modified
+	* mule/mule-cmds.el, lisp/mule/european-hooks.el: Modified
 	for LEIM.
 
-	* lisp/mule/mule-cmds.el: Uncomment key definition for
+	* mule/mule-cmds.el: Uncomment key definition for
  	`toggle-input-method'.
 
-	* lisp/mule/mule-init.el: Comment out about `mule-keymap' (moved to
+	* mule/mule-init.el: Comment out about `mule-keymap' (moved to
  	mule-cmds.el).
 
-	* lisp/mule/mule-cmds.el: Uncomment about `mule-keymap' (moved from
+	* mule/mule-cmds.el: Uncomment about `mule-keymap' (moved from
  	mule-init.el).
 
-	* lisp/tl/tl-atype.el: Don't require tl-str.
+	* tl/tl-atype.el: Don't require tl-str.
 
-	* lisp/tl/tl-atype.el: Use atype.el of APEL.
+	* tl/tl-atype.el: Use atype.el of APEL.
 
-	* lisp/tl/tl-list.el: Use alist.el of APEL.
+	* tl/tl-list.el: Use alist.el of APEL.
 
 1997-05-31  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
-	* lisp/tl/richtext.el, lisp/tl/emu-x20.el, lisp/tl/emu-xemacs.el,
+	* tl/richtext.el, tl/emu-x20.el, tl/emu-xemacs.el,
 	lisp/tl/emu.el, lisp/tl/emu-e19.el: moved to lisp/apel/.
 
-	* lisp/tl/file-detect.el, lisp/tl/filename.el: replaced by APEL's.
+	* tl/file-detect.el, tl/filename.el: replaced by APEL's.
 
-	* lisp/mu/std11-parse.el, lisp/mu/std11.el: moved to lisp/apel/.
+	* mu/std11-parse.el, mu/std11.el: moved to lisp/apel/.
 
-	* lisp/leim/quail.el: Add new quail.el (imported from Emacs
+	* leim/quail.el: Add new quail.el (imported from Emacs
  	19.34.94-epsilon).
 
-	* lisp/leim/skk/skkdic.el: delete skkdic.el temporary because XEmacs
+	* leim/skk/skkdic.el: delete skkdic.el temporary because XEmacs
  	can not compile it.
 
 	* leim/skk/skkdic.el, leim/quail/zozy.el, leim/quail/ziranma.el,
@@ -5293,7 +5539,7 @@ Fri Jun 13 13:20:39 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 
 	* mule/mule-load.el, mule/mule-cmds.el: Add mule-cmds.el.
 
-	* lisp/prim/simple.el (assoc-ignore-case): New function; imported
+	* prim/simple.el (assoc-ignore-case): New function; imported
 	from Emacs/mule-19.34.94-epsilon.
 
 1997-06-02  Steven L Baur  <steve@altair.xemacs.org>
@@ -5578,7 +5824,7 @@ Mon Sep 25 17:19:51 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 
 1997-05-21  Erik Naggum  <erik@naggum.no>
 
-	* lisp/add-log.el (add-log-lisp-like-modes, add-log-c-like-modes,
+	* add-log.el (add-log-lisp-like-modes, add-log-c-like-modes,
 	add-log-tex-like-modes): New variables.
 	(add-log-current-defun): Use them instead of constant lists.
 
@@ -5632,7 +5878,7 @@ Sat May 17 19:56:31 1997  Glynn Clements <glynn@sensei.co.uk>
 
 Sun May 11 18:24:25 1997  Kyle Jones  <kyle@crystal.WonderWorks.COM>
 
-	* lisp/prim/modeline.el: new mouse-drag-modeline function.
+	* prim/modeline.el: new mouse-drag-modeline function.
 	Allows bottommost modeline to be dragged.
 
 Sat May 17 03:41:11 1997  Steven L Baur  <steve@altair.xemacs.org>
@@ -6920,12 +7166,12 @@ Wed Jan 22 15:29:08 1997  Barry A. Warsaw  <bwarsaw@CNRI.Reston.VA.US>
 
 Wed Jan 22 01:03:42 1997  Martin Buchholz  <mrb@eng.sun.com>
 
-	* lisp/x11/x-font-menu.el: Make font menus work better in a
+	* x11/x-font-menu.el: Make font menus work better in a
 	Japanese environment.
 
 Tue Jan 21 19:56:26 1997  Martin Buchholz  <mrb@eng.sun.com>
 
-	* lisp/mule/mule-init.el (init-mule): Get Japanese man pages working.
+	* mule/mule-init.el (init-mule): Get Japanese man pages working.
 
 Fri Jan 17 17:22:54 1997  Hrvoje Niksic  <hniksic@bjesomar.srce.hr>
  

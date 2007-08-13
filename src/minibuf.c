@@ -252,14 +252,12 @@ regexp_ignore_completion_p (CONST Bufbyte *nonreloc,
   if (!NILP (Vcompletion_regexp_list))
     {
       Lisp_Object regexps;
-      for (regexps = Vcompletion_regexp_list;
-	   CONSP (regexps);
-	   regexps = XCDR (regexps))
+      EXTERNAL_LIST_LOOP (regexps, Vcompletion_regexp_list)
 	{
 	  Lisp_Object re = XCAR (regexps);
-	  if (STRINGP (re)
-	      && (fast_string_match (re, nonreloc, reloc, offset,
-				     length, 0, ERROR_ME, 0) < 0))
+	  CHECK_STRING (re);
+	  if (fast_string_match (re, nonreloc, reloc, offset,
+				 length, 0, ERROR_ME, 0) < 0)
 	    return 1;
 	}
     }

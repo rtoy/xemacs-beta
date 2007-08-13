@@ -623,8 +623,7 @@ WARNING: the event object returned may be a reused one; see the function
 	      CHECK_NATNUM (XCAR (value));
 	      CHECK_CONS (XCDR (value));
 	      if (XINT (Flength (value)) != 2)
-		signal_simple_error ("`dnd-data' should be a two-element list",
-				     Flength (value));
+		signal_simple_error ("should be a two-element list", value);
 	      /* Check validity of DATA. */
 	      EXTERNAL_LIST_LOOP (dnd_tail, XCAR (XCDR (value)))
 		{
@@ -1521,8 +1520,8 @@ Return the button-number of the given button-press or button-release event.
     /* we always have X if we have OffiX !! */
     return make_int (XEVENT (event)->event.button.button);
   else
-    event = wrong_type_argument ((Qbutton_event_p),(event));
-  
+    return wrong_type_argument ((Qbutton_event_p),(event));
+
 #endif
 }
 

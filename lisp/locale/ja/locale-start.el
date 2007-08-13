@@ -1,12 +1,10 @@
-;;; @(#)locale-start.el.euc	1.7 97/03/06 13:43:21
-;;; locale/ja/locale-start.el --- startup.el customized for ja locale.
-;;;			This file, being an .el file, 
-;;;			must be in ISO 2022 encoding after installation.
-;; Copyright (C) 1985-1986, 1990, 1992-1995 Free Software Foundation, Inc.
+;;; locale-start.el --- startup.el customized for ja locale.
+
+;; Copyright (C) 1985-6, 1990, 1992-1995, 1997 Free Software Foundation, Inc.
 ;; Copyright (c) 1993-1997 Sun Microsystems, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
 
-;; Maintainer: XEmacs
+;; Maintainer: XEmacs Development Team
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -23,12 +21,24 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+
+;;; Synched up with:  Not in FSF
+
+;;; Commentary:
+
+;;			This file, being an .el file, 
+;;			must be in ISO 2022 encoding after installation.
+;; @(#)locale-start.el.euc	1.7 97/03/06 13:43:21
+
+;;; Code:
 
 (defun startup-splash-frame-body ()
   `("\n" ,(emacs-version) "\n"
     (face bold-italic "\
-Copyright (C) 1985-1996 Free Software Foundation, Inc.
+Copyright (C) 1985-1997 Free Software Foundation, Inc.
 Copyright (C) 1990-1994 Lucid, Inc.
 Copyright (C) 1993-1997 Sun Microsystems, Inc. All Rights Reserved.
 Copyright (C) 1994-1996 Board of Trustees, University of Illinois
@@ -56,7 +66,7 @@ Copyright (C) 1995-1996 Ben Wing\n\n")
     "$B%X%k%W>pJs$r8+$k$K$O!"(B" (key help-command) " $B$H%?%$%W!"$^$?$O(B" 
     (face bold "$B%X%k%W(B") "$B%a%K%e!<$r;HMQ(B\n"
     "$B$7$F$/$@$5$$(B\n"
-    (key advertised-undo) " $B$K$h$jJQ99$r<h$j>C$;$^$;$9!#(B(C- $B$O!"(BControl $B%-!<$G$9!#(B)\n"
+    (key advertised-undo) " $B$K$h$jJQ99$r<h$j>C$;$^$9!#(B(C- $B$O!"(BControl $B%-!<$G$9!#(B)\n"
     "XEmacs $B$r=*N;$9$k$K$O!"(B" (key save-buffers-kill-emacs) " $B$H%?%$%W$7$F$/$@$5$$!#(B\n"
     (key help-with-tutorial) " $B$G(B XEmacs $B$N;HMQJ}K!$N<B=,$r3+;O$G$-$^$9!#(B\n"
     (key info) " $B$K$h$j!"(BInfo $B%b!<%I$KF~$j!"%*%s%i%$%s$N%I%-%e%a%s%H$r(B\n"
@@ -159,3 +169,5 @@ XEmacs $B$K$O!"%*%s%i%$%s$N<+=,=q$H%^%K%e%"%k(B  ($BN>J}$H$b1Q8lHG$N$_(B) $
 $B$7$F$/$@$5$$!#%^%K%e%"%k$rFI$`$K$O!"(B^Hi$B!"$5$i$K>\$7$$%X%k%W>pJs$O!"(B^H^H^H 
 (Control-h $B$r(B 3 $B2s(B) $B$r%?%$%W$7$F$/$@$5$$!#(B\n")
     (kill-emacs 0)))
+
+;;; locale-start.el ends here

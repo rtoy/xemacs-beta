@@ -23,19 +23,13 @@
        strange with X under NT. Has anyone else experiences with this ?
 
 # Native GUI issues
-    1. Mouse drags can cause aborts. I think this is because the timeout
-       implementation is broken and can cause the same timeout to go
-       off twice (especially during mouse drags?), which makes XEmacs abort.
-       Windows95 doesn't appear to provide any one-shot timers (NT does).
-    2. Random face colors.
-    3. Calling mouse_[enter|leave]_frame_hook.
-    4. Eliminate resizing funnies
-    5. Scrollbar
-    6. Menubar
-    7. Palette handling
-    8. Middle mouse button emulation. Dragging off-frame.
-    9. Images
-   10. Toolbar
+    1. Calling mouse_[enter|leave]_frame_hook.
+    2. Cut and paste from/to Windows clipboard.
+    3. Scrollbar
+    4. Menubar
+    5. Palette handling
+    6. Middle mouse button emulation.
+    7. Images
 
 Old Issues. 
 

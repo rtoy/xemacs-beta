@@ -439,7 +439,7 @@ The current window remains selected."
   (let (char)
     (save-excursion
       (set-buffer (Buffer-menu-buffer t))
-      (vc-toggle-read-only)
+      (modeline-toggle-read-only)
       (setq char (if buffer-read-only ?% ? )))
     (save-excursion
       (beginning-of-line)

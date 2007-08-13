@@ -57,7 +57,7 @@ extern int relevant_keymaps_to_search (Lisp_Object keys,
                                        int max_maps, Lisp_Object maps[]);
 extern void describe_map_tree (Lisp_Object startmap, int partial,
                                Lisp_Object shadow, Lisp_Object prefix,
-                               int mice_only_p);
+                               int mice_only_p, Lisp_Object buffer);
 
 extern void key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
 				    int allow_menu_events);

@@ -61,7 +61,7 @@ Boston, MA 02111-1307, USA.  */
 #undef STACK_TRACE_EYE_CATCHER
 
 /* Allow the configurer to specify (additional) package directories. */
-#undef PACKAGE_PATH
+/* #undef PACKAGE_PATH */
 
 /* Define LISP_FLOAT_TYPE if you want XEmacs to support floating-point
    numbers. */
@@ -113,7 +113,7 @@ Boston, MA 02111-1307, USA.  */
    quickly. */
 #undef HAVE_XFACE
 
-#define HAVE_IMAGEMAGICK
+/* #define HAVE_IMAGEMAGICK */
 
 /* Define HAVE_XMU if you have the Xmu library.  This should always be
    the case except on losing HPUX systems. */
@@ -324,6 +324,8 @@ Boston, MA 02111-1307, USA.  */
    (e.g. structure validation) compiled in.  These should be turned
    on during the beta-test cycle. */
 
+#ifdef DEBUG_XEMACS
+
 /* Check the entire extent structure of a buffer each time an extent
    change is done, and do other extent-related checks. */
 #define ERROR_CHECK_EXTENTS
@@ -342,9 +344,11 @@ Boston, MA 02111-1307, USA.  */
    etc. */
 #define ERROR_CHECK_MALLOC
 
+#endif /* DEBUG_XEMACS */
+
 /* Define DEBUG_XEMACS if you want extra debugging code compiled in.
    This is mainly intended for use by developers. */
-#define DEBUG_XEMACS 0
+/* #define DEBUG_XEMACS 0 */
 
 /* Define MEMORY_USAGE_STATS if you want extra code compiled in to
    determine where XEmacs's memory is going. */

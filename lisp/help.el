@@ -623,12 +623,17 @@ of the key sequence that ran this command."
 (defun xemacs-www-page ()
   "Go to the XEmacs World Wide Web page."
   (interactive)
-  (funcall browse-url-browser-function "http://www.xemacs.org/"))
+  (if (boundp 'browse-url-browser-function)
+      (funcall browse-url-browser-function "http://www.xemacs.org/")
+    (error "xemacs-www-page requires browse-url")))
 
 (defun xemacs-www-faq ()
   "View the latest and greatest XEmacs FAQ using the World Wide Web."
   (interactive)
-  (funcall browse-url-browser-function "http://www.xemacs.org/faq/index.html"))
+  (if (boundp 'browse-url-browser-function)
+      (funcall browse-url-browser-function
+	       "http://www.xemacs.org/faq/index.html")
+    (error "xemacs-www-faq requires browse-url")))
 
 (defun xemacs-local-faq ()
   "View the local copy of the XEmacs FAQ.

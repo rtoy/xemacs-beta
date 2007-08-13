@@ -682,6 +682,44 @@ redefine OBJECT if it is a symbol." t nil)
 
 ;;;***
 
+;;;### (autoloads (standard-display-european standard-display-underline standard-display-graphic standard-display-g1 standard-display-ascii standard-display-default standard-display-8bit make-display-table describe-current-display-table) "disp-table" "lisp/disp-table.el")
+
+(autoload 'describe-current-display-table "disp-table" "\
+Describe the display table in use in the selected window and buffer." t nil)
+
+(autoload 'make-display-table "disp-table" "\
+Return a new, empty display table." nil nil)
+
+(autoload 'standard-display-8bit "disp-table" "\
+Display characters in the range L to H literally." nil nil)
+
+(autoload 'standard-display-default "disp-table" "\
+Display characters in the range L to H using the default notation." nil nil)
+
+(autoload 'standard-display-ascii "disp-table" "\
+Display character C using printable string S." nil nil)
+
+(autoload 'standard-display-g1 "disp-table" "\
+Display character C as character SC in the g1 character set.
+This function assumes that your terminal uses the SO/SI characters;
+it is meaningless for an X frame." nil nil)
+
+(autoload 'standard-display-graphic "disp-table" "\
+Display character C as character GC in graphics character set.
+This function assumes VT100-compatible escapes; it is meaningless for an
+X frame." nil nil)
+
+(autoload 'standard-display-underline "disp-table" "\
+Display character C as character UC plus underlining." nil nil)
+
+(autoload 'standard-display-european "disp-table" "\
+Toggle display of European characters encoded with ISO 8859.
+When enabled, characters in the range of 160 to 255 display not
+as octal escapes, but as accented characters.
+With prefix argument, enable European character display iff arg is positive." t nil)
+
+;;;***
+
 ;;;### (autoloads nil "easymenu" "lisp/easymenu.el")
 
 ;;;***
@@ -1187,6 +1225,123 @@ The optional `pkg-dir' can be used to override the default package hiearchy
 
 (autoload 'package-admin-add-binary-package "package-admin" "\
 Install a pre-bytecompiled XEmacs package into package hierarchy." t nil)
+
+;;;***
+
+;;;### (autoloads (picture-mode) "picture" "lisp/picture.el")
+
+(autoload 'picture-mode "picture" "\
+Switch to Picture mode, in which a quarter-plane screen model is used.
+Printing characters replace instead of inserting themselves with motion
+afterwards settable by these commands:
+  C-c <	  Move left after insertion.
+  C-c >	  Move right after insertion.
+  C-c ^	  Move up after insertion.
+  C-c .	  Move down after insertion.
+  C-c `	  Move northwest (nw) after insertion.
+  C-c '	  Move northeast (ne) after insertion.
+  C-c /	  Move southwest (sw) after insertion.
+  C-c \\   Move southeast (se) after insertion.
+The current direction is displayed in the modeline.  The initial
+direction is right.  Whitespace is inserted and tabs are changed to
+spaces when required by movement.  You can move around in the buffer
+with these commands:
+  \\[picture-move-down]	  Move vertically to SAME column in previous line.
+  \\[picture-move-up]	  Move vertically to SAME column in next line.
+  \\[picture-end-of-line]	  Move to column following last non-whitespace character.
+  \\[picture-forward-column]	  Move right inserting spaces if required.
+  \\[picture-backward-column]	  Move left changing tabs to spaces if required.
+  C-c C-f Move in direction of current picture motion.
+  C-c C-b Move in opposite direction of current picture motion.
+  Return  Move to beginning of next line.
+You can edit tabular text with these commands:
+  M-Tab	  Move to column beneath (or at) next interesting character.
+	    `Indents' relative to a previous line.
+  Tab	  Move to next stop in tab stop list.
+  C-c Tab Set tab stops according to context of this line.
+	    With ARG resets tab stops to default (global) value.
+	    See also documentation of variable	picture-tab-chars
+	    which defines \"interesting character\".  You can manually
+	    change the tab stop list with command \\[edit-tab-stops].
+You can manipulate text with these commands:
+  C-d	  Clear (replace) ARG columns after point without moving.
+  C-c C-d Delete char at point - the command normally assigned to C-d.
+  \\[picture-backward-clear-column]  Clear (replace) ARG columns before point, moving back over them.
+  \\[picture-clear-line]	  Clear ARG lines, advancing over them.	 The cleared
+	    text is saved in the kill ring.
+  \\[picture-open-line]	  Open blank line(s) beneath current line.
+You can manipulate rectangles with these commands:
+  C-c C-k Clear (or kill) a rectangle and save it.
+  C-c C-w Like C-c C-k except rectangle is saved in named register.
+  C-c C-y Overlay (or insert) currently saved rectangle at point.
+  C-c C-x Like C-c C-y except rectangle is taken from named register.
+  \\[copy-rectangle-to-register]   Copies a rectangle to a register.
+  \\[advertised-undo]   Can undo effects of rectangle overlay commands
+	    commands if invoked soon enough.
+You can return to the previous mode with:
+  C-c C-c Which also strips trailing whitespace from every line.
+	    Stripping is suppressed by supplying an argument.
+
+Entry to this mode calls the value of  picture-mode-hook  if non-nil.
+
+Note that Picture mode commands will work outside of Picture mode, but
+they are not defaultly assigned to keys." t nil)
+
+(defalias 'edit-picture 'picture-mode)
+
+;;;***
+
+;;;### (autoloads (clear-rectangle string-rectangle open-rectangle insert-rectangle yank-rectangle kill-rectangle extract-rectangle delete-extract-rectangle delete-rectangle) "rect" "lisp/rect.el")
+
+(autoload 'delete-rectangle "rect" "\
+Delete (don't save) text in rectangle with point and mark as corners.
+The same range of columns is deleted in each line starting with the line
+where the region begins and ending with the line where the region ends." t nil)
+
+(autoload 'delete-extract-rectangle "rect" "\
+Delete contents of rectangle and return it as a list of strings.
+Arguments START and END are the corners of the rectangle.
+The value is list of strings, one for each line of the rectangle." nil nil)
+
+(autoload 'extract-rectangle "rect" "\
+Return contents of rectangle with corners at START and END.
+Value is list of strings, one for each line of the rectangle." nil nil)
+
+(defvar killed-rectangle nil "\
+Rectangle for yank-rectangle to insert.")
+
+(autoload 'kill-rectangle "rect" "\
+Delete rectangle with corners at point and mark; save as last killed one.
+Calling from program, supply two args START and END, buffer positions.
+But in programs you might prefer to use `delete-extract-rectangle'." t nil)
+
+(autoload 'yank-rectangle "rect" "\
+Yank the last killed rectangle with upper left corner at point." t nil)
+
+(autoload 'insert-rectangle "rect" "\
+Insert text of RECTANGLE with upper left corner at point.
+RECTANGLE's first line is inserted at point, its second
+line is inserted at a point vertically under point, etc.
+RECTANGLE should be a list of strings.
+After this command, the mark is at the upper left corner
+and point is at the lower right corner." nil nil)
+
+(autoload 'open-rectangle "rect" "\
+Blank out rectangle with corners at point and mark, shifting text right.
+The text previously in the region is not overwritten by the blanks,
+but instead winds up to the right of the rectangle." t nil)
+
+(autoload 'string-rectangle "rect" "\
+Insert STRING on each line of the region-rectangle, shifting text right.
+The left edge of the rectangle specifies the column for insertion.
+This command does not delete or overwrite any existing text.
+
+Called from a program, takes three args; START, END and STRING." t nil)
+
+(autoload 'clear-rectangle "rect" "\
+Blank out rectangle with corners at point and mark.
+The text previously in the region is overwritten by the blanks.
+When called from a program, requires two args which specify the corners." t nil)
 
 ;;;***
 

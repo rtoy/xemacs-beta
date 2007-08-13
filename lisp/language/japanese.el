@@ -120,7 +120,9 @@
 	     its:*standard-modes*))
       (provide 'egg-jpn))
     (setq wnn-server-type 'jserver)
-    (setq egg-default-startup-file "eggrc-wnn")
+    ;; Can't do this here any more.  Must do it when selecting egg-wnn
+    ;; or egg-sj3
+    ;; (setq egg-default-startup-file "eggrc-wnn")
     (setq-default its:*current-map* (its:get-mode-map "roma-kana"))))
 
 ;; stuff for providing gramatic processing of Japanese text

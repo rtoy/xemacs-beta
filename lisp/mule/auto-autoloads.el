@@ -1,6 +1,20 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (featurep 'mule-autoloads) (error "Already loaded"))
 
+;;;### (autoloads (view-charset) "char-table" "mule/char-table.el")
+
+(autoload 'view-charset "char-table" "\
+Display character table of CHARSET." t nil)
+
+;;;***
+
+;;;### (autoloads (view-charset-by-menu) "chartblxmas" "mule/chartblxmas.el")
+
+(autoload 'view-charset-by-menu "chartblxmas" "\
+Display character table of CHARSET by pop-up menu." t nil)
+
+;;;***
+
 ;;;### (autoloads (isearch-fep-quail isearch-fep-canna isearch-fep-egg isearch-fep-string) "isearch-mule" "mule/isearch-mule.el")
 
 (defvar search-string-char-prompt "*Enter string... ")

@@ -379,7 +379,7 @@ temacs: $(temacs_deps)
 
 .PHONY : run-temacs
 
-run-temacs:
+run-temacs: temacs
 	./temacs -batch -l loadup.el run-temacs
 
 ## Debugging targets:

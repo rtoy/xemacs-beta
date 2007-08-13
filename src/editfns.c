@@ -53,9 +53,13 @@ Lisp_Object Vsystem_name;	/* #### - I don't see why this should be */
 				   real values upon the first call to the
 				   functions that generate them. --stig */
 Lisp_Object Vuser_real_login_name; /* login name of current user ID */
-Lisp_Object Vuser_full_name;	/* full name of current user */
 Lisp_Object Vuser_login_name;	/* user name from LOGNAME or USER.  */
 #endif
+
+/* It's useful to be able to set this as user customization, so we'll
+   keep it. */
+Lisp_Object Vuser_full_name;
+Lisp_Object Fuser_full_name (Lisp_Object);
 
 extern char *get_system_name (void);
 
@@ -72,101 +76,24 @@ void
 init_editfns (void)
 {
 /* Only used in removed code below. */
-#if 0
-  char *user_name;
-  Bufbyte *p, *q;
-  struct passwd *pw;	/* password entry for the current user */
-  Lisp_Object tem;
-#endif
+  Bufbyte *p;
 
   environbuf = 0;
 
   /* Set up system_name even when dumping.  */
   init_system_name ();
 
-#if 0				/* this is now dynamic */
-  /* don't lose utterly if someone uses these during loadup. */
-  Vuser_real_login_name = Qnil;
-  Vuser_login_name = Qnil;
-  Vuser_full_name = Qnil;
-
 #ifndef CANNOT_DUMP
-  /* Don't bother with this on initial start when just dumping out */
   if (!initialized)
     return;
-#endif /* not CANNOT_DUMP */
-
-  pw = (struct passwd *) getpwuid (getuid ());
-#ifdef MSDOS
-  /* We let the real user name default to "root" because that's quite
-     accurate on MSDOG and because it lets Emacs find the init file.
-     (The DVX libraries override the Djgpp libraries here.)  */
-  Vuser_real_login_name = build_string (pw ? pw->pw_name : "root");
-#else
-  Vuser_real_login_name = build_string (pw ? pw->pw_name : "unknown");
 #endif
 
-  /* Get the effective user name, by consulting environment variables,
-     or the effective uid if those are unset.  */
-  user_name = getenv ("LOGNAME");
-  if (!user_name)
-#ifdef WINDOWSNT
-    user_name = (char *) getenv ("USERNAME"); /* it's USERNAME on NT */
-#else  /* WINDOWSNT */
-    user_name = (char *) getenv ("USER");
-#endif /* WINDOWSNT */
-  if (!user_name)
-    {
-      /* #### - do we really want the EFFECTIVE uid here?  Are these flipped? */
-      /* I ask because LOGNAME and USER vars WILL NOT MATCH the euid.  --Stig */
-      pw = (struct passwd *) getpwuid (geteuid ());
-      user_name = (char *) (pw ? pw->pw_name : "unknown");
-    }
-  Vuser_login_name = build_string (user_name);
-
-  /* If the user name claimed in the environment vars differs from
-     the real uid, use the claimed name to find the full name.  */
-  tem = Fstring_equal (Vuser_login_name, Vuser_real_login_name);
-  if (NILP (tem))
-    {
-      /* Jamie reports that IRIX gets wedged by SIGIO/SIGALARM occurring
-	 in select(), called from getpwnam(). */
-      slow_down_interrupts ();
-      pw = (struct passwd *)
-	getpwnam ((char *) XSTRING_DATA (Vuser_login_name));
-      speed_up_interrupts ();
-    }
-
-  p = (Bufbyte *) ((pw) ? USER_FULL_NAME : "unknown"); /* don't gettext here */
-  q = (Bufbyte *) strchr ((char *) p, ',');
-  Vuser_full_name = make_ext_string (p, (q ? q - p : strlen ((char *) p)),
-				     FORMAT_OS);
-
-#ifdef AMPERSAND_FULL_NAME
-  p = XSTRING_DATA (Vuser_full_name);
-  q = (Bufbyte *) strchr ((char *) p, '&');
-  /* Substitute the login name for the &, upcasing the first character.  */
-  if (q)
-    {
-      char *r = (char *)
-	alloca (strlen ((char *) p) + XSTRING_LENGTH (Vuser_login_name) + 1);
-      Charcount fullname_off = bytecount_to_charcount (p,  q - p);
-      memcpy (r, p, q - p);
-      r[q - p] = 0;
-      strcat (r, (char *) XSTRING_DATA (Vuser_login_name));
-      strcat (r, q + 1);
-      Vuser_full_name = build_string (r);
-      set_string_char (XSTRING (Vuser_full_name), fullname_off,
-		       UPCASE (current_buffer,
-			       string_char (XSTRING (Vuser_full_name),
-					    fullname_off)));
-    }
-#endif /* AMPERSAND_FULL_NAME */
-
-  p = (Bufbyte *) getenv ("NAME");
-  if (p)
-    Vuser_full_name = build_string ((char *) p);
-#endif /* 0 */
+  if ((p = (Bufbyte *) getenv ("NAME")))
+    /* I don't think it's the right thing to do the ampersand
+       modification on NAME.  Not that it matters anymore...  -hniksic */
+    Vuser_full_name = build_ext_string (p, FORMAT_OS);
+  else
+    Vuser_full_name = Fuser_full_name (Qnil);
 }
 
 DEFUN ("char-to-string", Fchar_to_string, 1, 1, 0, /*
@@ -245,7 +172,8 @@ If BUFFER is nil, the current buffer is assumed.
   struct buffer *b = decode_buffer (buffer, 1);
   if (NILP (dont_copy_p))
     return Fcopy_marker (b->point_marker, Qnil);
-  return b->point_marker;
+  else
+    return b->point_marker;
 }
 
 /* The following two functions end up being identical but it's
@@ -394,86 +322,69 @@ If BUFFER is nil, the current buffer is assumed.
 }
 
 
-/* The saved object looks like this:
+/* The saved object is a cons:
 
-   (COPY-OF-POINT-MARKER . (COPY-OF-MARK . VISIBLE-P))
+   (COPY-OF-POINT-MARKER . COPY-OF-MARK)
 
-   where
-
-   VISIBLE-P is t if `(eq (current-buffer) (window-buffer (selected-window)))'
-   but is not actually used any more.
- */
+   We used to have another cons for a VISIBLE-P element, which was t
+   if `(eq (current-buffer) (window-buffer (selected-window)))' but it
+   was unused for a long time, so I removed it.  --hniksic */
 Lisp_Object
 save_excursion_save (void)
 {
   struct buffer *b;
-  int visible;
-  Lisp_Object tem;
 
-  if (preparing_for_armageddon)
-    return Qnil;
-  else
-    {
-      b = current_buffer;
-      visible = (XBUFFER (XWINDOW (Fselected_window (Qnil))->buffer) == b);
-      tem = ((visible) ? Qt : Qnil);
-    }
+  /* #### Huh?  --hniksic */
+  /*if (preparing_for_armageddon) return Qnil;*/
 
 #ifdef ERROR_CHECK_BUFPOS
   assert (XINT (Fpoint (Qnil)) ==
 	  XINT (Fmarker_position (Fpoint_marker (Qt, Qnil))));
 #endif
 
-#if 0 /* FSFmacs */
-  tem = Fcons (tem, b->mark_active);
-#endif
+  b = current_buffer;
 
-  return noseeum_cons (noseeum_copy_marker (Fpoint_marker (Qt, Qnil), Qnil),
-		       noseeum_cons (noseeum_copy_marker (b->mark, Qnil),
-				     tem));
+  return noseeum_cons (noseeum_copy_marker (b->point_marker, Qnil),
+		       noseeum_copy_marker (b->mark, Qnil));
 }
 
 Lisp_Object
 save_excursion_restore (Lisp_Object info)
 {
-  Lisp_Object tem;
-  int visible;
-  struct gcpro gcpro1, gcpro2;
+  Lisp_Object buffer = Fmarker_buffer (XCAR (info));
 
-  tem = Fmarker_buffer (Fcar (info));
-  /* If buffer being returned to is now deleted, avoid error */
-  /* Otherwise could get error here while unwinding to top level
-     and crash */
-  /* In that case, Fmarker_buffer returns nil now.  */
-  if (NILP (tem))
-    return Qnil;
-  /* Need gcpro in case Lisp hooks get run */
-  GCPRO2 (info, tem);
-  Fset_buffer (tem);
-  tem = Fcar (info);
-  Fgoto_char (tem, Fcurrent_buffer ());
-  tem = Fcar (Fcdr (info));
-  Fset_marker (current_buffer->mark, tem, Fcurrent_buffer ());
-  tem = Fcdr (Fcdr (info));
-  visible = !NILP (tem);
+  /* If buffer being returned to is now deleted, avoid error --
+     otherwise could get error here while unwinding to top level and
+     crash.  In that case, Fmarker_buffer returns nil now.  */
+  if (!NILP (buffer))
+    {
+      struct buffer *buf = XBUFFER (buffer);
+      struct gcpro gcpro1;
+      GCPRO1 (info);
+      set_buffer_internal (buf);
+      Fgoto_char (XCAR (info), buffer);
+      Fset_marker (buf->mark, XCDR (info), buffer);
 
 #if 0 /* We used to make the current buffer visible in the selected window
 	 if that was true previously.  That avoids some anomalies.
 	 But it creates others, and it wasn't documented, and it is simpler
 	 and cleaner never to alter the window/buffer connections.  */
-/* #### I'm certain some code somewhere depends on this behavior. --jwz */
-
-  if (visible
-      && (current_buffer != XBUFFER (XWINDOW (selected_window)->buffer)))
-    switch_to_buffer (Fcurrent_buffer (), Qnil);
+      /* I'm certain some code somewhere depends on this behavior. --jwz */
+      /* Even if it did, it certainly doesn't matter anymore, because
+         this has been the behaviour for countless XEmacs releases
+         now.  --hniksic */
+      if (visible
+	  && (current_buffer != XBUFFER (XWINDOW (selected_window)->buffer)))
+	switch_to_buffer (Fcurrent_buffer (), Qnil);
 #endif
 
-  UNGCPRO;
+      UNGCPRO;
+    }
+
   /* Free all the junk we allocated, so that a `save-excursion' comes
      for free in terms of GC junk. */
   free_marker (XMARKER (XCAR (info)));
-  free_marker (XMARKER (XCAR (XCDR (info))));
-  free_cons (XCONS (XCDR (info)));
+  free_marker (XMARKER (XCDR (info)));
   free_cons (XCONS (info));
   return Qnil;
 }
@@ -498,6 +409,8 @@ Lisp_Object
 save_current_buffer_restore (Lisp_Object buffer)
 {
   struct buffer *buf = XBUFFER (buffer);
+  /* Avoid signaling an error if the buffer is no longer alive.  This
+     is for consistency with save-excursion.  */
   if (!BUFFER_LIVE_P (buf))
     return Qnil;
   set_buffer_internal (buf);
@@ -776,14 +689,21 @@ DEFUN ("user-full-name", Fuser_full_name, 0, 1, 0, /*
 Return the full name of the user logged in, as a string.
 If the optional argument USER is given, then the full name for that
 user is returned, or nil.  USER may be either a login name or a uid.
+
+If USER is nil, and `user-full-name' contains a string, the
+value of `user-full-name' is returned.
 */
        (user))
 {
-  Lisp_Object user_name = (STRINGP (user) ? user : Fuser_login_name (user));
+  Lisp_Object user_name;
   struct passwd *pw = NULL;
   Lisp_Object tem;
   char *p, *q;
 
+  if (NILP (user) && STRINGP (Vuser_full_name))
+    return Vuser_full_name;
+
+  user_name = (STRINGP (user) ? user : Fuser_login_name (user));
   if (!NILP (user_name))	/* nil when nonexistent UID passed as arg */
     {
       CONST char *user_name_ext;
@@ -830,9 +750,6 @@ user is returned, or nil.  USER may be either a login name or a uid.
     }
 #endif /* AMPERSAND_FULL_NAME */
 
-  p = getenv ("NAME");
-  if (p)
-    tem = build_string (p);
   return tem;
 }
 
@@ -927,7 +844,7 @@ lisp_to_time (Lisp_Object specified_time, time_t *result)
       CHECK_INT (high);
       low = Fcdr (specified_time);
       if (CONSP (low))
-	low = Fcar (low);
+	low = XCAR (low);
       CHECK_INT (low);
       *result = (XINT (high) << 16) + (XINT (low) & 0xffff);
       return *result >> 16 == XINT (high);
@@ -1097,7 +1014,7 @@ If you want them to stand for years in this century, you must do that yourself.
   tm.tm_isdst = -1;
 
   if (CONSP (zone))
-    zone = Fcar (zone);
+    zone = XCAR (zone);
   if (NILP (zone))
     _time = mktime (&tm);
   else
@@ -1814,25 +1731,27 @@ save_restriction_restore (Lisp_Object data)
   Lisp_Object tem;
   int local_clip_changed = 0;
 
-  buf = XBUFFER (Fcar (data));
+  buf = XBUFFER (XCAR (data));
   if (!BUFFER_LIVE_P (buf))
-    /* someone could have killed the buffer in the meantime ... */
-    return Qnil;
-  tem = Fcdr (data);
-  newhead = XINT (Fcar (tem));
-  newtail = XINT (Fcdr (tem));
-  while (CONSP (data))
     {
-      struct Lisp_Cons *victim = XCONS (data);
-      data = victim->cdr;
-      free_cons (victim);
+      /* someone could have killed the buffer in the meantime ... */
+      free_cons (XCONS (XCDR (data)));
+      free_cons (XCONS (data));
+      return Qnil;
     }
+  tem = XCDR (data);
+  newhead = XINT (XCAR (tem));
+  newtail = XINT (XCDR (tem));
+
+  free_cons (XCONS (XCDR (data)));
+  free_cons (XCONS (data));
 
   if (newhead + newtail > BUF_Z (buf) - BUF_BEG (buf))
     {
       newhead = 0;
       newtail = 0;
     }
+
   {
     Bufpos start, end;
     Bytind bi_start, bi_end;
@@ -2205,7 +2124,6 @@ vars_of_editfns (void)
 {
   staticpro (&Vsystem_name);
 #if 0
-  staticpro (&Vuser_full_name);
   staticpro (&Vuser_name);
   staticpro (&Vuser_real_name);
 #endif
@@ -2264,11 +2182,14 @@ Do not alter this.  It is for internal use only.
   zmacs_region_active_p = 0;
 
   DEFVAR_BOOL ("zmacs-region-stays", &zmacs_region_stays /*
+Whether the current command will deactivate the region.
 Commands which do not wish to affect whether the region is currently
 highlighted should set this to t.  Normally, the region is turned off after
 executing each command that did not explicitly turn it on with the function
 zmacs-activate-region. Setting this to true lets a command be non-intrusive.
 See the variable `zmacs-regions'.
+
+The same effect can be achieved using the `_' interactive specification.
 */ );
   zmacs_region_stays = 0;
 
@@ -2282,4 +2203,13 @@ is not available by any other means.
 #ifdef AMPERSAND_FULL_NAME
   Fprovide(intern("ampersand-full-name"));
 #endif
+
+  DEFVAR_LISP ("user-full-name", &Vuser_full_name /*
+*The name of the user.
+The function `user-full-name', which will return the value of this
+ variable, when called without arguments.
+This is initialized to the value of the NAME environment variable.
+*/ );
+  /* Initialized at run-time. */
+  Vuser_full_name = Qnil;
 }

@@ -5,7 +5,7 @@
 
 ;; Author: Akira Kon <kon@d1.bs2.mt.nec.co.jp>
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Revision: 1.8 $
+;; Version: $Revision: 1.9 $
 ;; Keywords: Canna, Japanese, input method, mule, multilingual
 
 ;; This file is not a part of Emacs yet.
@@ -50,7 +50,7 @@
 ;; end
 
 (defconst canna-rcs-version
-  "$Id: canna.el,v 1.8 1997/10/31 14:52:58 steve Exp $")
+  "$Id: canna.el,v 1.9 1997/12/06 22:26:21 steve Exp $")
 
 (defun canna-version ()
   "Display version of canna.el in mini-buffer."
@@ -63,7 +63,7 @@
 			 ))
 	    " ...")))
 
-(require 'emu)
+;; (require 'emu)
 
 (if running-xemacs
     (defun canna-self-insert-string (string)
@@ -833,7 +833,10 @@ kana-to-kanji translation, even if you are in the minibuffer."
 	(message "『かんな』の初期化を行っています....done")
 	))
   (canna-set-width (- (window-width (minibuffer-window))
-		      (minibuffer-prompt-width)
+		      ;; Inline expansion of `minibuffer-prompt-width'
+		      (save-excursion
+			(set-buffer (window-buffer (minibuffer-window)))
+			(current-column))
 		      (if (and display-minibuffer-mode-in-minibuffer
 			       (eq (selected-window) (minibuffer-window)))
 			  (string-width

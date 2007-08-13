@@ -73,8 +73,6 @@ Window-system options:
 --with-offix (*)	Compile in support for OffiX drag and drop.
 --with-xmu=no (*)	For those unfortunates whose vendors don't ship Xmu.
 --external-widget	Compile with external widget support.
---with-gif		Compile with support for GIF image conversion.
-			This support is built-in and defaults to `yes'.
 --with-xpm (*)		Compile with support for XPM files.
 			It is highly recommended that you obtain XPM
 			(version 3.4h or better) if you don't already

@@ -1,5 +1,6 @@
 ;;; hyper-apropos.el --- Hypertext emacs lisp documentation interface.
 
+;; Copyright (C)  1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1994, 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 1996 Ben Wing.
@@ -62,8 +63,6 @@
 ;; Niksic <hniksic@srce.hr>.
 
 ;;; Code:
-
-(require 'pp)
 
 (defgroup hyper-apropos nil
   "Hypertext emacs lisp documentation interface."
@@ -865,7 +864,7 @@ See also `hyper-apropos' and `hyper-describe-function'."
 			 (insert-face "value: " 'hyper-apropos-heading)
 			 (if hyper-apropos-prettyprint-long-values
 			     (condition-case nil
-				 (let ((pp-print-readably nil)) (pprint local))
+				 (cl-prettyprint local)
 			       (error (insert local-str)))
 			   (insert local-str))))
 		   (if global-str
@@ -874,7 +873,7 @@ See also `hyper-apropos' and `hyper-describe-function'."
 			 (insert-face "default value: " 'hyper-apropos-heading)
 			 (if hyper-apropos-prettyprint-long-values
 			     (condition-case nil
-				 (let ((pp-print-readably nil)) (pprint global))
+				 (cl-prettyprint global)
 			       (error (insert global-str)))
 			   (insert global-str)))))
 		 (indent-rigidly beg (point) 2))))
@@ -1246,10 +1245,10 @@ window.  (See also `find-function'.)"
 	   (insert (format " for function `%S'" sym))
 	   )
 	  ((consp fun)
-	   (with-output-to-temp-buffer "*Disassemble*"
-	     (pprint (if macrop
-			 (cons 'defmacro (cons sym (cdr (cdr fun))))
-		       (cons 'defun (cons sym (cdr fun))))))
+	   (with-current-buffer "*Disassemble*"
+	     (cl-prettyprint (if macrop
+				 (cons 'defmacro (cons sym (cdr (cdr fun))))
+			       (cons 'defun (cons sym (cdr fun))))))
 	   (set-buffer "*Disassemble*")
 	   (emacs-lisp-mode))
 	  ((or (vectorp fun) (stringp fun))

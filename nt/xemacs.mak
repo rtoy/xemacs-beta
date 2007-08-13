@@ -1,15 +1,19 @@
-MSDEV=c:\msdev
 XEMACS=..
 LISP=$(XEMACS)\lisp
-
+PACKAGE_PATH="~/.xemacs;h:/src/xemacs/packages"
 HAVE_X=0
 HAVE_MSW=1
 
 HAVE_MULE=0
 HAVE_IMAGEMAGICK=0
 
+DEBUG_XEMACS=1
+
+!if $(DEBUG_XEMACS)
 OPT=-Od -Zi
-#OPT=-O2 -G5 -Zi
+!else
+OPT=-O2 -G5 -Zi
+!endif
 
 #------------------------------------------------------------------------------
 
@@ -35,6 +39,10 @@ MSW_DEFINES=-DHAVE_MS_WINDOWS
 
 !if $(HAVE_MULE)
 MULE_DEFINES=-DMULE
+!endif
+
+!if $(DEBUG_XEMACS)
+DEBUG_DEFINES=-DDEBUG_XEMACS
 !endif
 
 !include "..\version.sh"
@@ -65,8 +73,14 @@ XEMACS_INCLUDES=\
  $(XEMACS)\src\Emacs.ad.h \
  $(XEMACS)\src\paths.h
 
-$(XEMACS_INCLUDES):
-	!copy *.h $(XEMACS)\src
+$(XEMACS)\src\config.h:	config.h
+	!copy config.h $(XEMACS)\src
+
+$(XEMACS)\src\Emacs.ad.h:	Emacs.ad.h
+	!copy Emacs.ad.h $(XEMACS)\src
+
+$(XEMACS)\src\paths.h:	paths.h
+	!copy paths.h $(XEMACS)\src
 
 #------------------------------------------------------------------------------
 
@@ -160,7 +174,6 @@ DOC_SRC1=\
  $(XEMACS)\src\console-stream.c \
  $(XEMACS)\src\console.c \
  $(XEMACS)\src\data.c \
- $(XEMACS)\src\debug.c \
  $(XEMACS)\src\device.c \
  $(XEMACS)\src\dgif_lib.c 
 DOC_SRC2=\
@@ -264,7 +277,7 @@ DOC_SRC6=\
 !endif
 
 !if $(HAVE_MSW)
-DOC_SRCS_7=\
+DOC_SRC7=\
  $(XEMACS)\src\console-msw.c \
  $(XEMACS)\src\device-msw.c  \
  $(XEMACS)\src\event-msw.c  \
@@ -275,12 +288,17 @@ DOC_SRCS_7=\
 !endif
 
 !if $(HAVE_MULE)
-DOC_SRCS_8=\
+DOC_SRC8=\
  $(XEMACS)\src\input-method-xlib.c \
  $(XEMACS)\src\mule.c \
  $(XEMACS)\src\mule-charset.c \
  $(XEMACS)\src\mule-ccl.c \
  $(XEMACS)\src\mule-coding.c
+!endif
+
+!if $(DEBUG_XEMACS)
+DOC_SRC_9=\
+ $(XEMACS)\src\debug.c
 !endif
 
 MAKE_DOCFILE=$(LIB_SRC)\make-docfile.exe
@@ -321,13 +339,15 @@ TEMACS_LIBS=$(LASTFILE) $(LWLIB) $(X_LIBS) kernel32.lib user32.lib gdi32.lib \
 TEMACS_LFLAGS=-nologo $(LIBRARIES) -base:0x1000000\
  -stack:0x800000 -entry:_start -subsystem:console\
  -pdb:$(TEMACS_DIR)\temacs.pdb -map:$(TEMACS_DIR)\temacs.map -debug:full\
- -heap:0x00100000 -out:$@\
-
-TEMACS_CPP_FLAGS= $(INCLUDES) $(DEFINES) \
+ -heap:0x00100000 -out:$@
+TEMACS_CPP_FLAGS= $(INCLUDES) $(DEFINES) $(DEBUG_DEFINES) \
  -DEMACS_MAJOR_VERSION=$(emacs_major_version) \
  -DEMACS_MINOR_VERSION=$(emacs_minor_version) \
+ -DEMACS_BETA_VERSION=$(emacs_beta_version) \
  -DXEMACS_CODENAME=\"$(xemacs_codename)\" \
- -DPATH_PREFIX=\"$(XEMACS)\"
+ -DPATH_PREFIX=\"$(XEMACS)\" \
+ -DPACKAGE_PATH=\"$(PACKAGE_PATH)\"
+
 TEMACS_FLAGS=-nologo -ML -w $(OPT) -c $(TEMACS_CPP_FLAGS)
 
 !if $(HAVE_X)
@@ -374,13 +394,19 @@ TEMACS_MULE_OBJS=\
 	$(OUTDIR)\mule.obj \
 	$(OUTDIR)\mule-charset.obj \
 	$(OUTDIR)\mule-ccl.obj \
-	$(OUTDIR)\mule-coding.obj \
+	$(OUTDIR)\mule-coding.obj
+!endif
+
+!if $(DEBUG_XEMACS)
+TEMACS_DEBUG_OBJS=\
+	$(OUTDIR)\debug.obj
 !endif
 
 TEMACS_OBJS= \
 	$(TEMACS_X_OBJS)\
 	$(TEMACS_MSW_OBJS)\
 	$(TEMACS_MULE_OBJS)\
+	$(TEMACS_DEBUG_OBJS)\
 	$(OUTDIR)\abbrev.obj \
 	$(OUTDIR)\alloc.obj \
 	$(OUTDIR)\alloca.obj \
@@ -397,7 +423,6 @@ TEMACS_OBJS= \
 	$(OUTDIR)\console-stream.obj \
 	$(OUTDIR)\console.obj \
 	$(OUTDIR)\data.obj \
-	$(OUTDIR)\debug.obj \
 	$(OUTDIR)\device.obj \
 	$(OUTDIR)\dgif_lib.obj \
 	$(OUTDIR)\dialog.obj \
@@ -519,6 +544,7 @@ $(DOC): $(LIB_SRC)\make-docfile.exe
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC6)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC7)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC8)
+	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC9)
 
 update-elc: $(LOADPATH)\startup.el
 	!$(TEMACS) -batch -l update-elc.el
@@ -572,3 +598,4 @@ depend:
 	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w9999 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w9999 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c

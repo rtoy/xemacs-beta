@@ -35,9 +35,7 @@
   "Plist of frame properties for initially creating a dialog frame.
 Properties specified here supersede the values given in
 `default-frame-plist'."
-  :type '(repeat (group :inline t
-			(symbol :tag "Property")
-			(sexp :tag "Value")))
+  :type 'plist
   :group 'frames)
 
 (defun make-dialog-frame (&optional props parent)

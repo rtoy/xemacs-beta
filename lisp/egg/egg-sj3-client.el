@@ -19,11 +19,13 @@
 ;; If not, write to the Free Software Foundation, 675 Mass
 ;; Ave, Cambridge, MA 02139, USA.
 
+;;; Ported to XEmacs 2-December, 1997.
+
 ;;;
 ;;; Mule - Sj3 server interface in elisp
 ;;;
 
-(provide 'sj3-client)
+(provide 'egg-sj3-client)
 
 ;;;;  修正メモ；；
 
@@ -68,7 +70,7 @@
 ;;;   に起こるバグの修正(これに伴い文節学習 sj3-server-b-study の修正)
 
 ;;;
-;;;  Sj3 deamon command constants
+;;;  Sj3 daemon command constants
 ;;;
 
 (defconst SJ3_OPEN          1  "利用者登録")
@@ -137,6 +139,7 @@
 (defvar sj3-user-dict-list nil)
 (defvar sj3-sys-dict-list nil)
 (defvar sj3-yomi-llist nil)
+
 ;;;
 ;;;  Put data into buffer 
 ;;;
@@ -152,8 +155,8 @@
 
 (defun sj3-put-string* (str)
   (let ((sstr (if (= *sj3-current-server-version* 2)
-		  (code-convert-string str *internal* *euc-japan*)
-		(code-convert-string str *internal* *sjis*))))
+		  (encode-coding-string str 'euc-japan)
+		(encode-coding-string str 'sjis))))
     (insert sstr 0)))
 
 ;;;
@@ -223,8 +226,8 @@
     (setq str (buffer-substring point (1- (point))))
     (delete-region point (point))
     (insert (if (= *sj3-current-server-version* 2)
-		(code-convert-string str *euc-japan* *internal*)
-	      (code-convert-string str *sjis* *internal*)) 0)))
+		(decode-coding-string str 'euc-japan)
+	      (decode-coding-string str 'sjis)) 0)))
 
 (defun sj3-get-stdy ()
   (let ((c 0) (point (point)))
@@ -251,12 +254,12 @@
     (progn  
       ;;; for Mule
       (if (fboundp 'set-process-coding-system)
-	  (set-process-coding-system sj3-server-process *noconv* *noconv*))
+	  (set-process-coding-system sj3-server-process 'binary 'binary))
       ;;; for Nemacs 3.0 and later
 ;;      (if (fboundp 'set-process-kanji-code)
 ;;         (set-process-kanji-code sj3-server-process 0))
       (set-buffer sj3-command-buffer)
-      (setq mc-flag nil)   ;;; for Mule
+      ;; (setq mc-flag nil)   ;;; for Mule
 ;;      (setq kanji-flag nil)
 ;;      (setq kanji-fileio-code 0)   ;;; for Nemacs 2.1
       (buffer-disable-undo sj3-command-buffer)
@@ -349,13 +352,13 @@
           ;;; for Mule
 	  (if (fboundp 'set-process-coding-system)
 	      (set-process-coding-system 
-	       sj3-server-process *noconv* *noconv*))
+	       sj3-server-process 'binary 'binary))
 	  ;;; for Nemacs 3.0 
 ;;	  (if (fboundp 'set-process-kanji-code)
 ;;	      (set-process-kanji-code sj3-server-process 0))
 	  (progn
 	    (set-buffer sj3-server-buffer)
-	    (setq mc-flag nil)   ;;; for Mule
+;;	    (setq mc-flag nil)   ;;; for Mule
 ;;	    (setq kanji-flag nil)
 	    ;;; for Nemacs 2.1
 ;;	    (setq kanji-fileio-code 0) 
@@ -363,14 +366,14 @@
 	    )
 	  (progn
 	    (set-buffer sj3-result-buffer)
-	    (setq mc-flag nil)   ;;; for Mule
+	    ;; (setq mc-flag nil)   ;;; for Mule
 ;;	    (setq kanji-flag nil)
 	    ;;; for Nemacs 2.1 
 ;;	    (setq kanji-fileio-code 0)
 	    (buffer-disable-undo sj3-result-buffer))
 	  (progn  
 	    (set-buffer sj3-command-buffer)
-	    (setq mc-flag nil)   ;;; for Mule
+;;	    (setq mc-flag nil)   ;;; for Mule
 ;;	    (setq kanji-flag nil)
 	    ;;; for Nemacs 2.1
 ;;	    (setq kanji-fileio-code 0)
@@ -509,8 +512,8 @@
       (save-excursion
 	(setq sj3-henkan-string henkan-string)
 	(if (= *sj3-current-server-version* 2)
-	    (setq mb-str (code-convert-string henkan-string *internal* *euc-japan*))
-	    (setq mb-str (code-convert-string henkan-string *internal* *sjis*))
+	    (setq mb-str (encode-coding-string henkan-string 'euc-japan))
+	    (setq mb-str (encode-coding-string henkan-string 'sjis))
         )
 	(set-buffer sj3-result-buffer)
 	(erase-buffer)
@@ -540,8 +543,8 @@
 		    endp)
 		(setq yp (+ yp yl))
 		(if (= *sj3-current-server-version* 2)
-		    (setq yl (length (code-convert-string ystr *euc-japan* *internal*)))
-		  (setq yl (length (code-convert-string ystr *sjis* *internal*)))
+		    (setq yl (length (decode-coding-string ystr 'euc-japan)))
+		  (setq yl (length (decode-coding-string ystr 'sjis)))
 		)
 		(sj3-get-stdy) ;;; skip study-data
 		(sj3-get-convert-string)
@@ -760,8 +763,8 @@
 (defun sj3-server-henkan-kouho (str)
   (if (not (sj3-server-active-p)) -1
     (let ((mb-str (if (= *sj3-current-server-version* 2)
-		      (code-convert-string str *internal* *euc-japan*)
-		    (code-convert-string str *internal* *sjis*)))
+		      (encode-coding-string str 'euc-japan)
+		    (encode-coding-string str 'sjis)))
 	  len kouho-suu)
       (setq len (length mb-str))
       (setq kouho-suu (sj3-server-henkan-kouho-suu len mb-str))
@@ -779,14 +782,17 @@
 
 (defun sj3-put-kata (str)
   (setq str (copy-sequence str))
-  (let ((i 0) (len (length str)))
+  (let ((i 0) (len (length str)) ch)
     (while (< i len)
-      (if (/= (aref str i) lc-jp)
-	  (setq i (1+ i))
-	(if (= (aref str (1+ i)) ?\244)
-	    (aset str (1+ i) ?\245))
-	(setq i (+ i 3)))))
-  (insert str 0))
+      (setq ch (aref str i))
+      (aset str i
+	    (if (and (/= ?ー ch)
+		     (string-match "\\cH" (char-to-string ch)))
+		(make-char (find-charset 'japanese-jisx0208) 37
+			   (char-octet ch 1))
+	      ch))
+      (incf i))
+    (insert str 0)))
 
 (defun sj3-server-henkan-kouho-suu (yomi-length yomi)
   (if (not (sj3-server-active-p)) -1
@@ -846,8 +852,8 @@
 			    (setq p1 (+ p0 (+ length 4)))
 			    (setq ystr (sj3-get-yomi yp1 ll))
 			    (setq mb-str (if (= *sj3-current-server-version* 2)
-					     (code-convert-string ystr *internal* *euc-japan*)
-					   (code-convert-string ystr *internal* *sjis*)))
+					     (encode-coding-string ystr 'euc-japan)
+					   (encode-coding-string ystr 'sjis)))
 			    (setq i (sj3-server-henkan-kouho-suu 
 				     (length mb-str) mb-str))
 			    (set-buffer sj3-result-buffer)
@@ -863,8 +869,8 @@
 (defun sj3-put-tanconv (str)
   (let ((point (point)) len ksuu
 	(mb-str (if (= *sj3-current-server-version* 2)
-		    (code-convert-string str *internal* *euc-japan*)
-		  (code-convert-string str *internal* *sjis*))))
+		    (encode-coding-string str 'euc-japan)
+		  (encode-coding-string str 'sjis))))
     (setq len (length mb-str))
     (setq ksuu (sj3-server-henkan-kouho-suu len mb-str))
     (if (>= ksuu 0)
@@ -921,7 +927,7 @@
 	(let ((ch (substring sj3-henkan-string c (1+ c))))
 	  (if (string= ch "\222");;lc-jp
 	      (setq c (+ 3 c))
-	    (setq c (1+ c)))
+	  (setq c (1+ c)))
 	  (setq i (1+ i))))
     (substring sj3-henkan-string offset c)))
       
@@ -994,13 +1000,12 @@
 	nil
       (sj3-result-goto-bunsetu bunsetu-no)
       (sj3-skip-length)
-      (let ((c 0) ch)
-	(while (not (zerop (setq ch (following-char))))
-	  (if (= ch lc-jp)
-	      (forward-char 3)
-	    (forward-char 1))
-	  (setq c (1+ c)))
-	c))))
+;;      (1- (- (point-max) (point))))))
+      (let ((c 0))
+	(while (not (char-equal (int-to-char 0) (char-after)))
+	  (forward-char 1)
+          (setq c (1+ c)))
+        c))))
 
 (defun sj3-yomi-point (bunsetu-no)
   (let ((i 0) (len 0) point length)

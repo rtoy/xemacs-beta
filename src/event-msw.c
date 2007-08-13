@@ -47,41 +47,87 @@ Boston, MA 02111-1307, USA.  */
 
 static struct event_stream *mswindows_event_stream;
 static Lisp_Object mswindows_dispatch_event_queue, mswindows_dispatch_event_queue_tail;
-static mswindows_waitable_count=0;
 CRITICAL_SECTION mswindows_dispatch_crit;
-
-static Lisp_Object mswindows_dequeue_dispatch_event (void);
 
 /*
  * List of mswindows waitable handles.
  * Apart from the dispatch queue semaphore, all of these handles may be waited
- * on multiple times in emacs_mswindows_next_event before being processed and so must
- * be manual-reset events.
+ * on multiple times in emacs_mswindows_next_event before being processed and so
+ * must be manual-reset events.
  */
 static HANDLE mswindows_waitable[MAX_WAITABLE];
 
 /* random emacs info associated with each of the wait handles */
 static mswindows_waitable_info_type mswindows_waitable_info[MAX_WAITABLE];
 
+/* Number of wait handles */
+static mswindows_waitable_count=0;
+
+/*
+ * Add an emacs event to the dispatch queue and increment the semaphore
+ */
 void
 mswindows_enqueue_dispatch_event (Lisp_Object event)
 {
-  assert(mswindows_waitable_count);
-//  EnterCriticalSection (&mswindows_dispatch_crit);
-  enqueue_event (event, &mswindows_dispatch_event_queue, &mswindows_dispatch_event_queue_tail);
+  enqueue_event (event, &mswindows_dispatch_event_queue,
+		 &mswindows_dispatch_event_queue_tail);
   ReleaseSemaphore(mswindows_waitable[0], 1, NULL);
-//  LeaveCriticalSection (&mswindows_dispatch_crit);
 }
 
+/*
+ * Remove and return the first emacs event on the dispatch queue. Don't
+ * decrement the queue's semaphore because it will be decremented by being
+ * waited on.
+ */
 static Lisp_Object
 mswindows_dequeue_dispatch_event (void)
 {
   Lisp_Object event;
-  assert(mswindows_waitable_count);
-//  EnterCriticalSection (&mswindows_dispatch_crit);
-  event = dequeue_event (&mswindows_dispatch_event_queue, &mswindows_dispatch_event_queue_tail);
-//  LeaveCriticalSection (&mswindows_dispatch_crit);
+  event = dequeue_event (&mswindows_dispatch_event_queue,
+			 &mswindows_dispatch_event_queue_tail);
   return event;
+}
+
+/*
+ * Remove and return the first emacs event on the dispatch queue that matches
+ * the supplied event and decrement the queue's semaphore.
+ * Only supports timeout events.
+ */
+Lisp_Object
+mswindows_cancel_dispatch_event (Lisp_Object match_event)
+{
+  Lisp_Object event;
+  Lisp_Object previous_event=Qnil;
+  struct Lisp_Event *match = XEVENT(match_event);
+
+  assert (match->event_type == timeout_event);
+
+  EVENT_CHAIN_LOOP (event, mswindows_dispatch_event_queue)
+    if (XEVENT_TYPE (event) == match->event_type)
+      {
+	/* We only handle timeouts */
+	if (XEVENT(event)->event.timeout.interval_id ==
+	    match->event.timeout.interval_id)
+	  {
+	    if (NILP (previous_event))
+	      dequeue_event (&mswindows_dispatch_event_queue,
+			     &mswindows_dispatch_event_queue_tail);
+	    else
+	      {
+		XSET_EVENT_NEXT (previous_event, XEVENT_NEXT (event));
+		if (EQ (mswindows_dispatch_event_queue_tail, event))
+		  mswindows_dispatch_event_queue_tail = previous_event;
+	      }
+ 
+	    /* Decrement the dispatch queue counter */
+	    WaitForSingleObject(mswindows_waitable[0], INFINITE);
+	    return event;
+	  }
+      }
+    else
+      previous_event = event;
+
+  return Qnil;
 }
 
 /*
@@ -196,10 +242,44 @@ emacs_mswindows_remove_timeout (int id)
   mswindows_make_request(WM_XEMACS_KILLTIMER, 0, &request);
 }
 
+/* If `user_p' is false, then return whether there are any win32, timeout,
+ * or subprocess events pending (that is, whether
+ * emacs_mswindows_next_event() would return immediately without blocking).
+ *
+ * if `user_p' is true, then return whether there are any *user generated*
+ * events available (that is, whether there are keyboard or mouse-click
+ * events ready to be read).  This also implies that
+ * emacs_mswindows_next_event() would not block.
+ */
 static int
 emacs_mswindows_event_pending_p (int user_p)
 {
-  return 0;
+  if (user_p)
+    {
+      /* Iterate over the dispatch queue looking for user-events */
+      int found = 0;
+      Lisp_Object event;
+
+      EnterCriticalSection (&mswindows_dispatch_crit);
+      EVENT_CHAIN_LOOP (event, mswindows_dispatch_event_queue)
+	if (command_event_p (event))
+	  found = 1;
+      LeaveCriticalSection (&mswindows_dispatch_crit);
+      return found;
+    }
+  else
+    {
+      /* Check for any kind of input, including the dispatch queue */
+#if 0
+      /* Want do do the following, but it's not clear whether this would
+       * cause the waitables to become unsignalled */
+      return (WaitForMultipleObjects (mswindows_waitable_count,
+				      mswindows_waitable, FALSE, 0)
+	      != WAIT_TIMEOUT);
+#else
+      return !NILP (mswindows_dispatch_event_queue);
+#endif
+    }
 }
 
 static struct console *
@@ -311,17 +391,14 @@ emacs_mswindows_handle_magic_event (struct Lisp_Event *emacs_event)
 	/* If we're uniconified, our size may or may not have changed */
         int columns, rows;
 	int was_visible = FRAME_VISIBLE_P (f);
-        pixel_to_char_size (f, rect->right, rect->bottom, &columns, &rows);
 
 	FRAME_VISIBLE_P (f) = 1;
-	if (f->height!=rows || f->width!=columns || f->size_change_pending)
-	  {
-	    /* Size changed */
-	    f->pixwidth = rect->right;
-	    f->pixheight = rect->bottom;
-	    change_frame_size (f, rows, columns, 0);
+        FRAME_PIXWIDTH(f) = rect->right;
+	FRAME_PIXHEIGHT(f) = rect->bottom;
+
+        pixel_to_char_size (f, rect->right, rect->bottom, &columns, &rows);
+	change_frame_size (f, rows, columns, 0);
 /*	      MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f); /* XXX Too extreme? */
-	  }
 
 	if (!was_visible)
           va_run_hook_with_args (Qmap_frame_hook, 1, frame);
@@ -331,7 +408,11 @@ emacs_mswindows_handle_magic_event (struct Lisp_Event *emacs_event)
 
   case WM_PAINT:
     mswindows_redraw_exposed_area(f, rect->left, rect->top,
-			    rect->right, rect->bottom);
+				  rect->right, rect->bottom);
+    break;
+
+  case WM_CLOSE:
+    enqueue_misc_user_event (frame, Qeval, list3 (Qdelete_frame, frame, Qt));
     break;
 
   default:

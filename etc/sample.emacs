@@ -70,8 +70,8 @@
 ;;(global-set-key 'f8 "\C-x\C-s\C-x0")
 
 ;; If you prefer delete to actually delete forward then you want to
-;; uncomment the next line.
-;; (load-library "delbackspace")
+;; uncomment the next line (or use `Customize' to customize this).
+;; (setq delete-key-deletes-forward t)
 
 
 (cond (running-xemacs

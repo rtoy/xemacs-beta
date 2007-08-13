@@ -159,7 +159,7 @@ srcdir-symlink.stamp:
 #define MOVEMAIL_NEEDS_BLESSING
 blessmail = blessmail
 blessmail:
-	../src/xemacs -batch -l ../lisp/utils/blessmail.el
+	../src/xemacs -batch -l ../lisp/blessmail.el
 	chmod +x $@
 #endif /* movemail needs blessing */
 

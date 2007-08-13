@@ -77,6 +77,9 @@ static XrmOptionDescRec emacs_options[] =
   {"-scrollbar-width",       "*EmacsFrame.scrollBarWidth",      XrmoptionSepArg, NULL},
   {"-scrollbar-height",      "*EmacsFrame.scrollBarHeight",     XrmoptionSepArg, NULL},
 
+  {"-privatecolormap", ".privateColormap", XrmoptionNoArg,  "yes"},
+  {"-visual",   ".EmacsVisual",	    XrmoptionSepArg, NULL},
+
   /* #### Beware!  If the type of the shell changes, update this. */
   {"-T",        "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
   {"-wn",       "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
@@ -100,7 +103,8 @@ int in_specifier_change_function;
 /*                          helper functions                            */
 /************************************************************************/
 
-static struct device *
+/* JH 97/11/25 removed the static declaration because I need it during setup in event-Xt... */
+struct device *
 get_device_from_display_1 (Display *dpy)
 {
   Lisp_Object devcons, concons;
@@ -202,10 +206,9 @@ sanity_check_geometry_resource (Display *dpy)
 static void
 x_init_device_class (struct device *d)
 {
-  Display *dpy = DEVICE_X_DISPLAY (d);
-  if (DisplayCells (dpy, DefaultScreen (dpy)) > 2)
+  if (DEVICE_X_DEPTH(d) > 2)
     {
-      switch (DefaultVisualOfScreen (DefaultScreenOfDisplay (dpy))->class)
+      switch (DEVICE_X_VISUAL(d)->class)
 	{
 	case StaticGray:
 	case GrayScale:
@@ -225,10 +228,17 @@ x_init_device (struct device *d, Lisp_Object props)
   Lisp_Object display;
   Lisp_Object device;
   Display *dpy;
+  Widget app_shell;
   int argc;
   char **argv;
-  CONST char *app_class;
+  CONST char *app_class, *app_name;
   CONST char *disp_name;
+  Arg xargs[6];
+  Cardinal numargs;
+  Visual *visual = NULL;
+  int depth = 8;		/* shut up the compiler */
+  Colormap cmap;
+  int screen;
 
   XSETDEVICE (device, d);
   display = DEVICE_CONNECTION (d);
@@ -258,6 +268,7 @@ x_init_device (struct device *d, Lisp_Object props)
       signal_simple_error ("X server not responding\n", display);
     }
 
+  screen = DefaultScreen(dpy);
   if (NILP (Vdefault_x_device))
     Vdefault_x_device = device;
 
@@ -291,39 +302,130 @@ x_init_device (struct device *d, Lisp_Object props)
   DEVICE_NAME (d) = Fcopy_sequence (DEVICE_NAME (d));
   /* colons and periods can't appear in individual elements of resource
      strings */
-  validify_resource_string ((char *) XSTRING_DATA (DEVICE_NAME (d)));
-  DEVICE_XT_APP_SHELL (d) = XtAppCreateShell (NULL, app_class,
-					      applicationShellWidgetClass,
-					      dpy, NULL, 0);
 
+  XtGetApplicationNameAndClass (dpy, &app_name, &app_class);
+  /* search for a matching visual if requested by the user, or setup the display default */
+  numargs = 0;
+  {
+    char buf1[100],buf2[100];
+    char *type;
+    XrmValue value;
+
+    sprintf (buf1, "%s.emacsVisual", app_name);
+    sprintf (buf2, "%s.EmacsVisual", app_class);
+    if (XrmGetResource (XtDatabase (dpy), buf1, buf2, &type, &value) == True)
+      {
+	int cnt = 0, vis_class= PseudoColor;
+	XVisualInfo vinfo;
+	char *res, *str = (char*)value.addr;
+
+	if      (strncmp(str, "StaticGray", 10) == 0)	cnt = 10, vis_class = StaticGray;
+	else if (strncmp(str, "StaticColor", 11) == 0)	cnt = 11, vis_class = StaticColor;
+	else if (strncmp(str, "TrueColor", 9) == 0)	cnt = 9,  vis_class = TrueColor;
+	else if (strncmp(str, "GrayScale", 9) == 0)	cnt = 9,  vis_class = GrayScale;
+	else if (strncmp(str, "PseudoColor", 11) == 0)	cnt = 11, vis_class = PseudoColor;
+	else if (strncmp(str, "DirectColor", 11) == 0)	cnt = 11, vis_class = DirectColor;
+	if (cnt)
+	  {
+	    res = str + cnt;
+	    depth = atoi(res);
+	    if (depth == 0)
+	      {
+		stderr_out("Invalid Depth specification in %s... ignoring...\n",(char*)str);
+	      }
+	    else
+	      {
+		if (XMatchVisualInfo(dpy, screen, depth, vis_class, &vinfo))
+		  {
+		    visual = vinfo.visual;
+		  }
+		else
+		  {
+		    stderr_out("Can't match the requested visual %s... using defaults\n",str);
+		  }
+	      }
+	  }
+	else
+	  {
+	    stderr_out("Invalid Visual specification in %s... ignoring.\n",(char*)str);
+	  }
+      }
+    if (visual == NULL)
+      {
+	visual = DefaultVisual(dpy, screen);
+	depth = DefaultDepth(dpy, screen);
+      }
+
+    /* If we've got the same visual as the default and its PseudoColor, check to see if the user
+       specified that we need a private colormap */
+    if (visual == DefaultVisual(dpy, screen))
+      {
+	sprintf (buf1, "%s.privateColormap", app_name);
+	sprintf (buf2, "%s.PrivateColormap", app_class);
+	if ((visual->class == PseudoColor) &&
+	    (XrmGetResource (XtDatabase (dpy), buf1, buf2, &type, &value) == True))
+	  {
+	     cmap = XCopyColormapAndFree(dpy, DefaultColormap(dpy, screen));
+	  }
+	else
+	  {
+	    cmap = DefaultColormap(dpy, screen);
+	  }
+      }
+    else
+      {
+	/* We have to create a matching colormap anyway...
+	   ### think about using standard colormaps (need the Xmu libs?) */
+	cmap = XCreateColormap(dpy, RootWindow(dpy, screen), visual, AllocNone);
+	XInstallColormap(dpy, cmap);
+      }
+  }
+  XtSetArg(xargs[numargs],XtNvisual, visual); numargs++;
+  XtSetArg(xargs[numargs],XtNdepth, depth); numargs++;
+  XtSetArg(xargs[numargs],XtNcolormap, cmap); numargs++;
+  DEVICE_X_VISUAL (d) = visual;
+  DEVICE_X_COLORMAP (d) = cmap;
+  DEVICE_X_DEPTH (d) = depth;
+
+  validify_resource_string ((char *) XSTRING_DATA (DEVICE_NAME (d)));
+  app_shell = XtAppCreateShell (NULL, app_class,
+				applicationShellWidgetClass,
+				dpy, xargs, numargs);
+
+  DEVICE_XT_APP_SHELL (d) = app_shell;
 #ifdef HAVE_XIM
   XIM_init_device(d);
 #endif /* HAVE_XIM */
 
+  /* Realize the app_shell so that it's window exists for GC creation purposes,
+     and set it to the size of the root window for child placement purposes */
+  {
+    Screen *scrn = ScreenOfDisplay(dpy, screen);
+    int screen_width, screen_height;
+    screen_width = WidthOfScreen(scrn);
+    screen_height = HeightOfScreen(scrn);
+    numargs = 0;
+    XtSetArg (xargs[numargs], XtNmappedWhenManaged, False); numargs++;
+    XtSetArg (xargs[numargs], XtNx, 0); numargs++;
+    XtSetArg (xargs[numargs], XtNy, 0); numargs++;
+    XtSetArg (xargs[numargs], XtNwidth,  screen_width); numargs++;
+    XtSetArg (xargs[numargs], XtNheight, screen_height); numargs++;
+    XtSetValues (app_shell, xargs, numargs);
+    XtRealizeWidget (app_shell);
+  }
 #ifdef HAVE_SESSION
   {
-    Arg al[3];
-    Widget shell = DEVICE_XT_APP_SHELL (d);
-
-    XtSetArg (al [0], XtNmappedWhenManaged, False);
-    XtSetArg (al [1], XtNwidth,  1);
-    XtSetArg (al [2], XtNheight, 1);
-    XtSetValues (shell, al, 3);
-    XtRealizeWidget (shell);
-
-    {
-      int new_argc;
-      char **new_argv;
-      make_argc_argv (Vcommand_line_args, &new_argc, &new_argv);
-      XSetCommand (XtDisplay (shell), XtWindow (shell), new_argv, new_argc);
-      free_argc_argv (new_argv);
-    }
-
+    int new_argc;
+    char **new_argv;
+    make_argc_argv (Vcommand_line_args, &new_argc, &new_argv);
+    XSetCommand (XtDisplay (app_shell), XtWindow (app_shell), new_argv, new_argc);
+    free_argc_argv (new_argv);
   }
 #endif /* HAVE_SESSION */
 
+
 #ifdef HAVE_OFFIX_DND
-  DndInitialize ( DEVICE_XT_APP_SHELL (d) );
+  DndInitialize ( app_shell );
 #endif
 
   Vx_initial_argv_list = make_arg_list (argc, argv);
@@ -340,8 +442,7 @@ x_init_device (struct device *d, Lisp_Object props)
   init_baud_rate (d);
   init_one_device (d);
 
-  DEVICE_X_GC_CACHE (d) =
-    make_gc_cache (dpy, RootWindow (dpy, DefaultScreen (dpy)));
+  DEVICE_X_GC_CACHE (d) = make_gc_cache (dpy, XtWindow(app_shell));
   DEVICE_X_GRAY_PIXMAP (d) = None;
   Xatoms_of_device_x (d);
   Xatoms_of_xselect (d);
@@ -1135,14 +1236,15 @@ This is the first-created X device that still exists.
 }
 
 DEFUN ("x-display-visual-class", Fx_display_visual_class, 0, 1, 0, /*
-Return the visual class of the X display `device' is on.
+Return the visual class of the X display `device' is using.
+This can be altered from the default at startup using the XResource "EmacsVisual".
 The returned value will be one of the symbols `static-gray', `gray-scale',
 `static-color', `pseudo-color', `true-color', or `direct-color'.
 */
        (device))
 {
-  switch (DefaultVisualOfScreen
-	  (DefaultScreenOfDisplay (get_x_display (device)))->class)
+  Visual *vis = DEVICE_X_VISUAL (decode_x_device (device));
+  switch (vis->class)
     {
     case StaticGray:  return intern ("static-gray");
     case GrayScale:   return intern ("gray-scale");
@@ -1155,6 +1257,14 @@ The returned value will be one of the symbols `static-gray', `gray-scale',
     }
 
   return Qnil;	/* suppress compiler warning */
+}
+
+DEFUN ("x-display-visual-depth", Fx_display_visual_depth, 0, 1, 0, /*
+Return the bitplane depth of the visual the X display `device' is using.
+*/
+       (device))
+{
+   return make_int (DEVICE_X_DEPTH (decode_x_device (device)));
 }
 
 static int
@@ -1443,6 +1553,7 @@ syms_of_device_x (void)
 
   DEFSUBR (Fdefault_x_device);
   DEFSUBR (Fx_display_visual_class);
+  DEFSUBR (Fx_display_visual_depth);
   DEFSUBR (Fx_server_vendor);
   DEFSUBR (Fx_server_version);
   DEFSUBR (Fx_valid_keysym_name_p);

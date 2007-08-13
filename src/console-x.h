@@ -76,6 +76,11 @@ struct x_device
   /* Cache of GC's for frame's on this device. */
   struct gc_cache *gc_cache;
 
+  /* Selected visual, depth and colormap for this device */
+  Visual *visual;
+  int depth;
+  Colormap device_cmap;
+
   /* Used by x_bevel_modeline in redisplay-x.c */
   Pixmap gray_pixmap;
 
@@ -179,6 +184,9 @@ struct x_device
 
 #define FRAME_X_DISPLAY(f) (DEVICE_X_DISPLAY (XDEVICE (f->device)))
 #define DEVICE_X_DISPLAY(d) 	(DEVICE_X_DATA (d)->display)
+#define DEVICE_X_VISUAL(d)	(DEVICE_X_DATA (d)->visual)
+#define DEVICE_X_DEPTH(d)	(DEVICE_X_DATA (d)->depth)
+#define DEVICE_X_COLORMAP(d) 	(DEVICE_X_DATA (d)->device_cmap)
 #define DEVICE_XT_APP_SHELL(d) 	(DEVICE_X_DATA (d)->Xt_app_shell)
 #define DEVICE_X_GC_CACHE(d) 	(DEVICE_X_DATA (d)->gc_cache)
 #define DEVICE_X_GRAY_PIXMAP(d) (DEVICE_X_DATA (d)->gray_pixmap)

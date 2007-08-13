@@ -1701,8 +1701,8 @@ x_generate_shadow_pixels (struct frame *f, unsigned long *top_shadow,
 {
   struct device *d = XDEVICE (f->device);
   Display *dpy = DEVICE_X_DISPLAY (d);
-  Colormap cmap =
-    DefaultColormapOfScreen (XtScreen ((Widget) FRAME_X_TEXT_WIDGET (f)));
+  Colormap cmap = DEVICE_X_COLORMAP (d);
+  Visual *visual = DEVICE_X_VISUAL (d);
 
   XColor topc, botc;
   int top_frobbed = 0, bottom_frobbed = 0;
@@ -1717,7 +1717,7 @@ x_generate_shadow_pixels (struct frame *f, unsigned long *top_shadow,
       topc.red   = MINL (65535, (unsigned long) topc.red   * 6 / 5);
       topc.green = MINL (65535, (unsigned long) topc.green * 6 / 5);
       topc.blue  = MINL (65535, (unsigned long) topc.blue  * 6 / 5);
-      if (allocate_nearest_color (dpy, cmap, &topc))
+      if (allocate_nearest_color (dpy, cmap, visual, &topc))
 	{
 	  *top_shadow = topc.pixel;
 	  top_frobbed = 1;
@@ -1733,7 +1733,7 @@ x_generate_shadow_pixels (struct frame *f, unsigned long *top_shadow,
       botc.red   = (unsigned short) ((unsigned long) botc.red   * 3 / 5);
       botc.green = (unsigned short) ((unsigned long) botc.green * 3 / 5);
       botc.blue  = (unsigned short) ((unsigned long) botc.blue  * 3 / 5);
-      if (allocate_nearest_color (dpy, cmap, &botc))
+      if (allocate_nearest_color (dpy, cmap, visual, &botc))
 	{
 	  *bottom_shadow = botc.pixel;
 	  bottom_frobbed = 1;

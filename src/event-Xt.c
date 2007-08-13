@@ -48,6 +48,8 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/CoreP.h>		/* Numerous places access the fields of
 				   a core widget directly.  We could
 				   use XtGetValues(), but ... */
+#include <X11/ShellP.h>
+
 #ifdef HAVE_XIM
 #ifdef XIM_MOTIF
 #include <Xm/Xm.h>
@@ -2662,6 +2664,11 @@ XtConvertArgRec Const colorConvertArgs[] = {
   toVal->size = sizeof(type);            \
   return True /* Caller supplies `;' */
 
+/* JH: We use this because I think there's a possibility this
+   is called before the device is properly set up, in which case
+   I don't want to abort. */
+extern struct device *get_device_from_display_1 (Display *dpy);
+
 static
 Boolean EmacsXtCvtStringToPixel (
  Display     *dpy,
@@ -2674,8 +2681,10 @@ Boolean EmacsXtCvtStringToPixel (
   String       str = (String)fromVal->addr;
   XColor       screenColor;
   XColor       exactColor;
-  Screen      *screen;
+  Screen       *screen;
   Colormap     colormap;
+  Visual       *visual;
+  struct device *d;
   Status       status;
   String       params[1];
   Cardinal     num_params  = 1;
@@ -2710,13 +2719,24 @@ Boolean EmacsXtCvtStringToPixel (
   }
 
   /* Originally called XAllocNamedColor() here. */
-  status = XParseColor (DisplayOfScreen(screen), colormap, (char*)str,
-                        &screenColor);
-  if (status) {
-    status = allocate_nearest_color (DisplayOfScreen(screen), colormap,
-                                     &screenColor);
+  if ((d = get_device_from_display_1(dpy))) {
+    visual = DEVICE_X_VISUAL(d);
+    if (colormap != DEVICE_X_COLORMAP(d)) {
+      XtAppWarningMsg(the_app_con, "wierdColormap", "cvtStringToPixel",
+		      "XtToolkitWarning",
+		      "The colormap passed to cvtStringToPixel doesn't match the one registerd to the device.\n",
+		      NULL, 0);
+      status = XAllocNamedColor(dpy, colormap, (char*)str, &screenColor, &exactColor);
+    } else {
+      status = XParseColor (dpy, colormap, (char*)str, &screenColor);
+      if (status) {
+	status = allocate_nearest_color (dpy, colormap, visual, &screenColor);
+      }
+    }
+  } else {
+    /* We haven't set up this device totally yet, so just punt */
+    status = XAllocNamedColor(dpy, colormap, (char*)str, &screenColor, &exactColor);
   }
-
   if (status == 0) {
     params[0] = str;
     /* Server returns a specific error code but Xlib discards it.  Ugh */
@@ -2829,6 +2849,28 @@ Information is displayed on stderr.  Currently defined values are:
   last_quit_check_signal_tick_count = 0;
 }
 
+/* This mess is a hack that patches the shell widget to treat visual inheritance
+   the same as colormap and depth inheritance */
+
+static XtInitProc orig_shell_init_proc;
+
+static void ShellVisualPatch(Widget wanted, Widget new,
+			     ArgList args, Cardinal *num_args)
+{
+  Widget p;
+  ShellWidget w = (ShellWidget) new;
+
+  /* first, call the original setup */
+  (*orig_shell_init_proc)(wanted, new, args, num_args);
+
+  /* if the visual isn't explicitly set, grab it from the nearest shell ancestor */
+  if (w->shell.visual == CopyFromParent) {
+    p = XtParent(w);
+    while (p && !XtIsShell(p)) p = XtParent(p);
+    if (p) w->shell.visual = ((ShellWidget)p)->shell.visual;
+  }
+}
+
 void
 init_event_Xt_late (void) /* called when already initialized */
 {
@@ -2868,5 +2910,9 @@ init_event_Xt_late (void) /* called when already initialized */
 			 NULL, 0,
 			 XtCacheByDisplay, EmacsFreeXIMStyles);
 #endif /* XIM_XLIB */
+
+  /* insert the visual inheritance patch/hack described above */
+  orig_shell_init_proc = shellClassRec.core_class.initialize;
+  shellClassRec.core_class.initialize = ShellVisualPatch;
 
 }

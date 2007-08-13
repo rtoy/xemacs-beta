@@ -35,8 +35,7 @@
 
 ;;; Warning-free compile
 (eval-when-compile
-  (defvar language-environment-list)
-  (require 'pending-del))
+  (defvar language-environment-list))
 
 (defconst default-menubar
   (purecopy-menubar
@@ -54,8 +53,10 @@
       ["Save As..."		write-file		t]
       ["Save Some Buffers"	save-some-buffers	t]
       "-----"
-      ["Print Buffer"		lpr-buffer		t  nil]
-      ["Pretty-Print Buffer"	ps-print-buffer-with-faces t  nil]
+      ;; Ugly, ugly.  The following two items _must_ be written in deprecated
+      ;; form due to braindamage in the `file-menu-filter' function.
+      ["Print Buffer" lpr-buffer (fboundp 'lpr-buffer) nil]
+      ["Pretty-Print Buffer" ps-print-buffer-with-faces (fboundp 'ps-print-buffer-with-faces) nil]
       "-----"
       ["New Frame"		make-frame		t]
       ["Frame on Other Display..."
@@ -121,42 +122,63 @@
 	      "--"
 	      ["Show character table" view-charset-by-menu t]
 	      ["Show diagnosis for MULE" mule-diag nil] ; not implemented yet
-	      ["Show many languages" view-hello-file t]
-	      )))
+	      ["Show many languages" view-hello-file t])))
      
      ("Apps"
-      ["Read Mail (VM)..."	vm			t]
-      ["Read Mail (MH)..."	(mh-rmail t)		t]
-      ["Send mail..."		mail			t]
-      ["Usenet News"		gnus			(fboundp 'gnus)]
-      ["Browse the Web"		w3			t]
-      ["Gopher"			gopher			t]
-      ["Hyperbole..."		hyperbole		t]
+      ["Read Mail (VM)..." vm
+       :active (fboundp 'vm-easy-menu-define)]
+      ["Read Mail (MH)..." (mh-rmail t)
+       :active (fboundp 'mh-rmail)]
+      ["Send mail..." mail
+       :active (fboundp 'mail)]
+      ["Usenet News" gnus
+       :active (fboundp 'gnus)]
+      ["Browse the Web" w3
+       :active (fboundp 'w3)]
+      ["Gopher" gopher
+       :active (fboundp 'gopher)]
+      ["Hyperbole..." hyperbole
+       :active (fboundp 'hmail:compose)]
       "----"
-      ["Spell-Check Buffer"	ispell-buffer		t]
-      ["Toggle VI emulation"	toggle-viper-mode (fboundp 'toggle-viper-mode)]
+      ["Spell-Check Buffer" ispell-buffer
+       :active (fboundp 'ispell-buffer)]
+      ["Toggle VI emulation" toggle-viper-mode
+       :active (fboundp 'toggle-viper-mode)]
       "----"
       ("Calendar"
-       ["3-Month Calendar"	calendar		t]
-       ["Diary"			diary			t]
-       ["Holidays"		holidays		t]
+       ["3-Month Calendar" calendar
+	:active (fboundp 'calendar)]
+       ["Diary" diary
+	:active (fboundp 'diary)]
+       ["Holidays" holidays
+	:active (fboundp 'holidays)]
        ;; we're all pagans at heart ...
-       ["Phases of the Moon"	phases-of-moon		t]
-       ["Sunrise/Sunset"	sunrise-sunset		t]
-       )
+       ["Phases of the Moon" phases-of-moon
+	:active (fboundp 'phases-of-moon)]
+       ["Sunrise/Sunset" sunrise-sunset
+	:active (fboundp 'sunrise-sunset)])
+
       ("Games"
-       ["Mine Game"		xmine			(fboundp 'xmine)]
-       ["Tetris"		tetris			(fboundp 'tetris)]
-       ["Quote from Zippy"	yow			(fboundp 'yow)]
-       ["Psychoanalyst"		doctor			(fboundp 'doctor)]
-       ["Psychoanalyze Zippy!"	psychoanalyze-pinhead	(fboundp 'psychoanalyze-pinhead)]
-       ["Random Flames"		flame			(fboundp 'flame)]
-       ["Dunnet (Adventure)"	dunnet			(fboundp 'dunnet)]
-       ["Towers of Hanoi"	hanoi			(fboundp 'hanoi)]
-       ["Game of Life"		life			(fboundp 'life)]
-       ["Multiplication Puzzle"	mpuz			(fboundp 'mpuz)]
-       )
-      )
+       ["Mine Game" xmine
+	:active (fboundp 'xmine)]
+       ["Tetris" tetris
+	:active (fboundp 'tetris)]
+       ["Quote from Zippy" yow
+	:active (fboundp 'yow)]
+       ["Psychoanalyst" doctor
+	:active (fboundp 'doctor)]
+       ["Psychoanalyze Zippy!" psychoanalyze-pinhead
+	:active (fboundp 'psychoanalyze-pinhead)]
+       ["Random Flames" flame
+	:active (fboundp 'flame)]
+       ["Dunnet (Adventure)" dunnet
+	:active (fboundp 'dunnet)]
+       ["Towers of Hanoi" hanoi
+	:active (fboundp 'hanoi)]
+       ["Game of Life" life
+	:active (fboundp 'life)]
+       ["Multiplication Puzzle" mpuz
+	:active (fboundp 'mpuz)]))
 
      ("Options"
       ("Customize"
@@ -167,7 +189,8 @@
        ["Face..." customize-face t]
        ["Saved..." customize-saved t]
        ["Set..." customize-customized t]
-       ["Apropos..." customize-apropos t])
+       ["Apropos..." customize-apropos t]
+       ["Browse..." customize-browse t])
       ["Read Only" (toggle-read-only)
        :style toggle :selected buffer-read-only]
       ("Editing Options"
@@ -185,7 +208,8 @@
        ["Auto Delete Selection" (pending-delete-mode
 				 (if pending-delete-mode 0 1))
 	:style toggle
-	:selected (and (boundp 'pending-delete-mode) pending-delete-mode)]
+	:selected (and (boundp 'pending-delete-mode) pending-delete-mode)
+	:active (fboundp 'pending-delete-mode)]
        ["Active Regions" (setq zmacs-regions (not zmacs-regions))
 	:style toggle :selected zmacs-regions]
        ["Mouse Paste At Text Cursor" (setq mouse-yank-at-point
@@ -213,56 +237,79 @@
 	(setq lpr-switches
 	      (read-expression "Switches for `lpr'/`lp': "
 			       (format "%S" lpr-switches)))
-	t]
+	(fboundp 'lpr-buffer)]
        ("Pretty-Print Paper Size"
 	["Letter"
 	 (setq ps-paper-type 'letter)
 	 :style radio
-	 :selected (eq ps-paper-type 'letter)]
+	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'letter))
+	 :active (fboundp 'ps-print-buffer)]
 	["Letter-small"
 	 (setq ps-paper-type 'letter-small)
 	 :style radio
-	 :selected (eq ps-paper-type 'letter-small)]
+	 :selected (and (boundp 'ps-paper-type)
+			(eq ps-paper-type 'letter-small))
+	 :active (fboundp 'ps-print-buffer)]
 	["Legal"
 	 (setq ps-paper-type 'legal)
 	 :style radio
-	 :selected (eq ps-paper-type 'legal)]
+	 :selected (and (boundp 'ps-paper-type)
+			(eq ps-paper-type 'legal))
+	 :active (fboundp 'ps-print-buffer)]
 	["Statement"
 	 (setq ps-paper-type 'statement)
 	 :style radio
-	 :selected (eq ps-paper-type 'statement)]
+	 :selected (and (boundp 'ps-paper-type)
+			(eq ps-paper-type 'statement))
+	 :active (fboundp 'ps-print-buffer)]
 	["Executive"
 	 (setq ps-paper-type 'executive)
 	 :style radio
-	 :selected (eq ps-paper-type 'executive)]
+	 :selected (and (boundp 'ps-paper-type)
+			(eq ps-paper-type 'executive))
+	 :active (fboundp 'ps-print-buffer)]
 	["Tabloid"
 	 (setq ps-paper-type 'tabloid)
 	 :style radio
-	 :selected (eq ps-paper-type 'tabloid)]
+	 :selected (and (boundp 'ps-paper-type)
+			(eq ps-paper-type 'tabloid))
+	 :active (fboundp 'ps-print-buffer)]
 	["Ledger"
 	 (setq ps-paper-type 'ledger)
 	 :style radio
-	 :selected (eq ps-paper-type 'ledger)]
+	 :selected (and (boundp 'ps-paper-type)
+			(eq ps-paper-type 'ledger))
+	 :active (fboundp 'ps-print-buffer)]
 	["A3"
 	 (setq ps-paper-type 'a3)
 	 :style radio
-	 :selected (eq ps-paper-type 'a3)]
+	 :selected (and (boundp 'ps-paper-type)
+			(eq ps-paper-type 'a3))
+	 :active (fboundp 'ps-print-buffer)]
 	["A4"
 	 (setq ps-paper-type 'a4)
 	 :style radio
-	 :selected (eq ps-paper-type 'a4)]
+	 :selected (and (boundp 'ps-paper-type)
+			(eq ps-paper-type 'a4))
+	 :active (fboundp 'ps-print-buffer)]
 	["A4small"
 	 (setq ps-paper-type 'a4small)
 	 :style radio
-	 :selected (eq ps-paper-type 'a4small)]
+	 :selected (and (boundp 'ps-paper-type)
+			(eq ps-paper-type 'a4small))
+	 :active (fboundp 'ps-print-buffer)]
 	["B4"
 	 (setq ps-paper-type 'b4)
 	 :style radio
-	 :selected (eq ps-paper-type 'b4)]
+	 :selected (and (boundp 'ps-paper-type)
+			(eq ps-paper-type 'b4))
+	 :active (fboundp 'ps-print-buffer)]
 	["B5"
 	 (setq ps-paper-type 'b5)
 	 :style radio
-	 :selected (eq ps-paper-type 'b5)]
+	 :selected (and (boundp 'ps-paper-type)
+			(eq ps-paper-type 'b5))
+	 :active (fboundp 'ps-print-buffer)]
 	)
        ["Color Printing"
 	(when (boundp 'ps-print-color-p)
@@ -276,8 +323,8 @@
 	    (set-face-background 'default "white")
 	    (setq ps-print-color-p t)))
 	:style toggle :selected (and (boundp 'ps-print-color-p)
-				     ps-print-color-p)]
-       )
+				     ps-print-color-p)
+	:active (fboundp 'ps-print-buffer)])
       ("\"Other Window\" Location"
        ["Always in Same Frame"
 	(setq get-frame-for-buffer-default-instance-limit nil)
@@ -326,7 +373,8 @@
       "-----"
       ("Syntax Highlighting" 
        ["In This Buffer" (font-lock-mode)
-	:style toggle :selected font-lock-mode]
+	:style toggle :selected (and (boundp 'font-lock-mode) font-lock-mode)
+	:active (fboundp 'font-lock-mode)]
        ["Automatic" (if (not (featurep 'font-lock))
 			   (progn
 			     (setq font-lock-auto-fontify t)
@@ -334,7 +382,8 @@
 			 (setq font-lock-auto-fontify
 			       (not font-lock-auto-fontify)))
 	:style toggle
-	:selected (and (featurep 'font-lock) font-lock-auto-fontify)]
+	:selected (and (featurep 'font-lock) font-lock-auto-fontify)
+	:active (fboundp 'font-lock-mode)]
        "-----"
        ["Fonts" (progn (require 'font-lock)
 		       (font-lock-use-default-fonts)
@@ -342,16 +391,20 @@
 			     font-lock-use-colors nil)
 		       (font-lock-mode 1))
 	:style radio
-	:selected (and font-lock-mode
-		       font-lock-use-fonts)]
+	:selected (and (boundp 'font-lock-mode)
+		       font-lock-mode
+		       font-lock-use-fonts)
+	:active (fboundp 'font-lock-mode)]
        ["Colors" (progn (require 'font-lock)
 			(font-lock-use-default-colors)
 			(setq font-lock-use-colors t 
 			      font-lock-use-fonts nil)
 			(font-lock-mode 1))
 	:style radio
-	:selected (and font-lock-mode
-		       font-lock-use-colors)]
+	:selected (and (boundp 'font-lock-mode)
+		       font-lock-mode
+		       font-lock-use-colors)
+	:active (fboundp 'font-lock-mode)]
        "-----"
        ["Least" (if (or (and (not (integerp font-lock-maximum-decoration))
 			     (not (eq t font-lock-maximum-decoration)))
@@ -361,7 +414,7 @@
 		  (setq font-lock-maximum-decoration nil)
 		  (font-lock-recompute-variables))
 	:style radio
-	:active font-lock-mode
+	:active (and (boundp 'font-lock-mode) font-lock-mode)
 	:selected (and font-lock-mode
 		       (or (and (not (integerp font-lock-maximum-decoration))
 				(not (eq t font-lock-maximum-decoration)))
@@ -373,7 +426,7 @@
 		 (setq font-lock-maximum-decoration 1)
 		 (font-lock-recompute-variables))
 	:style radio
-	:active font-lock-mode
+	:active (and (boundp 'font-lock-mode) font-lock-mode)
 	:selected (and font-lock-mode
 		       (integerp font-lock-maximum-decoration)
 		       (= 1 font-lock-maximum-decoration))]
@@ -383,7 +436,7 @@
 		      (setq font-lock-maximum-decoration 2)
 		      (font-lock-recompute-variables))
 	:style radio
-	:active font-lock-mode
+	:active (and (boundp 'font-lock-mode) font-lock-mode)
 	:selected (and font-lock-mode
 		       (integerp font-lock-maximum-decoration)
 		       (= 2 font-lock-maximum-decoration))]
@@ -394,7 +447,7 @@
 		 (setq font-lock-maximum-decoration t)
 		 (font-lock-recompute-variables))
 	:style radio
-	:active font-lock-mode
+	:active (and (boundp 'font-lock-mode) font-lock-mode)
 	:selected (and font-lock-mode
 		       (or (eq font-lock-maximum-decoration t)
 			   (and (integerp font-lock-maximum-decoration)
@@ -416,7 +469,9 @@
 			      (redraw-modeline)
 			      (add-hook 'font-lock-mode-hook
 					'turn-on-lazy-shot)))))
-	:active font-lock-mode
+	:active (and (boundp 'font-lock-mode)
+		     (boundp 'lazy-shot-mode)
+		     font-lock-mode)
 	:style toggle
 	:selected (and (boundp 'lazy-shot-mode) lazy-shot-mode)]
        ["Caching" (progn (require 'fast-lock)
@@ -431,19 +486,26 @@
 			       (progn
 				 (fast-lock-mode 1)
 				 (redraw-modeline)))))
-	:active font-lock-mode
+	:active (and (boundp 'font-lock-mode) font-lock-mode)
 	:style toggle
 	:selected (and (boundp 'fast-lock-mode) fast-lock-mode)]
        )
       ("Paren Highlighting"
        ["None" (paren-set-mode -1)
-	:style radio :selected (not paren-mode)]
+	:style radio :selected (and (boundp 'paren-mode) (not paren-mode))
+	:active (fboundp 'paren-set-mode)]
        ["Blinking Paren" (paren-set-mode 'blink-paren)
-	:style radio :selected (eq paren-mode 'blink-paren)]
+	:style radio :selected (and (boundp 'paren-mode)
+				    (eq paren-mode 'blink-paren))
+	:active (fboundp 'paren-set-mode)]
        ["Steady Paren" (paren-set-mode 'paren)
-	:style radio :selected (eq paren-mode 'paren)]
+	:style radio :selected (and (boundp 'paren-mode)
+				    (eq paren-mode 'paren))
+	:active (fboundp 'paren-set-mode)]
        ["Expression" (paren-set-mode 'sexp)
-	:style radio :selected (eq paren-mode 'sexp)]
+	:style radio :selected (and (boundp 'paren-mode)
+				    (eq paren-mode 'sexp))
+	:active (fboundp 'paren-set-mode)]
 ;;;       ["Nested Shading" (paren-set-mode 'nested)
 ;;;        :style radio :selected (eq paren-mode 'nested)]
        )
@@ -565,7 +627,10 @@
 	      (mouse-avoidance-mode 'banish))
 	  (beep)
 	  (message "This option requires a window system."))
-	:style toggle :selected (and mouse-avoidance-mode window-system)]
+	:style toggle :selected (and (boundp 'mouse-avoidance-mode)
+				     mouse-avoidance-mode
+				     window-system)
+	:active (fboundp 'mouse-avoidance-mode)]
        ["strokes-mode"
 	(if (equal (device-type) 'x)
 	    (strokes-mode)
@@ -573,32 +638,50 @@
 	  (message "This option requires a window system."))
 	:style toggle :selected (and (boundp 'strokes-mode)
 				     strokes-mode
-				     window-system)])
+				     window-system)
+	:active (fboundp 'strokes-mode)])
       ("Open URLs With"
        ["Emacs-W3" (setq browse-url-browser-function 'browse-url-w3)
 	:style radio
-	:selected (eq browse-url-browser-function 'browse-url-w3)]
+	:selected (and (boundp 'browse-url-browser-function)
+		       (eq browse-url-browser-function 'browse-url-w3))
+	:active (and (fboundp 'browse-url-w3)
+		     (fboundp 'w3-fetch))]
        ["Netscape" (setq browse-url-browser-function 'browse-url-netscape)
 	:style radio
-	:selected (eq browse-url-browser-function 'browse-url-netscape)]
+	:selected (and (boundp 'browse-url-browser-function)
+		       (eq browse-url-browser-function 'browse-url-netscape))
+	:active (fboundp 'browse-url-netscape)]
        ["Mosaic" (setq browse-url-browser-function 'browse-url-mosaic)
 	:style radio
-	:selected (eq browse-url-browser-function 'browse-url-mosaic)]
+	:selected (and (boundp 'browse-url-browser-function)
+		       (eq browse-url-browser-function 'browse-url-mosaic))
+	:active (fboundp 'browse-url-mosaic)]
        ["Mosaic (CCI)" (setq browse-url-browser-function 'browse-url-cci)
 	:style radio
-	:selected (eq browse-url-browser-function 'browse-url-iximosaic)]
+	:selected (and (boundp 'browse-url-browser-function)
+		       (eq browse-url-browser-function 'browse-url-iximosaic))
+	:active (fboundp 'browse-url-iximosaic)]
        ["IXI Mosaic" (setq browse-url-browser-function 'browse-url-iximosaic)
 	:style radio
-	:selected (eq browse-url-browser-function 'browse-url-iximosaic)]
+	:selected (and (boundp 'browse-url-browser-function)
+		       (eq browse-url-browser-function 'browse-url-iximosaic))
+	:active (fboundp 'browse-url-iximosaic)]
        ["Lynx (xterm)" (setq browse-url-browser-function 'browse-url-lynx-xterm)
 	:style radio
-	:selected (eq browse-url-browser-function 'browse-url-lynx-xterm)]
+	:selected (and (boundp 'browse-url-browser-function)
+		       (eq browse-url-browser-function 'browse-url-lynx-xterm))
+	:active (fboundp 'browse-url-lynx-xterm)]
        ["Lynx (xemacs)" (setq browse-url-browser-function 'browse-url-lynx-emacs)
 	:style radio
-	:selected (eq browse-url-browser-function 'browse-url-lynx-emacs)]
+	:selected (and (boundp 'browse-url-browser-function)
+		       (eq browse-url-browser-function 'browse-url-lynx-emacs))
+	:active (fboundp 'browse-url-lynx-emacs)]
        ["Grail" (setq browse-url-browser-function 'browse-url-grail)
 	:style radio
-	:selected (eq browse-url-browser-function 'browse-url-grail)]
+	:selected (and (boundp 'browse-url-browser-function)
+		       (eq browse-url-browser-function 'browse-url-grail))
+	:active (fboundp 'browse-url-grail)]
       )
       "-----"
       ["Browse Faces..." edit-faces t]
@@ -616,15 +699,24 @@
       )
      
      ("Tools"
-      ["Grep..."		grep			t]
-      ["Compile..."		compile			t]
-      ["Shell"			shell			t]
-      ["Shell Command..."	shell-command		t]
-      ["Shell Command on Region..." shell-command-on-region (region-exists-p)]
-      ["Debug (GDB)..."		gdb			t]
-      ["Debug (DBX)..."		dbx			t]
+      ["Grep..." grep
+       :active (fboundp 'grep)]
+      ["Compile..." compile
+       :active (fboundp 'compile)]
+      ["Shell" shell
+       :active (fboundp 'shell)]
+      ["Shell Command..." shell-command
+       :active (fboundp 'shell-command)]
+      ["Shell Command on Region..." shell-command-on-region
+       :active (and (fboundp 'shell-command-on-region)
+		    (region-exists-p))]
+      ["Debug (GDB)..." gdb
+       :active (fboundp 'gdb)]
+      ["Debug (DBX)..." dbx
+       :active (fboundp 'dbx)]
       "-----"
-      ["OO-Browser..."		oobr			t]
+      ["OO-Browser..." oobr
+       :active (fboundp 'oobr)]
       ("Tags"
        ["Find Tag..."		find-tag		t]
        ["Find Other Window..."	find-tag-other-window	t]
@@ -654,8 +746,8 @@
       "-----"
       ("XEmacs FAQ"
        ["FAQ (local)"		xemacs-local-faq	t]
-       ["FAQ via WWW" 		xemacs-www-faq	t]
-       ["Home Page"		xemacs-www-page		t])
+       ["FAQ via WWW" 		xemacs-www-faq	(boundp 'browse-url-browser-function)]
+       ["Home Page"		xemacs-www-page		(boundp 'browse-url-browser-function)])
       ("Samples"
        ["Sample"			(find-file
 					 (expand-file-name "sample.emacs"
@@ -697,9 +789,7 @@
        ["No Warranty"		describe-no-warranty	t]
        ["XEmacs License"	describe-copying	t]
        ["The Latest Version"	describe-distribution	t])
-      ["Submit Bug Report"	send-pr			t]
-      )
-     )))
+      ["Submit Bug Report"	send-pr			t]))))
 
 
 (defun maybe-add-init-button ()
@@ -850,12 +940,16 @@ This function changes the sensitivity of these Edit menu items:
 				   `[,bmk (bookmark-jump ',bmk) t])
 			       (bookmark-all-names))))
 	 ["Jump to Bookmark" nil nil])
-      ["Set bookmark"  	bookmark-set		t]
+      ["Set bookmark" bookmark-set
+       :active (fboundp 'bookmark-set)]
       "---"
-      ["Insert contents"  	bookmark-menu-insert	t]
-      ["Insert location"  	bookmark-menu-locate	t]
+      ["Insert contents" bookmark-menu-insert
+       :active (fboundp 'bookmark-menu-insert)]
+      ["Insert location" bookmark-menu-locate
+       :active (fboundp 'bookmark-menu-locate)]
       "---"
-      ["Rename bookmark"  	bookmark-menu-rename	t]
+      ["Rename bookmark" bookmark-menu-rename
+       :active (fboundp 'bookmark-menu-rename)]
       ,(if definedp
 	   '("Delete Bookmark"
 	     :filter (lambda (&rest junk)
@@ -863,11 +957,12 @@ This function changes the sensitivity of these Edit menu items:
 				   `[,bmk (bookmark-delete ',bmk) t])
 			       (bookmark-all-names))))
 	 ["Delete Bookmark" nil nil])
-      ["Edit Bookmark List"    bookmark-bmenu-list	,definedp]
+      ["Edit Bookmark List" bookmark-bmenu-list	,definedp]
       "---"
       ["Save bookmarks"        bookmark-save		,definedp]
       ["Save bookmarks as..."  bookmark-write		,definedp]
-      ["Load a bookmark file"  bookmark-load		t])))
+      ["Load a bookmark file" bookmark-load
+       :active (fboundp 'bookmark-load)])))
 
 ;;; The Buffers menu
 

@@ -182,10 +182,10 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
 	      if (!NILP (full))
 		name = concat2 (name_as_dir,
 				make_ext_string ((Bufbyte *)dp->d_name,
-						 len, FORMAT_BINARY));
+						 len, FORMAT_FILENAME));
 	      else
 		name = make_ext_string ((Bufbyte *)dp->d_name,
-					len, FORMAT_BINARY);
+					len, FORMAT_FILENAME);
 
 	      list = Fcons (name, list);
 	    }
@@ -292,6 +292,20 @@ file_name_completion_stat (Lisp_Object dirname, DIRENTRY *dp,
 }
 
 static Lisp_Object
+file_name_completion_unwind (Lisp_Object unwind_obj)
+{
+  DIR *d;
+  Lisp_Object obj = XCAR (unwind_obj);
+
+  if (NILP (obj))
+    return Qnil;
+  d = (DIR *)get_opaque_ptr (obj);
+  closedir (d);
+  free_opaque_ptr (obj);
+  return Qnil;
+}
+
+static Lisp_Object
 file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 		      int ver_flag)
 {
@@ -305,20 +319,18 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
   int speccount = specpdl_depth ();
   Charcount file_name_length;
   DIRENTRY *((*readfunc) (DIR *)) = readdir;
+  Lisp_Object unwind_closure;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
   GCPRO3 (file, dirname, bestmatch);
 
   CHECK_STRING (file);
 
-/* #### The following is valid not only for VMS, but for NT too. */
-#ifdef VMS
-  /* Filename completion on VMS ignores case, since VMS filesys does.  */
+#ifdef WINDOWSNT
+  /* Filename completion on Windows ignores case, since Windows
+     filesystems do.  */
   specbind (Qcompletion_ignore_case, Qt);
-
-  if (ver_flag)
-    readfunc = readdirver;
-#endif /* VMS */
+#endif /* HAVE_WINDOWS */
 
 #ifdef FILE_SYSTEM_CASE
   file = FILE_SYSTEM_CASE (file);
@@ -334,11 +346,20 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
      ** It would not actually be helpful to the user to ignore any possible
      completions when making a list of them.**  */
 
+  /* We cannot use close_directory_unwind() because we change the
+     directory.  The old code used to just avoid signaling errors, and
+     call closedir, but it was wrong, because it made sane handling of
+     QUIT impossible and, besides, various utility functions like
+     regexp_ignore_completion_p can signal errors.  */
+  unwind_closure = Fcons (Qnil, Qnil);
+  record_unwind_protect (file_name_completion_unwind, unwind_closure);
+
   for (passcount = !!all_flag; NILP (bestmatch) && passcount < 2; passcount++)
     {
       d = opendir ((char *) XSTRING_DATA (Fdirectory_file_name (dirname)));
       if (!d)
 	report_file_error ("Opening directory", list1 (dirname));
+      XCAR (unwind_closure) = make_opaque_ptr ((void *)d);
 
       /* Loop reading blocks */
       while (1)
@@ -355,17 +376,14 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 	  dp = (*readfunc) (d);
 	  if (!dp) break;
 
+	  /* #### This is a bad idea, because d_name can contain
+             control characters, which can make XEmacs crash.  This
+             should be handled properly with FORMAT_FILENAME.  */
 	  d_name = (Bufbyte *) dp->d_name;
 	  len = NAMLEN (dp);
 	  cclen = bytecount_to_charcount (d_name, len);
 
-	  /* Can't just use QUIT because we have to make sure the file
-             descriptor gets closed. */
-	  if (QUITP)
-	    {
-	      closedir (d);
-	      signal_quit ();
-	    }
+	  QUIT;
 
 	  if (! DIRENTRY_NONEMPTY (dp)
 	      || cclen < file_name_length
@@ -394,14 +412,13 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 		{
 		  Lisp_Object tem;
 		  /* and exit this for loop if a match is found */
-		  for (tem = Vcompletion_ignored_extensions;
-		       CONSP (tem);
-                       tem = XCDR (tem))
+		  EXTERNAL_LIST_LOOP (tem, Vcompletion_ignored_extensions)
 		    {
 		      Lisp_Object elt = XCAR (tem);
 		      Charcount skip;
 
-		      if (!STRINGP (elt)) continue;
+		      CHECK_STRING (elt);
+
 		      skip = cclen - string_char_length (XSTRING (elt));
 		      if (skip < 0) continue;
 
@@ -498,6 +515,8 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
             }
         }
       closedir (d);
+      free_opaque_ptr (XCAR (unwind_closure));
+      XCAR (unwind_closure) = Qnil;
     }
 
   unbind_to (speccount, Qnil);
@@ -527,7 +546,7 @@ make_directory_hash_table (char *path)
 	  len = NAMLEN (dp);
 	  if (DIRENTRY_NONEMPTY (dp))
 	    Fputhash (make_ext_string ((Bufbyte *) dp->d_name, len,
-				       FORMAT_BINARY), Qt, hash);
+				       FORMAT_FILENAME), Qt, hash);
 	}
       closedir (d);
     }

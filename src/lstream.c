@@ -186,7 +186,16 @@ finalize_lstream (void *header, int for_disksave)
     }
 #endif
   if (lstr->flags & LSTREAM_FL_IS_OPEN)
-    Lstream_close (lstr);
+    {
+      if (for_disksave)
+	{
+	  if (lstr->flags & LSTREAM_FL_CLOSE_AT_DISKSAVE)
+	    Lstream_close (lstr);
+	}
+      else
+	/* Just close. */
+	Lstream_close (lstr);
+    }
 }
 
 static unsigned int
@@ -825,6 +834,7 @@ make_stdio_stream_1 (FILE *stream, int flags, CONST char *mode)
   struct stdio_stream *str = STDIO_STREAM_DATA (lstr);
   str->file = stream;
   str->closing = flags & LSTR_CLOSING;
+  lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   XSETLSTREAM (obj, lstr);
   return obj;
 }
@@ -956,6 +966,7 @@ make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
     fstr->end_pos = -1;
   else
     fstr->end_pos = fstr->starting_pos + count;
+  lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   XSETLSTREAM (obj, lstr);
   return obj;
 }

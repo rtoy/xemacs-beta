@@ -36,12 +36,14 @@ Boston, MA 02111-1307, USA.  */
 struct x_color_instance_data
 {
   XColor color;
+  char dealloc_on_gc;
 };
 
 #define X_COLOR_INSTANCE_DATA(c) ((struct x_color_instance_data *) (c)->data)
 #define COLOR_INSTANCE_X_COLOR(c) (X_COLOR_INSTANCE_DATA (c)->color)
+#define COLOR_INSTANCE_X_DEALLOC(c) (X_COLOR_INSTANCE_DATA (c)->dealloc_on_gc)
 
-int allocate_nearest_color (Display *display, Colormap screen_colormap,
+int allocate_nearest_color (Display *display, Colormap screen_colormap, Visual *visual,
 			    XColor *color_def);
 int x_parse_nearest_color (struct device *d, XColor *color, Bufbyte *name,
 			   Bytecount len, Error_behavior errb);

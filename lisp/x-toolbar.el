@@ -36,8 +36,9 @@
 
 ;;; Code:
 
+;; Suppress warning message from bytecompiler
 (eval-when-compile
-  (require 'pending-del))
+  (defvar pending-delete))
 
 (defgroup toolbar nil
   "Configure XEmacs Toolbar functions and properties"

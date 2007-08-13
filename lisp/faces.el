@@ -1237,7 +1237,9 @@ If FRAME is nil, return the default frame properties."
 	     ;; and cache it...
 	     (set-frame-property frame 'custom-properties cache))
 	   cache))
-	(default-custom-frame-properties)
+	;; We avoid this cache, because various frame and device
+	;; properties can change.
+	;;(default-custom-frame-properties)
 	(t
 	 (setq default-custom-frame-properties
 	       (extract-custom-frame-properties (selected-frame))))))

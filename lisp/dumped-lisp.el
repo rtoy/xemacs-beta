@@ -132,6 +132,8 @@
 	;; Specialized language support
 	#+(and mule CANNA) "canna-leim"
 	#+(and mule wnn) "egg-leim"
+	#+mule "egg-sj3-leim"
+	#+mule "skk-leim"
 
 ;; Set up the XEmacs environment for Mule.
 ;; Assumes the existence of various stuff above.
@@ -160,9 +162,9 @@
 ;; preload the TTY init code.
 	#+tty "tty-init"
 ;;; Formerly in tooltalk/tooltalk-load.el
-	#+tooltalk "tooltalk/tooltalk-macros"
-	#+tooltalk "tooltalk/tooltalk-util"
-	#+tooltalk "tooltalk/tooltalk-init"
+	#+tooltalk "tooltalk-macros"
+	#+tooltalk "tooltalk-util"
+	#+tooltalk "tooltalk-init"
 	;; "vc-hooks"		; Packaged.  Available in two versions.
 	;; "ediff-hook"		; Packaged.
 	"fontl-hooks"

@@ -1,3 +1,30 @@
+Thu December 04 1997 jhar@tardis.ed.ac.uk
+	
+	* xemacs.mak: Define DEBUG_XEMACS when compiling with debug.
+
+Tue November 29 12:29:33 1997 davidh
+
+	* xemacs.mak and config.h updated to provide ability to
+	  specify DEBUG mode from the xemacs.mak file.
+
+Mon December 01 1997 jhar
+
+	* msw-init.el: Provide default bindings for cut, paste, copy and undo
+
+	* event-msw.c, event-msw.h, frame-msw.c, msw-proc.c:
+	  - Implemeted simple emacs_mswindows_event_pending_p().
+	  - Fixed deleting frames.
+	  - Rewrote timeout code, eliminating "!NILP(rest)" bug.
+	  - Special processing for 'Ctrl-@' keystroke.
+	  - Support for some new keysyms.
+	
+Mon December 01 1997 jhar
+
+	* xemacs.mak:
+	  - Add PACKAGE_PATH and EMACS_BETA_VERSION defines.
+	  - Automatically copy changed include files from \nt to \src.
+	  - Corrected some DOC_SRC* lists.
+  
 Tue November 18 21:45:06 1997 davidh
 
 	* xemacs.mak updated to remove dependency on startup.elc

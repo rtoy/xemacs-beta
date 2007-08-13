@@ -61,9 +61,7 @@ as it appears, you need to use this three-step process:
   don't affect subsequent frames.
 * Set `initial-frame-plist' in a way that matches the X resources,
   to override what you put in `default-frame-plist'."
-  :type '(repeat (group :inline t
-			(symbol :tag "Property")
-			(sexp :tag "Value")))
+  :type 'plist
   :group 'frames)
 
 (defcustom minibuffer-frame-plist '(width 80 height 2 menubar-visible-p nil
@@ -74,9 +72,7 @@ You can set this in your `.emacs' file; for example,
 Properties specified here supersede the values given in
 `default-frame-plist'.
 The format of this can also be an alist for backward compatibility."
-  :type '(repeat (group :inline t
-			(symbol :tag "Property")
-			(sexp :tag "Value")))
+  :type 'plist
   :group 'frames)
 
 (defcustom pop-up-frame-plist nil
@@ -86,9 +82,7 @@ This variable can be set in your init file, like this:
   (setq pop-up-frame-plist '(width 80 height 20))
 These supersede the values given in `default-frame-plist'.
 The format of this can also be an alist for backward compatibility."
-  :type '(repeat (group :inline t
-			(symbol :tag "Property")
-			(sexp :tag "Value")))
+  :type 'plist
   :group 'frames)
 
 (setq pop-up-frame-function
@@ -104,9 +98,7 @@ This variable can be set in your init file, like this:
   (setq special-display-frame-plist '(width 80 height 20))
 These supersede the values given in `default-frame-plist'.
 The format of this can also be an alist for backward compatibility."
-  :type '(repeat (group :inline t
-			(symbol :tag "Property")
-			(sexp :tag "Value")))
+  :type 'plist
   :group 'frames)
 
 (defun safe-alist-to-plist (cruftiness)

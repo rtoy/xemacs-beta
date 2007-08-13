@@ -3291,11 +3291,16 @@ SEQUENCE may be a list, a vector or a string.
        (fn, seq))
 {
   int len = XINT (Flength (seq));
-  Lisp_Object *args = alloca_array (Lisp_Object, len);
+  /* Ideally, this should call make_vector_internal, because we don't
+     need initialization.  */
+  Lisp_Object result = make_vector (len, Qnil);
+  struct gcpro gcpro1;
 
-  mapcar1 (len, args, fn, seq);
+  GCPRO1 (result);
+  mapcar1 (len, XVECTOR_DATA (result), fn, seq);
+  UNGCPRO;
 
-  return Fvector (len, args);
+  return result;
 }
 
 DEFUN ("mapc", Fmapc, 2, 2, 0, /*

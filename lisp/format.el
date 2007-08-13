@@ -166,7 +166,7 @@ BUFFER should be the buffer that the output originally came from."
       (save-current-buffer
 	(set-buffer buffer)
 	(with-output-to-temp-buffer "*Format Errors*"
-	  (shell-command-on-region from to method t nil standard-output))
+	  (shell-command-on-region from to method t nil))
 	(point))
     (funcall method from to buffer)))
 
@@ -177,7 +177,7 @@ otherwise, it should be a Lisp function."
   (if (stringp method)
       (progn
 	(with-output-to-temp-buffer "*Format Errors*"
-	  (shell-command-on-region from to method t nil standard-output))
+	  (shell-command-on-region from to method t nil))
 	(point))
     (funcall method from to)))
 

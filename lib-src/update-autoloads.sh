@@ -79,7 +79,7 @@ lisp_prog='(princ (featurep (quote mule)))'
 mule_p="`$EMACS -batch -vanilla -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
 	echo No
-	ignore_dirs="$ignore_dirs mule leim"
+	ignore_dirs="$ignore_dirs mule leim language skk"
 else
 	echo Yes
 fi

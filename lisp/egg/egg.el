@@ -2814,21 +2814,24 @@ correspoding to character position.")
 
 (defvar egg:*minibuffer-local-hiragana-map* (copy-keymap minibuffer-local-map))
 
-(substitute-key-definition 'self-insert-command
+(substitute-key-definition 'egg-self-insert-command
 			   'fence-self-insert-command
 			   egg:*minibuffer-local-hiragana-map*
-			   minibuffer-local-map)
+			   global-map)
 
 (defun read-hiragana-string (prompt &optional initial-input)
-  (save-excursion
-    (let ((minibuff (window-buffer (minibuffer-window))))
-      (set-buffer minibuff)
+  (let ((egg:fence-buffer (window-buffer (minibuffer-window)))
+	(minibuffer-exit-hook
+	 (append minibuffer-exit-hook
+		 '((lambda () (use-local-map minibuffer-local-map))))))
+    (save-excursion
+      (set-buffer egg:fence-buffer)
       (setq egg:*input-mode* t
 	    egg:*mode-on*    t
 	    its:*current-map* (its:get-mode-map "roma-kana"))
-      (mode-line-egg-mode-update (its:get-mode-indicator "roma-kana"))))
-  (read-from-minibuffer prompt initial-input
-		       egg:*minibuffer-local-hiragana-map*))
+      (mode-line-egg-mode-update (its:get-mode-indicator "roma-kana")))
+    (read-from-minibuffer prompt initial-input
+			  egg:*minibuffer-local-hiragana-map*)))
 
 (defun read-kanji-string (prompt &optional initial-input)
   (save-excursion

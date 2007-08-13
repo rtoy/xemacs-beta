@@ -226,12 +226,13 @@ Lisp_Object Qsuppress_keymap;
 Lisp_Object Qmodeline_map;
 Lisp_Object Qtoolbar_map;
 
-static void describe_command (Lisp_Object definition);
+static void describe_command (Lisp_Object definition, Lisp_Object buffer);
 static void describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
-			  void (*elt_describer) (Lisp_Object),
+			  void (*elt_describer) (Lisp_Object, Lisp_Object),
 			  int partial,
 			  Lisp_Object shadow,
-			  int mice_only_p);
+			  int mice_only_p,
+			  Lisp_Object buffer);
 Lisp_Object Qcontrol, Qctrl, Qmeta, Qsuper, Qhyper, Qalt, Qshift;
 /* Lisp_Object Qsymbol;	defined in general.c */
 Lisp_Object Qbutton0, Qbutton1, Qbutton2, Qbutton3, Qbutton4, Qbutton5,
@@ -3754,8 +3755,12 @@ Fifth argument MOUSE-ONLY-P says to only print bindings for mouse clicks.
        (map, all, shadow, prefix, mouse_only_p))
 {
   /* This function can GC */
+
+  /* #### At some point, this function should be changed to accept a
+     BUFFER argument.  Currently, the BUFFER argument to
+     describe_map_tree is being used only internally.  */
   describe_map_tree (map, NILP (all), shadow, prefix,
-		     !NILP (mouse_only_p));
+		     !NILP (mouse_only_p), Fcurrent_buffer ());
   return Qnil;
 }
 
@@ -3771,7 +3776,7 @@ Fifth argument MOUSE-ONLY-P says to only print bindings for mouse clicks.
 
 void
 describe_map_tree (Lisp_Object startmap, int partial, Lisp_Object shadow,
-                   Lisp_Object prefix, int mice_only_p)
+                   Lisp_Object prefix, int mice_only_p, Lisp_Object buffer)
 {
   /* This function can GC */
   Lisp_Object maps = Qnil;
@@ -3831,7 +3836,8 @@ describe_map_tree (Lisp_Object startmap, int partial, Lisp_Object shadow,
                       describe_command,
                       partial,
                       sub_shadow,
-                      mice_only_p);
+                      mice_only_p,
+		      buffer);
       }
     SKIP:
       NUNGCPRO;
@@ -3841,15 +3847,13 @@ describe_map_tree (Lisp_Object startmap, int partial, Lisp_Object shadow,
 
 
 static void
-describe_command (Lisp_Object definition)
+describe_command (Lisp_Object definition, Lisp_Object buffer)
 {
   /* This function can GC */
-  Lisp_Object buffer;
   int keymapp = !NILP (Fkeymapp (definition));
-  struct gcpro gcpro1, gcpro2;
-  GCPRO2 (definition, buffer);
+  struct gcpro gcpro1;
+  GCPRO1 (definition);
 
-  XSETBUFFER (buffer, current_buffer);
   Findent_to (make_int (16), make_int (3), buffer);
   if (keymapp)
     buffer_insert_c_string (XBUFFER (buffer), "<< ");
@@ -4099,15 +4103,16 @@ describe_map_parent_mapper (Lisp_Object keymap, void *arg)
 
 static void
 describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
-	      void (*elt_describer) (Lisp_Object),
+	      void (*elt_describer) (Lisp_Object, Lisp_Object),
 	      int partial,
 	      Lisp_Object shadow,
-	      int mice_only_p)
+	      int mice_only_p,
+	      Lisp_Object buffer)
 {
   /* This function can GC */
   struct describe_map_closure describe_map_closure;
   Lisp_Object list = Qnil;
-  struct buffer *buf = current_buffer;
+  struct buffer *buf = XBUFFER (buffer);
   Emchar printable_min = (CHAR_OR_CHAR_INTP (buf->ctl_arrow)
 			  ? XCHAR_OR_CHAR_INT (buf->ctl_arrow)
 			  : ((EQ (buf->ctl_arrow, Qt)
@@ -4202,7 +4207,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	    }
 
 	  /* Print a description of the definition of this character.  */
-	  (*elt_describer) (XCDR (XCAR (list)));
+	  (*elt_describer) (XCDR (XCAR (list)), buffer);
 	  list = XCDR (list);
 	}
     }

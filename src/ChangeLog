@@ -1,3 +1,180 @@
+1997-12-06  P E Jareth Hein  <jareth@camelot-soft.com>
+
+	* device-x.c: Change -privcmap to -privatecolormap.
+	* events.c: corret minor think-o.
+
+1997-12-04 Jonathon Harris <jhar@tardis.ed.ac.uk>
+
+	* event-msw.c, faces.c, msw-proc.c:
+	  Frame resizing happens in multiples of the default character 	  size.
+	* frame-msw.c:
+	  mswindows_set_frame_size() and
+	  mswindows_set_frame_properties() now call AdjustWindowRect to
+	  set the correct window size.
+
+1997-12-04  Jeff Sparkes <jsparkes@internetivity.com>
+ 
+	* frame-msw.c: added frame functions for move, resize,
+	 iconify, raise, lower, visible_p, iconified_p, focus,
+	 make visible, make invisible, set title.
+ 
+1997-12-01  Jonathon Harris <jhar@tardis.ed.ac.uk>
+
+	* event-msw.c, event-msw.h, frame-msw.c, msw-proc.c:
+	  - Implemeted simple emacs_mswindows_event_pending_p().
+	  - Fixed deleting frames.
+	  - Rewrote timeout code, eliminating "!NILP(rest)" bug.
+	  - Special processing for 'Ctrl-@' keystroke.
+	  - Support for some new keysyms.
+
+1997-12-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lstream.c (make_stdio_stream_1): Set it.
+	(make_filedesc_stream_1): Ditto.
+	(finalize_lstream): Use it.
+
+	* lstream.h: New flag LSTREAM_FL_CLOSE_AT_DISKSAVE.
+
+1997-11-29  Jeff Miller <jmiller@smart.net>
+
+	* menubar-x.c: define restore_in_menu_callback() when motif
+	  menubars are used.
+
+	* menubar-x.c: change #ifdef LWLIB_MENUBARS_MOTIF to
+          #if defined LWLIB_MENUBARS_LUCID || defined LWLIB_MENUBARS_MOTIF
+	  around code for incremental menu build.           
+
+	* event-stream.c: Changed HAVE_MENUBARS to HAVE_MENUBARS_LUCID in
+	  the #ifdef wrappers around menubar accelerator stuff.
+
+1997-12-05  SL Baur  <steve@altair.xemacs.org>
+
+	* keymap.h: update describe_map_tree prototype
+
+1997-12-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lstream.c (make_stdio_stream_1): Set it.
+	(make_filedesc_stream_1): Ditto.
+	(finalize_lstream): Use it.
+
+	* lstream.h: New flag LSTREAM_FL_CLOSE_AT_DISKSAVE.
+
+1997-12-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* editfns.c (save_excursion_restore): Fix comment.
+
+	* fns.c (Fmapvector): GCPRO the vector.
+
+1997-12-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cmdloop.c (default_error_handler): Respect
+ 	errors-deactivate-region; use display-error.
+
+	* editfns.c (vars_of_editfns): New variable user-full-name.
+	(init_editfns): Initialize it.
+	(Fuser_full_name): Use it.
+	(vars_of_editfns): Docfixes.
+
+	* dired.c (Fdirectory_files): Use FORMAT_FILENAME instead of
+ 	FORMAT_BINARY.
+	(make_directory_hash_table): Ditto.
+	(file_name_completion): Bind `completion-ignore-case' to t under
+	MS Windows.
+	(file_name_completion): Signal an error if a member of
+	`completion-ignored-extensions' is not a string.
+
+1997-11-30  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* doc.c (Fsubstitute_command_keys): Don't use
+ 	Vprin1_to_string_buffer.
+
+	* keymap.c (describe_map_tree): Accept a BUFFER argument.
+	(describe_map): Ditto.
+	(describe_command): Ditto.
+
+1997-11-29  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* insdel.c (signal_before_change): Don't treat
+	Vprin1_to_string_buffer specially.
+	(signal_after_change): Ditto.
+
+	* buffer.c (Fkill_buffer): Don't treat Vprin1_to_string_buffer
+ 	specially.
+	(complex_vars_of_buffer): Ditto.
+
+	* print.c (Ferror_message_string): Use Vprin1_to_string_stream.
+
+	* events.c (Fmake_event): Changed error message.
+
+	* print.c (Fprin1_to_string): Use a resizing-buffer stream.
+
+1997-12-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* buffer.c (Fkill_buffer): Use EXTERNAL_LIST_LOOP.
+	(Fget_file_buffer): Use LIST_LOOP.
+
+1997-12-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* editfns.c (save_excursion_save): Don't save VISIBLE-P.
+	(save_excursion_restore): Changed accordingly.
+	(save_excursion_restore): Free the markers and conses even if the
+	buffer is dead.
+	(save_restriction_restore): Use XCAR/XCDR.
+	(Fencode_time): Use XCAR/XCDR, when safe.
+
+	* menubar.c (Fnormalize_menu_item_name): Use INC_CHARPTR; allow
+	`%%' to mean `%'.
+
+	* minibuf.c (regexp_ignore_completion_p): Use EXTERNAL_LIST_LOOP;
+	check type of list elements.
+
+	* dired.c (file_name_completion): Set up a proper unwind form.
+	(file_name_completion_unwind): New function.
+	(file_name_completion): Allow errors.
+
+	* line-number.c (invalidate_line_number_cache): Would lose in
+ 	precence of Finsert_before_markers.
+	(narrow_line_number_cache): Only mark LINE_NUMBER_BEGV as dirty.
+	(buffer_line_number): Recalculate LINE_NUMBER_BEGV on demand.
+	(buffer_line_number): Would ignore LINE_NUMBER_FAR.
+
+1997-12-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fns.c (Fmapvector): Don't stack-allocate args; allocate the
+	vector and call mapcar1 with its data.
+
+1997-12-02  P E Jareth Hein  <jareth@camelot-soft.com>
+ 
+	* objects-x.c: Added colormap/visual support, rewrote
+	allocate_nearest_color, and changed the x-color-instance to deal
+	with possibly not freeing a color.
+
+	* objects-x.h: Added dealloc_on_gc flag for x-color-instances.
+
+	* redisplay-x.c: Added colormap/visual support.
+
+	* balloon-x.c: Added colormap/visual support.
+
+	* console-x.h: Added colormap/visual support by adding visual,
+	depth and colormap slots to a device.
+
+	* device-x.c: Added colormap/visual support with the command line
+	options "-privcmap" and "-visual" and Xresources
+	".privateColormap" and ".EmacsVisual".  Also changed the
+	device-init so that the app-shell is always realized to properly
+	deal with GCs (previously only realized when OFFIX was
+	supported), and added the x-display-visual-depth lisp function to
+	complement x-display-visual-class.
+
+	* event-Xt.c: Added colormap/visual support, and stuck in a
+	patch/hack to change the way Xt inherits visuals to match the way
+	it inherits colormaps.
+
+	* frame-x.c: Added colormap/visual support.
+
+	* glyphs-x.c: Added colormap/visual support. Will probably need a
+	lot more work.
+
 1997-11-27  Kyle Jones  <kyle_jones@wonderworks.com>
 
 	* src/keymap.c (munging_key_map_event_binding): Don't do

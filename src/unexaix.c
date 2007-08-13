@@ -185,8 +185,8 @@ pointer looks like an int) but not on all machines.
 #include <sys/stat.h>
 #include <errno.h>
 
-extern char *start_of_text ();		/* Start of text */
-extern char *start_of_data ();		/* Start of initialized data */
+extern char *start_of_text (void);		/* Start of text */
+extern char *start_of_data (void);		/* Start of initialized data */
 
 extern int _data;
 extern int _edata;
@@ -220,6 +220,7 @@ static long data_scnptr;
 static long load_scnptr;
 static long orig_load_scnptr;
 static long orig_data_scnptr;
+static unrelocate_symbols (int, int, char *, char *);
 #endif
 static ulong data_st;                   /* start of data area written out */
 
@@ -227,6 +228,7 @@ static ulong data_st;                   /* start of data area written out */
 #define MAX_SECTIONS	10
 #endif
 
+static adjust_lnnoptrs (int, int, char *);
 #endif /* COFF */
 
 static int pagemask;
@@ -243,9 +245,7 @@ static int pagemask;
 #include "lisp.h"
 
 static
-report_error (file, fd)
-     char *file;
-     int fd;
+report_error (char *file, int fd)
 {
   if (fd)
     close (fd);
@@ -258,10 +258,7 @@ report_error (file, fd)
 #define ERROR2(msg,x,y) report_error_1 (new, msg, x, y); return -1
 
 static
-report_error_1 (fd, msg, a1, a2)
-     int fd;
-     char *msg;
-     int a1, a2;
+report_error_1 (int fd, char *msg, int a1, int a2)
 {
   close (fd);
 #ifdef emacs
@@ -272,19 +269,21 @@ report_error_1 (fd, msg, a1, a2)
 #endif
 }
 
-static int make_hdr ();
-static void mark_x ();
-static int copy_text_and_data ();
-static int copy_sym ();
+static int make_hdr (int, int, unsigned, unsigned, unsigned, char *, char *);
+static void mark_x (char *);
+static int copy_text_and_data (int);
+static int copy_sym (int, int, char *, char *);
+static write_segment (int, char *, char *);
 
 /* ****************************************************************
  * unexec
  *
  * driving logic.
  */
-unexec (new_name, a_name, data_start, bss_start, entry_address)
-     char *new_name, *a_name;
-     unsigned data_start, bss_start, entry_address;
+int unexec (char *new_name, char *a_name,
+	uintptr_t data_start,
+	uintptr_t bss_start,
+	uintptr_t entry_address)
 {
   int new, a_out = -1;
 
@@ -326,11 +325,7 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
  * Modify the text and data sizes.
  */
 static int
-make_hdr (new, a_out, data_start, bss_start, entry_address, a_name, new_name)
-     int new, a_out;
-     unsigned data_start, bss_start, entry_address;
-     char *a_name;
-     char *new_name;
+make_hdr (int new, int a_out, unsigned data_start, unsigned bss_start, unsigned entry_address, char *a_name, char *new_name)
 {
   int scns;
   unsigned int bss_end;
@@ -435,15 +430,15 @@ make_hdr (new, a_out, data_start, bss_start, entry_address, a_name, new_name)
 
       if (f_thdr == 0)
 	{
-	  ERROR1 ("unexec: couldn't find \"%s\" section", _TEXT);
+	  ERROR1 ("unexec: couldn't find \"%s\" section", (int) _TEXT);
 	}
       if (f_dhdr == 0)
 	{
-	  ERROR1 ("unexec: couldn't find \"%s\" section", _DATA);
+	  ERROR1 ("unexec: couldn't find \"%s\" section", (int) _DATA);
 	}
       if (f_bhdr == 0)
 	{
-	  ERROR1 ("unexec: couldn't find \"%s\" section", _BSS);
+	  ERROR1 ("unexec: couldn't find \"%s\" section", (int) _BSS);
 	}
     }
   else
@@ -575,8 +570,7 @@ make_hdr (new, a_out, data_start, bss_start, entry_address, a_name, new_name)
  * Copy the text and data segments from memory to the new a.out
  */
 static int
-copy_text_and_data (new)
-     int new;
+copy_text_and_data (int new)
 {
   char *end;
   char *ptr;
@@ -595,9 +589,7 @@ copy_text_and_data (new)
 }
 
 #define UnexBlockSz (1<<12)			/* read/write block size */
-write_segment (new, ptr, end)
-     int new;
-     char *ptr, *end;
+write_segment (int new, char *ptr, char *end)
 {
   int i, nwrite, ret;
   char buf[80];
@@ -638,9 +630,7 @@ write_segment (new, ptr, end)
  * Copy the relocation information and symbol table from the a.out to the new
  */
 static int
-copy_sym (new, a_out, a_name, new_name)
-     int new, a_out;
-     char *a_name, *new_name;
+copy_sym (int new, int a_out, char *a_name, char *new_name)
 {
   char page[UnexBlockSz];
   int n;
@@ -676,8 +666,7 @@ copy_sym (new, a_out, a_name, new_name)
  * After successfully building the new a.out, mark it executable
  */
 static void
-mark_x (name)
-     char *name;
+mark_x (char *name)
 {
   struct stat sbuf;
   int um;
@@ -720,10 +709,7 @@ mark_x (name)
    a reasonable size buffer.  But I don't have time to work on such
    things, so I am installing it as submitted to me.  -- RMS.  */
 
-adjust_lnnoptrs (writedesc, readdesc, new_name)
-     int writedesc;
-     int readdesc;
-     char *new_name;
+adjust_lnnoptrs (int writedesc, int readdesc, char *new_name)
 {
   int nsyms;
   int naux;
@@ -780,9 +766,7 @@ adjust_lnnoptrs (writedesc, readdesc, new_name)
    read one LDREL and do do two lseeks per iteration) but the wrath of
    RMS (see above :-) would be too much to bear */
 
-unrelocate_symbols (new, a_out, a_name, new_name)
-     int new, a_out;
-     char *a_name, *new_name;
+unrelocate_symbols (int new, int a_out, char *a_name, char *new_name)
 {
   int i;
   int l;

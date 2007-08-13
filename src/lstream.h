@@ -132,10 +132,11 @@ typedef struct lstream_implementation
  Lstream_implementation c_name[1] =			\
    { { (name), (size) } }
 
-#define LSTREAM_FL_IS_OPEN 1
-#define LSTREAM_FL_READ 2
-#define LSTREAM_FL_WRITE 4
-#define LSTREAM_FL_NO_PARTIAL_CHARS 8
+#define LSTREAM_FL_IS_OPEN		1
+#define LSTREAM_FL_READ			2
+#define LSTREAM_FL_WRITE		4
+#define LSTREAM_FL_NO_PARTIAL_CHARS	8
+#define LSTREAM_FL_CLOSE_AT_DISKSAVE	16
 
 struct lstream
 {

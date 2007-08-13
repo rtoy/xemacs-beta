@@ -38,12 +38,12 @@ XEmacs 20.4
 ===========
 * Info::	Documentation browsing system.
 * XEmacs::	The extensible user-friendly self-documenting text editor.
-		This manual is for XEmacs 20.3.
+		This manual is for XEmacs 20.4.
 * Lispref::	XEmacs Lisp technical reference.
-		This manual is for XEmacs 20.3.
+		This manual is for XEmacs 20.4.
 * New-Users-Guide::
-	        XEmacs User's Guide for XEmacs 20.3.
-* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 20.3.
+	        XEmacs User's Guide for XEmacs 20.4.
+* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 20.4.
 * Internals::	Guide to the internals of XEmacs.
 * send-pr::	Submitting Bug Reports
 * gnats::	GNU Problem Report Management System
@@ -54,11 +54,8 @@ Local Packages:
 * Custom::	Customization Library for Emacs
 * External-Widget::
 		Use XEmacs as a text widget inside of another program.
-* Forms::	A package for editing databases by filling in forms.
-* PH::		Client interface to the CCSO white pages directory system
+* Skk::		Input Method for Japanese.
 * Standards::	The GNU coding standards.
-* Supercite::	Lets you cite parts of messages you're replying to.
-* Term::	ANSI-compatible terminal emulator.
 * Termcap::	The termcap library, which enables application programs
 		to handle all types of character-display terminals.
 * Texinfo::	With one source file, make either a printed manual (through

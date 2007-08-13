@@ -1727,6 +1727,9 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 		  Lisp_Object parent)
 {
   struct device *d = XDEVICE (f->device);
+  Visual *visual = DEVICE_X_VISUAL (d);
+  int depth = DEVICE_X_DEPTH (d);
+  Colormap cmap = DEVICE_X_COLORMAP (d);
 #ifdef EXTERNAL_WIDGET
   Window window_id = 0;
 #endif
@@ -1810,6 +1813,9 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
       XtSetArg (al[ac], XtNinput, True);       ac++;
       XtSetArg (al[ac], XtNminWidthCells, 10); ac++;
       XtSetArg (al[ac], XtNminHeightCells, 1); ac++;
+      XtSetArg (al[ac], XtNvisual, visual); ac++;
+      XtSetArg (al[ac], XtNdepth, depth);   ac++;
+      XtSetArg (al[ac], XtNcolormap, cmap); ac++;
     }
 
   if (!NILP (parent))
@@ -1833,8 +1839,13 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
   maybe_set_frame_title_format (shell);
 
   /* Create the manager widget */
+  ac = 0;
+  XtSetArg (al[ac], XtNvisual, visual); ac++;
+  XtSetArg (al[ac], XtNdepth, depth); ac++;
+  XtSetArg (al[ac], XtNcolormap, cmap); ac++;
+  
   container = XtCreateWidget ("container",
-			      emacsManagerWidgetClass, shell, NULL, 0);
+			      emacsManagerWidgetClass, shell, al, ac);
   FRAME_X_CONTAINER_WIDGET (f) = container;
   XtAddCallback (container, XtNresizeCallback, x_layout_widgets,
 		 (XtPointer) f);
@@ -1842,9 +1853,13 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 		 (XtPointer) f);
 
   /* Create the text area */
-  XtSetArg (al [0], XtNborderWidth, 0); /* should this be settable? */
-  XtSetArg (al [1], XtNemacsFrame,  f);
-  text = XtCreateWidget (name, emacsFrameClass, container, al, 2);
+  ac = 0;
+  XtSetArg (al[ac], XtNvisual, visual); ac++;
+  XtSetArg (al[ac], XtNdepth, depth); ac++;
+  XtSetArg (al[ac], XtNcolormap, cmap); ac++;
+  XtSetArg (al[ac], XtNborderWidth, 0); ac++; /* should this be settable? */
+  XtSetArg (al[ac], XtNemacsFrame,  f); ac++;
+  text = XtCreateWidget (name, emacsFrameClass, container, al, ac);
   FRAME_X_TEXT_WIDGET (f) = text;
 
 #ifdef HAVE_MENUBARS

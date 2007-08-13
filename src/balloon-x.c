@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 static unsigned long
 alloc_color (Display* dpy, CONST char* colorname, int light)
 {
-  Colormap cmap = DefaultColormap (dpy, DefaultScreen(dpy));
+  Colormap cmap = DEVICE_X_COLORMAP (XDEVICE(Vdefault_x_device));
   unsigned long pixel = 0;
   XColor color;
 

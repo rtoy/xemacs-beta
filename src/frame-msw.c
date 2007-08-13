@@ -63,9 +63,6 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 					       0, &request);
   FRAME_MSWINDOWS_DC(f) = GetDC(FRAME_MSWINDOWS_HANDLE(f));
   SetTextAlign(FRAME_MSWINDOWS_DC(f), TA_BASELINE|TA_LEFT|TA_NOUPDATECP);
-
-  /* XXX FIXME: This function should be made to do something */
-  update_frame_face_values (f);
 }
 
 /* Called just before frame's properties are set, size is 10x10 or something */
@@ -86,7 +83,14 @@ static void
 mswindows_init_frame_3 (struct frame *f)
 {
   /* Don't do this earlier or we get a WM_PAINT before the frame is ready*/
-  ShowWindow(FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
+  ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
+  SetForegroundWindow (FRAME_MSWINDOWS_HANDLE(f));
+}
+
+static void
+mswindows_focus_on_frame (struct frame *f)
+{
+    SetForegroundWindow (FRAME_MSWINDOWS_HANDLE(f));
 }
 
 static void
@@ -94,20 +98,97 @@ mswindows_delete_frame (struct frame *f)
 {
   if (f->frame_data)
     {
-      ReleaseDC(FRAME_MSWINDOWS_HANDLE(f), FRAME_MSWINDOWS_DC(f));
-      DestroyWindow(FRAME_MSWINDOWS_HANDLE(f));
+      mswindows_request_type request = { f };
+      mswindows_make_request(WM_XEMACS_DESTROYWINDOW, 0, &request);
     }
 }
 
 static void
 mswindows_set_frame_size (struct frame *f, int cols, int rows)
 {
+  RECT rect1, rect2;
+  
+  GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect1);
+  rect2.left = rect2.top = 0;
+  char_to_pixel_size (f, cols, rows, &rect2.right, &rect2.bottom);
+  AdjustWindowRect (&rect2, GetWindowLong (FRAME_MSWINDOWS_HANDLE(f),
+					   GWL_STYLE), FALSE);
+  MoveWindow (FRAME_MSWINDOWS_HANDLE(f), rect1.left, rect1.top,
+ 	      rect2.right-rect2.left, rect2.bottom-rect2.top, TRUE);
 }
 
 
 static void
 mswindows_set_frame_position (struct frame *f, int xoff, int yoff)
 {
+  RECT rect;
+
+  GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect);
+  MoveWindow (FRAME_MSWINDOWS_HANDLE(f), xoff, yoff,
+	      rect.right-rect.left, rect.bottom-rect.top, TRUE);
+}
+
+static void
+mswindows_make_frame_visible (struct frame *f) 
+{
+  if (f->iconified)
+    ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
+  else
+    ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
+  f->visible = 1;
+  f->iconified = 0;
+}
+
+static void
+mswindows_make_frame_invisible (struct frame *f) 
+{
+  ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_HIDE);
+  f->visible = -1;
+}
+
+static int
+mswindows_frame_visible_p (struct frame *f)
+{
+  return IsWindowVisible (FRAME_MSWINDOWS_HANDLE(f))
+    && !IsIconic (FRAME_MSWINDOWS_HANDLE(f));
+}
+
+
+static void
+mswindows_iconify_frame (struct frame *f)
+{
+  ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_MINIMIZE);
+  f->visible = 0;
+  f->iconified = 1;
+}
+
+static int
+mswindows_frame_iconified_p (struct frame *f)
+{
+  return IsIconic (FRAME_MSWINDOWS_HANDLE(f));
+}
+
+static void
+mswindows_raise_frame (struct frame *f)
+{
+  BringWindowToTop (FRAME_MSWINDOWS_HANDLE(f));
+  /* XXX Should we do SetWindowForeground too ? */
+}
+
+static void
+mswindows_lower_frame (struct frame *f)
+{
+  RECT rect;
+  
+  GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect);
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), HWND_BOTTOM, rect.top, rect.left,
+		rect.right-rect.left, rect.bottom-rect.top, 0);
+}
+
+static void
+mswindows_set_title_from_bufbyte (struct frame *f, Bufbyte *title) 
+{
+  SetWindowText (FRAME_MSWINDOWS_HANDLE(f), title);
 }
 
 static void
@@ -190,7 +271,9 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 	x = rect.left;
       if (!y_specified_p)
 	y = rect.top;
-      /* XXX FIXME: Should do AdjustWindowRect here like in mswindows_handle_request */
+
+      AdjustWindowRect (&rect, GetWindowLong (FRAME_MSWINDOWS_HANDLE(f),
+					      GWL_STYLE), FALSE);
       MoveWindow (FRAME_MSWINDOWS_HANDLE(f), x, y, pixel_width, pixel_height,
 		  (width_specified_p || height_specified_p));
     }
@@ -205,26 +288,26 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, init_frame_2);
   CONSOLE_HAS_METHOD (mswindows, init_frame_3);
 /*  CONSOLE_HAS_METHOD (mswindows, mark_frame); */
-/*  CONSOLE_HAS_METHOD (mswindows, focus_on_frame); */
+  CONSOLE_HAS_METHOD (mswindows, focus_on_frame);
   CONSOLE_HAS_METHOD (mswindows, delete_frame);
 /*  CONSOLE_HAS_METHOD (mswindows, get_mouse_position); */
 /*  CONSOLE_HAS_METHOD (mswindows, set_mouse_position); */
-/*  CONSOLE_HAS_METHOD (mswindows, raise_frame); */
-/*  CONSOLE_HAS_METHOD (mswindows, lower_frame); */
-/*  CONSOLE_HAS_METHOD (mswindows, make_frame_visible); */
-/*  CONSOLE_HAS_METHOD (mswindows, make_frame_invisible); */
-/*  CONSOLE_HAS_METHOD (mswindows, iconify_frame); */
+  CONSOLE_HAS_METHOD (mswindows, raise_frame);
+  CONSOLE_HAS_METHOD (mswindows, lower_frame);
+  CONSOLE_HAS_METHOD (mswindows, make_frame_visible);
+  CONSOLE_HAS_METHOD (mswindows, make_frame_invisible);
+  CONSOLE_HAS_METHOD (mswindows, iconify_frame);
   CONSOLE_HAS_METHOD (mswindows, set_frame_size);
   CONSOLE_HAS_METHOD (mswindows, set_frame_position);
 /*  CONSOLE_HAS_METHOD (mswindows, frame_property); */
 /*  CONSOLE_HAS_METHOD (mswindows, internal_frame_property_p); */
 /*  CONSOLE_HAS_METHOD (mswindows, frame_properties); */
   CONSOLE_HAS_METHOD (mswindows, set_frame_properties);
-/*  CONSOLE_HAS_METHOD (mswindows, set_title_from_bufbyte); */
+  CONSOLE_HAS_METHOD (mswindows, set_title_from_bufbyte);
 /*  CONSOLE_HAS_METHOD (mswindows, set_icon_name_from_bufbyte); */
-/*  CONSOLE_HAS_METHOD (mswindows, frame_visible_p); */
+  CONSOLE_HAS_METHOD (mswindows, frame_visible_p);
 /*  CONSOLE_HAS_METHOD (mswindows, frame_totally_visible_p); */
-/*  CONSOLE_HAS_METHOD (mswindows, frame_iconified_p); */
+  CONSOLE_HAS_METHOD (mswindows, frame_iconified_p);
 /*  CONSOLE_HAS_METHOD (mswindows, set_frame_pointer); */
 /*  CONSOLE_HAS_METHOD (mswindows, set_frame_icon); */
 /*  CONSOLE_HAS_METHOD (mswindows, get_frame_parent); */

@@ -43,5 +43,23 @@
 (defun init-post-mswindows-win (console)
   "Initialize mswindows GUI at startup (post).  Don't call this."
   (unless mswindows-post-win-initted
+    ;; XXX Add zmacs region hooks here ?
+
+    ;; Old-style mswindows bindings. The new-style mswindows bindings
+    ;; (namely Ctrl-X, Ctrl-C and Ctrl-V) are already spoken for by XEmacs.
+    (define-key global-map '(shift delete)   'mswindows-cut-region)
+    ; (define-key global-map '(control delete) 'mswindows-delete-region)
+    (define-key global-map '(shift insert)   'mswindows-paste-region)
+    (define-key global-map '(control insert) 'mswindows-copy-region)
+
+    ;; Other mswindows style-compliant keys
+    (define-key global-map '(control z)	'undo)
+
+    ;; Other mswindows style-compliant keys
+    (define-key global-map '(control z)        'undo)
+
+    ;; Random stuff
+    (define-key global-map 'menu	'popup-mode-menu)
+
     (setq mswindows-post-win-initted t)))
 

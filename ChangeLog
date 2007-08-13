@@ -1,3 +1,45 @@
+1997-12-06  SL Baur <steve@altair.xemacs.org>
+
+	* XEmacs 20.4-beta8 is released.
+
+	* info/dir: update for further packaging.
+	* configure.in: remove `tree-x' from XEmacs build.
+
+1997-11-29  Jeff Miller <jmiller@smart.net>
+
+	* configure.in:  motif menubars need xlwmenu.o
+
+	* updated files in src/ to allow an XEmacs configured for
+	  motif menubars to at least compile.  Motif menubars are still
+	  very broken.
+
+1997-12-05  Aki Vehtari  <Aki.Vehtari@hut.fi>
+
+	* etc/refcard.tex: Updated for 20.3
+
+1997-12-02  P E Jareth Hein  <jareth@camelot-soft.com>
+
+	* lwlib/xlwscrollbar.c: fixed colormap/visual handling to work
+	properly with the information in the core.
+
+	* lwlib/xlwmenu.c: fixed colormap/visual handling to work properly with
+	the information in the core, and fixed a potental problem with
+	parentage.
+
+1997-12-02  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/skk/SKK.tut.E (Hint): Fix typos.
+
+1997-12-01  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (with_session): Properly display flag in configure
+	status report.
+
+1997-11-29  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.usage: Remove documentation of obsolete option
+	--with-gif.
+
 1997-11-27  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.4-beta7 is released.

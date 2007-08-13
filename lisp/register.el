@@ -218,7 +218,7 @@ Interactively, second arg is non-nil if prefix arg is supplied."
   (push-mark)
   (let ((val (get-register register)))
     (cond
-     ((consp val)
+     ((and (consp val) (fboundp 'insert-rectangle))
       (insert-rectangle val))
      ((stringp val)
       (insert val))
@@ -268,6 +268,8 @@ With prefix arg, delete as well.
 Called from program, takes four args: REGISTER, START, END and DELETE-FLAG.
 START and END are buffer positions giving two corners of rectangle."
   (interactive "cCopy rectangle to register: \nr\nP")
+  (unless (fboundp 'extract-rectangle)
+    (error "Rectangles are not available in this XEmacs"))
   (set-register register
 		(if delete-flag
 		    (delete-extract-rectangle start end)

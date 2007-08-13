@@ -36,6 +36,8 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Vdoc_file_name;
 
+Lisp_Object QSsubstitute;
+
 /* Read and return doc string from open file descriptor FD
    at position POSITION.  Does not close the file.  Returns
    string; or if error, returns a cons holding the error
@@ -874,10 +876,14 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 	case '{':
 	case '<':
 	  {
+	    Lisp_Object buffer = Fget_buffer_create (QSsubstitute);
+	    struct buffer *buf_ = XBUFFER (buffer);
+
+	    Fbuffer_disable_undo (buffer);
+	    Ferase_buffer (buffer);
+
 	    /* \{foo} is replaced with a summary of keymap (symbol-value foo).
 	       \<foo> just sets the keymap used for \[cmd].  */
-	    struct buffer *oldbuf;
-
 	    changed = 1;
 	    idx += 2;		/* skip \{ or \< */
 	    strp += 2;
@@ -904,10 +910,6 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 		  tem = get_keymap (tem, 0, 1);
 	      }
 
-	    /* Now switch to a temp buffer.  */
-	    oldbuf = current_buffer;
-	    set_buffer_internal (XBUFFER (Vprin1_to_string_buffer));
-
 	    if (NILP (tem))
 	      {
 		char boof[255], *b = boof;
@@ -918,17 +920,18 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 		b += strlen (b);
 		*b++ = '\n';
 		*b++ = 0;
-		buffer_insert_c_string (current_buffer, boof);
+		buffer_insert_c_string (buf_, boof);
 
 		if (start[-1] == '<') keymap = Qnil;
 	      }
 	    else if (start[-1] == '<')
 	      keymap = tem;
 	    else
-	      describe_map_tree (tem, 1, Qnil, Qnil, 0);
-	    tem = Fbuffer_substring (Qnil, Qnil, Fcurrent_buffer ());
-	    Ferase_buffer (Fcurrent_buffer ());
-	    set_buffer_internal (oldbuf);
+	      describe_map_tree (tem, 1, Qnil, Qnil, 0, buffer);
+
+	    tem = make_string_from_buffer (buf_, BUF_BEG (buf_),
+					   BUF_Z (buf_) - BUF_BEG (buf_));
+	    Ferase_buffer (buffer);
 	    goto subst_string;
 
 	  subst_string:
@@ -981,4 +984,7 @@ vars_of_doc (void)
 Name of file containing documentation strings of built-in symbols.
 */ );
   Vdoc_file_name = Qnil;
+
+  QSsubstitute = build_string (" *substitute*");
+  staticpro (&QSsubstitute);
 }

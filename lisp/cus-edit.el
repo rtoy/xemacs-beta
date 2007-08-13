@@ -183,10 +183,6 @@
   "Front-ends/assistants for, or emulators of, UNIX features."
   :group 'environment)
 
-(defgroup vms nil
-  "Support code for vms."
-  :group 'environment)
-
 (defgroup i18n nil
   "Internationalization and alternate character-set support."
   :group 'environment
@@ -334,7 +330,7 @@
   :group 'processes)
 
 (defgroup mule nil
-  "MULE Emacs internationalization."
+  "Mule XEmacs internationalization."
   :group 'i18n)
 
 (defgroup windows nil
@@ -351,7 +347,9 @@
 	  (eq (car-safe sexp) 'lambda)
 	  (stringp sexp)
 	  (numberp sexp)
-	  (characterp sexp))
+	  (characterp sexp)
+	  (vectorp sexp)
+	  (bit-vector-p sexp))
       sexp
     (list 'quote sexp)))
 
@@ -424,7 +422,9 @@ WIDGET is the widget to apply the filter entries of MENU on."
   :type 'boolean)
 
 (defcustom custom-unlispify-remove-prefixes t
-  "Non-nil means remove group prefixes from option names in buffers and menus."
+  "Non-nil means remove group prefixes from option names in buffers and menus.
+This only has an effect when `custom-unlispify-tag-names' or
+`custom-unlispify-menu-entries' is on."
   :group 'custom-menu
   :type 'boolean)
 
@@ -966,13 +966,22 @@ With prefix arg, include options which are not user-settable."
 ;;; Buffer.
 
 (defcustom custom-buffer-style 'links
-  "Control the presentation style for customization buffers.
+  "*Control the presentation style for customization buffers.
 The value should be a symbol, one of:
 
 brackets: groups nest within each other with big horizontal brackets.
 links: groups have links to subgroups."
   :type '(radio (const :tag "brackets: Groups nest within each others" brackets)
 		(const :tag "links: Group have links to subgroups" links))
+  :group 'custom-buffer)
+
+(defcustom custom-buffer-done-function 'kill-buffer
+  "*Function to be used to remove the buffer when the user is done with it.
+Choices include `kill-buffer' (the default) and `bury-buffer'.
+The function will be called with one argument, the buffer to remove."
+  :type '(radio (function-item kill-buffer)
+		(function-item bury-buffer)
+		(function :tag "Other" nil))
   :group 'custom-buffer)
 
 (defcustom custom-buffer-indent 3
@@ -1013,6 +1022,13 @@ This button will have a menu with all three reset operations."
   :group 'custom-buffer)
 
 (defconst custom-skip-messages 5)
+
+(defun Custom-buffer-done ()
+  "Remove current buffer.
+This works by calling the function specified by
+ `custom-buffer-done-function'."
+  (interactive)
+  (funcall custom-buffer-done-function (current-buffer)))
 
 (defun custom-buffer-create-internal (options &optional description)
   (message "Creating customization buffer...")
@@ -1077,9 +1093,9 @@ Reset all values in this buffer to their standard settings"
   (widget-create 'push-button
 		 :tag "Done"
 		 :tag-glyph '("done-up" "done-down")
-		 :help-echo "Bury the buffer"
+		 :help-echo "Remove the buffer"
 		 :action (lambda (widget &optional event)
-			   (bury-buffer)))
+			   (Custom-buffer-done)))
   (widget-insert "\n\n")
   (message "Creating customization items...")
   (setq custom-options
@@ -1240,7 +1256,8 @@ item in another window.\n\n"))
 (widget-put (get 'item 'widget-type) :custom-show t)
 (widget-put (get 'editable-field 'widget-type)
 	    :custom-show (lambda (widget value)
-			   (let ((pp (pp-to-string value)))
+			   ;; This used to call pp-to-string
+			   (let ((pp (widget-prettyprint-to-string value)))
 			     (cond ((string-match "\n" pp)
 				    nil)
 				   ((> (length pp) 40)
@@ -1723,6 +1740,12 @@ If INITIAL-STRING is non-nil, use that rather than \"Parent groups:\"."
   "Face used for pushable variable tags."
   :group 'custom-faces)
 
+(defcustom custom-variable-default-form 'edit
+  "Default form of displaying variable values."
+  :type '(choice (const edit)
+		 (const lisp))
+  :group 'custom-buffer)
+
 (define-widget 'custom-variable 'custom
   "Customize variable."
   :format "%v"
@@ -1731,7 +1754,7 @@ If INITIAL-STRING is non-nil, use that rather than \"Parent groups:\"."
   :custom-category 'option
   :custom-state nil
   :custom-menu 'custom-variable-menu-create
-  :custom-form 'edit
+  :custom-form nil ; defaults to value of `custom-variable-default-form'
   :value-create 'custom-variable-value-create
   :action 'custom-variable-action
   :custom-set 'custom-variable-set
@@ -1759,6 +1782,8 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
 (defun custom-variable-value-create (widget)
   "Here is where you edit the variables value."
   (custom-load-widget widget)
+  (unless (widget-get widget :custom-form)
+    (widget-put widget :custom-form custom-variable-default-form))
   (let* ((buttons (widget-get widget :buttons))
 	 (children (widget-get widget :children))
 	 (form (widget-get widget :custom-form))
@@ -2160,6 +2185,13 @@ Match frames with dark backgrounds")
   "Face used for face tags."
   :group 'custom-faces)
 
+(defcustom custom-face-default-form 'selected
+  "Default form of displaying face definition."
+  :type '(choice (const all)
+		 (const selected)
+		 (const lisp))
+  :group 'custom-buffer)
+
 (define-widget 'custom-face 'custom
   "Customize face."
   :sample-face 'custom-face-tag-face
@@ -2169,7 +2201,7 @@ Match frames with dark backgrounds")
   :value-create 'custom-face-value-create
   :action 'custom-face-action
   :custom-category 'face
-  :custom-form 'selected
+  :custom-form nil ; defaults to value of `custom-face-default-form'
   :custom-set 'custom-face-set
   :custom-save 'custom-face-save
   :custom-reset-current 'custom-redraw
@@ -2272,6 +2304,8 @@ Match frames with dark backgrounds")
 	   (unless (eq state 'hidden)
 	     (message "Creating face editor...")
 	     (custom-load-widget widget)
+	     (unless (widget-get widget :custom-form)
+		 (widget-put widget :custom-form custom-face-default-form))
 	     (let* ((symbol (widget-value widget))
 		    (spec (or (get symbol 'saved-face)
 			      (get symbol 'face-defface-spec)
@@ -2501,6 +2535,41 @@ Optional EVENT is the location for the menu."
 		 (list other))))
     (widget-put widget :args args)
     widget))
+
+;;; The `plist' Widget.
+
+(define-widget 'plist 'list
+  "A property list."
+  :match (lambda (widget value)
+	   (valid-plist-p value))
+  :convert-widget 'custom-plist-convert-widget
+  :tag "Property List")
+
+;; #### Should handle options better.
+(defun custom-plist-convert-widget (widget)
+  (let* ((options (widget-get widget :options))
+	 (other `(editable-list :inline t
+				(group :inline t
+				       (symbol :format "%t: %v "
+					       :size 10
+					       :tag "Property")
+				       (sexp :tag "Value"))))
+	 (args
+	  (if options
+	      `((checklist :inline t
+			   ,@(mapcar 'custom-plist-process-option options))
+		,other)
+	    (list other))))
+    (widget-put widget :args args)
+    widget))
+
+(defun custom-plist-process-option (entry)
+  `(group :inline t
+	  (const :tag "Property"
+		 :format "%t: %v "
+		 :size 10
+		 ,entry)
+	  (sexp :tag "Value")))
 
 ;;; The `custom-group-link' Widget.
 
@@ -3143,23 +3212,11 @@ The format is suitable for use with `easy-menu-define'."
   (set-keymap-parents custom-mode-map widget-keymap)
   (suppress-keymap custom-mode-map)
   (define-key custom-mode-map " " 'scroll-up)
-  (define-key custom-mode-map "\177" 'scroll-down)
-  (define-key custom-mode-map "q" 'bury-buffer)
+  (define-key custom-mode-map [delete] 'scroll-down)
+  (define-key custom-mode-map "q" 'Custom-buffer-done)
   (define-key custom-mode-map "u" 'Custom-goto-parent)
   (define-key custom-mode-map "n" 'widget-forward)
-  (define-key custom-mode-map "p" 'widget-backward)
-  ;; (define-key custom-mode-map [mouse-1] 'Custom-move-and-invoke)
-  )
-
-(defun Custom-move-and-invoke (event)
-  "Move to where you click, and if it is an active field, invoke it."
-  (interactive "e")
-  (mouse-set-point event)
-  (if (widget-event-point event)
-      (let* ((pos (widget-event-point event))
-	     (button (get-char-property pos 'button)))
-	(if button
-	    (widget-button-click event)))))
+  (define-key custom-mode-map "p" 'widget-backward))
 
 (easy-menu-define Custom-mode-menu
     custom-mode-map
@@ -3204,7 +3261,6 @@ Move to previous button or editable field. \\[widget-backward]
 \\<widget-field-keymap>\
 Complete content of editable text field.   \\[widget-complete]
 \\<custom-mode-map>\
-Invoke button under the mouse pointer.     \\[Custom-move-and-invoke]
 Invoke button under point.		   \\[widget-button-press]
 Set all modifications.			   \\[Custom-set]
 Make all modifications default.		   \\[Custom-save]
