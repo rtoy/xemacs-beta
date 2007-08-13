@@ -45,7 +45,12 @@ casify_object (enum case_action flag, Lisp_Object obj, Lisp_Object buffer)
 	  CHECK_CHAR_COERCE_INT (obj);
 	  c = XCHAR (obj);
 	  if (IN_TRT_TABLE_DOMAIN (c))
-	    obj = make_char (inword ? DOWNCASE (buf, c) : UPCASE1 (buf, c));
+	    {
+	      if (inword)
+		obj = make_char (DOWNCASE (buf, c));
+	      else if (!UPPERCASEP (buf, c))
+		obj = make_char (UPCASE1 (buf, c));
+	    }
 	  return obj;
 	}
       if (STRINGP (obj))

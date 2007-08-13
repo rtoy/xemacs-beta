@@ -60,6 +60,8 @@
     (bw       "Bob Weiner"        "weiner@altrasoft.com")
     (cthomp   "Chuck Thompson"    "cthomp@xemacs.org")
     (dmoore   "David Moore"       "dmoore@ucsd.edu")
+    (dkindred "Darrell Kindred"	  "dkindred@cmu.edu")
+    (dv       "Didier Verna"      "verna@inf.enst.fr")
     (hniksic  "Hrvoje Niksic"     "hniksic@srce.hr")
     (jareth   "Jareth Hein"       "jhod@camelot-soft.com")
     (jens     "Jens Lautenbacher" "jens@lemcbed.lem.uni-karlsruhe.de")
@@ -89,6 +91,7 @@
     (altrasoft . "http://www.altrasoft.com/")
     (baw       . "http://www.python.org/~bwarsaw/")
     (cc-mode   . "http://www.python.org/ftp/emacs/")
+    (dkindred  . "http://www.cs.cmu.edu/People/dkindred/me.html")
     (dmoore    . "http://oj.egbt.org/dmoore/")
     (jwz       . "http://www.netscape.com/people/jwz/")
     (kazz      . "http://www.imasy.or.jp/~kazz/")
@@ -834,6 +837,30 @@ He loves to play soccer, yes football!
 See also:")
      (about-url-link 'kazz "Visit Kazz's home page")
      (widget-insert ".\n"))
+    (dkindred
+     (widget-insert "\
+Darrell tends to come out of the woodwork a couple of weeks 
+before a new release with a flurry of fixes for bugs that 
+annoy him.  He hopes he's spared you from a core dump or two.
+
+Darrell is currently a doctoral student in computer science at
+Carnegie Mellon University, but he's trying hard to kick that
+habit.
+
+See ")
+     (about-url-link 'dkindred "Visit Darrell's WWW page")
+     (widget-insert ".\n"))
+    (dv
+     (widget-insert "\
+I'm currently working (Ph.D.) on the cognitive aspects of
+Human-Machine Interaction in Virtual Environments, and especialy on
+the possibility of adding (artificial) intelligence between the system 
+and the operator, in order to detect the intentions of the latter.
+
+Otherwise, I'm, say, 35.82% professional Jazz guitar player,
+which means that's not the way I earn my crust, but things may very
+well reverse in the future ...\n"))
+
 ))
 
 ;; Setup the buffer for a maintainer.
@@ -986,17 +1013,29 @@ hair various colours.\n")
     (about-show-linked-info 'kazz "\
 IENAGA Kazuyuki is the XEmacs technical lead on BSD, particularly
 FreeBSD.\n")
+    (about-show-linked-info 'dkindred "\
+Darrell tends to come out of the woodwork a couple of weeks 
+before a new release with a flurry of fixes for bugs that 
+annoy him.  He hopes he's spared you from a core dump or two.
+
+Darrell is currently a doctoral student in computer science at
+Carnegie Mellon University, but he's trying hard to kick that
+habit.\n")
+    (about-show-linked-info 'dv "\
+I'm currently working (Ph.D.) on the cognitive aspects of
+Human-Machine Interaction in Virtual Environments, and especialy on
+the possibility of adding (artificial) intelligence between the system 
+and the operator, in order to detect the intentions of the latter.
+
+Otherwise, I'm, say, 35.82% professional Jazz guitar player,
+which means that's not the way I earn my crust, but things may very
+well reverse in the future ...\n")
     (flet ((print-short (name addr &optional shortinfo)
 	     (concat (about-with-face name 'italic)
 		     (about-tabs name)
 		     "<" addr ">\n"
 		     (if shortinfo (concat shortinfo "\n") ""))))
       (widget-insert
-       (print-short "Darell Kindred" "Darrell.Kindred@cmu.edu" "\
-Unofficial maintainer of the xemacs-beta list of extant bugs and
-contributor of an extraordinary number of important bug fixes, many of
-them in areas that neither Chuck nor Ben were particularly
-enthusiastic about investigating.\n")
        (print-short "Eduardo Pelegri-Llopart" "pelegri@eng.sun.com" "\
 Author of EOS, a package included in the standard XEmacs distribution
 that integrates XEmacs with the SPARCworks development environment
@@ -1026,15 +1065,6 @@ implementation of `duplicable' properties.\n")
        (print-short "Hans Muller" "hmuller@eng.sun.com" "\
 Author of the code used to connect XEmacs with ToolTalk, and of an
 early client of the external Emacs widget.\n")
-       (print-short "Didier Verna" "verna@inf.enst.fr" "\
-I'm currently working (Ph.D.) on the cognitive aspects of
-Human-Machine Interaction in Virtual Environments, and especialy on
-the possibility of adding (artificial) intelligence between the system 
-and the operator, in order to detect the intentions of the latter.
-
-Otherwise, I'm, say, 35.82% professional Jazz guitar player,
-which means that's not the way I earn my crust, but things may very
-well reverse in the future ...\n")
        (print-short "David hobley" "david.hobley@usa.net" "\
 I used to do real work, but now I am a Project Manager for one of the
 Telco's in Australia. In my spare time I like to get back to basics and

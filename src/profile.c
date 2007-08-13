@@ -264,7 +264,7 @@ mark_profiling_info (void (*markfun) (Lisp_Object))
     }
 }
 
-DEFUN ("clear-profiling-info", Fclear_profiling_info, 0, 0, 0, /*
+DEFUN ("clear-profiling-info", Fclear_profiling_info, 0, 0, "", /*
 Clear out the recorded profiling info.
 */
        ())

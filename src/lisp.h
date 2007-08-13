@@ -72,10 +72,10 @@ Boston, MA 02111-1307, USA.  */
    as 'macros.h' under Solaris.) */
 
 #ifndef min
-#define min(a,b) ((a) <= (b) ? (a) : (b))
+#define min(a,b) (((a) <= (b)) ? (a) : (b))
 #endif
 #ifndef max
-#define max(a,b) ((a) > (b) ? (a) : (b))
+#define max(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
 /* Emacs needs to use its own definitions of certain system calls on

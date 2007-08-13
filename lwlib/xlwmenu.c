@@ -44,6 +44,10 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef NEED_MOTIF
 #include <Xm/Xm.h>
+#if XmVersion < 1002 /* 1.1 or ancient */
+#undef XmFONTLIST_DEFAULT_TAG
+#define XmFONTLIST_DEFAULT_TAG XmSTRING_DEFAULT_CHARSET
+#endif /* XmVersion < 1.2 */
 #endif
 #include "xlwmenuP.h"
 
@@ -2285,11 +2289,11 @@ display_menu (XlwMenuWidget mw, int level, Boolean just_compute_p,
 	    highlighted_pos->x = ws->width;
 	}
 
-      if (hit && !*hit_return && (val->type != SEPARATOR_TYPE))
+      if (hit && !*hit_return)
 	{
-	  if (horizontal_p && hit->x > start.x && hit->x < where.x)
+	  if (horizontal_p && hit->x > start.x && hit->x <= where.x)
 	    *hit_return = val;
-	  else if (!horizontal_p && hit->y > start.y && hit->y < where.y)
+	  else if (!horizontal_p && hit->y > start.y && hit->y <= where.y)
 	    *hit_return = val;
 	}
 

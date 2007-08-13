@@ -77,7 +77,6 @@
 
 (require 'cl)
 (require 'widget)
-(require 'cus-edit)
 (require 'cus-face)
 
 ;; Don't change this, unless you plan to change the code in

@@ -2273,4 +2273,4 @@ macro.  Its value is a string or vector, or @code{nil}.
 
 @c Broke paragraph to prevent overfull hbox. --rjc 15mar92
   The commands are described in the user's manual (@pxref{Keyboard
-Macros,,, emacs, The XEmacs Reference Manual}).
+Macros,,, xemacs, The XEmacs Reference Manual}).

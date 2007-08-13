@@ -1,3 +1,33 @@
+1997-10-02  Colin Rafferty  <craffert@ml.com>
+
+	* prim/simple.el (set-fill-column): Used format to create the
+		  string for `display-message'.
+
+1997-10-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-face.el (custom-set-faces): Make the face, if
+	necessary.
+
+1997-10-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-face.el (custom-declare-face): Use `make-face'
+ 	instead of `make-empty-face'.
+	(custom-declare-face): Don't invoke init-face-from-resources
+ 	explicitly.
+
+	* prim/profile.el (pretty-print-profiling-info): When interactive, 
+	use a separate buffer instead of current-buffer.
+	(pretty-print-profiling-info): Prettified output.
+
+1997-10-01  SL Baur  <steve@altair.xemacs.org>
+
+	* custom/cus-dep.el (cus-face): Remove unneeded dependency on
+	cus-edit.
+
+1997-09-30  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/finder.el (finder-known-keywords): Fix typo.
+
 1997-09-30  SL Baur  <steve@altair.xemacs.org>
 
 	* prim/dumped-lisp.el (preloaded-file-list): Load

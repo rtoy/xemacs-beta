@@ -241,9 +241,10 @@ Type \\[describe-mode] in that buffer for a list of commands." t nil)
 (autoload 'pretty-print-profiling-info "profile" "\
 Print profiling info INFO to STREAM in a pretty format.
 If INFO is omitted, the current profiling info is retrieved using
-`get-profiling-info'.
-If STREAM is omitted, either current buffer or standard output are used,
- depending on whether the function was called interactively or not." t nil)
+ `get-profiling-info'.
+If STREAM is omitted, either a *Profiling Results* buffer or standard
+ output are used, depending on whether the function was called
+ interactively or not." t nil)
 
 (autoload 'profile "profile" "\
 Turn on profiling, execute FORMS and restore profiling state.

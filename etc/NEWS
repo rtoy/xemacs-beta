@@ -111,12 +111,13 @@ the form of easy-to-install add-ons.
 
 ** Startup file additions.
 
-By default XEmacs now loads the user file ~/.xemacs if it exists.  If
-there is no such file, it reads ~/.emacs as usual.  If both .xemacs
-and .emacs exist, XEmacs will only load .xemacs.
+By default XEmacs now loads the user file "~/.xemacs/init.el" if it
+exists.  If there is no such file, it reads "~/.emacs" as usual.  If
+both "~/.xemacs/init.el" and "~/.emacs" exist, XEmacs will only load
+"~/.xemacs/init.el".
 
-Customizable options are now saved to ~/.xemacs-custom file, which is
-normally loaded after .emacs.
+Customizable options are now saved to "~/.xemacs/options.el" file,
+which is normally loaded after "~/.xemacs/init.el".
 
 ** Quail input method is now available.
 

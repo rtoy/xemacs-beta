@@ -1,3 +1,41 @@
+1997-08-13  Yves BLUSSEAU  <hk444@cleveland.freenet.edu>
+
+	* efs/efs.el (efs-set-file-modes): Fix a bug that cause an error
+	when using the efs-set-file-modes function on a remote station with
+	a FTP daemon that don't support the QUOTE function.
+
+1997-10-02  Colin Rafferty  <craffert@ml.com>
+
+	* prim/frame.el (default-drag-and-drop-functions): Fixed a typo
+		  that was calling `data' rather than looking at it.
+
+1997-10-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* profile.c (Fclear_profiling_info): Made interactive.
+
+1997-10-02  SL Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c (USE_TEMP_FILES_FOR_PNG_IMAGES): Move outside of
+	HAVE_JPEG ifdef.
+
+1997-10-01  SL Baur  <steve@altair.xemacs.org>
+
+	* lisp.h (min): Fully parenthize.
+	(max): Ditto.
+
+	* Makefile.in.in (widget.o): Insert dependencies.
+	- Insert HAVE_OFFIX_DND dependencies.
+
+	* casefiddle.c (casify_object): Back out bogus undocumented patch
+	from 20.3-beta18.
+
+1997-09-30  SL Baur  <steve@altair.xemacs.org>
+
+	* events.c (Fevent_type): Add OffiX guard.
+	(command_event_p): Ditto.
+	(mark_event): Ditto.
+	(print_event): Ditto.
+
 1997-09-30  SL Baur  <steve@altair.xemacs.org>
 
 	* mule-canna.c (Fcanna_set_bunsetsu): Return a value.

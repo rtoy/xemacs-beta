@@ -1,3 +1,13 @@
+1997-10-01  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* lispref/commands.texi (Keyboard Macros): fixed typo.  Changed
+	reference to (emacs) into a reference to (xemacs).
+
+1997-10-01  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* lispref/keymaps.texi (Keymaps): untabified and reformatted menu
+	to prevent line wrap.
+
 1997-09-27  SL Baur  <steve@altair.xemacs.org>
 
 	* gnats/flowchart.eps: New file.

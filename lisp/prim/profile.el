@@ -1,6 +1,6 @@
 ;;; profile.el --- basic profiling commands for XEmacs
 
-;; Copyright (C) 1996 Ben Wing.
+;; Copyright (C) 1996 Ben Wing, (C) 1997 Free Software Foundation.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal
@@ -26,8 +26,36 @@
 
 ;;; Commentary:
 
-;; `profile' macro and `profile-key-sequence' added in June 1997 by
-;; hniksic.
+;; In addition to Lisp-based `elp', XEmacs contains a set of
+;; primitives able to profile evaluation of Lisp functions, created by
+;; the illustrious Ben Wing.  The functions in this file can be used
+;; to gain easy access to the internal profiling functions.
+
+;; The profiler works by catching "ticks" (actually SIGPROF signals),
+;; and looking at the current Lisp function, at the time of each tick.
+;; The output of this process is an alist with keys being the
+;; functions, and values being the number of ticks per function.  From
+;; this, `pretty-print-profiling-info' easily extracts the total
+;; number of ticks, and the percentage CPU time of each function.
+
+;; Unless stated otherwise, profiling info is being accumulated (the
+;; current info is returned by `get-profiling-info').  Use
+;; `clear-profiling-info' to break the accumulation chain.
+
+;; Caveats (ELP users should read this):
+;; 1) The time reported is function time, rather than
+;;    function+descendants time;
+;; 2) The Time/ms is CPU time (user+kernel), not the real time;
+;; 3) Only the actuall funcalls are profiled.  If a subr Ffoo calls
+;;    Fbar using Fbar (), only Ffoo will appear in the profile.
+
+;; A typical profiling session consists of using `clear-profiling-info'
+;; followed by `profile' or `profile-key-sequence', followed by
+;; `pretty-print-profiling-info'.
+
+;; For instance, to see where Gnus spends time when generating Summary
+;; buffer, go to the group buffer, and press `M-x clear-profiling-info'
+;; followed by `M-x profile-key-sequence RET SPC'.
 
 
 ;;; Code:
@@ -36,28 +64,51 @@
 (defun pretty-print-profiling-info (&optional info stream)
   "Print profiling info INFO to STREAM in a pretty format.
 If INFO is omitted, the current profiling info is retrieved using
-`get-profiling-info'.
-If STREAM is omitted, either current buffer or standard output are used,
- depending on whether the function was called interactively or not."
+ `get-profiling-info'.
+If STREAM is omitted, either a *Profiling Results* buffer or standard
+ output are used, depending on whether the function was called
+ interactively or not."
   (interactive)
-  (if info
-      (setq info (copy-alist info))
-    (setq info (get-profiling-info)))
-  (let ((standard-output (or stream (if (interactive-p)
-					(current-buffer)
-				      standard-output))))
+  (setq info (if info
+		 (copy-alist info)
+	       (get-profiling-info)))
+  (when (and (not stream)
+	     (interactive-p))
+    (pop-to-buffer (get-buffer-create "*Profiling Results*"))
+    (erase-buffer))
+  (let* ((standard-output (or stream (if (interactive-p)
+					 (current-buffer)
+				       standard-output)))
+	 (maxfunlen (max (length "Function Name")
+			 (apply 'max (mapcar (lambda (sym)
+					       (length (symbol-name
+							(car sym))))
+					     info))))
+	 (formatstr (format "%%-%ds" maxfunlen)))
     (setq info (nreverse (sort info #'cdr-less-than-cdr)))
-    (princ "Function                                               Count        %\n")
-    (princ "---------------------------------------------------------------------\n")
+    (princ (format (concat formatstr "    Ticks    %%/Total\n")
+		   "Function Name"))
+    (princ (make-string maxfunlen ?=))
+    (princ "    =====    =======\n")
     (let ((sum 0.0))
       (dolist (info2 info)
 	(incf sum (cdr info2)))
       (while info
 	(let ((f (caar info)))
-	  (princ (format "%-50s%10d   %6.3f\n" f (cdar info)
-			 (* 100 (/ (cdar info) sum)))))
-	(pop info)))))
+	  (princ (format (concat formatstr "    %-5d    %-6.3f\n")
+			 f (cdar info) (* 100 (/ (cdar info) sum)))))
+	(pop info))
+      (princ (make-string maxfunlen ?-))
+      (princ "--------------------\n")
+      (princ (format (concat formatstr "    %-5d    %-6.2f\n")
+		     "Total" sum 100.0))
+      (princ (format "\n\nOne tick = %g ms\n"
+		     (/ default-profiling-interval 1000.0)))))
+  (when (and (not stream)
+	     (interactive-p))
+    (goto-char (point-min))))
 
+;; Is it really necessary for this to be a macro?
 ;;;###autoload
 (defmacro profile (&rest forms)
   "Turn on profiling, execute FORMS and restore profiling state.

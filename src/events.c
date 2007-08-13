@@ -143,7 +143,9 @@ mark_event (Lisp_Object obj, void (*markobj) (Lisp_Object))
     case magic_event:
     case empty_event:
     case dead_event:
+#ifdef HAVE_OFFIX_DND
     case dnd_drop_event:
+#endif
       break;
     default:
       abort ();
@@ -217,9 +219,11 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case dead_event:
 	write_c_string ("#<DEALLOCATED-EVENT", printcharfun);
 	break;
+#ifdef HAVE_OFFIX_DND
     case dnd_drop_event:
       print_event_1 ("#<dnd-drop-event ", obj, printcharfun);
       break;
+#endif
     default:
 	write_c_string ("#<UNKNOWN-EVENT-TYPE", printcharfun);
 	break;
@@ -781,7 +785,9 @@ command_event_p (Lisp_Object event)
     case button_press_event:
     case button_release_event:
     case misc_user_event:
+#ifdef HAVE_OFFIX_DND
     case dnd_drop_event:
+#endif
       return 1;
     default:
       return 0;
@@ -1261,7 +1267,9 @@ empty		The event has been allocated but not assigned.
     case process_event:		return Qprocess;
     case timeout_event:		return Qtimeout;
     case eval_event:		return Qeval;
+#ifdef HAVE_OFFIX_DND
     case dnd_drop_event:	return Qdnd_drop;
+#endif
     case magic_event:
     case magic_eval_event:
       return Qmagic;

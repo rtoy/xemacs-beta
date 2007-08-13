@@ -38,14 +38,13 @@
 	    (frames (relevant-custom-frames))
 	    frame)
 	;; Create global face.
-	(make-empty-face face)
+	(make-face face)
 	(face-display-set face value)
 	;; Create frame local faces
 	(while frames
 	  (setq frame (car frames)
 		frames (cdr frames))
-	  (face-display-set face value frame))
-	(init-face-from-resources face)))
+	  (face-display-set face value frame))))
     (when (and doc (null (face-doc-string face)))
       (set-face-doc-string face doc))
     (custom-handle-all-keywords face args 'custom-face)
@@ -69,15 +68,15 @@ Control whether the text should be underlined.")
     (:foreground (color :tag "Foreground"
 			:value ""
 			:help-echo "Set foreground color.")
-		 set-face-foreground custom-face-foreground)
+		 set-face-foreground face-foreground-name)
     (:background (color :tag "Background"
 			:value ""
 			:help-echo "Set background color.")
-		 set-face-background custom-face-background)
-;;    (:reverse-video (boolean :tag "Reverse"
+		 set-face-background face-background-name)
+;;    (:inverse-video (boolean :tag "Inverse"
 ;;			     :help-echo "\
 ;;Control whether the text should be inverted.")
-;;		    custom-reverse-face custom-face-reverse)
+;;		    custom-inverse-face custom-face-inverse)
     (:stipple (editable-field :format "Stipple: %v"
 			      :help-echo "Name of background bitmap file.")
 	      set-face-background-pixmap custom-face-stipple)
@@ -256,6 +255,8 @@ See `defface' for the format of SPEC."
 	    (when now
 	      (put face 'force-face t))
 	    (when (or now (find-face face))
+	      (unless (find-face face)
+		(make-face face))
 	      (face-spec-set face spec))
 	    (setq args (cdr args)))
 	;; Old format, a plist of FACE SPEC pairs.

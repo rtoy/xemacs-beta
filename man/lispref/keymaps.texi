@@ -18,22 +18,22 @@ used to look up the next input event; this continues until a command
 is found.  The whole process is called @dfn{key lookup}.
 
 @menu
-* Keymap Terminology::        	Definitions of terms pertaining to keymaps.
-* Format of Keymaps::		What a keymap looks like as a Lisp object.
-* Creating Keymaps:: 		Functions to create and copy keymaps.
-* Inheritance and Keymaps::	How one keymap can inherit the bindings
-				   of another keymap.
-* Key Sequences::               How to specify key sequences.
-* Prefix Keys::                 Defining a key with a keymap as its definition.
-* Active Keymaps::	        Each buffer has a local keymap
-                                   to override the standard (global) bindings.
-				   A minor mode can also override them.
-* Key Lookup::                  How extracting elements from keymaps works.
-* Functions for Key Lookup::    How to request key lookup.
-* Changing Key Bindings::       Redefining a key in a keymap.
-* Key Binding Commands::        Interactive interfaces for redefining keys.
-* Scanning Keymaps::            Looking through all keymaps, for printing help.
-* Other Keymap Functions::      Miscellaneous keymap functions.
+* Keymap Terminology::       Definitions of terms pertaining to keymaps.
+* Format of Keymaps::        What a keymap looks like as a Lisp object.
+* Creating Keymaps::         Functions to create and copy keymaps.
+* Inheritance and Keymaps::  How one keymap can inherit the bindings
+                                of another keymap.
+* Key Sequences::            How to specify key sequences.
+* Prefix Keys::              Defining a key with a keymap as its definition.
+* Active Keymaps::           Each buffer has a local keymap
+                                to override the standard (global) bindings.
+                                A minor mode can also override them.
+* Key Lookup::               How extracting elements from keymaps works.
+* Functions for Key Lookup:: How to request key lookup.
+* Changing Key Bindings::    Redefining a key in a keymap.
+* Key Binding Commands::     Interactive interfaces for redefining keys.
+* Scanning Keymaps::         Looking through all keymaps, for printing help.
+* Other Keymap Functions::   Miscellaneous keymap functions.
 @end menu
 
 @node Keymap Terminology

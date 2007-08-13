@@ -1060,6 +1060,8 @@ xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 }
 
 
+#define USE_TEMP_FILES_FOR_PNG_IMAGES 1
+
 #ifdef HAVE_JPEG
 
 /**********************************************************************
@@ -1079,8 +1081,6 @@ extern "C" {
 /* Late-breaking update, we're going to give it a try, I think it's */
 /* fixed now -sb */
 /*#define USE_TEMP_FILES_FOR_JPEG_IMAGES 1*/
-#define USE_TEMP_FILES_FOR_PNG_IMAGES 1
-
 static void
 jpeg_validate (Lisp_Object instantiator)
 {

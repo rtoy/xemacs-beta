@@ -902,7 +902,7 @@
 ;;;    efs|Andy Norman and Sandy Rutherford
 ;;;    |ange@hplb.hpl.hp.com and sandy@ibm550.sissa.it
 ;;;    |transparent FTP Support for GNU Emacs
-;;;    |$Date: 1997/04/27 19:30:06 $|$efs release: 1.15 beta $|
+;;;    |$Date: 1997/10/03 00:11:00 $|$efs release: 1.15 beta $|
 
 ;;; Host and listing type notation:
 ;;;
@@ -8172,7 +8172,7 @@ of the directory in efs's internal cache."
 	      (if result
 		  (let ((exit-code
 			 (efs-shell-call-process
-			  (concat "chmod " mode " " (file-name-nondirectory file))
+			  (concat "chmod " omode " " (file-name-nondirectory file))
 			  (file-name-directory file))))
 		    (if (not (equal 0 exit-code))
 			(progn

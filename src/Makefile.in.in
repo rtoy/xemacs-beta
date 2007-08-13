@@ -890,6 +890,14 @@ window.o: mule-charset.h
 xselect.o: mule-charset.h
 #endif /* MULE */
 
+#ifdef HAVE_OFFIX_DND
+device-x.o: offix.h
+event-Xt.o: offix.h
+frame-x.o: offix.h
+offix.o: offix-cursors.h
+offix.o: offix.h
+#endif
+
 EmacsFrame.o: $(LWLIB_SRCDIR)/lwlib.h
 EmacsFrame.o: EmacsFrame.h
 EmacsFrame.o: EmacsFrameP.h
@@ -2460,6 +2468,10 @@ vm-limit.o: blocktype.h
 vm-limit.o: config.h
 vm-limit.o: dynarr.h
 vm-limit.o: mem-limits.h
+widget.o: config.h
+widget.o: lisp.h
+widget.o: buffer.h
+widget.o: insdel.h
 window.o: blocktype.h
 window.o: buffer.h
 window.o: bufslots.h

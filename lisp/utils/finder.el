@@ -51,7 +51,9 @@
 ;;; Code:
 
 (require 'lisp-mnt)
-(require 'finder-inf)
+(condition-case nil
+    (require 'finder-inf)
+  (t nil))
 ;; XEmacs addition
 (require 'picture)
 (require 'mode-motion)
@@ -98,7 +100,7 @@ directories to view or extract information from package source code.")
     (mail	. "modes for electronic-mail handling")
     (matching	. "various sorts of searching and matching")
     (mouse	. "mouse support")
-    ,@(when (featurep 'mule)
+    ,(when (featurep 'mule)
        (cons 'mule "multi-language extensions"))
     (news	. "support for netnews reading and posting")
     (oop	. "support for object-oriented programming")

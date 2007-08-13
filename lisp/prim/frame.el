@@ -824,7 +824,7 @@ A file is popped up in a new buffer, some data without
 is inserted at point."
   ;; changed this back -- hope it works for CDE ;-) Oliver Graf <ograf@fga.de>
   ;; the OffiX drop stuff has moved to mouse.el (mouse-offix-drop)
-  (if (data)
+  (if data
       (insert data)
     (let ((x pop-up-windows))
       (setq pop-up-windows nil)

@@ -2593,7 +2593,7 @@ The variable `fill-column' has a separate value for each buffer."
 	;; Disallow missing argument; it's probably a typo for C-x C-f.
 	(t
 	 (error "set-fill-column requires an explicit argument")))
-  (display-message 'command "fill-column set to %d" fill-column))
+  (display-message 'command (format "fill-column set to %d" fill-column)))
 
 (defcustom comment-multi-line t ; XEmacs - this works well with adaptive fill
   "*Non-nil means \\[indent-new-comment-line] should continue same comment
