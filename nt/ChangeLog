@@ -1,3 +1,14 @@
+1999-01-05  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.62 is released
+
+1998-12-11  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* xemacs.mak (DOC_SRC2): CLASH_DETECTION is not supported under
+ 	native Windows NT.  Therefore src\filelock.c is not to be
+ 	compiled.
+	(TEMACS_OBJS): Consequently, don't link in $(OUTDIR)\filelock.obj.
+
 1999-01-04  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.61 is released

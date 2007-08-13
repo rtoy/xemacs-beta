@@ -435,9 +435,9 @@ OUTDIR=obj
 !endif
 # Creation of Installation.el
 !if [type Installation] ||\
-[echo (setq Installation-string ^">Installation.el] ||\
+[echo (setq Installation-string ">Installation.el] ||\
 [type Installation >>Installation.el] ||\
-[echo ^")>>Installation.el]
+[echo ")>>Installation.el]
 !endif
 
 

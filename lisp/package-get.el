@@ -198,7 +198,7 @@ order until the package is found.  As a special case, `site-name' can be
     ("uniroma2.it" "ftp.uniroma2.it" "unix/misc/dist/XEMACS/packages")
     ("icm.edu.pl" "ftp.icm.edu.pl" "pub/unix/editors/xemacs/packages")
     ("sunet.se" "ftp.sunet.se" "pub/gnu/xemacs/packages")
-    ("doc.ic.ac.uk" "ftp.doc.ic.ac.uk" "packages/xemacs/packages")
+    ("doc.ic.ac.uk" "sunsite.doc.ic.ac.uk" "packages/xemacs/packages")
     ("srcc.msu.su" "ftp1.srcc.msu.su" "mirror/ftp.xemacs.org/packages")
 
     ;; Asia
@@ -261,8 +261,7 @@ When nil, updates which are not PGP signed are allowed without confirmation."
   "Build the `Add Download Site' menu."
   (mapcar (lambda (site)
             (vector (car site)
-                    `(lambda ()
-		       (interactive) (package-ui-add-site (quote ,(cdr site))))
+               `(package-ui-add-site (quote ,(cdr site)))
 		    :style 'toggle :selected
 		    `(member (quote ,(cdr site)) package-get-remote)))
           package-get-download-sites))
@@ -324,12 +323,10 @@ If NO-REMOTE is non-nil never search remote locations."
           (and (not nil-if-not-found)
                file)))))
 
-(defun package-get-locate-index-file (force-current)
-  "Locate the package-get index file.
-If FORCE-CURRENT is non-nil, require a current copy to be found."
-  (when (and force-current (not package-get-remote))
-    (error "No remote package sites specified in `package-get-remote'"))
-  (or (package-get-locate-file package-get-base-filename t (not force-current))
+(defun package-get-locate-index-file (no-remote)
+  "Locate the package-get index file.  Do not return remote paths if NO-REMOTE
+is non-nil."
+  (or (package-get-locate-file package-get-base-filename t no-remote)
       (locate-data-file package-get-base-filename)
       package-get-base-filename))
 
@@ -338,7 +335,7 @@ If FORCE-CURRENT is non-nil, require a current copy to be found."
 (defun package-get-maybe-save-index (filename)
   "Offer to save the current buffer as the local package index file,
 if different."
-  (let ((location (package-get-locate-index-file nil)))
+  (let ((location (package-get-locate-index-file t)))
     (unless (and filename (equal filename location))
       (unless (equal (md5 (current-buffer))
 		     (with-temp-buffer
@@ -356,7 +353,7 @@ if different."
   "Update the package-get database file with entries from DB-FILE.
 Unless FORCE-CURRENT is non-nil never try to update the database."
   (interactive
-   (let ((dflt (package-get-locate-index-file t)))
+   (let ((dflt (package-get-locate-index-file nil)))
      (list (read-file-name "Load package-get database: "
                            (file-name-directory dflt)
                            dflt
@@ -364,7 +361,7 @@ Unless FORCE-CURRENT is non-nil never try to update the database."
                            (file-name-nondirectory dflt)))))
   (setq db-file (expand-file-name (or db-file
                                       (package-get-locate-index-file
-                                       force-current))))
+				         (not force-current)))))
   (if (not (file-exists-p db-file))
       (error "Package-get database file `%s' does not exist" db-file))
   (if (not (file-readable-p db-file))

@@ -401,6 +401,8 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
 	  if      (EQ (key, Q_active))   active_p   = val;
 	  else if (EQ (key, Q_suffix))   suffix     = val;
 	  else if (EQ (key, Q_keys))     keys       = val;
+	  else if (EQ (key, Q_key_sequence))  ; /* ignored for FSF compat */
+	  else if (EQ (key, Q_label))  ; /* implement for 21.0 */
 	  else if (EQ (key, Q_style))    style      = val;
 	  else if (EQ (key, Q_selected)) selected_p = val, selected_spec = 1;
 	  else if (EQ (key, Q_included)) include_p  = val, included_spec = 1;

@@ -1,4 +1,7 @@
 							-*- indented-text -*-
+to 21.0 "Pyrenean"
+-- 21.2 sync of mswindows and package fixes that got away.
+
 to 21.0 "Poitou61"
 -- mswindows modeline crash fix from Jonathan Harris
 -- picon glyph fix from Gunnar Evermann

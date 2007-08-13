@@ -59,7 +59,8 @@ If you want to build for native GUI:
     time of writing) and read the README for details on how to build it.
 
 5.  cd to the nt subdirectory of the xemacs distribution and build xemacs:
-    `nmake install -f xemacs.mak`, but read on before hitting Enter.
+    `nmake install -f xemacs.mak` or `nmake install -f xemacs95.mak`
+     under windows 95 and windows 98, but read on before hitting Enter.
 
 6.  If you're building with XPM support, add this to the nmake command line:
 	HAVE_XPM=1 XPM_DIR="x:\location\of\your\xpm\sources"

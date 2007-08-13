@@ -1,3 +1,17 @@
+1999-01-05  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.62 is released
+
+1999-01-04  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	*  package-get: Sync again with 21.2 version (undoes premature 
+	   patch applied by mistake).
+
+1998-12-02  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* package-get.el (package-get-download-sites): change
+	ftp.doc.ic.ac.uk to sunsite.doc.ic.ac.uk
+
 1999-01-04  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.61 is released
