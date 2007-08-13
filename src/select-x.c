@@ -32,6 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "opaque.h"
 #include "systime.h"
+#include "select.h"
 
 int lisp_to_time (Lisp_Object, time_t *);
 Lisp_Object time_to_lisp (time_t);
@@ -45,22 +46,16 @@ Lisp_Object time_to_lisp (time_t);
 static void hack_motif_clipboard_selection (Atom selection_atom,
 					    Lisp_Object selection_value,
 					    Time thyme, Display *display,
-					    Window selecting_window,
-					    Bool owned_p);
+					    Window selecting_window);
 #endif
 
 #define CUT_BUFFER_SUPPORT
-
-Lisp_Object QPRIMARY, QSECONDARY, QSTRING, QINTEGER, QCLIPBOARD, QTIMESTAMP,
-  QTEXT, QDELETE, QMULTIPLE, QINCR, QEMACS_TMP, QTARGETS, QATOM, QNULL,
-  QATOM_PAIR, QCOMPOUND_TEXT;
 
 #ifdef CUT_BUFFER_SUPPORT
 Lisp_Object QCUT_BUFFER0, QCUT_BUFFER1, QCUT_BUFFER2, QCUT_BUFFER3,
   QCUT_BUFFER4, QCUT_BUFFER5, QCUT_BUFFER6, QCUT_BUFFER7;
 #endif
 
-Lisp_Object Vx_lost_selection_hooks;
 Lisp_Object Vx_sent_selection_hooks;
 
 /* If this is a smaller number than the max-request-size of the display,
@@ -73,31 +68,6 @@ Lisp_Object Vx_sent_selection_hooks;
 #define MAX_SELECTION_QUANTUM 0xFFFFFF
 
 #define SELECTION_QUANTUM(dpy) ((XMaxRequestSize (dpy) << 2) - 100)
-
-/* This is an association list whose elements are of the form
-     ( selection-name selection-value selection-timestamp )
-   selection-name is a lisp symbol, whose name is the name of an X Atom.
-   selection-value is the value that emacs owns for that selection.
-     It may be any kind of Lisp object.
-   selection-timestamp is the time at which emacs began owning this selection,
-     as a cons of two 16-bit numbers (making a 32 bit time).
-   If there is an entry in this alist, then it can be assumed that emacs owns
-    that selection.
-   The only (eq) parts of this list that are visible from elisp are the
-    selection-values.
- */
-Lisp_Object Vselection_alist;
-
-/* This is an alist whose CARs are selection-types (whose names are the same
-   as the names of X Atoms) and whose CDRs are the names of Lisp functions to
-   call to convert the given Emacs selection value to a string representing
-   the given selection type.  This is for elisp-level extension of the emacs
-   selection handling.
- */
-Lisp_Object Vselection_converter_alist;
-
-/* "Selection owner couldn't convert selection" */
-Lisp_Object Qselection_conversion_error;
 
 /* If the selection owner takes too long to reply to a selection request,
    we give up on it.  This is in seconds (0 = no timeout).
@@ -231,13 +201,14 @@ x_atom_to_symbol (struct device *d, Atom atom)
    Update the Vselection_alist so that we can reply to later requests for
    our selection.
  */
-static void
+static Lisp_Object
 x_own_selection (Lisp_Object selection_name, Lisp_Object selection_value)
 {
   struct device *d = decode_x_device (Qnil);
   Display *display = DEVICE_X_DISPLAY (d);
   struct frame *sel_frame = selected_frame ();
   Window selecting_window = XtWindow (FRAME_X_TEXT_WIDGET (sel_frame));
+  Lisp_Object selection_time;
   /* Use the time of the last-read mouse or keyboard event.
      For selection purposes, we use this as a sleazy way of knowing what the
      current time is in server-time.  This assumes that the most recently read
@@ -252,44 +223,21 @@ x_own_selection (Lisp_Object selection_name, Lisp_Object selection_value)
 
   XSetSelectionOwner (display, selection_atom, selecting_window, thyme);
 
-  /* Now update the local cache */
-  {
-    /* We do NOT use time_to_lisp() here any more, like we used to.
-       That assumed equivalence of time_t and Time, which is not
-       necessarily the case (e.g. under OSF on the Alphas, where
-       Time is a 64-bit quantity and time_t is a 32-bit quantity).
+  /* We do NOT use time_to_lisp() here any more, like we used to.
+     That assumed equivalence of time_t and Time, which is not
+     necessarily the case (e.g. under OSF on the Alphas, where
+     Time is a 64-bit quantity and time_t is a 32-bit quantity).
+     
+     Opaque pointers are the clean way to go here.
+  */
+  selection_time = make_opaque (sizeof (thyme), (void *) &thyme);
 
-       Opaque pointers are the clean way to go here.
-     */
-    Lisp_Object selection_time = make_opaque (sizeof (thyme), (void *) &thyme);
-    Lisp_Object selection_data = list3 (selection_name,
-					selection_value,
-					selection_time);
-    Lisp_Object prev_value = assq_no_quit (selection_name, Vselection_alist);
-    Vselection_alist = Fcons (selection_data, Vselection_alist);
-
-    /* If we already owned the selection, remove the old selection data.
-       Perhaps we should destructively modify it instead.
-       Don't use Fdelq() as that may QUIT;.
-     */
-    if (!NILP (prev_value))
-      {
-	Lisp_Object rest;	/* we know it's not the CAR, so it's easy. */
-	for (rest = Vselection_alist; !NILP (rest); rest = Fcdr (rest))
-	  if (EQ (prev_value, Fcar (XCDR (rest))))
-	    {
-	      XCDR (rest) = Fcdr (XCDR (rest));
-	      break;
-	    }
-      }
 #ifdef MOTIF_CLIPBOARDS
-    hack_motif_clipboard_selection (selection_atom, selection_value,
-				    thyme, display, selecting_window,
-				    !NILP (prev_value));
+  hack_motif_clipboard_selection (selection_atom, selection_value,
+				  thyme, display, selecting_window);
 #endif
-  }
+  return selection_time;
 }
-
 
 #ifdef MOTIF_CLIPBOARDS /* Bend over baby.  Take it and like it. */
 
@@ -302,8 +250,8 @@ hack_motif_clipboard_selection (Atom selection_atom,
 				Lisp_Object selection_value,
 				Time thyme,
 				Display *display,
-				Window selecting_window,
-				Bool owned_p)
+                                                Window selecting_window)
+     /*				Bool owned_p)*/
 {
   struct device *d = get_device_from_display (display);
   /* Those Motif wankers can't be bothered to follow the ICCCM, and do
@@ -440,101 +388,6 @@ motif_clipboard_cb (Widget widget, int *data_id, int *private_id, int *reason)
 # endif /* MOTIF_INCREMENTAL_CLIPBOARDS_WORK */
 #endif /* MOTIF_CLIPBOARDS */
 
-
-/* Given a selection-name and desired type, this looks up our local copy of
-   the selection value and converts it to the type.  It returns nil or a
-   string.  This calls random elisp code, and may signal or gc.
- */
-static Lisp_Object
-x_get_local_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
-{
-  /* This function can GC */
-  Lisp_Object local_value = assq_no_quit (selection_symbol, Vselection_alist);
-  Lisp_Object handler_fn, value, check;
-
-  if (NILP (local_value)) return Qnil;
-
-  /* TIMESTAMP and MULTIPLE are special cases 'cause that's easiest. */
-  if (EQ (target_type, QTIMESTAMP))
-    {
-      handler_fn = Qnil;
-      value = XCAR (XCDR (XCDR (local_value)));
-    }
-
-#if 0 /* #### MULTIPLE doesn't work yet */
-  else if (CONSP (target_type) &&
-	   XCAR (target_type) == QMULTIPLE)
-    {
-      Lisp_Object pairs = XCDR (target_type);
-      int len = XVECTOR_LENGTH (pairs);
-      int i;
-      /* If the target is MULTIPLE, then target_type looks like
-	  (MULTIPLE . [[SELECTION1 TARGET1] [SELECTION2 TARGET2] ... ])
-	 We modify the second element of each pair in the vector and
-	 return it as [[SELECTION1 <value1>] [SELECTION2 <value2>] ... ]
-       */
-      for (i = 0; i < len; i++)
-	{
-	  Lisp_Object pair = XVECTOR_DATA (pairs) [i];
-	  XVECTOR_DATA (pair) [1] =
-	    x_get_local_selection (XVECTOR_DATA (pair) [0],
-				   XVECTOR_DATA (pair) [1]);
-	}
-      return pairs;
-    }
-#endif
-  else
-    {
-      CHECK_SYMBOL (target_type);
-      handler_fn = Fcdr (Fassq (target_type, Vselection_converter_alist));
-      if (NILP (handler_fn)) return Qnil;
-      value = call3 (handler_fn,
-		     selection_symbol, target_type,
-		     XCAR (XCDR (local_value)));
-    }
-
-  /* This lets the selection function to return (TYPE . VALUE).  For example,
-     when the selected type is LINE_NUMBER, the returned type is SPAN, not
-     INTEGER.
-   */
-  check = value;
-  if (CONSP (value) && SYMBOLP (XCAR (value)))
-    check = XCDR (value);
-
-  /* Strings, vectors, and symbols are converted to selection data format in
-     the obvious way.  Integers are converted to 16 bit quantities if they're
-     small enough, otherwise 32 bits are used.
-   */
-  if (STRINGP (check) ||
-      VECTORP (check) ||
-      SYMBOLP (check) ||
-      INTP    (check) ||
-      CHARP   (check) ||
-      NILP (value))
-    return value;
-
-  /* (N . M) or (N M) get turned into a 32 bit quantity.  So if you want to
-     always return a small quantity as 32 bits, your converter routine needs
-     to return a cons.
-   */
-  else if (CONSP (check) &&
-	   INTP (XCAR (check)) &&
-	   (INTP (XCDR (check)) ||
-	    (CONSP (XCDR (check)) &&
-	     INTP (XCAR (XCDR (check))) &&
-	     NILP (XCDR (XCDR (check))))))
-    return value;
-  /* Otherwise the lisp converter function returned something unrecognized.
-   */
-  else
-    signal_error (Qerror,
-                  list3 (build_string
-			 ("unrecognized selection-conversion type"),
-                         handler_fn,
-                         value));
-
-  return Qnil;	/* suppress compiler warning */
-}
 
 
 
@@ -746,7 +599,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
   /* Convert lisp objects back into binary data */
 
   converted_selection =
-    x_get_local_selection (selection_symbol, target_symbol);
+    get_local_selection (selection_symbol, target_symbol);
 
   if (! NILP (converted_selection))
     {
@@ -759,8 +612,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
 
       x_reply_selection_request (event, format, data, size, type);
       successful_p = Qt;
-      /* Tell x_selection_request_lisp_error() it's cool. */
-      event->type = 0;
+      /* Tell x_selection_request_lisp_error() it's cool. */      event->type = 0;
       xfree (data);
     }
   unbind_to (count, Qnil);
@@ -817,37 +669,8 @@ x_handle_selection_clear (XSelectionClearEvent *event)
   if (changed_owner_time != CurrentTime &&
       local_selection_time > changed_owner_time)
     return;
-
-  /* Otherwise, we're really honest and truly being told to drop it.
-     Don't use Fdelq() as that may QUIT;.
-   */
-  if (EQ (local_selection_data, Fcar (Vselection_alist)))
-    Vselection_alist = Fcdr (Vselection_alist);
-  else
-    {
-      Lisp_Object rest;
-      for (rest = Vselection_alist; !NILP (rest); rest = Fcdr (rest))
-	if (EQ (local_selection_data, Fcar (XCDR (rest))))
-	  {
-	    XCDR (rest) = Fcdr (XCDR (rest));
-	    break;
-	  }
-    }
-
-  /* Let random lisp code notice that the selection has been stolen.
-   */
-  {
-    Lisp_Object rest;
-    Lisp_Object val = Vx_lost_selection_hooks;
-    if (!UNBOUNDP (val) && !NILP (val))
-      {
-	if (CONSP (val) && !EQ (XCAR (val), Qlambda))
-	  for (rest = val; !NILP (rest); rest = Fcdr (rest))
-	    call1 (Fcar (rest), selection_symbol);
-	else
-	  call1 (val, selection_symbol);
-      }
-  }
+  
+  handle_selection_clear (selection_symbol);
 }
 
 
@@ -1591,40 +1414,6 @@ lisp_data_to_selection_data (struct device *d,
   *type_ret = symbol_to_x_atom (d, type, 0);
 }
 
-static Lisp_Object
-clean_local_selection_data (Lisp_Object obj)
-{
-  if (CONSP (obj) &&
-      INTP (XCAR (obj)) &&
-      CONSP (XCDR (obj)) &&
-      INTP (XCAR (XCDR (obj))) &&
-      NILP (XCDR (XCDR (obj))))
-    obj = Fcons (XCAR (obj), XCDR (obj));
-
-  if (CONSP (obj) &&
-      INTP (XCAR (obj)) &&
-      INTP (XCDR (obj)))
-    {
-      if (XINT (XCAR (obj)) == 0)
-	return XCDR (obj);
-      if (XINT (XCAR (obj)) == -1)
-	return make_int (- XINT (XCDR (obj)));
-    }
-  if (VECTORP (obj))
-    {
-      int i;
-      int len = XVECTOR_LENGTH (obj);
-      Lisp_Object copy;
-      if (len == 1)
-	return clean_local_selection_data (XVECTOR_DATA (obj) [0]);
-      copy = make_vector (len, Qnil);
-      for (i = 0; i < len; i++)
-	XVECTOR_DATA (copy) [i] =
-	  clean_local_selection_data (XVECTOR_DATA (obj) [i]);
-      return copy;
-    }
-  return obj;
-}
 
 
 /* Called from the event loop to handle SelectionNotify events.
@@ -1643,83 +1432,13 @@ x_handle_selection_notify (XSelectionEvent *event)
     reading_selection_reply = 0; /* we're done now. */
 }
 
-
-DEFUN ("x-own-selection-internal", Fx_own_selection_internal, 2, 2, 0, /*
-Assert an X selection of the given TYPE with the given VALUE.
-TYPE is a symbol, typically PRIMARY, SECONDARY, or CLIPBOARD.
-VALUE is typically a string, or a cons of two markers, but may be
-anything that the functions on selection-converter-alist know about.
-*/
-       (selection_name, selection_value))
-{
-  CHECK_SYMBOL (selection_name);
-  if (NILP (selection_value)) error ("selection-value may not be nil.");
-  x_own_selection (selection_name, selection_value);
-  return selection_value;
-}
-
-
-/* Request the selection value from the owner.  If we are the owner,
-   simply return our selection value.  If we are not the owner, this
-   will block until all of the data has arrived.
- */
-DEFUN ("x-get-selection-internal", Fx_get_selection_internal, 2, 2, 0, /*
-Return text selected from some X window.
-SELECTION_SYMBOL is a symbol, typically PRIMARY, SECONDARY, or CLIPBOARD.
-TARGET_TYPE is the type of data desired, typically STRING or COMPOUND_TEXT.
-Under Mule, if the resultant data comes back as 8-bit data in type
-TEXT or COMPOUND_TEXT, it will be decoded as Compound Text.
-*/
-       (selection_symbol, target_type))
-{
-  /* This function can GC */
-  Lisp_Object val = Qnil;
-  struct gcpro gcpro1, gcpro2;
-  GCPRO2 (target_type, val); /* we store newly consed data into these */
-  CHECK_SYMBOL (selection_symbol);
-
-#if 0 /* #### MULTIPLE doesn't work yet */
-  if (CONSP (target_type) &&
-      XCAR (target_type) == QMULTIPLE)
-    {
-      CHECK_VECTOR (XCDR (target_type));
-      /* So we don't destructively modify this... */
-      target_type = copy_multiple_data (target_type);
-    }
-  else
-#endif
-    CHECK_SYMBOL (target_type);
-
-  val = x_get_local_selection (selection_symbol, target_type);
-
-  if (NILP (val))
-    {
-      val = x_get_foreign_selection (selection_symbol, target_type);
-    }
-  else
-    {
-      if (CONSP (val) && SYMBOLP (XCAR (val)))
-	{
-	  val = XCDR (val);
-	  if (CONSP (val) && NILP (XCDR (val)))
-	    val = XCAR (val);
-	}
-      val = clean_local_selection_data (val);
-    }
-  UNGCPRO;
-  return val;
-}
-
-DEFUN ("x-disown-selection-internal", Fx_disown_selection_internal, 1, 2, 0, /*
-If we own the named selection, then disown it (make there be no selection).
-*/
-       (selection, timeval))
+static void
+x_disown_selection (Lisp_Object selection, Lisp_Object timeval)
 {
   struct device *d = decode_x_device (Qnil);
   Display *display = DEVICE_X_DISPLAY (d);
   Time timestamp;
   Atom selection_atom;
-  XSelectionClearEvent event;
 
   CHECK_SYMBOL (selection);
   if (NILP (timeval))
@@ -1735,56 +1454,16 @@ If we own the named selection, then disown it (make there be no selection).
       timestamp = (Time) the_time;
     }
 
-  if (NILP (assq_no_quit (selection, Vselection_alist)))
-    return Qnil;  /* Don't disown the selection when we're not the owner. */
-
   selection_atom = symbol_to_x_atom (d, selection, 0);
 
   XSetSelectionOwner (display, selection_atom, None, timestamp);
-
-  /* It doesn't seem to be guaranteed that a SelectionClear event will be
-     generated for a window which owns the selection when that window sets
-     the selection owner to None.  The NCD server does, the MIT Sun4 server
-     doesn't.  So we synthesize one; this means we might get two, but
-     that's ok, because the second one won't have any effect.
-   */
-  event.display = display;
-  event.selection = selection_atom;
-  event.time = timestamp;
-  x_handle_selection_clear (&event);
-
-  return Qt;
 }
 
-
-DEFUN ("x-selection-owner-p", Fx_selection_owner_p, 0, 1, 0, /*
-Return t if current emacs process owns the given X Selection.
-The arg should be the name of the selection in question, typically one of
-the symbols PRIMARY, SECONDARY, or CLIPBOARD.  (For convenience, the symbol
-nil is the same as PRIMARY, and t is the same as SECONDARY.)
-*/
-       (selection))
-{
-  CHECK_SYMBOL (selection);
-  if      (EQ (selection, Qnil)) selection = QPRIMARY;
-  else if (EQ (selection, Qt))   selection = QSECONDARY;
-
-  return NILP (Fassq (selection, Vselection_alist)) ? Qnil : Qt;
-}
-
-DEFUN ("x-selection-exists-p", Fx_selection_exists_p, 0, 1, 0, /*
-Whether there is an owner for the given X Selection.
-The arg should be the name of the selection in question, typically one of
-the symbols PRIMARY, SECONDARY, or CLIPBOARD.  (For convenience, the symbol
-nil is the same as PRIMARY, and t is the same as SECONDARY.)
-*/
-       (selection))
+static Lisp_Object
+x_selection_exists_p (Lisp_Object selection)
 {
   struct device *d = decode_x_device (Qnil);
   Display *dpy = DEVICE_X_DISPLAY (d);
-  CHECK_SYMBOL (selection);
-  if (!NILP (Fx_selection_owner_p (selection)))
-    return Qt;
   return XGetSelectionOwner (dpy, symbol_to_x_atom (d, selection, 0)) != None ?
     Qt : Qnil;
 }
@@ -1981,11 +1660,6 @@ positive means move values forward, negative means backward.
 void
 syms_of_xselect (void)
 {
-  DEFSUBR (Fx_get_selection_internal);
-  DEFSUBR (Fx_own_selection_internal);
-  DEFSUBR (Fx_disown_selection_internal);
-  DEFSUBR (Fx_selection_owner_p);
-  DEFSUBR (Fx_selection_exists_p);
 
 #ifdef CUT_BUFFER_SUPPORT
   DEFSUBR (Fx_get_cutbuffer_internal);
@@ -1998,23 +1672,6 @@ syms_of_xselect (void)
              "x-selection-reply-timeout-internal");
   DEFSUBR (Fx_selection_reply_timeout_internal);
 
-  defsymbol (&QPRIMARY, "PRIMARY");
-  defsymbol (&QSECONDARY, "SECONDARY");
-  defsymbol (&QSTRING, "STRING");
-  defsymbol (&QINTEGER, "INTEGER");
-  defsymbol (&QCLIPBOARD, "CLIPBOARD");
-  defsymbol (&QTIMESTAMP, "TIMESTAMP");
-  defsymbol (&QTEXT, "TEXT");
-  defsymbol (&QDELETE, "DELETE");
-  defsymbol (&QMULTIPLE, "MULTIPLE");
-  defsymbol (&QINCR, "INCR");
-  defsymbol (&QEMACS_TMP, "_EMACS_TMP_");
-  defsymbol (&QTARGETS, "TARGETS");
-  defsymbol (&QATOM, "ATOM");
-  defsymbol (&QATOM_PAIR, "ATOM_PAIR");
-  defsymbol (&QCOMPOUND_TEXT, "COMPOUND_TEXT");
-  defsymbol (&QNULL, "NULL");
-
 #ifdef CUT_BUFFER_SUPPORT
   defsymbol (&QCUT_BUFFER0, "CUT_BUFFER0");
   defsymbol (&QCUT_BUFFER1, "CUT_BUFFER1");
@@ -2025,10 +1682,15 @@ syms_of_xselect (void)
   defsymbol (&QCUT_BUFFER6, "CUT_BUFFER6");
   defsymbol (&QCUT_BUFFER7, "CUT_BUFFER7");
 #endif /* CUT_BUFFER_SUPPORT */
+}
 
-  deferror (&Qselection_conversion_error,
-	    "selection-conversion-error",
-	    "selection-conversion error", Qio_error);
+void
+console_type_create_select_x (void)
+{
+  CONSOLE_HAS_METHOD (x, own_selection);
+  CONSOLE_HAS_METHOD (x, disown_selection);
+  CONSOLE_HAS_METHOD (x, get_foreign_selection);
+  CONSOLE_HAS_METHOD (x, selection_exists_p);
 }
 
 void
@@ -2044,61 +1706,6 @@ vars_of_xselect (void)
   selection_reply_timed_out = 0;
   for_whom_the_bell_tolls = 0;
   prop_location_tick = 0;
-
-  Vselection_alist = Qnil;
-  staticpro (&Vselection_alist);
-
-  DEFVAR_LISP ("selection-converter-alist", &Vselection_converter_alist /*
-An alist associating selection-types (such as STRING and TIMESTAMP) with
-functions.  These functions will be called with three args: the name of the
-selection (typically PRIMARY, SECONDARY, or CLIPBOARD); a desired type to
-which the selection should be converted; and the local selection value
- (whatever had been passed to `x-own-selection').  These functions should
-return the value to send to the X server, which should be one of:
-
--- nil (the conversion could not be done)
--- a cons of a symbol and any of the following values; the symbol
-   explicitly specifies the type that will be sent.
--- a string (If the type is not specified, then if Mule support exists,
-             the string will be converted to Compound Text and sent in
-             the 'COMPOUND_TEXT format; otherwise (no Mule support),
-             the string will be left as-is and sent in the 'STRING
-             format.  If the type is specified, the string will be
-             left as-is (or converted to binary format under Mule).
-             In all cases, 8-bit data it sent.)
--- a character (With Mule support, will be converted to Compound Text
-                whether or not a type is specified.  If a type is not
-                specified, a type of 'STRING or 'COMPOUND_TEXT will be
-		sent, as for strings.)
--- the symbol 'NULL (Indicates that there is no meaningful return value.
-                     Empty 32-bit data with a type of 'NULL will be sent.)
--- a symbol (Will be converted into an atom.  If the type is not specified,
-             a type of 'ATOM will be sent.)
--- an integer (Will be converted into a 16-bit or 32-bit integer depending
-               on the value.  If the type is not specified, a type of
-	       'INTEGER will be sent.)
--- a cons (HIGH . LOW) of integers (Will be converted into a 32-bit integer.
-                                    If the type is not specified, a type of
-				    'INTEGER will be sent.)
--- a vector of symbols (Will be converted into a list of atoms.  If the type
-                        is not specified, a type of 'ATOM will be sent.)
--- a vector of integers (Will be converted into a list of 16-bit integers.
-                         If the type is not specified, a type of 'INTEGER
-			 will be sent.)
--- a vector of integers and/or conses (HIGH . LOW) of integers
-                        (Will be converted into a list of 16-bit integers.
-                         If the type is not specified, a type of 'INTEGER
-			 will be sent.)
-*/ );
-  Vselection_converter_alist = Qnil;
-
-  DEFVAR_LISP ("x-lost-selection-hooks", &Vx_lost_selection_hooks /*
-A function or functions to be called after the X server has notified us
-that we have lost the selection.  The function(s) will be called with one
-argument, a symbol naming the selection (typically PRIMARY, SECONDARY, or
-CLIPBOARD).
-*/ );
-  Vx_lost_selection_hooks = Qunbound;
 
   DEFVAR_LISP ("x-sent-selection-hooks", &Vx_sent_selection_hooks /*
 A function or functions to be called after we have responded to some
