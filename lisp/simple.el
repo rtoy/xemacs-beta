@@ -3483,9 +3483,9 @@ should be logged.  Possible values include 'log-message-filter and
 'log-message-filter-errors-only.")
 
 (defun log-message-filter (label message)
-  "Default value of log-message-filter-function.
-Mesages whose text matches one of the log-message-ignore-regexps
-or whose label appears in log-message-ignore-labels are not saved."
+  "Default value of `log-message-filter-function'.
+Messages whose text matches one of the `log-message-ignore-regexps'
+or whose label appears in `log-message-ignore-labels' are not saved."
   (let ((r  log-message-ignore-regexps)
 	(ok (not (memq label log-message-ignore-labels))))
     (save-match-data
@@ -3496,14 +3496,14 @@ or whose label appears in log-message-ignore-labels are not saved."
     ok))
 
 (defun log-message-filter-errors-only (label message)
-  "For use as the log-message-filter-function.  Only logs error messages."
+  "For use as the `log-message-filter-function'.  Only logs error messages."
   (eq label 'error))
 
 (defun log-message (label message)
   "Stuff a copy of the message into the \" *Message-Log*\" buffer,
-if it satisfies the log-message-filter-function.
+if it satisfies the `log-message-filter-function'.
 
-For use on remove-message-hook."
+For use on `remove-message-hook'."
   (when (and (not noninteractive)
 	     (funcall log-message-filter-function label message))
     (with-current-buffer (get-buffer-create " *Message-Log*")

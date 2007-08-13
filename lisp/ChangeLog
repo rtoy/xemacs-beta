@@ -1,3 +1,53 @@
+1998-01-02  Colin Rafferty  <colin@xemacs.org>
+
+	* build-report.el (build-report-delete-regexp): Added a rule for
+	the main tarball shadowing anything past it.
+
+1998-01-02  SL Baur  <steve@altair.xemacs.org>
+
+	* packages.el (package-provide): Delete a previous provide.
+
+	* package-info.el: New file.
+
+	* package-get.el: New file.
+	From Pete Ware <ware@cis.ohio-state.edu>
+	(package-get): Fix md5 computation to work with Mule.
+
+1997-12-11  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* simple.el (log-message-*): Quote symbols in docstrings properly.
+
+1998-01-01  SL Baur  <steve@altair.xemacs.org>
+
+	* packages.el (packages-new-autoloads): Ignore symbolic links.
+
+	* cus-face.el (face-custom-attributes-get): Fix typo.
+	From Jens-Ulrik Holger Petersen <petersen@kurims.kyoto-u.ac.jp>
+
+1997-12-31  SL Baur  <steve@altair.xemacs.org>
+
+	* startup.el (load-init-file): Reload new or changed autoloads
+	unless inhibited.  Reload modified dumped lisp (stubbed).
+
+	* packages.el (packages-new-autoloads): New function.
+	(packages-reload-autoloads): New function.
+	(packages-reload-dumped-lisp): New (stub) function.
+
+	* loadup.el: Inhibit reloading dumped files when running temacs.
+
+	* loadhist.el (file-provides): Extend to handle variant
+	extensions.
+
+	* replace.el (query-replace): Fix typo.
+
+1997-12-30  SL Baur  <steve@altair.xemacs.org>
+
+	* make-docfile.el: list-autoloads-path has been renamed.
+	* update-elc.el: list-autoloads has been renamed.
+
+	* packages.el (packages-list-autoloads): Renamed.
+	(packages-list-autoloads-path): Ditto.
+
 1997-12-29  Colin Rafferty  <colin@xemacs.org>
 
 	* packages.el (packages-find-packages-1): Made it signal a warning 

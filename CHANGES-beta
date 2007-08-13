@@ -1,5 +1,11 @@
 							-*- indented-text -*-
+to 20.5 beta16 "Canindé"
+-- Package interface updates
+-- Reload updated and new auto-autoloads files at startup
+-- Miscellaneous bug fixes
+
 to 20.5 beta15 "British Alpine"
+-- MS Windows menu fixes courtesy of Kirill Katsnelson
 -- autoloads are now loaded into impure storage and can be deleted at runtime
 -- loadhist.el is now dumped with XEmacs
 -- XEmacs running in place as a login shell now works

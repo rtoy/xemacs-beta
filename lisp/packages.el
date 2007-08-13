@@ -3,6 +3,7 @@
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 
 ;; Author: Steven L Baur <steve@altair.xemacs.org>
+;; Maintainer: Steven L Baur <steve@altair.xemacs.org>
 ;; Keywords: internal, lisp, dumped
 
 ;; This file is part of XEmacs.
@@ -55,10 +56,27 @@
 (defvar packages-package-list nil
   "database of loaded packages and version numbers")
 
-(defun package-provide (name version)
-  (if (not (assq name packages-package-list))
-      (setq packages-package-list
-	    (cons (cons name version) packages-package-list))))
+(defun package-get-key-1 (info key)
+  "Locate keyword `key' in list."
+  (cond ((null info)
+	 nil)
+	((eq (car info) key)
+	 (nth 1 info))
+	(t (package-get-key-1 (cddr info) key))))
+
+(defun package-get-key (name key)
+  "Get info `key' from package `name'."
+  (let ((info (assq name packages-package-list)))
+    (when info
+      (package-get-key-1 (cdr info) key))))
+
+(defun package-provide (name &rest attributes)
+  (let ((info (if (and attributes (floatp (car attributes)))
+		  (list :version (car attributes))
+		attributes)))
+    (remassq name packages-package-list)
+    (setq packages-package-list
+	  (cons (cons name info) packages-package-list))))
 
 (defun package-require (name version)
   (let ((pkg (assq name packages-package-list)))
@@ -140,7 +158,7 @@ is used instead of `load-path'."
       (concat str ".elc")
     str))
 
-(defun list-autoloads-path ()
+(defun packages-list-autoloads-path ()
   "List autoloads from precomputed load-path."
   (let ((path load-path)
 	autoloads)
@@ -153,7 +171,7 @@ is used instead of `load-path'."
       (setq path (cdr path)))
     autoloads))
 
-(defun list-autoloads ()
+(defun packages-list-autoloads ()
   "List autoload files in (what will be) the normal lisp search path.
 This function is used during build to find where the global symbol files so
 they can be perused for their useful information."
@@ -161,7 +179,8 @@ they can be perused for their useful information."
   ;; (print (prin1-to-string load-path))
   (if (null source-directory)
       (setq source-directory (concat (car load-path) "./")))
-  (let ((files (directory-files (file-name-as-directory source-directory) t ".*"))
+  (let ((files (directory-files (file-name-as-directory source-directory)
+				t ".*"))
 	file autolist)
     ;; (print (prin1-to-string source-directory))
     ;; (print (prin1-to-string files))
@@ -172,6 +191,59 @@ they can be perused for their useful information."
 			       autolist)))
       (setq files (cdr files)))
     autolist))
+
+;; The following function cannot be called from a bare temacs
+(defun packages-new-autoloads ()
+  "Return autoloads files that have been added or modified since XEmacs dump."
+  (require 'loadhist)
+  (let ((me (concat invocation-directory invocation-name))
+	(path load-path)
+	result dir)
+    (while path
+      (setq dir (file-truename (car path)))
+      (let ((autoload-file (file-name-sans-extension (concat
+						      dir
+						      autoload-file-name))))
+	;; Check for:
+	;; 1.  An auto-autoload file that hasn't provided a feature (because
+	;;     it has been installed since XEmacs was dumped).
+	;; 2.  auto-autoload.el being newer than the executable
+	;; 3.  auto-autoload.elc being newer than the executable (the .el
+	;;     could be missing or compressed)
+	(when (or (and (null (file-provides autoload-file))
+		       (or (file-exists-p (concat autoload-file ".elc"))
+			   (file-exists-p (concat autoload-file ".el"))))
+		  (and (file-newer-than-file-p (concat autoload-file ".el") me)
+		       (setq autoload-file (concat autoload-file ".el")))
+		  (and (file-newer-than-file-p (concat autoload-file
+						       ".elc")
+					       me)
+		       (setq autoload-file (concat autoload-file ".elc"))))
+	  (push autoload-file result)))
+      (setq path (cdr path)))
+    result))
+
+;; The following function cannot be called from a bare temacs
+(defun packages-reload-autoloads ()
+  "Reload new or updated auto-autoloads files.
+This is an extremely dangerous function to call after the user-init-files
+is run.  Don't call it or you'll be sorry."
+  (let ((autoload-list (packages-new-autoloads)))
+    (while autoload-list
+      (let* ((autoload-file (car autoload-list))
+	     (feature (car-safe (file-provides autoload-file))))
+	(when feature
+	  ;; (message "(unload-feature %S)" feature)
+	  (unload-feature feature))
+	(load autoload-file))
+      (setq autoload-list (cdr autoload-list)))))
+
+;; The following function cannot be called from a bare temacs
+(defun packages-reload-dumped-lisp ()
+  "Reload new or updated dumped lisp files (with exceptions).
+This is an extremely dangerous function to call at any time."
+  ;; Nothing for the moment
+  nil)
 
 ;; The following function is called from temacs
 (defun packages-find-packages-1 (package path-only append-p user-package)
@@ -256,7 +328,8 @@ This is an internal function.  Do not call it after startup."
 				  (append preloaded-file-list package-lisp)))
 			(if (fboundp 'load-gc)
 			    (setq dumped-lisp-packages
-				  (append dumped-lisp-packages package-lisp)))))))
+				  (append dumped-lisp-packages
+					  package-lisp)))))))
 
 	    (if user-package
 		(condition-case error

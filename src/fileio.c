@@ -113,9 +113,6 @@ int disable_auto_save_when_buffer_shrinks;
 
 Lisp_Object Qfile_name_handler_alist;
 
-#ifdef DOS_NT
-/* Until we can figure out how to deal with the functions in this file in
-   a civilized fashion, this will remain #ifdef'ed out. -slb */
 /* Syncing with FSF 19.34.6 note: although labelled as NT-specific, these
    two lisp variables are compiled in even when not defined(DOS_NT).
    Need to check if we should bracket them between #ifdef's.
@@ -125,8 +122,11 @@ Lisp_Object Qfile_name_handler_alist;
 
    This needs to be initialized statically, because file name functions
    are called during initialization.  */
-Lisp_Object Vdirectory_sep_char = '/';
+Lisp_Object Vdirectory_sep_char;
 
+#ifdef DOS_NT
+/* Until we can figure out how to deal with the functions in this file in
+   a civilized fashion, this will remain #ifdef'ed out. -slb */
 /* For the benefit of backwards compatability with earlier versions of
    Emacs on DOS_NT, provide a way to disable the REPLACE option support
    in insert-file-contents.  */
@@ -4684,7 +4684,7 @@ delete a large chunk of the buffer and don't notice it until too late.
 Saving the buffer normally turns auto-save back on.
 */ );
   disable_auto_save_when_buffer_shrinks = 1;
-#ifdef DOS_NT
+
   DEFVAR_LISP ("directory-sep-char", &Vdirectory_sep_char /*
     *Directory separator character for built-in functions that return file names.
 The value should be either ?/ or ?\\ (any other value is treated as ?\\).
@@ -4692,8 +4692,9 @@ This variable affects the built-in functions only on Windows,
 on other platforms, it is initialized so that Lisp code can find out
 what the normal separator is.
 */ );
-  Vdirectory_sep_char = '/';
+  Vdirectory_sep_char = make_char('/');
 
+#ifdef DOS_NT
   DEFVAR_LISP ("insert-file-contents-allow-replace", &Vinsert_file_contents_allow_replace /*
     *Allow REPLACE option of insert-file-contents to preserve markers.
 If non-nil, the REPLACE option works as described, preserving markers.

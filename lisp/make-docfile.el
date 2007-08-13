@@ -1,6 +1,5 @@
 ;;; make-docfile.el --- Cache docstrings in external file
 
-
 ;; Copyright (C) 1985, 1986, 1992-1995, 1997 Free Software Foundation, Inc.
 
 ;; Author: Unknown
@@ -126,7 +125,7 @@
 		(setq processed (cons arg processed)))))
 	(setq site-load-packages (cdr site-load-packages)))))
 
-(let ((autoloads (list-autoloads-path)))
+(let ((autoloads (packages-list-autoloads-path)))
   ;; (print (concat "Autoloads: " (prin1-to-string autoloads)))
   (while autoloads
     (let ((arg (car autoloads)))

@@ -65,7 +65,7 @@
 (define-function 'defalias 'define-function)
 (require 'packages)
 
-(let ((autol (list-autoloads)))
+(let ((autol (packages-list-autoloads)))
   ;; (print (prin1-to-string autol))
   (while autol
     (let ((src (car autol)))

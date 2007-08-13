@@ -58,8 +58,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif
 
-#if defined (_WIN32) && defined (DEBUG_XEMACS)
-/* For DebugBreak in asserf_failed() */
+#if defined (_WIN32)
 #include <windows.h>
 #endif
 
@@ -161,6 +160,12 @@ int noninteractive1;
 
 /* Nonzero means don't perform package searches at startup */
 int inhibit_package_init;
+
+/* Nonzero means don't reload changed dumped lisp files at startup */
+int inhibit_update_dumped_lisp;
+
+/* Nonzero means don't reload changed or new auto-autoloads files at startup */
+int inhibit_update_autoloads;
 
 /* Save argv and argc.  */
 char **initial_argv;
@@ -304,7 +309,20 @@ make_arg_list_1 (int argc, char **argv, int skip_args)
   for (i = argc - 1; i >= 0; i--)
     {
       if (i == 0 || i > skip_args)
-	result = Fcons (build_ext_string (argv [i], FORMAT_FILENAME), result);
+	{
+#ifdef _WIN32
+	  if (i == 0)
+	    {
+	      /* Do not trust to what crt0 has stuffed into argv[0] */
+	      char full_exe_path [MAX_PATH];
+	      GetModuleFileName (NULL, full_exe_path, MAX_PATH);
+	      result = Fcons (build_ext_string (full_exe_path, FORMAT_FILENAME),
+			      result);
+	    }
+	  else
+#endif
+	    result = Fcons (build_ext_string (argv [i], FORMAT_FILENAME), result);
+	}
     }
   return result;
 }
@@ -615,18 +633,29 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
   /* Handle the -batch switch, which means don't do interactive display.  */
   if (argmatch (argv, argc, "-batch", "--batch", 5, NULL, &skip_args))
-    noninteractive = 1;
+    {
+      inhibit_update_autoloads = 1;
+      inhibit_update_dumped_lisp = 1;
+      noninteractive = 1;
+    }
 
   /* Partially handle -no-packages and -vanilla.  Packages are searched */
   /* prior to the rest of the command line being parsed in startup.el */
   if (argmatch (argv, argc, "-no-packages", "--no-packages",
-		6, NULL, &skip_args) ||
-      argmatch (argv, argc, "-vanilla", "--vanilla",
-		7, NULL, &skip_args))
+		6, NULL, &skip_args))
     {
       inhibit_package_init = 1;
       skip_args--;
     }
+  if (argmatch (argv, argc, "-vanilla", "--vanilla",
+		7, NULL, &skip_args))
+    {
+      inhibit_package_init = 1;
+      inhibit_update_autoloads = 1;
+      inhibit_update_dumped_lisp = 1;
+      skip_args--;
+    }
+
 
   /* Partially handle the -version and -help switches: they imply -batch,
      but are not removed from the list. */
@@ -2419,6 +2448,16 @@ Non-nil means XEmacs is running without interactive terminal.
   DEFVAR_BOOL ("inhibit-package-init", &inhibit_package_init /*
 Set to non-nil when the package-path should not be searched at startup.
 */ );
+
+  DEFVAR_BOOL ("inhibit-update-dumped-lisp", &inhibit_update_dumped_lisp /*
+Set to non-nil when modified dumped lisp should not be reloaded at startup.
+*/ );
+  inhibit_update_dumped_lisp = 1;
+
+  DEFVAR_BOOL ("inhibit-update-autoloads", &inhibit_update_autoloads /*
+Set to non-nil when modified or new autoloads files should not be reloaded.
+*/ );
+  inhibit_update_autoloads = 0;
 
   DEFVAR_INT ("emacs-priority", &emacs_priority /*
 Priority for XEmacs to run at.

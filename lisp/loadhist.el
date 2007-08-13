@@ -65,7 +65,11 @@ a buffer with no associated file, or an eval-region, return nil."
 
 (defun file-provides (file)
   "Return the list of features provided by FILE."
-  (let ((symbols (cdr (assoc file load-history))) (provides nil))
+  (let ((symbols (or (cdr (assoc file load-history))
+		     (cdr (assoc (file-name-sans-extension file) load-history))
+		     (cdr (assoc (concat file ".el") load-history))
+		     (cdr (assoc (concat file ".elc") load-history))))
+	(provides nil))
     (mapcar
      (function (lambda (x)
 		 (if (and (consp x) (eq (car x) 'provide))

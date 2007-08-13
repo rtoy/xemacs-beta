@@ -83,7 +83,8 @@
 
 (defcustom build-report-delete-regexp
   (list
-   "confl.*with.*auto-inlining")
+   "confl.*with.*auto-inlining"
+   (concat (regexp-quote (gethash 'blddir (config-value-hash-table))) "/lisp/[^ \t\n]+ hides "))
   "Regexp of make process output lines to delete from the report."
   :type '(repeat regexp)
   :group 'build-report)

@@ -137,7 +137,7 @@ If FRAME is nil, use the default face."
 	    atts (cdr atts)
 	    get (nth 3 att))
       (condition-case nil
-	  ;; This may fail if w3 doesn't exists.
+	  ;; This may fail if w3 doesn't exist.
 	  (when get
 	    (let ((answer (funcall get face frame)))
 	      (unless (equal answer (funcall get 'default frame))

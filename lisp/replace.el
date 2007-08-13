@@ -93,7 +93,7 @@ To customize possible responses, change the \"bindings\" in `query-replace-map'.
 	(save-excursion
 	  (narrow-to-region (point) (mark))
 	  (goto-char (point-min))
-	  (query-replace from-string to-string arg)))
+	  (perform-replace from-string to-string t nil arg)))
     (perform-replace from-string to-string t nil arg)))
 
 (defun query-replace-regexp (regexp to-string &optional arg)

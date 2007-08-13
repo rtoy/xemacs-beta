@@ -615,6 +615,13 @@ First try .xemacs/init, then try .emacs, but only load one of the two."
   (when site-start-file
     (load site-start-file t t))
 
+  ;; Disabled for now
+  (unless inhibit-update-dumped-lisp
+    (packages-reload-dumped-lisp))
+
+  (unless inhibit-update-autoloads
+    (packages-reload-autoloads))
+
   ;; Sites should not disable this.  Only individuals should disable
   ;; the startup message.
   (setq inhibit-startup-message nil)

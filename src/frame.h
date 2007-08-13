@@ -545,7 +545,8 @@ extern int frame_changed;
 
 #define FRAME_RIGHT_BORDER_START(f)					\
   (FRAME_PIXWIDTH (f) - FRAME_BORDER_WIDTH (f) -			\
-   2 * FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f))
+   FRAME_REAL_RIGHT_TOOLBAR_WIDTH(f) -                                                           \
+   2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH (f))
 #define FRAME_RIGHT_BORDER_END(f)					\
   (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f) -		\
    2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH(f))

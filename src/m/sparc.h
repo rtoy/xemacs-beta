@@ -46,6 +46,13 @@ NOTE-END  */
 
 #define EXPLICIT_SIGN_EXTEND
 
+/* Mask for address bits within a memory segment */
+
+#define SEGMENT_MASK (SEGSIZ - 1)
+
+#if ! defined (__NetBSD__) && ! defined (__linux__)
+/* This really belongs in s/sun.h.  */
+
 /* Data type of load average, as read out of kmem.  */
 
 #define LOAD_AVE_TYPE long
@@ -53,13 +60,6 @@ NOTE-END  */
 /* Convert that into an integer that is 100 for a load average of 1.0  */
 
 #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / FSCALE)
-
-/* Mask for address bits within a memory segment */
-
-#define SEGMENT_MASK (SEGSIZ - 1)
-
-#if ! defined (__NetBSD__) && ! defined (__linux__)
-/* This really belongs in s/sun.h.  */
 
 /* Say that the text segment of a.out includes the header;
    the header actually occupies the first few bytes of the text segment

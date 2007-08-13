@@ -1,3 +1,32 @@
+1998-01-02    Charles G. Waldman <cgw@pgt.com>
+
+	* frame.h:  fix erroneous FRAME_RIGHT_BORDER_START macro.
+	Corrects display glitch when toolbar is on the right.
+
+1998-01-02  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* emacs.c (make_arg_list_1): On Win32 platforms, GetModuleFileName
+	is consulted instead of argv[0] to get full path to the xemacs
+	executable.
+
+1998-01-01  SL Baur  <steve@altair.xemacs.org>
+
+	* m/sparc.h: Cleans up some warnings about unused variables in
+	getloadavg.c under Sparc/Linux.
+	From Stephen J. Turnbull <turnbull@sk.tsukuba.ac.jp>
+
+	* fileio.c (vars_of_fileio): Enable directory-sep-char always for
+	compatibility.
+
+	* emacs.c (main_1): Inhibit reloading dumped lisp when using
+	`-batch' or `-vanilla'.
+
+1997-12-31  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c: New variables `inhibit-update-dumped-lisp' and
+	`inhibit-update-autoloads'.
+	(vars_of_emacs): Initialize them.
+
 1997-12-29  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* msw-proc.c (mswindows_enqueue_magic_event): Made extern. User by 
