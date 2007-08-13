@@ -111,14 +111,14 @@
   `(("" "")
     ("foo" "Zm9v")
     ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-     "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVphYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ejAxMjM0
-NTY3ODk=")
+     "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVphYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ejAx
+MjM0NTY3ODk=")
     (,bt-allchars
-     "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4
-OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3Bx
-cnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmq
-q6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj
-5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==")
+     "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1
+Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWpr
+bG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6Ch
+oqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX
+2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==")
     ))
 
 ;;-----------------------------------------------------
@@ -154,101 +154,78 @@ q6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj
   (Assert (equal (bt-base64-decode-string (bt-remove-newlines encoded)) raw)))
 
 ;; Test errors
-(dolist (str `("foo" "AAC" "foo\0bar" ,bt-allchars))
-  (Assert (eq (bt-base64-decode-string str) nil)))
+(dolist (str `("foo" "AAC" "foo\0bar" "====" "Zm=9v" ,bt-allchars))
+  (Check-Error error (base64-decode-string str)))
 
-;; base64-decode-string is supposed to handle whitespaces anywhere in
-;; the string.  We test this in the cheesis manner possible, by
-;; inserting whitespaces at the beginning, at the end, in the middle
-;; of the string, and mixed.
+;; base64-decode-string should ignore non-base64 characters anywhere
+;; in the string.  We test this in the cheesiest manner possible, by
+;; inserting non-base64 chars at the beginning, at the end, and in the
+;; middle of the string.
 
-(defconst bt-whitespace-chars '(?\  ?\t ?\r ?\n ?\f ?\v))
+(defconst bt-base64-chars '(?A ?B ?C ?D ?E ?F ?G ?H ?I ?J
+			       ;; sometimes I hate Emacs indentation.
+			       ?K ?L ?M ?N ?O ?P ?Q ?R ?S ?T
+			       ?U ?V ?W ?X ?Y ?Z ?a ?b ?c ?d
+			       ?e ?f ?g ?h ?i ?j ?k ?l ?m ?n
+			       ?o ?p ?q ?r ?s ?t ?u ?v ?w ?x
+			       ?y ?z ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7
+			       ?8 ?9 ?+ ?/ ?=))
 
-(loop for (raw encoded) in bt-test-strings do
-  ;; Whitespace at the beginning
-  (dolist (char bt-whitespace-chars)
-    ;; One char...
-    (let ((mangled (concat (list char) encoded)))
-      (Assert (equal (bt-base64-decode-string mangled) raw))))
-  ;; ...all chars.
-  (let ((mangled (concat bt-whitespace-chars encoded)))
-    (Assert (equal (bt-base64-decode-string mangled) raw)))
+(defconst bt-nonbase64-chars (set-difference (mapcar #'identity bt-allchars)
+					     bt-base64-chars))
 
-  ;; Whitespace at the end
-  (dolist (char bt-whitespace-chars)
-    ;; One char...
-    (let ((mangled (concat encoded (list char))))
-      (Assert (equal (bt-base64-decode-string mangled) raw))))
-  ;; ...all chars.
-  (let ((mangled (concat encoded bt-whitespace-chars)))
-    (Assert (equal (bt-base64-decode-string mangled) raw)))
+(when nil
+  ;; This code crashes XEmacs!  This requires further investigation.
+  ;; I'm running Linux, and for me, XEmacs crashes in
+  ;; Fmapconcat()->mapcar1(), after a GC that thrashes the stack.
+  ;; Raymond Toy reports a similar crash under Solaris.
+  (loop for (raw encoded) in bt-test-strings do
+    (unless (equal raw "")
+      (let* ((middlepos (/ (1+ (length encoded)) 2))
+	     (left (substring encoded 0 middlepos))
+	     (right (substring encoded middlepos)))
+	;; Whitespace at the beginning, end, and middle.
+	(let ((mangled (concat bt-nonbase64-chars left bt-nonbase64-chars right
+			       bt-nonbase64-chars)))
+	  (Assert (equal (bt-base64-decode-string mangled) raw)))
 
-  (unless (equal raw "")
-    ;; Whitespace in the middle
-    (let* ((middlepos (/ (1+ (length encoded)) 2))
-	   (left (substring encoded 0 middlepos))
-	   (right (substring encoded middlepos)))
-      (dolist (char bt-whitespace-chars)
-	;; One char...
-	(let ((mangled (concat left (list char) right)))
-	  (Assert (equal (bt-base64-decode-string mangled) raw))))
-      ;; ...all chars.
-      (let ((mangled (concat left bt-whitespace-chars right)))
-	(Assert (equal (bt-base64-decode-string mangled) raw)))
-
-      ;; Whitespace at the beginning, end, and middle.
-      (dolist (char bt-whitespace-chars)
-	;; One char...
-	(let ((mangled (concat (list char) left (list char) right (list char))))
-	  (Assert (equal (bt-base64-decode-string mangled) raw))))
-      ;; ...all chars.
-      (let ((mangled (concat bt-whitespace-chars left bt-whitespace-chars right
-			     bt-whitespace-chars)))
-	(Assert (equal (bt-base64-decode-string mangled) raw)))
-
-      ;; Whitespace between every char.
-      (dolist (char bt-whitespace-chars)
-	;; One char...
-	(let ((mangled (concat (list char)
-			       ;; ENCODED with char between every character.
+	;; Whitespace between every char.
+	(let ((mangled (concat bt-nonbase64-chars
+			       ;; ENCODED with bt-nonbase64-chars
+			       ;; between every character.
 			       (mapconcat #'char-to-string encoded
-					  (char-to-string char))
-			       (list char))))
-	  (Assert (equal (bt-base64-decode-string mangled) raw))))
-      ;; ...all chars.
-      (let ((mangled (concat bt-whitespace-chars
-			     ;; ENCODED with bt-whitespace-chars
-			     ;; between every character.
-			     (mapconcat #'char-to-string encoded
-					(apply #'string bt-whitespace-chars))
-			     bt-whitespace-chars)))
+					  (apply #'string bt-nonbase64-chars))
+			       bt-nonbase64-chars)))
 	  (Assert (equal (bt-base64-decode-string mangled) raw))))))
+  )
 
 ;;-----------------------------------------------------
 ;; Mixed...
 ;;-----------------------------------------------------
 
-;; The crux of the whole base64 business is to ensure that
-;; (base64-decode-string (base64-decode-string FOO)) equals FOO.  The
-;; following stunts stress-test practically all aspects of the
-;; encoding and decoding process.
+;; The whole point of base64 is to ensure that an arbitrary sequence
+;; of bytes passes through gateway hellfire unscathed, protected by
+;; the asbestos suit of base64.  Here we test that
+;; (base64-decode-string (base64-decode-string FOO)) equals FOO for
+;; any FOO we can think of.  The following stunts stress-test
+;; practically all aspects of the encoding and decoding process.
 
-(loop for (string1 ignored) in bt-test-strings do
+(loop for (raw ignored) in bt-test-strings do
   (Assert (equal (bt-base64-decode-string
-		  (bt-base64-encode-string string1))
-		 string1))
+		  (bt-base64-encode-string raw))
+		 raw))
   (Assert (equal (bt-base64-decode-string
 		  (bt-base64-decode-string
 		   (bt-base64-encode-string
-		    (bt-base64-encode-string string1))))
-		 string1))
+		    (bt-base64-encode-string raw))))
+		 raw))
   (Assert (equal (bt-base64-decode-string
 		  (bt-base64-decode-string
 		   (bt-base64-decode-string
 		    (bt-base64-encode-string
 		     (bt-base64-encode-string
-		      (bt-base64-encode-string string1))))))
-		 string1))
+		      (bt-base64-encode-string raw))))))
+		 raw))
   (Assert (equal (bt-base64-decode-string
 		  (bt-base64-decode-string
 		   (bt-base64-decode-string
@@ -256,8 +233,8 @@ q6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj
 		     (bt-base64-encode-string
 		      (bt-base64-encode-string
 		       (bt-base64-encode-string
-			(bt-base64-encode-string string1))))))))
-		 string1))
+			(bt-base64-encode-string raw))))))))
+		 raw))
   (Assert (equal (bt-base64-decode-string
 		  (bt-base64-decode-string
 		   (bt-base64-decode-string
@@ -267,5 +244,5 @@ q6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj
 		       (bt-base64-encode-string
 			(bt-base64-encode-string
 			 (bt-base64-encode-string
-			  (bt-base64-encode-string string1))))))))))
-		 string1)))
+			  (bt-base64-encode-string raw))))))))))
+		 raw)))
