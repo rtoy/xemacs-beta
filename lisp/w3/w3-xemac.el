@@ -1,7 +1,7 @@
 ;;; w3-xemac.el --- XEmacs specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/01/19 20:06:02
-;; Version: 1.12
+;; Created: 1997/02/10 16:08:10
+;; Version: 1.14
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -80,6 +80,24 @@
 	(if current-menubar
 	    (add-submenu '("Help") (cons "WWW" (cdr w3-menu-help-menu))))))
 
+  ;; FIXME FIXME: Do sexy things to the default modeline for Emacs-W3
+  
+  ;; The following is a workaround for XEmacs 19.14 and XEmacs 20.0
+  ;; The text property implementation is badly broken - you could not have
+  ;; a text property with a `nil' value.  Bad bad bad.
+  (if (or (and (= emacs-major-version 20)
+	       (= emacs-minor-version 0))
+	  (and (= emacs-major-version 19)
+	       (= emacs-minor-version 14)))
+      (defun text-prop-extent-paste-function (ext from to)
+	(let ((prop (extent-property ext 'text-prop nil))
+	      (val nil))
+	  (if (null prop)
+	      (error "Internal error: no text-prop"))
+	  (setq val (extent-property ext prop nil))
+	  (put-text-property from to prop val nil)
+	  nil))
+    )
   )
 
 (defun w3-store-in-clipboard (str)

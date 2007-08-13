@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Customization Library
 
-Version: 1.30
+Version: 1.40
 
 @menu
 * Introduction::                
@@ -652,6 +652,12 @@ Ditto for @code{kill-emacs-query-functions}.
 @item
 Command to check if there are any customization options that
 does not belong to an existing group. 
+
+@item
+Optionally disable the point-cursor and instead highlight the selected
+item in XEmacs.  This is like the *Completions* buffer in XEmacs.
+Suggested by Jens Lautenbacher
+@samp{<jens@@lemming0.lem.uni-karlsruhe.de>}.@refill
 
 @end itemize
 

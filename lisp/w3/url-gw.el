@@ -1,7 +1,7 @@
 ;;; url-gw.el --- Gateway munging for URL loading
 ;; Author: wmperry
-;; Created: 1997/02/08 05:29:07
-;; Version: 1.4
+;; Created: 1997/02/10 01:00:01
+;; Version: 1.5
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -195,7 +195,7 @@ linked Emacs under SunOS 4.x")
 
     ;; If the user told us to do DNS for them, do it.
     (if url-gateway-broken-resolution
-	(setq host (url-nslookup-host host)))
+	(setq host (url-gateway-nslookup-host host)))
 
     (condition-case errobj
 	(setq conn (case gw-method

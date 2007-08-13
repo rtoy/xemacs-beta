@@ -5138,7 +5138,8 @@ The following symbols have predefined meanings:
                     `inside-margin', or `outside-margin') of the extent's
                     begin glyph.
 
- end-glyph-layout The layout policy of the extent's end glyph.  */
+ end-glyph-layout The layout policy of the extent's end glyph.
+*/
        (extent, property, value))
 {
   /* This function can GC if property is `keymap' */

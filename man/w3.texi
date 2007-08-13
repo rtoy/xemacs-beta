@@ -94,6 +94,7 @@ cannot be modified to your satisfaction, please send mail to the
 * Compatibility::               Explanation of compatibility with
                                 other browsers.
 * Stylesheets::	                How to control the look of web pages
+* Supported URLs::              What @sc{URL} schemes are supported.
 * MIME Support::                Support for @sc{mime}
 * Security::                    Various security methods supported
 * Non-Unix Operating Systems::	Special considerations necessary to get
@@ -106,13 +107,16 @@ cannot be modified to your satisfaction, please send mail to the
 * Future Directions::           Plans for future revisions
 
 Appendices:
-* Reporting Bugs::              How to report a bug in Emacs-W3
-* Installing SSL::              Turning on @sc{ssl} support
-* Mailcap Files::               An explanation of Mailcap files
+* Reporting Bugs::              How to report a bug in Emacs-W3.
+* Dealing with Firewalls::      How to get around your firewall.
+* Proxy Gateways::              Using a proxy gateway with Emacs-W3.
+* Installing SSL::              Turning on @sc{ssl} support.
+* Mailcap Files::               An explanation of Mailcap files.
+* Down with DoubleClick::       Annoyed by advertisements?  Read this!
 
 Indices:
-* General Index::               General Index
-* Key Index::                   Menus of command keys and their references
+* General Index::               General Index.
+* Key Index::                   Menus of command keys and their references.
 @end menu
 @end ifinfo
 
@@ -132,219 +136,25 @@ If the default page is not retrieved correctly at startup, you will have
 to do some customization.
 
 @menu
-* Using the Network::           Tell Emacs about your network setup.
-* Proxy Gateways::              Using an @sc{http} proxy
+* Downloading::                 Where to download Emacs-W3.
+* Building and Installing::     Compiling and installing from source.
 * Startup Files::               What is where, and why.
 * Preferences Panel::           Quick configuration of common options.
 @end menu
 
-@node Using the Network, Proxy Gateways, Getting Started, Getting Started
-@section Using the Network
-By default, Emacs can support standard @sc{tcp}/@sc{ip} network
-connections on almost all the platforms it runs on (Unix, @sc{vms},
-Windows, etc).  However, there are several situations where it is not
-sufficient.
+@node Downloading, Building and Installing, Getting Started, Getting Started
+@section Downloading
+:: WORK :: What you need, and why
+:: WORK :: Where to download Emacs, XEmacs, various platforms
+:: WORK :: Where to download Emacs-W3
+:: WORK :: Where to download related utilities (netpbm, xv, gimp, etc.)
 
-@table @b
-@cindex Firewalls
-@item Firewalls
-It is becoming more and more common to be behind a firewall or some
-other system that restricts your outbound network activity, especially
-if you are like me and away from the wonderful world of academia.
-Emacs-W3 has several different methods to get around firewalls (not to
-worry though - none of them should get you in trouble with the local
-@sc{mis} department.)
+@node Building and Installing, Startup Files, Downloading, Getting Started
+@section Building and Installing
+:: WORK :: Document makefile variables
+:: WORK :: Document what gets installed where, why
 
-@item Emacs cannot resolve hostnames.
-@cindex Faulty hostname resolvers
-@cindex Broken SunOS libc
-@cindex Hostname resolution
-This happens quite often on SunOS workstations and some ULTRIX machines.
-Some C libraries do not include the hostname resolver routines in their
-static libraries.  If Emacs was linked statically, and was not linked
-with the resolver libraries, it wil not be able to get to any machines
-off the local network.  This is characterized by being able to reach
-someplace with a raw ip number, but not its hostname
-(@url{http://129.79.254.191/} works, but
-@url{http://www.cs.indiana.edu/} doesn't).
-
-The best solution for this problem is to recompile Emacs, making sure to
-either link dynamically (if available on your operating system), or
-include the @file{-lresolv}.
-
-@cindex url-gateway-broken-resolution
-If you do not have the disk space or the appropriate permissions to
-recompile Emacs, another alternative is using the @file{nslookup}
-program to do hostname resolution.  To turn this on, set the variable
-@code{url-gateway-broken-resolution} in your @file{~/.emacs} file.  This
-runs the program specified by @code{url-gateway-nslookup-program} (by
-default "@code{nslookup}" to do hostname resolution.  This program should
-expect a single argument on the command line - the hostname to resolve,
-and should produce output similar to the standard Unix @file{nslookup}
-program:
-
-@example
-Name: www.cs.indiana.ed
-Address: 129.79.254.191
-@end example
-
-@cindex @sc{term}
-@item Using @sc{term} (or @sc{term}-like) Networking Software
-@sc{term} @footnote{@sc{term} is a user-level protocol for emulating
-@sc{ip} over a serial line.  More information is available at
-@url{ftp://sunsite.unc.edu/pub/Linux/apps/comm/term}} for slip-like
-access to the internet.
-
-@sc{note}: XEmacs and Emacs 19.22 or later have patches to enable native
-@sc{term} networking.  To enable it, @code{#define TERM} in the
-appropriate s/*.h file for the operating system, then change the
-@code{SYSTEM_LIBS} definition to include the @file{termnet} library that
-comes with the latest versions of @sc{term}.
-
-If you run into any problems with the native @sc{term} networking
-support in Emacs or XEmacs, please let @t{wmperry@@cs.indiana.edu} know,
-as he is responsible for the original support.
-@end table
-
-@vindex url-gateway-local-host-regexp
-Emacs-W3 has support for using the gateway mechanism for certain
-domains, and directly connecting to others.  The variable
-@code{url-gateway-local-host-regexp} controls this behaviour.  This is a
-regular expression @footnote{Please see the full Emacs distribution for
-a description of regular expressions} that matches local hosts that do
-not require the use of a gateway.  If @code{nil}, then all connections
-are made through the gateway.
-
-@vindex url-gateway-method
-Emacs-W3 supports several methods of getting around gateways.  The
-variable @code{url-gateway-method} controls which of these methods is
-used.  This variable can have several values (use these as symbol names,
-not strings), ie: @samp{(setq url-gateway-method 'telnet)}.  Possible
-values are:
-
-@table @dfn
-@item telnet
-Use this method if you must first telnet and log into a gateway host,
-and then run telnet from that host to connect to outside machines.
-
-:: WORK :: document telnet gw variables
-This section needs more information, specifically documenting the
-following variables.  For now, please do @key{C-h v} on the variable for
-more information.
-
-@table @code
-@item url-gateway-telnet-host
-@item url-gateway-telnet-parameters
-@item url-gateway-telnet-password-prompt
-@item url-gateway-telnet-puser-name
-@item url-gateway-prompt-pattern
-@end table
-
-@item rlogin
-This method is identical to the @code{telnet} method, but uses
-@file{rlogin} to log into the remote machine without having to send the
-username and password over the wire every time.
-
-:: WORK :: document rlogin gw variables
-This section needs more information, specifically documenting the
-following variables.  For now, please do @key{C-h v} on the variable for
-more information.
-
-@table @code
-@item url-gateway-rlogin-host
-@item url-gateway-rlogin-parameters
-@item url-gateway-rlogin-user-name
-@item url-gateway-prompt-pattern
-@end table
-
-@item tcp
-Masanobu UMEDA (@i{umerin@@mse.kyutech.ac.jp}) has written a very small
-application that you can run in a subprocess to do the network
-connections.
-
-@item @sc{socks}
-Use if the firewall has a @sc{socks} gateway running on it.
-
-:: WORK :: document socks variables
-This section needs more information, specifically documenting the
-following variables.  For now, please do @key{C-h v} on the variable for
-more information.
-
-@table @code
-@item socks-host
-@item socks-password
-@item socks-username
-@item socks-port
-@item socks-timeout
-@end table
-
-@c @item ssl
-@c This probably shouldn't be documented
-
-@item native
-This means that Emacs-W3 should use the builtin networking code of
-Emacs.  This should be used only if there is no firewall, or the Emacs
-source has already been hacked to get around the firewall.
-@end table
-
-Emacs-W3 should now be able to get outside the local network.  If none
-of this makes sense, its probably my fault.  Please check with the
-network administrators to see if they have a program that does most of
-this already, since somebody somewhere at the company has probably been
-through something similar to this before, and would be much more
-helpful/knowledgeable about the local setup than I would be.  But feel
-free to mail me as a last resort.
-@node Proxy Gateways, Startup Files , Using the Network, Getting Started
-@section Proxy Gateways
-@vindex url-proxy-services
-@cindex Proxy Servers
-@cindex Proxies
-@cindex Proxies, environment variables
-@cindex HTTP Proxy
-
-In late January 1993, Kevin Altis and Lou Montulli proposed and
-implemented a new proxy service.  This service requires the use of
-environment variables to specify a gateway server/port # to send
-protocol requests to.  Each protocol (@sc{http}, @sc{wais}, gopher,
-@sc{ftp}, etc.) can have a different gateway server.  The environment
-variables are @code{PROTOCOL}_proxy, where @code{PROTOCOL} is one of the
-supported network protocols (gopher, file, @sc{http}, @sc{ftp}, etc.)
-
-@cindex No Proxy
-@cindex Proxies, exclusion lists
-@vindex NO_PROXY
-For companies with internal intranets, it will usually be helpful to
-define a list of hosts that should be contacted directly, @b{not} sent
-through the proxy.  The @code{NO_PROXY} environment variable controls
-what hosts are able to be contacted directly.  This should be a comma
-separated list of hostnames, domain names, or a mixture of both.
-Asterisks can be used as a wildcard.  For example:
-
-@example
-NO_PROXY=*.aventail.com,home.com,*.seanet.com
-@end example
-
-tells Emacs-W3 to contact all machines in the @b{aventail.com} and
-@b{seanet.com} domains directly, as well as the machine named
-@b{home.com}.
-
-@vindex url-proxy-services
-@cindex Proxies, setting from lisp
-For those adventurous souls who enjoy writing regular expressions, all
-the proxy settings can be manipulated from Emacs-Lisp.  The variable
-@code{url-proxy-services} controls this.  This is an assoc list, keyed
-on the protocol type (@sc{http}, gopher, etc) in all lowercase.  The
-@code{cdr} of each entry should be the fully-specified @sc{url} of the proxy
-server to contact, or, in the case of the special "no_proxy" entry, a
-regular expression that matches any hostnames that should be contacted
-directly.
-
-@example
-(setq url-proxy-services '(("http"     . "http://proxy.aventail.com/")
-                           ("no_proxy" . "^.*\\(aventail\\|seanet\\)\.com")))
-@end example
-
-@node Startup Files, Preferences Panel, Proxy Gateways, Getting Started
+@node Startup Files, Preferences Panel, Building and Installing, Getting Started
 @section Startup Files
 @cindex Startup files
 @cindex Default stylesheet
@@ -355,9 +165,9 @@ and what each one does.  'profile' 'stylesheet' 'hotlist' 'history' etc.
 @node Preferences Panel, , Startup Files, Getting Started
 @section Preferences Panel
 @cindex Preferences
-@kindex M-x w3-edit-preferences
+@kindex M-x w3-preferences-edit
 :: WORK :: pref panel
-This should document the quick preferences panel.  M-x w3-edit-preferences
+This should document the quick preferences panel.  M-x w3-preferences-edit
 
 @node Basic Usage, Movement , Getting Started, Top
 @chapter Basic Usage
@@ -650,7 +460,7 @@ Takes one step forward along the path in the current history.  Has no
 effect if at the end of the session history.
 @end table
 
-@node Miscellaneous, , Action, Basic Usage
+@node Miscellaneous, Compatibility, Action, Basic Usage
 @section Miscellaneous
 @table @kbd
 @kindex M-m
@@ -753,7 +563,7 @@ a @code{completing-read} on only the links that have that type of
 relationship.
 @end table
 
-@node Compatibility, , , Top
+@node Compatibility, Emulation, Miscellaneous, Top
 @chapter Compatibility with other Browsers
 Due to the popularity of several other browsers, Emacs-W3 offers an easy
 transition to its much better way of life.  This ranges from being able
@@ -1007,7 +817,7 @@ backwards very easily along the path taken to reach a particular
 document.  To go forward, use the function @code{w3-forward-in-history},
 to go backward, use the function @code{w3-backward-in-history}.
 
-@node Global History, , Session History, Compatibility
+@node Global History, Stylesheets, Session History, Compatibility
 @section Global History
 :: WORK :: Document that the global history can have diff. formats
 Most web browsers also support the idea of a ``history'' of @sc{url}s the
@@ -1038,286 +848,924 @@ partial @sc{url}.  This is very useful, especially for very long @sc{url}s that
 are not in a hotlist, or for seeing all the pages from a particular web
 site before choosing which to retrieve.
 
-@node Stylesheets, General Formatting, Top, Top
+@node Stylesheets, Terminology, Global History, Top
 @chapter Stylesheets
-@cindex Customizing formatting
-@cindex Specifying Fonts
-@cindex Fonts
-@cindex Stylesheets
-@cindex Colors
-How Emacs-W3 formats a document is very customizable.  All control over
+The way in which Emacs-W3 formats a document is very customizable.  All
 formatting is now controlled by a default stylesheet set by the user
-with the @code{w3-default-stylesheet} variable.
+with the @code{w3-default-stylesheet} variable.  Emacs-W3 currently
+supports the @sc{W3C} recommendation for Cascading Style Sheets, Level 1
+(commonly known as @sc{CSS1}) with a few experimental items from other
+W3C proposals.  Wherever Emacs-W3 diverges from the specification, it
+will be clearly documented, and will be changed once a full standard is
+available.
 
-The following sections describe in more detail how to change the
-formatting of a document.
+Support for @sc{DSSSL} is progressing, but spare time is at an all-time
+low.  If anyone would like to help, please contact the author.
+
+The following sections closely parallel the @sc{CSS1} specification so
+it should be very easy to look up what Emacs-W3 supports when browsing
+through the @sc{CSS1} specification.  Please note that a lot of the text
+in the following sections comes directly from the specification as
+well.
 
 @ifinfo
 @menu
-* General Formatting::                 Changing general things about a
-                                       document.
-* Character based terminals::          Changing how a document is
-                                       displayed on a non-graphics
-                                       terminal (vt100, etc.@:) or if
-                                       @code{w3-delimit-emphasis} is @code{t}.
-* Graphics workstations::              Changing how a document is
-                                       displayed on a graphics terminal
-                                       (Xwindows, Windows, NeXTstep,
-                                       OS/2, etc.)
-* Inlined images::                     How to specify how Emacs-W3
-                                       handles inlined images/mpegs.
+* Terminology::                 Terms used in the rest of this chapter.
+* Basic Concepts::              Why are stylesheets useful?  Getting started.
+* Pseudo-Classes/Elements::     Special classes for elements.
+* The Cascade::                 How stylesheets are combined.
+* Properties::                  What properties you can set on elements.
+* Units::                       What you can set them to.
 @end menu
 @end ifinfo
-@node General Formatting, Character based terminals, Stylesheets, Stylesheets
-@section General formatting conventions
-@iftex
-@heading Setting the fill column
-@end iftex
-@ifinfo
-@center --------------------
-@center Setting the right margin
-@center --------------------
-@end ifinfo
-@cindex Margins
-@vindex fill-column
-@vindex w3-right-border
-Each time a document is parsed, the right margin is recalculated
-using the width of the current window and @code{w3-right-border}.
-@code{w3-right-border} is an integer specifying how much room at the
-right edge of the screen to leave blank.  The @code{fill-column} is set
-to @code{(- (window-width) @code{w3-right-border})}.
-@iftex
-@heading Formatting of directory listings
-@end iftex
-@ifinfo
-@center --------------------
-@center Formatting of directory listings
-@center --------------------
-@end ifinfo
-@vindex url-use-hypertext-dired
-When Emacs-W3 encounters a link to a directory (whether by local file access
-or via @sc{ftp}), it can either create an @sc{html} document on the fly, or use
-@code{dired-mode} to peruse the listing.  The variable
-@code{url-use-hypertext-dired} controls this behavior.
 
-If the value is @code{t}, Emacs-W3 uses @code{directory-files} to list them
-out and transform the directory into a hypertext document, then pass it
-through the parser like any other document.
+@node Terminology, Basic Concepts, Stylesheets, Stylesheets
+@section Terminology
 
-If the value is @code{nil}, just pass the directory off to dired using
-@code{find-file}.  Using this option loses all the hypertext abilities
-of Emacs-W3, and the users is unable to load documents in the directory
-directly into Emacs-W3 by clicking with the mouse, etc.
+@table @dfn
+@item attribute
+HTML attribute, ie: @samp{align=center} - align is the attribute.
+@item author
+The author of an HTML document.
+@item block-level element
+An element which has a line break before and after (e.g. 'H1' in @sc{HTML}).
+@item canvas
+The part of the UA's drawing surface onto which documents are rendered.
+@item child element
+A subelement in @sc{sgml} terminology.
+@item contextual selector
+A selector that matches elements based on their position in the document
+structure. A contextual selector consists of several simple
+selectors. E.g., the contextual selector 'H1.initial B' consists of two
+simple selectors, 'H1.initial' and 'B'.
+@item @sc{css}
+Cascading Style Sheets.
+@item declaration
+A property (e.g. 'font-size') and a corresponding value (e.g. '12pt').
+@item designer
+The designer of a style sheet.
+@item document
+@sc{html} document.
+@item element
+@sc{html} element.
+@item element type
+A generic identifier in @sc{sgml} terminology.
+@item fictional tag sequence
+A tool for describing the behavior of pseudo-classes and pseudo-elements.
+@item font size
+The size for which a font is designed. Typically, the size of a font is
+approximately equal to the distance from the bottom of the lowest letter
+with a descender to the top of the tallest letter with an ascender and
+(optionally) with a diacritical mark.
+@item @sc{html} extension
+Markup introduced by UA vendors, most often to support certain visual
+effects. The @sc{font}, @sc{center} and @sc{blink} elements are examples
+of HTML extensions, as is the @sc{bgcolor} attribute. One of the goals
+of @sc{css} is to provide an alternative to @sc{html} extensions.
+@item inline element
+An element which does not have a line break before and after
+(e.g. '@sc{strong}' in @sc{html})
+@item intrinsic dimensions
+The width and height as defined by the element itself, not imposed by
+the surroundings. In this specification it is assumed that all replaced
+elements -- and only replaced elements -- come with intrinsic
+dimensions.
+@item parent element
+The containing element in @sc{sgml} terminology.
+@item pseudo-element
+Pseudo-elements are used in @sc{css} selectors to address typographical
+items (e.g. the first line of an element) rather than structural
+elements.
+@item pseudo-class
+Pseudo-classes are used in @sc{css} selectors to allow information
+external to the @sc{html} source (e.g. the fact that an anchor has been
+visited or not) to classify elements.
+@item property
+A stylistic parameter that can be influenced through @sc{css}.
+@item reader
+The person for whom the document is rendered.
+@item replaced element
+An element that the @sc{css} formatter only knows the intrinsic
+dimensions of. In @sc{html}, @sc{img}, @sc{input}, @sc{textarea},
+@sc{select} and @sc{object} elements can be examples of replaced
+elements. E.g., the content of the @sc{img} element is often replaced by
+the image that the @sc{src} attribute points to.  @sc{css1} does not
+define how the intrinsic dimensions are found.
+@item rule
+A declaration (e.g. 'font-family: helvetica') and its selector
+(e.g. @sc{'H1'}).
+@item selector
+A string that identifies what elements the corresponding rule applies
+to. A selector can either be a simple selector (e.g. 'H1') or a
+contextual selector (e.g. @sc{'h1 b'}) which consists of several simple
+selectors.
+@item @sc{sgml}
+Standard Generalized Markup Language, of which @sc{html} is an
+application.
+@item simple selector
+A selector that matches elements based on the element type and/or
+attributes, and not he element's position in the document
+structure. E.g., 'H1.initial' is a simple selector.
+@item style sheet
+A collection of rules.
+@item @sc{ua}
+User Agent, often a web browser or web client.
+@item user
+Synonymous with reader.
+@item weight
+The priority of a rule.
+@end table
 
-@iftex
-@heading Formatting of gopher directories
-@end iftex
-@ifinfo
-@center --------------------
-@center Formatting of gopher directories
-@center --------------------
-@end ifinfo
-@vindex w3-use-hypertext-gopher
-@cindex Gopher+
-@cindex ASK blocks
-There are two different ways of viewing gopher links.  The built-in
-support that converts gopher directories into @sc{html}, or the
-@file{gopher.el} package by Scott Snyder (@i{snyder@@fnald0.fnal.gov}).
-The variable that controls this is @code{w3-use-hypertext-gopher}.  If
-set to @code{nil}, then @file{gopher.el} is used.  Any other value
-causes Emacs-W3 to use its internal gopher support.  If using
-@file{gopher.el}, all the hypertext capabilities of Emacs-W3 are lost.
-All the functionality of @file{gopher.el} is now available in the
-hypertext version, and the hypertext version supports Gopher+ and ASK
-blocks. 
+@node Basic Concepts, Pseudo-Classes/Elements, Terminology, Stylesheets
+@section Basic Concepts
+Designing simple style sheets is easy. One needs only to know a little
+HTML and some basic desktop publishing terminology. E.g., to set the
+text color of 'H1' elements to blue, one can say:
 
-@vindex w3-gopher-labels
-The main way to control the display of gopher directories is by the
-variable @code{w3-gopher-labels}.  This variable controls the text that
-is inserted at the front of each item.  This is an assoc list of gopher
-types (as one character strings), and a string to insert just after the
-list item.  All the normal gopher types are defined.  Entries should be
-similar to: @samp{("0" . "(TXT)")}.  I have tried to keep all the tags
-to three characters plus two parentheses. 
-@iftex
-@heading Creating a horizontal rule
-@end iftex
-@ifinfo
-@center --------------------
-@center Creating a horizontal rule
-@center --------------------
-@end ifinfo
-@vindex w3-horizontal-rule-char
-Horizontal rules (@b{<HR>} tags in @sc{html}[+]) are used to separate chunks
-of a document, and is meant to be rendered as a solid line across the
-page.  Some terminals display characters differently, so the variable
-@code{w3-horizontal-rule-char} controls which character is used to draw
-a horizontal bar.  This variable must be the ASCII value of the
-character, @b{not a string}.  The variable is passed through
-@code{make-string} whenever a horizontal rule of a certain width is
-necessary.
+@example 
+  H1 @{ color: blue @}
+@end example
 
-@node Character based terminals, Graphics workstations, General Formatting, Stylesheets
-@section On character based terminals
-@vindex w3-delimit-emphasis
-On character based terminals, there is no easy way to show that a
-certain range of text is in bold or italics.  If the variable
-@code{w3-delimit-emphasis} is non-@code{nil}, then Emacs-W3 can insert
-characters before and after character formatting commands in @sc{html}
-documents.  The defaul value of @code{w3-delimit-emphasis} is
-automatically set based on the type of window system and version of
-Emacs being used. 
+The example above is a simple CSS rule. A rule consists of two main
+parts: selector ('H1') and declaration ('color: blue'). The declaration
+has two parts: property ('color') and value ('blue'). While the example
+above tries to influence only one of the properties needed for rendering
+an HTML document, it qualifies as a style sheet on its own. Combined
+with other style sheets (one fundamental feature of CSS is that style
+sheets are combined) it will determine the final presentation of the
+document.
 
-@vindex w3-header-chars-assoc
-:: WORK ::
+The selector is the link between the HTML document and the style sheet, and
+all HTML element types are possible selectors.
 
-@findex w3-upcase-region
-@code{w3-header-chars-assoc} is an assoc list of header tags and a list
-of formatting instructions.  The @code{car} of the list is the level of
-the header (1--6).  The rest of the list should contain three items.
-The first item is text to insert before the header.  The second item is
-text to insert after the header.  Both should have reserved characters
-converted to their @sc{html}[+] entity definitions.  The third item is a
-function to call on the area the header is in.  This function is called
-with arguments specifying the start and ending character positions of
-the header.  The starting point is always first.  To convert a region to
-upper case, please use @code{w3-upcase-region} instead of
-@code{upcase-region}, so that entities are converted properly.
+@node Pseudo-Classes/Elements, The Cascade, Basic Concepts, Stylesheets
+@section Pseudo-Classes/Elements
+In @sc{css1}, style is normally attached to an element based on its
+position in the document structure. This simple model is sufficient for
+a wide variety of styles, but doesn't cover some common effects. The
+concept of pseudo-classes and pseudo-elements extend addressing in
+@sc{css1} to allow external information to influence the formatting
+process.
 
-@node Graphics workstations, Inlined images, Character based terminals, Stylesheets
-@section With graphics workstations
-Starting with the first public release of version 2.3.0, all formatting
-is controlled by the use of stylesheets.
+Pseudo-classes and pseudo-elements can be used in @sc{css} selectors,
+but do not exist in the @sc{html} source. Rather, they are "inserted" by
+the @sc{ua} under certain conditions to be used for addressing in style
+sheets. They are referred to as "classes" and "elements" since this is a
+convenient way of describing their behavior. More specifically, their
+behavior is defined by a fictional tag sequence.
 
-:: WORK :: Graphic workstation stuff - redo for stylesheets
+Pseudo-elements are used to address sub-parts of elements, while
+pseudo-classes allow style sheets to differentiate between different
+element types.
 
-@node Inlined images, , Graphics workstations, Stylesheets
-@cindex Inlined images
-@cindex Images
-@cindex Movies
-@cindex Inlined MPEGs
-@cindex MPEGs
-When running in Lucid Emacs 19.10 or XEmacs 19.11 and higher, Emacs-W3 can
-display inlined images and MPEG movies.  There are several variables that
-control how and when the images are displayed.
+The only support pseudo-classes in Emacs-W3 are on the anchor tag
+(<a>...</a>).
 
-@cindex Netpbm
-@cindex Pbmplus
-@vindex w3-graphic-converter-alist
-Since Lucid/XEmacs only natively understands XPixmaps and XBitmaps, GIFs
-and other image types must first be converted to one of these formats.
-To do this, the @b{netpbm utilities}@footnote{Available via anonymous
-ftp from ftp.x.org:/R5contrib/netpbm-1mar1994.tar.gz, and most large ftp
-sites.} programs are normally used.  This is a suite of freeware image
-conversion tools.  The variable @code{w3-graphic-converter-alist}
-controls how each image type is converted.  This is an assoc list, keyed
-on the @sc{mime} content-type.  The @code{car} is the content-type, and
-the @code{cdr} is a string suitable to pass to @code{format}.  A %s in
-this string will be replaced with a converter from the ppm image format
-to an XPixmap (or XBitmap, if being run on a monochrome display).  By
-default, the Emacs-W3 browser has converters for:
+User agents commonly display newly visited anchors differently from
+older ones. In @sc{css1}, this is handled through pseudo-classes on the
+'A' element:
+
+@example
+  A:link @{ color: red @}       /* unvisited link */
+  A:visited @{ color: blue @}   /* visited links */
+  A:active @{ color: lime @}    /* active links */
+@end example
+
+All 'A' elements with an 'HREF' attribute will be put into one and only
+one of these groups (i.e. target anchors are not affected). UAs may
+choose to move an element from 'visited' to 'link' after a certain
+time. An 'active' link is one that is currently being selected (e.g. by
+a mouse button press) by the reader.
+
+The formatting of an anchor pseudo-class is as if the class had been
+inserted manually. A @sc{ua} is not required to reformat a currently
+displayed document due to anchor pseudo-class transitions. E.g., a style
+sheet can legally specify that the 'font-size' of an 'active' link
+should be larger that a 'visited' link, but the UA is not required to
+dynamically reformat the document when the reader selects the 'visited'
+link.
+
+Pseudo-class selectors do not match normal classes, and vice versa. The
+style rule in the example below will therefore not have any influence:
+
+@example
+  A:link @{ color: red @}
+
+  <A CLASS=link NAME=target5> ... </A>
+@end example
+
+In @sc{css1}, anchor pseudo-classes have no effect on elements other
+than 'A'. Therefore, the element type can be omitted from the selector:
+
+@example
+  A:link @{ color: red @}
+  :link @{ color: red @}
+@end example
+
+The two selectors above will select the same elements in CSS1.
+
+Pseudo-class names are case-insensitive.
+
+Pseudo-classes can be used in contextual selectors:
+
+@example
+  A:link IMG @{ border: solid blue @}
+@end example
+
+Also, pseudo-classes can be combined with normal classes:
+
+@example
+  A.external:visited @{ color: blue @}
+
+  <A CLASS=external HREF="http://out.side/">external link</A>
+@end example
+
+If the link in the above example has been visited, it will be rendered
+in blue. Note that normal class names precede pseudo-classes in the
+selector.
+
+@node The Cascade, Properties, Pseudo-Classes/Elements, Stylesheets
+@section The Cascade
+
+In @sc{css}, more than one style sheet can influence the presentation
+simultaneously. There are two main reasons for this feature: modularity
+and author/reader balance.
+
+@table @i
+@item modularity
+A style sheet designer can combine several (partial) style sheets to
+reduce redundancy:
+
+@example
+  @@import url(http://www.style.org/pastoral);
+  @@import url(http://www.style.org/marine);
+
+  H1 @{ color: red @}     /* override imported sheets */
+@end example
+@item author/reader balance
+Both readers and authors can influence the presentation through style
+sheets. To do so, they use the same style sheet language thus reflecting
+a fundamental feature of the web: everyone can become a publisher. The
+@sc{ua} is free to choose the mechanism for referencing personal style
+sheets.
+@end table
+
+Sometimes conflicts will arise between the style sheets that influence
+the presentation. Conflict resolution is based on each style rule having
+a weight. By default, the weights of the reader's rules are less than
+the weights of rules in the author's documents. I.e., if there are
+conflicts between the style sheets of an incoming document and the
+reader's personal sheets, the author's rules will be used. Both reader
+and author rules override the @sc{ua}'s default values.
+
+The imported style sheets also cascade with each other, in the order
+they are imported, according to the cascading rules defined below. Any
+rules specified in the style sheet itself override rules in imported
+style sheets. That is, imported style sheets are lower in the cascading
+order than rules in the style sheet itself. Imported style sheets can
+themselves import and override other style sheets, recursively.
+
+In @sc{css1}, all '@@import' statements must occur at the start of a
+style sheet, before any declarations. This makes it easy to see that
+rules in the style sheet itself override rules in the imported style
+sheets.
+
+NOTE: The use of !important in @sc{css} stylesheets is unsupported at
+this time.
+
+Conflicting rules are intrinsic to the CSS mechanism. To find the value
+for an element/property combination, the following algorithm must be
+followed:
 
 @enumerate
 @item
-image/x-xbitmap
+Find all declarations that apply to the element/property in
+question. Declarations apply if the selector matches the element in
+question. If no declarations apply, the inherited value is used. If
+there is no inherited value (this is the case for the 'HTML' element and
+for properties that do not inherit), the initial value is used.
+@item 
+Sort the declarations by explicit weight: declarations marked
+'!important' carry more weight than unmarked (normal) declarations.
 @item
-image/xbitmap
+Sort by origin: the author's style sheets override the reader's style
+sheet which override the UA's default values. An imported style sheet
+has the same origin as the style sheet from which it is imported.
 @item
-image/xbm
+Sort by specificity of selector: more specific selectors will override
+more general ones. To find the specificity, count the number of ID
+attributes in the selector (a), the number of CLASS attributes in the
+selector (b), and the number of tag names in the selector
+(c). Concatenating the three numbers (in a number system with a large
+base) gives the specificity. Some examples:
+@example
+  LI            @{...@}  /* a=0 b=0 c=1 -> specificity =   1 */
+  UL LI         @{...@}  /* a=0 b=0 c=2 -> specificity =   2 */
+  UL OL LI      @{...@}  /* a=0 b=0 c=3 -> specificity =   3 */
+  LI.red        @{...@}  /* a=0 b=1 c=1 -> specificity =  11 */
+  UL OL LI.red  @{...@}  /* a=0 b=1 c=3 -> specificity =  13 */ 
+  #x34y         @{...@}  /* a=1 b=0 c=0 -> specificity = 100 */ 
+@end example
+Pseudo-elements and pseudo-classes are counted as normal elements and
+classes, respectively.
 @item
-image/gif
-@item
-image/jpeg
-@item
-image/x-fax
-@item
-image/x-raster
-@item
-image/windowdump
-@item
-image/x-icon
-@item
-image/portable-graymap
-@item
-image/portable-pixmap
-@item
-image/x-pixmap
-@item
-image/x-xpixmap
-@item
-image/pict
-@item
-image/x-macpaint
-@item
-image/x-targa
-@item
-image/tiff
+Sort by order specified: if two rules have the same weight, the latter
+specified wins. Rules in imported style sheets are considered to be
+before any rules in the style sheet itself.
 @end enumerate
 
-@vindex w3-color-max-blue
-@vindex w3-color-max-green
-@vindex w3-color-max-red
-@vindex w3-color-use-reducing
-@vindex w3-color-filter
-Since most displays are (sadly) not 24-bit, Emacs-W3 can automatically
-dither an image, so that it does not fill up the application' colormap too
-quickly.  If @code{w3-color-use-reducing} is non-@code{nil}, then the
-images will use reduced colors.  If @code{w3-color-filter} is @code{eq} to
-@code{'ppmquant}, then the ppmquant program will be used.  If @code{eq} to
-@code{'ppmdither}, then the ppmdither program will be used.  The ppmdither
-program tends to give better results.  The values of
-@code{w3-color-max-red}, @code{w3-color-max-blue}, and
-@code{w3-color-max-green} control how many colors the inlined images can
-use.  If using ppmquant, then the product of these three variables is used
-as the maximum number of colors per image.  If using ppmdither, then only
-the set number of color cells can be allocated per image.  See the man
-pages for ppmdither and ppmquant for more information on how the dithering
-is actually done.  @code{w3-color-filter} may also be a string, specifying
-exactly what external filter to use.  An example is: @samp{ppmquant -fs
--map ~/pixmaps/colormap.ppm}.
+The search for the property value can be terminated whenever one rule
+has a higher weight than the other rules that apply to the same
+element/property combination.
 
-@cindex MPEGs
-@cindex Inlined animations
-When running in XEmacs 19.11 or XEmacs 19.12, Emacs-W3 can insert an
-MPEG movie in the middle of a buffer.  
+This strategy gives author's style sheets considerably higher weight
+than those of the reader. It is therefore important that the reader has
+the ability to turn off the influence of a certain style sheet,
+e.g. through a pull-down menu.
 
-:: WORK :: Need a pointer to the new EMBED Internet Draft ::
+A declaration in the 'STYLE' attribute of an element has the same weight
+as a declaration with an ID-based selector that is specified at the end
+of the style sheet:
 
-The basic syntax is:
 @example
-<embed href="somevideo.mpg" type="video/mpeg">
+<STYLE TYPE="text/css">
+  #x97z @{ color: blue @}
+</STYLE>
+
+<P ID=x97z STYLE="color: red">
 @end example
 
-@vindex w3-mpeg-args
-@vindex w3-mpeg-program
-This requires a special version of the standard @file{mpeg_play} mpeg
-player.  Patches against the 2.0 version are available at
-ftp://ftp.cs.indiana.edu/pub/elisp/w3/mpeg_patch.  The variable
-@code{w3-mpeg-program} should point to this executable, and
-@code{w3-mpeg-args} should be a list of any additional arguments to be
-passed to the player.  By default, this includes @var{-loop}, so the
-mpeg plays continuously.
+In the above example, the color of the 'P' element would be
+red. Although the specificity is the same for both declarations, the
+declaration in the 'STYLE' attribute will override the one in the
+'STYLE' element because of cascading rule number 5.
 
-@cindex Delaying inlined images
-@cindex Delaying inlined animations
-@vindex w3-delay-image-loads
-@vindex w3-delay-mpeg-loads
-Because images and movies can take up an incredible amount of bandwidth,
-it is useful to be able to control whether they are loaded or not.  By
-default, images and movies are loaded automatically, but the variables
-@code{w3-delay-image-loads} and @code{w3-delay-mpeg-loads} control this.
-If set to non-@code{nil}, then the images or movies are not
-loaded until explicitly requested by the user.
+The UA may choose to honor other stylistic HTML attributes, for example
+'ALIGN'. If so, these attributes are translated to the corresponding CSS
+rules with specificity equal to 1. The rules are assumed to be at the
+start of the author style sheet and may be overridden by subsequent
+style sheet rules. In a transition phase, this policy will make it
+easier for stylistic attributes to coexist with style sheets.
 
-@cindex Loading delayed images
-@cindex Loading delayed movies
-@findex w3-load-delayed-images
-@findex w3-load-delayed-mpegs
-To load any delayed images, use the function
-@code{w3-load-delayed-images}.  Its counterpart for delayed movies is
-@code{w3-load-delayed-mpegs}
+@node Properties, Font Properties, The Cascade, Stylesheets
+@section Properties
+@ifinfo
+@menu
+* Font Properties::             Selecting fonts, styles, and sizes.
+* Colors and Backgrounds::      Controlling colors, front and back.
+* Text Properties::             Alignment, decoration, and more!
+* Box Properties::              Borders, padding, and margins, oh my!
+* Classification::              Changing whitespace and display policies.
+* Media Selection::             
+* Speech Properties::           
+@end menu
+@end ifinfo
 
-@node MIME Support, Adding MIME types based on file extensions, , Top
+@node Font Properties, font-family, Properties, Properties
+@subsection Font Properties
+Setting font properties will be among the most common uses of style
+sheets.  Unfortunately, there exists no well-defined and universally
+accepted taxonomy for classifying fonts, and terms that apply to one
+font family may not be appropriate for others. E.g. 'italic' is commonly
+used to label slanted text, but slanted text may also be labeled as
+being @b{Oblique}, @b{Slanted}, @b{Incline}, @b{Cursive} or
+@b{Kursiv}. Therefore it is not a simple problem to map typical font
+selection properties to a specific font.
+
+The properties defined by CSS1 are described in the following sections.
+@ifinfo
+@menu
+* font-family::                 Groups of fonts.
+* font-style::                  Normal, italic, or oblique?
+* font-variant::                Small-caps, etc.
+* font-weight::                 How bold can you go?
+* font-size::                   How big is yours?
+* font::                        Shorthand for all of the above.
+@end menu
+@end ifinfo
+
+@node font-family, font-style, Font Properties, Font Properties
+@subsubsection font-family
+
+@multitable @columnfractions .20 .8
+@item Supported Values: @tab [[<family-name> | <generic-family>],]* [<family-name> | <generic-family>]
+@item Initial: @tab User specific
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
+@end multitable
+The value is a prioritized list of font family names and/or generic
+family names. Unlike most other CSS1 properties, values are separated
+by a comma to indicate that they are alternatives:
+
+@example
+  BODY @{ font-family: gill, helvetica, sans-serif @}
+@end example
+
+There are two types of list values:
+
+@table @b
+@item <family-name>
+The name of a font family of choice. In the last example, "gill" and
+"helvetica" are font families.
+@item <generic-family>
+In the example above, the last value is a generic family name. The
+following generic families are defined:
+@itemize @bullet
+@item
+'serif' (e.g. Times)
+@item
+'sans-serif' (e.g. Helvetica)
+@item
+'cursive' (e.g. Zapf-Chancery)
+@item
+'fantasy' (e.g. Western)
+@item
+'monospace' (e.g. Courier)
+@end itemize
+@end table
+
+Style sheet designers are encouraged to offer a generic font family as a
+last alternative.
+
+Font names containing whitespace should be quoted:
+
+@example
+  BODY @{ font-family: "new century schoolbook", serif @}
+  
+  <BODY STYLE="font-family: 'My own font', fantasy">
+@end example
+
+If quoting is omitted, any whitespace characters before and after the
+font name are ignored and any sequence of whitespace characters inside
+the font name is converted to a single space.
+
+@node font-style, font-variant, font-family, Font Properties
+@subsubsection font-style
+
+@multitable @columnfractions .2 .8
+@item Supported Values: @tab normal | italic | oblique
+@item Initial: @tab normal
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
+@end multitable
+
+The 'font-style' property selects between normal (sometimes referred to
+as "roman" or "upright"), italic and oblique faces within a font family.
+
+A value of 'normal' selects a font that is classified as 'normal' in the
+UA's font database, while 'oblique' selects a font that is labeled
+'oblique'. A value of 'italic' selects a font that is labeled 'italic',
+or, if that is not available, one labeled 'oblique'.
+
+The font that is labeled 'oblique' in the UA's font database may
+actually have been generated by electronically slanting a normal font.
+
+Fonts with Oblique, Slanted or Incline in their names will typically be
+labeled 'oblique' in the UA's font database. Fonts with Italic, Cursive
+or Kursiv in their names will typically be labeled 'italic'.
+
+@example
+  H1, H2, H3 @{ font-style: italic @}
+  H1 EM @{ font-style: normal @}
+@end example
+
+In the example above, emphasized text within 'H1' will appear in a
+normal face.
+
+@node font-variant, font-weight, font-style, Font Properties
+@subsubsection font-variant
+
+@multitable @columnfractions .2 .8
+@item Value:             @tab normal | small-caps
+@item Initial:           @tab normal
+@item Applies to:        @tab all elements
+@item Inherited:         @tab yes
+@item Percentage values: @tab N/A
+@end multitable
+
+Another type of variation within a font family is the small-caps. In a
+small-caps font the lower case letters look similar to the uppercase
+ones, but in a smaller size and with slightly different proportions. The
+'font-variant' property selects that font.
+
+A value of 'normal' selects a font that is not a small-caps font,
+'small-caps' selects a small-caps font. It is acceptable (but not
+required) in CSS1 if the small-caps font is a created by taking a normal
+font and replacing the lower case letters by scaled uppercase
+characters. As a last resort, uppercase letters will be used as
+replacement for a small-caps font.
+
+The following example results in an 'H3' element in small-caps, with
+emphasized words in oblique small-caps:
+
+@example
+  H3 @{ font-variant: small-caps @}
+  EM @{ font-style: oblique @}
+@end example
+
+There may be other variants in the font family as well, such as fonts
+with old-style numerals, small-caps numerals, condensed or expanded
+letters, etc. CSS1 has no properties that select those.
+
+@node font-weight, font-size, font-variant, Font Properties
+@subsubsection font-weight
+
+@multitable @columnfractions .2 .8
+@item Supported Values: @tab normal | bold | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900
+@item Unsupported Values: @tab bolder | lighter
+@item Initial: @tab normal
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
+@end multitable
+
+The 'font-weight' property selects the weight of the font. The values
+'100' to '900' form an ordered sequence, where each number indicates a
+weight that is at least as dark as its predecessor. The keyword 'normal'
+is synonymous with '400', and 'bold' is synonymous with '700'. Keywords
+other than 'normal' and 'bold' have been shown to be often confused with
+font names and a numerical scale was therefore chosen for the 9-value
+list.
+
+@example
+  P @{ font-weight: normal @}   /* 400 */
+  H1 @{ font-weight: 700 @}     /* bold */
+@end example
+
+The 'bolder' and 'lighter' values select font weights that are relative
+to the weight inherited from the parent:
+
+@example
+  STRONG @{ font-weight: bolder @}
+@end example
+
+There is no guarantee that there will be a darker face for each of the
+'font-weight' values; for example, some fonts may have only a normal and
+a bold face, others may have eight different face weights. There is no
+guarantee on how a UA will map font faces within a family to weight
+values. The only guarantee is that a face of a given value will be no
+less dark than the faces of lighter values.
+
+@node font-size, font, font-weight, Font Properties
+@subsubsection font-size
+
+@multitable @columnfractions .2 .8
+@item Supported Values: @tab <absolute-size> | <length>
+@item Unsupported Values: @tab <percentage> | <relative-size>
+@item Initial: @tab medium
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@item Percentage values: @tab relative to parent element's font size
+@end multitable
+
+@table @b
+@item <absolute-size>
+An <absolute-size> keyword is an index to a table of font sizes computed
+and kept by the UA. Possible values are:
+@itemize @bullet
+@item
+xx-small
+@item
+x-small
+@item
+small
+@item
+medium
+@item
+large
+@item
+x-large
+@item
+xx-large
+@end itemize
+
+On a computer screen a scaling factor of 1.5 is suggested between
+adjacent indexes; if the 'medium' font is 10pt, the 'large' font could
+be 15pt. Different media may need different scaling factors. Also, the
+UA should take the quality and availability of fonts into account when
+computing the table. The table may be different from one font family to
+another.
+@item <relative-size>
+A <relative-size> keyword is interpreted relative to the table of font
+sizes and the font size of the parent element. Possible values are
+@b{larger} or @b{smaller}. For example, if the parent element has a font
+size of 'medium', a value of 'larger' will make the font size of the
+current element be 'large'. If the parent element's size is not close to
+a table entry, the UA is free to interpolate between table entries or
+round off to the closest one. The UA may have to extrapolate table
+values if the numerical value goes beyond the keywords.
+@end table
+
+Length and percentage values should not take the font size table into
+account when calculating the font size of the element.
+
+Negative values are not allowed.
+
+On all other properties, 'em' and 'ex' length values refer to the font
+size of the current element. On the 'font-size' property, these length
+units refer to the font size of the parent element.
+
+Note that an application may reinterpret an explicit size, depending on
+the context. E.g., inside a VR scene a font may get a different size
+because of perspective distortion.
+
+Examples:
+
+@example
+  P @{ font-size: 12pt; @}
+  BLOCKQUOTE @{ font-size: larger @}
+  EM @{ font-size: 150% @}
+  EM @{ font-size: 1.5em @}
+@end example
+
+If the suggested scaling factor of 1.5 is used, the last three
+declarations are identical.
+
+@node font, Colors and Backgrounds, font-size, Font Properties
+@subsubsection font
+
+@multitable @columnfractions .2 .8
+@item Value: @tab [ <font-style> || <font-variant> || <font-weight> ]? <font-size> [ / <line-height> ]? <font-family>
+@item Initial: @tab not defined for shorthand properties
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@item Percentage values: @tab allowed on <font-size> and <line-height>
+@end multitable
+The 'font' property is a shorthand property for setting 'font-style'
+'font-variant' 'font-weight' 'font-size', 'line-height' and
+'font-family' at the same place in the style sheet. The syntax of this
+property is based on a traditional typographical shorthand notation to
+set multiple properties related to fonts.
+
+For a definition of allowed and initial values, see the previously
+defined properties. Properties for which no values are given are set to
+their initial value.
+
+@example
+  P @{ font: 12pt/14pt sans-serif @}
+  P @{ font: 80% sans-serif @}
+  P @{ font: x-large/110% "new century schoolbook", serif @}
+  P @{ font: bold italic large Palatino, serif @}
+  P @{ font: normal small-caps 120%/120% fantasy @}
+@end example
+
+In the second rule, the font size percentage value ('80%') refers to the
+font size of the parent element. In the third rule, the line height
+percentage refers to the font size of the element itself.
+
+In the first three rules above, the 'font-style', 'font-variant' and
+'font-weight' are not explicitly mentioned, which means they are all
+three set to their initial value ('normal'). The fourth rule sets the
+'font-weight' to 'bold', the 'font-style' to 'italic' and implicitly
+sets 'font-variant' to 'normal'.
+
+The fifth rule sets the 'font-variant' ('small-caps'), the 'font-size'
+(120% of the parent's font), the 'line-height' (120% times the font
+size) and the 'font-family' ('fantasy'). It follows that the keyword
+'normal' applies to the two remaining properties: 'font-style' and
+'font-weight'.
+
+@node Colors and Backgrounds, color, font, Properties
+@subsection Colors and Backgrounds
+These properties describe the color (often called foreground color) and
+background of an element (i.e. the surface onto which the content is
+rendered). One can set a background color and/or a background image. The
+position of the image, if/how it is repeated, and whether it is fixed or
+scrolled relative to the canvas can also be set.
+
+The 'color' property inherits normally. The background properties do not
+inherit, but the parent element's background will shine through by
+default because of the initial 'transparent' value on
+'background-color'.
+
+NOTE: Currently, Emacs-W3 can only show background images under XEmacs.
+Emacs 19 doesn't have the support in its display code yet.
+
+@ifinfo
+@menu
+* color::		        Foreground colors.
+* background-color::		Background colors.
+* background-image::		Background images.
+* background-repeat::		Controlling repeating of background images.
+* background-attachment::	Where background images are drawn.
+* background-position::		Where background images are drawn.
+* background::		        Shorthand for all background properties.
+@end menu
+@end ifinfo
+
+@node color, background-color, Colors and Backgrounds, Colors and Backgrounds
+@subsubsection color
+@multitable @columnfractions .2 .8
+@item Value: @tab <color>
+@item Initial: @tab User specific
+@item Applies to: @tab  all elements
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
+@end multitable
+
+This property describes the text color of  an element (often referred to
+as the foreground color). There are different ways to specify red:
+
+@example
+  EM @{ color: red @}              /* natural language */
+  EM @{ color: rgb(255,0,0) @}     /* RGB range 0-255   */
+@end example
+
+See @ref{Color Units} for a description of possible color values.
+
+@node background-color, background-image, color, Colors and Backgrounds
+@subsubsection background-color
+@multitable @columnfractions .2 .8
+@item Value: @tab <color> | transparent
+@item Initial: @tab transparent
+@item Applies to: @tab all elements
+@item Inherited: @tab no
+@item Percentage values: @tab N/A
+@end multitable
+
+This property sets the background color of an element.
+
+@example
+  H1 @{ background-color: #F00 @}
+@end example
+
+@node background-image, background-repeat, background-color, Colors and Backgrounds
+@subsubsection background-image
+@multitable @columnfractions .2 .8
+@item Value: @tab <url> | none
+@item Initial: @tab none
+@item Applies to: @tab all elements
+@item Inherited: @tab no
+@item Percentage values: @tab N/A
+@end multitable
+
+This property sets the background image of an element. When setting a
+background image, one should also set a background color that will be
+used when the image is unavailable. When the image is available, it is
+overlaid on top of the background color.
+
+@example
+  BODY @{ background-image: url(marble.gif) @}
+  P @{ background-image: none @}
+@end example
+
+@node background-repeat, background-attachment, background-image, Colors and Backgrounds
+@subsubsection background-repeat
+This property is not supported at all under Emacs-W3.
+
+@node background-attachment, background-position, background-repeat, Colors and Backgrounds
+@subsubsection background-attachment
+This property is not supported at all under Emacs-W3.
+
+@node background-position, background, background-attachment, Colors and Backgrounds
+@subsubsection background-position
+This property is not supported at all under Emacs-W3.
+
+@node background, Text Properties, background-position, Colors and Backgrounds
+@subsubsection background
+@multitable @columnfractions .2 .8
+@item Value: @tab <background-color> || <background-image> || <background-repeat> || <background-attachment> || <background-position>
+@item Initial: @tab not defined for shorthand properties
+@item Applies to: @tab all elements
+@item Inherited: @tab no
+@item Percentage values: @tab allowed on <background-position>
+@end multitable
+
+The 'background' property is a shorthand property for setting the
+individual background properties (i.e., 'background-color',
+'background-image', 'background-repeat', 'background-attachment' and
+'background-position') at the same place in the style sheet.
+
+Possible values on the 'background' properties are the set of all
+possible values on the individual properties.
+
+@example 
+  BODY @{ background: red @}
+  P @{ background: url(chess.png) gray 50% repeat fixed @}
+@end example
+
+The 'background' property always sets all the individual background
+properties. In the first rule of the above example, only a value for
+'background-color' has been given and the other individual properties
+are set to their initial value. In the second rule, all individual
+properties have been specified.
+
+@node Text Properties, word-spacing, background, Properties
+@subsection Text Properties
+
+@ifinfo
+@menu
+* word-spacing::                
+* letter-spacing::              
+* text-decoration::             
+* vertical-align::              
+* text-transform::              
+* text-align::                  
+* text-indent::                 
+* line-height::                 
+@end menu
+@end ifinfo
+
+@node word-spacing, letter-spacing, Text Properties, Text Properties
+@subsubsection word-spacing
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node letter-spacing, text-decoration, word-spacing, Text Properties
+@subsubsection letter-spacing
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node text-decoration, vertical-align, letter-spacing , Text Properties
+@subsubsection text-decoration
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node vertical-align, text-transform, text-decoration, Text Properties
+@subsubsection vertical-align
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node text-transform, text-align, vertical-align, Text Properties
+@subsubsection text-transform
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node text-align, text-indent, text-transform, Text Properties
+@subsubsection text-align
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node text-indent, line-height, text-align, Text Properties
+@subsubsection
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node line-height, Box Properties, text-indent, Text Properties
+@subsubsection
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node Box Properties, Classification, line-height, Properties
+@subsection Box Properties
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node Classification, Media Selection, Box Properties, Properties
+@subsection Classification
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node Media Selection, Speech Properties, Classification, Properties
+@subsection Media Selection
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node Speech Properties, Units, Media Selection, Properties
+@subsection Speech Properties
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node Units, Length Units, Speech Properties, Stylesheets
+@section Units
+
+@ifinfo
+@menu
+* Length Units::
+* Percentage Units::
+* Color Units::
+* URLs::
+* Angle Units::
+* Time Units::
+@end menu
+@end ifinfo
+
+@node Length Units, Percentage Units, Units, Units
+@subsection Length Units
+
+@node Percentage Units, Color Units, Length Units, Units
+@subsection Percentage Units
+
+@node Color Units, URLs, Percentage Units, Units
+@subsection color Units
+
+@node URLs, Angle Units, Color Units, Units
+@subsection URLs
+
+@node Angle Units, Time Units, URLs, Units
+@subsection Angle Units
+
+@node Time Units, Supported URLs, Angle Units, Units
+@subsection Time Units
+
+@node Supported URLs, MIME Support, Time Units, Top
+@chapter Supported URLs
+
+::WORK:: List supported URL types, specific RFCs, etc.
+
+@node MIME Support, Adding MIME types based on file extensions, Supported URLs, Top
 @chapter MIME Support
 @sc{mime} is an emerging standard for multimedia mail.  It offers a very
 flexible typing mechanism.  The type of a file or message is specified
@@ -1962,7 +2410,7 @@ right now.
 
 :: WORK :: Revamp the todo list
 
-@node Reporting Bugs, Installing SSL, Future Directions, Top
+@node Reporting Bugs, Dealing with Firewalls, Future Directions, Top
 @appendix Reporting Bugs
 @cindex Reporting Bugs
 @cindex Bugs
@@ -2007,7 +2455,214 @@ trying to fix in the first place.  It will be much quicker and less
 painful if I don't have to waste a round-trip email exchange saying
 'what are you talking about'.
 
-@node Installing SSL, Mailcap Files, Reporting Bugs, Top 
+@node Dealing with Firewalls, Proxy Gateways, Reporting Bugs, Top
+@appendix Dealing with Firewalls
+By default, Emacs can support standard @sc{tcp}/@sc{ip} network
+connections on almost all the platforms it runs on (Unix, @sc{vms},
+Windows, etc).  However, there are several situations where it is not
+sufficient.
+
+@table @b
+@cindex Firewalls
+@item Firewalls
+It is becoming more and more common to be behind a firewall or some
+other system that restricts your outbound network activity, especially
+if you are like me and away from the wonderful world of academia.
+Emacs-W3 has several different methods to get around firewalls (not to
+worry though - none of them should get you in trouble with the local
+@sc{mis} department.)
+
+@item Emacs cannot resolve hostnames.
+@cindex Faulty hostname resolvers
+@cindex Broken SunOS libc
+@cindex Hostname resolution
+This happens quite often on SunOS workstations and some ULTRIX machines.
+Some C libraries do not include the hostname resolver routines in their
+static libraries.  If Emacs was linked statically, and was not linked
+with the resolver libraries, it wil not be able to get to any machines
+off the local network.  This is characterized by being able to reach
+someplace with a raw ip number, but not its hostname
+(@url{http://129.79.254.191/} works, but
+@url{http://www.cs.indiana.edu/} doesn't).
+
+The best solution for this problem is to recompile Emacs, making sure to
+either link dynamically (if available on your operating system), or
+include the @file{-lresolv}.
+
+@cindex url-gateway-broken-resolution
+If you do not have the disk space or the appropriate permissions to
+recompile Emacs, another alternative is using the @file{nslookup}
+program to do hostname resolution.  To turn this on, set the variable
+@code{url-gateway-broken-resolution} in your @file{~/.emacs} file.  This
+runs the program specified by @code{url-gateway-nslookup-program} (by
+default "@code{nslookup}" to do hostname resolution.  This program should
+expect a single argument on the command line - the hostname to resolve,
+and should produce output similar to the standard Unix @file{nslookup}
+program:
+
+@example
+Name: www.cs.indiana.ed
+Address: 129.79.254.191
+@end example
+
+@cindex @sc{term}
+@item Using @sc{term} (or @sc{term}-like) Networking Software
+@sc{term} @footnote{@sc{term} is a user-level protocol for emulating
+@sc{ip} over a serial line.  More information is available at
+@url{ftp://sunsite.unc.edu/pub/Linux/apps/comm/term}} for slip-like
+access to the internet.
+
+@sc{note}: XEmacs and Emacs 19.22 or later have patches to enable native
+@sc{term} networking.  To enable it, @code{#define TERM} in the
+appropriate s/*.h file for the operating system, then change the
+@code{SYSTEM_LIBS} definition to include the @file{termnet} library that
+comes with the latest versions of @sc{term}.
+
+If you run into any problems with the native @sc{term} networking
+support in Emacs or XEmacs, please let @t{wmperry@@cs.indiana.edu} know,
+as he is responsible for the original support.
+@end table
+
+@vindex url-gateway-local-host-regexp
+Emacs-W3 has support for using the gateway mechanism for certain
+domains, and directly connecting to others.  The variable
+@code{url-gateway-local-host-regexp} controls this behaviour.  This is a
+regular expression @footnote{Please see the full Emacs distribution for
+a description of regular expressions} that matches local hosts that do
+not require the use of a gateway.  If @code{nil}, then all connections
+are made through the gateway.
+
+@vindex url-gateway-method
+Emacs-W3 supports several methods of getting around gateways.  The
+variable @code{url-gateway-method} controls which of these methods is
+used.  This variable can have several values (use these as symbol names,
+not strings), ie: @samp{(setq url-gateway-method 'telnet)}.  Possible
+values are:
+
+@table @dfn
+@item telnet
+Use this method if you must first telnet and log into a gateway host,
+and then run telnet from that host to connect to outside machines.
+
+:: WORK :: document telnet gw variables
+This section needs more information, specifically documenting the
+following variables.  For now, please do @key{C-h v} on the variable for
+more information.
+
+@table @code
+@item url-gateway-telnet-host
+@item url-gateway-telnet-parameters
+@item url-gateway-telnet-password-prompt
+@item url-gateway-telnet-puser-name
+@item url-gateway-prompt-pattern
+@end table
+
+@item rlogin
+This method is identical to the @code{telnet} method, but uses
+@file{rlogin} to log into the remote machine without having to send the
+username and password over the wire every time.
+
+:: WORK :: document rlogin gw variables
+This section needs more information, specifically documenting the
+following variables.  For now, please do @key{C-h v} on the variable for
+more information.
+
+@table @code
+@item url-gateway-rlogin-host
+@item url-gateway-rlogin-parameters
+@item url-gateway-rlogin-user-name
+@item url-gateway-prompt-pattern
+@end table
+
+@item tcp
+Masanobu UMEDA (@i{umerin@@mse.kyutech.ac.jp}) has written a very small
+application that you can run in a subprocess to do the network
+connections.
+
+@item @sc{socks}
+Use if the firewall has a @sc{socks} gateway running on it.
+
+:: WORK :: document socks variables
+This section needs more information, specifically documenting the
+following variables.  For now, please do @key{C-h v} on the variable for
+more information.
+
+@table @code
+@item socks-host
+@item socks-password
+@item socks-username
+@item socks-port
+@item socks-timeout
+@end table
+
+@c @item ssl
+@c This probably shouldn't be documented
+
+@item native
+This means that Emacs-W3 should use the builtin networking code of
+Emacs.  This should be used only if there is no firewall, or the Emacs
+source has already been hacked to get around the firewall.
+@end table
+
+Emacs-W3 should now be able to get outside the local network.  If none
+of this makes sense, its probably my fault.  Please check with the
+network administrators to see if they have a program that does most of
+this already, since somebody somewhere at the company has probably been
+through something similar to this before, and would be much more
+helpful/knowledgeable about the local setup than I would be.  But feel
+free to mail me as a last resort.
+
+@node Proxy Gateways, Installing SSL, Dealing with Firewalls, Top
+@appendix Proxy Gateways
+@vindex url-proxy-services
+@cindex Proxy Servers
+@cindex Proxies
+@cindex Proxies, environment variables
+@cindex HTTP Proxy
+
+In late January 1993, Kevin Altis and Lou Montulli proposed and
+implemented a new proxy service.  This service requires the use of
+environment variables to specify a gateway server/port # to send
+protocol requests to.  Each protocol (@sc{http}, @sc{wais}, gopher,
+@sc{ftp}, etc.) can have a different gateway server.  The environment
+variables are @code{PROTOCOL}_proxy, where @code{PROTOCOL} is one of the
+supported network protocols (gopher, file, @sc{http}, @sc{ftp}, etc.)
+
+@cindex No Proxy
+@cindex Proxies, exclusion lists
+@vindex NO_PROXY
+For companies with internal intranets, it will usually be helpful to
+define a list of hosts that should be contacted directly, @b{not} sent
+through the proxy.  The @code{NO_PROXY} environment variable controls
+what hosts are able to be contacted directly.  This should be a comma
+separated list of hostnames, domain names, or a mixture of both.
+Asterisks can be used as a wildcard.  For example:
+
+@example
+NO_PROXY=*.aventail.com,home.com,*.seanet.com
+@end example
+
+tells Emacs-W3 to contact all machines in the @b{aventail.com} and
+@b{seanet.com} domains directly, as well as the machine named
+@b{home.com}.
+
+@vindex url-proxy-services
+@cindex Proxies, setting from lisp
+For those adventurous souls who enjoy writing regular expressions, all
+the proxy settings can be manipulated from Emacs-Lisp.  The variable
+@code{url-proxy-services} controls this.  This is an assoc list, keyed
+on the protocol type (@sc{http}, gopher, etc) in all lowercase.  The
+@code{cdr} of each entry should be the fully-specified @sc{url} of the proxy
+server to contact, or, in the case of the special "no_proxy" entry, a
+regular expression that matches any hostnames that should be contacted
+directly.
+
+@example
+(setq url-proxy-services '(("http"     . "http://proxy.aventail.com/")
+                           ("no_proxy" . "^.*\\(aventail\\|seanet\\)\.com")))
+@end example
+
+@node Installing SSL, Mailcap Files, Proxy Gateways, Top 
 @appendix Installing SSL
 @cindex HTTP/1.0 Authentication
 @cindex Secure Sockets Layer
@@ -2043,7 +2698,7 @@ This should be all the configuration necessary.  In the future, I will
 be distributing a set of patches to Emacs 19.xx and XEmacs 19.xx to
 SSL-enable them, for the sake of speed.
 
-@node Mailcap Files, General Index, Installing SSL, Top
+@node Mailcap Files, Down with DoubleClick, Installing SSL, Top
 @appendix Mailcap Files
 NCSA Mosaic and almost all other WWW browsers rely on a separate file
 for mapping MIME types to external viewing programs.  This takes some of
@@ -2177,7 +2832,12 @@ some of which might be standardized in a future version of this
 document.
 @end itemize
 
-@node General Index, Key Index, Mailcap Files, Top
+@node Down with DoubleClick, General Index, Mailcap Files, Top
+@appendix Down with DoubleClick
+:: WORK :: Document why doubleclick is evil
+:: WORK :: Document how you can never see another ad from them again
+
+@node General Index, Key Index, Down with DoubleClick, Top
 @appendix General Index
 @printindex fn
 @node Key Index, , General Index, Top
@@ -2185,143 +2845,6 @@ document.
 @printindex ky
 @contents
 @bye
-
-@c @ifinfo
-@c Here is some more specific information about what languages and
-@c protocols Emacs-W3 supports.
-@c @menu
-@c * Markup Languages Supported::	Markup languages supported by Emacs-W3
-@c * Stylesheets::                 Stylesheet languages supported by Emacs-W3
-@c * Supported Protocols::		Network protocols supported by Emacs-W3
-@c @end menu
-@c @end ifinfo
-@c @node Markup Languages Supported, Stylesheets, Introduction, Introduction
-@c @chapter Supported Markup Languages
-@c Several different markup languages, and various extensions to those
-@c languages, are supported by Emacs-W3.
-@c @ifinfo
-@c @center ----------
-@c @center HTML 2.0
-@c @center ----------
-@c @end ifinfo
-@c @iftex
-@c @section HTML 2.0
-@c @end iftex
-@c @cindex HTML 2.0
-
-@c :: WORK :: Reference to the HTML 2.0 RFC
-@c :: WORK :: Basic explanation of HTML, tag structure, etc.
-
-@c @ifinfo
-@c @center ----------
-@c @center HTML 3.2
-@c @center ----------
-@c @end ifinfo
-@c @iftex
-@c @section HTML 3.2
-@c @end iftex
-@c @cindex HTML 3.2
-@c The HTML 3.2 language is an extension of HTML, with a large degree of
-@c backward compatibility with HTML 2.0.  This basically documents current
-@c practice as of January, 1996.
-
-@c @ifinfo
-@c @center ----------
-@c @center SGML Features
-@c @center ----------
-@c @end ifinfo
-@c @iftex
-@c @section SGML Features
-@c @end iftex
-@c @cindex SGML Features
-@c @cindex Entity Definitions
-@c @cindex Marked Sections
-
-@c :: WORK :: Document marked sections, SGML features
-
-@c @ifinfo
-@c @center ----------
-@c @center Extras
-@c @center ----------
-@c @end ifinfo
-@c @iftex
-@c @section Extra Markup
-@c @end iftex
-@c @cindex Easter Eggs
-@c @cindex Fluff
-@c @cindex Pomp & Circumstance
-@c There are several different markup elements that are not officially part
-@c of HTML or HTML 3.2 that Emacs-W3 supports.  These are either items that
-@c were dropped from HTML 3.@var{x} after I had implemented them, things I
-@c find just completely hilarious, or experimental parts of HTML that
-@c should not be counted as "official" or long lived.
-@c @itemize @bullet
-@c @item
-@c FLAME support.  For truly interesting dynamic documents.  This is
-@c replaced with a random quote from Mr. Angry (see @kbd{M-x flame} for a
-@c sample).
-@c @item
-@c The top ten tags that did not make it into netscape.  These tags were
-@c posted to the newsgroup comp.infosystems.www.misc by Laura Lemay
-@c (@i{lemay@@netcom.com}).  Much thanks to her for the humor.
-@c @table @b
-@c @item <wired>...</wired>
-@c Renders the enclosed text in a suitably ugly font/color combination.  If
-@c no default has been set up by the user, this is the default font, with
-@c red text on a yellow background.
-@c @item <roach>...</roach>
-@c When selected, the enclosed text runs and hides under the nearest
-@c window.  OR, giggles a lot and demands nachos, depending on the
-@c definition of "roach." (the formal definition, of course, to be
-@c determined by the Official Honorary Internet Standards Committee For
-@c Moving Really Slowly.)
-@c @item <pinhead>
-@c Inserts "zippyisms" into the enclosed text.  Perfect for those professional
-@c documents.  This is sure to be a favorite of mine!
-@c @item <secret>...</secret>
-@c Must use secret spy decoder glasses (available direct from Netscape for
-@c a reasonable fee) in order to read the enclosed text.  Can also be read
-@c by holding the computer in front of a full moon during the autumn
-@c solstice.
-
-@c In Emacs-W3, this displays the text using rot13 encoding.
-@c @item <hype>
-@c Causes Marc Andreesen to magically appear and grant an interview (wanted
-@c or not).  Please use this tag sparingly.
-@c @item <peek>....</peek>
-@c @item <poke>...</poke>
-@c Need more control over screen layout in HTML?  Well, here ya go.
-@c n
-@c Actually, <peek> could almost be considered useful.  The VARIABLE
-@c attribute can be used to insert the value of an emacs variable into the
-@c current document.  Things like 'Welcome to my page, <peek
-@c variable=user-mail-address>' can be useful in spreading fear,
-@c uncertainty, and doubt among users.
-@c @item <yogsothoth>
-@c @cindex Gates Bill
-@c @cindex Yogsothoth
-@c Summons the elder gods to suck away your immortal soul.  Or Bill Gates,
-@c if the elder gods are busy.  Unpredictable (but amusing) results occur
-@c when the <YOGSOTHOTH> and <HYPE> tags are used in close proximity.
-
-@c @item <blink>...</blink>
-@c Causes the enclosed text to .... ooops that one made it in.
-@c @end table
-@c @end itemize
-
-@c @node Stylesheets, Supported Protocols, Markup Languages Supported,Introduction
-@c @chapter Stylesheets
-@c @cindex Stylesheets
-@c @cindex Cascading Style Sheets
-@c @cindex Aural Cascading Style Sheets
-@c @cindex CSS
-@c @cindex DSSSL
-@c :: WORK :: Document CSS support
-@c CSS Information at http://www.w3.org/pub/WWW/TR/REC-CSS1
-@c Style guide at http://www.htmlhelp.com/reference/css/
-@c :: WORK :: Document ACSS support
-@c ACSS Information at http://www.w3.org/pub/WWW/Style/CSS/Speech/NOTE-ACSS
-@c :: WORK :: Document DSSSL support
 
 @c @node Supported Protocols, , Stylesheets, Introduction
 @c @chapter Supported Protocols

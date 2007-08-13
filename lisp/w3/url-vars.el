@@ -1,7 +1,7 @@
 ;;; url-vars.el --- Variables for Uniform Resource Locator tool
 ;; Author: wmperry
-;; Created: 1997/02/08 05:29:30
-;; Version: 1.26
+;; Created: 1997/02/10 16:15:19
+;; Version: 1.27
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -446,19 +446,6 @@ Currently supported methods:
 
 (defvar url-running-xemacs (string-match "XEmacs" emacs-version)
   "*In XEmacs?.")
-
-(defvar url-use-hypertext-dired t
-  "*How to format directory listings.
-
-If value is non-nil, use directory-files to list them out and
-transform them into a hypertext document, then pass it through the
-parse like any other document.
-
-If value nil, just pass the directory off to dired using find-file.")
-
-(defconst monthabbrev-alist
-  '(("Jan" . 1) ("Feb" . 2) ("Mar" . 3) ("Apr" . 4) ("May" . 5) ("Jun" . 6)
-    ("Jul" . 7) ("Aug" . 8) ("Sep" . 9) ("Oct" . 10) ("Nov" . 11) ("Dec" . 12)))
 
 (defvar url-default-ports '(("http"   .  "80")
 			    ("gopher" .  "70")

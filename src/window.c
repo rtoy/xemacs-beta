@@ -4041,15 +4041,23 @@ window_scroll (Lisp_Object window, Lisp_Object n, int direction,
 
 }
 
+extern int signal_error_on_buffer_boundary;
+
 DEFUN ("scroll-up", Fscroll_up, 0, 1, "_P", /*
 Scroll text of current window upward ARG lines; or near full screen if no ARG.
 A near full screen is `next-screen-context-lines' less than a full screen.
 Negative ARG means scroll downward.
 When calling from a program, supply a number as argument or nil.
+
+If `signal-error-on-buffer-boundary' is nil, the usual error and
+loss of zmacs region is suppressed when moving past end of buffer.
 */
        (n))
 {
-  window_scroll (Fselected_window (Qnil), n, 1, ERROR_ME);
+  Error_behavior errb =
+    signal_error_on_buffer_boundary ? ERROR_ME : ERROR_ME_NOT;
+
+  window_scroll (Fselected_window (Qnil), n, 1, errb);
   return Qnil;
 }
 
@@ -4058,10 +4066,16 @@ Scroll text of current window downward ARG lines; or near full screen if no ARG.
 A near full screen is `next-screen-context-lines' less than a full screen.
 Negative ARG means scroll upward.
 When calling from a program, supply a number as argument or nil.
+
+If `signal-error-on-buffer-boundary' is nil, the usual error and
+loss of zmacs region is suppressed when moving past end of buffer.
 */
        (n))
 {
-  window_scroll (Fselected_window (Qnil), n, -1, ERROR_ME);
+  Error_behavior errb =
+    signal_error_on_buffer_boundary ? ERROR_ME : ERROR_ME_NOT;
+
+  window_scroll (Fselected_window (Qnil), n, -1, errb);
   return Qnil;
 }
 

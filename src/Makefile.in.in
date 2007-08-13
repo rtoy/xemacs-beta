@@ -314,7 +314,7 @@ SHORT=
 #    define SOUND_LIBS		-lAlib	
 #    define SOUND_OBJS		hpplay.o
 # else /* !HP9000S800 */
-#   if defined (LINUX)
+#   if defined (LINUX) || defined(__FreeBSD__)
 #     define SOUND_CFLAGS
 #     define SOUND_LIBS
 #     define SOUND_OBJS		linuxplay.o

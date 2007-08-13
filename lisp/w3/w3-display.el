@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/02/08 06:51:44
-;; Version: 1.123
+;; Created: 1997/02/14 17:51:17
+;; Version: 1.127
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -32,6 +32,7 @@
 (require 'w3-widget)
 (require 'w3-imap)
 
+(define-widget-keywords :emacspeak-help)
 (autoload 'sentence-ify "flame")
 (autoload 'string-ify "flame")
 (autoload '*flame "flame")
@@ -369,8 +370,7 @@ as the bullet character.")
 				     'start-open t
 				     'end-open t
 				     'rear-nonsticky t
-				     'duplicable t
-				     'read-only t))
+				     'duplicable t))
   (if (car w3-active-voices)
       (add-text-properties w3-scratch-start-point (point)
 			   (list 'personality (car w3-active-voices))))
@@ -635,7 +635,7 @@ as the bullet character.")
 	  (eq (device-type) 'tty))	; Why bother?
       (w3-add-delayed-graphic widget))
      ((not (w3-image-loadable-p src nil)) ; Hey, we can't load it!
-      (w3-warn 'images (format "Skipping image %s" (url-basepath src t)))
+      (message "Skipping image %s" (url-basepath src t))
       (w3-add-delayed-graphic widget))
      (t					; Grab the images
       (let (
@@ -679,7 +679,7 @@ as the bullet character.")
     (cond
      ((w3-image-invalid-glyph-p glyph)
       (setq glyph nil)
-      (w3-warn 'image (format "Reading of %s failed." url)))
+      (message "Reading of %s failed." url))
      ((eq (aref glyph 0) 'xbm)
       (let ((temp-fname (url-generate-unique-filename "%s.xbm")))
 	(save-excursion
@@ -1216,7 +1216,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	       (save-restriction
 		 (narrow-to-region (point) (point))
 		 (setq fill-column avgwidth
-		       inhibit-read-only t
+		       ;; inhibit-read-only t
 		       w3-last-fill-pos (point-min)
 		       i 0)
 		 ;; skip over columns that have leftover content
@@ -1492,7 +1492,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	(content-stack (list (list node)))
 	(right-margin-stack (list fill-column))
 	(left-margin-stack (list 0))
-	(inhibit-read-only t)
+	;; (inhibit-read-only t)
 	node
 	insert-before
 	insert-after
@@ -1612,9 +1612,9 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 				      (list 'link :args nil
 					    :value "" :tag ""
 					    :action 'w3-follow-hyperlink
-					    :from
-					    (set-marker (make-marker) st)
+					    :from (set-marker (make-marker) st)
 					    :help-echo 'w3-widget-echo
+					    :emacspeak-help 'w3-widget-echo
 					    )
 				      (alist-to-plist args))))
 	       (w3-handle-content node)
@@ -1763,7 +1763,8 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 				      (or w3-maximum-line-length
 					  (window-width)))
 		     fill-prefix "")
-	       (set (make-local-variable 'inhibit-read-only) t))
+	       ;; (set (make-local-variable 'inhibit-read-only) t)
+	       )
 	     (w3-handle-content node)
 	     )
 	    (*invisible

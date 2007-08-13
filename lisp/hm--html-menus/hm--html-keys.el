@@ -1,11 +1,11 @@
-;;; $Id: hm--html-keys.el,v 1.1.1.2 1996/12/18 03:46:48 steve Exp $
+;;; $Id: hm--html-keys.el,v 1.2 1997/02/16 01:29:08 steve Exp $
 ;;; 
-;;; Copyright (C) 1995, 1996 Heiko Muenkel
+;;; Copyright (C) 1995, 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
 ;;;
 ;;;  This program is free software; you can redistribute it and/or modify
 ;;;  it under the terms of the GNU General Public License as published by
-;;;  the Free Software Foundation; either version 1, or (at your option)
+;;;  the Free Software Foundation; either version 2, or (at your option)
 ;;;  any later version.
 ;;;
 ;;;  This program is distributed in the hope that it will be useful,
@@ -27,7 +27,6 @@
 ;;;	Put this file in one of your load path directories.
 ;;;
 
-;; This is necessary to get the definition of hm--html-mode-prefix-key.
 (require 'hm--html-configuration)
 
 (if (adapt-emacs19p)
@@ -192,7 +191,7 @@ It could have the same value as
 (if hm--html-region-structure-map
     ()
   (setq hm--html-region-structure-map (make-sparse-keymap))
-  (define-key hm--html-noregion-structure-map
+  (define-key hm--html-region-structure-map
     "i" 'hm--html-add-list-or-menu-item-to-region)
   (define-key hm--html-region-structure-map "m" 'hm--html-add-menu-to-region)
   (define-key hm--html-region-structure-map "u" 'hm--html-add-list-to-region)

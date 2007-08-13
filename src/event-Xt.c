@@ -592,18 +592,8 @@ emacs_Xt_mapping_action (Widget w, XEvent* event)
 /*                  X to Emacs event conversion                         */
 /************************************************************************/
 
-#if (defined(sun) || defined(__sun)) && defined(__GNUC__)
-# define SUNOS_GCC_L0_BUG
-#endif
-
-#ifdef SUNOS_GCC_L0_BUG
-static void
-x_to_emacs_keysym_sunos_bug (Lisp_Object *return_value_sunos_bug, /* #### */
-                             XEvent *event, int simple_p)
-#else /* !SUNOS_GCC_L0_BUG */
 static Lisp_Object
 x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
-#endif /* !SUNOS_GCC_L0_BUG */
      /* simple_p means don't try too hard (ASCII only) */
 {
   char *name;
@@ -611,11 +601,6 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
   /* Apparently it's necessary to specify a dummy here (rather than
      passing in 0) to avoid crashes on German IRIX */
   char dummy[256];
-
-#ifdef SUNOS_GCC_L0_BUG
-# define return(lose) \
-  do {*return_value_sunos_bug = (lose); goto return_it; } while (0)
-#endif
 
   /* ### FIX this by replacing with calls to XmbLookupString.
      XLookupString should never be called. --mrb */
@@ -682,23 +667,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	}
       return KEYSYM (name);
     }
-#ifdef SUNOS_GCC_L0_BUG
-# undef return
- return_it:
-  return;
-#endif
 }
-
-#ifdef SUNOS_GCC_L0_BUG
-/* #### */
-static Lisp_Object
-x_to_emacs_keysym (XEvent *event, int simple_p)
-{
-  Lisp_Object return_value_sunos_bug;
-  x_to_emacs_keysym_sunos_bug (&return_value_sunos_bug, event, simple_p);
-  return (return_value_sunos_bug);
-}
-#endif
 
 static void
 set_last_server_timestamp (struct device *d, XEvent *x_event)

@@ -94,11 +94,15 @@ blockquote{ display: block; margin-left: 5; margin-right: 5; }
 ** This functionality will be removed as soon as the W3C comes up with
 ** the standard way to do this, perhaps in CSS level 2.
 */
-input { text-decoration: underline; }
-input:submit { color: green;  text-decoration: none; }
-input:reset  { color: red;    text-decoration: none; }
-input:button { color: yellow; text-decoration: none; }
-input:image  { text-decoration: none; }
+input:text,
+input:integer,
+input:float,
+input:url,
+input:text    { text-decoration: underline; }
+input:submit  { color: green;  text-decoration: none; }
+input:reset   { color: red;    text-decoration: none; }
+input:button  { color: yellow; text-decoration: none; }
+input:image   { text-decoration: none; }
 
 /*
 ** List formatting instructions

@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/12/7
-;; Version: $Id: tm-pgp.el,v 1.4 1997/02/02 05:06:20 steve Exp $
+;; Version: $Id: tm-pgp.el,v 1.5 1997/02/16 01:29:33 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, PGP, security
 
 ;; This file is part of tm (Tools for MIME).
@@ -42,23 +42,6 @@
 
 (require 'tm-play)
 
-(defvar pgp-verify-function
-  'mc-verify "*PGP verify function.")
-
-(defvar pgp-decrypt-function
-  'mc-decrypt "*PGP decrypt function.")
-
-(defvar pgp-fetch-key-function
-  'mc-pgp-fetch-key "*PGP fetch key function.")
-
-(defvar pgp-snarf-keys-function
-  'mc-snarf-keys "*PGP snarf keys function.")
-
-(autoload pgp-verify-function		"mc-toplev")
-(autoload pgp-decrypt-function		"mc-toplev")
-(autoload pgp-fetch-key-function	"mc-toplev")
-(autoload pgp-snarf-keys-function	"mc-toplev")
-
 
 ;;; @ internal method for application/pgp
 ;;;
@@ -67,20 +50,22 @@
 (defun mime-article/view-application/pgp (beg end cal)
   (let* ((cnum (mime-article/point-content-number beg))
 	 (cur-buf (current-buffer))
+	 (p-win (or (get-buffer-window mime::article/preview-buffer)
+		    (get-largest-window)))
 	 (new-name (format "%s-%s" (buffer-name) cnum))
 	 (mother mime::article/preview-buffer)
 	 (mode major-mode)
 	 code-converter
 	 (str (buffer-substring beg end))
 	 )
-    (switch-to-buffer new-name)
+    (set-buffer (get-buffer-create new-name))
     (erase-buffer)
     (insert str)
     (cond ((progn
 	     (goto-char (point-min))
 	     (re-search-forward "^-+BEGIN PGP SIGNED MESSAGE-+$" nil t)
 	     )
-	   (funcall pgp-verify-function)
+	   (funcall (pgp-function 'verify))
 	   (goto-char (point-min))
 	   (delete-region
 	    (point-min)
@@ -106,7 +91,7 @@
 	     (goto-char (point-min))
 	     (re-search-forward "^-+BEGIN PGP MESSAGE-+$" nil t)
 	     )
-	   (as-binary-process (funcall pgp-decrypt-function))
+	   (as-binary-process (funcall (pgp-function 'decrypt)))
 	   (goto-char (point-min))
 	   (delete-region (point-min)
 			  (and
@@ -116,7 +101,8 @@
 	   ))
     (setq major-mode 'mime/show-message-mode)
     (setq mime::article/code-converter code-converter)
-    (mime/viewer-mode mother)
+    (save-window-excursion (mime/viewer-mode mother))
+    (set-window-buffer p-win mime::article/preview-buffer)
     ))
 
 (set-atype 'mime/content-decoding-condition
@@ -241,7 +227,7 @@ It should be ISO 639 2 letter language code such as en, ja, ...")
 		      (format "Key %s not found; attempt to fetch? " pgp-id))
 		     )
 		(progn
-		  (funcall pgp-fetch-key-function (cons nil pgp-id))
+		  (funcall (pgp-function 'fetch-key) (cons nil pgp-id))
 		  (mime::article/call-pgp-to-check-signature
 		   mime/output-buffer-name orig-file)
 		  ))
@@ -309,7 +295,7 @@ It should be ISO 639 2 letter language code such as en, ja, ...")
 	(delete-region (point-min) (match-end 0))
       )
     (mime-decode-region (point-min)(point-max) encoding)
-    (funcall pgp-snarf-keys-function)
+    (funcall (pgp-function 'snarf-keys))
     (kill-buffer (current-buffer))
     ))
 

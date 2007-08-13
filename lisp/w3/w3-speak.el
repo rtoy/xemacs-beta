@@ -168,15 +168,10 @@ This is done by setting the w3 variables so that anchors etc are not marked by
 delimiters. We then turn on voice-lock-mode. 
 Interactive prefix arg does the opposite. "
   (interactive "P")
-  (declare (special w3-delimit-links w3-delimit-emphasis w3-echo-link))
+  (declare (special w3-echo-link))
   (setq w3-echo-link 'text)
   (if arg
-      (progn
-	(setq w3-delimit-links 'guess 
-	      w3-delimit-emphasis 'guess)
-	(remove-hook 'w3-mode-hook 'w3-speak-mode-hook))
-    (setq w3-delimit-links nil
-          w3-delimit-emphasis nil)
+      (remove-hook 'w3-mode-hook 'w3-speak-mode-hook)
     (add-hook 'w3-mode-hook 'w3-speak-mode-hook)))
 
 (defun w3-speak-browse-page ()

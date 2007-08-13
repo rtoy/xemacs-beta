@@ -61,7 +61,11 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/soundcard.h>
+#ifdef __FreeBSD__
+#  include <machine/soundcard.h>
+#else
+#  include <linux/soundcard.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,8 +92,8 @@
 #define __inline__
 #endif
 
-static __sighandler_t sighup_handler;
-static __sighandler_t sigint_handler;
+static  void (*sighup_handler)(int);
+static  void (*sigint_handler)(int);
 
 /* Maintain global variable for keeping parser state information; this struct
    is set to zero before the first invocation of the parser. The use of a
@@ -982,8 +986,8 @@ static void linux_play_data_or_file(int fd,unsigned char *data,
      this could lead to problems, when multiple sound cards are installed */
   mix_fd = audio_fd;
 
-  sighup_handler = signal(SIGHUP,(__sighandler_t)sighandler);
-  sigint_handler = signal(SIGINT,(__sighandler_t)sighandler);
+  sighup_handler = signal(SIGHUP, sighandler);
+  sigint_handler = signal(SIGINT, sighandler);
 
   if (!audio_init(mix_fd,audio_fd,fmt,speed,tracks,&volume,&sndcnv))
     goto END_OF_PLAY;

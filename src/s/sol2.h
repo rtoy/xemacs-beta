@@ -43,7 +43,7 @@
 /* The standard Solaris library nsl has this function in it which is
    supposed to only be in the BSD compat stuff.  Yuck.  Of course,
    there isn't a prototype for it other than in /usr/ucbinclude. */
-int gethostname (char *, int);
+int gethostname (char *, size_t);
 
 /* XEmacs: Solaris include files miss this. */
 struct timeval;

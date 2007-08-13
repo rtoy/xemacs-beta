@@ -10,7 +10,7 @@
 @subtitle Frequently asked questions about XEmacs
 @subtitle Last Modified:  1997/01/16
 @sp 1
-@author Anthony Rossini <arossini@@biostats.hmc.psu.edu>
+@author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <wing@@netcom.com>
 @author Chuck Thompson <cthomp@@cs.uiuc.edu>
 @author Steve Baur <steve@@miranova.com>
@@ -314,11 +314,11 @@ to begin publishing printed copies of the manual in March 1997.
 
 @example
   Web:     http://www.xemacs.com
-  E-mail:  <info@xemacs.com>
+  E-mail:  <info@@xemacs.com>
   Tel:     +1 408 243 3300
 @end example
 
-@node Q1.1.1, Q1.1.2, Q1.0.13, Introduction
+@node Q1.1.1, Q1.1.2, Q1.0.14, Introduction
 @section What is the FAQ editorial policy?
 
 The FAQ is actively maintained and modified regularly.  All links should
@@ -3714,7 +3714,7 @@ InfoDock is an integrated productivity toolset, mainly aimed at
 technical people.  It is developed and supported by InfoDock
 Associates, a firm that offers custom support and development
 for InfoDock, XEmacs and GNU Emacs.  (http://www.infodock.com,
-<info@infodock.com>, +1 408 243 3300).
+<info@@infodock.com>, +1 408 243 3300).
 
 InfoDock is built atop the XEmacs variant of GNU Emacs and so has all of
 the power of Emacs, but with an easier to use and more comprehensive

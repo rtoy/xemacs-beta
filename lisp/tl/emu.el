@@ -1,9 +1,9 @@
 ;;; emu.el --- Emulation module for each Emacs variants
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu.el,v 1.2 1996/12/22 00:29:31 steve Exp $
+;; Version: $Id: emu.el,v 1.3 1997/02/16 01:29:29 steve Exp $
 ;; Keywords: emulation, compatibility, NEmacs, MULE, Emacs/mule, XEmacs
 
 ;; This file is part of emu.
@@ -89,22 +89,6 @@
        ;; for EMACS 19 and XEmacs 19 (without mule)
        (require 'emu-e19)
        ))
-
-
-;;; @ binary access
-;;;
-
-(defun insert-binary-file-contents-literally
-  (filename &optional visit beg end replace)
-  "Like `insert-file-contents-literally', q.v., but don't code conversion.
-A buffer may be modified in several ways after reading into the buffer due
-to advanced Emacs features, such as file-name-handlers, format decoding,
-find-file-hooks, etc.
-  This function ensures that none of these modifications will take place.
-\[emu.el]"
-  (as-binary-input-file
-   (insert-file-contents-literally filename visit beg end replace)
-   ))
 
 
 ;;; @ MIME charset

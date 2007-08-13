@@ -113,6 +113,34 @@ and NEW should be used instead.  If NEW is a string, then that is the
   (put var 'byte-obsolete-variable new)
   var)
 
+;; By overwhelming demand, we separate out truly obsolete symbols from
+;; those that are present for GNU Emacs compatibility.
+(defun make-compatible (fn new)
+  "Make the byte-compiler know that FUNCTION is provided for compatibility.
+The warning will say that NEW should be used instead.
+If NEW is a string, that is the `use instead' message."
+  (interactive "aMake function compatible: \nxCompatible replacement: ")
+  (let ((handler (get fn 'byte-compile)))
+    (if (eq 'byte-compile-compatible handler)
+	(setcar (get fn 'byte-compatible-info) new)
+      (put fn 'byte-compatible-info (cons new handler))
+      (put fn 'byte-compile 'byte-compile-compatible)))
+  fn)
+
+(defun make-compatible-variable (var new)
+  "Make the byte-compiler know that VARIABLE is provided for compatibility.
+and NEW should be used instead.  If NEW is a string, then that is the
+`use instead' message."
+  (interactive
+   (list
+    (let ((str (completing-read "Make variable compatible: "
+				obarray 'boundp t)))
+      (if (equal str "") (error ""))
+      (intern str))
+    (car (read-from-string (read-string "Compatible replacement: ")))))
+  (put var 'byte-compatible-variable new)
+  var)
+
 (put 'dont-compile 'lisp-indent-hook 0)
 (defmacro dont-compile (&rest body)
   "Like `progn', but the body always runs interpreted (not compiled).

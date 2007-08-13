@@ -889,7 +889,10 @@ Usage: emacs -batch *.el -f custom-make-dependencies > deps.el" nil nil)
 
 ;;;***
 
-;;;### (autoloads nil "custom" "custom/custom.el")
+;;;### (autoloads (widget-browse-at) "widget-browse" "custom/widget-browse.el")
+
+(autoload 'widget-browse-at "widget-browse" "\
+Browse the widget under point." t nil)
 
 ;;;***
 
@@ -920,239 +923,6 @@ create identical widgets:
 * (apply 'widget-create CLASS ARGS)
 
 The third argument DOC is a documentation string for the widget." nil nil)
-
-;;;***
-
-;;;### (autoloads (ange-ftp-hook-function) "ange-ftp" "dired/ange-ftp.el")
-
-(defvar ange-ftp-path-format '("^/\\(\\([^@/:]*\\)@\\)?\\([^@/:]*\\):\\(.*\\)" 3 2 4) "\
-*Format of a fully expanded remote pathname.  This is a cons
-\(REGEXP . (HOST USER PATH)), where REGEXP is a regular expression matching
-the full remote pathname, and HOST, USER, and PATH are the numbers of
-parenthesized expressions in REGEXP for the components (in that order).")
-
-(autoload 'ange-ftp-hook-function "ange-ftp" nil nil nil)
-
-(or (assoc (car ange-ftp-path-format) file-name-handler-alist) (setq file-name-handler-alist (cons (cons (car ange-ftp-path-format) 'ange-ftp-hook-function) file-name-handler-alist)))
-
-;;;***
-
-;;;### (autoloads (dired-make-permissions-interactive) "dired-chmod" "dired/dired-chmod.el")
-
-(autoload 'dired-make-permissions-interactive "dired-chmod" nil nil nil)
-
-;;;***
-
-;;;### (autoloads (dired-cwd-make-magic) "dired-cwd" "dired/dired-cwd.el")
-
-(autoload 'dired-cwd-make-magic "dired-cwd" "\
-Modify COMMAND so that it's working directory is the current dired directory.
-This works by binding `default-directory' to `(default-directory)'s value.
-See also function `default-directory'." t nil)
-
-;;;***
-
-;;;### (autoloads (dired-do-rename-list dired-do-rename-numeric) "dired-num" "dired/dired-num.el")
-
-(autoload 'dired-do-rename-numeric "dired-num" "\
-Rename all marked (or next ARG) files using numbers.
-You are prompted for a format string, e.g \"part_%d_of_8\", and a starting
-number, e.g. 1.  If there are 8 marked files, this example will rename them to
-
-    part_1_of_8
-    part_2_of_8
-    ...
-    part_8_of_8" t nil)
-
-(autoload 'dired-do-rename-list "dired-num" "\
-Rename all marked (or next ARG) files using elements from LIST.
-You are prompted for a format string, e.g \"x_%s\", and the list,
-e.g. '(foo bar zod).  This example will rename the marked files to
-
-    x_foo
-    x_bar
-    x_zod
-
-It is an error if LIST has not as many elements as there are files." t nil)
-
-;;;***
-
-;;;### (autoloads (dired-rcs-mark-rcs-files dired-rcs-mark-rcs-locked-files) "dired-rcs" "dired/dired-rcs.el")
-
-(autoload 'dired-rcs-mark-rcs-locked-files "dired-rcs" "\
-Mark all files that are under RCS control and RCS-locked.
-With prefix argument, unflag all those files.
-Mentions RCS files for which a working file was not found in this buffer.
-Type \\[dired-why] to see them again." t nil)
-
-(autoload 'dired-rcs-mark-rcs-files "dired-rcs" "\
-Mark all files that are under RCS control.
-With prefix argument, unflag all those files.
-Mentions RCS files for which a working file was not found in this buffer.
-Type \\[dired-why] to see them again." t nil)
-
-;;;***
-
-;;;### (autoloads (dired-extra-startup) "dired-x" "dired/dired-x.el")
-
-(autoload 'dired-extra-startup "dired-x" "\
-Automatically put on dired-mode-hook to get extra dired features:
-\\<dired-mode-map>
-  \\[dired-vm]	-- VM on folder
-  \\[dired-rmail]	-- Rmail on folder
-  \\[dired-do-insert-subdir]	-- insert all marked subdirs
-  \\[dired-do-find-file]	-- visit all marked files simultaneously
-  \\[dired-set-marker-char], \\[dired-restore-marker-char]	-- change and display dired-marker-char dynamically.
-  \\[dired-omit-toggle]	-- toggle omitting of files
-  \\[dired-mark-sexp]	-- mark by lisp expression
-  \\[dired-do-unmark]	-- replace existing marker with another.
-  \\[dired-mark-rcs-files]	-- mark all RCS controlled files
-  \\[dired-mark-files-compilation-buffer]	-- mark compilation files
-  \\[dired-copy-filename-as-kill]	-- copy the file or subdir names into the kill ring.
-  	   You can feed it to other commands using \\[yank].
-
-For more features, see variables
-
-  dired-omit-files
-  dired-omit-extenstions
-  dired-dangerous-shell-command
-  dired-mark-keys
-  dired-local-variables-file
-  dired-find-subdir
-  dired-guess-have-gnutar
-  dired-auto-shell-command-alist
-
-See also functions
-
-  dired-sort-on-size
-  dired-do-relsymlink
-  dired-flag-extension
-  dired-virtual
-  dired-jump-back
-  dired-jump-back-other-window
-" t nil)
-
-;;;***
-
-;;;### (autoloads (dired-noselect dired-other-window dired) "dired" "dired/dired.el")
-
-(defvar dired-listing-switches (purecopy "-al") "\
-*Switches passed to ls for dired. MUST contain the `l' option.
-Can contain even `F', `b', `i' and `s'.")
-
-(defvar dired-chown-program (purecopy (if (memq system-type '(dgux-unix hpux usg-unix-v silicon-graphics-unix irix)) "chown" "/etc/chown")) "\
-*Name of chown command (usully `chown' or `/etc/chown').")
-
-(defvar dired-ls-program (purecopy "ls") "\
-*Absolute or relative name of the ls program used by dired.")
-
-(defvar dired-ls-F-marks-symlinks t "\
-*Informs dired about how ls -lF marks symbolic links.
-Set this to t if `dired-ls-program' with -lF marks the symbolic link
-itself with a trailing @ (usually the case under Ultrix).
-
-Example: if `ln -s foo bar; ls -F bar' gives `bar -> foo', set it to
-nil, if it gives `bar@ -> foo', set it to t.
-
-Dired checks if there is really a @ appended.  Thus, if you have a
-marking ls program on one host and a non-marking on another host, and
-don't care about symbolic links which really end in a @, you can
-always set this variable to t.")
-
-(defvar dired-trivial-filenames (purecopy "^\\.\\.?$\\|^#") "\
-*Regexp of files to skip when moving point to the first file of a new directory listing.
-Nil means move to the subdir line, t means move to first file.")
-
-(defvar dired-keep-marker-move t "\
-If t, moved marked files are marked if their originals were.
-If a character, those files (marked or not) are marked with that character.")
-
-(defvar dired-keep-marker-copy 67 "\
-If t, copied files are marked if their source files were.
-If a character, those files are always marked with that character.")
-
-(defvar dired-keep-marker-hardlink 72 "\
-If t, hard-linked files are marked if the linked-to files were.
-If a character, those files are always marked with that character.")
-
-(defvar dired-keep-marker-symlink 89 "\
-If t, symlinked marked files are marked if the linked-to files were.
-If a character, those files are always marked with that character.")
-
-(defvar dired-dwim-target nil "\
-*If non-nil, dired tries to guess a default target directory:
-If there is a dired buffer displayed in the next window, use
-its current subdir, instead of the current subdir of this dired
-buffer.
-
-The target is used in the prompt for file copy, move etc.")
-
-(defvar dired-copy-preserve-time nil "\
-*If non-nil, Dired preserves the last-modified time in a file copy.
-\(This works on only some systems.)\\<dired-mode-map>
-Use `\\[dired-do-copy]' with a zero prefix argument to toggle its value.")
-
-(define-key ctl-x-map "d" 'dired)
-
-(autoload 'dired "dired" "\
-\"Edit\" directory DIRNAME--delete, rename, print, etc. some files in it.
-With an optional prefix argument you can specify the ls SWITCHES that are used.
-Dired displays a list of files in DIRNAME (which may also have
-  shell wildcards appended to select certain files).
-You can move around in it with the usual commands.
-You can flag files for deletion with \\<dired-mode-map>\\[dired-flag-file-deleted] and then delete them by
-  typing \\[dired-do-deletions].
-Type \\[describe-mode] after entering dired for more info.
-
-If DIRNAME is already in a dired buffer, that buffer is used without refresh." t nil)
-
-(define-key ctl-x-4-map "d" 'dired-other-window)
-
-(autoload 'dired-other-window "dired" "\
-\"Edit\" directory DIRNAME.  Like `dired' but selects in another window." t nil)
-
-(autoload 'dired-noselect "dired" "\
-Like `dired' but returns the dired buffer as value, does not select it." nil nil)
-
-;;;***
-
-;;;### (autoloads (find-grep-dired find-name-dired find-dired) "find-dired" "dired/find-dired.el")
-
-(defvar find-ls-option (purecopy (if (eq system-type 'berkeley-unix) '("-ls" . "-gilsb") '("-exec ls -ld {} \\;" . "-ld"))) "\
-*Description of the option to `find' to produce an `ls -l'-type listing.
-This is a cons of two strings (FIND-OPTION . LS-SWITCHES).  FIND-OPTION
-gives the option (or options) to `find' that produce the desired output.
-LS-SWITCHES is a list of `ls' switches to tell dired how to parse the output.")
-
-(defvar find-grep-options (purecopy (if (eq system-type 'berkeley-unix) "-s" "-q")) "\
-*Option to grep to be as silent as possible.
-On Berkeley systems, this is `-s'; on Posix, and with GNU grep, `-q' does it.
-On other systems, the closest you can come is to use `-l'.")
-
-(defvar find-dired-multiple-buffers nil "\
-*If non-nil, generates a new buffer for each find")
-
-(autoload 'find-dired "find-dired" "\
-Run `find' and go into dired-mode on a buffer of the output.
-The command run (after changing into DIR) is
-
-    find . \\( ARGS \\) -ls" t nil)
-
-(autoload 'find-name-dired "find-dired" "\
-Search DIR recursively for files matching the globbing pattern PATTERN,
-and run dired on those files.
-PATTERN is a shell wildcard (not an Emacs regexp) and need not be quoted.
-The command run (after changing into DIR) is
-
-    find . -name 'PATTERN' -ls" t nil)
-
-(autoload 'find-grep-dired "find-dired" "\
-Find files in DIR containing a regexp ARG and start Dired on output.
-The command run (after changing into DIR) is
-
-    find . -type f -exec test -r {} \\; -exec egrep -s ARG {} \\; -ls
-
-Thus ARG can also contain additional grep options." t nil)
 
 ;;;***
 
@@ -1349,6 +1119,202 @@ When called interactively, displays the version." t nil)
 (autoload 'ediff-documentation "ediff" "\
 Display Ediff's manual.
 With optional NODE, goes to that node." t nil)
+
+;;;***
+
+;;;### (autoloads nil "default-dir" "efs/default-dir.el")
+
+(defvar default-directory-function nil "\
+A function to call to compute the default-directory for the current buffer.
+If this is nil, the function default-directory will return the value of the
+variable default-directory.
+Buffer local.")
+
+;;;***
+
+;;;### (autoloads (dired-jump-back-other-frame dired-jump-back-other-window dired-jump-back dired-noselect dired-other-frame dired-other-window dired) "dired" "efs/dired.el")
+
+(defvar dired-compression-method 'compress "\
+*Type of compression program to use.
+Give as a symbol.
+Currently-recognized methods are: gzip pack compact compress.
+To change this variable use \\[dired-do-compress] with a zero prefix.")
+
+(defvar dired-compression-method-alist '((gzip ".gz" ("gzip") ("gzip" "-d") "-f") (compress ".Z" ("compress" "-f") ("compress" "-d") "-f") (pack ".z" ("pack" "-f") ("unpack")) (compact ".C" ("compact") ("uncompact"))) "\
+*Association list of compression method descriptions.
+ Each element of the table should be a list of the form
+ 
+     (compress-type extension (compress-args) (decompress-args) force-flag)
+ 
+ where 
+   `compress-type' is a unique symbol in the alist to which
+      `dired-compression-method' can be set;
+   `extension' is the file extension (as a string) used by files compressed
+      by this method;
+   `compress-args' is a list of the path of the compression program and
+      flags to pass as separate arguments;
+   `decompress-args' is a list of the path of the decompression
+      program and flags to pass as separate arguments.
+   `force-flag' is the switch to pass to the command to force overwriting
+      of existing files.
+ 
+ For example:
+ 
+   (setq dired-compresssion-method-alist
+         (cons '(frobnicate \".frob\" (\"frob\") (\"frob\" \"-d\") \"-f\")
+               dired-compression-method-alist))
+   => ((frobnicate \".frob\" (\"frob\") (\"frob\" \"-d\")) 
+       (gzip \".gz\" (\"gzip\") (\"gunzip\"))
+       ...)
+ 
+ See also: dired-compression-method <V>")
+
+(defvar dired-ls-program "ls" "\
+*Absolute or relative name of the ls program used by dired.")
+
+(defvar dired-listing-switches "-al" "\
+*Switches passed to ls for dired. MUST contain the `l' option.
+Can contain even `F', `b', `i' and `s'.")
+
+(defvar dired-chown-program (if (memq system-type '(hpux dgux usg-unix-v)) "chown" "/etc/chown") "\
+*Name of chown command (usully `chown' or `/etc/chown').")
+
+(defvar dired-gnutar-program nil "\
+*If non-nil, name of the GNU tar executable (e.g. \"tar\" or \"gnutar\").
+GNU tar's `z' switch is used for compressed tar files.
+If you don't have GNU tar, set this to nil: a pipe using `zcat' is then used.")
+
+(defvar dired-unshar-program nil "\
+*Set to the name of the unshar program, if you have it.")
+
+(defvar dired-local-variables-file ".dired" "\
+*If non-nil, filename for local variables for Dired.
+If Dired finds a file with that name in the current directory, it will
+temporarily insert it into the dired buffer and run `hack-local-variables'.
+
+Type \\[info] and `g' `(emacs)File Variables' `RET' for more info on
+local variables.")
+
+(defvar dired-kept-versions 2 "\
+*When cleaning directory, number of versions to keep.")
+
+(defvar dired-find-subdir nil "\
+*Determines whether dired tries to lookup a subdir in existing buffers.
+If non-nil, dired does not make a new buffer for a directory if it can be
+found (perhaps as subdir) in some existing dired buffer. If there are several
+dired buffers for a directory, then the most recently used one is chosen.
+
+Dired avoids switching to the current buffer, so that if you have
+a normal and a wildcard buffer for the same directory, C-x d RET will
+toggle between those two.")
+
+(defvar dired-use-file-transformers t "\
+*Determines whether dired uses file transformers.
+If non-nil `dired-do-shell-command' will apply file transformers to file names.
+See \\[describe-function] for dired-do-shell-command for more information.")
+
+(defvar dired-dwim-target nil "\
+*If non-nil, dired tries to guess a default target directory.
+This means that if there is a dired buffer displayed in the next window,
+use its current subdir, instead of the current subdir of this dired buffer.
+The target is put in the prompt for file copy, rename, etc.")
+
+(defvar dired-copy-preserve-time nil "\
+*If non-nil, Dired preserves the last-modified time in a file copy.
+\(This works on only some systems.)\\<dired-mode-map>
+Use `\\[dired-do-copy]' with a zero prefix argument to toggle its value.")
+
+(defvar dired-no-confirm nil "\
+*If non-nil, a list of symbols for commands dired should not confirm.
+It can be a sublist of
+
+  '(byte-compile chgrp chmod chown compress copy delete hardlink load
+    move print shell symlink uncompress recursive-delete kill-file-buffer
+    kill-dired-buffer patch create-top-dir revert-subdirs)
+
+The meanings of most of the symbols are obvious.  A few exceptions:
+
+    'compress applies to compression or decompression by any of the 
+     compression program in `dired-compression-method-alist'.
+
+    'kill-dired-buffer applies to offering to kill dired buffers for
+     directories which have been deleted.
+
+    'kill-file-buffer applies to offering to kill buffers visiting files
+     which have been deleted.
+
+    'recursive-delete applies to recursively deleting non-empty
+     directories, and all of their contents.
+
+    'create-top-dir applies to `dired-up-directory' creating a new top level
+     directory for the dired buffer.
+
+    'revert-subdirs applies to re-reading subdirectories which have 
+     been modified on disk.
+
+Note that this list also applies to remote files accessed with efs
+or ange-ftp.")
+
+(defvar dired-backup-if-overwrite nil "\
+*Non-nil if Dired should ask about making backups before overwriting files.
+Special value 'always suppresses confirmation.")
+
+(defvar dired-omit-files nil "\
+*If non-nil un-interesting files will be omitted from this dired buffer.
+Use \\[dired-omit-toggle] to see these files. (buffer local)")
+
+(defvar dired-mail-reader 'rmail "\
+*Mail reader used by dired for dired-read-mail (\\[dired-read-mail]).
+The symbols 'rmail and 'vm are the only two allowed values.")
+
+(define-key ctl-x-map "d" 'dired)
+
+(autoload 'dired "dired" "\
+\"Edit\" directory DIRNAME--delete, rename, print, etc. some files in it.
+Optional second argument SWITCHES specifies the `ls' options used.
+\(Interactively, use a prefix argument to be able to specify SWITCHES.)
+Dired displays a list of files in DIRNAME (which may also have
+shell wildcards appended to select certain files).  If DIRNAME is a cons,
+its first element is taken as the directory name and the resr as an explicit
+list of files to make directory entries for.
+\\<dired-mode-map>You can move around in it with the usual commands.
+You can flag files for deletion with \\[dired-flag-file-deletion] and then
+delete them by typing \\[dired-expunge-deletions].
+Type \\[dired-describe-mode] after entering dired for more info.
+
+If DIRNAME is already in a dired buffer, that buffer is used without refresh." t nil)
+
+(define-key ctl-x-4-map "d" 'dired-other-window)
+
+(autoload 'dired-other-window "dired" "\
+\"Edit\" directory DIRNAME.  Like `dired' but selects in another window." t nil)
+
+(define-key ctl-x-5-map "d" 'dired-other-frame)
+
+(autoload 'dired-other-frame "dired" "\
+\"Edit\" directory DIRNAME.  Like `dired' but makes a new frame." t nil)
+
+(autoload 'dired-noselect "dired" "\
+Like `dired' but returns the dired buffer as value, does not select it." nil nil)
+
+(define-key ctl-x-map "\C-j" 'dired-jump-back)
+
+(autoload 'dired-jump-back "dired" "\
+Jump back to dired.
+If in a file, dired the current directory and move to file's line.
+If in dired already, pop up a level and goto old directory's line.
+In case the proper dired file line cannot be found, refresh the dired
+  buffer and try again." t nil)
+
+(define-key ctl-x-4-map "\C-j" 'dired-jump-back-other-window)
+
+(autoload 'dired-jump-back-other-window "dired" "\
+Like \\[dired-jump-back], but to other window." t nil)
+
+(define-key ctl-x-5-map "\C-j" 'dired-jump-back-other-frame)
+
+(autoload 'dired-jump-back-other-frame "dired" "\
+Like \\[dired-jump-back], but in another frame." t nil)
 
 ;;;***
 
@@ -1848,6 +1814,67 @@ generations (this defaults to 1)." t nil)
 
 ;;;***
 
+;;;### (autoloads (mine-help mine-version mine) "mine" "games/mine.el")
+
+(autoload 'mine "mine" "\
+Play Mine.  Optional prefix argument is the number of mines.
+
+To play Mine, type `\\[mine]' or `\\[universal-argument] NUM \\[mine]'.  
+
+An optional prefix argument specifies the number of mines to be hidden
+in the field.  If no prefix argument is given, a percentage
+`mine-mines-%' of the field will contain mines.
+
+What is Mine?\\<mine-mode-map>
+
+Mine is a classical game of hide and seek played on a rectangular grid
+containing `mine-xmax' by `mine-ymax' squares (the mine field).
+
+Your opponent (Emacs, in this case) has hidden several mines within
+this field.  The object of the game is to find every hidden mine.
+
+When you're sure a square does NOT contain a mine, you can hit it:
+move the mouse over the square and press `\\[mine-mouse-hit]' or 
+move the cursor with the usual keys and press `\\[mine-hit-curpoint]'.
+
+If the square is a mine, you loose.
+If the square isn't a mine, a number appears which represents
+the number of mines in the surrounding eight squares.  
+
+When you think a square DOES contain a mine, you can mark it:
+move the mouse over the square and press `\\[mine-mouse-mark]' or
+move the cursor with the usual keys and press `\\[mine-mark-curpoint]'.
+
+The number of hidden mines remaining in the mine field is indicated
+inside the buffer.  Every time you mark a square as a mine, this
+number decreases by one, even if you incorrectly mark a square.
+
+If `mine-torus' is non-nil (the default), the Mine game is played over
+a periodic field (like a torus).  Each mine is hidden periodically
+over the mine board `mine-nb-tiles-x' times in the x direction and
+`mine-nb-tiles-y' times in the y direction.
+
+If `mine-colorp' is non-nil (the default, if the system allows it),
+the game is displayed with colors.  The colors can be chosen with the
+variable `mine-colors'.
+
+If the redisplay is not fast enough, increase `mine-level'.  If you
+want to see a smoother (slower) redisplay, decrease `mine-level',
+`mine-count1-max' and `mine-count2-max'.
+
+You can get help on `mine-mode' and its key bindings by pressing `\\[mine-help]'
+while in the *Mine* buffer.
+" t nil)
+
+(autoload 'mine-version "mine" "\
+Return string describing the current version of Mine.
+When called interactively, displays the version." t nil)
+
+(autoload 'mine-help "mine" "\
+*Get help on `mine-mode'." t nil)
+
+;;;***
+
 ;;;### (autoloads (mpuz) "mpuz" "games/mpuz.el")
 
 (autoload 'mpuz "mpuz" "\
@@ -2221,6 +2248,43 @@ Goto an URL in Mosaic." t nil)
 
 (autoload 'html-view-get-display "html-view" "\
 Get the display for Mosaic." t nil)
+
+;;;***
+
+;;;### (autoloads (tmpl-insert-template-file tmpl-insert-template-file-from-fixed-dirs tmpl-expand-templates-in-buffer tmpl-expand-templates-in-region) "tmpl-minor-mode" "hm--html-menus/tmpl-minor-mode.el")
+
+(autoload 'tmpl-expand-templates-in-region "tmpl-minor-mode" "\
+Expand the templates in the region from BEGIN to END.
+If BEGIN and and are nil, then the current region is used." t nil)
+
+(autoload 'tmpl-expand-templates-in-buffer "tmpl-minor-mode" "\
+Expand all templates in the current buffer." t nil)
+
+(autoload 'tmpl-insert-template-file-from-fixed-dirs "tmpl-minor-mode" "\
+Inserts a template FILE and expands it, if `tmpl-automatic-expand' is t.
+This command tries to read the template file from a list of
+predefined directries (look at `tmpl-template-dir-list') and it filters
+the contents of this directories with the regular expression
+`tmpl-filter-regexp' (look also at this variable). 
+The command uses a history variable, which could be changed with the
+variable `tmpl-history-variable-name'.
+
+The user of the command is able to change interactive to another
+directory by entering at first the string \"Change the directory\".
+This maybe to difficult for the user. Therefore another command
+called `tmpl-insert-template-file' exist, which doesn't use fixed
+directories and filters." t nil)
+
+(autoload 'tmpl-insert-template-file "tmpl-minor-mode" "\
+Insert a template FILE and expand it, if `tmpl-automatic-expand' is t.
+Look also at `tmpl-template-dir-list', to specify a default template directory.
+You should also take a look at `tmpl-insert-template-file-from-fixed-dirs'
+which has additional advantages (and disadvantages :-).
+
+ATTENTION: The interface of this function has changed. The old 
+function had the argument list (&optional TEMPLATE-DIR AUTOMATIC-EXPAND).
+The variables `tmpl-template-dir-list' and `tmpl-automatic-expand' must
+now be used instead of the args TEMPLATE-DIR and AUTOMATIC-EXPAND." t nil)
 
 ;;;***
 
@@ -3546,7 +3610,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.6 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.7 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4759,11 +4823,66 @@ First column's text    sSs  Second column's text
 
 ;;;***
 
+;;;### (autoloads (verilog-mode) "verilog-mode" "modes/verilog-mode.el")
+
+(autoload 'verilog-mode "verilog-mode" "\
+Major mode for editing Verilog code. \\<verilog-mode-map>
+NEWLINE, TAB indents for Verilog code.  
+Delete converts tabs to spaces as it moves back.
+Supports highlighting.
+
+Variables controlling indentation/edit style:
+
+ verilog-indent-level           (default 3)
+    Indentation of Verilog statements with respect to containing block.
+ verilog-cexp-indent            (default 1)
+    Indentation of Verilog statements broken across lines.
+ verilog-case-indent            (default 2)
+    Indentation for case statements.
+ verilog-auto-newline           (default nil)
+    Non-nil means automatically newline after simcolons and the punctation mark
+    after an end.
+ verilog-auto-indent-on-newline (default t)
+    Non-nil means automatically indent line after newline
+ verilog-tab-always-indent      (default t)
+    Non-nil means TAB in Verilog mode should always reindent the current line,
+    regardless of where in the line point is when the TAB command is used.
+ verilog-indent-begin-after-if  (default t)
+    Non-nil means to indent begin statements following a preceeding
+    if, else, while, for and repeat statements, if any. otherwise,
+    the begin is lined up with the preceeding token. If t, you get:
+      if (a)
+         begin
+    otherwise you get:
+      if (a)
+      begin
+ verilog-auto-endcomments       (default t)
+    Non-nil means a comment /* ... */ is set after the ends which ends cases, tasks, functions and modules.
+    The type and name of the object will be set between the braces.
+ verilog-auto-lineup            (default `(all))
+    List of contexts where auto lineup of :'s or ='s should be done.
+
+Turning on Verilog mode calls the value of the variable verilog-mode-hook with
+no args, if that value is non-nil.
+Other useful functions are:
+\\[verilog-complete-word]	-complete word with appropriate possibilities (functions, verilog keywords...)
+\\[verilog-comment-area]	- Put marked area in a comment, fixing nested comments.
+\\[verilog-uncomment-area]	- Uncomment an area commented with \\[verilog-comment-area].
+\\[verilog-insert-block]	- insert begin ... end;
+\\[verilog-star-comment]	- insert /* ... */
+\\[verilog-mark-defun]	- Mark function.
+\\[verilog-beg-of-defun]	- Move to beginning of current function.
+\\[verilog-end-of-defun]	- Move to end of current function.
+\\[verilog-label-be]	- Label matching begin ... end, fork ... join and case ... endcase statements;
+" t nil)
+
+;;;***
+
 ;;;### (autoloads (vhdl-mode) "vhdl-mode" "modes/vhdl-mode.el")
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.6 $
+vhdl-mode $Revision: 1.7 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5879,9 +5998,7 @@ Use \\[font-lock-fontify-buffer] to fontify the buffer if the cache is bad.
 Various methods of control are provided for the Font Lock cache.  In general,
 see variable `fast-lock-cache-directories' and function `fast-lock-cache-name'.
 For saving, see variables `fast-lock-minimum-size', `fast-lock-save-events',
-`fast-lock-save-others' and `fast-lock-save-faces'.
-
-Use \\[fast-lock-submit-bug-report] to send bug reports or feedback." t nil)
+`fast-lock-save-others' and `fast-lock-save-faces'." t nil)
 
 (autoload 'turn-on-fast-lock "fast-lock" "\
 Unconditionally turn on Fast Lock mode." nil nil)
@@ -7337,6 +7454,20 @@ From a program, any arguments are passed to the `rcs2log' script." t nil)
 
 ;;;***
 
+;;;### (autoloads (webjump) "webjump" "packages/webjump.el")
+
+(autoload 'webjump "webjump" "\
+Jumps to a Web site from a programmable hotlist.
+
+See the documentation for the `webjump-sites' variable for how to customize the
+hotlist.
+
+Feedback on WebJump can be sent to the author, Neil W. Van Dyke <nwv@acm.org>,
+or submitted via `\\[webjump-submit-bug-report]'.  The latest version can be
+gotten from `http://www.cs.brown.edu/people/nwv/'." t nil)
+
+;;;***
+
 ;;;### (autoloads (webster-spell webster-endings webster) "webster" "packages/webster.el")
 
 (autoload 'webster "webster" "\
@@ -7516,7 +7647,7 @@ This function works by modifying `process-environment'." t nil)
 
 ;;;***
 
-;;;### (autoloads (apply-macro-to-region-lines kbd-macro-query insert-kbd-macro name-last-kbd-macro) "macros" "prim/macros.el")
+;;;### (autoloads (apply-macro-to-region-lines kbd-macro-query name-last-kbd-macro) "macros" "prim/macros.el")
 
 (autoload 'name-last-kbd-macro "macros" "\
 Assign a name to the last keyboard macro defined.
@@ -7524,20 +7655,6 @@ Argument SYMBOL is the name to define.
 The symbol's function definition becomes the keyboard macro string.
 Such a \"function\" cannot be called from Lisp, but it is a valid
 editor command." t nil)
-
-(autoload 'insert-kbd-macro "macros" "\
-Insert in buffer the definition of kbd macro NAME, as Lisp code.
-Optional second argument KEYS means also record the keys it is on
-\(this is the prefix argument, when calling interactively).
-
-This Lisp code will, when executed, define the kbd macro with the
-same definition it has now.  If you say to record the keys,
-the Lisp code will also rebind those keys to the macro.
-Only global key bindings are recorded since executing this Lisp code
-always makes global bindings.
-
-To save a kbd macro, visit a file of Lisp code such as your `~/.emacs',
-use this command, and then save the file." t nil)
 
 (autoload 'kbd-macro-query "macros" "\
 Query user during kbd macro execution.
@@ -7836,9 +7953,11 @@ From a program takes two point or marker arguments, BEG and END." t nil)
 (autoload 'load-sound-file "sound" "\
 Read in an audio-file and add it to the sound-alist.
 
-You can only play sound files if you are running on display 0 of the console
-of a Sun SparcStation, SGI machine, or HP9000s700, or running a NetAudio
-server.  The sound file must be in the Sun/NeXT U-LAW format." t nil)
+You can only play sound files if you are running on display 0 of the
+console of a machine with native sound support or running a NetAudio
+server and XEmacs has the necessary sound support compiled in.
+
+The sound file must be in the Sun/NeXT U-LAW format." t nil)
 
 (autoload 'load-default-sounds "sound" "\
 Load and install some sound files as beep-types.
@@ -8542,6 +8661,93 @@ is a list of menu items, as above." nil 'macro)
 
 ;;;***
 
+;;;### (autoloads (insert-kbd-macro format-kbd-macro read-kbd-macro edit-named-kbd-macro edit-last-kbd-macro edit-kbd-macro) "edmacro" "utils/edmacro.el")
+
+(define-key ctl-x-map "\C-k" 'edit-kbd-macro)
+
+(defvar edmacro-eight-bits nil "\
+*Non-nil if edit-kbd-macro should leave 8-bit characters intact.
+Default nil means to write characters above \\177 in octal notation.")
+
+(autoload 'edit-kbd-macro "edmacro" "\
+Edit a keyboard macro.
+At the prompt, type any key sequence which is bound to a keyboard macro.
+Or, type `C-x e' or RET to edit the last keyboard macro, `C-h l' to edit
+the last 100 keystrokes as a keyboard macro, or `M-x' to edit a macro by
+its command name.
+With a prefix argument, format the macro in a more concise way." t nil)
+
+(autoload 'edit-last-kbd-macro "edmacro" "\
+Edit the most recently defined keyboard macro." t nil)
+
+(autoload 'edit-named-kbd-macro "edmacro" "\
+Edit a keyboard macro which has been given a name by `name-last-kbd-macro'." t nil)
+
+(autoload 'read-kbd-macro "edmacro" "\
+Read the region as a keyboard macro definition.
+The region is interpreted as spelled-out keystrokes, e.g., \"M-x abc RET\".
+See documentation for `edmacro-mode' for details.
+Leading/trailing \"C-x (\" and \"C-x )\" in the text are allowed and ignored.
+The resulting macro is installed as the \"current\" keyboard macro.
+
+In Lisp, may also be called with a single STRING argument in which case
+the result is returned rather than being installed as the current macro.
+The result will be a string if possible, otherwise an event vector.
+Second argument NEED-VECTOR means to return an event vector always." t nil)
+
+(autoload 'format-kbd-macro "edmacro" "\
+Return the keyboard macro MACRO as a human-readable string.
+This string is suitable for passing to `read-kbd-macro'.
+Second argument VERBOSE means to put one command per line with comments.
+If VERBOSE is `1', put everything on one line.  If VERBOSE is omitted
+or nil, use a compact 80-column format." nil nil)
+
+(autoload 'insert-kbd-macro "edmacro" "\
+Insert in buffer the definition of kbd macro NAME, as Lisp code.
+Optional second arg KEYS means also record the keys it is on
+\(this is the prefix argument, when calling interactively).
+
+This Lisp code will, when executed, define the kbd macro with the same
+definition it has now.  If you say to record the keys, the Lisp code
+will also rebind those keys to the macro.  Only global key bindings
+are recorded since executing this Lisp code always makes global
+bindings.
+
+To save a kbd macro, visit a file of Lisp code such as your `~/.emacs',
+use this command, and then save the file." t nil)
+
+;;;***
+
+;;;### (autoloads (turn-on-eldoc-mode eldoc-mode) "eldoc" "utils/eldoc.el")
+
+(defvar eldoc-mode nil "\
+*If non-nil, show the defined parameters for the elisp function near point.
+
+For the emacs lisp function at the beginning of the sexp which point is
+within, show the defined parameters for the function in the echo area.
+This information is extracted directly from the function or macro if it is
+in pure lisp.  If the emacs function is a subr, the parameters are obtained
+from the documentation string if possible.
+
+If point is over a documented variable, print that variable's docstring
+instead.
+
+This variable is buffer-local.")
+
+(autoload 'eldoc-mode "eldoc" "\
+*Enable or disable eldoc mode.
+See documentation for the variable of the same name for more details.
+
+If called interactively with no prefix argument, toggle current condition
+of the mode.
+If called with a positive or negative prefix argument, enable or disable
+the mode, respectively." t nil)
+
+(autoload 'turn-on-eldoc-mode "eldoc" "\
+Unequivocally turn on eldoc-mode (see variable documentation)." t nil)
+
+;;;***
+
 ;;;### (autoloads (elp-submit-bug-report elp-results elp-instrument-package elp-instrument-list elp-restore-function elp-instrument-function) "elp" "utils/elp.el")
 
 (autoload 'elp-instrument-function "elp" "\
@@ -8670,6 +8876,33 @@ Display names of defined colors, and show what they look like.
 If the optional argument LIST is non-nil, it should be a list of
 colors to display.  Otherwise, this command computes a list
 of colors that the current display can handle." t nil)
+
+;;;***
+
+;;;### (autoloads (floating-toolbar-from-extent-or-popup-mode-menu floating-toolbar-or-popup-mode-menu floating-toolbar) "floating-toolbar" "utils/floating-toolbar.el")
+
+(autoload 'floating-toolbar "floating-toolbar" "\
+Popup a toolbar near the current mouse position.
+The toolbar instantiator used is taken from the 'floating-toolbar
+property of any extent under the mouse.  If no such non-nil
+property exists for any extent under the mouse, then the value of the
+variable `floating-toolbar' is checked.  If its value si nil, then
+no toolbar will be displayed.
+
+This command should be bound to a button press event.
+
+When called from a program, first arg EVENT should be the button
+press event.  Optional second arg EXTENT-LOCAL-ONLY specifies
+that only extent local toolbars should be used; this means the
+`floating-toolbar' variable will not be consulted." t nil)
+
+(autoload 'floating-toolbar-or-popup-mode-menu "floating-toolbar" "\
+Like floating-toolbar, but if no toolbar is displayed
+run popup-mode-menu." t nil)
+
+(autoload 'floating-toolbar-from-extent-or-popup-mode-menu "floating-toolbar" "\
+Like floating-toolbar-or-popup-mode-menu, but search only for an
+extent local toolbar." t nil)
 
 ;;;***
 
@@ -9318,16 +9551,12 @@ visited or interesting items you have found on the World Wide Web." t nil)
 (autoload 'w3-open-local "w3" "\
 Find a local file, and interpret it as a hypertext document.
 It will prompt for an existing file or directory, and retrieve it as a
-hypertext document.  If it is a directory, and url-use-hypertext-dired
-is non-nil, then an HTML directory listing is created on the fly.
-Otherwise, dired-mode is used to visit the buffer." t nil)
+hypertext document." t nil)
 
 (autoload 'w3-find-file "w3" "\
 Find a local file, and interpret it as a hypertext document.
 It will prompt for an existing file or directory, and retrieve it as a
-hypertext document.  If it is a directory, and url-use-hypertext-dired
-is non-nil, then an HTML directory listing is created on the fly.
-Otherwise, dired-mode is used to visit the buffer." t nil)
+hypertext document." t nil)
 
 (autoload 'w3-fetch-other-frame "w3" "\
 Attempt to follow the hypertext reference under point in a new frame.

@@ -1,7 +1,7 @@
 ;;; w3-forms.el --- Emacs-w3 forms parsing code for new display engine
 ;; Author: wmperry
-;; Created: 1997/02/09 06:39:43
-;; Version: 1.65
+;; Created: 1997/02/13 23:10:23
+;; Version: 1.70
 ;; Keywords: faces, help, comm, data, languages
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -45,24 +45,28 @@
 
 (define-widget-keywords :emacspeak-help :w3-form-data)
 
-(defvar w3-form-keymap (copy-keymap global-map))
-(if (and w3-form-keymap widget-keymap)
-    (cl-map-keymap (function
-		    (lambda (key binding)
-		      (define-key w3-form-keymap
-			(if (vectorp key) key (vector key))
-			(case binding
-			  (widget-backward 'w3-widget-backward)
-			  (widget-forward  'w3-widget-forward)
-			  (otherwise binding)))))
-		   widget-keymap))
-(define-key w3-form-keymap [return]      'w3-form-maybe-submit-by-keypress)
-(define-key w3-form-keymap "\r"          'w3-form-maybe-submit-by-keypress)
-(define-key w3-form-keymap "\n"          'w3-form-maybe-submit-by-keypress)
-(define-key w3-form-keymap "\t"          'w3-widget-forward)
-(define-key w3-form-keymap "\C-k"        'widget-kill-line)
-(define-key w3-form-keymap "\C-a"        'widget-beginning-of-line)
-(define-key w3-form-keymap "\C-e"        'widget-end-of-line)
+(defvar w3-form-keymap
+  (let ((map (copy-keymap global-map))
+	(eol-loc (where-is-internal 'end-of-line nil t)))
+    (if widget-keymap
+	(cl-map-keymap (function
+			(lambda (key binding)
+			  (define-key map
+			    (if (vectorp key) key (vector key))
+			    (case binding
+				  (widget-backward 'w3-widget-backward)
+				  (widget-forward  'w3-widget-forward)
+				  (otherwise binding)))))
+		       widget-keymap))
+    (define-key map [return]      'w3-form-maybe-submit-by-keypress)
+    (define-key map "\r"          'w3-form-maybe-submit-by-keypress)
+    (define-key map "\n"          'w3-form-maybe-submit-by-keypress)
+    (define-key map "\t"          'w3-widget-forward)
+    (define-key map "\C-k"        'widget-kill-line)
+    (define-key map "\C-a"        'widget-beginning-of-line)
+    (if eol-loc
+	(define-key map eol-loc   'widget-end-of-line))
+    map))
 
 ;; A form entry area is a vector
 ;; [ type name default-value value maxlength options widget plist]
@@ -152,6 +156,8 @@
 
 (defun w3-form-resurrect-widgets ()
   (let ((st (point-min))
+	;; FIXME! For some reason this loses on long lines right now.
+	(widget-push-button-gui nil)
 	info nd node action face)
     (while st
       (if (setq info (get-text-property st 'w3-form-info))
@@ -382,6 +388,7 @@
 			 (lambda (x)
 			   (list 'choice-item :format "%[%t%]"
 				 :emacspeak-help 'w3-form-summarize-field
+				 :menu-tag-get (` (lambda (zed) (, (car x))))
 				 :tag (mule-truncate-string (car x) size ? )
 				 :button-face face
 				 :value-face face

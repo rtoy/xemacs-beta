@@ -267,7 +267,7 @@ C-x SPACE sets break point at current line."
   ;; XEmacs change:
   (make-local-hook 'kill-buffer-hook)
   (add-hook 'kill-buffer-hook 'gdb-delete-arrow-extent nil t)
-  (setq comint-input-sentinel 'shell-directory-tracker)
+  (add-hook 'comint-input-filter-functions 'shell-directory-tracker nil t)
   (run-hooks 'gdb-mode-hook))
 
 (defun gdb-delete-arrow-extent ()
@@ -652,11 +652,13 @@ It is for customization by you.")
     (goto-char (point-max))
     (insert comm)))
 
-(defun gdb-control-c-subjob ()
-  "Send a Control-C to the subprocess."
-  (interactive)
-  (process-send-string (get-buffer-process (current-buffer))
-		       "\C-c"))
+(fset 'gdb-control-c-subjob 'comint-interrupt-subjob)
+
+;(defun gdb-control-c-subjob ()
+;  "Send a Control-C to the subprocess."
+;  (interactive)
+;  (process-send-string (get-buffer-process (current-buffer))
+;		       "\C-c"))
 
 (defun gdb-toolbar-break ()
   (interactive)

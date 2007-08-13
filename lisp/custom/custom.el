@@ -1,10 +1,10 @@
 ;;; custom.el -- Tools for declaring and initializing options.
 ;;
-;; Copyright (C) 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1996, 1997 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.30
+;; Version: 1.40
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -22,6 +22,7 @@
 (define-widget-keywords :prefix :tag :load :link :options :type :group)
 
 ;; These autoloads should be deleted when the file is added to Emacs
+
 (unless (fboundp 'load-gc)
   (autoload 'customize "custom-edit" nil t)
   (autoload 'customize-variable "custom-edit" nil t)
@@ -93,7 +94,6 @@ If FRAME is omitted or nil, use the selected frame."
 
 ;;; The `defcustom' Macro.
 
-;;; Don't ;;;###autoload
 (defun custom-declare-variable (symbol value doc &rest args)
   "Like `defcustom', but SYMBOL and VALUE are evaluated as notmal arguments."
   (unless (and (default-boundp symbol)
@@ -130,7 +130,6 @@ If FRAME is omitted or nil, use the selected frame."
   (run-hooks 'custom-define-hook)
   symbol)
 
-;;; Don't ;;;###autoload
 (defmacro defcustom (symbol value doc &rest args)
   "Declare SYMBOL as a customizable variable that defaults to VALUE.
 DOC is the variable documentation.
@@ -155,7 +154,6 @@ information."
 
 ;;; The `defface' Macro.
 
-;;; Don't ;;;###autoload
 (defun custom-declare-face (face spec doc &rest args)
   "Like `defface', but FACE is evaluated as a normal argument."
   (put face 'factory-face spec)
@@ -171,7 +169,6 @@ information."
   (run-hooks 'custom-define-hook)
   face)
 
-;;; Don't ;;;###autoload
 (defmacro defface (face spec doc &rest args)
   "Declare FACE as a customizable face that defaults to SPEC.
 FACE does not need to be quoted.
@@ -221,7 +218,6 @@ information."
 
 ;;; The `defgroup' Macro.
 
-;;; Don't ;;;###autoload
 (defun custom-declare-group (symbol members doc &rest args)
   "Like `defgroup', but SYMBOL is evaluated as a normal argument."
   (put symbol 'custom-group (nconc members (get symbol 'custom-group)))
@@ -245,7 +241,6 @@ information."
   (run-hooks 'custom-define-hook)
   symbol)
 
-;;; Don't ;;;###autoload
 (defmacro defgroup (symbol members doc &rest args)
   "Declare SYMBOL as a customization group containing MEMBERS.
 SYMBOL does not need to be quoted.
@@ -270,7 +265,6 @@ Read the section about customization in the emacs lisp manual for more
 information."
   `(custom-declare-group (quote ,symbol) ,members ,doc ,@args))
 
-;;; Don't ;;;###autoload
 (defun custom-add-to-group (group option widget)
   "To existing GROUP add a new OPTION of type WIDGET,
 If there already is an entry for that option, overwrite it."
@@ -468,7 +462,6 @@ If FRAME is nil, set the default face."
       (make-face-italic face frame)
     (make-face-unitalic face frame)))
 
-;;; Don't ;;;###autoload
 (defun custom-initialize-faces (&optional frame)
   "Initialize all custom faces for FRAME.
 If FRAME is nil or omitted, initialize them for all frames."
@@ -480,7 +473,6 @@ If FRAME is nil or omitted, initialize them for all frames."
 
 ;;; Initializing.
 
-;;; Don't ;;;###autoload
 (defun custom-set-variables (&rest args)
   "Initialize variables according to user preferences.  
 
@@ -508,7 +500,6 @@ the default value for the SYMBOL."
 	  (put symbol 'saved-value (list value)))
 	(setq args (cdr (cdr args)))))))
 
-;;; Don't ;;;###autoload
 (defun custom-set-faces (&rest args)
   "Initialize faces according to user preferences.
 The arguments should be a list where each entry has the form:

@@ -1,8 +1,8 @@
 ;;;  hm--html-menu ---  A menu for the hm--html-mode.
 ;;;  
-;;;  $Id: hm--html-menu.el,v 1.1.1.2 1996/12/18 03:46:46 steve Exp $
+;;;  $Id: hm--html-menu.el,v 1.2 1997/02/16 01:29:08 steve Exp $
 ;;;
-;;;  Copyright (C) 1993, 1994, 1995, 1996  Heiko Muenkel
+;;;  Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;;  email: muenkel@tnt.uni-hannover.de
 ;;;
 ;;;  This program is free software; you can redistribute it and/or modify
@@ -60,6 +60,10 @@
 	 ("Anchors"
 	  ["Relative link..." hm--html-add-relative-link t]
 	  ["General link..." hm--html-add-normal-link t]
+	  ["Drag & Drop"
+	   idd-start-mouse-drag-and-drop
+	   :active t
+	   :keys "\\[idd-mouse-drag-and-drop]"]
 	  "----"
 	  ["Html link..." hm--html-add-html-link t]
 	  ["Info link..." hm--html-add-info-link t]
@@ -206,6 +210,10 @@
 	  ["Top aligned image..." hm--html-add-image-top t]
 	  ["Middle aligned image..." hm--html-add-image-middle t]
 	  ["Bottom aligned image..." hm--html-add-image-bottom t]
+	  ["Drag & Drop"
+	   idd-start-mouse-drag-and-drop
+	   :active t
+	   :keys "\\[idd-mouse-drag-and-drop]"]
 	  "----"
 	  ["Applet..." hm--html-add-applet t]
 	  ["Parameter..." hm--html-add-applet-parameter t]
@@ -248,6 +256,10 @@
        '("HTML No-region Novice Menu"
 	 ("Anchors"
 	  ["Relative link..." hm--html-add-relative-link t]
+	  ["Drag & Drop"
+	   idd-start-mouse-drag-and-drop 
+	   :active t
+	   :keys "\\[idd-mouse-drag-and-drop]"]
 	  "----"
 	  ["Html link..." hm--html-add-html-link t]
 	  ["File link..." hm--html-add-file-link t]
@@ -280,6 +292,10 @@
 	 ("Anchors"
 	  ["Relative link..." hm--html-add-relative-link-to-region t]
 	  ["General link..." hm--html-add-normal-link-to-region t]
+	  ["Drag & Drop"
+	   idd-start-mouse-drag-and-drop 
+	   :active t
+	   :keys "\\[idd-mouse-drag-and-drop]"]
 	  "----"
 	  ["Html link..." hm--html-add-html-link-to-region t]
 	  ["Info link..." hm--html-add-info-link-to-region t]
@@ -411,6 +427,10 @@
       '("HTML Region Novice Menu"
 	 ("Anchors"
 	  ["Relative link..." hm--html-add-relative-link-to-region t]
+	  ["Drag & Drop"
+	   idd-start-mouse-drag-and-drop 
+	   :active t
+	   :keys "\\[idd-mouse-drag-and-drop]"]
 	  "----"
 	  ["Html link..." hm--html-add-html-link-to-region t]
 	  ["File link..." hm--html-add-file-link-to-region t]
@@ -454,7 +474,18 @@
 ;	 ["Marcs menu" hm--html-use-marcs-menu t]
 	 )
 	["Reload config files" hm--html-load-config-files t]
+	["Templates (fixed dirs) ..."
+	 hm--html-insert-template-from-fixed-dirs
+	 t]
 	["Templates ..." hm--html-insert-template t]
+	["Drag & Drop"
+	 idd-start-mouse-drag-and-drop
+	 :active t
+	 :keys "\\[idd-mouse-drag-and-drop]"]
+	["Drag & Drop Help"
+	 idd-start-help-mouse-drag-and-drop
+	 :active t
+	 :keys "\\[idd-help-mouse-drag-and-drop]"]
 	"----"
 	["Remove numeric names" hm--html-remove-numeric-names t]
 	["Quotify hrefs" hm--html-quotify-hrefs t]

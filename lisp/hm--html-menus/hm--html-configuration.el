@@ -1,8 +1,8 @@
 ;;; hm--html-configuration.el - Configurationfile for the html-mode
 ;;;
-;;; $Id: hm--html-configuration.el,v 1.1.1.2 1996/12/18 03:46:47 steve Exp $
+;;; $Id: hm--html-configuration.el,v 1.2 1997/02/16 01:29:08 steve Exp $
 ;;;
-;;; Copyright (C) 1993, 1994, 1995, 1996  Heiko Muenkel
+;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
 ;;;
 ;;;  This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,11 @@ This variable will only be used, if no environment variable
 \"HTML_USER_CONFIG_FILE\" is set. 
 Example value: \"~/.hm--html-configuration.el\".")
 
+;;; The site specific config file
+(defvar hm--html-site-config-file nil
+  "*The location of a site specific config file.
+This variable will only be used, if no environment variable
+\"HTML_SITE_CONFIG_FILE\" is set.")
 
 ;;; Chose the initial popup menu
 (defvar hm--html-expert nil
@@ -309,15 +314,25 @@ URL.")
 ;;; For the Templates
 
 (defvar hm--html-template-dir "/data/info/www/tnt/guide/templates"
-  "*A directory with templatefiles")
+  "*A directory with templatefiles.
+It is now also possible to use it as a list of directories.
+Look at the variable `tmpl-template-dir-list' for further descriptions.")
 
-(if (not (file-exists-p hm--html-template-dir))
+(if (listp hm--html-template-dir)
+    (unless (file-exists-p (car hm--html-template-dir))
+      ;; Use a system directory, if the above one doesn't exist
+      ;; This may only be useful, in the XEmacs >= 19.12
+      (setq hm--html-template-dir (cons (concat data-directory
+						"../lisp/hm--html-menus/")
+					hm--html-template-dir)))
+  (unless (file-exists-p hm--html-template-dir)
     ;; Use a system directory, if the above one doesn't exist
-    ;; This is only useful, in the XEmacs 19.12
+    ;; This may only be useful, in the XEmacs >= 19.12
     (setq hm--html-template-dir (concat data-directory
-					"../lisp/hm--html-menus/")))
+					"../lisp/hm--html-menus/"))))
 
-(defvar hm--html-frame-template-file (concat hm--html-template-dir
+(defvar hm--html-frame-template-file (concat data-directory
+					     "../lisp/hm--html-menus/"
 					     "frame.tmpl")
   "File, which is used as template for a html frame.")
 
@@ -326,6 +341,8 @@ URL.")
 tmpl-minor-mode.el from Heiko Muenkel (muenkel@tnt.uni-hannover.de),
 which is distributed with the package hm--html-menus.")
 
+(defvar hm--html-template-filter-regexp ".*\\.html\\.tmpl$"
+  "*Regexp for filtering out non template files in a directory.")
 
 ;;; for deleting the automounter path-prefix
 (defvar hm--html-delete-wrong-path-prefix '("/tmp_mnt" "/phys/[^/]+")
@@ -371,34 +388,48 @@ Otherwise absolute links are used. The idd functions are used for
 drag and drop.")
 
 (defvar hm--html-idd-actions
-  '((nil (((idd-major-mode-p . dired-mode)
-	   (idd-dired-file-on-line-p . ".*\\.\\(gif\\)\\|\\(jpq\\)"))
+  '((nil (((idd-if-major-mode-p . dired-mode)
+	   (idd-if-dired-file-on-line-p . ".*\\.\\(gif\\)\\|\\(jpg\\)"))
 	  hm--html-idd-add-include-image-from-dired-line)
-	 (((idd-major-mode-p . dired-mode)
-	   (idd-dired-no-file-on-line-p . nil))
+	 (((idd-if-major-mode-p . dired-mode)
+	   (idd-if-dired-no-file-on-line-p . nil))
 	  hm--html-idd-add-file-link-to-file-on-dired-line)
-	 (((idd-major-mode-p . dired-mode)
-	   (idd-dired-no-file-on-line-p . t))
+	 (((idd-if-major-mode-p . dired-mode)
+	   (idd-if-dired-no-file-on-line-p . t))
 	  hm--html-idd-add-file-link-to-directory-of-buffer)
-	 (((idd-major-mode-p . w3-mode)
-	   (idd-url-at-point-p . t))
+	 (((idd-if-major-mode-p . w3-mode)
+	   (idd-if-url-at-point-p . t))
 	  hm--html-idd-add-html-link-from-w3-buffer-point)
-	 (((idd-major-mode-p . w3-mode))
+	 (((idd-if-major-mode-p . w3-mode))
 	  hm--html-idd-add-html-link-to-w3-buffer)
-	 (((idd-local-file-p . t))
+	 (((idd-if-local-file-p . t))
 	  hm--html-idd-add-file-link-to-buffer)))
-  "The action list for the source mode `hm--html-mode'.
+  "The action list for the destination mode `hm--html-mode'.
 Look at the description of the variable idd-actions")
 
 
 ;;; The font lock keywords
 
-(defvar hm--html-font-lock-keywords
+(defconst hm--html-font-lock-keywords-1
   (list
-   '("\\(<!--.*-->\\)\\|\\(<[^>]*>\\)+" . font-lock-comment-face)
-   '("[Hh][Rr][Ee][Ff]=\"\\([^\"]*\\)\"" 1 font-lock-string-face t)
-   '("[Ss][Rr][Cc]=\"\\([^\"]*\\)\"" 1 font-lock-string-face t))
+   '("<!--.*-->" . font-lock-comment-face)
+   '("<[^>]*>" . font-lock-keyword-face)
+   '("<[^>=]*href[ \t\n]*=[ \t\n]*\"\\([^\"]*\\)\"" 1 font-lock-string-face t)
+   '("<[^>=]src[ \t\n]*=[ \t\n]*\"\\([^\"]*\\)\"" 1 font-lock-string-face t))
+  "Subdued level highlighting for hm--html-mode.")
+
+(defconst hm--html-font-lock-keywords-2
+  (append hm--html-font-lock-keywords-1
+	  (list
+	   '(">\\([^<]*\\)</a>" 1 font-lock-reference-face)
+	   '("</b>\\([^<]*\\)</b>" 1 bold)
+	   '("</i>\\([^<]*\\)</i>" 1 italic)
+	   ))
+  "Gaudy level highlighting for hm--html-mode.")
+
+(defvar hm--html-font-lock-keywords hm--html-font-lock-keywords-1
   "Default expressions to highlight in the hm--html-mode.")
+
 
 
 ;;; The Prefix- Key for the keytables
@@ -438,6 +469,34 @@ See, usually, /usr/include/sys/signal.h.
  	SunOS 4.1.x	: (setq html-sigusr1-signal-value 30)
 	SunOS 5.x	: (setq html-sigusr1-signal-value 16)
 	Linux		: (setq html-sigusr1-signal-value 10))")
+
+
+;;; indentation
+
+(defvar hm--html-disable-indentation nil
+  "*Set this to t, if you want to disable the indentation in the hm--html-mode.
+And may be send me (muenkel@tnt.uni-hannover.de) a note, why you've
+done this.")
+
+(defvar hm--html-inter-tag-indent 2
+  "*The indentation after a start tag.")
+
+(defvar hm--html-comment-indent 5
+  "*The indentation of a comment.")
+
+(defvar hm--html-intra-tag-indent 2
+  "*The indentation after the start of a tag.")
+
+(defvar hm--html-tag-name-alist
+  '(("!--" (:hm--html-one-element-tag t))
+    )
+  "An alist with tag names known by the `hm--html-mode'.
+CURRENTLY THIS LIST CONTAINS NOT ALL TAGS!!!!.
+
+It is used to determine, if a tag is a one element tag or not.
+
+In the future it should also be used to get possible parameters of
+the tag.")
 
 
 ;;; Announce the feature hm--html-configuration

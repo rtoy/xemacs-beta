@@ -1,7 +1,7 @@
 ;;; images.el --- Automatic image converters
 ;; Author: wmperry
-;; Created: 1997/02/06 15:26:06
-;; Version: 1.7
+;; Created: 1997/02/13 15:01:57
+;; Version: 1.8
 ;; Keywords: images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -167,7 +167,7 @@ to a suitable internal image format will be carried out."
 (defun image-register-netpbm-utilities ()
   "Register all the netpbm utility packages converters."
   (interactive)
-  (if (image-converter-registered-p 'xpm 'gif)
+  (if (image-converter-registered-p 'pgm 'pbm)
       nil
     (image-register-converter 'pgm 'pbm "pgmtopbm")
     (image-register-converter 'ppm 'pgm "ppmtopgm")

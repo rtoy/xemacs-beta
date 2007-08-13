@@ -567,7 +567,7 @@ Timezone package is used."
     `(,(car funs) t1 t2)))
 
 (defun gnus-turn-off-edit-menu (type)
-  "Turn off edit meny in `gnus-TYPE-mode-map'."
+  "Turn off edit menu in `gnus-TYPE-mode-map'."
   (define-key (symbol-value (intern (format "gnus-%s-mode-map" type)))
     [menu-bar edit] 'undefined))
 
@@ -764,7 +764,7 @@ with potentially long computations."
       (when (and (not (get-file-buffer filename))
 		 (not (file-exists-p filename)))
 	(if (or (not ask)
-		(gnus-yes-or-no-p
+		(gnus-y-or-n-p
 		 (concat "\"" filename "\" does not exist, create it? ")))
 	    (let ((file-buffer (create-file-buffer filename)))
 	      (save-excursion
@@ -782,11 +782,24 @@ with potentially long computations."
       ;; Decide whether to append to a file or to an Emacs buffer.
       (let ((outbuf (get-file-buffer filename)))
 	(if (not outbuf)
-	    (append-to-file (point-min) (point-max) filename)
+	    (let ((buffer-read-only nil))
+	      (save-excursion
+		(goto-char (point-max))
+		(forward-char -2)
+		(unless (looking-at "\n\n")
+		  (goto-char (point-max))
+		  (unless (bolp)
+		    (insert "\n"))
+		  (insert "\n"))
+		(goto-char (point-max))
+		(append-to-file (point-min) (point-max) filename)))
 	  ;; File has been visited, in buffer OUTBUF.
 	  (set-buffer outbuf)
 	  (let ((buffer-read-only nil))
 	    (goto-char (point-max))
+	    (unless (eobp)
+	      (insert "\n"))
+	    (insert "\n")
 	    (insert-buffer-substring tmpbuf)))))
     (kill-buffer tmpbuf)))
 

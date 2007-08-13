@@ -103,6 +103,8 @@
 ;;;					    a macro to a lambda or vice versa,
 ;;;					    or redefined to take other args)
 ;;;				'obsolete  (obsolete variables and functions)
+;;;				'pedantic  (references to Emacs-compatible
+;;;					    symbols)
 ;;; (RMS calls the following option byte-compile-compatibility but
 ;;;  our name is better)
 ;;; byte-compile-emacs18-compatibility	Whether the compiler should
@@ -353,6 +355,7 @@ Elements of the list may be:
   redefine	function cell redefined from a macro to a lambda or vice
 		versa, or redefined to take a different number of arguments.
   obsolete	use of an obsolete function or variable.
+  pedantic	warn of use of compatible symbols.
 
 The default set is specified by `byte-compile-default-warnings' and
 normally encompasses all possible warnings.
@@ -947,6 +950,16 @@ otherwise pop it")
   (let ((new (get (car form) 'byte-obsolete-info)))
     (if (memq 'obsolete byte-compile-warnings)
 	(byte-compile-warn "%s is an obsolete function; %s" (car form)
+			   (if (stringp (car new))
+			       (car new)
+			     (format "use %s instead." (car new)))))
+    (funcall (or (cdr new) 'byte-compile-normal-call) form)))
+
+;;; Used by make-obsolete.
+(defun byte-compile-compatible (form)
+  (let ((new (get (car form) 'byte-compatible-info)))
+    (if (memq 'pedantic byte-compile-warnings)
+	(byte-compile-warn "%s is provided for compatibility; %s" (car form)
 			   (if (stringp (car new))
 			       (car new)
 			     (format "use %s instead." (car new)))))
@@ -2580,6 +2593,13 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	     (memq 'obsolete byte-compile-warnings))
 	(let ((ob (get var 'byte-obsolete-variable)))
 	  (byte-compile-warn "%s is an obsolete variable; %s" var
+			     (if (stringp ob)
+				 ob
+			       (format "use %s instead." ob)))))
+    (if (and (get var 'byte-compatible-variable)
+	     (memq 'pedantic byte-compile-warnings))
+	(let ((ob (get var 'byte-compatible-variable)))
+	  (byte-compile-warn "%s is provided for compatibility; %s" var
 			     (if (stringp ob)
 				 ob
 			       (format "use %s instead." ob)))))

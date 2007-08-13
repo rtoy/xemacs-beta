@@ -1,3 +1,96 @@
+12.02.97
+	Renamed command-description.tmpl to command-description.html.tmpl.
+	The indentation stuff can now be disabled by setting the
+	variable `hm--html-disable-indentation' to t.
+	Fixed the long annoying bug, that the directory in the pop up
+	frame for selecting the template file was wrong in most cases.
+	-- BUILDED the version 5.1 of the package
+11.02.97:
+	Changed the whole indentation stuff. It is now all working -
+	with the exceptions, that the list `hm--html-tag-name-alist'
+	contains not all "one element tags", and also text between
+	pre tags will be intended.
+09.02.97:
+	Fixed a bug in the template stuff.
+	Moved the whole indentation stuff to the new file
+	hm--html-indentation.el.
+06.02.97:
+	The indentation of two tag elements are now working.
+03.02.97:
+	It is now possible to use an own site specific configuration file.
+	For that the variable `hm--html-site-config-file' was added.
+	Added some code from Bob Weiner to modify the syntax table,
+	change the comment start and end and the sentence end.
+	Started to add the indentation.
+	The indentation in comments is now working.
+01.02.97:
+	In the source and destination description of a drag and drop
+	are now used marks instead of points. This fixed bugs, which
+	occured, if the source and the destination buffer are the same.
+	A help feature was implemented.
+30.01.97:
+	Added some new features to the drag and drop interface, like
+	the macro `idd-start-mouse-drag-and-drop', which is usefull to
+	define action functions. The event is now also stored in the source
+	and destination description.
+	Changed the order of the arguments destination and source
+	to source and destination.
+	Changed the name of all idd specification type functions
+	to idd-if-*-p.
+27.01.97:
+	Changed the source and destination in the drag and drop functions,
+	so that they are now used in a standard way.
+	Added the command `idd-start-mouse-drag-and-drop', which could
+	be used to start a drag and drop command without a button-press-event.
+	Used the command `idd-start-mouse-drag-and-drop' in the hm--html
+	menus.
+26.01.97:
+	Renamed the function `tmpl-insert-template-file' to
+	`tmpl-insert-template-file-from-fixed-dirs'.
+	Added a function `tmpl-insert-template-file', which doesn't use
+	a file filter and a list of directories.
+	Changed both functions, so that they now use the variables
+	`tmpl-template-dir-list', `tmpl-automatic-expand',
+	`tmpl-filter-regexp' and `tmpl-history-variable-name'
+	instead of optional arguments.
+	Changed the name of the file frame.html to frame.html.tmpl. This is
+	usefull, if you've templates for multiple modes in one directory and
+	you want to use the new filter feature of the command
+	`tmpl-insert-template-file-from-fixed-dirs'.
+	Changed the function `hm--html-insert-template' and added
+	the function `hm--html-insert-template-from-fixed-dirs'. They are
+	using the functions `tmpl-insert-template-file' and
+	`tmpl-insert-template-file-from-fixed-dirs'.
+	The function `hm--html-insert-created-comment' is no longer
+	called in this functions. If needed, then this function must be
+	inserted in the template file. This is done now with the file
+	frame.html.tmpl.
+22.01.97:
+	Changed the function `tmpl-insert-template-file':
+	It is now possible to use a file filter and a list
+	of directories, in which template files could be.
+19.01.97:
+	Applied a patch from Andreas Ernst to fix bugs in the table stuff.
+	Added a '(let ((case-fold-seach t))' in all functions of hm--html.el,
+	which are call a search function with lowercase letters.
+	The functions to insert ordered, normal and dired list are fixed to
+	use <LI> </LI> tags instead of only <LI>.
+	Fixed a keybind bug for C-c C-s i.
+	Fixed a wrong call to `hm--html-add-only-description-entry'.
+	Fixed a bug in the argument list of hm--html-add-tags-to-region.
+	Fixed a bug in `hm--html-add-tags-to-region', which was caused by the
+	indentation.
+	Fixed a bug in `hm--html-add-relative-link-to-region' and
+	`hm--html-add-relative-link'.
+	Replaced `hm--html-file-relative-name' with `file-relative-name'.
+	Changed the font-lock stuff. It uses now the property list of 
+	`font-lock-defaults' and the three keyword lists
+	'html-font-lock-keywords', `html-font-lock-keywords-1' and
+	`html-font-lock-keywords-2'.
+	Fixed a bug in the drag and drop variables.
+	Changed the drag and drop command, so that it could be called 
+	also from a menu.
+	Added the drag and drop command to the pop up menus.
 15.08.96:
 	The items of the menu "Set popup menu" are now radio items.
 	-- BUILDED the version 5.0 of the package

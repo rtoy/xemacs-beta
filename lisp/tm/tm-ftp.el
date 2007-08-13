@@ -5,7 +5,7 @@
 ;; Author: MASUTANI Yasuhiro <masutani@me.es.osaka-u.ac.jp>
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/11/5
-;; Version: $Id: tm-ftp.el,v 1.4 1997/02/04 02:36:06 steve Exp $
+;; Version: $Id: tm-ftp.el,v 1.5 1997/02/16 01:29:33 steve Exp $
 ;; Keywords: anonymous ftp, MIME, multimedia, mail, news
 
 ;; This file is part of tm (Tools for MIME).
@@ -28,7 +28,15 @@
 ;;; Code:
 
 (require 'tm-view)
-(require 'ange-ftp)
+
+(defvar mime-view-ftp-module
+  (if (< emacs-major-version 19)
+      'ange-ftp)
+  "*Module for ftp file access.")
+
+(and mime-view-ftp-module
+     (require mime-view-ftp-module)
+     )
 
 (defvar mime-article/dired-function
   (if mime/use-multi-frame

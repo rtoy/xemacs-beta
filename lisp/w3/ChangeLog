@@ -1,3 +1,97 @@
+Fri Feb 14 09:34:35 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.txi: Lots of documentation about stylesheets, chapter layout
+  changes.
+
+Thu Feb 13 07:01:59 1997  William M. Perry  <wmperry@aventail.com>
+
+* Synch'd up to widget 1.38
+
+* w3-forms.el (w3-form-resurrect-widgets): For now, don't use the nice new
+  GUI pushbuttons - they appear to suffer badly on long lines.
+
+* w3-mouse.el (w3-running-FSF19): Use new w3-popup-menu-on-mouse-3 variable
+
+* w3-vars.el: Removed _lots_ of obsolete variables
+(w3-popup-menu-on-mouse-3): New variable to control whether W3 should
+  override mouse-3 or not.
+
+* Emacs-W3 3.0.58 released
+
+* w3.txi: Added stubs for stylesheet chapters and supported URLs
+
+* images.el (image-register-netpbm-utilities): This is now safe to call
+  multiple times again.
+
+Wed Feb 12 06:26:55 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-forms.el (w3-form-keymap): When binding widget-end-of-line, make sure
+  that we do not overwrite Emacspeak's prefix-key.  Now does a
+  where-is-internal to find the correct binding in global-map to
+  override.
+
+* w3-display.el (w3-display-node): bind :emacspeak-help to 'w3-widget-echo
+  in all the hypertext links.
+
+* w3-vars.el (w3-mode-map): New binding for \M-\t - this _should_ have
+  been taken care of by the [(meta tab)] definition, but evidently it
+  doesn't.  *sigh*
+
+Tue Feb 11 07:33:50 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-forms.el (w3-form-create-option-list): Specify :menu-tag-get so that
+  keyboard-based-completion doesn't get confused by the fact that some
+  items will have spaces slapped in at the end.
+
+* ssl.el (ssl-program-arguments): New variable - a list of command line
+  switches to send to the SSL program in a subprocess, before the hostname
+  and port number.
+  (open-ssl-stream): Use it.
+
+Mon Feb 10 07:45:31 1997  William M. Perry  <wmperry@aventail.com>
+
+* url-file.el (url-file): Removed refs to variable url-use-hypertext-dired
+
+* url-vars.el: Removed obsolete variable url-use-hypertext-dired
+
+* url-file.el (url-dired-find-file-mouse): fixed bad typo of 
+  (interactive...) spec, added documentation to a few functions.
+  (url-file): Removed refs to obsolete variable url-use-hypertext-dired
+
+* w3-xemac.el (w3-setup-version-specifics): Workaround for users of XEmacs
+  19.14 or 20.0 with the bad bad bad lossage with text properties that
+  have null values.  This  bug is fixed in XEmacs 19.15, and will be in
+  20.1 as well.  This bug would cause you to get errors like:
+	internal error: no text-prop <#extent ....> start-open
+
+* w3.el (w3-widget-button-click): Deal with new image capabilities of the
+  widget checkbox/radio-button stuff.
+
+* Synch'ed up to widget 1.31
+
+Sun Feb  9 15:39:19 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.57 released
+
+* url-file.el (url-dired-minor-mode): New minor mode that overrides a few
+  of direds keybindings to use Emacs-W3 instead of straight find-file.
+  (url-format-directory): Now just uses dired to display directory
+  listings, much more powerful than the old way.  Can copy files, act on
+  multiple files, you all know the drill.
+
+* w3.txi: Added more chapters, reorg of others.
+
+* w3-display.el (w3-maybe-start-image-download): Fixed handling of bad
+  images in the cache again.  Duh.
+  No longer log to the warnings buffer if we fail to load an image.  Just
+  use message - much less intrusive.  We just usually don't care that much
+  about failed image loads.
+
+* url-gw.el (url-open-stream): fixed typo - was calling old
+  url-nslookup-host instead of url-gateway-nslookup-host
+
+* w3.el (w3-insert-formatted-url): Now inserts markup in lowercase.
+
 Sat Feb  8 13:54:43 1997  William M. Perry  <wmperry@aventail.com>
 
 * Emacs-W3 3.0.56 released.  Getting closer!

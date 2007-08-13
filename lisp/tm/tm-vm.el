@@ -9,7 +9,7 @@
 ;;         Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: 1994/10/29
-;; Version: $Revision: 1.4 $
+;; Version: $Revision: 1.5 $
 ;; Keywords: mail, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -103,7 +103,7 @@ These hooks are run in the MIME-Preview buffer.")
 ;;; @@ System/Information variables
 
 (defconst tm-vm/RCS-ID
-  "$Id: tm-vm.el,v 1.4 1997/02/09 23:51:48 steve Exp $")
+  "$Id: tm-vm.el,v 1.5 1997/02/16 01:29:35 steve Exp $")
 (defconst tm-vm/version (get-version-string tm-vm/RCS-ID))
 
 ; Ensure vm-menu-mail-menu gets properly defined *before* tm-vm/vm-emulation-map
@@ -311,27 +311,18 @@ If you use tiny-mime patch for VM (by RIKITAKE Kenji
               (cdr ret))
       ret)))
 
-(or (fboundp 'tm:vm-su-subject)
-    (fset 'tm:vm-su-subject (symbol-function 'vm-su-subject))
-    )
-(defun vm-su-subject (m)
-  (mime-eword/decode-string (tm:vm-su-subject m))
-  )
+(defadvice vm-su-subject (after tm activate)
+  "MIME decoding support through TM added."
+  (setq ad-return-value (mime-eword/decode-string ad-return-value)))
 
-(or (fboundp 'tm:vm-su-full-name)
-    (fset 'tm:vm-su-full-name (symbol-function 'vm-su-full-name))
-    )
-(defun vm-su-full-name (m)
-  (mime-eword/decode-string (tm:vm-su-full-name m))
-  )
+(defadvice vm-su-full-name (after tm activate)
+  "MIME decoding support through TM added."
+  (setq ad-return-value (mime-eword/decode-string ad-return-value)))
 
-(or (fboundp 'tm:vm-su-to-names)
-    (fset 'tm:vm-su-to-names (symbol-function 'vm-su-to-names))
-    )
-(defun vm-su-to-names (m)
-  (mime-eword/decode-string (tm:vm-su-to-names m))
-  )
-;;;
+(defadvice vm-su-to-names (after tm activate)
+  "MIME decoding support through TM added."
+  (setq ad-return-value (mime-eword/decode-string ad-return-value)))
+
 ))
 
 (defun tm-vm/decode-message-header (&optional count)
@@ -564,8 +555,7 @@ display-configuration safe."
         )
        (t
         ;; don't display if neither mwin nor pwin was displayed before.
-        )))
-   (set-buffer mbuf)))
+        )))))
 
 (defun tm-vm/preview-current-message ()
   "Either preview message (view first lines only) or MIME-Preview it.
@@ -823,7 +813,8 @@ command via `mime-viewer/quitting-method-alist'."
 	 (select-window pwin)
 	 (set-buffer pbuf)
 	 (if (pos-visible-in-window-p (point-max) pwin)
-	     (vm-next-message)
+	     (if vm-auto-next-message
+		 (vm-next-message))
 	   ;; not at the end of message. scroll preview buffer only.
 	   (scroll-up)
 	   (tm-vm/howl-if-eom))
@@ -887,22 +878,22 @@ command via `mime-viewer/quitting-method-alist'."
     (vm-select-folder-buffer)
     (vm-check-for-killed-summary)
     (vm-error-if-folder-empty)
-    (let ((mbuf (current-buffer))
-          (pbuf (and mime::article/preview-buffer
+    (let ((pbuf (and mime::article/preview-buffer
                      (get-buffer mime::article/preview-buffer))))
       (if (null pbuf)
           (progn
             (tm-vm/preview-current-message)
             (setq pbuf (get-buffer mime::article/preview-buffer))
             ))
-      (vm-display mbuf t '(vm-beginning-of-message)
+      (vm-display (current-buffer) t '(vm-beginning-of-message)
                   '(vm-beginning-of-message reading-message))
       (tm-vm/display-preview-buffer)
-      (set-buffer pbuf)
       (tm-vm/save-window-excursion
-       (select-window (vm-get-buffer-window pbuf))
+       (select-window (vm-get-visible-buffer-window pbuf))
        (push-mark)
        (goto-char (point-min))
+       (vm-display (current-buffer) t '(vm-beginning-of-message)
+		   '(vm-beginning-of-message reading-message))
        ))))
 
 (defadvice vm-end-of-message (around tm-aware activate)
@@ -914,22 +905,22 @@ command via `mime-viewer/quitting-method-alist'."
     (vm-select-folder-buffer)
     (vm-check-for-killed-summary)
     (vm-error-if-folder-empty)
-    (let ((mbuf (current-buffer))
-          (pbuf (and mime::article/preview-buffer
+    (let ((pbuf (and mime::article/preview-buffer
                      (get-buffer mime::article/preview-buffer))))
       (if (null pbuf)
           (progn
             (tm-vm/preview-current-message)
             (setq pbuf (get-buffer mime::article/preview-buffer))
             ))
-      (vm-display mbuf t '(vm-end-of-message)
+      (vm-display (current-buffer) t '(vm-end-of-message)
                   '(vm-end-of-message reading-message))
       (tm-vm/display-preview-buffer)
-      (set-buffer pbuf)
       (tm-vm/save-window-excursion
        (select-window (vm-get-buffer-window pbuf))
        (push-mark)
        (goto-char (point-max))
+       (vm-display (current-buffer) t '(vm-end-of-message)
+		   '(vm-end-of-message reading-message))
        ))))
 
 ;;; based on vm-howl-if-eom [vm-page.el]
@@ -1493,6 +1484,8 @@ the [Print Screen] key."
 		     'f22
 		   [f22]) 
 		 'tm-vm/print-message)
+  (make-local-variable 'ps-header-lines)
+  (make-local-variable 'ps-left-header)
   (setq ps-header-lines 3)
   (setq ps-left-header
         (list 'ps-article-subject 'ps-article-author 'buffer-name)))

@@ -460,7 +460,10 @@ See `set-frame-properties', `default-x-frame-plist', and
      the frame-specific version of the buffer-alist unless the frame
      is accessible from the device. */
 
+#if 0
   DEVICE_FRAME_LIST (d) = nconc2 (DEVICE_FRAME_LIST (d), Fcons (frame, Qnil));
+#endif
+  DEVICE_FRAME_LIST (d) = Fcons (frame, DEVICE_FRAME_LIST (d));
   RESET_CHANGED_SET_FLAGS;
 
   /* Now make sure that the initial cached values are set correctly.

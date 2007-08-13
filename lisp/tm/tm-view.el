@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/7/13 (1994/8/31 obsolete tm-body.el)
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.4 $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -42,7 +42,7 @@
 ;;;
 
 (defconst mime-viewer/RCS-ID
-  "$Id: tm-view.el,v 1.3 1997/02/02 05:06:20 steve Exp $")
+  "$Id: tm-view.el,v 1.4 1997/02/16 01:29:34 steve Exp $")
 
 (defconst mime-viewer/version (get-version-string mime-viewer/RCS-ID))
 (defconst mime/viewer-version mime-viewer/version)
@@ -1007,8 +1007,14 @@ button-2	Move to point under the mouse cursor
 		))
 	    (mime/decode-message-header)
 	    )
-	  (funcall (cdr (assq mode mime-viewer/following-method-alist))
-		   new-buf)
+	  (let ((f (cdr (assq mode mime-viewer/following-method-alist))))
+	    (if (functionp f)
+		(funcall f new-buf)
+	      (message
+	       (format
+		"Sorry, following method for %s is not implemented yet."
+		mode))
+	      ))
 	  ))))
 
 (defun mime-viewer/display-x-face ()

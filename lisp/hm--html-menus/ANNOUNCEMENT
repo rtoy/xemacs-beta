@@ -1,9 +1,9 @@
 Hello,
 
-I've written a new version (5.0) of my html package for the XEmacs 
+I've written a new version (5.1) of my html package for the XEmacs 
 and the GNU Emacs 19. The name of the package is:
 
-		 hm--html-menus-5.0.tar.gz
+		 hm--html-menus-5.1.tar.gz
 
 With this package it is very easy to write html pages for the World Wide 
 Web (WWW). Eg: In most cases the user gets help to construct a specific 
@@ -12,17 +12,19 @@ It is also possible to insert links and images by just clicking on its
 source and destination (drag and drop feature).
 
 The biggest new features in this release are:
-- drag and drop functions to insert links with the mouse
-- a minor mode to extent other html modes like the psgml mode
-- some new html tags, like the <applet> tags
-- fixed some old html tags 
-- the pulldown menu in the Emacs 19 is no longer a global menu
-- the popup menus in the Emacs 19 are now much fastere 
-- the name of the mode has changed from html-mode to hm--html-mode
-- the package is longer based on the package of Marc Andreessen
+- a better drag and drop interface to insert links with the mouse
+- help feature for the drag and drop commands
+- there's now also a default drag and drop table for other modes
+- a better interface for inserting template files
+- indentation
+- better font lock stuff
+- a site specific configuration file
+  (look at the variable hm--html-site-config-file)
+- a better syntax table from Bob Weiner
+- a lot of bug fixes
 Read the NEWS file to see news in detail...
 
-You should find hm--html-menus-5.0.tar.gz on the following ftp server:
+You should find hm--html-menus-5.1.tar.gz on the following ftp server:
 	sunsite.unc.edu in /pub/Linux/apps/editors/emacs/
 	ftp.rrzn.uni-hannover.de in /pub/unix/editors/lemacs/contrib
 	ftp.tnt.uni-hannover.de in /pub/editors/xemacs/contrib
@@ -31,7 +33,11 @@ It may take some time, before the package is copied by the ftp admins
 from the incoming directories to the above listed directories.
 
 There is also a html documentation about the package. You can find it on:
-http://www.tnt.uni-hannover.de:80/data/info/www/tnt/soft/info/www/html-editors/hm--html-menus/overview.html
+http://www.tnt.uni-hannover.de/~muenkel/software/own/hm--html-menus/overview.html
+
+NOTE: This version is not tested with the Emacs 19. One of the next
+releases in the near future will be a bug fix only release for the
+Emacs 19. So please report any bugs to muenkel@tnt.uni-hannover.de.
 
 The package provides functions to insert the following stuff in html-pages:
 1. Anchors:
@@ -78,7 +84,9 @@ You can choose the popup menus between an expert menu and an novice
 menu interactively.
 
 With the pulldown menu, you can do the following things:
-- select the pulldown menu
+- select the popup menu
+- start a drag and drop command
+- get help on a drag and drop command
 - remove numeric names
 - quotify hrefs
 - reload the config files
@@ -113,7 +121,8 @@ your site and with another file specific for a user.
 
 The html specification is under development and therefore this
 package is also under development. So, if you have any ideas to
-extend the package, feel free to email them to muenkel@tnt.uni-hannover.de.
+extend the package, feel free to email them to
+muenkel@tnt.uni-hannover.de.
 
 
 Heiko

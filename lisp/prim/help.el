@@ -382,7 +382,8 @@ the window.")
                     (t
                      (message
                       (substitute-command-keys "Type \\[switch-to-buffer-other-window] to restore the other window, \\[scroll-other-window] to scroll the help."))))
-	      (shrink-window-if-larger-than-buffer helpwin)))))))
+	      (when temp-buffer-shrink-to-fit
+		(shrink-window-if-larger-than-buffer helpwin))))))))
 
 (defun describe-key (key)
   "Display documentation of the function invoked by KEY.

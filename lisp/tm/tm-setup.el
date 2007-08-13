@@ -3,7 +3,7 @@
 ;; Copyright (C) 1994,1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-setup.el,v 1.4 1997/02/04 02:36:07 steve Exp $
+;; Version: $Id: tm-setup.el,v 1.5 1997/02/16 01:29:34 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -98,14 +98,15 @@
 ;;; @ for RMAIL
 ;;;
 
-(or running-xemacs-with-mule
-    (call-after-loaded 'rmail
-		       (function
-			(lambda ()
-			  (require 'tm-rmail)
-			  ))
-		       'rmail-mode-hook)
-    )
+(defun tm-setup/load-rmail ()
+  (or (and (boundp 'rmail-support-mime)
+	   rmail-support-mime)
+      (require 'tm-rmail)
+      )
+  (remove-hook 'rmail-mode-hook 'tm-setup/load-rmail)
+  )
+
+(call-after-loaded 'rmail 'tm-setup/load-rmail 'rmail-mode-hook)
 
 
 ;;; @ for mh-e

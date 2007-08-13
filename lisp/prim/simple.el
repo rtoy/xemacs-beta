@@ -1570,7 +1570,9 @@ and more reliable (no dependence on goal column, etc.)."
     (if (interactive-p)
 	(condition-case nil
 	    (line-move arg)
-	  ((beginning-of-buffer end-of-buffer) (ding nil 'buffer-bound)))
+	  ((beginning-of-buffer end-of-buffer)
+	   (when signal-error-on-buffer-boundary
+	     (ding nil 'buffer-bound))))
       (line-move arg)))
   nil)
 
@@ -1591,7 +1593,9 @@ to use and more reliable (no dependence on goal column, etc.)."
   (if (interactive-p)
       (condition-case nil
 	  (line-move (- arg))
-	((beginning-of-buffer end-of-buffer) (ding nil 'buffer-bound)))
+	((beginning-of-buffer end-of-buffer)
+	 (when signal-error-on-buffer-boundary ; XEmacs
+	   (ding nil 'buffer-bound))))
     (line-move (- arg)))
   nil)
 
@@ -1614,7 +1618,7 @@ When the `track-eol' feature is doing its job, the value is 9999.")
 (eval-when-compile
   (defvar inhibit-point-motion-hooks))
 
-(defvar line-move-ignore-invisible nil
+(defvar line-move-ignore-invisible t
   "*Non-nil means \\[next-line] and \\[previous-line] ignore invisible lines.
 Outline mode sets this.")
 

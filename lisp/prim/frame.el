@@ -1010,6 +1010,9 @@ is first in the list.  VISIBLE-ONLY will only list non-iconified frames."
 	(append (list save-frame) frames)
       frames)))
 
+(defvar temp-buffer-shrink-to-fit t
+  "*When non-nil resize temporary output buffers to minimize blank lines.")
+
 (defun show-temp-buffer-in-current-frame (buffer)
   "For use as the value of temp-buffer-show-function:
 always displays the buffer in the current frame, regardless of the behavior
@@ -1023,7 +1026,8 @@ is normally set to `get-frame-for-buffer' (which see)."
       (setq minibuffer-scroll-window window)
       (set-window-start window 1) ; obeys narrowing
       (set-window-point window 1)
-      (shrink-window-if-larger-than-buffer window)
+      (when temp-buffer-shrink-to-fit
+	(shrink-window-if-larger-than-buffer window))
       nil)))
 
 (setq pre-display-buffer-function 'get-frame-for-buffer)

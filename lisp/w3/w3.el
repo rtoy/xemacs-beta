@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/02/08 00:49:52
-;; Version: 1.72
+;; Created: 1997/02/13 23:05:56
+;; Version: 1.77
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -124,60 +124,6 @@
    ((<= n 26) (char-to-string (+ ?A (1- n))))
    (t (concat (char-to-string (+ ?A (1- (/ n 27))))
 	      (w3-decimal-to-alpha (% n 26))))))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Functions for compatibility with XMosaic
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Parse out the Mosaic documents-menu file
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun w3-parse-docs-menu ()
-  ;; Parse the Mosaic documents menu
-  (let ((tmp-menu (append '((separator)) w3-starting-documents
-			  '((separator))))
-	real-menu x y name url)
-    (if (or (not (file-exists-p w3-documents-menu-file))
-	    (not (file-readable-p w3-documents-menu-file)))
-	nil
-      (save-excursion
-	(set-buffer (get-buffer-create " *w3-temp*"))
-	(erase-buffer)
-	(insert-file-contents w3-documents-menu-file)
-	(goto-char (point-min))
-	(while (not (eobp))
-	  (if (not (looking-at "-+$"))
-	      (setq x (progn (beginning-of-line) (point))
-		    y (progn (end-of-line) (point))
-		    name (prog1
-			     (buffer-substring x y)
-			   (delete-region x (min (1+ y) (point-max))))
-		    x (progn (beginning-of-line) (point))
-		    y (progn (end-of-line) (point))
-		    url (prog1
-			    (buffer-substring x y)
-			  (delete-region x (min (1+ y) (point-max))))
-		    tmp-menu (if (rassoc url tmp-menu) tmp-menu
-			       (cons (cons name url) tmp-menu)))
-	    (setq tmp-menu (cons '(separator) tmp-menu))
-	    (delete-region (point-min) (min (1+ (progn (end-of-line)
-						       (point)))
-					    (point-max)))))
-	(kill-buffer (current-buffer))))
-    (if (equal (car (car tmp-menu)) "") (setq tmp-menu (cdr tmp-menu)))
-    (while tmp-menu
-      (setq real-menu (cons (if (equal 'separator (car (car tmp-menu)))
-				"--------"
-			      (vector (car (car tmp-menu))
-				      (list 'w3-fetch
-					    (if (listp (cdr (car tmp-menu)))
-						(car (cdr (car tmp-menu)))
-					      (cdr (car tmp-menu)))) t))
-			    real-menu)
-	    tmp-menu (cdr tmp-menu)))
-    (setq w3-navigate-menu (append w3-navigate-menu real-menu
-				   (list "-----")))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -384,9 +330,7 @@ See the variable `w3-notify' for the different notification behaviors."
 (defun w3-open-local (fname)
   "Find a local file, and interpret it as a hypertext document.
 It will prompt for an existing file or directory, and retrieve it as a
-hypertext document.  If it is a directory, and url-use-hypertext-dired
-is non-nil, then an HTML directory listing is created on the fly.
-Otherwise, dired-mode is used to visit the buffer."
+hypertext document."
   (interactive "FLocal file: ")
   (setq fname (expand-file-name fname))
   (if (not w3-setup-done) (w3-do-setup))
@@ -396,9 +340,7 @@ Otherwise, dired-mode is used to visit the buffer."
 (defun w3-find-file (fname)
   "Find a local file, and interpret it as a hypertext document.
 It will prompt for an existing file or directory, and retrieve it as a
-hypertext document.  If it is a directory, and url-use-hypertext-dired
-is non-nil, then an HTML directory listing is created on the fly.
-Otherwise, dired-mode is used to visit the buffer."
+hypertext document."
   (interactive "FLocal file: ")
   (w3-open-local fname))
  
@@ -765,18 +707,6 @@ the cdr is the 'next' node."
       string
     (concat (substring string 0 w3-max-menu-width) "$")))
 
-(defun w3-use-starting-documents ()
-  "Use the list of predefined starting documents from w3-starting-documents"
-  (interactive)
-  (let ((w3-hotlist w3-starting-documents))
-    (w3-use-hotlist)))
-
-(defun w3-show-starting-documents ()
-  "Show the list of predefined starting documents from w3-starting-documents"
-  (interactive)
-  (if (not w3-setup-done) (w3-do-setup))
-  (w3-fetch "www://auto/starting-points"))
-
 (defun w3-insert-formatted-url (p)
   "Insert a formatted url into a buffer.  With prefix arg, insert the url
 under point."
@@ -786,13 +716,13 @@ under point."
      (p
       (setq p (widget-at (point)))
       (or p (error "No url under point"))
-      (setq str (format "<A HREF=\"%s\">%s</A>" (widget-get p 'href)
+      (setq str (format "<a href=\"%s\">%s</a>" (widget-get p 'href)
 			(read-string "Link text: "
 				     (buffer-substring
                                       (widget-get p :from)
                                       (widget-get p :to))))))
      (t
-      (setq str (format "<A HREF=\"%s\">%s</A>" (url-view-url t)
+      (setq str (format "<a href=\"%s\">%s</a>" (url-view-url t)
 			(read-string "Link text: " (buffer-name))))))
     (setq buff (read-buffer "Insert into buffer: " nil t))
     (if buff
@@ -819,8 +749,14 @@ under point."
 
 (defun w3-widget-button-click (e)
   (interactive "@e")
-  (if (widget-at (event-point e))
-      (widget-button-click e)))
+  (cond
+   ((and (event-point e)
+	 (widget-at (event-point e)))
+    (widget-button-click e))
+   ((and (fboundp 'event-glyph)
+	 (event-glyph e)
+	 (glyph-property (event-glyph e) 'widget))
+    (widget-button-click e))))
    
 (defun w3-breakup-menu (menu-desc max-len)
   (if (> (length menu-desc) max-len)
@@ -887,8 +823,6 @@ the data in raw binary format.  If none of those, the default is
 	(x 0)
 	(args command-line-args-left)
 	(w3-strict-width 80)
-	(w3-delimit-emphasis nil)
-	(w3-delimit-links nil)
 	(retrieval-function 'w3-fetch)
 	(file-format "text")
 	(header "")
@@ -1095,19 +1029,12 @@ and convert newlines into spaces."
 	      (setq content-type "application/x-latex; charset=iso-8859-1")
 	      (w3-parse-tree-to-latex w3-current-parse url)))
 	    (buffer-string))))
-    (cond
-     ((and w3-mutable-windows (fboundp w3-mail-other-window-command))
-      (funcall w3-mail-other-window-command))
-     ((fboundp w3-mail-command)
-      (funcall w3-mail-command))
-     (w3-mutable-windows (mail-other-window))
-     (t (mail)))
+    (funcall w3-mail-command)
     (mail-subject)
     (insert format " from URL " url "\n"
 	    "Mime-Version: 1.0\n"
 	    "Content-transfer-encoding: 8bit\n"
 	    "Content-type: " content-type)
-
     (re-search-forward mail-header-separator nil)
     (forward-char 1)
     (insert (if (equal "HTML Source" format)
@@ -1176,7 +1103,7 @@ and convert newlines into spaces."
 				  (mm-extension-to-mime extn)) nil 5)))
       (if url-current-mime-viewer
 	  (setq cont (append cont '(w3-pass-to-viewer)))
-	(setq cont (append cont (list w3-default-action))))
+	(setq cont (append cont (list 'w3-prepare-buffer))))
       cont)))
 
 (defun w3-use-links ()
@@ -1193,17 +1120,11 @@ ftp: reference"
   (cond
    ((and (or (null url-current-type) (equal url-current-type "file"))
 	 (eq major-mode 'w3-mode))
-    (if w3-mutable-windows
-	(find-file-other-window url-current-file)
-      (find-file url-current-file)))
+    (find-file url-current-file))
    ((equal url-current-type "ftp")
-    (if w3-mutable-windows
-	(find-file-other-window
-	 (format "/%s@%s:%s" url-current-user url-current-server
-		 url-current-file))
-      (find-file
-       (format "/%s@%s:%s" url-current-user url-current-server
-	       url-current-file))))
+    (find-file
+     (format "/%s@%s:%s" url-current-user url-current-server
+	     url-current-file)))
    (t (message "Sorry, I can't get that file so you can alter it."))))
 
 (defun w3-insert-this-url (pref-arg)
@@ -1487,27 +1408,6 @@ ftp.w3.org:/pub/www/doc."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Functions to handle formatting an html buffer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun w3-insert-headers ()
-  ;; Insert some HTTP/1.0 headers if necessary
-  (url-lazy-message "Inserting HTTP/1.0 headers...")
-  (let ((hdrs (if (eq t w3-show-headers) (mapcar 'car url-current-mime-headers)
-		w3-show-headers))
-	x y)
-    (goto-char (setq y (point-max)))
-    (while hdrs
-      (if (setq x (w3-in-assoc (car hdrs) url-current-mime-headers))
-	  (insert "<LI> <B>" (car x) "</B>: " (url-insert-entities-in-string
-					       (if (numberp (cdr x))
-						   (int-to-string (cdr x))
-						 (cdr x)))))
-      (setq hdrs (cdr hdrs)))
-    (if (= y (point-max))
-	nil
-      (insert "</UL>")
-      (goto-char y)
-      (url-lazy-message "Inserting HTTP/1.0 headers... done.")
-      (insert "<HR><UL>"))))
-
 (defun w3-add-delayed-graphic (widget)
   ;; Add a delayed image for the current buffer.
   (setq w3-delayed-images (cons widget w3-delayed-images)))
@@ -1721,18 +1621,6 @@ displayed in a new buffer."
 	(insert  "\t\t\t\t<li> <a href=\"" (car (cdr (car tmp)))
 		 "\">" (url-insert-entities-in-string
 			(car (car tmp))) "</a></li>\n")
-	(setq tmp (cdr tmp)))
-      (insert "\n\t\t\t</ol>\n\t\t</div>\n\t</body>\n</html>\n")))
-   ((equal type "starting-points")
-    (let ((tmp w3-starting-documents))
-      (insert "<html>\n\t<head>\n\t\t"
-	      "<title> Starting Points </title>\n\t</head>\n"
-	      "\t<body>\n\t\t<div>\n\t\t\t<h1>Starting Point on the Web"
-	      "</h1>\n\t\t\t<ol>\n")
-      (while tmp
-	(insert (format "\t\t\t\t<li> <a href=\"%s\">%s</a></li>\n"
-			(car (cdr (car tmp)))
-			(car (car tmp))))
 	(setq tmp (cdr tmp)))
       (insert "\n\t\t\t</ol>\n\t\t</div>\n\t</body>\n</html>\n")))
    ((equal type "history")
@@ -2227,49 +2115,21 @@ dumped with emacs."
 	url-package-name "Emacs-W3")
 
   (w3-emit-image-warnings-if-necessary)
-  (if (eq w3-color-use-reducing 'guess)
-      (setq w3-color-use-reducing
-	    (cond
-	     ((eq (device-type) 'tty) nil)
-	     ((fboundp 'device-class)
-	      (not (and (memq (device-class) '(TrueColor true-color))
-			(<= 16 (or (device-bitplanes) 0)))))
-	     (t t))))
 		   
   (cond
    ((memq system-type '(ms-dos ms-windows))
-    (setq w3-documents-menu-file (or w3-documents-menu-file
-				     (expand-file-name "~/mosaic.mnu"))
-	  w3-hotlist-file (or w3-hotlist-file
+    (setq w3-hotlist-file (or w3-hotlist-file
 			      (expand-file-name "~/mosaic.hot"))
 	  ))
    ((memq system-type '(axp-vms vax-vms))
-    (setq w3-documents-menu-file
-	  (or w3-documents-menu-file
-	      (expand-file-name "decw$system_defaults:documents.menu"))
-	  w3-hotlist-file (or w3-hotlist-file
+    (setq w3-hotlist-file (or w3-hotlist-file
 			      (expand-file-name "~/mosaic.hotlist-default"))
 	  ))
    (t 
-    (setq w3-documents-menu-file
-	  (or w3-documents-menu-file
-	      (expand-file-name "/usr/local/lib/mosaic/documents.menu"))
-	  w3-hotlist-file (or w3-hotlist-file
+    (setq w3-hotlist-file (or w3-hotlist-file
 			      (expand-file-name "~/.mosaic-hotlist-default"))
 	  )))
   
-  (if (eq w3-delimit-emphasis 'guess)
-      (setq w3-delimit-emphasis
-	    (and (not w3-running-xemacs)
-		 (not (and w3-running-FSF19
-			   (memq (device-type) '(x ns pm)))))))
-
-  (if (eq w3-delimit-links 'guess)
-      (setq w3-delimit-links
-	    (and (not w3-running-xemacs)
-		 (not (and w3-running-FSF19
-			   (memq (device-type) '(x ns pm)))))))
-
   ; Set up a hook that will save the history list when
   ; exiting emacs
   (add-hook 'kill-emacs-hook 'w3-kill-emacs-func)
@@ -2286,9 +2146,6 @@ dumped with emacs."
       (setq w3-default-homepage
 	    (or (getenv "WWW_HOME")
 		"http://www.cs.indiana.edu/elisp/w3/docs.html")))
-
-  ; Set up the documents menu
-  (w3-parse-docs-menu)
 
   ; Set up the entity definition for PGP and PEM authentication
 

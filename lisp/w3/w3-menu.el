@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/02/08 05:30:56
-;; Version: 1.27
+;; Created: 1997/02/13 23:04:55
+;; Version: 1.29
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -636,10 +636,7 @@ on that platform.")
 		  url-privacy-level
 		  url-proxy-services
 		  url-standalone-mode
-		  url-use-hypertext-dired
 		  url-use-hypertext-gopher
-		  w3-color-filter
-		  w3-color-use-reducing
 		  w3-default-homepage
 		  w3-default-stylesheet
 		  w3-delay-image-loads

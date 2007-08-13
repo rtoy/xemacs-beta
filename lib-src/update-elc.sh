@@ -101,6 +101,7 @@ comm -23 $tmp1 $tmp2 | sed '
 \!/energize/write-file.el$!d
 \!/eos/!d
 \!/gnus/!d
+\!/efs/!d
 \!/ilisp/!d
 \!/paths.el$!d
 \!/prim/loadup.el$!d
@@ -140,6 +141,12 @@ if [ -d lisp/viper ]; then
   echo Compiling Viper...
   ( cd lisp/viper ; make EMACS=$REAL elc )
   echo Viper done.
+fi
+
+if [ -d lisp/efs ]; then
+  echo Compiling efs...
+  ( cd lisp/efs ; make EMACS=$REAL )
+  echo efs done.
 fi
 
 # Gnus now has a makefile...

@@ -84,12 +84,12 @@ key and mouse strokes within the extent's text, and the @code{mouse-face}
 property controls whether the extent is highlighted when the mouse moves
 over it.  @xref{Extents and Events}.
 
-  An extent can optionally have a @dfn{start-glyph} or @dfn{end-glyph}
-(but not both at one time) associated with it.  A start-glyph or
+  An extent can optionally have a @dfn{begin-glyph} or @dfn{end-glyph}
+(but not both at one time) associated with it.  A begin-glyph or
 end-glyph is a pixmap or string that will be displayed either at the
 start or end of an extent or in the margin of the line that the start
 or end of the extent lies in, depending on the extent's layout policy.
-Start-glyphs and end-glyphs are used to implement annotations, and you
+Begin-glyphs and end-glyphs are used to implement annotations, and you
 should use the annotation API functions in preference to the 
 lower-level extent functions.  For more information, @xref{Annotations}.
 

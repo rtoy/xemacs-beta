@@ -394,7 +394,7 @@ Normally nil in most modes, since there is no process to display.")
 (defvar modeline-modified-map (make-sparse-keymap 'modeline-modified-map)
   "Keymap consulted for mouse-clicks on the modeline-modified string.")
 (define-key modeline-modified-map 'button2
-  (make-modeline-command-wrapper 'toggle-read-only))
+  (make-modeline-command-wrapper 'vc-toggle-read-only))
 
 (defvar modeline-modified-extent (make-extent nil nil)
   "Extent covering the modeline-modified string.")

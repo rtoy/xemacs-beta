@@ -17,7 +17,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not synched with FSF.
@@ -33,30 +33,29 @@
 (defun describe-buffer-case-table ()
   "Describe the case table of the current buffer."
   (interactive)
-  (let ((vector (make-vector 256 nil))
-	(case-table (current-case-table))
-	(ch 0))
+  (let ((ch 0))
     (with-displaying-help-buffer
-      (set-buffer standard-output)
-      (while (< ch 256)
-	(cond ((/= ch (downcase ch))
-	       (insert (text-char-description ch))
-	       (indent-to 16)
-	       (insert "uppercase, matches "
-		       (text-char-description (downcase ch))
-		       "\n"))
-	      ((/= ch (upcase ch))
-	       (insert (text-char-description ch))
-	       (indent-to 16)
-	       (insert "lowercase, matches "
-		       (text-char-description (upcase ch))
-		       "\n"))
+     (lambda ()
+       (set-buffer standard-output)
+       (while (< ch 256)
+         (cond ((/= ch (downcase ch))
+                (insert (text-char-description ch))
+                (indent-to 16)
+                (insert "uppercase, matches "
+                        (text-char-description (downcase ch))
+                        "\n"))
+               ((/= ch (upcase ch))
+                (insert (text-char-description ch))
+                (indent-to 16)
+                (insert "lowercase, matches "
+                        (text-char-description (upcase ch))
+                        "\n"))
 ;;	      (t
 ;;	       (insert (text-char-description ch))
 ;;	       (indent-to 16)
 ;;	       (insert "case-invariant\n"))
 	      )
-	(setq ch (1+ ch))))))
+         (setq ch (1+ ch)))))))
 
 (defun invert-case (count)
   "Change the case of the character just after point and move over it.

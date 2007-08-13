@@ -6,7 +6,7 @@
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/08/21 renamed from mime.el
-;; Version: $Revision: 1.5 $
+;; Version: $Revision: 1.6 $
 ;; Keywords: mail, news, MIME, multimedia, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -120,7 +120,7 @@
 ;;;
 
 (defconst mime-editor/RCS-ID
-  "$Id: tm-edit.el,v 1.5 1997/02/02 05:06:19 steve Exp $")
+  "$Id: tm-edit.el,v 1.6 1997/02/16 01:29:32 steve Exp $")
 
 (defconst mime-editor/version (get-version-string mime-editor/RCS-ID))
 
@@ -432,16 +432,6 @@ If it is not specified for a major-mode,
 
 (defvar mime-editor/encrypting-type 'pgp-elkins
   "*PGP encrypting type (pgp-elkins, pgp-kazu or nil). [tm-edit.el]")
-
-(defvar mime-editor/pgp-sign-function 'tm:mc-pgp-sign-region)
-(defvar mime-editor/pgp-encrypt-function 'tm:mc-pgp-encrypt-region)
-(defvar mime-editor/traditional-pgp-sign-function 'mc-pgp-sign-region)
-(defvar mime-editor/pgp-insert-public-key-function 'mc-insert-public-key)
-
-(autoload mime-editor/pgp-sign-function "tm-edit-mc")
-(autoload mime-editor/pgp-encrypt-function "tm-edit-mc")
-(autoload mime-editor/traditional-pgp-sign-function "mc-pgp")
-(autoload mime-editor/pgp-insert-public-key-function "mc-toplev")
 
 
 ;;; @@ about tag
@@ -880,7 +870,7 @@ just return to previous mode."
 
 (defun mime-editor/insert-text ()
   "Insert a text message.
-Charset is automatically obtained from the `mime/lc-charset-alist'."
+Charset is automatically obtained from the `charsets-mime-charset-alist'."
   (interactive)
   (let ((ret (mime-editor/insert-tag "text" nil nil)))
   (if ret
@@ -1558,7 +1548,7 @@ Parameter must be '(PROMPT CHOICE1 (CHOISE2 ...))."
 	    (insert (format "Content-Transfer-Encoding: %s\n" encoding))
 	  )
 	(insert "\n")
-	(or (funcall mime-editor/pgp-sign-function
+	(or (funcall (pgp-function 'mime-sign)
 		     (point-min)(point-max) nil nil pgp-boundary)
 	    (throw 'mime-editor/error 'pgp-error)
 	    )
@@ -1622,7 +1612,7 @@ Parameter must be '(PROMPT CHOICE1 (CHOISE2 ...))."
 	      (insert (format "Content-Transfer-Encoding: %s\n" encoding))
 	    )
 	  (insert "\n")
-	  (or (funcall mime-editor/pgp-encrypt-function
+	  (or (funcall (pgp-function 'encrypt)
 		       recipients (point-min) (point-max) from)
 	      (throw 'mime-editor/error 'pgp-error)
 	      )
@@ -1659,7 +1649,7 @@ Content-Transfer-Encoding: 7bit
 	  )
 	(insert "\n")
 	(or (as-binary-process
-	     (funcall mime-editor/traditional-pgp-sign-function
+	     (funcall (pgp-function 'traditional-sign)
 		      beg (point-max)))
 	    (throw 'mime-editor/error 'pgp-error)
 	    )
@@ -1693,7 +1683,7 @@ Content-Transfer-Encoding: 7bit
 	    )
 	  (insert "\n")
 	  (or (as-binary-process
-	       (funcall mime-editor/pgp-encrypt-function
+	       (funcall (pgp-function 'encrypt)
 			recipients beg (point-max) nil 'maybe)
 	       )
 	      (throw 'mime-editor/error 'pgp-error)
@@ -2074,7 +2064,7 @@ and insert data encoded as ENCODING. [tm-edit.el]"
   (interactive "P")
   (mime-editor/insert-tag "application" "pgp-keys")
   (mime-editor/define-encoding "7bit")
-  (funcall mime-editor/pgp-insert-public-key-function)
+  (funcall (pgp-function 'insert-key))
   )
 
 
@@ -2444,7 +2434,10 @@ Content-Type: message/partial; id=%s; number=%d; total=%d\n%s\n"
 	      (setq type ctype)
 	      )
 	    (cond
-	     ((string-equal type "multipart")
+	     ((string= ctype "application/pgp-signature")
+	      (delete-region (point-min)(point-max))
+	      )
+	     ((string= type "multipart")
 	      (let* ((boundary (assoc-value "boundary" params))
 		     (boundary-pat
 		      (concat "\n--" (regexp-quote boundary) "[ \t]*\n"))
