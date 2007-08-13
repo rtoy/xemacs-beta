@@ -1,3 +1,91 @@
+2000-02-13  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.9 is released
+
+2000-02-07  Andreas Jaeger <aj@suse.de>
+
+	* x-font-menu.el: Use unscaled fonts, if available.
+
+2000-02-07  Stef Epardaud <stef@lunatech.com>
+
+	* font-lock.el: add JavaDoc 1.2 support and correct interface decl
+	highlighting
+
+2000-01-26  Hrvoje Niksic  <hniksic@iskon.hr>
+
+	* files.el (abbreviate-file-name): Use directory-sep-char instead
+	of hard-coded "/".
+
+2000-01-22  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lisp/itimer.el (itimer-run-expired-timers): (consp
+	  last-command-event-time) instead of (consp
+	  'last-command-event-time).
+
+2000-01-19  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* about.el (about-hackers): Add myself to contributors list.
+
+2000-01-15  Hrvoje Niksic  <hniksic@iskon.hr>
+
+	* info.el (Info-directory-list): Warn against using Customize with
+	Info-directory-list.
+
+2000-01-07  Andreas Jaeger  <aj@suse.de>
+
+	* about.el (about-hackers): Moved my entry to contributor list.
+	(xemacs-hackers): Added myself.
+	(about-maintainer-info): Added description of myself.
+
+2000-01-05  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* hyper-apropos.el (hyper-apropos-this-symbol): Don't always
+	get symbol at point-min.
+
+1999-12-13  Charles G Waldman  <cgw@alum.mit.edu>
+
+	* gnuserv.el (gnuserv-process-filter):  don't call 
+	gnuserv-write-to-client when gnuserv-current-client is nil
+
+1999-12-11  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* toolbar.el (default-toolbar-position): typo fix
+
+1999-12-07  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* package-get.el (package-get-download-sites): Use correct custom
+	type.
+
+1999-12-05  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lisp/itimer.el: (require 'lisp-float-type).  Use
+	  floats directly in itimer-time-difference.
+
+1999-12-03  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* lisp/mule-misc.el (coding-system-get): Imported from 21.2.
+	(coding-system-put): Ditto.
+	(coding-category): Imported from 21.2 and modified for 21.2.
+
+1999-12-03  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* mule-charset.el (charset-bytes): Imported from 21.2.
+	(charset-width): Ditto.
+
+1999-12-03  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* hyper-apropos.el (hyper-apropos-this-symbol): Handle
+	`hyper-apropos-help-mode' here to find symbol to customize
+	irregardless of cursor position and simplify
+	`hyper-apropos-set-variable', `hyper-apropos-find-function', and
+	`hyper-apropos-popup-menu'.
+
+1999-11-14  Jason R Mastaler  <jason@mastaler.com>
+
+	* package-get.el (package-get-download-sites): Removed several
+ 	defunct download sites, added many new ones, and corrected a few
+ 	incorrect directory-on-site entries.
+
 1999-11-02  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.8 is released

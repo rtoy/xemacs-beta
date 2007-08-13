@@ -1,3 +1,16 @@
+2000-02-13  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.9 is released
+
+1999-12-15  Scott Blachowicz  <Scott.Blachowicz@seaslug.org>
+
+	* minitar.c (main): Add explicit exit(0) to get successful return
+	code.
+
+1999-12-09  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* xemacs.mak ($(LISP)\auto-autoloads.el): Delete target first.
+
 1999-11-02  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.8 is released
@@ -119,7 +132,7 @@
 1998-12-13  Jonathan Harris  <jhar@tardis.ed.ac.uk>
 
 	* xemacs.mak:
-	  Replaced PACKAGEPATH variable with PACKAGE_PREFIX. 
+	  Replaced PACKAGEPATH variable with PACKAGE_PREFIX.
 	  configure-package-path is initialised to contain
 	  subdirectories of PACKAGE_PREFIX. The install target makes
 	  a skeleton package tree under PACKAGE_PREFIX.
@@ -338,9 +351,9 @@
 
 1998-05-20  Kirill M. Katsnelson  <kkm@kis.ru>
 
-	* xemacs.mak: Unified -nologo compiler switch handling and lib-src 
+	* xemacs.mak: Unified -nologo compiler switch handling and lib-src
 	programs build (only make-docfile currently, adding other tools
-	soon). 
+	soon).
 
 1998-05-23  Kirill M. Katsnelson  <kkm@kis.ru>
 
@@ -414,7 +427,7 @@
 1998-04-10  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* config.h: Do not USE_ASSERTION when DEBUG_XEMACS is not
-	defined. 
+	defined.
 
 	* xemacs.mak: Added new file process-nt.c
 
@@ -468,7 +481,7 @@
 
 1998-03-19  Kirill M. Katsnelson  <kkm@kis.ru>
 
-	* xemacs.mak: HAVE_FILE_CODING removed: it is no longer an option, 
+	* xemacs.mak: HAVE_FILE_CODING removed: it is no longer an option,
 	since file I/O depends on it, and defined unconditioanlly in
 	src/s/windowsnt.h.
 	Added -nologo switch to different tools here and there.
@@ -533,7 +546,7 @@ Mon December 08 1997 kkm@kis.ru
 	* config.h: removed #define HAVE_UNIXOID_EVENT_LOOP
 
 Thu December 04 1997 jhar@tardis.ed.ac.uk
-	
+
 	* xemacs.mak: Define DEBUG_XEMACS when compiling with debug.
 
 Tue November 29 12:29:33 1997 davidh
@@ -551,14 +564,14 @@ Mon December 01 1997 jhar
 	  - Rewrote timeout code, eliminating "!NILP(rest)" bug.
 	  - Special processing for 'Ctrl-@' keystroke.
 	  - Support for some new keysyms.
-	
+
 Mon December 01 1997 jhar
 
 	* xemacs.mak:
 	  - Add PACKAGE_PATH and EMACS_BETA_VERSION defines.
 	  - Automatically copy changed include files from \nt to \src.
 	  - Corrected some DOC_SRC* lists.
-  
+
 Tue November 18 21:45:06 1997 davidh
 
 	* xemacs.mak updated to remove dependency on startup.elc
@@ -567,7 +580,7 @@ Tue November 18 21:45:06 1997 davidh
 Thu September 25 23:06:44 1997 davidh
 
 	* xemacs.mak updated to make the build as simple as typing
-	  nmake -f xemacs.mak. Also support for native gui included 
+	  nmake -f xemacs.mak. Also support for native gui included
 	  which should mean the w32 directory is no longer required.
 
 	* config.h synced with config.h.in from 20.3-b2
@@ -577,7 +590,7 @@ Thu September 25 23:06:44 1997 davidh
 Thu September 25 23:06:44 1997 davidh
 
 	* August Hill provided a patch to xemacs.mak to greatly simplify
-	  the build - the DOC file gets created correctly. 
+	  the build - the DOC file gets created correctly.
 
 Tue September 22 23:06:44 1997 davidh
 
@@ -603,7 +616,7 @@ Thu June 31 21:16:21 1997 davidh
 	* nt/TODO created.
 
 	* nt/X11.patch created to help with the X build.
-	
+
 	* August Hill provided:
  	  a patch to fix the _WRETCODE undefined symbol,
 	  a patch to fix a problem with dired
@@ -616,7 +629,7 @@ Thu June 31 21:16:21 1997 davidh
           use the macro, I decided this would be easiest.
 
 	* Modified src/fileio.c to only open files in O_BINARY. This
-	  causes files to be opened and written without automatically 
+	  causes files to be opened and written without automatically
 	  writing ^M 's to the end of each line. MULE ought to sort this
           in theory, but I am less than convinced.
 
@@ -657,7 +670,7 @@ Sun Mar 16 00:32:15 1997  marcpa  (marcpa at MARCPA)
 
 Thu Mar 13 00:19:25 1997  marcpa  (marcpa at MARCPA)
 
-	* At end of compilation, there are some unresolved symbols: 
+	* At end of compilation, there are some unresolved symbols:
 
 link.exe @C:\TEMP\nma00115.
 sysdep.obj : error LNK2001: unresolved external symbol _vfork
@@ -684,12 +697,12 @@ Wed Mar 12 23:18:53 1997  marcpa  (marcpa at MARCPA)
 @@ -150,8 +150,9 @@
  typedef CARD16		BITS16;
  typedef CARD8		BYTE;
- 
+
 +#ifndef WIN32
  typedef CARD8           BOOL;
 -
 +#endif
 
 	* cpp.exe not used: cl.exe from VC++4.2 seems to handle everything
-	properly. 
+	properly.
 

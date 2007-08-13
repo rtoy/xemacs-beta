@@ -70,7 +70,7 @@ INSTALL_DATA = @INSTALL_DATA@
 ## Things that a user might actually run,
 ## which should be installed in bindir.
 INSTALLABLES_BASE = etags ctags b2m gnuclient ootags
-INSTALLABLE_SCRIPTS = rcs-checkin pstogif gnudoit gnuattach
+INSTALLABLE_SCRIPTS = rcs-checkin gnudoit gnuattach
 #ifdef HAVE_MS_WINDOWS
 INSTALLABLES = $(INSTALLABLES_BASE) runemacs
 #else

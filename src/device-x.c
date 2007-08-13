@@ -1604,7 +1604,7 @@ Grab the keyboard on the given device (defaulting to the selected one).
 So long as the keyboard is grabbed, all keyboard events will be delivered
 to emacs -- it is not possible for other X clients to eavesdrop on them.
 Ungrab the keyboard with `x-ungrab-keyboard' (use an unwind-protect).
-Returns t if the grab was successful; nil otherwise.
+Returns t if the grab is successful, nil otherwise.
 */
        (device))
 {

@@ -431,9 +431,15 @@ nil or `never', the default, auto-generated info directory
   "List of directories to search for Info documentation files.
 
 The first directory in this list, the \"dir\" file there will become
-the (dir)Top node of the Info documentation tree.  If you wish to
-modify the info search path, use `M-x customize-variable,
-Info-directory-list' to do so.")
+the (dir)Top node of the Info documentation tree.
+
+Note: DO NOT use the `customize' interface to change the value of this
+variable.  Its value is created dynamically on each startup, depending
+on XEmacs packages installed on the system.  If you want to change the
+search path, make the needed modifications on the variable's value
+from .emacs.  For instance:
+
+    (setq Info-directory-list (cons \"~/info\" Info-directory-list))")
 
 (defcustom Info-localdir-heading-regexp
     "^Locally installed XEmacs Packages:?"

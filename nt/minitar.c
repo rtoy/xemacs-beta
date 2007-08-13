@@ -1,14 +1,14 @@
 
-/* Minitar:  extract .tar.gz files on Win32 platforms. 
+/* Minitar:  extract .tar.gz files on Win32 platforms.
    Uses zlib for decompression.
-   
-   This is very simple-minded, it ignores checksums, and any type of file 
+
+   This is very simple-minded, it ignores checksums, and any type of file
    that is not a plain file or a directory.  Nonetheless it is useful.
 
    Author: Charles G. Waldman (cgw@pgt.com),  Aug 4 1998
 
    This file is placed in the public domain; you can
-   do whatever you like with it.  There is NO WARRANTY. 
+   do whatever you like with it.  There is NO WARRANTY.
    If it breaks, you get to keep both pieces */
 
 
@@ -64,8 +64,8 @@ int makepath(char *path)
   return 0;
 }
 
-  
-		     
+
+
 
 main(int argc, char **argv)
 {
@@ -78,7 +78,7 @@ main(int argc, char **argv)
   char name[101];
   char magic[7];
   char type;
-  
+
   gzFile *infile = (gzFile*)0;
   FILE *outfile = (FILE*)0;
 
@@ -99,9 +99,9 @@ main(int argc, char **argv)
     fprintf(stderr,"Cannot open %s\n", tarfile);
     exit(-2);
   }
-  
+
   while (1){
-  
+
 
     nread = gzread(infile,block,512);
 
@@ -129,7 +129,7 @@ main(int argc, char **argv)
       sprintf(fullname,"%s/%s",basedir,name);
       printf("%s\n",fullname);
       type = block[156];
-      
+
       switch(type){
       case '0':
       case '\0':
@@ -142,11 +142,11 @@ main(int argc, char **argv)
 	fprintf(stderr,"Error: unknown type flag %c. Exiting.\n",type);
 	break;
       }
-      
+
       if (directory){
 	in_block = 0;
-	
-	/* makepath will ignore the final path component, so make sure 
+
+	/* makepath will ignore the final path component, so make sure
 	   dirnames have a trailing slash */
 
 	if (fullname[strlen(fullname)-1] != '/')
@@ -193,7 +193,7 @@ main(int argc, char **argv)
       }
     } else { /* write or continue writing file contents */
       nbytes = size>512? 512:size;
-      
+
       nwritten = fwrite(block, 1, nbytes, outfile);
       if (nwritten != nbytes){
 	fprintf(stderr, "Error: only wrote %d bytes to file %s. Exiting.\n",
@@ -204,8 +204,10 @@ main(int argc, char **argv)
 	in_block = 0;
     }
   }
-}	
+
+  exit(0);
+}
 
 
 
-  
+

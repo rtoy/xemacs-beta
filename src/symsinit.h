@@ -98,6 +98,7 @@ void syms_of_glyphs (void);
 void syms_of_gui_x (void);
 void syms_of_gui (void);
 void syms_of_indent (void);
+void syms_of_input_method_xlib (void);
 void syms_of_intl (void);
 void syms_of_keymap (void);
 void syms_of_lread (void);

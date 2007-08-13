@@ -1,3 +1,32 @@
+2000-02-13  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.9 is released
+
+2000-01-22  Martin Buchholz  <martin@xemacs.org>
+
+	* internals/internals.texi (General Coding Rules): Document why we
+	#include <config.h>
+
+2000-01-20  Mark Thomas  <mthomas@jprc.com>
+
+	* lispref/backups.texi (Numbered Backups):
+	* xemacs/files.texi (Backup Deletion):
+	Change trim-versions-without-asking to delete-old-versions.
+
+1999-12-07  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* xemacs/startup.texi (Startup Paths): fix typo: EMACSPACKAGEPATH
+	instead of PACKAGEPATH 
+	From Marcus Harnisch <harnisch@mikrom.de>
+
+1999-12-06  Sandra Wambold  <wambold@pobox.com>
+
+	* xemacs-faq.texi: Added MS-Windows questions; some other changes
+
+1999-12-05  Martin Buchholz <martin@xemacs.org>
+
+	* texinfo.texi: make compatible with makeinfo 3.12 and 4.0.
+
 1999-11-02  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.8 is released

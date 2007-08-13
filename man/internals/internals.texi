@@ -1690,6 +1690,15 @@ should always be included before any other header files (including
 system header files) to ensure that certain tricks played by various
 @file{s/} and @file{m/} files work out correctly.
 
+When including header files, always use angle brackets, not double
+quotes, except when the file to be included is in the same directory as
+the including file.  If either file is a generated file, then that is
+not likely to be the case.  In order to understand why we have this
+rule, imagine what happens when you do a build in the source directory
+using @samp{./configure} and another build in another directory using
+@samp{../work/configure}.  There will be two different @file{config.h}
+files.  Which one will be used if you @samp{#include "config.h"}?
+
   @strong{All global and static variables that are to be modifiable must
 be declared uninitialized.}  This means that you may not use the ``declare
 with initializer'' form for these variables, such as @code{int

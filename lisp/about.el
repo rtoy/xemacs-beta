@@ -56,6 +56,7 @@
 ;; `about-maintainer-info' (and maybe `about-hackers'.
 (defvar xemacs-hackers
   '((ajc      "Andrew Cosgriff"   "ajc@bing.wattle.id.au")
+    (aj       "Andreas Jaeger"    "aj@suse.de")
     (baw      "Barry Warsaw"      "bwarsaw@python.org")
     (bw       "Bob Weiner"        "weiner@altrasoft.com")
     (chr      "Christian Nybø"    "chr@mediascience.no")
@@ -70,7 +71,7 @@
     (jmiller  "Jeff Miller"       "jmiller@smart.net")
     (juhp     "Jens-Ulrik Holger Petersen" "petersen@kurims.kyoto-u.ac.jp")
     (jwz      "Jamie Zawinski"    "jwz@netscape.com")
-    (kazz     "IENAGA Kazuyuki"   "ienaga@jsys.co.jp")
+    (kazz     "IENAGA Kazuyuki"   "ienaga@xemacs.org")
     (kyle     "Kyle Jones"        "kyle_jones@wonderworks.com")
     (larsi    "Lars Magne Ingebrigtsen" "larsi@gnus.org")
     (marcpa   "Marc Paquette"	  "marcpa@CAM.ORG")
@@ -988,6 +989,14 @@ internet startup called New Media Science, doing scripting and
 violation of HTML DTD's.  After graduation, spring 1999, he'll be
 looking for a job involving lisp programming, French and Russian.")
      (widget-insert ".\n"))
+    (aj
+     (widget-insert "\
+In the XEmacs team I'm responsible for the packages which means mainly
+applying patches and packaging the packages.
+
+I'm a software developer working for the SuSE Labs of the Linux
+distributor SuSE.  My main task is to improve the GNU C library.")
+     (widget-insert ".\n"))
 ))
 
 ;; Setup the buffer for a maintainer.
@@ -1199,6 +1208,9 @@ Originator and maintainer of the gnus.org domain.\n")
 Beta tester and last hacker of calendar.\n")
     (about-show-linked-info 'chr "\
 Maintainer of the XEmacs FAQ and proud author of `zap-up-to-char'.\n")
+    (about-show-linked-info 'aj "\
+`Package Patch Tender', beta tester and GNU libc developer.\n")
+
     (flet ((print-short (name addr &optional shortinfo)
 	     (concat (about-with-face name 'italic)
 		     (about-tabs name)
@@ -1265,7 +1277,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Per Abrahamsen" "abraham@dina.kvl.dk")
        (print-short "Gary Adams" "gra@zeppo.East.Sun.COM")
        (print-short "Gennady Agranov" "agranov@csa.CS.Technion.Ac.IL")
-       (print-short "Adrian Aichner" "aichner@ecf.teradyne.com")
+       (print-short "Adrian Aichner" "adrian@xemacs.org")
        (print-short "Mark Allender" "allender@vnet.IBM.COM")
        (print-short "Stephen R. Anderson" "sra@bloch.ling.yale.edu")
        (print-short "Butch Anton" "butch@zaphod.uchicago.edu")
@@ -1348,6 +1360,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "ChangGil Han" "cghan@phys401.phys.pusan.ac.kr")
        (print-short "Derek Harding" "dharding@lssec.bt.co.uk")
        (print-short "Michael Harnois" "mharnois@sbt.net")
+       (print-short "Yoshiki Hayashi" "yoshiki@xemacs.org")
        (print-short "John Haxby" "J.Haxby@isode.com")
        (print-short "Karl M. Hegbloom" "karlheg@inetarena.com")
        (print-short "Benedikt Heinen" "beh@icemark.thenet.ch")
@@ -1362,7 +1375,6 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Tudor Hulubei" "tudor@cs.unh.edu")
        (print-short "Tatsuya Ichikawa" "ichikawa@hv.epson.co.jp")
        (print-short "Andrew Innes" "andrewi@harlequin.co.uk")
-       (print-short "Andreas Jaeger" "aj@arthur.rhein-neckar.de")
        (print-short "Markku Jarvinen" "Markku.Jarvinen@simpukka.funet.fi")
        (print-short "Robin Jeffries" "robin.jeffries@sun.com")
        (print-short "Philip Johnson" "johnson@uhics.ics.Hawaii.Edu")

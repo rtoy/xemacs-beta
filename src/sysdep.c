@@ -351,7 +351,7 @@ void wait_for_termination (int pid)
   int ret = 0, status = 0;
   if (pHandle == NULL)
     {
-      stderr_out ("wait_for_termination: pHandle == NULL, GetLastError () = %d, (int)pHandle = %d\n", GetLastError (), (int)pHandle);
+      warn_when_safe (Qprocess, Qerror, "Cannot wait for NULL process handle.");
       return;
     }
   do
@@ -362,11 +362,15 @@ void wait_for_termination (int pid)
   while (ret == WAIT_TIMEOUT);
   if (ret == WAIT_FAILED)
     {
-      stderr_out ("wait_for_termination.WaitForSingleObject returns %d (WAIT_FAILED) GetLastError () %d for (int)pHandle %d\n", ret, GetLastError (), (int)pHandle);
+      warn_when_safe (Qprocess, Qerror,
+		      "WaitForSingleObject returns WAIT_FAILED for process handle %p.",
+		      pHandle);
     }
   if (ret == WAIT_ABANDONED)
     {
-      stderr_out ("wait_for_termination.WaitForSingleObject returns %d (WAIT_ABANDONED) GetLastError () %d for (int)pHandle %d\n", ret, GetLastError (), (int)pHandle);
+      warn_when_safe (Qprocess, Qerror,
+		      "WaitForSingleObject returns WAIT_ABANDONED for process handle %p.",
+		      pHandle);
     }
   if (ret == WAIT_OBJECT_0)
     {
@@ -380,13 +384,15 @@ void wait_for_termination (int pid)
 	{
 	  /* GetExitCodeProcess() didn't return a valid exit status,
 	     nothing to do.  APA */
-	  stderr_out ("wait_for_termination.GetExitCodeProcess status %d GetLastError () %d for (int)pHandle %d\n", status, GetLastError (), (int)pHandle);
+	  warn_when_safe (Qprocess, Qerror,
+			  "GetExitCodeProcess fails for process handle %p.",
+			  pHandle);
 	}
     }
   if (pHandle != NULL && !CloseHandle(pHandle)) 
     {
-      stderr_out ("wait_for_termination.CloseHandle GetLastError () %d for (int)pHandle %d\n",
-		  GetLastError (), (int)pHandle);
+      warn_when_safe (Qprocess, Qerror,
+		      "CloseHandle fails for process handle %p.", pHandle);
     }
 #elif defined (EMACS_BLOCK_SIGNAL) && !defined (BROKEN_WAIT_FOR_SIGNAL) && defined (SIGCHLD)
   while (1)
@@ -3081,6 +3087,15 @@ sys_readlink (CONST char *path, char *buf, size_t bufsiz)
   return readlink (path, buf, bufsiz);
 }
 #endif /* ENCAPSULATE_READLINK */
+
+
+#ifdef ENCAPSULATE_FSTAT
+int
+sys_fstat (int fd, struct stat *buf)
+{
+  return fstat (fd, buf);
+}
+#endif /* ENCAPSULATE_FSTAT */
 
 
 #ifdef ENCAPSULATE_STAT

@@ -1,3 +1,38 @@
+2000-02-13  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.9 is released
+
+2000-02-08  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Sync Berkeley db autodetection with src/database.c
+
+1999-12-17  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* README: Remove msdos part.
+
+1999-12-28  Max Matveev  <max@melbourne.sgi.com>
+
+	* configure.in: add new machine type for IRIX 6.[2-5] to
+	switch from using unexelf.o to unexelfsgi.o for just those
+	versions of IRIX.
+	In the ideal world it would be handled by the s/irix6-0.h but
+	since machine config is included AFTER OS config, I had to add a
+	new machine type.
+
+2000-01-25  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Default Drag-N-Drop to "no"
+
+1999-11-13  Jason R Mastaler  <jason@mastaler.com>
+
+	* etc/FTP: Updated FTP mirrors list.  Replaced GNU FTP document
+ 	with a URL.
+
+1999-11-13  Jason R Mastaler  <jason@mastaler.com>
+
+	* etc/MAILINGLISTS: Updated mailing list subscription information.
+  	Replaced GNU MAILINGLISTS document with a URL.
+
 1999-11-02  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.8 is released

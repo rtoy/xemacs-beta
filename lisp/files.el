@@ -772,7 +772,6 @@ Choose the buffer's name using `generate-new-buffer-name'."
 
 (defvar abbreviated-home-dir nil
   "The user's homedir abbreviated according to `directory-abbrev-alist'.")
-
 (defun abbreviate-file-name (filename &optional hack-homedir)
   "Return a version of FILENAME shortened using `directory-abbrev-alist'.
 See documentation of variable `directory-abbrev-alist' for more information.
@@ -790,38 +789,43 @@ If optional argument HACK-HOMEDIR is non-nil, then this also substitutes
 	;; If any elt of directory-abbrev-alist matches this name,
 	;; abbreviate accordingly.
 	(while tail
-	  (if (string-match (car (car tail)) filename)
-	      (setq filename
-		    (concat (cdr (car tail)) (substring filename (match-end 0)))))
+	  (when (string-match (car (car tail)) filename)
+	    (setq filename
+		  (concat (cdr (car tail)) (substring filename (match-end 0)))))
 	  (setq tail (cdr tail))))
-      (if hack-homedir
-	  (progn
-	    ;; Compute and save the abbreviated homedir name.
-	    ;; We defer computing this until the first time it's needed, to
-	    ;; give time for directory-abbrev-alist to be set properly.
-	    ;; We include a slash at the end, to avoid spurious matches
-	    ;; such as `/usr/foobar' when the home dir is `/usr/foo'.
-	    (or abbreviated-home-dir
-		(setq abbreviated-home-dir
-		      (let ((abbreviated-home-dir "$foo"))
-			(concat "\\`" (regexp-quote (abbreviate-file-name
-						     (expand-file-name "~")))
-				"\\(/\\|\\'\\)"))))
-	    ;; If FILENAME starts with the abbreviated homedir,
-	    ;; make it start with `~' instead.
-	    (if (and (string-match abbreviated-home-dir filename)
-		     ;; If the home dir is just /, don't change it.
-		     (not (and (= (match-end 0) 1) ;#### unix-specific
-			       (= (aref filename 0) ?/)))
-		     (not (and (or (eq system-type 'ms-dos)
-				   (eq system-type 'windows-nt))
-			       (save-match-data
-				 (string-match "^[a-zA-Z]:/$" filename)))))
-		(setq filename
-		      (concat "~"
-			      (substring filename
-					 (match-beginning 1) (match-end 1))
-			      (substring filename (match-end 0)))))))
+      (when hack-homedir
+	;; Compute and save the abbreviated homedir name.
+	;; We defer computing this until the first time it's needed,
+	;; to give time for directory-abbrev-alist to be set properly.
+	;; We include the separator at the end, to avoid spurious
+	;; matches such as `/usr/foobar' when the home dir is
+	;; `/usr/foo'.
+	(or abbreviated-home-dir
+	    (setq abbreviated-home-dir
+		  (let ((abbreviated-home-dir "$foo"))
+		    (concat "\\`"
+			    (regexp-quote
+			     (abbreviate-file-name (expand-file-name "~")))
+			    "\\("
+			    (regexp-quote (string directory-sep-char))
+			    "\\|\\'\\)"))))
+	;; If FILENAME starts with the abbreviated homedir,
+	;; make it start with `~' instead.
+	(if (and (string-match abbreviated-home-dir filename)
+		 ;; If the home dir is just /, don't change it.
+		 (not (and (= (match-end 0) 1)
+			   (= (aref filename 0) directory-sep-char)))
+		 (not (and (eq system-type 'windows-nt)
+			   (save-match-data
+			     (string-match (concat "\\`[a-zA-Z]:"
+						   (regexp-quote
+						    (string directory-sep-char))
+						   "\\'")
+					   filename)))))
+	    (setq filename
+		  (concat "~"
+			  (match-string 1 filename)
+			  (substring filename (match-end 0))))))
       filename)))
 
 (defcustom find-file-not-true-dirname-list nil

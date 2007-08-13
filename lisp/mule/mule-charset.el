@@ -116,6 +116,12 @@ This only applies to TTY mode (under X, the actual display width can
 be automatically determined)."
   (charset-property charset 'columns))
 
+(defun charset-width (charset)
+  "Return the number of display columns per character of CHARSET.
+This only applies to TTY mode (under X, the actual display width can
+be automatically determined)."
+  (charset-property charset 'columns))
+
 (defun charset-direction (charset)
   "Return the display direction (`l2r' or `r2l') of CHARSET."
   (charset-property charset 'direction))
@@ -130,6 +136,10 @@ that can display the characters in CHARSET."
   "Return the CCL program of CHARSET.
 See `make-charset'."
   (charset-property charset 'ccl-program))
+
+(defun charset-bytes (charset)
+  "Useless in XEmacs, returns 1."
+   1)
 
 ;;;; Define setf methods for all settable Charset properties
 

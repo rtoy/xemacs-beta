@@ -379,6 +379,8 @@ with_toolbars=""
 with_tty=""
 use_union_type="no"
 with_dnet=""
+dnl dragndrop is still experimental.  When it is stable, comment out the following line:
+with_dragndrop="no"
 
 dnl ------------------
 dnl Options Processing
@@ -1032,6 +1034,7 @@ case "$canonical" in
   alpha*-*-*       ) machine=alpha ;;
   vax-*-*          ) machine=vax ;;
   mips-dec-*       ) machine=pmax ;;
+  mips-sgi-irix6*  ) machine=iris6d ;;
   mips-sgi-*       ) machine=iris4d ;;
   mips*-linux      ) machine=mips ;;
   romp-ibm-*       ) machine=ibmrt ;;
@@ -3547,7 +3550,10 @@ dnl Check for Berkeley DB.
 if test "$with_database_berkdb" != "no"; then
   AC_MSG_CHECKING(for Berkeley db.h)
   for path in "db/db.h" "db.h"; do
-    AC_TRY_COMPILE([#ifdef HAVE_INTTYPES_H
+    AC_TRY_COMPILE([
+#include <stdlib.h>
+#if !(defined __GLIBC__ && __GLIBC_MINOR__ >= 1)
+#ifdef HAVE_INTTYPES_H
 #define __BIT_TYPES_DEFINED__
 #include <inttypes.h>
 typedef uint8_t  u_int8_t;
@@ -3555,6 +3561,7 @@ typedef uint16_t u_int16_t;
 typedef uint32_t u_int32_t;
 #ifdef WE_DONT_NEED_QUADS
 typedef uint64_t u_int64_t;
+#endif
 #endif
 #endif
 #include <$path>

@@ -1,3 +1,174 @@
+2000-02-13  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.9 is released
+
+2000-02-09  Andy Piper  <andy@xemacs.org>
+
+	* objects-msw.c (Fmswindows_shell_execute): make industrial
+	strength.
+
+2000-02-06  Vin Shelton  <acs@xemacs.org>
+
+	* menubar-x.c (make_dummy_xbutton_event): Change HAVE_WMCOMMAND to
+	HAVE_SESSION in order to fix popup menu location.
+
+2000-02-04  Andy Piper  <andy@xemacs.org>
+
+	* objects-msw.c (Fmswindows_shell_execute): Add from Emacs. From
+	Fabrice Popineau.
+
+2000-01-25  Martin Buchholz  <martin@xemacs.org>
+
+	* lread.c (read_bit_vector): Fix memory leak reading literal bit
+	vectors.
+
+2000-01-23  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+	* process.h (PROCESS_LIVE_P): Modify to take a Lisp_Process
+	instead of a Lisp_Object as argument to make it consistent with
+	the other LIVE_P macros.
+	(CHECK_LIVE_PROCESS): New macro.
+
+	* process.c: Declare Qprocess_live_p.
+	(Fprocess_live_p): New function.
+	(create_process): Use PROCESS_LIVE_P.
+	(read_process_output): Ditto.
+	(set_process_filter): Ditto.
+	(Fdelete_process): Ditto.
+	(kill_buffer_processes): Ditto
+	(process_send_signal): Use CHECK_LIVE_PROCESS.
+	(Fprocess_input_coding_system): Check whether process is still
+	alive (fix PR#1061).
+	(Fprocess_output_coding_system): Ditto.
+	(Fprocess_coding_system): Ditto.
+	(Fset_process_input_coding_system): Ditto.
+	(Fset_process_output_coding_system): Ditto.
+
+2000-01-18  Martin Buchholz  <martin@xemacs.org>
+
+	* eval.c (Fbacktrace): Small Purify-cation.  Fix docstring.
+
+2000-01-11  Mike Woolley  <mike@bulsara.com>
+
+	* ntheap.c: Reduced the reserved heap space from 1Gb down to
+	256Mb, as a workaround for the non-starting problem many people
+	have experienced.
+
+1999-12-14  Katsumi Yamaoka   <yamaoka@jpl.org>
+
+	* buffer.c (Fbury_buffer): Add directions to the docstring.
+
+1999-12-08  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* s\windowsnt.h (DIRECTORY_SEP): Initialize from
+	`Vdirectory_sep_char'.
+
+	* lisp.h: Add declaration for `Vdirectory_sep_char' to allow
+	customization of `DIRECTORY_SEP' under native Windows NT.
+
+1999-12-09  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* sysfile.h: Encapsulate `fstat' for Windows NT.
+
+	* sysdep.c (endif): Use `warn_when_safe'.
+	(sys_fstat): Encapsulate `fstat' for Windows NT.
+
+	* nt.c (fstat): New encapsulation function for Windows NT.
+	Fix somes typos throughout file.
+
+	* callproc.c (call_process_cleanup): Use `warn_when_safe'.
+
+1999-12-06  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* src/syntax.h (SYNTAX_START_P): Check whether the two chars
+	actually can start a common comment type.
+	* src/syntax.h (SYNTAX_END_P): ditto for end.
+
+2000-02-06  Vin Shelton  <acs@xemacs.org>
+
+	* menubar-x (make_dummy_xbutton_event): Change HAVE_WMCOMMAND to
+	HAVE_SESSION in order to fix popup menu location.
+
+1999-12-28  Max Matveev  <max@melbourne.sgi.com>
+
+	* unexelfsgi.c (unexec): Change the way we decide which segment
+	should be extended.
+
+	Assumption that .bss section should be outside the PT_LOADable
+ 	segment. On IRIX with version 6.2 and above, .bss (or .sbss, if
+ 	it's present) is inside the 'data' segment. This would fail the
+ 	test which was used to find a segment to grow and cover new
+ 	heap. Instead of this assumption, I created another one - on IRIX
+ 	the segment to grow should start below .bss and it's address
+ 	should extent above the end of .bss. Once this segment is
+ 	identified, it's grown to accommodate the new heap and new
+ 	zero-length .bss section is added at the end of .data2.
+
+1999-12-05  Kazuyuki IENAGA <kazz@imasy.or.jp>
+
+	* input-method-xlib.c: Added new lisp object Qxim_xlib.
+	New macro xim_warn(str), xim_warn1(fmt,str) and xim_info(str).
+	All the valid stderr_out were changed to those macros.
+	(IMDestroyCallback): Don't test the XIC if the frame is not X
+	frame.
+	(IMInstantiateCallback): Treat the client_data as "device" not
+	"frame" because the caller changed from frame to device.
+	Here initializes XIM and activates XICs for each frame which
+	doesn't have XIC.
+	(XIM_init_device): Register the XIM instantiation callback which
+	had been performed by XIM_init_frame() before.  When the system
+	runs X11R5, we just do XOpenIM().
+	(XIM_delete_frame): Added a test for the XIM before clearing XIC.
+	(XIM_init_frame): Placed an actual code for XIC activation which
+	was moved from IMInstantiateCallback.
+	(syms_of_input_method_xlib): New function which includes a symbol
+	Qxim_xlib that uses in emacs.c.
+
+	* emacs.c: Added a function entry "syms_of_input_method_xlib" for
+	input_method_xlib.
+
+1999-12-03  Alexandre Oliva  <oliva@lsd.ic.unicamp.br>
+	
+	* unexelf.c: Include <syms.h>, not <sym.h> on IRIX.  Removed
+	duplicate definition of ElfW.
+	(find_section): Copied from unexsgi.c.
+	(unexec): Use find_section.  Adjust whitespace.  Initialize
+	new_data2_offset based on old_data, not sbss (this fixes a
+	bug on IRIX6).  Change #ifdef __mips to __sgi, since it's
+	IRIX-specific.  Removed .got special-case in definitive, but
+	put back .lit4 and .lit8.  Adjust test for presence of .mdebug
+	section to the new return value of find_section.
+
+1999-12-03  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* src/callproc.c (Fcall_process_internal): Be careful in writing
+	terminating null when copying args. nargs can be < 4.
+	Idea from Klaus Frank <klausf@i3.informatik.rwth-aachen.de>
+
+1999-12-03  Mike Alexander <mta@arbortext.com>
+
+	* fileio.c: Make directory-sep-char work on Windows.
+
+1999-12-03 Eric Darve  <darve@crocco.stanford.edu>
+
+	* abbrev.c(abbrev_oblookup): moved a few lines in subroutine
+	abbrev_oblookup(...). Checking whether wordend <= wordstart (line
+	225) was moved out of the "if" block. This way this condition is
+	checked in all cases.
+
+1999-12-03  Robert Pluim  <rpluim@bigfoot.com>
+
+	* emacs.c (shut_down_emacs): Point users to PROBLEMS file
+
+1999-12-03  Mike Alexander <mta@arbortext.com>
+
+	* process-nt: Get MKS Korn shell to work.
+
+1999-11-14  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* mule-charset.c (non_ascii_valid_charptr_p): Check if
+	private charset is defined. Avoid the gap between
+	LEADING_BYTE_LATIN_JISX0201 and LEADING_BYTE_CYRILLIC_ISO8859_5.
+
 1999-11-02  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.8 is released

@@ -20,6 +20,8 @@
 
 (provide 'itimer)
 
+(require 'lisp-float-type)
+
 ;; `itimer' feature means Emacs-Lisp programmers get:
 ;;    itimerp
 ;;    itimer-live-p
@@ -46,7 +48,7 @@
 ;;
 ;; See the doc strings of these functions for more information.
 
-(defvar itimer-version "1.07"
+(defvar itimer-version "1.09"
   "Version number of the itimer package.")
 
 (defvar itimer-list nil
@@ -62,7 +64,7 @@ is not being used to drive the system.")
 (defvar itimer-timer-last-wakeup nil
   "The time the timer driver function last ran.")
 
-(defvar itimer-short-interval (if (featurep 'lisp-float-type) 1e-3 1)
+(defvar itimer-short-interval 1e-3
   "Interval used for scheduling an event a very short time in the future.
 Used internally to make the scheduler wake up early.
 Unit is seconds.")
@@ -671,7 +673,7 @@ x      start a new itimer
 	(inhibit-quit t))
     (setq next-wakeup 600)
     (cond ((and (boundp 'last-command-event-time)
-		(consp 'last-command-event-time))
+		(consp last-command-event-time))
 	   (setq last-event-time last-command-event-time
 		 idle-time (itimer-time-difference (current-time)
 						   last-event-time)))
@@ -838,11 +840,9 @@ x      start a new itimer
 	       secs (+ secs 65536))
       (setq carry 0))
     (setq 65536-secs (- (nth 0 t1) (nth 0 t2) carry))
-    ;; loses for interval larger than the maximum signed Lisp integer.
-    ;; can't really be helped.
-    (+ (* 65536-secs 65536)
+    (+ (* 65536-secs 65536.0)
        secs
-       (/ usecs (if (featurep 'lisp-float-type) 1e6 1000000)))))
+       (/ usecs 1000000.0))))
 
 (defun itimer-timer-driver (&rest ignored)
   ;; inhibit quit because if the user quits at an inopportune

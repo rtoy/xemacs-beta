@@ -1640,7 +1640,7 @@ only existing buffer names are allowed."
 This will prompt with a dialog box if appropriate, according to
  `should-use-dialog-box-p'.
 Value is not expanded---you must call `expand-file-name' yourself.
-Value is subject to interpreted by substitute-in-file-name however.
+Value is subject to interpretation by `substitute-in-file-name' however.
 Default name to DEFAULT if user enters a null string.
  (If DEFAULT is omitted, the visited file name is used,
   except that if INITIAL-CONTENTS is specified, that combined with DIR is

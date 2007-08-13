@@ -684,7 +684,7 @@ make_dummy_xbutton_event (XEvent *dummy,
       btn->x = eev->event.button.x;
       btn->y = eev->event.button.y;
       shellx = shelly = 0;
-#ifndef HAVE_WMCOMMAND
+#ifndef HAVE_SESSION
       {
 	Widget shell = XtParent (daddy);
 

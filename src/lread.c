@@ -1941,6 +1941,7 @@ read_bit_vector (Lisp_Object readcharfun)
 {
   unsigned_char_dynarr *dyn = Dynarr_new (unsigned_char);
   Emchar c;
+  Lisp_Object val;
 
   while (1)
     {
@@ -1953,8 +1954,12 @@ read_bit_vector (Lisp_Object readcharfun)
   if (c >= 0)
     unreadchar (readcharfun, c);
 
-  return make_bit_vector_from_byte_vector (Dynarr_atp (dyn, 0),
-					   Dynarr_length (dyn));
+  val = make_bit_vector_from_byte_vector (Dynarr_atp (dyn, 0),
+					  Dynarr_length (dyn));
+
+  Dynarr_free (dyn);
+
+  return val;
 }
 
 

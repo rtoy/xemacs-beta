@@ -445,15 +445,10 @@ or if you change your font path, you can call this to re-initialize the menus."
 	  ;; The user can no longer easily control the weight using the menu
 	  ;; Note it is silly anyway as it could very well be that the font
 	  ;; has no common size+weight combinations with the default font.
-;;	  (if (and (member weight (aref entry 1))
-;;		   (or (member size (aref entry 2))
-;;		       (and (not font-menu-ignore-scaled-fonts)
-;;			    (member 0 (aref entry 2)))))
-;;	      (enable-menu-item item)
-;;	    (disable-menu-item item))
-	  (if (and font-menu-ignore-scaled-fonts (member 0 (aref entry 2)))
+	  (if (and (not (member size (aref entry 2)))
+		   font-menu-ignore-scaled-fonts (member 0 (aref entry 2)))
 	      (disable-menu-item item)
-	    (enable-menu-item item))	  
+	    (enable-menu-item item))  
 	  (if (string-equal family f)
 	      (select-toggle-menu-item item)
 	    (deselect-toggle-menu-item item))

@@ -1246,6 +1246,7 @@ depend:
 VANILLA=-vanilla
 FORCE:
 $(LISP)\auto-autoloads.el:	FORCE
+	-@del $(LISP)\auto-autoloads.el
 	$(PROGNAME) $(VANILLA) -batch \
 		-l autoload -f batch-update-directory $(LISP)
 	$(PROGNAME) $(VANILLA) -batch \

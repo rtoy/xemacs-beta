@@ -306,7 +306,7 @@ otherwise it is killed."
 Like `key-binding', but handles menu events and toolbar presses correctly.
 KEY is any value returned by `next-command-event'.
 MENU-FLAG is a symbol that should be set to T if KEY is a menu event,
- or NIL otherwise"
+ or nil otherwise"
   (let (defn)
     (and menu-flag (set menu-flag nil))
     ;; If the key typed was really a menu selection, grab the form out

@@ -9,7 +9,10 @@ Real Real Quickstart FAQ
 ------------------------
 
 Q. Do I need to have the packages to compile XEmacs?
-A. No.
+A. No, XEmacs will build and install just fine without any packages
+   installed.  However, only the most basic editing functions will be
+   available with no packages installed, so installing packages is an
+   essential part of making your installed XEmacs _useful_.
 
 Q. I really liked the old way that packages were bundled and do not
    want to mess with packages at all.
@@ -59,7 +62,7 @@ Where to get the packages
 -------------------------
 
 Packages are available from ftp://ftp.xemacs.org/pub/xemacs/packages
-and its mirror.
+and its mirrors.
 
 How to install the packages
 ---------------------------
@@ -72,14 +75,14 @@ The Sumo Tarball
 ----------------
 
 Those with little time, cheap connections and plenty of disk space can
-install all packages at once using the sumo tarballs.
+install all the packages at once using the sumo tarballs.
 Download the file
 
-xemacs-sumo-<date>.tar.gz 
+xemacs-sumo.tar.gz
 
 For an XEmacs compiled with Mule you also need
 
-xemacs-mule-sumo-<date>.tar.gz
+xemacs-mule-sumo.tar.gz
 
 N.B. They are called 'Sumo Tarballs' for good reason. They are
 currently about 15MB and 2.3MB (gzipped) respectively.
@@ -131,8 +134,7 @@ and optionally:
 
    mailcrypt    - If you have PGP installed and want to verify the
                   signature of the index file.
-   mule-base    - Needed if you want to run XEmacs with MULE with a
-                  non-English language environment.
+   mule-base    - Needed if you want to use XEmacs with MULE.
 
 After installing these by hand, you can start XEmacs. (It is a good
 idea to use 'xemacs -vanilla' here as your startup files might need
@@ -201,8 +203,8 @@ Finding the Right Packages
 
 If you want to find out which package contains the functionality you
 are looking for, use M-x package-get-package-provider, and give it a
-symbol that is likely to be in that package.  eg, if some code you
-want to use has a (require 'thingatpt) in it, try doing
+symbol that is likely to be in that package.  For example, if some
+code you want to use has a (require 'thingatpt) in it, try doing
 M-x package-get-package-provider RET thingatpt , which will return
 something like: (fsf-compat "1.06").
 
@@ -210,7 +212,7 @@ Upgrading/Removing Packages
 ---------------------------
 
 As the exact files and their locations contained in a package may
-change it is recommend to remove a package first before installing a
+change it is recommended to remove a package first before installing a
 new version. In order to facilitate removal each package contains an
 pgkinfo/MANIFEST.pkgname file which list all the files belong to the
 package. M-x package-admin-delete-binary-package RET can be used to

@@ -171,13 +171,19 @@ WORD_SYNTAX_P (struct Lisp_Char_Table *table, Emchar c)
 #define SYNTAX_SECOND_CHAR_END   0x03
 #define SYNTAX_SECOND_CHAR       0x33
 
-#define SYNTAX_START_P(table, a, b)					\
-  ((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_START)		\
-   && (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_START))
 
-#define SYNTAX_END_P(table, a, b)					\
-  ((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_END)		\
-   && (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_END))
+/* #### These are now more or less equivalent to
+   SYNTAX_COMMENT_MATCH_START ...*/
+/* a and b must be first and second start chars for a common type */
+#define SYNTAX_START_P(table, a, b)                                     \
+  (((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_START) >> 2)    \
+   & (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_START))
+
+/* ... and  SYNTAX_COMMENT_MATCH_END */
+/* a and b must be first and second end chars for a common type */
+#define SYNTAX_END_P(table, a, b)                                       \
+  (((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_END) >> 2)      \
+   & (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_END))
 
 #define SYNTAX_STYLES_MATCH_START_P(table, a, b, mask)			    \
   ((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_START & (mask))	    \
