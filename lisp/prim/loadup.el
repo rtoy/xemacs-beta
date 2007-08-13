@@ -110,7 +110,6 @@
      ;;(load-gc (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
      (load-gc "widget")
      (load-gc "custom") ; Before loaddefs so that defcustom exists
-     (load-gc "custom-xmas")
      (load-gc "loaddefs") ; <=== autoloads get put here
      (load-gc "misc")
      (load-gc "profile")

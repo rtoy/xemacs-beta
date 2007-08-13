@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Customization Library
 
-Version: 1.46
+Version: 1.50
 
 @menu
 * Introduction::                
@@ -638,9 +638,6 @@ We need @strong{much} better support for keyboard operations in the
 customize buffer.
 
 @item
-Support real specifiers under XEmacs.
-
-@item
 Integrate with @file{w3} so you can customization buffers with much
 better formatting.  I'm thinking about adding a <custom>name</custom>
 tag. 
@@ -654,11 +651,6 @@ Support undo using lmi's @file{gnus-undo.el}.
 
 @item
 Make it possible to append to `choice', `radio', and `set' options.
-
-@item
-There should be a way to exit the buffer.
-
-An @sc{open look} pushpin would do wonders.
 
 @item
 Ask whether set or modified variables should be saved in

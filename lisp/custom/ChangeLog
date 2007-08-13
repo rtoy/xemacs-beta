@@ -1,3 +1,80 @@
+Mon Mar 03 18:29:27 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.50 released.
+
+Mon Mar  3 15:01:25 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-face.el (face-documentation): Renamed from
+	`get-face-documentation'. 
+	(custom-declare-face): Change caller.
+	* cus-edit.el (custom-face): Ditto.
+
+	* cus-face.el (make-empty-face): New function.
+	(initialize-face-resources): New option.
+	(initialize-face-resources): New function.
+	(custom-declare-face): Call them here.
+	(custom-face-display-set): Don't create face here.
+	(custom-set-faces): Clear face.
+	* cus-edit.el (custom-face-set): Ditto.
+	(custom-face-save): Ditto.
+	(custom-face-reset-saved): Ditto.
+	(custom-face-reset-factory): Ditto.
+
+Mon Mar 03 10:36:40 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.49 released.
+
+Mon Mar  3 10:34:44 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-face.el (custom-background-mode): Don't call
+	`x-color-values' on Emacs tty frame.
+	Patch by Katsumi Yamaoka <yamaoka@ga.sony.co.jp>.
+
+Sat Mar  1 22:55:17 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (cus-face): Require.
+
+Sat Mar 01 22:35:07 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.48 released.
+
+Sat Mar  1 21:45:44 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el: Renamed from widget-edit.el
+	* wid-browse.el: Renamed from widget-browse.el
+	* cus-edit.el: Renamed from custom-edit.el
+	* cus-face.el: New file.
+	* custom-xmas.el: Deleted.
+	* custom.el: Updated autoloads.
+	* widget.el: Ditto
+	* widget.texi: Updated examples.
+	* widget-example.el: Updated require.
+
+Fri Feb 28 02:04:49 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.el (custom-declare-face): Ignore already declared faces.
+
+	* Version 1.47 released.
+
+Fri Feb 28 01:46:22 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.el (custom-background-mode): Take a frame argument.
+	(custom-declare-face): Create frame local faces where relevant. 
+	(custom-declare-face): Whine when called during dump.
+	(custom-face-display-set): Don'e create frame local face if the
+	display is identical to the global face.
+	(custom-default-frame-properties): New variable and function.
+	(custom-extract-frame-properties): New function.
+	(custom-get-frame-properties): New function.
+	(custom-display-match-frame): Use it.
+	(custom-relevant-frames): New variable and function.
+	(custom-initialize-frame): New function.
+	(after-make-frame-hook): Enable it.
+
+Thu Feb 27 18:58:45 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom-edit.el (custom-buffer-create): Read up event when 
+
 Wed Feb 26 22:17:38 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.46 released.

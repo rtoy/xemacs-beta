@@ -1273,7 +1273,7 @@ lisp=   ${lispdir}paths.el \
         ${lispdir}prim/itimer.elc ${lispdir}prim/itimer-autosave.elc \
 	${lispdir}ediff/ediff-hook.elc \
 	${lispdir}custom/widget.elc \
-	${lispdir}custom/custom.elc ${lispdir}custom/custom-xmas.elc \
+	${lispdir}custom/custom.elc \
 	${lispdir}packages/fontl-hooks.elc SCROLLBAR_LISP \
 	${lispdir}prim/buffer.elc MENUBAR_LISP \
 	${lispdir}packages/buff-menu.elc DIALOG_LISP MULE_LISP NOMULE_LISP \

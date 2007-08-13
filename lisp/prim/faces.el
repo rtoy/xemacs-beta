@@ -1067,52 +1067,68 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
   (font-proportional-p (face-font face) domain charset))
 
 
+(defvar init-face-from-resources t
+  "If non-nil, attempt to initialize faces from the reseource database.")
+
+(defun make-empty-face (name &optional doc-string temporary)
+  "Like `make-face', but doesn't query the reseource database."
+  (let ((init-face-from-resources nil))
+    (make-face name doc-string temporary)))
+
 (defun init-face-from-resources (face &optional locale)
   "Initialize FACE from the resource database.
 If LOCALE is specified, it should be a frame, device, or 'global, and
 the face will be resourced over that locale.  Otherwise, the face will
 be resourced over all possible locales (i.e. all frames, all devices,
 and 'global)."
-  (if (not locale)
-      (progn
-	(init-face-from-resources face 'global)
-	(let ((devices (device-list)))
-	  (while devices
-	    (init-face-from-resources face (car devices))
-	    (setq devices (cdr devices))))
-	(let ((frames (frame-list)))
-	  (while frames
-	    (init-face-from-resources face (car frames))
-	    (setq frames (cdr frames)))))
-    (let ((devtype (cond ((devicep locale) (device-type locale))
-			 ((framep locale) (frame-type locale))
-			 (t nil))))
-      (cond ((or (and (not devtype) (featurep 'x)) (eq 'x devtype))
-	     (x-init-face-from-resources face locale))
-	    ((or (not devtype) (eq 'tty devtype))
-	     ;; Nothing to do for TTYs?
-	     )))))
+  (cond ((null init-face-from-resources)
+	 ;; Do nothing.
+	 )
+	((not locale)
+	 ;; Global, set for all frames.
+	 (progn
+	   (init-face-from-resources face 'global)
+	   (let ((devices (device-list)))
+	     (while devices
+	       (init-face-from-resources face (car devices))
+	       (setq devices (cdr devices))))
+	   (let ((frames (frame-list)))
+	     (while frames
+	       (init-face-from-resources face (car frames))
+	       (setq frames (cdr frames))))))
+	(t
+	 ;; Specific.
+	 (let ((devtype (cond ((devicep locale) (device-type locale))
+			      ((framep locale) (frame-type locale))
+			      (t nil))))
+	   (cond ((or (and (not devtype) (featurep 'x)) (eq 'x devtype))
+		  (x-init-face-from-resources face locale))
+		 ((or (not devtype) (eq 'tty devtype))
+		  ;; Nothing to do for TTYs?
+		  ))))))
 
 (defun init-device-faces (device)
   ;; First, add any device-local face resources.
-  (loop for face in (face-list) do
-	(init-face-from-resources face device))
-  ;; Then do any device-specific initialization.
-  (cond ((eq 'x (device-type device))
-	 (x-init-device-faces device))
-	;; Nothing to do for TTYs?
-	)
-  (init-other-random-faces device))
+  (when init-face-from-resources
+    (loop for face in (face-list) do
+	  (init-face-from-resources face device))
+    ;; Then do any device-specific initialization.
+    (cond ((eq 'x (device-type device))
+	   (x-init-device-faces device))
+	  ;; Nothing to do for TTYs?
+	  )
+    (init-other-random-faces device)))
 
 (defun init-frame-faces (frame)
-  ;; First, add any frame-local face resources.
-  (loop for face in (face-list) do
-	(init-face-from-resources face frame))
-  ;; Then do any frame-specific initialization.
-  (cond ((eq 'x (frame-type frame))
-	 (x-init-frame-faces frame))
-	;; Is there anything which should be done for TTY's?
-	))
+  (when init-face-from-resources
+    ;; First, add any frame-local face resources.
+    (loop for face in (face-list) do
+	  (init-face-from-resources face frame))
+    ;; Then do any frame-specific initialization.
+    (cond ((eq 'x (frame-type frame))
+	   (x-init-frame-faces frame))
+	  ;; Is there anything which should be done for TTY's?
+	  )))
 
 ;; #### This is somewhat X-specific, and is called when the first
 ;; X device is created (even if there were TTY devices created

@@ -1,4 +1,8 @@
 							-*- indented-text -*-
+to 20.1 beta5
+-- bug fix to gnus-mime.el
+-- custom-1.50
+
 to 20.1 beta4
 -- mine.el (almost) fully ported to XEmacs
 -- time.el updated for XEmacs Courtesy of Jens Lautenbacher

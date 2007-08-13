@@ -1,10 +1,10 @@
-;;; widget-edit.el --- Functions for creating and using widgets.
+;;; wid-edit.el --- Functions for creating and using widgets.
 ;;
 ;; Copyright (C) 1996, 1997 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.46
+;; Version: 1.50
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -84,7 +84,6 @@ into the buffer visible in the event's window."
   :link '(url-link :tag "Development Page" 
 		   "http://www.dina.kvl.dk/~abraham/custom/")
   :prefix "widget-"
-  :group 'help
   :group 'extensions
   :group 'faces
   :group 'hypermedia)
@@ -2379,6 +2378,6 @@ Enable with (run-with-idle-timer 1 t 'widget-echo-help-mouse)"
 
 ;;; The End:
 
-(provide 'widget-edit)
+(provide 'wid-edit)
 
-;; widget-edit.el ends here
+;; wid-edit.el ends here

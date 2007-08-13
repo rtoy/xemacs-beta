@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, extensions, faces, hypermedia
-;; Version: 1.46
+;; Version: 1.50
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -12,7 +12,7 @@
 ;; If you want to use this code, please visit the URL above.
 ;;
 ;; This file only contain the code needed to define new widget types.
-;; Everything else is autoloaded from `widget-edit.el'.
+;; Everything else is autoloaded from `wid-edit.el'.
 
 ;;; Code:
 
@@ -43,10 +43,10 @@
 
 ;; These autoloads should be deleted when the file is added to Emacs.
 (unless (fboundp 'load-gc)
-  (autoload 'widget-create "widget-edit")
-  (autoload 'widget-insert "widget-edit")
-  (autoload 'widget-browse "widget-browse" nil t)
-  (autoload 'widget-browse-at "widget-browse" nil t))
+  (autoload 'widget-create "wid-edit")
+  (autoload 'widget-insert "wid-edit")
+  (autoload 'widget-browse "wid-browse" nil t)
+  (autoload 'widget-browse-at "wid-browse" nil t))
 
 (defun define-widget (name class doc &rest args)
   "Define a new widget type named NAME from CLASS.

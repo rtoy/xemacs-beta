@@ -1,3 +1,7 @@
+Mon Mar  3 20:37:54 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (lisp): Remove custom-xmas.elc.
+
 Sat Mar  1 01:20:39 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* doc.c (weird_doc): Don't print `duplicate' messages as they are

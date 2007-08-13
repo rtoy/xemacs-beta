@@ -1,5 +1,7 @@
 Mon Mar  3 14:45:16 1997  Steven L Baur  <steve@altair.xemacs.org>
 
+	* prim/loadup.el: Remove custom.elc.
+
 	* prim/simple.el (newline): Attempt to not add newline to a
 	previous end-open extent.
 

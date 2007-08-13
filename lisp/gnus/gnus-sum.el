@@ -2074,7 +2074,7 @@ The following commands are available:
 
 ;; Some summary mode macros.
 
-(defun gnus-summary-article-number ()
+(defmacro gnus-summary-article-number ()
   "The article number of the article on the current line.
 If there isn's an article number here, then we return the current
 article number."
