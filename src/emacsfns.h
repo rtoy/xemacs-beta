@@ -749,6 +749,7 @@ Lisp_Object Fdiscard_input (void), Finput_pending_p (void);
 
 
 /* Defined in event-Xt.c */
+extern Lisp_Object Qsans_modifiers;
 void signal_special_Xt_user_event (Lisp_Object channel,
 				   Lisp_Object function,
 				   Lisp_Object object);

@@ -203,12 +203,42 @@ Compare regions line-by-line.
 @item ediff-patch-file
 @itemx epatch
 @findex ediff-patch-file
-@findex epatch
- Patch a file, then compare.
+@findex epatch 
+
+Patch a file or multiple files, then compare. If the patch applies to just
+one file, Ediff will invoke a regular comparison session. If it is a
+multi-file patch, then a session group interface will be used and the user
+will be able to patch the files selectively. @xref{Session Groups}, for
+more details.
+
+Note that @code{ediff-patch-file} will actually use the @file{patch}
+utility to change the the original files on disk. This is not that
+dangerous, since you will always have the original contents of the file
+saved in another file that has the extension @file{.orig}. 
+Furthermore, if the file is under version control, then you can always back
+out to one of the previous versions (see the section on Version Countrol in
+Emacs manual).
+
+@code{ediff-patch-file} is careful about versions control: if the file
+to be patched is checked in, then Ediff will offer to check it out, because
+failing to do so may result in the loss of the changes when the file is
+checked out the next time.
+
+If you don't intend to modify the file via the patch and just want to see
+what the patch is all about (and decide later), then
+@code{ediff-patch-buffer} might be a better choice.
+
 @item ediff-patch-buffer
 @itemx epatch-buffer
 @findex ediff-patch-buffer
-Patch a buffer, then compare.
+@findex epatch-buffer
+Patch a buffer, then compare. The buffer being patched and the file visited
+by that buffer (if any) is @emph{not} modified. The result of the patch
+appears in some other buffer that has the name ending with @emph{_patched}.
+
+This function would refuse to apply a multifile patch to a buffer. Use
+@code{ediff-patch-file} for that (and when you want the original file to be 
+modified by the @file{patch} utility).
 
 @item ediff-merge-files
 @itemx ediff-merge
@@ -323,8 +353,8 @@ command displays differences much like @code{ediff-files} and
 @code{ediff-buffers}.
 
 The functions @code{ediff-patch-file} and @code{ediff-patch-buffer} apply a
-patch to a file or a buffer and then run Ediff on these buffers, displaying
-the difference regions. 
+patch to a file or a buffer and then run Ediff on the appropriate
+files/buffers, displaying the difference regions.
 
 The entry points @code{ediff-directories}, @code{ediff-merge-directories},
 etc., provide a convenient interface for comparing and merging files in
@@ -2225,6 +2255,7 @@ Benjamin Pierce (benjamin.pierce@@cl.cam.ac.uk),
 Tibor Polgar (tlp00@@spg.amdahl.com),
 David Prince (dave0d@@fegs.co.uk),
 Paul Raines (raines@@slac.stanford.edu), 
+Bill Richter (richter@@math.nwu.edu),
 C.S. Roberson (roberson@@aur.alcatel.com),
 Kevin Rodgers (kevin.rodgers@@ihs.com),
 Sandy Rutherford (sandy@@ibm550.sissa.it),

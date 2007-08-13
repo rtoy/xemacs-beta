@@ -8229,6 +8229,10 @@ It is up to you to set this variable if your terminal can do that.
   DEFVAR_LISP ("window-system", &Vwindow_system /*
 A symbol naming the window-system under which Emacs is running,
 such as `x', or nil if emacs is running on an ordinary terminal.
+
+Do not use this variable, except for GNU Emacs compatibility, as it
+gives wrong values in a multi-device environment.  Use `console-type'
+instead.
 */ );
   Vwindow_system = Qnil;
 

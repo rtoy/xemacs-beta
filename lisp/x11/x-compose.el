@@ -4,6 +4,8 @@
 
 ;; Author: Jamie Zawinski <jwz@netscape.com>
 ;; Maintainer: XEmacs Development Team
+;; Rewritten by Martin Buchholz far too many times.
+;;
 ;; Changed: 11 Jun 1997 by Heiko Muenkel <muenkel@tnt.uni-hannover.de>
 ;;	The degree sign couldn't be inserted with the old version.
 ;; Keywords: i18n
@@ -101,25 +103,24 @@
 
 (require 'x-iso8859-1)
 
-(defvar compose-map		(make-keymap))
-(defvar compose-acute-map	(make-sparse-keymap))
-(defvar compose-grave-map	(make-sparse-keymap))
-(defvar compose-cedilla-map	(make-sparse-keymap))
-(defvar compose-diaeresis-map	(make-sparse-keymap))
-(defvar compose-circumflex-map	(make-sparse-keymap))
-(defvar compose-tilde-map	(make-sparse-keymap))
-(defvar compose-ring-map	(make-sparse-keymap))
+(defun make-compose-map (map-sym)
+  (let ((map (make-sparse-keymap)))
+    (set map-sym map)
+    (set-keymap-name map map-sym)
+    ;; Required to tell XEmacs the keymaps were actually autoloaded.
+    ;; #### Make this unnecessary!
+    (fset map-sym map)))
 
-;; Required to tell XEmacs the keymaps were actually autoloaded.
-;; #### Make this unnecessary!
-(fset 'compose-map            compose-map)
-(fset 'compose-acute-map      compose-acute-map)
-(fset 'compose-grave-map      compose-grave-map)
-(fset 'compose-cedilla-map    compose-cedilla-map)
-(fset 'compose-diaeresis-map  compose-diaeresis-map)
-(fset 'compose-circumflex-map compose-circumflex-map)
-(fset 'compose-tilde-map      compose-tilde-map)
-(fset 'compose-ring-map       compose-ring-map)
+(make-compose-map 'compose-map)
+(make-compose-map 'compose-acute-map)
+(make-compose-map 'compose-grave-map)
+(make-compose-map 'compose-cedilla-map)
+(make-compose-map 'compose-diaeresis-map)
+(make-compose-map 'compose-circumflex-map)
+(make-compose-map 'compose-tilde-map)
+(make-compose-map 'compose-ring-map)
+
+(unintern 'make-compose-map)
 
 (define-key compose-map 'acute	    compose-acute-map)
 (define-key compose-map 'grave	    compose-grave-map)
@@ -165,14 +166,20 @@
 ;;(define-dead-key-map [diaeresis] compose-diaeresis-map)
 ;;(define-dead-key-map [degree]	 compose-ring-map)
 
-(define-key compose-map [?']	compose-acute-map)
-(define-key compose-map [?`]	compose-grave-map)
-(define-key compose-map [?,]	compose-cedilla-map)
-(define-key compose-map [?\"]	compose-diaeresis-map)
-(define-key compose-map [?:]	compose-diaeresis-map)
-(define-key compose-map [?^]	compose-circumflex-map)
-(define-key compose-map [~]	compose-tilde-map)
-(define-key compose-map [?*]	compose-ring-map)
+(define-key compose-map [acute]		compose-acute-map)
+(define-key compose-map [?']		compose-acute-map)
+(define-key compose-map [grave]		compose-grave-map)
+(define-key compose-map [?`]		compose-grave-map)
+(define-key compose-map [cedilla]	compose-cedilla-map)
+(define-key compose-map [?,]		compose-cedilla-map)
+(define-key compose-map [diaeresis]	compose-diaeresis-map)
+(define-key compose-map [?\"]		compose-diaeresis-map)
+(define-key compose-map [circumflex]	compose-circumflex-map)
+(define-key compose-map [?^]		compose-circumflex-map)
+(define-key compose-map [tilde]		compose-tilde-map)
+(define-key compose-map [~]		compose-tilde-map)
+(define-key compose-map [degree]	compose-ring-map)
+(define-key compose-map [?*]		compose-ring-map)
 
 
 ;;; The dead keys might really be called just about anything, depending
@@ -288,7 +295,6 @@
 ;;; The contents of the "dead key" maps.  These are shared by the
 ;;; compose-map.
 
-(set-keymap-name compose-acute-map 'compose-acute-map)
 (define-key compose-acute-map [space]	"'")
 (define-key compose-acute-map [?']	[acute])
 (define-key compose-acute-map [?A]	[Aacute])
@@ -304,7 +310,6 @@
 (define-key compose-acute-map [u]	[uacute])
 (define-key compose-acute-map [y]	[yacute])
 
-(set-keymap-name compose-grave-map 'compose-grave-map)
 (define-key compose-grave-map [space]	"`")
 (define-key compose-grave-map [?`]	[grave])
 (define-key compose-grave-map [A]	[Agrave])
@@ -318,13 +323,11 @@
 (define-key compose-grave-map [o]	[ograve])
 (define-key compose-grave-map [u]	[ugrave])
 
-(set-keymap-name compose-cedilla-map 'compose-cedilla-map)
 (define-key compose-cedilla-map [space]	",")
 (define-key compose-cedilla-map [?,]	[cedilla])
 (define-key compose-cedilla-map [C]	[Ccedilla])
 (define-key compose-cedilla-map [c]	[ccedilla])
 
-(set-keymap-name compose-diaeresis-map 'compose-diaeresis-map)
 (define-key compose-diaeresis-map [space] [diaeresis])
 (define-key compose-diaeresis-map [?\"]	[diaeresis])
 (define-key compose-diaeresis-map [A]	[Adiaeresis])
@@ -339,7 +342,6 @@
 (define-key compose-diaeresis-map [u]	[udiaeresis])
 (define-key compose-diaeresis-map [y]	[ydiaeresis])
 
-(set-keymap-name compose-circumflex-map 'compose-circumflex-map)
 (define-key compose-circumflex-map [space] "^")
 (define-key compose-circumflex-map [?/]	"|")
 (define-key compose-circumflex-map [?!]	[brokenbar])
@@ -361,7 +363,6 @@
 (define-key compose-circumflex-map [o]	[ocircumflex])
 (define-key compose-circumflex-map [u]	[ucircumflex])
 
-(set-keymap-name compose-tilde-map 'compose-tilde-map)
 (define-key compose-tilde-map [space]	"~")
 (define-key compose-tilde-map [A]	[Atilde])
 (define-key compose-tilde-map [N]	[Ntilde])
@@ -370,7 +371,6 @@
 (define-key compose-tilde-map [n]	[ntilde])
 (define-key compose-tilde-map [o]	[otilde])
 
-(set-keymap-name compose-ring-map 'compose-ring-map)
 (define-key compose-ring-map [space]	[degree])
 (define-key compose-ring-map [A]	[Aring])
 (define-key compose-ring-map [a]	[aring])
@@ -379,13 +379,13 @@
 ;;; The rest of the compose-map.  These are the composed characters
 ;;; that are not accessible via "dead" keys.
 
-(set-keymap-name compose-map 'compose-map)
 (define-key compose-map " '"	"'")
 (define-key compose-map " ^"	"^")
 (define-key compose-map " `"	"`")
 (define-key compose-map " ~"	"~")
 (define-key compose-map "  "	[nobreakspace])
 (define-key compose-map " \""	[diaeresis])
+(define-key compose-map " :"	[diaeresis])
 (define-key compose-map " *"	[degree])
 
 (define-key compose-map "!!"	[exclamdown])
@@ -579,6 +579,7 @@
 (define-key compose-map "i'"	[iacute])
 (define-key compose-map "i^"	[icircumflex])
 (define-key compose-map "i\""	[idiaeresis])
+(define-key compose-map "i:"	[idiaeresis])
 
 (define-key compose-map "l-"	[sterling])
 (define-key compose-map "l="	[sterling])
@@ -636,8 +637,48 @@
 (define-key compose-map "||"	[brokenbar])
 
 
+;; Suppose we type these three physical keys: [Multi_key " a]
+;; Xlib can deliver these keys as the following sequences of keysyms:
+;;
+;; - [Multi_key " a] (no surprise here)
+;; - [adiaeresis] (OK, Xlib is doing compose processing for us)
+;; - [Multi_key " adiaeresis] (Huh?)
+;;
+;; It is the last possibility that is arguably a bug.  Xlib can't
+;; decide whether it's really doing compose processing or not (or
+;; actually, different parts of Xlib disagree).
+;;
+;; So we'll just convert [Multi_key " adiaeresis] to [adiaeresis]
+(defun xlib-input-method-bug-workaround (keymap)
+  (map-keymap
+   (lambda (key value)
+     (cond
+      ((keymapp value)
+       (xlib-input-method-bug-workaround value))
+      ((and (sequencep value)
+	    (eq 1 (length value))
+	    (null (lookup-key keymap value)))
+       (define-key keymap value value))))
+   keymap))
+(xlib-input-method-bug-workaround compose-map)
+(unintern 'xlib-input-method-bug-workaround)
+
+;; While we're at it, a similar mechanism will make colon equivalent
+;; to doublequote for diaeresis processing.  Some Xlibs do this.
+(defun alias-colon-to-doublequote (keymap)
+  (map-keymap
+   (lambda (key value)
+     (when (keymapp value)
+       (alias-colon-to-doublequote value))
+     (when (eq key '\")
+       (define-key keymap ":" value)))
+   keymap))
+(alias-colon-to-doublequote compose-map)
+(unintern 'alias-colon-to-doublequote)
+
 ;;; Electric dead keys: making a' mean a-acute.
 
+
 (defun electric-diacritic (&optional count)
   "Modify the previous character with an accent.
 For example, if `:' is bound to this command, then typing `a:'

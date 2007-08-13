@@ -455,7 +455,7 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
                  empty string?  -dkindred@cs.cmu.edu 8/1997
 	      */
 	      if (!string)
-		string = "(null)";
+		string = (Bufbyte *) "(null)";
 	      string_len = strlen ((char *) string);
 	    }
 	  else

@@ -163,14 +163,17 @@ the elements themselves."
 	(setq cl-list (cdr cl-list)))
       (nreverse cl-res))))
 
-(defun mapc (cl-func cl-seq &rest cl-rest)
-  "Like `mapcar', but does not accumulate values returned by the function."
-  (if cl-rest
-      (apply 'map nil cl-func cl-seq cl-rest)
-    ;; XEmacs change: we call mapc-internal, which really doesn't
-    ;; accumulate any results.
-    (mapc-internal cl-func cl-seq))
-  cl-seq)
+
+;; mapc is now in C, renamed from `mapc-internal'.
+
+;(defun mapc (cl-func cl-seq &rest cl-rest)
+;  "Like `mapcar', but does not accumulate values returned by the function."
+;  (if cl-rest
+;      (apply 'map nil cl-func cl-seq cl-rest)
+;    ;; XEmacs change: we call mapc-internal, which really doesn't
+;    ;; accumulate any results.
+;    (mapc-internal cl-func cl-seq))
+;  cl-seq)
 
 (defun mapl (cl-func cl-list &rest cl-rest)
   "Like `maplist', but does not accumulate values returned by the function."

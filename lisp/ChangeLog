@@ -1,3 +1,175 @@
+1997-09-13  SL Baur  <steve@altair.xemacs.org>
+
+	* x11/x-toolbar.el (toolbar-paste-function): Remove reference to
+	x-yank-primary-selection.
+	Suggested by: Hrvoje Niksic <hniksic@srce.hr>
+
+	* prim/about.el (about-xemacs): Update release date with worst
+	case.
+	(about-maintainer-info): Sync entry with 19.16.
+
+1997-09-11  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* packages/vc.el (vc-default-init-version): Make the default value 
+	be `nil'.  Improve the docstring.
+
+1997-09-12  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/make-docfile.el: Spawn make-docfile to csh on next-mach as
+	well as BSD.
+
+1997-09-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* mule/mule-util.el: Clean of Emacs-ported things.
+
+1997-09-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/etags.el (tags-file-pattern): Allow `,' in file names.
+
+	* prim/startup.el (initial-scratch-message): Converted to defcustom.
+
+1997-09-11  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/tar-mode.el: Customize; use cl.el instead of
+	home-brewed extensions.
+
+1997-09-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/subr.el (mapc-internal): Define for backward compatibility.
+
+	* cl/cl-extra.el: Don't define `mapc'.
+
+1997-09-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/startup.el (initial-scratch-message): Cosmetic change.
+
+Fri Sep  5 00:50:41 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/Release 5.17
+
+Fri Sep  5 04:47:03 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-cmds.el (c-beginning-of-statement):
+	Fixes in sentence movement to properly
+	handle M-e moving forward into a comment when looking at preceding
+	whitespace, and M-a moving backward into comment when looking at
+	following whitespace.
+
+	* cc-mode/cc-langs.el:
+	Define `/' in c-mode-base-map since all modes now support
+	c-electric-slash.
+
+	Define C-c C-e in mode-specific maps instead of c-mode-base-map since
+	c-expand-macro is meaningless in Java and IDL.
+
+	* cc-mode/cc-engine.el (c-end-of-statement-1):
+	Wrap backward-up-list in a c-safe call so no error results when
+	buffer contains only a comment and point is at eob.
+
+	* cc-mode/cc-cmds.el (c-beginning-of-statement):
+	Uncommented the looking-at call in the
+	sentence-flag clause so that moving by forward-sentence when looking
+	at the beginning of a comment works again.  A previous log message in
+	cc-mode.el indicates this was commented out "because
+	c-beginning-of-statement-1 should do the right thing", but clearly it
+	doesn't.
+
+	I don't know if this breaks something else, because I can't figure out
+	why it was commented out in the first place.
+
+Tue Aug 26 22:31:55 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-styles.el (c-style-alist): "python" style,
+	knr-argdecl-intro == +
+
+Mon Aug 25 17:25:12 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-engine.el (c-inside-bracelist-p):
+	Add a test to the enum list test so that the
+	following code won't erroneously recognize as inside a brace list:
+
+	static PyObject **
+	unpack_sequence(v, argcnt, why)
+	     PyObject **v;
+	     int argcnt;
+	     enum *why_code;
+	{
+		int i;
+
+	Otherwise, the `enum' in the K&R decl trips this code up.
+
+	* cc-mode/cc-styles.el (c-style-alist): "python" style,
+	fill-column = 78
+
+Fri Aug 22 20:25:57 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-cmds.el (c-comment-line-break-function):
+	Don't break line in the middle of a string.
+
+Mon Aug 18 17:37:24 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-styles.el (c-style-alist):
+	"python" style change: arglist-intro <= +
+	"python" style change: inextern-lang <= 0
+
+Fri Aug 15 18:39:10 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-styles.el (c-style-alist):
+	"python" style requires c-comment-continuation-stars
+	to be "".
+
+1997-09-09  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/autoload.el: One too many -autoload suffixes.
+
+1997-09-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/startup.el (initial-scratch-message): Cosmetic grammar
+	fixup in startup *scratch* message.
+
+1997-09-09  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* packages/vc.el (vc-register): make the second option arg COMMENT 
+	do something
+
+	* packages/vc.el (vc-register): Make the default initial
+	version be `vc-default-init-version', a new variable
+	defaulting to "0.1".
+
+1997-09-08  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/packages.el (packages-find-packages): Reverse package path.
+	From Colin Rafferty <craffert@ml.com>
+
+1997-09-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* utils/edmacro.el (edmacro-parse-word): Accept ^foo (would signal 
+	error).
+	(edmacro-format-1): Add SPC after ^.
+
+1997-09-03  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/make-docfile.el (Top Level): Ensure `load-path' always has
+	directory names ending in '/'.
+
+	* prim/packages.el (list-autoloads-path): Assume `load-path'
+	always has directories ending with trailing `/'s.
+
+	* version.el (emacs-version): Preserve previous matching info.
+	From Didier Verna <verna@inf.enst.fr>
+
+Wed Sep  3 13:53:10 1997  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/loadup.el:  *Never* add directories to the load-path
+	without trailing slashes.
+
+1997-09-03  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/packages.el (packages-find-packages): New argument:
+	`suppress-user' to allow suppression of searching package
+	hierarchies beginning with "~".
+	(Top Level): Suppress searching user directories at dump time.
+
 1997-08-30  Karl M. Hegbloom  <karlheg@inetarena.com>
 
 	* packages/info.el (Info-mouse-track-double-click-hook): Added,

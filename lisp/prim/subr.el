@@ -531,6 +531,9 @@ This function accepts any number of arguments, but ignores them."
   (interactive)
   nil)
 
+(define-function 'mapc-internal 'mapc)
+(make-obsolete 'mapc-internal 'mapc)
+
 (define-function 'eval-in-buffer 'with-current-buffer)
 (make-obsolete 'eval-in-buffer 'with-current-buffer)
 
@@ -594,6 +597,60 @@ This makes or adds to an entry on `after-load-alist'.
 FILE should be the name of a library, with no directory name."
   (eval-after-load file (read)))
 (make-compatible 'eval-next-after-load "")
+
+(defun string-to-sequence (string type)
+  "Convert STRING to a sequence of TYPE which contains characters in STRING.
+TYPE should be `list' or `vector'.
+Multibyte characters are concerned."
+  (cond ((eq type 'list)
+	 (mapcar #'identity string))
+	((eq type 'vector)
+	 (mapcar #'identity string))
+	(t
+	 (error "Type must be `list' or `vector'"))))
+
+(defun string-to-list (string)
+  "Return a list of characters in STRING."
+  (mapcar #'identity string))
+
+(defun string-to-vector (string)
+  "Return a vector of characters in STRING."
+  (mapvector #'identity string))
+
+(defun store-substring (string idx obj)
+  "Embed OBJ (string or character) at index IDX of STRING."
+  (let* ((str (cond ((stringp obj) obj)
+		    ((characterp obj) (char-to-string obj))
+		    (t (error
+			"Invalid argument (should be string or character): %s"
+			obj))))
+	 (string-len (length string))
+	 (len (length str))
+	 (i 0))
+    (while (and (< i len) (< idx string-len))
+      (aset string idx (aref str i))
+      (setq idx (1+ idx) i (1+ i)))
+    string))
+
+;;; ### Check compatibility with FSF
+;; The FSF version of this function does complex things to make each
+;; multibyte character behave as one "column".  We don't need any of
+;; it.
+(defun truncate-string-to-width (str width &optional start-column padding)
+  "Truncate string STR to fit in WIDTH columns.
+Optional 1st arg START-COLUMN if non-nil specifies the starting column.
+Optional 2nd arg PADDING if non-nil is a padding character to be padded at
+the head and tail of the resulting string to fit in WIDTH if necessary.
+If PADDING is nil, the resulting string may be narrower than WIDTH."
+  (or start-column
+      (setq start-column 0))
+  (if (< (+ start-column width) (length str))
+      (substring str start-column (+ start-column width))
+    (concat (substring str start-column)
+	    (if padding
+		(make-string (- width (length str) start-column) padding)))))
+(defalias 'truncate-string 'truncate-string-to-width)
+(make-obsolete 'truncate-string 'truncate-string-to-width)
 
 ; alternate names (not obsolete)
 (if (not (fboundp 'mod)) (define-function 'mod '%))

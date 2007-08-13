@@ -211,8 +211,7 @@ lisp_object_eql_equal (CONST void *x1, CONST void *x2)
   Lisp_Object obj1, obj2;
   CVOID_TO_LISP (obj1, x1);
   CVOID_TO_LISP (obj2, x2);
-  return
-    (FLOATP (obj1) ? !NILP (Fequal (obj1, obj2)) : EQ (obj1, obj2));
+  return FLOATP (obj1) ? !NILP (Fequal (obj1, obj2)) : EQ (obj1, obj2);
 }
 
 static unsigned long
@@ -257,8 +256,8 @@ make_lisp_hashtable (int size,
   switch (test)
     {
     case HASHTABLE_EQ:
-      table->test_function = 0;
-      table->hash_function = 0;
+      table->test_function = NULL;
+      table->hash_function = NULL;
       break;
 
     case HASHTABLE_EQL:
@@ -292,11 +291,7 @@ make_lisp_hashtable (int size,
 static enum hashtable_test_fun
 decode_hashtable_test_fun (Lisp_Object sym)
 {
-  if (NILP (sym))
-    return HASHTABLE_EQL;
-
-  CHECK_SYMBOL (sym);
-
+  if (NILP (sym))       return HASHTABLE_EQL;
   if (EQ (sym, Qeq))    return HASHTABLE_EQ;
   if (EQ (sym, Qequal)) return HASHTABLE_EQUAL;
   if (EQ (sym, Qeql))   return HASHTABLE_EQL;
@@ -366,16 +361,16 @@ as the given table.  The keys and values will not themselves be copied.
 
 
 DEFUN ("gethash", Fgethash, 2, 3, 0, /*
-Find hash value for KEY in TABLE.
+Find hash value for KEY in HASHTABLE.
 If there is no corresponding value, return DEFAULT (defaults to nil).
 */
-       (key, table, default_))
+       (key, hashtable, default_))
 {
   CONST void *vval;
   struct _C_hashtable htbl;
   if (!gc_in_progress)
-    CHECK_HASHTABLE (table);
-  ht_copy_to_c (XHASHTABLE (table), &htbl);
+    CHECK_HASHTABLE (hashtable);
+  ht_copy_to_c (XHASHTABLE (hashtable), &htbl);
   if (gethash (LISP_TO_VOID (key), &htbl, &vval))
     {
       Lisp_Object val;
@@ -388,30 +383,30 @@ If there is no corresponding value, return DEFAULT (defaults to nil).
 
 
 DEFUN ("remhash", Fremhash, 2, 2, 0, /*
-Remove hash value for KEY in TABLE.
+Remove hash value for KEY in HASHTABLE.
 */
-       (key, table))
+       (key, hashtable))
 {
   struct _C_hashtable htbl;
-  CHECK_HASHTABLE (table);
+  CHECK_HASHTABLE (hashtable);
 
-  ht_copy_to_c (XHASHTABLE (table), &htbl);
+  ht_copy_to_c (XHASHTABLE (hashtable), &htbl);
   remhash (LISP_TO_VOID (key), &htbl);
-  ht_copy_from_c (&htbl, XHASHTABLE (table));
+  ht_copy_from_c (&htbl, XHASHTABLE (hashtable));
   return Qnil;
 }
 
 
 DEFUN ("puthash", Fputhash, 3, 3, 0, /*
-Hash KEY to VAL in TABLE.
+Hash KEY to VAL in HASHTABLE.
 */
-       (key, val, table))
+       (key, val, hashtable))
 {
   struct hashtable *ht;
   void *vkey = LISP_TO_VOID (key);
 
-  CHECK_HASHTABLE (table);
-  ht = XHASHTABLE (table);
+  CHECK_HASHTABLE (hashtable);
+  ht = XHASHTABLE (hashtable);
   if (!vkey)
     ht->zero_entry = val;
   else
@@ -419,36 +414,36 @@ Hash KEY to VAL in TABLE.
       struct gcpro gcpro1, gcpro2, gcpro3;
       struct _C_hashtable htbl;
 
-      ht_copy_to_c (XHASHTABLE (table), &htbl);
-      GCPRO3 (key, val, table);
+      ht_copy_to_c (XHASHTABLE (hashtable), &htbl);
+      GCPRO3 (key, val, hashtable);
       puthash (vkey, LISP_TO_VOID (val), &htbl);
-      ht_copy_from_c (&htbl, XHASHTABLE (table));
+      ht_copy_from_c (&htbl, XHASHTABLE (hashtable));
       UNGCPRO;
     }
   return val;
 }
 
 DEFUN ("clrhash", Fclrhash, 1, 1, 0, /*
-Flush TABLE.
+Remove all entries from HASHTABLE.
 */
-       (table))
+       (hashtable))
 {
   struct _C_hashtable htbl;
-  CHECK_HASHTABLE (table);
-  ht_copy_to_c (XHASHTABLE (table), &htbl);
+  CHECK_HASHTABLE (hashtable);
+  ht_copy_to_c (XHASHTABLE (hashtable), &htbl);
   clrhash (&htbl);
-  ht_copy_from_c (&htbl, XHASHTABLE (table));
+  ht_copy_from_c (&htbl, XHASHTABLE (hashtable));
   return Qnil;
 }
 
 DEFUN ("hashtable-fullness", Fhashtable_fullness, 1, 1, 0, /*
-Return number of entries in TABLE.
+Return number of entries in HASHTABLE.
 */
-       (table))
+       (hashtable))
 {
   struct _C_hashtable htbl;
-  CHECK_HASHTABLE (table);
-  ht_copy_to_c (XHASHTABLE (table), &htbl);
+  CHECK_HASHTABLE (hashtable);
+  ht_copy_to_c (XHASHTABLE (hashtable), &htbl);
   return make_int (htbl.fullness);
 }
 
@@ -468,9 +463,8 @@ verify_function (Lisp_Object function, CONST char *description)
   else if (CONSP (function))
   {
     Lisp_Object funcar = Fcar (function);
-    if ((SYMBOLP (funcar))
-        && (EQ (funcar, Qlambda)
-            || EQ (funcar, Qautoload)))
+    if ((SYMBOLP (funcar)) && (EQ (funcar, Qlambda) ||
+			       EQ (funcar, Qautoload)))
       return;
   }
   signal_error (Qinvalid_function, list1 (function));
@@ -491,18 +485,18 @@ lisp_maphash_function (CONST void *void_key,
 
 
 DEFUN ("maphash", Fmaphash, 2, 2, 0, /*
-Map FUNCTION over entries in TABLE, calling it with two args,
+Map FUNCTION over entries in HASHTABLE, calling it with two args,
 each key and value in the table.
 */
-       (function, table))
+       (function, hashtable))
 {
   struct _C_hashtable htbl;
   struct gcpro gcpro1, gcpro2;
 
   verify_function (function, GETTEXT ("hashtable mapping function"));
-  CHECK_HASHTABLE (table);
-  ht_copy_to_c (XHASHTABLE (table), &htbl);
-  GCPRO2 (table, function);
+  CHECK_HASHTABLE (hashtable);
+  ht_copy_to_c (XHASHTABLE (hashtable), &htbl);
+  GCPRO2 (hashtable, function);
   maphash (lisp_maphash_function, &htbl, LISP_TO_VOID (function));
   UNGCPRO;
   return Qnil;
@@ -513,26 +507,25 @@ each key and value in the table.
    lisp hashtable.
  */
 void
-elisp_maphash (maphash_function function, Lisp_Object table, void *closure)
+elisp_maphash (maphash_function function, Lisp_Object hashtable, void *closure)
 {
   struct _C_hashtable htbl;
 
-  if (!gc_in_progress) CHECK_HASHTABLE (table);
-  ht_copy_to_c (XHASHTABLE (table), &htbl);
+  if (!gc_in_progress) CHECK_HASHTABLE (hashtable);
+  ht_copy_to_c (XHASHTABLE (hashtable), &htbl);
   maphash (function, &htbl, closure);
 }
 
 void
-elisp_map_remhash (remhash_predicate function,
-                   Lisp_Object table,
-                   void *closure)
+elisp_map_remhash (remhash_predicate function, Lisp_Object hashtable,
+		   void *closure)
 {
   struct _C_hashtable htbl;
 
-  if (!gc_in_progress) CHECK_HASHTABLE (table);
-  ht_copy_to_c (XHASHTABLE (table), &htbl);
+  if (!gc_in_progress) CHECK_HASHTABLE (hashtable);
+  ht_copy_to_c (XHASHTABLE (hashtable), &htbl);
   map_remhash (function, &htbl, closure);
-  ht_copy_from_c (&htbl, XHASHTABLE (table));
+  ht_copy_from_c (&htbl, XHASHTABLE (hashtable));
 }
 
 #if 0
@@ -695,9 +688,10 @@ finish_marking_weak_hashtables (int (*obj_marked_p) (Lisp_Object),
 	/* The hashtable is probably garbage.  Ignore it. */
 	continue;
       type = XHASHTABLE (rest)->type;
-      if (type == HASHTABLE_KEY_WEAK || type == HASHTABLE_VALUE_WEAK
-	  || type == HASHTABLE_KEY_CAR_WEAK
-	  || type == HASHTABLE_VALUE_CAR_WEAK)
+      if (type == HASHTABLE_KEY_WEAK     ||
+	  type == HASHTABLE_VALUE_WEAK   ||
+	  type == HASHTABLE_KEY_CAR_WEAK ||
+	  type == HASHTABLE_VALUE_CAR_WEAK)
 	{
           struct marking_closure fmh;
 

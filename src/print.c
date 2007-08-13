@@ -946,9 +946,12 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  strcpy (buf, "\\r");
 	else if (ch == '\t')
 	  strcpy (buf, "\\t");
-	else if (ch < 32)
+	else if (ch < 32) {
 	  sprintf (buf, "\\^%c", ch + 64);
-	else if (ch == 127)
+	  if ((ch + 64) == '\\') {
+	    strcat(buf, "\\");
+	  }
+	} else if (ch == 127)
 	  strcpy (buf, "\\^?");
 	else if (ch >= 128 && ch < 160)
 	  {

@@ -6,6 +6,8 @@
 	"replace" 		; match-string used in version.el.
 	"version.el"		; Ignore compiled-by-mistake version.elc
 	"cl"
+	;; "cl-extra"		; These cause lossage at dump
+	;; "cl-seq"		; Fix it first, if you want these dumped
 	;;"featurep"
 	"widget"
 	"custom"		; Before the world so everything can be
@@ -179,17 +181,18 @@
 	"auto-show"
 ;; #+energize "energize/energize-load.el"
 ;;; formerly in sunpro/sunpro-load.el
+;;	#+(and mule sparcworks) "mime-setup"
 	#+sparcworks "cc-mode"
 	#+sparcworks "sunpro-init"
 	#+sparcworks "ring"
 	#+sparcworks "comint"
 	#+sparcworks "annotations"
 ;;; formerly in eos/sun-eos-load.el
-	#+sparcworks "sun-eos-init"
-	#+sparcworks "sun-eos-common"
-	#+sparcworks "sun-eos-editor"
-	#+sparcworks "sun-eos-browser"
-	#+sparcworks "sun-eos-debugger"
-	#+sparcworks "sun-eos-debugger-extra"
-	#+sparcworks "sun-eos-menubar"
+;;	#+sparcworks "sun-eos-init"
+;;	#+sparcworks "sun-eos-common"
+;;	#+sparcworks "sun-eos-editor"
+;;	#+sparcworks "sun-eos-browser"
+;;	#+sparcworks "sun-eos-debugger"
+;;	#+sparcworks "sun-eos-debugger-extra"
+;;	#+sparcworks "sun-eos-menubar"
 ))

@@ -39,6 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #include "objects-x.h"
 #include "process.h"
 #include "redisplay.h"
+#include "elhash.h"
 
 #include "systime.h"
 #include "sysproc.h" /* for MAXDESC */
@@ -120,6 +121,7 @@ void dispatch_epoch_event (struct frame *f, XEvent *event, Lisp_Object type);
 static int last_quit_check_signal_tick_count;
 
 Lisp_Object Qkey_mapping;
+Lisp_Object Qsans_modifiers;
 
 
 /************************************************************************/
@@ -171,16 +173,52 @@ x_reset_key_mapping (struct device *d)
 {
   Display *display = DEVICE_X_DISPLAY (d);
   struct x_device *xd = DEVICE_X_DATA (d);
+  KeySym *keysym, *keysym_end;
+  Lisp_Object hashtable;
+  int key_code_count, keysyms_per_code;
+
   if (xd->x_keysym_map)
     XFree ((char *) xd->x_keysym_map);
   XDisplayKeycodes (display,
 		    &xd->x_keysym_map_min_code,
 		    &xd->x_keysym_map_max_code);
-  xd->x_keysym_map = XGetKeyboardMapping (display,
-					  xd->x_keysym_map_min_code,
-					  xd->x_keysym_map_max_code -
-					  xd->x_keysym_map_min_code + 1,
-					  &xd->x_keysym_map_keysyms_per_code);
+  key_code_count = xd->x_keysym_map_max_code - xd->x_keysym_map_min_code + 1;
+  xd->x_keysym_map =
+    XGetKeyboardMapping (display, xd->x_keysym_map_min_code, key_code_count,
+			 &xd->x_keysym_map_keysyms_per_code);
+
+  xd->x_keysym_map_hashtable = hashtable =
+    make_lisp_hashtable (128, HASHTABLE_NONWEAK, HASHTABLE_EQUAL);
+
+  for (keysym = xd->x_keysym_map,
+	 keysyms_per_code = xd->x_keysym_map_keysyms_per_code,
+	 keysym_end = keysym + (key_code_count * keysyms_per_code);
+       keysym < keysym_end;
+       keysym += keysyms_per_code)
+    {
+      int j;
+      char *keysym_name;
+
+      if (keysym[0] == NoSymbol)
+	continue;
+
+      if ((keysym_name = XKeysymToString (keysym[0])) != NULL)
+	Fputhash (build_string (keysym_name), Qsans_modifiers, hashtable);
+
+      for (j = 1; j < keysyms_per_code; j++)
+	{
+	  if (keysym[j] == keysym[0] ||
+	      keysym[j] == NoSymbol)
+	    continue;
+
+	  if ((keysym_name = XKeysymToString (keysym[j])) != NULL)
+	    {
+	      Lisp_Object name = build_string (keysym_name);
+	      if (NILP (Fgethash (name, hashtable, Qnil)))
+		Fputhash (name, Qt, hashtable);
+	    }
+	}
+    }
 }
 
 static CONST char *
@@ -393,8 +431,10 @@ x_reset_modifier_mapping (struct device *d)
 void
 x_init_modifier_mapping (struct device *d)
 {
-  DEVICE_X_DATA (d)->x_keysym_map = 0;
-  DEVICE_X_DATA (d)->x_modifier_keymap = 0;
+  struct x_device *xd = DEVICE_X_DATA (d);
+  xd->x_keysym_map_hashtable = Qnil;
+  xd->x_keysym_map = NULL;
+  xd->x_modifier_keymap = NULL;
   x_reset_modifier_mapping (d);
 }
 
@@ -648,12 +688,37 @@ x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
       if (simple_p) return Qnil;
       /* !!#### not Mule-ized */
       name = XKeysymToString (keysym);
-      if (!name || !name[0])	/* this shouldn't happen... */
-	{
-	  char buf [255];
-	  sprintf (buf, "unknown_keysym_0x%X", (int) keysym);
-	  return KEYSYM (buf);
-	}
+      if (!name || !name[0])
+	/* This happens if there is a mismatch between the Xlib of
+           XEmacs and the Xlib of the X server...
+
+	   Let's hard-code in some knowledge of common keysyms introduced
+	   in recent X11 releases.  Snarfed from X11/keysymdef.h
+	   
+	   Probably we should add some stuff here for X11R6. */
+	switch (keysym)
+	  {
+	  case 0xFF95: return KEYSYM ("kp-home");
+	  case 0xFF96: return KEYSYM ("kp-left");
+	  case 0xFF97: return KEYSYM ("kp-up");
+	  case 0xFF98: return KEYSYM ("kp-right");
+	  case 0xFF99: return KEYSYM ("kp-down");
+	  case 0xFF9A: return KEYSYM ("kp-prior");
+	  case 0xFF9B: return KEYSYM ("kp-next");
+	  case 0xFF9C: return KEYSYM ("kp-end");
+	  case 0xFF9D: return KEYSYM ("kp-begin");
+	  case 0xFF9E: return KEYSYM ("kp-insert");
+	  case 0xFF9F: return KEYSYM ("kp-delete");
+
+	  case 0x1005FF10: return KEYSYM ("SunF36"); /* labeled F11 */
+	  case 0x1005FF11: return KEYSYM ("SunF37"); /* labeled F12 */
+	  default:
+	    {
+	      char buf [64];
+	      sprintf (buf, "unknown-keysym-0x%X", (int) keysym);
+	      return KEYSYM (buf);
+	    }
+	  }
       /* If it's got a one-character name, that's good enough. */
       if (!name[1])
 	return make_char (name[0]);
@@ -2614,6 +2679,7 @@ void
 syms_of_event_Xt (void)
 {
   defsymbol (&Qkey_mapping, "key-mapping");
+  defsymbol (&Qsans_modifiers, "sans-modifiers");
 }
 
 void

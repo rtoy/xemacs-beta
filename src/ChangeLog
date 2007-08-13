@@ -1,3 +1,28 @@
+1997-09-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* event-stream.c (inhibit_input_event_recording): New boolean
+ 	variable.
+	(Fnext_event): Use it.
+
+1997-09-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fns.c (Fmapc): Renamed from Fmapc_internal.
+
+1997-09-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* database.c (Fmake_database): Expand FILE.
+
+	* redisplay.c (window-system): Warn against using it.
+
+1997-09-08  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (PACKAGE_PATH): Reverse PACKAGE_PATH.
+	Suggested by Colin Rafferty <craffert@ml.com>
+
+1997-09-03  SL Baur  <steve@altair.xemacs.org>
+
+	* print.c (print_internal): Special treatment for C-\.
+
 1997-08-13  P E Jareth Hein  <jareth@camelot-soft.com>
 
 	* insdel.c (buffer_delete_range): Changed the location where point

@@ -64,24 +64,17 @@
 
 ;;; Code:
 
-(defun x11-remap-keysyms-using-function-key-map (mapping)
-  (while mapping
-    (let ((k1 (caar mapping))
-          (k2 (cdar mapping)))
-      (mapc #'(lambda (prefix)
-                (define-key function-key-map
-                  (append prefix (list k1))
-                  (vector (append prefix (list k2)))))
-            '(() (shift) (control) (meta) (alt)
-              (shift control) (shift alt) (shift meta)
-              (control alt) (control meta) (alt meta)
-              (shift control alt) (shift control meta)
-              (shift alt meta) (control alt meta)
-              (shift control alt meta))
-            ))
-    (setq mapping (cdr mapping))))
+(defun x-remap-keysyms-using-function-key-map (from-key to-key)
+  (dolist (prefix '(() (shift) (control) (meta) (alt)
+		    (shift control) (shift alt) (shift meta)
+		    (control alt) (control meta) (alt meta)
+		    (shift control alt) (shift control meta)
+		    (shift alt meta) (control alt meta)
+		    (shift control alt meta)))
+    (define-key function-key-map
+      (append prefix (list from-key))
+      (vector (append prefix (list to-key))))))
 
-(x11-remap-keysyms-using-function-key-map
  ;; help is ok
  ;; num_lock is ok
  ;; up is ok
@@ -92,89 +85,86 @@
  ;; insert is ok
  ;; delete is ok
  ;; kp-enter is ok
- (append
-  ;; Sun Function keys
-  (cond ((x-keysym-on-keyboard-p "F21")
-         '((f21 . pause)
-           (f22 . print)
-           (f23 . scroll_lock))))
-         
-  (cond ((x-keysym-on-keyboard-p "SunCut") ; X11 R6 mappings
-         '((SunProps . props) (Undo     . undo)
-           (SunFront . front) (SunCopy  . copy)
-           (SunOpen  . open)  (SunPaste . paste)
-           (SunFind  . find)  (SunCut   . cut)
-           (cancel   . stop)))
-        
-        ((x-keysym-on-keyboard-p "F20")
-         '((f13	. props) (f14 . undo)
-           (f15	. front) (f16 . copy)
-           (f17	. open)  (f18 . paste)
-           (f19	. find)  (f20 . cut))))
-  
-  (if (x-keysym-on-keyboard-p "F25")    ; Sun Sparc keyboards
-      (append
-       '((f21 . pause)
-         (f22 . prsc)
-         (f23 . scroll)
-         (f25 . kp-divide)
-         (f26 . kp-multiply)
-         (f31 . kp-5))
-       
-       ;; Map f33 and r13 to end or kp-end
-       (cond
-        ((not (x-keysym-on-keyboard-p "End"))
-         '((f33 . end)    (r13 . end)))
-        ((not (x-keysym-on-keyboard-p "KP_End"))
-         '((f33 . kp-end) (r13 . kp-end))))
-  
-       (if (x-keysym-on-keyboard-p "F36")
-           '((f36 . stop) (f37 . again)) ; MIT Type 5 name
-         '((f11 . stop) (f12 . again)))  ; Sun name or MIT Type 4 name
-    
-       ;; Type 4 keyboards have a real kp-subtract  and a f24 labelled `='
-       ;; Type 5 keyboards have no key labelled `=' and a f24 labelled `-'
-       (if (x-keysym-on-keyboard-p "F24")
-           (if (x-keysym-on-keyboard-p "KP_Subtract")
-               '((f24 . kp-equal))
-             '((f24 . kp-subtract))))
-  
-       ;; Map f27 to home or kp-home, as appropriate
-       (cond ((not (x-keysym-on-keyboard-p "Home"))    '((f27 . home)))
-             ((not (x-keysym-on-keyboard-p "KP_Home")) '((f27 . kp-home))))
+;; Sun Function keys
+(loop for (x-name from-key to-key) in
+      `(("F21" f21 pause)
+	("F22" f22 print)
+	("F23" f23 scroll_lock)
 
-       ;; Map f29 to prior or kp-prior, as appropriate
-       (cond ((not (x-keysym-on-keyboard-p "Prior"))     '((f29 . prior)))
-             ((not (x-keysym-on-keyboard-p "KP_Prior"))  '((f29 . kp-prior))))
+	;; X11 R6 mappings
+	("SunProps" SunProps props)
+	("SunFront" SunFront front)
+	("SunOpen"  SunOpen  open)
+	("SunFind"  SunFind  find)
+	("Cancel"   cancel   stop)
+	("Undo"     Undo     undo)
+	("SunCopy"  SunCopy  copy)
+	("SunPaste" SunPaste paste)
+	("SunCut"   SunCut   cut)
 
-       ;; Map f35 to next or kp-next, as appropriate
-       (cond ((not (x-keysym-on-keyboard-p "Next"))    '((f35 . next)))
-             ((not (x-keysym-on-keyboard-p "KP_Next")) '((f35 . kp-next))))
-       ))
+	("F13" f13 props)
+	("F14" f14 undo)
+	("F15" f15 front)
+	("F16" f16 copy)
+	("F17" f17 open)
+	("F18" f18 paste)
+	("F19" f19 find)
+	("F20" f20 cut)
 
-  (cond ((x-keysym-on-keyboard-p "apRead") ; SunOS 4.1.1
-         '((apRead . f11) (apEdit . f12)))
-        ((x-keysym-on-keyboard-p "SunF36") ; SunOS 5
-         '((SunF36 . f11) (SunF37 . f12))))
+	("F25" f25 kp-divide)
+	("F26" f26 kp-multiply)
+	("F31" f31 kp-5)
 
-  ;; !@#$ SunOS 4 with SunOS5 X server
-  (if (string-match "sunos4.1" system-configuration)
-      '((unknown_keysym_0xFF9A . kp-prior)
-        (unknown_keysym_0xFF9B . kp-next)
-        (unknown_keysym_0xFF95 . kp-home)
-        (unknown_keysym_0xFF9C . kp-end)
-        (unknown_keysym_0xFF96 . kp-left)
-        (unknown_keysym_0xFF97 . kp-up)
-        (unknown_keysym_0xFF98 . kp-right)
-        (unknown_keysym_0xFF99 . kp-down)
-        (unknown_keysym_0xFF9E . kp-insert)))
-  ))
+	;; Map f33 and r13 to end or kp-end
+	,@(cond
+	   ((not (x-keysym-on-keyboard-sans-modifiers-p "End"))
+	    '(("F33" f33 end)
+	      ("R13" r13 end)))
+	   ((not (x-keysym-on-keyboard-sans-modifiers-p "KP_End"))
+	    '(("F33" f33 kp-end)
+	      ("R13" r13 kp-end))))
 
-(fmakunbound 'x11-remap-keysyms-using-function-key-map)
+	,@(if (x-keysym-on-keyboard-sans-modifiers-p "F36")
+	      '(("F36" f36 stop)
+		("F37" f37 again)))
 
+	;; Type 4 keyboards have a real kp-subtract  and a f24 labelled `='
+	;; Type 5 keyboards have no key labelled `=' and a f24 labelled `-'
+	,@(when (x-keysym-on-keyboard-sans-modifiers-p "F24")
+	    `(("F24" f24 ,(if (x-keysym-on-keyboard-sans-modifiers-p "KP_Subtract")
+			      'kp-equal
+			    'kp-subtract))))
+
+	;; Map f27 to home or kp-home, as appropriate
+	,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p "Home"))
+		 '(("F27" f27 home)))
+		((not (x-keysym-on-keyboard-sans-modifiers-p "KP_Home"))
+		 '(("F27" f27 kp-home))))
+
+	;; Map f29 to prior or kp-prior, as appropriate
+	,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p "Prior"))
+		 '(("F29" f29 prior)))
+		((not (x-keysym-on-keyboard-sans-modifiers-p "KP_Prior"))
+		 '(("F29" f29 kp-prior))))
+
+	;; Map f35 to next or kp-next, as appropriate
+	,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p "Next"))
+		 '(("F35" f35 next)))
+		((not (x-keysym-on-keyboard-sans-modifiers-p "KP_Next"))
+		 '(("F35" f35 kp-next))))
+
+	,@(cond ((x-keysym-on-keyboard-sans-modifiers-p "apRead") ; SunOS 4.1.1
+		 '(("apRead" apRead f11) ("apEdit" apEdit f12)))
+		((x-keysym-on-keyboard-sans-modifiers-p "SunF36") ; SunOS 5
+		 '(("SunF36" SunF36 f11) ("SunF37" SunF37 f12))))
+	)
+      do (when (x-keysym-on-keyboard-sans-modifiers-p x-name)
+	   (x-remap-keysyms-using-function-key-map from-key to-key)))
+
+(unintern 'x-remap-keysyms-using-function-key-map)
 
   ;; for each element in the left column of the above table, alias it
-  ;; to the thing in the right column.  Then do the same for mamy, but
+  ;; to the thing in the right column.  Then do the same for many, but
   ;; not all, modifier combinations.
   ;;
   ;; (Well, we omit hyper and super. #### Handle this some other way!)
@@ -193,14 +183,14 @@
 ;;; it's brain-dead in the typically FSF way, and associates *numbers*
 ;;; (who knows where the hell they come from?) with symbols.] --ben
 
-;;; And I've made it into a function which is not called by default --mrb
+;;; And I've made it into a function which is NOT called by default --mrb
 
 (defun sun-x11-keyboard-translate ()
   "Remap Sun's X11 keyboard.
 Keys with names like `f35' are remapped, at a low level,
 to more mnemonic ones,like `kp-3'."
   (interactive)
-  
+
   (keyboard-translate
    'f11		'stop			; the type4 keyboard Sun/MIT name
    'f36		'stop			; the type5 keyboard Sun name
@@ -251,7 +241,7 @@ to more mnemonic ones,like `kp-3'."
 
 ;;; OpenWindows-like "find" processing.
 ;;; As far as I know, the `find' key is a Sunism, so we do that binding
-;;; here.  This is the only Sun-specific keybinding.  (The functions 
+;;; here.  This is the only Sun-specific keybinding.  (The functions
 ;;; themselves are in x-win.el in case someone wants to use them when
 ;;; not running on a Sun display.)
 

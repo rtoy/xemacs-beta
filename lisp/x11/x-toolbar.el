@@ -95,7 +95,6 @@
 (defcustom toolbar-paste-function 'x-yank-clipboard-selection
   "*Function to call when the paste icon is selected."
   :type '(radio (function-item x-yank-clipboard-selection)
-		(function-item x-yank-primary-selection)
                 (function :tag "Other"))
   :group 'toolbar)
 

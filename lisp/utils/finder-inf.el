@@ -1335,7 +1335,7 @@
         nil
         "lisp/mule/")
     ("mule-cmds.el"
-        "Commands for mulitilingual environment"
+        "Commands for multilingual environment"
         (mule  multilingual)
         "lisp/mule/")
     ("mule-cne.el"
@@ -1363,7 +1363,7 @@
         nil
         "lisp/mule/")
     ("mule-util.el"
-        "Utility functions for mulitilingual environment (mule)"
+        "Utility functions for multilingual environment (mule)"
         (mule  multilingual)
         "lisp/mule/")
     ("mule-x-init.el"

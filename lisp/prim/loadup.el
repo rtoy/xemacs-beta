@@ -59,8 +59,10 @@
      ;;
      (let ((temp-path (expand-file-name ".." (car load-path))))
        (setq source-directory temp-path)
-       (setq load-path (nconc (directory-files temp-path t "^[^-.]"
-					       nil 'dirs-only)
+       (setq load-path (nconc (mapcar
+			       #'(lambda (i) (concat i "/"))
+			       (directory-files temp-path t "^[^-.]"
+						nil 'dirs-only))
 			      (cons temp-path load-path))))
 
      (setq load-warn-when-source-newer t ; set to nil at the end

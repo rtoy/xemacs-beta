@@ -3272,7 +3272,7 @@ SEQUENCE may be a list, a vector or a string.
   return Fvector (len, args);
 }
 
-DEFUN ("mapc-internal", Fmapc_internal, 2, 2, 0, /*
+DEFUN ("mapc", Fmapc, 2, 2, 0, /*
 Apply FUNCTION to each element of SEQUENCE.
 SEQUENCE may be a list, a vector, a bit vector, or a string.
 This function is like `mapcar' but does not accumulate the results,
@@ -3282,7 +3282,7 @@ which is more efficient if you do not use the results.
 {
   mapcar1 (XINT (Flength (seq)), 0, fn, seq);
 
-  return Qnil;
+  return seq;
 }
 
 
@@ -3540,12 +3540,10 @@ syms_of_fns (void)
   DEFSUBR (Fnconc);
   DEFSUBR (Fmapcar);
   DEFSUBR (Fmapvector);
-  DEFSUBR (Fmapc_internal);
+  DEFSUBR (Fmapc);
   DEFSUBR (Fmapconcat);
   DEFSUBR (Fload_average);
-/*#ifndef FEATUREP_SYNTAX*/
   DEFSUBR (Ffeaturep);
-/*#endif*/
   DEFSUBR (Frequire);
   DEFSUBR (Fprovide);
 }

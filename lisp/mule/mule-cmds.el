@@ -1,4 +1,4 @@
-;;; mule-cmds.el --- Commands for mulitilingual environment
+;;; mule-cmds.el --- Commands for multilingual environment
 
 ;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.

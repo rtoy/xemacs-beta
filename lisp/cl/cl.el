@@ -665,7 +665,7 @@ FUNC is not added if it already appears on the list stored in HOOK."
 		      (or (get func 'edebug-form-spec)
 			  (put func 'edebug-form-spec (nth 2 entry)))))
 		   (car entry))))
-	'(((defun* defmacro*) 2)
+	'(((defun* defmacro*) defun)
 	  ((function*) nil
 	   (&or symbolp ([&optional 'macro] 'lambda (&rest sexp) &rest form)))
 	  ((eval-when) 1 (sexp &rest form))
@@ -693,7 +693,7 @@ FUNC is not added if it already appears on the list stored in HOOK."
 	  ((letf letf*) 1 ((&rest (&rest form)) &rest form))
 	  ((callf destructuring-bind) 2 (sexp form &rest form))
 	  ((callf2) 3 (sexp form form &rest form))
-	  ((loop) nil (&rest &or symbolp form))
+	  ((loop) defun (&rest &or symbolp form))
 	  ((ignore-errors) 0 (&rest form))))
 
 

@@ -1,3 +1,43 @@
+1997-09-13  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta20 is released.
+
+1997-09-11  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in: Use `PATH' for options that take multiple dirs.
+	- Fix test for $PWD == `pwd`
+	- Prefer autodetected X11R6 to X11 so that broken HP and Linux
+	systems can work.  (untested)
+
+	* lisp/cl/cl.el:  Fix `loop' indentation to be same as `defun'.
+	* lisp/prim/dumped-lisp.el:  cl-extra and cl-seq always end up
+	being autoloaded - let's make them part of the core.
+
+	* lisp/x11/x-compose.el:
+	* lisp/x11/x-init.el:
+	* lisp/x11/x-win-sun.el:
+	* lisp/x11/x-winxfree86.el:
+	* src/device-x.c:
+	* src/event-Xt.c:
+	- Yet another rewrite of key handling (not the last, though)
+	- x-keysym-on-keyboard-p is much faster.
+	- x-keysym-on-keyboard-sans-modifiers-p introduced.
+	- x-keysym-hashtable introduced.
+	- allow X11R4 libs to guess keysyms on X11R5 servers.
+	- A better workaround for the bug that some Xlibs generate 
+	  Multi_key a adiaeresis when pressing Multi_key a "
+	
+	* src/dgif_lib.c: Make sure size_t is defined before using it.
+
+1997-09-12  SL Baur  <steve@altair.xemacs.org>
+
+	XEmacs 19.16-pre1 "Queens" is released.
+
+1997-09-08  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Reverse package-path.
+	From Colin Rafferty <craffert@ml.com>
+
 1997-09-02  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta19 is released.

@@ -77,8 +77,10 @@
 ;; Then process the list of Lisp files.
 (define-function 'defalias 'define-function)
 (let ((temp-path (expand-file-name ".." (car load-path))))
-  (setq load-path (nconc (directory-files temp-path t "^[^-.]"
-					  nil 'dirs-only)
+  (setq load-path (nconc (mapcar
+			  #'(lambda (i) (concat i "/"))
+			  (directory-files temp-path t "^[^-.]"
+					   nil 'dirs-only))
 			 (cons temp-path load-path))))
 
 ;; Then process the autoloads
@@ -159,7 +161,7 @@
       (setq exec-path (list (concat default-directory "../lib-src")))
 
       ;; (locate-file-clear-hashing nil)
-      (if (eq system-type 'berkeley-unix)
+      (if (memq system-type '(berkeley-unix next-mach))
 	  ;; Suboptimal, but we have a unresolved bug somewhere in the
 	  ;; low-level process code
 	  (call-process-internal

@@ -3616,14 +3616,10 @@ not `make-local-variable'.
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object hook[1];
   REGISTER int i;
 
   for (i = 0; i < nargs; i++)
-    {
-      hook[0] = args[i];
-      run_hook_with_args (1, hook, RUN_HOOKS_TO_COMPLETION);
-    }
+    run_hook_with_args (1, args + i, RUN_HOOKS_TO_COMPLETION);
 
   return Qnil;
 }

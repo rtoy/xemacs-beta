@@ -68,22 +68,21 @@ static XrmOptionDescRec emacs_options[] =
   {"-geometry", ".geometry", XrmoptionSepArg, NULL},
   {"-iconic", ".iconic", XrmoptionNoArg, "yes"},
 
-  {"-internal-border-width", "*EmacsFrame.internalBorderWidth",
-   XrmoptionSepArg, NULL},
-  {"-ib", "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL},
-  {"-scrollbar-width", "*EmacsFrame.scrollBarWidth", XrmoptionSepArg, NULL},
-  {"-scrollbar-height", "*EmacsFrame.scrollBarHeight", XrmoptionSepArg, NULL},
+  {"-internal-border-width", "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL},
+  {"-ib",                    "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL},
+  {"-scrollbar-width",       "*EmacsFrame.scrollBarWidth",      XrmoptionSepArg, NULL},
+  {"-scrollbar-height",      "*EmacsFrame.scrollBarHeight",     XrmoptionSepArg, NULL},
 
   /* #### Beware!  If the type of the shell changes, update this. */
-  {"-T",     "*TopLevelEmacsShell.title", XrmoptionSepArg, NULL},
-  {"-wn",    "*TopLevelEmacsShell.title", XrmoptionSepArg, NULL},
-  {"-title", "*TopLevelEmacsShell.title", XrmoptionSepArg, NULL},
+  {"-T",        "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
+  {"-wn",       "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
+  {"-title",    "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
 
   {"-iconname", "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL},
-  {"-in", "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL},
-  {"-mc", "*pointerColor", XrmoptionSepArg, NULL},
-  {"-cr", "*cursorColor",  XrmoptionSepArg, NULL},
-  {"-fontset", "*FontSet", XrmoptionSepArg, NULL},
+  {"-in",       "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL},
+  {"-mc",       "*pointerColor",                XrmoptionSepArg, NULL},
+  {"-cr",       "*cursorColor",                 XrmoptionSepArg, NULL},
+  {"-fontset",  "*FontSet",                     XrmoptionSepArg, NULL},
 };
 
 static void validify_resource_string (char *str);
@@ -301,8 +300,8 @@ x_init_device (struct device *d, Lisp_Object props)
     Widget shell = DEVICE_XT_APP_SHELL (d);
 
     XtSetArg (al [0], XtNmappedWhenManaged, False);
-    XtSetArg (al [1],XtNwidth,  1);
-    XtSetArg (al [2],XtNheight, 1);
+    XtSetArg (al [1], XtNwidth,  1);
+    XtSetArg (al [2], XtNheight, 1);
     XtSetValues (shell, al, 3);
     XtRealizeWidget (shell);
 
@@ -351,7 +350,8 @@ x_finish_init_device (struct device *d, Lisp_Object props)
 static void
 x_mark_device (struct device *d, void (*markobj) (Lisp_Object))
 {
-  ((markobj) (DEVICE_X_DATA (d)->WM_COMMAND_frame));
+  ((markobj) (DEVICE_X_WM_COMMAND_FRAME (d)));
+  ((markobj) (DEVICE_X_DATA (d)->x_keysym_map_hashtable));
 }
 
 
@@ -1215,9 +1215,9 @@ number.  See also `x-server-vendor'.
 {
   Display *dpy = get_x_display (device);
 
-  return list3 (make_int (ProtocolVersion (dpy)),
+  return list3 (make_int (ProtocolVersion  (dpy)),
 		make_int (ProtocolRevision (dpy)),
-		make_int (VendorRelease (dpy)));
+		make_int (VendorRelease    (dpy)));
 }
 
 DEFUN ("x-valid-keysym-name-p", Fx_valid_keysym_name_p, 1, 1, 0, /*
@@ -1235,7 +1235,21 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
   return XStringToKeysym (keysym_ext) ? Qt : Qnil;
 }
 
-DEFUN ("x-keysym-on-keyboard-p", Fx_keysym_on_keyboard_p, 1, 2, 0, /*
+DEFUN ("x-keysym-hashtable", Fx_keysym_hashtable, 0, 1, 0, /*
+Return a hashtable which contains a hash key for all keysyms which
+name keys on the keyboard.  See `x-keysym-on-keyboard-p'.
+*/
+       (device))
+{
+  struct device *d = decode_device (device);
+  if (!DEVICE_X_P (d))
+    signal_simple_error ("Not an X device", device);
+
+  return DEVICE_X_DATA (d)->x_keysym_map_hashtable;
+}
+
+DEFUN ("x-keysym-on-keyboard-sans-modifiers-p",
+       Fx_keysym_on_keyboard_sans_modifiers_p, 1, 2, 0, /*
 Return true if KEYSYM names a key on the keyboard of DEVICE.
 More precisely, return true if pressing a physical key
 on the keyboard of DEVICE without any modifier keys generates KEYSYM.
@@ -1244,31 +1258,34 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
 */
        (keysym, device))
 {
-  struct device *d = decode_device(device);
-  CONST char *keysym_string;
-  KeySym  keysym_KeySym;
-  KeySym *keysym_ptr, *keysym_last;
-  int min_code, max_code, keysyms_per_code;
+  struct device *d = decode_device (device);
+  if (!DEVICE_X_P (d))
+    signal_simple_error ("Not an X device", device);
+  CHECK_STRING (keysym);
+
+  return (EQ (Qsans_modifiers,
+	      Fgethash (keysym, DEVICE_X_KEYSYM_MAP_HASHTABLE (d), Qnil)) ?
+	  Qt : Qnil);
+}
+
+
+DEFUN ("x-keysym-on-keyboard-p", Fx_keysym_on_keyboard_p, 1, 2, 0, /*
+Return true if KEYSYM names a key on the keyboard of DEVICE.
+More precisely, return true if some keystroke (possibly including modifiers)
+on the keyboard of DEVICE keys generates KEYSYM.
+Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
+/usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
+*/
+       (keysym, device))
+{
+  struct device *d = decode_device (device);
 
   if (!DEVICE_X_P (d))
     signal_simple_error ("Not an X device", device);
   CHECK_STRING (keysym);
-  GET_C_STRING_CTEXT_DATA_ALLOCA (keysym, keysym_string);
-  keysym_KeySym = XStringToKeysym (keysym_string);
-  if (!keysym_KeySym)           /* Invalid keysym */
-    return Qnil;
 
-  XDisplayKeycodes (DEVICE_X_DISPLAY (d), &min_code, &max_code);
-  keysyms_per_code = DEVICE_X_DATA (d)->x_keysym_map_keysyms_per_code;
-  keysym_ptr       = DEVICE_X_DATA (d)->x_keysym_map;
-  keysym_last      = keysym_ptr + (max_code - min_code) * keysyms_per_code;
-  for ( ; keysym_ptr <= keysym_last; keysym_ptr += keysyms_per_code)
-    {
-      if (keysym_KeySym == *keysym_ptr)
-        return Qt;
-    }
-
-  return Qnil;
+  return (NILP (Fgethash (keysym, DEVICE_X_KEYSYM_MAP_HASHTABLE (d), Qnil)) ?
+	  Qnil : Qt);
 }
 
 
@@ -1416,7 +1433,9 @@ syms_of_device_x (void)
   DEFSUBR (Fx_server_vendor);
   DEFSUBR (Fx_server_version);
   DEFSUBR (Fx_valid_keysym_name_p);
+  DEFSUBR (Fx_keysym_hashtable);
   DEFSUBR (Fx_keysym_on_keyboard_p);
+  DEFSUBR (Fx_keysym_on_keyboard_sans_modifiers_p);
 
   DEFSUBR (Fx_grab_pointer);
   DEFSUBR (Fx_ungrab_pointer);

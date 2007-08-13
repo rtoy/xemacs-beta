@@ -607,8 +607,8 @@ be the first parameter on the command line."
 	     (not (looking-at ";;; DO NOT MODIFY THIS FILE")))
 	(progn
 	  (insert ";;; DO NOT MODIFY THIS FILE\n")
-	  (insert "(if (featurep '" sym "-autoloads)")
-	  (insert " (error \"Already loaded\"))")
+	  (insert "(if (featurep '" sym ")")
+	  (insert " (error \"Already loaded\"))\n")
 	  (goto-char (point-max))
 	  (insert "\n(provide '" sym ")\n")))))
 

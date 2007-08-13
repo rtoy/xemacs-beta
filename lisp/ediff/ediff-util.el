@@ -688,10 +688,6 @@ if necessary."
 Reestablish the default three-window display."
   (interactive)
   (ediff-barf-if-not-control-buffer)
-  
-;;  ;; No longer needed: XEmacs has surrogate minibuffers now.
-;;  (if ediff-xemacs-p (setq synchronize-minibuffers t))
-  
   (let (buffer-read-only)
     (if (and (ediff-buffer-live-p ediff-buffer-A)
 	     (ediff-buffer-live-p ediff-buffer-B)
@@ -2359,10 +2355,7 @@ temporarily reverses the meaning of this variable."
 
   ;; warp mouse into a working window
   (setq warp-frame  ; if mouse is over a reasonable frame, use it
-	(cond ((and ediff-xemacs-p (window-live-p (car (mouse-position))))
-	       (window-frame (car (mouse-position))))
-	      ((frame-live-p (car (mouse-position)))
-	       (car (mouse-position)))
+	(cond ((ediff-good-frame-under-mouse))
 	      (t warp-frame)))
   (if (frame-live-p warp-frame)
       (set-mouse-position (if ediff-emacs-p
@@ -2373,6 +2366,24 @@ temporarily reverses the meaning of this variable."
   (if (ediff-buffer-live-p meta-buffer)
       (ediff-show-meta-buffer meta-buffer))
   ))
+
+;; Returns frame under mouse, if this frame is not a minibuffer
+;; frame. Otherwise: nil
+(defun ediff-good-frame-under-mouse ()
+  (let ((frame-or-win (car (mouse-position)))
+	(buf-name "")
+	frame obj-ok)
+    (setq obj-ok
+	  (if ediff-emacs-p
+	      (frame-live-p frame-or-win)
+	    (window-live-p frame-or-win)))
+    (if obj-ok
+	(setq frame (if ediff-emacs-p frame-or-win (window-frame frame-or-win))
+	      buf-name
+	      (buffer-name (window-buffer (frame-selected-window frame)))))
+    (if (string-match "Minibuf" buf-name)
+	nil
+      frame)))
   
   
 (defun ediff-delete-temp-files ()
@@ -2919,6 +2930,15 @@ Hit \\[ediff-recenter] to reset the windows afterward."
       (error "Buffer out of sync for file %s" buffer-file-name))))
 
 
+(defun ediff-file-compressed-p (file)
+  (require 'jka-compr)
+  (string-match (jka-compr-build-file-regexp) file))
+
+(defun ediff-filename-magic-p (file)
+  (or (ediff-file-compressed-p file)
+      (ediff-file-remote-p file)))
+
+
 (defun ediff-save-buffer (arg)
   "Safe way of saving buffers A, B, C, and the diff output.
 `wa' saves buffer A, `wb' saves buffer B, `wc' saves buffer C,
@@ -3315,17 +3335,23 @@ Ediff Control Panel to restore highlighting."
 ;; other insignificant buffers (those beginning with "^[ *]").
 ;; Gets one arg--buffer name or a list of buffer names (it won't return
 ;; these buffers).
-(defun ediff-other-buffer (buff)
-  (if (not (listp buff)) (setq buff (list buff)))
+(defun ediff-other-buffer (buff-lst)
+  (or (listp buff-lst) (setq buff-lst (list buff-lst)))
   (let* ((frame-buffers (buffer-list))
+	 (buff-name-list 
+	  (mapcar 
+	   (function (lambda (b)
+		       (cond ((stringp b) b)
+			     ((bufferp b) (buffer-name b)))))
+	   buff-lst))
 	 (significant-buffers
 	  (mapcar
 	   (function (lambda (x)
-		       (cond ((member (buffer-name x) buff)
-			      nil)
-			     ((not (ediff-get-visible-buffer-window x))
-			      nil)
-			     ((string-match "^ " (buffer-name x))
+		       (cond ((member (buffer-name x) buff-name-list) nil)
+			     ((not (ediff-get-visible-buffer-window x)) nil)
+			     ((string-match "^[ *]" (buffer-name x)) nil)
+			     ((memq (ediff-with-current-buffer x major-mode)
+				    '(dired-mode))
 			      nil)
 			     (t x))))
 	   frame-buffers))
@@ -3339,8 +3365,12 @@ Ediff Control Panel to restore highlighting."
 		       (mapcar
 			(function
 			 (lambda (x)
-			   (cond ((member (buffer-name x) buff) nil)
+			   (cond ((member (buffer-name x) buff-name-list) nil)
 				 ((string-match "^[ *]" (buffer-name x)) nil)
+				 ((memq
+				   (ediff-with-current-buffer x major-mode)
+				   '(dired-mode))
+				  nil)
 				 (t x))))
 			frame-buffers)))
 	   (car less-significant-buffers))

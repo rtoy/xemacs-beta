@@ -7,7 +7,7 @@
 ;;             1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@python.org
 ;; Created:    a long, long, time ago. adapted from the original c-mode.el
-;; Version:    5.16
+;; Version:    5.17
 ;; Keywords:   c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -243,7 +243,7 @@ Key bindings:
 ;;;###autoload
 (defun java-mode ()
   "Major mode for editing Java code.
-To submit a problem report, enter `\\[c-submit-bug-report]' from an
+To submit a problem report, enter `\\[c-submit-bug-report]' from a
 java-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
 of the problem, including a reproducible test case and send the
@@ -326,7 +326,7 @@ Key bindings:
 
 
 ;; defuns for submitting bug reports
-(defconst c-version "5.16"
+(defconst c-version "5.17"
   "CC Mode version number.")
 
 (defconst c-mode-help-address

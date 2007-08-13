@@ -2207,7 +2207,7 @@ Non-directories are silently ignored."
 (defun dired-next-line (arg)
   "Move down lines then position at filename.
 Optional prefix ARG says how many lines to move; default is one line."
-  (interactive "p")
+  (interactive "_p")
   (condition-case err
       (next-line arg)
     (error
@@ -2220,7 +2220,7 @@ Optional prefix ARG says how many lines to move; default is one line."
 (defun dired-previous-line (arg)
   "Move up lines then position at filename.
 Optional prefix ARG says how many lines to move; default is one line."
-  (interactive "p")
+  (interactive "_p")
   (previous-line arg)
   (dired-move-to-filename)
   (dired-update-mode-line))
@@ -2229,7 +2229,7 @@ Optional prefix ARG says how many lines to move; default is one line."
   "Dired version of scroll up.
 Scroll text of current window upward ARG lines; or near full screen if no ARG.
 When calling from a program, supply a number as argument or nil."
-  (interactive "P")
+  (interactive "_P")
   (scroll-up arg)
   (dired-move-to-filename)
   (dired-update-mode-line))
@@ -2238,20 +2238,20 @@ When calling from a program, supply a number as argument or nil."
   "Dired version of scroll-down.
 Scroll text of current window down ARG lines; or near full screen if no ARG.
 When calling from a program, supply a number as argument or nil."
-  (interactive "P")
+  (interactive "_P")
   (scroll-down arg)
   (dired-move-to-filename)
   (dired-update-mode-line))
 
 (defun dired-beginning-of-buffer (arg)
   "Dired version of `beginning of buffer'."
-  (interactive "P")
+  (interactive "_P")
   (beginning-of-buffer arg)
   (dired-update-mode-line))
 
 (defun dired-end-of-buffer (arg)
   "Dired version of `end-of-buffer'."
-  (interactive "P")
+  (interactive "_P")
   (end-of-buffer arg)
   (while (not (or (dired-move-to-filename) (dired-get-subdir) (bobp)))
     (forward-line -1))
@@ -2259,7 +2259,7 @@ When calling from a program, supply a number as argument or nil."
 
 (defun dired-next-dirline (arg &optional opoint)
   "Goto ARG'th next directory file line."
-  (interactive "p")
+  (interactive "_p")
   (if dired-re-dir
       (progn
 	(dired-check-ls-l)
@@ -2276,12 +2276,12 @@ When calling from a program, supply a number as argument or nil."
 
 (defun dired-prev-dirline (arg)
   "Goto ARG'th previous directory file line."
-  (interactive "p")
+  (interactive "_p")
   (dired-next-dirline (- arg)))
 
 (defun dired-next-marked-file (arg &optional wrap opoint)
   "Move to the next marked file, wrapping around the end of the buffer."
-  (interactive "p\np")
+  (interactive "_p\np")
   (or opoint (setq opoint (point))) ; return to where interactively started
   (if (if (> arg 0)
 	  (re-search-forward dired-re-mark nil t arg)
@@ -2299,7 +2299,7 @@ When calling from a program, supply a number as argument or nil."
 
 (defun dired-prev-marked-file (arg &optional wrap)
   "Move to the previous marked file, wrapping around the end of the buffer."
-  (interactive "p\np")
+  (interactive "_p\np")
   (dired-next-marked-file (- arg) wrap)
   (dired-update-mode-line))
 

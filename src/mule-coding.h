@@ -109,35 +109,35 @@ struct Lisp_Coding_System
   Lisp_Object eol_lf, eol_crlf, eol_cr;
 
   struct
-    {
-      /* What are the charsets to be initially designated to G0, G1,
-	 G2, G3?  If t, no charset is initially designated.  If nil,
-	 no charset is initially designated and no charset is allowed
-	 to be designated. */
-      Lisp_Object initial_charset[4];
+  {
+    /* What are the charsets to be initially designated to G0, G1,
+       G2, G3?  If t, no charset is initially designated.  If nil,
+       no charset is initially designated and no charset is allowed
+       to be designated. */
+    Lisp_Object initial_charset[4];
 
-      /* If true, a designation escape sequence needs to be sent on output
-	 for the charset in G[0-3] before that charset is used. */
-      unsigned char force_charset_on_output[4];
+    /* If true, a designation escape sequence needs to be sent on output
+       for the charset in G[0-3] before that charset is used. */
+    unsigned char force_charset_on_output[4];
 
-      charset_conversion_spec_dynarr *input_conv;
-      charset_conversion_spec_dynarr *output_conv;
+    charset_conversion_spec_dynarr *input_conv;
+    charset_conversion_spec_dynarr *output_conv;
 
-      unsigned int shoort        :1; /* C makes you speak Dutch */
-      unsigned int no_ascii_eol  :1;
-      unsigned int no_ascii_cntl :1;
-      unsigned int seven         :1;
-      unsigned int lock_shift    :1;
-      unsigned int no_iso6429    :1;
-      unsigned int escape_quoted :1;
-    } iso2022;
+    unsigned int shoort		:1; /* C makes you speak Dutch */
+    unsigned int no_ascii_eol	:1;
+    unsigned int no_ascii_cntl	:1;
+    unsigned int seven		:1;
+    unsigned int lock_shift	:1;
+    unsigned int no_iso6429	:1;
+    unsigned int escape_quoted	:1;
+  } iso2022;
 
   struct
-    {
-      /* For a CCL coding system, these specify the CCL programs used for
-	 decoding (input) and encoding (output). */
-      Lisp_Object decode, encode;
-    } ccl;
+  {
+    /* For a CCL coding system, these specify the CCL programs used for
+       decoding (input) and encoding (output). */
+    Lisp_Object decode, encode;
+  } ccl;
 };
 
 DECLARE_LRECORD (coding_system, struct Lisp_Coding_System);

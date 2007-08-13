@@ -512,13 +512,18 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
 */
        (file, type, subtype, access_, mode))
 {
+  /* This function can GC */
   Lisp_Object retval = Qnil;
   int modemask;
   int accessmask = 0;
   struct database *dbase = NULL;
   char *filename;
+  struct gcpro gcpro1, gcpro2;
 
   CHECK_STRING (file);
+  GCPRO2 (file, access_);
+  file = Fexpand_file_name (file, Qnil);
+  UNGCPRO;
   filename = (char *) XSTRING_DATA (file);
 
   if (NILP (access_))

@@ -194,7 +194,7 @@ struct window
   Lisp_Object scrollbar_height;
   /* Pointer to use for vertical and horizontal scrollbars. */
   Lisp_Object scrollbar_pointer;
-#endif
+#endif /* HAVE_SCROLLBARS */
 #ifdef HAVE_TOOLBARS
   /* Toolbar specification for each of the four positions.
      This is not a size hog because the value here is not copied,
@@ -211,14 +211,14 @@ struct window
   Lisp_Object default_toolbar;
   Lisp_Object default_toolbar_width, default_toolbar_height;
   Lisp_Object default_toolbar_visible_p;
-#endif
+#endif /* HAVE_TOOLBARS */
   Lisp_Object left_margin_width, right_margin_width;
   Lisp_Object minimum_line_ascent, minimum_line_descent;
   Lisp_Object use_left_overflow, use_right_overflow;
 #ifdef HAVE_MENUBARS
   /* Visibility of menubar. */
   Lisp_Object menubar_visible_p;
-#endif
+#endif /* HAVE_MENUBARS */
   Lisp_Object text_cursor_visible_p;
 
   /* one-bit flags: */
@@ -238,11 +238,11 @@ struct window
   /* new redisplay flag */
   unsigned int windows_changed :1;
   unsigned int shadow_thickness_changed :1;
-  };
+};
 
-#define CURRENT_DISP		0
-#define DESIRED_DISP		1
-#define CMOTION_DISP		2
+#define CURRENT_DISP	0
+#define DESIRED_DISP	1
+#define CMOTION_DISP	2
 
 struct window_mirror
 {
@@ -271,7 +271,7 @@ struct window_mirror
   /* Scrollbars associated with window, if any. */
   struct scrollbar_instance *scrollbar_vertical_instance;
   struct scrollbar_instance *scrollbar_horizontal_instance;
-#endif
+#endif /* HAVE_SCROLLBARS */
 
   /* Flag indicating whether a subwindow is currently being displayed. */
   unsigned int subwindows_being_displayed :1;
@@ -295,16 +295,16 @@ DECLARE_LRECORD (window, struct window);
 extern Lisp_Object Qwindow_live_p;
 
 #define WINDOW_LIVE_P(x) (!(x)->dead)
-#define CHECK_LIVE_WINDOW(x)						\
-  do { CHECK_WINDOW (x);						\
-       if (!WINDOW_LIVE_P (XWINDOW (x)))				\
-	 dead_wrong_type_argument (Qwindow_live_p, (x));		\
-     } while (0)
-#define CONCHECK_LIVE_WINDOW(x)						\
-  do { CONCHECK_WINDOW (x);						\
-       if (!WINDOW_LIVE_P (XWINDOW (x)))				\
-	 x = wrong_type_argument (Qwindow_live_p, (x));			\
-     } while (0)
+#define CHECK_LIVE_WINDOW(x) do {			\
+  CHECK_WINDOW (x);					\
+  if (!WINDOW_LIVE_P (XWINDOW (x)))			\
+    dead_wrong_type_argument (Qwindow_live_p, (x));	\
+} while (0)
+#define CONCHECK_LIVE_WINDOW(x) do {			\
+  CONCHECK_WINDOW (x);					\
+  if (!WINDOW_LIVE_P (XWINDOW (x)))			\
+    x = wrong_type_argument (Qwindow_live_p, (x));	\
+} while (0)
 
 /* 1 if W is a minibuffer window.  */
 #define MINI_WINDOW_P(W)  (!EQ ((W)->mini_p, Qnil))
@@ -315,16 +315,17 @@ extern Lisp_Object Qwindow_live_p;
 #define TOP_LEVEL_WINDOW_P(w) NILP ((w)->parent)
 
 /* Set all redisplay flags indicating a window has changed */
-#define MARK_WINDOWS_CHANGED(w) do {					\
-  (w)->windows_changed = 1;						\
-  if (!NILP (w->frame))							\
-    MARK_FRAME_WINDOWS_CHANGED (XFRAME (w->frame));			\
-  else									\
-    windows_changed = 1; } while (0)
+#define MARK_WINDOWS_CHANGED(w) do {			\
+  (w)->windows_changed = 1;				\
+  if (!NILP (w->frame))					\
+    MARK_FRAME_WINDOWS_CHANGED (XFRAME (w->frame));	\
+  else							\
+    windows_changed = 1;				\
+} while (0)
 
 #define WINDOW_TTY_P(w) FRAME_TTY_P (XFRAME ((w)->frame))
-#define WINDOW_X_P(w) FRAME_X_P (XFRAME ((w)->frame))
-#define WINDOW_NS_P(w) FRAME_NS_P (XFRAME ((w)->frame))
+#define WINDOW_X_P(w)   FRAME_X_P   (XFRAME ((w)->frame))
+#define WINDOW_NS_P(w)  FRAME_NS_P  (XFRAME ((w)->frame))
 #define WINDOW_WIN_P(w) FRAME_WIN_P (XFRAME ((w)->frame))
 
 DECLARE_LRECORD (window_configuration, struct window_config);

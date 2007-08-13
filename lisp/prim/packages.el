@@ -140,9 +140,9 @@ is used instead of `load-path'."
 	autoloads)
     (while path
       (if (file-exists-p (concat (car path)
-				 "/" autoload-file-name))
+				 autoload-file-name))
 	  (setq autoloads (cons (concat (car path)
-					"/" autoload-file-name)
+					autoload-file-name)
 				autoloads)))
       (setq path (cdr path)))
     autoloads))
@@ -184,27 +184,38 @@ lisp/           Contain directories which either have straight lisp code
   ;; Lisp files
   (if (file-directory-p (concat package "/lisp"))
       (progn
+	;; (print (concat "DIR: " package "/lisp/"))
 	(setq load-path (cons (concat package "/lisp/") load-path))
 	(let ((dirs (directory-files (concat package "/lisp/")
 				     t "^[^-.]" nil 'dirs-only))
 	      dir)
 	  (while dirs
 	    (setq dir (car dirs))
+	    ;; (print (concat "DIR: " dir "/"))
 	    (setq load-path (cons (concat dir "/") load-path))
 	    (packages-find-packages-1 dir path-only)
 	    (setq dirs (cdr dirs)))))))
 
 ;; The following function is called from temacs
-(defun packages-find-packages (pkg-path path-only)
+(defun packages-find-packages (pkg-path path-only &optional suppress-user)
   "Search the supplied path for additional info/etc/lisp directories.
 Lisp directories if configured prior to build time will have equivalent
-status as bundled packages."
-  (let ((path pkg-path)
+status as bundled packages.
+If the argument `path-only' is non-nil, only the `load-path' will be set,
+otherwise data directories and info directories will be added.
+If the optional argument `suppress-user' is non-nil, package directories
+rooted in a user login directory (like ~/.xemacs) will not be searched.
+This is used at dump time to suppress the builder's local environment."
+  (let ((path (reverse pkg-path))
 	dir)
     (while path
       (setq dir (car path))
       ;; (prin1 (concat "Find: " (expand-file-name dir) "\n"))
-      (packages-find-packages-1 (expand-file-name dir) path-only)
+      (if (null (and suppress-user
+		     (string-match "^~" dir)))
+	  (progn
+	    ;; (print dir)
+	    (packages-find-packages-1 (expand-file-name dir) path-only)))
       (setq path (cdr path)))))
 
 ;; Data-directory is really a list now.  Provide something to search it for
@@ -225,7 +236,7 @@ status as bundled packages."
 ;; If we are being loaded as part of being dumped, bootstrap the rest of the
 ;; load-path for loaddefs.
 (if (fboundp 'load-gc)
-    (packages-find-packages package-path t))
+    (packages-find-packages package-path t t))
 
 (provide 'packages)
 

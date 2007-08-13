@@ -2257,7 +2257,8 @@ Use `store-match-data' to reinstate the data in this list.
   Charcount len;
 
   if (NILP (last_thing_searched))
-    error ("match-data called before any match found");
+    /*error ("match-data called before any match found");*/
+    return Qnil;
 
   data = alloca_array (Lisp_Object, 2 * search_regs.num_regs);
 

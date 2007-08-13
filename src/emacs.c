@@ -191,7 +191,7 @@ fatal_error_signal (int sig)
   /* If fatal error occurs in code below, avoid infinite recursion.  */
   if (! fatal_error_in_progress)
     {
-      fatal_error_in_progress = 1;
+      fatal_error_in_progress = dont_check_for_quit = 1;
       shut_down_emacs (sig, Qnil);
       stderr_out("\nLisp backtrace follows:\n\n");
       Fbacktrace(Qexternal_debugging_output, Qt);
@@ -2363,7 +2363,7 @@ Codename of this version of Emacs (a string).
 List of directories configured for package searching.
 */ );
 #ifndef PACKAGE_PATH
-#define PACKAGE_PATH PATH_PREFIX "/lib/xemacs/packages:~/.xemacs"
+#define PACKAGE_PATH "~/.xemacs:" PATH_PREFIX "/lib/xemacs/packages"
 #endif
   Vpackage_path = decode_path(PACKAGE_PATH);
 

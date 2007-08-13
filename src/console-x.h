@@ -126,6 +126,7 @@ struct x_device
   int x_keysym_map_min_code;
   int x_keysym_map_max_code;
   int x_keysym_map_keysyms_per_code;
+  Lisp_Object x_keysym_map_hashtable;
 
   /* frame that holds the WM_COMMAND property; there should be exactly
      one of these per device. */
@@ -177,64 +178,57 @@ struct x_device
 #define DEVICE_X_DATA(d) DEVICE_TYPE_DATA (d, x)
 
 #define FRAME_X_DISPLAY(f) (DEVICE_X_DISPLAY (XDEVICE (f->device)))
-#define DEVICE_X_DISPLAY(d) (DEVICE_X_DATA (d)->display)
-#define DEVICE_XT_APP_SHELL(d) (DEVICE_X_DATA (d)->Xt_app_shell)
-#define DEVICE_X_GC_CACHE(d) (DEVICE_X_DATA (d)->gc_cache)
+#define DEVICE_X_DISPLAY(d) 	(DEVICE_X_DATA (d)->display)
+#define DEVICE_XT_APP_SHELL(d) 	(DEVICE_X_DATA (d)->Xt_app_shell)
+#define DEVICE_X_GC_CACHE(d) 	(DEVICE_X_DATA (d)->gc_cache)
 #define DEVICE_X_GRAY_PIXMAP(d) (DEVICE_X_DATA (d)->gray_pixmap)
 #define DEVICE_X_WM_COMMAND_FRAME(d) (DEVICE_X_DATA (d)->WM_COMMAND_frame)
-#define DEVICE_X_MOUSE_TIMESTAMP(d) (DEVICE_X_DATA (d)->mouse_timestamp)
-#define DEVICE_X_GLOBAL_MOUSE_TIMESTAMP(d) \
-  (DEVICE_X_DATA (d)->global_mouse_timestamp)
-#define DEVICE_X_LAST_SERVER_TIMESTAMP(d) \
-  (DEVICE_X_DATA (d)->last_server_timestamp)
-/* #define DEVICE_X_X_COMPOSE_STATUS(d)
-   (DEVICE_X_DATA (d)->x_compose_status) */
+#define DEVICE_X_MOUSE_TIMESTAMP(d)  (DEVICE_X_DATA (d)->mouse_timestamp)
+#define DEVICE_X_GLOBAL_MOUSE_TIMESTAMP(d) (DEVICE_X_DATA (d)->global_mouse_timestamp)
+#define DEVICE_X_LAST_SERVER_TIMESTAMP(d)  (DEVICE_X_DATA (d)->last_server_timestamp)
+#define DEVICE_X_KEYSYM_MAP_HASHTABLE(d)  (DEVICE_X_DATA (d)->x_keysym_map_hashtable)
+/* #define DEVICE_X_X_COMPOSE_STATUS(d) (DEVICE_X_DATA (d)->x_compose_status) */
 #ifdef HAVE_XIM
-#define DEVICE_X_XIM(d) (DEVICE_X_DATA (d)->xim)
+#define DEVICE_X_XIM(d)        (DEVICE_X_DATA (d)->xim)
 #define DEVICE_X_XIM_STYLES(d) (DEVICE_X_DATA (d)->xim_styles)
 #define DEVICE_X_FONTSET(d)    (DEVICE_X_DATA (d)->fontset)
 #endif /* HAVE_XIM */
 
 /* allocated in Xatoms_of_xfns in xfns.c */
-#define DEVICE_XATOM_WM_PROTOCOLS(d) (DEVICE_X_DATA (d)->Xatom_WM_PROTOCOLS)
-#define DEVICE_XATOM_WM_DELETE_WINDOW(d) \
-  (DEVICE_X_DATA (d)->Xatom_WM_DELETE_WINDOW)
-#define DEVICE_XATOM_WM_SAVE_YOURSELF(d) \
-  (DEVICE_X_DATA (d)->Xatom_WM_SAVE_YOURSELF)
-#define DEVICE_XATOM_WM_TAKE_FOCUS(d) (DEVICE_X_DATA (d)->Xatom_WM_TAKE_FOCUS)
-#define DEVICE_XATOM_WM_STATE(d) (DEVICE_X_DATA (d)->Xatom_WM_STATE)
+#define DEVICE_XATOM_WM_PROTOCOLS(d)	 (DEVICE_X_DATA (d)->Xatom_WM_PROTOCOLS)
+#define DEVICE_XATOM_WM_DELETE_WINDOW(d) (DEVICE_X_DATA (d)->Xatom_WM_DELETE_WINDOW)
+#define DEVICE_XATOM_WM_SAVE_YOURSELF(d) (DEVICE_X_DATA (d)->Xatom_WM_SAVE_YOURSELF)
+#define DEVICE_XATOM_WM_TAKE_FOCUS(d)	 (DEVICE_X_DATA (d)->Xatom_WM_TAKE_FOCUS)
+#define DEVICE_XATOM_WM_STATE(d)	 (DEVICE_X_DATA (d)->Xatom_WM_STATE)
 
 /* allocated in Xatoms_of_xselect in xselect.c */
-#define DEVICE_XATOM_CLIPBOARD(d) (DEVICE_X_DATA (d)->Xatom_CLIPBOARD)
-#define DEVICE_XATOM_TIMESTAMP(d) (DEVICE_X_DATA (d)->Xatom_TIMESTAMP)
-#define DEVICE_XATOM_TEXT(d) (DEVICE_X_DATA (d)->Xatom_TEXT)
-#define DEVICE_XATOM_DELETE(d) (DEVICE_X_DATA (d)->Xatom_DELETE)
-#define DEVICE_XATOM_MULTIPLE(d) (DEVICE_X_DATA (d)->Xatom_MULTIPLE)
-#define DEVICE_XATOM_INCR(d) (DEVICE_X_DATA (d)->Xatom_INCR)
-#define DEVICE_XATOM_EMACS_TMP(d) (DEVICE_X_DATA (d)->Xatom_EMACS_TMP)
-#define DEVICE_XATOM_TARGETS(d) (DEVICE_X_DATA (d)->Xatom_TARGETS)
-#define DEVICE_XATOM_NULL(d) (DEVICE_X_DATA (d)->Xatom_NULL)
-#define DEVICE_XATOM_ATOM_PAIR(d) (DEVICE_X_DATA (d)->Xatom_ATOM_PAIR)
-#define DEVICE_XATOM_COMPOUND_TEXT(d) (DEVICE_X_DATA (d)->Xatom_COMPOUND_TEXT)
+#define DEVICE_XATOM_CLIPBOARD(d) 	(DEVICE_X_DATA (d)->Xatom_CLIPBOARD)
+#define DEVICE_XATOM_TIMESTAMP(d) 	(DEVICE_X_DATA (d)->Xatom_TIMESTAMP)
+#define DEVICE_XATOM_TEXT(d) 		(DEVICE_X_DATA (d)->Xatom_TEXT)
+#define DEVICE_XATOM_DELETE(d) 		(DEVICE_X_DATA (d)->Xatom_DELETE)
+#define DEVICE_XATOM_MULTIPLE(d) 	(DEVICE_X_DATA (d)->Xatom_MULTIPLE)
+#define DEVICE_XATOM_INCR(d) 		(DEVICE_X_DATA (d)->Xatom_INCR)
+#define DEVICE_XATOM_EMACS_TMP(d) 	(DEVICE_X_DATA (d)->Xatom_EMACS_TMP)
+#define DEVICE_XATOM_TARGETS(d) 	(DEVICE_X_DATA (d)->Xatom_TARGETS)
+#define DEVICE_XATOM_NULL(d) 		(DEVICE_X_DATA (d)->Xatom_NULL)
+#define DEVICE_XATOM_ATOM_PAIR(d) 	(DEVICE_X_DATA (d)->Xatom_ATOM_PAIR)
+#define DEVICE_XATOM_COMPOUND_TEXT(d) 	(DEVICE_X_DATA (d)->Xatom_COMPOUND_TEXT)
 
 /* allocated in Xatoms_of_objects_x in objects-x.c */
-#define DEVICE_XATOM_FOUNDRY(d) (DEVICE_X_DATA (d)->Xatom_FOUNDRY)
-#define DEVICE_XATOM_FAMILY_NAME(d) (DEVICE_X_DATA (d)->Xatom_FAMILY_NAME)
-#define DEVICE_XATOM_WEIGHT_NAME(d) (DEVICE_X_DATA (d)->Xatom_WEIGHT_NAME)
-#define DEVICE_XATOM_SLANT(d) (DEVICE_X_DATA (d)->Xatom_SLANT)
-#define DEVICE_XATOM_SETWIDTH_NAME(d) (DEVICE_X_DATA (d)->Xatom_SETWIDTH_NAME)
-#define DEVICE_XATOM_ADD_STYLE_NAME(d) \
-  (DEVICE_X_DATA (d)->Xatom_ADD_STYLE_NAME)
-#define DEVICE_XATOM_PIXEL_SIZE(d) (DEVICE_X_DATA (d)->Xatom_PIXEL_SIZE)
-#define DEVICE_XATOM_POINT_SIZE(d) (DEVICE_X_DATA (d)->Xatom_POINT_SIZE)
-#define DEVICE_XATOM_RESOLUTION_X(d) (DEVICE_X_DATA (d)->Xatom_RESOLUTION_X)
-#define DEVICE_XATOM_RESOLUTION_Y(d) (DEVICE_X_DATA (d)->Xatom_RESOLUTION_Y)
-#define DEVICE_XATOM_SPACING(d) (DEVICE_X_DATA (d)->Xatom_SPACING)
-#define DEVICE_XATOM_AVERAGE_WIDTH(d) (DEVICE_X_DATA (d)->Xatom_AVERAGE_WIDTH)
-#define DEVICE_XATOM_CHARSET_REGISTRY(d) \
-  (DEVICE_X_DATA (d)->Xatom_CHARSET_REGISTRY)
-#define DEVICE_XATOM_CHARSET_ENCODING(d) \
-  (DEVICE_X_DATA (d)->Xatom_CHARSET_ENCODING)
+#define DEVICE_XATOM_FOUNDRY(d)		(DEVICE_X_DATA (d)->Xatom_FOUNDRY)
+#define DEVICE_XATOM_FAMILY_NAME(d)	(DEVICE_X_DATA (d)->Xatom_FAMILY_NAME)
+#define DEVICE_XATOM_WEIGHT_NAME(d)	(DEVICE_X_DATA (d)->Xatom_WEIGHT_NAME)
+#define DEVICE_XATOM_SLANT(d)		(DEVICE_X_DATA (d)->Xatom_SLANT)
+#define DEVICE_XATOM_SETWIDTH_NAME(d)	(DEVICE_X_DATA (d)->Xatom_SETWIDTH_NAME)
+#define DEVICE_XATOM_ADD_STYLE_NAME(d)	(DEVICE_X_DATA (d)->Xatom_ADD_STYLE_NAME)
+#define DEVICE_XATOM_PIXEL_SIZE(d)	(DEVICE_X_DATA (d)->Xatom_PIXEL_SIZE)
+#define DEVICE_XATOM_POINT_SIZE(d)	(DEVICE_X_DATA (d)->Xatom_POINT_SIZE)
+#define DEVICE_XATOM_RESOLUTION_X(d)	(DEVICE_X_DATA (d)->Xatom_RESOLUTION_X)
+#define DEVICE_XATOM_RESOLUTION_Y(d)	(DEVICE_X_DATA (d)->Xatom_RESOLUTION_Y)
+#define DEVICE_XATOM_SPACING(d)		(DEVICE_X_DATA (d)->Xatom_SPACING)
+#define DEVICE_XATOM_AVERAGE_WIDTH(d)	(DEVICE_X_DATA (d)->Xatom_AVERAGE_WIDTH)
+#define DEVICE_XATOM_CHARSET_REGISTRY(d) (DEVICE_X_DATA (d)->Xatom_CHARSET_REGISTRY)
+#define DEVICE_XATOM_CHARSET_ENCODING(d) (DEVICE_X_DATA (d)->Xatom_CHARSET_ENCODING)
 
 /* The maximum number of widgets that can be displayed above the text
    area at one time.  Currently no more than 3 will ever actually be
@@ -264,10 +258,9 @@ struct x_frame
   int num_top_widgets;
 
 #ifdef ENERGIZE
-  /* The Energize property-sheets.  The current_ slots are the ones which are
-     actually on the frame.  The desired_ slots are the ones which should
-     be there.  Redisplay synchs these.
-   */
+  /* The Energize property-sheets.  The current_* slots are the ones
+     which are actually on the frame.  The desired_ slots are the ones
+     which should be there.  Redisplay synchs these.  */
   int *current_psheets;
   int *desired_psheets;
   int current_psheet_count;
@@ -282,13 +275,17 @@ struct x_frame
   Lisp_Object icon_pixmap;
   Lisp_Object icon_pixmap_mask;
 
-  /* We don't provide a mechanism for changing these are they are
+#ifdef HAVE_TOOLBARS
+  int old_toolbar_size[4];
+
+  /* We don't provide a mechanism for changing these after they are
      initialized so we might as well keep pointers to them and avoid
      lots of expensive calls to gc_cache_lookup. */
   GC toolbar_top_shadow_gc;
   GC toolbar_bottom_shadow_gc;
   GC toolbar_blank_background_gc;
   GC toolbar_pixmap_background_gc;
+#endif /* HAVE_TOOLBARS */
 
   /* geometry string that ought to be freed. */
   char *geom_free_me_please;
@@ -301,8 +298,6 @@ struct x_frame
   XIMStyle xic_style;		/* XIM Style cache */
 #endif /* XIM_XLIB */
 #endif /* HAVE_XIM */
-
-  int old_toolbar_size[4];
 
   /* 1 if the frame is completely visible on the display, 0 otherwise.
      if 0 the frame may have been iconified or may be totally
@@ -327,40 +322,33 @@ struct x_frame
 
 #define FRAME_X_DATA(f) FRAME_TYPE_DATA (f, x)
 
-#define FRAME_X_SHELL_WIDGET(f) (FRAME_X_DATA (f)->widget)
+#define FRAME_X_SHELL_WIDGET(f)	    (FRAME_X_DATA (f)->widget)
 #define FRAME_X_CONTAINER_WIDGET(f) (FRAME_X_DATA (f)->container)
-#define FRAME_X_MENUBAR_WIDGET(f) (FRAME_X_DATA (f)->menubar_widget)
-#define FRAME_X_TEXT_WIDGET(f) (FRAME_X_DATA (f)->edit_widget)
-#define FRAME_X_TOP_WIDGETS(f) (FRAME_X_DATA (f)->top_widgets)
-#define FRAME_X_NUM_TOP_WIDGETS(f) (FRAME_X_DATA (f)->num_top_widgets)
-
-#define FRAME_X_OLD_TOOLBAR_SIZE(f, pos) \
-  (FRAME_X_DATA (f)->old_toolbar_size[pos])
+#define FRAME_X_MENUBAR_WIDGET(f)   (FRAME_X_DATA (f)->menubar_widget)
+#define FRAME_X_TEXT_WIDGET(f)	    (FRAME_X_DATA (f)->edit_widget)
+#define FRAME_X_TOP_WIDGETS(f)	    (FRAME_X_DATA (f)->top_widgets)
+#define FRAME_X_NUM_TOP_WIDGETS(f)  (FRAME_X_DATA (f)->num_top_widgets)
 
 #ifdef ENERGIZE
-#define FRAME_X_CURRENT_PSHEETS(f) (FRAME_X_DATA (f)->current_psheets)
-#define FRAME_X_DESIRED_PSHEETS(f) (FRAME_X_DATA (f)->desired_psheets)
-#define FRAME_X_CURRENT_PSHEET_COUNT(f) \
-  (FRAME_X_DATA (f)->current_psheet_count)
-#define FRAME_X_DESIRED_PSHEET_COUNT(f) \
-  (FRAME_X_DATA (f)->desired_psheet_count)
-#define FRAME_X_CURRENT_PSHEET_BUFFER(f) \
-  (FRAME_X_DATA (f)->current_psheet_buffer)
-#define FRAME_X_DESIRED_PSHEET_BUFFER(f) \
-  (FRAME_X_DATA (f)->desired_psheet_buffer)
-#endif
+#define FRAME_X_CURRENT_PSHEETS(f)	 (FRAME_X_DATA (f)->current_psheets)
+#define FRAME_X_DESIRED_PSHEETS(f)	 (FRAME_X_DATA (f)->desired_psheets)
+#define FRAME_X_CURRENT_PSHEET_COUNT(f)  (FRAME_X_DATA (f)->current_psheet_count)
+#define FRAME_X_DESIRED_PSHEET_COUNT(f)  (FRAME_X_DATA (f)->desired_psheet_count)
+#define FRAME_X_CURRENT_PSHEET_BUFFER(f) (FRAME_X_DATA (f)->current_psheet_buffer)
+#define FRAME_X_DESIRED_PSHEET_BUFFER(f) (FRAME_X_DATA (f)->desired_psheet_buffer)
+#endif /* ENERGIZE */
 
-#define FRAME_X_ICON_PIXMAP(f) (FRAME_X_DATA (f)->icon_pixmap)
+#define FRAME_X_ICON_PIXMAP(f)	    (FRAME_X_DATA (f)->icon_pixmap)
 #define FRAME_X_ICON_PIXMAP_MASK(f) (FRAME_X_DATA (f)->icon_pixmap_mask)
 
-#define FRAME_X_TOOLBAR_TOP_SHADOW_GC(f) \
-  (FRAME_X_DATA (f)->toolbar_top_shadow_gc)
-#define FRAME_X_TOOLBAR_BOTTOM_SHADOW_GC(f) \
-  (FRAME_X_DATA (f)->toolbar_bottom_shadow_gc)
-#define FRAME_X_TOOLBAR_BLANK_BACKGROUND_GC(f) \
-  (FRAME_X_DATA (f)->toolbar_blank_background_gc)
-#define FRAME_X_TOOLBAR_PIXMAP_BACKGROUND_GC(f) \
-  (FRAME_X_DATA (f)->toolbar_pixmap_background_gc)
+#ifdef HAVE_TOOLBARS
+#define FRAME_X_OLD_TOOLBAR_SIZE(f, pos) (FRAME_X_DATA (f)->old_toolbar_size[pos])
+
+#define FRAME_X_TOOLBAR_TOP_SHADOW_GC(f)	(FRAME_X_DATA (f)->toolbar_top_shadow_gc)
+#define FRAME_X_TOOLBAR_BOTTOM_SHADOW_GC(f)	(FRAME_X_DATA (f)->toolbar_bottom_shadow_gc)
+#define FRAME_X_TOOLBAR_BLANK_BACKGROUND_GC(f)	(FRAME_X_DATA (f)->toolbar_blank_background_gc)
+#define FRAME_X_TOOLBAR_PIXMAP_BACKGROUND_GC(f) (FRAME_X_DATA (f)->toolbar_pixmap_background_gc)
+#endif /* HAVE_TOOLBARS */
 
 #define FRAME_X_GEOM_FREE_ME_PLEASE(f) (FRAME_X_DATA (f)->geom_free_me_please)
 

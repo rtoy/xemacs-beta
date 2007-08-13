@@ -224,6 +224,10 @@ Lisp_Object Vrecent_keys_ring;
 int recent_keys_ring_size;
 int recent_keys_ring_index;
 
+/* Boolean specifying whether keystrokes should be added to
+   recent-keys. */
+int inhibit_input_event_recording;
+
 /* prefix key(s) that must match in order to activate menu.
    This is ugly.  fix me.
    */
@@ -2220,7 +2224,8 @@ The returned event will be one of the following types:
   if (store_this_key)
     {
       push_this_command_keys (event);
-      push_recent_keys (event);
+      if (!inhibit_input_event_recording)
+	push_recent_keys (event);
       dribble_out_event (event);
       if (!NILP (con->defining_kbd_macro) && NILP (Vexecuting_macro))
 	{
@@ -5158,6 +5163,11 @@ and is one of the following:
 */ );
   debug_emacs_events = 0;
 #endif
+
+  DEFVAR_BOOL ("inhibit-input-event-recording", &inhibit_input_event_recording /*
+Non-nil inhibits recording of input-events to recent-keys ring.
+*/ );
+  inhibit_input_event_recording = 0;
 
   DEFVAR_LISP("menu-accelerator-prefix", &Vmenu_accelerator_prefix /*
 Prefix key(s) that must be typed before menu accelerators will be activated.

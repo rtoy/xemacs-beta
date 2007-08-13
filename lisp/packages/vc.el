@@ -123,6 +123,11 @@ to the checkout program by \\[vc-checkout].")
 (defvar vc-directory-exclusion-list '("SCCS" "RCS" "CVS")
   "*A list of directory names ignored by functions that recursively 
 walk file trees.")
+(defvar vc-default-init-version nil
+  "*A string giving the default version number for the function `vc-register'.
+If `nil' (default), the choice of initial version is left to the
+version control program.  Can be overridden by giving a prefix
+argument to `vc-register'.")
 
 (defconst vc-maximum-comment-ring-size 32
   "Maximum number of saved comments in the comment ring.")
@@ -819,7 +824,9 @@ merge in the changes into your working copy."
 
 ;;;###autoload
 (defun vc-register (&optional override comment)
-  "Register the current file into your version-control system."
+  "Register the current file into your version-control system.
+The default initial version number, taken to be `vc-default-init-version',
+can be overridden by giving a prefix arg."
   (interactive "P")
   (or buffer-file-name
       (error "No visited file"))
@@ -842,10 +849,12 @@ merge in the changes into your working copy."
 	 (setq backup-inhibited t)))
   (vc-admin
    buffer-file-name
-   (and override
-	(read-string
-	 (format "Initial version level for %s: " buffer-file-name))))
-  )
+   (or (and override
+	    (read-string
+	     (format "Initial version level for %s: "
+		     buffer-file-name)))
+       vc-default-init-version)
+   comment))
 
 (defun vc-resynch-window (file &optional keep noquery)
   ;; If the given file is in the current buffer,

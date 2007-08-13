@@ -1,4 +1,4 @@
-;;; mule-util.el --- Utility functions for mulitilingual environment (mule)
+;;; mule-util.el --- Utility functions for multilingual environment (mule)
 
 ;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
@@ -28,88 +28,12 @@
 ;;; String manipulations while paying attention to multibyte
 ;;; characters.
 
-;; [Was defsubst]
-;;;###autoload
-(defun string-to-sequence (string type)
-  "Convert STRING to a sequence of TYPE which contains characters in STRING.
-TYPE should be `list' or `vector'.
-Multibyte characters are concerned."
-  (map type (function identity) string))
+;; That code is pointless in XEmacs/Mule, since our multibyte
+;; representation doesn't leak to Lisp.
 
-;; [Was defsubst]
-;;;###autoload
-(defun string-to-list (string)
-  "Return a list of characters in STRING."
-  (mapcar (function identity) string))
+;; string-to-sequence, string-to-list, string-to-vector, store-substring,
+;; truncate-string-to-width
 
-;; [Was defsubst]
-;;;###autoload
-(defun string-to-vector (string)
-  "Return a vector of characters in STRING."
-  (string-to-sequence string 'vector))
-
-;;;###autoload
-(defun store-substring (string idx obj)
-  "Embed OBJ (string or character) at index IDX of STRING."
-  (let* ((str (cond ((stringp obj) obj)
-		    ((characterp obj) (char-to-string obj))
-		    (t (error
-			"Invalid argument (should be string or character): %s"
-			obj))))
-	 (string-len (length string))
-	 (len (length str))
-	 (i 0))
-    (while (and (< i len) (< idx string-len))
-      (aset string idx (aref str i))
-      (setq idx (1+ idx) i (1+ i)))
-    string))
-
-;;;###autoload
-(defun truncate-string-to-width (str width &optional start-column padding)
-  "Truncate string STR to fit in WIDTH columns.
-Optional 1st arg START-COLUMN if non-nil specifies the starting column.
-Optional 2nd arg PADDING if non-nil is a padding character to be padded at
-the head and tail of the resulting string to fit in WIDTH if necessary.
-If PADDING is nil, the resulting string may be narrower than WIDTH."
-  (or start-column
-      (setq start-column 0))
-  (let ((len (length str))
-	(idx 0)
-	(column 0)
-	(head-padding "") (tail-padding "")
-	ch last-column last-idx from-idx)
-    (condition-case nil
-	(while (< column start-column)
-	  (setq ch (sref str idx)
-		column (+ column (char-width ch))
-		idx (+ idx (char-bytes ch))))
-      (args-out-of-range (setq idx len)))
-    (if (< column start-column)
-	(if padding (make-string width padding) "")
-      (if (and padding (> column start-column))
-	  (setq head-padding (make-string (- column start-column) ?\ )))
-      (setq from-idx idx)
-      (condition-case nil
-	  (while (< column width)
-	    (setq last-column column
-		  last-idx idx
-		  ch (sref str idx)
-		  column (+ column (char-width ch))
-		  idx (+ idx (char-bytes ch))))
-	(args-out-of-range (setq idx len)))
-      (if (> column width)
-	  (setq column last-column idx last-idx))
-      (if (and padding (< column width))
-	  (setq tail-padding (make-string (- width column) padding)))
-      (setq str (substring str from-idx idx))
-      (if padding
-	  (concat head-padding str tail-padding)
-	str))))
-
-;;; For backward compatiblity ...
-;;;###autoload
-(defalias 'truncate-string 'truncate-string-to-width)
-(make-obsolete 'truncate-string 'truncate-string-to-width)
 
 ;;; Nested alist handler.  Nested alist is alist whose elements are
 ;;; also nested alist.

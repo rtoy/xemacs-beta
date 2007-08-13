@@ -3,7 +3,7 @@
 ;; Copyright (C) 1997 Glynn Clements <glynn@sensei.co.uk>
 
 ;; Author: Glynn Clements <glynn@sensei.co.uk>
-;; Version: 1.7
+;; Version: 1.8
 ;; Created: 1997-08-13
 ;; Keywords: games
 
@@ -42,6 +42,9 @@
 ;;	added color support for non-glyph mode
 ;;	added tetris-mode-hook
 ;;	added tetris-update-speed-function
+;; Modified: 1997-09-09, changed layout to work in a 22 line window
+;; Modified: 1997-09-12
+;;	fixed tetris-shift-down to deal with multiple rows correctly
 ;; URL: ftp://sensei.co.uk/misc/tetris.el.gz
 ;; Tested with XEmacs 20.3-beta and Emacs 19.34
 ;; Reported to work with XEmacs 19.15 and 20.2
@@ -95,10 +98,10 @@ If the return value is a number, it is used as the timer period")
 (defconst tetris-border-char [?\+]
   "Character vector for a border square in text mode")
 
-(defconst tetris-buffer-width 25
+(defconst tetris-buffer-width 30
   "Width of used portion of buffer")
 
-(defconst tetris-buffer-height 25
+(defconst tetris-buffer-height 22
   "Height of used portion of buffer")
 
 (defconst tetris-width 10
@@ -119,10 +122,10 @@ If the return value is a number, it is used as the timer period")
 (defconst tetris-next-y tetris-top-left-y
   "Y position of next shape")
 
-(defconst tetris-score-x tetris-top-left-x
+(defconst tetris-score-x tetris-next-x
   "X position of score")
 
-(defconst tetris-score-y (+ tetris-top-left-y tetris-height 2)
+(defconst tetris-score-y (+ tetris-next-y 6)
   "Y position of score")
 
 (defconst tetris-blank 0)
@@ -612,7 +615,7 @@ static char *noname[] = {
 	   c))))
 
 (defun tetris-shift-down ()
-  (loop for y0 from (1- tetris-height) downto 0 do
+  (loop for y0 from 0 to (1- tetris-height) do
 	(if (tetris-full-row y0)
 	    (progn
 	      (setq tetris-n-rows (1+ tetris-n-rows))
@@ -629,6 +632,7 @@ static char *noname[] = {
     (setq tetris-buffer-start (point))
     (dotimes (i tetris-buffer-height)
       (insert-string line))
+    (goto-char (point-min))
     (if (tetris-draw-border-p)
       (loop for y from -1 to tetris-height do
 	    (loop for x from -1 to tetris-width do
@@ -792,6 +796,7 @@ tetris-mode keybindings:
 
   (run-hooks 'tetris-mode-hook))
 
+;;;###autoload
 (defun tetris ()
   "Tetris
 

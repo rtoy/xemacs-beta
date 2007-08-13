@@ -3,7 +3,7 @@
 ;; Copyright (c) 1997 Free Software Foundation, Inc.
 
 ;; Keywords: extensions
-;; Version: 2.3
+;; Version: 2.4
 ;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
 
 ;; This file is part of XEmacs.
@@ -152,9 +152,8 @@
 			     (bury-buffer))
 		   "Kill"))
   (widget-insert " this buffer.\n")
-  (use-local-map (let ((map (make-sparse-keymap)))
-		   (set-keymap-parent map widget-keymap)
-		   map))
+  (use-local-map (make-sparse-keymap))
+  (set-keymap-parent (current-local-map) widget-keymap)
   (if (eq type 'bury)
       (progn
 	(local-set-key "q" 'bury-buffer)
@@ -186,7 +185,7 @@
     (widget-insert "\n")
     (let* ((emacs-short-version (concat emacs-major-version
 					"." emacs-minor-version))
-	   (emacs-about-version (format "version %s; Oct 1997"
+	   (emacs-about-version (format "version %s; Jan 1998"
 					emacs-short-version)))
       (widget-insert (about-center emacs-about-version))
       (widget-create 'link :help-echo "The latest NEWS of XEmacs"
@@ -550,12 +549,8 @@ seemed like a good idea at the time ...).  In real life I am a
 network administrator and Unix systems programmer for Calag.com,
 Inc. a small, but growing ISP in California.
 
-My main contributions to XEmacs have been reviving the FAQ,
-testing and integrating patches, tracking down and fixing bugs, and
-answering hundreds of questions on Usenet.
-
-Is that my picture?  I believe I already answered that in
-xemacs-beta-discuss ...")
+My main hobby while not maintaining XEmacs or working is ...
+you have got to be kidding ...")
      (widget-insert ".\n"))
     (mrb
      (widget-insert "\
@@ -1020,7 +1015,15 @@ implementation of `duplicable' properties.\n")
        (print-short "Hans Muller" "hmuller@eng.sun.com" "\
 Author of the code used to connect XEmacs with ToolTalk, and of an
 early client of the external Emacs widget.\n")
+       (print-short "Didier Verna" "verna@inf.enst.fr" "\
+I'm currently working (Ph.D.) on the cognitive aspects of
+Human-Machine Interaction in Virtual Environments, and especialy on
+the possibility of adding (artificial) intelligence between the system 
+and the operator, in order to detect the intentions of the latter.
 
+Otherwise, I'm, say, 35.82% professional Jazz guitar player,
+which means that's not the way I earn my crust, but things may very
+well reverse in the future ...\n")
        "\n\
 In addition to those just mentioned, the following people have spent a
 great deal of effort providing feedback, testing beta versions of

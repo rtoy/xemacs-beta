@@ -261,6 +261,29 @@ Return a vector containing the lines from `spook-phrases-file'." nil nil)
 
 ;;;***
 
+;;;### (autoloads (tetris) "tetris" "games/tetris.el")
+
+(autoload 'tetris "tetris" "\
+Tetris
+
+Shapes drop from the top of the screen, and the user has to move and
+rotate the shape to fit in with those at the bottom of the screen so
+as to form complete rows.
+
+tetris-mode keybindings:
+   \\<tetris-mode-map>
+\\[tetris-start-game]	Starts a new game of Tetris
+\\[tetris-end-game]	Terminates the current game
+\\[tetris-move-left]	Moves the shape one square to the left
+\\[tetris-move-right]	Moves the shape one square to the right
+\\[tetris-rotate-prev]	Rotates the shape clockwise
+\\[tetris-rotate-next]	Rotates the shape anticlockwise
+\\[tetris-move-bottom]	Drops the shape to the bottom of the playing area
+
+" t nil)
+
+;;;***
+
 ;;;### (autoloads (xmine-mode) "xmine" "games/xmine.el")
 
 (autoload 'xmine-mode "xmine" "\

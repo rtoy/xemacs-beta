@@ -1,6 +1,16 @@
 							-*- indented-text -*-
-to 20.3 beta19 "Kiev"
--- Mega Martin Buccholz patch
+to 20.3 beta20 "Tirana"
+-- Miscellaneous patches from Martin and Hrvoje
+-- tetris.el-1.8
+-- viper update courtesy of Michael Kifer
+-- ediff updates courtesy of Michael Kifer
+-- strokes.el-2.4-beta
+-- cc-mode-5.17
+-- edmacro.el-3.19 courtesy of Hrvoje Niksic
+-- Miscellaneous bug fixes
+
+to 20.3 beta19 "Kyiv"
+-- Mega Martin Buchholz patch
 -- Major Viper update, Viper is now Mule aware
 -- ediff updates courtesy of Michael Kifer
 -- tpu-edt.el/tpu-extras.el synched with Emacs 19.34/XEmacs 19.16 courtesy of

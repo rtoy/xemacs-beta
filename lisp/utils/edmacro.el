@@ -1,12 +1,12 @@
 ;;; edmacro.el --- keyboard macro editor
 
-;; Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1994, 1997 Free Software Foundation, Inc.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
-;;         Hrvoje Niksic <hniksic@srce.hr>  -- XEmacs port
+;;         Hrvoje Niksic <hniksic@srce.hr>  -- XEmacs rewrite
 ;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
-;; Version: 3.17
-;; Keywords: abbrev
+;; Version: 3.19
+;; Keywords: abbrev, internal
 
 ;; This file is part of XEmacs.
 
@@ -26,10 +26,10 @@
 ;; 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.34.
-;;; The important parts of this file have been rewritten for XEmacs,
-;;; so it's completely different from the FSF version.  The original
-;;; could not be used because it worked with the Emacs key
-;;; representation, and it mixed characters and integers too freely.
+;;; Most of this file has been rewritten for XEmacs, so the
+;;; implementations are out of synch.  The original version depended
+;;; too closely on GNU Emacs key representation and the equivalence of
+;;; characters and integers to be usable.
 
 ;;; Commentary:
 
@@ -82,13 +82,6 @@
 
 ;; With a prefix argument, `edit-kbd-macro' will format the
 ;; macro in a more concise way that omits the comments.
-
-;; This package requires GNU Emacs 19 or later, and daveg's CL
-;; package 2.02 or later.  (CL 2.02 comes standard starting with
-;; Emacs 19.18.)  This package does not work with Emacs 18 or
-;; Lucid Emacs.
-
-;; Ported to XEmacs.  This code will not run on GNU Emacs 19.  -hniksic
 
 ;;; Code:
 
@@ -192,7 +185,8 @@ With a prefix argument, format the macro in a more concise way."
 	(insert "\nCommand: " (if cmd (symbol-name cmd) "none") "\n")
 	(let ((keys (where-is-internal (or cmd mac))))
 	  (if keys
-	      (insert "Key: " (edmacro-format-keys (car keys)) "\n")
+	      (dolist (key keys)
+		(insert "Key: " (edmacro-format-keys key) "\n"))
 	    (insert "Key: none\n"))))
       (insert "\nMacro:\n\n")
       (save-excursion
@@ -220,13 +214,11 @@ With a prefix argument, format the macro in a more concise way."
   "Read the region as a keyboard macro definition.
 The region is interpreted as spelled-out keystrokes, e.g., \"M-x abc RET\".
 See documentation for `edmacro-mode' for details.
-Leading/trailing \"C-x (\" and \"C-x )\" in the text are allowed and ignored.
 The resulting macro is installed as the \"current\" keyboard macro.
 
 In Lisp, may also be called with a single STRING argument in which case
 the result is returned rather than being installed as the current macro.
-The result will be a string if possible, otherwise an event vector.
-Second argument NEED-VECTOR means to return an event vector always."
+The result will be a vector of keystrokes."
   (interactive "r")
   (if (stringp start)
       (edmacro-parse-keys start)
@@ -242,8 +234,7 @@ Second argument NEED-VECTOR means to return an event vector always."
   "Return the keyboard macro MACRO as a human-readable string.
 This string is suitable for passing to `read-kbd-macro'.
 Second argument VERBOSE means to put one command per line with comments.
-If VERBOSE is `1', put everything on one line.  If VERBOSE is omitted
-or nil, use a compact 80-column format."
+If VERBOSE is nil, put everything on one line."
   (and macro (symbolp macro) (setq macro (symbol-function macro)))
   (edmacro-format-keys (or macro last-kbd-macro) verbose))
 
@@ -460,10 +451,9 @@ doubt, use whitespace."
 
 ;;; Parsing a human-readable keyboard macro.
 
-;; Changes for XEmacs -- these two functions re-written from scratch.
-;; edmacro-parse-keys always returns a vector.  edmacro-format-keys
-;; accepts a vector (but works with a string too).  Vector may contain
-;; keypress events.      -hniksic
+;; In XEmacs version of edmacro, edmacro-parse-keys always returns a
+;; vector.  edmacro-format-keys accepts a vector (but works with a
+;; string too).
 (defun edmacro-parse-keys (string)
   (let* ((pos 0)
 	 (case-fold-search nil)
@@ -478,7 +468,7 @@ doubt, use whitespace."
 	  (push (edmacro-parse-word word) res))))
     (mapvector 'identity (apply 'nconc (nreverse res)))))
 
-;; Parse a word.
+;; Parse a "word".
 (defun edmacro-parse-word (word)
   (let ((force-sym nil)
 	(times 1)
@@ -535,9 +525,9 @@ doubt, use whitespace."
 	      (list (cdr abbr)))
 	     ((string-match "^\\^" word)
 	      ;; ^X == C-x
-	      (if (/= (length word) 2)
-		  (error "^ must be followed by one character"))
-	      `((control ,(aref word 1))))
+	      (if (= (length word) 2)
+		  `((control ,(aref word 1)))
+		(mapcar 'identity word)))
 	     ((string-match "^M--?[0-9]+$" word)
 	      ;; Special case: M- followed by an optional hyphen and
 	      ;; one or more digits
@@ -546,22 +536,22 @@ doubt, use whitespace."
 		      (substring word 2)))
 	     ((string-match "^\\([MCSsAH]\\|Sh\\)-" word)
 	      ;; Parse C-* and stuff
-	      (list
-	       (let ((pos1 0)
-		     (r1 nil)
-		     follow curpart prefix)
-		 (while (progn (setq curpart (substring word pos1))
-			       (string-match "^\\([MCSsAH]\\|Sh\\)-"
-					     curpart))
-		   (setq prefix (assoc (match-string 1 curpart)
-				       edmacro-modifiers))
-		   (push (cdr prefix) r1)
-		   (incf pos1 (1+ (length (car prefix)))))
-		 (setq follow (substring word pos1))
-		 (if (equal follow "")
-		     (error "%s must precede a string"
-			    (substring word 0 pos1)))
-		 (nconc (nreverse r1) (list (funcall conv follow))))))
+	      (let ((pos1 0)
+		    (r1 nil)
+		    follow curpart prefix)
+		(while (progn (setq curpart (substring word pos1))
+			      (string-match "^\\([MCSsAH]\\|Sh\\)-"
+					    curpart))
+		  (setq prefix (assoc (match-string 1 curpart)
+				      edmacro-modifiers))
+		  (push (cdr prefix) r1)
+		  (incf pos1 (1+ (length (car prefix)))))
+		(setq follow (substring word pos1))
+		(if (equal follow "")
+		    ;; we've got something like "C-M-" -- just let it be,
+		    ;; because of the way `edmacro-format-keys' works.
+		    (mapcar 'identity word)
+		  (list (nconc (nreverse r1) (list (funcall conv follow)))))))
 	     (force-sym
 	      ;; This must be a symbol
 	      (list (intern word)))
@@ -574,7 +564,7 @@ doubt, use whitespace."
 
 ;; Convert the keypress events in vector x to keys, and return a
 ;; vector of keys.  If a list element is not a keypress event, ignore
-;; it.
+;; it.  `events-to-keys' won't quite cut it here, as it is buggy.
 (defun edmacro-events-to-keys (x &optional list)
   (let (new)
     (mapc (lambda (el)
@@ -594,8 +584,7 @@ doubt, use whitespace."
 	new
       (mapvector 'identity new))))
 
-;; Collapse a list of keys into a list of function keys, where
-;; applicable.
+;; Collapse a list of keys into a list of function keys, if any.
 (defun edmacro-fkeys (keys)
   (let (new k lookup)
     (while keys
@@ -616,7 +605,7 @@ doubt, use whitespace."
 	(push k new))
     (apply 'nconc (nreverse new))))
 
-;; Convert a character or symbol to string
+;; Convert a character or symbol to string.
 (defun edmacro-conv (char-or-sym add-<>)
   (let ((char-to-word '((?\0 . "NUL")
 			(?\r . "RET")
@@ -659,10 +648,7 @@ doubt, use whitespace."
 	(start keys)
 	el)
     (while keys
-      (when (or (eq (car keys) ?-)
-		(eq (car keys) '-)
-		(eq (car keys) ?>)
-		(not (or togetherp (eq start keys))))
+      (when (not (or togetherp (eq start keys)))
 	(callf concat res " "))
       (if (> times 1)
 	  (setq res (concat (format "%d*" times) res)))
@@ -687,6 +673,9 @@ doubt, use whitespace."
 		   my)))
 	      (t
 	       (cdr (edmacro-conv el t)))))
+      (and (cdr keys)
+	   (memq (car keys) '(?- '- ?> ?^))
+	   (callf concat res " "))
       (pop keys))
     (if command
 	(callf concat res
@@ -706,9 +695,8 @@ doubt, use whitespace."
 ;;; Formatting a keyboard macro as human-readable text.
 
 (defun edmacro-format-keys (macro &optional verbose)
-  ;; XEmacs:
   ;; If we're dealing with events, convert them to symbols first;
-  ;; also, deal with Fkeys.
+  ;; Then, collapse them into function keys, if possible.
   (setq macro (edmacro-fkeys (edmacro-events-to-keys macro t)))
   (let ((res ""))
     (while macro

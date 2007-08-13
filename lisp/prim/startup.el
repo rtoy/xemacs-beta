@@ -470,13 +470,13 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
     (nreverse new-args)))
 
 (defconst initial-scratch-message "\
-;; If you want to create a file, don't type the text in this buffer.
 ;; This buffer is for notes you don't want to save, and for Lisp evaluation.
 ;; If you want to create a file, first visit that file with C-x C-f,
 ;; then enter the text in that file's own buffer.
 
 "
-  "Initial message displayed in *scratch* buffer at startup.")
+  "Initial message displayed in *scratch* buffer at startup.
+If this is nil, no message will be displayed.")
 
 (defun command-line ()
   (let ((command-line-args-left (cdr command-line-args)))

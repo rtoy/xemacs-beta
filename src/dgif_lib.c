@@ -14,14 +14,6 @@
 
 #ifdef emacs
 #include <config.h>
-void *xmalloc (size_t size);
-void *xrealloc (void *ptr, size_t size);
-#ifdef ERROR_CHECK_MALLOC
-void *xfree_1 (void *);
-#define xfree xfree_1
-#else
-void *xfree (void *);
-#endif
 #endif /* emacs */
 
 #ifdef __MSDOS__
@@ -42,6 +34,18 @@ void *xfree (void *);
 #ifndef emacs
 #include "gif_hash.h"
 #endif
+
+#ifdef emacs
+void *xmalloc (size_t size);
+void *xrealloc (void *ptr, size_t size);
+#ifdef ERROR_CHECK_MALLOC
+void *xfree_1 (void *);
+#define xfree xfree_1
+#else
+void *xfree (void *);
+#endif
+#endif /* emacs */
+
 
 #define PROGRAM_NAME	"GIF_LIBRARY"
 

@@ -374,6 +374,8 @@ This is especially useful for auto-detected options.
 
 Options marked with a (*) are autodetected.
 
+Use colons (or quoted spaces) to separate directory names in option
+values which are PATHs (i.e. lists of directories).
 
 General options:
 
@@ -393,11 +395,11 @@ Compilation options:
 			option.  This just allows for simultaneous
 			in-place and --srcdir building.)
 --cflags=FLAGS		Compiler flags. Overrides environment variable CFLAGS.
---site-includes=DIR	Other header file directories.  Separate multiple
-			dirs with spaces and use quotes to enclose.
---site-libraries=DIR	Other library directories.
---site-runtime-libraries=DIR
-			Paths to add with -R flag.
+--site-includes=PATH	List of directories to search first for header files.
+--site-libraries=PATH	List of directories to search first for libraries.
+--site-runtime-libraries=PATH
+			List of ALL directories to search for dynamically
+			linked libraries at run time.
 --dynamic=yes		Link dynamically if supported by system.
 --dynamic=no		Force static linking on systems where dynamic
 			linking is the default.
@@ -413,8 +415,8 @@ Installation options:
 
 Window-system options:
 
---with-x (*)		Support the X Window System.
---with-x=no		Don't support X.
+--with-x11 (*)		Support the X Window System.
+--with-x11=no		Don't support X.
 --x-includes=DIR 	Search for X header files in DIR.
 --x-libraries=DIR	Search for X libraries in DIR.
 --with-toolbars=no	Don't compile with any toolbar support.
@@ -427,9 +429,8 @@ Window-system options:
 --with-scrollbars=TYPE	Use TYPE scrollbars
 			(lucid, motif, athena, athena3d, or no).
 --with-dialogs=TYPE	Use TYPE dialog boxes (motif, athena, athena3d, or no).
-			(Lucid menubars and scrollbars are the default.
-			 Motif dialog boxes will be used if Motif can be
-			 found.)
+			Lucid menubars and scrollbars are the default.
+			Motif dialog boxes will be used if Motif can be found.
 --with-cde (*)		Compile in support for CDE drag and drop.
 --with-offix (*)	Compile in support for OffiX drag and drop.
 --with-xmu=no (*)	For those unfortunates whose vendors don't ship Xmu.
@@ -489,9 +490,8 @@ Additional features:
 --mail-locking=TYPE (*)	Specify the locking to be used by movemail to prevent
 			concurrent updates of mail spool files. Valid types
 			are \`lockf', \`flock', and \`file'.
---package-path=PATH     A list of blank separated directories for finding 
-                        packages to dump with xemacs.
-			Defaults to \`$prefix/lib/xemacs/packages ~/.xemacs'
+--package-path=PATH     Directories to search for packages to dump with xemacs.
+                        Defaults to \`$prefix/lib/xemacs/packages:~/.xemacs'.
 
 Internationalization options:
 
@@ -797,8 +797,8 @@ while test $# != 0; do
         dnl XFontSet support?
 	"with_xfs" )
 	  case "$val" in
-	  y | ye | yes )                val=yes   ;;
-	  n | no | non | none )         val=no    ;;
+	  y | ye | yes )		val=yes	;;
+	  n | no | non | none )		val=no	;;
 	  * ) USAGE_ERROR(["The \`--$optname' option must have one of these values:
  \`yes', or \`no'."]) ;;
 	  esac
@@ -951,12 +951,12 @@ test "$extra_verbose" = "yes" && verbose=yes
 
 dnl Allow use of either ":" or spaces for lists of directories
 define(COLON_TO_SPACE,
-  [case "$[$1]" in *:* [)] [$1]="`echo '' $[$1] | sed -e 's:^ ::' -e 's/:/ /g'`";; esac])dnl
+  [case "$[$1]" in *:* [)] [$1]="`echo '' $[$1] | sed -e 's/^ //' -e 's/:/ /g'`";; esac])dnl
 COLON_TO_SPACE(site_includes)
 COLON_TO_SPACE(site_libraries)
 COLON_TO_SPACE(site_runtime_libraries)
 
-dnl with_x is obsolete synonym for with_x11
+dnl with_x is an obsolete synonym for with_x11
 test -n "$with_x" && with_x11="$with_x"
 
 dnl# Ignore useless run-in-place flag
@@ -1030,7 +1030,7 @@ dnl Calculate canonical name for blddir (i.e. current directory).
 dnl PWD may already be the preferable absolute name for ".",
 dnl but we can't trust it - it is sometimes inaccurate.
 absolute_pwd="`pwd`";
-if test -n "$PWD" && "`cd $PWD && pwd`" = "$absolute_pwd"
+if test -n "$PWD" -a "`cd $PWD && pwd`" = "$absolute_pwd"
 then blddir="$PWD"
 else blddir="$absolute_pwd"
 fi
@@ -1611,7 +1611,7 @@ if test "$dynamic" = "yes"; then
   esac
 else dnl "$dynamic" = "no"
   case "$opsys" in
-    sol2 ) 
+    sol2 )
       echo "Static linking is not supported on Solaris 2."
       echo "Rerun configure without specifying --dynamic=no."
       exit 1 ;;
@@ -2216,23 +2216,35 @@ dnl ----------------------
 
 AC_CHECKING("for specified window system")
 
-dnl $OPENWINHOME implies --x-includes and --x-libraries
-dnl Not (yet) handled by autoconf2
-if test "$x_includes $x_libraries" = "NONE NONE"; then
-  if test -n "$OPENWINHOME" \
-   -a "$OPENWINHOME" != "/usr/openwin" \
-   -a -d "$OPENWINHOME"; then
-    test -d "$OPENWINHOME/lib"           && x_libraries="$OPENWINHOME/lib"
-    test -d "$OPENWINHOME/include"       && x_includes="$OPENWINHOME/include"
-    test -d "$OPENWINHOME/share/include" && x_includes="$OPENWINHOME/share/include"
-  fi
-fi
-
-dnl --x-includes or --x-libraries implies --with-x11.
-test "$x_includes $x_libraries" != "NONE NONE" && \
- window_system=x11 with_x11=yes
-
 if test "$with_x11" != "no"; then
+  dnl User-specified --x-includes or --x-libraries implies --with-x11.
+  test "$x_includes $x_libraries" != "NONE NONE" && \
+   window_system=x11 with_x11=yes
+
+  dnl $OPENWINHOME implies --x-includes and --x-libraries
+  dnl Not (yet) handled by autoconf2
+  if test "$x_includes $x_libraries" = "NONE NONE"; then
+    if test -n "$OPENWINHOME" \
+     -a "$OPENWINHOME" != "/usr/openwin" \
+     -a -d "$OPENWINHOME"; then
+      test -d "$OPENWINHOME/lib"           && x_libraries="$OPENWINHOME/lib"
+      test -d "$OPENWINHOME/include"       && x_includes="$OPENWINHOME/include"
+      test -d "$OPENWINHOME/share/include" && x_includes="$OPENWINHOME/share/include"
+    else
+      dnl AC_PATH_XTRA often guesses /usr/include, when some other 
+      dnl include directory is a MUCH better guess (Linux, HP-UX 10.20).
+      dnl This is a workaround for idiot (esp. HP) system packagers.
+      for dir in "/usr/X11R6/include" "/usr/include/X11R6"; do
+        if test -d "$dir/X11"; then x_includes="$dir"; break; fi
+      done
+      if test "$x_includes" != "NONE"; then
+        for dir in "/usr/X11R6/lib" "/usr/lib/X11R6"; do
+          if test -d "$dir"; then x_libraries="$dir"; break; fi
+        done
+      fi
+    fi
+  fi
+
   AC_PATH_XTRA # Autoconf claims to find X library and include dirs for us.
   if test "$no_x" = "yes"
   then with_x11=no  window_system=none HAVE_X_WINDOWS=no
@@ -2366,7 +2378,7 @@ EOF
                            with_xmu=yes, with_xmu=no) }
   if test "$with_xmu" = "no"; then
     XE_ADD_OBJS(xmu.o)
-  else 
+  else
     XE_PREPEND(-lXmu, libs_x)
     AC_DEFINE(HAVE_XMU)
   fi
@@ -2929,7 +2941,7 @@ test "$rel_alloc" = "yes" && AC_DEFINE(REL_ALLOC)
 
 dnl Check for terminal I/O variants
 dnl TERMIOS systems may have termio.h, but not vice-versa, I think.
-AC_CHECK_HEADER(termios.h, 
+AC_CHECK_HEADER(termios.h,
   AC_DEFINE(HAVE_TERMIOS)
   AC_DEFINE(SIGNALS_VIA_CHARACTERS)
   AC_DEFINE(NO_TERMIO),
@@ -3374,8 +3386,8 @@ AC_SUBST(dynodump_arch)
 
 
 dnl if --package-path wasn't passed to configure, give the default value
-if test "x${package_path}" = "xNONE" ; then
-	package_path="${prefix}/lib/xemacs/packages:~/.xemacs"
+if test "${package_path}" = "NONE" ; then
+	package_path="~/.xemacs:${prefix}/lib/xemacs/packages"
 fi
 dnl change blanks to colons in package path, and make available to config.h
 package_path=`echo $package_path | sed 'y/ /:/'`

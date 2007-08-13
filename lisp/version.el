@@ -86,27 +86,28 @@ When called interactively with a prefix argument, insert string at point.
 Don't use this function in programs to choose actions according
 to the system configuration; look at `system-configuration' instead."
   (interactive "p")
-  (let ((version-string
-         (format
-	  "XEmacs %s %s(%s%s) of %s %s on %s"
-	  (substring emacs-version 0 (string-match " XEmacs" emacs-version))
-	  (if (not (featurep 'infodock))
-	      "[Lucid] "
-	    "")
-	  system-configuration
-	  (cond ((or (and (fboundp 'featurep)
-			  (featurep 'mule))
-		     (memq 'mule features)) ", Mule")
-		(t ""))
-	  (substring emacs-build-time 0
-		     (string-match " *[0-9]*:" emacs-build-time))
-	  (substring emacs-build-time
-		     (string-match "[0-9]*$" emacs-build-time))
-	  emacs-build-system)))
-    (cond
-     ((null arg) version-string)
-     ((eq arg 1) (message "%s" version-string))
-     (t          (insert version-string)))))
+  (save-match-data
+    (let ((version-string
+	   (format
+	    "XEmacs %s %s(%s%s) of %s %s on %s"
+	    (substring emacs-version 0 (string-match " XEmacs" emacs-version))
+	    (if (not (featurep 'infodock))
+		"[Lucid] "
+	      "")
+	    system-configuration
+	    (cond ((or (and (fboundp 'featurep)
+			    (featurep 'mule))
+		       (memq 'mule features)) ", Mule")
+		  (t ""))
+	    (substring emacs-build-time 0
+		       (string-match " *[0-9]*:" emacs-build-time))
+	    (substring emacs-build-time
+		       (string-match "[0-9]*$" emacs-build-time))
+	    emacs-build-system)))
+      (cond
+       ((null arg) version-string)
+       ((eq arg 1) (message "%s" version-string))
+       (t          (insert version-string))))))
 
 ;; from emacs-vers.el
 (defun emacs-version>= (major &optional minor)

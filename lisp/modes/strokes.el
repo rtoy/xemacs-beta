@@ -1,5 +1,5 @@
 ;;; strokes.el	-- Control XEmacs through mouse strokes --
-;;  Mon Jul 25 12:40:41 EDT 1997
+;;  Thursday September 4 12:40:41 EDT 1997
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 
@@ -30,10 +30,10 @@
 
 ;;; Commentary:
 
-;; This package is written for for XEmacs v19.15 and up.  This is the
-;; strokes package.  It is intended to allow the user to control
-;; XEmacs by means of mouse strokes.  Once strokes is loaded, you can
-;; always get help be invoking `strokes-help':
+;; This package is written for for XEmacs v20.*.  This is the strokes
+;; package.  It is intended to allow the user to control XEmacs by
+;; means of mouse strokes.  Once strokes is loaded, you can always get
+;; help be invoking `strokes-help':
 
 ;; > M-x strokes-help
 
@@ -326,6 +326,11 @@
 ;;      took place n times.  So to deal, I put in some extra checks to
 ;;      see if the frame parameters really changed, making an update
 ;;      worthwhile.  See `strokes-update-window-configuration-plist'.
+;; 2.4  For XEmacs 20.*, all hashtables were changed to char-tables,
+;;      since this is more modern, more efficient, and faster.  God only 
+;;      knows how inefficient the hash function was before the advent of 
+;;      char-tables.  I also did this out of necessity since MIT's
+;;      version of XEmacs-20.2 was hashtable-buggy.  
 
 ;;; Code:
 
@@ -978,66 +983,6 @@ Optional EVENT is acceptable as the starting event of the stroke"
 	   (setq event (next-event event)))))
       (setq grid-locs (strokes-renormalize-to-grid (nreverse pix-locs)))
       (strokes-fill-stroke (strokes-eliminate-consecutive-redundancies grid-locs)))))
-
-;;; This version of `strokes-read-stroke' is not broken, but pathetic.
-;;(defun strokes-read-stroke (&optional prompt event)
-;;  "Read a simple stroke (interactively) and return the stroke.
-;;Optional PROMPT in minibuffer displays before and during stroke reading.
-;;This function will display the stroke interactively as it is being
-;;entered in the strokes buffer if the variable
-;;`strokes-use-strokes-buffer' is non-nil.
-;;Optional EVENT is currently not used, but hopefully will be soon."
-;;  (save-excursion
-;;    (strokes-while-inhibiting-garbage-collector
-;;     (let ((pix-locs nil)
-;;	  (grid-locs nil)
-;;	  (event (or event (make-event))))
-;;      (if strokes-use-strokes-buffer
-;;	  ;; switch to the strokes buffer and
-;;	  ;; display the stroke as it's being read
-;;	  (save-window-excursion
-;;	    (set-window-configuration strokes-window-configuration)
-;;	    (if prompt
-;;		(progn
-;;		  (setq event (next-event event prompt))
-;;		  (while (not (button-press-event-p event))
-;;		    (dispatch-event event)
-;;		    (setq event (next-event event)))))
-;;	    (unwind-protect
-;;		(progn
-;;		  (setq event (next-event event))
-;;		  (while (not (button-release-event-p event))
-;;		    (if (mouse-event-p event)
-;;			(let ((point (event-closest-point event)))
-;;			  (when point
-;;			    (goto-char point)
-;;			    (subst-char-in-region point (1+ point) ?\  strokes-character))
-;;			  (push (cons (event-x-pixel event)
-;;				      (event-y-pixel event))
-;;				pix-locs)))
-;;		    (setq event (next-event event))))
-;;	      ;; protected
-;;	      ;; clean up strokes buffer and then bury it.
-;;	      (when (equal (buffer-name) strokes-buffer-name)
-;;		(subst-char-in-region (point-min) (point-max) strokes-character ?\ )
-;;		(goto-char (point-min))
-;;		(bury-buffer))))
-;;	;; Otherwise, don't use strokes buffer and read stroke silently
-;;	(if prompt
-;;	    (progn
-;;	      (setq event (next-event event prompt))
-;;	      (while (not (button-press-event-p event))
-;;		(dispatch-event event)
-;;		(setq event (next-event event)))))
-;;	(setq event (next-event))
-;;	(while (not (button-release-event-p event))
-;;	  (if (mouse-event-p event)
-;;	      (push (cons (event-x-pixel event)
-;;			  (event-y-pixel event))
-;;		    pix-locs))
-;;	  (setq event (next-event event))))
-;;      (setq grid-locs (strokes-renormalize-to-grid (nreverse pix-locs)))
-;;      (strokes-fill-stroke (strokes-eliminate-consecutive-redundancies grid-locs))))))
 
 (defun strokes-read-complex-stroke (&optional prompt event)
   "Read a complex stroke (interactively) and return the stroke.
@@ -1799,76 +1744,70 @@ strokes with
 					; lazy right now.
 					; In a few days.
 
-(defconst strokes-char-value-hashtable (make-hashtable 62) ;
-					; (make-char-table
-					; 'syntax)
-					; in 20.*
-  ;; ### This will/should become a char-table for XEmacs-20 !!! ###
+(defconst strokes-char-table (make-char-table 'generic) ;
   "The table which stores values for the character keys.")
-(puthash ?0 0 strokes-char-value-hashtable) ; (put-char-table ?0 0
-					; strokes-value-chartable)
-					; in 20.*
-(puthash ?1 1 strokes-char-value-hashtable)
-(puthash ?2 2 strokes-char-value-hashtable)
-(puthash ?3 3 strokes-char-value-hashtable)
-(puthash ?4 4 strokes-char-value-hashtable)
-(puthash ?5 5 strokes-char-value-hashtable)
-(puthash ?6 6 strokes-char-value-hashtable)
-(puthash ?7 7 strokes-char-value-hashtable)
-(puthash ?8 8 strokes-char-value-hashtable)
-(puthash ?9 9 strokes-char-value-hashtable)
-(puthash ?a 10 strokes-char-value-hashtable)
-(puthash ?b 11 strokes-char-value-hashtable)
-(puthash ?c 12 strokes-char-value-hashtable)
-(puthash ?d 13 strokes-char-value-hashtable)
-(puthash ?e 14 strokes-char-value-hashtable)
-(puthash ?f 15 strokes-char-value-hashtable)
-(puthash ?g 16 strokes-char-value-hashtable)
-(puthash ?h 17 strokes-char-value-hashtable)
-(puthash ?i 18 strokes-char-value-hashtable)
-(puthash ?j 19 strokes-char-value-hashtable)
-(puthash ?k 20 strokes-char-value-hashtable)
-(puthash ?l 21 strokes-char-value-hashtable)
-(puthash ?m 22 strokes-char-value-hashtable)
-(puthash ?n 23 strokes-char-value-hashtable)
-(puthash ?o 24 strokes-char-value-hashtable)
-(puthash ?p 25 strokes-char-value-hashtable)
-(puthash ?q 26 strokes-char-value-hashtable)
-(puthash ?r 27 strokes-char-value-hashtable)
-(puthash ?s 28 strokes-char-value-hashtable)
-(puthash ?t 29 strokes-char-value-hashtable)
-(puthash ?u 30 strokes-char-value-hashtable)
-(puthash ?v 31 strokes-char-value-hashtable)
-(puthash ?w 32 strokes-char-value-hashtable)
-(puthash ?x 33 strokes-char-value-hashtable)
-(puthash ?y 34 strokes-char-value-hashtable)
-(puthash ?z 35 strokes-char-value-hashtable)
-(puthash ?A 36 strokes-char-value-hashtable)
-(puthash ?B 37 strokes-char-value-hashtable)
-(puthash ?C 38 strokes-char-value-hashtable)
-(puthash ?D 39 strokes-char-value-hashtable)
-(puthash ?E 40 strokes-char-value-hashtable)
-(puthash ?F 41 strokes-char-value-hashtable)
-(puthash ?G 42 strokes-char-value-hashtable)
-(puthash ?H 43 strokes-char-value-hashtable)
-(puthash ?I 44 strokes-char-value-hashtable)
-(puthash ?J 45 strokes-char-value-hashtable)
-(puthash ?K 46 strokes-char-value-hashtable)
-(puthash ?L 47 strokes-char-value-hashtable)
-(puthash ?M 48 strokes-char-value-hashtable)
-(puthash ?N 49 strokes-char-value-hashtable)
-(puthash ?O 50 strokes-char-value-hashtable)
-(puthash ?P 51 strokes-char-value-hashtable)
-(puthash ?Q 52 strokes-char-value-hashtable)
-(puthash ?R 53 strokes-char-value-hashtable)
-(puthash ?S 54 strokes-char-value-hashtable)
-(puthash ?T 55 strokes-char-value-hashtable)
-(puthash ?U 56 strokes-char-value-hashtable)
-(puthash ?V 57 strokes-char-value-hashtable)
-(puthash ?W 58 strokes-char-value-hashtable)
-(puthash ?X 59 strokes-char-value-hashtable)
-(puthash ?Y 60 strokes-char-value-hashtable)
-(puthash ?Z 61 strokes-char-value-hashtable)
+(put-char-table ?0 0 strokes-char-table)
+(put-char-table ?1 1 strokes-char-table)
+(put-char-table ?2 2 strokes-char-table)
+(put-char-table ?3 3 strokes-char-table)
+(put-char-table ?4 4 strokes-char-table)
+(put-char-table ?5 5 strokes-char-table)
+(put-char-table ?6 6 strokes-char-table)
+(put-char-table ?7 7 strokes-char-table)
+(put-char-table ?8 8 strokes-char-table)
+(put-char-table ?9 9 strokes-char-table)
+(put-char-table ?a 10 strokes-char-table)
+(put-char-table ?b 11 strokes-char-table)
+(put-char-table ?c 12 strokes-char-table)
+(put-char-table ?d 13 strokes-char-table)
+(put-char-table ?e 14 strokes-char-table)
+(put-char-table ?f 15 strokes-char-table)
+(put-char-table ?g 16 strokes-char-table)
+(put-char-table ?h 17 strokes-char-table)
+(put-char-table ?i 18 strokes-char-table)
+(put-char-table ?j 19 strokes-char-table)
+(put-char-table ?k 20 strokes-char-table)
+(put-char-table ?l 21 strokes-char-table)
+(put-char-table ?m 22 strokes-char-table)
+(put-char-table ?n 23 strokes-char-table)
+(put-char-table ?o 24 strokes-char-table)
+(put-char-table ?p 25 strokes-char-table)
+(put-char-table ?q 26 strokes-char-table)
+(put-char-table ?r 27 strokes-char-table)
+(put-char-table ?s 28 strokes-char-table)
+(put-char-table ?t 29 strokes-char-table)
+(put-char-table ?u 30 strokes-char-table)
+(put-char-table ?v 31 strokes-char-table)
+(put-char-table ?w 32 strokes-char-table)
+(put-char-table ?x 33 strokes-char-table)
+(put-char-table ?y 34 strokes-char-table)
+(put-char-table ?z 35 strokes-char-table)
+(put-char-table ?A 36 strokes-char-table)
+(put-char-table ?B 37 strokes-char-table)
+(put-char-table ?C 38 strokes-char-table)
+(put-char-table ?D 39 strokes-char-table)
+(put-char-table ?E 40 strokes-char-table)
+(put-char-table ?F 41 strokes-char-table)
+(put-char-table ?G 42 strokes-char-table)
+(put-char-table ?H 43 strokes-char-table)
+(put-char-table ?I 44 strokes-char-table)
+(put-char-table ?J 45 strokes-char-table)
+(put-char-table ?K 46 strokes-char-table)
+(put-char-table ?L 47 strokes-char-table)
+(put-char-table ?M 48 strokes-char-table)
+(put-char-table ?N 49 strokes-char-table)
+(put-char-table ?O 50 strokes-char-table)
+(put-char-table ?P 51 strokes-char-table)
+(put-char-table ?Q 52 strokes-char-table)
+(put-char-table ?R 53 strokes-char-table)
+(put-char-table ?S 54 strokes-char-table)
+(put-char-table ?T 55 strokes-char-table)
+(put-char-table ?U 56 strokes-char-table)
+(put-char-table ?V 57 strokes-char-table)
+(put-char-table ?W 58 strokes-char-table)
+(put-char-table ?X 59 strokes-char-table)
+(put-char-table ?Y 60 strokes-char-table)
+(put-char-table ?Z 61 strokes-char-table)
 
 (defconst strokes-base64-chars
   ;; I can easily have made this a vector of single-character strings,
@@ -1890,15 +1829,13 @@ strokes with
   "Character vector for fast lookup of base-64 encoding of numbers in [0,61].")
 
 (defsubst strokes-xpm-char-on-p (char)
-  ;; ### CAUTION: `char-equal' may need to change to `char=' ###
   "Non-nil if CHAR represents an `on' bit in the xpm."
-  (char-equal char ?*))
+  (char= char ?*))
 
 (defsubst strokes-xpm-char-bit-p (char)
   "Non-nil if CHAR represents an `on' or `off' bit in the xpm."
-  ;; ### CAUTION: `char-equal' may need to change to `char=' ###
-  (or (char-equal char ?\ )
-      (char-equal char ?*)))
+  (or (char= char ?\ )
+      (char= char ?*)))
 
 ;;(defsubst strokes-xor (a b)  ### Should I make this an inline function? ###
 ;;  "T iff one and only one of A and B is non-nil; otherwise, returns nil.
@@ -1912,11 +1849,7 @@ strokes with
 		   
 (defsubst strokes-xpm-decode-char (character)
   "Given a CHARACTER, do a fast lookup to find its corresponding integer value."
-  ;; ### NOTE: for XEmacs-20.* this will need to be changed to deal w/
-  ;; char-tables !!! ###
-  (gethash character strokes-char-value-hashtable)) ; (get-char-table
-					; character
-					; strokes-value-chartable)
+  (get-char-table character strokes-char-table))
 		   
 (defun strokes-xpm-to-compressed-string (&optional xpm-buffer)
   "Convert the xpm in XPM-BUFFER into a compressed string representing the stroke.
@@ -1936,7 +1869,7 @@ XPM-BUFFER is an optional argument, and defaults to `*strokes-xpm*'."
 					; represented `on' bits
 	  (current-char-is-on-p nil)	; current stream represents `on' bits
 	  (char-at-point (char-after)))	; read the first char
-      (while (not (char-equal char-at-point ?})) ; a `}' denotes the
+      (while (not (char= char-at-point ?})) ; a `}' denotes the
 					; end of the pixmap
 	(cond ((zerop count)		; must restart counting
 	       ;; check to see if the `char-at-point' is an actual pixmap bit

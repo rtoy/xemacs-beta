@@ -633,7 +633,7 @@ this buffer uses."
 ;; "\\(.*[ \t]+\\)?\\(\\(\\sw\\|\\s_\\)+\\)[ ()]*\C-?"
 ;; "\\(\\sw\\|\\s_\\)+[ ()]*\C-?"
       )
-(defconst tags-file-pattern "^\f\n\\([^,]+\\),[0-9]+\n")
+(defconst tags-file-pattern "^\f\n\\(.+\\),[0-9]+\n")
 
 (defun add-to-tag-completion-table ()
   "Sucks the current buffer (a TAGS table) into the completion-table."

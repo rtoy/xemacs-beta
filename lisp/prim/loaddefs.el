@@ -383,7 +383,7 @@ Send a mail message from within View Mail, or from without."
 (let ((dir load-path))
   (while dir
     (condition-case nil
-	(load (concat (car dir) "/auto-autoloads"))
+	(load (concat (car dir) "auto-autoloads"))
       (t nil))
     (pop dir)))
 

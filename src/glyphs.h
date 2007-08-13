@@ -270,53 +270,56 @@ extern Lisp_Object Qpointer_image_instance_p;
 extern Lisp_Object Qsubwindow_image_instance_p;
 
 #define IMAGE_INSTANCE_TYPE_P(ii, type) \
-  (IMAGE_INSTANCEP (ii) && XIMAGE_INSTANCE_TYPE (ii) == type)
+(IMAGE_INSTANCEP (ii) && XIMAGE_INSTANCE_TYPE (ii) == type)
 
-#define NOTHING_IMAGE_INSTANCEP(ii) IMAGE_INSTANCE_TYPE_P (ii, IMAGE_NOTHING)
-#define TEXT_IMAGE_INSTANCEP(ii) IMAGE_INSTANCE_TYPE_P (ii, IMAGE_TEXT)
+#define NOTHING_IMAGE_INSTANCEP(ii) \
+     IMAGE_INSTANCE_TYPE_P (ii, IMAGE_NOTHING)
+#define TEXT_IMAGE_INSTANCEP(ii) \
+     IMAGE_INSTANCE_TYPE_P (ii, IMAGE_TEXT)
 #define MONO_PIXMAP_IMAGE_INSTANCEP(ii) \
-  IMAGE_INSTANCE_TYPE_P (ii, IMAGE_MONO_PIXMAP)
+     IMAGE_INSTANCE_TYPE_P (ii, IMAGE_MONO_PIXMAP)
 #define COLOR_PIXMAP_IMAGE_INSTANCEP(ii) \
-  IMAGE_INSTANCE_TYPE_P (ii, IMAGE_COLOR_PIXMAP)
-#define POINTER_IMAGE_INSTANCEP(ii) IMAGE_INSTANCE_TYPE_P (ii, IMAGE_POINTER)
+     IMAGE_INSTANCE_TYPE_P (ii, IMAGE_COLOR_PIXMAP)
+#define POINTER_IMAGE_INSTANCEP(ii) \
+     IMAGE_INSTANCE_TYPE_P (ii, IMAGE_POINTER)
 #define SUBWINDOW_IMAGE_INSTANCEP(ii) \
-  IMAGE_INSTANCE_TYPE_P (ii, IMAGE_SUBWINDOW)
+     IMAGE_INSTANCE_TYPE_P (ii, IMAGE_SUBWINDOW)
 
-#define CHECK_NOTHING_IMAGE_INSTANCE(x)					\
-  do { CHECK_IMAGE_INSTANCE (x);					\
-       if (!NOTHING_IMAGE_INSTANCEP (x))				\
-	 x = wrong_type_argument (Qnothing_image_instance_p, (x));	\
-     } while (0)
+#define CHECK_NOTHING_IMAGE_INSTANCE(x) do {			\
+  CHECK_IMAGE_INSTANCE (x);					\
+  if (!NOTHING_IMAGE_INSTANCEP (x))				\
+    x = wrong_type_argument (Qnothing_image_instance_p, (x));	\
+} while (0)
 
-#define CHECK_TEXT_IMAGE_INSTANCE(x)					\
-  do { CHECK_IMAGE_INSTANCE (x);					\
-       if (!TEXT_IMAGE_INSTANCEP (x))					\
-	 x = wrong_type_argument (Qtext_image_instance_p, (x));		\
-     } while (0)
+#define CHECK_TEXT_IMAGE_INSTANCE(x) do {			\
+  CHECK_IMAGE_INSTANCE (x);					\
+  if (!TEXT_IMAGE_INSTANCEP (x))				\
+    x = wrong_type_argument (Qtext_image_instance_p, (x));	\
+} while (0)
 
-#define CHECK_MONO_PIXMAP_IMAGE_INSTANCE(x)				\
-  do { CHECK_IMAGE_INSTANCE (x);					\
-       if (!MONO_PIXMAP_IMAGE_INSTANCEP (x))				\
-	 x = wrong_type_argument (Qmono_pixmap_image_instance_p, (x));	\
-     } while (0)
+#define CHECK_MONO_PIXMAP_IMAGE_INSTANCE(x) do {			\
+  CHECK_IMAGE_INSTANCE (x);						\
+  if (!MONO_PIXMAP_IMAGE_INSTANCEP (x))					\
+    x = wrong_type_argument (Qmono_pixmap_image_instance_p, (x));	\
+} while (0)
 
-#define CHECK_COLOR_PIXMAP_IMAGE_INSTANCE(x)				\
-  do { CHECK_IMAGE_INSTANCE (x);					\
-       if (!COLOR_PIXMAP_IMAGE_INSTANCEP (x))				\
-	 x = wrong_type_argument (Qcolor_pixmap_image_instance_p, (x));	\
-     } while (0)
+#define CHECK_COLOR_PIXMAP_IMAGE_INSTANCE(x) do {			\
+  CHECK_IMAGE_INSTANCE (x);						\
+  if (!COLOR_PIXMAP_IMAGE_INSTANCEP (x))				\
+    x = wrong_type_argument (Qcolor_pixmap_image_instance_p, (x));	\
+} while (0)
 
-#define CHECK_POINTER_IMAGE_INSTANCE(x)					\
-  do { CHECK_IMAGE_INSTANCE (x);					\
-       if (!POINTER_IMAGE_INSTANCEP (x))				\
-	 x = wrong_type_argument (Qpointer_image_instance_p, (x));	\
-     } while (0)
+#define CHECK_POINTER_IMAGE_INSTANCE(x) do {			\
+  CHECK_IMAGE_INSTANCE (x);					\
+  if (!POINTER_IMAGE_INSTANCEP (x))				\
+    x = wrong_type_argument (Qpointer_image_instance_p, (x));	\
+} while (0)
 
-#define CHECK_SUBWINDOW_IMAGE_INSTANCE(x)				\
-  do { CHECK_IMAGE_INSTANCE (x);					\
-       if (!SUBWINDOW_IMAGE_INSTANCEP (x))				\
-	 x = wrong_type_argument (Qsubwindow_image_instance_p, (x));	\
-     } while (0)
+#define CHECK_SUBWINDOW_IMAGE_INSTANCE(x) do {			\
+  CHECK_IMAGE_INSTANCE (x);					\
+  if (!SUBWINDOW_IMAGE_INSTANCEP (x))				\
+    x = wrong_type_argument (Qsubwindow_image_instance_p, (x));	\
+} while (0)
 
 struct Lisp_Image_Instance
 {
@@ -325,26 +328,26 @@ struct Lisp_Image_Instance
   Lisp_Object name;
   enum image_instance_type type;
   union
+  {
+    struct
     {
-      struct
-	{
-	  Lisp_Object string;
-	} text;
-      struct
-	{
-	  int width, height, depth;
-	  Lisp_Object hotspot_x, hotspot_y; /* integer or Qnil */
-	  Lisp_Object filename; /* string or Qnil */
-	  Lisp_Object mask_filename; /* string or Qnil */
-	  Lisp_Object fg, bg; /* foreground and background colors,
-				 if this is a colorized mono-pixmap
-				 or a pointer */
-	} pixmap; /* used for pointers as well */
-      struct
-	{
-	  int dummy; /* #### fill in this structure */
-	} subwindow;
-    } u;
+      Lisp_Object string;
+    } text;
+    struct
+    {
+      int width, height, depth;
+      Lisp_Object hotspot_x, hotspot_y; /* integer or Qnil */
+      Lisp_Object filename;	 /* string or Qnil */
+      Lisp_Object mask_filename; /* string or Qnil */
+      Lisp_Object fg, bg; /* foreground and background colors,
+			     if this is a colorized mono-pixmap
+			     or a pointer */
+    } pixmap; /* used for pointers as well */
+    struct
+    {
+      int dummy; /* #### fill in this structure */
+    } subwindow;
+  } u;
 
   /* console-type- and image-type-specific data */
   void *data;
@@ -438,23 +441,23 @@ DECLARE_LRECORD (glyph, struct Lisp_Glyph);
 
 extern Lisp_Object Qbuffer_glyph_p, Qpointer_glyph_p, Qicon_glyph_p;
 
-#define CHECK_BUFFER_GLYPH(x)						\
-  do { CHECK_GLYPH (x);							\
-       if (XGLYPH (x)->type != GLYPH_BUFFER)				\
-	 x = wrong_type_argument (Qbuffer_glyph_p, (x));		\
-     } while (0)
+#define CHECK_BUFFER_GLYPH(x) do {			\
+  CHECK_GLYPH (x);					\
+  if (XGLYPH (x)->type != GLYPH_BUFFER)			\
+    x = wrong_type_argument (Qbuffer_glyph_p, (x));	\
+} while (0)
 
-#define CHECK_POINTER_GLYPH(x)						\
-  do { CHECK_GLYPH (x);							\
-       if (XGLYPH (x)->type != GLYPH_POINTER)				\
-	 x = wrong_type_argument (Qpointer_glyph_p, (x));		\
-     } while (0)
+#define CHECK_POINTER_GLYPH(x) do {			\
+  CHECK_GLYPH (x);					\
+  if (XGLYPH (x)->type != GLYPH_POINTER)		\
+    x = wrong_type_argument (Qpointer_glyph_p, (x));	\
+} while (0)
 
-#define CHECK_ICON_GLYPH(x)						\
-  do { CHECK_GLYPH (x);							\
-       if (XGLYPH (x)->type != GLYPH_ICON)				\
-	 x = wrong_type_argument (Qicon_glyph_p, (x));			\
-     } while (0)
+#define CHECK_ICON_GLYPH(x) do {			\
+  CHECK_GLYPH (x);					\
+  if (XGLYPH (x)->type != GLYPH_ICON)			\
+    x = wrong_type_argument (Qicon_glyph_p, (x));	\
+} while (0)
 
 #define GLYPH_TYPE(g) ((g)->type)
 #define GLYPH_IMAGE(g) ((g)->image)
