@@ -73,12 +73,8 @@
 ;;; Documentation:
 ;;; --------------------------------------------------------------
 ;;;
-;;; Currently efs does not have a tex info file, and what you are
-;;; reading represents the only efs documentation. Please report any
-;;; errors or omissions in this documentation to the "bugs" address
-;;; below. Eventually, a tex info file should be written.  If you have
-;;; any problems with efs, please read this section *before*
-;;; submitting a bug report.
+;;; If you have any problems with efs, please read this section
+;;; *before* submitting a bug report.
 
 ;;; Installation:
 ;;;
@@ -309,7 +305,7 @@
 
 ;;; Gateways:
 ;;;
-;;; Sometimes it is neccessary for the FTP process to be run on a different
+;;; Sometimes it is necessary for the FTP process to be run on a different
 ;;; machine than the machine running GNU Emacs.  This can happen when the
 ;;; local machine has restrictions on what hosts it can access.
 ;;;
@@ -4161,6 +4157,7 @@ Should return \(result  line cont-lines\), like `efs-raw-send-cmd'."
 ;;;;                      pretty much scrap metal.)
 ;;;; ---------------------------------------------------------------------
 
+;;;###autoload
 (defun efs-nslookup-host (host)
   "Attempt to resolve the given HOSTNAME using nslookup if possible."
   (interactive "sHost: ")
@@ -10730,6 +10727,7 @@ in file name expansion."
 ;;;; File name handlers
 ;;;; ------------------------------------------------------------
 
+;;;###autoload
 (defun efs-file-handler-function (operation &rest args)
   "Function to call special file handlers for remote files."
   (let ((handler (get operation 'efs)))

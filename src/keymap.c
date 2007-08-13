@@ -2381,8 +2381,11 @@ get_relevant_keymaps (Lisp_Object keys,
 
 	      if (!EQ (buffer, Vmouse_grabbed_buffer)) /* already pushed */
 		{
+		  Lisp_Object map = XBUFFER (buffer)->keymap;
+
 		  get_relevant_minor_maps (buffer, &closure);
-		  relevant_map_push (XBUFFER (buffer)->keymap, &closure);
+		  if (!NILP(map))
+		    relevant_map_push (map, &closure);
 		}
 	    }
 	}
@@ -2621,6 +2624,8 @@ event_binding (Lisp_Object event0, int accept_default)
   assert (EVENTP (event0));
 
   nmaps = get_relevant_keymaps (event0, countof (maps), maps);
+  if (nmaps > countof (maps))
+    nmaps = countof (maps);
   return (process_event_binding_result
 	  (lookup_events (event0, nmaps, maps, accept_default)));
 }

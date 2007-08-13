@@ -97,7 +97,7 @@
 (put 'message-insertion 'custom-loads '("message"))
 (put 'wp 'custom-loads '("cus-edit"))
 (put 'message-faces 'custom-loads '("message"))
-(put 'w3 'custom-loads '("w3-cus"))
+(put 'w3 'custom-loads '("w3-cus" "w3-script"))
 (put 'gnus-score-files 'custom-loads '("gnus-score"))
 (put 'gnus-summary-marks 'custom-loads '("gnus-sum"))
 (put 'picons 'custom-loads '("gnus-picon"))
@@ -107,3 +107,4 @@
 (put 'message-buffers 'custom-loads '("message"))
 (put 'editing 'custom-loads '("cus-edit"))
 (put 'gnus-article-mime 'custom-loads '("gnus-art" "gnus-sum"))
+(put 'w3-scripting 'custom-loads '("w3-script"))

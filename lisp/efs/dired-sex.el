@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-sex.el
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: $Revision: 7.9 $
 ;; RCS:
 ;; Description:   Marking files according to sexpressions.  Sorry.
 ;; Created:       Wed Sep 14 01:30:43 1994 by sandy on ibm550

@@ -38,6 +38,9 @@
 ;;;      the old mechanism for specifying what is to be displayed.
 ;;;      The starting variable to look at is `display-time-form-list'
 
+;;; Thanks to Mike Scheidler for the idea to make the time led's fore- and
+;;; background color customizable
+
 ;;; Code:
 
 (require 'itimer)
@@ -141,6 +144,11 @@ echo area instead of in the mode-line."
   (start-itimer "display-time" 'display-time-function
 		display-time-interval display-time-interval))
 
+(defun display-time-stop ()
+  (interactive)
+  (delete-itimer "display-time")
+  (setq display-time-string nil))
+
 (defcustom display-time-show-icons-maybe t
   "Use icons for time, load and mail status if possible
 and not specified different explicitely"
@@ -163,11 +171,37 @@ if display-time-echo-area is t"
 :group 'display-time
 :type 'string)
 
-(defcustom display-time-display-pad t
-  "Wether the load indicator is displayed with a trapezoidal \"pad\"
-in the background"
+(defcustom display-time-display-pad  "grey35"
+  "How the load indicator's trapezoidal \"pad\" is to be displayed.
+This can be 'transparent or a string describing the color it should have"
   :group 'display-time
-  :type 'boolean)
+  :type '(choice :tag "Value"
+		 (const transparent)
+		 (string :tag "Color")))
+
+(defcustom display-time-display-time-foreground  "firebrick"
+  "How the time LEDs foreground is to be displayed.
+This can be 'modeline (foreground color of the Modeline)
+or a string describing the color it should have"
+  :group 'display-time
+  :type '(choice :tag "Value"
+		 (const modline)
+		 (string :tag "Color")))
+
+(defcustom display-time-display-time-background  'transparent
+  "How the time LEDs background is to be displayed.
+This can be 'transparent or a string describing the color it should have"
+  :group 'display-time
+  :type '(choice :tag "Value"
+		 (const transparent)
+		 (string :tag "Color")))
+
+
+(defvar display-time-display-pad-old nil)
+
+(defvar display-time-display-time-fg-old nil)
+
+(defvar display-time-display-time-bg-old nil)
 
 (defcustom display-time-load-list
   (list 0.2 0.5 0.8 1.1 1.8 2.6)
@@ -175,107 +209,148 @@ in the background"
 which correspond to the six different icons to be displayed
 as a load indicator"
   :group 'display-time
-  :type '(list (number :tag "Threshold 1 load")
-	       (number :tag "Threshold 2 load")
-	       (number :tag "Threshold 3 load")
-	       (number :tag "Threshold 4 load")
-	       (number :tag "Threshold 5 load")
-	       (number :tag "Threshold 6 load")))
+  :type '(list (number :tag "Threshold 1")
+	       (number :tag "Threshold 2")
+	       (number :tag "Threshold 3")
+	       (number :tag "Threshold 4")
+	       (number :tag "Threshold 5")
+	       (number :tag "Threshold 6")))
 
 (defun display-time-string-to-char-list (str)
   (mapcar (function identity) str))
 
-(if (featurep 'xpm)
+(defun display-time-generate-load-glyphs (&optional force)
+  (let* ((pad-color (if (symbolp display-time-display-pad)
+			(list "pad-color" '(face-background 'modeline))
+		      (list "pad-color" display-time-display-pad)))
+	 (xpm-color-symbols (append (list pad-color) xpm-color-symbols)))
+    (if (and (featurep 'xpm)
+	     (or force (not (equal display-time-display-pad
+				   display-time-display-pad-old))))
+	(progn
+	  (setq display-time-load-0.0-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph
+		       (concat display-time-icons-dir "l-0.0.xpm"))))
+	  (setq display-time-load-0.5-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph
+		       (concat display-time-icons-dir "l-0.5.xpm"))))
+	  (setq display-time-load-1.0-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph
+		       (concat display-time-icons-dir "l-1.0.xpm"))))
+	  (setq display-time-load-1.5-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph
+		       (concat display-time-icons-dir "l-1.5.xpm"))))
+	  (setq display-time-load-2.0-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph
+		       (concat display-time-icons-dir "l-2.0.xpm"))))
+	  (setq display-time-load-2.5-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph
+		       (concat display-time-icons-dir "l-2.5.xpm"))))
+	  (setq display-time-load-3.0-glyph
+	  (cons (make-extent nil nil)
+		(make-glyph
+		 (concat display-time-icons-dir "l-3.0.xpm"))))
+	  (setq display-time-display-pad-old display-time-display-pad)
+	  ))))
+
+
+(defun display-time-generate-time-glyphs (&optional force)
+  (let* ((ledbg (if (symbolp display-time-display-time-background)
+		    (list "ledbg" '(face-background 'modeline))
+		  (list "ledbg" display-time-display-time-background)))
+	 (ledfg (if (symbolp display-time-display-time-foreground)
+		    (list "ledfg" '(face-foreground 'modeline))
+		  (list "ledfg" display-time-display-time-foreground)))
+	 (xpm-color-symbols (append (list ledbg)
+				    (list ledfg) xpm-color-symbols)))
+    (if (and (featurep 'xpm)
+	     (or force (not (equal display-time-display-time-background
+				   display-time-display-time-bg-old))
+		 (not (equal display-time-display-time-foreground
+			     display-time-display-time-fg-old))))
+	(progn
+	  (setq display-time-1-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "1.xpm"))))
+	  (setq display-time-2-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "2.xpm"))))
+	  (setq display-time-3-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "3.xpm"))))
+	  (setq display-time-4-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "4.xpm"))))
+	  (setq display-time-5-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "5.xpm"))))
+	  (setq display-time-6-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "6.xpm"))))
+	  (setq display-time-7-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "7.xpm"))))
+	  (setq display-time-8-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "8.xpm"))))
+	  (setq display-time-9-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "9.xpm"))))
+	  (setq display-time-0-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "0.xpm"))))
+	  (setq display-time-:-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "dp.xpm"))))
+	  (setq display-time-am-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "am.xpm"))))
+	  (setq display-time-pm-glyph
+		(cons (make-extent nil nil)
+		      (make-glyph (concat display-time-icons-dir "pm.xpm"))))
+	  (setq display-time-display-time-fg-old
+		display-time-display-time-foreground
+		display-time-display-time-bg-old
+		display-time-display-time-background)
+	  ))))
+
+  (if (featurep 'xpm)
     (progn
       (defvar display-time-mail-sign
 	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "letter.xpm"))))
+	      (make-glyph  (concat display-time-icons-dir "letter.xpm"))))
       (defvar display-time-no-mail-sign
 	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "no-letter.xpm"))))
-      (defvar  display-time-1-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "1.xpm"))))
-      (defvar display-time-2-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "2.xpm"))))
-      (defvar display-time-3-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "3.xpm"))))
-      (defvar display-time-4-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "4.xpm"))))
-      (defvar display-time-5-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "5.xpm"))))
-      (defvar display-time-6-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "6.xpm"))))
-      (defvar display-time-7-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "7.xpm"))))
-      (defvar display-time-8-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "8.xpm"))))
-      (defvar display-time-9-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "9.xpm"))))
-      (defvar display-time-0-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "0.xpm"))))
-      (defvar display-time-:-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "dp.xpm"))))
-      (defvar display-time-load-0.0-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-0.0.xpm"))))
-      (defvar display-time-load-0.5-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-0.5.xpm"))))
-      (defvar display-time-load-1.0-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-1.0.xpm"))))
-      (defvar display-time-load-1.5-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-1.5.xpm"))))
-      (defvar display-time-load-2.0-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-2.0.xpm"))))
-      (defvar display-time-load-2.5-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-2.5.xpm"))))
-      (defvar display-time-load-3.0-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-3.0.xpm"))))
-      (defvar display-time-load-0.0-jtl-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-jtl-0.0.xpm"))))
-      (defvar display-time-load-0.5-jtl-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-jtl-0.5.xpm"))))
-      (defvar display-time-load-1.0-jtl-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-jtl-1.0.xpm"))))
-      (defvar display-time-load-1.5-jtl-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-jtl-1.5.xpm"))))
-      (defvar display-time-load-2.0-jtl-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-jtl-2.0.xpm"))))
-      (defvar display-time-load-2.5-jtl-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-jtl-2.5.xpm"))))
-      (defvar display-time-load-3.0-jtl-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "l-jtl-3.0.xpm"))))
-      (defvar display-time-am-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "am.xpm"))))
-      (defvar display-time-pm-glyph
-	(cons (make-extent nil nil)
-	      (make-glyph	(concat display-time-icons-dir "pm.xpm"))))
+	      (make-glyph  (concat display-time-icons-dir "no-letter.xpm"))))
+      (defvar display-time-1-glyph  nil)
+      (defvar display-time-2-glyph  nil)
+      (defvar display-time-3-glyph  nil)
+      (defvar display-time-4-glyph  nil)
+      (defvar display-time-5-glyph  nil)
+      (defvar display-time-6-glyph  nil)
+      (defvar display-time-7-glyph  nil)
+      (defvar display-time-8-glyph  nil)
+      (defvar display-time-9-glyph  nil)
+      (defvar display-time-0-glyph  nil)
+      (defvar display-time-:-glyph  nil)
+      (defvar display-time-am-glyph nil)
+      (defvar display-time-pm-glyph nil)
+      (defvar display-time-load-0.0-glyph nil)
+      (defvar display-time-load-0.5-glyph nil)
+      (defvar display-time-load-1.0-glyph nil)
+      (defvar display-time-load-1.5-glyph nil)
+      (defvar display-time-load-2.0-glyph nil)
+      (defvar display-time-load-2.5-glyph nil)
+      (defvar display-time-load-3.0-glyph nil)
+      (display-time-generate-time-glyphs 'force)
+      (display-time-generate-load-glyphs 'force)  
       ))
-
 
 (defun display-time-can-do-graphical-display (&optional textual)
   (and display-time-show-icons-maybe
@@ -289,6 +364,7 @@ as a load indicator"
   (let ((list (display-time-string-to-char-list time-string))
 	elem tmp)
     (if (not (display-time-can-do-graphical-display textual)) time-string 
+      (display-time-generate-time-glyphs)
       (while (setq elem (pop list))
 	(push (eval (intern-soft (concat "display-time-"
 					 (char-to-string elem)
@@ -308,11 +384,11 @@ as a load indicator"
 	result elem)
     (if (not (display-time-can-do-graphical-display textual))
 	load-string
+      (display-time-generate-load-glyphs)
       (while (>= load-number (cdr (setq elem (pop alist))))
 	(setq result (eval (intern-soft (concat
 					 "display-time-load-"
 					 (number-to-string (car elem))
-					 (if display-time-display-pad "-jtl")
 					 "-glyph")))))
       result)))
 
@@ -410,7 +486,7 @@ mail:          This displays a mail indicator. Under X this will
 	      
 mail-text:     The same as above, but will not use a glyph"
   :group 'display-time
-  :type '(repeat (choice :tag "Toggle Symbol/String"
+  :type '(repeat (choice :tag "Symbol/String"
 			 (const :tag "Date" date)
 			 (const :tag "Time" time)
 			 (const :tag "Time (text)" time-text)

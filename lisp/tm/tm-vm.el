@@ -9,7 +9,7 @@
 ;;         Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: 1994/10/29
-;; Version: $Revision: 1.5 $
+;; Version: $Revision: 1.6 $
 ;; Keywords: mail, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -46,7 +46,7 @@
 (require 'vm-summary)
 (require 'vm-menu)
 (require 'vm-toolbar)
-
+(require 'vm-mime)
 
 ;;; @ Variables
 
@@ -103,7 +103,7 @@ These hooks are run in the MIME-Preview buffer.")
 ;;; @@ System/Information variables
 
 (defconst tm-vm/RCS-ID
-  "$Id: tm-vm.el,v 1.5 1997/02/16 01:29:35 steve Exp $")
+  "$Id: tm-vm.el,v 1.6 1997/03/22 05:29:25 steve Exp $")
 (defconst tm-vm/version (get-version-string tm-vm/RCS-ID))
 
 ; Ensure vm-menu-mail-menu gets properly defined *before* tm-vm/vm-emulation-map
@@ -286,8 +286,8 @@ These hooks are run in the MIME-Preview buffer.")
 (define-key vm-mode-map "\et" 'tm-vm/toggle-preview-mode)
 
 ; Disable VM 6 built-in MIME handling
-(setq vm-display-using-mime nil)
-(setq vm-send-using-mime nil)
+(setq vm-display-using-mime nil
+      vm-send-using-mime nil)
 
 ;;; @ MIME encoded-words
 
@@ -298,30 +298,18 @@ If you use tiny-mime patch for VM (by RIKITAKE Kenji
 
 (or tm-vm/use-tm-patch
     (progn
-;;;
-(defvar tm-vm/chop-full-name-function 'tm-vm/default-chop-full-name)
-(setq vm-chop-full-name-function tm-vm/chop-full-name-function)
-
-(defun tm-vm/default-chop-full-name (address)
-  (let* ((ret (vm-default-chop-full-name address))
-         (full-name (car ret))
-         )
-    (if (stringp full-name)
-        (cons (mime-eword/decode-string full-name)
-              (cdr ret))
-      ret)))
-
-(defadvice vm-su-subject (after tm activate)
+(defadvice vm-compile-format (around tm activate)
   "MIME decoding support through TM added."
-  (setq ad-return-value (mime-eword/decode-string ad-return-value)))
+  (let ((vm-display-using-mime t))
+    ad-do-it))
 
-(defadvice vm-su-full-name (after tm activate)
+(defadvice vm-tokenized-summary-insert (around tm activate)
   "MIME decoding support through TM added."
-  (setq ad-return-value (mime-eword/decode-string ad-return-value)))
+  (let ((vm-display-using-mime t))
+    ad-do-it))
 
-(defadvice vm-su-to-names (after tm activate)
-  "MIME decoding support through TM added."
-  (setq ad-return-value (mime-eword/decode-string ad-return-value)))
+(fset 'vm-decode-mime-encoded-words-in-string 'mime-eword/decode-string)
+(fset 'vm-reencode-mime-encoded-words-in-string 'mime-eword/encode-string)
 
 ))
 
@@ -397,6 +385,12 @@ Current buffer is assumed to have a message-like structure."
 
 
 ;;; @ MIME Viewer
+
+(setq mime-viewer/code-converter-alist 
+      (append
+       (list (cons 'vm-mode 'mime-charset/decode-buffer)
+	     (cons 'vm-virtual-mode 'mime-charset/decode-buffer))
+       mime-viewer/code-converter-alist))
 
 ;;; @@ MIME-Preview buffer management
 
@@ -743,11 +737,9 @@ command via `mime-viewer/quitting-method-alist'."
            'vm-virtual-mode
            (function tm-vm/following-method))
 
-
 (set-alist 'mime-viewer/quitting-method-alist
            'vm-mode
            'tm-vm/quit-view-message)
-
 (set-alist 'mime-viewer/quitting-method-alist
            'vm-virtual-mode
            'tm-vm/quit-view-message)
@@ -1204,7 +1196,9 @@ These are the messages that will be enclosed."
           ))))
 
 (defadvice vm-forward-message (around tm-aware activate)
-  "Extended to support rfc1521 multipart digests and to work properly in MIME-Preview buffers."
+  "Extended to support rfc1521 digests (roughly equivalent to what
+VM does when vm-forwarding-digest-type is 'mime but using message/rfc822
+when appropriate."
   (if (not (equal vm-forwarding-digest-type "rfc1521"))
       ad-do-it
     (if mime::preview/article-buffer

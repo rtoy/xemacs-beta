@@ -26,7 +26,7 @@
 ;;;; Use configuration variables.
 ;;;; ------------------------------------------------------------
 
-(defvar efs-default-user nil
+(defvar efs-default-user "anonymous"
   "*User name to use when none is specied in a pathname.
 
 If a string, than this string is used as the default user name.
@@ -86,6 +86,7 @@ additional arguments user, host, and remote path.")
   (substring efs-path-user-at-host-format 3)
   "Format to return `host:' strings for completion in root directory.")
 
+;;;###autoload
 (defvar efs-path-root-regexp "^/[^/:]+:"
   "Regexp to match the `/user@host:' root of an efs full path.")
 
@@ -619,12 +620,12 @@ This list is sorted, unless the optional argument NOSORT is non-nil."
 (defun efs-code-string (string)
   ;; Encode a string, using `efs-passwd-seed'. This is nil-potent,
   ;; meaning applying it twice decodes.
-  (if (and (fboundp 'int-char) (fboundp 'char-int))
+  (if (and (fboundp 'int-to-char) (fboundp 'char-to-int))
       (mapconcat
        (function
 	(lambda (c)
 	  (char-to-string
-	   (int-char (logxor (efs-get-passwd-seed) (char-int c))))))
+	   (int-to-char (logxor (efs-get-passwd-seed) (char-to-int c))))))
        string "")
     (mapconcat
      (function

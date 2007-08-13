@@ -260,7 +260,7 @@
 	;; Neither DOS nor OS/2 allows us to end the name of a directory
 	;; with an "\".
 	;; Adding *.* to the end also allows us to distinguish plain files from
-	;; directries.  All DOS servers seem to understand this except
+	;; directories.  All DOS servers seem to understand this except
 	;; Frontier Technologies' super-tcp server.
 	((string-match "/$" dir-path)
 	 (concat (efs-fix-pc-path dir-path) "*.*"))

@@ -2,7 +2,7 @@
 #
 # File:         Makefile
 # Release:      $efs release: 1.15 $
-# Version:      $Revision: 1.3 $
+# Version:      $Revision: 1.4 $
 # RCS:
 # Description:  Makefile for byte-compiling efs and dired.
 # Author:       Andy Norman, HPLabs, Bristol, UK.
@@ -84,10 +84,18 @@ SHELL=/bin/sh
 COREOBJS = efs-defun.elc efs-ovwrt.elc efs-fnh.elc efs-cu.elc efs-netrc.elc \
            efs.elc efs-dired.elc efs-report.elc \
            efs-cp-p.elc
+CORESRC = efs-defun.el efs-ovwrt.el efs-fnh.el efs-cu.el efs-netrc.el \
+          efs.el efs-dired.el efs-report.el \
+          efs-cp-p.el \
+	  efs-dump.el
 DOBJS = default-dir.elc dired.elc dired-mob.elc dired-oas.elc \
         dired-rgxp.elc dired-shell.elc dired-vir.elc dired-xy.elc \
         dired-grep.elc dired-uu.elc \
         dired-cmpr.elc dired-diff.elc dired-help.elc dired-sex.elc
+DSRC = default-dir.el dired.el dired-mob.el dired-oas.el \
+       dired-rgxp.el dired-shell.el dired-vir.el dired-xy.el \
+       dired-grep.el dired-uu.el \
+       dired-cmpr.el dired-diff.el dired-help.el dired-sex.el
 EFSOBJS = $(COREOBJS) efs-auto.elc \
           efs-cms.elc efs-cms-knet.elc efs-dos-distinct.elc efs-nos-ve.elc \
           efs-gwp.elc efs-kerberos.elc efs-hell.elc efs-ka9q.elc \
@@ -95,10 +103,21 @@ EFSOBJS = $(COREOBJS) efs-auto.elc \
           efs-pc.elc efs-ti-explorer.elc efs-ti-twenex.elc \
           efs-tops-20.elc efs-dl.elc efs-guardian.elc efs-coke.elc \
           efs-vms.elc efs-vos.elc efs-plan9.elc efs-ms-unix.elc
+EFSSRC = $(CORESRC) efs-auto.el \
+          efs-cms.el efs-cms-knet.el efs-dos-distinct.el efs-nos-ve.el \
+          efs-gwp.el efs-kerberos.el efs-hell.el efs-ka9q.el \
+          efs-mpe.el efs-mts.el efs-mvs.el efs-netware.el \
+          efs-pc.el efs-ti-explorer.el efs-ti-twenex.el \
+          efs-tops-20.el efs-dl.el efs-guardian.el efs-coke.el \
+          efs-vms.el efs-vos.el efs-plan9.el efs-ms-unix.el
 VMOBJS = efs-vm.elc
+VMSRC = efs-vm.el
 GEOBJS = dired-fsf.elc dired-mule.elc efs-dired-mule.elc \
 	 passwd.elc diff.elc auto-save.elc
+GESRC = dired-fsf.el dired-mule.el efs-dired-mule.el \
+	passwd.el diff.el auto-save.el
 XEOBJS = dired-faces.elc dired-xemacs.elc
+XESRC = dired-faces.el dired-xemacs.el
 OBJS = $(DOBJS) $(EFSOBJS) $(VMOBJS) $(GEOBJS) $(XEOBJS) \
        efs-18.elc efs-19.elc efs-19.23.elc \
        efs-l19.11.elc efs-x19.15.elc \
@@ -195,6 +214,8 @@ efs-vm.elc: efs-vm.el
 # backward compatibility files
 fn-handler.elc: fn-handler.el
 emacs-19.elc: emacs-19.el
+# auto-save package
+auto-save.elc: auto-save.el
 
 # Core targets
 core: $(COREOBJS)
@@ -229,6 +250,7 @@ vm: core $(VMOBJS)
 efs: $(EFSOBJS)
 dired: $(DOBJS)
 all: $(OBJS)
+info: efs.info
 
 # Making for a specific emacs version
 18: emacs-19.elc fn-handler.elc efs dired efs-18.elc dired-mule.elc \
@@ -247,6 +269,20 @@ install_src:
 	@echo "Installing in $(LISPDIR)..."
 	@ls -C `ls *.el 2>&1 | grep -v "fixup"` 2> /dev/null
 	cp `ls *.el | grep -v "fixup"` $(LISPDIR)
+install_xemacs:
+	@echo "Installing source in $(LISPDIR)..."
+	cp $(EFSSRC) $(DSRC) $(XESRC) efs-x19.15.el $(LISPDIR)
+	cp Makefile README fixup.el $(LISPDIR)
+diff_xemacs:
+	for f in $(EFSSRC) $(DSRC) $(XESRC) efs-x19.15.el \
+	         Makefile README fixup.el; do \
+		if [ -e $(LISPDIR)/$$f ]; \
+		then\
+		  diff -c $(LISPDIR)/$$f $$f; \
+		else \
+		  diff -c /dev/null $$f; \
+		fi \
+	done
 install_all: install_src install
 clean:
 	rm -f $(OBJS)

@@ -3,8 +3,8 @@ static char *noname[] = {
 /* width height ncolors chars_per_pixel */
 "9 13 2 1",
 /* colors */
-"` s None c None",
-"a c #CA1E1C",
+"` s ledbg c None",
+"a s ledfg c #CA1E1C",
 /* pixels */
 "`````````",
 "`````````",

@@ -213,7 +213,7 @@ beta:		clean all-elc
 # Build XEmacs and recompile out-of-date and missing .elc files along
 # the way.
 all-elc:	src/paths.h src/Emacs.ad.h lib-src lwlib dump-elcs src
-	sh ${srcdir}/lib-src/update-elc.sh
+	MAKE='$(MAKE)' sh ${srcdir}/lib-src/update-elc.sh
 
 # Sub-target for all-elc.
 dump-elcs:	FRC.dump-elcs
@@ -221,7 +221,7 @@ dump-elcs:	FRC.dump-elcs
 		CC='${CC}' CFLAGS='${CFLAGS}' MAKE='${MAKE}'
 
 autoloads:	src
-	sh ${srcdir}/lib-src/update-autoloads.sh
+	MAKE='$(MAKE)' sh ${srcdir}/lib-src/update-autoloads.sh
 
 # We force the rebuilding of src/paths.h because the user might give
 # different values for the various directories.  Since we use

@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-uu.el
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: $Revision: 7.9 $
 ;; RCS:
 ;; Description:   Commands for uuencoding/uudecoding marked files.
 ;; Author:        Sandy Rutherford <sandy@math.ubc.ca>

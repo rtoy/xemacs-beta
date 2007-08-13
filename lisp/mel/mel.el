@@ -1,11 +1,11 @@
 ;;; mel.el : a MIME encoding/decoding library
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; modified by Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;; Created: 1995/6/25
-;; Version: $Id: mel.el,v 1.3 1996/12/29 00:14:58 steve Exp $
+;; Version: $Id: mel.el,v 1.4 1997/03/22 05:29:07 steve Exp $
 ;; Keywords: MIME, Base64, Quoted-Printable, uuencode, gzip64
 
 ;; This file is part of MEL (MIME Encoding Library).
@@ -27,13 +27,26 @@
 
 ;;; Code:
 
+;;; @ variable
+;;;
+
+(defvar mime-temp-directory (or (getenv "MIME_TMP_DIR")
+				(getenv "TM_TMP_DIR")
+				"/tmp/")
+  "*Directory for temporary files.")
+
+
 ;;; @ region
 ;;;
 
-(autoload 'base64-encode-region           "mel-b" nil t)
-(autoload 'quoted-printable-encode-region "mel-q" nil t)
-(autoload 'uuencode-encode-region         "mel-u" nil t)
-(autoload 'gzip64-encode-region           "mel-g" nil t)
+(autoload 'base64-encode-region
+  "mel-b" "Encode current region by base64." t)
+(autoload 'quoted-printable-encode-region
+  "mel-q" "Encode current region by Quoted-Printable." t)
+(autoload 'uuencode-encode-region
+  "mel-u" "Encode current region by unofficial uuencode format." t)
+(autoload 'gzip64-encode-region
+  "mel-g" "Encode current region by unofficial x-gzip64 format." t)
 
 (defvar mime-encoding-method-alist
   '(("base64"           . base64-encode-region)
@@ -47,13 +60,17 @@
   "Alist of encoding vs. corresponding method to encode region.
 Each element looks like (STRING . FUNCTION) or (STRING . nil).
 STRING is content-transfer-encoding.
-FUNCTION is region encoder and nil means not to encode. [mel.el]")
+FUNCTION is region encoder and nil means not to encode.")
 
 
-(autoload 'base64-decode-region           "mel-b" nil t)
-(autoload 'quoted-printable-decode-region "mel-q" nil t)
-(autoload 'uuencode-decode-region         "mel-u" nil t)
-(autoload 'gzip64-decode-region		  "mel-g" nil t)
+(autoload 'base64-decode-region
+  "mel-b" "Decode current region by base64." t)
+(autoload 'quoted-printable-decode-region
+  "mel-q" "Decode current region by Quoted-Printable." t)
+(autoload 'uuencode-decode-region
+  "mel-u" "Decode current region by unofficial uuencode format." t)
+(autoload 'gzip64-decode-region
+  "mel-g" "Decode current region by unofficial x-gzip64 format." t)
 
 (defvar mime-decoding-method-alist
   '(("base64"           . base64-decode-region)
@@ -65,11 +82,11 @@ FUNCTION is region encoder and nil means not to encode. [mel.el]")
   "Alist of encoding vs. corresponding method to decode region.
 Each element looks like (STRING . FUNCTION).
 STRING is content-transfer-encoding.
-FUNCTION is region decoder. [mel.el]")
+FUNCTION is region decoder.")
 
 
-(defun mime-encode-region (beg end encoding)
-  "Encode region BEG to END of current buffer using ENCODING. [mel.el]"
+(defun mime-encode-region (start end encoding)
+  "Encode region START to END of current buffer using ENCODING."
   (interactive
    (list (region-beginning) (region-end)
 	 (completing-read "encoding: "
@@ -78,11 +95,11 @@ FUNCTION is region decoder. [mel.el]")
    )
   (let ((f (cdr (assoc encoding mime-encoding-method-alist))))
     (if f
-	(funcall f beg end)
+	(funcall f start end)
       )))
 
-(defun mime-decode-region (beg end encoding)
-  "Decode region BEG to END of current buffer using ENCODING. [mel.el]"
+(defun mime-decode-region (start end encoding)
+  "Decode region START to END of current buffer using ENCODING."
   (interactive
    (list (region-beginning) (region-end)
 	 (completing-read "encoding: "
@@ -91,17 +108,21 @@ FUNCTION is region decoder. [mel.el]")
    )
   (let ((f (cdr (assoc encoding mime-decoding-method-alist))))
     (if f
-	(funcall f beg end)
+	(funcall f start end)
       )))
 
 
 ;;; @ file
 ;;;
 
-(autoload 'base64-insert-encoded-file           "mel-b" nil t)
-(autoload 'quoted-printable-insert-encoded-file "mel-q" nil t)
-(autoload 'uuencode-insert-encoded-file         "mel-u" nil t)
-(autoload 'gzip64-insert-encoded-file           "mel-g" nil t)
+(autoload 'base64-insert-encoded-file
+  "mel-b" "Insert file encoded by base64." t)
+(autoload 'quoted-printable-insert-encoded-file
+  "mel-q" "Insert file encoded by quoted-printable." t)
+(autoload 'uuencode-insert-encoded-file
+  "mel-u" "Insert file encoded by unofficial uuencode format." t)
+(autoload 'gzip64-insert-encoded-file
+  "mel-g" "Insert file encoded by unofficial gzip64 format." t)
 
 (defvar mime-file-encoding-method-alist
   '(("base64"           . base64-insert-encoded-file)
@@ -115,11 +136,10 @@ FUNCTION is region decoder. [mel.el]")
   "Alist of encoding vs. corresponding method to insert encoded file.
 Each element looks like (STRING . FUNCTION).
 STRING is content-transfer-encoding.
-FUNCTION is function to insert encoded file. [mel.el]")
-
+FUNCTION is function to insert encoded file.")
 
 (defun mime-insert-encoded-file (filename encoding)
-  "Encode region BEG to END of current buffer using ENCODING. [mel.el]"
+  "Insert file FILENAME encoded by ENCODING format."
   (interactive
    (list (read-file-name "Insert encoded file: ")
 	 (completing-read "encoding: "

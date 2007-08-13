@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-xemacs.el
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: $Revision: 7.9 $
 ;; RCS:
 ;; Description:   dired functions for XEmacs
 ;; Author:        Mike Sperber <sperber@informatik.uni-tuebingen.de>
@@ -274,7 +274,7 @@ This shouldn't match socket or symbolic link lines (which aren't editable).")
   "Installs the Dired menu at the menubar."
   (if (null dired-help-menu)
       (dired-setup-menus))
-  (if current-menubar
+  (if (and (featurep 'menubar) current-menubar)
       (progn
 	(let ((buffer-menubar (copy-sequence current-menubar)))
 	  (delete (assoc "Edit" buffer-menubar) buffer-menubar)

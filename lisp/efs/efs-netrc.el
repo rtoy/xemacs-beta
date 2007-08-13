@@ -3,12 +3,11 @@
 ;;
 ;; File:         efs-netrc.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.2 $
 ;; RCS:          
 ;; Description:  Parses ~/.netrc file, and does completion in /.
 ;; Author:       Sandy Rutherford <sandy@ibm550.sissa.it>
 ;; Created:      Fri Jan 28 19:32:47 1994 by sandy on ibm550
-;; Modified:     Sun Nov 27 18:38:50 1994 by sandy on gandalf
 ;; Language:     Emacs-Lisp
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -33,7 +32,7 @@
 (defconst efs-netrc-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.2 $" 11 -2)))
 
 ;; Make the byte compiler happy.
 (defvar dired-directory)
@@ -58,6 +57,7 @@ Encrypting this file is a good idea!")
 ;;;; Host / User / Account mapping support.
 ;;;; ------------------------------------------------------------
 
+;;;###autoload
 (defun efs-set-passwd (host user passwd)
   "For a given HOST and USER, set or change the associated PASSWORD."
   (interactive (list (read-string "Host: ")
@@ -370,6 +370,7 @@ Used when completion is done in the root directory."
 	  (list nil)
 	res))))
 
+;;;###autoload
 (defun efs-root-file-name-all-completions (file dir)
   ;; Generates all completions in the root directory.
   (let ((file-name-handler-alist (efs-file-name-handler-alist-sans-fn
@@ -378,6 +379,7 @@ Used when completion is done in the root directory."
 	   (file-name-all-completions file dir))))
 
 
+;;;###autoload
 (defun efs-root-file-name-completion (file dir)
   ;; Calculates completions in the root directory to include remote hosts.
   (let ((file-name-handler-alist (efs-file-name-handler-alist-sans-fn

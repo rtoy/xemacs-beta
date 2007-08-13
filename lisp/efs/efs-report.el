@@ -3,12 +3,11 @@
 ;;
 ;; File:         efs-report.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.9 $
 ;; RCS:          
 ;; Description:  Function to report efs bugs in a usable way.
 ;; Author:       Andy Norman, Dawn
 ;; Created:      Tue May 18 08:34:45 1993
-;; Modified:     Sun Nov 27 18:41:45 1994 by sandy on gandalf
 ;; Language:     Emacs-Lisp
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -23,7 +22,7 @@
 (defconst efs-report-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.9 $" 11 -2)))
 
 (defconst efs-report-salutations
   ["Dear bug team:"
@@ -163,6 +162,7 @@ Passwords are never written into this buffer." buff-name)))
 	   ?\n ?\ )
 	(insert subj)))))
 
+;;;###autoload
 (defun efs-report-bug (&optional default-host  default-user blurb no-confirm)
   "Submit a bug report for efs."
   (interactive)

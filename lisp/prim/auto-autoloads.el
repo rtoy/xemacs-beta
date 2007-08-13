@@ -1204,7 +1204,7 @@ To change this variable use \\[dired-do-compress] with a zero prefix.")
  
  For example:
  
-   (setq dired-compresssion-method-alist
+   (setq dired-compression-method-alist
          (cons '(frobnicate \".frob\" (\"frob\") (\"frob\" \"-d\") \"-f\")
                dired-compression-method-alist))
    => ((frobnicate \".frob\" (\"frob\") (\"frob\" \"-d\")) 
@@ -1221,7 +1221,7 @@ To change this variable use \\[dired-do-compress] with a zero prefix.")
 Can contain even `F', `b', `i' and `s'.")
 
 (defvar dired-chown-program (if (memq system-type '(hpux dgux usg-unix-v)) "chown" "/etc/chown") "\
-*Name of chown command (usully `chown' or `/etc/chown').")
+*Name of chown command (usually `chown' or `/etc/chown').")
 
 (defvar dired-gnutar-program nil "\
 *If non-nil, name of the GNU tar executable (e.g. \"tar\" or \"gnutar\").
@@ -1359,6 +1359,47 @@ Like \\[dired-jump-back], but to other window." t nil)
 
 (autoload 'dired-jump-back-other-frame "dired" "\
 Like \\[dired-jump-back], but in another frame." t nil)
+
+;;;***
+
+;;;### (autoloads nil "efs-cu" "efs/efs-cu.el")
+
+(defvar efs-path-root-regexp "^/[^/:]+:" "\
+Regexp to match the `/user@host:' root of an efs full path.")
+
+;;;***
+
+;;;### (autoloads nil "efs-dump" "efs/efs-dump.el")
+
+(setq file-name-handler-alist (cons (cons efs-path-root-regexp 'efs-file-handler-function) file-name-handler-alist))
+
+;;;***
+
+;;;### (autoloads (efs-root-file-name-completion efs-root-file-name-all-completions efs-set-passwd) "efs-netrc" "efs/efs-netrc.el")
+
+(autoload 'efs-set-passwd "efs-netrc" "\
+For a given HOST and USER, set or change the associated PASSWORD." t nil)
+
+(autoload 'efs-root-file-name-all-completions "efs-netrc" nil nil nil)
+
+(autoload 'efs-root-file-name-completion "efs-netrc" nil nil nil)
+
+;;;***
+
+;;;### (autoloads (efs-report-bug) "efs-report" "efs/efs-report.el")
+
+(autoload 'efs-report-bug "efs-report" "\
+Submit a bug report for efs." t nil)
+
+;;;***
+
+;;;### (autoloads (efs-file-handler-function efs-nslookup-host) "efs" "efs/efs.el")
+
+(autoload 'efs-nslookup-host "efs" "\
+Attempt to resolve the given HOSTNAME using nslookup if possible." t nil)
+
+(autoload 'efs-file-handler-function "efs" "\
+Function to call special file handlers for remote files." nil nil)
 
 ;;;***
 
@@ -3678,7 +3719,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.16 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.17 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4953,7 +4994,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.16 $
+vhdl-mode $Revision: 1.17 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

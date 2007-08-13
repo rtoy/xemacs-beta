@@ -2414,6 +2414,7 @@ folder."
 	       (condition-case ()
 		   (progn
 		     (delete-file buffer-file-name)
+		     (clear-visited-file-modtime)
 		     (message "%s removed" buffer-file-name))
 		 ;; no can do, oh well.
 		 (error nil)))

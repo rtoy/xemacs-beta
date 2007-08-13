@@ -384,7 +384,9 @@
 	    (cond ((= char ?\n)
 		   (vm-insert-char char 1 nil work-buffer)
 		   (setq cols 0))
-		  ((and (= char 32) (not (= ?\n (char-after (1+ inputpos)))))
+		  ((and (= char 32)
+			(not (= (1+ inputpos) end))
+			(not (= ?\n (char-after (1+ inputpos)))))
 		   (vm-insert-char char 1 nil work-buffer)
 		   (vm-increment cols))
 		  ((or (< char 33) (> char 126) (= char 61)
@@ -2575,7 +2577,10 @@ and the approriate content-type and boundary markup information is added."
 		   (delete-char 1)))
 		((stringp object)
 		 (let ((overridding-file-coding-system 'no-conversion))
-		   (insert-file-contents-literally object))))
+		   (insert-before-markers " ")
+		   (forward-char -1)
+		   (insert-file-contents-literally object)
+		   (delete-char 1))))
 	  ;; gather information about the object from the extent.
 	  (if (setq already-mimed (vm-extent-property e 'vm-mime-encoded))
 	      (setq layout (vm-mime-parse-entity

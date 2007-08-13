@@ -6,7 +6,7 @@
 ;;         MINOURA Makoto <minoura@netlaputa.or.jp>
 ;;         Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;; Maintainer: Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
-;; Version: $Revision: 1.6 $
+;; Version: $Revision: 1.7 $
 ;; Keywords: mail, news, citation
 
 ;; This file is part of MU (Message Utilities).
@@ -54,7 +54,7 @@
 ;;;
 
 (defconst mu-cite/RCS-ID
-  "$Id: mu-cite.el,v 1.6 1997/03/16 05:55:24 steve Exp $")
+  "$Id: mu-cite.el,v 1.7 1997/03/22 05:29:11 steve Exp $")
 (defconst mu-cite/version (get-version-string mu-cite/RCS-ID))
 
 
@@ -95,21 +95,8 @@ Use this hook to add your own methods to `mu-cite/default-methods-alist'.")
 ;;; @ field
 ;;;
 
-(defvar mu-cite/get-field-value-method-alist
-  (list (cons 'mh-letter-mode
-	      (function
-	       (lambda (name)
-		 (if (and (stringp mh-sent-from-folder)
-			  (numberp mh-sent-from-msg))
-		     (save-excursion
-		       (set-buffer mh-sent-from-folder)
-		       (set-buffer mh-show-buffer)
-		       (and (boundp 'mime::preview/article-buffer)
-			    (bufferp mime::preview/article-buffer)
-			    (set-buffer mime::preview/article-buffer))
-		       (std11-field-body name)
-		       ))
-		 )))))
+(defvar mu-cite/get-field-value-method-alist nil
+  "Alist major-mode vs. function to get field-body of header.")
 
 (defun mu-cite/get-field-value (name)
   (or (std11-field-body name)

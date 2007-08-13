@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-guardian.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.7 $
 ;; RCS:          
 ;; Description:  Guardian support for efs
 ;; Author:       Sandy Rutherford <sandy@math.ubc.ca>
@@ -22,7 +22,7 @@
 (defconst efs-guardian-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.7 $" 11 -2)))
 
 (provide 'efs-guardian)
 (require 'efs)

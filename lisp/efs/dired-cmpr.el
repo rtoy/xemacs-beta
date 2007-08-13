@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-cmpr.el
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: $Revision: 7.9 $
 ;; RCS:
 ;; Description:   Commands for compressing marked files.
 ;;

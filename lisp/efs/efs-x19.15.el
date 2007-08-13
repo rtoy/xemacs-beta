@@ -3,24 +3,22 @@
 ;;
 ;; File:         efs-x19.15.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.2 $
 ;; RCS:          
 ;; Description:  efs support for XEmacs, versions 19.15, and later.
 ;; Author:       Sandy Rutherford <sandy@ibm550.sissa.it>
 ;; Created:      Tue Aug  2 17:40:32 1994 by sandy on ibm550
-;; Modified:     by Mike Sperber
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide 'efs-x19\.15)
 (require 'efs-cu)
-(require 'default-dir)
 (require 'efs-ovwrt)
 
 (defconst efs-x19\.15-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.2 $" 11 -2)))
 
 ;;; Functions requiring special defs. for these XEmacs versions.
 

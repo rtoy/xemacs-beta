@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         4.381
-;; Last Modified:   1997/03/18 16:43:13
+;; Version:         4.387
+;; Last Modified:   1997/03/21 20:25:33
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -32,18 +32,19 @@
 
 ;;; Commentary:
 
-;; This package provides modes in GNU Emacs for editing C, C++,
-;; Objective-C, and Java code. It is intended to be a replacement for
-;; c-mode.el (a.k.a. BOCM -- Boring Old C-Mode), c++-mode.el,
-;; cplus-md.el, and cplus-md1.el, all of which are in some way
-;; ancestors of this file.  A number of important improvements have
-;; been made, briefly: complete K&R C, ANSI C, `ARM' C++, Objective-C,
-;; and Java support with consistent indentation across all modes, more
-;; intuitive indentation controlling variables, compatibility across
-;; all known Emacsen, nice new features, and tons of bug fixes.  This
-;; package is called "CC Mode" to distinguish it from its ancestors,
-;; but there is no cc-mode command.  Usage and programming details are
-;; contained in an accompanying texinfo manual.
+;; This package provides GNU Emacs major modes for editing C, C++,
+;; Objective-C, and Java code.  As of the latest Emacs and XEmacs
+;; releases, it is the default package for editing these languages.
+;; This package is called "CC Mode", and should be spelled exactly
+;; this way.  It supports K&R and ANSI C, ANSI C++, Objective-C, and
+;; Java, with a consistent indentation model across all modes.  This
+;; indentation model is intuitive and very flexible, so that almost
+;; any desired style of indentation can be supported.  Installation,
+;; usage, and programming details are contained in an accompanying
+;; texinfo manual.
+
+;; CC Mode's immediate ancestors were, c++-mode.el, cplus-md.el, and
+;; cplus-md1.el..
 
 ;; NOTE: This mode does not perform font-locking (a.k.a syntactic
 ;; coloring, keyword highlighting, etc.) for any of the supported
@@ -67,22 +68,6 @@
 ;; necessary granularity.  Let me say this again: YOU CAN IGNORE ALL
 ;; BYTE-COMPILER WARNINGS (you'd be surprised at how many people don't
 ;; follow this advice :-).
-
-;; As of this writing (24-Feb-1997), CC Mode comes with the latest
-;; Emacs and XEmacs distributions (19.34 and 19.14 respectively), but
-;; is no longer pre-loaded by default.  To use the latest version of
-;; CC Mode, you need only make sure that this copy of cc-mode.el is
-;; found first on your load-path.
-
-;; If your Emacs is pre-loaded with any version of cc-mode.el,
-;; c-mode.el, or c++-mode.el, you will need to consult the
-;; cc-mode.texinfo manual for details on upgrading your Emacs.
-
-;; There are four major mode entry points provided by this package,
-;; one for editing C++ code, one for editing C code (both K&R and
-;; ANSI), one for editing Objective-C code, and one for editing Java
-;; code.  The commands are M-x c-mode, M-x c++-mode, M-x objc-mode,
-;; and M-x java-mode.
 
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, code contributions, and
@@ -421,8 +406,14 @@ This hook gets called after a line is indented by the mode.")
 (defvar c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'.")
+
 (defvar c-label-minimum-indentation 1
-  "*Minimum indentation for labels and case tags in `gnu' style.")
+  "*Minimum indentation for lines inside of top-level constructs.
+This variable typically only affects code using the `gnu' style, which
+mandates a minimum of one space in front of every line inside
+top-level constructs.  Specifically, the function
+`c-gnu-impose-minimum' on your `c-special-indent-hook' is what
+enforces this.")
 
 (defvar c-progress-interval 5
   "*Interval used to update progress status during long re-indentation.
@@ -1239,10 +1230,14 @@ The expansion is entirely correct because it uses the C preprocessor."
 (defconst c-C++-friend-key
   "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+"
   "Regexp describing friend declarations in C++ classes.")
-(defconst c-C++-comment-start-regexp "/[/*]"
-  "Dual comment value for `c-comment-start-regexp'.")
-(defconst c-C-comment-start-regexp "/\\*"
-  "Single comment style value for `c-comment-start-regexp'.")
+
+;; comment starter definitions for various languages.  the language
+;; modes will set c-comment-start-regexp to this value.
+(defconst c-C++-comment-start-regexp "/[/*]")
+(defconst c-C-comment-start-regexp "/[*]")
+;; We need to match all 3 Java style comments
+;; 1) Traditional C block; 2) javadoc /** ...; 3) C++ style
+(defconst c-Java-comment-start-regexp "/\\(/\\|[*][*]?\\)")
 
 (defconst c-ObjC-method-key
   (concat
@@ -1453,7 +1448,7 @@ Key bindings:
  	comment-end   ""
  	comment-multi-line nil
  	c-conditional-key c-Java-conditional-key
- 	c-comment-start-regexp c-C++-comment-start-regexp
+ 	c-comment-start-regexp c-Java-comment-start-regexp
   	c-class-key c-Java-class-key
 	c-method-key c-Java-method-key
 	c-double-slash-is-comments-p t
@@ -1597,6 +1592,11 @@ global and affect all future `c-mode' buffers."
 
 
 ;; macros must be defined before first use
+(defmacro c-add-syntax (symbol &optional relpos)
+  ;; a simple macro to append the syntax in symbol to the syntax list.
+  ;; try to increase performance by using this macro
+  (` (setq syntax (cons (cons (, symbol) (, relpos)) syntax))))
+
 (defmacro c-point (position)
   ;; Returns the value of point at certain commonly referenced POSITIONs.
   ;; POSITION can be one of the following symbols:
@@ -2611,7 +2611,9 @@ Optional prefix ARG means justify paragraph as well."
 				      (goto-char comment-start-place)
 				    (search-backward "/*"))
 				  (if (and (not c-hanging-comment-starter-p)
-					   (looking-at "/\\*[ \t]*$"))
+					   (looking-at
+					    (concat c-comment-start-regexp
+						    "[ \t]*$")))
 				      (forward-line 1))
 				  ;; Protect text before the comment
 				  ;; start by excluding it.  Add
@@ -3857,11 +3859,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 
 ;; defuns for calculating the syntactic state and indenting a single
 ;; line of C/C++/ObjC code
-(defmacro c-add-syntax (symbol &optional relpos)
-  ;; a simple macro to append the syntax in symbol to the syntax list.
-  ;; try to increase performance by using this macro
-  (` (setq syntax (cons (cons (, symbol) (, relpos)) syntax))))
-
 (defun c-most-enclosing-brace (state)
   ;; return the bufpos of the most enclosing brace that hasn't been
   ;; narrowed out by any enclosing class, or nil if none was found
@@ -4937,8 +4934,9 @@ With universal argument, inserts the analysis as a comment on that line."
 		  ;; we now have to figure out where this comment begins.
 		  (goto-char here)
 		  (back-to-indentation)
-		  (if (re-search-forward "[*]+/" (c-point 'eol) t)
-		      (forward-comment -1)
+		  (if (looking-at "[*]+/")
+		      (progn (goto-char (match-end 0))
+			     (forward-comment -1))
 		    (goto-char (cdr langelem))
 		    (back-to-indentation))))
 	    (- (current-column) cs-curcol))
@@ -5205,7 +5203,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "4.381"
+(defconst c-version "4.387"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -5226,7 +5224,10 @@ command to conveniently insert and align the necessary backslashes."
   (interactive)
   ;; load in reporter
   (let ((reporter-prompt-for-summary-p t)
-	(reporter-dont-compact-list '(c-offsets-alist)))
+	(reporter-dont-compact-list '(c-offsets-alist))
+	(style c-indentation-style)
+	(hook c-special-indent-hook)
+	(c-features c-emacs-features))
     (and
      (if (y-or-n-p "Do you want to submit a report on CC Mode? ")
 	 t (message "") nil)
@@ -5253,6 +5254,7 @@ command to conveniently insert and align the necessary backslashes."
 		   'c-hanging-colons-alist
 		   'c-hanging-comment-starter-p
 		   'c-hanging-comment-ender-p
+		   'c-indent-comments-syntactically-p
 		   'c-tab-always-indent
 		   'c-recognize-knr-p
 		   'c-label-minimum-indentation
@@ -5265,15 +5267,15 @@ command to conveniently insert and align the necessary backslashes."
       (function
        (lambda ()
 	 (insert
-	  "Buffer Style: " c-indentation-style "\n\n"
-	  (if c-special-indent-hook
+	  "Buffer Style: " style "\n\n"
+	  (if hook
 	      (concat "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 		      "c-special-indent-hook is set to '"
-		      (format "%s" c-special-indent-hook)
+		      (format "%s" hook)
 		      ".\nPerhaps this is your problem?\n"
 		      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n")
 	    "\n")
-	  (format "c-emacs-features: %s\n" c-emacs-features)
+	  (format "c-emacs-features: %s\n" c-features)
 	  )))
       nil
       "Dear Barry,"

@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-faces.el
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: $Revision: 1.2 $
 ;; RCS:
 ;; Description:   rudimentary face customization support for dired
 ;; Author:        Mike Sperber <sperber@informatik.uni-tuebingen.de>
@@ -66,12 +66,6 @@
 (defface dired-face-permissions '((t (:background "grey75")
 				     (:foreground "black")))
   "Face used for interactive permissions."
-  :group 'dired)
-
-(defface dired-face-deleted '((((class color))
-			       (:foreground "yellow3"))
-			      (t (:reverse t)))
-  "Face used to indicate deleted files."
   :group 'dired)
 
 (defface dired-face-socket '((((class color))

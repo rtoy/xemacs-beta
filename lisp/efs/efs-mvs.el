@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-mvs.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.4 $
 ;; RCS:          
 ;; Description:  MVS support for efs
 ;; Author:       Sandy Rutherford <sandy@math.ubc.ca, sandy@itp.ethz.ch>
@@ -26,7 +26,7 @@
 (defconst efs-mvs-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.4 $" 11 -2)))
 
 ;; What's the MVS character set for valid partitioned data sets?
 ;; I'll guess [-A-Z0-9_$+]

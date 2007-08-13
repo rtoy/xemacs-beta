@@ -1,4 +1,15 @@
 							-*- indented-text -*-
+to 19.15 beta103
+-- VM-6.21
+-- tm-7.106
+-- Garbage Collection patches courtesy of David Moore
+-- time.el update
+-- cc-mode.el-4.387
+-- EFS integration/bug fix patches courtesy of Michael Sperber
+-- safe char-before added
+-- minor build tweaks
+-- miscellaneous bug fixes
+
 to 19.15 beta102
 -- preceding-char, following-char are obsolete and broken, do not use them
 -- miscellaneous bug fixes
