@@ -37,6 +37,7 @@
 (defun vm-mm-layout-body-start (e) (aref e 8))
 (defun vm-mm-layout-body-end (e) (aref e 9))
 (defun vm-mm-layout-parts (e) (aref e 10))
+;; if display of MIME part fails, error string will be here.
 (defun vm-mm-layout-cache (e) (aref e 11))
 
 (defun vm-set-mm-layout-type (e type) (aset e 0 type))
@@ -1248,7 +1249,9 @@ in the buffer.  The function is expected to make the message
 		      ;; text/plain.
 		      (vm-mime-display-internal-text/plain layout)))
 		(t (and extent (vm-mime-rewrite-failed-button
-				extent (vm-mm-layout-cache layout)))
+				extent
+				(or (vm-mm-layout-cache layout)
+				    "no external viewer defined for type")))
 		   (vm-mime-display-internal-application/octet-stream
 		    (or extent layout))))
 	  (and extent (vm-mime-delete-button-maybe extent)))
@@ -1259,25 +1262,28 @@ in the buffer.  The function is expected to make the message
   (vm-mime-display-button-xxxx layout t))
 
 (defun vm-mime-display-internal-text/html (layout)
-  (let ((buffer-read-only nil)
-	(work-buffer nil))
-    (message "Inlining text/html, be patient...")
-    ;; w3-region is not as tame as we would like.
-    ;; make sure the yoke is firmly attached.
-    (unwind-protect
-	(progn
-	  (save-excursion
-	    (set-buffer (setq work-buffer
-			      (generate-new-buffer " *workbuf*")))
-	    (vm-mime-insert-mime-body layout)
-	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
-	    (save-excursion
-	      (save-window-excursion
-		(w3-region (point-min) (point-max)))))
-	  (insert-buffer-substring work-buffer))
-      (and work-buffer (kill-buffer work-buffer)))
-    (message "Inlining text/html... done")
-    t ))
+  (if (fboundp 'w3-region)
+      (let ((buffer-read-only nil)
+	    (work-buffer nil))
+	(message "Inlining text/html, be patient...")
+	;; w3-region is not as tame as we would like.
+	;; make sure the yoke is firmly attached.
+	(unwind-protect
+	    (progn
+	      (save-excursion
+		(set-buffer (setq work-buffer
+				  (generate-new-buffer " *workbuf*")))
+		(vm-mime-insert-mime-body layout)
+		(vm-mime-transfer-decode-region layout (point-min) (point-max))
+		(save-excursion
+		  (save-window-excursion
+		    (w3-region (point-min) (point-max)))))
+	      (insert-buffer-substring work-buffer))
+	  (and work-buffer (kill-buffer work-buffer)))
+	(message "Inlining text/html... done")
+	t )
+    (vm-set-mm-layout-cache layout "Need W3 to inline HTML")
+    nil ))
 
 (defun vm-mime-display-internal-text/plain (layout &optional no-highlighting)
   (let ((start (point)) end old-size
@@ -1764,7 +1770,7 @@ in the buffer.  The function is expected to make the message
 (defun vm-mime-display-button-xxxx (layout disposable)
   (let ((description (vm-mime-layout-description layout)))
     (vm-mime-insert-button
-     (format "%-35.35s [%s to display]"
+     (format "%-35.35s [%s to attempt display]"
 	     description
 	     (if (vm-mouse-support-possible-p) "Click mouse-2" "Press RETURN"))
      (function
@@ -1875,7 +1881,7 @@ in the buffer.  The function is expected to make the message
   (let* ((buffer-read-only nil)
 	 (start (point)))
     (goto-char (vm-extent-start-position button))
-    (insert (format "DISPLAY FAILED -- %s" error-string))
+    (insert (format "DISPLAY FAILED -- %s\n" error-string))
     (vm-set-extent-endpoints button start (vm-extent-end-position button))
     (delete-region (point) (vm-extent-end-position button))))
 
@@ -2454,9 +2460,6 @@ and the approriate content-type and boundary markup information is added."
 	    (narrow-to-region (point) (point-max))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
-	    (if vm-xemacs-mule-p
-		(encode-coding-region (point-min) (point-max)
-				      buffer-file-coding-system))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
 			    (point-min)
 			    (point-max))
@@ -2498,7 +2501,11 @@ and the approriate content-type and boundary markup information is added."
 	  (cond ((bufferp object)
 		 (insert-buffer-substring object))
 		((stringp object)
-		 (let ((coding-system-for-read 'no-conversion))
+		 (let ((coding-system-for-read 'no-conversion)
+		       ;; don't let file-coding-system be changed
+		       ;; by insert-file-contents-literally.  The
+		       ;; value we bind to it to here isn't important.
+		       (buffer-file-coding-system 'no-conversion))
 		   (insert-file-contents-literally object))))
 	  ;; gather information about the object from the extent.
 	  (if (setq already-mimed (extent-property e 'vm-mime-encoded))
@@ -2638,9 +2645,6 @@ and the approriate content-type and boundary markup information is added."
 	    nil
 	  (setq charset (vm-determine-proper-charset (point)
 						     (point-max)))
-	  (if vm-xemacs-mule-p
-	      (encode-coding-region (point-min) (point-max)
-				    buffer-file-coding-system))
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
 			  (point)
 			  (point-max))
@@ -2758,9 +2762,6 @@ and the approriate content-type and boundary markup information is added."
 	    (narrow-to-region (point) (point-max))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
-	    (if vm-xemacs-mule-p
-		(encode-coding-region (point-min) (point-max)
-				      file-coding-system))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
 			    (point-min)
 			    (point-max))
@@ -2955,9 +2956,6 @@ and the approriate content-type and boundary markup information is added."
 	    nil
 	  (setq charset (vm-determine-proper-charset (point)
 						     (point-max)))
-	  (if vm-xemacs-mule-p
-	      (encode-coding-region (point-min) (point-max)
-				    file-coding-system))
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
 			  (point)
 			  (point-max))

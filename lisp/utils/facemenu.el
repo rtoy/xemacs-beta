@@ -269,8 +269,7 @@ variables."
   ;; Global bindings:
   (if (string-match "XEmacs" emacs-version)
       (easy-menu-change '("Edit") (car facemenu-menu) (cdr facemenu-menu))
-    (define-key global-map [C-down-mouse-2] 'facemenu-menu))
-  (if facemenu-key (define-key global-map facemenu-key 'facemenu-keymap)))
+    (define-key global-map [C-down-mouse-2] 'facemenu-menu)))
 
 (fset 'facemenu-region-active-p
       (if (string-match "XEmacs" emacs-version)

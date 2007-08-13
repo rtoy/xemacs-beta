@@ -2204,7 +2204,7 @@ See the documentation for vm-mode for more information." t nil)
 
 (autoload (quote vm-mode) "vm-startup" "Major mode for reading mail.
 
-This is VM 6.26.
+This is VM 6.27.
 
 Commands:
    h - summarize folder contents

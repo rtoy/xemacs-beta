@@ -63,8 +63,8 @@
   "Face used for unimportant files."
   :group 'dired)
 
-(defface dired-face-permissions '((t (:background "grey75")
-				     (:foreground "black")))
+(defface dired-face-permissions '((t (:background "grey75"
+				      :foreground "black")))
   "Face used for interactive permissions."
   :group 'dired)
 

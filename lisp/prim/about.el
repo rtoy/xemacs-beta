@@ -1122,6 +1122,7 @@
 	  Fred Appelman <Fred.Appelman@cv.ruu.nl>
 	  Erik \"The Pope\" Arneson <lazarus@mind.net>
 	  Tor Arntsen <tor@spacetec.no>
+	  Marc Aurel <4-tea-2@bong.saar.de>
 	  Larry Auton <lda@control.att.com>
 	  Oswald P. Backus IV <backus@altagroup.com>
 	  Mike Battaglia <mbattagl@dsccc.com>
@@ -1169,6 +1170,7 @@
 	  Holger Franz <hfranz@physik.rwth-aachen.de>
 	  Benjamin Fried <bf@morgan.com>
 	  Barry Friedman <friedman@nortel.ca>
+	  Kazuyoshi Furutaka <furutaka@Flux.tokai.jaeri.go.jp>
 	  Lew Gaiter III <lew@StarFire.com>
 	  Itay Gat <itay@cs.huji.ac.il>
 	  Tim Geisler <Tim.Geisler@informatik.uni-muenchen.de>
@@ -1176,6 +1178,7 @@
 	  Christian F. Goetze <cg@bigbook.com>
 	  Yusuf Goolamabbas <yusufg@iss.nus.sg>
 	  Wolfgang Grieskamp <wg@cs.tu-berlin.de>
+	  John Griffith <griffith@sfs.nphil.uni-tuebingen.de>
 	  James Grinter <jrg@demon.net>
 	  Ben Gross <bgross@uiuc.edu>
 	  Dirk Grunwald <grunwald@foobar.cs.Colorado.EDU>
@@ -1205,6 +1208,7 @@
 	  Philip Johnson <johnson@uhics.ics.Hawaii.Edu>
 	  J. Kean Johnston <jkj@paradigm-sa.com>
 	  Andreas Kaempf <andreas@sccon.com>
+	  Yoshiaki Kasahara <kasahara@nc.kyushu-u.ac.jp>
 	  Amir Katz <amir@ndsoft.com>
 	  Doug Keller <dkeller@vnet.ibm.com>
 	  Hunter Kelly <retnuh@corona>
@@ -1225,6 +1229,7 @@
 	  Christian Limpach <Christian.Limpach@nice.ch>
 	  Markus Linnala <maage@b14b.tupsu.ton.tut.fi>
 	  Robert Lipe <robertl@arnet.com>
+	  Derrell Lipman <derrell@vis-av.com>
 	  Damon Lipparelli <lipp@aa.net>
 	  Hamish Macdonald <hamish@bnr.ca>
 	  Ian MacKinnon <imackinnon@telia.co.uk>
@@ -1246,6 +1251,7 @@
 	  Heiko Muenkel <muenkel@tnt.uni-hannover.de>
 	  Arup Mukherjee <arup+@cs.cmu.edu>
 	  Colas Nahaboo <Colas.Nahaboo@sophia.inria.fr>
+	  TSUTOMU NAKAMURA <tsutomu@rs.kyoto.omronsoft.co.jp>
 	  Lynn D. Newton <lynn@ives.phx.mcd.mot.com>
 	  Casey Nielson <knielson@joule.elee.calpoly.edu>
 	  Georg Nikodym <Georg.Nikodym@canada.sun.com>
@@ -1295,6 +1301,7 @@
 	  Anders Stenman <stenman@isy.liu.se>
 	  Jason Stewart <jasons@cs.unm.edu>
 	  Rick Tait <rickt@gnu.ai.mit.edu>
+	  Samuel Tardieu <sam@inf.enst.fr>
 	  James Thompson <thompson@wg2.waii.com>
 	  Raymond L. Toy <toy@rtp.ericsson.se>
 	  Remek Trzaska <remek@npac.syr.edu>
@@ -1309,6 +1316,7 @@
 	  Rich Williams <rdw@hplb.hpl.hp.com>
 	  David C Worenklein <dcw@gcm.com>
 	  Takeshi Yamada <yamada@sylvie.kecl.ntt.jp>
+	  Katsumi Yamaoka <yamaoka@ga.sony.co.jp>
 	  Jason Yanowitz <yanowitz@eternity.cs.umass.edu>
 	  La Monte Yarroll <piggy@hilbert.maths.utas.edu.au>
 	  Blair Zajac <blair@olympia.gps.caltech.edu>

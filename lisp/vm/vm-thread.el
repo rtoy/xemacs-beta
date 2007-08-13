@@ -149,14 +149,18 @@ will be visible."
 
 (defun vm-thread-mark-for-summary-update (message-list)
   (while message-list
-    (vm-mark-for-summary-update (car message-list) t)
-    (vm-set-thread-list-of (car message-list) nil)
-    (vm-set-thread-indentation-of (car message-list) nil)
-    (vm-thread-mark-for-summary-update
-     (get (intern (vm-su-message-id (car message-list))
-		  vm-thread-obarray)
-	  'children))
-    (setq message-list (cdr message-list))))
+    ;; if thread-list is null then we've already marked this
+    ;; message, or it doesn't need marking.
+    (if (null (vm-thread-list-of (car message-list)))
+	nil
+      (vm-mark-for-summary-update (car message-list) t)
+      (vm-set-thread-list-of (car message-list) nil)
+      (vm-set-thread-indentation-of (car message-list) nil)
+      (vm-thread-mark-for-summary-update
+       (get (intern (vm-su-message-id (car message-list))
+		    vm-thread-obarray)
+	    'children))
+      (setq message-list (cdr message-list)))))
 
 (defun vm-thread-list (message)
   (let ((done nil)

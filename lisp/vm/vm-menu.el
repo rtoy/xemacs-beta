@@ -846,7 +846,8 @@ set to the command name so that window configuration will be done."
 	 ;; selection.  This will cause the command loop to
 	 ;; resume which might undo what set-buffer does.
 	 (select-window (event-window event))
-	 (and (event-point event) (goto-char (event-point event))))
+	 (and (event-closest-point event)
+	      (goto-char (event-closest-point event))))
 	((vm-menu-fsfemacs-menus-p)
 	 (set-buffer (window-buffer (posn-window (event-start event))))
 	 (goto-char (posn-point (event-start event))))))

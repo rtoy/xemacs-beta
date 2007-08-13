@@ -276,7 +276,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 6.26.
+This is VM 6.27.
 
 Commands:
    h - summarize folder contents
