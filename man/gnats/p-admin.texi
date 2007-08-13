@@ -1,0 +1,1262 @@
+@node Management
+@chapter @sc{gnats} Administration
+@cindex administering @sc{gnats}
+@cindex managing @sc{gnats}
+@cindex GNATS management
+@cindex duties for @code{gnats-admin}
+
+In daily usage, @sc{gnats} is self-maintaining.  However, there are
+various administrative duties which need to be performed periodically:
+
+@table @emph
+@item emptying the @code{pending} directory
+@cindex emptying the @code{pending} directory
+If a Problem Report arrives with a @samp{>Category:} value that is
+unrecognized by the @file{categories} file, or if that field is missing,
+@sc{gnats} places the PR in the @w{@file{pending}} directory
+(@pxref{Locations,,Where the tools and utilities reside}).  @sc{gnats}
+has no way of knowing which subdirectory the PR should be filed under.
+@sc{gnats} sends a notice to the @code{gnats-admin} and to the party
+responsible for that submitter (as listed in the @file{submitters} file)
+when this occurs.
+
+To file these PRs, simply use @code{edit-pr} to repair the problematic
+fields in each file in the @file{pending} directory.  Be sure to change
+the @samp{>Category:} field of the PR from @samp{pending} to an
+appropriate category.  In many cases the culprit is simply a
+typographical error, although it may be necessary sometimes to contact
+the submitter of the PR to decipher her or his intentions.
+
+Should you run out of disk space, there may be an empty PR in the
+@file{pending} directory.  In that case, look in the file
+@w{@file{@var{GNATS_ROOT}/gnats-adm/bug.log}}, which should still contain
+the full message that was submitted.
+
+@item adding new categories
+@cindex adding a problem category
+@cindex @code{mkcat}
+To add a new category, simply insert a new line in the
+@w{@file{categories}} file and then run the program @code{mkcat}.
+
+@emph{Note}: this causes all category lists for @code{send-pr} (except
+the one on the local machine) to become outdated.  Copy the new list on
+to every machine on your network that has @code{send-pr} installed, and
+make sure you advise remote submitters that the category list has
+changed.  @xref{mkcat,,Adding a problem category}.  Also
+@ref{categories,,The @code{categories} file}.
+
+@item removing categories
+@cindex removing a problem category
+@cindex @code{rmcat}
+To remove a category, you need to make sure the relevant subdirectory is
+empty (in other words, make sure no PRs exist for the category you wish
+to remove).  You can then remove the category listing from the
+@file{categories} file, and invoke 
+
+@smallexample
+rmcat @var{category@dots{}}
+@end smallexample
+
+@noindent
+to remove @var{category} (any number of categories may be specified on
+the command line to @code{rmcat}, so long as they abide by the above
+constraints).
+
+@emph{Note}: this causes all category lists for @code{send-pr} (except
+the one on the local machine) to become outdated.  Copy the new list on
+to every machine on your network that has @code{send-pr} installed, and
+make sure you advise remote submitters that the category list has
+changed.  @xref{rmcat,,Removing a problem category}.  Also
+@ref{categories,,The @code{categories} file}.
+
+@item adding and removing maintainers
+@cindex adding and removing maintainers
+Edit the @file{responsible} file to add a new maintainer or to remove an
+existing maintainer.  @xref{responsible,,The @code{responsible} file}.
+
+@item building a distribution of @code{send-pr}
+@cindex building a distribution of @code{send-pr}
+@cindex @code{mkdist}
+You can build a distribution of @code{send-pr} which contains valid
+information for your site by invoking the command @code{mkdist}.
+@xref{mkdist,,Configuring @code{send-pr} for the outside world}.  You
+can then distribute your customized @w{@code{send-pr}} to your
+customers, friends, relatives, etc., so that they can submit Problem
+Reports to your database.
+
+@item building a new index
+@cindex building a new index
+@cindex @code{gen-index}
+If your index becomes corrupted, or if you wish to generate a new one
+for some reason, use the program @code{gen-index}
+(@pxref{gen-index,,Regenerating the index}).
+
+@item pruning log files
+@cindex pruning log files
+Log files often grow to unfathomable proportions.  As with gardening, it
+is best to prune these as they grow, lest they take over your disk and
+leave you with no room to gather more Problem Reports.  If you keep log
+files, be sure to keep an eye on them.  (@xref{Aliases,,Setting up mail
+aliases}.)
+@c "gather ye rosebugs while ye may..."
+
+@item BACKING UP YOUR DATA
+@cindex BACK UP YOUR DATA
+Any database is only useful if its data remains uncorrupted and safe.
+Performing periodic backups ensures that problems like disk crashes and
+data corruption are reversible.
+
+@end table
+
+@xref{Locations,,Where @sc{gnats} lives}.
+
+@menu
+* Networked management::  Managing GNATS over a network
+* Local configuration::   Changing your local configuration
+* Admin files::           Administrative data files
+* Admin utils::           Administrative utilities
+* Internal utils::        Internal utilities
+@end menu
+
+@node Networked management
+@section Managing @sc{gnats} over a network
+@cindex networked management
+@cindex managing @sc{gnats} over a network
+
+If you have installed the @sc{gnats} user tools on machines around your
+local network, there are a few things you need to remember.
+
+@code{mkcat} and @code{rmcat} do not update the categories list for
+other machines on your network which have @code{send-pr} installed,
+unless those machines share @var{prefix} with the host machine).  To
+update these lists, copy the @code{send-pr} categories list to each of
+the other hosts.  This categories list is
+@w{@file{@var{prefix}/lib/gnats/@var{site}}}, where @var{site} is the
+name tag for your local site, as specified in the @file{config} file as
+@samp{GNATS_SITE} (@pxref{config,,The @code{config} file}).
+
+It is also important to note that only your local @code{send-pr} has
+access to this new information; any copies of @code{send-pr} which you
+have distributed to outside submitters now have outdated category lists.
+You must either contact your submitters and instruct them to update
+their copy of the categories list, which they installed in
+@w{@file{@var{prefix}/lib/gnats/@var{support-site}}} from the
+distribution you provided, or you must build another distribution of
+@code{send-pr} with this new information and redistribute it.
+
+If you need to use @sc{gnats} utilities, like @code{query-pr} and
+@code{edit-pr}, on other systems besides the one where @sc{gnats} itself
+resides, @pxref{Installing tools,,Installing the user tools}.
+
+@c FIXME - anything else?
+
+@node Local configuration
+@section Changing your local configuration
+@cindex local configuration
+@cindex changing your local configuration
+
+@xref{Locations,,Where @sc{gnats} lives}.
+
+Your local configuration is determined by the data files in the
+directory @w{@file{@var{GNATS_ROOT}/gnats-adm}}.  These can be altered at
+any time by editing the pertinent file.
+
+@table @code
+@cindex @code{config} file
+@item config
+Variables which control certain behavior.  @xref{config,,The
+@code{config} file}.  Behaviors you can change here include
+
+@itemize @bullet
+@item 
+The address where your site receives Problem Reports.
+
+@item
+The address of the @sc{gnats} administrator.
+
+@item
+The nametag for your Support Site (your organization, company,
+group, etc.).
+
+@item
+The nametag for your local Submitter Site.
+
+@item
+The default release for your site.
+
+@item
+The default value for the @samp{>Organization:} field (this value
+appears as the default when you run @code{send-pr}).
+
+@item
+Whether or not to remind maintainers if a requisite time period has
+passed before they change the state of a Problem Report to
+@samp{analyzed}.  (Also see @ref{submitters,,The @code{submitters}
+file}, and @ref{at-pr,,Timely Reminders}.
+
+@item
+Whether or not to send an automatic acknowledgement to the originator of
+a problem report when the @sc{gnats} first receives the PR. 
+
+@item
+The value @sc{gnats} assigns to PRs which come in with missing or unknown
+values for the @samp{>Submitter-Id:} field.
+
+@item
+Whether or not @sc{gnats} should retain @samp{Received:}
+mail headers from incoming mail.
+
+@item
+Whether or not @sc{gnats} is in a mode for debugging.
+
+@item
+The values which define business hours.
+@end itemize
+
+@cindex @code{categories} file
+@item categories
+The list of categories that @sc{gnats} accepts as valid for the
+@samp{>Category:} field, and the maintainers responsible for each
+category.  Update this file whenever you have a new category, or
+whenever a category is no longer valid.  You must also update this file
+whenever responsiblility for a category changes, or if a maintainer is
+no longer valid.  @xref{categories,,The @code{categories} file}.  Also
+see @ref{mkcat,,Adding a new problem category}, and @ref{rmcat,,Removing
+a problem category}.
+
+@cindex @code{responsible} file
+@item responsible
+The list of maintainers.  Update this file whenever you have a new
+maintainer, or whenever a maintainer is no longer valid.
+@xref{responsible,,The @code{responsible} file}.
+
+@cindex @code{submitters} file
+@item submitters
+The list of Submitter Sites from whom @sc{gnats} accepts Problem Reports.
+This file is mandatory, although the feature it provides is not; see
+@ref{submitters,,The @code{submitters} file}.
+@end table
+
+@menu
+* default behavior::
+* config::          The `config' file
+* categories::      The `categories' file
+* responsible::     The `responsible' file
+* submitters::      The `submitters' file
+@end menu
+
+@node default behavior
+@subsection Default behavior
+
+The default behavior for @sc{gnats} is as follows:
+
+@cindex default behavior
+@itemize @bullet
+@item 
+The address where your site receives Problem Reports is @samp{bugs} (a
+local address).
+
+@item
+The address of the @sc{gnats} administrator is @samp{gnats-admin} (a local
+address).
+
+@item
+The nametag for your Support Site (your organization, company, group,
+etc.) is the second-to-last field in your domain name.
+
+@item
+The nametag for your local Submitter Site is the nametag for your
+Support Site.
+
+@item
+The default release for your site is @samp{unknown-1.0}.
+
+@item
+The default value for the @samp{>Organization:} field (this value appears as the
+default when you run @code{send-pr}) is the nametag for your Support
+Site.
+
+@item
+@sc{gnats} reminds maintainers if a requisite time period has passed
+before they change the state of a Problem Report to @samp{analyzed}.
+
+@item
+An automatic acknowledgement is sent to the originator of a problem
+report when the @sc{gnats} first receives the PR.
+
+@item
+The value @sc{gnats} assigns to the @samp{>Submitter-Id:} field in PRs
+which arrive with missing or unknown values for that field is
+@samp{unknown}.
+
+@item
+@samp{Received@dots{}} mail headers are retained.
+
+@item
+@sc{gnats} is not in a debugging mode.
+
+@item
+@dfn{business hours} are defined as 8:00am to 5:00pm, Monday through
+Friday.
+@end itemize
+
+
+@node config
+@subsection The @code{config} file
+@cindex @code{config} file
+
+Much of the behavior @sc{gnats} exhibits depends on the values of fields
+in the file @w{@file{@var{GNATS_ROOT}/gnats-adm/config}}.  The
+@file{config} file contains a list of variables (using Bourne-shell
+syntax) which control the following behavior.  These values can be
+changed at any time; the new values take effect for all subsequent
+iterations of the tools.
+
+@table @code
+@cindex @code{GNATS_ADDR}
+@item GNATS_ADDR="@var{address}"
+The address where your site receives Problem Reports.  This address is
+aliased in the file @w{@file{/etc/aliases}} so that it directs incoming
+mail into @code{queue-pr} (@pxref{Installing utils,,Installing the
+utilities}).
+
+The default is @samp{bugs} (a local address).
+
+@cindex @code{GNATS_ADMIN}
+@item GNATS_ADMIN="@var{address}"
+The address of the @sc{gnats} administrator.  Normally this is set to
+@samp{gnats-admin}, which is an alias in @file{/etc/aliases} that points
+toward the person responsible for administrating @sc{gnats}.
+@xref{Installing utils,,Installing the utilities}.
+
+The default is @samp{gnats-admin} (a local address).
+
+@cindex @code{GNATS_SITE}
+@item GNATS_SITE="@var{site}"
+The nametag for your Support Site (your organization, company, group,
+etc.).  This nametag should also appear in the @file{submitters} file,
+so that users at your site can submit Problem Reports locally.
+
+@var{site} is also used as the name of the file containing a valid
+category list for your site.  This file is installed locally as
+@w{@file{@var{prefix}/lib/gnats/@var{site}}}.  @emph{Warning:} if you
+change this variable after @sc{gnats} is installed, you must also change
+the name of this file, as well as the name of the alias for your local
+submitters (@pxref{Aliases,,Setting up mail aliases}).
+
+The default is the second-to-last field in your domain name.  For
+example, if your domain name is @w{@samp{unleaded.truckstop.org}}, your
+default @var{site} is @w{@samp{truckstop}}.
+
+@cindex @code{SUBMITTER}
+@item SUBMITTER="@var{submitter-id}"
+The nametag for your local Submitter Site (this value appears as the
+default value for @samp{>Submitter-Id} when you run @code{send-pr}).
+Even though you are a Support Site, if you submit Problem Reports to
+your own organization you become a Submitter Site.  The value
+@var{submitter-id} is the default value for the @samp{>Submitter-Id:}
+field that your maintainers see when they submit Problem Reports
+locally.
+
+The default is the value of @samp{GNATS_SITE}.
+
+@cindex @code{DEFAULT_RELEASE}
+@item DEFAULT_RELEASE="@var{release}"
+The default release for your site (this value appears as the default
+value for @samp{>Release:} when you run @code{send-pr}).
+
+The default is @samp{unknown-1.0}.
+
+@cindex @code{DEFAULT_ORGANIZATION}
+@item DEFAULT_ORGANIZATION="@var{text}"
+The default value for the @samp{>Organization:} field (this value
+appears as the default when you run @code{send-pr}).
+
+The default is the value of @samp{GNATS_SITE}.
+
+@c FIXME - where else to mention this stuff?
+@cindex @code{NOTIFY}
+@item NOTIFY=@var{boolean}
+Determines whether or not to remind maintainers if a requisite time
+period has passed before they change the state of a Problem Report to
+@samp{analyzed}.  This feature uses the program @code{at-pr}; see
+@ref{at-pr,,Timely Reminders}.
+
+This requisite time is determined for each submitter individually; see
+@ref{submitters,,The @code{submitters} file}.  The time is measured in
+@dfn{business hours}, which by default are 8:00am to 5:00pm, Monday
+through Friday.  Business hours can be redefined by changing the
+variables @code{BDAY_START}, @code{BDAY_END}, @code{BWEEK_START}, and
+@code{BWEEK_END} in the @file{config} file (see below).
+
+If @var{boolean} is @samp{1}, this feature is active.  If @var{boolean}
+is @samp{0}, the feature is turned off.  The default value for
+@samp{NOTIFY} is @samp{1}.
+
+@cindex @code{ACKNOWLEDGE}
+@item ACKNOWLEDGE=@var{boolean}
+Determines whether or not to send an automatic acknowledgement to the
+originator of a problem report when the @sc{gnats} first receives the PR.
+
+If @var{boolean} is @samp{1}, this feature is active.  If @var{boolean}
+is @samp{0}, the feature is turned off.  The default for
+@samp{ACKNOWLEDGE} is @samp{1}.
+
+The acknowledgment is of the form:
+
+@smallexample
+@group
+To: @var{your-address}
+From: gnats
+Subject: Re: @var{category}/@var{gnats-id}:@var{Synopsis}
+In-Reply-To: Your message of @var{date}
+
+Thank you very much for your problem report.
+It has the internal identification: @var{category}/@var{gnats-id}
+The individual assigned to look at your bug is:
+     @var{responsible}
+
+Category:     @var{category of the PR}
+Responsible:  @var{responsible}
+Synopsis:     @var{Synopsis from submitted PR}
+Arrival-Date: @var{arrival date}
+@end group
+@end smallexample
+
+@cindex @code{DEFAULT_SUBMITTER}
+@item DEFAULT_SUBMITTER="submitter-id"
+The value @sc{gnats} assigns to PRs which come in with missing or unknown
+values for the @samp{>Submitter-Id:} field.  This value must also appear
+in the @file{submitters} file; see @ref{submitters,,The
+@code{submitters} file}.
+
+@cindex disabling @var{submitter-id}
+To disable the feature of @sc{gnats} which tracks the
+@samp{>Submitter-Id:}, simply alter the @file{submitters} file to only
+contain the @var{submitter-id} value which appears in
+@w{@code{DEFAULT_SUBMITTER}}, and and instruct your submitters to ignore
+the field.
+
+The default value for @samp{DEFAULT_SUBMITTER} is @samp{unknown}.
+
+@cindex @code{KEEP_RECEIVED_HEADERS}
+@item KEEP_RECEIVED_HEADERS=@var{boolean}
+Determines whether or not @sc{gnats} should retain the
+@w{@samp{Received:}} mail headers from incoming mail.  These headers
+often take up a lot of space, and they are seldom used.
+
+If @var{boolean} is @samp{1}, this feature is active.  If @var{boolean}
+is @samp{0}, the feature is turned off.  The default value for
+@samp{KEEP_RECEIVED_HEADERS} is @samp{1}.
+
+@item DEBUG_MODE=@var{boolean}
+Determines whether or not @sc{gnats} is operating in a mode for
+debugging.  When @var{boolean} is @samp{1}, @sc{gnats} fowards all mail
+to the @sc{gnats} administrator, @w{@code{gnats-admin}}.
+
+@cindex business hours
+@item BDAY_START=@var{integer}
+@itemx BDAY_END=@var{integer}
+@itemx BWEEK_START=@var{integer}
+@itemx BWEEK_END=@var{integer}
+The definition of @dfn{business hours}.  These values are only used if
+@code{NOTIFY} is set to @samp{1} in the @file{config} file (see above).
+
+By default, business hours are 8:00am to 5:00pm Monday through Friday,
+local time.
+
+@table @code
+@item BDAY_START=@var{integer}
+Defines the hour of the day when business hours begin.  @var{integer}
+values must fall between @samp{0} (midnight) and @samp{23} (11:00pm).
+The default is @samp{8} (8:00am).
+
+@item BDAY_END=@var{integer}
+Defines the hour of the day when business hours end.  @var{integer}
+values must fall between @samp{0} (midnight) and @samp{23} (11:00pm).
+The default is @samp{17} (5:00pm).
+
+@item BWEEK_START=@var{integer}
+Defines the beginning day of the business week.  @var{integer} values
+must fall between @samp{0} (Sunday) and @samp{6} (Saturday).  The
+default is @samp{1} (Monday).
+
+@item BWEEK_END=@var{integer}
+Defines the ending day of the business week.  @var{integer} values must
+fall between @samp{0} (Sunday) and @samp{6} (Saturday).  The default is
+@samp{5} (Friday).
+@end table
+
+@end table
+
+@node categories
+@subsection The @code{categories} file
+@cindex @code{categories} file
+
+The @file{categories} file contains a list of problem categories,
+specific to your site, which @sc{gnats} tracks.  This file also matches
+responsible people with these categories.  You must edit this file
+initially, creating valid categories and then running @code{mkcat} to
+create the corresponding subdirectories of @w{@code{@var{GNATS_ROOT}}}
+and update the valid categories list for @w{@code{send-pr}}.  For
+instructions on running @code{mkcat}, see @ref{mkcat,,Adding a problem
+category}.
+
+To create a new category, log in as @sc{gnats}, add a line to this file,
+and run @code{mkcat}.  Lines beginning with @samp{#} are ignored.
+
+A line in the @file{categories} file consists of four fields delimited
+by colons, as follows:
+
+@smallexample
+@var{category}:@var{description}:@var{responsible}:@var{notify}
+@end smallexample
+
+@noindent
+@table @var
+@item category
+A unique category name, made up of text characters.  This name cannot
+contain spaces or any of the following characters:
+
+@smallexample
+! $ & * ( ) @{ @} [ ] ` ' " ; : < > ~
+@end smallexample
+
+@noindent
+Ideally, category names should not contain commas or begin with periods.
+Each line has a corresponding subdirectory in the main @sc{gnats}
+directory (@var{GNATS_ROOT}).
+
+@ignore
+It is possible that if you set up the database with categories
+which contain characters that describe subdirectories, such as a slash
+(@key{/}) in @sc{Unix}, you could effectively build subdirectories
+within each category, and @sc{gnats} would read and write to these
+files as it would any other.  This is not recommended.  It doesn't
+break any of the existing tools, and is a fine way to keep category
+directories from growing too large.  It is, however, quite untested.
+@end ignore
+
+@item description
+A terse textual description of the category.
+
+@item responsible
+The name tag of the party responsible for this category of problems, as
+listed in the @file{responsible} file (@pxref{responsible,,The
+@code{responsible} file}).
+
+@item notify
+One or more other parties which should be notified when a Problem Report
+with this category arrives, such as a project manager, other members of
+the same project, other interested parties, or even log files.  These
+should be separated with commas.
+@end table
+
+A good strategy for configuring this file is to have a different
+category for each product your organization supports or wishes to track
+information for, or perhaps with sub-categories within each category.
+For instance, if you wish to track documentation problems in a variety of
+areas, you could have entries such as
+
+@smallexample
+doc:General Doc Questions:myboss:me,barney
+doc-rock:Doc for ROCK program:me:myboss
+doc-stone:Docs for STONE utils:barney:fred
+doc-local:in-house documentation:me:doc-local-log
+@end smallexample
+
+In the above example, the nametags @samp{myboss}, @samp{me},
+@samp{fred}, and @samp{barney} must be defined in the @file{responsible}
+file (@pxref{responsible,,The @code{responsible} file}).
+
+Problem Reports with a category of @samp{doc} are sent to the local mail
+address (or alias) @samp{myboss}, and also sent to the addresses
+@samp{me} and @samp{barney}.  PRs with a category of @samp{doc-rock} are
+sent to the local addresses @samp{me} and @samp{myboss} only, while PRs
+with the category @samp{doc-stone} are sent to @samp{fred} as well as to
+@samp{barney}.  PRs with a category of @samp{doc-local} are sent only to
+@samp{me}, and are also filed in @code{doc-local-log} (in this case, an
+alias should be set up in @file{/etc/aliases} to reflect a location for
+the log file, such as @w{@samp{doc-local-log: /users/me/local-log}}).
+
+Whenever you add a new category, be sure to run @code{mkcat} to create a
+subdirectory for it and update the local categories list.
+
+Only one category must be present for @sc{gnats} to function:
+
+@smallexample
+pending:Category for faulty PRs: gnats-admin:
+@end smallexample
+
+@cindex @code{pending} file
+The @file{pending} directory is created automatically when you run
+@w{@samp{make install}} (@pxref{Configure and make,,Configuring and
+compiling the software}).
+
+@node responsible
+@subsection The @code{responsible} file
+@cindex @code{responsible} file
+
+This file contains a list of the responsible parties.  Lines beginning
+with @samp{#} are ignored.  Each entry contains three fields, separated
+by colons:
+
+@smallexample
+@var{responsible}:@var{full-name}:@var{mail-address}
+@end smallexample
+
+@noindent
+@table @var
+@item responsible
+A name-tag description of the party in question, such as her or his user
+name, or the name of the group.  This name is listed in the PR in
+the @samp{>Responsible:} field.
+
+@item full-name
+The full name of the party (``Charlotte Bronte''; ``Compiler Group'').
+
+@item mail-address
+The full, valid mail address of the party.  This field is only necessary
+if the responsible party has no local mail address or alias.
+@end table
+
+@noindent
+A sample @file{responsible} listing might be:
+
+@smallexample
+ren:Ren Hoek:
+stimpy:Stimpson J. Cat:stimpy@@lederhosen.org
+@end smallexample
+
+Here, @code{ren} is a local user.  @code{stimpy} is remote, so his full
+address must be specified.
+
+The following entry must be present for @sc{gnats} to function:
+
+@smallexample
+gnats-admin: GNATS administrator:
+@end smallexample
+
+@noindent
+(@code{gnats-admin} is a mail alias, so for this purpose
+@code{gnats-admin} is a local address.)
+
+@node submitters
+@subsection The @code{submitters} file
+@cindex @code{submitters} file
+
+This is a database of sites which submit bugs to your support site.  It
+contains six fields delineated by colons.  Lines beginning with @samp{#}
+will be ignored.
+
+Entries are of the format:
+
+@smallexample
+@var{submitter-id}:@var{name}:@var{type}:@var{resp-time}:@var{contact}:@var{notify}
+@end smallexample
+
+@noindent
+@table @var
+@item submitter-id
+A unique identifier for a specific site or other entity who submits
+Problem Reports.
+
+@item name
+A textual description of this entity.
+
+@item type
+Optional description for the type of relationship this submitter to your
+support site.  This could indicate a contract type, a level of
+expertise, etc., or it can remain blank.
+
+@item resp-time
+Optional quoted response time, in @dfn{business hours}.  @sc{gnats} is
+capable of reminding responsible parties when Problem Reports marked
+with a @samp{>Severity} value of @samp{critical}, or those with a
+@samp{>Severity} of @samp{serious} and a @samp{>Priority} value of
+@samp{high}, are neglected for a certain period.  This argument defines
+that response period for each @var{submitter-id}.  Business hours are
+defined by default as 8:00am to 5:00pm, Monday through Friday.  For
+example, three business days would be equal to 24 business hours.
+
+This function is active if the @code{NOTIFY} field is defined as
+@samp{1} in the @file{config} file (@pxref{Local configuration,,Changing
+your local configuration}).  If @code{NOTIFY} is @samp{0}, this field is
+ignored.  For information on @code{at-pr}, the program which sends out
+this reminder, see @ref{at-pr,,Timely Reminders}.
+
+@item contact
+The name tag of the main @dfn{contact} at the Support Site for this
+submitter.  This contact should be in the @file{responsible} file
+(@pxref{responsible,,The @code{responsible} file}).  Incoming bugs from
+@var{submitter} are sent to this contact.  Optionally, this field can be
+left blank.
+
+@item notify
+Any other parties who should receive copies of Problem Reports sent in
+by @var{submitter}.
+@end table
+
+A few example entries in the @file{submitters} file:
+
+@smallexample
+univ-hell: University of Hades:eternal:3:beelzebub:lucifer
+tta: Telephones and Telegraphs of America:support:720:dave:
+@end smallexample
+
+@noindent
+In this example, when a PR comes in from the University of Hades (who
+has an eternal contract), it should have @samp{univ-hell} in its
+@samp{Submitter-Id} field.  This Problem Report goes to @code{beelzebub}
+(who should be in the @file{responsible} file), and if it is not
+analyzed within three business hours a reminder message is sent.
+@code{lucifer} also receives a copy of the bug, and a copy of the
+reminder message as well (if it is sent).  When Telephones and
+Telegraphs of America utilizes their support contract and submits a bug,
+a copy is sent only to @code{dave}, who has 720 business hours to return
+an analysis before a reminder is sent.
+
+@cindex disabling @var{submitter-id}
+To disable the feature of @sc{gnats} which tracks the
+@samp{>Submitter-Id:}, simply alter the @file{submitters} file to only
+contain the @var{submitter-id} value which appears as the
+@samp{DEFAULT_SUBMITTER} value in the @file{config} file
+(@pxref{config,,The @code{config} file}), and instruct your submitters
+to ignore the field.
+
+@node Admin files
+@section Administrative data files
+@cindex admin files
+@cindex files used for @sc{gnats} administration
+
+The following files are located in @file{@var{GNATS_ROOT}/gnats-adm},
+where @var{GNATS_ROOT} is the resident directory of @sc{gnats}.  These
+files are maintained by @sc{gnats}; you should never touch them.
+
+@menu
+* index file::      The `index' file
+* current file::    The `current' file
+@end menu
+
+@node index file
+@subsection The @code{index} file
+@cindex @code{index} file
+
+The index is used to accelerate searches on the database by
+@code{query-pr} and @code{edit-pr}.  This file is not created until the
+first PR comes in.  It is then kept up to date by @sc{gnats}; you should
+never touch this file.
+
+Any searches on subjects contained in the index are much faster than
+searches which depend on data not in the index.  The index contains
+single-line entries for the following fields, in order, separated by
+colons (@samp{:}) except for @samp{>Category:} and @samp{>Number:},
+which are separated by a slash (@samp{/}) (the @samp{>} and @samp{:}
+Problem Report fieldname delimiters have been removed for the sake of
+brevity and readability)::
+
+@smallexample
+Category       Number         Submitter-Id
+Responsible    State          Confidential
+Severity       Priority
+@end smallexample
+
+To see an example index, run @code{gen-index} without any options
+(@pxref{gen-index,,Regenerating the index}).
+
+@node current file
+@subsection The @code{current} file
+@cindex @code{current} file
+
+This file contains the last serial number assigned to an incoming PR.
+It is used internally by @sc{gnats}; you need never touch this file.
+
+@node Admin utils
+@section Administrative utilities
+@cindex administrative utilities
+
+These tools are used by the @sc{gnats} administrator as part of the
+periodic maintenance and configuration of @sc{gnats}.
+@xref{Management,,@sc{gnats} Administration}.
+
+@menu
+* mkcat::       Adding a problem category
+* rmcat::       Removing a problem category
+* gen-index::   Regenerating the index
+* mkdist::      Configuring send-pr for the outside world
+@end menu
+
+@node mkcat
+@subsection Adding a problem category
+@cindex @code{mkcat}
+@cindex adding a problem category
+@cindex new problem categories
+@cindex @code{categories} file
+
+To add new categories to the database:
+
+@enumerate 1
+@item 
+Add a line to the @file{categories} file under
+@w{@file{@var{GNATS_ROOT}/gnats-adm}} for each new category.
+@xref{categories,,The @code{categories} file}.
+
+@item
+Run @code{mkcat}.  @code{mkcat} creates a directory under
+@w{@var{GNATS_ROOT}} for any new categories which appear in the
+@file{categories} file.  @code{mkcat} also recreates the list of valid
+categories for both your locally installed @code{send-pr} and for the
+@code{send-pr} distribution template in
+@w{@file{@var{prefix}/lib/gnats/dist}} (@pxref{Locations,,Where @sc{gnats}
+lives}.
+@end enumerate
+
+@emph{Note:} @code{mkcat} does not update the categories list for other
+machines on your network which have @code{send-pr} installed (unless
+the two machines share the directory @var{prefix}).
+@xref{Networked management,,Managing @sc{gnats} over a network}.
+
+It is also important to note that only your local @code{send-pr} has
+access to this new information; any copies of @code{send-pr} which you
+have distributed to outside submitters now have outdated category lists.
+You must either contact your submitters and instruct them to update
+their copy of the categories list, which they installed in
+@w{@file{@var{prefix}/lib/gnats/@var{support-site}}} (@emph{Note:} the
+value for @var{prefix} may be different from yours) from the
+distribution you provided, or you must build another distribution of
+@code{send-pr} with this new information and redistribute it
+(@pxref{mkdist,,Configuring @code{send-pr} for the outside world}).
+
+@node rmcat
+@subsection Removing a problem category
+@cindex @code{rmcat}
+@cindex removing a problem category
+@cindex @code{categories} file
+
+To remove a category from the database:
+
+@enumerate 1
+@item
+Remove the Problem Reports from the subdirectories corresponding to the
+categories you wish to remove, or assign the PRs to new categories.  All
+PRs for a given category reside in
+@w{@file{@var{GNATS_ROOT}/@var{category}}}.  Make sure you do this for
+each category you wish to remove.
+
+@item
+Run @code{rmcat} using
+
+@smallexample
+rmcat @var{category} [ @var{category@dots{}} ]
+@end smallexample
+
+@noindent
+where @var{category} is the category you wish to remove.  You can
+specify as many categories as you wish as long as each category has no
+PRs associated with it.  @code{rmcat} removes the directory under
+@w{@var{GNATS_ROOT}} where the Problem Reports for that category had been
+stored.  @code{rmcat} also deletes the category from the list of valid
+categories for both your locally installed @code{send-pr} and for the
+@code{send-pr} distribution template in
+@w{@file{@var{prefix}/lib/gnats/dist}} (@pxref{Locations,,Where @sc{gnats}
+lives}).
+@end enumerate
+
+@emph{Note:} @code{rmcat} does not update the categories list for other
+machines on your network which have @code{send-pr} installed.
+@xref{Networked management,,Managing @sc{gnats} over a network}.
+
+It is also important to note that only your local @code{send-pr} has
+access to this new information; any copies of @code{send-pr} which you
+have distributed to outside submitters now have outdated category lists.
+You must either contact your submitters and instruct them to update
+their copy of the categories list, which they installed in
+@w{@file{@var{prefix}/lib/gnats/@var{support-site}}} (@emph{Note:} the
+value for @var{prefix} may be different from yours) from the
+distribution you provided, or you must build another distribution of
+@code{send-pr} with this new information and redistribute it
+(@pxref{mkdist,,Configuring @code{send-pr} for the outside world}).
+
+@c FIXME!  Should we suggest this?
+@ignore
+To reassign a group of categories....
+
+(The idea is to call "query-pr --full", run the output through sed, and
+then throw it at pr-edit.  This approach is untested, and may be unhealthy.)
+
+@end ignore
+
+@node gen-index
+@subsection Regenerating the index
+@cindex @code{gen-index}
+@cindex @code{index} file
+
+If your @file{index} file becomes corrupted, or if you need a copy of
+the current index for some reason, use
+
+@smallexample
+gen-index [ -n | --numeric ]
+          [ -d @var{directory} | --directory=@var{directory} ]
+	  [ -c @var{filename} | --catfile=@var{filename} ]
+          [ -o @var{filename} | --outfile=@var{filename} ]
+          [ -h | --help] [ -V | --version ]
+@end smallexample
+
+@noindent
+With no options, @code{gen-index} generates an index that is ordered the
+same as the order of the categories as they appear in the
+@file{categories} file, and prints it to standard output.  The options
+are:
+
+@table @code
+@item -n
+@itemx --numeric
+Sorts index entries numerically.
+
+@item -d @var{directory}
+@itemx --directory=@var{directory}
+Uses @var{directory} as the directory containing the database, by
+default @w{@var{GNATS_ROOT}} (@pxref{Locations,,Where @sc{gnats} lives}).
+
+@item -o @var{filename}
+@itemx --outfile=@var{filename}
+Places output in @var{filename} rather than sending it to standard
+output.
+
+@item -c @var{filename}
+@itemx --catfile=@var{filename}
+Point to @var{filename}, the file listing the valid categories.
+
+@item -h
+@itemx --help
+Prints the usage for @code{gen-index}.
+
+@item -V
+@itemx --version
+Prints the version number for @code{gen-index}.
+@end table
+
+@node mkdist
+@subsection Configuring @code{send-pr} for the outside world
+@cindex configuring @code{send-pr} for the outside world
+@cindex invoking @code{mkdist}
+@cindex using @code{mkdist}
+
+Now that @sc{gnats} is up and running on your system, you probably want
+to distribute @code{send-pr} to all your friends, relatives, enemies,
+etc. so they can more easily submit bugs to your organization.  To do
+this, create a new directory @var{dist-directory} to hold the
+distribution.  Then run the program
+
+@smallexample
+mkdist --release=@var{release} @var{dist-directory}
+@end smallexample
+
+@noindent
+This populates @var{dist-directory} with a full distribution of the
+program @code{send-pr}, including a @file{Makefile} and all the
+@code{send-pr} documentation.  You can then simply package up this
+directory and send it to your bug report submitters.  For example,
+when logged in as @code{gnats} you can do the following:
+
+@smallexample
+mkdir new-dist
+mkdist --release=tools-1.2 new-dist 
+tar cvf send-pr.tar new-dist
+@end smallexample
+
+This creates a file called @file{send-pr.tar} which contains a full
+distribution of @code{send-pr} customized for your site, with a default
+release number of @samp{tools-1.2}.  You can then place this onto a disk
+or tape and send it to your submitters, or instruct your submitters to
+download it using @code{ftp}.
+
+If you only have one submitter, you can set the Submitter ID in the
+send-pr script by specifying the --submitter option to mkdist.  If you
+do this, the submitter will not have to run install-sid.
+
+@node Internal utils
+@section Internal utilities
+@cindex internal utilities
+
+These tools are used internally by @sc{gnats}.  You should never need to
+run these by hand; however, a complete understanding may help you locate
+problems with the @sc{gnats} tools or with your local implementation.
+
+@menu
+* queue-pr::    Handling incoming traffic
+* file-pr::     Processing incoming traffic
+* at-pr::       Timely reminders
+* pr-edit::     The edit-pr driver
+* pr-addr::     Address retrieval
+@end menu
+
+@node queue-pr
+@subsection Handling incoming traffic
+@cindex @code{queue-pr}
+@cindex handling incoming traffic
+
+The program @code{queue-pr} handles traffic coming into @sc{gnats}.
+@code{queue-pr} queues incoming Problem Reports in the directory
+@w{@file{@var{GNATS_ROOT}/gnats-queue}}, and then periodically (via
+@code{cron}) passes them on to @code{file-pr} to be filed in the
+@sc{gnats} database.  @xref{Installation,,Installing @sc{gnats}}.
+
+The usage for @code{queue-pr} is as follows:
+
+@smallexample
+queue-pr [ -q | --queue ] [ -r | --run ]
+         [ -f @var{filename} | --file=@var{filename} ]
+         [ -d @var{directory} | --directory=@var{directory} ]
+@end smallexample
+
+One of @samp{-q} or @samp{-r} (or their longer-named counterparts) must
+be present upon each call to @code{queue-pr}.  These options provide
+different functions, as described below.
+
+@table @code
+@item -q
+@itemx --queue
+Accepts standard input as an incoming mail message, placing this message
+in an incrementally numbered file in the @w{@file{gnats-queue}} directory
+under @w{@code{@var{GNATS_ROOT}}} (@pxref{Locations,,Where @sc{gnats}
+lives}).
+
+@item -r
+@itemx --run
+Redirects files in the @file{gnats-queue} directory into the program
+@code{file-pr} one by one.
+
+@item -f @var{filename}
+@itemx --file=@var{filename}
+Used with @samp{-q} (or @samp{--queue}), accepts the file denoted by
+@var{filename} as input rather than reading from standard input.
+
+@item -d @var{directory}
+@itemx --directory=@var{directory}
+Resets the default @var{directory} value, which is by default
+@w{@file{@var{GNATS_ROOT}/gnats-queue}}.  When @w{@samp{-d
+@var{directory}}} is used in conjunction with the @samp{-q} (or
+@samp{--queue}) option, @w{@code{queue-pr}} files incoming messages into
+@var{directory} rather than the @file{gnats-queue} directory.  When
+@w{@samp{-d @var{directory}}} is used in conjunction with the @samp{-r}
+(or @samp{--run}) option, @code{queue-pr} redirects into
+@w{@code{file-pr}} files from @var{directory} rather than from the
+@w{@file{gnats-queue}} directory.
+@end table
+
+@node file-pr
+@subsection Processing incoming traffic
+@cindex @code{file-pr}
+@cindex processing incoming traffic
+
+@code{queue-pr} hands off queued Problem Reports to @code{file-pr} one
+at a time.  @code{file-pr} checks each Problem Report for correct
+information in its fields (particularly a correct @samp{>Category:}),
+assigns it an identification number, and files it in the database under
+the appropriate category.
+
+If the @samp{>Category:} field does not contain a valid category value
+(i.e., matching a line in the @code{categories} file;
+@pxref{categories,,The @code{categories} file}), the PR is given a
+@samp{>Category:} value of @samp{pending} and is placed in the
+@file{pending} directory.  The @sc{gnats} administrator is notified of
+the unplaceable PR.
+
+@code{file-pr} assigns the Problem Report an identification number,
+files it in the @sc{gnats} database (under @w{@samp{pending}}, if the
+@samp{>Category:} field contains an invalid category), and sends
+acknowledgements to appropriate parties.  The person responsible for
+that category of problem (@pxref{categories,,The @code{categories}
+file}) and the person responsible for the submitter site where the PR
+originated (@pxref{submitters,,The @code{submitters} file}) receive a
+copy of the PR in its entirety.  Optionally, the originator of the PR
+receives an acknowledgement that the PR arrived and was filed
+(@pxref{Local configuration,,Changing your local configuration}).
+
+The usage for @code{file-pr} is as follows:
+
+@smallexample
+file-pr [ -f @var{filename} | --file=@var{filename} ]
+        [ -d @var{directory} | --directory=@var{directory}b ]
+	[ -D | --debug ] [ -h | --help ] [ -V | --version ]
+@end smallexample
+
+@code{file-pr} requires no options in order to operate, and takes input
+from standard input (normally, the output of @w{@samp{queue-pr -r}})
+unless otherwise specified.  The options include:
+
+@table @code
+@item -f @var{filename}
+@itemx --filename=@var{filename}
+Uses @var{filename} as input rather than standard input.
+
+@item -d @var{directory}
+@itemx --directory=@var{directory}
+Performs refiling operations in @var{directory} rather than in
+@w{@code{@var{GNATS_ROOT}}}.
+
+@item -D
+@itemx --debug
+Give debugging output while @code{file-pr} is running.
+
+@item -h
+@itemx --help
+Prints the usage for @code{file-pr}.
+
+@item -V
+@itemx --version
+Prints the version number for @code{file-pr}.
+@end table
+
+@node at-pr
+@subsection Timely reminders
+@cindex @code{at-pr}
+@cindex timely reminders
+@cindex automatic notification
+@cindex notification of overdue PRs
+
+@code{at-pr} creates a queued job using @code{at} which, after an
+allotted @dfn{response time} is past, checks the PR to see if its state
+has changed from @samp{open}.
+
+The @file{submitters} file contains the response time for each
+@w{@code{>Submitter-Id:}} (@pxref{submitters,,The @code{submitters} file}).
+The time is determined in @dfn{business hours}, which are defined by
+default as 8:00am to 5:00pm Monday through Friday, local time.  These
+hours are defined in the @file{config} file (@pxref{config,,The
+@code{config} file}).
+
+If the PR is still open after the requisite time period has passed,
+@code{at-pr} sends a reminder to the @sc{gnats} administrator, to the
+maintainer responsible for that submitter, and to the maintainer
+responsible for the PR with the following message:
+
+@cindex reminder message
+@cindex @code{at-pr}
+@smallexample
+To: @var{submitter-contact} @var{responsible} @var{gnats-admin}
+Subject: PR @var{gnats-id} not analyzed in @var{#hours} hours
+
+PR @var{gnats-id} was not analyzed within the acknowledgment period
+of @var{#hours} business hours.  The pertinent information is:
+
+ Submitter-Id: @var{submitter}
+ Originator: @var{full name of the submitter}
+ Synopsis: @var{synopsis}
+ Person responsible for the PR: @var{responsible}
+
+--
+The GNU Problem Report Management System (GNATS)
+@end smallexample
+
+@node pr-edit
+@subsection The @code{edit-pr} driver
+@cindex @code{pr-edit}
+@cindex @code{edit-pr} driver
+@cindex driver for @code{edit-pr}
+
+@code{pr-edit} does the background work for @code{edit-pr}, including
+error-checking and refiling newly edited Problem Reports and handling
+file locks.  It can be called interactively, though it has no useable
+editing interface.
+
+The usage for @code{pr-edit} is:
+
+@smallexample
+pr-edit [ -l @var{maintainer} --lock=@var{maintainer} ]
+        [ -u | --unlock ] [ -c | --check ] [ -F ]
+	[ -L | --lockdb ] [ -U | --unlockdb ]
+        [ -f @var{filename} | --filename=@var{filename} ]
+        [ -d @var{directory} | --directory=@var{directory} ]
+        [ -h | --help ] [ -V | --version ]
+        [ @var{gnats-id} ]
+@end smallexample
+
+@cindex PR locks
+@cindex locks
+A @dfn{lock} is placed on a Problem Report while the PR is being edited.
+The lock is simply a file in the same directory as the PR, with the name
+@w{@file{@var{gnats-id}.lock}}, which contains the name of the maintainer
+who created the lock.  @var{maintainer} then ``owns'' the lock, and must
+remove it before the PR can be locked again, even by the same
+@var{maintainer}@footnote{This approach may seem heavy-handed, but it
+ensures that changes are not overwritten.}.  If a PR is already locked
+when you attempt to edit it, @code{pr-edit} prints an error message
+giving the name of the maintainer who is currently editing the PR.
+
+If you do not specify @w{@var{gnats-id}}, @code{pr-edit} reads from
+standard input.  You must specify @w{@var{gnats-id}} for the functions
+which affect PR locks, @samp{--lock=@var{maintainer}} and
+@samp{--unlock}.
+
+@table @code
+@item -l @var{maintainer}
+@itemx --lock=@var{maintainer}
+Locks Problem Report @w{@var{gnats-id}}, failing (and returning an error
+message) if @w{@var{gnats-id}} is already locked, or if @w{@var{gnats-id}}
+does not exist.  @code{pr-edit} requires that you specify
+@w{@var{gnats-id}} when using this option.
+
+@item -u
+@itemx --unlock
+Unlocks Problem Report @w{@var{gnats-id}}.  @code{pr-edit} requires that
+you specify @w{@var{gnats-id}} when using this option.  You must own a
+file lock to remove it.
+
+@item -L
+@itemx --lockdb
+Locks the GNATS database as a whole.  This will prevent any modification
+to any part of the system while it's locked.
+
+@item -U
+@itemx --unlockdb
+Unlocks the GNATS database as a whole, allowing modification of its
+files.
+
+@item -c
+@itemx --check
+Checks the Problem Report in @w{@var{gnats-id}} (or standard input, if
+@w{@var{gnats-id}} is not present) for correct information in its
+@w{@sc{Enumerated}} fields.  @code{pr-edit} complains about any bogus
+information in the Problem Report.
+
+@item -F
+Forces the PR to be submitted to the database, even if there is no
+current index entry for it (i.e., even if the PR did not exist in the
+database previously).
+
+@emph{Warning: using this option may corrupt your index.}  If you use
+it, be sure you know what you are doing.
+
+@item -f @var{filename}
+@itemx --filename=@var{filename}
+Reads @var{filename} rather than standard input.
+
+@item -d @var{directory}
+@itemx --directory=@var{directory}
+Resets the operating directory (@w{@code{@var{GNATS_ROOT}}}).
+
+@item -h
+@itemx --help
+Prints the usage for @code{pr-edit}.
+
+@item -V
+@itemx --version
+Prints the version number for @code{pr-edit}.
+@end table
+@node pr-addr
+@subsection Address retrieval
+@cindex address retrieval
+@cindex @code{pr-addr}
+
+Returns an electronic mail address when given a valid @dfn{nametag}, as
+it appears in the @file{responsible} file (@pxref{responsible,,The
+@code{responsible} file}).  If @var{nametag} is not valid, @code{pr-addr}
+will tell the user that it could not find the requested address.
+
+Usage is simply:
+
+@smallexample
+pr-addr @var{name}
+@end smallexample

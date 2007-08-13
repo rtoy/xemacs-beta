@@ -1,0 +1,905 @@
+\input texinfo   @c -*-texinfo-*-
+@setfilename gnats.info   
+
+@include version.texi
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* Keeping Track: (gnats).        GNU Problem Report Management System
+END-INFO-DIR-ENTRY
+@end format
+@end ifinfo
+
+@ifinfo
+Copyright @copyright{} 1993, 1995 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries a copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+@end ignore
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+@end ifinfo
+
+@c NOTE TO ANYONE FORMATTING THIS DOCUMENT FOR PRINTING...
+@c Comment the following line out if you don't have access to a
+@c PostScript printer or viewer
+
+@set POSTSCRIPT
+
+@settitle Keeping Track
+@setchapternewpage odd
+@finalout
+@titlepage
+@title Keeping Track
+@subtitle Managing Messages With GNATS
+@subtitle The @sc{gnu} Problem Report Management System
+@subtitle Version @value{VERSION}
+@subtitle January 1996
+@author Jeffrey M. Osier
+@author Brendan Kehoe
+@author Cygnus Support
+@page
+
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1993, 1995 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+
+@end titlepage
+
+@node Top
+@top Overview
+@cindex overview to GNATS
+@cindex foreword
+
+This manual documents @sc{gnats}, the @sc{gnu} Problem Report Management
+System, version @value{VERSION}.  @sc{gnats} is a bug-tracking tool
+designed for use at a central @dfn{Support Site}.  Users who experience
+problems use electronic mail to communicate these problems to
+@dfn{maintainers} at that Support Site.  @sc{gnats} partially automates
+the tracking of these @dfn{Problem Reports} (@dfn{PR}s) by:
+
+@itemize @bullet
+@item
+organizing problem reports into a database and notifying responsible
+parties of suspected bugs;
+
+@item
+allowing support personnel and their managers to edit and query
+accumulated bugs; and
+
+@item
+providing a reliable archive of problems (and their subsequent
+solutions) with a given program.
+@end itemize
+
+@sc{gnats} offers many of the same features offered by more generalized
+databases, including editing, querying, and basic reporting.  The
+@sc{gnats} database itself is an ordered repository for problem reports;
+each PR receives a unique, incremental @dfn{PR number} which identifies
+it throughout its lifetime.  For a discussion on the working system
+adopted by @sc{gnats}, see @ref{Paradigm,,The database paradigm}.
+
+You can access the submitting, editing, and querying functions of
+@sc{gnats} from within @sc{gnu} Emacs.  @xref{Invoking the
+tools,,Invoking the @sc{gnats} tools}.
+
+@menu
+* Introduction::          Introducing GNATS
+* Invoking the tools::    Invoking the GNATS tools
+* Management::            GNATS Administration
+* Installation::          Installing GNATS
+* Locations::             Where @sc{gnats} lives
+* Regexps::               Querying using regular expressions
+* Index::
+@end menu
+
+@c ===============================================================
+@node Introduction
+@chapter Introducing @sc{gnats}
+@cindex introduction to GNATS
+@cindex rationale
+@cindex database rationale
+
+Any support organization realizes that a large amount of data flows back
+and forth between the maintainers and the users of their products.  This
+data often takes the form of problem reports and communication via
+electronic mail.  @sc{gnats} addresses the problem of organizing this
+communication by defining a database made up of archived and indexed
+electronic mail messages.
+
+@sc{gnats} was designed as a tool for software maintainers.  It consists
+of several utilities which, when used in concert, formulate and
+administer a database of Problem Reports grouped by site-defined
+@dfn{problem categories}.  It allows a support organization to keep
+track of problems (hence the term @dfn{Problem Report}) in an organized
+fashion.  Essentially, @sc{gnats} acts as an active archive for
+field-separated textual data submitted through electronic mail.
+
+@menu 
+* Paradigm::       The database paradigm
+* Flowchart::      Flowchart of GNATS activities
+* States::         States of Problem Reports
+* Fields::         Problem Report format
+@end menu
+
+@node Paradigm
+@section The database paradigm
+@cindex paradigm
+@cindex database paradigm
+@cindex why GNATS
+@cindex support site
+@cindex maintenance
+@cindex so what does it do
+
+It is in your best interest as the maintainer of a body of work to
+organize the feedback you receive on that work, and to make it easy for
+users of your work to report problems and suggestions.
+
+@sc{gnats} makes this easy by automatically filing incoming problem
+reports into appropriate places, by notifying responsible parties of the
+existence of the problem and (optionally) sending an acknowledgement to
+the submitter that the report was received, and by making these Problem
+Reports accessible to queries and easily editable.  @sc{gnats} is a
+database specialized for a specific task.
+
+@sc{gnats} was designed for use at a Support Site that handles a high
+level of problem-related traffic though electronic mail.  It maintains
+Problem Reports in the form of text files with defined @dfn{fields}
+(@pxref{Fields,,@sc{gnats} data fields}).  The location of the database,
+as well as the categories it accepts as valid, the maintainers for whom
+it provides service, and the submitters from whom it accepts Problem
+Reports, are all definable by the @dfn{Support Site}.
+@xref{Management,,@sc{gnats} administration}.
+
+@cindex what is a PR
+Each PR is a separate file within a main repository
+(@pxref{Locations,,Where @sc{gnats} lives}).  Editing access to the
+database is regulated to maintain consistency, but anyone with
+electronic mail access may submit Problem Reports.  To make queries on
+the database faster, an index is kept automatically (@pxref{index
+file,,The @code{index} file}).
+
+We provide several software tools so that users may submit new Problem
+Reports, edit existing Problem Reports, and query the database.
+
+@itemize @bullet
+@item 
+@w{@code{send-pr}} is used by both product maintainers and the end users
+of the products they support to submit PRs to the database.
+
+@item 
+@w{@code{edit-pr}} is used by maintainers to use when editing problem
+reports in the database.
+
+@item 
+Maintainers, managers and administrators can use @w{@code{query-pr}} to
+make inquiries about indidvidual PRs or groups of PRs.  
+
+@end itemize
+
+@code{send-pr} can also be packaged by itself and distributed to anyone
+you wish to receive Problem  Reports  from; see @ref{mkdist,,Configuring
+@code{send-pr} for the outside world}.
+
+@cindex GNATS administrator
+At the Support Site, a @sc{gnats} @dfn{administrator} is charged with the
+duty of maintaining @sc{gnats}.  These duties are discussed in detail in
+@ref{Management,,@sc{gnats} Administration}, and generally include
+configuring @sc{gnats} for the Support Site, editing PRs that @sc{gnats}
+cannot process, pruning log files, setting up new problem categories,
+backing up the database, and distributing @code{send-pr} so that others
+may submit Problem Reports.
+
+Responsibility for a given Problem Report depends on the category of the
+problem.  Optionally, an automated reminder can be sent to the
+responsible person if a problem report is neglected for a requisite time
+period.  @xref{Local configuration,,Changing your local configuration}.
+
+@cindex @code{pending} directory
+@cindex unparseable incoming PRs
+@cindex incoming PRs that @sc{gnats} cannot parse
+@sc{gnats} does not have the ability to decipher random text, so any
+problem reports which arrive in a format @sc{gnats} does not recognize
+are placed in a separate directory pending investigation by the
+@sc{gnats} administrator (@pxref{Management,,@sc{gnats} Administration}).
+
+Once a problem is recorded in the database, work can begin toward a
+solution.  A problem's initial @dfn{state} is @samp{open}
+(@pxref{States,,States of Problem Reports}).  An acknowledgement is sent
+to the originator of the bug report (if that feature of @sc{gnats} is
+activated).  @sc{gnats} forwards copies of the report to the party
+responsible for that problem category and to the person responsible for
+problems arriving from that @dfn{Submitter Site}.
+@c (@pxref{Glossary,,Glossary}).
+
+When a problem has been identified, the maintainer can change its state
+to @samp{analyzed}, and then to @samp{feedback} when a solution is
+found.  Each time the state of a PR changes, the submitter of the
+problem report is notified of the reason for the change.  If the party
+responsible for the PR changes, the previous responsible party and the
+new responsible party receive notice of the change.  The change and
+reason are also recorded in the @samp{>Audit-Trail:} field of the
+Problem Report.  (@xref{edit-pr,,Editing existing Problem Reports}.  For
+information on the @samp{>Audit-Trail:} field, see @ref{Fields,,Problem
+Report format}.)
+
+When the originator of the Problem Report confirms that the solution
+works, the maintainer can change the state to @dfn{closed}.  If the PR
+cannot be closed, the maintainer can change its state to @dfn{suspended}
+as a last resort.  (For a more detailed description of these states, see
+@ref{States,,States of Problem Reports}.)
+
+@node Flowchart
+@section Flowchart of @sc{gnats} activities
+@cindex flowchart of GNATS activities
+@cindex visual map of data flow
+
+This informal flowchart shows the relationships of the @sc{gnats} tools
+to each other and to the files with which they interoperate.
+
+@sp 2
+
+@ifset POSTSCRIPT
+@tex
+\input epsf
+\epsffile{flowchart.eps}
+@end tex
+@end ifset
+
+@ifinfo
+@clear POSTSCRIPT
+@end ifinfo
+
+@ifclear POSTSCRIPT
+@cartouche
+@smallexample
+@include flowchart.txt
+@end smallexample
+@end cartouche
+
+@end ifclear
+
+@sp 2
+
+@c ---------------------------------------------------------------
+
+@include states.texi
+
+@c ---------------------------------------------------------------
+@include fields.texi
+
+@c ===============================================================
+
+@include p-usage.texi
+
+@c ===============================================================
+
+@include p-admin.texi
+
+@c ===============================================================
+
+@node Installation
+@appendix Installing @sc{gnats}
+
+@include p-inst.texi
+
+@c ===============================================================
+
+@node Locations
+@appendix Where @sc{gnats} lives
+@cindex locations
+@cindex where GNATS lives
+@cindex default installation locations
+
+We use a few conventions when referring to the installation structure
+@sc{gnats} uses.  These values are adjustable when you build and install
+@sc{gnats} (@pxref{Installation,,Installing @sc{gnats}}).
+
+@menu
+* prefix::
+* exec-prefix::
+* GNATS_ROOT::
+* defaults::       Default installation locations
+@end menu
+
+@node prefix
+@section @var{prefix}
+@cindex @var{prefix}
+
+@var{prefix} corresponds to the variable @samp{prefix} for
+@code{configure}, which passes it on to the @file{Makefile} it creates.
+@var{prefix} sets the root installation directory for
+@dfn{host-independent} files as follows:
+
+@c FIXME - check these
+@table @asis
+@item libraries
+@file{@var{prefix}/lib}@*
+
+@item @code{man} pages
+@file{@var{prefix}/man}
+
+@item @code{info} documents
+@file{@var{prefix}/info}
+
+@item @code{include} files
+@file{@var{prefix}/include}
+
+@item @emph{etc@dots{}}
+@end table
+
+The default value for @var{prefix} is @w{@file{/usr/local}}, which can
+be changed on the command line to @code{configure} using
+
+@smallexample
+configure --prefix=@var{prefix} @dots{}
+@end smallexample
+
+@noindent
+@xref{Configure and make,,Configuring and compiling the software}.
+
+@node exec-prefix
+@section @var{exec-prefix}
+@cindex @var{exec-prefix}
+
+@var{exec-prefix} corresponds to the variable @samp{exec_prefix} for
+@code{configure}, which passes it on to the @file{Makefile} it creates.
+@w{@var{exec-prefix}} sets the root installation for
+@dfn{host-dependent} files as follows:
+
+@c FIXME - check these
+@table @asis
+@item binary tools
+@file{@var{exec-prefix}/bin}
+
+@item binary support utilities
+@file{@var{exec-prefix}/lib/gnats}
+
+@item compiled libraries 
+@file{@var{exec-prefix}/lib}@*
+
+@item @emph{etc@dots{}}
+@end table
+
+Since most installations are not intended to be distributed around a
+network, the default value for @w{@var{exec-prefix}} is the value of
+@samp{prefix}, i.e., @w{@file{/usr/local}}.  However, using
+@var{exec-prefix} saves space when you are installing a package on
+several different platforms for which many files are identical; rather
+than duplicate them for each host, these files can be shared in a common
+repository, and you can use symbolic links on each host to find the
+host-dependent files.  @emph{It is not necessary to use this paradigm
+when building the @sc{gnats} tools}.  @xref{Configure and
+make,,Configuring and compiling the software}.
+
+Use @var{exec-prefix} in conjunction with @var{prefix} to share
+host-independent files, like libraries and @code{info} documents.  For
+example:
+
+@smallexample
+   @emph{for each host:}
+configure --prefix=/usr/gnu --exec-prefix=/usr/gnu/H-@var{host}
+make all install @dots{}
+@end smallexample
+
+@noindent
+Using this paradigm, all host-dependent binary files are installed into
+@w{@file{/usr/gnu/H-@var{host}/bin}}, while files which do not depend on
+the host type for which they were configured are installed into
+@w{@file{/usr/gnu}}.
+
+You can then use a different symbolic link for @w{@file{/usr/gnu}}
+on each host (@file{/usr} is usually specific to a particular machine;
+it is always specific to a particular architecture).
+
+@smallexample
+  @emph{on host-1:}
+ln -s /usr/gnu/H-@var{host-1} /usr/gnu
+  @emph{on host-2:}
+ln -s /usr/gnu/H-@var{host-2} /usr/gnu
+@end smallexample
+
+@noindent
+To the end user, then, placing @w{@file{/usr/gnu/bin}} in her or his
+@code{PATH} simply works transparently for each @var{host} type.
+
+You can change @w{@var{exec-prefix}} on the command line to
+@code{configure} using
+
+@smallexample
+configure --exec-prefix=@var{exec-prefix} @dots{}
+@end smallexample
+
+We recommend that you consult @ref{Using configure,,Using
+@code{configure},configure,Cygnus configure}, before attempting this.
+Again, @emph{it is not necessary to use this paradigm when building the
+@sc{gnats} tools}.
+
+@node GNATS_ROOT
+@section @var{GNATS_ROOT}
+@cindex @var{GNATS_ROOT}
+
+The location of the database and the administrative data files, by
+default @w{@file{@var{prefix}/lib/gnats/gnats-db}}.  You can change this
+value on the command line to @code{configure} using
+
+@smallexample
+configure --with-gnats-root=@w{@var{GNATS_ROOT}}
+@end smallexample
+
+@noindent
+Administrative data files reside in @w{@file{@var{GNATS_ROOT}/gnats-adm}}.
+These include @file{categories}, @file{submitters}, @file{responsible},
+and @file{config}, as well as two files generated and maintained by
+@sc{gnats}, @file{index} and @file{current}.  @xref{Local configuration,,
+Changing your local configuration}, and @ref{Admin files,,Administrative
+data files}.
+
+@node defaults
+@section Default installation locations
+@cindex default installation locations
+
+@table @asis
+@item @var{prefix}
+defaults to @file{/usr/local}; change using @code{configure}
+(@pxref{Configure and make,,Configuring and compiling the software}).
+
+@item @var{exec-prefix}
+defaults to @var{prefix}; change using @code{configure}
+(@pxref{Configure and make,,Configuring and compiling the software}).
+
+@item @w{@var{GNATS_ROOT}}
+defaults to @w{@file{@var{prefix}/lib/gnats/gnats-db}}; change using
+@code{configure} (@pxref{Configure and make,,Configuring and compiling
+the software}).
+@end table
+
+@noindent
+@sc{gnats} installs tools, utilities, and files into the following
+locations.
+
+@table @code
+
+@item @var{exec-prefix}/bin
+
+@table @code
+@item send-pr
+@xref{send-pr,,Submitting Problem Reports}.
+@item edit-pr
+@xref{edit-pr,,Editing existing Problem Reports}.
+@item query-pr
+@xref{query-pr,,Querying the database}.
+@item nquery-pr
+@xref{query-pr,,Querying the database over the network}.
+@end table
+
+@item @var{exec-prefix}/lib/gnats
+
+@table @code
+@item mkcat
+@xref{mkcat,,Adding a problem category}.
+@item rmcat
+@xref{rmcat,,Removing a problem category}.
+@item mkdist
+@xref{mkdist,,Configuring @code{send-pr} for the outside world}.
+@item gen-index
+@xref{gen-index,,Regenerating the index}.
+@item queue-pr
+@xref{queue-pr,,Handling incoming traffic}.
+@item file-pr
+@xref{file-pr,,Processing incoming traffic}.
+@ignore
+@item gnatsd
+@xref{gnats,,Remote @sc{gnats} daemon}.
+@end ignore
+@item at-pr
+@xref{at-pr,,Timely reminders}.
+@item pr-edit
+@xref{pr-edit,,The @code{edit-pr} driver}.
+@ignore
+@item npr-edit
+@xref{npr-edit,,The remote @code{edit-pr} driver}.
+@end ignore
+@item pr-addr
+@xref{pr-addr,,Address retrieval}.
+@item libiberty.a
+The @sc{gnu} @code{libiberty} library.
+@end table
+
+@item @var{prefix}/lib/gnats/dist
+
+@table @asis
+@item A packageable distribution of @code{send-pr}.
+@xref{mkdist,,Configuring @code{send-pr} for the outside world}.
+@end table
+
+@item @var{prefix}/lib/gnats
+
+@table @var
+@item site
+The local list of valid categories, used by @code{send-pr}; @var{site}
+is the value of @samp{GNATS_SITE} (@pxref{config,,The @code{config}
+file}).
+@end table
+
+@item @var{prefix}/lib/emacs/lisp
+
+@table @code
+@item gnats.el
+@itemx gnats.elc
+The Emacs versions of the programs @code{query-pr}, @code{edit-pr}, and
+@code{view-pr}.  @xref{Invoking the tools,,Invoking the @sc{gnats}
+tools}.  To change this directory you must alter @file{Makefile.in}; see
+@ref{Configure and make,,Configuring and compiling the software}.
+@item send-pr.el
+The Emacs version of the program @code{send-pr}.
+@xref{send-pr,,Submitting Problem Reports}.
+@end table
+
+@item @var{prefix}/info
+
+@table @code
+@item gnats.info
+@itemx send-pr.info
+The @sc{gnats} manuals, in a form readable by @code{info} (the @sc{gnu}
+hypertext browser).  @xref{Info,,Reading GNU Online
+Documentation,infoman,GNU Online Documentation}.
+@end table
+
+@item @var{prefix}/man/man1
+@itemx @var{prefix}/man/man8
+
+@table @asis
+@item @code{man} pages for all the @sc{gnats} tools and utilities.
+@xref{Invoking the tools,,Invoking the @sc{gnats} tools}.
+@end table
+
+@c FIXME - does this happen?
+@item @var{prefix}/src
+
+@table @asis
+@item Source code for @sc{gnats}.
+@end table
+
+@item @var{prefix}/sample
+
+@table @asis
+@item Example administrative files, including @file{categories},
+@file{submitters}, @file{responsible}, and @file{config}.  @xref{Local
+configuration,,Changing your local configuration}.
+@end table
+
+@item @w{@var{GNATS_ROOT}}
+
+@table @code
+@item gnats-adm
+Administration and configuration data files.  The files
+@table @code
+@item config
+@item categories
+@item submitters
+@item responsible
+@item gnatsd.conf
+@item index
+(@emph{This file is created by @sc{gnats}.})
+@item current
+(@emph{This file is created by @sc{gnats}.})
+@end table
+@noindent
+exist here.  @xref{Local configuration,,Changing your local
+configuration}, and @ref{Admin files,,Administrative data files}.
+@item gnats-queue
+Incoming Problem Reports are queued here until the next iteration of
+@w{@samp{queue-pr -r}} (@pxref{queue-pr,,Handling incoming traffic}).
+@item pending
+Problem Reports which arrive without a valid category value are
+reassigned to the category @samp{pending} and placed here pending
+intervention by the @sc{gnats} administrator.
+@xref{Management,,@sc{gnats} administration}.
+@item @var{category}
+Each valid category has a corresponding subdirectory in the database.
+All Problem Reports associated with that category are kept in that
+subdirectory, along with lock files for PRs which are being edited.
+@end table
+
+@end table
+
+@c ===============================================================
+@node Regexps
+@appendix Querying using regular expressions
+@cindex querying using regexps
+@cindex regular expressions
+@cindex syntax of regexps
+
+@c FIXME - all my examples just use . and * 
+@sc{gnats} uses @sc{gnu} regular expression syntax with these settings:
+
+@smallexample
+RE_SYNTAX_POSIX_EXTENDED | RE_BK_PLUS_QM & RE_DOT_NEWLINE
+@end smallexample
+
+@noindent
+This means that parentheses (@samp{(} and @samp{)}) and pipe symbols
+(@samp{|}) do not need to be used with the escape symbol @samp{\}.  The
+tokens @samp{+} and @samp{?} do need the escape symbol, however.
+
+Unfortunately, we do not have room in this manual for an adequate
+tutorial on regular expressions.  The following is a basic summary of
+some regular expressions you might wish to use.
+
+@xref{Regular Expression Syntax,,Regular Expression Syntax,regex,Regex},
+for details on regular expression syntax.  Also see @ref{Regexps,,Syntax
+of Regular Expressions,emacs,GNU Emacs Manual}, but beware that the
+syntax for regular expressions in Emacs is slightly different.
+
+All search criteria options to @code{query-pr} rely on regular
+expression syntax to construct their search patterns.  For example,
+
+@smallexample
+query-pr --state=open
+@end smallexample
+
+@noindent
+matches all PRs whose @samp{>State:} values match with the regular
+expression @samp{open}.
+
+We can substitute the expression @samp{o} for @samp{open}, according
+to @sc{gnu} regular expression syntax.  This matches all values of
+@samp{>State:} which begin with the letter @samp{o}.
+
+@smallexample
+query-pr --state=o
+@end smallexample
+
+is equivalent to
+
+@smallexample
+query-pr --state=open
+@end smallexample
+
+@noindent
+in this case, since the only value for @samp{>State:} which matches the
+expression @samp{o} is @samp{open}.  (Double quotes (@kbd{"}) are used
+to protect the asterix (@kbd{*}) from the shell.)  @samp{--state=o} also
+matches @samp{o}, @samp{oswald}, and even @samp{oooooo}, but none of
+those values are valid states for a Problem Report.
+
+Regular expression syntax considers a regexp token surrounded with
+parentheses, as in @w{@samp{(@var{regexp})}}, to be a @dfn{group}.  This
+means that @w{@samp{(ab)*}} matches any number of contiguous instances
+of @samp{ab}, including zero.  Matches include @samp{}, @samp{ab}, and
+@samp{ababab}.
+
+Regular expression syntax considers a regexp token surrounded with
+square brackets, as in @w{@samp{[@var{regexp}]}}, to be a @dfn{list}.
+This means that @w{@samp{Char[(ley)(lene)(broiled)}} matches any of the
+words @samp{Charley}, @samp{Charlene}, or @samp{Charbroiled} (case is
+significant; @samp{charbroiled} is not matched).
+
+Using groups and lists, we see that
+
+@smallexample
+query-pr --category="gcc|gdb|gas"
+@end smallexample
+
+@noindent
+is equivalent to
+
+@smallexample
+query-pr --category="g(cc|db|as)"
+@end smallexample
+
+@noindent
+and is also very similar to
+
+@smallexample
+query-pr --category="g[cda]"
+@end smallexample
+
+@noindent
+with the exception that this last search matches any values which begin
+with @samp{gc}, @samp{gd}, or @samp{ga}.
+
+The @samp{.} character is known as a @dfn{wildcard}.  @samp{.} matches
+on any single character.  @samp{*} matches the previous character
+(except newlines), list, or group any number of times, including zero.
+Therefore, we can understand @samp{.*} to mean ``match zero or more
+instances of any character.''  For this reason, we never specify it at
+the end of a regular expression, as that would be redundant.  The
+expression @samp{o} matches any instance of the letter @samp{o}
+(followed by anything) at the beginning of a line, while the expression
+@samp{o.*} matches any instance of the letter @samp{o} at the beginning
+of a line followed by any number (including zero) of any characters.
+
+We can also use the expression operator @samp{|} to signify a logical
+@code{OR}, such that
+
+@smallexample
+query-pr --state="o|a"
+@end smallexample
+
+@noindent
+matches all @samp{open} or @samp{analyzed} Problem Reports.  (Double
+quotes (@kbd{"}) are used to protect the pipe symbol (@kbd{|}) from the
+shell.)
+
+By the same token,@footnote{No pun intended.} using 
+
+@smallexample
+query-pr --state=".*a"
+@end smallexample
+
+@noindent
+matches all values for @samp{>State:} which contain an @samp{a}.  (These
+include @samp{analyzed} and @samp{feedback}.)
+
+Another way to understand what wildcards do is to follow them on their
+search for matching text.  By our syntax, @samp{.*} matches any
+character any number of times, including zero.  Therefore, @samp{.*a}
+searches for any group of characters which end with @samp{a}, ignoring
+the rest of the field.  @samp{.*a} matches @samp{analyzed} (stopping at
+the first @samp{a}) as well as @samp{feedback}.
+
+@emph{Note:} When using @samp{--text} or @samp{--multitext}, you do not
+have to specify the token @samp{.*} at the beginning of @var{text} to
+match the entire field.  For the technically minded, this is because
+@samp{--text} and @samp{--multitext} use @samp{re_search} rather than
+@samp{re_match}.  @samp{re_match} @dfn{anchors} the search at the
+beginning of the field, while @samp{re_search} does not anchor the
+search.
+
+For example, to search in the @code{>Description:} field for the text
+
+@smallexample
+The defrobulator component returns a nil value.
+@end smallexample
+
+@noindent
+we can use
+
+@smallexample
+query-pr --multitext="defrobulator.*nil"
+@end smallexample
+
+To also match newlines, we have to include the expression @samp{(.|^M)}
+instead of just a dot (@samp{.}).  @samp{(.|^M)} matches ``any single
+character except a newline (@samp{.}) @emph{or} (@samp{|}) any newline
+(@samp{^M}).''  This means that to search for the text
+
+@smallexample
+The defrobulator component enters the bifrabulator routine
+and returns a nil value.
+@end smallexample
+
+@noindent
+we must use
+
+@smallexample
+query-pr --multitext="defrobulator(.|^M)*nil"
+@end smallexample
+
+To generate the newline character @samp{^M}, type the following
+depending on your shell:
+
+@table @code
+@item csh
+@samp{@emph{control}-V @emph{control}-M}
+
+@item tcsh
+@samp{@emph{control}-V @emph{control}-J}
+
+@item sh (@emph{or} bash)
+Use the @key{RETURN} key, as in
+
+@smallexample
+(.|
+)
+@end smallexample
+@end table
+
+Again, see @ref{Regular Expression Syntax,,Regular Expression
+Syntax,regex,Regex}, for a much more complete discussion on regular
+expression syntax.
+
+@c ===============================================================
+
+@ignore
+@c complete this someday...
+@node Glossary
+@unnumbered Glossary
+
+@table @strong
+@item PR
+Short for ``Problem Report''.  An electronic mail message which reports
+a problem.  A @dfn{record} in the @sc{gnats} database.
+
+@item Support Site
+A central site that provides resources for maintainers of a body of
+work, such as a software package.  We refer to the Support Site as the
+location where @sc{gnats} is installed and functional.
+
+@item Database
+An organized collection of information.
+
+@item @sc{gnats}
+The @sc{gnu} Problem Report Management System.
+
+@item Field
+A location for specific information.  A group of fields make up a
+Problem Report.
+
+@item Mail header
+Defined by the Internet Internet standard RFC-822
+
+@item Category
+@item Submitter
+@item Originator
+@item Query
+@item Report
+@item Site
+@item Edit
+@item Submit
+@item Bug
+@item State
+@item ID Number
+@item Synopsis
+@item Confidential
+@item Severity
+@item Priority
+@item Responsible
+@item Configuration
+@item Class
+@item Environment
+@item Description
+@item Audit-Trail
+@item Unformatted
+@item Fix
+@item Release
+@item Makefile
+@item gnats-admin
+@item pending
+@item send-pr
+@item edit-pr
+@item Maintainers
+@item timestamp
+@item utility
+@item tool
+
+@end table
+
+@end ignore
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@contents
+
+@bye
+

@@ -1,0 +1,698 @@
+@c remember to put in the autoload stuff!!!!  see the .el files
+
+@c This file is included as an appendix in gnats.texi.
+
+@cindex installing GNATS
+@cindex configuring  GNATS
+@cindex setting up GNATS
+@cindex building GNATS
+
+@xref{Locations,,Where the tools and utilities reside}.
+
+There are several steps you need to follow to fully configure and
+install @sc{gnats} on your system.  You need @code{root} access in order
+to create a new account for @code{gnats} and to install the @sc{gnats}
+utilities.  You may need @code{root} access on some systems in order to
+set mail aliases in place and to allow this new account access to
+@code{cron} and @code{at}.
+
+If you are updating an older version of @sc{gnats} rather than installing
+from scratch, see @ref{Upgrading,,Upgrading from older versions}.
+
+To build @sc{gnats}, you must:
+
+@itemize @bullet
+@item
+Run @code{configure}, with correct options if the defaults are
+unsuitable for your site.  @xref{Configure and make,,Configuring and
+compiling the software}.  Default installation locations are in
+@ref{Locations,,Where @sc{gnats} lives}.
+
+@item
+Compile the @sc{gnats} programs on your system.  @xref{Configure and
+make,,Configuring and compiling the software}.
+
+@item
+Install the @sc{gnats} tools and utilities locally, and install the user
+tools on every machine in your local network.  @xref{Installing
+utils,,Installing the utilities}.
+
+@item
+Set up mail aliases for @sc{gnats}.  @xref{Aliases,,Setting up mail
+aliases}.
+
+@item
+Install the @sc{gnats} user tools (@code{query-pr}, @code{nquery-pr}, @code{edit-pr},
+@code{send-pr}) around your network.  @xref{Installing tools,,Installing
+the user tools}.
+
+@item
+Install the @sc{gnats} daemon @file{gnatsd}.
+
+@item
+Update the local configuration files
+
+@smallexample
+config      categories  submitters  responsible  gnatsd.conf
+@end smallexample
+
+@noindent
+in @w{@file{@var{GNATS_ROOT}/gnats-adm}}.  @xref{Local
+configuration,,Changing your local configuration}.
+
+@item
+Create a distribution of @code{send-pr} for submitters outside your
+organization.  @xref{mkdist,,Configuring @code{send-pr} for the outside
+world}.
+@end itemize
+
+@menu
+* Configure and make::    Configuring and compiling the software
+* Installing utils::      Installing the utilities
+* Aliases::               Setting up mail aliases
+* Installing the daemon:: Installing the daemon
+* Installing tools::      Installing the user tools
+* Upgrading::             Upgrading from older versions
+@end menu
+
+@node Configure and make
+@section Configuring and compiling the software
+@cindex unpacking the distribution
+@cindex configuring and compiling the software
+@cindex compiling the software
+@cindex @code{configure}
+@cindex @code{make}
+
+@enumerate 1
+@item
+First, unpack your distribution.  We provide source code in a @code{tar}
+file which was compressed using @code{gzip}.  The code can be extracted
+into a directory @var{unpackdir} using
+
+@smallexample
+mkdir @var{unpackdir}
+cd @var{unpackdir}
+tar zxvf gnats-@value{VERSION}.tar.z
+@end smallexample
+
+The sources reside in a directory called @file{gnats-@value{VERSION}}
+when unpacked.  We call this the @dfn{top level} of the source
+directory, or @dfn{srcdir}.  The sources for the @sc{gnats} tools are in
+the subdirectory @file{gnats-@value{VERSION}/gnats/*}.  Lists of files
+included in the distribution are in each directory in the file
+@file{MANIFEST}.
+
+@cindex lisp file installation
+@cindex Emacs lisp file installation
+@item
+You may wish to alter the installation directory for the Emacs lisp
+files.  If your Emacs lisp library is not in
+@w{@file{@var{prefix}/lib/emacs/lisp}}, edit the files
+
+@smallexample
+@var{srcdir}/gnats/Makefile.in   @emph{and}
+@var{srcdir}/send-pr/Makefile.in
+@end smallexample
+
+@noindent
+Change the variable @samp{lispdir} from @samp{$(datadir)/emacs/lisp} to
+the directory containing your Emacs lisp library.  For information on
+@var{prefix}, see @ref{prefix,,@var{prefix}}.
+
+@item
+Run @code{configure}.  You can nearly always run @code{configure} with
+the command
+
+@example
+./configure --with-full-gnats
+@end example
+
+@noindent
+and the ``Right Thing'' happens:
+
+@itemize @bullet
+@item
+@sc{gnats} is configured in the same directory you unpacked it in;
+
+@item
+when built, @sc{gnats} runs on the machine you're building it on;
+
+@item
+when installed, files are installed under @file{/usr/local}
+(@pxref{Locations,,Where @sc{gnats} lives}).
+
+@item
+@sc{gnats} operates by default behavior (@pxref{default behavior,,Default
+behavior}).
+@end itemize
+
+@cindex @code{configure}
+The full usage for @code{configure} is:
+
+@smallexample
+configure [ --with-full-gnats ]
+          [ --prefix=@var{prefix} ]
+          [ --exec-prefix=@var{exec-prefix} ]
+          [ --with-gnats-root=@w{@var{GNATS_ROOT}} ]
+          [ --with-gnats-server=@w{@var{hostname}} ]
+          [ --with-gnats-service=@w{@var{service-name}} ]
+          [ --with-gnats-user=@w{@var{username}} ]
+          [ --with-gnats-port=@w{@var{port-number}} ]
+          [ --verbose ]
+@end smallexample
+
+@table @code
+@cindex @code{with-full-gnats}
+@item --with-full-gnats
+All programs are to be built; this includes the user utilities, the
+administrative utilities, and the internal utilities.  Use this when
+configuring the utilities for the machine where @sc{gnats} is to run.
+Omit it when building only the user utilities for other machines on your
+network; see @ref{Installing tools,,Installing the user tools}.
+
+@cindex @var{prefix}
+@item --prefix=@var{prefix}
+All host-independent programs and files are to be installed under
+@var{prefix}.  (Host-dependent programs and files are also installed in
+@var{prefix} by default.)  The default for @var{prefix} is
+@w{@file{/usr/local}}.  @xref{Locations,,Where @sc{gnats} lives}.
+
+@cindex @var{exec-prefix}
+@item --exec-prefix=@var{exec-prefix}
+All host-dependent programs and files are to be installed under
+@var{exec-prefix}.  The default for @var{exec-prefix} is @var{prefix}.
+@xref{Locations,,Where @sc{gnats} lives}.
+
+@cindex @var{GNATS_ROOT}
+@item --with-gnats-root=@w{@var{GNATS_ROOT}}
+The database and its data files are to be installed into
+@w{@var{GNATS_ROOT}}.  The default for @w{@var{GNATS_ROOT}} is
+@w{@file{@var{prefix}/lib/gnats/gnats-db}}.  @xref{Locations,,Where
+@sc{gnats} lives}.
+
+@cindex --with-gnats-server
+@item --with-gnats-root=@w{hostname}
+FIXME
+
+@cindex --with-gnats-service
+@item --with-gnats-root=@w{@var{service-name}}
+FIXME
+
+@cindex --with-gnats-user
+@item --with-gnats-user=@w{@var{username}}
+FIXME
+
+@cindex --with-gnats-port
+@item --with-gnats-port=@w{@var{port-number}}
+FIXME
+
+@item --verbose
+Give verbose output while @code{configure} runs.
+@end table
+
+@xref{Using configure,,Using @code{configure},configure,Cygnus
+configure}.
+
+@cindex building in a different directory
+@cindex @var{objdir}
+You can build @sc{gnats} in a different directory (@var{objdir}) from the
+source code by calling the @code{configure} program from the new
+directory, as in
+
+@smallexample
+mkdir @var{objdir}
+cd @var{objdir}
+@var{srcdir}/configure @dots{}
+make all
+@end smallexample
+
+By default, @code{configure} compiles the programs in the same directory
+as the sources (@var{srcdir}).  Emacs lisp files are byte-compiled if
+@code{make} can find Emacs on your local system.
+
+@item
+Run 
+
+@smallexample
+make all info
+@end smallexample
+
+@noindent
+from the directory where @code{configure} created a @file{Makefile}.
+(This may not be the same directory as the source directory.)  These
+targets indicate:
+
+@table @code
+@item all
+Compile all programs
+
+@item info
+Create @samp{info} files using @code{makeinfo}.
+@end table
+@end enumerate
+
+@node Installing utils
+@section Installing the utilities
+@cindex installing the utilities
+
+The following steps are necessary for a complete installation.  You may
+need @code{root} access for these.
+
+@enumerate 1
+@item
+Install the utilities by
+invoking
+
+@smallexample
+make install install-info
+@end smallexample
+
+These targets indicate:
+
+@table @code
+@item install
+Installs all programs into their configured locations
+(@pxref{Locations,,Where @sc{gnats} lives}).
+
+@item install-info
+Installs @samp{info} files into their configured locations
+(@pxref{Locations,,Where @sc{gnats} lives}).
+@end table
+
+After you have installed @sc{gnats}, you can remove the object files with
+
+@smallexample
+make clean
+@end smallexample
+
+@cindex @code{autoload} commands
+@cindex loading @code{.el} files
+@cindex Emacs functions
+@item
+Place the following lines in the file @file{default.el} in your Emacs
+lisp library, or instruct your local responsible parties to place the
+lines in their local editions of @file{.emacs}:
+
+@smallexample
+(autoload 'edit-pr "gnats" 
+   "Command to edit a problem report." t)
+(autoload 'view-pr "gnats"
+   "Command to view a problem report." t)
+(autoload 'unlock-pr "gnats"
+   "Unlock a problem report." t)
+(autoload 'query-pr "gnats"
+   "Command to query information about problem reports." t)
+(autoload 'send-pr-mode "send-pr"
+   "Major mode for sending problem reports." t)
+(autoload 'send-pr "send-pr"
+   "Command to create and send a problem report." t)
+@end smallexample
+
+Emacs lisp files are byte-compiled if @code{make} can find Emacs on your
+local system.
+
+
+@item
+@cindex creating an account for @sc{gnats}
+Create an account for a user named @sc{gnats}.  This user must have an
+entry in the file @file{/etc/passwd}.  The home directory for this
+account should be the same directory you specified for @var{GNATS_ROOT}
+in the file @file{Makefile.in}.  Also, the default @code{PATH} for this
+user should contain @w{@file{@var{exec-prefix}/bin}} and
+@w{@file{@var{exec-prefix}/lib/gnats}}.
+
+@cindex @code{cron}
+@cindex @code{at}
+@item
+Allow the new user @code{gnats} access to @code{cron} and @code{at}.  To
+do this, add the name @code{gnats} to the files @w{@file{cron.allow}} and
+@w{@file{at.allow}}, which normally reside in the directory
+@w{@file{/var/spool/cron}}.  If these files do not exist, make sure
+@code{gnats} does not appear in either of the files @w{@file{cron.deny}}
+and @w{@file{at.deny}} (in the same directory).
+
+@noindent
+For the following steps, log in as @code{gnats}.
+
+@itemize @bullet
+@item
+Edit the files @file{categories}, @file{responsible}, and
+@file{submitters} in the directory @w{@file{@var{GNATS_ROOT}/gnats-adm}}
+(@pxref{Local configuration,,Changing your local configuration}) to
+reflect your local needs.  Be sure to run @code{mkcat} after you update
+the @file{categories} file (@pxref{mkcat,,Adding a new problem
+category}).  @emph{Note:} these templates are not installed if they
+already exist, i.e. if you are upgrading.  @xref{Upgrading,,Upgrading
+from older versions}.
+
+@item
+If you wish to install the @sc{gnats} user tools on other machines on
+your network, see @ref{Installing tools,,Installing the user tools}.
+@end itemize
+
+@cindex @code{crontab}
+@item
+Create a @code{crontab} entry that periodically runs the program
+@code{queue-pr} with the @samp{--run} option.  For example, to run
+@w{@samp{queue-pr --run}} every ten minutes, create a file called
+@file{.mycron} in the home directory of the user @code{gnats} which
+contains the line:
+
+@smallexample
+0,10,20,30,40,50 * * * * @var{exec-prefix}/lib/gnats/queue-pr --run
+@end smallexample
+
+@noindent
+(Specify the full path name for @code{queue-pr}.)  Then run
+
+@smallexample
+crontab .mycron
+@end smallexample
+
+@noindent
+See the @code{man} pages for @code{cron} and @code{crontab} for details
+on using @code{cron}.
+@end enumerate
+
+@node Aliases
+@section Setting up mail aliases
+@cindex mail aliases
+@cindex aliases
+
+The following mail aliases must be placed in the file
+@w{@file{/etc/aliases}} on the same machine where the @sc{gnats} tools
+are installed.  You may need @code{root} access to add these aliases.
+
+@itemize @bullet
+@item
+@cindex @code{gnats-admin} alias
+Create an alias for the @sc{gnats} administrator.  This address should
+point to the address of the person in charge of administrating
+@sc{gnats}:
+
+@smallexample
+gnats-admin:  @var{address}
+@end smallexample
+
+@item
+@cindex bug alias
+@cindex incoming alias for Problem Reports
+@cindex alias for incoming Problem Reports
+@cindex @code{queue-pr -q}
+Create an alias to redirect incoming Problem Reports.  This alias should
+redirect incoming mail via a @dfn{pipe} to the program @w{@samp{queue-pr
+-q}}.  For example, if Problem Reports coming to your site are to arrive
+at the address @samp{bugs@@your.company.com}, create an alias to the
+effect of:
+
+@smallexample
+bugs:  "| @var{exec-prefix}/lib/gnats/queue-pr -q"
+@end smallexample
+
+@noindent
+This places incoming Problem Reports in
+@w{@file{@var{GNATS_ROOT}/gnats-queue}}.
+
+@item
+@cindex @var{site} alias
+@cindex mail alias for your @emph{site}
+@cindex alias for your @emph{site}
+Create an alias for your site. This alias should be the same nametag
+indicated by the variable @w{@samp{GNATS_SITE}} in the file
+@w{@file{@var{GNATS_ROOT}/gnats-adm/config}} (@pxref{config,,The
+@code{config} file}), with an added suffix @samp{-gnats}.  This alias,
+@w{@samp{@var{GNATS_SITE}-gnats}}, should point toward the local
+submission address.  For instance, if your site is Tofu Technologies,
+the presence of @sc{gnats} on your @var{site} would be aliased as the
+following (the previous example is also shown):
+
+@smallexample
+bugs:  "| @var{exec-prefix}/lib/gnats/queue-pr -q"
+tofu-gnats: bugs
+@end smallexample
+
+@noindent
+The report submission utility @code{send-pr} automatically appends the
+@samp{-gnats} to any arguments you specify (@pxref{send-pr,,Submitting
+Problem Reports}).  The @code{send-pr} which was installed when you
+typed @w{@kbd{make install}} has a default argument of @var{GNATS_SITE},
+your site, so that when your local users simply type @kbd{send-pr} mail
+is sent to your local @sc{gnats}.  Part of the installation process a
+Submitter Site follows when installing @code{send-pr} is to set up an
+alias for the Support Site from whom this submitter received
+@code{send-pr}.  In other words, anyone you distribute @code{send-pr} to
+is instructed to make an alias
+
+@smallexample
+tofu-gnats: bugs@@tofu.com
+@end smallexample
+
+@item
+You may also wish to forward a copy of each incoming Problem Report to a
+log.  This can be accomplished with something like:
+
+@smallexample
+bug-q: "| @var{exec-prefix}/lib/gnats/queue-pr -q"
+bug-log:  @var{GNATS_ROOT}/gnats-adm/bugs.log
+bugs:      bug-q, bug-log
+@end smallexample
+
+@noindent
+This configuration archives incoming Problem Reports in the file
+@w{@file{@var{GNATS_ROOT}/gnats-adm/bug.log}}, and also feeds them to the
+program @code{queue-pr}.  (Remember, @file{bug.log} needs to be
+world-writable, and should be pruned regularly; @pxref{Management,,
+@sc{gnats} Administration}.)
+
+@item
+If you want your users to be able to query the database by mail, use the
+following alias:
+
+@smallexample
+query-pr: "| @var{exec-prefix}/lib/gnats/mail-query"
+@end smallexample
+
+@noindent
+The @code{mail-query} program uses @samp{--restricted} to search on the
+database, and by default only searches for PRs that aren't closed
+(@pxref{query-pr,,Querying the database}).
+
+@end itemize
+
+@c ---------------------------------------------------------------
+@node Installing the daemon
+@section Installing the daemon
+@cindex daemon
+@cindex using @sc{gnats} over a network
+
+By default, the daemon and clients are set to use port 1529.  Add the line
+
+@smallexample
+support		1529/tcp			# GNATS
+@end smallexample
+
+@noindent
+to your @file{/etc/services} file.  If you want a different port,
+or a different service name or port, configure @sc{gnats} with
+
+@smallexample
+--with-gnats-service=@var{servicename}
+--with-gnats-port=@var{portnumber}
+@end smallexample
+
+In your @file{inetd.conf} file, add the line
+
+@smallexample
+support	stream	tcp	nowait	gnats	/usr/local/lib/gnats/gnatsd gnatsd
+@end smallexample
+
+@noindent
+adjusting the path accordingly.  To make inetd start spawning the @sc{gnats} daemon
+when connected on that port, send it a hangup signal (@code{HUP}).
+
+By default, the server for the @sc{gnats} daemon is assumed to be one with the
+name of @samp{gnats}.  If you'd like something else, use
+
+@smallexample
+--with-gnats-server=@var{hostname}
+@end smallexample
+
+In the @file{gnats-adm} directory, you'll want to edit @file{gnatsd.conf}.
+It lists the hosts allowed to access your server.  Or, if you're using
+Kerberos, it shows the sites that don't require Kerberos authentication.
+The format is reserved for future revision; only the first field is
+actually used:
+
+@smallexample
+site.com::
+@end smallexample
+
+@noindent
+The second field may be used for things like controlling what
+categories, submitter-id'd PRs, etc., can be accessed from that site.
+In the file that logs syslog messages (@file{/var/adm/messages}, for
+example) you'll find the notification of denied access.
+
+
+@c ---------------------------------------------------------------
+@node Installing tools
+@section Installing the user tools
+@cindex networks
+@cindex using @sc{gnats} over a network
+@cindex configuring @sc{gnats} on a network
+
+When you install the @sc{gnats} utilities, the user tools are installed
+by default on the host machine.  If your machine is part of a network,
+however, you may wish to install the user tools on each machine in the
+network so that responsible parties on those machines can submit new
+Problem Reports, query the database, and edit existing PRs.  To do this,
+follow these steps @emph{on each new host}.  You may need root access on
+each machine.
+
+@enumerate 1
+@item
+Make sure that the directory where @sc{gnats} resides is mounted to each
+system that will need access to it, so @var{GNATS_ROOT} will be the same
+for each host.  (You can do this with symbolic links as well.)
+
+@item
+Either mount the disk which contains your source directory, or make a
+copy of the @sc{gnats} source code tree in a separate directory on each
+system you wish to build on.
+
+@item
+Run @code{configure}, @emph{without} specifying
+@w{@samp{--with-full-gnats}}, and using the same argument (if any) for
+the option
+
+@smallexample
+--with-gnats-root=@var{GNATS_ROOT}
+@end smallexample
+
+that you specified when building the @sc{gnats} utilites
+(@pxref{Configure and make,,Configuring and compiling the software}).
+You may use different values for the other options to @code{configure}.
+Again, @emph{do not} use @w{@samp{--with-full-gnats}} at this point, as
+that creates all the @sc{gnats} programs.  Without this option,
+@code{configure} only instructs the resulting @file{Makefile} to create
+the user utilities.
+
+@exdent
+@emph{You may need @code{root} access on each host for the following steps.}
+
+@item
+@cindex creating an account for @sc{gnats}
+Create an account for a user named @sc{gnats} on the new host.  This user
+must have an entry in the file @file{/etc/passwd}.  The user ID for
+@code{gnats} must be the same as on the main @sc{gnats} host.
+
+@item 
+Run 
+
+@smallexample
+make all info install install-info
+@end smallexample
+
+@noindent
+This builds and installs the @code{gnats} user tools @w{@code{query-pr}},
+@w{@code{edit-pr}}, and @w{@code{send-pr}} on the new host, and installs
+them in @w{@file{@var{exec-prefix}/bin}} on the new host (@emph{Note:}
+the value for @var{exec-prefix} on the new host may be different from
+the value you used when building the @sc{gnats} utilities;
+@pxref{exec-prefix,,@var{exec-prefix}}).  The programs @code{pr-edit}
+and @code{pr-addr} are installed into
+@w{@file{@var{exec-prefix}/lib/gnats}}.
+
+@code{info} files are created as well, and are installed into
+@w{@file{@var{prefix}/info}}.  The Elisp files @file{gnats.el} and
+@file{send-pr.el} (and possibly @file{gnats.elc}
+if @code{make} was able to compile them using Emacs) are installed into
+@w{@file{@var{prefix}/lib/emacs/lisp}} unless you change the
+@samp{lispdir} variable in @file{Makefile.in} (@pxref{Configure and
+make,,Configuring and compiling the software}).
+
+@cindex @code{autoload} commands
+@cindex loading @code{.el} files
+@cindex Emacs functions
+@item
+Add the following lines to the file @w{@file{default.el}} in the Emacs
+lisp repository on the new host, or instruct your responsible parties
+who use these hosts to add them to their @file{.emacs} files:
+
+@smallexample
+(autoload 'edit-pr "gnats" 
+   "Command to edit a problem report." t)
+(autoload 'view-pr "gnats"
+   "Command to view a problem report." t)
+(autoload 'unlock-pr "gnats"
+   "Unlock a problem report." t)
+(autoload 'query-pr "gnats"
+   "Command to query information about problem reports." t)
+(autoload 'send-pr-mode "send-pr"
+   "Major mode for sending problem reports." t)
+(autoload 'send-pr "send-pr"
+   "Command to create and send a problem report." t)
+@end smallexample
+
+@item
+Copy the file @w{@file{@var{prefix}/lib/gnats/@var{site}}} from the
+original host to the new host (which may have a different value for
+@var{prefix}).  This is the list of valid categories that
+@w{@code{send-pr}} uses (@pxref{Locations,,Where @sc{gnats} lives}).
+@var{site} is your local site, the value of @w{@samp{GNATS_SITE}} in the
+@file{config} file (@pxref{config,,The @code{config} file}).
+
+@end enumerate
+
+@c ---------------------------------------------------------------
+@node Upgrading
+@section Upgrading from older versions
+@cindex upgrading from older versions
+
+If you are upgrading from a previous release of @sc{gnats}, you probably
+do not want to delete your current configuration files or your current
+database.  The new @sc{gnats} can be installed around the older version.
+
+You need to:
+
+@itemize @bullet
+@item
+Specify your current @var{GNATS_ROOT} on the command line to
+@code{configure} when you build the new tools, with
+
+@smallexample
+configure --with-full-gnats --with-gnats-root=@var{GNATS_ROOT}
+@end smallexample
+
+@noindent
+(@xref{Configure and make,,Configuring and compiling the software}.)
+
+@item
+Remove the directory @w{@file{gnats-bin}} from @w{@var{GNATS_ROOT}}; it is
+no longer used.
+
+@item
+Update your current mail aliases to reflect that @w{@code{queue-pr}} now
+resides in @w{@file{@var{exec-prefix}/lib/gnats}} rather than
+@w{@file{@var{GNATS_ROOT}/gnats-bin}} (@pxref{Locations,,Where @sc{gnats}
+lives}).
+
+@item
+Change the default @code{PATH} for the @code{gnats} user to search the
+directories @w{@file{@var{exec-prefix}/bin}} and
+@w{@file{@var{exec-prefix}/lib/gnats}}.
+
+@item
+Reinstall the @sc{gnats} user tools on all other hosts on your network
+(@pxref{Installing tools,,Installing the user tools}).
+
+@item
+Redistribute @code{send-pr} to your Submitter Sites
+(@pxref{mkdist,,Configuring @code{send-pr} for the outside world}).
+This is not absolutely necessary, as @sc{gnats} can read Problem Reports
+generated by older versions of @code{send-pr}.  It should be done
+eventually, however, as @w{@code{send-pr}} is improved over older
+verisons.
+
+@c FIXME - anything else?
+@end itemize

@@ -1,0 +1,891 @@
+@node Invoking the tools
+@chapter Invoking the @sc{gnats} tools
+@cindex usage for the @sc{gnats} tools
+@cindex invoking the @sc{gnats} tools
+@cindex tool usage for software maintainers
+
+The following programs comprise @sc{gnats}:
+
+@cindex user utilities
+@subheading User Utilities
+
+These tools are used by the maintainers of a body of work
+(@w{@code{send-pr}} is also used by the end users of the product).
+
+@table @code
+@item send-pr
+Used by anyone who has a problem with a body of work to submit a report
+of the problem to the maintainers of that work
+(@pxref{send-pr,,Submitting Problem Reports}).
+
+@item query-pr
+Used by software maintainers to query the @sc{gnats} database
+(@pxref{query-pr,,Querying the database}).
+
+@item edit-pr
+Used by software maintainers to edit Problem Reports (to record new
+data, to change the responsible party, etc.) (@pxref{edit-pr,,Editing
+existing Problem Reports}).
+
+@item view-pr
+Used by software maintainers to view individual Problem Reports using
+Emacs (@pxref{view-pr,,Viewing individual Problem Reports}).
+@end table
+
+@cindex administrative utilities
+@subheading Administrative Utilities
+
+These tools are used by the @sc{gnats} administrator; see also
+@ref{Management,,@sc{gnats} Administration}.  For complete explanations
+of these utilities, see @ref{Admin utils,,Administrative utilities}.
+
+@table @code
+@item mkcat
+Creates new categories (@pxref{mkcat,,Adding a problem category}).
+
+@item rmcat
+Removes existing categories (@pxref{rmcat,,Removing a problem
+category}).
+
+@item gen-index
+Generates an up-to-date copy of the index used by @code{query-pr} and
+@code{edit-pr} (@pxref{index file,,The @code{index} file}).  Use
+@code{gen-index} to rebuild the index if it becomes corrupted, or if you
+need a copy of the current index for some reason
+(@pxref{gen-index,,Regenerating the index}).
+
+@item mkdist
+Creates a distribution of the program @code{send-pr} for offsite
+submitters of PRs (@pxref{mkdist,,Configuring @code{send-pr} for the
+outside world}).
+@end table
+
+@cindex internal utilities
+@subheading Internal Utilities
+
+These tools are used internally by @sc{gnats}.  You should not need to
+run these by hand.  For complete explanations of these utilities, see
+@ref{Internal utils,,Internal utilities}.
+
+@table @code
+@item queue-pr
+Handles incoming bugs, first through a mail alias by queueing incoming
+PRs as they arrive, and second as a periodic transfer agent between the
+queue and the database.
+
+@item file-pr
+Files Problem Reports as they come in.
+
+@item at-pr
+Sends reminders to maintainers based on quoted response times.
+
+@item pr-edit
+Used by @code{edit-pr} to error-check and submit edited Problem Reports
+(also @pxref{edit-pr,,Editing existing Problem Reports}).
+
+@item pr-addr
+Used by the @code{edit-pr} script to retrieve correct addresses from the
+@file{responsible} file.
+@end table
+
+@xref{Locations,,Where @sc{gnats} lives}.
+
+@menu
+* send-pr::           Submitting Problem Reports
+* edit-pr::           Editing existing Problem Reports
+* query-pr::          Querying the database
+* view-pr::           Viewing individual Problem Reports
+@end menu
+
+@node send-pr
+@section Submitting Problem Reports
+@cindex @code{send-pr}
+@cindex using @code{send-pr}
+@cindex invoking @code{send-pr}
+@cindex reporting problems with @code{send-pr}
+
+Use @code{send-pr} to submit Problem Reports to the database.
+@code{send-pr} is both a shell script and a Lisp program for @sc{gnu}
+Emacs; both implementations provide a template for submitters to
+complete.  In most cases, @code{send-pr} can determine intelligent
+default values for several fields, partially automating the
+bug-reporting process.
+
+@xref{mkdist,,Configuring @code{send-pr} for the outside world}, for
+information on distributing a version of @code{send-pr} customized with
+your site's configuration.
+
+@lowersections
+@include s-usage.texi
+@raisesections
+
+@c ---------------------------------------------------------------
+@node edit-pr
+@section Editing existing Problem Reports
+@cindex using @code{edit-pr}
+@cindex invoking @code{edit-pr}
+@cindex @code{edit-pr}
+
+Use @code{edit-pr} to make changes to existing PRs in the database.
+@code{edit-pr} is both a shell script and a Lisp program for @sc{gnu}
+Emacs.  Both implementations are essentially identical, though the Emacs
+interface provides interactive prompting for some of the fields.
+
+@code{edit-pr} first examines the PR you wish to edit and locks it if it
+is not already locked.  This is to prevent you from editing a PR at the
+same time as another user.  If the PR you wish to edit is already in the
+process of being edited, @code{edit-pr} tells you the name of the person
+who owns the lock.
+
+You may edit any field in the database that you wish.  We recommend that
+you avoid deleting any information in the @sc{Text} and @sc{MultiText}
+fields (such as @samp{>Description:} and @samp{>How-To-Repeat:}
+(@pxref{Fields,,Problem Report format}).  We also recommend that you
+record the final solution to the problem in the @samp{>Fix:} field for
+future reference.
+
+If you change the @samp{>Responsible:} field, @code{edit-pr} prompts you
+to supply a reason for the change.  @code{edit-pr} then mails copies of
+the change message to the previous responsible party, and to the new
+responsible party.  The change is then recorded in the
+@samp{>Audit-Trail:} section of the PR as follows:
+
+@table @asis
+@item @code{Responsible-Changed-<From>-<To>}: The value change, supplied
+automatically by @code{edit-pr}.
+
+@item @code{Responsible-Changed-By}: Your name here, supplied
+automatically by @code{edit-pr}.
+
+@item @code{Responsible-Changed-When}: The current date, supplied
+automatically by @code{edit-pr}.
+
+@item @code{Responsible-Changed-Why}: Your reason for the change; you
+are prompted for this.
+@end table
+
+If you change the @samp{>State:} field, you are prompted to supply a
+reason for the change.  Copies of the change message are then mailed to
+the responsible party, and to the original submitter of the Problem
+Report.  The change is then recorded in the @samp{Audit-Trail} section
+of the PR as follows:
+
+@table @asis
+@item @code{State-Changed-<From>-<To>}: The value change, supplied
+automatically by @code{edit-pr}.
+
+@item @code{State-Changed-By}: Your name here, supplied
+automatically by @code{edit-pr}.
+
+@item @code{State-Changed-When}: The current date, supplied
+automatically by @code{edit-pr}.
+
+@item @code{State-Changed-Why}: Your reason for the change; you are
+prompted for this.
+@end table
+
+The PR is then resubmitted to the database, and the index is updated
+(@pxref{index file,,The @code{index} file}).  For information on
+@code{pr-edit}, the main driver for @code{edit-pr}, see @ref{Internal
+utils,,Internal utilities}.
+
+@menu
+* edit-pr in Emacs::        Using @code{edit-pr} from within Emacs
+* edit-pr from the shell::  Invoking @code{edit-pr} from the shell
+@end menu
+
+@node edit-pr in Emacs
+@subsection Using @code{edit-pr} from within Emacs
+@cindex @code{edit-pr} in Emacs
+
+Call @code{edit-pr} from within Emacs with @w{@code{M-x
+edit-pr}}@footnote{If typing @w{@samp{M-x edit-pr}} doesn't work, see
+your system administrator for help loading @code{edit-pr} into Emacs.}.
+When @code{edit-pr} prompts you for a PR identification number, type the
+number of the PR you wish to edit.
+
+If the PR is locked, Emacs announces the login name of the person who
+has locked the file.  If not, @w{@code{M-x edit-pr}} locks the PR, loads
+it into a buffer named @samp{*edit-pr*}, and places the cursor in the
+@samp{>Number:} field.  (@emph{Do not change this field}.)
+
+Edit the PR to reflect correct information.  Resubmit the PR to the
+database using @w{@samp{C-c C-c}} (see below).
+
+The easiest way to edit a PR from Emacs is to use the special key
+bindings provided.  These are:
+
+@table @code
+@item C-c C-c
+@itemx M-x gnats-submit-pr
+Saves and resubmits the PR currently being edited.  Do this when you
+finish editing the PR; if you simply kill the buffer, your changes are
+lost.
+
+@item C-x C-s
+@itemx M-x save-buffer
+Saves the current buffer tp a file.  You are prompted for a filename.
+This is not a special key binding, but at one point in the history of
+@sc{gnats} it was used to resubmit the PR (i.e., it was bound to
+@w{@samp{M-x gnats-submit-pr}}).  @w{@samp{C-x C-s}} now simply saves a
+copy of the PR.  This command @emph{does not} resubmit the PR to the
+database.  Use @w{@samp{C-c C-c}} to resubmit the PR.
+
+@item C-x k
+@itemx M-x gnats:kill-buffer (@emph{use this only with Emacs 18})
+@itemx M-x kill-buffer
+Kills the current buffer (destroying all changes) and unlocks the
+current PR.  Use this to back out of a change without affecting the
+database.
+
+@item C-c C-u
+@itemx M-x unlock-pr
+Unlocks a PR that you have locked.  Use this if you have a locked PR
+from a failed editing session.  You are prompted for the @var{gnats-id}
+of a PR to unlock.
+
+@item C-c C-q
+@item M-x unlock-buffer
+Removes the lock on the current PR, allowing others to edit it.  The
+buffer remains active and non-writeable.  To relock a PR, simply type
+@samp{e} in the buffer containing the Problem Report.
+
+@item C-c C-e
+@itemx M-x edit-pr
+Runs @code{edit-pr} in a new buffer.
+
+@item C-c C-f
+@itemx M-x change-field
+Changes the field under the cursor.  @code{edit-pr} prompts you for a
+new value.  If you use
+
+@smallexample
+C-u C-c C-f  @emph{or}
+C-u M-x change-field
+@end smallexample
+
+@noindent
+you are prompted for a field to change.
+
+@item C-c C-a
+@itemx M-x gnats-mail-reply
+Sends mail to the originator of this PR, using the address in the
+@samp{From:} field of the mail header.  The @samp{Subject}, @samp{To:},
+and @samp{Cc:} fields are constructed from the Problem Report currently
+being edited.  Edit the message, and use @w{@samp{C-c C-c}} to send it.
+
+@item C-c RET
+@itemx C-c C-m
+@itemx M-x gnats-mail-other-window
+Splits the current window, and starts a mail message.  The
+@samp{Subject:} field is constructed from the Problem Report currently
+being edited.  Edit the message, and use @w{@samp{C-c C-c}} to send it.
+
+@item C-c C-r
+@itemx M-x gnats-responsible-change-from-to
+Changes the @samp{>Responsible:} field.  @code{edit-pr} prompts you for
+the new responsible person, and for a message describing the reason for
+the change.  When you type @w{@samp{C-c C-c}} to resubmit the PR, the
+cursor is placed in a mail buffer containing a copy of the change.  You
+can then edit this buffer and type @w{@samp{C-c C-c}} again to send the
+mail.
+
+@item C-c C-s
+@itemx M-x gnats-state-change-from-to
+Changes the @samp{>State:} field.  @code{edit-pr} prompts you for the
+new state, and for a message describing the reason for the change.  When
+you type @w{@samp{C-c C-c}} to resubmit the PR, the cursor is placed in
+a mail buffer containing a copy of the change.  You can then edit this
+buffer and type @w{@samp{C-c C-c}} again to send the mail.
+
+@item C-c C-t
+@itemx M-x category-change-from-to
+Changes the @samp{>Category:} field of the PR.  @code{edit-pr} prompts
+you for the new category.  @code{edit-pr} also prompts you with the
+question
+
+@smallexample
+Update the >Responsible field?
+@end smallexample
+
+@noindent
+Type @samp{y} to change the value of the @samp{>Responsible:} field to
+the name of the party responsible for the new category.  Type @samp{n} to
+keep the current value of @samp{>Responsible:}.
+
+@c FIXME:
+@c @item C-c C-f
+@c @itemx M-x change-field
+@c what does this routine do??  I can't figure it out from gnats-el.in...
+
+@item M-C-b
+@itemx M-x gnats-backward-field
+Moves the cursor to the beginning of the value of the current field.
+
+@item M-C-f
+@itemx M-x gnats-forward-field
+Moves the cursor to the end of the value of the current field.
+
+@item M-p
+@itemx M-x gnats-previous-field
+Moves the cursor back one field to the beginning of the value of the
+previous field.
+
+@item M-n
+@itemx M-x gnats-next-field
+Moves the cursor forward one field to the beginning of the value of the
+next field.
+@end table
+
+@node edit-pr from the shell
+@subsection Invoking @code{edit-pr} from the shell
+@cindex @code{edit-pr} from the shell
+
+The usage for the @code{edit-pr} shell script is:
+
+@smallexample
+edit-pr @var{gnats-id} [ -V | --version ] [ -h | --help ]
+@end smallexample
+
+@noindent
+You must first determine which PR you want to edit.  The options are:
+
+@table @code
+@item -V @emph{or} --version
+Prints the version number for @code{edit-pr}.
+
+@item -h @emph{or} --help
+Prints the usage for @code{edit-pr}.
+@end table
+
+@code{edit-pr} calls the editor specified in your environment
+variable @code{EDITOR} on a temporary copy of that PR.  (If you don't
+have the variable @code{EDITOR} defined in your environment, the default
+editor @code{vi} is used.)
+
+Edit the PR, changing any relevant fields or adding to existing
+information.  When you exit the editor, @code{edit-pr} prompts you on
+standard input for a reason if you've changed either the
+@samp{>Responsible:} field or the @samp{>State:} field.  @code{edit-pr}
+tracks the information you provide when changing either of these two
+fields, along with the change that occurred, your name, and the time of
+change in the @samp{>Audit-Trail:} field.
+
+@c ---------------------------------------------------------------
+@node query-pr
+@section Querying the database
+@cindex using @code{query-pr}
+@cindex invoking @code{query-pr}
+@cindex @code{query-pr}
+@cindex querying invdividual problem reports
+
+Obtain information from the database by using the program
+@w{@code{query-pr}}. @code{query-pr} uses search parameters you provide
+to find matching Problem Reports in the database.  You can invoke
+@code{query-pr} from the shell or from within Emacs.  @code{query-pr}
+uses the same arguments whether it is invoked from the shell or from
+Emacs.
+
+All arguments and options to @code{query-pr} are optional.  If you do
+not specify a PR identification number and do not give any search
+parameters, @code{query-pr} displays the entire database.  All arguments
+are considered identification numbers of Problem Reports to display.
+Any number of options can be given (though some make no sense when
+specified on the same command line); all are connected with a logical
+@code{AND}.
+
+@menu
+* Invoking query-pr::
+* Example queries::
+* Reporting::
+@end menu
+
+@node Invoking query-pr
+@subsection Invoking @code{query-pr}
+
+From the shell, simply type @kbd{query-pr}, followed by any search
+parameters you wish to exercise.  From Emacs, type @w{@kbd{M-x
+query-pr}}.  @code{query-pr} prompts you for search parameters in the
+minibuffer.
+
+@cindex @code{query-pr} by mail
+@code{query-pr} can also be accessed by electronic mail, if your version
+of @sc{gnats} is configured for this.  To use this feature, simply send
+mail to the address @w{@samp{query-pr@@@var{your-site}}} with command
+line arguments or options in the @samp{Subject:} line of the mail
+header.  @sc{gnats} replies to your mail with the results of your query.
+The default settings for the @code{query-pr} mail server are
+
+@cindex the section on query-by-mail needs to be relocated
+@smallexample
+--restricted --state="open|analyzed|feedback|suspended"
+@end smallexample
+
+@noindent
+To override the @samp{--state} parameter, specify
+@w{@samp{--state=@var{state}}} in the @code{Subject:} line of the mail
+header.  You can not query on confidential Problem Reports by mail.
+
+The usage for @code{query-pr} is:
+
+@smallexample
+query-pr [ @var{gnats-id} ]
+         [ -c @var{category} | --category=@var{category} ]
+         [ -s @var{state} | --state=@var{state} ]
+         [ -r @var{responsible} | --responsible=@var{responsible} ]
+         [ -S @var{submitter} | --submitter=@var{submitter} ]
+         [ -C [ @var{yes} | @var{no} ] | --confidential=[ @var{yes} | @var{no} ] ]
+         [ -e @var{severity} | --severity=@var{severity} ]
+         [ -p @var{priority} | --priority=@var{priority} ]
+         [ -O @var{originator} | --originator=@var{originator} ]
+         [ -L @var{class} | --class=@var{class} ]
+@c         [ -k @var{class} | --class=@var{class} ]
+         [ -t @var{text} | --text=@var{text} ]
+         [ -m @var{text} | --multitext=@var{text} ]
+         [ -R | --restricted ]
+         [ -F | --full ] [ -q | --summary ] [ -i | --sql ]
+         [ -P | --print-path ]
+         [ -d @var{directory} | --directory=@var{directory} ]
+         [ -o @var{outfile} | --output=@var{outfile} ]
+         [ -V | --version ] [ -h | --help ]
+@end smallexample
+
+If you run @code{query-pr} from within Emacs, you can use
+
+@smallexample
+C-x `     @emph{or}       M-x next-error
+@end smallexample
+
+@noindent
+to scroll through Problem Reports one by one after the search is
+finished.
+
+@subheading Search criteria
+
+The following arguments and options specify search criteria.  The lack
+of a criterion indicates that all values for the corresponding field are
+valid for the search.  Regular expressions may be used as arguments to
+search criteria options; see @ref{Regexps,,Querying using regular
+expressions}.
+
+Using an argument to @code{query-pr} specifies the most stringent search
+criteria, that of a single PR.
+
+@table @code
+@item @var{gnats-id}
+The identification number of the PR you wish to view, as shown in the
+@samp{>Number:} field.  Any number of @var{gnats-id} arguments may be
+given.
+
+@item -c @var{category}
+@itemx --category=@var{category}
+Search only for PRs with a @samp{>Category:} value of @var{category}.
+For a list of valid categories, type @w{@samp{send-pr -L}} from the
+shell.
+
+@item -s @var{state}
+@itemx --state=@var{state}
+Search only for PRs with a @samp{>State:} value of @var{state}.
+@var{state} must be one of: @samp{open}, @samp{analyzed},
+@samp{feedback}, @samp{closed}, or @samp{suspended}.
+
+@noindent
+This field may be searched using regular expressions.  @xref{Regexps,,
+Querying using regular expressions}.  Also see @ref{Example
+queries,,Example queries}.
+
+@item -r @var{responsible}
+@itemx --responsible=@var{responsible}
+Search only for PRs with a @samp{>Responsible:} value of @var{responsible}.
+
+@item -S @var{submitter}
+@itemx --submitter=@var{submitter}
+Search only for PRs with a @samp{>Submitter:} value of @var{submitter}.
+
+@item -C [@var{yes} | @var{no}]
+@itemx --confidential=[@var{yes} | @var{no}]
+Search only for PRs with a @samp{>Confidential:} value of either
+@var{yes} or @var{no}.  If this option is not given, all PRs are
+eligible for the search regardless of their confidentiality.
+
+@item -e @var{severity}
+@itemx --severity=@var{severity}
+Search only for PRs with a @samp{>Severity:} value of @var{severity}.
+@var{severity} must be one of: @samp{critical}, @samp{serious}, or
+@samp{non-critical}.
+
+@item -p @var{priority}
+@itemx --priority=@var{priority}
+Search only for PRs with a @samp{>Priority:} value of @var{priority}.
+@var{priority} must be one of: @samp{high}, @samp{medium}, or
+@samp{low}.
+
+@item -O @var{originator}
+@itemx --originator=@var{originator}
+Search only for PRs with an @samp{>Originator:} value of @var{originator}.
+
+Since this option does not reference the index, queries using it finish
+much faster if you also use another search criterion that @emph{is} part
+of the index (@pxref{index file,,The @code{index} file}).
+
+@item -L @var{class}
+@itemx --class=@var{class}
+Search only for PRs with a @samp{>Class:} value of @var{class}.
+Since this option does not reference the index, queries using it finish
+much faster if you also use another search criterion that @emph{is} part
+of the index (@pxref{index file,,The @code{index} file}).
+
+@ignore
+@c FIXME - check if these need @w, and make sure this option goes in!
+@item -k @var{class}
+@itemx --class=@var{class}
+Search only for PRs with a @samp{>Class:} value of @var{class}.  @var{class}
+must be one of: @samp{sw-bug}, @samp{doc-bug}, @samp{change-request},
+@samp{support}, @samp{duplicate}, or @samp{mistaken}.
+
+Since this option does not reference the index, queries using it finish
+much faster if you also use another search criterion that @emph{is} part
+of the index (@pxref{index file,,The @code{index} file}).
+@end ignore
+
+@item -t @var{text}
+@itemx --text=@var{text}
+Search the @sc{Text} fields in the database for the regular expression
+@var{text}.  @sc{Text} fields include the following (the
+@samp{>} and @samp{:} Problem Report fieldname delimiters have been
+removed for the sake of brevity and readability):
+
+@smallexample
+@group
+Submitter-Id   Originator     Synopsis
+Category       Release        Responsible
+Arrival-Date
+@end group
+@end smallexample
+
+@noindent
+@xref{Regexps,,Querying using regular expressions}.
+
+Queries using this option can be slow.  Since this option does not
+reference the index, queries using it finish much faster if you also use
+another search criterion that @emph{is} part of the index (@pxref{index
+file,,The @code{index} file}).
+
+@item -m @var{text}
+@item --multitext=@var{text}
+Search the @sc{MultiText} fields in the database for the regular
+expression @var{text}.  @sc{MultiText} fields include the following
+(again, the fieldname delimiters @samp{>} and @samp{:} have been
+omitted):
+
+@smallexample
+@group
+Organization   Environment    Description
+How-To-Repeat  Fix            Audit-Trail
+Unformatted
+@end group
+@end smallexample
+
+@noindent
+@xref{Regexps,,Querying using regular expressions}.  
+
+Queries using this option can be very slow.  Since this option does not
+reference the index, queries using it finish much faster if you also use
+another search criterion that @emph{is} part of the index (@pxref{index
+file,,The @code{index} file}).
+
+@item -R
+@itemx --restricted
+Omit from the search path PRs whose @samp{>Confidential:} fields contain
+the value @samp{yes}.  This is equivalent to 
+
+@smallexample
+query-pr --confidential=no
+@end smallexample
+
+@noindent
+and also disallows the use of the options
+@w{@samp{--outfile=@var{outfile}}} and
+@w{@samp{--directory=@var{directory}}}.  This option is used with the
+@w{@code{mail-query}} tool.
+
+@item -x
+@itemx --skip-closed
+Omit closed PRs from the search path.  This option is ignored if you
+also use @w{@samp{-s @var{state}}} or @samp{--state=@var{state}}.
+@end table
+
+@subheading Output format
+
+Use the following options to select the format in which the Problem
+Report is printed.  Use only one of these options for a given search.
+If you do not specify one of these options, a header@footnote{A
+@dfn{header} includes the mail header fields as well as the following
+fields: @samp{>Number:}, @samp{>Category:}, @samp{>Synopsis:},
+@samp{>Confidential:}, @samp{>Severity:}, @samp{>Priority:},
+@samp{>Responsible:}, @samp{>State:}, @samp{>Class:},
+@samp{>Submitter-Id:}, @samp{>Originator:}, @samp{>Release:}, and
+@samp{>Arrival-Date:}.  For suggestions on using alternate output
+formats in database reports, see @ref{Reporting,,Reporting}.} for the
+Problem Reports meeting the search criteria is printed.
+
+@table @code
+@item -F
+@itemx --full
+Prints all fields in the Problem Report rather than just summary
+information.
+
+@item -q
+@itemx --summary
+Print a short single-line summary of PR information, delimited by
+whitespace, including the following fields in order (the @samp{>} and
+@samp{:} Problem Report fieldname delimiters have been removed for the
+sake of brevity and readability):
+
+@smallexample
+Number         Responsible    Category
+State          Severity       Priority
+Submitter-Id   Synopsis
+@end smallexample
+
+@item -i
+@itemx --sql
+Prints information on a single line with fields delimited by pipes
+(@samp{|}), which can be uploaded into a relational database.  When you
+use this option, @code{query-pr} outputs @sc{Enumerated} fields
+numerically rather than textually; see @ref{Reporting,,Reporting on
+groups of Problem Reports}.
+
+@samp{query-pr -i} outputs the following fields, in order (again, the
+fieldname delimiters @samp{>} and @samp{:} have been omitted):
+
+@smallexample
+Number         Category       Synopsis
+Confidential   Severity       Priority
+Responsible    State          Class
+Submitter-Id   Arrival-Date   Originator
+Release
+@end smallexample
+
+When you use the @samp{-i} option, @samp{query-pr} outputs the
+@sc{Enumerated} fields in the database, namely @samp{>Severity:},
+@samp{>Priority:}, @samp{>State:}, and @samp{>Class:}, as numbers rather
+than text.  @xref{Reporting,,Reporting on groups of Problem Reports},
+for details.
+
+@end table
+
+@subheading Other options
+
+@code{query-pr} also accepts the following options:
+
+@table @code
+@item -P
+@itemx --print-path
+Prints the path which @code{query-pr} used to find the current PR.  A
+line of the form @samp{@var{directory}/@var{number}:@var{number}} is
+printed before each PR.  This option is automatically used from within
+Emacs to facilitate scrolling through groups of PRs with @w{@kbd{C-x `}}.
+
+@item -d @var{directory}
+@itemx --directory=@var{directory}
+Changes the search directory to @var{directory} from @var{GNATS_ROOT}.
+
+@item -o @var{outfile}
+@itemx --output=@var{outfile}
+Prints all output to @var{outfile} rather than to the standard output.
+
+@item -V
+@itemx --version
+Prints the version number for @code{query-pr}.
+
+@item -h
+@itemx --help
+Prints the usage for @code{query-pr}.
+@end table
+
+
+@node Example queries
+@subsection Example queries
+@cindex example queries
+
+The following simple query:
+
+@smallexample
+query-pr --category=rats --responsible=fred --state=analyzed
+@end smallexample
+
+@noindent
+yields all PRs in the database which contain the field values:
+
+@smallexample
+>Category:     rats         @emph{and}
+>Responsible:  fred         @emph{and}
+>State:        analyzed
+@end smallexample
+
+The following query:
+
+@smallexample
+query-pr --state="o|a"
+@end smallexample
+
+@noindent
+yields all PRs in the database whose @samp{>State:} values match either
+@samp{open} or @samp{analyzed} (@pxref{Regexps,,Querying using regular
+expressions}.  This search is useful as a daily report that lists all
+Problem Reports which require attention.
+
+The report can be further altered using an alternate output format for
+@code{query-pr}; see @ref{Reporting,,Reporting on groups of Problem
+Reports}.  A more fine-grained report may be obtained by specifying more
+search parameters, e.g. narrowing the search down by
+@w{@samp{>Submitter:}} or by @samp{>Responsible:}.
+
+The following query:
+
+@smallexample
+query-pr --text="The quick.*brown fox"
+@end smallexample
+
+@noindent
+yields all PRs whose @sc{Text} fields contain the text @samp{The quick}
+followed by @samp{brown fox} within the same field.
+@xref{Regexps,,Querying using regular expressions}.
+
+@node Reporting
+@subsection Reporting on groups of Problem Reports
+@cindex reporting
+@cindex writing reports
+
+There currently exists no separate reporting mechanism in @sc{gnats} from
+@code{query-pr}.  However, the @samp{-q} and @samp{-i} options to
+@code{query-pr} allow for easy reporting.
+
+For example, a report on the current open Problem Reports in the
+database can be obtained using @code{awk} with
+
+@smallexample
+query-pr -q | awk '@{print $3 "/" $1 ": " $4@}'
+@end smallexample
+
+@noindent
+which yields a list of the form
+
+@smallexample
+@var{category}/@var{gnats-id}: @var{state}
+@emph{etc@dots{}}
+@end smallexample
+
+@noindent
+For example:
+
+@smallexample
+sprockets/123: open
+widgets/456: analyzed
+@emph{etc@dots{}}
+@end smallexample
+
+@noindent
+The @samp{-i} option to @code{query-pr} yields output delimited by pipes
+(@samp{|}).  This results in the following:
+
+@smallexample
+@var{gnats-id}|@var{category}|@var{synopsis}|@var{confidential}|\
+@var{severity}|@var{priority}|@var{responsible}|@var{state}|@var{class}|\
+@var{submitter-id}|@var{arrival-date}|@var{originator}|@var{release}
+@end smallexample
+
+A report on Problem Reports in the database that are currently
+@samp{open} or @samp{analyzed} might resemble the following (the example
+is split into two lines in order to fit onto the page; it is intended to
+be typed on one command line):
+
+@smallexample
+query-pr -i -s "o|a" | \
+  awk -F\| '@{print $1 "  " $2 "  " $8 "  " $3@}'
+@end smallexample
+
+@noindent
+which yields
+
+@smallexample
+@var{gnats-id}  @var{category}  @var{state}  @var{responsible} @var{synopsis}
+@emph{etc@dots{}}
+@end smallexample
+
+@noindent
+For example:
+
+@smallexample
+123  sprockets  1  fred    The sprockets program gives bad output
+456  widgets    2  barney  The foo widget doesn't work with 'bar'
+789  widgets    1  wilma   The 'baz' widget is broken
+@end smallexample
+
+@noindent
+When you use the @samp{-i} option, @samp{query-pr} outputs the
+@sc{Enumerated} fields in the database, namely @samp{>Severity:},
+@samp{>Priority:}, @samp{>State:}, and @samp{>Class:}, as numbers rather
+than text.  In the example above, a @samp{>State:} value of @samp{1}
+means @samp{open}, @samp{2} means @samp{analyzed}, and so forth.
+@sc{Enumerated} fields are output according to the following paradigm:
+
+@smallexample
+    >Severity:                   >Priority:
+critical        1             high            1
+serious         2             medium          2 
+non-critical    3             low             3
+
+     >State:                      >Class:
+open            1             sw-bug          1
+analyzed        2             doc-bug         2
+suspended       3             support         3
+feedback        4             change-request  4
+closed          5             mistaken        5
+                              duplicate       6
+@end smallexample
+
+This makes sorting on these values easy, when combined with @code{sort}.
+It is left as an exercise for the reader to figure out how to do this.
+
+@ignore
+@c it works something like...
+@smallexample
+query-pr -i -s "o|a" | \
+  awk -F\| '@{print $8 "|" $1 "|" $2 "|" $3@}' | \
+  sort -n | \
+  awk -F\| '@{if $1 = "1" then \
+                 print "Open bugs:\n" $2 "  " $3 "  " $3@}' \
+           '@{if $1 = "2" then \
+                 print "Analyzed bugs:\n" $2 "  " $3 "  " $3@}'
+@end smallexample
+@end ignore
+
+@node view-pr
+@section Viewing individual Problem Reports
+@cindex @code{view-pr} in Emacs
+
+Use @code{view-pr} from within Emacs to view individual Problem Reports.
+Invoke @code{view-pr} with
+
+@smallexample
+M-x view-pr
+@end smallexample
+
+You are prompted to enter a Problem Report identification number
+(@var{gnats-id}).  You can also invoke @code{view-pr} with
+
+@smallexample
+C-u @var{gnats-id} M-x view-pr
+@end smallexample
+
+@code{view-pr} allows you to view @var{gnats-id}.  This is identical to
+using
+
+@smallexample
+C-u @var{gnats-id} M-x query-pr
+@end smallexample
+
+except that you may choose to edit the PR at any time by pressing
+@samp{e}.

@@ -1,3 +1,15 @@
+Mon Mar 17 15:34:06 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* comint/comint.el (comint-input-setup): Require comint-xemacs.
+
+	* utils/autoload.el (autoload-snarf-defcustom): Don't snarf from
+	auto-autoloads.el.
+
+	* comint/comint-xemacs.el: New file.  Contains face declarations
+	for comint.
+
+	* comint/comint.el: Remove inline defface.
+
 Sat Mar 15 15:14:06 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* prim/loadup.el: Add prim/auto-customize.elc to dumped files.

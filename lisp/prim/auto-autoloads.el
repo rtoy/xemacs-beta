@@ -2389,7 +2389,7 @@ Finds out what articles are to be part of the nnkiboze groups." t nil)
 ;;;### (autoloads (nnml-generate-nov-databases) "nnml" "gnus/nnml.el")
 
 (autoload 'nnml-generate-nov-databases "nnml" "\
-Generate nov databases in all nnml directories." t nil)
+Generate NOV databases in all nnml directories." t nil)
 
 ;;;***
 
@@ -3840,7 +3840,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.15 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.16 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -5192,7 +5192,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.15 $
+vhdl-mode $Revision: 1.16 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -8360,48 +8360,6 @@ when this can be done without changing the column they end at.
 Called non-interactively, the region is specified by arguments
 START and END, rather than by the position of point and mark.
 The variable `tab-width' controls the spacing of tab stops." t nil)
-
-;;;***
-
-;;;### (autoloads (with-timeout run-with-idle-timer run-with-timer run-at-time) "timer" "prim/timer.el")
-
-(autoload 'run-at-time "timer" "\
-Perform an action after a delay of SECS seconds.
-Repeat the action every REPEAT seconds, if REPEAT is non-nil.
-TIME should be a string like \"11:23pm\", nil meaning now, a number of seconds
-from now, or a value from `encode-time'.
-REPEAT may be an integer or floating point number.
-The action is to call FUNCTION with arguments ARGS.
-
-This function returns a timer object which you can use in `cancel-timer'." t nil)
-
-(autoload 'run-with-timer "timer" "\
-Perform an action after a delay of SECS seconds.
-Repeat the action every REPEAT seconds, if REPEAT is non-nil.
-SECS and REPEAT may be integers or floating point numbers.
-The action is to call FUNCTION with arguments ARGS.
-
-This function returns a timer object which you can use in `cancel-timer'." t nil)
-
-(autoload 'run-with-idle-timer "timer" "\
-Perform an action the next time Emacs is idle for SECS seconds.
-If REPEAT is non-nil, do this each time Emacs is idle for SECS seconds.
-SECS may be an integer or a floating point number.
-The action is to call FUNCTION with arguments ARGS.
-
-This function returns a timer object which you can use in `cancel-timer'." t nil)
-
-(put 'with-timeout 'lisp-indent-function 1)
-
-(autoload 'with-timeout "timer" "\
-Run BODY, but if it doesn't finish in SECONDS seconds, give up.
-If we give up, we run the TIMEOUT-FORMS and return the value of the last one.
-The call should look like:
- (with-timeout (SECONDS TIMEOUT-FORMS...) BODY...)
-The timeout is checked whenever Emacs waits for some kind of external
-event (such as keyboard input, input from subprocesses, or a certain time);
-if the program loops without waiting in any way, the timeout will not
-be detected." nil 'macro)
 
 ;;;***
 

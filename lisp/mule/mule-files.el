@@ -41,6 +41,8 @@
 (setq-default buffer-file-coding-system 'iso-2022-8)
 (put 'buffer-file-coding-system 'permanent-local t)
 
+(define-obsolete-variable-alias 'file-coding-system 'buffer-file-coding-system)
+
 (defvar coding-system-for-write nil
   "Overriding coding system used when writing a file.
 You should *bind* this, not set it.  If this is non-nil, it specifies
@@ -66,11 +68,13 @@ particular operation, you should bind the variable
 `coding-system-for-read' rather than setting this variable,
 which is intended to be used for global environment specification.")
 
+(define-obsolete-variable-alias
+  'file-coding-system-for-read
+  'buffer-file-coding-system-for-read)
+
 (defvar buffer-file-coding-system-alist
-  '(("\\.el$" . iso-2022-8)
-    ("\\.info$" . iso-2022-8)
-    ("ChangeLog$" . iso-2022-8)
-    ("\\.texi$" . iso-2022-8)
+  '(("\\.\\(el\\|emacs\\|info\\|texi\\)$" . iso-2022-8)
+    ("\\(ChangeLog\\|CHANGES-beta\\)$" . iso-2022-8)
     ("\\.\\(gz\\|Z\\)$" . no-conversion)
     ("/spool/mail/.*$" . convert-mbox-coding-system))
   "Alist specifying the coding system used for particular files.
@@ -83,6 +87,10 @@ Instead of a coding system you may specify a function, and it will be
 called after the file has been read in to decode the file.  It is
 called with four arguments: FILENAME, VISIT, START, and END, the same
 as the first four arguments to `insert-file-contents'.")
+
+(define-obsolete-variable-alias
+  'file-coding-system-alist
+  'buffer-file-coding-system-alist)
 
 (defun set-buffer-file-coding-system (coding-system &optional force)
   "Set buffer-file-coding-system of the current buffer to CODING-SYSTEM.
@@ -99,6 +107,10 @@ the current value of `buffer-file-coding-system'."
   (setq buffer-file-coding-system coding-system)
   (redraw-modeline t))
 
+(define-obsolete-function-alias
+  'set-file-coding-system
+  'set-buffer-file-coding-system)
+
 (defun set-buffer-file-coding-system-for-read (coding-system)
   "Set the coding system used when reading in a file.
 This is equivalent to setting the variable
@@ -109,6 +121,10 @@ particular files."
   (get-coding-system coding-system) ;; correctness check
   (setq buffer-file-coding-system-for-read coding-system))
 
+(define-obsolete-function-alias
+  'set-file-coding-system-for-read
+  'set-buffer-file-coding-system-for-read)
+
 (defun set-default-buffer-file-coding-system (coding-system)
   "Set the default value of `buffer-file-coding-system' to CODING-SYSTEM.
 The default value is used both for buffers without associated files
@@ -117,6 +133,10 @@ See `buffer-file-coding-system' for more information."
   (interactive "zDefault file coding system: ")
   (setq-default buffer-file-coding-system coding-system)
   (redraw-modeline t))
+
+(define-obsolete-function-alias
+  'set-default-file-coding-system
+  'set-default-buffer-file-coding-system)
 
 (defun find-buffer-file-coding-system-from-filename (filename)
   "Look up a file in `buffer-file-coding-system-alist'.
@@ -136,6 +156,10 @@ entry specified a function to be called)."
     (if codesys
  	(cond ((find-coding-system codesys))
 	      (t codesys)))))
+
+(define-obsolete-function-alias
+  'find-file-coding-system-from-filename
+  'find-buffer-file-coding-system-from-filename)
 
 (defun convert-mbox-coding-system (filename visit start end)
   "Decoding function for Unix mailboxes.

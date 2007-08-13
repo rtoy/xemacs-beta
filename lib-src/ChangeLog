@@ -1,3 +1,17 @@
+Mon Mar 17 10:12:03 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (INSTALLABLE_SCRIPTS): Add install-sid and
+	send-pr (from GNATS).
+
+	* update-elc.sh (prune_vc): Use full path to cleantree.el.
+	(NUMTOCOMPILE): Remove useless rule to recompile out-of-date .elcs.
+
+Sun Mar 16 21:13:29 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* install-sid: New file (GNATS integration).
+
+	* send-pr: New file (GNATS integration).
+
 Fri Mar 14 17:59:57 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh (ignore_dirs): Build VM with `make autoload'.

@@ -54,7 +54,7 @@ echo "    with $EMACS..."
 
 prune_vc="( -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 
-$EMACS -batch -q -no-site-file -l cleantree -f batch-remove-old-elc lisp
+$EMACS -batch -q -l `pwd`/lisp/prim/cleantree -f batch-remove-old-elc lisp
 
 # $els  is a list of all .el  files
 # $elcs is a list of all .elc files
@@ -155,12 +155,5 @@ comm -23 $els $elcs | \
  sed "$ignore_pattern" | \
  xargs -t -n$NUMTOCOMPILE $BYTECOMP -f batch-byte-compile
 echo "Compiling files without .elc... Done"
-
-
-echo "Compiling files with out-of-date .elc..."
-find lisp/* $prune_vc -type d -print | \
- sed "$ignore_pattern" | \
- xargs -t $BYTECOMP -f batch-byte-recompile-directory
-echo "Compiling files with out-of-date .elc... Done"
 
 eval "$make_special_commands"

@@ -1335,18 +1335,20 @@ release: temacs ${lisp} ${libsrc}DOC MOFILE OTHER_FILES
 	else true; fi
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -nl -batch -l loadup.el dump
-	@if [ -f SATISFIED ]; then \
+	@if [ ! -f SATISFIED ]; then \
 		$(MAKE) release; \
 	fi
+	@/bin/rm -f SATISFIED
 #else /* ! defined (HAVE_SHM) */
 	-if [ -w ${srcdir}/../lisp ]; then \
 	  w=`pwd`; cd ${srcdir} && $${w}/temacs -batch -l inc-vers; \
 	else true; fi
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
-	@if [ -f SATISFIED ]; then \
+	@if [ ! -f SATISFIED ]; then \
 		$(MAKE) release; \
 	fi
+	@/bin/rm -f SATISFIED
 #endif /* ! defined (HAVE_SHM) */
 	touch release
 #endif /* ! defined (CANNOT_DUMP) */
@@ -1354,16 +1356,18 @@ release: temacs ${lisp} ${libsrc}DOC MOFILE OTHER_FILES
 xemacs: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
-	@if [ -f SATISFIED ]; then \
+	@if [ ! -f SATISFIED ]; then \
 		$(MAKE) xemacs; \
 	fi
+	@/bin/rm -f SATISFIED
 
 xemacs-no-site-file: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump no-site-file
-	@if [ -f SATISFIED ]; then \
+	@if [ ! -f SATISFIED ]; then \
 		$(MAKE) xemacs-no-site-file; \
 	fi
+	@/bin/rm -f SATISFIED
 
 obj_src = $(objs:.o=.c)
 
@@ -1378,7 +1382,7 @@ ${libsrc}DOC: ${libsrc}make-docfile
 ${libsrc}DOC: ${libsrc}make-docfile ${obj_src} ${mule_obj_src} ${lisp}
 #endif
 	rm -f ${libsrc}DOC
-	${libsrc}make-docfile -d ${srcdir} -i ${lispdir}../site-packages \
+	${libsrc}make-docfile -d ${srcdir} -i ../site-packages \
 		${obj_src} ${mule_obj_src} \
 	        ${mallocdocsrc} ${rallocdocsrc} ${lispdir}version.el \
 		${lisp} > ${libsrc}DOC
@@ -1386,7 +1390,12 @@ ${libsrc}DOC: ${libsrc}make-docfile ${obj_src} ${mule_obj_src} ${lisp}
 dump_elcs: dump-elcs
 
 dump-elcs: temacs
-	$(LOADPATH) ./temacs -batch -l ../prim/update-elc.el $(lisp) $(otherlisp)
+	@touch SATISFIED
+	-$(LOADPATH) ./temacs -batch -l ../prim/update-elc.el $(lisp) $(otherlisp)
+	@if [ ! -f SATISFIED ]; then \
+		$(MAKE) dump-elcs; \
+	fi
+	@/bin/rm -f SATISFIED
 
 all-elc all-elcs:
 	cd .. && $(MAKE) all-elc $(MFLAGS)

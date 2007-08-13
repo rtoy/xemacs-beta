@@ -1,3 +1,13 @@
+Mon Mar 17 15:40:12 1997  David Moore  <dmoore@ucsd.edu>
+
+	* glyphs-x.c (our_own_dgif_slurp_from_gif2x11_c): Only get the
+	first image out of a multi-image or animated gif.
+
+Mon Mar 17 15:27:26 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (xemacs): Invert sense of test for successful
+	completion of XEmacs dump.
+
 Sat Mar 15 14:21:39 1997  David Moore  <dmoore@ucsd.edu>
 
 	* fileio.c (Fdo_auto_save): Protect against file handlers which

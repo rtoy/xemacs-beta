@@ -1,6 +1,6 @@
 ;;; fill.el --- fill commands for XEmacs.
 
-;; Copyright (C) 1985, 86, 92, 94, 95, 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 86, 92, 94, 95, 1997 Free Software Foundation, Inc.
 
 ;; Keywords: wp
 
@@ -91,7 +91,7 @@ This function is used when `adaptive-fill-regexp' does not match.")
 	nil
       ;; we have skipped backward SPC or WAN (word-across-newline).  So move point forward again.
       (forward-char)
-      (if (<= opoint (point))
+      (if (< opoint (point))
 	  (forward-char -1)))))
 
 ;; Added for kinsoku processing. Use instead of
@@ -103,7 +103,7 @@ This function is used when `adaptive-fill-regexp' does not match.")
     (if (not (re-search-forward regexp lim 'move))
 	nil
       (forward-char -1)
-      (if (<= (point) opoint)
+      (if (< (point) opoint)
 	  (forward-char))))
   (if (featurep 'mule) (kinsoku-process-extend)))
 

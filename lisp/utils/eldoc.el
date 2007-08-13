@@ -7,7 +7,7 @@
 ;; Keywords: extensions
 ;; Created: 1995-10-06
 
-;; $Id: eldoc.el,v 1.3 1997/03/16 03:05:48 steve Exp $
+;; $Id: eldoc.el,v 1.4 1997/03/18 03:27:00 steve Exp $
 
 ;; This file is part of GNU Emacs.
 
@@ -240,7 +240,7 @@ the mode, respectively."
               ;; timer, we're still in the middle of executing a command,
               ;; e.g. a query-replace where it would be annoying to
               ;; overwrite the echo area.
-              (and ;(not this-command)
+              (and (not this-command)
                    (symbolp last-command)
                    (intern-soft (symbol-name last-command)
                                 eldoc-message-commands)))

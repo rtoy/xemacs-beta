@@ -1,7 +1,7 @@
 \input texinfo                  @c -*-texinfo-*-
 
 @setfilename gnus
-@settitle Gnus 5.4 Manual
+@settitle Gnus 5.4.28 Manual
 @synindex fn cp
 @synindex vr cp
 @synindex pg cp
@@ -287,13 +287,13 @@ into another language, under the above conditions for modified versions.
 @tex
 
 @titlepage
-@title Gnus 5.4 Manual
+@title Gnus 5.4.28 Manual
 
 @author by Lars Magne Ingebrigtsen
 @page
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1995,96 Free Software Foundation, Inc. 
+Copyright @copyright{} 1995,96,97 Free Software Foundation, Inc. 
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -323,7 +323,7 @@ can be gotten by any nefarious means you can think of---@sc{nntp}, local
 spool or your mbox file.  All at the same time, if you want to push your
 luck.
 
-This manual corresponds to Gnus 5.4.
+This manual corresponds to Gnus 5.4.28
 
 @end ifinfo
 
@@ -1816,8 +1816,9 @@ Make a group based on some file or other
 command, you will be prompted for a file name and a file type.
 Currently supported types are @code{babyl}, @code{mbox}, @code{digest},
 @code{mmdf}, @code{news}, @code{rnews}, @code{clari-briefs},
-@code{rfc934} and @code{forward}.  If you run this command without a
-prefix, Gnus will guess at the file type.  @xref{Document Groups}.
+@code{rfc934}, @code{rfc822-forward}, and @code{forward}.  If you run
+this command without a prefix, Gnus will guess at the file type.
+@xref{Document Groups}.
 
 @item G w
 @kindex G w (Group)
@@ -1897,6 +1898,10 @@ If the group parameter list has an element that looks like
 doing a @kbd{a} in any group.  It is totally ignored when doing a
 followup---except that if it is present in a news group, you'll get mail
 group semantics when doing @kbd{f}.
+
+If you do an @kbd{a} command in a mail group and you don't have a
+@code{to-list} group parameter, one will be added automatically upon
+sending the message.
 
 @item broken-reply-to
 @cindex broken-reply-to
@@ -9131,7 +9136,9 @@ doesn't really mix very well.
 
 @vindex nnmail-expiry-wait
 The @code{nnmail-expiry-wait} variable supplies the default time an
-expirable article has to live.  The default is seven days.  
+expirable article has to live.  Gnus starts counting days from when the
+message @emph{arrived}, not from when it was sent.  The default is seven
+days.
 
 Gnus also supplies a function that lets you fine-tune how long articles
 are to live, based on what group they are in.  Let's say you want to
@@ -9755,8 +9762,9 @@ Virtual server variables:
 @item nndoc-article-type
 @vindex nndoc-article-type
 This should be one of @code{mbox}, @code{babyl}, @code{digest},
-@code{mmdf}, @code{forward}, @code{rfc934}, @code{news}, @code{rnews},
-@code{mime-digest}, @code{clari-briefs}, or @code{guess}.
+@code{mmdf}, @code{forward}, @code{rfc934}, @code{rfc822-forward},
+@code{news}, @code{rnews}, @code{mime-digest}, @code{clari-briefs}, or
+@code{guess}.
 
 @item nndoc-post-type
 @vindex nndoc-post-type
@@ -13843,6 +13851,7 @@ Also thanks to the following for patches and stuff:
 
 Adrian Aichner,
 Peter Arius, 
+Matt Armstrong,
 Marc Auslander,
 Chris Bone,
 Mark Borges,
@@ -13894,6 +13903,7 @@ Tonny Madsen,
 Shlomo Mahlab,
 Nat Makarevitch,
 David Martin,
+Gordon Matzigkeit,
 Timo Metzemakers,
 Richard Mlynarik,
 Lantz Moore,
@@ -13916,6 +13926,7 @@ Jason Rumney,
 Loren Schall,
 Dan Schmidt,
 Ralph Schleicher,
+Philippe Schnoebelen,
 Randal L. Schwartz,
 Danny Siu, 
 Paul D. Smith,

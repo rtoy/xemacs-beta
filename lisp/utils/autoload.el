@@ -344,7 +344,9 @@ autoloads go somewhere else.")
   (let ((visited (get-file-buffer file)))
     (save-excursion
       (set-buffer (or visited (find-file-noselect file)))
-      (when (and file (string-match "\\`\\(.*\\)\\.el\\'" file))
+      (when (and file
+		 (string-match "\\`\\(.*\\)\\.el\\'" file)
+		 (not (buffer-modified-p)))
 	(goto-char (point-min))
 	(condition-case nil
 	    (let ((name (file-name-nondirectory (match-string 1 file))))

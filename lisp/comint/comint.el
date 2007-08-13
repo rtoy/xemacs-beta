@@ -355,21 +355,6 @@ This is to work around a bug in Emacs process signalling.")
 (put 'comint-scroll-show-maximum-output 'permanent-local t)
 (put 'comint-ptyp 'permanent-local t)
 
-(defface comint-input-face '((((class color)
-			      (background dark))
-			     (:foreground "red"))
-			    (((class color)
-			      (background light))
-			     (:foreground "blue"))
-			    (((class mono))
-			     (:bold t))
-			    (((class grayscale))
-			     (:bold t))
-			    (t 
-			     (:bold t)))
-  "How to display user input for comint shells."
-  :group 'comint-input-face)
-
 
 
 (defun comint-mode ()
@@ -1385,6 +1370,7 @@ Similarly for Soar, Scheme, etc."
 
 (defun comint-input-setup ()
   "Insure the comint-input-extent is ready."
+  (require 'comint-xemacs)
   (setq comint-input-extent (make-extent (point) (point-max)))
   (set-extent-property comint-input-extent 'detachable nil)
   (set-extent-property comint-input-extent 'start-closed t)

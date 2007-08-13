@@ -1678,6 +1678,12 @@ our_own_dgif_slurp_from_gif2x11_c (GifFileType *GifFile)
 		    return GIF_ERROR;
 		}
 	    }
+
+	  /* Only get 1 image from animated gifs. */
+	  /* #### if the rest of the file was bad, we still return
+	     GIF_OK, since we don't even bother looking at it.  Should
+	     probably check for ImageCount == 1 above too, hmm. */
+	  goto done;
 	  break;
 
 	case EXTENSION_RECORD_TYPE:
@@ -1700,6 +1706,8 @@ our_own_dgif_slurp_from_gif2x11_c (GifFileType *GifFile)
 	}
     }
   while (RecordType != TERMINATE_RECORD_TYPE);
+
+ done:
 
   return GIF_OK;
 }

@@ -1,3 +1,7 @@
+Sun Mar 16 18:48:14 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* gnats/Makefile (gnats_srcs): New manuals for GNATS.
+
 Wed Mar 12 14:39:43 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* lispref/strings.texi (Text Comparison): Correct example for

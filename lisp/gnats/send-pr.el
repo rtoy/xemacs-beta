@@ -64,7 +64,7 @@
 
 (defconst send-pr::version "3.101")
 
-(defvar gnats:root ""
+(defvar gnats:root "/usr/lib/gnats/gnats-db"
   "*The top of the tree containing the GNATS database.")
 
 ;;;;---------------------------------------------------------------------------
@@ -129,13 +129,13 @@ Returns the final value of default-directory in the buffer."
     ret))
 
 ;; const because it must match the script's value
-(defconst send-pr:datadir (or (gnats::get-config "DATADIR") "/usr/local/share")
+(defconst send-pr:datadir (or (gnats::get-config "DATADIR") "/usr/share")
   "*Where the `gnats' subdirectory containing category lists lives.")
 
 (defvar send-pr::sites nil
   "List of GNATS support sites; computed at runtime.")
 (defvar send-pr:default-site
-  (or (gnats::get-config "GNATS_SITE") "cygnus")
+  (or (gnats::get-config "GNATS_SITE") "altair.xemacs.org")
   "Default site to send bugs to.")
 (defvar send-pr:::site send-pr:default-site
   "The site to which a problem report is currently being submitted, or NIL
@@ -274,8 +274,9 @@ to send the PR with `send-pr -b -f -'."
       (save-excursion
 	;; Clear cruft inserted by bdamaged .cshrcs
 	(goto-char 1)
-	(re-search-forward "^SEND-PR:")
-	(delete-region 1 (match-beginning 0)))))
+	;; XEmacs change
+	(when (re-search-forward "^SEND-PR:" nil t)
+	  (delete-region 1 (match-beginning 0))))))
   (set-buffer-modified-p nil)
   (send-pr:send-pr-mode)
   (setq send-pr:::site site)

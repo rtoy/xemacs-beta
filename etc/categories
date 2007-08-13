@@ -1,0 +1,37 @@
+#		    Possible categories for a PR.
+#
+# Any line which begins with a `#' is considered a comment, and GNATS
+# will ignore it. 
+#
+# Each entry has the format:
+#
+# 	category:description:responsible:notify
+#
+# * `category' is the name of the classification for the PR.
+# * `description' can be a normal text description for the
+#   category, like "Development Tools" for the `tools' category.
+# * `responsible' gives the name (which can be found in the remote
+#   file) of the person who will be given responsibility for any PR
+#   appearing in this category.
+# * `notify' are other email addresses which should be given copies of
+#    any PR in this category.
+#
+# The following category is mandatory for GNATS to work.
+#
+pending:Category for faulty PRs:gnats-admin:
+#
+# Sample categories:
+#
+auxillary:Auxillary Programs:gnats-admin:
+configuration:Configuration:gnats-admin:mrb@eng.sun.com
+documentation:Documentation Bug:gnats-admin:weiner@infodock.com
+frames:X11 Frames:gnats-admin:
+i18n:I18n Internationalization:gnats-admin:mrb@eng.sun.com
+lisp:Emacs Lisp code:gnats-admin:
+menubars:X11 menubars:gnats-admin:
+misc:Miscellaneous:gnats-admin:
+performance:Performance Issues:gnats-admin:dmoore@ucsd.edu
+redisplay:Redisplay Issues:gnats-admin:cthomp@xemacs.org
+scrollbars:X11 scrollbars:gnats-amdin:mrb@eng.sun.com
+tooblbars:X11 toolbars:gnats-admin:
+test:*Test Category:gnats-admin:
