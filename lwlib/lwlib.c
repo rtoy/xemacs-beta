@@ -36,7 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #define alloca __builtin_alloca
 #endif
 
-#if ((!__GNUC__) && !defined(__hpux)) && !defined(_AIX) && !defined (_SCO_DS) && !defined (__USLC__) && !defined(sinix) && !defined(WINDOWSNT)
+#if ((!__GNUC__) && !defined(__hpux)) && !defined(_AIX) && !defined (_SCO_DS) && !defined (__USLC__) && !defined(sinix) && !defined(WINDOWSNT) && !defined(_SEQUENT_)
 #include <alloca.h>
 #endif
 

@@ -1,3 +1,13 @@
+Wed Apr 23 11:28:10 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* psgml-charent.el (sgml-display-char-list-filename): Move
+	iso88591.map to a proper location.
+
+Tue Apr 22 02:05:09 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* psgml-xemacs.el (sgml-xemacs-get-popup-value): Allow for
+	interactive function.
+
 Sat Mar 22 19:58:27 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* psgml-html.el (html-mode): Too many backslashes in DOCSTRING.

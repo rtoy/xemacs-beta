@@ -23,6 +23,7 @@
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
+  (message "Clearing all marks...")
   (let ((mp vm-message-list))
     (while mp
       (if (vm-mark-of (car mp))
@@ -32,7 +33,8 @@
       (setq mp (cdr mp))))
   (vm-display nil nil '(vm-clear-all-marks)
 	      '(vm-clear-all-marks marking-message))
-  (vm-update-summary-and-mode-line))
+  (vm-update-summary-and-mode-line)
+  (message "Clearing all marks... done"))
 
 (defun vm-mark-all-messages ()
   "Mark all messages in the current folder."
@@ -40,6 +42,7 @@
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
+  (message "Marking all messages...")
   (let ((mp vm-message-list))
     (while mp
       (vm-set-mark-of (car mp) t)
@@ -47,7 +50,8 @@
       (setq mp (cdr mp))))
   (vm-display nil nil '(vm-mark-all-messages)
 	      '(vm-mark-all-messages marking-message))
-  (vm-update-summary-and-mode-line))
+  (vm-update-summary-and-mode-line)
+  (message "Marking all messages... done"))
 
 (defun vm-mark-message (count)
   "Mark the current message.

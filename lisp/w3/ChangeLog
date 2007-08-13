@@ -2,7 +2,22 @@ Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 * Makefile (xemacs-w3): Special target for XEmacs Build.
 
+Mon Apr 21 08:58:02 1997  William M. Perry  <wmperry@aventail.com>
+
+* devices.el: Added magic to not optimize this file under XEmacs - its not 
+  actually used, so no damage.  It wouldn't compile under XEmacs because
+  it has subrs for all these, and our declaring them as defsubsts
+  thoroughly confuses the byte-compiler.
+
+Sun Apr 20 12:19:56 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-sysdp.el: Moved device stuf out into its own devices.el file so that
+  it can be correctly byte-compiled.
+  Ditto for the text properties stuff (into w3-props.el)
+
 Fri Apr 18 13:09:31 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs/W3 3.0.83 released
 
 * Synch'd up to Widget 1.89
 

@@ -1,7 +1,7 @@
 ;;; dsssl-flow.el --- DSSSL flow objects
 ;; Author: wmperry
-;; Created: 1997/04/18 13:48:10
-;; Version: 1.2
+;; Created: 1997/04/21 15:58:59
+;; Version: 1.3
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,6 +40,11 @@
   (sizeof nil)				; get size of a single flow object
   (clean nil)				; cleanup instance of backend
   )
+
+(defvar dsssl-flow-active-faces nil)
+(defvar dsssl-flow-active-voices nil)
+(make-variable-buffer-local 'dsssl-flow-active-faces)
+(make-variable-buffer-local 'dsssl-flow-active-voices)
 
 (defun dsssl-flow-display (flows processor)
   (let ((handler (dsssl-flow-processor-handler processor))
@@ -104,7 +109,7 @@
 	    (applet			; Wow, Java
 	     )
 	    (script			; Scripts
-	     (w3-handle-empty-tag))
+	     )
 	    (form-element		; Any form element
 	     )
 	    ;; pinhead, flame, and cookie can now all be handled by

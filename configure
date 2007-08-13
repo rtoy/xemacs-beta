@@ -120,6 +120,7 @@ with_gif=''
 with_toolbars=''
 with_tty='yes'
 use_union_type='no'
+with_dnet=''
 
 # # gnu echo silently eats `--help', `--version', `-n', `-e', `-E', `-n'.
 # # other versions of echo eat any strings beginning with `-n'.
@@ -263,6 +264,7 @@ Additional features:
 --with-pop		support POP for mail retrieval
 --with-kerberos		support Kerberos-authenticated POP
 --with-hesiod		support Hesiod to get the POP server host
+--with-dnet (*)		Compile with support for DECnet.
 
 Internationalization options:
 
@@ -434,6 +436,7 @@ while test $# != 0; do
 	with_pop	| \
 	with_kerberos	| \
 	with_hesiod	| \
+	with_dnet	| \
 	external_widget | \
 	verbose		| \
 	extra_verbose	| \
@@ -2967,7 +2970,8 @@ CPPFLAGS="${C_SWITCH_SITE} $c_switch_system $c_switch_machine $c_switch_x_system
 DEFS="${C_SWITCH_SITE} $c_switch_system $c_switch_machine $c_switch_x_system $DEFS"
 LIBS="${LD_SWITCH_SITE} $ld_switch_x_system $libsrc_libs $LIBS"
 
-ac_save_LIBS="${LIBS}"
+test "${with_dnet}"      != "no"   -a \
+     "${with_dnet}"      != "yes" && { ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -ldnet"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -ldnet"
@@ -2985,7 +2989,12 @@ fi
 rm -f conftest*
 LIBS="${ac_save_LIBS}"
 if test -n "${ac_have_lib}"; then
-   
+   :; with_dnet="yes"
+else
+   :; 
+fi
+ }
+test "${with_dnet}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_LIBDNET"
@@ -2997,8 +3006,6 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_LIBDNET\${ac_dB}HAVE_LIBDNET\${ac_dC}1\
 "
 }
 
-   LIBS="${LIBS} -ldnet"
-fi
 
 
 ac_save_LIBS="${LIBS}"
@@ -5957,7 +5964,7 @@ if test "${with_tooltalk}" = "yes" ; then
       C_SWITCH_X_SITE="${C_SWITCH_X_SITE} ${arg}"
     fi
   done
-  for arg in "-L/usr/lib" "-L${OPENWINHHOME-/usr/openwin}/lib" "-L/usr/dt/lib"
+  for arg in "-L/usr/lib" "-L${OPENWINHOME-/usr/openwin}/lib" "-L/usr/dt/lib"
   do
     case "${arg}" in
 	-L*) if test -f `echo "${arg}/libtt.a" | sed 's/^\-L//'` ; then
@@ -7107,7 +7114,12 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}NO_UNION_TYPE\${ac_dB}NO_UNION_TYPE\${ac_dC}
 
 
 (
-echo "uname -a: `uname -a`" 
+if test -f /etc/osversion; then
+	# SONY NEWS-OS
+	echo "osversion: `cat /etc/osversion`"
+eles
+	echo "uname -a: `uname -a`" 
+fi
 echo "" 
 echo "$0 $quoted_arguments" 
 ) >> Installation
@@ -7139,6 +7151,7 @@ elif test -n "$site_libraries"; then
 elif test -n "$site_runtime_libraries"; then
   echo "  Additional libraries:                                   ${site_runtime_libraries}"
 fi
+test "$with_dnet"  = yes && echo "  Compiling in support for DNET."
 test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_term"  = yes && echo "  Compiling in support for TERM."
 test "$with_xauth" = yes && echo "  Compiling in support for XAUTH."

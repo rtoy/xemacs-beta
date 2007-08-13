@@ -13,7 +13,8 @@
     (setq args (cdr args))))
 
 ;; For Emacs 19
-(w3-declare-variables 'track-mouse 'menu-bar-help-menu 'menu-bar-mode)
+(w3-declare-variables 'track-mouse 'menu-bar-help-menu 'menu-bar-mode
+		      'global-face-data)
 
 ;; For XEmacs/Lucid
 (w3-declare-variables 'current-menubar 'default-menubar 'extent
@@ -31,7 +32,7 @@
 (w3-declare-variables '*noconv* '*autoconv* '*euc-japan* '*internal*
 		      'w3-mime-list-for-code-conversion 'lc-ltn1
 		      'mule-version 'enable-multibyte-characters
-		      'charset-latin-iso8859-1
+		      'mc-flag 'charset-latin-iso8859-1
 		      'file-coding-system-for-read 'file-coding-system)
 
 ;; For TM

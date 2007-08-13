@@ -167,7 +167,7 @@ Keymap for characters following C-c.")
 
 ;; FSFmacs keyboard.c
 
-(define-key global-map "\C-z" 'suspend-or-iconify-emacs)
+(define-key global-map "\C-z" 'suspend-emacs-or-iconify-frame)
 (define-key global-map "\C-x\C-z" 'suspend-or-iconify-emacs)
 
 ;; FSFmacs loaddefs.el

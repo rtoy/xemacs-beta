@@ -1,4 +1,14 @@
 							-*- indented-text -*-
+to 20.2 beta2
+-- sundry psgml fixes
+-- VM-6.29
+-- Gnus-5.4.46
+-- W3-3.0.84
+-- miscellaneous bug fixes
+-- edmacro.el-3.10
+-- Reverted to custom-1.84
+-- Make use of DECnet support a configure time option.
+
 to 20.2 beta1
 -- W3-3.0.83 courtesy of William Perry
 -- edmacro.el-3.09 courtesy of Hrvoje Niksic

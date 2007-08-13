@@ -624,7 +624,7 @@
 				  (vm-headers-of m)
 				  (vm-text-of m)
 				  (vm-text-end-of m)
-				  nil nil nil )))
+				  nil nil )))
 		  ((null type)
 		   (goto-char (point-min))
 		   (or (re-search-forward "^\n\\|\n\\'" nil t)
@@ -635,7 +635,7 @@
 			   (vm-marker (point-min))
 			   (vm-marker (point))
 			   (vm-marker (point-max))
-			   nil nil nil ))
+			   nil nil ))
 		  ((null (string-match "[^/ ]+/[^/ ]+" (car type)))
 		   (vm-mime-error "Malformed MIME content type: %s" (car type)))
 		  ((and (string-match "^multipart/\\|^message/" (car type))
@@ -757,7 +757,8 @@
 	     '("attachment") '("attachment")
 	     header
 	     text
-	     text-end)))))
+	     text-end
+	     nil nil)))))
 
 (defun vm-mime-get-xxx-parameter (layout name param-list)
   (let ((match-end (1+ (length name)))
@@ -824,7 +825,7 @@
 	     (make-local-variable 'scroll-in-place)
 	     (setq scroll-in-place nil)
 	     (and vm-xemacs-mule-p
-		  (set-buffer-file-coding-system 'no-conversion t))
+		  (set-file-coding-system 'binary t))
 	     (cond (vm-fsfemacs-19-p
 		    ;; need to do this outside the let because
 		    ;; loading disp-table initializes
@@ -889,7 +890,7 @@
 (fset 'vm-presentation-mode 'vm-mode)
 (put 'vm-presentation-mode 'mode-class 'special)
 
-(defvar buffer-file-coding-system)
+(defvar file-coding-system)
 
 (defun vm-determine-proper-charset (beg end)
   (save-excursion
@@ -903,9 +904,8 @@
 		     "us-ascii")
 		    ((cdr charsets)
 		     (or (car (cdr
-			       (assq (coding-system-name
-				      buffer-file-coding-system)
-				     vm-mime-mule-coding-to-charset-alist)))
+			       (assoc (coding-system-name file-coding-system)
+				      vm-mime-mule-coding-to-charset-alist)))
 			 "iso-2022-jp"))
 		    (t
 		     (or (car (cdr
@@ -1341,15 +1341,15 @@ in the buffer.  The function is expected to make the message
 	     (vm-mime-transfer-decode-region layout start end)
 	     (setq tempfile (vm-make-tempfile-name))
 	     (let ((buffer-file-type buffer-file-type)
-		   buffer-file-coding-system)
+		   file-coding-system)
 	       ;; Tell DOS/Windows NT whether the file is binary
 	       (setq buffer-file-type (not (vm-mime-text-type-p layout)))
 	       ;; Tell XEmacs/MULE not to mess with the bits unless
 	       ;; this is a text type.
 	       (if vm-xemacs-mule-p
 		   (if (vm-mime-text-type-p layout)
-		       (set-buffer-file-coding-system 'no-conversion nil)
-		     (set-buffer-file-coding-system 'binary t)))
+		       (set-file-coding-system 'no-conversion nil)
+		     (set-file-coding-system 'binary t)))
 	       (write-region start end tempfile nil 0))
 	     (delete-region start end)
 	     (save-excursion
@@ -1831,10 +1831,11 @@ in the buffer.  The function is expected to make the message
 	      file (and file (if colorful (nth 2 file) (nth 1 file)))
 	      sym (and file (intern file vm-image-obarray))
 	      glyph (and sym (boundp sym) (symbol-value sym))
-	      glyph (or glyph (not file)
-			(make-glyph
-			 (vector 'autodetect
-				 ':data (expand-file-name file dir)))))
+	      glyph (or glyph
+			(and file
+			     (make-glyph
+			      (vector 'autodetect
+				      ':data (expand-file-name file dir))))))
 	(and sym (not (boundp sym)) (set sym glyph))
 	(and glyph (set-extent-begin-glyph e glyph)))))
 
@@ -1930,8 +1931,8 @@ in the buffer.  The function is expected to make the message
 	    ;; this is a text type.
 	    (if vm-xemacs-mule-p
 		(if (vm-mime-text-type-p layout)
-		    (set-buffer-file-coding-system 'no-conversion nil)
-		  (set-buffer-file-coding-system 'binary t)))
+		    (set-file-coding-system 'no-conversion nil)
+		  (set-file-coding-system 'binary t)))
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
 	    (or (not (file-exists-p file))
@@ -2394,17 +2395,53 @@ will interactively query you for the file type information."
     encoding ))
 
 (defun vm-mime-transfer-encode-layout (layout)
-  (let ((encoding
-	 (vm-mime-transfer-encode-region (vm-mm-layout-encoding layout)
-					 (vm-mm-layout-body-start layout)
-					 (vm-mm-layout-body-end layout)
-					 (vm-mime-text-type-p layout))))
-    (save-excursion
-      (save-restriction
-	(goto-char (vm-mm-layout-header-start layout))
-	(narrow-to-region (point) (vm-mm-layout-body-start layout))
-	(vm-reorder-message-headers nil nil "Content-Transfer-Encoding:")
-	(insert "Content-Transfer-Encoding: " encoding "\n")))))
+  (let ((list (vm-mm-layout-parts layout))
+	(type (car (vm-mm-layout-type layout)))
+	(encoding "7bit")
+	(vm-mime-8bit-text-transfer-encoding
+	 vm-mime-8bit-text-transfer-encoding))
+  (cond ((vm-mime-composite-type-p type)
+	 ;; MIME messages of type "message" and
+	 ;; "multipart" are required to have a non-opaque
+	 ;; content transfer encoding.  This means that
+	 ;; if the user only wants to send out 7bit data,
+	 ;; then any subpart that contains 8bit data must
+	 ;; have an opaque (qp or base64) 8->7bit
+	 ;; conversion performed on it so that the
+	 ;; enclosing entity can use a non-opaque
+	 ;; encoding.
+	 ;;
+	 ;; message/partial requires a "7bit" encoding so
+	 ;; force 8->7 conversion in that case.
+	 (cond ((memq vm-mime-8bit-text-transfer-encoding
+		      '(quoted-printable base64))
+		t)
+	       ((vm-mime-types-match "message/partial" type)
+		(setq vm-mime-8bit-text-transfer-encoding
+		      'quoted-printable)))
+	 (while list
+	   (if (equal (vm-mime-transfer-encode-layout (car list)) "8bit")
+	       (setq encoding "8bit"))
+	   (setq list (cdr list))))
+	(t
+	 (if (and (vm-mime-types-match "message/partial" type)
+		  (not (memq vm-mime-8bit-text-transfer-encoding
+			     '(quoted-printable base64))))
+		(setq vm-mime-8bit-text-transfer-encoding
+		      'quoted-printable))
+	 (setq encoding
+	       (vm-mime-transfer-encode-region (vm-mm-layout-encoding layout)
+					       (vm-mm-layout-body-start layout)
+					       (vm-mm-layout-body-end layout)
+					       (vm-mime-text-type-p layout)))))
+  (save-excursion
+    (save-restriction
+      (goto-char (vm-mm-layout-header-start layout))
+      (narrow-to-region (point) (vm-mm-layout-body-start layout))
+      (vm-reorder-message-headers nil nil "Content-Transfer-Encoding:")
+      (if (not (equal encoding "7bit"))
+	  (insert "CONTENT-TRANSFER-ENCODING: " encoding "\n"))
+      encoding ))))
 
 (defun vm-mime-encode-composition ()
  "MIME encode the current mail composition buffer.
@@ -2501,11 +2538,11 @@ and the approriate content-type and boundary markup information is added."
 	  (cond ((bufferp object)
 		 (insert-buffer-substring object))
 		((stringp object)
-		 (let ((coding-system-for-read 'no-conversion)
+		 (let ((overriding-file-coding-system 'no-conversion)
 		       ;; don't let file-coding-system be changed
 		       ;; by insert-file-contents-literally.  The
 		       ;; value we bind to it to here isn't important.
-		       (buffer-file-coding-system 'no-conversion))
+		       (file-coding-system 'no-conversion))
 		   (insert-file-contents-literally object))))
 	  ;; gather information about the object from the extent.
 	  (if (setq already-mimed (extent-property e 'vm-mime-encoded))
@@ -2548,41 +2585,13 @@ and the approriate content-type and boundary markup information is added."
 				 (point-max)
 				 t))
 		 (setq 8bit (or 8bit (equal encoding "8bit"))))
-		((or (vm-mime-types-match "message/rfc822" type)
-		     (vm-mime-types-match "message/news" type)
-		     (vm-mime-types-match "multipart" type))
+		((vm-mime-composite-type-p type)
 		 (setq opoint-min (point-min))
 		 (if (not already-mimed)
 		     (setq layout (vm-mime-parse-entity
 				   nil (list "text/plain" "charset=us-ascii")
 				   "7bit")))
-		 ;; MIME messages of type "message" and
-		 ;; "multipart" are required to have a non-opaque
-		 ;; content transfer encoding.  This means that
-		 ;; if the user only wants to send out 7bit data,
-		 ;; then any subpart that contains 8bit data must
-		 ;; have an opaque (qp or base64) 8->7bit
-		 ;; conversion performed on it so that the
-		 ;; enclosing entity can use a non-opaque
-		 ;; encoding.
-		 ;;
-		 ;; message/partial requires a "7bit" encoding so
-		 ;; force 8->7 conversion in that case.
-		 (let ((vm-mime-8bit-text-transfer-encoding
-			(if (vm-mime-types-match "message/partial" type)
-			    'quoted-printable
-			  vm-mime-8bit-text-transfer-encoding)))
-		   (vm-mime-map-atomic-layouts 'vm-mime-transfer-encode-layout
-					       (vm-mm-layout-parts layout)))
-		 ;; now figure out a proper content transfer
-		 ;; encoding value for the enclosing entity.
-		 (re-search-forward "^\n" nil t)
-		 (save-restriction
-		   (narrow-to-region (point) (point-max))
-		   (setq encoding
-			 (vm-determine-proper-content-transfer-encoding
-			  (point-min)
-			  (point-max))))
+		 (setq encoding (vm-mime-transfer-encode-layout layout))
 		 (setq 8bit (or 8bit (equal encoding "8bit")))
 		 (goto-char (point-max))
 		 (widen)
@@ -2859,41 +2868,13 @@ and the approriate content-type and boundary markup information is added."
 				 (point-max)
 				 t))
 		 (setq 8bit (or 8bit (equal encoding "8bit"))))
-		((or (vm-mime-types-match "message/rfc822" type)
-		     (vm-mime-types-match "message/news" type)
-		     (vm-mime-types-match "multipart" type))
+		((vm-mime-composite-type-p type)
 		 (setq opoint-min (point-min))
 		 (if (not already-mimed)
 		     (setq layout (vm-mime-parse-entity
 				   nil (list "text/plain" "charset=us-ascii")
 				   "7bit")))
-		 ;; MIME messages of type "message" and
-		 ;; "multipart" are required to have a non-opaque
-		 ;; content transfer encoding.  This means that
-		 ;; if the user only wants to send out 7bit data,
-		 ;; then any subpart that contains 8bit data must
-		 ;; have an opaque (qp or base64) 8->7bit
-		 ;; conversion performed on it so that the
-		 ;; enclosing entity can use a non-opaque
-		 ;; encoding.
-		 ;;
-		 ;; message/partial requires a "7bit" encoding so
-		 ;; force 8->7 conversion in that case.
-		 (let ((vm-mime-8bit-text-transfer-encoding
-			(if (vm-mime-types-match "message/partial" type)
-			    'quoted-printable
-			  vm-mime-8bit-text-transfer-encoding)))
-		   (vm-mime-map-atomic-layouts 'vm-mime-transfer-encode-layout
-					       (vm-mm-layout-parts layout)))
-		 ;; now figure out a proper content transfer
-		 ;; encoding value for the enclosing entity.
-		 (re-search-forward "^\n" nil t)
-		 (save-restriction
-		   (narrow-to-region (point) (point-max))
-		   (setq encoding
-			 (vm-determine-proper-content-transfer-encoding
-			  (point-min)
-			  (point-max))))
+		 (setq encoding (vm-mime-transfer-encode-layout layout))
 		 (setq 8bit (or 8bit (equal encoding "8bit")))
 		 (goto-char (point-max))
 		 (widen)
@@ -3045,16 +3026,15 @@ and the approriate content-type and boundary markup information is added."
 	  b header-start header-end master-buffer start end)
       (vm-remove-mail-mode-header-separator)
       ;; message/partial must have "7bit" content transfer
-      ;; encoding, so verify that everything has been encoded for
+      ;; encoding, so force everything to be encoded for
       ;; 7bit transmission.
       (let ((vm-mime-8bit-text-transfer-encoding
 	     (if (eq vm-mime-8bit-text-transfer-encoding '8bit)
 		 'quoted-printable
 	       vm-mime-8bit-text-transfer-encoding)))
-	(vm-mime-map-atomic-layouts
-	 'vm-mime-transfer-encode-layout
-	 (list (vm-mime-parse-entity nil (list "text/plain" "charset=us-ascii")
-				     "7bit"))))
+	(vm-mime-transfer-encode-layout
+	 (vm-mime-parse-entity nil (list "text/plain" "charset=us-ascii")
+			       "7bit")))
       (goto-char (point-min))
       (setq header-start (point))
       (search-forward "\n\n")
@@ -3156,12 +3136,16 @@ message."
       (and temp-buffer (kill-buffer temp-buffer)))))
 
 (defun vm-mime-composite-type-p (type)
-  (or (vm-mime-types-match "message" type)
+  (or (and (vm-mime-types-match "message" type)
+	   (not (vm-mime-types-match "message/partial" type))
+	   (not (vm-mime-types-match "message/external-body" type)))
       (vm-mime-types-match "multipart" type)))
 
-(defun vm-mime-map-atomic-layouts (function list)
-  (while list
-    (if (vm-mime-composite-type-p (car (vm-mm-layout-type (car list))))
-	(vm-mime-map-atomic-layouts function (vm-mm-layout-parts (car list)))
-      (funcall function (car list)))
-    (setq list (cdr list))))
+;; Unused currrently.
+;;
+;;(defun vm-mime-map-atomic-layouts (function list)
+;;  (while list
+;;    (if (vm-mime-composite-type-p (car (vm-mm-layout-type (car list))))
+;;	(vm-mime-map-atomic-layouts function (vm-mm-layout-parts (car list)))
+;;      (funcall function (car list)))
+;;    (setq list (cdr list))))

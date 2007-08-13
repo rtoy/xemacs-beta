@@ -1,3 +1,14 @@
+Wed Apr 23 10:33:58 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.2-b2 is released.
+
+	* configure.in (beta): OPENWINHOME misspelled.
+
+Mon Apr 21 14:48:29 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* etc/BETA (writing): Update with information about how to create
+	patches.
+
 Sat Apr 19 16:13:16 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.2-b1 is released.

@@ -1,7 +1,7 @@
 ;;; css.el -- Cascading Style Sheet parser
 ;; Author: wmperry
-;; Created: 1997/04/17 13:50:34
-;; Version: 1.36
+;; Created: 1997/04/21 14:00:12
+;; Version: 1.38
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -773,14 +773,14 @@ For a terminal frame, the value is always 1."
 		     (if css-running-xemacs 'xemacs 'emacs)
 		     (if (css-color-light-p 'default) 'light 'dark)))
 	(type (device-type device)))
+    ;; For reasons I don't really want to get into, emacspeak and TTY
+    ;; are mutually exclusive for most of our purposes (insert-before,
+    ;; xetc)
+    (if (featurep 'emacspeak)
+	(setq types (cons 'speech types))
+      (if (eq type 'tty)
+	  (setq types (cons 'tty types))))
     (cond
-     ((featurep 'emacspeak)
-      (setq types (cons 'speech types)))
-     ((eq type 'tty)
-      (if (and (fboundp 'tty-color-list)
-	       (/= 0 (length (tty-color-list))))
-	  (setq types (cons 'ansi-tty types))
-	(setq types (cons 'tty types))))
      ((eq 'color (device-class))
       (if (not (device-bitplanes))
 	  (setq types (cons 'color types))
@@ -802,6 +802,9 @@ For a terminal frame, the value is always 1."
       (setq types (append (list 'mono 'monochrome) types)))
      (t
       (setq types (cons 'unknown types))))
+    ;; FIXME: Remove me when the real 3.0 comes out
+    (if (and (memq 'tty types) (memq 'color types))
+	(setq types (cons 'ansi-tty types)))
     types))
 
 (defmacro css-rule-specificity-internal (rule)
@@ -898,7 +901,7 @@ For a terminal frame, the value is always 1."
 	 ((or (looking-at "<!--+")	; begin
 	      (looking-at "--+>"))	; end
 	  (goto-char (match-end 0)))
-	 ;; C++ style comments, and we are doing IE compatibility
+	 ;; C++ style comments
 	 ((looking-at "//")
 	  (end-of-line))
 	 ;; Pre-Processor directives

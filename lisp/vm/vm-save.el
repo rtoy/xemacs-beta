@@ -434,8 +434,9 @@ vm-save-message instead (normally bound to `s')."
     (setq vm-last-written-file file)))
 
 (defun vm-pipe-message-to-command (command prefix-arg)
-  "Run shell command with the some or all of the current message as input.
-By default the entire message is used.
+  "Runs a shell command with some or all of the contents of the
+current message as input.
+By default, the entire message is used.
 With one \\[universal-argument] the text portion of the message is used.
 With two \\[universal-argument]'s the header portion of the message is used.
 With three \\[universal-argument]'s the visible header portion of the message

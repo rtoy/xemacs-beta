@@ -136,6 +136,7 @@ with_gif=''
 with_toolbars=''
 with_tty='yes'
 use_union_type='no'
+with_dnet=''
 
 # # gnu echo silently eats `--help', `--version', `-n', `-e', `-E', `-n'.
 # # other versions of echo eat any strings beginning with `-n'.
@@ -279,6 +280,7 @@ Additional features:
 --with-pop		support POP for mail retrieval
 --with-kerberos		support Kerberos-authenticated POP
 --with-hesiod		support Hesiod to get the POP server host
+--with-dnet (*)		Compile with support for DECnet.
 
 Internationalization options:
 
@@ -453,6 +455,7 @@ while test $# != 0; do
 	with_pop	| \
 	with_kerberos	| \
 	with_hesiod	| \
+	with_dnet	| \
 	external_widget | \
 	verbose		| \
 	extra_verbose	| \
@@ -2069,7 +2072,10 @@ LIBS="${LD_SWITCH_SITE} $ld_switch_x_system $libsrc_libs $LIBS"
 dnl If found, this defines HAVE_LIBDNET, which m/pmax.h checks,
 dnl and also adds -ldnet to LIBS, which Autoconf uses for checks.
 dnl FSF 19.29 also checks for function dnet_ntoa.
-AC_HAVE_LIBRARY(-ldnet)
+test "${with_dnet}"      != "no"   -a \
+     "${with_dnet}"      != "yes" && { AC_HAVE_LIBRARY(-ldnet, with_dnet="yes") }
+IF_YES_AC_DEFINE(with_dnet, HAVE_LIBDNET)
+
 dnl This causes -lresolv to get used in subsequent tests,
 dnl which causes failures on some systems such as HPUX 9.
 dnl FSF 19.29 also checks for function gethostbyname.
@@ -2944,7 +2950,7 @@ if test "${with_tooltalk}" = "yes" ; then
       C_SWITCH_X_SITE="${C_SWITCH_X_SITE} ${arg}"
     fi
   done
-  for arg in "-L/usr/lib" "-L${OPENWINHHOME-/usr/openwin}/lib" "-L/usr/dt/lib"
+  for arg in "-L/usr/lib" "-L${OPENWINHOME-/usr/openwin}/lib" "-L/usr/dt/lib"
   do
     case "${arg}" in
 	-L*) if test -f `echo "${arg}/libtt.a" | sed 's/^\-L//'` ; then
@@ -3201,6 +3207,7 @@ elif test -n "$site_libraries"; then
 elif test -n "$site_runtime_libraries"; then
   echo "  Additional libraries:                                   ${site_runtime_libraries}"
 fi
+test "$with_dnet"  = yes && echo "  Compiling in support for DNET."
 test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_term"  = yes && echo "  Compiling in support for TERM."
 test "$with_xauth" = yes && echo "  Compiling in support for XAUTH."

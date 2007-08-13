@@ -371,14 +371,14 @@ This is run before the process is cranked up."
   :type 'hook
   :group 'comint)
 
-(defcustom comint-exec-hook '()
+;; This is initialized by the various language environments, do not
+;; Custom-ize it.
+(defvar comint-exec-hook '()
   "Called each time a process is exec'd by `comint-exec'.
 This is called after the process is cranked up.  It is useful for things that
 must be done each time a process is executed in a comint mode buffer (e.g.,
 `(process-kill-without-query)').  In contrast, the `comint-mode-hook' is only
-executed once when the buffer is created."
-  :type 'hook
-  :group 'comint)
+executed once when the buffer is created.")
 
 (defvar comint-mode-map nil)
 

@@ -54,7 +54,8 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
       (goto-char (point-max))
       (insert "------- end of forwarded message -------\n"))))
 
-(defun vm-mime-encapsulate-messages (message-list keep-list discard-regexp)
+(defun vm-mime-encapsulate-messages (message-list keep-list discard-regexp
+				     always-use-digest)
   "Encapsulate the messages in MESSAGE-LIST as per the MIME spec.
 The resulting digest is inserted at point in the current buffer.
 Point is not moved.
@@ -67,14 +68,21 @@ KEEP-LIST and DISCARD-REGEXP are used to order and trim the headers
 to be forwarded.  See the docs for vm-reorder-message-headers
 to find out how KEEP-LIST and DISCARD-REGEXP are used.
 
-Returns the multipart boundary parameter (string) that should be used
-in the Content-Type header."
+If ALWAYS-USE-DIGEST is non-nil, always encapsulate for a multipart/digest.
+Otherwise if there are fewer than two messages to be encapsulated
+leave off the multipart boundary strings.  The caller is assumed to
+be using message/rfc822 or message/news encoding instead.
+
+If multipart/digest encapsulation is done, the function returns
+the multipart boundary parameter (string) that should be used in
+the Content-Type header.  Otherwise nil is returned."
   (if message-list
       (let ((target-buffer (current-buffer))
 	    (boundary-positions nil)
 	    (mlist message-list)
 	    (mime-keep-list (append keep-list vm-mime-header-list))
-	    boundary source-buffer m start n beg)
+	    (boundary nil)
+	    source-buffer m start n beg)
 	(save-restriction
 	  ;; narrow to a zero length region to avoid interacting
 	  ;; with anything that might have already been inserted
@@ -97,29 +105,27 @@ in the Content-Type header."
 	     discard-regexp)
 	    (goto-char (point-max))
 	    (setq mlist (cdr mlist)))
-	  (goto-char start)
-	  (setq boundary (vm-mime-make-multipart-boundary))
-	  (while (re-search-forward (concat "^--"
-					    (regexp-quote boundary)
-					    "\\(--\\)?$")
-				    nil t)
+	  (if (and (< (length message-list) 2) (not always-use-digest))
+	      nil
+	    (goto-char start)
 	    (setq boundary (vm-mime-make-multipart-boundary))
-	    (goto-char start))
-	  (goto-char (point-max))
-	  (insert "\n--" boundary "--\n")
-	  (while boundary-positions
-	    (goto-char (car boundary-positions))
-	    (insert "\n--" boundary "\n\n")
-	    (setq boundary-positions (cdr boundary-positions)))
-	  (goto-char start)
-	  (setq n (length message-list))
-	  (insert (format "This is a %s%sMIME encapsulation.\n"
-			  (if (cdr message-list)
-			      "digest, "
-			    "forwarded message, ")
-			  (if (cdr message-list)
-			      (format "%d messages, " n)
-			    "")))
+	    (while (re-search-forward (concat "^--"
+					      (regexp-quote boundary)
+					      "\\(--\\)?$")
+				      nil t)
+	      (setq boundary (vm-mime-make-multipart-boundary))
+	      (goto-char start))
+	    (goto-char (point-max))
+	    (insert "\n--" boundary "--\n")
+	    (while boundary-positions
+	      (goto-char (car boundary-positions))
+	      (insert "\n--" boundary "\n\n")
+	      (setq boundary-positions (cdr boundary-positions)))
+	    (goto-char start)
+	    (setq n (length message-list))
+	    (insert
+	     (format "This is a digest, %d messages, MIME encapsulation.\n"
+		     n)))
 	  (goto-char start))
 	boundary )))
 

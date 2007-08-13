@@ -28,6 +28,9 @@ typedef struct _XlwMenu_part
   XmFontList	fallback_font_list;
 #else
   XFontStruct *	font;
+# ifdef USE_XFONTSET
+  XFontSet font_set;
+# endif
 #endif
   Dimension	font_ascent, font_descent;  /* extracted from font/fontlist */
 

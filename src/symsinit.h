@@ -44,6 +44,7 @@ void init_opaque_once_early (void);
 
 void syms_of_abbrev (void);
 void syms_of_alloc (void);
+void syms_of_balloon_x (void);
 void syms_of_buffer (void);
 void syms_of_bytecode (void);
 void syms_of_callint (void);
@@ -180,6 +181,7 @@ void init_provide_once (void);
 
 void vars_of_abbrev (void);
 void vars_of_alloc (void);
+void vars_of_balloon_x (void);
 void vars_of_buffer (void);
 void vars_of_bytecode (void);
 void vars_of_callint (void);

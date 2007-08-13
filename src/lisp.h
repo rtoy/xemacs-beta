@@ -609,7 +609,7 @@ enum munge_me_out_the_door
 /* There's not any particular reason not to use lrecords for these; some
    objects get slightly larger, but we get 3 bit tags instead of 4.
  */
-#define LRECORD_SYMBOL
+/* #define LRECORD_SYMBOL */
 
 
 /* Define the fundamental Lisp data structures */

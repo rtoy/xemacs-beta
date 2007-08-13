@@ -516,7 +516,7 @@ LWLIBSRCDIR = ${srcdir}/$(dot)$(dot)/lwlib
 #endif
 
 #ifndef HAVE_XIM
-#define INPUT_METHOD_X_OBJS
+#define INPUT_METHOD_X_OBJS input-method-xfs.o
 #elif defined(XIM_MOTIF)
 #define INPUT_METHOD_X_OBJS input-method-motif.o
 #else
@@ -527,8 +527,8 @@ LWLIBSRCDIR = ${srcdir}/$(dot)$(dot)/lwlib
 	      glyphs-x.o GUI_X_OBJS MENUBAR_X_OBJS objects-x.o redisplay-x.o \
               SCROLLBAR_X_OBJS TOOLBAR_X_OBJS INPUT_METHOD_X_OBJS xgccache.o \
 	      xselect.o \
-	      balloon_help.o balloon-x.o
-
+	      balloon_help.o
+#define BALLOONOBJS balloon-x.o
 #ifdef HAVE_XMU
 #define XMU_OBJS
 XMU_LIB = -lXmu
@@ -605,7 +605,7 @@ LIBX=  $(LIBX11_LIBS) $(XMU_LIB) -lXt -lXext LIBX11_INTL -lX11 LIBX11_MACHINE LI
 #else
 # define XOBJS
 # define XMU_OBJS
-
+# define BALLOONOBJS
 #endif /* HAVE_X_WINDOWS */
 
 /* We should be able to deal with Canna and Wnn in tty mode once MULE is */
@@ -761,7 +761,7 @@ LD=ld
 
 #ifdef TOOLTALK
 # define TOOLTALK_OBJS tooltalk.o
-# if (defined (IRIX5) || defined (HPUX) || defined (POWERPC) || defined (AIX4) || defined (LINUX))
+# if (defined (IRIX5) || defined (HPUX) || defined (POWERPC) || defined (AIX4) || defined (LINUX) || (defined (OSF1) && defined (DEC_ALPHA)))
 #  define LIB_TOOLTALK -ltt
 # else
 #  if (defined (SPARC) && !defined (USG))
@@ -782,7 +782,11 @@ LD=ld
 #endif /* !TOOLTALK */
 
 #ifdef HAVE_CDE
-#  define LIB_CDE -lDtSvc -ltt
+#  if (defined (OSF1) && defined (DEC_ALPHA))
+#    define LIB_CDE -lDtSvc -ltt -lcxx
+#  else
+#    define LIB_CDE -lDtSvc -ltt
+#  endif /* (defined (OSF1) && defined (DEC_ALPHA)) */
 #else
 #  define LIB_CDE
 #endif
@@ -890,7 +894,7 @@ objs=	abbrev.o alloc.o blocktype.o buffer.o bytecode.o \
 	strftime.o SUNPRO_OBJS symbols.o syntax.o sysdep.o \
 	TOOLBAR_OBJS TOOLTALK_OBJS TTY_OBJS \
 	undo.o UNEXEC \
-	XOBJS XMU_OBJS \
+	XOBJS XMU_OBJS BALLOONOBJS \
 	window.o
 
 #ifdef HAVE_TTY

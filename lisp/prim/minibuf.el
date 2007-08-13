@@ -284,6 +284,8 @@ minibuffer history if its length is less than that value."
 		 integer)
   :group 'minibuffer)
 
+(define-error 'input-error "Keyboard input error")
+
 (defun read-from-minibuffer (prompt &optional initial-contents
                                     keymap
                                     readp
@@ -436,7 +438,10 @@ See also the variable completion-highlight-first-word-only for control over
                            ;; total total kludge
                            (if (stringp v) (setq v (list 'quote v)))
                            (setq val v))
-                       (error (setq err e))))
+                       (end-of-file
+			(setq err
+			      '(input-error "End of input before end of expression")))
+		       (error (setq err e))))
                  ;; Add the value to the appropriate history list unless
                  ;; it's already the most recent element, or it's only
                  ;; two characters long.

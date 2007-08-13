@@ -11,7 +11,8 @@ mule
 performance
 redisplay
 scrollbars
-tooblbars
+subprocesses
+toolbars
 gnus
 vm
 w3

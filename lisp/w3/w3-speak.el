@@ -192,6 +192,7 @@ Interactive prefix arg does the opposite. "
     (when (> now
 	     (+ 3 url-speak-last-progress-indication))
 	  (setq url-speak-last-progress-indication now)
+	  (apply 'message (ad-get-args 0))
 	  (emacspeak-auditory-icon 'progress))))
 
 (provide 'w3-speak)

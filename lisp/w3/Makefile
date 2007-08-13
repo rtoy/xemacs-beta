@@ -44,12 +44,13 @@ URLOBJECTS    = $(URLSOURCES:.el=.elc)
 
 SOURCES = \
 	$(CUSTOMSOURCES) $(URLSOURCES) mule-sysdp.el w3-widget.el	\
-	w3-imap.el css.el dsssl.el font.el images.el w3-vars.el		\
-	w3-cus.el w3-style.el w3-keyword.el w3-forms.el w3-emulate.el	\
-	w3-auto.el w3-menu.el w3-mouse.el w3-toolbar.el	w3-prefs.el	\
-	w3-speak.el w3-latex.el w3-parse.el w3-display.el w3-print.el	\
-	w3-about.el w3-hot.el w3-e19.el w3-xemac.el w3.el w3-script.el	\
-	w3-jscript.el w3-elisp.el dsssl-flow.el
+	devices.el w3-imap.el css.el dsssl.el dsssl-flow.el font.el 	\
+	images.el w3-vars.el w3-cus.el w3-style.el w3-keyword.el 	\
+	w3-forms.el w3-emulate.el w3-props.el w3-auto.el w3-menu.el	\
+	w3-mouse.el w3-toolbar.el w3-prefs.el w3-speak.el w3-latex.el	\
+	w3-parse.el w3-display.el w3-print.el w3-about.el w3-hot.el	\
+	w3-e19.el w3-xemac.el w3.el w3-script.el w3-jscript.el		\
+	w3-elisp.el
 
 OBJECTS = $(SOURCES:.el=.elc)
 

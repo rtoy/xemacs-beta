@@ -1179,6 +1179,7 @@ scan the entire tree of subdirectories of the current directory."
 	      (vc-dired-reformat-line x)
 	      (forward-line 1)))	; go to next line
 	   (nreverse userlist))
+	  (dired-insert-set-properties (point-min) (point-max))
 	  (setq buffer-read-only t)
 	  (goto-char (point-min))
 	  )
@@ -1196,7 +1197,8 @@ scan the entire tree of subdirectories of the current directory."
       (setq tlist (cdr tlist))
       (while (not (null tlist))
      	(setq s (car tlist))
-     	(insert s " ")
+     	(insert s)	
+	(if (cdr tlist) (insert " "))
      	(setq tlist (cdr tlist)))
       (setq string (buffer-string))
       (kill-this-buffer)

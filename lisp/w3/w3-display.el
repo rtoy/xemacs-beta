@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/04/11 14:42:46
-;; Version: 1.173
+;; Created: 1997/04/21 21:59:42
+;; Version: 1.175
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -27,6 +27,8 @@
 ;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'cl)
+(eval-when-compile
+  (require 'w3-props))
 (require 'css)
 (require 'font)
 (require 'w3-widget)
@@ -770,6 +772,15 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 
 ;; The table handling
 
+(if (and w3-running-xemacs (featurep 'mule))
+    (make-charset 'w3-dingbats "Dingbats character set for Emacs/W3"
+		  '(registry "" dimension 1 chars 96 final ?:)))
+
+(defun w3-make-char (oct)
+  (if (and w3-running-xemacs (featurep 'mule))
+      (make-char 'w3-dingbats (if (characterp oct) (char-int oct) oct))
+    oct))
+
 (defvar w3-table-ascii-border-chars
   [nil  nil  nil  ?/ nil  ?- ?\\ ?- nil ?\\ ?| ?| ?/ ?- ?| ?+]
   "*Vector of ascii characters to use to draw table borders.
@@ -781,7 +792,23 @@ This vector is used when terminal characters are unavailable")
 This vector is used when terminal characters are used via glyphs")
 
 (defvar w3-table-graphic-border-chars
-  [nil  nil  nil  ?j nil  ?q ?m ?v nil ?k ?x ?u ?l ?w ?t ?n]
+  (vector
+   nil
+   nil
+   nil
+   (w3-make-char ?j)
+   nil
+   (w3-make-char ?q)
+   (w3-make-char ?m)
+   (w3-make-char ?v)
+   nil
+   (w3-make-char ?k)
+   (w3-make-char ?x)
+   (w3-make-char ?u)
+   (w3-make-char ?l)
+   (w3-make-char ?w)
+   (w3-make-char ?t)
+   (w3-make-char ?n))
   "Vector of characters to use to draw table borders.
 This vector is used when terminal characters are used directly")
 

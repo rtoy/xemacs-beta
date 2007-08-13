@@ -721,6 +721,7 @@ all frames that were visible, and iconify all frames that were not."
 	  map-frame-hook 'deiconify-emacs)
     (iconify-frame me)))
 
+
 (defun deiconify-emacs (&optional ignore)
   (or iconification-data (error "not iconified?"))
   (setq frame-icon-title-format (car iconification-data)
@@ -728,9 +729,9 @@ all frames that were visible, and iconify all frames that were not."
 	iconification-data (car (cdr (cdr iconification-data))))
   (while iconification-data
     (let ((visibility (cdr (car iconification-data))))
-      (cond ((eq visibility 't)
+      (cond (visibility  ;; JV  (Note non-nil means visible in XEmacs)
 	     (make-frame-visible (car (car iconification-data))))
-;	    (t ;; (eq visibility 'icon)
+;	    (t ;; (eq visibility 'icon) ;; JV Not in XEmacs!!!
 ;	     (make-frame-visible (car (car iconification-data)))
 ;	     (sleep-for 500 t) ; process X events; I really want to XSync() here
 ;	     (iconify-frame (car (car iconification-data))))
@@ -742,12 +743,26 @@ all frames that were visible, and iconify all frames that were not."
   "Calls iconify-emacs if frame is an X frame, otherwise calls suspend-emacs"
   (interactive)
   (cond
-   ((eq (frame-type (selected-frame)) 'x) (iconify-emacs))
-   ((and (eq (frame-type (selected-frame)) 'tty)
+   ((eq (frame-type) 'x)
+    (iconify-emacs))
+   ((and (eq (frame-type) 'tty)
 	 (console-tty-controlling-process (selected-console)))
     (suspend-console (selected-console)))
    (t
     (suspend-emacs))))
+
+;; This is quite a mouthful, but it should be descriptive, as it's
+;; bound to C-z
+(defun suspend-emacs-or-iconify-frame ()
+  "Iconify current frame if it is an X frame, otherwise suspend Emacs."
+  (interactive)
+  (cond ((eq (frame-type) 'x)
+	 (iconify-frame))
+	((and (eq (frame-type) 'tty)
+	      (console-tty-controlling-process (selected-console)))
+	 (suspend-console (selected-console)))
+	(t
+	 (suspend-emacs))))
 
 
 ;;; auto-raise and auto-lower

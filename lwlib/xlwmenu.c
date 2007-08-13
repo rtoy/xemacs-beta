@@ -69,6 +69,10 @@ xlwMenuResources[] =
 #else
   {XtNfont,  XtCFont, XtRFontStruct, sizeof(XFontStruct *),
      offset(menu.font), XtRString, "XtDefaultFont"},
+# ifdef USE_XFONTSET
+  {XtNfontSet,  XtCFontSet, XtRFontSet, sizeof(XFontSet),
+     offset(menu.font_set), XtRString, "XtDefaultFontSet"},
+# endif
 #endif
   {XtNforeground, XtCForeground, XtRPixel, sizeof(Pixel),
      offset(menu.foreground), XtRString, "XtDefaultForeground"},
@@ -328,10 +332,16 @@ string_width (XlwMenuWidget mw,
   XmStringExtent (mw->menu.font_list, s, &width, &height);
   return width;
 #else
+# ifdef USE_XFONTSET
+  XRectangle ri, rl;
+  XmbTextExtents (mw->menu.font_set, s, strlen (s), &ri, &rl);
+  return rl.width;
+# else
   XCharStruct xcs;
   int drop;
   XTextExtents (mw->menu.font, s, strlen (s), &drop, &drop, &drop, &xcs);
   return xcs.width;
+# endif /* USE_XFONTSET */
 #endif
 }
 
@@ -686,8 +696,13 @@ string_draw(XlwMenuWidget mw,
 		0, /* ???? layout_direction */
 		0);
 #else
+# ifdef USE_XFONTSET
+  XmbDrawString (XtDisplay (mw), window, mw->menu.font_set, gc,
+	       x, y + mw->menu.font_ascent, string, strlen (string));
+# else
   XDrawString (XtDisplay (mw), window, gc,
 	       x, y + mw->menu.font_ascent, string, strlen (string));
+# endif /* USE_XFONTSET */
 
 #endif
 }
@@ -2660,8 +2675,28 @@ extract_font_extents (XlwMenuWidget mw)
     XmFontListFreeFontContext (context);
   }
 #else /* Not Motif */
+# ifdef USE_XFONTSET
+  XFontStruct **fontstruct_list;
+  char **fontname_list;
+  XFontStruct *font;
+  int fontcount = XFontsOfFontSet(mw->menu.font_set, &fontstruct_list,
+                                      &fontname_list);
+  mw->menu.font_ascent  = 0;
+  mw->menu.font_descent = 0;
+#  if 0 /* nasty, personal debug, Kazz */
+  fprintf(stderr, "fontSet count is %d\n", fontcount);
+#  endif
+  while (--fontcount >= 0) {
+      font = fontstruct_list[fontcount];
+      if (font->ascent > (int) mw->menu.font_ascent)
+          mw->menu.font_ascent = font->ascent;
+      if (font->descent > (int) mw->menu.font_descent)
+          mw->menu.font_descent = font->descent;
+  }
+# else /* ! USE_XFONTSET */
   mw->menu.font_ascent  = mw->menu.font->ascent;
   mw->menu.font_descent = mw->menu.font->descent;
+# endif
 #endif /* NEED_MOTIF */
 }
 

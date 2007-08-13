@@ -159,8 +159,8 @@ will be visible."
       (vm-thread-mark-for-summary-update
        (get (intern (vm-su-message-id (car message-list))
 		    vm-thread-obarray)
-	    'children))
-      (setq message-list (cdr message-list)))))
+	    'children)))
+    (setq message-list (cdr message-list))))
 
 (defun vm-thread-list (message)
   (let ((done nil)

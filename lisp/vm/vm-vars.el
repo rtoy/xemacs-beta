@@ -419,7 +419,7 @@ A non-nil value for this variable means that VM will
 A nil value means VM will not offer any support for composing
 MIME messages.")
 
-(defvar vm-honor-mime-content-disposition t
+(defvar vm-honor-mime-content-disposition nil
   "*Non-nil value means use information from the Content-Disposition header
 to display MIME messages.  The Content-Disposition header
 specifies whether a MIME object should be displayed inline or

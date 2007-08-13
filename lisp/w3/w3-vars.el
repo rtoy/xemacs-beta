@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/04/18 20:28:20
-;; Version: 1.125
+;; Created: 1997/04/21 22:07:54
+;; Version: 1.126
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -33,7 +33,7 @@
 (require 'w3-cus)			; Grab everything that is customized
 
 (defconst w3-version-number
-  (let ((x "p3.0.83"))
+  (let ((x "p3.0.84"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -41,7 +41,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/04/18 20:28:20"))
+(defconst w3-version-date (let ((x "1997/04/21 22:07:54"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))

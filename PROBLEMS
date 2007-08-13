@@ -480,6 +480,12 @@ subdirectory with the X11r5 header files.  That doesn't work.
 Remember, you can't compile lwlib for r4 and emacs for r5, or vice versa.
 They must be in sync.
 
+** Problems finding X11 libraries on Solaris with Openwindows
+
+Some users have reported problems in this area.  The reported solution
+is to define the environment variable OPENWINHOME, even if you must set
+it to `/usr/openwin'.
+
 * Problems with running XEmacs
 
 ** You type Control-H (Backspace) expecting to delete characters.

@@ -387,7 +387,7 @@ Each entry should be (SUFFIX . STRING); if STRING contains %s, that is
 changed to name of the file to decode, otherwise the file is given to
 the command as standard input.  If STRING is nil, no decoding is done.")
 
-(defvar Info-footnote-tag "See"
+(defvar Info-footnote-tag "Note"
   "*Symbol that identifies a footnote or cross-reference.
 All \"*Note\" references will be changed to use this word instead.")
 

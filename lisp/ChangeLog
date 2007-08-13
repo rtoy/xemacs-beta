@@ -1,3 +1,40 @@
+Wed Apr 23 10:56:05 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (hack-local-variables-prop-line): Mistakenly
+	returned t when enable-local-variables was nil.
+
+	* psgml/psgml-charent.el (sgml-display-char-list-filename): Move
+	iso88591.map to a proper location.
+
+	* prim/sound.el (load-sound-file): Make sure sound files are read
+	as binary files.
+
+Tue Apr 22 02:05:38 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/vc.el (vc-directory): Set text properties.
+
+	* psgml/psgml-xemacs.el (sgml-xemacs-get-popup-value): Allow for
+	interactive commands.
+
+Mon Apr 21 15:15:12 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/minibuf.el (input-error): New error type.
+	(read-from-minibuffer): Use it.
+
+	* comint/comint.el (comint-exec-hook): Do not Customize due to
+	interactions with setting language environment in MULE.
+
+Sun Apr 20 09:36:19 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/info.el (Info-footnote-tag): Changing the footnote tag
+	from the default "Note" is broken.
+
+Tue Apr 22 07:01:20 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/keydefs.el (global-map): Bind it to `C-z'.
+
+	* prim/frame.el (suspend-emacs-or-iconify-frame): New function.
+
 Fri Apr 18 16:45:07 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* utils/skeleton.el (skeleton-pair-insert-maybe): Guard test with

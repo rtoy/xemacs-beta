@@ -2634,9 +2634,9 @@ init_event_Xt_late (void) /* called when already initialized */
 
   event_stream = Xt_event_stream;
   
-#ifdef HAVE_XIM
+#if defined(HAVE_XIM) || defined(USE_XFONTSET)
   Initialize_Locale();
-#endif /* HAVE_XIM */
+#endif /* HAVE_XIM || USE_XFONTSET */
   
   XtToolkitInitialize ();
   Xt_app_con = XtCreateApplicationContext ();

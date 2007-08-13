@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.89
+;; Version: 1.84
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -244,37 +244,6 @@ VALUE is assumed to be a list of widgets."
 (put :buttons 'widget-keyword-printer 'widget-browse-widgets)
 (put :button 'widget-keyword-printer 'widget-browse-widget)
 (put :args 'widget-keyword-printer 'widget-browse-sexps)
-
-;;; Widget Minor Mode.
-
-(defvar widget-minor-mode nil
-  "I non-nil, we are in Widget Minor Mode.")
-  (make-variable-buffer-local 'widget-minor-mode)
-
-(defvar widget-minor-mode-map nil
-  "Keymap used in Widget Minor Mode.")
-
-(unless widget-minor-mode-map
-  (setq widget-minor-mode-map (make-sparse-keymap))
-  (set-keymap-parent widget-minor-mode-map widget-keymap))
-
-;;;###autoload
-(defun widget-minor-mode (&optional arg)
-  "Togle minor mode for traversing widgets.
-With arg, turn widget mode on if and only if arg is positive."
-  (interactive "P")
-  (cond ((null arg)
-	 (setq widget-minor-mode (not widget-minor-mode)))
-	((<= 0 arg)
-	 (setq widget-minor-mode nil))
-	(t
-	 (setq widget-minor-mode t)))
-  (force-mode-line-update))
-
-(add-to-list 'minor-mode-alist '(widget-minor-mode " Widget"))
-
-(add-to-list 'minor-mode-map-alist 
-	     (cons 'widget-minor-mode widget-minor-mode-map))
 
 ;;; The End:
 

@@ -30,3 +30,5 @@
 /* Digital Unix 4.0 has a realpath, but it's buggy.  And I
    *do* mean buggy. */
 #undef HAVE_REALPATH
+
+#define LIBS_DEBUG

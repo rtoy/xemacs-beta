@@ -37,6 +37,8 @@ Emacs*XlwMenu.resourceLabels: True
 !! Fonts for the window frame and menus
 Emacs*fontList: \
 -*-gothic-medium-r-normal--14-120-75-75-c-*-*-*:
+!! FontSet for the window frame and menus when you use USE_XFONTSET
+Emacs*fontSet: -*-fixed-medium-r-normal--14-*
 
 !!!! Default Menubar Top Level
 

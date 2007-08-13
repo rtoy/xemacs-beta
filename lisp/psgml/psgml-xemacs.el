@@ -1,5 +1,5 @@
 ;;;; psgml-xemacs.el --- Part of SGML-editing mode with parsing support
-;; $Id: psgml-xemacs.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
+;; $Id: psgml-xemacs.el,v 1.2 1997/04/24 04:00:12 steve Exp $
 
 ;; Copyright (C) 1994 Lennart Staflin
 
@@ -80,7 +80,7 @@ into several panes.")
   (let ((value nil)
 	(event nil))
     (popup-menu menudesc)
-    (while (popup-menu-up-p)
+    (while (popup-up-p)
       (setq event (next-command-event event))
       (cond ((menu-event-p event)
 	     (cond
@@ -88,6 +88,9 @@ into several panes.")
 	       (signal 'quit nil))
 	      ((eq (event-object event) 'menu-no-selection-hook)
 	       nil)
+	      ((commandp (event-object event))
+	       (call-interactively (event-object event))
+	       (signal 'quit nil))
 	      (t
 	       (eval (event-object event)))))
 	    ((button-release-event-p event) ; don't beep twice

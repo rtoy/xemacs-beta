@@ -481,7 +481,8 @@ that the buffer has been killed."
 		    nil			;yep
 		  (server-write-to-client (car client) nil) ;nope, tell client
 		  (setq server-clients (delq client server-clients))))
-	      (setq old-clients (cdr old-clients))))))))
+	      (setq old-clients (cdr old-clients)))
+	    t)))))
 
 
 ;; Ask before killing a server buffer.

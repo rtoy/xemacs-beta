@@ -181,3 +181,31 @@ xemacs-beta@xemacs.org.  The build report should include
 
 5. Any other unusual items you feel should be brought to the attention
    of the developers.
+
+** Creating patches for submission
+==================================
+
+When making patches you should use the `-c', or preferably if your
+diff supports it, `-u'.  Using ordinary diffs like this are
+notoriously prone to error (and this one won't in fact work, since
+I've already applied a patch to this file so the line numbers probably
+don't match up any more).
+
+$ diff -u old-file.c new-file.c
+
+-or-
+
+$ diff -c old-file.c new-file.c
+
+Also, it is helpful for me if you create the patch in the top level of
+the XEmacs source directory:
+
+$ diff -u lwlib/xlwmenu.c~ lwlib/xlwmenu.c
+
+I prefer patches to be accompanied by an update (either a raw entry or
+a patch) to the appropriate ChangeLog file, but it is not required.
+
+Also note that if you cut & paste from an xterm to an XEmacs mail buffer
+you will probably lose due to tab expansion.  The best thing to do is to
+M-x cd to the appropriate directory, and issue the command `C-u M-!' from
+within XEmacs.

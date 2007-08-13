@@ -444,7 +444,7 @@ BUFFER may be a buffer or the name of one.
 static Lisp_Object
 get_process (Lisp_Object name)
 {
-  Lisp_Object proc;
+  Lisp_Object proc, obj;
 
 #ifdef I18N3
   /* #### Look more closely into translating process names. */
@@ -455,24 +455,33 @@ get_process (Lisp_Object name)
   if (GC_PROCESSP (name))
     return name;
 
-  if (GC_NILP (name))
-    proc = Fget_buffer_process (Fcurrent_buffer ());
+  if (GC_STRINGP (name))
+    {
+      obj = Fget_process (name);
+      if (GC_NILP (obj))
+        obj = Fget_buffer (name);
+      if (GC_NILP (obj))
+        error ("Process %s does not exist", XSTRING_DATA (name));
+    }
+  else if (GC_NILP (name))
+    obj = Fcurrent_buffer ();
+  else
+    obj = name;
+
+  /* Now obj should be either a buffer object or a process object.
+   */
+  if (GC_BUFFERP (obj))
+    {
+      proc = Fget_buffer_process (obj);
+      if (GC_NILP (proc))
+	error ("Buffer %s has no process", XSTRING_DATA (XBUFFER(obj)->name));
+    }
   else
     {
-      proc = Fget_process (name);
-      if (GC_NILP (proc))
-	proc = Fget_buffer_process (Fget_buffer (name));
+      /* fsf:  CHECK_PROCESS (obj, 0); */
+      proc = obj;
     }
-
-  if (!GC_NILP (proc))
-    return proc;
-
-  if (GC_NILP (name))
-    error ("Current buffer has no process");
-  else
-    error ("Process %s does not exist", XSTRING_DATA (name));
-  /* NOTREACHED */
-  return Qnil; /* warning suppression */
+  return proc;
 }
 
 DEFUN ("process-id", Fprocess_id, 1, 1, 0, /*

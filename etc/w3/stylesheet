@@ -8,7 +8,7 @@
 **
 **  This contains the top level fallback default styles for Emacs-w3
 **
-******************************************************************************
+*******************************************************************************
 **
 ** To specify device-dependent styles, you must mark a section with
 ** @media devicetype { ... }
@@ -32,11 +32,23 @@
 ** xemacs - only include this chunk if you are using XEmacs
 **  light - only include this chunk if you are using a light background
 **   dark - only include this chunk if you are using a dark background
+**    tty - only include this chunk if you are using a TTY
+** ansi-tty - "  include this chunk if you are using an ANSI-capable TTY 
+*******************************************************************************
+**
+** There are some things this stylesheet cannot really specify, that we 
+** must rely on the browser to explicitly handle correctly:
+**
+** o table formatting
+** o actually creating a hyperlink from an <a> tag and its attributes
+** o specifying which tags open lists
+** o inlined images
+** o frames (perhaps with positioning)
+** o applet/script/embed/object
+** o horizontal rules
 ******************************************************************************/
 
-/*
-** Headers
-*/
+/* Headers */
 
 h1,h2,h3,
 h4,h5,h6  {
@@ -45,25 +57,16 @@ h4,h5,h6  {
             font-weight : bold;
           }
 
-/*
-** Since Emacs-19 doesn't handle mixed-sized fonts very well just yet,
-** we only use them under XEmacs.  Hopefully, this will change soon.
-*/
-@media xemacs {
       h1  { font-size : +12pt }
       h2  { font-size : +6pt  }
       h3  { font-size : +4pt  }
       h5  { font-size : -2pt  }
       h6  { font-size : -4pt  }
-/*
-** Emacs-19 also doesn't handle how Emacs-W3 changes this type of font
-** very well, so lets only do it under XEmacs for now.  Emacs-19 can only
-** do monospaced fonts anyway, so its redundant.
-*/
+
+/* Used to cause problems under Emacs 19, lets try once more, with feeling! */
    pre,xmp,
   plaintext { font-family: monospace }
 key,code,tt { font-family: monospace }
-} // @media xemacs
 
 /*
 ** Best we can do under Emacs-19 is use the default font and try to make
@@ -100,7 +103,7 @@ blockquote{ display: block; margin-left: 5em; margin-right: 5em; }
 ** the standard way to do this, perhaps in CSS level 2.
 */
 input:text,
-input:integer,
+input:int,
 input:float,
 input:url,
 input:text    { text-decoration: underline; }
@@ -213,9 +216,11 @@ a:link   {
          }
 
 input:text,
-input:integer,
+input:int,
 input:float,
 input:url,
+input:file,
+input:password,
 input:text    { insert-before: "[{"; insert-after: "}]"; }
 select { insert-before: "[{"; insert-after: "}]"; }
 
@@ -251,6 +256,10 @@ a:visited { color : magenta  }
  a:active { color : yellow   }
 } // @media ansi-tty
 
+/*
+** Secial styles for the Emacspeak subsystem of emacs - an incredibly cool
+** speech synthesizer.  This was contributed by T.V. Raman (raman@adobe.com)
+*/
 @media speech {
 h1,h2,h3,
 h4,h5,h6 { voice-family: paul; stress: 2; richness: 9; }

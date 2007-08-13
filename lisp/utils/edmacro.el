@@ -5,7 +5,7 @@
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;;         Hrvoje Niksic <hniksic@srce.hr>  -- XEmacs port
 ;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
-;; Version: 3.09
+;; Version: 3.10
 ;; Keywords: abbrev
 
 ;; This file is part of XEmacs.
@@ -26,6 +26,10 @@
 ;; 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.34.
+;;; The important parts of this file have been rewritten for XEmacs,
+;;; so it's completely different from the FSF version.  The original
+;;; could not be used because it worked with the Emacs key
+;;; representation, and it mixed characters and integers too freely.
 
 ;;; Commentary:
 
@@ -54,13 +58,15 @@
 ;; This and `format-kbd-macro' can also be called directly as
 ;; Lisp functions.
 
-;; The `kbd' function is a shorter name for `read-kbd-macro'.  It is
-;; good to use in your programs and initializations, as you needn't
-;; know the internal keysym representation.  For example:
+;; The `kbd' macro is a shorter-named and more efficient form of
+;; `read-kbd-macro'.  Unlike `read-kbd-macro', it is evaluated at
+;; read-time, and doesn't bring any overhead to compiled programs.  It
+;; is recommended to use in your programs and initializations, as you
+;; needn't know the internal keysym representation.  For example:
 ;;
 ;; (define-key foo-mode-map (kbd "C-c <up>") 'foo-up)
 ;;
-;; is the equivalent of
+;; is the exact equivalent of
 ;;
 ;; (define-key foo-mode-map [(control ?c) up] 'foo-up)
 ;;
@@ -226,7 +232,7 @@ Second argument NEED-VECTOR means to return an event vector always."
     (setq last-kbd-macro (edmacro-parse-keys (buffer-substring start end)))))
 
 ;;;###autoload
-(defun kbd (keys)
+(defmacro kbd (keys)
   "Convert KEYS to the internal Emacs key representation."
   (read-kbd-macro keys))
 
@@ -370,7 +376,7 @@ as characters of the macro.  The whitespace that separates words
 is ignored.  Whitespace in the macro must be written explicitly,
 as in \"foo SPC bar RET\".
 
- * The special words RET, SPC, TAB, DEL, LFD, ESC, and NUL represent
+ * The special words RET, SPC, TAB, DEL, BS, LFD, ESC, and NUL represent
    special control characters.  The words must be written in uppercase.
 
  * A word in angle brackets, e.g., <return>, <down>, or <f1>, represents
@@ -422,7 +428,8 @@ doubt, use whitespace."
       (char-to-int int)
     int))
 
-;;; Formatting a keyboard macro as human-readable text.
+
+;;; Parsing a human-readable keyboard macro.
 
 ;; Changes for XEmacs -- these two functions re-written from scratch.
 ;; edmacro-parse-keys always returns a vector.  edmacro-format-keys
@@ -431,7 +438,7 @@ doubt, use whitespace."
 (defun edmacro-parse-keys (string &optional ignored)
   (let* ((pos 0)
 	 (case-fold-search nil)
-	 (word-to-sym '(("NUL" . (control space))
+	 (word-to-sym '(("NUL" . ?\0)
 			("RET" . return)
 			("LFD" . linefeed)
 			("TAB" . tab)
@@ -675,6 +682,8 @@ doubt, use whitespace."
 	(setq new (nconc new k)))
     new))
 
+;;; Formatting a keyboard macro as human-readable text.
+
 (defun edmacro-format-keys (macro &optional verbose)
   ;; XEmacs:
   ;; If we're dealing with events, convert them to symbols first.
@@ -778,9 +787,6 @@ doubt, use whitespace."
 			"supported by this command"))))
 	(incf i))))
   macro)
-
-;;; Parsing a human-readable keyboard macro.
-
 
 
 ;;; The following probably ought to go in macros.el:

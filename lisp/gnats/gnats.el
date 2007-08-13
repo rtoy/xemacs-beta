@@ -1019,7 +1019,7 @@ if needed."
 				 "%s/gnats/npr-edit"
 			       "%s/gnats/pr-edit")
 			     gnats:libdir)
-;		     (if gnats:network-server (list "--host" gnats:network-server))
+		     (if gnats:network-server (format  "--host=%s" gnats:network-server))
 		     args
 		     ))
 

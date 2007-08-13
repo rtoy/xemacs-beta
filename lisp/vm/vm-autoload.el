@@ -74,8 +74,14 @@ KEEP-LIST and DISCARD-REGEXP are used to order and trim the headers
 to be forwarded.  See the docs for vm-reorder-message-headers
 to find out how KEEP-LIST and DISCARD-REGEXP are used.
 
-Returns the multipart boundary parameter (string) that should be used
-in the Content-Type header." nil nil)
+If ALWAYS-USE-DIGEST is non-nil, always encapsulate for a multipart/digest.
+Otherwise if there are fewer than two messages to be encapsulated
+leave off the multipart boundary strings.  The caller is assumed to
+be using message/rfc822 or message/news encoding instead.
+
+If multipart/digest encapsulation is done, the function returns
+the multipart boundary parameter (string) that should be used in
+the Content-Type header.  Otherwise nil is returned." nil nil)
 
 (autoload (quote vm-mime-burst-message) "vm-digest" "Burst messages from the digest message M.
 M should be a message struct for a real message.
@@ -1420,8 +1426,6 @@ message." t nil)
 
 (autoload (quote vm-mime-composite-type-p) "vm-mime" nil nil nil)
 
-(autoload (quote vm-mime-map-atomic-layouts) "vm-mime" nil nil nil)
-
 (autoload (quote vm-minibuffer-complete-word) "vm-minibuf" nil t nil)
 
 (autoload (quote vm-minibuffer-complete-word-and-exit) "vm-minibuf" nil t nil)
@@ -1941,10 +1945,10 @@ you can change the recipient address before resending the message." t nil)
 The current message will be copied to a Mail mode buffer and you
 can edit the message and send it as usual.
 
-NOTE: since you are doing a resend, a Resent-To header is
-provided for you to fill in.  If you don't fill it in, when you
-send the message it will go to the original recipients listed in
-the To and Cc headers.  You may also create a Resent-Cc header." t nil)
+NOTE: since you are doing a resend, a Resent-To header is provided
+for you to fill in the new recipient list.  If you don't fill in
+this header, what happens when you send the message is undefined.
+You may also create a Resent-Cc header." t nil)
 
 (autoload (quote vm-send-digest) "vm-reply" "Send a digest of all messages in the current folder to recipients.
 The type of the digest is specified by the variable vm-digest-send-type.
@@ -2042,8 +2046,9 @@ The saved messages are flagged as `written'.
 This command should NOT be used to save message to mail folders; use
 vm-save-message instead (normally bound to `s')." t nil)
 
-(autoload (quote vm-pipe-message-to-command) "vm-save" "Run shell command with the some or all of the current message as input.
-By default the entire message is used.
+(autoload (quote vm-pipe-message-to-command) "vm-save" "Runs a shell command with some or all of the contents of the
+current message as input.
+By default, the entire message is used.
 With one \\[universal-argument] the text portion of the message is used.
 With two \\[universal-argument]'s the header portion of the message is used.
 With three \\[universal-argument]'s the visible header portion of the message
@@ -2204,7 +2209,7 @@ See the documentation for vm-mode for more information." t nil)
 
 (autoload (quote vm-mode) "vm-startup" "Major mode for reading mail.
 
-This is VM 6.27.
+This is VM 6.29.
 
 Commands:
    h - summarize folder contents

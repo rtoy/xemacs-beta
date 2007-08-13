@@ -758,6 +758,9 @@ main_1 (int argc, char **argv, char **envp)
 
       syms_of_abbrev ();
       syms_of_alloc ();
+#ifdef HAVE_X_WINDOWS
+      syms_of_balloon_x ();
+#endif
       syms_of_buffer ();
       syms_of_bytecode ();
       syms_of_callint ();
@@ -1065,6 +1068,9 @@ main_1 (int argc, char **argv, char **envp)
 
       vars_of_abbrev ();
       vars_of_alloc ();
+#ifdef HAVE_X_WINDOWS
+      vars_of_balloon_x ();
+#endif
       vars_of_buffer ();
       vars_of_bytecode ();
       vars_of_callint ();

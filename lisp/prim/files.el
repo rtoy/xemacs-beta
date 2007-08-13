@@ -1473,8 +1473,8 @@ for current buffer."
 	(let ((key (car (car result)))
 	      (val (cdr (car result))))
 	  (cond ((eq key 'mode)
-		 (setq mode-p t)
 		 (and enable-local-variables
+		      (setq mode-p t)
 		      (funcall (intern (concat (downcase (symbol-name val))
 					       "-mode")))))
 		(set-any-p

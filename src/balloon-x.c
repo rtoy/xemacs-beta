@@ -1,3 +1,26 @@
+/* 
+   Copyright (c) 1997 Douglas Keller
+
+This file is part of XEmacs.
+
+XEmacs is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs; see the file COPYING.  If not, write to
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
+
+/* Synched up with: Not in FSF. */
+
+
 #include <config.h>
 #include "lisp.h"
 
@@ -8,72 +31,77 @@
 
 /* ### start of hack */
 
-static unsigned long alloc_color( Display* dpy, const char* colorname, int light )
+static unsigned long
+alloc_color (Display* dpy, const char* colorname, int light)
 {
-  Colormap cmap = DefaultColormap( dpy, DefaultScreen(dpy) );
+  Colormap cmap = DefaultColormap (dpy, DefaultScreen(dpy));
   unsigned long pixel = 0;
   XColor color;
 
-  if( XParseColor(dpy, cmap, colorname, &color) && XAllocColor(dpy, cmap, &color) )
-  {
-    pixel = color.pixel;
-  }
+  if (XParseColor(dpy, cmap, colorname, &color) && XAllocColor(dpy, cmap, &color))
+    {
+      pixel = color.pixel;
+    }
   else
-  {
-    if( light )
     {
-      printf("Warning: could not allocate color \"%s\", using \"white\"\n", colorname);
-      pixel = alloc_color( dpy, "white", True );
+      if (light)
+	{
+	  printf ("Warning: could not allocate color \"%s\", using \"white\"\n",
+		  colorname);
+	  pixel = alloc_color (dpy, "white", True);
+	}
+      else
+	{
+	  printf ("Warning: could not allocate color \"%s\", using \"black\"\n",
+		  colorname);
+	  pixel = alloc_color (dpy, "black", True);
+	}
     }
-    else
-    {
-      printf("Warning: could not allocate color \"%s\", using \"black\"\n", colorname);
-      pixel = alloc_color( dpy, "black", True );
-    }
-  }
   return pixel;
 }
 
-static XFontStruct* open_font( Display* dpy, const char* font_name )
+static XFontStruct *
+open_font (Display* dpy, const char* font_name)
 {
   XFontStruct* fontStruct = NULL;
 
-  fontStruct = XLoadQueryFont( dpy, font_name ? font_name : "fixed" );
-  if( fontStruct == NULL )
-  {
-    printf("Warning: could not load font \"%s\", using \"fixed\".\n", font_name);
-    fontStruct = XLoadQueryFont( dpy, "fixed" );
-    assert( fontStruct != NULL );
-  }
+  fontStruct = XLoadQueryFont (dpy, font_name ? font_name : "fixed");
+  if (fontStruct == NULL)
+    {
+      printf ("Warning: could not load font \"%s\", using \"fixed\".\n", font_name);
+      fontStruct = XLoadQueryFont (dpy, "fixed");
+      assert (fontStruct != NULL);
+    }
   return fontStruct;
 }
 
-static void init( void )
+static void
+init (void)
 {
   static int init;
 
-  if( !init )
-  {
-    Pixel fg, bg, shine, shadow;
-    XFontStruct* font;
-    Display *dpy = DEVICE_X_DISPLAY (XDEVICE (Vdefault_x_device));
+  if (!init)
+    {
+      Pixel fg, bg, shine, shadow;
+      XFontStruct* font;
+      Display *dpy = DEVICE_X_DISPLAY (XDEVICE (Vdefault_x_device));
 
-    fg = alloc_color( dpy, "grey60",  1 );
-    bg = alloc_color( dpy, "black", 0 );
-    
-    shine  = alloc_color( dpy, "grey80", 1 );
-    shadow = alloc_color( dpy, "grey40", 0 );
+      fg = alloc_color (dpy, "grey60", 1);
+      bg = alloc_color (dpy, "black", 0);
 
-    font = open_font( dpy, "-adobe-helvetica-medium-r-normal--12-*" );
+      shine  = alloc_color (dpy, "grey80", 1);
+      shadow = alloc_color (dpy, "grey40", 0);
 
-    balloon_help_create( dpy, bg, fg, shine, shadow, font );
-    init = 1;
-  }
+      font = open_font (dpy, "-adobe-helvetica-medium-r-normal--12-*");
+
+      balloon_help_create (dpy, bg, fg, shine, shadow, font);
+      init = 1;
+    }
 }
 
 /* ### end of hack */
 
-DEFUN( "show-balloon-help", Fshow_balloon_help, 1, 1, 0, /*
+DEFUN ("show-balloon-help", Fshow_balloon_help, 1, 1, 0, /*
 Show balloon help.
 */
        (string))
@@ -83,33 +111,33 @@ Show balloon help.
 
   p = (char *) XSTRING_DATA (string);
 
-  init();
+  init ();
 
-  balloon_help_show( p );
-
-  return Qnil;
-}
-
-DEFUN( "hide-balloon-help", Fhide_balloon_help, 0, 0, 0, /*
-Hide balloon help.
-*/
-      ())
-{
-  init();
-
-  balloon_help_hide();
+  balloon_help_show (p);
 
   return Qnil;
 }
 
-DEFUN( "balloon-help-move-to-pointer", Fballoon_help_move_to_pointer, 0, 0, 0, /*
+DEFUN ("hide-balloon-help", Fhide_balloon_help, 0, 0, 0, /*
 Hide balloon help.
 */
       ())
 {
-  init();
+  init ();
 
-  balloon_help_move_to_pointer();
+  balloon_help_hide ();
+
+  return Qnil;
+}
+
+DEFUN ("balloon-help-move-to-pointer", Fballoon_help_move_to_pointer, 0, 0, 0, /*
+Hide balloon help.
+*/
+      ())
+{
+  init ();
+
+  balloon_help_move_to_pointer ();
 
   return Qnil;
 }
@@ -123,9 +151,9 @@ Hide balloon help.
 void
 syms_of_balloon_x (void)
 {
-  DEFSUBR( Fshow_balloon_help );
-  DEFSUBR( Fhide_balloon_help );
-  DEFSUBR( Fballoon_help_move_to_pointer );
+  DEFSUBR (Fshow_balloon_help);
+  DEFSUBR (Fhide_balloon_help);
+  DEFSUBR (Fballoon_help_move_to_pointer);
 }
 
 void

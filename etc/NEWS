@@ -109,7 +109,7 @@ denizen of the free software community.
 *** More user-level documentation on using Mule.
 
 
-* Changes in XEmacs 20.1
+* Changes in XEmacs 20.2
 ========================
 
 ** The logo has been changed, and the default background color is
@@ -126,6 +126,11 @@ when new mail arrives.  It also supports balloon-help messages.
 ** Various commands that were previously disabled are now enabled, like
 eval-expression (`M-:') and upcase-region (`C-x C-u')/downcase-region
 (`C-x C-l').
+
+** The `C-z' key now iconifies only the current X frame.  You can use
+`C-x C-z' to get the old behavior.
+
+On the tty frames `C-z' behaves as before.
 
 ** Numerous causes of crashes have been fixed.  XEmacs should now be
 even more stable than before.
@@ -266,7 +271,7 @@ from incoming mail before saving the mail.
 
 *** The nnml mail backend now understands compressed article files.
 
-** Custom 1.84, courtesy of Per Abrahamsen
+** Custom 1.86, courtesy of Per Abrahamsen
 
 The Customize library enables Emacs Lisp programmers to specify types
 of their variables, so that the users can customize them.
@@ -342,7 +347,7 @@ It completely reverses the effect of the undo, which includes making
 the chain of buffer modification records shorter by one, to counteract
 the effect of the undo command making the record list longer by one.
 
-** edmacro.el-3.09, courtesy of Dave Gillespie, ported to XEmacs by
+** edmacro.el-3.10, courtesy of Dave Gillespie, ported to XEmacs by
 Hrvoje Niksic.
 
 Edmacro is a utility that provides easy editing of keyboard macros.
@@ -392,7 +397,7 @@ different FTP servers, and integration with dired.
 ** overlay.el, courtesy of Joseph Nuspl
 
 
-* Lisp and internal changes in XEmacs 20.1
+* Lisp and internal changes in XEmacs 20.2
 ==========================================
 
 ** `defcustom' and `defgroup' can now be used to specify types and
@@ -446,22 +451,24 @@ interface will remain the same.  This is why we recommend that you use
 
 ** The `read-kbd-macro' function is now available.
 
-The `read-kbd-macro' function (and its shorter-named equivalent `kbd')
-from the edmacro package is now available in XEmacs.  For example:
+The `read-kbd-macro' function (as well as the read-time evaluated
+`kbd' macro) from the edmacro package is now available in XEmacs.  For
+example:
 
 (define-key foo-mode-map (kbd "C-c <up>") 'foo-up)
 
-is the equivalent of
+is completely equivalent to
 
 (define-key foo-mode-map [(control ?c) up] 'foo-up)
 
-Using `read-kbd-macro' and `kbd' is not necessary for GNU Emacs
-compatibility (GNU Emacs supports the XEmacs-style keysyms), but adds
-to clarity.
+The `kbd' macro is preferred over `read-kbd-macro' function , as it
+evaluates before compiling, thus having no loading overhead.
 
-For example, (kbd "C-?") is easier to read than [(control ??)].  The
-full description of the syntax of keybindings accepted by
-`read-kbd-macro' is documented in the docstring of `edmacro-mode'.
+Using `kbd' is not necessary for GNU Emacs compatibility (GNU Emacs
+supports the XEmacs-style keysyms), but adds to clarity.  For example,
+(kbd "C-?") is usually easier to read than [(control ??)].  The full
+description of the syntax of keybindings accepted by `read-kbd-macro'
+is documented in the docstring of `edmacro-mode'.
 
 ** Overlay compatibility is implemented.
 
@@ -471,9 +478,8 @@ top of the native XEmacs extents, and can be used as a GNU
 Emacs-compatible way of changing display properties.
 
 ** You should use keysyms kp-* (kp-1, kp-2, ..., kp-enter etc.)
-rather than the old form kp_*.  The old form is retained for
-backwards compatibility, but is obsolete.  The new form is also
-compatible with GNU Emacs.
+rather than the old form kp_*.  The new form is also compatible with
+GNU Emacs.
 
 ** The keysyms mouse-1, mouse-2, mouse-3 and down-mouse-1,
 down-mouse-2, and down-mouse-3 have been added for GNU Emacs
@@ -515,6 +521,13 @@ likely to be removed in the future.
 
 If you still need the purged files, look for them in the GNU Emacs
 distribution.
+
+
+* Changes in XEmacs 20.1
+========================
+
+XEmacs 20.1 has not been released to the net.  Please consult the 20.2
+entries instead.
 
 
 * Major Differences Between 19.14 and 20.0

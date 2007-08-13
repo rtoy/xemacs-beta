@@ -1,7 +1,7 @@
 ;;; w3-xemac.el --- XEmacs specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/04/10 00:03:38
-;; Version: 1.18
+;; Created: 1997/04/21 21:59:34
+;; Version: 1.20
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

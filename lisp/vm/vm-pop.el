@@ -192,7 +192,7 @@
 		(get-buffer-create (format "trace of POP session to %s" host)))
 	  ;; Tell XEmacs/MULE not to mess with the text.
 	  (and vm-xemacs-mule-p
-	       (set-buffer-file-coding-system 'no-conversion t))
+	       (set-file-coding-system 'binary t))
 	  ;; clear the trace buffer of old output
 	  (save-excursion
 	    (set-buffer process-buffer)

@@ -711,12 +711,9 @@ See also `\\[telnet]'." t nil)
 
 ;;;***
 
-;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-buffer-create customize-apropos customize-customized customize-face-other-window customize-face customize-variable-other-window customize-variable customize-other-window customize) "cus-edit" "custom/cus-edit.el")
+;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-buffer-create customize-apropos customize-customized customize-face-other-window customize-face customize-variable-other-window customize-variable customize) "cus-edit" "custom/cus-edit.el")
 
 (autoload 'customize "cus-edit" "\
-Customize SYMBOL, which must be a customization group." t nil)
-
-(autoload 'customize-other-window "cus-edit" "\
 Customize SYMBOL, which must be a customization group." t nil)
 
 (autoload 'customize-variable "cus-edit" "\
@@ -784,7 +781,7 @@ See `defface' for the format of SPEC." nil nil)
 
 ;;;***
 
-;;;### (autoloads (widget-minor-mode widget-browse-other-window widget-browse widget-browse-at) "wid-browse" "custom/wid-browse.el")
+;;;### (autoloads (widget-browse-other-window widget-browse widget-browse-at) "wid-browse" "custom/wid-browse.el")
 
 (autoload 'widget-browse-at "wid-browse" "\
 Browse the widget under point." t nil)
@@ -794,10 +791,6 @@ Create a widget browser for WIDGET." t nil)
 
 (autoload 'widget-browse-other-window "wid-browse" "\
 Show widget browser for WIDGET in other window." t nil)
-
-(autoload 'widget-minor-mode "wid-browse" "\
-Togle minor mode for traversing widgets.
-With arg, turn widget mode on if and only if arg is positive." t nil)
 
 ;;;***
 
@@ -2209,7 +2202,8 @@ Smilify the region between point and mark." t nil)
 
 (autoload 'smiley-buffer "smiley" nil t nil)
 
-(autoload 'gnus-smiley-display "smiley" nil t nil)
+(autoload 'gnus-smiley-display "smiley" "\
+Display \"smileys\" as small graphical icons." t nil)
 
 ;;;***
 
@@ -3637,7 +3631,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.23 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.24 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4997,7 +4991,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.23 $
+vhdl-mode $Revision: 1.24 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -8800,7 +8794,7 @@ The result will be a string if possible, otherwise an event vector.
 Second argument NEED-VECTOR means to return an event vector always." t nil)
 
 (autoload 'kbd "edmacro" "\
-Convert KEYS to the internal Emacs key representation." nil nil)
+Convert KEYS to the internal Emacs key representation." nil 'macro)
 
 (autoload 'format-kbd-macro "edmacro" "\
 Return the keyboard macro MACRO as a human-readable string.

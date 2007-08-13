@@ -1,3 +1,32 @@
+Tue Apr 22 11:54:02 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (main_1): Add syms_of_balloon_x and guard with
+	HAVE_X_WINDOWS.
+	(main_1): Add vars_of_balloon_x and guard with HAVE_X_WINDOWS.
+
+	* process.c (get_process): This function can be passed a BUFFER as 
+	a parameter.
+
+Tue Apr 22 01:32:00 1997  Kyle Jones  <kyle@crystal.WonderWorks.COM>
+
+	* src/menubar-x.c (pre_activate_hook):
+	  set in_menu_callback around call to call to
+          menu_item_descriptor_to_widget_value.
+
+	* src/event-stream.c (Fnext_event):
+	  signal error if in_menu_callback non-nil to avoid
+	  reentering the menubar code and causing a crash later.
+
+	* src/cmdloop.c (command_loop_3):
+	  signal error if in_menu_callback non-nil to avoid
+	  inflooping calling Fnext_event, which will signal an
+	  error if the situation is not caught earlier.
+
+Tue Apr 22 08:22:22 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* balloon-x.c, balloon_help.c, balloon_help.h: Modified to conform
+	to XEmacs coding standards.
+
 Thu Apr 17 17:16:34 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* balloon-x.c: New file from Douglas Keller.

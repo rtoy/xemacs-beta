@@ -1,3 +1,8 @@
+Sat Apr 19 20:48:00 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lispref/files.texi (File Name Expansion): Update documentation
+	of file-relative-name.
+
 Mon Apr  7 21:02:39 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* lispref/lispref.texi: Update version numbers (with patches from

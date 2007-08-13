@@ -76,13 +76,13 @@
 				       (integer :tag "Duration"))))))
 
 (defcustom sound-load-alist 
-  '((load-sound-file "sounds/drum-beep.au"	'drum)
-    (load-sound-file "sounds/quiet-beep.au"	'quiet)
-    (load-sound-file "sounds/bass-snap.au"	'bass 80)
-    (load-sound-file "sounds/whip.au"		'whip 70)
-    (load-sound-file "sounds/cuckoo.au"		'cuckoo)
-    (load-sound-file "sounds/yeep.au"		'yeep)
-    (load-sound-file "sounds/hype.au"		'hype 100)
+  '((load-sound-file "drum-beep.au"	'drum)
+    (load-sound-file "quiet-beep.au"	'quiet)
+    (load-sound-file "bass-snap.au"	'bass 80)
+    (load-sound-file "whip.au"		'whip 70)
+    (load-sound-file "cuckoo.au"		'cuckoo)
+    (load-sound-file "yeep.au"		'yeep)
+    (load-sound-file "hype.au"		'hype 100)
     )
   "A list of calls to load-sound-file to be processed by load-default-sounds. 
 
@@ -92,14 +92,14 @@
   :type '(repeat  (sexp :tag "Sound")
 		  ))
 
-(defcustom default-sound-directory data-directory
+(defcustom default-sound-directory (concat data-directory "sounds/")
   "Default directory to load a sound file from."
   :group 'sound
   :type 'directory
   )
 
 (defcustom sound-ext ""
-  "Filename extensions to complet sound file name with. If more than one 
+  "Filename extensions to complete sound file name with. If more than one 
    extension is used, they should be separated by \":\". "
   :group 'sound
   :type 'string)
@@ -130,14 +130,16 @@ SSymbol to name this sound: \n\
 nVolume (0 for default): ")
   (or (symbolp sound-name) (error "sound-name not a symbol"))
   (or (null volume) (integerp volume) (error "volume not an integer or nil"))
-  (let (buf data)
+  (let (buf
+	data
+	(file (locate-file filename  default-sound-directory-list  sound-ext)))
     (unwind-protect
 	(save-excursion
 	  (set-buffer (setq buf (get-buffer-create " *sound-tmp*")))
 	  (buffer-disable-undo (current-buffer))
 	  (erase-buffer)
-	  (insert-file-contents 
-	   (locate-file filename  default-sound-directory-list  sound-ext ))
+	  (let ((coding-system-for-read 'binary))
+	    (insert-file-contents  file))
 	  (setq data (buffer-string))
 	  (erase-buffer))
       (and buf (kill-buffer buf)))

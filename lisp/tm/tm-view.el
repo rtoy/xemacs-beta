@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/7/13 (1994/8/31 obsolete tm-body.el)
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.4 $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -42,7 +42,7 @@
 ;;;
 
 (defconst mime-viewer/RCS-ID
-  "$Id: tm-view.el,v 1.3 1997/03/08 23:26:58 steve Exp $")
+  "$Id: tm-view.el,v 1.4 1997/04/24 04:00:14 steve Exp $")
 
 (defconst mime-viewer/version (get-version-string mime-viewer/RCS-ID))
 (defconst mime/viewer-version mime-viewer/version)
@@ -178,17 +178,30 @@ Each elements are regexp of field-name. [tm-view.el]")
 
 (defvar mime-viewer/redisplay nil)
 
-(defvar mime-viewer/announcement-for-message/partial
-  (if (and (>= emacs-major-version 19) window-system)
-      "\
-\[[ This is message/partial style split message. ]]
-\[[ Please press `v' key in this buffer          ]]
-\[[ or click here by mouse button-2.             ]]"
-    "\
-\[[ This is message/partial style split message. ]]
-\[[ Please press `v' key in this buffer.         ]]"
-    ))
+(defun mime-viewer/get-key-for-fun (symb)
+  (let ((key (where-is-internal symb))
+	)
+    (if key
+	(key-description (car key))
+      "v")))
 
+(defun mime-viewer/announcement-for-message/partial ()
+  (let ((key (mime-viewer/get-key-for-fun 'mime-viewer/play-content)))
+    (if (and (>= emacs-major-version 19) window-system)
+	(concat
+	 "\
+\[[ This is message/partial style split message. ]]
+\[[ Please press `" 
+	 key
+	 "' in this buffer              ]]
+\[[ or click here by mouse button-2.             ]]")
+      (concat 
+       "\
+\[[ This is message/partial style split message. ]]
+\[[ Please press `"
+       key
+       "' in this buffer.         ]]")
+      )))
 
 ;;; @@ predicate functions
 ;;;
@@ -579,7 +592,7 @@ The compressed face will be piped to this command.")
       )
     (let ((be (point-max)))
       (narrow-to-region be be)
-      (insert mime-viewer/announcement-for-message/partial)
+      (insert (mime-viewer/announcement-for-message/partial))
       (tm:add-button (point-min)(point-max)
 		     (function mime-viewer/play-content))
       )))

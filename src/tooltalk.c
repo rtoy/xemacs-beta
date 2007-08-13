@@ -177,7 +177,7 @@ print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
     error ("printing unreadable object #<tooltalk_message 0x%x>",
 	   p->header.uid);
 
-  sprintf (buf, "#<tooltalk_message id:%d 0x%x>", (int) p->m, p->header.uid);
+  sprintf (buf, "#<tooltalk_message id:%d 0x%x>", p->m, p->header.uid);
   write_c_string (buf, printcharfun);
 }
 
@@ -253,7 +253,7 @@ print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
     error ("printing unreadable object #<tooltalk_pattern 0x%x>",
 	   p->header.uid);
 
-  sprintf (buf, "#<tooltalk_pattern id:%d 0x%x>", (int) p->p, p->header.uid);
+  sprintf (buf, "#<tooltalk_pattern id:%d 0x%x>", p->p, p->header.uid);
   write_c_string (buf, printcharfun);
 }
 

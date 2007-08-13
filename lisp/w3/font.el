@@ -1,7 +1,7 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/04/04 16:02:58
-;; Version: 1.44
+;; Created: 1997/04/20 19:19:45
+;; Version: 1.45
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -32,12 +32,36 @@
 (require 'cl)
 
 (eval-and-compile
-  (if (not (and (string-match "XEmacs" emacs-version)
-		(or (> emacs-major-version 19)
-		    (>= emacs-minor-version 14))))
-      (require 'w3-sysdp)))
+  (require 'devices))
+
+(eval-and-compile
+  (if (not (fboundp 'try-font-name))
+      (defsubst try-font-name (fontname &rest args)
+	(case window-system
+	  ((x win32 pm) (car-safe (x-list-fonts fontname)))
+	  (ns (car-safe (ns-list-fonts fontname)))
+	  (otherwise nil))))
+  (if (not (fboundp 'facep))
+      (defsubst facep (face)
+	"Return t if X is a face name or an internal face vector."
+	(if (not window-system)
+	    nil				; FIXME if FSF ever does TTY faces
+	  (and (or (internal-facep face)
+		   (and (symbolp face) (assq face global-face-data)))
+	       t))))
+  (if (not (fboundp 'set-face-property))
+      (defsubst set-face-property (face property value &optional locale
+					tag-set how-to-add)
+	"Change a property of FACE."
+	(and (symbolp face)
+	     (put face property value))))
+  (if (not (fboundp 'face-property))
+      (defsubst face-property (face property &optional locale tag-set exact-p)
+	"Return FACE's value of the given PROPERTY."
+	(and (symbolp face) (get face property)))))
 
 (require 'disp-table)
+
 (if (not (fboundp '<<))   (fset '<< 'lsh))
 (if (not (fboundp '&))    (fset '& 'logand))
 (if (not (fboundp '|))    (fset '| 'logior))

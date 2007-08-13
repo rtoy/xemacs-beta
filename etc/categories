@@ -34,6 +34,7 @@ mule:MULE Internationalization stuffs:jhod:
 performance:Performance Issues:dmoore:
 redisplay:Redisplay Issues:gnats-admin:cthomp@xemacs.org
 scrollbars:X11 scrollbars:gnats-amdin:mrb@eng.sun.com
+subprocesses:All Subprocess stuff:dmoore:
 toolbars:X11 toolbars:gnats-admin:
 gnus:Gnus newsreader:larsi:
 vm:VM Mailreader:kyle:
