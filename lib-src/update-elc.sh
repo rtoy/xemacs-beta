@@ -48,7 +48,7 @@ export EMACS
 echo " (using $EMACS)"
 
 # fuckin' sysv, man...
-if [ "`uname -r | sed 's/\(.\).*/\1/'`" -gt 4 ]; then
+if [ "`uname -r | sed 's/[^0-9]*\([0-9]*\).*/\1/'`" -gt 4 ]; then
   echon()
   {    
     /bin/echo $* '\c'

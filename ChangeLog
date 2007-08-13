@@ -1,3 +1,64 @@
+1998-04-25  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-21.0-beta37 is released.
+
+1998-04-25  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* configure.in: Sychronized ..._USER_DEFINED variables with
+	datadir setting.
+
+	* Makefile.in (mkdir): No longer create sitelispdir.
+
+Sat Apr 24 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: make graphic libraries tests be dependant on a
+	window system not X11 only.
+
+Fri Apr 24 19:38:19 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: check for our special select in msw.
+
+1998-04-22  Marcus Thiessel  <marcus_thiessel@hp.com>
+
+	* PROBLEMS: add answers to some FAQ concerning hpux.
+
+Wed Apr 22 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: enable checking for special mswindows select()
+
+1998-04-21  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Isolate incomprehensible cma_open/pthreads checking
+	to decosf*
+
+1998-04-21  Marcus Thiessel  <marcus_thiessel@hp.com>
+
+	* configure.in: /usr/{include,lib}/Motif2.1 added to search path for X11
+ 	libs and includes.
+
+1998-04-22  Itay Ben-Yaacov  <pezz@www-mail.huji.ac.il>
+
+	* configure.in: check for xpm does not depend anymore on having X.
+	if libXpm exists, and is of the FOR_MSW flavor, define FOR_MSW.
+
+1998-04-19  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* etc/NEWS: Documented info dir rebuilding and LDAP support.
+
+	* info/dir: Fixed the explanatory notes for
+	`Info-default-directory-list' removal and the new automatic dir
+	rebuilding facility.  Reindented the menu.  Added an entry for
+	term.info 
+
+1998-04-20  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (LISPDIR): Removed configuration option for
+	site-lisp.
+
+1998-04-19  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (version): snarf InfoDock version number.
+
 1998-04-18  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs-21.0-beta36 is released.

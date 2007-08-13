@@ -24,8 +24,9 @@
 
  If it defines anything, this file should define some subset of the following:
 
-   PATH_PREFIX		The default value of `prefix-directory'.  This is the
-   			default root for everything.
+   PATH_EXEC_PREFIX	The value of --exec-prefix.
+
+   PATH_PREFIX		The value of --prefix.
 
    PATH_LOADSEARCH	The default value of `load-path'.
 
@@ -52,7 +53,9 @@
 			These are additional places info files are searched
 			for. */
 
-#define PATH_PREFIX "@prefix@"
+#define PATH_EXEC_PREFIX "@EXEC_PREFIX@"
+
+#define PATH_PREFIX "@PREFIX@"
 
 #ifdef LISPDIR_USER_DEFINED
 #define  PATH_LOADSEARCH "@LISPDIR@"

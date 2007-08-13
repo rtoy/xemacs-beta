@@ -81,12 +81,6 @@
 		(cons src update-elc-files-to-compile))))
     (setq autol (cdr autol))))
 
-;; We must have some lisp support at this point
-(let ((temp-path (expand-file-name "." (car load-path))))
-  (setq load-path (nconc (directory-files temp-path t "^[^-.]"
-					  nil 'dirs-only)
-			 (cons temp-path load-path))))
-
 ;; (print (prin1-to-string update-elc-files-to-compile))
 
 (let (preloaded-file-list site-load-packages)

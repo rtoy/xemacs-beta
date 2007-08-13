@@ -188,6 +188,8 @@
 	;; "ediff-hook"		; Packaged.
 	"fontl-hooks"
 	"auto-show"
+	#+ldap "ldap"
+
 ;; #+energize "energize/energize-load.el"
 ;;; formerly in sunpro/sunpro-load.el
 ;;	#+(and mule sparcworks) "mime-setup"

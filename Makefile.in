@@ -453,7 +453,7 @@ MAKEPATH=./lib-src/make-path
 ## make-path instead of mkdir.  Not all mkdirs have the `-p' flag.
 mkdir: FRC.mkdir
 	${MAKEPATH} ${COPYDESTS} ${lockdir} ${infodir} ${archlibdir} \
-	  ${mandir} ${bindir} ${datadir} ${libdir} ${sitelispdir} ${pkgdir}
+	  ${mandir} ${bindir} ${datadir} ${libdir} ${pkgdir}
 	-chmod 0777 ${lockdir}
 
 ## Delete all the installed files that the `install' target would

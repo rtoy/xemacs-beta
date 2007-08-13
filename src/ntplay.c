@@ -21,6 +21,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <windows.h>
 #undef CONST
 #include <config.h>
+#include <stdio.h>
 
 #ifdef __CYGWIN32__
 extern BOOL WINAPI PlaySound(LPCSTR,HMODULE,DWORD);

@@ -70,7 +70,7 @@ SELECT_TYPE process_only_mask, tty_only_mask;
    through a signal (e.g. window-change or C-g on controlling TTY). */
 int signal_event_pipe[2];
 
-static int signal_event_pipe_initialized;
+int signal_event_pipe_initialized;
 
 int fake_event_occurred;
 

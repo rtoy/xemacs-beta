@@ -39,6 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <errno.h>
 
 #include "buffer.h"
 #include "bytecode.h"
@@ -3322,10 +3323,13 @@ which is more efficient if you do not use the results.
 
 /* #### this function doesn't belong in this file! */
 
-DEFUN ("load-average", Fload_average, 0, 0, 0, /*
+DEFUN ("load-average", Fload_average, 0, 1, 0, /*
 Return list of 1 minute, 5 minute and 15 minute load averages.
 Each of the three load averages is multiplied by 100,
 then converted to integer.
+
+When USE-FLOATS is non-nil, floats will be used instead of integers.
+These floats are not multiplied by 100.
 
 If the 5-minute or 15-minute load averages are not available, return a
 shortened list, containing only those averages which are available.
@@ -3333,22 +3337,26 @@ shortened list, containing only those averages which are available.
 On some systems, this won't work due to permissions on /dev/kmem,
 in which case you can't use this.
 */
-       ())
+       (use_floats))
 {
   double load_ave[3];
   int loads = getloadavg (load_ave, countof (load_ave));
+  Lisp_Object ret = Qnil;
 
   if (loads == -2)
-    error ("load-average not implemented for this operating system.");
+    error ("load-average not implemented for this operating system");
   else if (loads < 0)
-    error ("could not get load-average; check permissions.");
+    signal_simple_error ("Could not get load-average",
+			 lisp_strerror (errno));
 
-  {
-    Lisp_Object ret = Qnil;
-    while (loads > 0)
-      ret = Fcons (make_int ((int) (load_ave[--loads] * 100.0)), ret);
-    return ret;
-  }
+  while (loads-- > 0)
+    {
+      Lisp_Object load = (NILP (use_floats) ?
+			  make_int ((int) (100.0 * load_ave[loads]))
+			  : make_float (load_ave[loads]));
+      ret = Fcons (load, ret);
+    }
+  return ret;
 }
 
 

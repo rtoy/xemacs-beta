@@ -1,3 +1,276 @@
+1998-04-25  SL Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c (xface_normalize): Add console_type parameters to
+	calls to `potential_pixmap_file_instantiator'.
+
+Sat Apr 24 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* event-msw.c: fix and enable signal pipe handling when using msg
+	select().
+
+1998-04-25  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* process-unix.c (allocate_pty): Typo fix.
+
+1998-04-25  Olivier Galibert  <galibert@pobox.com>
+
+	* s/irix5-0.h (PTY_OPEN): Ditto
+	* s/irix4-0.h (PTY_OPEN): Restore the stb variable.
+
+1998-04-25  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* emacs.c (complex_vars_of_emacs): Typo fixes.
+
+	* emacs.c: Added configure-exec-prefix-directory.
+
+	* paths.h.in: Added PATH_EXEC_PREFIX.
+
+1998-04-25  Olivier Galibert  <galibert@pobox.com>
+
+	* unexelfsgi.c (unexec): Kludge for Irix 5.3 which clears the
+	.sbss section no matter what. Defensively remove the alignment fix
+	if the .sbss section type isn't modified (Irix 6.5SE). Remove some
+	warnings.
+
+1998-04-24  Martin Buchholz  <martin@xemacs.org>
+
+	* data.c (Fnot): There has traditionally been kludgy startup lisp
+	code that called `null' even if `not' was more appropriate,
+	because `not' was defined in lisp.  This is one primitive
+	sufficiently important that it should ALWAYS be defined. 
+
+Sat Apr 24 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* Makefile.in.in: add glyphs-eimage.o to build.
+
+	* console.h: added console methods init_image_instance_from_eimage
+	and locate_pixmap_file.
+
+	* emacs.c: add initialisation for glyphs-eimage.c
+
+	* symsinit.h: declare glyphs-eimage functions.
+
+	* glyphs-eimage.c: New file - generalised eimage support for gif,
+	tiff, png and jpeg, mainly from glyphs-x.c.
+
+	* glyphs-msw.c: added init_image_instance_from_eimage. Tidied up
+	file location.
+
+	* glyphs-x.c: disable gif, tiff, png and jpeg support in this
+	file. Added init_image_instance_from_eimage. Tidied up file
+	location.
+
+	* glyphs.h:
+	* glyphs.c: abstract image location.
+
+Fri Apr 24 19:38:19 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* config.h.in: support our special select
+
+	* event-msw.c:
+	* toolbar-msw.c:
+	* console-msw.h: toolbar cleanup.
+
+	* device-msw.c:
+	* emacs.c:
+	* frame-msw.c:
+	* glyphs-msw.h:
+	* ntplay.c:
+	* process-unix.c:
+	* select-msw.c:
+	* sheap.c:
+	* s/cygwin32.h: warning elimination.
+
+1998-04-24  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fns.c (Fload_average): New argument USE_FLOATS.
+
+	* alloc.c (Fstring): New function, synched with FSF 20.3.
+
+Thu Apr 23 19:38:19 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* unexcw.c: cope with the reversed executable sections written by
+	binutils-2.9 ld and egcs.
+
+1998-04-24  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* menubar-msw.c (populate_or_checksum_helper): Fixed to compile
+	with union type.
+
+1998-04-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fns.c (Fload_average): Respect errno when reporting getloadavg() 
+	errors.
+
+	* getloadavg.c (getloadavg): Cleaner Solaris implementation, based 
+	on sample code by Casper Dik.
+
+1998-04-23  SL Baur  <steve@altair.xemacs.org>
+
+	* frame-x.c (x_delete_frame): remove dead code.
+
+1998-04-22  SL Baur  <steve@altair.xemacs.org>
+
+	* print.c (Falternate_debugging_output): Unconditionally define.
+
+1998-04-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* eval.c: Ditto.
+
+	* alloc.c: Ditto.
+
+	* lread.c: Ditto.
+
+	* print.c: Removed standalone hacks.
+
+1998-04-23  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* toolbar-msw.c (mswindows_clear_toolbar): Fixed wabbit buttons.
+	(mswindows_output_toolbar): Gave 3D look to toolbars. Still no
+	pretty, needs more work.
+	(mswindows_move_toolbar): Renamed so because it does not deal with 
+	redrawing exposed toolbars.
+	Properly position toolbars.
+	(mswindows_redraw_exposed_toolbars): Changed calls to the above.
+	(mswindows_find_toolbar_pos): Do not assert if toolbar not
+	found: a command can come from a menu.
+	(mswindows_handle_toolbar_wm_command): Quickly return nil if
+	toolbar not found.
+
+1998-04-22  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* device-msw.c (tagINITCOMMONCONTROLSEX): Uniform declaration
+	between SDK and cygwin.
+	(mswindows_init_device): InitCommonControls ->
+	InitCommonControlsEx typo fix.
+
+Wed Apr 22 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* glyphs-msw.c (EImage2DIBitmap): count the number of bytes correctly.
+
+Wed Apr 22 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* config.h.in: support for HAVE_MSG_SELECT.
+
+	* console-msw.h: add support for four toolbars.
+
+	* device-msw.c: init common controls.
+
+	* event-msw.c: if HAVE_MSG_SELECT is defined use unixoid event
+	stream tye callbacks and select() on events rather than MWFMO.
+ 	Added event handling for tooltip messages. If you have this
+	special select then all process support works under cygwin.
+
+	* frame-msw.c: add support for four toolbars.
+
+	* redisplay-msw.c: update toolbars when an area is exposed.
+
+	* signal.c: _WIN32 -> WINDOWSNT.
+
+	* event-stream.c: enable unixoid initialization if we have it.
+
+	* event-unixoid.c: allow us to turn off the signal pipe.
+
+	* toolbar-msw.c: major overhaul. Enable support for all four
+	toolbars, fix display and sizing problems, enable tooltip support,
+	be more optimal about deleting toolbars.
+
+	* toolbar.h: reinstate 0 toolbar border width for msw.
+
+	* s/cygwin32.h: minor define updates.
+
+1998-04-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* print.c (Falternate_debugging_output): Define only if
+	DEBUG_XEMACS.
+
+1998-04-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Fmake_temp_name): Updated docstring.
+
+1998-04-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* print.c (print_prepare): New argument FRAME_KLUDGE.
+	(print_prepare): If writing to a frame, return a resizing buffer
+	stream.
+	(print_finish): Flush the stream.
+	(Fprin1): Adjust calls to print_prepare() and print_finish().
+	(Fprinc): Ditto.
+	(Fprint): Ditto.
+	(print_internal): Optimize printing of characters.
+
+	* print.c (RESET_PRINT_GENSYM): New macro.
+	(print_prepare): Use it.
+	(print_finish): Ditto.
+	(Fwrite_char): Ditto.
+	(Fprin1_to_string): Ditto.
+
+1998-04-22  SL Baur  <steve@altair.xemacs.org>
+
+	* config.h.in: add FOR_MSW variable.
+	From Itay Ben-Yaacov <pezz@www-mail.huji.ac.il>
+
+1998-04-20  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* alloc.c (report_pure_usage): Remove ifdef WINDOWSNT around
+	"Don't panic, I will restart make".
+
+1998-04-19  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* process.c (vars_of_process): Declared lisp variable
+	windowed-process-io.
+
+	* procimpl.h: Externally declared it.
+
+	* process-nt.c (nt_create_process): Changed to honor the above
+	variable, and to utilize SHGetFileInfo to determine file type.
+
+1998-04-21  Martin Buchholz  <martin@xemacs.org>
+
+	* mule-ccl.c: Fix compiler warnings.  I hate compiler warnings.
+	The code is clearer anyways without macros that goto.
+
+1998-04-22  SL Baur  <steve@altair.xemacs.org>
+
+	* glyphs.h: Add prototypes for signal_image_error and
+	signal_image_error_2.
+	Suggested by Hrvoje Niksic <hniksic@srce.hr>
+
+1998-04-18  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* fileio.c: Changed `directory-sep-char' to `path-separator',
+	following a change in GNU Emacs.
+
+1998-04-21  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* eldap.c: As suggested by Hrvoje Niksic
+	(Fldap_search_internal): Loop and GCPRO cleanup
+	(print_ldap): Removed text translation
+
+1998-04-19  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* eldap.c: (print_ldap): Ignore escapeflag
+	(Fldap_search_internal): Added unwind protection to appropriately
+	free the LDAP temporary structures in case of interruption.  Added 
+	a QUIT to the result fetching loop.
+
+1998-04-19  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (TopLevel): New variables: Vinfodock_major_version,
+	Vinfodock_minor_version, Vinfodock_build_version.
+	(vars_of_emacs): Initialize them.
+
+	* config.h.in: Add InfoDock version numbers.
+
+	* device-x.c (have_xemacs_resources_in_xrdb): distinguish whether
+	we're running as InfoDock or XEmacs.
+
+1998-04-18  SL Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c: Remove definition of Q_color_symbols.
+
+	* glyphs.h: Declare Q_color_symbols and evaluate_xpm_color_symbols.
+
 1998-04-17  Jonathan Harris <jhar@tardis.ed.ac.uk>
 
 	* console-msw.h:
@@ -122,6 +395,9 @@ Fri Apr 17 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
 	mswindows_frame_being_created to Vmswindows_frame_being_created.
 
 1998-04-12  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* event-msw.c (emacs_mswindows_quit_p): Do not check for quit
+	character in modal loop.
 
 	* fileio.c: Removed Vdirectory_sep_char variable.
 

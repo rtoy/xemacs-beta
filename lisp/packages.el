@@ -86,9 +86,9 @@
    (list (paths-construct-path '("~" ".xemacs"))
                              'early #'(lambda () t))
    (list "site-packages"     'late  #'(lambda () t))
+   (list "infodock-packages" 'late  #'(lambda () (featurep 'infodock)))
    (list "mule-packages"     'late  #'(lambda () (featurep 'mule)))
-   (list "packages"          'late  #'(lambda () t))
-   (list "infodock-packages" 'late  #'(lambda () (featurep 'infodock))))
+   (list "packages"          'late  #'(lambda () t)))
   "Locations of the various package directories.
 This is a list each of whose elements describes one directory.
 A directory description is a three-element list.

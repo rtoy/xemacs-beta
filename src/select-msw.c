@@ -121,7 +121,7 @@ Return the contents of the mswindows clipboard.
       do
 	{
 	  /* copy next line or remaining bytes excluding '\0' */
-	  next = _memccpy (dst, src, '\r', rawsize);
+	  next = memccpy (dst, src, '\r', rawsize);
 	  if (next)
 	    {
 	      /* copied one line ending with '\r' */

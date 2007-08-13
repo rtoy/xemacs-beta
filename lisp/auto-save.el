@@ -421,7 +421,7 @@ Hashed files are not understood, see `auto-save-hash-p'."
   ;; byte-by-byte basis. The polynomial used is D^7 + D^6 + D^3 +1.
   ;; The resulting string consists of hexadecimal digits [0-9a-f].
   ;; In particular, it contains no slash, so it can be used as autosave name."
-  (let ((crc (make-string 7 ?\0)))
+  (let ((crc (make-vector 7 ?\0)))
     (mapc
      (lambda (new)
        (setq new (+ new (aref crc 6)))
@@ -434,13 +434,13 @@ Hashed files are not understood, see `auto-save-hash-p'."
        (aset crc 0 new))
      s)
     (format "%02x%02x%02x%02x%02x%02x%02x"
-	    (aref crc 0)
-	    (aref crc 1)
-	    (aref crc 2)
-	    (aref crc 3)
-	    (aref crc 4)
-	    (aref crc 5)
-	    (aref crc 6))))
+	    (logand 255 (aref crc 0))
+	    (logand 255 (aref crc 1))
+	    (logand 255 (aref crc 2))
+	    (logand 255 (aref crc 3))
+	    (logand 255 (aref crc 4))
+	    (logand 255 (aref crc 5))
+	    (logand 255 (aref crc 6)))))
 
 ;; #### It is unclear to me how the following function is useful.  It
 ;; should be used in `auto-save-name-in-same-directory', if anywhere.

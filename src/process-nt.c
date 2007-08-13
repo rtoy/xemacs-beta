@@ -30,8 +30,10 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "process.h"
 #include "procimpl.h"
+#include "sysdep.h"
 
 #include <windows.h>
+#include <shellapi.h>
 
 /* Implemenation-specific data. Pointed to by Lisp_Process->process_data */
 struct nt_process_data
@@ -124,36 +126,61 @@ nt_init_process_io_handles (struct Lisp_Process *p, void* in, void* out, int fla
 
 /* #### This function completely ignores Vprocess_environment */
 
+static void
+signal_cannot_launch (char* image_file, DWORD err)
+{
+  mswindows_set_errno (err);
+  error ("Starting \"%s\": %s", image_file, strerror (errno));
+}
+
 static int
 nt_create_process (struct Lisp_Process *p,
 		   char **argv, CONST char *current_dir)
 {
   HANDLE hmyshove, hmyslurp, hprocin, hprocout;
   LPTSTR command_line;
-  
-  /* Create two unidirectional named pipes */
+  BOOL do_io, windowed;
+
+  /* Find out whether the application is windowed or not */
   {
-    HANDLE htmp;
-    SECURITY_ATTRIBUTES sa;
-
-    sa.nLength = sizeof(sa);
-    sa.bInheritHandle = TRUE;
-    sa.lpSecurityDescriptor = NULL;
-
-    CreatePipe (&hprocin, &hmyshove, &sa, 0);
-    CreatePipe (&hmyslurp, &hprocout, &sa, 0);
-
-    /* Stupid Win32 allows to create a pipe with *both* ends either
-       inheritable or not. We need process ends inheritable, and local
-       ends not inheritable. */
-    /* #### Perhaps even stupider me does not know how to do this better */
-    DuplicateHandle (GetCurrentProcess(), hmyshove, GetCurrentProcess(), &htmp,
-		     0, FALSE, DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS);
-    hmyshove = htmp;
-    DuplicateHandle (GetCurrentProcess(), hmyslurp, GetCurrentProcess(), &htmp,
-		     0, FALSE, DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS);
-    hmyslurp = htmp;
+    /* SHGetFileInfo tends to return ERROR_FILE_NOT_FOUND on most
+       errors. This leads to bogus error message. */
+    DWORD image_type = SHGetFileInfo (argv[0], 0, NULL, 0, SHGFI_EXETYPE);
+    if (image_type == 0)
+      signal_cannot_launch (argv[0], (GetLastError () == ERROR_FILE_NOT_FOUND
+				      ? ERROR_BAD_FORMAT : GetLastError ()));
+    windowed = HIWORD (image_type) != 0;
   }
+
+  /* Decide whether to do I/O on process handles, or just mark the
+     process exited immediately upon successful launching. We do I/O if the
+     process is a console one, or if it is windowed but windowed_process_io
+     is non-zero */
+  do_io = !windowed || windowed_process_io ;
+  
+  if (do_io)
+    {
+      /* Create two unidirectional named pipes */
+      HANDLE htmp;
+      SECURITY_ATTRIBUTES sa;
+
+      sa.nLength = sizeof(sa);
+      sa.bInheritHandle = TRUE;
+      sa.lpSecurityDescriptor = NULL;
+
+      CreatePipe (&hprocin, &hmyshove, &sa, 0);
+      CreatePipe (&hmyslurp, &hprocout, &sa, 0);
+
+      /* Stupid Win32 allows to create a pipe with *both* ends either
+	 inheritable or not. We need process ends inheritable, and local
+	 ends not inheritable. */
+      DuplicateHandle (GetCurrentProcess(), hmyshove, GetCurrentProcess(), &htmp,
+		       0, FALSE, DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS);
+      hmyshove = htmp;
+      DuplicateHandle (GetCurrentProcess(), hmyslurp, GetCurrentProcess(), &htmp,
+		       0, FALSE, DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS);
+      hmyslurp = htmp;
+    }
 
   /* Convert an argv vector into Win32 style command line.
 
@@ -186,74 +213,57 @@ nt_create_process (struct Lisp_Process *p,
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     DWORD err;
-    BOOL windowed;
 
     xzero (si);
-    si.hStdInput = hprocin;
-    si.hStdOutput = hprocout;
-    si.hStdError = hprocout;
-    si.wShowWindow = SW_HIDE;
-    si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-	
-    err = (CreateProcess (NULL, command_line, NULL, NULL, TRUE,
-			  CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP |	CREATE_SUSPENDED,
-			  NULL, current_dir, &si, &pi)
-	   ? 0 : GetLastError ());
-      
-    CloseHandle (hprocin);
-    CloseHandle (hprocout);
-
-    /* See if we succeeded with process creation */
-    if (err)
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = windowed ? SW_SHOWNORMAL : SW_HIDE;
+    if (do_io)
       {
-      process_error__One_of_those_nasty_uses_for_goto_statement:
-	CloseHandle (hmyshove);
-	CloseHandle (hmyslurp);
-	error ("Cannot start \"%s\": error code was %lu", argv[0], err);
+	si.hStdInput = hprocin;
+	si.hStdOutput = hprocout;
+	si.hStdError = hprocout;
+	si.dwFlags |= STARTF_USESTDHANDLES;
       }
 
-    /* Determine if the new process is a windowed one */
-    windowed = WaitForInputIdle (pi.hProcess, 100) == WAIT_TIMEOUT;
-    if (windowed)
+    err = (CreateProcess (NULL, command_line, NULL, NULL, TRUE,
+			  CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP,
+			  NULL, current_dir, &si, &pi)
+	   ? 0 : GetLastError ());
+
+    if (do_io)
       {
-	/* We restart windowed process fire-and forget style, and
-	   indicate successful process creation, just as if the
-	   process ended instantly upon launching */
-	CloseHandle (hmyshove);
-	CloseHandle (hmyslurp);
-	/* TerminateProcess is safe becuase the process is not yet
-	   running */
-	TerminateProcess (pi.hProcess, 0);
-	si.dwFlags = STARTF_USESHOWWINDOW;
-	si.wShowWindow = SW_SHOWNORMAL;
-	if (!CreateProcess (NULL, command_line, NULL, NULL, FALSE,
-			    DETACHED_PROCESS , NULL, current_dir, &si, &pi))
+	/* These just have been inherited; we do not need a copy */
+	CloseHandle (hprocin);
+	CloseHandle (hprocout);
+      }
+    
+    /* Handle process creation failure */
+    if (err)
+      {
+	if (do_io)
 	  {
-	    err = GetLastError ();
-	    goto process_error__One_of_those_nasty_uses_for_goto_statement;
+	    CloseHandle (hmyshove);
+	    CloseHandle (hmyslurp);
 	  }
+	signal_cannot_launch (argv[0], GetLastError ());
+      }
 
-	/* We just launched a windowed process. Fake it as if a
-	   process launched has already ended */
-	p->status_symbol = Qexit;
-
-	/* Get rid of process and thread handles */
-	CloseHandle (pi.hThread);
-	CloseHandle (pi.hProcess);
+    /* The process started successfully */
+    if (do_io)
+      {
+	NT_DATA(p)->h_process = pi.hProcess;
+	init_process_io_handles (p, (void*)hmyslurp, (void*)hmyshove, 0);
       }
     else
       {
-	/* Just started a console subprocess */
-
-	NT_DATA(p)->h_process = pi.hProcess;
-
-	init_process_io_handles (p, (void*)hmyslurp, (void*)hmyshove, 0);
-	
-	/* We created it suspended. Resume the only thread */
-	ResumeThread (pi.hThread);
-	CloseHandle (pi.hThread);
+	/* Indicate as if the process has exited immediately. */
+	p->status_symbol = Qexit;
+	CloseHandle (pi.hProcess);
       }
 
+    CloseHandle (pi.hThread);
+
+    /* Hack to support Windows 95 negative pids */
     return ((int)pi.dwProcessId < 0
 	    ? -(int)pi.dwProcessId : (int)pi.dwProcessId);
   }

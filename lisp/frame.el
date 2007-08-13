@@ -873,10 +873,16 @@ This always assumes DndText as type."
 
 ;;; Application-specific frame-management
 
-(defvar get-frame-for-buffer-default-frame-name nil
-  "The default frame to select; see doc of `get-frame-for-buffer'.")
+(defcustom get-frame-for-buffer-default-frame-name nil
+  "*The default frame to select; see doc of `get-frame-for-buffer'."
+  :type 'string
+  :group 'frames)
 
-(defvar get-frame-for-buffer-default-instance-limit nil)
+(defcustom get-frame-for-buffer-default-instance-limit nil
+  "*The default instance limit for creating new frames; 
+see doc of `get-frame-for-buffer'."
+  :type 'integer
+  :group 'frames)
 
 (defun get-frame-name-for-buffer (buffer)
   (let ((mode (and (get-buffer buffer)

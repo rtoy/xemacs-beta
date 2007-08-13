@@ -166,10 +166,12 @@ char pot_etags_version[] = "@(#) pot revision number is 12.28";
 #define	intoken(c)	(_itk[CHAR(c)]) /* c can be in token */
 #define	endtoken(c)	(_etk[CHAR(c)]) /* c ends tokens */
 
-#ifdef INFODOCK
-#undef OO_BROWSER
+/*#ifdef INFODOCK*/
+/*#undef OO_BROWSER*/
+/* Due to the way this file is constructed, this unfortunately doesn't */
+/* work except for documentation purposes. -slb */
 #define OO_BROWSER 1
-#endif
+/*#endif*/
 
 #ifdef OO_BROWSER
 #define set_construct(construct) \
@@ -2879,23 +2881,26 @@ C_entries (c_ext, inf)
 			      token_name.buffer[toklen] = '\0';
 			      token_name.len = toklen;
 			      /* Name macros. */
-#ifdef OO_BROWSER
-			      /* Also name #define constants,
-				 enumerations and enum_labels.
-				 -- Bob Weiner, Altrasoft */
 			      tok.named
 				      = (structdef == stagseen
 					 || typdef == tend
-					 || definedef == dignorerest
+#ifdef OO_BROWSER
+			      /* Also name #define constants,
+				 enumerations and enum_labels.
+				 Conditionalize `funorvar' reference
+				 here or #defines will appear without
+				 their #names.
+				 -- Bob Weiner, Altrasoft, 4/25/1998 */
+					 || ((oo_browser_format || funorvar)
+					     && definedef == dignorerest)
 					 || (oo_browser_format
 					     && (oo_browser_construct == C_ENUMERATION
-					     || oo_browser_construct == C_ENUM_LABEL)));
+					     || oo_browser_construct == C_ENUM_LABEL))
 #else
-			      tok.named = (structdef == stagseen
-					   || typdef == tend
-					   || (funorvar
-					       && definedef == dignorerest));
+					 || (funorvar
+					     && definedef == dignorerest)
 #endif
+					 );
 			    }
 			  tok.lineno = lineno;
 			  tok.linelen = tokoff + toklen + 1;

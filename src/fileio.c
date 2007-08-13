@@ -111,7 +111,7 @@ int disable_auto_save_when_buffer_shrinks;
 
 Lisp_Object Qfile_name_handler_alist;
 
-Lisp_Object Vdirectory_sep_char;
+Lisp_Object Vpath_separator;
 
 /* These variables describe handlers that have "already" had a chance
    to handle the current operation.
@@ -655,10 +655,9 @@ Generate temporary file name starting with PREFIX.
 The Emacs process number forms part of the result, so there is no
 danger of generating a name being used by another process.
 
-In its current implementation, this function guarantees 262144 unique
-names per process per PREFIX (this is 54872 on case-insensitive
-filesystems.  However, if you want it to operate safely, PREFIX should
-have been passed through `expand-file-name'.
+In addition, this function makes an attempt to choose a name which
+has no existing file.  To make this work, PREFIX should be an
+absolute file name.
 */
        (prefix))
 {
@@ -700,10 +699,10 @@ have been passed through `expand-file-name'.
   memcpy (data, XSTRING_DATA (prefix), len);
   p = data + len;
 
-  /* `val' is created by adding 6 characters to PREFIX.  The first
-     three are the PID of this process, in base 64, and the second
-     three are incremented if the file already exists.  This ensures
-     262144 unique file names per PID per PREFIX.  */
+  /* VAL is created by adding 6 characters to PREFIX.  The first three
+     are the PID of this process, in base 64, and the second three are
+     incremented if the file already exists.  This ensures 262144
+     unique file names per PID per PREFIX.  */
 
   pid = (unsigned)getpid ();
   *p++ = tbl[pid & 63], pid >>= 6;
@@ -729,7 +728,7 @@ have been passed through `expand-file-name'.
       p[1] = tbl[num & 63], num >>= 6;
       p[2] = tbl[num & 63], num >>= 6;
 
-      if (stat ((const char *) data, &ignored) < 0)
+      if (stat ((CONST char *) data, &ignored) < 0)
 	{
 	  /* We want to return only if errno is ENOENT.  */
 	  if (errno == ENOENT)
@@ -4294,12 +4293,10 @@ Saving the buffer normally turns auto-save back on.
 */ );
   disable_auto_save_when_buffer_shrinks = 1;
 
-  DEFVAR_LISP ("directory-sep-char", &Vdirectory_sep_char /*
-    *Directory separator character for built-in functions that return file names.
-The value should be either ?/ or ?\\ (any other value is treated as ?\\).
-This variable affects the built-in functions only on Windows,
-on other platforms, it is initialized so that Lisp code can find out
-what the normal separator is.
+  DEFVAR_LISP ("path-separator", &Vpath_separator /*
+    *Directory separator string for built-in functions that return file names.
+The value should be either \"/\" or \"\\\".
 */ );
-  Vdirectory_sep_char = make_char(DIRECTORY_SEP);
+  Vpath_separator = build_string("X");
+  (XSTRING_DATA (Vpath_separator))[0] = DIRECTORY_SEP;
 }

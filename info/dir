@@ -13,13 +13,13 @@ For example, you could add this code to .../lisp/site-start.el, which is
 loaded before ~/.emacs each time the editor starts up:
 
   ;; find local info nodes
-  (setq Info-default-directory-list
-        (append Info-default-directory-list '("/private/info/")))
+  (setq Info-directory-list
+        (append Info-directory-list '("/private/info/")))
 
-Then, when you enter info, the contents of the file "/private/info/localdir"
-will be appended to the contents of this file (where the "* Locals:" line is.)
-The "localdir" file should simply contain lines like in this file, listing the
-names of the info files in its directory.
+Then, when you enter info, a dir file like this one will be automatically
+created and saved (provided you have write access to the directory).  The
+contents of that file "/private/info/dir" will be appended to the contents of
+this file.
 
 
 File: dir	Node: Top	This is the top of the INFO tree
@@ -36,26 +36,24 @@ File: dir	Node: Top	This is the top of the INFO tree
 
 XEmacs 21.0
 ===========
-* Info::	Documentation browsing system.
-* XEmacs::	The extensible user-friendly self-documenting text editor.
-		This manual is for XEmacs 21.0.
-* Lispref::	XEmacs Lisp technical reference.
-		This manual is for XEmacs 21.0.
-* New-Users-Guide::
-	        XEmacs User's Guide for XEmacs 21.0.
-* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 21.0.
-* Internals::	Guide to the internals of XEmacs.
+* Info::	     Documentation browsing system.
+* XEmacs::	     The extensible user-friendly self-documenting text editor.
+		     This manual is for XEmacs 21.0.
+* Lispref::	     XEmacs Lisp technical reference.
+		     This manual is for XEmacs 21.0.
+* New-Users-Guide::  XEmacs New User's Guide for XEmacs 21.0.
+* XEmacs-FAQ::	     XEmacs Frequently Asked Questions for 21.0.
+* Internals::	     Guide to the internals of XEmacs.
 
 Local Packages:
 
-* CL::		A Common Lisp compatibility package for Emacs-Lisp.
-* Custom::	Customization Library for Emacs
-* External-Widget::
-		Use XEmacs as a text widget inside of another program.
-* Standards::	The GNU coding standards.
-* Termcap::	The termcap library, which enables application programs
-		to handle all types of character-display terminals.
-* Texinfo::	With one source file, make either a printed manual (through
-		TeX) or an Info file (through texinfo).
-* Widget::	An Emacs Lisp widget library
-* Locals:
+* CL::		     A Common Lisp compatibility package for Emacs-Lisp.
+* Custom::	     Customization Library for Emacs
+* External-Widget::  Use XEmacs as a text widget inside of another program.
+* Standards::	     The GNU coding standards.
+* Term::	     A mode to control inferior processes (a comint replacement)
+* Termcap::	     The termcap library, which enables application programs
+		     to handle all types of character-display terminals.
+* Texinfo::	     With one source file, make either a printed manual (through
+		     TeX) or an Info file (through texinfo).
+* Widget::	     An Emacs Lisp widget library

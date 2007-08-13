@@ -82,6 +82,9 @@ Lisp_Object Qmulticast; /* Will be used for occasional warnings */
    maybe other values to come.  */
 Lisp_Object Vprocess_connection_type;
 
+/* Read comments to DEFVAR of this */
+int windowed_process_io;
+
 #ifdef PROCESS_IO_BLOCKING
 /* List of port numbers or port names to set a blocking I/O mode.
    Nil means set a non-blocking I/O mode [default]. */
@@ -2010,6 +2013,26 @@ then a pipe is used in any case.
 The value takes effect when `start-process' is called.
 */ );
   Vprocess_connection_type = Qt;
+
+  DEFVAR_BOOL ("windowed-process-io", &windowed_process_io /*
+Enables input/ouptut on standard handles of a windowed process.
+When this variable is nil (the default), XEmacs does not attempt to read
+standard output handle of a windowed process. Instead, the process is
+immediately marked as exited immediately upon successful launching. This is
+done because normal windowed processes do not use stadnard I/O, as they are
+not connected to any console.
+
+When launching a specially crafted windowed process, which expects to be
+launched by XEmacs, or by other program which pipes its standard input and
+output, this variable must be set to non-nil, in which case XEmacs will
+treat this process just like a console process.
+
+NOTE: You should never set this variable, only bind it.
+
+Only Windows processes can be "windowed" or "console". This variable has no
+effect on UNIX processes, because all UNIX processes are "console".
+*/ );
+  windowed_process_io = 0;
 
 #ifdef PROCESS_IO_BLOCKING
   DEFVAR_LISP ("network-stream-blocking-port-list", &network_stream_blocking_port_list /*

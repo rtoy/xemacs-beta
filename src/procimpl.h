@@ -166,6 +166,8 @@ extern c_hashtable usid_to_process;
 
 extern volatile int process_tick;
 
+extern int windowed_process_io;
+
 #ifdef HAVE_MULTICAST
 extern Lisp_Object Qmulticast;
 #endif

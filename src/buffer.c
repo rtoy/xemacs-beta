@@ -2588,6 +2588,10 @@ inserts at the end of a line, and inserts when point is before a tab,
 until the tab is filled in.
 If `overwrite-mode-binary', self-insertion replaces newlines and tabs too.
 Automatically becomes buffer-local when set in any fashion.
+
+Normally, you shouldn't modify this variable by hand, but use the functions
+`overwrite-mode' and `binary-overwrite-mode' instead. However, you can
+customize the default value from the options menu.
 */ );
 
 #if 0 /* FSFmacs */

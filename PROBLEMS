@@ -1,11 +1,12 @@
--*- mode:outline -*-
+                                                  -*- mode:outline -*-
+
 This file describes various problems that have been encountered
 in compiling, installing and running XEmacs.  It has been updated for
 XEmacs 21.0.
 
-This file is large, but we have tried to sort the entries by their
-respective relevance for XEmacs, but may have not succeeded completely
-in that task.  The file is divided into four parts:
+This file is rather large, but we have tried to sort the entries by
+their respective relevance for XEmacs, but may have not succeeded
+completely in that task.  The file is divided into four parts:
 
  - Problems with building XEmacs
  - Problems with running XEmacs
@@ -167,7 +168,7 @@ A related compiler bug has been fixed by the DEC compiler team.  The
 new versions of the compiler should run fine.
 
 ** On HPUX, the HP C compiler might have a problem compiling some files
-   with optimization.
+with optimization.
 
 Richard Cognot <cognot@ensg.u-nancy.fr> writes:
 
@@ -184,6 +185,19 @@ Richard Cognot <cognot@ensg.u-nancy.fr> writes:
 
 You can get these standard X tools by anonymous FTP to hpcvaaz.cv.hp.com.
 Essentially all X programs need these.
+
+** On HP-UX, problems with make
+
+Marcus Thiessel <marcus_thiessel@hp.com>
+
+  Some releases of XEmacs require GNU make to build successfully.
+
+** On HP-UX 9.05 XEmacs won't compile or coredump during the build.
+
+Marcus Thiessel <marcus_thiessel@hp.com>
+
+  This might be a sed problem. For your own safety make sure to use
+  GNU sed while dumping XEmacs.
 
 ** Solaris 2.3 /bin/sh coredumps during configuration.
 
@@ -485,13 +499,18 @@ installed copy of movemail is usually in the directory
 mode of the installed copy; changing the group and mode of the build
 directory copy is ineffective.
 
-** XEmacs crashes on Digital Unix when dealing with large compilation
-buffers.
+** XEmacs crashes on Digital Unix within font-lock, or when dealing
+with large compilation buffers.
 
-This is a known problem with the regexp code, that uses alloca
-extensively, and overflows the stack in case of complex regexp
-matches.  As a workaround, you can recompile with REGEX_MALLOC
-defined.
+The default stack size under Digital Unix is rather small (2M as
+opposed to Solaris 8M), hosing the regexp code, which uses alloca()
+extensively, overflowing the stack when complex regexps are used.
+Workarounds:
+
+1) Increase your stack size, using `ulimit -s 8192' or a (t)csh
+   equivalent;
+
+2) Recompile regex.c with REGEX_MALLOC defined.
 
 ** On Solaris, C-x doesn't get through to Emacs when you use the console.
 
@@ -1362,7 +1381,7 @@ that comes with bbdb and use the one that comes with XEmacs.
 funding, and all work is done by volunteers.  If you think you can
 help, please contact the XEmacs maintainers.
 
-** XEmacs/Mule doesn't work on a tty.
+** XEmacs/Mule doesn't support TTY's satisfactorily.
 
 This is a major problem, which we plan to address in a future release
 of XEmacs.  Basically, XEmacs should have primitives to be told

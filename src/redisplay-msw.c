@@ -821,6 +821,12 @@ mswindows_redraw_exposed_area (struct frame *f, int x, int y, int width, int hei
      use them we'll blow up.  We mark the frame as changed to ensure
      that redisplay will do a full update.  This probably isn't
      necessary but it can't hurt. */
+#ifdef HAVE_TOOLBARS
+  /* #### We would rather put these off as well but there is currently
+     no combination of flags which will force an unchanged toolbar to
+     redraw anyhow. */
+  MAYBE_FRAMEMETH (f, redraw_exposed_toolbars, (f, x, y, width, height));
+#endif
 
   if (!f->window_face_cache_reset)
 	{

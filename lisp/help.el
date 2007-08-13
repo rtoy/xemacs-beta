@@ -762,21 +762,28 @@ The number of messages shown is controlled by `view-lossage-message-count'."
       (while (progn (move-to-column 50) (not (eobp)))
 	(search-forward " " nil t)
 	(insert "\n")))
-    ;; XEmacs addition
+    ;; XEmacs addition: copy the messages from " *Message-Log*",
+    ;; reversing their order and handling multiline messages
+    ;; correctly.
     (princ "\n\n\nRecent minibuffer messages (most recent first):\n\n")
     (save-excursion
       (let ((buffer (get-buffer-create " *Message-Log*"))
 	    (count 0)
-	    oldpoint)
-	(set-buffer buffer)
-	(goto-char (point-max))
+	    oldpoint extent)
+	(goto-char (point-max buffer) buffer)
 	(set-buffer standard-output)
-	(while (and (> (point buffer) (point-min buffer))
+	(while (and (not (bobp buffer))
 		    (< count view-lossage-message-count))
 	  (setq oldpoint (point buffer))
-	  (forward-line -1 buffer)
+	  (setq extent (extent-at oldpoint buffer
+				  'message-multiline nil 'before))
+	  ;; If the message was multiline, move all the way to the
+	  ;; beginning.
+	  (if extent
+	      (goto-char (extent-start-position extent) buffer)
+	    (forward-line -1 buffer))
 	  (insert-buffer-substring buffer (point buffer) oldpoint)
-	  (setq count (1+ count)))))))
+	  (incf count))))))
 
 (define-function 'help 'help-for-help)
 

@@ -28,10 +28,7 @@ int always_gc;
 #include <config.h>
 #include "lisp.h"
 
-#ifndef standalone
 #include "commands.h"
-#endif
-
 #include "backtrace.h"
 #include "bytecode.h"
 #include "buffer.h"

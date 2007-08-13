@@ -243,11 +243,11 @@ DEFAULT is the preferred value."
     (append list-1
 	    (reverse reverse-survivors))))
 
-(defun paths-delete (predicate list)
+(defun paths-filter (predicate list)
   "Delete all matches of PREDICATE from LIST."
   (let ((reverse-result '()))
     (while list
-      (if (not (funcall predicate (car list)))
+      (if (funcall predicate (car list))
 	  (setq reverse-result (cons (car list) reverse-result)))
       (setq list (cdr list)))
     (nreverse reverse-result)))
@@ -265,24 +265,30 @@ Otherwise, they are left alone."
 			(file-name-as-directory component)))
 		  components)))
     (if drop-empties
-	(paths-delete #'(lambda (component)
-			  (string-equal "" component))
+	(paths-filter #'(lambda (component)
+			  (null (string-equal "" component)))
 		      directories)
       directories)))
 
 (defun paths-find-emacs-roots (invocation-directory
 			       invocation-name)
   "Find all plausible installation roots for XEmacs."
-  (let ((invocation-root
-	 (paths-find-emacs-root invocation-directory invocation-name))
-	(installation-root
-	 (and configure-prefix-directory
-	      (file-directory-p configure-prefix-directory)
-	      (file-name-as-directory configure-prefix-directory))))
-    (append (and invocation-root
-		 (list invocation-root))
-	    (and installation-root
-		 (paths-emacs-root-p installation-root)
-		 (list installation-root)))))
+  (let* ((potential-invocation-root
+	  (paths-find-emacs-root invocation-directory invocation-name))
+	 (invocation-roots
+	  (and potential-invocation-root
+	       (list potential-invocation-root)))
+	 (potential-installation-roots
+	  (paths-uniq-append
+	   (and configure-exec-prefix-directory
+		(list (file-name-as-directory
+		       configure-exec-prefix-directory)))
+	   (and configure-prefix-directory
+		(list (file-name-as-directory
+		       configure-prefix-directory)))))
+	 (installation-roots
+	  (paths-filter #'paths-emacs-root-p potential-installation-roots)))
+    (paths-uniq-append invocation-roots
+		       installation-roots)))
 
 ;;; find-paths.el ends here

@@ -5328,7 +5328,7 @@ init_event_stream (void)
   if (initialized)
     {
 #ifdef HAVE_UNIXOID_EVENT_LOOP
-      if (strcmp (display_use, "mswindows") != 0)
+      /*      if (strcmp (display_use, "mswindows") != 0)*/
 	init_event_unixoid ();
 #endif
 #ifdef HAVE_X_WINDOWS

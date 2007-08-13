@@ -56,10 +56,11 @@ COLORREF mswindows_string_to_color (CONST char *name);
 /* convert from a series of RGB triples to a BITMAPINFO formated for the*/
 /* proper display 							*/
 /************************************************************************/
-BITMAPINFO* EImage2DIBitmap (Lisp_Object device, int width, int height,
-			    unsigned char *pic,
-			    int *bit_count,
-			    unsigned char** bmp_data)
+static BITMAPINFO* convert_EImage_to_DIBitmap (Lisp_Object device,
+					       int width, int height,
+					       unsigned char *pic,
+					       int *bit_count,
+					       unsigned char** bmp_data)
 {
   struct device *d = XDEVICE (device);
   int i,j;
@@ -92,7 +93,7 @@ BITMAPINFO* EImage2DIBitmap (Lisp_Object device, int width, int height,
       /* bitmap data needs to be in blue, green, red triples - in that
 	 order, eimage is in RGB format so we need to convert */
       *bmp_data = xnew_array_and_zero (unsigned char, bpline * height);
-      *bit_count = width * height * 3;
+      *bit_count = bpline * height;
 
       if (!bmp_data)
 	{
@@ -186,8 +187,8 @@ BITMAPINFO* EImage2DIBitmap (Lisp_Object device, int width, int height,
    where the file might be located.  Return a full pathname if found;
    otherwise, return Qnil. */
 
-static Lisp_Object
-locate_pixmap_file (Lisp_Object name)
+Lisp_Object
+mswindows_locate_pixmap_file (Lisp_Object name)
 {
   /* This function can GC if IN_REDISPLAY is false */
   Lisp_Object found;
@@ -219,6 +220,7 @@ locate_pixmap_file (Lisp_Object name)
   return found;
 }
 
+#if 0
 /* If INSTANTIATOR refers to inline data, return Qnil.
    If INSTANTIATOR refers to data in a file, return the full filename
    if it exists; otherwise, return a cons of (filename).
@@ -298,6 +300,7 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
     RETURN_UNGCPRO (result);
   }
 }
+#endif
 
 
 /* Initialize an image instance from a bitmap
@@ -355,6 +358,44 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
   IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = bmp_info->bmiHeader.biWidth;
   IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = bmp_info->bmiHeader.biHeight;
   IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = bmp_info->bmiHeader.biBitCount;
+}
+
+static void
+mswindows_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
+					   int width, int height,
+					   unsigned char *eimage, 
+					   int dest_mask,
+					   Lisp_Object instantiator,
+					   Lisp_Object domain)
+{
+  Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
+  BITMAPINFO*		bmp_info;
+  unsigned char*	bmp_data;
+  int			bmp_bits;
+  COLORREF		bkcolor;
+  
+  if (!DEVICE_MSWINDOWS_P (XDEVICE (device)))
+    signal_simple_error ("Not an mswindows device", device);
+
+  /* this is a hack but MaskBlt and TransparentBlt are not supported
+     on most windows variants */
+  bkcolor = COLOR_INSTANCE_MSWINDOWS_COLOR 
+    (XCOLOR_INSTANCE (FACE_BACKGROUND (Vdefault_face, domain)));
+
+  /* build a bitmap from the eimage */
+  if (!(bmp_info=convert_EImage_to_DIBitmap (device, width, height, eimage,
+					     &bmp_bits, &bmp_data)))
+    {
+      signal_simple_error ("EImage to DIBitmap conversion failed",
+			   instantiator);
+    }
+
+  /* Now create the pixmap and set up the image instance */
+  init_image_instance_from_dibitmap (ii, bmp_info, dest_mask,
+				     bmp_data, bmp_bits, instantiator);
+
+  xfree (bmp_info);
+  xfree (bmp_data);
 }
 
 void
@@ -620,8 +661,8 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
     }
   
   /* build a bitmap from the eimage */
-  if (!(bmp_info=EImage2DIBitmap (device, width, height, eimage,
-				 &bmp_bits, &bmp_data)))
+  if (!(bmp_info=convert_EImage_to_DIBitmap (device, width, height, eimage,
+					     &bmp_bits, &bmp_data)))
     {
       signal_simple_error ("XPM to EImage conversion failed",
 			   image_instance);
@@ -827,6 +868,8 @@ console_type_create_glyphs_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, finalize_image_instance);
   CONSOLE_HAS_METHOD (mswindows, image_instance_equal);
   CONSOLE_HAS_METHOD (mswindows, image_instance_hash);
+  CONSOLE_HAS_METHOD (mswindows, init_image_instance_from_eimage);
+  CONSOLE_HAS_METHOD (mswindows, locate_pixmap_file);
 }
 
 void

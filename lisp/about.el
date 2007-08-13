@@ -111,6 +111,7 @@
     (marcpa    . "http://www.positron911.com/products/power.htm")
     (ograf     . "http://www.fga.de/~ograf/")
     (pez       . "http://www.dwwc.com/")
+    (piper     . "http://www.parallax.co.uk/~andyp")
     (vin       . "http://www.upa.org/")
     (stigb     . "http://www.tihlde.hist.no/~stigb/")
     (wget      . "ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/")
@@ -720,9 +721,12 @@ I've got milk inside my udder
 Churn it up and make some butter\n"))
     (piper
      (widget-insert "\
-Author of the original \"fake\" XEmacs toolbar, and outl-mouse for
-mouse gesture based outlining.  Accomplished kludge contributor.
-
+Author of the original \"fake\" XEmacs toolbar, outl-mouse for mouse
+gesture based outlining, the original CDE drag-n-drop support, the
+cygwin port of XEmacs including unexec, glyphs under MS-Windows,
+toolbars under MS-Windows. My home page is here:\n")
+     (about-url-link 'piper "Visit andy's home page")
+     (widget-insert "\n
 Andy has recently rejoined the XEmacs team to help port XEmacs to
 MS Windows operating systems.\n"))
     (bw
@@ -1051,7 +1055,9 @@ Emacs utilities, fixes, enhancements and kludgery as whimsy, boredom,
 and ToT dictate (but not necessarily in that order).\n")
     (about-show-linked-info 'piper "\
 Created the prototype for the toolbars.  Has been the first to make
-use of many of the new XEmacs graphics features.\n")
+use of many of the new XEmacs graphics features. Has implemented many
+of XEmacs' graphics features under MS-Windows and has ported XEmacs
+to cygwin under MS-Windows.\n")
     (about-show-linked-info 'bw "\
 Author of the Hyperbole everyday information management hypertext
 system and the OO-Browser multi-language code browser.  He also

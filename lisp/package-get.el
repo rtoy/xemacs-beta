@@ -177,7 +177,7 @@ Uses `package-get-base' to determine just what is required and what
 package provides that functionality.  If VERSION is nil, retrieves
 latest version.  Optional argument FETCHED-PACKAGES is used to keep
 track of packages already fetched."
-  (interactive "sPackage: sVersion: ")
+  (interactive "sPackage: \nsVersion: ")
   (let* ((the-package (package-get-info-find-package package-get-base
 						     package))
 	 (this-package (package-get-info-version

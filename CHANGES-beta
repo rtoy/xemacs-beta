@@ -1,4 +1,25 @@
 							-*- indented-text -*-
+to 21.0 beta37 "Pygmy"
+-- Bug fixes, generalization of image code from Andy Piper
+-- Installation/startup fixes from Michael Sperber
+-- Irix 5.3 dumping fix from Olivier Galibert
+-- Bug fixes from Martin Buchholz, Michael Sperber and Bob Weiner
+-- miscellaneous bug fixes
+-- More fixes from Didier Verna for Customization of options menu
+-- Miscellaneous patches from Kirill Katsnelson and Hrvoje Niksic
+-- More MS Windows toolbar stuffs from Kirill Katsnelson
+-- Custom-ization of the options menu from Didier Verna
+-- MS Windows toolbar stuffs from Andy Piper
+-- MS Windows build fixes from Kirill Katsnelson
+-- MS Windows process fixes from Kirill Katsnelson
+-- miscellaneous patches from Michael Sperber, Hrvoje Niksic, Martin Buchholz
+-- Gnuclient/gnudoit stdin support from Jan Vroonhof
+-- eldap fixes from Oscar Figueiredo
+-- Synching with InfoDock 3.7
+-- info fixes from Oscar Figueiredo 
+-- removed --sitelispdir configure option
+-- miscellaneous bug fixes
+
 to 21.0 beta36 "Philippine"
 -- Xpm for MS Windows from Jonathan Harris
 -- print stream fix from Hrvoje Niksic

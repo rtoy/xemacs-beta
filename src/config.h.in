@@ -64,6 +64,10 @@ char *alloca();
 #undef EMACS_BETA_VERSION
 #undef EMACS_VERSION
 #undef XEMACS_CODENAME
+/* InfoDock versions, not used with XEmacs */
+#undef INFODOCK_MAJOR_VERSION
+#undef INFODOCK_MINOR_VERSION
+#undef INFODOCK_BUILD_VERSION
 
 /* Make all functions available on AIX.  See AC_AIX. */
 #undef _ALL_SOURCE
@@ -113,6 +117,9 @@ char *alloca();
 /* Compile in support for MS windows? */
 #undef HAVE_MS_WINDOWS
 
+/* special cygwin process handling? */
+#undef HAVE_MSG_SELECT
+
 /* Compile in support for the X window system? */
 #undef HAVE_X_WINDOWS
 
@@ -142,7 +149,7 @@ char *alloca();
 #endif
 
 /* Define HAVE_UNIXOID_EVENT_LOOP if we use select() to wait for events. */
-#if defined (HAVE_X_WINDOWS) || defined (HAVE_TTY)
+#if defined (HAVE_X_WINDOWS) || defined (HAVE_TTY) || defined(HAVE_MSG_SELECT)
 #define HAVE_UNIXOID_EVENT_LOOP
 #endif
 
@@ -308,6 +315,7 @@ char *alloca();
 
 /* Compile in support for X pixmaps via the `xpm' library? */
 #undef HAVE_XPM
+#undef FOR_MSW
 
 /* Compile in support for "X faces" via the `compface' library?
    This enables graphical display of X-face headers in mail/news messages */

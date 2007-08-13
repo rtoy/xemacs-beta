@@ -76,6 +76,11 @@ extern "C" {
 #include "file-coding.h"
 #endif
 
+#undef HAVE_PNG
+#undef HAVE_TIFF
+#undef HAVE_JPEG
+#undef HAVE_GIF
+
 #if INTBITS == 32
 # define FOUR_BYTE_TYPE unsigned int
 #elif LONGBITS == 32
@@ -93,10 +98,6 @@ Lisp_Object Qxbm;
 
 Lisp_Object Q_mask_file, Q_mask_data, Q_hotspot_x, Q_hotspot_y;
 Lisp_Object Q_foreground, Q_background;
-
-#ifdef HAVE_XPM
-Lisp_Object Q_color_symbols;
-#endif
 
 #ifdef HAVE_XFACE
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (xface);
@@ -473,8 +474,8 @@ Lisp_Object Vx_bitmap_file_path;
    where the file might be located.  Return a full pathname if found;
    otherwise, return Qnil. */
 
-static Lisp_Object
-locate_pixmap_file (Lisp_Object name)
+Lisp_Object
+x_locate_pixmap_file (Lisp_Object name)
 {
   /* This function can GC if IN_REDISPLAY is false */
   Display *display;
@@ -548,6 +549,13 @@ locate_pixmap_file (Lisp_Object name)
   }
 }
 
+static Lisp_Object
+locate_pixmap_file (Lisp_Object name)
+{
+  return x_locate_pixmap_file (name);
+}
+
+#if 0
 /* If INSTANTIATOR refers to inline data, return Qnil.
    If INSTANTIATOR refers to data in a file, return the full filename
    if it exists; otherwise, return a cons of (filename).
@@ -602,8 +610,9 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
      Note that if we cannot generate any regular inline data, we
      skip out. */
 
-  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data);
-
+  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data, 
+					     console_type);
+  
   if (CONSP (file)) /* failure locating filename */
     signal_double_file_error ("Opening pixmap file",
 			      "no such file or directory",
@@ -628,6 +637,7 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
     RETURN_UNGCPRO (result);
   }
 }
+#endif
 
 #if 0
 static void
@@ -889,6 +899,42 @@ init_image_instance_from_x_image (struct Lisp_Image_Instance *ii,
   IMAGE_INSTANCE_X_NPIXELS (ii) = npixels;
 }
 
+static void
+x_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
+				   int width, int height,
+				   unsigned char *eimage, 
+				   int dest_mask,
+				   Lisp_Object instantiator,
+				   Lisp_Object domain)
+{
+  Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
+  Colormap cmap = DEVICE_X_COLORMAP (XDEVICE(device));
+  unsigned long *pixtbl;
+  int pixcount;
+  int npixels;
+  XImage* ximage;
+  
+  ximage = convert_EImage_to_XImage (device, width, height, eimage,
+				     &pixtbl, &pixcount, &npixels);
+  if (!ximage)
+    signal_image_error("EImage to XImage conversion failed", instantiator);
+
+  /* Now create the pixmap and set up the image instance */
+  init_image_instance_from_x_image (ii, ximage, dest_mask,
+				    cmap, pixtbl, npixels,
+				    instantiator);
+
+  if (ximage)
+    {
+      if (ximage->data)
+        {
+	  xfree (ximage->data);
+          ximage->data = 0;
+        }
+      XDestroyImage (ximage);
+    }
+}
+
 
 /**********************************************************************
  *                             XBM                                    *
@@ -1056,9 +1102,10 @@ xbm_normalize (Lisp_Object inst, Lisp_Object console_type)
      Note that if we cannot generate any regular inline data, we
      skip out. */
 
-  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data);
+  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data,
+					     console_type);
   mask_file = potential_pixmap_file_instantiator (inst, Q_mask_file,
-						  Q_mask_data);
+						  Q_mask_data, console_type);
 
   if (CONSP (file)) /* failure locating filename */
     signal_double_file_error ("Opening bitmap file",
@@ -1414,7 +1461,8 @@ x_xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
      Note that if we cannot generate any regular inline data, we
      skip out. */
 
-  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data);
+  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data, 
+					     console_type);
 
   if (CONSP (file)) /* failure locating filename */
     signal_double_file_error ("Opening pixmap file",
@@ -3702,9 +3750,10 @@ xface_normalize (Lisp_Object inst, Lisp_Object console_type)
      Note that if we cannot generate any regular inline data, we
      skip out. */
 
-  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data);
+  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data,
+					     console_type);
   mask_file = potential_pixmap_file_instantiator (inst, Q_mask_file,
-						  Q_mask_data);
+						  Q_mask_data, console_type);
 
   if (CONSP (file)) /* failure locating filename */
     signal_double_file_error ("Opening bitmap file",
@@ -4524,6 +4573,8 @@ console_type_create_glyphs_x (void)
   CONSOLE_HAS_METHOD (x, image_instance_equal);
   CONSOLE_HAS_METHOD (x, image_instance_hash);
   CONSOLE_HAS_METHOD (x, colorize_image_instance);
+  CONSOLE_HAS_METHOD (x, init_image_instance_from_eimage);
+  CONSOLE_HAS_METHOD (x, locate_pixmap_file);
 }
 
 void

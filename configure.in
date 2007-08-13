@@ -269,6 +269,8 @@ dnl These are left unexpanded so users can "make install exec_prefix=/foo"
 dnl and all the variables that are supposed to be based on exec_prefix
 dnl by default will actually change.
 dnl Use braces instead of parens because sh, perl, etc. also accept them.
+dnl If you change these, you need to synchronize with the settings of the
+dnl various ..._USER_DEFINED variables further down.
 bindir='${exec_prefix}/bin'
 sbindir='${exec_prefix}/sbin'
 libexecdir='${exec_prefix}/libexec'
@@ -327,7 +329,7 @@ infodir='${datadir}/xemacs-${version}/info'
 infopath=''
 install_pp=''
 lispdir='${datadir}/xemacs-${version}/lisp'
-sitelispdir='${datadir}/xemacs/site-lisp'
+dnl sitelispdir='${datadir}/xemacs/site-lisp'
 pkgdir='${datadir}/xemacs-${version}/lisp'
 package_path=''
 etcdir='${datadir}/xemacs-${version}/etc'
@@ -682,7 +684,7 @@ while test $# != 0; do
 	dnl Has the user specified one of the path options?
 	prefix | exec_prefix | bindir | datadir | statedir | libdir | \
 	mandir | infodir | infopath | lispdir | etcdir | lockdir | pkgdir | \
-	archlibdir | sitelispdir | docdir | package_path )	
+	archlibdir | docdir | package_path )	
 	   dnl If the value was omitted, get it from the next argument.
 	   if test "$valomitted" = "yes"; then
 	     if test "$#" = 0; then
@@ -692,18 +694,19 @@ while test $# != 0; do
 	   fi
 	   eval "$opt=\"$val\""
 
-           dnl Changing exec_prefix or libdir will change the default value
-           dnl of archlibdir.  Changing datadir will change the default value
-           dnl of etcdir and lispdir.  Changing statedir will change the
-           dnl default value of lockdir.
-           case "$opt" in
+           dnl You need to synchronize this with the way the
+           dnl default values are built.
+	   case "$opt" in
              lispdir ) AC_DEFINE(LISPDIR_USER_DEFINED) ;;
-             sitelispdir ) AC_DEFINE(SITELISPDIR_USER_DEFINED) ;;
+dnl             sitelispdir ) AC_DEFINE(SITELISPDIR_USER_DEFINED) ;;
              etcdir  )  AC_DEFINE(ETCDIR_USER_DEFINED) ;;
              infodir ) AC_DEFINE(INFODIR_USER_DEFINED) ;;
              infopath ) AC_DEFINE(INFOPATH_USER_DEFINED) ;;
              package_path ) AC_DEFINE(PACKAGE_PATH_USER_DEFINED) ;;
-             datadir ) AC_DEFINE(ETCDIR_USER_DEFINED) ;;
+             datadir )
+ 	        AC_DEFINE(INFODIR_USER_DEFINED)
+ 	        AC_DEFINE(LISPDIR_USER_DEFINED)
+	        AC_DEFINE(ETCDIR_USER_DEFINED) ;;
              statedir | lockdir ) AC_DEFINE(LOCKDIR_USER_DEFINED) ;;
              exec_prefix | libdir | archlibdir ) AC_DEFINE(ARCHLIBDIR_USER_DEFINED) ;;
            esac
@@ -905,6 +908,12 @@ if test -n "$emacs_beta_version"; then
 fi
 AC_DEFINE_UNQUOTED(XEMACS_CODENAME, "$xemacs_codename")
 AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
+
+dnl InfoDock version numbers.  XEmacs will use the same numbering after
+dnl the release of 21.0.
+AC_DEFINE_UNQUOTED(INFODOCK_MAJOR_VERSION, $infodock_major_version)
+AC_DEFINE_UNQUOTED(INFODOCK_MINOR_VERSION, $infodock_minor_version)
+AC_DEFINE_UNQUOTED(INFODOCK_BUILD_VERSION, $infodock_build_version)
 
 dnl ----------------------------------
 dnl Error checking and debugging flags
@@ -2108,10 +2117,11 @@ AC_CHECK_LIB(kstat, kstat_open)
 dnl Another way to get the load average
 AC_CHECK_LIB(kvm, kvm_read)
 
-AC_CHECK_LIB(pthreads, cma_open)
-if test "$ac_cv_lib_pthreads_cma_open" = "yes"; then
-   case "$opsys" in decosf*) c_switch_site="$c_switch_site -threads";; esac
-fi
+case "$opsys" in decosf*)
+  AC_CHECK_LIB(pthreads, cma_open)
+  test "$ac_cv_lib_pthreads_cma_open" = "yes" && \
+    c_switch_site="$c_switch_site -threads" ;;
+esac
 
 AC_MSG_CHECKING(whether the -xildoff compiler flag is required)
 if   ${CC-cc} '-###' -xildon  no_such_file.c 2>&1 | grep '^[^ ]*/ild ' > /dev/null ; then
@@ -2194,7 +2204,7 @@ if test "$with_x11" = "yes"; then
 
   dnl Try to find Motif/CDE/Tooltalk dirs
   dnl These take precedence over other X libs/includes, so PRE-pend
-  for lib_dir in "/usr/dt/lib" "/usr/lib/Motif1.2" "/usr/lib/Motif1.1"; do
+  for lib_dir in "/usr/dt/lib" "/usr/lib/Motif2.1" "/usr/lib/Motif1.2" "/usr/lib/Motif1.1"; do
     inc_dir=`echo $lib_dir | sed -e 's/lib/include/'`
     if test -d "$lib_dir" -a -d "$inc_dir"; then
       case "$x_libraries" in *"$lib_dir"* ) ;; *)
@@ -2374,8 +2384,14 @@ if test "$with_msw" != "no"; then
 	test "$with_menubars"   != "no" && XE_ADD_OBJS(menubar-msw.o)
 	test "$with_toolbars"   != "no" && XE_ADD_OBJS(toolbar-msw.o)
     fi
+    dnl check for our special version of select 	
+    AC_TRY_RUN([#include <fcntl.h>
+    int main() { return (open("/dev/windows", O_RDONLY, 0) > 0)? 0 : 1; }],
+    [AC_DEFINE(HAVE_MSG_SELECT)])
     const_is_losing=no
     with_file_coding=yes
+    use_minimal_tagbits=yes
+    use_indexed_lrecord_implementation=yes
     XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o glyphs-msw.o)
   fi
 fi
@@ -2419,7 +2435,7 @@ if test "$with_x11" != "yes"; then
   dnl   AC_MSG_ERROR([No window system support and no TTY support - Unable to proceed.])
   dnl fi
   for feature in tooltalk cde offix session xim xmu \
-                 tiff png jpeg gif xface xpm
+                 xface
   do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
        AC_MSG_WARN([--with-$feature ignored:  Not valid without X support])
@@ -2536,20 +2552,11 @@ if test "$with_ldap" = "yes"; then
 fi
 
 dnl ----------------------
-dnl X11 Graphics libraries
+dnl Graphics libraries
 dnl ----------------------
 
-if test "$with_x11" = "yes"; then
-
-  AC_CHECKING(for X11 graphics libraries)
-
-  dnl Too many stupid linkers can't detect cascaded lib dependencies until runtime
-  dnl So we always search for libz compression support.
-  if test "$with_png $with_tiff" != "no no"; then
-    AC_CHECK_LIB(c,  inflate, [:], [
-    AC_CHECK_LIB(z,  inflate, [XE_PREPEND(-lz,  libs_x)],[
-    AC_CHECK_LIB(gz, inflate, [XE_PREPEND(-lgz, libs_x)])])])
-  fi
+if test "$window_system" != "none"; then
+  AC_CHECKING(for graphics libraries)
 
   dnl Autodetect Xpm
   if test -z "$with_xpm"; then
@@ -2573,11 +2580,11 @@ if test "$with_x11" = "yes"; then
           xpm_problem="Internal xpm detection logic error!"
         fi
         echo "
-  *** WARNING *** $problem
-		  I'm not touching that with a 10-foot pole!
-		  If you really want to use the installed version of Xpm, rerun
-		  configure --with-xpm=yes, but don't blame me if XEmacs crashes!"
-      fi],
+*** WARNING *** $problem
+  I'm not touching that with a 10-foot pole!
+  If you really want to use the installed version of Xpm, rerun
+  configure --with-xpm=yes, but don't blame me if XEmacs crashes!"
+    fi],
     [with_xpm=no])
     xe_check_libs=
     AC_MSG_RESULT($with_xpm)
@@ -2585,15 +2592,24 @@ if test "$with_x11" = "yes"; then
   if test "$with_xpm" = "yes"; then
     AC_DEFINE(HAVE_XPM)
     XE_PREPEND(-lXpm, libs_x)
+    AC_MSG_CHECKING(for \"FOR_MSW\" xpm)
+    xe_check_libs=-lXpm
+    AC_TRY_LINK(, [XpmCreatePixmapFromData()],
+    [xpm_for_msw=no],
+    [xpm_for_msw=yes])
+    xe_check_libs=
+    AC_MSG_RESULT($xpm_for_msw)
+    if test "$xpm_for_msw" = "yes"; then
+      AC_DEFINE(FOR_MSW)
+    fi
   fi
 
-  dnl Autodetect XFACE
-  test -z "$with_xface" && { AC_CHECK_HEADER(compface.h,          ,with_xface=no) }
-  test -z "$with_xface" && { AC_CHECK_LIB(compface, UnGenFace,[:] ,with_xface=no) }
-  test -z "$with_xface" && with_xface=yes
-  if test "$with_xface" = "yes"; then
-    AC_DEFINE(HAVE_XFACE)
-    XE_PREPEND(-lcompface, libs_x)
+  dnl Too many stupid linkers can't detect cascaded lib dependencies until runtime
+  dnl So we always search for libz compression support.
+  if test "$with_png $with_tiff" != "no no"; then
+    AC_CHECK_LIB(c,  inflate, [:], [
+    AC_CHECK_LIB(z,  inflate, [XE_PREPEND(-lz,  libs_x)],[
+    AC_CHECK_LIB(gz, inflate, [XE_PREPEND(-lgz, libs_x)])])])
   fi
 
   dnl Autodetect GIFlib
@@ -2640,6 +2656,24 @@ yes
   if test "$with_tiff" = "yes"; then
     AC_DEFINE(HAVE_TIFF)
     XE_PREPEND(-ltiff, libs_x)
+  fi
+fi
+
+dnl ----------------------
+dnl Graphics libraries
+dnl ----------------------
+
+if test "$with_x11" = "yes"; then
+
+  AC_CHECKING(for X11 graphics libraries)
+
+  dnl Autodetect XFACE
+  test -z "$with_xface" && { AC_CHECK_HEADER(compface.h,          ,with_xface=no) }
+  test -z "$with_xface" && { AC_CHECK_LIB(compface, UnGenFace,[:] ,with_xface=no) }
+  test -z "$with_xface" && with_xface=yes
+  if test "$with_xface" = "yes"; then
+    AC_DEFINE(HAVE_XFACE)
+    XE_PREPEND(-lcompface, libs_x)
   fi
 
   dnl Autodetect -lXaw
@@ -3505,8 +3539,6 @@ AC_SUBST(version)
 AC_SUBST(configuration)
 AC_SUBST(canonical)
 AC_SUBST(srcdir)
-AC_SUBST(prefix)
-AC_SUBST(exec_prefix)
 AC_SUBST(bindir)
 AC_SUBST(datadir)
 AC_SUBST(pkgdir)
@@ -3514,9 +3546,29 @@ AC_SUBST(statedir)
 AC_SUBST(libdir)
 AC_SUBST(mandir)
 
+AC_SUBST(prefix)
+dnl Yo, Stephen Bourne!  I want to marry you!
+PREFIX=$prefix
+while true; do
+  case "$PREFIX" in
+    *\$* ) eval "PREFIX=$PREFIX" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(PREFIX)
+
+AC_SUBST(exec_prefix)
+EXEC_PREFIX=$exec_prefix
+while true; do
+  case "$EXEC_PREFIX" in
+    *\$* ) eval "EXEC_PREFIX=$EXEC_PREFIX" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(EXEC_PREFIX)
+
 AC_SUBST(infodir)
 AC_SUBST(INFODIR_USER_DEFINED)
-dnl Yo, Stephen Bourne!  I want to marry you!
 INFODIR=$infodir
 while true; do
   case "$INFODIR" in
@@ -3559,16 +3611,16 @@ while true; do
 done
 AC_SUBST(LISPDIR)
 
-AC_SUBST(sitelispdir)
-AC_SUBST(SITELISPDIR_USER_DEFINED)
-SITELISPDIR=$sitelispdir
-while true; do
-  case "$SITELISPDIR" in
-    *\$* ) eval "SITELISPDIR=$SITELISPDIR" ;;
-    *) break ;;
-  esac
-done
-AC_SUBST(SITELISPDIR)
+dnl AC_SUBST(sitelispdir)
+dnl AC_SUBST(SITELISPDIR_USER_DEFINED)
+dnl SITELISPDIR=$sitelispdir
+dnl while true; do
+dnl   case "$SITELISPDIR" in
+dnl     *\$* ) eval "SITELISPDIR=$SITELISPDIR" ;;
+dnl     *) break ;;
+dnl   esac
+dnl done
+dnl AC_SUBST(SITELISPDIR)
 
 AC_SUBST(etcdir)
 AC_SUBST(ETCDIR_USER_DEFINED)

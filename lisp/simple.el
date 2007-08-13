@@ -569,7 +569,7 @@ nil means discard it; anything else is stream for print."
   "Print the number of words in BUFFER.
 If called noninteractively, the value is returned rather than printed.
 BUFFER defaults to the current buffer."
-  (interactive "bBuffer: ")
+  (interactive "_bBuffer: ")
   (let ((words (count-words-region (point-min) (point-max) buffer)))
     (when (interactive-p)
       (message "Buffer has %d words" words))
@@ -580,7 +580,7 @@ BUFFER defaults to the current buffer."
   "Print the number of words in region between START and END in BUFFER.
 If called noninteractively, the value is returned rather than printed.
 BUFFER defaults to the current buffer."
-  (interactive "r")
+  (interactive "_r")
   (save-excursion
     (set-buffer (or buffer (current-buffer)))
     (let ((words 0))
@@ -610,36 +610,71 @@ BUFFER defaults to the current buffer."
                cnt (- (point-max) (point-min)))
       cnt)))
 
+;;; Modified by Bob Weiner, 8/24/95, to print narrowed line number also.
+;;; Expanded by Bob Weiner, Altrasoft, on 02/12/1997
 (defun what-line ()
-  "Print the current buffer line number and narrowed line number of point."
+  "Print the following variants of the line number of point:
+     Region line     - displayed line within the active region
+     Collapsed line  - includes only selectively displayed lines;
+     Buffer line     - physical line in the buffer;
+     Narrowed line   - line number from the start of the buffer narrowing."
   ;; XEmacs change
   (interactive "_")
   (let ((opoint (point)) start)
     (save-excursion
       (save-restriction
-	(goto-char (point-min))
+	(if (region-active-p)
+	    (goto-char (region-beginning))
+	  (goto-char (point-min)))
 	(widen)
 	(beginning-of-line)
 	(setq start (point))
 	(goto-char opoint)
 	(beginning-of-line)
-	(if (/= start 1)
-	    (message "Line %d (narrowed line %d)"
-		     (1+ (count-lines 1 (point)))
-		     (1+ (count-lines start (point))))
-	  (message "Line %d" (1+ (count-lines 1 (point)))))))))
+	(let* ((buffer-line (1+ (count-lines 1 (point))))
+	       (narrowed-p (or (/= start 1)
+			       (/= (point-max) (1+ (buffer-size)))))
+	       (narrowed-line (if narrowed-p (1+ (count-lines start (point)))))
+	       (selective-line (if selective-display
+				   (1+ (count-lines start (point) t))))
+	       (region-line (if (region-active-p)
+				(1+ (count-lines start (point) selective-display)))))
+	  (cond (region-line
+		 (message "Region line %d; Buffer line %d"
+			  region-line buffer-line))
+		((and narrowed-p selective-line (/= selective-line narrowed-line))
+		 ;; buffer narrowed and some lines selectively displayed
+		 (message "Collapsed line %d; Buffer line %d; Narrowed line %d"
+			  selective-line buffer-line narrowed-line))
+		(narrowed-p
+		 ;; buffer narrowed
+		 (message "Buffer line %d; Narrowed line %d"
+			  buffer-line narrowed-line))
+		((and selective-line (/= selective-line buffer-line))
+		 ;; some lines selectively displayed
+		 (message "Collapsed line %d; Buffer line %d"
+			  selective-line buffer-line))
+		(t
+		 ;; give a basic line count
+		 (message "Line %d" buffer-line)))))))
+  (setq zmacs-region-stays t))
 
-
-(defun count-lines (start end)
+;;; Bob Weiner, Altrasoft, 02/12/1998
+;;; Added the 3rd arg in `count-lines' to conditionalize the counting of
+;;; collapsed lines.
+(defun count-lines (start end &optional ignore-invisible-lines-flag)
   "Return number of lines between START and END.
 This is usually the number of newlines between them,
 but can be one more if START is not equal to END
-and the greater of them is not at the start of a line."
+and the greater of them is not at the start of a line.
+
+With optional IGNORE-INVISIBLE-LINES-FLAG non-nil, lines collapsed with
+selective-display are excluded from the line count."
   (save-excursion
     (save-restriction
       (narrow-to-region start end)
       (goto-char (point-min))
-      (if (eq selective-display t)
+      (if (and (not ignore-invisible-lines-flag) (eq selective-display t))
 	  (save-match-data
 	    (let ((done 0))
 	      (while (re-search-forward "[\n\C-m]" nil t 40)
@@ -2762,7 +2797,7 @@ unless optional argument SOFT is non-nil."
     ;; fa-extras, which I'm not gonna do.  His changes are to (1) execute
     ;; the save-excursion below unconditionally, and (2) uncomment the check
     ;; for (not comment-multi-line) further below.  --Stig
-      ;;### jhod: probably need to fix this for kinsoku processing
+      ;;#### jhod: probably need to fix this for kinsoku processing
       (if (not comment-multi-line)
 	  (save-excursion
 	    (if (and comment-start-skip
@@ -3603,12 +3638,23 @@ if it satisfies the `log-message-filter-function'.
 For use on `remove-message-hook'."
   (when (and (not noninteractive)
 	     (funcall log-message-filter-function label message))
-    (with-current-buffer (get-buffer-create " *Message-Log*")
+    ;; Use save-excursion rather than save-current-buffer because we
+    ;; change the value of point.
+    (save-excursion
+      (set-buffer (get-buffer-create " *Message-Log*"))
       (goto-char (point-max))
-      ;; (insert (concat (upcase (symbol-name label)) ": "  message "\n"))
-      (insert message "\n")
+      ;(insert (concat (upcase (symbol-name label)) ": "  message "\n"))
+      (let (extent)
+	;; Mark multiline message with an extent, which `view-lossage'
+	;; will recognize.
+	(when (string-match "\n" message)
+	  (setq extent (make-extent (point) (point)))
+	  (set-extent-properties extent '(end-open nil message-multiline t)))
+	(insert message "\n")
+	(when extent
+	  (set-extent-property extent 'end-open t)))
       (when (> (point-max) (max log-message-max-size (point-min)))
-	;; trim log to ~90% of max size
+	;; Trim log to ~90% of max size.
 	(goto-char (max (- (point-max)
 			   (truncate (* 0.9 log-message-max-size)))
 			(point-min)))
@@ -3644,10 +3690,9 @@ you should just use (message nil)."
   (or frame (setq frame (selected-frame)))
   (let ((clear-stream (and message-stack (eq 'stream (frame-type frame)))))
     (remove-message label frame)
-    (let ((buffer (get-buffer " *Echo Area*"))
-	  (inhibit-read-only t)
+    (let ((inhibit-read-only t)
 	  (zmacs-region-stays zmacs-region-stays)) ; preserve from change
-      (erase-buffer buffer))
+      (erase-buffer " *Echo Area*"))
     (if clear-stream
 	(send-string-to-terminal ?\n stdout-p))
     (if no-restore
@@ -3656,7 +3701,8 @@ you should just use (message nil)."
 	  (let ((oldmsg (cdr (car message-stack))))
 	    (raw-append-message oldmsg frame stdout-p)
 	    oldmsg)
-	;; ### should we (redisplay-echo-area) here?  messes some things up.
+	;; #### Should we (redisplay-echo-area) here?  Messes some
+	;; things up.
 	nil))))
 
 (defun remove-message (&optional label frame)
@@ -3666,14 +3712,14 @@ you should just use (message nil)."
     (while (and message-stack
 		(or (null label)	; null label means clear whole stack
 		    (eq label (car (car message-stack)))))
-      (setq log (cons (car message-stack) log))
-    (setq message-stack (cdr message-stack)))
+      (push (car message-stack) log)
+      (setq message-stack (cdr message-stack)))
     (let ((s  message-stack))
       (while (cdr s)
 	(let ((msg (car (cdr s))))
 	  (if (eq label (car msg))
 	      (progn
-		(setq log (cons msg log))
+		(push msg log)
 		(setcdr s (cdr (cdr s))))
 	    (setq s (cdr s))))))
     ;; (possibly) log each removed message
@@ -3686,27 +3732,26 @@ you should just use (message nil)."
 		 "Error caught in `remove-message-hook': %s"
 		 (error-message-string e))
 	       (let ((inhibit-read-only t))
-		 (erase-buffer (get-buffer " *Echo Area*")))
+		 (erase-buffer " *Echo Area*"))
 	       (signal (car e) (cdr e))))
       (setq log (cdr log)))))
 
 (defun append-message (label message &optional frame stdout-p)
   (or frame (setq frame (selected-frame)))
-  ;; add a new entry to the message-stack, or modify an existing one
+  ;; Add a new entry to the message-stack, or modify an existing one
   (let ((top (car message-stack)))
     (if (eq label (car top))
 	(setcdr top (concat (cdr top) message))
-      (setq message-stack (cons (cons label message) message-stack))))
+      (push (cons label message) message-stack)))
   (raw-append-message message frame stdout-p))
 
-;; really append the message to the echo area.  no fiddling with message-stack.
+;; Really append the message to the echo area.  no fiddling with
+;; message-stack.
 (defun raw-append-message (message &optional frame stdout-p)
-  (if (eq message "") nil
-    (let ((buffer (get-buffer " *Echo Area*"))
+  (unless (equal message "")
+    (let ((inhibit-read-only t)
 	  (zmacs-region-stays zmacs-region-stays)) ; preserve from change
-      (with-current-buffer buffer
-	(let ((inhibit-read-only t))
-	  (insert message)))
+      (insert-string message " *Echo Area*")
       ;; Conditionalizing on the device type in this way is not that clean,
       ;; but neither is having a device method, as I originally implemented
       ;; it: all non-stream devices behave in the same way.  Perhaps
@@ -3718,7 +3763,7 @@ you should just use (message nil)."
       ;; Don't redisplay the echo area if we are executing a macro.
       (if (not executing-kbd-macro)
 	  (if (eq 'stream (frame-type frame))
-	      (send-string-to-terminal message stdout-p)
+	      (send-string-to-terminal message stdout-p (frame-device frame))
 	    (redisplay-echo-area))))))
 
 (defun display-message (label message &optional frame stdout-p)
@@ -3894,8 +3939,7 @@ times."
   (check-argument-type 'warning-level-p level)
   (if (and (not (featurep 'infodock))
 	   (not init-file-loaded))
-      (setq before-init-deferred-warnings
-	    (cons (list class message level) before-init-deferred-warnings))
+      (push (list class message level) before-init-deferred-warnings)
     (catch 'ignored
       (let ((display-p t)
 	    (level-num (cdr (assq level warning-level-alist))))

@@ -121,6 +121,12 @@
 	     (left-margin fill integer)
 	     (tab-width editing-basics integer)
 	     (truncate-lines display boolean)
+	     (overwrite-mode editing-basics ;; for the options menu - dverna
+			     (choice (const :tag "disabled" nil)
+				     (const :tag "textual"
+					    'overwrite-mode-textual)
+				     (const :tag "binary"
+					    'overwrite-mode-binary)))
 	     ;; not documented as user-options, but should still be
 	     ;; customizable:
 	     (bar-cursor display (choice (const :tag "Block Cursor" nil)

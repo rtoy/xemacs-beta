@@ -427,7 +427,6 @@ new value."
 (defun widget-activation-widget-mapper (extent action)
   "Activate or deactivate EXTENT's widget (button or field).
 Suitable for use with `map-extents'."
-  (message "FUCK")
   (ecase action
     (:activate
      (decf (extent-property extent :inactive-count))
@@ -450,7 +449,6 @@ Suitable for use with `map-extents'."
   nil)
 
 (defun widget-activation-glyph-mapper (extent action)
-  (message "FUCK")
   (let ((activate-p (if (eq action :activate) t nil)))
     (if activate-p
 	(decf (extent-property extent :inactive-count))

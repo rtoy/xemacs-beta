@@ -52,16 +52,14 @@ Boston, MA 02111-1307, USA.  */
 #include "sysproc.h"
 #include "syswait.h"
 #include "systime.h"
+#include "sysdep.h"
 
 #include "events-mod.h"
+#ifdef HAVE_MSG_SELECT
+#include "sysfile.h"
+#endif
 #include <io.h>
 #include <errno.h>
-
-#ifdef BROKEN_CYGWIN
-int WINAPI      DdeCmpStringHandles (HSZ, HSZ);
-HDDEDATA WINAPI DdeCreateDataHandle (DWORD, LPBYTE, DWORD, DWORD, HSZ,
-				     UINT, UINT);
-#endif
 
 #ifdef HAVE_MENUBARS
 #define ADJR_MENUFLAG TRUE
@@ -81,6 +79,10 @@ HDDEDATA WINAPI DdeCreateDataHandle (DWORD, LPBYTE, DWORD, DWORD, HSZ,
 #define	DndFiles	3
 #define	DndText		4
 
+extern Lisp_Object 
+mswindows_get_toolbar_button_text (struct frame* f, int command_id);
+extern Lisp_Object
+mswindows_handle_toolbar_wm_command (struct frame* f, HWND ctrl, WORD id);
 
 static Lisp_Object mswindows_find_frame (HWND hwnd);
 static Lisp_Object mswindows_find_console (HWND hwnd);
@@ -91,6 +93,13 @@ static int mswindows_button2_near_enough (POINTS p1, POINTS p2);
 static int mswindows_current_layout_has_AltGr (void);
 
 static struct event_stream *mswindows_event_stream;
+
+#ifdef HAVE_MSG_SELECT
+extern SELECT_TYPE input_wait_mask, non_fake_input_wait_mask;
+extern SELECT_TYPE process_only_mask, tty_only_mask;
+extern int signal_event_pipe_initialized;
+int windows_fd;
+#endif
 
 /*
  * Two separate queues, for efficiency, one (_u_) for user events, and
@@ -171,7 +180,7 @@ struct ntpipe_slurp_stream_shared_data
 
 #define MAX_SLURP_STREAMS 32
 struct ntpipe_slurp_stream_shared_data 
-shared_data_block[MAX_SLURP_STREAMS]={0};
+shared_data_block[MAX_SLURP_STREAMS]={{0}};
 
 struct ntpipe_slurp_stream
 {
@@ -401,6 +410,7 @@ ntpipe_slurp_reader (Lstream *stream, unsigned char *data, size_t size)
 	return bytes_read + 1;
       }
   }
+  return 0;
 }
 
 static int 
@@ -1057,8 +1067,77 @@ mswindows_need_event (int badly_p)
 
   while (NILP (mswindows_u_dispatch_event_queue)
 	 && NILP (mswindows_s_dispatch_event_queue))
-  {
-    /* Now try getting a message or process event */
+    {
+#ifdef HAVE_MSG_SELECT
+      int i;
+      SELECT_TYPE temp_mask = input_wait_mask;
+      EMACS_TIME sometime;
+      EMACS_SELECT_TIME select_time_to_block, *pointer_to_this;
+      
+      if (badly_p)
+ 	pointer_to_this = 0;
+      else
+	{
+	  EMACS_SET_SECS_USECS (sometime, 0, 0);
+	  EMACS_TIME_TO_SELECT_TIME (sometime, select_time_to_block);
+	  pointer_to_this = &select_time_to_block;
+	}
+      active = select (MAXDESC, &temp_mask, 0, 0, pointer_to_this);
+      
+      if (active == 0)
+	{
+	  return;		/* timeout */
+	}
+      else if (active > 0)
+	{
+	  if (FD_ISSET (windows_fd, &temp_mask))
+	    {
+	      mswindows_drain_windows_queue ();
+	    }
+	  
+	  /* Look for a process event */
+	  for (i = 0; i < MAXDESC-1; i++)
+	    {
+	      if (FD_ISSET (i, &temp_mask))
+		{
+		  if (FD_ISSET (i, &process_only_mask))
+		    {
+		      struct Lisp_Process *p =
+			get_process_from_usid (FD_TO_USID(i));
+		      
+		      mswindows_enqueue_process_event (p);
+		    }
+		  else if (FD_ISSET (i, &tty_only_mask))
+		    {
+				/* do we care about tty events? Do we
+                                   ever get tty events? */
+		    }
+		  else
+		    {
+		      /* We might get here when a fake event came
+                         through a signal. Return a dummy event, so
+                         that a cycle of the command loop will
+                         occur. */
+		      drain_signal_event_pipe ();
+		      mswindows_bump_queue();
+		    }
+		}
+	    }
+	}
+      else if (active==-1)
+	{
+	  if (errno != EINTR)
+	    {
+	      /* something bad happended */
+	      assert(0);
+	    }
+	}
+      else
+	{
+	  assert(0);
+	}
+#else
+      /* Now try getting a message or process event */
     active = MsgWaitForMultipleObjects (mswindows_waitable_count,
 					mswindows_waitable_handles,
 					FALSE, badly_p ? INFINITE : 0,
@@ -1104,6 +1183,7 @@ mswindows_need_event (int badly_p)
 	    mswindows_bump_queue ();
 	  }
       }
+#endif
   } /* while */
 }
 
@@ -1516,6 +1596,34 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     break;
 
+#ifdef HAVE_TOOLBARS
+  case WM_NOTIFY:
+    {
+      LPTOOLTIPTEXT tttext = (LPTOOLTIPTEXT)lParam;
+      Lisp_Object btext;
+      if (tttext->hdr.code ==  TTN_NEEDTEXT)    
+	{
+	  /* find out which toolbar */
+	  frame = XFRAME (mswindows_find_frame (hwnd));
+	  btext = mswindows_get_toolbar_button_text ( frame, 
+						      tttext->hdr.idFrom );
+	  
+	  tttext->lpszText = NULL;
+	  tttext->hinst = NULL;
+
+	  if (!NILP(btext))
+	    {
+	      strncpy (tttext->szText, XSTRING_DATA (btext), 80);
+	      tttext->lpszText=tttext->szText;
+	    }
+#if 0
+	  tttext->uFlags |= TTF_DI_SETITEM;
+#endif
+	}    
+    }
+    break;
+#endif
+    
   case WM_PAINT:
     {
       PAINTSTRUCT paintStruct;
@@ -1726,10 +1834,11 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
   case WM_COMMAND:
     {
       WORD id = LOWORD (wParam);
+      HWND cid = (HWND)lParam;
       frame = XFRAME (mswindows_find_frame (hwnd));
 
 #ifdef HAVE_TOOLBARS
-      if (!NILP (mswindows_handle_toolbar_wm_command (frame, id)))
+      if (!NILP (mswindows_handle_toolbar_wm_command (frame, cid, id)))
 	break;
 #endif
 
@@ -2331,13 +2440,22 @@ vars_of_event_mswindows (void)
   mswindows_event_stream->handle_magic_event_cb = emacs_mswindows_handle_magic_event;
   mswindows_event_stream->add_timeout_cb 	= emacs_mswindows_add_timeout;
   mswindows_event_stream->remove_timeout_cb 	= emacs_mswindows_remove_timeout;
+  mswindows_event_stream->quit_p_cb		= emacs_mswindows_quit_p;
   mswindows_event_stream->select_console_cb 	= emacs_mswindows_select_console;
   mswindows_event_stream->unselect_console_cb	= emacs_mswindows_unselect_console;
+#ifdef HAVE_MSG_SELECT
+  mswindows_event_stream->select_process_cb 	= 
+    (void (*)(struct Lisp_Process*))event_stream_unixoid_select_process;
+  mswindows_event_stream->unselect_process_cb	= 
+    (void (*)(struct Lisp_Process*))event_stream_unixoid_unselect_process;
+  mswindows_event_stream->create_stream_pair_cb = event_stream_unixoid_create_stream_pair;
+  mswindows_event_stream->delete_stream_pair_cb = event_stream_unixoid_delete_stream_pair;
+#else
   mswindows_event_stream->select_process_cb 	= emacs_mswindows_select_process;
   mswindows_event_stream->unselect_process_cb	= emacs_mswindows_unselect_process;
-  mswindows_event_stream->quit_p_cb		= emacs_mswindows_quit_p;
   mswindows_event_stream->create_stream_pair_cb = emacs_mswindows_create_stream_pair;
   mswindows_event_stream->delete_stream_pair_cb = emacs_mswindows_delete_stream_pair;
+#endif
 
   DEFVAR_BOOL ("mswindows-dynamic-frame-resize", &mswindows_dynamic_frame_resize /*
 *Controls redrawing frame contents during mouse-drag or keyboard resize
@@ -2400,6 +2518,15 @@ lstream_type_create_mswindows_selectable (void)
 void
 init_event_mswindows_late (void)
 {
+#ifdef HAVE_MSG_SELECT
+  windows_fd = open("/dev/windows", O_RDONLY | O_NONBLOCK, 0);
+  assert (windows_fd>=0);
+  FD_SET (windows_fd, &input_wait_mask);
+  /* for some reason I get blocks on the signal event pipe, which is
+     bad... 
+     signal_event_pipe_initialized = 0; */
+#endif
+
   event_stream = mswindows_event_stream;
 
   mswindows_dynamic_frame_resize = !GetSystemMetrics (SM_SLOWMACHINE);

@@ -27,6 +27,13 @@ Boston, MA 02111-1307, USA.  */
 #include "specifier.h"
 
 extern Lisp_Object Qxpm;
+#ifdef HAVE_XPM
+extern Lisp_Object Q_color_symbols;
+Lisp_Object evaluate_xpm_color_symbols (void);
+#endif
+
+DOESNT_RETURN signal_image_error (CONST char *, Lisp_Object);
+DOESNT_RETURN signal_image_error_2 (CONST char *, Lisp_Object, Lisp_Object);
 
 /************************************************************************/
 /*			Image Instantiators				*/
@@ -187,6 +194,13 @@ Lisp_Object find_keyword_in_vector (Lisp_Object vector,
 Lisp_Object find_keyword_in_vector_or_given (Lisp_Object vector,
 					     Lisp_Object keyword,
 					     Lisp_Object default_);
+Lisp_Object simple_image_type_normalize (Lisp_Object inst, 
+					 Lisp_Object console_type,
+					 Lisp_Object image_type_tag);
+Lisp_Object potential_pixmap_file_instantiator (Lisp_Object instantiator,
+						Lisp_Object file_keyword,
+						Lisp_Object data_keyword,
+						Lisp_Object console_type);
 void check_valid_string (Lisp_Object data);
 void check_valid_int (Lisp_Object data);
 DECLARE_DOESNT_RETURN (incompatible_image_types (Lisp_Object instantiator,

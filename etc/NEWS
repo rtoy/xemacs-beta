@@ -37,6 +37,9 @@ file.
 See the file `etc/PACKAGES' in the distribution for a full
 description.
 
+** When the Zmacs region is active, `M-x query-replace' and the other
+replace commands now operate on the region contents only.
+
 ** Using the new `-private' option, you can make XEmacs use a private
 colormap.
 
@@ -93,17 +96,65 @@ XFONTSET and either the X11 libraries are built with X_LOCALE defined
 or the native C libraries support Japanese localization.  This has
 been available since 20.3, only it hasn't been announced before.
 
+** C mode changes
+
+*** Multiline macros are now handled, both as they affect indentation,
+and as recognized syntax.  New syntactic symbol cpp-macro-cont is
+assigned to second and subsequent lines of a multiline macro
+definition.
+
+*** A new style "user" which captures all non-hook-ified
+(i.e. top-level) .emacs file variable setings and customizations.
+Style "cc-mode" is an alias for "user" and is deprecated.  "gnu" style
+is still the default however.
+
+*** "java" style now conforms to Sun's JDK coding style.
+
+*** There are new commands c-beginning-of-defun, c-end-of-defun which
+are alternatives which you could bind to C-M-a and C-M-e if you prefer
+them.  They do not have key bindings by default.
+
+*** New and improved implementations of M-a (c-beginning-of-statement)
+and M-e (c-end-of-statement).
+
+*** C++ namespace blocks are supported, with new syntactic symbols
+namespace-open, namespace-close, and innamespace.
+
+*** File local variable settings of c-file-style and c-file-offsets
+makes the style variables local to that buffer only.
+
+*** New indentation functions c-lineup-close-paren,
+c-indent-one-line-block, c-lineup-dont-change.
+
+*** Improvements (hopefully!) to the way CC Mode is loaded.  You
+should now be able to do a (require 'cc-mode) to get the entire
+package loaded properly for customization in your .emacs file.  A new
+variable c-initialize-on-load controls this and is t by default.
+
 ** In Text mode, now only blank lines separate paragraphs.
 This makes it possible to get the full benefit of Adaptive Fill mode
 in Text mode, and other modes derived from it (such as Mail mode).
-TAB in Text mode now runs the command indent-relative; this
-makes a practical difference only when you use indented paragraphs.
+TAB in Text mode now runs the command indent-relative; this makes a
+practical difference only when you use indented paragraphs.
 
 As a result, the old Indented Text mode is now identical to Text mode,
 and is an alias for it.
 
 If you want spaces at the beginning of a line to start a paragraph,
 use the new mode, Paragraph Indent Text mode.
+
+** In Info mode, dir files can be automatically rebuilt  
+when they do not exist or get out of date with respect to the info files
+in the same directory.
+
+The default behaviour is to ask the user if he wants to rebuild an
+outdated info file when doing so would overwrite the file.  When the
+user has no write access to an outdated info file or to an info
+directory containing no dir file, a temporary dir file is built and used
+instead without asking the user but issuing a warning.
+
+This behaviour can be customized, look for `Info-rebuild-outdated-dir'
+in the `info' customization group.
 
 
 * Lisp and internal changes in XEmacs 21.0
@@ -114,6 +165,14 @@ integers (normally, Lisp integers are only 28 bits wide on 32-bit
 machines.)  Configure with --use-minimal-tagbits to test.  With this
 change, the maximum buffer size on 32-bit machines is bumped from 128M
 to 1G.  This setting will be the default in a future XEmacs version.
+
+** It is now possible to build XEmacs with LDAP support
+You need to install a LDAP library first.  The following have been
+tested: 
+  - LDAP 3.3 from the University of Michigan 
+    (http://www.umich.edu/~dirsvcs/ldap/)
+  - LDAP SDK 1.0 from Netscape Corp.
+    (http://developer.netscape.com)
 
 ** The XEmacs hashtables now have a consistent read/print syntax.
 This means that a hashtable will be readably printed in a
@@ -134,6 +193,15 @@ instance:
 is now calculated.  This information is stored in
 `call-count-profile-table', and is utilized by `profile-results' as
 well as the new function `profile-call-count-results'.
+
+** The new function `string' concatenates all its argument characters
+and returns the resulting string.  This is consistent with other
+functions, like `list', `vector', etc.
+
+** The `load-average' function now accepts a USE-FLOATS argument
+which, when non-nil, means to use floats instead of integers
+multiplied by 100.  At a future date, `load-average' will use floats
+by default.
 
 ** The `make-event' function now supports the TYPE and PLIST
 arguments, which can be used to create various events from Lisp.  See

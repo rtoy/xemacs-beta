@@ -6,10 +6,10 @@ shift
 tstr=""
 while [ $# -gt 0 ]
 do
-  if [ -e $1.exe ]
+  if [ -f $1.exe ]
   then
     tstr="$tstr$1.exe $2.exe"
-    shift
+    shift 2
   else
     tstr="$tstr$1 "
   fi

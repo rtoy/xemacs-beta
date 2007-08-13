@@ -42,6 +42,7 @@ char *_getpty ();
 #define PTY_OPEN						\
 {								\
   char *name;							\
+  struct stat stb;						\
   EMACS_BLOCK_SIGCHLD;						\
   name = _getpty (&fd, O_RDWR | O_NDELAY, 0600, 0);		\
   EMACS_UNBLOCK_SIGCHLD;					\

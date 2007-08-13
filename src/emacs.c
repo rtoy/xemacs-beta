@@ -109,6 +109,11 @@ Lisp_Object Vemacs_major_version;
 Lisp_Object Vemacs_minor_version;
 Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
+#ifdef INFODOCK
+Lisp_Object Vinfodock_major_version;
+Lisp_Object Vinfodock_minor_version;
+Lisp_Object Vinfodock_build_version;
+#endif
 
 /* The path under which XEmacs was invoked. */
 Lisp_Object Vinvocation_path;
@@ -140,7 +145,7 @@ Lisp_Object Vconfigure_info_path;
 Lisp_Object Vinternal_error_checking;
 
 /* The default base directory XEmacs is installed under. */
-Lisp_Object Vconfigure_prefix_directory;
+Lisp_Object Vconfigure_exec_prefix_directory, Vconfigure_prefix_directory;
 
 /* If nonzero, set XEmacs to run at this priority.  This is also used
    in child_setup and sys_suspend to make sure subshells run at normal
@@ -898,6 +903,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_frame ();
       syms_of_general ();
       syms_of_glyphs ();
+      syms_of_glyphs_read ();
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       syms_of_gui ();
 #endif
@@ -1143,6 +1149,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	 called before the any calls to the other macros. */
 
       image_instantiator_format_create ();
+      image_instantiator_format_create_glyphs_read ();
 #ifdef HAVE_X_WINDOWS
       image_instantiator_format_create_glyphs_x ();
 #endif /* HAVE_X_WINDOWS */
@@ -1162,7 +1169,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef FILE_CODING
       lstream_type_create_mule_coding ();
 #endif
-#ifdef HAVE_MS_WINDOWS
+#if defined (HAVE_MS_WINDOWS) && !defined(HAVE_MSG_SELECT)
       lstream_type_create_mswindows_selectable ();
 #endif
       
@@ -1261,6 +1268,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_font_lock ();
       vars_of_frame ();
       vars_of_glyphs ();
+      vars_of_glyphs_read ();
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       vars_of_gui ();
 #endif
@@ -2668,6 +2676,23 @@ earlier than 20.3.
   Vemacs_beta_version = Qnil;
 #endif
 
+#ifdef INFODOCK
+  DEFVAR_LISP ("infodock-major-version", &Vinfodock_major_version /*
+Major version number of this InfoDock release.
+*/ );
+  Vinfodock_major_version = make_int (INFODOCK_MAJOR_VERSION);
+
+  DEFVAR_LISP ("infodock-minor-version", &Vinfodock_minor_version /*
+Minor version number of this InfoDock release.
+*/ );
+  Vinfodock_minor_version = make_int (INFODOCK_MINOR_VERSION);
+
+  DEFVAR_LISP ("infodock-build-version", &Vinfodock_build_version /*
+Build version of this InfoDock release.
+*/ );
+  Vinfodock_build_version = make_int (INFODOCK_BUILD_VERSION);
+#endif
+
   DEFVAR_LISP ("xemacs-codename", &Vxemacs_codename /*
 Codename of this version of Emacs (a string).
 */ );
@@ -2788,7 +2813,7 @@ configure's idea of what LISP-DIRECTORY will be.
 
   DEFVAR_LISP ("configure-package-path", &Vconfigure_package_path /*
 For internal use by the build procedure only.
-configure's idea of what PACKAGE-DIRECTORY will be.
+configure's idea of what the package path will be.
 */ );
 #ifdef PATH_PACKAGEPATH
   Vconfigure_package_path = decode_path (PATH_PACKAGEPATH);
@@ -2865,6 +2890,17 @@ configure's idea of what DOC-DIRECTORY will be.
     (build_string ((char *) PATH_DOC));
 #else
   Vconfigure_doc_directory = Qnil;
+#endif
+
+  DEFVAR_LISP ("configure-exec-prefix-directory", &Vconfigure_exec_prefix_directory /*
+For internal use by the build procedure only.
+configure's idea of what EXEC-PREFIX-DIRECTORY will be.
+*/ );
+#ifdef PATH_EXEC_PREFIX
+  Vconfigure_exec_prefix_directory = Ffile_name_as_directory
+    (build_string ((char *) PATH_EXEC_PREFIX));
+#else
+  Vconfigure_exec_prefix_directory = Qnil;
 #endif
 
   DEFVAR_LISP ("configure-prefix-directory", &Vconfigure_prefix_directory /*

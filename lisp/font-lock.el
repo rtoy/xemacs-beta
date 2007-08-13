@@ -527,7 +527,16 @@ Currently, valid mode names as `fast-lock-mode' and `lazy-lock-mode'.
 This is normally set via `font-lock-defaults'.")
 
 ;;;###autoload
-(defvar font-lock-mode nil) ; for modeline
+(defcustom font-lock-mode nil ;; customized for the option menu. dverna
+  "Non nil means `font-lock-mode' is on"
+  :group 'font-lock
+  :type 'boolean
+  :initialize 'custom-initialize-default
+  :require 'font-lock
+  :set '(lambda (var val)
+	  (font-lock-mode (or val 0)))
+  )
+
 (defvar font-lock-fontified nil) ; whether we have hacked this buffer
 (put 'font-lock-fontified 'permanent-local t)
 

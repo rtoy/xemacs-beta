@@ -67,6 +67,7 @@ unsigned long  data_size = UNINIT_LONG;
 /* Cached info about the .bss section in the executable.  */
 void* bss_start = UNINIT_PTR;
 unsigned long  bss_size = UNINIT_LONG;
+int sections_reversed = 0;
 FILHDR f_hdr;
 PEAOUTHDR f_ohdr;
 SCNHDR f_data, f_bss, f_text, f_nextdata;
@@ -155,11 +156,12 @@ static void get_section_info (int a_out, char* a_name)
 	  PERROR (a_name);
 	}
     }
-  /* Loop through .data & .bss section headers, copying them in */
+  /* Loop through .data & .bss section headers, copying them in.
+     With newer lds these are reversed so we have to cope with both */
   lseek (a_out, sizeof (f_hdr) + f_hdr.f_opthdr, 0);
 
   if (read (a_out, &f_text, sizeof (f_text)) != sizeof (f_text)
-      &&
+      ||
       strcmp (f_text.s_name, ".text"))
     {
       PERROR ("no .text section");
@@ -167,25 +169,45 @@ static void get_section_info (int a_out, char* a_name)
 
   /* The .bss section.  */
   if (read (a_out, &f_bss, sizeof (f_bss)) != sizeof (f_bss)
-      &&
-      strcmp (f_bss.s_name, ".bss"))
+      ||
+      (strcmp (f_bss.s_name, ".bss") && strcmp (f_bss.s_name, ".data")))
     {
-      PERROR ("no .bss section");
+      PERROR ("no .bss / .data section");
     }
 
+  /* check for reversed .bss and .data */
+  if (!strcmp(f_bss.s_name, ".data"))
+    {
+      printf(".data and .bss reversed\n");
+      sections_reversed = 1;
+      memcpy(&f_data, &f_bss, sizeof(f_bss));
+    }
+
+  /* The .data section.  */
+  if (!sections_reversed)
+    {
+      if (read (a_out, &f_data, sizeof (f_data)) != sizeof (f_data)
+	  ||
+	  strcmp (f_data.s_name, ".data"))
+	{
+	  PERROR ("no .data section");
+	}
+    }
+  else
+    {
+      if (read (a_out, &f_bss, sizeof (f_bss)) != sizeof (f_bss)
+	  ||
+	  strcmp (f_bss.s_name, ".bss"))
+	{
+	  PERROR ("no .bss section");
+	}
+    }
+  
   bss_start = (void *) ((char*)f_ohdr.ImageBase + f_bss.s_vaddr);
   bss_size = (unsigned long)((char*)&my_ebss-(char*)bss_start);
   
   /* must keep bss data that we want to be blank as blank */
   printf("found bss - keeping %lx of %lx bytes\n", bss_size, f_ohdr.bsize);
-
-  /* The .data section.  */
-  if (read (a_out, &f_data, sizeof (f_data)) != sizeof (f_data)
-      &&
-      strcmp (f_data.s_name, ".data"))
-    {
-      PERROR ("no .data section");
-    }
 
   /* The .data section.  */
   data_start_va = (void *) ((char*)f_ohdr.ImageBase + f_data.s_vaddr);
@@ -195,8 +217,9 @@ static void get_section_info (int a_out, char* a_name)
      then a dumped Emacs won't run on system versions other
      than the one Emacs was dumped on).  */
   data_size = (unsigned long)my_edata - (unsigned long)data_start_va;
+  printf("found data - keeping %lx of %lx bytes\n", data_size, f_ohdr.dsize);
 
-  /* The following data section.  */
+  /* The following data section - often .idata */
   if (read (a_out, &f_nextdata, sizeof (f_nextdata)) != sizeof (f_nextdata)
       &&
       strcmp (&f_nextdata.s_name[2], "data"))
@@ -211,8 +234,13 @@ static void
 copy_executable_and_dump_data_section (int a_out, int a_new)
 {
   long size=0;
-  unsigned long new_data_size, new_bss_size, f_data_s_vaddr,
-    file_sz_change, f_data_s_scnptr, bss_padding;
+  unsigned long new_data_size, new_bss_size, 
+    bss_padding, file_sz_change, data_padding=0,
+    f_data_s_vaddr = f_data.s_vaddr,
+    f_data_s_scnptr = f_data.s_scnptr,
+    f_bss_s_vaddr = f_bss.s_vaddr, 
+    f_nextdata_s_scnptr = f_nextdata.s_scnptr;
+
   int i;
   void* empty_space;
   extern int static_heap_dumped;
@@ -230,14 +258,27 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
      f_data.s_vaddr is f_bss.s_vaddr
      f_data.s_size is new dsize maybe.
      what about s_paddr & s_scnptr?  */
+
   /* this is the amount the file increases in size */
-  new_bss_size=f_data.s_vaddr - f_bss.s_vaddr;
-  file_sz_change=new_bss_size;
-  new_data_size=f_ohdr.dsize + new_bss_size;
-  f_data_s_scnptr = f_data.s_scnptr;
-  f_data_s_vaddr = f_data.s_vaddr;
-  f_data.s_vaddr = f_bss.s_vaddr;
-  f_data.s_paddr += new_bss_size;
+  if (!sections_reversed)
+    {
+      new_bss_size = f_data.s_vaddr - f_bss.s_vaddr;
+      data_padding = 0;
+    }
+  else
+    {
+      new_bss_size = f_nextdata.s_vaddr - f_bss.s_vaddr;
+      data_padding = (f_bss.s_vaddr - f_data.s_vaddr) - f_data.s_size;
+    }
+
+  file_sz_change=new_bss_size + data_padding;
+  new_data_size=f_ohdr.dsize + file_sz_change;
+
+  if (!sections_reversed)
+    {
+      f_data.s_vaddr = f_bss.s_vaddr;
+    }
+  f_data.s_paddr += file_sz_change;
 #if 0 
   if (f_data.s_size + f_nextdata.s_size != f_ohdr.dsize)
     {
@@ -245,7 +286,7 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
 	     f_data.s_size + f_nextdata.s_size, f_ohdr.dsize);
     }
 #endif
-  f_data.s_size += new_bss_size;
+  f_data.s_size += file_sz_change;
   lseek (a_new, 0, SEEK_SET);
   /* write file header */
   f_hdr.f_symptr += file_sz_change;
@@ -331,23 +372,26 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
 
   CHECK_AOUT_POS(f_data_s_scnptr);
 
-  /* dump bss + padding between sections */
-  printf ("dumping .bss into executable... %lx bytes\n", bss_size);
-  if (write(a_new, bss_start, bss_size) != (int)bss_size)
+  if (!sections_reversed)
     {
-      PERROR("failed to write bss section");
+      /* dump bss + padding between sections */
+      printf ("dumping .bss into executable... %lx bytes\n", bss_size);
+      if (write(a_new, bss_start, bss_size) != (int)bss_size)
+	{
+	  PERROR("failed to write bss section");
+	}
+      
+      /* pad, needs to be zero */
+      bss_padding = new_bss_size - bss_size;
+      printf ("padding .bss ... %lx bytes\n", bss_padding);
+      empty_space = malloc(bss_padding);
+      memset(empty_space, 0, bss_padding);
+      if (write(a_new, empty_space, bss_padding) != (int)bss_padding)
+	{
+	  PERROR("failed to write bss section");
+	}
+      free(empty_space);
     }
-
-  /* pad, needs to be zero */
-  bss_padding = new_bss_size - bss_size;
-  printf ("padding .bss ... %lx bytes\n", bss_padding);
-  empty_space = malloc(bss_padding);
-  memset(empty_space, 0, bss_padding);
-  if (write(a_new, empty_space, bss_padding) != (int)bss_padding)
-    {
-      PERROR("failed to write bss section");
-    }
-  free(empty_space);
 
   /* tell dumped version not to free pure heap */
   static_heap_dumped = 1;
@@ -361,11 +405,48 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
   static_heap_dumped = 0;
   
   size = lseek(a_out, f_data_s_scnptr + data_size, SEEK_SET);
-  size = f_nextdata.s_scnptr - size;
-  dup_file_area(a_out, a_new, size);
 
-  //  lseek(a_out, f_nextdata.s_scnptr, SEEK_CUR);
-  CHECK_AOUT_POS(f_nextdata.s_scnptr);
+  if (!sections_reversed)
+    {
+      size = f_nextdata_s_scnptr - size;
+      dup_file_area(a_out, a_new, size);
+    }
+  else
+    {
+      /* need to bad to bss with data in file */
+      printf ("padding .data ... %lx bytes\n", data_padding);
+      size = (f_bss_s_vaddr - f_data_s_vaddr) - data_size;
+      dup_file_area(a_out, a_new, size);
+
+      /* dump bss + padding between sections */
+      printf ("dumping .bss into executable... %lx bytes\n", bss_size);
+      if (write(a_new, bss_start, bss_size) != (int)bss_size)
+	{
+	  PERROR("failed to write bss section");
+	}
+      
+      /* pad, needs to be zero */
+      bss_padding = new_bss_size - bss_size;
+      printf ("padding .bss ... %lx bytes\n", bss_padding);
+      empty_space = malloc(bss_padding);
+      memset(empty_space, 0, bss_padding);
+      if (write(a_new, empty_space, bss_padding) != (int)bss_padding)
+	{
+	  PERROR("failed to write bss section");
+	}
+      free(empty_space);
+      if (lseek(a_new, 0, SEEK_CUR) != f_nextdata.s_scnptr)
+	{
+	  printf("at %lx should be at %lx\n", 
+		 lseek(a_new, 0, SEEK_CUR),
+		 f_nextdata.s_scnptr);
+	  PERROR("file positioning error\n");
+	}
+      lseek(a_out, f_nextdata_s_scnptr, SEEK_SET);
+    }
+
+  CHECK_AOUT_POS(f_nextdata_s_scnptr);
+
   /* now dump - nextdata don't need to do this cygwin ds is in .data! */
   printf ("dumping following data section... %lx bytes\n", f_nextdata.s_size);
 
@@ -374,8 +455,8 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
   /* write rest of file */
   printf ("writing rest of file\n");
   size = lseek(a_out, 0, SEEK_END);
-  size = size - (f_nextdata.s_scnptr + f_nextdata.s_size); /* length remaining in a_out */
-  lseek(a_out, f_nextdata.s_scnptr + f_nextdata.s_size, SEEK_SET);
+  size = size - (f_nextdata_s_scnptr + f_nextdata.s_size); /* length remaining in a_out */
+  lseek(a_out, f_nextdata_s_scnptr + f_nextdata.s_size, SEEK_SET);
 
   dup_file_area(a_out, a_new, size);
 }

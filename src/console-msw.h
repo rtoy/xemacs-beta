@@ -125,9 +125,9 @@ struct mswindows_frame
   /* Coordinates of last click event, screen-relative */
   POINTS last_click_point;
 #ifdef HAVE_TOOLBARS
-  HWND htoolbar;
   /* Toolbar hashtable. See toolbar-msw.c */
   Lisp_Object toolbar_hashtable;
+  unsigned int toolbar_checksum[4];
 #endif
 
   /* Menu hashtable. See menubar-msw.c */
@@ -155,11 +155,13 @@ struct mswindows_frame
 #define FRAME_MSWINDOWS_DATA(f) FRAME_TYPE_DATA (f, mswindows)
 
 #define FRAME_MSWINDOWS_HANDLE(f)	  (FRAME_MSWINDOWS_DATA (f)->hwnd)
-#define FRAME_MSWINDOWS_TOOLBAR(f)	  (FRAME_MSWINDOWS_DATA (f)->htoolbar)
 #define FRAME_MSWINDOWS_DC(f)		  (FRAME_MSWINDOWS_DATA (f)->hdc)
 #define FRAME_MSWINDOWS_CDC(f)		  (FRAME_MSWINDOWS_DATA (f)->cdc)
 #define FRAME_MSWINDOWS_MENU_HASHTABLE(f) (FRAME_MSWINDOWS_DATA (f)->menu_hashtable)
-#define FRAME_MSWINDOWS_TOOLBAR_HASHTABLE(f) (FRAME_MSWINDOWS_DATA (f)->toolbar_hashtable)
+#define FRAME_MSWINDOWS_TOOLBAR_HASHTABLE(f) \
+ (FRAME_MSWINDOWS_DATA (f)->toolbar_hashtable)
+#define FRAME_MSWINDOWS_TOOLBAR_CHECKSUM(f,pos) \
+ (FRAME_MSWINDOWS_DATA (f)->toolbar_checksum[pos])
 #define FRAME_MSWINDOWS_MENU_CHECKSUM(f)  (FRAME_MSWINDOWS_DATA (f)->menu_checksum)
 #define FRAME_MSWINDOWS_TITLE_CHECKSUM(f) (FRAME_MSWINDOWS_DATA (f)->title_checksum)
 #define FRAME_MSWINDOWS_CHARWIDTH(f)	  (FRAME_MSWINDOWS_DATA (f)->charwidth)

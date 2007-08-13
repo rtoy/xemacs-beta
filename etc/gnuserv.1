@@ -69,13 +69,14 @@ specified files to be viewed instead of edited.
 Tell Emacs to load the specified library.
 .TP 8
 .BI \-batch
-Tell Emacs not to open any frames. Just load libraries and evaluate lisp code.  You
-must use the
+Tell Emacs not to open any frames. Just load libraries and evaluate
+lisp code.  If no files to execute, functions to call or forms to eval 
+are given using the
 .BR \-l ,
 .BR \-f ,
-and
+or
 .B \-eval
-options to specify files to execute and functions to call.
+options, then forms to eval are read from STDIN.
 .TP 8
 .BI \-f " function," 
 Make Emacs execute the lisp function.

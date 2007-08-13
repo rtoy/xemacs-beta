@@ -395,7 +395,8 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 			     debug-paths))
       (startup-setup-paths-warning))
 
-    (if (not inhibit-autoloads)
+    (if (and (not inhibit-autoloads)
+	     lisp-directory)
 	(load (expand-file-name (file-name-sans-extension autoload-file-name)
 				lisp-directory) nil t))
     
@@ -1132,45 +1133,40 @@ It's idempotent, so call this as often as you like!"
     (erase-buffer)
     (buffer-disable-undo (current-buffer))
 
-    (insert "Couldn't find an obvious default for the root of the "
+    (insert "Couldn't find an obvious default for the root of the\n"
 	    "XEmacs hierarchy.")
-
-    (let ((fill-column 76))
-      (fill-region (point-min) (point-max)))
 
     (princ "\nWARNING:\n" 'external-debugging-output)
     (princ (buffer-string) 'external-debugging-output)))
 
 (defun startup-setup-paths-warning ()
   (let ((lock (if (boundp 'lock-directory) lock-directory 't))
-	warnings message)
+	(warnings '()))
     (if (and (stringp lock) (null (file-directory-p lock)))
 	(setq lock nil))
     (cond
-     ((null (and exec-directory data-directory doc-directory load-path lock))
+     ((null (and lisp-directory exec-directory data-directory doc-directory
+		 load-path
+		 lock))
       (save-excursion
 	(set-buffer (get-buffer-create " *warning-tmp*"))
 	(erase-buffer)
 	(buffer-disable-undo (current-buffer))
+	(if (null lisp-directory) (push "lisp-directory" warnings))
 	(if (null lock)           (push "lock-directory" warnings))
 	(if (null exec-directory) (push "exec-directory" warnings))
 	(if (null data-directory) (push "data-directory" warnings))
 	(if (null doc-directory)  (push "doc-directory"  warnings))
 	(if (null load-path)      (push "load-path"      warnings))
-	(cond ((cdr (cdr warnings))
-	       (setq message (apply 'format "%s, %s, and %s" warnings)))
-	      ((cdr warnings)
-	       (setq message (apply 'format "%s and %s" warnings)))
-	      (t (setq message (format "variable %s" (car warnings)))))
-	(insert "couldn't find an obvious default for " message
-		", and there were no defaults specified in paths.h when "
-		"XEmacs was built.  Perhaps some directories don't exist, "
-		"or the XEmacs executable, " (concat invocation-directory
-						     invocation-name)
-		" is in a strange place?")
 
-	(let ((fill-column 76))
-	  (fill-region (point-min) (point-max)))
+	(insert "Couldn't find obvious defaults for:\n")
+	(while warnings
+	  (insert (car warnings) "\n")
+	  (setq warnings (cdr warnings)))
+	(insert "Perhaps some directories don't exist, "
+		"or the XEmacs executable,\n" (concat invocation-directory
+						     invocation-name)
+		"\nis in a strange place?")
 
 	(princ "\nWARNING:\n" 'external-debugging-output)
 	(princ (buffer-string) 'external-debugging-output)

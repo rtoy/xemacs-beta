@@ -41,7 +41,6 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#ifndef standalone
 #include "backtrace.h"
 #include "buffer.h"
 #include "bytecode.h"
@@ -56,7 +55,6 @@ Boston, MA 02111-1307, USA.  */
 #include "specifier.h"
 #include "sysfile.h"
 #include "window.h"
-#endif
 
 #ifdef DOUG_LEA_MALLOC
 #include <malloc.h>
@@ -371,13 +369,11 @@ memory_full (void)
   consing_since_gc = gc_cons_threshold + 1;
   release_breathing_space ();
 
-#ifndef standalone
-  /* Flush some histories which might conceivably contain
-   *  garbalogical inhibitors */
+  /* Flush some histories which might conceivably contain garbalogical
+     inhibitors.  */
   if (!NILP (Fboundp (Qvalues)))
     Fset (Qvalues, Qnil);
   Vcommand_history = Qnil;
-#endif
 
   error ("Memory exhausted");
 }
@@ -2365,6 +2361,23 @@ LENGTH must be an integer and INIT must be a character.
   return val;
 }
 
+DEFUN ("string", Fstring, 0, MANY, 0, /*
+Concatenate all the argument characters and make the result a string.
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Bufbyte *storage = alloca_array (Bufbyte, nargs * MAX_EMCHAR_LEN);
+  Bufbyte *p = storage;
+
+  for (; nargs; nargs--, args++)
+    {
+      Lisp_Object lisp_char = *args;
+      CHECK_CHAR_COERCE_INT (lisp_char);
+      p += set_charptr_emchar (p, XCHAR (lisp_char));
+    }
+  return make_string (storage, p - storage);
+}
+
 /* Take some raw memory, which MUST already be in internal format,
    and package it up into a Lisp string. */
 Lisp_Object
@@ -3072,12 +3085,7 @@ report_pure_usage (int report_impurities,
 
   if (rc < 0) {
     unlink("SATISFIED");
-				/* Current build process on NT does */
-				/* not know how to restart itself. */
-				/* --marcpa */
-#ifndef WINDOWSNT
     fatal ("Pure size adjusted, Don't Panic!  I will restart the `make'");
-#endif
   } else if (pure_lossage && die_if_pure_storage_exceeded) {
     fatal ("Pure storage exhausted");
   }
@@ -3899,9 +3907,6 @@ sweep_symbols (void)
   SWEEP_FIXED_TYPE_BLOCK (symbol, struct Lisp_Symbol);
 }
 
-
-#ifndef standalone
-
 static void
 sweep_extents (void)
 {
@@ -3951,9 +3956,6 @@ free_marker (struct Lisp_Marker *ptr)
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (marker, struct Lisp_Marker, ptr);
 #endif /* ALLOC_NO_POOLS */
 }
-
-#endif /* not standalone */
-
 
 
 #if defined (MULE) && defined (VERIFY_STRING_CHARS_INTEGRITY)
@@ -5010,11 +5012,10 @@ init_alloc_once_early (void)
 #ifdef LISP_FLOAT_TYPE
   init_float_alloc ();
 #endif /* LISP_FLOAT_TYPE */
-#ifndef standalone
   init_marker_alloc ();
   init_extent_alloc ();
   init_event_alloc ();
-#endif
+
   ignore_malloc_warnings = 0;
   staticidx = 0;
   consing_since_gc = 0;
@@ -5067,6 +5068,7 @@ syms_of_alloc (void)
   DEFSUBR (Fmake_vector);
   DEFSUBR (Fmake_bit_vector);
   DEFSUBR (Fmake_string);
+  DEFSUBR (Fstring);
   DEFSUBR (Fmake_symbol);
   DEFSUBR (Fmake_marker);
   DEFSUBR (Fpurecopy);

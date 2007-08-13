@@ -82,12 +82,26 @@ extern void cygwin32_posix_to_win32_path_list(const char*, char*);
 extern int cygwin32_posix_to_win32_path_list_buf_size(const char*);
 struct timeval;
 struct timezone;
+struct itimerval;
+struct stat;
 extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
 extern int gethostname (char* name, int namelen);
 extern char*	mktemp(char *);
 extern double	logb(double);
 extern void	sync();
 extern int	ioctl(int, int, ...);
+				/* sys/stat.h */
+extern int lstat(const char *path, struct stat *buf);
+				/* unistd.h */
+extern int readlink(const char *path, void *buf, unsigned int bufsiz);
+extern int symlink(const char *name1, const char *name2);
+				/* sys/time.h */
+extern int setitimer(int which, const struct itimerval *value,
+		     struct itimerval *ovalue);
+extern int utimes(char *file, struct timeval *tvp);
+
+extern int srandom( unsigned seed);
+extern long random();
 #endif
 
 #ifdef HAVE_MS_WINDOWS
@@ -99,9 +113,10 @@ extern int	ioctl(int, int, ...);
 #define ORDINARY_LINK
 #endif
 
-#define C_SWITCH_SYSTEM -Wno-sign-compare -Wno-implicit -fno-caller-saves
+#define C_SWITCH_SYSTEM -Wno-sign-compare -fno-caller-saves
 #define LIBS_SYSTEM -lwinmm
 
+#define ICC_BAR_CLASSES 4
 #define SIF_TRACKPOS	0x0010
 #define FW_BLACK	FW_HEAVY
 #define FW_ULTRABOLD	FW_EXTRABOLD
@@ -132,12 +147,6 @@ extern int	ioctl(int, int, ...);
 #endif
 #define OBJECTS_SYSTEM	ntplay.o
 #define HAVE_NATIVE_SOUND
-
-#ifndef CYGWIN_B19
-#define TMPF_FIXED_PITCH	0x01
-#define SIGPROF	0
-#define SIGWINCH 0
-#endif
 
 #undef MAIL_USE_SYSTEM_LOCK
 #define MAIL_USE_POP
@@ -177,6 +186,10 @@ extern int	ioctl(int, int, ...);
 
 /* Text does precede data space, but this is never a safe assumption.  */
 #define VIRT_ADDR_VARIES
+
+/* set this if you have a new version of cygwin
+#define DATA_SEG_BITS 0x10000000
+*/
 
 /* If you are compiling with a non-C calling convention but need to
    declare vararg routines differently, put it here */

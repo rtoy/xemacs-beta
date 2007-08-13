@@ -45,6 +45,16 @@ HSZ mswindows_dde_service;
 HSZ mswindows_dde_topic_system;
 HSZ mswindows_dde_item_open;
 
+#ifdef __CYGWIN32__
+typedef struct tagINITCOMMONCONTROLSEX
+{
+  DWORD dwSize;
+  DWORD dwICC;
+} INITCOMMONCONTROLSEX;
+WINAPI BOOL InitCommonControlsEx (INITCOMMONCONTROLSEX*);
+#else
+#include <commctrl.h>
+#endif
 
 /* Control conversion of upper case file names to lower case.
    nil means no, t means yes. */
@@ -63,6 +73,10 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   WNDCLASSEX wc;
   HWND desktop;
   HDC hdc;
+#ifdef HAVE_TOOLBARS
+  INITCOMMONCONTROLSEX iccex;
+  xzero(iccex);
+#endif
 
   DEVICE_INFD (d) = DEVICE_OUTFD (d) = -1;
   init_baud_rate (d);
@@ -104,6 +118,15 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   wc.hIconSm = LoadImage (GetModuleHandle (NULL), XEMACS_CLASS,
 			  IMAGE_ICON, 16, 16, 0);
   RegisterClassEx (&wc);
+#ifdef HAVE_TOOLBARS
+  iccex.dwSize = sizeof (iccex);
+  iccex.dwICC = ICC_BAR_CLASSES;
+#ifdef __CYGWIN32__
+  InitCommonControls ();
+#else
+  InitCommonControlsEx (&iccex);
+#endif
+#endif
 }
 
 static void
@@ -111,7 +134,7 @@ mswindows_finish_init_device (struct device *d, Lisp_Object props)
 {
   /* Initialise DDE management library and our related globals */
   mswindows_dde_mlid = 0;
-  DdeInitialize (&mswindows_dde_mlid, mswindows_dde_callback,
+  DdeInitialize (&mswindows_dde_mlid, (PFNCALLBACK)mswindows_dde_callback,
 		 APPCMD_FILTERINITS|CBF_FAIL_SELFCONNECTIONS|CBF_FAIL_ADVISES|
 		 CBF_FAIL_POKES|CBF_FAIL_REQUESTS|CBF_SKIP_ALLNOTIFICATIONS, 0);
   

@@ -402,7 +402,7 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
 	  if (bar_p && !REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIHGT_FLUSH)
 	    flush_right = 1;
 	  if (!populate_p)
-	    checksum = HASH2 (checksum, Qnil);
+	    checksum = HASH2 (checksum, LISP_HASH (Qnil));
 	}
       else if (populate_p)
 	populate_menu_add_item (menu, path, hash_tab,

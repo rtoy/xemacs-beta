@@ -180,7 +180,7 @@ alarm_signal (int signo)
 	 it needs to stay the way it is. */
       quit_check_signal_happened = 1;
 
-#ifdef _WIN32
+#ifdef WINDOWSNT
       can_break_system_calls = 0;
 #else
       /* can_break_system_calls is set when we want to break out of

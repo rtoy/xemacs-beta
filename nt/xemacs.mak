@@ -67,17 +67,33 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=0
 #
 # Conf error checks
 #
+CONFIG_ERROR=0
 !if !$(HAVE_MSW) && !$(HAVE_X)
-!error Please specify at least one HAVE_MSW=1 and/or HAVE_X=1
+!message Please specify at least one HAVE_MSW=1 and/or HAVE_X=1
+CONFIG_ERROR=1
 !endif
 !if $(HAVE_X) && !defined(X11_DIR)
-!error Please specify root directory for your X11 installation: X11_DIR=path
+!message Please specify root directory for your X11 installation: X11_DIR=path
+CONFIG_ERROR=1
+!endif
+!if $(HAVE_X) && defined(X11_DIR) && !exist("$(X11_DIR)\LIB\X11.LIB")
+!message Specified X11 directory does not contain "$(X11_DIR)\LIB\X11.LIB"
+CONFIG_ERROR=1
 !endif
 !if $(HAVE_MSW) && $(HAVE_XPM) && !defined(XPM_DIR)
-!error Please specify root directory for your XPM installation: XPM_DIR=path
+!message Please specify root directory for your XPM installation: XPM_DIR=path
+CONFIG_ERROR=1
+!endif
+!if $(HAVE_MSW) && $(HAVE_XPM) && defined(XPM_DIR) && !exist("$(XPM_DIR)\LIB\XPM.LIB")
+!message Specified XPM directory does not contain "$(XPM_DIR)\LIB\XPM.LIB"
+CONFIG_ERROR=1
 !endif
 !if $(HAVE_MSW) && $(HAVE_TOOLBARS) && !$(HAVE_XPM)
 !error Toolbars require XPM support
+CONFIG_ERROR=1
+!endif
+!if $(CONFIG_ERROR)
+!error Configuration error(s) found
 !endif
 
 #
@@ -132,6 +148,18 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !message 
 !endif # !defined(CONF_REPORT_ALREADY_PRINTED)
 
+#
+# Compiler command echo control. Define VERBOSECC=1 to get vebose compilation.
+#
+!if !defined(VERBOSECC)
+VERBOSECC=0
+!endif
+!if $(VERBOSECC)
+CCV=$(CC)
+!else
+CCV=@$(CC)
+!endif
+
 !if $(DEBUG_XEMACS)
 OPT=-Od -Zi
 !else
@@ -157,8 +185,8 @@ MSW_C_DIRED_OBJ=$(OUTDIR)\dired-msw.obj
 !endif
 !if $(HAVE_XPM)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_XPM -DFOR_MSW
-MSW_INCLUDES=$(MSW_INCLUDES) -I$(XPM_DIR) -I$(XPM_DIR)\lib
-MSW_LIBS=$(MSW_LIBS) $(XPM_DIR)\lib\Xpm.lib
+MSW_INCLUDES=$(MSW_INCLUDES) -I"$(XPM_DIR)" -I"$(XPM_DIR)\lib"
+MSW_LIBS=$(MSW_LIBS) "$(XPM_DIR)\lib\Xpm.lib"
 !endif
 !if $(HAVE_TOOLBARS)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_TOOLBARS
@@ -181,7 +209,7 @@ DEBUG_FLAGS= -debugtype:both -debug:full
 
 # Generic variables
 
-INCLUDES=$(X_INCLUDES) $(MSW_INCLUDES) -I$(XEMACS)\nt\inc -I$(XEMACS)\src -I$(XEMACS)\lwlib -I"$(MSVCDIR)\include"
+INCLUDES=$(X_INCLUDES) $(MSW_INCLUDES) -I$(XEMACS)\nt\inc -I$(XEMACS)\src -I$(XEMACS)\lwlib
 
 DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MULE_DEFINES) \
 	-DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN -DWINDOWSNT -Demacs \
@@ -203,16 +231,16 @@ XEMACS_INCLUDES=\
  $(XEMACS)\src\puresize-adjust.h
 
 $(XEMACS)\src\config.h:	config.h
-	!copy config.h $(XEMACS)\src
+	copy config.h $(XEMACS)\src
 
 $(XEMACS)\src\Emacs.ad.h:	Emacs.ad.h
-	!copy Emacs.ad.h $(XEMACS)\src
+	copy Emacs.ad.h $(XEMACS)\src
 
 $(XEMACS)\src\paths.h:	paths.h
-	!copy paths.h $(XEMACS)\src
+	copy paths.h $(XEMACS)\src
 
 $(XEMACS)\src\puresize-adjust.h:	puresize-adjust.h
-	!copy puresize-adjust.h $(XEMACS)\src
+	copy puresize-adjust.h $(XEMACS)\src
 
 #------------------------------------------------------------------------------
 
@@ -228,7 +256,7 @@ $(LASTFILE): $(XEMACS_INCLUDES) $(LASTFILE_OBJS)
 	link.exe -lib -nologo -out:$@ $(LASTFILE_OBJS)
 
 $(OUTDIR)\lastfile.obj:	$(LASTFILE_SRC)\lastfile.c
-	 $(CC) $(LASTFILE_FLAGS) $**
+	 $(CCV) $(LASTFILE_FLAGS) $**
 
 #------------------------------------------------------------------------------
 
@@ -255,25 +283,25 @@ $(LWLIB): $(LWLIB_OBJS)
 	link.exe -lib -nologo $(DEBUG_FLAGS) -out:$@ $(LWLIB_OBJS)
 
 $(OUTDIR)\lwlib-config.obj:	$(LWLIB_SRC)\lwlib-config.c
-	 $(CC) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\lwlib-utils.obj:	$(LWLIB_SRC)\lwlib-utils.c
-	 $(CC) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\lwlib-Xaw.obj:	$(LWLIB_SRC)\lwlib-Xaw.c
-	 $(CC) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\lwlib-Xlw.obj:	$(LWLIB_SRC)\lwlib-Xlw.c
-	 $(CC) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\lwlib.obj:		$(LWLIB_SRC)\lwlib.c
-	 $(CC) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\xlwmenu.obj:		$(LWLIB_SRC)\xlwmenu.c
-	 $(CC) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\xlwscrollbar.obj:	$(LWLIB_SRC)\xlwscrollbar.c
-	 $(CC) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 !endif
 #------------------------------------------------------------------------------
@@ -446,7 +474,7 @@ $(MAKE_DOCFILE): $(OUTDIR)\make-docfile.obj
 	link.exe -out:$@ $(LIB_SRC_LFLAGS) $** $(LIB_SRC_LIBS)
 
 $(OUTDIR)\make-docfile.obj:	$(LIB_SRC)\make-docfile.c
-	 $(CC) -nologo $(LIB_SRC_FLAGS) -c $** -Fo$@
+	 $(CCV) -nologo $(LIB_SRC_FLAGS) -c $** -Fo$@
 
 RUNEMACS=$(XEMACS)\src\runemacs.exe
 
@@ -457,7 +485,7 @@ $(RUNEMACS): $(OUTDIR)\runemacs.obj
 	advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib libc.lib
 
 $(OUTDIR)\runemacs.obj:	$(XEMACS)\nt\runemacs.c
-	$(CC) -nologo -ML $(WARN_CPP_FLAGS) $(OPT) -c \
+	$(CCV) -nologo -ML $(WARN_CPP_FLAGS) $(OPT) -c \
 	-D_DEBUG -DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN \
 	-D_X86_ -Demacs -DHAVE_CONFIG_H \
 	$** -Fo$@
@@ -648,13 +676,13 @@ TEMACS_OBJS= \
 
 # nmake rule
 {$(TEMACS_SRC)}.c{$(OUTDIR)}.obj:
-	$(CC) $(TEMACS_FLAGS) $< -Fo$@ -Fr$*.sbr
+	$(CCV) $(TEMACS_FLAGS) $< -Fo$@ -Fr$*.sbr
 
 $(OUTDIR)\TopLevelEmacsShell.obj:	$(TEMACS_SRC)\EmacsShell-sub.c
-	$(CC) $(TEMACS_FLAGS) -DDEFINE_TOP_LEVEL_EMACS_SHELL $** -Fo$@
+	$(CCV) $(TEMACS_FLAGS) -DDEFINE_TOP_LEVEL_EMACS_SHELL $** -Fo$@
 
 $(OUTDIR)\TransientEmacsShell.obj: $(TEMACS_SRC)\EmacsShell-sub.c
-	$(CC) $(TEMACS_FLAGS) -DDEFINE_TRANSIENT_EMACS_SHELL $** -Fo$@
+	$(CCV) $(TEMACS_FLAGS) -DDEFINE_TRANSIENT_EMACS_SHELL $** -Fo$@
 
 $(OUTDIR)\pure.obj: $(TEMACS_SRC)\pure.c $(TEMACS_SRC)\puresize-adjust.h
 
@@ -675,7 +703,7 @@ xemacs.res: xemacs.rc
 # MSDEV Source Broswer file. "*.sbr" is too inclusive but this is harmless
 $(TEMACS_BROWSE): $(TEMACS_OBJS)
 	@dir /b/s $(OUTDIR)\*.sbr > bscmake.tmp
-	bscmake /nologo -o$@ @bscmake.tmp
+	bscmake -nologo -o$@ @bscmake.tmp
 	@del bscmake.tmp
 
 #------------------------------------------------------------------------------
@@ -686,44 +714,41 @@ LOADPATH=$(LISP)
 
 $(DOC): $(LIB_SRC)\make-docfile.exe
 	-del $(DOC)
-	!$(TEMACS) -batch -l $(TEMACS_DIR)\..\lisp\make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
-	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC1)
-	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC2)
-	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC3)
-	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC4)
-	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC5)
-	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC6)
-	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC7)
-	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC8)
-	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC9)
+	$(TEMACS) -batch -l $(TEMACS_DIR)\..\lisp\make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
+	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC1)
+	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC2)
+	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC3)
+	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC4)
+	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC5)
+	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC6)
+	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC7)
+	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC8)
+	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC9)
 
 $(LISP)\Installation.el: Installation.el
 	copy Installation.el $(LISP)
 
 update-elc: $(LISP)\Installation.el
 	set EMACSBOOTSTRAPLOADPATH=$(LISP)
-	!$(TEMACS) -batch -l $(TEMACS_DIR)\..\lisp\update-elc.el
+	$(TEMACS) -batch -l $(TEMACS_DIR)\..\lisp\update-elc.el
 
-rebuild: $(TEMACS_DIR)\puresize-adjust.h
-        !nmake -nologo -f xemacs.mak dump-xemacs
-
-# This rule dumps xemacs and then checks to see if a rebuild is required due
-# to changing PURESPACE requirements.
+# This rule dumps xemacs and then possibly spawns sub-make if PURESPACE
+# requirements has changed.
 dump-xemacs: $(TEMACS)
-	!echo >rebuild
+	@echo >$(TEMACS_DIR)\SATISFIED
 	cd $(TEMACS_DIR)
 	set EMACSBOOTSTRAPLOADPATH=$(LISP)
-	!$(TEMACS) -batch -l $(TEMACS_DIR)\..\lisp\loadup.el dump
+	-1 $(TEMACS) -batch -l $(TEMACS_DIR)\..\lisp\loadup.el dump
 	cd $(XEMACS)\nt
-	!nmake -nologo -f xemacs.mak rebuild
+	@if not exist $(TEMACS_DIR)\SATISFIED nmake -nologo -f xemacs.mak $@
 
 #------------------------------------------------------------------------------
 
 # use this rule to build the complete system
-all: $(LASTFILE) $(LWLIB) $(SUPPORT_PROGS) $(TEMACS) $(TEMACS_BROWSE) update-elc $(DOC) dump-xemacs
-	-del rebuild
+all:	$(OUTDIR)\nul $(LASTFILE) $(LWLIB) $(SUPPORT_PROGS) \
+	$(TEMACS) $(TEMACS_BROWSE) update-elc $(DOC) dump-xemacs
 
-temacs:  $(TEMACS)
+temacs: $(TEMACS)
 
 # use this rule to install the system
 install:

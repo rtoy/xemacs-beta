@@ -978,17 +978,19 @@ actually get any text from."
     (if (not (find-buffer-visiting file))
 	(if (not (file-exists-p file))
 	    (if (or (eq Info-rebuild-outdated-dir 'always)
-		    (and (eq Info-rebuild-outdated-dir 'conservative)
-			 (not (file-writable-p file)))
+		    (eq Info-rebuild-outdated-dir 'conservative)
 		    (and (eq Info-rebuild-outdated-dir 'ask)
-			 (y-or-n-p (format "No dir file in %s. Rebuild now ? " (file-name-directory file)))))
+			 (y-or-n-p (format "No dir file in %s. Rebuild now ? " 
+					   (file-name-directory file)))))
 		(Info-build-dir-anew (file-name-directory file) (not (file-writable-p file))))
 	  (if (Info-dir-outdated-p file)
 	      (if (or (eq Info-rebuild-outdated-dir 'always)
 		      (and (eq Info-rebuild-outdated-dir 'conservative)
-			   (not (file-writable-p file)))
+			   (or (not (file-writable-p file))
+			       (y-or-n-p (format "%s is outdated. Rebuild it now ? " 
+					       (file-name-directory file)))))
 		      (and (eq Info-rebuild-outdated-dir 'ask)
-			   (y-or-n-p (format "%s is outdated. Rebuild now ? " file))))
+			   (y-or-n-p (format "%s is outdated. Rebuild it now ? " file))))
 		  (Info-rebuild-dir file (not (file-writable-p file)))))))))
 
 ;; Record which *.info files are newer than the dir file
@@ -996,7 +998,7 @@ actually get any text from."
 
 (defun Info-dir-outdated-p (file)
   "Return non-nil if dir or localdir is outdated.
-dir or localdir are outdated when a *.info file in the same
+dir or localdir are outdated when an info file in the same
 directory has been modified more recently."
   (let ((dir-mod-time (nth 5 (file-attributes file)))
 	f-mod-time
@@ -1045,20 +1047,23 @@ and `END-INFO-DIR-ENTRY'"
       (save-restriction
 	(narrow-to-region beg end)
 	(goto-char beg)
-	(while (re-search-forward "^\\* \\([^:]+\\):\\([ \t]*(\\(.*\\))\\w*\\.\\|:\\)" nil t)
+	(while (re-search-forward "^\\* \\([^:]+\\):\\([ \t]*(\\([^)]*\\))\\w*\\.\\|:\\)" nil t)
 	  (setq entry (list (match-string 2)
 			    (match-string 1)
 			    (downcase (or (match-string 3)
 					  (match-string 1)))))
-	  (setq entry (cons (nreverse 
-			     (cdr 
-			      (nreverse 
-			       (split-string (buffer-substring (re-search-forward "[ \t]*" nil t)
-							       (or (and (re-search-forward "^[^ \t]" nil t)
-									(goto-char (match-beginning 0)))
-								   (point-max)))
-					     "[ \t]*\n[ \t]*"))))
-			    entry))
+	  (setq entry 
+		(cons (nreverse 
+		       (cdr 
+			(nreverse 
+			 (split-string 
+			  (buffer-substring 
+			   (re-search-forward "[ \t]*" nil t)
+			   (or (and (re-search-forward "^[^ \t]" nil t)
+				    (goto-char (match-beginning 0)))
+			       (point-max)))
+			  "[ \t]*\n[ \t]*"))))
+		      entry))
 	  (setq entries (cons (nreverse entry) entries)))))
     (nreverse entries)))
 
@@ -1082,7 +1087,8 @@ and `END-INFO-DIR-ENTRY'"
 		 (indent-to-column description-col)
 		 (insert (car e) "\n")
 		 (setq e (cdr e))))
-	    entries)))
+	    entries)
+    (insert "\n")))
 
 
 (defun Info-build-dir-anew (directory to-temp)
@@ -1096,7 +1102,10 @@ and `END-INFO-DIR-ENTRY'"
 			    nil
 			    t)))
       (if to-temp
-	  (display-warning 'info (format "Missing info dir file in %s" directory) 'notice)
+	  (if (not (eq Info-rebuild-outdated-dir 'always))
+	      (display-warning 'info 
+		(format "Missing info dir file in %s" directory) 
+		'notice))
 	(message "Creating %s..." dirfile))
       (set-buffer (find-file-noselect dirfile t))
       (setq buffer-read-only nil)
@@ -1108,7 +1117,10 @@ and `END-INFO-DIR-ENTRY'"
 	'(lambda (f)
 	   (or (Info-extract-dir-entry-from f)
 	       (list 'dummy
-		     (file-name-sans-extension (file-name-nondirectory f))
+		     (progn 
+		       (string-match "\\(.*\\)\\.info\\(.gz\\|.Z\\|-z\\|.zip\\)?$" 
+				     (file-name-nondirectory f))
+		       (capitalize (match-string 1 (file-name-nondirectory f))))
 		     ":"
 		     (list Info-no-description-string))))
 	info-files))
@@ -1132,7 +1144,10 @@ and `END-INFO-DIR-ENTRY'"
 	(set-buffer (find-file-noselect file t))
 	(setq buffer-read-only nil)
 	(if to-temp
-	    (display-warning 'info (format "Outdated info dir file: %s" file) 'notice)
+	    (if (not (eq Info-rebuild-outdated-dir 'always))
+		(display-warning 'info 
+		  (format "Outdated info dir file: %s" file) 
+		  'notice))
 	  (message "Rebuilding %s..." file))
 	(catch 'done
 	  (setq buffer-read-only nil)
@@ -1195,7 +1210,35 @@ and `END-INFO-DIR-ENTRY'"
 	(if to-temp
 	    (message "Rebuilding temporary dir...done")
 	  (message "Rebuilding %s...done" file))))))
-      
+
+;;;###autoload      
+(defun Info-batch-rebuild-dir ()
+  "(Re)build info `dir' files in the directories remaining on the command line.
+Use this from the command line, with `-batch';
+it won't work in an interactive Emacs.
+Each file is processed even if an error occurred previously.
+For example, invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\""
+  ;; command-line-args-left is what is left of the command line (from
+  ;; startup.el)
+  (defvar command-line-args-left)	; Avoid 'free variable' warning
+  (if (not noninteractive)
+      (error "`Info-batch-rebuild-dir' is to be used only with -batch"))
+  (while command-line-args-left
+    (if  (not (file-directory-p (car command-line-args-left)))
+	(message "Warning: Skipped %s. Not a directory."
+		 (car command-line-args-left))
+      (setq dir (expand-file-name "dir" (car command-line-args-left)))
+      (setq localdir (expand-file-name "localdir" (car command-line-args-left)))
+      (cond 
+       ((file-exists-p dir)
+	(Info-rebuild-dir dir nil))
+       ((file-exists-p localdir)
+	(Info-rebuild-dir localdir nil))
+       (t
+	(Info-build-dir-anew (car command-line-args-left) nil))))
+    (setq command-line-args-left (cdr command-line-args-left)))
+  (message "Done")
+  (kill-emacs 0))
 
 (defun Info-history-add (file node point)
   (if Info-keeping-history
@@ -1268,16 +1311,16 @@ for; usually a downcased version of NAME."
       (setq file (concat name (caar suff))
 	    file2 (and name2 (concat name2 (caar suff))))
       (cond
-       ((file-exists-p file)
+       ((file-regular-p file)
 	(setq found file))
-       ((and file2 (file-exists-p file2))
+       ((and file2 (file-regular-p file2))
 	(setq found file2))
        (t
 	(setq suff (cdr suff)))))
     (or found
-	(and name (when (file-exists-p name)
+	(and name (when (file-regular-p name)
 		    name))
-	(and name2 (when (file-exists-p name2)
+	(and name2 (when (file-regular-p name2)
 		     name2)))))
 
 (defun Info-insert-file-contents (file &optional visit)
@@ -2371,6 +2414,7 @@ be edited; default is 1."
       (save-buffers-kill-emacs)
     (bury-buffer (current-buffer))
     (if (and (featurep 'toolbar)
+	     (boundp 'toolbar-info-frame)
 	     (eq toolbar-info-frame (selected-frame)))
 	(condition-case ()
 	    (delete-frame toolbar-info-frame)

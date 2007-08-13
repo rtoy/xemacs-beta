@@ -27,7 +27,6 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#ifndef standalone
 #include "buffer.h"
 #include "bytecode.h"
 #include "commands.h"
@@ -35,7 +34,6 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "opaque.h"
 #include <paths.h>
-#endif
 #ifdef FILE_CODING
 #include "file-coding.h"
 #endif
@@ -340,20 +338,6 @@ static Lisp_Object read_list (Lisp_Object readcharfun,
                               Emchar terminator,
                               int allow_dotted_lists,
 			      int check_for_doc_references);
-
-/* get a character from the tty */
-
-#ifdef standalone     /* This primitive is normally not defined */
-
-#define kludge DEFUN /* to keep this away from make-docfile... */
-kludge ("read-char", Fread_char, Sread_char, 0, 0, 0, "") ()
-{
-  return getchar ();
-}
-#undef kludge
-#endif /* standalone */
-
-
 
 static void readevalloop (Lisp_Object readcharfun,
                           Lisp_Object sourcefile,
@@ -1373,8 +1357,6 @@ readevalloop (Lisp_Object readcharfun,
   unbind_to (speccount, Qnil);
 }
 
-#ifndef standalone
-
 DEFUN ("eval-buffer", Feval_buffer, 0, 2, "bBuffer: ", /*
 Execute BUFFER as Lisp code.
 Programs can pass two arguments, BUFFER and PRINTFLAG.
@@ -1467,8 +1449,6 @@ see some text temporarily disappear because of this.
 
   return unbind_to (speccount, Qnil);
 }
-
-#endif /* standalone */
 
 DEFUN ("read", Fread, 0, 1, 0, /*
 Read one Lisp expression as text from STREAM, return as Lisp object.
@@ -1493,14 +1473,12 @@ STREAM or the value of `standard-input' may be:
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   Vcurrent_compiled_function_annotation = Qnil;
 #endif
-#ifndef standalone
   if (EQ (stream, Qread_char))
     {
       Lisp_Object val = call1 (Qread_from_minibuffer,
 			       build_translated_string ("Lisp expression: "));
       return Fcar (Fread_from_string (val, Qnil, Qnil));
     }
-#endif
 
   if (STRINGP (stream))
     return Fcar (Fread_from_string (stream, Qnil, Qnil));
@@ -3031,9 +3009,6 @@ syms_of_lread (void)
   DEFSUBR (Flocate_file_clear_hashing);
   DEFSUBR (Feval_buffer);
   DEFSUBR (Feval_region);
-#ifdef standalone
-  DEFSUBR (Fread_char);
-#endif
 
   defsymbol (&Qstandard_input, "standard-input");
   defsymbol (&Qread_char, "read-char");

@@ -436,75 +436,65 @@ Lisp_Object Vccl_program_table;
 				     command.  */
 #define CCL_STAT_QUIT		3 /* Terminated because of quit.  */
 
-/* Terminate CCL program successfully.  */
-#define CCL_SUCCESS		   	\
-  do {				   	\
-    ccl->status = CCL_STAT_SUCCESS;	\
-    ccl->ic = CCL_HEADER_MAIN;		\
-    goto ccl_finish;		   	\
-  } while (0)
-
-/* Suspend CCL program because of reading from empty input buffer or
-   writing to full output buffer.  When this program is resumed, the
-   same I/O command is executed.  */
-#define CCL_SUSPEND		 	\
-  do {				 	\
-    ic--;			 	\
-    ccl->status = CCL_STAT_SUSPEND;	\
-    goto ccl_finish;		 	\
-  } while (0)
-
-/* Terminate CCL program because of invalid command.  Should not occur
-   in the normal case.  */
-#define CCL_INVALID_CMD		     	\
-  do {				     	\
-    ccl->status = CCL_STAT_INVALID_CMD;	\
-    goto ccl_error_handler;	     	\
-  } while (0)
-
 /* Encode one character CH to multibyte form and write to the current
    output buffer.  If CH is less than 256, CH is written as is.  */
-#define CCL_WRITE_CHAR(ch)		      	      	\
-  do {					      	      	\
-    if (!destination)				      	\
-      CCL_INVALID_CMD;			      	      	\
-    else				      	      	\
-      {					      	      	\
-	Bufbyte work[MAX_EMCHAR_LEN];	      	      	\
-	int len = ( ch < 256 ) ?			\
-          simple_set_charptr_emchar (work, ch) :	\
-          non_ascii_set_charptr_emchar (work, ch);	\
-	Dynarr_add_many (destination, work, len);      	\
-      }					      	      	\
-  } while (0)
+#define CCL_WRITE_CHAR(ch) do {				\
+  if (!destination)					\
+    {							\
+      ccl->status = CCL_STAT_INVALID_CMD;		\
+      goto ccl_error_handler;				\
+    }							\
+  else							\
+    {							\
+      Bufbyte work[MAX_EMCHAR_LEN];			\
+      int len = ( ch < 256 ) ?				\
+	simple_set_charptr_emchar (work, ch) :		\
+	non_ascii_set_charptr_emchar (work, ch);	\
+      Dynarr_add_many (destination, work, len);		\
+    }							\
+} while (0)
 
 /* Write a string at ccl_prog[IC] of length LEN to the current output
    buffer.  */
-#define CCL_WRITE_STRING(len)					\
-  do {								\
-    if (!destination)						\
-      CCL_INVALID_CMD;						\
-    else							\
-      for (i = 0; i < len; i++)					\
-	Dynarr_add(destination, (XINT (ccl_prog[ic + (i / 3)])	\
-		   >> ((2 - (i % 3)) * 8)) & 0xFF);		\
-  } while (0)
+#define CCL_WRITE_STRING(len) do {			\
+  if (!destination)					\
+    {							\
+      ccl->status = CCL_STAT_INVALID_CMD;		\
+      goto ccl_error_handler;				\
+    }							\
+  else							\
+    for (i = 0; i < len; i++)				\
+      Dynarr_add(destination,				\
+		 (XINT (ccl_prog[ic + (i / 3)])		\
+		  >> ((2 - (i % 3)) * 8)) & 0xFF);	\
+} while (0)
 
 /* Read one byte from the current input buffer into Rth register.  */
-#define CCL_READ_CHAR(r)	\
-  do {				\
-    if (!src)			\
-      CCL_INVALID_CMD;		\
-    else if (src < src_end)	\
-      r = *src++;		\
-    else if (ccl->last_block)	\
-      {				\
-        ic = ccl->eof_ic;	\
-        goto ccl_finish;	\
-      }				\
-    else			\
-      CCL_SUSPEND;		\
-  } while (0)
+#define CCL_READ_CHAR(r) do {			\
+  if (!src)					\
+    {						\
+      ccl->status = CCL_STAT_INVALID_CMD;	\
+      goto ccl_error_handler;			\
+    }						\
+  else if (src < src_end)			\
+    r = *src++;					\
+  else if (ccl->last_block)			\
+    {						\
+      ic = ccl->eof_ic;				\
+      goto ccl_finish;				\
+    }						\
+  else						\
+    /* Suspend CCL program because of		\
+       reading from empty input buffer or	\
+       writing to full output buffer.		\
+       When this program is resumed, the	\
+       same I/O command is executed.  */	\
+    {						\
+      ic--;					\
+      ccl->status = CCL_STAT_SUSPEND;		\
+      goto ccl_finish;				\
+    }						\
+} while (0)
 
 
 /* Execute CCL code on SRC_BYTES length text at SOURCE.  The resulting
@@ -727,7 +717,8 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source, unsigned_char_
 		    ccl_prog = ccl_prog_stack_struct[0].ccl_prog;
 		    ic = ccl_prog_stack_struct[0].ic;
 		  }
-		CCL_INVALID_CMD;
+		ccl->status = CCL_STAT_INVALID_CMD;
+		goto ccl_error_handler;
 	      }
 
 	    ccl_prog_stack_struct[stack_idx].ccl_prog = ccl_prog;
@@ -765,7 +756,10 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source, unsigned_char_
 	      ic = ccl_prog_stack_struct[stack_idx].ic;
 	      break;
 	    }
-	  CCL_SUCCESS;
+	  /* Terminate CCL program successfully.  */
+	  ccl->status = CCL_STAT_SUCCESS;
+	  ccl->ic = CCL_HEADER_MAIN;
+	  goto ccl_finish;
 
 	case CCL_ExprSelfConst: /* 00000OPERATION000000rrrXXXXX */
 	  i = XINT (ccl_prog[ic]);
@@ -799,7 +793,9 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source, unsigned_char_
 	    case CCL_LE: reg[rrr] = reg[rrr] <= i; break;
 	    case CCL_GE: reg[rrr] = reg[rrr] >= i; break;
 	    case CCL_NE: reg[rrr] = reg[rrr] != i; break;
-	    default: CCL_INVALID_CMD;
+	    default:
+	      ccl->status = CCL_STAT_INVALID_CMD;
+	      goto ccl_error_handler;
 	    }
 	  break;
 
@@ -862,7 +858,9 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source, unsigned_char_
 	    case CCL_NE: reg[rrr] = i != j; break;
 	    case CCL_ENCODE_SJIS: ENCODE_SJIS (i, j, reg[rrr], reg[7]); break;
 	    case CCL_DECODE_SJIS: DECODE_SJIS (i, j, reg[rrr], reg[7]); break;
-	    default: CCL_INVALID_CMD;
+	    default:
+	      ccl->status = CCL_STAT_INVALID_CMD;
+	      goto ccl_error_handler;
 	    }
 	  code &= 0x1F;
 	  if (code == CCL_WriteExprConst || code == CCL_WriteExprRegister)
@@ -875,7 +873,8 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source, unsigned_char_
 	  break;
 
 	default:
-	  CCL_INVALID_CMD;
+	  ccl->status = CCL_STAT_INVALID_CMD;
+	  goto ccl_error_handler;
 	}
     }
 
@@ -889,6 +888,8 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source, unsigned_char_
 
       switch (ccl->status)
 	{
+	  /* Terminate CCL program because of invalid command.
+	     Should not occur in the normal case.  */
 	case CCL_STAT_INVALID_CMD:
 	  sprintf(msg, "\nCCL: Invalid command %x (ccl_code = %x) at %d.",
 		  code & 0x1F, code, ic);

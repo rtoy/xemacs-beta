@@ -194,6 +194,13 @@ struct console_methods
 				      int depth);
   unsigned long (*image_instance_hash_method) (struct Lisp_Image_Instance *,
 					       int depth);
+  void (*init_image_instance_from_eimage_method) (struct Lisp_Image_Instance *ii,
+						  int width, int height,
+						  unsigned char *eimage, 
+						  int dest_mask,
+						  Lisp_Object instantiator,
+						  Lisp_Object domain);
+  Lisp_Object (*locate_pixmap_file_method) (Lisp_Object file_method);
   int (*colorize_image_instance_method) (Lisp_Object image_instance,
 					 Lisp_Object fg, Lisp_Object bg);
   Lisp_Object image_conversion_list;

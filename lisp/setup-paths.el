@@ -42,10 +42,8 @@
   "Depth of load-path searches in core Lisp paths.")
 
 (defvar paths-default-info-directories
-  (list (paths-construct-path '("usr" "local" "info")
-			      (char-to-string directory-sep-char))
-	(paths-construct-path '("usr" "info")
-			      (char-to-string directory-sep-char)))
+  (list (paths-construct-path '("usr" "local" "info") path-separator)
+	(paths-construct-path '("usr" "info") path-separator))
   "Directories appended to the end of the info path by default.")
 
 (defun paths-find-site-lisp-directory (roots)
@@ -74,8 +72,9 @@
 	       (paths-find-recursive-load-path (list site-lisp-directory)
 					       paths-load-path-depth)))
 	 (lisp-load-path
-	  (paths-find-recursive-load-path (list lisp-directory)
-					  paths-load-path-depth)))
+	  (and lisp-directory
+	       (paths-find-recursive-load-path (list lisp-directory)
+					       paths-load-path-depth))))
     (append env-load-path
 	    early-package-load-path
 	    site-lisp-load-path
@@ -99,7 +98,7 @@
       (packages-find-package-info-path last-packages)
       (and info-path-envval
 	   (paths-decode-directory-path info-path-envval 'drop-empties)))
-     (and (not info-path-envval)
+     (and (null info-path-envval)
 	  (paths-uniq-append
 	   (paths-directories-which-exist configure-info-path)
 	   (paths-directories-which-exist paths-default-info-directories))))))

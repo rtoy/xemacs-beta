@@ -584,7 +584,7 @@ find_section (name, section_names, file_name, old_file_h, old_section_h, noerror
       if (noerror)
 	return -1;
       else
-	fatal ("Can't find .bss in %s.\n", file_name, 0);
+	fatal ("Can't find .bss in %s.\n", file_name);
     }
 
   return idx;
@@ -626,7 +626,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
   l_Elf_Addr new_data2_addr;
   l_Elf_Addr new_offsets_shift;
 
-  int n, nn, old_bss_index, old_data_index, new_data2_index;
+  int n, nn, old_bss_index, old_data_index;
   int old_mdebug_index, old_sbss_index;
   struct stat stat_buf;
 
@@ -713,7 +713,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 #endif
 
   if ((unsigned) new_bss_addr < (unsigned) old_bss_addr + old_bss_size)
-    fatal (".bss shrank when undumping???\n", 0, 0);
+    fatal (".bss shrank when undumping???\n");
 
   /* Set the output file to the right size and mmap it.  Set
      pointers to various interesting objects.  stat_buf still has
@@ -758,6 +758,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
   new_file_h->e_shoff += new_offsets_shift;
   new_file_h->e_shnum += 1;
 
+
 #ifdef DEBUG
   fprintf (stderr, "Old section offset %x\n", old_file_h->e_shoff);
   fprintf (stderr, "Old section count %d\n", old_file_h->e_shnum);
@@ -782,7 +783,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
       /* Supposedly this condition is okay for the SGI.  */
 #if 0
       if (NEW_PROGRAM_H (n).p_vaddr + NEW_PROGRAM_H (n).p_filesz > old_base_addr)
-	fatal ("Program segment above .bss in %s\n", old_name, 0);
+	fatal ("Program segment above .bss in %s\n", old_name);
 #endif
 
       if (NEW_PROGRAM_H (n).p_type == PT_LOAD
@@ -794,7 +795,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
     }
   if (n < 0)
     fatal ("Couldn't find segment next to %s in %s\n",
-	   old_sbss_index == -1 ? ".sbss" : ".bss", old_name, 0);
+	   old_sbss_index == -1 ? ".sbss" : ".bss", old_name);
 
   NEW_PROGRAM_H (n).p_filesz += new_offsets_shift;
   NEW_PROGRAM_H (n).p_memsz = NEW_PROGRAM_H (n).p_filesz;
@@ -822,7 +823,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 		 ".data"))
       break;
   if (old_data_index == old_file_h->e_shnum)
-    fatal ("Can't find .data in %s.\n", old_name, 0);
+    fatal ("Can't find .data in %s.\n", old_name);
 
   /* Walk through all section headers, insert the new data2 section right 
      before the new bss section.  */
@@ -893,7 +894,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 	PATCH_INDEX (NEW_SECTION_H (nn).sh_info);
       
       /* Fix the type and alignment for the .sbss section */
-      if (!strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".sbss"))
+      if ((old_sbss_index != -1) && !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".sbss"))
 	{
 	  NEW_SECTION_H (nn).sh_type = SHT_PROGBITS;
 	  NEW_SECTION_H (nn).sh_offset = round_up (NEW_SECTION_H (nn).sh_offset,
@@ -991,6 +992,15 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 	    }
 	}
     }
+
+  /* Kludge around the stupid 5.3 run time loader which always
+     zero-fills the .sbss section no matter what. */
+
+  if (old_sbss_index != -1)
+    strcpy (new_base
+	    + NEW_SECTION_H (new_file_h->e_shstrndx).sh_offset
+	    + NEW_SECTION_H (old_sbss_index).sh_name,
+	    ".zbzz");
 
   /* Close the files and make the new file executable.  */
 

@@ -2499,8 +2499,7 @@ x_delete_frame (struct frame *f)
        XtUnrealizeWidget() here.  Xt can really suck. */
     if (f->being_deleted)
       XtUnrealizeWidget (w);
-    if (NILP (popup))
-      XtDestroyWidget (w);
+    XtDestroyWidget (w);
     x_error_occurred_p (dpy);
   }
 #else

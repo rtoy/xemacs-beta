@@ -1,3 +1,147 @@
+1998-04-25  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* info.el (Info-parse-dir-entries): Fixed regexp
+	(Info-build-dir-anew): Remove full suffix and capitalize info file 
+	name for files with no @direntry
+	(Info-batch-rebuild-dir): New function
+	(Info-suffixed-file): Check for regular files instead of simple
+	file existence (could catch directories before)
+
+1998-04-25  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* setup-paths.el, find-paths.el: Removed uses of `not' which
+	temacs doesn't have.
+
+	* find-paths.el (paths-find-emacs-roots): Included exec-prefix
+	into root searching.
+
+1998-04-24  Martin Buchholz  <martin@xemacs.org>
+
+	* subr.el: Remove definition of `not'.
+
+Sat Apr 24 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* msw-glyphs.el: enable graphics support.
+
+1998-04-23  Didier Verna  <verna@inf.enst.fr>
+
+	* x-menubar.el (default-menubar): restored the line-number-mode
+	option.
+
+	* misc doc string updates related to the options menu.
+
+1998-04-24  SL Baur  <steve@altair.xemacs.org>
+
+	* setup-paths.el (paths-construct-load-path): Fix typo.
+
+1998-04-23  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* x-menubar.el (default-menubar): font-menu-this-frame-only-p and
+	font-menu-ignore-scaled-fonts don't have to be bound now; this
+	gets us one step further towards making --no-autoloads work.
+
+	* startup.el (normal-top-level): Load auto-autoloads only if
+	lisp-directory is non-nil.
+
+	* setup-paths.el (paths-construct-load-path): Made it robust
+	against nil lisp-directory.
+
+	* startup.el (startup-setup-paths-warning): Added `lisp-directory'
+	to the list of variables that cause a warning when nil.
+
+	* toolbar.el (init-toolbar-location): Now works even when there's
+	no toolbar icon directory.
+
+1998-04-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* help.el (view-lossage): Recognize it.
+
+	* simple.el (log-message): Mark multiline messages.
+
+1998-04-22  SL Baur  <steve@altair.xemacs.org>
+
+	* info.el (Info-exit): `toolbar-info-frame' doesn't necessarily exist.
+
+1998-4-20  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* package-get.el (package-get-all):  add `\n' separator to
+	interactive specification so that both variables are read
+
+1998-04-22  Didier Verna  <verna@inf.enst.fr>
+
+	* x-menubar.el: ported the options menu to Custom.
+	Moved the "read only" toggle button to the buffers menu.
+	Corrected some missing ;;;###autoload or defcustom.
+
+	* scrollbar.el (scrollbars-visible-p): defcustom wrapper around
+	the scrollbar-visible specifier for options menu handling.
+
+	* toolbar.el (toolbar-visible-p)
+		     (toolbar-captioned-p)
+		     (default-toolbar-position): defcustom wrappers around
+	the toolbar specifiers for options menu handling.
+
+	* frame.el (get-frame-for-buffer-default-instance-limit):
+	defcustom it for options menu handling.
+
+	* font-lock.el (font-lock-mode): defcustom and autolaod the variable
+	font-lock-mode for options menu handling.
+
+	* cus-start.el: added Custom properties to overwrite-mode for
+	options menu handling.
+
+Wed Apr 22 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* about.el: shameless self-promotion.
+
+1998-04-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* simple.el (raw-append-message): Slightly optimize.
+	(remove-message): Use `push' for clarity.
+	(append-message): Ditto.
+	(display-warning): Dito.
+	(raw-append-message): Send the message to the appropriate device.
+
+1998-04-22  SL Baur  <steve@altair.xemacs.org>
+
+	* auto-save.el (auto-save-cyclic-hash-14): De-ebolification.
+	From Sean MacLennan <Sean.MacLennan@pika.ca>
+
+1998-04-18  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* setup-paths.el: Changed `directory-sep-char' to
+	`path-separator', following a change in GNU Emacs.
+
+1998-04-19  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* info.el (Info-maybe-update-dir): Bug fix in `conservative' behaviour
+	(Info-build-dir-anew): Add a final newline.  
+	(Info-build-dir-anew): Do not issue warning when rebuilding policy 
+	is `always'
+	(Info-rebuild-dir): Ditto
+	
+	* dumped-lisp.el (preloaded-file-list): Added ldap.el
+
+1998-04-21  SL Baur  <steve@altair.xemacs.org>
+
+	* simple.el (count-words-buffer): Retain zmacs region.
+	(count-words-region): Ditto.
+	* simple.el: (what-line): Expanded line counts.
+	(count-lines): New parameter to conditionalize whether collapsed
+	lines get counted.
+	From Bob Weiner <weiner@altrasoft.com>
+
+1998-04-19  SL Baur  <steve@altair.xemacs.org>
+
+	* packages.el (package-locations): infodock-packages must override 
+	mule-packages and packages.
+
+1998-04-19  Jonathan Harris <jhar@tardis.ed.a.uk>
+
+	* wid-edit.el:
+	remove rude messages from widget-activation-widget-mapper
+	and widget-activation-glyph-mapper
+
 1998-04-17  Jonathan Harris <jhar@tardis.ed.ac.uk>
 
 	* toolbar.el: Remove (featurep 'x) test from

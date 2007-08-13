@@ -475,9 +475,29 @@ main (int argc, char *argv[])
     } /* eval_function || eval_form || load_library */
   else if (batch)
     {
-      fprintf (stderr, "%s: `-batch' requires an evaluation\n",
-	       progname);
-      exit (1);
+      /* no sexp on the command line, so read it from stdin */
+      int nb;
+
+#if defined(INTERNET_DOMAIN_SOCKETS)
+      connect_type = make_connection (hostarg, port, &s);
+#else
+      connect_type = make_connection (NULL, (u_short) 0, &s);
+#endif
+      sprintf (command, "(gnuserv-eval%s '(progn ", quick ? "-quickly" : "");
+      send_string (s, command);
+
+      while ((nb = read(fileno(stdin), buffer, GSERV_BUFSZ-1)) > 0)
+	{
+	  buffer[nb] = '\0';
+	  send_string(s, buffer);
+	}
+      send_string(s,"))");
+      send_string (s, EOT_STR);
+      if (read_line (s, result) == 0)
+	{
+	  fprintf (stderr, "%s: Could not read\n", progname);
+	  exit (1);
+	}
     }
 
   if (!batch)

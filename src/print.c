@@ -28,7 +28,6 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#ifndef standalone
 #include "backtrace.h"
 #include "buffer.h"
 #include "bytecode.h"
@@ -39,8 +38,6 @@ Boston, MA 02111-1307, USA.  */
 #include "insdel.h"
 #include "lstream.h"
 #include "sysfile.h"
-
-#endif /* not standalone */
 
 #include <float.h>
 /* Define if not in float.h */
@@ -152,7 +149,7 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
 	       Lisp_Object reloc, Bytecount offset, Bytecount len)
 {
   /* This function can GC */
-  Charcount ccoff, cclen;
+  Charcount cclen;
   /* We change the value of nonreloc (fetching it from reloc as
      necessary), but we don't want to pass this changed value on to
      other functions that take both a nonreloc and a reloc, or things
@@ -172,7 +169,6 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
   if (STRINGP (reloc))
     newnonreloc = XSTRING_DATA (reloc);
 
-  ccoff = bytecount_to_charcount (newnonreloc, offset);
   cclen = bytecount_to_charcount (newnonreloc + offset, len);
 
   if (LSTREAMP (function))
@@ -182,8 +178,7 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
 	  /* Protect against Lstream_write() causing a GC and
 	     relocating the string.  For small strings, we do it by
 	     alloc'ing the string and using a copy; for large strings,
-	     we inhibit GC.  Now that print_streams are dead, this
-	     case should happen very rarely anyway.  */
+	     we inhibit GC.  */
 	  if (len < 65536)
 	    {
 	      Bufbyte *copied = alloca_array (Bufbyte, len);
@@ -206,8 +201,6 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
       if (print_unbuffered)
 	Lstream_flush (XLSTREAM (function));
     }
-
-#ifndef standalone
   else if (BUFFERP (function))
     {
       CHECK_LIVE_BUFFER (function);
@@ -215,10 +208,10 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
     }
   else if (MARKERP (function))
     {
-      /* marker_position will err if marker doesn't point anywhere */
+      /* marker_position() will err if marker doesn't point anywhere.  */
       Bufpos spoint = marker_position (function);
 
-      buffer_insert_string_1 (XBUFFER (Fmarker_buffer (function)),
+      buffer_insert_string_1 (XMARKER (function)->buffer,
 			      spoint, nonreloc, reloc, offset, len,
 			      0);
       Fset_marker (function, make_int (spoint + cclen),
@@ -226,12 +219,15 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
     }
   else if (FRAMEP (function))
     {
+      /* This gets used by functions not invoking print_prepare(),
+         such as Fwrite_char.  */
       struct frame *f = XFRAME (function);
+      CHECK_LIVE_FRAME (function);
+
       if (!EQ (Vprint_message_label, echo_area_status (f)))
 	clear_echo_area_from_print (f, Qnil, 1);
       echo_area_append (f, nonreloc, reloc, offset, len, Vprint_message_label);
     }
-#endif /* not standalone */
   else if (EQ (function, Qt) || EQ (function, Qnil))
     {
       write_string_to_stdio_stream (stdout, 0, newnonreloc, offset, len,
@@ -239,6 +235,7 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
     }
   else
     {
+      Charcount ccoff = bytecount_to_charcount (newnonreloc, offset);
       Charcount iii;
 
       for (iii = ccoff; iii < cclen + ccoff; iii++)
@@ -252,6 +249,11 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
 
   UNGCPRO;
 }
+
+#define RESET_PRINT_GENSYM do {			\
+  if (!CONSP (Vprint_gensym))			\
+    Vprint_gensym_alist = Qnil;			\
+} while (0)
 
 static Lisp_Object
 canonicalize_printcharfun (Lisp_Object printcharfun)
@@ -260,54 +262,92 @@ canonicalize_printcharfun (Lisp_Object printcharfun)
     printcharfun = Vstandard_output;
 
   if (EQ (printcharfun, Qt) || NILP (printcharfun))
-    {
-#ifndef standalone
-      printcharfun = Fselected_frame (Qnil); /* print to minibuffer */
-#endif
-    }
+    printcharfun = Fselected_frame (Qnil); /* print to minibuffer */
+
   return printcharfun;
 }
 
-/* Now that print_streams are dead, I wonder if the following two
-   functions are needed as separate entities.  */
-
 static Lisp_Object
-print_prepare (Lisp_Object printcharfun)
+print_prepare (Lisp_Object printcharfun, Lisp_Object *frame_kludge)
 {
   /* Emacs won't print whilst GCing, but an external debugger might */
   if (gc_in_progress)
     return Qnil;
 
+  RESET_PRINT_GENSYM;
+
   printcharfun = canonicalize_printcharfun (printcharfun);
-  if (!CONSP (Vprint_gensym))
-    Vprint_gensym_alist = Qnil;
+
+  /* Here we could safely return the canonicalized PRINTCHARFUN.
+     However, if PRINTCHARFUN is a frame, printing of complex
+     structures becomes very expensive, because `append-message'
+     (called by echo_area_append) gets called as many times as
+     output_string() is called (and that's a *lot*).  append-message
+     tries to keep top of the message-stack in sync with the contents
+     of " *Echo Area" buffer, consing a new string for each component
+     of the printed structure.  For instance, if you print (a a),
+     append-message will cons up the following strings:
+
+         "("
+	 "(a"
+	 "(a "
+	 "(a a"
+	 "(a a)"
+
+     and will use only the last one.  With larger objects, this turns
+     into an O(n^2) consing frenzy that locks up XEmacs in incessant
+     garbage collection.
+
+     We prevent this by creating a resizing_buffer stream and letting
+     the printer write into it.  print_finish() will notice this
+     stream, and invoke echo_area_append() with the stream's buffer,
+     only once.  */
+  if (FRAMEP (printcharfun))
+    {
+      CHECK_LIVE_FRAME (printcharfun);
+      *frame_kludge = printcharfun;
+      printcharfun = make_resizing_buffer_output_stream ();
+    }
 
   return printcharfun;
 }
 
 static void
-print_finish (Lisp_Object stream)
+print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
 {
   /* Emacs won't print whilst GCing, but an external debugger might */
   if (gc_in_progress)
     return;
 
-  if (!CONSP (Vprint_gensym))
-    Vprint_gensym_alist = Qnil;
+  RESET_PRINT_GENSYM;
+
+  /* See the comment in print_prepare().  */
+  if (FRAMEP (frame_kludge))
+    {
+      struct frame *f = XFRAME (frame_kludge);
+      Lstream *str = XLSTREAM (stream);
+      CHECK_LIVE_FRAME (frame_kludge);
+
+      Lstream_flush (str);
+      if (!EQ (Vprint_message_label, echo_area_status (f)))
+	clear_echo_area_from_print (f, Qnil, 1);
+      echo_area_append (f, resizing_buffer_stream_ptr (str),
+			Qnil, 0, Lstream_byte_count (str),
+			Vprint_message_label);	
+      Lstream_delete (str);
+    }
 }
 
-#if 1 /* Prefer space over "speed" */
-#define write_char_internal(string_of_length_1, stream) \
-  write_string_1 ((CONST Bufbyte *) (string_of_length_1), 1, (stream))
-#else
-#define write_char_internal(string_of_length_1, stream) \
-  output_string ((stream), (CONST Bufbyte *) (string_of_length_1), Qnil, 0, 1)
-#endif
+/* Used for printing a character.  STRING_OF_LENGTH_1 must contain a
+   single-byte character, not just any emchar.  */
+#define write_char_internal(string_of_length_1, stream)			\
+  output_string ((stream), (CONST Bufbyte *) (string_of_length_1),	\
+		 Qnil, 0, 1)
 
 /* NOTE:  Do not call this with the data of a Lisp_String,
  *  as printcharfun might cause a GC, which might cause
  *  the string's data to be relocated.
- *  Use print_object_internal (string, printcharfun, 0)
+ *  Use print_internal (string, printcharfun, 0)
  *  to princ a Lisp_String
  * Note: "stream" should be the result of "canonicalize_printcharfun"
  *  (ie Qnil means stdout, not Vstandard_output, etc)
@@ -316,7 +356,9 @@ void
 write_string_1 (CONST Bufbyte *str, Bytecount size, Lisp_Object stream)
 {
   /* This function can GC */
+#ifdef ERROR_CHECK_BUFPOS
   assert (size >= 0);
+#endif
   output_string (stream, str, Qnil, 0, size);
 }
 
@@ -339,12 +381,12 @@ STREAM defaults to the value of `standard-output' (which see).
   Bytecount len;
 
   CHECK_CHAR_COERCE_INT (ch);
+  RESET_PRINT_GENSYM;
   len = set_charptr_emchar (str, XCHAR (ch));
   output_string (canonicalize_printcharfun (stream), str, Qnil, 0, len);
+  RESET_PRINT_GENSYM;
   return ch;
 }
-
-#ifndef standalone
 
 void
 temp_output_buffer_setup (CONST char *bufname)
@@ -428,7 +470,6 @@ to get the buffer displayed.  It gets one argument, the buffer to display.
 
   return unbind_to (speccount, val);
 }
-#endif /* not standalone */
 
 DEFUN ("terpri", Fterpri, 0, 1, 0, /*
 Output a newline to STREAM.
@@ -452,20 +493,17 @@ Output stream is STREAM, or value of `standard-output' (which see).
        (object, stream))
 {
   /* This function can GC */
-  Lisp_Object the_stream = Qnil;
+  Lisp_Object the_stream = Qnil, frame = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
   GCPRO3 (object, stream, the_stream);
   print_depth = 0;
-  the_stream = print_prepare (stream);
+  the_stream = print_prepare (stream, &frame);
   print_internal (object, the_stream, 1);
-  print_finish (the_stream);
+  print_finish (the_stream, frame);
   UNGCPRO;
   return object;
 }
-
-/* Stream to which prin1-to-string prints. */
-static Lisp_Object Vprin1_to_string_stream;
 
 DEFUN ("prin1-to-string", Fprin1_to_string, 1, 2, 0, /*
 Return a string containing the printed representation of OBJECT,
@@ -476,29 +514,23 @@ second argument NOESCAPE is non-nil.
        (object, noescape))
 {
   /* This function can GC */
-  Lstream *stream;
-  struct gcpro gcpro1;
+  Lisp_Object stream;
+  Lstream *str;
+  struct gcpro gcpro1, gcpro2;
 
-  /* We avoid creating a new stream for every invocation of
-     prin1_to_string, for better memory usage.  #### Is it necessary?  */
+  stream = make_resizing_buffer_output_stream ();
+  str = XLSTREAM (stream);
 
-  if (NILP (Vprin1_to_string_stream))
-    Vprin1_to_string_stream = make_resizing_buffer_output_stream ();
-  stream = XLSTREAM (Vprin1_to_string_stream);
-  Lstream_rewind (stream);
-
-  /* In case a caller forgot to protect. */
-  GCPRO1 (object);
+  /* Protect OBJECT, in case a caller forgot to protect. */
+  GCPRO2 (object, stream);
   print_depth = 0;
-  if (!CONSP (Vprint_gensym))
-    Vprint_gensym_alist = Qnil;
-  print_internal (object, Vprin1_to_string_stream, NILP (noescape));
-  if (!CONSP (Vprint_gensym))
-    Vprint_gensym_alist = Qnil;
-  Lstream_flush (stream);
+  RESET_PRINT_GENSYM;
+  print_internal (object, stream, NILP (noescape));
+  RESET_PRINT_GENSYM;
+  Lstream_flush (str);
   UNGCPRO;
-  return make_string (resizing_buffer_stream_ptr (stream),
-		      Lstream_byte_count (stream));
+  return make_string (resizing_buffer_stream_ptr (str),
+		      Lstream_byte_count (str));
 }
 
 DEFUN ("princ", Fprinc, 1, 2, 0, /*
@@ -510,14 +542,14 @@ Output stream is STREAM, or value of standard-output (which see).
        (obj, stream))
 {
   /* This function can GC */
-  Lisp_Object the_stream = Qnil;
+  Lisp_Object the_stream = Qnil, frame = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
   GCPRO3 (obj, stream, the_stream);
-  the_stream = print_prepare (stream);
+  the_stream = print_prepare (stream, &frame);
   print_depth = 0;
   print_internal (obj, the_stream, 0);
-  print_finish (the_stream);
+  print_finish (the_stream, frame);
   UNGCPRO;
   return obj;
 }
@@ -531,16 +563,16 @@ Output stream is STREAM, or value of `standard-output' (which see).
        (obj, stream))
 {
   /* This function can GC */
-  Lisp_Object the_stream = Qnil;
+  Lisp_Object the_stream = Qnil, frame = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
   GCPRO3 (obj, stream, the_stream);
-  the_stream = print_prepare (stream);
+  the_stream = print_prepare (stream, &frame);
   print_depth = 0;
   write_char_internal ("\n", the_stream);
   print_internal (obj, the_stream, 1);
   write_char_internal ("\n", the_stream);
-  print_finish (the_stream);
+  print_finish (the_stream, frame);
   UNGCPRO;
   return obj;
 }
@@ -761,6 +793,40 @@ float_to_string (char *buf, double data)
     }
 }
 #endif /* LISP_FLOAT_TYPE */
+
+/* Print NUMBER to BUFFER.  The digits are first written in reverse
+   order (the least significant digit first), and are then reversed.
+   This is equivalent to sprintf(buffer, "%ld", number), only much
+   faster.  */
+void
+long_to_string (char *buffer, long number)
+{
+  char *p;
+  int i, l;
+
+  if (number < 0)
+    {
+      *buffer++ = '-';
+      number = -number;
+    }
+  p = buffer;
+  /* Print the digits to the string.  */
+  do
+    {
+      *p++ = number % 10 + '0';
+      number /= 10;
+    }
+  while (number);
+  /* And reverse them.  */
+  l = p - buffer - 1;
+  for (i = l/2; i >= 0; i--)
+    {
+      char c = buffer[i];
+      buffer[i] = buffer[l - i];
+      buffer[l - i] = c;
+    }
+  buffer[l + 1] = '\0';
+}
 
 static void
 print_vector_internal (CONST char *start, CONST char *end,
@@ -911,8 +977,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		  write_char_internal ("\\", printcharfun);
 		  /* This is correct for Mule because the
 		     character is either \ or " */
-		  write_char_internal ((char *) (string_data (s) + i),
-				       printcharfun);
+		  write_char_internal (string_data (s) + i, printcharfun);
 		}
 	      last = i + 1;
 	    }
@@ -927,41 +992,6 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       write_char_internal ("\"", printcharfun);
     }
   UNGCPRO;
-  return;
-}
-
-/* Print NUMBER to BUFFER.  The digits are first written in reverse
-   order (the least significant digit first), and are then reversed.
-   This is equivalent to sprintf(buffer, "%ld", number), only much
-   faster.  */
-void
-long_to_string (char *buffer, long number)
-{
-  char *p;
-  int i, l;
-
-  if (number < 0)
-    {
-      *buffer++ = '-';
-      number = -number;
-    }
-  p = buffer;
-  /* Print the digits to the string.  */
-  do
-    {
-      *p++ = number % 10 + '0';
-      number /= 10;
-    }
-  while (number);
-  /* And reverse them.  */
-  l = p - buffer - 1;
-  for (i = l/2; i >= 0; i--)
-    {
-      char c = buffer[i];
-      buffer[i] = buffer[l - i];
-      buffer[l - i] = c;
-    }
-  buffer[l + 1] = '\0';
 }
 
 static void
@@ -988,9 +1018,9 @@ internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int escapeflag)
 {
   char buf[200];
-  sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%p>",
+  sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
 	   XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
-	   (void *) XPNTR (obj));
+	   (unsigned long) XPNTR (obj));
   write_c_string (buf, printcharfun);
 }
 
@@ -1056,26 +1086,27 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       {
 	/* God intended that this be #\..., you know. */
 	Emchar ch = XCHAR (obj);
-	write_c_string ("?", printcharfun);
+	char *p = buf;
+	*p++ = '?';
 	if (ch == '\n')
-	  strcpy (buf, "\\n");
+	  *p++ = '\\', *p++ = 'n';
 	else if (ch == '\r')
-	  strcpy (buf, "\\r");
+	  *p++ = '\\', *p++ = 'r';
 	else if (ch == '\t')
-	  strcpy (buf, "\\t");
-	else if (ch < 32) {
-	  sprintf (buf, "\\^%c", ch + 64);
-	  if ((ch + 64) == '\\') {
-	    strcat(buf, "\\");
+	  *p++ = '\\', *p++ = 't';
+	else if (ch < 32)
+	  {
+	    *p++ = '\\', *p++ = '^';
+	    *p++ = ch + 64;
+	    if ((ch + 64) == '\\')
+	      *p++ = '\\';
 	  }
-	} else if (ch == 127)
-	  strcpy (buf, "\\^?");
+	else if (ch == 127)
+	  *p++ = '\\', *p++ = '^', *p++ = '?';
 	else if (ch >= 128 && ch < 160)
 	  {
-	    Bytecount i;
-	    strcpy (buf, "\\^");
-	    i = set_charptr_emchar ((unsigned char *) (buf + 2), ch + 64);
-	    buf[2+i] = '\0';
+	    *p++ = '\\', *p++ = '^';
+	    p += set_charptr_emchar ((Bufbyte *)p, ch + 64);
 	  }
 	else if (ch < 127
 		 && !isdigit (ch)
@@ -1083,21 +1114,17 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		 && ch != '^') /* must not backslash this or it will
 				  be interpreted as the start of a
 				  control char */
-	  sprintf (buf, "\\%c", ch);
+	  *p++ = '\\', *p++ = ch;
 	else
-	  {
-	    Bytecount i;
-	    i = set_charptr_emchar ((unsigned char *) buf, ch);
-	    buf[i] = '\0';
-	  }
-	write_c_string (buf, printcharfun);
+	  p += set_charptr_emchar ((Bufbyte *)p, ch);
+	output_string (printcharfun, (Bufbyte *)buf, Qnil, 0, p - buf);
 	break;
       }
 
 #ifndef LRECORD_STRING
     case Lisp_Type_String:
       {
-	print_string(obj, printcharfun, escapeflag);
+	print_string (obj, printcharfun, escapeflag);
 	break;
       }
 #endif /* ! LRECORD_STRING */
@@ -1125,12 +1152,11 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 #ifndef LRECORD_VECTOR
     case Lisp_Type_Vector:
       {
-	struct gcpro gcpro1, gcpro2;
-
 	/* If deeper than spec'd depth, print placeholder.  */
 	if (INTP (Vprint_level)
 	    && print_depth > XINT (Vprint_level))
 	  {
+	    struct gcpro gcpro1, gcpro2;
 	    GCPRO2 (obj, printcharfun);
 	    write_c_string ("...", printcharfun);
 	    UNGCPRO;
@@ -1293,7 +1319,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   /* This function can GC */
   /* #### Bug!! (intern "") isn't printed in some distinguished way */
   /* ####  (the reader also loses on it) */
-  struct Lisp_String *name = XSYMBOL (obj)->name;
+  struct Lisp_String *name = symbol_name (XSYMBOL (obj));
   Bytecount size = string_length (name);
   struct gcpro gcpro1, gcpro2;
 
@@ -1372,6 +1398,9 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
 #ifdef LISP_FLOAT_TYPE
     if (!confusing)
+      /* #### Ugh, this is needlessly complex and slow for what we
+         need here.  It might be a good idea to copy equivalent code
+         from FSF.  --hniksic */
       confusing = isfloat_string ((char *) data);
 #endif
     if (confusing)
@@ -1406,6 +1435,9 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   UNGCPRO;
 }
 
+/* #ifdef DEBUG_XEMACS */
+/* I don't like seeing `Note: Strange doc (not fboundp) for function */
+/* alternate-debugging-output @ 429542' -slb */
 int alternate_do_pointer;
 char alternate_do_string[5000];
 
@@ -1414,7 +1446,6 @@ Append CHARACTER to the array `alternate_do_string'.
 This can be used in place of `external-debugging-output' as a function
 to be passed to `print'.  Before calling `print', set `alternate_do_pointer'
 to 0.
-
 */
        (character))
 {
@@ -1431,6 +1462,7 @@ to 0.
   alternate_do_string[alternate_do_pointer] = 0;
   return character;
 }
+/* #endif /* DEBUG_XEMACS */
 
 DEFUN ("external-debugging-output", Fexternal_debugging_output, 1, 3, 0, /*
 Write CHAR-OR-STRING to stderr or stdout.
@@ -1502,7 +1534,7 @@ FILE = nil means just close any termscript file currently open.
       file = Fexpand_file_name (file, Qnil);
       termscript = fopen ((char *) XSTRING_DATA (file), "w");
       if (termscript == NULL)
-	report_file_error ("Opening termscript", Fcons (file, Qnil));
+	report_file_error ("Opening termscript", list1 (file));
     }
   return Qnil;
 }
@@ -1672,9 +1704,7 @@ syms_of_print (void)
   DEFSUBR (Fexternal_debugging_output);
   DEFSUBR (Fopen_termscript);
   defsymbol (&Qexternal_debugging_output, "external-debugging-output");
-#ifndef standalone
   DEFSUBR (Fwith_output_to_temp_buffer);
-#endif /* not standalone */
 }
 
 void
@@ -1784,7 +1814,4 @@ Label for minibuffer messages created with `print'.  This should
 generally be bound with `let' rather than set.  (See `display-message'.)
 */ );
   Vprint_message_label = Qprint;
-
-  Vprin1_to_string_stream = Qnil;
-  staticpro (&Vprin1_to_string_stream);
 }

@@ -31,6 +31,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#include "opaque.h"
 
 #include <errno.h>
 #include <lber.h>
@@ -129,19 +130,12 @@ print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     error ("printing unreadable object #<ldap %s>",
            XSTRING_DATA (ldap->host));
 
-  if (!escapeflag)
-    {
-      print_internal (ldap->host, printcharfun, 0);
-    }
-  else
-    {
-      write_c_string (GETTEXT ("#<ldap "), printcharfun);
-      print_internal (ldap->host, printcharfun, 1);
-      write_c_string (" state:",printcharfun);
-      print_internal (ldap->status_symbol, printcharfun, 1);
-      sprintf (buf, " 0x%x>", ldap);
-      write_c_string (buf, printcharfun);
-    }
+  write_c_string ("#<ldap ", printcharfun);
+  print_internal (ldap->host, printcharfun, 1);
+  write_c_string (" state:",printcharfun);
+  print_internal (ldap->status_symbol, printcharfun, 1);
+  sprintf (buf, " 0x%x>", ldap);
+  write_c_string (buf, printcharfun);
 }
 
 static struct Lisp_LDAP *
@@ -227,14 +221,14 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
 
   struct Lisp_LDAP *lisp_ldap;
   LDAP *ld;
-  int   ldap_port = 0;
+  int  ldap_port = 0;
   int  ldap_auth = LDAP_AUTH_SIMPLE;
   char *ldap_binddn = NULL;
   char *ldap_passwd = NULL;
   int  ldap_deref = LDAP_DEREF_NEVER;
   int  ldap_timelimit = 0;
   int  ldap_sizelimit = 0;
-  int err;
+  int  err;
 
   Lisp_Object ldap, list, keyword, value;
   struct gcpro gcpro1;
@@ -390,6 +384,23 @@ it was already closed before the call
 /************************************************************************/
 /*                  Working on a LDAP connection                        */
 /************************************************************************/
+struct ldap_unwind_struct
+{
+  LDAPMessage *res;
+  char **vals;
+};
+
+
+static Lisp_Object
+ldap_search_unwind (Lisp_Object unwind_obj)
+{
+  struct ldap_unwind_struct *unwind =
+    (struct ldap_unwind_struct *) get_opaque_ptr (unwind_obj);
+  if (unwind->res != (LDAPMessage *)NULL)
+    ldap_msgfree (unwind->res);
+  if (unwind->vals != (char **)NULL)
+    ldap_value_free (unwind->vals);
+}
 
 DEFUN ("ldap-search-internal", Fldap_search_internal, 2, 6, 0, /*
 Perform a search on an open LDAP connection.
@@ -412,22 +423,26 @@ an alist of attribute/values.
 
   /* Vars for query */
   LDAP *ld;
-  LDAPMessage *res, *e;
+  LDAPMessage *e;
   BerElement *ptr;
   char *a;
   int i, rc, err;
-
-  char **vals = NULL;
   int  matches;
+  struct ldap_unwind_struct unwind;
 
   int  ldap_scope = LDAP_SCOPE_SUBTREE;
   char **ldap_attributes = NULL;
+
+  int speccount = specpdl_depth ();
 
   Lisp_Object list, entry, result;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
   list = entry = result = Qnil;
   GCPRO3(list, entry, result);
+
+  unwind.res = (LDAPMessage *)NULL;
+  unwind.vals = (char **)NULL;
 
   /* Do all the parameter checking  */
   CHECK_LIVE_LDAP (ldap);
@@ -463,23 +478,21 @@ an alist of attribute/values.
   /* Attributes to search */
   if (!NILP (attrs))
     {
-      Lisp_Object attr_left = attrs;
-      struct gcpro ngcpro1;
-
-      NGCPRO1 (attr_left);
       CHECK_CONS (attrs);
+      ldap_attributes = alloca_array (char *, 1 + XINT (Flength (attrs)));
 
-      ldap_attributes = alloca ((XINT (Flength (attrs)) + 1)*sizeof (char *));
-
-      for (i=0; !NILP (attr_left); i++) {
-        CHECK_STRING (XCAR (attr_left));
-        ldap_attributes[i] = alloca (XSTRING_LENGTH (XCAR (attr_left)) + 1);
-        strcpy(ldap_attributes[i],
-               (char *)(XSTRING_DATA( XCAR (attr_left))));
-        attr_left = XCDR (attr_left);
-      }
+      i = 0;
+      EXTERNAL_LIST_LOOP (attrs, attrs)
+	{
+	  Lisp_Object current = XCAR (attrs);
+	  CHECK_STRING (current);
+	  ldap_attributes[i] =
+	    alloca_array (char, 1 + XSTRING_LENGTH (current));
+	  memcpy (ldap_attributes[i],
+		  XSTRING_DATA (current), XSTRING_LENGTH (current));
+	  ++i;
+	}
       ldap_attributes[i] = NULL;
-      NUNGCPRO;
     }
 
   /* Attributes only ? */
@@ -498,17 +511,22 @@ an alist of attribute/values.
       signal_ldap_error (ld);
     }
 
+  /* Ensure we don't exit without cleaning up */
+  record_unwind_protect (ldap_search_unwind,
+                         make_opaque_ptr (&unwind));
+
   /* Build the results list */
   matches = 0;
 
   /* ldap_result calls select() and can get wedged by EINTR signals */
   slow_down_interrupts ();
-  rc = ldap_result (ld, LDAP_RES_ANY, 0, NULL, &res);
+  rc = ldap_result (ld, LDAP_RES_ANY, 0, NULL, &(unwind.res));
   speed_up_interrupts ();
   while ( rc == LDAP_RES_SEARCH_ENTRY )
     {
+      QUIT;
       matches ++;
-      e = ldap_first_entry (ld, res);
+      e = ldap_first_entry (ld, unwind.res);
       message ("Parsing results... %d", matches);
       entry = Qnil;
       for (a= ldap_first_attribute (ld, e, &ptr);
@@ -516,25 +534,27 @@ an alist of attribute/values.
            a= ldap_next_attribute (ld, e, ptr) )
         {
           list = Fcons (build_string (a), Qnil);
-          vals = ldap_get_values (ld, e, a);
-          if (vals != NULL)
+          unwind.vals = ldap_get_values (ld, e, a);
+          if (unwind.vals != NULL)
             {
-              for (i=0; vals[i]!=NULL; i++)
+              for (i=0; unwind.vals[i]!=NULL; i++)
                 {
-                  list = Fcons (build_string (vals[i]),
+                  list = Fcons (build_string (unwind.vals[i]),
                                 list);
                 }
             }
           entry = Fcons (Fnreverse (list),
                          entry);
-          ldap_value_free (vals);
+          ldap_value_free (unwind.vals);
+          unwind.vals = (char **)NULL;
         }
       result = Fcons (Fnreverse (entry),
                       result);
-      ldap_msgfree (res);
+      ldap_msgfree (unwind.res);
+      unwind.res = (LDAPMessage *)NULL;
 
       slow_down_interrupts ();
-      rc = ldap_result (ld, LDAP_RES_ANY, 0, NULL, &res);
+      rc = ldap_result (ld, LDAP_RES_ANY, 0, NULL, &(unwind.res));
       speed_up_interrupts ();
     }
 
@@ -543,17 +563,19 @@ an alist of attribute/values.
       signal_ldap_error (ld);
     }
 
-  if ((rc = ldap_result2error (ld, res, 0)) != LDAP_SUCCESS)
+  if ((rc = ldap_result2error (ld, unwind.res, 0)) != LDAP_SUCCESS)
     {
       signal_ldap_error (ld);
     }
 
-  ldap_msgfree (res);
+  ldap_msgfree (unwind.res);
+  unwind.res = (LDAPMessage *)NULL;
   message ("Done.");
 
   result = Fnreverse (result);
   clear_message ();
 
+  unbind_to (speccount, Qnil);
   UNGCPRO;
   return result;
 }

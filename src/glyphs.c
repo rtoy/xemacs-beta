@@ -72,6 +72,9 @@ DEFINE_IMAGE_INSTANTIATOR_FORMAT (inherit);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (string);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (formatted_string);
 
+Lisp_Object x_locate_pixmap_file (Lisp_Object name);
+Lisp_Object mswindows_locate_pixmap_file (Lisp_Object name);
+
 #ifdef HAVE_XPM
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (xpm);
 Lisp_Object Qxpm;
@@ -1447,6 +1450,96 @@ formatted_string_instantiate (Lisp_Object image_instance,
     }
   else
     incompatible_image_types (instantiator, dest_mask, IMAGE_TEXT_MASK);
+}
+
+
+/************************************************************************/
+/*                        pixmap file functions                         */
+/************************************************************************/
+
+/* If INSTANTIATOR refers to inline data, return Qnil.
+   If INSTANTIATOR refers to data in a file, return the full filename
+   if it exists; otherwise, return a cons of (filename).
+
+   FILE_KEYWORD and DATA_KEYWORD are symbols specifying the
+   keywords used to look up the file and inline data,
+   respectively, in the instantiator.  Normally these would
+   be Q_file and Q_data, but might be different for mask data. */
+
+Lisp_Object
+potential_pixmap_file_instantiator (Lisp_Object instantiator,
+				    Lisp_Object file_keyword,
+				    Lisp_Object data_keyword,
+				    Lisp_Object console_type)
+{
+  Lisp_Object file;
+  Lisp_Object data;
+
+  assert (VECTORP (instantiator));
+
+  data = find_keyword_in_vector (instantiator, data_keyword);
+  file = find_keyword_in_vector (instantiator, file_keyword);
+
+  if (!NILP (file) && NILP (data))
+    {
+      Lisp_Object retval = MAYBE_LISP_CONTYPE_METH
+	(decode_console_type(console_type, ERROR_ME), 
+	 locate_pixmap_file, (file));
+
+      if (!NILP (retval))
+	return retval;
+      else
+	return Fcons (file, Qnil); /* should have been file */
+    }
+  
+  return Qnil;
+}
+
+Lisp_Object
+simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
+			     Lisp_Object image_type_tag)
+{
+  /* This function can call lisp */
+  Lisp_Object file = Qnil;
+  struct gcpro gcpro1, gcpro2;
+  Lisp_Object alist = Qnil;
+
+  GCPRO2 (file, alist);
+
+  /* Now, convert any file data into inline data.  At the end of this,
+     `data' will contain the inline data (if any) or Qnil, and `file'
+     will contain the name this data was derived from (if known) or
+     Qnil.
+
+     Note that if we cannot generate any regular inline data, we
+     skip out. */
+
+  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data, 
+					     console_type);
+
+  if (CONSP (file)) /* failure locating filename */
+    signal_double_file_error ("Opening pixmap file",
+			      "no such file or directory",
+			      Fcar (file));
+
+  if (NILP (file)) /* no conversion necessary */
+    RETURN_UNGCPRO (inst);
+
+  alist = tagged_vector_to_alist (inst);
+
+  {
+    Lisp_Object data = make_string_from_file (file);
+    alist = remassq_no_quit (Q_file, alist);
+    /* there can't be a :data at this point. */
+    alist = Fcons (Fcons (Q_file, file),
+		   Fcons (Fcons (Q_data, data), alist));
+  }
+
+  {
+    Lisp_Object result = alist_to_tagged_vector (image_type_tag, alist);
+    free_alist (alist);
+    RETURN_UNGCPRO (result);
+  }
 }
 
 

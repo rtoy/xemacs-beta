@@ -236,504 +236,566 @@
        ["Set..." customize-customized]
        ["Apropos..." customize-apropos]
        ["Browse..." customize-browse])
-      ["Read Only" (toggle-read-only)
-       :style toggle :selected buffer-read-only]
       ("Editing Options"
-       ["Overstrike" (progn
-		       (overwrite-mode current-prefix-arg)
-		       (setq-default overwrite-mode overwrite-mode))
+       ["Overstrike"
+	(progn
+	  (setq overwrite-mode (if overwrite-mode nil 'overwrite-mode-textual))
+	  (customize-set-variable 'overwrite-mode overwrite-mode))
 	:style toggle :selected overwrite-mode]
-       ["Case Sensitive Search" (progn
-				  (setq case-fold-search
-					(not case-fold-search))
-				  (setq-default case-fold-search
-						case-fold-search))
+       ["Case Sensitive Search" 
+	(customize-set-variable 'case-fold-search 
+				(setq case-fold-search (not case-fold-search)))
 	:style toggle :selected (not case-fold-search)]
-       ["Case Matching Replace" (setq case-replace (not case-replace))
+       ["Case Matching Replace" 
+	(customize-set-variable 'case-replace (not case-replace))
 	:style toggle :selected case-replace]
-       ["Auto Delete Selection" (pending-delete-mode
-				 (if pending-delete-mode 0 1))
+       ["Auto Delete Selection"
+	(customize-set-variable 'pending-delete-mode (not pending-delete-mode))
 	:style toggle
 	:selected (and (boundp 'pending-delete-mode) pending-delete-mode)
-	:active (fboundp 'pending-delete-mode)]
-       ["Active Regions" (setq zmacs-regions (not zmacs-regions))
+	:active (boundp 'pending-delete-mode)]
+       ["Active Regions" 
+	(customize-set-variable 'zmacs-regions (not zmacs-regions))
 	:style toggle :selected zmacs-regions]
-       ["Mouse Paste At Text Cursor" (setq mouse-yank-at-point
-					   (not mouse-yank-at-point))
+       ["Mouse Paste At Text Cursor" 
+	(customize-set-variable 'mouse-yank-at-point (not mouse-yank-at-point))
 	:style toggle :selected mouse-yank-at-point]
-       ["Require Newline At End" (setq require-final-newline
-				       (or (eq require-final-newline 'ask)
-					   (not require-final-newline)))
-	:style toggle :selected (eq require-final-newline 't)]
-       ["Add Newline When Moving Past End" (setq next-line-add-newlines
-						 (not next-line-add-newlines))
+       ("Newline at end of file..."
+	["Don't require"
+	 (customize-set-variable 'require-final-newline nil)
+	 :style radio :selected (not require-final-newline)]
+	["Require"
+	 (customize-set-variable 'require-final-newline t)
+	 :style radio :selected (eq require-final-newline t)]
+	["Ask"
+	 (customize-set-variable 'require-final-newline 'ask)
+	 :style radio :selected (and require-final-newline
+				     (not (eq require-final-newline t)))])
+       ["Add Newline When Moving Past End" 
+	(customize-set-variable 'next-line-add-newlines 
+				(not next-line-add-newlines))
 	:style toggle :selected next-line-add-newlines]
        )
       ("General Options"
-       ["Teach Extended Commands" (setq teach-extended-commands-p
-					(not teach-extended-commands-p))
+       ["Teach Extended Commands" 
+	(customize-set-variable 'teach-extended-commands-p
+				(not teach-extended-commands-p))
 	:style toggle :selected teach-extended-commands-p]
-       ["Debug On Error" (setq debug-on-error (not debug-on-error))
+       ["Debug On Error"
+	(customize-set-variable 'debug-on-error (not debug-on-error))
 	:style toggle :selected debug-on-error]
-       ["Debug On Quit" (setq debug-on-quit (not debug-on-quit))
+       ["Debug On Quit" 
+	(customize-set-variable 'debug-on-quit (not debug-on-quit))
 	:style toggle :selected debug-on-quit]
        )
       ("Printing Options"
        ["Command-Line Switches for `lpr'/`lp'..."
-	(setq lpr-switches
-	      (read-expression "Switches for `lpr'/`lp': "
-			       (format "%S" lpr-switches)))
+	;; better to directly open a customization buffer, since the value
+	;; must be a list of strings, which is somewhat complex to prompt for.
+	(customize-variable 'lpr-switches)
 	(boundp 'lpr-switches)]
        ("Pretty-Print Paper Size"
 	["Letter"
-	 (setq ps-paper-type 'letter)
+	 (customize-set-variable 'ps-paper-type 'letter)
 	 :style radio
 	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'letter))
-	 :active (fboundp 'ps-print-buffer)]
+	 :active (boundp 'ps-paper-type)]
 	["Letter-small"
-	 (setq ps-paper-type 'letter-small)
+	 (customize-set-variable 'ps-paper-type 'letter-small)
 	 :style radio
 	 :selected (and (boundp 'ps-paper-type)
 			(eq ps-paper-type 'letter-small))
-	 :active (fboundp 'ps-print-buffer)]
+	 :active (boundp 'ps-paper-type)]
 	["Legal"
-	 (setq ps-paper-type 'legal)
+	 (customize-set-variable 'ps-paper-type 'legal)
 	 :style radio
-	 :selected (and (boundp 'ps-paper-type)
-			(eq ps-paper-type 'legal))
-	 :active (fboundp 'ps-print-buffer)]
+	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'legal))
+	 :active (boundp 'ps-paper-type)]
 	["Statement"
-	 (setq ps-paper-type 'statement)
+	 (customize-set-variable 'ps-paper-type 'statement)
 	 :style radio
-	 :selected (and (boundp 'ps-paper-type)
-			(eq ps-paper-type 'statement))
-	 :active (fboundp 'ps-print-buffer)]
-	["Executive"
-	 (setq ps-paper-type 'executive)
+	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'statement))
+	 :active (boundp 'ps-paper-type)]
+	["Executive" 
+	 (customize-set-variable 'ps-paper-type 'executive)
 	 :style radio
-	 :selected (and (boundp 'ps-paper-type)
-			(eq ps-paper-type 'executive))
-	 :active (fboundp 'ps-print-buffer)]
+	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'executive))
+	 :active (boundp 'ps-paper-type)]
 	["Tabloid"
-	 (setq ps-paper-type 'tabloid)
+	 (customize-set-variable 'ps-paper-type 'tabloid)
 	 :style radio
-	 :selected (and (boundp 'ps-paper-type)
-			(eq ps-paper-type 'tabloid))
-	 :active (fboundp 'ps-print-buffer)]
-	["Ledger"
-	 (setq ps-paper-type 'ledger)
+	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'tabloid))
+	 :active (boundp 'ps-paper-type)]
+	["Ledger" 
+	 (customize-set-variable 'ps-paper-type 'ledger)
 	 :style radio
-	 :selected (and (boundp 'ps-paper-type)
-			(eq ps-paper-type 'ledger))
-	 :active (fboundp 'ps-print-buffer)]
+	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'ledger))
+	 :active (boundp 'ps-paper-type)]
 	["A3"
-	 (setq ps-paper-type 'a3)
+	 (customize-set-variable 'ps-paper-type 'a3)
 	 :style radio
-	 :selected (and (boundp 'ps-paper-type)
-			(eq ps-paper-type 'a3))
-	 :active (fboundp 'ps-print-buffer)]
-	["A4"
-	 (setq ps-paper-type 'a4)
+	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'a3))
+	 :active (boundp 'ps-paper-type)]
+	["A4" 
+	 (customize-set-variable 'ps-paper-type 'a4)
 	 :style radio
-	 :selected (and (boundp 'ps-paper-type)
-			(eq ps-paper-type 'a4))
-	 :active (fboundp 'ps-print-buffer)]
-	["A4small"
-	 (setq ps-paper-type 'a4small)
+	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'a4))
+	 :active (boundp 'ps-paper-type)]
+	["A4small" 
+	 (customize-set-variable 'ps-paper-type 'a4small)
 	 :style radio
-	 :selected (and (boundp 'ps-paper-type)
-			(eq ps-paper-type 'a4small))
-	 :active (fboundp 'ps-print-buffer)]
-	["B4"
-	 (setq ps-paper-type 'b4)
+	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'a4small))
+	 :active (boundp 'ps-paper-type)]
+	["B4" 
+	 (customize-set-variable 'ps-paper-type 'b4)
 	 :style radio
-	 :selected (and (boundp 'ps-paper-type)
-			(eq ps-paper-type 'b4))
-	 :active (fboundp 'ps-print-buffer)]
-	["B5"
-	 (setq ps-paper-type 'b5)
+	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'b4))
+	 :active (boundp 'ps-paper-type)]
+	["B5" 
+	 (customize-set-variable 'ps-paper-type 'b5)
 	 :style radio
-	 :selected (and (boundp 'ps-paper-type)
-			(eq ps-paper-type 'b5))
-	 :active (fboundp 'ps-print-buffer)]
+	 :selected (and (boundp 'ps-paper-type) (eq ps-paper-type 'b5))
+	 :active (boundp 'ps-paper-type)]
 	)
        ["Color Printing"
-	(when (boundp 'ps-print-color-p)
-	  (if ps-print-color-p
-	      (progn
-		(setq ps-print-color-p nil)
-		(when (and (boundp 'original-face-background)
-			   original-face-background)
-		  (set-face-background 'default original-face-background)))
-	    (setq original-face-background (face-background-instance 'default))
-	    (set-face-background 'default "white")
-	    (setq ps-print-color-p t)))
-	:style toggle :selected (and (boundp 'ps-print-color-p)
-				     ps-print-color-p)
-	:active (fboundp 'ps-print-buffer)])
+	(cond (ps-print-color-p
+	       (customize-set-variable 'ps-print-color-p nil)
+	       ;; I'm wondering whether all this muck is usefull.
+	       (and (boundp 'original-face-background)
+		    original-face-background
+		    (set-face-background 'default original-face-background)))
+	      (t
+	       (customize-set-variable 'ps-print-color-p t)
+	       (setq original-face-background 
+		     (face-background-instance 'default))
+	       (set-face-background 'default "white")))
+	:style toggle 
+	:selected (and (boundp 'ps-print-color-p) ps-print-color-p)
+	:active (boundp 'ps-print-color-p)])
       ("\"Other Window\" Location"
        ["Always in Same Frame"
-	(setq get-frame-for-buffer-default-instance-limit nil)
+	(customize-set-variable 
+	 'get-frame-for-buffer-default-instance-limit nil)
 	:style radio
 	:selected (null get-frame-for-buffer-default-instance-limit)]
        ["Other Frame (2 Frames Max)"
-	(setq get-frame-for-buffer-default-instance-limit 2)
+	(customize-set-variable 'get-frame-for-buffer-default-instance-limit 2)
 	:style radio
 	:selected (eq 2 get-frame-for-buffer-default-instance-limit)]
        ["Other Frame (3 Frames Max)"
-	(setq get-frame-for-buffer-default-instance-limit 3)
+	(customize-set-variable 'get-frame-for-buffer-default-instance-limit 3)
 	:style radio
 	:selected (eq 3 get-frame-for-buffer-default-instance-limit)]
        ["Other Frame (4 Frames Max)"
-	(setq get-frame-for-buffer-default-instance-limit 4)
+	(customize-set-variable 'get-frame-for-buffer-default-instance-limit 4)
 	:style radio
 	:selected (eq 4 get-frame-for-buffer-default-instance-limit)]
        ["Other Frame (5 Frames Max)"
-	(setq get-frame-for-buffer-default-instance-limit 5)
+	(customize-set-variable 'get-frame-for-buffer-default-instance-limit 5)
 	:style radio
 	:selected (eq 5 get-frame-for-buffer-default-instance-limit)]
        ["Always Create New Frame"
-	(setq get-frame-for-buffer-default-instance-limit 0)
+	(customize-set-variable 'get-frame-for-buffer-default-instance-limit 0)
 	:style radio
 	:selected (eq 0 get-frame-for-buffer-default-instance-limit)]
        "-----"
        ["Temp Buffers Always in Same Frame"
-	(setq temp-buffer-show-function 'show-temp-buffer-in-current-frame)
+	(customize-set-variable 'temp-buffer-show-function 
+				'show-temp-buffer-in-current-frame)
 	:style radio
 	:selected (eq temp-buffer-show-function
 		      'show-temp-buffer-in-current-frame)]
        ["Temp Buffers Like Other Buffers"
-	(setq temp-buffer-show-function nil)
+	(customize-set-variable 'temp-buffer-show-function nil)
 	:style radio
 	:selected (null temp-buffer-show-function)]
        "-----"
        ["Make current frame gnuserv target"
-	(setq gnuserv-frame
-	      (if (equal gnuserv-frame (selected-frame))
-		  'new
-		(selected-frame)))
-	:style radio
-	:selected (and (boundp 'gnuserv-frame)
-		       (equal gnuserv-frame (selected-frame)))]
+	(customize-set-variable 'gnuserv-frame (if (eq gnuserv-frame t) nil t))
+	:style toggle
+	:selected (and (boundp 'gnuserv-frame) (eq gnuserv-frame t))
+	:active (boundp 'gnuserv-frame)]
        )
-
       "-----"
       ("Syntax Highlighting"
-       ["In This Buffer" (font-lock-mode)
-	:style toggle :selected (and (boundp 'font-lock-mode) font-lock-mode)
-	:active (fboundp 'font-lock-mode)]
-       ["Automatic" (if (not (featurep 'font-lock))
-			(progn
-			  (setq font-lock-auto-fontify t)
-			  (require 'font-lock))
-		      (setq font-lock-auto-fontify
-			    (not font-lock-auto-fontify)))
+       ["In This Buffer" 
+	(progn ;; becomes buffer local
+	  (font-lock-mode)
+	  (customize-set-variable 'font-lock-mode font-lock-mode))
+	:style toggle 
+	:selected (and (boundp 'font-lock-mode) font-lock-mode)
+	:active (boundp 'font-lock-mode)]
+       ["Automatic"
+	(customize-set-variable 'font-lock-auto-fontify
+				(not font-lock-auto-fontify))
 	:style toggle
-	:selected (and (featurep 'font-lock) font-lock-auto-fontify)
+	:selected (and (boundp 'font-lock-auto-fontify) font-lock-auto-fontify)
 	:active (fboundp 'font-lock-mode)]
        "-----"
-       ["Fonts" (progn (require 'font-lock)
-		       (font-lock-use-default-fonts)
-		       (setq font-lock-use-fonts t
-			     font-lock-use-colors nil)
-		       (font-lock-mode 1))
+       ["Fonts" 
+	(progn
+	  (require 'font-lock)
+	  (font-lock-use-default-fonts)
+	  (customize-set-variable 'font-lock-use-fonts t)
+	  (customize-set-variable 'font-lock-use-colors nil)
+	  (font-lock-mode 1))
 	:style radio
-	:selected (and (boundp 'font-lock-mode)
-		       font-lock-mode
-		       font-lock-use-fonts)
+	:selected (and (boundp 'font-lock-use-fonts) font-lock-use-fonts)
 	:active (fboundp 'font-lock-mode)]
-       ["Colors" (progn (require 'font-lock)
-			(font-lock-use-default-colors)
-			(setq font-lock-use-colors t
-			      font-lock-use-fonts nil)
-			(font-lock-mode 1))
+       ["Colors"
+	(progn
+	  (require 'font-lock)
+	  (font-lock-use-default-colors)
+	  (customize-set-variable 'font-lock-use-colors t)
+	  (customize-set-variable 'font-lock-use-fonts nil)
+	  (font-lock-mode 1))
 	:style radio
-	:selected (and (boundp 'font-lock-mode)
-		       font-lock-mode
-		       font-lock-use-colors)
-	:active (fboundp 'font-lock-mode)]
+	:selected (and (boundp 'font-lock-use-colors) font-lock-use-colors)
+	:active (boundp 'font-lock-mode)]
        "-----"
-       ["Least" (if (or (and (not (integerp font-lock-maximum-decoration))
-			     (not (eq t font-lock-maximum-decoration)))
-			(and (integerp font-lock-maximum-decoration)
-			     (<= font-lock-maximum-decoration 0)))
-		    nil
-		  (setq font-lock-maximum-decoration nil)
-		  (font-lock-recompute-variables))
+       ["Least"
+	(progn
+	  (require 'font-lock)
+	  (if (or (and (not (integerp font-lock-maximum-decoration))
+		       (not (eq t font-lock-maximum-decoration)))
+		  (and (integerp font-lock-maximum-decoration)
+		       (<= font-lock-maximum-decoration 0)))
+	      nil
+	    (customize-set-variable 'font-lock-maximum-decoration nil)
+	    (font-lock-recompute-variables)))
 	:style radio
-	:active (and (boundp 'font-lock-mode) font-lock-mode)
-	:selected (and (boundp 'font-lock-mode)
-		       font-lock-mode
+	:active (fboundp 'font-lock-mode)
+	:selected (and (boundp 'font-lock-maximium-decoration)
 		       (or (and (not (integerp font-lock-maximum-decoration))
 				(not (eq t font-lock-maximum-decoration)))
 			   (and (integerp font-lock-maximum-decoration)
 				(<= font-lock-maximum-decoration 0))))]
-       ["More" (if (and (integerp font-lock-maximum-decoration)
-			(= 1 font-lock-maximum-decoration))
-		   nil
-		 (setq font-lock-maximum-decoration 1)
-		 (font-lock-recompute-variables))
+       ["More" 
+	(progn
+	  (require 'font-lock)
+	  (if (and (integerp font-lock-maximum-decoration)
+		   (= 1 font-lock-maximum-decoration))
+	      nil
+	    (customize-set-variable 'font-lock-maximum-decoration 1)
+	    (font-lock-recompute-variables)))
 	:style radio
-	:active (and (boundp 'font-lock-mode) font-lock-mode)
-	:selected (and (boundp 'font-lock-mode)
-		       font-lock-mode
+	:active (fboundp 'font-lock-mode)
+	:selected (and (boundp 'font-lock-maximium-decoration)
 		       (integerp font-lock-maximum-decoration)
 		       (= 1 font-lock-maximum-decoration))]
-       ["Even More" (if (and (integerp font-lock-maximum-decoration)
-			     (= 2 font-lock-maximum-decoration))
-			nil
-		      (setq font-lock-maximum-decoration 2)
-		      (font-lock-recompute-variables))
+       ["Even More" 
+	(progn
+	  (require 'font-lock)
+	  (if (and (integerp font-lock-maximum-decoration)
+		   (= 2 font-lock-maximum-decoration))
+	      nil
+	    (customize-set-variable 'font-lock-maximum-decoration 2)
+	    (font-lock-recompute-variables)))
 	:style radio
-	:active (and (boundp 'font-lock-mode) font-lock-mode)
-	:selected (and (boundp 'font-lock-mode)
-		       font-lock-mode
+	:active (fboundp 'font-lock-mode)
+	:selected (and (boundp 'font-lock-maximum-decoration)
 		       (integerp font-lock-maximum-decoration)
 		       (= 2 font-lock-maximum-decoration))]
-       ["Most" (if (or (eq font-lock-maximum-decoration t)
-		       (and (integerp font-lock-maximum-decoration)
-			    (>= font-lock-maximum-decoration 3)))
-		   nil
-		 (setq font-lock-maximum-decoration t)
-		 (font-lock-recompute-variables))
+       ["Most"
+	(progn
+	  (require 'font-lock)
+	  (if (or (eq font-lock-maximum-decoration t)
+		  (and (integerp font-lock-maximum-decoration)
+		       (>= font-lock-maximum-decoration 3)))
+	      nil
+	    (customize-set-variable 'font-lock-maximum-decoration t)
+	    (font-lock-recompute-variables)))
 	:style radio
-	:active (and (boundp 'font-lock-mode) font-lock-mode)
-	:selected (and (boundp 'font-lock-mode)
-		       font-lock-mode
+	:active (fboundp 'font-lock-mode)
+	:selected (and (boundp 'font-lock-maximum-decoration)
 		       (or (eq font-lock-maximum-decoration t)
 			   (and (integerp font-lock-maximum-decoration)
 				(>= font-lock-maximum-decoration 3))))]
        "-----"
-       ["Lazy" (progn (require 'lazy-shot)
-		      (if (and (boundp 'lazy-shot-mode) lazy-shot-mode)
-			  (progn
-			    (lazy-shot-mode 0)
-			    ;; this shouldn't be necessary so there has to
-			    ;; be a redisplay bug lurking somewhere (or
-			    ;; possibly another event handler bug)
-			    (redraw-modeline)
-			    (remove-hook 'font-lock-mode-hook
-					 'turn-on-lazy-shot))
-			(if font-lock-mode
-			    (progn
-			      (lazy-shot-mode 1)
-			      (redraw-modeline)
-			      (add-hook 'font-lock-mode-hook
-					'turn-on-lazy-shot)))))
-	:active (and (boundp 'font-lock-mode)
-		     (boundp 'lazy-shot-mode)
+       ["Lazy"
+	(progn ;; becomes buffer local
+	  (lazy-shot-mode)
+	  (customize-set-variable 'lazy-shot-mode lazy-shot-mode)
+	  ;; this shouldn't be necessary so there has to
+	  ;; be a redisplay bug lurking somewhere (or
+	  ;; possibly another event handler bug)
+	  (redraw-modeline))
+	:active (and (boundp 'font-lock-mode) (boundp 'lazy-shot-mode) 
 		     font-lock-mode)
 	:style toggle
 	:selected (and (boundp 'lazy-shot-mode) lazy-shot-mode)]
-       ["Caching" (progn (require 'fast-lock)
-			 (if fast-lock-mode
-			     (progn
-			       (fast-lock-mode 0)
-			       ;; this shouldn't be necessary so there has to
-			       ;; be a redisplay bug lurking somewhere (or
-			       ;; possibly another event handler bug)
-			       (redraw-modeline))
-			   (if font-lock-mode
-			       (progn
-				 (fast-lock-mode 1)
-				 (redraw-modeline)))))
-	:active (and (boundp 'font-lock-mode) font-lock-mode)
+       ["Caching"
+	(progn ;; becomes buffer local
+	  (fast-lock-mode)
+	  (customize-set-variable 'fast-lock-mode fast-lock-mode)
+	  ;; this shouldn't be necessary so there has to
+	  ;; be a redisplay bug lurking somewhere (or
+	  ;; possibly another event handler bug)
+	  (redraw-modeline))
+	:active (and (boundp 'font-lock-mode) (boundp 'fast-lock-mode)
+		     font-lock-mode)
 	:style toggle
 	:selected (and (boundp 'fast-lock-mode) fast-lock-mode)]
        )
       ("Paren Highlighting"
-       ["None" (paren-set-mode -1)
-	:style radio :selected (and (boundp 'paren-mode) (not paren-mode))
-	:active (fboundp 'paren-set-mode)]
-       ["Blinking Paren" (paren-set-mode 'blink-paren)
-	:style radio :selected (and (boundp 'paren-mode)
-				    (eq paren-mode 'blink-paren))
-	:active (fboundp 'paren-set-mode)]
-       ["Steady Paren" (paren-set-mode 'paren)
-	:style radio :selected (and (boundp 'paren-mode)
-				    (eq paren-mode 'paren))
-	:active (fboundp 'paren-set-mode)]
-       ["Expression" (paren-set-mode 'sexp)
-	:style radio :selected (and (boundp 'paren-mode)
-				    (eq paren-mode 'sexp))
-	:active (fboundp 'paren-set-mode)]
-;;;       ["Nested Shading" (paren-set-mode 'nested)
-;;;        :style radio :selected (eq paren-mode 'nested)]
+       ["None"
+	(customize-set-variable 'paren-mode nil)
+	:style radio 
+	:selected (and (boundp 'paren-mode) (not paren-mode))
+	:active (boundp 'paren-mode)]
+       ["Blinking Paren"
+	(customize-set-variable 'paren-mode 'blink-paren)
+	:style radio
+	:selected (and (boundp 'paren-mode) (eq paren-mode 'blink-paren))
+	:active (boundp 'paren-mode)]
+       ["Steady Paren"
+	(customize-set-variable 'paren-mode 'paren)
+	:style radio 
+	:selected (and (boundp 'paren-mode) (eq paren-mode 'paren))
+	:active (boundp 'paren-mode)]
+       ["Expression"
+	(customize-set-variable 'paren-mode 'sexp)
+	:style radio 
+	:selected (and (boundp 'paren-mode) (eq paren-mode 'sexp))
+	:active (boundp 'paren-mode)]
+;;	 ["Nested Shading"	     
+;;	  (customize-set-variable 'paren-mode 'nested)
+;;	  :style radio		     
+;;	  :selected (and (boundp 'paren-mode) (eq paren-mode 'nested))
+;;	  :active (boundp 'paren-mode)]
        )
       "-----"
       ("Frame Appearance"
+       ["Frame-Local Font Menu" 
+	(customize-set-variable 'font-menu-this-frame-only-p
+				(not font-menu-this-frame-only-p))
+	:style toggle 
+	:selected (and (boundp 'font-menu-this-frame-only-p)
+		       font-menu-this-frame-only-p)]
        ,@(if (featurep 'scrollbar)
-	     '(["Scrollbars" (if (= (specifier-instance scrollbar-width) 0)
-				 (progn
-				   (set-specifier scrollbar-width 15)
-				   (set-specifier scrollbar-height 15))
-			       (set-specifier scrollbar-width 0)
-			       (set-specifier scrollbar-height 0))
-		:style toggle :selected (> (specifier-instance scrollbar-width) 0)]))
-       ["3D Modeline"
-	(progn
-	  (if (zerop (specifier-instance modeline-shadow-thickness))
-	      (set-specifier modeline-shadow-thickness 2)
-	    (set-specifier modeline-shadow-thickness 0))
-	  (redraw-modeline t))
-	:style toggle :selected
-	(let ((thickness
-	       (specifier-instance modeline-shadow-thickness)))
-	  (and (integerp thickness)
-	       (> thickness 0)))]
-       ["Truncate Lines" (progn
-			   (setq truncate-lines (not truncate-lines))
-			   (setq-default truncate-lines truncate-lines))
-	:style toggle :selected truncate-lines]
-       ["Bar Cursor" (progn
-		       (setq bar-cursor
-			     (if (not bar-cursor) 2 nil))
-		       (force-cursor-redisplay))
-	:style toggle :selected bar-cursor]
-       ["Blinking Cursor" (blink-cursor-mode)
+	     '(["Scrollbars"
+		(customize-set-variable 'scrollbars-visible-p
+					(not scrollbars-visible-p))
+		:style toggle 
+		:selected scrollbars-visible-p]))
+       ;; I don't think this is of any interest. - dverna apr. 98
+;;	 ["3D Modeline"			   
+;;	  (progn				   
+;;	    (if (zerop (specifier-instance modeline-shadow-thickness))
+;;		(set-specifier modeline-shadow-thickness 2)
+;;	      (set-specifier modeline-shadow-thickness 0))
+;;	    (redraw-modeline t))		   
+;;	  :style toggle			   
+;;	  :selected (let ((thickness	   
+;;			   (specifier-instance modeline-shadow-thickness)))
+;;		      (and (integerp thickness)
+;;			   (> thickness 0)))]
+       ["Truncate Lines"
+	(progn ;; becomes buffer-local
+	  (setq truncate-lines (not truncate-lines))
+	  (customize-set-variable 'truncate-lines truncate-lines))
 	:style toggle
-	:selected (and (boundp 'blink-cursor-mode) blink-cursor-mode)]
-       ["Frame-Local Font Menu" (setq font-menu-this-frame-only-p
-				      (not font-menu-this-frame-only-p))
-	:style toggle :selected (and (boundp 'font-menu-this-frame-only-p)
-				     font-menu-this-frame-only-p)]
-					;     ["Line Numbers" (line-number-mode nil)
-					;      :style toggle :selected line-number-mode]
+	:selected truncate-lines]
+       ["Blinking Cursor"
+	(customize-set-variable 'blink-cursor-mode (not blink-cursor-mode))
+	:style toggle
+	:selected (and (boundp 'blink-cursor-mode) blink-cursor-mode)
+	:active (boundp 'blink-cursor-mode)]
+       "-----"
+       ["Block cursor" 
+	(progn
+	  (customize-set-variable 'bar-cursor nil)
+	  (force-cursor-redisplay))
+	:style radio
+	:selected (null bar-cursor)]
+       ["Bar cursor (1 pixel)" 
+	(progn
+	  (customize-set-variable 'bar-cursor t)
+	  (force-cursor-redisplay))
+	:style radio
+	:selected (eq bar-cursor t)]
+	["Bar cursor (2 pixels)" 
+	 (progn
+	   (customize-set-variable 'bar-cursor 2)
+	   (force-cursor-redisplay))
+	 :style radio 
+	 :selected (and bar-cursor (not (eq bar-cursor t)))]
+	"------"
+	["Line Numbers"
+	 (progn
+	   (customize-set-variable 'line-number-mode (not line-number-mode))
+	   (redraw-modeline))
+	 :style toggle :selected line-number-mode]
+	["Column Numbers"
+	 (progn
+	   (customize-set-variable 'column-number-mode
+				   (not column-number-mode))
+	   (redraw-modeline))
+	 :style toggle :selected column-number-mode]
        )
       ("Menubar Appearance"
        ["Buffers Menu Length..."
-	(progn
-	  (setq buffers-menu-max-size
+	(customize-set-variable
+	 'buffers-menu-max-size
+	 ;; would it be better to open a customization buffer ?
+	 (let ((val 
 		(read-number
-		 "Enter number of buffers to display (or 0 for unlimited): "))
-	  (if (eq buffers-menu-max-size 0) (setq buffers-menu-max-size nil)))]
+		 "Enter number of buffers to display (or 0 for unlimited): ")))
+	   (if (eq val 0) nil val)))]
        ["Multi-Operation Buffers Sub-Menus"
-	(setq complex-buffers-menu-p
-	      (not complex-buffers-menu-p))
-	:style toggle :selected complex-buffers-menu-p]
+	(customize-set-variable 'complex-buffers-menu-p
+				(not complex-buffers-menu-p))
+	:style toggle
+	:selected complex-buffers-menu-p]
        ("Buffers Menu Sorting"
 	["Most Recently Used"
 	 (progn
-	   (setq buffers-menu-sort-function nil)
-	   (setq buffers-menu-grouping-function nil))
+	   (customize-set-variable 'buffers-menu-sort-function nil)
+	   (customize-set-variable 'buffers-menu-grouping-function nil))
 	 :style radio
 	 :selected (null buffers-menu-sort-function)]
 	["Alphabetically"
 	 (progn
-	   (setq buffers-menu-sort-function
-		 'sort-buffers-menu-alphabetically)
-	   (setq buffers-menu-grouping-function nil))
+	   (customize-set-variable 'buffers-menu-sort-function
+				   'sort-buffers-menu-alphabetically)
+	   (customize-set-variable 'buffers-menu-grouping-function nil))
 	 :style radio
 	 :selected (eq 'sort-buffers-menu-alphabetically
 		       buffers-menu-sort-function)]
 	["By Major Mode, Then Alphabetically"
 	 (progn
-	   (setq buffers-menu-sort-function
-		 'sort-buffers-menu-by-mode-then-alphabetically)
-	   (setq buffers-menu-grouping-function
-		 'group-buffers-menu-by-mode-then-alphabetically))
+	   (customize-set-variable 
+	    'buffers-menu-sort-function
+	    'sort-buffers-menu-by-mode-then-alphabetically)
+	   (customize-set-variable 
+	    'buffers-menu-grouping-function
+	    'group-buffers-menu-by-mode-then-alphabetically))
 	 :style radio
 	 :selected (eq 'sort-buffers-menu-by-mode-then-alphabetically
 		       buffers-menu-sort-function)])
        ["Submenus for Buffer Groups"
-	(setq buffers-menu-submenus-for-groups-p
-	      (not buffers-menu-submenus-for-groups-p))
+	(customize-set-variable 'buffers-menu-submenus-for-groups-p
+				(not buffers-menu-submenus-for-groups-p))
 	:style toggle
-	:selected buffers-menu-submenus-for-groups-p
-	:active (not (null buffers-menu-grouping-function))]
+	:selected buffers-menu-submenus-for-groups-p]
        "---"
-       ["Ignore Scaled Fonts" (setq font-menu-ignore-scaled-fonts
-				    (not font-menu-ignore-scaled-fonts))
-	:style toggle :selected (and (boundp 'font-menu-ignore-scaled-fonts)
-				     font-menu-ignore-scaled-fonts)]
+       ["Ignore Scaled Fonts"
+	(customize-set-variable 'font-menu-ignore-scaled-fonts
+				(not font-menu-ignore-scaled-fonts))
+	:style toggle 
+	:selected (and (boundp 'font-menu-ignore-scaled-fonts)
+		       font-menu-ignore-scaled-fonts)]
        )
       ,@(if (featurep 'toolbar)
 	    '(("Toolbar Appearance"
-	       ["Visible" (set-specifier default-toolbar-visible-p
-					 (not (specifier-instance
-					       default-toolbar-visible-p)))
+	       ["Visible" 
+		(customize-set-variable 'toolbar-visible-p
+					(not toolbar-visible-p))
 		:style toggle
-		:selected (specifier-instance default-toolbar-visible-p)]
-	       ["Captioned" (set-specifier toolbar-buttons-captioned-p
-					   (not (specifier-instance
-						 toolbar-buttons-captioned-p)))
+		:selected toolbar-visible-p]
+	       ["Captioned" 
+		(customize-set-variable 'toolbar-captioned-p
+					(not toolbar-captioned-p))
 		:style toggle
-		:selected
-		(specifier-instance toolbar-buttons-captioned-p)]
+		:selected toolbar-captioned-p]
 	       ("Default Location"
-		["Top" (set-default-toolbar-position 'top)
-		 :style radio :selected (eq (default-toolbar-position) 'top)]
-		["Bottom" (set-default-toolbar-position 'bottom)
-		 :style radio :selected (eq (default-toolbar-position) 'bottom)]
-		["Left" (set-default-toolbar-position 'left)
-		 :style radio :selected (eq (default-toolbar-position) 'left)]
-		["Right" (set-default-toolbar-position 'right)
-		 :style radio :selected (eq (default-toolbar-position) 'right)]
+		["Top"
+		 (customize-set-variable 'default-toolbar-position 'top)
+		 :style radio 
+		 :selected (eq default-toolbar-position 'top)]
+		["Bottom" 
+		 (customize-set-variable 'default-toolbar-position 'bottom)
+		 :style radio
+		 :selected (eq default-toolbar-position 'bottom)]
+		["Left"
+		 (customize-set-variable 'default-toolbar-position 'left)
+		 :style radio
+		 :selected (eq default-toolbar-position 'left)]
+		["Right"
+		 (customize-set-variable 'default-toolbar-position 'right)
+		 :style radio
+		 :selected (eq default-toolbar-position 'right)]
 		)
 	       )))
       ("Mouse"
-       ["Avoid-Text"
-	(if (equal (device-type) 'x)
-	    (if mouse-avoidance-mode
-		(mouse-avoidance-mode 'none)
-	      (mouse-avoidance-mode 'banish))
-	  (beep)
-	  (message "This option requires a window system."))
-	:style toggle :selected (and (boundp 'mouse-avoidance-mode)
-				     mouse-avoidance-mode
-				     window-system)
-	:active (fboundp 'mouse-avoidance-mode)]
+       ["Avoid Text..."
+	(customize-set-variable 'mouse-avoidance-mode 
+				(if mouse-avoidance-mode nil 'banish))
+	:style toggle
+	:selected (and (boundp 'mouse-avoidance-mode) mouse-avoidance-mode)
+	:active (and (boundp 'mouse-avoidance-mode) 
+		     window-system (eq (device-type) 'x))]
        ["strokes-mode"
-	(if (equal (device-type) 'x)
-	    (strokes-mode)
-	  (beep)
-	  (message "This option requires a window system."))
-	:style toggle :selected (and (boundp 'strokes-mode)
-				     strokes-mode
-				     window-system)
-	:active (fboundp 'strokes-mode)])
+	(customize-set-variable 'strokes-mode (not strokes-mode))
+	:style toggle
+	:selected (and (boundp 'strokes-mode) strokes-mode)
+	:active (and (boundp 'strokes-mode)
+		     window-system (eq (device-type) 'x))]
+       )
       ("Open URLs With"
-       ["Emacs-W3" (setq browse-url-browser-function 'browse-url-w3)
+       ["Emacs-W3" 
+	(customize-set-variable 'browse-url-browser-function 'browse-url-w3)
 	:style radio
 	:selected (and (boundp 'browse-url-browser-function)
 		       (eq browse-url-browser-function 'browse-url-w3))
-	:active (and (fboundp 'browse-url-w3)
+	:active (and (boundp 'browse-url-browser-function)
+		     (fboundp 'browse-url-w3)
 		     (fboundp 'w3-fetch))]
-       ["Netscape" (setq browse-url-browser-function 'browse-url-netscape)
+       ["Netscape" 
+	(customize-set-variable 'browse-url-browser-function 
+				'browse-url-netscape)
 	:style radio
 	:selected (and (boundp 'browse-url-browser-function)
 		       (eq browse-url-browser-function 'browse-url-netscape))
-	:active (fboundp 'browse-url-netscape)]
-       ["Mosaic" (setq browse-url-browser-function 'browse-url-mosaic)
+	:active (and (boundp 'browse-url-browser-function)
+		     (fboundp 'browse-url-netscape))]
+       ["Mosaic" 
+	(customize-set-variable 'browse-url-browser-function
+				'browse-url-mosaic)
 	:style radio
 	:selected (and (boundp 'browse-url-browser-function)
 		       (eq browse-url-browser-function 'browse-url-mosaic))
-	:active (fboundp 'browse-url-mosaic)]
-       ["Mosaic (CCI)" (setq browse-url-browser-function 'browse-url-cci)
+	:active (and (boundp 'browse-url-browser-function)
+		     (fboundp 'browse-url-mosaic))]
+       ["Mosaic (CCI)" 
+	(customize-set-variable 'browse-url-browser-function 'browse-url-cci)
+	:style radio
+	:selected (and (boundp 'browse-url-browser-function)
+		       (eq browse-url-browser-function 'browse-url-cci))
+	:active (and (boundp 'browse-url-browser-function)
+		     (fboundp 'browse-url-cci))]
+       ["IXI Mosaic" 
+	(customize-set-variable 'browse-url-browser-function 
+				'browse-url-iximosaic)
 	:style radio
 	:selected (and (boundp 'browse-url-browser-function)
 		       (eq browse-url-browser-function 'browse-url-iximosaic))
-	:active (fboundp 'browse-url-iximosaic)]
-       ["IXI Mosaic" (setq browse-url-browser-function 'browse-url-iximosaic)
-	:style radio
-	:selected (and (boundp 'browse-url-browser-function)
-		       (eq browse-url-browser-function 'browse-url-iximosaic))
-	:active (fboundp 'browse-url-iximosaic)]
-       ["Lynx (xterm)" (setq browse-url-browser-function 'browse-url-lynx-xterm)
+	:active (and (boundp 'browse-url-browser-function)
+		     (fboundp 'browse-url-iximosaic))]
+       ["Lynx (xterm)" 
+	(customize-set-variable 'browse-url-browser-function
+				'browse-url-lynx-xterm)
 	:style radio
 	:selected (and (boundp 'browse-url-browser-function)
 		       (eq browse-url-browser-function 'browse-url-lynx-xterm))
-	:active (fboundp 'browse-url-lynx-xterm)]
-       ["Lynx (xemacs)" (setq browse-url-browser-function 'browse-url-lynx-emacs)
+	:active (and (boundp 'browse-url-browser-function)
+		     (fboundp 'browse-url-lynx-xterm))]
+       ["Lynx (xemacs)"
+	(customize-set-variable 'browse-url-browser-function
+				'browse-url-lynx-emacs)
 	:style radio
 	:selected (and (boundp 'browse-url-browser-function)
 		       (eq browse-url-browser-function 'browse-url-lynx-emacs))
-	:active (fboundp 'browse-url-lynx-emacs)]
-       ["Grail" (setq browse-url-browser-function 'browse-url-grail)
+	:active (and (boundp 'browse-url-browser-function)
+		     (fboundp 'browse-url-lynx-emacs))]
+       ["Grail" 
+	(customize-set-variable 'browse-url-browser-function
+				'browse-url-grail)
 	:style radio
 	:selected (and (boundp 'browse-url-browser-function)
 		       (eq browse-url-browser-function 'browse-url-grail))
-	:active (fboundp 'browse-url-grail)]
+	:active (and (boundp 'browse-url-browser-function)
+		     (fboundp 'browse-url-grail))]
        )
       "-----"
       ["Browse Faces..." (customize-face nil)]
@@ -741,11 +803,13 @@
       ("Size"	:filter font-menu-size-constructor)
       ("Weight"	:filter font-menu-weight-constructor)
       "-----"
-      ["Save Options" save-options-menu-settings]
+      ["Save Options" customize-save-customized]
       )
 
      ("Buffers"
       :filter buffers-menu-filter
+      ["Read Only" (toggle-read-only)
+       :style toggle :selected buffer-read-only]
       ["List All Buffers" list-buffers]
       "--"
       )
@@ -1208,6 +1272,9 @@ items by redefining the function `format-buffers-menu-line'."
 
 ;;; The Options menu
 
+;; We'll keep those variables here for a while, in order to provide a
+;; function for porting the old options file that a user may own to Custom.
+
 (defvar options-save-faces nil
   "*Non-nil value means save-options will save information about faces.
 A nil value means save-options will not save face information.
@@ -1218,189 +1285,6 @@ can use to permanently save your face changes.
 
 M-x edit-faces is deprecated.  Support for it and this variable will
 be discontinued in a future release.")
-
-(defconst options-menu-saved-forms
-  ;; This is really quite a kludge, but it gets the job done.
-  ;;
-  ;; remember that we have to conditionalize on default features
-  ;; both in the forms to evaluate and in the forms output to
-  ;; .emacs, in case the .emacs is loaded into an XEmacs with
-  ;; different features.
-  (purecopy
-   '(
-     ;; Editing Options menu.
-     ;; put case-fold-search first to defeat a bug in the backquote
-     ;; processing mechanism.  Feh!
-     case-fold-search
-     `(setq-default overwrite-mode ,(default-value 'overwrite-mode))
-     (if (default-value 'overwrite-mode)
-	 '(overwrite-mode 1))
-     `(setq-default case-fold-search ,(default-value 'case-fold-search))
-     case-replace
-     (if (and (boundp 'pending-delete-mode)
-	      pending-delete-mode)
-	 '(pending-delete-mode 1))
-     zmacs-regions
-     mouse-yank-at-point
-     require-final-newline
-     next-line-add-newlines
-
-     ;; General Options menu.
-     teach-extended-commands-p
-     ;; (#### not actually on Options menu)
-     teach-extended-commands-timeout
-     debug-on-error
-     debug-on-quit
-
-     ;; Printing Options menu.
-     lpr-switches
-     ps-print-color-p
-     ps-paper-type
-
-     ;; Other Window Location
-     get-frame-for-buffer-default-instance-limit
-     temp-buffer-show-function
-     (if gnuserv-frame
-	 '(setq gnuserv-frame (selected-frame)))
-
-     ;; Syntax Highlighting
-     font-lock-auto-fontify
-     font-lock-use-fonts
-     font-lock-use-colors
-     font-lock-maximum-decoration
-     font-lock-maximum-size
-     ;; (#### the next two not on Options menu)
-     font-lock-mode-enable-list
-     font-lock-mode-disable-list
-     ;; #### - this structure is clearly broken.  There's no way to ever
-     ;; un-require font-lock via the menus.  --Stig
-     (if (featurep 'font-lock)
-	 '(require 'font-lock))
-     (if (and (boundp 'font-lock-mode-hook)
-	      (memq 'turn-on-fast-lock font-lock-mode-hook))
-	 '(add-hook 'font-lock-mode-hook 'turn-on-fast-lock)
-       '(remove-hook 'font-lock-mode-hook 'turn-on-fast-lock))
-     (if (and (boundp 'font-lock-mode-hook)
-	      (memq 'turn-on-lazy-shot font-lock-mode-hook))
-	 '(add-hook 'font-lock-mode-hook 'turn-on-lazy-shot)
-       '(remove-hook 'font-lock-mode-hook 'turn-on-lazy-shot))
-
-     ;; Paren Highlighting
-     (if paren-mode
-	 `(progn (require 'paren) (paren-set-mode ',paren-mode)))
-
-     ;; For specifiers, we only save global settings since the others
-     ;; will belong to objects which only exist during this session.
-
-     ;; Frame Appearance
-     (if (featurep 'scrollbar)
-	 `(if (featurep 'scrollbar)
-	      (progn
-		(add-spec-list-to-specifier
-		 scrollbar-width
-		 ',(specifier-spec-list scrollbar-width 'global))
-		(add-spec-list-to-specifier
-		 scrollbar-height
-		 ',(specifier-spec-list scrollbar-height 'global)))))
-     `(add-spec-list-to-specifier
-       modeline-shadow-thickness
-       ',(specifier-spec-list modeline-shadow-thickness 'global))
-     `(setq-default truncate-lines ,(default-value 'truncate-lines))
-     bar-cursor
-     (if (and (boundp 'blink-cursor-mode) blink-cursor-mode)
-	 '(blink-cursor-mode t))
-
-     ;; Menubar Appearance
-     buffers-menu-max-size
-     complex-buffers-menu-p
-     buffers-menu-sort-function
-     buffers-menu-grouping-function
-     buffers-menu-submenus-for-groups-p
-     font-menu-ignore-scaled-fonts
-     font-menu-this-frame-only-p
-
-     ;; Toolbar Appearance
-     (if (featurep 'toolbar)
-	 `(if (featurep 'toolbar)
-	      (progn
-		(set-default-toolbar-position
-		 ',(default-toolbar-position))
-		(add-spec-list-to-specifier
-		 default-toolbar-visible-p
-		 ',(specifier-spec-list default-toolbar-visible-p 'global))
-		(add-spec-list-to-specifier
-		 toolbar-buttons-captioned-p
-		 ',(specifier-spec-list toolbar-buttons-captioned-p
-					'global)))))
-
-     ;; mouse
-     mouse-avoidance-mode
-
-     ;; Open URLs With
-     browse-url-browser-function
-
-     ;; Now save all faces.
-
-     ;; Setting this in lisp conflicts with X resources.  Bad move.  --Stig
-     ;; (list 'set-face-font ''default (face-font-name 'default))
-     ;; (list 'set-face-font ''modeline (face-font-name 'modeline))
-     (if options-save-faces
-	 (cons 'progn
-	       (mapcar #'(lambda (face)
-			   `(make-face ',face))
-		       (save-options-non-customized-face-list))))
-
-     (if options-save-faces
-	 (cons 'progn
-	       (apply 'nconc
-		      (mapcar
-		       #'(lambda (face)
-			   (delq nil
-				 (mapcar
-				  #'(lambda (property)
-				      (if (specifier-spec-list
-					   (face-property face property))
-					  `(add-spec-list-to-specifier
-					    (face-property ',face ',property)
-					    ',(save-options-specifier-spec-list
-					       face property))))
-				  (delq 'display-table
-					(copy-sequence
-					 built-in-face-specifiers)))))
-		       (save-options-non-customized-face-list)))))
-
-     ;; Mule-specific:
-     (if (featurep 'mule)
-	 `(if (featurep 'mule)
-	      (set-language-environment ',current-language-environment)))
-     ))
-  "The variables to save; or forms to evaluate to get forms to write out.
-This is used by `save-options-menu-settings' and should mirror the
-options listed in the Options menu.")
-
-(defun save-options-non-customized-face-list ()
-  "Return a list of all faces that have not been 'customized'."
-  (delq nil (mapcar '(lambda (face)
-		       (unless (get face 'saved-face)
-			 face))
-		    (face-list))))
-
-(defun save-options-specifier-spec-list (face property)
-  (if (not (or (eq property 'font) (eq property 'color)))
-      (specifier-spec-list (face-property face property) 'global)
-    (let* ((retlist (specifier-spec-list (face-property face property)
-					 'global))
-	   (entry (cdr (car retlist)))
-	   item)
-      (while entry
-	(setq item (car entry))
-	(if (eq property 'font)
-	    (if (font-instance-p (cdr item))
-		(setcdr item (font-instance-name (cdr item))))
-	  (if (color-instance-p (cdr item))
-	      (setcdr item (color-instance-name (cdr item)))))
-	(setq entry (cdr entry)))
-      retlist)))
 
 (defvar save-options-init-file nil
   "File into which to save forms to load the options file (nil for .emacs).
@@ -1413,123 +1297,6 @@ This file is loaded from your .emacs file.
 If this is a relative filename, it is put into the same directory as your
 .emacs file.")
 
-(defun save-options-menu-settings ()
-  "Save the current settings of the `Options' menu to your `.emacs' file."
-  (interactive)
-  ;; we compute the actual filenames now because x-menubar is loaded
-  ;; at dump time, when the identity of the user running XEmacs is not known.
-  (let* ((actual-save-options-init-file
-	  (or save-options-init-file
-	      (and (not (equal user-init-file ""))
-		   user-init-file)
-	      (and (eq system-type 'ms-dos)
-		   (concat "~" (user-login-name) "/_emacs"))
-	      (concat "~" (user-login-name) "/.emacs")))
-	 (actual-save-options-file
-	  (abbreviate-file-name
-	   (expand-file-name
-	    save-options-file
-	    (file-name-directory actual-save-options-init-file))
-	   ;; Don't hack-homedir in abbreviate-file-name.  This will
-	   ;; cause an incorrect expansion if the save-options variables
-	   ;; have ~ in them.
-	   ))
-	 (init-output-buffer (find-file-noselect
-			      actual-save-options-init-file))
-	 init-output-marker
-	 (options-output-buffer
-	  (find-file-noselect actual-save-options-file))
-	 options-output-marker)
-
-    (save-excursion
-      (set-buffer options-output-buffer)
-      (erase-buffer)
-      (setq options-output-marker (point-marker)))
-
-    ;; run with current-buffer unchanged so that variables are evaluated in
-    ;; the current context, instead of in the context of the ".emacs" buffer
-    ;; or the ".xemacs-options" buffer.
-
-    ;; first write out .xemacs-options.
-
-    (let ((standard-output options-output-marker))
-      (princ ";; -*- Mode: Emacs-Lisp -*-\n\n")
-      (princ "(setq options-file-xemacs-version '(")
-      (princ emacs-major-version)
-      (princ " ")
-      (princ emacs-minor-version)
-      (princ "))\n")
-      (let ((print-readably t)
-	    (print-escape-newlines t))
-	(mapcar #'(lambda (var)
-		    (princ "  ")
-		    (if (symbolp var)
-			(prin1 (list 'setq-default var
-				     (let ((val (symbol-value var)))
-				       (if (or (memq val '(t nil))
-					       (and (not (symbolp val))
-						    (not (consp val))))
-					   val
-					 (list 'quote val)))))
-		      (setq var (eval var))
-		      (cond ((eq (car-safe var) 'progn)
-			     (while (setq var (cdr var))
-			       (prin1 (car var))
-			       (princ "\n")
-			       (if (cdr var) (princ "  "))
-			       ))
-			    (var
-			     (prin1 var))))
-		    (if var (princ "\n")))
-		options-menu-saved-forms)
-	))
-    (set-marker options-output-marker nil)
-    (save-excursion
-      (set-buffer options-output-buffer)
-      (save-buffer))
-
-    ;; then fix .emacs.
-
-    (save-excursion
-      (set-buffer init-output-buffer)
-      ;;
-      ;; Find and delete the previously saved data, and position to write.
-      ;;
-      (goto-char (point-min))
-      (if (re-search-forward "^;; Options Menu Settings *\n" nil 'move)
-	  (let ((p (match-beginning 0)))
-	    (goto-char p)
-	    (or (re-search-forward
-		 "^;; End of Options Menu Settings *\\(\n\\|\\'\\)"
-		 nil t)
-		(error "can't find END of saved state in .emacs"))
-	    (delete-region p (match-end 0)))
-	(goto-char (point-max))
-	(insert "\n"))
-      (setq init-output-marker (point-marker)))
-
-    (let ((standard-output init-output-marker))
-      (princ ";; Options Menu Settings\n")
-      (princ ";; =====================\n")
-      (princ "(cond\n")
-      (princ " ((and (string-match \"XEmacs\" emacs-version)\n")
-      (princ "       (boundp 'emacs-major-version)\n")
-      (princ "       (or (and\n")
-      (princ "            (= emacs-major-version 19)\n")
-      (princ "            (>= emacs-minor-version 14))\n")
-      (princ "           (= emacs-major-version 20))\n")
-      (princ "       (fboundp 'load-options-file))\n")
-      (princ "  (load-options-file \"")
-      (princ actual-save-options-file)
-      (princ "\")))\n")
-      (princ ";; ============================\n")
-      (princ ";; End of Options Menu Settings\n"))
-
-    (set-marker init-output-marker nil)
-    (save-excursion
-      (set-buffer init-output-buffer)
-      (save-buffer))
-    ))
 
 
 ;;; The Help menu

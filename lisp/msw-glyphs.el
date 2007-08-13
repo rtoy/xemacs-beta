@@ -43,20 +43,18 @@
      ("\\`BM" [bmp :data nil] 2)
      ,@(if (featurep 'xpm) '(("\\.xpm\\'" [xpm :file nil] 2)))
      ,@(if (featurep 'xpm) '(("\\`/\\* XPM \\*/" [xpm :data nil] 2)))
-;    ,@(if (featurep 'xface) '(("\\`X-Face:" [xface :data nil] 2)))
-;    ,@(if (featurep 'gif) '(("\\.gif\\'" [gif :file nil] 2)
-;			     ("\\`GIF8[79]" [gif :data nil] 2)))
-;    ,@(if (featurep 'jpeg) '(("\\.jpe?g\\'" [jpeg :file nil] 2)))
-;    ;; all of the JFIF-format JPEG's that I've seen begin with
-;    ;; the following.  I have no idea if this is standard.
-;    ,@(if (featurep 'jpeg) '(("\\`\377\330\377\340\000\020JFIF"
-;			       [jpeg :data nil] 2)))
-;    ,@(if (featurep 'png) '(("\\.png\\'" [png :file nil] 2)))
-;    ,@(if (featurep 'png) '(("\\`\211PNG" [png :data nil] 2)))
+     ,@(if (featurep 'gif) '(("\\.gif\\'" [gif :file nil] 2)
+			     ("\\`GIF8[79]" [gif :data nil] 2)))
+     ,@(if (featurep 'jpeg) '(("\\.jpe?g\\'" [jpeg :file nil] 2)))
+     ;; all of the JFIF-format JPEG's that I've seen begin with
+     ;; the following.  I have no idea if this is standard.
+     ,@(if (featurep 'jpeg) '(("\\`\377\330\377\340\000\020JFIF"
+			       [jpeg :data nil] 2)))
+     ,@(if (featurep 'png) '(("\\.png\\'" [png :file nil] 2)))
+     ,@(if (featurep 'png) '(("\\`\211PNG" [png :data nil] 2)))
+     ,@(if (featurep 'tiff) '(("\\.tif?f\\'" [tiff :file nil] 2)))
      ("\\`X-Face:" [string :data "[xface]"])
      ("\\`/\\* XPM \\*/" [string :data "[xpm]"])
-     ("\\`GIF87" [string :data "[gif]"])
-     ("\\`\377\330\340\000\020JFIF" [string :data "[jpeg]"])
      ("" [string :data nil] 2)
      ;; this last one is here for pointers and icons and such --
      ;; strings are not allowed so they will be ignored.

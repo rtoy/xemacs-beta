@@ -204,9 +204,8 @@ connect_to_file_descriptor (Lisp_Object name, Lisp_Object buffer,
 static int
 allocate_pty (void)
 {
+#ifndef PTY_OPEN
   struct stat stb;
-  int c, i;
-  int fd;
 
   /* Some systems name their pseudoterminals so that there are gaps in
      the usual sequence - for example, on HP9000/S700 systems, there
@@ -214,6 +213,10 @@ allocate_pty (void)
      three failures in a row before deciding that we've reached the
      end of the ptys.  */
   int failed_count = 0;
+#endif
+  int i;
+  int fd;
+  int c;
 
 #ifdef PTY_ITERATION
   PTY_ITERATION

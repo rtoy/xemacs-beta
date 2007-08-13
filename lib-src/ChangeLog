@@ -1,3 +1,22 @@
+Wed Apr 22 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* installexe.sh: fix to use -f instead of -e file and fix shift
+	typo.
+
+1998-04-22  SL Baur  <steve@altair.xemacs.org>
+
+	* etags.c: Unconditionally define OO_BROWSER.
+
+	* update-elc.sh: Tighten up regexp on uname -r output.
+	From Marcus Thiessel <thiessel@tmbbwtx.bbn.hp.com>
+
+1998-04-19  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* gnuclient.c (main): Read eval from from stdin if just "-batch"
+	is given. 
+	* gnudoit: Support this.
+	* gnuserv.1: Document this behavior.
+
 1998-04-18  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
 
 	* etags.c (C_entries): Add parentheses.

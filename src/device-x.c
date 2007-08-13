@@ -276,7 +276,11 @@ have_xemacs_resources_in_xrdb (Display *dpy)
   char *xdefs, *key;
   int len;
 
+#ifdef INFODOCK
+  key = "InfoDock";
+#else
   key = "XEmacs";
+#endif
   len = strlen (key);
 
   if (!dpy)
@@ -370,7 +374,11 @@ x_init_device (struct device *d, Lisp_Object props)
     {
       app_class = (NILP (Vx_emacs_application_class)  &&
                    have_xemacs_resources_in_xrdb (dpy))
+#ifdef INFODOCK
+                  ? "InfoDock"
+#else
                   ? "XEmacs"
+#endif
                   : "Emacs";
       /* need to update Vx_emacs_application_class: */
       Vx_emacs_application_class = build_string (app_class);

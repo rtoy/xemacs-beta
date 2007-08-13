@@ -30,6 +30,42 @@
 
 ;;; Code:
 
+(defcustom toolbar-visible-p ;; added for the options menu - dverna apr. 98
+  (specifier-instance default-toolbar-visible-p)
+  "Whether the default toolbar is globally visible. This option can be
+customized through the options menu."
+  :group 'display
+  :type 'boolean
+  :set '(lambda (var val)
+	  (set-specifier default-toolbar-visible-p val)
+	  (setq toolbar-visible-p val))
+  )
+
+(defcustom toolbar-captioned-p ;; added for the options menu - dverna apr. 98
+  (specifier-instance toolbar-buttons-captioned-p)
+  "Whether the toolbars buttons are globally captioned. This option can be
+customized through the options menu."
+  :group 'display
+  :type 'boolean
+  :set '(lambda (var val)
+	  (set-specifier toolbar-buttons-captioned-p val)
+	  (setq toolbar-captioned-p val))
+  )
+
+(defcustom default-toolbar-position ;; added for the options menu - dverna
+  (default-toolbar-position)
+  "The location of the default toolbar. It can be 'top, 'bootom, 'left or
+'right. This option can be customized through the options menu."
+  :group 'display
+  :type '(choice (const :tag "top" 'top)
+		 (const :tag "bottom" 'bottom)
+		 (const :tag "left" 'left)
+		 (const :tag "right" 'right))
+  :set '(lambda (var val)
+	  (set-default-toolbar-position val)
+	  (setq default-toolbar-position val))
+  )
+
 (defvar toolbar-help-enabled t
   "If non-nil help is echoed for toolbar buttons.")
 
@@ -60,9 +96,10 @@
 
 (defun init-toolbar-location ()
   (if (not toolbar-icon-directory)
-      (setq toolbar-icon-directory
-	    (file-name-as-directory
-	     (locate-data-directory "toolbar")))))
+      (let ((name (locate-data-directory "toolbar")))
+	(if name
+	    (setq toolbar-icon-directory
+		  (file-name-as-directory name))))))
 
 (defun init-toolbar-from-resources (locale)
   (if (and (featurep 'x)

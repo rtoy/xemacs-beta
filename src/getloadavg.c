@@ -503,6 +503,10 @@ static struct nlist nl[2];
 static kvm_t *kd;
 #endif /* SUNOS_5 */
 
+#ifndef countof
+# define countof(x) (sizeof (x) / sizeof (*(x)))
+#endif
+
 #endif /* LOAD_AVE_TYPE */
 
 /* Put the 1 minute, 5 minute and 15 minute load averages
@@ -520,44 +524,53 @@ getloadavg (double loadavg[], int nelem)
   /* Set errno to zero to indicate that there was no particular error;
      this function just can't work at all on this system.  */
   errno = 0;
-  elem = -1;
+  elem = -2;
 #endif
 
-#ifdef XEMACS
 #if ! defined (LDAV_DONE) && defined (HAVE_KSTAT_H) && defined (HAVE_LIBKSTAT)
 #define LDAV_DONE
+/* getloadavg is best implemented using kstat (kernel stats), on
+   systems (like SunOS5) that support it, since you don't need special
+   privileges to use it.
 
-/* getloadavg is best implemented using kstat (kernel stats),
-   on systems (like SunOS5) that support it,
-   since you don't have to be superusers to use it.
-   Thanks to Zlatko Calusic <zcalusic@srce.hr>.
-   Integrated to XEmacs by Hrvoje Niksic <hniksic@srce.hr>. */
-  static kstat_ctl_t *kc;
-  static kstat_t *ksp;
-  static kstat_named_t *buf;
+   Initial implementation courtesy Zlatko Calusic <zcalusic@carnet.hr>.
+   Integrated to XEmacs by Hrvoje Niksic <hniksic@srce.hr>.
+   Additional cleanup by Hrvoje Niksic, based on code published by
+   Casper Dik <Casper.Dik@Holland.Sun.Com>.  */
+  kstat_ctl_t *kc;
+  kstat_t *ksp;
+  static char *avestrings[] = { "avenrun_1min",
+				"avenrun_5min",
+				"avenrun_15min" };
 
-  if (!getloadavg_initialized)
-    {
-      kc = kstat_open();
-      if (!kc)
-        return -1;
-      getloadavg_initialized = 1;
-    }
-  ksp = kstat_lookup(kc, "unix", 0, "system_misc");
-  if (!ksp)
-      return -1;
-  if (kstat_read(kc, ksp, ksp->ks_data) < 0)
+  if (nelem > countof (avestrings))
+    nelem = countof (avestrings);
+
+  kc = kstat_open();
+  if (!kc)
     return -1;
-  buf = (kstat_named_t *) malloc (ksp->ks_data_size);
-  if (!buf)
-     return -1;
-  memcpy(buf, ksp->ks_data, ksp->ks_data_size);
-  if (nelem > 3)
-     nelem = 3;
+  ksp = kstat_lookup (kc, "unix", 0, "system_misc");
+  if (!ksp)
+    {
+      kstat_close (kc);
+      return -1;
+    }
+  if (kstat_read (kc, ksp, 0) < 0)
+    {
+      kstat_close (kc);
+      return -1;
+    }
   for (elem = 0; elem < nelem; elem++)
-    loadavg[elem] = (buf + 6 + elem)->value.ul / 256.0;
-  free(buf);
-
+    {
+      kstat_named_t *kn = kstat_data_lookup (ksp, avestrings[elem]);
+      if (!kn)
+	{
+	  kstat_close (kc);
+	  return -1;
+	}
+      loadavg[elem] = (double)kn->value.ul/FSCALE;
+    }
+  kstat_close (kc);
 #endif /* HAVE_KSTAT_H && HAVE_LIBKSTAT */
 
 #if !defined (LDAV_DONE) && defined (HAVE_SYS_PSTAT_H)
@@ -578,8 +591,6 @@ getloadavg (double loadavg[], int nelem)
   loadavg[elem++] = procinfo.psd_avg_5_min;
   loadavg[elem++] = procinfo.psd_avg_15_min;
 #endif	/* HPUX */
-
-#endif /* XEMACS */
 
 #if !defined (LDAV_DONE) && defined (__linux__)
 #define LDAV_DONE
@@ -608,9 +619,6 @@ getloadavg (double loadavg[], int nelem)
 
   for (elem = 0; elem < nelem && elem < count; elem++)
     loadavg[elem] = load_ave[elem];
-
-  return elem;
-
 #endif /* __linux__ */
 
 #if !defined (LDAV_DONE) && defined (__NetBSD__)
@@ -637,9 +645,6 @@ getloadavg (double loadavg[], int nelem)
 
   for (elem = 0; elem < nelem; elem++)
     loadavg[elem] = (double) load_ave[elem] / (double) scale;
-
-  return elem;
-
 #endif /* __NetBSD__ */
 
 #if !defined (LDAV_DONE) && defined (NeXT)
@@ -944,7 +949,7 @@ getloadavg (double loadavg[], int nelem)
   /* Set errno to zero to indicate that there was no particular error;
      this function just can't work at all on this system.  */
   errno = 0;
-  return -1;
+  return -2;
 #endif
 }
 

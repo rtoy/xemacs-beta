@@ -78,7 +78,6 @@ XEMACS_RECT_WH mswindows_frame_target_rect;
 static void
 mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 {
-  Lisp_Object device = FRAME_DEVICE (f);
   Lisp_Object initially_unmapped;
   Lisp_Object name, height, width, popup, top, left;
   Lisp_Object frame_obj = Qnil;
@@ -184,7 +183,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   hwnd = CreateWindowEx (exstyle,
 			 XEMACS_CLASS,
 			 STRINGP(f->name) ? XSTRING_DATA(f->name) :
-		    	   (STRINGP(name) ? XSTRING_DATA(name) : XEMACS_CLASS),
+			 (STRINGP(name) ? XSTRING_DATA(name) : XEMACS_CLASS),
 			 style,
 			 rect_default.left, rect_default.top,
 			 rect_default.width, rect_default.height,

@@ -59,5 +59,12 @@ struct mswindows_image_instance_data
 #define XIMAGE_INSTANCE_MSWINDOWS_ICON(i) \
   IMAGE_INSTANCE_MSWINDOWS_ICON (XIMAGE_INSTANCE (i))
 
+int
+mswindows_resize_dibitmap_instance (struct Lisp_Image_Instance* ii,
+				    struct frame* f,
+				    int newx, int newy);
+void
+mswindows_create_icon_from_image(Lisp_Object image, struct frame* f, int size);
+
 #endif /* HAVE_MS_WINDOWS */
 #endif /* _XEMACS_GLYPHS_MSW_H_ */
