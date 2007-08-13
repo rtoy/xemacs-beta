@@ -25,11 +25,11 @@ Boston, MA 02111-1307, USA. */
 #ifndef _XEMACS_DYNARR_H_
 #define _XEMACS_DYNARR_H_
 
-#define Dynarr_declare(type)                                         \
-  type *base;                                                        \
-  int elsize;                                                        \
-  int cur;                                                           \
-  int largest;							     \
+#define Dynarr_declare(type)	\
+  type *base;			\
+  int elsize;			\
+  int cur;			\
+  int largest;			\
   int max
 
 typedef struct dynarr
@@ -50,7 +50,7 @@ void Dynarr_free (void *d);
 #define Dynarr_largest(d) ((d)->largest)
 #define Dynarr_reset(d) ((d)->cur = 0)
 #define Dynarr_add_many(d, el, len) Dynarr_insert_many (d, el, len, (d)->cur)
-#define Dynarr_insert_many_at_start(d, el, len)				\
+#define Dynarr_insert_many_at_start(d, el, len)	\
   Dynarr_insert_many (d, el, len, 0)
 
 #define Dynarr_add(d, el) (						\

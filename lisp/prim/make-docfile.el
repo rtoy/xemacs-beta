@@ -40,6 +40,9 @@
 (defvar site-file-list nil)
 (defvar docfile-out-of-date nil)
 
+;; BOGUS
+(defvar find-file-hooks nil)
+
 ;; Gobble up the stuff we don't wish to pass on.
 (setq command-line-args (cdr (cdr (cdr (cdr command-line-args)))))
 
@@ -130,12 +133,15 @@
 		(setq processed (cons arg processed)))))
 	(setq site-load-packages (cdr site-load-packages)))))
 
-(let ((autoloads (list-autoloads)))
+(packages-find-packages package-path t)
+
+(let ((autoloads (list-autoloads-path)))
   ;; (print (concat "Autoloads: " (prin1-to-string autoloads)))
   (while autoloads
     (let ((arg (car autoloads)))
       (if (null (member arg processed))
 	  (progn
+	    ;; (print arg)
 	    (if (and (null docfile-out-of-date)
 		     (file-newer-than-file-p arg docfile))
 		(setq docfile-out-of-date t))
@@ -171,6 +177,7 @@
 	     (list (concat default-directory "../lib-src/make-docfile"))
 	     options processed)
 	    " "))
+	;; (print (prin1-to-string (append options processed)))
 	(apply 'call-process-internal
 	       ;; (concat default-directory "../lib-src/make-docfile")
 	       "make-docfile"

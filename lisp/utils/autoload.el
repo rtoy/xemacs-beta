@@ -607,10 +607,10 @@ be the first parameter on the command line."
 	     (not (looking-at ";;; DO NOT MODIFY THIS FILE")))
 	(progn
 	  (insert ";;; DO NOT MODIFY THIS FILE\n")
-	  (insert "(if (not (featurep '" sym "))\n")
-	  (insert "    (progn\n")
 	  (goto-char (point-max))
-	  (insert "\n(provide '" sym ")\n))\n")))))
+	  (insert "\n(provide '" sym ")\n")))))
+
+(defvar autoload-package-name nil)
 
 ;;;###autoload
 (defun batch-update-directory ()
@@ -642,7 +642,9 @@ be used only with -batch, and kills XEmacs on completion."
 	(when autoload-do-custom-save
 	  (autoload-save-customization)
 	  (setq customized-symbols nil))
-	(fixup-autoload-buffer (concat (file-name-nondirectory arg)
+	(fixup-autoload-buffer (concat (if autoload-package-name
+					   autoload-package-name
+					 (file-name-nondirectory arg))
 				"-autoloads"))
 	(save-some-buffers t))
       ;; (message "Done")

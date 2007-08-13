@@ -171,15 +171,16 @@ x_reset_key_mapping (struct device *d)
 {
   Display *display = DEVICE_X_DISPLAY (d);
   struct x_device *xd = DEVICE_X_DATA (d);
-  int max_code;
   if (xd->x_keysym_map)
     XFree ((char *) xd->x_keysym_map);
-  XDisplayKeycodes (display, &xd->x_keysym_map_min_code,
-		    &max_code);
-  xd->x_keysym_map =
-    XGetKeyboardMapping (display, xd->x_keysym_map_min_code,
-			 max_code - xd->x_keysym_map_min_code + 1,
-			 &xd->x_keysym_map_keysyms_per_code);
+  XDisplayKeycodes (display,
+		    &xd->x_keysym_map_min_code,
+		    &xd->x_keysym_map_max_code);
+  xd->x_keysym_map = XGetKeyboardMapping (display,
+					  xd->x_keysym_map_min_code,
+					  xd->x_keysym_map_max_code -
+					  xd->x_keysym_map_min_code + 1,
+					  &xd->x_keysym_map_keysyms_per_code);
 }
 
 static CONST char *
@@ -188,7 +189,7 @@ index_to_name (int indice)
   switch (indice)
     {
     case ShiftMapIndex:   return "ModShift";
-    case LockMapIndex:    return "ModLock";   
+    case LockMapIndex:    return "ModLock";
     case ControlMapIndex: return "ModControl";
     case Mod1MapIndex:    return "Mod1";
     case Mod2MapIndex:    return "Mod2";
@@ -401,9 +402,15 @@ static int
 x_key_is_modifier_p (KeyCode keycode, struct device *d)
 {
   struct x_device *xd = DEVICE_X_DATA (d);
-  KeySym *syms = &xd->x_keysym_map [(keycode - xd->x_keysym_map_min_code) *
-				    xd->x_keysym_map_keysyms_per_code];
+  KeySym *syms;
   int i;
+
+  if (keycode < xd->x_keysym_map_min_code ||
+      keycode > xd->x_keysym_map_max_code)
+    return 0;
+
+  syms = &xd->x_keysym_map [(keycode - xd->x_keysym_map_min_code) *
+			   xd->x_keysym_map_keysyms_per_code];
   for (i = 0; i < xd->x_keysym_map_keysyms_per_code; i++)
     if (IsModifierKey (syms [i]) ||
 	syms [i] == XK_Mode_switch) /* why doesn't IsModifierKey count this? */
@@ -443,12 +450,16 @@ x_handle_sticky_modifiers (XEvent *ev, struct device *d)
   xd = DEVICE_X_DATA (d);
   keycode = ev->xkey.keycode;
   type = ev->type;
-  
+
+  if (keycode < xd->x_keysym_map_min_code ||
+      keycode > xd->x_keysym_map_max_code)
+    return;
+
   if (! ((type == KeyPress || type == KeyRelease) &&
          x_key_is_modifier_p (keycode, d)))
     { /* Not a modifier key */
       Bool key_event_p = (type == KeyPress || type == KeyRelease);
-      
+
       if (type == KeyPress && !xd->last_downkey)
 	xd->last_downkey = keycode;
       else if (type == ButtonPress ||
@@ -566,7 +577,7 @@ keysym_obeys_caps_lock_p (KeySym sym, struct device *d)
      But if shift-lock is down, then it does. */
   if (xd->lock_interpretation == XK_Shift_Lock)
     return 1;
-  
+
   return
     ((sym >= XK_A)        && (sym <= XK_Z))          ||
     ((sym >= XK_a)        && (sym <= XK_z))          ||
@@ -580,7 +591,7 @@ keysym_obeys_caps_lock_p (KeySym sym, struct device *d)
    MappingNotify event is received.  In its infinite wisdom, Xt
    decided that Xt event handlers never get MappingNotify events.
    O'Reilly Xt Programming Manual 9.1.2 says:
-   
+
    MappingNotify is automatically handled by Xt, so it isn't passed
    to event handlers and you don't need to worry about it.
 
@@ -646,7 +657,7 @@ x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
       /* If it's got a one-character name, that's good enough. */
       if (!name[1])
 	return make_char (name[0]);
-      
+
       /* If it's in the "Keyboard" character set, downcase it.
 	 The case of those keysyms is too totally random for us to
 	 force anyone to remember them.
@@ -725,7 +736,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
       print_status_when (XLookupChars);
       print_status_when (XLookupNone);
       print_status_when (XBufferOverflow);
-      
+
       if (status == XLookupKeySym || status == XLookupBoth)
 	stderr_out (" keysym=%s",  XKeysymToString (keysym));
       if (status == XLookupChars  || status == XLookupBoth)
@@ -765,7 +776,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
         instream =
 	  make_decoding_input_stream (XLSTREAM (instream),
 				      Fget_coding_system (Qautomatic_conversion));
-        
+
         while ((ch = Lstream_get_emchar (XLSTREAM (instream))) != EOF)
           {
             Lisp_Object emacs_event = Fmake_event ();
@@ -855,7 +866,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	  key_event_p ? x_event->xkey.time : x_event->xbutton.time;
 
 	x_handle_sticky_modifiers (x_event, d);
-	
+
 	if (*state & ControlMask)    modifiers |= MOD_CONTROL;
 	if (*state & xd->MetaMask)   modifiers |= MOD_META;
 	if (*state & xd->SuperMask)  modifiers |= MOD_SUPER;
@@ -888,11 +899,11 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	       store it here, but we really don't care about the frame. */
 	    emacs_event->channel = DEVICE_CONSOLE (d);
 	    keysym = x_to_emacs_keysym (&x_event->xkey, 0);
-	    
+
 	    /* If the emacs keysym is nil, then that means that the
 	       X keysym was NoSymbol, which probably means that
 	       we're in the midst of reading a Multi_key sequence,
-	       or a "dead" key prefix.  Ignore it. */
+	       or a "dead" key prefix, or XIM input.  Ignore it. */
 	    if (NILP (keysym))
 	      return 0;
 
@@ -941,10 +952,10 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	    if (! frame)
 	      return 0;	/* not for us */
 	    XSETFRAME (emacs_event->channel, frame);
-            
+
 	    emacs_event->event_type = (x_event->type == ButtonPress) ?
 	      button_press_event : button_release_event;
-            
+
 	    emacs_event->event.button.modifiers = modifiers;
 	    emacs_event->timestamp		= ev->time;
 	    emacs_event->event.button.button	= ev->button;
@@ -953,17 +964,17 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	  }
       }
     break;
-      
+
     case MotionNotify:
       {
         XMotionEvent *ev = &x_event->xmotion;
         struct frame *frame = x_window_to_frame (d, ev->window);
         unsigned int modifiers = 0;
         XMotionEvent event2;
-	
+
         if (! frame)
           return 0; /* not for us */
-	
+
         /* We use MotionHintMask, so we will get only one motion event
            until the next time we call XQueryPointer or the user
            clicks the mouse.  So call XQueryPointer now (meaning that
@@ -979,7 +990,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
                            &event2.x,      &event2.y,
                            &event2.state))
           ev = &event2; /* only one structure copy */
-	
+
         DEVICE_X_MOUSE_TIMESTAMP (d) = ev->time;
 
         XSETFRAME (emacs_event->channel, frame);
@@ -998,7 +1009,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
         emacs_event->event.motion.modifiers = modifiers;
       }
     break;
-      
+
     case ClientMessage:
       {
         /* Patch bogus TAKE_FOCUS messages from MWM; CurrentTime is
@@ -1013,42 +1024,49 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
           }
       }
     /* fall through */
-      
+
     default: /* it's a magic event */
       {
         struct frame *frame;
         Window w;
-    
+	size_t event_size;
+	XEvent *x_event_copy = &emacs_event->event.magic.underlying_x_event;
+
+#define FROB(event_member, window_member) \
+	x_event_copy->event_member = x_event->event_member; \
+	w = x_event->event_member.window_member
+
         switch (x_event->type)
           {
-            /* Note: the number of cases could be reduced to two or
-               three by using xany.window, but it's perhaps clearer
-               and potentially more robust this way */
-          case SelectionRequest: w = x_event->xselectionrequest.owner; break;
-          case SelectionClear:   w = x_event->xselectionclear.window;  break;
-          case SelectionNotify:  w = x_event->xselection.requestor;    break;
-          case PropertyNotify:   w = x_event->xproperty.window;        break;
-          case ClientMessage:    w = x_event->xclient.window;          break;
-          case ConfigureNotify:  w = x_event->xconfigure.window;       break;
-          case Expose:
-          case GraphicsExpose:   w = x_event->xexpose.window;          break;
-          case MapNotify:
-          case UnmapNotify:      w = x_event->xmap.window;             break;
-          case EnterNotify:
-          case LeaveNotify:      w = x_event->xcrossing.window;        break;
-          case FocusIn:
-          case FocusOut:         w = x_event->xfocus.window;           break;
-          case VisibilityNotify: w = x_event->xvisibility.window;      break;
-          default:               w = x_event->xany.window;             break;
+	  case SelectionRequest: FROB(xselectionrequest, owner);  break;
+	  case SelectionClear:	 FROB(xselectionclear, window);	  break;
+	  case SelectionNotify:	 FROB(xselection, requestor);	  break;
+	  case PropertyNotify:	 FROB(xproperty, window);	  break;
+	  case ClientMessage:	 FROB(xclient, window);		  break;
+	  case ConfigureNotify:	 FROB(xconfigure, window);	  break;
+	  case Expose:
+	  case GraphicsExpose:	 FROB(xexpose, window);		  break;
+	  case MapNotify:
+	  case UnmapNotify:	 FROB(xmap, window);		  break;
+	  case EnterNotify:
+	  case LeaveNotify:	 FROB(xcrossing, window);	  break;
+	  case FocusIn:
+	  case FocusOut:	 FROB(xfocus, window);		  break;
+	  case VisibilityNotify: FROB(xvisibility, window);	  break;
+          default:
+	    w = x_event->xany.window;
+	    *x_event_copy = *x_event;
+	    break;
           }
+#undef FROB
         frame = x_any_window_to_frame (d, w);
-       
+
         if (!frame)
           return 0;
 
         emacs_event->event_type = magic_event;
         XSETFRAME (emacs_event->channel, frame);
-        emacs_event->event.magic.underlying_x_event = *x_event;
+
         break;
       }
     }
@@ -1084,7 +1102,7 @@ handle_focus_event_1 (struct frame *f, int in_p)
     Lisp_Object frm;
     Lisp_Object conser;
     struct gcpro gcpro1;
-    
+
     XSETFRAME (frm, f);
     conser = Fcons (frm, Fcons (FRAME_DEVICE (f), in_p ? Qt : Qnil));
     GCPRO1 (conser);
@@ -1105,7 +1123,7 @@ emacs_Xt_handle_focus_event (XEvent *event)
    * It's curious that we're using x_any_window_to_frame() instead
    * of x_window_to_frame().  I don't know what the impact of this is.
    */
-  
+
   struct frame *f =
     x_any_window_to_frame (get_device_from_display (event->xany.display),
 			   event->xfocus.window);
@@ -1138,7 +1156,7 @@ change_frame_visibility (struct frame *f, int is_visible)
       dispatch_epoch_event (f, event, Qx_map);
 #endif
     }
-  else if (FRAME_VISIBLE_P (f) && !is_visible) 
+  else if (FRAME_VISIBLE_P (f) && !is_visible)
     {
       FRAME_VISIBLE_P (f) = 0;
       va_run_hook_with_args (Qunmap_frame_hook, 1, frame);
@@ -1257,7 +1275,7 @@ handle_client_message (struct frame *f, XEvent *event)
       handle_focus_event_1 (f, 1);
 #if 0
       /* If there is a dialog box up, focus on it.
-	 
+
 	 #### Actually, we're raising it too, which is wrong.  We should
 	 #### just focus on it, but lwlib doesn't currently give us an
 	 #### easy way to do that.  This should be fixed.
@@ -1284,7 +1302,7 @@ static void
 emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
 {
   /* This function can GC */
-  XEvent *event = (XEvent *) &emacs_event->event.magic.underlying_x_event;
+  XEvent *event = &emacs_event->event.magic.underlying_x_event;
   struct frame *f = XFRAME (EVENT_CHANNEL (emacs_event));
 
   if (!FRAME_LIVE_P (f))
@@ -1295,60 +1313,60 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
     case SelectionRequest:
       x_handle_selection_request (&event->xselectionrequest);
       break;
-      
+
     case SelectionClear:
       x_handle_selection_clear (&event->xselectionclear);
       break;
-      
+
     case SelectionNotify:
       x_handle_selection_notify (&event->xselection);
       break;
-      
+
     case PropertyNotify:
       x_handle_property_notify (&event->xproperty);
 #ifdef EPOCH
       dispatch_epoch_event (f, event, Qx_property_change);
 #endif
       break;
-      
+
     case Expose:
       x_redraw_exposed_area (f, event->xexpose.x, event->xexpose.y,
 			     event->xexpose.width, event->xexpose.height);
       break;
-      
+
     case GraphicsExpose: /* This occurs when an XCopyArea's source area was
 			    obscured or not available. */
       x_redraw_exposed_area (f, event->xexpose.x, event->xexpose.y,
 			     event->xexpose.width, event->xexpose.height);
       break;
-      
+
     case MapNotify:
     case UnmapNotify:
       handle_map_event (f, event);
       break;
-      
+
     case EnterNotify:
       if (event->xcrossing.detail != NotifyInferior)
 	{
 	  Lisp_Object frame;
-	  
+
 	  XSETFRAME (frame, f);
 	  /* FRAME_X_MOUSE_P (f) = 1; */
 	  va_run_hook_with_args (Qmouse_enter_frame_hook, 1, frame);
 	}
       break;
-      
+
     case LeaveNotify:
       if (event->xcrossing.detail != NotifyInferior)
 	{
 	  Lisp_Object frame;
-	  
+
 	  XSETFRAME (frame, f);
 	  /* FRAME_X_MOUSE_P (f) = 0; */
 	  va_run_hook_with_args (Qmouse_leave_frame_hook, 1, frame);
 	}
       break;
-      
+
     case FocusIn:
     case FocusOut:
 #ifdef EXTERNAL_WIDGET
@@ -1361,11 +1379,11 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
 #endif
       handle_focus_event_1 (f, event->type == FocusIn);
       break;
-      
+
     case ClientMessage:
       handle_client_message (f, event);
       break;
-      
+
     case VisibilityNotify: /* window visiblity has changed */
       if (event->xvisibility.window == XtWindow (FRAME_X_SHELL_WIDGET (f)))
 	{
@@ -1373,9 +1391,9 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
 	    (event->xvisibility.state == VisibilityUnobscured);
 	  /* Note that the fvwm pager only sends VisibilityNotify when
 	     changing pages. Is this all we need to do ? JV */
-	  /* Nope.  We must at least trigger a redisplay here.  
-	     Since this case seems similar to MapNotify, I've 
-	     factored out some code to change_frame_visibility(). 
+	  /* Nope.  We must at least trigger a redisplay here.
+	     Since this case seems similar to MapNotify, I've
+	     factored out some code to change_frame_visibility().
 	     This triggers the necessary redisplay and runs
 	     (un)map-frame-hook.  - dkindred@cs.cmu.edu */
 	  /* Changed it again to support the tristate visibility flag */
@@ -1383,7 +1401,7 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
 				       != VisibilityFullyObscured) ? 1 : -1);
 	}
       break;
-      
+
     case ConfigureNotify:
 #ifdef HAVE_XIM
       XIM_SetGeometry (f);
@@ -1570,10 +1588,10 @@ mark_what_as_being_ready (struct what_is_ready_closure *closure)
 	 for that process's fd, so returning without setting any
 	 flags will take care of it.)  To see the problem, uncomment
 	 the stderr_out below, turn NORMAL_QUIT_CHECK_TIMEOUT_MSECS
-	 down to 25, do sh -c 'xemacs -nw -q -f shell 2>/tmp/log' 
+	 down to 25, do sh -c 'xemacs -nw -q -f shell 2>/tmp/log'
 	 and press return repeatedly.  (Seen under AIX & Linux.)
 	 -dkindred@cs.cmu.edu */
-      if (!poll_fds_for_input (temp_mask)) 
+      if (!poll_fds_for_input (temp_mask))
 	{
 #if 0
 	  stderr_out ("mark_what_as_being_ready: no input available (fd=%d)\n",
@@ -1619,7 +1637,7 @@ select_filedesc (int fd, Lisp_Object what)
   closure = (struct what_is_ready_closure *) xmalloc (sizeof (*closure));
   closure->fd = fd;
   closure->what = what;
-  closure->id = 
+  closure->id =
     XtAppAddInput (Xt_app_con, fd,
 		   (XtPointer) (XtInputReadMask /* | XtInputExceptMask */),
 		   Xt_what_callback, closure);
@@ -1676,10 +1694,8 @@ unselect_filedesc (int fd)
 static void
 emacs_Xt_select_process (struct Lisp_Process *p)
 {
-  int infd;
   Lisp_Object process;
-
-  infd = event_stream_unixoid_select_process (p);
+  int infd = event_stream_unixoid_select_process (p);
 
   XSETPROCESS (process, p);
   select_filedesc (infd, process);
@@ -1688,9 +1704,7 @@ emacs_Xt_select_process (struct Lisp_Process *p)
 static void
 emacs_Xt_unselect_process (struct Lisp_Process *p)
 {
-  int infd;
-
-  infd = event_stream_unixoid_unselect_process (p);
+  int infd = event_stream_unixoid_unselect_process (p);
 
   unselect_filedesc (infd);
 }
@@ -1758,7 +1772,14 @@ emacs_Xt_select_console (struct console *con)
   /* On a stream device (ie: noninteractive), bad things can happen. */
   if (EQ (CONSOLE_TYPE (con), Qtty)) {
     mousefd = CONSOLE_TTY_MOUSE_FD (con);
-    if (mousefd >= 0) {
+	/* We check filedesc_to_what_closure[fd] here because if you run
+	** XEmacs from a TTY, it will fire up GPM, select the mouse fd, then
+	** if you run gnuattach to connect to another TTY, it will fire up
+	** GPM again, and try to reselect the mouse fd.  GPM uses the same
+	** fd for every connection apparently, and select_filedesc will
+	** fail its assertion if we try to select it twice.
+	*/
+    if ((mousefd >= 0) && !filedesc_to_what_closure[mousefd]) {
       select_filedesc (mousefd, console);
     }
   }
@@ -1911,12 +1932,12 @@ describe_event (XEvent *event)
 	stderr_out ("     detail: %s\n", XEvent_detail_to_string(ev->detail));
 	break;
       }
-      
+
     case KeyPress:
       {
 	XKeyEvent *ev = &event->xkey;
 	unsigned int state = ev->state;
-	
+
 	describe_event_window (ev->window, ev->display);
 	stderr_out ("   subwindow: %ld\n", ev->subwindow);
 	stderr_out ("   state: ");
@@ -1929,7 +1950,7 @@ describe_event (XEvent *event)
 	if (state & Mod3Mask)    stderr_out ("Mod3 ");
 	if (state & Mod4Mask)    stderr_out ("Mod4 ");
 	if (state & Mod5Mask)    stderr_out ("Mod5 ");
-	
+
 	if (! state)
 	  stderr_out ("vanilla\n");
 	else
@@ -1939,7 +1960,7 @@ describe_event (XEvent *event)
 	stderr_out ("   keycode: 0x%x\n", ev->keycode);
       }
     break;
-    
+
     case Expose:
       if (x_debug_events > 1)
 	{
@@ -1952,7 +1973,7 @@ describe_event (XEvent *event)
       else
 	stderr_out ("\n");
       break;
-      
+
     case GraphicsExpose:
       if (x_debug_events > 1)
 	{
@@ -1968,7 +1989,7 @@ describe_event (XEvent *event)
       else
 	stderr_out ("\n");
       break;
-    
+
     case EnterNotify:
     case LeaveNotify:
       if (x_debug_events > 1)
@@ -2015,7 +2036,7 @@ describe_event (XEvent *event)
       else
 	stderr_out ("\n");
       break;
-    
+
     case ClientMessage:
       {
 	XClientMessageEvent *ev = &event->xclient;
@@ -2030,7 +2051,7 @@ describe_event (XEvent *event)
 	stderr_out ("\n");
 	break;
       }
-	
+
     default:
       stderr_out ("\n");
       break;
@@ -2073,9 +2094,7 @@ void
 signal_special_Xt_user_event (Lisp_Object channel, Lisp_Object function,
 			      Lisp_Object object)
 {
-  Lisp_Object event;
-
-  event = Fmake_event ();
+  Lisp_Object event = Fmake_event ();
 
   XEVENT (event)->event_type = misc_user_event;
   XEVENT (event)->channel = channel;
@@ -2083,7 +2102,7 @@ signal_special_Xt_user_event (Lisp_Object channel, Lisp_Object function,
   XEVENT (event)->event.eval.object = object;
 
   enqueue_Xt_dispatch_event (event);
-}  
+}
 
 static void
 emacs_Xt_next_event (struct Lisp_Event *emacs_event)
@@ -2149,8 +2168,7 @@ emacs_Xt_next_event (struct Lisp_Event *emacs_event)
     Xt_timeout_to_emacs_event (emacs_event);
   else if (fake_event_occurred)
     {
-      /* A dummy event, so that a cycle of the command loop will
-	 occur. */
+      /* A dummy event, so that a cycle of the command loop will occur. */
       fake_event_occurred = 0;
       /* eval events have nil as channel */
       emacs_event->event_type = eval_event;
@@ -2407,7 +2425,7 @@ emacs_Xt_event_pending_p (int user_p)
 	 signal_event_pipe to generate actual input in the form
 	 of an identity eval event or something. (#### maybe this
 	 actually happens?) */
-	 
+
       if (poll_fds_for_input (process_only_mask))
 	return 1;
 
@@ -2513,7 +2531,7 @@ Boolean EmacsXtCvtStringToPixel (
   String       params[1];
   Cardinal     num_params  = 1;
   XtAppContext the_app_con = XtDisplayToApplicationContext (dpy);
-  
+
   if (*num_args != 2) {
     XtAppWarningMsg(the_app_con, "wrongParameters", "cvtStringToPixel",
                     "XtToolkitError",
@@ -2549,11 +2567,11 @@ Boolean EmacsXtCvtStringToPixel (
     status = allocate_nearest_color (DisplayOfScreen(screen), colormap,
                                      &screenColor);
   }
-  
+
   if (status == 0) {
     params[0] = str;
     /* Server returns a specific error code but Xlib discards it.  Ugh */
-    if (XLookupColor(DisplayOfScreen(screen), colormap, (char*)str,
+    if (XLookupColor(DisplayOfScreen(screen), colormap, (char*) str,
                      &exactColor, &screenColor)) {
       XtAppWarningMsg(the_app_con, "noColormap", "cvtStringToPixel",
                       "XtToolkitError",
@@ -2565,7 +2583,7 @@ Boolean EmacsXtCvtStringToPixel (
                       "XtToolkitError",
                       "Color name \"%s\" is not defined", params, &num_params);
     }
-    
+
     *closure_ret = False;
     return False;
   } else {
@@ -2670,15 +2688,15 @@ init_event_Xt_late (void) /* called when already initialized */
   completed_timeouts = 0;
 
   event_stream = Xt_event_stream;
-  
+
 #if defined(HAVE_XIM) || defined(USE_XFONTSET)
   Initialize_Locale();
 #endif /* HAVE_XIM || USE_XFONTSET */
-  
+
   XtToolkitInitialize ();
   Xt_app_con = XtCreateApplicationContext ();
   XtAppSetFallbackResources (Xt_app_con, (String *) x_fallback_resources);
-  
+
   /* In xselect.c */
   x_selection_timeout = (XtAppGetSelectionTimeout (Xt_app_con) / 1000);
   XSetErrorHandler (x_error_handler);
@@ -2701,5 +2719,5 @@ init_event_Xt_late (void) /* called when already initialized */
 			 NULL, 0,
 			 XtCacheByDisplay, EmacsFreeXIMStyles);
 #endif /* XIM_XLIB */
-  
+
 }

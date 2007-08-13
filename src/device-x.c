@@ -52,7 +52,7 @@ Boston, MA 02111-1307, USA.  */
 Lisp_Object Vdefault_x_device;
 
 /* Qdisplay in general.c */
-Lisp_Object Qx_error; 
+Lisp_Object Qx_error;
 Lisp_Object Qinit_pre_x_win, Qinit_post_x_win;
 
 /* 切腹, n.  Japanese ritual suicide. */
@@ -65,30 +65,25 @@ Lisp_Object Vx_initial_argv_list; /* #### ugh! */
 
 static XrmOptionDescRec emacs_options[] =
 {
-  {(String)"-geometry", (String)".geometry", XrmoptionSepArg, NULL},
-  {(String)"-iconic", (String)".iconic", XrmoptionNoArg, (XtPointer) "yes"},
+  {"-geometry", ".geometry", XrmoptionSepArg, NULL},
+  {"-iconic", ".iconic", XrmoptionNoArg, (XtPointer) "yes"},
 
-  {(String)"-internal-border-width", (String)"*EmacsFrame.internalBorderWidth",
+  {"-internal-border-width", "*EmacsFrame.internalBorderWidth",
    XrmoptionSepArg, NULL},
-  {(String)"-ib", (String)"*EmacsFrame.internalBorderWidth", XrmoptionSepArg,
-   NULL},
-  {(String)"-scrollbar-width", (String)"*EmacsFrame.scrollBarWidth",
-   XrmoptionSepArg, NULL},
-  {(String)"-scrollbar-height", (String)"*EmacsFrame.scrollBarHeight",
-   XrmoptionSepArg, NULL},
+  {"-ib", "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL},
+  {"-scrollbar-width", "*EmacsFrame.scrollBarWidth", XrmoptionSepArg, NULL},
+  {"-scrollbar-height", "*EmacsFrame.scrollBarHeight", XrmoptionSepArg, NULL},
 
   /* #### Beware!  If the type of the shell changes, update this. */
-  {(String)"-T", (String)"*TopLevelEmacsShell.title", XrmoptionSepArg, NULL},
-  {(String)"-wn", (String)"*TopLevelEmacsShell.title", XrmoptionSepArg, NULL},
-  {(String)"-title", (String)"*TopLevelEmacsShell.title", XrmoptionSepArg,
-   NULL},
-  {(String)"-iconname", (String)"*TopLevelEmacsShell.iconName",
-   XrmoptionSepArg, NULL},
-  {(String)"-in", (String)"*TopLevelEmacsShell.iconName", XrmoptionSepArg,
-   NULL},
-  {(String)"-mc", (String)"*pointerColor", XrmoptionSepArg, NULL},
-  {(String)"-cr", (String)"*cursorColor", XrmoptionSepArg, NULL},
-  {(String)"-fontset", (String)"*FontSet", XrmoptionSepArg, NULL},
+  {"-T",     "*TopLevelEmacsShell.title", XrmoptionSepArg, NULL},
+  {"-wn",    "*TopLevelEmacsShell.title", XrmoptionSepArg, NULL},
+  {"-title", "*TopLevelEmacsShell.title", XrmoptionSepArg, NULL},
+
+  {"-iconname", "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL},
+  {"-in", "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL},
+  {"-mc", "*pointerColor", XrmoptionSepArg, NULL},
+  {"-cr", "*cursorColor",  XrmoptionSepArg, NULL},
+  {"-fontset", "*FontSet", XrmoptionSepArg, NULL},
 };
 
 static void validify_resource_string (char *str);
@@ -276,7 +271,7 @@ x_init_device (struct device *d, Lisp_Object props)
     char path[MAXPATHLEN];
     XrmDatabase db = XtDatabase (dpy); /* ### XtScreenDatabase(dpy) ? */
     CONST char *locale = XrmLocaleOfDatabase (db);
-    
+
     if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
 	GET_C_STRING_FILENAME_DATA_ALLOCA (Vdata_directory, data_dir);
@@ -388,7 +383,7 @@ x_delete_device (struct device *d)
     {
 #ifdef FREE_CHECKING
       checking_free = (__free_hook != 0);
-      
+
       /* Disable strict free checking, to avoid bug in X library */
       if (checking_free)
 	disable_strict_free_check ();
@@ -407,7 +402,7 @@ x_delete_device (struct device *d)
 	enable_strict_free_check ();
 #endif
     }
-  
+
   if (EQ (device, Vdefault_x_device))
     {
       Lisp_Object devcons, concons;
@@ -785,7 +780,7 @@ construct_name_list (Display *display, Widget widget, char *fake_name,
     }
 }
 
-#endif
+#endif /* 0 */
 
 /* Only the characters [-_A-Za-z0-9] are allowed in the individual
    sections of a resource.  Convert invalid characters to -. */
@@ -881,8 +876,8 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
 DEFUN ("x-get-resource", Fx_get_resource, 3, 6, 0, /*
 Retrieve an X resource from the resource manager.
 
-The first arg is the name of the resource to retrieve, such as \"font\".
-The second arg is the class of the resource to retrieve, like \"Font\".
+The first arg is the name of the resource to retrieve, such as "font".
+The second arg is the class of the resource to retrieve, like "Font".
 The third arg should be one of the symbols 'string, 'integer, 'natnum, or
   'boolean, specifying the type of object that the database is searched for.
 The fourth arg is the locale to search for the resources on, and can
@@ -890,7 +885,7 @@ The fourth arg is the locale to search for the resources on, and can
   defaults to 'global.
 The fifth arg is the device to search for the resources on. (The resource
   database for a particular device is constructed by combining non-device-
-  specific resources such any command-line resources specified and any
+  specific resources such as any command-line resources specified and any
   app-defaults files found [or the fallback resources supplied by XEmacs,
   if no app-defaults file is found] with device-specific resources such as
   those supplied using xrdb.) If omitted, it defaults to the device of
@@ -906,49 +901,49 @@ locale.
 
 If you want to search for a subresource, you just need to specify the
 resource levels in NAME and CLASS.  For example, NAME could be
-\"modeline.attributeFont\", and CLASS \"Face.AttributeFont\".
+"modeline.attributeFont", and CLASS "Face.AttributeFont".
 
 Specifically,
 
 1) If LOCALE is a buffer, a call
 
-    (x-get-resource \"foreground\" \"Foreground\" 'string SOME-BUFFER)
+    (x-get-resource "foreground" "Foreground" 'string SOME-BUFFER)
 
 is an interface to a C call something like
 
-    XrmGetResource (db, \"xemacs.buffer.BUFFER-NAME.foreground\",
-			\"Emacs.EmacsLocaleType.EmacsBuffer.Foreground\",
-			\"String\");
+    XrmGetResource (db, "xemacs.buffer.BUFFER-NAME.foreground",
+			"Emacs.EmacsLocaleType.EmacsBuffer.Foreground",
+			"String");
 
 2) If LOCALE is a frame, a call
 
-    (x-get-resource \"foreground\" \"Foreground\" 'string SOME-FRAME)
+    (x-get-resource "foreground" "Foreground" 'string SOME-FRAME)
 
 is an interface to a C call something like
 
-    XrmGetResource (db, \"xemacs.frame.FRAME-NAME.foreground\",
-			\"Emacs.EmacsLocaleType.EmacsFrame.Foreground\",
-			\"String\");
+    XrmGetResource (db, "xemacs.frame.FRAME-NAME.foreground",
+			"Emacs.EmacsLocaleType.EmacsFrame.Foreground",
+			"String");
 
 3) If LOCALE is a device, a call
 
-    (x-get-resource \"foreground\" \"Foreground\" 'string SOME-DEVICE)
+    (x-get-resource "foreground" "Foreground" 'string SOME-DEVICE)
 
 is an interface to a C call something like
 
-    XrmGetResource (db, \"xemacs.device.DEVICE-NAME.foreground\",
-			\"Emacs.EmacsLocaleType.EmacsDevice.Foreground\",
-			\"String\");
+    XrmGetResource (db, "xemacs.device.DEVICE-NAME.foreground",
+			"Emacs.EmacsLocaleType.EmacsDevice.Foreground",
+			"String");
 
 4) If LOCALE is 'global, a call
 
-    (x-get-resource \"foreground\" \"Foreground\" 'string 'global)
+    (x-get-resource "foreground" "Foreground" 'string 'global)
 
 is an interface to a C call something like
 
-    XrmGetResource (db, \"xemacs.foreground\",
-			\"Emacs.Foreground\",
-			\"String\");
+    XrmGetResource (db, "xemacs.foreground",
+			"Emacs.Foreground",
+			"String");
 
 Note that for 'global, no prefix is added other than that of the
 application itself; thus, you can use this locale to retrieve
@@ -973,8 +968,10 @@ mean ``unspecified.''
   CHECK_STRING (class);
   CHECK_SYMBOL (type);
 
-  if (!EQ (type, Qstring) && !EQ (type, Qboolean) &&
-      !EQ (type, Qinteger) && !EQ (type, Qnatnum))
+  if (!EQ (type, Qstring)  &&
+      !EQ (type, Qboolean) &&
+      !EQ (type, Qinteger) &&
+      !EQ (type, Qnatnum))
     return maybe_signal_continuable_error
       (Qwrong_type_argument,
        list2 (build_translated_string
@@ -1024,11 +1021,11 @@ mean ``unspecified.''
     return build_string (raw_result);
   else if (EQ (type, Qboolean))
     {
-      if (!strcasecmp (raw_result, "off") ||
+      if (!strcasecmp (raw_result, "off")   ||
 	  !strcasecmp (raw_result, "false") ||
-	  !strcasecmp (raw_result,"no"))
+	  !strcasecmp (raw_result, "no"))
 	return Fcons (Qnil, Qnil);
-      else if (!strcasecmp (raw_result, "on") ||
+      else if (!strcasecmp (raw_result, "on")   ||
 	       !strcasecmp (raw_result, "true") ||
 	       !strcasecmp (raw_result, "yes"))
 	return Fcons (Qt, Qnil);
@@ -1067,7 +1064,7 @@ The resource prefix is the strings used to prefix resources if
 the LOCALE and DEVICE arguments were passed to `x-get-resource'.
 The returned value is a cons of a name prefix and a class prefix.
 For example, if LOCALE is a frame, the returned value might be
-\(\"xemacs.frame.FRAME-NAME\" . \"Emacs.EmacsLocaleType.EmacsFrame\").
+\("xemacs.frame.FRAME-NAME" . "Emacs.EmacsLocaleType.EmacsFrame").
 If no valid X device for resourcing can be obtained, this function
 returns nil. (In such a case, `x-get-resource' would always return nil.)
 */
@@ -1206,10 +1203,7 @@ Return the vendor ID string of the X server `device' on.
   Display *dpy = get_x_display (device);
   char *vendor = ServerVendor (dpy);
 
-  if (vendor)
-    return (build_string (vendor));
-  else
-    return (build_string (""));
+  return build_string (vendor ? vendor : "");
 }
 
 DEFUN ("x-server-version", Fx_server_version, 0, 1, 0, /*
@@ -1235,12 +1229,11 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
        (keysym))
 {
   CONST char *keysym_ext;
-  
+
   CHECK_STRING (keysym);
   GET_C_STRING_CTEXT_DATA_ALLOCA (keysym, keysym_ext);
-  if (XStringToKeysym (keysym_ext))
-    return Qt;
-  return Qnil;
+
+  return XStringToKeysym (keysym_ext) ? Qt : Qnil;
 }
 
 DEFUN ("x-keysym-on-keyboard-p", Fx_keysym_on_keyboard_p, 1, 2, 0, /*
@@ -1257,7 +1250,7 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
   KeySym  keysym_KeySym;
   KeySym *keysym_ptr, *keysym_last;
   int min_code, max_code, keysyms_per_code;
-  
+
   if (!DEVICE_X_P (d))
     signal_simple_error ("Not an X device", device);
   CHECK_STRING (keysym);
@@ -1265,7 +1258,7 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
   keysym_KeySym = XStringToKeysym (keysym_string);
   if (!keysym_KeySym)           /* Invalid keysym */
     return Qnil;
-  
+
   XDisplayKeycodes (DEVICE_X_DISPLAY (d), &min_code, &max_code);
   keysyms_per_code = DEVICE_X_DATA (d)->x_keysym_map_keysyms_per_code;
   keysym_ptr       = DEVICE_X_DATA (d)->x_keysym_map;
@@ -1275,7 +1268,7 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
       if (keysym_KeySym == *keysym_ptr)
         return Qt;
     }
-  
+
   return Qnil;
 }
 
@@ -1327,7 +1320,7 @@ Returns t if the grab is successful, nil otherwise.
 			 (NILP (cursor) ? 0
 			  : XIMAGE_INSTANCE_X_CURSOR (cursor)),
 			 CurrentTime);
-  return ((result == GrabSuccess) ? Qt : Qnil);
+  return (result == GrabSuccess) ? Qt : Qnil;
 }
 
 DEFUN ("x-ungrab-pointer", Fx_ungrab_pointer, 0, 1, 0, /*

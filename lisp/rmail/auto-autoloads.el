@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'rmail-autoloads))
-    (progn
+(if (featurep 'rmail-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (rmail-input rmail-mode rmail) "rmail" "rmail/rmail.el")
 
@@ -115,4 +114,3 @@ Convert Rmail file FILE to mailbox-format file TO-FILE." t nil)
 ;;;***
 
 (provide 'rmail-autoloads)
-))

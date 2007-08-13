@@ -2328,11 +2328,11 @@ The type name can then be used in `typecase', `check-type', etc."
 	 name 'cl-deftype-handler (cons (list* '&cl-defs ''('*) args) body))))
 
 (defun cl-make-type-test (val type)
-  (if (memq type '(character string-char)) (setq type '(integer 0 255)))
   (if (symbolp type)
       (cond ((get type 'cl-deftype-handler)
 	     (cl-make-type-test val (funcall (get type 'cl-deftype-handler))))
 	    ((memq type '(nil t)) type)
+	    ((eq type 'string-char) (list 'characterp val))
 	    ((eq type 'null) (list 'null val))
 	    ((eq type 'float) (list 'floatp-safe val))
 	    ((eq type 'real) (list 'numberp val))

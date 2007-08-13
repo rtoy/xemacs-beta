@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'custom-autoloads))
-    (progn
+(if (featurep 'custom-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all customize-save-customized customize-browse custom-buffer-create-other-window custom-buffer-create customize-apropos-groups customize-apropos-faces customize-apropos-options customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-option-other-window customize-option customize-group-other-window customize-group customize customize-save-variable customize-set-variable customize-set-value) "cus-edit" "custom/cus-edit.el")
 
@@ -192,4 +191,3 @@ Delete WIDGET." nil nil)
 ;;;***
 
 (provide 'custom-autoloads)
-))

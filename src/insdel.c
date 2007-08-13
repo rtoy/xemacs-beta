@@ -2678,15 +2678,12 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
       BUF_MODIFF (buf)++;
       MARK_BUFFERS_CHANGED;
 
-      /* Relocate point as if it were a marker.  */
-      if (bi_from < BI_BUF_PT (buf))
-	{
-	  if (BI_BUF_PT (buf) < bi_to)
-	    JUST_SET_POINT (buf, from, bi_from);
-	  else
-	    JUST_SET_POINT (buf, BUF_PT (buf) - numdel,
-			    BI_BUF_PT (buf) - bc_numdel);
-	}
+      /* ### Point used to be modified here, but this causes problems with MULE,
+	 as point is used to calculate bytinds, and if the offset in bc_numdel causes
+	 point to move to a non first-byte location, causing some other function to 
+	 throw an assertion in ASSERT_VALID_BYTIND. I've moved the code to right after
+	  the other movements and adjustments, but before the gap is moved.
+	  -- jh 970813 */
 
       /* Detach any extents that are completely within the range [FROM, TO],
 	 if the extents are detachable.
@@ -2706,6 +2703,16 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
       /* Relocate any extent endpoints just like markers. */
       adjust_extents_for_deletion (bufobj, bi_from, bi_to, BUF_GAP_SIZE (buf),
 				   bc_numdel, BUF_GAP_SIZE (buf));
+
+      /* Relocate point as if it were a marker.  */
+      if (bi_from < BI_BUF_PT (buf))
+	{
+	  if (BI_BUF_PT (buf) < bi_to)
+	    JUST_SET_POINT (buf, from, bi_from);
+	  else
+	    JUST_SET_POINT (buf, BUF_PT (buf) - numdel,
+			    BI_BUF_PT (buf) - bc_numdel);
+	}
 
       SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) + bc_numdel);
       SET_BOTH_BUF_ZV (buf, BUF_ZV (buf) - numdel, BI_BUF_ZV (buf) - bc_numdel);
@@ -2997,12 +3004,11 @@ convert_emchar_string_into_bufbyte_dynarr (Emchar *arr, int nels,
 					  bufbyte_dynarr *dyn)
 {
   Bufbyte str[MAX_EMCHAR_LEN];
-  Bytecount len;
   int i;
 
   for (i = 0; i < nels; i++)
     {
-      len = set_charptr_emchar (str, arr[i]);
+      Bytecount len = set_charptr_emchar (str, arr[i]);
       Dynarr_add_many (dyn, str, len);
     }
 }
@@ -3058,8 +3064,7 @@ init_buffer_text (struct buffer *b, int indirect_p)
   if (!indirect_p)
     {
       SET_BUF_GAP_SIZE (b, 20);
-      (void) BUFFER_ALLOC (b->text->beg,
-			   BUF_GAP_SIZE (b) + BUF_END_SENTINEL_SIZE);
+      BUFFER_ALLOC (b->text->beg, BUF_GAP_SIZE (b) + BUF_END_SENTINEL_SIZE);
       if (! BUF_BEG_ADDR (b))
 	memory_full ();
 
@@ -3083,7 +3088,7 @@ init_buffer_text (struct buffer *b, int indirect_p)
 	    b->text->mule_bytind_cache[i] = 1;
 	  }
       }
-#endif
+#endif /* MULE */
 
       BUF_MODIFF (b) = 1;
       BUF_SAVE_MODIFF (b) = 1;

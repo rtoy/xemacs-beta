@@ -285,7 +285,7 @@ struct font_metric_info
   int ascent;
   int descent;
 
-  char proportional_p;
+  int proportional_p;
 };
 
 /* NOTE NOTE NOTE: Currently the positions in an extent fragment

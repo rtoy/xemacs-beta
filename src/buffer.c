@@ -115,15 +115,15 @@ Lisp_Object Vbuffer_defaults;
    as well as a default value which is used to initialize newly-created
    buffers and as a reset-value when local-vars are killed.
 
-   If a slot is -2, there is no DEFVAR_BUFFER_LOCAL for it. 
+   If a slot is -2, there is no DEFVAR_BUFFER_LOCAL for it.
    (The slot is always local, but there's no lisp variable for it.)
-   The default value is only used to initialize newly-creation buffers. 
-   
+   The default value is only used to initialize newly-creation buffers.
+
    If a slot is -3, then there is no DEFVAR_BUFFER_LOCAL for it but
    there is a default which is used to initialize newly-creation
    buffers and as a reset-value when local-vars are killed.
 
-   
+
    */
 struct buffer buffer_local_flags;
 
@@ -270,12 +270,12 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   struct buffer *b = XBUFFER (obj);
 
-  if (print_readably) 
+  if (print_readably)
     {
       if (!BUFFER_LIVE_P (b))
 	error ("printing unreadable object #<killed buffer>");
       else
-	error ("printing unreadable object #<buffer %s>", 
+	error ("printing unreadable object #<buffer %s>",
 	       XSTRING_DATA (b->name));
     }
   else if (!BUFFER_LIVE_P (b))
@@ -291,7 +291,7 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       print_internal (b->name, printcharfun, 0);
     }
 }
-  
+
 
 DEFUN ("bufferp", Fbufferp, 1, 1, 0, /*
 T if OBJECT is an editor buffer.
@@ -349,7 +349,7 @@ get_buffer (Lisp_Object name, int error_if_deleted_or_does_not_exist)
         {
           if (error_if_deleted_or_does_not_exist)
             nsberror (name);
-          return (Qnil);
+          return Qnil;
         }
       return name;
     }
@@ -364,7 +364,7 @@ get_buffer (Lisp_Object name, int error_if_deleted_or_does_not_exist)
       UNGCPRO;
       if (NILP (buf) && error_if_deleted_or_does_not_exist)
 	nsberror (name);
-      return (buf);
+      return buf;
     }
 }
 
@@ -372,16 +372,10 @@ struct buffer *
 decode_buffer (Lisp_Object buffer, int allow_string)
 {
   if (NILP (buffer))
-    {
-      return current_buffer;
-    }
-  else if (STRINGP (buffer))
-    {
-      if (allow_string)
-	return XBUFFER (get_buffer (buffer, 1));
-      else
-	CHECK_BUFFER (buffer);    /* This will cause a wrong-type error. */
-    }
+    return current_buffer;
+
+  if (allow_string && STRINGP (buffer))
+    return XBUFFER (get_buffer (buffer, 1));
 
   CHECK_LIVE_BUFFER (buffer);
   return XBUFFER (buffer);
@@ -421,7 +415,7 @@ assoc_ignore_text_properties (register Lisp_Object key, Lisp_Object list)
   return Qnil;
 }
 
-#endif
+#endif /* FSFmacs */
 
 DEFUN ("get-buffer", Fget_buffer, 1, 1, 0, /*
 Return the buffer named NAME (a string).
@@ -439,7 +433,7 @@ NAME may also be a buffer; if so, the value is that buffer.
      called FSF compatibility. */
   if (BUFFERP (name))
     return name;
-  return (get_buffer (name, 0));
+  return get_buffer (name, 0);
   /* FSFmacs 19.29 calls assoc_ignore_text_properties() here.
      Bleagh!! */
 }
@@ -750,7 +744,7 @@ even if a buffer with that name exists.
 
   tem = Fget_buffer (name);
   if (NILP (tem))
-    return (name);
+    return name;
 
   count = 1;
   while (1)
@@ -765,7 +759,7 @@ even if a buffer with that name exists.
         }
       tem = Fget_buffer (gentemp);
       if (NILP (tem))
-	return (gentemp);
+	return gentemp;
     }
 }
 
@@ -908,7 +902,7 @@ No argument or nil as argument means use current buffer as BUFFER.
 #include "bufslots.h"
 #undef MARKED_SLOT
   }
-  return (result);
+  return result;
 }
 
 DEFUN ("buffer-dedicated-frame", Fbuffer_dedicated_frame, 0, 1, 0, /*
@@ -923,7 +917,7 @@ No argument or nil as argument means use current buffer as BUFFER.
   if (!NILP (buf->dedicated_frame) &&
       !FRAME_LIVE_P (XFRAME (buf->dedicated_frame)))
     buf->dedicated_frame = Qnil;
-    
+
   return buf->dedicated_frame;
 }
 
@@ -965,10 +959,10 @@ as BUFFER means use current buffer.
   struct buffer *buf = decode_buffer (buffer, 0);
 
 #ifdef ENERGIZE
-  Lisp_Object starting_flag = 
+  Lisp_Object starting_flag =
     (BUF_SAVE_MODIFF (buf) < BUF_MODIFF (buf)) ? Qt : Qnil;
   Lisp_Object argument_flag = (NILP (flag)) ? Qnil : Qt;
-#endif  
+#endif
 
 #ifdef CLASH_DETECTION
   /* If buffer becoming modified, lock the file.
@@ -1033,7 +1027,7 @@ No argument or nil as argument means use current buffer as BUFFER.
        (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
-  
+
   return make_int (BUF_MODIFF (buf));
 }
 
@@ -1142,7 +1136,7 @@ VISIBLE-OK.
 	 disregard buffers that don't fit the predicate.  */
       if (FRAMEP (frame))
 	{
-	  tem = XFRAME (frame)->buffer_predicate;	
+	  tem = XFRAME (frame)->buffer_predicate;
 	  if (!NILP (tem))
 	    {
 	      tem = call1 (tem, buf);
@@ -1298,7 +1292,7 @@ with `delete-process'.
       if (EQ (Vwindow_system, Qx))
 	call0 (intern ("xselect-kill-buffer-hook"));
       /* #### generalize me! */
-#endif
+#endif /* HAVE_X_WINDOWS */
       unbind_to (speccount, Qnil);
       UNGCPRO;
       b = XBUFFER (buf);        /* Hypothetical relocating GC. */
@@ -1330,7 +1324,7 @@ with `delete-process'.
 
       UNGCPRO;
     }
-  
+
   /* Make this buffer not be current.
      In the process, notice if this is the sole visible buffer
      and give up if so.  */
@@ -1393,7 +1387,7 @@ with `delete-process'.
 	    internal_delete_file (b->auto_save_file_name);
 	    UNGCPRO;
 	    b = XBUFFER (buf);
-	    
+
 	    if (!BUFFER_LIVE_P (b))
 	      return Qnil;
 
@@ -1552,13 +1546,13 @@ set_buffer_internal (struct buffer *b)
       extern Lisp_Object Ffep_force_on (), Ffep_force_off (), Ffep_get_mode ();
 
       old_buf->fep_mode = Ffep_get_mode ();
-      
+
       if (!NILP (current_buffer->fep_mode))
 	Ffep_force_on ();
       else
 	Ffep_force_off ();
   }
-#endif
+#endif /* HAVE_FEP */
 
   if (old_buf)
     {
@@ -1662,7 +1656,7 @@ discussion.
     }
   barf_if_buffer_read_only (b, s, e);
 
-  return (Qnil);
+  return Qnil;
 }
 
 static void
@@ -2054,7 +2048,7 @@ The functions are run using the `run-hooks' function.
 *Non-nil means deactivate the mark when the buffer contents change.
 */ );
   Vtransient_mark_mode = Qnil;
-#endif
+#endif /* FSFmacs */
 
   DEFVAR_INT ("undo-threshold", &undo_threshold /*
 Keep no more undo information once it exceeds this size.
@@ -2093,7 +2087,7 @@ List of functions called with no args to query before killing a buffer.
   delete_auto_save_files = 1;
 }
 
-/* DOC is ignored because it is snagged and recorded externally 
+/* DOC is ignored because it is snagged and recorded externally
  *  by make-docfile */
 /* Renamed from DEFVAR_PER_BUFFER because FSFmacs D_P_B takes
  *  a bogus extra arg, which confuses an otherwise identical make-docfile.c */
@@ -2133,7 +2127,7 @@ List of functions called with no args to query before killing a buffer.
  } while (0)
 
 static void
-defvar_buffer_local (CONST char *namestring, 
+defvar_buffer_local (CONST char *namestring,
                      CONST struct symbol_value_forward *m)
 {
   int offset = ((char *)symbol_value_forward_forward (m)
@@ -2141,11 +2135,11 @@ defvar_buffer_local (CONST char *namestring,
 
   defvar_mumble (namestring, m, sizeof (*m));
 
-  *((Lisp_Object *)(offset + (char *)XBUFFER (Vbuffer_local_symbols))) 
+  *((Lisp_Object *)(offset + (char *)XBUFFER (Vbuffer_local_symbols)))
     = intern (namestring);
 }
 
-/* DOC is ignored because it is snagged and recorded externally 
+/* DOC is ignored because it is snagged and recorded externally
  *  by make-docfile */
 #define DEFVAR_BUFFER_DEFAULTS(lname, field_name)			\
  do { static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C	\
@@ -2188,12 +2182,12 @@ complex_vars_of_buffer (void)
   staticpro (&Vbuffer_local_symbols);
   XSETBUFFER (Vbuffer_defaults, defs);
   XSETBUFFER (Vbuffer_local_symbols, syms);
-  
+
   nuke_all_buffer_slots (syms, Qnil);
   nuke_all_buffer_slots (defs, Qnil);
   defs->text = &defs->own_text;
   syms->text = &syms->own_text;
-  
+
   /* Set up the non-nil default values of various buffer slots.
      Must do these before making the first buffer.
      */
@@ -2209,7 +2203,7 @@ complex_vars_of_buffer (void)
   defs->mirror_upcase_table = Vmirror_ascii_upcase_table;
   defs->mirror_case_canon_table = Vmirror_ascii_canon_table;
   defs->mirror_case_eqv_table = Vmirror_ascii_eqv_table;
-#endif  
+#endif /* MULE */
   defs->syntax_table = Vstandard_syntax_table;
   defs->mirror_syntax_table =
     XCHAR_TABLE (Vstandard_syntax_table)->mirror_table;
@@ -2228,7 +2222,7 @@ complex_vars_of_buffer (void)
   defs->auto_save_modified = 0;
   defs->auto_save_failure_time = -1;
   defs->invisibility_spec = Qt;
-  
+
   {
     /*  0 means var is always local.  Default used only at creation.
      * -1 means var is always local.  Default used only at reset and
@@ -2242,13 +2236,13 @@ complex_vars_of_buffer (void)
     Lisp_Object always_local_no_default = make_int (0);
     Lisp_Object always_local_resettable = make_int (-1);
     Lisp_Object resettable = make_int (-3);
-    
+
     /* Assign the local-flags to the slots that have default values.
        The local flag is a bit that is used in the buffer
        to say that it has its own local value for the slot.
        The local flag bits are in the local_var_flags slot of the
        buffer.  */
-    
+
     nuke_all_buffer_slots (&buffer_local_flags, make_int (-2));
     buffer_local_flags.filename = always_local_no_default;
     buffer_local_flags.directory = always_local_no_default;
@@ -2256,7 +2250,7 @@ complex_vars_of_buffer (void)
     buffer_local_flags.save_length = always_local_no_default;
     buffer_local_flags.auto_save_file_name = always_local_no_default;
     buffer_local_flags.read_only = always_local_no_default;
-    
+
     buffer_local_flags.major_mode = always_local_resettable;
     buffer_local_flags.mode_name = always_local_resettable;
     buffer_local_flags.undo_list = always_local_no_default;
@@ -2268,7 +2262,7 @@ complex_vars_of_buffer (void)
     buffer_local_flags.invisibility_spec = always_local_resettable;
     buffer_local_flags.file_format = always_local_resettable;
     buffer_local_flags.generated_modeline_string = always_local_no_default;
-    
+
     buffer_local_flags.keymap = resettable;
     buffer_local_flags.downcase_table = resettable;
     buffer_local_flags.upcase_table = resettable;
@@ -2278,7 +2272,7 @@ complex_vars_of_buffer (void)
 #ifdef MULE
     buffer_local_flags.category_table = resettable;
 #endif
-    
+
     buffer_local_flags.modeline_format = make_int (1);
     buffer_local_flags.abbrev_mode = make_int (2);
     buffer_local_flags.overwrite_mode = make_int (4);
@@ -2299,7 +2293,7 @@ complex_vars_of_buffer (void)
 #ifdef MULE
     buffer_local_flags.buffer_file_coding_system = make_int (0x8000);
 #endif
-    
+
     /* #### Warning, 0x4000000 (that's six zeroes) is the largest number
        currently allowable due to the XINT() handling of this value.
        With some rearrangement you can get 4 more bits. */
@@ -2479,7 +2473,7 @@ in the current display table (if there is one).
 *Non-nil means lines in the buffer are displayed right to left.
 Nil means left to right. (Not yet implemented.)
 */ );
-#endif
+#endif /* Not yet implemented */
 
   DEFVAR_BUFFER_LOCAL_MAGIC ("truncate-lines", truncate_lines /*
 *Non-nil means do not display continuation lines;
@@ -2579,11 +2573,11 @@ Each buffer has its own value of this variable.
 #endif /* FSFmacs */
 
   DEFVAR_BUFFER_LOCAL ("buffer-file-truename", file_truename /*
-The real name of the file visited in the current buffer, 
-or nil if not visiting a file.  This is the result of passing 
-buffer-file-name to the `file-truename' function.  Every buffer has 
-its own value of this variable.  This variable is automatically 
-maintained by the functions that change the file name associated 
+The real name of the file visited in the current buffer,
+or nil if not visiting a file.  This is the result of passing
+buffer-file-name to the `file-truename' function.  Every buffer has
+its own value of this variable.  This variable is automatically
+maintained by the functions that change the file name associated
 with a buffer.
 */ );
 
@@ -2650,7 +2644,7 @@ An entry (nil PROPERTY VALUE BEG . END) indicates that a text property
 was modified between BEG and END.  PROPERTY is the property name,
 and VALUE is the old value.
 */
-#endif
+#endif /* FSFmacs */
 
   DEFVAR_BUFFER_LOCAL ("buffer-undo-list", undo_list /*
 List of undo entries in current buffer.
@@ -2691,7 +2685,7 @@ If the value of the variable is t, undo information is not recorded.
 Non-nil means the mark and region are currently active in this buffer.
 Automatically local in all buffers.
 */ );
-#endif
+#endif /* FSFmacs */
 
 #ifdef REGION_CACHE_NEEDS_WORK
   xxDEFVAR_BUFFER_LOCAL ("cache-long-line-scans", cache_long_line_scans /*
@@ -2804,7 +2798,7 @@ handled:
   Vbuffer_alist = Qnil;
   /* Want no undo records for prin1_to_string_buffer */
   Fbuffer_disable_undo (Vprin1_to_string_buffer);
-  
+
   {
     Lisp_Object scratch =
       Fset_buffer (Fget_buffer_create (QSscratch));
@@ -2854,5 +2848,5 @@ init_buffer (void)
   /* #### is this correct? */
   temp = get_minibuffer (0);
   XBUFFER (temp)->directory = current_buffer->directory;
-#endif
+#endif /* FSFmacs */
 }

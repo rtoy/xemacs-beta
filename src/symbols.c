@@ -3043,7 +3043,7 @@ Variable aliases are created with `defvaralias'.  See also
   if (!NILP (follow_past_lisp_magic) && !EQ (follow_past_lisp_magic, Qt))
     {
       CHECK_SYMBOL (follow_past_lisp_magic);
-      (void) handler_type_from_function_symbol (follow_past_lisp_magic, 0);
+      handler_type_from_function_symbol (follow_past_lisp_magic, 0);
     }
 
   valcontents = fetch_value_maybe_past_magic (variable,
@@ -3072,7 +3072,7 @@ variable chain of symbols.
   if (!NILP (follow_past_lisp_magic) && !EQ (follow_past_lisp_magic, Qt))
     {
       CHECK_SYMBOL (follow_past_lisp_magic);
-      (void) handler_type_from_function_symbol (follow_past_lisp_magic, 0);
+      handler_type_from_function_symbol (follow_past_lisp_magic, 0);
     }
   return follow_varalias_pointers (object, follow_past_lisp_magic);
 }

@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'ediff-autoloads))
-    (progn
+(if (featurep 'ediff-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (ediff-show-registry) "ediff-mult" "ediff/ediff-mult.el")
 
@@ -184,4 +183,3 @@ With optional NODE, goes to that node." t nil)
 ;;;***
 
 (provide 'ediff-autoloads)
-))

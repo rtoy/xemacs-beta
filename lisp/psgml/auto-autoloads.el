@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'psgml-autoloads))
-    (progn
+(if (featurep 'psgml-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (style-format) "psgml-fs" "psgml/psgml-fs.el")
 
@@ -94,4 +93,3 @@ All bindings:
 ;;;***
 
 (provide 'psgml-autoloads)
-))

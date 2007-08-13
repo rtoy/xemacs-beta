@@ -70,6 +70,13 @@ This is relavent for Solaris and, perhaps, other systems which have
   :type 'boolean
   :group 'man)
 
+(defcustom Manual-buffers-have-stars nil
+  "*When T, manual page buffers are always named like *man*.
+Otherwise, they are not if `buffers-menu-submenus-for-groups-p' is T,
+so that Manual-mode buffers will have their own submenu."
+  :type 'boolean
+  :group 'man)
+
 (defcustom Manual-use-rosetta-man (not (null (locate-file "rman" exec-path))) "\
 If non-nil, use RosettaMan (rman) to filter man pages.
 This makes man-page cleanup virtually instantaneous, instead of
@@ -202,9 +209,10 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 
     (let ((bufname (flet
 		       ((maybe-star ()
-				    (if buffers-menu-submenus-for-groups-p
-					""
-				      "*")))
+		          (if (or Manual-buffers-have-stars
+				  (not buffers-menu-submenus-for-groups-p))
+			      "*"
+			    "")))
 		     (if apropos-mode
 			 (concat (maybe-star) "man apropos " topic (maybe-star))
 		       (concat (maybe-star)
@@ -261,15 +269,9 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 		   (message "%s (done.)" args-string))
 		 (set-buffer-modified-p nil)
 		 (Manual-mode)))))
-
-      (let ((page (flet
-		      ((maybe-star ()
-				   (if buffers-menu-submenus-for-groups-p
-				       ""
-				     "*")))
-		    (if section
-			(concat (maybe-star) topic "(" section ")" (maybe-star))
-		      topic))))
+      (let ((page (if section
+		      (concat topic "(" section ")")
+		    topic)))
 	(setq Manual-page-history
 	      (cons (buffer-name)
 		    (delete (buffer-name) Manual-page-history))
@@ -513,6 +515,8 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 
 (defun Manual-mouseify-xrefs ()
   (goto-char (point-min))
+  ;; skip the top line of manual pages, but not apropos listings.
+  (unless apropos-mode (forward-line 1))
   (let ((case-fold-search nil)
 	s e name splitp extent)
     ;; possibly it would be faster to rewrite this expression to search for
@@ -528,7 +532,6 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 
       (goto-char s)
       ;; if this is a hyphenated xref, we're on the second line, 1st char now.
-
       (when (progn
 	      (beginning-of-line)
 	      (and (looking-at (concat "^[ \t]+" (regexp-quote name)))
@@ -650,9 +653,10 @@ on the menu in the order in which they appear in the buffer."
 		(setq manpage "???"))
 	      (flet
 		  ((maybe-star ()
-			       (if buffers-menu-submenus-for-groups-p
-				   "*"
-				 "")))
+		     (if (or Manual-buffers-have-stars
+			     (not buffers-menu-submenus-for-groups-p))
+			 "*"
+		       "")))
 		(setq buffer
 		      (rename-buffer
 		       (generate-new-buffer-name (concat (maybe-star)

@@ -27,18 +27,18 @@ Boston, MA 02111-1307, USA.  */
 #define _EmacsManager_h
 
 #ifndef XtNresizeCallback
-#define XtNresizeCallback (String) "resizeCallback"
+#define XtNresizeCallback "resizeCallback"
 #endif
 
 #ifndef XtNqueryGeometryCallback
-#define XtNqueryGeometryCallback (String) "queryGeometryCallback"
+#define XtNqueryGeometryCallback "queryGeometryCallback"
 #endif
 
 #ifndef XtNuserData
-#define XtNuserData (String) "userData"
+#define XtNuserData "userData"
 #endif
 #ifndef XtCUserData
-#define XtCUserData (String) "UserData"
+#define XtCUserData "UserData"
 #endif
 
 typedef struct _EmacsManagerClassRec *EmacsManagerWidgetClass;

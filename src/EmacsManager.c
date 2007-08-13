@@ -70,7 +70,7 @@ EmacsManagerClassRec emacsManagerClassRec = {
 #else
     /* superclass         */    (WidgetClass) &compositeClassRec,
 #endif
-    /* class_name         */    (String) "EmacsManager",
+    /* class_name         */    "EmacsManager",
     /* widget_size        */    sizeof(EmacsManagerRec),
     /* class_initialize   */    ClassInitialize,
     /* class_part_init    */	NULL,
@@ -113,12 +113,12 @@ EmacsManagerClassRec emacsManagerClassRec = {
 #ifdef LWLIB_USES_MOTIF
   {
   /* constraint_class fields */
-      NULL,                                     /* resource list        */   
-      0,                                        /* num resources        */   
-      0,                                        /* constraint size      */   
-      (XtInitProc)NULL,                         /* init proc            */   
-      (XtWidgetProc)NULL,                       /* destroy proc         */   
-      (XtSetValuesFunc)NULL,                    /* set values proc      */   
+      NULL,                                     /* resource list        */
+      0,                                        /* num resources        */
+      0,                                        /* constraint size      */
+      (XtInitProc)NULL,                         /* init proc            */
+      (XtWidgetProc)NULL,                       /* destroy proc         */
+      (XtSetValuesFunc)NULL,                    /* set values proc      */
       NULL,                                     /* extension            */
   },
   {
@@ -218,7 +218,7 @@ Realize (Widget w, Mask *valueMask, XSetWindowAttributes *attributes)
 {
   attributes->bit_gravity = NorthWestGravity;
   *valueMask |= CWBitGravity;
-  
+
   XtCreateWindow (w, (unsigned) InputOutput, (Visual *) CopyFromParent,
 		  *valueMask, attributes);
 }

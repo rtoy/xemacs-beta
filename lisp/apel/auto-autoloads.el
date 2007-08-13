@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'apel-autoloads))
-    (progn
+(if (featurep 'apel-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (module-installed-p exec-installed-p file-installed-p get-latest-path add-latest-path add-path) "file-detect" "apel/file-detect.el")
 
@@ -60,4 +59,3 @@ If PATHS is omitted, `load-path' is used." nil nil)
 ;;;***
 
 (provide 'apel-autoloads)
-))

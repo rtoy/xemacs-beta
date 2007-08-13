@@ -1183,20 +1183,20 @@ x_offix_drop_event_handler (Widget widget, XtPointer data, XEvent *event,
 
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
-  Type = DndDataType (event); 
-  if (Type < 0)  /* pseudo event produces -1 as type */
+  if (!DndIsDropMessage(event)) /* the better way */
     {
-      stderr_out("DndDropHandler: pseudo drop received\n");
+      stderr_out("DndDropHandler: pseudo drop received (ignore me!)\n");
       return;
     }
-
+    
+  Type = DndDataType (event); 
   DndGetData (&Data, &Size);
   
   GCPRO4 (path, frame, dnd_data, dnd_type);
 
   frame = make_frame ((struct frame *) data);
 
-  stderr_out("DndDropHandler: real drop received (T%d Sl%d)\n",Type,Size);
+  stderr_out("DndDropHandler: valid drop received (T%d S%u)\n",Type,Size);
   
   switch (Type)
     {
@@ -1238,6 +1238,75 @@ x_offix_drop_event_handler (Widget widget, XtPointer data, XEvent *event,
   UNGCPRO;
   return;
 }
+
+DEFUN ("offix-start-drag-internal", Foffix_start_drag_internal, 2, 3, 0, /*
+First arg is the event that started the drag,
+second arg should be some string.
+Start a OffiX drag from a buffer.
+For now this will only drag as DndText.
+This fun is heavily stolen from the CDE Dnd stuff.
+*/
+       (event, data, dtyp))
+{
+  if (EVENTP(event) && STRINGP (data))
+    {
+      struct frame *f = decode_x_frame (Fselected_frame (Qnil));
+      XEvent x_event;
+      Widget wid = FRAME_X_TEXT_WIDGET (f);
+      Display *display = XtDisplayOfObject (wid);
+      Window root_window, child_window;
+      int root_x, root_y, win_x, win_y;
+      unsigned int keys_and_buttons;
+      char *dnd_data;
+      unsigned long dnd_len;
+      int dnd_typ;
+      struct Lisp_Event *lisp_event = XEVENT(event);
+
+      /* only drag if this is really a press */
+      if (EVENT_TYPE(lisp_event) != button_press_event)
+	return Qnil;
+
+      /* and whats with MULE data ??? */
+      dnd_data = XSTRING_DATA (data);
+      dnd_len  = XSTRING_LENGTH (data) + 1; /* the f*cking zero */
+
+      /* set the type */
+      if (!NILP (dtyp) && INTP (dtyp))
+	dnd_typ = XINT (dtyp);
+      else
+	dnd_typ = DndText; /* the default */
+
+      /*
+       * Eek - XEmacs doesn't keep the old X event around so we have to
+       * build a dummy event.  This is a truly gross hack. (from CDE)
+       *
+       * Perhaps there is some way to hand back the lisp event object?
+       * Best way: hand through x-event in all Lisp_Events
+       */
+
+      x_event.xbutton.type = ButtonPress;
+      x_event.xbutton.send_event = False;
+      x_event.xbutton.display = XtDisplayOfObject(wid);
+      x_event.xbutton.window = XtWindowOfObject(wid);
+      x_event.xbutton.root = XRootWindow(x_event.xkey.display, 0);
+      x_event.xbutton.subwindow = 0;
+      x_event.xbutton.time = lisp_event->timestamp;
+      x_event.xbutton.x = lisp_event->event.button.x;
+      x_event.xbutton.y = lisp_event->event.button.y;
+      x_event.xbutton.x_root = lisp_event->event.button.x; /* this is wrong */
+      x_event.xbutton.y_root = lisp_event->event.button.y;
+      x_event.xbutton.state = 0; /* calc state from modifier */
+      x_event.xbutton.button = lisp_event->event.button.button;
+      x_event.xkey.same_screen = True;
+
+      DndSetData(dnd_typ, dnd_data, dnd_len);
+
+      if (DndHandleDragging(wid, &x_event))
+	return Qt;
+    }
+  return Qnil;
+}
+
 #endif /* HAVE_OFFIX_DND */
 
 
@@ -2536,6 +2605,9 @@ syms_of_frame_x (void)
   DEFSUBR (Fx_window_id);
 #ifdef HAVE_CDE
   DEFSUBR (Fcde_start_drag_internal);
+#endif
+#ifdef HAVE_OFFIX_DND
+  DEFSUBR (Foffix_start_drag_internal);
 #endif
 }
 

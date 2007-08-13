@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'eterm-autoloads))
-    (progn
+(if (featurep 'eterm-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (term make-term) "term" "eterm/term.el")
 
@@ -86,4 +85,3 @@ Otherwise, one argument `-i' is passed to the shell.
 ;;;***
 
 (provide 'eterm-autoloads)
-))

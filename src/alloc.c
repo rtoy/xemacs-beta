@@ -92,7 +92,7 @@ extern void cadillac_record_backtrace ();
   } while (0)
 #else
 #define INCREMENT_CONS_COUNTER_1(size) (consing_since_gc += (size))
-#endif
+#endif /* EMACS_BTL */
 
 #define debug_allocation_backtrace()				\
 do {								\
@@ -242,30 +242,28 @@ static int purecopying_for_bytecode;
 static int pure_sizeof (Lisp_Object /*, int recurse */);
 
 /* Keep statistics on how much of what is in purespace */
-struct purestat
+static struct purestat
 {
   int nobjects;
   int nbytes;
   CONST char *name;
-};
-
-#define FMH(s,n) static struct purestat s = { 0, 0, n }
-FMH (purestat_cons, "cons cells:");
-FMH (purestat_float, "float objects:");
-FMH (purestat_string_pname, "symbol-name strings:");
-FMH (purestat_bytecode, "compiled-function objects:");
-FMH (purestat_string_bytecodes, "byte-code strings:");
-FMH (purestat_vector_bytecode_constants, "byte-constant vectors:");
-FMH (purestat_string_interactive, "interactive strings:");
+}
+  purestat_cons = {0, 0, "cons cells"},
+  purestat_float = {0, 0, "float objects"},
+  purestat_string_pname = {0, 0, "symbol-name strings"},
+  purestat_bytecode = {0, 0, "compiled-function objects"},
+  purestat_string_bytecodes = {0, 0, "byte-code strings"},
+  purestat_vector_bytecode_constants = {0, 0, "byte-constant vectors"},
+  purestat_string_interactive = {0, 0, "interactive strings"},
 #ifdef I18N3
-FMH (purestat_string_domain, "domain strings:");
+  purestat_string_domain = {0, 0, "domain strings"},
 #endif
-FMH (purestat_string_documentation, "documentation strings:");
-FMH (purestat_string_other_function, "other function strings:");
-FMH (purestat_vector_other, "other vectors:");
-FMH (purestat_string_other, "other strings:");
-FMH (purestat_string_all, "all strings:");
-FMH (purestat_vector_all, "all vectors:");
+  purestat_string_documentation = {0, 0, "documentation strings"},
+  purestat_string_other_function = {0, 0, "other function strings"},
+  purestat_vector_other = {0, 0, "other vectors"},
+  purestat_string_other = {0, 0, "other strings"},
+  purestat_string_all = {0, 0, "all strings"},
+  purestat_vector_all = {0, 0, "all vectors"};
 
 static struct purestat *purestats[] =
 {
@@ -287,7 +285,6 @@ static struct purestat *purestats[] =
   &purestat_string_all,
   &purestat_vector_all
 };
-#undef FMH
 
 static void
 bump_purestat (struct purestat *purestat, int nbytes)
@@ -319,7 +316,7 @@ static void *breathing_space;
 void
 release_breathing_space (void)
 {
-  if (breathing_space) 
+  if (breathing_space)
     {
       void *tmp = breathing_space;
       breathing_space = 0;
@@ -423,7 +420,7 @@ xfree (void *block)
      the one that comes with Solaris 2.3.  FMH!! */
   assert (block != (void *) 0xDEADBEEF);
   assert (block);
-#endif
+#endif /* ERROR_CHECK_MALLOC */
   free (block);
 }
 
@@ -451,18 +448,19 @@ deadbeef_memory (void *ptr, unsigned long size)
   unsigned long long_length = size / sizeof (FOUR_BYTE_TYPE);
   unsigned long i;
   unsigned long bytes_left_over = size - sizeof (FOUR_BYTE_TYPE) * long_length;
-  
+
   for (i = 0; i < long_length; i++)
     ((FOUR_BYTE_TYPE *) ptr)[i] = 0xdeadbeef;
   for (i = i; i < bytes_left_over; i++)
     ((unsigned char *) ptr + long_length)[i] = deadbeef_as_char[i];
 }
 
-#else
+#else /* !ERROR_CHECK_GC */
+
 
 #define deadbeef_memory(ptr, size)
 
-#endif
+#endif /* !ERROR_CHECK_GC */
 
 #ifdef xstrdup
 #undef xstrdup
@@ -518,7 +516,7 @@ allocate_lisp_storage (int size)
 
 /* lrecords are chained together through their "next.v" field.
  * After doing the mark phase, the GC will walk this linked
- *  list and free any record which hasn't been marked 
+ *  list and free any record which hasn't been marked
  */
 static struct lcrecord_header *all_lcrecords;
 
@@ -600,7 +598,7 @@ disksave_object_finalization_1 (void)
 	((header->lheader.implementation->finalizer) (header, 1));
     }
 }
-  
+
 
 /* This must not be called -- it just serves as for EQ test
  *  If lheader->implementation->finalizer is this_marks_a_marked_record,
@@ -677,7 +675,7 @@ gc_record_type_p (Lisp_Object frob, CONST struct lrecord_implementation *type)
    two string_chars_blocks.
 
    Vectors are each malloc()ed separately, similar to lcrecords.
-   
+
    In the following discussion, we use conses, but it applies equally
    well to the other fixed-size types.
 
@@ -793,7 +791,7 @@ gc_record_type_p (Lisp_Object frob, CONST struct lrecord_implementation *type)
 #else
 #define MALLOC_OVERHEAD 8
 #endif
-#endif
+#endif /* MALLOC_OVERHEAD */
 
 #ifdef ALLOC_NO_POOLS
 # define TYPE_ALLOC_SIZE(type, structtype) 1
@@ -801,7 +799,7 @@ gc_record_type_p (Lisp_Object frob, CONST struct lrecord_implementation *type)
 # define TYPE_ALLOC_SIZE(type, structtype)			\
     ((2048 - MALLOC_OVERHEAD - sizeof (struct type##_block *))	\
      / sizeof (structtype))
-#endif
+#endif /* ALLOC_NO_POOLS */
 
 #define DECLARE_FIXED_TYPE_ALLOC(type, structtype)			  \
 									  \
@@ -873,7 +871,7 @@ do									 \
   MARK_STRUCT_AS_NOT_FREE (result);					 \
 } while (0)
 
-#else
+#else /* !ERROR_CHECK_GC */
 
 #define ALLOCATE_FIXED_TYPE_1(type, structtype, result)		\
 do								\
@@ -889,7 +887,7 @@ do								\
   MARK_STRUCT_AS_NOT_FREE (result);				\
 } while (0)
 
-#endif
+#endif /* !ERROR_CHECK_GC */
 
 #define ALLOCATE_FIXED_TYPE(type, structtype, result)	\
 do							\
@@ -915,7 +913,7 @@ do								\
    Even if Emacs is run on some weirdo system that allows and allocates
    byte-aligned pointers, this pointer is at the very top of the address
    space and so it's almost inconceivable that it could ever be valid. */
-   
+
 #if INTBITS == 32
 # define INVALID_POINTER_VALUE 0xFFFFFFFF
 #elif INTBITS == 48
@@ -954,7 +952,7 @@ do { if (type##_free_list_tail)						\
      type##_free_list_tail = ptr;					\
    } while (0)
 
-#else
+#else /* !ERROR_CHECK_GC */
 
 #define PUT_FIXED_TYPE_ON_FREE_LIST(type, structtype, ptr)	\
 do { * (structtype **) ((char *) ptr + sizeof (void *)) =	\
@@ -962,7 +960,7 @@ do { * (structtype **) ((char *) ptr + sizeof (void *)) =	\
      type##_free_list = ptr;					\
    } while (0)
 
-#endif
+#endif /* !ERROR_CHECK_GC */
 
 /* TYPE and STRUCTTYPE are the same as in ALLOCATE_FIXED_TYPE(). */
 
@@ -989,7 +987,7 @@ do { FREE_FIXED_TYPE (type, structtype, ptr);			\
      DECREMENT_CONS_COUNTER (sizeof (structtype));		\
      gc_count_num_##type##_freelist++;				\
    } while (0)
-     
+
 
 
 /**********************************************************************/
@@ -1526,7 +1524,7 @@ This is terrible behavior which is retained for compatibility with old
   int purecopy_instructions = 1;
 
   if (nargs > 6)
-    return Fsignal (Qwrong_number_of_arguments, 
+    return Fsignal (Qwrong_number_of_arguments,
 		    list2 (intern ("make-byte-code"), make_int (nargs)));
 
   CHECK_LIST (arglist);
@@ -1589,7 +1587,7 @@ This is terrible behavior which is retained for compatibility with old
 		       pure_sizeof (interactive));
 #endif /* PURESTAT */
     }
-  
+
   {
     int docp = !NILP (doc_string);
     int intp = !UNBOUNDP (interactive);
@@ -1621,7 +1619,7 @@ This is terrible behavior which is retained for compatibility with old
 	b->annotated = Vload_file_name_internal_the_purecopy;
 	UNGCPRO;
       }
-#endif
+#endif /* COMPILED_FUNCTION_ANNOTATION_HACK */
 
 #ifdef I18N3
     if (docp && intp && domp)
@@ -1735,7 +1733,7 @@ allocate_event (void)
   XSETEVENT (val, e);
   return val;
 }
-  
+
 
 /**********************************************************************/
 /*                       Marker allocation                            */
@@ -1785,11 +1783,11 @@ noseeum_make_marker (void)
 /*                        String allocation                           */
 /**********************************************************************/
 
-/* The data for "short" strings generally resides inside of structs of type 
-   string_chars_block. The Lisp_String structure is allocated just like any 
+/* The data for "short" strings generally resides inside of structs of type
+   string_chars_block. The Lisp_String structure is allocated just like any
    other Lisp object (except for vectors), and these are freelisted when
    they get garbage collected. The data for short strings get compacted,
-   but the data for large strings do not. 
+   but the data for large strings do not.
 
    Previously Lisp_String structures were relocated, but this caused a lot
    of bus-errors because the C code didn't include enough GCPRO's for
@@ -1852,7 +1850,7 @@ struct unused_string_chars
 static void
 init_string_chars_alloc (void)
 {
-  first_string_chars_block = 
+  first_string_chars_block =
     (struct string_chars_block *) xmalloc (sizeof (struct string_chars_block));
   first_string_chars_block->prev = 0;
   first_string_chars_block->next = 0;
@@ -1884,10 +1882,10 @@ allocate_string_chars_struct (struct Lisp_String *string_it_goes_with,
   else
     {
       /* Make a new current string chars block */
-      struct string_chars_block *new 
+      struct string_chars_block *new
 	= (struct string_chars_block *)
 	  xmalloc (sizeof (struct string_chars_block));
-      
+
       current_string_chars_block->next = new;
       new->prev = current_string_chars_block;
       new->next = 0;
@@ -1923,7 +1921,7 @@ make_uninit_string (Bytecount length)
   set_string_data (s, &(s_chars->chars[0]));
   set_string_length (s, length);
   s->plist = Qnil;
-  
+
   set_string_byte (s, length, 0);
 
   XSETSTRING (val, s);
@@ -1933,7 +1931,7 @@ make_uninit_string (Bytecount length)
 #ifdef VERIFY_STRING_CHARS_INTEGRITY
 static void verify_string_chars_integrity (void);
 #endif
-     
+
 /* Resize the string S so that DELTA bytes can be inserted starting
    at POS.  If DELTA < 0, it means deletion starting at POS.  If
    POS < 0, resize the string but don't copy any characters.  Use
@@ -1959,7 +1957,7 @@ resize_string (struct Lisp_String *s, Bytecount pos, Bytecount delta)
       if (delta < 0)
 	assert ((-delta) <= string_length (s));
     }
-#endif
+#endif /* ERROR_CHECK_BUFPOS */
 
   if (pos >= 0 && delta < 0)
   /* If DELTA < 0, the functions below will delete the characters
@@ -1983,7 +1981,7 @@ resize_string (struct Lisp_String *s, Bytecount pos, Bytecount delta)
 	     modulo any alignment constraints). */
 	  if (pos >= 0)
 	    {
-	      Bufbyte *addroff = pos + string_data (s);  
+	      Bufbyte *addroff = pos + string_data (s);
 
 	      memmove (addroff + delta, addroff,
 		       /* +1 due to zero-termination. */
@@ -2004,7 +2002,7 @@ resize_string (struct Lisp_String *s, Bytecount pos, Bytecount delta)
 						    newfullsize));
 	  if (pos >= 0)
 	    {
-	      Bufbyte *addroff = pos + string_data (s);  
+	      Bufbyte *addroff = pos + string_data (s);
 
 	      memmove (addroff + delta, addroff,
 		       /* +1 due to zero-termination. */
@@ -2136,7 +2134,7 @@ make_string (CONST Bufbyte *contents, Bytecount length)
 #if defined (ERROR_CHECK_BUFPOS) && defined (MULE)
   bytecount_to_charcount (contents, length); /* Just for the assertions */
 #endif
-  
+
   val = make_uninit_string (length);
   memcpy (XSTRING_DATA (val), contents, length);
   return val;
@@ -2259,7 +2257,7 @@ mark_lcrecord_list (Lisp_Object obj, void (*markobj) (Lisp_Object))
       MARK_RECORD_HEADER (lheader);
       chain = free_header->chain;
     }
-      
+
   return Qnil;
 }
 
@@ -2305,7 +2303,7 @@ allocate_managed_lcrecord (Lisp_Object lcrecord_list)
       /* So must the size. */
       assert (implementation->static_size == 0
 	      || implementation->static_size == list->size);
-#endif
+#endif /* ERROR_CHECK_GC */
       list->free = free_header->chain;
       free_header->lcheader.free = 0;
       return val;
@@ -2339,7 +2337,7 @@ free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord)
 	    == list->size);
   else
     assert (implementation->static_size == list->size);
-#endif
+#endif /* ERROR_CHECK_GC */
 
   if (implementation->finalizer)
     ((implementation->finalizer) (lheader, 0));
@@ -2361,8 +2359,8 @@ make_pure_string (CONST Bufbyte *data, Bytecount length,
 {
   Lisp_Object new;
   struct Lisp_String *s;
-  int size = (sizeof (struct Lisp_String) + ((no_need_to_copy_data) 
-                                             ? 0 
+  int size = (sizeof (struct Lisp_String) + ((no_need_to_copy_data)
+                                             ? 0
                                              /* + 1 for terminating 0 */
                                              : (length + 1)));
   size = ALIGN_SIZE (size, ALIGNOF (Lisp_Object));
@@ -2402,7 +2400,7 @@ make_pure_string (CONST Bufbyte *data, Bytecount length,
   bump_purestat (&purestat_string_all, size);
   if (purecopying_for_bytecode)
     bump_purestat (&purestat_string_other_function, size);
-#endif
+#endif /* PURESTAT */
 
   /* Do this after the official "completion" of the purecopying. */
   s->plist = Fpurecopy (plist);
@@ -2482,7 +2480,7 @@ make_pure_float (double num)
        of the struct to account for this.
      */
     int alignment = sizeof (float_data (f));
-#endif
+#endif /* !GNUC */
     char *p = ((char *) PUREBEG + pureptr);
 
     p = (char *) (((unsigned EMACS_INT) p + alignment - 1) & - alignment);
@@ -2543,7 +2541,7 @@ alloc_pure_lrecord (int size, struct lrecord_implementation *implementation)
   header->next = 0;
   return header;
 }
-#endif
+#endif /* unused */
 
 
 
@@ -2612,24 +2610,20 @@ Does not copy symbols.
 
 
 static void
-PURESIZE_h(long int puresize)
+puresize_adjust_h (long int puresize)
 {
-  int fd;
-  char *PURESIZE_h_file = "puresize_adjust.h";
-  char *WARNING = "/* This file is generated by XEmacs, DO NOT MODIFY!!! */\n";
-  char define_PURESIZE[256];
+  FILE *stream = fopen ("puresize-adjust.h", "w");
 
-  if ((fd = open(PURESIZE_h_file, O_WRONLY|O_CREAT|O_TRUNC, 0666)) < 0) {
-    report_file_error("Can't write PURESIZE_ADJUSTMENT",
-		      Fcons(build_ext_string(PURESIZE_h_file, FORMAT_FILENAME),
-			    Qnil));
-  }
+  if (stream == NULL)
+    report_file_error ("Opening puresize adjustment file",
+		       Fcons (build_string ("puresize-adjust.h"), Qnil));
 
-  write(fd, WARNING, strlen(WARNING));
-  sprintf(define_PURESIZE, "# define PURESIZE_ADJUSTMENT (%ld)\n",
-	  puresize - RAW_PURESIZE);
-  write(fd, define_PURESIZE, strlen(define_PURESIZE));
-  close(fd);
+  fprintf (stream,
+	   "/*\tDo not edit this file!\n"
+	   "\tAutomatically generated by XEmacs */\n"
+	   "# define PURESIZE_ADJUSTMENT (%ld)\n",
+	   puresize - RAW_PURESIZE);
+  fclose (stream);
 }
 
 void
@@ -2641,11 +2635,11 @@ report_pure_usage (int report_impurities,
   if (pure_lossage)
     {
       message ("\n****\tPure Lisp storage exhausted!\n"
-"\tPurespace usage: %ld of %ld\n"
- "****",
+	       "\tPurespace usage: %ld of %ld\n"
+	       "****",
                get_PURESIZE()+pure_lossage, (long) get_PURESIZE());
       if (die_if_pure_storage_exceeded) {
-	PURESIZE_h(get_PURESIZE() + pure_lossage);
+	puresize_adjust_h (get_PURESIZE() + pure_lossage);
 	rc = -1;
       }
     }
@@ -2660,7 +2654,7 @@ report_pure_usage (int report_impurities,
       if (lost > 2) {
         sprintf (buf + strlen (buf), " -- %dk wasted", lost);
 	if (die_if_pure_storage_exceeded) {
-	  PURESIZE_h(pureptr + 16);
+	  puresize_adjust_h (pureptr + 16);
 	  rc = -1;
 	}
       }
@@ -2670,45 +2664,54 @@ report_pure_usage (int report_impurities,
     }
 
 #ifdef PURESTAT
+
+  purestat_vector_other.nbytes =
+    purestat_vector_all.nbytes -
+    purestat_vector_bytecode_constants.nbytes;
+  purestat_vector_other.nobjects =
+    purestat_vector_all.nobjects -
+    purestat_vector_bytecode_constants.nobjects;
+
+  purestat_string_other.nbytes =
+    purestat_string_all.nbytes -
+    (purestat_string_pname.nbytes +
+     purestat_string_bytecodes.nbytes +
+     purestat_string_interactive.nbytes +
+     purestat_string_documentation.nbytes +
+#ifdef I18N3
+     purestat_string_domain.nbytes +
+#endif
+     purestat_string_other_function.nbytes);
+
+  purestat_string_other.nobjects =
+    purestat_string_all.nobjects -
+    (purestat_string_pname.nobjects +
+     purestat_string_bytecodes.nobjects +
+     purestat_string_interactive.nobjects +
+     purestat_string_documentation.nobjects +
+#ifdef I18N3
+     purestat_string_domain.nobjects +
+#endif
+     purestat_string_other_function.nobjects);
+
+  message ("   %-26s Total    Bytes", "");
+
   {
-    int iii;
+    int j;
 
-    purestat_vector_other.nbytes =
-      purestat_vector_all.nbytes - purestat_vector_bytecode_constants.nbytes;
-    purestat_vector_other.nobjects =
-      purestat_vector_all.nobjects -
-	purestat_vector_bytecode_constants.nobjects;
-
-    purestat_string_other.nbytes =
-      purestat_string_all.nbytes - (purestat_string_pname.nbytes +
-                                    purestat_string_bytecodes.nbytes +
-                                    purestat_string_interactive.nbytes +
-                                    purestat_string_documentation.nbytes +
-#ifdef I18N3
-                                    purestat_string_domain.nbytes +
-#endif
-                                    purestat_string_other_function.nbytes);
-    purestat_string_other.nobjects =
-      purestat_string_all.nobjects - (purestat_string_pname.nobjects +
-                                      purestat_string_bytecodes.nobjects +
-                                      purestat_string_interactive.nobjects +
-                                      purestat_string_documentation.nobjects +
-#ifdef I18N3
-                                      purestat_string_domain.nobjects +
-#endif
-                                      purestat_string_other_function.nobjects);
-
-    message ("   %-24stotal:   bytes:", "");
-
-    for (iii = 0; iii < countof (purestats); iii++)
-      if (!purestats[iii])
+    for (j = 0; j < countof (purestats); j++)
+      if (!purestats[j])
         clear_message ();
       else
-        message ("   %-24s%5d  %7d  %2d%%",
-                 purestats[iii]->name,
-                 purestats[iii]->nobjects,
-                 purestats[iii]->nbytes,
-                 (int) (purestats[iii]->nbytes / (pureptr / 100.0) + 0.5));
+	{
+	  char buf [100];
+	  sprintf(buf, "%s:", purestats[j]->name);
+	  message ("   %-26s %5d  %7d  %2d%%",
+		   buf,
+		   purestats[j]->nobjects,
+		   purestats[j]->nbytes,
+		   (int) (purestats[j]->nbytes / (pureptr / 100.0) + 0.5));
+	}
   }
 #endif /* PURESTAT */
 
@@ -2732,7 +2735,7 @@ report_pure_usage (int report_impurities,
 			  string_length (XSYMBOL (Fcar (tem))->name) + 1);
 		  while (*s++) if (*s == '-') *s = ' ';
 		  s--; *s++ = ':'; *s = 0;
-		  message ("   %-32s%6d", buf, total);
+		  message ("   %-33s %6d", buf, total);
 		}
 	      tem = Fcdr (Fcdr (tem));
 	    }
@@ -2748,10 +2751,10 @@ report_pure_usage (int report_impurities,
   clear_message ();
 
   if (rc < 0) {
-    (void)unlink("SATISFIED");
+    unlink("SATISFIED");
 				/* Current build process on NT does */
 				/* not know how to restart itself. */
-				/* --marcpa */ 
+				/* --marcpa */
 #ifndef WINDOWSNT
     fatal ("Pure size adjusted, Don't Panic!  I will restart the `make'");
 #endif
@@ -2788,7 +2791,7 @@ staticpro (Lisp_Object *varaddress)
 
 /* Mark reference to a Lisp_Object.  If the object referred to has not been
    seen yet, recursively mark all the references contained in it. */
-   
+
 static void
 mark_object (Lisp_Object obj)
 {
@@ -2940,9 +2943,8 @@ mark_conses_in_list (Lisp_Object obj)
 
 
 #ifdef PURESTAT
-/* Simpler than mark-object, because pure structure can't 
-   have any circularities
- */
+/* Simpler than mark-object, because pure structure can't
+   have any circularities */
 
 #if 0 /* unused */
 static int idiot_c_doesnt_have_closures;
@@ -2978,7 +2980,7 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
         if (string_data (ptr) !=
 	    (unsigned char *) ptr + sizeof (struct Lisp_String))
 	  {
-	    /* string-data not allocated contiguously.  
+	    /* string-data not allocated contiguously.
 	       Probably (better be!!) a pointer constant "C" data. */
 	    size = sizeof (struct Lisp_String);
 	  }
@@ -3001,7 +3003,7 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
 #if 0 /* unused */
         if (!recurse)
           break;
-        { 
+        {
           int i;
 	  for (i = 0; i < len - 1; i++)
 	    total += pure_sizeof (ptr->contents[i], 1);
@@ -3038,7 +3040,7 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
 	    obj = ((implementation->marker) (obj, idiot_c));
 	    total += idiot_c_doesnt_have_closures;
 	    idiot_c_doesnt_have_closures = old;
-            
+
 	    if (!NILP (obj)) goto tail_recurse;
 	  }
 #endif /* unused */
@@ -3229,7 +3231,7 @@ sweep_lcrecords_1 (struct lcrecord_header **prev, int *used)
 }
 
 static void
-sweep_vectors_1 (Lisp_Object *prev, 
+sweep_vectors_1 (Lisp_Object *prev,
                  int *used, int *total, int *storage)
 {
   Lisp_Object vector;
@@ -3267,7 +3269,7 @@ sweep_vectors_1 (Lisp_Object *prev,
 }
 
 static void
-sweep_bit_vectors_1 (Lisp_Object *prev, 
+sweep_bit_vectors_1 (Lisp_Object *prev,
 		     int *used, int *total, int *storage)
 {
   Lisp_Object bit_vector;
@@ -3354,7 +3356,7 @@ do {									\
   gc_count_num_##typename##_freelist = num_free;			\
 } while (0)
 
-#else
+#else /* !ERROR_CHECK_GC */
 
 #define SWEEP_FIXED_TYPE_BLOCK(typename, obj_type)			      \
 do {									      \
@@ -3429,7 +3431,7 @@ do {									      \
   gc_count_num_##typename##_freelist = num_free;			      \
 } while (0)
 
-#endif
+#endif /* !ERROR_CHECK_GC */
 
 
 
@@ -3457,7 +3459,8 @@ free_cons (struct Lisp_Cons *ptr)
      check to make sure we're not freeing something already freed. */
   if (POINTER_TYPE_P (XTYPE (ptr->car)))
     ASSERT_VALID_POINTER (XPNTR (ptr->car));
-#endif
+#endif /* ERROR_CHECK_GC */
+
 #ifndef ALLOC_NO_POOLS
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (cons, struct Lisp_Cons, ptr);
 #endif /* ALLOC_NO_POOLS */
@@ -3583,7 +3586,8 @@ free_marker (struct Lisp_Marker *ptr)
   Lisp_Object temmy;
   XSETMARKER (temmy, ptr);
   assert (GC_MARKERP (temmy));
-#endif
+#endif /* ERROR_CHECK_GC */
+
 #ifndef ALLOC_NO_POOLS
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (marker, struct Lisp_Marker, ptr);
 #endif /* ALLOC_NO_POOLS */
@@ -3607,7 +3611,7 @@ verify_string_chars_integrity (void)
       /* POS is the index of the next string in the block.  */
       while (pos < sb->pos)
         {
-          struct string_chars *s_chars = 
+          struct string_chars *s_chars =
             (struct string_chars *) &(sb->string_chars[pos]);
           struct Lisp_String *string;
 	  int size;
@@ -3657,7 +3661,7 @@ compact_string_chars (void)
       /* FROM_POS is the index of the next string in the block.  */
       while (from_pos < from_sb->pos)
         {
-          struct string_chars *from_s_chars = 
+          struct string_chars *from_s_chars =
             (struct string_chars *) &(from_sb->string_chars[from_pos]);
           struct string_chars *to_s_chars;
           struct Lisp_String *string;
@@ -3706,7 +3710,7 @@ compact_string_chars (void)
               to_sb = to_sb->next;
               to_pos = 0;
             }
-             
+
           /* Compute new address of this string
              and update TO_POS for the space being used.  */
           to_s_chars = (struct string_chars *) &(to_sb->string_chars[to_pos]);
@@ -3717,13 +3721,13 @@ compact_string_chars (void)
 
           /* Relocate FROM_S_CHARS's reference */
           set_string_data (string, &(to_s_chars->chars[0]));
-             
+
           from_pos += fullsize;
           to_pos += fullsize;
         }
     }
 
-  /* Set current to the last string chars block still used and 
+  /* Set current to the last string chars block still used and
      free any that follow. */
   {
     struct string_chars_block *victim;
@@ -3762,7 +3766,7 @@ debug_string_purity_print (struct Lisp_String *p)
   }
   stderr_out ("\"\n");
 }
-#endif
+#endif /* 1 */
 
 
 static void
@@ -4171,7 +4175,7 @@ garbage_collect_1 (void)
 		       : 0);
 
 	  /* Show "...done" only if the echo area would otherwise be empty. */
-	  if (NILP (clear_echo_area (selected_frame (), 
+	  if (NILP (clear_echo_area (selected_frame (),
 				     Qgarbage_collecting, 0)))
 	    {
 	      Lisp_Object args[2], whole_msg;
@@ -4206,7 +4210,7 @@ garbage_collect_1 (void)
     There's not any other way to know the address of the end of a function.
   */
 void BTL_after_garbage_collect_1_stub () { abort (); }
-#endif
+#endif /* EMACS_BTL */
 
 /* Debugging aids.  */
 
@@ -4232,7 +4236,7 @@ Reclaim storage for Lisp objects no longer needed.
 Returns info on amount of space in use:
  ((USED-CONSES . FREE-CONSES) (USED-SYMS . FREE-SYMS)
   (USED-MARKERS . FREE-MARKERS) USED-STRING-CHARS USED-VECTOR-SLOTS
-  PLIST) 
+  PLIST)
   where `PLIST' is a list of alternating keyword/value pairs providing
   more detailed information.
 Garbage collection happens automatically if you cons more than
@@ -4253,7 +4257,7 @@ Garbage collection happens automatically if you cons more than
 
   for (i = 0; i < last_lrecord_type_index_assigned; i++)
     {
-      if (lcrecord_stats[i].bytes_in_use != 0 
+      if (lcrecord_stats[i].bytes_in_use != 0
           || lcrecord_stats[i].bytes_freed != 0
 	  || lcrecord_stats[i].instances_on_free_list != 0)
         {
@@ -4299,17 +4303,17 @@ Garbage collection happens automatically if you cons more than
   pl = gc_plist_hack ("floats-used", gc_count_num_float_in_use, pl);
 #endif /* LISP_FLOAT_TYPE */
   HACK_O_MATIC (string, "string-header-storage", pl);
-  pl = gc_plist_hack ("long-strings-total-length", 
+  pl = gc_plist_hack ("long-strings-total-length",
                       gc_count_string_total_size
 		      - gc_count_short_string_total_size, pl);
   HACK_O_MATIC (string_chars, "short-string-storage", pl);
   pl = gc_plist_hack ("short-strings-total-length",
                       gc_count_short_string_total_size, pl);
   pl = gc_plist_hack ("strings-free", gc_count_num_string_freelist, pl);
-  pl = gc_plist_hack ("long-strings-used", 
+  pl = gc_plist_hack ("long-strings-used",
                       gc_count_num_string_in_use
 		      - gc_count_num_short_string_in_use, pl);
-  pl = gc_plist_hack ("short-strings-used", 
+  pl = gc_plist_hack ("short-strings-used",
                       gc_count_num_short_string_in_use, pl);
 
   HACK_O_MATIC (compiled_function, "compiled-function-storage", pl);
@@ -4319,12 +4323,12 @@ Garbage collection happens automatically if you cons more than
 		      gc_count_num_compiled_function_in_use, pl);
 
   pl = gc_plist_hack ("vector-storage", gc_count_vector_storage, pl);
-  pl = gc_plist_hack ("vectors-total-length", 
+  pl = gc_plist_hack ("vectors-total-length",
                       gc_count_vector_total_size, pl);
   pl = gc_plist_hack ("vectors-used", gc_count_num_vector_used, pl);
 
   pl = gc_plist_hack ("bit-vector-storage", gc_count_bit_vector_storage, pl);
-  pl = gc_plist_hack ("bit-vectors-total-length", 
+  pl = gc_plist_hack ("bit-vectors-total-length",
                       gc_count_bit_vector_total_size, pl);
   pl = gc_plist_hack ("bit-vectors-used", gc_count_num_bit_vector_used, pl);
 
@@ -4361,7 +4365,7 @@ If this value exceeds `gc-cons-threshold', a garbage collection happens.
 {
   return make_int (consing_since_gc);
 }
-  
+
 DEFUN ("memory-limit", Fmemory_limit, 0, 0, "", /*
 Return the address of the last byte Emacs has allocated, divided by 1024.
 This may be helpful in debugging Emacs's memory usage.
@@ -4384,7 +4388,7 @@ object_dead_p (Lisp_Object obj)
 	  (CONSOLEP (obj) && !CONSOLE_LIVE_P (XCONSOLE (obj))) ||
 	  (EVENTP   (obj) && !EVENT_LIVE_P   (XEVENT   (obj))) ||
 	  (EXTENTP  (obj) && !EXTENT_LIVE_P  (XEXTENT  (obj))));
-	  
+
 }
 
 #ifdef MEMORY_USAGE_STATS
@@ -4539,16 +4543,16 @@ init_alloc_once_early (void)
       purestats[iii]->nbytes = 0;
     }
   purecopying_for_bytecode = 0;
-#endif
-  
+#endif /* PURESTAT */
+
   last_lrecord_type_index_assigned = -1;
   for (iii = 0; iii < countof (lrecord_implementations_table); iii++)
     {
       lrecord_implementations_table[iii] = 0;
     }
-  
+
   symbols_initialized = 0;
-  
+
   gc_generation_number[0] = 0;
   /* purify_flag 1 is correct even if CANNOT_DUMP.
    * loadup.el will set to nil at end. */
@@ -4601,7 +4605,7 @@ init_alloc_once_early (void)
   ERROR_ME_WARN.
     really_unlikely_name_to_have_accidentally_in_a_non_errb_structure =
       3333632;
-#endif
+#endif /* ERROR_CHECK_TYPECHECK */
 }
 
 void

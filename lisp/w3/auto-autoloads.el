@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'w3-autoloads))
-    (progn
+(if (featurep 'w3-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (x-font-build-cache font-default-size-for-device font-default-encoding-for-device font-default-registry-for-device font-default-family-for-device font-default-object-for-device font-default-font-for-device font-create-object) "font" "w3/font.el")
 
@@ -188,4 +187,3 @@ to disk." t nil)
 ;;;***
 
 (provide 'w3-autoloads)
-))

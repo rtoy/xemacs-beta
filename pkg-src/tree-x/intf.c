@@ -1317,13 +1317,10 @@ HelpDone_CB(Widget w, XtPointer client_data, XtPointer call_data)
 static void
 NodeLabel_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
-  char	*node_label;
-
   XtPopdown(dialog[DLG_NODE_NAME]);
   if (client_data == (XtPointer) TRUE) {
-    node_label = XtMalloc(strlen(XawDialogGetValueString(XtParent(w)))
-			  * sizeof(char));
-    node_label = strcpy(node_label, XawDialogGetValueString(XtParent(w)));
+    char *string = XawDialogGetValueString(XtParent(w));
+    char *node_label = XtNewString(string);
     if (*node_label)
       InsertNode(PopupNode, NodePos, node_label);
   }

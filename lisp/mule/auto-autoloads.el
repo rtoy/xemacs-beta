@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'mule-autoloads))
-    (progn
+(if (featurep 'mule-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (isearch-fep-quail isearch-fep-canna isearch-fep-egg isearch-fep-string) "isearch-mule" "mule/isearch-mule.el")
 
@@ -254,4 +253,3 @@ Convert pre-composed Vietnamese characaters of the current region to
 ;;;***
 
 (provide 'mule-autoloads)
-))

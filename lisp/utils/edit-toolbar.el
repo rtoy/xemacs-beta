@@ -42,20 +42,35 @@
 
 ;; To do:
 
-;; o It would be nice if edit-toolbar could edit *any* toolbar, not just
-;;   the default one.
 ;; o The function edit-toolbar-quit should do something other than just
 ;;   bury the buffer.
 ;; o Dynamically add new items to edit-toolbar-button-alist as new buttons
 ;;   are added.
+;; o Allow more than one toolbar to be saved in the ~/.xemacs/.toolbar file.
+;; o Allow buttons to be copied from any toolbar.
+;; o Allow multiple toolbars to be edited simultaneously.
+
+;;; Change Log:
+
+;; Modified by Mike Scheidler <c23mts@eng.delcoelect.com> 25 Jul 1997
+;;  - Enabled editing of any toolbar (not just `default-toolbar').
+;;  - Added context sensitivity to `edit-toolbar-menu'.
+;;  - Added support for `nil' toolbar item (left/right divider).
+;;  - Enabled editing of empty toolbars.
 
 ;;; Code:
 
-(defvar edit-toolbar-version "1.01"
+(defvar edit-toolbar-version "1.02"
   "Version of Edit Toolbar.")
 
-(defvar edit-toolbar-default-toolbar (specifier-instance default-toolbar)
-  "Default toolbar used when reverting.")
+(defvar edit-toolbar-temp-toolbar-name nil
+  "Value of toolbar being edited.")
+
+(defvar edit-toolbar-temp-toolbar nil
+  "Working copy of toolbar being edited.")
+
+(defvar edit-toolbar-fallback-toolbar nil
+  "Toolbar definition to use when reverting.")
 
 (defvar edit-toolbar-file-name (concat "~"
 				       (if (boundp 'emacs-user-extension-dir)
@@ -66,22 +81,24 @@
 
 (defvar edit-toolbar-menu
   '("Edit Toolbar"
-    ["Move This Item Up" edit-toolbar-up t]
-    ["Move This Item Down" edit-toolbar-down t]
-    ["Set Function" edit-toolbar-set-function t]
-    ["Set Help String" edit-toolbar-set-help t]
-    ["Remove This Item" edit-toolbar-kill t]
+    ["Move This Item Up" edit-toolbar-up (>= (edit-toolbar-current-index) 0)]
+    ["Move This Item Down" edit-toolbar-down (>= (edit-toolbar-current-index) 0)]
+    ["Set Function" edit-toolbar-set-function (edit-toolbar-button-p)]
+    ["Set Help String" edit-toolbar-set-help (edit-toolbar-button-p)]
+    ["Copy This Button" edit-toolbar-copy (edit-toolbar-button-p)]
+    ["Remove This Item" edit-toolbar-kill (>= (edit-toolbar-current-index) 0)]
     "----"
     ["Add Button..." edit-toolbar-add-button t]
     ("Add Separator"
-     ["2D (narrow)      " edit-toolbar-add-separator-2D-narrow t]
+     ["2D (narrow)" edit-toolbar-add-separator-2D-narrow t]
      ["3D (narrow)" edit-toolbar-add-separator-3D-narrow t]
      ["2D (wide)" edit-toolbar-add-separator-2D-wide t]
      ["3D (wide)" edit-toolbar-add-separator-3D-wide t]
+     ["Right/left divider" edit-toolbar-add-separator-right-left t]
      )
     "----"
-    ["Restore Default Toolbar      " edit-toolbar-restore t]
-    ["Save This Toolbar" edit-toolbar-save t]
+    ["Restore Default Toolbar      " edit-toolbar-restore (buffer-modified-p)]
+    ["Save This Toolbar" edit-toolbar-save (buffer-modified-p)]
     "----"
     ["Help" describe-mode t]
     "----"
@@ -104,6 +121,7 @@
     (define-key map "@" 'edit-toolbar-add-separator-2D-wide)
     (define-key map "3" 'edit-toolbar-add-separator-3D-narrow)
     (define-key map "#" 'edit-toolbar-add-separator-3D-wide)
+    (define-key map "R" 'edit-toolbar-add-separator-right-left)
     (define-key map "c" 'edit-toolbar-copy)
     (define-key map "d" 'edit-toolbar-down)
     (define-key map "u" 'edit-toolbar-up)
@@ -116,17 +134,41 @@
     map
     ))
 
+(defun edit-toolbar-create-toolbar-alist ()
+  (setq edit-toolbar-toolbar-alist nil)
+  (mapatoms
+   (lambda (sym)
+     (if (and (boundp sym)
+              (toolbar-specifier-p (symbol-value sym))
+              (not (string-match "^edit-toolbar" (symbol-name sym))))
+         (setq edit-toolbar-toolbar-alist
+               (cons (cons (symbol-name sym) sym)
+                     edit-toolbar-toolbar-alist))))))
+ 
 ;;;###autoload
-(defun edit-toolbar ()
-  "Alter toolbar characteristics by editing a buffer representing the current toolbar.
-Pops up a buffer containing a list of the current toobar."
+(defun edit-toolbar (&optional toolbar)
+  "Alter toolbar characteristics by editing a buffer representing the specified toolbar.
+Pops up a buffer containing a list of the toolbar matching TOOLBAR_NAME."
   (interactive)
+  (edit-toolbar-create-toolbar-alist)
+  (if (eq toolbar nil)
+      (setq toolbar (intern-soft
+                     (completing-read
+                      "Toolbar: " edit-toolbar-toolbar-alist))))
+  (if (not (toolbar-specifier-p (symbol-value toolbar)))
+      (error (format "Toolbar named %s not found" (prin1 toolbar))))
   (pop-to-buffer (get-buffer-create "*Edit Toolbar*"))
+  (setq edit-toolbar-temp-toolbar (symbol-value toolbar))
+  (setq edit-toolbar-temp-toolbar-name (symbol-name toolbar))
+  (setq edit-toolbar-fallback-toolbar
+                 (specifier-instance (symbol-value toolbar)))
+  (edit-toolbar-create-button-alist)
   (edit-toolbar-list)
   (set-buffer-modified-p nil)
   (edit-toolbar-mode)
   (set-face-foreground 'default "black" (current-buffer))
   (set-face-background 'default "grey75" (current-buffer))
+  (set-face-background-pixmap 'default "nil" (current-buffer))
   (set-face-foreground 'list-mode-item-selected "yellow" (current-buffer))
   (set-face-background 'list-mode-item-selected "black" (current-buffer)))
 
@@ -149,11 +191,26 @@ Editing commands:
 (defun edit-toolbar-list ()
   (erase-buffer)
   (edit-toolbar-insert-item 'header)
-  (let ((ilist (specifier-instance default-toolbar)))
-    (while (setq item (car ilist))
-      (edit-toolbar-insert-item item)
-      (setq ilist (cdr ilist))))
+  (mapcar (function (lambda (item)
+                      (edit-toolbar-insert-item item)))
+          (specifier-instance edit-toolbar-temp-toolbar))
   (goto-char (point-min)))
+
+(defun edit-toolbar-button-p ()
+  "Returns t if the currently selected edit-toolbar item is a button."
+  (let ((item (edit-toolbar-current-item)))
+    (not (or (eq item nil)
+             (eq (aref item 0) :style)
+             (eq (aref item 0) :size)))))
+
+(defun edit-toolbar-current-index ()
+  "Returns the offset of the currently selected edit-toolbar item." 
+  (- (count-lines (point-min) (point)) 2))
+
+(defun edit-toolbar-current-item ()
+  "Returns the value of the currently selected edit-toolbar item." 
+  (let ((toolbar (specifier-instance edit-toolbar-temp-toolbar)))
+    (nth (edit-toolbar-current-index) toolbar)))
 
 (defun edit-toolbar-quit ()
   "Quit an Edit Toolbar session.  This simply buries the buffer."
@@ -174,38 +231,42 @@ Editing commands:
 (defun edit-toolbar-set-function (func)
   "Set the function for the selected toolbar button."
   (interactive "aNew Function: ")
-  (let ((toolbar (specifier-instance default-toolbar))
-	(index (- (count-lines (point-min) (point)) 2)))
-    (setf (aref (nth index toolbar) 1) func)
-    (edit-toolbar-list)
-    (forward-line (+ index 2))))
+  (let ((index (edit-toolbar-current-index)))
+    (if (not (edit-toolbar-button-p))
+        (error "Not a button")
+      (setf (aref (edit-toolbar-current-item) 1) func)
+      (edit-toolbar-list)
+      (forward-line (+ index 2)))))
 
 (defun edit-toolbar-set-help (help)
   "Set the help string for the selected toolbar button."
   (interactive "sNew Help String: ")
-  (let ((toolbar (specifier-instance default-toolbar))
-	(index (- (count-lines (point-min) (point)) 2)))
-    (setf (aref (nth index toolbar) 3) help)
-    (edit-toolbar-list)
-    (forward-line (+ index 2))))
+  (let ((index (edit-toolbar-current-index)))
+    (if (not (edit-toolbar-button-p))
+        (error "Not a button")
+      (setf (aref (edit-toolbar-current-item) 3) help)
+      (edit-toolbar-list)
+      (forward-line (+ index 2)))))
 
 (defun edit-toolbar-copy ()
   "Make a copy of the selected toolbar button."
   (interactive)
-  (let* ((toolbar (specifier-instance default-toolbar))
-	 (index (- (count-lines (point-min) (point)) 2))
-	 (item (nth index toolbar)))
-    (setcdr (nthcdr index toolbar)
-	    (cons item (nthcdr (1+ index) toolbar)))
-    (edit-toolbar-list)
-    (forward-line (+ index 3))))
+  (let ((index (edit-toolbar-current-index)))
+    (if (not (edit-toolbar-button-p))
+        (error "Not a button")
+      (setcdr (nthcdr index (specifier-instance edit-toolbar-temp-toolbar))
+              (cons (edit-toolbar-current-item)
+                    (nthcdr (1+ index)
+                            (specifier-instance edit-toolbar-temp-toolbar))))
+      (edit-toolbar-list)
+      (forward-line (+ index 3)))))
 
 (defun edit-toolbar-down ()
   "Move the current toolbar button down (right) one position."
   (interactive)
-  (let* ((toolbar (specifier-instance default-toolbar))
+  (let* ((toolbar (specifier-instance edit-toolbar-temp-toolbar))
 	 (index (- (count-lines (point-min) (point)) 2))
-	 (item (nth index toolbar)))
+         (item (nth index toolbar)))
     (if (eq (1+ index) (length toolbar))
 	(error "Already at the bottom of the toolbar."))
     (if (eq index 0)
@@ -214,17 +275,18 @@ Editing commands:
 	      (nthcdr (1+ index) toolbar)))
     (setcdr (nthcdr index toolbar)
 	    (cons item (nthcdr (1+ index) toolbar)))
-    (set-specifier default-toolbar toolbar)
+    (set-specifier
+     (symbol-value (intern-soft edit-toolbar-temp-toolbar-name)) toolbar)
     (edit-toolbar-list)
     (forward-line (+ index 3))))
 
 (defun edit-toolbar-up ()
   "Move the current toolbar button up (left) one position."
   (interactive)
-  (let* ((toolbar (specifier-instance default-toolbar))
+  (let* ((toolbar (specifier-instance edit-toolbar-temp-toolbar))
 	 (index (- (count-lines (point-min) (point)) 2))
 	 (item (nth index toolbar)))
-    (if (eq index 0)
+    (if (<= index 0)
 	(error "Already at the top of the toolbar."))
     (setcdr (nthcdr (1- index) toolbar)
 	    (nthcdr (1+ index) toolbar))
@@ -232,21 +294,22 @@ Editing commands:
 	(setq toolbar (cons item toolbar))
       (setcdr (nthcdr (- index 2) toolbar)
 	      (cons item (nthcdr (- index 1) toolbar))))
-    (set-specifier default-toolbar toolbar)
+    (set-specifier
+     (symbol-value (intern-soft edit-toolbar-temp-toolbar-name)) toolbar)
     (edit-toolbar-list)
     (forward-line (+ index 1))))
 
 (defun edit-toolbar-kill ()
   "Remove the current toolbar button."
   (interactive)
-  (let* ((toolbar (specifier-instance default-toolbar))
-	 (index (- (count-lines (point-min) (point)) 2))
-	 (item (nth index toolbar)))
+  (let* ((toolbar (specifier-instance edit-toolbar-temp-toolbar))
+	 (index (- (count-lines (point-min) (point)) 2)))
     (if (eq index 0)
 	(setq toolbar (cdr toolbar))
       (setcdr (nthcdr (1- index) toolbar)
 	      (nthcdr (1+ index) toolbar)))
-    (set-specifier default-toolbar toolbar)
+    (set-specifier
+     (symbol-value (intern-soft edit-toolbar-temp-toolbar-name)) toolbar)
     (edit-toolbar-list)
     (forward-line (+ index 2))))
 
@@ -259,7 +322,11 @@ Editing commands:
 		help "Help String")
 	  (insert-face "Icon\t" 'bold)
 	  (insert-face (format line-format function help) 'bold))
-      (cond ((or (eq (aref item 0) :style)
+      (cond ((eq item nil)
+             (setq icon nil
+                   function "-------------- Right/Left Divider --------------"
+                   help ""))
+	    ((or (eq (aref item 0) :style)
 		 (eq (aref item 0) :size))
 	     (setq icon nil
 		   function "----------------------------------------"
@@ -281,25 +348,32 @@ Editing commands:
 
 (defun edit-toolbar-create-button-alist ()
   (let ((button-alist nil)
-	(buttons (specifier-instance default-toolbar)))
+	(buttons (specifier-instance edit-toolbar-temp-toolbar)))
     (while buttons
       (setq button-alist
-	    (cons (cons (symbol-name (aref (car buttons) 1)) (car buttons))
-		  button-alist))
+	    (if (arrayp (car buttons))
+		(cons (cons (symbol-name (aref (car buttons) 1)) (car buttons))
+		      button-alist)
+	      (cons (car buttons) button-alist)))
       (setq buttons (cdr buttons)))
     button-alist))
 
-(defvar edit-toolbar-button-alist (edit-toolbar-create-button-alist))
+(defvar edit-toolbar-button-alist nil
+  "List of buttons in the toolbar currently being edited.")
+
+(defvar edit-toolbar-toolbar-alist nil
+  "List of existing toolbars (used for completing read).")
 
 (defun edit-toolbar-add-item (item)
   "Add a toolbar item ITEM at the current location."
-  (let* ((toolbar (specifier-instance default-toolbar))
+  (let* ((toolbar (specifier-instance edit-toolbar-temp-toolbar))
 	 (index (- (count-lines (point-min) (point)) 2)))
-    (if (eq index 0)
+    (if (<= index 0)
 	(setq toolbar (cons item toolbar))
       (setcdr (nthcdr (- index 1) toolbar)
 	      (cons item (nthcdr index toolbar))))
-    (set-specifier default-toolbar toolbar)
+    (set-specifier
+     (symbol-value (intern-soft edit-toolbar-temp-toolbar-name)) toolbar)
     (edit-toolbar-list)
     (forward-line (+ index 2))))
 
@@ -312,7 +386,8 @@ Editing commands:
   "Restore the default toolbar."
   (interactive)
 ;  (edit-toolbar-check-for-save)
-  (set-specifier default-toolbar edit-toolbar-default-toolbar)
+  (set-specifier edit-toolbar-temp-toolbar
+                 edit-toolbar-fallback-toolbar)
   (edit-toolbar-list)
   (set-buffer-modified-p nil))
   
@@ -335,6 +410,13 @@ Editing commands:
   "Add a wide 3D separator at the current position."
   (interactive)
   (edit-toolbar-add-item [:style 3D :size 30]))
+
+(defun edit-toolbar-add-separator-right-left ()
+  "Add a right/left separator at the current position."
+  (interactive)
+  (if (memq nil (specifier-instance edit-toolbar-temp-toolbar))
+      (error "Can't have more than one left/right divider in a toolbar.")
+    (edit-toolbar-add-item nil)))
 
 (defun edit-toolbar-add-button ()
   "Add a new toolbar item at the current position.
@@ -410,8 +492,8 @@ Alternatively, I can do this for you now."
 	   (standard-output buf))
       (set-buffer buf)
       (erase-buffer)
-      (insert "(set-specifier default-toolbar '")
-      (prin1 (specifier-instance default-toolbar))
+      (insert (concat "(set-specifier " edit-toolbar-temp-toolbar-name) " '")
+      (prin1 (specifier-instance edit-toolbar-temp-toolbar))
       (insert ")")
       (save-buffer)
       (kill-buffer (current-buffer))

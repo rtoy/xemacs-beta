@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'packages-autoloads))
-    (progn
+(if (featurep 'packages-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (add-log-current-defun change-log-mode add-change-log-entry-other-window add-change-log-entry find-change-log prompt-for-change-log-name) "add-log" "packages/add-log.el")
 
@@ -2341,4 +2340,3 @@ With argument, asks for a command line." t nil)
 ;;;***
 
 (provide 'packages-autoloads)
-))

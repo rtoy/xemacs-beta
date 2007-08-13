@@ -30,6 +30,10 @@
 ;;; Commentary:
 
 ;; created by jwz, 14-jun-92.
+;;; changed by Jan Vroonhof, July 1997: Use function-key-map instead
+;;;                                     of global map.
+;;;                                     Preliminary support for
+;;;                                     XFree86 deadkeys
 
 ;; This file implements DEC-, OpenWindows-, and HP-compatible "Compose"
 ;; processing for XEmacs.  
@@ -108,13 +112,14 @@
 
 ;;; The command `compose-key' exists so that this file may be autoloaded.
 ;;;this doesn't work yet###autoload
-(define-function 'compose-key compose-map)
+;; (define-function 'compose-key compose-map)
 
 ;; The "Compose" key:
 ;; (keysym is lower case because we downcase everything in the Symbol font...)
 ;;
 ;;;this doesn't work yet###autoload
-(define-key global-map [multi-key]	'compose-key)
+;; Ditched JV, (define-key function-key-map [multi-key]	'compose-key)
+(define-key function-key-map [multi-key]	compose-map)
 
 ;; The following is necessary, because one can't rebind [degree]
 ;; and use it to insert the degree sign!
@@ -125,10 +130,10 @@
 
 ;; The "Dead" keys:
 ;;
-(define-key global-map [acute]		compose-acute-map)
-(define-key global-map [cedilla]	compose-cedilla-map)
-(define-key global-map [diaeresis]	compose-diaeresis-map)
-(define-key global-map [degree]		compose-ring-map)
+(define-key function-key-map [acute]		compose-acute-map)
+(define-key function-key-map [cedilla]		compose-cedilla-map)
+(define-key function-key-map [diaeresis]	compose-diaeresis-map)
+(define-key function-key-map [degree]		compose-ring-map)
 
 ;; The dead keys as seen by the "Compose" map:
 ;;
@@ -164,126 +169,178 @@
 ;; Sun according to MIT:
 ;;
 (cond ((x-valid-keysym-name-p "SunFA_Acute")
-       (define-key global-map  [SunFA_Acute]		compose-acute-map)
+       (define-key function-key-map  [SunFA_Acute]
+	 compose-acute-map) 
        (define-key compose-map [SunFA_Acute]		compose-acute-map)
-       (define-key global-map  [SunFA_Grave]		compose-grave-map)
+       (define-key function-key-map  [SunFA_Grave]
+	 compose-grave-map) 
        (define-key compose-map [SunFA_Grave]		compose-grave-map)
-       (define-key global-map  [SunFA_Cedilla]		compose-cedilla-map)
+       (define-key function-key-map  [SunFA_Cedilla]
+	 compose-cedilla-map) 
        (define-key compose-map [SunFA_Cedilla]		compose-cedilla-map)
-       (define-key global-map  [SunFA_Diaeresis]	compose-diaeresis-map)
+       (define-key function-key-map  [SunFA_Diaeresis]	compose-diaeresis-map)
        (define-key compose-map [SunFA_Diaeresis]	compose-diaeresis-map)
-       (define-key global-map  [SunFA_Circum]		compose-circumflex-map)
+       (define-key function-key-map  [SunFA_Circum]
+	 compose-circumflex-map) 
        (define-key compose-map [SunFA_Circum]		compose-circumflex-map)
-       (define-key global-map  [SunFA_Tilde]		compose-tilde-map)
+       (define-key function-key-map  [SunFA_Tilde]
+	 compose-tilde-map) 
        (define-key compose-map [SunFA_Tilde]		compose-tilde-map)
        ))
 
 ;; Sun according to OpenWindows 2:
 ;;
 (cond ((x-valid-keysym-name-p "Dead_Grave")
-       (define-key global-map  [Dead_Grave]		compose-grave-map)
+       (define-key function-key-map  [Dead_Grave]
+	 compose-grave-map) 
        (define-key compose-map [Dead_Grave]		compose-grave-map)
-       (define-key global-map  [Dead_Circum]		compose-circumflex-map)
+       (define-key function-key-map  [Dead_Circum]
+	 compose-circumflex-map) 
        (define-key compose-map [Dead_Circum]		compose-circumflex-map)
-       (define-key global-map  [Dead_Tilde]		compose-tilde-map)
+       (define-key function-key-map  [Dead_Tilde]
+	 compose-tilde-map) 
        (define-key compose-map [Dead_Tilde]		compose-tilde-map)
        ))
 
 ;; Sun according to OpenWindows 3:
 ;;
 (cond ((x-valid-keysym-name-p "SunXK_FA_Acute")
-       (define-key global-map  [SunXK_FA_Acute]		compose-acute-map)
+       (define-key function-key-map  [SunXK_FA_Acute]
+	 compose-acute-map) 
        (define-key compose-map [SunXK_FA_Acute]		compose-acute-map)
-       (define-key global-map  [SunXK_FA_Grave]		compose-grave-map)
+       (define-key function-key-map  [SunXK_FA_Grave]
+	 compose-grave-map) 
        (define-key compose-map [SunXK_FA_Grave]		compose-grave-map)
-       (define-key global-map  [SunXK_FA_Cedilla]	compose-cedilla-map)
+       (define-key function-key-map  [SunXK_FA_Cedilla]	compose-cedilla-map)
        (define-key compose-map [SunXK_FA_Cedilla]	compose-cedilla-map)
-       (define-key global-map  [SunXK_FA_Diaeresis]	compose-diaeresis-map)
+       (define-key function-key-map  [SunXK_FA_Diaeresis]
+	 compose-diaeresis-map) 
        (define-key compose-map [SunXK_FA_Diaeresis]	compose-diaeresis-map)
-       (define-key global-map  [SunXK_FA_Circum]	compose-circumflex-map)
+       (define-key function-key-map  [SunXK_FA_Circum]	compose-circumflex-map)
        (define-key compose-map [SunXK_FA_Circum]	compose-circumflex-map)
-       (define-key global-map  [SunXK_FA_Tilde]		compose-tilde-map)
+       (define-key function-key-map  [SunXK_FA_Tilde]
+	 compose-tilde-map) 
        (define-key compose-map [SunXK_FA_Tilde]		compose-tilde-map)
        ))
 
 ;; DEC according to MIT:
 ;;
 (cond ((x-valid-keysym-name-p "Dacute_accent")
-       (define-key global-map  [Dacute_accent]		compose-acute-map)
+       (define-key function-key-map  [Dacute_accent]
+	 compose-acute-map) 
        (define-key compose-map [Dacute_accent]		compose-acute-map)
-       (define-key global-map  [Dgrave_accent]		compose-grave-map)
+       (define-key function-key-map  [Dgrave_accent]
+	 compose-grave-map) 
        (define-key compose-map [Dgrave_accent]		compose-grave-map)
-       (define-key global-map  [Dcedilla_accent]	compose-cedilla-map)
+       (define-key function-key-map  [Dcedilla_accent]	compose-cedilla-map)
        (define-key compose-map [Dcedilla_accent]	compose-cedilla-map)
-       (define-key global-map  [Dcircumflex_accent]	compose-circumflex-map)
+       (define-key function-key-map  [Dcircumflex_accent]
+	 compose-circumflex-map) 
        (define-key compose-map [Dcircumflex_accent]	compose-circumflex-map)
-       (define-key global-map  [Dtilde]			compose-tilde-map)
+       (define-key function-key-map  [Dtilde]
+	 compose-tilde-map) 
        (define-key compose-map [Dtilde]			compose-tilde-map)
-       (define-key global-map  [Dring_accent]		compose-ring-map)
+       (define-key function-key-map  [Dring_accent]
+	 compose-ring-map) 
        (define-key compose-map [Dring_accent]		compose-ring-map)
        ))
 
 ;; DEC according to OpenWindows 3:
 ;;
 (cond ((x-valid-keysym-name-p "DXK_acute_accent")
-       (define-key global-map  [DXK_acute_accent]	compose-acute-map)
+       (define-key function-key-map  [DXK_acute_accent]	compose-acute-map)
        (define-key compose-map [DXK_acute_accent]	compose-acute-map)
-       (define-key global-map  [DXK_grave_accent]	compose-grave-map)
+       (define-key function-key-map  [DXK_grave_accent]	compose-grave-map)
        (define-key compose-map [DXK_grave_accent]	compose-grave-map)
-       (define-key global-map  [DXK_cedilla_accent]	compose-cedilla-map)
+       (define-key function-key-map  [DXK_cedilla_accent]
+	 compose-cedilla-map) 
        (define-key compose-map [DXK_cedilla_accent]	compose-cedilla-map)
-       (define-key global-map  [DXK_circumflex_accent]	compose-circumflex-map)
+       (define-key function-key-map  [DXK_circumflex_accent]
+	 compose-circumflex-map) 
        (define-key compose-map [DXK_circumflex_accent]	compose-circumflex-map)
-       (define-key global-map  [DXK_tilde]		compose-tilde-map)
+       (define-key function-key-map  [DXK_tilde]
+	 compose-tilde-map) 
        (define-key compose-map [DXK_tilde]		compose-tilde-map)
-       (define-key global-map  [DXK_ring_accent]	compose-ring-map)
+       (define-key function-key-map  [DXK_ring_accent]	compose-ring-map)
        (define-key compose-map [DXK_ring_accent]	compose-ring-map)
        ))
 
 ;; HP according to MIT:
 ;;
 (cond ((x-valid-keysym-name-p "hpmute_acute")
-       (define-key global-map  [hpmute_acute]		compose-acute-map)
+       (define-key function-key-map  [hpmute_acute]
+	 compose-acute-map) 
        (define-key compose-map [hpmute_acute]		compose-acute-map)
-       (define-key global-map  [hpmute_grave]		compose-grave-map)
+       (define-key function-key-map  [hpmute_grave]
+	 compose-grave-map) 
        (define-key compose-map [hpmute_grave]		compose-grave-map)
-       (define-key global-map  [hpmute_diaeresis]	compose-diaeresis-map)
+       (define-key function-key-map  [hpmute_diaeresis]	compose-diaeresis-map)
        (define-key compose-map [hpmute_diaeresis]	compose-diaeresis-map)
-       (define-key global-map  [hpmute_asciicircum]	compose-circumflex-map)
+       (define-key function-key-map  [hpmute_asciicircum]
+	 compose-circumflex-map) 
        (define-key compose-map [hpmute_asciicircum]	compose-circumflex-map)
-       (define-key global-map  [hpmute_asciitilde]	compose-tilde-map)
+       (define-key function-key-map  [hpmute_asciitilde]
+	 compose-tilde-map) 
        (define-key compose-map [hpmute_asciitilde]	compose-tilde-map)
        ))
 
 ;; HP according to OpenWindows 3:
 ;;
 (cond ((x-valid-keysym-name-p "hpXK_mute_acute")
-       (define-key global-map  [hpXK_mute_acute]	compose-acute-map)
+       (define-key function-key-map  [hpXK_mute_acute]	compose-acute-map)
        (define-key compose-map [hpXK_mute_acute]	compose-acute-map)
-       (define-key global-map  [hpXK_mute_grave]	compose-grave-map)
+       (define-key function-key-map  [hpXK_mute_grave]	compose-grave-map)
        (define-key compose-map [hpXK_mute_grave]	compose-grave-map)
-       (define-key global-map  [hpXK_mute_diaeresis]	compose-diaeresis-map)
+       (define-key function-key-map  [hpXK_mute_diaeresis]
+	 compose-diaeresis-map)
        (define-key compose-map [hpXK_mute_diaeresis]	compose-diaeresis-map)
-       (define-key global-map  [hpXK_mute_asciicircum]	compose-circumflex-map)
+       (define-key function-key-map  [hpXK_mute_asciicircum]
+	 compose-circumflex-map)
        (define-key compose-map [hpXK_mute_asciicircum]	compose-circumflex-map)
-       (define-key global-map  [hpXK_mute_asciitilde]	compose-tilde-map)
+       (define-key function-key-map  [hpXK_mute_asciitilde]
+	 compose-tilde-map)
        (define-key compose-map [hpXK_mute_asciitilde]	compose-tilde-map)
        ))
 
 ;; HP according to HP-UX 8.0:
 ;;
 (cond ((x-valid-keysym-name-p "XK_mute_acute")
-       (define-key global-map  [XK_mute_acute]		compose-acute-map)
+       (define-key function-key-map  [XK_mute_acute]
+	 compose-acute-map)    
        (define-key compose-map [XK_mute_acute]		compose-acute-map)
-       (define-key global-map  [XK_mute_grave]		compose-grave-map)
+       (define-key function-key-map  [XK_mute_grave]
+	 compose-grave-map) 
        (define-key compose-map [XK_mute_grave]		compose-grave-map)
-       (define-key global-map  [XK_mute_diaeresis]	compose-diaeresis-map)
+       (define-key function-key-map  [XK_mute_diaeresis]
+	 compose-diaeresis-map) 
        (define-key compose-map [XK_mute_diaeresis]	compose-diaeresis-map)
-       (define-key global-map  [XK_mute_asciicircum]	compose-circumflex-map)
+       (define-key function-key-map  [XK_mute_asciicircum]
+	 compose-circumflex-map) 
        (define-key compose-map [XK_mute_asciicircum]	compose-circumflex-map)
-       (define-key global-map  [XK_mute_asciitilde]	compose-tilde-map)
+       (define-key function-key-map
+	   [XK_mute_asciitilde]	compose-tilde-map)
        (define-key compose-map [XK_mute_asciitilde]	compose-tilde-map)
        ))
+;; Xfree seems to use lower case and a hyphen
+(cond ((x-valid-keysym-name-p "dead-tilde")
+       (define-key function-key-map  [dead-acute]
+	 compose-acute-map) 
+       (define-key compose-map [dead-acute]		compose-acute-map)
+       (define-key function-key-map  [dead-grave]
+	 compose-grave-map) 
+       (define-key compose-map [dead-grave]		compose-grave-map)
+       (define-key function-key-map  [dead-cedilla]	compose-cedilla-map)
+       (define-key compose-map [dead-cedilla]	compose-cedilla-map)
+       (define-key function-key-map  [dead_diaeresis]	compose-diaeresis-map)
+       (define-key compose-map [dead-diaeresis]	compose-diaeresis-map)
+       (define-key function-key-map  [dead-circum]	compose-circumflex-map)
+       (define-key compose-map [dead-circum]	compose-circumflex-map)
+       (define-key function-key-map  [dead-tilde]
+	 compose-tilde-map)  
+       (define-key compose-map [dead-tilde]		compose-tilde-map)
+       ))
+
+
 
 ;;; The contents of the "dead key" maps.  These are shared by the
 ;;; compose-map.
@@ -307,7 +364,8 @@
 
 (set-keymap-name compose-grave-map 'compose-grave-map)
 (set-keymap-default-binding compose-grave-map 'self-insert-command)
-(define-key compose-grave-map " "	[grave])
+(define-key compose-grave-map " "        "`")
+(define-key compose-grave-map "`"       [grave])
 (define-key compose-grave-map "A"	[Agrave])
 (define-key compose-grave-map "E"	[Egrave])
 (define-key compose-grave-map "I"	[Igrave])
@@ -321,6 +379,7 @@
 
 (set-keymap-name compose-cedilla-map 'compose-cedilla-map)
 (set-keymap-default-binding compose-cedilla-map 'self-insert-command)
+(define-key compose-cedilla-map " "     ",")
 (define-key compose-cedilla-map ","	[cedilla])
 (define-key compose-cedilla-map "C"	[Ccedilla])
 (define-key compose-cedilla-map "c"	[ccedilla])

@@ -93,7 +93,7 @@ static void x_bevel_modeline (struct window *w, struct display_line *dl);
 
      /* Note: We do not use the Xmb*() functions and XFontSets.
 	Those functions are generally losing for a number of reasons:
-	
+
 	 1) They only support one locale (e.g. you could display
 	    Japanese and ASCII text, but not mixed Japanese/Chinese
 	    text).  You could maybe call setlocale() frequently
@@ -169,7 +169,7 @@ separate_textual_runs (unsigned char *text_storage,
 	  run_storage[runs_so_far].ptr       = text_storage;
 	  run_storage[runs_so_far].charset   = charset;
 	  run_storage[runs_so_far].dimension = dimension;
-	  
+
 	  if (runs_so_far)
 	    {
 	      run_storage[runs_so_far - 1].len =
@@ -267,7 +267,7 @@ x_text_width (struct face_cachel *cachel, CONST Emchar *str,
     (struct textual_run *) alloca (len * sizeof (struct textual_run));
   int nruns;
   int i;
-  
+
   nruns = separate_textual_runs (text_storage, runs, str, len);
 
   for (i = 0; i < nruns; i++)
@@ -448,7 +448,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 	      if (rb->type == RUNE_BLANK)
 		x_output_blank (w, dl, rb, start_pixpos, cursor_start,
 				cursor_width);
-	      else 
+	      else
 		{
 		  /* #### Our flagging of when we need to redraw the
                      modeline shadows sucks.  Since RUNE_HLINE is only used
@@ -490,7 +490,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 			XIMAGE_INSTANCE_TEXT_STRING (instance);
 		      convert_bufbyte_string_into_emchar_dynarr
 			(XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
-		    
+
 		      x_output_string (w, dl, buf, xpos,
 				       rb->object.dglyph.xoffset,
 				       start_pixpos, -1, findex,
@@ -511,7 +511,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 
 		  case IMAGE_POINTER:
 		    abort ();
-		    
+
 		  case IMAGE_SUBWINDOW:
 		    /* #### implement me */
 		    break;
@@ -519,7 +519,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 		  case IMAGE_NOTHING:
 		    /* nothing is as nothing does */
 		    break;
-		    
+
 		  default:
 		    abort ();
 		  }
@@ -791,7 +791,7 @@ x_output_string (struct window *w, struct display_line *dl,
   Window x_win = XtWindow (FRAME_X_TEXT_WIDGET (f));
 
   int clip_end;
-  
+
   /* Cursor-related variables */
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
   int cursor_clip;
@@ -812,13 +812,13 @@ x_output_string (struct window *w, struct display_line *dl,
 
   XSETDEVICE (device, d);
   XSETWINDOW (window, w);
-  
+
   if (width < 0)
     width = x_text_width (cachel, Dynarr_atp (buf, 0), Dynarr_length (buf));
   height = dl->ascent + dl->descent - dl->clip;
 
   /* Regularize the variables passed in. */
-  
+
   if (clip_start < xpos)
     clip_start = xpos;
   clip_end = xpos + width;
@@ -827,7 +827,7 @@ x_output_string (struct window *w, struct display_line *dl,
     return;
 
   xpos -= xoffset;
-  
+
   nruns = separate_textual_runs (text_storage, runs, Dynarr_atp (buf, 0),
 				 Dynarr_length (buf));
 
@@ -852,7 +852,7 @@ x_output_string (struct window *w, struct display_line *dl,
          become invalid. */
       cachel = WINDOW_FACE_CACHEL (w, findex);
     }
-  
+
 #ifdef HAVE_XIM
   if (cursor && focus && (cursor_start == clip_start) && cursor_height)
     XIM_SetSpotLocation (f, xpos - 2, dl->ypos + dl->descent - 2);
@@ -874,7 +874,7 @@ x_output_string (struct window *w, struct display_line *dl,
     XFillRectangle (dpy, x_win, bgc, clip_start,
 		    dl->ypos - dl->ascent, clip_end - clip_start,
 		    height);
-  
+
   for (i = 0; i < nruns; i++)
     {
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
@@ -897,30 +897,30 @@ x_output_string (struct window *w, struct display_line *dl,
 	{
 	  int clear_start = max (xpos, clip_start);
 	  int clear_end = min (xpos + this_width, clip_end);
-	  
+
 	  if (cursor)
 	    {
 	      int ypos1_line, ypos1_string, ypos2_line, ypos2_string;
-	      
+
 	      ypos1_string = dl->ypos - fi->ascent;
 	      ypos2_string = dl->ypos + fi->descent;
 	      ypos1_line = dl->ypos - dl->ascent;
 	      ypos2_line = dl->ypos + dl->descent - dl->clip;
-	      
+
 	      /* Make sure we don't clear below the real bottom of the
 		 line. */
 	      if (ypos1_string > ypos2_line)
 		ypos1_string = ypos2_line;
 	      if (ypos2_string > ypos2_line)
 		ypos2_string = ypos2_line;
-	      
+
 	      if (ypos1_line < ypos1_string)
 		{
 		  x_clear_region (window, findex, clear_start, ypos1_line,
 				  clear_end - clear_start,
 				  ypos1_string - ypos1_line);
 		}
-	      
+
 	      if (ypos2_line > ypos2_string)
 		{
 		  x_clear_region (window, findex, clear_start, ypos2_string,
@@ -946,12 +946,12 @@ x_output_string (struct window *w, struct display_line *dl,
       if (need_clipping)
 	{
 	  XRectangle clip_box[1];
-	  
+
 	  clip_box[0].x = 0;
 	  clip_box[0].y = 0;
 	  clip_box[0].width = clip_end - clip_start;
 	  clip_box[0].height = height;
-	  
+
 	  XSetClipRectangles (dpy, gc, clip_start, dl->ypos - dl->ascent,
 			      clip_box, 1, Unsorted);
 	}
@@ -971,18 +971,18 @@ x_output_string (struct window *w, struct display_line *dl,
 	{
 	  unsigned long upos, uthick;
 	  XFontStruct *xfont;
-	  
+
 	  xfont = FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font));
 	  if (!XGetFontProperty (xfont, XA_UNDERLINE_POSITION, &upos))
 	    upos = 0;
 	  if (!XGetFontProperty (xfont, XA_UNDERLINE_THICKNESS, &uthick))
 	    uthick = 1;
-	  
+
 	  if (dl->ypos + upos < dl->ypos + dl->descent - dl->clip)
 	    {
 	      if (dl->ypos + upos + uthick > dl->ypos + dl->descent - dl->clip)
 		uthick = dl->descent - dl->clip - upos;
-	      
+
 	      if (uthick == 1)
 		{
 		  XDrawLine (dpy, x_win, gc, xpos, dl->ypos + upos,
@@ -995,28 +995,28 @@ x_output_string (struct window *w, struct display_line *dl,
 		}
 	    }
 	}
-      
+
       if (cachel->strikethru) {
 	unsigned long ascent,descent,upos, uthick;
 	XFontStruct *xfont;
- 
+
 	xfont = FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font));
- 
+
 	if (!XGetFontProperty (xfont, XA_STRIKEOUT_ASCENT, &ascent))
 	  ascent = xfont->ascent;
 	if (!XGetFontProperty (xfont, XA_STRIKEOUT_DESCENT, &descent))
 	  descent = xfont->descent;
 	if (!XGetFontProperty (xfont, XA_UNDERLINE_THICKNESS, &uthick))
 	  uthick = 1;
- 
+
 	upos = ascent - ((ascent + descent) / 2) + 1;
- 
+
 	/* Generally, upos will be positive (above the baseline),so subtract */
 	if (dl->ypos - upos < dl->ypos + dl->descent - dl->clip)
 	  {
 	    if (dl->ypos - upos + uthick > dl->ypos + dl->descent - dl->clip)
 	      uthick = dl->descent - dl->clip + upos;
- 
+
 	    if (uthick == 1)
 	      {
 		XDrawLine (dpy, x_win, gc, xpos, dl->ypos - upos,
@@ -1029,39 +1029,39 @@ x_output_string (struct window *w, struct display_line *dl,
 	      }
 	  }
       }
-      
+
       /* Restore the GC */
       if (need_clipping)
 	{
 	  XSetClipMask (dpy, gc, None);
 	  XSetClipOrigin (dpy, gc, 0, 0);
 	}
-      
+
       /* If we are actually superimposing the cursor then redraw with just
 	 the appropriate section highlighted. */
       if (cursor_clip && !cursor && focus && cursor_cachel)
 	{
 	  GC cgc;
 	  XRectangle clip_box[1];
-	  
+
 	  cgc = x_get_gc (d, font, cursor_cachel->foreground,
 			  cursor_cachel->background, Qnil, Qnil);
-	  
+
 	  clip_box[0].x = 0;
 	  clip_box[0].y = 0;
 	  clip_box[0].width = cursor_width;
 	  clip_box[0].height = height;
-	  
+
 	  XSetClipRectangles (dpy, cgc, cursor_start, dl->ypos - dl->ascent,
 			      clip_box, 1, Unsorted);
-	  
+
 	  if (runs[i].dimension == 1)
 	    XDrawImageString (dpy, x_win, cgc, xpos, dl->ypos,
 			      (char *) runs[i].ptr, runs[i].len);
 	  else
 	    XDrawImageString16 (dpy, x_win, cgc, xpos, dl->ypos,
 				(XChar2b *) runs[i].ptr, runs[i].len);
-	  
+
 	  XSetClipMask (dpy, cgc, None);
 	  XSetClipOrigin (dpy, cgc, 0, 0);
 	}
@@ -1098,7 +1098,7 @@ x_output_string (struct window *w, struct display_line *dl,
 	 span two characters instead of overlaying just one. */
       int bogusly_obtained_ascent_value =
 	XFONT_INSTANCE (FACE_CACHEL_FONT (cachel, runs[0].charset))->ascent;
-      
+
       if (!NILP (bar_cursor_value))
 	{
 	  gc = x_get_gc (d, Qnil, cursor_cachel->background, Qnil, Qnil,
@@ -1109,7 +1109,7 @@ x_output_string (struct window *w, struct display_line *dl,
 	  gc = x_get_gc (d, Qnil, cursor_cachel->background,
 			 Qnil, Qnil, Qnil);
 	}
-      
+
       tmp_y = dl->ypos - bogusly_obtained_ascent_value;
       tmp_height = cursor_height;
       if (tmp_y + tmp_height > (int) (dl->ypos - dl->ascent + height))
@@ -1119,7 +1119,7 @@ x_output_string (struct window *w, struct display_line *dl,
 	    tmp_y = dl->ypos - dl->ascent;
 	  tmp_height = dl->ypos - dl->ascent + height - tmp_y;
 	}
-      
+
       if (need_clipping)
 	{
 	  XRectangle clip_box[1];
@@ -1184,11 +1184,11 @@ x_output_x_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
 			  GCClipYOrigin);
 	  /* Can't set a clip rectangle below because we already have a mask.
 	     We could conceivably create a new clipmask by zeroing out
-	     everything outside the clip region.  Is it worth it? 
+	     everything outside the clip region.  Is it worth it?
 	     Is it possible to get an equivalent effect by changing the
 	     args to XCopyArea below rather than messing with a clip box?
 	     - dkindred@cs.cmu.edu */
-	  need_clipping = 0; 
+	  need_clipping = 0;
 	}
 
       gc = gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv, pixmap_mask);
@@ -1856,7 +1856,7 @@ x_redraw_exposed_window (struct window *w, int x, int y, int width, int height)
          they are in the exposed region. */
       orig_windows_structure_changed = f->windows_structure_changed;
       f->windows_structure_changed = 1;
-    } 
+    }
 
   if (window_needs_vertical_divider (w))
     {
@@ -2069,7 +2069,7 @@ x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos)
   GC gc;
   face_index elt = get_builtin_face_cache_index (w, Vtext_cursor_face);
   struct face_cachel *cursor_cachel = WINDOW_FACE_CACHEL (w, elt);
-			
+
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
   Lisp_Object bar_cursor_value = symbol_value_in_buffer (Qbar_cursor,
 							 WINDOW_BUFFER (w));
@@ -2080,7 +2080,7 @@ x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos)
   int height = dl->ascent + dl->descent - dl->clip;
   int cursor_height, cursor_y;
   int defheight, defascent;
-  
+
   XClearArea (dpy, x_win, x, y, width, height, False);
 
   if (NILP (w->text_cursor_visible_p))
@@ -2094,18 +2094,18 @@ x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos)
     XSETWINDOW (window, w);
     default_face_font_info (window, &defascent, 0, &defheight, 0, 0);
   }
-  
+
   /* make sure the cursor is entirely contained between y and y+height */
   cursor_height = min (defheight, height);
-  cursor_y = max (y, min (y + height - cursor_height, 
+  cursor_y = max (y, min (y + height - cursor_height,
 			  dl->ypos - defascent));
-  
+
   if (focus)
     {
 #ifdef HAVE_XIM
       XIM_SetSpotLocation (f, x - 2 , cursor_y + cursor_height - 2);
 #endif /* HAVE_XIM */
-  
+
       if (NILP (bar_cursor_value))
 	{
 	  XFillRectangle (dpy, x_win, gc, x, cursor_y, width, cursor_height);
@@ -2207,7 +2207,7 @@ x_flash (struct device *d)
   XtSetArg (al [0], XtNwidth,  &width);
   XtSetArg (al [1], XtNheight, &height);
   XtGetValues (shell, al, 2);
-  
+
   XSETFRAME (frame, f);
 
   tmp_pixel = FACE_FOREGROUND (Vdefault_face, frame);
@@ -2235,7 +2235,7 @@ x_flash (struct device *d)
     tv.tv_sec  = usecs / 1000000L;
     tv.tv_usec = usecs % 1000000L;
     /* I'm sure someone is going to complain about this... */
-    (void) select (0, 0, 0, 0, &tv);
+    select (0, 0, 0, 0, &tv);
   }
 #endif /* !HAVE_POLL */
 

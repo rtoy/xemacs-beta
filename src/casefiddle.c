@@ -18,7 +18,7 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Synched up with: FSF 19.30. */
+/* Synched up with: FSF 19.34. */
 
 #include <config.h>
 #include "lisp.h"
@@ -31,36 +31,31 @@ Boston, MA 02111-1307, USA.  */
 enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
 
 static Lisp_Object
-casify_object (struct buffer *buf, enum case_action flag, Lisp_Object obj)
+casify_object (enum case_action flag, Lisp_Object obj, Lisp_Object buffer)
 {
-  REGISTER Emchar c;
-  REGISTER Charcount i, len;
-  REGISTER int inword = flag == CASE_DOWN;
-  struct Lisp_Char_Table *syntax_table =
-    XCHAR_TABLE (buf->mirror_syntax_table);
+  struct buffer *buf = decode_buffer (buffer, 0);
+  REGISTER int inword = (flag == CASE_DOWN);
+  struct Lisp_Char_Table *syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
 
   while (1)
     {
       if (CHAR_OR_CHAR_INTP (obj))
 	{
+	  Emchar c;
 	  CHECK_CHAR_COERCE_INT (obj);
 	  c = XCHAR (obj);
 	  if (IN_TRT_TABLE_DOMAIN (c))
-	    {
-	      if (inword)
-		obj = make_char (DOWNCASE (buf, c));
-	      else if (!UPPERCASEP (buf, c))
-		obj = make_char (UPCASE1 (buf, c));
-	    }
+	    obj = make_char (inword ? DOWNCASE (buf, c) : UPCASE1 (buf, c));
 	  return obj;
 	}
       if (STRINGP (obj))
 	{
+	  Charcount i;
+	  Charcount len = string_char_length (XSTRING (obj));
 	  obj = Fcopy_sequence (obj);
-	  len = string_char_length (XSTRING (obj));
 	  for (i = 0; i < len; i++)
 	    {
-	      c = string_char (XSTRING (obj), i);
+	      Emchar c = string_char (XSTRING (obj), i);
 	      if (inword)
 		c = DOWNCASE (buf, c);
 	      else if (!UPPERCASEP (buf, c)
@@ -86,7 +81,7 @@ Optional second arg BUFFER specifies which buffer's case tables to use,
 */
        (obj, buffer))
 {
-  return casify_object (decode_buffer (buffer, 0), CASE_UP, obj);
+  return casify_object (CASE_UP, obj, buffer);
 }
 
 DEFUN ("downcase", Fdowncase, 1, 2, 0, /*
@@ -98,7 +93,7 @@ Optional second arg BUFFER specifies which buffer's case tables to use,
 */
        (obj, buffer))
 {
-  return casify_object (decode_buffer (buffer, 0), CASE_DOWN, obj);
+  return casify_object (CASE_DOWN, obj, buffer);
 }
 
 DEFUN ("capitalize", Fcapitalize, 1, 2, 0, /*
@@ -112,7 +107,7 @@ Optional second arg BUFFER specifies which buffer's case tables to use,
 */
        (obj, buffer))
 {
-  return casify_object (decode_buffer (buffer, 0), CASE_CAPITALIZE, obj);
+  return casify_object (CASE_CAPITALIZE, obj, buffer);
 }
 
 /* Like Fcapitalize but change only the initials.  */
@@ -127,23 +122,21 @@ Optional second arg BUFFER specifies which buffer's case tables to use,
 */
        (obj, buffer))
 {
-  return casify_object (decode_buffer (buffer, 0), CASE_CAPITALIZE_UP, obj);
+  return casify_object (CASE_CAPITALIZE_UP, obj, buffer);
 }
 
 /* flag is CASE_UP, CASE_DOWN or CASE_CAPITALIZE or CASE_CAPITALIZE_UP.
    b and e specify range of buffer to operate on. */
 
 static void
-casify_region (struct buffer *buf, enum case_action flag, Lisp_Object b,
-	       Lisp_Object e)
+casify_region_internal (enum case_action flag, Lisp_Object b, Lisp_Object e,
+			struct buffer *buf)
 {
   /* This function can GC */
   REGISTER Bufpos i;
   Bufpos start, end;
-  REGISTER Emchar c;
   REGISTER int inword = (flag == CASE_DOWN);
-  struct Lisp_Char_Table *syntax_table =
-    XCHAR_TABLE (buf->mirror_syntax_table);
+  struct Lisp_Char_Table *syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
   int mccount;
 
   if (EQ (b, e))
@@ -154,24 +147,37 @@ casify_region (struct buffer *buf, enum case_action flag, Lisp_Object b,
 
   mccount = begin_multiple_change (buf, start, end);
   record_change (buf, start, end - start);
-  BUF_MODIFF (buf)++;
 
   for (i = start; i < end; i++)
     {
-      c = BUF_FETCH_CHAR (buf, i);
+      Emchar c = BUF_FETCH_CHAR (buf, i);
+      Emchar oldc = c;
+
       if (inword && flag != CASE_CAPITALIZE_UP)
 	c = DOWNCASE (buf, c);
       else if (!UPPERCASEP (buf, c)
 	       && (!inword || flag != CASE_CAPITALIZE_UP))
 	c = UPCASE1 (buf, c);
 
-      buffer_replace_char (buf, i, c, 1, (i == start));
+      if (oldc != c)
+	{
+	  buffer_replace_char (buf, i, c, 1, (i == start));
+	  BUF_MODIFF (buf)++;
+	}
       /* !!#### need to revalidate the start and end pointers in case
 	 the buffer was changed */
       if ((int) flag >= (int) CASE_CAPITALIZE)
 	inword = WORD_SYNTAX_P (syntax_table, c);
     }
   end_multiple_change (buf, mccount);
+}
+
+INLINE Lisp_Object
+casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e,
+	       Lisp_Object buffer)
+{
+  casify_region_internal (flag, b, e, decode_buffer (buffer, 1));
+  return Qnil;
 }
 
 DEFUN ("upcase-region", Fupcase_region, 2, 3, "r", /*
@@ -185,8 +191,7 @@ Optional third arg BUFFER defaults to the current buffer.
        (b, e, buffer))
 {
   /* This function can GC */
-  casify_region (decode_buffer (buffer, 1), CASE_UP, b, e);
-  return Qnil;
+  return casify_region (CASE_UP, b, e, buffer);
 }
 
 DEFUN ("downcase-region", Fdowncase_region, 2, 3, "r", /*
@@ -199,8 +204,7 @@ Optional third arg BUFFER defaults to the current buffer.
        (b, e, buffer))
 {
   /* This function can GC */
-  casify_region (decode_buffer (buffer, 1), CASE_DOWN, b, e);
-  return Qnil;
+  return casify_region (CASE_DOWN, b, e, buffer);
 }
 
 DEFUN ("capitalize-region", Fcapitalize_region, 2, 3, "r", /*
@@ -214,8 +218,7 @@ Optional third arg BUFFER defaults to the current buffer.
        (b, e, buffer))
 {
   /* This function can GC */
-  casify_region (decode_buffer (buffer, 1), CASE_CAPITALIZE, b, e);
-  return Qnil;
+  return casify_region (CASE_CAPITALIZE, b, e, buffer);
 }
 
 /* Like Fcapitalize_region but change only the initials.  */
@@ -229,23 +232,25 @@ Optional third arg BUFFER defaults to the current buffer.
 */
        (b, e, buffer))
 {
-  casify_region (decode_buffer (buffer, 1), CASE_CAPITALIZE_UP, b, e);
-  return Qnil;
+  return casify_region (CASE_CAPITALIZE_UP, b, e, buffer);
 }
 
 
 static Lisp_Object
-operate_on_word (struct buffer *buf, Lisp_Object arg, int *newpoint)
+casify_word (enum case_action flag, Lisp_Object arg, Lisp_Object buffer)
 {
   Bufpos farend;
+  struct buffer *buf = decode_buffer (buffer, 1);
 
   CHECK_INT (arg);
+
   farend = scan_words (buf, BUF_PT (buf), XINT (arg));
   if (!farend)
     farend = XINT (arg) > 0 ? BUF_ZV (buf) : BUF_BEGV (buf);
 
-  *newpoint = ((BUF_PT (buf) > farend) ? BUF_PT (buf) : farend);
-  return (make_int (farend));
+  casify_region_internal (flag, make_int (BUF_PT (buf)), make_int (farend), buf);
+  BUF_SET_PT (buf, max (BUF_PT (buf), farend));
+  return Qnil;
 }
 
 DEFUN ("upcase-word", Fupcase_word, 1, 2, "p", /*
@@ -257,15 +262,7 @@ Optional second arg BUFFER defaults to the current buffer.
        (arg, buffer))
 {
   /* This function can GC */
-  Lisp_Object beg, end;
-  Bufpos newpoint;
-  struct buffer *buf = decode_buffer (buffer, 1);
-
-  beg = make_int (BUF_PT (buf));
-  end = operate_on_word (buf, arg, &newpoint);
-  casify_region (buf, CASE_UP, beg, end);
-  BUF_SET_PT (buf, newpoint);
-  return Qnil;
+  return casify_word (CASE_UP, arg, buffer);
 }
 
 DEFUN ("downcase-word", Fdowncase_word, 1, 2, "p", /*
@@ -276,15 +273,7 @@ Optional second arg BUFFER defaults to the current buffer.
        (arg, buffer))
 {
   /* This function can GC */
-  Lisp_Object beg, end;
-  Bufpos newpoint;
-  struct buffer *buf = decode_buffer (buffer, 1);
-
-  beg = make_int (BUF_PT (buf));
-  end = operate_on_word (buf, arg, &newpoint);
-  casify_region (buf, CASE_DOWN, beg, end);
-  BUF_SET_PT (buf, newpoint);
-  return Qnil;
+  return casify_word (CASE_DOWN, arg, buffer);
 }
 
 DEFUN ("capitalize-word", Fcapitalize_word, 1, 2, "p", /*
@@ -297,15 +286,7 @@ Optional second arg BUFFER defaults to the current buffer.
        (arg, buffer))
 {
   /* This function can GC */
-  Lisp_Object beg, end;
-  Bufpos newpoint;
-  struct buffer *buf = decode_buffer (buffer, 1);
-
-  beg = make_int (BUF_PT (buf));
-  end = operate_on_word (buf, arg, &newpoint);
-  casify_region (buf, CASE_CAPITALIZE, beg, end);
-  BUF_SET_PT (buf, newpoint);
-  return Qnil;
+  return casify_word (CASE_CAPITALIZE, arg, buffer);
 }
 
 

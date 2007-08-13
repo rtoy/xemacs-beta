@@ -877,7 +877,7 @@ internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 {
   char buf[200];
   sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%p>",
-	   XRECORD_LHEADER (obj)->implementation->name, 
+	   XRECORD_LHEADER (obj)->implementation->name,
 	   (void *) XPNTR (obj));
   write_c_string (buf, printcharfun);
 }
@@ -1440,7 +1440,7 @@ FILE = nil means just close any termscript file currently open.
     {
       file = Fexpand_file_name (file, Qnil);
       termscript = fopen ((char *) XSTRING_DATA (file), "w");
-      if (termscript == 0)
+      if (termscript == NULL)
 	report_file_error ("Opening termscript", Fcons (file, Qnil));
     }
   return Qnil;

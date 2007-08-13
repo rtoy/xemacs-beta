@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'comint-autoloads))
-    (progn
+(if (featurep 'comint-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (background) "background" "comint/background.el")
 
@@ -248,4 +247,3 @@ See also `\\[telnet]'." t nil)
 ;;;***
 
 (provide 'comint-autoloads)
-))

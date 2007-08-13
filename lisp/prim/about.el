@@ -1186,7 +1186,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Frederic Poncin" "fp@info.ucl.ac.be")
        (print-short "E. Rehmi Post" "rehmi@asylum.sf.ca.us")
        (print-short "Martin Pottendorfer" "Martin.Pottendorfer@aut.alcatel.at")
-       (print-short "Colin Rafferty" "craffert@spspme.ml.com")
+       (print-short "Colin Rafferty" "craffert@ml.com")
        (print-short "Paul M Reilly" "pmr@pajato.com")
        (print-short "Jack Repenning" "jackr@sgi.com")
        (print-short "Daniel Rich" "drich@cisco.com")

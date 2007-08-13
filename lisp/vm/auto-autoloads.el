@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'vm-autoloads))
-    (progn
+(if (featurep 'vm-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (vm-easy-menu-create-keymaps vm-easy-menu-define) "vm-easymenu" "vm/vm-easymenu.el")
 
@@ -73,4 +72,3 @@ is a list of menu items, as above." nil 'macro)
 ;;;***
 
 (provide 'vm-autoloads)
-))

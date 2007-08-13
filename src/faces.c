@@ -156,21 +156,20 @@ face_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 
   depth++;
 
-  if (!internal_equal (f1->foreground, f2->foreground, depth) ||
-      !internal_equal (f1->background, f2->background, depth) ||
-      !internal_equal (f1->font, f2->font, depth) ||
-      !internal_equal (f1->display_table, f2->display_table, depth) ||
-      !internal_equal (f1->background_pixmap, f2->background_pixmap, depth) ||
-      !internal_equal (f1->underline, f2->underline, depth) ||
-      !internal_equal (f1->strikethru, f2->strikethru, depth) ||
-      !internal_equal (f1->highlight, f2->highlight, depth) ||
-      !internal_equal (f1->dim, f2->dim, depth) ||
-      !internal_equal (f1->blinking, f2->blinking, depth) ||
-      !internal_equal (f1->reverse, f2->reverse, depth) ||
-      plists_differ (f1->plist, f2->plist, 0, 0, depth + 1))
-    return 0;
+  return
+    (internal_equal (f1->foreground,	     f2->foreground,	    depth) &&
+     internal_equal (f1->background,	     f2->background,	    depth) &&
+     internal_equal (f1->font,		     f2->font,		    depth) &&
+     internal_equal (f1->display_table,	     f2->display_table,	    depth) &&
+     internal_equal (f1->background_pixmap,  f2->background_pixmap, depth) &&
+     internal_equal (f1->underline,	     f2->underline,	    depth) &&
+     internal_equal (f1->strikethru,	     f2->strikethru,	    depth) &&
+     internal_equal (f1->highlight,	     f2->highlight,	    depth) &&
+     internal_equal (f1->dim,		     f2->dim,		    depth) &&
+     internal_equal (f1->blinking,	     f2->blinking,	    depth) &&
+     internal_equal (f1->reverse,	     f2->reverse,	    depth) &&
 
-  return 1;
+     ! plists_differ (f1->plist, f2->plist, 0, 0, depth + 1));
 }
 
 static unsigned long
@@ -184,7 +183,7 @@ face_hash (Lisp_Object obj, int depth)
      Just hash the most common ones. */
   return HASH3 (internal_hash (f->foreground, depth),
 		internal_hash (f->background, depth),
-		internal_hash (f->font, depth));
+		internal_hash (f->font,       depth));
 }
 
 static Lisp_Object
@@ -192,30 +191,20 @@ face_getprop (Lisp_Object obj, Lisp_Object prop)
 {
   struct Lisp_Face *f = XFACE (obj);
 
-#define FROB(propprop) 							\
-do {									\
-  if (EQ (prop, Q##propprop))						\
-    {									\
-      return f->propprop;						\
-    }									\
-} while (0)
-
-  FROB (foreground);
-  FROB (background);
-  FROB (font);
-  FROB (display_table);
-  FROB (background_pixmap);
-  FROB (underline);
-  FROB (strikethru);
-  FROB (highlight);
-  FROB (dim);
-  FROB (blinking);
-  FROB (reverse);
-  FROB (doc_string);
-
-#undef FROB
-
-  return external_plist_get (&f->plist, prop, 0, ERROR_ME);
+  return
+    ((EQ (prop, Qforeground))	     ? f->foreground	    :
+     (EQ (prop, Qbackground))	     ? f->background	    :
+     (EQ (prop, Qfont))		     ? f->font		    :
+     (EQ (prop, Qdisplay_table))     ? f->display_table	    :
+     (EQ (prop, Qbackground_pixmap)) ? f->background_pixmap :
+     (EQ (prop, Qunderline))	     ? f->underline	    :
+     (EQ (prop, Qstrikethru))	     ? f->strikethru	    :
+     (EQ (prop, Qhighlight))	     ? f->highlight	    :
+     (EQ (prop, Qdim))		     ? f->dim		    :
+     (EQ (prop, Qblinking))	     ? f->blinking	    :
+     (EQ (prop, Qreverse))	     ? f->reverse	    :
+     (EQ (prop, Qdoc_string))	     ? f->doc_string	    :
+     external_plist_get (&f->plist, prop, 0, ERROR_ME));
 }
 
 static int
@@ -223,25 +212,18 @@ face_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
 {
   struct Lisp_Face *f = XFACE (obj);
 
-#define FROB(propprop) 							\
-do {									\
-  if (EQ (prop, Q##propprop))						\
-    return 0;								\
-} while (0)
-
-  FROB (foreground);
-  FROB (background);
-  FROB (font);
-  FROB (display_table);
-  FROB (background_pixmap);
-  FROB (underline);
-  FROB (strikethru);
-  FROB (highlight);
-  FROB (dim);
-  FROB (blinking);
-  FROB (reverse);
-
-#undef FROB
+  if (EQ (prop, Qforeground)        ||
+      EQ (prop, Qbackground)        ||
+      EQ (prop, Qfont)              ||
+      EQ (prop, Qdisplay_table)     ||
+      EQ (prop, Qbackground_pixmap) ||
+      EQ (prop, Qunderline)         ||
+      EQ (prop, Qstrikethru)        ||
+      EQ (prop, Qhighlight)         ||
+      EQ (prop, Qdim)               ||
+      EQ (prop, Qblinking)          ||
+      EQ (prop, Qreverse))
+    return 0;
 
   if (EQ (prop, Qdoc_string))
     {
@@ -260,25 +242,18 @@ face_remprop (Lisp_Object obj, Lisp_Object prop)
 {
   struct Lisp_Face *f = XFACE (obj);
 
-#define FROB(propprop) 							\
-do {									\
-  if (EQ (prop, Q##propprop))						\
-    return -1;								\
-} while (0)
-
-  FROB (foreground);
-  FROB (background);
-  FROB (font);
-  FROB (display_table);
-  FROB (background_pixmap);
-  FROB (underline);
-  FROB (strikethru);
-  FROB (highlight);
-  FROB (dim);
-  FROB (blinking);
-  FROB (reverse);
-
-#undef FROB
+  if (EQ (prop, Qforeground)        ||
+      EQ (prop, Qbackground)        ||
+      EQ (prop, Qfont)              ||
+      EQ (prop, Qdisplay_table)     ||
+      EQ (prop, Qbackground_pixmap) ||
+      EQ (prop, Qunderline)         ||
+      EQ (prop, Qstrikethru)        ||
+      EQ (prop, Qhighlight)         ||
+      EQ (prop, Qdim)               ||
+      EQ (prop, Qblinking)          ||
+      EQ (prop, Qreverse))
+    return -1;
 
   if (EQ (prop, Qdoc_string))
     {
@@ -295,25 +270,19 @@ face_plist (Lisp_Object obj)
   struct Lisp_Face *f = XFACE (obj);
   Lisp_Object result = Qnil;
 
-#define FROB(propprop) 							\
-do {									\
-  /* backwards order; we reverse it below */				\
-  result = Fcons (f->propprop, Fcons (Q##propprop, result));		\
-} while (0)
+  /* backwards order; we reverse it below */
+  result = Fcons (f->foreground,        Fcons (Qforeground,        result));
+  result = Fcons (f->background,        Fcons (Qbackground,        result));
+  result = Fcons (f->font,              Fcons (Qfont,              result));
+  result = Fcons (f->display_table,     Fcons (Qdisplay_table,     result));
+  result = Fcons (f->background_pixmap, Fcons (Qbackground_pixmap, result));
+  result = Fcons (f->underline,         Fcons (Qunderline,         result));
+  result = Fcons (f->strikethru,        Fcons (Qstrikethru,        result));
+  result = Fcons (f->highlight,         Fcons (Qhighlight,         result));
+  result = Fcons (f->dim,               Fcons (Qdim,               result));
+  result = Fcons (f->blinking,          Fcons (Qblinking,          result));
+  result = Fcons (f->reverse,           Fcons (Qreverse,           result));
 
-  FROB (foreground);
-  FROB (background);
-  FROB (font);
-  FROB (display_table);
-  FROB (background_pixmap);
-  FROB (underline);
-  FROB (strikethru);
-  FROB (highlight);
-  FROB (dim);
-  FROB (blinking);
-  FROB (reverse);
-
-#undef FROB
   return nconc2 (Fnreverse (result), f->plist);
 }
 
@@ -520,10 +489,7 @@ update_inheritance_mapper_internal (Lisp_Object cur_face,
        !NILP (elt);
        elt = XCDR (elt))
     {
-      Lisp_Object locale, values;
-
-      locale = XCAR (XCAR (elt));
-      values = XCDR (XCAR (elt));
+      Lisp_Object values = XCDR (XCAR (elt));
 
       for (; !NILP (values); values = XCDR (values))
 	{
@@ -554,18 +520,18 @@ update_face_inheritance_mapper (CONST void *hash_key, void *hash_contents,
     {
       update_inheritance_mapper_internal (contents, fcl->face, Qfont);
     }
-  else if (EQ (fcl->property, Qforeground)
-	   || EQ (fcl->property, Qbackground))
+  else if (EQ (fcl->property, Qforeground) ||
+	   EQ (fcl->property, Qbackground))
     {
       update_inheritance_mapper_internal (contents, fcl->face, Qforeground);
       update_inheritance_mapper_internal (contents, fcl->face, Qbackground);
     }
-  else if (EQ (fcl->property, Qunderline)
-	   || EQ (fcl->property, Qstrikethru)
-	   || EQ (fcl->property, Qhighlight)
-	   || EQ (fcl->property, Qdim)
-	   || EQ (fcl->property, Qblinking)
-	   || EQ (fcl->property, Qreverse))
+  else if (EQ (fcl->property, Qunderline)  ||
+	   EQ (fcl->property, Qstrikethru) ||
+	   EQ (fcl->property, Qhighlight)  ||
+	   EQ (fcl->property, Qdim)        ||
+	   EQ (fcl->property, Qblinking)   ||
+	   EQ (fcl->property, Qreverse))
     {
       update_inheritance_mapper_internal (contents, fcl->face, Qunderline);
       update_inheritance_mapper_internal (contents, fcl->face, Qstrikethru);
@@ -1161,17 +1127,15 @@ face_cachel_charset_font_metric_info (struct face_cachel *cachel,
     {
       if (charsets[i])
 	{
-	  Lisp_Object charset;
-	  Lisp_Object font_instance;
-	  struct Lisp_Font_Instance *fi;
+	  Lisp_Object charset = CHARSET_BY_LEADING_BYTE (i + MIN_LEADING_BYTE);
+	  Lisp_Object font_instance = FACE_CACHEL_FONT (cachel, charset);
+	  struct Lisp_Font_Instance *fi = XFONT_INSTANCE (font_instance);
 
-	  charset = CHARSET_BY_LEADING_BYTE (i + MIN_LEADING_BYTE);
 	  assert (CHARSETP (charset));
-	  font_instance = FACE_CACHEL_FONT (cachel, charset);
 	  assert (FONT_INSTANCEP (font_instance));
-	  fi = XFONT_INSTANCE (font_instance);
-	  fm->ascent = max ((int) fi->ascent, (int) fm->ascent);
-	  fm->descent = max ((int) fi->descent, (int) fm->descent);
+
+	  if (fm->ascent  < (int) fi->ascent)  fm->ascent  = (int) fi->ascent;
+	  if (fm->descent < (int) fi->descent) fm->descent = (int) fi->descent;
 	  fm->height = fm->ascent + fm->descent;
 	  if (fi->proportional_p)
 	    fm->proportional_p = 1;
@@ -1650,7 +1614,7 @@ update_EmacsFrame (Lisp_Object frame, Lisp_Object name)
           it. */
        if (EQ (name, Qbackground))
 	 MAYBE_DEVMETH (XDEVICE (frm->device), redraw_frame_toolbars, (frm));
-#endif
+#endif /* HAVE_TOOLBARS */
 
        /* The intent of this code is to cause the frame size in
 	  characters to remain the same when the font changes, at the
@@ -1758,7 +1722,7 @@ TAG-SET, EXACT-P, and HOW-TO-ADD are as in `copy-specifier'.
      occur in various places below. */
   GCPRO4 (tag_set, locale, old_face, new_face);
   /* check validity of how_to_add now. */
-  (void) decode_how_to_add_specification (how_to_add);
+  decode_how_to_add_specification (how_to_add);
   /* and of tag_set. */
   tag_set = decode_specifier_tag_set (tag_set);
   /* and of locale. */
@@ -1940,37 +1904,39 @@ complex_vars_of_faces (void)
   {
     Lisp_Object inst_list = Qnil;
 #ifdef HAVE_X_WINDOWS
-    CONST char *fonts[30];
-    int n = 0;
-
     /* The same gory list from x-faces.el.
        (#### Perhaps we should remove the stuff from x-faces.el
        and only depend on this stuff here?  That should work.)
      */
-    fonts[n++] = "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*";
-    fonts[n++] = "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*";
-    fonts[n++] = "-*-courier-*-r-*-*-*-120-*-*-*-*-iso8859-*";
-    fonts[n++] = "-*-*-medium-r-*-*-*-120-*-*-m-*-iso8859-*";
-    fonts[n++] = "-*-*-medium-r-*-*-*-120-*-*-c-*-iso8859-*";
-    fonts[n++] = "-*-*-*-r-*-*-*-120-*-*-m-*-iso8859-*";
-    fonts[n++] = "-*-*-*-r-*-*-*-120-*-*-c-*-iso8859-*";
-    fonts[n++] = "-*-*-*-r-*-*-*-120-*-*-*-*-iso8859-*";
-    fonts[n++] = "-*-*-medium-r-*-*-*-120-*-*-m-*-*-*";
-    fonts[n++] = "-*-*-medium-r-*-*-*-120-*-*-c-*-*-*";
-    fonts[n++] = "-*-*-*-r-*-*-*-120-*-*-m-*-*-*";
-    fonts[n++] = "-*-*-*-r-*-*-*-120-*-*-c-*-*-*";
-    fonts[n++] = "-*-*-*-r-*-*-*-120-*-*-*-*-*-*";
-    fonts[n++] = "-*-*-*-*-*-*-*-120-*-*-*-*-*-*";
-    fonts[n++] = "*";
+    CONST char *fonts[] =
+    {
+      "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
+      "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
+      "-*-courier-*-r-*-*-*-120-*-*-*-*-iso8859-*",
+      "-*-*-medium-r-*-*-*-120-*-*-m-*-iso8859-*",
+      "-*-*-medium-r-*-*-*-120-*-*-c-*-iso8859-*",
+      "-*-*-*-r-*-*-*-120-*-*-m-*-iso8859-*",
+      "-*-*-*-r-*-*-*-120-*-*-c-*-iso8859-*",
+      "-*-*-*-r-*-*-*-120-*-*-*-*-iso8859-*",
+      "-*-*-medium-r-*-*-*-120-*-*-m-*-*-*",
+      "-*-*-medium-r-*-*-*-120-*-*-c-*-*-*",
+      "-*-*-*-r-*-*-*-120-*-*-m-*-*-*",
+      "-*-*-*-r-*-*-*-120-*-*-c-*-*-*",
+      "-*-*-*-r-*-*-*-120-*-*-*-*-*-*",
+      "-*-*-*-*-*-*-*-120-*-*-*-*-*-*",
+      "*"
+    };
+    CONST char **fontptr;
 
-    for (--n; n >= 0; --n)
-      inst_list = Fcons (Fcons (list1 (Qx), build_string (fonts[n])),
+    for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
+      inst_list = Fcons (Fcons (list1 (Qx), build_string (*fontptr)),
 			 inst_list);
-#endif
+#endif /* HAVE_X_WINDOWS */
+
 #ifdef HAVE_TTY
     inst_list = Fcons (Fcons (list1 (Qtty), build_string ("normal")),
 		       inst_list);
-#endif
+#endif /* HAVE_TTY */
     set_specifier_fallback (Fget (Vdefault_face, Qfont, Qnil), inst_list);
   }
 

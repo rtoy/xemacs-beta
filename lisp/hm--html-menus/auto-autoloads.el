@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'hm--html-menus-autoloads))
-    (progn
+(if (featurep 'hm--html-menus-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (hm--html-minor-mode hm--html-mode) "hm--html-mode" "hm--html-menus/hm--html-mode.el")
 
@@ -74,4 +73,3 @@ now be used instead of the args TEMPLATE-DIR and AUTOMATIC-EXPAND." t nil)
 ;;;***
 
 (provide 'hm--html-menus-autoloads)
-))

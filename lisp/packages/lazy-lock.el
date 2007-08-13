@@ -736,7 +736,7 @@ Does not restore the value of point in the selected window, or anything else."
 	(we (if lazy-lock-hide-invisible
 		(save-excursion
 		  (end-of-line) (forward-line (window-height)) (point))
-	      (min (max (1- (window-end)) (point-min)) (point-max)))))
+	      (min (max (1- (window-end nil t)) (point-min)) (point-max)))))
     (if (or (/= ws lazy-lock-cache-start) (/= we lazy-lock-cache-end))
 	;; Find where we haven't `fontified' before.
 	(let* ((start (or (text-property-not-all ws we 'fontified t) ws))

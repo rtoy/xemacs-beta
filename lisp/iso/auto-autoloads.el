@@ -1,9 +1,6 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'iso-autoloads))
-    (progn
+(if (featurep 'iso-autoloads) (error "Already loaded"))
 
-(provide 'iso-autoloads)
-))
 
 ;;;### (autoloads (iso-accents-mode) "iso-acc" "iso/iso-acc.el")
 
@@ -31,3 +28,5 @@ With an argument, a positive argument enables ISO Accents mode,
 and a negative argument disables it." t nil)
 
 ;;;***
+
+(provide 'iso-autoloads)

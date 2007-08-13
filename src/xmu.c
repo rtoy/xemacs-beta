@@ -27,7 +27,7 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL M.I.T.
  * BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN 
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <X11/cursorfont.h>
@@ -143,9 +143,9 @@ int XmuCursorNameToIndex (const char *name)
     const struct _CursorName *table;
     int i;
     char tmp[40];
-    
+
     if (strlen (name) >= sizeof tmp) return -1;
-    for (i=0; i<strlen(name); i++) 
+    for (i=0; i<strlen(name); i++)
         if (isupper((unsigned char) name[i]))
             tmp[i] = tolower((unsigned char) name[i]);
         else
@@ -202,7 +202,7 @@ static void initHexTable (void)
     hexTable[' '] = -1;	hexTable[','] = -1;
     hexTable['}'] = -1;	hexTable['\n'] = -1;
     hexTable['\t'] = -1;
-	
+
     hex_initialized = 1;
 }
 
@@ -215,7 +215,7 @@ static int NextInt (FILE *fstream)
     int	value = 0;
     int gotone = 0;
     int done = 0;
-    
+
     /* loop, accumulate hex value until find delimiter  */
     /* skip any initial delimiters found in read stream */
 
@@ -299,7 +299,7 @@ int XmuReadBitmapData (
 	    }
 	    continue;
 	}
-    
+
 	if (sscanf(line, "static short %s = {", name_and_type) == 1)
 	  version10p = 1;
 	else if (sscanf(line,"static unsigned char %s = {",name_and_type) == 1)
@@ -316,7 +316,7 @@ int XmuReadBitmapData (
 
 	if (strcmp("bits[]", type))
 	  continue;
-    
+
 	if (!ww || !hh)
 	  RETURN (BitmapFileInvalid);
 
@@ -329,7 +329,7 @@ int XmuReadBitmapData (
 
 	size = bytes_per_line * hh;
 	data = (unsigned char *) Xmalloc ((unsigned int) size);
-	if (!data) 
+	if (!data)
 	  RETURN (BitmapNoMemory);
 
 	if (version10p) {
@@ -348,7 +348,7 @@ int XmuReadBitmapData (
 	    int bytes;
 
 	    for (bytes=0, ptr=data; bytes<size; bytes++, ptr++) {
-		if ((value = NextInt(fstream)) < 0) 
+		if ((value = NextInt(fstream)) < 0)
 		  RETURN (BitmapFileInvalid);
 		*ptr=value;
 	    }
@@ -373,7 +373,7 @@ int XmuReadBitmapData (
 
 int XmuReadBitmapDataFromFile (const char *filename,
 			       /* Remaining args are RETURNED */
-			       unsigned int *width, 
+			       unsigned int *width,
 			       unsigned int *height,
 			       unsigned char **datap,
 			       int *x_hot, int *y_hot)
@@ -390,7 +390,7 @@ int XmuReadBitmapDataFromFile (const char *filename,
 }
 
 /*
- * XmuPrintDefaultErrorMessage - print a nice error that looks like the usual 
+ * XmuPrintDefaultErrorMessage - print a nice error that looks like the usual
  * message.  Returns 1 if the caller should consider exitting else 0.
  */
 int XmuPrintDefaultErrorMessage (Display *dpy, XErrorEvent *event, FILE *fp)
@@ -402,10 +402,10 @@ int XmuPrintDefaultErrorMessage (Display *dpy, XErrorEvent *event, FILE *fp)
     _XExtension *ext = (_XExtension *)NULL;
     XGetErrorText(dpy, event->error_code, buffer, BUFSIZ);
     XGetErrorDatabaseText(dpy, mtype, "XError", "X Error", mesg, BUFSIZ);
-    (void) fprintf(fp, "%s:  %s\n  ", mesg, buffer);
-    XGetErrorDatabaseText(dpy, mtype, "MajorCode", "Request Major code %d", 
+    fprintf(fp, "%s:  %s\n  ", mesg, buffer);
+    XGetErrorDatabaseText(dpy, mtype, "MajorCode", "Request Major code %d",
 	mesg, BUFSIZ);
-    (void) fprintf(fp, mesg, event->request_code);
+    fprintf(fp, mesg, event->request_code);
     if (event->request_code < 128) {
 	sprintf(number, "%d", event->request_code);
 	XGetErrorDatabaseText(dpy, "XRequest", number, "", buffer, BUFSIZ);
@@ -420,17 +420,17 @@ int XmuPrintDefaultErrorMessage (Display *dpy, XErrorEvent *event, FILE *fp)
 	else
 	    buffer[0] = '\0';
     }
-    (void) fprintf(fp, " (%s)", buffer);
+    fprintf(fp, " (%s)", buffer);
     fputs("\n  ", fp);
 #if (XtSpecificationRelease >= 5)
     if (event->request_code >= 128) {
 	XGetErrorDatabaseText(dpy, mtype, "MinorCode", "Request Minor code %d",
 			      mesg, BUFSIZ);
-	(void) fprintf(fp, mesg, event->minor_code);
+	fprintf(fp, mesg, event->minor_code);
 	if (ext) {
 	    sprintf(mesg, "%s.%d", ext->name, event->minor_code);
 	    XGetErrorDatabaseText(dpy, "XRequest", mesg, "", buffer, BUFSIZ);
-	    (void) fprintf(fp, " (%s)", buffer);
+	    fprintf(fp, " (%s)", buffer);
 	}
 	fputs("\n  ", fp);
     }
@@ -445,12 +445,12 @@ int XmuPrintDefaultErrorMessage (Display *dpy, XErrorEvent *event, FILE *fp)
 	/* kludge, try to find the extension that caused it */
 	buffer[0] = '\0';
 	for (ext = dpy->ext_procs; ext; ext = ext->next) {
-	    if (ext->error_string) 
+	    if (ext->error_string)
 		(*ext->error_string)(dpy, event->error_code, &ext->codes,
 				     buffer, BUFSIZ);
 	    if (buffer[0])
 		break;
-	}    
+	}
 	if (buffer[0])
 	    sprintf(buffer, "%s.%d", ext->name,
 		    event->error_code - ext->codes.first_error);
@@ -458,7 +458,7 @@ int XmuPrintDefaultErrorMessage (Display *dpy, XErrorEvent *event, FILE *fp)
 	    strcpy(buffer, "Value");
 	XGetErrorDatabaseText(dpy, mtype, buffer, "", mesg, BUFSIZ);
 	if (*mesg) {
-	    (void) fprintf(fp, mesg, event->resourceid);
+	    fprintf(fp, mesg, event->resourceid);
 	    fputs("\n  ", fp);
 	}
     } else if ((event->error_code == BadWindow) ||
@@ -480,33 +480,33 @@ int XmuPrintDefaultErrorMessage (Display *dpy, XErrorEvent *event, FILE *fp)
 	else
 	    XGetErrorDatabaseText(dpy, mtype, "ResourceID", "ResourceID 0x%x",
 				  mesg, BUFSIZ);
-	(void) fprintf(fp, mesg, event->resourceid);
+	fprintf(fp, mesg, event->resourceid);
 	fputs("\n  ", fp);
     }
 #elif (XtSpecificationRelease == 4)
     XGetErrorDatabaseText(dpy, mtype, "MinorCode", "Request Minor code %d",
 			  mesg, BUFSIZ);
-    (void) fprintf(fp, mesg, event->minor_code);
+    fprintf(fp, mesg, event->minor_code);
     fputs("\n  ", fp);
     if (ext) {
       sprintf(mesg, "%s.%d", ext->name, event->minor_code);
       XGetErrorDatabaseText(dpy, "XRequest", mesg, "", buffer, BUFSIZ);
-      (void) fprintf(fp, " (%s)", buffer);
+      fprintf(fp, " (%s)", buffer);
     }
     XGetErrorDatabaseText(dpy, mtype, "ResourceID", "ResourceID 0x%x",
 			  mesg, BUFSIZ);
-    (void) fprintf(fp, mesg, event->resourceid);
+    fprintf(fp, mesg, event->resourceid);
     fputs("\n  ", fp);
 #else
 ERROR! Unsupported release of X11
 #endif
-    XGetErrorDatabaseText(dpy, mtype, "ErrorSerial", "Error Serial #%d", 
+    XGetErrorDatabaseText(dpy, mtype, "ErrorSerial", "Error Serial #%d",
 	mesg, BUFSIZ);
-    (void) fprintf(fp, mesg, event->serial);
+    fprintf(fp, mesg, event->serial);
     fputs("\n  ", fp);
     XGetErrorDatabaseText(dpy, mtype, "CurrentSerial", "Current Serial #%d",
 	mesg, BUFSIZ);
-    (void) fprintf(fp, mesg, NextRequest(dpy)-1);
+    fprintf(fp, mesg, NextRequest(dpy)-1);
     fputs("\n", fp);
     if (event->error_code == BadImplementation) return 0;
     return 1;
@@ -531,7 +531,7 @@ int XmuSimpleErrorHandler (Display *dpy, XErrorEvent *errorp)
     }
     /* got a "real" X error */
     return XmuPrintDefaultErrorMessage (dpy, errorp, stderr);
-}	
+}
 
 void XmuCopyISOLatin1Lowered(char *dst, char *src)
 {

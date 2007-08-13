@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'prim-autoloads))
-    (progn
+(if (featurep 'prim-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (about-xemacs) "about" "prim/about.el")
 
@@ -529,4 +528,3 @@ The buffer in question is current when this function is called." nil nil)
 ;;;***
 
 (provide 'prim-autoloads)
-))

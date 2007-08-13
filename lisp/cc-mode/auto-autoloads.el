@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'cc-mode-autoloads))
-    (progn
+(if (featurep 'cc-mode-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads nil "cc-langs" "cc-mode/cc-langs.el")
 
@@ -144,4 +143,3 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 ;;;***
 
 (provide 'cc-mode-autoloads)
-))

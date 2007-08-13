@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'pcl-cvs-autoloads))
-    (progn
+(if (featurep 'pcl-cvs-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (pcl-cvs-fontify) "pcl-cvs-xemacs" "pcl-cvs/pcl-cvs-xemacs.el")
 
@@ -25,4 +24,3 @@ If optional prefix argument LOCAL is non-nil, 'cvs update -l' is run." t nil)
 ;;;***
 
 (provide 'pcl-cvs-autoloads)
-))

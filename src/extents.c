@@ -1636,7 +1636,7 @@ extent_changed_for_redisplay (EXTENT extent, int descendants_too,
   }
 }
 
-/* A change to an extent occurred that will might affect redisplay.
+/* A change to an extent occurred that might affect redisplay.
    This is called when properties such as the endpoints, the layout,
    or the priority changes.  Redisplay will be affected only if
    the extent has any displayable attributes. */
@@ -1647,9 +1647,12 @@ extent_maybe_changed_for_redisplay (EXTENT extent, int descendants_too,
 {
   /* Retrieve the ancestor for efficiency */
   EXTENT anc = extent_ancestor (extent);
-  if (!NILP (extent_face (anc)) || !NILP (extent_begin_glyph (anc)) ||
-      !NILP (extent_end_glyph (anc)) || !NILP (extent_mouse_face (anc)) ||
-      !NILP (extent_invisible (anc)) || invisibility_change)
+  if (!NILP (extent_face        (anc)) ||
+      !NILP (extent_begin_glyph (anc)) ||
+      !NILP (extent_end_glyph   (anc)) ||
+      !NILP (extent_mouse_face  (anc)) ||
+      !NILP (extent_invisible   (anc)) ||
+      invisibility_change)
     extent_changed_for_redisplay (extent, descendants_too,
 				  invisibility_change);
 }
@@ -1664,7 +1667,7 @@ make_extent_detached (Lisp_Object object)
   extent_object (extent) = object;
   /* Now make sure the extent info exists. */
   if (!NILP (object))
-    (void) buffer_or_string_extent_info_force (object);
+    buffer_or_string_extent_info_force (object);
   return extent;
 }
 

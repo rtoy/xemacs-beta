@@ -23,12 +23,12 @@ Boston, MA 02111-1307, USA.  */
 
 /* Moved from puresize.h to here so alloc.c does not get recompiled */
 
-/* Current build process on NT does not generate a puresize_adjust.h */
-/* file. --marcpa */  
+/* Current build process on NT does not generate a puresize-adjust.h */
+/* file. --marcpa */
 #ifdef WINDOWSNT
 # define PURESIZE_ADJUSTMENT 1000000
 #else
-# include <puresize_adjust.h>
+# include <puresize-adjust.h>
 #endif
 #define PURESIZE ((RAW_PURESIZE) + (PURESIZE_ADJUSTMENT))
 

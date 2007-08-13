@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'modes-autoloads))
-    (progn
+(if (featurep 'modes-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads nil "abbrev" "modes/abbrev.el")
 
@@ -570,7 +569,7 @@ Decode XPM image between START and END." nil nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.7 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.8 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -1939,7 +1938,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.7 $
+vhdl-mode $Revision: 1.8 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2092,4 +2091,3 @@ Major mode for editing xrdb config files" t nil)
 ;;;***
 
 (provide 'modes-autoloads)
-))

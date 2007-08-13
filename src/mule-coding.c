@@ -87,15 +87,15 @@ struct iso2022_decoder
   /* Which registers are currently invoked into the left (GL) and
      right (GR) halves of the 8-bit encoding space? */
   int register_left, register_right;
-  
+
   /* ISO_ESC holds a value indicating part of an escape sequence
      that has already been seen. */
   enum iso_esc_flag esc;
-  
+
   /* This records the bytes we've seen so far in an escape sequence,
      in case the sequence is invalid (we spit out the bytes unchanged). */
   unsigned char esc_bytes[8];
-  
+
   /* Index for next byte to store in ISO escape sequence. */
   int esc_bytes_index;
 
@@ -232,7 +232,7 @@ mark_coding_system (Lisp_Object obj, void (*markobj) (Lisp_Object))
   (markobj) (CODING_SYSTEM_EOL_LF (codesys));
   (markobj) (CODING_SYSTEM_EOL_CRLF (codesys));
   (markobj) (CODING_SYSTEM_EOL_CR (codesys));
-  
+
   switch (CODING_SYSTEM_TYPE (codesys))
     {
       int i;
@@ -350,14 +350,14 @@ setup_eol_coding_systems (struct Lisp_Coding_System *codesys)
   int len = string_length (XSYMBOL (CODING_SYSTEM_NAME (codesys))->name);
   char *codesys_name = (char *) alloca (len + 7);
   Lisp_Object codesys_name_sym, sub_codesys_obj;
-  
+
   /* kludge */
 
   XSETCODING_SYSTEM (codesys_obj, codesys);
 
   memcpy (codesys_name,
 	  string_data (XSYMBOL (CODING_SYSTEM_NAME (codesys))->name), len);
-  
+
 #define DEFINE_SUB_CODESYS(op_sys, Type) do {	\
     strcpy (codesys_name + len, "-" op_sys);	\
     codesys_name_sym = intern (codesys_name);	\
@@ -556,7 +556,7 @@ unparse_charset_conversion_specs (charset_conversion_spec_dynarr *load_here)
   Lisp_Object result = Qnil;
 
   if (!load_here)
-    return Qnil; 
+    return Qnil;
   for (i = 0; i < Dynarr_length (load_here); i++)
     {
       struct charset_conversion_spec *ccs =
@@ -741,7 +741,7 @@ if TYPE is 'ccl:
   int ty;
   int need_to_setup_eol_systems = 1;
 
-  /* Convert type to constant */ 
+  /* Convert type to constant */
   if (NILP (type) || EQ (type, Qautomatic_conversion))
                                       { ty = CODESYS_AUTODETECT; }
   else if (EQ (type, Qshift_jis))     { ty = CODESYS_SHIFT_JIS; }
@@ -794,7 +794,7 @@ if TYPE is 'ccl:
 	  else if (EQ (key, Qcharset_g1)) FROB_INITIAL_CHARSET (1);
 	  else if (EQ (key, Qcharset_g2)) FROB_INITIAL_CHARSET (2);
 	  else if (EQ (key, Qcharset_g3)) FROB_INITIAL_CHARSET (3);
-	
+
 #define FROB_FORCE_CHARSET(charset_num) \
   CODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT (codesys, charset_num) = !NILP (value)
 
@@ -805,7 +805,7 @@ if TYPE is 'ccl:
 
 #define FROB_BOOLEAN_PROPERTY(prop) \
   CODING_SYSTEM_ISO2022_##prop (codesys) = !NILP (value)
-    
+
 	  else if (EQ (key, Qshort))         FROB_BOOLEAN_PROPERTY (SHORT);
 	  else if (EQ (key, Qno_ascii_eol))  FROB_BOOLEAN_PROPERTY (NO_ASCII_EOL);
 	  else if (EQ (key, Qno_ascii_cntl)) FROB_BOOLEAN_PROPERTY (NO_ASCII_CNTL);
@@ -813,7 +813,7 @@ if TYPE is 'ccl:
 	  else if (EQ (key, Qlock_shift))    FROB_BOOLEAN_PROPERTY (LOCK_SHIFT);
 	  else if (EQ (key, Qno_iso6429))    FROB_BOOLEAN_PROPERTY (NO_ISO6429);
 	  else if (EQ (key, Qescape_quoted)) FROB_BOOLEAN_PROPERTY (ESCAPE_QUOTED);
-	
+
 	  else if (EQ (key, Qinput_charset_conversion))
 	    {
 	      codesys->iso2022.input_conv =
@@ -852,7 +852,7 @@ if TYPE is 'ccl:
 
   if (need_to_setup_eol_systems)
     setup_eol_coding_systems (codesys);
-      
+
   {
     Lisp_Object codesys_obj;
     XSETCODING_SYSTEM (codesys_obj, codesys);
@@ -1028,7 +1028,7 @@ Return the PROP property of CODING-SYSTEM.
 #define INITIAL_CHARSET(charset_num) \
   (XCHARSET_NAME (XCODING_SYSTEM_ISO2022_INITIAL_CHARSET \
 		  (coding_system, charset_num)))
-    
+
       if      (EQ (prop, Qcharset_g0)) return INITIAL_CHARSET (0);
       else if (EQ (prop, Qcharset_g1)) return INITIAL_CHARSET (1);
       else if (EQ (prop, Qcharset_g2)) return INITIAL_CHARSET (2);
@@ -1045,7 +1045,7 @@ Return the PROP property of CODING-SYSTEM.
 
 #define LISP_BOOLEAN(prop) \
   (XCODING_SYSTEM_ISO2022_##prop (coding_system) ? Qt : Qnil)
-  
+
       else if (EQ (prop, Qshort))         return LISP_BOOLEAN (SHORT);
       else if (EQ (prop, Qno_ascii_eol))  return LISP_BOOLEAN (NO_ASCII_EOL);
       else if (EQ (prop, Qno_ascii_cntl)) return LISP_BOOLEAN (NO_ASCII_CNTL);
@@ -1053,7 +1053,7 @@ Return the PROP property of CODING-SYSTEM.
       else if (EQ (prop, Qlock_shift))    return LISP_BOOLEAN (LOCK_SHIFT);
       else if (EQ (prop, Qno_iso6429))    return LISP_BOOLEAN (NO_ISO6429);
       else if (EQ (prop, Qescape_quoted)) return LISP_BOOLEAN (ESCAPE_QUOTED);
-  
+
       else if (EQ (prop, Qinput_charset_conversion))
 	return
 	  unparse_charset_conversion_specs
@@ -1210,21 +1210,21 @@ struct detection_state
   enum eol_type eol_type;
   int seen_non_ascii;
   int mask;
-  
+
   struct
     {
       int mask;
       int in_second_byte;
     }
   big5;
-  
+
   struct
     {
       int mask;
       int in_second_byte;
     }
   shift_jis;
-  
+
   struct
     {
       int mask;
@@ -1312,7 +1312,7 @@ detect_eol_type (struct detection_state *st, CONST unsigned char *src,
 
    st->mask holds the determined coding category mask, or ~0 if only
    ASCII has been seen so far.
-   
+
    Returns:
 
    0 == st->eol_type is EOL_AUTODETECT and/or more than coding category
@@ -1331,7 +1331,7 @@ detect_coding_type (struct detection_state *st, CONST unsigned char *src,
 
   if (just_do_eol)
     return st->eol_type != EOL_AUTODETECT;
-  
+
   if (!st->seen_non_ascii)
     {
       for (; n; n--, src++)
@@ -1397,7 +1397,7 @@ coding_system_from_mask (int mask)
       int cat = -1;
 
       mask = postprocess_iso2022_mask (mask);
-      
+
       /* Look through the coding categories by priority and find
 	 the first one that is allowed. */
       for (i = 0; i <= CODING_CATEGORY_LAST; i++)
@@ -1435,7 +1435,7 @@ determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
   memset (&decst, 0, sizeof (decst));
   decst.eol_type = *eol_type_in_out;
   decst.mask = ~0;
-  
+
   /* If autodetection is called for, do it now. */
   if (XCODING_SYSTEM_TYPE (*codesys_in_out) == CODESYS_AUTODETECT ||
       *eol_type_in_out == EOL_AUTODETECT)
@@ -1445,7 +1445,7 @@ determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
 	{
 	  unsigned char random_buffer[4096];
 	  int nread;
-	  
+
 	  nread = Lstream_read (stream, random_buffer, sizeof (random_buffer));
 	  if (!nread)
 	    break;
@@ -1494,7 +1494,7 @@ defaults to the current buffer.
     {
       unsigned char random_buffer[4096];
       int nread;
-      
+
       nread = Lstream_read (XLSTREAM (instream), random_buffer,
 			    sizeof (random_buffer));
       if (!nread)
@@ -1509,11 +1509,11 @@ defaults to the current buffer.
   else
     {
       int i;
-      
+
       val = Qnil;
 
       decst.mask = postprocess_iso2022_mask (decst.mask);
-      
+
       for (i = CODING_CATEGORY_LAST; i >= 0; i--)
 	{
 	  int sys = coding_category_by_priority[i];
@@ -1645,7 +1645,7 @@ struct decoding_stream
   /* Additional ISO2022 information.  We define the structure above
      because it's also needed by the detection routines. */
   struct iso2022_decoder iso2022;
-  
+
   /* Additional information (the state of the running CCL program)
      used by the CCL decoder. */
   struct ccl_program ccl;
@@ -1782,7 +1782,7 @@ reset_decoding_stream (struct decoding_stream *str)
       set_ccl_program (&str->ccl, CODING_SYSTEM_CCL_DECODE (str->codesys),
 		       0, 0, 0);
     }
-  
+
   str->flags = str->ch = 0;
 }
 
@@ -1906,7 +1906,7 @@ mule_decode (Lstream *decoding, CONST unsigned char *src,
      we're a writing stream or a non-seekable reading stream,
      meaning that we can't just process the whole input,
      rewind, and start over. */
-  
+
   if (CODING_SYSTEM_TYPE (str->codesys) == CODESYS_AUTODETECT ||
       str->eol_type == EOL_AUTODETECT)
     {
@@ -1933,7 +1933,7 @@ mule_decode (Lstream *decoding, CONST unsigned char *src,
 	    str->flags |= CODING_STATE_END;
 	}
     }
-      
+
   switch (CODING_SYSTEM_TYPE (str->codesys))
     {
 #ifdef DEBUG_XEMACS
@@ -2017,7 +2017,7 @@ BUFFER defaults to the current buffer if unspecified.
     Lstream *in  = XLSTREAM(instream);
     Lstream *out = XLSTREAM(outstream);
     Bufpos newpos, even_newer_pos;
-    
+
     while (1)
       {
         Bufpos oldpos = lisp_buffer_stream_startpos (in);
@@ -2246,7 +2246,7 @@ reset_encoding_stream (struct encoding_stream *str)
     default:
       break;
     }
-  
+
   str->flags = str->ch = 0;
 }
 
@@ -2548,7 +2548,7 @@ decode_coding_sjis (Lstream *decoding, CONST unsigned char *src,
   while (n--)
     {
       c = *src++;
-      
+
       if (ch)
 	{
 	  /* Previous character was first byte of Shift-JIS Kanji char. */
@@ -2655,7 +2655,7 @@ Return the corresponding character.
        (code))
 {
   unsigned char c1, c2, s1, s2;
- 
+
   CHECK_CONS (code);
   CHECK_INT (XCAR (code));
   CHECK_INT (XCDR (code));
@@ -2680,7 +2680,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
 {
   Lisp_Object charset;
   int c1, c2, s1, s2;
- 
+
   CHECK_CHAR_COERCE_INT (ch);
   BREAKUP_CHAR (XCHAR (ch), charset, c1, c2);
   if (EQ (charset, Vcharset_japanese_jisx0208))
@@ -2865,7 +2865,7 @@ decode_coding_big5 (Lstream *decoding, CONST unsigned char *src,
 	}
     label_continue_loop:;
     }
-  
+
   DECODE_HANDLE_END_OF_CONVERSION (flags, ch, dst);
 
   CODING_STREAM_COMPOSE (str, flags, ch);
@@ -2889,7 +2889,7 @@ encode_coding_big5 (Lstream *encoding, CONST unsigned char *src,
     {
       c = *src++;
       if (c == '\n')
-	{	
+	{
 	  if (eol_type != EOL_LF && eol_type != EOL_AUTODETECT)
 	    Dynarr_add (dst, '\r');
 	  if (eol_type != EOL_CR)
@@ -2943,7 +2943,7 @@ Return the corresponding character.
        (code))
 {
   unsigned char c1, c2, b1, b2;
- 
+
   CHECK_CONS (code);
   CHECK_INT (XCAR (code));
   CHECK_INT (XCDR (code));
@@ -2970,7 +2970,7 @@ Return the corresponding character code in Big5.
 {
   Lisp_Object charset;
   int c1, c2, b1, b2;
- 
+
   CHECK_CHAR_COERCE_INT (ch);
   BREAKUP_CHAR (XCHAR (ch), charset, c1, c2);
   if (EQ (charset, Vcharset_chinese_big5_1) ||
@@ -3128,7 +3128,7 @@ Return the corresponding character code in Big5.
 	o CSI '2' ']'  -- start of right-to-left text
    The control character CSI (0x9B: control sequence introducer) is
    abbreviated to the escape sequence ESC '[' in 7-bit environment.
-   
+
    Character composition specification takes the following format:
 	o ESC '0' -- start character composition
 	o ESC '1' -- end character composition
@@ -3139,7 +3139,7 @@ static void
 reset_iso2022 (Lisp_Object coding_system, struct iso2022_decoder *iso)
 {
   int i;
-  
+
   for (i = 0; i < 4; i++)
     {
       if (!NILP (coding_system))
@@ -3232,7 +3232,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 	  *flags |= CODING_STATE_ESCAPE;
 	  iso->esc = ISO_ESC;
 	  goto not_done;
-	  
+
 	case ISO_CODE_CSI:      /* ISO6429 (specifying directionality) */
 	  *flags |= CODING_STATE_ESCAPE;
 	  iso->esc = ISO_ESC_5_11;
@@ -3293,7 +3293,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 	  *flags = (*flags & CODING_STATE_ISO2022_LOCK) |
 	    CODING_STATE_COMPOSITE;
 	  return 1;
-	  
+
 	case '1':
 	  iso->esc = ISO_ESC_END_COMPOSITE;
 	  *flags = (*flags & CODING_STATE_ISO2022_LOCK) &
@@ -3458,7 +3458,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 	    /* Can this ever be reached? -slb */
 	    abort();
 	  }
-	
+
 	cs = CHARSET_BY_ATTRIBUTES (type, c,
 				    *flags & CODING_STATE_R2L ?
 				    CHARSET_RIGHT_TO_LEFT :
@@ -3785,7 +3785,7 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 		    Dynarr_add_many (dst, comstr, len);
 		    break;
 		  }
-		  
+
 		case ISO_ESC_LITERAL:
 		  DECODE_ADD_BINARY_CHAR (c, dst);
 		  break;
@@ -3895,7 +3895,7 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 		  (!(flags & CODING_STATE_R2L) &&
 		   XCHARSET_DIRECTION (charset) == CHARSET_RIGHT_TO_LEFT))
 		{
-		  Lisp_Object new_charset = 
+		  Lisp_Object new_charset =
 		    XCHARSET_REVERSE_DIRECTION_CHARSET (charset);
 		  if (!NILP (new_charset))
 		    charset = new_charset;
@@ -3908,13 +3908,13 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 		  DECODE_OUTPUT_PARTIAL_CHAR (ch);
 		  Dynarr_add (dst, c & 0x7F);
 		  break;
-		  
+
 		case 2:	/* one-byte official */
 		  DECODE_OUTPUT_PARTIAL_CHAR (ch);
 		  Dynarr_add (dst, lb);
 		  Dynarr_add (dst, c | 0x80);
 		  break;
-		  
+
 		case 3:	/* one-byte private or two-byte official */
 		  if (XCHARSET_PRIVATE_P (charset))
 		    {
@@ -3936,7 +3936,7 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 			ch = c;
 		    }
 		  break;
-		  
+
 		default:	/* two-byte private */
 		  if (ch)
 		    {
@@ -3999,7 +3999,7 @@ iso2022_designate (Lisp_Object charset, unsigned char reg,
     if (dyn)
       {
 	int i;
-	
+
 	for (i = 0; i < Dynarr_length (dyn); i++)
 	  {
 	    struct charset_conversion_spec *spec = Dynarr_atp (dyn, i);
@@ -4138,8 +4138,7 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
 	{ /* Processing Leading Byte */
 	  ch = 0;
 	  charset = CHARSET_BY_LEADING_BYTE (c);
-	  if (c == PRE_LEADING_BYTE_PRIVATE_1 ||
-	      c == PRE_LEADING_BYTE_PRIVATE_2)
+	  if (LEADING_BYTE_PREFIX_P(c))
 	    ch = c;
 	  else if (!EQ (charset, Vcharset_control_1)
 		   && !EQ (charset, Vcharset_composite))
@@ -4338,7 +4337,7 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
 	  iso2022_designate (initial_charset, i, str, dst);
 	}
     }
- 
+
   CODING_STREAM_COMPOSE (str, flags, ch);
   str->iso2022.current_char_boundary = char_boundary;
   str->iso2022.current_charset = charset;
@@ -4370,7 +4369,7 @@ decode_coding_no_conversion (Lstream *decoding, CONST unsigned char *src,
   while (n--)
     {
       c = *src++;
-      
+
       DECODE_HANDLE_EOL_TYPE (eol_type, c, flags, dst);
       DECODE_ADD_BINARY_CHAR (c, dst);
     label_continue_loop:;
@@ -4450,7 +4449,7 @@ static bufbyte_dynarr *conversion_in_dynarr;
  ((NILP (Vpathname_coding_system) ||			\
    (EQ ((Vpathname_coding_system), Qbinary))) ?		\
   Qnil : Fget_coding_system (Vpathname_coding_system))
-  
+
 /* #### not correct for all values of `fmt'! */
 #define FMT_CODING_SYSTEM(fmt)					\
  (((fmt) == FORMAT_FILENAME) ? PATHNAME_CODING_SYSTEM      :	\
@@ -4472,7 +4471,7 @@ convert_to_external_format (CONST Bufbyte *ptr,
     Dynarr_reset (conversion_out_dynarr);
 
   if (NILP (coding_system))
-    {      
+    {
       CONST Bufbyte *end = ptr + len;
 
       for (; ptr < end;)
@@ -4486,7 +4485,7 @@ convert_to_external_format (CONST Bufbyte *ptr,
           Dynarr_add (conversion_out_dynarr, (Extbyte) c);
           INC_CHARPTR (ptr);
         }
-    
+
 #ifdef ERROR_CHECK_BUFPOS
       assert (ptr == end);
 #endif
@@ -4528,7 +4527,7 @@ convert_from_external_format (CONST Extbyte *ptr,
 			      enum external_data_format fmt)
 {
   Lisp_Object coding_system = FMT_CODING_SYSTEM (fmt);
-  
+
   if (!conversion_in_dynarr)
     conversion_in_dynarr = Dynarr_new (Bufbyte);
   else
@@ -4551,7 +4550,7 @@ convert_from_external_format (CONST Extbyte *ptr,
         ((unsigned_char_dynarr *) conversion_in_dynarr);
       struct gcpro gcpro1, gcpro2;
       char tempbuf[1024]; /* some random amount */
-      
+
       outstream =
         make_decoding_output_stream (XLSTREAM (outstream), coding_system);
       GCPRO2 (instream, outstream); /* Necessary?? */
@@ -4603,7 +4602,7 @@ syms_of_mule_coding (void)
   DEFSUBR (Fcoding_priority_list);
   DEFSUBR (Fset_coding_category_system);
   DEFSUBR (Fcoding_category_system);
-  
+
   DEFSUBR (Fdetect_coding_region);
   DEFSUBR (Fdecode_coding_region);
   DEFSUBR (Fencode_coding_region);
@@ -4704,7 +4703,7 @@ vars_of_mule_coding (void)
       coding_category_system[i] = Qnil;
       coding_category_by_priority[i] = i;
     }
-  
+
   DEFVAR_LISP ("keyboard-coding-system", &Vkeyboard_coding_system /*
 Coding system used for TTY keyboard input.
 Not used under a windowing system.

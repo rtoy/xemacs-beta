@@ -49,7 +49,7 @@ bindir=@bindir@
 libdir=@libdir@
 srcdir=@srcdir@
 archlibdir=@archlibdir@
-
+configuration=@configuration@
 ## ==================== Utility Programs for the Build =================
 
 INSTALL = @INSTALL@
@@ -178,21 +178,29 @@ send-pr:
 #define MOVEMAIL_NEEDS_BLESSING
 blessmail = blessmail
 blessmail:
-	../src/emacs -batch -l ../lisp/blessmail.el
+	../src/xemacs -batch -l ../lisp/utils/blessmail.el
 	chmod +x $@
 #endif /* movemail needs blessing */
 
 maybe-blessmail: $(blessmail)
 #ifdef MOVEMAIL_NEEDS_BLESSING
 ## Do not charge ahead and do it!  Let the installer decide.
-	  ./blessmail ${archlibdir}/movemail  */
+##	  ./blessmail ${archlibdir}/movemail  
 	@if test `wc -l <blessmail` != 2; then \
 	  dir=`sed -n -e 's/echo mail directory = \(.*\)/\1/p' blessmail`; \
-	  echo "Assuming $$dir is really the mail spool directory, you should"; \
+	  echo "*************************************************************";\
+	  echo "Assuming $$dir is really the mail spool directory, you should";\
 	  echo "run  lib-src/blessmail ${archlibdir}/movemail"; \
 	  echo "as root, to give  movemail  appropriate permissions."; \
 	  echo "Do that after running  make install."; \
+	  echo "You can also do  make blessmail. "; \
+	  echo "*************************************************************";\
 	fi
+#endif
+
+do-blessmail: $(blessmail)
+#ifdef MOVEMAIL_NEEDS_BLESSING
+	./blessmail ${archlibdir}/movemail  
 #endif
 
 ## Install the internal utilities.  Until they are installed, we can

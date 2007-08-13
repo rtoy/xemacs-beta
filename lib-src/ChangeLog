@@ -1,3 +1,15 @@
+1997-08-11  Jeff Miller <jmiller@smart.net>
+	* Makefile.in.in:  Added a test for system-type equal to linux to
+	lisp/paths.el.  Mail spool dir should be /var/spool/mail.
+
+	* cleaned up lib-src/Makefile.in.in regarding targets blessmail and
+	maybe-blessmail. Added target do-blessmail.  Makefile.in.in was also
+	missing a variable called "configuration. This messed up archilibdir.
+
+	* Added highlighting to text suggesting to do "make gzip-el" in top
+	level Makefile.in.  Added code to do make maybe-blessmail after a 
+	make install is done.
+
 1997-08-07  Jan Vroonhof  <vroonhof@math.ethz.ch>
 
 	* gnuclient.c (main): Made help string correspond to options.

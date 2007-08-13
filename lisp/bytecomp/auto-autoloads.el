@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'bytecomp-autoloads))
-    (progn
+(if (featurep 'bytecomp-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (batch-byte-recompile-directory batch-byte-recompile-directory-norecurse batch-byte-compile display-call-tree byte-compile-sexp byte-compile compile-defun byte-compile-file byte-recompile-file byte-recompile-directory byte-force-recompile) "bytecomp" "bytecomp/bytecomp.el")
 
@@ -93,4 +92,3 @@ redefine OBJECT if it is a symbol." t nil)
 ;;;***
 
 (provide 'bytecomp-autoloads)
-))

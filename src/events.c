@@ -266,23 +266,19 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 
     case magic_event:
       {
-	Lisp_Object console;
-
-	console = CDFW_CONSOLE (e1->channel);
+	struct console *con = XCONSOLE (CDFW_CONSOLE (e1->channel));
 
 #ifdef HAVE_X_WINDOWS
-	/* XEvent is actually a union which means that we can't just use == */
-	if (CONSOLE_X_P (XCONSOLE (console)))
-	  return !memcmp ((XEvent *) &e1->event.magic.underlying_x_event,
-			   (XEvent *) &e2->event.magic.underlying_x_event,
-			  sizeof (e1->event.magic.underlying_x_event));
+	if (CONSOLE_X_P (con))
+	  return (e1->event.magic.underlying_x_event.xany.serial ==
+		  e2->event.magic.underlying_x_event.xany.serial);
 #endif
 #ifdef HAVE_TTY
-	if (CONSOLE_TTY_P (XCONSOLE (console)))
+	if (CONSOLE_TTY_P (con))
 	return (e1->event.magic.underlying_tty_event ==
 		e2->event.magic.underlying_tty_event);
 #endif
-	return 1;
+	return 1; /* not reached */
       }
 
     case empty_event:      /* Empty and deallocated events are equal. */
@@ -334,18 +330,15 @@ event_hash (Lisp_Object obj, int depth)
 
     case magic_event:
       {
-	Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (e));
+	struct console *con = XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e)));
 #ifdef HAVE_X_WINDOWS
-	if (CONSOLE_X_P (XCONSOLE (console)))
-	  return
-	    HASH2 (hash,
-		   memory_hash (&e->event.magic.underlying_x_event,
-				sizeof (e->event.magic.underlying_x_event)));
+	if (CONSOLE_X_P (con))
+	  return HASH2 (hash, e->event.magic.underlying_x_event.xany.serial);
 #endif
-	return
-	  HASH2 (hash,
-		 memory_hash (&e->event.magic.underlying_tty_event,
-			      sizeof (e->event.magic.underlying_tty_event)));
+#ifdef HAVE_TTY
+	if (CONSOLE_TTY_P (con))
+	  return HASH2 (hash, e->event.magic.underlying_tty_event);
+#endif
       }
 
     case empty_event:
@@ -356,7 +349,7 @@ event_hash (Lisp_Object obj, int depth)
       abort ();
     }
 
-  return 0;
+  return 0; /* unreached */
 }
 
 
@@ -924,26 +917,27 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
       }
     case magic_event:
       {
-        CONST char *name = 0;
-	Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (event));
+        CONST char *name = NULL;
 
 #ifdef HAVE_X_WINDOWS
-        if (CONSOLE_X_P (XCONSOLE (console)))
-	  name =
-	    x_event_name (event->event.magic.underlying_x_event.xany.type);
-#endif
+	{
+	  Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (event));
+	  if (CONSOLE_X_P (XCONSOLE (console)))
+	    name = x_event_name (event->event.magic.underlying_x_event.type);
+	}
+#endif /* HAVE_X_WINDOWS */
 	if (name) strcpy (buf, name);
 	else strcpy (buf, "???");
 	return;
       }
     case magic_eval_event:	strcpy (buf, "magic-eval"); return;
-    case pointer_motion_event:	strcpy (buf, "motion");	return;
-    case misc_user_event:	strcpy (buf, "misc-user"); return;
-    case eval_event:		strcpy (buf, "eval"); 	return;
-    case process_event:		strcpy (buf, "process");return;
-    case timeout_event:		strcpy (buf, "timeout");return;
-    case empty_event:		strcpy (buf, "empty"); return;
-    case dead_event:		strcpy (buf, "DEAD-EVENT");  return;
+    case pointer_motion_event:	strcpy (buf, "motion");	    return;
+    case misc_user_event:	strcpy (buf, "misc-user");  return;
+    case eval_event:		strcpy (buf, "eval");	    return;
+    case process_event:		strcpy (buf, "process");    return;
+    case timeout_event:		strcpy (buf, "timeout");    return;
+    case empty_event:		strcpy (buf, "empty");	    return;
+    case dead_event:		strcpy (buf, "DEAD-EVENT"); return;
     default:
       abort ();
     }
@@ -989,9 +983,9 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
 	}
       else
 	{
-	  memcpy (buf, string_data (XSYMBOL (key)->name),
-                string_length (XSYMBOL (key)->name) + 1);
-	  str += string_length (XSYMBOL (key)->name);
+	  struct Lisp_String *name = XSYMBOL (key)->name;
+	  memcpy (buf, string_data (name), string_length (name) + 1);
+	  str += string_length (name);
 	}
     }
   else
@@ -1157,22 +1151,23 @@ Return the button-number of the given button-press or button-release event.
 
 DEFUN ("event-modifier-bits", Fevent_modifier_bits, 1, 1, 0, /*
 Return a number representing the modifier keys which were down
-when the given mouse or keyboard event was produced.  See also the function
-event-modifiers.
+when the given mouse or keyboard event was produced.
+See also the function event-modifiers.
 */
        (event))
 {
  again:
   CHECK_LIVE_EVENT (event);
-  if (XEVENT (event)->event_type == key_press_event)
-    return make_int (XEVENT (event)->event.key.modifiers);
-  else if (XEVENT (event)->event_type == button_press_event ||
-	   XEVENT (event)->event_type == button_release_event)
-    return make_int (XEVENT (event)->event.button.modifiers);
-  else if (XEVENT (event)->event_type == pointer_motion_event)
-    return make_int (XEVENT (event)->event.motion.modifiers);
-  else
+  switch (XEVENT (event)->event_type)
     {
+    case key_press_event:
+      return make_int (XEVENT (event)->event.key.modifiers);
+    case button_press_event:
+    case button_release_event:
+      return make_int (XEVENT (event)->event.button.modifiers);
+    case pointer_motion_event:
+      return make_int (XEVENT (event)->event.motion.modifiers);
+    default:
       event = wrong_type_argument (intern ("key-or-mouse-event-p"), event);
       goto again;
     }

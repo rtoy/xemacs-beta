@@ -234,8 +234,8 @@ play_sound_file (char *sound_file, int volume)
       close (audio_fd);
     }
 
-  (void) signal (SIGHUP, sighup_handler);
-  (void) signal (SIGINT, sigint_handler);
+  signal (SIGHUP, sighup_handler);
+  signal (SIGINT, sigint_handler);
 }
 
 
@@ -312,8 +312,8 @@ play_sound_data (unsigned char *data, int length, int volume)
       close (audio_fd);
     }
 
-  (void) signal (SIGHUP, sighup_handler);
-  (void) signal (SIGINT, sigint_handler);
+  signal (SIGHUP, sighup_handler);
+  signal (SIGINT, sigint_handler);
 }
 
 /* #### sigcontext doesn't exist in Solaris.  This should be updated

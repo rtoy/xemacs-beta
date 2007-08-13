@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'electric-autoloads))
-    (progn
+(if (featurep 'electric-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (electric-buffer-list) "ebuff-menu" "electric/ebuff-menu.el")
 
@@ -95,4 +94,3 @@ Provide help for current mode." t nil)
 ;;;***
 
 (provide 'electric-autoloads)
-))

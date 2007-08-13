@@ -1,3 +1,14 @@
+1997-08-13  P E Jareth Hein  <jareth@camelot-soft.com>
+
+	* insdel.c (buffer_delete_range): Changed the location where point
+	was actually moved to after all other movement handling.  This
+	prevents a MULE related crash in VALID_BYTIND.
+
+1997-08-11  SL Baur  <steve@altair.xemacs.org>
+
+	* doc.c (Fsnarf_documentation): Semi-clarify types of weird
+	functions.
+
 1997-08-05  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
 
 	* eval.c (vars_of_eval): Updated docstring for `debug_on_error' to 

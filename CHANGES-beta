@@ -1,4 +1,12 @@
 							-*- indented-text -*-
+to 20.3 beta18 "Bratislava"
+-- enhancements to help.el courtesy of Jens Petersen
+-- Mega Martin Buchholz patch
+-- edit-toolbar.el-1.02 courtesy of Mike Scheidler
+-- cc-mode-5.16
+-- DOC file generation clean up
+-- Miscellaneous bug fixes
+
 to 20.3 beta17 "Bucharest"
 -- ediff-2.67
 -- viper-2.96

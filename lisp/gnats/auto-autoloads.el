@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'gnats-autoloads))
-    (progn
+(if (featurep 'gnats-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (gnats:summ-pr gnats:query-pr gnats:edit-pr gnats:view-pr gnats:gnats-mode) "gnats" "gnats/gnats.el")
 
@@ -71,4 +70,3 @@ if it is not nil." t nil)
 ;;;***
 
 (provide 'gnats-autoloads)
-))

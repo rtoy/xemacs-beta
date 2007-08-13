@@ -140,7 +140,7 @@ free_widget_value_contents (widget_value *wv)
 
   if (wv->toolkit_data && wv->free_toolkit_data)
     {
-      free (wv->toolkit_data);
+      XtFree (wv->toolkit_data);
       wv->toolkit_data = (void *) 0xDEADBEEF;
     }
 #ifdef NEED_SCROLLBARS
@@ -210,18 +210,19 @@ merge_scrollbar_values (widget_value *old, widget_value *new)
     {
       scrollbar_values *old_sb = old->scrollbar_data;
       scrollbar_values *new_sb = new->scrollbar_data;
-#define FROB(field) if (old_sb->field != new_sb->field) changed = True
-      FROB (line_increment);
-      FROB (page_increment);
-      FROB (minimum);
-      FROB (maximum);
-      FROB (slider_size);
-      FROB (slider_position);
-      FROB (scrollbar_width);
-      FROB (scrollbar_height);
-      FROB (scrollbar_x);
-      FROB (scrollbar_y);
-#undef FROB
+
+      if ((old_sb->line_increment   != new_sb->line_increment)	 ||
+	  (old_sb->page_increment   != new_sb->page_increment)	 ||
+	  (old_sb->minimum	    != new_sb->minimum)		 ||
+	  (old_sb->maximum	    != new_sb->maximum)		 ||
+	  (old_sb->slider_size	    != new_sb->slider_size)	 ||
+	  (old_sb->slider_position  != new_sb->slider_position)	 ||
+	  (old_sb->scrollbar_width  != new_sb->scrollbar_width)	 ||
+	  (old_sb->scrollbar_height != new_sb->scrollbar_height) ||
+	  (old_sb->scrollbar_x	    != new_sb->scrollbar_x)	 ||
+	  (old_sb->scrollbar_y	    != new_sb->scrollbar_y))
+	changed = True;
+
       *old_sb = *new_sb;
     }
 
@@ -630,7 +631,7 @@ merge_widget_value (widget_value *val1, widget_value *val2, int level)
   if (change > NO_CHANGE && val1->toolkit_data)
     {
       if (val1->free_toolkit_data)
-	free (val1->toolkit_data);
+	XtFree (val1->toolkit_data);
       val1->toolkit_data = NULL;
     }
 

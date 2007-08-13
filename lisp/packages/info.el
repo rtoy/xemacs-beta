@@ -370,7 +370,9 @@ This variable is ignored unless running under XEmacs."
 (defcustom Info-default-directory-list nil
   "*List of default directories to search for Info documentation
 files.  This value is used as the default for `Info-directory-list'.
-It is set in startup.el."
+It is set in startup.el.  The first directory in this list must
+contain a `dir' file that will become the basis for the toplevel Info
+directory."
   :type '(repeat directory)
   :group 'info)
 
@@ -393,7 +395,7 @@ file. An example might be something like:
 		  path (substring path (min (1+ idx)
 					    (length path)))))
 	  (nreverse list))
-      Info-default-directory-list))
+      (reverse Info-default-directory-list)))
   "List of directories to search for Info documentation files.
 Default is to use the environment variable INFOPATH if it exists,
 else to use Info-default-directory-list.")
@@ -812,13 +814,21 @@ actually get any text from."
 		(cond
 		 ((re-search-backward "^ *\\* *Locals *: *\n" nil t)
 		  (delete-region (match-beginning 0) (match-end 0)))
-		 ((re-search-backward "^Local" nil t)
-		  (end-of-line))
+		 ((re-search-backward "^[ \t]*Local" nil t)
+		  ;; This is for people who underline topic headings with
+		  ;; equal signs or dashes.
+		  (when (save-excursion
+			  (forward-line 1)
+			  (beginning-of-line)
+			  (looking-at "^[ \t]*[-=]+"))
+		    (forward-line 1))
+		  (forward-line 1)
+		  (beginning-of-line))
 		 (t (search-backward "\^L" nil t)))
 		;; Insert menu part of the file
 		(let* ((pt (point))
 		       (len (length (buffer-string nil nil other))))
-		  (insert "\n" (buffer-string nil nil other))
+		  (insert (buffer-string nil nil other))
 		  (goto-char (+ pt len))
 		  (save-excursion
 		    (goto-char pt)
@@ -1059,7 +1069,7 @@ for; usually a downcased version of NAME."
 		       "")
 		     ")"
 		     (or Info-current-node ""))))))
-
+
 ;; Go to an info node specified with a filename-and-nodename string
 ;; of the sort that is found in pointers in nodes.
 
@@ -1249,8 +1259,7 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
       (or (and (equal onode Info-current-node)
                (equal ofile Info-current-file))
           (Info-history-add ofile onode opoint)))))
-
-
+
 ;; Extract the value of the node-pointer named NAME.
 ;; If there is none, use ERRORNAME in the error message; 
 ;; if ERRORNAME is nil, just return nil.
@@ -1338,7 +1347,7 @@ Argument can be negative to go through the circle in the other direction.
   "Go to the Info directory node."
   (interactive)
   (Info-find-node "dir" "top"))
-
+
 (defun Info-follow-reference (footnotename)
   "Follow cross reference named NAME to the node it refers to.
 NAME may be an abbreviation of the reference name."
@@ -2060,8 +2069,7 @@ be edited; default is 1."
       (or (equal tag "")
 	  (insert "<<" tag ">>"))))
   (Info-cease-annotate))
-
-
+
 (defun Info-exit ()
   "Exit Info by selecting some other buffer."
   (interactive)
@@ -2230,7 +2238,6 @@ At end of the node's text, moves to the next node."
 	       (name (nth 1 (nth 1 data))))
 	  (and name (nth 1 data))))
     (error nil)))
-
 
 (defvar Info-mode-map nil
   "Keymap containing Info commands.")
@@ -2292,7 +2299,6 @@ At end of the node's text, moves to the next node."
   (define-key Info-mode-map 'delete 'Info-scroll-prev)
   (define-key Info-mode-map 'button2 'Info-follow-clicked-node)
   (define-key Info-mode-map 'button3 'Info-select-node-menu))
-
 
 ;; Info mode is suitable only for specially formatted data.
 (put 'info-mode 'mode-class 'special)
@@ -2471,7 +2477,6 @@ The locations are of the format used in Info-history, i.e.
 				  0)
 			    where)))
       where)))
-
 
 ;;; fontification and mousability for info
 
@@ -2697,7 +2702,6 @@ Used to construct the menubar submenu and popup menu."
 		 "Up entry to enclosing section"]
 		)))
 ;))
-
 
 (provide 'info)
 

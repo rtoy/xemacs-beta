@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'tl-autoloads))
-    (progn
+(if (featurep 'tl-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (view-charset) "char-table" "tl/char-table.el")
 
@@ -17,4 +16,3 @@ Display character table of CHARSET by pop-up menu." t nil)
 ;;;***
 
 (provide 'tl-autoloads)
-))

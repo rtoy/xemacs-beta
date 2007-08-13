@@ -109,6 +109,46 @@ the form of easy-to-install add-ons.
 * Changes in XEmacs 20.3
 ========================
 
+** Info "dir" functionality merged from Emacs-19.34
+
+All of the directories on `Info-directory-list' will be searched for
+"dir" files, which may be full fledged Info files containing subnodes
+as well as menus.  They are merged to become one directory, with menus
+in like-named subnodes being coalesced from the several "dir" files.
+
+"localdir" files are looked for too, secondary to "dir"'s.  If there's
+no "dir" in a directory, a "localdir" will be looked for.  There can
+be one of either "dir" or "localdir" in each of the directories in
+`Info-directory-list', which is initialized from `Info-default-
+directory-list', which you may customize through the Options menu.
+
+The first directory specified in `Info-default-directory-list' should
+contain a "dir" file that will become the toplevel dir which the
+others will be merged into.  A "localdir" may optionally contain a
+'* Menu:' section, or just entries like those in a menu section, but
+no subnodes or info header.  You can see what I'm talking about if you
+view the "dir" file that comes with XEmacs.  It has a header section
+that should not be in a "localdir" file.  The "localdir" should look
+like the `buffer-substring' of XEmacs' stock "dir" from just below
+"* Menu:" to the end of the file, optionally also containing the
+"* Menu:" line.
+
+The contents of each "localdir" file will be inserted into the
+toplevel "dir" file replacing a '* Locals:' line, OR alternatively,
+will insert it below a 'Local*' (that's a regexp) heading line.  If
+there's more than one "localdir" file, each will either consume a '*
+Locals:' line, be catenated to the end of the (dir)Top, or be inserted
+under the 'Local' topic header.
+
+There is a new variable, called `Info-additional-directory-list',
+which you may customize also, that can contain a list of directories
+in which to search for Info documents, but NOT to search in for "dir"
+or "localdir" files.  This is useful for things like the Calc package,
+which likes its info files in its lisp directory.  If you put that
+directory in the 'additional list', and a menu entry for it in one of
+your "dir" or "localdir" files, a click on a menu entry for it will be
+able to find the Info file.
+
 ** Startup file additions.
 
 By default XEmacs now loads the user file ~/.xemacs if it exists.  If

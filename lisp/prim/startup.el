@@ -686,7 +686,8 @@ a new format, when variables have changed, etc."
 	    (when timeout (disable-timeout timeout))
 	    (with-current-buffer (get-buffer "*scratch*")
 	      (erase-buffer)
-	      (insert initial-scratch-message)
+	      (when (stringp initial-scratch-message)
+		(insert initial-scratch-message))
 	      ;; In case the XEmacs server has already selected
 	      ;; another buffer, erase the one our message is in.
 	      (set-buffer-modified-p nil)))))

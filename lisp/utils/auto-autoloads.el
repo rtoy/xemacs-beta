@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'utils-autoloads))
-    (progn
+(if (featurep 'utils-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (defadvice ad-add-advice) "advice" "utils/advice.el")
 
@@ -249,8 +248,8 @@ See also \\(f@docref-subst)." t nil)
 ;;;### (autoloads (edit-toolbar) "edit-toolbar" "utils/edit-toolbar.el")
 
 (autoload 'edit-toolbar "edit-toolbar" "\
-Alter toolbar characteristics by editing a buffer representing the current toolbar.
-Pops up a buffer containing a list of the current toobar." t nil)
+Alter toolbar characteristics by editing a buffer representing the specified toolbar.
+Pops up a buffer containing a list of the toolbar matching TOOLBAR_NAME." t nil)
 
 ;;;***
 
@@ -1064,4 +1063,3 @@ It should be a string." nil nil)
 ;;;***
 
 (provide 'utils-autoloads)
-))

@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'tm-autoloads))
-    (progn
+(if (featurep 'tm-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (mime/editor-mode) "tm-edit" "tm/tm-edit.el")
 
@@ -146,4 +145,3 @@ User customizable variables (not documented all of them):
 ;;;***
 
 (provide 'tm-autoloads)
-))

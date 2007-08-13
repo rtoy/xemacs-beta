@@ -103,13 +103,11 @@ static XtResource resources[] = {
   {XtNrightToolBarWidth, XtCRightToolBarWidth, XtRInt, sizeof (int),
      offset (right_toolbar_width), XtRImmediate, (XtPointer)-1},
   {XtNtopToolBarShadowColor, XtCTopToolBarShadowColor, XtRPixel, sizeof(Pixel),
-     offset(top_toolbar_shadow_pixel), XtRString, (String) "#000000"},
+     offset(top_toolbar_shadow_pixel), XtRString, "#000000"},
   {XtNbottomToolBarShadowColor, XtCBottomToolBarShadowColor, XtRPixel,
-     sizeof(Pixel), offset(bottom_toolbar_shadow_pixel), XtRString,
-     (String) "#000000"},
+     sizeof(Pixel), offset(bottom_toolbar_shadow_pixel), XtRString, "#000000"},
   {XtNbackgroundToolBarColor, XtCBackgroundToolBarColor, XtRPixel,
-     sizeof(Pixel), offset(background_toolbar_pixel), XtRString,
-     (String) "Gray75"},
+     sizeof(Pixel), offset(background_toolbar_pixel), XtRString, "Gray75"},
   {XtNtopToolBarShadowPixmap, XtCTopToolBarShadowPixmap, XtRPixmap,
      sizeof (Pixmap), offset(top_toolbar_shadow_pixmap), XtRImmediate,
      (XtPointer)None},
@@ -131,9 +129,9 @@ static XtResource resources[] = {
     offset(font), XtRImmediate, (XtPointer)0
   },
   {XtNforeground, XtCForeground, XtRPixel, sizeof(Pixel),
-     offset(foreground_pixel), XtRString, (String) "XtDefaultForeground"},
+     offset(foreground_pixel), XtRString, "XtDefaultForeground"},
   {XtNcursorColor, XtCForeground, XtRPixel, sizeof(Pixel),
-     offset(cursor_color), XtRString, (String) "XtDefaultForeground"},
+     offset(cursor_color), XtRString, "XtDefaultForeground"},
   {XtNbarCursor, XtCBarCursor, XtRBoolean, sizeof (Boolean),
      offset (bar_cursor), XtRImmediate, (XtPointer)0},
   {XtNvisualBell, XtCVisualBell, XtRBoolean, sizeof (Boolean),
@@ -156,7 +154,7 @@ static XtResource resources[] = {
 
 static XtActionsRec
 emacsFrameActionsTable [] = {
-  {(String) "mapping",  (XtActionProc) emacs_Xt_mapping_action},
+  {"mapping",  (XtActionProc) emacs_Xt_mapping_action},
 };
 
 static char
@@ -175,7 +173,7 @@ EmacsFrameClassRec emacsFrameClassRec = {
 #else
     /* superclass		*/	&widgetClassRec,
 #endif
-    /* class_name		*/	(String) "EmacsFrame",
+    /* class_name		*/	"EmacsFrame",
     /* widget_size		*/	sizeof(EmacsFrameRec),
     /* class_initialize		*/	EmacsFrameClassInitialize,
     /* class_part_initialize	*/	0,
@@ -242,7 +240,7 @@ update_various_frame_slots (EmacsFrame ew)
     ew->emacs_frame.internal_border_width;
 }
 
-static void 
+static void
 EmacsFrameInitialize (Widget request, Widget new,
 		       ArgList dum1, Cardinal *dum2)
 {
@@ -333,7 +331,7 @@ EmacsFrameResize (Widget widget)
   int columns;
   int rows;
   XtWidgetGeometry req, repl;
-  
+
   pixel_to_char_size (f, ew->core.width, ew->core.height, &columns, &rows);
   update_various_frame_slots (ew);
   change_frame_size (f, rows, columns, 0);
@@ -401,7 +399,7 @@ EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
 	  (Vscrollbar_height,
 	   make_int (new->emacs_frame.scrollbar_height),
 	   frame, Qnil, Qnil);
-#endif
+#endif /* HAVE_SCROLLBARS */
 #ifdef HAVE_TOOLBARS
       if (cur->emacs_frame.top_toolbar_height !=
 	  new->emacs_frame.top_toolbar_height)
@@ -427,7 +425,7 @@ EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
 	  (Vtoolbar_size[RIGHT_TOOLBAR],
 	   make_int (new->emacs_frame.right_toolbar_width),
 	   frame, Qnil, Qnil);
-#endif
+#endif /* HAVE_TOOLBARS */
     }
   in_resource_setting--;
 
@@ -491,76 +489,41 @@ static unsigned char cvt_string_scrollbar_placement;
 
 /* ARGSUSED */
 static void
-_CvtStringToScrollBarPlacement (XrmValuePtr args,   /* unused */
-				Cardinal *num_args, /* unused */
-				XrmValuePtr fromVal,
-				XrmValuePtr toVal)
+Xt_StringToScrollBarPlacement (XrmValuePtr args,   /* unused */
+				 Cardinal *num_args, /* unused */
+				 XrmValuePtr fromVal,
+				 XrmValuePtr toVal)
 {
-#if 0
-  /* Martin, this is broken.  Please fix it. */
   XrmQuark q;
-  char *lowerName = (char *) alloca (strlen ( (char *) fromVal->addr) + 1);
-  
+  char *lowerName = (char *) alloca (strlen ((char *) fromVal->addr) + 1);
+
   XmuCopyISOLatin1Lowered (lowerName, (char *) fromVal->addr);
   q = XrmStringToQuark (lowerName);
-  
+
   toVal->size = sizeof (cvt_string_scrollbar_placement);
   toVal->addr = (XtPointer) &cvt_string_scrollbar_placement;
-  cvt_string_scrollbar_placement =
-    q == XrmStringToQuark ("top_left")     ? XtTOP_LEFT     :
-    q == XrmStringToQuark ("bottom_left")  ? XtBOTTOM_LEFT  :
-    q == XrmStringToQuark ("top_right")    ? XtTOP_RIGHT    :
-    q == XrmStringToQuark ("bottom_right") ? XtBOTTOM_RIGHT :
-    0;
 
-  if (cvt_string_scrollbar_placement != 0)
-    return;
-  
-  toVal->addr = NULL;
-  toVal->size = 0;
-  XtStringConversionWarning (fromVal->addr, "scrollBarPlacement");
-#endif
-#define done(address, type) \
-toVal->size = sizeof(type); \
-toVal->addr = (XtPointer) address; \
-return /* `;' supplied by caller */
-
-  XrmQuark q;
-  char lowerName[1000];
-  
-  XmuCopyISOLatin1Lowered (lowerName, (char*)fromVal->addr);
-  q = XrmStringToQuark(lowerName);
-  if (q == XrmStringToQuark ("top_left"))
+  if      (q == XrmStringToQuark ("top_left"))
+    cvt_string_scrollbar_placement = XtTOP_LEFT;
+  else if (q == XrmStringToQuark ("bottom_left"))
+    cvt_string_scrollbar_placement = XtBOTTOM_LEFT;
+  else if (q == XrmStringToQuark ("top_right"))
+    cvt_string_scrollbar_placement = XtTOP_RIGHT;
+  else if (q == XrmStringToQuark ("bottom_right"))
+    cvt_string_scrollbar_placement = XtBOTTOM_RIGHT;
+  else
     {
-      cvt_string_scrollbar_placement = XtTOP_LEFT;
-      done (&cvt_string_scrollbar_placement, unsigned char);
+      XtStringConversionWarning (fromVal->addr, "scrollBarPlacement");
+      toVal->addr = NULL;
+      toVal->size = 0;
     }
-  if (q == XrmStringToQuark ("bottom_left"))
-    {
-      cvt_string_scrollbar_placement = XtBOTTOM_LEFT;
-      done (&cvt_string_scrollbar_placement, unsigned char);
-    }
-  if (q == XrmStringToQuark ("top_right"))
-    {
-      cvt_string_scrollbar_placement = XtTOP_RIGHT;
-      done (&cvt_string_scrollbar_placement, unsigned char);
-    }
-  if (q == XrmStringToQuark ("bottom_right"))
-    {
-      cvt_string_scrollbar_placement = XtBOTTOM_RIGHT;
-      done (&cvt_string_scrollbar_placement, unsigned char);
-    }
-  XtStringConversionWarning (fromVal->addr, "scrollBarPlacement");
-  toVal->addr = NULL;
-  toVal->size = 0;
-#undef done
 }
 
 static void
 EmacsFrameClassInitialize (void)
 {
   XtAddConverter (XtRString, XtRScrollBarPlacement,
-		  _CvtStringToScrollBarPlacement, NULL, 0);
+		  Xt_StringToScrollBarPlacement, NULL, 0);
 }
 
 /********************* Special entrypoints *******************/

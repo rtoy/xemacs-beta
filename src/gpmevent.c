@@ -23,10 +23,6 @@
 #include <linux/keyboard.h> 
 #endif
 
-extern SELECT_TYPE input_wait_mask, non_fake_input_wait_mask;
-extern SELECT_TYPE process_only_mask, device_only_mask;
-void select_filedesc (int fd, Lisp_Object what);
-
 int handle_gpm_read(struct Lisp_Event *event, struct console *con, int fd)
 {
   Gpm_Event ev;

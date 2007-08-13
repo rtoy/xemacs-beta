@@ -78,15 +78,13 @@ static int composite_char_col_next;
 /* Table of number of bytes in the string representation of a character
    indexed by the first byte of that representation.
 
-   This value can be derived other ways -- e.g. something like
+   rep_bytes_by_first_byte(c) is more efficient than the equivalent
+   canonical computation:
 
-   (BYTE_ASCII_P (first_byte) ? 1 :
-    XCHARSET_REP_BYTES (CHARSET_BY_LEADING_BYTE (first_byte)))
-
-   but it's faster this way. */
+   (BYTE_ASCII_P (c) ? 1 : XCHARSET_REP_BYTES (CHARSET_BY_LEADING_BYTE (c))) */
 
 Bytecount rep_bytes_by_first_byte[0xA0] =
-{ /* 16 x 8 ones for ASCII */
+{ /* 0x00 - 0x7f are for straight ASCII */
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -95,11 +93,11 @@ Bytecount rep_bytes_by_first_byte[0xA0] =
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  /* 1 x 8 for Dimension-1 official Mule charsets */
+  /* 0x80 - 0x8f are for Dimension-1 official charsets */
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-  /* 0x90 - 0x9d are Dimension-2 official */
-  /* 0x9e is Dimension-1 private */
-  /* 0x9f is Dimension-2 private */
+  /* 0x90 - 0x9d are for Dimension-2 official charsets */
+  /* 0x9e is for Dimension-1 private charsets */
+  /* 0x9f is for Dimension-2 private charsets */
   3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4
 };
 
@@ -112,7 +110,7 @@ Lisp_Object Qreverse_direction_charset;
 Lisp_Object Qccl_program;
 
 Lisp_Object Qascii, Qcontrol_1,
-  
+
   Qlatin_iso8859_1,
   Qlatin_iso8859_2,
   Qlatin_iso8859_3,
@@ -122,18 +120,18 @@ Lisp_Object Qascii, Qcontrol_1,
   Qgreek_iso8859_7,
   Qhebrew_iso8859_8,
   Qlatin_iso8859_9,
-  
+
   Qthai_tis620,
-  
+
   Qkatakana_jisx0201, Qlatin_jisx0201,
   Qjapanese_jisx0208_1978,
   Qjapanese_jisx0208,
   Qjapanese_jisx0212,
-  
+
   Qchinese_gb2312,
   Qchinese_big5_1, Qchinese_big5_2,
   Qchinese_cns11643_1, Qchinese_cns11643_2,
-  
+
   Qkorean_ksc5601, Qcomposite;
 
 Lisp_Object Ql2r, Qr2l;
@@ -410,7 +408,7 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   struct Lisp_Charset *cs = XCHARSET (obj);
   char buf[200];
-  
+
   if (print_readably)
     error ("printing unreadable object #<charset %s 0x%x>",
            string_data (XSYMBOL (CHARSET_NAME (cs))->name),
@@ -477,7 +475,7 @@ make_charset (Lisp_Object name, Bufbyte leading_byte, unsigned char rep_bytes,
   if (leading_byte < 0xA0)
     /* official leading byte */
     rep_bytes_by_first_byte[leading_byte] = rep_bytes;
-  
+
   /* Some charsets are "faux" and don't have names or really exist at
      all except in the leading-byte table. */
   if (!NILP (name))
@@ -792,7 +790,7 @@ NEW-NAME is the name of the new charset.  Return the new charset.
     signal_simple_error ("Cannot redefine existing charset", new_name);
 
   cs = XCHARSET (charset);
-  
+
   type      = CHARSET_TYPE      (cs);
   columns   = CHARSET_COLUMNS   (cs);
   dimension = CHARSET_DIMENSION (cs);
@@ -981,7 +979,7 @@ Set the 'registry property of CHARSET to REGISTRY.
   face_property_was_changed (Vdefault_face, Qfont, Qglobal);
   return Qnil;
 }
-  
+
 
 /************************************************************************/
 /*              Lisp primitives for working with characters             */
@@ -1043,22 +1041,20 @@ N defaults to 0 if omitted.
        (ch, n))
 {
   Lisp_Object charset;
-  int c1, c2;
+  int c1, c2, int_n;
 
   CHECK_CHAR_COERCE_INT (ch);
   if (NILP (n))
-    n = Qzero;
+    int_n = 0;
   else
     {
       CHECK_INT (n);
-      if (XINT (n) != 0 && XINT (n) != 1)
+      int_n = XINT (n);
+      if (int_n != 0 && int_n != 1)
 	signal_simple_error ("Octet number must be 0 or 1", n);
     }
   BREAKUP_CHAR (XCHAR (ch), charset, c1, c2);
-  if (XINT (n) == 0)
-    return make_int (c1);
-  else
-    return make_int (c2);
+  return make_int (int_n == 0 ? c1 : c2);
 }
 
 
@@ -1188,19 +1184,19 @@ syms_of_mule_charset (void)
   defsymbol (&Qhebrew_iso8859_8,	"hebrew-iso8859-8");
   defsymbol (&Qlatin_iso8859_9,		"latin-iso8859-9");
   defsymbol (&Qthai_tis620,		"thai-tis620");
-  
+
   defsymbol (&Qkatakana_jisx0201,	"katakana-jisx0201");
   defsymbol (&Qlatin_jisx0201,		"latin-jisx0201");
   defsymbol (&Qjapanese_jisx0208_1978,	"japanese-jisx0208-1978");
   defsymbol (&Qjapanese_jisx0208, 	"japanese-jisx0208");
   defsymbol (&Qjapanese_jisx0212,	"japanese-jisx0212");
-  
+
   defsymbol (&Qchinese_gb2312,		"chinese-gb2312");
   defsymbol (&Qchinese_big5_1,		"chinese-big5-1");
   defsymbol (&Qchinese_big5_2,		"chinese-big5-2");
   defsymbol (&Qchinese_cns11643_1,	"chinese-cns11643-1");
   defsymbol (&Qchinese_cns11643_2,	"chinese-cns11643-2");
-  
+
   defsymbol (&Qkorean_ksc5601,		"korean-ksc5601");
   defsymbol (&Qcomposite,		"composite");
 }
@@ -1210,18 +1206,15 @@ vars_of_mule_charset (void)
 {
   int i, j, k;
 
-  for (i = 0; i < 128; i++)
+  /* Table of charsets indexed by leading byte. */
+  for (i = 0; i < countof (charset_by_leading_byte); i++)
     charset_by_leading_byte[i] = Qnil;
-  
-  for (i = 0; i < 4; i++)
-    for (j = 0; j < 128; j++)
-      for (k = 0; k < 2; k ++)
-	charset_by_attributes[i][j][k] = Qnil;
 
-  /* Now done at compile time
-  for (i = 0; i < 128; i++)
-    rep_bytes_by_first_byte[i] = 1;
-    */
+  /* Table of charsets indexed by type/final-byte/direction. */
+  for (i = 0; i < countof (charset_by_attributes); i++)
+    for (j = 0; j < countof (charset_by_attributes[0]); j++)
+      for (k = 0; k < countof (charset_by_attributes[0][0]); k++)
+	charset_by_attributes[i][j][k] = Qnil;
 
   next_allocated_1_byte_leading_byte = MIN_LEADING_BYTE_PRIVATE_1;
   next_allocated_2_byte_leading_byte = MIN_LEADING_BYTE_PRIVATE_2;
@@ -1233,7 +1226,7 @@ complex_vars_of_mule_charset (void)
   staticpro (&Vcharset_hashtable);
   Vcharset_hashtable = make_lisp_hashtable (50, HASHTABLE_NONWEAK,
 					    HASHTABLE_EQ);
-  
+
   /* Predefined character sets.  We store them into variables for
      ease of access. */
 
@@ -1407,19 +1400,10 @@ complex_vars_of_mule_charset (void)
   composite_char_col_next = 32;
 
   Vcomposite_char_string2char_hashtable =
-    make_lisp_hashtable (500, HASHTABLE_NONWEAK,
-			 HASHTABLE_EQUAL);
+    make_lisp_hashtable (500, HASHTABLE_NONWEAK, HASHTABLE_EQUAL);
   Vcomposite_char_char2string_hashtable =
-    make_lisp_hashtable (500, HASHTABLE_NONWEAK,
-			 HASHTABLE_EQ);
+    make_lisp_hashtable (500, HASHTABLE_NONWEAK, HASHTABLE_EQ);
   staticpro (&Vcomposite_char_string2char_hashtable);
   staticpro (&Vcomposite_char_char2string_hashtable);
 
-  /* Faux charsets used only for convenience in retrieving the
-     number of rep bytes associated with a leading byte. */
-
-  make_charset (Qnil, PRE_LEADING_BYTE_PRIVATE_1, 3, 0, 0, 0, 0,
-		0, Qnil, Qnil);
-  make_charset (Qnil, PRE_LEADING_BYTE_PRIVATE_2, 4, 0, 0, 0, 0,
-		0, Qnil, Qnil);
 }

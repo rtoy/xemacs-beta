@@ -1,4 +1,4 @@
-/* Implements a lightweight scrollbar widget.  
+/* Implements a lightweight scrollbar widget.
    Copyright (C) 1992, 1993, 1994 Lucid, Inc.
    Copyright (C) 1997 Sun Microsystems, Inc.
 
@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
  * Emacs*XlwScrollBar.translations: #override \n\
  *   <Btn1Down>:     PageDownOrRight()	  \n\
  *   <Btn3Down>:     PageUpOrLeft()
- * 
+ *
  */
 
 /*
@@ -192,10 +192,10 @@ static XtResource resources[] = {
     { XmNsliderStyle, XmCSliderStyle, XtRString, sizeof(char *),
       offset(sb.sliderStyle), XtRImmediate, NULL},
     { XmNknobStyle, XmCKnobStyle, XtRString, sizeof(char *),
-      offset(sb.sliderStyle), XtRImmediate, NULL},
+       offset(sb.knobStyle), XtRImmediate, NULL},
 
-    { XmNarrowPosition, XmCArrowPosition, XtRString,
-      sizeof(char *), offset(sb.arrowPosition), XtRImmediate, NULL},
+    { XmNarrowPosition, XmCArrowPosition, XtRString, sizeof(char *),
+      offset(sb.arrowPosition), XtRImmediate, NULL},
 };
 
 /*-------------------------- Prototypes ---------------------------------*/
@@ -308,7 +308,7 @@ check(XlwScrollBarWidget w)
       (w->sb.value < w->sb.minimum) ||
       (w->sb.value > w->sb.maximum - w->sb.sliderSize))
     {
-      printf("above=%d ss=%d below=%d height=%d\n", 
+      printf("above=%d ss=%d below=%d height=%d\n",
 	     w->sb.above, w->sb.ss, w->sb.below, height);
       printf("value=%d min=%d max=%d ss=%d max-ss=%d\n",
 	     w->sb.value, w->sb.minimum, w->sb.maximum,
@@ -473,7 +473,9 @@ decrement_value (XlwScrollBarWidget w, int diff)
 static SliderStyle
 slider_style (XlwScrollBarWidget w)
 {
-  return w->sb.sliderStyle && w->sb.sliderStyle[0] == 'd' ?
+  return (w->sb.sliderStyle ? w->sb.sliderStyle[0] == 'd' :
+	  w->sb.knobStyle   ? w->sb.knobStyle[0]   == 'd' :
+	  0) ?
     SLIDER_DIMPLE :
     SLIDER_PLAIN;
 }
@@ -501,7 +503,7 @@ get_gc (XlwScrollBarWidget w, Pixel fg, Pixel bg, Pixmap pm)
       fg = WhitePixelOfScreen (DefaultScreenOfDisplay (XtDisplay (w)));
       bg = BlackPixelOfScreen (DefaultScreenOfDisplay (XtDisplay (w)));
     }
- 
+
   values.foreground = fg;
   values.background = bg;
   values.fill_style = FillOpaqueStippled;
@@ -656,11 +658,11 @@ make_shadow_pixels (XlwScrollBarWidget w)
 	}
     }
 
-  if (w->sb.topShadowColor    == w->core.background_pixel || 
+  if (w->sb.topShadowColor    == w->core.background_pixel ||
       w->sb.bottomShadowColor == w->core.background_pixel)
     {
       /* Assume we're in mono. This code should be okay even if we're
-       * really in color but just short on color cells -- We want the 
+       * really in color but just short on color cells -- We want the
        * following behavior, which has been empirically determined to
        * work well for all fg/bg combinations in mono: If the trough
        * and slider are BOTH black, then use a white top shadow and a
@@ -864,7 +866,7 @@ draw_arrow_down (Display *dpy, Drawable win, GC bgGC, GC shineGC, GC shadowGC,
   if (shadowT > (width  / 2)) shadowT = (width  / 2);
   if (shadowT > (height / 2)) shadowT = (height / 2);
   if (shadowT < 0) shadowT = 0;
-      
+
   /*  \-  */
   make_vert_seg (shine,
 		 x, y,
@@ -903,7 +905,7 @@ draw_arrow_right (Display *dpy, Drawable win, GC bgGC, GC shineGC, GC shadowGC,
   if (shadowT > (width  / 2)) shadowT = (width  / 2);
   if (shadowT > (height / 2)) shadowT = (height / 2);
   if (shadowT < 0) shadowT = 0;
-      
+
   /*  |\  */
   make_hor_seg (shine,
 		x, y,
@@ -1501,7 +1503,7 @@ XlwScrollBarSetValues (Widget widget, int value, int sliderSize,
        w->sb.pageIncrement != pageIncrement))
     {
       int last_value = w->sb.value;
-      
+
       w->sb.value         = value;
       w->sb.sliderSize    = sliderSize;
       w->sb.increment     = increment;
@@ -1591,7 +1593,7 @@ what_button (XlwScrollBarWidget w, int mouse_x, int mouse_y)
     {
       if (mouse_y >= (height -= arrow_height))
 	return BUTTON_DOWN_ARROW;
-      
+
       if (arrow_same_end (w))
 	{
 	  if (mouse_y >= (height -= arrow_height))
@@ -1601,7 +1603,7 @@ what_button (XlwScrollBarWidget w, int mouse_x, int mouse_y)
 	if ( (mouse_y -= arrow_height) < 0)
 	  return BUTTON_UP_ARROW;
     }
-  
+
   if ( (mouse_y -= w->sb.above) < 0)
     return BUTTON_TROUGH_ABOVE;
 
@@ -1711,7 +1713,7 @@ Select (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
     {
       seg_pixel_sizes (w, &w->sb.above, &w->sb.ss, &w->sb.below);
       draw_slider (w, w->sb.above, w->sb.ss, w->sb.below);
-	  
+
       call_callbacks (w, reason, w->sb.value, mouse_y, event);
 
       if (w->sb.timerActive)
@@ -1823,7 +1825,7 @@ Jump (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
 
   int scroll_region_y = widget_y (w);
   int scroll_region_h = widget_h (w);
-  
+
   if (w->sb.showArrows)
     {
       int arrow_height = arrow_h (w);
@@ -1847,7 +1849,7 @@ Jump (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
       w->sb.above = mouse_y - (w->sb.ss / 2) - scroll_region_y;
       if (w->sb.above < 0)
 	w->sb.above = 0;
-      else if (w->sb.above + w->sb.ss > scroll_region_h) 
+      else if (w->sb.above + w->sb.ss > scroll_region_h)
 	w->sb.above = scroll_region_h - w->sb.ss;
 
       w->sb.below = scroll_region_h - w->sb.ss - w->sb.above;
@@ -1863,7 +1865,7 @@ Jump (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
 
       if (w->sb.value != last_value)
 	call_callbacks (w, XmCR_DRAG, w->sb.value, mouse_y, event);
-      
+
       break;
     default:
       ; /* Do nothing */

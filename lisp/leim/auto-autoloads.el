@@ -1,9 +1,6 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'leim-autoloads))
-    (progn
+(if (featurep 'leim-autoloads) (error "Already loaded"))
 
-(provide 'leim-autoloads)
-))
 
 ;;;### (autoloads (quail-use-package) "quail" "leim/quail.el")
 
@@ -12,3 +9,5 @@ Start using Quail package PACKAGE-NAME.
 The remaining arguments are libraries to be loaded before using the package." nil nil)
 
 ;;;***
+
+(provide 'leim-autoloads)

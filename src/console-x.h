@@ -124,6 +124,7 @@ struct x_device
 
   KeySym *x_keysym_map;
   int x_keysym_map_min_code;
+  int x_keysym_map_max_code;
   int x_keysym_map_keysyms_per_code;
 
   /* frame that holds the WM_COMMAND property; there should be exactly

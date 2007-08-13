@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'games-autoloads))
-    (progn
+(if (featurep 'games-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (blackbox) "blackbox" "games/blackbox.el")
 
@@ -319,4 +318,3 @@ Zippy goes to the analyst." t nil)
 ;;;***
 
 (provide 'games-autoloads)
-))

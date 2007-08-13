@@ -2424,7 +2424,7 @@ indicating whether soft newlines should be inserted.")
 		      ;; 97/3/14 jhod: Kinsoku processing
 		      ;(indent-new-comment-line)
 		      (let ((spacep (memq (char-before (point)) '(?\  ?\t))))
-			(indent-new-comment-line)
+			(funcall comment-line-break-function)
 			;; if user type space explicitly, leave SPC
 			;; even if there is no WAN.
 			(if spacep
@@ -2437,7 +2437,7 @@ indicating whether soft newlines should be inserted.")
 				  (insert ?\ )))))
 		    (save-excursion
 		      (goto-char fill-point)
-		      (indent-new-comment-line)))
+		      (funcall comment-line-break-function)))
 		  ;; If making the new line didn't reduce the hpos of
 		  ;; the end of the line, then give up now;
 		  ;; trying again will not help.

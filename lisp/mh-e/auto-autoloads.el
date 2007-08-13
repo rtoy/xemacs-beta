@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'mh-e-autoloads))
-    (progn
+(if (featurep 'mh-e-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (mh-letter-mode mh-smail-other-window mh-smail-batch mh-smail) "mh-comp" "mh-e/mh-comp.el")
 
@@ -87,4 +86,3 @@ Legal MIME content types.  See documentation for \\[mh-edit-mhn].")
 ;;;***
 
 (provide 'mh-e-autoloads)
-))

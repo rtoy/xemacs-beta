@@ -58,7 +58,7 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
     WIN32_FIND_DATA wfd;
     HANDLE fh;
     p = new_cmdline + strlen (new_cmdline);
-    strcpy (p, "\\emacs*.exe ");
+    strcpy (p, "\\xemacs*.exe ");
     fh = FindFirstFile (new_cmdline, &wfd);
     if (fh == INVALID_HANDLE_VALUE)
       goto error;
@@ -79,7 +79,7 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
     strcat (p, " ");
   }
 #else
-  strcat (new_cmdline, "\\emacs.exe ");
+  strcat (new_cmdline, "\\xemacs.exe ");
 #endif
 
   /* Append original arguments if any; first look for -wait as first
@@ -125,6 +125,6 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
   return (int) ret_code;
 
 error:
-  MessageBox (NULL, "Could not start Emacs.", "Error", MB_ICONSTOP);
+  MessageBox (NULL, "Could not start XEmacs.", "Error", MB_ICONSTOP);
   return 1;
 }

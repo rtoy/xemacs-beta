@@ -216,6 +216,8 @@ Will not override settings in site-init.el or site-run.el."
 	    "/var/mail/")
 	   ((memq system-type '(dgux hpux usg-unix-v unisoft-unix rtu irix))
 	    "/usr/mail/")
+	   ((memq system-type '(linux))
+	    "/var/spool/mail/")
 	   (t "/usr/spool/mail/")))
 
     (funcall

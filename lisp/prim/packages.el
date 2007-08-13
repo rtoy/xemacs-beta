@@ -112,7 +112,8 @@ is used instead of `load-path'."
               ;; If autocompression mode is on,
               ;; consider all combinations of library suffixes
               ;; and compression suffixes.
-              (if (rassq 'jka-compr-handler file-name-handler-alist)
+              (if (or (rassq 'jka-compr-handler file-name-handler-alist)
+                      (member 'crypt-find-file-hook find-file-hooks))
                   (apply 'nconc
                          (mapcar (lambda (compelt)
                                    (mapcar (lambda (baselt)
@@ -131,6 +132,19 @@ is used instead of `load-path'."
   (if (null (string-match "\\.el\\'" str))
       (concat str ".elc")
     str))
+
+(defun list-autoloads-path ()
+  "List autoloads from precomputed load-path."
+  (let ((path load-path)
+	autoloads)
+    (while path
+      (if (file-exists-p (concat (car path)
+				 "/" autoload-file-name))
+	  (setq autoloads (cons (concat (car path)
+					"/" autoload-file-name)
+				autoloads)))
+      (setq path (cdr path)))
+    autoloads))
 
 (defun list-autoloads ()
   "List autoload files in (what will be) the normal lisp search path.
@@ -169,7 +183,7 @@ lisp/           Contain directories which either have straight lisp code
   ;; Lisp files
   (if (file-directory-p (concat package "/lisp"))
       (progn
-	(setq load-path (cons (concat package "/lisp/") load-path))
+	(setq load-path (cons (concat package "/lisp") load-path))
 	(let ((dirs (directory-files (concat package "/lisp/")
 				     t "^[^-.]" nil 'dirs-only))
 	      dir)

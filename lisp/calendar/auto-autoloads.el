@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'calendar-autoloads))
-    (progn
+(if (featurep 'calendar-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads nil "cal-dst" "calendar/cal-dst.el")
 
@@ -377,4 +376,3 @@ Requires floating point." nil nil)
 ;;;***
 
 (provide 'calendar-autoloads)
-))

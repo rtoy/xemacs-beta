@@ -690,7 +690,7 @@ keymap_submaps_mapper_0 (CONST void *hash_key, void *hash_contents,
   Lisp_Object contents;
   VOID_TO_LISP (contents, hash_contents);
   /* Perform any autoloads, etc */
-  (void) Fkeymapp (contents);
+  Fkeymapp (contents);
 }
 
 static void

@@ -386,7 +386,7 @@ See also dired-no-confirm <V>.")
 
 ;;; File name regular expressions and extensions.
 
-(defvar dired-trivial-filenames "^\\.\\.?$\\|^#"
+(defvar dired-trivial-filenames "\\`\\.\\.?\\'\\|\\`#"
   "*Regexp of files to skip when finding first file of a directory listing.
 A value of nil means move to the subdir line.
 A value of t means move to first file.")
@@ -421,7 +421,7 @@ To make omission mode the default, set `dired-omit-files' to t.
 See also `dired-omit-extensions'.")
 (make-variable-buffer-local 'dired-omit-extensions)
 
-(defvar dired-omit-regexps '("^#" "^\\.")
+(defvar dired-omit-regexps '("\\`#" "\\`\\.")
   "*File names matching these regexp may be omitted (buffer-local).
 This only has effect when the subdirectory is in omission mode.
 To make omission mode the default, set `dired-omit-files' to t.
@@ -429,7 +429,7 @@ This only has effect when `dired-omit-files' is t.
 See also `dired-omit-extensions'.")
 (make-variable-buffer-local 'dired-omit-regexps)
 
-(defvar dired-filename-re-ext "\\..+$"   ; start from the first dot. last dot?
+(defvar dired-filename-re-ext "\\..+\\'"  ; start from the first dot. last dot?
   "*Defines what is the extension of a file name.
 \(match-beginning 0\) for this regexp in the file name without directory will
 be taken to be the start of the extension.")
@@ -2818,7 +2818,8 @@ writeable buffer.  You can use it to recover marks, killed lines or subdirs."
 (defun dired-find-file ()
   "In dired, visit the file or directory named on this line."
   (interactive)
-  (find-file (dired-get-filename)))
+  (let ((find-file-run-dired t))
+    (find-file (dired-get-filename))))
 
 (defun dired-view-file ()
   "In dired, examine a file in view mode, returning to dired when done.
@@ -2837,18 +2838,21 @@ With a prefix, the file is displayed, but the window is not selected."
   (interactive "P")
   (if displayp
       (dired-display-file)
-    (find-file-other-window (dired-get-filename))))
+      (let ((find-file-run-dired t))
+        (find-file-other-window (dired-get-filename)))))
 
 ;; Only for Emacs 19
 (defun dired-find-file-other-frame ()
   "In dired, visit this file or directory in another frame."
   (interactive)
-  (find-file-other-frame (dired-get-filename)))
+  (let ((find-file-run-dired t))
+    (find-file-other-frame (dired-get-filename))))
 
 (defun dired-display-file ()
   "In dired, displays this file or directory in the other window."
   (interactive)
-  (display-buffer (find-file-noselect (dired-get-filename))))
+  (let ((find-file-run-dired t))
+    (display-buffer (find-file-noselect (dired-get-filename)))))
 
 ;; After an idea by wurgler@zippysun.math.uakron.edu (Tom Wurgler).
 (defun dired-do-find-file (&optional arg)
@@ -2879,7 +2883,8 @@ the height of the current window and the variable `window-min-height'."
       ;; The upper window will have SIZE lines.  We select the lower
       ;; (larger) window because we want to split that again.
       (select-window (split-window nil size))
-      (find-file (car file-list))
+      (let ((find-file-run-dired t))
+        (find-file (car file-list)))
       (setq file-list (cdr file-list)))))
 
 (defun dired-create-directory (directory)
@@ -3050,14 +3055,14 @@ See the variable dired-filename-re-ext'."
 (defun dired-file-name-sans-rcs-extension (fn)
   "Returns the file name FN without its RCS extension \",v\"."
   (setq fn (file-name-nondirectory fn))
-  (if (string-match ",v$" fn 1)
+  (if (string-match ",v\\'" fn 1)
       (substring fn 0 (match-beginning 0))
     fn))
 
 (defun dired-file-name-sans-compress-extension (fn)
   "Returns the file name FN without the extension from compress or gzip."
   (setq fn (file-name-nondirectory fn))
-  (if (string-match "\\.\\([zZ]\\|gz\\)$" fn 1)
+  (if (string-match "\\.\\([zZ]\\|gz\\)\\'" fn 1)
       (substring fn (match-beginning 0))
     fn))
 
@@ -4217,7 +4222,7 @@ Type \\[dired-why] to see them again."
 		   "RCS")
 	    ;; skip inserted RCS subdirs
 	    (setq rcs-files
-		  (append (directory-files dir t ",v$") ; *,v and RCS/*,v
+		  (append (directory-files dir t ",v\\'") ; *,v and RCS/*,v
 			  (let ((rcs-dir (expand-file-name "RCS" dir)))
 			    (if (file-directory-p rcs-dir)
 				(mapcar	; working files from ./RCS are in ./
@@ -4226,7 +4231,7 @@ Type \\[dired-why] to see them again."
 				    (expand-file-name x dir)))
 				 (directory-files
 				  (file-name-as-directory rcs-dir)
-				  nil ",v$"))))
+				  nil ",v\\'"))))
 			  rcs-files)))))
      (mapcar (function car) dired-subdir-alist))
     (setq total (length rcs-files))
@@ -5434,7 +5439,7 @@ displayed."
 	(setq rgxp (concat
 		    ".\\("
 		    (mapconcat 'regexp-quote dired-omit-extensions "\\|")
-		    "\\)$")))
+		    "\\)\\'")))
     (if dired-omit-regexps
 	(setq rgxp
 	      (concat

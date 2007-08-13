@@ -26,31 +26,31 @@ Boston, MA 02111-1307, USA.  */
 #define _EmacsShell_h
 
 #ifndef XtNwidthCells
-#define XtNwidthCells (String) "widthCells"
+#define XtNwidthCells "widthCells"
 #endif
 #ifndef XtCWidthCells
-#define XtCWidthCells (String) "WidthCells"
+#define XtCWidthCells "WidthCells"
 #endif
 
 #ifndef XtNheightCells
-#define XtNheightCells (String) "heightCells"
+#define XtNheightCells "heightCells"
 #endif
 #ifndef XtCHeightCells
-#define XtCHeightCells (String) "HeightCells"
+#define XtCHeightCells "HeightCells"
 #endif
 
 #ifndef XtNminWidthCells
-#define XtNminWidthCells (String) "minWidthCells"
+#define XtNminWidthCells "minWidthCells"
 #endif
 #ifndef XtCMinWidthCells
-#define XtCMinWidthCells (String) "MinWidthCells"
+#define XtCMinWidthCells "MinWidthCells"
 #endif
 
 #ifndef XtNminHeightCells
-#define XtNminHeightCells (String) "minHeightCells"
+#define XtNminHeightCells "minHeightCells"
 #endif
 #ifndef XtCMinHeightCells
-#define XtCMinHeightCells (String) "MinHeightCells"
+#define XtCMinHeightCells "MinHeightCells"
 #endif
 
 typedef struct _TopLevelEmacsShellClassRec *TopLevelEmacsShellWidgetClass;

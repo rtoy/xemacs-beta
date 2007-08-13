@@ -221,38 +221,38 @@ DECLARE_LRECORD (buffer, struct buffer);
 
 #define BUFFER_LIVE_P(b) (!NILP ((b)->name))
 extern Lisp_Object Qbuffer_live_p;
-#define CHECK_LIVE_BUFFER(x) 						\
-  do { CHECK_BUFFER (x);						\
-       if (!BUFFER_LIVE_P (XBUFFER (x)))				\
-	 dead_wrong_type_argument (Qbuffer_live_p, (x));		\
+#define CHECK_LIVE_BUFFER(x) 					\
+  do { CHECK_BUFFER (x);					\
+       if (!BUFFER_LIVE_P (XBUFFER (x)))			\
+	 dead_wrong_type_argument (Qbuffer_live_p, (x));	\
      } while (0)
-#define CONCHECK_LIVE_BUFFER(x) 					\
-  do { CONCHECK_BUFFER (x);						\
-       if (!BUFFER_LIVE_P (XBUFFER (x)))				\
-	 x = wrong_type_argument (Qbuffer_live_p, (x));			\
+#define CONCHECK_LIVE_BUFFER(x) 				\
+  do { CONCHECK_BUFFER (x);					\
+       if (!BUFFER_LIVE_P (XBUFFER (x)))			\
+	 x = wrong_type_argument (Qbuffer_live_p, (x));		\
      } while (0)
 
 #define BUFFER_OR_STRING_P(x) (BUFFERP (x) || STRINGP (x))
 
 extern Lisp_Object Qbuffer_or_string_p;
-#define CHECK_BUFFER_OR_STRING(x)					\
-  do { if (!BUFFER_OR_STRING_P (x))					\
-	 dead_wrong_type_argument (Qbuffer_or_string_p, (x));		\
+#define CHECK_BUFFER_OR_STRING(x)				\
+  do { if (!BUFFER_OR_STRING_P (x))				\
+	 dead_wrong_type_argument (Qbuffer_or_string_p, (x));	\
      } while (0)
-#define CONCHECK_BUFFER_OR_STRING(x)					\
-  do { if (!BUFFER_OR_STRING_P (x))					\
-	 x = wrong_type_argument (Qbuffer_or_string_p, (x));		\
+#define CONCHECK_BUFFER_OR_STRING(x)				\
+  do { if (!BUFFER_OR_STRING_P (x))				\
+	 x = wrong_type_argument (Qbuffer_or_string_p, (x));	\
      } while (0)
 
-#define CHECK_LIVE_BUFFER_OR_STRING(x)					\
-  do { CHECK_BUFFER_OR_STRING (x);					\
-       if (BUFFERP (x))							\
-	 CHECK_LIVE_BUFFER (x);						\
+#define CHECK_LIVE_BUFFER_OR_STRING(x)				\
+  do { CHECK_BUFFER_OR_STRING (x);				\
+       if (BUFFERP (x))						\
+	 CHECK_LIVE_BUFFER (x);					\
      } while (0)
-#define CONCHECK_LIVE_BUFFER_OR_STRING(x)				\
-  do { CONCHECK_BUFFER_OR_STRING (x);					\
-       if (BUFFERP (x))							\
-	 CONCHECK_LIVE_BUFFER (x);					\
+#define CONCHECK_LIVE_BUFFER_OR_STRING(x)			\
+  do { CONCHECK_BUFFER_OR_STRING (x);				\
+       if (BUFFERP (x))						\
+	 CONCHECK_LIVE_BUFFER (x);				\
      } while (0)
 
 
@@ -525,30 +525,27 @@ INLINE Emchar charptr_emchar (CONST Bufbyte *ptr);
 INLINE Emchar
 charptr_emchar (CONST Bufbyte *ptr)
 {
-  if (BYTE_ASCII_P (*ptr))
-    return simple_charptr_emchar (ptr);
-  else
-    return non_ascii_charptr_emchar (ptr);
+  return BYTE_ASCII_P (*ptr) ?
+    simple_charptr_emchar (ptr) :
+    non_ascii_charptr_emchar (ptr);
 }
 
 INLINE Bytecount set_charptr_emchar (Bufbyte *ptr, Emchar x);
 INLINE Bytecount
 set_charptr_emchar (Bufbyte *ptr, Emchar x)
 {
-  if (!CHAR_MULTIBYTE_P (x))
-    return simple_set_charptr_emchar (ptr, x);
-  else
-    return non_ascii_set_charptr_emchar (ptr, x);
+  return !CHAR_MULTIBYTE_P (x) ?
+    simple_set_charptr_emchar (ptr, x) :
+    non_ascii_set_charptr_emchar (ptr, x);
 }
 
 INLINE Bytecount charptr_copy_char (CONST Bufbyte *ptr, Bufbyte *ptr2);
 INLINE Bytecount
 charptr_copy_char (CONST Bufbyte *ptr, Bufbyte *ptr2)
 {
-  if (BYTE_ASCII_P (*ptr))
-    return simple_charptr_copy_char (ptr, ptr2);
-  else
-    return non_ascii_charptr_copy_char (ptr, ptr2);
+  return BYTE_ASCII_P (*ptr) ?
+    simple_charptr_copy_char (ptr, ptr2) :
+    non_ascii_charptr_copy_char (ptr, ptr2);
 }
 
 #else /* not MULE */
@@ -575,15 +572,12 @@ INLINE int valid_char_p (Emchar ch);
 INLINE int
 valid_char_p (Emchar ch)
 {
-  if (ch >= 0 && ch < 0400)
-    return 1;
-  else
-    return non_ascii_valid_char_p (ch);
+  return (ch >= 0 && ch <= 255) || non_ascii_valid_char_p (ch);
 }
 
 #else /* not MULE */
 
-#define valid_char_p(ch) ((unsigned int) (ch) < 0400)
+#define valid_char_p(ch) ((unsigned int) (ch) <= 255)
 
 #endif /* not MULE */
 
@@ -607,13 +601,14 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
 
 #endif
 
-#define CHECK_CHAR_COERCE_INT(x)					\
-  do { if (CHARP (x))							\
-         ;								\
-       else if (CHAR_INTP (x))						\
-         x = make_char (XINT (x));					\
-       else								\
-         x = wrong_type_argument (Qcharacterp, x); } while (0)
+#define CHECK_CHAR_COERCE_INT(x) do {		\
+  if (CHARP (x))				\
+     ;						\
+  else if (CHAR_INTP (x))			\
+    x = make_char (XINT (x));			\
+  else						\
+    x = wrong_type_argument (Qcharacterp, x);	\
+  } while (0)
 
 #ifdef MULE
 # define MAX_EMCHAR_LEN 4
@@ -662,8 +657,8 @@ INLINE Bytind
 BI_BUF_PTR_BYTE_POS (struct buffer *buf, Bufbyte *ptr)
 {
   return ((ptr) - (buf)->text->beg + 1
-           - ((ptr - (buf)->text->beg + 1) > (buf)->text->gpt
-          ? (buf)->text->gap_size : 0));
+	  - ((ptr - (buf)->text->beg + 1) > (buf)->text->gpt
+	     ? (buf)->text->gap_size : 0));
 }
 
 #define BUF_PTR_BYTE_POS(buf, ptr) \
@@ -703,22 +698,16 @@ INLINE int valid_memind_p (struct buffer *buf, Memind x);
 INLINE int
 valid_memind_p (struct buffer *buf, Memind x)
 {
-  if (x >= 1 && x <= (Memind) (buf)->text->gpt)
-    return 1;
-  if (x > (Memind) ((buf)->text->gpt + (buf)->text->gap_size)
-      && x <= (Memind) ((buf)->text->z + (buf)->text->gap_size))
-    return 1;
-  return 0;
+  return ((x >= 1 && x <= (Memind) (buf)->text->gpt) ||
+	  (x  > (Memind) ((buf)->text->gpt + (buf)->text->gap_size) &&
+	   x <= (Memind) ((buf)->text->z   + (buf)->text->gap_size)));
 }
 
 INLINE Memind bytind_to_memind (struct buffer *buf, Bytind x);
 INLINE Memind
 bytind_to_memind (struct buffer *buf, Bytind x)
 {
-  if (x > (buf)->text->gpt)
-    return (Memind) (x + (buf)->text->gap_size);
-  else
-    return (Memind) (x);
+  return (Memind) ((x > (buf)->text->gpt) ? (x + (buf)->text->gap_size) : x);
 }
 
 #ifdef ERROR_CHECK_BUFPOS
@@ -728,10 +717,9 @@ INLINE Bytind
 memind_to_bytind (struct buffer *buf, Memind x)
 {
   assert (valid_memind_p (buf, x));
-  if (x > (Memind) (buf)->text->gpt)
-    return (Bytind) (x - (buf)->text->gap_size);
-  else
-    return (Bytind) (x);
+  return (Bytind) ((x > (Memind) (buf)->text->gpt) ?
+		   x - (buf)->text->gap_size :
+		   x);
 }
 
 #else
@@ -740,10 +728,9 @@ INLINE Bytind memind_to_bytind (struct buffer *buf, Memind x);
 INLINE Bytind
 memind_to_bytind (struct buffer *buf, Memind x)
 {
-  if (x > (Memind) (buf)->text->gpt)
-    return (Bytind) (x - (buf)->text->gap_size);
-  else
-    return (Bytind) (x);
+  return (Bytind) ((x > (Memind) (buf)->text->gpt) ?
+		   x - (buf)->text->gap_size :
+		   x);
 }
 
 #endif
@@ -1097,8 +1084,6 @@ Bufpos bytind_to_bufpos (struct buffer *buf, Bytind x);
   charptr_copy_char (BI_BUF_BYTE_ADDRESS (buf, pos), str)
 #define BUF_CHARPTR_COPY_CHAR(buf, pos, str) \
   BI_BUF_CHARPTR_COPY_CHAR (buf, bufpos_to_bytind (buf, pos), str)
-
-
 
 
 
@@ -1505,7 +1490,7 @@ do						\
    does too much stuff, such as moving out of invisible extents. */
 #define TEMP_SET_PT(position) (temp_set_point ((position), current_buffer))
 #define SET_BUF_PT(buf, value) ((buf)->pt = (value))
-#endif
+#endif /* FSFmacs */
 
 /*----------------------------------------------------------------------*/
 /*                      Miscellaneous buffer values                     */
@@ -1515,8 +1500,9 @@ do						\
 #define BUF_SIZE(buf) (BUF_Z (buf) - BUF_BEG (buf))
 
 /* Is this buffer narrowed? */
-#define BUF_NARROWED(buf) ((BI_BUF_BEGV (buf) != BI_BUF_BEG (buf)) \
-			   || (BI_BUF_ZV (buf) != BI_BUF_Z (buf)))
+#define BUF_NARROWED(buf) \
+   ((BI_BUF_BEGV (buf) != BI_BUF_BEG (buf)) || \
+    (BI_BUF_ZV   (buf) != BI_BUF_Z   (buf)))
 
 /* Modification count.  */
 #define BUF_MODIFF(buf) ((buf)->text->modiff)
@@ -1783,7 +1769,7 @@ int map_over_sharing_buffers (struct buffer *buf,
   (MIRROR_TRT_TABLE_AS_STRING (table)[ch1] = (Bufbyte) (ch2))
 #endif
 
-# define IN_TRT_TABLE_DOMAIN(c) (((unsigned EMACS_INT) (c)) < 0400)
+# define IN_TRT_TABLE_DOMAIN(c) (((unsigned EMACS_INT) (c)) <= 255)
 
 #ifdef MULE
 #define MIRROR_DOWNCASE_TABLE_AS_STRING(buf) \
@@ -1809,10 +1795,7 @@ INLINE Emchar TRT_TABLE_OF (Lisp_Object trt, Emchar c);
 INLINE Emchar
 TRT_TABLE_OF (Lisp_Object trt, Emchar c)
 {
-  if (IN_TRT_TABLE_DOMAIN (c))
-    return TRT_TABLE_CHAR_1 (trt, c);
-  else
-    return c;
+  return IN_TRT_TABLE_DOMAIN (c) ? TRT_TABLE_CHAR_1 (trt, c) : c;
 }
 
 /* Macros used below. */
@@ -1825,7 +1808,7 @@ INLINE int UPPERCASEP (struct buffer *buf, Emchar ch);
 INLINE int
 UPPERCASEP (struct buffer *buf, Emchar ch)
 {
-  return (DOWNCASE_TABLE_OF (buf, ch) != ch);
+  return DOWNCASE_TABLE_OF (buf, ch) != ch;
 }
 
 /* 1 if CH is lower case.  */
@@ -1834,7 +1817,7 @@ INLINE int LOWERCASEP (struct buffer *buf, Emchar ch);
 INLINE int
 LOWERCASEP (struct buffer *buf, Emchar ch)
 {
-  return (UPCASE_TABLE_OF (buf, ch) != ch &&
+  return (UPCASE_TABLE_OF   (buf, ch) != ch &&
 	  DOWNCASE_TABLE_OF (buf, ch) == ch);
 }
 
@@ -1844,7 +1827,7 @@ INLINE int NOCASEP (struct buffer *buf, Emchar ch);
 INLINE int
 NOCASEP (struct buffer *buf, Emchar ch)
 {
-  return (UPCASE_TABLE_OF (buf, ch) == ch);
+  return UPCASE_TABLE_OF (buf, ch) == ch;
 }
 
 /* Upcase a character, or make no change if that cannot be done.  */
@@ -1853,8 +1836,7 @@ INLINE Emchar UPCASE (struct buffer *buf, Emchar ch);
 INLINE Emchar
 UPCASE (struct buffer *buf, Emchar ch)
 {
-  return (DOWNCASE_TABLE_OF (buf, ch) == ch) ?
-    UPCASE_TABLE_OF (buf, ch) : ch;
+  return (DOWNCASE_TABLE_OF (buf, ch) == ch) ? UPCASE_TABLE_OF (buf, ch) : ch;
 }
 
 /* Upcase a character known to be not upper case.  */

@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'emulators-autoloads))
-    (progn
+(if (featurep 'emulators-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (edt-emulation-on) "edt" "emulators/edt.el")
 
@@ -151,4 +150,3 @@ The key bindings are:
 ;;;***
 
 (provide 'emulators-autoloads)
-))

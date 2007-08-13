@@ -1383,7 +1383,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* Step 3: read file parameters with jpeg_read_header() */
 
-  (void) jpeg_read_header (&cinfo, TRUE);
+  jpeg_read_header (&cinfo, TRUE);
   /* We can ignore the return value from jpeg_read_header since
    *   (a) suspension is not possible with the stdio data source, and
    *   (b) we passed TRUE to reject a tables-only JPEG file as an error.
@@ -1418,7 +1418,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* Step 5: Start decompressor */
 
-  (void) jpeg_start_decompress (&cinfo);
+  jpeg_start_decompress (&cinfo);
   /* We can ignore the return value since suspension is not possible
    * with the stdio data source.
    */
@@ -1544,7 +1544,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* Step 7: Finish decompression */
 
-  (void) jpeg_finish_decompress (&cinfo);
+  jpeg_finish_decompress (&cinfo);
   /* We can ignore the return value since suspension is not possible
    * with the stdio data source.
    */

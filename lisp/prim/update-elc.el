@@ -47,6 +47,9 @@
 (defvar processed nil)
 (defvar update-elc-files-to-compile nil)
 
+;; BOGUS
+(defvar find-file-hooks nil)
+
 ;(setq update-elc-files-to-compile
 ;      (delq nil
 ;	    (mapcar (function

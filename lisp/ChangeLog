@@ -1,3 +1,99 @@
+Fri Aug 15 17:26:05 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/Release 5.16
+
+Fri Aug 15 18:39:10 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-styles.el (c-style-alist):
+	"python" style requires c-comment-continuation-stars
+	to be "".
+
+	* cc-mode/cc-engine.el (c-end-of-statement-1):
+	Eliminate false hits on important characters
+	inside literals (strings, comments).
+
+Tue Aug 12 21:47:18 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-cmds.el (c-comment-line-break-function):
+	In this function, and the defadvice,
+	call indent-new-comment-line if not in a comment.
+
+	* cc-mode/cc-vars.el (c-buffer-is-cc-mode): Definition moved to
+	cc-mode.el
+
+	* cc-mode/cc-mode.el (c-buffer-is-cc-mode):
+	Definition moved here from cc-vars.el.  Also,
+	put permanent-local property on variable so it's value won't get
+	killed by kill-all-local-variables.  This makes it easier for non-CC
+	Mode derived modes to be initialized correctly.
+
+	* cc-mode/cc-cmds.el (c-electric-brace):
+	In preserve-p test, don't test char-before when at
+	bobp.  Open brace at bobp is illegal in most modes, but not awk-mode,
+	which depends on CC Mode.
+
+Mon Aug 11 15:37:04 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-mode.el (c++-mode, java-mode, objc-mode, idl-mode):
+	Remove obsolete variable c-double-slash-is-comments-p.
+
+	* cc-mode/cc-langs.el (c-double-slash-is-comments-p): Remove
+	obsolete variable.
+
+	* cc-mode/cc-cmds.el (c-fill-paragraph):
+	Remove conditional on obsolete variable
+	c-double-slash-is-comments-p.
+
+	* cc-mode/cc-styles.el (c-style-alist):
+	Conform comment settings to RMS's preferences.
+
+Thu Aug  7 19:21:32 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-set-offset): Added autoload cookie.
+
+1997-08-15  SL Baur  <steve@altair.xemacs.org>
+
+	* cl/cl-macs.el (cl-make-type-test): De-ebolify type test for
+	'character.
+
+1997-08-12  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/man.el (Manual-mouseify-xrefs): Skip the top line of
+ 	manual entries so to not get the all-caps pseudo xrefs in the
+ 	heading in our list of manuals.
+	(Manual-buffers-have-stars): new customize option.
+	(manual-entry): Fix to utilize the new variable, and to not put
+ 	stars around manual names put in the minibuffer history.
+
+1997-08-12  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/info.el (Info-directory-list): reverse the
+ 	`Info-default-directory-list' when using it to initialize the
+ 	`Info-directory-list'.
+	(Info-insert-dir): make it so the insertion of a locadir file at a
+ 	"^[ \t]*Local.*\n[ \t]*[-=]+" line works correctly.
+
+Mon Aug 11 17:35:35 1997  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/loaddefs.el (((dir load-path))): Ignore all errors.
+
+	* utils/autoload.el (fixup-autoload-buffer): Wrapping autoloads
+	files with a guard produces invalid bytecode.
+
+	* prim/make-docfile.el (package-path): Look in the package path
+	for autoloads files.
+
+	* prim/packages.el (packages-find-packages-1): Don't append
+	trailing "/" when adding a top-level Lisp directory.
+	(list-autoloads-path): New function.  Use existing precomputed
+	load-path instead of doing the old broken computation.
+
+1997-08-11  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/startup.el (command-line-1): Allow setting of
+	`initial-scratch-message' to nil to turn it off.
+	Suggested by Gary D. Foster <Gary.Foster@Corp.Sun.COM>
+
 1997-08-09  Karl M. Hegbloom  <karlheg@inetarena.com>
 
 	* packages/info.el: (info::toolbar) swap next and prev buttons to

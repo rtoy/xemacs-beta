@@ -279,6 +279,8 @@ sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
 libdir='${{exec_prefix}}/lib'
+dnl The following gives NONE/lib/xemacs/packages as the first package
+dnl package_path=${prefix}/lib/xemacs/packages:~/.xemacs
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 infodir='${prefix}/info'
@@ -3435,6 +3437,7 @@ Configured for \`$canonical'.
 
   Where should the build process find the source code?    $srcdir
   What installation prefix should install use?		  $prefix
+  Where should XEmacs look for packages?		  $package_path
   What operating system and machine description files should XEmacs use?
         \`$opsysfile' and \`$machfile'
   What compiler should XEmacs be built with?              $CC $CFLAGS

@@ -863,6 +863,25 @@ Calls the internal function cde-start-drag-internal to do the actual work."
 	       (buffer-substring-no-properties begin end))
     (error "CDE functionality not compiled in.")))
 
+(defun offix-start-drag (event data &optional type)
+  "Implements the OffiX drag operation.
+Calls the internal function offix-start-drag-internal to do the actual work.
+If type is not given, DndText is assumed."
+  (interactive "esi")
+  (if (featurep 'offix)
+      (funcall (intern "offix-start-drag-internal") event data type)
+    (error "OffiX functionality not compiled in.")))
+
+(defun offix-start-drag-region (event begin end)
+  "Implements the OffiX drag operation for a region.
+Calls the internal function offix-start-drag-internal to do the actual work.
+This always assumes DndText as type."
+  (interactive "_er")
+  (if (featurep 'offix)
+      (funcall (intern "offix-start-drag-internal")
+	       event (buffer-substring-no-properties begin end))
+    (error "OffiX functionality not compiled in.")))
+
 
 
 ;;; Application-specific frame-management

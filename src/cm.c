@@ -396,7 +396,7 @@ cmgoto (struct frame *f, int row, int col)
 #endif
     }
 
-  (void) calccost (f, FRAME_CURSOR_Y (f), FRAME_CURSOR_X (f), row, col, 1);
+  calccost (f, FRAME_CURSOR_Y (f), FRAME_CURSOR_X (f), row, col, 1);
   FRAME_CURSOR_Y (f) = row;
   FRAME_CURSOR_X (f) = col;
 #endif

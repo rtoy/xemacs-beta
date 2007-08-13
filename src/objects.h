@@ -179,7 +179,7 @@ struct Lisp_Font_Instance
   unsigned short descent;
   unsigned short width;
   unsigned short height;
-  char proportional_p;
+  int proportional_p;
 
   /* console-type-specific data */
   void *data;

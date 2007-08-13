@@ -115,7 +115,7 @@ typedef struct position_redisplay_data_type
   face_index last_findex;   /* The face index of the previous character.
 			       Needed to ensure the validity of the
 			       last_charset optimization. */
-  
+
   int last_char_width;	/* The width of the previous character. */
   int font_is_bogus;	/* If true, it means we couldn't instantiate
 			   the font for this charset, so we substitute
@@ -195,7 +195,7 @@ enum prop_type
 struct prop_block
 {
   enum prop_type type;
-  
+
   union data
     {
       struct
@@ -203,14 +203,14 @@ struct prop_block
 	  Bufbyte *str;
 	  Bytecount len; /* length of the string. */
 	} p_string;
-    
+
       struct
 	{
 	  Emchar ch;
 	  Bytind bi_cursor_bufpos; /* NOTE: is in Bytinds */
 	  unsigned int cursor_type :3;
 	} p_char;
-    
+
       struct
 	{
 	  int width;
@@ -394,12 +394,12 @@ int faces_changed;
 /* Nonzero means some frames have been marked as garbaged */
 int frame_changed;
 
-/* This variable is 1 if the icon has to be updated. 
+/* This variable is 1 if the icon has to be updated.
  It is set to 1 when `frame-icon-glyph' changes. */
 int icon_changed;
 int icon_changed_set;
 
-/* This variable is 1 if the menubar widget has to be updated. 
+/* This variable is 1 if the menubar widget has to be updated.
  It is set to 1 by set-menubar-dirty-flag and cleared when the widget
  has been indapted. */
 /* indapted???? */
@@ -474,7 +474,7 @@ Lisp_Object Qredisplay_end_trigger_functions, Vredisplay_end_trigger_functions;
    Think about this for 19.14. */
 Lisp_Object Vpre_redisplay_hook, Vpost_redisplay_hook;
 Lisp_Object Qpre_redisplay_hook, Qpost_redisplay_hook;
-#endif
+#endif /* INHIBIT_REDISPLAY_HOOKS */
 
 int last_display_warning_tick, display_warning_tick;
 Lisp_Object Qdisplay_warning_buffer;
@@ -519,7 +519,7 @@ redisplay_text_width_string (struct window *w, int findex,
   if (!rtw_emchar_dynarr)
     rtw_emchar_dynarr = Dynarr_new (Emchar);
   Dynarr_reset (rtw_emchar_dynarr);
-  
+
   fixup_internal_substring (nonreloc, reloc, offset, &len);
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
@@ -863,7 +863,7 @@ add_emchar_rune (pos_data *data)
 	{
 	  /* OK, we need to do things the hard way. */
 	  struct window *w = XWINDOW (data->window);
-	  struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, data->findex);  
+	  struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, data->findex);
 	  Lisp_Object font_instance =
 	    ensure_face_cachel_contains_charset (cachel, data->window,
 						 charset);
@@ -981,7 +981,7 @@ add_bufbyte_string_runes (pos_data *data, Bufbyte *c_string,
      ctl-arrow checking), etc. that create_text_block() does.
      The functionality to do this in that routine needs to be
      modularized. */
-     
+
   for (pos = c_string; pos < end;)
     {
       data->ch = charptr_emchar (pos);
@@ -1049,7 +1049,7 @@ add_blank_rune (pos_data *data, struct window *w, int char_tab_width)
 	  else
 	    data->blank_width -= spcwid;
 	}
-	  
+
       data->start_col = 0;
       retval = add_hscroll_rune (data);
 
@@ -1488,7 +1488,7 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
     }
 
  oops_no_more_space:
-  
+
   data->bi_cursor_bufpos = bi_old_cursor_bufpos;
   data->cursor_type = old_cursor_type;
   if (elt < Dynarr_length (*prop))
@@ -1869,7 +1869,7 @@ create_text_block (struct window *w, struct display_line *dl,
 
   Lisp_Object synch_minibuffers_value =
     symbol_value_in_buffer (Qsynchronize_minibuffers, w->buffer);
-  
+
   dl->used_prop_data = 0;
   dl->num_chars = 0;
 
@@ -2080,7 +2080,7 @@ create_text_block (struct window *w, struct display_line *dl,
 	  else if (data.bi_bufpos < BI_BUF_BEGV (b))
 	    /* #### urk urk urk! Aborts are not very fun! Fix this please! */
 	    data.bi_bufpos = BI_BUF_BEGV (b);
-	  else  
+	  else
 	    INC_BYTIND (b, data.bi_bufpos);
 	}
 
@@ -2437,7 +2437,7 @@ done:
                  appear unless eob is immediately preceded by a
                  newline.  In that case the cursor should actually
                  appear on the next line. */
-	      if (data.cursor_type == CURSOR_ON 
+	      if (data.cursor_type == CURSOR_ON
 		  && data.bi_cursor_bufpos >= data.bi_bufpos
 		  && (data.bi_cursor_bufpos < bi_pos ||
 		      (bi_pos == BI_BUF_ZV (b)
@@ -2488,7 +2488,7 @@ done:
       data.max_pixpos += data.blank_width;
       add_emchar_rune (&data);
       data.max_pixpos -= data.blank_width;
-      
+
       /* #### urk!  Chuck, this shit is bad news.  Going around
 	 manipulating invalid positions is guaranteed to result in
 	 trouble sooner or later. */
@@ -2639,7 +2639,7 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
   pos_data data;
-  
+
   /* If Voverlay_arrow_string isn't valid then just fail silently. */
   if (!STRINGP (Voverlay_arrow_string) && !GLYPHP (Voverlay_arrow_string))
     return 0;
@@ -3055,8 +3055,8 @@ create_left_glyph_block (struct window *w, struct display_line *dl,
       elt++;
     }
 
-  /* Now that we now where everything goes, we add the glyphs as runes
-     to the appropriate display blocks. */
+  /* Now that we know where everything goes, we add the glyphs as
+     runes to the appropriate display blocks. */
   if (out_cnt || in_out_cnt || white_out_cnt)
     {
       odb = get_display_block_from_line (dl, LEFT_OUTSIDE_MARGIN);
@@ -3763,7 +3763,7 @@ generate_fstring_runes (struct window *w, pos_data *data, Charcount pos,
      -- Non-printable characters should be converted into something
         appropriate (e.g. ^F) instead of blindly being printed anyway.
    */
-     
+
 tail_recurse:
   if (depth > 10)
     goto invalid;
@@ -3891,8 +3891,8 @@ tail_recurse:
           /* Give up right away for nil or t.  */
           else if (!EQ (tem, elt))
 	    {
-	      elt = tem; 
-	      goto tail_recurse; 
+	      elt = tem;
+	      goto tail_recurse;
 	    }
         }
     }
@@ -3924,7 +3924,7 @@ tail_recurse:
             {
               if (!NILP (tem))
                 {
-                  elt = XCAR (elt); 
+                  elt = XCAR (elt);
                   goto tail_recurse;
 		}
             }
@@ -4013,7 +4013,7 @@ tail_recurse:
 		     all the charsets */
 		  font_inst = WINDOW_FACE_CACHEL_FONT (w, new_findex,
 						       Vcharset_ascii);
-	  
+
 		  data->dl->ascent = max (data->dl->ascent,
 					  XFONT_INSTANCE (font_inst)->ascent);
 		  data->dl->descent = max (data->dl->descent,
@@ -4022,7 +4022,7 @@ tail_recurse:
 		}
 	      else
 		new_findex = old_findex;
-	  
+
 	      data->findex = new_findex;
 	      pos = generate_fstring_runes (w, data, pos, pos, max_pos,
 					    XCDR (elt), depth - 1,
@@ -5361,12 +5361,12 @@ redisplay_frame (struct frame *f, int preemption_check)
      caused by an Expose event generated by the visibility change
      being handled. */
   update_frame_menubars (f);
-#endif
+#endif /* HAVE_MENUBARS */
 
 #ifdef HAVE_TOOLBARS
   /* Update the toolbars. */
   update_frame_toolbars (f);
-#endif
+#endif /* HAVE_TOOLBARS */
 
   hold_frame_size_changes ();
 
@@ -5471,7 +5471,7 @@ redisplay_device (struct device *d)
 
   /* Always do the selected frame first. */
   frame = DEVICE_SELECTED_FRAME (d);
-  
+
   f = XFRAME (frame);
 
   if (f->icon_changed || f->windows_changed)
@@ -5558,7 +5558,7 @@ restore_profiling_redisplay_flag (Lisp_Object val)
   profiling_redisplay_flag = XINT (val);
   return Qnil;
 }
-#endif
+#endif /* WINDOWSNT */
 
 /* Ensure that all windows on all frames on all devices are displaying
    the current contents of their respective buffers. */
@@ -5577,7 +5577,7 @@ redisplay_without_hooks (void)
 			     make_int (profiling_redisplay_flag));
       profiling_redisplay_flag = 1;
     }
-#endif
+#endif /* WINDOWSNT */
 
   if (asynch_device_change_pending)
     handle_asynch_device_change ();
@@ -5666,14 +5666,14 @@ redisplay (void)
 #ifndef INHIBIT_REDISPLAY_HOOKS
   run_hook_trapping_errors ("Error in pre-redisplay-hook",
 			    Qpre_redisplay_hook);
-#endif
+#endif /* INHIBIT_REDISPLAY_HOOKS */
 
   redisplay_without_hooks ();
 
 #ifndef INHIBIT_REDISPLAY_HOOKS
   run_hook_trapping_errors ("Error in post-redisplay-hook",
 			    Qpost_redisplay_hook);
-#endif
+#endif /* INHIBIT_REDISPLAY_HOOKS */
 }
 
 /* Inefficiently determine the line number of the line point is on and
@@ -5770,7 +5770,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
           }
       }
       break;
-#endif
+#endif /* MULE */
 
       /* print the current line number */
     case 'l':
@@ -5793,7 +5793,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	    sprintf (str, "-%d", f->order_count);
 	  }
       }
-#endif
+#endif /* HAVE_TTY */
       break;
 
       /* print Narrow if appropriate */
@@ -5905,7 +5905,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
          botpos may be negative. */
       if (botpos < toppos)
 	botpos = toppos;
-      
+
       if (botpos >= BUF_ZV (b))
 	{
 	  if (toppos <= BUF_BEGV (b))
@@ -6717,7 +6717,7 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
 	  if (-pixheight > point_line_height)
 	    /* We can't make the target line cover pixpos, so put it
 	       above pixpos.  That way it will at least be visible. */
-	    return prev_pos;  
+	    return prev_pos;
 	  else
 	    return cur_pos;
 	}
@@ -6786,8 +6786,8 @@ start_with_point_on_display_line (struct window *w, Bufpos point, int line)
 
       /* If scroll_on_clipped_lines is false, the last "visible" line of
  	 the window covers the pixel at WINDOW_TEXT_BOTTOM (w) - 1.
- 	 If s_o_c_l is true, then we don't want to count a clipped 
- 	 line, so back up from the bottom by the height of the line 
+ 	 If s_o_c_l is true, then we don't want to count a clipped
+ 	 line, so back up from the bottom by the height of the line
  	 containing point. */
       if (scroll_on_clipped_lines)
 	pixpos -= Dynarr_atp (w->line_start_cache, cur_elt)->height;
@@ -7475,7 +7475,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
       *w = 0;
       UPDATE_CACHE_RETURN;
     }
-#endif
+#endif /* HAVE_TOOLBARS */
 
   /* We still have to return the window the pointer is next to and its
      relative y position even if it is outside the x boundary. */
@@ -7576,7 +7576,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 		      else
 			*closest =
 			  Dynarr_atp (db->runes,
-				      Dynarr_length (db->runes) - 2)->bufpos;
+				      Dynarr_length (db->runes) - 1)->bufpos;
 		    }
 
 		  if (dl->modeline)
@@ -7668,7 +7668,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 			  else
 			    *closest = dl->end_bufpos + dl->offset;
 			  really_over_nothing = 1;
-			}			  
+			}
 		    }
 		  else
 		    {
@@ -8013,28 +8013,21 @@ text_cursor_visible_p_changed (Lisp_Object specifier, struct window *w,
 static int
 compute_rune_dynarr_usage (rune_dynarr *dyn, struct overhead_stats *ovstats)
 {
-  int total = 0;
-
-  if (dyn)
-    total += Dynarr_memory_usage (dyn, ovstats);
-
-  return total;
+  return dyn ? Dynarr_memory_usage (dyn, ovstats) : 0;
 }
 
 static int
 compute_display_block_dynarr_usage (display_block_dynarr *dyn,
 				    struct overhead_stats *ovstats)
 {
-  int total = 0;
+  int total, i;
 
-  if (dyn)
-    {
-      int i;
+  if (!dyn)
+    return 0;
 
-      total += Dynarr_memory_usage (dyn, ovstats);
-      for (i = 0; i < Dynarr_largest (dyn); i++)
-	total += compute_rune_dynarr_usage (Dynarr_at (dyn, i).runes, ovstats);
-    }
+  total = Dynarr_memory_usage (dyn, ovstats);
+  for (i = 0; i < Dynarr_largest (dyn); i++)
+    total += compute_rune_dynarr_usage (Dynarr_at (dyn, i).runes, ovstats);
 
   return total;
 }
@@ -8043,37 +8036,25 @@ static int
 compute_glyph_block_dynarr_usage (glyph_block_dynarr *dyn,
 				  struct overhead_stats *ovstats)
 {
-  int total = 0;
-
-  if (dyn)
-    total += Dynarr_memory_usage (dyn, ovstats);
-
-  return total;
+  return dyn ? Dynarr_memory_usage (dyn, ovstats) : 0;
 }
 
 int
 compute_display_line_dynarr_usage (display_line_dynarr *dyn,
 				   struct overhead_stats *ovstats)
 {
-  int total = 0;
+  int total, i;
 
-  if (dyn)
+  if (!dyn)
+    return 0;
+
+  total = Dynarr_memory_usage (dyn, ovstats);
+  for (i = 0; i < Dynarr_largest (dyn); i++)
     {
-      int i;
-
-      total += Dynarr_memory_usage (dyn, ovstats);
-      for (i = 0; i < Dynarr_largest (dyn); i++)
-	{
-	  total +=
-	    compute_display_block_dynarr_usage (Dynarr_at (dyn, i).
-						display_blocks, ovstats);
-	  total +=
-	    compute_glyph_block_dynarr_usage (Dynarr_at (dyn, i).
-					      left_glyphs, ovstats);
-	  total +=
-	    compute_glyph_block_dynarr_usage (Dynarr_at (dyn, i).
-					      right_glyphs, ovstats);
-	}
+      struct display_line *dl = &Dynarr_at (dyn, i);
+      total += compute_display_block_dynarr_usage(dl->display_blocks, ovstats);
+      total += compute_glyph_block_dynarr_usage  (dl->left_glyphs,    ovstats);
+      total += compute_glyph_block_dynarr_usage  (dl->right_glyphs,   ovstats);
     }
 
   return total;
@@ -8083,12 +8064,7 @@ int
 compute_line_start_cache_dynarr_usage (line_start_cache_dynarr *dyn,
 				       struct overhead_stats *ovstats)
 {
-  int total = 0;
-
-  if (dyn)
-    total += Dynarr_memory_usage (dyn, ovstats);
-
-  return total;
+  return dyn ? Dynarr_memory_usage (dyn, ovstats) : 0;
 }
 
 #endif /* MEMORY_USAGE_STATS */
@@ -8139,7 +8115,7 @@ init_redisplay (void)
       Vinitial_window_system = Qx;
       return;
     }
-#endif
+#endif /* HAVE_X_WINDOWS */
 
   /* If no window system has been specified, try to use the terminal.  */
   if (!isatty (0))
@@ -8165,7 +8141,7 @@ syms_of_redisplay (void)
 #ifndef INHIBIT_REDISPLAY_HOOKS
   defsymbol (&Qpre_redisplay_hook, "pre-redisplay-hook");
   defsymbol (&Qpost_redisplay_hook, "post-redisplay-hook");
-#endif
+#endif /* INHIBIT_REDISPLAY_HOOKS */
   defsymbol (&Qdisplay_warning_buffer, "display-warning-buffer");
   defsymbol (&Qbar_cursor, "bar-cursor");
   defsymbol (&Qwindow_scroll_functions, "window-scroll-functions");
@@ -8189,7 +8165,7 @@ vars_of_redisplay (void)
   staticpro (&last_arrow_string);
   last_arrow_position = Qnil;
   last_arrow_string = Qnil;
-#endif
+#endif /* 0 */
 
   updating_line_start_cache = 0;
 
@@ -8305,7 +8281,7 @@ Function or functions to run after every redisplay.
 Functions on this hook must be careful to avoid signalling errors!
 */ );
   Vpost_redisplay_hook = Qnil;
-#endif
+#endif /* INHIBIT_REDISPLAY_HOOKS */
 
   DEFVAR_INT ("display-warning-tick", &display_warning_tick /*
 Bump this to tell the C code to call `display-warning-buffer'
@@ -8363,9 +8339,7 @@ specifier_vars_of_redisplay (void)
 This is a specifier; use `set-specifier' to change it.
 */ );
   Vleft_margin_width = Fmake_specifier (Qnatnum);
-  set_specifier_fallback
-    (Vleft_margin_width,
-     list1 (Fcons (Qnil, Qzero)));
+  set_specifier_fallback (Vleft_margin_width, list1 (Fcons (Qnil, Qzero)));
   set_specifier_caching (Vleft_margin_width,
 			 slot_offset (struct window, left_margin_width),
 			 some_window_value_changed,
@@ -8377,9 +8351,7 @@ This is a specifier; use `set-specifier' to change it.
 This is a specifier; use `set-specifier' to change it.
 */ );
   Vright_margin_width = Fmake_specifier (Qnatnum);
-  set_specifier_fallback
-    (Vright_margin_width,
-     list1 (Fcons (Qnil, Qzero)));
+  set_specifier_fallback (Vright_margin_width, list1 (Fcons (Qnil, Qzero)));
   set_specifier_caching (Vright_margin_width,
 			 slot_offset (struct window, right_margin_width),
 			 some_window_value_changed,
@@ -8391,11 +8363,9 @@ This is a specifier; use `set-specifier' to change it.
 This is a specifier; use `set-specifier' to change it.
 */ );
   Vminimum_line_ascent = Fmake_specifier (Qnatnum);
-  set_specifier_fallback (Vminimum_line_ascent,
-			  list1 (Fcons (Qnil, Qzero)));
+  set_specifier_fallback (Vminimum_line_ascent, list1 (Fcons (Qnil, Qzero)));
   set_specifier_caching (Vminimum_line_ascent,
-			 slot_offset (struct window,
-				      minimum_line_ascent),
+			 slot_offset (struct window, minimum_line_ascent),
 			 some_window_value_changed,
 			 0, 0);
 
@@ -8404,11 +8374,9 @@ This is a specifier; use `set-specifier' to change it.
 This is a specifier; use `set-specifier' to change it.
 */ );
   Vminimum_line_descent = Fmake_specifier (Qnatnum);
-  set_specifier_fallback (Vminimum_line_descent,
-			  list1 (Fcons (Qnil, Qzero)));
+  set_specifier_fallback (Vminimum_line_descent, list1 (Fcons (Qnil, Qzero)));
   set_specifier_caching (Vminimum_line_descent,
-			 slot_offset (struct window,
-				      minimum_line_descent),
+			 slot_offset (struct window, minimum_line_descent),
 			 some_window_value_changed,
 			 0, 0);
 
@@ -8418,11 +8386,9 @@ displaying 'whitespace or 'inside-margin glyphs.
 This is a specifier; use `set-specifier' to change it.
 */ );
   Vuse_left_overflow = Fmake_specifier (Qboolean);
-  set_specifier_fallback (Vuse_left_overflow,
-			  list1 (Fcons (Qnil, Qnil)));
+  set_specifier_fallback (Vuse_left_overflow, list1 (Fcons (Qnil, Qnil)));
   set_specifier_caching (Vuse_left_overflow,
-			 slot_offset (struct window,
-				      use_left_overflow),
+			 slot_offset (struct window, use_left_overflow),
 			 some_window_value_changed,
 			 0, 0);
 
@@ -8432,11 +8398,9 @@ displaying 'whitespace or 'inside-margin glyphs.
 This is a specifier; use `set-specifier' to change it.
 */ );
   Vuse_right_overflow = Fmake_specifier (Qboolean);
-  set_specifier_fallback (Vuse_right_overflow,
-			  list1 (Fcons (Qnil, Qnil)));
+  set_specifier_fallback (Vuse_right_overflow, list1 (Fcons (Qnil, Qnil)));
   set_specifier_caching (Vuse_right_overflow,
-			 slot_offset (struct window,
-				      use_right_overflow),
+			 slot_offset (struct window, use_right_overflow),
 			 some_window_value_changed,
 			 0, 0);
 
@@ -8445,11 +8409,9 @@ This is a specifier; use `set-specifier' to change it.
 This is a specifier; use `set-specifier' to change it.
 */ );
   Vtext_cursor_visible_p = Fmake_specifier (Qboolean);
-  set_specifier_fallback (Vtext_cursor_visible_p,
-			  list1 (Fcons (Qnil, Qt)));
+  set_specifier_fallback (Vtext_cursor_visible_p, list1 (Fcons (Qnil, Qt)));
   set_specifier_caching (Vtext_cursor_visible_p,
-			 slot_offset (struct window,
-				      text_cursor_visible_p),
+			 slot_offset (struct window, text_cursor_visible_p),
 			 text_cursor_visible_p_changed,
 			 0, 0);
 

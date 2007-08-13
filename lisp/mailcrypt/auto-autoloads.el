@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'mailcrypt-autoloads))
-    (progn
+(if (featurep 'mailcrypt-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (mc-deactivate-passwd mc-install-write-mode mc-install-read-mode) "mailcrypt" "mailcrypt/mailcrypt.el")
 
@@ -156,4 +155,3 @@ Decrypt the contents of the current MH message in the show buffer." t nil)
 ;;;***
 
 (provide 'mailcrypt-autoloads)
-))

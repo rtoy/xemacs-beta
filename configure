@@ -10398,6 +10398,7 @@ Configured for \`$canonical'.
 
   Where should the build process find the source code?    $srcdir
   What installation prefix should install use?		  $prefix
+  Where should XEmacs look for packages?		  $package_path
   What operating system and machine description files should XEmacs use?
         \`$opsysfile' and \`$machfile'
   What compiler should XEmacs be built with?              $CC $CFLAGS

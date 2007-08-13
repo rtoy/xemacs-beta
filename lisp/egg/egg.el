@@ -403,13 +403,18 @@
   "FSFmacs event emulator that shoves non key events into
 unread-command-events to facilitate translation from Mule-2.3"
   (let ((event (make-event))
-	(ch nil))
+	ch key)
     (next-command-event event)
+    (setq key (event-key event))
     (if (key-press-event-p event)
 	(if (eq 0 (event-modifier-bits event))
-	    (setq ch (event-key event))
+	    (setq ch (or (event-to-character event) key))
 	  (if (eq 1 (event-modifier-bits event))
-	      (setq ch (int-to-char (- (char-to-int (event-key event)) 96)))
+	      (setq ch
+		    (if (characterp key)
+			(or (int-to-char (- (char-to-int key) 96))
+			    (int-to-char (- (char-to-int key) 64)))
+		      (event-to-character event)))
 	    (setq unread-command-events (list event))))
       (setq unread-command-events (list event)))
     ch))
@@ -929,7 +934,7 @@ unread-command-events to facilitate translation from Mule-2.3"
     (narrow-to-region start end)
     (goto-char (point-min))
     (while (re-search-forward "\\cS\\|\\cA\\|\\cK" (point-max) (point-max))
-      (let* ((ch (preceding-char))
+      (let* ((ch (char-before (point)))
 	     (ch1 (char-octet ch 0))
 	     (ch2 (char-octet ch 1)))
 	(cond ((= ch1 33) ;Symbols
@@ -1014,13 +1019,14 @@ unread-command-events to facilitate translation from Mule-2.3"
     (narrow-to-region start end)
     (goto-char (point-min))
     (while (re-search-forward "[ -~]" (point-max) (point-max))
-      (let ((ch (preceding-char)))
+      (let ((ch (char-before (point))))
 	(if (and (<= ?  ch) (<= ch ?~))
 	    (progn
 	      (delete-char -1)
 	      (let ((zen (cdr (assq ch *zenkaku-alist*))))
 		(if zen (insert zen)
-		  (insert (make-char (find-charset 'japanese-jisx0208) 38 ch))))))))))
+		  (insert (make-char (find-charset 'japanese-jisx0208) 38
+				     (char-to-int ch)))))))))))
 
 (defun zenkaku-paragraph ()
   "zenkaku  paragraph at or after point."
@@ -1602,7 +1608,7 @@ OUTPUTn)))は INPUT が入力された時に状態 STATE を表示し，条件 C
 		  ch)
 	      nil))
 	nil)
-    (following-char)))
+    (char-after (point))))
 
 (defun its:read-char ()
   (if (= (point) its:*buff-e*)
@@ -1611,7 +1617,7 @@ OUTPUTn)))は INPUT が入力された時に状態 STATE を表示し，条件 C
 	(if its:*interactive*
 	    (egg-read-event)
 	  nil))
-    (let ((ch (following-char)))
+    (let ((ch (char-after (point))))
       (setq its:*char-from-buff* t)
       (delete-char 1)
       ch)))
@@ -2682,9 +2688,9 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
   (fence-exit-internal))
 
 (defun fence-exit-internal ()
+  (egg:fence-face-off)
   (delete-region (- egg:*region-start* (length egg:*fence-open*)) egg:*region-start*)
   (delete-region egg:*region-end* (+ egg:*region-end* (length egg:*fence-close*)))
-  (egg:fence-face-off)
   (if its:*previous-map*
       (setq its:*current-map* its:*previous-map*
 	    its:*previous-map* nil))

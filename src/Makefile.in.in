@@ -23,7 +23,7 @@
 ## Synched up with: Not synched with FSF.
 
 all: xemacs
-.PHONY : all release dump-elc dump-elcs all-elc all-elcs lint binary
+.PHONY : all release dump-elc dump-elcs all-elc all-elcs lint
 
 ## For performance and consistency, no built-in rules.
 .SUFFIXES:
@@ -89,23 +89,12 @@ vpath %.h @srcdir@
 vpath config.h
 vpath paths.h
 vpath Emacs.ad.h
-vpath puresize_adjust.h
+vpath puresize-adjust.h
 #else
 VPATH=@srcdir@
 #endif
 
 RM = rm -f
-PURIFY_PROG=purify
-PURIFY_FLAGS=-chain-length=16 -ignore-signals=SIGPOLL -log-file=puremacs.log \
-             -messages=batch -show-directory=yes -windows=yes -threads=yes \
-             -cache-dir=. -always-use-cache-dir=yes -pointer-mask=0x0fffffff
-PURECOV_PROG=purecov
-#ifdef  QUANTIFY
-quantify_prog  = quantify
-quantify_flags = -windows=no -record-data=no
-quantify_includes = -I/local/include
-quantify_libs = /local/lib/quantify_stubs.a
-#endif /* QUANTIFY */
 
 #ifdef HAVE_NATIVE_SOUND
 sound_cflags=@sound_cflags@
@@ -298,21 +287,20 @@ release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 
 FRC.DOC:
 
-FRC.xemacs:
-
-xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} FRC.xemacs
-	@touch NOBYTECOMPILE
-	-${DUMPENV} ./temacs -batch -l ../prim/update-elc.el
-	if test -f NOBYTECOMPILE || test ! -f xemacs; then \
-		$(RECURSIVE_MAKE) binary; \
-	fi
-	@$(RM) NOBYTECOMPILE
-
-binary: temacs
-	@touch SATISFIED
+xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
+	@$(RM) $@ && touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
-	@if test ! -f SATISFIED; then $(RECURSIVE_MAKE) $@; fi
-	@$(RM) SATISFIED
+	@if test -f $@;        then $(RM) SATISFIED; exit 0; fi; \
+	 if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi; \
+	 $(RECURSIVE_MAKE) $@;
+
+FRC.update-elc.stamp :
+
+update-elc.stamp : FRC.update-elc.stamp
+	@touch NOBYTECOMPILE
+	${DUMPENV} ./temacs -batch -l ../prim/update-elc.el
+	@if test ! -f $@ -o -f NOBYTECOMPILE; then touch $@; fi; \
+	 $(RM) NOBYTECOMPILE
 
 obj_src = $(objs:.o=.c)
 
@@ -382,7 +370,7 @@ lint: $(LINTFILES)
 ## end of Lint Section
 
 temacs_deps=\
- $(LOCALCPP) $(start_files) ${objs} ${otherobjs}\
+ $(start_files) ${objs} ${otherobjs}\
  $(lwlib_deps) $(dynodump_deps) prefix-args
 
 temacs_link_args=\
@@ -390,9 +378,26 @@ temacs_link_args=\
  -o $@ ${start_files} ${objs} ${otherobjs} ${LIBES}
 
 temacs: $(temacs_deps)
-	if $(LD) $(temacs_link_args); then \
-		$(RM) xemacs; \
-	fi
+	$(LD) $(temacs_link_args)
+
+.PHONY : run-temacs
+
+run-temacs:
+	./temacs -batch -l loadup.el run-temacs
+
+## Debugging targets:
+##
+## RTC is Sun WorkShop's Run Time Checking
+##
+## Purify, Quantify, PureCoverage are software quality products from
+## Rational, formerly Pure Atria, formerly Pure Software.
+## 
+## None of these products work with a dumped xemacs binary, because it
+## does unexpected things like free memory that has been malloc'ed in
+## a *different* process!!  So we need to run these on temacs.
+## 
+
+.PHONY : run-rtcmacs run-puremacs run-quantmacs
 
 rtc_patch.o:
 	rtc_patch_area -o $@
@@ -401,7 +406,7 @@ rtcmacs: $(temacs_deps) rtc_patch.o
 	$(RM) temacs; $(RECURSIVE_MAKE) temacs RTC_patch_objs=rtc_patch.o
 	mv temacs rtcmacs
 
-rtcrun: rtcmacs
+run-rtcmacs: rtcmacs
 	dbx -q -C -c \
 	'dbxenv rtc_error_log_file_name /dev/fd/1; \
 	dbxenv suppress_startup_message 5.0; \
@@ -411,18 +416,31 @@ rtcrun: rtcmacs
 	runargs -batch -l loadup.el run-temacs -q; \
 	run' rtcmacs
 
+## Purify
+PURIFY_PROG=purify
+PURIFY_FLAGS=-chain-length=32 -ignore-signals=SIGPOLL -threads=yes \
+ -cache-dir=./purecache -always-use-cache-dir=yes -pointer-mask=0x0fffffff
 puremacs: $(temacs_deps)
 	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) $(temacs_link_args) -lpthread
 
-.PHONY : run-puremacs
 run-puremacs: puremacs
 	./puremacs -batch -l loadup.el run-temacs
 
+## Quantify
+#ifdef  QUANTIFY
+quantify_prog  = quantify
+quantify_flags = -windows=no -record-data=no
+quantify_includes = -I/local/include
+quantify_libs = /local/lib/quantify_stubs.a
+
 quantmacs: $(temacs_deps)
 	$(quantify_prog) $(quantify_flags) $(LD) $(temacs_link_args)
+#endif /* QUANTIFY */
 
+PURECOV_PROG=purecov
 covmacs: $(temacs_deps)
 	$(PURECOV_PROG) $(LD) $(temacs_link_args)
+
 
 TopLevelEmacsShell.o : ${srcdir}/EmacsShell-sub.c
 	$(CC) -c $(cflags) -DDEFINE_TOP_LEVEL_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
@@ -523,11 +541,11 @@ prefix-args: ${srcdir}/prefix-args.c config.h
 	$(CC) $(cflags) ${srcdir}/prefix-args.c -o prefix-args
 
 config.h: ${srcdir}/config.h.in
-puresize_adjust.h: ${srcdir}/puresize.h
+puresize-adjust.h: ${srcdir}/puresize.h
 paths.h: ${srcdir}/paths.h.in
 Emacs.ad.h: ${srcdir}/${etcdir}Emacs.ad
 
-config.h puresize_adjust.h paths.h Emacs.ad.h :
+config.h puresize-adjust.h paths.h Emacs.ad.h :
 	@echo "The file $@ needs to be re-generated."
 	@echo "Please run a make in the top level directory."
 	@echo "Consult the file \`INSTALL' for instructions for building XEmacs."
@@ -598,11 +616,11 @@ hpplay.o: ${srcdir}/hpplay.c
 mostlyclean:
 	$(RM) temacs puremacs quantmacs prefix-args depend.* *.o *.i core
 clean: mostlyclean versionclean
-	$(RM) libextcli*
+	$(RM) libextcli* update-elc.stamp
 ## This is used in making a distribution.
 ## Do not use it on development directories!
 distclean: clean
-	$(RM) config.h paths.h puresize_adjust.h Emacs.ad.h \
+	$(RM) config.h paths.h puresize-adjust.h Emacs.ad.h \
 	  Makefile Makefile.in TAGS
 realclean: distclean
 versionclean:
@@ -2106,7 +2124,7 @@ profile.o: systime.h
 pure.o: blocktype.h
 pure.o: config.h
 pure.o: dynarr.h
-pure.o: puresize.h puresize_adjust.h
+pure.o: puresize.h puresize-adjust.h
 ralloc.o: blocktype.h
 ralloc.o: config.h
 ralloc.o: dynarr.h

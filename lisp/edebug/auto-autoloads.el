@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'edebug-autoloads))
-    (progn
+(if (featurep 'edebug-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (edebug-eval-top-level-form def-edebug-spec) "edebug" "edebug/edebug.el")
 
@@ -20,4 +19,3 @@ or if an error occurs, leave point after it with mark at the original point." t 
 ;;;***
 
 (provide 'edebug-autoloads)
-))

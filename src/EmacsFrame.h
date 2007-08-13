@@ -25,178 +25,178 @@ Boston, MA 02111-1307, USA.  */
 #define _EmacsFrame_h
 
 #ifndef XtNminibuffer
-#define XtNminibuffer (String) "minibuffer"
+#define XtNminibuffer "minibuffer"
 #endif
 #ifndef XtCMinibuffer
-#define XtCMinibuffer (String) "Minibuffer"
+#define XtCMinibuffer "Minibuffer"
 #endif
 
 #ifndef XtNunsplittable
-#define XtNunsplittable (String) "unsplittable"
+#define XtNunsplittable "unsplittable"
 #endif
 #ifndef XtCUnsplittable
-#define XtCUnsplittable (String) "Unsplittable"
+#define XtCUnsplittable "Unsplittable"
 #endif
 
 #ifndef XtNinternalBorderWidth
-#define XtNinternalBorderWidth (String) "internalBorderWidth"
+#define XtNinternalBorderWidth "internalBorderWidth"
 #endif
 #ifndef XtCInternalBorderWidth
-#define XtCInternalBorderWidth (String) "InternalBorderWidth"
+#define XtCInternalBorderWidth "InternalBorderWidth"
 #endif
 
 #ifndef XtNscrollBarWidth
-#define XtNscrollBarWidth (String) "scrollBarWidth"
+#define XtNscrollBarWidth "scrollBarWidth"
 #endif
 #ifndef XtCScrollBarWidth
-#define XtCScrollBarWidth (String) "ScrollBarWidth"
+#define XtCScrollBarWidth "ScrollBarWidth"
 #endif
 
 #ifndef XtNscrollBarHeight
-#define XtNscrollBarHeight (String) "scrollBarHeight"
+#define XtNscrollBarHeight "scrollBarHeight"
 #endif
 #ifndef XtCScrollBarHeight
-#define XtCScrollBarHeight (String) "ScrollBarHeight"
+#define XtCScrollBarHeight "ScrollBarHeight"
 #endif
 
 #ifndef XtNtopToolBarHeight
-#define XtNtopToolBarHeight (String) "topToolBarHeight"
+#define XtNtopToolBarHeight "topToolBarHeight"
 #endif
 #ifndef XtCTopToolBarHeight
-#define XtCTopToolBarHeight (String) "TopToolBarHeight"
+#define XtCTopToolBarHeight "TopToolBarHeight"
 #endif
 
 #ifndef XtNbottomToolBarHeight
-#define XtNbottomToolBarHeight (String) "bottomToolBarHeight"
+#define XtNbottomToolBarHeight "bottomToolBarHeight"
 #endif
 #ifndef XtCBottomToolBarHeight
-#define XtCBottomToolBarHeight (String) "BottomToolBarHeight"
+#define XtCBottomToolBarHeight "BottomToolBarHeight"
 #endif
 
 #ifndef XtNleftToolBarWidth
-#define XtNleftToolBarWidth (String) "leftToolBarWidth"
+#define XtNleftToolBarWidth "leftToolBarWidth"
 #endif
 #ifndef XtCLeftToolBarWidth
-#define XtCLeftToolBarWidth (String) "LeftToolBarWidth"
+#define XtCLeftToolBarWidth "LeftToolBarWidth"
 #endif
 
 #ifndef XtNrightToolBarWidth
-#define XtNrightToolBarWidth (String) "rightToolBarWidth"
+#define XtNrightToolBarWidth "rightToolBarWidth"
 #endif
 #ifndef XtCRightToolBarWidth
-#define XtCRightToolBarWidth (String) "RightToolBarWidth"
+#define XtCRightToolBarWidth "RightToolBarWidth"
 #endif
 
 #ifndef XtNtopToolBarShadowColor
-#define XtNtopToolBarShadowColor (String) "topToolBarShadowColor"
+#define XtNtopToolBarShadowColor "topToolBarShadowColor"
 #endif
 #ifndef XtCTopToolBarShadowColor
-#define XtCTopToolBarShadowColor (String) "TopToolBarShadowColor"
+#define XtCTopToolBarShadowColor "TopToolBarShadowColor"
 #endif
 
 #ifndef XtNbottomToolBarShadowColor
-#define XtNbottomToolBarShadowColor (String) "bottomToolBarShadowColor"
+#define XtNbottomToolBarShadowColor "bottomToolBarShadowColor"
 #endif
 #ifndef XtCBottomToolBarShadowColor
-#define XtCBottomToolBarShadowColor (String) "BottomToolBarShadowColor"
+#define XtCBottomToolBarShadowColor "BottomToolBarShadowColor"
 #endif
 
 #ifndef XtNbackgroundToolBarColor
-#define XtNbackgroundToolBarColor (String) "backgroundToolBarColor"
+#define XtNbackgroundToolBarColor "backgroundToolBarColor"
 #endif
 #ifndef XtCBackgroundToolBarColor
-#define XtCBackgroundToolBarColor (String) "BackgroundToolBarColor"
+#define XtCBackgroundToolBarColor "BackgroundToolBarColor"
 #endif
 
 #ifndef XtNtopToolBarShadowPixmap
-#define XtNtopToolBarShadowPixmap (String) "topToolBarShadowPixmap"
+#define XtNtopToolBarShadowPixmap "topToolBarShadowPixmap"
 #endif
 #ifndef XtCTopToolBarShadowPixmap
-#define XtCTopToolBarShadowPixmap (String) "TopToolBarShadowPixmap"
+#define XtCTopToolBarShadowPixmap "TopToolBarShadowPixmap"
 #endif
 
 #ifndef XtNbottomToolBarShadowPixmap
-#define XtNbottomToolBarShadowPixmap (String) "bottomToolBarShadowPixmap"
+#define XtNbottomToolBarShadowPixmap "bottomToolBarShadowPixmap"
 #endif
 #ifndef XtCBottomToolBarShadowPixmap
-#define XtCBottomToolBarShadowPixmap (String) "BottomToolBarShadowPixmap"
+#define XtCBottomToolBarShadowPixmap "BottomToolBarShadowPixmap"
 #endif
 
 #ifndef XtNtoolBarShadowThickness
-#define XtNtoolBarShadowThickness (String) "toolBarShadowThickness"
+#define XtNtoolBarShadowThickness "toolBarShadowThickness"
 #endif
 #ifndef XtCToolBarShadowThickness
-#define XtCToolBarShadowThickness (String) "ToolBarShadowThickness"
+#define XtCToolBarShadowThickness "ToolBarShadowThickness"
 #endif
 
 #ifndef XtNscrollBarPlacement
-#define XtNscrollBarPlacement (String) "scrollBarPlacement"
+#define XtNscrollBarPlacement "scrollBarPlacement"
 #endif
 #ifndef XtCScrollBarPlacement
-#define XtCScrollBarPlacement (String) "ScrollBarPlacement"
+#define XtCScrollBarPlacement "ScrollBarPlacement"
 #endif
 #ifndef XtRScrollBarPlacement
-#define XtRScrollBarPlacement (String) "ScrollBarPlacement"
+#define XtRScrollBarPlacement "ScrollBarPlacement"
 #endif
 
 #ifndef XtNinterline
-#define XtNinterline (String) "interline"
+#define XtNinterline "interline"
 #endif
 #ifndef XtCInterline
-#define XtCInterline (String) "Interline"
+#define XtCInterline "Interline"
 #endif
 
 #ifndef XtNfont
-#define XtNfont (String) "font"
+#define XtNfont "font"
 #endif
 #ifndef XtCFont
-#define XtCFont (String) "Font"
+#define XtCFont "Font"
 #endif
 
 #ifndef XtNforeground
-#define XtNforeground (String) "foreground"
+#define XtNforeground "foreground"
 #endif
 #ifndef XtCForeground
-#define XtCForeground (String) "Foreground"
+#define XtCForeground "Foreground"
 #endif
 
 #ifndef XtNiconic
-#define XtNiconic (String) "iconic"
+#define XtNiconic "iconic"
 #endif
 #ifndef XtCIconic
-#define XtCIconic (String) "Iconic"
+#define XtCIconic "Iconic"
 #endif
 
 #ifndef XtNcursorColor
-#define XtNcursorColor (String) "cursorColor"
+#define XtNcursorColor "cursorColor"
 #endif
 #ifndef XtCCursorColor
-#define XtCCursorColor (String) "CursorColor"
+#define XtCCursorColor "CursorColor"
 #endif
 
 #ifndef XtNbarCursor
-#define XtNbarCursor (String) "barCursor"
+#define XtNbarCursor "barCursor"
 #endif
 #ifndef XtCBarCursor
-#define XtCBarCursor (String) "BarCursor"
+#define XtCBarCursor "BarCursor"
 #endif
 
 #ifndef XtNvisualBell
-#define XtNvisualBell (String) "visualBell"
+#define XtNvisualBell "visualBell"
 #endif
 #ifndef XtCVisualBell
-#define XtCVisualBell (String) "VisualBell"
+#define XtCVisualBell "VisualBell"
 #endif
 
 #ifndef XtNbellVolume
-#define XtNbellVolume (String) "bellVolume"
+#define XtNbellVolume "bellVolume"
 #endif
 #ifndef XtCBellVolume
-#define XtCBellVolume (String) "BellVolume"
+#define XtCBellVolume "BellVolume"
 #endif
 
 #ifndef XtNpointerBackground
-#define XtNpointerBackground (String) "pointerBackground"
+#define XtNpointerBackground "pointerBackground"
 #endif
 
 #ifndef XtNpointerColor
@@ -204,75 +204,75 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifndef XtNtextPointer
-#define XtNtextPointer (String) "textPointer"
+#define XtNtextPointer "textPointer"
 #endif
 
 #ifndef XtNspacePointer
-#define XtNspacePointer (String) "spacePointer"
+#define XtNspacePointer "spacePointer"
 #endif
 
 #ifndef XtNmodeLinePointer
-#define XtNmodeLinePointer (String) "modePointer"
+#define XtNmodeLinePointer "modePointer"
 #endif
 
 #ifndef XtNgcPointer
-#define XtNgcPointer (String) "gcPointer"
+#define XtNgcPointer "gcPointer"
 #endif
 
 #ifndef XtNemacsFrame
-#define XtNemacsFrame (String) "emacsFrame"
+#define XtNemacsFrame "emacsFrame"
 #endif
 #ifndef XtCEmacsFrame
-#define XtCEmacsFrame (String) "EmacsFrame"
+#define XtCEmacsFrame "EmacsFrame"
 #endif
 
 #ifndef XtNgeometry
-#define XtNgeometry (String) "geometry"
+#define XtNgeometry "geometry"
 #endif
 #ifndef XtCGeometry
-#define XtCGeometry (String) "Geometry"
+#define XtCGeometry "Geometry"
 #endif
 
 #ifndef XtNinitialGeometry
-#define XtNinitialGeometry (String) "initialGeometry"
+#define XtNinitialGeometry "initialGeometry"
 #endif
 #ifndef XtCInitialGeometry
-#define XtCInitialGeometry (String) "InitialGeometry"
+#define XtCInitialGeometry "InitialGeometry"
 #endif
 
 #ifndef XtNmenubar
-#define XtNmenubar (String) "menubar"
+#define XtNmenubar "menubar"
 #endif
 #ifndef XtCMenubar
-#define XtCMenubar (String) "Menubar"
+#define XtCMenubar "Menubar"
 #endif
 
 #ifndef XtNinitiallyUnmapped
-#define XtNinitiallyUnmapped (String) "initiallyUnmapped"
+#define XtNinitiallyUnmapped "initiallyUnmapped"
 #endif
 #ifndef XtCInitiallyUnmapped
-#define XtCInitiallyUnmapped (String) "InitiallyUnmapped"
+#define XtCInitiallyUnmapped "InitiallyUnmapped"
 #endif
 
 #ifndef XtNpreferredWidth
-#define XtNpreferredWidth (String) "preferredWidth"
+#define XtNpreferredWidth "preferredWidth"
 #endif
 #ifndef XtCPreferredWidth
-#define XtCPreferredWidth (String) "PreferredWidth"
+#define XtCPreferredWidth "PreferredWidth"
 #endif
 
 #ifndef XtNpreferredHeight
-#define XtNpreferredHeight (String) "preferredHeight"
+#define XtNpreferredHeight "preferredHeight"
 #endif
 #ifndef XtCPreferredHeight
-#define XtCPreferredHeight (String) "PreferredHeight"
+#define XtCPreferredHeight "PreferredHeight"
 #endif
 
 #ifndef XtNuseBackingStore
-#define XtNuseBackingStore (String) "useBackingStore"
+#define XtNuseBackingStore "useBackingStore"
 #endif
 #ifndef XtCUseBackingStore
-#define XtCUseBackingStore (String) "UseBackingStore"
+#define XtCUseBackingStore "UseBackingStore"
 #endif
 
 #define XtNximStyles "ximStyles"
@@ -287,12 +287,12 @@ Boston, MA 02111-1307, USA.  */
 #define EM_BOTTOM	0
 #define EM_LEFT		2
 #define EM_RIGHT	0
- 
+
 #define XtTOP_LEFT	(EM_TOP    | EM_LEFT)
 #define XtBOTTOM_LEFT	(EM_BOTTOM | EM_LEFT)
 #define XtTOP_RIGHT	(EM_TOP    | EM_RIGHT)
 #define XtBOTTOM_RIGHT	(EM_BOTTOM | EM_RIGHT)
- 
+
 /* structures */
 typedef struct _EmacsFrameRec *EmacsFrame;
 typedef struct _EmacsFrameClassRec *EmacsFrameClass;

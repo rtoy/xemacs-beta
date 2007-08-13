@@ -2989,6 +2989,10 @@ vars_of_frame (void)
   Fprovide (intern ("cde"));
 #endif
 
+#ifdef HAVE_OFFIX_DND
+  Fprovide (intern ("offix"));
+#endif
+
 #if 0 /* FSFmacs stupidity */
   xxDEFVAR_LISP ("emacs-iconified", &Vemacs_iconified /*
 Non-nil if all of emacs is iconified and frame updates are not needed.

@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep '-autoloads))
-    (progn
+(if (featurep 'hyperbole-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (hmail:compose) "hmail" "hyperbole/hmail.el")
 
@@ -421,5 +420,4 @@ It provides the following keys:
 
 ;;;***
 
-(provide '-autoloads)
-))
+(provide 'hyperbole-autoloads)

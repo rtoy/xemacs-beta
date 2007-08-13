@@ -384,7 +384,7 @@ Send a mail message from within View Mail, or from without."
   (while dir
     (condition-case nil
 	(load (concat (car dir) "/auto-autoloads"))
-      (file-error nil))
+      (t nil))
     (pop dir)))
 
 ;;; Local Variables:

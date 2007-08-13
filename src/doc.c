@@ -539,9 +539,28 @@ when doc strings are referred to in the dumped Emacs.
 				}
 			      XCAR (tem) = offset;
 			    }
-                          else goto weird_function;
+                          else if (!CONSP (tem))
+			    {
+			      weird_doc (sym, GETTEXT ("!CONSP(tem)"),
+					 GETTEXT ("function"), pos);
+			  goto cont;
+			    }
+                          else
+			    {
+			      /* DOC string is a string not integer 0 */
+#if 0
+			      weird_doc (sym, GETTEXT ("!INTP(XCAR(tem))"),
+					 GETTEXT ("function"), pos);
+#endif
+			      goto cont;
+			    }
                         }
-                      else goto weird_function;
+                      else
+			{
+			  weird_doc (sym, GETTEXT ("not lambda or autoload"),
+				     GETTEXT ("function"), pos);
+			  goto cont;
+			}
 		    }
 		  else if (COMPILED_FUNCTIONP (fun))
 		    {
@@ -599,6 +618,7 @@ when doc strings are referred to in the dumped Emacs.
                 }
             }
 	}
+    cont:
       pos += end - buf;
       filled -= end - buf;
       memmove (buf, end, filled);

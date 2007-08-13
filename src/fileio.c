@@ -50,7 +50,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HPUX_PRE_8_0
 #include <errnet.h>
 #endif
-#endif
+#endif /* HPUX */
 
 /* Nonzero during writing of auto-save files */
 static int auto_saving;
@@ -1139,7 +1139,7 @@ See also the function `substitute-in-file-name'.
  	  if (newdir[1] == ':')
  	    drive = newdir[0];
 	  dostounix_filename (newdir);
-#endif
+#endif /* DOS_NT */
 	  nm++;
 #ifdef VMS
 	  nm++;			/* Don't leave the slash in nm.  */
@@ -2388,13 +2388,13 @@ check_executable (char *filename)
 	  || (st.st_mode & S_IFMT) == S_IFDIR);
 #else /* not DOS_NT */
 #ifdef HAVE_EACCESS
-  return (eaccess (filename, 1) >= 0);
+  return eaccess (filename, 1) >= 0;
 #else
   /* Access isn't quite right because it uses the real uid
      and we really want to test with the effective uid.
      But Unix doesn't give us a right way to do it.  */
-  return (access (filename, 1) >= 0);
-#endif
+  return access (filename, 1) >= 0;
+#endif /* HAVE_EACCESS */
 #endif /* not DOS_NT */
 }
 
@@ -2971,7 +2971,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 				 filename));
 	}
     }
-#endif
+#endif /* S_IFREG */
 
   if (!NILP (beg))
     CHECK_INT (beg);
@@ -3170,7 +3170,7 @@ positions), even in Mule. (Fixing this is very difficult.)
       (XLSTREAM (stream), Fget_coding_system (codesys));
     Lstream_set_character_mode (XLSTREAM (stream));
     Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
-#endif
+#endif /* MULE */
 
     record_unwind_protect (close_stream_unwind, stream);
 
@@ -3206,7 +3206,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	Fset (used_codesys,
 	      XCODING_SYSTEM_NAME (decoding_stream_coding_system (XLSTREAM (stream))));
       }
-#endif
+#endif /* MULE */
     NUNGCPRO;
   }
 
@@ -3227,7 +3227,7 @@ positions), even in Mule. (Fixing this is very difficult.)
       }
   }
 #endif
-#endif
+#endif /* 0 */
 
   /* Close the file/stream */
   unbind_to (speccount, Qnil);
@@ -3383,7 +3383,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   int buffer_file_type
     = NILP (current_buffer->buffer_file_type) ? O_TEXT : O_BINARY;
 #endif /* DOS_NT */
-#endif
+#endif /* 0 */
 
 #ifdef MULE
   codesys = Fget_coding_system (codesys);
@@ -3547,7 +3547,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 		      vms_truncate (fn_data);
 		      desc = open (fn_data, O_RDWR, 0);
 		    }
-#endif
+#endif /* 0 */
 		}
 	    }
 	  UNGCPRO;
@@ -3608,7 +3608,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     you lose -- fix this
     if (GPT > BUF_BEG (current_buffer) && *GPT_ADDR[-1] != '\n')
       move_gap (find_next_newline (current_buffer, GPT, 1));
-#endif
+#endif /* VMS */
 
     failure = 0;
 
@@ -3630,7 +3630,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
       make_encoding_output_stream ( XLSTREAM (outstream), codesys);
     Lstream_set_buffering (XLSTREAM (outstream),
 			   LSTREAM_BLOCKN_BUFFERED, 65536);
-#endif
+#endif /* MULE */
     if (STRINGP (start))
       {
 	instream = make_lisp_string_input_stream (start, 0, -1);
@@ -3666,7 +3666,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 	failure = 1;
 	save_errno = errno;
       }
-#endif
+#endif /* HAVE_FSYNC */
 
     /* Spurious "file has changed on disk" warnings have been
        observed on Suns as well.
@@ -3820,7 +3820,7 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  end = make_int (BUF_ZV (current_buffer));
 	  annotations = Qnil;
 	}
-      (void) Flength (res);     /* Check basic validity of return value */
+      Flength (res);     /* Check basic validity of return value */
       annotations = merge (annotations, res, Qcar_less_than_car);
       p = Fcdr (p);
     }
@@ -3841,7 +3841,7 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  end = make_int (BUF_ZV (current_buffer));
 	  annotations = Qnil;
 	}
-      (void) Flength (res);
+      Flength (res);
       annotations = merge (annotations, res, Qcar_less_than_car);
       p = Fcdr (p);
     }
@@ -3896,7 +3896,7 @@ a_write (Lisp_Object outstream, Lisp_Object instream, int pos,
 	    }
 	}
       else
-#endif
+#endif /* MULE */
 	{
 	  while (pos != nextpos)
 	    {
@@ -3956,17 +3956,14 @@ Encrypt STRING using KEY.
   memcpy (encrypted_string, XSTRING_DATA (string), XSTRING_LENGTH (string));
   memset (encrypted_string + rounded_size - extra, 0, extra + 1);
 
-  if (XSTRING_LENGTH (key) > CRYPT_KEY_SIZE)
-    key_size = CRYPT_KEY_SIZE;
-  else
-    key_size = XSTRING_LENGTH (key);
+  key_size = min (CRYPT_KEY_SIZE, XSTRING_LENGTH (key))
 
   raw_key = alloca (CRYPT_KEY_SIZE + 1);
   memcpy (raw_key, XSTRING_DATA (key), key_size);
   memset (raw_key + key_size, 0, (CRYPT_KEY_SIZE + 1) - key_size);
 
-  (void) ecb_crypt (raw_key, encrypted_string, rounded_size,
-		    DES_ENCRYPT | DES_SW);
+  ecb_crypt (raw_key, encrypted_string, rounded_size,
+	     DES_ENCRYPT | DES_SW);
   return make_string (encrypted_string, rounded_size);
 }
 
@@ -3986,21 +3983,17 @@ Decrypt STRING using KEY.
   memcpy (decrypted_string, XSTRING_DATA (string), string_size);
   decrypted_string[string_size - 1] = '\0';
 
-  if (XSTRING_LENGTH (key) > CRYPT_KEY_SIZE)
-    key_size = CRYPT_KEY_SIZE;
-  else
-    key_size = XSTRING_LENGTH (key);
+  key_size = min (CRYPT_KEY_SIZE, XSTRING_LENGTH (key))
 
   raw_key = alloca (CRYPT_KEY_SIZE + 1);
   memcpy (raw_key, XSTRING_DATA (key), key_size);
   memset (raw_key + key_size, 0, (CRYPT_KEY_SIZE + 1) - key_size);
 
 
-  (void) ecb_crypt (raw_key, decrypted_string, string_size,
-		    DES_DECRYPT | DES_SW);
+  ecb_crypt (raw_key, decrypted_string, string_size, D | DES_SW);
   return make_string (decrypted_string, string_size - 1);
 }
-#endif
+#endif /* 0 */
 
 
 DEFUN ("verify-visited-file-modtime", Fverify_visited_file_modtime, 1, 1, 0, /*
@@ -4722,7 +4715,7 @@ responsible for calling the after-insert-file-functions if appropriate.
   DEFVAR_LISP ("write-region-annotate-functions",
 	       &Vwrite_region_annotate_functions /*
 A list of functions to be called at the start of `write-region'.
-Each is passed two arguments, START and END as for `write-region'.
+Each is passed two arguments, START and END, as for `write-region'.
 It should return a list of pairs (POSITION . STRING) of strings to be
 effectively inserted at the specified positions of the file being written
 \(1 means to insert before the first byte written).  The POSITIONs must be

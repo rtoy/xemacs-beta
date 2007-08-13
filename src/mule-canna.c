@@ -328,7 +328,7 @@ static void call_Fding()
 {
   extern Lisp_Object Fding();
 
-  (void)Fding(Qnil, Qnil, Qnil);
+  Fding (Qnil, Qnil, Qnil);
 }
 
 DEFUN ("canna-initialize", Fcanna_initialize, 0, 3, 0, /*
