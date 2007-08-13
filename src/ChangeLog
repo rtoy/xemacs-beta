@@ -1,3 +1,75 @@
+1998-09-29  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre14 is released.
+
+1998-09-27  P. E. Jareth Hein  <jareth@camelot.co.jp>
+
+	* regex.c (re_match_2_internal): Add in code to reset lowest_active_reg
+	to prevent memory corruption in the case of jumping out of a series of
+	nested match patterns. This is a rather brute force approach, though.
+
+1998-09-02  Andy Piper  <andyp@parallax.co.uk>
+
+	* config.h.in: ditto.
+
+	* s/cygwin32.h: rearrange declarations to cope with cygwin
+ 	b20. Include cygwin32/version.h if it exists.
+
+1998-09-20  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* device-msw.c (mswindows_init_device): Call new
+	  mswindows_enumerate_fonts() function in objects-msw.c instead
+	  of font_enum_callback_1() to enumerate fonts.
+
+	  font_enum_callback_1() and _2() moved to objects-msw.c. 
+
+	* faces.c (complex_vars_of_faces): Make the mswindows default 
+	  face font fully specified and provide some fallbacks.
+
+	* objects-msw.c: font_enum_callback_1() and _2() moved here
+	  from objects-msw.c. Obtain the enumerated font's character
+	  sets by table lookup instead of using the locale-specific
+	  string provided by Windows.
+
+	  New public non-method mswindows_enumerate_fonts() that fills
+	  in the supplied mswindows device's font list.
+
+	  mswindows_initialize_font_instance: Use the supplied name
+	  variable instead of f->name when signalling errors. Match font
+	  weights and character sets using lookup tables which handle
+	  spaces instead of by frobbing.
+
+1998-09-20  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* process-nt.c: Define an arbitrary limit, FRAGMENT_CODE_SIZE,
+	  on the size of code fragments passed to run_in_other_process.
+
+	  run_in_other_process(): Use FRAGMENT_CODE_SIZE to determine
+	  the amount of memory to allocate in the other process.
+
+	  Removed sigkill_code_end(), sigint_code_end() and
+	  sig_enable_code_end() since they are now redundant.
+
+	  send_signal() and enable_child_signals(): Don't try to work
+	  out the end of the code fragments passed to 
+	  run_in_other_process()
+
+1998-09-10  Kazuyuki IENAGA  <ienaga@jsys.co.jp>
+
+	* src/s/freebsd.h: Added __ELF__ and compiler/liker flags for
+	FreeBSD-current.
+
+	* src/unexelf.c: Partially synched with FSF's 20.3.
+
+1998-09-11  Gunnar Evermann  <Gunnar.Evermann@nats.informatik.uni-hamburg.de>
+
+	* redisplay.c (redisplay_window): make sure a new starting point
+	is chosen if it somehow got moved from the beginning of the line
+	-- this can happen because Fwiden was called recently.
+
+	* window.c (Fset_window_start): set start_at_line_beg correctly
+	(Fset_window_buffer): Ditto
+
 1998-09-06  Jan Vroonhof  <vroonhof@math.ethz.ch>
 
 	* process-unix.c (unix_create_process): Reset SIGHUP handler to

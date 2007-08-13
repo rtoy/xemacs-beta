@@ -1226,10 +1226,6 @@ diary entry with the @kbd{i y} command.
   All of the above commands make marking diary entries by default.  To
 make a nonmarking diary entry, give a numeric argument to the command.
 For example, @kbd{C-u i w} makes a nonmarking weekly diary entry.
- 
-  All of the above commands make marking diary entries.  If you want the diary
-entry to be nonmarking, give a prefix argument to the command.  For example,
-@kbd{C-u i w} makes a nonmarking, weekly diary entry.
 
   When you modify the diary file, be sure to save the file before
 exiting Emacs.

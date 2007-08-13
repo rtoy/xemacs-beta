@@ -1,3 +1,24 @@
+1998-09-29  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre14 is released.
+
+1998-09-19  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* tiff.mak: New file provided by Charles Wilson
+	  <cwilson@ee.gatech.edu>
+
+	* README: Update provided by Charles Wilson
+	  <cwilson@ee.gatech.edu>.  Documenting use of the newly
+	  introduced tiff.mak.  Renumbering subsequent build instruction
+	  items.
+
+1998-09-20  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* PROBLEMS: New file.
+
+	* xemacs.mak: Install the PROBLEMS file in the root directory of
+	  the XEmacs installation.
+
 1998-09-05  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre12 is released.

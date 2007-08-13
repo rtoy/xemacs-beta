@@ -100,6 +100,8 @@
 (defvar about-url-alist
   '((ajc       . "http://www-personal.monash.edu.au/~ajc/")
     (altrasoft . "http://www.altrasoft.com/")
+    (ben       . "http://www.666.com/ben/")
+    (ben-xemacs . "http://www.666.com/xemacs/")
     (baw       . "http://www.python.org/~bwarsaw/")
     (cc-mode   . "http://www.python.org/ftp/emacs/")
     (chr       . "http://www.xemacs.org/faq/")
@@ -586,26 +588,21 @@ Martin is no longer doing XEmacs for a living, and is Just Another
 Volunteer.\n"))
     (hniksic
      (widget-insert "\
-Hrvoje is currently a student at the Faculty of Electrical
-Engineering and Computing in Zagreb, Croatia.  He works part-time
-at SRCE, where he helps run the network machines.  In his free time he
-is helping develop free software (especially XEmacs, as well as GNU
-software) and is writing his own -- he has written a small network
-mirroring utility Wget, see ")
-     (about-url-link 'wget "Download Wget")
-     (widget-insert ".\n"))
+Hrvoje is a student at the Faculty of Electrical Engineering and
+Computing in Zagreb, Croatia, working part-time at system administration
+at SRCE.  His hobby is hacking free software, particularly XEmacs and
+GNU Wget, the latter being his very own creation.
+
+His contribution to XEmacs consists of a multitude of hours spent
+adding new features and bugs, and fixing old ones.  He dreams of
+writing a home page.\n"))
     (wing
      (widget-insert
       "\
-I'm not a thug -- I just play one on video.
-My roommate says I'm a San Francisco \"Mission Critter\".\n\n"
-      (about-with-face "Gory stuff follows:" 'italic)
-      "\n
-In 1992 I left a stuffy East-Coast university, set out into the real
-world, and ended up a co-founder of Pearl Software.  As part of this
-company, I became the principal architect of Win-Emacs, a port of
-Lucid Emacs to Microsoft Windows and Windows NT (for more info, e-mail
-to info@pearlsoft.com).
+I began my Emacs life in 1992 as the co-founder of the now defunct
+Pearl Software.  As part of this company, I became the principal
+architect of Win-Emacs, an early port of Lucid Emacs to Microsoft
+Windows and Windows NT.
 
 Since April 1993, I've worked on XEmacs as a contractor for various
 companies, changing hats faster than Ronald Reagan's hair color (oops,
@@ -616,8 +613,19 @@ widget, improving the documentation (especially the Emacs Lisp
 manual), and being a general nuisance ... er, brainstormer for many of
 the new features of XEmacs.
 
-Recently I took a job at Dimension X, where I'm working on a
-Java-based toolkit for developing VRML applications.\n"))
+Alas, life has not been good to me recently.  This former San Francisco
+\"Mission Critter\" was exiled to \"Stroller Valley\" and, after a brief
+stint developing a Java-based VRML toolkit for the now also defunct
+Dimension X, I developed insidious hand and neck problems, and I was
+forced to quit working.  Since then, I have been learning how to interact
+with the computer by using foot pedals and by dictating text to other
+people.  Recently I completed Architecting XEmacs, a web site about the
+future of XEmacs.\n\n")
+     (widget-insert "Architecting XEmacs: ")
+     (about-url-link 'ben-xemacs "Find the miracles in store for XEmacs")
+     (widget-insert "\nBen's home page:     ")
+     (about-url-link 'ben "Visit Ben's page")
+     (widget-insert "\n"))
     (cthomp
      (widget-insert "\
 Chuck, through being in the wrong place at the right time, has gotten
@@ -1494,6 +1502,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Peter B. West" "p.west@uq.net.au")
        (print-short "Rod Whitby" "rwhitby@asc.corp.mot.com")
        (print-short "Rich Williams" "rdw@hplb.hpl.hp.com")
+       (print-short "Raymond Wiker" "raymond@orion.no")
        (print-short "Peter Windle" "peterw@SDL.UG.EDS.COM")
        (print-short "David C Worenklein" "dcw@gcm.com")
        (print-short "Takeshi Yamada" "yamada@sylvie.kecl.ntt.jp")

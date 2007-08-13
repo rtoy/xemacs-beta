@@ -136,6 +136,18 @@ the directory to be ignored.")
 		  version name (cdr pkg)))
 	  (t t))))
 
+(defun package-delete-name (name)
+  (let (pkg)
+    ;; Delete ALL versions of package.
+    ;; This is pretty memory-intensive, as we use copy-alist when deleting
+    ;; package entries, to prevent side-effects in functions that call this
+    ;; one.
+    (while (setq pkg (assq name packages-package-list))
+      (setq packages-package-list (delete pkg (copy-alist
+					       packages-package-list)))
+      )
+    ))
+
 ;;; Build time stuff
 
 (defvar autoload-file-name "auto-autoloads.el"
@@ -293,6 +305,23 @@ is run.  Don't call it or you'll be sorry."
 ;; Data-directory is really a list now.  Provide something to search it for
 ;; directories.
 
+(defun locate-data-directory-list (name &optional dir-list)
+  "Locate the matching list of directories in a search path DIR-LIST.
+If no DIR-LIST is supplied, it defaults to `data-directory-list'."
+  (unless dir-list
+    (setq dir-list data-directory-list))
+  (let (found found-dir found-dir-list)
+    (while dir-list
+      (setq found (file-name-as-directory (concat (car dir-list) name))
+	    found-dir (file-directory-p found))
+      (and found-dir
+	   (setq found-dir-list (cons found found-dir-list)))
+      (setq dir-list (cdr dir-list)))
+    (nreverse found-dir-list)))
+
+;; Data-directory is really a list now.  Provide something to search it for
+;; a directory.
+
 (defun locate-data-directory (name &optional dir-list)
   "Locate a directory in a search path DIR-LIST (a list of directories).
 If no DIR-LIST is supplied, it defaults to `data-directory-list'."
@@ -330,7 +359,7 @@ This function is basically a wrapper over `locate-file'."
      (and version-directory (list version-directory))
      (and site-directory (list site-directory)))))
 
-(defvar packages-special-base-regexp "^\\(etc\\|info\\|lisp\\|lib-src\\|bin\\)$"
+(defvar packages-special-base-regexp "^\\(etc\\|info\\|lisp\\|lib-src\\|bin\\|pkginfo\\|man\\)$"
   "Special subdirectories of packages.")
 
 (defvar packages-no-package-hierarchy-regexp

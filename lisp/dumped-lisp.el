@@ -165,7 +165,6 @@
 ;; preload the X code, for faster startup.
 	(when-feature (and (not infodock)
 			   (or x mswindows) menubar) "menubar-items")
-	(when-feature (and infodock (or x mswindows) menubar) "id-menus")
 	(when-feature x "x-faces")
 	(when-feature x "x-iso8859-1")
 	(when-feature x "x-mouse")

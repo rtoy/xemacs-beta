@@ -149,10 +149,7 @@ one version of a package available.")
   "*Where to store temporary files for staging.")
 
 (defvar package-get-remote
-  '(
-    ("ftp.xemacs.org" "/pub/xemacs/beta/xemacs-21.0/packages/binary-packages")
-    ("ftp.xemacs.org" "/pub/xemacs/beta/xemacs-21.0/packages/single-file-packages")
-    ("ftp.xemacs.org" "/pub/xemacs/package"))
+  '(("ftp.xemacs.org" "/pub/xemacs/packages"))
   "*List of remote sites to contact for downloading packages.
 List format is '(site-name directory-on-site).  Each site is tried in
 order until the package is found.  As a special case, `site-name' can be
@@ -161,53 +158,6 @@ order until the package is found.  As a special case, `site-name' can be
 (defvar package-get-remove-copy nil
   "*After copying and installing a package, if this is T, then remove the
 copy.  Otherwise, keep it around.")
-
-(defun package-get-rmtree (directory)
-  "Delete a directory and all of its contents, recursively.
-This is a feeble attempt at making a portable rmdir."
-  (let ( (orig-default-directory default-directory) files dirs dir)
-    (unwind-protect
-	(progn
-	  (setq directory (file-name-as-directory directory))
-	  (setq files (directory-files directory nil nil nil t))
-	  (setq dirs (directory-files directory nil nil nil 'dirs))
-	  (while dirs
-	    (setq dir (car dirs))
-	    (if (file-symlink-p dir)	;; just in case, handle symlinks
-		(delete-file dir)
-	      (if (not (or (string-equal dir ".") (string-equal dir "..")))
-		  (package-get-rmtree (expand-file-name dir directory))))
-	    (setq dirs (cdr dirs))
-	    )
-	  (setq default-directory directory)
-	  (condition-case err
-	      (progn
-		(while files
-		  (delete-file (car files))
-		  (setq files (cdr files))
-		  )
-		(delete-directory directory)
-		)
-	    (file-error
-	     (message "%s: %s: \"%s\"" (nth 1 err) (nth 2 err) (nth 3 err)))
-	    )
-	  )
-      (progn
-	(setq default-directory orig-default-directory)
-	))
-    ))
-
-;;;###autoload
-(defun package-get-update-all ()
-  "Fetch and install the latest versions of all currently installed packages."
-  (interactive)
-  ;; Load a fresh copy
-  (catch 'exit
-    (mapcar (lambda (pkg)
-	      (if (not (package-get (car pkg) nil 'never))
-		  (throw 'exit nil)		;; Bail out if error detected
-		  ))
-	    packages-package-list)))
 
 (defun package-get-interactive-package-query (get-version package-symbol)
   "Perform interactive querying for package and optional version.
@@ -243,6 +193,26 @@ The return value is suitable for direct passing to `interactive'."
 	    (list package-symbol)
 	  (list package)))
       )))
+
+;;;###autoload
+(defun package-get-delete-package (package &optional pkg-topdir)
+  "Delete an installation of PACKAGE below directory PKG-TOPDIR.
+PACKAGE is a symbol, not a string.
+This is just an interactive wrapper for `package-admin-delete-binary-package'."
+  (interactive (package-get-interactive-package-query nil t))
+  (package-admin-delete-binary-package package pkg-topdir))
+
+;;;###autoload
+(defun package-get-update-all ()
+  "Fetch and install the latest versions of all currently installed packages."
+  (interactive)
+  ;; Load a fresh copy
+  (catch 'exit
+    (mapcar (lambda (pkg)
+	      (if (not (package-get (car pkg) nil 'never))
+		  (throw 'exit nil)		;; Bail out if error detected
+		  ))
+	    packages-package-list)))
 
 ;;;###autoload
 (defun package-get-all (package version &optional fetched-packages)
@@ -366,7 +336,7 @@ successfully installed but errors occurred during initialization, or
 	 (search-dirs package-get-remote)
 	 (base-filename (package-get-info-prop this-package 'filename))
 	 (package-status t)
-	 filenames full-package-filename package-lispdir)
+	 filenames full-package-filename)
     (if (null this-package)
 	(error "Couldn't find package %s with version %s"
 	       package version))
@@ -466,19 +436,7 @@ successfully installed but errors occurred during initialization, or
 						 'md5sum)))
 	    (error "Package %s does not match md5 checksum" base-filename)))
 
-      ;; Now delete old lisp directory, if any
-      ;;
-      ;; Gads, this is ugly.  However, we're not supposed to use `concat'
-      ;; in the name of portability.
-      (if (and (setq package-lispdir (expand-file-name "lisp" install-dir))
-	       (setq package-lispdir (expand-file-name (symbol-name package)
-						       package-lispdir))
-	       (file-accessible-directory-p package-lispdir))
-	  (progn
-	    (message "Removing old lisp directory \"%s\" ..." package-lispdir)
-	    (sit-for 0)
-	    (package-get-rmtree package-lispdir)
-	    ))
+      (package-admin-delete-binary-package package install-dir)
 
       (message "Installing package `%s' ..." package) (sit-for 0)
       (let ((status
@@ -489,7 +447,8 @@ successfully installed but errors occurred during initialization, or
 	      ;; clear messages so that only messages from
 	      ;; package-get-init-package are seen, below.
 	      (clear-message)
-	      (if (package-get-init-package package-lispdir)
+	      (if (package-get-init-package (package-admin-get-lispdir
+					     install-dir package))
 		  (progn
 		    (message "Added package `%s'" package)
 		    (sit-for 0)
@@ -581,9 +540,10 @@ Creates `package-get-dir'  it it doesn't exist."
   (if (not (file-exists-p package-get-dir))
       (make-directory package-get-dir))
   (expand-file-name
-   (file-name-nondirectory (or (nth 2 (efs-ftp-path filename)) filename))
+   (file-name-nondirectory (or (and (fboundp 'efs-ftp-path)
+				    (nth 2 (efs-ftp-path filename)))
+			       filename))
    (file-name-as-directory package-get-dir)))
-       
 
 (defun package-get-remote-filename (search filename)
   "Return FILENAME as a remote filename.

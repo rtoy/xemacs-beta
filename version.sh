@@ -2,7 +2,7 @@
 emacs_major_version=21
 emacs_minor_version=0
 emacs_beta_version=
-xemacs_codename="Norwegian"
+xemacs_codename="Poitou"
 infodock_major_version=4
 infodock_minor_version=0
-infodock_build_version=4
+infodock_build_version=5

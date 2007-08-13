@@ -27,6 +27,12 @@
   :initialize 'package-get-ever-installed-p
   :type 'boolean)
 
+(defcustom irchat-package nil 
+  "ZENIRC IRC Client."
+  :group 'comm-packages
+  :initialize 'package-get-ever-installed-p
+  :type 'boolean)
+
 (defcustom mailcrypt-package nil 
   "Support for messaging encryption with PGP."
   :group 'comm-packages
@@ -47,6 +53,12 @@
 
 (defcustom net-utils-package nil 
   "Miscellaneous Networking Utilities."
+  :group 'comm-packages
+  :initialize 'package-get-ever-installed-p
+  :type 'boolean)
+
+(defcustom gnus-package nil 
+  "The Gnus Newsreader and Mailreader."
   :group 'comm-packages
   :initialize 'package-get-ever-installed-p
   :type 'boolean)
@@ -77,6 +89,12 @@
 
 (defcustom w3-package nil 
   "A Web browser."
+  :group 'comm-packages
+  :initialize 'package-get-ever-installed-p
+  :type 'boolean)
+
+(defcustom zenirc-package nil 
+  "ZENIRC IRC Client."
   :group 'comm-packages
   :initialize 'package-get-ever-installed-p
   :type 'boolean)

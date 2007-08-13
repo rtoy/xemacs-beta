@@ -1,3 +1,26 @@
+1998-09-29  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre14 is released.
+
+1998-09-09  Gunnar Evermann  <Gunnar.Evermann@nats.informatik.uni-hamburg.de>
+
+	* lwlib/xlwmenu.c:
+	* lwlib/xlwscrollbar: fix for Motif >=2.0
+	Patch provided by Glenn Barry <gtb@eng.sun.com>
+
+	* PROBLEMS: XEmacs 21.0 now works on HP-UX 11.0
+
+1998-09-02  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: check for cygwin32/version.h.
+
+1998-09-21  Martin Buchholz  <martin@xemacs.org>
+
+	* lwlib/xlwmenu.c (string_draw_u): 
+	* lwlib/xlwmenu.c (string_width_u): 
+	Fix killer memory leak.
+	Free memory allocated by XmStringGetLtoR.
+
 1998-08-31  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
 
 	* PROBLEMS: Added AIX 4.3 note.

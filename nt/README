@@ -46,14 +46,21 @@ If you want to build for native GUI:
     cd to the libpng directory, rename or move the zlib directory to ..\zlib
     and type 'nmake -f scripts\makefile.w32'.
 
-3.  If you want JPEG and/or TIFF support grab the latest versions of jpegsrc
-    and/or libtiff and read the respective READMEs for details on how to build
-    them.
+3.  If you want TIFF support, grap the latest version of libtiff (tiff-v3.4
+    at time of writing) and unpack it somewhere. Copy nt\tiff.mak from the 
+    xemacs sources to the contrib\winnt subdirectory of the tiff sources, 
+    cd to that directory and build libtiff with 'nmake -f tiff.mak'. Note:
+    tiff.mak has only been verified to work under WinNT, not Win95 or 98. 
+    However, the lastest distribution of libtiff includes a 
+    contrib\win95\makefile.w95; that might work.
 
-4.  cd to the nt subdirectory of the xemacs distribution and build xemacs:
+4.  If you want JPEG support grab the latest version of jpegsrc (jpeg-6b at 
+    time of writing) and read the README for details on how to build it.
+
+5.  cd to the nt subdirectory of the xemacs distribution and build xemacs:
     `nmake install -f xemacs.mak`, but read on before hitting Enter.
 
-5.  If you're building with XPM support, add this to the nmake command line:
+6.  If you're building with XPM support, add this to the nmake command line:
 	HAVE_XPM=1 XPM_DIR="x:\location\of\your\xpm\sources"
     and similarly for JPEG and TIFF support.
 
@@ -64,7 +71,7 @@ If you want to build for native GUI:
     If you want to build with GIF support, add this to the nmake command line:
 	HAVE_GIF=1
 
-6.  By default, XEmacs will look for packages in
+7.  By default, XEmacs will look for packages in
     "c:\Program Files\XEmacs\packages". If you want it to look elsewhere,
     add this to the nmake command line:
 	PACKAGEPATH="x:\\location\\of\\your\\packages"
@@ -72,19 +79,19 @@ If you want to build for native GUI:
     package path after you've already built XEmacs, delete the file
     .\obj\emacs.obj before rebuilding with the new value of PACKAGEPATH.
 
-7.  By default, XEmacs will be installed in directories under the directory
+8.  By default, XEmacs will be installed in directories under the directory
     "c:\Program Files\XEmacs\XEmacs-21.0". If you want to install it
     elsewhere, add this to the nmake command line:
 	INSTALL_DIR="x:\your\installation\directory"
 
-8.  Now you can press Enter. nmake will build temacs, the DOC file, update the
+9.  Now you can press Enter. nmake will build temacs, the DOC file, update the
     elc's, dump xemacs and install the relevant files in the directories under
     the installation directory. Unless you set INSTALL_DIR above, the file that
     you should run to start XEmacs will be installed as
     "c:\Program Files\XEmacs\XEmacs-21.0\i386-pc-win32\runemacs.exe". You may
     want to create a shortcut to that file from your Desktop or Start Menu.
 
-9.  The build process always creates debugging and "Source Browser" information
+10. The build process always creates debugging and "Source Browser" information
     in the source tree for use with MS DevStudio. If you actually want to debug
     XEmacs you should run XEmacs from the source directory instead of from the
     installation directory. You should probably also build a debug version of

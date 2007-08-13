@@ -243,6 +243,7 @@ in `substitute-in-file-name'."
        (delete-region (point-min) (point)))
   (insert ?~))
 
+
 (defvar read-file-name-map
   (let ((map (make-sparse-keymap 'read-file-name-map)))
     (set-keymap-parents map (list minibuffer-local-completion-map))
@@ -447,12 +448,14 @@ See also the variable completion-highlight-first-word-only for control over
 		 (insert initial-contents)
 		 (setq current-minibuffer-contents initial-contents
 		       current-minibuffer-point (point))))
-           (use-local-map (or keymap minibuffer-local-map))
+           (use-local-map (help-keymap-with-help-key
+			   (or keymap minibuffer-local-map)
+			   minibuffer-help-form))
            (let ((mouse-grabbed-buffer
 		  (and minibuffer-smart-completion-tracking-behavior
 		       (current-buffer)))
                  (current-prefix-arg current-prefix-arg)
-                 (help-form minibuffer-help-form)
+;;                 (help-form minibuffer-help-form)
                  (minibuffer-history-variable (cond ((not _history_)
                                                      'minibuffer-history)
                                                     ((consp _history_)

@@ -376,7 +376,7 @@ Marcus Thiessel <marcus_thiessel@hp.com>
 
 Marcus Thiessel <marcus_thiessel@hp.com>
 
-  Unfortunately, XEmacs releases don't work with Motif2.1. It
+  Unfortunately, XEmacs releases <21.0 don't work with Motif2.1. It
   will compile but you will get excessive X11 errors like
 
   xemacs: X Error of failed request:  BadGC (invalid GC parameter)

@@ -1,3 +1,114 @@
+1998-09-29  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre14 is released.
+
+1998-08-14  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* files.el (auto-mode-alist): Enhanced regexp for perl-mode
+
+1998-09-22  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* info.el (Info-mode): Document page turning by double clicks in
+	docstring so `M-x describe-mode' will display it.
+
+1998-09-20  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* info.el (Info-mouse-track-double-click-hook): Use character
+	widths to calculate a border region where double clicking does
+	page turning, and return `nil' by default so other hooks, such as
+	region highlighting, will be run.
+
+1998-09-29  Colin Rafferty   <colin@xemacs.org>
+
+	* sound.el (default-sound-directory-list): Initialize with all the 
+	"sounds" directories in `data-directory-list'.  It used to just be 
+	the first one.
+
+	* packages.el (locate-data-directory-list): Created.  This gives
+	the list of matching directories, unlike `locate-data-directory',
+	which just gives the first one.
+
+1998-09-28  Raymond Wiker <raymond@orion.no>
+
+	* packages.el: Added "man" as a special subdirectory of packages.
+
+1998-09-26  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* minibuf.el (read-from-minibuffer): No longer bind help-form but
+	make a binding in the local keymap until help-char handling is
+	improved. 
+
+	* help.el (help-keymap-with-help-key): Provide keymap with help
+	binding.
+	(help-print-help-form): New helper function.
+
+1998-09-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* isearch-mode.el (isearch-highlight): set-extent-endpoints can
+	move extent to another buffer; no need to create a new extent.
+	(isearch-fix-case): New function.
+	(isearch-search-and-update): Use it.
+
+1998-09-20  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* msw-faces.el (mswindows-init-device-faces): Don't try to
+	  specify a default font at this late stage. Do try to force
+	  creation of the default face font so that if it fails we get
+	  an error now instead of a crash at frame creation.
+
+	  mswindows-font-canonicalize-name, mswindows-make-font-unbold,
+	  mswindows-make-font-unitalic: Canonical default weight
+	  changed from "Normal" to "Regular".
+
+	  mswindows-make-font-bold / -bold-italic: Supplied device was
+	  not being passed into call to mswindows-find-smaller-font.
+
+1998-09-10  Björn Torkelsson  <torkel@hpc2n.umu.se>
+
+	* package-get.el (package-get-remote): Fix the path where to find
+	  the packages on xemacs.org.
+
+1998-09-08  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* about.el (about-maintainer-info): Update Ben's entry.
+
+1998-09-20  Darryl Okahata  <darrylo@sr.hp.com>
+
+	* packages.el: Added new function, `package-delete-name', to
+	  delete existing packages from the installed package database
+ 	  (`packages-package-list').  Also added the "pkginfo" directory
+ 	  to `packages-special-base-regexp', so that the pkginfo directory
+ 	  would not get added to `late-packages'.
+
+	* package-admin.el: Added ability to delete an installed package
+	  (added low-level function, `package-admin-delete-package').
+  	  Understands how to use the pkginfo/MANIFEST.<package> file to
+ 	  delete the package.  When installing a package, will also
+ 	  create a MANIFEST.* file if one is not provided by the
+ 	  package.  If the MANIFEST.* doesn't exist when deleting a
+ 	  package, the functions will fall back to attempting to delete
+ 	  any package-specific lisp directory.
+
+	* package-get.el: Moved some functions to package-admin.el.
+	  Added interactive function `package-get-delete-package', for
+	  use by users for deleting a package.
+
+	  Also modified to not require the prescence of efs.
+
+1998-09-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* files.el (find-file-noselect): Handle all signals, kill the
+	buffer and resignal.
+
+1998-09-23  SL Baur  <steve@altair.xemacs.org>
+
+	* cl-macs.el (glyph-image): Add setf method.
+
+1998-09-15  SL Baur  <steve@altair.xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list): Eliminate reference to
+	InfoDock-specific id-menus.el.
+
 1998-09-06  Darryl Okahata  <darrylo@sr.hp.com>
 
 	* package-get.el: Fixed broken EFS downloading.  Also, look for

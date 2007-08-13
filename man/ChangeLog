@@ -1,3 +1,16 @@
+1998-09-29  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre14 is released.
+
+1998-09-20  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lispref/customize.texi: New file.
+
+1998-09-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* internals/internals.texi (Coding for Mule): New node and
+	section.
+
 1998-09-03  Darryl Okahata  <darrylo@sr.hp.com>
 
 	* xemacs/packages.texi: Document manually installing binary packages.

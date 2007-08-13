@@ -1,4 +1,21 @@
 							-*- indented-text -*-
+to 21.0 "Poitou"
+-- port to Motif >= 2.0
+-- help keymap fixes from Jan Vroonhof
+-- isearch mixed case bugfix from Hrvoje Niksic
+-- cygwin gnuclient fix from Raymond Toy
+-- fix for divide by 0 error in non-English MS Windows from Jonathan Harris
+-- subprocess signalling fix for MS windows from Jonathan Harris
+-- PROBLEMS file for MS windows from Jonathan Harris
+-- BSD Fix from Kazuyuki IENAGA
+-- miscellaneous bug fixes from Altrasoft
+-- various package fixes
+-- various documentation updates
+-- widening fix from Gunnar Everman
+-- signal fix in find-file-noselect from Hrvoje Niksic
+-- Memory leak fix from Martin Buchholz
+-- Memory leak fix from CDE DnD from Oliver Graf
+
 to 21.0 "Norwegian"
 -- PNG memleak fix from Andy Piper
 -- MS Windows NT directory separator check fix from Jonathan Harris

@@ -946,6 +946,7 @@ temacs: $(TEMACS)
 # use this rule to install the system
 install:	all
 	@echo Installing in $(INSTALL_DIR) ...
+	@xcopy /q PROBLEMS "$(INSTALL_DIR)\"
 	@xcopy /q README "$(INSTALL_DIR)\lock\"
 	@del "$(INSTALL_DIR)\lock\README"
 	@xcopy /q $(LIB_SRC)\*.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
