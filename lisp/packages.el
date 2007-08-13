@@ -48,6 +48,7 @@
 ;; Because of all this, make sure that the stuff you put here really
 ;; belongs here.
 
+;; This file requires find-paths.el.
 
 ;;; Code:
 
@@ -55,6 +56,18 @@
 
 (defvar packages-package-list nil
   "database of loaded packages and version numbers")
+
+(defvar early-packages nil
+  "Packages early in the load path.")
+
+(defvar early-package-load-path nil
+  "Load path for packages early in the load path.")
+
+(defvar early-packages nil
+  "Packages late in the load path.")
+
+(defvar late-package-load-path nil
+  "Load path for packages late in the load path.")
 
 (defun package-get-key-1 (info key)
   "Locate keyword `key' in list."
@@ -249,151 +262,6 @@ This is an extremely dangerous function to call at any time."
   ;; Nothing for the moment
   nil)
 
-;; The following function is called from temacs
-(defun packages-find-packages-1 (package path-only append-p user-package)
-  "Search the supplied directory for associated directories.
-The top level is assumed to look like:
-info/           Contain texinfo files for lisp installed in this hierarchy
-etc/            Contain data files for lisp installled in this hierarchy
-lisp/           Contain directories which either have straight lisp code
-                or are self-contained packages of their own.
-
-If the argument `append-p' is non-nil, the found directories will be
-appended to the paths, otherwise, they will be prepended.
-
-This is an internal function.  Do not call it after startup."
-  ;; Info files
-  (if (and (null path-only) (file-directory-p (concat package "/info")))
-      (let ((dir (concat package "/info/")))
-	(if (not (member dir Info-default-directory-list))
-	    (nconc Info-default-directory-list (list dir)))))
-  ;; Data files
-  (if (and (null path-only) (file-directory-p (concat package "/etc")))
-      (setq data-directory-list
-	    (if append-p
-		(append data-directory-list (list (concat package "/etc/")))
-	      (cons (concat package "/etc/") data-directory-list))))
-  ;; Lisp files
-  (if (file-directory-p (concat package "/lisp"))
-      (progn
-;	(print (concat "DIR: "
-;		       (if user-package "[USER]" "")
-;		       package
-;		       "/lisp/"))
-	(setq load-path
-	      (if append-p
-		  (append load-path (list (concat package "/lisp/")))
-		(cons (concat package "/lisp/") load-path)))
-
-	;; Locate and process a dumped-lisp.el file if it exists
-	(if (and (running-temacs-p)
-		 (file-exists-p (concat package "/lisp/dumped-lisp.el")))
-	    (let (package-lisp)
-	      (let (preloaded-file-list)
-		(load (concat package "/lisp/dumped-lisp.el")))
-	      (if package-lisp
-		  (progn
-		    (if (boundp 'preloaded-file-list)
-			(setq preloaded-file-list
-			      (append preloaded-file-list package-lisp)))
-		    (if (fboundp 'load-gc)
-			(setq dumped-lisp-packages
-			      (append dumped-lisp-packages package-lisp)))))))
-
-	(if user-package
-	    (condition-case error
-		(load (concat package "/lisp/"
-			      (file-name-sans-extension autoload-file-name))
-		      t)
-	      (error
-	       (warn (format "Autoload error in: %s/lisp/:\n\t%s"
-			     package
-			     (with-output-to-string
-			       (display-error error nil)))))))
-	(let ((dirs (directory-files (concat package "/lisp/")
-				     t "^[^-.]" nil 'dirs-only))
-	      dir)
-	  (while dirs
-	    (setq dir (car dirs))
-;	    (print (concat "DIR: " dir "/"))
-	    (setq load-path
-		  (if append-p
-		      (append load-path (list (concat dir "/")))
-		    (cons (concat dir "/") load-path)))
-
-	    ;; Locate and process a dumped-lisp.el file if it exists
-	    (if (and (running-temacs-p)
-		     (file-exists-p (concat dir "/dumped-lisp.el")))
-		(let (package-lisp)
-		  (let (preloaded-file-list)
-		    (load (concat dir "/dumped-lisp.el")))
-		  (if package-lisp
-		      (progn
-			(if (boundp 'preloaded-file-list)
-			    (setq preloaded-file-list
-				  (append preloaded-file-list package-lisp)))
-			(if (fboundp 'load-gc)
-			    (setq dumped-lisp-packages
-				  (append dumped-lisp-packages
-					  package-lisp)))))))
-
-	    (if user-package
-		(condition-case error
-		    (progn
-;		      (print
-;		       (concat dir "/"
-;			       (file-name-sans-extension autoload-file-name)))
-		      (load
-		       (concat dir "/"
-			       (file-name-sans-extension autoload-file-name))
-		       t))
-		  (error
-		   (warn (format "Autoload error in: %s/:\n\t%s"
-				 dir
-				 (with-output-to-string
-				   (display-error error nil)))))))
-	    (packages-find-packages-1 dir path-only append-p user-package)
-	    (setq dirs (cdr dirs)))))))
-
-;; The following function is called from temacs
-(defun packages-find-packages-2 (path path-only append-p suppress-user)
-  "Search the supplied path for associated directories.
-If the argument `append-p' is non-nil, the found directories will be
-appended to the paths, otherwise, they will be prepended.
-
-This is an internal function.  Do not call it after startup."
-  (let (dir)
-    (while path
-      (setq dir (car path))
-      ;; (prin1 (concat "Find: " (expand-file-name dir) "\n"))
-      (if (null (and (or suppress-user inhibit-package-init)
-		     (string-match "^~" dir)))
-	  (progn
-	    ;; (print dir)
-	    (packages-find-packages-1 (expand-file-name dir)
-				      path-only
-				      append-p
-				      (string-match "^~" dir))))
-      (setq path (cdr path)))))
-
-;; The following function is called from temacs
-(defun packages-find-packages (pkg-path path-only &optional suppress-user)
-  "Search the supplied path for additional info/etc/lisp directories.
-Lisp directories if configured prior to build time will have equivalent
-status as bundled packages.
-If the argument `path-only' is non-nil, only the `load-path' will be set,
-otherwise data directories and info directories will be added.
-If the optional argument `suppress-user' is non-nil, package directories
-rooted in a user login directory (like ~/.xemacs) will not be searched.
-This is used at dump time to suppress the builder's local environment."
-  (let ((prefix-path nil))
-    (while (and pkg-path (car pkg-path))
-      (setq prefix-path (cons (car pkg-path) prefix-path)
-	    pkg-path (cdr pkg-path)))
-    (packages-find-packages-2 (cdr pkg-path) path-only t suppress-user)
-    (packages-find-packages-2 prefix-path path-only nil suppress-user)))
-
-
 ;; Data-directory is really a list now.  Provide something to search it for
 ;; directories.
 
@@ -422,10 +290,159 @@ This function is basically a wrapper over `locate-file'."
     (setq dir-list data-directory-list))
   (locate-file name dir-list))
 
-;; If we are being loaded as part of being dumped, bootstrap the rest of the
-;; load-path for loaddefs.
-(if (fboundp 'load-gc)
-    (packages-find-packages package-path t t))
+;; Path setup
+
+(defun packages-find-package-path (roots)
+  "Construct the package path underneath installation roots ROOTS."
+  (let ((envvar-value (getenv "EMACSPACKAGEPATH")))
+    (if envvar-value
+	(decode-path-internal envvar-value)
+      (let ((site-base-directory (paths-find-site-directory roots "packages"))
+	    (version-base-directory (paths-find-version-directory roots "packages")))
+	(if (or site-base-directory version-base-directory)
+	    (let ((site-mule-directory
+		   (and (featurep 'mule)
+			(paths-find-site-directory roots
+						   "mule-packages")))
+		  (version-mule-directory
+		   (and (featurep 'mule)
+			(paths-find-version-directory roots
+						      "mule-packages"))))
+	      (append '("~/.xemacs/")
+		      '(nil)
+		      (and version-mule-directory
+			   (null (string-equal version-mule-directory
+					      site-mule-directory))
+			   (list version-mule-directory))
+		      (and site-mule-directory
+			   (list site-mule-directory))
+		      (and version-base-directory
+			   (null (string-equal version-base-directory
+					      site-base-directory))
+			   (list version-base-directory))
+		      (and site-base-directory
+			   (list site-base-directory))))
+	  configure-package-path)))))
+
+(defvar packages-special-bases '("etc" "info" "lisp" "lib-src" "bin")
+  "Special subdirectories of packages.")
+
+(defun packages-find-packages-in-directories (directories)
+  "Find all packages underneath directories in DIRECTORIES."
+  (paths-find-recursive-path directories
+			     (append paths-version-control-bases
+				     packages-special-bases)))
+
+(defun packages-split-path (path)
+  "Split PATH at NIL, return pair with two components.
+The second component is shared with PATH."
+  (let ((reverse-early '()))
+    (while (and path (null (null (car path))))
+      (setq reverse-early (cons (car path) reverse-early))
+      (setq path (cdr path)))
+    (if (null path)
+	(cons nil path)
+      (cons (reverse reverse-early) (cdr path)))))
+
+(defun packages-find-packages (package-path &optional inhibit)
+  "Search for all packages in PACKAGE-PATH.
+PACKAGE-PATH may distinguish (by NIL-separation) between early
+and late packages.
+If INHIBIT is non-NIL, return empty paths.
+This returns (CONS EARLY-PACKAGES LATE-PACKAGES)."
+  (if inhibit
+      (cons '() '())
+    (let* ((stuff (packages-split-path package-path))
+	   (early (car stuff))
+	   (late (cdr stuff)))
+      (cons (packages-find-packages-in-directories early)
+	    (packages-find-packages-in-directories late)))))
+
+(defun packages-find-package-library-path (packages suffixes)
+  "Construct a path into a component of the packages hierarchy.
+PACKAGES is a list of package directories.
+SUFFIXES is a list of names of package subdirectories to look for."
+  (let ((directories
+	 (apply
+	  #'append
+	  (mapcar #'(lambda (package)
+		      (mapcar #'(lambda (suffix)
+				  (concat package suffix))
+			      suffixes))
+		  packages))))
+    (paths-directories-which-exist directories)))
+
+(defun packages-find-package-load-path (packages)
+  "Construct the load-path component for packages.
+PACKAGES is a list of package directories."
+  (paths-find-recursive-load-path
+   (packages-find-package-library-path packages '("lisp/"))))
+
+(defun packages-find-package-exec-path (packages)
+  (packages-find-package-library-path packages
+				   (list (concat "bin/" system-configuration "/")
+					 "lib-src/")))
+
+(defun packages-find-package-info-path (packages)
+  (packages-find-package-library-path packages '("info/")))
+
+(defun packages-find-package-data-path (packages)
+  (packages-find-package-library-path packages '("etc/")))
+
+;; Loading package initialization files
+
+(defun packages-load-package-lisps (package-load-path base)
+  "Load all Lisp files of a certain name along a load path.
+BASE is the base name of the files."
+  (mapc #'(lambda (dir)
+	    (let ((file-name (expand-file-name base dir)))
+	      (if (file-exists-p file-name)
+		  (condition-case error
+		      (load file-name)
+		    (error
+		     (warn (format "Autoload error in: %s:\n\t%s"
+				   file-name
+				   (with-output-to-string
+				     (display-error error nil)))))))))
+	package-load-path))
+
+(defun packages-load-package-auto-autoloads (package-load-path)
+  "Load auto-autoload files along a load path."
+  (packages-load-package-lisps package-load-path
+			       (file-name-sans-extension autoload-file-name)))
+
+(defun packages-handle-package-dumped-lisps (handle package-load-path)
+  "Load dumped-lisp.el files along a load path.
+Call HANDLE on each file off definitions of PACKAGE-LISP there."
+  (mapc #'(lambda (dir)
+	    (let ((file-name (expand-file-name "dumped-lisp.el" dir)))
+	      (if (file-exists-p file-name)
+		  (let (package-lisp
+			;; 20.4 packages could set this
+			preloaded-file-list)
+		    (load file-name)
+		    ;; dumped-lisp.el could have set this ...
+		    (if package-lisp
+			(mapc #'(lambda (base)
+				  (funcall handle (expand-file-name base dir)))
+			      package-lisp))))))
+	  package-load-path))
+
+(defun packages-load-package-dumped-lisps (package-load-path)
+  "Load dumped-lisp.el files along a load path.
+Also load files off PACKAGE-LISP definitions there"
+  (packages-handle-package-dumped-lisps #'load package-load-path))
+
+(defun packages-collect-package-dumped-lisps (package-load-path)
+  "Load dumped-lisp.el files along a load path.
+Return list of files off PACKAGE-LISP definitions there"
+  (let ((*files* '()))
+    (packages-handle-package-dumped-lisps
+     #'(lambda (file)
+	 (setq *files* (cons (file-name-nondirectory file)
+			     *files*)))
+     package-load-path)
+    (reverse *files*)))
 
 (provide 'packages)
 

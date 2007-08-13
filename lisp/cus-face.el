@@ -28,7 +28,7 @@
 ;;;###autoload
 (defun custom-declare-face (face spec doc &rest args)
   "Like `defface', but FACE is evaluated as a normal argument."
-  ;; (when (fboundp 'load-gc)
+  ;; (when (fboundp 'pureload)
     ;; (error "Attempt to declare a face during dump"))
   (unless (get face 'face-defface-spec)
     (put face 'face-defface-spec spec)

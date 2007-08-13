@@ -40,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* The name of the directory in which we keep lock files, with a '/'
    appended.  */
-Lisp_Object Vlock_directory;
+Lisp_Object Vlock_directory, Vconfigure_lock_directory;
 
 #if 0 /* FSFmacs */
 /* Look in startup.el */
@@ -51,7 +51,7 @@ Lisp_Object Vlock_directory;
 
 /* The name of the superlock file.  This is SUPERLOCK_NAME appended to
    Vlock_directory.  */
-Lisp_Object Vsuperlock_file;
+Lisp_Object Vsuperlock_file, Vconfigure_superlock_file;
 
 Lisp_Object Qask_user_about_supersession_threat;
 Lisp_Object Qask_user_about_lock;
@@ -523,25 +523,34 @@ vars_of_filelock (void)
   DEFVAR_LISP ("lock-directory", &Vlock_directory /*
 Don't change this
 */ );
+  Vlock_directory = Qnil;
   DEFVAR_LISP ("superlock-file", &Vsuperlock_file /*
 Don't change this
 */ );
+  Vsuperlock_file = Qnil;
 }
 
 void
 complex_vars_of_filelock (void)
 {
+  DEFVAR_LISP ("configure-lock-directory", &Vconfigure_lock_directory /*
+For internal use by the build procedure only.
+configure's idea of what LOCK-DIRECTORY will be.
+*/ );
 #ifdef PATH_LOCK
-  Vlock_directory =
+  Vconfigure_lock_directory =
     Ffile_name_as_directory (build_string (PATH_LOCK));
 #else
-  Vlock_directory = Qnil;
+  Vconfigure_lock_directory = Qnil;
 #endif
+  DEFVAR_LISP ("configure-superlock-file", &Vconfigure_superlock_file /*
+For internal use by the build procedure only.
+configure's idea of what SUPERLOCK-FILE will be.
+*/ );
 #ifdef PATH_SUPERLOCK
-  Vsuperlock_file =
-    Ffile_name_as_directory (build_string (PATH_SUPERLOCK));
+  Vconfigure_superlock_file = build_string (PATH_SUPERLOCK);
 #else
-  Vsuperlock_file = Qnil;
+  Vconfigure_superlock_file = Qnil;
 #endif
   /* All the rest done dynamically by startup.el */
 }

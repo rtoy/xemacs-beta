@@ -55,14 +55,6 @@ Lisp_Object Vbinary_process_input;
 Lisp_Object Vbinary_process_output;
 #endif /* DOS_NT */
 
-Lisp_Object Vexec_path, Vexec_directory, Vdata_directory, Vdoc_directory;
-Lisp_Object Vdata_directory_list;
-Lisp_Object Vconfigure_info_directory, Vsite_directory;
-Lisp_Object Vinfopath_internal;
-
-/* The default base directory XEmacs is installed under. */
-Lisp_Object Vprefix_directory;
-
 Lisp_Object Vshell_file_name;
 
 /* The environment to pass to all subprocesses when they are started.
@@ -877,134 +869,6 @@ init_callproc (void)
       }
   }
 
-  /* jwz: don't do these things when in temacs (this used to be the case by
-     virtue of egetenv() always returning 0, but that has been changed).
-   */
-#ifndef CANNOT_DUMP
-  if (!initialized)
-    {
-      Vdata_directory = Qnil;
-      Vsite_directory = Qnil;
-      Vdoc_directory  = Qnil;
-      Vexec_path      = Qnil;
-    }
-  else
-#endif
-    {
-      char *data_dir = egetenv ("EMACSDATA");
-      char *site_dir = egetenv ("EMACSSITE");
-      char *doc_dir  = egetenv ("EMACSDOC");
-
-#ifdef PATH_DATA
-      if (!data_dir)
-	data_dir = (char *) PATH_DATA;
-#endif
-#ifdef PATH_DOC
-      if (!doc_dir)
-	doc_dir = (char *) PATH_DOC;
-#endif
-#ifdef PATH_SITE
-      if (!site_dir)
-	site_dir = (char *) PATH_SITE;
-#endif
-
-      if (data_dir)
-	Vdata_directory = Ffile_name_as_directory
-	  (build_string (data_dir));
-      else
-	Vdata_directory = Qnil;
-      if (doc_dir)
-	Vdoc_directory = Ffile_name_as_directory
-	  (build_string (doc_dir));
-      else
-	Vdoc_directory = Qnil;
-      if (site_dir)
-	Vsite_directory = Ffile_name_as_directory
-	  (build_string (site_dir));
-      else
-	Vsite_directory = Qnil;
-
-      /* Check the EMACSPATH environment variable, defaulting to the
-	 PATH_EXEC path from paths.h.  */
-      Vexec_path = decode_env_path ("EMACSPATH",
-#ifdef PATH_EXEC
-				    PATH_EXEC
-#else
-				    0
-#endif
-				    );
-    }
-
-  if (NILP (Vexec_path))
-    Vexec_directory = Qnil;
-      else
-    Vexec_directory = Ffile_name_as_directory
-      (Fcar (Vexec_path));
-
-  if (initialized)
-    Vexec_path = nconc2 (decode_env_path ("PATH", 0),
-                         Vexec_path);
-
-  if (!NILP (Vexec_directory))
-    {
-      tempdir = Fdirectory_file_name (Vexec_directory);
-      if (access ((char *) XSTRING_DATA (tempdir), 0) < 0)
-	{
-	  /* If the hard-coded path is bogus, fail silently.
-	     This will allow the normal heuristics to make an attempt. */
-#if 0
-	  warn_when_safe
-	    (Qpath, Qwarning,
-	     "Warning: machine-dependent data dir (%s) does not exist.\n",
-	     XSTRING_DATA (Vexec_directory));
-#else
-	  Vexec_directory = Qnil;
-#endif
-	}
-    }
-
-  if (!NILP (Vdata_directory))
-    {
-      tempdir = Fdirectory_file_name (Vdata_directory);
-      if (access ((char *) XSTRING_DATA (tempdir), 0) < 0)
-	{
-	  /* If the hard-coded path is bogus, fail silently.
-	     This will allow the normal heuristics to make an attempt. */
-#if 0
-	  warn_when_safe
-	    (Qpath, Qwarning,
-	     "Warning: machine-independent data dir (%s) does not exist.\n",
-	     XSTRING_DATA (Vdata_directory));
-#else
-	  Vdata_directory = Qnil;
-#endif
-	}
-    }
-
-  if (!NILP (Vsite_directory))
-    {
-      tempdir = Fdirectory_file_name (Vsite_directory);
-      if (access ((char *) XSTRING_DATA (tempdir), 0) < 0)
-	{
-	  /* If the hard-coded path is bogus, fail silently.
-	     This will allow the normal heuristics to make an attempt. */
-#if 0
-	  warn_when_safe
-	    (Qpath, Qwarning,
-	     "Warning: machine-independent site dir (%s) does not exist.\n",
-	     XSTRING_DATA (Vsite_directory));
-#else
-	  Vsite_directory = Qnil;
-#endif
-	}
-    }
-
-#ifdef PATH_PREFIX
-  Vprefix_directory = build_string ((char *) PATH_PREFIX);
-#else
-  Vprefix_directory = Qnil;
-#endif
-
 #ifdef WINDOWSNT
   /* Sync with FSF Emacs 19.34.6 note: this is not in 19.34.6. --marcpa */
   /*
@@ -1083,79 +947,10 @@ vars_of_callproc (void)
 Initialized from the SHELL environment variable.
 */ );
 
-  DEFVAR_LISP ("exec-path", &Vexec_path /*
-*List of directories to search programs to run in subprocesses.
-Each element is a string (directory name) or nil (try default directory).
-*/ );
-
-  DEFVAR_LISP ("exec-directory", &Vexec_directory /*
-Directory of architecture-dependent files that come with XEmacs,
-especially executable programs intended for XEmacs to invoke.
-*/ );
-
-  DEFVAR_LISP ("data-directory", &Vdata_directory /*
-Directory of architecture-independent files that come with XEmacs,
-intended for XEmacs to use.
-Use of this variable in new code is almost never correct.  See the
-function `locate-data-directory' and the variable `data-directory-list'.
-*/ );
-
-  DEFVAR_LISP ("data-directory-list", &Vdata_directory_list /*
-List of directories of architecture-independent files that come with XEmacs
-or were installed as packages, and are intended for XEmacs to use.
-*/ );
-  Vdata_directory_list = Qnil;
-
-  DEFVAR_LISP ("site-directory", &Vsite_directory /*
-Directory of architecture-independent files that do not come with XEmacs,
-intended for XEmacs to use.
-*/ );
-
-  /* FSF puts the DOC file into data-directory.  They do a bunch of
-     contortions to attempt to put everything into the DOC file
-     whether the support is there or not. */
-  DEFVAR_LISP ("doc-directory", &Vdoc_directory /*
-Directory containing the DOC file that comes with XEmacs.
-This is usually the same as exec-directory.
-*/ );
-
-  DEFVAR_LISP ("prefix-directory", &Vprefix_directory /*
-The default directory under which XEmacs is installed.
-*/ );
-
   DEFVAR_LISP ("process-environment", &Vprocess_environment /*
 List of environment variables for subprocesses to inherit.
 Each element should be a string of the form ENVVARNAME=VALUE.
 The environment which Emacs inherits is placed in this variable
 when Emacs starts.
 */ );
-}
-
-void
-complex_vars_of_callproc (void)
-{
-  DEFVAR_LISP ("configure-info-directory", &Vconfigure_info_directory /*
-For internal use by the build procedure only.
-This is the name of the directory in which the build procedure installed
-Emacs's info files; the default value for Info-default-directory-list
-includes this.
-*/ );
-
-#ifdef PATH_INFO
-  Vconfigure_info_directory =
-    Ffile_name_as_directory (build_string (PATH_INFO));
-#else
-  Vconfigure_info_directory = Qnil;
-#endif
-
-  DEFVAR_LISP ("infopath-internal", &Vinfopath_internal /*
-The configured initial value of Info-default-directory-list.
-*/ );
-
-#ifdef PATH_INFOPATH
-  Vinfopath_internal = build_string (PATH_INFOPATH);
-#else
-  Vinfopath_internal =
-    build_string ("/usr/info:/usr/local/info:/usr/lib/texmf/doc/info:/usr/local/lib/texmf/doc/info");
-#endif
 }

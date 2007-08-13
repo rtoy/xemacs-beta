@@ -3184,14 +3184,14 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
     while (!NILP (t))
       {
 	i++;
-	sprintf(buf,"OPERATE (%d): ",i);
-	write_c_string (buf,Qexternal_debugging_output);
+	sprintf (buf,"OPERATE (%d): ",i);
+	write_c_string (buf, Qexternal_debugging_output);
 	print_internal (t, Qexternal_debugging_output, 1);
 	write_c_string ("\n", Qexternal_debugging_output);
 	t = XEVENT_NEXT (t);
       }
   }
-#endif
+#endif /* 0 */
 
   /* menu accelerator keys don't go into keyboard macros */
   if (!NILP (con->defining_kbd_macro) && NILP (Vexecuting_macro))

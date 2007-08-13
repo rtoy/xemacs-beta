@@ -1,4 +1,4 @@
-;;; loadup.el --- load up standardly loaded Lisp files for XEmacs.
+;; loadup.el --- load up standardly loaded Lisp files for XEmacs.
 
 ;; Copyright (C) 1985, 1986, 1992, 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1996 Richard Mlynarik.
@@ -48,6 +48,8 @@
 (call-with-condition-handler 'really-early-error-handler
     #'(lambda ()
 	;; message not defined yet ...
+	(setq load-path (decode-path-internal (getenv "EMACSBOOTSTRAPLOADPATH")))
+
 	(external-debugging-output (format "\nUsing load-path %s" load-path))
 
 	;; We don't want to have any undo records in the dumped XEmacs.
@@ -76,7 +78,7 @@
 	;; minimize the size of the dumped image (if we don't do this,
 	;; there will be lots of extra space in the data segment filled
 	;; with garbage-collected junk)
-	(defun load-gc (file)
+	(defun pureload (file)
 	  (let ((full-path (locate-file file
 					load-path
 					(if load-ignore-elc-files
@@ -91,10 +93,11 @@
 	      nil)))
 
 	(load (concat default-directory "../lisp/dumped-lisp.el"))
+
 	(let ((dumped-lisp-packages preloaded-file-list)
 	      file)
 	  (while (setq file (car dumped-lisp-packages))
-	    (or (load-gc file)
+	    (or (pureload file)
 	      (progn
 		(external-debugging-output "Fatal error during load, aborting")
 		(kill-emacs 1)))
@@ -104,7 +107,11 @@
 		;; else still define a few functions.
 		(defun toolbar-button-p    (obj) "No toolbar support." nil)
 		(defun toolbar-specifier-p (obj) "No toolbar support." nil)))
-	  (fmakunbound 'load-gc))
+	  (fmakunbound 'pureload))
+
+	(if (null inhibit-package-init)
+	    (packages-load-package-dumped-lisps late-package-load-path))
+
 	)) ;; end of call-with-condition-handler
 
 ;; Fix up the preloaded file list

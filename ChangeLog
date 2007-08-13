@@ -1,3 +1,41 @@
+1998-03-24  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta32 is released.
+
+1998-03-23  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* configure.in: Extended package path by version-specific
+	hierarchies.  Changed allow-site-lisp to inhibit-site-lisp.
+
+1998-03-22  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (distclean): Remove packages and mule-packages if they
+	have been linked into place.
+
+1998-03-22  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* <Today>: The Big Path Searching Overhaul.
+
+	* Makefile.in, configure.in: Now pass all configure-specified paths
+	into the binary in a uniform way.
+
+1998-03-20  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (have_libmcheck): Add test for glibc's malloc
+	checker.
+	- Fix HP/UX dynamic linking flag.
+
+1998-03-19  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (quoted_arguments): Fix unquoted variable in
+	error-checking test.
+	- fix bogus substitution.
+	
+1998-03-17  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: In -lpng test, look for png_set_strip_alpha.
+	Suggested by William M. Perry <wmperry@aventail.com>
+
 1998-03-16  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0 beta31 is released.

@@ -214,8 +214,8 @@ scmp_1 (CONST Bufbyte *s1, CONST Bufbyte *s2, Charcount len,
     {
       while (l)
         {
-          Bufbyte c1 = DOWNCASE (current_buffer, charptr_emchar (s1));
-          Bufbyte c2 = DOWNCASE (current_buffer, charptr_emchar (s2));
+          Emchar c1 = DOWNCASE (current_buffer, charptr_emchar (s1));
+          Emchar c2 = DOWNCASE (current_buffer, charptr_emchar (s2));
 
           if (c1 == c2)
             {
@@ -289,7 +289,16 @@ ignore_completion_p (Lisp_Object completion_string,
 }
 
 
+/* #### Maybe we should allow ALIST to be a hashtable.  It is wrong
+   for the use of obarrays to be better-rewarded than the use of
+   hashtables.  By better-rewarded I mean that you can pass an obarray
+   to all of the completion functions, whereas you can't do anything
+   like that with a hashtable.
 
+   To do so, there should probably be a
+   map_obarray_or_alist_or_hashtable function which would be used by
+   both Ftry_completion and Fall_completions.  But would the
+   additional funcalls slow things down?  */
 
 DEFUN ("try-completion", Ftry_completion, 2, 3, 0, /*
 Return common substring of all completions of STRING in ALIST.
@@ -326,13 +335,13 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
   CHECK_STRING (string);
 
   if (CONSP (alist))
-  {
-    Lisp_Object tem = XCAR (alist);
-    if (SYMBOLP (tem))          /* lambda, autoload, etc.  Emacs-lisp sucks */
-      return call3 (alist, string, pred, Qnil);
-    else
-      list = 1;
-  }
+    {
+      Lisp_Object tem = XCAR (alist);
+      if (SYMBOLP (tem))	/* lambda, autoload, etc.  Emacs-lisp sucks */
+	return call3 (alist, string, pred, Qnil);
+      else
+	list = 1;
+    }
   else if (VECTORP (alist))
     list = 0;
   else if (NILP (alist))
@@ -379,10 +388,11 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 	  if (!ZEROP (bucket))
 	    {
               struct Lisp_Symbol *next;
-	      if (!SYMBOLP (bucket)) {
-		signal_simple_error("Bad obarry passed to try-completions",
-				    bucket);
-	      }
+	      if (!SYMBOLP (bucket))
+		{
+		  signal_simple_error ("Bad obarray passed to try-completions",
+				       bucket);
+		}
 	      next = symbol_next (XSYMBOL (bucket));
 	      elt = bucket;
 	      eltstring = Fsymbol_name (elt);
@@ -529,13 +539,13 @@ the symbol from the obarray.
   CHECK_STRING (string);
 
   if (CONSP (alist))
-  {
-    Lisp_Object tem = XCAR (alist);
-    if (SYMBOLP (tem))          /* lambda, autoload, etc.  Emacs-lisp sucks */
-      return call3 (alist, string, pred, Qt);
-    else
-      list = 1;
-  }
+    {
+      Lisp_Object tem = XCAR (alist);
+      if (SYMBOLP (tem))	/* lambda, autoload, etc.  Emacs-lisp sucks */
+	return call3 (alist, string, pred, Qt);
+      else
+	list = 1;
+    }
   else if (VECTORP (alist))
     list = 0;
   else if (NILP (alist))

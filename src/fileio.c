@@ -2191,9 +2191,11 @@ See also `file-exists-p' and `file-attributes'.
 
 #ifdef WINDOWSNT
   /* Under MS-DOS and Windows, open does not work for directories.  */
+  UNGCPRO;
   if (access (XSTRING_DATA (abspath), 0) == 0)
     return Qt;
-  return Qnil;
+  else
+    return Qnil;
 #else /* not WINDOWSNT */
   {
     int desc = interruptible_open ((char *) XSTRING_DATA (abspath), O_RDONLY | OPEN_BINARY, 0);

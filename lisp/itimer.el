@@ -1,36 +1,22 @@
-;;; itimer.el --- Interval timers for XEmacs
-
-;; Copyright (C) 1988, 1991, 1993, 1997 Kyle E. Jones
-
-;; Author: Kyle Jones <kyle_jones@wonderworks.com>
-;; Keywords: internal, dumped
-
-;; This file is part of XEmacs.
-
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
-
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
-;; General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
-
-;;; Synched up with: Not in FSF
-
-;;; Commentary:
-
-;; This file is dumped with XEmacs.
-
-;; Send bug reports to kyle_jones@wonderworks.com
-
-;;; Code:
+;;; Interval timers for GNU Emacs
+;;; Copyright (C) 1988, 1991, 1993, 1997, 1998 Kyle E. Jones
+;;;
+;;; This program is free software; you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation; either version 2, or (at your option)
+;;; any later version.
+;;;
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;;
+;;; A copy of the GNU General Public License can be obtained from this
+;;; program's author (send electronic mail to kyle@uunet.uu.net) or from
+;;; the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+;;; 02139, USA.
+;;;
+;;; Send bug reports to kyle_jones@wonderworks.com
 
 (provide 'itimer)
 
@@ -60,7 +46,7 @@
 ;;
 ;; See the doc strings of these functions for more information.
 
-(defvar itimer-version "1.06"
+(defvar itimer-version "1.07"
   "Version number of the itimer package.")
 
 (defvar itimer-list nil
@@ -83,12 +69,12 @@ Unit is seconds.")
 
 ;; This value is maintained internally; it does not determine
 ;; itimer granularity.  Itimer granularity is 1 second if your
-;; Emacs doens't support floats or your system doesn't have a
+;; Emacs doesn't support floats or your system doesn't have a
 ;; clock with microsecond granularity.  Otherwise granularity is
-;; to the microsend, although you can't possibly get timers to be
+;; to the microsecond, although you can't possibly get timers to be
 ;; executed with this kind of accuracy in practice.  There will
 ;; be delays due to system and Emacs internal activity that delay
-;; dealing with syunchronous events and process output.
+;; dealing with synchronous events and process output.
 (defvar itimer-next-wakeup itimer-short-interval
   "Itimer process will wakeup to service running itimers within this
 many seconds.")
@@ -517,7 +503,7 @@ x      start a new itimer
 	tab-stop-list '(22 32 40 60 67))
   (abbrev-mode 0)
   (auto-fill-mode 0)
-  (buffer-disable-undo (current-buffer))
+  (buffer-flush-undo (current-buffer))
   (use-local-map itimer-edit-map)
   (set-syntax-table emacs-lisp-mode-syntax-table))
 
@@ -684,15 +670,20 @@ x      start a new itimer
 	;; catch them and print a message.
 	(inhibit-quit t))
     (setq next-wakeup 600)
-    (if (and (boundp 'last-input-time) (consp last-input-time))
-	(setq last-event-time (list (car last-input-time)
-				    (cdr last-input-time)
-				    0)
-	      idle-time (itimer-time-difference (current-time)
-						last-event-time))
-      ;; no way to do this under FSF Emacs yet.
-      (setq last-event-time '(0 0 0)
-	    idle-time 0))
+    (cond ((and (boundp 'last-command-event-time)
+		(consp 'last-command-event-time))
+	   (setq last-event-time last-command-event-time
+		 idle-time (itimer-time-difference (current-time)
+						   last-event-time)))
+	  ((and (boundp 'last-input-time) (consp last-input-time))
+	   (setq last-event-time (list (car last-input-time)
+				       (cdr last-input-time)
+				       0)
+		 idle-time (itimer-time-difference (current-time)
+						   last-event-time)))
+	  ;; no way to do this under FSF Emacs yet.
+	  (t (setq last-event-time '(0 0 0)
+		   idle-time 0)))
     (while itimers
       (setq itimer (car itimers))
       (if (itimer-is-idle itimer)
@@ -741,9 +732,17 @@ x      start a new itimer
 	    (set-itimer-value-internal itimer (itimer-restart itimer))
 	    (setq next-wakeup (min next-wakeup (itimer-value itimer))))))
       (setq itimers (cdr itimers)))
-    ;; if user is editing itimers, update displayed info
-    (if (eq major-mode 'itimer-edit-mode)
-	(list-itimers))
+    ;; make another sweep through the list to catch any timers
+    ;; that might have been added by timer functions above.
+    (setq itimers itimer-list)
+    (while itimers
+      (setq next-wakeup (min next-wakeup (itimer-value (car itimers)))
+	    itimers (cdr itimers)))
+    ;; if user is viewing the timer list, update displayed info.
+    (let ((b (get-buffer "*Itimer List*")))
+      (if (and b (get-buffer-window b))
+	  (save-excursion
+	    (list-itimers))))
     next-wakeup ))
 
 (defun itimer-process-filter (process string)
@@ -812,12 +811,17 @@ x      start a new itimer
 	  itimer-timer (add-timeout itimer-short-interval
 				    'itimer-timer-driver nil nil))))
 
+(defun itimer-disable-timeout (timeout)
+  ;; Disgusting hack, but necessary because there is no other way
+  ;; to remove a timer that has a restart value from while that
+  ;; timer's function is being run.  (FSF Emacs only.)
+  (if (vectorp timeout)
+      (aset timeout 4 nil))
+  (disable-timeout timeout))
+
 (defun itimer-timer-wakeup ()
   (let ((inhibit-quit t))
-    (cond ((fboundp 'disable-timeout)
-	   (disable-timeout itimer-timer))
-	  ((fboundp 'cancel-timer)
-	   (cancel-timer itimer-timer)))
+    (itimer-disable-timeout itimer-timer)
     (setq itimer-timer (add-timeout itimer-short-interval
 				    'itimer-timer-driver nil 5))))
 
@@ -842,7 +846,7 @@ x      start a new itimer
 
 (defun itimer-timer-driver (&rest ignored)
   ;; inhibit quit because if the user quits at an inopportune
-  ;; time, the timer process won't bne launched again and the
+  ;; time, the timer process won't be launched again and the
   ;; system stops working.  itimer-run-expired-timers allows
   ;; individual timer function to be aborted, so the user can
   ;; escape a feral timer function.
@@ -854,7 +858,7 @@ x      start a new itimer
 	     (sleep nil))
 	(setq itimer-timer-last-wakeup now
 	      sleep (itimer-run-expired-timers elapsed))
-	(disable-timeout itimer-timer)
+	(itimer-disable-timeout itimer-timer)
 	(setq itimer-next-wakeup sleep
 	      itimer-timer (add-timeout sleep 'itimer-timer-driver nil 5)))))
 
@@ -867,5 +871,3 @@ x      start a new itimer
   (if (fboundp 'add-timeout)
       (itimer-timer-wakeup)
     (itimer-process-wakeup)))
-
-;;; itimer.el ends here

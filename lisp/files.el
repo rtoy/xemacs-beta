@@ -392,22 +392,23 @@ Not actually set up until the first time you use it.")
 (defvar path-separator ":"
   "Character used to separate concatenated paths.")
 
-;; Merged with equivalent C Code.
-;(defun parse-colon-path (cd-path)
-;  "Explode a colon-separated list of paths into a string list."
-;  (and cd-path
-;       (let (cd-list (cd-start 0) cd-colon)
-;	 (setq cd-path (concat cd-path path-separator))
-;	 (while (setq cd-colon (string-match path-separator cd-path cd-start))
-;	   (setq cd-list
-;		 (nconc cd-list
-;			(list (if (= cd-start cd-colon)
-;				   nil
-;				(substitute-in-file-name
-;				 (file-name-as-directory
-;				  (substring cd-path cd-start cd-colon)))))))
-;	   (setq cd-start (+ cd-colon 1)))
-;	 cd-list)))
+(defun parse-colon-path (cd-path)
+  "Explode a colon-separated list of paths into a string list.
+This will be moved into \"C\" when decode_path is no longer called so
+early in XEmacs initialization."
+  (and cd-path
+       (let (cd-list (cd-start 0) cd-colon)
+	 (setq cd-path (concat cd-path path-separator))
+	 (while (setq cd-colon (string-match path-separator cd-path cd-start))
+	   (setq cd-list
+		 (nconc cd-list
+			(list (if (= cd-start cd-colon)
+				   nil
+				(substitute-in-file-name
+				 (file-name-as-directory
+				  (substring cd-path cd-start cd-colon)))))))
+	   (setq cd-start (+ cd-colon 1)))
+	 cd-list)))
 
 (defun cd-absolute (dir)
   "Change current directory to given absolute file name DIR."

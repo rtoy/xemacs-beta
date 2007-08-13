@@ -447,18 +447,19 @@ main (int argc, char *argv[])
       send_string (s, command);
       if (load_library)
 	{
-	  sprintf (command, " (load-library %s)", clean_string (load_library));
-	  send_string (s, command);
+	  send_string (s , "(load-library ");
+	  send_string (s, clean_string(load_library));
+	  send_string (s, ") ");
 	}
       if (eval_form)
 	{
-	  sprintf (command, " %s", eval_form);
-	  send_string (s, command);
+	  send_string (s, eval_form);
 	}
       if (eval_function)
 	{
-	  sprintf (command, " (%s)", eval_function);
-	  send_string (s, command);
+	  send_string (s, "(");
+	  send_string (s, eval_function);
+	  send_string (s, ")");
 	}
       send_string (s, "))");
       send_string (s, EOT_STR);

@@ -329,7 +329,7 @@ x_init_device (struct device *d, Lisp_Object props)
        This is in addition to the standard app-defaults files, and
        does not override resources defined elsewhere */
     CONST char *data_dir;
-    char path[MAXPATHLEN];
+    char *path;
     XrmDatabase db = XtDatabase (dpy); /* ### XtScreenDatabase(dpy) ? */
     CONST char *locale = XrmLocaleOfDatabase (db);
 
@@ -337,6 +337,7 @@ x_init_device (struct device *d, Lisp_Object props)
 	XSTRING_LENGTH (Vx_app_defaults_directory) > 0)
       {
 	GET_C_STRING_FILENAME_DATA_ALLOCA(Vx_app_defaults_directory, data_dir);
+	path = (char *)alloca (strlen (data_dir) + strlen (locale) + 7);
 	sprintf (path, "%s%s/Emacs", data_dir, locale);
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
@@ -344,6 +345,7 @@ x_init_device (struct device *d, Lisp_Object props)
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
 	GET_C_STRING_FILENAME_DATA_ALLOCA (Vdata_directory, data_dir);
+	path = (char *)alloca (strlen (data_dir) + 13 + strlen (locale) + 7);
 	sprintf (path, "%sapp-defaults/%s/Emacs", data_dir, locale);
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
@@ -364,7 +366,8 @@ x_init_device (struct device *d, Lisp_Object props)
   /* search for a matching visual if requested by the user, or setup the display default */
   numargs = 0;
   {
-    char buf1[100],buf2[100];
+    char *buf1 = (char *)alloca (strlen (app_name) + 17);
+    char *buf2 = (char *)alloca (strlen (app_class) + 17);
     char *type;
     XrmValue value;
 

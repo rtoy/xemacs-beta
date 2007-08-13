@@ -923,6 +923,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 	      {
 		char boof[255], *b = boof;
 		*b++ = '\n';
+		/* #### This sprintf() is potentially dangerous!  */
 		sprintf (b, GETTEXT (
 		"Uses keymap \"%s\", which is not currently defined."),
 			 (char *) XSTRING_DATA (Fsymbol_name (name)));

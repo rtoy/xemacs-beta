@@ -199,8 +199,13 @@ it defaults to the value of `obarray'.
      not mark through this slot, so it is not usable later (because
      the obarray might have been collected).  Marking through the
      ->obarray slot is an even worse idea, because it would keep
-     obarrays from being collected because of symbols pointed to them.  */
-  XSYMBOL (sym)->obarray = Qt;
+     obarrays from being collected because of symbols pointed to them.
+
+     NOTE: We place Qt here only if OBARRAY is actually Vobarray.  It
+     is safer to do it this way, to avoid hosing with symbols within
+     pure objects.  */
+  if (EQ (obarray, Vobarray))
+    XSYMBOL (sym)->obarray = Qt;
 
   if (SYMBOLP (*ptr))
     symbol_next (XSYMBOL (sym)) = XSYMBOL (*ptr);
@@ -531,19 +536,15 @@ symbol_is_constant (Lisp_Object sym, Lisp_Object val)
       XSYMBOL_VALUE_MAGIC_TYPE (val) == SYMVAL_CONST_BOOLEAN_FORWARD ||
       XSYMBOL_VALUE_MAGIC_TYPE (val) == SYMVAL_CONST_CURRENT_BUFFER_FORWARD ||
       XSYMBOL_VALUE_MAGIC_TYPE (val) == SYMVAL_CONST_SELECTED_CONSOLE_FORWARD))
-#if 0
-    /* #### - This is disabled until a new magic symbol_value for
-       constants is added */
-    || SYMBOL_IS_KEYWORD (sym)
-#endif
+    /* We don't return true for keywords here because they are handled
+       specially by reject_constant_symbols().  */
     ;
 }
 
 /* We are setting SYM's value slot (or function slot, if FUNCTION_P is
-   non-zero) to NEWVAL.  Make sure this is allowed.  NEWVAL is only
-   used in the error message.  FOLLOW_PAST_LISP_MAGIC specifies
-   whether we delve past symbol-value-lisp-magic objects.
-   */
+   non-zero) to NEWVAL.  Make sure this is allowed.
+   FOLLOW_PAST_LISP_MAGIC specifies whether we delve past
+   symbol-value-lisp-magic objects.  */
 
 static void
 reject_constant_symbols (Lisp_Object sym, Lisp_Object newval, int function_p,
@@ -558,7 +559,9 @@ reject_constant_symbols (Lisp_Object sym, Lisp_Object newval, int function_p,
     signal_simple_error ("Use `set-specifier' to change a specifier's value",
 			 sym);
 
-  if (symbol_is_constant (sym, val))
+  if (symbol_is_constant (sym, val)
+      || (SYMBOL_IS_KEYWORD (sym) && !EQ (newval, sym)
+	  && !NILP (XSYMBOL (sym)->obarray)))
     signal_error (Qsetting_constant,
 		  UNBOUNDP (newval) ? list1 (sym) : list2 (sym, newval));
 }
@@ -1617,7 +1620,8 @@ Set SYMBOL's value to NEWVAL, and return NEWVAL.
 
  retry:
   valcontents = XSYMBOL (sym)->value;
-  if (NILP (sym) || EQ (sym, Qt) || SYMBOL_VALUE_MAGIC_P (valcontents))
+  if (NILP (sym) || EQ (sym, Qt) || SYMBOL_VALUE_MAGIC_P (valcontents)
+      || SYMBOL_IS_KEYWORD (sym))
     reject_constant_symbols (sym, newval, 0,
 			     UNBOUNDP (newval) ? Qmakunbound : Qset);
   else

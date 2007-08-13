@@ -538,7 +538,9 @@ EmacsXtCvtStringToXIMStyles (
 
   if (p->count_styles == 0)
     {   /* No valid styles? */
-      char buf[1024];
+      char *buf = (char *)alloca (strlen (fromVal->addr)
+				  + strlen (DefaultXIMStyles)
+				  + 100);
       XrmValue new_from;
       XtAppContext the_app_con = XtDisplayToApplicationContext (dpy);
 
@@ -703,7 +705,7 @@ describe_Status (Status status)
 void
 describe_Window (Window win)
 {
-  char xwincmd[64];
+  char xwincmd[128];
   sprintf (xwincmd, "xwininfo -id 0x%x >&2; xwininfo -events -id 0x%x >&2",
            (int) win, (int) win);
   system (xwincmd);

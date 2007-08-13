@@ -90,6 +90,7 @@ void syms_of_frame_x (void);
 void syms_of_free_hook (void);
 void syms_of_general (void);
 void syms_of_glyphs_x (void);
+void syms_of_glyphs_mswindows (void);
 void syms_of_glyphs (void);
 void syms_of_gui_x (void);
 void syms_of_gui (void);
@@ -163,6 +164,7 @@ void console_type_create_objects_mswindows (void);
 void console_type_create_redisplay_mswindows (void);
 void console_type_create_scrollbar_mswindows (void);
 void console_type_create_toolbar_mswindows (void);
+void console_type_create_glyphs_mswindows (void);
 
 /* Initialize the specifier types (dump-time only). */
 
@@ -183,6 +185,7 @@ void structure_type_create_hashtable (void);
 
 void image_instantiator_format_create (void);
 void image_instantiator_format_create_glyphs_x (void);
+void image_instantiator_format_create_glyphs_mswindows (void);
 
 /* Initialize the lstream types (dump-time only). */
 
@@ -244,6 +247,7 @@ void vars_of_frame_mswindows (void);
 void vars_of_frame_x (void);
 void vars_of_frame (void);
 void vars_of_glyphs_x (void);
+void vars_of_glyphs_mswindows (void);
 void vars_of_glyphs (void);
 void vars_of_gui_x (void);
 void vars_of_gui (void);
@@ -315,6 +319,7 @@ void complex_vars_of_mule_charset (void);
 void complex_vars_of_mule_coding (void);
 void complex_vars_of_glyphs (void);
 void complex_vars_of_glyphs_x (void);
+void complex_vars_of_glyphs_mswindows (void);
 void complex_vars_of_alloc (void);
 void complex_vars_of_menubar (void);
 void complex_vars_of_scrollbar (void);
@@ -324,6 +329,7 @@ void complex_vars_of_syntax (void);
 void complex_vars_of_chartab (void);
 void complex_vars_of_buffer (void);
 void complex_vars_of_console (void);
+void complex_vars_of_emacs (void);
 void complex_vars_of_minibuf (void);
 void complex_vars_of_callproc (void);
 void complex_vars_of_filelock (void);

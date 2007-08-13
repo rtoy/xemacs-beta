@@ -98,6 +98,10 @@ Lisp_Object Q_foreground, Q_background;
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (xpm);
 Lisp_Object Qxpm;
 Lisp_Object Q_color_symbols;
+void mswindows_xpm_instantiate (Lisp_Object image_instance, 
+				Lisp_Object instantiator,
+				Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+				int dest_mask, Lisp_Object domain);
 #endif
 
 #ifdef HAVE_XFACE
@@ -1618,6 +1622,12 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   enum image_instance_type type;
   int force_mono;
   unsigned int w, h;
+#ifdef HAVE_MS_WINDOWS
+  if (DEVICE_MSWINDOWS_P (XDEVICE (device)))
+    return mswindows_xpm_instantiate(image_instance, instantiator, 
+				     pointer_fg, pointer_bg, 
+				     dest_mask, domain);
+#endif
 
   if (!DEVICE_X_P (XDEVICE (device)))
     signal_simple_error ("Not an X device", device);
@@ -2154,6 +2164,20 @@ my_jpeg_error_exit (j_common_ptr cinfo)
   longjmp (myerr->setjmp_buffer, 1);
 }
 
+#if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)
+METHODDEF(void)
+#else
+METHODDEF void
+#endif
+my_jpeg_output_message (j_common_ptr cinfo)
+{
+  char buffer[JMSG_LENGTH_MAX];
+
+  /* Create the message */
+  (*cinfo->err->format_message) (cinfo, buffer);
+  warn_when_safe (Qjpeg, Qinfo, "%s", buffer);
+}
+
 /* The code in this routine is based on example.c from the JPEG library
    source code and from gif_instantiate() */
 static void
@@ -2226,6 +2250,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* We set up the normal JPEG error routines, then override error_exit. */
   cinfo.err = jpeg_std_error (&jerr.pub);
   jerr.pub.error_exit = my_jpeg_error_exit;
+  jerr.pub.output_message = my_jpeg_output_message;
 
   /* Establish the setjmp return context for my_error_exit to use. */
   if (setjmp (jerr.setjmp_buffer))
@@ -2258,7 +2283,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 #else
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    Extbyte *bytes;
+    CONST Extbyte *bytes;
     Extcount len;
 
     /* #### This is a definite problem under Mule due to the amount of
@@ -3587,11 +3612,11 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   
   /* set up error facilities */
   if (setjmp(tiff_err_data.setjmp_buffer)) {
-    /* An error was signaled. No clean up is needed, as unwind handles that
-       for us.  Just pass the error along. */
-    Lisp_Object errstring;
-    errstring = build_string (tiff_err_data.err_str);
-    signal_simple_error_2 ("TIFF decoding error", errstring, instantiator);
+  /* An error was signaled. No clean up is needed, as unwind handles that
+     for us.  Just pass the error along. */
+    signal_simple_error_2 ("TIFF decoding error",
+			   build_string(tiff_err_data.err_str),
+			   instantiator);
   }
   TIFFSetErrorHandler((TIFFErrorHandler)tiff_error_func);
   TIFFSetWarningHandler((TIFFErrorHandler)tiff_warning_func);

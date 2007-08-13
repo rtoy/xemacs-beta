@@ -381,7 +381,7 @@ GetGeometry (Widget W, Widget child)
     }
 
     if(w->shell.geometry != NULL) {
-	char def_geom[64];
+	char def_geom[128];
 	int width, height;
 
 	x = w->core.x;

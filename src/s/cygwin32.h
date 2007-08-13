@@ -194,12 +194,6 @@ extern int	ioctl(int, int, ...);
 
 #define NO_MATHERR
 
-/* NOMULTIPLEJOBS should be defined if your system's shell
- does not have "job control" (the ability to stop a program,
- run some other program, then continue the first one).  */
-
-#define NOMULTIPLEJOBS
-
 /* define MAIL_USE_FLOCK if the mailer uses flock
    to interlock access to /usr/spool/mail/$USER.
    The alternative is that a lock file named

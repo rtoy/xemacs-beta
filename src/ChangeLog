@@ -1,3 +1,238 @@
+1998-03-25  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* process.c (Fprocess_send_eof): Close output stream before
+	deleting stream pair.
+	(deactivate_process): Ditto, both input and output streams.
+
+	* event-unixoid.c (event_stream_unixoid_delete_stream_pair): Do
+	not close passed lstreams.
+
+1998-03-24  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* fileio.c (Ffile_readable_p): GC protect fix, MS Windows specific. 
+
+Mon Mar 23 22:14:12 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: compile in glyphs-msw.o when compiling fopr
+	mswindows.
+	
+Mon Mar 23 22:14:12 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* msw-glyphs.el: add support for xpm and bmp. change
+	eval-and-compile to progn.
+
+Mon Mar 23 22:14:12 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* Makefile.in.in: fastdump - new target for dumping bypassing
+	bytecompilation, DOC. Add dependencies for glyphs-msw.o. Move
+	imgproc.o to object list.
+	
+	* glyphs-msw.h:
+	* glyphs-msw.c: new files adding support for xpm and bmp and
+	EImages.
+
+	* redisply-msw.c: add support for outputing color pixmaps.
+
+	* console-msw.h: add bitspixel field to mswindows frame.
+
+	* device-msw.c: initialise bitspixel field in mswindows frame.
+	
+	* glyphs-x.c (xpm_instantiate): call mswindows_xpm_instantiate if
+	the device type is mswindows.
+
+	* emacs.c: call glyphs-msw.c init functions if compiling with
+	mswindows.
+
+	* symsinit.h: add prototypes for glyphs-msw.c functions.
+	
+	* sheap.c: make includes src-dir compliant.
+
+	* events.c: remove cygwin ^H <-> erase hack.
+
+	* s/cygwin32.h: remove NOMULTIPLEJOBS defn.
+
+1998-03-24  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-x.c (my_jpeg_output_message): Added new function to redirect
+	any error/warning messages from the jpeg library to XEmacs.  Also
+	get rid of an unneeded temp variable in the tiff code.
+
+1998-03-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* insdel.c (fixup_internal_substring): Protect asserts with #ifdef
+	ERROR_CHECK_BUFPOS.
+
+	* minibuf.c (scmp_1): c1 and c2 are Emchar, not Bufbyte.
+	(Ftry_completion): Fixed typo.
+
+	* dired.c (file_name_completion): Removed `readfunc', a remnant of
+	dead VMS code.
+
+1998-03-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* dired.c (Fdirectory_files): Simplify logic.
+
+	* symbols.c (reject_constant_symbols): Allow setting a keyword's
+	function slot.
+
+1998-03-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lread.c (readevalloop): Don't specbind Qstandard_input to
+	READCHARFUN.
+
+1998-03-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* wid-edit.el (widget-choice-action): Remember user's explicit
+	choice.
+	(widget-choice-value-create): Respect it.
+	From Richard Stallman <rms@gnu.org>
+
+1998-03-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lread.c (read_atom): Ditto.
+
+	* symbols.c (reject_constant_symbols): Do the keyword stunts only
+	if the symbol is in Vobarray.
+
+	* symbols.c (reject_constant_symbols): Signal error when
+	attempting to assign a value to a keyword, unless the value is the 
+	keyword itself.
+
+	* symbols.c (Fintern): Initialize symbol's ->obarray to t only
+	when OBARRAY is Vobarray.
+
+1998-03-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* events.c (Fmake_event): Allow creation of misc-user-events.
+
+1998-03-23  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* config.h.in, emacs.c: Changed allow-site-lisp to
+	inhibit-site-lisp.  Made -no-autoloads set inhibit-site-lisp.
+
+1998-03-22  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* <Today>: The Big Path Searching Overhaul.
+
+	* symsinit.h: Added declaration for complex_vars_of_emacs in
+	emacs.c.
+
+	* paths.h.in: Adjusted the comments to reality as dictated by
+	configure.
+
+	* filelock.c (complex_vars_of_filelock): Added support for lock
+	directories passed in from configure.
+
+	* emacs.c (complex_vars_of_emacs): Added all relevant installation
+	paths passed from configure.  They all have the prefix "configure-" now.
+
+	* config.h.in: Added HAVE_SITE_LISP configuration option.
+
+	* callproc.c (init_callproc): Ripped out all the bogus path setup.
+
+	* Makefile.in.in: Updated all calls of "temacs -l" with absolute
+	file names because auf the more minimalistic load-path setup in
+	lread.c.  Also set EMACSBOOTSTRAPLOADPATH on calling temacs rather
+	than EMACSLOADPATH because EMACSLOADPATH is now more persistent than
+	before.
+
+	* lread.c (init_lread): Ripped out bogus load-path setup.
+
+1998-03-21  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame.h: Move the check for an initialize_frame_toolbars
+	  method into FRAME_RAW_REAL_TOOLBAR_VISIBLE to avoid getting
+	  clunked by toolbar-less builds.
+
+1998-03-20  SL Baur  <steve@altair.xemacs.org>
+
+	* m/powerpc.h (LD_SWITCH_MACHINE): Fix path to ppc.ldscript.
+
+1998-03-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* redisplay.c (window_line_number_buf): Made it larger.
+
+	* opaque.c (print_opaque): Ditto.
+
+	* lstream.c (print_lstream): Avoid `%p'.
+
+	* keymap.c (ensure_meta_prefix_char_keymapp): Use
+	error_with_frob().
+
+	* input-method-xlib.c (EmacsXtCvtStringToXIMStyles): Allocate buf
+	dynamically.
+
+	* event-Xt.c (describe_event_window): Allocate buf dynamically.
+
+	* doc.c (Fsubstitute_command_keys): Warn of sprintf().
+
+	* device-x.c (x_init_device): Allocate path dynamically.
+	(x_init_device): Allocate buf1 and buf2 dynamically.
+
+1998-03-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* ExternalShell.c (GetGeometry): Use a larger buffer for
+	sprintf().
+
+1998-03-19  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* redisplay.c (point_would_be_visible): Fix
+	window::line_cache_validation_override reference counter.
+	(start_with_line_at_pixpos): Ditto.
+
+1998-03-20  Olivier Galibert  <olivier.galibert@mines.u-nancy.fr>
+
+	* insdel.c (bytecount_to_charcount): Use 'L' suffix on long
+	constants probably too large for an int.
+
+1998-03-18  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lread.c (read_atom_0): Signal Qend_of_file if readcharfun
+	returned -1.
+	(read_escape): Ditto.
+	(FSF_LOSSAGE): Ditto.
+
+1998-03-20  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c: path-separator (and parse-colon-path) moved from Lisp
+	into C because we need it for early initialization.
+
+	* Makefile.in.in (libmcheck): Add.
+
+	* config.h.in: Add HAVE_LIBMCHECK and HAVE_MCHECK_H.
+
+	* hash.c (grow_hashtable): Fix tests to compare against
+	Qnull_pointer since this function may be called before any symbols 
+	or the Lisp engine is initialized.
+
+	* emacs.c (main_1): Restore usage of free-hook.c.
+
+	* free-hook.c (check_realloc): Change aborts to printfs.
+	(check_free): Ditto.
+
+1998-03-18  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (Fkill_emacs): Use LIST_LOOP_DELETING because our
+	control variable is being modified underneath us.
+	- Avoid calling delete_console_internal on stream consoles.
+
+	* console-tty.c (free_tty_console_struct): NULL out pointers after 
+	xfree'ing.
+
+	* console-stream.c (allocate_stream_console_struct): Fix memory
+	leak -- if the stream_console struct is already allocated, don't
+	reallocate it.
+	(free_stream_console_struct): Don't leave dangling freed pointer
+	around.
+
+	* redisplay-output.c (redisplay_redraw_cursor): Fully bracket.
+
+1998-03-17  SL Baur  <steve@altair.xemacs.org>
+
+	* frame.c (delete_frame_internal): Correct check.
+
+	* imgproc.c: Include <config.h>.
+
 1998-03-13  P. E. Jareth Hein  <jareth@camelot-soft.com>
 
 	* glyphs-x.c: fix for upside-down TIFFs.
@@ -64,24 +299,6 @@
 	  (Fscroll_down): Dropped support for
 	  signal-error-on-buffer-boundary.  Added details to doc
 	  string.
-
-1998-03-15  Kyle Jones  <kyle_jones@wonderworks.com>
-
-	* keydefs.el: Changed keybindings of forward-char,
-	  backward, scroll-up and scroll-down to point to their
-	  -command counterparts.
-
-	* simple.el: New functions: forwarc-char-command,
-	  backwrad-char-command, scroll-up-command,
-	  scroll-down-command which work liek their counterparts
-	  except that they honor the variable
-	  signal-error-on-buffer-boundary.
-
-	  Definition of signal-error-on-buffer-boundary received
-	  from src/cmds.c.
-
-	  defvar declaration added for word-across-newline to avoid
-	  byte-compiler warning about the free variable reference.
 
 1998-03-15  Kyle Jones  <kyle_jones@wonderworks.com>
 

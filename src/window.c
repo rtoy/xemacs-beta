@@ -1366,6 +1366,7 @@ Return the number of columns by which WINDOW is scrolled from left margin.
   return make_int (decode_window (window)->hscroll);
 }
 
+#ifdef MODELINE_IS_SCROLLABLE
 DEFUN ("modeline-hscroll", Fmodeline_hscroll, 0, 1, 0, /*
 Return the number of columns by which WINDOW's modeline is scrolled from 
 left margin. If the window has no modeline, return nil.
@@ -1377,6 +1378,7 @@ left margin. If the window has no modeline, return nil.
   w = decode_window (window);
   return (WINDOW_HAS_MODELINE_P (w)) ? make_int (w->modeline_hscroll) : Qnil;
 }
+#endif
 
 DEFUN ("set-window-hscroll", Fset_window_hscroll, 2, 2, 0, /*
 Set number of columns WINDOW is scrolled from left margin to NCOL.
@@ -1397,6 +1399,7 @@ NCOL should be zero or positive.
   return ncol;
 }
 
+#ifdef MODELINE_IS_SCROLLABLE
 DEFUN ("set-modeline-hscroll", Fset_modeline_hscroll, 2, 2, 0, /*
 Set number of columns WINDOW's modeline is scrolled from left margin to NCOL.
 NCOL should be zero or positive. If NCOL is negative, it will be forced to 0.
@@ -1420,6 +1423,7 @@ If the window has no modeline, do nothing and return nil.
     }
   return Qnil;
 }
+#endif
 
 #if 0 /* bogus crock */
 

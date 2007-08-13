@@ -1105,6 +1105,7 @@ struct Lisp_Symbol
   struct Lisp_String *name;
   Lisp_Object value;
   Lisp_Object function;
+  /* non-nil if the symbol is interned in Vobarray */
   Lisp_Object obarray;
   Lisp_Object plist;
 };

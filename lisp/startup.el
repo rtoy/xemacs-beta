@@ -369,6 +369,21 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 	    (setq default-directory (file-name-as-directory value)))))
     (setq default-directory (abbreviate-file-name default-directory))
     (initialize-xemacs-paths)
+
+    (startup-set-invocation-environment)
+
+    (let ((roots (paths-find-emacs-roots invocation-directory
+					 invocation-name)))
+      (startup-setup-paths roots
+			   inhibit-package-init
+			   inhibit-site-lisp)
+      (startup-setup-paths-warning))
+
+    (if (not inhibit-package-init)
+	(progn
+	  (packages-load-package-auto-autoloads early-package-load-path)
+	  (packages-load-package-auto-autoloads late-package-load-path)))
+
     (unwind-protect
 	(command-line)
       ;; Do this again, in case .emacs defined more abbreviations.
@@ -504,7 +519,6 @@ If this is nil, no message will be displayed.")
 
     (let ((debugger 'early-error-handler)
 	  (debug-on-error t))
-      (set-default-load-path)
 
       ;; Process magic command-line switches like -q and -u.  Do this
       ;; before creating the first frame because some of these switches
@@ -984,404 +998,71 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 ;;    (funcall present-file "sample.Xdefaults")
 ;;    (insert (format "\nin the directory %s." data-directory)))
 
-
-;;;; Computing the default load-path, etc.
-;;;
-;;; This stuff is a complete mess and isn't nearly as general as it 
-;;; thinks it is.  It should be rethunk.  In particular, too much logic
-;;; is duplicated between the code that looks around for the various
-;;; directories, and the code which suggests where to create the various
-;;; directories once it decides they are missing.
-
-;;; The source directory has this layout:
-;;;
-;;;    BUILD_ROOT/src/xemacs*			  argv[0]
-;;;    BUILD_ROOT/xemacs*			  argv[0], possibly
-;;;    BUILD_ROOT/lisp/
-;;;    BUILD_ROOT/etc/				  data-directory
-;;;    BUILD_ROOT/info/
-;;;    BUILD_ROOT/lib-src/			  exec-directory, doc-directory
-;;;    BUILD_ROOT/lock/
-;;;
-;;; The default tree created by "make install" has this layout:
-;;;
-;;;    PREFIX/bin/xemacs*	  		argv[0]
-;;;    PREFIX/lib/xemacs-VERSION/lisp/
-;;;    PREFIX/lib/xemacs-VERSION/etc/		  data-directory
-;;;    PREFIX/lib/xemacs-VERSION/info/
-;;;    PREFIX/lib/xemacs-VERSION/CONFIGURATION/	  exec-directory, doc-directory
-;;;    PREFIX/lib/xemacs/lock/
-;;;    PREFIX/lib/xemacs/site-lisp/
-;;;
-;;; The binary packages we ship have that layout, except that argv[0] has
-;;; been moved one level deeper under the bin directory:
-;;;
-;;;    PREFIX/bin/CONFIGURATION/xemacs*
-;;;
-;;; The following code has to deal with at least the above three situations,
-;;; and it should be possible for it to deal with more.  Though perhaps that
-;;; does cover it all?  The trick is, when something is missing, realizing
-;;; which of those three layouts is mostly in place, so that we can suggest
-;;; the right directories in the error message.
-
-
-;; extremely low-tech debugging, since this happens so early in startup.
-;;(or (fboundp 'orig-file-directory-p)
-;;    (fset 'orig-file-directory-p (symbol-function 'file-directory-p)))
-;;(defun file-directory-p (path)
-;;  (send-string-to-terminal (format "PROBING %S" path))
-;;  (let ((v (orig-file-directory-p path)))
-;;    (send-string-to-terminal (format " -> %S\n" v))
-;;    v))
-
-(defun startup-make-version-dir ()
-  (let ((version (and (string-match "\\`[^0-9]*\\([0-9]+\\.[0-9]+\\)"
-				    emacs-version)
-		      (substring emacs-version
-				 (match-beginning 1) (match-end 1)))))
-    (if (string-match "(beta *\\([0-9]+\\))" emacs-version)
-	(setq version (concat version "-b"
-			      (substring emacs-version (match-beginning 1)
-					 (match-end 1)))))
-    (if (string-match "(alpha *\\([0-9]+\\))" emacs-version)
-	(setq version (concat version "-a"
-			      (substring emacs-version (match-beginning 1)
-					 (match-end 1)))))
-    (concat "lib/xemacs-" version)))
-
-(defun find-emacs-root-internal-1 (path lisp-p)
-  ;; (prin1 (format "f-e-r-i-1:  %s\n" path))
-  (let ((dir (file-name-directory path)))
-    (or
-     ;;
-     ;; If this directory is a plausible root of the XEmacs tree, return it.
-     ;;
-     (and (or (not lisp-p)
-	      (file-directory-p (expand-file-name "lisp" dir)))
-	  (or (file-directory-p (expand-file-name "lib-src" dir))
-	      (file-directory-p (expand-file-name system-configuration dir)))
-	  dir)
-     ;;
-     ;; If the parent of this directory is a plausible root, use it.
-     ;; (But don't do so recursively!)
-     ;;
-     (and (or (not lisp-p)
-	      (file-directory-p (expand-file-name "../lisp" dir)))
-	  (or (file-directory-p (expand-file-name
-				 (format "../%s" system-configuration)
-				 dir))
-	      (file-directory-p (expand-file-name "../lib-src" dir)))
-	  (expand-file-name "../" dir))
-
-     ;; 
-     ;; (--run-in-place) Same thing, but from one directory level deeper.
-     ;;
-     (and (or (not lisp-p)
-	      (file-directory-p (expand-file-name "../../lisp" dir)))
-	  (or (file-directory-p (expand-file-name
-				 (format "../%s" system-configuration)
-				 dir))
-	      (file-directory-p 
-	       (expand-file-name 
-		(format "../../lib-src/%s" system-configuration) dir)))
-	  (expand-file-name "../.." dir))
-
-     ;; If ../lib/xemacs-<version> exists check it.
-     ;; This is of the form "xemacs-19.10/" or "xemacs-19.10-b7/".
-     ;;
-     (let ((ver-dir (concat "../" (startup-make-version-dir))))
-       (and (or (not lisp-p)
-		(file-directory-p (expand-file-name
-				   (format "%s/lisp" ver-dir)
-				   dir)))
-	    (or (file-directory-p (expand-file-name
-				   (format "%s/%s" ver-dir
-					   system-configuration)
-				   dir))
-		(file-directory-p (expand-file-name
-				   (format "%s/lib-src" ver-dir)
-				   dir)))
-	    (expand-file-name (file-name-as-directory ver-dir) dir)))
-     ;;
-     ;; Same thing, but one higher: ../../lib/xemacs-<version>.
-     ;;
-     (let ((ver-dir (concat "../../" (startup-make-version-dir))))
-       (and (or (not lisp-p)
-		(file-directory-p (expand-file-name
-				   (format "%s/lisp" ver-dir)
-				   dir)))
-	    (or (file-directory-p (expand-file-name
-				   (format "%s/%s" ver-dir
-					   system-configuration)
-				   dir))
-		(file-directory-p (expand-file-name
-				   (format "%s/lib-src" ver-dir)
-				   dir)))
-	    (expand-file-name (file-name-as-directory ver-dir) dir)))
-     ;;
-     ;; If that doesn't work, and the XEmacs executable is a symlink, then
-     ;; chase the link and try again there.
-     ;;
-     (and (setq path (file-symlink-p path))
-	  (find-emacs-root-internal-1 (expand-file-name path dir) lisp-p))
-     ;;
-     ;; Otherwise, this directory just doesn't cut it.
-     ;; Some bozos think they can use the 18.59 lisp directory with 19.*.
-     ;; This is because they're not using their brains.  But it might be
-     ;; nice to notice that that is happening and point them in the
-     ;; general direction of a clue.
-     ;;
-     nil)))
-
-(defun find-emacs-root-internal (path)
-  ;;  (send-string-to-terminal (format "FINDING ROOT FOR %S\n" path))
-  ;; first look for lisp and lib-src; then just look for lib-src.
-  ;; XEmacs can run (kind of) if the lisp directory is omitted, which
-  ;; some people might want to do for space reasons.
-  (or (find-emacs-root-internal-1 path t)
-      ;; (find-emacs-root-internal-1 path nil)
-      ;; If we don't succeed we are going to crash and burn for sure.
-      ;; Try some paths relative to prefix-directory if it isn't nil.
-      ;; This is definitely necessary in cases such as when we're used
-      ;; as a login shell since we can't determine the invocation
-      ;; directory in that case.
-
-      (find-emacs-root-internal-1
-       (format "%s/bin/%s" prefix-directory invocation-name) t)
-      (find-emacs-root-internal-1
-       (format "%s/bin/%s" prefix-directory invocation-name) nil)
-      (find-emacs-root-internal-1
-       (format "%s/lib/%s" prefix-directory invocation-name) t)
-      (find-emacs-root-internal-1
-       (format "%s/lib/%s" prefix-directory invocation-name) nil)
-
-      ;; We're desperate -- try the prefix-directory correctly.
-      (find-emacs-root-internal-1
-       (format "%s/%s/foo" prefix-directory (startup-make-version-dir)) t)
-      (find-emacs-root-internal-1
-       (format "%s/%s/foo" prefix-directory (startup-make-version-dir)) nil)
-      ))
-
-(defun set-default-load-path ()
+(defun startup-set-invocation-environment ()
   ;; XEmacs -- Steven Baur says invocation directory is nil if you
   ;; try to use XEmacs as a login shell.
   (or invocation-directory (setq invocation-directory default-directory))
   (setq invocation-directory
 	;; don't let /tmp_mnt/... get into the load-path or exec-path.
-	(abbreviate-file-name invocation-directory))
+	(abbreviate-file-name invocation-directory)))
 
-  ;; #### FSFmacs recognizes environment vars EMACSLOCKDIR, etc.
-  (let* ((root (find-emacs-root-internal (concat invocation-directory
-						 invocation-name)))
-	 (lisp (and root
-		    (let ((f (expand-file-name "lisp" root)))
-		      (and (file-directory-p f) f))))
-	 (site-lisp
-	  (and root
-	       (or
-		(let ((f (expand-file-name "xemacs/site-lisp" root)))
-		  (and (file-directory-p f) f))
-		(let ((f (expand-file-name "../xemacs/site-lisp" root)))
-		  (and (file-directory-p f) f))
-		;; the next two are for --run-in-place
-		(let ((f (expand-file-name "site-lisp" root)))
-		  (and (file-directory-p f) f))
-		(let ((f (expand-file-name "lisp/site-lisp" root)))
-		  (and (file-directory-p f) f))
-		)))
-	 (lib-src
-	  (and root
-	       (or
-		(let ((f (expand-file-name
-			  (concat "lib-src/" system-configuration)
-			  root)))
-		  (and (file-directory-p f) f))
-		(let ((f (expand-file-name "lib-src" root)))
-		  (and (file-directory-p f) f))
-		(let ((f (expand-file-name system-configuration root)))
-		  (and (file-directory-p f) f)))))
-	 (etc
-	  (and root
-	       (let ((f (expand-file-name "etc" root)))
-		 (and (file-directory-p f) f))))
-	 (info
-	  (and root
-	       (let ((f (expand-file-name "info" root)))
-		 (and (file-directory-p f) (file-name-as-directory f)))))
-	 (packages
-	  (and root
-	       (let ((f (expand-file-name "packages" root)))
-		 (and (file-directory-p f) (file-name-as-directory f)))))
-	 (lock
-	  (and root
-	       (boundp 'lock-directory)
-	       (if (and lock-directory (file-directory-p lock-directory))
-		   (file-name-as-directory lock-directory)
-		 (or
-		  (let ((f (expand-file-name "xemacs/lock" root)))
-		    (and (file-directory-p f)
-			 (file-name-as-directory f)))
-		  (let ((f (expand-file-name "../xemacs/lock" root)))
-		    (and (file-directory-p f)
-			 (file-name-as-directory f)))
-		  (let ((f (expand-file-name "lock" root)))
-		    (and (file-directory-p f)
-			 (file-name-as-directory f)))
-		  ;; if none of them exist, make the "guess" be
-		  ;; the one that set-default-load-path-warning
-		  ;; will suggest.
-		  (file-name-as-directory
-		   (expand-file-name "../xemacs/lock" root))
-		  )))))
-    
-    ;; 1996/12/6 by MORIOKA Tomohiko <morioka@jaist.ac.jp>
-    ;;	define `default-load-path' for file-detect.el
-    (setq default-load-path load-path)
+(defun startup-setup-paths (roots &optional inhibit-packages inhibit-site-lisp)
+  "Setup all the various paths.
+ROOTS is a list of plausible roots of the XEmacs directory hierarchy.
+If INHIBIT-PACKAGES is non-NIL, don't do packages.
+If INHIBIT-SITE-LISP is non-NIL, don't do site-lisp.
+It's idempotent, so call this as often as you like!"
 
-    ;; add site-lisp dir to load-path
-    (when site-lisp
-      ;; If the site-lisp dir isn't on the load-path, add it to the end.
-      (or (member site-lisp load-path)
-	  (setq load-path (append load-path
-				  (list (file-name-as-directory site-lisp)))))
-      ;; Also add any direct subdirectories of the site-lisp directory
-      ;; to the load-path.  But don't add dirs whose names begin
-      ;; with dot or hyphen.
-      (let ((files (directory-files site-lisp nil "^[^-.]" nil 'dirs-only))
-	    file)
-	(while files
-	  (setq file (car files))
-	  (if (and (not (member file '("RCS" "CVS" "SCCS")))
-		   (setq file (expand-file-name file site-lisp))
-		   (not (member file load-path)))
-	      (setq load-path
-		    (nconc load-path
-			   (list (file-name-as-directory file)))))
-	  (setq files (cdr files)))))
+  (setq package-path (packages-find-package-path roots))
 
-    ;; add lisp dir to load-path
-    (when lisp
-      ;; If the lisp dir isn't on the load-path, add it to the end.
-      (or (member lisp load-path)
-	  (setq load-path (append load-path
-				  (list (file-name-as-directory lisp)))))
-      ;; Also add any direct subdirectories of the lisp directory
-      ;; to the load-path.  But don't add dirs whose names begin
-      ;; with dot or hyphen.
-      (let ((files (directory-files lisp nil "^[^-.]" nil 'dirs-only))
-	    file)
-	(while files
-	  (setq file (car files))
-	  (when (and (not (member file '("RCS" "CVS" "SCCS")))
-		     (setq file (expand-file-name file lisp))
-		     (not (member file load-path)))
-	    (setq load-path
-		  (nconc load-path
-			 (list (file-name-as-directory file)))))
-	  (setq files (cdr files)))))
+  (let ((stuff (packages-find-packages package-path inhibit-packages)))
+    (setq early-packages (car stuff))
+    (setq late-packages (cdr stuff)))
 
-    ;; 1996/12/6 by MORIOKA Tomohiko <morioka@jaist.ac.jp>
-    ;;	define `default-load-path' for file-detect.el
-    (setq default-load-path
-	  (append default-load-path
-		  (if site-lisp
-		      (list site-lisp))
-		  (if lisp
-		      (list lisp)
-		    )
-		  ))
+  (setq early-package-load-path (packages-find-package-load-path early-packages))
+  (setq late-package-load-path (packages-find-package-load-path late-packages))
 
-    ;; 1997/03/06 by Jeff Miller <jmiller@bayserve.net>
-    ;; initialize 'site-directory'.  This is the site-lisp dir used by 
-    ;; XEmacs
-    (if site-lisp
-	(setq site-directory (file-name-as-directory site-lisp))
-      )
-    ;; If running from the build directory, always prefer the exec-directory
-    ;; that is here over to the one that came from paths.h.
-    (when (or (and (null exec-directory) lib-src)
-	      (and (string= lib-src (expand-file-name "lib-src" root))
-		   (not (string= exec-directory lib-src))))
-      (setq exec-directory (file-name-as-directory lib-src)))
-    (when (or (and (null doc-directory) lib-src)
-	      (and (string= lib-src (expand-file-name "lib-src" root))
-		   (not (string= doc-directory lib-src))))
-      (setq doc-directory (file-name-as-directory lib-src)))
+  (setq load-path (paths-construct-load-path roots
+					     early-package-load-path
+					     late-package-load-path
+					     inhibit-site-lisp))
 
-    (when exec-directory
-      (or (member exec-directory exec-path)
-	  (setq exec-path (append exec-path (list exec-directory)))))
-    (when (or (and (null data-directory) etc)
-	      (and (string= etc (expand-file-name "etc" root))
-		   (not (string= data-directory etc))))
-      (setq data-directory (file-name-as-directory etc)))
+  (setq info-path (paths-construct-info-path roots early-packages late-packages))
 
-    ;; If `configure' specified an info dir, use it.
-    ;; #### The above comment is suspect.
-    (or (boundp 'Info-default-directory-list)
-	(setq Info-default-directory-list nil))
+  (if (boundp 'lock-directory)
+      (progn
+	(setq lock-directory (paths-find-lock-directory roots))
+	(setq superlock-file (paths-find-superlock-file lock-directory))))
 
-    ;; Add additional system directories.
-    (setq Info-default-directory-list
-	  (append Info-default-directory-list
-		  (split-string infopath-internal ":")))
+  (setq exec-directory (paths-find-exec-directory roots))
 
-    (let ((infopath (getenv "INFOPATH")))
-      (when infopath
-	(setq Info-default-directory-list
-	      (append Info-default-directory-list
-		      (split-string infopath ":")))))
+  (setq exec-path (paths-construct-exec-path roots exec-directory
+					     early-packages late-packages))
 
-    (cond (configure-info-directory
-	   (setq configure-info-directory (file-name-as-directory
-					   configure-info-directory))
-	   (or (member configure-info-directory Info-default-directory-list)
-	       (setq Info-default-directory-list
-		     (append (list configure-info-directory)
-			     Info-default-directory-list)))))
-    ;; If we've guessed the info dir, use that (too).
-    (when (and info (not (member info Info-default-directory-list)))
-      (setq Info-default-directory-list
-	    (append (list info) Info-default-directory-list)))
+  (setq doc-directory (paths-find-doc-directory roots))
 
-    ;; Default the lock dir to being a sibling of the data-directory.
-    ;; If superlock isn't set, or is set to a file in a nonexistent
-    ;; directory, derive it from the lock dir.
-    (when (boundp 'lock-directory)
-      (setq lock-directory lock)
-      (cond ((null lock-directory)
-	     (setq superlock-file nil))
-	    ((or (null superlock-file)
-		 (not (file-directory-p
-		       (file-name-directory superlock-file))))
-	     (setq superlock-file
-		   (expand-file-name "!!!SuperLock!!!"
-				     lock-directory)))))
+  (setq data-directory (paths-find-data-directory roots))
 
-    (set-default-load-path-warning)
-    (when (and (null (running-temacs-p))
-	       data-directory
-	       Info-default-directory-list)
-      (setq data-directory-list (list data-directory))
-      (packages-find-packages package-path nil))))
+  (setq data-directory-list (paths-construct-data-directory-list data-directory
+								 early-packages
+								 late-packages)))
 
-
-(defun set-default-load-path-warning ()
+(defun startup-setup-paths-warning ()
   (let ((lock (if (boundp 'lock-directory) lock-directory 't))
-	warnings message guess)
-    (when (and (stringp lock) (not (file-directory-p lock)))
-      (setq lock nil))
+	warnings message)
+    (if (and (stringp lock) (null (file-directory-p lock)))
+	(setq lock nil))
     (cond
-     ((not (and exec-directory data-directory doc-directory load-path lock))
+     ((null (and exec-directory data-directory doc-directory load-path lock))
       (save-excursion
 	(set-buffer (get-buffer-create " *warning-tmp*"))
 	(erase-buffer)
 	(buffer-disable-undo (current-buffer))
-	(when (null lock)           (push "lock-directory" warnings))
-	(when (null exec-directory) (push "exec-directory" warnings))
-	(when (null data-directory) (push "data-directory" warnings))
-	(when (null doc-directory)  (push "doc-directory"  warnings))
-	(when (null load-path)      (push "load-path"      warnings))
+	(if (null lock)           (push "lock-directory" warnings))
+	(if (null exec-directory) (push "exec-directory" warnings))
+	(if (null data-directory) (push "data-directory" warnings))
+	(if (null doc-directory)  (push "doc-directory"  warnings))
+	(if (null load-path)      (push "load-path"      warnings))
 	(cond ((cdr (cdr warnings))
 	       (setq message (apply 'format "%s, %s, and %s" warnings)))
 	      ((cdr warnings)
@@ -1393,83 +1074,11 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 		"or the XEmacs executable, " (concat invocation-directory
 						     invocation-name)
 		" is in a strange place?")
-	(setq guess (or exec-directory
-			data-directory
-			doc-directory
-			(car load-path)
-			(and (string-match "/[^/]+\\'" invocation-directory)
-			     (substring invocation-directory 0
-					(match-beginning 0)))))
-	(when (and guess
-		   (or
-		    ;; parent of a terminal bin/<configuration> pair (hack hack).
-		    (string-match (concat "/bin/"
-					  (regexp-quote system-configuration)
-					  "/?\\'")
-				  guess)
-		    ;; parent of terminal src, lib-src, etc, or lisp dir.
-		    (string-match
-		     "/\\(bin\\|src\\|lib-src\\|etc\\|lisp\\)[^/]*/?\\'"
-		     guess)))
-	  (setq guess (substring guess 0 (match-beginning 0))))
 
-	;; If neither the exec nor lisp dirs are around, then "guess" that
-	;; the new configure-style lib dir should be used.  Otherwise, if
-	;; only one of them appears to be missing, or it's just lock,
-	;; then guess it to be a sibling of whatever already exists.
-	(when (and (null exec-directory) (null load-path))
-	  (setq guess (expand-file-name (startup-make-version-dir) guess)))
-
-	(when (or (null exec-directory) (null load-path))
-	  (insert
-	   "\n\nWithout both exec-directory and load-path, XEmacs will "
-	   "be very broken.  "))
-	(when (and (null exec-directory) guess)
-	  (insert
-	   "Consider making a symbolic link from "
-	   (expand-file-name system-configuration guess)
-	   " to wherever the appropriate XEmacs exec-directory "
-	   "directory is"))
-	(when (and (null data-directory) guess)
-	  (insert
-	   (if exec-directory
-	       "\n\nConsider making a symbolic link " ", and ")
-	   "from "
-	   (expand-file-name "etc" (if load-path
-				       (file-name-directory
-					(directory-file-name
-					 (car load-path)))
-				     guess))
-	   " to wherever the appropriate XEmacs data-directory is"))
-	(when (and (null load-path) guess)
-	  (insert
-	   (if (and exec-directory data-directory)
-	       "Consider making a symbolic link "
-	     ", and ")
-	   "from "
-	   (expand-file-name "lisp" guess)
-	   " to wherever the appropriate XEmacs lisp library is"))
-	(insert ".")
-
-	(when (null lock)
-	  (insert
-	   "\n\nWithout lock-directory set, file locking won't work.  ")
-	  (when guess
-	    (insert
-	     "Consider creating "
-	     (expand-file-name "../xemacs/lock"
-			       (or (find-emacs-root-internal
-				    (concat invocation-directory
-					    invocation-name))
-				   guess))
-	     " as a directory or symbolic link for use as the lock "
-	     "directory.  (This directory must be globally writable.)"
-	     )))
-
-	(when (fboundp 'fill-region)
-	  ;; Might not be bound in the cold load environment...
-	  (let ((fill-column 76))
-	    (fill-region (point-min) (point-max))))
+	(if (fboundp 'fill-region)
+	    ;; Might not be bound in the cold load environment...
+	    (let ((fill-column 76))
+	      (fill-region (point-min) (point-max))))
 	(goto-char (point-min))
 	(princ "\nWARNING:\n" 'external-debugging-output)
 	(princ (buffer-string) 'external-debugging-output)

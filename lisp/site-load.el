@@ -43,17 +43,17 @@ This variable should be set by `site-load-package-file'.")
 (when (file-exists-p site-load-package-file) 
   (let ((file))
     (load site-load-package-file t t t)
-    ;; The `load-gc' macro is provided as a clue that a package is being loaded
-    ;; in preparation of being dumped into XEmacs.
-    (defmacro load-gc (file)
+    ;; The `pureload' macro is provided as a clue that a package is
+    ;; being loaded in preparation of being dumped into XEmacs.
+    (defmacro pureload (file)
       (list 'prog1 (list 'load file) '(garbage-collect)))
     (message "Loading site-wide packages for dumping...")
     (while site-load-packages
       (setq file (car site-load-packages))
-      (load-gc file)
+      (pureload file)
       (setq site-load-packages (cdr site-load-packages)))
     (message "Loading site-wide packages for dumping...done")
-    (fmakunbound 'load-gc)))
+    (fmakunbound 'pureload)))
 
 ;; This file is intended for end user additions.
 ;; Put other initialization here, like setting of language-environment, etc.

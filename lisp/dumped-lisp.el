@@ -1,13 +1,15 @@
 (setq preloaded-file-list
       '("backquote" 		; needed for defsubst etc.
 	"bytecomp-runtime"	; define defsubst
-	;; "setup-paths" ; We're not ready for this
+	#-infodock "Installation.el"
+	"find-paths"
 	"packages"		; Bootstrap run-time lisp environment
+	"setup-paths"
+	"dump-paths"
 	"subr" 			; load the most basic Lisp functions
 	"replace" 		; match-string used in version.el.
 	; Ignore compiled-by-mistake version.elc
 	"version.el"
-	#-infodock "Installation.el"
 	"cl"
 	"cl-extra"
 	"cl-seq"
@@ -23,7 +25,7 @@
 	"obsolete"
 	"specifier"
 	"faces"			; must be loaded before any make-face call
-;;(load-gc "facemenu") #### not yet ported
+;;(pureload "facemenu") #### not yet ported
 	"glyphs"
 	"objects"
 	"extents"
@@ -46,14 +48,14 @@
 ;; autoloads file with the dumped packages removed.
 ;; After fixing, eos/loaddefs-eos and loaddefs appear identical?!!
 ;; So just make loaddefs-eos go away...
-;;(load-gc (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
+;;(pureload (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
 	"startup"		; For initialization of
 				;  `emacs-user-extension-dir'
 	"misc"
-	;; (load-gc "profile")
+	;; (pureload "profile")
 	#-mule "help-nomule"
 	"help"
-	;; (load-gc "hyper-apropos")  Soon...
+	;; (pureload "hyper-apropos")  Soon...
 	#-file-coding "files-nomule"
 	"files"
 	#-infodock "lib-complete" ; InfoDock uses an older version
@@ -110,12 +112,12 @@
 ;; or user switching of input systems???
 ;(if (featurep 'wnn)
 ;    (progn
-;      (load-gc "egg")
-;      (load-gc "egg-wnn")
+;      (pureload "egg")
+;      (pureload "egg-wnn")
 ;      (setq egg-default-startup-file "eggrc-wnn")))
 
 ;; (if (and (boundp 'CANNA) CANNA)
-;;     (load-gc "canna")
+;;     (pureload "canna")
 ;;   )
 
 ;; Now load files to set up all the different languages/environments
@@ -123,11 +125,11 @@
 
 	#+mule "arabic"
 	#+mule "chinese"
-	#+mule "cyrillic"
+	#+mule "mule-base/cyrillic" ; overloaded in leim/quail
 	#+mule "english"
 ;;	#+mule "ethiopic"
 	#+mule "european"
-	#+mule "greek"
+	#+mule "mule-base/greek" ; overloaded in leim/quail
 	#+mule "hebrew"
 	#+mule "japanese"
 	#+mule "korean"
@@ -152,7 +154,7 @@
 
 ;; Enable Mule capability for Gnus, mail, etc...
 ;; Moved to sunpro-load.el - the default only for Sun.
-;;(load-gc "mime-setup")
+;;(pureload "mime-setup")
 ;;; mule-load.el ends here
 	#+window-system "gui"
 	#+window-system "mode-motion"

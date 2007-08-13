@@ -84,6 +84,7 @@ struct mswindows_device
   int planes, cells;
   int horzres, vertres;		/* Size in pixels */
   int horzsize, vertsize;	/* Size in mm */
+  int bitspixel;
 };
 
 #define DEVICE_MSWINDOWS_DATA(d) DEVICE_TYPE_DATA (d, mswindows)
@@ -95,6 +96,7 @@ struct mswindows_device
 #define DEVICE_MSWINDOWS_VERTRES(d) 	(DEVICE_MSWINDOWS_DATA (d)->vertres)
 #define DEVICE_MSWINDOWS_HORZSIZE(d) 	(DEVICE_MSWINDOWS_DATA (d)->horzsize)
 #define DEVICE_MSWINDOWS_VERTSIZE(d) 	(DEVICE_MSWINDOWS_DATA (d)->vertsize)
+#define DEVICE_MSWINDOWS_BITSPIXEL(d) 	(DEVICE_MSWINDOWS_DATA (d)->bitspixel)
 
 
 /*

@@ -63,8 +63,13 @@
 ;		    (nthcdr 3 command-line-args))))
 
 (define-function 'defalias 'define-function)
+
+(setq load-path (decode-path-internal (getenv "EMACSBOOTSTRAPLOADPATH")))
+
+(load "find-paths.el")
 (load "packages.el")
-;;; (load "setup-paths.el")
+(load "setup-paths.el")
+(load "dump-paths.el")
 
 (let ((autol (packages-list-autoloads)))
   ;; (print (prin1-to-string autol))
@@ -82,15 +87,22 @@
 					  nil 'dirs-only)
 			 (cons temp-path load-path))))
 
-
 ;; (print (prin1-to-string update-elc-files-to-compile))
 
 (let (preloaded-file-list site-load-packages)
   (load (concat default-directory "../lisp/dumped-lisp.el"))
-  ;; At this point we need to have the package path initialized
-  ;(paths-setup-paths)
-  (packages-find-packages package-path t t)
-  ;; (print (prin1-to-string preloaded-file-list))
+
+  (print (format "%S" package-path))
+
+  ;; Path setup
+  (let ((package-preloaded-file-list
+	 (packages-collect-package-dumped-lisps late-package-load-path)))
+
+    (setq preloaded-file-list
+	  (append package-preloaded-file-list
+		  preloaded-file-list
+		  packages-hardcoded-lisp)))
+
   (load (concat default-directory "../site-packages") t t)
   (setq preloaded-file-list
 	(append packages-hardcoded-lisp

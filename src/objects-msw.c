@@ -732,7 +732,7 @@ hexval (char c)
     return c-'0';
 }
 
-static COLORREF
+COLORREF
 mswindows_string_to_color(CONST char *name)
 {
   int i;

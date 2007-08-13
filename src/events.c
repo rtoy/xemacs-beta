@@ -482,6 +482,11 @@ WARNING: the event object returned may be a reused one; see the function
     e->event_type = button_release_event;
   else if (EQ (type, Qmotion))
     e->event_type = pointer_motion_event;
+  else if (EQ (type, Qmisc_user))
+    {
+      e->event_type = misc_user_event;
+      e->event.eval.function = e->event.eval.object = Qnil;
+    }
 #if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
   else if (EQ (type, Qdnd_drop))
     {
@@ -491,37 +496,38 @@ WARNING: the event object returned may be a reused one; see the function
 #endif
   else
     {
-      /* Not allowed: Qmisc_user, Qprocess, Qtimeout, Qmagic, Qeval,
-	 Qmagic_eval.  */
-      /* #### Should we allow misc-user events?  */
+      /* Not allowed: Qprocess, Qtimeout, Qmagic, Qeval, Qmagic_eval.  */
       signal_simple_error ("Invalid event type", type);
     }
+
+  EVENT_CHANNEL (e) = Qnil;
 
   plist = Fcopy_sequence (plist);
   Fcanonicalize_plist (plist, Qnil);
 
-  /* Process the plist. */
+#define WRONG_EVENT_TYPE_FOR_PROPERTY(prop)					\
+  error_with_frob (type, "Invalid event type for `%s' property", keyword)
+
   EXTERNAL_PROPERTY_LIST_LOOP (tail, keyword, value, plist)
     {
       if (EQ (keyword, Qchannel))
 	{
 	  if (e->event_type == key_press_event)
 	    {
-	      if (!CONSOLEP (value))
-		wrong_type_argument (Qconsolep, value);
+	      while (!CONSOLEP (value))
+		value = wrong_type_argument (Qconsolep, value);
 	    }
-	  else
+	  else if (e->event_type != misc_user_event)
 	    {
-	      if (!FRAMEP (value))
-		wrong_type_argument (Qframep, value);
+	      while (!FRAMEP (value))
+		value = wrong_type_argument (Qframep, value);
 	    }
 	  EVENT_CHANNEL (e) = value;
 	}
       else if (EQ (keyword, Qkey))
 	{
 	  if (e->event_type != key_press_event)
-	    signal_simple_error ("Invalid event type for `key' property",
-				 type);
+	    WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
 	  if (!SYMBOLP (value) && !CHARP (value))
 	    signal_simple_error ("Invalid event key", value);
 	  e->event.key.keysym = value;
@@ -529,28 +535,28 @@ WARNING: the event object returned may be a reused one; see the function
       else if (EQ (keyword, Qbutton))
 	{
 	  CHECK_NATNUM (value);
-	  check_int_range (XINT(value), 1, 3);
+	  check_int_range (XINT (value), 0, 7);
 	  if (e->event_type != button_press_event
 	      && e->event_type != button_release_event)
-	    signal_simple_error ("Invalid event type for `button' property",
-				 type);
+	    {
+	      WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
+	    }
 	  e->event.button.button = XINT (value);
 	}
       else if (EQ (keyword, Qmodifiers))
 	{
-	  Lisp_Object modtail, sym;
+	  Lisp_Object modtail;
 	  int modifiers = 0;
 
 	  if (e->event_type != key_press_event
 	      && e->event_type != button_press_event
 	      && e->event_type != button_release_event
 	      && e->event_type != pointer_motion_event)
-	    /* Currently unreached. */
-	    signal_simple_error ("Invalid event type for modifiers", type);
+	    WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
 
 	  EXTERNAL_LIST_LOOP (modtail, value)
 	    {
-	      sym = XCAR (modtail);
+	      Lisp_Object sym = XCAR (modtail);
 	      if (EQ (sym, Qcontrol))      modifiers |= MOD_CONTROL;
 	      else if (EQ (sym, Qmeta))    modifiers |= MOD_META;
 	      else if (EQ (sym, Qsuper))   modifiers |= MOD_SUPER;
@@ -559,7 +565,7 @@ WARNING: the event object returned may be a reused one; see the function
 	      else if (EQ (sym, Qsymbol))  modifiers |= MOD_ALT;
 	      else if (EQ (sym, Qshift))   modifiers |= MOD_SHIFT;
 	      else
-		signal_simple_error ("Invalid key modifier", XCAR (modtail));
+		signal_simple_error ("Invalid key modifier", sym);
 	    }
 	  if (e->event_type == key_press_event)
 	    e->event.key.modifiers = modifiers;
@@ -578,8 +584,7 @@ WARNING: the event object returned may be a reused one; see the function
 	      && e->event_type != button_press_event
 	      && e->event_type != button_release_event)
 	    {
-	      signal_simple_error ("Cannot assign `x' property to event",
-				   type);
+	      WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
 	    }
 	  coord_x = XINT (value);
 	}
@@ -591,8 +596,7 @@ WARNING: the event object returned may be a reused one; see the function
 	      && e->event_type != button_press_event
 	      && e->event_type != button_release_event)
 	    {
-	      signal_simple_error ("Cannot assign `y' property to event",
-				   type);
+	      WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
 	    }
 	  coord_y = XINT (value);
 	}
@@ -600,6 +604,18 @@ WARNING: the event object returned may be a reused one; see the function
 	{
 	  CHECK_NATNUM (value);
 	  e->timestamp = XINT (value);
+	}
+      else if (EQ (keyword, Qfunction))
+	{
+	  if (e->event_type != misc_user_event)
+	    WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
+	  e->event.eval.function = value;
+	}
+      else if (EQ (keyword, Qobject))
+	{
+	  if (e->event_type != misc_user_event)
+	    WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
+	  e->event.eval.object = value;
 	}
 #if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
       else if (EQ (keyword, Qdnd_data))
@@ -627,15 +643,15 @@ WARNING: the event object returned may be a reused one; see the function
 	}
 #endif /* HAVE_OFFIX_DND || HAVE_MS_WINDOWS */
       else
-	signal_simple_error ("Invalid property", keyword);
-    } /* while */
+	signal_simple_error_2 ("Invalid property", keyword, value);
+    }
 
   /* Insert the channel, if missing. */
   if (NILP (EVENT_CHANNEL (e)))
     {
       if (e->event_type == key_press_event)
 	EVENT_CHANNEL (e) = Vselected_console;
-      else
+      else if (e->event_type != misc_user_event)
 	EVENT_CHANNEL (e) = Fselected_frame (Qnil);
     }
 
@@ -1001,7 +1017,7 @@ character_to_event (Emchar c, struct Lisp_Event *event, struct console *con,
 	case 'M': k = QKreturn;	  m &= ~MOD_CONTROL; break;
 	case '[': k = QKescape;	  m &= ~MOD_CONTROL; break;
 	default:
-#if defined(HAVE_TTY) && !defined(__CYGWIN32__)
+#if defined(HAVE_TTY)
 	  if (do_backspace_mapping &&
 	      CHARP (con->tty_erase_char) &&
 	      c - '@' == XCHAR (con->tty_erase_char))
@@ -1014,7 +1030,7 @@ character_to_event (Emchar c, struct Lisp_Event *event, struct console *con,
 	}
       if (c >= 'A' && c <= 'Z') c -= 'A'-'a';
     }
-#if defined(HAVE_TTY) && !defined(__CYGWIN32__)
+#if defined(HAVE_TTY) 
   else if (do_backspace_mapping &&
 	   CHARP (con->tty_erase_char) && c == XCHAR (con->tty_erase_char))
     k = QKbackspace;

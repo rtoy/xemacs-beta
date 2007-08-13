@@ -77,6 +77,7 @@ Boston, MA 02111-1307, USA.  */
 void *malloc (unsigned long);
 #endif
 
+#if !defined(HAVE_LIBMCHECK)
 #include <stdio.h>
 
 #include "hash.h"
@@ -225,28 +226,36 @@ check_free (void *ptr)
 	{
 	/* This can only happen if you try to free something that didn't
 	   come from malloc */
-	if (strict_free_check)
-	  abort ();
-	else
-	  {
-	    __free_hook = check_free;
-	    __malloc_hook = check_malloc;
-	    goto end;
-	  }
+#if 1
+	  /* I originally wrote:  "There's really no need to drop core."
+	     I have seen the error of my ways. -slb */
+	  if (strict_free_check)
+	    {
+	      abort ();
+	    }
+#endif
+	  printf("Freeing unmalloc'ed memory at %p\n", ptr);
+	  __free_hook = check_free;
+	  __malloc_hook = check_malloc;
+	  goto end;
 	}
 
       if (size < 0)
 	{
-	/* This happens when you free twice */
-	if (strict_free_check)
-	  abort ();
-	else
-	  {
-	    __free_hook = check_free;
-	    __malloc_hook = check_malloc;
-	    goto end;
-	  }
+	  /* This happens when you free twice */
+#if 1
+	  /* See above comment. */
+	  if (strict_free_check)
+	    {
+	      abort ();
+	    }
+#endif
+	  printf("Freeing %p twice\n", ptr);
+	  __free_hook = check_free;
+	  __malloc_hook = check_malloc;
+	  goto end;
 	}
+
       puthash (ptr, (void *)-size, pointer_table);
 #ifdef UNMAPPED_FREE
       /* Round up size to an even number of pages. */
@@ -345,9 +354,16 @@ check_realloc (void * ptr, unsigned long size)
 
   present = (EMACS_INT) gethash (ptr, pointer_table, (void **) &old_size);
   if (!present)
+    {
     /* This can only happen by reallocing a pointer that didn't
        come from malloc. */
-    abort ();
+#if 1
+      /* see comment in check_free(). */
+      abort ();
+#endif
+      printf("Realloc'ing unmalloc'ed pointer at %p\n", ptr);
+    }
+
   if (result == 0)
     goto end;
   memcpy (result, ptr, MIN (size, old_size));
@@ -490,6 +506,7 @@ void *(*__malloc_hook)() = check_malloc;
 void *(*__realloc_hook)() = check_realloc;
 #endif
 
+#endif /* !defined(HAVE_LIBMCHECK) */
 
 #if defined(DEBUG_INPUT_BLOCKING) || defined (DEBUG_GCPRO)
 

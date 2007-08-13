@@ -287,6 +287,7 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string ("#<keymap ", printcharfun);
   if (!NILP (keymap->name))
     print_internal (keymap->name, printcharfun, 1);
+  /* #### Yuck!  This is no way to form plural!  --hniksic */
   sprintf (buf, "%s%d entr%s 0x%x>",
            ((NILP (keymap->name)) ? "" : " "),
            size,
@@ -1719,7 +1720,6 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
                                  Lisp_Object keymap)
 {
   /* This function can GC */
-  char buf [255];
   Lisp_Object new_keys;
   int i;
   Lisp_Object mpc_binding;
@@ -1746,18 +1746,20 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
     }
   else
     abort ();
+
   if (EQ (keys, new_keys))
-    sprintf (buf, GETTEXT ("can't bind %s: %s has a non-keymap binding"),
-	     (char *) XSTRING_DATA (Fkey_description (keys)),
-	     (char *) XSTRING_DATA (Fsingle_key_description
-				    (Vmeta_prefix_char)));
+    error_with_frob (mpc_binding,
+		     "can't bind %s: %s has a non-keymap binding",
+		     (char *) XSTRING_DATA (Fkey_description (keys)),
+		     (char *) XSTRING_DATA (Fsingle_key_description
+					    (Vmeta_prefix_char)));
   else
-    sprintf (buf, GETTEXT ("can't bind %s: %s %s has a non-keymap binding"),
-	     (char *) XSTRING_DATA (Fkey_description (keys)),
-	     (char *) XSTRING_DATA (Fkey_description (new_keys)),
-	     (char *) XSTRING_DATA (Fsingle_key_description
-				    (Vmeta_prefix_char)));
-  signal_simple_error (buf, mpc_binding);
+    error_with_frob (mpc_binding,
+		     "can't bind %s: %s %s has a non-keymap binding",
+		     (char *) XSTRING_DATA (Fkey_description (keys)),
+		     (char *) XSTRING_DATA (Fkey_description (new_keys)),
+		     (char *) XSTRING_DATA (Fsingle_key_description
+					    (Vmeta_prefix_char)));
 }
 
 DEFUN ("define-key", Fdefine_key, 3, 3, 0, /*

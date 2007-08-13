@@ -63,43 +63,41 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
 */
        (dirname, full, match, nosort, files_only))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   DIR *d;
-  Bytecount name_as_dir_length;
-  Lisp_Object list = Qnil, name, dirfilename = Qnil;
+  Lisp_Object list = Qnil;
+  Bytecount dirnamelen;
   Lisp_Object handler;
   struct re_pattern_buffer *bufp = NULL;
-  Lisp_Object name_as_dir = Qnil;
   int speccount = specpdl_depth ();
   char *statbuf, *statbuf_tail;
 
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-  GCPRO4 (dirname, name_as_dir, dirfilename, list);
+  struct gcpro gcpro1, gcpro2;
+  GCPRO2 (dirname, list);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (dirname, Qdirectory_files);
   if (!NILP (handler))
-  {
-    UNGCPRO;
-    if (!NILP (files_only))
-      return call6 (handler, Qdirectory_files, dirname, full, match, nosort,
-                    files_only);
-    else
-      return call5 (handler, Qdirectory_files, dirname, full, match,
-		    nosort);
-  }
+    {
+      UNGCPRO;
+      if (!NILP (files_only))
+	return call6 (handler, Qdirectory_files, dirname, full, match, nosort,
+		      files_only);
+      else
+	return call5 (handler, Qdirectory_files, dirname, full, match,
+		      nosort);
+    }
 
   /* #### why do we do Fexpand_file_name after file handlers here,
      but earlier everywhere else? */
   dirname = Fexpand_file_name (dirname, Qnil);
-  dirfilename = Fdirectory_file_name (dirname);
-  name_as_dir = Ffile_name_as_directory (dirname);
+  dirname = Ffile_name_as_directory (dirname);
+  dirnamelen = XSTRING_LENGTH (dirname);
 
-  name_as_dir_length = XSTRING_LENGTH (name_as_dir);
-  statbuf = (char *) alloca (name_as_dir_length + MAXNAMLEN + 1);
-  memcpy (statbuf, XSTRING_DATA (name_as_dir), name_as_dir_length);
-  statbuf_tail = statbuf + name_as_dir_length;
+  statbuf = (char *)alloca (dirnamelen + MAXNAMLEN + 1);
+  memcpy (statbuf, XSTRING_DATA (dirname), dirnamelen);
+  statbuf_tail = statbuf + dirnamelen;
 
   /* XEmacs: this should come after Ffile_name_as_directory() to avoid
      potential regexp cache smashage.  It comes before the opendir()
@@ -117,81 +115,82 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   /* Now *bufp is the compiled form of MATCH; don't call anything
      which might compile a new regexp until we're done with the loop!  */
 
-  /* Do this opendir after anything which might signal an error;
-     previosly, there was no unwind-protection in case of error, but
-     now there is.  */
-  d = opendir ((char *) XSTRING_DATA (dirfilename));
-  if (! d)
+  /* Do this opendir after anything which might signal an error.
+     NOTE: the above comment is old; previosly, there was no
+     unwind-protection in case of error, but now there is.  */
+  d = opendir ((char *) XSTRING_DATA (dirname));
+  if (!d)
     report_file_error ("Opening directory", list1 (dirname));
 
   record_unwind_protect (close_directory_unwind, make_opaque_ptr ((void *)d));
-
-  list = Qnil;
 
   /* Loop reading blocks */
   while (1)
     {
       DIRENTRY *dp = readdir (d);
+      Lisp_Object name;
       int len;
 
-      if (!dp) break;
+      if (!dp)
+	break;
       len = NAMLEN (dp);
-      if (DIRENTRY_NONEMPTY (dp))
+      if (DIRENTRY_NONEMPTY (dp)
+	  && (NILP (match)
+	      || (0 <= re_search (bufp, dp->d_name, len, 0, len, 0))))
 	{
-	  int result;
-	  result = (NILP (match)
-	      || (0 <= re_search (bufp, dp->d_name, len, 0, len, 0)));
-          if (result)
+	  if (!NILP (files_only))
 	    {
-	      if (!NILP (files_only))
+	      int dir_p;
+	      struct stat st;
+	      char *cur_statbuf = statbuf;
+	      char *cur_statbuf_tail = statbuf_tail;
+
+	      /* #### I don't think the code under `if' is necessary
+		 anymore.  The crashes in this function were reported
+		 because MAXNAMLEN was used to remember the *whole*
+		 statbuf, instead of using MAXPATHLEN.  This should be
+		 tested after 20.5 is released.  */
+
+	      /* We normally use the buffer created by alloca.
+		 However, if the file name we get too big, we'll use a
+		 malloced buffer, and free it.  It is undefined how
+		 stat() will react to this, but we avoid a buffer
+		 overrun.  */
+	      if (len > MAXNAMLEN)
 		{
-		  int dir_p;
-		  struct stat st;
-		  char *cur_statbuf = statbuf;
-		  char *cur_statbuf_tail = statbuf_tail;
-
-		  /* A trick: we normally use the buffer created by
-		     alloca.  However, if the filename is too big
-		     (meaning MAXNAMLEN is wrong or useless on the
-		     system), we'll use a malloced buffer, and free
-		     it. */
-		  if (len > MAXNAMLEN)
-		    {
-		      cur_statbuf = (char *) xmalloc (name_as_dir_length
-						      + len + 1);
-		      memcpy (cur_statbuf, statbuf, name_as_dir_length);
-		      cur_statbuf_tail = cur_statbuf + name_as_dir_length;
-		    }
-		  memcpy (cur_statbuf_tail, dp->d_name, len);
-		  cur_statbuf_tail [len] = 0;
-
-		  if (stat (cur_statbuf, &st) < 0)
-		    dir_p = 0;
-		  else
-		    dir_p = ((st.st_mode & S_IFMT) == S_IFDIR);
-
-		  if (cur_statbuf != statbuf)
-		    xfree (cur_statbuf);
-
-		  if (EQ (files_only, Qt) && dir_p)
-		    continue;
-		  else if (!EQ (files_only, Qt) && !dir_p)
-		    continue;
+		  cur_statbuf = (char *)xmalloc (dirnamelen + len + 1);
+		  memcpy (cur_statbuf, statbuf, dirnamelen);
+		  cur_statbuf_tail = cur_statbuf + dirnamelen;
 		}
+	      memcpy (cur_statbuf_tail, dp->d_name, len);
+	      cur_statbuf_tail[len] = 0;
 
-	      if (!NILP (full))
-		name = concat2 (name_as_dir,
-				make_ext_string ((Bufbyte *)dp->d_name,
-						 len, FORMAT_FILENAME));
+	      if (stat (cur_statbuf, &st) < 0)
+		dir_p = 0;
 	      else
-		name = make_ext_string ((Bufbyte *)dp->d_name,
-					len, FORMAT_FILENAME);
+		dir_p = ((st.st_mode & S_IFMT) == S_IFDIR);
 
-	      list = Fcons (name, list);
+	      if (cur_statbuf != statbuf)
+		xfree (cur_statbuf);
+
+	      if (EQ (files_only, Qt) && dir_p)
+		continue;
+	      else if (!EQ (files_only, Qt) && !dir_p)
+		continue;
 	    }
+
+	  if (!NILP (full))
+	    name = concat2 (dirname, make_ext_string ((Bufbyte *)dp->d_name,
+						      len, FORMAT_FILENAME));
+	  else
+	    name = make_ext_string ((Bufbyte *)dp->d_name,
+				    len, FORMAT_FILENAME);
+
+	  list = Fcons (name, list);
 	}
     }
   unbind_to (speccount, Qnil);	/* This will close the dir */
+
   if (!NILP (nosort))
     RETURN_UNGCPRO (list);
   else
@@ -292,17 +291,17 @@ file_name_completion_stat (Lisp_Object dirname, DIRENTRY *dp,
 }
 
 static Lisp_Object
-file_name_completion_unwind (Lisp_Object unwind_obj)
+file_name_completion_unwind (Lisp_Object locative)
 {
   DIR *d;
-  Lisp_Object obj = XCAR (unwind_obj);
+  Lisp_Object obj = XCAR (locative);
 
   if (NILP (obj))
     return Qnil;
   d = (DIR *)get_opaque_ptr (obj);
   closedir (d);
   free_opaque_ptr (obj);
-  free_cons (XCONS (unwind_obj));
+  free_cons (XCONS (locative));
   return Qnil;
 }
 
@@ -319,8 +318,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
   int passcount;
   int speccount = specpdl_depth ();
   Charcount file_name_length;
-  DIRENTRY *((*readfunc) (DIR *)) = readdir;
-  Lisp_Object unwind_closure;
+  Lisp_Object locative;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
   GCPRO3 (file, dirname, bestmatch);
@@ -331,7 +329,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
   /* Filename completion on Windows ignores case, since Windows
      filesystems do.  */
   specbind (Qcompletion_ignore_case, Qt);
-#endif /* HAVE_WINDOWS */
+#endif /* WINDOWSNT */
 
 #ifdef FILE_SYSTEM_CASE
   file = FILE_SYSTEM_CASE (file);
@@ -352,15 +350,15 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
      call closedir, but it was wrong, because it made sane handling of
      QUIT impossible and, besides, various utility functions like
      regexp_ignore_completion_p can signal errors.  */
-  unwind_closure = noseeum_cons (Qnil, Qnil);
-  record_unwind_protect (file_name_completion_unwind, unwind_closure);
+  locative = noseeum_cons (Qnil, Qnil);
+  record_unwind_protect (file_name_completion_unwind, locative);
 
   for (passcount = !!all_flag; NILP (bestmatch) && passcount < 2; passcount++)
     {
       d = opendir ((char *) XSTRING_DATA (Fdirectory_file_name (dirname)));
       if (!d)
 	report_file_error ("Opening directory", list1 (dirname));
-      XCAR (unwind_closure) = make_opaque_ptr ((void *)d);
+      XCAR (locative) = make_opaque_ptr ((void *)d);
 
       /* Loop reading blocks */
       while (1)
@@ -374,7 +372,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
           int ignored_extension_p = 0;
 	  Bufbyte *d_name;
 
-	  dp = (*readfunc) (d);
+	  dp = readdir (d);
 	  if (!dp) break;
 
 	  /* #### This is a bad idea, because d_name can contain
@@ -516,8 +514,8 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
             }
         }
       closedir (d);
-      free_opaque_ptr (XCAR (unwind_closure));
-      XCAR (unwind_closure) = Qnil;
+      free_opaque_ptr (XCAR (locative));
+      XCAR (locative) = Qnil;
     }
 
   unbind_to (speccount, Qnil);

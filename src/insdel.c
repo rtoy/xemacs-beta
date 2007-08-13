@@ -316,9 +316,9 @@ bytecount_to_charcount (CONST Bufbyte *ptr, Bytecount len)
 #  define HIGH_BIT_MASK 0x80808080U
 # else
 #  define LONG_BYTES 8
-#  define ALIGN_MASK 0xFFFFFFFFFFFFFFF8U
+#  define ALIGN_MASK 0xFFFFFFFFFFFFFFF8UL
    /* I had a dream, I was being overrun with early Intel processors ... */
-#  define HIGH_BIT_MASK 0x8080808080808080U
+#  define HIGH_BIT_MASK 0x8080808080808080UL
 # endif
 
   /* When we have a large number of bytes to scan, we can be trickier
@@ -2331,12 +2331,14 @@ fixup_internal_substring (CONST Bufbyte *nonreloc, Lisp_Object reloc,
       else
 	*len = XSTRING_LENGTH (reloc) - offset;
     }
+#ifdef ERROR_CHECK_BUFPOS
   assert (*len >= 0);
   if (STRINGP (reloc))
     {
       assert (offset >= 0 && offset <= XSTRING_LENGTH (reloc));
       assert (offset + *len <= XSTRING_LENGTH (reloc));
     }
+#endif
 }
 
 /* Insert a string into BUF at Bufpos POS.  The string data comes

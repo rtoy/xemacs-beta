@@ -272,7 +272,9 @@ grow_hashtable (c_hashtable hash, unsigned int new_size)
      been set and is thus all zeroes.  Qzero is "automatically"
      initialized at startup because its correct value is also all
      zeroes. */
-  if (!NILP (hash->elisp_table) && !ZEROP (hash->elisp_table))
+  if (!EQ (hash->elisp_table, Qnull_pointer) &&
+      !NILP (hash->elisp_table) &&
+      !ZEROP (hash->elisp_table))
     new_harray = (hentry *) elisp_hvector_malloc (sizeof (hentry) * new_hsize,
 						  hash->elisp_table);
   else
@@ -293,7 +295,9 @@ grow_hashtable (c_hashtable hash, unsigned int new_size)
   }
 
 #ifdef emacs
-  if (!NILP (hash->elisp_table) && !ZEROP (hash->elisp_table))
+  if (!EQ (hash->elisp_table, Qnull_pointer) &&
+      !NILP (hash->elisp_table) &&
+      !ZEROP (hash->elisp_table))
     elisp_hvector_free (old_harray, hash->elisp_table);
   else
 #endif

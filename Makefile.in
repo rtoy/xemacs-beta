@@ -152,10 +152,17 @@ lispdir=@lispdir@
 ## --datadir flag at configuration time.
 lispdir_user_defined=@lispdir_user_defined@
 
-## Directories XEmacs should search for lisp files specific
+## Where packages are found.
+packagepath=@packagepath@
+
+## This is set to 'yes' if the user specified the --package_path
+## at configuration time.
+packagepath_user_defined=@packagepath_user_defined@
+
+
+## Directory XEmacs should search for lisp files specific
 ## to this site (i.e. customizations), before consulting
-## ${lispdir}.  This should be a colon-separated list of
-## directories.
+## ${lispdir}.
 sitelispdir=@sitelispdir@
 
 ## Where XEmacs will search for its lisp files while
@@ -303,6 +310,14 @@ src/paths.h: Makefile ${srcdir}/src/paths.h.in FRC.src.paths.h
 	 if test "${lispdir_user_defined}" = "yes"; \
 	   then echo    '#define PATH_LOADSEARCH "${lispdir}"'; \
 	   else echo '/* #define PATH_LOADSEARCH "${lispdir}" */'; \
+	 fi; \
+	 if test "${packagepath_user_defined}" = "yes"; \
+	   then echo    '#define PATH_PACKAGEPATH "${packagepath}"'; \
+	   else echo '/* #define PATH_PACKAGEPATH "${packagepath}" */'; \
+	 fi; \
+	 if test "${sitelispdir_user_defined}" = "yes"; \
+	   then echo    '#define PATH_SITE "${sitelispdir}"'; \
+	   else echo '/* #define PATH_SITE "${sitelispdir}" */'; \
 	 fi; \
 	 if test "${archlibdir_user_defined}" = "yes"; \
 	   then echo    '#define PATH_EXEC "${archlibdir}"'; \
@@ -571,7 +586,8 @@ top_distclean=\
 	  $(RM) $$d/Makefile $$d/Makefile.in ; \
 	done ; \
 	$(RM) core .sbinit Makefile lock/*; \
-	$(RM) lisp/finder-inf.el* Installation.el Installation.elc
+	$(RM) lisp/finder-inf.el* Installation.el Installation.elc; \
+	$(RM) packages mule-packages
 
 distclean: FRC.distclean
 	for d in $(SUBDIR); do (cd $$d && $(RECURSIVE_MAKE) $@); done

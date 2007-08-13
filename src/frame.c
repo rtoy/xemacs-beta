@@ -1513,7 +1513,7 @@ delete_frame_internal (struct frame *f, int force,
     }
  double_break_1:
 
-  if (called_from_delete_device < 0)
+  if (!called_from_delete_device)
     /* then we're being called from delete-console, and we shouldn't
        try to find another default-minibuffer frame for the console.
        */

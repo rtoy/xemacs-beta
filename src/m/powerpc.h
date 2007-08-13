@@ -160,5 +160,5 @@ Boston, MA 02111-1307, USA.  */
 #undef NEED_PTEM_H
 
 #define ORDINARY_LINK
-#define LD_SWITCH_MACHINE -T ppc.ldscript
+#define LD_SWITCH_MACHINE -T ${srcdir}/src/ppc.ldscript
 #endif

@@ -86,14 +86,6 @@ int initialized;
 /* Preserves a pointer to the memory allocated that copies that
    static data inside glibc's malloc.  */
 void *malloc_state_ptr;
-/*#define SLB_MEMORY_CHECKING 1*/
-/* I have observed free being passed the value 0x01 in gdb from somewhere */
-/* in the locale initialization, except that as soon as the following */
-/* monitoring code was added, the problem went away.  I don't trust gdb */
-/* at all with glibc, sigh.  -slb */
-#ifdef SLB_MEMORY_CHECKING
-void slb_memory_checker(__malloc_ptr_t);
-#endif
 #endif
 
 /* Variable whose value is symbol giving operating system type. */
@@ -112,9 +104,6 @@ Lisp_Object Vemacs_minor_version;
 Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
 
-/* Package directories built in at configure time */
-Lisp_Object Vpackage_path;
-
 /* The name under which XEmacs was invoked, with any leading directory
    names discarded.  */
 Lisp_Object Vinvocation_name;
@@ -127,6 +116,21 @@ Lisp_Object Vinvocation_directory;
    nil means get them only from PATH_LOADSEARCH.  */
 Lisp_Object Vinstallation_directory;
 #endif
+
+Lisp_Object Vexec_path, Vconfigure_exec_path;
+Lisp_Object Vexec_directory;
+Lisp_Object Vconfigure_lisp_directory;
+Lisp_Object Vconfigure_package_path;
+Lisp_Object Vdata_directory, Vconfigure_data_directory;
+Lisp_Object Vdoc_directory, Vconfigure_doc_directory;
+Lisp_Object Vconfigure_lock_directory;
+Lisp_Object Vdata_directory_list;
+Lisp_Object Vinfo_directory, Vconfigure_info_directory;
+Lisp_Object Vsite_directory, Vconfigure_site_directory;
+Lisp_Object Vconfigure_info_path;
+
+/* The default base directory XEmacs is installed under. */
+Lisp_Object Vconfigure_prefix_directory;
 
 /* If nonzero, set XEmacs to run at this priority.  This is also used
    in child_setup and sys_suspend to make sure subshells run at normal
@@ -172,6 +176,9 @@ int noninteractive;
    but nothing terrible happens if user sets this one.  */
 
 int noninteractive1;
+
+/* Nonzero means don't perform site-lisp searches at startup */
+int inhibit_site_lisp;
 
 /* Nonzero means don't perform package searches at startup */
 int inhibit_package_init;
@@ -506,14 +513,14 @@ main_1 (int argc, char **argv, char **envp, int restart)
   extern int malloc_cookie;
 #endif
 
-#ifndef SYSTEM_MALLOC
+#if !defined(SYSTEM_MALLOC) && !defined(HAVE_LIBMCHECK)
   /* Make sure that any libraries we link against haven't installed a
      hook for a gmalloc of a potentially incompatible version. */
+  /* If we're using libmcheck, the hooks have already been initialized, */
+  /* don't touch them. -slb */
   __malloc_hook = NULL;
   __realloc_hook = NULL;
-#ifndef SLB_MEMORY_CHECKING
   __free_hook = NULL;
-#endif
 #endif /* not SYSTEM_MALLOC */
 
   noninteractive = 0;
@@ -532,11 +539,12 @@ main_1 (int argc, char **argv, char **envp, int restart)
       printf ("malloc jumpstart failed!\n");
 #endif /* NeXT */
 
-#if defined (GNU_MALLOC) && defined (ERROR_CHECK_MALLOC)
-#if 0
-  if (!initialized)
-    init_free_hook ();
-#endif
+#if defined (GNU_MALLOC) && \
+    defined (ERROR_CHECK_MALLOC) && \
+    !defined (HAVE_LIBMCHECK)
+  /* Prior to XEmacs 21, this was `#if 0'ed out.  I'm putting it back in
+     because it provides extremely valuable debugging code. -slb */
+  init_free_hook ();
 #endif
 
   sort_args (argc, argv);
@@ -677,6 +685,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
     {
       /* Inhibit everything */
       inhibit_package_init = 1;
+      inhibit_site_lisp = 1;
       inhibit_update_autoloads = 1;
       inhibit_update_dumped_lisp = 1;
       skip_args--;
@@ -945,6 +954,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_frame_mswindows ();
       syms_of_objects_mswindows ();
       syms_of_select_mswindows ();
+      syms_of_glyphs_mswindows ();
 #ifdef HAVE_MENUBARS
       syms_of_menubar_mswindows ();
 #endif
@@ -982,10 +992,11 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_btl ();
 #endif
 
-#if defined (GNU_MALLOC) && defined (ERROR_CHECK_MALLOC)
-#if 0
+#if defined (GNU_MALLOC) && \
+    defined (ERROR_CHECK_MALLOC) && \
+    !defined (HAVE_LIBMCHECK)
+      /* Prior to XEmacs 21, this was `#if 0'ed out. -slb */
       syms_of_free_hook ();
-#endif
 #endif
 
 #ifdef TOOLTALK
@@ -1050,6 +1061,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       console_type_create_frame_mswindows ();
       console_type_create_objects_mswindows ();
       console_type_create_redisplay_mswindows ();
+      console_type_create_glyphs_mswindows ();
 # ifdef HAVE_SCROLLBARS
       console_type_create_scrollbar_mswindows ();
 # endif
@@ -1107,6 +1119,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_X_WINDOWS
       image_instantiator_format_create_glyphs_x ();
 #endif /* HAVE_X_WINDOWS */
+#ifdef HAVE_MS_WINDOWS
+      image_instantiator_format_create_glyphs_mswindows ();
+#endif /* HAVE_MSWINDOWS_WINDOWS */
 
       /* Now initialize the lstream types and associated symbols.
 	 Other than the first function below, the functions may
@@ -1312,6 +1327,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_frame_mswindows ();
       vars_of_objects_mswindows ();
       vars_of_select_mswindows ();
+      vars_of_glyphs_mswindows ();
 #ifdef HAVE_SCROLLBARS
       vars_of_scrollbar_mswindows ();
 #endif
@@ -1415,6 +1431,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_X_WINDOWS
       complex_vars_of_glyphs_x ();
 #endif
+#ifdef HAVE_MS_WINDOWS
+      complex_vars_of_glyphs_mswindows ();
+#endif
 
       /* This calls Fmake_glyph_internal(). */
       complex_vars_of_alloc ();
@@ -1460,7 +1479,8 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
       /* These two might call Ffile_name_as_directory(), which
 	 might depend on all sorts of things; I'm not sure. */
-      complex_vars_of_callproc ();
+      complex_vars_of_emacs ();
+
 #ifdef CLASH_DETECTION
       complex_vars_of_filelock ();
 #endif /* CLASH_DETECTION */
@@ -1911,25 +1931,6 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   return Qnil; /* not reached; warning suppression */
 }
 
-#ifdef SLB_MEMORY_CHECKING
-void
-slb_memory_checker(__malloc_ptr_t mem)
-{
-  unsigned int u = (unsigned int)mem;
-  /*        08f6b0a8 */
-  if (u < 0x08000000) {
-    printf("free(%08x)\n", u);
-    /* abort(); */
-  } else {
-    __free_hook = 0;
-
-    free(mem);
-
-    __free_hook = slb_memory_checker;
-  }
-}
-#endif
-
 /* ARGSUSED */
 int
 main (int argc, char **argv, char **envp)
@@ -1965,9 +1966,6 @@ main (int argc, char **argv, char **envp)
   quantify_clear_data ();
 #endif /* QUANTIFY */
 
-#ifdef SLB_MEMORY_CHECKING
-      __free_hook = slb_memory_checker;
-#endif
   suppress_early_backtrace = 0;
   lim_data = 0; /* force reinitialization of this variable */
 
@@ -2076,7 +2074,7 @@ all of which are called before XEmacs is actually killed.
 
   if (!preparing_for_armageddon)
     {
-      Lisp_Object concons;
+      Lisp_Object concons, nextcons;
 
       /* Normally, go ahead and delete all the consoles now.
 	 Some unmentionably lame window systems (MS Wwwww...... eek,
@@ -2085,8 +2083,17 @@ all of which are called before XEmacs is actually killed.
 	 If we're going down, however, we don't do this (might
 	 be too dangerous), and if we get a crash somewhere within
 	 this loop, we'll still autosave and won't try this again. */
-      CONSOLE_LOOP (concons)
-	delete_console_internal (XCONSOLE (XCAR (concons)), 1, 1, 0);
+
+      LIST_LOOP_DELETING(concons, nextcons, Vconsole_list)
+	{
+	  /* There is very little point in deleting the stream console.
+	     It uses stdio, which should flush any buffered output and
+	     something can only go wrong. -slb */
+	  /* I changed my mind.  There's a stupid hack in close to add
+	     a trailing newline. */
+	  /*if (!CONSOLE_STREAM_P (XCONSOLE (XCAR (concons))))*/
+	    delete_console_internal (XCONSOLE (XCAR (concons)), 1, 1, 0);
+	}
     }
 
   UNGCPRO;
@@ -2371,14 +2378,20 @@ and announce itself normally when it is run.
 #define SEPCHAR ':'
 #endif
 
-DEFUN ("parse-colon-path", Fparse_colon_path, 1, 1, 0, /*
+DEFUN ("decode-path-internal", Fdecode_path_internal, 1, 1, 0, /*
 Explode a colon-separated list of paths into a string list.
 */
        (cd_path))
 {
+  if (NILP(cd_path))
+    {
+      return Qnil;
+    }
   CHECK_STRING (cd_path);
 
-  return decode_path(XSTRING_DATA(cd_path));
+  return (!XSTRING_LENGTH(cd_path)) ?
+    list1(Qnil) :
+    decode_path(XSTRING_DATA(cd_path));
 }
 
 Lisp_Object
@@ -2398,7 +2411,7 @@ decode_path (CONST char *path)
       p = strchr (path, SEPCHAR);
       if (!p) p = path + strlen (path);
       lpath = Fcons (((p != path)
-#if 0
+#if 1
 		      ? Ffile_name_as_directory(make_string ((CONST Bufbyte *) path, p - path))
 #else
 		      ? make_string ((CONST Bufbyte *) path, p - path)
@@ -2512,7 +2525,7 @@ syms_of_emacs (void)
   DEFSUBR (Fquantify_clear_data);
 #endif /* QUANTIFY */
 
-  DEFSUBR (Fparse_colon_path);
+  DEFSUBR (Fdecode_path_internal);
 
   defsymbol (&Qkill_emacs_hook, "kill-emacs-hook");
   defsymbol (&Qsave_buffers_kill_emacs, "save-buffers-kill-emacs");
@@ -2607,20 +2620,16 @@ Codename of this version of Emacs (a string).
 #endif
   Vxemacs_codename = Fpurecopy (build_string (XEMACS_CODENAME));
 
-  DEFVAR_LISP ("package-path", &Vpackage_path /*
-List of directories configured for package searching.
-*/ );
-#ifndef PACKAGE_PATH
-#define PACKAGE_PATH "~/.xemacs:" PATH_PREFIX "/lib/xemacs/packages"
-#endif
-  Vpackage_path = decode_path(PACKAGE_PATH);
-
   DEFVAR_BOOL ("noninteractive", &noninteractive1 /*
 Non-nil means XEmacs is running without interactive terminal.
 */ );
 
   DEFVAR_BOOL ("inhibit-package-init", &inhibit_package_init /*
 Set to non-nil when the package-path should not be searched at startup.
+*/ );
+
+  DEFVAR_BOOL ("inhibit-site-lisp", &inhibit_site_lisp /*
+Set to non-nil when the site-lisp should not be searched at startup.
 */ );
 
   DEFVAR_BOOL ("inhibit-update-dumped-lisp", &inhibit_update_dumped_lisp /*
@@ -2643,4 +2652,149 @@ before you compile XEmacs, to enable the code for this feature.
 */ );
   emacs_priority = 0;
 
+}
+
+void
+complex_vars_of_emacs (void)
+{
+  DEFVAR_LISP ("exec-path", &Vexec_path /*
+*List of directories to search programs to run in subprocesses.
+Each element is a string (directory name) or nil (try default directory).
+*/ );
+  Vexec_path = Qnil;
+
+  DEFVAR_LISP ("configure-exec-path", &Vconfigure_exec_path /*
+For internal use by the build procedure only.
+configure's idea of what EXEC-PATH will be.
+*/ );
+#ifdef PATH_EXEC
+  Vconfigure_exec_path = decode_path (PATH_EXEC);
+#else
+  Vconfigure_exec_path = Qnil;
+#endif
+
+  DEFVAR_LISP ("exec-directory", &Vexec_directory /*
+*Directory of architecture-dependent files that come with XEmacs,
+especially executable programs intended for XEmacs to invoke.
+*/ );
+  Vexec_directory = Qnil;
+
+  DEFVAR_LISP ("configure-lisp-directory", &Vconfigure_lisp_directory /*
+Directory of core Lisp files that come with XEmacs.
+*/ );
+#ifdef PATH_LOADSEARCH
+  Vconfigure_lisp_directory = Ffile_name_as_directory
+    (build_string ((char *) PATH_LOADSEARCH));
+#else
+  Vconfigure_lisp_directory = Qnil;
+#endif
+
+  DEFVAR_LISP ("configure-package-path", &Vconfigure_package_path /*
+For internal use by the build procedure only.
+configure's idea of what PACKAGE-DIRECTORY will be.
+*/ );
+#ifdef PATH_PACKAGEPATH
+  Vconfigure_package_path = decode_path (PATH_PACKAGEPATH);
+#else
+  Vconfigure_package_path = Qnil;
+#endif
+
+  DEFVAR_LISP ("data-directory", &Vdata_directory /*
+*Directory of architecture-independent files that come with XEmacs,
+intended for XEmacs to use.
+Use of this variable in new code is almost never correct.  See the
+function `locate-data-directory' and the variable `data-directory-list'.
+*/ );
+  Vdata_directory = Qnil;
+
+  DEFVAR_LISP ("configure-data-directory", &Vconfigure_data_directory /*
+For internal use by the build procedure only.
+configure's idea of what DATA-DIRECTORY will be.
+*/ );
+#ifdef PATH_DATA
+  Vconfigure_data_directory = Ffile_name_as_directory
+    (build_string ((char *) PATH_DATA));
+#else
+  Vconfigure_data_directory = Qnil;
+#endif
+
+  DEFVAR_LISP ("data-directory-list", &Vdata_directory_list /*
+*List of directories of architecture-independent files that come with XEmacs
+or were installed as packages, and are intended for XEmacs to use.
+*/ );
+  Vdata_directory_list = Qnil;
+
+#ifdef CLASH_DETECTION
+  DEFVAR_LISP ("configure-lock-directory", &Vconfigure_lock_directory /*
+For internal use by the build procedure only.
+configure's idea of what LOCK-DIRECTORY will be.
+*/ );
+#ifdef PATH_LOCK
+  Vconfigure_lock_directory = Ffile_name_as_directory
+    (build_string ((char *) PATH_LOCK));
+#else
+  Vconfigure_lock_directory = Qnil;
+#endif
+#endif /* CLASH_DETECTION */
+
+  DEFVAR_LISP ("configure-site-directory", &Vconfigure_site_directory /*
+For internal use by the build procedure only.
+configure's idea of what SITE-DIRECTORY will be.
+*/ );
+#ifdef PATH_SITE
+  Vconfigure_site_directory = Ffile_name_as_directory
+    (build_string ((char *) PATH_SITE));
+#else
+  Vconfigure_site_directory = Qnil;
+#endif
+
+  DEFVAR_LISP ("doc-directory", &Vdoc_directory /*
+*Directory containing the DOC file that comes with XEmacs.
+This is usually the same as exec-directory.
+*/ );
+  Vdoc_directory = Qnil;
+
+  DEFVAR_LISP ("configure-doc-directory", &Vconfigure_doc_directory /*
+For internal use by the build procedure only.
+configure's idea of what DOC-DIRECTORY will be.
+*/ );
+#ifdef PATH_DOC
+  Vconfigure_doc_directory = Ffile_name_as_directory
+    (build_string ((char *) PATH_DOC));
+#else
+  Vconfigure_doc_directory = Qnil;
+#endif
+
+  DEFVAR_LISP ("configure-prefix-directory", &Vconfigure_prefix_directory /*
+For internal use by the build procedure only.
+configure's idea of what PREFIX-DIRECTORY will be.
+*/ );
+#ifdef PATH_PREFIX
+  Vconfigure_prefix_directory = Ffile_name_as_directory
+    (build_string ((char *) PATH_PREFIX));
+#else
+  Vconfigure_prefix_directory = Qnil;
+#endif
+
+  DEFVAR_LISP ("configure-info-directory", &Vconfigure_info_directory /*
+For internal use by the build procedure only.
+This is the name of the directory in which the build procedure installed
+Emacs's info files; the default value for Info-default-directory-list
+includes this.
+*/ );
+#ifdef PATH_INFO
+  Vconfigure_info_directory =
+    Ffile_name_as_directory (build_string (PATH_INFO));
+#else
+  Vconfigure_info_directory = Qnil;
+#endif
+
+  DEFVAR_LISP ("configure-info-path", &Vconfigure_info_path /*
+The configured initial path for info documentation.
+*/ );
+#ifdef PATH_INFOPATH
+  Vconfigure_info_path = decode_path (PATH_INFOPATH);
+#else
+  Vconfigure_info_path = Qnil;
+#endif
 }

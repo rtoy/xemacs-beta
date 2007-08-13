@@ -47,7 +47,14 @@ Lisp_Object Vstdio_str;
 static void
 allocate_stream_console_struct (struct console *con)
 {
-  con->console_data = xnew_and_zero (struct stream_console);
+  if (!con->console_data)
+    {
+      con->console_data = xnew_and_zero (struct stream_console);
+    }
+  else
+    {
+      memset(con->console_data, 0, sizeof (struct stream_console));
+    }
 }
 
 static void
@@ -101,7 +108,10 @@ free_stream_console_struct (struct console *con)
 {
   struct stream_console *tcon = (struct stream_console *) con->console_data;
   if (tcon)
-    xfree (tcon);
+    {
+      xfree (tcon);
+      con->console_data = NULL;
+    }
 }
 
 extern int stdout_needs_newline;
@@ -167,9 +177,10 @@ static void
 stream_init_frame_1 (struct frame *f, Lisp_Object props)
 {
   struct device *d = XDEVICE (FRAME_DEVICE (f));
+#if 0
   if (!NILP (DEVICE_FRAME_LIST (d)))
     error ("Only one frame allowed on stream devices");
-
+#endif
   f->name = build_string ("stream");
   f->height = 80;
   f->width = 24;

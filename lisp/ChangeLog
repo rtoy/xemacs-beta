@@ -1,8 +1,111 @@
+1998-03-23  SL Baur  <steve@altair.xemacs.org>
+
+	* minibuf.el (mouse-read-file-name-1): If a default directory was
+	specified, use it for generating the completions.
+
+1998-03-23  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* update-elc.el: Now respects inhibit-package-init and
+	inhibit-site-lisp.
+	Now does path construction with loadup-paths.
+
+	* startup.el (normal-top-level, startup-setup-paths): Now respects
+	inhibit-package-init and inhibit-site-lisp.
+
+	* packages.el (packages-find-package-path): Extended package path
+	by version-specific hierarchies.
+	(packages-find-packages): Now respects inhibit flag and
+	inhibit-site-lisp.
+	Moved path setup to loadup-paths.
+
+	* make-docfile.el: Now respects inhibit-package-init and
+	inhibit-site-lisp.
+	Now does path construction with loadup-paths.
+
+	* loadup.el: Now respects inhibit-package-init and
+	inhibit-site-lisp.
+
+	* dumped-lisp.el (preloaded-file-list): Added loadup-paths.
+
+	* loadup-paths.el: New file: setup load-path to encompass
+	packages.
+
+1998-03-22  SL Baur  <steve@altair.xemacs.org>
+
+	* auto-show.el: load-gc renamed to pureload.
+	* site-load.el: Ditto.
+	* packages.el (toplevel): Ditto.
+	* loadup.el (really-early-error-handler): Ditto.
+	* dumped-lisp.el (preloaded-file-list): Ditto.
+	* cus-face.el (custom-declare-face): Ditto.
+
+1998-03-22  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* <Today>: The Big Path Searching Overhaul.
+
+	* find-paths.el: New file: find and assemble paths in the
+	installation hierarchy.
+
+	* setup-paths.el: New file: global layout of paths and directories
+	within the XEmacs hierarchy.
+
+	* packages.el: Replaced everything related to path searching and
+	startup by code in terms of find-paths.
+
+	* loadup.el, make-docfile.el, update-elc.el, startup.el: Now calls
+	the new path searching engine.
+
+	* dumped-lisp.el (preloaded-file-list): Added new files find-paths
+	and setup-paths.
+
+1998-03-22  SL Baur  <steve@altair.xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list): Load setup-paths.elc not
+	setup-paths.el.
+
+1998-03-20  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* msw-glyphs.el: Added check for 'mswindows feature, so the file
+	compiles identically in any configuration.
+	Removed irrelevant commentary.
+
+1998-03-20  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* simple.el (set-variable): Allow setting specifiers.
+
+1998-03-19  SL Baur  <steve@altair.xemacs.org>
+
+	* lisp.el (forward-sexp): Revert previous change.
+
+1998-03-18  SL Baur  <steve@altair.xemacs.org>
+
+	* frame.el (frame-initialize): Use `delete-console' instead of
+	`delete-device' to delete the stream console to match the usage in 
+	Fkill_emacs.
+
 1998-03-16  SL Baur  <steve@altair.xemacs.org>
 
 	* files.el (cdpath-previous): New variable.
 	(cd): Use it.
 	From Bob Weiner <weiner@wave.altrasoft.com>
+
+1998-03-15  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* keydefs.el: Changed keybindings of forward-char,
+	  backward, scroll-up and scroll-down to point to their
+	  -command counterparts.
+
+	* simple.el: New functions: forwarc-char-command,
+	  backwrad-char-command, scroll-up-command,
+	  scroll-down-command which work liek their counterparts
+	  except that they honor the variable
+	  signal-error-on-buffer-boundary.
+
+	  Definition of signal-error-on-buffer-boundary received
+	  from src/cmds.c.
+
+	  defvar declaration added for word-across-newline to avoid
+	  byte-compiler warning about the free variable reference.
 
 1998-03-14  Kirill M. Katsnelson  <kkm@kis.ru>
 

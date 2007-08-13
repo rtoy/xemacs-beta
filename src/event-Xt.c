@@ -2044,12 +2044,13 @@ describe_event_window (Window window, Display *display)
   if (w)
     stderr_out (" %s", w->core.widget_class->core_class.class_name);
   f = x_any_window_to_frame (get_device_from_display (display), window);
-  if (f) {
-    char buf[500];
-    sprintf (buf, " \"%s\"", XSTRING_DATA (f->name));
-    write_string_to_stdio_stream (stderr, 0, (Bufbyte *) buf, 0, strlen (buf),
-                                  FORMAT_TERMINAL);
-  }
+  if (f)
+    {
+      char *buf = alloca (XSTRING_LENGTH (f->name) + 4);
+      sprintf (buf, " \"%s\"", XSTRING_DATA (f->name));
+      write_string_to_stdio_stream (stderr, 0, (Bufbyte *) buf, 0,
+				    strlen (buf), FORMAT_TERMINAL);
+    }
   stderr_out ("\n");
 }
 

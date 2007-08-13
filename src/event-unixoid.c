@@ -325,11 +325,6 @@ event_stream_unixoid_delete_stream_pair (Lisp_Object instream,
   if (out != in && out >= 0)
     close (out);
 
-  if (!NILP (instream))
-    Lstream_close (XLSTREAM (instream));
-  if (!NILP (outstream))
-    Lstream_close (XLSTREAM (outstream));
-
   return FD_TO_USID (in);
 }
 

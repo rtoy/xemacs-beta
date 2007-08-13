@@ -983,12 +983,16 @@ redisplay_redraw_cursor (struct frame *f, int run_end_begin_meths)
   extern int cursor_in_echo_area; 
  
   if (cursor_in_echo_area)
+    {
     if (FRAME_HAS_MINIBUF_P (f)) 
       { 
 	w = XWINDOW (FRAME_MINIBUF_WINDOW (f)); 
       }
     else
+      {
       return;
+      }
+    }
   redraw_cursor_in_window (w, run_end_begin_meths);
 }
 

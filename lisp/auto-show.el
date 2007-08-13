@@ -191,7 +191,7 @@ See also the command `auto-show-mode'."
 ;;(add-hook 'post-command-hook 'auto-show-make-point-visible)
 
 ;; If being dumped, turn it on right away.
-(when (boundp 'load-gc)
+(when (boundp 'pureload)
   (auto-show-mode 1))
 
 ;; Do auto-scrolling in comint buffers after process output also.

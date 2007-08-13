@@ -1,4 +1,20 @@
 							-*- indented-text -*-
+to 21.0 beta32 "Nachi"
+-- NT image support from Andy Piper
+-- Various fixes from Hrvoje Niksic
+-- Canna detection now looks for includes in /usr/local/canna
+-- load-gc renamed to pureload
+-- itimer.el-1.07 courtesy of Kyle Jones
+-- package-path searching fixes courtesy of Michael Sperber
+-- buffer overrun prevention patches from Hrvoje Niksic, and Jan Vroonhof
+-- various patches from Hrvoje Niksic
+-- Miscellaneous patches from Kyle Jones, Kirill Katsnelson,
+-- decode-path-internal added as lisp level interface to decode_path
+-- parse-colon-path restored to files.el
+-- miscellaneous startup fixes
+-- DLL fixes from William Perry
+-- PNG autodetectin update
+
 to 20.5 beta31 "Myotonic"
 -- modules directory with dll examples courtesy of William Perry
 -- Upside-down TIFF fix from Jareth Hein

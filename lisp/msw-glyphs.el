@@ -36,10 +36,23 @@
 
 ;;; Code:
 
-(eval-and-compile
+(progn
   (set-console-type-image-conversion-list
    'mswindows
-   '(("^#define" [string :data "[xpm]"])
+   `(("\\.bmp\\'" [bmp :file nil] 2)
+     ("\\`BM" [bmp :data nil] 2)
+     ,@(if (featurep 'xpm) '(("\\.xpm\\'" [xpm :file nil] 2)))
+     ,@(if (featurep 'xpm) '(("\\`/\\* XPM \\*/" [xpm :data nil] 2)))
+;    ,@(if (featurep 'xface) '(("\\`X-Face:" [xface :data nil] 2)))
+;    ,@(if (featurep 'gif) '(("\\.gif\\'" [gif :file nil] 2)
+;			     ("\\`GIF8[79]" [gif :data nil] 2)))
+;    ,@(if (featurep 'jpeg) '(("\\.jpe?g\\'" [jpeg :file nil] 2)))
+;    ;; all of the JFIF-format JPEG's that I've seen begin with
+;    ;; the following.  I have no idea if this is standard.
+;    ,@(if (featurep 'jpeg) '(("\\`\377\330\377\340\000\020JFIF"
+;			       [jpeg :data nil] 2)))
+;    ,@(if (featurep 'png) '(("\\.png\\'" [png :file nil] 2)))
+;    ,@(if (featurep 'png) '(("\\`\211PNG" [png :data nil] 2)))
      ("\\`X-Face:" [string :data "[xface]"])
      ("\\`/\\* XPM \\*/" [string :data "[xpm]"])
      ("\\`GIF87" [string :data "[gif]"])
@@ -49,25 +62,25 @@
      ;; strings are not allowed so they will be ignored.
      ("" [nothing])))
 
-  ;; finish initializing truncation glyph -- created internally
-  ;; because it has a built-in bitmap
   (set-glyph-image truncation-glyph "$" 'global 'mswindows)
-
-  ;; finish initializing continuation glyph -- created internally
-  ;; because it has a built-in bitmap
   (set-glyph-image continuation-glyph "\\" 'global 'mswindows)
-
-  ;; finish initializing hscroll glyph -- created internally
-  ;; because it has a built-in bitmap
   (set-glyph-image hscroll-glyph "$" 'global 'mswindows)
 
   (set-glyph-image octal-escape-glyph "\\")
   (set-glyph-image control-arrow-glyph "^")
   (set-glyph-image invisible-text-glyph " ...")
 
-  (set-glyph-image xemacs-logo
-		   "XEmacs <Images support is due in 20.6!>"
-		   'global 'mswindows)
+  (cond ((featurep 'xpm)
+	 (set-glyph-image xemacs-logo
+			  (concat "../etc/"
+				  (if emacs-beta-version
+				      "xemacs-beta.xpm"
+				    "xemacs.xpm"))
+			  'global 'mswindows))
+	(t
+	 (set-glyph-image xemacs-logo
+			  "XEmacs <insert spiffy graphic logo here>"
+			  'global 'mswindows)))
 )
 
 ;;; msw-glyphs.el ends here

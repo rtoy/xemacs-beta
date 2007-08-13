@@ -1934,6 +1934,8 @@ whether it is a file(/result) or a directory (/result/)."
 	  (setq user-data (list filebuf dirbuff filewin dirwin))
 	  (set-window-buffer (frame-lowest-window frame) butbuff)
 	  (set-buffer butbuff)
+	  (when dir
+	    (setq default-directory dir))
 	  (when (featurep 'scrollbar)
 	    (set-specifier scrollbar-width 0 butbuff))
 	  (insert "                 ")

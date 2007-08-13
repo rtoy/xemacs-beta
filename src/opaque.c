@@ -91,11 +91,11 @@ print_opaque (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   char buf[200];
   if (INTP (XOPAQUE (obj)->size_or_chain))
-    sprintf (buf, "#<INTERNAL EMACS BUG (opaque, size=%ld) 0x%p>",
-	     (long) XOPAQUE_SIZE (obj), (void *) XPNTR (obj));
+    sprintf (buf, "#<INTERNAL EMACS BUG (opaque, size=%ld) 0x%lx>",
+	     (long) XOPAQUE_SIZE (obj), (unsigned long) XPNTR (obj));
   else
-    sprintf (buf, "#<INTERNAL EMACS BUG (opaque, freed) 0x%p>",
-	     (void *) XPNTR (obj));
+    sprintf (buf, "#<INTERNAL EMACS BUG (opaque, freed) 0x%lx>",
+	     (unsigned long) XPNTR (obj));
   write_c_string (buf, printcharfun);
 }
 

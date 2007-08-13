@@ -40,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include "events.h"
 #include "faces.h"
 #include "frame.h"
-#include "glyphs.h"	/* XXX FIXME: Should be glyphs-mswindows when we make one */
+#include "glyphs-msw.h"
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
@@ -71,8 +71,6 @@ static void mswindows_clear_region (Lisp_Object locale, face_index findex,
 static void mswindows_output_vertical_divider (struct window *w, int clear);
 static void mswindows_redraw_exposed_windows (Lisp_Object window, int x,
 					int y, int width, int height);
-
-
 
 typedef struct textual_run
 {
@@ -228,7 +226,7 @@ mswindows_update_dc (HDC hdc, Lisp_Object font, Lisp_Object fg,
       debug_print (fg); 
 #endif
       fg = Qnil;
-      }
+    }
 
   if (!NILP (bg) && !COLOR_INSTANCEP (bg))
     {
@@ -238,7 +236,7 @@ mswindows_update_dc (HDC hdc, Lisp_Object font, Lisp_Object fg,
       debug_print (bg); 
 #endif
       bg = Qnil;
-      }
+    }
 #endif
 
   if (!NILP (fg))
@@ -490,6 +488,203 @@ mswindows_output_string (struct window *w, struct display_line *dl,
     }
 }
 
+void
+mswindows_output_dibitmap (struct frame *f, struct Lisp_Image_Instance *p,
+			   int x, int y, 
+			   int clip_x, int clip_y, 
+			   int clip_width, int clip_height, 
+			   int width, int height, int pixmap_offset)
+{
+  HDC hdc = FRAME_MSWINDOWS_DC (f);
+  HGDIOBJ old;
+  int need_clipping = (clip_x || clip_y);
+
+  if (need_clipping)
+    {
+#if 0
+      XRectangle clip_box[1];
+      
+      clip_box[0].x = clip_x;
+      clip_box[0].y = clip_y;
+      clip_box[0].width = clip_width;
+      clip_box[0].height = clip_height;
+      
+      XSetClipRectangles (dpy, gc, x, y, clip_box, 1, Unsorted);
+#endif
+    }
+
+  /* Select the bitmaps into the compatible DC. */
+  if ((old=SelectObject(IMAGE_INSTANCE_MSWINDOWS_DC(p),
+			IMAGE_INSTANCE_MSWINDOWS_BITMAP(p))))
+    {
+      BitBlt(hdc, 
+	     x,y,
+	     width, height, 
+	     IMAGE_INSTANCE_MSWINDOWS_DC(p),
+	     0,0, 
+	     SRCCOPY);                  
+      SelectObject(IMAGE_INSTANCE_MSWINDOWS_DC(p),old);
+    }
+  else
+    {
+      /* error */
+    }
+
+#if 0
+  if (need_clipping)
+    {
+      XSetClipMask (dpy, gc, None);
+      XSetClipOrigin (dpy, gc, 0, 0);
+    }
+#endif
+}
+
+static void
+mswindows_output_pixmap (struct window *w, struct display_line *dl,
+			 Lisp_Object image_instance, int xpos, int xoffset,
+			 int start_pixpos, int width, face_index findex,
+			 int cursor_start, int cursor_width, int cursor_height)
+{
+  struct frame *f = XFRAME (w->frame);
+  struct device *d = XDEVICE (f->device);
+  HDC hdc = FRAME_MSWINDOWS_DC (f);
+  struct Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
+  Lisp_Object window;
+
+  int lheight = dl->ascent + dl->descent - dl->clip;
+  int pheight = ((int) IMAGE_INSTANCE_PIXMAP_HEIGHT (p) > lheight ? lheight :
+		 IMAGE_INSTANCE_PIXMAP_HEIGHT (p));
+  int pwidth = min (width + xoffset, (int) IMAGE_INSTANCE_PIXMAP_WIDTH (p));
+  int clip_x, clip_y, clip_width, clip_height;
+
+  /* The pixmap_offset is used to center the pixmap on lines which are
+     shorter than it is.  This results in odd effects when scrolling
+     pixmaps off of the bottom.  Let's try not using it. */
+#if 0
+  int pixmap_offset = (int) (IMAGE_INSTANCE_PIXMAP_HEIGHT (p) - lheight) / 2;
+#else
+  int pixmap_offset = 0;
+#endif
+
+  XSETWINDOW (window, w);
+
+  if ((start_pixpos >= 0 && start_pixpos > xpos) || xoffset)
+    {
+      if (start_pixpos > xpos && start_pixpos > xpos + width)
+	return;
+
+      clip_x = xoffset;
+      clip_width = width;
+      if (start_pixpos > xpos)
+	{
+	  clip_x += (start_pixpos - xpos);
+	  clip_width -= (start_pixpos - xpos);
+	}
+    }
+  else
+    {
+      clip_x = 0;
+      clip_width = 0;
+    }
+
+  /* Place markers for possible future functionality (clipping the top
+     half instead of the bottom half; think pixel scrolling). */
+  clip_y = 0;
+  clip_height = pheight;
+
+  /* Clear the area the pixmap is going into.  The pixmap itself will
+     always take care of the full width.  We don't want to clear where
+     it is going to go in order to avoid flicker.  So, all we have to
+     take care of is any area above or below the pixmap. */
+  /* #### We take a shortcut for now.  We know that since we have
+     pixmap_offset hardwired to 0 that the pixmap is against the top
+     edge so all we have to worry about is below it. */
+  /* #### Unless the pixmap has a mask in which case we have to clear
+     the whole damn thing since we can't yet clear just the area not
+     included in the mask. */
+  if (((int) (dl->ypos - dl->ascent + pheight) <
+       (int) (dl->ypos + dl->descent - dl->clip))
+      || IMAGE_INSTANCE_MSWINDOWS_MASK (p))
+    {
+      int clear_x, clear_y, clear_width, clear_height;
+
+      if (IMAGE_INSTANCE_MSWINDOWS_MASK (p))
+	{
+	  clear_y = dl->ypos - dl->ascent;
+	  clear_height = lheight;
+	}
+      else
+	{
+	  clear_y = dl->ypos - dl->ascent + pheight;
+	  clear_height = lheight - pheight;
+	}
+
+      if (start_pixpos >= 0 && start_pixpos > xpos)
+	{
+	  clear_x = start_pixpos;
+	  clear_width = xpos + width - start_pixpos;
+	}
+      else
+	{
+	  clear_x = xpos;
+	  clear_width = width;
+	}
+
+      mswindows_clear_region (window, findex, clear_x, clear_y,
+			      clear_width, clear_height);
+    }
+
+  /* Output the pixmap. */
+  {
+    Lisp_Object tmp_pixel;
+    COLORREF tmp_bcolor, tmp_fcolor;
+    
+    tmp_pixel = WINDOW_FACE_CACHEL_FOREGROUND (w, findex);
+    tmp_fcolor = COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (tmp_pixel));
+    tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, findex);
+    tmp_bcolor = COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (tmp_pixel));
+#if 0
+    mswindows_update_dc (hdc, Qnil, tmp_fcolor,
+			 tmp_bcolor, Qnil);
+#endif
+    mswindows_output_dibitmap (f, p, xpos - xoffset, dl->ypos - dl->ascent,
+			       clip_x, clip_y, clip_width, clip_height,
+			       pwidth, pheight, pixmap_offset);
+  }
+
+  /* Draw a cursor over top of the pixmap. */
+  if (cursor_width && cursor_height && (cursor_start >= xpos)
+      && !NILP (w->text_cursor_visible_p)
+      && (cursor_start < xpos + pwidth))
+    {
+      int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
+      int y = dl->ypos - dl->ascent;
+      struct face_cachel *cursor_cachel =
+	WINDOW_FACE_CACHEL (w,
+			    get_builtin_face_cache_index
+			    (w, Vtext_cursor_face));
+      
+      mswindows_update_dc(hdc, Qnil, cursor_cachel->background, Qnil, 
+			  Qnil);
+
+      if (cursor_width > xpos + pwidth - cursor_start)
+	cursor_width = xpos + pwidth - cursor_start;
+
+      if (focus)
+	{
+	  RECT rect={cursor_start, y + cursor_height,
+		     cursor_start + cursor_width, y};
+	  FrameRect(hdc, &rect, 
+		    COLOR_INSTANCE_MSWINDOWS_BRUSH 
+		    (XCOLOR_INSTANCE(cursor_cachel->background)));
+	}
+      else
+	{
+	  Rectangle (hdc, cursor_start, y, cursor_width,
+		     cursor_height);
+	}
+    }
+}
 
 #ifdef HAVE_SCROLLBARS
 /*
@@ -941,12 +1136,10 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
 
 		  case IMAGE_MONO_PIXMAP:
 		  case IMAGE_COLOR_PIXMAP:
-#if 0
 		    mswindows_output_pixmap (w, dl, instance, xpos,
 				     rb->object.dglyph.xoffset, start_pixpos,
 				     rb->width, findex, cursor_start,
 				     cursor_width, cursor_height);
-#endif
 		    break;
 
 		  case IMAGE_POINTER:
@@ -1214,7 +1407,6 @@ mswindows_clear_frame (struct frame *f)
 {
   GdiFlush();
 }
-
 
 
 

@@ -6259,7 +6259,7 @@ redisplay (void)
 }
 
 
-static char window_line_number_buf[16];
+static char window_line_number_buf[32];
 
 /* Efficiently determine the window line number, and return a pointer
    to its printed representation.  Do this regardless of whether
@@ -7089,10 +7089,7 @@ point_would_be_visible (struct window *w, Bufpos startp, Bufpos point)
      fail. */
   if (startp < BUF_BEGV (b) || startp > BUF_ZV (b)
       || point < BUF_BEGV (b) || point > BUF_ZV (b))
-    {
-      w->line_cache_validation_override--;
-      return 0;
-    }
+    return 0;
 
   validate_line_start_cache (w);
   w->line_cache_validation_override++;
@@ -7278,7 +7275,10 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
   cur_elt = point_in_line_start_cache (w, point, 0);
   /* #### See comment in update_line_start_cache about big minibuffers. */
   if (cur_elt < 0)
-    return point;
+    {
+      w->line_cache_validation_override--;
+      return point;
+    }
 
   point_line_height = Dynarr_atp (w->line_start_cache, cur_elt)->height;
 

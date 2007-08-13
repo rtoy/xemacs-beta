@@ -181,9 +181,15 @@ free_tty_console_struct (struct console *con)
 {
   struct tty_console *tcon = (struct tty_console *) con->console_data;
   if (tcon && tcon->term_entry_buffer) /* allocated in term_init () */
-    xfree (tcon->term_entry_buffer);
+    {
+      xfree (tcon->term_entry_buffer);
+      tcon->term_entry_buffer = NULL;
+    }
   if (tcon)
-    xfree (tcon);
+    {
+      xfree (tcon);
+      con->console_data = NULL;
+    }
 }
 
 static void

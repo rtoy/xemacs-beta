@@ -4,7 +4,6 @@ PACKAGE_PATH="~/.xemacs;f:/src/xemacs/packages"
 HAVE_X=0
 HAVE_MSW=1
 
-HAVE_FILE_CODING=1
 HAVE_MULE=0
 HAVE_IMAGEMAGICK=0
 
@@ -24,10 +23,6 @@ OPT=-O2 -G5 -Zi
 WARN_CPP_FLAGS = -W3
 
 #------------------------------------------------------------------------------
-
-!if $(HAVE_MULE)
-HAVE_FILE_CODING=1
-!endif
 
 !if $(HAVE_X)
 
@@ -58,10 +53,6 @@ MSW_C_DIRED_OBJ=$(OUTDIR)\dired-msw.obj
 MULE_DEFINES=-DMULE
 !endif
 
-!if $(HAVE_FILE_CODING)
-CODING_DEFINES=-DFILE_CODING
-!endif
-
 !if $(DEBUG_XEMACS)
 DEBUG_DEFINES=-DDEBUG_XEMACS
 DEBUG_FLAGS= -debugtype:both -debug:full
@@ -76,8 +67,7 @@ DEBUG_FLAGS= -debugtype:both -debug:full
 
 INCLUDES=$(X_INCLUDES) -I$(XEMACS)\nt\inc -I$(XEMACS)\src -I$(XEMACS)\lwlib -I"$(MSVCDIR)\include"
 
-DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(CODING_DEFINES) $(MULE_DEFINES) \
-	$(MSW_C_DIRED_DEFINES) \
+DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MULE_DEFINES) $(MSW_C_DIRED_DEFINES) \
 	-DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN -DWINDOWSNT -Demacs \
 	-DHAVE_CONFIG_H -D_DEBUG
 
@@ -200,8 +190,7 @@ DOC_SRC1=\
  $(XEMACS)\src\console-stream.c \
  $(XEMACS)\src\console.c \
  $(XEMACS)\src\data.c \
- $(XEMACS)\src\device.c \
- $(XEMACS)\src\dgif_lib.c 
+ $(XEMACS)\src\device.c
 DOC_SRC2=\
  $(XEMACS)\src\dialog.c \
  $(XEMACS)\src\dired.c \
@@ -216,6 +205,7 @@ DOC_SRC2=\
  $(XEMACS)\src\events.c \
  $(XEMACS)\src\extents.c \
  $(XEMACS)\src\faces.c \
+ $(XEMACS)\src\file-coding.c \
  $(XEMACS)\src\fileio.c \
  $(XEMACS)\src\filelock.c \
  $(XEMACS)\src\filemode.c \
@@ -226,8 +216,6 @@ DOC_SRC3=\
  $(XEMACS)\src\frame.c \
  $(XEMACS)\src\free-hook.c \
  $(XEMACS)\src\general.c \
- $(XEMACS)\src\gif_err.c \
- $(XEMACS)\src\gifalloc.c \
  $(XEMACS)\src\glyphs.c \
  $(XEMACS)\src\gmalloc.c \
  $(XEMACS)\src\gui.c  \
@@ -318,13 +306,8 @@ DOC_SRC7=\
  $(MSW_C_DIRED_SRC)
 !endif
 
-!if $(HAVE_FILE_CODING)
-DOC_SRC8=\
- $(XEMACS)\src\file-coding.c
-!endif
-
 !if $(HAVE_MULE)
-DOC_SRC9=\
+DOC_SRC8=\
  $(XEMACS)\src\input-method-xlib.c \
  $(XEMACS)\src\mule.c \
  $(XEMACS)\src\mule-charset.c \
@@ -333,7 +316,7 @@ DOC_SRC9=\
 !endif
 
 !if $(DEBUG_XEMACS)
-DOC_SRC10=\
+DOC_SRC9=\
  $(XEMACS)\src\debug.c
 !endif
 
@@ -343,12 +326,12 @@ $(MAKE_DOCFILE): $(OUTDIR)\make-docfile.obj
 	link.exe -out:$@ $(LIB_SRC_LFLAGS) $** $(LIB_SRC_LIBS)
 
 $(OUTDIR)\make-docfile.obj:	$(LIB_SRC)\make-docfile.c
-	 $(CC) $(LIB_SRC_FLAGS) -c $** -Fo$@
+	 $(CC) -nologo $(LIB_SRC_FLAGS) -c $** -Fo$@
 
 RUNEMACS=$(XEMACS)\src\runemacs.exe
 
 $(RUNEMACS): $(OUTDIR)\runemacs.obj
-	link.exe -out:$@ -subsystem:windows -entry:WinMainCRTStartup \
+	link.exe -nologo -out:$@ -subsystem:windows -entry:WinMainCRTStartup \
 	-pdb:none -release -incremental:no $** \
 	kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
 	advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib libc.lib
@@ -425,10 +408,6 @@ TEMACS_MSW_OBJS=\
 	$(MSW_C_DIRED_OBJ)
 !endif
 
-!if $(HAVE_FILE_CODING)
-TEMACS_CODING_OBJS=\
-	$(OUTDIR)\file-coding.obj
-!endif
 
 !if $(HAVE_MULE)
 TEMACS_MULE_OBJS=\
@@ -467,7 +446,6 @@ TEMACS_OBJS= \
 	$(OUTDIR)\console.obj \
 	$(OUTDIR)\data.obj \
 	$(OUTDIR)\device.obj \
-	$(OUTDIR)\dgif_lib.obj \
 	$(OUTDIR)\dialog.obj \
 	$(OUTDIR)\dired.obj \
 	$(OUTDIR)\doc.obj \
@@ -481,6 +459,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\events.obj \
 	$(OUTDIR)\extents.obj \
 	$(OUTDIR)\faces.obj \
+	$(OUTDIR)\file-coding.obj \
 	$(OUTDIR)\fileio.obj \
 	$(OUTDIR)\filelock.obj \
 	$(OUTDIR)\filemode.obj \
@@ -490,8 +469,6 @@ TEMACS_OBJS= \
 	$(OUTDIR)\frame.obj \
 	$(OUTDIR)\free-hook.obj \
 	$(OUTDIR)\general.obj \
-	$(OUTDIR)\gif_err.obj \
-	$(OUTDIR)\gifalloc.obj \
 	$(OUTDIR)\glyphs.obj \
 	$(OUTDIR)\gmalloc.obj \
 	$(OUTDIR)\gui.obj \
@@ -573,9 +550,9 @@ xemacs.res: xemacs.rc
 
 # MSDEV Source Broswer file. "*.sbr" is too inclusive but this is harmless
 $(TEMACS_BROWSE): $(TEMACS_OBJS)
-	dir /b/s $(OUTDIR)\*.sbr > bscmake.tmp
-	bscmake -o$@ @bscmake.tmp
-	del bscmake.tmp
+	@dir /b/s $(OUTDIR)\*.sbr > bscmake.tmp
+	bscmake /nologo -o$@ @bscmake.tmp
+	@del bscmake.tmp
 
 #------------------------------------------------------------------------------
 
@@ -595,7 +572,6 @@ $(DOC): $(LIB_SRC)\make-docfile.exe
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC7)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC8)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC9)
-	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC10)
 
 $(LISP)\Installation.el: Installation.el
 	copy Installation.el $(LISP)
@@ -604,16 +580,16 @@ update-elc: $(LISP)\Installation.el
 	!$(TEMACS) -batch -l update-elc.el
 
 rebuild: $(TEMACS_DIR)\puresize-adjust.h
-        !nmake -f xemacs.mak dump-xemacs
+        !nmake -nologo -f xemacs.mak dump-xemacs
 
 # This rule dumps xemacs and then checks to see if a rebuild is required due
 # to changing PURESPACE requirements.
 dump-xemacs: $(TEMACS)
-        !touch rebuild
+        !echo >rebuild
         cd $(TEMACS_DIR)
         !$(TEMACS) -batch -l loadup.el dump
         cd $(XEMACS)\nt
-        !nmake -f xemacs.mak rebuild
+        !nmake -nologo -f xemacs.mak rebuild
 
 #------------------------------------------------------------------------------
 
@@ -660,6 +636,7 @@ distclean:
 	-del /s /q *.bak *.elc *.orig *.rej
 
 depend:
+	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w9999 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
-	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w9999 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c
+

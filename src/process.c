@@ -1750,11 +1750,15 @@ text to PROCESS after you call this function.
 
   if (!MAYBE_INT_PROCMETH (process_send_eof, (proc)))
     {
-      event_stream_delete_stream_pair (Qnil, XPROCESS (proc)->pipe_outstream);
-      XPROCESS (proc)->pipe_outstream = Qnil;
+      if (!NILP (DATA_OUTSTREAM (XPROCESS (proc))))
+	{
+	  Lstream_close (XLSTREAM (DATA_OUTSTREAM (XPROCESS (proc))));
+	  event_stream_delete_stream_pair (Qnil, XPROCESS (proc)->pipe_outstream);
+	  XPROCESS (proc)->pipe_outstream = Qnil;
 #ifdef FILE_CODING
-      XPROCESS (proc)->coding_outstream = Qnil;
+	  XPROCESS (proc)->coding_outstream = Qnil;
 #endif
+	}
     }
 
   return process;
@@ -1780,6 +1784,11 @@ deactivate_process (Lisp_Object proc)
      is guarded by process->selected, so this is not a problem. - kkm*/
   /* Must call this before setting the streams to nil */
   event_stream_unselect_process (p);
+
+  if (!NILP (DATA_OUTSTREAM (p)))
+    Lstream_close (XLSTREAM (DATA_OUTSTREAM (p)));
+  if (!NILP (DATA_INSTREAM (p)))
+    Lstream_close (XLSTREAM (DATA_INSTREAM (p)));
 
   /* Provide minimal implementation for deactivate_process
      if there's no process-specific one */

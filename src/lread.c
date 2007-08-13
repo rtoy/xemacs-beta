@@ -1297,7 +1297,10 @@ readevalloop (Lisp_Object readcharfun,
   else if (MARKERP (readcharfun))
     b = XMARKER (readcharfun)->buffer;
 
-  specbind (Qstandard_input, readcharfun);
+  /* Don't do this.  It is not necessary, and it needlessly exposes
+     READCHARFUN (which can be a stream) to Lisp.  --hniksic */
+  /*specbind (Qstandard_input, readcharfun);*/
+
   specbind (Qcurrent_load_list, Qnil);
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
@@ -1580,6 +1583,10 @@ read_escape (Lisp_Object readcharfun)
 {
   /* This function can GC */
   Emchar c = readchar (readcharfun);
+
+  if (c < 0)
+    signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
+
   switch (c)
     {
     case 'a': return '\007';
@@ -1595,9 +1602,13 @@ read_escape (Lisp_Object readcharfun)
 
     case 'M':
       c = readchar (readcharfun);
+      if (c < 0)
+	signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
       if (c != '-')
 	error ("Invalid escape character syntax");
       c = readchar (readcharfun);
+      if (c < 0)
+	signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
       if (c == '\\')
 	c = read_escape (readcharfun);
       return c | 0200;
@@ -1615,11 +1626,14 @@ read_escape (Lisp_Object readcharfun)
    #define ctl_modifier   (0x400000)
    #define meta_modifier  (0x800000)
 */
-#define FSF_LOSSAGE(mask)						\
-      if (puke_on_fsf_keys || ((c = readchar (readcharfun)) != '-'))	\
-	error ("Invalid escape character syntax");			\
-      if ((c =  readchar (readcharfun)) == '\\')			\
-	c = read_escape (readcharfun);					\
+#define FSF_LOSSAGE(mask)							\
+      if (puke_on_fsf_keys || ((c = readchar (readcharfun)) != '-'))		\
+	error ("Invalid escape character syntax");				\
+      c = readchar (readcharfun);						\
+      if (c < 0)								\
+	signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));	\
+      if (c == '\\')								\
+	c = read_escape (readcharfun);						\
       return c | mask
 
     case 'S': FSF_LOSSAGE (shift_modifier);
@@ -1636,10 +1650,14 @@ read_escape (Lisp_Object readcharfun)
 
     case 'C':
       c = readchar (readcharfun);
+      if (c < 0)
+	signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
       if (c != '-')
 	error ("Invalid escape character syntax");
     case '^':
       c = readchar (readcharfun);
+      if (c < 0)
+	signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
       if (c == '\\')
 	c = read_escape (readcharfun);
       /* FSFmacs junk for non-ASCII controls.
@@ -1730,6 +1748,8 @@ read_atom_0 (Lisp_Object readcharfun, Emchar firstchar, int *saw_a_backslash)
       if (c == '\\')
 	{
 	  c = readchar (readcharfun);
+	  if (c < 0)
+	    signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
 	  *saw_a_backslash = 1;
 	}
       Lstream_put_emchar (XLSTREAM (Vread_buffer_stream), c);
@@ -1822,13 +1842,15 @@ read_atom (Lisp_Object readcharfun,
 	/* intern will purecopy pname if necessary */
 	Lisp_Object name = make_string ((Bufbyte *) read_ptr, len);
 	sym = Fintern (name, Qnil);
-      }
-    if (SYMBOL_IS_KEYWORD (sym))
-      {
-	/* the LISP way is to put keywords in their own package, but we don't
-	   have packages, so we do something simpler.  Someday, maybe we'll
-	   have packages and then this will be reworked.  --Stig. */
-	XSYMBOL (sym)->value = sym;
+
+	if (SYMBOL_IS_KEYWORD (sym))
+	  {
+	    /* the LISP way is to put keywords in their own package,
+	       but we don't have packages, so we do something simpler.
+	       Someday, maybe we'll have packages and then this will
+	       be reworked.  --Stig. */
+	    XSYMBOL (sym)->value = sym;
+	  }
       }
     return sym;
   }
@@ -2259,7 +2281,7 @@ retry:
             /* purecons #[...] syntax */
 	  case '[': return read_compiled_function (readcharfun, ']'
 						   /*, purify_flag */ );
-            /* "#:"-- quasi-implemented gensym syntax */
+            /* "#:"-- gensym syntax */
 	  case ':': return read_atom (readcharfun, -1, 1);
             /* #'x => (function x) */
 	  case '\'': return list2 (Qfunction, read0 (readcharfun));
@@ -2972,56 +2994,16 @@ read_compiled_function (Lisp_Object readcharfun, Emchar terminator)
 void
 init_lread (void)
 {
-#ifdef PATH_LOADSEARCH
-  CONST char *normal = PATH_LOADSEARCH;
-
-/* Don't print this warning.  If the hardcoded paths don't exist, then
-   startup.el will try and deduce one.  If it fails, it knows how to
-   handle things. */
-#if 0
-#ifndef WINDOWSNT
-  /* When Emacs is invoked over network shares on NT, PATH_LOADSEARCH is
-     almost never correct, thereby causing a warning to be printed out that
-     confuses users.  Since PATH_LOADSEARCH is always overriden by the
-     EMACSLOADPATH environment variable below, disable the warning on NT.  */
-
-  /* Warn if dirs in the *standard* path don't exist.  */
-  if (!turn_off_warning)
-    {
-      Lisp_Object normal_path = decode_env_path (0, normal);
-      for (; !NILP (normal_path); normal_path = XCDR (normal_path))
-	{
-	  Lisp_Object dirfile;
-	  dirfile = Fcar (normal_path);
-	  if (!NILP (dirfile))
-	    {
-	      dirfile = Fdirectory_file_name (dirfile);
-	      if (access ((char *) XSTRING_DATA (dirfile), 0) < 0)
-		stdout_out ("Warning: lisp library (%s) does not exist.\n",
-			    XSTRING_DATA (Fcar (normal_path)));
-	    }
-	}
-    }
-#endif /* WINDOWSNT */
-#endif /* 0 */
-#else /* !PATH_LOADSEARCH */
-  CONST char *normal = 0;
-#endif /* !PATH_LOADSEARCH */
   Vvalues = Qnil;
 
-  /* further frobbed by startup.el if nil. */
-  Vload_path = decode_env_path ("EMACSLOADPATH", normal);
-
-/*  Vdump_load_path = Qnil; */
-  if (purify_flag && NILP (Vload_path))
-    {
-      /* loadup.el will frob this some more. */
-      /* #### unix-specific */
-      Vload_path = Fcons (build_string ("../lisp/"), Vload_path);
-    }
   load_in_progress = 0;
-
+  
   Vload_descriptor_list = Qnil;
+
+  /* kludge: locate-file does not work for a null load-path, even if
+     the file name is absolute. */
+
+  Vload_path = Fcons (build_string (""), Qnil);
 
   /* This used to get initialized in init_lread because all streams
      got closed when dumping occurs.  This is no longer true --
@@ -3100,6 +3082,7 @@ If there were no paths specified in `paths.h', then XEmacs chooses a default
 value for this variable by looking around in the file-system near the
 directory in which the XEmacs executable resides.
 */ );
+  Vload_path = Qnil;
 
 /*  xxxDEFVAR_LISP ("dump-load-path", &Vdump_load_path,
     "*Location of lisp files to be used when dumping ONLY."); */

@@ -40,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
    Color Image Quantization for Frame Buffer Display, Paul Heckbert,
    Siggraph '82 proceedings, pp. 297-307 */
 
-#include "config.h"
+#include <config.h>
 #include "lisp.h"
 #include "imgproc.h"
 

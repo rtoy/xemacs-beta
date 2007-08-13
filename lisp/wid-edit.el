@@ -2197,21 +2197,27 @@ If END is omitted, it defaults to the length of LIST."
   ;; Insert the first choice that matches the value.
   (let ((value (widget-get widget :value))
 	(args (widget-get widget :args))
+	(explicit (widget-get widget :explicit-choice))
 	current)
-    (while args
-      (setq current (car args)
-	    args (cdr args))
-      (when (widget-apply current :match value)
-	(widget-put widget :children (list (widget-create-child-value
-					    widget current value)))
-	(widget-put widget :choice current)
-	(setq args nil
-	      current nil)))
-    (when current
-      (let ((void (widget-get widget :void)))
-	(widget-put widget :children (list (widget-create-child-and-convert
-					    widget void :value value)))
-	(widget-put widget :choice void)))))
+    (if explicit
+	(progn
+	  (widget-put widget :children (list (widget-create-child-value
+					      widget explicit value)))
+	  (widget-put widget :choice explicit))
+      (while args
+	(setq current (car args)
+	      args (cdr args))
+	(when (widget-apply current :match value)
+	  (widget-put widget :children (list (widget-create-child-value
+					      widget current value)))
+	  (widget-put widget :choice current)
+	  (setq args nil
+		current nil)))
+      (when current
+	(let ((void (widget-get widget :void)))
+	  (widget-put widget :children (list (widget-create-child-and-convert
+					      widget void :value value)))
+	  (widget-put widget :choice void))))))
 
 (defun widget-choice-value-get (widget)
   ;; Get value of the child widget.
@@ -2283,7 +2289,10 @@ when he invoked the menu."
 			 (cons (cons (widget-apply current :menu-tag-get)
 				     current)
 			       choices)))
-		 (widget-choose tag (reverse choices) event))))
+		 (let ((choice
+			(widget-choose tag (reverse choices) event)))
+		   (widget-put widget :explicit-choice choice)
+		   choice))))
     (when current
       (widget-value-set widget
 			(widget-apply current :value-to-external

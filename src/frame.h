@@ -450,7 +450,8 @@ extern int frame_changed;
 
 #ifdef HAVE_TOOLBARS
 #define FRAME_RAW_REAL_TOOLBAR_VISIBLE(f, pos) \
-  (!NILP (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_visible_p[pos]))
+  (HAS_DEVMETH_P (XDEVICE (FRAME_DEVICE (f)), initialize_frame_toolbars) \
+   && !NILP (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_visible_p[pos]))
 #define FRAME_RAW_REAL_TOOLBAR_BORDER_WIDTH(f, pos) \
   (XINT (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_border_width[pos]))
 #define FRAME_RAW_REAL_TOOLBAR_SIZE(f, pos) \

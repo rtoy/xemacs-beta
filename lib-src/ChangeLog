@@ -1,3 +1,8 @@
+1998-03-18  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* gnuclient.c (main): Do not copy string unnecessary in (too)
+	small buffers.
+
 1998-03-02  SL Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh: Change all -q -no-site-file to -vanilla

@@ -76,6 +76,9 @@
 
 ;; Then process the list of Lisp files.
 (define-function 'defalias 'define-function)
+
+(setq load-path (decode-path-internal (getenv "EMACSBOOTSTRAPLOADPATH")))
+
 (let ((temp-path (expand-file-name "." (car load-path))))
   (setq load-path (nconc (mapcar
 			  #'(lambda (i) (concat i "/"))
@@ -88,17 +91,22 @@
 (setq autoload-file-name "auto-autoloads.elc")
 (setq source-directory (concat default-directory "../lisp"))
 ;; (print (concat "Source directory: " source-directory))
+(load "find-paths.el")
 (load "packages.el")
-;; (load "setup-paths.el")
+(load "setup-paths.el")
+(load "dump-paths.el")
 
 (let (preloaded-file-list)
   (load (concat default-directory "../lisp/dumped-lisp.el"))
-  ;; Add package lisp directories to load-path (for autoloads)
-  ;; Add files dumped from lisp packages
-  ;(paths-setup-paths)
-  (packages-find-packages package-path t t)
-  (setq preloaded-file-list
-	(append preloaded-file-list packages-hardcoded-lisp))
+
+  (let ((package-preloaded-file-list
+	 (packages-collect-package-dumped-lisps late-package-load-path)))
+
+    (setq preloaded-file-list
+	  (append package-preloaded-file-list
+		  preloaded-file-list
+		  packages-hardcoded-lisp)))
+
   (while preloaded-file-list
     (let ((arg0 (packages-add-suffix (car preloaded-file-list)))
 	  arg)

@@ -3213,6 +3213,8 @@ Each action has the form (FUNCTION . ARGS)."
   "Set VARIABLE to VALUE.  VALUE is a Lisp object.
 When using this interactively, supply a Lisp expression for VALUE.
 If you want VALUE to be a string, you must surround it with doublequotes.
+If VARIABLE is a specifier, VALUE is added to it as an instantiator in
+the 'global locale with nil tag set (see `set-specifier').
 
 If VARIABLE has a `variable-interactive' property, that is used as if
 it were the arg to `interactive' (which see) to interactively read the value."
@@ -3246,7 +3248,9 @@ it were the arg to `interactive' (which see) to interactively read the value."
 					   (list 'interactive prop)
 					   'arg))
 	       (eval-minibuffer (format "Set %s to value: " var)))))))
-  (set var val))
+  (if (specifierp (symbol-value var))
+      (set-specifier (symbol-value var) val)
+    (set var val)))
 
 ;; XEmacs
 (defun activate-region ()

@@ -376,7 +376,8 @@
 ;; (e.g. turner@lanl.gov), if set.
 
 (if (and running-xemacs
-	 (or (and (= emacs-major-version 20) (>= emacs-minor-version 1))
+	 (or (> emacs-major-version 20)
+	     (and (= emacs-major-version 20) (>= emacs-minor-version 1))
 	     (and (= emacs-major-version 19) (>= emacs-minor-version 15))))
     (progn
       (message "Loading and configuring bundled packages... efs")

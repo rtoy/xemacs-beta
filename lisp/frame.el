@@ -216,7 +216,9 @@ The format of this can also be an alist for backward compatibility."
 		    (frame-remove-geometry-props initial-frame-plist))))
 	;; At this point, we know that we have a frame open, so we
 	;; can delete the terminal device.
-	(delete-device terminal-device)
+	;; (delete-device terminal-device)
+	;; Do it the same way Fkill_emacs does it. -slb
+	(delete-console terminal-console)
 	(setq terminal-frame nil)
 
 	;; FSFmacs sets frame-creation-function here, but no need.

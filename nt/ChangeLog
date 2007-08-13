@@ -1,3 +1,21 @@
+1998-03-24  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak (dump-xemacs): Replaced use of `touch' with `echo'.
+
+1998-03-20  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Removed all references to deleted dgif_lib.{c,obj},
+	gif_err.{c,obj} and gifalloc.{c,obj}. New image support is not
+	compiled in yet.
+
+1998-03-19  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: HAVE_FILE_CODING removed: it is no longer an option, 
+	since file I/O depends on it, and defined unconditioanlly in
+	src/s/windowsnt.h.
+	Added -nologo switch to different tools here and there.
+	Suppressed some irrelevant make output.
+
 1998-02-28  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* xemacs.mak: Defined HAVE_FILE_CODING variable, an equivalent of

@@ -255,8 +255,6 @@ verbose=
 x_includes=NONE
 x_libraries=NONE
 CDPATH=.; export CDPATH
-dnl this will serve for testing if a default value should be given
-package_path=NONE
 
 dnl Allow this script to work with zsh, by setting sh emulation options
 if test -n "$ZSH_VERSION"; then
@@ -335,12 +333,16 @@ infopath_user_defined='no'
 lispdir='${datadir}/xemacs-${version}/lisp'
 lispdir_user_defined='no'
 sitelispdir='${datadir}/xemacs/site-lisp'
+sitelispdir_user_defined='no'
+packagepath='~/.xemacs::${datadir}/xemacs/mule-packages:${datadir}/xemacs-${version}/mule-packages:${datadir}/xemacs/packages:${datadir}/xemacs-${version}/packages'
+packagepath_user_defined='no'
 etcdir='${datadir}/xemacs-${version}/etc'
 etcdir_user_defined='no'
 lockdir='${statedir}/xemacs/lock'
 lockdir_user_defined='no'
 archlibdir='${libdir}/xemacs-${version}/${configuration}'
 archlibdir_user_defined='no'
+with_site_lisp='yes'
 with_menubars=''
 with_scrollbars=''
 with_dialogs=''
@@ -514,7 +516,7 @@ while test $# != 0; do
 	puresize	| \
 	cache_file	| \
 	native_sound_lib | \
-	package_path	| \
+	site_lisp	| \
 	x_includes	| \
 	x_libraries	| \
 	site_includes	| \
@@ -629,7 +631,7 @@ while test $# != 0; do
 	  dnl Example: --error-checking=all,noextents,nobufpos
 	  dnl Example: --error-checking=none,malloc,gc
 
-	  for x in `echo "$val" | sed -e 's/,/ /'` ; do
+	  for x in `echo "$val" | sed -e 's/,/ /g'` ; do
 	    case "$x" in
 	      dnl all and none are only permitted as the first in the list.
 	      n | no | non | none ) new_default=no ;;
@@ -654,7 +656,7 @@ while test $# != 0; do
 	    esac
 	    if test "$bogus_error_check" -o \
 	         \( -n "$new_default" -a -n "$echeck_notfirst" \) ; then
-		if test $error_check_default = yes ; then
+		if test "$error_check_default" = yes ; then
 		  types="\`all' (default), \`none', \`noextents', \`notypecheck', \`nobufpos', \`nogc', and \`nomalloc'."
 		else
 		  types="\`all', \`none' (default), \`extents', \`typecheck', \`bufpos', \`gc', and \`malloc'."
@@ -681,7 +683,7 @@ while test $# != 0; do
 	dnl Has the user specified one of the path options?
 	prefix | exec_prefix | bindir | datadir | statedir | libdir | \
 	mandir | infodir | infopath | lispdir | etcdir | lockdir | pkgdir | \
-	 archlibdir | sitelispdir | docdir )
+	archlibdir | sitelispdir | docdir | packagepath )	
 	   dnl If the value was omitted, get it from the next argument.
 	   if test "$valomitted" = "yes"; then
 	     if test "$#" = 0; then
@@ -697,9 +699,11 @@ while test $# != 0; do
            dnl default value of lockdir.
            case "$opt" in
              lispdir ) lispdir_user_defined=yes ;;
+             sitelispdir ) sitelispdir_user_defined=yes ;;
              etcdir  )  etcdir_user_defined=yes ;;
              infodir ) infodir_user_defined=yes ;;
              infopath ) infopath_user_defined=yes ;;
+             packagepath ) packagepath_user_defined=yes ;;
              datadir ) lispdir_user_defined=yes etcdir_user_defined=yes ;;
              statedir | lockdir ) lockdir_user_defined=yes ;;
              exec_prefix | libdir | archlibdir ) archlibdir_user_defined=yes ;;
@@ -1962,6 +1966,23 @@ if test "$doug_lea_malloc" = "yes" ; then
   with_minimal_tagbits=yes
 fi
 
+dnl #### mcheck is broken in all versions of Linux libc and glibc.
+dnl Try this again when 2.1 hits the streets.
+dnl Avoid using free-hook.c if support exists for malloc debugging in libc
+dnl have_libmcheck=no
+dnl if test "$error_check_malloc" = "yes" -a \
+dnl    "$have_glibc" = "yes" -a \
+dnl    "$doug_lea_malloc" = "yes"; then
+dnl   AC_CHECK_HEADERS(mcheck.h)
+dnl   AC_CHECK_LIB(mcheck, mcheck, have_libmcheck=yes, have_libmcheck=no)
+dnl fi
+
+dnl if test "$have_libmcheck" = "yes"; then
+dnl   AC_DEFINE(HAVE_LIBMCHECK)
+dnl   libmcheck=-lmcheck
+dnl   AC_SUBST(libmcheck)
+dnl fi
+
 dnl Some other nice autoconf tests.  If you add a test here which
 dnl should make an entry in src/config.h, do not forget to add an
 dnl #undef clause to src/config.h.in for autoconf to modify.
@@ -2324,7 +2345,7 @@ if test "$with_msw" != "no"; then
     fi
     const_is_losing=no
     with_file_coding=yes
-    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o)
+    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o glyphs-msw.o)
   fi
 fi
 
@@ -2525,7 +2546,7 @@ if test "$with_x11" = "yes"; then
   test -z "$with_png" && { AC_CHECK_FUNC(pow,     , with_png=no) }
   if test "$with_png" != "no"; then
     for extra_libs in "" "-lz" "-lgz"; do
-      AC_CHECK_LIB(png, png_read_image,
+      AC_CHECK_LIB(png, png_set_strip_alpha,
 	png_libs="-lpng $extra_libs" with_png=yes; break,[:],$extra_libs)
     done
   fi
@@ -2733,6 +2754,21 @@ if test "$with_mule" = "yes" ; then
   fi
 
   dnl Autodetect canna
+  canna_includes_found=no
+  if test "$with_canna" != "no"; then
+    AC_CHECK_HEADER(canna/jrkanji.h,canna_includes_found=yes)
+  fi
+  if test "$canna_includes_found" = "no" -a "$with_canna" != "no" -a \
+      -d "/usr/local/canna/include"; then
+    save_c_switch_site="$c_switch_site"
+    c_switch_site="$c_switch_site -I/usr/local/canna/include"
+    AC_CHECK_HEADER(canna/jrkanji.h,canna_includes_found=yes)
+    if test "$canna_includes_found" != "yes"; then
+      c_switch_site="$save_c_switch_site"
+      with_canna="no"
+    fi
+  fi
+
   test -z "$with_canna" && { AC_CHECK_HEADER(canna/RK.h,         , with_canna=no) }
   test -z "$with_canna" && { AC_CHECK_LIB(RKC, RkBgnBun,       [:],with_canna=no) }
   test -z "$with_canna" && { AC_CHECK_LIB(canna,jrKanjiControl,[:],with_canna=no) }
@@ -3264,7 +3300,7 @@ if test "$with_shlib" = "yes"; then
   ld_dynamic_link_flags=
   dnl Fill this in with other values as this gets more testing
   case "$opsys" in
-  hpux*)  ld_dynamic_link_flags="-E" ;;
+  hpux*)  ld_dynamic_link_flags="-Wl,-E" ;;
   linux*) ld_dynamic_link_flags="-rdynamic" ;;
   *) ;;
   esac
@@ -3373,9 +3409,12 @@ AC_SUBST(infodir)
 AC_SUBST(infodir_user_defined)
 AC_SUBST(infopath)
 AC_SUBST(infopath_user_defined)
+AC_SUBST(packagepath)
+AC_SUBST(packagepath_user_defined)
 AC_SUBST(lispdir)
 AC_SUBST(lispdir_user_defined)
 AC_SUBST(sitelispdir)
+AC_SUBST(sitelispdir_user_defined)
 AC_SUBST(etcdir)
 AC_SUBST(etcdir_user_defined)
 AC_SUBST(lockdir)
@@ -3414,14 +3453,10 @@ AC_SUBST(sound_cflags)
 AC_SUBST(RANLIB)
 AC_SUBST(dynodump_arch)
 
-
-dnl if --package-path wasn't passed to configure, give the default value
-if test "${package_path}" = "NONE" ; then
-	package_path="~/.xemacs:${prefix}/lib/xemacs/packages"
+# The default is yes
+if test "$with_site_lisp" = "no"; then
+  AC_DEFINE(INHIBIT_SITE_LISP)
 fi
-dnl change blanks to colons in package path, and make available to config.h
-package_path=`echo $package_path | sed 'y/ /:/'`
-AC_DEFINE_UNQUOTED(PACKAGE_PATH, "$package_path")
 
 XE_SPACE(ac_configure_args, $ac_configure_args)
 AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION, "$canonical")
@@ -3489,7 +3524,6 @@ XEmacs ${emacs_major_version}.${emacs_minor_version}${xemacs_betaname} \"$xemacs
 
   Where should the build process find the source code?    $srcdir
   What installation prefix should install use?		  $prefix
-  Where should XEmacs look for packages?		  $package_path
   What operating system and machine description files should XEmacs use?
         \`$opsysfile' and \`$machfile'
   What compiler should XEmacs be built with?              $CC $CFLAGS
@@ -3594,8 +3628,6 @@ echo "  movemail will use \"$mail_locking\" for locking mail spool files."
 test "$with_pop"	= yes && echo "  Using POP for mail access"
 test "$with_kerberos"	= yes && echo "  Using Kerberos for POP authentication"
 test "$with_hesiod"	= yes && echo "  Using Hesiod to get POP server host"
-echo "  The \`Info-default-directory-list' will be initialized from:"
-echo "  INFOPATH=\"$infopath\""
 test "$use_union_type"     = yes && echo "  Using the union type for Lisp_Objects."
 test "$with_minimal_tagbits" != "no" -o "$with_gung" != "no" && \
 		echo "  Using Lisp_Objects with minimal tagbits."

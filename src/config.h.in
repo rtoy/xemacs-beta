@@ -73,8 +73,8 @@ Boston, MA 02111-1307, USA.  */
 /* Used to identify the XEmacs version in stack traces. */
 #undef STACK_TRACE_EYE_CATCHER
 
-/* Allow the configurer to specify (additional) package directories. */
-#undef PACKAGE_PATH
+/* Allow the configurer to specify if she wants site-lisp. */
+#undef INHIBIT_SITE_LISP
 
 /* This will be removed in 19.15. */
 /* Hah!  Try 20.3 ... */
@@ -93,6 +93,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Define if you are using the GNU C Library. -- experimental. */
 #undef DOUG_LEA_MALLOC
+
+/* Define if you are using libmcheck.a from the GNU C Library. */
+#undef HAVE_LIBMCHECK
 
 /* Define if you are using dlmalloc from the Linux C library. */
 #undef _NO_MALLOC_WARNING_
@@ -167,6 +170,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Some things figured out by the configure script, grouped as they are in
    configure.in. */
+#undef HAVE_MCHECK_H
 #undef HAVE_MACH_MACH_H
 #undef HAVE_SYS_STROPTS_H
 #undef HAVE_SYS_TIMEB_H

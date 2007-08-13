@@ -93,17 +93,30 @@ int dll_init(CONST char *arg) {
 }
 
 dll_handle dll_open(CONST char *fname) {
-  return((dll_handle)shl_load(fname,BIND_DEFERRED,0L));
+  shl_t h = shl_load(fname,BIND_DEFERRED,0L);
+  shl_t *hp = NULL;
+
+  if (h) {
+    hp = (shl_t *)malloc(sizeof(shl_t));
+    if (!hp) {
+      shl_unload(h);
+    } else {
+      *hp = h;
+    }
+  }
+  return((dll_handle)hp);
 }
 
 int dll_close(dll_handle h) {
-  return (shl_unload((shl_t)h));
+  shl_t h = *((shl_t *)hp);
+  free(hp);
+  return (shl_unload(h));
 }
 
 dll_func dll_function(dll_handle h,CONST char *n) {
   long handle = 0L;
 
-  if (shl_findsym(&(shl_t)h,n,TYPE_PROCEDURE,&handle))
+  if (shl_findsym((shl_t *)h,n,TYPE_PROCEDURE,&handle))
     return(NULL);
 
   return((dll_func)handle);
@@ -112,7 +125,7 @@ dll_func dll_function(dll_handle h,CONST char *n) {
 dll_var dll_variable(dll_handle h,CONST char *n) {
   long handle = 0L;
 
-  if (shl_findsym(&(shl_t)h,n,TYPE_DATA,&handle))
+  if (shl_findsym((shl_t *)h,n,TYPE_DATA,&handle))
     return(NULL);
 
   return((dll_var)handle);

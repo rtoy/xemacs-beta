@@ -18,9 +18,9 @@ along with XEmacs; see the file COPYING.  If not, write to the Free
 Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.*/
 
-#include "config.h"
+#include <config.h>
 #include <stdio.h>
-#include <lisp.h>
+#include "lisp.h"
 #include <stddef.h>
 #include "sheap-adjust.h"
 

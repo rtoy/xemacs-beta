@@ -29,6 +29,10 @@
 
    PATH_LOADSEARCH	The default value of `load-path'.
 
+   PATH_PACKAGEPATH     The default value of `package-path'.
+
+   PATH_SITE            The default location of site-specific Lisp files.
+
    PATH_EXEC		The default value of `exec-directory' and `exec-path'.
 			(exec-path also contains the value of whatever is in
 			the PATH environment variable.)
@@ -41,9 +45,6 @@
 			with which we record what files are being modified in 
 			Emacs.  This directory should be writable by everyone.
 			If this is specified, the string must end with a slash!
-
-   PATH_SUPERLOCK	The name of the file !!!SuperLock!!! in the lock 
-			directory.  You probably should let this default...
 
    PATH_INFO		This is where the info documentation is installed.
 
