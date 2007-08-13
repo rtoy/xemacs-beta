@@ -1017,7 +1017,7 @@ request_sigio_on_device (struct device *d)
 {
   int filedesc = DEVICE_INFD (d);
 
-#if defined (I_SETSIG) && !defined(HPUX10)
+#if defined (I_SETSIG) && !defined(HPUX10) && !defined(LINUX)
   {
     int events=0;
     ioctl (filedesc, I_GETSIG, &events);
@@ -1062,7 +1062,7 @@ unrequest_sigio_on_device (struct device *d)
 {
   int filedesc = DEVICE_INFD (d);
 
-#if defined (I_SETSIG) && !defined(HPUX10)
+#if defined (I_SETSIG) && !defined(HPUX10) && !defined(LINUX)
   {
     int events=0;
     ioctl (filedesc, I_GETSIG, &events);

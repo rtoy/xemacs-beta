@@ -1000,6 +1000,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_MSW_C_DIRED
       syms_of_dired_mswindows ();
 #endif
+#ifdef WINDOWSNT
+      syms_of_ntproc ();
+#endif
 #endif	/* HAVE_MS_WINDOWS */
 
 #ifdef MULE
@@ -1008,7 +1011,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_mule_charset ();
 #endif
 #ifdef FILE_CODING
-      syms_of_mule_coding ();
+      syms_of_file_coding ();
 #endif
 #ifdef MULE
 #ifdef HAVE_WNN
@@ -1185,7 +1188,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
       lstream_type_create ();
 #ifdef FILE_CODING
-      lstream_type_create_mule_coding ();
+      lstream_type_create_file_coding ();
 #endif
 #if defined (HAVE_MS_WINDOWS) && !defined(HAVE_MSG_SELECT)
       lstream_type_create_mswindows_selectable ();
@@ -1256,6 +1259,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_bytecode ();
       vars_of_callint ();
       vars_of_callproc ();
+      vars_of_chartab ();
       vars_of_cmdloop ();
       vars_of_cmds ();
       vars_of_console ();
@@ -1315,6 +1319,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_menubar ();
 #endif
       vars_of_minibuf ();
+#ifdef WINDOWSNT
+      vars_of_ntproc ();
+#endif
       vars_of_objects ();
       vars_of_print ();
 
@@ -1399,10 +1406,11 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
 #ifdef MULE
       vars_of_mule ();
+      vars_of_mule_ccl ();
       vars_of_mule_charset ();
 #endif
 #ifdef FILE_CODING
-      vars_of_mule_coding ();
+      vars_of_file_coding ();
 #endif
 #ifdef MULE
 #ifdef HAVE_WNN
@@ -1474,7 +1482,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       complex_vars_of_mule_charset ();
 #endif
 #if defined(FILE_CODING)
-      complex_vars_of_mule_coding ();
+      complex_vars_of_file_coding ();
 #endif
 
       /* This calls allocate_glyph(), which creates specifiers

@@ -442,7 +442,7 @@ variable number of arguments.
 
 This means that if you want to test whether A < B < C, you can write
 it as (< A B C) instead of (and (< A B) (< B C)).  Likewise,
-(apply #'> LIST) now tests if LIST is monotonously increasing -- and
+(apply #'> LIST) now tests if LIST is monotonically increasing -- and
 so on.
 
 ** The XEmacs hashtables now have a consistent read/print syntax.

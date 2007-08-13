@@ -935,7 +935,7 @@ if test -n "$emacs_beta_version" ; then
   	version="${version}-b${emacs_beta_version}"
   	AC_DEFINE_UNQUOTED(EMACS_BETA_VERSION, $emacs_beta_version)
   else
-	version="${version}-p${emacs_beta_version}"
+	version="${version}.${emacs_beta_version}"
 	AC_DEFINE_UNQUOTED(EMACS_PATCH_LEVEL, $emacs_beta_version)
   fi
 fi
@@ -3941,7 +3941,7 @@ echo "$0 $quoted_arguments"
 
 if test ! -z ${emacs_beta_version} ; then
   if test -z "${emacs_is_beta}" ; then
-	xemacs_betaname="-p${emacs_beta_version}"
+	xemacs_betaname=".${emacs_beta_version}"
   else
 	xemacs_betaname="-b${emacs_beta_version}"
   fi

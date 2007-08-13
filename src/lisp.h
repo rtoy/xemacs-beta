@@ -1003,9 +1003,9 @@ set_bit_vector_bit (struct Lisp_Bit_Vector *v, int i, int value)
 {
   unsigned int ui = (unsigned int) i;
   if (value)
-    (v)->bits[ui >> LONGBITS_LOG2] |= (1 << (ui & (LONGBITS_POWER_OF_2 - 1)));
+    (v)->bits[ui >> LONGBITS_LOG2] |= (1UL << (ui & (LONGBITS_POWER_OF_2 - 1)));
   else
-    (v)->bits[ui >> LONGBITS_LOG2] &= ~(1 << (ui & (LONGBITS_POWER_OF_2 - 1)));
+    (v)->bits[ui >> LONGBITS_LOG2] &= ~(1UL << (ui & (LONGBITS_POWER_OF_2 - 1)));
 }
 
 /* Number of longs required to hold LEN bits */

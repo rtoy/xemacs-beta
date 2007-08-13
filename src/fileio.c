@@ -3337,18 +3337,21 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
       }
 #endif /* HAVE_FSYNC */
 
-    /* Spurious "file has changed on disk" warnings have been
-       observed on Suns as well.
-       It seems that `close' can change the modtime, under nfs.
-
-       (This has supposedly been fixed in Sunos 4,
-       but who knows about all the other machines with NFS?)  */
-    /* On VMS and APOLLO, must do the stat after the close
-       since closing changes the modtime.  */
-    /* As it does on Windows too - kkm */
-#if !defined (WINDOWSNT) /* !defined (VMS) && !defined (APOLLO) */
-    fstat (desc, &st);
-#endif
+    /*
+     * On VMS and APOLLO, must do the stat after the close
+     * since closing changes the modtime.
+     *
+     * Spurious "file has changed on disk" warnings have been
+     * observed on Suns as well.  It seems that `close' can change
+     * the modtime, under nfs.  (This has supposedly been fixed in
+     * Sunos 4, but who knows about all the other machines with
+     * NFS?)
+     *
+     * This is reported to happen under Windows also.
+     *
+     * So we don't do the stat here.  It is done after the
+     * descriptor is closed.
+     */
 
     /* NFS can report a write failure now.  */
     if (close (desc) < 0)
@@ -3364,9 +3367,11 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     unbind_to (speccount, Qnil);
   }
 
-#if defined (WINDOWSNT) /* defined (VMS) || defined (APOLLO) */
+  /*
+   * stat the file after the file is closed to avoid having the
+   * modtime change on us when the file is closed.
+   */
   stat ((char *) XSTRING_DATA (fn), &st);
-#endif
 
 #ifdef CLASH_DETECTION
   if (!auto_saving)

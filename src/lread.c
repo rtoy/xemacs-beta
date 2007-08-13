@@ -1545,9 +1545,8 @@ backquote_unwind (Lisp_Object ptr)
 static Lisp_Object
 read0 (Lisp_Object readcharfun)
 {
-  Lisp_Object val;
+  Lisp_Object val = read1 (readcharfun);
 
-  val = read1 (readcharfun);
   if (CONSP (val) && UNBOUNDP (XCAR (val)))
     {
       Emchar c = XCHAR (XCDR (val));
@@ -1687,10 +1686,14 @@ read_escape (Lisp_Object readcharfun)
       }
 
     case 'x':
-      /* A hex escape, as in ANSI C.  */
+      /* A hex escape, as in ANSI C, except that we only allow latin-1
+	 characters to be read this way.  What is "\x4e03" supposed to
+	 mean, anyways, if the internal representation is hidden?
+         This is also consistent with the treatment of octal escapes. */
       {
 	REGISTER Emchar i = 0;
-	while (1)
+	REGISTER int count = 0;
+	while (++count <= 2)
 	  {
 	    c = readchar (readcharfun);
 	    /* Remember, can't use isdigit(), isalpha() etc. on Emchars */

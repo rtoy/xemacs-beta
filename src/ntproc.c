@@ -50,6 +50,7 @@ Boston, MA 02111-1307, USA.
 #include "systime.h"
 #include "syssignal.h"
 #include "syswait.h"
+#include "buffer.h"
 #include "process.h"
 /*#include "w32term.h"*/ /* From 19.34.6: sync in ? --marcpa */
 
@@ -571,17 +572,19 @@ sys_spawnve (int mode, CONST char *cmdname,
 	  errno = EINVAL;
 	  return -1;
 	}
-      cmdname = XSTRING_DATA (full);
-      /* #### KLUDGE */
-      *(char**)(argv[0]) = cmdname;
+      GET_C_STRING_FILENAME_DATA_ALLOCA (full, cmdname);
+    }
+  else
+    {
+      (char*)cmdname = alloca (strlen (argv[0]) + 1);
+      strcpy ((char*)cmdname, argv[0]);
     }
   UNGCPRO;
 
   /* make sure argv[0] and cmdname are both in DOS format */
-  strcpy (cmdname = alloca (strlen (cmdname) + 1), argv[0]);
   unixtodos_filename (cmdname);
   /* #### KLUDGE */
-  *(char**)(argv[0]) = cmdname;
+  ((CONST char**)argv)[0] = cmdname;
 
   /* Determine whether program is a 16-bit DOS executable, or a Win32
      executable that is implicitly linked to the Cygnus dll (implying it
@@ -1335,9 +1338,6 @@ If successful, the new locale id is returned, otherwise nil.
 void
 syms_of_ntproc ()
 {
-  Qhigh = intern ("high");
-  Qlow = intern ("low");
-
   DEFSUBR (Fwin32_short_file_name);
   DEFSUBR (Fwin32_long_file_name);
   DEFSUBR (Fwin32_set_process_priority);
@@ -1346,6 +1346,14 @@ syms_of_ntproc ()
   DEFSUBR (Fwin32_get_default_locale_id);
   DEFSUBR (Fwin32_get_valid_locale_ids);
   DEFSUBR (Fwin32_set_current_locale);
+}
+
+
+void
+vars_of_ntproc (void)
+{
+  Qhigh = intern ("high");
+  Qlow = intern ("low");
 
   DEFVAR_LISP ("win32-quote-process-args", &Vwin32_quote_process_args /*
     Non-nil enables quoting of process arguments to ensure correct parsing.
@@ -1376,7 +1384,7 @@ or indirectly by Emacs), and preventing Emacs from cleanly terminating the
 subprocess group, but may allow Emacs to interrupt a subprocess that doesn't
 otherwise respond to interrupts from Emacs.
 */ );
-  Vwin32_start_process_share_console = Qnil;
+  Vwin32_start_process_share_console = Qt;
 
   DEFVAR_LISP ("win32-pipe-read-delay", &Vwin32_pipe_read_delay /*
     Forced delay before reading subprocess output.
@@ -1401,4 +1409,5 @@ the truename of a file can be slow.
   Vwin32_generate_fake_inodes = Qnil;
 #endif
 }
+
 /* end of ntproc.c */

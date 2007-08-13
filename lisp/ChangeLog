@@ -1,3 +1,31 @@
+1999-06-26  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.3 is released
+
+1999-06-26  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.3 is released
+
+1999-06-13    Yoshiki Hayashi <g740685@komaba.ecc.u-tokyo.ac.jp>
+
+	* mule/mule-cmds.el (read-input-method-name): set input-method
+	properly.
+
+1999-06-12    Vin Shelton <acs@xemacs.org>
+
+	* startup.el: Document -private and break out non-standard X
+ 	options.
+
+1999-06-12    SL Baur  <steve@gneiss.etl.go.jp>
+
+	* info.el (Info-scroll-prev): Use event functions instead of
+	the old emacs 19 interface.
+
+1999-06-12    SL Baur  <steve@gneiss.etl.go.jp>
+
+	* about.el (about-xemacs): Update maintainer list.
+	Fix release date.
+
 1999-05-14  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.2 is released

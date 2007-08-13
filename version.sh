@@ -1,8 +1,8 @@
 #!/bin/sh
 emacs_major_version=21
 emacs_minor_version=1
-emacs_beta_version=2
-xemacs_codename="20 Minutes to Nikko"
+emacs_beta_version=3
+xemacs_codename="Acadia"
 infodock_major_version=4
 infodock_minor_version=0
 infodock_build_version=7

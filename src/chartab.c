@@ -1753,6 +1753,11 @@ syms_of_chartab (void)
   DEFSUBR (Fcategory_table_value_p);
 #endif /* MULE */
 
+}
+
+void
+vars_of_chartab (void)
+{
   /* DO NOT staticpro this.  It works just like Vweak_hash_tables. */
   Vall_syntax_tables = Qnil;
 }

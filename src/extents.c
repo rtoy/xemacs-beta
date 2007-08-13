@@ -5714,8 +5714,6 @@ splice_in_string_extents_mapper (EXTENT extent, void *arg)
     new_start = base_start;
   if (new_end > base_end)
     new_end = base_end;
-  if (new_end <= new_start)
-    return 0;
 
   if (!extent_duplicable_p (extent))
     return 0;

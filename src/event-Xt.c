@@ -2035,7 +2035,7 @@ emacs_Xt_unselect_console (struct console *con)
   /* On a stream device (ie: noninteractive), bad things can happen. */
   if (EQ (CONSOLE_TYPE (con), Qtty)) {
     mousefd = CONSOLE_TTY_MOUSE_FD (con);
-    if (mousefd >= 0) {
+    if (mousefd >= 0 && filedesc_to_what_closure[mousefd]  ) {
       unselect_filedesc (mousefd);
     }
   }

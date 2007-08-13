@@ -45,10 +45,10 @@ PROGRAM_DEFINES=-DINFODOCK 					\
 	-DINFODOCK_MINOR_VERSION=$(infodock_minor_version)	\
 	-DINFODOCK_BUILD_VERSION=$(infodock_build_version)
 !else
-!if "$(emacs_beta_version)" != ""
+!if "$(emacs_is_beta)" != ""
 XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)-b$(emacs_beta_version)
 !else
-XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)
+XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version).$(emacs_beta_version)
 !endif
 PROGRAM_DEFINES=						\
 	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
@@ -748,8 +748,10 @@ DOC_SRC9=\
 # TEMACS Executable
 
 # This may not exist
-!if "$(emacs_beta_version)" != ""
+!if "$(emacs_is_beta)" != ""
 EMACS_BETA_VERSION=-DEMACS_BETA_VERSION=$(emacs_beta_version)
+!else
+EMACS_BETA_VERSION=-DEMACS_PATCH_LEVEL=$(emacs_beta_version)
 !ENDIF
 
 TEMACS_DIR=$(XEMACS)\src

@@ -83,7 +83,7 @@
     (piper    "Andy Piper"        "andy@xemacs.org")
     (rickc    "Rick Campbell"     "rickc@lehman.com")
     (rossini  "Anthony Rossini"	  "rossini@stat.sc.edu")
-    (vin      "Vin Shelton"	  "acs@acm.org")
+    (vin      "Vin Shelton"	  "acs@xemacs.org")
     (sperber  "Michael Sperber"   "sperber@informatik.uni-tuebingen.de")
     (slb      "SL Baur"           "steve@xemacs.org")
     (stig     "Jonathan Stigelman" "stig@hackvan.com")
@@ -213,7 +213,7 @@
     (let* ((emacs-short-version (format "%d.%d"
 					emacs-major-version
 					emacs-minor-version))
-	   (emacs-about-version (format "version %s; Aug 1998"
+	   (emacs-about-version (format "version %s; May 1999"
 					emacs-short-version)))
       (widget-insert (about-center emacs-about-version))
       (widget-create 'link :help-echo "The latest NEWS of XEmacs"
@@ -283,7 +283,7 @@ developers responsible for this release are:\n\n")
 			     :value who)
 	      (widget-insert (format "  <%s>\n" address)))))
       ;; Setup persons responsible for this release.
-      (mapc 'setup-person '(slb hniksic kyle martin piper))
+      (mapc 'setup-person '(vin slb hniksic kyle martin piper))
       (widget-insert "\n\t* ")
       (widget-create 'link :help-echo "A legion of XEmacs hackers"
 		     :action 'about-hackers
@@ -831,11 +831,10 @@ programming languages and their implementation, and hopes that one day
 XEmacs will speak Scheme.\n"))
     (vin
      (widget-insert "\
-Vin maintains the XEmacs patch pages in order to bring a more
-stable XEmacs.  (Actually, he does it 'cause it's fun and he's been
-using emacs for a long, long time.)  Vin also contributed the detached
-minibuffer code as well as a few minor enhancements to the menubar
-options.
+Vin is currently maintaining the 21.1 (stable) version of XEmacs.  He does
+it 'cause it's fun and he's been using emacs for a long, long time.
+Vin also contributed the detached minibuffer code as well as a few minor
+enhancements to the menubar options.
 
 I own and operate my own consulting firm, EtherSoft.  Shhh, don't
 tell anyone, but it's named after an Ultimate team I used to play
