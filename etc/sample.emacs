@@ -398,6 +398,15 @@
     )
   )
 
+;;; ********************
+;;; Load the default-dir.el package which installs fancy handling
+;;;  of the initial contents in the minibuffer when reading
+;;; file names.
+
+(if (and running-xemacs
+	 (or (and (= emacs-major-version 20) (>= emacs-minor-version 1))
+	     (and (= emacs-major-version 19) (>= emacs-minor-version 15))))
+    (require 'default-dir))
 
 ;;; ********************
 ;;; Load the auto-save.el package, which lets you put all of your autosave

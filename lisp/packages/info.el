@@ -1638,8 +1638,8 @@ This command is designed to be used whether you are already in Info or not."
   (save-window-excursion
     (info)
     (condition-case nil
-	(Info-find-node "elisp" "Top")
-      (error (Info-find-node "lispref" "Top")))
+	(Info-find-node "lispref" "Top")
+      (error (Info-find-node "elisp" "Top")))
     (Info-index (symbol-name func)))
   (pop-to-buffer "*info*"))
 

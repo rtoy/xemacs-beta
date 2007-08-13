@@ -999,7 +999,7 @@ See also `\\[telnet]'." t nil)
 
 ;;;***
 
-;;;### (autoloads (custom-make-dependencies custom-menu-update custom-buffer-create customize-apropos customize-customized customize-face customize-variable customize) "cus-edit" "custom/cus-edit.el")
+;;;### (autoloads (custom-make-dependencies custom-menu-update custom-save-all custom-buffer-create customize-apropos customize-customized customize-face customize-variable customize) "cus-edit" "custom/cus-edit.el")
 
 (autoload 'customize "cus-edit" "\
 Customize SYMBOL, which must be a customization group." t nil)
@@ -1024,6 +1024,9 @@ Create a buffer containing OPTIONS.
 OPTIONS should be an alist of the form ((SYMBOL WIDGET)...), where
 SYMBOL is a customization option, and WIDGET is a widget for editing
 that option." nil nil)
+
+(autoload 'custom-save-all "cus-edit" "\
+Save all customizations in `custom-file'." nil nil)
 
 (autoload 'custom-menu-update "cus-edit" "\
 Update customize menu." t nil)
@@ -1462,16 +1465,27 @@ Like \\[dired-jump-back], but in another frame." t nil)
 
 ;;;***
 
-;;;### (autoloads nil "efs-cu" "efs/efs-cu.el")
+;;;### (autoloads (efs-ftp-path) "efs-cu" "efs/efs-cu.el")
 
 (defvar efs-path-root-regexp "^/[^/:]+:" "\
 Regexp to match the `/user@host:' root of an efs full path.")
 
+(autoload 'efs-ftp-path "efs-cu" "\
+Parse PATH according to efs-path-regexp.
+Returns a list (HOST USER PATH), or nil if PATH does not match the format." nil nil)
+
 ;;;***
 
-;;;### (autoloads nil "efs-dump" "efs/efs-dump.el")
+;;;### (autoloads (remote-path-file-handler-function) "efs-dump" "efs/efs-dump.el")
 
-(setq file-name-handler-alist (cons (cons efs-path-root-regexp 'efs-file-handler-function) file-name-handler-alist))
+(defvar allow-remote-paths t "\
+*Set this to nil if you don't want remote paths to access
+remote files.")
+
+(or (assoc efs-path-root-regexp file-name-handler-alist) (setq file-name-handler-alist (cons (cons efs-path-root-regexp 'remote-path-file-handler-function) file-name-handler-alist)))
+
+(autoload 'remote-path-file-handler-function "efs-dump" "\
+Function to call special file handlers for remote files." nil nil)
 
 ;;;***
 
@@ -1493,7 +1507,12 @@ Submit a bug report for efs." t nil)
 
 ;;;***
 
-;;;### (autoloads (efs-file-handler-function efs-nslookup-host) "efs" "efs/efs.el")
+;;;### (autoloads (efs-file-handler-function efs-nslookup-host efs-display-ftp-activity) "efs" "efs/efs.el")
+
+(autoload 'efs-display-ftp-activity "efs" "\
+Displays the number of active background ftp sessions in the modeline.
+Uses the variable `efs-mode-line-format' to determine how this will be
+displayed." t nil)
 
 (autoload 'efs-nslookup-host "efs" "\
 Attempt to resolve the given HOSTNAME using nslookup if possible." t nil)
@@ -2286,8 +2305,6 @@ prompt the user for the name of an NNTP server to use." t nil)
 
 ;;;### (autoloads (unbold-region bold-region message-news-other-frame message-news-other-window message-mail-other-frame message-mail-other-window message-bounce message-resend message-forward message-recover message-supersede message-cancel-news message-followup message-wide-reply message-reply message-news message-mail message-mode) "message" "gnus/message.el")
 
-(defcustom message-fcc-handler-function 'message-output "*A function called to save outgoing articles.\nThis function will be called with the name of the file to store the\narticle in.  The default function is `message-output' which saves in Unix\nmailbox format." :type '(radio (function-item message-output) (function :tag "Other")) :group 'message-sending)
-
 (defcustom message-from-style 'default "*Specifies how \"From\" headers look.\n\nIf `nil', they contain just the return address like:\n	king@grassland.com\nIf `parens', they look like:\n	king@grassland.com (Elvis Parsley)\nIf `angles', they look like:\n	Elvis Parsley <king@grassland.com>\n\nOtherwise, most addresses look like `angles', but they look like\n`parens' if `angles' would need quoting and `parens' would not." :type '(choice (const :tag "simple" nil) (const parens) (const angles) (const default)) :group 'message-headers)
 
 (defcustom message-signature-separator "^-- *$" "Regexp matching the signature separator." :type 'regexp :group 'message-various)
@@ -2505,29 +2522,29 @@ Get the display for Mosaic." t nil)
 ;;;### (autoloads (tmpl-insert-template-file tmpl-insert-template-file-from-fixed-dirs tmpl-expand-templates-in-buffer tmpl-expand-templates-in-region) "tmpl-minor-mode" "hm--html-menus/tmpl-minor-mode.el")
 
 (autoload 'tmpl-expand-templates-in-region "tmpl-minor-mode" "\
-Expand the templates in the region from BEGIN to END.
-If BEGIN and and are nil, then the current region is used." t nil)
+Expands the templates in the region from BEGIN to END.
+If BEGIN and END are nil, then the current region is used." t nil)
 
 (autoload 'tmpl-expand-templates-in-buffer "tmpl-minor-mode" "\
-Expand all templates in the current buffer." t nil)
+Expands all templates in the current buffer." t nil)
 
 (autoload 'tmpl-insert-template-file-from-fixed-dirs "tmpl-minor-mode" "\
 Inserts a template FILE and expands it, if `tmpl-automatic-expand' is t.
 This command tries to read the template file from a list of
-predefined directries (look at `tmpl-template-dir-list') and it filters
-the contents of this directories with the regular expression
+predefined directories (look at `tmpl-template-dir-list') and it filters
+the contents of these directories with the regular expression
 `tmpl-filter-regexp' (look also at this variable). 
 The command uses a history variable, which could be changed with the
 variable `tmpl-history-variable-name'.
 
-The user of the command is able to change interactive to another
+The user of the command is able to change interactively to another
 directory by entering at first the string \"Change the directory\".
-This maybe to difficult for the user. Therefore another command
+This may be too difficult for the user. Therefore another command
 called `tmpl-insert-template-file' exist, which doesn't use fixed
 directories and filters." t nil)
 
 (autoload 'tmpl-insert-template-file "tmpl-minor-mode" "\
-Insert a template FILE and expand it, if `tmpl-automatic-expand' is t.
+Inserts a template FILE and expand it, if `tmpl-automatic-expand' is t.
 Look also at `tmpl-template-dir-list', to specify a default template directory.
 You should also take a look at `tmpl-insert-template-file-from-fixed-dirs'
 which has additional advantages (and disadvantages :-).
@@ -3885,7 +3902,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.17 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.18 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -5240,7 +5257,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.17 $
+vhdl-mode $Revision: 1.18 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5259,6 +5276,10 @@ Key bindings:
 ;;;***
 
 ;;;### (autoloads (auto-view-mode view-major-mode view-mode view-minor-mode view-buffer-other-window view-file-other-window view-buffer view-file) "view-less" "modes/view-less.el")
+
+(defvar view-minor-mode-map (let ((map (make-keymap))) (set-keymap-name map 'view-minor-mode-map) (suppress-keymap map) (define-key map "-" 'negative-argument) (define-key map " " 'scroll-up) (define-key map "f" 'scroll-up) (define-key map "" 'scroll-down) (define-key map "b" 'scroll-down) (define-key map 'backspace 'scroll-down) (define-key map "" 'view-scroll-lines-up) (define-key map "\n" 'view-scroll-lines-up) (define-key map "e" 'view-scroll-lines-up) (define-key map "j" 'view-scroll-lines-up) (define-key map "y" 'view-scroll-lines-down) (define-key map "k" 'view-scroll-lines-down) (define-key map "d" 'view-scroll-some-lines-up) (define-key map "u" 'view-scroll-some-lines-down) (define-key map "r" 'recenter) (define-key map "t" 'toggle-truncate-lines) (define-key map "N" 'view-buffer) (define-key map "E" 'view-file) (define-key map "P" 'view-buffer) (define-key map "!" 'shell-command) (define-key map "|" 'shell-command-on-region) (define-key map "=" 'what-line) (define-key map "?" 'view-search-backward) (define-key map "h" 'view-mode-describe) (define-key map "s" 'view-repeat-search) (define-key map "n" 'view-repeat-search) (define-key map "/" 'view-search-forward) (define-key map "\\" 'view-search-backward) (define-key map "g" 'view-goto-line) (define-key map "G" 'view-last-windowful) (define-key map "%" 'view-goto-percent) (define-key map "p" 'view-goto-percent) (define-key map "m" 'point-to-register) (define-key map "'" 'register-to-point) (define-key map "C" 'view-cleanup-backspaces) (define-key map "" 'view-quit) (define-key map "" 'view-quit-toggle-ro) (define-key map "q" 'view-quit) map))
+
+(defvar view-mode-map (let ((map (copy-keymap view-minor-mode-map))) (set-keymap-name map 'view-mode-map) map))
 
 (autoload 'view-file "view-less" "\
 Find FILE, enter view mode.  With prefix arg OTHER-P, use other window." t nil)

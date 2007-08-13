@@ -400,6 +400,13 @@ Display cursor at that position for a second."
 ;;; mouse/selection tracking
 ;;; generalized mouse-track
 
+(defvar default-mouse-track-normalize-point-function
+  'default-mouse-track-normalize-point
+  "Function called to normalize position of point.
+Called with two arguments: TYPE depends on the number of times that the
+mouse has been clicked and is a member of `default-mouse-track-type-list',
+FORWARDP determines the direction in which the point should be moved.")
+
 (defvar mouse-track-down-hook nil
   "Function or functions called when the user presses the mouse.
 This hook is invoked by `mouse-track'; thus, it will not be called
@@ -790,8 +797,8 @@ at the initial click position."
 
 (defun default-mouse-track-next-move (min-anchor max-anchor extent)
   (let ((anchor (if (<= (point) min-anchor) max-anchor min-anchor)))
-    (default-mouse-track-normalize-point
-      default-mouse-track-type (> (point) anchor))
+    (funcall default-mouse-track-normalize-point-function
+	     default-mouse-track-type (> (point) anchor))
     (if (consp extent)
 	(default-mouse-track-next-move-rect anchor (point) extent)
       (if extent
@@ -1015,12 +1022,14 @@ at the initial click position."
 	(let ((anchor (default-mouse-track-anchor adjust previous-point)))
 	  (setq default-mouse-track-min-anchor
 		(save-excursion (goto-char anchor)
-				(default-mouse-track-normalize-point
+				(funcall
+				 default-mouse-track-normalize-point-function
 				 default-mouse-track-type nil)
 				(point)))
 	  (setq default-mouse-track-max-anchor
 		(save-excursion (goto-char anchor)
-				(default-mouse-track-normalize-point
+				(funcall
+				 default-mouse-track-normalize-point-function
 				 default-mouse-track-type t)
 				(point))))
 	;;

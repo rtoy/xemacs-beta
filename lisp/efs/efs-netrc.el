@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-netrc.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.2 $
+;; Version:      #Revision: 1.2 $
 ;; RCS:          
 ;; Description:  Parses ~/.netrc file, and does completion in /.
 ;; Author:       Sandy Rutherford <sandy@ibm550.sissa.it>
@@ -32,7 +32,7 @@
 (defconst efs-netrc-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.2 $" 11 -2)))
+	  (substring "#Revision: 1.2 $" 11 -2)))
 
 ;; Make the byte compiler happy.
 (defvar dired-directory)

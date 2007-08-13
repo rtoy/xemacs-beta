@@ -3,7 +3,7 @@
 ;;
 ;; File:           dired-diff.el
 ;; RCS:
-;; Dired Version:  $Revision: 1.1 $
+;; Dired Version:  #Revision: 7.9 $
 ;; Description:    Support for diff and related commands.
 ;; Author:         Sandy Rutherford <sandy@ibm550.sissa.it>
 ;; Created:        Fri Jun 24 08:50:20 1994 by sandy on ibm550

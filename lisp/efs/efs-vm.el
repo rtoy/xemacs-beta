@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-vm.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  Allows the VM  mail reader to access folders using efs.
 ;;               If you are looking for support for VM/CMS, see efs-cms.el.
@@ -75,7 +75,7 @@ is a list of remote spool files.")
 (defconst efs-vm-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "#Revision: 1.1 $" 11 -2)))
 
 
 (defun efs-vm-get-new-mail (&optional arg)

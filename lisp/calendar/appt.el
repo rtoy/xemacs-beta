@@ -24,7 +24,10 @@
 ;;; 29-nov-89	created by Neil Mager <neilm@juliet.ll.mit.edu>.
 ;;; 23-feb-91	hacked upon by Jamie Zawinski <jwz@lucid.com>.
 ;;;  1-apr-91	some more.
-;;; 12-jul-95   updated for XEmacs 19.12 by Greg Veres <gveres@cgl.uwaterloo.ca>
+;;; 12-jul-95   updated for XEmacs 19.12 by Greg Veres 
+;;;             <gveres@cgl.uwaterloo.ca>
+;;; 21-mar-97   better support for fancy diary display by Tomasz J. Cholewo 
+;;;             <t.cholewo@ieee.org>
 ;;;
 ;; appt.el - visible and/or audible notification of
 ;;           appointments from ~/diary file generated from
@@ -117,7 +120,7 @@
 ;;;
 ;;; This also interacts correctly with Benjamin Pierce's reportmail.el package.
 ;;;
-;;; Brief internal description - Skip this if your not interested!
+;;; Brief internal description - Skip this if you are not interested!
 ;;;
 ;;; The function appt-initialize invokes 'diary' to get a list of today's
 ;;; appointments, and parses the lines beginning with date descriptions.
@@ -133,7 +136,7 @@
 ;;;
 ;;; TO DO:
 ;;;
-;;;  o  multiple adjascent appointments are not handled gracefully.  If there 
+;;;  o  multiple adjacent appointments are not handled gracefully.  If there 
 ;;;     is an appointment at 3:30 and another at 3:35, and you have set things
 ;;;     up so that you get a notification twenty minutes before each appt,
 ;;;     then a notification should come at 3:10 for the first appt, and at
@@ -369,7 +372,7 @@ notifications to be given via messages in a pop-up frame."
 ;;; Internal stuff
 
 (defun appt-convert-time (time2conv)
-  " Convert hour:min[am/pm] format to minutes from midnight."
+  "Convert hour:min[am/pm] format to minutes from midnight."
   (cond ((string-match "^[ \t]*midni\\(ght\\|te\\)[ \t]*\\'" time2conv)
 	 0)
 	((string-match "^[ \t]*noon[ \t]*\\'" time2conv)
@@ -401,8 +404,8 @@ notifications to be given via messages in a pop-up frame."
 	   (+ (* hr 60) min)))))
 
 
-(defun appt-current-time-in-seconds ()
-  "returns the current time in seconds since midnight."
+(defun appt-current-time-in-minutes ()
+  "Returns the current time in minutes since midnight."
   (let* ((str (current-time-string))
 	 (hour (string-to-int (substring str 11 13)))
 	 (min  (string-to-int (substring str 14 16))))
@@ -415,17 +418,18 @@ notifications to be given via messages in a pop-up frame."
 	  (< (car (car x)) (car (car y)))))))
 
 (defun appt-diary-entries ()
+  "Return an updated list of appointments for today."
   (let ((list-diary-entries-hook '(appt-make-list))
-	(diary-display-hook nil)
+	(diary-display-hook 'ignore)
 	(diary-list-include-blanks nil))
     ;; this will set appt-time-msg-list.
     (diary 1)
     appt-time-msg-list))
 
 (defun appt-initialize ()
-  " Read your `diary-file' and remember today's appointments.  Call this from 
+  "Read your `diary-file' and remember today's appointments.  Call this from 
  your .emacs file, or any time you want your .diary file re-read (this happens 
- automatically at midnight to move to notice the next day's appointments).
+ automatically at midnight to notice the next day's appointments).
  
  The time must be at the beginning of a line for it to be put in the 
  appointments list.
@@ -483,11 +487,11 @@ notifications to be given via messages in a pop-up frame."
 	      (append (nreverse new-appts) appt-time-msg-list))))
   (setq appt-time-msg-list (appt-sort-list appt-time-msg-list))
   ;;
-  ;; Get the current time and convert it to minutes from midnight. ie. 12:01am
-  ;; = 1, midnight = 0, so that the elements in the list that are earlier than
-  ;; the present time can be removed.
+  ;; Get the current time and convert it to minutes from midnight, i.e.,
+  ;; 12:01am = 1, midnight = 0, so that the elements in the list that
+  ;; are earlier than the present time can be removed.
   ;;
-  (let ((cur-comp-time (appt-current-time-in-seconds))
+  (let ((cur-comp-time (appt-current-time-in-minutes))
 	(appt-comp-time (car (car (car appt-time-msg-list)))))
     (while (and appt-time-msg-list (< appt-comp-time cur-comp-time))
       (setq appt-time-msg-list (cdr appt-time-msg-list)) 
@@ -548,8 +552,8 @@ notifications to be given via messages in a pop-up frame."
   (if appt-issue-message
    (let ((min-to-app -1))
      ;; Get the current time and convert it to minutes
-     ;; from midnight. ie. 12:01am = 1, midnight = 0.
-     (let* ((cur-comp-time (appt-current-time-in-seconds))
+     ;; from midnight, i.e., 12:01am = 1, midnight = 0.
+     (let* ((cur-comp-time (appt-current-time-in-minutes))
 	    ;; If the current time is the same as the tick, just return.
 	    ;; This means that this function has been called more than once
 	    ;; in the current minute, which is not useful.
@@ -559,8 +563,8 @@ notifications to be given via messages in a pop-up frame."
        ;;
        ;; If it is now the next day (we have crossed midnight since the last
        ;; time this was called) then we should update our appointments to
-       ;; today's list.
-       (if turnover-p (appt-diary-entries))
+       ;; today's list.  Show the diary entries (tjc).
+       (if turnover-p (diary 1))
        ;;
        ;; Get the first time off of the list and calculate the number
        ;; of minutes until the appointment.

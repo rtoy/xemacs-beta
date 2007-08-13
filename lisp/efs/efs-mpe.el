@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-mpe.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      #Revision: 1.8 $
 ;; RCS:          
 ;; Description:  MPE (HP3000) support for efs.
 ;; Author:       (Corny de Souza) cdesouza@hpbbn.bbn.hp.com
@@ -125,7 +125,7 @@ This can take a very long time on large accounts")
 (defconst efs-mpe-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "#Revision: 1.8 $" 11 -2)))
 
 ;;; Support for build parameters
 

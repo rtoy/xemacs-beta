@@ -4,7 +4,7 @@
 ;; File:         efs-vos.el
 ;; Description:  VOS support for efs
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Author:       Sandy Rutherford <sandy@ibm550.sissa.it>
 ;; Created:      Sat Apr  3 03:05:00 1993 by sandy on ibm550
@@ -27,7 +27,7 @@
 (defconst efs-vos-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "#Revision: 1.1 $" 11 -2)))
 
 ;;;;---------------------------------------------------------------
 ;;;; VOS support for efs

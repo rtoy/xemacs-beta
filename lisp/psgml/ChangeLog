@@ -1,3 +1,7 @@
+Sat Mar 22 19:58:27 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* psgml-html.el (html-mode): Too many backslashes in DOCSTRING.
+
 Wed Mar 19 22:58:40 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* psgml-html.el (html-helper-address-string): Use

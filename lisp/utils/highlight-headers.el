@@ -39,48 +39,31 @@
 ;; highlight-headers-citation-regexp		matches lines of quoted text
 ;; highlight-headers-citation-header-regexp	matches headers for quoted text
 
-(if (find-face 'message-headers)
-    nil
-  (make-face 'message-headers)
-  (or (face-differs-from-default-p 'message-headers)
-      (copy-face 'bold 'message-headers)))
+(defgroup highlight-headers nil
+  "Fancify rfc822 documents."
+  :group 'faces
+  :group 'mail
+  :group 'news)
 
-(if (find-face 'message-header-contents)
-    nil
-  (make-face 'message-header-contents)
-  (or (face-differs-from-default-p 'message-header-contents)
-      (copy-face 'italic 'message-header-contents)))
+(defface message-headers '((t (:bold t)))
+  "Face used for header part before colon."
+  :group 'highlight-headers)
 
-(if (find-face 'message-highlighted-header-contents)
-    nil
-  (make-face 'message-highlighted-header-contents)
-  (or (face-differs-from-default-p 'message-highlighted-header-contents)
-      (progn
-	(copy-face 'message-header-contents
-		   'message-highlighted-header-contents)
-	;; Most people seem not to like underlining, so change
-	;; the font instead.
-	;; (set-face-underline-p 'message-highlighted-header-contents t)
-	(or (make-face-bold 'message-highlighted-header-contents)
-	    (make-face-unbold 'message-highlighted-header-contents)
-	    (make-face-italic 'message-highlighted-header-contents)
-	    (make-face-unitalic 'message-highlighted-header-contents))
-	)))
+(defface message-header-contents '((t (:italic t)))
+  "Face used for header part after colon."
+  :group 'highlight-headers)
 
-(if (find-face 'message-cited-text)
-    nil
-  (make-face 'message-cited-text)
-  (or (face-differs-from-default-p 'message-cited-text)
-      (copy-face 'italic 'message-cited-text)))
+(defface message-highlighted-header-contents '((t (:italic t :bold t)))
+  "Face used for contents of \"special\" headers."
+  :group 'highlight-headers)
 
-(if (find-face 'x-face)
-    nil
-  (make-face 'x-face)
-  (or (face-differs-from-default-p 'x-face)
-      (progn 
-	(copy-face 'message-highlighted-header-contents 'x-face)
-	(set-face-background 'x-face "white")
-	(set-face-foreground 'x-face "black"))))
+(defface message-cited-text '((t (:italic t)))
+  "Face used for cited text."
+  :group 'highlight-headers)
+
+(defface x-face '((t (:background "white" :foreground "black")))
+  "Face used for X-Face icon."
+  :group 'highlight-headers)
 
 ;;(condition-case nil
 ;;    (face-name 'message-addresses)

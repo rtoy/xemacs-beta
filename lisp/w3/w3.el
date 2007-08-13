@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/03/18 20:31:29
-;; Version: 1.100
+;; Created: 1997/03/26 00:02:30
+;; Version: 1.103
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -183,7 +183,9 @@ See the variable `w3-notify' for the different notification behaviors."
     (pop-to-buffer buff)
     (delete-other-windows))
    ((eq w3-notify 'semibully)
-    (switch-to-buffer buff))
+    (condition-case nil
+	(switch-to-buffer buff)
+      (error (message "W3 buffer %s is ready." (buffer-name buff)))))
    ((eq w3-notify 'aggressive)
     (pop-to-buffer buff))
    ((eq w3-notify 'friendly)
@@ -1998,6 +2000,8 @@ dumped with emacs."
   (setq url-package-version w3-version-number
 	url-package-name "Emacs-W3")
 
+  (w3-setup-terminal-chars)
+
   (w3-emit-image-warnings-if-necessary)
 		   
   (cond
@@ -2203,7 +2207,8 @@ Current keymap is:
       (w3-preview-this-buffer)
     (let ((tmp (mapcar (function (lambda (x) (cons x (symbol-value x))))
 		       w3-persistent-variables)))
-      (kill-all-local-variables)
+      ;; Oh gross, this kills buffer-local faces in XEmacs
+      ;;(kill-all-local-variables)
       (use-local-map w3-mode-map)
       (setq major-mode 'w3-mode)
       (setq mode-name "WWW")

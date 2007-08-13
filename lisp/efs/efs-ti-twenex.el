@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-ti-twenex.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.2 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  Support for a TI lisp machine in Twenex emulation mode.
 ;; Author:       Jamie Zawinski <jwz@lucid.com>
@@ -22,7 +22,7 @@
 (defconst efs-ti-twenex-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.2 $" 11 -2)))
+	  (substring "#Revision: 1.1 $" 11 -2)))
 
 ;;;; ------------------------------------------------------------
 ;;;; Twenex support.

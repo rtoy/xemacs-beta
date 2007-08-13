@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/03/18 23:20:40
-;; Version: 1.150
+;; Created: 1997/03/26 15:24:53
+;; Version: 1.157
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -75,9 +75,12 @@
   (defmacro w3-get-attribute (attr)
     (` (cdr-safe (assq (, attr) args))))
   
-  (defmacro w3-get-face-info (info)
+  (defmacro w3-get-face-info (info &optional other)
     (let ((var (intern (format "w3-face-%s" info))))
-      (` (push (w3-get-style-info (quote (, info)) node (car (, var)))
+      (` (push (w3-get-style-info (quote (, info)) node
+				  (or (cdr-safe (assq (quote (, other))
+						      (nth 1 node)))
+				      (car (, var))))
 	       (, var)))))
 
   (defmacro w3-pop-face-info (info)
@@ -94,8 +97,8 @@
        (w3-get-face-info font-size)
        (w3-get-face-info text-decoration)
        ;;(w3-get-face-info pixmap)
-       (w3-get-face-info color)
-       (w3-get-face-info background-color)
+       (w3-get-face-info color color)
+       (w3-get-face-info background-color bgcolor)
        (setq w3-face-font-spec (make-font
 				:weight (car w3-face-font-weight)
 				:family (car w3-face-font-family)
@@ -284,15 +287,6 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
   (if (string-match "[ \t\n\r]+$" string)
       (setq string (substring string 0 (match-beginning 0))))
   string)
-
-(defvar w3-bullets
-  '((disc   . ?*)
-    (circle . ?o)
-    (square . ?#)
-    (none   . ? )
-    )
-  "*An assoc list of unordered list types mapping to characters to use
-as the bullet character.")    
 
 
 (defsubst w3-display-line-break (n)
@@ -728,6 +722,7 @@ as the bullet character.")
 		    ((stringp w3-auto-image-alt)
 		     (format w3-auto-image-alt (url-basepath src t)))))
 	  (alt (or (w3-get-attribute 'alt) our-alt))
+	  (c nil)
 	  (ismap (and (assq 'ismap args) 'ismap))
 	  (usemap (w3-get-attribute 'usemap))
 	  (base (w3-get-attribute 'base))
@@ -736,6 +731,8 @@ as the bullet character.")
 	  (widget nil)
 	  (align (or (w3-get-attribute 'align)
 		     (w3-get-style-info 'vertical-align node))))
+     (while (setq c (string-match "[\C-i\C-j\C-l\C-m]" alt))
+       (aset alt c ? ))
      (if (assq '*table-autolayout w3-display-open-element-stack)
 	 (insert alt)
        (setq widget (widget-create 'image
@@ -757,11 +754,141 @@ as the bullet character.")
 
 ;; The table handling
 
+(defvar w3-table-ascii-border-chars
+  [nil  nil  nil  ?/ nil  ?- ?\\ ?- nil ?\\ ?| ?| ?/ ?- ?| ?+]
+  "*Vector of ascii characters to use to draw table borders.
+This vector is used when terminal characters are unavailable")
+
+(defvar w3-table-glyph-border-chars
+  [nil  nil  nil  11 nil  2 7 14 nil 3 8 6 1 15 4 5]
+  "Vector of characters to use to draw table borders.
+This vector is used when terminal characters are used via glyphs")
+
+(defvar w3-table-graphic-border-chars
+  [nil  nil  nil  ?j nil  ?q ?m ?v nil ?k ?x ?u ?l ?w ?t ?n]
+  "Vector of characters to use to draw table borders.
+This vector is used when terminal characters are used directly")
+
+(defvar w3-table-border-chars w3-table-ascii-border-chars
+  "Vector of characters to use to draw table borders.
+w3-setup-terminal-chars sets this to one of 
+w3-table-ascii-border-chars, 
+w3-table-glyph-border-chars, or
+w3-table-graphic-border-chars.")
+
+(defsubst w3-table-lookup-char (l u r b)
+  (aref w3-table-border-chars (logior (if l 1 0)
+				      (if u 2 0)
+				      (if r 4 0)
+				      (if b 8 0))))
+
+(defvar w3-terminal-properties nil)
+
+(defsubst w3-insert-terminal-char (character &optional count inherit)
+  (if w3-terminal-properties
+      (set-text-properties (point)
+			   (progn
+			     (insert-char (or character ? )
+					  (or count 1) inherit)
+			     (point))
+			   w3-terminal-properties)
+    (insert-char (or character ? ) (or count 1) inherit)))
+
+(defsubst w3-horizontal-rule-char nil
+  (or w3-horizontal-rule-char (w3-table-lookup-char t nil t nil)))
+
+(defun w3-setup-terminal-chars nil
+  "Try to find the best set of characters to draw table borders with.
+On a console, this can trigger some Emacs display bugs.
+
+Initializes a number of variables:
+w3-terminal-properties to either nil or a list of properties including 'face
+w3-table-border-chars to one of the the three other vectors"
+  (interactive)
+  (setq w3-table-border-chars w3-table-ascii-border-chars
+	w3-terminal-properties nil)
+  (cond
+   ((and w3-use-terminal-characters
+	 (eq (device-type) 'x))
+    (if (find-face 'w3-table-hack-x-face) nil
+      (make-face 'w3-table-hack-x-face)
+      (font-set-face-font 'w3-table-hack-x-face
+			  (make-font :family "terminal")))
+    (cond
+     ((not (face-differs-from-default-p 'w3-table-hack-x-face))
+      nil)
+     ((and w3-use-terminal-glyphs (fboundp 'face-id))
+      (let ((id (face-id 'w3-table-hack-x-face))
+	    (c (length w3-table-border-chars)))
+	(while (> (decf c) 0)
+	  (if (aref w3-table-glyph-border-chars c)
+	      (aset standard-display-table (aref w3-table-glyph-border-chars c)
+		    (vector (+ (* 256 id)
+			       (aref w3-table-graphic-border-chars c))))))
+	(setq w3-table-border-chars w3-table-glyph-border-chars
+	      w3-terminal-properties nil)))
+     (t 
+      (setq w3-table-border-chars w3-table-graphic-border-chars
+	    w3-terminal-properties (list 'start-open t
+					 'end-open t
+					 'rear-nonsticky t
+					 'w3-table-border t
+					 'face 'w3-table-hack-x-face)))))
+   ((and w3-use-terminal-characters-on-tty
+	 (eq (device-type) 'tty))
+    (let ((c (length w3-table-border-chars)))
+      (while (> (decf c) 0)
+	(and (aref w3-table-glyph-border-chars c)
+	     (aref w3-table-graphic-border-chars c)
+	     (standard-display-g1 (aref w3-table-glyph-border-chars c)
+				  (aref w3-table-graphic-border-chars c)))))
+    (setq w3-table-border-chars w3-table-glyph-border-chars
+	  w3-terminal-properties (list 'w3-table-border t)))
+   (t
+    nil))
+  w3-table-border-chars)
+
+(defun w3-unsetup-terminal-characters nil
+  (interactive)
+  (w3-excise-terminal-characters (buffer-list))
+  (standard-display-default 1 15)
+  (setq w3-table-border-chars w3-table-ascii-border-chars))
+
+(defun w3-excise-terminal-characters (buffs)
+  "Replace hacked characters with ascii characters in buffers BUFFS.
+Should be run before restoring w3-table-border-chars to ascii characters.
+This will only work if we used glyphs rather than text properties"
+  (interactive (list (list (current-buffer))))
+  (let ((inhibit-read-only t)
+	(tr (make-string 16 ? ))
+	(i 0))
+    (while (< i (length tr))
+      (aset tr i i)
+      (setq i (1+ i)))
+    (setq i 0)
+    (while (< i (length w3-table-border-chars))
+      (and (aref w3-table-border-chars i)
+	   (< (aref w3-table-border-chars i) 16)
+	   (aset tr 
+		 (aref w3-table-glyph-border-chars i)
+		 (aref w3-table-ascii-border-chars i)))
+      (setq i (1+ i)))
+    (mapcar (function (lambda (buf)
+			(save-excursion
+			  (set-buffer buf)
+			  (if (eq major-mode 'w3-mode)
+			      (translate-region (point-min)
+						(point-max)
+						tr)))))
+	    buffs)))
+
+
 (defvar w3-display-table-cut-words-p nil
   "*Whether to cut words that are oversized in table cells")
   
 (defvar w3-display-table-force-borders nil
-  "*Whether to always draw table borders")
+  "*Whether to always draw table borders
+Can sometimes make the structure of a document clearer")
 
 (defun w3-display-table-cut ()
   (save-excursion
@@ -828,7 +955,7 @@ as the bullet character.")
 	    (w3-do-incremental-display nil)
 	    (hr-regexp  (concat "^"
 				(regexp-quote 
-				 (make-string 5 w3-horizontal-rule-char)) 
+				 (make-string 5 (w3-horizontal-rule-char)))
 				"*$"))
 	    )
 	;;(push 'left  w3-display-alignment-stack)
@@ -1042,107 +1169,6 @@ as the bullet character.")
 	  )))
       (list rows cols ret-vector))))
 
-(defvar w3-table-ascii-border-chars
-  [?  ?  ?  ?/ ?  ?- ?\\ ?- ?  ?\\ ?| ?| ?/ ?- ?| ?-]
-  "Vector of ascii characters to use to draw table borders.
-w3-table-unhack-border-chars uses this to restore w3-table-border-chars.")
-
-(defvar w3-table-border-chars w3-table-ascii-border-chars
-  "Vector of characters to use to draw table borders.
-If you set this you should set w3-table-ascii-border-chars to the same value
-so that w3-table-unhack-borders can restore the value if necessary.
-
-A reasonable value is [?  ?  ?  ?/ ?  ?- ?\\\\ ?^ ?  ?\\\\ ?| ?< ?/ ?- ?> ?-]
-Though i recommend replacing the ^ with - and the < and > with |")
-
-(defsubst w3-table-lookup-char (l u r b)
-  (aref w3-table-border-chars (logior (if l 1 0)
-				      (if u 2 0)
-				      (if r 4 0)
-				      (if b 8 0))))
-
-(defun w3-table-hack-borders nil
-  "Try to find the best set of characters to draw table borders with.
-I definitely recommend trying this on X. 
-On a console, this can trigger some Emacs display bugs.
-
-I haven't tried this on XEmacs or any window-system other than X."
-  (interactive)
-  (case (device-type)
-    (x
-     (let ((id (or (and (find-face 'w3-table-hack-x-face)
-			(face-id 'w3-table-hack-x-face))
-		   (progn
-		     (make-face 'w3-table-hack-x-face)
-		     (font-set-face-font 'w3-table-hack-x-face
-					 (make-font :family "terminal"))
-		     (face-id 'w3-table-hack-x-face)))))
-       (if (not (face-differs-from-default-p 'w3-table-hack-x-face))
-	   nil
-	 (aset standard-display-table 1 (vector (+ (* 256 id) ?l)))
-	 (aset standard-display-table 2 (vector (+ (* 256 id) ?q)))
-	 (aset standard-display-table 3 (vector (+ (* 256 id) ?k)))
-	 (aset standard-display-table 4 (vector (+ (* 256 id) ?t)))
-	 (aset standard-display-table 5 (vector (+ (* 256 id) ?n)))
-	 (aset standard-display-table 6 (vector (+ (* 256 id) ?u)))
-	 (aset standard-display-table 7 (vector (+ (* 256 id) ?m)))
-	 (aset standard-display-table 8 (vector (+ (* 256 id) ?x)))
-	 (aset standard-display-table 11 (vector (+ (* 256 id) ?j)))
-	 (aset standard-display-table 14 (vector (+ (* 256 id) ?v)))
-	 (aset standard-display-table 15 (vector (+ (* 256 id) ?w)))
-	 (setq w3-table-border-chars [?  ?  ?  11 ?  2 7 14 ?  3 8 6 1 15 4 5])
-	 (setq w3-horizontal-rule-char 2))))
-    (tty
-     (standard-display-g1 1 108)	; ulcorner 
-     (standard-display-g1 2 113)	; hline
-     (standard-display-g1 3 107)	; urcorner
-     (standard-display-g1 4 116)	; leftt
-     (standard-display-g1 5 110)	; intersection
-     (standard-display-g1 6 117)	; rightt
-     (standard-display-g1 7 109)	; llcorner
-     (standard-display-g1 8 120)	; vline
-     (standard-display-g1 11 106)	; lrcorner
-     (standard-display-g1 14 118)	; upt
-     (standard-display-g1 15 119)	; downt
-     (setq w3-table-border-chars [?  ?  ?  11 ?  2 7 14 ?  3 8 6 1 15 4 5])
-     (setq w3-horizontal-rule-char 2))
-    (otherwise
-     (error "Unknown window-system, can't do any better than ascii borders")))
-  )
-  
-(defun w3-table-unhack-borders nil
-  (interactive)
-  (w3-table-excise-hack (buffer-list))
-  (standard-display-default 1 15)
-  (setq w3-table-border-chars w3-table-ascii-border-chars)
-  (setq w3-horizontal-rule-char ?-))
-
-(defun w3-table-excise-hack (buffs)
-  "Replace hacked characters with ascii characters in buffers BUFFS.
-Should be run before restoring w3-table-border-chars to ascii characters."
-  (interactive (list (list (current-buffer))))
-  (let ((inhibit-read-only t)
-	(tr (make-string 16 ? ))
-	(i 0))
-    (while (< i (length tr))
-      (aset tr i i)
-      (setq i (1+ i)))
-    (setq i 0)
-    (while (< i (length w3-table-border-chars))
-      (if (< (aref w3-table-border-chars i) 16)
-	  (aset tr 
-		(aref w3-table-border-chars i)
-		(aref w3-table-ascii-border-chars i)))
-      (setq i (1+ i)))
-    (mapcar (function (lambda (buf)
-			(save-excursion
-			  (set-buffer buf)
-			  (if (eq major-mode 'w3-mode)
-			      (translate-region (point-min)
-						(point-max)
-						tr)))))
-	    buffs)))
-
 (defun w3-display-table (node)
   (let* ((dimensions (w3-display-table-dimensions node))
 	 (num-cols (max (cadr dimensions) 1))
@@ -1349,11 +1375,12 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 		 (setq bflag (/= (aref table-colspans i) 0))
 		 (setq tflag (/= (aref prev-colspans  i) 0))
 
-		 (insert (w3-table-lookup-char lflag tflag rflag bflag))
+		 (w3-insert-terminal-char (w3-table-lookup-char lflag tflag rflag bflag))
 		 (setq lflag t)
 		 (cond ((= (aref prev-rowspans i) 0)
-			(insert-char (w3-table-lookup-char t nil t nil) 
-				     (aref column-dimensions i))
+			(w3-insert-terminal-char
+			 (w3-table-lookup-char t nil t nil) 
+			 (aref column-dimensions i))
 			(setq i (1+ i)))
 		       ((car (aref formatted-cols i))
 			(insert (pop (aref formatted-cols i)))
@@ -1365,8 +1392,9 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 			(setq lflag nil)
 			(setq i (+ i (max (aref table-colspans i)
 					  (aref prev-colspans  i) 1))))))
-	       (insert (w3-table-lookup-char lflag (/= row 1) nil t) "\n"))
-
+	       (w3-insert-terminal-char (w3-table-lookup-char lflag (/= row 1) nil t))
+	       (insert "\n"))
+	     
 	     ;; recalculate height (in case we've shortened a rowspanning cell
 	     (setq height 0 
 		   i 0)
@@ -1377,13 +1405,14 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 
 	     ;; Insert a row back in original buffer
 	     (while (> height 0)
-	       (insert fill-prefix (w3-table-lookup-char nil t nil t))
+	       (insert fill-prefix)
+	       (w3-insert-terminal-char (w3-table-lookup-char nil t nil t))
 	       (setq i 0)
 	       (while (< i num-cols)
 		 (if (car (aref formatted-cols i))
 		     (insert (pop (aref formatted-cols i))) 
 		   (insert-char ?  (aref table-colwidth i))) 
-		 (insert (w3-table-lookup-char nil t nil t))
+		 (w3-insert-terminal-char (w3-table-lookup-char nil t nil t))
 		 (setq i (+ i (max (aref table-colspans i) 1))))
 	       (insert "\n")
 	       ;;(and w3-do-incremental-display (w3-pause))
@@ -1418,12 +1447,15 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	  (let (tflag lflag)
 	    (while (< i num-cols)
 	      (setq tflag (/= (aref prev-colspans  i) 0))
-	      (insert (w3-table-lookup-char lflag tflag t nil))
+	      (w3-insert-terminal-char (w3-table-lookup-char lflag tflag t nil))
 	      (setq lflag t)
-	      (insert-char (w3-table-lookup-char t nil t nil) 
-			   (aref column-dimensions i))
+	      (w3-insert-terminal-char
+	       (w3-table-lookup-char t nil t nil) 
+	       (aref column-dimensions i))
 	      (setq i (1+ i)))
-	    (insert (w3-table-lookup-char t t nil nil) "\n")))
+	    (w3-insert-terminal-char
+	     (w3-table-lookup-char t t nil nil))
+	    (insert "\n")))
 	)
       (pop w3-display-open-element-stack)))))
 
@@ -1708,14 +1740,11 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	     (let* ((perc (or (w3-get-attribute 'width)
 			      (w3-get-style-info 'width node)
 			      "100%"))
-		    (rule nil)
 		    (width nil))
 	       (setq perc (/ (min (string-to-int perc) 100) 100.0)
-		     width (* fill-column perc)
-		     rule (make-string (max (truncate width) 0)
-				       w3-horizontal-rule-char)
-		     node (list 'hr nil (list rule)))
-	       (w3-handle-content node)))
+		     width (truncate (* fill-column perc)))
+	       (w3-insert-terminal-char (w3-horizontal-rule-char) width)
+	       (w3-handle-empty-tag)))
 	    (map			; Client side imagemaps
 	     (let ((name (or (w3-get-attribute 'name)
 			     (w3-get-attribute 'id)
@@ -1795,6 +1824,15 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	       (w3-handle-content node)
 	       (setq w3-current-isindex (cons action prompt)))
 	     )
+	    ((html body)
+	     (let ((fore (car (delq nil (copy-list w3-face-color))))
+		   (back (car (delq nil (copy-list w3-face-background-color))))
+		   )
+	       (if (and fore font-running-xemacs)
+		   (font-set-face-foreground 'default fore (current-buffer)))
+	       (if (and back font-running-xemacs)
+		   (font-set-face-background 'default back (current-buffer)))
+	       (w3-handle-content node)))
 	    (*document
 	     (let ((info (mapcar (lambda (x) (cons x (symbol-value x)))
 				 w3-persistent-variables)))
@@ -1808,7 +1846,10 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 			       w3-right-margin)
 			    (or w3-maximum-line-length
 				(window-width))))
-	       (switch-to-buffer (current-buffer))
+	       (condition-case nil
+		   (switch-to-buffer (current-buffer))
+		 (error (message  "W3 buffer %s is being drawn." (buffer-name (current-buffer)))))
+
 	       (buffer-disable-undo (current-buffer))
 	       (mapcar (function (lambda (x) (set (car x) (cdr x)))) info)
 	       ;; ACK!  We don't like filladapt mode!
@@ -1879,21 +1920,13 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 					       w3-current-form-number)
 					 args))
 	       (w3-handle-content node)))
-;	    (keygen
-;	     (w3-form-add-element 'keygen
-;				  (or (w3-get-attribute 'name)
-;				      (w3-get-attribute 'id)
-;				      "keygen")
-;				  nil	; value
-;				  nil	; size
-;				  nil	; maxlength
-;				  nil   ; default
-;				  w3-display-form-id ; action
-;				  nil	; options
-;				  w3-current-form-number
-;				  (w3-get-attribute 'id) ; id
-;				  nil	; checked
-;				  (car w3-active-faces)))
+	    (keygen
+	     (w3-form-add-element 
+	      (w3-display-normalize-form-info 
+	       (cons '(type . "keygen")
+		     args))
+	      w3-active-faces)
+	     (w3-handle-empty-tag))
 	    (input
 	     (w3-form-add-element
 	      (w3-display-normalize-form-info args)
@@ -1957,8 +1990,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 		 (w3-handle-empty-tag))))
 	    (textarea
 	     (let* ((plist (w3-display-normalize-form-info args))
-		    (value (w3-normalize-spaces
-			    (apply 'concat (nth 2 node)))))
+		    (value (apply 'concat (nth 2 node))))
 	       (setq plist (plist-put plist 'type 'multiline)
 		     plist (plist-put plist 'value value))
 	       (w3-form-add-element plist w3-active-faces))
@@ -2040,11 +2072,13 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 
 (defun w3-fixup-eol-faces ()
   ;; Remove 'face property at end of lines - underlining screws up stuff
+  ;; also remove 'mouse-face property at the beginning and end of lines 
   (let ((inhibit-read-only t))
     (save-excursion
       (goto-char (point-min))
-      (while (search-forward "\n" nil t)
-	(put-text-property (match-beginning 0) (match-end 0) 'face nil)))))
+      (while (search-forward "[ \t]*\n[ \t]*" nil t)
+	(remove-text-properties (match-beginning 0) (match-end 0)
+				'(face nil mouse-face nil) nil)))))
 
 (defsubst w3-finish-drawing ()
   (let (url glyph widget)
@@ -2065,7 +2099,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
        (not (eq (device-type) 'tty))
        (w3-fixup-eol-faces))
   (let ((inhibit-read-only t))
-    (put-text-property (point-min) (point-max) 'read-only nil))
+    (remove-text-properties (point-min) (point-max) '(read-only) nil))
   (message "Drawing... done"))
 
 (defun w3-region (st nd)

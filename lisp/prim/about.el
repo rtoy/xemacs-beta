@@ -157,7 +157,7 @@
     (toggle-read-only 0)
 
     (let ((rest (if who-to-load (list who-to-load)
-		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle larsi jens)))
+		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle larsi jens jareth)))
 	  (got-error nil))
       (while rest
 	(let* ((who (car rest))
@@ -302,6 +302,7 @@
 	  ('kyle "About Kyle Jones")
 	  ('larsi "About Lars Magne Ingebrigtsen")
 	  ('jens "About Jens Lautenbacher")
+	  ('jareth "About Jareth Hein")
 	  ('others "About Everyone")
 	  ('features "New XEmacs Features")
 	  ('history "XEmacs History")
@@ -804,6 +805,23 @@
 	  (insert " to go back to the previous page.\n")
 	  )
 
+	 ((eq xref 'jens)
+	  (about-face "P E Jareth Hein" 'bold)
+	  (insert " <jhod@jhod@po.iijnet.or.jp>
+
+	Jareth Hein is a mountain boy who abandoned his home state of
+	Colorado for the perpetual state of chaos known as Tokyo in a
+	failed attempt to become a cel-animator, and a more successful
+	one to become a computer-game programmer. As he happens to be
+	bilingual (guess which two?) he's been doing quite a bit of
+	MULE hacking. He's also getting his hands dirty in the graphics
+	areas as well.")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
 	 ((eq xref 'others)
 	  (insert "Click ")
 	  (about-xref "here" 'about "Return to previous page")
@@ -883,6 +901,15 @@
 	computers (and graphics). But because I have no deadline for
 	the exams and XEmacs betas are released at a high rate this
 	may take some time...
+
+	") (about-xref "Jareth Hein" 'jens "Find out more about Jareth Hein") (insert " <jhod@jhod@po.iijnet.or.jp>
+	Jareth Hein is a mountain boy who abandoned his home state of
+	Colorado for the perpetual state of chaos known as Tokyo in a
+	failed attempt to become a cel-animator, and a more successful
+	one to become a computer-game programmer. As he happens to be
+	bilingual (guess which two?) he's been doing quite a bit of
+	MULE hacking. He's also getting his hands dirty in the graphics
+	areas as well.
 
 	Darrell Kindred <Darrell.Kindred@cmu.edu>
 	Unofficial maintainer of the xemacs-beta list of extant bugs
@@ -1012,7 +1039,6 @@
 	  Derek Harding <dharding@lssec.bt.co.uk>
 	  Michael Harnois <mharnois@sbt.net>
 	  John Haxby <J.Haxby@isode.com>
-	  Jareth \"JHod\" Hein <jhod@po.iijnet.or.jp>
 	  Benedikt Heinen <beh@icemark.thenet.ch>
 	  Stephan Herrmann <sh@first.gmd.de>
 	  Charles Hines <chuck_hines@VNET.IBM.COM>

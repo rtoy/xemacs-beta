@@ -109,7 +109,45 @@ buffer is not visible in its window.")
 
 (defvar compilation-num-errors-found)
 
-(defvar compilation-error-regexp-alist
+(defvar compilation-error-regexp-systems-list 'all
+  "This is either the symbol `all', or a list of systems for which
+compilation error regexps should be included in
+`compilation-error-regexp-alist'.  
+
+The list of known systems is:
+  gnu:      but of course
+  lcc:      Lucid compilers
+  ada:      Ada compilers
+  of:       Using tool that says line xx of foo.c
+  comma:    Using tool that says \"foo.c\", line 12
+  4bsd:     Using 4bsd
+  msft:     Using microsoft
+  borland:  Using Borland
+  mips:     Using Mips
+  sgi:      Using SGI
+  cray:     Using Cray
+  ibm:      IBM C compilers
+  aix:      the operating system
+  ultrix:   the operating system
+
+See also the variable `compilation-error-regexp-alist-alist'.")
+
+(defun compilation-build-compilation-error-regexp-alist ()
+  (interactive)
+  (setq compilation-error-regexp-alist
+        (apply 'append
+               (mapcar
+                '(lambda (elt)
+                   (if (or (not (consp compilation-error-regexp-systems-list))
+                           (and (consp (car elt))
+                                (intersection (car elt)
+                                              compilation-error-regexp-systems-list))
+                           (memq (car elt) compilation-error-regexp-systems-list))
+                       (cdr elt)
+                     nil))
+                compilation-error-regexp-alist-alist))))
+
+(defvar compilation-error-regexp-alist-alist
   '(
     ;; NOTE!  See also grep-regexp-alist, below.
 
@@ -125,52 +163,68 @@ buffer is not visible in its window.")
     ;; We'll insist that the number be followed by a colon or closing
     ;; paren, because otherwise this matches just about anything
     ;; containing a number with spaces around it.
+   ((4bsd gnu)
     ("\
 \\([a-zA-Z]?:?[^:( \t\n]+\\)[:(][ \t]*\\([0-9]+\\)\\([) \t]\\|\
 :\\([^0-9\n]\\|\\([0-9]+:\\)\\)\\)" 1 2 5)
+    )
 
     ;; Microsoft C/C++:
     ;;  keyboard.c(537) : warning C4005: 'min' : macro redefinition
     ;;  d:\tmp\test.c(23) : error C2143: syntax error : missing ';' before 'if'
+   (msft
     ("\\(\\([a-zA-Z]:\\)?[^:( \t\n-]+\\)[:(][ \t]*\\([0-9]+\\)[:) \t]" 1 3)
+    )
 
     ;; Borland C++:
     ;;  Error ping.c 15: Unable to open include file 'sys/types.h'
     ;;  Warning ping.c 68: Call to function 'func' with no prototype
+   (borland
     ("\\(Error\\|Warning\\) \\([a-zA-Z]?:?[^:( \t\n]+\\)\
  \\([0-9]+\\)\\([) \t]\\|:[^0-9\n]\\)" 2 3)
+    )
 
     ;; 4.3BSD lint pass 2
     ;; 	strcmp: variable # of args. llib-lc(359)  ::  /usr/src/foo/foo.c(8)
+   (4bsd
     ("[^\n]*[ \t:]\\([a-zA-Z]?:?[^:( \t\n]+\\)[:(](+[ \t]*\\([0-9]+\\))[:) \t]*$"
      1 2)
+    )
 
     ;; 4.3BSD lint pass 3
     ;; 	bloofle defined( /users/wolfgang/foo.c(4) ), but never used
     ;; This used to be
     ;; ("[ \t(]+\\([a-zA-Z]?:?[^:( \t\n]+\\)[:( \t]+\\([0-9]+\\)[:) \t]+" 1 2)
     ;; which is regexp Impressionism - it matches almost anything!
+   (4bsd
     ("[^\n]*([ \t]*\\([a-zA-Z]?:?[^:( \t\n]+\\)[:(][ \t]*\\([0-9]+\\))" 1 2)
+    )
 
     ;; MIPS lint pass<n>; looks good for SunPro lint also
     ;;  TrimMask (255) in solomon.c may be indistinguishable from TrimMasks (93) in solomon.c due to truncation
+   (mips
     ("[^ \n]+ (\\([0-9]+\\)) in \\([^ \n]+\\)" 2 1)
     ;;  name defined but never used: LinInt in cmap_calc.c(199)
     ("[^\n]*in \\([^(\n]+\\)(\\([0-9]+\\))$" 1 2)
+    )
 
     ;; Ultrix 3.0 f77:
     ;;  fort: Severe: addstf.f, line 82: Missing operator or delimiter symbol
     ;; Some SGI cc version:
     ;;  cfe: Warning 835: foo.c, line 2: something
+   ((sgi ultrix)
     ("\\(cfe\\|fort\\): [^:\n]*: \\([^ \n]*\\), line \\([0-9]+\\):" 2 3)
+    )
     ;;  Error on line 3 of t.f: Execution error unclassifiable statement    
     ;; Unknown who does this:
     ;;  Line 45 of "foo.c": bloofle undefined
     ;; Absoft FORTRAN 77 Compiler 3.1.3
     ;;  error on line 19 of fplot.f: spelling error?
     ;;  warning on line 17 of fplot.f: data type is undefined for variable d
+   (of
     ("\\(\\|[^\n]* on \\)[Ll]ine[ \t]+\\([0-9]+\\)[ \t]+\
 of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2)
+    )
 
     ;; Apollo cc, 4.3BSD fc:
     ;;	"foo.f", line 3: Error: syntax error near end of statement
@@ -184,55 +238,83 @@ of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2)
     ;;  "foo.adb", line 2(11): warning: file name does not match ...
     ;; IBM AIX xlc compiler:
     ;;  "src/swapping.c", line 30.34: 1506-342 (W) "/*" detected in comment.
+   (comma
     ("[^\n]*\"\\([^,\" \n\t]+\\)\", lines? \
 \\([0-9]+\\)\\([\(.]\\([0-9]+\\)\)?\\)?[:., (-]" 1 2 4)
+    )
 
     ;; MIPS RISC CC - the one distributed with Ultrix:
     ;;	ccom: Error: foo.c, line 2: syntax error
     ;; DEC AXP OSF/1 cc
     ;;  /usr/lib/cmplrs/cc/cfe: Error: foo.c: 1: blah blah 
+   ((mips ultrix)
     ("[^\n]*rror: \\([^,\" \n\t]+\\)[,:] \\(line \\)?\\([0-9]+\\):" 1 3)
+    )
 
     ;; IBM AIX PS/2 C version 1.1:
     ;;	****** Error number 140 in line 8 of file errors.c ******
+   (aix
     ("[^\n]*in line \\([0-9]+\\) of file \\([^ \n]+[^. \n]\\)\\.? " 2 1)
+    )
     ;; IBM AIX lint is too painful to do right this way.  File name
     ;; prefixes entire sections rather than being on each line.
 
     ;; Lucid Compiler, lcc 3.x
     ;; E, file.cc(35,52) Illegal operation on pointers
+   (lcc
     ("[EW], \\([^(\n]*\\)(\\([0-9]+\\),[ \t]*\\([0-9]+\\)" 1 2 3)
+    )
 
     ;; GNU messages with program name and optional column number.
+   (gnu
     ("[a-zA-Z]?:?[^0-9 \n\t:]+:[ \t]*\\([^ \n\t:]+\\):\
 \\([0-9]+\\):\\(\\([0-9]+\\)[: \t]\\)?" 1 2 4)
+    )
 
     ;; GNU messages with program name and optional column number
     ;; and a severity letter after that.  nsgmls makes them.
+   (gnu
     ("[^0-9 \n\t:]+:[ \t]*\\([^ \n\t:]+\\):\
 \\([0-9]+\\):\\(\\([0-9]+\\):\\)?[A-Za-z]:" 1 2 4)
+    )
 
     ;; jwz:
     ;; IRIX 5.2
     ;; cfe: Warning 712: foo.c, line 2: illegal combination of pointer and ...
+   (sgi
     ("[^\n]* \\([^ \n,\"]+\\), line \\([0-9]+\\):" 1 2)
+    )
     ;; IRIX 5.2
     ;; cfe: Warning 600: xfe.c: 170: Not in a conditional directive while ...
+   (sgi
     ("[^\n]*: \\([^ \n,\"]+\\): \\([0-9]+\\):" 1 2)
+    )
 
     ;; Cray C compiler error messages
+   (cray
     ("\\(cc\\| cft\\)-[0-9]+ c\\(c\\|f77\\): ERROR \\([^,\n]+, \\)* File = \\([^,\n]+\\), Line = \\([0-9]+\\)" 4 5)
+    )
 
     ;; IBM C/C++ Tools 2.01:
     ;;  foo.c(2:0) : informational EDC0804: Function foo is not referenced.
     ;;  foo.c(3:8) : warning EDC0833: Implicit return statement encountered.
     ;;  foo.c(5:5) : error EDC0350: Syntax error.
+   (ibm
     ("\\([^( \n\t]+\\)(\\([0-9]+\\):\\([0-9]+\\)) : " 1 2 3)
+    )
 
     ;; Sun ada (VADS, Solaris):
     ;;  /home3/xdhar/rcds_rc/main.a, line 361, char 6:syntax error: "," inserted
+   (ada
     ("\\([^, \n\t]+\\), line \\([0-9]+\\), char \\([0-9]+\\)[:., \(-]" 1 2 3)
     )
+   )
+  "Alist of (system regexp-alist) for building
+`compilation-error-regexp-alist'.  SYSTEM is either a system identifier,
+or a list of system identifiers.  See the variable 
+`compilation-error-regexp-systems-list'")
+
+(defvar compilation-error-regexp-alist nil
  "Alist that specifies how to match errors in compiler output.
 Each elt has the form (REGEXP FILE-IDX LINE-IDX [COLUMN-IDX FILE-FORMAT...])
 If REGEXP matches constrained to the beginning of the line, the
@@ -243,7 +325,13 @@ any FILE-FORMAT is given, each is a format string to produce a file name
 to try; %s in the string is replaced by the text matching the
 FILE-IDX'th subexpression.  Note previously REGEXP was not constrained
 to the beginning of the line, so old patterns without leading `^' or `\\n'
-may now require a leading `.*'.")
+may now require a leading `.*'.
+
+Note that this now gets set by the function 
+`compilation-build-compilation-error-regexp-alist' using the 
+value of the variable `compilation-error-regexp-alist-alist'")
+
+(compilation-build-compilation-error-regexp-alist)
 
 (defvar compilation-read-command t
   "If not nil, M-x compile reads the compilation command to use.
@@ -332,6 +420,10 @@ write into the compilation buffer, and to put in its mode line.")
 ;; XEmacs change
 (put 'compilation-mode 'font-lock-defaults
      '(compilation-font-lock-keywords t))
+
+(defvar compilation-mouse-motion-initiate-parsing t
+  "When set to a non-nil value, mouse motion over the compilation/grep output
+buffer may initiate parsing of the error messages or grep hits")
 
 
 ;;;###autoload
@@ -678,8 +770,9 @@ Runs `compilation-mode-hook' with `run-hooks' (which see)."
         (let* ((p (point))
                (e (progn (end-of-line) (point)))
                (l (progn
-                    (if (or (eq compilation-error-list 't)
-                            (>= p compilation-parsing-end))
+                    (if (and compilation-mouse-motion-initiate-parsing
+                             (or (eq compilation-error-list 't)
+                                 (>= p compilation-parsing-end)))
                         ;; #### Does it suck too badly to have mouse-movement
                         ;; #### over a buffer parse errors in that buffer??
                         (save-window-excursion
@@ -1507,7 +1600,8 @@ See variable `compilation-parse-errors-function' for the interface it uses."
 	regexp enter-group leave-group error-group
 	alist subexpr error-regexp-groups
 	(found-desired nil)
-	(compilation-num-errors-found 0))
+	(compilation-num-errors-found 0)
+        (message-freq (max 1 (/ (count-lines (point-min) (point-max)) 50))))
 
     ;; Don't reparse messages already seen at last parse.
     (goto-char compilation-parsing-end)
@@ -1746,15 +1840,19 @@ See variable `compilation-parse-errors-function' for the interface it uses."
 	    (t
 	     (error "compilation-parse-errors: known groups didn't match!")))
 
-      (message "Parsing error messages...%d (%.0f%% of buffer)"
-	       compilation-num-errors-found
-	       ;; Use floating-point because (* 100 (point)) frequently
-	       ;; exceeds the range of Emacs Lisp integers.
-	       (/ (* 100.0 (point)) (point-max)))
+      (when (= (% compilation-num-errors-found message-freq) 0)
+        (message "Parsing error messages...%d (%.0f%% of buffer)"
+                 compilation-num-errors-found
+                 ;; Use floating-point because (* 100 (point)) frequently
+                 ;; exceeds the range of Emacs Lisp integers.
+                 (/ (* 100.0 (point)) (point-max))))
 
-      (and limit-search (>= (point) limit-search)
-	   ;; The user wanted a specific error, and we're past it.
-	   (setq found-desired t)))
+;;; This is broken - it foils the logic above which is supposed to ensure
+;;; that all errors for the current file are found before we quit. 
+;      (and limit-search (>= (point) limit-search)
+;	   ;; The user wanted a specific error, and we're past it.
+;	   (setq found-desired t))
+      )
     (setq compilation-parsing-end (if found-desired
 				      (point)
 				    ;; We have searched the whole buffer.

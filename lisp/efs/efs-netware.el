@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-netware.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      #Revision: 1.5 $
 ;; RCS:          
 ;; Description:  efs support for the Novell Netware FTP server
 ;; Author:       Sandy Rutherford <sandy@math.ubc.ca>
@@ -24,7 +24,7 @@
 (defconst efs-netware-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "#Revision: 1.5 $" 11 -2)))
 
 ;;; Basic efs support
 

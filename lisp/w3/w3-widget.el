@@ -1,7 +1,7 @@
 ;;; w3-widget.el --- An image widget
 ;; Author: wmperry
-;; Created: 1997/03/11 15:40:22
-;; Version: 1.23
+;; Created: 1997/03/26 15:31:17
+;; Version: 1.27
 ;; Keywords: faces, images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -147,7 +147,8 @@
       (cdr-safe (assoc usemap w3-imagemaps)))))
 
 (defun widget-image-callback (widget widget-ignore &optional event)
-  (and (widget-get widget 'href) (w3-fetch (widget-get widget 'href) (widget-get widget 'target))))
+  (if (widget-get widget 'href)
+      (w3-fetch (widget-get widget 'href) (widget-get widget 'target))))
 
 (defmacro widget-image-create-subwidget (&rest args)
   (` (widget-create (,@ args)
@@ -157,37 +158,6 @@
 		    'href href
 		    'src (widget-get widget 'src)
 		    'ismap server-map)))
-
-(defun widget-image-emacspeak-tty-imagemap (usemap)
-  (let* ((default nil)
-	 (href nil)
-	 (tag nil)
-	 (options (delete
-		   nil
-		   (mapcar
-		    (function
-		     (lambda (x)
-		       (if (eq (aref x 0) 'default)
-			   (setq default (aref x 2)))
-		       (if (and (not default) (stringp (aref x 2)))
-			   (setq default (aref x 2)))
-		       (setq tag (or (aref x 3) (aref x 2))
-			     href (aref x 2))
-		       (and (stringp tag)
-			    (stringp href)
-			    (list 'a
-				  (list
-				   (cons 'href href)
-				   (cons
-				    'class
-				    (list
-				     (if (url-have-visited-url href)
-					 ":visited" ":link"))))
-				  (list tag)))))
-		    usemap))))
-    (w3-display-node (list 'table '((border . "1"))
-			   (w3-display-chop-into-table
-			    (list nil nil options) 3)))))
 
 (defun widget-image-value-create (widget)
   ;; Insert the printed representation of the value
@@ -218,35 +188,32 @@
 	  (goto-char where)
 	  (cond
 	   (client-map
-	    (if (featurep 'emacspeak)
-		(widget-image-emacspeak-tty-imagemap client-map)
-	      (let* ((default nil)
-		     (href nil)
-		     (tag nil)
-		     (options (mapcar
-			       (function
-				(lambda (x)
-				  (if (eq (aref x 0) 'default)
-				      (setq default (aref x 2)))
-				  (if (and (not default) (stringp (aref x 2)))
-				      (setq default (aref x 2)))
-				  (list 'choice-item
-					:format "%[%t%]"
-					:tag (or (aref x 3) (aref x 2))
-					:value (aref x 2)))) client-map)))
-		(setq real-widget
-		      (apply 'widget-create 'menu-choice
-			     :tag (or (widget-get widget :tag) "Imagemap")
-			     :notify (widget-get widget :notify)
-			     :action (widget-get widget :action)
-			     :value default
-			     :parent widget
-			     :help-echo 'widget-image-summarize
-			     options)))))
+	    (let* ((default nil)
+		   (options (mapcar
+			     (function
+			      (lambda (x)
+				(if (eq (aref x 0) 'default)
+				    (setq default (aref x 2)))
+				(if (and (not default) (stringp (aref x 2)))
+				    (setq default (aref x 2)))
+				(list 'choice-item
+				      :format "%[%t%]"
+				      :tag (or (aref x 3) (aref x 2))
+				      :value (aref x 2)))) client-map)))
+	      (setq real-widget
+		    (apply 'widget-create 'menu-choice
+			   :tag (or (widget-get widget :tag) "Imagemap")
+			   :ignore-case t
+			   :notify (widget-get widget :notify)
+			   :action (widget-get widget :action)
+			   :value default
+			   :parent widget
+			   :help-echo 'widget-image-summarize
+			   options))))
 	   ((and server-map (stringp href))
 	    (setq real-widget
 		  (widget-image-create-subwidget
-		   'push-button
+		   'item :format "%[%t%]"
 		   :tag alt
 		   :delete 'widget-default-delete
 		   :value href
@@ -255,7 +222,8 @@
 	   (href
 	    (setq real-widget
 		  (widget-image-create-subwidget
-		   'push-button :tag (or alt "Image")
+		   'item :format "%[%t%]"
+		   :tag (or alt "Image")
 		   :value href
 		   :delete 'widget-default-delete
 		   :action (widget-get widget :action)
@@ -263,7 +231,8 @@
 	   (alt
 	    (setq real-widget
 		  (widget-image-create-subwidget
-		   'push-button :tag alt :format "%[%t%]"
+		   'item :format "%[%t%]"
+		   :tag alt 
 		   :tab-order -1
 		   :delete 'widget-default-delete
 		   :action (widget-get widget :action)
@@ -279,6 +248,7 @@
 	(widget-put widget :children nil)
 	(set-extent-property extent 'keymap widget-image-keymap)
 	(set-extent-property extent 'begin-glyph glyph)
+	(set-extent-property extent 'detachable t)
 	(set-extent-property extent 'help-echo (cond
 						((and href (or client-map
 							       server-map))
@@ -329,12 +299,10 @@
 	 (usemap (widget-image-usemap widget))
 	 (href   (widget-get widget 'href))
 	 (alt    (widget-get widget 'alt))
-	 (value  (widget-value widget))
-	 (i nil))
+	 (value  (widget-value widget)))
     (cond
      (usemap
-      (setq i (length usemap)
-	    usemap (widget-image-usemap-default usemap))
+      (setq usemap (widget-image-usemap-default usemap))
       ;; Perhaps we should do something here with showing the # of entries
       ;; in the imagemap as well as the default href?  Could get too long.
       (format "Client side imagemap: %s" value))
@@ -366,7 +334,6 @@ Any other value means ask the user each time.")
 	 (href   (widget-get widget 'href))
 	 (img-src (or (widget-get widget 'src)
 		      (and widget-changed (widget-get widget-changed 'src))))
-	 (value  (widget-value widget))
 	 (target (widget-get widget 'target))
 	 )
     (cond
@@ -383,7 +350,8 @@ Any other value means ask the user each time.")
 				(cons
 				 (or (aref entry 3) (aref entry 2))
 				 (aref entry 2)))) usemap))
-	    (choice nil))
+	    (choice nil)
+	    (case-fold-search t))
 	(setq choice (completing-read "Imagemap: " choices nil t)
 	      choice (cdr-safe (assoc choice choices)))
 	(and (stringp choice) (w3-fetch choice target))))

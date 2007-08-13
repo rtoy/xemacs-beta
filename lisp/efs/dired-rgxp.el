@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:           dired-rgxp.el
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: #Revision: 7.9 $
 ;; RCS:
 ;; Description:   Commands for running commands on files whose names
 ;;                match a regular expression.

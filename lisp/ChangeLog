@@ -1,7 +1,64 @@
+Fri Jul 19 12:01:51 1996  Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* packages/info.el (Info-elisp-ref): Look first in lispref, then
+	elisp.
+
+	* packages/func-menu.el (fume-function-name-regexp-bibtex): `,'
+	isn't allowed.
+
+	* packages/etags.el (list-tags): Interactive argument should be an
+	existing file name.
+
+Wed Mar 26 22:33:40 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Remove ns lisp directory.
+	* Remove vms lisp directory.
+
+Tue Mar 25 12:22:57 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (file-remote-p): Update doc string.
+
+	* packages/terminal.el (te-stty-string): Fix definition for Linux.
+
+Mon Mar 24 23:43:53 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (file-remote-p): Correct documentation and allow
+	for `allow-remote-paths' to control loading of efs.
+
+Sun Mar 23 16:58:08 1997  Tomasz J. Cholewo  <t.cholewo@ieee.org>
+
+	* packages/etags.el (with-caps-disable-folding): New macro.
+	(find-tag-internal): Use it.
+	(tags-search): Use it.
+	(tags-query-replace): Use it.  Case bug corrected.
+
+Mon Mar 24 00:47:38 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el (popup-mode-menu): Change guard when stripping
+	keywords to be more robust.
+
+Sun Mar 23 00:26:53 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/startup.el (splash-hack-version-string): Correct for case
+	of hosts with '-' in the names.
+
+Sat Mar 22 14:25:47 1997  Tomasz J. Cholewo  <t.cholewo@ieee.org>
+
+	* modes/sendmail.el (user-mail-address): Require cus-edit.
+	Fix when scope.
+
+Sat Mar 22 14:25:47 1997  Tomasz J. Cholewo  <t.cholewo@ieee.org>
+
+	* calendar/diary-lib.el (diary-countdown): New function.
+	(fancy-diary-display): Use modeline-buffer-identification.
+
+	* calendar/appt.el (appt-diary-entries): Do not display diary.
+	(appt-check): Display diary buffer at midnight.  
+	
 Fri Mar 21 19:16:46 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* mule/mule-coding.el (enable-multibyte-characters): MULE
-	compatabile variable.
+	compatible variable.
 
 Thu Mar 20 13:28:17 1997  Steven L Baur  <steve@altair.xemacs.org>
 

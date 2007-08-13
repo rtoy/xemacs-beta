@@ -387,6 +387,7 @@ static Lisp_Object
 simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
 			     Lisp_Object image_type_tag)
 {
+  /* This function can call lisp */
   Lisp_Object file = Qnil;
   struct gcpro gcpro1, gcpro2;
   Lisp_Object alist = Qnil;
@@ -2976,6 +2977,7 @@ xface_validate (Lisp_Object instantiator)
 static Lisp_Object
 xface_normalize (Lisp_Object inst, Lisp_Object console_type)
 {
+  /* This funcation can call lisp */
   Lisp_Object file = Qnil, mask_file = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
   Lisp_Object alist = Qnil;

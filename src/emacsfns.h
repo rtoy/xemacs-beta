@@ -1303,6 +1303,7 @@ extern Lisp_Object Qsubwindow;
 extern Lisp_Object Qformatted_string;
 extern Lisp_Object Qicon;
 extern Lisp_Object Qconst_glyph_variable;
+extern Lisp_Object Qdisplay_table;
 Error_behavior decode_error_behavior_flag (Lisp_Object no_error);
 Lisp_Object encode_error_behavior_flag (Error_behavior errb);
 

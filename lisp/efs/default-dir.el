@@ -3,7 +3,7 @@
 ;;
 ;; File:         default-dir.el
 ;; RCS:
-;; Version:      $Revision: 1.4 $
+;; Version:      #Revision: 1.5 $
 ;; Description:  Defines the function default-directory, for fancy handling
 ;;               of the initial contents in the minibuffer when reading
 ;;               file names.
@@ -35,6 +35,10 @@
 	((>= (string-to-int (substring emacs-version 0 2)) 19) 'fsf-19)
 	(t 'fsf-18)))
 
+(defconst default-dir-find-file-takes-coding-system
+  (and (eq default-dir-emacs-variant 'xemacs)
+       (>= (string-to-int (substring emacs-version 0 2)) 20)))
+
 ;;;###autoload
 (defvar default-directory-function nil
   "A function to call to compute the default-directory for the current buffer.
@@ -61,7 +65,7 @@ Will use the variable default-directory-function if it non-nil."
 (cond
  ((or (featurep 'mule)
       (boundp 'MULE))
-      
+
   (defun default-dir-find-file (file &optional coding-system)
     "Documented as original"
     (interactive   
@@ -122,7 +126,7 @@ Will use the variable default-directory-function if it non-nil."
 		 (read-coding-system "Coding-system: "))))
 	  (default-dir-real-find-file-other-frame file
 	    coding-system))))
-
+  
   (if (fboundp 'find-file-read-only-other-frame)
       (progn
 	(defun default-dir-find-file-read-only-other-frame
@@ -145,14 +149,14 @@ Will use the variable default-directory-function if it non-nil."
    ;; optional arguments, and the interaction screws things up.
    ;; Therefore these functions accept an optional dummy coding-system
    ;; argument.
-
+    
    (defun default-dir-find-file (file &optional coding-system)
      "Documented as original"
      (interactive
       (list
        (expand-file-name
 	(read-file-name "Find file: " (default-directory)))))
-     (default-dir-real-find-file file coding-system))
+     (default-dir-real-find-file file))
   
    (defun default-dir-find-file-other-window (file &optional coding-system)
      "Documented as original"
@@ -160,15 +164,15 @@ Will use the variable default-directory-function if it non-nil."
       (list
        (expand-file-name
 	(read-file-name "Find file in other window: " (default-directory)))))
-     (default-dir-real-find-file-other-window file coding-system))
+     (default-dir-real-find-file-other-window file))
 
-   (defun default-dir-find-file-read-only (file &optional coding-system)
+   (defun default-dir-find-file-read-only (file  &optional coding-system)
      "Documented as original"
      (interactive
       (list
        (expand-file-name
 	(read-file-name "Find file read-only: " (default-directory) nil t))))
-     (default-dir-real-find-file-read-only file coding-system))
+     (default-dir-real-find-file-read-only file))
   
    (if (fboundp 'find-file-read-only-other-window)
        (progn
@@ -208,6 +212,7 @@ Will use the variable default-directory-function if it non-nil."
 	   (default-dir-real-find-file-read-only-other-frame file)))))
 
  (t
+    
   (defun default-dir-find-file (file)
     "Documented as original"
     (interactive
@@ -266,7 +271,7 @@ Will use the variable default-directory-function if it non-nil."
 			     (default-directory) nil t))))
 	  (default-dir-real-find-file-read-only-other-frame file))))))
 
-
+ 
 
 (efs-overwrite-fn "default-dir" 'find-file 'default-dir-find-file)
 (efs-overwrite-fn "default-dir" 'find-file-other-window
@@ -361,7 +366,7 @@ Will use the variable default-directory-function if it non-nil."
     (expand-file-name
      (read-file-name "Change default directory: " (default-directory)))))
   (default-dir-real-cd dir))
-
+  
 (efs-overwrite-fn "default-dir" 'cd 'default-dir-cd)
 
 (defun default-dir-set-visited-file-name (filename)

@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-ti-explorer.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.2 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  Explorer support for efs
 ;; Author:       Jamie Zawinski <jwz@lucid.com>
@@ -22,7 +22,7 @@
 (defconst efs-ti-explorer-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.2 $" 11 -2)))
+	  (substring "#Revision: 1.1 $" 11 -2)))
 
 ;;;; ------------------------------------------------------------
 ;;;; Explorer support.

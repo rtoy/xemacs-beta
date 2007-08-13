@@ -57,8 +57,7 @@ on your system, you could say something like:
  (autoload 'mail-position-on-field "sendmail")
  (autoload 'message-remove-header "message")
  (autoload 'cancel-function-timers "timers")
- (autoload 'gnus-point-at-eol "gnus-util")
- (autoload 'gnus-buffer-live-p "gnus-util"))
+ (autoload 'gnus-point-at-eol "gnus-util"))
 
 ;;; Header access macros.
 

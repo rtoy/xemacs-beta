@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-xemacs.el
-;; Dired Version: $Revision: 1.3 $
+;; Dired Version: #Revision: 7.9 $
 ;; RCS:
 ;; Description:   dired functions for XEmacs
 ;; Author:        Mike Sperber <sperber@informatik.uni-tuebingen.de>
@@ -45,11 +45,11 @@
 	  "-[-r][-w][-x][-r][-w][sS][-r][-w][xst]")
   "setgid plain file (even if not executable)")
 
-(defvar dired-re-pre-permissions "^.? ?[0-9 	]*[-d]"
+(defvar dired-re-pre-permissions "^[^-d]? ?[0-9 	]*[-d]"
   "Regexp matching the preamble to file permissions part of a dired line.
 This shouldn't match socket or symbolic link lines (which aren't editable).")
 
-(defvar dired-re-permissions "[-r][-w][-Ssx][-r][-w][-Ssx][-r][-w][-xst]"
+(defvar dired-re-permissions "[-r][-w][-Ssx][-r][-w][-Ssx][-r][-w][-xstT]"
   "Regexp matching the file permissions part of a dired line.")
 
 ;;; Setup
@@ -690,10 +690,10 @@ If the file name is already flag, this unflags it."
   (setq
    dired-u-r-keymap (dired-setup-chmod-keymap ?u ?r '(?r))
    dired-u-w-keymap (dired-setup-chmod-keymap ?u ?w '(?w))
-   dired-u-x-keymap (dired-setup-chmod-keymap ?u ?x '(?x ?s ?S) '(?x))
+   dired-u-x-keymap (dired-setup-chmod-keymap ?u ?x '(?x ?s) '(?x))
    dired-g-r-keymap (dired-setup-chmod-keymap ?g ?r '(?r))
    dired-g-w-keymap (dired-setup-chmod-keymap ?g ?w '(?w))
-   dired-g-x-keymap (dired-setup-chmod-keymap ?g ?x '(?x ?s ?S) '(?x))
+   dired-g-x-keymap (dired-setup-chmod-keymap ?g ?x '(?x ?s) '(?x))
    dired-o-r-keymap (dired-setup-chmod-keymap ?o ?r '(?r))
    dired-o-w-keymap (dired-setup-chmod-keymap ?o ?w '(?w))
    dired-o-x-keymap (dired-setup-chmod-keymap ?o ?x '(?x ?s ?t) '(?x))))

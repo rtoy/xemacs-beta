@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-cms-knet.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.2 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  CMS support for efs using KNET/VM server
 ;; Authors:	 Sandy Rutherford <sandy@ibm550.sissa.it>
@@ -23,7 +23,7 @@
 (defconst efs-cms-knet-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.2 $" 11 -2)))
+	  (substring "#Revision: 1.1 $" 11 -2)))
 
 ;;;; ------------------------------------------------------------
 ;;;; CMS support for KNET-VM server

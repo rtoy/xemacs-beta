@@ -612,9 +612,9 @@ evaluate.  We show the result of the expansion with
 evaluation of the expanded form.
 
 @example
-(third '(a b c))
-     @expansion{} (car (cdr (cdr '(a b c))))
-     @result{} c
+(news-cadr '(a b c))
+     @expansion{} (car (cdr '(a b c)))
+     @result{} b
 @end example
 
   Sometimes to help describe one form we show another form that
@@ -622,7 +622,7 @@ produces identical results.  The exact equivalence of two forms is
 indicated with @samp{@equiv{}}.
 
 @example
-(make-sparse-keymap) @equiv{} (list 'keymap)
+(cons 'a nil) @equiv{} (list 'a)
 @end example
 
 @node Printing Notation

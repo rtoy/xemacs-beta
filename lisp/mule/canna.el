@@ -49,6 +49,8 @@
 ;; added by MORIOKA Tomohiko <morioka@jaist.ac.jp>, 1996/6/18
 (defvar running-xemacs (string-match "XEmacs" emacs-version))
 
+(if running-xemacs (require 'overlay))
+
 (if running-xemacs
     (progn
       (defun self-insert-string (string)
@@ -935,7 +937,9 @@ dictionary."
 			      (eq hilit-background-mode 'dark))
 			 (string-match
 			  "on\\|t"
-			  (or (x-get-resource "ReverseVideo" "reverseVideo")
+			  (or (if running-xemacs
+				  (x-get-resource "ReverseVideo" "reverseVideo" 'string)
+				(x-get-resource "ReverseVideo" "reverseVideo"))
 			      "")))
 		     'reverse)	;反転しているなら 'reverse
 		    (t 'normal)))

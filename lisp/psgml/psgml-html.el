@@ -157,7 +157,7 @@ Add to this with `html-helper-add-type-to-alist'.")
   "Major mode for editing HTML documents.
 This is based on PSGML mode, and has a sophisticated SGML parser in it.
 It knows how to properly indent HTML/SGML documents, and it can do
-  a form of document validation (use \\[sgml-next-trouble-spot\\] to find
+  a form of document validation (use \\[sgml-next-trouble-spot] to find
   the next error in your document).
 Commands beginning with C-z insert various types of HTML tags
   (prompting for the required information); to iconify or suspend,

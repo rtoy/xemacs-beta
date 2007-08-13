@@ -111,7 +111,7 @@ echo \"lisp/$dir done.\";"
 #make_special vm
 #make_special ediff elc
 #make_special viper elc
-make_special efs
+make_special efs x20
 make_special gnus  some
 make_special w3 xemacs-w3
 make_special hyperbole elc

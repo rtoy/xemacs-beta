@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-mule.el
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: #Revision: 7.9 $
 ;; RCS:
 ;; Description:   MULE support for dired.
 ;; Created:       Sun Jul 17 14:45:12 1994 by sandy on ibm550

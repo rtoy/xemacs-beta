@@ -177,7 +177,7 @@ However, the overlays you get are the real objects that the buffer uses."
 		(setq before (append before (list overlay)))
 	      (setq after (append after (list overlay)))))))
      (extent-list))
-    (list before after)))
+    (cons before after)))
 
 (defun overlay-recenter (pos)
   "Recenter the overlays of the current buffer around position POS."

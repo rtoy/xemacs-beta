@@ -54,6 +54,7 @@ Lisp_Object Qconst_glyph_variable;
 Lisp_Object Qmono_pixmap, Qcolor_pixmap, Qsubwindow;
 
 Lisp_Object Vcurrent_display_table;
+Lisp_Object Qdisplay_table;
 
 Lisp_Object Vtruncation_glyph, Vcontinuation_glyph, Voctal_escape_glyph;
 Lisp_Object Vcontrol_arrow_glyph, Vinvisible_text_glyph, Vhscroll_glyph;
@@ -386,6 +387,7 @@ face_must_be_present (Lisp_Object instantiator)
 Lisp_Object
 make_string_from_file (Lisp_Object file)
 {
+  /* This function can call lisp */
   int count = specpdl_depth ();
   Lisp_Object temp_buffer;
   struct gcpro gcpro1;
@@ -2939,7 +2941,7 @@ If a value is a vector it must be composed only of strings and glyphs.
 nil means display the character in the default fashion.
 Faces can have their own, overriding display table.
 */ );
-  Vcurrent_display_table = Fmake_specifier (Qgeneric);
+  Vcurrent_display_table = Fmake_specifier (Qdisplay_table);
   set_specifier_fallback (Vcurrent_display_table,
 			  list1 (Fcons (Qnil, Qnil)));
   set_specifier_caching (Vcurrent_display_table,

@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-shell.el
-;; Dired Version: $Revision: 1.2 $
+;; Dired Version: #Revision: 7.9 $
 ;; RCS:
 ;; Description:   Commands for running shell commands on marked files.
 ;;

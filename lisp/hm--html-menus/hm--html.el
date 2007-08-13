@@ -1,4 +1,4 @@
-;;; $Id: hm--html.el,v 1.4 1997/02/27 06:08:10 steve Exp $
+;;; $Id: hm--html.el,v 1.5 1997/03/28 02:28:42 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -153,7 +153,7 @@ The parameter must be a string (i.e. \"</PRE>\")"
   "Adds the HTML tag for a basefont."
   (interactive (list (hm--html-read-font-size t)))
   (hm--html-add-tags 'hm--html-insert-start-tag 
-		     (concate "<BASEFONT SIZE=" size ">")))
+		     (concat "<BASEFONT SIZE=" size ">")))
 
 (defun hm--html-add-line-break ()
   "Adds the HTML tag for a line break."
@@ -207,13 +207,14 @@ The parameter must be a string (i.e. \"</PRE>\")"
 	(point)
       (goto-char (point-min))
       (if (re-search-forward
-	   (concat "\\(<title\\)\\|\\(<head\\)\\|\\(<html\\)\\|"
-		   "\\(<isindex\\)\\|\\(<base\\)\\|\\(<link\\)\\|"
-		   "\\(<meta")
+	   (concat ;"\\(<title\\)\\|\\(<head\\)\\|\\(<html\\)\\|"
+	    "\\(<title\\)\\|"
+	    "\\(<isindex\\)\\|\\(<base\\)\\|\\(<link\\)\\|"
+	    "\\(<meta\\)")
 	   end-point
 	   t)
 	  (beginning-of-line)
-	point))))
+	end-point))))
 
 (defun hm--html-add-isindex (prompt)
   "Inserts the isindex tag. PROMPT is the value of the prompt attribute."
@@ -226,17 +227,18 @@ The parameter must be a string (i.e. \"</PRE>\")"
       (setq head-end-point (when (re-search-forward
 				  "\\(</head\\)\\|\\(<body\\)\\|\\(</html\\)")
 			     (beginning-of-line)
-			     (point))))
-    (cond ((re-search-forward "<isindex[^>]*>" head-end-point t)
-	   (delete-region (match-beginning 0) (match-end 0)))
-	  (t (goto-char point)
-	     (hm--html-search-place-for-element-in-head head-end-point)))
-    (hm--html-add-tags 'hm--html-insert-start-tag
-		       (concat "<ISINDEX "
-			       (if (and prompt
-					(not (string= prompt "")))
-				   (concat " PROMPT=\"" prompt "\">")
-				 ">")))))
+			     (point)))
+      (goto-char (point-min))
+      (cond ((re-search-forward "<isindex[^>]*>" head-end-point t)
+	     (delete-region (match-beginning 0) (match-end 0)))
+	    (t (goto-char point)
+	       (hm--html-search-place-for-element-in-head head-end-point)))
+      (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+			 (concat "<ISINDEX "
+				 (if (and prompt
+					  (not (string= prompt "")))
+				     (concat " PROMPT=\"" prompt "\">")
+				   ">"))))))
 				   
 (defun hm--html-add-base (href)
   "Inserts the base tag. HREF is the value of the href attribute."
@@ -253,17 +255,18 @@ The parameter must be a string (i.e. \"</PRE>\")"
       (setq head-end-point (when (re-search-forward
 				  "\\(</head\\)\\|\\(<body\\)\\|\\(</html\\)")
 			     (beginning-of-line)
-			     (point))))
-    (cond ((re-search-forward "<base[^>]*>" head-end-point t)
-	   (delete-region (match-beginning 0) (match-end 0)))
-	  (t (goto-char point)
-	     (hm--html-search-place-for-element-in-head head-end-point)))
-    (hm--html-add-tags 'hm--html-insert-start-tag
-		       (concat "<BASE "
-			       (if (and href
-					(not (string= href "")))
-				   (concat " HREF=\"" href "\">")
-				 ">")))))
+			     (point)))
+      (goto-char (point-min))
+      (cond ((re-search-forward "<base[^>]*>" head-end-point t)
+	     (delete-region (match-beginning 0) (match-end 0)))
+	    (t (goto-char point)
+	       (hm--html-search-place-for-element-in-head head-end-point)))
+      (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+			 (concat "<BASE "
+				 (if (and href
+					  (not (string= href "")))
+				     (concat " HREF=\"" href "\">")
+				   ">"))))))
 
 (defun hm--html-add-meta (name content &optional name-instead-of-http-equiv)
   "Inserts the meta tag."
@@ -280,7 +283,7 @@ The parameter must be a string (i.e. \"</PRE>\")"
 			     (point)))
       (goto-char point)
       (hm--html-search-place-for-element-in-head head-end-point)
-      (hm--html-add-tags 'hm--html-insert-start-tag
+      (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
 			 (concat "<META "
 				 (if name-instead-of-http-equiv
 				     "NAME=\""
@@ -442,6 +445,10 @@ URL will be used as the default URL for the external viewer."
 			     "\nCOORDS=\"" coords "\""
 			     ">")))
 
+
+(when (adapt-emacs19p)
+      (defvar :ask ':ask))
+
 (defvar hm--html-use-image-as-map ':ask
   "Internal variable of `hm--html-add-image'.
 nil => insert the image element without an usemap attribute.
@@ -548,43 +555,6 @@ This tag must be added between <APPLET> and </APPLET>."
 			     value
 			     "\">")))
 		     
-
-(defun hm--html-add-server-side-include-file (file)
-  "This function adds a server side include file directive in the buffer.
-The directive is only supported by the NCSA http daemon."
-  (interactive "FInclude File: ")
-  (let ((start (point)))
-    (if (string= file "")
-	(error "ERROR: No filename specified !")
-      (insert "<INC SRV \"" file "\">"))))
-  
-
-(defun hm--html-add-server-side-include-command-with-isindex-parameter 
-  (command)
-  "This function adds a server side include command directive in the buffer.
-The include command uses the \"isindex\"- parameter for the specified command."
-  (interactive (list 
-		(completing-read "Include Command: "
-				 hm--html-server-side-include-command-alist)))
-  (hm--html-add-server-side-include-command command t))
-
-
-(defun hm--html-add-server-side-include-command (command &optional srvurl)
-  "This function adds a server side include command directive in the buffer.
-The directive is only supported by the NCSA http daemon.
-If SRVURL is t, then the attribute srvurl instead of srv is used for the 
-include command. With srvurl, the include command uses the \"isindex\"-
-parameter for the specified command."
-  (interactive (list 
-		(completing-read "Include Command: "
-				 hm--html-server-side-include-command-alist)))
-  (let ((start (point))
-	(attribute (if srvurl "SRVURL" "SRV")))
-    (if (string= command "")
-	(error "ERROR: No command specified !")
-      (if (= ?| (string-to-char command))
-	  (insert "<INC " attribute" \"" command "\">")
-	(insert "<INC " attribute " \"|" command "\">")))))
 
 
 ;;; Functions, which adds tags of the form <starttag> ... </endtag>
@@ -865,7 +835,7 @@ parameter for the specified command."
 		     "</DIV>"))
 
 
-(defun hm--html-add-document-division-to-region ()
+(defun hm--html-add-document-division-to-region (alignment)
   "Adds the HTML tags for document division to the region."
   (interactive (list (hm--html-read-alignment "Alignment of the division: ")))
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
@@ -1071,7 +1041,7 @@ It returns nil, if the color should not be changed."
 		     "</FONT>"))
 
 
-(defun hm--html-add-font-to-region ()
+(defun hm--html-add-font-to-region (size color)
   "Adds the HTML tags for Font to the region."
   (interactive (list (hm--html-read-font-size)
 		     (hm--html-read-font-color)))
@@ -1975,58 +1945,58 @@ ANCHOR-PARAMETER-LIST are lists with a prompt string, an alist, a default
 value and an example string. The ANCHOR-PARAMETER-LIST has as an additional
 element an anchor seperator string. All these elements are used to read and
 construct the link."
-  (let ((point nil))
-    (save-window-excursion
-      (let ((html-buffer (current-buffer))
-	    (html-help-buffer (hm--html-generate-add-link-help-buffer
-			       scheme-parameter-list
-			       host-name:port-parameter-list
-			       servername:port-parameter-list
-			       path+file-parameter-list
-			       anchor-parameter-list))
-	    (scheme (hm--html-completing-read scheme-parameter-list))
-	    (hostname:port (hm--html-completing-read 
-			    host-name:port-parameter-list))
-	    (servername:port (hm--html-completing-read 
-			      servername:port-parameter-list))
-	    (path+file (hm--html-read-filename path+file-parameter-list))
-	    (anchor (hm--html-completing-read anchor-parameter-list))
-;	    (hrefname (setq html-link-counter (1+ html-link-counter)))
-	    (anchor-seperator 
-	     (hm--html-get-anchor-seperator-from-parameter-list
-	      anchor-parameter-list)))
-	(if (not (string= scheme ""))
-	    (if (string= hostname:port "")
-		(setq scheme (concat scheme ":"))
-	      (setq scheme (concat scheme "://"))))
-	(if (and (not (string= hostname:port ""))
-		 (not (string= servername:port ""))
-		 (not (string= (substring servername:port 0 1) "/")))
-	    (setq servername:port (concat "/" servername:port)))
-	(if (and (not (string= path+file ""))
-		 (not (string= "/" (substring path+file 0 1))))
-	    (setq path+file (concat "/" path+file)))
-	(if (not (string= anchor ""))
-	    (setq anchor (concat anchor-seperator anchor)))
-	(kill-buffer  html-help-buffer)
-	(pop-to-buffer html-buffer)
-	(eval (list function-add-tags 
-		    ''hm--html-insert-start-tag
-		    (concat "<A"
+;  (let ((point nil))
+  (save-window-excursion
+    (let ((html-buffer (current-buffer))
+	  (html-help-buffer (hm--html-generate-add-link-help-buffer
+			     scheme-parameter-list
+			     host-name:port-parameter-list
+			     servername:port-parameter-list
+			     path+file-parameter-list
+			     anchor-parameter-list))
+	  (scheme (hm--html-completing-read scheme-parameter-list))
+	  (hostname:port (hm--html-completing-read 
+			  host-name:port-parameter-list))
+	  (servername:port (hm--html-completing-read 
+			    servername:port-parameter-list))
+	  (path+file (hm--html-read-filename path+file-parameter-list))
+	  (anchor (hm--html-completing-read anchor-parameter-list))
+;	  (hrefname (setq html-link-counter (1+ html-link-counter)))
+	  (anchor-seperator 
+	   (hm--html-get-anchor-seperator-from-parameter-list
+	    anchor-parameter-list)))
+      (if (not (string= scheme ""))
+	  (if (string= hostname:port "")
+	      (setq scheme (concat scheme ":"))
+	    (setq scheme (concat scheme "://"))))
+      (if (and (not (string= hostname:port ""))
+	       (not (string= servername:port ""))
+	       (not (string= (substring servername:port 0 1) "/")))
+	  (setq servername:port (concat "/" servername:port)))
+      (if (and (not (string= path+file ""))
+	       (not (string= "/" (substring path+file 0 1))))
+	  (setq path+file (concat "/" path+file)))
+      (if (not (string= anchor ""))
+	  (setq anchor (concat anchor-seperator anchor)))
+      (kill-buffer  html-help-buffer)
+      (pop-to-buffer html-buffer)
+      (eval (list function-add-tags 
+		  ''hm--html-insert-start-tag
+		  (concat "<A"
 ;		            "<A Name="
 ;			    hrefname
-			    " HREF=\""
-			    scheme
-			    hostname:port
-			    servername:port
-			    path+file
-			    anchor
-			    "\">")
-		    ''hm--html-insert-end-tag
-		    "</A>")))
-      (setq point (point))))
-  (goto-char (point)))
-
+			  " HREF=\""
+			  scheme
+			  hostname:port
+			  servername:port
+			  path+file
+			  anchor
+			  "\">")
+		  ''hm--html-insert-end-tag
+		  "</A>")))
+;    (setq point (point))))
+; (goto-char (point)))
+    ))
 
 (defun hm--html-add-info-link-1 (function-add-tags)
   "Internal function. Adds the HTML tags for a link on a GNU Info file."
@@ -2503,7 +2473,7 @@ this gateway."
 (defun hm--html-make-newsgroup-alist ()
   "Makes a hm--html-make-newsgroup-alist from a .newsrc.el file.
 The function looks at the environment variable NNTPSERVER.
-If this variable exists, it trys to open the file with the Name
+If this variable exists, it tries to open the file with the Name
 ~/$NNTPSERVER.el. If this file exists, the alist of the file is
 returned as the newsgroup-alist. If the file doesn't exist, it
 tries to use the file ~/$NNTPSERVER to make the alist. The function
@@ -2623,13 +2593,13 @@ returns '((\"\"))"
 (defun hm--html-add-mail-box-link ()
   "Adds the HTML tags for a link to a mail box."
   (interactive)
-  (hm--html-add-mail-link-1 'hm--html-add-tags))
+  (hm--html-add-mail-box-link-1 'hm--html-add-tags))
 
 
 (defun hm--html-add-mail-box-link-to-region ()
   "Adds the HTML tags for a link to a mail box to the region."
   (interactive)
-  (hm--html-add-mail-link-1 'hm--html-add-tags-to-region))
+  (hm--html-add-mail-box-link-1 'hm--html-add-tags-to-region))
 
 
 (defun hm--html-add-mailto-link-1 (function-add-tags)
@@ -2801,25 +2771,25 @@ noerror is nil."
       (if (not (search-forward "</title>" end-of-head t))
 	  (if (not noerror)
 	      (error "ERROR: Please insert a title in the document !"))
-	(let ((end-of-title-position (point)))
-	  (if (search-forward "<!-- Created by: " end-of-head t)
-	      (if (yes-or-no-p 
-		   "Replace the old comment \"<!-- Created by: \" ")
-		  (progn
-		    (goto-char (match-beginning 0))
-		    (kill-line)
-		    (hm--html-add-comment)
-		    (insert "Created by: " 
-			    (or hm--html-username (user-full-name))
-			    ", "
-			    (hm--date))))
-	    (newline)
-	    (hm--html-add-comment)
-	    (insert "Created by: " 
-		    (or hm--html-username (user-full-name))
-		    ", "
-		    (hm--date)
-		    )))))))
+;	(let ((end-of-title-position (point)))
+	(if (search-forward "<!-- Created by: " end-of-head t)
+	    (if (yes-or-no-p 
+		 "Replace the old comment \"<!-- Created by: \" ")
+		(progn
+		  (goto-char (match-beginning 0))
+		  (kill-line)
+		  (hm--html-add-comment)
+		  (insert "Created by: " 
+			  (or hm--html-username (user-full-name))
+			  ", "
+			  (hm--date))))
+	  (newline)
+	  (hm--html-add-comment)
+	  (insert "Created by: " 
+		  (or hm--html-username (user-full-name))
+		  ", "
+		  (hm--date)
+		  ))))))
 
 
 (defun hm--html-insert-changed-comment-1 (newline username)

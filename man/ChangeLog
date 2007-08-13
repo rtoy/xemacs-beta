@@ -1,3 +1,11 @@
+Sun Mar 23 15:47:05 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile (srcs): Add efs.texi.
+
+Sat Mar 22 16:39:16 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile (srcs): Add hm--html-mode.texi.
+
 Sun Mar 16 18:48:14 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* gnats/Makefile (gnats_srcs): New manuals for GNATS.

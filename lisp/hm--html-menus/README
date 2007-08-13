@@ -1,4 +1,4 @@
-This README file describes the emacs lisp package hm--html-menus-5.3.
+This README file describes the emacs lisp package hm--html-menus-5.5.
 
 The package provides functions and various popup and pulldown menus
 for a html mode called hm--html-mode, a mode for writing html pages.
@@ -26,12 +26,6 @@ and epoch.
 This package is tested with the xemacs 19.15 on Suns with SunOS 5.5
 and on PC's with linux. But it should work also on other (possibly
 only UNIX ?) platforms.
-
-NOTE: The current release isn't tested with the Emacs 19 (5.0 is but
-5.1 to 5.3 are not). One of the next releases in the near future :-) will be a
-bug fix only release for the Emacs 19. So please report any bugs to
-muenkel@tnt.uni-hannover.de to shorten the time until the Emacs 19
-related bugs are fixed.
 
 Read the file README-EMACS-19, if you want to use this package with
 GNU Emacs 19. 
@@ -62,19 +56,17 @@ hm--html-mode.el		: provides the functions for the definition
 				  of the hm--html-mode; this is now the
 				  main file of the package;
 hm--html-not-standard.el	: provides functions to insert some
-				  non standard hteml elements;
+				  non standard html elements;
 				  this file is not evaluated by default;
 hm--html-configuration.el	: configuration file for the html mode;
 				  choose this as system configuration file;
 hm--html-drag-and-drop.el	: defines the HTML- specific functions
 				  for the drag and drop interface;
-hm--html-indentation.el		: defines functions for the indentation of
-				  HTML elements;
 hm--date.el			: defines the function hm--date, which 
 				  returns the date in the format 
 				  "day-month-year" like "30-Jun-1993".
 html-view.el			: Ron Tapia's html-view.el to view html-pages
-				  in the Xmosaic; it is patched for use
+				  in the Xmosaic; it is patched for the use
 				  with the xemacs;
 internal-drag-and-drop.el	: provides the general (html-mode 
 				  independend functions) of the drag and
@@ -85,7 +77,7 @@ tmpl-minor-mode.el		: provides functions for the tmpl-minor-mode;
 				  with this mode you can expand templates,
 				  which are described in the file
 				  templates-syntax.doc (look at the files
-				  command-description.tmpl and
+				  command-description.html.tmpl and
 				  frame.html.tmpl for examples);
 				  templates can be expanded automatically, if
 				  you include a file with templates via the
@@ -94,7 +86,9 @@ tmpl-minor-mode.el		: provides functions for the tmpl-minor-mode;
 command-description.html.tmpl	: Templatefile for the use with the
 				  tmpl-minor-mode;
 frame.html.tmpl			: Templatefile, provides a simple frame;
-
+doc/hm--html-mode.texinfo	: Package documentation in the Texinfo format;
+doc/umlaute.texinfo		: Texinfo include file for german vowel 
+				  mutation (deutsche Umlaute);
 
 
 
@@ -104,7 +98,7 @@ INSTALLATION:
 
 Note: In this version the setting of the environment variables 
 HTML_CONFIG_FILE and HTML_USER_CONFIG_FILE are no longer necessary,
-if you put the user configuration file in the home directrory and
+if you put the user configuration file in the home directory and
 the system configuration file in one of the load path directories
 of your XEmacs or Emacs 19.
 

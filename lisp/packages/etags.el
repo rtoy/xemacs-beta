@@ -815,6 +815,19 @@ If it returns non-nil, this file needs processing by evalling
 
 (autoload 'get-symbol-syntax-table "symbol-syntax")
 
+(require 'backquote)
+
+(defmacro with-caps-disable-folding (string &rest body) "\
+Eval BODY with `case-fold-search' let to nil if STRING contains
+uppercase letters and `search-caps-disable-folding' is t."
+  `(let ((case-fold-search
+          (if (and case-fold-search search-caps-disable-folding)
+              (isearch-no-upper-case-p ,string)
+            case-fold-search)))
+     ,@body))
+(put 'with-caps-disable-folding 'lisp-indent-function 1)
+(put 'with-caps-disable-folding 'edebug-form-spec '(form body))
+
 (defun find-tag-internal (tagname)
   (let ((next (null tagname))
 	(exact (or tags-always-exact (consp tagname)))
@@ -853,60 +866,61 @@ If it returns non-nil, this file needs processing by evalling
 	  (t
 	   (setq tag-target tagname)
 	   (setq syn-tab (syntax-table))))
-    (save-excursion
-      (catch 'found
-	(while tag-tables
-	  (set-buffer (get-tag-table-buffer (car tag-tables)))
-	  (bury-buffer (current-buffer))
-	  (goto-char (or tag-table-point (point-min)))
-	  (setq tag-table-point nil)
-	  (let ((osyn (syntax-table))
-		case-fold-search)
-	    (set-syntax-table syn-tab)
-	    (unwind-protect
-		;; **** should there be support for non-regexp tag searches?
-		(while (re-search-forward tag-target nil t)
-		  (if (looking-at "[^\n\C-?]*\C-?")
-		      (throw 'found t)))
-	      (set-syntax-table osyn)))
-	  (setq tag-tables (cdr tag-tables)))
-	(error "No %sentries %s %s"
-	       (if next "more " "")
-	       (if exact "matching" "containing")
-	       tagname))
-      (search-forward "\C-?")
-      (setq file (expand-file-name (file-of-tag)
-				   ;; XEmacs change: this needs to be
-				   ;; relative to the 
-				   (or (file-name-directory (car tag-tables))
-				       "./")))
-      (setq linebeg
-	    (buffer-substring (1- (point))
-			      (save-excursion (beginning-of-line) (point))))
-      (search-forward ",")
-      (setq startpos (read (current-buffer)))
-      (setq last-tag-data (nconc (list tagname (point)) tag-tables)))
-    (setq buf (find-file-noselect file))
-    (save-excursion
-      (set-buffer buf)
+    (with-caps-disable-folding tag-target
       (save-excursion
-	(save-restriction
-	  (widen)
-	  (setq offset 1000)
-	  (setq pat (concat "^" (regexp-quote linebeg)))
-	  (or startpos (setq startpos (point-min)))
-	  (while (and (not found)
-		      (progn
-			(goto-char (- startpos offset))
-			(not (bobp))))
-	    (setq found (re-search-forward pat (+ startpos offset) t))
-	    (setq offset (* 3 offset)))
-	  (or found
-	      (re-search-forward pat nil t)
-	      (error "%s not found in %s" pat file))
-	  (beginning-of-line)
-	  (setq startpos (point)))))
-    (cons buf startpos)))
+        (catch 'found
+          (while tag-tables
+            (set-buffer (get-tag-table-buffer (car tag-tables)))
+            (bury-buffer (current-buffer))
+            (goto-char (or tag-table-point (point-min)))
+            (setq tag-table-point nil)
+            (let ((osyn (syntax-table))
+                  case-fold-search)
+              (set-syntax-table syn-tab)
+              (unwind-protect
+                  ;; **** should there be support for non-regexp tag searches?
+                  (while (re-search-forward tag-target nil t)
+                    (if (looking-at "[^\n\C-?]*\C-?")
+                        (throw 'found t)))
+                (set-syntax-table osyn)))
+            (setq tag-tables (cdr tag-tables)))
+          (error "No %sentries %s %s"
+                 (if next "more " "")
+                 (if exact "matching" "containing")
+                 tagname))
+        (search-forward "\C-?")
+        (setq file (expand-file-name (file-of-tag)
+                                     ;; XEmacs change: this needs to be
+                                     ;; relative to the 
+                                     (or (file-name-directory (car tag-tables))
+                                         "./")))
+        (setq linebeg
+              (buffer-substring (1- (point))
+                                (save-excursion (beginning-of-line) (point))))
+        (search-forward ",")
+        (setq startpos (read (current-buffer)))
+        (setq last-tag-data (nconc (list tagname (point)) tag-tables)))
+      (setq buf (find-file-noselect file))
+      (save-excursion
+        (set-buffer buf)
+        (save-excursion
+          (save-restriction
+            (widen)
+            (setq offset 1000)
+            (setq pat (concat "^" (regexp-quote linebeg)))
+            (or startpos (setq startpos (point-min)))
+            (while (and (not found)
+                        (progn
+                          (goto-char (- startpos offset))
+                          (not (bobp))))
+              (setq found (re-search-forward pat (+ startpos offset) t))
+              (setq offset (* 3 offset)))
+            (or found
+                (re-search-forward pat nil t)
+                (error "%s not found in %s" pat file))
+            (beginning-of-line)
+            (setq startpos (point)))))
+      (cons buf startpos))))
 
 ;;;###autoload
 (defun find-tag (tagname &optional other-window)
@@ -1176,6 +1190,7 @@ If the latter returns non-nil, we exit; otherwise we scan the next file."
          (null tags-loop-operate)
          (message "Scanning file %s...found" buffer-file-name))))
 
+
 ;;;###autoload
 (defun tags-search (regexp &optional file-list-form)
   "Search through all files listed in tags table for match for REGEXP.
@@ -1185,16 +1200,15 @@ To continue searching for next match, use command \\[tags-loop-continue].
 See documentation of variable `tag-table-alist'."
   (interactive "sTags search (regexp): ")
   (if (and (equal regexp "")
-           (eq (car tags-loop-scan) 're-search-forward)
+           (eq (car tags-loop-scan) 'with-caps-disable-folding)
            (null tags-loop-operate))
       ;; Continue last tags-search as if by M-,.
       (tags-loop-continue nil)
-    (setq tags-loop-scan
-          (list 're-search-forward regexp nil t)
+    (setq tags-loop-scan `(with-caps-disable-folding ,regexp
+                            (re-search-forward ,regexp nil t))
           tags-loop-operate nil)
     (tags-loop-continue (or file-list-form t))))
-
-
+  
 ;;;###autoload
 (defun tags-query-replace (from to &optional delimited file-list-form)
   "Query-replace-regexp FROM with TO through all files listed in tags table.
@@ -1205,14 +1219,14 @@ with the command \\[tags-loop-continue].
 See documentation of variable `tag-table-alist'."
   (interactive
    "sTags query replace (regexp): \nsTags query replace %s by: \nP")
-  (setq tags-loop-scan (list 'prog1
-                             (list 'if (list 're-search-forward from nil t)
-                                   ;; When we find a match, move back
-                                   ;; to the beginning of it so perform-replace
-                                   ;; will see it.
-                                   '(goto-char (match-beginning 0))))
+  (setq tags-loop-scan `(with-caps-disable-folding ,from
+                          (if (re-search-forward ,from nil t)
+                              ;; When we find a match, move back
+                              ;; to the beginning of it so perform-replace
+                              ;; will see it.
+                              (progn (goto-char (match-beginning 0)) t)))
         tags-loop-operate (list 'perform-replace from to t t delimited))
-  (tags-loop-continue (or file-list-form t)))
+   (tags-loop-continue (or file-list-form t)))
 
 ;; Miscellaneous
 
@@ -1223,7 +1237,8 @@ See documentation of variable `tag-table-alist'."
   "Display list of tags in file FILE.
 FILE should not contain a directory spec
 unless it has one in the tag table."
-  (interactive "sList tags (in file): ")
+  (interactive "fList tags (in file): ")
+  (setq string (expand-file-name string))
   (with-output-to-temp-buffer "*Tags List*"
     (princ "Tags in file ")
     (princ string)

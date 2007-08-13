@@ -307,7 +307,7 @@ Internationalization options:
 Debugging options:
 
 --debug			Compile with support for debugging XEmacs.
-			(Causes code-size increase but no loss of speed.)
+			(Causes code-size increase and little loss of speed.)
 --error-checking=TYPE[,TYPE]...
 			Compile with internal error-checking added.
 			Causes noticeable loss of speed.  Valid types
@@ -1869,13 +1869,38 @@ elif test -z "${with_toolbars}"  ; then
   with_toolbars='yes'
 fi
 [
+runtime_arg="-R${dash_r_space}"
+
 case "${canonical}" in
-  *-sun-solaris* | *-sun-sunos5* ) add_runtime_flag=yes ;;
+  *-sun-solaris* | *-sun-sunos5* ) 
+    add_runtime_flag=yes ;;
+  *-sgi-irix5.* )
+    # In the IRIX 5.3 ld, only the last -rpath arg has any effect.  This is 
+    # fundamentaly incompatible with having separate LD_SWITCH_X_SITE
+    # and LD_SWITCH_SITE variables.  Fortunately, SGI fixed this by 6.2.
+    if [ -n "${x_libraries}" ] || [ -n "${site_runtime_libraries}" ]; then
+      (echo "WARNING: The IRIX 5 ld ignores all but the last -rpath argument,";
+       echo "         so if you need to specify more than one additional";
+       echo "         runtime library directory, you will have to do so";
+       echo "         manually by setting the environment variable";
+       echo "         LD_SWITCH_SITE to '-rpath <path>' before running";
+       echo "         configure.  If you have only one additional directory,"
+       echo "         you can specify it with --site-runtime-libraries.") >&2
+    fi
+    runtime_arg="-rpath " ;;
+  *-sgi-irix* )
+    # Note that IRIX gcc (as of 2.7.2) doesn't accept -rpath, so
+    # using it can cause trouble.  Specifying --use-gcc=no will work 
+    # around this, but the real problem is that configure uses $LDFLAGS 
+    # as arguments to $(CC), instead of using prefix-args like the
+    # src/Makefile does.
+    add_runtime_flag=yes;
+    runtime_arg="-rpath " ;;
 esac
 
 if test -n "${x_libraries}" ; then
-  if test "${add_runtime_flag}" ; then
-    LD_SWITCH_X_SITE="-L${x_libraries} -R${dash_r_space}${x_libraries}"
+    if test "${add_runtime_flag}" = "yes" ]; then
+	LD_SWITCH_X_SITE="-L${x_libraries} ${runtime_arg}${x_libraries}"
   else
     LD_SWITCH_X_SITE="-L${x_libraries}"
   fi
@@ -1894,7 +1919,7 @@ if test -n "${site_runtime_libraries}" ; then
   for arg in ${site_runtime_libraries}
   do
     LD_SWITCH_SITE="${LD_SWITCH_SITE} -L${arg}"
-    LD_SWITCH_SITE="${LD_SWITCH_SITE} -R${dash_r_space}${arg}"
+    LD_SWITCH_SITE="${LD_SWITCH_SITE} ${runtime_arg}${arg}"
   done
 fi
 if test -n "${site_includes}" ; then
@@ -2966,8 +2991,8 @@ if test "${with_tooltalk}" = "yes" ; then
     case "${arg}" in
 	-L*) if test -f `echo "${arg}/libtt.a" | sed 's/^\-L//'` ; then
 		 dash_r=''
-		 if test -n "${add_runtime_flag}" ; then
-		     dash_r=`echo ${arg} | sed "s/^-L/-R${dash_r_space}/"`
+		 if [ "${add_runtime_flag}" = "yes" ]; then
+		     dash_r=`echo ${arg} | sed "s/^-L */${runtime_arg}/"`
 		 fi
 		 LD_SWITCH_X_SITE="${LD_SWITCH_X_SITE} ${arg} ${dash_r}"
 	     fi
@@ -3178,6 +3203,9 @@ dnl ############################################################################
 dnl #                     Report on what we decided to do                      #
 dnl ############################################################################
 
+echo "$0 $configure_args" >> Installation
+# Start stdout redirection to '| tee -a Installation'
+(
 echo "
 
 Configured for \`${canonical}'.
@@ -3191,92 +3219,91 @@ Configured for \`${canonical}'.
   Should XEmacs use the relocating allocator for buffers? ${rel_alloc}
   What window system should XEmacs use?                   ${window_system}${x_includes+
   Where do we find X Windows header files?                }${x_includes}${x_libraries+
-  Where do we find X Windows libraries?                   }${x_libraries}" >> Installation
+  Where do we find X Windows libraries?                   }${x_libraries}"
 
 if test -n "$site_includes"; then
-  echo "  Additional header files:                                ${site_includes}" >> Installation
+  echo "  Additional header files:                                ${site_includes}"
 fi
 
 if test -n "$site_libraries" -a -n "$site_runtime_libraries"; then
-  echo "  Additional libraries:                                   ${site_libraries} ${site_runtime_libraries}" >> Installation
+  echo "  Additional libraries:                                   ${site_libraries} ${site_runtime_libraries}"
 elif test -n "$site_libraries"; then
-  echo "  Additional libraries:                                   ${site_libraries}" >> Installation
+  echo "  Additional libraries:                                   ${site_libraries}"
 elif test -n "$site_runtime_libraries"; then
-  echo "  Additional libraries:                                   ${site_runtime_libraries}" >> Installation
+  echo "  Additional libraries:                                   ${site_runtime_libraries}"
 fi
 if test "$with_wnn"; then
-  echo "  Finding WNN includes with:                              ${wnn_includes}" >> Installation
-  echo "  Loading WNN libs with:                                  ${wnn_libraries}" >> Installation
+  echo "  Finding WNN includes with:                              ${wnn_includes}"
+  echo "  Loading WNN libs with:                                  ${wnn_libraries}"
 fi
-test "$with_socks" = yes && echo "  Compiling in support for SOCKS." >> Installation
-test "$with_term"  = yes && echo "  Compiling in support for TERM." >> Installation
-test "$with_xauth" = yes && echo "  Compiling in support for XAUTH." >> Installation
-test "$with_xpm"   = yes && echo "  Compiling in support for XPM." >> Installation
+test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
+test "$with_term"  = yes && echo "  Compiling in support for TERM."
+test "$with_xauth" = yes && echo "  Compiling in support for XAUTH."
+test "$with_xpm"   = yes && echo "  Compiling in support for XPM."
 if test "$with_xmu" != yes -a "$window_system" != none; then
-  echo "  No Xmu; substituting equivalent routines." >> Installation
+  echo "  No Xmu; substituting equivalent routines."
 fi
-test "$with_xface" = yes && echo "  Compiling in support for X-Face headers." >> Installation
-test "$with_gif"   = yes && echo "  Compiling in support for GIF image conversion." >> Installation
-test "$with_jpeg"  = yes && echo "  Compiling in support for JPEG image conversion." >> Installation
+test "$with_xface" = yes && echo "  Compiling in support for X-Face headers."
+test "$with_gif"   = yes && echo "  Compiling in support for GIF image conversion."
+test "$with_jpeg"  = yes && echo "  Compiling in support for JPEG image conversion."
 if test "$with_png"   = yes -o "$with_png" = gnuz; then
-  echo "  Compiling in support for PNG image conversion." >> Installation
+  echo "  Compiling in support for PNG image conversion."
 fi
 if test "$with_png" = gnuz; then
-  echo "  (Using -lgz instead of -lz.)" >> Installation
+  echo "  (Using -lgz instead of -lz.)"
 fi
-test "$with_tiff"  = yes && echo "  Compiling in support for TIFF image conversion (not implemented)." >> Installation
-test "$with_epoch" = yes && echo "  Compiling in extra Epoch compatibility." >> Installation
+test "$with_tiff"  = yes && echo "  Compiling in support for TIFF image conversion (not implemented)."
+test "$with_epoch" = yes && echo "  Compiling in extra Epoch compatibility."
 
-test "$with_sound" = nas    && echo "  Compiling in network sound support." >> Installation
-test "$with_sound" = native && echo "  Compiling in native sound support." >> Installation
-test "$with_sound" = both   && echo "  Compiling in both network and native sound support." >> Installation
-test "$old_nas"    = true   && echo "        nas library lacks error trapping, will play synchronously" >> Installation
+test "$with_sound" = nas    && echo "  Compiling in network sound support."
+test "$with_sound" = native && echo "  Compiling in native sound support."
+test "$with_sound" = both   && echo "  Compiling in both network and native sound support."
+test "$old_nas"    = true   && echo "        nas library lacks error trapping, will play synchronously"
 
-test "$with_database_berkdb" = yes && echo "  Compiling in support for Berkeley DB." >> Installation
-test "$with_database_dbm"    = yes && echo "  Compiling in support for DBM." >> Installation
-test "$with_database_gnudbm" = yes && echo "  Compiling in support for GNU DBM." >> Installation
+test "$with_database_berkdb" = yes && echo "  Compiling in support for Berkeley DB."
+test "$with_database_dbm"    = yes && echo "  Compiling in support for DBM."
+test "$with_database_gnudbm" = yes && echo "  Compiling in support for GNU DBM."
 
-test "$with_ncurses"  = yes && echo "  Compiling in support for ncurses." >> Installation
-test "$with_socks"    = yes && echo "  Compiling in support for SOCKS." >> Installation
+test "$with_ncurses"  = yes && echo "  Compiling in support for ncurses."
+test "$with_socks"    = yes && echo "  Compiling in support for SOCKS."
 
-test "$with_mule"     = yes && echo "  Compiling in Mule (multi-lingual) support." >> Installation
-test "$with_xim"      != no && echo "  Compiling in XIM (X11R5+ I18N input method) support." >> Installation
-test "$with_xim" = motif    && echo "    Using Motif to provide XIM support." >> Installation
-test "$with_xim" = xlib     && echo "    Using raw Xlib to provide XIM support." >> Installation
-test "$with_canna"    = yes && echo "  Compiling in support for Canna on Mule." >> Installation
-test "$with_wnn"      = yes && echo "  Compiling in support for WNN on Mule." >> Installation
-test "$with_wnn6"     = yes && echo "  WNN support for version 6." >> Installation
-test "$with_i18n3"    = yes && echo "  Compiling in I18N support, level 3 (doesn't currently work)." >> Installation
+test "$with_mule"     = yes && echo "  Compiling in Mule (multi-lingual) support."
+test "$with_xim"      != no && echo "  Compiling in XIM (X11R5+ I18N input method) support."
+test "$with_xim" = motif    && echo "    Using Motif to provide XIM support."
+test "$with_xim" = xlib     && echo "    Using raw Xlib to provide XIM support."
+test "$with_canna"    = yes && echo "  Compiling in support for Canna on Mule."
+test "$with_wnn"      = yes && echo "  Compiling in support for WNN on Mule."
+test "$with_wnn6"     = yes && echo "  WNN support for version 6."
+test "$with_i18n3"    = yes && echo "  Compiling in I18N support, level 3 (doesn't currently work)."
 
-test "$with_cde"      = yes && echo "  Compiling in support for CDE." >> Installation
-test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk." >> Installation
-test "$with_offix"    = yes && echo "  Compiling in support for OffiX." >> Installation
-test "$with_mocklisp" = yes && echo "  Compiling in support for Mocklisp." >> Installation
-test "$with_sparcworks" = yes && echo "  Compiling in support for SparcWorks." >> Installation
-test "$with_energize" = yes && echo "  Compiling in support for Lucid Energize (doesn't currently work)." >> Installation
-test "$with_menubars" = "lucid" && echo "  Using the Lucid menubar." >> Installation
+test "$with_cde"      = yes && echo "  Compiling in support for CDE."
+test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
+test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
+test "$with_mocklisp" = yes && echo "  Compiling in support for Mocklisp."
+test "$with_sparcworks" = yes && echo "  Compiling in support for SparcWorks."
+test "$with_energize" = yes && echo "  Compiling in support for Lucid Energize (doesn't currently work)."
+test "$with_menubars" = "lucid" && echo "  Using the Lucid menubar."
 if test "$with_menubars" = "motif"; then
-  echo "  Using the Motif menubar." >> Installation
-  echo " *WARNING*  The Motif menubar is currently buggy.  We recommend" >> Installation
-  echo "            that you use the Lucid menubar instead.  Re-run" >> Installation
-  echo "            configure with --with-menubars='lucid'." >> Installation
+  echo "  Using the Motif menubar."
+  echo " *WARNING*  The Motif menubar is currently buggy.  We recommend"
+  echo "            that you use the Lucid menubar instead.  Re-run"
+  echo "            configure with --with-menubars='lucid'."
 fi
-test "$with_scrollbars" = lucid  && echo "  Using the Lucid scrollbar." >> Installation
-test "$with_scrollbars" = motif  && echo "  Using the Motif scrollbar." >> Installation
-test "$with_scrollbars" = athena && echo "  Using the Athena scrollbar." >> Installation
-test "$with_scrollbars" = athena3d && echo "  Using the Athena-3d scrollbar." >> Installation
-test "$with_dialogs"    = motif  && echo "  Using the Motif dialog boxes." >> Installation
-test "$with_dialogs"    = athena && echo "  Using the Athena dialog boxes." >> Installation
-test "$with_dialogs"    = athena3d && echo "  Using the Athena-3d dialog boxes." >> Installation
+test "$with_scrollbars" = lucid  && echo "  Using the Lucid scrollbar."
+test "$with_scrollbars" = motif  && echo "  Using the Motif scrollbar."
+test "$with_scrollbars" = athena && echo "  Using the Athena scrollbar."
+test "$with_scrollbars" = athena3d && echo "  Using the Athena-3d scrollbar."
+test "$with_dialogs"    = motif  && echo "  Using the Motif dialog boxes."
+test "$with_dialogs"    = athena && echo "  Using the Athena dialog boxes."
+test "$with_dialogs"    = athena3d && echo "  Using the Athena-3d dialog boxes."
 
-test "${use_union_type}"     = yes && echo "  Using the union type for Lisp_Objects." >> Installation
-test "${debug}"              = yes && echo "  Compiling in extra code for debugging." >> Installation
-test "${memory_usage_stats}" = yes && echo "  Compiling in code for checking XEmacs memory usage." >> Installation
-test "$usage_tracking"       = yes && echo "  Compiling with usage tracking active (Sun internal)." >> Installation
-echo " >> Installation
+test "${use_union_type}"     = yes && echo "  Using the union type for Lisp_Objects."
+test "${debug}"              = yes && echo "  Compiling in extra code for debugging."
+test "${memory_usage_stats}" = yes && echo "  Compiling in code for checking XEmacs memory usage."
+test "$usage_tracking"       = yes && echo "  Compiling with usage tracking active (Sun internal)."
+) | tee -a Installation
+echo " | tee -a Installation
 "
-
-test -r Installation && cat Installation
 dnl ############################################################################
 dnl #                                Now generate!                             #
 dnl ############################################################################

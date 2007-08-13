@@ -1,6 +1,6 @@
-;;; $Id: adapt.el,v 1.2 1997/02/15 22:21:03 steve Exp $
+;;; $Id: adapt.el,v 1.3 1997/03/28 02:28:41 steve Exp $
 ;;;
-;;; Copyright (C) 1993, 1994, 1995  Heiko Muenkel
+;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
 ;;;
 ;;;  This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 ;;; 
 ;;; Description:
 ;;;
-;;;	General functions to port Lucid Emacs to GNU Emacs 19.
+;;;	General functions to port XEmacs functions to GNU Emacs 19.
 ;;; 
 ;;; Installation: 
 ;;;   
@@ -47,7 +47,7 @@ Old version, use `adapt-xemacsp' instead of this."
    (not (adapt-xemacsp))
    (string= (substring emacs-version 0 2) "19")))
 
-;;; Functions, which doesn't exist in both emacses
+;;; Functions, which don't exist in both emacs versions
 
 (defun adapt-region-active-p ()
   "Returns t, if a region is active."
@@ -55,7 +55,19 @@ Old version, use `adapt-xemacsp' instead of this."
       (mark)
     mark-active))
 
+(if (not (fboundp 'file-remote-p))
+    (defun file-remote-p (file)
+      "Test wether file resides on the local system.
+The special value 'unknown is returned if no remote file acess package
+has been loaded."
+      (if (not (featurep 'ange-ftp))
+	  (require 'ange-ftp))
+      (if (not (fboundp 'ange-ftp-ftp-p))
+	  nil ; better than nothing, if no ange-ftp-ftp-p exists
+	(ange-ftp-ftp-path file))))
 
+
+;;; Functions, which don't exist in the Emacs 19
 (if (adapt-emacs19p)
     (progn
       (load-library "lucid")
@@ -238,6 +250,20 @@ Return the next available \"user\" event.
 	    (and (button-event-p obj)
 		 (not (button-press-event-p obj)))))
 
+      (if (not (fboundp 'button-click-event-p))
+	  (defun button-click-event-p (obj)
+	    "True if OBJ is a click event obkect."
+	    ;; only for the Emacs 19
+	    ;; doesn't exist and can't (?) exist in the XEmacs
+	    (and (button-event-p obj)
+		 (member 'click (event-modifiers obj)))))
+      
+      (if (not (fboundp 'mouse-event-p))
+	  (defun mouse-event-p (obj)
+	    "True if OBJ is a button-press, button-release, or mouse-motion event object."
+	    (or (button-event-p obj)
+		(member 'drag (event-modifiers obj)))))
+
       (if (not (fboundp 'event-window))
 	  (defun event-window (event)
 	    "Return the window of the given mouse event.
@@ -315,6 +341,9 @@ WARNING: THIS FUNCTION ISN'T READ YET."
 
       (if (not (fboundp 'redraw-modeline))
 	  (defalias 'redraw-modeline 'force-mode-line-update))
+
+      (if (not (fboundp 'mouse-track))
+	  (defalias 'mouse-track 'mouse-drag-region))
 
       ))
 

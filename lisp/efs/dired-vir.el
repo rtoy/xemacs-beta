@@ -2,7 +2,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-vir.el
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: #Revision: 7.9 $
 ;; RCS:
 ;; Description:   Virtual dired mode for browsing ls -lR listings.
 ;; Author:        Sebastian Kremer <sk@thp.uni-koeln.de>

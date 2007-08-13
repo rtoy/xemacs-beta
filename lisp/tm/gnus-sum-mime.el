@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: gnus-sum-mime.el,v 1.4 1997/03/16 03:05:46 steve Exp $
+;;	$Id: gnus-sum-mime.el,v 1.5 1997/03/28 02:29:05 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -56,12 +56,11 @@
     (goto-char (point-min))
     (while (< (point)(point-max))
       (decode-mime-charset-region (point)
-				  (progn
-				    (end-of-line)
-				    (point))
+				  (point-at-eol)
 				  charset)
       (end-of-line)
-      (forward-char)
+      (let ((signal-error-on-buffer-boundary nil))
+	(forward-char))
       )))
 
 

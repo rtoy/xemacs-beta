@@ -1,7 +1,7 @@
 ;;; w3-cus.el --- Customization support for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/03/18 20:30:34
-;; Version: 1.5
+;; Created: 1997/03/24 06:35:57
+;; Version: 1.7
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -102,7 +102,7 @@ menus to get to them."
   :group 'w3-files
   :type 'file)
 
-(defcustom w3-documentation-root "http://www.cs.indiana.edu/elisp/w3/docs/"
+(defcustom w3-documentation-root "http://www.cs.indiana.edu/elisp/w3/"
   "*Where the w3 documentation lives.  This MUST end in a slash."
   :group 'w3-files
   :type 'string)
@@ -125,10 +125,16 @@ t		display frame hyperlinks and fetch them."
 		 (const :tag "Show hyperlinks, ask whether to retrieve them" :value ask)
 		 (const :tag "Automatically retrieve frames" :value t)))
 
-(defcustom w3-do-incremental-display nil
-  "*Whether to do incremental display of pages or not."
+(defcustom w3-bullets
+  '((disc   . ?*)
+    (circle . ?o)
+    (square . ?#)
+    (none   . ? )
+    )
+  "*An assoc list of unordered list types mapping to characters to use
+as the bullet character."
   :group 'w3-display
-  :type 'boolean)
+  :type 'list)
 
 (defcustom w3-echo-link '(title url text name)
   "*Whether to display the URL of a link when tabbing through links.
@@ -149,12 +155,45 @@ in menus, etc."
 	      (const :tag "Name of the link as defined in the HTML tag"
 		     :value name)))
 
-(defcustom w3-horizontal-rule-char ?-
+(defcustom w3-horizontal-rule-char nil
   "*The character to use to create a horizontal rule.
 Must be the character's code, not a string.  This character is
-replicated across the screen to create a division."
+replicated across the screen to create a division.
+If nil W3 will use a terminal graphic character if possible."
   :group 'w3-display
-  :type 'character)
+  :type '(choice (const :tag "Best possible" :value nil)
+		 (character)))
+
+;;; these three variables control how w3-setup-terminal-chars works
+(defcustom w3-use-terminal-characters t
+  "*Use terminal graphics characters for drawing tables and rules if available"
+  :group 'w3-display
+  :type 'boolean)
+
+(defcustom w3-use-terminal-characters-on-tty nil
+  "*Use terminal graphics characters for tables and rules even on a tty.
+This triggers display bugs on both FSF Emacs and XEmacs. 
+(Though it's usually tolerable at least on FSF Emacs.)"
+  :group 'w3-display
+  :type 'boolean)
+
+(defcustom w3-use-terminal-glyphs t
+  "*Use glyphs if possible rather than properties for terminal graphics characters
+
+Glyphs are probably more efficient but don't work with the most recent versions
+of XEmacs and there are some cute tricks we can play with text-properties that
+glyphs won't let us do. It may be possible someday to make XEmacs automagically
+translate the characters back to ascii characters when pasted into another
+buffer. (On the other hand, right now w3-excise-terminal-characters doesn't
+work at all if we're using text-properties)."
+  :group 'w3-display
+  :type '(choice (const :tag "Use Glyphs" :value t)
+		 (const :tag "Use Text Properties" :value nil)))
+
+(defcustom w3-do-incremental-display nil
+  "*Whether to do incremental display of pages or not."
+  :group 'w3-display
+  :type 'boolean)
 
 (defcustom w3-defined-link-types
   ;; This is the HTML3.0 list (downcased) plus "made".

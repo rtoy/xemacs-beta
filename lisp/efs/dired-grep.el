@@ -3,7 +3,7 @@
 ;;
 ;; File:           dired-grep.el
 ;; RCS:
-;; Dired Version:  $Revision: 1.1 $
+;; Dired Version:  #Revision: 7.9 $
 ;; Description:    Support for running grep on marked files in a dired buffer.
 ;; Author:         Sandy Rutherford <sandy@ibm550.sissa.it>
 ;; Created:        Tue Jul 13 22:59:37 1993 by sandy on ibm550

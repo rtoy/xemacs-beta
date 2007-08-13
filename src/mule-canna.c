@@ -1589,6 +1589,7 @@ mule_make_string (unsigned char *p, int l)
 }	
 
 /* return the MULE internal string length of EUC string */
+/* Modified by sb to return a character count not byte count. */
 static int
 mule_strlen (unsigned char *p, int l)
 {
@@ -1599,17 +1600,17 @@ mule_strlen (unsigned char *p, int l)
     {
       if ((unsigned char) ch == ISO_CODE_SS2)
 	{
-	  len += 2;
+	  len++;
 	  cp += 2;
 	}
       else if ((unsigned char) ch == ISO_CODE_SS3)
 	{
-	  len += 3;
+	  len++;
 	  cp += 3;
 	}
       else if (ch & 0x80)
 	{
-	  len += 3;
+	  len++;
 	  cp += 2;
 	}
       else

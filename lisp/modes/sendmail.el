@@ -312,12 +312,13 @@ actually occur.")
 	(put 'user-mail-address 'saved-value
 	     (list user-mail-address))
 	(put 'query-user-mail-address 'saved-value '(nil))
-	(custom-save-all)))
-    (if user-mail-address
-	user-mail-address
-      (setq user-mail-address (concat (user-login-name) "@"
-				      (or mail-host-address
-					  (system-name)))))))
+        (require 'cus-edit)
+	(custom-save-all))))
+  (if user-mail-address
+      user-mail-address
+    (setq user-mail-address (concat (user-login-name) "@"
+                                    (or mail-host-address
+                                        (system-name))))))
 
 (defun mail-setup (to subject in-reply-to cc replybuffer actions)
   (or mail-default-reply-to

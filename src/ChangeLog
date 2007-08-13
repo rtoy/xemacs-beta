@@ -1,3 +1,56 @@
+Tue Mar 25 11:36:08 1997  David Moore  <dmoore@ucsd.edu>
+
+	* fileio.c (barf_or_query_if_file_exists): GC fixes.
+	(Ffile_readable_p): ditto.
+	(Ffile_writable_p): ditto.
+	(Ffile_symlink_p): ditto.
+	(Ffile_accessible_directory_p): ditto.
+
+	* sound.c (Fplay_sound_file): Fix up gc problems with file
+	handlers.
+
+	* buffer.c (Fkill_buffer): Fix up buffer killing problems with
+	file handlers.
+
+	* sysdep.c (sys_subshell): Fix up gc problems with file handlers.
+
+	* callproc.c (Fcall_process_internal): Fix up gc problems with
+	file handlers.
+Tue Mar 25 17:16:14 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* ralloc.c (MHASH): Make 64bit Alpha happier.
+
+Tue Mar 25 11:36:08 1997  David Moore  <dmoore@ucsd.edu>
+
+	* fileio.c (auto_save_expand_name_error): New function.
+	(auto_save_expand_name): Ditto.
+	(Fdo_auto_save): Protect against an error in Fexpand_file_name
+	from kicking us inappropriately out of auto-save.
+
+Mon Mar 24 21:50:13 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* s/linux.h (GETPGRP_NEEDS_ARG): Define if compiling with glibc
+	2.1 (suggested by Andreas Jaeger).
+
+Mon Mar 24 12:40:56 1997  David Moore  <dmoore@ucsd.edu>
+
+	* profile.c: Fixed some comments about GC status of functions.
+	
+	* profile.c (inside_profiling): New variable to lock the
+	profiling table.
+	(sigprof_handler): Check it.
+	(Fget_profiling_info): Set it.
+	(mark_profiling_info): Set it.
+	(Fclear_profiling_info): Set it.
+
+	* eval.c (PUSH_BACKTRACE): New macro.
+	(POP_BACKTRACE): Ditto.
+
+	* eval.c (Fcommand_execute): Use them and fix problem with
+ 	backtrace_list build ordering requirements for profiling code.
+	(Feval): Ditto.
+	(funcall_recording_as): Ditto.
+
 Fri Mar 21 20:19:09 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in.in: strip inline.o.

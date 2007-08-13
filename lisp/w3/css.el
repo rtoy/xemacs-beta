@@ -1,7 +1,7 @@
 ;;; css.el -- Cascading Style Sheet parser
 ;; Author: wmperry
-;; Created: 1997/03/14 22:02:39
-;; Version: 1.30
+;; Created: 1997/03/25 03:35:09
+;; Version: 1.33
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -44,7 +44,7 @@
     [font-style       t              symbol]
     [font-variant     t              symbol]
     [font-weight      t              weight]
-    [font-size        t              length]
+    [font-size        t              height]
     [font             nil            font]
 
     ;; Color and background properties, Section 5.3
@@ -317,7 +317,7 @@
       (setq classes (sort classes 'string-lessp))
       (cons tag classes)))
    ((string-match "^#" tag)		; id selector
-    (cons '*document tag))
+    (cons '*document (list tag)))
    (t
     (cons (intern (downcase tag)) t)
     )
@@ -361,17 +361,27 @@
     (if size
 	(push (cons 'font-size (css-expand-length size)) retval))
     (if height
-	(push (cons 'line-height (css-expand-length height)) retval))
+	(push (cons 'line-height (css-expand-length height t)) retval))
     (if family
 	(push (cons 'font-family (css-expand-value 'string-list family)) retval))
     retval))
 
-(defun css-expand-length (spec)
+(if (not (fboundp 'frame-char-height))
+    (defun frame-char-height (&optional frame)
+      "Height in pixels of a line in the font in frame FRAME.
+If FRAME is omitted, the selected frame is used.
+For a terminal frame, the value is always 1."
+      (font-height (face-font 'default frame))))
+
+(defun css-expand-length (spec &optional height)
   (cond
    ((not (stringp spec)) spec)
    ((string-equal spec "auto") nil)
    ((string-match "\\([+-]?\\([0-9]+\\|[0-9]*\\.[0-9]+\\)\\)%" spec)	; A percentage
-    nil)
+    (setq spec (/ (string-to-int (match-string 1 spec)) 100.0))
+    (if height
+	(round (* (frame-char-height) spec))
+      (max 0 (round (* (frame-width) spec)))))
    ((string-match "\\([+-]?\\([0-9]+\\|[0-9]*\\.[0-9]+\\)\\)e[mx]" spec) ; Character based
     (max 0 (round (string-to-number (match-string 1 spec)))))
    (t
@@ -463,6 +473,8 @@
       (case type
 	(length				; CSS, Section 6.1
 	 (setq value (css-expand-length value)))
+	(height
+	 (setq value (css-expand-length value t)))
 	(percentage			; CSS, Section 6.2
 	 (setq value (/ (string-to-number value)
 			(if (fboundp 'float) (float 100) 1))))
@@ -577,8 +589,7 @@
 	  ((string-match (css-symbol-list-as-regexp normal bold bolder lighter)
 			 value)
 	   (setq value (intern (downcase (concat ":" value)))))
-	  (t setq value (intern ":bold"))))
-
+	  (t (setq value (intern ":bold")))))
 	;; The rest of these deal with how we handle things internally
 	((symbol integer)		; Read it in
 	 (setq value (read (downcase value))))

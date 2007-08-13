@@ -779,7 +779,7 @@ by func-menu, then do something along the lines of the following:
   ;; "^@[A-Za-z]*[({]\\([A-Za-z0-9:;&-]*\\),"
   ;; Christoph Wedler <wedler@fmi.uni-passau.de>
   ;; According to the LaTeX Companion, this should be
-  "^@[A-Za-z]*[({]\\([A-Za-z][^ \t\n\"#%'()={}]*\\),"
+  "^@[A-Za-z]*[({]\\([A-Za-z][^ \t\n\"#%'(),={}]*\\),"
   "Expression to get bibtex citation headers.")
 
 ;;; SGML

@@ -615,7 +615,7 @@ If file does not exist, returns nil.
 */
        (filename))
 {
-  /* This function can GC */
+  /* This function can call lisp */
   Lisp_Object values[12];
   Lisp_Object dirname = Qnil;
   struct stat s;

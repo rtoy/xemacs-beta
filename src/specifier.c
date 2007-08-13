@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include "opaque.h"
 #include "specifier.h"
 #include "window.h"
+#include "glyphs.h"  /* for DISP_TABLE_SIZE definition */
 
 Lisp_Object Qspecifierp;
 Lisp_Object Qprepend, Qappend, Qremove_tag_set_prepend, Qremove_tag_set_append;
@@ -2877,6 +2878,30 @@ Return non-nil if OBJECT is an boolean specifier.
   return (BOOLEAN_SPECIFIERP (object) ? Qt : Qnil);
 }
 
+/************************************************************************/
+/*                        Display table specifier type                  */
+/************************************************************************/
+
+DEFINE_SPECIFIER_TYPE (display_table);
+
+void
+display_table_validate(instantiator)
+Lisp_Object instantiator;
+{
+  if (!NILP(instantiator) &&
+      (!VECTORP (instantiator) ||
+       XVECTOR (instantiator)->size != DISP_TABLE_SIZE))
+    dead_wrong_type_argument(display_table_specifier_methods->predicate_symbol, instantiator);
+  return;
+}
+DEFUN ("display-table-specifier-p", Fdisplay_table_specifier_p, 1, 1, 0, /*
+Return non-nil if OBJECT is an display-table specifier.
+*/
+       (object))
+{
+  return (DISPLAYTABLE_SPECIFIERP (object) ? Qt : Qnil);
+}
+
 
 /************************************************************************/
 /*                           Initialization                             */
@@ -2977,6 +3002,11 @@ specifier_type_create (void)
   INITIALIZE_SPECIFIER_TYPE (boolean, "boolean", "boolean-specifier-p");
 
   SPECIFIER_HAS_METHOD (boolean, validate);
+
+  INITIALIZE_SPECIFIER_TYPE (display_table, "display-table",
+			     "display-table-p");
+
+  SPECIFIER_HAS_METHOD (display_table, validate);
 }
 
 void

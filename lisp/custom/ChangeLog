@@ -1,3 +1,56 @@
+Thu Mar 27 19:31:40 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.68 released.
+
+Thu Mar 27 18:50:16 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el (:active): New keywords.
+	(:inactive): Ditto.
+	(:activate): Ditto.
+	(:deactivate): Ditto.
+
+	* wid-edit.el (widget-inactive-face): new face.
+	(widget-specify-inactive): New function.
+	(widget-overlay-inactive): Ditto.
+	(widget-specify-active): Ditto.
+	(widget-apply-action): Ditto.
+	(widget-field-activate): Use it.
+	(widget-button-click): Ditto.
+	(widget-button1-click): Ditto.
+	(widget-button-press): Ditto.
+	(widget-gui-action): Ditto.
+	(default): Use new keywords.
+	(widget-default-active): New function.
+	(widget-default-deactivate): Ditto.
+	(widget-checkbox-action): New function.
+	(checkbox): Use it.
+	(widget-checklist-add-item): Initialize active state.
+	(widget-radio-add-item): Ditto.
+	(widget-radio-value-set): Ditto.
+	(widget-radio-action): Ditto.
+
+	* widget.texi (Widget Properties): Document the new keywords. 
+
+Mon Mar 24 18:36:15 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.67 released.
+
+Mon Mar 24 18:19:05 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-save-all): Added autoload.
+
+	* Version 1.66 released.
+
+Mon Mar 24 18:09:04 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-default-delete): Added workaround for bug
+	with empty `:format'.
+
+Thu Mar 20 12:33:59 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.texi (The Init File): Explain that `custom-file' is not
+	automatically loaded.
+
 Tue Mar 18 14:42:31 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.65 released.

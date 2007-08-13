@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-oas.el
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: #Revision: 7.9 $
 ;; RCS:
 ;; Description:   dired odds and sods. Dired functions not usually needed.
 ;;                This file is not a reference to the Organization of

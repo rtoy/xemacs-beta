@@ -1,4 +1,4 @@
-;;; $Id: hm--html-keys.el,v 1.4 1997/02/27 06:08:09 steve Exp $
+;;; $Id: hm--html-keys.el,v 1.5 1997/03/28 02:28:41 steve Exp $
 ;;; 
 ;;; Copyright (C) 1995, 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -56,7 +56,7 @@ It could have the same value as
   (define-key hm--html-noregion-anchor-map "f" 'hm--html-add-file-link)
   (define-key hm--html-noregion-anchor-map "\C-f" 'hm--html-add-ftp-link)
   (define-key hm--html-noregion-anchor-map "n" 'hm--html-add-news-link)
-  (define-key hm--html-noregion-anchor-map "m" 'hm--html-add-mail-link)
+  (define-key hm--html-noregion-anchor-map "m" 'hm--html-add-mail-box-link)
   (define-key hm--html-noregion-anchor-map 
     [(control m)] 'hm--html-add-mailto-link)
   (define-key hm--html-noregion-anchor-map "w" 'hm--html-add-direct-wais-link)
@@ -84,7 +84,7 @@ It could have the same value as
   (define-key hm--html-region-anchor-map 
     "\C-f" 'hm--html-add-ftp-link-to-region)
   (define-key hm--html-region-anchor-map "n" 'hm--html-add-news-link-to-region)
-  (define-key hm--html-region-anchor-map "m" 'hm--html-add-mail-link-to-region)
+  (define-key hm--html-region-anchor-map "m" 'hm--html-add-mail-box-link-to-region)
   (define-key hm--html-region-anchor-map
     [(control m)] 'hm--html-add-mailto-link-to-region)
   (define-key hm--html-region-anchor-map 
@@ -229,13 +229,13 @@ It could have the same value as
   (define-key hm--html-noregion-formating-paragraph-map
     "b" 'hm--html-add-blockquote)
   (define-key hm--html-noregion-formating-paragraph-map
-    "C-b" 'hm--html-add-basefont)
+    "\C-b" 'hm--html-add-basefont)
   (define-key hm--html-noregion-formating-paragraph-map
     "f" 'hm--html-add-font)
   (define-key hm--html-noregion-formating-paragraph-map
     "c" 'hm--html-add-center)
   (define-key hm--html-noregion-formating-paragraph-map
-    "C-c" 'hm--html-add-comment-to-region)
+    "\C-c" 'hm--html-add-comment)
 ;  (define-key hm--html-noregion-formating-paragraph-map
 ;    "l" 'hm--html-add-listing)
 ;  (define-key hm--html-noregion-formating-paragraph-map
@@ -255,13 +255,13 @@ It could have the same value as
   (define-key hm--html-region-formating-paragraph-map
     "b" 'hm--html-add-blockquote-to-region)
   (define-key hm--html-region-formating-paragraph-map
-    "C-b" 'hm--html-add-basefont-to-region)
+    "\C-b" 'hm--html-add-basefont-to-region)
   (define-key hm--html-region-formating-paragraph-map
     "f" 'hm--html-add-font-to-region)
   (define-key hm--html-region-formating-paragraph-map
     "c" 'hm--html-add-center-to-region)
   (define-key hm--html-region-formating-paragraph-map
-    "C-c" 'hm--html-add-comment-to-region)
+    "\C-c" 'hm--html-add-comment-to-region)
 ;  (define-key hm--html-region-formating-paragraph-map
 ;    "l" 'hm--html-add-listing-to-region)
 ;  (define-key hm--html-region-formating-paragraph-map

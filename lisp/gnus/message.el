@@ -113,7 +113,6 @@
   :group 'message-buffers
   :type 'function)
 
-;;;###autoload
 (defcustom message-fcc-handler-function 'message-output
   "*A function called to save outgoing articles.
 This function will be called with the name of the file to store the
@@ -1656,7 +1655,8 @@ The text will also be indented the normal way."
 (defun message-kill-buffer ()
   "Kill the current buffer."
   (interactive)
-  (when (yes-or-no-p "Kill the buffer? ")
+  (when (or (not (buffer-modified-p))
+	    (yes-or-no-p "Message modified; kill anyway? "))
     (let ((actions message-kill-actions))
       (kill-buffer (current-buffer))
       (message-do-actions actions))))
@@ -2461,7 +2461,8 @@ to find out how to use this."
 
 (defun message-make-from ()
   "Make a From header."
-  (let* ((login (message-make-address))
+  (let* ((style message-from-style)
+	 (login (message-make-address))
 	 (fullname
 	  (or (and (boundp 'user-full-name)
 		   user-full-name)
@@ -2471,11 +2472,11 @@ to find out how to use this."
     (save-excursion
       (message-set-work-buffer)
       (cond
-       ((or (null message-from-style)
+       ((or (null style)
 	    (equal fullname ""))
 	(insert login))
-       ((or (eq message-from-style 'angles)
-	    (and (not (eq message-from-style 'parens))
+       ((or (eq style 'angles)
+	    (and (not (eq style 'parens))
 		 ;; Use angles if no quoting is needed, or if parens would
 		 ;; need quoting too.
 		 (or (not (string-match "[^- !#-'*+/-9=?A-Z^-~]" fullname))

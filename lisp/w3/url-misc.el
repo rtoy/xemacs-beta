@@ -1,7 +1,7 @@
 ;;; url-misc.el --- Misc Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/02/19 00:52:07
-;; Version: 1.12
+;; Created: 1997/03/24 23:59:37
+;; Version: 1.13
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -29,6 +29,14 @@
 (require 'url-vars)
 (require 'url-parse)
 (autoload 'Info-goto-node "info" "" t)
+
+(defun url-netrek (url)
+  ;; Start a netrek client
+  (if (get-buffer url-working-buffer)
+      (kill-buffer url-working-buffer))
+  (let ((data (url-generic-parse-url url)))
+    (error
+     "I should launch netrek on: %s %s" (url-host data) (url-port data))))
 
 (defun url-info (url)
   ;; Fetch an info node

@@ -1079,7 +1079,8 @@ x_output_string (struct window *w, struct display_line *dl,
     {
       int tmp_height, tmp_y;
       int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
-      int cursor_x;
+      int need_clipping = (cursor_start < clip_start
+			   || clip_end < cursor_start + cursor_width);
 
       /* #### This value is correct (as far as I know) because
 	 all of the times we need to draw this cursor, we will
@@ -1109,11 +1110,6 @@ x_output_string (struct window *w, struct display_line *dl,
 			 Qnil, Qnil, Qnil);
 	}
       
-      if (cursor)
-	cursor_x = clip_start;
-      else
-	cursor_x = cursor_start;
-      
       tmp_y = dl->ypos - bogusly_obtained_ascent_value;
       tmp_height = cursor_height;
       if (tmp_y + tmp_height > (int) (dl->ypos - dl->ascent + height))
@@ -1124,15 +1120,33 @@ x_output_string (struct window *w, struct display_line *dl,
 	  tmp_height = dl->ypos - dl->ascent + height - tmp_y;
 	}
       
+      if (need_clipping)
+	{
+	  XRectangle clip_box[1];
+	  clip_box[0].x = 0;
+	  clip_box[0].y = 0;
+	  clip_box[0].width = clip_end - clip_start;
+	  clip_box[0].height = tmp_height;
+	  XSetClipRectangles (dpy, gc, clip_start, tmp_y,
+			      clip_box, 1, Unsorted);
+	}
+
       if (!focus && NILP (bar_cursor_value))
 	{
-	  XDrawRectangle (dpy, x_win, gc, cursor_x, tmp_y,
+	  XDrawRectangle (dpy, x_win, gc, cursor_start, tmp_y,
 			  cursor_width - 1, tmp_height - 1);
 	}
       else if (focus && !NILP (bar_cursor_value))
 	{
-	  XDrawLine (dpy, x_win, gc, cursor_x + bar_width - 1, tmp_y,
-		     cursor_x + bar_width - 1, tmp_y + tmp_height - 1);
+	  XDrawLine (dpy, x_win, gc, cursor_start + bar_width - 1, tmp_y,
+		     cursor_start + bar_width - 1, tmp_y + tmp_height - 1);
+	}
+
+      /* Restore the GC */
+      if (need_clipping)
+	{
+	  XSetClipMask (dpy, gc, None);
+	  XSetClipOrigin (dpy, gc, 0, 0);
 	}
     }
 }
@@ -1826,8 +1840,8 @@ x_redraw_exposed_window (struct window *w, int x, int y, int width, int height)
     }
 
   /* If the window doesn't intersect the exposed region, we're done here. */
-  if (x > WINDOW_RIGHT (w) || (x + width) < WINDOW_LEFT (w)
-      || y > WINDOW_BOTTOM (w) || (y + height) < WINDOW_TOP (w))
+  if (x >= WINDOW_RIGHT (w) || (x + width) <= WINDOW_LEFT (w)
+      || y >= WINDOW_BOTTOM (w) || (y + height) <= WINDOW_TOP (w))
     {
       return;
     }
@@ -2093,12 +2107,10 @@ x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos)
     default_face_font_info (window, &defascent, 0, &defheight, 0, 0);
   }
   
-  cursor_y = dl->ypos - defascent;
-  if (cursor_y < y)
-    cursor_y = y;
-  cursor_height = defheight;
-  if (cursor_y + cursor_height > y + height)
-    cursor_height = y + height - cursor_y;
+  /* make sure the cursor is entirely contained between y and y+height */
+  cursor_height = min (defheight, height);
+  cursor_y = max (y, min (y + height - cursor_height, 
+			  dl->ypos - defascent));
   
   if (focus)
     {

@@ -825,8 +825,7 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use.
   set_font_attached_to (f->font, face, Qfont);
   f->background_pixmap = Fmake_specifier (Qimage);
   set_image_attached_to (f->background_pixmap, face, Qbackground_pixmap);
-  /* #### need a special display-table specifier */
-  f->display_table = Fmake_specifier (Qgeneric);
+  f->display_table = Fmake_specifier (Qdisplay_table);
   f->underline = Fmake_specifier (Qface_boolean);
   set_face_boolean_attached_to (f->underline, face, Qunderline);
   f->strikethru = Fmake_specifier (Qface_boolean);

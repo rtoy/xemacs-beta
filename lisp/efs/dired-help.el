@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-help.el
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: #Revision: 7.9 $
 ;; RCS:
 ;; Description:   Obtaining help for dired
 ;; Modified:      Sun Nov 20 21:10:47 1994 by sandy on gandalf

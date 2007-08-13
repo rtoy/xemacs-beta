@@ -1,4 +1,20 @@
 							-*- indented-text -*-
+to 20.1 beta10
+-- custom-1.68 [Beyond 19.15]
+-- W3-3.0.75
+-- Documentation updates
+-- cc-mode-4.388
+-- Custom-1.67
+-- EFS fixes courtesy of Michael Sperber
+-- time.el-1.11
+-- Various cursor glitch patches courtesy of Darrell Kindred
+-- Irix -rpath support courtesy of Darrell Kindred
+-- Miscellaneous bug fixes
+-- EFS synch to 19.15 for default-dir.el
+-- hm--html-mode-5.5
+-- VM-6.22
+-- Gnus-5.4.37
+
 to 20.1 beta9
 -- VM-6.21
 -- tm-7.106
@@ -18,7 +34,6 @@ to 20.1 beta9
 -- floating-toolbar.el-1.02
 -- balloon-help.el-1.05
 -- W3-3.0.71
--- VM-6.20
 -- Custom-1.65
 -- Gnus-5.4.33
 -- strip unimplemented subwindows subr code

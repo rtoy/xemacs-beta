@@ -1,7 +1,7 @@
 ;;; w3-prefs.el --- Preferences panels for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/03/14 23:49:47
-;; Version: 1.20
+;; Created: 1997/03/21 15:52:22
+;; Version: 1.23
 ;; Keywords: hypermedia, preferences
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -304,7 +304,9 @@
 	(setq host proxy-entry
 	      port nil))
       (set (make-local-variable host-var) (or host ""))
-      (set (make-local-variable port-var) (or port "")))))
+      (set (make-local-variable port-var) (or port ""))))
+  (set (make-local-variable 'w3-preferences-temp-no-proxy)
+       (cdr-safe (assoc "no_proxy" url-proxy-services))))
 
 (defun w3-preferences-create-proxy-panel ()
   (let ((proxies '("FTP" "Gopher" "HTTP" "Security" "WAIS" "SHTTP" "News"))
@@ -335,6 +337,14 @@
 		      :value (format "%5s" (symbol-value port-var)))
        'variable port-var)
       (widget-insert "\n\n"))
+    (widget-insert "        No proxy: ")
+    (widget-put
+     (widget-create 'editable-field
+		    :size 40
+		    :value-face 'underline
+		    :notify 'w3-preferences-generic-variable-callback
+		    :value (or (symbol-value 'w3-preferences-temp-no-proxy) ""))
+     'variable 'w3-preferences-temp-no-proxy)
     (widget-setup)))
 
 (defun w3-preferences-save-proxy-panel ()
@@ -346,6 +356,12 @@
 	(host nil)
 	(port nil)
 	(new-proxy-services nil))
+    (if (/= 0 (length (symbol-value 'w3-preferences-temp-no-proxy)))
+	(setq new-proxy-services (cons
+				  (cons
+				   "no_proxy"
+				   (symbol-value 'w3-preferences-temp-no-proxy))
+				  new-proxy-services)))
     (while proxies
       (setq proxy (car proxies)
 	    proxies (cdr proxies)

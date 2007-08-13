@@ -41,6 +41,16 @@ int always_gc;
 
 struct backtrace *backtrace_list;
 
+/* Note you must always fill all of the fields in a backtrace structure
+   before pushing them on the backtrace_list.  The profiling code depends
+   on this. */
+
+#define PUSH_BACKTRACE(bt) \
+  do { (bt).next = backtrace_list; backtrace_list = &(bt); } while (0)
+
+#define POP_BACKTRACE(bt) \
+  do { backtrace_list = (bt).next; } while (0)
+
 /* This is the list of current catches (and also condition-cases).
    This is a stack: the most recent catch is at the head of the
    list.  Catches are created by declaring a 'struct catchtag'
@@ -2582,18 +2592,17 @@ when reading the arguments.
 #ifdef EMACS_BTL
       backtrace.id_number = 0;
 #endif
-      backtrace.next = backtrace_list;
-      backtrace_list = &backtrace;
       backtrace.function = &Qcall_interactively;
       backtrace.args = &cmd;
       backtrace.nargs = 1;
       backtrace.evalargs = 0;
       backtrace.pdlcount = specpdl_depth ();
       backtrace.debug_on_exit = 0;
+      PUSH_BACKTRACE (backtrace);
 
       final = Fcall_interactively (cmd, record, keys);
 
-      backtrace_list = backtrace.next;
+      POP_BACKTRACE (backtrace);
       return (final);
     }
   else if (STRINGP (final) || VECTORP (final))
@@ -2917,13 +2926,12 @@ Evaluate FORM and return its value.
   backtrace.id_number = 0;
 #endif
   backtrace.pdlcount = specpdl_depth_counter;
-  backtrace.next = backtrace_list;
-  backtrace_list = &backtrace;
   backtrace.function = &original_fun; /* This also protects them from gc */
   backtrace.args = &original_args;
   backtrace.nargs = UNEVALLED;
   backtrace.evalargs = 1;
   backtrace.debug_on_exit = 0;
+  PUSH_BACKTRACE (backtrace);
 
   if (debug_on_next_call)
     do_debug_on_call (Qt);
@@ -2999,7 +3007,7 @@ Evaluate FORM and return its value.
 #endif
           if (backtrace.debug_on_exit)
             val = do_debug_on_exit (val);
-          backtrace_list = backtrace.next;
+	  POP_BACKTRACE (backtrace);
 	  UNGCPRO;
           return (val);
 	}
@@ -3072,7 +3080,7 @@ Evaluate FORM and return its value.
 #endif
   if (backtrace.debug_on_exit)
     val = do_debug_on_exit (val);
-  backtrace_list = backtrace.next;
+  POP_BACKTRACE (backtrace);
   return (val);
 }
 
@@ -3107,15 +3115,12 @@ funcall_recording_as (Lisp_Object recorded_as, int nargs,
   backtrace.id_number = 0;
 #endif
   backtrace.pdlcount = specpdl_depth_counter;
-  backtrace.next = backtrace_list;
   backtrace.function = &args[0];
   backtrace.args = &args[1];
   backtrace.nargs = nargs;
   backtrace.evalargs = 0;
   backtrace.debug_on_exit = 0;
-  /* XEmacs: make sure this is done last so we don't get race
-     conditions in the profiling code. */
-  backtrace_list = &backtrace;
+  PUSH_BACKTRACE (backtrace);
 
   if (debug_on_next_call)
     do_debug_on_call (Qlambda);
@@ -3204,7 +3209,7 @@ funcall_recording_as (Lisp_Object recorded_as, int nargs,
   lisp_eval_depth--;
   if (backtrace.debug_on_exit)
     val = do_debug_on_exit (val);
-  backtrace_list = backtrace.next;
+  POP_BACKTRACE (backtrace);
   return val;
 }
 

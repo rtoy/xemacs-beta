@@ -67,7 +67,7 @@ These are the main subdirectories:
 			loads a file named $TERM.el from this directory, if
 			that file exists.
 
-	vms		VMS-specific code.
+	vms		VMS-specific code. (Not functional)
 
 	x11		X Window System-specific code.
 
@@ -80,18 +80,26 @@ These are the main subdirectories:
 
 Some packages are fairly large; those have been given their own	directories:
 
+	auctex		A package for editing TeX documents.
+
 	bytecomp	The XEmacs-lisp compiler.
 
 	calendar	A calendar and appointment manager.
 
+	cl		Common Lisp compatibility code.
+
 	comint		General code for interacting with inferior processes,
 			like shell buffers and lisp interpreters.
 
-	dired		The directory editor.
+	custom		User environment customization code.
 
 	edebug		A source-level debugger for Elisp.
 
 	ediff		A comprehensive visual interface to diff and patch.
+
+	efs		The directory editor, remote FTP frontend.
+
+	egg		MULE Input Method.
 
 	electric	The "electric" commands; these implement temporary
 			windows for help, list-buffers, etc.
@@ -103,7 +111,7 @@ Some packages are fairly large; those have been given their own	directories:
 	eterm		A merge of the comint shell mode with an
 			ANSI-compatible terminal-emulator.
 
-	gnus		An NNTP-based newsreader; version 3.14.
+	gnus		A network news and mail reader.
 
 	hm--html-menus	Menu interface to html-mode.
 
@@ -112,22 +120,47 @@ Some packages are fairly large; those have been given their own	directories:
 	ilisp		A comint-based package for interacting with inferior
 			lisp processes.
 
+	iso		ISO Latin language support.
+
+	its		MULE Input Method.
+
+	locale		IE18N stuff.
+
+	mailcrypt	Package for dealing with PGP encrypted messages.
+
+	mel		MIME encoding library (part of the Tools for MIME).
+
 	mh-e		An interface to the MH-E mail handling system.
+
+	mu		Message Utilities library (part of the Tools for
+			MIME).
+
+	mule		Multi-lingual extensions for XEmacs.
+
+	ns		NeXTStep support.
 
 	oobr		An Object-Oriented class browser.
 
 	pcl-cvs		An interface to the Concurrent Version System.
 
+	psgml		General purpose SGML editing support with extra
+			support for editing HTML.
+
+	quail		MULE Input Method.
+
 	rmail		A BABYL-format mail reader.
 
 	sunpro		Additional code for interfacing with SunPro products.
+
+	tl		Tiny Library (Part of the Tools for MIME).
+
+	tm		Tools for MIME.  MIME support for emacs lisp based
+			news and mail readers.
 
 	tooltalk	An inteface to the ToolTalk communication protocol.
 
 	viper		A full-featured VI emulator.
 
 	vm		View Mail, an UNIX-format alternative to RMAIL.
-
-	url		A Uniform Resource Locator retrieval tool.
 
 	w3		A World Wide Web interface.

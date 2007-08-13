@@ -1791,3 +1791,44 @@ detected, and DragAndDrop works (more or less, see next issue).
 The is seen when installing the Big Brother Data Base (bbdb) which
 includes an outdated copy of mail-abbrevs.el.  Remove the copy that
 comes with bbdb and use the one that comes with XEmacs.
+
+* Linking with -rpath on IRIX.
+
+Darrell Kindred <dkindred@cmu.edu> writes:
+There are a couple of problems [with use of -rpath with Irix ld], though:
+
+  1. The ld in IRIX 5.3 ignores all but the last -rpath
+     spec, so the patched configure spits out a warning
+     if --x-libraries or --site-runtime-libraries are
+     specified under irix 5.x, and it only adds -rpath 
+     entries for the --site-runtime-libraries.  This bug was
+     fixed sometime between 5.3 and 6.2.
+
+  2. IRIX gcc 2.7.2 doesn't accept -rpath directly, so
+     it would have to be prefixed by -Xlinker or "-Wl,".
+     This would be fine, except that configure compiles with
+        ${CC-cc} $CFLAGS $LDFLAGS ...
+     rather than quoting $LDFLAGS with prefix-args, like
+     src/Makefile does.  So if you specify --x-libraries
+     or --site-runtime-libraries, you must use --use-gcc=no,
+     or configure will fail.
+
+* On Irix 5.x and 6.x, the dumped XEmacs (xemacs) core dumps when executed 
+  on another machine, or after newer SGI IRIX patches have been installed.
+
+The xemacs binary must be executed with the same "libc.so" file which was used 
+when the xemacs binary was dumped.  Some SGI IRIX patches update this file.
+Make sure that all machines using the xemacs binary are using the same
+set of IRIX patches.  If xemacs core dumps after a patch upgrade then you 
+will have to redump it from temacs.
+
+* xemacs: can't resolve symbol '__malloc_hook'
+
+This is a Linux problem where you've compiled the XEmacs binary on a libc
+5.4 with version higher than 5.4.19 and attempted to run the binary against
+an earlier version.  The solution is to upgrade your old library.
+
+* VM appears to hang in large folders
+
+This is normal (trust us) when upgrading to VM-6.22 from earlier versions.
+Let VM finish what it is doing and all will be well.

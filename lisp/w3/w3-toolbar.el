@@ -1,7 +1,7 @@
 ;;; w3-toolbar.el --- Toolbar functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/02/03 15:38:24
-;; Version: 1.8
+;; Created: 1997/03/26 00:01:47
+;; Version: 1.9
 ;; Keywords: mouse, toolbar
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -163,7 +163,8 @@ not `none'.")
 	     (expand-file-name "w3" data-directory))))
   (cond
    ((not (file-exists-p w3-toolbar-icon-directory))
-    (w3-warn 'files "Toolbar directory does not exist."))
+    (and w3-running-xemacs
+	 (w3-warn 'files "Toolbar directory does not exist.")))
    ((not (fboundp 'toolbar-make-button-list))
     nil)
    ((eq w3-toolbar-type 'text)

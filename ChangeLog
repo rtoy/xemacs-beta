@@ -1,3 +1,42 @@
+Thu Mar 27 18:24:19 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b10 is released.
+
+Wed Mar 26 22:31:10 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Remove vms top-level directory.
+	
+	* XEmacs 19.15 final released to beta testers.
+
+Tue Mar 25 19:13:27 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.15 prefinal released to beta testers.
+
+Mon Mar 24 12:28:17 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* configure.in (--debug): Correct documentation.
+
+Sun Mar 23 17:24:38 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.15-b104 is released.
+
+Sat Mar 22 19:56:36 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* etc/sgml/CATALOG: Default to html-3.2final.
+
+Sat Mar 22 17:55:15 1997  Darrell Kindred  <dkindred@cmu.edu>
+
+	* configure.in (beta): Add configure support for the -rpath flag
+	for IRIX analogous to the Solaris "-R".
+
+Sat Mar 22 16:47:08 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* info/dir (Packages): Add HM-HTML-Mode to menu.
+
+Sat Mar 22 21:27:41 1997  Tomasz J. Cholewo  <t.cholewo@ieee.org>
+
+        * configure.in: Echo only current configuration using 'tee -a'.
+
 Fri Mar 21 21:26:01 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs-19.15-b103 is released.

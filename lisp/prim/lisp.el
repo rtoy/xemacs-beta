@@ -326,10 +326,7 @@ function definitions, values or properties are considered."
 		     (setq list (cdr list)))
 		   (setq list (nreverse new))))
 	     (with-output-to-temp-buffer "*Completions*"
-	       (display-completion-list list))
-	     (when temp-buffer-shrink-to-fit
-	       (shrink-window-if-larger-than-buffer
-		(get-buffer-window "*Completions*"))))
+	       (display-completion-list list)))
 	   (message "Making completion list...%s" "done")))))
 
 ;;; lisp.el ends here

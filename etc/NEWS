@@ -20,7 +20,7 @@ There are five sections.
 
 New users should look at the next section on "Using Outline Mode".  You will
 be more efficient when you can navigate quickly through this file.  Users
-interested in some of the details of how XEmacs differs from FSF GNU Emacs
+interested in some of the details of how XEmacs differs from GNU Emacs
 should read the section "What's Different?".  Users who would to know which
 capabilities have been introduced in each release should look at the
 appropriate subsection of the "XEmacs Release Notes."
@@ -103,7 +103,7 @@ both contributed significantly to the development of XEmacs.
 ===================
 
 
-** Differences between XEmacs and FSF GNU Emacs 19
+** Differences between XEmacs and GNU Emacs 19
 ==================================================
 In XEmacs 20, characters are first-class objects.  Characters can be
 converted to integers, but are not integers.  FSF 19, XEmacs 19, and Mule
@@ -116,7 +116,7 @@ ancient ASCII code used to represent a particular overlapping subset of them.
 In XEmacs, keymaps are first-class opaque objects.  FSF 19 represents them as
 complicated combinations of association lists and vectors.  If you use the
 advertised functional interface to manipulation of keymaps, the same code
-will work in XEmacs, Emacs 18, and FSF GNU Emacs 19; if your code depends
+will work in XEmacs, Emacs 18, and GNU Emacs 19; if your code depends
 on the underlying implementation of keymaps, it will not.
 
 XEmacs uses "extents" to represent all non-textual aspects of buffers;
@@ -1586,10 +1586,10 @@ Significant Lisp-level changes:
 -- The `face' property of extents and text properties can now
    be a list.
 
--- The `mouse-face' property from FSF GNU Emacs is now supported.
+-- The `mouse-face' property from GNU Emacs is now supported.
    It supersedes the `highlight' property.
 
--- `enriched' and `facemenu' packages from FSF GNU Emacs have been ported.
+-- `enriched' and `facemenu' packages from GNU Emacs have been ported.
 
 -- New functions for easier creation of dialog boxes:
    `get-dialog-box-response', `message-box', and `message-or-box'.
@@ -2484,7 +2484,7 @@ developed by RSA, inc.
 *** Keymaps
 -----------
 
-The FSF GNU Emacs concept of `function-key-map' is now partially
+The GNU Emacs concept of `function-key-map' is now partially
 implemented.  This allows conversion of function-key escape sequences
 such as `ESC [ 1 1 ~' into an equivalent human-readable keysym such as
 `F1'.  This work will be completed in 19.14.  The function-key map is
@@ -2513,7 +2513,7 @@ provided for easier customization of mouse behavior.  For example, you
 can now easily specify an action to be invoked on single-click
 (i.e. down-up without appreciable motion), double-click, drag-up, etc.
 
-Some code from FSF GNU Emacs has been ported over, generalizing some of
+Some code from GNU Emacs has been ported over, generalizing some of
 the X-specific mouse stuff.
 
 ** INCOMPATIBLE CHANGE **: The function `set-mouse-position' accepts

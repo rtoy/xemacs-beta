@@ -1195,6 +1195,8 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
     }
   else
     {
+      /* #### dmoore - file-directory-p can call lisp, make sure everything
+	 here protects itself. */
       if (!NILP (Ffile_directory_p (program)))
 	error ("Specified program for new process is a directory");
     }

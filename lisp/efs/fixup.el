@@ -3,7 +3,7 @@
 ;;
 ;; File:         fixup.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  Fix up the load path for batch byte compilation of efs.
 ;; Author:       Andy Norman, Dawn

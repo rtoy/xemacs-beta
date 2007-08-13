@@ -359,8 +359,7 @@ This function is provided for optional use as the `diary-display-hook'."
     (save-excursion;; Prepare the fancy diary buffer.
       (set-buffer (get-buffer-create fancy-diary-buffer))
       (setq buffer-read-only nil)
-      (make-local-variable 'mode-line-format)
-      (calendar-set-mode-line "Diary Entries")
+      (setq modeline-buffer-identification '("Diary Entries"))
       (erase-buffer)
       (let ((entry-list diary-entries-list)
             (holiday-list)
@@ -1102,6 +1101,13 @@ A number of built-in functions are available for this type of diary entry:
                   order of the parameters should be changed to D1, M1, Y1,
                   D2, M2, Y2.)
 
+      %%(diary-countdown BEFORE AFTER M1 D1 Y1) text
+                  Entry will appear on dates between BEFORE days before
+                  and AFTER days after specified date.  (If
+                  `european-calendar-style' is t, the order of the
+                  parameters should be changed to BEFORE, AFTER, D1, M1,
+                  Y1.)
+
       %%(diary-anniversary MONTH DAY YEAR) text
                   Entry will appear on anniversary dates of MONTH DAY, YEAR.
                   (If `european-calendar-style' is t, the order of the
@@ -1261,7 +1267,7 @@ best if they are nonmarking."
 (defun diary-block (m1 d1 y1 m2 d2 y2)
   "Block diary entry.
 Entry applies if date is between two dates.  Order of the parameters is
-M1, D1, Y1, M2, D2, Y2 `european-calendar-style' is nil, and
+M1, D1, Y1, M2, D2, Y2 if `european-calendar-style' is nil, and
 D1, M1, Y1, D2, M2, Y2 if `european-calendar-style' is t."
   (let ((date1 (calendar-absolute-from-gregorian
                 (if european-calendar-style
@@ -1274,6 +1280,28 @@ D1, M1, Y1, D2, M2, Y2 if `european-calendar-style' is t."
         (d (calendar-absolute-from-gregorian date)))
     (if (and (<= date1 d) (<= d date2))
         entry)))
+
+(defun diary-countdown (before after m1 d1 y1)
+  "Countdown diary entry.
+Entry applies if date is between BEFORE days before and AFTER days after
+specified date.  Order of the parameters is BEFORE, AFTER, M1, D1, Y1 if
+`european-calendar-style' is nil, and BEFORE, AFTER, D1, M1, Y1 if
+`european-calendar-style' is t."
+  (let* ((date1 (calendar-absolute-from-gregorian
+                 (if european-calendar-style
+                     (list d1 m1 y1)
+                   (list m1 d1 y1))))
+         (d (calendar-absolute-from-gregorian date))
+         (diff (- d date1)))
+    (cond
+     ((and (<= (- before) diff) (< diff 0))
+      (concat (format "It is %d day%s before " 
+                      (- diff) (if (= diff -1) "" "s")) entry))
+     ((= diff 0) (concat (format "TODAY: " diff) entry))
+     ((and (<= diff after) (> diff 0)) 
+      (concat (format "It is %d day%s after " 
+                      diff (if (= diff 1) "" "s")) entry))
+     (t nil))))
 
 (defun diary-float (month dayname n)
   "Floating diary entry--entry applies if date is the nth dayname of month.

@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-cp-p.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.2 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  Support for preserving file modtimes with copies. i.e. cp -p
 ;; Author:       Sandy Rutherford <sandy@ibm550.sissa.it>
@@ -24,7 +24,7 @@
 (defconst efs-cp-p-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.2 $" 11 -2)))
+	  (substring "#Revision: 1.1 $" 11 -2)))
 
 (defvar efs-local-timezone nil)
 ;; cache.

@@ -5,7 +5,7 @@
 ;;
 ;; File:          dired.el
 ;; RCS:           
-;; Dired Version: $Revision: 1.4 $
+;; Dired Version: #Revision: 7.9 $
 ;; Description:   The DIRectory EDitor is for manipulating, and running
 ;;                commands on files in a directory.
 ;; Authors:       FSF,
@@ -36,7 +36,7 @@
 
 ;;; Dired Version
 
-(defconst dired-version (substring "$Revision: 1.4 $" 11 -2)
+(defconst dired-version (substring "#Revision: 7.9 $" 11 -2)
   "The revision number of Tree Dired (as a string).
 
 Don't forget to mention this when reporting bugs to:
@@ -5719,7 +5719,10 @@ Use \\[dired-hide-subdir] to (un)hide a particular subdirectory."
 	       (function
 		(lambda (x)
 		  (and (not (eq (current-buffer) (cdr x))) x)))
-	       dired-buffers))))
+	       dired-buffers)))
+  ;; If there are no more dired buffers, we are no longer needed in the
+  ;; file-name-handler-alist.
+  (or dired-buffers (dired-remove-from-file-name-handler-alist)))
 
 (defun dired-fun-in-all-buffers (directory fun &rest args)
   ;; In all buffers dired'ing DIRECTORY, run FUN with ARGS.

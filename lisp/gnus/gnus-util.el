@@ -524,7 +524,7 @@ Timezone package is used."
 
 (defun gnus-kill-all-overlays ()
   "Delete all overlays in the current buffer."
-  (when (fboundp 'overlay-lists)
+  (unless gnus-xemacs
     (let* ((overlayss (overlay-lists))
 	   (buffer-read-only nil)
 	   (overlays (nconc (car overlayss) (cdr overlayss))))

@@ -1,6 +1,6 @@
 ;;;  hm--html-menu ---  A menu for the hm--html-mode.
 ;;;  
-;;;  $Id: hm--html-menu.el,v 1.4 1997/02/27 06:08:09 steve Exp $
+;;;  $Id: hm--html-menu.el,v 1.5 1997/03/28 02:28:41 steve Exp $
 ;;;
 ;;;  Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;;  email: muenkel@tnt.uni-hannover.de
@@ -64,7 +64,7 @@
 	  "----"
 	  ["Ftp link..." hm--html-add-ftp-link t]
 	  ["News link..." hm--html-add-news-link t]
-	  ["Mailbox link..." hm--html-add-mail-link t]
+	  ["Mailbox link..." hm--html-add-mail-box-link t]
 	  ["Mailto link..." hm--html-add-mailto-link t]
 	  ["Wais link (direct)..." hm--html-add-direct-wais-link t]
 	  ["Wais link (gateway)..." hm--html-add-wais-link t]
@@ -189,7 +189,7 @@
 ;	  ("Literature"
 ;	   ["Quote" hm--html-add-quote t]
 ;	   ["Acronym" hm--html-add-acronym t]
-;	   ["Abbrevation" hm--html-add-abbrevation t]
+;	   ["Abbreviation" hm--html-add-abbreviation t]
 ;	   ["Citation" hm--html-add-citation t]
 ;	   ["Literature" hm--html-add-literature t]
 ;	   ["Publication" hm--html-add-publication t]
@@ -312,7 +312,7 @@
 	  "----"
 	  ["Ftp link..." hm--html-add-ftp-link-to-region t]
 	  ["News link..." hm--html-add-news-link-to-region t]
-	  ["Mailbox link..." hm--html-add-mail-link-to-region t]
+	  ["Mailbox link..." hm--html-add-mail-box-link-to-region t]
 	  ["Mailto link..." hm--html-add-mailto-link-to-region t]
 	  ["WAIS link (direct)..." hm--html-add-direct-wais-link-to-region t]
 	  ["WAIS link (gateway)..." hm--html-add-wais-link-to-region t]
@@ -534,7 +534,9 @@
       (if (and current-menubar (not (assoc menu-name current-menubar)))
 	  (progn
 	    (set-buffer-menubar (copy-sequence current-menubar))
-	    (add-submenu nil (cons menu-name (cdr hm--html-pulldown-menu)) "HTML"))))
+	    (add-submenu nil
+			 (cons menu-name (cdr hm--html-pulldown-menu))
+			 "HTML"))))
 
   (defun hm--install-html-menu (menu-name)
     (if (eq major-mode 'hm--html-mode)
@@ -688,9 +690,9 @@ menus to the psgml popup menu."
 				    (car menudesc) ;
 				    "==")          ;
 			      (cdr menudesc)))     ;
-	  (while (popup-menu-up-p)
+	  (while (popup-up-p)
 	    (setq event (next-command-event event))
-	    (cond ((menu-event-p event)
+	    (cond ((misc-user-event-p event)
 		   (cond
 		    ((eq (event-object event) 'abort)
 		     (signal 'quit nil))

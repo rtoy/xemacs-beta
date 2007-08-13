@@ -2578,10 +2578,13 @@ and the approriate content-type and boundary markup information is added."
 		   (delete-char 1)))
 		((stringp object)
 		 (let ((coding-system-for-read 'no-conversion))
-		   (insert-before-markers " ")
-		   (forward-char -1)
-		   (insert-file-contents-literally object)
-		   (delete-char 1))))
+		   (if (vm-xemacs-p)
+		       (insert-file-contents-literally object)
+		     (insert-before-markers " ")
+		     (forward-char -1)
+		     (insert-file-contents-literally object)
+		     (goto-char (point-max))
+		     (delete-char -1)))))
 	  ;; gather information about the object from the extent.
 	  (if (setq already-mimed (vm-extent-property e 'vm-mime-encoded))
 	      (setq layout (vm-mime-parse-entity

@@ -39,10 +39,11 @@ SUBDIR = xemacs lispref new-users-guide internals tm auctex
 ../info/%.info : %.texi
 	-$(MAKEINFO) -o $@ $<
 
-srcs = cc-mode cl custom ediff external-widget forms gnus \
-       hyperbole ilisp info ispell mailcrypt message mh-e oo-browser \
-       pcl-cvs psgml psgml-api rmail standards supercite term \
-       termcap texinfo vhdl-mode viper vm w3 widget xemacs-faq
+srcs = cc-mode cl custom ediff efs external-widget forms gnus \
+	hm--html-mode \
+	hyperbole ilisp info ispell mailcrypt message mh-e oo-browser \
+	pcl-cvs psgml psgml-api rmail standards supercite term \
+	termcap texinfo vhdl-mode viper vm w3 widget xemacs-faq
 
 info = $(srcs:%=../info/%.info)
 dvi  = $(srcs:%=%.dvi)

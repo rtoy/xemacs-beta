@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Customization Library
 
-Version: 1.65
+Version: 1.68
 
 @menu
 * Introduction::                
@@ -620,8 +620,9 @@ The menu is in a format applicable to @code{easy-menu-define}.
 When you save the customizations, call to @code{custom-set-variables},
 @code{custom-set-faces} are inserted into the file specified by
 @code{custom-file}.  By default @code{custom-file} is your @file{.emacs}
-file.  The two functions will initialize variables and faces as you have
-specified. 
+file.  If you use another file, you must explicitly load it yourself.
+The two functions will initialize variables and faces as you have
+specified.
 
 @node  Wishlist,  , The Init File, Top
 @comment  node-name,  next,  previous,  up

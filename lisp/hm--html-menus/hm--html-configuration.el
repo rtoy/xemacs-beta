@@ -1,6 +1,6 @@
 ;;; hm--html-configuration.el - Configurationfile for the html-mode
 ;;;
-;;; $Id: hm--html-configuration.el,v 1.4 1997/02/27 06:08:08 steve Exp $
+;;; $Id: hm--html-configuration.el,v 1.5 1997/03/28 02:28:41 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -24,7 +24,7 @@
 ;;;
 ;;;	This file is for the system wide configuration of the html mode.
 ;;;	User specific configuration should be done in the file
-;;;	~/.hm--html-configuration.el, which preceeds the settings in
+;;;	~/.hm--html-configuration.el, which precedes the settings in
 ;;;	this file.
 ;;;	All settings in this file are done with defvar's, therefore
 ;;;	you could overwrite them also with the function setq in your
@@ -191,6 +191,10 @@ For example: \"http://www.tnt.uni-hannover.de:80/data/info/www/tnt/info/tnt/whoi
     )
   "*Alist with hostnames and ports for the gopher server.")
 
+(defvar hm--html-gopher-hostname:port-default
+  "newsserver.rrzn.uni-hannover.de:70"
+  "*Default hostname with port for the gopher server.")
+
 (defvar hm--html-gopher-doctype-alist '(("/1")
 					("/11")
 					("/00"))
@@ -198,10 +202,6 @@ For example: \"http://www.tnt.uni-hannover.de:80/data/info/www/tnt/info/tnt/whoi
 
 (defvar hm--html-gopher-doctype-default "/1"
   "*Default doctype string for the gopher server.")
-
-(defvar hm--html-gopher-hostname:port-default
-  "newsserver.rrzn.uni-hannover.de:70"
-  "*Default hostname with port for the gopher server.")
 
 (defvar hm--html-gopher-anchor-alist
   '(("veronica")
@@ -338,7 +338,7 @@ Look at the variable `tmpl-template-dir-list' for further descriptions.")
 
 (defvar hm--html-frame-template-file (concat data-directory
 					     "../lisp/hm--html-menus/"
-					     "frame.tmpl")
+					     "frame.html.tmpl")
   "File, which is used as template for a html frame.")
 
 (defvar hm--html-automatic-expand-templates t
@@ -381,7 +381,7 @@ nil => No automatic insertation of a \"created comment\" line.")
 ;;; Keybindings:
 
 (defvar hm--html-bind-latin-1-char-entities t
-  "Set this to nil, if you don't want to use the ISO Latin 1 charcter entities.
+  "Set this to nil, if you don't want to use the ISO Latin 1 character entities.
 This is only useful, if `hm--html-use-old-keymap' is set to nil. It is only 
 used during loading the html package the first time.")
 
@@ -410,7 +410,7 @@ drag and drop.")
 	 (((idd-if-local-file-p . t))
 	  hm--html-idd-add-file-link-to-buffer)))
   "The action list for the destination mode `hm--html-mode'.
-Look at the description of the variable idd-actions")
+Look at the description of the variable idd-actions.")
 
 
 ;;; The font lock keywords
@@ -458,7 +458,7 @@ Look at the description of the variable idd-actions")
   "*Hook variable to execute functions after loading the package.")
 
 (defvar hm--html-mode-hook nil
-  "This hook will be called each time, when the hm--html-mode is invoked.")
+  "*This hook will be called each time, when the hm--html-mode is invoked.")
 
 
 ;;; For the file html-view.el
@@ -466,7 +466,7 @@ Look at the description of the variable idd-actions")
 ;;; Look at that file, if you've trouble with the functions
 ;;; to preview the html document with the Mosaic
 (defvar html-view-mosaic-command "/sol/www/bin/mosaic"
-  "The command that runs Mosaic on your system")
+  "The command that runs Mosaic on your system.")
 
 (defvar html-sigusr1-signal-value 16
   "Value for the SIGUSR1 signal on your system.  
@@ -620,7 +620,7 @@ done this.")
     ("script" (:hm--html-two-element-tag t))
     )
   "An alist with tag names known by the `hm--html-mode'.
-CURRENTLY THIS LIST CONTAINS NOT ALL TAGS!!!!.
+CURRENTLY THIS LIST MIGHT NOT CONTAIN ALL TAGS!!!!.
 
 It is used to determine, if a tag is a one element tag or not.
 
