@@ -403,6 +403,7 @@ See also the variable completion-highlight-first-word-only for control over
                                   (if minibuffer-exit-hook
                                       (run-hooks 'minibuffer-exit-hook))
                                   (buffer-string)))
+                    (histval val)
                       (err nil))
                  (if readp
                      (condition-case e
@@ -424,12 +425,12 @@ See also the variable completion-highlight-first-word-only for control over
 		     (let ((list (symbol-value minibuffer-history-variable)))
 		       (or (eq list t)
 			   (null val)
-			   (and list (equal val (car list)))
+			   (and list (equal histval (car list)))
 			   (and (stringp val)
 				minibuffer-history-minimum-string-length
 				(< (length val)
 				   minibuffer-history-minimum-string-length))
-			   (set minibuffer-history-variable (cons val list)))))
+			   (set minibuffer-history-variable (cons histval list)))))
                  (if err (signal (car err) (cdr err)))
                  val))))
       ;; stupid display code requires this for some reason
@@ -1704,9 +1705,7 @@ DIR defaults to current buffer's directory default."
                ;; complete?
                (if (not orig)
                    nil
-		 (and (file-directory-p string)
-		      ;; So "foo" is ambiguous between "foo/" and "foobar/"
-		      (equal string (file-name-as-directory string)))))
+		 (file-directory-p string)))
               ((eq action 't)
                ;; all completions
                (funcall dirs #'(lambda (n)

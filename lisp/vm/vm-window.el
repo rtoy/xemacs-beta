@@ -131,6 +131,9 @@
       (unwind-protect
 	  (progn
 	    (set-buffer (setq work-buffer (get-buffer-create "*vm-wconfig*")))
+	    ;; for XEmacs/MULE
+	    (and (fboundp 'set-file-coding-system)
+		 (set-file-coding-system 'no-conversion))
 	    (erase-buffer)
 	    (print vm-window-configurations (current-buffer))
 	    (write-region (point-min) (point-max) file nil 0))

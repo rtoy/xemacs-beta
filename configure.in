@@ -296,6 +296,8 @@ Internationalization options:
 			This is beta level code.
 --with-wnn6		Compile with support for WNN version 6
 			This is alpha level code.
+--wnn-includes=DIR 	Search for WNN header files in DIR.
+--wnn-libraries=DIR	Search for WNN libraries in DIR.
 --with-i18n3		Compile with I18N level 3 (support for message
 			translation).  This doesn't currently work.
 
@@ -461,6 +463,8 @@ Set it to either \`yes' or \`no'."
 	native_sound_lib	| \
 	x_includes	| \
 	x_libraries	| \
+        wnn_includes    | \
+        wnn_libraries   | \
 	site_includes	| \
 	site_libraries	| \
 	site_runtime_libraries  )
@@ -2271,9 +2275,12 @@ if test "${window_system}" != "none" -a \
 	"${with_cde}"      != "yes" ; then
   internal_cde_lib_found='no'
   AC_HAVE_LIBRARY(-lDtSvc, internal_cde_lib_found='yes')
+  if test "${internal_cde_lib_found}" = "no" -a -f "/usr/dt/lib/libDtSvc.a"; then
+    internal_cde_lib_found="yes"
+  fi
   if test "${internal_cde_lib_found}" = "yes" ; then
     internal_cde_includes_found='no'
-    for arg in ${DEFS} /usr/include ; do
+    for arg in ${DEFS} /usr/include /usr/dt/include ; do
       if test -f `echo "${arg}/Dt/Dt.h" | sed 's/^\-I//'` ; then
         internal_cde_includes_found='yes'
       fi
@@ -2284,6 +2291,13 @@ if test "${window_system}" != "none" -a \
   fi
 fi
 IF_YES_AC_DEFINE(with_cde, HAVE_CDE)
+
+# having CDE implies Tooltalk
+if test "${with_cde}"      = "yes" -a \
+        "${with_tooltalk}" != "no" -a \
+	"${with_tooltalk}" != "none" ; then
+  with_tooltalk='yes'
+fi
 
 #
 # See if we can find OffiX.
@@ -2369,9 +2383,9 @@ IF_YES_AC_DEFINE(with_xpm, HAVE_XPM)
 if test "${window_system}" != "none" ; then
   if test "${with_xmu}" != "no" ; then
     test "${with_xmu}" != "yes" && { AC_HAVE_LIBRARY(-lXmu, with_xmu="yes") }
-    # On SunOS4 we must kludge harder to try to detect Xmu
+    # On SunOS4 (and 5!) we must kludge harder to try to detect Xmu
     # Upgrade to autoconf 2 and use ac_check_lib - mrb
-    if test "${with_xmu}" != "yes" -a -n "$OPENWINHOME" ; then
+    if test "${with_xmu}" != "yes" ; then
       # begin expansion of ac_have_library
       ac_save_LIBS="${LIBS}"
       LIBS="${LIBS} -lXmu -lXt -lXext -lX11 -lm"
@@ -2652,6 +2666,26 @@ else # Other internationalization features depend on Mule
   done
 fi
 
+#
+# set defaults for finding WNN includes and libs
+#
+if test "${with_wnn}" = "yes" ; then
+  for arg in "-I${wnn_includes}" "-I/usr/X11R6/include"
+  do
+    if test -f `echo "${arg}/wnnerror.h" | sed 's/^\-I//'` ; then
+      C_SWITCH_SITE="${C_SWITCH_SITE} ${arg}"
+      wnn_includes=${arg}
+    fi
+  done
+  for arg in "-L${wnn_libraries}" "-I/usr/X11R6/lib"
+  do
+    if test -f `echo "${arg}/libwnn.a" | sed 's/^\-L//'` ; then
+      LD_SWITCH_SITE="${LD_SWITCH_SITE} ${arg}"
+      wnn_libraries=${arg}
+    fi
+  done
+fi
+
 # If netdb.h doesn't declare h_errno, we must declare it by hand.
 AC_COMPILE_CHECK(declaration of h_errno in netdb.h,
 	[#include <netdb.h>],
@@ -2879,15 +2913,23 @@ if test "${with_sound}" = "nas" -o \
   AC_HEADER_EGREP(AuXtErrorJump,audio/Xtutil.h, , old_nas=true)
 fi
 
+if test "${with_cde}" = "yes" ; then
+  if test -f "/usr/dt/include/Dt/Dt.h" ; then
+    C_SWITCH_X_SITE="${C_SWITCH_X_SITE} -I/usr/dt/include"
+  fi
+  if test -f "/usr/dt/lib/libDtSvc.a" ; then
+    LD_SWITCH_X_SITE="${LD_SWITCH_X_SITE} -L/usr/dt/lib"
+  fi
+fi
+
 if test "${with_tooltalk}" = "yes" ; then
-  for arg in ${DEFS} "-I/usr/include" "-I${OPENWINHOME-/usr/openwin}/include"
+  for arg in "-I/usr/include/desktop" "-I${OPENWINHOME-/usr/openwin}/include/desktop" "-I/usr/dt/include/Tt"
   do
-    if test -f `echo "${arg}/desktop/tt_c.h" | sed 's/^\-I//'` ; then
-      C_SWITCH_X_SITE="${C_SWITCH_X_SITE} ${arg}/desktop"
+    if test -f `echo "${arg}/tt_c.h" | sed 's/^\-I//'` ; then
+      C_SWITCH_X_SITE="${C_SWITCH_X_SITE} ${arg}"
     fi
   done
-
-  for arg in ${LIBS} "-L/usr/lib" "-L${OPENWINHHOME-/usr/openwin}/lib"
+  for arg in "-L/usr/lib" "-L${OPENWINHHOME-/usr/openwin}/lib" "-L/usr/dt/lib"
   do
     case "${arg}" in
 	-L*) if test -f `echo "${arg}/libtt.a" | sed 's/^\-L//'` ; then
@@ -3130,7 +3172,10 @@ elif test -n "$site_libraries"; then
 elif test -n "$site_runtime_libraries"; then
   echo "  Additional libraries:                                   ${site_runtime_libraries}"
 fi
-
+if test "$with_wnn"; then
+  echo "  Finding WNN includes with:                              ${wnn_includes}"
+  echo "  Loading WNN libs with:                                  ${wnn_libraries}"
+fi
 test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_term"  = yes && echo "  Compiling in support for TERM."
 test "$with_xauth" = yes && echo "  Compiling in support for XAUTH."
@@ -3161,7 +3206,6 @@ test "$with_database_gnudbm" = yes && echo "  Compiling in support for GNU DBM."
 
 test "$with_ncurses"  = yes && echo "  Compiling in support for ncurses."
 test "$with_socks"    = yes && echo "  Compiling in support for SOCKS."
-test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 
 test "$with_mule"     = yes && echo "  Compiling in Mule (multi-lingual) support."
 test "$with_xim"      != no && echo "  Compiling in XIM (X11R5+ I18N input method) support."
@@ -3173,6 +3217,7 @@ test "$with_wnn6"     = yes && echo "  WNN support for version 6."
 test "$with_i18n3"    = yes && echo "  Compiling in I18N support, level 3 (doesn't currently work)."
 
 test "$with_cde"      = yes && echo "  Compiling in support for CDE."
+test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
 test "$with_mocklisp" = yes && echo "  Compiling in support for Mocklisp."
 test "$with_sparcworks" = yes && echo "  Compiling in support for SparcWorks."

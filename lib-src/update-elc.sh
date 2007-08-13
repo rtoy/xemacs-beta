@@ -50,7 +50,7 @@ echo "Deleting .elc files without .el files... Done"
 
 
 # Compute patterns to ignore when searching for files
-ignore_dirs="egg its quail"	# ### Not ported yet...
+ignore_dirs="its quail"	# ### Not ported yet...
 
 # Only use Mule XEmacs to compile Mule-specific elisp dirs
 echo "Checking for Mule support..."
@@ -94,6 +94,7 @@ make_special hyperbole elc
 make_special oobr HYPB_ELC='' elc
 make_special eos -k		# not stricly necessary...
 make_special ilisp elc
+make_special auctex
 
 ignore_pattern=''
 for dir in $ignore_dirs ; do
@@ -106,7 +107,6 @@ done
 ignore_pattern="$ignore_pattern"'
 \!/,!d
 \!/edebug/edebug-test.el$!d
-\!/emulators/edt.el$!d
 \!/energize/energize-load.el$!d
 \!/energize/write-file.el$!d
 \!/paths.el$!d

@@ -3,18 +3,81 @@
 #
 # AUTHOR:       Bob Weiner
 #
-# ORIG-DATE:    15-Oct-90
-# LAST-MOD:     3-May-96 at 21:25:00 by Harri Pasanen
+# ORG:          InfoDock Associates.  We sell corporate support and development
+#               contracts for InfoDock, Emacs and XEmacs.
+#               E-mail: <info@infodock.com>  Web: http://www.infodock.com
+#               Tel: +1 408-243-3300
 #
-# Copyright (C) 1990-1995  Free Software Foundation, Inc.
+# ORIG-DATE:    15-Oct-90
+# LAST-MOD:     21-Feb-97 at 16:33:20 by Bob Weiner
+#
+# Copyright (C) 1990-1997  Free Software Foundation, Inc.
 # See the file BR-COPY for license information.
 #
 # This file is part of the OO-Browser.
 
 ---------------------------------------------------------------------------
-			       VERSION 2.9.12
+			       VERSION 2.10
 
-* Added support for Python language
+* OO-Browser Multi-language Changes
+
+  ** Added Show-Inherited-Features toggle button to the OO-Browser Options
+     menu.  This determines whether or not inherited features are shown
+     when listing class features.  (The default is `on'.)
+
+  ** Adding a single class to an Environment with the br-add-class command
+     now properly adds its features too.  Similarly, the br-delete command
+     deletes associated features.
+
+  ** X OO-Browser bug on some platforms that blackened the whole window after
+     drawing the tree may be eliminated on some platforms, but not all.
+
+  ** br-edit-feature is now more flexible, permitting separate specification of
+     class and feature name arguments.
+
+  ** Fixed br-find-file to never display a file in a browser listing window.
+
+  ** Eliminated unnecessary execution of mode-specific hooks when scanning
+     class files.  For example, invocation of syntax highlighting could
+     slow down scanning dramatically.
+
+  ** Added InfoDock Associates contact info to version/credit screen that
+     appears on startup or when using the {C-c #} command in the browser
+     to make it easy for people to get commercial support or custom
+     develpment for the OO-Browser.
+
+* C++ OO-Browser
+
+  ** Added support for multi-line virtual method declarations.
+
+* Java OO-Browser
+
+  ** Attributes are now included as features of a class (you must rebuild
+     any existing Environment to have them included).  They are prefaced
+     with "= " when shown in a browser listing buffer.
+
+  ** Array return values from methods are now handled properly by the
+     OO-Browser scanner.
+
+  ** Feature name completion now works properly, whenever the browser
+     prompts for a feature name.
+
+  ** Added support for .jav files for 3-character suffix impaired users.
+
+  ** Cleaned up a number of areas of the code that were improperly carried
+     over from the C++ OO-Browser.
+
+  ** Removed support for threadsafe keyword since it has been deleted from
+     the language specification.
+
+* Objective-C OO-Browser
+
+  ** objc-feature-matches can now take a regular expression and return
+     all matching features.
+
+* Python OO-Browser
+
+  ** Included support for the Python object-oriented scripting language.
 
 ---------------------------------------------------------------------------
 			       VERSION 2.9.11

@@ -1,3 +1,7 @@
+Wed Feb 19 17:57:27 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile (auctex): New subdirectory target.
+
 Wed Feb 12 12:30:27 1997  Yotam Medini  <yotam_medini@tmai.com>
 
 	* mule/languages.texi: Correct typo.

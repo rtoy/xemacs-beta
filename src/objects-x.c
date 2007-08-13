@@ -653,7 +653,7 @@ x_font_truename (Display *dpy, char *name, XFontStruct *font)
   if (truename)
     {
       Lisp_Object result = build_string (truename);
-      xfree (truename);
+      XFree (truename);
       return result;
     }
   else

@@ -416,20 +416,35 @@ RFC 1153.  Otherwise assume RFC 934 digests."
 			(delete-char -1))
 		      ;; put one back
 		      (insert ?\n)))
-	       ;; insert a trailing message separator
-	       ;; delete the digest separator
-	       ;; insert the leading separator
-	       (if prev-sep
-		   (progn
-		     (delete-region (match-beginning 0) (match-end 0))
-		     (insert (vm-trailing-message-separator folder-type))))
-	       (setq prev-sep (point))
-	       (insert (vm-leading-message-separator folder-type))
-	       (setq after-prev-sep (point))
-	       ;; eat trailing newlines
-	       (while (= (following-char) ?\n)
-		 (delete-char 1))
-	       (insert ident-header)
+	       ;; there should be at least one valid header at
+	       ;; the beginning of an encapsulated message.  If
+	       ;; there isn't a valid header, then assume that
+	       ;; the digest was packed improperly and that this
+	       ;; isn't a real boundary.
+	       (if (not
+		    (save-excursion
+		      (save-match-data
+			(skip-chars-forward "\n")
+			(and (vm-match-header)
+			     (or (vm-digest-get-header-contents "From")
+				 (not (re-search-forward separator-regexp
+							 nil t)))))))
+		   (setq prev-sep (point)
+			 after-prev-sep (point))
+		 ;; insert a trailing message separator
+		 ;; delete the digest separator
+		 ;; insert the leading separator
+		 (if prev-sep
+		     (progn
+		       (delete-region (match-beginning 0) (match-end 0))
+		       (insert (vm-trailing-message-separator folder-type))))
+		 (setq prev-sep (point))
+		 (insert (vm-leading-message-separator folder-type))
+		 (setq after-prev-sep (point))
+		 ;; eat trailing newlines
+		 (while (= (following-char) ?\n)
+		   (delete-char 1))
+		 (insert ident-header))
 	       ;; try to match message separator and repeat.
 	       (setq match (re-search-forward separator-regexp nil t)))
 	     ;; from the last separator to eof is the digest epilogue.
@@ -595,3 +610,16 @@ Returns either \"rfc934\", \"rfc1153\" or \"mime\"."
 	(cond ((search-forward "\n----------------------------------------------------------------------\n" (vm-text-end-of m) t)
 	       "rfc1153")
 	      (t "rfc934"))))))
+
+(defun vm-digest-get-header-contents (header-name-regexp)
+  (let ((contents nil)
+	regexp)
+    (setq regexp (concat "^\\(" header-name-regexp "\\)\\|\\(^$\\)"))
+    (save-excursion
+      (let ((case-fold-search t))
+	(if (and (re-search-forward regexp nil t)
+		 (match-beginning 1)
+		 (progn (goto-char (match-beginning 0))
+			(vm-match-header)))
+	    (vm-matched-header-contents)
+	  nil )))))

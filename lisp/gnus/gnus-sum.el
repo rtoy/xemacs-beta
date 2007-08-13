@@ -159,7 +159,7 @@ If nil, only the marking commands will go to the next (un)read article."
 (defcustom gnus-summary-default-score 0
   "*Default article score level.
 If this variable is nil, scoring will be disabled."
-  :group 'gnus-score
+  :group 'gnus-score-default
   :type '(choice (const :tag "disable")
 		 integer))
 
@@ -489,7 +489,7 @@ with some simple extensions:
   "*Mark all articles with a score below this variable as read.
 This variable is local to each summary buffer and usually set by the
 score file."
-  :group 'gnus-score
+  :group 'gnus-score-default
   :type 'integer)
 
 (defcustom gnus-article-sort-functions '(gnus-article-sort-by-number)
@@ -538,7 +538,7 @@ Some functions you can use are `+', `max', or `min'."
 
 (defcustom gnus-summary-expunge-below nil
   "All articles that have a score less than this variable will be expunged."
-  :group 'gnus-score
+  :group 'gnus-score-default
   :type '(choice (const :tag "off" nil)
 		 integer))
 
@@ -547,7 +547,7 @@ Some functions you can use are `+', `max', or `min'."
 See `gnus-thread-score-function' for en explanation of what a
 \"thread score\" is."
   :group 'gnus-treading
-  :group 'gnus-score
+  :group 'gnus-score-default
   :type '(choice (const :tag "off" nil)
 		 integer))
 
@@ -1036,30 +1036,6 @@ simple-first is t, first argument is already simplified."
    (t
     (equal s1
 	   (gnus-simplify-subject-fully s2)))))
-
-(defun gnus-offer-save-summaries ()
-  "Offer to save all active summary buffers."
-  (save-excursion
-    (let ((buflist (buffer-list))
-	  buffers bufname)
-      ;; Go through all buffers and find all summaries.
-      (while buflist
-	(and (setq bufname (buffer-name (car buflist)))
-	     (string-match "Summary" bufname)
-	     (save-excursion
-	       (set-buffer bufname)
-	       ;; We check that this is, indeed, a summary buffer.
-	       (and (eq major-mode 'gnus-summary-mode)
-		    ;; Also make sure this isn't bogus.
-		    gnus-newsgroup-prepared))
-	     (push bufname buffers))
-	(setq buflist (cdr buflist)))
-      ;; Go through all these summary buffers and offer to save them.
-      (when buffers
-	(map-y-or-n-p
-	 "Update summary buffer %s? "
-	 (lambda (buf) (set-buffer buf) (gnus-summary-exit))
-	 buffers)))))
 
 (defun gnus-summary-bubble-group ()
   "Increase the score of the current group.
@@ -3908,8 +3884,7 @@ If WHERE is `summary', the summary mode line format will be used."
 	  (setq mode-string (format (format "%%-%ds" max-len) mode-string))))
       ;; Update the mode line.
       (setq mode-line-buffer-identification 
-	    (gnus-mode-line-buffer-identification
-	     (list mode-string)))
+	    (gnus-mode-line-buffer-identification (list mode-string)))
       (set-buffer-modified-p t))))
 
 (defun gnus-create-xref-hashtb (from-newsgroup headers unreads)
@@ -5395,7 +5370,7 @@ article."
   (setq gnus-summary-buffer (current-buffer))
   (gnus-set-global-variables)
   (let ((article (gnus-summary-article-number))
-	(article-window (get-buffer-window gnus-article-buffer))
+	(article-window (get-buffer-window gnus-article-buffer t))
 	(endp nil))
     (gnus-configure-windows 'article)
     (if (eq (cdr (assq article gnus-newsgroup-reads)) gnus-canceled-mark)
@@ -5431,7 +5406,7 @@ Argument LINES specifies lines to be scrolled down."
   (interactive "P")
   (gnus-set-global-variables)
   (let ((article (gnus-summary-article-number))
-	(article-window (get-buffer-window gnus-article-buffer)))
+	(article-window (get-buffer-window gnus-article-buffer t)))
     (gnus-configure-windows 'article)
     (if (or (null gnus-current-article)
 	    (null gnus-article-current)
@@ -6688,7 +6663,7 @@ If TO-NEWSGROUP is string, do not prompt for a newsgroup to move to.
 If SELECT-METHOD is non-nil, do not move to a specific newsgroup, but
 re-spool using this method."
   (interactive "P")
-  (gnus-summary-move-article n nil select-method 'copy))
+  (gnus-summary-move-article n to-newsgroup select-method 'copy))
 
 (defun gnus-summary-crosspost-article (&optional n)
   "Crosspost the current article to some other group."
@@ -8276,7 +8251,12 @@ save those articles instead."
 		      (funcall (if (string-match "%s" action)
 				   'format 'concat)
 			       action
-			       (mapconcat (lambda (f) f) files " ")))))
+			       (mapconcat
+				(lambda (f)
+				  (if (equal f " ")
+				      f
+				    (gnus-quote-arg-for-sh-or-csh f)))
+				files " ")))))
 	  (setq ps (cdr ps)))))
     (if (and gnus-view-pseudos (not not-view))
 	(while pslist
@@ -8532,6 +8512,32 @@ save those articles instead."
       ;; Set the number of unread articles in gnus-newsrc-hashtb.
       (gnus-get-unread-articles-in-group info (gnus-active group))
       t)))
+
+(defun gnus-offer-save-summaries ()
+  "Offer to save all active summary buffers."
+  (save-excursion
+    (let ((buflist (buffer-list))
+	  buffers bufname)
+      ;; Go through all buffers and find all summaries.
+      (while buflist
+	(and (setq bufname (buffer-name (car buflist)))
+	     (string-match "Summary" bufname)
+	     (save-excursion
+	       (set-buffer bufname)
+	       ;; We check that this is, indeed, a summary buffer.
+	       (and (eq major-mode 'gnus-summary-mode)
+		    ;; Also make sure this isn't bogus.
+		    gnus-newsgroup-prepared
+		    ;; Also make sure that this isn't a dead summary buffer.
+		    (not gnus-dead-summary-mode)))
+	     (push bufname buffers))
+	(setq buflist (cdr buflist)))
+      ;; Go through all these summary buffers and offer to save them.
+      (when buffers
+	(map-y-or-n-p
+	 "Update summary buffer %s? "
+	 (lambda (buf) (switch-to-buffer buf) (gnus-summary-exit))
+	 buffers)))))
 
 (provide 'gnus-sum)
 

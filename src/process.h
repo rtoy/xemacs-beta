@@ -120,7 +120,12 @@ void create_process (Lisp_Object process, char **new_argv,
 		     CONST char *current_dir);
 #endif
 
-void child_setup (int in, int out, int err, 
+#ifdef WINDOWSNT
+int
+#else
+void
+#endif
+child_setup (int in, int out, int err, 
 		  char **new_argv, CONST char *current_dir);
 
 Charcount read_process_output (Lisp_Object proc);

@@ -34,6 +34,12 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif
 
+#if defined(WINDOWSNT) && defined(HAVE_X_WINDOWS)
+/* Provides gettimeofday etc */
+#include <X11/Xw32defs.h>
+#include <X11/Xos.h>
+#endif
+
 #ifdef HAVE_UTIME_H
 # include <utime.h>
 #endif

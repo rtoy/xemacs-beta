@@ -599,7 +599,10 @@ main_1 (int argc, char **argv, char **envp)
 	if (! isatty (0))
 	  fatal ("%s: not a tty", term);
  
+#if 0
 	stderr_out ("Using %s", ttyname (0));
+#endif
+	stderr_out ("Using %s", term);
 	inhibit_window_system = 1;	/* -t => -nw */
       }
   }
@@ -823,7 +826,9 @@ main_1 (int argc, char **argv, char **envp)
 #if !defined (NO_SUBPROCESSES)
       syms_of_process ();
 #endif
+#ifndef WINDOWSNT
       syms_of_profile ();
+#endif
 #if defined (HAVE_MMAP) && defined (REL_ALLOC)
       syms_of_ralloc ();
 #endif /* HAVE_MMAP && REL_ALLOC */
@@ -1146,7 +1151,9 @@ main_1 (int argc, char **argv, char **envp)
 #ifndef NO_SUBPROCESSES
       vars_of_process ();
 #endif
+#ifndef WINDOWSNT
       vars_of_profile ();
+#endif
 #if defined (HAVE_MMAP) && defined (REL_ALLOC)
       vars_of_ralloc ();
 #endif /* HAVE_MMAP && REL_ALLOC */

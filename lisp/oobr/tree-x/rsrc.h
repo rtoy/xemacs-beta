@@ -16,10 +16,10 @@
 
 #define TrDefaultBackgroundColor "white"
 #define TrDefaultTreeColor       "black"
-#define TrDefaultContourColor    "MediumSlateBlue"
-#define TrDefaultSplitColor      "goldenrod"
-#define TrDefaultHighlightColor  "OrangeRed"
-#define TrDefaultActionColor     "OrangeRed"
+#define TrDefaultContourColor    "Blue"
+#define TrDefaultSplitColor      "brown"
+#define TrDefaultHighlightColor  "red"
+#define TrDefaultActionColor     "red"
 #define TrDefaultContourWidth    2
 
 typedef struct {

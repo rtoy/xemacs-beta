@@ -4,7 +4,7 @@
 # AUTHOR:       Bob Weiner
 #
 # ORIG-DATE:     6-Oct-94 at 03:42:38
-# LAST-MOD:      1-Nov-95 at 22:22:45 by Bob Weiner
+# LAST-MOD:     21-Feb-97 at 18:37:04 by Bob Weiner
 #
 # Copyright (C) 1994-1995  Free Software Foundation, Inc.
 # See the file BR-COPY for license information.
@@ -65,11 +65,17 @@ XEMACS = xemacs
 # Emacs version used to byte-compile .el files into .elc's.
 EMACS = $(XEMACS)
 
+# Where to install IDA logo image.
+datadir = ../../etc
 # Where to install the Info version of the OO-Browser manual.
-infodir = ../info
+infodir = ../../info
+# Where to find the doc for the OO-Browser manual before installation.
+tar_mandir = man
+# Where to find the .texi source for the OO-Browser manual after installation.
+mandir = ../../man
 # Where to install the Texinfo version of the OO-Browser manual
 # along with its im/ directory of images.
-texidir = ../man
+texidir = ../../man
 
 # Site-specific Emacs Lisp libraries to load before byte-compiling any files
 # from this package.  Typically the only reason to set this is to get Emacs
@@ -118,9 +124,7 @@ DIST_DIR = /tmp
 #                     NO CHANGES REQUIRED BELOW HERE                     #
 ##########################################################################
 
-OOBR_VERSION = 2.9.11
-
-MAN_DIR = man
+OOBR_VERSION = 2.10
 
 # Libraries that must be pre-loaded before trying to byte-compile anything.
 PRELOADS = $(SITE_PRELOADS) -l ./br-start.el
@@ -158,8 +162,7 @@ EL_COMPILE  = br-c-ft.el br-c++-ft.el br-c++.el br-clos-ft.el \
               br-eif-ft.el br-eif.el br-env.el br-ftr.el br-info.el \
               br-init.el br-java.el br-java-ft.el \
 	      br-lib.el br-menu.el br-objc-ft.el \
-              br-objc.el br-python.elc br-python-ft.elc \
-	      br-site.el br-vers.el \
+              br-objc.el br-python.el br-python-ft.el br-site.el br-vers.el \
 	      br-smt.el br-start.el br-tree.el br.el c++-browse.el \
 	      clos-brows.el eif-browse.el eif-calls.el eif-ise-er.el \
 	      hasht.el hmouse-br.el info-brows.el java-brows.el \
@@ -171,7 +174,7 @@ ELC_COMPILE = br-c-ft.elc br-c++-ft.elc br-c++.elc br-clos-ft.elc \
               br-init.elc br-java.elc br-java-ft.elc \
 	      br-lib.elc br-menu.elc br-objc-ft.elc \
               br-objc.elc br-python.elc br-python-ft.elc \
-	      br-site.elc br-vers.elc \
+              br-site.elc br-vers.elc \
 	      br-smt.elc br-start.elc br-tree.elc br.elc c++-browse.elc \
 	      clos-brows.elc eif-browse.elc eif-calls.elc eif-ise-er.elc \
 	      hasht.elc hmouse-br.elc info-brows.elc java-brows.elc \
@@ -192,9 +195,10 @@ xoobr:
 
 
 install: xoobr
+	$(MV) ida-logo.xpm $(datadir)
 	# Install the X OO-Browser in its executable directory.
 	cd tree-x; make install
-	cd $(MAN_DIR); $(INSTALL) oo-browser.info* $(infodir); \
+	cd $(tar_mandir); $(INSTALL) oo-browser.info* $(infodir); \
 	  $(INSTALL) oo-browser.texi $(texidir); \
 	  $(INSTALL) im $(texidir)
 
@@ -229,22 +233,22 @@ all-elc:
 oobr-env:
 	cd $(OOBR_DIR); $(EMACS) $(BATCHFLAGS) $(PRELOADS) ${OOBR_ENV} -f br-env-batch-build
 
-dvi: $(MAN_DIR)/oo-browser.dvi
+dvi: $(mandir)/oo-browser.dvi
 
-info: $(MAN_DIR)/oo-browser.info
+info: $(infodir)/oo-browser.info
 
-ps: $(MAN_DIR)/oo-browser.ps
+ps: $(mandir)/oo-browser.ps
 
-$(MAN_DIR)/oo-browser.dvi: $(MAN_DIR)/oo-browser.info
-	cd $(MAN_DIR); tex oo-browser.texi; texindex oo-browser.??; tex oo-browser.texi
+$(mandir)/oo-browser.dvi: $(mandir)/oo-browser.info
+	cd $(mandir); tex oo-browser.texi; texindex oo-browser.??; tex oo-browser.texi
 
-$(MAN_DIR)/oo-browser.info: $(MAN_DIR)/oo-browser.texi
-	cd $(MAN_DIR); $(MAKEINFO) oo-browser.texi
+$(infodir)/oo-browser.info: $(mandir)/oo-browser.texi
+	cd $(mandir); $(MAKEINFO) oo-browser.texi
 
-$(MAN_DIR)/oo-browser.ps: $(MAN_DIR)/oo-browser.texi
-	make $(MAN_DIR)/oo-browser.dvi
-	-$(RM) $(MAN_DIR)/oo-browser.ps
-	cd $(MAN_DIR); $(DVIPS) -o oo-browser.ps oo-browser.dvi
+$(mandir)/oo-browser.ps: $(mandir)/oo-browser.texi
+	make $(mandir)/oo-browser.dvi
+	-$(RM) $(mandir)/oo-browser.ps
+	cd $(mandir); $(DVIPS) -o oo-browser.ps oo-browser.dvi
 
 tags: $(EL_TAGS)
 	$(ETAGS) $(EL_TAGS) tree-x/*.[ch] tree-nx/*.[mh]
@@ -256,32 +260,35 @@ clean:  distclean
 	$(RM) *.elc
 
 version:
-	fgrep $(OOBR_VERSION) BR-RELEASE br-vers.el man/oo-browser.texi
+	fgrep $(OOBR_VERSION) BR-RELEASE br-vers.el $(mandir)/oo-browser.texi
 	echo ""
 
 # Don't use this target.
 bw-install:
-	cd /usr/local/infodock/lisp/; \
+	cd /home/infodock/lisp/; \
 	tar zxvf /tmp/oo-browser-$(OOBR_VERSION).tar.gz; \
 	cd oobr/; mv man/*.info* ../../info/; mv man/*.texi ../../man/; \
-	rm -rf man
+	mv ida-logo.xpm $(datadir); rm -rf hypb man
 
 dist: version elc info
-	echo "Ensure version # in br-vers.el and man/oo-browser.texi is up to date."
+	echo "Ensure version # in br-vers.el and oo-browser.texi is up to date."
 	$(RM) -r $(DIST_DIR)/oobr
 	cd ..; $(TAR) clf $(DIST_DIR)/br.tar oobr
 	cd $(DIST_DIR); $(TAR) xf br.tar
 	cd $(DIST_DIR)/oobr; $(RM) -r hypb man/im; make distclean; \
-	  mkdir hypb man/im; chmod 755 hypb man/im; \
-	  $(CP) /usr/local/infodock/info-local/im/oobr-* man/im
-	$(CP) $(HYPERBOLE) $(DIST_DIR)/oobr/hypb
+	  mkdir hypb man man/im; chmod 755 hypb man man/im; \
+	  $(CP) /home/infodock/man/im/oobr-* man/im/; \
+	  $(CP) /home/infodock/man/oo-browser.texi man/; \
+	  $(CP) /home/infodock/info/oo-browser.info* man/
+	$(CP) $(HYPERBOLE) $(DIST_DIR)/oobr/hypb/
+	$(CP) $(datadir)/ida-logo.xpm $(DIST_DIR)/oobr/
 # This ver setup won't work under SunOS for some reason.
 #	  ver="`head -3 oobr/br-vers.el | tail -1 | sed -e 's/.*|//'`"
 	cd $(DIST_DIR); $(RM) br.tar; \
-	  $(TAR) --gzip -clf oo-browser-$(OOBR_VERSION).tar.gz oobr
+	  $(TAR) -czlf oo-browser-$(OOBR_VERSION).tar.gz oobr
 
 distclean:
 	-$(RM) TAGS core .place* .*~ *~ *\# *.orig *.rej .nfs*
 	-cd tree-x; $(RM) .*~ *~ *\# *.orig *.rej *.o xoobr .nfs*
 	-cd tree-nx; $(RM) -r .*~ *~ *\# *.orig *.rej obj* TreeView.app .nfs*
-	-cd $(MAN_DIR); $(RM) oo-browser.?? oo-browser.dvi .*~ *~ *\# *.orig *.rej .nfs*
+	-cd $(tar_mandir); $(RM) oo-browser.?? oo-browser.dvi .*~ *~ *\# *.orig *.rej .nfs*

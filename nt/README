@@ -1,0 +1,33 @@
+		      Building and Installing Xemacs
+ 			      on Windows NT
+
+You need a compiler package to build and install Emacs on NT or Win95.
+
+This is an extremely early release. Any help I can provide I will do so.
+
+1. You need to extract the nt subdirectory from the nt.tar file.
+2. You need to compile the lcc c preprocessor in the nt/cpp directory.
+3. Get and compile MIT X11R6.1. Well I use 6.1, later versions will probably
+   work as well.
+4. Edit the xemacs.mak Makefile and ensure variables point to the correct place.
+5. Create the obj subdirectory.
+6. copy the files from nt/src into src/.
+7. patch the original source files with the src.diffs file.
+8. Run nmake using xemacs.mak
+9. Manually run the resulting temacs executable to create xemacs.
+
+
+Problems:
+- Haven't got rid of some symbol problems which may be causing problems.
+- Still seems to use fork, which fails without /force option on link. I am
+  trying to work out where it should be removed.
+- Executable crashes when running it.
+
+Any problems/questions, mail me:
+
+David Hobley
+david_hobley@optusvision.com.au -- work email.
+
+I am in the process of changing ISP's at the moment for my home account,
+so your best bet for a fastish response is my work account.
+

@@ -1,3 +1,59 @@
+Sun Feb 23 16:56:17 1997  David Hobley  <david@spook-le0.cia.com.au>
+	Initial MS Windows NT support.
+	* unexnt.c: New file.
+
+	* ntproc.c: New file.
+
+	* ntheap.h: New file.
+
+	* ntheap.c: New file.
+
+	* nt.h: New file.
+
+	* nt.c: New file.
+
+Sun Feb 23 15:56:58 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* floatfns.c (_GNU_SOURCE): Define if compiling with glibc 2.
+
+	* gmalloc.c: Guard __getpagesize definition against glibc 2.
+
+Sat Feb 22 17:12:47 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (lisp): Snarf docstrings from new file
+	itimer-autosave.elc.
+
+Fri Feb 21 18:21:32 1997  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* event-Xt.c (emacs_Xt_handle_magic_event): Correction for frame
+	freezing bug.
+
+Wed Feb 19 12:54:32 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* buffer.c (Fbuffer_disable_undo): Default to current buffer.
+
+Tue Feb 18 12:37:28 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (lisp): Dump new file custom-xmas.elc.
+
+Mon Feb 17 11:29:07 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* print.c (Ferror_message_string): New function, ported from Emacs
+	19.34.
+	(print_error_message): Ditto.
+
+	* extents.c (verify_extent_mapper): Experimental deletion of code
+	to allow deletion of read-only extents.
+
+	* symbols.c (hash_string): Replace algorithm with one given in
+	Aho, Sethi & Ullman.
+
+Sun Feb 16 14:53:58 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* keymap.c (lookup_keys): Wrong sense in test.
+
+	* Makefile.in.in: Dont dump font.elc.
+
 Sat Feb 15 02:30:51 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* cmds.c: Define new symbol signal-error-on-buffer-boundary.

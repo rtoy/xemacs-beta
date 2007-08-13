@@ -72,7 +72,7 @@ SOURCES = \
 
 vm:	vm.elc
 
-vm.elc:	autoload
+vm.elc:	noautoload
 
 noautoload:	$(OBJECTS) tapestry.elc
 	@echo "building vm.elc (with all modules included)..."
@@ -101,7 +101,7 @@ clean:
 
 vm.info:	vm.texinfo
 	@echo "making vm.info..."
-	@$(EMACS) $(BATCHFLAGS) vm.texinfo -l texinfmt -f texinfo-format-buffer -f save-buffer
+	@$(EMACS) $(BATCHFLAGS) -insert vm.texinfo -l texinfmt -f texinfo-format-buffer -f save-buffer
 
 vm-autoload.elc:	$(SOURCES)
 	@echo scanning sources to build autoload definitions...

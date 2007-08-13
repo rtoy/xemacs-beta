@@ -56,6 +56,8 @@ Boston, MA 02111-1307, USA.  */
 #include "syssignal.h"		/* SIGCHLD, etc. */
 #include "systime.h"		/* to set Vlast_input_time */
 
+#include "events-mod.h"
+
 #ifdef MULE
 #include "mule-coding.h"
 #endif

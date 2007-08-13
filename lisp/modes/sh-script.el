@@ -92,6 +92,12 @@ The car of each element is compared with
 the name of the interpreter specified in the first line.
 If it matches, mode MODE is selected.")
 
+(defvar sh-mode-hook nil
+  "*Hook run by `sh-mode'.")
+
+(defvar sh-set-shell-hook nil
+  "*Hook run by `sh-set-shell'.")
+
 (defvar sh-ancestor-alist
   '((ash . sh)
     (bash . jsh)

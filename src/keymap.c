@@ -39,6 +39,18 @@ Boston, MA 02111-1307, USA.  */
 #include "keymap.h"
 #include "window.h"
 
+#ifdef WINDOWSNT
+/* Hmm, under unix we want X modifiers, under NT we want X modifiers if
+   we are running X and Windows modifiers otherwise.
+   gak. This is a kludge until we support multiple native GUIs!
+*/
+#undef MOD_ALT
+#undef MOD_CONTROL
+#undef MOD_SHIFT
+#endif
+
+#include <events-mod.h>
+
 
 /* A keymap contains four slots:
 
@@ -2095,7 +2107,7 @@ lookup_keys (Lisp_Object keymap, int nkeys, Lisp_Object *keys,
   if (nkeys == 0)
     return Qnil;
 
-  if (nkeys > (countof (kkk)))
+  if (nkeys < (countof (kkk)))
     raw_keys = kkk;
   else
     raw_keys = (struct key_data *) alloca (sizeof (struct key_data) * nkeys);

@@ -144,8 +144,9 @@ t means make numeric backup versions unconditionally.
 nil means make them for files that have some already.
 `never' means do not make them.")
 
-(defvar dired-kept-versions 2
-  "*When cleaning directory, number of versions to keep.")
+;; This is now defined in efs.
+;(defvar dired-kept-versions 2
+;  "*When cleaning directory, number of versions to keep.")
 
 (defvar delete-old-versions nil
   "*If t, delete excess backup versions silently.
@@ -1409,7 +1410,7 @@ for current buffer."
 		;; Set the variable.  "Variables" mode and eval are funny.
                 (hack-one-local-variable var val))))))))
 
-
+;; jwz - New Version 20.1/19.15
 (defun hack-local-variables-prop-line (&optional force)
   ;; Set local variables specified in the -*- line.
   ;; Returns t if mode was set.
@@ -1430,7 +1431,7 @@ for current buffer."
 	;; Parse the -*- line into the `result' alist.
 	(cond ((not (search-forward "-*-" end t))
 	       ;; doesn't have one.
-	       (setq force t))
+	       nil)
 	      ((looking-at "[ \t]*\\([^ \t\n\r:;]+\\)\\([ \t]*-\\*-\\)")
 	       ;; Antiquated form: "-*- ModeName -*-".
 	       (setq result
@@ -1465,23 +1466,22 @@ for current buffer."
 		   (setq result (cons (cons key val) result))
 		   (skip-chars-forward " \t;")))
 	       (setq result (nreverse result))))))
-
-    (if result
-	(let ((set-any-p (or force (hack-local-variables-p t)))
-	      (mode-p nil))
-	  (while result
-	    (let ((key (car (car result)))
-		  (val (cdr (car result))))
-	      (cond ((eq key 'mode)
-		     (setq mode-p t)
-		     (funcall (intern (concat (downcase (symbol-name val))
-					      "-mode"))))
-		    (set-any-p
-		     (hack-one-local-variable key val))
-		    (t
-		     nil)))
-	    (setq result (cdr result)))
-	  mode-p))))
+	
+    (let ((set-any-p (or force (hack-local-variables-p t)))
+	  (mode-p nil))
+      (while result
+	(let ((key (car (car result)))
+	      (val (cdr (car result))))
+	  (cond ((eq key 'mode)
+		 (setq mode-p t)
+		 (funcall (intern (concat (downcase (symbol-name val))
+					  "-mode"))))
+		(set-any-p
+		 (hack-one-local-variable key val))
+		(t
+		 nil)))
+	(setq result (cdr result)))
+      mode-p)))
 
 (defconst ignored-local-variables
   (list 'enable-local-eval)
@@ -2944,8 +2944,8 @@ absolute one."
   "Test whether file resides on the local system.
 The special value 'unknown is returned if no remote file access package
 has been loaded."
-  (cond ((fboundp 'efs-ftp-path) (efs-ftp-path name))
-	((fboundp 'ange-ftp-ftp-name) (ange-ftp-ftp-name name))
-	(t 'unknown)))
+  (cond ((featurep 'ange-ftp) (ange-ftp-ftp-path file-name))
+        (t (require 'efs)
+	   (efs-ftp-path file-name))))
 
 ;;; files.el ends here

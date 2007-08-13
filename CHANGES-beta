@@ -1,4 +1,37 @@
 							-*- indented-text -*-
+to 20.1 beta2
+-- First cut at MS Windows NT support Courtesy of David Hobley
+-- itimer.el-1.01 Courtesy of Kyle Jones
+-- hm--html-menus-5.2
+-- redo.el-1.01
+-- VM-6.15
+-- miscellaneous efs/dired fixes
+-- OO-Browser-2.10 Courtesy of Bob Weiner
+-- Yet another man.el Courtesy of jwz
+-- Addition to sample.emacs Courtesy of jwz
+-- additions/corrections to about.el
+-- hyperbole-4.021 Courtesy of Bob Weiner
+-- Restoration of reportmail.el Courtesy of jwz
+-- Restoration of passwd.el Courtesy of jwz
+-- AUC TeX-9.7i Courtesy of Per Abrahamsen
+-- viper-2.93 Courtesy of Michael Kifer
+-- ediff-2.64 Courtesy of Michael Kifer
+-- edmacro.el-3.05
+-- detached-minibuf.el Courtesy of Alvin Shelton
+-- whitespace-mode.el Courtesy of Heiko Muenkel
+-- winmgr-mode.el Courtesy of David Konerding, Stefan Strobel & Barry Warsaw
+-- Gnus-5.4.15
+-- custom-1.44
+-- error-message-string ported from Emacs 19.34.
+-- fast-lock.el-3.11.01 Courtesy of Simon Marshall
+-- lazy-lock.el-1.16 Courtesy of Simon Marshall
+-- speedbar.el Courtesy of Eric Ludlam and Jens Lautenbacher
+-- W3-3.0.60
+-- Miscellaneous bug fixes
+-- igrep.el-2.56 Courtesy of Kevin Rodgers
+-- frame-icon.el Courtesy of Michael Lamoureux and Bob Weiner
+-- xrdb-mode.el-1.17 Courtesy of Barry Warsaw
+
 to 20.1 beta1
 -- New symbol `signal-error-on-buffer-boundary'.  Set to nil to avoid
     lossage of zmacs region when moving against buffer boundaries.
@@ -29,6 +62,6 @@ to 20.1 beta1
 -- floating-toolbar.el courtesy of Kyle Jones [New]
 -- Initial Wnn/egg support and bug fixes courtesy of Jareth Hein [New]
 -- Gnus-5.4.12 Courtesy of Lars Magne Ingebrigtsen [Upgrade]
--- custom-1.39 Courtesy of Per Abrahamsen [New]
+-- custom-1.40 Courtesy of Per Abrahamsen [New]
 -- W3-3.0.59 Courtesy of William Perry
 -- VM-6.13 Courtesy of Kyle Jones [Upgrade]

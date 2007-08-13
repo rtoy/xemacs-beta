@@ -26,7 +26,7 @@ SHELL = /bin/sh
 .SUFFIXES: .info .texi .dvi
 
 # Subdirectories to make recursively.
-SUBDIR = xemacs lispref new-users-guide internals tm
+SUBDIR = xemacs lispref new-users-guide internals tm auctex
 
 ../info/%.info : %.texi
 	makeinfo -o $@ $<
@@ -53,6 +53,8 @@ new-users-guide: FORCE
 internals: FORCE
 	cd $@ && $(MAKE) $(MFLAGS)
 tm: FORCE
+	cd $@ && $(MAKE) $(MFLAGS)
+auctex: FORCE
 	cd $@ && $(MAKE) $(MFLAGS)
 FORCE :
 

@@ -263,6 +263,7 @@ and the following faces:
 		(and (/= (char-syntax (char-after beg)) ?\\)
 		     (/= (char-syntax (char-after beg)) ?\$)
 		     ;; XEmacs change
+		     (matching-paren (char-after beg))
 		     (/= (char-after (1- end))
 			 (matching-paren (char-after beg)))))
 	  (if (eq paren-mode 'sexp)

@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-dired.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.2 $
+;; Version:      $Revision: 1.3 $
 ;; RCS:          
 ;; Description:  Extends much of Dired to work under efs.
 ;; Authors:      Sebastian Kremer <sk@thp.uni-koeln.de>, 
@@ -25,7 +25,7 @@
 (defconst efs-dired-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.2 $" 11 -2)))
+	  (substring "$Revision: 1.3 $" 11 -2)))
 
 ;;;; ----------------------------------------------------------------
 ;;;; User Configuration Variables

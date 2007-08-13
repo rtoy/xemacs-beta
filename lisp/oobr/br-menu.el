@@ -6,12 +6,12 @@
 ;; KEYWORDS:     mouse, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    27-Oct-93 at 21:13:36
-;; LAST-MOD:     22-Oct-95 at 00:41:44 by Bob Weiner
+;; LAST-MOD:     21-Feb-97 at 16:58:26 by Bob Weiner
 ;;
-;; Copyright (C) 1994, 1995  Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1997  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -36,18 +36,21 @@
      "----"
      ["Compose-Mail-to-List"
       (progn (br-quit)
-	     (mail nil "oo-browser@hub.ucsb.edu"
+	     (mail nil "oo-browser@infodock.com"
 		   "Replace this line with a descriptive sentence.")
 	     (goto-char (point-min))
 	     (search-forward "Subject: " nil t)) t]
      ["Mail-List-Request"
       (progn (br-quit)
-	     (mail nil "oo-browser-request@hub.ucsb.edu")
-	     (insert "Use a subject line like one of the following:\n"
-		     "  Subject: Subscribe <joe@any.com> (Joe Williams).\n"
-		     "  Subject: Unsubscribe <joe@any.com>.\n")
-	     (goto-char (point-min))
-	     (search-forward "Subject: " nil t)) t]
+	     (mail nil "oo-browser-request@infodock.com")
+	     (insert "The subject line of this message will not be used.\n"
+		     "Remove everything in the body of this message except one\n"
+		     "or more lines of the following form:\n\n" 
+		     "  subscribe oo-browser [<your-email-address>]\n"
+		     "    or\n"
+		     "  unsubscribe oo-browser [<your-email-address>]\n\n"
+		     "For example: subscribe oo-browser joe@nowhere.gov\n"))
+      t]
      "----"
      ["Reinitialize"        br-refresh                     t]
      ["Exit-Temporarily"    (id-tool-quit '(br-quit))    t]
@@ -127,8 +130,12 @@
     ("Options"
      ["Keep-Viewed-Classes" br-toggle-keep-viewed
       :style toggle :selected br-keep-viewed-classes]
-     ["Graphical-Show-Features" br-tree-features-toggle
+     ["Graphical-Add-Features" br-tree-features-toggle
       :style toggle :selected br-show-features]
+     ["Show-Inherited-Features"
+      (setq br-inherited-features-flag
+	    (not br-inherited-features-flag))
+      :style toggle :selected br-inherited-features-flag]
      )
     ("View-Window"
      ["Full-Frame"          br-view-full-frame             t]
@@ -149,18 +156,21 @@
     "----"
     ["Compose-Mail-to-List"
      (progn (br-quit)
-	    (mail nil "oo-browser@hub.ucsb.edu"
+	    (mail nil "oo-browser@infodock.com"
 		  "Replace this line with a descriptive sentence.")
 	    (goto-char (point-min))
 	    (search-forward "Subject: " nil t)) t]
     ["Mail-List-Request"
      (progn (br-quit)
-	    (mail nil "oo-browser-request@hub.ucsb.edu")
-	    (insert "Use a subject line like one of the following:\n"
-		    "  Subject: Subscribe <joe@any.com> (Joe Williams).\n"
-		    "  Subject: Unsubscribe <joe@any.com>.\n")
-	    (goto-char (point-min))
-	    (search-forward "Subject: " nil t)) t]
+	    (mail nil "oo-browser-request@infodock.com")
+	    (insert "The subject line of this message will not be used.\n"
+		    "Remove everything in the body of this message except one\n"
+		    "or more lines of the following form:\n\n" 
+		    "  subscribe oo-browser [<your-email-address>]\n"
+		    "    or\n"
+		    "  unsubscribe oo-browser [<your-email-address>]\n\n"
+		    "For example: subscribe oo-browser joe@nowhere.gov\n"))
+     t]
      "----"
     ("Class"
      ["Edit-Current"        br-edit-entry                  t]
@@ -234,8 +244,12 @@
     ("Options"
      ["Keep-Viewed-Classes" br-toggle-keep-viewed
       :style toggle :selected br-keep-viewed-classes]
-     ["Graphical-Show-Features" br-tree-features-toggle
+     ["Graphical-Add-Features" br-tree-features-toggle
       :style toggle :selected br-show-features]
+     ["Show-Inherited-Features"
+      (setq br-inherited-features-flag
+	    (not br-inherited-features-flag))
+      :style toggle :selected br-inherited-features-flag]
      )
     ("View-Window"
      ["Full-Frame"          br-view-full-frame             t]

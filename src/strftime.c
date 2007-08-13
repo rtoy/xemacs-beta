@@ -94,9 +94,13 @@
 time_t mktime ();
 #endif
 
+#if defined(WINDOWSNT)
+#include <time.h>
+#else
 #if defined(HAVE_TZNAME)
 extern char *tzname[2];
 #endif
+#endif /* WINDOWSNT */
 
 #ifdef emacs
 #define strftime emacs_strftime

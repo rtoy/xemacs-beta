@@ -4413,6 +4413,7 @@ verify_extent_mapper (EXTENT extent, void *arg)
   if (CONSP (closure->iro) && !NILP (Fmemq (prop, closure->iro)))
     return 0;
 
+#if 0 /* Nobody seems to care for this any more -sb */
   /* Allow deletion if the extent is completely contained in
      the region being deleted.
      This is important for supporting tokens which are internally
@@ -4424,6 +4425,7 @@ verify_extent_mapper (EXTENT extent, void *arg)
       extent_start (extent) >= closure->start &&
       extent_end (extent) <= closure->end)
     return 0;
+#endif
 
   while (1)
     Fsignal (Qbuffer_read_only, (list1 (closure->object)));

@@ -9,7 +9,7 @@
 ;; ORG:          Brown U.
 ;;
 ;; ORIG-DATE:    10-Oct-91 at 01:51:12
-;; LAST-MOD:     23-Jun-95 at 14:55:05 by Bob Weiner
+;; LAST-MOD:     31-Oct-96 at 22:36:19 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -22,7 +22,7 @@
 ;;   Automatically configured for use in "hyperbole.el".
 ;;   If hsite loading fails prior to initializing Hyperbole Vm support,
 ;;
-;;       {M-x Vm-init RTN}
+;;       {M-x Vm-init RET}
 ;;
 ;;   will do it.
 ;;

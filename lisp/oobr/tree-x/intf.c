@@ -10,27 +10,47 @@
 #include <string.h>
 #include <fcntl.h>
 
-#include "X11/IntrinsicP.h"
+#include <X11/IntrinsicP.h>
 #include <X11/ShellP.h>
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
-#include <X11/Xaw/Box.h>
-#include <X11/Xaw/Simple.h>
-#include <X11/Xaw/MenuButton.h>
-#include <X11/Xaw/SimpleMenu.h>
-#include <X11/Xaw/SmeBSB.h>
-#include <X11/Xaw/SmeLine.h>
-#include <X11/Xaw/Form.h>
-#include <X11/Xaw/Label.h>
-#include <X11/Xaw/Dialog.h>
-#include <X11/Xaw/AsciiText.h>
-#include <X11/Xaw/AsciiSrc.h>
-#include <X11/Xaw/Viewport.h>
-#include <X11/Xaw/Scrollbar.h>
-#include <X11/Xaw/Paned.h>
-#include <X11/Xaw/Panner.h>
-#include <X11/Xaw/Reports.h>
+
+#ifdef XAW3D
+  #include <X11/Xaw3d/Box.h>
+  #include <X11/Xaw3d/Simple.h>
+  #include <X11/Xaw3d/MenuButton.h>
+  #include <X11/Xaw3d/SimpleMenu.h>
+  #include <X11/Xaw3d/SmeBSB.h>
+  #include <X11/Xaw3d/SmeLine.h>
+  #include <X11/Xaw3d/Form.h>
+  #include <X11/Xaw3d/Label.h>
+  #include <X11/Xaw3d/Dialog.h>
+  #include <X11/Xaw3d/AsciiText.h>
+  #include <X11/Xaw3d/AsciiSrc.h>
+  #include <X11/Xaw3d/Viewport.h>
+  #include <X11/Xaw3d/Scrollbar.h>
+  #include <X11/Xaw3d/Paned.h>
+  #include <X11/Xaw3d/Panner.h>
+  #include <X11/Xaw3d/Reports.h>
+#else  
+  #include <X11/Xaw/Box.h>
+  #include <X11/Xaw/Simple.h>
+  #include <X11/Xaw/MenuButton.h>
+  #include <X11/Xaw/SimpleMenu.h>
+  #include <X11/Xaw/SmeBSB.h>
+  #include <X11/Xaw/SmeLine.h>
+  #include <X11/Xaw/Form.h>
+  #include <X11/Xaw/Label.h>
+  #include <X11/Xaw/Dialog.h>
+  #include <X11/Xaw/AsciiText.h>
+  #include <X11/Xaw/AsciiSrc.h>
+  #include <X11/Xaw/Viewport.h>
+  #include <X11/Xaw/Scrollbar.h>
+  #include <X11/Xaw/Paned.h>
+  #include <X11/Xaw/Panner.h>
+  #include <X11/Xaw/Reports.h>
+  #endif
 
 #include "defs.h"
 #include "tree.h"
@@ -1166,7 +1186,7 @@ InitializeInterface(argc, argv)
   
   TreeDrawingAreaDB = 
     DBLcreate_double_buffer(TreeDisplay, 
-			    XtWindow(TreeDrawingArea), FALSE,
+			    XtWindow(TreeDrawingArea), TRUE,
 			    colors, NUM_COLORS);
 
   ASSERT(TreeDrawingAreaDB, "could not create double buffer");

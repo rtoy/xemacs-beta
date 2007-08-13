@@ -1,6 +1,6 @@
 ;;!emacs
 ;;
-;; LCD-ENTRY:    hyperbole|Bob Weiner|hyperbole@hub.ucsb.edu|Everyday Info Manager|03-Nov-95|4.01|ftp.cs.uiuc.edu:/pub/xemacs/infodock/
+;; LCD-ENTRY:    hyperbole|Bob Weiner|hyperbole@infodock.com|Everyday Info Manager|21-Feb-97|4.021|ftp://ftp.xemacs.org/pub/infodock
 ;;
 ;; FILE:         hversion.el
 ;; SUMMARY:      Hyperbole version, system and load path information.
@@ -8,15 +8,15 @@
 ;; KEYWORDS:     hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Brown U.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     1-Jan-94
-;; LAST-MOD:      3-Nov-95 at 23:08:37 by Bob Weiner
+;; LAST-MOD:     21-Feb-97 at 18:03:57 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1994, 1995  Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996, 1997  Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -26,7 +26,7 @@
 ;;; Public variables
 ;;; ************************************************************************
 
-(defconst hyperb:version "04.01" "Hyperbole revision number.")
+(defconst hyperb:version "04.021" "Hyperbole revision number.")
 
 ;;; Support button highlighting and flashing under XEmacs.
 ;;;
@@ -60,7 +60,7 @@
       (if (string< epoch::version "Epoch 4") "V3" "V4"))
   "Simplified version string under Epoch, e.g. \"V4\", or nil")
 
-;; Koutlines work only with specific versions of Emacs 19 and XEmacs.
+;;; Koutlines work only with specific versions of Emacs 19 and XEmacs.
 (defconst hyperb:kotl-p
   (if hyperb:lemacs-p
       ;; Only works for XEmacs 19.9 and above.
@@ -70,23 +70,30 @@
     hyperb:emacs19-p)
   "Non-nil iff this Emacs version supports the Hyperbole outliner.")
 
+;;; Account for what rain all year round and working for two ex-Harvard guys
+;;; will do to programmers.
+(defvar hyperb:microcruft-os-p
+  (memq system-type '(ms-windows windows-nt ms-dos))
+  "T iff Hyperbole is running under a Microcruft OS.")
+
 (defun sm-window-sys-term ()
   "Returns the first part of the term-type if running under a window system, else nil.
 Where a part in the term-type is delimited by a '-' or  an '_'."
-  (let ((term (cond ((memq window-system '(x ns dps pm))
-		     ;; X11, NEXTSTEP (DPS), or OS/2 Presentation Manager (PM)
-		     (cond (hyperb:emacs19-p "emacs19")
-			   (hyperb:lemacs-p  "lemacs")
-			   (hyperb:epoch-p   "epoch")
-			   (t                "xterm")))
-		    ((or (featurep 'eterm-fns)
-			 (equal (getenv "TERM") "NeXT")
-			 (equal (getenv "TERM") "eterm"))
-		     ;; NEXTSTEP add-on support to Emacs
-		     "next")
-		    ((or window-system 
-			 (featurep 'sun-mouse) (featurep 'apollo))
-		     (getenv "TERM")))))
+  (let* ((display-type (if (fboundp 'device-type) (device-type) window-system))
+	 (term (cond ((memq display-type '(x ns dps pm win32))
+		      ;; X11, NEXTSTEP (DPS), or OS/2 Presentation Manager (PM)
+		      (cond (hyperb:emacs19-p "emacs19")
+			    (hyperb:lemacs-p  "lemacs")
+			    (hyperb:epoch-p   "epoch")
+			    (t                "xterm")))
+		     ((or (featurep 'eterm-fns)
+			  (equal (getenv "TERM") "NeXT")
+			  (equal (getenv "TERM") "eterm"))
+		      ;; NEXTSTEP add-on support to Emacs
+		      "next")
+		     ((or display-type
+			  (featurep 'sun-mouse) (featurep 'apollo))
+		      (getenv "TERM")))))
     (and term
 	 (substring term 0 (string-match "[-_]" term)))))
 

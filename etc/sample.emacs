@@ -258,10 +258,43 @@
               ;              t ;; don't do the normal operations.
               ;              )))
 
-
 	      ))
 
        ))
+
+;; Oh, and here's a cute hack you might want to put in the sample .emacs
+;; file: it changes the color of the window if it's not on the local
+;; machine, or if it's running as root:
+
+;; local emacs background:  whitesmoke
+;; remote emacs background: palegreen1
+;; root emacs background:   coral2
+(cond
+ ((and (string-match "XEmacs" emacs-version)
+       (eq window-system 'x)
+       (boundp 'emacs-major-version)
+       (= emacs-major-version 19)
+       (>= emacs-minor-version 12))
+  (let* ((root-p (eq 0 (user-uid)))
+	 (dpy (or (getenv "DISPLAY") ""))
+	 (remote-p (not
+		    (or (string-match "^\\(\\|unix\\|localhost\\):" dpy)
+			(let ((s (system-name)))
+			  (if (string-match "\\.\\(netscape\\|mcom\\)\\.com" s)
+			      (setq s (substring s 0 (match-beginning 0))))
+			  (string-match (concat "^" (regexp-quote s)) dpy)))))
+	 (bg (cond (root-p "coral2")
+		   (remote-p "palegreen1")
+		   (t nil))))
+    (cond (bg
+	   (let ((def (color-name (face-background 'default)))
+		 (faces (list-faces)))
+	     (while faces
+	       (let ((obg (face-background (car faces))))
+		 (if (and obg (equal def (color-name obg)))
+		     (set-face-background (car faces) bg)))
+	       (setq faces (cdr faces)))))))))
+
 
 ;;; Older versions of emacs did not have these variables
 ;;; (emacs-major-version and emacs-minor-version.)
@@ -320,16 +353,50 @@
 
 
 ;;; ********************
-;;; Load ange-ftp, which uses the FTP protocol as a pseudo-filesystem.
+;;; Load efs, which uses the FTP protocol as a pseudo-filesystem.
 ;;; When this is loaded, the pathname syntax /user@host:/remote/path
 ;;; refers to files accessible through ftp.
 ;;;
 (require 'dired)
-(require 'ange-ftp)
-(setq ange-ftp-default-user "anonymous"      ; id to use for /host:/remote/path
-      ange-ftp-generate-anonymous-password t ; use $USER@`hostname`
-      ange-ftp-binary-file-name-regexp "."   ; always transfer in binary mode
+;; compatible ange-ftp/efs initialization derived from code
+;; from John Turner <turner@lanl.gov>
+;; As of 19.15, efs is bundled instead of ange-ftp.
+;; NB: doesn't handle 20.0 properly, efs didn't appear until 20.1.
+;;
+;; The environment variable EMAIL_ADDRESS is used as the password
+;; for access to anonymous ftp sites, if it is set.  If not, one is
+;; constructed using the environment variables USER and DOMAINNAME
+;; (e.g. turner@lanl.gov), if set.
+
+(if (and running-xemacs (< emacs-major-version 20) (>= emacs-minor-version 15))
+    (progn
+      (message "Loading and configuring bundled packages... efs")
+      (require 'efs-auto)
+      (if (getenv "USER")
+	  (setq efs-default-user (getenv "USER")))
+      (if (getenv "EMAIL_ADDRESS")
+	  (setq efs-generate-anonymous-password (getenv "EMAIL_ADDRESS"))
+	(if (and (getenv "USER")
+		 (getenv "DOMAINNAME"))
+	    (setq efs-generate-anonymous-password
+		  (concat (getenv "USER")"@"(getenv "DOMAINNAME")))))
+      (setq efs-auto-save 1)
+      ))
+(if (and running-xemacs (< emacs-major-version 20) (< emacs-minor-version 15))
+    (progn
+      (message "Loading and configuring bundled packages... ange-ftp")
+      (require 'ange-ftp)
+      (if (getenv "USER")
+	  (setq ange-ftp-default-user (getenv "USER")))
+      (if (getenv "EMAIL_ADDRESS")
+	  (setq ange-ftp-generate-anonymous-password (getenv "EMAIL_ADDRESS"))
+	(if (and (getenv "USER")
+		 (getenv "DOMAINNAME"))
+	    (setq ange-ftp-generate-anonymous-password
+		  (concat (getenv "USER")"@"(getenv "DOMAINNAME")))))
+      (setq ange-ftp-auto-save 1)
       )
+  )
 
 
 ;;; ********************
@@ -339,8 +406,8 @@
 (setq auto-save-directory (expand-file-name "~/autosave/")
       auto-save-directory-fallback auto-save-directory
       auto-save-hash-p nil
-      ange-ftp-auto-save t
-      ange-ftp-auto-save-remotely nil
+      efs-auto-save t
+      efs-auto-save-remotely nil
       ;; now that we have auto-save-timeout, let's crank this up
       ;; for better interactive response.
       auto-save-interval 2000

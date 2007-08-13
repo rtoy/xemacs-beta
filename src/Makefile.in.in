@@ -632,12 +632,14 @@ LIBX11_LIBS = -llw $(TOOLKIT_LIBS) $(XPM_LIBS) $(XFACE_LIBS) $(JPEG_LIBS) $(PNG_
 #ifdef AIX4
 # define LIBI18N -li18n
 #else
-# if (defined(LINUX) && defined(HAVE_CDE))
-#  define LIBI18N -lXintl
-# else
-#  define LIBI18N
-#endif /* LINUX & CDE */
+# define LIBI18N
 #endif /* AIX4 */
+
+#if (defined(LINUX) && defined(HAVE_CDE))
+# define LIBX11_INTL -lXintl
+#else
+# define LIBX11_INTL
+#endif
 
 #ifdef THIS_IS_X11R6
 #ifdef NEED_LIBW
@@ -645,9 +647,9 @@ LIBW= -lw
 #else
 LIBW=
 #endif
-LIBX=  $(LIBX11_LIBS) $(XMU_LIB) -lXt -lSM -lICE $(LIBW) -lXext -lX11 LIBX11_MACHINE LIBX11_SYSTEM LIBI18N
+LIBX=  $(LIBX11_LIBS) $(XMU_LIB) -lXt -lSM -lICE $(LIBW) -lXext LIBX11_INTL -lX11 LIBX11_MACHINE LIBX11_SYSTEM LIBI18N
 #else
-LIBX=  $(LIBX11_LIBS) $(XMU_LIB) -lXt -lXext -lX11 LIBX11_MACHINE LIBX11_SYSTEM LIBI18N
+LIBX=  $(LIBX11_LIBS) $(XMU_LIB) -lXt -lXext LIBX11_INTL -lX11 LIBX11_MACHINE LIBX11_SYSTEM LIBI18N
 #endif
 
 #else
@@ -1267,9 +1269,10 @@ lisp=   ${lispdir}paths.el \
         ${lispdir}prim/replace.elc ${lispdir}prim/specifier.elc \
         ${lispdir}modes/auto-show.elc SUNPRO_LISP TTY_LISP \
         ${lispdir}bytecomp/bytecomp-runtime.elc FLOAT_LISP EPOCH_LISP \
-        ${lispdir}prim/itimer.elc ${lispdir}ediff/ediff-hook.elc \
-	${lispdir}custom/custom.elc ${lispdir}custom/widget.elc \
-	${lispdir}w3/font.elc \
+        ${lispdir}prim/itimer.elc ${lispdir}prim/itimer-autosave.elc \
+	${lispdir}ediff/ediff-hook.elc \
+	${lispdir}custom/widget.elc \
+	${lispdir}custom/custom.elc ${lispdir}custom/custom-xmas.elc \
 	${lispdir}packages/fontl-hooks.elc SCROLLBAR_LISP \
 	${lispdir}prim/buffer.elc MENUBAR_LISP \
 	${lispdir}packages/buff-menu.elc DIALOG_LISP MULE_LISP NOMULE_LISP \

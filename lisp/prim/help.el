@@ -780,6 +780,19 @@ not an autoload.")
 		    (car obsolete)
 		  (format "use `%s' instead." (car obsolete)))))))
 
+(defun function-compatible-p (function)
+  "Return non-nil if FUNCTION is present for Emacs compatibility."
+  (not (null (get function 'byte-compatible-info))))
+
+(defun function-compatibility-doc (function)
+  "If FUNCTION is Emacs compatible, return a string describing this."
+  (let ((compatible (get function 'byte-compatible-info)))
+    (if compatible
+	(format "Emacs Compatible; %s"
+		(if (stringp (car compatible))
+		    (car compatible)
+		  (format "use `%s' instead." (car compatible)))))))
+
 ;Here are all the possibilities below spelled out, for the benefit
 ;of the I18N3 snarfer.
 ;
@@ -894,10 +907,16 @@ not an autoload.")
 	   ;; If the function is obsolete and is aliased, don't
 	   ;; even bother to report the documentation, as a further
 	   ;; encouragement to use the new function.
-	   (let ((obsolete (function-obsoleteness-doc function)))
+	   (let ((obsolete (function-obsoleteness-doc function))
+		 (compatible (function-compatibility-doc function)))
 	     (if obsolete
 		 (progn
 		   (princ obsolete stream)
+		   (terpri stream)
+		   (terpri stream)))
+	     (if compatible
+		 (progn
+		   (princ compatible stream)
 		   (terpri stream)
 		   (terpri stream)))
 	     (if (not (and obsolete aliases))
@@ -954,6 +973,19 @@ not an autoload.")
 		(if (stringp obsolete)
 		    obsolete
 		  (format "use `%s' instead." obsolete))))))
+
+(defun variable-compatible-p (variable)
+  "Return non-nil if VARIABLE is Emacs compatible."
+  (not (null (get variable 'byte-compatible-variable))))
+
+(defun variable-compatibility-doc (variable)
+  "If VARIABLE is Emacs compatible, return a string describing this."
+  (let ((compatible (get variable 'byte-compatible-variable)))
+    (if compatible
+	(format "Emacs Compatible; %s"
+		(if (stringp compatible)
+		    compatible
+		  (format "use `%s' instead." compatible))))))
 
 (defun built-in-variable-doc (variable)
   "Return a string describing whether VARIABLE is built-in."
@@ -1045,10 +1077,16 @@ not an autoload.")
        (princ "Documentation:")
        (terpri)
        (let ((doc (documentation-property variable 'variable-documentation))
-	     (obsolete (variable-obsoleteness-doc origvar)))
+	     (obsolete (variable-obsoleteness-doc origvar))
+	     (compatible (variable-compatibility-doc origvar)))
 	 (if obsolete
 	     (progn
 	       (princ obsolete)
+	       (terpri)
+	       (terpri)))
+	 (if compatible
+	     (progn
+	       (princ compatible)
 	       (terpri)
 	       (terpri)))
 	 ;; don't bother to print anything if variable is obsolete and aliased.

@@ -4,7 +4,7 @@
 # AUTHOR:       Bob Weiner
 #
 # ORIG-DATE:    15-Oct-90
-# LAST-MOD:      3-May-96 at 21:30:00 by Harri Pasanen
+# LAST-MOD:     21-Feb-97 at 16:37:30 by Bob Weiner
 #
 # Copyright (C) 1990-1995  Free Software Foundation, Inc.
 # See the file BR-COPY for license information.
@@ -18,23 +18,25 @@ The OO-Browser is a multi-windowed, interactive object-oriented class browser
 similar in use to the well-known Smalltalk browsers.  It is unique in a
 number of respects foremost of which is that it works well with a
 multiplicity of object-oriented languages.  It provides both textual
-views within an editor and graphical views under the X window system.
+views within an editor and graphical views under the X and NEXTSTEP window
+systems.
 
 
 * Support for all popular OO Languages on UNIX
 ----------------------------------------------
 
-  ** Contains support for Eiffel, C++, Objective-C, Common Lisp and its
-     Object System (CLOS), Java, Python, and Smalltalk class browsing.  
-     Additionally, support for browsing large amounts of material in Info 
-     format by node name (a popular online documentation format with cross 
-     references and hierarchical structure) is included.
+  ** Support for C, C++, Common Lisp and its Object System (CLOS), Eiffel,
+     Java, Objective-C, Python and Smalltalk class browsing is included.
+     Additionally, support for browsing large amounts of material in Info
+     format by node name (a popular online documentation format with cross
+     references and hierarchical structure) is included.  All languages
+     provide class browsing via either a textual or a graphical interface.
 
-  ** Method browsing is supported for C++, Objective-C, Eiffel, Java, 
-     Python and CLOS.  CLOS supports browsing all elements defined with 
-     (def* constructs.  In-source feature browsing is also supported for 
-     all of these languages.  One simply selects a feature name to jump to 
-     its corresponding source.  Method name overloading in C++ and inherited
+  ** Method and typically attribute browsing is supported for all languages
+     except Smalltalk.  CLOS supports browsing all elements defined with
+     (def* constructs.  In-source feature browsing is also supported for all
+     of these languages.  One simply selects a feature name to jump to its
+     corresponding source.  Method name overloading in C++ and inherited
      feature renaming in Eiffel are fully supported.
 
   ** C code browsing is supported for C++, Objective-C and C source code.
@@ -42,6 +44,8 @@ views within an editor and graphical views under the X window system.
   ** Objective-C category and formal protocol browsing are supported.
 
   ** C++ parameterized template classes and methods are supported.
+
+  ** Java abstract and native (externally defined) methods are supported.
 
   ** Immediate switching among languages is allowed.  One can switch
      from Eiffel browsing to C++ browsing in an instant, if so desired.
@@ -52,12 +56,10 @@ views within an editor and graphical views under the X window system.
   ** Statistics on classes and Environments may be displayed.
 
   ** Language-specific class information may be shown.  Presently this
-     feature is supported only for Eiffel and Python.  For Eiffel, a 
-     listing of class parents, attributes, routines and best guess 
-     (highly accurate) list of routine calls may be displayed.  Outputs 
-     from the Eiffel 'short' and 'flat' commands may also be shown.  
-     For Python this feature is used to browse documentation strings in 
-     classes and methods.
+     feature is supported only for Eiffel.  A listing of class parents,
+     attributes, routines and best guess (highly accurate) list of
+     routine calls may be displayed.  Outputs from the Eiffel `short'
+     and `flat' commands may also be shown.
 
 
 * For Serious Use
@@ -69,8 +71,8 @@ views within an editor and graphical views under the X window system.
      Environment.  There are no fixed limits on the number of classes per
      Environment nor on the number of Environments that may be browsed.
 
-  **  All source code, over 400 kilobytes, is included and is heavily
-      documented.
+  ** All source code, over 400 kilobytes, is included and is heavily
+     documented.
 
 
 * Ease of Use
@@ -81,6 +83,7 @@ views within an editor and graphical views under the X window system.
      OO-Browser is pre-configured for use with the X window system, NEXTSTEP,
      Sunview or Apollo's DM window system under InfoDock, Emacs V19, XEmacs,
      Epoch, and Emacs V18.  Online mouse usage help is always one key away.
+     (Don't try that level of platform independence with Java!)
 
   ** Popup and pulldown command menus are available under InfoDock, Emacs V19
      and XEmacs.
@@ -129,7 +132,9 @@ views within an editor and graphical views under the X window system.
      gain several views of classes in the same or in multiple environments.
      All graphical browsers can communicate with a single textual browser, so
      one can quickly display and edit classes from different environments
-     (even different languages).
+     (even different languages).  Multiple inheritance is handled through
+     repetition of nodes throughout the tree; repeated nodes are followed by
+     ellipses to indicate multiple inheritance.
 
   ** The OO-Browser uses class source code only, hence no compiler is
      necessary for proper browser operation.  This allows one to explore

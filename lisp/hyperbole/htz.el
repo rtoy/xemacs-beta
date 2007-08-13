@@ -6,20 +6,20 @@
 ;; KEYWORDS:     calendar, hypermedia
 ;;
 ;; AUTHOR:       Masanobu UMEDA             / Bob Weiner
-;; ORG:          Fujitsu Laboratories LTD.  / Brown U.
+;; ORG:          Fujitsu Laboratories LTD.  / InfoDock Associates
 ;;
 ;; ORIG-DATE:    14-Oct-91 at 07:22:08
-;; LAST-MOD:      7-Jul-95 at 14:59:51 by Bob Weiner
+;; LAST-MOD:     20-Feb-97 at 12:21:10 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
+;; Copyright (C) 1991-1995, 1997  Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; Adapted from Timezone package for GNU Emacs
 ;; Copyright(C) 1990 Masanobu UMEDA (umerin@mse.kyutech.ac.jp)
-;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/hyperbole/Attic/htz.el,v 1.1.1.1 1996/12/18 22:43:15 steve Exp $
+;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/hyperbole/Attic/htz.el,v 1.2 1997/02/24 01:13:35 steve Exp $
 ;;
 ;; DESCRIPTION:  
 ;;
@@ -72,7 +72,7 @@ Optional 2nd argument TIMEZONE specifies a timezone to be represented in."
 (defun htz:date-parse (date &optional parsed-current-date)
   "Parse DATE string and return a vector [year month day time timezone].
 19 is prepended to year if necessary.  Timezone in DATE is optional, it
-defaults to the value of htz:local.
+defaults to the value of `htz:local'.
 
 Recognizes the following styles:
  (1) 14 Apr 89 03:20[:12] [GMT]
@@ -192,9 +192,8 @@ Optional argument LOCAL specifies the local timezone of the DATE."
   "Convert DATE or current date to a unix standard date.
 Optional 1st argument LOCAL specifies the local timezone of the DATE (default
 is the timezone embedded in the date or if there is none, then the value of
-the variable, htz:local).  Optional 2nd argument TIMEZONE specifies the
-timezone in which the date is returned; it defaults to the value of
-htz:local."
+`htz:local').  Optional 2nd argument TIMEZONE specifies the timezone in which
+the date is returned; it defaults to the value of `htz:local'."
   (or (vectorp date)
       (setq date (htz:date-parse (or date (current-time-string)))))
   (or local (setq local (or (aref date 4) htz:local)))

@@ -1,3 +1,16 @@
+Sun Feb 23 17:10:09 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b2 is released.
+
+Sat Feb 22 14:29:44 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19-15-b'95 is released.
+
+Thu Feb 20 12:40:57 1997  Jan Vroonhof <vroonhof@math.ethz.ch>
+
+	* configure.in (with_xauth): Attempted correction of test for
+	libXmu on SunOS.
+
 Sat Feb 15 14:11:03 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.1-b1 is released.

@@ -6,12 +6,12 @@
 ;; KEYWORDS:     oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    18-May-90
-;; LAST-MOD:      1-Nov-95 at 20:22:46 by Bob Weiner
+;; LAST-MOD:     20-Feb-97 at 07:02:16 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995, 1997  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -24,7 +24,7 @@
 ;;; ************************************************************************
 
 ;; >>> If you wish to edit classes displayed by the browser in an editor
-;;     other than Emacs, set the 'br-editor-cmd' variable to the command you
+;;     other than Emacs, set the `br-editor-cmd' variable to the command you
 ;;     want to edit with.  Arguments to the command should be placed in
 ;;     'br-ed[1-9], with one string argument per variable'.  Keep in
 ;;     mind that the command must generate a new window under your
@@ -36,7 +36,7 @@
 ;;
 ;;     This editor will only be used when the browser is run under a window
 ;;     system external to Emacs, like X.  (In such a case, the variable
-;;     'hyperb:window-system' will be non-nil).
+;;     `hyperb:window-system' will be non-nil).
 ;;
 ;;
 (defvar br-editor-cmd nil
@@ -49,7 +49,7 @@ Lisp function which takes a single file argument.")
 
 ;;
 ;; >>> If you want to view classes in a read-only fashion outside of Emacs,
-;;     set the following 'br-viewer-cmd' and 'br-vw[1-9]' variables in a
+;;     set the following `br-viewer-cmd' and `br-vw[1-9]' variables in a
 ;;     similar manner as you did for the editor variables above.
 ;;
 ;;     For example, to use "xmore", an X-compatible version of more, as your
@@ -111,7 +111,7 @@ Lisp function which takes a single file argument.")
 		 (interactive "P")
 		 (if arg (assist-key) (action-key)))
 	       ;;
-	       ;; A value of t for 'hkey-init' below will cause the
+	       ;; A value of t for `hkey-init' below will cause the
 	       ;; Smart Keys to be bound to keyboard keys in addition to any
 	       ;; mouse key bindings.  Comment it out or set it to nil if you
 	       ;; don't want these bindings.  Or change the bindings in the
@@ -198,16 +198,16 @@ Lisp function which takes a single file argument.")
   (autoload 'hmail:compose      "hmail"
     "Compose mail with ADDRESS and evaluation of EXPR." t)
   (autoload 'hypb:configuration "hypb"
-    "Insert Emacs configuration information into OUT-BUF or current buffer.")
+    "Insert Emacs configuration information into OUT-BUF or current buffer." nil)
+  (autoload 'hypb:display-file-with-logo "hypb" "Display FILE with IDA logo." nil)
   ;;
-  (autoload 'c++-browse  "c++-browse" "C++ OO-Browser" t)
+  (autoload 'c++-browse  "c++-browse" "C++/C OO-Browser" t)
   (autoload 'clos-browse "clos-brows" "Common Lisp OO-Browser" t)
   (autoload 'eif-browse  "eif-browse" "Eiffel OO-Browser" t)
   (autoload 'info-browse "info-brows" "Info OO-Browser" t)
   (autoload 'java-browse "java-brows" "Java OO-Browser" t)
   (autoload 'objc-browse "objc-brows" "Objective-C OO-Browser" t)
   (autoload 'smt-browse  "smt-browse" "Smalltalk OO-Browser" t)
-  (autoload 'python-browse  "python-browse" "Python OO-Browser" t)
   )
 
 ;;; ************************************************************************

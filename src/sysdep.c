@@ -61,7 +61,11 @@ Boston, MA 02111-1307, USA.  */
 #include "syswait.h"
 #include "sysdir.h"
 #include "systime.h"
+#if defined(WINDOWSNT)
+#include "syssignal.h"
+#else
 #include <sys/times.h>
+#endif
 
 /* ------------------------------- */
 /*           VMS includes          */
@@ -426,6 +430,7 @@ flush_pending_output (int channel)
 
 #ifndef VMS
 #ifndef MSDOS
+#ifndef WINDOWSNT
 /*  Set up the terminal at the other end of a pseudo-terminal that
     we will be controlling an inferior through.
     It should not echo or do line-editing, since that is done
@@ -453,6 +458,7 @@ child_setup_tty (int out)
 #ifdef OLCUC
   s.main.c_oflag &= ~OLCUC;	/* Disable upcasing on output.  */
 #endif
+  s.main.c_oflag &= ~TAB3;	/* Disable tab expansion */
 #if defined (CSIZE) && defined (CS8)
   s.main.c_cflag = (s.main.c_cflag & ~CSIZE) | CS8; /* Don't strip 8th bit */
 #endif
@@ -532,6 +538,7 @@ child_setup_tty (int out)
   }
 #endif /* RTU */
 }
+#endif /* WINDOWSNT */
 #endif /* not MSDOS */
 #endif /* not VMS */
 
@@ -1297,6 +1304,8 @@ disconnect_controlling_terminal (void)
 /*        Getting and setting emacs_tty structures        */
 /* ------------------------------------------------------ */
 
+#ifdef HAVE_TTY
+
 /* Set *TC to the parameters associated with the terminal FD.
    Return zero if all's well, or -1 if we ran into an error we
    couldn't deal with.  */
@@ -1435,6 +1444,8 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
   /* We have survived the tempest.  */
   return 0;
 }
+
+#endif
 
 
 /* ------------------------------------------------------ */
@@ -3412,7 +3423,7 @@ static int process_times_available;
 static int
 get_process_times_1 (long *user_ticks, long *system_ticks)
 {
-#if defined (_SC_CLK_TCK) || defined (CLK_TCK)
+#if defined (_SC_CLK_TCK) || defined (CLK_TCK) && !defined(WINDOWSNT)
   /* We have the POSIX times() function available. */
   struct tms tttt;
   times (&tttt);
@@ -3420,8 +3431,8 @@ get_process_times_1 (long *user_ticks, long *system_ticks)
   *system_ticks = (long) tttt.tms_stime;
   return 1;
 #elif defined (CLOCKS_PER_SEC)
-  *user_time = (long) clock ();
-  *system_time = 0;
+  *user_ticks = (long) clock ();
+  *system_ticks = 0;
   return 1;
 #else
   return 0;
@@ -3563,6 +3574,38 @@ insque (caddr_t q, caddr_t p)
 /************************************************************************/
 
 #if !defined (SYS_SIGLIST_DECLARED) && !defined (HAVE_SYS_SIGLIST)
+
+#ifdef WINDOWSNT
+char *sys_siglist[] =
+  {
+    "bum signal!!",
+    "hangup",
+    "interrupt",
+    "quit",
+    "illegal instruction",
+    "trace trap",
+    "iot instruction",
+    "emt instruction",
+    "floating point exception",
+    "kill",
+    "bus error",
+    "segmentation violation",
+    "bad argument to system call",
+    "write on a pipe with no one to read it",
+    "alarm clock",
+    "software termination signal from kill",
+    "status signal",
+    "sendable stop signal not from tty",
+    "stop signal from tty",
+    "continue a stopped process",
+    "child status has changed",
+    "background read attempted from control tty",
+    "background write attempted from control tty",
+    "input record available at control tty",
+    "exceeded CPU time limit",
+    "exceeded file size limit"
+    };
+#endif
 
 #ifdef USG
 #ifdef AIX

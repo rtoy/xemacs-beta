@@ -841,7 +841,18 @@ set to the command name so that window configuration will be done."
 	 ;;  (cons "Mail" vm-menu-fsfemacs-mail-menu))
 	 (if vm-popup-menu-on-mouse-3
 	     (define-key vm-mail-mode-map [down-mouse-3]
-	       'vm-menu-popup-mode-menu)))))
+	       'vm-menu-popup-mode-menu))
+	 ;; replace some FSF Emacs menubar menu commands so the
+	 ;; user gets the VM version.  Catch errors; we don't
+	 ;; care enough about this to make VM crash if the
+	 ;; menubar entry names change.
+	 (condition-case nil
+	     (progn
+	       (define-key vm-mail-mode-map [menubar mail send]
+		 'vm-mail-send-and-exit)
+	       (define-key vm-mail-mode-map [menubar mail send-stay]
+		 'vm-mail-send))
+	   (error nil)))))
 
 (defun vm-menu-install-menus ()
   (cond ((consp vm-use-menus)

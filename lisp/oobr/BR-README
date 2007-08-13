@@ -1,13 +1,18 @@
-# See "br-vers.el" for the OO-Browser Lisp Code Directory information.
+# See "br-vers.el" for the OO-Browser lisp code directory entry.
 #
 # SUMMARY:      OO-Browser overview and installation notes
 #
 # AUTHOR:       Bob Weiner
 #
-# ORIG-DATE:    16-Jun-90
-# LAST-MOD:     3-May-96 at 20:45:00 by Harri Pasanen
+# ORG:          InfoDock Associates.  We sell corporate support and development
+#               contracts for InfoDock, Emacs and XEmacs.
+#               E-mail: <info@infodock.com>  Web: http://www.infodock.com
+#               Tel: +1 408-243-3300
 #
-# Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996  Free Software Foundation, Inc.
+# ORIG-DATE:    16-Jun-90
+# LAST-MOD:     21-Feb-97 at 17:05:39 by Bob Weiner
+#
+# Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997  Free Software Foundation, Inc.
 # See the file BR-COPY for license information.
 #
 # This file is part of the OO-Browser.
@@ -43,41 +48,43 @@ source versions of the OO-Browser User Manual.
 *			    Mail Lists
 ===========================================================================
 
-<oo-browser@hub.ucsb.edu>            - mail list
-<oo-browser-request@hub.ucsb.edu>    - administrative requests
+<oo-browser@infodock.com>            - mail list
+<oo-browser-request@infodock.com>    - add/change/delete requests
 
-   The oo-browser mail list is for discussion, bug reports and feature
-   requests concerning the OO-Browser multi-language code browser.
-   If your Emacs version supports menubars and popup menus, you can use the
-   Compose-Mail-to-List and Mail-List-Request menu items to access the
-   mail list and administrative address, respectively, when in the OO-Browser.
+   The oo-browser mail list is for public discussion, bug reports and feature
+   ideas concerning the OO-Browser multi-language code browser.  If your
+   Emacs version supports menubars and popup menus, you can use the
+   Compose-Mail-to-List and Mail-List-Request menu items to access the mail
+   list and request address, respectively, when in the OO-Browser.
+
+   If you ask questions, you should consider adding to the discussion by
+   telling people the kinds of work you are doing or contemplating doing
+   with the OO-Browser.  In this way, the list will not be overwhelmed by
+   messages that ask for, but provide no information.
 
    ALL mail concerning administration of the OO-Browser mailing list should
    be sent to the -request address.  That includes addition, change, or
    deletion requests.  Don't EVER consider sending such a request to the
    oo-browser mail list.
 
-   Use the following formats on your subject line to execute requests,
-   where you substitute your own values for the <> delimited items.
+   Use the following formats in the *body* of your message to execute requests,
+   where you substitute your own values for the <> delimited items and items
+   enclosed in [] are optional.
  
-     Subject: Subscribe '<' <user@domain> '>' (<your name>).
-     Subject: Unsubscribe '<' <user@domain> '>'.
-
-   To change your address, you must unsubscribe your old address in one
-   message and then subscribe your new address in another message.
+     subscribe oo-browser [<your-email-address>]
+       or
+     unsubscribe oo-browser [<your-email-address>]
 
    For example:
 
-     To: oo-browser-request@hub.ucsb.edu
-     Subject: Unsubscribe <joe@any.com>.
+     To: oo-browser-request@infodock.com
+     Subject: Used if a human happens to read your mail.
 
-     To: oo-browser-request@hub.ucsb.edu
-     Subject: Subscribe <joe@any.com> (Joe Williams).
+     subscribe oo-browser joe@nowhere.gov
 
-   If you ask questions, you should consider adding to the discussion by
-   telling people the kinds of work you are doing or contemplating doing
-   with the OO-Browser.  In this way, the list will not be overwhelmed by
-   messages that ask for, but provide no information.
+   To change your address, you must unsubscribe your old address with
+   once command and subscribe your new address with another command, though
+   you can embed multiple commands on separate lines within a single message.
 
 
 ===========================================================================
@@ -88,7 +95,7 @@ To install the OO-Browser:
 
     If you have the Hyperbole system installed, you must be using
     V3.18.4 or greater.  Otherwise, you must upgrade.  Get Hyperbole
-    from: /anonymous@ftp.xemacs.org:/pub/infodock.  Get the h*
+    from: "ftp://ftp.xemacs.org/pub/infodock".  Get the h*
     files in that directory.  Once you have this version installed,
     you can safely delete the oobr/hypb/ directory, which duplicates a
     subset of the Hyperbole files to provide the OO-Browser with
@@ -97,10 +104,10 @@ To install the OO-Browser:
     so that the OO-Browser Makefile can see the Hyperbole files it needs.
 
     Add the full path of either the Hyperbole code directory or the
-    "oobr/hypb/" subdirectory to your 'load-path' variable.
+    "oobr/hypb/" subdirectory to your `load-path' variable.
 
-    You may want to change the settings of 'c++-cpp-include-dirs'
-    and 'c++-include-dirs' at the bottom of "br-site.el".
+    You may want to change the settings of `c++-cpp-include-dirs'
+    and `c++-include-dirs' at the bottom of "br-site.el".
 
     If you prefer to use some non-GNU Emacs editor such
     as vi to view and edit your code, then modify to your taste the
@@ -124,18 +131,6 @@ It must end with a directory separator character.")
 
          (global-set-key "\C-c\C-o" 'oo-browser)
 
-    It conceivable that you are not actively using all the languages that 
-    OO-Browser supports. You can limit the list of offered languages by 
-    providing your own definition of br-env-lang-avector, defined in 
-    br-env.el. 
-
-    For example, to enable just C++ and Python browsing, add this to your
-    .emacs:
-
-	(defvar br-env-lang-avector
-      	  '[("C++"     . "c++-")
-            ("Python"  . "python-")]
-  "Association vector of (LANGUAGE-NAME . LANGUAGE-PREFIX-STRING) elements of OO-Browser languages.")
 
     The OO-Browser's Emacs Lisp files are pre-byte-compiled for InfoDock,
     Emacs 19 and XEmacs, so if you run one of these versions, when you use
@@ -146,7 +141,7 @@ It must end with a directory separator character.")
     "Makefile".  You must set the EMACS variable to point to the Emacs
     executable that you want to use to byte-compile the OO-Browser Lisp
     files.  You may also have to set SITE-PRELOADS; follow the instructions
-    that precede the 'SITE-PRELOADS =' line.  Make these changes now and save
+    that precede the `SITE-PRELOADS =' line.  Make these changes now and save
     the Makefile.
 
     If you are running Emacs V18 or Epoch, you must first rebuild all

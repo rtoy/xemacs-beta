@@ -104,6 +104,12 @@ The new version of the list, minus the deleted strings, is returned."
 	    (setq temp-buffer (generate-new-buffer "*vm-work*"))
 	    (set-buffer temp-buffer)
 	    (insert string)
+	    ;; correct for VM's uses of this function---
+	    ;; writing out message separators
+	    (setq buffer-file-type nil)
+	    ;; Tell XEmacs/MULE to pick the correct newline conversion.
+	    (and (fboundp 'set-file-coding-system)
+		 (set-file-coding-system 'no-conversion nil))
 	    (write-region (point-min) (point-max) where t 'quiet))
 	(and temp-buffer (kill-buffer temp-buffer))))))
 
@@ -269,6 +275,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	    (if hack-addresses
 		(nth 1 (funcall vm-chop-full-name-function (car list)))
 	      (car list))
+	    sym-string (or sym-string "-unparseable-garbage-")
 	    sym (intern sym-string hashtable))
       (if (boundp sym)
 	  (and all (setcar (symbol-value sym) nil))
@@ -375,6 +382,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
   (and (vm-xemacs-p)
        (vm-multiple-frames-possible-p)
        (featurep 'toolbar)))
+
+(defun vm-multiple-fonts-possible-p ()
+  (or (eq window-system 'x)
+      (and (fboundp 'device-type)
+	   (eq (device-type) 'x))))
 
 (defun vm-run-message-hook (message &optional hook-variable)
   (save-excursion
@@ -559,7 +571,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 			    (vm-extent-end-position e))))
     (while props
       (vm-set-extent-property ee (car props) (car (cdr props)))
-      (setq props (cdr props)))))
+      (setq props (cdr (cdr props))))))
 
 (defun vm-make-tempfile-name ()
   (let ((done nil) (pid (emacs-pid)) filename)
@@ -599,6 +611,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     (set-buffer buffer)
     (set var value)))
 
+(defun vm-buffer-variable-value (buffer var)
+  (save-excursion
+    (set-buffer buffer)
+    (symbol-value var)))
+
 (defsubst vm-with-string-as-temp-buffer (string function)
   (let ((work-buffer nil))
     (unwind-protect
@@ -609,3 +626,54 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	  (funcall function)
 	  (buffer-string))
       (and work-buffer (kill-buffer work-buffer)))))
+
+(defmacro vm-with-virtual-selector-variables (&rest forms)
+  (append '(let ((any 'vm-vs-any)
+		 (and 'vm-vs-and)
+		 (or 'vm-vs-or)
+		 (not 'vm-vs-not)
+		 (header 'vm-vs-header)
+		 (label 'vm-vs-label)
+		 (text 'vm-vs-text)
+		 (recipient 'vm-vs-recipient)
+		 (author 'vm-vs-author)
+		 (subject 'vm-vs-subject)
+		 (sent-before 'vm-vs-sent-before)
+		 (sent-after 'vm-vs-sent-after)
+		 (more-chars-than 'vm-vs-more-chars-than)
+		 (less-chars-than 'vm-vs-less-chars-than)
+		 (more-lines-than 'vm-vs-more-lines-than)
+		 (less-lines-than 'vm-vs-less-lines-than)
+		 (new 'vm-vs-new)
+		 (unread 'vm-vs-unread)
+		 (read 'vm-vs-read)
+		 (deleted 'vm-vs-deleted)
+		 (replied 'vm-vs-replied)
+		 (forwarded 'vm-vs-forwarded)
+		 (filed 'vm-vs-filed)
+		 (written 'vm-vs-written)
+		 (edited 'vm-vs-edited)
+		 (marked 'vm-vs-marked)))
+	  forms))
+
+(defun vm-string-assoc (elt list)
+  (let ((case-fold-search t)
+	(found nil)
+	(elt (regexp-quote elt)))
+    (while (and list (not found))
+      (if (and (equal 0 (string-match elt (car (car list))))
+	       (= (match-end 0) (length (car (car list)))))
+	  (setq found t)
+	(setq list (cdr list))))
+    (car list)))
+
+(defun vm-string-member (elt list)
+  (let ((case-fold-search t)
+	(found nil)
+	(elt (regexp-quote elt)))
+    (while (and list (not found))
+      (if (and (equal 0 (string-match elt (car list)))
+	       (= (match-end 0) (length (car list))))
+	  (setq found t)
+	(setq list (cdr list))))
+    list))

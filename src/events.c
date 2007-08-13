@@ -38,6 +38,18 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "window.h"
 
+#ifdef WINDOWSNT
+/* Hmm, under unix we want X modifiers, under NT we want X modifiers if
+   we are running X and Windows modifiers otherwise.
+   gak. This is a kludge until we support multiple native GUIs!
+*/
+#undef MOD_ALT
+#undef MOD_CONTROL
+#undef MOD_SHIFT
+#endif
+
+#include <events-mod.h>
+
 /* Where old events go when they are explicitly deallocated.
    The event chain here is cut loose before GC, so these will be freed
    eventually.

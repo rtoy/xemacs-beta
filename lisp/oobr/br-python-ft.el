@@ -10,9 +10,9 @@
 ;; ORG:          Tekla Oy
 ;;
 ;; ORIG-DATE:    5-Apr-96
-;; LAST-MOD:     1-May-96
+;; LAST-MOD:     23-Dec-96 at 22:09:00 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1996  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -60,7 +60,7 @@ i.e. (match-end 0), and goes to the end of the string or line.")
 (defun python-add-default-classes ()
   ;; Add to 'system' class table.
   ;; Add this default class for global functions
-  (br-add-class "[functions]" br-null-path nil))
+  (br-add-class "[function]" br-null-path nil))
 
 (defun python-feature-implementors (name)
   "Return unsorted list of Python feature tags which implement feature NAME.
@@ -126,12 +126,11 @@ prepended to the name for display in a browser listing."
 
 (defun python-scan-features ()
   "Return reverse ordered list of Python function definitions in current 
-buffer.  Assume point is at beginning of widened buffer.
-'[functions]@- foo@foo(arguments)'"
+buffer.  Assume point is at the beginning of a widened buffer."
   (save-excursion
     (let ((routines) class name rout)
       (while (re-search-forward python-routine-def nil t)
-	(setq class "[functions]"
+	(setq class "[function]"
 	      name (buffer-substring (match-beginning python-feature-name-grpn)
 				     (match-end python-feature-name-grpn))
 	      rout (python-feature-normalize 
@@ -494,7 +493,7 @@ Look for include file in directory list 'python-import-dirs'"
 
 (defun python-locate-feature (ftr class ftr-pat &optional other-win)
   ;; 'class' may = nil, implying non-member function
-  (or class (setq class "[functions]"))
+  (or class (setq class "[function]"))
   (let ((def-class))
     (if (and ftr-pat
 	     (setq def-class

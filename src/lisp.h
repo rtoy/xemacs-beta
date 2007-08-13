@@ -1423,11 +1423,10 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
    Snarf_documentation chokes */
 
 #define DEFUN(lname, Fname, minargs, maxargs, prompt, arglist)		\
-  Lisp_Object Fname (DEFUN_ ## maxargs arglist) ; /* See below */	\
+  Lisp_Object Fname (DEFUN_##maxargs arglist) ; /* See below */	\
   static struct Lisp_Subr S##Fname = { {lrecord_subr},			\
 	minargs, maxargs, prompt, 0, lname, (lisp_fn_t) Fname };	\
   Lisp_Object Fname (DEFUN_##maxargs arglist)
-
 
 /* Heavy ANSI C preprocessor hackery to get DEFUN to declare a
    prototype that matches maxargs, and add the obligatory

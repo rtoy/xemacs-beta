@@ -35,12 +35,15 @@ Boston, MA 02111-1307, USA.  */
 #include "mule-coding.h"
 #endif
 
-#include "sysfile.h"
 #include "systime.h"
 #include "sysproc.h"
+#include "sysfile.h" /* Always include after sysproc.h */
 #include "syssignal.h" /* Always include before systty.h */
 #include "systty.h"
 
+#ifdef WINDOWSNT
+#define _P_NOWAIT 1	/* from process.h */
+#endif
 
 #ifdef DOS_NT
 /* When we are starting external processes we need to know whether they
@@ -342,11 +345,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     }
   else
     {
-#ifdef WINDOWSNT
-      pipe_with_inherited_out (fd);
-#else  /* not WINDOWSNT */
       pipe (fd);
-#endif /* not WINDOWSNT */
 #if 0
       /* Replaced by close_process_descs */
       set_exclusive_use (fd[0]);
@@ -639,7 +638,11 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
 static int relocate_fd (int fd, int min);
 
+#ifdef WINDOWSNT
+int
+#else
 void
+#endif
 child_setup (int in, int out, int err, char **new_argv,
 	     CONST char *current_dir)
 {

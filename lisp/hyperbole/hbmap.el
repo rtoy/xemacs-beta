@@ -9,7 +9,7 @@
 ;; ORG:          Brown U.
 ;;
 ;; ORIG-DATE:     6-Oct-91 at 06:34:05
-;; LAST-MOD:     24-Oct-95 at 18:32:30 by Bob Weiner
+;; LAST-MOD:     17-Feb-97 at 15:30:16 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -114,7 +114,9 @@ the error.  Optional NO-SAVE disables saving of the map after operation."
 ;;; ************************************************************************
 
 (defvar hbmap:dir-user
-  (if (memq system-type '(ms-windows windows-nt ms-dos))
+  (if (and hyperb:microcruft-os-p
+	   (or (not (fboundp 'getenv))
+	       (not (getenv "HOME"))))
       "c:/_hyperb/" "~/.hyperb/")
   "Per user directory in which to store top level Hyperbole map data.
 Must end with a directory separator.

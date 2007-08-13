@@ -1,3 +1,21 @@
+18.02.97
+	Fixed a compilation bug.
+	-- BUILDED the version 5.2 of the package
+17.02.97
+	Changed the function `hm--html-read-alignment' according to the
+	HTML version 3.2.
+	Added a more general command for adding images.
+	Added the HTML elements MAP and AREA.
+	Added a command for adding an image and a map.
+15.02.97
+	Fixed some bugs in the insert full frame stuff.
+	Added the DOCTYPE to the full frame stuff.
+	Added the HTML elements DIV, FONT and BASEFONT.
+14.02.97
+	Added the HTML elements DOCTYPE, ISINDEX, BASE, META.
+	Added all one tag elements used in HTML 3.2 to the list
+	`hm--html-tag-name-alist' to make the indentation happy.
+	Fixed a bug in the indentation after one tag elements.
 12.02.97
 	Renamed command-description.tmpl to command-description.html.tmpl.
 	The indentation stuff can now be disabled by setting the

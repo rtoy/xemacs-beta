@@ -1,0 +1,48 @@
+
+(setq
+br-env-version
+"02.09.11"
+
+br-sys-search-dirs
+'(".")
+
+br-lib-search-dirs
+'nil
+
+br-lang-prefix
+'"c++-"
+
+br-env-spec
+'nil
+
+br-children-alist
+'(
+)
+
+br-sys-paths-alist
+'(
+(("line" "tnode") . "/home/infodock/lisp/oobr/tree-x/tree.h")
+(("[constant]" "[enumeration]" "[function]" "[macro]" "[structure]" "[type]" "[union]") . "<none>")
+)
+
+br-lib-paths-alist
+'(
+)
+
+br-sys-parents-alist
+'(
+(nil . "[union]")
+(nil . "[type]")
+(nil . "[structure]")
+(nil . "[macro]")
+(nil . "[function]")
+(nil . "[enumeration]")
+(nil . "[constant]")
+(nil . "line")
+(nil . "tnode")
+)
+
+br-lib-parents-alist
+'(
+)
+)

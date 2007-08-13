@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.  */
    things configured in. */
 
 #if (LONGBITS == 64)
-# define BASE_PURESIZE 893000
+# define BASE_PURESIZE 938000
 #else
 # define BASE_PURESIZE 563000
 #endif
@@ -120,7 +120,7 @@ Boston, MA 02111-1307, USA.  */
 /* Extra amount of purespace needed for Sunpro builds. */
 
 #ifdef SUNPRO
-#define SUNPRO_PURESIZE_EXTRA 85000
+#define SUNPRO_PURESIZE_EXTRA 95000
 #else
 # define SUNPRO_PURESIZE_EXTRA 0
 #endif

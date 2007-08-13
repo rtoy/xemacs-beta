@@ -1,17 +1,27 @@
+# See "hversion.el" for the Hyperbole lisp code directory entry.
 #
 # FILE:		README
-# SUMMARY:      Intro information on Hyperbole.  
+# SUMMARY:	Information Hyperbole users and maintainers should read.
 #
 # AUTHOR:       Bob Weiner
 #
+# ORG:          InfoDock Associates.  We sell corporate support and development
+#               contracts for InfoDock, Emacs and XEmacs.
+#               E-mail: <info@infodock.com>  Web: http://www.infodock.com
+#               Tel: +1 408-243-3300
+#
 # ORIG-DATE:    19-Oct-91 at 03:27:47
-# LAST-MOD:      3-Nov-95 at 23:20:31 by Bob Weiner
+# LAST-MOD:     21-Feb-97 at 18:04:41 by Bob Weiner
+#
+# See the Copyright section below for license information.
 
-The author's work on this project has been sponsored by Motorola Inc.
+We thank Motorola Inc. for sponsoring our initial development work on
+Hyperbole.
 
-We hope you enjoy using and developing with Hyperbole.  Suggestions and bug
-reports are welcome, as described later in this document.  Feel free to
-mail or post news containing this file wherever it may be of use.
+We hope you enjoy using and developing with Hyperbole.  Suggestions
+and bug reports are welcome, as described later in this document.
+Feel free to mail or post news containing this file wherever it may be
+of use.
 
 
 ===========================================================================
@@ -35,14 +45,14 @@ mail or post news containing this file wherever it may be of use.
 Hyperbole is an open, efficient, programmable information management and
 hypertext system.  It is intended for everyday work on any UNIX platform
 supported by GNU Emacs.  It works well with the versions of Emacs that
-support multiple X or NEXTSTEP windows: GNU Emacs V19, XEmacs (formerly
-called Lucid Emacs) and Epoch.  Hyperbole allows hypertext buttons to be
-embedded within unstructured and structured files, mail messages and
-news articles.  It offers intuitive mouse-based control of information
-display within multiple windows.  It also provides point-and-click
-access to Info manuals, ftp archives, Wide-Area Information Servers
-(WAIS), and the World-Wide Web (WWW) hypertext system through
-encapsulations of software that support these protocols.
+support MS-Windows, X or NEXTSTEP windows: XEmacs and GNU Emacs.
+
+Hyperbole allows hypertext buttons to be embedded within unstructured and
+structured files, mail messages and news articles.  It offers intuitive
+mouse-based control of information display within multiple windows.  It also
+provides point-and-click access to Info manuals, ftp archives, Wide-Area
+Information Servers (WAIS), and the World-Wide Web (WWW) hypertext system
+through encapsulations of software that support these protocols.
 
 Hyperbole consists of four parts:
 
@@ -155,178 +165,96 @@ Typical Hyperbole applications include:
 
 
 ===========================================================================
-*		       What's New in V4.00 and V4.01?
+*		       What's New in V4.02 and V4.021
 ===========================================================================
 
   (See "ChangeLog" for more complete details of changes.)
 
   ACTION AND ASSIST KEYS
 
-    - New variable, action-key-url-function, sets the function used to
-      display URLs which are activated as implicit buttons with the Action
-      Key.
+    - Support for new ID-edit mode (a part of InfoDock) that allows rapid,
+      cutting, copying and yanking of regions plus fast display management.
+      In this mode, the Action and Assist keys yank the previously selected
+      region at point.
 
-    - Action or Assist Key presses at the end of a line now scroll
-      proportionally, by default.  See the documentation for the variable,
-      smart-scroll-proportional, and the Smart Scrolling section of the
-      Hyperbole DEMO file, for more information.
+    - An Action Key press on a Java identifier jumps to its definition
+      (if an associated TAGS file or OO-Browser environment exists).  The
+      same is true for an `@see' cross-reference within a Java comment.  The
+      variable, `smart-java-package-dirs,' determines where Java package
+      source can be found when the OO-Browser is not in use.
 
-    - Fixed bug that prevented browsing Info files in dired with the Action
-      Key.
+    - An Action Key press on a double or single quoted Emacs Lisp filename
+      (without any path) displays the file by looking for it among the
+      directories in the variable, `load-path'.
 
-  BUTTON TYPES
-
-    - "hsys-w3.el" is now automatically loaded so that the Action Key can
-      follow URLs by default.  It defines the implicit button type, www-url. 
-
-    - New implicit button type, text-toc, makes table of contents entries in
-      README files jump to the associated section of the file.  Try it with
-      this file once you have loaded the current version of Hyperbole.
-
-  DOCUMENTATION
-
-    - A lot of work has gone into reorganizing and rewriting the Hyperbole
-      manual to improve its readability and completeness.  A full chapter on
-      the Koutliner has been added.  Please take some time to read the parts
-      of interest to you and send your feedback on what is good and what is
-      not to the mail list, <hyperbole@hub.ucsb.edu>.
+    - If the Action Key is pressed on a function identifier that is defined
+      in the same buffer as the reference clicked upon, it will now be
+      displayed faster, since the func-menu package will be used.  The
+      reference identifier will also flash when pressed, if the display
+      device supports this.
 
   EMACS VERSIONS
 
-    - MS-DOS and Windows NT Emacs 19 or Win-Emacs: Made Hyperbole work under
-      all of these PC Emacs versions.
+    - Further support for MS-DOS, Windows NT Emacs 19, and Win-Emacs.
 
-    - Emacs 19: Fixed bug that prevented Action Key selection of minibuffer
-      menu items.
-
-    - Emacs 19: Hyperbole menubar menus are now properly displayed.
-
-    - Emacs 19: Action Key press on a filename that has a .info suffix
-      displays the Top node for that info file in the Info browser.
+    - Fixed configuration setup problem when running Emacs 19 on a dumb
+      terminal.
 
   KOUTLINER
 
-    - You can now view and edit koutlines with blank lines between cells
-      turned off.  {C-c b} now toggles between showing or hiding blank lines.
+    - XEmacs 19.14 and above: Fixed display of current viewspec in the
+      modeline to accomodate modeline extents (specialized modeline regions).
+      This eliminated an error that occurred when reading in an Koutline file.
 
-    - Minibuffer menu item Otl/Below renamed to Otl/Downto so could add
-      Otl/Blanks which toggles blank lines on and off.
+    - Fixed bug that prevented installation of Koutliner mode-specific
+      menubar when running InfoDock.
 
-    - {C-c C-o} which displays one line per cell, for an overview, now also
-      turns off blank lines.
+  MENUS
 
-    - {C-c C-i} adds an attribute to the current cell.  It changes the
-      attribute's value if it already exists.  Completion on existing
-      attribute names from the cell is provided.
+    - New Hyperbole/About menu item added.  In minibuffer menus, this item is
+      found under the Doc/ menu.
 
-    - {C-c h}, which displays cell attributes, when given "0" as the cell id
-      now displays the zero cell's attributes in addition to any other
-      attributes shown.
+    - New window system menu, Hyperbole/Customization (and minibuffer menu,
+      Cust/) added to set Hyperbole options, including where Hyperbole link
+      referents are displayed, where URLs are displayed and whether to use
+      proportional or windowful scrolling when a Smart Key is pressed at the
+      end of a line.
 
-    - By default, the outliner separates labels from cell contents by two
-      spaces.  If you want to change the separator for the current outline,
-      use {C-c M-l}.  {C-u C-c M-l} will additionally change the default
-      separator value used when new outlines are created.
+    - The default setting of where Hyperbole link references are displayed
+      may be set in "hsite.el" via the variable, `hpath:display-where'
+      (after Hyperbole has been installed using `make install').
+      See its documentation for detail.
 
-    - If you invoke {M-x kotl-mode RET} on a non-read-only, non-koutline
-      buffer, it converts each paragraph in the buffer into a level 1 cell,
-      and thereby creates a koutline buffer.  The conversion uses the
-      buffer-specific variable, `paragraph-start' to determine the paragraphs
-      in the buffer.
-
-    - If you save a koutline to a file whose name does not end in .kotl,
-      e.g. with {C-x C-w} (kfile:write), it will still be treated as a valid
-      koutline when you read it in again.  You can create a koutline file
-      without the standard suffix via {M-x kfile:find RET} or by converting a
-      buffer to a koutline via {M-x kotl-mode RET}.
-
-    - Each koutline now maintains a current view setting that is saved with
-      the outline and restored when it is first displayed.  View settings
-      include:  show/hide blank lines, show a fixed number of lines per cell,
-      show a fixed number of levels in the outline, show all lines and cells,
-      show/hide ellipses after truncated outline entries, set cell numbering
-      (label) types.
-
-    - View settings are controlled by single character codes called view
-      specs.  The current view spec setting for a koutline appears in the
-      modeline following the name of the outline.  The current view spec
-      setting may be changed interactively with {C-c C-v}.
-      See <${hyperb:dir}/kotl/EXAMPLE.kotl, 2b16=048> for details on valid
-      view specs.
-
-    - Minibuffer menu item Otl/View changed to Otl/Vspec to set a view
-      specification.  Use {C-x C-r} to view a Koutline in read-only mode.
-
-    - Added View menu to Koutliner popup and pulldown menus.  Moved
-      view-related tree operations from Tree menu to View menu.
-
-    - Fixed importation of star outline and Augment-style files.
-    
-    - The elements of a another buffer or file may be inserted into a
-      koutline as a set of cells by using the {C-x i} command. When prompted,
-      you may use a buffer name or file name from which to insert.
-
-      The cells will be inserted as the successors of the current cell unless
-      {C-u C-x i} is used and then they are inserted as the initial children
-      of the current cell.
-
-      See the documentation for the variables, kimport:mode-alist and
-      kimport:suffix-alist, for information on mode and suffix-specific
-      conversions performed on files before they are inserted.
-
-      Use {M-x kotl-mode:insert-file-contents RET} to insert the entire
-      contents of a file into the current cell at the location of point.
-
-    - {M-x kimport:file RET} will prompt for a file and a new koutline file
-      to create and will insert the elements of the file in the new outline.
-      (You can also use buffer or buffer names as arguments instead of file
-      names.)  See the documentation for the variables, kimport:mode-alist
-      and kimport:suffix-alist, for information on how the importation type
-      is determined.
-
-    - {C-c +} appends the contents of one cell to the end of another.  Added
-      this as Append-Cell to popup and pulldown menus.
-    
-    - {M-w}, copy-region, now works properly in read-only outlines.
+    - The Hyperbole/Global-Button menu now includes a menu item that will
+      activate each existing global button.  The Hyperbole/Explicit-Button
+      menu does the same thing for explicit buttons in the current buffer.
 
   ROLODEX
 
-    - {e} within a rolodex match buffer edits the associated entry within your
-      rolodex source file.  Fixed bug that caused {e} to fail when entries
-      are collapsed within the match buffer.
+    - Rolo-edit, bound to {e} in the rolodex match buffer, now works properly
+      if the rolodex is loaded before the rest of the Hyperbole system.
 
-    - {C-h h r e}, rolo-edit, just displays your personal rolodex file if you
-      hit {RET} without specifying an entry name to edit.
-
-    - {m} within a rolodex match buffer composes mail to the e-mail
-      address at point or the first address following point.  Also added as
-      Rolo/Mail minibuffer menu item and Rolodex/Mail-to-Address for window
-      system menus.
-
-    - New variable, wrolo-yank-reformat-function permits reformatting of an
-      entry yanked into the current buffer with {C-h h r y}, rolo-yank.
-
-  WINDOW CONFIGURATIONS 
-
-    - The minibuffer menu items, Win/PopRing and Win/YankRing now redisplay
-      the Win menu after performing their actions.  This allows you to yank
-      or pop window configurations repeatedly until you get to the one you
-      want.
 
 ===========================================================================
 *			     How to Obtain
 ===========================================================================
 
-Hyperbole is actually part of an integrated tool framework that we have
-developed called InfoDock.  InfoDock provides a modern user interface on top
-of Emacs, information management, and powerful software development tools,
-all in one package.  Get it via anonymous ftp from host ftp.xemacs.org in
-the /pub/infodock directory.
+InfoDock Associates, the developer of Hyperbole and InfoDock (an industrial
+quality turn-key version of XEmacs), is a firm dedicated to radical
+productivity improvement in technical environments, whether in software
+development or other knowledge intensive disciplines.  Our initial offerings
+include high quality commercial support, training, books and custom package
+development for InfoDock, XEmacs or GNU Emacs on a variety of platforms.
+InfoDock provides a modern user interface on top of Emacs, information
+management, and powerful software development tools, all in one package.
 
-Hyperbole is also available as a standalone package via anonymous ftp across
-the Internet.  Do not send requests to have it mailed to you since it won't
-be.  Instead have another party who has Internet access obtain it for the
-both of you.
+Contact us at <info@infodock.com> or visit our web site at
+http://www.infodock.com.
+
+Hyperbole is available as part of InfoDock or XEmacs and also as a standalone
+package via anonymous ftp across the Internet.  Do not send requests to have
+it mailed to you since it won't be.  Instead have another party who has
+Internet access obtain it for the both of you.
 
 Here is how to obtain Hyperbole as a standalone package on the Internet:
 
@@ -338,7 +266,7 @@ directory and place all of the files below it.
 
 Ftp to ftp.xemacs.org  (Internet Host ID = 128.174.252.16):
 
-   prompt> ftp ftp.xemacs.org
+   prompt> ftp ftp.xemacs.org  (If this doesn't work, try `ftp xemacs.org'.)
 
 Login as 'anonymous' with your own <user-id>@<site-name> as a password.
    
@@ -349,7 +277,7 @@ Login as 'anonymous' with your own <user-id>@<site-name> as a password.
 
 Move to the Hyperbole directory:
 
-   ftp> cd pub/infodock
+   ftp> cd /pub/infodock
 
 Set your transfer mode to binary:
 
@@ -514,8 +442,8 @@ context-sensitive Hyperbole key bindings.
 There are several Hyperbole-related mail addresses.  Learn what each is
 for before you mail to any of them.
 
-<hyperbole-request@hub.ucsb.edu>
-<hyperbole-announce-request@hub.ucsb.edu>
+<hyperbole-request@infodock.com>
+<hyperbole-announce-request@infodock.com>
 
    ALL mail concerning administration of the Hyperbole mailing lists should
    be sent to the appropriate one of these addresses.  That includes
@@ -524,27 +452,30 @@ for before you mail to any of them.
    that all Internet mail lists have a -request address for administrative
    requests.
 
-   Use the following formats on your subject line to execute requests,
-   where you substitute your own values for the <> delimited items.
+   Use the following formats in the *body* of your message to execute requests,
+   where you substitute your own values for the <> delimited items and items
+   enclosed in [] are optional.
  
-     Subject: Subscribe '<' <user@domain> '>' (<your name>).
-     Subject: Unsubscribe '<' <user@domain> '>'.
-
-   To change your address, you must unsubscribe your old address in one
-   message and then subscribe your new address in another message.
+     subscribe <mail-list-name> [<your-email-address>]
+       or
+     unsubscribe <mail-list-name> [<your-email-address>]
 
    For example:
 
-     To: hyperbole-announce-request@hub.ucsb.edu
-     Subject: Unsubscribe <joe@any.com>.
+     To: hyperbole-request@infodock.com
+     Subject: Used if a human happens to read your mail.
 
-     To: hyperbole-announce-request@hub.ucsb.edu
-     Subject: Subscribe <joe@any.com> (Joe Williams).
+     subscribe hyperbole joe@nowhere.gov
+
+   To change your address, you must unsubscribe your old address with
+   once command and subscribe your new address with another command, though
+   you can embed multiple commands on separate lines within a single message.
+
 
 There are two Hyperbole-related mail lists.  Subscribe to one or the other,
 not to both.
 
-<hyperbole@hub.ucsb.edu>
+<hyperbole@infodock.com>
 
    Mail list for discussion of all Hyperbole issues.  Bug reports and
    suggestions may also be sent here.
@@ -572,7 +503,7 @@ not to both.
    with Hyperbole.  In this way, the list will not be overwhelmed by
    messages that ask for, but provide no information.
 
-<hyperbole-announce@hub.ucsb.edu>
+<hyperbole-announce@infodock.com>
 
    Those who don't want to participate in the discussion but want to
    hear about bug fixes and new releases of Hyperbole should subscribe
@@ -598,6 +529,23 @@ not to both.
 
 	   				-- Bob Glickstein
 					   Z-Code Software Corporation
+-------
+
+  I've found Hyperbole (in conjunction with XEmacs) to be very useful
+  for signal processing algorithm development.
+
+  For me, it has almost completely obsoleted the engineering notebook:
+  I keep a set of files with ideas, algorithms, and results, linked
+  together and to the implementation in C++ files.  Using XEmacs'
+  support for embedding graphics, I've written a mode that accepts
+  image tags (formatted like HTML), and reads in GIF files to display
+  plots.  I have another program that converts the file to HTML (not
+  perfect, but adequate), so I can put any aspect of development on
+  our internal web for others to see.
+
+                                        -- Farzin Guilak
+		                           Protocol Systems, Inc., Engineer
+
 -------
 
   I am blind and have been using Hyperbole since 1992.  I used to use a PC as
@@ -731,7 +679,7 @@ got its name.
 
 The following copyright applies to the Hyperbole system as a whole.
 
-Copyright (C) 1989, 1990, 1991, 1992, 1993, 1994, 1995  Free Software Foundation, Inc.
+Copyright (C) 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996  Free Software Foundation, Inc.
 
 Available for use and distribution under the terms of the GNU Public License,
 version 2 or higher.
@@ -745,7 +693,11 @@ Hyperbole is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with GNU Emacs or XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+InfoDock Associates sells support and development services for this package
+and most other aspects of Emacs or InfoDock.  Contact information is at the
+top of this file.
 
+You should have received a copy of the GNU General Public License
+along with GNU Emacs, XEmacs or InfoDock; see the file COPYING.  If
+not, write to the Free Software Foundation, 675 Mass Ave, Cambridge,
+MA 02139, USA.

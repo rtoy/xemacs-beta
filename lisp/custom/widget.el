@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, extensions, faces, hypermedia
-;; Version: 1.40
+;; Version: 1.44
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -42,12 +42,12 @@
   :hide-rear-space) 
 
 ;; These autoloads should be deleted when the file is added to Emacs.
-(autoload 'widget-create "widget-edit")
-(autoload 'widget-insert "widget-edit")
-(autoload 'widget-browse "widget-browse" nil t)
-(autoload 'widget-browse-at "widget-browse" nil t)
+(unless (fboundp 'load-gc)
+  (autoload 'widget-create "widget-edit")
+  (autoload 'widget-insert "widget-edit")
+  (autoload 'widget-browse "widget-browse" nil t)
+  (autoload 'widget-browse-at "widget-browse" nil t))
 
-;;;###autoload
 (defun define-widget (name class doc &rest args)
   "Define a new widget type named NAME from CLASS.
 

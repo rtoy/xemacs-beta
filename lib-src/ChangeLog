@@ -1,3 +1,7 @@
+Wed Feb 19 18:24:49 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh: Added lisp/auctex.
+
 Thu Feb 13 11:32:47 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in.in: Install pstogif script.

@@ -17,12 +17,9 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;; General Public License for more details.
 
-;;; Synched up with: Not in FSF.
-
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;; Change Log:
 ;;
@@ -186,9 +183,7 @@ characters are typed.  There's not currently a way around this."
 	(passwd-ungrab-keyboard)
 	(passwd-insecure-display)
 	(passwd-kill-buffer input)
-	(if (fboundp 'clear-message) ;XEmacs
-	    (clear-message)
-	  (message ""))
+	(message "")
 	))))
 
 
@@ -372,9 +367,7 @@ characters are typed.  There's not currently a way around this."
   (let ((inhibit-quit t)
 	str)
     (while (or (null str) (keymapp (key-binding str)))
-      (if (fboundp 'display-message)
-	  (display-message 'prompt prompt)
-	(message prompt))
+      (message prompt)
       (setq str (concat str (char-to-string (read-char)))))
     (setq quit-flag nil)
     str))

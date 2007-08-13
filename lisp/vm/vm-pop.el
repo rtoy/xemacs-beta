@@ -24,19 +24,125 @@
   (let ((process nil)
 	(folder-type vm-folder-type)
 	(saved-password t)
+	(m-per-session vm-pop-messages-per-session)
+	(b-per-session vm-pop-bytes-per-session)
 	(handler (and (fboundp 'find-file-name-handler)
 		      (condition-case ()
 			  (find-file-name-handler source 'vm-pop-move-mail)
 			(wrong-number-of-arguments
 			  (find-file-name-handler source)))))
 	(popdrop (vm-safe-popdrop-string source))
-	greeting timestamp n message-count
-	host port auth user pass source-list process-buffer)
+	mailbox-count mailbox-size message-size response
+	n retrieved retrieved-bytes process-buffer)
     (unwind-protect
 	(catch 'done
 	  (if handler
 	      (throw 'done
 		     (funcall handler 'vm-pop-move-mail source destination)))
+	  (setq process (vm-pop-make-session source))
+	  (or process (throw 'done nil))
+	  (setq process-buffer (process-buffer process))
+	  (save-excursion
+	    (set-buffer process-buffer)
+	    (setq vm-folder-type (or folder-type vm-default-folder-type))
+	    ;; find out how many messages are in the box.
+	    (vm-pop-send-command process "STAT")
+	    (setq response (vm-pop-read-stat-response process)
+		  mailbox-count (nth 0 response)
+		  mailbox-size (nth 1 response))
+	    ;; forget it if the command fails
+	    ;; or if there are no messages present.
+	    (if (or (null mailbox-count)
+		    (< mailbox-count 1))
+		(throw 'done nil))
+	    ;; loop through the maildrop retrieving and deleting
+	    ;; messages as we go.
+	    (setq n 1 retrieved 0 retrieved-bytes 0)
+	    (while (and (<= n mailbox-count)
+			(or (not (natnump m-per-session))
+			    (< retrieved m-per-session))
+			(or (not (natnump b-per-session))
+			    (< retrieved-bytes b-per-session)))
+	      (if (or vm-pop-max-message-size
+		      b-per-session)
+		  (progn
+		    (vm-pop-send-command process (format "LIST %d" n))
+		    (setq message-size
+			  (vm-pop-read-list-response process))))
+	      (if (and (integerp vm-pop-max-message-size)
+		       (> message-size vm-pop-max-message-size)
+		       (progn
+			 (setq response
+			       (if vm-pop-ok-to-ask
+				   (vm-pop-ask-about-large-message process
+								   message-size
+								   n)
+				 'skip))
+			 (not (eq response 'retrieve))))
+		  (if (eq response 'delete)
+		      (progn
+			(message "Deleting message %d..." n)
+			(vm-pop-send-command process (format "DELE %d" n))
+			(and (null (vm-pop-read-response process))
+			     (throw 'done (not (equal retrieved 0)))))
+		    (if vm-pop-ok-to-ask
+			(message "Skipping message %d..." n)
+	     (message "Skipping message %d in %s, too large (%d > %d)..."
+		      n popdrop message-size vm-pop-max-message-size)))
+		(message "Retrieving message %d (of %d) from %s..."
+			 n mailbox-count popdrop)
+		(vm-pop-send-command process (format "RETR %d" n))
+		(and (null (vm-pop-read-response process))
+		     (throw 'done (not (equal retrieved 0))))
+		(and (null (vm-pop-retrieve-to-crashbox process destination))
+		     (throw 'done (not (equal retrieved 0))))
+		(vm-increment retrieved)
+		(and b-per-session
+		     (setq retrieved-bytes (+ retrieved-bytes message-size)))
+		(vm-pop-send-command process (format "DELE %d" n))
+		;; DELE can't fail but Emacs or this code might
+		;; blow a gasket and spew filth down the
+		;; connection, so...
+		(and (null (vm-pop-read-response process))
+		     (throw 'done (not (equal retrieved 0)))))
+	      (vm-increment n))
+	     (not (equal retrieved 0)) ))
+      (if process
+	  (vm-pop-end-session process)))))
+
+(defun vm-pop-check-mail (source)
+  (let ((process nil)
+	(handler (and (fboundp 'find-file-name-handler)
+		      (condition-case ()
+			  (find-file-name-handler source 'vm-pop-check-mail)
+			(wrong-number-of-arguments
+			 (find-file-name-handler source)))))
+	response)
+    (unwind-protect
+	(save-excursion
+	  (catch 'done
+	    (if handler
+		(throw 'done
+		       (funcall handler 'vm-pop-check-mail source)))
+	    (setq process (vm-pop-make-session source))
+	    (or process (throw 'done nil))
+	    (set-buffer (process-buffer process))
+	    (vm-pop-send-command process "STAT")
+	    (setq response (vm-pop-read-stat-response process))
+	    (if (null response)
+		nil
+	      (not (equal 0 (car response))))))
+      (and process (vm-pop-end-session process)))))
+
+(defun vm-pop-make-session (source)
+  (let ((process-to-shutdown nil)
+	process
+	(saved-password t)
+	(popdrop (vm-safe-popdrop-string source))
+	greeting timestamp
+	host port auth user pass source-list process-buffer)
+    (unwind-protect
+	(catch 'done
 	  ;; parse the maildrop
 	  (setq source-list (vm-parse source "\\([^:]+\\):?")
 		host (nth 0 source-list)
@@ -67,16 +173,22 @@
 	      (progn
 		(setq pass (car (cdr (assoc source vm-pop-passwords))))
 		(if (null pass)
-		    (setq pass
-			  (vm-read-password
-			   (format "POP password for %s: "
-				   popdrop))
-			  vm-pop-passwords (cons (list source pass)
-						 vm-pop-passwords)
-			  saved-password t))))
+		    (if (null vm-pop-ok-to-ask)
+			(progn (message "Need password for %s" popdrop)
+			       (throw 'done nil))
+		      (setq pass
+			    (vm-read-password
+			     (format "POP password for %s: "
+				     popdrop))
+			    vm-pop-passwords (cons (list source pass)
+						   vm-pop-passwords)
+			    saved-password t)))))
 	  ;; get the trace buffer
 	  (setq process-buffer
 		(get-buffer-create (format "trace of POP session to %s" host)))
+	  ;; Tell XEmacs/MULE not to mess with the text.
+	  (and (fboundp 'set-file-coding-system)
+	       (set-file-coding-system 'binary t))
 	  ;; clear the trace buffer of old output
 	  (save-excursion
 	    (set-buffer process-buffer)
@@ -84,14 +196,15 @@
 	  ;; open the connection to the server
 	  (setq process (open-network-stream "POP" process-buffer host port))
 	  (and (null process) (throw 'done nil))
-	  (set-process-filter process 'vm-pop-process-filter)
+	  (process-kill-without-query process)
 	  (save-excursion
 	    (set-buffer process-buffer)
 	    (make-local-variable 'vm-pop-read-point)
-	    (setq vm-pop-read-point (point-min)
-		  vm-folder-type (or folder-type vm-default-folder-type))
-	    (and (null (setq greeting (vm-pop-read-response process t)))
-		 (throw 'done nil))
+	    (setq vm-pop-read-point (point-min))
+	    (if (null (setq greeting (vm-pop-read-response process t)))
+		(progn (delete-process process)
+		       (throw 'done nil)))
+	    (setq process-to-shutdown process)
 	    ;; authentication
 	    (cond ((equal auth "pass")
 		   (vm-pop-send-command process (format "USER %s" user))
@@ -118,7 +231,7 @@
 		   (if (null timestamp)
 		       (progn
 			 (goto-char (point-max))
-		 (insert "<<< ooops, no timestamp found in greeting! >>>\n")
+   (insert-before-markers "<<< ooops, no timestamp found in greeting! >>>\n")
 			 (throw 'done nil)))
 		   (vm-pop-send-command
 		    process
@@ -128,51 +241,25 @@
 		   (and (null (vm-pop-read-response process))
 			(throw 'done nil)))
 		  (t (error "Don't know how to authenticate with %s" auth)))
-	    ;; find out how many messages are in the box.
-	    (vm-pop-send-command process "STAT")
-	    (setq message-count (vm-pop-read-stat-response process))
-	    ;; forget it if the command fails
-	    ;; or if there are no messages present.
-	    (if (or (null message-count)
-		    (< message-count 1))
-		(throw 'done nil))
-	    ;; loop through the maildrop retrieving and deleting
-	    ;; messages as we go.
-	    (setq n 1)
-	    (while (<= n message-count)
-	      (vm-unsaved-message "Retrieving message %d (of %d) from %s..."
-				  n message-count popdrop)
-	      (vm-pop-send-command process (format "RETR %d" n))
-	      (and (null (vm-pop-read-response process))
-		   (throw 'done (not (equal n 1))))
-	      (and (null (vm-pop-retrieve-to-crashbox process destination))
-		   (throw 'done (not (equal n 1))))
-	      (vm-pop-send-command process (format "DELE %d" n))
-	      ;; DELE can't fail but Emacs or this code might
-	      ;; blow a gasket and spew filth down the
-	      ;; connection, so...
-	      (and (null (vm-pop-read-response process))
-		   (throw 'done (not (equal n 1))))
-	      (vm-increment n))
-	     t ))
-      (if process
-	  (save-excursion
-	    (set-buffer (process-buffer process))
-	    (vm-pop-send-command process "QUIT")
-	    (vm-pop-read-response process)
-	    (delete-process process))))))
+	    (setq process-to-shutdown nil)
+	    process ))
+      (if process-to-shutdown
+	  (vm-pop-end-session process-to-shutdown)))))
 
-(defun vm-pop-process-filter (process output)
+(defun vm-pop-end-session (process)
   (save-excursion
     (set-buffer (process-buffer process))
-    (goto-char (point-max))
-    (insert output)))
+    (vm-pop-send-command process "QUIT")
+    (vm-pop-read-response process)
+    (if (fboundp 'add-async-timeout)
+	(add-async-timeout 2 'delete-process process)
+      (run-at-time 2 nil 'delete-process process))))
 
 (defun vm-pop-send-command (process command)
   (goto-char (point-max))
   (if (= (aref command 0) ?P)
-      (insert "PASS <omitted>\r\n")
-    (insert command "\r\n"))
+      (insert-before-markers "PASS <omitted>\r\n")
+    (insert-before-markers command "\r\n"))
   (setq vm-pop-read-point (point))
   (process-send-string process command)
   (process-send-string process "\r\n"))
@@ -193,16 +280,72 @@
 	  (buffer-substring (point) match-end)
 	t ))))
 
+(defun vm-pop-read-past-dot-sentinel-line (process)
+  (let ((case-fold-search nil))
+    (goto-char vm-pop-read-point)
+    (while (not (search-forward "^.\r\n" nil 0))
+      (beginning-of-line)
+      ;; save-excursion doesn't work right
+      (let ((opoint (point)))
+	(accept-process-output process)
+	(goto-char opoint)))
+    (setq vm-pop-read-point (point))))
+
 (defun vm-pop-read-stat-response (process)
+  (let ((response (vm-pop-read-response process t))
+	list)
+    (setq list (vm-parse response "\\([^ ]+\\) *"))
+    (list (string-to-int (nth 1 list)) (string-to-int (nth 2 list)))))
+
+(defun vm-pop-read-list-response (process)
   (let ((response (vm-pop-read-response process t)))
-    (string-to-int (nth 1 (vm-parse response "\\([^ ]+\\) *")))))
+    (string-to-int (nth 2 (vm-parse response "\\([^ ]+\\) *")))))
+
+(defun vm-pop-ask-about-large-message (process size n)
+  (let ((work-buffer nil)
+	(pop-buffer (current-buffer))
+	start end)
+    (unwind-protect
+	(save-excursion
+	  (save-window-excursion
+	    (vm-pop-send-command process (format "TOP %d %d" n 0))
+	    (if (vm-pop-read-response process)
+		(progn
+		  (setq start vm-pop-read-point)
+		  (vm-pop-read-past-dot-sentinel-line process)
+		  (setq end vm-pop-read-point)
+		  (setq work-buffer (generate-new-buffer "*pop-glop*"))
+		  (set-buffer work-buffer)
+		  (insert-buffer-substring pop-buffer start end)
+		  (forward-line -1)
+		  (delete-region (point) (point-max))
+		  (vm-pop-cleanup-region (point-min) (point-max))
+		  (vm-display-buffer work-buffer)
+		  (setq minibuffer-scroll-window (selected-window))
+		  (goto-char (point-min))
+		  (if (re-search-forward "^Received:" nil t)
+		      (progn
+			(goto-char (match-beginning 0))
+			(vm-reorder-message-headers
+			 nil vm-visible-headers
+			 vm-invisible-header-regexp)))
+		  (set-window-point (selected-window) (point))))
+	    (if (y-or-n-p (format "Message %d, size = %d, retrieve? " n size))
+		'retrieve
+	      (if (y-or-n-p (format "Delete message %d from popdrop? " n size))
+		  'delete
+		'skip))))
+      (and work-buffer (kill-buffer work-buffer)))))
 
 (defun vm-pop-retrieve-to-crashbox (process crash)
   (let ((start vm-pop-read-point) end)
     (goto-char start)
-    (while (not (re-search-forward "^\\.\r\n" nil t))
-      (accept-process-output process)
-      (goto-char start))
+    (while (not (re-search-forward "^\\.\r\n" nil 0))
+      (beginning-of-line)
+      ;; save-excursion doesn't work right
+      (let ((opoint (point)))
+	(accept-process-output process)
+	(goto-char opoint)))
     (setq vm-pop-read-point (point-marker))
     (goto-char (match-beginning 0))
     (setq end (point-marker))

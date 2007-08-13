@@ -481,11 +481,11 @@ crash some time ago.
 @section What is the status of XEmacs v20?
 
 XEmacs v20 is the version of XEmacs that includes MULE (Asian-language)
-support.  It's currently in late beta and the tentative release date for
-20.0 is for mid February.  When compiled without MULE support 20.0 is
-currently very similar to 19.15 (except for some changes to the
-byte-code format, some new primitive types including @code{char},
-@code{char-table}, and @code{range-table}) and equally stable.
+support.  XEmacs 20.0 was released in February 1997.  When compiled
+without MULE support 20.0 is currently very similar to 19.15 (except for
+some changes to the byte-code format, some new primitive types including
+@code{char}, @code{char-table}, and @code{range-table}) and equally
+stable.
 
 @node Q1.3.2, Q1.3.3, Q1.3.1, Introduction
 @section What is the status of Asian-language support, aka MULE?
@@ -4860,10 +4860,13 @@ various FAQ FTP sites, as this file is surely out of date.
 @section What is new in 19.15?
 
 The biggest changes in 19.15 include integration of TM (a MIME package
-for VM and Gnus), beautifying the outlook, and bugfixing.
+for VM and Gnus), EFS (the next generation of ange-ftp) and AUC TeX (the
+Emacs subsystem that includes a major mode for editing TeX and LaTeX,
+and a lot of other stuff).  Many bugs from 19.14 have been fixed for
+this release.
 
-XEmacs 20.0 is now very close (currently a separate branch of XEmacs
-that includes full Asian-language aka MULE support).  This work is being
+XEmacs 20.0 (which includes full Asian-language support aka MULE) has
+been released, but is still considered unstable.  This work is being
 supported by Sun Microsystems.
 
 @node Q6.0.3,  , Q6.0.1, Current Events
@@ -4884,7 +4887,7 @@ decided that intermediate versions will be made available in source only
 form for the truly interested.
 
 XEmacs 19.15 is the end of the road for version 19 XEmacs.  The next
-release after 19.15 will be XEmacs 20.0.
+release after 19.15 will be XEmacs 20.1.
 
 @item
 As of December 1996, Steve Baur <steve@@altair.xemacs.org> has become

@@ -6,12 +6,12 @@
 ;; KEYWORDS:     oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    03-Oct-90
-;; LAST-MOD:     11-May-95 at 11:24:33 by Bob Weiner
+;; LAST-MOD:     31-Oct-96 at 17:05:31 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1996  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -19,26 +19,51 @@
 ;; DESCRIPTION:  
 ;; DESCRIP-END.
 
-;; ************************************************************************
-;; Other required Elisp libraries
-;; ************************************************************************
+;;; ************************************************************************
+;;; Other required Elisp libraries
+;;; ************************************************************************
 
 (require 'eif-calls)
 
-;; ************************************************************************
-;; Public variables
-;; ************************************************************************
+;;; ************************************************************************
+;;; Public variables
+;;; ************************************************************************
 
 (defconst eif-type-tag-separator ","
   "String that separates a tags type from its normalized definition form.")
 
-;; ************************************************************************
-;; Public functions
-;; ************************************************************************
+;;; ************************************************************************
+;;; Public functions
+;;; ************************************************************************
 
 (defun eif-feature-implementors (ftr-name)
   "Return unsorted list of Eiffel feature tags which implement FTR-NAME."
   (eif-feature-matches (concat "^" (regexp-quote ftr-name) "$")))
+
+(defun eif-feature-map-class-tags (function class)
+  "Apply FUNCTION to all feature tags from CLASS and return a list of the results.
+Feature tags come from the file named by br-feature-tags-file."
+  (let ((obuf (current-buffer))
+	(class-tag (concat "\n" class eif-type-tag-separator))
+	(results)
+	start end)
+    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+    (goto-char 1)
+    (if (not (search-forward class-tag nil t))
+	nil
+      (setq start (match-beginning 0)
+	    end (if (search-forward "\^L\n" nil t)
+		    (match-beginning 0)
+		  (point-max)))
+      (goto-char start)
+      ;; Feature defs can occur only within a single file.
+      (while (search-forward class-tag end t)
+	(setq results (cons (funcall function) results))
+	;; Might have deleted current tag and would miss next tag unless point
+	;; is moved backwards.
+	(backward-char)))
+    (set-buffer obuf)
+    results))
 
 (defun eif-feature-name-to-regexp (name)
   "Converts feature NAME into a regular expression matching the feature's name tag."
@@ -52,7 +77,7 @@
 
 (defun eif-feature-signature-to-regexp (signature)
   "Given an Eiffel class or feature SIGNATURE, return regexp to match its definition."
-  (let ((regexp) class name type)
+  (let ((regexp) name type)
     (setq regexp
 	  (cond ((string-match (concat eif-type-tag-separator
 				       "\\(" br-feature-type-regexp "\\) ")
@@ -75,31 +100,18 @@
 	(error "(eif-feature-signature-to-regexp): Invalid format, '%s'"
 	       signature))))
 
+(defun eif-feature-tag-regexp (class feature-name)
+  "Return a regexp that matches to the feature tag entry for CLASS' FEATURE-NAME."
+  (concat "^" (regexp-quote class) eif-type-tag-separator
+	  br-feature-type-regexp " "
+	  (regexp-quote feature-name) "[ \n]"))
+
 (defun eif-feature-tree-command-p (class-or-signature)
   "Display definition of CLASS-OR-SIGNATURE if a signature and return t, else return nil."
   (if (br-in-browser) (br-to-view-window))
   (br-feature-found-p (br-feature-file class-or-signature)
 		      class-or-signature))
 
-(defun eif-list-features (class &optional indent)
-  "Return sorted list of Eiffel feature names lexically defined in CLASS."
-  (let ((class-tag (concat "\n" class eif-type-tag-separator))
-	(features) start end)
-    (save-excursion
-      (set-buffer
-       (funcall br-find-file-noselect-function br-feature-tags-file))
-      (goto-char 1)
-      (if (not (search-forward class-tag nil t))
-	  nil
-	(setq start (match-beginning 0)
-	      end (if (search-forward "\^L\n" nil t)
-		      (match-beginning 0)
-		    (point-max)))
-	(goto-char start)
-	;; Feature defs can occur only within a single file.
-	(while (search-forward class-tag end t)
-	  (setq features (cons (br-feature-current) features)))
-	(eif-sort-features features)))))
 
 (defun eif-get-feature-tags (feature-file feature-list)
   "Save Eiffel feature tags defined in FEATURE-FILE to 'br-feature-tags-file'.
@@ -123,6 +135,14 @@ of tags to save."
 	       (mapcar (function (lambda (tag) (insert tag "\n")))
 		       feature-list)))
     (set-buffer obuf)))
+
+(defun eif-list-features (class &optional indent)
+  "Return sorted list of Eiffel feature names lexically defined in CLASS.
+Optional INDENT is unused but is required for multi-language OO-Browser conformance."
+  ;; Use nreverse here so that stable sort ends up leaving same named
+  ;; features in the order they were defined in the source file.
+  (eif-sort-features
+   (eif-feature-map-class-tags 'br-feature-current class)))
 
 (defun eif-scan-features-in-class (class start end)
   "Return unordered list of Eiffel feature definitions in CLASS.
@@ -161,9 +181,9 @@ With optional IDENTIFIER, do the same instead for it."
 	nil))
      )))
 
-;; ************************************************************************
-;; Private functions
-;; ************************************************************************
+;;; ************************************************************************
+;;; Private functions
+;;; ************************************************************************
 
 (defun eif-export-feature-p ()
   "Return nil unless point is within a class export clause."
@@ -225,40 +245,43 @@ With optional IDENTIFIER, do the same instead for it."
       (goto-char opoint)
       nil)))
 
-(defun eif-feature-matches (regexp)
-  "Return an unsorted list of feature tags whose names match in part or whole to REGEXP."
-  ;; Ensure match to feature names only; also handle "^" and "$" meta-chars
-  (setq regexp
-	(concat "^\\(" eif-identifier "\\)"
-		eif-type-tag-separator
-		br-feature-type-regexp " "
-		(if (equal (substring regexp 0 1) "^")
-		    (progn (setq regexp (substring regexp 1)) nil)
-		  (concat "[" eif-identifier-chars "]*"))
-		(if (equal (substring regexp -1) "$")
-		    (substring regexp 0 -1)
-		  (concat regexp "[" eif-identifier-chars "]*"))
-		"[ \t\n\r]"))
-  (save-excursion
-    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
-    (goto-char 1)
-    (let ((features) start end)
-      (if (not (re-search-forward regexp nil t))
-	  nil
-	(setq start (match-beginning 0)
-	      end (if (search-forward "\^L\n" nil t)
-		      (match-beginning 0)
-		    (point-max)))
-	(goto-char start)
-	;; Feature defs can occur only within a single file.
-	(while (re-search-forward regexp end t)
-	  (backward-char) ;; Might have moved past newline.
-	  (setq features (cons (br-feature-current) features))))
-      features)))
-
 (defun eif-feature-lessp (feature1 feature2)
   (string-lessp (eif-feature-partial-name feature1)
 		(eif-feature-partial-name feature2)))
+
+(defun eif-feature-map-tags (function regexp)
+  "Apply FUNCTION to all current feature tags that match REGEXP and return a list of the results.
+Feature tags come from the file named by br-feature-tags-file."
+  (let ((identifier-chars (concat "[" eif-identifier-chars "]*"))
+	(results))
+    ;; Ensure match to feature names only; also handle "^" and "$" meta-chars
+    (setq regexp
+	  (concat "^\\(" eif-identifier "\\)"
+		  eif-type-tag-separator
+		  br-feature-type-regexp " "
+		  (if (equal (substring regexp 0 1) "^")
+		      (progn (setq regexp (substring regexp 1)) nil)
+		    identifier-chars)
+		  (if (equal (substring regexp -1) "$")
+		      (substring regexp 0 -1)
+		    (concat regexp identifier-chars))
+		  "[ \t\n\r\f]"))
+    (save-excursion
+      (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+      (goto-char 1)
+      (while (re-search-forward regexp nil t)
+	(setq results (cons (funcall function) results))))
+    results))
+
+(defun eif-feature-matches (regexp)
+  "Return an unsorted list of feature tags whose names match in part or whole to REGEXP.
+^ and $ characters may be used to match to the beginning and end of a feature name,
+respectively."
+  (eif-feature-map-tags
+   ;; Backward-char is necessary in this next function since point might have
+   ;; moved past a newline.
+   (function (lambda () (backward-char) (br-feature-current)))
+   regexp))
 
 (defun eif-feature-partial-name (signature &optional with-class for-display)
   "Extract the feature name without its class name from feature SIGNATURE.
@@ -319,21 +342,6 @@ listing."
 ;; feature in buffers whose major mode is 'eiffel-mode'.  It is used by the
 ;; browser but may also be used standalone.
 ;;
-(defun eiffel-find-feature (feature-name)
-  "Move point to start of feature named FEATURE-NAME in current buffer.
-Display feature including all preceding comments at the top of the window.
-Move point and return non-nil iff FEATURE-NAME is found."
-  (interactive "sFeature to find: ")
-  (cond ((eif-locate-feature
-	  feature-name (eif-routine-to-regexp feature-name)))
-	((eif-to-attribute feature-name)
-	 (let ((opoint (point)))
-	   (eif-to-comments-begin)
-	   (recenter 0)
-	   (goto-char opoint)
-	   (back-to-indentation)
-	   t))))
-
 (defun eif-find-class-name ()
   "Return class name that point is within, else nil."
   (if (= (point) (point-max)) (skip-chars-backward " \t\n"))
@@ -474,9 +482,24 @@ Move point and return non-nil iff FEATURE-NAME is found."
       (buffer-substring (match-beginning 0) (match-end 0))))
 
 
-;; ************************************************************************
-;; Private variables
-;; ************************************************************************
+(defun eiffel-find-feature (feature-name)
+  "Move point to start of feature named FEATURE-NAME in current buffer.
+Display feature including all preceding comments at the top of the window.
+Move point and return non-nil iff FEATURE-NAME is found."
+  (interactive "sFeature to find: ")
+  (cond ((eif-locate-feature
+	  feature-name (eif-routine-to-regexp feature-name)))
+	((eif-to-attribute feature-name)
+	 (let ((opoint (point)))
+	   (eif-to-comments-begin)
+	   (recenter 0)
+	   (goto-char opoint)
+	   (back-to-indentation)
+	   t))))
+
+;;; ************************************************************************
+;;; Private variables
+;;; ************************************************************************
 
 (defconst eif-feature-name
   (concat 

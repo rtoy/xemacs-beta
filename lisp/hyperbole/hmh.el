@@ -6,15 +6,15 @@
 ;; KEYWORDS:     hypermedia, mail
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Brown U.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    21-May-91 at 17:06:36
-;; LAST-MOD:     19-May-95 at 15:09:30 by Bob Weiner
+;; LAST-MOD:     31-Oct-96 at 22:34:01 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
+;; Copyright (C) 1991-1996, Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -22,7 +22,7 @@
 ;;   Automatically configured for use in "hsite.el".
 ;;   If hsite loading fails prior to initializing Hyperbole Mh support,
 ;;
-;;       {M-x Mh-init RTN}
+;;       {M-x Mh-init RET}
 ;;
 ;;   will do it.
 ;;

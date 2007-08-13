@@ -2561,7 +2561,9 @@ EndDSCPage\n"))
 
 (defun ps-build-reference-face-lists ()
   (if ps-auto-font-detect
-      (let ((faces (face-list))
+      (let ((faces (if (eq ps-print-emacs-type 'xemacs)
+		       (face-list 5)
+		     (face-list)))
 	    the-face)
 	(setq ps-ref-bold-faces nil
 	      ps-ref-italic-faces nil

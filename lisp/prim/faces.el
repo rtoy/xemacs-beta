@@ -1343,7 +1343,7 @@ you want to add code to do stuff like this, use the create-device-hook."
     (let ((fg (face-foreground 'modeline-buffer-id 'global))
 	  (font (face-font 'modeline-buffer-id 'global)))
       (when (and (null fg) (featurep 'x))
-	(set-face-foreground 'modeline-buffer-id "blue" 'global '(color x)))
+	(set-face-foreground 'modeline-buffer-id "blue4" 'global '(color x)))
       (unless font
 	(when (featurep 'x)
 	  (set-face-font 'modeline-buffer-id [bold-italic] nil '(mono x))
@@ -1357,7 +1357,7 @@ you want to add code to do stuff like this, use the create-device-hook."
     (let ((fg (face-foreground 'modeline-mousable 'global))
 	  (font (face-font 'modeline-mousable 'global)))
       (when (and (null fg) (featurep 'x))
-	(set-face-foreground 'modeline-mousable "red" 'global '(color x)))
+	(set-face-foreground 'modeline-mousable "firebrick" 'global '(color x)))
       (unless font
 	(when (featurep 'x)
 	  (set-face-font 'modeline-mousable [bold] nil '(mono x))
@@ -1370,7 +1370,7 @@ you want to add code to do stuff like this, use the create-device-hook."
       (when (and (null fg) (featurep 'x))
 	(set-face-foreground 'modeline-mousable-minor-mode
 			     '(((color x) . "green4")
-			       ((color x) . "green")) 'global))))
+			       ((color x) . "forestgreen")) 'global))))
   (set-face-parent 'modeline-mousable-minor-mode 'modeline-mousable
 		   nil nil 'append)
   )

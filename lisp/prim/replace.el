@@ -581,7 +581,8 @@ The valid answers include `act', `skip', `act-and-show',
       (let ((aborted t))
 	(unwind-protect
 	    (progn
-	      (isearch-highlight (match-beginning 0) (match-end 0))
+	      (if (match-beginning 0)
+		  (isearch-highlight (match-beginning 0) (match-end 0)))
 	      (next-command-event event)
 	      (setq aborted nil))
 	  (isearch-dehighlight aborted)))
@@ -735,6 +736,7 @@ which will run faster and probably do exactly what you want."
 		       (if (not replaced)
 			   (progn
 			     (replace-match next-replacement nocasify literal)
+			     (store-match-data nil)
 			     (setq replaced t))))
 		      ((eq def 'automatic)
 		       (or replaced

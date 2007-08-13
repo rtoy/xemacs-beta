@@ -21,7 +21,11 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: Not really in FSF. */
 
 #include <errno.h>
+
+#ifndef WINDOWSNT
 #include <sys/errno.h>          /* <errno.h> does not always imply this */
+#endif
+
 /* Load sys/types.h if not already loaded.
    In some systems loading it twice is suicidal.  */
 #ifndef makedev
@@ -49,12 +53,17 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifdef WINDOWSNT
-#define NOMINMAX
+#include <io.h>
+#endif
+
+#if 0
+#ifdef WINDOWSNT
 #include <windows.h>
 #include <stdlib.h>	/* for proper declaration of environ */
 #include <fcntl.h>
 #include "nt.h"
 #define _P_NOWAIT 1	/* from process.h */
+#endif
 #endif
 
 #ifdef MSDOS

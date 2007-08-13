@@ -1,9 +1,9 @@
 ;; -*-Emacs-Lisp-*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;; File:         efs-efs-kerberos.el
+;; File:         efs-kerberos.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.2 $
 ;; RCS:
 ;; Description:  Support for Kerberos gateways.
 ;; Author:       Sandy Rutherford <sandy@gandalf.sissa.it>
@@ -21,7 +21,7 @@
 (defconst efs-kerberos-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.2 $" 11 -2)))
 
 ;;; Internal Variables
 

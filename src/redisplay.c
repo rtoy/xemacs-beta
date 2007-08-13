@@ -3661,7 +3661,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
 
 static Charcount
 add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
-				Charcount pos, Charcount min, Charcount max)
+				Charcount pos, Charcount min_pos, Charcount max_pos)
 {
   /* This function has been Mule-ized. */
   Charcount end;
@@ -3674,8 +3674,8 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
 
   end = (Dynarr_length (db->runes) +
 	 bytecount_to_charcount (str, strlen ((CONST char *) str)));
-  if (max != -1)
-    end = min (max, end);
+  if (max_pos != -1)
+    end = min (max_pos, end);
 
   while (pos < end && *cur_pos)
     {
@@ -3693,7 +3693,7 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
 	}
     }
 
-  while (Dynarr_length (db->runes) < min &&
+  while (Dynarr_length (db->runes) < min_pos &&
 	 (data->pixpos + data->blank_width <= data->max_pixpos))
     add_blank_rune (data, NULL, 0);
 
@@ -3704,7 +3704,7 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
    modeline extents. */
 static Charcount
 add_glyph_to_fstring_db_runes (pos_data *data, Lisp_Object glyph,
-			       Charcount pos, Charcount min, Charcount max)
+			       Charcount pos, Charcount min_pos, Charcount max_pos)
 {
   /* This function has been Mule-ized. */
   Charcount end;
@@ -3716,8 +3716,8 @@ add_glyph_to_fstring_db_runes (pos_data *data, Lisp_Object glyph,
     add_blank_rune (data, NULL, 0);
 
   end = Dynarr_length (db->runes) + 1;
-  if (max != -1)
-    end = min (max, end);
+  if (max_pos != -1)
+    end = min (max_pos, end);
 
   gb.glyph = glyph;
   gb.extent = Qnil;
@@ -5536,12 +5536,14 @@ redisplay_device (struct device *d)
   return 0;
 }
 
+#ifndef WINDOWSNT
 static Lisp_Object
 restore_profiling_redisplay_flag (Lisp_Object val)
 {
   profiling_redisplay_flag = XINT (val);
   return Qnil;
 }
+#endif
 
 /* Ensure that all windows on all frames on all devices are displaying
    the current contents of their respective buffers. */
@@ -5553,12 +5555,14 @@ redisplay_without_hooks (void)
   int size_change_failed = 0;
   int count = specpdl_depth ();
 
+#ifndef WINDOWSNT
   if (profiling_active)
     {
       record_unwind_protect (restore_profiling_redisplay_flag,
 			     make_int (profiling_redisplay_flag));
       profiling_redisplay_flag = 1;
     }
+#endif
 
   if (asynch_device_change_pending)
     handle_asynch_device_change ();

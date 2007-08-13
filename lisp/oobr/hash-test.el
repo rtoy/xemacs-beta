@@ -6,12 +6,12 @@
 ;; KEYWORDS:     extensions, maint, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    16-Mar-90 at 03:38:48
-;; LAST-MOD:     14-Apr-95 at 15:37:49 by Bob Weiner
+;; LAST-MOD:     20-Feb-97 at 07:04:19 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995, 1997  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -76,7 +76,7 @@
 ; => ("b1" "b2")
 
 (hash-make -3)
-; => (error ("(hash-make): Initializer must be >= 0, not '-3'"))
+; => (error ("(hash-make): Initializer must be >= 0, not `-3'"))
 
 (hash-replace '("e11" "e22") "e" hs3)
 ; => ("e11" "e22")

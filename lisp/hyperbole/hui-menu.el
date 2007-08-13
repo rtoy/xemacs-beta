@@ -6,12 +6,12 @@
 ;; KEYWORDS:     hypermedia, mouse
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola, Inc., PPG
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    28-Oct-94 at 10:59:44
-;; LAST-MOD:     26-Oct-95 at 23:10:38 by Bob Weiner
+;; LAST-MOD:     19-Feb-97 at 10:50:57 by Bob Weiner
 ;;
-;; Copyright (C) 1994-1995 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996, 1997  Free Software Foundation, Inc.
 ;;
 ;; This file is part of Hyperbole.
 ;;
@@ -47,15 +47,90 @@
 ;;; Public variables
 ;;; ************************************************************************
 
+;; Ensure that this variable is defined to avert any error within
+;; the Customization menu.
+(defvar highlight-headers-follow-url-netscape-new-window nil
+  "*Whether to make Netscape create a new window when a URL is sent to it.")
+
+(defconst hui-menu-options
+  (append '("Display-Referents-in"
+	    "----"
+	    "----")
+	  (mapcar (function (lambda (sym)
+			      (vector
+			       (capitalize (symbol-name sym))
+			       (` (setq hpath:display-where '(, sym)))
+			       :style 'radio
+			       :selected (` (eq hpath:display-where
+						'(, sym))))))
+		  (mapcar 'car hpath:display-where-alist))
+	  '("----"
+	    "Display-URLs-in"
+	    "----"
+	    "----"
+	    ["Here"
+	     (setq action-key-url-function 'w3-fetch
+		   highlight-headers-follow-url-function
+		   action-key-url-function)
+	     :style radio
+	     :selected (eq action-key-url-function 'w3-fetch)]
+	    ["Current-Netscape-Window"
+	     (setq action-key-url-function
+		   'highlight-headers-follow-url-netscape
+		   highlight-headers-follow-url-function
+		   action-key-url-function
+		   highlight-headers-follow-url-netscape-new-window
+		   nil)
+	     :style radio
+	     :selected
+	     (and (eq action-key-url-function
+		      'highlight-headers-follow-url-netscape)
+		  (not highlight-headers-follow-url-netscape-new-window))]
+	    ["New-Netscape-Window"
+	     (setq action-key-url-function
+		   'highlight-headers-follow-url-netscape
+		   highlight-headers-follow-url-function
+		   action-key-url-function
+		   highlight-headers-follow-url-netscape-new-window
+		   t)
+	     :style radio
+	     :selected
+	     (and (eq action-key-url-function
+		      'highlight-headers-follow-url-netscape)
+		  highlight-headers-follow-url-netscape-new-window)]
+	    ["Mosaic"
+	     (setq action-key-url-function
+		   'highlight-headers-follow-url-mosaic
+		   highlight-headers-follow-url-function
+		   action-key-url-function)
+	     :style radio
+	     :selected (eq action-key-url-function
+			   'highlight-headers-follow-url-mosaic)]
+	    )
+	  '("----"
+	    "Smart-Key-Press-at-Eol"
+	    "----"
+	    "----"
+	    ["Scrolls-a-Windowful"
+	     (setq smart-scroll-proportional nil)
+	     :style radio :selected (null smart-scroll-proportional)]
+	    ["Scrolls-Proportionally"
+	     (setq smart-scroll-proportional t)
+	     :style radio :selected smart-scroll-proportional]
+	    ))
+  "Untitled menu of Hyperbole options.")
+
 ;;; Don't change this name; doing so will break the way InfoDock
 ;;; initializes the Hyperbole menu.
 (defconst infodock-hyperbole-menu
   (delq nil
 	(list
 	 "Hyperbole"
-	 '["Browse-Manual"      (id-info "(hyperbole.info)Top") t]
+	 '["About" (hypb:display-file-with-logo
+		    (expand-file-name "ABOUT" hyperb:dir)) t]
+	 '["Manual"      (id-info "(hyperbole.info)Top") t]
 	 "----"
-	 '["Activate-Button-at-Point" hui:hbut-act t]
+	 '["Activate-Button-at-Point" hui:hbut-current-act t]
 	 '["Back-to-Prior-Location" (hhist:remove current-prefix-arg) t]
 	 '("Button-File"
 	   ["Manual"  (id-info "(hyperbole.info)Button Files") t]
@@ -65,6 +140,7 @@
 				  (expand-file-name
 				   hbmap:filename hbmap:dir-user)) t]
 	   )
+	 (cons "Customization" hui-menu-options)
 	 '("Documentation"
 	   ["Manual"      (id-info "(hyperbole.info)Top") t]
 	   "----"
@@ -84,9 +160,8 @@
 	   ["Smart-Key-Summary" (id-browse-file (hypb:mouse-help-file)) t]
 	   )
 	 '("Explicit-Button"
-	   ["Manual"   (id-info "(hyperbole.info)Explicit Buttons") t]
-	   "----"
-	   ["Activate-at-Point" hui:hbut-act t]
+	   :filter hui-menu-explicit-buttons
+	   ["Activate" hui:hbut-act t]
 	   ["Create" hui:ebut-create t]
 	   ["Delete" hui:ebut-delete t]
 	   ["Edit"   hui:ebut-modify t]
@@ -102,9 +177,7 @@
 	   ["Search" hui:ebut-search t]
 	   )
 	 '("Global-Button"
-	   ["Manual" (id-info "(hyperbole.info)Global Buttons") t]
-	   "----"
-	   ["Activate" gbut:act t]
+	   :filter hui-menu-global-buttons
 	   ["Create" hui:gbut-create t]
 	   ["Edit"   hui:gbut-modify t]
 	   ["Help"   gbut:help t]
@@ -113,7 +186,7 @@
 	 '("Implicit-Button"
 	   ["Manual"   (id-info "(hyperbole.info)Implicit Buttons") t]
 	   "----"
-	   ["Activate-at-Point"    hui:hbut-act t]
+	   ["Activate-at-Point"    hui:hbut-current-act t]
 	   ["Delete-Type"         (hui:htype-delete 'ibtypes) t]
 	   ["Help"   hui:hbut-help t]
 	   ["Types"  (hui:htype-help 'ibtypes 'no-sort) t]
@@ -123,13 +196,13 @@
 	    t]
 	   "----"
 	   ["Change-Hyperbole-Address"
-	    (hmail:compose "hyperbole-request@hub.ucsb.edu"
+	    (hmail:compose "hyperbole-request@infodock.com"
 			   '(hact 'hyp-request)) t]
 	   ["Change-Hyperbole-Announce-Address"
-	    (hmail:compose "hyperbole-request@hub.ucsb.edu"
+	    (hmail:compose "hyperbole-request@infodock.com"
 			   '(hact 'hyp-request)) t]
 	   ["Mail-to-Hyperbole-List"
-	    (hmail:compose "hyperbole@hub.ucsb.edu" '(hact 'hyp-config)) t]
+	    (hmail:compose "hyperbole@infodock.com" '(hact 'hyp-config)) t]
 	   )
 	 (if hyperb:kotl-p
 	     '("Outline"
@@ -189,6 +262,71 @@
 			(setq smail:comment "")))
 	   t]
 	 )))
+
+;;; ************************************************************************
+;;; Private functions
+;;; ************************************************************************
+
+(defvar hui-menu-max-list-length 24
+  "Positive integer that caps the length of a dynamic menu list.")
+
+(defvar hui-menu-order-explicit-buttons t
+  "When non-nil (default), explicit button menu list is lexicographically ordered.
+Otherwise, explicit buttons are listed in their order of appearance within
+the current buffer.")
+
+;; List explicit buttons in the current buffer for menu activation.
+(defun hui-menu-explicit-buttons (rest-of-menu)
+  (delq nil
+	(append
+	 '(["Manual"   (id-info "(hyperbole.info)Explicit Buttons") t]
+	   "----")
+	 (let ((labels (ebut:list))
+	       (cutoff))
+	   (if labels
+	       (progn
+		 ;; Cutoff list if too long.
+		 (if (setq cutoff (nthcdr (1- hui-menu-max-list-length) labels))
+		     (setcdr cutoff nil))
+		 (delq nil
+		       (append
+			'("----"
+			  ["Alphabetize-List"
+			   (setq hui-menu-order-explicit-buttons 
+				 (not hui-menu-order-explicit-buttons))
+			   :style toggle :selected hui-menu-order-explicit-buttons]
+			  "Activate:")
+			(mapcar (function (lambda (label)
+					    (vector label `(ebut:act ,label) t)))
+				(if hui-menu-order-explicit-buttons
+				    (sort labels 'string-lessp)
+				  labels))
+			(if cutoff '(". . ."))
+			'("----" "----"))))))
+	 rest-of-menu)))
+
+;; List existing global buttons for menu activation.
+(defun hui-menu-global-buttons (rest-of-menu)
+  (delq nil
+	(append
+	 '(["Manual" (id-info "(hyperbole.info)Global Buttons") t]
+	   "----")
+	 (let ((labels (gbut:label-list))
+	       (cutoff))
+	   (if labels
+	       (progn
+		 ;; Cutoff list if too long.
+		 (if (setq cutoff (nthcdr (1- hui-menu-max-list-length) labels))
+		     (setcdr cutoff nil))
+		 (delq nil
+		       (append
+			'("----" "Activate:")
+			(mapcar (function (lambda (label)
+					    (vector label `(gbut:act ,label) t)))
+				(sort labels 'string-lessp))
+			(if cutoff '(". . ."))
+			'("----" "----"))))))
+	 rest-of-menu)))
 
 ;;; ************************************************************************
 ;;; Private variables

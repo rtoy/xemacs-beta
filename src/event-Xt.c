@@ -55,6 +55,18 @@ Boston, MA 02111-1307, USA.  */
 #include "mule-coding.h"
 #endif
 
+#ifdef WINDOWSNT
+/* Hmm, under unix we want X modifiers, under NT we want X modifiers if
+   we are running X and Windows modifiers otherwise.
+   gak. This is a kludge until we support multiple native GUIs!
+*/
+#undef MOD_ALT
+#undef MOD_CONTROL
+#undef MOD_SHIFT
+#endif
+
+#include <events-mod.h>
+
 static void enqueue_Xt_dispatch_event (Lisp_Object event);
 
 static struct event_stream *Xt_event_stream;
@@ -1319,8 +1331,19 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
       
     case VisibilityNotify: /* window visiblity has changed */
       if (event->xvisibility.window == XtWindow (FRAME_X_SHELL_WIDGET (f)))
- 	FRAME_X_TOTALLY_VISIBLE_P (f) =
- 	  (event->xvisibility.state == VisibilityUnobscured);
+#if 0 /* This causes all kinds of strange behavior I don't like. -sb */
+	{
+	  /* Note that the fvwm pager only sends VisibilityNotify when
+	     changing pages. Is this all we need to do ? JV */
+	  FRAME_VISIBLE_P (f) =
+	    ( event->xvisibility.state != VisibilityFullyObscured);
+	  FRAME_X_TOTALLY_VISIBLE_P (f) =
+	    (event->xvisibility.state == VisibilityUnobscured);
+	}
+#else
+        FRAME_X_TOTALLY_VISIBLE_P (f) =
+	  (event->xvisibility.state == VisibilityUnobscured);
+#endif
       break;
       
     case ConfigureNotify:

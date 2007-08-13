@@ -63,12 +63,14 @@
 
 (provide 'redo)
 
-(defvar redo-version "1.00"
+(defvar redo-version "1.01"
   "Version number for the Redo package.")
 
 (defvar last-buffer-undo-list nil
   "The head of buffer-undo-list at the last time an undo or redo was done.")
 (make-variable-buffer-local 'last-buffer-undo-list)
+
+(make-variable-buffer-local 'pending-undo-list)
 
 (defun redo (&optional count)
   "Redo the the most recent undo.
@@ -94,7 +96,7 @@ then you cannot redo any undos before then."
 	(old-undo-list buffer-undo-list)
 	(p (cdr buffer-undo-list))
 	(records-between 0))
-    ;; count the number of undo records between the head of teh
+    ;; count the number of undo records between the head of the
     ;; undo chain and the pointer to the next change.  Note that
     ;; by `record' we mean clumps of change records, not the
     ;; boundary records.  The number of records will always be a

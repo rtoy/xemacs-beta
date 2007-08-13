@@ -2,8 +2,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:         efs-x19.15.el
-;; Release:      $efs release: 1.14 $
-;; Version:      $Revision: 1.1 $
+;; Release:      $efs release: 1.15 $
+;; Version:      $Revision: 1.2 $
 ;; RCS:          
 ;; Description:  efs support for XEmacs, versions 19.15, and later.
 ;; Author:       Sandy Rutherford <sandy@ibm550.sissa.it>
@@ -18,9 +18,9 @@
 (require 'efs-ovwrt)
 
 (defconst efs-x19\.15-version
-  (concat (substring "$efs release: 1.14 $" 14 -2)
+  (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.2 $" 11 -2)))
 
 ;;; Functions requiring special defs. for these XEmacs versions.
 

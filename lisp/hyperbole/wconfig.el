@@ -6,10 +6,10 @@
 ;; KEYWORDS:     frames, hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Brown U.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    15-Mar-89
-;; LAST-MOD:     14-Apr-95 at 16:26:27 by Bob Weiner
+;; LAST-MOD:      9-Dec-96 at 18:39:50 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -64,6 +64,15 @@
 
 (defconst wconfig-ring-max 10
   "*Maximum length of window configuration ring before oldest elements are deleted.")
+
+(defvar wconfig-names (set:create)
+  "Set of (name . window-configuration) elements.")
+
+(defvar wconfig-ring nil
+  "List of window configurations saved in a ring.")
+
+(defvar wconfig-ring-yank-pointer nil
+  "The tail of the window configuration ring whose car is the last thing yanked.")
 
 ;;; ************************************************************************
 ;;; Public functions
@@ -167,15 +176,6 @@ one comes the newest one."
 ;;; ************************************************************************
 ;;; Private variables
 ;;; ************************************************************************
-
-(defvar wconfig-names (set:create)
-  "Set of (name . window-configuration) elements.")
-
-(defvar wconfig-ring nil
-  "List of window configurations saved in a ring.")
-
-(defvar wconfig-ring-yank-pointer nil
-  "The tail of the window configuration ring whose car is the last thing yanked.")
 
 (run-hooks 'wconfig-load-hook)
 

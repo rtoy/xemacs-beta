@@ -673,15 +673,6 @@ create_bidirectional_pipe (int *inchannel, int *outchannel,
   *outchannel = *inchannel = sv[0];
   *forkout = *forkin = sv[1];
 #else /* not SKTPAIR */
-#ifdef WINDOWSNT
-  pipe_with_inherited_out (sv);
-  *inchannel = sv[0];
-  *forkout = sv[1];
-
-  pipe_with_inherited_in (sv);
-  *forkin = sv[0];
-  *outchannel = sv[1];
-#else /* not WINDOWSNT */
   int temp;
   temp = pipe (sv);
   if (temp < 0) return -1;
@@ -691,7 +682,6 @@ create_bidirectional_pipe (int *inchannel, int *outchannel,
   if (temp < 0) return -1;
   *outchannel = sv[1];
   *forkin = sv[0];
-#endif /* not WINDOWSNT */
 #endif /* not SKTPAIR */
   return 0;
 }
@@ -1007,7 +997,7 @@ create_process (Lisp_Object process,
 	signal (SIGINT, SIG_DFL);
 	signal (SIGQUIT, SIG_DFL);
 
-#ifndef MSDOS
+#if !defined(MSDOS) && !defined(WINDOWSNT)
 	if (pty_flag)
 	  {
 	    /* Set up the terminal characteristics of the pty. */
@@ -2206,7 +2196,9 @@ reap_exited_processes (void)
   int i;
   struct Lisp_Process *p;
 
+#ifdef  EMACS_BLOCK_SIGNAL
   EMACS_BLOCK_SIGNAL (SIGCHLD);
+#endif
   for (i = 0; i < exited_processes_index; i++)
     {
       int pid = exited_processes[i];
@@ -2287,7 +2279,9 @@ static void
 record_exited_processes (int block_sigchld)
 {
   if (block_sigchld)
+#ifdef EMACS_BLOCK_SIGNAL
     EMACS_BLOCK_SIGNAL (SIGCHLD);
+#endif
 
   while (sigchld_happened)
     {
@@ -3023,12 +3017,7 @@ SIGCODE may be an integer, or a symbol whose name is a signal name.
 
 #undef handle_signal
 
-#ifdef WINDOWSNT
-  /* Only works for kill-type signals */
-  return make_int (win32_kill_process (XINT (pid), XINT (sigcode)));
-#else
   return make_int (kill (XINT (pid), XINT (sigcode)));
-#endif
 }
 
 DEFUN ("process-send-eof", Fprocess_send_eof, 0, 1, 0, /*

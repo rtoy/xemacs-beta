@@ -260,7 +260,9 @@ lock_file_1 (CONST char *lfname, int mode)
 
   if ((fd = open (lfname, mode, 0666)) >= 0)
     {
-#ifdef USG
+#if defined(WINDOWSNT)
+      chmod(lfname, _S_IREAD|_S_IWRITE);
+#elif defined(USG)
       chmod (lfname, 0666);
 #else
       fchmod (fd, 0666);
@@ -378,7 +380,9 @@ lock_superlock (CONST char *lfname)
     }
   if (fd >= 0)
     {
-#ifdef USG
+#if defined(WINDOWSNT)
+      chmod(lfname, _S_IREAD|_S_IWRITE);
+#elif defined(USG)
       chmod ((char *) XSTRING_DATA (Vsuperlock_file), 0666);
 #else
       fchmod (fd, 0666);

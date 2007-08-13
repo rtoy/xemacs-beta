@@ -8,7 +8,7 @@
 
 ;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
-(defconst viper-version "2.92 of January 10, 1997"
+(defconst viper-version "2.93 of February 13, 1997"
   "The current version of Viper")
 
 ;; This file is part of GNU Emacs.
@@ -1308,7 +1308,7 @@ as a Meta key and any number of multiple escapes is allowed."
   (let (value func)
     ;; read while number
     (while (and (vip-characterp event) (>= event ?0) (<= event ?9))
-      (setq value (+ (* (if (vip-characterp value) value 0) 10) (- event ?0)))
+      (setq value (+ (* (if (integerp value) value 0) 10) (- event ?0)))
       (setq event (vip-read-event-convert-to-char)))
     
     (setq prefix-arg value)
@@ -1331,7 +1331,7 @@ as a Meta key and any number of multiple escapes is allowed."
 	  ;; the user typed, say, d2. In this case, `com' would be `d', `w',
 	  ;; etc.
 	  ;; If vip-digit-argument was invoked by vip-escape-to-vi (which is
-	  ;; indicated by the fact that the current state is not vi-state,
+	  ;; indicated by the fact that the current state is not vi-state),
 	  ;; then `event' represents the vi command to be executed (e.g., `d',
 	  ;; `w', etc). Again, last-command-char must make emacs believe that
 	  ;; this is the command we typed.
@@ -1393,10 +1393,11 @@ as a Meta key and any number of multiple escapes is allowed."
 	(while (= char ?U)
 	  (vip-describe-arg cmd-info)
 	  (setq char (read-char)))
-	;; `char' is a movement command or a digit arg command---so we execute
-	;; it at the very end 
+	;; `char' is a movement cmd, a digit arg cmd, or a register cmd---so we
+	;; execute it at the very end 
 	(or (vip-movement-command-p char)
 	    (vip-digit-command-p char)
+	    (vip-regsuffix-command-p char)
 	    (error ""))
 	(setq mv-or-digit-cmd
 	      (vip-exec-form-in-vi 
@@ -3893,18 +3894,38 @@ To turn this feature off, set this variable to nil.")
 
 (defadvice find-file (before vip-add-suffix-advice activate)
   "Use `read-file-name' for reading arguments."
-  (interactive (list (read-file-name "Find file: "
-				     nil default-directory))))
+  (interactive (cons (read-file-name "Find file: " nil default-directory)
+		     ;; if Mule and prefix argument, ask for coding system
+		     (if (or (boundp 'MULE)    ; mule integrated Emacs 19
+			     (featurep 'mule)) ; mule integrated XEmacs 20
+			 (list
+			  (and current-prefix-arg
+			       (read-coding-system "Coding-system: "))))
+		     )))
     
 (defadvice find-file-other-window (before vip-add-suffix-advice activate)
   "Use `read-file-name' for reading arguments."
-  (interactive (list (read-file-name "Find file in other window: "
-				     nil default-directory))))
+  (interactive (cons (read-file-name "Find file in other window: "
+				     nil default-directory)
+		     ;; if Mule and prefix argument, ask for coding system
+		     (if (or (boundp 'MULE)    ; mule integrated Emacs 19
+			     (featurep 'mule)) ; mule integrated XEmacs 20
+			 (list
+			  (and current-prefix-arg
+			       (read-coding-system "Coding-system: "))))
+		     )))
     
 (defadvice find-file-other-frame (before vip-add-suffix-advice activate)
   "Use `read-file-name' for reading arguments."
-  (interactive (list (read-file-name "Find file in other frame: "
-				     nil default-directory))))
+  (interactive (cons (read-file-name "Find file in other frame: "
+				     nil default-directory)
+		     ;; if Mule and prefix argument, ask for coding system
+		     (if (or (boundp 'MULE)    ; mule integrated Emacs 19
+			     (featurep 'mule)) ; mule integrated XEmacs 20
+			 (list
+			  (and current-prefix-arg
+			       (read-coding-system "Coding-system: "))))
+		     )))
 
 (defadvice read-file-name (around vip-suffix-advice activate)
   "Tell `exit-minibuffer' to run `vip-file-add-suffix' as a hook."
@@ -4996,6 +5017,7 @@ Mail anyway (y or n)? ")
 
   (defvar help-mode-hook)
   (add-hook 'help-mode-hook 'viper-mode)
+  (vip-modify-major-mode 'help-mode 'vi-state vip-help-modifier-map)
 
   (defvar awk-mode-hook)
   (add-hook 'awk-mode-hook 'viper-mode)

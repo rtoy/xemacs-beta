@@ -4,7 +4,7 @@
 # AUTHOR:       Bob Weiner
 #
 # ORIG-DATE:    15-Jun-94 at 03:42:38
-# LAST-MOD:      3-Nov-95 at 23:57:26 by Bob Weiner
+# LAST-MOD:     21-Feb-97 at 18:04:02 by Bob Weiner
 #
 # This file is part of Hyperbole.
 # Available for use and distribution under the same terms as GNU Emacs.
@@ -47,6 +47,8 @@ EMACS = $(XEMACS)
 datadir = ../../etc
 # Where to install the Info version of the Hyperbole manual.
 infodir = ../../info
+# Where to find the .texi source for the Hyperbole manual.
+mandir = ../../man
 # Where to install the Texinfo version of the Hyperbole manual.
 texidir = ../../man
 
@@ -96,9 +98,7 @@ DIST_DIR = /tmp
 #                     NO CHANGES REQUIRED BELOW HERE.                    #
 ##########################################################################
 
-HYPB_VERSION = 4.01
-
-MAN_DIR = ../../man
+HYPB_VERSION = 4.021
 
 # Libraries that must be pre-loaded before trying to byte-compile anything.
 PRELOADS = $(SITE_PRELOADS) -l ./hversion.el -l ./hyperbole.el -l ./hsite.el
@@ -155,7 +155,7 @@ all: elc
 doc: info ps
 
 install: elc doc
-	cd $(MAN_DIR); $(INSTALL) hypb-mouse.txt $(datadir); \
+	cd $(mandir); $(INSTALL) hypb-mouse.txt $(datadir); \
 	  $(INSTALL) hyperbole.info* $(infodir); \
 	  $(INSTALL) hyperbole.texi $(texidir)
 
@@ -172,7 +172,7 @@ elc: elc-init hsite.el $(ELC_KOTL) $(ELC_COMPILE)
             || (echo "These files will be compiled: " \
                  && echo "`cat $(ELISP_TO_COMPILE)`" \
                  && $(EMACS) $(BATCHFLAGS) $(PRELOADS) \
-                       -l bytecomp -f batch-byte-compile `cat $(ELISP_TO_COMPILE)`)
+                       -f batch-byte-compile `cat $(ELISP_TO_COMPILE)`)
 	@ $(RM) $(ELISP_TO_COMPILE)
 
 elc-init:
@@ -200,23 +200,23 @@ all-elc-v18:
 hsite.el: hsite-ex.el
 	\test -f hsite.el || $(CP) hsite-ex.el hsite.el
 
-dvi: $(MAN_DIR)/hyperbole.dvi
+dvi: $(mandir)/hyperbole.dvi
 
 info: $(infodir)/hyperbole.info
 
-ps: $(MAN_DIR)/hyperbole.ps
+ps: $(mandir)/hyperbole.ps
 
-$(MAN_DIR)/hyperbole.dvi: info
-	cd $(MAN_DIR); tex hyperbole.texi; \
+$(mandir)/hyperbole.dvi: info
+	cd $(mandir); tex hyperbole.texi; \
 	   texindex hyperbole.??; tex hyperbole.texi
 
-$(infodir)/hyperbole.info: $(MAN_DIR)/hyperbole.texi
-	cd $(MAN_DIR); $(MAKEINFO) hyperbole.texi
+$(infodir)/hyperbole.info: $(mandir)/hyperbole.texi
+	cd $(mandir); $(MAKEINFO) hyperbole.texi
 
-$(MAN_DIR)/hyperbole.ps: $(MAN_DIR)/hyperbole.texi
-	make $(MAN_DIR)/hyperbole.dvi
-	-$(RM) $(MAN_DIR)/hyperbole.ps
-	cd $(MAN_DIR); $(DVIPS) -o hyperbole.ps hyperbole.dvi
+$(mandir)/hyperbole.ps: $(mandir)/hyperbole.texi
+	make $(mandir)/hyperbole.dvi
+	-$(RM) $(mandir)/hyperbole.ps
+	cd $(mandir); $(DVIPS) -o hyperbole.ps hyperbole.dvi
 
 tags: $(EL_TAGS)
 	$(ETAGS) $(EL_TAGS) h-skip-bytec.lsp
@@ -224,15 +224,15 @@ tags: $(EL_TAGS)
 clean:  
 	-$(RM) core .place* .*~ *~ *\# *.orig *.rej .nfs*
 	-cd kotl; $(RM) core .*~ *~ *\# *.orig *.rej .place* .nfs*
-	-cd $(MAN_DIR); $(RM) core .*~ *~ *\# *.orig *.rej .place* .nfs*
+	-cd $(mandir); $(RM) core .*~ *~ *\# *.orig *.rej .place* .nfs*
 
 version:
 	fgrep $(HYPB_VERSION) Makefile README hversion.el \
-	  $(MAN_DIR)/hyperbole.texi; echo ""
+	  $(mandir)/hyperbole.texi; echo ""
 
 # Don't use this target.
 bw-install:
-	cd /usr/local/infodock/lisp/; \
+	cd /home/infodock/lisp/; \
 	tar zxvf /tmp/hyperbole-$(HYPB_VERSION).tar.gz; \
 	cd hyperbole/; \
 	mv man/hyperbole.info* ../../info/; mv man/hyperbole.texi ../../man/; \
@@ -241,11 +241,13 @@ bw-install:
 dist: version elc info
 	echo "Ensure version # in README, hversion.el, Makefile and man/hyperbole.texi is up to date."
 	cd ..; $(TAR) clf $(DIST_DIR)/h.tar hyperbole; \
+	  $(CP) ../etc/ida-logo.xpm $(DIST_DIR); \
 	  $(RM) -r $(DIST_DIR)/hman; mkdir $(DIST_DIR)/hman; \
 	  $(CP) ../man/hyperbole.texi ../info/hyperbole.info* \
              ../etc/hypb-mouse.txt $(DIST_DIR)/hman
 	$(RM) -r $(DIST_DIR)/hyperbole
-	cd $(DIST_DIR); $(TAR) xf h.tar; $(MV) hman hyperbole/man
+	cd $(DIST_DIR); $(TAR) xf h.tar; \
+	  $(MV) hman hyperbole/man; $(MV) ida-logo.xpm hyperbole
 	cd $(DIST_DIR)/hyperbole; make distclean
 # This ver setup won't work under SunOS for some reason.
 #	ver="`head -3 hyperbole/hversion.el | tail -1 | sed -e 's/.*|//'`"
@@ -254,5 +256,5 @@ dist: version elc info
 
 # Don't run this target manually.  Use 'make dist' instead.
 distclean: clean
-	-$(RM) TAGS hsite.el* kotl/TO-DO* $(MAN_DIR)/hyperbole.dvi \
-          $(MAN_DIR)/hyperbole.??
+	-$(RM) TAGS hsite.el* kotl/TO-DO* $(mandir)/hyperbole.dvi \
+          $(mandir)/hyperbole.??

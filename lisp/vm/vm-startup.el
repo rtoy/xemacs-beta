@@ -61,7 +61,9 @@ See the documentation for vm-mode for more information."
 				       (expand-file-name vm-folder-directory))
 				  default-directory))
 			    (inhibit-local-variables t)
-			    (enable-local-variables nil))
+			    (enable-local-variables nil)
+			    ;; for XEmacs/Mule
+			    (overriding-file-coding-system 'no-conversion))
 			(vm-unsaved-message "Reading %s..." file)
 			(prog1 (find-file-noselect file)
 			  ;; update folder history
@@ -71,6 +73,27 @@ See the documentation for vm-mode for more information."
 				      (cons item vm-folder-history))))
 			  (vm-unsaved-message "Reading %s... done" file))))))))
       (set-buffer folder-buffer)
+      ;; for XEmacs/MULE
+      ;;
+      ;; If the file coding system is not a no-conversion variant,
+      ;; make it so by encoding all the text, then setting
+      ;; the file coding system and decoding it.
+      ;; This is only possible if a file is visited and vm-mode
+      ;; is run on it afterwards.
+      (defvar file-coding-system)
+      (if (and (fboundp 'get-coding-system)
+	       (not (eq file-coding-system
+			(get-coding-system 'no-conversion-unix)))
+	       (not (eq file-coding-system
+			(get-coding-system 'no-conversion-dos)))
+	       (not (eq file-coding-system
+			(get-coding-system 'no-conversion-mac)))
+	       (not (eq file-coding-system
+			(get-coding-system 'binary))))
+	  (progn
+	    (encode-coding-region (point-min) (point-max) file-coding-system)
+	    (set-file-coding-system 'no-conversion nil)
+	    (decode-coding-region (point-min) (point-max) file-coding-system)))
       (vm-check-for-killed-summary)
       (vm-check-for-killed-presentation)
       ;; If the buffer's not modified then we know that there can be no
@@ -200,7 +223,7 @@ See the documentation for vm-mode for more information."
 	  (progn
 	    (vm-unsaved-message "Checking for new mail for %s..."
 				(or buffer-file-name (buffer-name)))
-	    (if (and (vm-get-spooled-mail) (vm-assimilate-new-messages t))
+	    (if (and (vm-get-spooled-mail t) (vm-assimilate-new-messages t))
 		(progn
 		  (setq totals-blurb (vm-emit-totals-blurb))
 		  (if (vm-thoughtfully-select-message)
@@ -210,12 +233,7 @@ See the documentation for vm-mode for more information."
 
       ;; Display copyright and copying info unless
       ;; user says no.
-      ;; Check this-command so we don't make the user wait if
-      ;; they call vm non-interactively from some other program.
-      (if (and (not vm-startup-message-displayed)
-	       (or (memq this-command '(vm vm-visit-folder))
-		   ;; for emacs -f vm
-		   (null last-command)))
+      (if (and (interactive-p) (not vm-startup-message-displayed))
 	  (progn
 	    (vm-display-startup-message)
 	    (if (not (input-pending-p))
@@ -251,7 +269,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 6.13.
+This is VM 6.15.
 
 Commands:
    h - summarize folder contents
@@ -419,6 +437,7 @@ Variables:
    vm-highlighted-header-face
    vm-highlighted-header-regexp
    vm-honor-page-delimiters
+   vm-image-directory
    vm-in-reply-to-format
    vm-included-text-attribution-format
    vm-included-text-discard-header-regexp
@@ -429,6 +448,7 @@ Variables:
    vm-jump-to-unread-messages
    vm-keep-crash-boxes
    vm-keep-sent-messages
+   vm-mail-check-interval
    vm-mail-header-from
    vm-mail-mode-hook
    vm-make-crash-box-name
@@ -444,6 +464,8 @@ Variables:
    vm-mime-base64-encoder-program
    vm-mime-base64-encoder-switches
    vm-mime-button-face
+   vm-mime-charset-font-alist
+   vm-mime-default-face-charsets
    vm-mime-digest-discard-header-regexp
    vm-mime-digest-headers
    vm-mime-display-function
@@ -459,7 +481,10 @@ Variables:
    vm-mutable-frames
    vm-mutable-windows
    vm-netscape-program
+   vm-pop-bytes-per-session
+   vm-pop-max-message-size
    vm-pop-md5-program
+   vm-pop-messages-per-session
    vm-popup-menu-on-mouse-3
    vm-preferences-file
    vm-preview-lines
@@ -490,8 +515,8 @@ Variables:
    vm-send-using-mime
    vm-skip-deleted-messages
    vm-skip-read-messages
-   vm-spool-files
    vm-spool-file-suffixes
+   vm-spool-files
    vm-startup-with-summary
    vm-strip-reply-headers
    vm-summary-arrow
@@ -501,8 +526,8 @@ Variables:
    vm-summary-redo-hook
    vm-summary-show-threads
    vm-summary-thread-indent-level
-   vm-temp-file-directory
    vm-tale-is-an-idiot
+   vm-temp-file-directory
    vm-trust-From_-with-Content-Length
    vm-undisplay-buffer-hook
    vm-unforwarded-header-regexp
@@ -629,6 +654,8 @@ vm-virtual-mode is not a normal major mode.  If you run it, it
 will not do anything.  The entry point to vm-virtual-mode is
 vm-visit-virtual-folder.")
 
+(defvar scroll-in-place)
+
 (defun vm-visit-virtual-folder (folder-name &optional read-only)
   (interactive
    (let ((last-command last-command)
@@ -661,6 +688,9 @@ vm-visit-virtual-folder.")
 		vm-label-obarray (make-vector 29 0)
 		vm-virtual-folder-definition
 		  (assoc folder-name vm-virtual-folder-alist))
+	  ;; scroll in place messes with scroll-up and this loses
+	  (make-local-variable 'scroll-in-place)
+	  (setq scroll-in-place nil)
 	  (vm-build-virtual-message-list nil)
 	  (use-local-map vm-mode-map)
 	  (and (vm-menu-support-possible-p)
@@ -850,6 +880,7 @@ vm-visit-virtual-folder.")
       'vm-highlight-url-face
       'vm-highlighted-header-regexp
       'vm-honor-page-delimiters
+      'vm-image-directory
       'vm-in-reply-to-format
       'vm-included-text-attribution-format
       'vm-included-text-discard-header-regexp
@@ -865,6 +896,7 @@ vm-visit-virtual-folder.")
       'vm-mail-hook
       'vm-make-crash-box-name
       'vm-make-spool-file-name
+      'vm-mail-check-interval
       'vm-mail-mode-hook
       'vm-mime-8bit-composition-charset
       'vm-mime-8bit-text-transfer-encoding
@@ -877,6 +909,8 @@ vm-visit-virtual-folder.")
       'vm-mime-base64-encoder-program
       'vm-mime-base64-encoder-switches
       'vm-mime-button-face
+      'vm-mime-charset-font-alist
+      'vm-mime-default-face-charsets
       'vm-mime-digest-discard-header-regexp
       'vm-mime-digest-headers
       'vm-mime-display-function
@@ -893,6 +927,9 @@ vm-visit-virtual-folder.")
       'vm-mutable-frames
       'vm-mutable-windows
       'vm-netscape-program
+      'vm-pop-bytes-per-session
+      'vm-pop-max-message-size
+      'vm-pop-messages-per-session
       'vm-pop-md5-program
       'vm-popup-menu-on-mouse-3
       'vm-preferences-file
@@ -988,8 +1025,21 @@ vm-visit-virtual-folder.")
 	 (error "VM %s must be run on Emacs 19.34 or a later version."
 		vm-version))))
 
+(defun vm-set-debug-flags ()
+  (or stack-trace-on-error
+      debug-on-error
+      (setq stack-trace-on-error
+	    '(
+	      wrong-type-argument
+	      wrong-number-of-arguments
+	      args-out-of-range
+	      void-function
+	      void-variable
+	     ))))
+
 (defun vm-session-initialization ()
   (vm-check-emacs-version)
+  (vm-set-debug-flags)
   ;; If this is the first time VM has been run in this Emacs session,
   ;; do some necessary preparations.
   (if (or (not (boundp 'vm-session-beginning))

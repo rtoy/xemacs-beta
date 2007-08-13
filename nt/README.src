@@ -1,0 +1,2 @@
+This directory contains new files required to compile xemacs. Copy them into
+the src and src/s and src/m directories.

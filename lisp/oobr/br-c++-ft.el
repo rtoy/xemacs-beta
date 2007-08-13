@@ -6,12 +6,12 @@
 ;; KEYWORDS:     c, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    03-Oct-90
-;; LAST-MOD:      5-May-95 at 15:59:53 by Bob Weiner
+;; LAST-MOD:     11-Nov-96 at 17:29:58 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1996  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -163,6 +163,22 @@ Optional REGEXP-FLAG means FEATURE-TAG is a regular expression."
 	       (goto-char start)
 	       t))))
 
+(defun c++-feature-map-class-tags (function class)
+  "Apply FUNCTION to all feature tags from CLASS and return a list of the results.
+Feature tags come from the file named by br-feature-tags-file."
+  (let ((obuf (current-buffer))
+	(class-tag (concat "\n" class c++-type-tag-separator))
+	(results))
+    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+    (goto-char 1)
+    (while (search-forward class-tag nil t)
+      (setq results (cons (funcall function) results))
+      ;; Might have deleted current tag and would miss next tag unless point
+      ;; is moved backwards.
+      (backward-char))
+    (set-buffer obuf)
+    results))
+
 (defun c++-feature-name-to-regexp (name)
   "Converts routine NAME into a regular expression matching the routine's name tag."
   (setq name (c++-feature-signature-to-regexp name))
@@ -219,6 +235,12 @@ prepended to the name for display in a browser listing."
 	      i (1+ i)))
       (setq pat (concat prefix-info pat)))))
 
+(defun c++-feature-tag-regexp (class feature-name)
+  "Return a regexp that matches to the feature tag entry for CLASS' FEATURE-NAME."
+  (concat "^" (regexp-quote class) c++-type-tag-separator
+	  br-feature-type-regexp " "
+	  (regexp-quote feature-name) c++-type-tag-separator))
+
 (defun c++-feature-tree-command-p (class-or-signature)
   "Display definition of CLASS-OR-SIGNATURE if a signature and return t, else return nil."
   (if (c++-routine-p class-or-signature)
@@ -228,7 +250,10 @@ prepended to the name for display in a browser listing."
 			    class-or-signature))))
 
 (defun c++-list-features (class &optional indent)
-  "Return sorted list of C++ feature tags lexically defined in CLASS."
+  "Return sorted list of C++ feature tags lexically defined in CLASS.
+Optional INDENT if > 2 indicates that this is a listing of inherited
+features, in which case, friend features, which are never inherited, are
+omitted from the returned list."
   (let ((obuf (current-buffer))
 	(features)
 	(class-tag (concat "\n" class c++-type-tag-separator))
@@ -246,6 +271,8 @@ prepended to the name for display in a browser listing."
 	  (or (string-match friend-regexp feature)
 	      (setq features (cons feature features))))))
     (set-buffer obuf)
+    ;; Use nreverse here so that stable sort ends up leaving same named
+    ;; features in the order they were defined in the source file.
     (c++-sort-features (nreverse features))))
 
 (defun c++-routine-p (str)
@@ -430,35 +457,32 @@ signature in a source buffer."
 Commented member definitions also return nil.
 Leaves point at start of statement for visual clarity."
   (c++-skip-to-statement)
-  (save-excursion
-    (and (not (c-within-comment-p))
-	 (save-excursion (beginning-of-line)
-			 (not (looking-at "[ \t]*//")))
-	 (not (looking-at c++-class-decl))
-	 (looking-at (concat c++-at-feature-regexp "[{;,]"))
-	 (let ((end-punct))
-	   (or (= ?{ 
-		  (setq end-punct (save-excursion (goto-char (match-end 0))
-						  (preceding-char))))
-	       ;; If ends with a '[;,]' then must not have func parens
-	       ;; nor simply be a scoped name in order to be a def.
-	       ;; If it begins with 'virtual', ends with "= 0" and has
-	       ;; parens, then is a deferred virtual function declaration.
-	       (if (match-end c++-feature-parens-grpn)
-		   (save-restriction
-		     (narrow-to-region (match-beginning 0) (match-end 0))
-		     (if (looking-at
-			  "\\(^\\|[ \t]+\\)virtual[ \t].*=[ \t]*0[ \t]*[,;]")
-			 (progn (message "(OO-Browser):  Pure virtual function, definition deferred to descendants.")
-				t)))
-		 (or (null (match-end c++-feature-scope-grpn))
-		     (not (equal (concat
-				  (buffer-substring
-				   (match-beginning c++-feature-scope-grpn)
-				   (match-end c++-feature-name-grpn))
-				  (char-to-string end-punct))
-				 (buffer-substring (match-beginning 0)
-						   (match-end 0)))))))))))
+  (and (not (c-within-comment-p))
+       (save-excursion (beginning-of-line)
+		       (not (looking-at "[ \t]*//")))
+       (not (looking-at c++-class-decl))
+       (looking-at (concat c++-at-feature-regexp "[{;,]"))
+       (let ((end-punct))
+	 (or (= ?\{ (setq end-punct (char-after (1- (match-end 0)))))
+	     ;; If ends with a '[;,]' then must not have func parens
+	     ;; nor simply be a scoped name in order to be a def.
+	     ;; If it begins with 'virtual', ends with "= 0" and has
+	     ;; parens, then is a deferred virtual function declaration.
+	     (if (match-end c++-feature-parens-grpn)
+		 (save-restriction
+		   (narrow-to-region (match-beginning 0) (match-end 0))
+		   (if (looking-at
+			"\\s *\\<virtual\\>[^;{}]+=[ \t]*0[ \t]*[,;]")
+		       (progn (message "(OO-Browser):  Pure virtual function, definition deferred to descendants.")
+			      t)))
+	       (or (null (match-end c++-feature-scope-grpn))
+		   (not (equal (concat
+				(buffer-substring
+				 (match-beginning c++-feature-scope-grpn)
+				 (match-end c++-feature-name-grpn))
+				(char-to-string end-punct))
+			       (buffer-substring (match-beginning 0)
+						 (match-end 0))))))))))
 
 (defun c++-feature-def-pat ()
   "Return (list <feature-def-pat> <feature-class> <feature-name>) associated with declaration at point."
@@ -597,31 +621,66 @@ Leaves point at start of statement for visual clarity."
 			 (, post-member-regexp))))
 	    class member-name)))))
 
+(defun c++-feature-display (class-list ftr-pat &optional other-win)
+  "Display routine definition derived from CLASS-LIST, matching FTR-PAT.
+Use routine tags table to locate a match.  Caller must use 'set-buffer'
+to restore prior buffer when a match is not found."
+  (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+  (let  ((classes class-list)
+	 (found-ftr)
+	 (ftr-regexp)
+	 (class)
+	 (ftr-path))
+    (if (or (null class-list) (equal class-list '(nil)))
+	nil
+      (while (and (not found-ftr) classes)
+	(setq class (car classes)
+	      ftr-regexp (funcall ftr-pat class)
+	      ftr-path (br-feature-def-file ftr-regexp)
+	      found-ftr (if ftr-path
+			    (br-edit-feature-from-tag (br-feature-current)
+						      ftr-path other-win))
+	      classes (if found-ftr nil (cdr classes))))
+      (if found-ftr
+	  (or class t)
+	(c++-feature-display
+	 (apply 'append (mapcar (function (lambda (cl) (br-get-parents cl)))
+				class-list))
+	 ftr-pat)))))
+
 (defun c++-feature-lessp (routine1 routine2)
   (string-lessp (c++-feature-signature-to-name routine1)
 		(c++-feature-signature-to-name routine2)))
 
-(defun c++-feature-matches (regexp)
-  "Return an unsorted list of feature tags whose names match in part or whole to REGEXP."
-  ;; Ensure match to feature names only; also handle "^" and "$" meta-chars
-  (setq regexp
-	(concat (format "^[^%s \n]+%s%s "
-			c++-type-tag-separator c++-type-tag-separator
-			br-feature-type-regexp)
-		(if (equal (substring regexp 0 1) "^")
-		    (progn (setq regexp (substring regexp 1)) nil)
-		  c++-identifier-chars)
-		(if (equal (substring regexp -1) "$")
-		    (substring regexp 0 -1)
-		  (concat regexp c++-identifier-chars))
-		c++-type-tag-separator))
-  (save-excursion
-    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
-    (goto-char 1)
-    (let ((features))
+(defun c++-feature-map-tags (function regexp)
+  "Apply FUNCTION to all current feature tags that match REGEXP and return a list of the results.
+Feature tags come from the file named by br-feature-tags-file."
+  (let ((identifier-chars (concat "[" c++-identifier-chars "]*"))
+	(results))
+    ;; Ensure match to feature names only; also handle "^" and "$" meta-chars
+    (setq regexp
+	  (concat (format "^[^%s \n]+%s%s "
+			  c++-type-tag-separator c++-type-tag-separator
+			  br-feature-type-regexp)
+		  (if (equal (substring regexp 0 1) "^")
+		      (progn (setq regexp (substring regexp 1)) nil)
+		    identifier-chars)
+		  (if (equal (substring regexp -1) "$")
+		      (substring regexp 0 -1)
+		    (concat regexp identifier-chars))
+		  c++-type-tag-separator))
+    (save-excursion
+      (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+      (goto-char 1)
       (while (re-search-forward regexp nil t)
-	(setq features (cons (br-feature-current) features)))
-      features)))
+	(setq results (cons (funcall function) results))))
+    results))
+
+(defun c++-feature-matches (regexp)
+  "Return an unsorted list of feature tags whose names match in part or whole to REGEXP.
+^ and $ characters may be used to match to the beginning and end of a feature name,
+respectively."
+  (c++-feature-map-tags 'br-feature-current regexp))
 
 (defun c++-feature-normalize (routine class name &optional friend-flag)
   (setq class (br-delete-space class)
@@ -668,33 +727,6 @@ Leaves point at start of statement for visual clarity."
 	 (substring signature (match-beginning 1) (match-end 1)))
 	(t "")))
 
-(defun c++-feature-tags-lookup (class-list ftr-pat &optional other-win)
-  "Display routine definition derived from CLASS-LIST, matching FTR-PAT.
-Use routine tags table to locate a match.  Caller must use 'set-buffer'
-to restore prior buffer when a match is not found."
-  (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
-  (let  ((classes class-list)
-	 (found-ftr)
-	 (ftr-regexp)
-	 (class)
-	 (ftr-path))
-    (if (or (null class-list) (equal class-list '(nil)))
-	nil
-      (while (and (not found-ftr) classes)
-	(setq class (car classes)
-	      ftr-regexp (funcall ftr-pat class)
-	      ftr-path (br-feature-def-file ftr-regexp)
-	      found-ftr (if ftr-path
-			    (br-edit-feature (br-feature-current)
-					     ftr-path other-win))
-	      classes (if found-ftr nil (cdr classes))))
-      (if found-ftr
-	  (or class t)
-	(c++-feature-tags-lookup
-	 (apply 'append (mapcar (function (lambda (cl) (br-get-parents cl)))
-				class-list))
-	 ftr-pat)))))
-
 (defun c++-files-with-source (class)
   "Use CLASS to compute set of files that match to a C++ source file regexp.
 Return as a list."
@@ -716,7 +748,7 @@ Return as a list."
 	(if (and br-feature-tags-file
 		 (file-exists-p br-feature-tags-file)
 		 (file-readable-p br-feature-tags-file))
-	    (c++-feature-tags-lookup class-list ftr-pat other-win)
+	    (c++-feature-display class-list ftr-pat other-win)
 	  ;; Only works if features are in same directory as class def.
 	  (c++-scan-ancestors-feature class-list ftr-pat other-win))
       (set-buffer obuf))))

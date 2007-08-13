@@ -1,8 +1,8 @@
 ;;; mic-paren.el --- highlight matching paren.
 ;;; Version 1.2 - 96-09-19
-;;; Copyright (C) 1996 Mikael Sj,Av(Bdin (mic@docs.uu.se)
+;;; Copyright (C) 1996 Mikael Sjödin (mic@docs.uu.se)
 ;;;
-;;; Author: Mikael Sj,Av(Bdin  --  mic@docs.uu.se
+;;; Author: Mikael Sjödin  --  mic@docs.uu.se
 ;;; Keywords: languages, faces
 ;;;
 ;;; This file is NOT part of GNU Emacs.
@@ -318,7 +318,7 @@ point. When in sexp-mode this is the overlay for the expression after point.")
       (input-pending-p)			;[This might cause trouble since the
                                         ; function is unreliable]
       (condition-case paren-error
-	  (mic-paren-highligt)
+	  (mic-paren-highlight)
 	(error 
 	 (if (not (window-minibuffer-p (selected-window)))
 	     (message "mic-paren catched error (please report): %s"
@@ -326,14 +326,14 @@ point. When in sexp-mode this is the overlay for the expression after point.")
 
 (defun mic-paren-command-idle-hook ()
   (condition-case paren-error
-      (mic-paren-highligt)
+      (mic-paren-highlight)
     (error 
      (if (not (window-minibuffer-p (selected-window)))
 	 (message "mic-paren catched error (please report): %s" 
 		  paren-error)))))
 
 
-(defun mic-paren-highligt ()
+(defun mic-paren-highlight ()
   "The main-function of mic-paren. Does all highlighting, dinging, messages,
 cleaning-up."
   ;; Remove any old highlighting
@@ -375,7 +375,7 @@ cleaning-up."
 				 (char-after open)))
 		   (visible (pos-visible-in-window-p open)))
 	       ;; If highlight is appropriate
-	       ;;    highligt
+	       ;;    highlight
 	       ;; else
 	       ;;    remove any old highlight
 	       (if (or visible paren-highlight-offscreen paren-sexp-mode)
@@ -460,7 +460,7 @@ cleaning-up."
 				 (char-after (1- close))))
 		   (visible (pos-visible-in-window-p close)))
 	       ;; If highlight is appropriate
-	       ;;    highligt
+	       ;;    highlight
 	       ;; else
 	       ;;    remove any old highlight
 	       (if (or visible paren-highlight-offscreen paren-sexp-mode)

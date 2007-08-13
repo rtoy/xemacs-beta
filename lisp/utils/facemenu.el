@@ -1,5 +1,5 @@
 ;;; facemenu.el --- create a face menu for interactively adding fonts to text
-;; Copyright (c) 1994, 1995 Free Software Foundation, Inc.
+;; Copyright (c) 1994, 1995, 1996 Free Software Foundation, Inc.
 
 ;; XEmacs version: Mike Sperber <sperber@informatik.uni-tuebingen.de>
 ;; Original author: Boris Goldowsky <boris@gnu.ai.mit.edu>
@@ -22,9 +22,10 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
+
 ;; This file defines a menu of faces (bold, italic, etc) which allows you to
 ;; set the face used for a region of the buffer.  Some faces also have
 ;; keybindings, which are shown in the menu.  Faces with names beginning with
@@ -38,11 +39,6 @@
 ;; The menu also contains submenus for indentation and justification-changing
 ;; commands.
 
-;;; Installation:
-;; Just do a (require 'facemenu).
-;; If you want the menu bound to a mouse button under XEmacs, do
-;; (define-key global-map '(control button2) 'facemenu-menu)
-
 ;;; Usage:
 ;; Selecting a face from the menu or typing the keyboard equivalent will
 ;; change the region to use that face.  If you use transient-mark-mode and the
@@ -54,6 +50,28 @@
 ;; The standard keybindings are M-g (or ESC g) + letter:
 ;; M-g i = "set italic",  M-g b = "set bold", etc.
 
+;;; Customization:
+;; An alternative set of keybindings that may be easier to type can be set up
+;; using "Alt" or "Hyper" keys.  This requires that you either have or create
+;; an Alt or Hyper key on your keyboard.  On my keyboard, there is a key
+;; labeled "Alt", but to make it act as an Alt key I have to put this command
+;; into my .xinitrc:
+;;    xmodmap -e "add Mod3 = Alt_L"
+;; Or, I can make it into a Hyper key with this:
+;;    xmodmap -e "keysym Alt_L = Hyper_L" -e "add Mod2 = Hyper_L"
+;; Check with local X-perts for how to do it on your system.
+;; Then you can define your keybindings with code like this in your .emacs:
+;;   (setq facemenu-keybindings
+;;    '((default     . [?\H-d])
+;;      (bold        . [?\H-b])
+;;      (italic      . [?\H-i])
+;;      (bold-italic . [?\H-l])
+;;      (underline   . [?\H-u])))
+;;   (setq facemenu-keymap global-map)
+;;   (setq facemenu-key nil)
+;;   (define-key global-map [?\H-c] 'facemenu-set-foreground) ; set fg color
+;;   (define-key global-map [?\H-C] 'facemenu-set-background) ; set bg color
+;;   (require 'facemenu)
 ;;
 ;; The order of the faces that appear in the menu and their keybindings can be
 ;; controlled by setting the variables `facemenu-keybindings' and
@@ -79,6 +97,7 @@
 
 (provide 'facemenu)
 
+;; XEmacs
 (require 'easymenu)
 
 ;;; Provide some binding for startup:
@@ -112,6 +131,7 @@ If you change this variable after loading facemenu.el, you will need to call
 This should be nil to put them at the top of the menu, or t to put them
 just before \"Other\" at the end.")
 
+;; XEmacs -- additional faces
 (defvar facemenu-unlisted-faces
   '(modeline region secondary-selection highlight scratch-face
     gui-button-face isearch hyperlink
@@ -215,6 +235,22 @@ This is only relevant for XEmacs.")
 requested in `facemenu-keybindings'.")
 (defalias 'facemenu-keymap facemenu-keymap)
 
+
+(defvar facemenu-add-face-function nil
+  "Function called at beginning of text to change or `nil'.
+This function is passed the FACE to set and END of text to change, and must
+return a string which is inserted.  It may set `facemenu-end-add-face'.")
+
+(defvar facemenu-end-add-face nil
+  "String to insert or function called at end of text to change or `nil'.
+This function is passed the FACE to set, and must return a string which is
+inserted.")
+
+(defvar facemenu-remove-face-function nil
+  "When non-`nil' function called to remove faces.
+This function is passed the START and END of text to change.
+May also be `t' meaning to use `facemenu-add-face-function'.")
+
 ;;; Internal Variables
 
 (defvar facemenu-color-alist nil
@@ -260,10 +296,10 @@ Otherwise, this command specifies the face for the next character
 inserted.  Moving point or switching buffers before
 typing a character to insert cancels the specification." 
   (interactive (list (read-face-name "Use face: ")))
-  (setq zmacs-region-stays t)
+  (setq zmacs-region-stays t) ; XEmacs
   (barf-if-buffer-read-only)
   (facemenu-add-new-face face)
-  (facemenu-update-facemenu-menu)
+  (facemenu-update-facemenu-menu) ; XEmacs
   (if (and (facemenu-region-active-p)
 	   (not current-prefix-arg))
       (let ((start (or start (region-beginning)))
@@ -304,7 +340,7 @@ typing a character cancels the request."
     (facemenu-set-face face start end)))
 
 ;;;###autoload
-(defun facemenu-set-face-from-menu (face)
+(defun facemenu-set-face-from-menu (face start end)
   "Set the face of the region or next character typed.
 This function is designed to be called from a menu; the face to use
 is the menu item's name.
@@ -315,19 +351,21 @@ this command sets the region to the requested face.
 Otherwise, this command specifies the face for the next character
 inserted.  Moving point or switching buffers before
 typing a character to insert cancels the specification." 
-  (let ((start (if (and (facemenu-region-active-p)
-			(not current-prefix-arg))
-		   (region-beginning)))
-	(end (if (and (facemenu-region-active-p)
-		      (not current-prefix-arg))
-		 (region-end))))
-    (barf-if-buffer-read-only)
-    (setq zmacs-region-stays t)
-    (facemenu-get-face face)
-    (if start
-	(facemenu-add-face face start end)
-      (facemenu-self-insert-face face))))
+  (interactive (list last-command-event
+		     (if (and (facemenu-region-active-p)
+			      (not current-prefix-arg))
+			 (region-beginning))
+		     (if (and (facemenu-region-active-p)
+			      (not current-prefix-arg))
+			 (region-end))))
+  (barf-if-buffer-read-only)
+  (setq zmacs-region-stays t) ; XEmacs
+  (facemenu-get-face face)
+  (if start
+      (facemenu-add-face face start end)
+    (facemenu-self-insert-face face))) ; XEmacs
 
+;; XEmacs
 (defun facemenu-self-insert-face (face)
   (setq self-insert-face (cond
 			  ((null self-insert-face) face)
@@ -417,7 +455,8 @@ else it calls `make-face-smaller' -SIZE times."
 		      (facemenu-sized-face (facemenu-face-strip-size face)
 					    size))
 		  face))
-   (t (facemenu-sized-face face size))))
+   ;;[BV  9-Feb-97] strip-face from this face too, please!
+   (t (facemenu-sized-face (facemenu-face-strip-size face) size))))
 
 (defun facemenu-adjust-size (from to)
   "Adjust the size of the text between FROM and TO according
@@ -460,7 +499,7 @@ to the values of the 'size property in that region."
   "Make the region invisible.
 This sets the `invisible' text property; it can be undone with
 `facemenu-remove-special'."
-  (interactive "r")
+  (interactive "_r")
   (put-text-property start end 'invisible t))
 
 ;;;###autoload
@@ -468,7 +507,7 @@ This sets the `invisible' text property; it can be undone with
   "Make the region intangible: disallow moving into it.
 This sets the `intangible' text property; it can be undone with
 `facemenu-remove-special'."
-  (interactive "r")
+  (interactive "_r")
   (put-text-property start end 'intangible t))
 
 ;;;###autoload
@@ -476,7 +515,7 @@ This sets the `intangible' text property; it can be undone with
   "Make the region unmodifiable.
 This sets the `read-only' text property; it can be undone with
 `facemenu-remove-special'."
-  (interactive "r")
+  (interactive "_r")
   (put-text-property start end 'read-only t))
 
 ;;;###autoload
@@ -501,15 +540,35 @@ These special properties include `invisible', `intangible' and `read-only'."
 (defun list-text-properties-at (p)
   "Pop up a buffer listing text-properties at LOCATION."
   (interactive "d")
-  (let ((props (text-properties-at p)))
+  (let ((props (text-properties-at p))
+	category
+	str)
     (if (null props)
 	(message "None")
-      (with-output-to-temp-buffer "*Text Properties*"
-	(princ (format "Text properties at %d:\n\n" p))
-	(while props
-	  (princ (format "%-20s %S\n"
-			 (car props) (car (cdr props))))
-	  (setq props (cdr (cdr props))))))))
+      (if (and (not (cdr (cdr props)))
+	       (not (eq (car props) 'category))
+	       (< (length (setq str (format "Text property at %d:  %s  %S"
+					    p (car props) (car (cdr props)))))
+		  (frame-width)))
+	  (message "%s" str)
+	(with-output-to-temp-buffer "*Text Properties*"
+	  (princ (format "Text properties at %d:\n\n" p))
+	  (while props
+	    (if (eq (car props) 'category)
+		(setq category (car (cdr props))))
+	    (princ (format "%-20s %S\n"
+			   (car props) (car (cdr props))))
+	    (setq props (cdr (cdr props))))
+	  (if category
+	      (progn
+		(setq props (symbol-plist category))
+		(princ (format "\nCategory %s:\n\n" category))
+		(while props
+		  (princ (format "%-20s %S\n"
+				 (car props) (car (cdr props))))
+		  (if (eq (car props) 'category)
+		      (setq category (car (cdr props))))
+		  (setq props (cdr (cdr props)))))))))))
 
 ;;;###autoload
 (defun facemenu-read-color (&optional prompt)
@@ -596,7 +655,7 @@ determine the correct answer."
 	((and (equal (facemenu-color-values a)
 		     (facemenu-color-values b))))))
 
-(defun facemenu-add-face (face start end)
+(defun facemenu-add-face (face &optional start end)
   "Add FACE to text between START and END.
 For each section of that region that has a different face property, FACE will
 be consed onto it, and other faces that are completely hidden by that will be
@@ -606,22 +665,48 @@ As a special case, if FACE is `default', then the region is left with NO face
 text property.  Otherwise, selecting the default face would not have any
 effect."
   (interactive "*_xFace:\nr")
-  (if (eq face 'default)
-      (remove-text-properties start end '(face default))
-    (let ((part-start start) part-end)
-      (while (not (= part-start end))
-	(setq part-end (next-single-property-change part-start 'face nil end))
-	(let* ((prev (get-text-property part-start 'face))
-	       (size (get-text-property part-start 'size))
-	       (face (if size (facemenu-sized-face face size) face)))
-	  (put-text-property part-start part-end 'face
-			     (if (null prev)
-				 face
-			       (facemenu-active-faces
-				(cons face
-				      (if (listp prev) prev (list prev)))))))
-	(setq part-start part-end)))))
+  (if (and (eq face 'default)
+	   (not (eq facemenu-remove-face-function t)))
+      (if facemenu-remove-face-function
+	  (funcall facemenu-remove-face-function start end)
+	(if (and start (< start end))
+	    (remove-text-properties start end '(face default))
+	  (setq self-insert-face 'default
+		self-insert-face-command this-command)))
+    (if facemenu-add-face-function
+	(save-excursion
+	  (if end (goto-char end))
+	  (save-excursion
+	    (if start (goto-char start))
+	    (insert-before-markers
+	     (funcall facemenu-add-face-function face end)))
+	  (if facemenu-end-add-face
+	      (insert (if (stringp facemenu-end-add-face)
+			  facemenu-end-add-face
+			(funcall facemenu-end-add-face face)))))
+      (if (and start (< start end))
+	  (let ((part-start start) part-end)
+	    (while (not (= part-start end))
+	      (setq part-end (next-single-property-change part-start 'face
+							  nil end))
+	      (let ((prev (get-text-property part-start 'face)))
+		(put-text-property part-start part-end 'face
+				   (if (null prev)
+				       face
+				     (facemenu-active-faces
+				      (cons face
+					    (if (listp prev)
+						prev
+					      (list prev)))))))
+	      (setq part-start part-end)))
+	(setq self-insert-face (if (eq last-command self-insert-face-command)
+				   (cons face (if (listp self-insert-face)
+						  self-insert-face
+						(list self-insert-face)))
+				 face)
+	      self-insert-face-command this-command)))))
 
+;; XEmacs
 (defun facemenu-face-attributes (face)
   "Create a vector of the relevant face attributes of face FACE."
   (if (string-match "XEmacs" emacs-version)

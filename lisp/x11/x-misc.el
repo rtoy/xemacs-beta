@@ -75,5 +75,4 @@ a check is done for bogus resource specifications."
       (x-bogosity-check-resource name class type))
   (x-get-resource name class type locale nil t))
 
-
-
+;;; x-misc.el ends here

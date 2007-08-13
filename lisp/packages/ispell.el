@@ -1270,7 +1270,8 @@ SPC:   Accept word this time.
 	       (enlarge-window 2)
 	       ;; Make sure we display the minibuffer
 	       ;; in this window, not some other.
-	       (set-minibuffer-window (selected-window))
+	       (if (fboundp 'set-minibuffer-window)
+		   (set-minibuffer-window (selected-window)))
 	       (insert (concat help-1 "\n" help-2 "\n" help-3))))
 	(sit-for 5)
 	(erase-buffer)))))

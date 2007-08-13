@@ -370,22 +370,31 @@ if that value is non-nil."
       (eval (cons 'defconst (cdr expr)))
     (eval expr)))
 
-(defun eval-last-sexp (eval-last-sexp-arg-internal)
+;; XEmacs change, based on Bob Weiner suggestion
+(defun eval-last-sexp (eval-last-sexp-arg-internal) ;dynamic scoping wonderment
   "Evaluate sexp before point; print value in minibuffer.
 With argument, print output into current buffer."
   (interactive "P")
   (let ((standard-output (if eval-last-sexp-arg-internal (current-buffer) t))
 	(opoint (point)))
-    (prin1 (let ((stab (syntax-table)))
-	     ;; XEmacs change use eval-interactive not eval
-	     (eval-interactive (unwind-protect
-				   (save-excursion
-				     (set-syntax-table emacs-lisp-mode-syntax-table)
-				     (forward-sexp -1)
-				     (save-restriction
-				       (narrow-to-region (point-min) opoint)
-				       (read (current-buffer))))
-				 (set-syntax-table stab)))))))
+    (prin1 (let ((stab (syntax-table))
+		 expr)
+	     (eval-interactive
+	      (unwind-protect
+		  (save-excursion
+		    (set-syntax-table emacs-lisp-mode-syntax-table)
+		    (forward-sexp -1)
+		    (save-restriction
+		      (narrow-to-region (point-min) opoint)
+		      (setq expr (read (current-buffer)))
+		      (if (and (consp expr)
+			       (eq (car expr) 'interactive))
+			  (list 'quote
+				(call-interactively
+				 (eval (` (lambda (&rest args)
+					    (, expr) args)))))
+			expr)))
+		(set-syntax-table stab)))))))
 
 (defun eval-defun (eval-defun-arg-internal)
   "Evaluate defun that point is in or before.

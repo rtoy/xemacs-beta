@@ -1156,11 +1156,13 @@ More precisely, a regexp to match any one such character.")
 
 ;;; In-line functions
 
-(defsubst ediff-file-remote-p (file-name)
-  (require 'ange-ftp)
-  (car (if ediff-xemacs-p
-	   (ange-ftp-ftp-path file-name)
-	 (ange-ftp-ftp-name file-name))))
+(or (fboundp 'ediff-file-remote-p) ; user supplied his own function
+    (defun ediff-file-remote-p (file-name)
+      (car (cond ((featurep 'efs) (efs-ftp-path file-name))
+		 ((fboundp 'file-remote-p) (efs-ftp-path file-name))
+		 (t (require 'ange-ftp)
+		    ;; Can happen only in Emacs, since XEmacs has file-remote-p
+		    (ange-ftp-ftp-name file-name))))))
 
     
 (defsubst ediff-frame-unsplittable-p (frame)
@@ -1601,10 +1603,10 @@ Checks if overlay's buffer exists."
       (apply 'message string args)))
 
 (defun ediff-file-attributes (filename attr-number)
-  (let ((handler (find-file-name-handler filename 'find-file-noselect)))
-    (if (and handler (string-match "ange-ftp" (format "%S" handler)))
-	-1
-      (nth attr-number (file-attributes filename)))))
+  (if (ediff-file-remote-p filename)
+      -1
+    (nth attr-number (file-attributes filename))))
+
 (defsubst ediff-file-size (filename)
   (ediff-file-attributes filename 7))
 (defsubst ediff-file-modtime (filename)

@@ -6,12 +6,12 @@
 ;; KEYWORDS:     oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     8-Jun-90
-;; LAST-MOD:     20-Sep-95 at 14:59:03 by Bob Weiner
+;; LAST-MOD:     21-Feb-97 at 17:22:39 by Bob Weiner
 ;;
-;; Copyright (C) 1989-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1989-1995, 1997  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -181,7 +181,7 @@ Return the name of the Environment specification file that was created."
   (interactive)
   (if env-file
       (read-string
-	(format "Please specify the \"%s\" Environment (Hit RTN to begin)."
+	(format "Please specify the \"%s\" Environment (Hit RET to begin)."
 		(file-name-nondirectory env-file)))
     (setq env-file (br-env-default-file)
 	  env-file (read-file-name
@@ -192,7 +192,7 @@ Return the name of the Environment specification file that was created."
   (setq env-file (expand-file-name env-file))
   ;; Display Env spec if previous one existed
   (and (equal env-file br-env-file) (file-readable-p env-file) (br-env-stats))
-  (let ((prompt "System search dir #%d (RTN to end): ")
+  (let ((prompt "System search dir #%d (RET to end): ")
 	(br-env-spec t)
 	br-sys-search-dirs br-lib-search-dirs
 	br-lang-prefix
@@ -206,7 +206,7 @@ Return the name of the Environment specification file that was created."
     (br-env-create-htables)
     (setq br-lang-prefix (or lang-prefix (br-env-select-lang))
 	  br-sys-search-dirs (br-env-get-dirs prompt)
-	  prompt "Library search dir #%d (RTN to end): "
+	  prompt "Library search dir #%d (RET to end): "
 	  br-lib-search-dirs (br-env-get-dirs prompt))
     ;; Now since user has not aborted, set real variables
     (setq br-env-spec t)
@@ -286,6 +286,19 @@ Return t if load is successful, else nil."
 		 env-file
 		 (if prompt
 		     "Environment file format is obsolete, rebuild it? ")))))
+	  ;; Ensure that OO-Browser support libraries for the current
+	  ;; language are loaded, since this function may be called without
+	  ;; invoking the OO-Browser user interface.
+	  (let ((lang-symbol (intern-soft (concat br-lang-prefix "browse")))
+		lang-setup-symbol
+		lang-function)
+	    (if lang-symbol
+		(progn (setq lang-function (symbol-function lang-symbol))
+		       (and (listp lang-function) (eq (car lang-function) 'autoload)
+			    (load (car (cdr lang-function)))
+			    ;; Initialize language-specific browser variables.
+			    (setq lang-setup-symbol (intern-soft (concat br-lang-prefix "browse-setup")))
+			    (funcall lang-setup-symbol)))))
 	  nil)
       (if (file-exists-p env-file)
 	  (progn (beep)
@@ -359,7 +372,7 @@ With optional prefix ARG, display class totals in minibuffer."
     (if arg
 	(message "Envir \"%s\": %s" env-file (br-env-totals))
       (br-funcall-in-view-window
-       (concat br-buffer-prefix-info "Info")
+       (concat br-buffer-prefix-info "Info*")
        (function
 	(lambda ()
 	  (insert (format "Environment: \"%s\"" env-file))
@@ -566,7 +579,7 @@ Return file name found, the value of 'br-env-file' if non-nil, or else the
 value of 'br-env-default-file'.  All return values are expanded to absolute
 paths before being returned."
   (let ((path directory)
-	(oobr-file))
+	(oo-browser-file))
     (while (and (stringp path)
 		(setq path (file-name-directory path))
 		(setq path (directory-file-name path))
@@ -574,10 +587,10 @@ paths before being returned."
 		(not (string-match ":?/\\'" path))
 		;; No environment file
 		(not (file-exists-p
-		      (setq oobr-file (expand-file-name
+		      (setq oo-browser-file (expand-file-name
 				       br-env-default-file path)))))
-      (setq oobr-file nil))
-    (expand-file-name (or oobr-file br-env-file br-env-default-file))))
+      (setq oo-browser-file nil))
+    (expand-file-name (or oo-browser-file br-env-file br-env-default-file))))
 
 (defun br-env-file-sym-val (symbol-name)
   "Given a SYMBOL-NAME, a string, find its value in the current Environment file.
@@ -675,7 +688,7 @@ then return nil."
   "Display values of internal data structures in viewer buffer."
   (interactive)
   (br-funcall-in-view-window
-   (concat br-buffer-prefix-info "Info")
+   (concat br-buffer-prefix-info "Info*")
    (function
     (lambda ()
       (let ((standard-output (current-buffer)))
@@ -871,7 +884,7 @@ Nil means current Environment has been built, though it may still require
 updating. Value is language-specific.")
 
 (defvar br-env-lang-avector
-  '[("C++"     . "c++-")
+  '[("C++/C"   . "c++-")
     ("Eiffel"  . "eif-")
     ("Info"    . "info-")
     ("Java"    . "java-")

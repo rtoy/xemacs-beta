@@ -151,7 +151,9 @@ The name of the tag is TAG-NAME. After this function the point is at UNTIL
 (defun hm--html-is-one-element-tag-p (tag-name)
   "Returns t, if the tag with the tag-name is a one element tag."
   (assoc :hm--html-one-element-tag
-	 (cdr (assoc* tag-name hm--html-tag-name-alist :test 'string=))))
+	 (cdr (assoc* (downcase tag-name)
+		      hm--html-tag-name-alist
+		      :test 'string=))))
 
 (defun hm--html-calculate-indent-according-to-previous-tags ()
   "Calculate the indent according to the previous tags in this line.

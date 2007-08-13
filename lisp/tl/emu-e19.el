@@ -1,9 +1,9 @@
 ;;; emu-e19.el --- emu module for Emacs 19 and XEmacs 19
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu-e19.el,v 1.2 1996/12/28 21:03:08 steve Exp $
+;; Version: $Id: emu-e19.el,v 1.3 1997/02/24 01:14:16 steve Exp $
 ;; Keywords: emulation, compatibility, mule, Latin-1
 
 ;; This file is part of emu.
@@ -135,6 +135,11 @@
        (,@ body)
        )))
 
+(defmacro as-binary-output-file (&rest body)
+  (` (let ((emx-binary-mode t)) ; Stop CRLF to LF conversion in OS/2
+       (,@ body)
+       )))
+
 
 ;;; @@ for old MULE emulation
 ;;;
@@ -150,6 +155,21 @@ else returns nil. [emu-e19.el; old MULE emulating function]"
 to TARGET. On successful conversion returns t,
 else returns nil. [emu-e19.el; old MULE emulating function]"
   t)
+
+
+;;; @ binary access
+;;;
+
+(defun insert-binary-file-contents-literally
+  (filename &optional visit beg end replace)
+  "Like `insert-file-contents-literally', q.v., but don't code conversion.
+A buffer may be modified in several ways after reading into the buffer due
+to advanced Emacs features, such as file-name-handlers, format decoding,
+find-file-hooks, etc.
+  This function ensures that none of these modifications will take place."
+  (let ((emx-binary-mode t))
+    (insert-file-contents-literally filename visit beg end replace)
+    ))
 
 
 ;;; @ MIME charset

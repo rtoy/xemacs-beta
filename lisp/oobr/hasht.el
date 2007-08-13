@@ -6,12 +6,12 @@
 ;; KEYWORDS:     extensions, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    16-Mar-90 at 03:38:48
-;; LAST-MOD:     27-Sep-95 at 21:31:20 by Bob Weiner
+;; LAST-MOD:     20-Feb-97 at 07:04:56 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995, 1997  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -20,11 +20,11 @@
 ;;
 ;;   Featureful set of hash table operators for use in personal programs.
 ;;
-;;   'hash-make' creates a hash table from an association list, 'hash-add'
-;;   adds a value-key pair to a hash table, and 'hash-lookup' finds the value
+;;   `hash-make' creates a hash table from an association list, `hash-add'
+;;   adds a value-key pair to a hash table, and `hash-lookup' finds the value
 ;;   associated with a given key in a hash table, if any.
 ;;
-;;   'hash-map' does the same thing as 'mapcar' but operates on hash tables
+;;   `hash-map' does the same thing as `mapcar' but operates on hash tables
 ;;   instead.
 ;;
 ;;   For a list of 300 items, these hash tables improve lookup times by a
@@ -57,7 +57,7 @@ Replaces any VALUE previously referenced by KEY."
 (defun hash-copy (hash-table)
   "Return a copy of HASH-TABLE, list and vector elements are shared across both tables."
   (if (not (hashp hash-table))
-      (error "(hash-copy): Invalid hash-table: '%s'" hash-table))
+      (error "(hash-copy): Invalid hash-table: `%s'" hash-table))
   (let ((htable-copy (hash-make (length (hash-obarray hash-table)))))
     (hash-map
      (function (lambda (elt) (hash-add (car elt) (cdr elt) htable-copy)))
@@ -102,7 +102,7 @@ Return nil if KEY is not in HASH-TABLE or non-nil otherwise."
 	 (vconcat (mapcar 'hash-deep-copy obj)))
 	((atom obj) obj)
 	((nlistp obj)
-	 (error "(hash-deep-copy): Invalid type, '%s'" obj))
+	 (error "(hash-deep-copy): Invalid type, `%s'" obj))
 	(t ;; list
 	 (cons (hash-deep-copy (car obj)) (hash-deep-copy (cdr obj))))))
 
@@ -117,7 +117,7 @@ Return nil if KEY is not in HASH-TABLE or non-nil otherwise."
 (defun hash-lookup (key hash-table)
   "Lookup KEY in HASH-TABLE and return associated value.
 If value is nil, this function does not tell you whether or not KEY is in the
-hash table.  Use 'hash-key-p' instead for that function."
+hash table.  Use `hash-key-p' instead for that function."
   (if (hashp hash-table)
       (let* ((obarray (hash-obarray hash-table))
 	     (sym (intern-soft key obarray)))
@@ -133,7 +133,7 @@ form (<key> . <value>)."
   (if (integerp initializer)
       (if (>= initializer 0)
 	  (cons 'hasht (make-vector (hash-next-prime initializer) 0))
-	(error "(hash-make): Initializer must be >= 0, not '%s'"
+	(error "(hash-make): Initializer must be >= 0, not `%s'"
 	       initializer))
     (let* ((vlen (hash-next-prime (length initializer)))
 	   (obarray (make-vector vlen 0))
@@ -154,7 +154,7 @@ form (<key> . <value>)."
 (defun hash-map (func hash-table)
   "Return result of application of FUNC to each (<value> . <key>) element of HASH-TABLE."
   (if (not (hashp hash-table))
-      (error "(hash-map): Invalid hash-table: '%s'" hash-table))
+      (error "(hash-map): Invalid hash-table: `%s'" hash-table))
   (let ((result))
     (mapatoms (function
 		(lambda (sym)
@@ -232,7 +232,7 @@ assumed to be strings and the result is a set of ordered strings."
 (make-obsolete 'hash-new 'hash-make)
 (defun hash-new (size)
   "Return a new hash table of SIZE elements.
-This is obsolete.  Use 'hash-make' instead."
+This is obsolete.  Use `hash-make' instead."
   (hash-make size))
 
 (defun hash-prin1 (hash-table &optional stream)
@@ -259,12 +259,12 @@ An error will occur if KEY is not found in HASH-TABLE."
 	      (sym (intern-soft key obarray)))
 	 (if (and (boundp sym) sym)
 	     (set sym value)
-	   (error "(hash-replace): '%s' key not found in hash table." key)))))
+	   (error "(hash-replace): `%s' key not found in hash table." key)))))
 
 (defun hash-resize (hash-table new-size)
   "Resize HASH-TABLE to NEW-SIZE without losing any elements and return new table.
 NEW-SIZE must be greater than 0.  Hashing works best if NEW-SIZE is a prime
-number.  See also 'hash-next-prime'."
+number.  See also `hash-next-prime'."
   (if (< new-size 1)
       (error "(hash-resize): Cannot resize hash table to size %d" new-size))
   (let ((htable (hash-make new-size)))

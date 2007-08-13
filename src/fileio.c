@@ -2145,7 +2145,7 @@ This is what happens in interactive use with M-x.
 				  INTP (ok_if_already_exists), 0);
 
 #ifdef WINDOWSNT
-  if (!MoveFile (XSTRING (filename)->data, XSTRING (newname)->data))
+  if (!MoveFile (XSTRING (filename)->_data, XSTRING (newname)->_data))
 #else  /* not WINDOWSNT */
     /* FSFmacs only calls rename() here under BSD 4.1, and calls
        link() and unlink() otherwise, but that's bogus.  Sometimes
@@ -2726,7 +2726,7 @@ Return mode bits of FILE, as an integer.
   if (stat ((char *) XSTRING_DATA (abspath), &st) < 0)
     return Qnil;
 #ifdef DOS_NT
-  if (check_executable (XSTRING (abspath)->data))
+  if (check_executable (XSTRING (abspath)->_data))
     st.st_mode |= S_IEXEC;
 #endif /* DOS_NT */
 
@@ -2801,7 +2801,9 @@ Tell Unix to finish all pending disk updates.
 */
        ())
 {
+#ifndef WINDOWSNT
   sync ();
+#endif
   return Qnil;
 }
 #endif /* !VMS */
@@ -3194,6 +3196,8 @@ positions), even in Mule. (Fixing this is very difficult.)
     NUNGCPRO;
   }
 
+#if 0
+/* XXXX Why the #### ? Bogus anyway. If they are there, display em! */
 #ifdef DOS_NT
   /* Determine file type from name and remove LFs from CR-LFs if the file
      is deemed to be a text file.  */
@@ -3208,6 +3212,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	buffer_do_msdos_crlf_to_lf (buf, ####);
       }
   }
+#endif
 #endif
 
   /* Close the file/stream */

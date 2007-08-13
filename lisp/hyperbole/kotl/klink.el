@@ -8,7 +8,7 @@
 ;; AUTHOR:       Bob Weiner & Kellie Clark
 ;;
 ;; ORIG-DATE:    15-Nov-93 at 12:15:16
-;; LAST-MOD:      1-Nov-95 at 23:07:37 by Bob Weiner
+;; LAST-MOD:      6-Jan-97 at 19:00:58 by Bob Weiner
 ;;
 ;; DESCRIPTION:  
 ;;
@@ -102,8 +102,8 @@ See documentation for 'kcell:ref-to-id' for valid cell-ref formats."
 
 (defun klink:at-p ()
   "Return non-nil iff point is within a klink.
-See documentation for the `link-to-kotl' function for valid klink formats.
-Value returned is a list of: link-label, link-start-position, and
+See documentation for the `actypes::link-to-kotl' function for valid klink
+formats.  Value returned is a list of: link-label, link-start-position, and
 link-end-position, (including delimiters)."
   (let (bol klink referent)
     (if (and
@@ -127,7 +127,17 @@ link-end-position, (including delimiters)."
 	 (setq klink (hbut:label-p t "<" ">" t))
 	 (stringp (setq referent (car klink)))
 	 ;; Eliminate matches to e-mail address like, <user@domain>.
-	 (not (string-match "[^<> \t\n][!&@]" referent)))
+	 (not (string-match "[^<> \t\n][!&@]" referent))
+	 ;; Eliminate matches to URLs
+	 (not (string-match "\\`[a-zA-Z]+:" referent))
+	 ;; Don't match to <HTML> and </SGML> tags.
+	 (not (and (memq major-mode
+			 (if (boundp 'id-select-markup-modes)
+			     id-select-markup-modes
+			   '(html-mode sgml-mode)))
+		   ;; Assume , followed by a number is a klink.
+		   (not (string-match ",\\s *[0-9]" referent))
+		   (string-match "\\`[a-zA-Z!/]" referent))))
 	klink)))
 
 ;;; ************************************************************************

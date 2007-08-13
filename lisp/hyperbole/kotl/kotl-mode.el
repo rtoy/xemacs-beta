@@ -8,7 +8,7 @@
 ;; AUTHOR:       Bob Weiner & Kellie Clark
 ;;
 ;; ORIG-DATE:    6/30/93
-;; LAST-MOD:      3-Nov-95 at 19:25:57 by Bob Weiner
+;; LAST-MOD:      5-Dec-96 at 18:55:22 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -69,7 +69,7 @@ It provides the following keys:
 				       minor-mode-alist)
 	  minor-mode-alist (set:remove '(selective-display " Otl")
 				       minor-mode-alist)
-	;; Remove indication that buffer is ;; narrowed.
+	;; Remove indication that buffer is narrowed.
 	mode-line-format (copy-sequence mode-line-format)
 	mode-line-format (set:remove "%n" mode-line-format)))
   ;;

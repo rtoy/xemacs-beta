@@ -8,16 +8,20 @@
 ;; KEYWORDS:     hypermedia, matching
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;;
+;; ORG:          InfoDock Associates.  We sell corporate support and development
+;;               contracts for InfoDock, Emacs and XEmacs.
+;;               E-mail: <info@infodock.com>  Web: http://www.infodock.com
+;;               Tel: +1 408-243-3300
 ;;
 ;; ORIG-DATE:     7-Jun-89 at 22:08:29
-;; LAST-MOD:     31-Oct-95 at 18:39:54 by Bob Weiner
+;; LAST-MOD:     17-Feb-97 at 15:32:20 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
 ;; Copyright (C) 1989, '90, '91, '92, '95  Free Software Foundation, Inc.
-;; Developed with support from Motorola Inc.
+;; Copyright (C) 1996  InfoDock Associates
 ;;
 ;; DESCRIPTION:  
 ;;
@@ -223,7 +227,7 @@ It must contain a %s indicating where to put the entry name and a second
 %s indicating where to put the e-mail address.")
 
 (defvar rolo-file-list
-  (if (memq system-type '(ms-windows windows-nt ms-dos))
+  (if hyperb:microcruft-os-p
       '("c:/_rolodex.otl") '("~/.rolodex.otl"))
   "*List of files containing rolodex entries.
 The first file should be a user-specific rolodex file, typically in the home
@@ -346,11 +350,12 @@ entry which begins with the parent string."
 		(if (string= entry-spc "") "   " entry-spc)
 		name "\n")
 	(backward-char 1))
-      (widen)
-      (rolo-to-buffer (current-buffer))
-      ;; Fixes non-display update bug when buf is on screen before
-      ;; interactive command invocation. 
-      (goto-char (point))
+      ;; Rolo-to-buffer may move point from its desired location, so
+      ;; restore it.
+      (let ((opoint (point)))
+	(widen)
+	(rolo-to-buffer (current-buffer))
+	(goto-char opoint))
       (if (interactive-p)
 	  (message "Edit entry at point.")))))
 
@@ -421,9 +426,8 @@ parent entry which begins with the parent string."
 			    (find-file-noselect (car file-list))))
 	(setq buffer-read-only nil))
       (widen)
-      ;; Fixes display update bug in some Emacs versions.  When buf is
-      ;; on screen before interactive command invocation, point is not
-      ;; moved to proper location.
+      ;; Rolo-to-buffer may have moved point from its desired location, so
+      ;; restore it.
       (if found-point (goto-char found-point)))))
 
 (defun rolo-edit-entry ()
@@ -671,11 +675,12 @@ any rolodex entry of the given level, not the beginning of a line (^); an
 example, might be (regexp-quote \"**\") to match level two.  Returns number
 of groupings sorted."
   (interactive "sRolodex file to sort: \nRegexp for level's entries: \nP")
-  (rolo-map-level
-   (function (lambda (start end) (sort-lines nil start end)))
-   rolo-file
-   level-regexp
-   max-groupings))
+  (let ((sort-fold-case t))
+    (rolo-map-level
+     (function (lambda (start end) (sort-lines nil start end)))
+     rolo-file
+     level-regexp
+     max-groupings)))
 
 (defun rolo-toggle-narrow-to-entry ()
   "Toggle between display of current entry and display of all matched entries.
@@ -1116,6 +1121,8 @@ Calls the functions given by `wrolo-mode-hook'.
 	mode-name "Rolodex")
   (use-local-map wrolo-mode-map)
   ;;
+  (set-syntax-table wrolo-mode-syntax-table)
+  ;;
   ;; Loads menus under non-tty InfoDock, XEmacs or Emacs19; does nothing
   ;; otherwise.
   (and (not (featurep 'wrolo-menu)) hyperb:window-system
@@ -1159,6 +1166,16 @@ String search expressions are converted to regular expressions.")
 
 (defvar *rolo-wconfig* nil
   "Saves frame's window configuration prior to a rolodex search.")
+
+(defvar wrolo-mode-syntax-table nil
+  "Syntax table used while in wrolo match mode.")
+
+(if wrolo-mode-syntax-table
+    ()
+  (setq wrolo-mode-syntax-table (make-syntax-table text-mode-syntax-table))
+  ;; Support syntactic selection of delimited e-mail addresses.
+  (modify-syntax-entry ?<  "(>" wrolo-mode-syntax-table)
+  (modify-syntax-entry ?>  ")<" wrolo-mode-syntax-table))
 
 (defvar wrolo-mode-map nil
   "Keymap for the rolodex match buffer.")

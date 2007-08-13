@@ -66,6 +66,19 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-file-command)
     (fset 'vm-toolbar-file-command 'vm-save-message))
 
+(defvar vm-toolbar-getmail-button
+  [vm-toolbar-getmail-icon vm-toolbar-getmail-command
+   (vm-toolbar-mail-waiting-p)
+   "Retrieve spooled mail for the current folder.\n
+The command `vm-toolbar-getmail-command' is run, which is normally
+bound to `vm-get-new-mail'.
+You can make this button run some other command by using a Lisp
+s-expression like this one in your .vm file:
+   (fset 'vm-toolbar-getmail-command 'some-other-command)"])
+(defvar vm-toolbar-getmail-icon nil)
+(or (fboundp 'vm-toolbar-getmail-command)
+    (fset 'vm-toolbar-getmail-command 'vm-get-new-mail))
+
 (defvar vm-toolbar-print-button
   [vm-toolbar-print-icon
    vm-toolbar-print-command
@@ -254,6 +267,12 @@ s-expression like this one in your .vm file:
     (vm-select-folder-buffer)
     (memq major-mode '(vm-mode vm-virtual-mode))))
 
+(defun vm-toolbar-mail-waiting-p ()
+  (save-excursion
+    (vm-check-for-killed-folder)
+    (vm-select-folder-buffer)
+    vm-spooled-mail-waiting))
+
 (fset 'vm-toolbar-can-help-p 'vm-toolbar-can-quit-p)
 
 (defun vm-toolbar-update-toolbar ()
@@ -263,6 +282,9 @@ s-expression like this one in your .vm file:
   (cond ((vm-toolbar-can-recover-p)
 	 (setq vm-toolbar-helper-command 'recover-file
 	       vm-toolbar-helper-icon vm-toolbar-recover-icon))
+	((vm-toolbar-mail-waiting-p)
+	 (setq vm-toolbar-helper-command 'vm-get-new-mail
+	       vm-toolbar-helper-icon vm-toolbar-getmail-icon))
 	((vm-toolbar-can-decode-mime-p)
 	 (setq vm-toolbar-helper-command 'vm-decode-mime-message
 	       vm-toolbar-helper-icon vm-toolbar-decode-mime-icon))
@@ -386,6 +408,7 @@ s-expression like this one in your .vm file:
 			   "undelete-dn.xpm")
  '(vm-toolbar-autofile-icon "autofile-up.xpm" "autofile-dn.xpm"
 			   "autofile-dn.xpm")
+ '(vm-toolbar-getmail-icon "getmail-up.xpm" "getmail-dn.xpm" "getmail-dn.xpm")
  '(vm-toolbar-file-icon "file-up.xpm" "file-dn.xpm" "file-dn.xpm")
  '(vm-toolbar-reply-icon "reply-up.xpm" "reply-dn.xpm" "reply-dn.xpm")
  '(vm-toolbar-compose-icon "compose-up.xpm" "compose-dn.xpm" "compose-dn.xpm")
@@ -405,6 +428,7 @@ s-expression like this one in your .vm file:
 			   "undelete-xx.xbm")
  (vm-toolbar-autofile-icon "autofile-up.xbm" "autofile-dn.xbm"
 			   "autofile-xx.xbm")
+ (vm-toolbar-getmail-icon "getmail-up.xbm" "getmail-dn.xbm" "getmail-xx.xbm")
  (vm-toolbar-file-icon "file-up.xbm" "file-dn.xbm" "file-xx.xbm")
  (vm-toolbar-reply-icon "reply-up.xbm" "reply-dn.xbm" "reply-xx.xbm")
  (vm-toolbar-compose-icon "compose-up.xbm" "compose-dn.xbm" "compose-xx.xbm")

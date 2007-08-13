@@ -1,4 +1,4 @@
-;;; $Id: hm--html-keys.el,v 1.2 1997/02/15 22:21:04 steve Exp $
+;;; $Id: hm--html-keys.el,v 1.3 1997/02/24 01:13:27 steve Exp $
 ;;; 
 ;;; Copyright (C) 1995, 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -26,8 +26,6 @@
 ;;;   
 ;;;	Put this file in one of your load path directories.
 ;;;
-
-(require 'hm--html-configuration)
 
 (if (adapt-emacs19p)
     (progn

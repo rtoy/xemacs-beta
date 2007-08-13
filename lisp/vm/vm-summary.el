@@ -295,7 +295,7 @@ mandatory."
 	     (set-extent-endpoints vm-summary-overlay start end)
 	   (setq vm-summary-overlay (make-extent start end))
 	   ;; the reason this isn't needed under FSF Emacs is
-	   ;; that insert-before-marker also inserts before
+	   ;; that insert-before-markers also inserts before
 	   ;; overlays!  so a summary update of an entry just
 	   ;; before this overlay in the summary buffer won't
 	   ;; leak into the overlay, but it _will_ leak into an
@@ -327,7 +327,9 @@ mandatory."
       (while tokens
 	(setq token (car tokens))
 	(cond ((stringp token)
-	       (insert token))
+	       (if vm-display-using-mime
+		   (insert (vm-decode-mime-encoded-words-in-string token))
+		 (insert token)))
 	      ((eq token 'number)
 	       (insert (vm-padded-number-of message)))
 	      ((eq token 'mark)
@@ -444,6 +446,10 @@ mandatory."
 			 (setq token ''mark)
 		       (setq sexp (cons (list 'vm-su-mark
 					      'vm-su-message) sexp)))))
+	      (cond ((and (not token) vm-display-using-mime)
+		     (setcar sexp
+			     (list 'vm-decode-mime-encoded-words-in-string
+				   (car sexp)))))
 	      (cond ((and (not token) (match-beginning 1))
 		     (setcar sexp
 			     (list 'vm-left-justify-string (car sexp)
@@ -465,6 +471,10 @@ mandatory."
 				    (substring format
 					       (match-beginning 4)
 					       (match-end 4)))))))
+	      (cond ((and (not token) vm-display-using-mime)
+		     (setcar sexp
+			     (list 'vm-reencode-mime-encoded-words-in-string
+				   (car sexp)))))
 	      (setq sexp-fmt
 		    (cons (if token "" "%s")
 			  (cons (substring format
@@ -527,7 +537,20 @@ mandatory."
     (concat (make-string (- width (length string)) ?\ ) string)))
 
 (defun vm-truncate-string (string width)
-  (cond ((<= (length string) width)
+  (cond
+;; doesn't work because the width of wide chars such as the Kanji
+;; glyphs as not even multiples of the default face's font width.
+;;	((fboundp 'char-width)
+;;	 (let ((i 0)
+;;	       (lim (length string))
+;;	       (total 0))
+;;	   (while (and (< i lim) (<= total width))
+;;	     (setq total (+ total (char-width (aref string i)))
+;;		   i (1+ i)))
+;;	   (if (<= total width)
+;;	       string
+;;	     (substring string 0 (1- i)))))
+	((<= (length string) width)
 	 string)
 	((< width 0)
 	 (substring string width))
@@ -811,7 +834,6 @@ mandatory."
     (if (string-match "\\`\"\\([^\"]+\\)\"\\'" full-name)
  	(setq full-name
  	      (substring full-name (match-beginning 1) (match-end 1))))
-    (setq full-name (vm-decode-mime-encoded-words-maybe full-name))
     (while (setq i (string-match "\n" full-name i))
       (aset full-name i ?\ ))
     (vm-set-full-name-of m full-name)
@@ -889,7 +911,6 @@ mandatory."
       (if (string-match "\\`\"\\([^\"]+\\)\"\\'" full-name)
 	  (setq full-name
 		(substring full-name (match-beginning 1) (match-end 1))))
-      (setq full-name (vm-decode-mime-encoded-words-maybe full-name))
       (while (setq i (string-match "\n" full-name i))
 	(aset full-name i ?\ ))
       (setq names (cons full-name names))
@@ -943,7 +964,6 @@ mandatory."
        m
        (let ((subject (or (vm-get-header-contents m "Subject:" " ") ""))
 	     (i nil))
-	 (setq subject (vm-decode-mime-encoded-words-maybe subject))
 	 (while (setq i (string-match "\n" subject i))
 	   (aset subject i ?\ ))
 	 subject ))))

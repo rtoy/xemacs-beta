@@ -26,7 +26,9 @@ Boston, MA 02111-1307, USA.  */
 
 #include "systime.h" /* necessary for sys/resource.h; also gets the
 			FD_* defines on some systems. */
+#ifndef WINDOWSNT
 #include <sys/resource.h>
+#endif
 
 #if !defined (NO_SUBPROCESSES)
 

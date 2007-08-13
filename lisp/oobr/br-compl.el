@@ -6,12 +6,12 @@
 ;; KEYWORDS:     matching, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    27-Mar-90
-;; LAST-MOD:      4-May-95 at 17:08:48 by Bob Weiner
+;; LAST-MOD:     20-Feb-97 at 06:58:31 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995, 1997  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.

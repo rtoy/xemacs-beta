@@ -20,27 +20,17 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.31. */
 
-/*
- *      Define symbols to identify the version of Unix this is.
- *      Define all the symbols that apply correctly.
- */
-
-/* #define UNIPLUS */
-/* #define USG5 */
-/* #define USG */
-/* #define HPUX */
-/* #define UMAX */
-/* #define BSD4_1 */
-/* #define BSD4_2 */
-/* #define BSD4_3 */
-/* #define BSD */
-/* #define VMS */
 #ifndef WINDOWSNT
 #define WINDOWSNT
 #endif
+
 #ifndef DOS_NT
 #define DOS_NT 	/* MSDOS or WINDOWSNT */
 #endif
+
+typedef unsigned short mode_t;
+typedef long ptrdiff_t;
+typedef int pid_t;
 
 /* If you are compiling with a non-C calling convention but need to
    declare vararg routines differently, put it here */
@@ -55,9 +45,12 @@ Boston, MA 02111-1307, USA.  */
  It sets the Lisp variable system-type.  */
 
 #define SYSTEM_TYPE "windows-nt"
-#define SYMS_SYSTEM syms_of_ntterm ()
 
 #define NO_MATHERR
+
+#define SIZEOF_LONG 4
+#define SIZEOF_INT 4
+#define SIZEOF_SHORT 4
 
 /* NOMULTIPLEJOBS should be defined if your system's shell
  does not have "job control" (the ability to stop a program,
@@ -120,8 +113,10 @@ Boston, MA 02111-1307, USA.  */
    your system and must be used only through an encapsulation
    (Which you should place, by convention, in sysdep.c).  */
 
+#if 0
 /* Define this to be the separator between path elements */
 #define DIRECTORY_SEP XINT (Vdirectory_sep_char)
+#endif
 
 /* Define this to be the separator between devices and paths */
 #define DEVICE_SEP ':'
@@ -139,12 +134,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #define LISP_FLOAT_TYPE
-
-#define HAVE_SYS_TIMEB_H
-#define HAVE_SYS_TIME_H
-#define HAVE_UNISTD_H
-#define STDC_HEADERS
-#define TIME_WITH_SYS_TIME
 
 #define HAVE_GETTIMEOFDAY
 #define HAVE_GETHOSTNAME
@@ -179,6 +168,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* get some redefinitions in place */
 
+#if 0
 /* IO calls that are emulated or shadowed */
 #define access  sys_access
 #define chdir   sys_chdir
@@ -190,18 +180,18 @@ Boston, MA 02111-1307, USA.  */
 #define dup2    sys_dup2
 #define fopen   sys_fopen
 #define link    sys_link
-#define mkdir   sys_mkdir
 #define mktemp  sys_mktemp
 #define open    sys_open
-#define pipe    sys_pipe
 #define read    sys_read
 #define rename  sys_rename
-#define rmdir   sys_rmdir
-#define select  sys_select
-#define sleep   sys_sleep
 #define unlink  sys_unlink
 #define write   sys_write
+#define mkdir   sys_mkdir
+#define rmdir   sys_rmdir
 
+#endif
+
+#if 0
 /* this is hacky, but is necessary to avoid warnings about macro
    redefinitions using the SDK compilers */
 #ifndef __STDC__
@@ -215,6 +205,15 @@ Boston, MA 02111-1307, USA.  */
 #undef __STDC__
 #undef MUST_UNDEF__STDC__
 #endif
+#endif
+
+
+/* IO calls that are emulated or shadowed */
+#define pipe    sys_pipe
+
+#ifndef HAVE_X_WINDOWS
+#define sleep   sys_sleep
+#endif
 
 /* subprocess calls that are emulated */
 #define spawnve sys_spawnve
@@ -222,16 +221,18 @@ Boston, MA 02111-1307, USA.  */
 #define kill    sys_kill
 #define signal  sys_signal
 
+#define select  sys_select
+
 /* map to MSVC names */
 #define execlp    _execlp
 #define execvp    _execvp
 #define fcloseall _fcloseall
-#define fdopen          _fdopen
+#define fdopen    _fdopen
 #define fgetchar  _fgetchar
-#define fileno          _fileno
+#define fileno    _fileno
 #define flushall  _flushall
 #define fputchar  _fputchar
-#define getw    _getw
+#define getw      _getw
 #define getpid    _getpid
 #define isatty    _isatty
 #define logb      _logb
@@ -239,11 +240,13 @@ Boston, MA 02111-1307, USA.  */
 #define lseek     _lseek
 #define popen     _popen
 #define pclose    _pclose
-#define putw    _putw
-#define umask   _umask
-#define utime   _utime
+#define putw      _putw
+#define umask     _umask
+#define utime     _utime
 #define index     strchr
 #define rindex    strrchr
+#define read	  _read
+#define write	  _write
 
 #ifdef HAVE_NTGUI
 #define abort	win32_abort
@@ -289,10 +292,12 @@ Boston, MA 02111-1307, USA.  */
 #include <stdlib.h>
 #include <string.h>
 
+#if 0
 /* Emacs takes care of ensuring that these are defined.  */
 #ifdef max
 #undef max
 #undef min
+#endif
 #endif
 
 /* We need a little extra space, see ../../lisp/loadup.el */

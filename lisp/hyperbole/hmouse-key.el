@@ -6,15 +6,15 @@
 ;; KEYWORDS:     hypermedia, mouse
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola, Inc., PPG
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    30-May-94 at 00:11:57
-;; LAST-MOD:     14-Sep-95 at 18:35:17 by Bob Weiner
+;; LAST-MOD:     21-Feb-97 at 18:03:12 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1994-1995, Free Software Foundation, Inc.
+;; Copyright (C) 1994-1995, 1997  Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -22,12 +22,12 @@
 ;;   Supports Epoch, Lucid Emacs, X, Sunview, NEXTSTEP, and Apollo DM
 ;;   window systems.
 ;;
-;;   'hmouse-shift-buttons' globally binds the Action and Assist Mouse Keys
+;;   `hmouse-shift-buttons' globally binds the Action and Assist Mouse Keys
 ;;   to either shifted or unshifted mouse buttons.
 ;;
-;;   'hmouse-toggle-bindings' may be bound to a key.  It switches between
+;;   `hmouse-toggle-bindings' may be bound to a key.  It switches between
 ;;   the Hyperbole mouse bindings and previous mouse key bindings any time
-;;   after 'hmouse-shift-buttons' has been called.
+;;   after `hmouse-shift-buttons' has been called.
 ;;
 ;; DESCRIP-END.
 
@@ -43,17 +43,18 @@
 ;;; Public variables
 ;;; ************************************************************************
 
-(eval (cdr (assoc hyperb:window-system
-		  '(
-		    ;; XEmacs and Emacs 19 pre-load their mouse libraries, so
-		    ;; we shouldn't have to require them here.
-		    ;;
-		    ("xterm"   . (require 'x-mouse))     ; X
-		    ("epoch"   . (require 'mouse))       ; UofI Epoch
-		    ("next"    . (load "eterm-fns" t))   ; NeXTstep
-		    ("sun"     . (require 'sun-fns))     ; SunView
-		    ("apollo"  . (require 'apollo))      ; Display Manager
-		    ))))
+(if (or hyperb:xemacs-p hyperb:emacs19-p)
+    ;; XEmacs and Emacs 19 pre-load their mouse libraries, so
+    ;; we shouldn't have to require them here.
+    nil
+  (eval (cdr (assoc hyperb:window-system
+		    '(
+		      ("xterm"   . (require 'x-mouse))     ; X
+		      ("epoch"   . (require 'mouse))       ; UofI Epoch
+		      ("next"    . (load "eterm-fns" t))   ; NeXTstep
+		      ("sun"     . (require 'sun-fns))     ; SunView
+		      ("apollo"  . (require 'apollo))      ; Display Manager
+		      )))))
 
 ;;; ************************************************************************
 ;;; Public functions
@@ -64,10 +65,11 @@
 KEY-BINDING-LIST is the value returned by 'hmouse-get-bindings' prior to
 Smart Key setup."
   (cond
+    ;; Do nothing when running in batch mode.
+    (noninteractive)
     ;;
     ;; GNU Emacs 19, Lucid Emacs, XEmacs or InfoDock
-    ((or (if (not noninteractive) (or hyperb:xemacs-p hyperb:emacs19-p))
-	 (equal hyperb:window-system "lemacs"))
+    ((or hyperb:xemacs-p hyperb:emacs19-p (equal hyperb:window-system "lemacs"))
      (mapcar
        (function
 	 (lambda (key-and-binding)

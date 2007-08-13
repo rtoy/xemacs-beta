@@ -9,7 +9,7 @@
 ;; ORG:          Brown U.
 ;;
 ;; ORIG-DATE:     9-May-91 at 04:22:02
-;; LAST-MOD:     19-May-95 at 15:09:04 by Bob Weiner
+;; LAST-MOD:     14-Feb-97 at 11:38:57 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -22,7 +22,7 @@
 ;;   Automatically configured for use in "hyperbole.el".
 ;;   If hsite loading fails prior to initializing Hyperbole Rmail support,
 ;;
-;;       {M-x Rmail-init RTN}
+;;       {M-x Rmail-init RET}
 ;;
 ;;   will do it.
 ;;
@@ -216,32 +216,47 @@ Returns t if successful, else nil."
 
 ;;; Overlay version of this function from "rmail.el" to include any
 ;;; Hyperbole button data.
-(defun rmail-forward (&optional resend)
-  "Forward the current message to another user."
-  (interactive)
-  ;; Resend argument is ignored but for now but is there for Emacs V19 call
-  ;; compatibility.
-  ;;>> this gets set even if we abort. Can't do anything about it, though.
-  (rmail-set-attribute "forwarded" t)
-  (let ((forward-buffer (current-buffer))
-	(subject (concat "["
-			 (mail-strip-quoted-names (mail-fetch-field "From"))
-			 ": " (or (mail-fetch-field "Subject") "") "]")))
-    (save-restriction
-      (Rmail-msg-widen)
-      ;; If only one window, use it for the mail buffer.
-      ;; Otherwise, use another window for the mail buffer
-      ;; so that the Rmail buffer remains visible
-      ;; and sending the mail will get back to it.
-      (if (if (one-window-p t)
-	      (mail nil nil subject)
-	    (mail-other-window nil nil subject))
-	  (save-excursion
-	    (goto-char (point-max))
-	    (forward-line 1)
-	    (insert-buffer forward-buffer)
-	    (hmail:msg-narrow)
-	    )))))
+(defun rmail-forward (resend)
+  "Forward the current message to another user.
+With prefix argument, \"resend\" the message instead of forwarding it;
+see the documentation of `rmail-resend'."
+  (interactive "P")
+  (if resend
+      (call-interactively 'rmail-resend)
+    (let ((forward-buffer (current-buffer))
+	  (subject (concat "["
+			   (let ((from (or (mail-fetch-field "From")
+					   (mail-fetch-field ">From"))))
+			     (if from
+				 (concat (mail-strip-quoted-names from) ": ")
+			       ""))
+			   (or (mail-fetch-field "Subject") "")
+			   "]")))
+      (save-restriction
+	(Rmail-msg-widen)
+	;; Turn off the usual actions for initializing the message body
+	;; because we want to get only the text from the failure message.
+	(let (mail-signature mail-setup-hook)
+	  ;; If only one window, use it for the mail buffer.
+	  ;; Otherwise, use another window for the mail buffer
+	  ;; so that the Rmail buffer remains visible
+	  ;; and sending the mail will get back to it.
+	  (if (funcall (if (one-window-p t)
+			   (function mail)
+			 (function mail-other-window))
+		       nil nil subject nil nil nil
+		       (list (list (function (lambda (buf msgnum)
+					       (save-excursion
+						 (set-buffer buf)
+						 (rmail-set-attribute
+						  "forwarded" t msgnum))))
+				   (current-buffer)
+				   rmail-current-message)))
+	      (save-excursion
+		(goto-char (point-max))
+		(forward-line 1)
+		(insert-buffer forward-buffer)
+		(hmail:msg-narrow))))))))
 
 ;;; Overlay version of 'rmail-get-new-mail' from "rmail.el" to highlight
 ;;; Hyperbole buttons when possible.

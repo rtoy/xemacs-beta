@@ -441,6 +441,10 @@ Useful in some modes, such as Gnus, MH, etc.")
 (define-key vip-dired-modifier-map ":" 'vip-ex)
 (define-key vip-dired-modifier-map "/" 'vip-search-forward)
 
+(defvar vip-help-modifier-map (make-sparse-keymap)
+  "This map modifies Help mode behavior.")
+(define-key vip-help-modifier-map "q" (if vip-xemacs-p 'help-mode-quit))
+
 
 
 ;;; Code
