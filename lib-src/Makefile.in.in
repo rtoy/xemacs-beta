@@ -338,7 +338,7 @@ clean: mostlyclean
 	-rm -f ${INSTALLABLES} ${UTILITIES}
 
 distclean: clean
-	-rm -f ../etc/DOC* *.tab.c *.tab.h aixcc.c TAGS
+	-rm -f DOC *.tab.c *.tab.h aixcc.c TAGS
 	-rm -f Makefile Makefile.in blessmail
 
 realclean: distclean

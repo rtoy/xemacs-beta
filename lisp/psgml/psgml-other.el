@@ -1,5 +1,5 @@
 ;;;; psgml-other.el --- Part of SGML-editing mode with parsing support
-;; $Id: psgml-other.el,v 1.1.1.1 1996/12/18 22:43:36 steve Exp $
+;; $Id: psgml-other.el,v 1.2 1997/01/03 03:10:27 steve Exp $
 
 ;; Copyright (C) 1994 Lennart Staflin
 
@@ -39,9 +39,9 @@ into several panes.")
 ;;;; Key Commands
 
 ;; Doesn't this work in Lucid? ***
-(define-key sgml-mode-map [?\M-\C-\ ] 'sgml-mark-element)
+(define-key sgml-mode-map [(meta control space)] 'sgml-mark-element)
 
-(define-key sgml-mode-map [S-mouse-1] 'sgml-tags-menu)
+(define-key sgml-mode-map [(shift button-3)] 'sgml-tags-menu)
 
 
 ;;;; Pop Up Menus
@@ -111,8 +111,10 @@ if the item is selected."
     (cond
      (sgml-use-text-properties
       (let ((inhibit-read-only t)
-	    (after-change-function nil)
-	    (before-change-function nil))
+	    (after-change-function nil) ; obsolete variable
+	    (before-change-function nil) ; obsolete variable
+	    (after-change-functions nil)
+	    (before-change-functions nil))
 	(put-text-property start end 'face face)))
      (t
       (let ((current (overlays-at start))

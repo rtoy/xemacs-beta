@@ -1,6 +1,6 @@
 \input texinfo.tex
 @c %**start of header
-@setfilename tm-vm_en.info
+@setfilename tm-vm-en.info
 @settitle tm-vm Manual (English Version)
 @c %**end of header
 
@@ -26,7 +26,7 @@ Copyright 1996 Tomohiko Morioka, Oscar Figueiredo
 @titlepage
 @title tm-vm Manual (English Version)
 @author by Oscar Figueiredo
-@code{$Id: tm-vm-en.texi,v 1.1 1996/12/28 21:12:52 steve Exp $}
+@code{$Id: tm-vm-en.texi,v 1.2 1997/01/04 23:05:28 steve Exp $}
 @page
 
 tm-vm is part of the TM Package.
@@ -56,7 +56,7 @@ This document applies to release 7.79 of tm-vm.el
 * Install::                     Installation procedure
 * Usage::                       Detailed usage of tm-vm                  
 * Customization::               How to customize tm-vm behavior.
-* What's new::                  Recent modifications      
+* News::                  	Recent modifications      
 * Copyright::                   
 * Variable Index::              
 * Concept Index::               
@@ -258,7 +258,7 @@ sequence in your initialization file:
 
 
 
-@node Customization, What's new, Usage, Top
+@node Customization, News, Usage, Top
 @chapter Customization
 
 Several variables let you adapt the behavior of tm-vm to your needs. You
@@ -320,8 +320,8 @@ explicitly if you want to:
 @end lisp
 
 
-@node What's new, Copyright, Customization, Top
-@chapter What's new
+@node News, Copyright, Customization, Top
+@chapter News
 
 This section documents the changes in the latest releases of tm-vm.
 
@@ -390,7 +390,7 @@ X-Faces are displayed by default. @pxref{Customization}
 
 
 
-@node Copyright, Variable Index, What's new, Top
+@node Copyright, Variable Index, News, Top
 @ifinfo
 @chapter Copyright
 

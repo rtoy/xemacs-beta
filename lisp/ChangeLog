@@ -1,3 +1,116 @@
+Sat Jan  4 12:25:34 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/faces.el (init-other-random-faces): Guard against adding
+	modeline buffer tty face if no tty support.
+
+Fri Jan  3 23:15:22 1997  Greg Klanderman  <greg@alphatech.com>
+
+	* packages/backup-dir.el: Added to distribution.
+
+Fri Jan  3 16:20:42 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* gnus/gnus-setup.el: Updated to gracefully handle installed
+ 	auxilliary packages like tm, and handle eventual integration of
+ 	Red Gnus/Gnus 5.4.
+
+Fri Jan  3 14:32:07 1997  Vinnie Shelton  <shelton@icd.teradyne.com>
+
+	* packages/gnuserv.el (gnuserv-frame): Autoload.
+
+	* x11/x-menubar.el (default-menubar): Add option to control gnuserv
+	creating a new frame.
+	(options-menu-saved-forms): Ditto.
+
+Fri Jan  3 12:18:41 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* x11/x-mouse.el: Protect creation of scrollbar-pointer-glyph with
+	feature test on 'scrollbar.
+
+Fri Jan  3 10:37:48 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/mic-paren.el (paren-activate): Update to v1.2.
+
+Fri Jan  3 10:21:58 1997  Pete Ware  <ware@cis.ohio-state.edu>
+
+	* x11/x-menubar.el (default-menubar): Add require-final-newline
+	and next-line-add-newlines as options in the options menu.
+	(options-menu-saved-forms): Ditto.
+
+Thu Jan  2 18:52:32 1997  Joel Peterson  <tarzan@aosi.com>
+
+	* prim/simple.el (blink-matching-open): Make sure point is visible
+	when blinking.
+
+Thu Jan  2 11:25:05 1997  Vinnie Shelton  <shelton@icd.teradyne.com>
+
+	* prim/replace.el (occur-mode-mouse-goto): Fix typo in Emacs 19.34
+	synch up.
+	(occur-mode-map): Ditto.
+
+Wed Nov 20 19:40:05 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-modify-dtd): set sgml-current-tree to
+	sgml-top-tree. Needed by sgml-open-element.
+
+Mon Nov 11 01:50:40 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Version 1.0 released.
+
+Sun Sep 15 14:07:24 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml.el (sgml-mode): modify mode-line-format with subst, don't
+	replicate the whole format in the code.
+
+Thu Sep 12 20:27:38 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-external-file): Try to find system
+	identifiers using the sgml-public-map
+	if sgml-system-identifiers-are-preferred; this way that flag will
+	have effect even if the sgml-public-map contains `%s'.
+	(sgml-final): moved to be defined before use.
+
+	* psgml-dtd.el (sgml-parse-parameter-literal): Try to handle
+	character references to character number above 255 by leaving a
+	character reference in then parsed entity text.
+
+Thu Sep  5 14:11:00 1996  Dave Love  <d.love@dl.ac.uk>
+
+	* psgml-other.el (sgml-set-face-for): Nullify
+	{after,before}-change-functions as well as (obsolete)
+ 	{after,before}-change-function.
+
+Tue Dec 31 11:34:37 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* comint/gdb.el (gdb-mode): Require 'cc-mode if not already loaded
+	prior to starting gdb.
+
+Mon Dec 30 17:59:48 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* comint/telnet.el (telnet-check-software-type-initialize): Remove
+	default in cond (which allows special treatment of password prompt
+	to work).
+
+Mon Dec 30 09:36:04 1996  Valdis Kletnieks  <Valdis.Kletnieks@vt.edu>
+
+	* packages/gnuserv.el (server-edit): Add option to allow killing
+	last visible frame.
+
+Sun Dec 29 21:36:44 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files-nomule.el: Add trailing newline.
+
+Sun Dec 29 18:45:34 1996  James LewisMoss  <dres@dres.elam.org>
+
+	* modes/perl-mode.el: Add (provide 'perl-mode).
+
+Sun Dec 29 17:15:57 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* ilisp/Makefile (elc): Be a little smarter about recompilation.
+
+Sun Dec 29 17:14:27 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* tm/tm-edit-tipgp.el: Don't unconditionally require tinypgpa.el.
+
 Sat Dec 28 11:15:55 1996  Steven L Baur  <steve@altair.xemacs.org>
 
 	* x11/x-menubar.el (default-menubar): Move Frame-local font menu

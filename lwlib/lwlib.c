@@ -1253,7 +1253,8 @@ lw_get_widget_id (Widget w)
 void
 lw_set_keyboard_focus (Widget parent, Widget w)
 {
-#ifdef NEED_MOTIF
+#if defined(NEED_MOTIF) && !defined(LESSTIF_VERSION)
+  /* This loses with Lesstif v0.75a */
   xm_set_keyboard_focus (parent, w);
 #else
   XtSetKeyboardFocus (parent, w);

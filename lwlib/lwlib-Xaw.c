@@ -15,7 +15,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU Emacs; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -555,9 +556,16 @@ xaw_scrollbar_jump (Widget widget, XtPointer closure, XtPointer call_data)
 static Widget
 xaw_create_scrollbar (widget_instance *instance, int vertical)
 {
-  Arg av[20];
+  Arg av[10];
   int ac = 0;
-  Widget scrollbar;
+
+  static XtCallbackRec jumpCallbacks[2] =
+  { {xaw_scrollbar_jump, NULL}, {NULL, NULL} };
+  
+  static XtCallbackRec scrollCallbacks[2] =
+  { {xaw_scrollbar_scroll, NULL}, {NULL, NULL} };
+
+  jumpCallbacks[0].closure = scrollCallbacks[0].closure = (XtPointer) instance;
 
   /* #### This is tacked onto the with and height and completely
      screws our geometry management.  We should probably make the

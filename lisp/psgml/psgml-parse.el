@@ -1,5 +1,5 @@
 ;;;; psgml-parse.el --- Parser for SGML-editing mode with parsing support
-;; $Id: psgml-parse.el,v 1.1.1.2 1996/12/21 20:50:41 steve Exp $
+;; $Id: psgml-parse.el,v 1.2 1997/01/03 03:10:27 steve Exp $
 
 ;; Copyright (C) 1994, 1995 Lennart Staflin
 
@@ -446,6 +446,17 @@ to point to the next scratch buffer.")
 
 ;;; Using states
 
+(defsubst sgml-final (state)
+  (if (sgml-normal-state-p state)
+      (sgml-state-final-p state)
+    (sgml-final-and state)))
+
+(defun sgml-final-and (state)
+  (and (sgml-final (sgml-and-state-substate state))
+       (loop for s in (sgml-and-state-dfas state)
+	     always (sgml-state-final-p s))
+       (sgml-state-final-p (sgml-and-state-next state))))
+
 ;; get-move: State x Token --> State|nil
 
 (defsubst sgml-get-move (state token)
@@ -464,11 +475,6 @@ to point to the next scratch buffer.")
 				 (sgml-and-node-next dest)))))))
    (t					;state is a and-state
     (sgml-get-and-move state token))))
-
-(defsubst sgml-final (state)
-  (if (sgml-normal-state-p state)
-      (sgml-state-final-p state)
-    (sgml-final-and state)))
 
 (defun sgml-get-and-move (state token)
   ;; state is a and-state
@@ -506,13 +512,6 @@ If this is not possible, but all DFAS are final, move by TOKEN in NEXT."
         (loop for s in (sgml-and-state-dfas state)
               nconc (sgml-tokens-of-moves (sgml-state-reqs s)))
         (sgml-tokens-of-moves (sgml-state-reqs (sgml-and-state-next state))))))
-
-
-(defun sgml-final-and (state)
-  (and (sgml-final (sgml-and-state-substate state))
-       (loop for s in (sgml-and-state-dfas state)
-	     always (sgml-state-final-p s))
-       (sgml-state-final-p (sgml-and-state-next state))))
 
 (defun sgml-optional-tokens (state)
   (if (sgml-normal-state-p state)
@@ -1207,7 +1206,7 @@ buffer is assumend to be empty to start with."
     (sgml-pop-entity)
     (erase-buffer)
     ;; For XEmacs-20.0/Mule
-    (setq file-coding-system 'no-conversion)
+    (setq file-coding-system 'noconv)
     (sgml-write-dtd sgml-dtd-info to-file)
     t))
 
@@ -1235,7 +1234,7 @@ buffer is assumend to be empty to start with."
   "Merge the binary coded dtd in the current buffer with the current dtd.
 The current dtd is the variable sgml-dtd-info.  Return t if mereged
 was successfull or nil if failed."
-  (setq file-coding-system 'no-conversion)
+  (setq file-coding-system 'noconv)
   (goto-char (point-min))
   (sgml-read-sexp)			; skip filev
   (let ((dependencies (sgml-read-sexp))
@@ -1966,8 +1965,12 @@ the entity name."
 		       (or name "?")
 		       pubid 
 		       (sgml-extid-sysid extid))
-    (or (if sgml-system-identifiers-are-preferred
-	    (sgml-lookup-sysid-as-file extid))
+    (or (if (and sgml-system-identifiers-are-preferred
+		 (sgml-extid-sysid extid))
+	    (or (sgml-lookup-sysid-as-file extid)
+		(sgml-path-lookup  ;Try the path also, but only using sysid
+		 (sgml-make-extid nil (sgml-extid-sysid extid))
+		 nil nil)))
 	(sgml-catalog-lookup sgml-current-localcat pubid type name)
 	(sgml-catalog-lookup sgml-catalog-files pubid type name)
 	(if (not sgml-system-identifiers-are-preferred)
@@ -2365,7 +2368,7 @@ overrides the entity type in entity look up."
     ;; (reported by Jeffrey Friedl <jfriedl@nff.ncl.omron.co.jp>)
     (setq mc-flag nil)
     ;; For XEmacs 20.0/Mule
-    (setq file-coding-system 'no-conversion)
+    (setq file-coding-system 'noconv)
     (when (eq sgml-scratch-buffer (default-value 'sgml-scratch-buffer))
       (make-local-variable 'sgml-scratch-buffer)
       (setq sgml-scratch-buffer nil))
@@ -3640,7 +3643,7 @@ VALUE is a string.  Returns nil or an attdecl."
   (setq sgml-dtd-info (sgml-pstate-dtd sgml-buffer-parse-state)
 	sgml-top-tree (sgml-pstate-top-tree sgml-buffer-parse-state))
   (sgml-set-global)
-  ;;*** what is sgml-current-tree now?
+  (setq sgml-current-tree sgml-top-tree)
   (while (stringp (cadr modifier))	; Loop thru the context elements
     (let ((et (sgml-lookup-eltype (car modifier))))
       (sgml-open-element et nil (point-min) (point-min))

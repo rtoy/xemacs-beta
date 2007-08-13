@@ -418,12 +418,12 @@ tt_mode_symbol (Tt_mode n)
 {
   switch (n)
     {
-    case TT_MODE_UNDEFINED:             return Q_TT_MODE_UNDEFINED;
-    case TT_IN:                         return Q_TT_IN;			
-    case TT_OUT:                        return Q_TT_OUT;
-    case TT_INOUT:                      return Q_TT_INOUT;
-    case TT_MODE_LAST:                  return Q_TT_MODE_LAST;
-    default:                            return Qnil;
+    case TT_MODE_UNDEFINED:	return Q_TT_MODE_UNDEFINED;
+    case TT_IN:			return Q_TT_IN;			
+    case TT_OUT:		return Q_TT_OUT;
+    case TT_INOUT:		return Q_TT_INOUT;
+    case TT_MODE_LAST:		return Q_TT_MODE_LAST;
+    default:			return Qnil;
     }
 }
 
@@ -432,12 +432,12 @@ tt_scope_symbol (Tt_scope n)
 {
   switch (n)
     {
-    case TT_SCOPE_NONE:                 return Q_TT_SCOPE_NONE;
-    case TT_SESSION:                    return Q_TT_SESSION;
-    case TT_FILE:                       return Q_TT_FILE;
-    case TT_BOTH:                       return Q_TT_BOTH;
-    case TT_FILE_IN_SESSION:            return Q_TT_FILE_IN_SESSION;
-    default:                            return Qnil;
+    case TT_SCOPE_NONE:		return Q_TT_SCOPE_NONE;
+    case TT_SESSION:		return Q_TT_SESSION;
+    case TT_FILE:		return Q_TT_FILE;
+    case TT_BOTH:		return Q_TT_BOTH;
+    case TT_FILE_IN_SESSION:	return Q_TT_FILE_IN_SESSION;
+    default:			return Qnil;
     }
 }
 
@@ -447,11 +447,11 @@ tt_class_symbol (Tt_class n)
 {
   switch (n)
     {
-    case TT_CLASS_UNDEFINED:            return Q_TT_CLASS_UNDEFINED;
-    case TT_NOTICE:                     return Q_TT_NOTICE;
-    case TT_REQUEST:                    return Q_TT_REQUEST;
-    case TT_CLASS_LAST:                 return Q_TT_CLASS_LAST;
-    default:                            return Qnil;
+    case TT_CLASS_UNDEFINED:	return Q_TT_CLASS_UNDEFINED;
+    case TT_NOTICE:		return Q_TT_NOTICE;
+    case TT_REQUEST:		return Q_TT_REQUEST;
+    case TT_CLASS_LAST:		return Q_TT_CLASS_LAST;
+    default:			return Qnil;
     }
 }
 
@@ -465,11 +465,11 @@ tt_category_symbol (Tt_category n)
 {
   switch (n)
     {
-    case TT_CATEGORY_UNDEFINED:         return Q_TT_CATEGORY_UNDEFINED;
-    case TT_OBSERVE:                    return Q_TT_OBSERVE;
-    case TT_HANDLE:                     return Q_TT_HANDLE;
-    case TT_CATEGORY_LAST:              return Q_TT_CATEGORY_LAST;
-    default:                            return Qnil;
+    case TT_CATEGORY_UNDEFINED:	return Q_TT_CATEGORY_UNDEFINED;
+    case TT_OBSERVE:		return Q_TT_OBSERVE;
+    case TT_HANDLE:		return Q_TT_HANDLE;
+    case TT_CATEGORY_LAST:	return Q_TT_CATEGORY_LAST;
+    default:			return Qnil;
     }
 }
 #endif /* 0 */
@@ -479,12 +479,12 @@ tt_address_symbol (Tt_address n)
 {
   switch (n)
     {
-    case TT_PROCEDURE:                  return Q_TT_PROCEDURE;
-    case TT_OBJECT:                     return Q_TT_OBJECT;
-    case TT_HANDLER:                    return Q_TT_HANDLER;
-    case TT_OTYPE:                      return Q_TT_OTYPE;
-    case TT_ADDRESS_LAST:               return Q_TT_ADDRESS_LAST;
-    default:                            return Qnil;
+    case TT_PROCEDURE:		return Q_TT_PROCEDURE;
+    case TT_OBJECT:		return Q_TT_OBJECT;
+    case TT_HANDLER:		return Q_TT_HANDLER;
+    case TT_OTYPE:		return Q_TT_OTYPE;
+    case TT_ADDRESS_LAST:	return Q_TT_ADDRESS_LAST;
+    default:			return Qnil;
     }
 }
 
@@ -493,15 +493,15 @@ tt_state_symbol (Tt_state n)
 {
   switch (n)
     {
-    case TT_CREATED:                    return Q_TT_CREATED;
-    case TT_SENT:                       return Q_TT_SENT;
-    case TT_HANDLED:                    return Q_TT_HANDLED;
-    case TT_FAILED:                     return Q_TT_FAILED;
-    case TT_QUEUED:                     return Q_TT_QUEUED;
-    case TT_STARTED:                    return Q_TT_STARTED;
-    case TT_REJECTED:                   return Q_TT_REJECTED;
-    case TT_STATE_LAST:                 return Q_TT_STATE_LAST;
-    default:                            return Qnil;
+    case TT_CREATED:		return Q_TT_CREATED;
+    case TT_SENT:		return Q_TT_SENT;
+    case TT_HANDLED:		return Q_TT_HANDLED;
+    case TT_FAILED:		return Q_TT_FAILED;
+    case TT_QUEUED:		return Q_TT_QUEUED;
+    case TT_STARTED:		return Q_TT_STARTED;
+    case TT_REJECTED:		return Q_TT_REJECTED;
+    case TT_STATE_LAST:		return Q_TT_STATE_LAST;
+    default:			return Qnil;
     }
 }
 

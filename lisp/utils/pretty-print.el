@@ -6,20 +6,25 @@
 
 ;; This file is written in GNU Emacs Lisp, but is not part of GNU Emacs.
 
-;; The software contained in this file is free software; you can
-;; redistribute it and/or modify it under the terms of the GNU General
-;; Public License as published by the Free Software Foundation; either
-;; version 2, or (at your option) any later version.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-;; 
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with:  Not in FSF.
+
 ;; Please send bugs and comments to the author.
 ;;
 ;; <DISCLAIMER>
@@ -109,8 +114,8 @@
 ; Change History
 ; 
 ; $Log: pretty-print.el,v $
-; Revision 1.1.1.1  1996/12/18 22:51:29  steve
-; XEmacs 20.0 -- Beta 31
+; Revision 1.2  1997/01/03 03:10:34  steve
+; Main beta 34 patches
 ;
 ; Revision 1.4  1993/03/25  14:09:52  bosch
 ; Commands `prettyexpand-sexp' and `prettyexpand-all-sexp' and

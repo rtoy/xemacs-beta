@@ -17,14 +17,15 @@
 # the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 
-#### This makefile is currently broken!
-#### makeinfo doesn't work with these .texi files!
+# The japanese texinfo files requires the very latest 20.0 xemacs
+EMACS = xemacs
 NAMES = tm tm-edit tm-view gnus-mime tm-mh-e
-NAMES_EN = $(NAMES:%=%-en)
+NAMES_EN = $(NAMES:%=%-en) tm-vm-en
 NAMES_JA = $(NAMES:%=%-ja)
 NAMES_ALL = $(NAMES_EN) $(NAMES_JA)
+#NAMES_ALL = $(NAMES_EN)
 INFOS = $(NAMES_ALL:%=../../info/%.info)
-DVIS  = $(NAMES_ALL:%=%.dvi)
+DVIS  = $(NAMES_EN:%=%.dvi)
 
 TEXI2DVI = texi2dvi
 
@@ -33,8 +34,13 @@ TEXI2DVI = texi2dvi
 all : info
 info : $(INFOS)
 
-../../info/%.info : %.texi
+../../info/%-en.info : %-en.texi
 	makeinfo -o $@ $<
+
+../../info/%-ja.info : %-ja.texi
+	$(EMACS) -batch -q -no-site-file $< -eval '(cd "../../info")' \
+	    -l texinfmt -f texinfo-format-buffer \
+	    -eval '(setq file-coding-system (quote iso-2022-7))' -f save-buffer
 
 dvi: $(DVIS)
 .texi.dvi :

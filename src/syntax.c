@@ -328,7 +328,7 @@ syntax table.
 
 
 
-INLINE int
+static int
 word_constituent_p (struct buffer *buf, Bufpos pos,
 		    struct Lisp_Char_Table *tab)
 {

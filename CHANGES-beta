@@ -1,4 +1,14 @@
 							-*- indented-text -*-
+to 20.0 beta34
+-- backup-dir 2.0 courtesy of Greg Klanderman
+-- lazy-lock-1.15
+-- tm-7.100.3
+-- Various patches courtesy of Joel Peterson
+-- viper-2.91
+-- ediff-2.63
+-- psgml-1.01
+-- Miscellaneous bug fixes
+
 to 20.0 beta33
 -- 20k of new zippy quotes from mly
 -- By popular demand, `font-menu-this-frame-only-p' now defaults to nil.

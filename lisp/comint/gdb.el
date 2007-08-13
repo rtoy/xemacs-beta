@@ -243,6 +243,8 @@ C-x SPACE sets break point at current line."
   (interactive)
   (comint-mode)
   (use-local-map gdb-mode-map)
+  (when (not (boundp 'c-mode-syntax-table))
+    (require 'cc-mode))
   (set-syntax-table c-mode-syntax-table)
   (make-local-variable 'gdb-last-frame-displayed-p)
   (make-local-variable 'gdb-last-frame)

@@ -40,11 +40,7 @@ suitable as LaTeX input."
   ;
   ; Select the DOC file.
   ;
-  (find-file (expand-file-name
-	      (if (fboundp 'dump-emacs)
-		  (concat "DOC-" emacs-version)
-		"DOC")
-	      exec-directory))
+  (find-file (expand-file-name "DOC" exec-directory))
   (setq buffer-read-only nil)
   (auto-save-mode 0)
   (set-visited-file-name (concat (buffer-file-name) ".tex"))

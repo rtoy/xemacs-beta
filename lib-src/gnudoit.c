@@ -35,7 +35,8 @@ static char rcsid [] = "!Header: gnudoit.c,v 2.1 95/02/16 11:59:02 arup alpha !"
 #include <unistd.h>
 
 #if !defined(SYSV_IPC) && !defined(UNIX_DOMAIN_SOCKETS) && !defined(INTERNET_DOMAIN_SOCKETS)
-main ()
+int
+main (int argc, char *argv[])
 {
   fprintf (stderr,"Sorry, the Emacs server is only supported on systems that have\n");
   fprintf (stderr,"Unix Domain sockets, Internet Domain sockets or System V IPC.\n");
@@ -43,10 +44,8 @@ main ()
 } /* main */
 #else /* SYSV_IPC || UNIX_DOMAIN_SOCKETS || INTERNET_DOMAIN_SOCKETS */
 
-void
-main(argc,argv)
-     int argc;
-     char *argv[];
+int
+main(int argc, char *argv[])
 {
   int qflg = 0;					/* don't wait around for 
 						 * gnu emacs to eval cmd */
@@ -146,7 +145,7 @@ main(argc,argv)
     disconnect_from_server(s,!qflg);
 #endif /* !SYSV_IPC */
 
-  exit(0);
+  return 0;
 
 } /* main */
 

@@ -66,6 +66,7 @@
 	 (not (featurep 'gnuserv)))
     (error "Can't run gnuserv because server.el appears to be loaded already"))
 
+;;;###autoload
 (defvar gnuserv-frame nil
   "*If non-nil, the frame to be used to display all edited files.
 If nil, then a new frame is created for each file edited.
@@ -83,6 +84,9 @@ Functions such as 'kill-buffer' and 'bury-buffer' are good values.")
 
 (defvar server-string ""
   "The last input string from the server")
+
+(defvar server-kill-last-frame nil
+  "set to t to kill last frame")
 
 (defvar current-client nil
   "The client we are currently talking to")
@@ -487,7 +491,9 @@ MH <draft> files are always saved and backed up, no questions asked.
 When all of a client's buffers are marked as \"done\", the client is notified.
 
 If invoked with a prefix argument, or if there is no server process running, 
-starts server process and that is all.  Invoked by \\[server-edit]."
+starts server process and that is all.  Invoked by \\[server-edit].
+
+If `server-kill-last-frame' is t, then the final frame will be killed."
   (interactive "P")
   (if (or arg
 	  (not server-process)
@@ -500,7 +506,8 @@ starts server process and that is all.  Invoked by \\[server-edit]."
 			       gnuserv-frame
 			       (frame-live-p gnuserv-frame))
 			  (condition-case ()
-			      (delete-frame (selected-frame) nil)
+			      (delete-frame (selected-frame)
+					    server-kill-last-frame)
 			    (error 
 			     (message "Not deleting last visible frame...")))))
 		     ((or (not window-system) 
@@ -541,3 +548,4 @@ one."
 
 (provide 'gnuserv)
 
+;;; gnuserv.el ends here

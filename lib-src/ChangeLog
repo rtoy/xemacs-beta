@@ -1,3 +1,8 @@
+Sun Dec 29 17:16:45 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* update-elc.sh (make_special_commands): Make ilisp be a little
+	smarter about recompilation.
+
 Wed Dec 18 20:22:55 1996  Martin Buchholz  <mrb@eng.sun.com>
 
 	* mmencode.c: Don't declare index().

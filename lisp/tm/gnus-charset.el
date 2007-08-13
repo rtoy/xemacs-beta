@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: gnus-charset.el,v 1.1.1.2 1996/12/21 20:50:47 steve Exp $
+;;	$Id: gnus-charset.el,v 1.2 1997/01/04 23:05:18 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -107,7 +107,12 @@
                          after-insert-file-functions)
                    '(jam-code-guess-after-insert-file-function))))
           (insert-file-contents filename visit beg end replace))
-        ))
+        )
+       ;; for gnspool on OS/2
+       (while (re-search-forward "\r$" nil t)
+	 (replace-match "")
+	 )
+       )
      ;; imported from Red Gnus 0.66
      (or (fboundp 'nnheader-auto-mode-alist)
          (defun nnheader-auto-mode-alist ()

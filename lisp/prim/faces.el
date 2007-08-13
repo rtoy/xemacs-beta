@@ -1369,7 +1369,8 @@ you want to add code to do stuff like this, use the create-device-hook."
 		(set-face-font 'modeline-buffer-id [bold-italic] nil '(mono x))
 		(set-face-font 'modeline-buffer-id [bold-italic] nil
 			       '(grayscale x))))
-	  (set-face-font 'modeline-buffer-id [bold-italic] nil 'tty))))
+	  (if (featurep 'tty)
+	      (set-face-font 'modeline-buffer-id [bold-italic] nil 'tty)))))
   (set-face-parent 'modeline-buffer-id 'modeline nil nil 'append)
 
   ;; modeline-mousable:
@@ -1468,3 +1469,5 @@ you want to add code to do stuff like this, use the create-device-hook."
 ;;
 (if (featurep 'tty)
     (set-face-reverse-p 'isearch t 'global 'tty))
+
+;;; faces.el ends here

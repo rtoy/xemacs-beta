@@ -64,7 +64,9 @@
 (defconst hyperb:kotl-p
   (if hyperb:lemacs-p
       ;; Only works for XEmacs 19.9 and above.
-      (string-match "^19\\.9 \\|^19\\.[1-9][0-9]" emacs-version)
+      (or (string-match "^19\\.9 \\|^19\\.[1-9][0-9]" emacs-version)
+	  ;; Version 20 and above.
+	  (string-lessp "20" emacs-version))
     hyperb:emacs19-p)
   "Non-nil iff this Emacs version supports the Hyperbole outliner.")
 

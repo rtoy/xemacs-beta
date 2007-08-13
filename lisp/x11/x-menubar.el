@@ -161,6 +161,13 @@
        ["Mouse Paste At Text Cursor" (setq mouse-yank-at-point
 					   (not mouse-yank-at-point))
 	:style toggle :selected mouse-yank-at-point]
+       ["Require Newline At End" (setq require-final-newline
+				       (or (eq require-final-newline 'ask)
+					   (not require-final-newline)))
+	:style toggle :selected (eq require-final-newline 't)]
+       ["Add Newline When Moving Past End" (setq next-line-add-newlines
+						 (not next-line-add-newlines))
+	:style toggle :selected next-line-add-newlines]
        )
       ("General Options"
        ["Teach Extended Commands" (setq teach-extended-commands-p
@@ -230,6 +237,14 @@
 	(setq temp-buffer-show-function nil)
 	:style radio
 	:selected (null temp-buffer-show-function)]
+       "-----"
+       ["Make current frame gnuserv target"
+	(setq gnuserv-frame
+	      (if (equal gnuserv-frame (selected-frame))
+		  nil
+		(selected-frame)))
+	:style radio
+	:selected (equal gnuserv-frame (selected-frame))]
        )
 
       "-----"
@@ -316,11 +331,15 @@
 			    ;; this shouldn't be necessary so there has to
 			    ;; be a redisplay bug lurking somewhere (or
 			    ;; possibly another event handler bug)
-			    (redraw-modeline))
+			    (redraw-modeline)
+			    (remove-hook 'font-lock-mode-hook
+					 'turn-on-lazy-lock))
 			(if font-lock-mode
 			    (progn
 			      (lazy-lock-mode 1)
-			      (redraw-modeline)))))
+			      (redraw-modeline)
+			      (add-hook 'font-lock-mode-hook
+					'turn-on-lazy-lock)))))
 	:active font-lock-mode
 	:style toggle
 	:selected (and (boundp 'lazy-lock-mode) lazy-lock-mode)]
@@ -990,6 +1009,8 @@ items by redefining the function `format-buffers-menu-line'."
 	    (pending-delete-on nil)))
      zmacs-regions
      mouse-yank-at-point
+     require-final-newline
+     next-line-add-newlines
 
      ;; General Options menu.
      teach-extended-commands-p
@@ -1006,6 +1027,8 @@ items by redefining the function `format-buffers-menu-line'."
      ;; Other Window Location
      get-frame-for-buffer-default-instance-limit
      temp-buffer-show-function
+     (if gnuserv-frame
+	 '(setq gnuserv-frame (selected-frame)))
 
      ;; Syntax Highlighting
      font-lock-auto-fontify

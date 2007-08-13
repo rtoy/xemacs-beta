@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: mime-setup.el,v 1.2 1996/12/28 21:03:12 steve Exp $
+;;	$Id: mime-setup.el,v 1.3 1997/01/03 03:10:30 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -28,8 +28,8 @@
 
 (require 'tm-setup)
 
-(autoload 'mime/editor-mode "tm-edit"
-  "Minor mode for editing MIME message." t)
+;(autoload 'mime/editor-mode "tm-edit"
+;  "Minor mode for editing MIME message." t)
 (autoload 'mime/decode-message-header "tm-ew-d"
   "Decode MIME encoded-words in message header." t)
 

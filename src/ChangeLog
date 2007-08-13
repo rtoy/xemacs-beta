@@ -1,3 +1,35 @@
+Sat Jan  4 12:15:16 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* toolbar.c (specifier_vars_of_toolbar): Clean up fallback
+	specifiers so XEmacs can be built without tty support.
+
+	* console-stream.c: Moved function bodies of
+	semi_canonicalize_console_connection,
+	canonicalize_console_connection,
+	semi_canonicalize_device_connection, and
+	canonicalize_device_connection into this file from console-tty.c.
+	Moved variable Vstdio_str into this file.
+
+	* console-tty.c: See above.
+
+Fri Jan  3 18:07:11 1997  Axel Seibert  <aseibert@cybernet-ag.net>
+
+	* m/next.h: Cleanup accumulated cruft.
+
+	* s/nextstep.h: Remove useless #undef REL_ALLOC/HAVE_MMAP.
+
+	* syssignal.h: Don't typedef SIGTYPE on NeXT.
+
+Fri Jan  3 12:06:44 1997  Michael Sperber  <sperber@informatik.uni-tuebingen.de>
+
+	* m/ibmrs6000.inp: Added various get.* symbols.
+
+Sun Dec 29 20:16:08 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* m/next.h: Remove signal_handler_t #define.
+
+	* s/nextstep.h: Remove signal_handler_t #define.
+
 Fri Dec 27 21:13:33 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
 
 	* event-Xt.c (x_to_emacs_keysym): Corrections to SUNOS_GCC_LO_BUG.

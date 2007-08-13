@@ -51,7 +51,10 @@ particular operation, you should bind the variable
 which is intended to be used for global environment specification.")
 
 (defvar file-coding-system-alist
-  '(("\\.el$" . iso-2022-7)  ;;  '(; ("\\.el$" . euc-japan)
+  ;;  '(; ("\\.el$" . euc-japan)
+  '(("\\.el$" . iso-2022-7)
+    ("\\.info$" . iso-2022-7)
+    ("\\.\\(gz\\|Z\\)$" . binary)
     ("/spool/mail/.*$" . convert-mbox-coding-system))
   "Alist specifying the coding system used for particular files.
 Each element of the alist is a cons of a regexp, specifying the files
@@ -464,5 +467,4 @@ See also `write-region-pre-hook' and `write-region-post-hook'."
 			start end filename append visit lockname
 			coding-system)))
 
-
-
+;;; mule-files.el ends here

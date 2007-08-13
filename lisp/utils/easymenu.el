@@ -1,27 +1,30 @@
 ;;; easymenu.el - Easy menu support for Emacs 19 and XEmacs.
 ;; 
-;; $Id: easymenu.el,v 1.1.1.1 1996/12/18 22:43:01 steve Exp $
+;; $Id: easymenu.el,v 1.2 1997/01/03 03:10:33 steve Exp $
 ;;
 ;; LCD Archive Entry:
 ;; easymenu|Per Abrahamsen|abraham@iesd.auc.dk|
 ;; Easy menu support for XEmacs|
-;; $Date: 1996/12/18 22:43:01 $|$Revision: 1.1.1.1 $|~/misc/easymenu.el.gz|
+;; $Date: 1997/01/03 03:10:33 $|$Revision: 1.2 $|~/misc/easymenu.el.gz|
 
 ;; Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-;;
-;; This program is free software; you can redistribute it and/or modify
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
-;; 
-;; This program is distributed in the hope that it will be useful,
+
+;; XEmacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
-;; 
+
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; if not, write to the Free Software
+;; Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;;; Synched up with: Not synched with FSF.
 ;;; In RMS's typical lame-ass way, he removed all support for

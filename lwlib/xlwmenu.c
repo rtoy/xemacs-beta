@@ -15,8 +15,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+along with XEmacs; see the file COPYING.  If not, write to
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
 
 /* Created by devin@lucid.com */
 
@@ -25,6 +26,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include <sys/types.h>
 #include <X11/Xos.h>
@@ -53,8 +55,7 @@ xlwMenuResources[] =
   /* There are three font list resources, so that we can accept either of
      the resources *fontList: or *font:, and so that we can tell the
      difference between them being specified, and being defaulted to a
-     font from the XtRString specified here.
-   */
+     font from the XtRString specified here. */
   {XmNfontList,  XmCFontList, XmRFontList, sizeof(XmFontList),
      offset(menu.font_list),  XtRImmediate, (XtPointer)0},
   {XtNfont,      XtCFont,     XmRFontList, sizeof(XmFontList),
@@ -63,17 +64,16 @@ xlwMenuResources[] =
      offset(menu.fallback_font_list),
      /* We must use an iso8859-1 font here, or people without $LANG set lose.
 	It's fair to assume that those who do have $LANG set also have the
-	*fontList resource set, or at least know how to deal with this.
-      */
-     XtRString, (String) "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1"},
+	*fontList resource set, or at least know how to deal with this. */
+     XtRString, "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1"},
 #else
   {XtNfont,  XtCFont, XtRFontStruct, sizeof(XFontStruct *),
      offset(menu.font), XtRString, "XtDefaultFont"},
 #endif
   {XtNforeground, XtCForeground, XtRPixel, sizeof(Pixel),
-     offset(menu.foreground), XtRString, (String) "XtDefaultForeground"},
+     offset(menu.foreground), XtRString, "XtDefaultForeground"},
   {XtNbuttonForeground, XtCButtonForeground, XtRPixel, sizeof(Pixel),
-     offset(menu.button_foreground), XtRString, (String)"XtDefaultForeground"},
+     offset(menu.button_foreground), XtRString, "XtDefaultForeground"},
   {XtNmargin, XtCMargin, XtRDimension,  sizeof(Dimension),
      offset(menu.margin), XtRImmediate, (XtPointer)2},
   {XmNmarginWidth, XmCMarginWidth, XmRHorizontalDimension, sizeof(Dimension),
@@ -139,9 +139,9 @@ static XFontStruct *default_font_of_font_list (XmFontList);
 static XtActionsRec 
 xlwMenuActionsList [] =
 {
-  {(String) "start",	Start},
-  {(String) "drag",	Drag},
-  {(String) "select",	Select},
+  {"start",	Start},
+  {"drag",	Drag},
+  {"select",	Select},
 };
 
 #define SuperClass ((CoreWidgetClass)&coreClassRec)
@@ -150,7 +150,7 @@ XlwMenuClassRec xlwMenuClassRec =
 {
   {  /* CoreClass fields initialization */
     (WidgetClass) SuperClass,		/* superclass		  */	
-    (String) "XlwMenu",			/* class_name		  */
+    "XlwMenu",				/* class_name		  */
     sizeof(XlwMenuRec),			/* size			  */
     XlwMenuClassInitialize,		/* class_initialize	  */
     NULL,				/* class_part_initialize  */
@@ -174,7 +174,8 @@ XlwMenuClassRec xlwMenuClassRec =
     NULL,				/* set_values_hook	  */
     XtInheritSetValuesAlmost,		/* set_values_almost	  */
     NULL,				/* get_values_hook	  */
-    NULL,			/* #### - should this be set for grabs? accept_focus		  */
+    NULL,				/* #### - should this be set for */
+			    		/* grabs? accept_focus */
     XtVersion,				/* version		  */
     NULL,				/* callback_private	  */
     xlwMenuTranslations,		/* tm_table		  */
@@ -213,68 +214,49 @@ static int
 allocate_nearest_color (Display *display, Colormap screen_colormap,
 		        XColor *color_def)
 {
-  int status;
+  int status = XAllocColor (display, screen_colormap, color_def);
+  if (status)
+    return status;
 
-  status = XAllocColor (display, screen_colormap, color_def);
-  if (!status)
     {
       /* If we got to this point, the colormap is full, so we're
 	 going to try and get the next closest color.
 	 The algorithm used is a least-squares matching, which is
 	 what X uses for closest color matching with StaticColor visuals.  */
 
-      XColor *cells;
-      int no_cells;
-      int nearest;
-      long nearest_delta, trial_delta;
-      int x;
+      int nearest, x;
+      unsigned long nearest_delta = ULONG_MAX;
 
-      no_cells = XDisplayCells (display, XDefaultScreen (display));
+      int no_cells = XDisplayCells (display, XDefaultScreen (display));
       /* Don't use alloca here because lwlib doesn't have the
          necessary configuration information that src does. */
-      cells = (XColor *) malloc (sizeof (XColor) * no_cells);
+      XColor *cells = (XColor *) malloc (sizeof (XColor) * no_cells);
 
       for (x = 0; x < no_cells; x++)
 	cells[x].pixel = x;
 
       XQueryColors (display, screen_colormap, cells, no_cells);
-      nearest = 0;
-      /* I'm assuming CSE so I'm not going to condense this. */
-      nearest_delta =
-	((((color_def->red >> 8) - (cells[0].red >> 8))
-	  * ((color_def->red >> 8) - (cells[0].red >> 8)))
-	 +
-	 (((color_def->green >> 8) - (cells[0].green >> 8))
-	  * ((color_def->green >> 8) - (cells[0].green >> 8)))
-	 +
-	 (((color_def->blue >> 8) - (cells[0].blue >> 8))
-	  * ((color_def->blue >> 8) - (cells[0].blue >> 8))));
-      for (x = 1; x < no_cells; x++)
+
+      for (nearest = 0, x = 0; x < no_cells; x++)
 	{
-	  trial_delta =
-	    ((((color_def->red >> 8) - (cells[x].red >> 8))
-	      * ((color_def->red >> 8) - (cells[x].red >> 8)))
-	     +
-	     (((color_def->green >> 8) - (cells[x].green >> 8))
-	      * ((color_def->green >> 8) - (cells[x].green >> 8)))
-	     +
-	     (((color_def->blue >> 8) - (cells[x].blue >> 8))
-	      * ((color_def->blue >> 8) - (cells[x].blue >> 8))));
-	  if (trial_delta < nearest_delta)
+	  long dred   = (color_def->red   >> 8) - (cells[x].red   >> 8);
+	  long dgreen = (color_def->green >> 8) - (cells[x].green >> 8);
+	  long dblue  = (color_def->blue  >> 8) - (cells[x].blue  >> 8);
+	  unsigned long delta = dred * dred + dgreen * dgreen + dblue * dblue;
+
+	  if (delta < nearest_delta)
 	    {
 	      nearest = x;
-	      nearest_delta = trial_delta;
+	      nearest_delta = delta;
 	    }
 	}
       color_def->red = cells[nearest].red;
       color_def->green = cells[nearest].green;
       color_def->blue = cells[nearest].blue;
-      status = XAllocColor (display, screen_colormap, color_def);
 
       free (cells);
+      return XAllocColor (display, screen_colormap, color_def);
     }
-
-  return status;
 }
 
 static void
@@ -425,7 +407,7 @@ massage_resource_name (CONST char *in, char *out)
 static XtResource
 nameResource[] =
 { 
-  { (String) "labelString", (String) "LabelString", XtRString, sizeof(String),
+  { "labelString", "LabelString", XtRString, sizeof(String),
     0, XtRImmediate, 0 }
 };
 

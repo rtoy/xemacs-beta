@@ -796,7 +796,10 @@ if the dragged object is a buffer, inserts it at point."
 Calls the internal function cde-start-drag-internal to do the actual work."
   (interactive "_r")
   (if (featurep 'cde)
-      (cde-start-drag-internal (buffer-substring-no-properties begin end))
+      ;; Avoid build-time doc string warning by calling the function
+      ;; in the following roundabout way:
+      (funcall (intern "cde-start-drag-internal")
+	       (buffer-substring-no-properties begin end))
     (error "CDE functionality not compiled in.")))
 
 

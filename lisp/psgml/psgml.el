@@ -1,11 +1,13 @@
 ;;; psgml.el --- SGML-editing mode with parsing support
-;; $Id: psgml.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
+;; $Id: psgml.el,v 1.2 1997/01/03 03:10:28 steve Exp $
 
 ;; Copyright (C) 1993, 1994, 1995, 1996 Lennart Staflin
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
 
 ;; Author: Lennart Staflin <lenst@lysator.liu.se>
 ;; 	James Clark <jjc@clark.com>
+;; Maintainer: Lennart Staflin <lenst@lysator.liu.se>
+;; Keywords: languages
 
 ;; 
 ;; This program is free software; you can redistribute it and/or
@@ -50,7 +52,7 @@
 
 ;;; Code:
 
-(defconst psgml-version "1.0a12"
+(defconst psgml-version "1.0.1"
   "Version of psgml package.")
 
 (defconst psgml-maintainer-address "lenst@lysator.liu.se")
@@ -1086,8 +1088,7 @@ All bindings:
   (make-local-variable 'indent-line-function)
   (setq indent-line-function 'sgml-indent-line)
   (make-local-variable 'mode-line-format)
-  ;; wing change: use `subst' rather than duplicating the whole
-  ;; mode-line-format.  XEmacs 19.14 changes the default mode-line-format.
+  ;; Modify mode-line-format with susbt (sugested by wing)
   (setq mode-line-format
 	(subst '("" mode-name sgml-active-dtd-indicator) 'mode-name
 	       mode-line-format))
@@ -1449,4 +1450,4 @@ If it is something else complete with ispell-complete-word." t)
  (t
   (require 'psgml-other)))
 
-;;; psgml.el ends HERE
+;;; psgml.el ends here

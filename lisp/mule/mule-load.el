@@ -55,4 +55,7 @@
 (load-gc "mule-init")
 
 ;; Enable Mule capability for Gnus, mail, etc...
-(load-gc "mime-setup")
+;; Moved to sunpro-load.el - the default only for Sun.
+;;(load-gc "mime-setup")
+
+;;; mule-load.el ends here

@@ -180,7 +180,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
 /* Extract a doc string from a file.  FILEPOS says where to get it.
    (This could actually be byte code instructions/constants instead
    of a doc string.)
-   If it is an integer, use that position in the standard DOC-... file.
+   If it is an integer, use that position in the standard DOC file.
    If it is (FILE . INTEGER), use FILE as the file name
    and INTEGER as the position in that file.
    But if INTEGER is negative, make it positive.

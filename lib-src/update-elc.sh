@@ -28,9 +28,11 @@ fi
 
 EMACS=${XEMACS:-./src/xemacs}; export EMACS
 REAL=`cd \`dirname $EMACS\` ; pwd | sed 's:^/tmp_mnt::'`/`basename $EMACS`
+BYTECOMP="$REAL -batch -q -no-site-file -l bytecomp"
 echo "Recompiling in `pwd|sed 's:^/tmp_mnt::'`"
 echo "    with $REAL..."
 
+prune_vc="( -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 
 # $els  is a list of all .el  files
 # $elcs is a list of all .elc files
@@ -61,7 +63,7 @@ fi
 # with the latest version (assuming we're compiling the lisp dir of the emacs
 # we're running, which might not be the case, but often is.)
 echo "Checking the byte compiler..."
-$REAL -batch -q -no-site-file -f batch-byte-recompile-directory lisp/bytecomp
+$BYTECOMP -f batch-byte-recompile-directory lisp/bytecomp
 
 # Prepare for byte-compiling directories with directory-specific instructions
 make_special_commands=''
@@ -82,9 +84,9 @@ make_special gnus  some
 make_special w3
 make_special url		# really part of w3
 make_special hyperbole elc
-make_special oobr HYPB_ELC= elc
+make_special oobr HYPB_ELC='' elc
 make_special eos -k		# not stricly necessary...
-make_special ilisp compile -f Makefile
+make_special ilisp elc -f Makefile
 
 ignore_pattern=''
 for dir in $ignore_dirs ; do
@@ -113,13 +115,15 @@ ignore_pattern="$ignore_pattern"'
 
 echo "Compiling files without .elc..."
 NUMTOCOMPILE=20			# compile this many files with each invocation
-comm -23 $els $elcs | sed "$ignore_pattern" | \
- xargs -t -n$NUMTOCOMPILE $REAL -batch -q -no-site-file -f batch-byte-compile
+comm -23 $els $elcs | \
+ sed "$ignore_pattern" | \
+ xargs -t -n$NUMTOCOMPILE $BYTECOMP -f batch-byte-compile
 echo "Compiling files without .elc... Done"
 
 
 echo "Compiling files with out-of-date .elc..."
-find lisp/. -name SCCS -prune -o -type d -print | sed "$ignore_pattern" | \
+find lisp/. -name CVS -prune -o -name SCCS -prune -o -type d -print | \
+ sed "$ignore_pattern" | \
  xargs -t $REAL -batch -q -no-site-file -f batch-byte-recompile-directory
 echo "Compiling files with out-of-date .elc... Done"
 

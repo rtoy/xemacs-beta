@@ -220,9 +220,9 @@ See `./PROBLEMS' for more details on which systems this affects.
 5) Put into `./lisp/site-init.el' or `./lisp/site-load.el' any Emacs
 Lisp code you want Emacs to load before it is dumped out.  Use
 site-load.el for additional libraries if you arrange for their
-documentation strings to be in the etc/DOC file (see
-src/Makefile.in.in if you wish to figure out how to do that).  For all
-else, use site-init.el.
+documentation strings to be in the DOC file (see src/Makefile.in.in if
+you wish to figure out how to do that).  For all else, use
+site-init.el.
 
 <MULE>
 All language specific basic environments are defined `./lisp/mule-init.el'.

@@ -38,6 +38,9 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_TTY
 #include "console-tty.h"
+#else
+#include "syssignal.h"
+#include "systty.h"
 #endif /* HAVE_TTY */
 
 #include "console-stream.h"

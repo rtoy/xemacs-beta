@@ -899,7 +899,7 @@ objs=	abbrev.o alloc.o blocktype.o buffer.o bytecode.o \
 	general.o getloadavg.o GIF_OBJS glyphs.o GUI_OBJS \
 	hash.o \
 	indent.o inline.o insdel.o intl.o \
-	keymap.o \
+	keymap.o $(RTC_PATCH_O) \
 	lread.o lstream.o \
 	macros.o marker.o md5.o MENUBAR_OBJS minibuf.o MOCKLISPOBJS \
 	NAS_OBJS NSOBJS \
@@ -1237,7 +1237,8 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
     here because we do not want things to appear to be out-of-date just 
     because the version number has been incremented. -- D.N.G. 8/28/93]
  */
-lisp=   ${lispdir}paths.el ${lispdir}prim/loaddefs.elc \
+lisp=   ${lispdir}paths.el \
+	${lispdir}prim/loaddefs.elc ${lispdir}prim/auto-autoloads.elc \
         ${lispdir}prim/loadup.el ${lispdir}prim/subr.elc \
         ${lispdir}prim/cmdloop.elc CMDLOOP_LISP \
 	${lispdir}utils/text-props.elc MOUSE_LISP \
@@ -1433,6 +1434,23 @@ temacs: TEMACS_DEPS
 
 cemacs: TEMACS_DEPS
 	$(LD) $(ENERGIZEP) TEMACS_LINK_ARGS
+
+rtc_patch.o:
+	rtc_patch_area -o $@
+
+rtcmacs: TEMACS_DEPS rtc_patch.o
+	rm -f temacs; $(MAKE) $(MAKE_FLAGS) temacs RTC_PATCH_O=rtc_patch.o
+	mv temacs rtcmacs
+
+rtcrun: rtcmacs
+	dbx -q -C -c \
+	'dbxenv rtc_error_log_file_name /dev/fd/1; \
+	dbxenv suppress_startup_message 5.0; \
+	ignore POLL; \
+	check -access; \
+	suppress rui; \
+	runargs -batch -l loadup.el run-temacs -q; \
+	run' rtcmacs
 
 puremacs: TEMACS_DEPS
 	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) TEMACS_LINK_ARGS

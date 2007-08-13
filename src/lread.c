@@ -2736,7 +2736,7 @@ read_list (Lisp_Object readcharfun,
 		{
 		  if (NILP (Vdoc_file_name))
 		    /* We have not yet called Snarf-documentation, so
-		       assume this file is described in the DOC-MM.NN
+		       assume this file is described in the DOC
 		       file and Snarf-documentation will fill in the
 		       right value later.  For now, replace the whole
 		       list with 0.  */

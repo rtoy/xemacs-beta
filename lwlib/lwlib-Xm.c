@@ -16,7 +16,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU Emacs; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -110,8 +111,8 @@ static destroyed_instance*
 make_destroyed_instance (char* name, char* type, Widget widget, Widget parent,
 			 Boolean pop_up_p)
 {
-  destroyed_instance* instance =
-    (destroyed_instance*)malloc (sizeof (destroyed_instance));
+  destroyed_instance *instance =
+    (destroyed_instance *) malloc (sizeof (destroyed_instance));
   instance->name = safe_strdup (name);
   instance->type = safe_strdup (type);
   instance->widget = widget;
@@ -152,8 +153,8 @@ resource_string (Widget widget, char *name)
   XtResource resource;
   char *result = NULL;
   
-  resource.resource_name = (String) "labelString";
-  resource.resource_class = (String) "LabelString"; /* #### should be Xmsomething... */
+  resource.resource_name = "labelString";
+  resource.resource_class = "LabelString"; /* #### should be Xmsomething... */
   resource.resource_type = XtRString;
   resource.resource_size = sizeof (String);
   resource.resource_offset = 0;
@@ -1115,7 +1116,7 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
   /* invisible seperator button */
   ac = 0;
   XtSetArg (al[ac], XmNmappedWhenManaged, FALSE); ac++;
-  children [n_children] = XmCreateLabel (row, (char *) "separator_button",
+  children [n_children] = XmCreateLabel (row, "separator_button",
 					 al, ac);
   DO_DND_KLUDGE (children [n_children]);
   n_children++;

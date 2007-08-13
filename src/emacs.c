@@ -1557,6 +1557,7 @@ sort_args (int argc, char **argv)
   int to = 1;
   int from;
   int i;
+  int end_of_options_p = 0;
 
   /* Categorize all the options,
      and figure out which argv elts are option arguments.  */
@@ -1564,7 +1565,11 @@ sort_args (int argc, char **argv)
     {
       options[from] = -1;
       priority[from] = 0;
-      if (argv[from][0] == '-')
+      /* Pseudo options "--" and "run-temacs" indicate end of options */
+      if (!strcmp (argv[from], "--") ||
+	  !strcmp (argv[from], "run-temacs"))
+	end_of_options_p = 1;
+      if (!end_of_options_p && argv[from][0] == '-')
 	{
 	  int match, thislen;
 	  char *equals;
@@ -1760,39 +1765,36 @@ main (int argc, char **argv, char **envp)
   suppress_early_backtrace = 0;
   lim_data = 0; /* force reinitialization of this variable */
 
-  if (sizeof (Lisp_Object) != sizeof (void *))
-    abort (); /* Lisp_Object must fit in a word;
-		 check VALBITS and GCTYPEBITS */
+  /* Lisp_Object must fit in a word; check VALBITS and GCTYPEBITS */
+  assert (sizeof (Lisp_Object) == sizeof (void *));
+
   if (!initialized)
-  {
-    run_temacs_argc = 0;
-    if (! SETJMP (run_temacs_catch))
-      main_1 (vol_argc, vol_argv, vol_envp);
-    /* run-emacs-from-temacs called */
-    vol_argc = run_temacs_argc;
-    run_temacs_argc = 0;
-    vol_argv = run_temacs_argv;
-#ifdef _SCO_DS
-    /*
-    This makes absolutely no sense to anyone involved.
-    There are several people using this stuff.  We've
-    compared versions on everything we can think of.  We
-    can find no difference.  However, on both my systems
-    environ is a plain old global variable initialized to
-    zero.  _environ is the one that contains pointers to
-    the actual environment.
-    Since we can't figure out the difference (and we're
-    hours away from a release), this takes a very cowardly
-    approach and is bracketed with both a system specific
-    preprocessor test and a runtime "do you have this
-    problem" test
-    06/20/96 robertl@dgii.com
-    */
     {
-    extern char *_environ ;
-    if ((unsigned) environ == 0)
-      environ=_environ;
-    }
+      run_temacs_argc = 0;
+      if (! SETJMP (run_temacs_catch))
+	main_1 (vol_argc, vol_argv, vol_envp);
+      /* run-emacs-from-temacs called */
+      vol_argc = run_temacs_argc;
+      vol_argv = run_temacs_argv;
+#ifdef _SCO_DS
+      /* This makes absolutely no sense to anyone involved.  There are
+	 several people using this stuff.  We've compared versions on
+	 everything we can think of.  We can find no difference.
+	 However, on both my systems environ is a plain old global
+	 variable initialized to zero.  _environ is the one that
+	 contains pointers to the actual environment.
+	
+	 Since we can't figure out the difference (and we're hours
+	 away from a release), this takes a very cowardly approach and
+	 is bracketed with both a system specific preprocessor test
+	 and a runtime "do you have this problem" test
+	
+	 06/20/96 robertl@dgii.com */
+      {
+	extern char *_environ;
+	if ((unsigned) environ == 0)
+	  environ=_environ;
+      }
 #endif /* _SCO_DS */
     vol_envp = environ;
   }

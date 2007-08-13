@@ -92,7 +92,7 @@ Used for compatibility among different emacs variants."
 
 ;; XEmacs:
 (define-function 'not 'null)
-(define-function-when-void 'numberp 'intergerp) ; different when floats
+(define-function-when-void 'numberp 'integerp) ; different when floats
 
 (defun local-variable-if-set-p (sym buffer)
   "Return t if SYM would be local to BUFFER after it is set.

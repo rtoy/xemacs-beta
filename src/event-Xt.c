@@ -599,18 +599,8 @@ emacs_Xt_mapping_action (Widget w, XEvent* event)
 /*                  X to Emacs event conversion                         */
 /************************************************************************/
 
-#if (defined(sun) || defined(__sun)) && defined(__GNUC__)
-# define SUNOS_GCC_L0_BUG
-#endif
-
-#ifdef SUNOS_GCC_L0_BUG
-static void
-x_to_emacs_keysym_sunos_bug (Lisp_Object *return_value_sunos_bug, /* #### */
-                             XKeyPressedEvent *event, int simple_p)
-#else /* !SUNOS_GCC_L0_BUG */
 static Lisp_Object
 x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
-#endif /* !SUNOS_GCC_L0_BUG */
      /* simple_p means don't try too hard (ASCII only) */
 {
   char *name;
@@ -625,11 +615,6 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
   char *bufptr = buffer;
   int   bufsiz = sizeof (buffer);
   Status status;
-#endif
-
-#ifdef SUNOS_GCC_L0_BUG
-# define return(lose) \
-  do {*return_value_sunos_bug = (lose); goto return_it; } while (0)
 #endif
 
 #ifdef HAVE_XIM
@@ -708,9 +693,9 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
             enqueue_Xt_dispatch_event (emacs_event);
           }
         Lstream_close (XLSTREAM (instream));
-	return (Qnil);
+	return Qnil;
       }
-    case XLookupNone: return (Qnil);
+    case XLookupNone: return Qnil;
     case XBufferOverflow:
       bufptr = alloca (len+1);
       bufsiz = len+1;
@@ -724,36 +709,33 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
   if (keysym >= XK_exclam && keysym <= XK_asciitilde)
     /* We must assume that the X keysym numbers for the ASCII graphic
        characters are the same as their ASCII codes.  */
-    return (make_char (keysym));
+    return make_char (keysym);
 
   switch (keysym)
     {
       /* These would be handled correctly by the default case, but by
 	 special-casing them here we don't garbage a string or call intern().
 	 */
-    case XK_BackSpace:	return (QKbackspace);
-    case XK_Tab:	return (QKtab);
-    case XK_Linefeed:	return (QKlinefeed);
-    case XK_Return:	return (QKreturn);
-    case XK_Escape:	return (QKescape);
-    case XK_space:	return (QKspace);
-    case XK_Delete:	return (QKdelete);
-    case 0:		return (Qnil);
+    case XK_BackSpace:	return QKbackspace;
+    case XK_Tab:	return QKtab;
+    case XK_Linefeed:	return QKlinefeed;
+    case XK_Return:	return QKreturn;
+    case XK_Escape:	return QKescape;
+    case XK_space:	return QKspace;
+    case XK_Delete:	return QKdelete;
+    case 0:		return Qnil;
     default:
-      if (simple_p) return (Qnil);
-      /* #### without return_value_sunos_bug, %l0 (GCC struct return pointer)
-       * ####  gets roached (top 8 bits cleared) around this call.
-       */
+      if (simple_p) return Qnil;
       /* !!#### not Mule-ized */
       name = XKeysymToString (keysym);
       if (!name || !name[0])	/* this shouldn't happen... */
 	{
 	  char buf [255];
 	  sprintf (buf, "unknown_keysym_0x%X", (int) keysym);
-	  return (KEYSYM (buf));
+	  return KEYSYM (buf);
 	}
       /* If it's got a one-character name, that's good enough. */
-      if (!name[1]) return (make_char (name[0]));
+      if (!name[1]) return make_char (name[0]);
       
       /* If it's in the "Keyboard" character set, downcase it.
 	 The case of those keysyms is too totally random for us to
@@ -772,27 +754,11 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	    }
 	  }
 	  *s2 = 0;
-	  return (KEYSYM (buf));
+	  return KEYSYM (buf);
 	}
-      return (KEYSYM (name));
+      return KEYSYM (name);
     }
-#ifdef SUNOS_GCC_L0_BUG
-# undef return
- return_it:
-  return;
-#endif
 }
-
-#ifdef SUNOS_GCC_L0_BUG
-/* #### */
-static Lisp_Object
-x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
-{
-  Lisp_Object return_value_sunos_bug;
-  x_to_emacs_keysym_sunos_bug (&return_value_sunos_bug, event, simple_p);
-  return (return_value_sunos_bug);
-}
-#endif
 
 static void
 set_last_server_timestamp (struct device *d, XEvent *x_event)

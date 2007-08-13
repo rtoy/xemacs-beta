@@ -505,19 +505,9 @@ DECLARE_LRECORD (charset, struct Lisp_Charset);
 #define CHARSET_CCL_PROGRAM(cs)  ((cs)->ccl_program)
 #define CHARSET_REVERSE_DIRECTION_CHARSET(cs) ((cs)->reverse_direction_charset)
 
-INLINE int
-CHARSET_DIMENSION (struct Lisp_Charset *cs)
-{
-  /* Optimized using inside knowledge of CHARSET_TYPE values */
-  return (CHARSET_TYPE (cs) <= CHARSET_TYPE_96) ? 1 : 2;
-}
-
-INLINE int
-CHARSET_CHARS (struct Lisp_Charset *cs)
-{
-  /* Optimized using inside knowledge of CHARSET_TYPE values */
-  return (CHARSET_TYPE (cs) & 0x1) ? 96 : 94;
-}
+/* Optimized using inside knowledge of CHARSET_TYPE values */
+#define CHARSET_DIMENSION(cs) ((CHARSET_TYPE (cs) <= CHARSET_TYPE_96) ? 1 : 2)
+#define CHARSET_CHARS(cs)     ((CHARSET_TYPE (cs) & 0x1) ? 96 : 94)
 
 #define CHARSET_PRIVATE_P(cs) LEADING_BYTE_PRIVATE_P (CHARSET_LEADING_BYTE (cs))
 

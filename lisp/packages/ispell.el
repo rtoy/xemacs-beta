@@ -789,8 +789,11 @@ You can set this variable in hooks in your init file -- eg:
      (not (boundp 'epoch::version))
      (defalias 'ispell 'ispell-buffer))
 
+
+;; XEmacs: \M-$ for whatever reason, drives `make autoloads' bonkers
+
 ;;;###autoload
-(define-key global-map "\M-$" 'ispell-word)
+(define-key global-map [(meta ?\$)] 'ispell-word)
 
 ;;;###autoload
 (defun ispell-word (&optional following quietly continue)

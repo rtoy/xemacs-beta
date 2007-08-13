@@ -549,7 +549,7 @@ If BUFFER is nil, the current buffer is assumed.
 }
 
 DEFUN ("following-char", Ffollowing_char, 0, 1, 0, /*
-Return the character following point, as a number.
+Return the character following point.
 At the end of the buffer or accessible region, return 0.
 If BUFFER is nil, the current buffer is assumed.
 */
@@ -563,7 +563,7 @@ If BUFFER is nil, the current buffer is assumed.
 }
 
 DEFUN ("preceding-char", Fpreceding_char, 0, 1, 0, /*
-Return the character preceding point, as a number.
+Return the character preceding point.
 At the beginning of the buffer or accessible region, return 0.
 If BUFFER is nil, the current buffer is assumed.
 */
@@ -584,9 +584,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  if (BUF_PT (b) == BUF_BEGV (b))
-    return Qt;
-  return Qnil;
+  return BUF_PT (b) == BUF_BEGV (b) ? Qt : Qnil;
 }
 
 DEFUN ("eobp", Feobp, 0, 1, 0, /*
@@ -597,9 +595,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  if (BUF_PT (b) == BUF_ZV (b))
-    return Qt;
-  return Qnil;
+  return BUF_PT (b) == BUF_ZV (b) ? Qt : Qnil;
 }
 
 int

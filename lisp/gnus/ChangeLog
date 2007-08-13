@@ -1,3 +1,9 @@
+Fri Jan  3 16:20:42 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* gnus-setup.el: Updated to gracefully handle installed auxilliary
+	packages like tm, and handle eventual integration of Red Gnus/Gnus
+	5.4.
+
 Fri Aug 30 02:23:23 1996  Lars Magne Ingebrigtsen  <larsi@hrym.ifi.uio.no>
 
 	* message.el (message-do-fcc): Set the FROM-GNUS flag.

@@ -258,7 +258,7 @@ Applies to lines after point."
     ()
   (setq occur-mode-map (make-sparse-keymap))
   (set-keymap-name occur-mode-map 'occur-mode-map) ; XEmacs
-  (define-key occur-mode-map [mouse-2] 'occur-mode-mouse-goto)
+  (define-key occur-mode-map 'button2 'occur-mode-mouse-goto) ; XEmacs
   (define-key occur-mode-map "\C-c\C-c" 'occur-mode-goto-occurrence)
   (define-key occur-mode-map "\C-m" 'occur-mode-goto-occurrence))
 
@@ -304,7 +304,7 @@ This function is only reasonable when bound to a mouse key in the occur buffer"
     ;; preserve the window/frame setup
     (unwind-protect
 	(progn
-	  (mouse-set-point e)
+	  (mouse-set-point event)
 	  (occur-mode-goto-occurrence))
       (select-frame frame-save)
       (select-window window-save))))
