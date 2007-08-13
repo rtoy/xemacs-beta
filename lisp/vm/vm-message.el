@@ -139,10 +139,15 @@
 ;; sortable subject, re: garbage removed
 (defmacro vm-sortable-subject-of (message)
   (list 'aref (list 'aref message 3) 17))
+;; tokenized summary entry
 (defmacro vm-summary-of (message)
   (list 'aref (list 'aref message 3) 18))
+;; parent of this message, as determined by threading
 (defmacro vm-parent-of (message)
   (list 'aref (list 'aref message 3) 19))
+;; message IDs parsed from References header
+(defmacro vm-references-of (message)
+  (list 'aref (list 'aref message 3) 20))
 ;; extra data shared by virtual messages if vm-virtual-mirror is non-nil
 (defmacro vm-mirror-data-of (message) (list 'aref message 4))
 ;; if message is being edited, this is the buffer being used.
@@ -262,6 +267,8 @@
   (list 'aset (list 'aref message 3) 18 val))
 (defmacro vm-set-parent-of (message val)
   (list 'aset (list 'aref message 3) 19 val))
+(defmacro vm-set-references-of (message val)
+  (list 'aset (list 'aref message 3) 20 val))
 (defmacro vm-set-mirror-data-of (message data)
   (list 'aset message 4 data))
 (defmacro vm-set-edit-buffer-of (message buf)

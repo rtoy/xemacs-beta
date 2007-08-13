@@ -1,4 +1,59 @@
+Mon Mar 17 08:44:46 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-sysdp.el (buffer-substring-no-properties): Added stub
+
+* url-gopher.el (url-gopher-retrieve): Ditto.
+
+* url.el: Ditto
+
+* w3-parse.el: Removed all sorts of fun (following-char) commands that can
+  cause ebola warnings under XEmacs 20.x
+
+* w3.el (w3-popup-info): Default to the URL under point instead of the
+  documents URL
+
+* w3-auto.el: updated autoloads - made sure everything was interactive if
+  appropriate.
+
+* w3-menu.el (w3-popup-menu): If w3-popup-menu-on-mouse-3 is nil, call
+  whatever button3 is bound to in global-map
+
+* w3-display.el: Added XEmacs version of frame-char-height and
+  frame-char-width
+  (w3-frames): If w3-display-frames is non-nil, then do a refresh with it
+  bound locally, so everything should just work.
+
+* url.el (url-do-setup): Global history file now defaults to ~/.w3/history
+  (url-do-setup): Cookie storage now defaults to ~/.w3/cookies
+
+Mon Mar 17 06:51:07 1997  Paul Stodghill <stodghil@CS.Cornell.EDU>
+
+* mm.el (mm-temporary-directory): Initialize variable from TMPDIR
+  environment variable
+
+Fri Mar 14 13:35:56 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-forms.el (w3-form-create-custom): Fixed the 'custom' input type for
+  new filenames in the widget/custom package.
+
+* ssl.el (ssl-certificate-verification-depth): New variable to control how
+  far up a cert chain to look.
+  (ssl-view-certificate-program-name): New variable.
+  (ssl-view-certificate-program-arguments): New variable.
+  (ssl-certificate-directory-style): New variable.
+  (ssl-rehash-program-name): New variable.
+  (ssl-certificate-directory): New variable.
+  (ssl-program-arguments): Use some of them.
+  (ssl-accept-ca-certificate): Use the rest.
+
+* css.el (css-parse-args): Removed old code that could cause infinite loop
+  in stylesheet parsing on bad things like "foo=bar" instead of "foo:bar"
+
+* w3-cus.el: Added better groupings for the customization stuff.
+
 Thu Mar 13 19:54:50 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.68 released
 
 * w3-cus.el: Added customization support for Emacs-W3
 

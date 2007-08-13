@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/03/14 06:39:41
-;; Version: 1.98
+;; Created: 1997/03/18 00:47:35
+;; Version: 1.99
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1226,7 +1226,8 @@ ftp.w3.org:/pub/www/doc."
                
 (defun w3-popup-info (&optional url)
   "Show information about the link under point. (All SGML attributes)"
-  (interactive (list (w3-read-url-with-default)))
+  (interactive (list (or (w3-view-this-url t)
+			 (w3-read-url-with-default))))
   (let (dat widget)
     (if (interactive-p)
 	nil

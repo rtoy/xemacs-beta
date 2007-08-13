@@ -1,4 +1,16 @@
+Tue Mar 18 14:42:31 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.65 released.
+
+Tue Mar 18 11:03:02 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-face.el (custom-face-attributes): Removed `:invert'.
+	(custom-invert-face): Removed.
+
 Mon Mar 17 11:32:51 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-file-action): Spelling correction by Greg
+	Stark <gsstark@mit.edu>.
 
 	* Version 1.64 released.
 
@@ -7,7 +19,7 @@ Mon Mar 17 10:43:10 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 	* cus-edit.el (custom-group-menu-create): Split definition into
 	XEmacs and Emacs.  XEmacs uses :filter.  Emacs limits
 	`custom-menu-nesting'. 
-	(custom-menu-create): Do noy limit `custom-menu-nesting' here. 
+	(custom-menu-create): Do not limit `custom-menu-nesting' here. 
 	(custom-menu-update): Removed XEmacs support.
 
 	* custom.el (custom-help-menu): Use `custom-menu-create' in XEmacs

@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.64
+;; Version: 1.65
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -2158,7 +2158,7 @@ It will read a file name from the minibuffer when activated."
 	 (file (file-name-nondirectory value))
 	 (menu-tag (widget-apply widget :menu-tag-get))
 	 (must-match (widget-get widget :must-match))
-	 (answer (read-file-name (concat menu-tag ": (defalt `" value "') ")
+	 (answer (read-file-name (concat menu-tag ": (default `" value "') ")
 				 dir nil must-match file)))
     (widget-value-set widget (abbreviate-file-name answer))
     (widget-apply widget :notify widget event)

@@ -22,6 +22,7 @@
 
 ;; `itimer' feature means Emacs-Lisp programmers get:
 ;;    itimerp
+;;    itimer-live-p
 ;;    itimer-value
 ;;    itimer-restart
 ;;    itimer-function
@@ -45,7 +46,7 @@
 ;;
 ;; See the doc strings of these functions for more information.
 
-(defvar itimer-version "1.04"
+(defvar itimer-version "1.05"
   "Version number of the itimer package.")
 
 (defvar itimer-list nil
@@ -159,6 +160,13 @@ This is a macro."
   "Returns non-nil iff OBJ is an itimer."
   (and (consp obj) (eq (length obj) 8)))
 
+(defun itimer-live-p (obj)
+  "Returns non-nil iff OBJ is an itimer and is active.
+``Active'' means Emacs will run it when it expires.
+`activate-timer' must be called on a itimer to make it active.
+Itimers started with `start-itimer' are automatically active."
+  (and (itimerp obj) (memq obj itimer-list)))
+
 (defun itimer-name (itimer)
   "Returns the name of ITIMER."
   (check-itimer itimer)
@@ -268,7 +276,7 @@ Returns FLAG."
   (check-itimer itimer)
   (setcar (nthcdr 5 itimer) flag))
 
-(defun set-itimer-function-arguments (itimer &rest arguments)
+(defun set-itimer-function-arguments (itimer &optional arguments)
   "Set the function arguments of ITIMER to be ARGUMENTS.
 The function of ITIMER will be called with ARGUMENTS when itimer expires.
 Returns ARGUMENTS."
@@ -700,6 +708,9 @@ x      start a new itimer
 		  (let* ((current-itimer itimer)
 			 (quit-flag nil)
 			 (inhibit-quit nil)
+			 ;; for FSF Emacs timer.el emulation under XEmacs.
+			 ;; eldoc expect this to be done, apparently.
+			 (this-command nil)
 			 itimer itimers time-elapsed)
 		    (if (itimer-uses-arguments current-itimer)
 			(apply (itimer-function current-itimer)
@@ -787,10 +798,10 @@ x      start a new itimer
 
 (defun itimer-timer-wakeup ()
   (let ((inhibit-quit t))
-    (cond ((fboundp 'cancel-timer)
-	   (cancel-timer itimer-timer))
-	  ((fboundp 'disable-timeout)
-	   (disable-timeout itimer-timer)))
+    (cond ((fboundp 'disable-timeout)
+	   (disable-timeout itimer-timer))
+	  ((fboundp 'cancel-timer)
+	   (cancel-timer itimer-timer)))
     (setq itimer-timer (add-timeout itimer-short-interval
 				    'itimer-timer-driver nil nil))))
 

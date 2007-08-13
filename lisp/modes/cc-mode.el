@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         4.379
-;; Last Modified:   1997/03/10 00:59:10
+;; Version:         4.381
+;; Last Modified:   1997/03/18 16:43:13
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1213,7 +1213,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 (defconst c-inher-key
   (concat "\\(\\<static\\>\\s +\\)?"
 	  c-C++-class-key "[ \t]+" c-symbol-key
-	  "\\([ \t]*:[ \t]*\\)?\\s *[^;]")
+	  "\\([ \t]*:[ \t]*\\)\\s *[^;]")
   "Regexp describing a class inheritance declaration.")
 (defconst c-switch-label-key
   "\\(\\(case[( \t]+\\S .*\\)\\|default[ \t]*\\):"
@@ -2563,6 +2563,12 @@ Optional prefix ARG means justify paragraph as well."
 			    (progn
 			      (beginning-of-line)
 			      (skip-chars-forward " \t*" (c-point 'eol))
+			      ;; kludge alert, watch out for */, in
+			      ;; which case fill-prefix should *not*
+			      ;; be "*"!
+			      (if (and (= (following-char) ?/)
+				       (= (preceding-char) ?*))
+				  (forward-char -1))
 			      (point)))
 
 			 ;; If the comment is only one line followed
@@ -5199,7 +5205,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "4.379"
+(defconst c-version "4.381"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"

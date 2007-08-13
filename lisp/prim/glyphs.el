@@ -465,7 +465,8 @@ instantiators afterwards using `set-glyph-image'."
   (and (image-instance-p object) (eq 'pointer (image-instance-type object))))
 
 (defun subwindow-image-instance-p (object)
-  "t if OBJECT is an image instance of type `subwindow'."
+  "t if OBJECT is an image instance of type `subwindow'.
+Subwindows are not implemented in this version of XEmacs."
   (and (image-instance-p object) (eq 'subwindow (image-instance-type object))))
 
 ;;;;;;;;;; the built-in glyphs

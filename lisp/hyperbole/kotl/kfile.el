@@ -8,7 +8,8 @@
 ;; AUTHOR:       Bob Weiner & Kellie Clark
 ;;
 ;; ORIG-DATE:    10/31/93
-;; LAST-MOD:      1-Nov-95 at 00:46:41 by Bob Weiner
+;; LAST-MOD:      6-Mar-97 at 01:17:51 by Bob Weiner
+
 ;;; ************************************************************************
 ;;; Other required Elisp libraries
 ;;; ************************************************************************
@@ -152,13 +153,13 @@ Return file's kview."
 Return the new view."
   (let (ver-string)
     (cond ((not (bufferp buffer))
-	   (error "(kfile:read): Argument must be a buffer, '%s'." buffer))
+	   (error "(kfile:read): Argument must be a buffer, `%s'." buffer))
 	  ((not existing-file-p)
 	   (kfile:create buffer))
 	  ((progn
 	     (set-buffer buffer)
 	     (not (setq ver-string (kfile:is-p))))
-	   (error "(kfile:read): '%s' is not a koutline file." buffer))
+	   (error "(kfile:read): `%s' is not a koutline file." buffer))
 	  ((equal ver-string "Kotl-4.0")
 	   (kfile:read-v4-or-v3 buffer nil))
 	  ((equal ver-string "Kotl-3.0")
@@ -167,7 +168,7 @@ Return the new view."
 	   (kfile:read-v2 buffer))
 	  ((equal ver-string "Kotl-1.0")
 	   (error "(kfile:read): V1 koutlines are no longer supported"))
-	  (t (error "(kfile:read): '%s' has unknown kotl version, %s."
+	  (t (error "(kfile:read): `%s' has unknown kotl version, %s."
 		    buffer ver-string)))))
 
 (defun kfile:read-v2 (buffer)
@@ -323,7 +324,7 @@ VISIBLE-ONLY-P is non-nil.  Signal an error if kotl is not attached to a file."
       (set-marker opoint nil)
       nil)))
 
-;;; Next function is adapted from 'file-write' of GNU Emacs 19, copyright FSF,
+;;; Next function is adapted from `file-write' of GNU Emacs 19, copyright FSF,
 ;;; under the GPL.
 (defun kfile:write (file)
   "Write current outline to FILE."
@@ -529,6 +530,6 @@ Output stream is STREAM, or value of `standard-output' (which see)."
 ;;; ************************************************************************
 
 (defvar kfile:escape-newlines t 
-  "Value of print-escape-newlines used by 'kfile:print-to-string' function.")
+  "Value of print-escape-newlines used by `kfile:print-to-string' function.")
 
 (provide 'kfile)

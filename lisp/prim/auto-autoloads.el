@@ -2600,7 +2600,7 @@ FUNC that return non-nil." t nil)
 
 ;;;***
 
-;;;### (autoloads (rolo-yank rolo-sort rolo-kill rolo-grep rolo-fgrep rolo-edit rolo-display-matches rolo-add) "wrolo" "hyperbole/wrolo.el")
+;;;### (autoloads (rolo-yank rolo-toggle-datestamps rolo-sort rolo-kill rolo-grep rolo-fgrep rolo-edit rolo-display-matches rolo-add) "wrolo" "hyperbole/wrolo.el")
 
 (autoload 'rolo-add "wrolo" "\
 Adds a new entry in personal rolodex for NAME.
@@ -2611,13 +2611,13 @@ entry which begins with the parent string." t nil)
 
 (autoload 'rolo-display-matches "wrolo" "\
 Display optional DISPLAY-BUF buffer of previously found rolodex matches.
-If DISPLAY-BUF is nil, use the value in 'rolo-display-buffer'.
+If DISPLAY-BUF is nil, use the value in `rolo-display-buffer'.
 Second arg RETURN-TO-BUFFER is the buffer to leave point within after the display." t nil)
 
 (autoload 'rolo-edit "wrolo" "\
-Edits a rolodex entry given by optional NAME within 'rolo-file-list'.
+Edits a rolodex entry given by optional NAME within `rolo-file-list'.
 With prefix argument, prompts for optional FILE to locate entry within.
-With no NAME arg, simply displays FILE or first entry in 'rolo-file-list' in an
+With no NAME arg, simply displays FILE or first entry in `rolo-file-list' in an
 editable mode.  NAME may be of the form: parent/child to edit child below a
 parent entry which begins with the parent string." t nil)
 
@@ -2652,7 +2652,7 @@ Returns number of entries matched.  See also documentation for the variable
 rolo-file-list." t nil)
 
 (autoload 'rolo-kill "wrolo" "\
-Kills a rolodex entry given by NAME within 'rolo-file-list'.
+Kills a rolodex entry given by NAME within `rolo-file-list'.
 With prefix argument, prompts for optional FILE to locate entry within.
 NAME may be of the form: parent/child to kill child below a parent entry
 which begins with the parent string.
@@ -2660,8 +2660,12 @@ Returns t if entry is killed, nil otherwise." t nil)
 
 (autoload 'rolo-sort "wrolo" "\
 Sorts up to 14 levels of entries in ROLO-FILE (default is personal rolo).
-Assumes entries are delimited by one or more '*'characters.
+Assumes entries are delimited by one or more `*'characters.
 Returns list of number of groupings at each entry level." t nil)
+
+(autoload 'rolo-toggle-datestamps "wrolo" "\
+Toggle whether datestamps are updated when rolodex entries are modified.
+With optional ARG, turn them on iff ARG is positive." t nil)
 
 (autoload 'rolo-yank "wrolo" "\
 Inserts at point the first rolodex entry matching NAME.
@@ -3674,7 +3678,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.14 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.15 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4946,7 +4950,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.14 $
+vhdl-mode $Revision: 1.15 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

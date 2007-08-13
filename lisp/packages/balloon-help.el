@@ -57,7 +57,7 @@
 
 (provide 'balloon-help)
 
-(defvar balloon-help-version "1.04"
+(defvar balloon-help-version "1.05"
   "Version string for Balloon Help.")
 
 (defvar balloon-help-mode t
@@ -138,8 +138,6 @@ Each hook is called with one argument, the mouse motion event.")
 as the X server gets around to displaying it.  Nil means it
 will be invisible as soon as the X server decides to hide it.")
 
-(defvar balloon-help-bar-cursor nil)
-
 (defun balloon-help-mode (&optional arg)
   "Toggle Balloon Help mode.
 With arg, turn Balloon Help mode on iff arg is positive.
@@ -183,6 +181,16 @@ used as the help message."
     (let* ((buffer (event-buffer event))
 	   (frame (event-frame event))
 	   (point (and buffer (event-point event)))
+	   (modeline-point (and buffer (event-modeline-position event)))
+	   (modeline-extent (and modeline-point
+				 (map-extents
+				  (function (lambda (e ignored) e))
+				  (symbol-value-in-buffer
+				   'generated-modeline-string
+				   buffer)
+				  modeline-point modeline-point
+				  nil nil
+				  'balloon-help)))
 	   (glyph-extent (event-glyph-extent event))
 	   (glyph-extent (if (and glyph-extent
 				  (extent-property glyph-extent
@@ -194,7 +202,7 @@ used as the help message."
 	   (button (if (and button (toolbar-button-help-string button))
 		       button
 		     nil))
-	   (object (or glyph-extent extent button))
+	   (object (or modeline-extent glyph-extent extent button))
 	   (id balloon-help-timeout-id))
       (if (null object)
 	  (if (and balloon-help-frame
@@ -278,7 +286,6 @@ used as the help message."
 			(get-buffer-create " *balloon-help*")))
 	      (if (not (frame-live-p balloon-help-frame))
 		  (setq balloon-help-frame (balloon-help-make-help-frame)))
-	      (setq bar-cursor t)
 	      (set-buffer balloon-help-buffer)
 	      (erase-buffer)
 	      (insert help)
@@ -309,7 +316,6 @@ used as the help message."
 	      (balloon-help-expose-help-frame))))))
 
 (defun balloon-help-undisplay-help ()
-  (setq bar-cursor balloon-help-bar-cursor)
   (balloon-help-hide-help-frame))
 
 (defun balloon-help-hide-help-frame ()
@@ -347,11 +353,14 @@ used as the help message."
 (defun balloon-help-make-junk-frame ()
   (let ((window-min-height 1)
 	(window-min-width 1))
-    (make-frame '(minibuffer t initially-unmapped t width 1 height 1))))
+    (save-excursion
+      (set-buffer (generate-new-buffer "*junk-frame-buffer*"))
+      (prog1
+	  (make-frame '(minibuffer t initially-unmapped t width 1 height 1))
+	(rename-buffer " *junk-frame-buffer*" t)))))
 
 (defun balloon-help-make-help-frame ()
   (save-excursion
-    (setq balloon-help-bar-cursor bar-cursor)
     (set-buffer balloon-help-buffer)
     (set-buffer-menubar nil)
     (let* ((x (balloon-help-compute-help-frame-x-location))

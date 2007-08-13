@@ -11,7 +11,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     6-Oct-92 at 11:52:51
-;; LAST-MOD:     19-Feb-97 at 10:57:44 by Bob Weiner
+;; LAST-MOD:     15-Mar-97 at 17:09:40 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -118,7 +118,7 @@ It must end with a directory separator character.")
 
 ;;; Provides a site standard way to easily switch between the Hyperbole mouse
 ;;; bindings and a set of personal mouse bindings.  You may instead show
-;;; users how to bind this to a key via 'hyperb:init-hook' (see
+;;; users how to bind this to a key via `hyperb:init-hook' (see
 ;;; Hyperbole Manual).
 ;;;
 (or (global-key-binding "\C-ct")
@@ -130,7 +130,7 @@ It must end with a directory separator character.")
   (interactive "P")
   (if arg (assist-key) (action-key)))
 
-;;; A value of t for 'hkey-init' below will cause the Hyperbole
+;;; A value of t for `hkey-init' below will cause the Hyperbole
 ;;; context-sensitive keys to be bound to keyboard keys, in addition to any
 ;;; mouse key bindings.  Comment it out or set it to nil if you don't want
 ;;; these bindings.  Or change the bindings in the succeeding lines.
@@ -407,16 +407,17 @@ Its displayable part begins at optional MSG-START and ends at or before MSG-END.
   )
 
 ;;; Hyperbole rolodex main entry points.
-(autoload 'rolo-add              "wrolo"      "Add an entry to rolodex"       t)
-(autoload 'rolo-display-matches  "wrolo"      "Redisplay previous rolodex matches" t)
-(autoload 'rolo-edit             "wrolo"      "Edit an existing rolodex entry" t)
-(autoload 'rolo-fgrep            "wrolo"      "Rolodex string search"         t)
-(autoload 'rolo-grep             "wrolo"      "Rolodex regexp search"         t)
-(autoload 'rolo-kill             "wrolo"      "Delete an existing rolodex entry" t)
-(autoload 'rolo-logic            "wrolo-logic" "Logical rolodex search filters." t)
-(autoload 'rolo-sort             "wrolo"      "Sort rolodex entries" t)
-(autoload 'rolo-word             "wrolo"      "Rolodex string search for a word" t)
-(autoload 'rolo-yank             "wrolo"      "Insert a rolodex entry into current buffer" t)
+(autoload 'rolo-add               "wrolo"      "Add an entry to rolodex"       t)
+(autoload 'rolo-display-matches   "wrolo"      "Redisplay previous rolodex matches" t)
+(autoload 'rolo-edit              "wrolo"      "Edit an existing rolodex entry" t)
+(autoload 'rolo-fgrep             "wrolo"      "Rolodex string search"         t)
+(autoload 'rolo-grep              "wrolo"      "Rolodex regexp search"         t)
+(autoload 'rolo-kill              "wrolo"      "Delete an existing rolodex entry" t)
+(autoload 'rolo-logic             "wrolo-logic" "Logical rolodex search filters." t)
+(autoload 'rolo-sort              "wrolo"      "Sort rolodex entries" t)
+(autoload 'rolo-toggle-datestamps "wrolo"      "Toggle datestamp insertion." t)
+(autoload 'rolo-word              "wrolo"      "Rolodex string search for a word" t)
+(autoload 'rolo-yank              "wrolo"      "Insert a rolodex entry into current buffer" t)
 
 ;;; Hyperbole Key autoloads.
 (autoload 'Info-handle-in-note "hmous-info"
@@ -485,14 +486,14 @@ Its displayable part begins at optional MSG-START and ends at or before MSG-END.
 ;;;
 ;;; Hyperbole mail composer support configuration.
 ;;;
-(var:append 'mail-mode-hook      '((lambda () (require 'hsmail))))
-(var:append 'mh-letter-mode-hook '((lambda () (require 'hsmail))))
-(var:append 'vm-mail-mode-hook   '((lambda () (require 'hsmail))))
+(var:append 'mail-mode-hook      (list (function (lambda () (require 'hsmail)))))
+(var:append 'mh-letter-mode-hook (list (function (lambda () (require 'hsmail)))))
+(var:append 'vm-mail-mode-hook   (list (function (lambda () (require 'hsmail)))))
 
 ;;; ************************************************************************
 ;;; Frame function aliases.
 ;;; ************************************************************************
-;; Create all needed 'frame-' aliases for all 'screen-' functions, e.g.
+;; Create all needed `frame-' aliases for all `screen-' functions, e.g.
 ;; screen-width.
 (if (fboundp 'selected-frame)
     nil

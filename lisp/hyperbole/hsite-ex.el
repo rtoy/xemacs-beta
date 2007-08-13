@@ -9,7 +9,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    15-Apr-91 at 00:48:49
-;; LAST-MOD:     17-Feb-97 at 18:34:17 by Bob Weiner
+;; LAST-MOD:      8-Mar-97 at 22:52:36 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.

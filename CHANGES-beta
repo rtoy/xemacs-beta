@@ -1,4 +1,17 @@
 							-*- indented-text -*-
+to 19.15 beta101
+-- itimer.el-1.05
+-- hyperbole-4.023
+-- cc-mode.el-4.381
+-- floating-toolbar.el-1.02
+-- balloon-help.el-1.05
+-- W3-3.0.69
+-- VM-6.20
+-- Custom-1.65
+-- Gnus-5.4.30
+-- strip unimplemented subwindows subr code
+-- GIF correction courtesy Darrell Kindred
+
 to 19.15 beta100
 -- GIF crash fix courtesy of David Moore
 -- Fix for problem dumping comint with sparcworks

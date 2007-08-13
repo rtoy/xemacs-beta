@@ -164,7 +164,7 @@ Prefix argument N means scroll forward N lines."
 ;; answer about where the end of the message is going to be
 ;; visible when redisplay finally does occur.
 (defun vm-howl-if-eom ()
-  (let ((w (vm-get-visible-buffer-window (current-buffer))))
+  (let ((w (get-buffer-window (current-buffer))))
     (and w
 	 (save-excursion
 	   (save-window-excursion
@@ -450,8 +450,7 @@ Use mouse button 3 to choose a Web browser for the URL."
     (if (or vm-highlight-url-face vm-url-browser)
 	(save-restriction
 	  (widen)
-	  (narrow-to-region start
-			    end)
+	  (narrow-to-region start end)
 	  (vm-energize-urls)))))
     
 (defun vm-highlight-headers-maybe ()
@@ -499,7 +498,8 @@ Use mouse button 3 to choose a Web browser for the URL."
 
 (defun vm-preview-current-message ()
   (vm-save-buffer-excursion
-   (setq vm-system-state 'previewing)
+   (setq vm-system-state 'previewing
+	 vm-mime-decoded nil)
    (if vm-real-buffers
        (vm-make-virtual-copy (car vm-message-pointer)))
 
@@ -562,7 +562,11 @@ Use mouse button 3 to choose a Web browser for the URL."
 	   (not (vm-buffer-variable-value vm-mail-buffer 'vm-mime-decoded))
 	 (not vm-mime-decoded))
        (not (vm-mime-plain-message-p (car vm-message-pointer)))
-       (vm-decode-mime-message))
+       (condition-case data
+	   (vm-decode-mime-message)
+	 (vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
+					       (car (cdr data)))
+			(message "%s" (car (cdr data))))))
   (vm-save-buffer-excursion
    (save-excursion
      (save-excursion

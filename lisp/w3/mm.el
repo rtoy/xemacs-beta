@@ -305,7 +305,7 @@ not.")
 (defvar mm-download-directory nil
   "*Where downloaded files should go by default.")
 
-(defvar mm-temporary-directory "/tmp"
+(defvar mm-temporary-directory (or (getenv "TMPDIR") "/tmp")
   "*Where temporary files go.")
 
 

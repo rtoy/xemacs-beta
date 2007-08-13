@@ -48,7 +48,7 @@
 	      m
 	      (condition-case data
 		  (vm-mime-parse-entity m)
-		(vm-mime-error (apply 'message (cdr data)))))
+		(vm-mime-error (message "%s" (car (cdr data))))))
 	     (vm-mime-layout-of m))))
 
 (defun vm-mm-encoded-header (m)
@@ -418,7 +418,6 @@
 (defun vm-decode-mime-message-headers (m)
   (let ((case-fold-search t)
 	(buffer-read-only nil)
-	(did-decode nil)
 	charset encoding match-start match-end start end)
     (save-excursion
       (goto-char (vm-headers-of m))
@@ -433,7 +432,6 @@
 	;; character set properly.
 	(if (not (vm-mime-charset-internally-displayable-p charset))
 	    nil
-	  (setq did-decode t)
 	  (delete-region end match-end)
 	  (condition-case data
 	      (cond ((string-match "B" encoding)
@@ -447,16 +445,7 @@
 			   (insert "**invalid encoded word**")
 			   (delete-region (point) end)))
 	  (vm-mime-charset-decode-region charset start end)
-	  (delete-region match-start start)))
-      ;; if we did some decoding, re-electrify the headers since
-      ;; some of the extents might have been wiped by the
-      ;; decoding process.
-      (if did-decode
-	  (save-restriction
-	    (narrow-to-region (vm-headers-of m) (vm-text-of m))
-	    (vm-energize-urls)
-	    (vm-highlight-headers-maybe)
-	    (vm-energize-headers-and-xfaces))))))
+	  (delete-region match-start start))))))
 
 (defun vm-decode-mime-encoded-words ()
   (let ((case-fold-search t)
@@ -632,8 +621,6 @@
   (let ((case-fold-search t) version type qtype encoding id description
 	disposition qdisposition boundary boundary-regexp start
 	multipart-list c-t c-t-e done p returnval)
-    (and m (message "Parsing MIME message..."))
-    (prog1
     (catch 'return-value
       (save-excursion
 	(if m
@@ -701,7 +688,7 @@
 	    (cond ((null m) t)
 		  ((null version)
 		   (throw 'return-value 'none))
-		  ((string= version "1.0") t)
+		  ((or vm-mime-ignore-mime-version (string= version "1.0")) t)
 		  (t (vm-mime-error "Unsupported MIME version: %s" version)))
 	    (cond ((and m (null type))
 		   (throw 'return-value
@@ -814,9 +801,7 @@
 		    (vm-marker (point))
 		    (vm-marker (point-max))
 		    (nreverse multipart-list)
-		    nil )))))
-    (and m (message "Parsing MIME message... done"))
-    )))
+		    nil )))))))
 
 (defun vm-mime-parse-entity-safe (&optional m c-t c-t-e)
   (or c-t (setq c-t '("text/plain" "charset=us-ascii")))
@@ -930,7 +915,8 @@
 	     (and (vm-toolbar-support-possible-p) vm-use-toolbar
 		  (vm-toolbar-install-toolbar))
 	     (and (vm-menu-support-possible-p)
-		  (vm-menu-install-menus)))
+		  (vm-menu-install-menus))
+	     (run-hooks 'vm-presentation-mode-hook))
 	   (setq vm-presentation-buffer-handle b)))
     (setq b vm-presentation-buffer-handle
 	  vm-presentation-buffer vm-presentation-buffer-handle
@@ -1080,9 +1066,7 @@
 	   (let ((charset (or (vm-mime-get-parameter layout "charset")
 			      "us-ascii")))
 	     (vm-mime-charset-internally-displayable-p charset)))
-;; commented out until I decide whether W3 is safe to use in
-;; light of the porposed javascript extension and the possibility
-;; of executing arbitrary Emacs-Lisp code embedded in a page.
+;; commented out until w3-region behavior gets worked out
 ;;
 ;;	  ((vm-mime-types-match "text/html" type)
 ;;	   (condition-case ()
@@ -1276,7 +1260,10 @@ in the buffer.  The function is expected to make the message
 		 (if (vectorp layout)
 		     (progn
 		       (vm-decode-mime-layout layout)
-		       (delete-region (point) (point-max)))))
+		       (delete-region (point) (point-max))))
+		 (vm-energize-urls)
+		 (vm-highlight-headers-maybe)
+		 (vm-energize-headers-and-xfaces))
 	     (set-buffer-modified-p modified))))
 	(save-excursion (set-buffer vm-mail-buffer)
 			(setq vm-mime-decoded 'decoded))
@@ -1348,9 +1335,7 @@ in the buffer.  The function is expected to make the message
 (defun vm-mime-display-button-text (layout)
   (vm-mime-display-button-xxxx layout t))
 
-;; commented out until I decide whether W3 is safe to use in
-;; light of the proposed javascript extension and the possibility
-;; of executing arbitrary Emacs-Lisp code embedded in a page.
+;; commented out until w3-region behavior is worked out
 ;;
 ;;(defun vm-mime-display-internal-text/html (layout)
 ;;  (let ((buffer-read-only nil)
@@ -1373,7 +1358,7 @@ in the buffer.  The function is expected to make the message
 ;;    (message "Inlining text/html... done")
 ;;    t ))
 
-(defun vm-mime-display-internal-text/plain (layout &optional ignore-urls)
+(defun vm-mime-display-internal-text/plain (layout &optional no-highlighting)
   (let ((start (point)) end old-size
 	(buffer-read-only nil)
 	(charset (or (vm-mime-get-parameter layout "charset") "us-ascii")))
@@ -1388,7 +1373,7 @@ in the buffer.  The function is expected to make the message
       (setq old-size (buffer-size))
       (vm-mime-charset-decode-region charset start end)
       (set-marker end (+ end (- (buffer-size) old-size)))
-      (or ignore-urls (vm-energize-urls-in-message-region start end))
+      (or no-highlighting (vm-energize-urls-in-message-region start end))
       (goto-char end)
       t )))
 
@@ -1593,7 +1578,8 @@ in the buffer.  The function is expected to make the message
      (vm-mode))
     ;; temp buffer, don't offer to save it.
     (setq buffer-offer-save nil)
-    (vm-display nil nil (list this-command) '(vm-mode startup)))
+    (vm-display (or vm-presentation-buffer (current-buffer)) t
+		(list this-command) '(vm-mode startup)))
   t )
 (fset 'vm-mime-display-button-multipart/digest
       'vm-mime-display-internal-multipart/digest)
@@ -2894,7 +2880,7 @@ message."
 	  (vm-insert-region-from-buffer mail-buffer)
 	  (goto-char (point-min))
 	  (or (vm-mail-mode-get-header-contents "From")
-	      (insert "From: " (or user-mail-address (user-login-name)) "\n"))
+	      (insert "From: " (user-login-name) "\n"))
 	  (or (vm-mail-mode-get-header-contents "Message-ID")
 	      (insert "Message-ID: <fake@fake.fake>\n"))
 	  (or (vm-mail-mode-get-header-contents "Date")

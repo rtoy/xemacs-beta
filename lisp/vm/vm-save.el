@@ -501,7 +501,7 @@ Output, if any, is displayed.  The message is not altered."
 Prefix arg N means print the current message and the next N - 1 messages.
 Prefix arg -N means print the current message and the previous N - 1 messages.
 
-The variables `vm-print-command' controls what command is run to
+The variable `vm-print-command' controls what command is run to
 print the message, and `vm-print-command-switches' is a list of switches
 to pass to the command.
 

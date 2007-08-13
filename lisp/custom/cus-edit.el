@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.64
+;; Version: 1.65
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -1808,8 +1808,8 @@ Leave point at the location of the call, or after the last expression."
     (defun custom-group-menu-create (widget symbol)
       "Ignoring WIDGET, create a menu entry for customization group SYMBOL."
       `( ,(custom-unlispify-menu-entry symbol t)
-	  :filter (lambda (&rest junk)
-		    (cdr (custom-menu-create ',symbol)))))
+	 :filter (lambda (&rest junk)
+		   (cdr (custom-menu-create ',symbol)))))
   ;; But emacs can't.
   (defun custom-group-menu-create (widget symbol)
     "Ignoring WIDGET, create a menu entry for customization group SYMBOL."

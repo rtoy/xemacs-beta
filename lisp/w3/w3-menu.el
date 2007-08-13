@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/13 19:25:10
-;; Version: 1.32
+;; Created: 1997/03/18 00:45:01
+;; Version: 1.34
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -27,6 +27,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'w3-vars)
+(require 'w3-mouse)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Spiffy new menus (for both Emacs and XEmacs)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -676,47 +677,49 @@ on that platform.")
 (defun w3-popup-menu (e)
   "Pop up a menu of common w3 commands"
   (interactive "e")
-  (mouse-set-point e)
-  (let* ((glyph (event-glyph e))
-	 (widget (or (and glyph (glyph-property glyph 'widget))
-		     (widget-at (point))))
-	 (parent (and widget (widget-get widget :parent)))
-	 (href (or (and widget (widget-get widget 'href))
-		   (and parent (widget-get parent 'href))))
-	 (imag (or (and widget (widget-get widget 'src))
-		   (and parent (widget-get parent 'src))))
-	 (menu (copy-tree w3-popup-menu))
-	 url val trunc-url)
-    (if href
-	(progn
-	  (setq url href)
-	  (if url (setq trunc-url (url-truncate-url-for-viewing
-				   url
-				   w3-max-menu-width)))
+  (if (not w3-popup-menu-on-mouse-3)
+      (call-interactively (lookup-key global-map (vector w3-mouse-button3)))
+    (mouse-set-point e)
+    (let* ((glyph (event-glyph e))
+	   (widget (or (and glyph (glyph-property glyph 'widget))
+		       (widget-at (point))))
+	   (parent (and widget (widget-get widget :parent)))
+	   (href (or (and widget (widget-get widget 'href))
+		     (and parent (widget-get parent 'href))))
+	   (imag (or (and widget (widget-get widget 'src))
+		     (and parent (widget-get parent 'src))))
+	   (menu (copy-tree w3-popup-menu))
+	   url val trunc-url)
+      (if href
+	  (progn
+	    (setq url href)
+	    (if url (setq trunc-url (url-truncate-url-for-viewing
+				     url
+				     w3-max-menu-width)))
+	    (setcdr menu (append (cdr menu)
+				 '("---")
+				 (mapcar
+				  (function
+				   (lambda (x)
+				     (vector (format (car x) trunc-url)
+					     (list (cdr x) url) t)))
+				  w3-hyperlink-menu)))))
+      (if imag
+	  (progn
+	    (setq url imag
+		  trunc-url (url-truncate-url-for-viewing url
+							  w3-max-menu-width))
+	    (setcdr menu (append (cdr menu)
+				 '("---")
+				 (mapcar
+				  (function
+				   (lambda (x)
+				     (vector (format (car x) trunc-url)
+					     (list (cdr x) url) t)))
+				  w3-graphlink-menu)))))
+      (if (not (w3-menubar-active))
 	  (setcdr menu (append (cdr menu)
-			       '("---")
-			       (mapcar
-				(function
-				 (lambda (x)
-				   (vector (format (car x) trunc-url)
-					   (list (cdr x) url) t)))
-				w3-hyperlink-menu)))))
-     (if imag
-	 (progn
-	   (setq url imag
-		 trunc-url (url-truncate-url-for-viewing url
-							 w3-max-menu-width))
-	   (setcdr menu (append (cdr menu)
-				'("---")
-				(mapcar
-				 (function
-				  (lambda (x)
-				    (vector (format (car x) trunc-url)
-					    (list (cdr x) url) t)))
-				 w3-graphlink-menu)))))
-     (if (not (w3-menubar-active))
-	 (setcdr menu (append (cdr menu)
-			      '("---" ["Show Menubar" w3-toggle-menubar t]))))
-     (popup-menu menu)))
+			       '("---" ["Show Menubar" w3-toggle-menubar t]))))
+      (popup-menu menu))))
 
 (provide 'w3-menu)

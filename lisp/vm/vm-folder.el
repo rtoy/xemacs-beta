@@ -2738,77 +2738,88 @@ run vm-expunge-folder followed by vm-save-folder."
 	(vm-pop-ok-to-ask interactive)
 	crash in maildrop popdrop
 	(got-mail nil))
-    (while triples
-      (setq in (expand-file-name (nth 0 (car triples)) vm-folder-directory)
-	    maildrop (nth 1 (car triples))
-	    crash (nth 2 (car triples)))
-      (if (eq (current-buffer) (vm-get-file-buffer in))
-	  (let (retrieval-function)
-	    (if (file-exists-p crash)
-		(progn
-		  (message "Recovering messages from %s..." crash)
-		  (setq got-mail (or (vm-gobble-crash-box crash) got-mail))
-		  (message "Recovering messages from %s... done" crash)))
-	    (setq popdrop (and vm-recognize-pop-maildrops
-			       (string-match vm-recognize-pop-maildrops
-					     maildrop)
-			       ;; maildrop with password clipped
-			       (vm-safe-popdrop-string maildrop)))
-	    (if (or popdrop
-		    (and (not (equal 0 (nth 7 (file-attributes maildrop))))
-			 (file-readable-p maildrop)))
-		(progn
-		  (setq crash (expand-file-name crash vm-folder-directory))
-		  (if (not popdrop)
-		      (setq maildrop (expand-file-name maildrop)
-			    retrieval-function 'vm-spool-move-mail)
-		    (setq retrieval-function 'vm-pop-move-mail))
-		  (if (if got-mail
-			  ;; don't allow errors to be signaled unless no
-			  ;; mail has been appended to the incore
-			  ;; copy of the folder.  otherwise the
-			  ;; user will wonder where the mail is,
-			  ;; since it is not in the crash box or
-			  ;; the spool file and doesn't _appear_ to
-			  ;; be in the folder either.
-			  (condition-case error-data
-			      (funcall retrieval-function maildrop crash)
-			    (error (message "%s signaled: %s"
-					    (if popdrop
-						'vm-pop-move-mail
-					      'vm-spool-move-mail)
-					    error-data)
-				   (sleep-for 2)
-				   ;; we don't know if mail was
-				   ;; put into the crash box or
-				   ;; not, so return t just to be
-				   ;; safe.
-				   t )
-			    (quit (message "quitting from %s..."
-					    (if popdrop
-						'vm-pop-move-mail
-					      'vm-spool-move-mail))
-				   (sleep-for 1)
-				   ;; we don't know if mail was
-				   ;; put into the crash box or
-				   ;; not, so return t just to be
-				   ;; safe.
-				   t ))
-			(funcall retrieval-function maildrop crash))
-		      (if (vm-gobble-crash-box crash)		      
-			  (progn
-			    (setq got-mail t)
-			    (message "Got mail from %s."
-				     (or popdrop maildrop)))))))))
-      (setq triples (cdr triples)))
-    ;; not really correct, but it is what the user expects to see.
-    (if got-mail
-	(setq vm-spooled-mail-waiting nil))
-    (intern (buffer-name) vm-buffers-needing-display-update)
-    (vm-update-summary-and-mode-line)
-    (if got-mail
-	(run-hooks 'vm-retrieved-spooled-mail-hook))
-    got-mail ))
+    (if (and (not (verify-visited-file-modtime (current-buffer)))
+	     (or (null interactive)
+		 (not (yes-or-no-p
+		       (format
+			"Folder %s changed on disk, discard those changes? "
+			(buffer-name (current-buffer)))))))
+	(progn
+	  (message "Folder %s changed on disk, consider M-x revert-buffer"
+		   (buffer-name (current-buffer)))
+	  (sleep-for 1)
+	  nil )
+      (while triples
+	(setq in (expand-file-name (nth 0 (car triples)) vm-folder-directory)
+	      maildrop (nth 1 (car triples))
+	      crash (nth 2 (car triples)))
+	(if (eq (current-buffer) (vm-get-file-buffer in))
+	    (let (retrieval-function)
+	      (if (file-exists-p crash)
+		  (progn
+		    (message "Recovering messages from %s..." crash)
+		    (setq got-mail (or (vm-gobble-crash-box crash) got-mail))
+		    (message "Recovering messages from %s... done" crash)))
+	      (setq popdrop (and vm-recognize-pop-maildrops
+				 (string-match vm-recognize-pop-maildrops
+					       maildrop)
+				 ;; maildrop with password clipped
+				 (vm-safe-popdrop-string maildrop)))
+	      (if (or popdrop
+		      (and (not (equal 0 (nth 7 (file-attributes maildrop))))
+			   (file-readable-p maildrop)))
+		  (progn
+		    (setq crash (expand-file-name crash vm-folder-directory))
+		    (if (not popdrop)
+			(setq maildrop (expand-file-name maildrop)
+			      retrieval-function 'vm-spool-move-mail)
+		      (setq retrieval-function 'vm-pop-move-mail))
+		    (if (if got-mail
+			    ;; don't allow errors to be signaled unless no
+			    ;; mail has been appended to the incore
+			    ;; copy of the folder.  otherwise the
+			    ;; user will wonder where the mail is,
+			    ;; since it is not in the crash box or
+			    ;; the spool file and doesn't _appear_ to
+			    ;; be in the folder either.
+			    (condition-case error-data
+				(funcall retrieval-function maildrop crash)
+			      (error (message "%s signaled: %s"
+					      (if popdrop
+						  'vm-pop-move-mail
+						'vm-spool-move-mail)
+					      error-data)
+				     (sleep-for 2)
+				     ;; we don't know if mail was
+				     ;; put into the crash box or
+				     ;; not, so return t just to be
+				     ;; safe.
+				     t )
+			      (quit (message "quitting from %s..."
+					     (if popdrop
+						 'vm-pop-move-mail
+					       'vm-spool-move-mail))
+				    (sleep-for 1)
+				    ;; we don't know if mail was
+				    ;; put into the crash box or
+				    ;; not, so return t just to be
+				    ;; safe.
+				    t ))
+			  (funcall retrieval-function maildrop crash))
+			(if (vm-gobble-crash-box crash)		      
+			    (progn
+			      (setq got-mail t)
+			      (message "Got mail from %s."
+				       (or popdrop maildrop)))))))))
+	(setq triples (cdr triples)))
+      ;; not really correct, but it is what the user expects to see.
+      (if got-mail
+	  (setq vm-spooled-mail-waiting nil))
+      (intern (buffer-name) vm-buffers-needing-display-update)
+      (vm-update-summary-and-mode-line)
+      (if got-mail
+	  (run-hooks 'vm-retrieved-spooled-mail-hook))
+      got-mail )))
 
 (defun vm-safe-popdrop-string (drop)
   (or (and (string-match "^\\([^:]+\\):[^:]+:[^:]+:\\([^:]+\\):[^:]+" drop)

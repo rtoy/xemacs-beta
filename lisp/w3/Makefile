@@ -61,7 +61,7 @@ EXTRAS = w3-sysdp.el
 .el.elc:
 	$(EMACS) $(BATCHFLAGS) $(DEPS) -f batch-byte-compile $<
 
-w3:	docomp.el $(OBJECTS)
+w3:	check-custom docomp.el $(OBJECTS)
 	@echo Build of w3 complete...
 
 all:	w3.info w3
@@ -79,6 +79,9 @@ install: all
 
 clean:
 	$(RM) $(OBJECTS)
+
+check-custom:
+	@./custom-check $(EMACS)
 
 w3.info:	w3.txi
 	@$(MAKEINFO) w3.txi

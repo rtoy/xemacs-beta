@@ -32,10 +32,10 @@ if [ ! -d ./lisp ]; then
   fi
 fi
 
-EMACS=${XEMACS:-./src/xemacs}
-echo " (using $EMACS)"
-
+EMACS="./src/xemacs"
 export EMACS
+
+echo " (using $EMACS)"
 
 # fuckin' sysv, man...
 if [ "`uname -r | sed 's/\(.\).*/\1/'`" -gt 4 ]; then
@@ -49,7 +49,6 @@ else
     echo -n $*
   }
 fi
-
 
 REAL=`cd \`dirname $EMACS\` ; pwd | sed 's|^/tmp_mnt||'`/`basename $EMACS`
 BYTECOMP="$REAL -batch -q -no-site-file "

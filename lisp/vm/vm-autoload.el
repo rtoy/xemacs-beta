@@ -977,6 +977,8 @@ for the current directory (.) is inserted." nil nil)
 
 (autoload (quote vm-parent-of) "vm-message" nil nil (quote macro))
 
+(autoload (quote vm-references-of) "vm-message" nil nil (quote macro))
+
 (autoload (quote vm-mirror-data-of) "vm-message" nil nil (quote macro))
 
 (autoload (quote vm-edit-buffer-of) "vm-message" nil nil (quote macro))
@@ -1088,6 +1090,8 @@ for the current directory (.) is inserted." nil nil)
 (autoload (quote vm-set-summary-of) "vm-message" nil nil (quote macro))
 
 (autoload (quote vm-set-parent-of) "vm-message" nil nil (quote macro))
+
+(autoload (quote vm-set-references-of) "vm-message" nil nil (quote macro))
 
 (autoload (quote vm-set-mirror-data-of) "vm-message" nil nil (quote macro))
 
@@ -2043,7 +2047,7 @@ Output, if any, is displayed.  The message is not altered." t nil)
 Prefix arg N means print the current message and the next N - 1 messages.
 Prefix arg -N means print the current message and the previous N - 1 messages.
 
-The variables `vm-print-command' controls what command is run to
+The variable `vm-print-command' controls what command is run to
 print the message, and `vm-print-command-switches' is a list of switches
 to pass to the command.
 
@@ -2188,7 +2192,7 @@ See the documentation for vm-mode for more information." t nil)
 
 (autoload (quote vm-mode) "vm-startup" "Major mode for reading mail.
 
-This is VM 6.19.
+This is VM 6.20.
 
 Commands:
    h - summarize folder contents
@@ -2390,10 +2394,12 @@ Variables:
    vm-mime-digest-headers
    vm-mime-display-function
    vm-mime-external-content-types-alist
+   vm-mime-ignore-mime-version
    vm-mime-internal-content-types
    vm-mime-max-message-size
    vm-mode-hook
    vm-mosaic-program
+   vm-mosaic-program-switches
    vm-move-after-deleting
    vm-move-after-killing
    vm-move-after-undeleting
@@ -2401,6 +2407,7 @@ Variables:
    vm-mutable-frames
    vm-mutable-windows
    vm-netscape-program
+   vm-netscape-program-switches
    vm-pop-bytes-per-session
    vm-pop-max-message-size
    vm-pop-md5-program
@@ -2629,6 +2636,8 @@ will be visible." t nil)
 (autoload (quote vm-thread-list) "vm-thread" nil nil nil)
 
 (autoload (quote vm-unthread-message) "vm-thread" nil nil nil)
+
+(autoload (quote vm-th-references) "vm-thread" nil nil nil)
 
 (autoload (quote vm-th-parent) "vm-thread" nil nil nil)
 

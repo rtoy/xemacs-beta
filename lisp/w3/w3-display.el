@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/03/14 06:33:15
-;; Version: 1.147
+;; Created: 1997/03/17 20:09:50
+;; Version: 1.148
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2124,6 +2124,9 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 (defun w3-frames (&optional new-frame)
   "Set up and fetch W3 frames. With optional prefix, do so in a new frame."
   (interactive "P")
+  (if (not w3-display-frames)
+      (let ((w3-display-frames t))
+	(w3-refresh-buffer)))
   (let* ((old-asynch url-be-asynchronous)
 	 (structure (reverse w3-frameset-structure))
 	 (dims (or (reverse w3-frameset-dimensions)
@@ -2203,6 +2206,20 @@ Should be run before restoring w3-table-border-chars to ascii characters."
       (if (eq (current-buffer) origin-buffer)
 	  (setq stop t)))
     window-distances))
+
+(if (not (fboundp 'frame-char-height))
+    (defun frame-char-height (&optional frame)
+      "Height in pixels of a line in the font in frame FRAME.
+If FRAME is omitted, the selected frame is used.
+For a terminal frame, the value is always 1."
+      (font-height (face-font 'default frame))))
+
+(if (not (fboundp 'frame-char-width))
+    (defun frame-char-width (&optional frame)
+      "Width in pixels of characters in the font in frame FRAME.
+If FRAME is omitted, the selected frame is used.
+For a terminal screen, the value is always 1."
+      (font-width (face-font 'default frame))))
 
 (defun w3-decode-frameset-dimensions (dims available-dimension)
   "Returns numbers of lines or columns in Emacs, computed from specified frameset dimensions"

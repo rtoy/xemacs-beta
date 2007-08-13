@@ -1,7 +1,7 @@
 ;;; url-gopher.el --- Gopher Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/02/18 23:34:30
-;; Version: 1.6
+;; Created: 1997/03/18 01:02:58
+;; Version: 1.7
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -456,8 +456,7 @@ title, type, selector string, server, port, gopher-plus?"
 		   (nth 1 descr))))
       (if url-use-hypertext-gopher
 	  (url-do-gopher descr)
-	(gopher-dispatch-object (vector (if (= 0
-					       (string-to-char (nth 2 descr)))
+	(gopher-dispatch-object (vector (if (= 0 (length (nth 2 descr)))
 					    ?1
 					  (string-to-char (nth 2 descr)))
 					(nth 2 descr) (nth 2 descr)

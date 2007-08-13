@@ -1070,6 +1070,9 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 		${lispdir}eos/sun-eos-toolbar.elc \
 		${lispdir}eos/sun-eos-menubar.elc \
 		${lispdir}utils/annotations.elc \
+		${lispdir}modes/cc-mode.elc \
+		${lispdir}modes/imenu.elc \
+		${lispdir}utils/reporter.elc \
 		${lispdir}prim/loaddefs.elc
 #else
 #define SUNPRO_LISP	${lispdir}prim/loaddefs.elc
@@ -1264,7 +1267,7 @@ ${libsrc}DOC: ${libsrc}make-docfile
 ${libsrc}DOC: ${libsrc}make-docfile ${obj_src} ${lisp}
 #endif
 	rm -f ${libsrc}DOC
-	${libsrc}make-docfile -d ${srcdir} -i ../site-packages \
+	${libsrc}make-docfile -d ${srcdir} -i ${libsrc}../site-packages \
 		${obj_src} \
 	        ${mallocdocsrc} ${rallocdocsrc} ${lispdir}version.el \
 		${lisp} > ${libsrc}DOC

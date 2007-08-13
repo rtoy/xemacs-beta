@@ -191,11 +191,13 @@
 (defun vm-mouse-send-url-to-netscape (url &optional new-netscape new-window)
   (message "Sending URL to Netscape...")
   (if new-netscape
-      (vm-run-background-command vm-netscape-program url)
-    (or (equal 0 (vm-run-command vm-netscape-program "-remote" 
-				 (concat "openURL(" url
-					 (if new-window ", new-window" "")
-					 ")")))
+      (apply 'vm-run-background-command vm-netscape-program
+	     (append vm-netscape-program-switches (list url)))
+    (or (equal 0 (apply 'vm-run-command vm-netscape-program "-remote" 
+			(append (list (concat "openURL(" url
+					      (if new-window ", new-window" "")
+					      ")"))
+				vm-netscape-program-switches)))
 	(vm-mouse-send-url-to-netscape url t new-window)))
   (message "Sending URL to Netscape... done"))
 
@@ -227,9 +229,9 @@
 		   (not (equal 0 (vm-run-command "kill" "-USR1" pid))))
 	       (setq new-mosaic t)))))
   (if new-mosaic
-      (vm-run-background-command vm-mosaic-program url))
+     (apply 'vm-run-background-command vm-mosaic-program
+	    (append vm-mosaic-program-switches (list url))))
   (message "Sending URL to Mosaic... done"))
-
 
 (defun vm-mouse-install-mouse ()
   (cond ((vm-mouse-xemacs-mouse-p)

@@ -8,7 +8,8 @@
 ;; AUTHOR:       Bob Weiner & Kellie Clark
 ;;
 ;; ORIG-DATE:    6/30/93
-;; LAST-MOD:      2-Nov-95 at 00:52:52 by Bob Weiner
+;; LAST-MOD:      6-Mar-97 at 01:16:42 by Bob Weiner
+
 ;;; ************************************************************************
 ;;; Other required Lisp Libraries
 ;;; ************************************************************************
@@ -43,10 +44,10 @@ Labels are padded with spaces on the left.")
 It must be one of the following symbols:
   no              for no labels
   id              for permanent idstamp labels, e.g. 001, 002, etc.
-  alpha           for '1a2' full alphanumeric labels
-  legal           for '1.1.2' labels
-  partial-alpha   for partial alphanumeric labels, e.g. '2' for node '1a2'
-  star            for multi-star labeling, e.g. '***'.")
+  alpha           for `1a2' full alphanumeric labels
+  legal           for `1.1.2' labels
+  partial-alpha   for partial alphanumeric labels, e.g. `2' for node `1a2'
+  star            for multi-star labeling, e.g. `***'.")
 
 (defvar kview:default-level-indent 3
   "*Default number of spaces to indent each succeeding level in koutlines.")
@@ -294,9 +295,9 @@ characters of the cell whose level is desired."
     (if pos (goto-char pos))
     (if (kview:valid-position-p)
 	(buffer-substring
-	 (kotl-mode:beginning-of-line)
+	 (kotl-mode:start-of-line)
 	 (kotl-mode:end-of-line))
-      (error "(kcell-view:line): Invalid position, '%d'" (point)))))
+      (error "(kcell-view:line): Invalid position, `%d'" (point)))))
 
 (defun kcell-view:next (&optional visible-p label-sep-len)
   "Move to start of next cell within current view.
@@ -402,7 +403,7 @@ Return t unless no previous cell."
 (defun kcell-view:reference (&optional pos relative-dir)
   "Return a reference to the kcell at optional POS or point for use in a link.
 The reference is a string of the form, \"<kcell-file, cell-ref>\" where
-cell-ref is as described in the documentation for 'kcell:ref-to-id'.
+cell-ref is as described in the documentation for `kcell:ref-to-id'.
 Kcell-file is made relative to optional RELATIVE-DIR before it is returned."
   (format "<%s, %s=%s>" (hpath:relative-to buffer-file-name relative-dir)
 	  (kcell-view:label pos) (kcell-view:idstamp pos)))
@@ -473,21 +474,21 @@ outline.  Optional LABEL-TYPE, LEVEL-INDENT, LABEL-SEPARATOR, LABEL-MIN-WIDTH,
 BLANK-LINES, LEVELS-TO-SHOW, and LINES-TO-SHOW may also be given, otherwise default values are used.
 
   See documentation of:
- 'kview:default-label-type' for LABEL-TYPE,
- 'kview:default-level-indent' for LEVEL-INDENT,
- 'kview:default-label-separator' for LABEL-SEPARATOR,
- 'kview:default-label-min-width' for LABEL-MIN-WIDTH,
- 'kview:default-blank-lines' for BLANK-LINES,
- 'kview:default-levels-to-show' for LEVELS-TO-SHOW,
- 'kview:default-lines-to-show' for LINES-TO-SHOW."
+ `kview:default-label-type' for LABEL-TYPE,
+ `kview:default-level-indent' for LEVEL-INDENT,
+ `kview:default-label-separator' for LABEL-SEPARATOR,
+ `kview:default-label-min-width' for LABEL-MIN-WIDTH,
+ `kview:default-blank-lines' for BLANK-LINES,
+ `kview:default-levels-to-show' for LEVELS-TO-SHOW,
+ `kview:default-lines-to-show' for LINES-TO-SHOW."
 
   (let ((buf (get-buffer buffer-name)))
     (cond ((null buf)
-	   (error "(kview:create): No such buffer, '%s'." buffer-name))
+	   (error "(kview:create): No such buffer, `%s'." buffer-name))
 	  ((or (null id-counter) (= id-counter 0))
 	   (setq id-counter 0))
 	  ((not (integerp id-counter))
-	   (error "(kview:create): 2nd arg, '%s', must be an integer." id-counter)))
+	   (error "(kview:create): 2nd arg, `%s', must be an integer." id-counter)))
     (set-buffer buf)
     (if (and (boundp 'kview) (eq (kview:buffer kview) buf))
 	;; Don't recreate view if it exists.
@@ -731,7 +732,7 @@ buffer or some other kview, and should operate upon the cell at point.
 FUNC is called so that it may test against this value.  `Label-sep-len'
 contains the label separator length.
 
-See also 'kview:map-siblings' and 'kview:map-tree'."
+See also `kview:map-siblings' and `kview:map-tree'."
     (save-excursion
       (set-buffer (kview:buffer kview))
       (let ((results)
@@ -760,7 +761,7 @@ buffer or some other kview, and should operate upon the cell at point.
 FUNC is called so that it may test against this value.  `Label-sep-len'
 contains the label separator length.
 
-See also 'kview:map-branch' and 'kview:map-tree'."
+See also `kview:map-branch' and `kview:map-tree'."
     (save-excursion
       (set-buffer (kview:buffer kview))
       (let ((results)
@@ -787,7 +788,7 @@ buffer or some other kview, and should operate upon the cell at point.
 FUNC is called so that it may test against this value.  `Label-sep-len'
 contains the label separator length.
 
-See also 'kview:map-branch' and 'kview:map-siblings'."
+See also `kview:map-branch' and `kview:map-siblings'."
   (let ((results)
 	(label-sep-len (kview:label-separator-length kview)))
     (save-excursion
@@ -924,7 +925,7 @@ valid values of NEW-TYPE."
 			   label-type
 			 (intern new-type-str)))))
   (if (not (memq new-type '(alpha legal id no partial-alpha star)))
-      (error "(kview:set-label-type): Invalid label type, '%s'." new-type))
+      (error "(kview:set-label-type): Invalid label type, `%s'." new-type))
   ;; Disable use of partial-alpha for now since it is broken.
   (if (eq new-type 'partial-alpha)
       (error "(kview:set-label-type): Partial-alpha labels don't work, choose another type"))
@@ -948,9 +949,9 @@ The read-only positions between cells and within cell indentations are invalid."
 	 (>= (current-column) (kcell-view:indent)))
 	((not (integer-or-marker-p pos))
 	 (error "(kview:valid-position-p): Argument POS not an integer
-or marker, '%s'" pos))
+or marker, `%s'" pos))
 	((or (< pos (point-min)) (> pos (point-max)))
-	 (error "(kview:valid-position-p): Invalid POS argument, '%d'"
+	 (error "(kview:valid-position-p): Invalid POS argument, `%d'"
 		pos))
 	(t (save-excursion
 	     (goto-char pos)

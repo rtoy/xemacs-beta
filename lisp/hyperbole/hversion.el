@@ -1,6 +1,6 @@
 ;;!emacs
 ;;
-;; LCD-ENTRY:    hyperbole|Bob Weiner|hyperbole@infodock.com|Everyday Info Manager|23-Feb-97|4.022|ftp://ftp.xemacs.org/pub/infodock
+;; LCD-ENTRY:    hyperbole|Bob Weiner|hyperbole@infodock.com|Everyday Info Manager|17-Mar-97|4.023|ftp://ftp.xemacs.org/pub/infodock
 ;;
 ;; FILE:         hversion.el
 ;; SUMMARY:      Hyperbole version, system and load path information.
@@ -11,7 +11,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     1-Jan-94
-;; LAST-MOD:     23-Feb-97 at 23:22:37 by Bob Weiner
+;; LAST-MOD:     17-Mar-97 at 21:08:15 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -26,7 +26,7 @@
 ;;; Public variables
 ;;; ************************************************************************
 
-(defconst hyperb:version "04.022" "Hyperbole revision number.")
+(defconst hyperb:version "04.023" "Hyperbole revision number.")
 
 ;;; Support button highlighting and flashing under XEmacs.
 ;;;

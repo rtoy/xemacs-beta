@@ -9,7 +9,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     1-Nov-91 at 00:44:23
-;; LAST-MOD:     16-Feb-97 at 02:34:35 by Bob Weiner
+;; LAST-MOD:      9-Mar-97 at 01:38:33 by Bob Weiner
 
 ;;; ************************************************************************
 ;;; Public variables
@@ -552,14 +552,14 @@ groupings:
   4 = optional username
   4 = host and domain to connect to
   5 = optional port number to use
-  6 = pathname to access."
-  ;; WWW URL format:  [URL:]<protocol>:/[<user>@]<domain>[:<port>]/<path>
-  ;;             or   [URL:]<protocol>://[<user>@]<domain>[:<port>]<path>
+  6 = optional pathname to access."
+  ;; WWW URL format:  [URL:]<protocol>:/[<user>@]<domain>[:<port>][/<path>]
+  ;;             or   [URL:]<protocol>://[<user>@]<domain>[:<port>][<path>]
   ;; Avoid [a-z]:/path patterns since these may be disk paths on OS/2, DOS or
   ;; Windows.
   (if (looking-at "\\(URL:\\)?\\([a-zA-Z][a-zA-Z]+\\)://?\\([^@/: \t\n\^M]+@\\)?\\([^/:@ \t\n\^M\"`']+\\)\\(:[0-9]+\\)?\\([/~][^]@ \t\n\^M\"`'\)\}>]*\\)?")
       (save-excursion
-	(goto-char (match-end 6))
+	(goto-char (match-end 0))
 	(skip-chars-backward ".?#!*()")
 	(buffer-substring (match-beginning 2) (point)))))
 
@@ -571,9 +571,9 @@ Use string-match with match-beginning and match-end on the following groupings:
   3 = optional username
   4 = host and domain to connect to
   5 = optional port number to use
-  6 = pathname to access."
-  ;; WWW URL format:  [URL:]<protocol>:/[<user>@]<domain>[:<port>]/<path>
-  ;;             or   [URL:]<protocol>://[<user>@]<domain>[:<port>]<path>
+  6 = optional pathname to access."
+  ;; WWW URL format:  [URL:]<protocol>:/[<user>@]<domain>[:<port>][/<path>]
+  ;;             or   [URL:]<protocol>://[<user>@]<domain>[:<port>][<path>]
   ;; Avoid [a-z]:/path patterns since these may be disk paths on OS/2, DOS or
   ;; Windows.
   (and (stringp obj)
@@ -590,9 +590,9 @@ With optional INCLUDE-START-AND-END-P non-nil, returns list of:
     (cond ((not include-start-and-end-p)
 	   (hpath:url-at-p))
 	  ((hpath:url-at-p)
-	   (list (buffer-substring (match-beginning 2) (match-end 6))
+	   (list (buffer-substring (match-beginning 2) (match-end 0))
 		 (match-beginning 2)
-		 (match-end 6))))))
+		 (match-end 0))))))
 
 (defun hpath:www-p (path)
   "Returns non-nil iff PATH is a world-wide-web link reference."

@@ -1,3 +1,77 @@
+Thu Mar 13 22:01:52 1997  Bob Weiner  <weiner@infodock.com>
+
+* wrolo.el (rolo-toggle-datestamps): Added.
+* hui-mini.el (hui:menus): Added Cust/Toggle-Rolodex-Dates entry.
+* hui-menu.el (hui-menu-options): Added Customization/Toggle-Rolodex-Dates
+    item.
+* wrolo.el (rolo-add): Added wrolo-add-hook, executed after the record
+    is added.
+           (rolo-edit): Added wrolo-edit-hook, executed after point is
+    successfully moved to the record to edit.  These can be used, for
+    example, to add and update date entries in address records.
+           (rolo-current-date): Added.
+	   (rolo-set-date): Added and used as default wrolo-add-hook and
+    wrolo-edit-hook settings.
+
+Mon Mar 10 12:17:15 1997  Bob Weiner  <weiner@infodock.com>
+
+* hsys-w3.el (www-url): Eliminated call of external Web browser if not
+    running under a window system.
+
+Sun Mar  9 01:32:03 1997  Bob Weiner  <weiner@infodock.com>
+
+* hpath.el (hpath:url-at-p):
+	   (hpath:www-at-p): Fixed bug that referred to an optional match
+    component without checking if it was matched.
+           (hpath:url-p): Changed doc to reflect that pathname can be optional.
+
+* hsite-ex.el: Added (require 'hyperbole) to ensure that this file
+    is loaded if hsite.el is autoloaded, e.g. under XEmacs.
+
+Thu Mar  6 14:14:05 1997  Bob Weiner  <weiner@infodock.com>
+
+* hui-mini.el (hyperbole): Added autoload special comment.
+
+Wed Mar  5 01:14:47 1997  Bob Weiner  <weiner@infodock.com>
+
+* kotl/kotl-mode.el (kotl-mode:center-line): 
+* kotl/kview.el (kcell-view:line): Changed calls to
+    kotl-mode:beginning-of-line to kotl-mode:start-of-line to avoid an
+    XEmacs byte compiler bug in some versions.  The bug shows up when
+    kotl-mode:center-line is called on the first line of a cell and the
+    cell label is centered along with the line (the label should not
+    move).
+
+Tue Mar  4 20:45:52 1997  Bob Weiner  <weiner@infodock.com>
+
+* hsite-ex.el (hpath:find-alist): Modified to use `xv' to display xpm
+  files; it is more robust than `sxpm' in the face of limited colors.
+
+Mon Mar  3 12:06:49 1997  Bob Weiner  <weiner@infodock.com>
+
+* hui-menu.el (infodock-hyperbole-menu): Added :config 'Hyperbole
+    configurator to the menu so users can hide the Hyperbole
+    menu from the menubar if they don't use it, via menubar-configuration,
+    under XEmacs and InfoDock.
+
+Sun Mar  2 22:35:26 1997  Bob Weiner  <weiner@infodock.com>
+
+* kotl/kotl-mode.el (kotl-mode:set-cell-attribute): Changed
+    read-expression to read-minibuffer since GNU Emacs doesn't
+    have the former.
+
+Fri Feb 28 23:31:57 1997  Bob Weiner  <weiner@infodock.com>
+
+* kotl/kprop-xe.el (kproperty:put): Fixed problem with internal handling
+    of text property protocols within newer versions of XEmacs.  The
+    `text-prop' symbol can no longer be set to `t'.  It must be set to
+    a symbol from the property list of the extent that carries
+    text-properties.
+
+==============================================================================
+V4.023 changes ^^^^:
+==============================================================================
+
 Sat Feb 22 14:30:14 1997  Bob Weiner  <weiner@infodock.com>
 
 * hypb.el (hypb:ida-logo-keymap): Added conditional for Emacs keybinding.

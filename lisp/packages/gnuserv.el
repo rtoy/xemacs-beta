@@ -5,7 +5,7 @@
 ; Copying is permitted under those conditions described by the GNU
 ; General Public License.
 ;
-; Copyright (C) 1989-1994  Free Software Foundation, Inc.
+; Copyright (C) 1989-1996  Free Software Foundation, Inc.
 ;
 ; Author: Andy Norman (ange@hplb.hpl.hp.com) based on
 ;         'lisp/server.el' from the 18.52 GNU Emacs distribution.
@@ -53,6 +53,12 @@
 ;
 ; Ben Wing <wing@666.com> May/1996
 ; patch to get TTY terminal type correct.
+;
+; Jan Vroonhof <vroonhof@math.ethz.ch> July/1996
+; ported the server-temp-file-regexp feature from server.el
+; ported server hooks from server.el
+; ported kill-*-query functions from server.el (and made it optional)
+; synced other behaviour with server.el
 
 
 
@@ -74,10 +80,28 @@ This variable has no effect in XEmacs versions older than 19.9.")
 
 (defvar server-done-function 'kill-buffer 
   "*A function of one argument, a buffer, which removes the buffer after editing.
-Functions such as 'kill-buffer' and 'bury-buffer' are good values.")
+Functions such as 'kill-buffer' and 'bury-buffer' are good values. See also
+`server-done-temp-file-function'")
+
+(defvar server-done-temp-file-function 'kill-buffer
+  "*A function of one argument, a buffer, which removes the buffer after editing a
+temporary file. Functions such as 'kill-buffer' and 'bury-buffer' are
+good values. See also `server-done-function'")
 
 (defvar server-program "gnuserv"
   "*The program to use as the edit server")
+
+
+ (defvar server-visit-hook nil
+   "*List of hooks to call when visiting a file for the Emacs server.")
+
+;; defined by server.el but obsolete?
+;; (defvar server-switch-hook nil
+;;  "*List of hooks to call when switching to a buffer for the Emacs server.")
+
+(defvar server-done-hook nil
+  "*List of hooks to call when done editing a buffer for the Emacs server.")
+
 
 (defvar server-process nil 
   "The current server process")
@@ -97,14 +121,38 @@ Each element is (CLIENTID BUFFER...) where CLIENTID is an integer
 that can be given to the server process to identify a client.
 When a buffer is killed, it is removed from this list.")
 
+(defvar server-kill-quietly nil
+  "If this variable is set then don't confirm kills of buffers with
+  clients attached")
+
+
 (defvar server-buffer-clients nil
   "List of client ids for clients requesting editing of the current buffer.")
+
+(defvar server-temp-file-regexp "^/tmp/Re\\|/draft$"
+  "*Regexp which should match filenames of temporary files
+which are deleted and reused after each edit
+by the programs that invoke the emacs server.")
+
+(defvar server-make-temp-file-backup nil
+  "Non-nil makes the server backup temporary files also")
 
 (make-variable-buffer-local 'server-buffer-clients)
 (setq-default server-buffer-clients nil)
 (or (assq 'server-buffer-clients minor-mode-alist)
     (setq minor-mode-alist (cons '(server-buffer-clients " Server") 
 				 minor-mode-alist)))
+
+(defun server-temp-file-p (buffer)
+  "Return non-nil if BUFFER contains a file considered temporary.
+These are files whose names suggest they are repeatedly
+reused to pass information to another program.
+
+The variable `server-temp-file-regexp' controls which filenames
+are considered temporary."
+  (and (buffer-file-name buffer)
+       (string-match server-temp-file-regexp (buffer-file-name buffer))))
+
 
 (defun server-log (string)
   "If a *server* buffer exists, write STRING to it for logging purposes."
@@ -200,7 +248,7 @@ Prefix arg means just kill any existing server communications subprocess."
 ;; make gnuserv-start an alias to server-start, for backward compatibility
 (fset 'server-start (function gnuserv-start))
 
-
+; Can gnuserv handle commands in close succesion? (See server.el line 283) JV
 (defun server-write-to-client (client form)
   "Write the given form to the given client via the server process."
   (if (and client
@@ -249,7 +297,8 @@ afterwards in order to not keep the client waiting."
     (select-frame (make-frame nil device))
     (if (not file)
 	(switch-to-buffer (get-buffer-create "*scratch*"))
-      (find-file file))))
+      (find-file file)))
+  (run-hooks 'server-visit-hook))
 
 (defun server-find-file (file)
   "Edit file FILENAME.
@@ -304,7 +353,8 @@ creating one if none already exists."
 		      (find-file file))
 	     (select-screen (create-screen (find-file-noselect file)))))
 
-	  (t (find-file file)))))                        ;; emacs18+
+	  (t (find-file file))))                          ;; emacs18+
+     (run-hooks 'server-visit-hook))                        
 
 
 (defun server-edit-files-quickly (list)
@@ -414,6 +464,34 @@ that the buffer has been killed."
 	      (setq old-clients (cdr old-clients))))))))
 
 
+;; Ask before killing a server buffer.
+;; It was suggested to release its client instead,
+;; but I think that is dangerous--the client would proceed
+;; using whatever is on disk in that file. -- rms.
+(defun server-kill-buffer-query-function ()
+  (or server-kill-quietly
+      (not server-buffer-clients)
+      (yes-or-no-p (format "Buffer `%s' still has clients; kill it? "
+			   (buffer-name (current-buffer))))))
+
+(add-hook 'kill-buffer-query-functions
+ 	  'server-kill-buffer-query-function)
+
+(defun server-kill-emacs-query-function ()
+  (let (live-client
+	(tail server-clients))
+    ;; See if any clients have any buffers that are still alive.
+    (while tail
+      (if (memq t (mapcar 'stringp (mapcar 'buffer-name (cdr (car tail)))))
+	  (setq live-client t))
+      (setq tail (cdr tail)))
+    (or server-kill-quietly
+        (not live-client)
+	(yes-or-no-p "Server buffers still have clients; exit anyway? "))))
+
+(add-hook 'kill-emacs-query-functions 'server-kill-emacs-query-function)
+
+
 (defun server-kill-all-local-variables ()
   "Eliminate all the buffer-local variable values of the current buffer.
 This buffer will then see the default values of all variables.
@@ -441,6 +519,7 @@ server-buffer-clients."
   "Mark BUFFER as \"done\" for its client(s).
 Buries the buffer, and returns another server buffer as a suggestion for the
 new current buffer."
+  ; Note we do NOT return a list with a killed flag, doesn't seem usefull to me. JV
   (let ((next-buffer nil)
 	(old-clients server-clients))
     (while old-clients
@@ -448,6 +527,13 @@ new current buffer."
 	(or next-buffer 
 	    (setq next-buffer (nth 1 (memq buffer client))))
 	(delq buffer client)
+	;; Delete all dead buffers from CLIENT.  (Why? JV , copyed from server.el)
+	(let ((tail client))
+	  (while tail
+	    (and (bufferp (car tail))
+		 (null (buffer-name (car tail)))
+		 (delq (car tail) client))
+	    (setq tail (cdr tail))))
 	;; If client now has no pending buffers,
 	;; tell it that it is done, and forget it entirely.
 	(if (cdr client)
@@ -455,13 +541,16 @@ new current buffer."
 	  (if (buffer-name buffer)
 	      (save-excursion
 		(set-buffer buffer)
-		(setq server-buffer-clients nil)))
+		(setq server-buffer-clients nil)
+		(run-hooks 'server-done-hook)))
 	  ; Order is important here --
 	  ; server-kill-buffer tries to notify clients that
 	  ; they are done, too, but if we try and notify twice,
 	  ; we are h0zed -- Hunter Kelly 3/3/97
 	  (setq server-clients (delq client server-clients))
-	  (funcall server-done-function buffer)
+	  (if (server-temp-file-p buffer)
+ 	      (funcall server-done-temp-file-function buffer)
+ 	    (funcall server-done-function buffer))
 	  (server-write-to-client (car client) nil)))
       (setq old-clients (cdr old-clients)))
     next-buffer))
@@ -480,22 +569,32 @@ Also bury it, and return a suggested new current buffer."
   (let ((buffer (current-buffer)))
     (if server-buffer-clients
 	(progn
- 	  (if (mh-draft-p buffer)
+ 	  (if (mh-draft-p buffer);; Does this comflict with temp-file ? JV
  	      (progn (save-buffer)
 		     (write-region (point-min) (point-max)
 				   (concat buffer-file-name "~"))
 		     (kill-buffer buffer))
-	    (if (and (buffer-modified-p)
-		     (y-or-n-p (concat "Save file " buffer-file-name "? ")))
-		(save-buffer buffer)))
+	    (if (server-temp-file-p buffer)
+		;; For a temp file, save, and do NOT make a non-numeric backup
+		;; Why does server.el explicitly back up temporary files?
+		(let ((version-control nil)
+		      (buffer-backed-up (not server-make-temp-file-backup)))
+		  (save-buffer))
+	      (if (and (buffer-modified-p)
+		       (y-or-n-p (concat "Save file " buffer-file-name "? ")))
+		  (save-buffer buffer))))
 	  (server-buffer-done buffer)))))
 
 
 (defun server-edit (&optional arg)
-  "Switch to next server editing buffer and mark current one as \"done\".
-If a server buffer is current, it is marked \"done\" and optionally saved.
-MH <draft> files are always saved and backed up, no questions asked.
-When all of a client's buffers are marked as \"done\", the client is notified.
+  "Switch to next server editing
+buffer and mark current one as \"done\". If a server buffer is
+current, it is marked \"done\" and optionally saved. MH <draft> files
+are always saved and backed up, no questions asked. Files that match
+server-temp-file-regexp are considered temporary and are saved
+unconditionally and
+backed up if server-make-temp-file-backup is non-nil. When all of a
+client's buffers are marked as \"done\", the client is notified.
 
 If invoked with a prefix argument, or if there is no server process running, 
 starts server process and that is all.  Invoked by \\[server-edit].
@@ -507,7 +606,7 @@ If `server-kill-last-frame' is t, then the final frame will be killed."
 	  (memq (process-status server-process) '(signal exit)))
       (server-start nil)
     (if server-buffer-clients
-	(progn (server-switch-buffer (server-done))
+	(progn (server-done-and-switch)
 	       (cond ((fboundp 'console-type)        ;; XEmacs 19.14+
 		      (or (and (equal (console-type) 'x)
 			       gnuserv-frame
@@ -534,10 +633,11 @@ If `server-kill-last-frame' is t, then the final frame will be killed."
        "(server-edit): Use only on buffers created by external programs.")
       )))
 
-(defun server-switch-buffer (next-buffer)
+(defun server-switch-buffer-internal (next-buffer always)
   "Switch to NEXT-BUFFER if a live buffer, otherwise switch to another buffer
-with gnuserv clients. If no such buffer is available, simply choose another 
-one."
+with gnuserv clients. If no such buffer is available, we switch to
+another normal buffer if `always' is non-nil!"
+  ;; switching 
   (if next-buffer
       (if (and (bufferp next-buffer)
 	       (buffer-name next-buffer))
@@ -545,11 +645,28 @@ one."
 	;; If NEXT-BUFFER is a dead buffer,
 	;; remove the server records for it
 	;; and try the next surviving server buffer.
-	(server-switch-buffer
-	 (server-buffer-done next-buffer)))
-    (if server-clients
-	(server-switch-buffer (nth 1 (car server-clients)))
-      (switch-to-buffer (other-buffer)))))
+	(server-switch-buffer-internal
+	 (server-buffer-done next-buffer) always))
+      (if server-clients
+	  (server-switch-buffer-internal (nth 1 (car server-clients)) always)
+	(if always
+	    (switch-to-buffer (other-buffer))))))
+
+;; For compatability
+(defun server-switch-buffer (next-buffer)
+  (server-switch-buffer-internal next-buffer t))
+
+;; The below function calles server-done and switches to the next
+;; sensible buffer. This implementation works regardless of the values
+;; of server-*-function and doens't need the tail recursion
+;; variable passing of server.el. It is more transparant too. JV
+(defun server-done-and-switch ()
+  "Be done with the current buffer and switch to another server buffer
+  if there is one, otherwise just switch buffer"
+  (let ((old-current (current-buffer)))
+    (server-switch-buffer-internal (server-done) nil)
+    (if (eq old-current (current-buffer))
+	(switch-to-buffer (other-buffer)))))
 
 (global-set-key "\C-x#" 'server-edit)
 

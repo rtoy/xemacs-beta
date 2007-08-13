@@ -1,7 +1,7 @@
 ;;; w3-forms.el --- Emacs-w3 forms parsing code for new display engine
 ;; Author: wmperry
-;; Created: 1997/03/07 14:26:02
-;; Version: 1.77
+;; Created: 1997/03/15 00:31:11
+;; Version: 1.78
 ;; Keywords: faces, help, comm, data, languages
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -249,7 +249,9 @@
 (make-variable-buffer-local 'w3-custom-options)
 
 (defun w3-form-create-custom (el face)
-  (require 'custom-edit)
+  (condition-case ()
+      (require 'cus-edit)
+    (error (require 'custom-edit)))
   (let* ((name (w3-form-element-name el))
 	 (var-name (w3-form-element-value el))
 	 (type (plist-get (w3-form-element-plist el) 'custom-type))

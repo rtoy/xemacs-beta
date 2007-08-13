@@ -11,7 +11,7 @@
 #               Tel: +1 408-243-3300
 #
 # ORIG-DATE:    19-Oct-91 at 03:27:47
-# LAST-MOD:     23-Feb-97 at 23:25:29 by Bob Weiner
+# LAST-MOD:     17-Mar-97 at 21:14:10 by Bob Weiner
 #
 # See the Copyright section below for license information.
 
@@ -165,12 +165,15 @@ Typical Hyperbole applications include:
 
 
 ===========================================================================
-*			 What's New in V4.02-V4.022
+*			 What's New in V4.02-V4.023
 ===========================================================================
 
   (See "ChangeLog" for more complete details of changes.)
 
   ACTION AND ASSIST KEYS
+
+    - Action Key clicks on HTTP URLs use the Emacs internal web browser
+      if not running under a window system.
 
     - Support for new ID-edit mode (a part of InfoDock) that allows rapid,
       cutting, copying and yanking of regions plus fast display management.
@@ -230,6 +233,14 @@ Typical Hyperbole applications include:
       menu does the same thing for explicit buttons in the current buffer.
 
   ROLODEX
+
+    - Date stamps are added to each rolodex entry when created and updated
+      when edited.  This feature can be toggled on and off with:
+      M-x rolo-toggle-datestamps RET, or via the Toggle-Rolodex-Dates menu
+      item on the Customization menu.
+
+    - wrolo-add-hook is called after a new entry is added.
+      wrolo-edit-hook is called after an entry is displayed for editing.
 
     - Rolo-edit, bound to {e} in the rolodex match buffer, now works properly
       if the rolodex is loaded before the rest of the Hyperbole system.
