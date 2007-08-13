@@ -1293,6 +1293,8 @@ recent to least recent -- in other words, the version names don't have to
 be lexically ordered.  It is debatable if it makes sense to have more than
 one version of a package available.")
 
+(defcustom package-get-download-sites '(("xemacs.org" "ftp.xemacs.org" "pub/xemacs/packages") ("cso.uiuc.edu" "ftp.cso.uiuc.edu" "pub/packages/xemacs/packages") ("unicamp.br" "ftp.unicamp.br" "pub/xemacs/packages") ("sunsite.cnlab-switch.ch" "sunsite.cnlab-switch.ch" "mirror/xemacs/packages") ("tu-darmstadt.de" "ftp.tu-darmstadt.de" "pub/editors/xemacs/packages") ("sunsite.auc.dk" "sunsite.auc.dk" "pub/emacs/xemacs/packages") ("pasteur.fr" "ftp.pasteur.fr" "pub/computing/xemacs/packages") ("cenatls.cena.dgac.fr" "ftp.cenatls.cena.dgac.fr" "pub/Emacs/xemacs/packages") ("kfki.hu" "ftp.kfki.hu" "pub/packages/xemacs/packages") ("uniroma2.it" "ftp.uniroma2.it" "unix/misc/dist/XEMACS/packages") ("icm.edu.pl" "ftp.icm.edu.pl" "pub/unix/editors/xemacs/packages") ("sunet.se" "ftp.sunet.se" "pub/gnu/xemacs/packages") ("doc.ic.ac.uk" "sunsite.doc.ic.ac.uk" "packages/xemacs/packages") ("srcc.msu.su" "ftp1.srcc.msu.su" "mirror/ftp.xemacs.org/packages") ("usyd.edu.au" "ftp.usyd.edu.au" "pub/Xemacs/packages") ("netlab.is.tsukuba.ac.jp" "ftp.netlab.is.tsukuba.ac.jp" "pub/GNU/xemacs/packages") ("jaist.ac.jp" "ftp.jaist.ac.jp" "pub/GNU/xemacs/packages") ("ring.aist.go.jp" "ring.aist.go.jp" "pub/text/xemacs/packages") ("ring.asahi-net.or.jp" "ring.asahi-net.or.jp" "pub/text/xemacs/packages") ("SunSITE.sut.ac.jp" "SunSITE.sut.ac.jp" "pub/archives/packages/xemacs/packages") ("dti.ad.jp" "ftp.dti.ad.jp" "pub/unix/editor/xemacs/packages") ("kreonet.re.kr" "ftp.kreonet.re.kr" "pub/tools/emacs/xemacs/packages")) "*List of remote sites available for downloading packages.\nList format is '(site-description site-name directory-on-site).\nSITE-DESCRIPTION is a textual description of the site.  SITE-NAME\nis the internet address of the download site.  DIRECTORY-ON-SITE\nis the directory on the site in which packages may be found.\nThis variable is used to initialize `package-get-remote', the\nvariable actually used to specify package download sites." :tag "Package download sites" :type '(repeat (list hostname directory)) :group 'package-get)
+
 (autoload 'package-get-download-menu "package-get" "\
 Build the `Add Download Site' menu." nil nil)
 
@@ -1736,6 +1738,24 @@ or if you change your font path, you can call this to re-initialize the menus." 
 (autoload 'font-menu-size-constructor "x-font-menu" nil nil nil)
 
 (autoload 'font-menu-weight-constructor "x-font-menu" nil nil nil)
+
+;;;***
+
+;;;### (autoloads (xpm-button-create) "xpm-button" "lisp/xpm-button.el")
+
+(autoload 'xpm-button-create "xpm-button" "\
+Returns a list of XPM image instantiators for a button displaying TEXT.
+The list is of the form
+   (UP DOWN DISABLED)
+where UP, DOWN, and DISABLED are the up, down and disabled image
+instantiators for the button.
+
+SHADOW-THICKNESS specifies how many pixels should be used for the
+shadows on the edges of the buttons.  It should be a positive integer,
+or 0 to mean no shadows on the edges.
+FG-COLOR is the color used to display the text.  It should be a string.
+BG-COLOR is the background color the text will be displayed upon.
+It should be a string." nil nil)
 
 ;;;***
 

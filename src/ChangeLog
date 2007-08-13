@@ -1,3 +1,93 @@
+1999-11-02  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.8 is released
+
+1999-11-01  Andy Piper  <andy@xemacs.org>
+
+	* console-msw.h: fix defines for cygwin 1.0 compilation.
+	* glyphs-msw.c: ditto.
+	* ntplay.c: ditto.
+	* objects-msw.c: ditto.
+	* unexcw.c: ditto.
+	* s/cygwin32.h: ditto.
+
+1999-11-01  Andreas Jaeger  <aj@suse.de>
+
+	* emacs.c (main_1): Don't set the malloc hooks if using
+	DOUG_LEA_MALLOC.
+
+1999-11-01  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* sysdep.h: Declare wait_for_termination() to return process
+	HANDLE on NT, according to implementation change.
+
+	* sysdep.c (wait_for_termination): Take pHandle argument on NT,
+	since OpenProcess inside this function may be too late.
+	(wait_for_termination): Implement processing of child exit status
+	for NT.
+	(sys_subshell): _spawnlp (_P_NOWAIT, ...) on NT and
+	wait_for_termination().
+
+	* ntproc.c (create_child): Take out Windows 95 cp->pid hack and
+	remove incorrect bit-masking.
+
+	* callproc.c (call_process_cleanup): Pass on pHandle to
+	wait_for_termination() on WINDOWSNT.
+	(Fcall_process_internal): On NT only open process handle if BUFFER
+	is not 0 (INTP).  Close fd_error in parent on NT too.
+	(Fcall_process_internal): Don't report error for negative pid on
+	NT (Windows9[58] has them).
+	(Fcall_process_internal): Call wait_for_termination with pHandle
+	argument on NT (see sysdep.c).
+
+1999-11-01  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* menubar-x.c (pre_activate_callback): set accelerator field in
+	"No menu" entries to nil. Avoid crash in
+	command_builder_operate_menu_accelerator
+
+1999-10-22  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* glyphs-eimage.c (gif_instantiate): Correct handling of
+	interlaced gifs to avoid writing past the end of the eimage
+	buffer.
+
+1999-10-21  Rasmus Borup Hansen	<rbh@math.ku.dk>
+
+	* glyphs-x.c (convert_EImage_to_XImage): Avoid infinite loop on
+	GrayScale, StaticGray or StaticColor visuals.
+
+1999-10-20  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* fileio.c (Ffile_truename): Do proper mule decoding on
+	the argument to xrealpath()
+
+1999-10-20  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* event-msw.c (mswindows_key_to_emacs_keysym):
+	  Recognise keypad keys as different from normal keys.
+
+1999-10-20  SL Baur  <steve@miho.m17n.org>
+
+	* doprnt.c (emacs_doprnt_1): Fix problem with %0XXd for a negative
+	integer.
+	Based on a patch from MORIOKA Tomohiko  <tomo@etl.go.jp>
+
+1999-10-20  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* unexelf.c (unexec): Only copy the global offset
+	table from memory on sgi machines.
+
+1999-09-26  Andy Piper  <andy@xemacs.org>
+
+	* cygwin32.h: include mousewheel definitions.
+	[This was actually in 21.1.7].
+
+1999-09-24  Martin Buchholz  <martin@xemacs.org>
+
+	* doprnt.c (get_doprnt_args): Use int, not short, with va_arg.
+	[This was actually in 21.1.7].
+
 1999-09-26  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.7 is released

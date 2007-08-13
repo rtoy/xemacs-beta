@@ -1,3 +1,69 @@
+1999-11-02  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.8 is released
+
+1999-11-01 Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* mule/cyrillic.el (setup-cyrillic-environment): Revert
+	previous change and modify for XEmacs 21.1.
+	(language-info-alist): Revert last change.
+
+1999-11-01 Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* mule/japanese.el (setup-japanese-environment): Set up
+	default-coding-system.
+	* mule/chinese.el (setup-chinese-gb-environment): New function.
+	(setup-chinese-big5-environment): New function.
+	* mule/cyrillic.el (setup-cyrillic-iso-environment): New function.
+	(setup-cyrillic-koi8-environment): New function.
+	(setup-cyrillic-alternativnyj-environment): New function.
+	(setup-cyrillic-environment, describe-cyrillic-support):
+	Remove bogus functions.
+	(language-info-alist): Don't add Cyrillic.
+
+1999-10-21  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* xemacs-20/lisp/package-get.el
+	(package-get-user-package-location):
+	Use user-init-directory in the "correct" way for 21.1
+
+1999-10-21  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* apropos.el (apropos-documentation): Use insert instead
+	of princ.
+
+1999-10-20  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* info.el (Info-page-prev): Don't do (sit-for 0).
+
+1999-10-20  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* mule/japanese.el (setup-japanese-environment): New function.
+	(language-info-alist): Use setup-japanese-enviroment as a
+	setup function.
+
+1999-10-20  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* coding.el (set-terminal-coding-system): Only set the console
+	coding system on the selected console if it is a tty.
+
+1999-10-20  Werner Fink  <werner@suse.de>
+
+	* setup-paths.el (paths-find-exec-directory): Add missing nil
+	parameter for environment.
+
+1999-10-20  Werner Fink  <werner@suse.de>
+
+	* cyrillic.el (setup-cyrillic-environment): Replace
+	old set-coding-priority.
+
+1999-09-25  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* package-get.el (package-get-download-menu): Make menu really
+ 	toggle download sites.
+	(package-get-download-sites): Add autoload cookie.
+	[This was in 21.1.7.]
+
 1999-09-26  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.7 is released

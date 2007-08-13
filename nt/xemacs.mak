@@ -1174,7 +1174,9 @@ dump-xemacs: $(TEMACS)
 
 # use this rule to build the complete system
 all:	$(OUTDIR)\nul $(LASTFILE) $(LWLIB) $(LIB_SRC_TOOLS) $(RUNEMACS) \
-	$(TEMACS) $(TEMACS_BROWSE) update-elc $(DOC) dump-xemacs info
+	$(TEMACS) $(TEMACS_BROWSE) update-elc $(DOC) dump-xemacs \
+	$(LISP)/auto-autoloads.el $(LISP)/custom-load.el \
+	info
 
 temacs: $(TEMACS)
 
@@ -1238,6 +1240,21 @@ distclean:
 
 depend:
 	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w9999 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c
+
+# Update auto-autoloads.el and custom-load.el similar to what
+# XEmacs.rules does for xemacs-packages.
+VANILLA=-vanilla
+FORCE:
+$(LISP)\auto-autoloads.el:	FORCE
+	$(PROGNAME) $(VANILLA) -batch \
+		-l autoload -f batch-update-directory $(LISP)
+	$(PROGNAME) $(VANILLA) -batch \
+		-f batch-byte-compile $@
+	@del $(LISP)\auto-autoloads.el~
+
+$(LISP)\custom-load.el:	FORCE
+	$(PROGNAME) $(VANILLA) -batch -l cus-dep \
+		-f Custom-make-dependencies $(LISP)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

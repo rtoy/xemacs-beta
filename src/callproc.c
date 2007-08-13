@@ -104,6 +104,9 @@ call_process_cleanup (Lisp_Object fdpid)
 {
   int fd = XINT (Fcar (fdpid));
   int pid = XINT (Fcdr (fdpid));
+#ifdef WINDOWSNT
+  HANDLE pHandle;
+#endif
 
   if (!call_process_exited &&
       EMACS_KILLPG (pid, SIGINT) == 0)
@@ -114,7 +117,16 @@ call_process_cleanup (Lisp_Object fdpid)
     /* #### "c-G" -- need non-consing Single-key-description */
     message ("Waiting for process to die...(type C-g again to kill it instantly)");
 
+#ifdef WINDOWSNT
+    pHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
+    if (pHandle == NULL)
+      {
+	stderr_out ("call_process_cleanup.OpenProcess: pHandle == NULL, GetLastError () = %d, (int)pHandle = %d\n", GetLastError (), (int)pHandle);
+      }
+    wait_for_termination (pHandle);
+#else
     wait_for_termination (pid);
+#endif
 
     /* "Discard" the unwind protect.  */
     XCAR (fdpid) = Qnil;
@@ -170,6 +182,9 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   Lisp_Object infile, buffer, current_dir, display, path;
   int fd[2];
   int filefd;
+#ifdef WINDOWSNT
+  HANDLE pHandle;
+#endif
   int pid;
   char buf[16384];
   char *bufptr = buf;
@@ -367,6 +382,19 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 #ifdef WINDOWSNT
     pid = child_setup (filefd, fd1, fd_error, new_argv,
                        (char *) XSTRING_DATA (current_dir));
+    if (!INTP (buffer))
+      {
+	/* OpenProcess() as soon after child_setup as possible.  It's too
+	   late once the process terminated. */
+	pHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
+	if (pHandle == NULL)
+	  {
+	    stderr_out ("Fcall_process_internal: pHandle == NULL, GetLastError () = %d, (int)pHandle = %d\n", GetLastError (), (int)pHandle);
+	  }
+      }
+    /* Close STDERR into the parent process.  We no longer need it. */
+    if (fd_error >= 0)
+      close (fd_error);
 #else  /* not WINDOWSNT */
     pid = fork ();
 
@@ -406,12 +434,14 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   if (!NILP (fork_error))
     signal_error (Qfile_error, fork_error);
 
+#ifndef WINDOWSNT
   if (pid < 0)
     {
       if (fd[0] >= 0)
 	close (fd[0]);
       report_file_error ("Doing fork", Qnil);
     }
+#endif
 
   if (INTP (buffer))
     {
@@ -519,7 +549,11 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
     QUIT;
     /* Wait for it to terminate, unless it already has.  */
+#ifdef WINDOWSNT
+    wait_for_termination (pHandle);
+#else
     wait_for_termination (pid);
+#endif
 
     /* Don't kill any children that the subprocess may have left behind
        when exiting.  */

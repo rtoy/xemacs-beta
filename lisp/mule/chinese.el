@@ -200,6 +200,19 @@
 				  . describe-chinese-environment-map))
 		))
 
+(defun setup-chinese-gb-environment ()
+  "Setup multilingual environment (MULE) for Chinese GB2312 users."
+  (interactive)
+  (setup-english-environment)
+  (set-coding-category-system 'iso-8-2 'cn-gb-2312)
+  (set-coding-category-system 'big5 'big5)
+  (set-coding-category-system 'iso-7 'iso-2022-7bit)
+  (set-coding-priority-list
+   '(iso-8-2
+     big5
+     iso-7))
+  (set-default-coding-systems 'cn-gb-2312))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese BIG5 (traditional)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -248,6 +261,19 @@
 		  (documentation . ("Support for Chinese Big5 character set."
 				    . describe-chinese-environment-map))
 		  ))
+
+(defun setup-chinese-big5-environment ()
+  "Setup multilingual environment (MULE) for Chinese Big5 users."
+  (interactive)
+  (setup-english-environment)
+  (set-coding-category-system 'big5 'big5)
+  (set-coding-category-system 'iso-8-2 'cn-gb-2312)
+  (set-coding-category-system 'iso-7 'iso-2022-7bit)
+  (set-coding-priority-list
+   '(big5
+     iso-8-2
+     iso-7))
+  (set-default-coding-systems 'big5))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese CNS11643 (traditional)

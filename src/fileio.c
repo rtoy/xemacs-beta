@@ -1299,18 +1299,18 @@ No component of the resulting pathname will be a symbolic link, as
 
   {
     char resolved_path[MAXPATHLEN];
-    char path[MAXPATHLEN];
-    char *p = path;
+    char *path;
+    char *p;
     int elen = XSTRING_LENGTH (expanded_name);
 
-    if (elen >= countof (path))
+    GET_STRING_FILENAME_DATA_ALLOCA(expanded_name,path,elen);
+    p = path;
+    if (elen > MAXPATHLEN)
       goto toolong;
-
-    memcpy (path, XSTRING_DATA (expanded_name), elen + 1);
-    /* memset (resolved_path, 0, sizeof (resolved_path)); */
-
+    
     /* Try doing it all at once. */
-    /* !!#### Does realpath() Mule-encapsulate? */
+    /* !! Does realpath() Mule-encapsulate?
+       Answer: Nope! So we do it above */
     if (!xrealpath (path, resolved_path))
       {
 	/* Didn't resolve it -- have to do it one component at a time. */

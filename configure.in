@@ -2702,6 +2702,9 @@ dnl ----------------------
 if test "$window_system" != "none"; then
   AC_CHECKING(for graphics libraries)
 
+  dnl On IRIX 6, most graphics libraries depend on libCsup
+  AC_CHECK_LIB(Csup,__T_9__nothrow,[LIBS="-lCsup $LIBS"])
+
   dnl Autodetect Xpm
   xpm_problem=""
   if test -z "$with_xpm"; then
@@ -3354,7 +3357,9 @@ if test "$with_native_sound" != "no"; then
     case "$canonical" in
     *-sgi-* )
       if test -z "$native_sound_lib"; then
+       AC_CHECK_HEADER(audio.h, [
         AC_CHECK_LIB(audio, ALopenport, native_sound_lib="-laudio")
+       ])
       fi
       if test -n "$native_sound_lib"; then
         sound_found=yes sound_cflags=""

@@ -88,7 +88,8 @@ mswindows_handle_toolbar_wm_command (struct frame* f, HWND ctrl, WORD id);
 
 static Lisp_Object mswindows_find_frame (HWND hwnd);
 static Lisp_Object mswindows_find_console (HWND hwnd);
-static Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key, int mods);
+static Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
+						  int extendedp);
 static int mswindows_modifier_state (BYTE* keymap, int has_AltGr);
 static void mswindows_set_chord_timer (HWND hwnd);
 static int mswindows_button2_near_enough (POINTS p1, POINTS p2);
@@ -1635,15 +1636,17 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       BYTE keymap[256];
       int has_AltGr = mswindows_current_layout_has_AltGr ();
       int mods;
+      int extendedp = lParam & 0x1000000;
       Lisp_Object keysym;
 
       GetKeyboardState (keymap);
       mods = mswindows_modifier_state (keymap, has_AltGr);
 
-      /* Handle those keys for which TranslateMessage won't generate a WM_CHAR */
-      if (!NILP (keysym = mswindows_key_to_emacs_keysym(wParam, mods)))
+      /* Handle non-printables */
+      if (!NILP (keysym = mswindows_key_to_emacs_keysym (wParam, mods,
+							 extendedp)))
 	mswindows_enqueue_keypress_event (hwnd, keysym, mods);
-      else
+      else	/* Normal keys & modifiers */
 	{
 	  int quit_ch = CONSOLE_QUIT_CHAR (XCONSOLE (mswindows_find_console (hwnd)));
 	  BYTE keymap_orig[256];
@@ -1653,9 +1656,9 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	   * to loosely track Left and Right modifiers on behalf of the OS,
 	   * without screwing up Windows NT which tracks them properly. */
 	  if (wParam == VK_CONTROL)
-	    keymap [(lParam & 0x1000000) ? VK_RCONTROL : VK_LCONTROL] |= 0x80;
+	    keymap [extendedp ? VK_RCONTROL : VK_LCONTROL] |= 0x80;
 	  else if (wParam == VK_MENU)
-	    keymap [(lParam & 0x1000000) ? VK_RMENU : VK_LMENU] |= 0x80;
+	    keymap [extendedp ? VK_RMENU : VK_LMENU] |= 0x80;
 
 	  memcpy (keymap_orig, keymap, 256);
 
@@ -2312,67 +2315,100 @@ int mswindows_modifier_state (BYTE* keymap, int has_AltGr)
  * Only returns non-Qnil for keys that don't generate WM_CHAR messages
  * or whose ASCII codes (like space) xemacs doesn't like.
  * Virtual key values are defined in winresrc.h
- * XXX I'm not sure that KEYSYM("name") is the best thing to use here.
  */
-Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key, int mods)
+Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
+					   int extendedp)
 {
-  switch (mswindows_key)
-  {
-  /* First the predefined ones */
-  case VK_BACK:		return QKbackspace;
-  case VK_TAB:		return QKtab;
-  case '\n':		return QKlinefeed;  /* No VK_LINEFEED in winresrc.h */
-  case VK_RETURN:	return QKreturn;
-  case VK_ESCAPE:	return QKescape;
-  case VK_SPACE:	return QKspace;
-  case VK_DELETE:	return QKdelete;
-
-  /* The rest */
-  case VK_CLEAR:	return KEYSYM ("clear");  /* Should do ^L ? */
-  case VK_PRIOR:	return KEYSYM ("prior");
-  case VK_NEXT:		return KEYSYM ("next");
-  case VK_END:		return KEYSYM ("end");
-  case VK_HOME:		return KEYSYM ("home");
-  case VK_LEFT:		return KEYSYM ("left");
-  case VK_UP:		return KEYSYM ("up");
-  case VK_RIGHT:	return KEYSYM ("right");
-  case VK_DOWN:		return KEYSYM ("down");
-  case VK_SELECT:	return KEYSYM ("select");
-  case VK_PRINT:	return KEYSYM ("print");
-  case VK_EXECUTE:	return KEYSYM ("execute");
-  case VK_SNAPSHOT:	return KEYSYM ("print");
-  case VK_INSERT:	return KEYSYM ("insert");
-  case VK_HELP:		return KEYSYM ("help");
-#if 0	/* XXX What are these supposed to do? */
-  case VK_LWIN		return KEYSYM ("");
-  case VK_RWIN		return KEYSYM ("");
+  if (extendedp)	/* Keys not present on a 82 key keyboard */
+    {
+      switch (mswindows_key)
+        {
+	case VK_RETURN:		return KEYSYM ("kp-enter");
+	case VK_PRIOR:		return KEYSYM ("prior");
+	case VK_NEXT:		return KEYSYM ("next");
+	case VK_END:		return KEYSYM ("end");
+	case VK_HOME:		return KEYSYM ("home");
+	case VK_LEFT:		return KEYSYM ("left");
+	case VK_UP:		return KEYSYM ("up");
+	case VK_RIGHT:		return KEYSYM ("right");
+	case VK_DOWN:		return KEYSYM ("down");
+	case VK_INSERT:		return KEYSYM ("insert");
+	case VK_DELETE:		return QKdelete;
+	}
+    }
+  else
+    {
+      switch (mswindows_key)
+	{
+	case VK_BACK:		return QKbackspace;
+	case VK_TAB:		return QKtab;
+	case '\n':		return QKlinefeed;
+	case VK_CLEAR:		return KEYSYM ("clear");
+	case VK_RETURN:		return QKreturn;
+	case VK_ESCAPE:		return QKescape;
+	case VK_SPACE:		return QKspace;
+	case VK_PRIOR:		return KEYSYM ("kp-prior");
+	case VK_NEXT:		return KEYSYM ("kp-next");
+	case VK_END:		return KEYSYM ("kp-end");
+	case VK_HOME:		return KEYSYM ("kp-home");
+	case VK_LEFT:		return KEYSYM ("kp-left");
+	case VK_UP:		return KEYSYM ("kp-up");
+	case VK_RIGHT:		return KEYSYM ("kp-right");
+	case VK_DOWN:		return KEYSYM ("kp-down");
+	case VK_SELECT:		return KEYSYM ("select");
+	case VK_PRINT:		return KEYSYM ("print");
+	case VK_EXECUTE:	return KEYSYM ("execute");
+	case VK_SNAPSHOT:	return KEYSYM ("print");
+	case VK_INSERT:		return KEYSYM ("kp-insert");
+	case VK_DELETE:		return KEYSYM ("kp-delete");
+	case VK_HELP:		return KEYSYM ("help");
+#if 0	/* FSF Emacs allows these to return configurable syms/mods */
+	case VK_LWIN		return KEYSYM ("");
+	case VK_RWIN		return KEYSYM ("");
 #endif
-  case VK_APPS:		return KEYSYM ("menu");
-  case VK_F1:		return KEYSYM ("f1");
-  case VK_F2:		return KEYSYM ("f2");
-  case VK_F3:		return KEYSYM ("f3");
-  case VK_F4:		return KEYSYM ("f4");
-  case VK_F5:		return KEYSYM ("f5");
-  case VK_F6:		return KEYSYM ("f6");
-  case VK_F7:		return KEYSYM ("f7");
-  case VK_F8:		return KEYSYM ("f8");
-  case VK_F9:		return KEYSYM ("f9");
-  case VK_F10:		return KEYSYM ("f10");
-  case VK_F11:		return KEYSYM ("f11");
-  case VK_F12:		return KEYSYM ("f12");
-  case VK_F13:		return KEYSYM ("f13");
-  case VK_F14:		return KEYSYM ("f14");
-  case VK_F15:		return KEYSYM ("f15");
-  case VK_F16:		return KEYSYM ("f16");
-  case VK_F17:		return KEYSYM ("f17");
-  case VK_F18:		return KEYSYM ("f18");
-  case VK_F19:		return KEYSYM ("f19");
-  case VK_F20:		return KEYSYM ("f20");
-  case VK_F21:		return KEYSYM ("f21");
-  case VK_F22:		return KEYSYM ("f22");
-  case VK_F23:		return KEYSYM ("f23");
-  case VK_F24:		return KEYSYM ("f24");
-  }
+	case VK_APPS:		return KEYSYM ("menu");
+	case VK_NUMPAD0:	return KEYSYM ("kp-0");
+	case VK_NUMPAD1:	return KEYSYM ("kp-1");
+	case VK_NUMPAD2:	return KEYSYM ("kp-2");
+	case VK_NUMPAD3:	return KEYSYM ("kp-3");
+	case VK_NUMPAD4:	return KEYSYM ("kp-4");
+	case VK_NUMPAD5:	return KEYSYM ("kp-5");
+	case VK_NUMPAD6:	return KEYSYM ("kp-6");
+	case VK_NUMPAD7:	return KEYSYM ("kp-7");
+	case VK_NUMPAD8:	return KEYSYM ("kp-8");
+	case VK_NUMPAD9:	return KEYSYM ("kp-9");
+	case VK_MULTIPLY:	return KEYSYM ("kp-multiply");
+	case VK_ADD:		return KEYSYM ("kp-add");
+	case VK_SEPARATOR:	return KEYSYM ("kp-separator");
+	case VK_SUBTRACT:	return KEYSYM ("kp-subtract");
+	case VK_DECIMAL:	return KEYSYM ("kp-decimal");
+	case VK_DIVIDE:		return KEYSYM ("kp-divide");
+	case VK_F1:		return KEYSYM ("f1");
+	case VK_F2:		return KEYSYM ("f2");
+	case VK_F3:		return KEYSYM ("f3");
+	case VK_F4:		return KEYSYM ("f4");
+	case VK_F5:		return KEYSYM ("f5");
+	case VK_F6:		return KEYSYM ("f6");
+	case VK_F7:		return KEYSYM ("f7");
+	case VK_F8:		return KEYSYM ("f8");
+	case VK_F9:		return KEYSYM ("f9");
+	case VK_F10:		return KEYSYM ("f10");
+	case VK_F11:		return KEYSYM ("f11");
+	case VK_F12:		return KEYSYM ("f12");
+	case VK_F13:		return KEYSYM ("f13");
+	case VK_F14:		return KEYSYM ("f14");
+	case VK_F15:		return KEYSYM ("f15");
+	case VK_F16:		return KEYSYM ("f16");
+	case VK_F17:		return KEYSYM ("f17");
+	case VK_F18:		return KEYSYM ("f18");
+	case VK_F19:		return KEYSYM ("f19");
+	case VK_F20:		return KEYSYM ("f20");
+	case VK_F21:		return KEYSYM ("f21");
+	case VK_F22:		return KEYSYM ("f22");
+	case VK_F23:		return KEYSYM ("f23");
+	case VK_F24:		return KEYSYM ("f24");
+	}
+    }
   return Qnil;
 }
 

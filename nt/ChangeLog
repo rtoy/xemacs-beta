@@ -1,3 +1,15 @@
+1999-11-02  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.8 is released
+
+1999-10-20  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* xemacs.mak (all): Update $(LISP)/auto-autoloads.elc? and
+ 	$(LISP)/custom-load.el using XEmacs itself, like xemacs-packages
+ 	do.
+	($(LISP)\auto-autoloads.el): Add new rule.
+	($(LISP)\custom-load.el): Ditto.
+
 1999-09-26  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.7 is released

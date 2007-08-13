@@ -81,6 +81,15 @@
 		  (documentation . ("Support for Cyrillic ISO-8859-5."
 				    . describe-cyrillic-environment-map))))
 
+(defun setup-cyrillic-iso-environment ()
+  "Setup multilingual environment (MULE) for Cyrillic ISO-8859-5 users."
+  (interactive)
+  (setup-english-environment)
+  (set-coding-category-system 'iso-8-1 'iso-8859-5)
+  (set-coding-priority-list
+   '(iso-8-1))
+  (set-default-coding-systems 'iso-8859-5))
+
 ;; KOI-8 staff
 
 (define-ccl-program ccl-decode-koi8
@@ -173,6 +182,15 @@
 		   (documentation . ("Support for Cyrillic KOI-8."
 				     . describe-cyrillic-environment-map))))
 
+(defun setup-cyrillic-koi8-environment ()
+  "Setup multilingual environment (MULE) for Cyrillic KOI8 users."
+  (interactive)
+  (setup-english-environment)
+  (set-coding-category-system 'iso-8-1 'koi8-r)
+  (set-coding-priority-list
+   '(iso-8-1))
+  (set-default-coding-systems 'koi8-r))
+
 ;;; ALTERNATIVNYJ staff
 
 (define-ccl-program ccl-decode-alternativnyj
@@ -257,34 +275,31 @@
 		  (documentation . ("Support for Cyrillic ALTERNATIVNYJ."
 				    . describe-cyrillic-environment-map))))
 
+(defun setup-cyrillic-alternativnyj-environment ()
+  "Setup multilingual environment (MULE) for Cyrillic ALTERNATIVNYJ users."
+  (interactive)
+  (setup-english-environment)
+  (set-coding-category-system 'iso-8-1 'alternativnyj)
+  (set-coding-priority-list
+   '(iso-8-1))
+  (set-default-coding-systems 'alternativnyj))
+
 ;;; GENERAL
 
 (defun setup-cyrillic-environment ()
   "Setup multilingual environment for Cyrillic users."
   (interactive)
-  (setq primary-language "Cyrillic")
+  (set-coding-category-system 'iso-8-1 'iso-8859-5)
+  (set-coding-priority-list
+   '(iso-8-1))
 
-  (setq coding-category-iso-8-1 'iso-8859-5)
+  (set-default-coding-systems 'iso-8859-5)
 
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-8-1))
-
-  (setq-default buffer-file-coding-system 'iso-8859-5)
-  (set-terminal-coding-system 'iso-8859-5)
-  (set-keyboard-coding-system 'iso-8859-5)
-
-  (setq default-input-method '("Cyrillic" . "quail-yawerty"))
+  (setq default-input-method 'cyrillic-yawerty)
   )
-
-(defun describe-cyrillic-support ()
-  "Describe how Emacs support Cyrillic."
-  (interactive)
-  (describe-language-support-internal "Cyrillic"))
 
 (set-language-info-alist
  "Cyrillic" '((setup-function . setup-cyrillic-environment)
-              (describe-function . describe-cyrillic-support)
               (charset . (cyrillic-iso8859-5))
 	      (tutorial . "TUTORIAL.ru")
               (coding-system . (iso-8859-5 koi8-r alternativnyj))

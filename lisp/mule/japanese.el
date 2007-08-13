@@ -218,8 +218,28 @@
 (copy-coding-system 'euc-jp 'euc-japan) ; only for w3
 (copy-coding-system 'euc-jp 'japanese-euc)
 
+(defun setup-japanese-environment ()
+  "Setup multilingual environment (MULE) for Japanese."
+  (interactive)
+  (setup-english-environment)
+  (set-coding-category-system 'shift-jis 'shift_jis)
+  (set-coding-category-system 'iso-8-2 'euc-jp)
+  (set-coding-category-system 'iso-7 'iso-2022-jp)
+  (set-coding-category-system 'iso-8-designate 'iso-2022-8bit-ss2)
+
+  (set-coding-priority-list
+   '(iso-7
+     iso-8-2
+     shift-jis
+     iso-8-1
+     iso-lock-shift
+     iso-8-designate
+     no-conversion
+     big5))
+  (set-default-coding-systems 'iso-2022-jp))
+
 (set-language-info-alist
- "Japanese" '((setup-function . setup-japanese-environment-internal)
+ "Japanese" '((setup-function . setup-japanese-environment)
 	      (tutorial . "TUTORIAL.ja")
 	      (charset . (japanese-jisx0208 japanese-jisx0208-1978
 			  japanese-jisx0212 latin-jisx0201

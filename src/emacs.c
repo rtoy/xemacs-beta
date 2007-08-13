@@ -531,7 +531,8 @@ main_1 (int argc, char **argv, char **envp, int restart)
   extern int malloc_cookie;
 #endif
 
-#if !defined(SYSTEM_MALLOC) && !defined(HAVE_LIBMCHECK)
+#if (!defined (SYSTEM_MALLOC) && !defined (HAVE_LIBMCHECK)	\
+     && !defined (DOUG_LEA_MALLOC))
   /* Make sure that any libraries we link against haven't installed a
      hook for a gmalloc of a potentially incompatible version. */
   /* If we're using libmcheck, the hooks have already been initialized, */
@@ -539,7 +540,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
   __malloc_hook = NULL;
   __realloc_hook = NULL;
   __free_hook = NULL;
-#endif /* not SYSTEM_MALLOC */
+#endif /* not SYSTEM_MALLOC or HAVE_LIBMCHECK or DOUG_LEA_MALLOC */
 
   noninteractive = 0;
 

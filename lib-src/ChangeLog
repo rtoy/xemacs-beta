@@ -1,3 +1,11 @@
+1999-11-02  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.8 is released
+
+1999-11-01  Andy Piper  <andy@xemacs.org>
+
+	* mmencode.c: include <errno.h>
+
 1999-09-26  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.7 is released

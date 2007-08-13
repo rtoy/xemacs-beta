@@ -1,3 +1,37 @@
+1999-11-02  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.8 is released
+
+1999-11-01  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* INSTALL: Update configure option.
+
+1999-11-01  Alexandre Oliva  <oliva@lsd.ic.unicamp.br>
+	
+	* configure.in (native_sound_lib, *-sgi-*): Check for audio.h.
+	(LIBS): Check for libCsup.
+
+1999-10-22  Vin Shelton  <acs@xemacs.org>
+
+	* INSTALL: Added more information about README.packages, and
+	re-numbered some bullets.
+
+1999-10-21  Giacomo Boffi <giacomo.boffi@polimi.it>
+
+	* etc/sample.Xdefaults: adds a reference to beNiceToColrmap,
+	  so that the user can guess what to do if xemacs' dialogs are
+	  butt ugly.
+
+1999-10-21  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* INSTALL: Make disk space requirements more realistic.
+	Add note about stack size requirements.
+	Update and add more weight to the package section.
+
+	* README: Add reference to README.packages
+
+	* INSTALL: Remove junk from install.sh
+
 1999-09-26  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.7 is released

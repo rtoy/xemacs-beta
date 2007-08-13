@@ -633,6 +633,7 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 	    {
 	      char text_to_print[500];
 	      char constructed_spec[100];
+	      int tem;
 
 	      /* Partially reconstruct the spec and use sprintf() to
 		 format the string. */
@@ -657,7 +658,7 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 		  long_to_string (constructed_spec + strlen (constructed_spec),
 				  spec->precision);
 		}
-	      sprintf (constructed_spec + strlen (constructed_spec), "%c", ch);
+	      sprintf (constructed_spec + (tem = strlen (constructed_spec)), "%c", ch);
 
 	      /* sprintf the mofo */
 	      /* we have to use separate calls to sprintf(), rather than
@@ -674,6 +675,12 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 		}
 	      else
 		{
+		  /* In the special case of zero padding a signed integer */
+		  /* with a field width specified, we overwrite the default */
+		  /* format. */
+		  if (spec->zero_flag && spec->minwidth)
+		    sprintf (constructed_spec + tem,
+			     "0%d%c", spec->minwidth, ch);
 		  if (spec->l_flag)
 		    sprintf (text_to_print, constructed_spec, arg.l);
 		  else

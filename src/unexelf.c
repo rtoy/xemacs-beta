@@ -432,7 +432,7 @@ extern void fatal (CONST char *, ...);
 #include <sys/elf_mips.h>
 #include <sym.h>
 #endif /* __sony_news && _SYSTYPE_SYSV */
-#if __sgi
+#ifdef __sgi
 #include <sym.h> /* for HDRR declaration */
 #endif /* __sgi */
 
@@ -956,12 +956,17 @@ unexec (char *new_name, char *old_name, unsigned int data_start,
       if (!strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data")
 	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
 		      ".sdata")
+          /* Taking these sections from the current process, breaks
+             Linux in a subtle way. Binaries only run on the
+             architecture (e.g. i586 vs i686) of the dumping machine */
+#ifdef __sgi
 	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
 		      ".lit4")
 	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
 		      ".lit8")
 	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
 		      ".got")
+#endif
 	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
 		      ".sdata1")
 	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
@@ -1018,7 +1023,7 @@ unexec (char *new_name, char *old_name, unsigned int data_start,
 	}
 #endif /* __sony_news && _SYSTYPE_SYSV */
 
-#if __sgi
+#ifdef __sgi
       /* Adjust  the HDRR offsets in .mdebug and copy the 
 	 line data if it's in its usual 'hole' in the object.
 	 Makes the new file debuggable with dbx.
@@ -1133,12 +1138,14 @@ unexec (char *new_name, char *old_name, unsigned int data_start,
 	if (!strcmp (old_section_names + NEW_SECTION_H (nn).sh_name, ".data")
 	    || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 			".sdata")
+#ifdef __sgi
 	    || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 			".lit4")
 	    || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 			".lit8")
 	    || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 			".got")
+#endif
 	    || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 			".sdata1")
 	    || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),

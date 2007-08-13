@@ -337,7 +337,8 @@ is non-nil."
       (locate-data-file package-get-base-filename)
       package-get-base-filename))
 
-(defvar package-get-user-package-location user-init-directory)
+(defvar package-get-user-package-location
+  (concat "~" init-file-user user-init-directory))
 
 (defun package-get-maybe-save-index (filename)
   "Offer to save the current buffer as the local package index file,

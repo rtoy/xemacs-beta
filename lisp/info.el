@@ -2055,11 +2055,9 @@ A positive or negative prefix argument moves by multiple screenfuls."
 	  (progn
 	    (Info-global-prev)
 	    (message "Node: %s" Info-current-node)
-	    (sit-for 0)
-	    ;;(scroll-up 1)   ; work around bug in pos-visible-in-window-p
-	    ;;(scroll-down 1)
-	    (while (not (pos-visible-in-window-p (point-max)))
-	      (scroll-up)))
+	    (goto-char (point-max))
+	    (recenter -1)
+	    (move-to-window-line 0))
 	(scroll-down)))))
 
 (defun Info-scroll-prev (arg)

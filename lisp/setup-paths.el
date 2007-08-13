@@ -126,7 +126,7 @@
 
 (defun paths-find-exec-directory (roots)
   "Find the binary directory."
-  (paths-find-architecture-directory roots "lib-src" configure-exec-directory))
+  (paths-find-architecture-directory roots "lib-src" nil configure-exec-directory))
 
 (defun paths-construct-exec-path (roots exec-directory
 				  early-packages late-packages last-packages)
