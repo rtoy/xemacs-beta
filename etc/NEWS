@@ -43,7 +43,10 @@ replace commands now operate on the region contents only.
 ** Using the new `-private' option, you can make XEmacs use a private
 colormap.
 
-** The `imenu' package has been ported to XEmacs.
+** The `imenu' package has been ported to XEmacs and is available as a
+package.
+
+** Horizontally split windows are now draggable.
 
 ** `echo-keystrokes' can now be a floating-point number, so that you
 can set it to intervals shorter than one second.
@@ -53,7 +56,7 @@ can set it to intervals shorter than one second.
 ** The new command `center-to-window-line' works like `recenter'
 (bound to `C-l'), only it does not redisplay the whole display area.
 
-** The `M-.' command will now first search through exact tags matches,
+** The M-. command will now first search through exact tags matches,
 and then through inexact matches, as one would expect.
 
 ** The new variable `user-full-name' can be used to customize one's
@@ -87,9 +90,26 @@ consistency.  A reminder: if you wish to revert to old-style
 ChangeLogs instead, customize the value of `add-log-time-format'
 variable.
 
+** The new command `zap-up-to-char' is now available.  It is similar
+to `zap-to-char', except that it does not delete the searched-for
+character.  It is not bound to a key by default.
+
+** You can now store a number into a register with `C-u NUMBER C-x r n'
+REG, increment it by INC with `C-u INC C-x r + REG' (to increment by
+one, omit C-u INC), and insert it in the buffer with `C-x r g REG'.
+This is useful for writing keyboard macros.
+
+** The M-: command, when given a prefix argument, will now insert its
+result to the current buffer.
+
+** The `C-h c' command, when given a prefix argument, will now insert
+the message into the current buffer.
+
 ** XEmacs/Mule (internationalization) changes.
 
-*** Mule support now works on TTY's.  #### What, where, how?
+*** Mule support now works on TTY's.  Use `set-terminal-coding-system'
+and `set-keyboard-coding-system' to specify the coding system of your
+display and keyboard.
 
 *** Egg/SJ3 input method is now officially supported.  Quail and
 Egg/Skk have been available through the generalized Leim since 20.3.
@@ -98,6 +118,14 @@ Egg/Skk have been available through the generalized Leim since 20.3.
 XFONTSET and either the X11 libraries are built with X_LOCALE defined
 or the native C libraries support Japanese localization.  This has
 been available since 20.3, only it hasn't been announced before.
+
+** Jamie Zawinski's `gdb-highlight' program is now distributed with
+the `debug' package.  gdb-highlight makes most objects printed in a
+gdb buffer be mouse-sensitive: as text shows up in the buffer, it is
+parsed, and objects which are recognized have context-sensitive
+commands attached to them.  To use it, add the following to `.emacs':
+
+  (add-hook 'gdb-mode-hook '(lambda () (require 'gdb-highlight)))
 
 ** C mode changes
 
@@ -166,15 +194,32 @@ in the `info' customization group.
 ** It is now possible to build XEmacs with support for 31-bit Lisp
 integers (normally, Lisp integers are only 28 bits wide on 32-bit
 machines.)  Configure with --use-minimal-tagbits to test.  With this
-change, the maximum buffer size on 32-bit machines is bumped from 128M
-to 1G.  This setting will be the default in a future XEmacs version.
+change, the maximum buffer size on 32-bit machines is increased from
+128M to 1G.  This setting will be made default in a future XEmacs
+version.
 
-** When the variable focus-follows-mouse is non-nil, `select-frame' no
-longer permanently selects a different frame.  The frame selection is
-temporary and is reverted when the current command terminates, much
-like the buffer selected by `set-buffer'.  The `other-frame' command
-(`C-x 5 o') is unaffected by `focus-follows-mouse', and its behaviour
-is unchanged.
+** Frame focus management changes.
+
+*** When the variable focus-follows-mouse is non-nil, `select-frame'
+no longer permanently selects a different frame.  The frame selection
+is temporary and is reverted when the current command terminates, much
+like the buffer selected by `set-buffer'.  This is the same as in FSF
+Emacs.
+
+*** The new function `focus-frame' sets the window system focus to
+FRAME (and selects it), regardless of the value of
+`focus-follows-mouse'.  Doing this is not well behaved, so be
+absolutely sure that you want this.
+
+The code that uses `select-frame' only to get the window manager focus
+should be changed to use `set-frame-focus' instead, so that they keep
+working when `focus-follows-mouse' is non-nil.
+
+*** The special forms `save-selected-frame' and `with-selected-frame'
+can now be used to temporarily change selected frame.
+
+*** The behavior of `other-frame' command (`C-x 5 o') is unaffected by
+these changes.
 
 ** It is now possible to build XEmacs with LDAP support
 You need to install a LDAP library first.  The following have been
@@ -184,8 +229,8 @@ tested:
   - LDAP SDK 1.0 from Netscape Corp.
     (http://developer.netscape.com)
 
-** The arithmetic comparison functions <, >, =, /= now accept 1 or
-more arguments.
+** The arithmetic comparison functions <, >, =, /= now accept a
+variable number of arguments.
 
 This means that if you want to test whether A < B < C, you can write
 it as (< A B C) instead of (and (< A B) (< B C)).  Likewise,
@@ -207,19 +252,39 @@ instance:
 
    #<hashtable size 2/13 data (key1 value1 key2 value2) 0x874d>
 
+** The new specifiers `vertical-scrollbar-visible-p' and
+`horizontal-scrollbar-visible-p' may be used to control scrollbar
+visibility.  Previously, the only way to toggle scrollbar visibility
+was to set a scrollbar's size to 0.  This method is still supported
+for backward compatibility.
+
+** The new specifiers `scrollbar-on-left-p' and `scrollbar-on-top-p'
+may be used to control the position of the vertical and horizontal
+toolbar.  Previously, their position could be changed only through the
+use of X resources.
+
 ** When profiling is in effect, a call-count of all recorded functions
 is now calculated.  This information is stored in
 `call-count-profile-table', and is utilized by `profile-results' as
 well as the new function `profile-call-count-results'.
 
+** It is now an error to change the value of a symbol whose name
+starts with a colon, if it is interned in the standard obarray.
+
+However, setting such a symbol to its proper value, which is that
+symbol itself, is not an error.  This is for the sake of programs that
+support pre-19.12 XEmacs and pre-20 GNU Emacs by explicitly setting
+these variables to themselves.
+
+** The `concat' function no longer accepts integer arguments.
+
 ** The new function `string' concatenates all its argument characters
 and returns the resulting string.  This is consistent with other
 functions, like `list', `vector', etc.
 
-** The `load-average' function now accepts a USE-FLOATS argument
-which, when non-nil, means to use floats instead of integers
-multiplied by 100.  At a future date, `load-average' will use floats
-by default.
+** The function load-average now accepts an optional argument
+USE-FLOATS.  If it is non-nil, the load average values are returned as
+floating point numbers, rather than as integers to be divided by 100.
 
 ** The `make-event' function now supports the TYPE and PLIST
 arguments, which can be used to create various events from Lisp.  See
@@ -238,6 +303,12 @@ automatically applies `format' to its arguments.
 
 ** The new `lwarn' function, analogous to `lmessage', allows printing
 a formatted warning, with a non-default CLASS or LABEL.
+
+** The new function `split-path' can now be used to explode the
+components of a colon-separated search path into a list.
+
+   (split-path "foo:bar")
+     => ("foo" "bar")
 
 ** Specifiers and symbols whose value is a specifier are now allowed
 as modeline specifications.

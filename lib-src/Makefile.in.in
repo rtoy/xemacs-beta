@@ -188,13 +188,13 @@ do-blessmail: $(blessmail)
 ${archlibdir}: all
 	@echo; echo "Installing utilities run internally by XEmacs."
 	./make-path ${archlibdir}
-	if test `(cd ${archlibdir} && $(pwd))` != `$(pwd)`; then \
+	if test "`(cd ${archlibdir} && $(pwd))`" != "`$(pwd)`"; then \
 	  for f in ${UTILITIES}; do \
 	    (cd .. && $(INSTALL_PROGRAM) lib-src/$$f ${archlibdir}/$$f) ; \
 	  done ; \
 	fi
-	if test `(cd ${archlibdir} && $(pwd))` \
-	     != `(cd ${srcdir}     && $(pwd))`; then \
+	if test "`(cd ${archlibdir} && $(pwd))`" \
+	     != "`(cd ${srcdir}     && $(pwd))`"; then \
 	  for f in ${SCRIPTS}; do \
 	    (cd .. && $(INSTALL_PROGRAM) ${srcdir}/$$f ${archlibdir}/$$f); \
 	  done ; \

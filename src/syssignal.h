@@ -48,12 +48,19 @@ Boston, MA 02111-1307, USA.  */
 /* SIGPOLL is the SVR4 signal.  Those systems generally define
    SIGIO as an alias for SIGPOLL, but just in case ... */
 
-#if !defined (SIGIO) && defined (SIGPOLL)
-# define SIGIO SIGPOLL
-#endif
-
 #if defined (BROKEN_SIGIO)
-# undef SIGIO
+#  if defined (SIGIO) && defined (SIGPOLL)
+#    if SIGIO == SIGPOLL
+#      undef SIGIO
+#      undef SIGPOLL
+#    else
+#      undef SIGIO
+#    endif
+#  endif
+#else /* Not BROKEN_SIGIO */
+#  if !defined (SIGIO) && defined (SIGPOLL)
+#    define SIGIO SIGPOLL
+#  endif
 #endif
 
 /* Define SIGCHLD as an alias for SIGCLD.  There are many conditionals
@@ -131,7 +138,7 @@ signal_handler_t sys_do_signal (int signal_number, signal_handler_t action);
   sigsuspend (&_mask);				\
 } while (0)
 #define EMACS_REESTABLISH_SIGNAL(sig, handler)
-  
+
 #elif defined (HAVE_SIGBLOCK)
 
 /* The older BSD way (signal/sigvec, sigblock, sigsetmask, sigpause) */

@@ -159,8 +159,8 @@
 	#+window-system "gui"
 	#+window-system "mode-motion"
 	#+window-system "mouse"
-	#+window-system "dragdrop"
 	#+window-system "select"
+	#+dragdrop-api "dragdrop"
 ;; preload the X code, for faster startup.
 	#+(and (not infodock) (or x mswindows) menubar) "menubar-items"
 	#+(and infodock (or x mswindows) menubar) "id-menus"

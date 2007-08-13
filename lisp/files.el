@@ -390,13 +390,12 @@ Not actually set up until the first time you use it.")
 (defvar cdpath-previous nil
   "Prior value of the CDPATH environment variable.")
 
-(defvar path-separator ":"
-  "Character used to separate concatenated paths.")
-
 (defun parse-colon-path (cd-path)
-  "Explode a colon-separated list of paths into a string list.
-This will be moved into \"C\" when decode_path is no longer called so
-early in XEmacs initialization."
+  "Explode a colon-separated search path into a list of directory names.
+
+If you think you want to use this, you probably don't.  This function
+is provided for backward compatibility.  A more robust implementation
+of the same functionality is available as `split-path', which see."
   (and cd-path
        (let (cd-list (cd-start 0) cd-colon)
 	 (setq cd-path (concat cd-path path-separator))
@@ -1097,7 +1096,7 @@ The directory containing %s does not exist.  Create? "
 					       t))
 			 (quit
 			  (kill-buffer (current-buffer))
-			  (error "Canceled"))))
+			  (signal 'quit nil))))
 		   nil))))
       (if msg
 	  (progn
@@ -2077,7 +2076,7 @@ If the value is nil, don't make a backup."
   (car (cdr (file-attributes filename))))
 
 (defun file-relative-name (filename &optional directory)
-  "Convert FILENAME to be relative to DIRECTORY (default: default-directory).1
+  "Convert FILENAME to be relative to DIRECTORY (default: default-directory).
 This function returns a relative file name which is equivalent to FILENAME
 when used with that default directory as the default.
 If this is impossible (which can happen on MSDOS and Windows
@@ -2096,7 +2095,8 @@ then it returns FILENAME."
 	  filename
 	(let ((ancestor ".")
 	      (fname-dir (file-name-as-directory fname)))
-	  (while (and (not (string-match (concat "^" (regexp-quote directory)) fname-dir))
+	  (while (and (not (string-match (concat "^" (regexp-quote directory))
+					 fname-dir))
 		      (not (string-match (concat "^" (regexp-quote directory)) fname)))
 	    (setq directory (file-name-directory (substring directory 0 -1))
 		  ancestor (if (equal ancestor ".")

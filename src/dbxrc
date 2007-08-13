@@ -139,20 +139,37 @@ or when temacs builds successfully, but xemacs does not.
 end
 
 function run-temacs {
-  run -batch -l loadup.el run-temacs -q
+  unset EMACSLOADPATH
+  export EMACSBOOTSTRAPLOADPATH=../lisp/:..
+  run -batch -l ../lisp/loadup.el run-temacs -q
 }
 
 document update-elc << 'end'
 Usage: update-elc
-Run the elc compilation part of the build procedure.
+Run the core lisp byte compilation part of the build procedure.
 Use when debugging temacs, not xemacs!
 Use this when temacs builds successfully, but xemacs does not.
 end
 
 function update-elc {
-  export EMACSLOADPATH=../lisp/
-  run -batch -l update-elc.el
+  unset EMACSLOADPATH
+  export EMACSBOOTSTRAPLOADPATH=../lisp/:..
+  run -batch -l ../lisp/update-elc.el
 }
+
+
+function dump-temacs {
+  unset EMACSLOADPATH
+  export EMACSBOOTSTRAPLOADPATH=../lisp/:..
+  run -batch -l ../lisp/loadup.el dump
+}
+
+document dump-temacs << 'end'
+Usage: dump-temacs
+Run the dumping part of the build procedure.
+Use when debugging temacs, not xemacs!
+Use this when temacs builds successfully, but xemacs does not.
+end
 
 function pstruct {
   xstruct="((struct $1 *) $val)"

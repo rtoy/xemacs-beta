@@ -106,9 +106,12 @@ or go back to just one window (by deleting all but the selected window)."
 	((string-match "^ \\*" (buffer-name (current-buffer)))
 	 (bury-buffer))))
 
-;;#### This should really be a ring of last errors.
+;; Someone wrote: "This should really be a ring of last errors."
+;;
+;; But why bother?  This stuff is not all that necessary now that we
+;; have message log, anyway.
 (defvar last-error nil
-  "#### Document me.")
+  "Object describing the last signaled error.")
 
 (defcustom errors-deactivate-region nil
   "*Non-nil means that errors will cause the region to be deactivated."
@@ -154,10 +157,12 @@ or go back to just one window (by deleting all but the selected window)."
 (defun describe-last-error ()
   "Redisplay the last error-message.  See the variable `last-error'."
   (interactive)
-  (with-displaying-help-buffer
-   (lambda ()
-     (princ "Last error was:\n" standard-output)
-     (display-error last-error standard-output))))
+  (if last-error
+      (with-displaying-help-buffer
+       (lambda ()
+	 (princ "Last error was:\n" standard-output)
+	 (display-error last-error standard-output)))
+    (message "No error yet")))
 
 
 ;;#### Must be done later in the loadup sequence
@@ -439,8 +444,10 @@ signalled.  The character typed is returned as an ASCII value.  This
 is most likely the wrong thing for you to be using: consider using
 the `next-command-event' function instead."
   (save-excursion
-    (let* ((inhibit-quit t)
-	   (event (next-command-event)))
+    (let ((event (next-command-event)))
+      (or inhibit-quit
+	  (and (event-matches-key-specifier-p event (quit-char))
+	       (signal 'quit nil)))
       (prog1 (or (event-to-character event)
                  ;; Kludge.  If the event we read was a mouse-release,
                  ;; discard it and read the next one.
@@ -456,10 +463,12 @@ If a mouse click or non-ASCII character is detected, it is discarded.
 The character typed is returned as an ASCII value.  This is most likely
 the wrong thing for you to be using: consider using the
 `next-command-event' function instead."
-  (let ((inhibit-quit t)
-	event ch)
+  (let (event ch)
     (while (progn
 	     (setq event (next-command-event))
+	     (or inhibit-quit
+		 (and (event-matches-key-specifier-p event (quit-char))
+		      (signal 'quit nil)))
 	     (setq ch (event-to-character event))
 	     (deallocate-event event)
 	     (null ch)))
@@ -470,37 +479,39 @@ the wrong thing for you to be using: consider using the
 digit, we read up to two more octal digits and return the character
 represented by the octal number consisting of those digits.
 Optional argument PROMPT specifies a string to use to prompt the user."
-  (save-excursion
-    (let ((count 0) (code 0)
-	  (prompt (and prompt (gettext prompt)))
-	  char event)
-      (while (< count 3)
-        (let ((inhibit-quit (zerop count))
+  (let ((count 0) (code 0) done
+	(prompt (and prompt (gettext prompt)))
+	char event)
+    (while (and (not done) (< count 3))
+      (let ((inhibit-quit (zerop count))
 	    ;; Don't let C-h get the help message--only help function keys.
 	    (help-char nil)
 	    (help-form
 	     "Type the special character you want to use,
 or three octal digits representing its character code."))
-          (and prompt (display-message 'prompt (format "%s-" prompt)))
-          (setq event (next-command-event)
-                char (or (event-to-character event nil nil t)
-                         (error "key read cannot be inserted in a buffer: %S"
-                          event)))
-          (if inhibit-quit (setq quit-flag nil)))
-        (cond ((null char))
-              ((and (<= ?0 char) (<= char ?7))
-               (setq code (+ (* code 8) (- char ?0))
-                     count (1+ count))
-               (and prompt (display-message
-			    'prompt
-			    (setq prompt (format "%s %c" prompt char)))))
-              ((> count 0)
-               (setq unread-command-event event
-                     count 259))
-              (t (setq code char count 259))))
+	(and prompt (display-message 'prompt (format "%s-" prompt)))
+	(setq event (next-command-event)
+	      char (or (event-to-character event nil nil t)
+		       (signal 'error
+			       (list "key read cannot be inserted in a buffer"
+				     event))))
+	(if inhibit-quit (setq quit-flag nil)))
+      (cond ((<= ?0 char ?7)
+	     (setq code (+ (* code 8) (- char ?0))
+		   count (1+ count))
+	     (when prompt
+	       (display-message 'prompt
+		 (setq prompt (format "%s %c" prompt char)))))
+	    ((> count 0)
+	     (setq unread-command-event event
+		   done t))
+	    (t (setq code (char-int char)
+		     done t))))
+    (int-char code)
     ;; Turn a meta-character into a character with the 0200 bit set.
-    (logior (if (/= (logand code ?\M-\^@) 0) 128 0)
-	    (logand 255 code)))))
+;    (logior (if (/= (logand code ?\M-\^@) 0) 128 0)
+;	    (logand 255 code))))
+    ))
 
 (defun momentary-string-display (string pos &optional exit-char message) 
   "Momentarily display STRING in the buffer at POS.

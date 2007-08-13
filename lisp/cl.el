@@ -364,14 +364,20 @@ always returns nil."
 (defvar *random-state* (vector 'cl-random-state-tag -1 30 (cl-random-time)))
 
 ;;; We use `eval' in case VALBITS differs from compile-time to load-time.
-(defconst most-positive-fixnum (eval '(lsh -1 -1)))
-(defconst most-negative-fixnum (eval '(- -1 (lsh -1 -1))))
+(defconst most-positive-fixnum (eval '(lsh -1 -1))
+  "The integer closest in value to positive infinity.")
+(defconst most-negative-fixnum (eval '(- -1 (lsh -1 -1)))
+  "The integer closest in value to negative infinity.")
 
-;;; The following are actually set by cl-float-limits.
-(defconst most-positive-float nil)
-(defconst most-negative-float nil)
-(defconst least-positive-float nil)
-(defconst least-negative-float nil)
+;;; The following are set by code in cl-extra.el
+(defconst most-positive-float nil
+  "The float closest in value to positive infinity.")
+(defconst most-negative-float nil
+  "The float closest in value to negative infinity.")
+(defconst least-positive-float nil
+  "The positive float closest in value to 0.")
+(defconst least-negative-float nil
+  "The negative float closest in value to 0.")
 (defconst least-positive-normalized-float nil)
 (defconst least-negative-normalized-float nil)
 (defconst float-epsilon nil)

@@ -446,6 +446,15 @@ prove enlightening.
 
 * Problems with running XEmacs
 ==============================
+** On Solaris 2.6, XEmacs dumps core when exiting.
+
+This happens if you're XEmacs is running on the same machine as the X
+server, and the optimized memory transport has been turned on by
+setting the environment variable XSUNTRANSPORT.  The crash occurs
+during the call to XCloseDisplay.
+
+If this describes your situation, you need to undefine the
+XSUNTRANSPORT environment variable.
 
 ** `C-z', or `M-x suspend-emacs' hangs instead of suspending.
 

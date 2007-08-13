@@ -489,8 +489,8 @@ x_init_device (struct device *d, Lisp_Object props)
 	depth = DefaultDepth(dpy, screen);
       }
 
-    /* If we've got the same visual as the default and its PseudoColor, check to see if the user
-       specified that we need a private colormap */
+    /* If we've got the same visual as the default and it's PseudoColor,
+       check to see if the user specified that we need a private colormap */
     if (visual == DefaultVisual(dpy, screen))
       {
 	sprintf (buf1, "%s.privateColormap", app_name);
@@ -1403,24 +1403,24 @@ x_device_system_metrics (struct device *d,
 
   switch (m)
     {
-    case size_device:
+    case DM_size_device:
       return Fcons (make_int (DisplayWidth (dpy, DefaultScreen (dpy))),
 		    make_int (DisplayHeight (dpy, DefaultScreen (dpy))));
       break;
-    case size_device_mm:
+    case DM_size_device_mm:
       return Fcons (make_int (DisplayWidthMM (dpy, DefaultScreen (dpy))),
 		    make_int (DisplayHeightMM (dpy, DefaultScreen (dpy))));
       break;
-    case num_bit_planes:
+    case DM_num_bit_planes:
       return make_int (DisplayPlanes (dpy, DefaultScreen (dpy)));
       break;
-    case num_color_cells:
+    case DM_num_color_cells:
       return make_int (DisplayCells (dpy, DefaultScreen (dpy)));
       break;
     }
 
   /* Do not know such property */
-  return Qnil;
+  return Qunbound;
 }
 
 DEFUN ("x-server-vendor", Fx_server_vendor, 0, 1, 0, /*

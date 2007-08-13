@@ -1,4 +1,44 @@
 							-*- indented-text -*-
+to 21.0 beta40 "Saanen"
+-- Vertical divider hacking from Didier Verna and Kirill Katsnelson
+-- Bind cut'n'paste keys to generic functions from Jonathan Harris
+-- MS Windows toolbar size fix from Andy Piper
+-- Icons from MS Windows resources from Andy Piper
+-- New function `windows-text-lines-pixel-height' from Greg Klanderman
+-- Window beats buffer in specifiers from Kirill Katsnelson
+-- Dialog box as a dialog box from Kirill Katsnelson
+-- More DnD fixes from Oliver Graf
+-- NEWS updates from Hrvoje Niksic
+-- More device metrics from Kirill Katsnelson
+-- Miscellaneous patches from Hrvoje Niksic
+-- Documentation updates from Christian Nybø
+-- More vertical divider fixes from Kirill Katsnelson
+-- New function zap-up-to-char, behaves like zap-to-char in Emacs 18
+-- Toolbar fixes from Andy Piper
+-- Miscellaneous MS Windows fixes from Kirill Katsnelson
+-- vertical divider shadow thickness specifier from Didier Verna
+-- More device metrics from Kirill Katsnelson
+-- Minibuffer synch with FSF Emacs from Michael Sperber
+-- DnD fixes from Oliver Graf
+-- decode-path cleanup from Hrvoje Niksic
+-- Miscellaneous patches from Hrvoje Niksic
+-- clear region bg pixmap fixes from Andy Piper
+-- Various cleanup patches from Martin Buchholz
+-- miscellaneous code cleanup
+-- with-display-help-buffer fixes from Hrvoje Niksic
+-- Draggable vertical dividers from Kirill Katsnelson
+-- More MS Windows DnD support from Jonathan Harris
+-- Reversion to old key descriptions from Hrvoje Niksic
+-- DnD updates from Oliver Graf
+-- Fix mouse(-pixel)?-position from Kirill Katsnelson
+-- More device metrics fixes from Kirill Katsnelson
+-- background pixmaps for MS Windows from Andy Piper
+-- various build fixes from SAKIYAMA Nobuo and Kirill Katsnelson
+-- Fix for non-interruptible re_search from Hrvoje Niksic
+-- miscellaneous fixes from Hrvoje Niksic
+-- focus frame fixes from Hrvoje Niksic
+-- Really apply Kyle Jones' realpath fixes (sorry).
+
 to 21.0 beta39 "Russian White"
 -- DnD fixes from Oliver Graf and Jonathan Harris
 -- scrollbar visibility and placement specifiers from of Kirill Katsnelson

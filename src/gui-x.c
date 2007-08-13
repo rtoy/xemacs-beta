@@ -260,7 +260,8 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
       arg = Qmenu_no_selection_hook;
     }
   else if (SYMBOLP (data)
-	   /* poor man's commandp */
+	   /* poor man's commandp
+	      #### should abstract it out! */
 	   || (COMPILED_FUNCTIONP (data)
 	       && XCOMPILED_FUNCTION (data)->flags.interactivep)
 	   || (EQ (XCAR (data), Qlambda)

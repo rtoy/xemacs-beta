@@ -1,0 +1,71 @@
+@c -*-texinfo-*-
+@c This is part of the XEmacs Lisp Reference Manual.
+@c Copyright (C) 1998 Oliver Graf <ograf@fga.de>
+@c Original reference is (c) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc. 
+@c See the file lispref.texi for copying conditions.
+@setfilename ../../info/dragndrop.texi
+@node Drag'n'Drop, Modes, Scrollbars, Top
+@chapter Drag'n'Drop
+@cindex drag'n'drop
+
+  Drag'n'drop is a way to transfer information between multiple applications.
+To do this serveral GUIs define their own protocols. Examples are OffiX, CDE,
+Motif, KDE, MSWindows, GNOME, and many more. To catch all these protocols,
+XEmacs provides a generic API.
+
+@menu
+* Supported Protocols:: Which low-level protocols are supported.
+* Drop Interface::      How XEmacs handles a drop from another application.
+* Drag Interface::      Calls to initiate a drag from XEmacs.
+@end menu
+
+@node Supported Protocols
+@section Supported Protocols
+
+The current release of XEmacs only support a small set of Drag'n'drop
+protocols. Some of these only support limited options avaiable in the API.
+
+@menu
+* OffiX DND::           A generic X based protocol.
+* CDE dt::              Common Desktop Environment used on suns.
+* MSWindows OLE::       Mr. Gates way of live.
+@end menu
+
+@node OffiX DND
+@subsection OffiX DND
+@cindex OffiX DND
+
+The OffiX Drag'n'Drop protocol is part of a X API/Widget library created by
+Cesar Crusius. It is based on X-Atoms and ClientMessage events, and works with
+any X platform supporting them.
+
+OffiX is supported if 'offix is member of the variable dragdrop-protocols, or
+the feature 'offix is defined.
+
+XEmacs supports both MIME and URL drags and drops using this API. No application 
+interaction is possible while dragging is in progress.
+
+For infomation about the OffiX project have a look at http://leb.net/~offix/
+
+@node CDE dt
+@subsection CDE dt
+@cindex CDE dt
+
+to be written
+
+@node MSWindows OLE
+@subsection MSWindows OLE
+@cindex MSWindows OLE
+
+to be written
+
+@node Drop Interface
+@section Drop Interface
+@cindex drop
+
+This describes the drop API (under construction)
+
+@node Drag Interface
+@section Drag Interface
+
+This describes the drag API (not implemented yet).

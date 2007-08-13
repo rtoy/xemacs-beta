@@ -155,12 +155,14 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
   /* set button sizes based on bar size */
   if (vert)
     {
-      width = height = bar_width;
+      width = height = bar_width
+	- (window_frame_width + shadow_thickness) * 2; 
       bmwidth = bmheight = width - (border_width + shadow_thickness) * 2;
     }
   else
     {
-      height = width = bar_height - window_frame_width * 2; 
+      height = width = bar_height 
+	- (window_frame_width + shadow_thickness) * 2; 
       bmwidth = bmheight = width - (border_width + shadow_thickness) * 2; 
     }
 
@@ -336,13 +338,16 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
       /* vertical toolbars need more rows */
       if (vert)
 	{
+	  RECT tmp;
 	  SendMessage (toolbarwnd, TB_SETROWS, 
-		       MAKEWPARAM(nbuttons, FALSE), 0);
+		       MAKEWPARAM(nbuttons, FALSE), (LPARAM)&tmp);
 	}
 
       else
 	{
-	  SendMessage (toolbarwnd, TB_SETROWS, MAKEWPARAM(1, FALSE), 0);
+	  RECT tmp;
+	  SendMessage (toolbarwnd, TB_SETROWS, MAKEWPARAM(1, FALSE), 
+		       (LPARAM)&tmp);
 	}
 
       /* finally populate with images */

@@ -90,7 +90,7 @@ ifelse([$3], , , [  rm -fr conftest*
   $3
 ])dnl
 fi
-rm -fr conftest*])
+rm -fr conftest*])dnl AC_TRY_RUN_NATIVE
 
 
 dnl Avoid spurious cross-compiling warnings from AC_TRY_RUN
@@ -108,7 +108,7 @@ cat >> confdefs.h <<\EOF
 [#define] $1 ifelse($#, 2, [$2], 1)
 EOF
 }
-])
+])dnl AC_DEFINE
 
 define([AC_DEFINE_UNQUOTED],
 [{ test "$extra_verbose" = "yes" && cat << EOF
@@ -118,8 +118,7 @@ cat >> confdefs.h <<EOF
 [#define] $1 ifelse($#, 2, [$2], 1)
 EOF
 }
-])
-
+])dnl AC_DEFINE_UNQUOTED
 
 dnl redefine AC_CHECK_LIB in accordance with our own value of ac_link
 dnl Add in extra kludgy check to support with_dnet=no
@@ -138,7 +137,7 @@ else
 AC_CHECK_LIB_ORIG_HACKED([$1],[$2],[$3],[$4],[$5], [$6])
 [ifelse([$1],dnet,[fi
 ])]dnl
-)
+)dnl AC_CHECK_LIB
 
 define([AC_CHECK_LIB_ORIG_HACKED],
 [ifelse([$5],,AC_MSG_CHECKING([for $2 in -l$1]),
@@ -183,7 +182,7 @@ else
 ifelse([$4], , , [$4
 ])dnl
 fi
-])
+])dnl AC_CHECK_LIB_ORIG_HACKED
 
 
 dnl AC_LANG_C()
@@ -201,7 +200,7 @@ ac_cpp='$CPP '"$xe_cppflags"
 ac_compile='${CC-cc} -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext 1>&AC_FD_CC'
 ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' 1>&AC_FD_CC'
 cross_compiling=no
-])
+]) dnl AC_LANG_C
 
 dnl The construct foo=`echo $w1 $w2 $w3` fails on some systems if $w1 = -e or -n
 dnl So we use the following instead.
@@ -210,14 +209,14 @@ define([XE_SPACE],[
 T=""
 for W in $2; do if test -z "$T"; then T="$W"; else T="$T $W"; fi; done
 $1="$T"
-])dnl
+])dnl XE_SPACE
 
 dnl XE_ADD_OBJS(foo.o ...)
 define([XE_ADD_OBJS],
 [extra_objs="$extra_objs [$1]" && dnl
  if test "$extra_verbose" = "yes"; then
    echo "    xemacs will be linked with \"[$1]\""
- fi])
+ fi])dnl XE_ADD_OBJS
 
 dnl XE_APPEND(value, varname)
 define([XE_APPEND],
@@ -235,6 +234,27 @@ dnl The variables have the same names as the options, with
 dnl dashes changed to underlines.
 
 define([AC_INIT_PARSE_ARGS],[
+
+dnl Get sane consistent behavior from various shells
+dnl Avoid losing with weird user CDPATHs
+
+if test -n "$ZSH_VERSION"; then
+  dnl zsh's Bourne shell emulation options
+  setopt NO_BAD_PATTERN NO_BANG_HIST NO_BG_NICE NO_EQUALS NO_FUNCTION_ARGZERO
+  setopt GLOB_SUBST NO_HUP INTERACTIVE_COMMENTS KSH_ARRAYS NO_MULTIOS NO_NOMATCH
+  setopt RM_STAR_SILENT POSIX_BUILTINS SH_FILE_EXPANSION SH_GLOB SH_OPTION_LETTERS
+  setopt SH_WORD_SPLIT BSD_ECHO IGNORE_BRACES
+  dnl zsh-3.1-beta drops core on the following
+  dnl unset CDPATH
+  if test -n "$CDPATH"; then CDPATH="."; export CDPATH; fi
+elif test -n "$BASH_VERSION"; then
+  dnl Use Posix mode with bash
+  set -o posix
+  unset CDPATH
+else
+  if test -n "$CDPATH"; then CDPATH="."; export CDPATH; fi
+fi
+
 dnl Initialize some variables set by options.
 dnl The variables have the same names as the options, with
 dnl dashes changed to underlines.
@@ -254,15 +274,6 @@ target=NONE
 verbose=
 x_includes=NONE
 x_libraries=NONE
-CDPATH=.; export CDPATH
-
-dnl Allow this script to work with zsh, by setting sh emulation options
-if test -n "$ZSH_VERSION"; then
-  setopt NO_BAD_PATTERN NO_BANG_HIST NO_BG_NICE NO_EQUALS NO_FUNCTION_ARGZERO
-  setopt GLOB_SUBST NO_HUP INTERACTIVE_COMMENTS KSH_ARRAYS NO_MULTIOS NO_NOMATCH
-  setopt RM_STAR_SILENT POSIX_BUILTINS SH_FILE_EXPANSION SH_GLOB SH_OPTION_LETTERS
-  setopt SH_WORD_SPLIT BSD_ECHO IGNORE_BRACES
-fi
 
 dnl Installation directory options.
 dnl These are left unexpanded so users can "make install exec_prefix=/foo"
@@ -289,7 +300,8 @@ subdirs=
 MFLAGS= MAKEFLAGS=
 dnl Maximum number of lines to put in a shell here document.
 ac_max_here_lines=12
-])dnl
+])dnl AC_INIT_PARSE_ARGS
+
 AC_INIT(src/lisp.h)dnl
 AC_CONFIG_HEADER(src/config.h lwlib/config.h)
 dnl Remove any more than one leading "." element from the path name.
@@ -787,11 +799,23 @@ if test -n "$gung_ho"; then
 fi
 if test "$use_minimal_tagbits" = "no"; then
   test "$with_dlmalloc" = "yes" && \
-    USAGE_ERROR(--with-dlmalloc=yes requires --use-minimal-tagbits=yes)
+    USAGE_ERROR("--with-dlmalloc requires --use-minimal-tagbits")
   with_dlmalloc=no
 fi
 
-dnl# Ignore useless run-in-place flag
+dnl XE_CHECK_FEATURE_DEPENDENCY(feature1, feature2)
+define([XE_CHECK_FEATURE_DEPENDENCY],
+[if test "$with_$1 $with_$2" = "yes no"; then
+  USAGE_ERROR("--with-$1 requires --with-$2")
+elif test "$with_$2" = "no" ; then with_$1=no
+elif test "$with_$1" = "yes"; then with_$2=yes
+fi
+])
+
+dnl CDE requires tooltalk
+XE_CHECK_FEATURE_DEPENDENCY(cde, tooltalk)
+
+dnl Ignore useless run-in-place flag
 if test "$run_in_place" = "yes"; then
   AC_MSG_WARN("The --run-in-place option is ignored because it is unnecessary.")
 fi
@@ -1489,10 +1513,10 @@ dnl --------------------------------------------------
 
 dnl Sun Development environment support
 test "$with_sparcworks" = "yes" && with_workshop=yes # compatibility alias
+XE_CHECK_FEATURE_DEPENDENCY(workshop, tooltalk)
 if test "$with_workshop" = "yes"; then
   AC_DEFINE(SUNPRO)
   XE_ADD_OBJS(sunpro.o)
-  with_tooltalk=yes
 fi
 
 if test "$with_clash_detection" = "yes"; then
@@ -1585,7 +1609,7 @@ define([CPP_to_sh],
 [#]define [$1]ifelse([$3],,, [ "$3"])
 [#]endif
 configure___ [$2]=[$1]
-])
+])dnl CPP_to_sh
 
 dnl CPP_boolean_to_sh(CPP_SYMBOL, SH_VAR)
 define([CPP_boolean_to_sh],
@@ -1594,29 +1618,23 @@ configure___ [$2]=yes
 [#]else
 configure___ [$2]=no
 [#]endif
-])
+])dnl CPP_boolean_to_sh
 
-
-echo > $tempcname
-
-echo '
+cat > $tempcname <<EOF
 #define NOT_C_CODE
 #define C_SWITCH_SITE
 #define C_SWITCH_X_SITE
 #define LD_SWITCH_SITE
 #define LD_SWITCH_X_SITE
 #define LD_SWITCH_X_SITE_AUX
-#define OS_RELEASE '$os_release'
-#include "'$srcdir'/src/'$opsysfile'"
-#include "'$srcdir'/src/'$machfile'"
+#define OS_RELEASE $os_release
+#include "$srcdir/src/$opsysfile"
+#include "$srcdir/src/$machfile"
 
 CPP_to_sh(LIBS_MACHINE, libs_machine)
 CPP_to_sh(LIBS_SYSTEM,  libs_system)
 CPP_to_sh(LIBS_TERMCAP, libs_termcap)
 CPP_to_sh(LIB_STANDARD, libs_standard)
-
-' >> $tempcname
-echo '
 
 CPP_to_sh(OBJECTS_MACHINE, objects_machine)
 CPP_to_sh(OBJECTS_SYSTEM,  objects_system)
@@ -1631,14 +1649,11 @@ CPP_to_sh(UNEXEC, unexec, unexec.o)
 
 CPP_to_sh(LD_SWITCH_SHARED, ld_switch_shared, -c)
 
-' >> $tempcname
-echo '
-
 #ifdef ORDINARY_LINK
-#define LD "$(CC) $(CFLAGS)"
+#define LD "\$(CC) \$(CFLAGS)"
 #else /* no ORDINARY LINK */
 #ifdef COFF_ENCAPSULATE
-#define LD "$(CC) -nostdlib"
+#define LD "\$(CC) -nostdlib"
 #else /* not COFF_ENCAPSULATE */
 #ifdef LINKER
 #define LD LINKER
@@ -1651,9 +1666,6 @@ configure___ ld=LD
 
 CPP_to_sh(LIB_GCC, lib_gcc)
 CPP_to_sh(LD_TEXT_START_ADDR, ld_text_start_addr)
-
-' >> $tempcname
-echo '
 
 #if ! defined (ORDINARY_LINK) && !defined (START_FILES)
 #ifdef NO_REMAP
@@ -1676,8 +1688,8 @@ CPP_boolean_to_sh(SYSTEM_MALLOC, system_malloc)
 CPP_boolean_to_sh(TERMINFO, have_terminfo)
 CPP_boolean_to_sh(MAIL_USE_FLOCK, mail_use_flock)
 CPP_boolean_to_sh(MAIL_USE_LOCKF, mail_use_lockf)
+EOF
 
-' >> $tempcname
 dnl The value of CPP is a quoted variable reference, so we need to do this
 dnl to get its actual value...
 CPP=`eval "echo $CPP"`
@@ -2517,22 +2529,32 @@ dnl offix.c, so that the thing is dumped after lastfile.o
 AC_SUBST(dnd_objs)
 
 dnl Autodetect tooltalk
-test "$with_cde" = "yes" && with_tooltalk=yes # CDE requires tooltalk
 if test "$with_tooltalk" != "no" ; then
   dnl autodetect the location of tt_c.h
   dnl tt_c.h might be in Tt or desktop include directories
   for dir in "" "Tt/" "desktop/" ; do
-    AC_CHECK_HEADER(${dir}tt_c.h, tt_c_h_path="${dir}tt_c.h" && break)
+    AC_CHECK_HEADER(${dir}tt_c.h, tt_c_h_path="${dir}tt_c.h"; break)
   done
-  test -z "$tt_c_h_path" && with_tooltalk=no
+  if test -z "$tt_c_h_path"; then
+    if test "$with_tooltalk" = "yes"; then
+      USAGE_ERROR("Unable to find required tooltalk header files.")
+    fi
+    with_tooltalk=no
+  fi
 fi
 if test "$with_tooltalk" != "no" ; then
   for extra_libs in "" "-lI18N -lce" "-lcxx"; do
     AC_CHECK_LIB(tt, tt_message_create,
-      with_tooltalk=yes tt_libs="-ltt $extra_libs"; break, [:],$extra_libs)
+      tt_libs="-ltt $extra_libs"; break, [:],$extra_libs)
   done
+  if test -z "$tt_libs"; then
+    if test "$with_tooltalk" = "yes"; then
+      USAGE_ERROR("Unable to find required tooltalk libraries.")
+    fi
+    with_tooltalk=no
+  fi
 fi
-test -z "$with_tooltalk" && with_tooltalk=no
+test -z "$with_tooltalk" && with_tooltalk=yes
 if test "$with_tooltalk" = "yes"; then
   AC_DEFINE(TOOLTALK)
   AC_DEFINE_UNQUOTED(TT_C_H_PATH, "$tt_c_h_path")
@@ -2914,8 +2936,10 @@ if test "$with_mule" = "yes" ; then
     AC_DEFINE(HAVE_WNN)
     XE_PREPEND(-lwnn, libs_x)
     XE_ADD_OBJS(mule-wnnfns.o)
-    AC_CHECK_LIB(wnn, jl_fi_dic_list, with_wnn6=yes)
-    test "$with_wnn6" = "yes" && AC_DEFINE(WNN6)
+    if test "$with_wnn6" != "no"; then
+      AC_CHECK_LIB(wnn, jl_fi_dic_list, with_wnn6=yes)
+      test "$with_wnn6" = "yes" && AC_DEFINE(WNN6)
+    fi
   fi
 
   dnl Autodetect canna
@@ -3163,6 +3187,7 @@ AC_CHECK_FUNC(socket,
       [AC_MSG_RESULT(no)])
       AC_MSG_CHECKING("for ip_mreq struct in netinet/in.h")
       AC_TRY_LINK([
+#include <sys/types.h>
 #include <netinet/in.h>
       ],
       [static struct ip_mreq x;],

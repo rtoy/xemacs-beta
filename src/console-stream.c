@@ -201,12 +201,6 @@ stream_right_margin_width (struct window *w)
 }
 
 static int
-stream_divider_width (void)
-{
-  return 1;
-}
-
-static int
 stream_divider_height (void)
 {
   return 1;
@@ -302,7 +296,6 @@ console_type_create_stream (void)
   CONSOLE_HAS_METHOD (stream, text_width);
   CONSOLE_HAS_METHOD (stream, output_display_block);
   CONSOLE_HAS_METHOD (stream, output_vertical_divider);
-  CONSOLE_HAS_METHOD (stream, divider_width);
   CONSOLE_HAS_METHOD (stream, divider_height);
   CONSOLE_HAS_METHOD (stream, eol_cursor_width);
   CONSOLE_HAS_METHOD (stream, clear_to_window_end);

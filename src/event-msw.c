@@ -43,8 +43,11 @@ Boston, MA 02111-1307, USA.  */
 # include "menubar-msw.h"
 #endif
 
+#ifdef HAVE_DRAGNDROP
+# include "dragdrop.h"
+#endif
+
 #include "device.h"
-#include "dragdrop.h"
 #include "events.h"
 #include "frame.h"
 #include "lstream.h"
@@ -58,6 +61,8 @@ Boston, MA 02111-1307, USA.  */
 #include "events-mod.h"
 #ifdef HAVE_MSG_SELECT
 #include "sysfile.h"
+#elif defined(__CYGWIN32__)
+typedef unsigned int SOCKET;
 #endif
 #include <io.h>
 #include <errno.h>
@@ -1410,7 +1415,11 @@ mswindows_wm_timer_callback (HWND hwnd, UINT umsg, UINT id_timer, DWORD dwtime)
 
 /* 
  * Callback procedure for dde messages
+ *
+ * We execute a dde Open("file") by simulating a file drop, so dde support
+ * depends on dnd support.
  */
+#ifdef HAVE_DRAGNDROP
 HDDEDATA CALLBACK
 mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 			HSZ hszTopic, HSZ hszItem, HDDEDATA hdata,
@@ -1446,6 +1455,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	  struct gcpro gcpro1, gcpro2;
           Lisp_Object l_dndlist = Qnil;
 	  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
+	  Lisp_Object frmcons, devcons, concons;
 	  struct Lisp_Event *event = XEVENT (emacs_event);
 
 	  DdeGetData (hdata, cmd, len, 0);
@@ -1491,7 +1501,16 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	  GCPRO2 (emacs_event, l_dndlist);
 	  l_dndlist = make_string (filename, strlen (filename));
 
+	  /* Find a mswindows frame */
 	  event->channel = Qnil;
+	  FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
+	    {
+	      Lisp_Object frame = XCAR (frmcons);
+	      if (FRAME_TYPE_P (XFRAME (frame), mswindows))
+		event->channel = frame;
+	    };
+	  assert (!NILP (event->channel));
+
 	  event->timestamp = GetTickCount();
 	  event->event_type = misc_user_event;
 	  event->event.misc.button = 1;
@@ -1511,8 +1530,8 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
     default: 
       return (HDDEDATA) NULL; 
     } 
-
 }
+#endif
 
 /*
  * The windows procedure for the window class XEMACS_CLASS
@@ -2059,6 +2078,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
   break;
 
+#ifdef HAVE_DRAGNDROP
   case WM_DROPFILES:	/* implementation ripped-off from event-Xt.c */
     {
       UINT filecount, i, len;
@@ -2118,7 +2138,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       UNGCPRO;
     }
   break;
-
+#endif
 
   defproc:
   default:

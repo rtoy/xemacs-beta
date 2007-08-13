@@ -115,6 +115,9 @@ minibuffer is reinvoked while it is the selected window."
 (defvar minibuffer-help-form nil
   "Value that `help-form' takes on inside the minibuffer.")
 
+(defvar minibuffer-default nil
+  "Default value for minibuffer input.")
+  
 (defvar minibuffer-local-map
   (let ((map (make-sparse-keymap 'minibuffer-local-map)))
     map)
@@ -1290,8 +1293,9 @@ If N is negative, find the previous or Nth previous match."
 	      initial-minibuffer-history-position)
       (setq current-minibuffer-contents (buffer-string)
 	    current-minibuffer-point (point)))
-    (let ((narg (- minibuffer-history-position n)))
-      (cond ((< narg 0)
+    (let ((narg (- minibuffer-history-position n))
+	  (minimum (if minibuffer-default -1 0)))
+      (cond ((< narg minimum)
 	     (error "No following item in %s" minibuffer-history-variable))
 	    ((> narg (length (symbol-value minibuffer-history-variable)))
 	     (error "No preceding item in %s" minibuffer-history-variable)))
@@ -1301,8 +1305,10 @@ If N is negative, find the previous or Nth previous match."
 	  (progn
 	    (insert current-minibuffer-contents)
 	    (goto-char current-minibuffer-point))
-	(let ((elt (nth (1- minibuffer-history-position)
-			(symbol-value minibuffer-history-variable))))
+	(let ((elt (if (>= narg 0)
+		       (nth (1- minibuffer-history-position)
+			    (symbol-value minibuffer-history-variable))
+		     minibuffer-default)))
 	  (insert
 	   (if (not (stringp elt))
 	       (let ((print-level nil))

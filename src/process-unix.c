@@ -596,11 +596,9 @@ process_signal_char (int tty_fd, int signo)
       {
       case SIGINT:  return t.c_cc[VINTR];
       case SIGQUIT: return t.c_cc[VQUIT];
-#  if defined (VSWTCH) && !defined (PREFER_VSUSP)
-      case SIGTSTP: return t.c_cc[VSWTCH];
-#  else
+#if defined(SIGTSTP) && defined(VSUSP)
       case SIGTSTP: return t.c_cc[VSUSP];
-#  endif
+#endif
       }
   }
 

@@ -1276,7 +1276,6 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
   else if (SYMBOLP (key))
     {
       CONST char *str = 0;
-#if 0 /* obsolete keynames */
       if (brief)
 	{
 	  if      (EQ (key, QKlinefeed))  str = "LFD";
@@ -1287,7 +1286,6 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
 	  else if (EQ (key, QKspace))     str = "SPC";
 	  else if (EQ (key, QKbackspace)) str = "BS";
 	}
-#endif
       if (str)
 	{
 	  int i = strlen (str);
@@ -1648,6 +1646,7 @@ See also `mouse-event-p' `event-window-y-pixel'.
      OVER_NOTHING:	over the text area, but not over text
      OVER_OUTSIDE:	outside of the frame border
      OVER_TEXT:		over text in the text area
+     OVER_V_DIVIDER:	over windows vertical divider
 
    and return:
 
@@ -1790,6 +1789,16 @@ Return t if the mouse event EVENT occurred over a toolbar.
   int result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
   return result == OVER_TOOLBAR ? Qt : Qnil;
+}
+
+DEFUN ("event-over-vertical-divider-p", Fevent_over_vertical_divider_p, 1, 1, 0, /*
+Return t if the mouse event EVENT occurred over a window divider.
+*/
+       (event))
+{
+  int result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+  return result == OVER_V_DIVIDER ? Qt : Qnil;
 }
 
 struct console *
@@ -2160,6 +2169,7 @@ syms_of_events (void)
   DEFSUBR (Fevent_over_modeline_p);
   DEFSUBR (Fevent_over_border_p);
   DEFSUBR (Fevent_over_toolbar_p);
+  DEFSUBR (Fevent_over_vertical_divider_p);
   DEFSUBR (Fevent_channel);
   DEFSUBR (Fevent_window);
   DEFSUBR (Fevent_point);

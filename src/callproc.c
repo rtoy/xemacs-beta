@@ -49,7 +49,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef DOS_NT
 /* When we are starting external processes we need to know whether they
    take binary input (no conversion) or text input (\n is converted to
-   \r\n).  Similar for output: if newlines are written as \r\n then it's
+   \r\n).  Similarly for output: if newlines are written as \r\n then it's
    text process output, otherwise it's binary.  */
 Lisp_Object Vbinary_process_input;
 Lisp_Object Vbinary_process_output;
@@ -61,10 +61,6 @@ Lisp_Object Vshell_file_name;
    This is in the semi-bogus format of ("VAR=VAL" "VAR2=VAL2" ... )
  */
 Lisp_Object Vprocess_environment;
-
-#ifdef DOS_NT
-Lisp_Object Qbuffer_file_type;
-#endif /* DOS_NT */
 
 /* True iff we are about to fork off a synchronous process or if we
    are waiting for it.  */

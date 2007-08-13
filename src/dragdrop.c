@@ -42,8 +42,7 @@ Boston, MA 02111-1307, USA.  */
 	   and body.
 	   if it is a list it should look like
 	      ( MIME-TYPE MIME-ENCODING MIME-DATA )
-	   MIME-TYPE should have the format as required by tm-view, but
-	             is a string
+	   MIME-TYPE list of type and key.value conses. Same as in tm-view
 	   MIME-ENC  the same (a string in this case)
 	   MIME-DATA is a string
 */
@@ -51,6 +50,9 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 #include "dragdrop.h"
+
+/* The supported protocol list */
+Lisp_Object Vdragdrop_protocols;
 
 /* Drag'n'Drop data types known by XEmacs */
 Lisp_Object Qdragdrop_MIME;
@@ -114,4 +116,27 @@ syms_of_dragdrop (void)
   defsymbol (&Qdragdrop_MIME, "dragdrop-MIME");
   defsymbol (&Qdragdrop_URL,  "dragdrop-URL");
   defsymbol (&Qdragdrop_drop_dispatch, "dragdrop-drop-dispatch");
+}
+
+void
+vars_of_dragdrop (void)
+{
+  Fprovide (intern ("dragdrop-api"));
+
+  DEFVAR_CONST_LISP ("dragdrop-protocols", &Vdragdrop_protocols /*
+A list of supported Drag'n'drop protocols.
+Each element is the feature symbol of the protocol.
+*/ );
+  
+  Vdragdrop_protocols = Qnil;
+
+#ifdef HAVE_MSWINDOWS
+  Vdragdrop_protocols = Fcons ( Qmswindows , Vdragdrop_protocols );
+#endif
+#ifdef HAVE_CDE
+  Vdragdrop_protocols = Fcons ( intern ("cde") , Vdragdrop_protocols );
+#endif
+#ifdef HAVE_OFFIX_DND
+  Vdragdrop_protocols = Fcons ( intern ("offix") , Vdragdrop_protocols );
+#endif
 }

@@ -123,7 +123,9 @@ define xtype
 end
 
 define run-temacs
-run -batch -l loadup.el run-temacs -q
+  unset env EMACSLOADPATH
+  set env EMACSBOOTSTRAPLOADPATH ../lisp/:..
+  run -batch -l ../lisp/loadup.el run-temacs -q
 end
 
 document run-temacs
@@ -134,21 +136,22 @@ or when temacs builds successfully, but xemacs does not.
 end
 
 define update-elc
-  set env EMACSLOADPATH=../lisp/
-  set env EMACSBOOTSTRAPLOADPATH=../lisp/:..
-  run -batch -l update-elc.el
+  unset env EMACSLOADPATH
+  set env EMACSBOOTSTRAPLOADPATH ../lisp/:..
+  run -batch -l ../lisp/update-elc.el
 end
 
 document update-elc
 Usage: update-elc
-Run the elc compilation part of the build procedure.
+Run the core lisp byte compilation part of the build procedure.
 Use when debugging temacs, not xemacs!
 Use this when temacs builds successfully, but xemacs does not.
 end
 
 define dump-temacs
-  set env EMACSLOADPATH=../lisp/:..
-  run -batch -l loadup.el dump
+  unset env EMACSLOADPATH
+  set env EMACSBOOTSTRAPLOADPATH ../lisp/:..
+  run -batch -l ../lisp/loadup.el dump
 end
 
 document dump-temacs

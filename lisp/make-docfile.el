@@ -77,7 +77,7 @@
 ;; Then process the list of Lisp files.
 (define-function 'defalias 'define-function)
 
-(setq load-path (decode-path-internal (getenv "EMACSBOOTSTRAPLOADPATH")))
+(setq load-path (split-path (getenv "EMACSBOOTSTRAPLOADPATH")))
 
 ;; Then process the autoloads
 (setq autoload-file-name "auto-autoloads.elc")
@@ -90,7 +90,7 @@
 
 (setq
  load-path
- (nconc load-path (decode-path-internal (getenv "EMACSBOOTSTRAPLOADPATH"))))
+ (nconc load-path (split-path (getenv "EMACSBOOTSTRAPLOADPATH"))))
 
 (let (preloaded-file-list)
   (load (concat default-directory "../lisp/dumped-lisp.el"))

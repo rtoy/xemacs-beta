@@ -1,3 +1,15 @@
+1998-05-15  Christian Nybø <chr@mediascience.no>
+
+	* xemacs/killing.texi: Properly document `zap-to-char'.
+
+1998-05-10  Oliver Graf <ograf@fga.de>
+
+	* lispref/dragndrop.texi: new section for the DnD API
+	* lispref/lispref.texi: added Drag'n'Drop between scrollbars and
+	modes
+	* lispref/modes.texi: changed back-ref to Drag'n'Drop
+	* lispref/scrollbars.texi: changed next-ref to Drag'n'Drop
+
 1998-05-05  Oliver Graf <ograf@fga.de>
 
 	* commands.texi: exchange of dnd-drop with misc-user

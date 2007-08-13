@@ -533,6 +533,7 @@ symbol_is_constant (Lisp_Object sym, Lisp_Object val)
       case SYMVAL_CONST_CURRENT_BUFFER_FORWARD:
       case SYMVAL_CONST_SELECTED_CONSOLE_FORWARD:
         return 1;
+      default: break; /* Warning suppression */
       }
 
   /* We don't return true for keywords here because they are handled
@@ -589,6 +590,7 @@ verify_ok_for_buffer_local (Lisp_Object sym,
 	     but I don't want to consider that right now. */
         case SYMVAL_SELECTED_CONSOLE_FORWARD:
 	  goto not_ok;
+      default: break; /* Warning suppression */
       }
 
   return;
@@ -715,8 +717,9 @@ Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
    the user level, so there is no loss of generality.
 
    If a symbol is "unbound", then the contents of its value cell is
-   Qunbound.  Despite appearances, this is *not* a symbol, but is
-   a symbol-value-forward object.
+   Qunbound.  Despite appearances, this is *not* a symbol, but is a
+   symbol-value-forward object.  This is so that printing it results
+   in "INTERNAL EMACS BUG", in case it leaks to Lisp, somehow.
 
    Logically all of the following objects are "symbol-value-magic"
    objects, and there are some games played w.r.t. this (#### this
@@ -889,8 +892,7 @@ Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
    a symbol-value-buffer-local object, and most of the
    low-level functions below do not accept them; you need
    to call follow_varalias_pointers to get the actual
-   symbol to operate on.
-   */
+   symbol to operate on.  */
 
 static Lisp_Object
 mark_symbol_value_buffer_local (Lisp_Object obj,

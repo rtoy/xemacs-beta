@@ -2,24 +2,21 @@
 ;; combination with extents.
 ;;
 
-(defun dnd-drop-somewhere (object)
-  (message "Dropped somewhere else with :%s" object)
+(defun dnd-drop-message (event object text)
+  (message "Dropped %s with :%s" text object)
   t)
 
-(defun do-nothing (object)
+(defun do-nothing (event object)
   nil)
 
-(defun dnd-target1 (object)
-  (message "Drop on target1 with: %s" object)
-  t)
-
-(defun dnd-target2 (object)
-  (message "Drop on target2 with: %s" object)
-  t)
-
-(defun dnd-target3 (object)
-  (message "Drop on target3 with: %s" object)
-  t)
+(defun start-drag (event what &optional typ)
+  (cond ((featurep 'offix)
+	 (if (numberp typ)
+	     (offix-start-drag event what typ)
+	   (offix-start-drag event what)))
+	((featurep 'cde)
+	 (funcall (intern "cde-start-drag-internal") what))
+	(t display-message 'error "no valid drag protocols implemented")))
 
 (defun make-drop-targets ()
   (let ((buf (get-buffer-create "*DND misc-user extent test buffer*"))
@@ -31,21 +28,28 @@
     (insert "[ DROP TARGET 1]")
     (setq e (point))
     (setq ext (make-extent s e))
-    (set-extent-property ext 'dragdrop-drop-functions '(do-nothing dnd-target1))
+    (set-extent-property ext
+			 'dragdrop-drop-functions
+			 '((do-nothing t t)
+			   (dnd-drop-message t t "on target 1")))
     (set-extent-property ext 'mouse-face 'highlight)
     (insert "    ")
     (setq s (point))
     (insert "[ DROP TARGET 2]")
     (setq e (point))
     (setq ext (make-extent s e))
-    (set-extent-property ext 'dragdrop-drop-functions '(dnd-target2))
+    (set-extent-property ext
+			 'dragdrop-drop-functions
+			 '((dnd-drop-message t t "on target 2")))
     (set-extent-property ext 'mouse-face 'highlight)
     (insert "    ")
     (setq s (point))
     (insert "[ DROP TARGET 3]")
     (setq e (point))
     (setq ext (make-extent s e))
-    (set-extent-property ext 'dragdrop-drop-functions '(dnd-target3))
+    (set-extent-property ext
+			 'dragdrop-drop-functions
+			 '((dnd-drop-message t t "on target 3")))
     (set-extent-property ext 'mouse-face 'highlight)
     (newline 2)))
 
@@ -99,20 +103,23 @@
     
 (defun text-drag (event)
   (interactive "@e")
-  (offix-start-drag event "That's a test"))
+  (start-drag event "That's a test"))
 
 (defun file-drag (event)
   (interactive "@e")
-  (offix-start-drag event "/tmp/printcap" 2))
+  (start-drag event "/tmp/printcap" 2))
 
 (defun url-drag (event)
   (interactive "@e")
-  (offix-start-drag event "http://www.xemacs.org/" 8))
+  (start-drag event "http://www.xemacs.org/" 8))
 
 (defun files-drag (event)
   (interactive "@e")
-  (offix-start-drag event '("/tmp/dragtest" "/tmp/droptest" "/tmp/printcap") 3))
+  (start-drag event '("/tmp/dragtest" "/tmp/droptest" "/tmp/printcap") 3))
 
-(setq dragdrop-drop-functions '(do-nothing dnd-drop-somewhere do-nothing))
+(setq dragdrop-drop-functions '((do-nothing t t)
+				(dnd-drop-message 2 t "region somewhere else")
+				(dnd-drop-message 1 t "drag-source somewhere else")
+				(do-nothing t t)))
 (make-drag-starters)
 (make-drop-targets)

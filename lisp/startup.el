@@ -76,7 +76,7 @@ The frame system uses this to open frames to display messages while
 XEmacs loads the user's initialization file.")
 
 (defvar after-init-hook nil
-  "*Functions to call after loading the init file (`~/.xemacs/init.el').
+  "*Functions to call after loading the init file (`.emacs').
 The call is not protected by a condition-case, so you can set `debug-on-error'
 in `init.el', and put all the actual code on `after-init-hook'.")
 
@@ -104,7 +104,7 @@ the user's init file.")
   "List of plausible roots of the XEmacs hierarchy.")
 
 (defvar init-file-user nil
-  "Identity of user whose `~/.xemacs/init.el' file is or was read.
+  "Identity of user whose `.emacs' file is or was read.
 The value is nil if no init file is being used; otherwise, it may be either
 the null string, meaning that the init file was taken from the user that
 originally logged in, or it may be a string containing a user's name.
@@ -120,13 +120,13 @@ Setting `init-file-user' does not prevent Emacs from loading
 
 (defvar site-start-file (purecopy "site-start")
   "File containing site-wide run-time initializations.
-This file is loaded at run-time before `~/.xemacs/init.el'.  It
+This file is loaded at run-time before `.emacs'.  It
 contains inits that need to be in place for the entire site, but
 which, due to their higher incidence of change, don't make sense to
 load into XEmacs' dumped image.  Thus, the run-time load order is:
 
   1. file described in this variable, if non-nil;
-  2. `~/.xemacs/init.el';
+  2. `.emacs';
   3. `/path/to/xemacs/lisp/default.el'.
 
 Don't use the `site-start.el' file for things some users may not like.
@@ -149,7 +149,7 @@ is less convenient.")
 This is initialized based on `mail-host-address',
 after your init file is read, in case it sets `mail-host-address'.")
 
-(defvar auto-save-list-file-prefix "~/.xemacs/.saves-"
+(defvar auto-save-list-file-prefix "~/.saves-"
   "Prefix for generating auto-save-list-file-name.
 Emacs's pid and the system name will be appended to
 this prefix to create a unique file name.")

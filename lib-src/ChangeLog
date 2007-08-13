@@ -1,3 +1,16 @@
+1998-05-11  Martin Buchholz  <martin@xemacs.org>
+
+	* Makefile.in.in:
+	- Adjust for luser's CDPATH being set to something weird.
+	- Take into account bash 2.02's tendency to print the cwd when
+	  using CDPATH.  Always use `cd ./foo' instead of `cd foo'.
+	- fix the run-temacs target to use $(DUMPENV)
+	- fix the run-puremacs target to use $(DUMPENV)
+	- fix the `depend' target to properly $(RM) the right files
+	- Generate a better TAGS file for XEmacs' lisp code using
+	  hand-crafted regexps.
+	- Use standard coding conventions for modules/Makefile.in
+
 1998-05-07  Andy Piper  <andyp@parallax.co.uk>
 
 	* update-elc.sh: test x && y loses in the presence of set -e, use

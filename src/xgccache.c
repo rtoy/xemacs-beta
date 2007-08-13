@@ -266,7 +266,7 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
 }
 
 
-#if 1
+#ifdef DEBUG_XEMACS
 
 #include <stdio.h>
 
@@ -327,4 +327,4 @@ describe_gc_cache (struct gc_cache *cache)
     stderr_out ("\nERROR!  count should be %d\n\n", cache->size);
 }
 
-#endif
+#endif /* DEBUG_XEMACS */

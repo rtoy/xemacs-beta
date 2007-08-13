@@ -39,7 +39,7 @@
   "Windows within a frame."
   :group 'environment)
 
-(defun recenter (n &optional window)
+(defun recenter (&optional n window)
   "Center point in WINDOW and redisplay frame.  With N, put point on line N.
 The desired position of point is always relative to the window.
 Just C-u as prefix means put point in the center of the window.
@@ -57,24 +57,7 @@ This is just like calling `other-window' with the arg negated."
   (interactive "p")
   (other-window (- arg) all-frames device))
 
-(defun windows-of-buffer (&optional buffer)
-  "Return a list of windows that have BUFFER in them.
-If BUFFER is not specified, the current buffer will be used."
-  (or (bufferp buffer)
-      (if (stringp buffer)
-	  (setq buffer (or (get-buffer buffer)
-			   (get-file-buffer buffer)))
-	(setq buffer (current-buffer))))
-  (let* ((firstwin (next-window nil nil t))
-	 (wind firstwin)
-	 (done nil)
-	 window-list)
-    (while (not done)
-      (if (eq (window-buffer wind) buffer)
-	  (setq window-list (append window-list (list wind))))
-      (setq wind (next-window wind nil t))
-      (setq done (eq wind firstwin)))
-    window-list))
+(defalias 'windows-of-buffer 'get-buffer-window-list)
 
 (defun buffer-in-multiple-windows-p (&optional buffer)
   "Return t if BUFFER is in multiple windows.

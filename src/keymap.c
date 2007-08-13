@@ -208,6 +208,8 @@ static Lisp_Object Voverriding_local_map;
 
 static Lisp_Object Vkey_translation_map;
 
+static Lisp_Object Vvertical_divider_map;
+
 /* This is incremented whenever a change is made to a keymap.  This is
    so that things which care (such as the menubar code) can recompute
    privately-cached data when the user has changed keybindings.
@@ -2332,6 +2334,7 @@ get_relevant_keymaps (Lisp_Object keys,
   else
     {
       /* It's a mouse event; order of keymaps searched is:
+	 o  vertical-divider-map, if event is over a divider
 	 o  local-map of mouse-grabbed-buffer
 	 o  keymap of any/all extents under the mouse
 	 if the mouse is over a modeline:
@@ -2342,6 +2345,12 @@ get_relevant_keymaps (Lisp_Object keys,
 	 o  global-map
 	 */
       Lisp_Object window = Fevent_window (terminal);
+
+      if (!NILP (Fevent_over_vertical_divider_p (terminal)))
+	{
+	  if (KEYMAPP (Vvertical_divider_map))
+	    relevant_map_push (Vvertical_divider_map, &closure);
+	}
 
       if (BUFFERP (Vmouse_grabbed_buffer))
 	{
@@ -2535,6 +2544,7 @@ For key-presses, the order of keymaps searched is:
 
 For mouse-clicks, the order of keymaps searched is:
   - the current-local-map of the `mouse-grabbed-buffer' if any;
+  - vertical-divider-map, if the event happened over a vertical divider
   - the `keymap' property of any extent(s) at the position of the click
     (this includes modeline extents);
   - the modeline-map of the buffer corresponding to the modeline under
@@ -4314,6 +4324,10 @@ You should *bind* this, not set it.
 Keymap of key translations that can override keymaps.
 This keymap works like `function-key-map', but comes after that,
 and applies even for keys that have ordinary bindings.
+*/ );
+
+  DEFVAR_LISP ("vertical-divider-map", &Vvertical_divider_map /*
+Keymap which handles mouse clicks over vertical dividers.
 */ );
 
   DEFVAR_INT ("keymap-tick", &keymap_tick /*

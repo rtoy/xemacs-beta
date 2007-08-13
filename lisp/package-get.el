@@ -256,16 +256,15 @@ of the package, an error is signalled."
 	  ))
       (if (not (file-exists-p (package-get-staging-dir filename)))
 	  (error "Unable to find file %s" filename))
-      ;;
       ;; Validate the md5 checksum
-      ;; Unfortunately we cannot do this in XEmacs due to Mule lossage.
-      ;;
+      ;; Doing it with XEmacs removes the need for an external md5 program
       (with-temp-buffer
-	(call-process "md5sum" (package-get-staging-dir filename) t)
-	(goto-char (point-min))
-	(looking-at "[a-z0-9]+")
-	(if (not (string= (buffer-substring (match-beginning 0) (match-end 0))
-			  (package-get-info-prop this-package 'md5sum)))
+	; What ever happened to i-f-c-literally
+	(let (file-name-handler-alist)
+	  (insert-file-contents-internal (package-get-staging-dir filename)))
+	(if (not (string= (md5 (current-buffer))
+			  (package-get-info-prop this-package
+						 'md5sum)))
 	    (error "Package %s does not match md5 checksum" filename)))
       (message "Retrieved package %s" filename) (sit-for 0)
       (let ((status

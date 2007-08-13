@@ -48,14 +48,16 @@ Boston, MA 02111-1307, USA.  */
 
 enum device_metrics
 {
-  color_default, color_select, color_balloon, color_3d_face, color_3d_light,
-  color_3d_dark, color_menu, color_menu_high, color_menu_button,
-  color_menu_unsel, color_toolbar, color_scrollbar, color_desktop,
-  color_workspace, font_default, font_menubar, font_dialog, size_cursor,
-  size_scrollbar, size_menu, size_toolbar, size_tbbutton, size_tbborder,
-  size_icon, size_icon_small, size_device, size_workspace, size_device_mm,
-  device_dpi, num_bit_planes, num_color_cells,mouse_buttons,
-  swap_buttons, show_sounds, slow_device, security, dbcs, ime, mid_east
+  DM_color_default, DM_color_select, DM_color_balloon, DM_color_3d_face,
+  DM_color_3d_light, DM_color_3d_dark, DM_color_menu, DM_color_menu_highlight,
+  DM_color_menu_button, DM_color_menu_disabled, DM_color_toolbar,
+  DM_color_scrollbar, DM_color_desktop, DM_color_workspace, DM_font_default,
+  DM_font_menubar, DM_font_dialog, DM_size_cursor, DM_size_scrollbar,
+  DM_size_menu, DM_size_toolbar, DM_size_toolbar_button,
+  DM_size_toolbar_border, DM_size_icon, DM_size_icon_small, DM_size_device,
+  DM_size_workspace, DM_size_device_mm, DM_device_dpi, DM_num_bit_planes,
+  DM_num_color_cells, DM_mouse_buttons, DM_swap_buttons, DM_show_sounds,
+  DM_slow_device, DM_security
 };
 
 struct console_methods
@@ -133,7 +135,6 @@ struct console_methods
 			    CONST Emchar *str, Charcount len);
   void (*output_display_block_method) (struct window *, struct display_line *,
 				       int, int, int, int, int, int, int);
-  int (*divider_width_method) (void);
   int (*divider_height_method) (void);
   int (*eol_cursor_width_method) (void);
   void (*output_vertical_divider_method) (struct window *, int);
@@ -266,6 +267,7 @@ struct console_methods
 
 #ifdef HAVE_DIALOGS
   /* dialog methods */
+  void (*popup_dialog_box_method) (struct frame *, Lisp_Object dbox_desc);
 #endif
 };
 

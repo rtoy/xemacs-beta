@@ -257,9 +257,12 @@ the buffer of the window whose modeline was clicked upon.")
 
 (make-face 'modeline-mousable "Face for mousable portions of the modeline.")
 (set-face-parent 'modeline-mousable 'modeline nil '(default))
+(when (featurep 'window-system)
+  (set-face-foreground 'modeline-mousable 
+		       '(((default color x) . "firebrick")
+			 ((default color mswindows) . "firebrick"))
+			 'global))
 (when (featurep 'x)
-  (set-face-foreground 'modeline-mousable "firebrick" 'global
-		       '(default color x))
   (set-face-font 'modeline-mousable [bold] nil '(default mono x))
   (set-face-font 'modeline-mousable [bold] nil '(default grayscale x)))
 
@@ -294,10 +297,13 @@ in the list takes precedence.")
 	   "Face for mousable minor-mode strings in the modeline.")
 (set-face-parent 'modeline-mousable-minor-mode 'modeline-mousable nil
 		 '(default))
-(when (featurep 'x)
+(when (featurep 'window-system)
   (set-face-foreground 'modeline-mousable-minor-mode
 		       '(((default color x) . "green4")
-			 ((default color x) . "forestgreen")) 'global))
+			 ((default color x) . "forestgreen")
+			 ((default color mswindows) . "green4")
+			 ((default color mswindows) . "forestgreen")) 
+		       'global))
 
 (defvar modeline-mousable-minor-mode-extent (make-extent nil nil)
   ;; alliteration at its finest.
@@ -402,12 +408,14 @@ Example: (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
 		(lambda ()
 		  (interactive)
 		  (if defining-kbd-macro
-		      ;; #### 1 means to disregard the last event.
-		      ;; This is needed because the last recorded
-		      ;; event is usually the mouse event that invoked
-		      ;; the menu item (and this function), and having
-		      ;; it in the macro causes problems.
-		      (end-kbd-macro nil 1)
+		      (progn
+			;; #### This means to disregard the last event.
+			;; It is needed because the last recorded
+			;; event is usually the mouse event that
+			;; invoked the menu item (and this function),
+			;; and having it in the macro causes problems.
+			(zap-last-kbd-macro-event)
+			(end-kbd-macro nil))
 		    (start-kbd-macro nil))))
 
 (defun modeline-minor-mode-menu (event)
@@ -492,8 +500,11 @@ parentheses on the modeline."
 (make-face 'modeline-buffer-id
 	   "Face for the buffer ID string in the modeline.")
 (set-face-parent 'modeline-buffer-id 'modeline nil '(default))
-(when (featurep 'x)
-  (set-face-foreground 'modeline-buffer-id "blue4" 'global '(default color x)))
+(when (featurep 'window-system)
+  (set-face-foreground 'modeline-buffer-id 
+		       '(((default color x) . "blue4")
+			 ((default color mswindows) . "blue4"))
+		       'global))
 (when (featurep 'x)
   (set-face-font 'modeline-buffer-id [bold-italic] nil '(default mono x))
   (set-face-font 'modeline-buffer-id [bold-italic] nil '(default grayscale x)))

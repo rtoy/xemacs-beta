@@ -751,7 +751,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
       (error "Invalid specifier domain"))
   (let ((device (dfw-device domain))
 	(common-props '(foreground background font display-table underline))
-	(x-props '(background-pixmap strikethru))
+	(win-props '(background-pixmap strikethru))
 	(tty-props '(highlight dim blinking reverse)))
 
     ;; First check the properties which are used in common between the
@@ -760,8 +760,9 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
     (and (face-equal-loop common-props face1 face2 domain)
 	 (cond ((eq 'tty (device-type device))
 		(face-equal-loop tty-props face1 face2 domain))
-	       ((eq 'x (device-type device))
-		(face-equal-loop x-props face1 face2 domain))
+	       ((or (eq 'x (device-type device))
+		    (eq 'mswindows (device-type device)))
+		(face-equal-loop win-props face1 face2 domain))
 	       (t t)))))
 
 (defun face-differs-from-default-p (face &optional domain)

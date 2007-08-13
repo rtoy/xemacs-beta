@@ -2243,9 +2243,8 @@ complex_vars_of_buffer (void)
 #ifdef REGION_CACHE_NEEDS_WORK
     buffer_local_flags.cache_long_line_scans = make_int (0x2000);
 #endif
-    buffer_local_flags.buffer_file_type = make_int (0x4000);
 #ifdef FILE_CODING
-    buffer_local_flags.buffer_file_coding_system = make_int (0x8000);
+    buffer_local_flags.buffer_file_coding_system = make_int (0x4000);
 #endif
 
     /* #### Warning, 0x4000000 (that's six zeroes) is the largest number
@@ -2299,12 +2298,6 @@ This is the same as (default-value 'tab-width).
   DEFVAR_BUFFER_DEFAULTS ("default-case-fold-search", case_fold_search /*
 Default value of `case-fold-search' for buffers that don't override it.
 This is the same as (default-value 'case-fold-search).
-*/ );
-
-  DEFVAR_BUFFER_DEFAULTS ("default-buffer-file-type", buffer_file_type /*
-Default file type for buffers that do not override it.
-This is the same as (default-value 'buffer-file-type).
-The file type is nil for text, t for binary.
 */ );
 
   DEFVAR_BUFFER_LOCAL ("modeline-format", modeline_format /*
@@ -2444,12 +2437,6 @@ Name of default directory of current buffer.  Should end with slash.
 Each buffer has its own value of this variable.
 */ );
 
-  DEFVAR_BUFFER_LOCAL ("buffer-file-type", buffer_file_type /*
-    "Non-nil if the visited file is a binary file.
-This variable is meaningful on MS-DOS and Windows NT.
-On those systems, it is automatically local in every buffer.
-On other systems, this variable is normally always nil.
-*/ );
 #ifdef FILE_CODING
   DEFVAR_BUFFER_DEFAULTS ("default-buffer-file-coding-system", buffer_file_coding_system /*
 Default value of `buffer-file-coding-system' for buffers that do not override it.

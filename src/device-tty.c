@@ -187,14 +187,14 @@ tty_device_system_metrics (struct device *d,
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
   switch (m)
     {
-    case size_device:
+    case DM_size_device:
       return Fcons (make_int (CONSOLE_TTY_DATA (con)->width),
 		    make_int (CONSOLE_TTY_DATA (con)->height));
       break;
     }
 
   /* Do not know such property */
-  return Qnil;
+  return Qunbound;
 }
 
 /************************************************************************/

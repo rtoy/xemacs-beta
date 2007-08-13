@@ -144,6 +144,7 @@ Lisp_Object Vinfo_directory, Vconfigure_info_directory;
 Lisp_Object Vsite_directory, Vconfigure_site_directory;
 Lisp_Object Vconfigure_info_path;
 Lisp_Object Vinternal_error_checking;
+Lisp_Object Vpath_separator;
 
 /* The default base directory XEmacs is installed under. */
 Lisp_Object Vconfigure_exec_prefix_directory, Vconfigure_prefix_directory;
@@ -1087,6 +1088,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_TOOLBARS
       console_type_create_toolbar_x ();
 #endif
+#ifdef HAVE_DIALOGS
+      console_type_create_dialog_x ();
+#endif
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_MS_WINDOWS
@@ -1256,6 +1260,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
       vars_of_dired ();
       vars_of_doc ();
+#ifdef HAVE_DRAGNDROP
+      vars_of_dragdrop ();
+#endif
       vars_of_editfns ();
       vars_of_elhash ();
       vars_of_emacs ();
@@ -2448,61 +2455,109 @@ and announce itself normally when it is run.
 #define SEPCHAR ':'
 #endif
 
-DEFUN ("decode-path-internal", Fdecode_path_internal, 1, 1, 0, /*
-Explode a colon-separated list of paths into a list of strings.
-*/
-       (cd_path))
+/* Split STRING into a list of substrings.  The substrings are the
+   parts of original STRING separated by SEPCHAR.  */
+static Lisp_Object
+split_string_by_emchar_1 (CONST Bufbyte *string, Bytecount size,
+			  Emchar sepchar)
 {
-  if (NILP (cd_path))
-    return Qnil;
-
-  CHECK_STRING (cd_path);
-
-  return !XSTRING_LENGTH (cd_path) ?
-    list1 (Qnil) :
-    decode_path ((char *) XSTRING_DATA (cd_path));
-}
-
-Lisp_Object
-decode_path (CONST char *path)
-{
-  REGISTER CONST char *p;
-  Lisp_Object lpath = Qnil;
-
-  if (!path || !strlen (path)) return Qnil;
-
-#if defined (MSDOS) || defined (WIN32)
-  dostounix_filename (path);
-#endif
+  Lisp_Object result = Qnil;
+  CONST Bufbyte *end = string + size;
 
   while (1)
     {
-      p = strchr (path, SEPCHAR);
-      if (!p) p = path + strlen (path);
-      lpath = Fcons (make_string ((CONST Bufbyte *) path, p - path),
-		     lpath);
-      if (*p)
-	path = p + 1;
+      CONST Bufbyte *p = string;
+      while (p < end)
+	{
+	  if (charptr_emchar (p) == sepchar)
+	    break;
+	  INC_CHARPTR (p);
+	}
+      result = Fcons (make_string (string, p - string), result);
+      if (p < end)
+	{
+	  string = p;
+	  INC_CHARPTR (string);	/* skip sepchar */
+	}
       else
 	break;
     }
-  return Fnreverse (lpath);
+  return Fnreverse (result);
+}
+
+/* The same as the above, except PATH is an external C string (it is
+   converted as FORMAT_FILENAME), and sepchar is hardcoded to SEPCHAR
+   (':' or whatever).  */
+Lisp_Object
+decode_path (CONST char *path)
+{
+  int len;
+  Bufbyte *newpath;
+  if (!path)
+    return Qnil;
+
+  GET_C_CHARPTR_INT_FILENAME_DATA_ALLOCA (path, newpath);
+
+  len = strlen (newpath);
+  /* #### Does this make sense?  It certainly does for
+     decode_env_path(), but it looks dubious here.  Does any code
+     depend on decode_path("") returning nil instead of an empty
+     string?  */
+  if (!len)
+    return Qnil;
+
+  return split_string_by_emchar_1 (newpath, (Bytecount)len, SEPCHAR);
 }
 
 Lisp_Object
 decode_env_path (CONST char *evarname, CONST char *default_)
 {
-  REGISTER CONST char *path = 0;
+  CONST char *path = 0;
   if (evarname)
-    path = (char *) egetenv (evarname);
+    path = egetenv (evarname);
   if (!path)
     path = default_;
-  if (!path)
-    return Qnil;
-  else
-    return decode_path(path);
+  return decode_path (path);
 }
 
+/* Ben thinks this function should not exist or be exported to Lisp.
+   We use it to define split-path-string in subr.el (not!).  */
+
+DEFUN ("split-string-by-char", Fsplit_string_by_char, 1, 2, 0, /*
+Split STRING into a list of substrings originally separated by SEPCHAR.
+*/
+       (string, sepchar))
+{
+  CHECK_STRING (string);
+  CHECK_CHAR (sepchar);
+  return split_string_by_emchar_1 (XSTRING_DATA (string),
+				   XSTRING_LENGTH (string),
+				   XCHAR (sepchar));
+}
+
+/* #### This was supposed to be in subr.el, but is used VERY early in
+   the bootstrap process, so it goes here.  Damn.  */
+
+DEFUN ("split-path", Fsplit_path, 1, 1, 0, /*
+Explode a search path into a list of strings.
+The path components are separated with the characters specified
+with `path-separator'.
+*/
+       (path))
+{
+  CHECK_STRING (path);
+
+  while (!STRINGP (Vpath_separator)
+	 || (XSTRING_CHAR_LENGTH (Vpath_separator) != 1))
+    Vpath_separator = signal_simple_continuable_error
+      ("`path-separator' should be set to a single-character string",
+       Vpath_separator);
+
+  return (split_string_by_emchar_1
+	  (XSTRING_DATA (path), XSTRING_LENGTH (path),
+	   charptr_emchar (XSTRING_DATA (Vpath_separator))));
+}
+
 DEFUN ("noninteractive", Fnoninteractive, 0, 0, 0, /*
 Non-nil return value means XEmacs is running without interactive terminal.
 */
@@ -2588,7 +2643,8 @@ syms_of_emacs (void)
   DEFSUBR (Fquantify_clear_data);
 #endif /* QUANTIFY */
 
-  DEFSUBR (Fdecode_path_internal);
+  DEFSUBR (Fsplit_string_by_char);
+  DEFSUBR (Fsplit_path);	/* #### */
 
   defsymbol (&Qkill_emacs_hook, "kill-emacs-hook");
   defsymbol (&Qsave_buffers_kill_emacs, "save-buffers-kill-emacs");
@@ -2772,6 +2828,14 @@ bufpos		- check buffer positions.
 				    Vinternal_error_checking);
 #endif
   Vinternal_error_checking = Fpurecopy (Vinternal_error_checking);
+
+  DEFVAR_LISP ("path-separator", &Vpath_separator /*
+The directory separator in search paths, as a string.
+*/ );
+  {
+    char c = SEPCHAR;
+    Vpath_separator = make_string ((Bufbyte *)&c, 1);
+  }
 }
 
 void

@@ -22,18 +22,18 @@ Boston, MA 02111-1307, USA.  */
 
 /* To calculate the line numbers, redisplay must count the newlines
    from a known position.  This used to be BUF_BEGV, but this made the
-   redisplay extremely slow for large buffers, because Emacs must
-   rescan the whole buffer at each redisplay, just to count the
-   newlines.
+   line numbering extremely slow for large buffers, because Emacs had
+   to rescan the whole buffer at each redisplay.
 
-   To make line numbering efficient, we maintain a simple-minded
-   cache.  Each buffer contains a small ring of known positions, each
-   element of the ring being a Lisp_Object -- either nil or a cons of
-   a buffer position and the line number (beginning with 0).
+   To make line numbering efficient, we maintain a buffer-local cache
+   of recently used positions and their line numbers.  The cache is
+   implemented as a small ring of cache positions.  A cache position
+   is either nil or a cons of a buffer position (marker) and the
+   corresponding line number.
 
    When calculating the line numbers, this cache is consulted if it
    would otherwise take too much time to count the newlines in the
-   buffer (see the comment to window_line_number.)
+   buffer (see the comment to buffer_line_number().)
 
    Insertion and deletions that contain/delete newlines invalidate the
    cached positions after the insertion point.  This guarantees
@@ -42,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
    the buffers where the cache is actually initialized -- i.e. where
    line-numbering is on, and you move the point farther than
    LINE_NUMBER_FAR from the beginning of buffer.  In this sense, the
-   cache is lazy.  If you don't use it, you don't pay for it.
+   cache is lazy -- if you don't use it, you don't pay for it.
 
    NOTE: line-number cache should not be confused with line-start
    cache.  Line-start cache (a part of redisplay) works with the
@@ -56,21 +56,18 @@ Boston, MA 02111-1307, USA.  */
 
 #include "line-number.h"
 
-
-/* #### The following three values could use some tweaking, to get the
-   best performance.  I suspect LINE_NUMBER_FAR and
-   LINE_NUMBER_LARGE_STRING could be made bigger.  */
+/* #### The following three values could stand more exploration for
+   best performance.  */
 
 /* Size of the ring.  The current code expects this to be a small
-   number.  If you make it much bigger, you should probably tr yto
-   optimize the various routines to keep it sorted. */
+   number.  If you make it larger, you should probably optimize the
+   code below to keep it sorted. */
 #define LINE_NUMBER_RING_SIZE 8
 
 /* How much traversal has to be exceeded for two points to be
    considered "far" from each other.  When two points are far, cache
-   will be used.  You can set this to a small value for debugging
-   purposes.  */
-#define LINE_NUMBER_FAR 16384
+   will be used.  */
+#define LINE_NUMBER_FAR 32768
 
 /* How large a string has to be to give up searching it for newlines,
    before change. */
@@ -101,24 +98,23 @@ allocate_line_number_cache (struct buffer *b)
   narrow_line_number_cache (b);
 }
 
-/* Update line_number_begv, or flag it as dirty.  Do it only if the
-   line number cache is already initialized.  */
+/* Flag LINE_NUMBER_BEGV (b) as dirty.  Do it only if the line number
+   cache is already initialized.  */ 
 void
 narrow_line_number_cache (struct buffer *b)
 {
   if (NILP (b->line_number_cache))
     return;
-  /* Optimization: if BUF_BEG == BUF_BEGV (as is the case after Fwiden
-     and save_restriction_restore), don't bother calling scan_buffer.  */
+
   if (BUF_BEG (b) == BUF_BEGV (b))
-    {
-      LINE_NUMBER_BEGV (b) = Qzero;
-      return;
-    }
-  /* Calculating the line number of BUF_BEGV here is a bad idea,
-     because there is absolutely no reason to do it before the next
-     redisplay.  We simply mark it as dirty instead.  */
-  LINE_NUMBER_BEGV (b) = make_int (-1);
+    /* The is the case Fwiden and save_restriction_restore.  Since we
+       know the correct value, we can update it now.  */
+    LINE_NUMBER_BEGV (b) = Qzero;
+  else
+    /* Calculating the line number of BUF_BEGV here is a bad idea,
+       because there is absolutely no reason to do it before the next
+       redisplay.  We simply mark it as dirty instead.  */
+    LINE_NUMBER_BEGV (b) = make_int (-1);
 }
 
 /* Invalidate the line number cache positions that lie after POS. */
@@ -127,26 +123,24 @@ invalidate_line_number_cache (struct buffer *b, Bufpos pos)
 {
   EMACS_INT i, j;
   Lisp_Object *ring = XVECTOR_DATA (LINE_NUMBER_RING (b));
-  Lisp_Object lisp_buffer = make_buffer (b);
 
   for (i = 0; i < LINE_NUMBER_RING_SIZE; i++)
     {
       if (!CONSP (ring[i]))
 	break;
       /* As the marker stays behind the insertions, this check might
-         as well be `>'.  However, Finsert_before_markers can move the
-         marker anyway, which bites in shell buffers.
+         as well be `>'.  However, Finsert_before_markers can advance
+         the marker anyway, which bites in shell buffers.
 
-	 #### This is wrong; it works right, but forces recreation of
-	 the cached marker (and recalculation of newlines) every time
-	 a newline is inserted at point, which is way losing.  Isn't
-	 there a way to make a marker impervious to
-	 Finsert_before_markers()??  Maybe I should convert to using
-	 extents.  */
+	 #### This forces recreation of the cached marker (and
+	 recalculation of newlines) every time a newline is inserted
+	 at point, which is way losing.  Isn't there a way to make a
+	 marker impervious to Finsert_before_markers()??  Maybe I
+	 should convert the code to use extents.  */
       if (marker_position (XCAR (ring[i])) >= pos)
 	{
 	  /* Get the marker out of the way.  */
-	  Fset_marker (XCAR (ring[i]), Qnil, lisp_buffer);
+	  Fset_marker (XCAR (ring[i]), Qnil, Qnil);
 	  /* ...and shift the ring elements, up to the first nil.  */
 	  for (j = i; !NILP (ring[j]) && j < LINE_NUMBER_RING_SIZE - 1; j++)
 	    ring[j] = ring[j + 1];
@@ -162,7 +156,7 @@ invalidate_line_number_cache (struct buffer *b, Bufpos pos)
    than LINE_NUMBER_LARGE_STRING), invalidate the cache positions
    after POS without prior search.
 
-   This will do nothing, if cache is uninitialized.  */
+   This will do nothing if the cache is uninitialized.  */
 void
 insert_invalidate_line_number_cache (struct buffer *b, Bufpos pos,
 				     CONST Bufbyte *nonreloc, Bytecount length)
@@ -172,19 +166,19 @@ insert_invalidate_line_number_cache (struct buffer *b, Bufpos pos,
 
   if (length > LINE_NUMBER_LARGE_STRING
       ||
-      /* We could also count how many newlines are in the string, and
-         update the cache accordingly, but it would be too much work
-         for too little gain. */
+      /* We could also count how many newlines there are in the string
+         and update the cache accordingly, but it would be too much
+         work for too little gain. */
       memchr ((void *)nonreloc, '\n', (size_t) length))
     invalidate_line_number_cache (b, pos);
 }
 
 /* Invalidate the cache positions after FROM, if the region to be
-   deleted contains a newline.  If the region is too large (larger
-   than LINE_NUMBER_LARGE_STRING), invalidate the cache positions
-   after FROM without prior search.
+   deleted contains a newline.  If the region-to-be-deleted is larger
+   than LINE_NUMBER_LARGE_STRING, invalidate the cache positions after
+   FROM without unconditionally.
 
-   This will do nothing, if cache is uninitialized.  */
+   This will do nothing if the cache is uninitialized.  */
 void
 delete_invalidate_line_number_cache (struct buffer *b, Bufpos from, Bufpos to)
 {
@@ -215,22 +209,18 @@ static void
 get_nearest_line_number (struct buffer *b, Bufpos *beg, Bufpos pos,
 			 EMACS_INT *line)
 {
-  Lisp_Object *ring = XVECTOR_DATA (LINE_NUMBER_RING (b));
   EMACS_INT i;
-  Charcount length, howfar;
-  Bufpos newpos;
+  Lisp_Object *ring = XVECTOR_DATA (LINE_NUMBER_RING (b));
+  Charcount length = pos - *beg;
 
-  length = pos - *beg;
   if (length < 0)
     length = -length;
 
-  /* Look for the nearest match. */
-  for (i = 0; i < LINE_NUMBER_RING_SIZE; i++)
+  /* Find the ring entry closest to POS, if it is closer than BEG. */
+  for (i = 0; i < LINE_NUMBER_RING_SIZE && CONSP (ring[i]); i++)
     {
-      if (!CONSP (ring[i]))
-	break;
-      newpos = marker_position (XCAR (ring[i]));
-      howfar = newpos - pos;
+      Bufpos newpos = marker_position (XCAR (ring[i]));
+      Charcount howfar = newpos - pos;
       if (howfar < 0)
 	howfar = -howfar;
       if (howfar < length)
@@ -242,19 +232,25 @@ get_nearest_line_number (struct buffer *b, Bufpos *beg, Bufpos pos,
     }
 }
 
-/* Add a (pos, line) pair to the ring, and rotate it. */
+/* Add a (POS . LINE) pair to the ring, and rotate it. */
 static void
-add_line_number (struct buffer *b, Bufpos pos, int line)
+add_position_to_cache (struct buffer *b, Bufpos pos, int line)
 {
   Lisp_Object *ring = XVECTOR_DATA (LINE_NUMBER_RING (b));
-  Lisp_Object marker;
-  int i;
+  int i = LINE_NUMBER_RING_SIZE - 1;
 
-  for (i = LINE_NUMBER_RING_SIZE - 1; i > 0; i--)
+  /* Set the last marker in the ring to point nowhere. */
+  if (CONSP (ring[i]))
+    Fset_marker (XCAR (ring[i]), Qnil, Qnil);
+
+  /* Rotate the ring... */
+  for (; i > 0; i--)
     ring[i] = ring[i - 1];
-  marker = Fmake_marker ();
-  Fset_marker (marker, make_int (pos), make_buffer (b));
-  ring[0] = Fcons (marker, make_int (line));
+
+  /* ...and update it. */
+  ring[0] = Fcons (Fset_marker (Fmake_marker (), make_int (pos),
+				make_buffer (b)),
+		   make_int (line));
 }
 
 /* Calculate the line number in buffer B at position POS.  If CACHEP
@@ -272,7 +268,7 @@ add_line_number (struct buffer *b, Bufpos pos, int line)
    appropriately.
 
    If the calculation (with or without the cache lookup) required more
-   than LINE_NUMBER_FAR bytes of traversal, update the cache.  */
+   than LINE_NUMBER_FAR characters of traversal, update the cache.  */
 EMACS_INT
 buffer_line_number (struct buffer *b, Bufpos pos, int cachep)
 {
@@ -314,12 +310,11 @@ buffer_line_number (struct buffer *b, Bufpos pos, int cachep)
     {
       /* If too far, update the cache. */
       if ((pos > beg ? pos - beg : beg - pos) > LINE_NUMBER_FAR)
-	add_line_number (b, pos, line);
-      /* Account for narrowing.  If CACHEP is nil, this is
+	add_position_to_cache (b, pos, line);
+      /* Account for narrowing.  If cache is not used, this is
 	 unnecessary, because we counted from BUF_BEGV anyway.  */
       line -= XINT (LINE_NUMBER_BEGV (b));
     }
 
   return line;
 }
-

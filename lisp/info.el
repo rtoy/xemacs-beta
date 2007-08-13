@@ -2764,9 +2764,7 @@ e	Edit the contents of the current node."
       (progn
 	;; make a local copy of the menubar, so our modes don't
 	;; change the global menubar
-	(set-buffer-menubar current-menubar)
-	(add-submenu nil '("Info"
-			   :filter Info-menu-filter))))
+	(easy-menu-add '("Info" :filter Info-menu-filter))))
   (run-hooks 'Info-mode-hook)
   (Info-set-mode-line))
 

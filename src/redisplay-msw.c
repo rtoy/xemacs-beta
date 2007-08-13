@@ -51,14 +51,6 @@ Boston, MA 02111-1307, USA.  */
 #include "mule-charset.h"
 #endif
 
-/* MSWINDOWS_DIVIDER_LINE_WIDTH is the width of the line drawn in the gutter.
-   MSWINDOWS_DIVIDER_SPACING is the amount of blank space on each side of the line.
-   MSWINDOWS_DIVIDER_WIDTH = MSWINDOWS_DIVIDER_LINE_WIDTH + 2*MSWINDOWS_DIVIDER_SPACING
-*/
-#define MSWINDOWS_DIVIDER_LINE_WIDTH	7
-#define MSWINDOWS_DIVIDER_SPACING	0
-#define MSWINDOWS_DIVIDER_WIDTH	(MSWINDOWS_DIVIDER_LINE_WIDTH + 2 * MSWINDOWS_DIVIDER_SPACING)
-
 #define MSWINDOWS_EOL_CURSOR_WIDTH	5
 
 /*
@@ -71,11 +63,20 @@ static void mswindows_clear_region (Lisp_Object locale, face_index findex,
 static void mswindows_output_vertical_divider (struct window *w, int clear);
 static void mswindows_redraw_exposed_windows (Lisp_Object window, int x,
 					int y, int width, int height);
+static void mswindows_output_dibitmap (struct frame *f, 
+				       struct Lisp_Image_Instance *p,
+				       int x, int y, 
+				       int clip_x, int clip_y, 
+				       int clip_width, int clip_height, 
+				       int width, int height,
+				       int pixmap_offset,
+				       int offset_bitmap);
 static void mswindows_output_pixmap (struct window *w, struct display_line *dl,
 				     Lisp_Object image_instance, int xpos,
 				     int xoffset, int start_pixpos, int width,
 				     face_index findex, int cursor_start, 
-				     int cursor_width, int cursor_height);
+				     int cursor_width, int cursor_height,
+				     int offset_bitmap);
 
 typedef struct textual_run
 {
@@ -220,35 +221,21 @@ mswindows_update_dc (HDC hdc, Lisp_Object font, Lisp_Object fg,
   if (!NILP (font))
     SelectObject(hdc, FONT_INSTANCE_MSWINDOWS_HFONT (XFONT_INSTANCE (font)));
 
-#if defined(DEBUG_XEMACS) 
-  /* evil kludge! - #### do we need this? - cygwin does for some
-     reason --andyp */
-  if (!NILP (fg) && !COLOR_INSTANCEP (fg))
-    {
-      /* this break under mule */
-#if 0 
-      fprintf (stderr, "Help! mswindows_update_dc got a bogus fg value! fg = ");
-      debug_print (fg); 
-#endif
-      fg = Qnil;
-    }
-
-  if (!NILP (bg) && !COLOR_INSTANCEP (bg))
-    {
-      /* this break under mule */
-#if 0 
-      fprintf (stderr, "Help! mswindows_update_dc got a bogus fg value! bg = ");
-      debug_print (bg); 
-#endif
-      bg = Qnil;
-    }
-#endif
 
   if (!NILP (fg))
-    SetTextColor (hdc, COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (fg)));
-
+    {
+      SetTextColor (hdc, COLOR_INSTANCE_MSWINDOWS_COLOR 
+		    (XCOLOR_INSTANCE (fg)));
+    }
   if (!NILP (bg))
-    SetBkColor (hdc, COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (bg)));
+    { 
+      SetBkMode (hdc, OPAQUE);
+      SetBkColor (hdc, COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (bg)));
+    }
+  else 
+    {
+      SetBkMode (hdc, TRANSPARENT);
+    }
 }
 
 
@@ -285,10 +272,14 @@ mswindows_output_blank (struct window *w, struct display_line *dl, struct rune *
 
   if (!NILP(bg_pmap))
     {
+      /* blank the background in the appropriate color */
+      mswindows_update_dc (FRAME_MSWINDOWS_DC (f), Qnil, cachel->foreground,
+			   cachel->background, Qnil);
+
       mswindows_output_pixmap (w, dl, bg_pmap, 
-			       rb->xpos, rb->object.dglyph.xoffset,
+			       rb->xpos, 0 /*rb->object.dglyph.xoffset*/,
 			       start_pixpos, rb->width, rb->findex,
-			       0, 0, 0);
+			       0, 0, 0, TRUE);
     }
   else 
     {
@@ -431,7 +422,8 @@ mswindows_output_string (struct window *w, struct display_line *dl,
   unsigned char *text_storage = (unsigned char *) alloca (2 * len);
   textual_run *runs = alloca_array (textual_run, len);
   int nruns;
-  int i;
+  int i, height;
+  RECT rect;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
   XSETWINDOW (window, w);
@@ -454,21 +446,42 @@ mswindows_output_string (struct window *w, struct display_line *dl,
 
   xpos -= xoffset;
 
-  nruns = separate_textual_runs (text_storage, runs, Dynarr_atp (buf, 0),
-				 Dynarr_length (buf));
+  /* sort out the destination rectangle */
+  height = dl->ascent + dl->descent - dl->clip;
+  rect.left = clip_start;
+  rect.top  = dl->ypos - dl->ascent;
+  rect.right = clip_end;
+  rect.bottom = height + dl->ypos - dl->ascent;
 
+  /* output the background pixmap if there is one */
   bg_pmap = cachel->background_pixmap;
   if (!IMAGE_INSTANCEP (bg_pmap)
       || !IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (bg_pmap)))
     bg_pmap = Qnil;
 
+  if (!NILP(bg_pmap))
+    {
+      /* blank the background in the appropriate color */
+      mswindows_update_dc (hdc, Qnil, cachel->foreground,
+			   cachel->background, Qnil);
+
+      mswindows_output_pixmap (w, dl, bg_pmap, 
+			       xpos, xoffset,
+			       clip_start, width, findex,
+			       0, 0, 0, TRUE);
+      /* output pixmap calls this so we have to recall to get correct
+         references */
+      cachel = WINDOW_FACE_CACHEL (w, findex);
+    }
+
+  nruns = separate_textual_runs (text_storage, runs, Dynarr_atp (buf, 0),
+				 Dynarr_length (buf));
+
   for (i = 0; i < nruns; i++)
     {
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
-      /* struct Lisp_Font_Instance *fi = XFONT_INSTANCE (font);*/
+      struct Lisp_Font_Instance *fi = XFONT_INSTANCE (font);
       int this_width;
-      RECT rect = { clip_start, dl->ypos - dl->ascent,
-		    clip_end, dl->ypos + dl->descent - dl->clip };
 
       if (EQ (font, Vthe_null_font_instance))
 	continue;
@@ -477,15 +490,24 @@ mswindows_output_string (struct window *w, struct display_line *dl,
 			   NILP(bg_pmap) ? cachel->background : Qnil, Qnil);
 
       this_width = mswindows_text_width_single_run (hdc, cachel, runs + i);
-
-      /* #### bg_pmap should be output here */
-      if (!NILP(bg_pmap))
+      
+      /* cope with fonts taller than lines */
+      if ((int) fi->height < (int) (height + dl->clip))
 	{
-	  mswindows_output_pixmap (w, dl, bg_pmap, 
-				   xpos, xoffset,
-				   clip_start, width, findex,
-				   0, 0, 0);
+	  int clear_start = max (xpos, clip_start);
+	  int clear_end = min (xpos + this_width, clip_end);
+	  
+	  {
+	    mswindows_clear_region (window, findex, clear_start,
+				    dl->ypos - dl->ascent, 
+				    clear_end - clear_start,
+				    height);
+	    /* output pixmap calls this so we have to recall to get correct
+	       references */
+	    cachel = WINDOW_FACE_CACHEL (w, findex);
+	  }
 	}
+
       assert (runs[i].dimension == 1);	/* XXX FIXME */
       ExtTextOut (hdc, xpos, dl->ypos,
 		  NILP(bg_pmap) ? ETO_CLIPPED | ETO_OPAQUE : ETO_CLIPPED,
@@ -498,88 +520,145 @@ mswindows_output_string (struct window *w, struct display_line *dl,
     }
 }
 
-void
+static void
 mswindows_output_dibitmap (struct frame *f, struct Lisp_Image_Instance *p,
 			   int x, int y, 
 			   int clip_x, int clip_y, 
 			   int clip_width, int clip_height, 
-			   int width, int height, int pixmap_offset)
+			   int width, int height, int pixmap_offset,
+			   int offset_bitmap)
 {
   HDC hdc = FRAME_MSWINDOWS_DC (f);
-  HGDIOBJ old;
+  HGDIOBJ old=NULL;
+  COLORREF bgcolor = GetBkColor (hdc);
   int need_clipping = (clip_x || clip_y);
+  int yoffset=0;
+  int xoffset=0;
+  /* do we need to offset the pixmap vertically? this is necessary
+     for background pixmaps. */
+  if (offset_bitmap)
+    {
+      yoffset = y % IMAGE_INSTANCE_PIXMAP_HEIGHT (p);
+      xoffset = x % IMAGE_INSTANCE_PIXMAP_WIDTH (p);
+      /* the width is handled by mswindows_output_pixmap_region */
+    }
 
   if (need_clipping)
     {
-#if 0
-      XRectangle clip_box[1];
-      
-      clip_box[0].x = clip_x;
-      clip_box[0].y = clip_y;
-      clip_box[0].width = clip_width;
-      clip_box[0].height = clip_height;
-      
-      XSetClipRectangles (dpy, gc, x, y, clip_box, 1, Unsorted);
-#endif
     }
 
-  /* Select the bitmaps into the compatible DC. */
-  if ((old=SelectObject(FRAME_MSWINDOWS_CDC (f),
-			IMAGE_INSTANCE_MSWINDOWS_BITMAP (p))))
+  /* first blt the mask */
+  if (IMAGE_INSTANCE_MSWINDOWS_MASK (p))
     {
-      if (!IMAGE_INSTANCE_MSWINDOWS_MASK (p))
-	{
-	  BitBlt(hdc, 
-		 x,y,
-		 width, height, 
-		 FRAME_MSWINDOWS_CDC (f),
-		 0,0, 
-		 SRCCOPY);                  
-	}
-      else
-	{
-	  MaskBlt(hdc, 
-		  x,y,
-		  width, height, 
-		  FRAME_MSWINDOWS_CDC (f),
-		  0,0, 
-		  IMAGE_INSTANCE_MSWINDOWS_MASK (p),
-		  0,0,
-		  MAKEROP4(SRCINVERT,SRCCOPY));
-	}
-      SelectObject (FRAME_MSWINDOWS_CDC (f),old);
-    }
-  else
-    {
-      /* error */
-    }
+      RGBQUAD col;
+      col.rgbBlue = GetBValue (bgcolor);
+      col.rgbRed = GetRValue (bgcolor);
+      col.rgbGreen = GetGValue (bgcolor);
+      col.rgbReserved = 0;
 
-#if 0
+      old = SelectObject (FRAME_MSWINDOWS_CDC (f),
+			  IMAGE_INSTANCE_MSWINDOWS_MASK (p));
+      
+      SetDIBColorTable (FRAME_MSWINDOWS_CDC (f), 1, 1, &col);
+
+      BitBlt (hdc, 
+	      x,y,
+	      width, height, 
+	      FRAME_MSWINDOWS_CDC (f),
+	      xoffset,yoffset, 
+	      SRCCOPY);                  
+
+      SelectObject (FRAME_MSWINDOWS_CDC (f), old);
+    }
+  
+  /* now blt the bitmap itself. */
+  old = SelectObject (FRAME_MSWINDOWS_CDC (f),
+		      IMAGE_INSTANCE_MSWINDOWS_BITMAP (p));
+
+  BitBlt (hdc, 
+	  x,y,
+	  width, height, 
+	  FRAME_MSWINDOWS_CDC (f),
+	  xoffset, yoffset, 
+	  IMAGE_INSTANCE_MSWINDOWS_MASK (p) ? SRCINVERT : SRCCOPY);
+
+  SelectObject (FRAME_MSWINDOWS_CDC (f),old);
+
   if (need_clipping)
     {
-      XSetClipMask (dpy, gc, None);
-      XSetClipOrigin (dpy, gc, 0, 0);
     }
-#endif
+}
+
+/*
+ * X gc's have this nice property that setting the bg pixmap will
+ * output it offset relative to the window. Windows doesn't have this
+ * feature so we have to emulate this by outputting multiple pixmaps 
+ */
+static void
+mswindows_output_dibitmap_region (struct frame *f, 
+				  struct Lisp_Image_Instance *p,
+				  int x, int y, 
+				  int clip_x, int clip_y, 
+				  int clip_width, int clip_height, 
+				  int width, int height, int pixmap_offset,
+				  int offset_bitmap)
+{
+  int pwidth = min (width, IMAGE_INSTANCE_PIXMAP_WIDTH (p));
+  int pheight = min (height, IMAGE_INSTANCE_PIXMAP_HEIGHT (p));
+  int pxoffset = 0, pyoffset = 0;
+
+  /* when doing a bg pixmap do a partial pixmap first so that we
+     blt whole pixmaps thereafter */
+
+  if (offset_bitmap)
+    {
+      pheight = min (pheight, IMAGE_INSTANCE_PIXMAP_HEIGHT (p) -
+		     y % IMAGE_INSTANCE_PIXMAP_HEIGHT (p));
+    }
+  
+  while (pheight > 0)
+    {
+      if (offset_bitmap)
+	{
+	  pwidth = min (min (width, IMAGE_INSTANCE_PIXMAP_WIDTH (p)),
+			IMAGE_INSTANCE_PIXMAP_WIDTH (p) -
+			x % IMAGE_INSTANCE_PIXMAP_WIDTH (p));
+	  pxoffset = 0;
+	}
+      while (pwidth > 0)
+	{
+	  mswindows_output_dibitmap (f, p,
+				     x + pxoffset, y + pyoffset, 
+				     clip_x, clip_y, 
+				     clip_width, clip_height, 
+				     pwidth, pheight, pixmap_offset,
+				     offset_bitmap);
+	  pxoffset += pwidth;
+	  pwidth = min ((width-pxoffset), 
+			IMAGE_INSTANCE_PIXMAP_WIDTH (p));
+	}
+      pyoffset += pheight;
+      pheight = min ((height-pyoffset), 
+		     IMAGE_INSTANCE_PIXMAP_HEIGHT (p));
+    }
 }
 
 static void
 mswindows_output_pixmap (struct window *w, struct display_line *dl,
 			 Lisp_Object image_instance, int xpos, int xoffset,
 			 int start_pixpos, int width, face_index findex,
-			 int cursor_start, int cursor_width, int cursor_height)
+			 int cursor_start, int cursor_width, int cursor_height,
+			 int offset_bitmap)
 {
   struct frame *f = XFRAME (w->frame);
-#if 0
   HDC hdc = FRAME_MSWINDOWS_DC (f);
-#endif
+
   struct Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
   Lisp_Object window;
 
   int lheight = dl->ascent + dl->descent - dl->clip;
   int pheight = ((int) IMAGE_INSTANCE_PIXMAP_HEIGHT (p) > lheight ? lheight :
 		 IMAGE_INSTANCE_PIXMAP_HEIGHT (p));
-  int pwidth = min (width + xoffset, (int) IMAGE_INSTANCE_PIXMAP_WIDTH (p));
   int clip_x, clip_y, clip_width, clip_height;
 
   /* The pixmap_offset is used to center the pixmap on lines which are
@@ -655,27 +734,22 @@ mswindows_output_pixmap (struct window *w, struct display_line *dl,
 	  clear_width = width;
 	}
 
-      mswindows_clear_region (window, findex, clear_x, clear_y,
-			      clear_width, clear_height);
+      if (!offset_bitmap)	/* i.e. not a bg pixmap */
+	mswindows_clear_region (window, findex, clear_x, clear_y,
+				clear_width, clear_height);
     }
 
-  /* Output the pixmap. */
-  {
-    Lisp_Object tmp_pixel;
-    COLORREF tmp_bcolor, tmp_fcolor;
-    
-    tmp_pixel = WINDOW_FACE_CACHEL_FOREGROUND (w, findex);
-    tmp_fcolor = COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (tmp_pixel));
-    tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, findex);
-    tmp_bcolor = COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (tmp_pixel));
-#if 0
-    mswindows_update_dc (hdc, Qnil, tmp_fcolor,
-			 tmp_bcolor, Qnil);
-#endif
-    mswindows_output_dibitmap (f, p, xpos - xoffset, dl->ypos - dl->ascent,
-			       clip_x, clip_y, clip_width, clip_height,
-			       pwidth, pheight, pixmap_offset);
-  }
+  /* Output the pixmap. Have to do this as many times as is required
+   to fill the given area */
+  mswindows_update_dc (hdc, Qnil,
+		       WINDOW_FACE_CACHEL_FOREGROUND (w, findex),
+		       WINDOW_FACE_CACHEL_BACKGROUND (w, findex), Qnil);
+
+  mswindows_output_dibitmap_region (f, p, xpos - xoffset,
+				    dl->ypos - dl->ascent,
+				    clip_x, clip_y, clip_width, clip_height,
+				    width + xoffset, pheight, pixmap_offset,
+				    offset_bitmap);
 }
 
 #ifdef HAVE_SCROLLBARS
@@ -696,27 +770,16 @@ mswindows_redisplay_deadbox_maybe (struct window *w, CONST RECT* prc)
     return;
 
   if (!NILP (w->scrollbar_on_left_p))
-    {
-      rect_dead.left = WINDOW_LEFT (w);
-      rect_dead.right = WINDOW_LEFT (w) + sbw;
-    }
+    rect_dead.left = WINDOW_LEFT (w);
   else
-    {
-      rect_dead.left = WINDOW_RIGHT (w) - sbw;
-      rect_dead.right = WINDOW_RIGHT (w);
-    }
+    rect_dead.left = WINDOW_TEXT_RIGHT (w);
+  rect_dead.right = rect_dead.left + sbw;
 
   if (!NILP (w->scrollbar_on_top_p))
-    {
-      rect_dead.top = WINDOW_TOP (w);
-      rect_dead.bottom = WINDOW_TOP (w) + sbh;
-    }
+    rect_dead.top = WINDOW_TOP (w);
   else
-    {
-      int modh = window_modeline_height (w);
-      rect_dead.top = WINDOW_BOTTOM (w) - modh - sbh;
-      rect_dead.bottom = WINDOW_BOTTOM (w) - modh;
-    }
+    rect_dead.top = WINDOW_TEXT_BOTTOM (w);
+  rect_dead.bottom = rect_dead.top + sbh;
       
   if (IntersectRect (&rect_paint, &rect_dead, prc))
     {
@@ -892,19 +955,8 @@ mswindows_bevel_modeline (struct window *w, struct display_line *dl)
 
 
 /*****************************************************************************
- #### Display methods
+ Display methods
 *****************************************************************************/
-
-/*****************************************************************************
- mswindows_divider_width
-
- Return the width of the vertical divider.
- ****************************************************************************/
-static int
-mswindows_divider_width (void)
-{
-  return MSWINDOWS_DIVIDER_WIDTH;
-}
 
 /*****************************************************************************
  mswindows_divider_height
@@ -1141,7 +1193,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
 		    mswindows_output_pixmap (w, dl, instance, xpos,
 				     rb->object.dglyph.xoffset, start_pixpos,
 				     rb->width, findex, cursor_start,
-				     cursor_width, cursor_height);
+				     cursor_width, cursor_height, 0);
 		    if (rb->cursor_type == CURSOR_ON)
 		      mswindows_output_cursor (w, dl, xpos, cursor_width,
 					       findex, 0, 1);
@@ -1187,52 +1239,60 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
 /*****************************************************************************
  mswindows_output_vertical_divider
 
- Draw a vertical divider down the left side of the given window.
+ Draw a vertical divider down the right side of the given window.
  ****************************************************************************/
 static void
-mswindows_output_vertical_divider (struct window *w, int clear)
+mswindows_output_vertical_divider (struct window *w, int clear_unused)
 {
   struct frame *f = XFRAME (w->frame);
-  Lisp_Object color;
   RECT rect;
-  int shadow_width = MODELINE_SHADOW_THICKNESS (w);
+  int spacing = XINT (w->vertical_divider_spacing);
+  int shadow = XINT (w->vertical_divider_shadow_thickness);
+  int abs_shadow = abs (shadow);
+  int line_width = XINT (w->vertical_divider_line_width);
+  int div_left = WINDOW_RIGHT (w) - window_divider_width (w);
 
-  /* We don't use the normal gutter measurements here because the
-     horizontal scrollbars and toolbars do not stretch completely over
-     to the right edge of the window.  Only the modeline does. */
-  int modeline_height = window_modeline_height (w);
+  /* Clear left and right spacing areas */
+  if (spacing)
+    {
+      rect.top = WINDOW_TOP (w);
+      rect.bottom = WINDOW_BOTTOM (w);
+      mswindows_update_dc (FRAME_MSWINDOWS_DC (f), Qnil, Qnil,
+		   WINDOW_FACE_CACHEL_BACKGROUND (w, DEFAULT_INDEX), Qnil);
+      rect.right = WINDOW_RIGHT (w);
+      rect.left = rect.right - spacing;
+      ExtTextOut (FRAME_MSWINDOWS_DC (f), 0, 0, ETO_OPAQUE, 
+		  &rect, NULL, 0, NULL);
+      rect.left = div_left;
+      rect.right = div_left + spacing;
+      ExtTextOut (FRAME_MSWINDOWS_DC (f), 0, 0, ETO_OPAQUE, 
+		  &rect, NULL, 0, NULL);
+    }
+  
+  /* Clear divider face */
+  rect.top = WINDOW_TOP (w) + abs_shadow;
+  rect.bottom = WINDOW_BOTTOM (w) - abs_shadow;
+  rect.left = div_left + spacing + abs_shadow;
+  rect.right = rect.left + line_width;
+  if (rect.left < rect.right)
+    {
+      face_index div_face
+	= get_builtin_face_cache_index (w, Vvertical_divider_face);
+      mswindows_update_dc (FRAME_MSWINDOWS_DC (f), Qnil, Qnil,
+		   WINDOW_FACE_CACHEL_BACKGROUND (w, div_face), Qnil);
+      ExtTextOut (FRAME_MSWINDOWS_DC (f), 0, 0, ETO_OPAQUE, 
+		  &rect, NULL, 0, NULL);
+    }
 
-  assert(!MSWINDOWS_DIVIDER_SPACING);		/* This code doesn't handle this */
-
-  /* XXX Not sure about this */
-#ifdef HAVE_SCROLLBARS
-  if (!NILP (w->scrollbar_on_left_p))
-    rect.left = WINDOW_LEFT (w);
-  else
-    rect.left = WINDOW_RIGHT (w) - MSWINDOWS_DIVIDER_WIDTH;
-#else
-  rect.left = WINDOW_LEFT (w);
-#endif
-  rect.right = rect.left + MSWINDOWS_DIVIDER_WIDTH;
-
-#ifdef HAVE_SCROLLBARS
-  if (!NILP (w->scrollbar_on_top_p))
-    rect.top = WINDOW_TOP (w);
-  else
-#endif
-    rect.top = WINDOW_TEXT_TOP (w);
-  rect.bottom = WINDOW_BOTTOM (w) - modeline_height;
-
-  /* Draw the divider line */
-  color = WINDOW_FACE_CACHEL_BACKGROUND (w, MODELINE_INDEX);
-  mswindows_update_dc (FRAME_MSWINDOWS_DC(f), Qnil, Qnil, color, Qnil);
-  ExtTextOut (FRAME_MSWINDOWS_DC (f), 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
-  if (shadow_width)
-    DrawEdge (FRAME_MSWINDOWS_DC (f), &rect,
-	      shadow_width==1 ? BDR_RAISEDINNER : EDGE_RAISED,
-	      BF_TOP|BF_RIGHT|BF_LEFT);
+  /* Draw a shadow around the divider */
+  if (shadow != 0)
+    {
+      /* #### This will be fixed to support arbitrary thichkness */
+      InflateRect (&rect, abs_shadow, abs_shadow);
+      DrawEdge (FRAME_MSWINDOWS_DC (f), &rect,
+		shadow > 0 ? EDGE_RAISED : EDGE_SUNKEN, BF_RECT);
+    }
 }
-
 
 /****************************************************************************
  mswindows_text_width
@@ -1318,28 +1378,31 @@ mswindows_clear_region (Lisp_Object locale, face_index findex, int x, int y,
 
   if (!UNBOUNDP (background_pixmap))
     {
+      Lisp_Object fcolor, bcolor;
+      
+      if (w)
+	{
+	  fcolor = WINDOW_FACE_CACHEL_FOREGROUND (w, findex);
+	  bcolor = WINDOW_FACE_CACHEL_BACKGROUND (w, findex);
+	}
+      else
+	{
+	  fcolor = FACE_FOREGROUND (Vdefault_face, locale);
+	  bcolor = FACE_BACKGROUND (Vdefault_face, locale);
+	}
+
+      mswindows_update_dc (FRAME_MSWINDOWS_DC (f),
+			   Qnil, fcolor, bcolor, background_pixmap);
+
       if (XIMAGE_INSTANCE_PIXMAP_DEPTH (background_pixmap) == 0)
 	{
-	  Lisp_Object fcolor, bcolor;
-
-	  if (w)
-	    {
-	      fcolor = WINDOW_FACE_CACHEL_FOREGROUND (w, findex);
-	      bcolor = WINDOW_FACE_CACHEL_BACKGROUND (w, findex);
-	    }
-	  else
-	    {
-	      fcolor = FACE_FOREGROUND (Vdefault_face, locale);
-	      bcolor = FACE_BACKGROUND (Vdefault_face, locale);
-	    }
-
-	  mswindows_update_dc (FRAME_MSWINDOWS_DC (f),
-			       Qnil, fcolor, bcolor, background_pixmap);
 	  FillRect (FRAME_MSWINDOWS_DC(f), &rect, brush);
 	}
       else
 	{
-	  assert(0);
+	  mswindows_output_dibitmap_region 
+	    ( f, XIMAGE_INSTANCE (background_pixmap),
+	      x, y, 0, 0, 0, 0, width, height, 0, TRUE);
 	}
     }
   else
@@ -1425,7 +1488,6 @@ console_type_create_redisplay_mswindows (void)
   /* redisplay methods */
   CONSOLE_HAS_METHOD (mswindows, text_width);
   CONSOLE_HAS_METHOD (mswindows, output_display_block);
-  CONSOLE_HAS_METHOD (mswindows, divider_width);
   CONSOLE_HAS_METHOD (mswindows, divider_height);
   CONSOLE_HAS_METHOD (mswindows, eol_cursor_width);
   CONSOLE_HAS_METHOD (mswindows, output_vertical_divider);

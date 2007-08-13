@@ -5,8 +5,9 @@
 /* AIX 4 does not have HFT any more.  */
 #undef AIXHFT
 
-/* Get strcasecmp, and friends, for warning suppression.
-   These functions shouldn't actually be used, but don't try to fix it.  */
 #ifndef NOT_C_CODE
-#include <strings.h>
+#define _XFUNCS_H_ 1
+/* Forward declarations for xlc warning suppressions */
+struct ether_addr;
+struct sockaddr_dl;
 #endif

@@ -4474,6 +4474,10 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
   for (;;)
     {
       DEBUG_PRINT2 ("\n0x%p: ", p);
+#ifdef emacs /* XEmacs added, w/removal of immediate_quit */
+      if (!no_quit_in_re_search)
+	QUIT;
+#endif
 
       if (p == pend)
 	{ /* End of pattern means we might have succeeded.  */

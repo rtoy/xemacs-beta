@@ -111,7 +111,7 @@ int disable_auto_save_when_buffer_shrinks;
 
 Lisp_Object Qfile_name_handler_alist;
 
-Lisp_Object Vpath_separator;
+Lisp_Object Vdirectory_sep_char;
 
 /* These variables describe handlers that have "already" had a chance
    to handle the current operation.
@@ -657,9 +657,9 @@ Generate temporary file name starting with PREFIX.
 The Emacs process number forms part of the result, so there is no
 danger of generating a name being used by another process.
 
-In addition, this function makes an attempt to choose a name which
-has no existing file.  To make this work, PREFIX should be an
-absolute file name.
+In addition, this function makes an attempt to choose a name that
+does not specify an existing file.  To make this work, PREFIX should
+be an absolute file name.
 */
        (prefix))
 {
@@ -1289,7 +1289,7 @@ No component of the resulting pathname will be a symbolic link, as
 
     /* Try doing it all at once. */
     /* !!#### Does realpath() Mule-encapsulate? */
-    if (!realpath (path, resolved_path))
+    if (!xrealpath (path, resolved_path))
       {
 	/* Didn't resolve it -- have to do it one component at a time. */
 	/* "realpath" is a typically useless, stupid un*x piece of crap.
@@ -1304,7 +1304,7 @@ No component of the resulting pathname will be a symbolic link, as
 	      *p = 0;
 
 	    /* memset (resolved_path, 0, sizeof (resolved_path)); */
-	    if (realpath (path, resolved_path))
+	    if (xrealpath (path, resolved_path))
 	      {
 		if (p)
 		  *p = '/';
@@ -2455,7 +2455,7 @@ searchable directory.
 }
 
 DEFUN ("file-regular-p", Ffile_regular_p, 1, 1, 0, /*
-  "Return t if file FILENAME is the name of a regular file.
+Return t if file FILENAME is the name of a regular file.
 This is the sort of file that holds an ordinary stream of data bytes.
 */
        (filename))
@@ -4305,10 +4305,12 @@ Saving the buffer normally turns auto-save back on.
 */ );
   disable_auto_save_when_buffer_shrinks = 1;
 
-  DEFVAR_LISP ("path-separator", &Vpath_separator /*
-    *Directory separator string for built-in functions that return file names.
-The value should be either \"/\" or \"\\\".
+  DEFVAR_LISP ("directory-sep-char", &Vdirectory_sep_char /*
+Directory separator character for built-in functions that return file names.
+The value should be either ?/ or ?\ (any other value is treated as ?\).
+This variable affects the built-in functions only on Windows,
+on other platforms, it is initialized so that Lisp code can find out
+what the normal separator is.
 */ );
-  Vpath_separator = build_string("X");
-  (XSTRING_DATA (Vpath_separator))[0] = DIRECTORY_SEP;
+  Vdirectory_sep_char = make_char ('/');
 }

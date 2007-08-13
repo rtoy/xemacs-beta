@@ -172,4 +172,8 @@ int interruptible_open (CONST char *path, int oflag, int mode);
 extern int h_errno;
 #endif
 
+#ifdef HAVE_REALPATH
+#define xrealpath realpath
+#endif
+
 #endif /* _XEMACS_SYSDEP_H_ */

@@ -43,6 +43,15 @@
   (interactive)
   (ding))
 
+(defmacro kbd (keys)
+  "Convert KEYS to the internal Emacs key representation.
+KEYS should be a string in the format used for saving keyboard macros
+\(see `insert-kbd-macro')."
+  (if (or (stringp keys)
+	  (vectorp keys))
+      (read-kbd-macro keys)
+    `(read-kbd-macro ,keys)))
+
 (defun suppress-keymap (map &optional nodigits)
   "Make MAP override all normally self-inserting keys to be undefined.
 Normally, as an exception, digits and minus-sign are set to make prefix args,
@@ -271,7 +280,7 @@ Regardless of MAPVAR, COMMAND's function-value is always set to the keymap."
 ;;; This is used both by call-interactively (for the command history)
 ;;; and by macros.el (for saving keyboard macros to a file).
 
-;; ### why does (events-to-keys [backspace]) return "\C-h"?
+;; #### why does (events-to-keys [backspace]) return "\C-h"?
 ;; BTW, this function is a mess, and macros.el does *not* use it, in
 ;; spite of the above comment.  `format-kbd-macro' is used to save
 ;; keyboard macros to a file.

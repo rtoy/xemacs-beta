@@ -256,7 +256,7 @@ all-elc all-elcs: lib-src lwlib dump-elcs src
 
 ## Sub-target for all-elc.
 dump-elc dump-elcs: ${GENERATED_HEADERS} FRC.dump-elcs
-	cd src && $(RECURSIVE_MAKE) dump-elcs
+	cd ./src && $(RECURSIVE_MAKE) dump-elcs
 
 autoloads: src
 	MAKE='$(MAKE)' EMACS='./src/$(PROGNAME)' sh ${srcdir}/lib-src/update-autoloads.sh
@@ -266,7 +266,7 @@ custom-loads:
 
 finder: src
 	@echo "Building finder database ..."
-	@(cd lisp; \
+	@(cd ./lisp; \
 		${blddir}/src/${PROGNAME} -batch -vanilla \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
@@ -274,7 +274,7 @@ finder: src
 
 lisp/finder-inf.el:
 	@echo "Building finder database ..."
-	@(cd lisp; \
+	@(cd ./lisp; \
 		${blddir}/src/${PROGNAME} -batch -vanilla \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
@@ -313,7 +313,7 @@ FRC.src FRC.lib-src FRC.lwlib FRC.dynodump pkg-src/FRC.tree-x:
 FRC.lisp.finder-inf.el:
 
 ${SUBDIR}: ${SUBDIR_MAKEFILES} ${GENERATED_HEADERS} FRC
-	cd $@ && $(RECURSIVE_MAKE) all
+	cd ./$@ && $(RECURSIVE_MAKE) all
 
 Makefile: ${srcdir}/Makefile.in config.status
 	./config.status
@@ -374,10 +374,11 @@ install: all check-features install-arch-dep install-arch-indep
 
 install-arch-dep: mkdir
 	for subdir in ${INSTALL_ARCH_DEP_SUBDIR}; do \
-	( cd $${subdir} && $(RECURSIVE_MAKE) install prefix=${prefix} \
+	(cd ./$${subdir} && $(RECURSIVE_MAKE) install prefix=${prefix} \
 	    exec_prefix=${exec_prefix} bindir=${bindir} libdir=${libdir} \
-	    archlibdir=${archlibdir} ) ; done
-	if test `(cd ${archlibdir} && $(pwd))` != `(cd lib-src && $(pwd))`; then \
+	    archlibdir=${archlibdir}) ; done
+	if test "`(cd ${archlibdir} && $(pwd))`" != \
+		"`(cd ./lib-src && $(pwd))`"; then \
 	   if test -f ../Installation; then \
 		${INSTALL_DATA} ../Installation ${archlibdir}/Installation; \
 	   fi; \
@@ -404,7 +405,8 @@ install-arch-dep: mkdir
 install-arch-indep: mkdir info
 	-@set ${COPYDESTS} ; \
 	 for dir in ${COPYDIR} ; do \
-	   if [ `(cd $$1 && $(pwd))` != `(cd $${dir} && $(pwd))` ] ; then \
+	   if test "`(cd $$1 && $(pwd))`" != \
+		   "`(cd $${dir} && $(pwd))`"; then \
 	     : do nothing - echo "rm -rf $$1" ; \
 	   fi ; \
 	   shift ; \
@@ -416,7 +418,8 @@ install-arch-indep: mkdir info
 	 for dir in ${COPYDIR} ; do \
 	   dest=$$1 ; shift ; \
 	   test -d $${dir} \
-	     -a `(cd $${dir} && $(pwd))` != `(cd $${dest} && $(pwd))` \
+	     -a "`(cd $${dir} && $(pwd))`" != \
+		"`(cd $${dest} && $(pwd))`" \
 	   && (echo "Copying $${dir}..." ; \
 	       (cd $${dir} && tar -cf - . ) | \
 		(cd $${dest} && umask 022 && tar -xf - );\
@@ -425,7 +428,8 @@ install-arch-indep: mkdir info
 		 (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; \
 	       done) ; \
 	 done
-	if test `(cd ${srcdir}/info && $(pwd))` != `(cd ${infodir} && $(pwd))` && cd ${srcdir}/info; then \
+	if test "`(cd ${srcdir}/info && $(pwd))`" != \
+		"`(cd ${infodir} && $(pwd))`" && cd ${srcdir}/info; then \
 	  if test ! -f ${infodir}/dir -a -f dir ; then \
 	    ${INSTALL_DATA} ${srcdir}/info/dir ${infodir}/dir ; \
 	  fi ; \
@@ -468,7 +472,7 @@ mkdir: FRC.mkdir
 #### This target has not been updated in sometime and until it is it
 #### would be extremely dangerous for anyone to use it.
 #uninstall:
-#	(cd lib-src; 					\
+#	(cd ./lib-src; 					\
 #	 $(RECURSIVE_MAKE) uninstall			\
 #	    prefix=${prefix} exec_prefix=${exec_prefix}	\
 #	    bindir=${bindir} libdir=${libdir} archlibdir=${archlibdir})
@@ -503,7 +507,7 @@ FRC.mostlyclean FRC.clean FRC.distclean FRC.realclean FRC.tags:
 ##      target for GCC does not delete `libgcc.a', because recompiling it
 ##      is rarely necessary and takes a lot of time.
 mostlyclean: FRC.mostlyclean
-	for d in $(SUBDIR); do (cd $$d && $(RECURSIVE_MAKE) $@); done
+	for d in $(SUBDIR); do (cd ./$$d && $(RECURSIVE_MAKE) $@); done
 
 ## `clean'
 ##      Delete all files from the current directory that are normally
@@ -514,7 +518,7 @@ mostlyclean: FRC.mostlyclean
 
 ##      Delete `.dvi' files here if they are not part of the distribution.
 clean: FRC.clean
-	for d in $(SUBDIR); do (cd $$d && $(RECURSIVE_MAKE) $@); done
+	for d in $(SUBDIR); do (cd ./$$d && $(RECURSIVE_MAKE) $@); done
 	$(RM) core
 
 ## `distclean'
@@ -533,7 +537,7 @@ top_distclean=\
 	$(RM) packages mule-packages site-lisp
 
 distclean: FRC.distclean
-	for d in $(SUBDIR); do (cd $$d && $(RECURSIVE_MAKE) $@); done
+	for d in $(SUBDIR); do (cd ./$$d && $(RECURSIVE_MAKE) $@); done
 	-${top_distclean}
 
 ## `realclean'
@@ -548,7 +552,7 @@ distclean: FRC.distclean
 ##      anything that needs to exist in order to run `configure' and then
 ##      begin to build the program.
 realclean: FRC.realclean
-	for d in $(SUBDIR); do (cd $$d && $(RECURSIVE_MAKE) $@); done
+	for d in $(SUBDIR); do (cd ./$$d && $(RECURSIVE_MAKE) $@); done
 	-${top_distclean}
 	$(RM) TAGS
 
@@ -557,7 +561,7 @@ realclean: FRC.realclean
 ## the coding standards seem to come from.  It's like distclean, but
 ## it deletes backup and autosave files too.
 extraclean:
-	for d in $(SUBDIR); do (cd $$d && $(RECURSIVE_MAKE) $@); done
+	for d in $(SUBDIR); do (cd ./$$d && $(RECURSIVE_MAKE) $@); done
 	$(RM) *~ \#*
 	-${top_distclean}
 
@@ -578,30 +582,31 @@ SOURCES = ChangeLog GETTING.GNU.SOFTWARE INSTALL Makefile.in PROBLEMS \
 
 unlock:
 	chmod u+w $(SOURCES) cpp/*
-	-cd elisp && chmod u+w Makefile README *.texi
-	for d in src etc lib-src lisp; do (cd $$d && $(RECURSIVE_MAKE) $@); done
-	cd lisp/term && chmod u+w README *.el
-	cd man && chmod u+w *texi* ChangeLog split-man
-	cd lwlib && chmod u+w *.[ch] Makefile.in.in
+	-cd ./elisp && chmod u+w Makefile README *.texi
+	for d in src etc lib-src lisp; do (cd ./$$d && $(RECURSIVE_MAKE) $@); done
+	cd ./lisp/term && chmod u+w README *.el
+	cd ./man && chmod u+w *texi* ChangeLog split-man
+	cd ./lwlib && chmod u+w *.[ch] Makefile.in.in
 
 relock:
 	chmod u-w $(SOURCES) cpp/*
-	-cd elisp && chmod u-w Makefile README *.texi
-	for d in src etc lib-src lisp; do (cd $$d && $(RECURSIVE_MAKE) $@); done
-	cd lisp/term && chmod u+w README *.el
-	cd man && chmod u+w *texi* ChangeLog split-man
-	cd lwlib && chmod u+w *.[ch] Makefile.in.in
+	-cd ./elisp && chmod u-w Makefile README *.texi
+	for d in src etc lib-src lisp; do (cd ./$$d && $(RECURSIVE_MAKE) $@); done
+	cd ./lisp/term && chmod u+w README *.el
+	cd ./man && chmod u+w *texi* ChangeLog split-man
+	cd ./lwlib && chmod u+w *.[ch] Makefile.in.in
 
+PRUNE_VC = -name SCCS -prune -o -name RCS -prune -o -name CVS -prune -o
 TAGS tags: FRC.tags
 	@echo "If you don't have a copy of etags around, then do 'make lib-src' first."
+	$(RM) ${srcdir}/TAGS
 	@PATH=`$(pwd)`/lib-src:$$PATH HOME=/-=-; export PATH HOME; \
 	  echo "Using etags from `which etags`."
 	PATH=`$(pwd)`/lib-src:$$PATH ; export PATH; cd ${srcdir} && \
-	etags --regex='/[ 	]*DEF\(VAR\|INE\)_[A-Z_]+[ 	]*([ 	]*"\([^"]+\)"/\2/' src/*.[ch] ; \
-	for d in `find lisp -name SCCS -prune -o -name RCS -prune -o -type d -print` ; do \
-	  (cd $$d && if [ "`echo *.el`" != "*.el" ] ; then etags -a -o ${srcdir}/TAGS *.el ; fi ) ; \
-	done ; \
-	etags -a lwlib/*.[ch]
+	find src lwlib lib-src ${PRUNE_VC} -name '*.[ch]' -print | \
+	  xargs etags -a -r '/[ 	]*DEF\(VAR\|INE\)_[A-Z_]+[ 	]*([ 	]*"\([^"]+\)"/\2/'; \
+	find lisp ${PRUNE_VC} -name '*.el' -print | \
+	  xargs etags -a -l none -r "/^(def\\(var\\|un\\|alias\\|const\\|macro\\)[ 	]+'?\\([^ 	]+\\)/\\2/"
 
 ## We have automated tests!
 testdir = ${srcdir}/tests

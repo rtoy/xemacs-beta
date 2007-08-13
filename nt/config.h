@@ -383,6 +383,9 @@ Boston, MA 02111-1307, USA.  */
 /* Compile in support for OffiX Drag and Drop? */
 #undef HAVE_OFFIX_DND
 
+/* Compile in generic Drag'n'Drop API */
+#define HAVE_DRAGNDROP
+
 /* Compile in support for proper session-management. */
 #undef HAVE_SESSION
 

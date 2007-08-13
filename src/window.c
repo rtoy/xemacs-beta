@@ -68,8 +68,20 @@ static void change_window_height (struct window *w, int delta, int widthflag,
 /* Thickness of shadow border around 3d modelines. */
 Lisp_Object Vmodeline_shadow_thickness;
 
+/* Whether vertical dividers are draggable and displayed */
+Lisp_Object Vvertical_divider_draggable_p;
+
 /* Whether a modeline should be displayed. */
 Lisp_Object Vhas_modeline_p;
+
+/* Thickness of shadow border around vertical dividers. */
+Lisp_Object Vvertical_divider_shadow_thickness;
+
+/* Divider surface width (not counting 3-d borders) */
+Lisp_Object Vvertical_divider_line_width;
+
+/* Spacing between outer egde of divider border and window edge */
+Lisp_Object Vvertical_divider_spacing;
 
 /* Scroll if point lands on the bottom line and that line is partially
    clipped. */
@@ -150,52 +162,12 @@ mark_window (Lisp_Object obj, void (*markobj) (Lisp_Object))
   MARK_DISP_VARIABLE (last_facechange);
   ((markobj) (window->line_cache_last_updated));
   ((markobj) (window->redisplay_end_trigger));
-  /* Cached specifiers: */
-  ((markobj) (window->display_table));
-  ((markobj) (window->has_modeline_p));
-  ((markobj) (window->modeline_shadow_thickness));
-#ifdef HAVE_SCROLLBARS
-  ((markobj) (window->scrollbar_width));
-  ((markobj) (window->scrollbar_height));
-  ((markobj) (window->horizontal_scrollbar_visible_p));
-  ((markobj) (window->vertical_scrollbar_visible_p));
-  ((markobj) (window->scrollbar_on_left_p));
-  ((markobj) (window->scrollbar_on_top_p));
-  ((markobj) (window->scrollbar_pointer));
-#endif /* HAVE_SCROLLBARS */
-  ((markobj) (window->left_margin_width));
-  ((markobj) (window->right_margin_width));
-#ifdef HAVE_TOOLBARS
-  ((markobj) (window->toolbar[0]));
-  ((markobj) (window->toolbar[1]));
-  ((markobj) (window->toolbar[2]));
-  ((markobj) (window->toolbar[3]));
-  ((markobj) (window->toolbar_size[0]));
-  ((markobj) (window->toolbar_size[1]));
-  ((markobj) (window->toolbar_size[2]));
-  ((markobj) (window->toolbar_size[3]));
-  ((markobj) (window->toolbar_visible_p[0]));
-  ((markobj) (window->toolbar_visible_p[1]));
-  ((markobj) (window->toolbar_visible_p[2]));
-  ((markobj) (window->toolbar_visible_p[3]));
-  ((markobj) (window->toolbar_buttons_captioned_p));
-  ((markobj) (window->default_toolbar));
-  ((markobj) (window->default_toolbar_height));
-  ((markobj) (window->default_toolbar_width));
-  ((markobj) (window->default_toolbar_visible_p));
-#endif /* HAVE_TOOLBARS */
-  ((markobj) (window->minimum_line_ascent));
-  ((markobj) (window->minimum_line_descent));
-  ((markobj) (window->use_left_overflow));
-  ((markobj) (window->use_right_overflow));
-#ifdef HAVE_MENUBARS
-  ((markobj) (window->menubar_visible_p));
-#endif /* HAVE_MENUBARS */
-  ((markobj) (window->text_cursor_visible_p));
-  /* End cached specifiers. */
-  ((markobj) (window->dedicated));
   mark_face_cachels (window->face_cachels, markobj);
   mark_glyph_cachels (window->glyph_cachels, markobj);
+
+#define WINDOW_SLOT(slot, compare) ((markobj) (window->slot))
+#include "winslots.h"
+
   return Qnil;
 }
 
@@ -307,38 +279,10 @@ allocate_window (void)
   INIT_DISP_VARIABLE (last_point_y, 0);
   INIT_DISP_VARIABLE (window_end_pos, 0);
   p->redisplay_end_trigger = Qnil;
-  /* cached specifier values: will get set properly later */
-  p->display_table = Qnil;
-  p->has_modeline_p = Qnil;
-  p->modeline_shadow_thickness = Qnil;
-#ifdef HAVE_SCROLLBARS
-  p->scrollbar_width = Qnil;
-  p->scrollbar_height = Qnil;
-  p->horizontal_scrollbar_visible_p = Qnil;
-  p->vertical_scrollbar_visible_p = Qnil;
-  p->scrollbar_on_left_p = Qnil;
-  p->scrollbar_on_top_p = Qnil;
-#endif
-  p->left_margin_width = Qnil;
-  p->right_margin_width = Qnil;
-#ifdef HAVE_TOOLBARS
-  p->toolbar_size[0] = Qnil;
-  p->toolbar_size[1] = Qnil;
-  p->toolbar_size[2] = Qnil;
-  p->toolbar_size[3] = Qnil;
-  p->toolbar_buttons_captioned_p = Qnil;
-#endif
-  p->minimum_line_ascent = Qnil;
-  p->minimum_line_descent = Qnil;
-  p->use_left_overflow = Qnil;
-  p->use_right_overflow = Qnil;
-#ifdef HAVE_MENUBARS
-  p->menubar_visible_p = Qnil;
-#endif
-  p->text_cursor_visible_p = Qnil;
-  /* end cached specifier values. */
 
-  p->dedicated = Qnil;
+#define WINDOW_SLOT(slot, compare) p->slot = Qnil
+#include "winslots.h"
+
   p->windows_changed = 1;
   p->shadow_thickness_changed = 1;
 
@@ -776,16 +720,86 @@ window_truncation_on (struct window *w)
 }
 
 int
+have_undivided_common_edge (struct window *w_right, void *closure)
+{
+  struct window *w_left = (struct window *) closure;
+  return (WINDOW_RIGHT (w_left) == WINDOW_LEFT (w_right)
+	  && WINDOW_TOP (w_left) < WINDOW_BOTTOM (w_right)
+	  && WINDOW_TOP (w_right) < WINDOW_BOTTOM (w_left)
+#ifdef HAVE_SCROLLBARS
+	  && (NILP (w_right->scrollbar_on_left_p)
+	      || NILP (w_right->vertical_scrollbar_visible_p)
+	      || ZEROP (w_right->scrollbar_width))
+#endif
+	  );
+}
+
+static int
+window_needs_vertical_divider_1 (struct window *w)
+{
+  /* Never if we're on the right */
+  if (window_is_rightmost (w))
+    return 0;
+
+  /* Always if draggable */
+  if (!NILP (w->vertical_divider_draggable_p))
+    return 1;
+
+#ifdef HAVE_SCROLLBARS
+  /* Our right scrollabr is enough to separate us at the right */
+  if (NILP (w->scrollbar_on_left_p)
+      && !NILP (w->vertical_scrollbar_visible_p)
+      && !ZEROP (w->scrollbar_width))
+    return 0;
+#endif
+
+  /* Ok. to determine whether we need a divider on the left, we must
+     check that out right neighbor windows have scrollbars on their
+     left sides. We mist check all such windows which have common
+     left edge with our window's right edge. */
+  return map_windows (XFRAME (WINDOW_FRAME (w)),
+		      have_undivided_common_edge, (void*)w);
+}
+
+int
 window_needs_vertical_divider (struct window *w)
 {
-#ifdef HAVE_SCROLLBARS
-  return (!window_scrollbar_width (w) &&
-	  (!NILP (w->scrollbar_on_left_p) ?
-	   !window_is_leftmost  (w) :
-	   !window_is_rightmost (w)));
-#else
-  return !window_is_leftmost (w);
-#endif /* HAVE_SCROLLBARS */
+  if (!w->need_vertical_divider_valid_p)
+    {
+      w->need_vertical_divider_p =
+	window_needs_vertical_divider_1 (w);
+      w->need_vertical_divider_valid_p = 1;
+    }
+  return w->need_vertical_divider_p;
+}
+
+/* Called from invalidate_vertical_divider_cache_in_frame */
+int
+invalidate_vertical_divider_cache_in_window (struct window *w,
+					     void *u_n_u_s_e_d)
+{
+  w->need_vertical_divider_valid_p = 0;
+  return 0;
+}
+
+/* Calculate width of vertical divider, including its shadows
+   and spacing. The returned value is effectively the distance
+   between adjacent window edges. This function does not check
+   whether a windows needs vertival divider, so the returned 
+   value is a "theoretical" one */
+int
+window_divider_width (struct window *w)
+{
+  /* the shadow thickness can be negative. This means that the divider
+     will have a depressed look */
+
+  if (FRAME_WIN_P (XFRAME (WINDOW_FRAME (w))))
+    return 
+      XINT (w->vertical_divider_line_width)
+      + 2 * XINT (w->vertical_divider_spacing)
+      + 2 * abs (XINT (w->vertical_divider_shadow_thickness));
+  else
+    return XINT (w->vertical_divider_line_width) == 0 ? 0 : 1;
 }
 
 int
@@ -1033,72 +1047,40 @@ window_bottom_gutter_height (struct window *w)
     return other_height;
 }
 
-static int
-window_left_right_gutter_width_internal (struct window *w, int modeline)
-{
-  struct frame *f = XFRAME (w->frame);
-  int scrollbar_width = window_scrollbar_width (w);
-
-  if (!NILP (w->hchild) || !NILP (w->vchild))
-    return 0;
-
-  if (!modeline)
-    {
-      if (scrollbar_width)
-	return scrollbar_width;
-      else if (window_needs_vertical_divider (w))
-	return FRAMEMETH (f, divider_width, ());
-      else
-	return 0;
-    }
-  else
-    {
-      /* The shadows on the 3D modelines provide a visual break
-         between the modelines of horizontally split windows.  2D
-         modelines need some help, though. */
-      if (!EQ (Qzero, w->modeline_shadow_thickness))
-	return 0;
-      else if (window_needs_vertical_divider (w))
-	return FRAMEMETH (f, divider_width, ());
-      else
-	return 0;
-    }
-}
-
 int
 window_left_gutter_width (struct window *w, int modeline)
 {
+  int gutter = window_left_toolbar_width (w);
+  
   if (!NILP (w->hchild) || !NILP (w->vchild))
     return 0;
 
+
 #ifdef HAVE_SCROLLBARS
-  if (!NILP (w->scrollbar_on_left_p))
-    {
+  if (!modeline && !NILP (w->scrollbar_on_left_p))
+    gutter += window_scrollbar_width (w);
 #endif
-      return (window_left_right_gutter_width_internal (w, modeline) +
-	      window_left_toolbar_width (w));
-#ifdef HAVE_SCROLLBARS
-    }
-  else
-    return window_left_toolbar_width (w);
-#endif
+
+  return gutter;
 }
 
 int
 window_right_gutter_width (struct window *w, int modeline)
 {
+  int gutter = window_left_toolbar_width (w);
+  
   if (!NILP (w->hchild) || !NILP (w->vchild))
     return 0;
 
 #ifdef HAVE_SCROLLBARS
-  if (NILP (w->scrollbar_on_left_p))
-    {
-      return (window_left_right_gutter_width_internal (w, modeline) +
-	      window_right_toolbar_width (w));
-    }
-  else
+  if (!modeline && NILP (w->scrollbar_on_left_p))
+    gutter += window_scrollbar_width (w);
 #endif
-    return window_right_toolbar_width (w);
+
+  if (window_needs_vertical_divider (w))
+    gutter += window_divider_width (w);
+
+  return gutter;
 }
 
 
@@ -4379,21 +4361,22 @@ map_windows_1 (Lisp_Object window,
 
    If MAPFUN create or delete windows, the behaviour is undefined.  */
 
-void
+int
 map_windows (struct frame *f, int (*mapfun) (struct window *w, void *closure),
 	     void *closure)
 {
   if (f)
-    map_windows_1 (FRAME_ROOT_WINDOW (f), mapfun, closure);
+    return map_windows_1 (FRAME_ROOT_WINDOW (f), mapfun, closure);
   else
     {
       Lisp_Object frmcons, devcons, concons;
 
       FRAME_LOOP_NO_BREAK(frmcons, devcons, concons)
 	{
-	  if (map_windows_1 (FRAME_ROOT_WINDOW (XFRAME (XCAR (frmcons))),
-			     mapfun, closure))
-	    return;
+	  int v = map_windows_1 (FRAME_ROOT_WINDOW (XFRAME (XCAR (frmcons))),
+				 mapfun, closure);
+	  if (v)     
+	    return v;
 	}
     }
 }
@@ -4405,6 +4388,15 @@ modeline_shadow_thickness_changed (Lisp_Object specifier, struct window *w,
 {
   w->shadow_thickness_changed = 1;
   MARK_WINDOWS_CHANGED (w);
+}
+
+static void
+vertical_divider_changed_in_window (Lisp_Object specifier, 
+				    struct window *w, 
+				    Lisp_Object oldval)
+{
+  MARK_WINDOWS_CHANGED (w);
+  MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (XFRAME (WINDOW_FRAME (w)));
 }
 
 /* also used in scrollbar.c */
@@ -4543,38 +4535,11 @@ struct saved_window
   int modeline_hscroll;
   int parent_index;           /* index into saved_windows */
   int prev_index;             /* index into saved_windows */
-  Lisp_Object dedicated;
   char start_at_line_beg; /* boolean */
-  Lisp_Object display_table;
-  Lisp_Object modeline_shadow_thickness;
-  Lisp_Object has_modeline_p;
-#ifdef HAVE_SCROLLBARS
-  Lisp_Object scrollbar_width;
-  Lisp_Object scrollbar_height;
-  Lisp_Object horizontal_scrollbar_visible_p;
-  Lisp_Object vertical_scrollbar_visible_p;
-  Lisp_Object scrollbar_on_left_p;
-  Lisp_Object scrollbar_on_top_p;
-  Lisp_Object scrollbar_pointer;
-#endif /* HAVE_SCROLLBARS */
-#ifdef HAVE_TOOLBARS
-  Lisp_Object toolbar[4];
-  Lisp_Object toolbar_size[4];
-  Lisp_Object toolbar_border_width[4];
-  Lisp_Object toolbar_visible_p[4];
-  Lisp_Object toolbar_buttons_captioned_p;
-  Lisp_Object default_toolbar;
-  Lisp_Object default_toolbar_width, default_toolbar_height;
-  Lisp_Object default_toolbar_visible_p;
-  Lisp_Object default_toolbar_border_width;
-#endif /* HAVE_TOOLBARS */
-  Lisp_Object left_margin_width, right_margin_width;
-  Lisp_Object minimum_line_ascent, minimum_line_descent;
-  Lisp_Object use_left_overflow, use_right_overflow;
-#ifdef HAVE_MENUBARS
-  Lisp_Object menubar_visible_p;
-#endif /* HAVE_MENUBARS */
-  Lisp_Object text_cursor_visible_p;
+
+#define WINDOW_SLOT_DECLARATION
+#define WINDOW_SLOT(slot, compare) Lisp_Object slot
+#include "winslots.h"
 };
 
 /* If you add anything to this structure make sure window_config_equal
@@ -4625,7 +4590,16 @@ mark_window_config (Lisp_Object obj, void (*markobj) (Lisp_Object))
       ((markobj) (s->pointm));
       ((markobj) (s->sb_point));
       ((markobj) (s->mark));
+#if 0
+      /* #### This looked like this. I do not see why specifier cached
+	 values should not be marked, as such specifiers as toolbars
+	 might have GC-able instances. Freed configs are not marked,
+	 aren't they?  -- kkm */
       ((markobj) (s->dedicated));
+#else
+#define WINDOW_SLOT(slot, compare) ((markobj) (s->slot))
+#include "winslots.h"
+#endif
     }
   return Qnil;
 }
@@ -4671,6 +4645,11 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("window-configuration",
 static int
 saved_window_equal (struct saved_window *win1, struct saved_window *win2)
 {
+#define WINDOW_SLOT(slot, compare)		\
+  if (!compare (win1->slot, win2->slot))	\
+    return 0;
+#include "winslots.h"
+
   return
     EQ (win1->window, win2->window) &&
     EQ (win1->buffer, win2->buffer) &&
@@ -4686,54 +4665,7 @@ saved_window_equal (struct saved_window *win1, struct saved_window *win2)
     win1->modeline_hscroll == win2->modeline_hscroll &&
     win1->parent_index == win2->parent_index &&
     win1->prev_index   == win2->prev_index &&
-    EQ (win1->dedicated, win2->dedicated) &&
-    win1->start_at_line_beg == win2->start_at_line_beg &&
-    internal_equal(win1->display_table, win2->display_table, 0) &&
-    EQ(win1->modeline_shadow_thickness, win2->modeline_shadow_thickness) &&
-    EQ(win1->has_modeline_p, win2->has_modeline_p) &&
-#ifdef HAVE_SCROLLBARS
-    EQ(win1->scrollbar_width, win2->scrollbar_width) &&
-    EQ(win1->scrollbar_height, win2->scrollbar_height) &&
-    EQ(win1->horizontal_scrollbar_visible_p, win2->horizontal_scrollbar_visible_p) &&
-    EQ(win1->vertical_scrollbar_visible_p, win2->vertical_scrollbar_visible_p) &&
-    EQ(win1->scrollbar_on_left_p, win2->scrollbar_on_left_p) &&
-    EQ(win1->scrollbar_on_top_p, win2->scrollbar_on_top_p) &&
-    EQ(win1->scrollbar_pointer, win2->scrollbar_pointer) &&
-#endif /* HAVE_SCROLLBARS */
-#ifdef HAVE_TOOLBARS
-    internal_equal(win1->toolbar[0], win2->toolbar[0], 0) &&
-    internal_equal(win1->toolbar[1], win2->toolbar[1], 0) &&
-    internal_equal(win1->toolbar[2], win2->toolbar[2], 0) &&
-    internal_equal(win1->toolbar[3], win2->toolbar[3], 0) &&
-    internal_equal(win1->toolbar_border_width[0], win2->toolbar_border_width[0], 0) &&
-    internal_equal(win1->toolbar_border_width[1], win2->toolbar_border_width[1], 0) &&
-    internal_equal(win1->toolbar_border_width[2], win2->toolbar_border_width[2], 0) &&
-    internal_equal(win1->toolbar_border_width[3], win2->toolbar_border_width[3], 0) &&
-    internal_equal(win1->toolbar_size[0], win2->toolbar_size[0], 0) &&
-    internal_equal(win1->toolbar_size[1], win2->toolbar_size[1], 0) &&
-    internal_equal(win1->toolbar_size[2], win2->toolbar_size[2], 0) &&
-    internal_equal(win1->toolbar_size[3], win2->toolbar_size[3], 0) &&
-    internal_equal(win1->toolbar_visible_p[0], win2->toolbar_visible_p[0], 0) &&
-    internal_equal(win1->toolbar_visible_p[1], win2->toolbar_visible_p[1], 0) &&
-    internal_equal(win1->toolbar_visible_p[2], win2->toolbar_visible_p[2], 0) &&
-    internal_equal(win1->toolbar_visible_p[3], win2->toolbar_visible_p[3], 0) &&
-    EQ(win1->toolbar_buttons_captioned_p, win2->toolbar_buttons_captioned_p) &&
-    internal_equal(win1->default_toolbar, win2->default_toolbar, 0) &&
-    EQ(win1->default_toolbar_width, win2->default_toolbar_width) &&
-    EQ(win1->default_toolbar_height, win2->default_toolbar_height) &&
-    EQ(win1->default_toolbar_visible_p, win2->default_toolbar_visible_p) &&
-    EQ(win1->default_toolbar_border_width, win2->default_toolbar_border_width) &&
-#endif /* HAVE_TOOLBARS */
-    EQ(win1->left_margin_width, win2->left_margin_width) &&
-    EQ(win1->right_margin_width, win2->right_margin_width) &&
-    EQ(win1->minimum_line_ascent, win2->minimum_line_ascent) &&
-    EQ(win1->minimum_line_descent, win2->minimum_line_descent) &&
-    EQ(win1->use_left_overflow, win2->use_left_overflow) &&
-    EQ(win1->use_right_overflow, win2->use_right_overflow) &&
-#ifdef HAVE_MENUBARS
-    EQ(win1->menubar_visible_p, win2->menubar_visible_p) &&
-#endif /* HAVE_MENUBARS */
-    EQ(win1->text_cursor_visible_p, win2->text_cursor_visible_p);
+    win1->start_at_line_beg == win2->start_at_line_beg;
 }
 
 /* Returns a boolean indicating whether the two given configurations
@@ -5011,51 +4943,13 @@ by `current-window-configuration' (which see).
 	  WINDOW_HEIGHT (w) = WINDOW_HEIGHT (p);
 	  w->hscroll = p->hscroll;
 	  w->modeline_hscroll = p->modeline_hscroll;
-	  w->display_table = p->display_table;
-	  w->modeline_shadow_thickness = p->modeline_shadow_thickness;
-	  w->has_modeline_p = p->has_modeline_p;
-#ifdef HAVE_SCROLLBARS
-	  w->scrollbar_width = p->scrollbar_width;
-	  w->scrollbar_height = p->scrollbar_height;
-	  w->horizontal_scrollbar_visible_p = p->horizontal_scrollbar_visible_p;
-	  w->vertical_scrollbar_visible_p = p->vertical_scrollbar_visible_p;
-	  w->scrollbar_on_left_p = p->scrollbar_on_left_p;
-	  w->scrollbar_on_top_p = p->scrollbar_on_top_p;
-	  w->scrollbar_pointer = p->scrollbar_pointer;
-#endif /* HAVE_SCROLLBARS */
-#ifdef HAVE_TOOLBARS
-	  {
-	    int ix;
-	    for (ix = 0; ix < 4; ix++)
-	      {
-		w->toolbar[ix] = p->toolbar[ix];
-		w->toolbar_size[ix] = p->toolbar_size[ix];
-		w->toolbar_border_width[ix] = p->toolbar_border_width[ix];
-		w->toolbar_visible_p[ix] = p->toolbar_visible_p[ix];
-	      }
-	  }
-	  w->toolbar_buttons_captioned_p = p->toolbar_buttons_captioned_p;
-	  w->default_toolbar = p->default_toolbar;
-	  w->default_toolbar_width = p->default_toolbar_width;
-	  w->default_toolbar_height = p->default_toolbar_height;
-	  w->default_toolbar_visible_p = p->default_toolbar_visible_p;
-	  w->default_toolbar_border_width = p->default_toolbar_border_width;
-#endif /* HAVE_TOOLBARS */
-	  w->left_margin_width = p->left_margin_width;
-	  w->right_margin_width = p->right_margin_width;
-	  w->minimum_line_ascent = p->minimum_line_ascent;
-	  w->minimum_line_descent = p->minimum_line_descent;
-	  w->use_left_overflow = p->use_left_overflow;
-	  w->use_right_overflow = p->use_right_overflow;
-#ifdef HAVE_MENUBARS
-	  w->menubar_visible_p = p->menubar_visible_p;
-#endif /* HAVE_MENUBARS */
-	  w->text_cursor_visible_p = p->text_cursor_visible_p;
-	  w->dedicated = p->dedicated;
 	  w->line_cache_last_updated = Qzero;
 	  SET_LAST_MODIFIED (w, 1);
 	  SET_LAST_FACECHANGE (w);
 	  w->config_mark = 0;
+
+#define WINDOW_SLOT(slot, compare) w->slot = p->slot;
+#include "winslots.h"
 
 	  /* Reinstall the saved buffer and pointers into it.  */
 	  if (NILP (p->buffer))
@@ -5277,46 +5171,9 @@ save_window_save (Lisp_Object window, struct window_config *config, int i)
       WINDOW_HEIGHT (p) = WINDOW_HEIGHT (w);
       p->hscroll = w->hscroll;
       p->modeline_hscroll = w->modeline_hscroll;
-      p->display_table = w->display_table;
-      p->modeline_shadow_thickness = w->modeline_shadow_thickness;
-      p->has_modeline_p = w->has_modeline_p;
-#ifdef HAVE_SCROLLBARS
-      p->scrollbar_width = w->scrollbar_width;
-      p->scrollbar_height = w->scrollbar_height;
-      p->horizontal_scrollbar_visible_p = w->horizontal_scrollbar_visible_p;
-      p->vertical_scrollbar_visible_p = w->vertical_scrollbar_visible_p;
-      p->scrollbar_on_left_p = w->scrollbar_on_left_p;
-      p->scrollbar_on_top_p = w->scrollbar_on_top_p;
-      p->scrollbar_pointer = w->scrollbar_pointer;
-#endif /* HAVE_SCROLLBARS */
-#ifdef HAVE_TOOLBARS
-      {
-	int ix;
- 	for (ix = 0; ix < 4; ix++)
-	  {
-	    p->toolbar[ix] = w->toolbar[ix];
-	    p->toolbar_size[ix] = w->toolbar_size[ix];
-	    p->toolbar_border_width[ix] = w->toolbar_border_width[ix];
-	    p->toolbar_visible_p[ix] = w->toolbar_visible_p[ix];
-	  }
-      }
-      p->toolbar_buttons_captioned_p = w->toolbar_buttons_captioned_p;
-      p->default_toolbar = w->default_toolbar;
-      p->default_toolbar_width = w->default_toolbar_width;
-      p->default_toolbar_height = w->default_toolbar_height;
-      p->default_toolbar_visible_p = w->default_toolbar_visible_p;
-      p->default_toolbar_border_width = w->default_toolbar_border_width;
-#endif /* HAVE_TOOLBARS */
-      p->left_margin_width = w->left_margin_width;
-      p->right_margin_width = w->right_margin_width;
-      p->minimum_line_ascent = w->minimum_line_ascent;
-      p->minimum_line_descent = w->minimum_line_descent;
-      p->use_left_overflow = w->use_left_overflow;
-      p->use_right_overflow = w->use_right_overflow;
-#ifdef HAVE_MENUBARS
-      p->menubar_visible_p = w->menubar_visible_p;
-#endif /* HAVE_MENUBARS */
-      p->text_cursor_visible_p = w->text_cursor_visible_p;
+
+#define WINDOW_SLOT(slot, compare) p->slot = w->slot;
+#include "winslots.h"
 
       if (!NILP (w->buffer))
 	{
@@ -5356,7 +5213,6 @@ save_window_save (Lisp_Object window, struct window_config *config, int i)
 	p->prev_index = -1;
       else
         p->prev_index = saved_window_index (w->prev, config, i);
-      p->dedicated = w->dedicated;
       if (!NILP (w->vchild))
 	i = save_window_save (w->vchild, config, i);
       if (!NILP (w->hchild))
@@ -5674,7 +5530,7 @@ This is a specifier; use `set-specifier' to change it.
 				      modeline_shadow_thickness),
 			 modeline_shadow_thickness_changed,
 			 0, 0);
-
+  
   DEFVAR_SPECIFIER ("has-modeline-p", &Vhas_modeline_p /*
 *Whether the modeline should be displayed.
 This is a specifier; use `set-specifier' to change it.
@@ -5690,5 +5546,98 @@ This is a specifier; use `set-specifier' to change it.
 			    has changed, but not one to indicate that
 			    the modeline has been turned off or on. */
 			 some_window_value_changed,
+			 0, 0);
+
+  DEFVAR_SPECIFIER ("vertical-divider-draggable-p", &Vvertical_divider_draggable_p /*
+*Should XEmacs allow resizing windows by dragging vertical dividers.
+When t, vertical dividers are always shown, and are draggable.
+When nil, vertical dividers are shown only when there are no scrollbars
+in between windows, and not draggable.
+This is a specifier; use `set-specifier' to change it.
+*/ );
+  Vvertical_divider_draggable_p = Fmake_specifier (Qboolean);
+  set_specifier_fallback (Vvertical_divider_draggable_p,
+			  list1 (Fcons (Qnil, Qt)));
+  set_specifier_caching (Vvertical_divider_draggable_p,
+			 slot_offset (struct window,
+				      vertical_divider_draggable_p),
+			 vertical_divider_changed_in_window,
+ 			 0, 0);
+
+  DEFVAR_SPECIFIER ("vertical-divider-shadow-thickness", &Vvertical_divider_shadow_thickness /*
+*How thick to draw shadows around the vertical dividers. 
+This is a specifier; use `set-specifier' to change it.
+*/ );
+  Vvertical_divider_shadow_thickness = Fmake_specifier (Qinteger);
+  set_specifier_fallback (Vvertical_divider_shadow_thickness,
+			  list1 (Fcons (Qnil, Qzero)));
+  Fadd_spec_to_specifier (Vvertical_divider_shadow_thickness, make_int (2),
+			  Qnil, Qnil, Qnil);
+  set_specifier_caching (Vvertical_divider_shadow_thickness,
+			 slot_offset (struct window,
+				      vertical_divider_shadow_thickness),
+			 vertical_divider_changed_in_window,
+ 			 0, 0);
+  DEFVAR_SPECIFIER ("vertical-divider-line-width", &Vvertical_divider_line_width /*
+*The width of the vertical dividers, not including shadows.
+
+For TTY windows, divider line is always one character wide. When
+instance of this specifier is zero in a TTY window, no divider is
+drawn at all between windows. When non-zero, one character wide
+divider is displayed.
+
+*Whether the modeline should be displayed.
+This is a specifier; use `set-specifier' to change it.
+*/ );
+
+  Vvertical_divider_line_width = Fmake_specifier (Qnatnum);
+  {
+    Lisp_Object fb = Qnil;
+#ifdef HAVE_TTY
+    fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
+#endif
+#ifdef HAVE_X_WINDOWS
+    fb = Fcons (Fcons (list1 (Qx), make_int (3)), fb);
+#endif
+#ifdef HAVE_MS_WINDOWS
+    /* #### This should be made magic and made to obey system settings */
+    fb = Fcons (Fcons (list1 (Qmswindows), make_int (3)), fb);
+#endif
+    set_specifier_fallback (Vvertical_divider_line_width, fb);
+  }
+  set_specifier_caching (Vvertical_divider_line_width,
+                         slot_offset (struct window,
+				      vertical_divider_line_width),
+			 vertical_divider_changed_in_window,
+                         0, 0);
+
+  DEFVAR_SPECIFIER ("vertical-divider-spacing", &Vvertical_divider_spacing /*
+*How much space to leave around the vertical dividers.
+
+In TTY windows, spacing is always zero, and the value of this
+specifier is ignored.
+
+This is a specifier; use `set-specifier' to change it.
+*/ );
+  Vvertical_divider_spacing = Fmake_specifier (Qnatnum);
+  {
+    Lisp_Object fb = Qnil;
+#ifdef HAVE_TTY
+    fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
+#endif
+#ifdef HAVE_X_WINDOWS
+    /* #### 3D dividers look great on MS Windows with spacing = 0.
+       Shoud not the same value be the fallback under X? - kkm */
+    fb = Fcons (Fcons (list1 (Qx), make_int (2)), fb);
+#endif
+#ifdef HAVE_MS_WINDOWS
+    fb = Fcons (Fcons (list1 (Qmswindows), Qzero), fb);
+#endif
+    set_specifier_fallback (Vvertical_divider_spacing, fb);
+  }
+  set_specifier_caching (Vvertical_divider_spacing,
+			 slot_offset (struct window,
+				      vertical_divider_spacing),
+			 vertical_divider_changed_in_window,
 			 0, 0);
 }

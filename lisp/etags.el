@@ -554,9 +554,9 @@ Make it buffer-local in a mode hook.  The function is called with no
  arguments.")
 
 (defvar find-tag-hook nil
-  "Function to call after a hook is found.
+  "Function to call after a tag is found.
 Make it buffer-local in a mode hook.  The function is called with no
- argsuments.")
+ arguments.")
 
 ;; Return a default tag to search for, based on the text at point.
 (defun find-tag-default ()

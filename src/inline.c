@@ -47,6 +47,7 @@ Boston, MA 02111-1307, USA.  */
 #include "chartab.h"
 #include "console.h"
 #include "device.h"
+#include "eldap.h"
 #include "elhash.h"
 #include "events.h"
 #include "extents.h"

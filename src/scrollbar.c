@@ -468,7 +468,9 @@ update_scrollbar_instance (struct window *w, int vertical,
       {
 	x_offset = (!NILP (w->scrollbar_on_left_p)
 		    ? WINDOW_LEFT (w)
-		    : WINDOW_RIGHT (w) - scrollbar_width);
+		    : (WINDOW_RIGHT (w) - scrollbar_width
+		       - (window_needs_vertical_divider (w)
+			  ? window_divider_width (w) : 0)));
 	y_offset = WINDOW_TEXT_TOP (w) + f->scrollbar_y_offset;
       }
     else
@@ -585,6 +587,26 @@ init_global_scrollbars (struct device *d)
 			       Qglobal);
       unbind_to (depth, Qnil);
     }
+}
+
+static void
+vertical_scrollbar_changed_in_window (Lisp_Object specifier,
+				      struct window *w,
+				      Lisp_Object oldval)
+{
+  /* Hold on your cerebella guys. If we always show the dividers,
+     changing scrollbar affects only how the text and scrollbar are
+     laid out in the window. If we do not want the dividers to show up
+     always, then we mark more drastic change, because changing
+     divider appearane changes lotta things. Although we actually need
+     to do this only if the scrollbar has appeared or disappeared
+     completely at either window edge, we do this always, as users
+     usually do not reposition scrollbars 200 times a second or so. Do
+     you? */
+  if (NILP (w->vertical_divider_draggable_p))
+    MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (XFRAME (WINDOW_FRAME (w)));
+  else
+    MARK_WINDOWS_CHANGED (w);
 }
 
 /* This function is called as a result of a change to the
@@ -928,7 +950,7 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_caching (Vscrollbar_width,
 			 slot_offset (struct window,
 				      scrollbar_width),
-			 some_window_value_changed,
+			 vertical_scrollbar_changed_in_window,
 			 slot_offset (struct frame,
 				      scrollbar_width),
 			 frame_size_slipped);
@@ -974,7 +996,7 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_caching (Vvertical_scrollbar_visible_p,
 			 slot_offset (struct window,
 				      vertical_scrollbar_visible_p),
-			 some_window_value_changed,
+			 vertical_scrollbar_changed_in_window,
 			 slot_offset (struct frame,
 				      vertical_scrollbar_visible_p),
 			 frame_size_slipped);
@@ -1002,7 +1024,7 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_caching (Vscrollbar_on_left_p,
 			 slot_offset (struct window,
 				      scrollbar_on_left_p),
-			 some_window_value_changed,
+			 vertical_scrollbar_changed_in_window,
 			 slot_offset (struct frame,
 				      scrollbar_on_left_p),
 			 frame_size_slipped);

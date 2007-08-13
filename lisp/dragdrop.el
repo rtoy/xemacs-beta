@@ -26,17 +26,18 @@
 
 ;;; Commentary:
 
-;; This file is dumped with XEmacs (when window system support is compiled in).
+;; This file is dumped with XEmacs (when drag'n'drop support is compiled in).
 
 ;;; Code:
 
-(provide 'dragdrop)
-
 ;; we need mouse-set-point
 (require 'mouse)
+(provide 'dragdrop)
 
 ;; I think this is a better name for the custom group
 ;; looks better in the menu and the group display as dragdrop
+;; Anyway: is dragdrop- a good prefix for all this?
+;; What if someone type drop<TAB> into the minibuffer?
 (defgroup drag-n-drop nil
   "Window system-independent drag'n'drop support."
   :group 'editing)
@@ -54,27 +55,89 @@ Otherwise, the buffer is only decoded if tm-view is already avaiable."
   :type 'boolean
   :group 'drag-n-drop)
 
-(defcustom dragdrop-drop-functions '(dragdrop-drop-url-default
-				     dragdrop-drop-mime-default)
+;; the widget for editing the drop-functions
+(define-widget 'dragdrop-function-widget 'list
+  "Widget for editing drop dispatch functions."
+  :args `((choice :tag "Function"
+		  (function-item dragdrop-drop-url-default)
+		  (function-item dragdrop-drop-mime-default)
+		  (function-item dragdrop-drop-log-function)
+		  (function :tag "Other" nil))
+	  (choice :tag "Button" :value t
+		  (choice-item :tag "Ignore" t)
+		  (choice-item 0) (choice-item 1) (choice-item 2)
+		  (choice-item 3) (choice-item 4) (choice-item 5)
+		  (choice-item 6) (choice-item 7))
+	  (radio-button-choice :tag "Modifiers"
+			       (const :tag "Ignore Modifier Keys" t)
+			       (checklist :greedy t
+					  :format "Modifier Keys:\n%v"
+					  :extra-offset 6
+					  (const shift)
+					  (const control)
+					  (const meta)
+					  (const alt)
+					  (const hyper)
+					  (const super)))
+	  (repeat :inline t :value nil :tag "Extra Function Arguments"
+		  (sexp :tag "Arg" :value nil)))
+  :value '(nil t t))
+
+;; button and widget selectors are still "shaky":
+;; button may be a number or t (or nil?), t means "Ignore"
+;; mods may be t or nil or a list of mod-syms, t means "Ignore"
+;; but this seems to be a porblem for the widget, well perhaps I find
+;; a solution...
+(defcustom dragdrop-drop-functions '((dragdrop-drop-url-default t t)
+				     (dragdrop-drop-mime-default t t))
   "This is the standart drop function search list.
-Each variable in this list is called with the drop data until
-one of the functions return t, or the end of the list is reached."
+Each element is a list of a function, a button selector, a modifier
+selector and optional argumets to the function call.
+The function must accept at least two arguments: first is the event
+of the drop, second the object data, followed by any of the optional
+arguments provided in this list.
+The functions are called in order, until one returns t."
   :group 'drag-n-drop
-  :type '(repeat (choice (function-item dragdrop-drop-url-default)
-                         (function-item dragdrop-drop-mime-default)
-                         (function :tag "other"))))
+  :type '(repeat dragdrop-function-widget))
+
+(defgroup dnd-debug nil
+  "Drag'n'Drop debugging options."
+  :group 'drag-n-drop)
+
+(defcustom dragdrop-drop-log nil
+  "If non-nil, every drop is logged.
+The name of the buffer is set in the custom 'dragdrop-drop-log-name"
+  :group 'dnd-debug
+  :type 'boolean)
+
+(defcustom dragdrop-drop-log-name "*drop log buffer*"
+  "The name of the buffer used to log drops.
+Set dragdrop-drop-log to non-nil to enable this feature."
+  :group 'dnd-debug
+  :type 'string)
+
+(defvar dragdrop-drop-log-buffer nil
+  "Buffer to log drops in debug mode.")
 
 (defun dragdrop-drop-dispatch (object)
   "This function identifies DROP type misc-user-events.
-It tries to find out how to handle the dropped data by looking
-for dragdrop-drop-functions in extents and variables."
+It calls functions which will handle the drag."
+  (let ((event current-mouse-event))
+    (and dragdrop-drop-log
+	 (dragdrop-drop-log-function event object))
+    (dragdrop-drop-find-functions event object)))
+
+(defun dragdrop-drop-find-functions (event object)
+  "Finds valid drop-handle functions and executes them to dispose the drop.
+It does this by looking for extent-properties called 'dragdrop-drop-functions
+and for variables named like this."
   (catch 'dragdrop-drop-is-done
-    (and (event-over-text-area-p current-mouse-event)
+    (and (event-over-text-area-p event)
 	 ;; let's search the extents
 	 (catch 'dragdrop-extents-done
-	   (let ((window (event-window current-mouse-event))
-		 (pos (event-point current-mouse-event))
-		 (cpos (event-closest-point current-mouse-event))
+	   (let ((window (event-window event))
+		 (pos (event-point event))
+		 (cpos (event-closest-point event))
 		 (buffer nil))
 	     (or window (throw 'dragdrop-extents-done nil))
 	     (or pos (setq pos cpos))
@@ -84,26 +147,90 @@ for dragdrop-drop-functions in extents and variables."
 	       (while (not (eq ext nil))
 		 (dragdrop-drop-do-functions
 		  (extent-property ext 'dragdrop-drop-functions)
+		  event
 		  object)
 		 (setq ext (extent-at pos buffer 'dragdrop-drop-functions ext)))))))
     ;; now look into the variable dragdrop-drop-functions
-    (dragdrop-drop-do-functions dragdrop-drop-functions object)))
+    (dragdrop-drop-do-functions dragdrop-drop-functions event object)))
 
-(defun dragdrop-drop-do-functions (drop-funs object)
+(defun dragdrop-compare-mods (first-mods second-mods)
+  "Returns t if both first-mods and second-mods contain the same elements.
+Order is not important."
+  (let ((moda (copy-sequence first-mods))
+	(modb (copy-sequence second-mods)))
+    (while (and (not (eq moda ()))
+		(not (eq modb ())))
+      (setq modb (delete (car moda) modb))
+      (setq moda (delete (car moda) moda)))
+    (and (eq moda ())
+	 (eq modb ()))))
+
+(defun dragdrop-drop-do-functions (drop-funs event object)
   "Calls all functions in drop-funs with object until one returns t.
 Returns t if one of drop-funs returns t. Otherwise returns nil."
-  (while (not (eq drop-funs ()))
-    (and (funcall (car drop-funs) object)
-	 (throw 'dragdrop-drop-is-done t))
-    (setq drop-funs (cdr drop-funs)))
+  (let ((flist nil)
+	(button (event-button event))
+	(mods (event-modifiers event)))
+    (while (not (eq drop-funs ()))
+      (setq flist (car drop-funs))
+      (and (or (eq (cadr flist) t)
+	       (= (cadr flist) button))
+	   (or (eq (caddr flist) t)
+	       (dragdrop-compare-mods (caddr flist) modifiers))
+	   (apply (car flist) `(,event ,object ,@(cdddr flist)))
+	   ;; (funcall (car flist) event object)
+	   (throw 'dragdrop-drop-is-done t))
+      (setq drop-funs (cdr drop-funs))))
   nil)
 
-(defun dragdrop-drop-url-default (object)
+(defun dragdrop-drop-log-function (event object &optional message buffer)
+  "Logs any drops into a buffer.
+If buffer is nil, it inserts the data into a buffer called after
+dragdrop-drop-log-name.
+If dragdrop-drop-log is non-nil, this is done automatically for each drop.
+The function always returns nil."
+  (save-excursion
+    (cond ((buffer-live-p buffer)
+	   (set-buffer buffer))
+	  ((stringp buffer)
+	   (set-buffer (get-buffer-create buffer)))
+	  ((buffer-live-p dragdrop-drop-log-buffer)
+	   (set-buffer dragdrop-drop-log-buffer))
+	  (t
+	   (setq dragdrop-drop-log-buffer (get-buffer-create dragdrop-drop-log-name))
+	   (set-buffer dragdrop-drop-log-buffer)))
+    (insert (format "* %s: %s\n"
+		    (current-time-string)
+		    (if message message "received a drop")))
+    (insert (format "  at %d,%d (%d,%d) with button %d and mods %s\n"
+		    (event-x event)
+		    (event-y event)
+		    (event-x-pixel event)
+		    (event-y-pixel event)
+		    (event-button event)
+		    (event-modifiers event)))
+    (insert (format "  data is of type %s (%d %s)\n"
+	     (cond ((eq (car object) 'dragdrop-URL) "URL")
+		   ((eq (car object) 'dragdrop-MIME) "MIME")
+		   (t "UNKNOWN"))
+	     (length (cdr object))
+	     (if (= (length (cdr object)) 1) "element" "elements")))
+    (let ((i 1)
+	  (data (cdr object)))
+      (while (not (eq data ()))
+	(insert (format "    Element %d: %S\n"
+			i (car data)))
+	(setq i (1+ i))
+	(setq data (cdr data))))
+    (insert "----------\n"))
+  nil)
+
+(defun dragdrop-drop-url-default (event object)
   "Default handler for dropped URL data.
 Finds files and URLs. Returns nil if object does not contain URL data."
   (cond ((eq (car object) 'dragdrop-URL)
 	 (let ((data (cdr object))
-	       (frame (event-channel current-mouse-event))
+	       (frame (event-channel event))
 	       (x pop-up-windows))
 	   (setq pop-up-windows nil)
 	   (while (not (eq data ()))
@@ -126,13 +253,13 @@ Finds files and URLs. Returns nil if object does not contain URL data."
 	   t))
 	(t nil)))
 
-(defun dragdrop-drop-mime-default (object)
+(defun dragdrop-drop-mime-default (event object)
   "Default handler for dropped MIME data.
 Inserts text into buffer, creates MIME buffers for other types.
 Returns nil if object does not contain MIME data."
   (cond ((eq (car object) 'dragdrop-MIME)
 	 (let ((ldata (cdr object))
-	       (frame (event-channel current-mouse-event))
+	       (frame (event-channel event))
 	       (x pop-up-windows)
 	       (data nil))
 	   ;; how should this be handled???
@@ -150,13 +277,15 @@ Returns nil if object does not contain MIME data."
 	     (setq data (car ldata))
 	     (if (and (listp data)
 		      (= (length data) 3)
-		      (string= (car data) "text/plain")
-		      (event-over-text-area-p current-mouse-event))
-		 (let ((window (event-window current-mouse-event)))
+		      (listp (car data))
+		      (stringp (caar data))
+		      (string= (caar data) "text/plain")
+		      (event-over-text-area-p event))
+		 (let ((window (event-window event)))
 		   (and window
 			(select-window window))
 		   (and (not dragdrop-drop-at-point)
-			(mouse-set-point current-mouse-event))
+			(mouse-set-point event))
 		   (insert (caddr data)))
 	       (let ((buf (get-buffer-create "*MIME-Drop data*")))
 		 (set-buffer buf)
@@ -187,7 +316,7 @@ Returns nil if object does not contain MIME data."
 			(and (featurep 'tm-view)
 			     ;; this list of (car data) should be done before
 			     ;; enqueing the event
-			     (mime/viewer-mode buf (list (car data)) (cadr data))))
+			     (mime/viewer-mode buf (car data) (cadr data))))
 		       (t
 			(display-message 'error "Wrong drop data")))))
 	     (undo-boundary)

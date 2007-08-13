@@ -615,6 +615,14 @@ unhold_frame_size_changes (void)
   FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
     unhold_one_frame_size_changes (XFRAME (XCAR (frmcons)));
 }
+
+void
+invalidate_vertical_divider_cache_in_frame (struct frame *f)
+{
+  /* Invalidate cached value of needs_vertical_divider_p in 
+     every and all windows */
+  map_windows (f, invalidate_vertical_divider_cache_in_window, 0);
+}
 
 /*
  * Frame size may change due to changes in scrollbars, toolbars,
@@ -701,6 +709,23 @@ Return non-nil if OBJECT is a frame which has not been deleted.
 }
 
 
+DEFUN ("focus-frame", Ffocus_frame, 1, 1, 0, /*
+Select FRAME and give it the window system focus.
+This function is not affected by the value of `focus-follows-mouse'.
+*/
+       (frame))
+{
+  CHECK_LIVE_FRAME (frame);
+
+  MAYBE_DEVMETH (XDEVICE (FRAME_DEVICE (XFRAME (frame))), focus_on_frame,
+		 (XFRAME (frame)));
+  /* FRAME will be selected by the time we receive the next event.
+     However, it is better to select it explicitly now, in case the
+     Lisp code depends on frame being selected.  */
+  Fselect_frame (frame);
+  return Qnil;
+}
+
 /* Called from Fselect_window() */
 void
 select_frame_1 (Lisp_Object frame)
@@ -725,16 +750,14 @@ The selection of FRAME lasts until the next time the user does
 something to select a different frame, or until the next time this
 function is called.
 
-Note that this does not actually cause the window-system focus to
-be set to this frame, or the select-frame-hook or deselect-frame-hook
+Note that this does not actually cause the window-system focus to be
+set to this frame, or the `select-frame-hook' or `deselect-frame-hook'
 to be run, until the next time that XEmacs is waiting for an event.
 
 Also note that when focus-follows-mouse is non-nil, the frame
 selection is temporary and is reverted when the current command
 terminates, much like the buffer selected by `set-buffer'.  In order
-to effect a permanent focus change in this case, bind
-focus-follows-mouse to nil, select the frame you want, and do
-a (sit-for 0) within the scope of the binding.
+to effect a permanent focus change, use `focus-frame'.
 */
        (frame))
 {
@@ -1716,8 +1739,9 @@ mouse_pixel_position_1 (struct device *d, Lisp_Object *frame,
 
 DEFUN ("mouse-pixel-position", Fmouse_pixel_position, 0, 1, 0, /*
 Return a list (WINDOW X . Y) giving the current mouse window and position.
-The position is given in pixel units, where (0, 0) is the
-upper-left corner.
+The position is given in pixel units, where (0, 0) is the upper-left corner.
+
+When the cursor is not over a window, the return value is a list (nil nil).
 
 DEVICE specifies the device on which to read the mouse position, and
 defaults to the selected device.  If the device is a mouseless terminal
@@ -1728,18 +1752,16 @@ the device's selected window for WINDOW and nil for X and Y.
 {
   struct device *d = decode_device (device);
   Lisp_Object frame;
-  Lisp_Object window;
+  Lisp_Object window = Qnil;
   Lisp_Object x = Qnil;
   Lisp_Object y = Qnil;
   int intx, inty;
 
-  if (mouse_pixel_position_1 (d, &frame, &intx, &inty))
+  if (mouse_pixel_position_1 (d, &frame, &intx, &inty) > 0)
     {
       struct window *w =
 	find_window_by_pixel_pos (intx, inty, XFRAME (frame)->root_window);
-      if (!w)
-	window = Qnil;
-      else
+      if (w)
 	{
 	  XSETWINDOW (window, w);
 
@@ -1750,21 +1772,19 @@ the device's selected window for WINDOW and nil for X and Y.
 	  XSETINT (y, inty);
 	}
     }
-  else
-    {
-      if (FRAMEP (frame))
-	window = FRAME_SELECTED_WINDOW (XFRAME (frame));
-      else
-	window = Qnil;
-    }
+  else if (FRAMEP (frame))
+    window = FRAME_SELECTED_WINDOW (XFRAME (frame));
 
   return Fcons (window, Fcons (x, y));
 }
 
 DEFUN ("mouse-position", Fmouse_position, 0, 1, 0, /*
 Return a list (WINDOW X . Y) giving the current mouse window and position.
-The position is given in character cells, where (0, 0) is the
-upper-left corner of the window.
+The position is of a character under cursor, where (0, 0) is the upper-left
+corner of the window.
+
+When the cursor is not over a character, or not over a window, the return
+value is a list (nil nil).
 
 DEVICE specifies the device on which to read the mouse position, and
 defaults to the selected device.  If the device is a mouseless terminal
@@ -1773,39 +1793,31 @@ the device's selected window for WINDOW and nil for X and Y.
 */
        (device))
 {
-  Lisp_Object val = Fmouse_pixel_position (device);
-  int x, y, obj_x, obj_y;
+  struct device *d = decode_device (device);
   struct window *w;
-  struct frame *f;
+  Lisp_Object frame, window = Qnil, lisp_x = Qnil, lisp_y = Qnil;
+  int x, y, obj_x, obj_y;
   Bufpos bufpos, closest;
   Charcount modeline_closest;
   Lisp_Object obj1, obj2;
 
-  if (NILP (XCAR (val)) || NILP (XCAR (XCDR (val))))
-    return val;
-  w = XWINDOW (XCAR (val));
-  x = XINT (XCAR (XCDR (val)));
-  y = XINT (XCDR (XCDR (val)));
-  f = XFRAME (w->frame);
-
-  if (x >= 0 && y >= 0)
+  if (mouse_pixel_position_1 (d, &frame, &x, &y) > 0)
     {
-      if (pixel_to_glyph_translation (f, x, y, &x, &y, &obj_x, &obj_y, &w,
-				      &bufpos, &closest, &modeline_closest,
-				      &obj1, &obj2)
-	  != OVER_NOTHING)
+      int res = pixel_to_glyph_translation (XFRAME (frame), x, y, &x, &y,
+					    &obj_x, &obj_y, &w, &bufpos,
+					    &closest, &modeline_closest,
+					    &obj1, &obj2);
+      if (res == OVER_TEXT)
 	{
-	  XCAR (XCDR (val)) = make_int (x);
-	  XCDR (XCDR (val)) = make_int (y);
+	  lisp_x = make_int (x);
+	  lisp_y = make_int (y);
+	  XSETWINDOW (window, w);
 	}
     }
-  else
-    {
-      XCAR (XCDR (val)) = Qnil;
-      XCDR (XCDR (val)) = Qnil;
-    }
+  else if (FRAMEP (frame))
+    window = FRAME_SELECTED_WINDOW (XFRAME (frame));
 
-  return val;
+  return Fcons (window, Fcons (lisp_x, lisp_y));
 }
 
 DEFUN ("mouse-position-as-motion-event", Fmouse_position_as_motion_event, 0, 1, 0, /*
@@ -3136,6 +3148,7 @@ syms_of_frame (void)
 #if 0 /* FSFmacs */
   DEFSUBR (Fignore_event);
 #endif
+  DEFSUBR (Ffocus_frame);
   DEFSUBR (Fselect_frame);
   DEFSUBR (Fselected_frame);
   DEFSUBR (Factive_minibuffer_window);

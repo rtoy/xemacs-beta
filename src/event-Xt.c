@@ -1166,7 +1166,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 		    {
 		      len = strlen ((char*)data);
 		      hurl = dnd_url_hexify_string ((char *)data, "file:");
-		      l_item = make_string (hurl, strlen (hurl));
+		      l_item = make_string ((Bufbyte *)hurl, strlen (hurl));
 		      l_dndlist = Fcons (l_item, l_dndlist);
 		      data += len + 1;
 		      xfree (hurl);
@@ -1176,9 +1176,9 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 		break;
 	      case DndText:
 		l_type = Qdragdrop_MIME;
-		l_dndlist = list1 ( list3 ( make_string ("text/plain", 10),
-					    make_string ("8bit", 4),
-					    make_ext_string (data, 
+		l_dndlist = list1 ( list3 ( list1 ( make_string ((Bufbyte *)"text/plain", 10) ),
+					    make_string ((Bufbyte *)"8bit", 4),
+					    make_ext_string ((Extbyte *)data, 
 							     strlen((char *)data),
 							     FORMAT_CTEXT) ) );
 		break;
@@ -1191,7 +1191,8 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 		       to tm...
 		*/
 		l_type = Qdragdrop_MIME;
-		l_dndlist = list1 ( make_ext_string (data, strlen((char *)data),
+		l_dndlist = list1 ( make_ext_string ((Extbyte *)data,
+						     strlen((char *)data),
 						     FORMAT_BINARY) );
 		break;
 	      case DndFile:
@@ -1201,7 +1202,8 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 		{
 		  char *hurl = dnd_url_hexify_string (data, "file:");
 
-		  l_dndlist = list1 ( make_string (hurl, strlen (hurl)) );
+		  l_dndlist = list1 ( make_string ((Bufbyte *)hurl,
+						   strlen (hurl)) );
 		  l_type = Qdragdrop_URL;
 
 		  xfree (hurl);
@@ -1210,15 +1212,16 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	      case DndURL:
 		/* as it is a real URL it should already be escaped
 		   and escaping again will break them (cause % is unsave) */
-		l_dndlist = list1 ( make_ext_string ((char *)data, 
+		l_dndlist = list1 ( make_ext_string ((Extbyte *)data, 
 						     strlen ((char *)data),
 						     FORMAT_FILENAME) );
 		l_type = Qdragdrop_URL;
 		break;
 	      default: /* Unknown, RawData and any other type */
-		l_dndlist = list1 ( list3 ( make_string ("application/octet-stream", 24),
-					    make_string ("8bit", 4),
-					    make_ext_string ((char *)data, size,
+		l_dndlist = list1 ( list3 ( list1 ( make_string ((Bufbyte *)"application/octet-stream", 24) ),
+					    make_string ((Bufbyte *)"8bit", 4),
+					    make_ext_string ((Extbyte *)data,
+							     size,
 							     FORMAT_BINARY) ) );
 		l_type = Qdragdrop_MIME;
 		break;

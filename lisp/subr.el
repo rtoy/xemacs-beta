@@ -305,6 +305,19 @@ If PATTERN is omitted, it defaults to \"[ \\f\\t\\n\\r\\v]+\"."
 	    start (match-end 0)))
     (nreverse (cons (substring string start) parts))))
 
+;; #### #### #### AAaargh!  Must be in C, because it is used insanely
+;; early in the bootstrap process.
+;(defun split-path (path)
+;  "Explode a search path into a list of strings.
+;The path components are separated with the characters specified
+;with `path-separator'."
+;  (while (or (not stringp path-separator)
+;	     (/= (length path-separator) 1))
+;    (setq path-separator (signal 'error (list "\
+;`path-separator' should be set to a single-character string"
+;					      path-separator))))
+;  (split-string-by-char path (aref separator 0)))
+
 (defmacro with-output-to-string (&rest forms)
   "Collect output to `standard-output' while evaluating FORMS and return
 it as a string."
@@ -533,14 +546,18 @@ yourself.]"
     (set-text-properties 0 (length string) nil string)
     string))
 
-;; This should probably be written in C (i.e., without using `walk-windows').
-(defun get-buffer-window-list (buffer &optional minibuf frame)
+(defun get-buffer-window-list (&optional buffer minibuf frame)
   "Return windows currently displaying BUFFER, or nil if none.
+BUFFER defaults to the current buffer.
 See `walk-windows' for the meaning of MINIBUF and FRAME."
-  (let ((buffer (if (bufferp buffer) buffer (get-buffer buffer))) windows)
-    (walk-windows (function (lambda (window)
-			      (if (eq (window-buffer window) buffer)
-				  (setq windows (cons window windows)))))
+  (cond ((null buffer)
+	 (setq buffer (current-buffer)))
+	((not (bufferp buffer))
+	 (setq buffer (get-buffer buffer))))
+  (let (windows)
+    (walk-windows (lambda (window)
+		    (if (eq (window-buffer window) buffer)
+			(push window windows)))
 		  minibuf frame)
     windows))
 

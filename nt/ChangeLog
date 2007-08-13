@@ -1,3 +1,16 @@
+1998-05-15  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Comment out dialog.{c,obj} from build.
+
+1998-05-11  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* nt/config.h:
+	Unconditionally define new HAVE_DRAGNDROP.
+
+1998-05-10  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Added dragdrop.{c,obj}
+
 1998-05-08  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* config.h (enum_field): Redefine to be unsigned int.

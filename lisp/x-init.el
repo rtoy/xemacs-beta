@@ -325,14 +325,14 @@
 		    (x-activate-region-as-selection))))
     ;; Motif-ish bindings
     ;; The following two were generally unliked.
-    ;;(define-key global-map '(shift delete)   'x-kill-primary-selection)
-    ;;(define-key global-map '(control delete) 'x-delete-primary-selection)
-    (define-key global-map '(shift insert)   'x-yank-clipboard-selection)
-    (define-key global-map '(control insert) 'x-copy-primary-selection)
+    ;;(define-key global-map '(shift delete)   'kill-primary-selection)
+    ;;(define-key global-map '(control delete) 'delete-primary-selection)
+    (define-key global-map '(shift insert)   'yank-clipboard-selection)
+    (define-key global-map '(control insert) 'copy-primary-selection)
     ;; These are Sun-isms.
-    (define-key global-map 'copy	'x-copy-primary-selection)
-    (define-key global-map 'paste	'x-yank-clipboard-selection)
-    (define-key global-map 'cut		'x-kill-primary-selection)
+    (define-key global-map 'copy	'copy-primary-selection)
+    (define-key global-map 'paste	'yank-clipboard-selection)
+    (define-key global-map 'cut		'kill-primary-selection)
 
     (define-key global-map 'menu	'popup-mode-menu)
     ;;(define-key global-map '(shift menu) 'x-goto-menubar) ;NYI

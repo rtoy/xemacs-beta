@@ -57,16 +57,17 @@ Lisp_Object Vcreate_device_hook, Vdelete_device_hook;
 Lisp_Object Qgrayscale, Qmono;
 
 /* Device metrics symbols */
-Lisp_Object Qcolor_default, Qcolor_select, Qcolor_balloon, Qcolor_3d_face;
-Lisp_Object Qcolor_3d_light, Qcolor_3d_dark, Qcolor_menu, Qcolor_menu_high;
-Lisp_Object Qcolor_menu_button, Qcolor_menu_unsel, Qcolor_toolbar;
-Lisp_Object Qcolor_scrollbar, Qcolor_desktop, Qcolor_workspace, Qfont_default;
-Lisp_Object Qfont_menubar, Qfont_dialog, Qsize_cursor, Qsize_scrollbar;
-Lisp_Object Qsize_menu, Qsize_toolbar, Qsize_tbbutton, Qsize_tbborder, Qsize_icon;
-Lisp_Object Qsize_icon_small, Qsize_device, Qsize_workspace, Qsize_device_mm;
-Lisp_Object Qdevice_dpi, Qmouse_buttons, Qswap_buttons;
-Lisp_Object Qshow_sounds, Qslow_device, Qsecurity, Qdbcs, Qime, Qmid_east;
-Lisp_Object Qnum_bit_planes, Qnum_color_cells;
+Lisp_Object
+  Qcolor_default, Qcolor_select, Qcolor_balloon, Qcolor_3d_face,
+  Qcolor_3d_light, Qcolor_3d_dark, Qcolor_menu, Qcolor_menu_highlight,
+  Qcolor_menu_button, Qcolor_menu_disabled, Qcolor_toolbar,
+  Qcolor_scrollbar, Qcolor_desktop, Qcolor_workspace, Qfont_default,
+  Qfont_menubar, Qfont_dialog, Qsize_cursor, Qsize_scrollbar,
+  Qsize_menu, Qsize_toolbar, Qsize_toolbar_button,
+  Qsize_toolbar_border, Qsize_icon, Qsize_icon_small, Qsize_device,
+  Qsize_workspace, Qsize_device_mm, Qdevice_dpi, Qnum_bit_planes,
+  Qnum_color_cells, Qmouse_buttons, Qswap_buttons, Qshow_sounds,
+  Qslow_device, Qsecurity;
 
 Lisp_Object Qdevicep, Qdevice_live_p;
 Lisp_Object Qdelete_device;
@@ -905,133 +906,197 @@ Return the output baud rate of DEVICE.
   return make_int (DEVICE_BAUD_RATE (decode_device (device)));
 }
 
-DEFUN ("device-system-metrics", Fdevice_system_metrics, 2, 2, 0, /*
-Get metrics for DEVICE as provided by the system.
+DEFUN ("device-system-metric", Fdevice_system_metric, 1, 3, 0, /*
+Get a metric for DEVICE as provided by the system.
 
-METRIC must be a symbol specifying requested metric. Note that
-the metrics returned are these provided by the system internally,
-not read from resources, so obtained from the mostly internal level.
+METRIC must be a symbol specifying requested metric.  Note that the metrics
+returned are these provided by the system internally, not read from resources,
+so obtained from the most internal level. 
 
-If a metric is not provided by the system, return value is nil.
-Boolean values are returned as zero and non-zero integers.
+If a metric is not provided by the system, then DEFAULT is returned.
+
+When DEVICE is nil, selected device is assumed
 
 Metrics, by group, are:
 
-COLORS. Colors are returned as valid color instantiators. No other
-assumption on the returned valie should be made (i.e. it can be a
-string on one system but a color instance on another). For colors,
-returned value is a cons of foreground and background colors. Note
-that if the system provides only one color of the pair, the second
-one may be nil.
+COLORS.  Colors are returned as valid color instantiators.  No other assumption
+on the returned valie should be made (i.e. it can be a string on one system but
+a color instance on another).  For colors, returned value is a cons of
+foreground and background colors.  Note that if the system provides only one
+color of the pair, the second one may be nil.
 
-'color-default	   Standard window text foreground and background.
-'color-select	   Selection highligh text and backgroun colors.
-'color-balloon	   Ballon popup text and background colors.
-'color-3d-face	   3-D object (button, modeline) text and surface colors.
-'color-3d-light	   Fore and back colors for 3-D edges facing light source.
-'color-3d-dark	   Fore and back colors for 3-D edges facing away from
-		   light source.
-'color-menu	   Text and background for menus
-'color-menu-high   Selected menu item colors
-'color-menu-button Menu button colors
-'color-menu-unsel  Unselectable menu item colors
-'color-toolbar	   Toolbar foreground and background colors
-'color-scrollbar   Scrollbar foreground and background colors
-'color-desktop	   Desktop window colors
-'color-workspace   Workspace window colors
+color-default         Standard window text foreground and background.
+color-select          Selection highligh text and backgroun colors.
+color-balloon         Ballon popup text and background colors.
+color-3d-face         3-D object (button, modeline) text and surface colors.
+color-3d-light        Fore and back colors for 3-D edges facing light source.
+color-3d-dark         Fore and back colors for 3-D edges facing away from
+                      light source.
+color-menu            Text and background for menus
+color-menu-highlight  Selected menu item colors
+color-menu-button     Menu button colors
+color-menu-disabled   Unselectable menu item colors
+color-toolbar         Toolbar foreground and background colors
+color-scrollbar       Scrollbar foreground and background colors
+color-desktop         Desktop window colors
+color-workspace       Workspace window colors
 
-FONTS. Fonts are returned as valid font instantiators. No other
-assumption on the returned value should be made (i.e. it can be a
-string on one system but font instance on another).
+FONTS. Fonts are returned as valid font instantiators.  No other assumption on
+the returned value should be made (i.e. it can be a string on one system but
+font instance on another).
 
-'font-default	   Default fixed width font.
-'font-menubar	   Menubar font
-'font-dialog	   Dialog boxes font
+font-default          Default fixed width font.
+font-menubar          Menubar font
+font-dialog           Dialog boxes font
 
-GEOMETRY. These metrics are returned as conses of (X . Y). As with colors,
+GEOMETRY. These metrics are returned as conses of (X . Y).  As with colors,
 either car or cdr of the cons may be nil if the system does not provide one
 of corresponding dimensions.
-'size-cursor	   Mouse cursor size.
-'size-scrollbar	   Scrollbars (WIDTH . HEIGHT)
-'size-menu	   Menubar height, as (nil . HEIGHT)
-'size-toolbar	   Toolbar width and height.
-'size-tbbutton	   Toolbar button size.
-'size-tbborder	   Toolbar border width and height.
-'size-icon	   Icon dimensions.
-'size-icon-small   Small icon dimensions.
-'size-device	   Device screen size in pixels.
-'size-workspace	   Workspace size in pixels. This can be less than the above
-		   if window manager has decorations which effectively shrink
-		   the area remaining for application windows.
-'size-device-mm	   Device screen size in millimeters.
-'device-dpi	   Device resolution, in dots per inch.
 
-'num-bit-planes    Integer, number of deive bit planes.
-'num-color-cells   Integer, number of device color cells.
+size-cursor           Mouse cursor size.
+size-scrollbar        Scrollbars (WIDTH . HEIGHT)
+size-menu             Menubar height, as (nil . HEIGHT)
+size-toolbar          Toolbar width and height.
+size-toolbar-button   Toolbar button size.
+size-toolbar-border   Toolbar border width and height.
+size-icon             Icon dimensions.
+size-icon-small       Small icon dimensions.
+size-device           Device screen size in pixels.
+size-workspace        Workspace size in pixels. This can be less than the
+                      above if window manager has decorations which
+                      effectively shrink the area remaining for application
+                      windows.
+size-device-mm        Device screen size in millimeters.
+device-dpi            Device resolution, in dots per inch.
+num-bit-planes        Integer, number of deivce bit planes.
+num-color-cells       Integer, number of device color cells.
 
-FEATURES. This group reports various device features. Boolean values retuned
-as integer 1 for true and zero for false, or nil if the feature is unknown
-for the system.
-		
-'mouse-buttons	   Number of mouse buttons, or zero if no mouse (integer).
-'swap-buttons	   Non-zero if left and right mouse buttons are swapped
-'show-sounds	   User preference for visual over audible bell (boolean).
-'slow-device	   Device is slow, avoid animation (boolean).
-'security	   Non-zero if user environment is secure.
-'dbcs		   Window system supports DBCS (boolean).
-'ime		   Device embeds an input method editor (boolean).
-'mid-east	   Non-zero if the window system is enabled for Hebrew
-		   and Arabic (left-to-right reading) languages.
+FEATURES.  This group reports various device features.  If a feature is
+present, integer 1 (one) is returned, if it is not present, then integer
+0 (zero) is returned.  If the system is unaware of the feature, then
+DEFAULT is returned.
+                
+mouse-buttons         Integer, number of mouse buttons, or zero if no mouse.
+swap-buttons          Non-zero if left and right mouse buttons are swapped.
+show-sounds           User preference for visual over audible bell.
+slow-device           Device is slow, avoid animation.
+security              Non-zero if user environment is secure.
 */
-       (device, metric))
+       (device, metric, default_))
 {
   struct device *d = decode_device (device);
   enum device_metrics m;
+  Lisp_Object res;
 
   /* Decode metric */
-  if (EQ (metric, Qcolor_default))		m = color_default;
-  else if (EQ (metric, Qcolor_select))		m = color_select;
-  else if (EQ (metric, Qcolor_balloon))		m = color_balloon;
-  else if (EQ (metric, Qcolor_3d_face))		m = color_3d_face;
-  else if (EQ (metric, Qcolor_3d_light))	m = color_3d_light;
-  else if (EQ (metric, Qcolor_3d_dark))		m = color_3d_dark;
-  else if (EQ (metric, Qcolor_menu))		m = color_menu;
-  else if (EQ (metric, Qcolor_menu_high))	m = color_menu_high;
-  else if (EQ (metric, Qcolor_menu_button))	m = color_menu_button;
-  else if (EQ (metric, Qcolor_menu_unsel))	m = color_menu_unsel;
-  else if (EQ (metric, Qcolor_toolbar))		m = color_toolbar;
-  else if (EQ (metric, Qcolor_scrollbar))	m = color_scrollbar;
-  else if (EQ (metric, Qcolor_desktop))		m = color_desktop;
-  else if (EQ (metric, Qcolor_workspace))	m = color_workspace;
-  else if (EQ (metric, Qfont_default))		m = font_default;
-  else if (EQ (metric, Qfont_menubar))		m = font_menubar;
-  else if (EQ (metric, Qfont_dialog))		m = font_dialog;
-  else if (EQ (metric, Qsize_cursor))		m = size_cursor;
-  else if (EQ (metric, Qsize_scrollbar))	m = size_scrollbar;
-  else if (EQ (metric, Qsize_menu))		m = size_menu;
-  else if (EQ (metric, Qsize_toolbar))		m = size_toolbar;
-  else if (EQ (metric, Qsize_tbbutton))		m = size_tbbutton;
-  else if (EQ (metric, Qsize_tbborder))		m = size_tbborder;
-  else if (EQ (metric, Qsize_icon))		m = size_icon;
-  else if (EQ (metric, Qsize_icon_small))	m = size_icon_small;
-  else if (EQ (metric, Qsize_device))		m = size_device;
-  else if (EQ (metric, Qsize_workspace))	m = size_workspace;
-  else if (EQ (metric, Qsize_device_mm))	m = size_device_mm;
-  else if (EQ (metric, Qdevice_dpi))		m = device_dpi;
-  else if (EQ (metric, Qnum_bit_planes))	m = num_bit_planes;
-  else if (EQ (metric, Qnum_color_cells))	m = num_color_cells;
-  else if (EQ (metric, Qmouse_buttons))		m = mouse_buttons;
-  else if (EQ (metric, Qswap_buttons))		m = swap_buttons;
-  else if (EQ (metric, Qshow_sounds))		m = show_sounds;
-  else if (EQ (metric, Qslow_device))		m = slow_device;
-  else if (EQ (metric, Qsecurity))		m = security;
-  else if (EQ (metric, Qdbcs))			m = dbcs;
-  else if (EQ (metric, Qime))			m = ime;
-  else if (EQ (metric, Qmid_east))		m = mid_east;
+#define FROB(met)				\
+  else if (EQ (metric, Q##met))			\
+    m = DM_##met
+
+  if (0)
+    ;
+  FROB (color_default);
+  FROB (color_select);
+  FROB (color_balloon);
+  FROB (color_3d_face);
+  FROB (color_3d_light);
+  FROB (color_3d_dark);
+  FROB (color_menu);
+  FROB (color_menu_highlight);
+  FROB (color_menu_button);
+  FROB (color_menu_disabled);
+  FROB (color_toolbar);
+  FROB (color_scrollbar);
+  FROB (color_desktop);
+  FROB (color_workspace);
+  FROB (font_default);
+  FROB (font_menubar);
+  FROB (font_dialog);
+  FROB (size_cursor);
+  FROB (size_scrollbar);
+  FROB (size_menu);
+  FROB (size_toolbar);
+  FROB (size_toolbar_button);
+  FROB (size_toolbar_border);
+  FROB (size_icon);
+  FROB (size_icon_small);
+  FROB (size_device);
+  FROB (size_workspace);
+  FROB (size_device_mm);
+  FROB (device_dpi);
+  FROB (num_bit_planes);
+  FROB (num_color_cells);
+  FROB (mouse_buttons);
+  FROB (swap_buttons);
+  FROB (show_sounds);
+  FROB (slow_device);
+  FROB (security);
   else
     signal_simple_error ("Invalid device metric symbol", metric);
-  
-  return DEVMETH_OR_GIVEN (d, device_system_metrics, (d, m), Qnil);
+
+  res = DEVMETH_OR_GIVEN (d, device_system_metrics, (d, m), Qunbound);
+  return UNBOUNDP(res) ? default_ : res;
+
+#undef FROB
+}
+
+DEFUN ("device-system-metrics", Fdevice_system_metrics, 0, 1, 0, /*
+Get a property list of device metric for DEVICE.
+
+See `device-system-metric' for the description of available metrics.
+DEVICE defaults to selected device when omitted.
+*/
+       (device))
+{
+  struct device *d = decode_device (device);
+  Lisp_Object plist = Qnil, one_metric;
+
+#define FROB(m)								\
+  if (!UNBOUNDP ((one_metric =						\
+		  DEVMETH_OR_GIVEN (d, device_system_metrics,     	\
+				    (d, DM_##m), Qunbound))))		\
+    plist = Fcons (Q##m, Fcons (one_metric, plist));
+
+  FROB (color_default);
+  FROB (color_select);
+  FROB (color_balloon);
+  FROB (color_3d_face);
+  FROB (color_3d_light);
+  FROB (color_3d_dark);
+  FROB (color_menu);
+  FROB (color_menu_highlight);
+  FROB (color_menu_button);
+  FROB (color_menu_disabled);
+  FROB (color_toolbar);
+  FROB (color_scrollbar);
+  FROB (color_desktop);
+  FROB (color_workspace);
+  FROB (font_default);
+  FROB (font_menubar);
+  FROB (font_dialog);
+  FROB (size_cursor);
+  FROB (size_scrollbar);
+  FROB (size_menu);
+  FROB (size_toolbar);
+  FROB (size_toolbar_button);
+  FROB (size_toolbar_border);
+  FROB (size_icon);
+  FROB (size_icon_small);
+  FROB (size_device);
+  FROB (size_workspace);
+  FROB (size_device_mm);
+  FROB (device_dpi);
+  FROB (num_bit_planes);
+  FROB (num_color_cells);
+  FROB (mouse_buttons);
+  FROB (swap_buttons);
+  FROB (show_sounds);
+  FROB (slow_device);
+  FROB (security);
+
+  return plist;
+
+#undef FROB
 }
 
 Lisp_Object
@@ -1172,6 +1237,7 @@ syms_of_device (void)
   DEFSUBR (Fdevice_class);
   DEFSUBR (Fset_device_class);
   DEFSUBR (Fdevice_system_metrics);
+  DEFSUBR (Fdevice_system_metric);
   DEFSUBR (Fset_device_baud_rate);
   DEFSUBR (Fdevice_baud_rate);
   DEFSUBR (Fdomain_device_type);
@@ -1195,9 +1261,9 @@ syms_of_device (void)
   defsymbol (&Qcolor_3d_light, "color-3d-light");
   defsymbol (&Qcolor_3d_dark, "color-3d-dark");
   defsymbol (&Qcolor_menu, "color-menu");
-  defsymbol (&Qcolor_menu_high, "color-menu-high");
+  defsymbol (&Qcolor_menu_highlight, "color-menu-highlight");
   defsymbol (&Qcolor_menu_button, "color-menu-button");
-  defsymbol (&Qcolor_menu_unsel, "color-menu-unsel");
+  defsymbol (&Qcolor_menu_disabled, "color-menu-disabled");
   defsymbol (&Qcolor_toolbar, "color-toolbar");
   defsymbol (&Qcolor_scrollbar, "color-scrollbar");
   defsymbol (&Qcolor_desktop, "color-desktop");
@@ -1209,8 +1275,8 @@ syms_of_device (void)
   defsymbol (&Qsize_scrollbar, "size-scrollbar");
   defsymbol (&Qsize_menu, "size-menu");
   defsymbol (&Qsize_toolbar, "size-toolbar");
-  defsymbol (&Qsize_tbbutton, "size-tbbutton");
-  defsymbol (&Qsize_tbborder, "size-tbborder");
+  defsymbol (&Qsize_toolbar_button, "size-toolbar-button");
+  defsymbol (&Qsize_toolbar_border, "size-toolbar-border");
   defsymbol (&Qsize_icon, "size-icon");
   defsymbol (&Qsize_icon_small, "size-icon-small");
   defsymbol (&Qsize_device, "size-device");
@@ -1224,9 +1290,6 @@ syms_of_device (void)
   defsymbol (&Qshow_sounds, "show-sounds");
   defsymbol (&Qslow_device, "slow-device");
   defsymbol (&Qsecurity, "security");
-  defsymbol (&Qdbcs, "dbcs");
-  defsymbol (&Qime, "ime");
-  defsymbol (&Qmid_east, "mid-east");
 }
 
 void

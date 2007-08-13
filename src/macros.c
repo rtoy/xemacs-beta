@@ -87,7 +87,7 @@ Non-nil arg (prefix arg) means append to last macro defined;
   return Qnil;
 }
 
-DEFUN ("end-kbd-macro", Fend_kbd_macro, 0, 2, "P", /*
+DEFUN ("end-kbd-macro", Fend_kbd_macro, 0, 1, "P", /*
 Finish defining a keyboard macro.
 The definition was started by \\[start-kbd-macro].
 The macro is now available for use via \\[call-last-kbd-macro],
@@ -97,28 +97,15 @@ under that name.
 With numeric arg, repeat macro now that many times,
 counting the definition just completed as the first repetition.
 An argument of zero means repeat until error.
-
-If REMOVE-LAST is an integer, it means to not record the last number
-of events.  This is used internally and will likely be removed.
 */
-       (arg, remove_last))
+       (arg))
 {
   /* This function can GC */
   struct console *con = XCONSOLE (Vselected_console);
-  int repeat, kill;
+  int repeat;
 
   if (NILP (con->defining_kbd_macro))
     error ("Not defining kbd macro.");
-
-  /* #### Read the comment in modeline.el to see why this ugliness is
-     needed.  #### Try to avoid it, somehow!  */
-  if (!NILP (remove_last))
-    {
-      CHECK_NATNUM (remove_last);
-      kill = XINT (remove_last);
-    }
-  else
-    kill = 0;
 
   if (NILP (arg))
     repeat = -1;
@@ -128,7 +115,7 @@ of events.  This is used internally and will likely be removed.
   if (!NILP (con->defining_kbd_macro))
     {
       int i;
-      int size = con->kbd_macro_end - kill;
+      int size = con->kbd_macro_end;
 
       if (size < 0)
 	size = 0;
@@ -152,6 +139,18 @@ of events.  This is used internally and will likely be removed.
 			       make_int (repeat - 1));
 }
 
+/* #### Read the comment in modeline.el to see why this ugliness is
+   needed.  #### Try to avoid it, somehow!  */
+DEFUN ("zap-last-kbd-macro-event", Fzap_last_kbd_macro_event, 0, 0, 0, /*
+Don't look at this lest you vomit or spontaneously combust.
+*/
+       ())
+{
+  struct console *con = XCONSOLE (Vselected_console);
+  if (con->kbd_macro_end)
+    --con->kbd_macro_end;
+  return Qnil;
+}
 
 /* Store event into kbd macro being defined
  */
@@ -304,6 +303,7 @@ syms_of_macros (void)
 {
   DEFSUBR (Fstart_kbd_macro);
   DEFSUBR (Fend_kbd_macro);
+  DEFSUBR (Fzap_last_kbd_macro_event);
   DEFSUBR (Fcall_last_kbd_macro);
   DEFSUBR (Fexecute_kbd_macro);
   DEFSUBR (Fcancel_kbd_macro_events);

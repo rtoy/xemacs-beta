@@ -1221,9 +1221,11 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
     default:
       {
+#ifdef ERROR_CHECK_TYPECHECK
+	abort ();
+#else  /* not ERROR_CHECK_TYPECHECK */
 	char buf[128];
-	/* We're in trouble if this happens!  Probably should just
-	   abort () */
+	/* We're in trouble if this happens! */
 	if (print_readably)
 	  error ("printing illegal data type #o%03o",
 		 (int) XTYPE (obj));
@@ -1234,6 +1236,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	write_c_string
 	  (" Save your buffers immediately and please report this bug>",
 	   printcharfun);
+#endif /* not ERROR_CHECK_TYPECHECK */
 	break;
       }
     }

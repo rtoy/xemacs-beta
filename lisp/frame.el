@@ -519,13 +519,10 @@ All frames are arranged in a cyclic order.
 This command selects the frame ARG steps away in that order.
 A negative ARG moves in the opposite order.
 
-This command ignores the value of `focus-follows-mouse'."
+This sets the window system focus, regardless of the value
+of `focus-follows-mouse'."
   (interactive "p")
-  (let ((frame (selected-frame))
-        (old-focus-follows-mouse focus-follows-mouse)
-        ;; Allow selecting another frame even when
-        ;; focus-follows-mouse is true.
-        (focus-follows-mouse nil))
+  (let ((frame (selected-frame)))
     (while (> arg 0)
       (setq frame (next-frame frame 'visible-nomini))
       (setq arg (1- arg)))
@@ -533,11 +530,7 @@ This command ignores the value of `focus-follows-mouse'."
       (setq frame (previous-frame frame 'visible-nomini))
       (setq arg (1+ arg)))
     (raise-frame frame)
-    (select-frame frame)
-    ;; Allow the focus change to be processed while
-    ;; focus-follows-mouse is nil.
-    (and old-focus-follows-mouse
-	 (sit-for 0))
+    (focus-frame frame)
     ;this is a bad idea; you should in general never warp the
     ;pointer unless the user asks for this.  Furthermore,
     ;our version of `set-mouse-position' takes a window,
@@ -547,8 +540,24 @@ This command ignores the value of `focus-follows-mouse'."
     ;(if (fboundp 'unfocus-frame)
     ;	(unfocus-frame))))
     ))
-
+
 ;; XEmacs-added utility functions
+
+(defmacro save-selected-frame (&rest body)
+  "Execute forms in BODY, then restore the selected frame.
+The value returned is the value of the last form in BODY."
+  (let ((old-frame (gensym "ssf")))
+    `(let ((,old-frame (selected-frame)))
+       (unwind-protect
+           (progn ,@body)
+         (select-frame ,old-frame)))))
+
+(defmacro with-selected-frame (frame &rest body)
+  "Execute forms in BODY with FRAME as the selected frame.
+The value returned is the value of the last form in BODY."
+  `(save-selected-frame
+     (select-frame ,frame)
+     ,@body))
 
 ; this is in C in FSFmacs
 (defun frame-list ()

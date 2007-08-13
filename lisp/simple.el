@@ -219,7 +219,11 @@ this function useful in editing binary files."
   (let ((char (if (or (not overwrite-mode)
 		      (eq overwrite-mode 'overwrite-mode-binary))
 		  (read-quoted-char)
-		(read-char))))
+		;; read-char obeys C-g, so we should protect.  FSF
+		;; doesn't have the protection here, but it's a bug in
+		;; FSF.
+		(let ((inhibit-quit t))
+		  (read-char)))))
     (if (> arg 0)
 	(if (eq overwrite-mode 'overwrite-mode-binary)
 	    (delete-char arg)))
@@ -457,6 +461,15 @@ Goes backward if ARG is negative; error if CHAR not found."
 ;			 (goto-char (if (> arg 0) (1- (point)) (1+ (point))))
 			 (point))))
 
+(defun zap-up-to-char (arg char)
+  "Kill up to ARG'th occurrence of CHAR.
+Goes backward if ARG is negative; error if CHAR not found."
+  (interactive "*p\ncZap up to char: ")
+  (kill-region (point) (progn
+                       (search-forward (char-to-string char) nil nil arg)
+                       (goto-char (if (> arg 0) (1- (point)) (1+ (point))))
+                       (point))))
+
 (defun beginning-of-buffer (&optional arg)
   "Move point to the beginning of the buffer; leave mark at previous position.
 With arg N, put point N/10 of the way from the beginning.
@@ -565,11 +578,11 @@ nil means discard it; anything else is stream for print."
   (eval-buffer (current-buffer) printflag))
 
 ;; XEmacs
-(defun count-words-buffer (buffer)
+(defun count-words-buffer (&optional buffer)
   "Print the number of words in BUFFER.
 If called noninteractively, the value is returned rather than printed.
 BUFFER defaults to the current buffer."
-  (interactive "_bBuffer: ")
+  (interactive)
   (let ((words (count-words-region (point-min) (point-max) buffer)))
     (when (interactive-p)
       (message "Buffer has %d words" words))
@@ -600,11 +613,10 @@ BUFFER defaults to the current buffer."
 	   (count-lines start end) (- end start)))
 
 ;; XEmacs
-(defun count-lines-buffer (buffer)
+(defun count-lines-buffer (&optional buffer)
   "Print number of lines and characters in BUFFER."
-  (interactive "_bBuffer: ")
-  (save-excursion
-    (set-buffer (or buffer (current-buffer)))
+  (interactive)
+  (with-current-buffer (or buffer (current-buffer))
     (let ((cnt (count-lines (point-min) (point-max))))
       (message "Buffer has %d lines, %d characters"
                cnt (- (point-max) (point-min)))
@@ -737,16 +749,19 @@ Other major modes are defined by comparison with this one."
 
 ;; We define this, rather than making `eval' interactive,
 ;; for the sake of completion of names like eval-region, eval-current-buffer.
-(defun eval-expression (expression)
+(defun eval-expression (expression &optional eval-expression-insert-value)
   "Evaluate EXPRESSION and print value in minibuffer.
-Value is also consed on to front of the variable `values'."
+Value is also consed on to front of the variable `values'.
+With prefix argument, insert the result to the current buffer."
   ;(interactive "xEval: ")
   (interactive
    (list (read-from-minibuffer "Eval: "
 			       nil read-expression-map t
-			       'read-expression-history)))
+			       'read-expression-history)
+	 current-prefix-arg))
   (setq values (cons (eval expression) values))
-  (prin1 (car values) t))
+  (prin1 (car values)
+	 (if eval-expression-insert-value (current-buffer) t)))
 
 ;; XEmacs -- extra parameter (variant, but equivalent logic)
 (defun edit-and-eval-command (prompt command &optional history)

@@ -37,6 +37,7 @@ Boston, MA 02111-1307, USA.  */
 #define OVER_NOTHING		3
 #define OVER_BORDER		4
 #define OVER_TOOLBAR		5
+#define OVER_V_DIVIDER		6
 
 #define NO_BLOCK	-1
 

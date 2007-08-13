@@ -42,8 +42,10 @@
   "Depth of load-path searches in core Lisp paths.")
 
 (defvar paths-default-info-directories
-  (list (paths-construct-path '("usr" "local" "info") path-separator)
-	(paths-construct-path '("usr" "info") path-separator))
+  (list (paths-construct-path '("usr" "local" "info")
+			      (char-to-string directory-sep-char))
+	(paths-construct-path '("usr" "info")
+			      (char-to-string directory-sep-char)))
   "Directories appended to the end of the info path by default.")
 
 (defun paths-find-site-lisp-directory (roots)
@@ -138,7 +140,7 @@
    (packages-find-package-exec-path last-packages)
    (let ((emacspath-envval (getenv "EMACSPATH")))
      (and emacspath-envval
-	  (decode-path-internal emacspath-envval)))
+	  (split-path emacspath-envval)))
    (and exec-directory
 	(list exec-directory))))
 

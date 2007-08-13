@@ -93,11 +93,10 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
 (define-function 'x-grayscale-display-p 'x-display-grayscale-p)
 (make-compatible 'x-display-grayscale-p 'device-class)
 
-(define-compatible-function-alias 'x-display-pixel-width 'device-pixel-width)
-(define-compatible-function-alias 'x-display-pixel-height
-  'device-pixel-height)
-(define-compatible-function-alias 'x-display-planes 'device-bitplanes)
-(define-compatible-function-alias 'x-display-color-cells 'device-color-cells)
+(define-compatible-function-alias 'x-display-pixel-width  'device-pixel-width)
+(define-compatible-function-alias 'x-display-pixel-height 'device-pixel-height)
+(define-compatible-function-alias 'x-display-planes       'device-bitplanes)
+(define-compatible-function-alias 'x-display-color-cells  'device-color-cells)
 
 (define-obsolete-function-alias 'baud-rate 'device-baud-rate)
 
@@ -122,7 +121,7 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
 (define-obsolete-function-alias 'extent-buffer 'extent-object)
 
 (defun set-extent-attribute (extent attr &optional clearp)
-  "" ;; obsoleteness info will be displayed, so no need for anything more.
+  ;; obsoleteness info will be displayed, so no need for docstring.
   (cond ((eq attr 'write-protected)
          (set-extent-property extent 'read-only t))
         ((eq attr 'unhighlight)
@@ -136,20 +135,20 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
 (make-obsolete 'set-extent-attribute 'set-extent-property)
 
 (defun extent-glyph (extent)
-  "" ;; obsoleteness info will be displayed, so no need for anything more.
+  ;; obsoleteness info will be displayed, so no need for docstring.
   (or (extent-begin-glyph extent)
       (extent-end-glyph extent)))
 (make-obsolete 'extent-glyph
 	       "use `extent-begin-glyph' or `extent-end-glyph' instead.")
 
 (defun extent-layout (extent)
-  "" ;; obsoleteness info will be displayed, so no need for anything more.
+  ;; obsoleteness info will be displayed, so no need for docstring.
   (extent-begin-glyph-layout extent))
 (make-obsolete 'extent-layout
        "use `extent-begin-glyph-layout' or `extent-end-glyph-layout' instead.")
 
 (defun set-extent-layout (extent layout)
-  "" ;; obsoleteness info will be displayed, so no need for anything more.
+  ;; obsoleteness info will be displayed, so no need for docstring.
   (set-extent-begin-glyph-layout extent layout))
 (make-obsolete 'set-extent-layout
        "use `set-extent-begin-glyph-layout' or `set-extent-end-glyph-layout' instead.")
@@ -245,7 +244,7 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
 (define-obsolete-variable-alias 'x-screen-defaults 'default-x-frame-alist)
 
 (defun x-create-screen (parms window-id)
-  ""
+  ;; obsoleteness info will be displayed, so no need for docstring.
   (if (not (eq 'x (device-type (selected-device))))
       (error "Cannot create X frames on non-X device"))
   (make-frame (append parms (list (list 'window-id window-id)))

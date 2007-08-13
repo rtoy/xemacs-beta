@@ -299,12 +299,14 @@ Mail readers known by default are vm, gnus, rmail, mh, pine, elm,
   (if toolbar-compile-already-run
       (compile compile-command)
     (setq toolbar-compile-already-run t)
-    (popup-dialog-box
-     `(,(concat "Compile:\n        " compile-command)
-       ["Compile" (compile compile-command) t]
-       ["Edit command" compile t]
-       nil
-       ["Cancel" (message "Quit") t]))))
+    (if (should-use-dialog-box-p)
+       (popup-dialog-box
+        `(,(concat "Compile:\n        " compile-command)
+          ["Compile" (compile compile-command) t]
+          ["Edit command" compile t]
+          nil
+          ["Cancel" (message "Quit") t]))
+      (compile compile-command))))
 
 ;;
 ;; toolbar news variables and defuns

@@ -3142,7 +3142,7 @@ Full name of file being loaded by `load'.
   Vload_file_name = Qnil;
 
   DEFVAR_LISP ("load-read-function", &Vload_read_function /*
-    "Function used by `load' and `eval-region' for reading expressions.
+Function used by `load' and `eval-region' for reading expressions.
 The default is nil, which means use the function `read'.
 */ );
   Vload_read_function = Qnil;

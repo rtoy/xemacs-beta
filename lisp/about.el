@@ -205,8 +205,9 @@
 		   :format "%t"
 		   :tag-glyph xemacs-logo)
     (widget-insert "\n")
-    (let* ((emacs-short-version (concat emacs-major-version
-					"." emacs-minor-version))
+    (let* ((emacs-short-version (format "%d.%d"
+					emacs-major-version
+					emacs-minor-version))
 	   (emacs-about-version (format "version %s; Apr 1998"
 					emacs-short-version)))
       (widget-insert (about-center emacs-about-version))
@@ -1186,8 +1187,7 @@ Currently studying computer science in Trondheim, Norway.  Full time
 Linux user and proud of it.  XEmacs hacker light.  Maintainer of the
 RPM package.\n")
     (about-show-linked-info 'ograf "\
-Is currently working on the integration of OffiX and CDE drag-and-drop
-into the event system of XEmacs.\n")
+Author of the XEmacs Drag'n'Drop API.\n")
     (about-show-linked-info 'juhp "\
 Author of \"find-func.el\".\n")
     (about-show-linked-info 'jason "\

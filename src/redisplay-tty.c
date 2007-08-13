@@ -114,18 +114,6 @@ tty_text_width (struct frame *f, struct face_cachel *cachel, CONST Emchar *str,
 }
 
 /*****************************************************************************
- tty_divider_width
-
- Return the width of the vertical divider.  This is a function because
- divider_width is a console method.
- ****************************************************************************/
-static int
-tty_divider_width (void)
-{
-  return 1;
-}
-
-/*****************************************************************************
  tty_divider_height
 
  Return the width of the horizontal divider.  This is a function
@@ -436,31 +424,35 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 /*****************************************************************************
  tty_output_vertical_divider
 
- Draw a vertical divider down the left side of the given window.
+ Draw a vertical divider down the right side of the given window.
  ****************************************************************************/
 static void
 tty_output_vertical_divider (struct window *w, int clear)
 {
-  struct frame *f = XFRAME (w->frame);
-  struct console *c = XCONSOLE (FRAME_CONSOLE (f));
-  int line;
-  int y_top = WINDOW_TEXT_TOP (w);
-  int y_bot = WINDOW_TEXT_BOTTOM (w);
-  unsigned char divv = '|';
-
-  tty_turn_on_face (w, MODELINE_INDEX);
-  for (line = y_top; line < y_bot; line++)
+  /* Divider width can either be 0 or 1 on TTYs */
+  if (window_divider_width (w))
     {
-      cmgoto (f, line, WINDOW_TEXT_LEFT (w) - 1);
+      struct frame *f = XFRAME (w->frame);
+      struct console *c = XCONSOLE (FRAME_CONSOLE (f));
+      int line;
+      int y_top = WINDOW_TEXT_TOP (w);
+      int y_bot = WINDOW_TEXT_BOTTOM (w);
+      unsigned char divv = '|';
+
+      tty_turn_on_face (w, MODELINE_INDEX);
+      for (line = y_top; line < y_bot; line++)
+	{
+	  cmgoto (f, line, WINDOW_TEXT_RIGHT (w));
+	  send_string_to_tty_console (c, &divv, 1);
+	  TTY_INC_CURSOR_X (c, 1);
+	}
+
+      /* Draw the divider in the modeline. */
+      cmgoto (f, y_bot, WINDOW_TEXT_RIGHT (w));
       send_string_to_tty_console (c, &divv, 1);
       TTY_INC_CURSOR_X (c, 1);
+      tty_turn_off_face (w, MODELINE_INDEX);
     }
-
-  /* Draw the divider in the modeline. */
-  cmgoto (f, y_bot, WINDOW_TEXT_LEFT (w) - 1);
-  send_string_to_tty_console (c, &divv, 1);
-  TTY_INC_CURSOR_X (c, 1);
-  tty_turn_off_face (w, MODELINE_INDEX);
 }
 
 /****************************************************************************
@@ -1548,7 +1540,6 @@ console_type_create_redisplay_tty (void)
   CONSOLE_HAS_METHOD (tty, text_width);
   CONSOLE_HAS_METHOD (tty, output_display_block);
   CONSOLE_HAS_METHOD (tty, output_vertical_divider);
-  CONSOLE_HAS_METHOD (tty, divider_width);
   CONSOLE_HAS_METHOD (tty, divider_height);
   CONSOLE_HAS_METHOD (tty, eol_cursor_width);
   CONSOLE_HAS_METHOD (tty, clear_to_window_end);

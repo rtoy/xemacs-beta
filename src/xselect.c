@@ -1051,7 +1051,6 @@ static Lisp_Object Qx_selection_reply_timeout_internal;
 
 DEFUN ("x-selection-reply-timeout-internal", Fx_selection_reply_timeout_internal,
        1, 1, 0, /*
-
 */
        (arg))
 {

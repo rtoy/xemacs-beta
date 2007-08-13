@@ -423,7 +423,7 @@ temacs: $(temacs_deps)
 .PHONY : run-temacs
 
 run-temacs: temacs
-	./temacs -batch -l ${srcdir}/../lisp/loadup.el run-temacs
+	-$(DUMPENV) ./temacs -batch -l ${srcdir}/../lisp/loadup.el run-temacs
 
 ## Debugging targets:
 ##
@@ -464,7 +464,7 @@ puremacs: $(temacs_deps)
 	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) $(temacs_link_args) -lpthread
 
 run-puremacs: puremacs
-	./puremacs -batch -l ${srcdir}/../lisp/loadup.el run-temacs
+	-$(DUMPENV) ./puremacs -batch -l ${srcdir}/../lisp/loadup.el run-temacs
 
 ## Quantify
 #ifdef  QUANTIFY
@@ -679,6 +679,6 @@ relock:
 
 ## Dependency processing using home-grown script, not makedepend
 depend: FRC.depend
-	$(RM) ${srcdir}/depend; mv depend.tmp ${srcdir}/depend
+	$(RM) ${srcdir}/depend depend.tmp
 	perl ${srcdir}/make-src-depend > depend.tmp
 	mv depend.tmp ${srcdir}/depend

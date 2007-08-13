@@ -777,6 +777,16 @@ update_frame_toolbars (struct frame *f)
 	  || !EQ (FRAME_TOOLBAR_BUFFER (f, LEFT_TOOLBAR), buffer)
 	  || !EQ (FRAME_TOOLBAR_BUFFER (f, RIGHT_TOOLBAR), buffer)))
     {
+      int width, height;
+
+      /* We're not officially "in redisplay", so we still have a chance
+	 to re-layout toolbars and windows. This is done here, because
+	 toolbar is the only thing which currently might necesseritate
+	 this layout, as it is outside any windows */
+      pixel_to_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
+			  &width, &height);
+      change_frame_size (f, height, width, 0);
+
       /* Removed the check for the minibuffer here.  We handle this
 	 more correctly now by consistently using
 	 FRAME_LAST_NONMINIBUF_WINDOW instead of FRAME_SELECTED_WINDOW

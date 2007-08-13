@@ -929,6 +929,9 @@ float_error (int signo)
 
 #endif /* FLOAT_CATCH_SIGILL */
 
+/* In C++, it is impossible to determine what type matherr expects
+   without some more configure magic.
+   We shouldn't be using matherr anyways - it's a non-standard SYSVism. */
 #if defined (HAVE_MATHERR) && !defined(__cplusplus)
 int
 matherr (struct exception *x)
@@ -947,11 +950,11 @@ matherr (struct exception *x)
                         : Qnil)));
   switch (x->type)
     {
-    case DOMAIN:	Fsignal (Qdomain_error, args);		break;
-    case SING:		Fsignal (Qsingularity_error, args);	break;
-    case OVERFLOW:	Fsignal (Qoverflow_error, args);	break;
-    case UNDERFLOW:	Fsignal (Qunderflow_error, args);	break;
-    default:		Fsignal (Qarith_error, args);		break;
+    case DOMAIN:    Fsignal (Qdomain_error,	 args); break;
+    case SING:	    Fsignal (Qsingularity_error, args); break;
+    case OVERFLOW:  Fsignal (Qoverflow_error,	 args); break;
+    case UNDERFLOW: Fsignal (Qunderflow_error,	 args); break;
+    default:	    Fsignal (Qarith_error,	 args); break;
     }
   return 1;	/* don't set errno or print a message */
 }

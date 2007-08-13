@@ -127,7 +127,7 @@ of compatibility with previous XEmacs and should not be depended on.
 putting strings together, or by taking them apart.
 
 @defun string &rest characters
-  This function returns of string made up of @var{characters}.
+  This function returns a new string made up of @var{characters}.
 
 @example
 (string ?X ?E ?m ?a ?c ?s)

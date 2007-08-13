@@ -4925,7 +4925,7 @@ BEGIN-GLYPH must be a glyph object.  The layout policy defaults to `text'.
 }
 
 DEFUN ("set-extent-end-glyph", Fset_extent_end_glyph, 2, 3, 0, /*
-Display a bitmap, subwindow or string at the end of the EXTENT.
+Display a bitmap, subwindow or string at the end of EXTENT.
 END-GLYPH must be a glyph object.  The layout policy defaults to `text'.
 */
        (extent, end_glyph, layout))
@@ -4937,22 +4937,22 @@ DEFUN ("extent-begin-glyph", Fextent_begin_glyph, 1, 1, 0, /*
 Return the glyph object displayed at the beginning of EXTENT.
 If there is none, nil is returned.
 */
-       (extent_obj))
+       (extent))
 {
-  return extent_begin_glyph (decode_extent (extent_obj, 0));
+  return extent_begin_glyph (decode_extent (extent, 0));
 }
 
 DEFUN ("extent-end-glyph", Fextent_end_glyph, 1, 1, 0, /*
 Return the glyph object displayed at the end of EXTENT.
 If there is none, nil is returned.
 */
-       (extent_obj))
+       (extent))
 {
-  return extent_end_glyph (decode_extent (extent_obj, 0));
+  return extent_end_glyph (decode_extent (extent, 0));
 }
 
 DEFUN ("set-extent-begin-glyph-layout", Fset_extent_begin_glyph_layout, 2, 2, 0, /*
-Set the layout policy of the given extent's begin glyph.
+Set the layout policy of EXTENT's begin glyph.
 Access this using the `extent-begin-glyph-layout' function.
 */
        (extent, layout))
@@ -4965,7 +4965,7 @@ Access this using the `extent-begin-glyph-layout' function.
 }
 
 DEFUN ("set-extent-end-glyph-layout", Fset_extent_end_glyph_layout, 2, 2, 0, /*
-Set the layout policy of the given extent's end glyph.
+Set the layout policy of EXTENT's end glyph.
 Access this using the `extent-end-glyph-layout' function.
 */
        (extent, layout))
@@ -4978,7 +4978,7 @@ Access this using the `extent-end-glyph-layout' function.
 }
 
 DEFUN ("extent-begin-glyph-layout", Fextent_begin_glyph_layout, 1, 1, 0, /*
-Return the layout policy associated with the given extent's begin glyph.
+Return the layout policy associated with EXTENT's begin glyph.
 Set this using the `set-extent-begin-glyph-layout' function.
 */
        (extent))
@@ -4988,7 +4988,7 @@ Set this using the `set-extent-begin-glyph-layout' function.
 }
 
 DEFUN ("extent-end-glyph-layout", Fextent_end_glyph_layout, 1, 1, 0, /*
-Return the layout policy associated with the given extent's end glyph.
+Return the layout policy associated with EXTENT's end glyph.
 Set this using the `set-extent-end-glyph-layout' function.
 */
        (extent))
@@ -5332,7 +5332,7 @@ See `set-extent-property' for the built-in property names.
 }
 
 DEFUN ("extent-properties", Fextent_properties, 1, 1, 0, /*
-Return a property list of the attributes of the given extent.
+Return a property list of the attributes of EXTENT.
 Do not modify this list; use `set-extent-property' instead.
 */
        (extent))
@@ -5448,29 +5448,29 @@ If the second arg is non-nil, it will be highlighted, else dehighlighted.
 This is the same as `highlight-extent', except that it will work even
 on extents without the `mouse-face' property.
 */
-       (extent_obj, highlight_p))
+       (extent, highlight_p))
 {
-  if (NILP (extent_obj))
+  if (NILP (extent))
     highlight_p = Qnil;
   else
-    XSETEXTENT (extent_obj, decode_extent (extent_obj, DE_MUST_BE_ATTACHED));
-  do_highlight (extent_obj, !NILP (highlight_p));
+    XSETEXTENT (extent, decode_extent (extent, DE_MUST_BE_ATTACHED));
+  do_highlight (extent, !NILP (highlight_p));
   return Qnil;
 }
 
 DEFUN ("highlight-extent", Fhighlight_extent, 1, 2, 0, /*
-Highlight the given extent, if it is highlightable
+Highlight EXTENT, if it is highlightable.
 \(that is, if it has the `mouse-face' property).
 If the second arg is non-nil, it will be highlighted, else dehighlighted.
 Highlighted extents are displayed as if they were merged with the face
 or faces specified by the `mouse-face' property.
 */
-       (extent_obj, highlight_p))
+       (extent, highlight_p))
 {
-  if (EXTENTP (extent_obj) && NILP (extent_mouse_face (XEXTENT (extent_obj))))
+  if (EXTENTP (extent) && NILP (extent_mouse_face (XEXTENT (extent))))
     return Qnil;
   else
-    return Fforce_highlight_extent (extent_obj, highlight_p);
+    return Fforce_highlight_extent (extent, highlight_p);
 }
 
 

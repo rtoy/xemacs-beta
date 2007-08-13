@@ -159,6 +159,7 @@ void console_type_create_objects_x (void);
 void console_type_create_redisplay_x (void);
 void console_type_create_scrollbar_x (void);
 void console_type_create_toolbar_x (void);
+void console_type_create_dialog_x (void);
 void console_type_create_mswindows (void);
 void console_type_create_device_mswindows (void);
 void console_type_create_frame_mswindows (void);
@@ -168,6 +169,7 @@ void console_type_create_redisplay_mswindows (void);
 void console_type_create_scrollbar_mswindows (void);
 void console_type_create_toolbar_mswindows (void);
 void console_type_create_glyphs_mswindows (void);
+void console_type_create_dialog_mswindows (void);
 
 /* Initialize the specifier types (dump-time only). */
 
@@ -232,6 +234,7 @@ void vars_of_dialog (void);
 void vars_of_dialog_x (void);
 void vars_of_dired (void);
 void vars_of_doc (void);
+void vars_of_dragdrop (void);
 void vars_of_editfns (void);
 void vars_of_elhash (void);
 void vars_of_emacs (void);

@@ -52,18 +52,9 @@ Boston, MA 02111-1307, USA.  */
 #include "file-coding.h" /* for CCL conversion */
 #endif
 
-/* X_DIVIDER_LINE_WIDTH is the width of the line drawn in the gutter.
-   X_DIVIDER_SPACING is the amount of blank space on each side of the line.
-   X_DIVIDER_WIDTH = X_DIVIDER_LINE_WIDTH + 2*X_DIVIDER_SPACING
-*/
-
 /* Number of pixels below each line. */
 /* #### implement me */
 int x_interline_space;
-
-#define X_DIVIDER_LINE_WIDTH	3
-#define X_DIVIDER_SPACING	2
-#define X_DIVIDER_WIDTH		(X_DIVIDER_LINE_WIDTH + 2 * X_DIVIDER_SPACING)
 
 #define EOL_CURSOR_WIDTH	5
 
@@ -274,19 +265,6 @@ x_text_width (struct frame *f, struct face_cachel *cachel, CONST Emchar *str,
     width_so_far += x_text_width_single_run (cachel, runs + i);
 
   return width_so_far;
-}
-
-
-/*****************************************************************************
- x_divider_width
-
- Return the width of the vertical divider.  This is a function because
- divider_width is a device method.
- ****************************************************************************/
-static int
-x_divider_width (void)
-{
-  return X_DIVIDER_WIDTH;
 }
 
 /*****************************************************************************
@@ -1388,7 +1366,7 @@ x_output_pixmap (struct window *w, struct display_line *dl,
 /*****************************************************************************
  x_output_vertical_divider
 
- Draw a vertical divider down the left side of the given window.
+ Draw a vertical divider down the right side of the given window.
  ****************************************************************************/
 static void
 x_output_vertical_divider (struct window *w, int clear)
@@ -1396,75 +1374,127 @@ x_output_vertical_divider (struct window *w, int clear)
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
 
+  EmacsFrame ef = (EmacsFrame) FRAME_X_TEXT_WIDGET (f);
   Display *dpy = DEVICE_X_DISPLAY (d);
   Window x_win = XtWindow (FRAME_X_TEXT_WIDGET (f));
-  GC gc;
+  Pixel top_shadow_pixel, bottom_shadow_pixel, background_pixel;
+  Lisp_Object tmp_pixel;
+  XColor tmp_color;
+  XGCValues gcv;
+  GC top_shadow_gc, bottom_shadow_gc, background_gc;
 
-  /* We don't use the normal gutter measurements here because the
-     horizontal scrollbars and toolbars do not stretch completely over
-     to the right edge of the window.  Only the modeline does. */
-  int modeline_height = window_modeline_height (w);
-  int x1, x2;
-  int y1, y2;
+  int use_pixmap = 0;
+  int flip_gcs = 0;
+  unsigned long mask;
+  int x, y1, y2, width, shadow_thickness, spacing, line_width;
+  face_index div_face = get_builtin_face_cache_index (w, Vvertical_divider_face);
+  
+  width = window_divider_width (w);
+  shadow_thickness = XINT (w->vertical_divider_shadow_thickness);
+  spacing = XINT (w->vertical_divider_spacing);
+  line_width = XINT (w->vertical_divider_line_width);
+  x = WINDOW_RIGHT (w) - width;
+  y1 = WINDOW_TOP (w);
+  y2 = WINDOW_BOTTOM (w);
+  
+  memset (&gcv, ~0, sizeof (XGCValues));
+  
+  tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, div_face);
+  tmp_color = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (tmp_pixel));
+  
+  /* First, get the GC's. */
+  top_shadow_pixel = tmp_color.pixel;
+  bottom_shadow_pixel = tmp_color.pixel;
+  background_pixel = tmp_color.pixel;
+  
+  x_generate_shadow_pixels (f, &top_shadow_pixel, &bottom_shadow_pixel,
+			    background_pixel, ef->core.background_pixel);
+  
+  tmp_pixel = WINDOW_FACE_CACHEL_FOREGROUND (w, div_face);
+  tmp_color = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (tmp_pixel));
+  gcv.background = tmp_color.pixel;
+  gcv.graphics_exposures = False;
+  mask = GCForeground | GCBackground | GCGraphicsExposures;
 
-#ifdef HAVE_SCROLLBARS
-  if (!NILP (w->scrollbar_on_left_p))
-#endif
-    x1 = WINDOW_LEFT (w);
-#ifdef HAVE_SCROLLBARS
-  else
-    x1 = WINDOW_RIGHT (w) - X_DIVIDER_WIDTH;
-#endif
-  x2 = x1 + X_DIVIDER_SPACING;
-
-#ifdef HAVE_SCROLLBARS
-  if (!NILP (w->scrollbar_on_top_p))
-    y1 = WINDOW_TOP (w);
-  else
-#endif
-    y1 = WINDOW_TEXT_TOP (w);
-  y2 = WINDOW_BOTTOM (w) - modeline_height;
-
-  /* Draw the divider in the window. */
-  {
-    /* Clear the divider area first.  This needs to be done when a
-       window split occurs. */
-    if (clear)
-      XClearArea (dpy, x_win, x1, y1, X_DIVIDER_WIDTH, y2 - y1, False);
-
-    /* #### There needs to be some checks to make sure that whatever
-       colors we choose, the line will be visible (not same color as
-       default background.
-
-       #### No there don't.  If I want the vertical divider to be
-       invisible, I should be able to make it so. */
-    gc = x_get_gc (d, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, MODELINE_INDEX),
-		   WINDOW_FACE_CACHEL_FOREGROUND (w, MODELINE_INDEX),
-		   Qnil, Qnil);
-
-    /* Draw the divider line. */
-    XFillRectangle (dpy, x_win, gc, x2, y1, X_DIVIDER_LINE_WIDTH, y2 - y1);
-  }
-
-  /* Draw the divider in the modeline but only if we are using 2D
-     modelines. */
-  if (EQ (Qzero, w->modeline_shadow_thickness))
+  /* If we can't distinguish one of the shadows (the color is the same as the
+     background), it's better to use a pixmap to generate a dithrered gray. */
+  if (top_shadow_pixel == background_pixel ||
+      bottom_shadow_pixel == background_pixel)
+    use_pixmap = 1;
+  
+  if (use_pixmap)
     {
-      XFillRectangle (dpy, x_win, gc, x1, y2, X_DIVIDER_WIDTH,
-		      modeline_height);
-
-      /* #### There needs to be some checks to make sure that whatever
-	 colors we choose, the line will be visible (not same color as
-	 default background. */
-      gc = x_get_gc (d, Qnil,
-		     WINDOW_FACE_CACHEL_FOREGROUND (w, MODELINE_INDEX),
-		     WINDOW_FACE_CACHEL_BACKGROUND (w, MODELINE_INDEX),
-		     Qnil, Qnil);
-
-      /* Draw the divider line. */
-      XFillRectangle (dpy, x_win, gc, x2, y2, X_DIVIDER_LINE_WIDTH,
-		      modeline_height);
+      if (DEVICE_X_GRAY_PIXMAP (d) == None)
+	{
+	  DEVICE_X_GRAY_PIXMAP (d) =
+	    XCreatePixmapFromBitmapData (dpy, x_win, (char *) gray_bits,
+					 gray_width, gray_height, 1, 0, 1);
+	}
+      
+      tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, div_face);
+      tmp_color = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (tmp_pixel));
+      gcv.foreground = tmp_color.pixel;
+      /* this is needed because the GC draws with a pixmap here */
+      gcv.fill_style = FillOpaqueStippled;
+      gcv.stipple = DEVICE_X_GRAY_PIXMAP (d);
+      top_shadow_gc = gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv,
+				       (mask | GCStipple | GCFillStyle));
+      
+      tmp_pixel = WINDOW_FACE_CACHEL_FOREGROUND (w, div_face);
+      tmp_color = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (tmp_pixel));
+      bottom_shadow_pixel = tmp_color.pixel;
+      
+      flip_gcs = (bottom_shadow_pixel ==
+		  WhitePixelOfScreen (DefaultScreenOfDisplay (dpy)));
     }
+  else
+    {
+      gcv.foreground = top_shadow_pixel;
+      top_shadow_gc = gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv, mask);
+    }
+  
+  gcv.foreground = bottom_shadow_pixel;
+  bottom_shadow_gc = gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv, mask);
+  
+  if (use_pixmap && flip_gcs)
+    {
+      GC tmp_gc = bottom_shadow_gc;
+      bottom_shadow_gc = top_shadow_gc;
+      top_shadow_gc = tmp_gc;
+    }
+  
+  gcv.foreground = background_pixel;
+  background_gc = gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv, mask);
+  
+  /* possibly revert the GC's in case the shadow thickness is < 0.
+     This will give a depressed look to the divider */
+  if (shadow_thickness < 0)
+    {
+      GC temp;
+
+      temp = top_shadow_gc;
+      top_shadow_gc = bottom_shadow_gc;
+      bottom_shadow_gc = temp;
+      
+      /* better avoid a Bad Adress XLib error ;-) */
+      shadow_thickness = - shadow_thickness;
+    }
+
+  /* Clear the divider area first.  This needs to be done when a
+     window split occurs. */
+  if (clear)
+    XClearArea (dpy, x_win, x, y1, width, y2 - y1, False);
+
+  /* Draw the divider line. */
+  XFillRectangle (dpy, x_win, background_gc, 
+		  x + spacing + shadow_thickness, y1,
+		  line_width, y2 - y1);
+  
+  /* Draw the shadows around the divider line */
+  x_output_shadows (f, x + spacing, y1, 
+		    width - 2 * spacing, y2 - y1,
+		    top_shadow_gc, bottom_shadow_gc,
+		    background_gc, shadow_thickness);
 }
 
 /*****************************************************************************
@@ -2294,7 +2324,6 @@ console_type_create_redisplay_x (void)
   /* redisplay methods */
   CONSOLE_HAS_METHOD (x, text_width);
   CONSOLE_HAS_METHOD (x, output_display_block);
-  CONSOLE_HAS_METHOD (x, divider_width);
   CONSOLE_HAS_METHOD (x, divider_height);
   CONSOLE_HAS_METHOD (x, eol_cursor_width);
   CONSOLE_HAS_METHOD (x, output_vertical_divider);

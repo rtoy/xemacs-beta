@@ -606,10 +606,12 @@ concat (int nargs, Lisp_Object *args,
         /* Urk!  We allow this, for "compatibility"... */
         ;
 #endif
+#if 0				/* removed for XEmacs 21 */
       else if (INTP (seq))
         /* This is too revolting to think about but maintains
            compatibility with FSF (and lots and lots of old code). */
         args[argnum] = Fnumber_to_string (seq);
+#endif
       else
 	{
           check_losing_bytecode ("concat", seq);

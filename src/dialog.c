@@ -26,10 +26,53 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#include "frame.h"
+#include "device.h"
+
+DEFUN ("popup-dialog-box", Fpopup_dialog_box, 1, 1, 0, /*
+Pop up a dialog box.
+A dialog box description is a list.
+
+The first element of a dialog box must be a string, which is the title or
+question.
+
+The rest of the elements are descriptions of the dialog box's buttons.
+Each of these is a vector, the syntax of which is essentially the same as
+that of popup menu items.  They may have any of the following forms:
+
+ [ "name" callback <active-p> ]
+ [ "name" callback <active-p> "suffix" ]
+ [ "name" callback :<keyword> <value>  :<keyword> <value> ... ]
+
+The name is the string to display on the button; it is filtered through the
+resource database, so it is possible for resources to override what string
+is actually displayed.
+
+If the `callback' of a button is a symbol, then it must name a command.
+It will be invoked with `call-interactively'.  If it is a list, then it is
+evaluated with `eval'.
+
+One (and only one) of the buttons may be `nil'.  This marker means that all
+following buttons should be flushright instead of flushleft.
+
+Though the keyword/value syntax is supported for dialog boxes just as in
+popup menus, the only keyword which is both meaningful and fully implemented
+for dialog box buttons is `:active'.
+*/
+     (dbox_desc))
+{
+  struct frame *f = selected_frame ();
+  struct device *d = XDEVICE (f->device);
+  
+  MAYBE_DEVMETH (d, popup_dialog_box, (f, dbox_desc));
+
+  return Qnil;
+}
 
 void
 syms_of_dialog (void)
 {
+  DEFSUBR (Fpopup_dialog_box);
 }
 
 void

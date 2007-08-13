@@ -76,27 +76,28 @@ undo_prelude (struct buffer *b, int hack_pending_boundary)
     return (0);
 
   if (NILP (last_undo_buffer) || b != XBUFFER (last_undo_buffer))
-  {
-    undo_boundary (b);
-    XSETBUFFER (last_undo_buffer, b);
-  }
+    {
+      undo_boundary (b);
+      XSETBUFFER (last_undo_buffer, b);
+    }
 
   /* Allocate a cons cell to be the undo boundary after this command.  */
   if (hack_pending_boundary && NILP (pending_boundary))
     pending_boundary = Fcons (Qnil, Qnil);
 
   if (BUF_MODIFF (b) <= BUF_SAVE_MODIFF (b))
-  {
-    /* Record that an unmodified buffer is about to be changed.
-       Record the file modification date so that when undoing this entry
-       we can tell whether it is obsolete because the file was saved again.  */
-    b->undo_list
-      = Fcons (Fcons (Qt,
-                      Fcons (make_int ((b->modtime >> 16) & 0xffff),
-                             make_int (b->modtime & 0xffff))),
-               b->undo_list);
-  }
-  return (1);
+    {
+      /* Record that an unmodified buffer is about to be changed.
+	 Record the file modification date so that when undoing this
+	 entry we can tell whether it is obsolete because the file was
+	 saved again.  */
+      b->undo_list
+	= Fcons (Fcons (Qt,
+			Fcons (make_int ((b->modtime >> 16) & 0xffff),
+			       make_int (b->modtime & 0xffff))),
+		 b->undo_list);
+    }
+  return 1;
 }
 
 
@@ -525,7 +526,7 @@ Return what remains of the list.
 	    {
 	    rotten:
 	      signal_simple_continuable_error
-		("Something rotten in the state of undo:", next);
+		("Something rotten in the state of undo", next);
 	    }
         }
       arg--;

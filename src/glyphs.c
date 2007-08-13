@@ -142,8 +142,8 @@ valid_image_instantiator_format_p (Lisp_Object format)
   return (decode_image_instantiator_format (format, ERROR_ME_NOT) != 0);
 }
 
-DEFUN ("valid-image-instantiator-format-p",
-       Fvalid_image_instantiator_format_p, 1, 1, 0, /*
+DEFUN ("valid-image-instantiator-format-p", Fvalid_image_instantiator_format_p,
+       1, 1, 0, /*
 Given an IMAGE-INSTANTIATOR-FORMAT, return non-nil if it is valid.
 Valid formats are some subset of 'nothing, 'string, 'formatted-string,
 'xpm, 'xbm, 'xface, 'gif, 'jpeg, 'png, 'tiff, 'cursor-font, 'font,
@@ -155,8 +155,8 @@ Valid formats are some subset of 'nothing, 'string, 'formatted-string,
     Qt : Qnil;
 }
 
-DEFUN ("image-instantiator-format-list",
-       Fimage_instantiator_format_list, 0, 0, 0, /*
+DEFUN ("image-instantiator-format-list", Fimage_instantiator_format_list,
+       0, 0, 0, /*
 Return a list of valid image-instantiator formats.
 */
        ())
@@ -184,8 +184,8 @@ get_image_conversion_list (Lisp_Object console_type)
   return &decode_console_type (console_type, ERROR_ME)->image_conversion_list;
 }
 
-DEFUN ("set-console-type-image-conversion-list",
-       Fset_console_type_image_conversion_list, 2, 2, 0, /*
+DEFUN ("set-console-type-image-conversion-list", Fset_console_type_image_conversion_list,
+       2, 2, 0, /*
 Set the image-conversion-list for consoles of the given TYPE.
 The image-conversion-list specifies how image instantiators that
 are strings should be interpreted.  Each element of the list should be
@@ -252,8 +252,8 @@ specifiers will not be affected.
   return list;
 }
 
-DEFUN ("console-type-image-conversion-list",
-       Fconsole_type_image_conversion_list, 1, 1, 0, /*
+DEFUN ("console-type-image-conversion-list", Fconsole_type_image_conversion_list,
+       1, 1, 0, /*
 Return the image-conversion-list for devices of the given TYPE.
 The image-conversion-list specifies how to interpret image string
 instantiators for the specified console type.  See
@@ -3143,7 +3143,7 @@ image_instantiator_format_create (void)
   IIFORMAT_VALID_KEYWORD (xpm, Q_data, check_valid_string);
   IIFORMAT_VALID_KEYWORD (xpm, Q_file, check_valid_string);
   IIFORMAT_VALID_KEYWORD (xpm, Q_color_symbols, check_valid_xpm_color_symbols);
-#endif
+#endif /* HAVE_XPM */
 }
 
 void
@@ -3207,7 +3207,7 @@ The default value of this variable defines the logical color names
 \"foreground\" and \"background\" to be the colors of the `default' face.
 */ );
   Vxpm_color_symbols = Qnil; /* initialized in x-faces.el */
-#endif
+#endif /* HAVE_XPM */
 }
 
 void

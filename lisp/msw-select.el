@@ -49,21 +49,27 @@ replacing the active selection if there is one."
 	(insert-rectangle clip)
       (insert clip))))
 
+(defun mswindows-clear-clipboard ()
+  "Delete the selection without copying it to the clipboard or the kill ring."
+  (interactive "*")
+  (mswindows-cut-copy-clear-clipboard 'clear))
+
 (defun mswindows-copy-clipboard ()
   "Copy the selection to the mswindows clipboard and to the kill ring."
   (interactive)
-  (mswindows-cut-copy-clipboard 'copy))
+  (mswindows-cut-copy-clear-clipboard 'copy))
 
 (defun mswindows-cut-clipboard ()
   "Copy the selection to the mswindows clipboard and to the kill ring,
 then delete it."
   (interactive "*")
-  (mswindows-cut-copy-clipboard 'cut))
+  (mswindows-cut-copy-clear-clipboard 'cut))
 
-(defun mswindows-cut-copy-clipboard (mode)
+(defun mswindows-cut-copy-clear-clipboard (mode)
   "Don't use this function.
-Use mswindows-cut-clipboard or mswindows-copy-clipboard instead."
-  (or (memq mode '(cut copy)) (error "unkown mode %S" mode))
+Use mswindows-cut-clipboard, mswindows-copy-clipboard or
+mswindows-clear-clipboard instead."
+  (or (memq mode '(cut copy clear)) (error "unkown mode %S" mode))
   (setq last-command nil)
   (let ((s (mark-marker)) (e (point-marker)))
     (if s
@@ -73,8 +79,9 @@ Use mswindows-cut-clipboard or mswindows-copy-clipboard instead."
 		(setq killed-rectangle (extract-rectangle s e))
 		(kill-new (mapconcat 'identity killed-rectangle "\n")))
 	    (copy-region-as-kill s e))
-	  (mswindows-set-clipboard (car kill-ring))
-	  (if (eq mode 'cut)
+	  (if (memq mode '(cut copy))	  
+	      (mswindows-set-clipboard (car kill-ring)))
+	  (if (memq mode '(cut clear))
 	      (if mouse-track-rectangle-p
 		  (delete-rectangle s e)
 		(delete-region s e))

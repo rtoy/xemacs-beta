@@ -504,6 +504,7 @@ EXFUN (Fevent_glyph_extent, 1);
 EXFUN (Fevent_modeline_position, 1);
 EXFUN (Fevent_over_modeline_p, 1);
 EXFUN (Fevent_over_toolbar_p, 1);
+EXFUN (Fevent_over_vertical_divider_p, 1);
 EXFUN (Fevent_point, 1);
 EXFUN (Fevent_window, 1);
 EXFUN (Fmake_event, 2);

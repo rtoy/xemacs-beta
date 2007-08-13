@@ -57,9 +57,11 @@ Lisp_Object Qinit_global_faces;
 Lisp_Object Vdefault_face, Vmodeline_face;
 Lisp_Object Vleft_margin_face, Vright_margin_face, Vtext_cursor_face;
 Lisp_Object Vpointer_face;
+Lisp_Object Vvertical_divider_face;
 
 /* Qdefault, Qhighlight defined in general.c */
 Lisp_Object Qmodeline, Qleft_margin, Qright_margin, Qtext_cursor;
+Lisp_Object Qvertical_divider;
 
 /* In the old implementation Vface_list was a list of the face names,
    not the faces themselves.  We now distinguish between permanent and
@@ -1753,6 +1755,7 @@ syms_of_faces (void)
   defsymbol (&Qleft_margin, "left-margin");
   defsymbol (&Qright_margin, "right-margin");
   defsymbol (&Qtext_cursor, "text-cursor");
+  defsymbol (&Qvertical_divider, "vertical-divider");
 
   DEFSUBR (Ffacep);
   DEFSUBR (Ffind_face);
@@ -1804,6 +1807,8 @@ vars_of_faces (void)
   staticpro (&Vmodeline_face);
   Vmodeline_face = Qnil;
 
+  staticpro (&Vvertical_divider_face);
+  Vvertical_divider_face = Qnil;
   staticpro (&Vleft_margin_face);
   Vleft_margin_face = Qnil;
   staticpro (&Vright_margin_face);
@@ -1934,6 +1939,20 @@ complex_vars_of_faces (void)
      way since we need to get them anyway. */
   Vmodeline_face = Fmake_face (Qmodeline, build_string ("modeline face"),
 			       Qnil);
+  Vvertical_divider_face = Fmake_face (Qvertical_divider,
+				       build_string ("vertical divider face"),
+				       Qnil);
+  /* #### vertical-divider-face should not inherit from modeline face.
+     Perhaps there must be a 3d-object-face to supply default foreground,
+     background and pixmap. */
+  set_specifier_fallback (Fget (Vvertical_divider_face, Qforeground, Qunbound),
+			  Fget (Vmodeline_face, Qforeground, Qunbound));
+  set_specifier_fallback (Fget (Vvertical_divider_face, Qbackground, Qunbound),
+			  Fget (Vmodeline_face, Qbackground, Qunbound));
+  set_specifier_fallback (Fget (Vvertical_divider_face, Qbackground_pixmap,
+				Qunbound),
+			  Fget (Vdefault_face, Qbackground_pixmap, Qunbound));
+
   Vleft_margin_face = Fmake_face (Qleft_margin,
 				  build_string ("left margin face"),
 				  Qnil);

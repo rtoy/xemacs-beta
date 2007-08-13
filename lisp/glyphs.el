@@ -511,6 +511,12 @@ This is a glyph; use `set-glyph-image' to change it.
 If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 (set-glyph-face toolbar-pointer-glyph 'pointer)
 
+(defvar divider-pointer-glyph (make-pointer-glyph)
+  "*The shape of the mouse-pointer when over a window divider.
+This is a glyph; use `set-glyph-image' to change it.
+If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
+(set-glyph-face divider-pointer-glyph 'pointer)
+
 ;; The following three are in C.
 (if (featurep 'menubar)
     (set-glyph-face menubar-pointer-glyph 'pointer))
@@ -546,6 +552,7 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 (define-constant-glyph 'selection-pointer-glyph)
 (define-constant-glyph 'busy-pointer-glyph)
 (define-constant-glyph 'gc-pointer-glyph)
+(define-constant-glyph 'divider-pointer-glyph)
 (define-constant-glyph 'toolbar-pointer-glyph)
 (define-constant-glyph 'menubar-pointer-glyph)
 (define-constant-glyph 'scrollbar-pointer-glyph)

@@ -65,31 +65,31 @@ it is nil, it is assumes to be the value returned by emacs-pid."
 
 (defun device-pixel-width (&optional device)
   "Return the width in pixels of DEVICE, or nil if unknown."
-  (let ((ds (device-system-metrics device 'size-device)))
+  (let ((ds (device-system-metric device 'size-device)))
     (and ds (car ds))))
 
 (defun device-pixel-height (&optional device)
   "Return the height in pixels of DEVICE, or nil if unknown."
-  (let ((ds (device-system-metrics device 'size-device)))
+  (let ((ds (device-system-metric device 'size-device)))
     (and ds (cdr ds))))
 
 (defun device-mm-width (&optional device)
   "Return the width in millimeters of DEVICE, or nil if unknown."
-  (let ((ds (device-system-metrics device 'size-device-mm)))
+  (let ((ds (device-system-metric device 'size-device-mm)))
     (and ds (car ds))))
 
 (defun device-mm-height (&optional device)
   "Return the height in millimeters of DEVICE, or nil if unknown."
-  (let ((ds (device-system-metrics device 'size-device-mm)))
+  (let ((ds (device-system-metric device 'size-device-mm)))
     (and ds (cdr ds))))
 
 (defun device-bitplanes (&optional device)
   "Return the number of bitplanes of DEVICE, or nil if unknown."
-  (device-system-metrics device 'num-bit-planes))
+  (device-system-metric device 'num-bit-planes))
 
 (defun device-color-cells (&optional device)
   "Return the number of color cells of DEVICE, or nil if unknown."
-  (device-system-metrics device 'num-color-cells))
+  (device-system-metric device 'num-color-cells))
 
 (defun make-x-device (&optional display)
   "Create a new device connected to DISPLAY."

@@ -191,19 +191,19 @@
 ))
 (tm
   (standards-version 1.0
-   version "1.06"
-   author-version "21.0b38"
-   date "1998-04-23"
-   build-date "1998-05-01"
+   version "1.07"
+   author-version "21.0b40"
+   date "1998-05-10"
+   build-date "1998-05-15"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "comm"
    dump nil
    description "Emacs MIME support."
-   filename "tm-1.06-pkg.tar.gz"
-   md5sum "3f40b731e676c866c5a6133c0bff031b"
-   size 252232
+   filename "tm-1.07-pkg.tar.gz"
+   md5sum "53fc3cb133f27663c7ad0897507c32a5"
+   size 252320
    provides (tm tm-edit tm-view mime-setup)
    requires (gnus mh-e rmail vm mailcrypt mail-lib apel xemacs-base)
    type regular
@@ -438,19 +438,19 @@
 ))
 (mail-lib
   (standards-version 1.0
-   version "1.13"
-   author-version "21.0b39"
-   date "1998-05-09"
-   build-date "1998-05-09"
+   version "1.14"
+   author-version "21.0b40"
+   date "1998-05-10"
+   build-date "1998-05-15"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "libs"
    dump nil
    description "Fundamental lisp files for providing email support."
-   filename "mail-lib-1.13-pkg.tar.gz"
-   md5sum "39c95ef0dfc8d2bee106768c14821d98"
-   size 120019
+   filename "mail-lib-1.14-pkg.tar.gz"
+   md5sum "929ca9e3b14577139704a67bb019c996"
+   size 120134
    provides (browse-url highlight-headers mail-abbrevs mail-extr mail-utils reporter rfc822 rmail-mini rmailout sendmail smtpmail)
    requires (xemacs-base)
    type regular
@@ -476,19 +476,19 @@
 ))
 (xemacs-base
   (standards-version 1.0
-   version "1.19"
-   author-version "21.0b38"
-   date "1998-04-29"
-   build-date "1998-05-01"
+   version "1.20"
+   author-version "21.0b40"
+   date "1998-05-15"
+   build-date "1998-05-15"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution mule
    priority high
    category "libs"
    dump nil
    description "Fundamental XEmacs support, you almost certainly need this."
-   filename "xemacs-base-1.19-pkg.tar.gz"
-   md5sum "3cd0aa1366931e36651f7aee46931e22"
-   size 453658
+   filename "xemacs-base-1.20-pkg.tar.gz"
+   md5sum "4329fd1b5649e5b6b184377985444cae"
+   size 454236
    provides (add-log advice annotations assoc case-table chistory comint-xemacs comint compile debug ebuff-menu echistory edmacro ehelp electric enriched env facemenu ffap helper imenu iso-syntax macros novice outline overlay passwd pp regi ring shell skeleton sort thing time-stamp timezone xbm-button xpm-button)
    requires ()
    type regular
@@ -590,19 +590,19 @@
 ))
 (mule-base
   (standards-version 1.0
-   version "1.16"
-   author-version "21.0b39"
-   date "1998-05-09"
-   build-date "1998-05-09"
+   version "1.17"
+   author-version "21.0b40"
+   date "1998-05-10"
+   build-date "1998-05-15"
    maintainer "SL Baur <steve@altair.xemacs.org>"
    distribution mule
    priority high
    category "mule"
    dump t
    description "Basic Mule support, required for building with Mule."
-   filename "mule-base-1.16-pkg.tar.gz"
-   md5sum "5acc72aebf3a3f6505ddc947bd111cb1"
-   size 508454
+   filename "mule-base-1.17-pkg.tar.gz"
+   md5sum "bce5a73395ef4167ed5c3bf94e2f70de"
+   size 489829
    provides (canna-leim canna char-table china-util cyril-util isearch-ext japan-util ccl can-n-egg mule-help)
    requires (fsf-compat xemacs-base)
    type regular
@@ -666,19 +666,19 @@
 ))
 (edit-utils
   (standards-version 1.0
-   version "1.21"
-   author-version "21.0b38"
-   date "1998-03-15"
-   build-date "1998-05-02"
+   version "1.22"
+   author-version "21.0b40"
+   date "1998-05-12"
+   build-date "1998-05-15"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority high
    category "oa"
    dump nil
    description "Miscellaneous editor extensions, you probably need this."
-   filename "edit-utils-1.21-pkg.tar.gz"
-   md5sum "5483cfb7d0ed4588332c2185e77d31eb"
-   size 570895
+   filename "edit-utils-1.22-pkg.tar.gz"
+   md5sum "2b3de19afb781c06a69cfe340bda8c70"
+   size 572566
    provides (abbrevlist atomic-extents avoid backup-dir balloon-help big-menubar blink-cursor blink-paren bookmark compare-w completion dabbrev desktop detached-minibuf edit-toolbar fast-lock file-part floating-toolbar flow-ctrl foldout func-menu hippie-exp icomplete id-select info-look iswitchb lazy-lock lazy-shot live-icon man mic-paren paren popper mode-motion+ outl-mouse page-ext blink-paren paren permanent-buffers recent-files redo reportmail rsz-minibuf saveconfsavehist saveplace scroll-in-place tempo toolbar-utils tree-menu uniquify where-was-i-db)
    requires (xemacs-base)
    type single
@@ -1084,19 +1084,19 @@
 ))
 (ediff
   (standards-version 1.0
-   version "1.07"
+   version "1.08"
    author-version "2.70.1"
    date "1998-04-27"
-   build-date "1998-04-27"
+   build-date "1998-05-15"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "prog"
    dump nil
    description "Interface over GNU patch."
-   filename "ediff-1.07-pkg.tar.gz"
-   md5sum "78e0193180343fba87ae08a67036b3b4"
-   size 244462
+   filename "ediff-1.08-pkg.tar.gz"
+   md5sum "d73e47087119a6cb7d5b4f71fdba8b72"
+   size 243042
    provides (ediff)
    requires (pcl-cvs dired xemacs-base)
    type regular
@@ -1141,19 +1141,19 @@
 ))
 (pcl-cvs
   (standards-version 1.0
-   version "1.08"
-   author-version "21.0b39"
-   date "1998-05-07"
-   build-date "1998-05-09"
+   version "1.09"
+   author-version "21.0b40"
+   date "1998-05-15"
+   build-date "1998-05-15"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "prog"
    dump nil
    description "CVS frontend."
-   filename "pcl-cvs-1.08-pkg.tar.gz"
-   md5sum "c1cf0841a3df11130736a82e20b1ccf4"
-   size 172294
+   filename "pcl-cvs-1.09-pkg.tar.gz"
+   md5sum "b1722c8b42e14b17111cba9163e7e9bb"
+   size 172405
    provides (pcl-cvs dll elib-node generic-sc)
    requires (xemacs-base)
    type regular
@@ -1198,19 +1198,19 @@
 ))
 (sh-script
   (standards-version 1.0
-   version "1.04"
+   version "1.05"
    author-version "2.0e"
-   date "1998-01-24"
-   build-date "1998-04-04"
+   date "1998-05-12"
+   build-date "1998-05-15"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "prog"
    dump nil
    description "Support for editing shell scripts."
-   filename "sh-script-1.04-pkg.tar.gz"
-   md5sum "7e14483d0732a83b1f5e32f059f76b04"
-   size 33630
+   filename "sh-script-1.05-pkg.tar.gz"
+   md5sum "8462bd33b9edc71da72ebd134b8a77c6"
+   size 33785
    provides (sh-script executable)
    requires (xemacs-base)
    type regular
@@ -1236,19 +1236,19 @@
 ))
 (vc
   (standards-version 1.0
-   version "1.07"
-   author-version "21.0b38"
-   date "1998-04-27"
-   build-date "1998-04-27"
+   version "1.08"
+   author-version "21.0b40"
+   date "1998-05-14"
+   build-date "1998-05-15"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "prog"
    dump t
    description "Version Control for Free systems."
-   filename "vc-1.07-pkg.tar.gz"
-   md5sum "04b5fb71ac7975479824c0a636b4b510"
-   size 74573
+   filename "vc-1.08-pkg.tar.gz"
+   md5sum "10b3a769fce6d64e7662b3d4629bff30"
+   size 83873
    provides (vc)
    requires (dired xemacs-base)
    type regular
@@ -1407,19 +1407,19 @@
 ))
 (viper
   (standards-version 1.0
-   version "1.06"
+   version "1.07"
    author-version "3.02"
    date "1998-02-25"
-   build-date "1998-04-04"
+   build-date "1998-05-15"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "wp"
    dump nil
    description "VI emulation support."
-   filename "viper-1.06-pkg.tar.gz"
-   md5sum "23528829ed5464cafb97fd3f278b41aa"
-   size 261321
+   filename "viper-1.07-pkg.tar.gz"
+   md5sum "7f8fc245699c2036b62789d455196654"
+   size 260876
    provides (viper)
    requires (xemacs-base)
    type regular

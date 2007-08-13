@@ -382,6 +382,7 @@ extern int frame_changed;
     }							\
   else							\
     windows_structure_changed = 1;			\
+  invalidate_vertical_divider_cache_in_frame (fwsc_f);	\
 } while (0)
 
 #define MARK_FRAME_SIZE_SLIPPED(f) do {			\
@@ -717,5 +718,6 @@ int show_gc_cursor (struct frame *f, Lisp_Object cursor);
 void set_frame_selected_window (struct frame *f, Lisp_Object window);
 int is_surrogate_for_selected_frame (struct frame *f);
 void update_frame_icon (struct frame *f);
+void invalidate_vertical_divider_cache_in_frame (struct frame *f);
 
 #endif /* _XEMACS_FRAME_H_ */

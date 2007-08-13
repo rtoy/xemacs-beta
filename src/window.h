@@ -164,14 +164,6 @@ struct window
   /* need one for each set of display structures */
   int window_end_pos[3];
 
-  /* Non-nil means window is marked as dedicated.  */
-  Lisp_Object dedicated;
-
-#if 0 /* FSFmacs */
-  /* The column number currently displayed in this window's mode line,
-     or nil if column numbers are not being displayed.  */
-  Lisp_Object column_number_displayed;
-#endif
   /* If redisplay in this window goes beyond this buffer position,
      must run the redisplay-end-trigger-functions.  */
   Lisp_Object redisplay_end_trigger;
@@ -180,57 +172,9 @@ struct window
      to implement the redisplay-end-trigger-functions. */
   Bufpos last_redisplay_pos;
 
-  /* specifier values cached in the struct window: */
-
-  /* Display-table to use for displaying chars in this window. */
-  Lisp_Object display_table;
-  /* Thickness of modeline shadow, in pixels.  If negative, draw
-     as recessed. */
-  Lisp_Object modeline_shadow_thickness;
-  /* Non-nil means to display a modeline for the buffer. */
-  Lisp_Object has_modeline_p;
-#ifdef HAVE_SCROLLBARS
-  /* Width of vertical scrollbars. */
-  Lisp_Object scrollbar_width;
-  /* Height of horizontal scrollbars. */
-  Lisp_Object scrollbar_height;
-  /* Whether the scrollbars are visible */
-  Lisp_Object horizontal_scrollbar_visible_p;
-  Lisp_Object vertical_scrollbar_visible_p;
-  /* Scrollbar positions */
-  Lisp_Object scrollbar_on_left_p;
-  Lisp_Object scrollbar_on_top_p;
-  /* Pointer to use for vertical and horizontal scrollbars. */
-  Lisp_Object scrollbar_pointer;
-#endif /* HAVE_SCROLLBARS */
-#ifdef HAVE_TOOLBARS
-  /* Toolbar specification for each of the four positions.
-     This is not a size hog because the value here is not copied,
-     and will be shared with the specs in the specifier. */
-  Lisp_Object toolbar[4];
-  /* Toolbar size for each of the four positions. */
-  Lisp_Object toolbar_size[4];
-  /* Toolbar border width for each of the four positions. */
-  Lisp_Object toolbar_border_width[4];
-  /* Toolbar visibility status for each of the four positions. */
-  Lisp_Object toolbar_visible_p[4];
-  /* Caption status of toolbar. */
-  Lisp_Object toolbar_buttons_captioned_p;
-  /* The following five don't really need to be cached except
-     that we need to know when they've changed. */
-  Lisp_Object default_toolbar;
-  Lisp_Object default_toolbar_width, default_toolbar_height;
-  Lisp_Object default_toolbar_visible_p;
-  Lisp_Object default_toolbar_border_width;
-#endif /* HAVE_TOOLBARS */
-  Lisp_Object left_margin_width, right_margin_width;
-  Lisp_Object minimum_line_ascent, minimum_line_descent;
-  Lisp_Object use_left_overflow, use_right_overflow;
-#ifdef HAVE_MENUBARS
-  /* Visibility of menubar. */
-  Lisp_Object menubar_visible_p;
-#endif /* HAVE_MENUBARS */
-  Lisp_Object text_cursor_visible_p;
+#define WINDOW_SLOT_DECLARATION
+#define WINDOW_SLOT(slot, compare) Lisp_Object slot
+#include "winslots.h"
 
   /* one-bit flags: */
 
@@ -249,6 +193,9 @@ struct window
   /* new redisplay flag */
   unsigned int windows_changed :1;
   unsigned int shadow_thickness_changed :1;
+  /* Vertical divider flag and validity of it */
+  unsigned int need_vertical_divider_p :1;
+  unsigned int need_vertical_divider_valid_p :1;
 };
 
 #define CURRENT_DISP	0
@@ -409,11 +356,14 @@ struct buffer *window_display_buffer (struct window *w);
 void set_window_display_buffer (struct window *w, struct buffer *b);
 void update_frame_window_mirror (struct frame *f);
 
-void map_windows (struct frame *f,
-		  int (*mapfun) (struct window *w, void *closure),
-		  void *closure);
+int map_windows (struct frame *f,
+		 int (*mapfun) (struct window *w, void *closure),
+		 void *closure);
 void some_window_value_changed (Lisp_Object specifier, struct window *w,
 				Lisp_Object oldval);
+int invalidate_vertical_divider_cache_in_window (struct window *w,
+						 void *u_n_u_s_e_d);
+int window_divider_width (struct window *w);
 
 #define WINDOW_FRAME(w) ((w)->frame)
 #define WINDOW_BUFFER(w) ((w)->buffer)

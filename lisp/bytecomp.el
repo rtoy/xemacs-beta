@@ -32,9 +32,10 @@
 
 ;;; Commentary:
 
-;; The Emacs Lisp byte compiler.  This crunches lisp source into a sort
-;; of p-code which takes up less space and can be interpreted faster.
-;; The user entry points are byte-compile-file and byte-recompile-directory.
+;; The Emacs Lisp byte compiler.  This crunches lisp source into a
+;; sort of p-code which takes up less space and can be interpreted
+;; faster.  The user entry points are byte-compile-file,
+;; byte-recompile-directory and byte-compile-buffer.
 
 ;;; Code:
 
@@ -1566,6 +1567,8 @@ With prefix arg (noninteractively: 2nd arg), load the file after compiling."
       t)))
 
 ;; RMS comments the next two out.
+
+;;;###autoload
 (defun byte-compile-and-load-file (&optional filename)
   "Compile a file of Lisp code named FILENAME into a file of byte code,
 and then load it.  The output file's name is made by appending \"c\" to
@@ -1576,16 +1579,17 @@ the end of FILENAME."
     (let ((current-prefix-arg '(4)))
 	(call-interactively 'byte-compile-file))))
 
+;;;###autoload
 (defun byte-compile-buffer (&optional buffer)
   "Byte-compile and evaluate contents of BUFFER (default: the current buffer)."
   (interactive "bByte compile buffer: ")
   (setq buffer (if buffer (get-buffer buffer) (current-buffer)))
-  (message "Compiling %s..." (buffer-name buffer))
+  (message "Compiling %s..." buffer)
   (let* ((filename (or (buffer-file-name buffer)
-			 (concat "#<buffer " (buffer-name buffer) ">")))
-	   (byte-compile-current-file buffer))
+		       (prin1-to-string buffer)))
+	 (byte-compile-current-file buffer))
     (byte-compile-from-buffer buffer filename t))
-  (message "Compiling %s...done" (buffer-name buffer))
+  (message "Compiling %s...done" buffer)
   t)
 
 ;;; compiling a single function

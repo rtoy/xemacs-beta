@@ -41,9 +41,9 @@
   :group 'languages
   :group 'development)
 
-(defvar lisp-mode-syntax-table nil "")
-(defvar emacs-lisp-mode-syntax-table nil "")
-(defvar lisp-mode-abbrev-table nil "")
+(defvar lisp-mode-syntax-table nil)
+(defvar emacs-lisp-mode-syntax-table nil)
+(defvar lisp-mode-abbrev-table nil)
 
 ;; XEmacs change
 (defvar lisp-interaction-mode-popup-menu nil)
@@ -116,12 +116,10 @@
 	(setq i (1+ i)))
       (modify-syntax-entry ?  "    " emacs-lisp-mode-syntax-table)
       (modify-syntax-entry ?\t "    " emacs-lisp-mode-syntax-table)
+      (modify-syntax-entry ?\f "    " emacs-lisp-mode-syntax-table)
       (modify-syntax-entry ?\n ">   " emacs-lisp-mode-syntax-table)
       ;; Give CR the same syntax as newline, for selective-display.
       (modify-syntax-entry ?\^m ">   " emacs-lisp-mode-syntax-table)
-      ;; XEmacs change
-      ;; Treat ^L as whitespace.
-      (modify-syntax-entry ?\f "    " emacs-lisp-mode-syntax-table)
       (modify-syntax-entry ?\; "<   " emacs-lisp-mode-syntax-table)
       (modify-syntax-entry ?` "'   " emacs-lisp-mode-syntax-table)
       (modify-syntax-entry ?' "'   " emacs-lisp-mode-syntax-table)
@@ -155,17 +153,17 @@
 
 (define-abbrev-table 'lisp-mode-abbrev-table ())
 
-;(defvar lisp-imenu-generic-expression
-;      '(
-;	 (nil 
-;	  "^\\s-*(def\\(un\\|subst\\|macro\\|advice\\)\\s-+\\([-A-Za-z0-9+]+\\)" 2)
-;	 ("Variables" 
-;	  "^\\s-*(def\\(var\\|const\\)\\s-+\\([-A-Za-z0-9+]+\\)" 2)
-;	 ("Types" 
-;	  "^\\s-*(def\\(type\\|struct\\|class\\|ine-condition\\)\\s-+\\([-A-Za-z0-9+]+\\)" 
-;	  2))
-;
-;  "Imenu generic expression for Lisp mode.  See `imenu-generic-expression'.")
+(defvar lisp-imenu-generic-expression
+      '(
+	(nil 
+	 "^\\s-*(def\\(un\\|subst\\|macro\\|advice\\)\\s-+\\([-A-Za-z0-9+*|:]+\\)" 2)
+	("Variables" 
+	 "^\\s-*(def\\(var\\|const\\|custom\\)\\s-+\\([-A-Za-z0-9+*|:]+\\)" 2)
+	("Types" 
+	 "^\\s-*(def\\(group\\|type\\|struct\\|class\\|ine-condition\\)\\s-+\\([-A-Za-z0-9+*|:]+\\)" 
+	 2))
+
+  "Imenu generic expression for Lisp mode.  See `imenu-generic-expression'.")
 
 (defun lisp-mode-variables (lisp-syntax)
   (cond (lisp-syntax
@@ -204,13 +202,11 @@
   (setq comment-column 40)
   (make-local-variable 'comment-indent-function)
   (setq comment-indent-function 'lisp-comment-indent)
-  ;; XEmacs changes
-;  (make-local-variable 'imenu-generic-expression)
-;  (setq imenu-generic-expression lisp-imenu-generic-expression)
+  ;; XEmacs change
   (set (make-local-variable 'dabbrev-case-fold-search) nil)
   (set (make-local-variable 'dabbrev-case-replace) nil)
-  )
-
+  (make-local-variable 'imenu-generic-expression)
+  (setq imenu-generic-expression lisp-imenu-generic-expression))
 
 (defvar shared-lisp-mode-map ()
   "Keymap for commands shared by all sorts of Lisp modes.")
@@ -404,27 +400,26 @@ The printed messages are \"defvar treated as defconst\" and \"defcustom
 (defun eval-interactive (expr)
   "Like `eval' except that it transforms defvars to defconsts.
 The evaluation of defcustom forms is forced."
-  (cond ((and (consp expr)
-	      (eq (car expr) 'defvar)
+  (cond ((and (eq (car-safe expr) 'defvar)
 	      (> (length expr) 2))
 	 (eval (cons 'defconst (cdr expr)))
-	 (and eval-interactive-verbose
-	      (message "defvar treated as defconst"))
-	 (sit-for 1)
-	 (message "")
+	 (when eval-interactive-verbose
+	   (message "defvar treated as defconst")
+	   (sit-for 1)
+	   (message ""))
 	 (nth 1 expr))
-	((and (consp expr)
-	      (eq (car expr) 'defcustom)
+	((and (eq (car-safe expr) 'defcustom)
 	      (> (length expr) 2)
 	      (default-boundp (nth 1 expr)))
 	 ;; Force variable to be bound
+	 ;; #### defcustom might specify a different :set method.
 	 (set-default (nth 1 expr) (eval (nth 2 expr)))
 	 ;; And evaluate the defcustom
 	 (eval expr)
-	 (and eval-interactive-verbose
-	      (message "defcustom evaluation forced"))
-	 (sit-for 1)
-	 (message "")
+	 (when eval-interactive-verbose
+	   (message "defcustom evaluation forced")
+	   (sit-for 1)
+	   (message ""))
 	 (nth 1 expr))
 	(t
 	 (eval expr))))
@@ -435,25 +430,33 @@ The evaluation of defcustom forms is forced."
 With argument, print output into current buffer."
   (interactive "P")
   (let ((standard-output (if eval-last-sexp-arg-internal (current-buffer) t))
-	(opoint (point)))
-    (prin1 (let ((stab (syntax-table))
-		 expr)
-	     (eval-interactive
-	      (unwind-protect
-		  (save-excursion
-		    (set-syntax-table emacs-lisp-mode-syntax-table)
-		    (forward-sexp -1)
-		    (save-restriction
-		      (narrow-to-region (point-min) opoint)
-		      (setq expr (read (current-buffer)))
-		      (if (and (consp expr)
-			       (eq (car expr) 'interactive))
-			  (list 'quote
-				(call-interactively
-				 (eval (` (lambda (&rest args)
-					    (, expr) args)))))
-			expr)))
-		(set-syntax-table stab)))))))
+	(opoint (point))
+	ignore-quotes)
+    (prin1 (eval-interactive
+	    (letf (((syntax-table) emacs-lisp-mode-syntax-table))
+	      (save-excursion
+		;; If this sexp appears to be enclosed in `...' then
+		;; ignore the surrounding quotes.
+		(setq ignore-quotes (or (eq (char-after) ?\')
+					(eq (char-before) ?\')))
+		(forward-sexp -1)
+		;; vladimir@cs.ualberta.ca 30-Jul-1997: skip ` in
+		;; `variable' so that the value is returned, not the
+		;; name.
+		(if (and ignore-quotes
+			 (eq (char-after) ?\`))
+		    (forward-char))
+		(save-restriction
+		  (narrow-to-region (point-min) opoint)
+		  (let ((expr (read (current-buffer))))
+		    (if (eq (car-safe expr) 'interactive)
+			;; If it's an (interactive ...) form, it's
+			;; more useful to show how an interactive call
+			;; would use it.
+			`(call-interactively
+			  (lambda (&rest args)
+			    ,expr args))
+		      expr)))))))))
 
 (defun eval-defun (eval-defun-arg-internal)
   "Evaluate defun that point is in or before.
@@ -471,6 +474,8 @@ With argument, insert value in current buffer after the defun."
   (if (looking-at "\\s<\\s<\\s<")
       (current-column)
     (if (looking-at "\\s<\\s<")
+	;; #### FSF has:
+	;; (let ((tem (or (calculate-lisp-indent) (current-column)))) ...
 	(let ((tem (calculate-lisp-indent)))
 	  (if (listp tem) (car tem) tem))
       (skip-chars-backward " \t")
@@ -491,8 +496,8 @@ of `comment-start' to open the comment."
       (insert block-comment-start))
   (indent-for-comment))
 
-(defconst lisp-indent-offset nil "")
-(defconst lisp-indent-function 'lisp-indent-function "")
+(defvar lisp-indent-offset nil)
+(defvar lisp-indent-function 'lisp-indent-function)
 
 (defun lisp-indent-line (&optional whole-exp)
   "Indent current line as Lisp code.
@@ -677,7 +682,7 @@ of the start of the containing expression."
 	      (method
 		(funcall method state indent-point)))))))
 
-(defconst lisp-body-indent 2
+(defvar lisp-body-indent 2
   "Number of columns to indent the second line of a `(def...)' form.")
 
 (defun lisp-indent-specform (count state indent-point normal-indent)
@@ -746,6 +751,8 @@ of the start of the containing expression."
 (put 'save-excursion 'lisp-indent-function 0)
 (put 'save-window-excursion 'lisp-indent-function 0)
 (put 'save-selected-window 'lisp-indent-function 0)
+(put 'save-selected-frame 'lisp-indent-function 0)
+(put 'with-selected-frame 'lisp-indent-function 1)
 (put 'save-restriction 'lisp-indent-function 0)
 (put 'save-match-data 'lisp-indent-function 0)
 (put 'let 'lisp-indent-function 1)
@@ -762,6 +769,7 @@ of the start of the containing expression."
 (put 'with-temp-buffer 'lisp-indent-function 0)
 (put 'with-output-to-string 'lisp-indent-function 0)
 (put 'with-output-to-temp-buffer 'lisp-indent-function 1)
+(put 'eval-after-load 'lisp-indent-function 1)
 (put 'display-message 'lisp-indent-function 1)
 (put 'display-warning 'lisp-indent-function 1)
 (put 'lmessage 'lisp-indent-function 2)
@@ -774,7 +782,7 @@ If optional arg ENDPOS is given, indent each line, stopping when
 ENDPOS is encountered."
   (interactive)
   (let ((indent-stack (list nil))
-	(next-depth 0) 
+	(next-depth 0)
 	;; If ENDPOS is non-nil, use nil as STARTING-POINT
 	;; so that calculate-lisp-indent will find the beginning of
 	;; the defun we are in.

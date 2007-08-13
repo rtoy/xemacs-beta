@@ -1620,6 +1620,26 @@ enqueue_misc_user_event (Lisp_Object channel, Lisp_Object function,
   return event;
 }
 
+Lisp_Object
+enqueue_misc_user_event_pos (Lisp_Object channel, Lisp_Object function,
+			     Lisp_Object object,
+			     int button, int modifiers, int x, int y)
+{
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
+
+  XEVENT (event)->event_type = misc_user_event;
+  XEVENT (event)->channel = channel;
+  XEVENT (event)->event.misc.function  = function;
+  XEVENT (event)->event.misc.object    = object;
+  XEVENT (event)->event.misc.button    = button;
+  XEVENT (event)->event.misc.modifiers = modifiers;
+  XEVENT (event)->event.misc.x         = x;
+  XEVENT (event)->event.misc.y         = y;
+  enqueue_command_event (event);
+
+  return event;
+}
+
 
 /**********************************************************************/
 /*                       focus-event handling                         */

@@ -165,6 +165,9 @@ A mark is pushed, so that the inserted text lies between point and mark."
     (set-glyph-image toolbar-pointer-glyph
 	  (or (x-get-resource "toolBarPointer" "Cursor" 'string device)
 	      "left_ptr"))
+    (set-glyph-image divider-pointer-glyph
+	  (or (x-get-resource "dividerPointer" "Cursor" 'string device)
+	      "sb_h_double_arrow"))
     (let ((fg
 	   (x-get-resource "pointerColor" "Foreground" 'string device)))
       (and fg

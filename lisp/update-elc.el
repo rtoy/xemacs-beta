@@ -64,7 +64,7 @@
 
 (define-function 'defalias 'define-function)
 
-(setq load-path (decode-path-internal (getenv "EMACSBOOTSTRAPLOADPATH")))
+(setq load-path (split-path (getenv "EMACSBOOTSTRAPLOADPATH")))
 
 (load "find-paths.el")
 (load "packages.el")

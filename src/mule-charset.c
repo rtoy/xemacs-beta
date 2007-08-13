@@ -816,8 +816,7 @@ NEW-NAME is the name of the new charset.  Return the new charset.
   return new_charset;
 }
 
-/* #### The defsubr for this is commented out at the moment but no
-   reason why is given. */
+/* #### Reverse direction charsets not yet implemented.  */
 #if 0
 DEFUN ("charset-reverse-direction-charset", Fcharset_reverse_direction_charset,
        1, 1, 0, /*

@@ -154,6 +154,8 @@ Reference Manual, corresponding to XEmacs version 21.0.
 * Dialog Boxes::	    Creating dialog boxes.
 * Toolbar::		    Controlling the toolbar.
 * Scrollbars::		    Controlling the scrollbars.
+* Drag'n'Drop::		    Generic API to inter-application communication
+                              via specific protocols.
 * Modes::                   Defining major and minor modes.
 * Documentation::           Writing and using documentation strings.
 
@@ -1135,6 +1137,7 @@ Building XEmacs and Object Allocation
 @include dialog.texi
 @include toolbar.texi
 @include scrollbars.texi
+@include dragndrop.texi
 @include modes.texi
 
 @include help.texi

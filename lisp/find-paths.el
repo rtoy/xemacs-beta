@@ -250,7 +250,7 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
 Non-\"\" comonents are converted into directory form.
 If DROP-EMPTIES is non-NIL, \"\" components are dropped from the output.
 Otherwise, they are left alone."
-  (let* ((components (decode-path-internal string))
+  (let* ((components (split-path string))
 	 (directories
 	  (mapcar #'(lambda (component)
 		      (if (string-equal "" component)

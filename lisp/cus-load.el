@@ -35,7 +35,6 @@
 
 (require 'custom)
 
-
 (defun custom-add-loads (symbol list)
   "Update the custom-loads list of a symbol.
 This works by adding the elements from LIST to the SYMBOL's
@@ -48,19 +47,11 @@ added to `custom-group-hash-table'."
     (put symbol 'custom-loads loads)
     (puthash symbol t custom-group-hash-table)))
 
-;; custom-add-loads was named custom-put (and accepted different
-;; arguments) during the 20.3 beta cycle.  Support it for
-;; compatibility.
-(defun custom-put (symbol ignored list)
-  (custom-add-loads symbol list))
-(make-obsolete 'custom-put 'custom-add-loads)
-
-
 (message "Loading customization dependencies...")
 
 ;; Garbage-collection seems to be very intensive here, and it slows
 ;; things down.  Nuke it.
-(let ((gc-cons-threshold 10000000))
+(let ((gc-cons-threshold most-positive-fixnum))
   (mapc (lambda (dir)
 	  (load (expand-file-name "custom-load" dir) t t))
 	load-path))

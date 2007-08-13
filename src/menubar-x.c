@@ -670,7 +670,6 @@ x_update_frame_menubar_internal (struct frame *f)
   Boolean menubar_was_visible = XtIsManaged (FRAME_X_MENUBAR_WIDGET (f));
   Boolean menubar_will_be_visible = menubar_was_visible;
   Boolean menubar_visibility_changed;
-  Widget container = FRAME_X_CONTAINER_WIDGET (f);
 
   if (menubar_contents_changed)
     menubar_will_be_visible = set_frame_menubar (f, 0, 0);

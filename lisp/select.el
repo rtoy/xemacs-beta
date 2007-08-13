@@ -53,6 +53,7 @@
   (interactive "*")
   (case (device-type (selected-device))
     (x (x-delete-primary-selection))
+    (mswindows (mswindows-clear-clipboard))
     (otherwise nil)))
 
 (defun yank-clipboard-selection ()

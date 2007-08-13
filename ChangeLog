@@ -1,3 +1,58 @@
+1998-05-15  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta40 is released.
+
+1998-05-13  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (ZSH_VERSION): zsh-3.1.2 (and zsh-3.0.4) drops core
+	on the `unset CDPATH' if running as sh.
+
+1998-05-12  Oliver Graf <ograf@fga.de>
+
+	* tests/Dnd/droptest.el: some CDE adaptions (untested)
+
+1998-05-11  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in:
+	Add some more comments.
+	If using bash, use Posix mode and unset CDPATH.
+	Be more careful checking feature dependencies.
+	Introduce XE_CHECK_FEATURE_DEPENDENCY.
+	Undo the gross hack of multiple `echo >> $tempcname'
+	by using here documents instead.  (Might break mswindows, tho...)
+	Be more careful autodetecting tooltalk.
+
+	* PROBLEMS:
+	Document problems with Solaris 2.6 + XSUNTRANSPORT
+
+	* Makefile.in: 
+	* lwlib/Makefile.in.in:
+	* modules/Makefile.in:
+	- Adjust for luser's CDPATH being set to something weird.
+	- Take into account bash 2.02's tendency to print the cwd when
+	  using CDPATH.  Always use `cd ./foo' instead of `cd foo'.
+	- fix the run-temacs target to use $(DUMPENV)
+	- fix the run-puremacs target to use $(DUMPENV)
+	- fix the `depend' target to properly $(RM) the right files
+	- Generate a better TAGS file for XEmacs' lisp code using
+	  hand-crafted regexps.
+	- Use standard coding conventions for modules/Makefile.in
+
+1998-05-12  Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+	* configure.in: some people claimed that they can't stop
+	linking wnn6 library if they set --with-wnn6=no.
+
+1998-05-11  Oliver Graf <ograf@fga.de>
+
+	* tests/Dnd/droptest.el: adapted to new calling conventions
+	also showing the new possibilities
+	* tests/Dnd/README: changed to new protocol
+
+1998-05-11  SAKIYAMA Nobuo <nobuo@db3.so-net.or.jp>
+
+	* Fix for HAVE_MULTICAST check.
+
 1998-05-09  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-beta39 is released.

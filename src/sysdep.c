@@ -475,14 +475,17 @@ child_setup_tty (int out)
   s.main.c_iflag &= ~BRKINT;
 #endif /* AIX */
 #ifdef SIGNALS_VIA_CHARACTERS
-  /* the QUIT and INTR character are used in process_send_signal
+  /* TTY `special characters' are used in process_send_signal
      so set them here to something useful.  */
   s.main.c_cc[VQUIT] = '\\'&037; /* Control-\ */
   s.main.c_cc[VINTR] = 'C' &037; /* Control-C */
+  s.main.c_cc[VSUSP] = 'Z' &037; /* Control-Z */
 #else /* no TIOCGPGRP or no TIOCGLTC or no TIOCGETC */
-  /* QUIT and INTR work better as signals, so disable character forms */
+  /* TTY `special characters' work better as signals, so disable
+     character forms */
   s.main.c_cc[VQUIT] = CDISABLE;
   s.main.c_cc[VINTR] = CDISABLE;
+  s.main.c_cc[VSUSP] = CDISABLE;
   s.main.c_lflag &= ~ISIG;
 #endif /* no TIOCGPGRP or no TIOCGLTC or no TIOCGETC */
   s.main.c_cc[VEOL] = CDISABLE;

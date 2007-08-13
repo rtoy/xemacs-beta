@@ -1093,10 +1093,11 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 			 XtPointer callData)
 {
   char *filePath, *hurl;
-  int ii;
+  int ii, enqueue=1;
   Lisp_Object frame = Qnil;
   Lisp_Object l_type = Qnil;
   Lisp_Object l_data = Qnil;
+  DtDndTransferCallbackStruct *transferInfo = NULL;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
   /*
@@ -1105,17 +1106,16 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
       correct misc_user_event
     - the data must be converted to the new format (URL/MIME)
   */
-  return;
+  /* return; */
 
-  DtDndTransferCallbackStruct *transferInfo =
-    (DtDndTransferCallbackStruct *) callData;
-
+  transferInfo = (DtDndTransferCallbackStruct *) callData;
   if (transferInfo == NULL)
     return;
 
   GCPRO3 (frame, l_type, l_data);
 
   frame = make_frame ((struct frame *) clientData);
+
   if (transferInfo->dropData->protocol == DtDND_FILENAME_TRANSFER)
     {
       l_type = Qdragdrop_URL;
@@ -1125,7 +1125,9 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	  filePath = transferInfo->dropData->data.files[ii];
 	  hurl = dnd_url_hexify_string ((char *)filePath, "file:");
           /* ### Mule-izing required */
-	  l_data = Fcons ( make_string (hurl, strlen (hurl)), l_data );
+	  l_data = Fcons (make_string ((Bufbyte* )hurl,
+				       strlen (hurl)),
+			  l_data);
 	  xfree (hurl);
 	}
     }
@@ -1133,8 +1135,11 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
     {
       int speccount = specpdl_depth();
 
+      /* Problem: all buffers a treated as text/plain!!!
+         Solution: Also support DtDND_TEXT_TRANSFER
+         perhaps implementation of the Motif protocol
+         (which is the base of CDE) will clear this */
       l_type = Qdragdrop_MIME;
-      /* the meaning of this is not clear to me... */
       record_unwind_protect(abort_current_drag, Qnil);
       drag_not_done = 1;
       for (ii = 0; ii < transferInfo->dropData->numItems; ii++)
@@ -1144,21 +1149,26 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	     path = (filePath == NULL) ? Qnil
 	     : make_string ((Bufbyte *)filePath, strlen (filePath)); */
 	  /* what, if the data is no text, and how can I tell it? */
-	  l_data = Fcons ( list3 ( make_string ("text/plain", 10),
-				   make_string ("8bit", 4),
-				   make_ext_string (transferInfo->dropData->data.buffers[ii].bp, 
-						    transferInfo->dropData->data.buffers[ii].size,
-						    FORMAT_CTEXT) ),
+	  l_data = Fcons ( list3 ( list1 ( make_string ((Bufbyte *)"text/plain", 10) ),
+				   make_string ((Bufbyte *)"8bit", 4),
+				   make_string ((Bufbyte *)transferInfo->dropData->data.buffers[ii].bp, 
+						transferInfo->dropData->data.buffers[ii].size) ),
 			   l_data );
  	}
       drag_not_done = 0;
-      /* and what is this */
       unbind_to(speccount, Qnil);
     }
-  
-  /* where are button, mod and pos? -- query the pointer... */
-  enqueue_misc_user_event ( frame, Qdragdrop_drop_dispatch,
-			    Fcons (l_type, l_data) );
+  else /* the other cases: NOOP_TRANSFER */
+    enqueue=0;
+
+  /* The Problem: no button and mods from CDE... */
+  if (enqueue)  
+    enqueue_misc_user_event_pos ( frame, Qdragdrop_drop_dispatch,
+				  Fcons (l_type, l_data),
+				  0 /* this is the button */,
+				  0 /* these are the mods */,
+				  transferInfo->x,
+				  transferInfo->y);
 
   UNGCPRO;
   return;
@@ -1964,6 +1974,7 @@ x_popup_frame (struct frame *f)
  			 DtDND_FILENAME_TRANSFER | DtDND_BUFFER_TRANSFER,
  			 XmDROP_COPY, dnd_transfer_cb_rec,
  			 DtNtextIsBuffer, True,
+			 DtNregisterChildren, True, 
 			 DtNpreserveRegistration, False,
 			 NULL);
   }

@@ -1801,7 +1801,7 @@ map_specifier (Lisp_Object specifier, Lisp_Object locale,
 
 DEFUN ("add-spec-to-specifier", Fadd_spec_to_specifier, 2, 5, 0, /*
 Add a specification to SPECIFIER.
-The specification maps from LOCALE (which should be a buffer, window,
+The specification maps from LOCALE (which should be a window, buffer,
 frame, device, or 'global, and defaults to 'global) to INSTANTIATOR,
 whose allowed values depend on the type of the specifier.  Optional
 argument TAG-SET limits the instantiator to apply only to the specified
@@ -1871,7 +1871,7 @@ The format of a spec-list is
   ((LOCALE (TAG-SET . INSTANTIATOR) ...) ...)
 
 where
-  LOCALE := a buffer, a window, a frame, a device, or 'global
+  LOCALE := a window, a buffer, a frame, a device, or 'global
   TAG-SET := an unordered list of zero or more TAGS, each of which
              is a symbol
   TAG := a device class (see `valid-device-class-p'), a device type
@@ -2086,10 +2086,10 @@ remove_specifier_mapfun (Lisp_Object specifier,
 DEFUN ("remove-specifier", Fremove_specifier, 1, 4, 0, /*
 Remove specification(s) for SPECIFIER.
 
-If LOCALE is a particular locale (a buffer, window, frame, device,
+If LOCALE is a particular locale (a window, buffer, frame, device,
 or 'global), the specification for that locale will be removed.
 
-If instead, LOCALE is a locale type (i.e. 'buffer, 'window, 'frame,
+If instead, LOCALE is a locale type (i.e. 'window, 'buffer, 'frame,
 or 'device), the specifications for all locales of that type will be
 removed.
 
@@ -2481,13 +2481,13 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
     }
 
 try_again:
-  /* First see if we can generate one from the buffer specifiers. */
-  if (!NILP (buffer))
-    CHECK_INSTANCE_ENTRY (buffer, matchspec, LOCALE_BUFFER);
-
-  /* Next see if we can generate one from the window specifiers. */
+  /* First see if we can generate one from the window specifiers. */
   if (!NILP (window))
     CHECK_INSTANCE_ENTRY (window, matchspec, LOCALE_WINDOW);
+
+  /* Next see if we can generate one from the buffer specifiers. */
+  if (!NILP (buffer))
+    CHECK_INSTANCE_ENTRY (buffer, matchspec, LOCALE_BUFFER);
 
   /* Next see if we can generate one from the frame specifiers. */
   if (!NILP (frame))
@@ -2550,8 +2550,8 @@ to all locales that can be derived from the given domain, from specific
 to general.  In most cases, the domain is an Emacs window.  In that case
 specifications are searched for as follows:
 
-1. A specification whose locale is the window's buffer;
-2. A specification whose locale is the window itself;
+1. A specification whose locale is the window itself;
+2. A specification whose locale is the window's buffer;
 3. A specification whose locale is the window's frame;
 4. A specification whose locale is the window's frame's device;
 5. A specification whose locale is 'global.

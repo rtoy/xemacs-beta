@@ -62,9 +62,10 @@
 		    (activate-region-as-selection))))
     ;; Old-style mswindows bindings. The new-style mswindows bindings
     ;; (namely Ctrl-X, Ctrl-C and Ctrl-V) are already spoken for by XEmacs.
-    (define-key global-map '(control insert) 'mswindows-copy-clipboard)
-    (define-key global-map '(shift insert)   'mswindows-paste-clipboard)
-    (define-key global-map '(shift delete)   'mswindows-cut-clipboard)
+    (define-key global-map '(shift delete)   'kill-primary-selection)
+    (define-key global-map '(control delete) 'delete-primary-selection)
+    (define-key global-map '(shift insert)   'yank-clipboard-selection)
+    (define-key global-map '(control insert) 'copy-primary-selection)
 
     ;; Random stuff
     (define-key global-map 'menu	'popup-mode-menu)

@@ -2180,6 +2180,8 @@ void wait_delaying_user_input (int (*) (void *), void *);
 int detect_input_pending (void);
 void reset_this_command_keys (Lisp_Object, int);
 Lisp_Object enqueue_misc_user_event (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object enqueue_misc_user_event_pos (Lisp_Object, Lisp_Object,
+					 Lisp_Object, int, int, int, int);
 
 /* Defined in event-Xt.c */
 void signal_special_Xt_user_event (Lisp_Object, Lisp_Object, Lisp_Object);

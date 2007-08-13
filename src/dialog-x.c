@@ -213,40 +213,10 @@ dbox_descriptor_to_widget_value (Lisp_Object desc)
   }
 }
 
-DEFUN ("popup-dialog-box", Fpopup_dialog_box, 1, 1, 0, /*
-Pop up a dialog box.
-A dialog box description is a list.
-
-The first element of a dialog box must be a string, which is the title or
-question.
-
-The rest of the elements are descriptions of the dialog box's buttons.
-Each of these is a vector, the syntax of which is essentially the same as
-that of popup menu items.  They may have any of the following forms:
-
- [ "name" callback <active-p> ]
- [ "name" callback <active-p> "suffix" ]
- [ "name" callback :<keyword> <value>  :<keyword> <value> ... ]
-
-The name is the string to display on the button; it is filtered through the
-resource database, so it is possible for resources to override what string
-is actually displayed.
-
-If the `callback' of a button is a symbol, then it must name a command.
-It will be invoked with `call-interactively'.  If it is a list, then it is
-evaluated with `eval'.
-
-One (and only one) of the buttons may be `nil'.  This marker means that all
-following buttons should be flushright instead of flushleft.
-
-Though the keyword/value syntax is supported for dialog boxes just as in
-popup menus, the only keyword which is both meaningful and fully implemented
-for dialog box buttons is `:active'.
-*/
-     (dbox_desc))
+static void
+x_popup_dialog_box (struct frame* f, Lisp_Object dbox_desc)
 {
   int dbox_id;
-  struct frame *f = selected_frame ();
   widget_value *data;
   Widget parent, dbox;
   Lisp_Object frame;
@@ -288,13 +258,17 @@ for dialog box buttons is `:active'.
 
   popup_up_p++;
   lw_pop_up_all_widgets (dbox_id);
-  return Qnil;
 }
 
 void
 syms_of_dialog_x (void)
 {
-  DEFSUBR (Fpopup_dialog_box);
+}
+
+void
+console_type_create_dialog_x (void)
+{
+  CONSOLE_HAS_METHOD (x, popup_dialog_box);
 }
 
 void

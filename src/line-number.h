@@ -19,7 +19,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-void mark_line_number_cache (void *, void (*)(Lisp_Object));
 void narrow_line_number_cache (struct buffer *);
 void insert_invalidate_line_number_cache (struct buffer *, Bufpos,
 					  CONST Bufbyte *, Bytecount);

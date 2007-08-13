@@ -719,14 +719,14 @@
 				(if mouse-avoidance-mode nil 'banish))
 	:style toggle
 	:selected (and (boundp 'mouse-avoidance-mode) mouse-avoidance-mode)
-	:active (and (boundp 'mouse-avoidance-mode) 
-		     window-system (eq (device-type) 'x))]
+	:active (and (boundp 'mouse-avoidance-mode)
+		     (device-on-window-system-p))]
        ["strokes-mode"
 	(customize-set-variable 'strokes-mode (not strokes-mode))
 	:style toggle
 	:selected (and (boundp 'strokes-mode) strokes-mode)
 	:active (and (boundp 'strokes-mode)
-		     window-system (eq (device-type) 'x))]
+		     (device-on-window-system-p))]
        )
       ("Open URLs With"
        ["Emacs-W3" 
@@ -1328,21 +1328,17 @@ If this is a relative filename, it is put into the same directory as your
      :suffix (if (or (eq last-command 'undo)
 		     (eq last-command 'advertised-undo))
 		 "More" "")]
-    ["Cut" x-kill-primary-selection
-     :active (and (eq 'x (device-type (selected-device)))
-		  (x-selection-owner-p))]
-    ["Copy" x-copy-primary-selection
-     :active (and (eq 'x (device-type (selected-device)))
-		  (x-selection-owner-p))]
-    ["Paste" x-yank-clipboard-selection
-     :active (and (eq 'x (device-type (selected-device)))
-		  (x-selection-exists-p 'CLIPBOARD))]
-    ["Clear" x-delete-primary-selection
-     :active (and (eq 'x (device-type (selected-device)))
-		  (x-selection-owner-p))]
+    ["Cut" kill-primary-selection
+     :active (selection-owner-p)]
+    ["Copy" copy-primary-selection
+     :active (selection-owner-p)]
+    ["Paste" yank-clipboard-selection
+     :active (selection-exists-p 'CLIPBOARD)]
+    ["Clear" delete-primary-selection
+     :active (selection-owner-p)]
     "-----"
     ["Select Block" mark-paragraph]
-    ["Split Window" (split-window)]
+    ["Split Window" split-window-vertically]
     ["Unsplit Window" delete-other-windows]
     ))
 
@@ -1375,19 +1371,22 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
   (run-hooks 'activate-popup-menu-hook)
   (popup-menu
    (cond ((and global-popup-menu mode-popup-menu)
+	  ;; Merge global-popup-menu and mode-popup-menu
 	  (check-menu-syntax mode-popup-menu)
 	  (let* ((title (car mode-popup-menu))
 		 (items (cdr mode-popup-menu))
-		 filters)
+		 mode-filters)
 	    ;; Strip keywords from local menu for attaching them at the top
 	    (while (and items
-			(symbolp (car items)))
-	      (setq items (append filters (list (car items))))
-	      (setq items (cdr items)))
-	    ;; If filters contains a keyword already present in
-	    ;; `global-popup-menu' you will probably lose.
+			(keywordp (car items)))
+	      ;; Push both keyword and its argument.
+	      (push (pop items) mode-filters)
+	      (push (pop items) mode-filters))
+	    (setq mode-filters (nreverse mode-filters))
+	    ;; If mode-filters contains a keyword already present in
+	    ;; `global-popup-menu', you will probably lose.
 	    (append (list (car global-popup-menu))
-		    filters
+		    mode-filters
 		    (cdr global-popup-menu)
 		    '("---" "---")
 		    (if popup-menu-titles (list title))
@@ -1396,7 +1395,7 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
 	 (t
 	  (or mode-popup-menu
 	      global-popup-menu
-	      (error "No menu here."))))))
+	      (error "No menu defined in this buffer"))))))
 
 (defun popup-buffer-menu (event)
   "Pop up a copy of the Buffers menu (from the menubar) where the mouse is clicked."

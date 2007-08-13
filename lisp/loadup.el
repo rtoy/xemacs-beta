@@ -47,7 +47,7 @@
 (call-with-condition-handler 'really-early-error-handler
     #'(lambda ()
 	;; message not defined yet ...
-	(setq load-path (decode-path-internal (getenv "EMACSBOOTSTRAPLOADPATH")))
+	(setq load-path (split-path (getenv "EMACSBOOTSTRAPLOADPATH")))
 
 	(external-debugging-output (format "\nUsing load-path %s" load-path))
 

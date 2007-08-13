@@ -66,7 +66,7 @@
 
 (defvar Buffer-menu-buffer-column 4)
 
-(defvar Buffer-menu-mode-map nil "")
+(defvar Buffer-menu-mode-map nil)
 
 (if Buffer-menu-mode-map
     ()

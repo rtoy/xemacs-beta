@@ -241,7 +241,7 @@ Returns list of symbols and documentation found."
 		    (if (setq doc (symbol-plist symbol))
 			(if (eq (/ (length doc) 2) 1)
 			    (format "1 property (%s)" (car doc))
-			  (concat (/ (length doc) 2) " properties")))
+			  (format "%d properties" (/ (length doc) 2))))
 		    (if (get symbol 'widget-type)
 			(if (setq doc (documentation-property
 				       symbol 'widget-documentation t))
@@ -501,96 +501,98 @@ found."
 	 (setq apropos-label-face `(face ,apropos-label-face
 					 mouse-face highlight)))
     (let ((help-buffer-prefix-string "Apropos"))
-      (with-displaying-help-buffer apropos-regexp
-	(with-current-buffer standard-output
-	(run-hooks 'apropos-mode-hook)
-	(let ((p apropos-accumulator)
-	      (old-buffer (current-buffer))
-	      symbol item point1 point2)
-	  ;; XEmacs change from (if window-system
-	  (if (device-on-window-system-p)
-	      (progn
-		(princ "If you move the mouse over text that changes color,\n")
-		(princ (substitute-command-keys
-			"you can click \\[apropos-mouse-follow] to get more information.\n"))))
-	  (princ (substitute-command-keys
-		  "Type \\[apropos-follow] in this buffer to get full documentation.\n\n"))
-	  (while (consp p)
-	    (or (not spacing) (bobp) (terpri))
-	    (setq apropos-item (car p)
-		  symbol (car apropos-item)
-		  p (cdr p)
-		  point1 (point))
-	    (princ symbol)		        ; print symbol name
-	    (setq point2 (point))
-	    ;; Calculate key-bindings if we want them.
-	    (and do-keys
-		 (commandp symbol)
-		 (indent-to 30 1)
-		 (if (let ((keys
-			    (save-excursion
-			      (set-buffer old-buffer)
-			      (where-is-internal symbol)))
-			   filtered)
-		       ;; Copy over the list of key sequences,
-		       ;; omitting any that contain a buffer or a frame.
-		       (while keys
-			 (let ((key (car keys))
-			       (i 0)
-			       loser)
-			   (while (< i (length key))
-			     (if (or (framep (aref key i))
-				     (bufferp (aref key i)))
-				 (setq loser t))
-			     (setq i (1+ i)))
-			   (or loser
-			       (setq filtered (cons key filtered))))
-			 (setq keys (cdr keys)))
-		       (setq item filtered))
-		     ;; Convert the remaining keys to a string and insert.
-		     (princ
-		      (mapconcat
-		       (lambda (key)
-			 (setq key (key-description key))
-			 (if apropos-keybinding-face
-			     (put-text-property 0 (length key)
-						'face apropos-keybinding-face
-						key))
-			 key)
-		       item ", "))
-		   (princ "Type ")
-		   (princ "M-x")
-		   (put-text-property (- (point) 3) (point)
-				      'face apropos-keybinding-face)
-		   (princ (format " %s " (symbol-name symbol)))
-		   (princ "RET")
-		   (put-text-property (- (point) 3) (point)
-				      'face apropos-keybinding-face)))
-	    (terpri)
-	    ;; only now so we don't propagate text attributes all over
-	    (put-text-property point1 point2 'item
-			       (if (eval `(or ,@(cdr apropos-item)))
-				   (car apropos-item)
-				 apropos-item))
-	    (if apropos-symbol-face
-		(put-text-property point1 point2 'face apropos-symbol-face))
-	    (apropos-print-doc 'describe-function 1
-			       (if (commandp symbol)
-				   "Command"
-				 (if (apropos-macrop symbol)
-				     "Macro"
-				   "Function"))
-			       do-keys)
-	    (if (get symbol 'custom-type)
-		(apropos-print-doc 'customize-variable-other-window 2
-				   "User Option" do-keys)
-	      (apropos-print-doc 'describe-variable 2
-				 "Variable" do-keys))
-	      (apropos-print-doc 'customize-other-window 6 "Group" do-keys)
-	      (apropos-print-doc 'customize-face-other-window 5 "Face" do-keys)
-	      (apropos-print-doc 'widget-browse-other-window 4 "Widget" do-keys)
-	      (apropos-print-doc 'apropos-describe-plist 3
-				 "Plist" nil))))))
+      (with-displaying-help-buffer
+       (lambda ()
+	 (with-current-buffer standard-output
+	   (run-hooks 'apropos-mode-hook)
+	   (let ((p apropos-accumulator)
+		 (old-buffer (current-buffer))
+		 symbol item point1 point2)
+	     ;; XEmacs change from (if window-system
+	     (if (device-on-window-system-p)
+		 (progn
+		   (princ "If you move the mouse over text that changes color,\n")
+		   (princ (substitute-command-keys
+			   "you can click \\[apropos-mouse-follow] to get more information.\n"))))
+	     (princ (substitute-command-keys
+		     "Type \\[apropos-follow] in this buffer to get full documentation.\n\n"))
+	     (while (consp p)
+	       (or (not spacing) (bobp) (terpri))
+	       (setq apropos-item (car p)
+		     symbol (car apropos-item)
+		     p (cdr p)
+		     point1 (point))
+	       (princ symbol)		; print symbol name
+	       (setq point2 (point))
+	       ;; Calculate key-bindings if we want them.
+	       (and do-keys
+		    (commandp symbol)
+		    (indent-to 30 1)
+		    (if (let ((keys
+			       (save-excursion
+				 (set-buffer old-buffer)
+				 (where-is-internal symbol)))
+			      filtered)
+			  ;; Copy over the list of key sequences,
+			  ;; omitting any that contain a buffer or a frame.
+			  (while keys
+			    (let ((key (car keys))
+				  (i 0)
+				  loser)
+			      (while (< i (length key))
+				(if (or (framep (aref key i))
+					(bufferp (aref key i)))
+				    (setq loser t))
+				(setq i (1+ i)))
+			      (or loser
+				  (setq filtered (cons key filtered))))
+			    (setq keys (cdr keys)))
+			  (setq item filtered))
+			;; Convert the remaining keys to a string and insert.
+			(princ
+			 (mapconcat
+			  (lambda (key)
+			    (setq key (key-description key))
+			    (if apropos-keybinding-face
+				(put-text-property 0 (length key)
+						   'face apropos-keybinding-face
+						   key))
+			    key)
+			  item ", "))
+		      (princ "Type ")
+		      (princ "M-x")
+		      (put-text-property (- (point) 3) (point)
+					 'face apropos-keybinding-face)
+		      (princ (format " %s " (symbol-name symbol)))
+		      (princ "RET")
+		      (put-text-property (- (point) 3) (point)
+					 'face apropos-keybinding-face)))
+	       (terpri)
+	       ;; only now so we don't propagate text attributes all over
+	       (put-text-property point1 point2 'item
+				  (if (eval `(or ,@(cdr apropos-item)))
+				      (car apropos-item)
+				    apropos-item))
+	       (if apropos-symbol-face
+		   (put-text-property point1 point2 'face apropos-symbol-face))
+	       (apropos-print-doc 'describe-function 1
+				  (if (commandp symbol)
+				      "Command"
+				    (if (apropos-macrop symbol)
+					"Macro"
+				      "Function"))
+				  do-keys)
+	       (if (get symbol 'custom-type)
+		   (apropos-print-doc 'customize-variable-other-window 2
+				      "User Option" do-keys)
+		 (apropos-print-doc 'describe-variable 2
+				    "Variable" do-keys))
+	       (apropos-print-doc 'customize-other-window 6 "Group" do-keys)
+	       (apropos-print-doc 'customize-face-other-window 5 "Face" do-keys)
+	       (apropos-print-doc 'widget-browse-other-window 4 "Widget" do-keys)
+	       (apropos-print-doc 'apropos-describe-plist 3
+				  "Plist" nil)))))
+       apropos-regexp))
     (prog1 apropos-accumulator
       (setq apropos-accumulator ()))))	; permit gc
 
@@ -668,18 +670,20 @@ found."
 (defun apropos-describe-plist (symbol)
   "Display a pretty listing of SYMBOL's plist."
   (let ((help-buffer-prefix-string "Apropos-plist"))
-    (with-displaying-help-buffer (symbol-name symbol)
-      (run-hooks 'apropos-mode-hook)
-      (princ "Symbol ")
-      (prin1 symbol)
-      (princ "'s plist is\n (")
-      (with-current-buffer standard-output
-	(if apropos-symbol-face
-	    (put-text-property 8 (- (point) 14) 'face apropos-symbol-face)))
-      (princ (apropos-format-plist symbol "\n  "))
-      (princ ")")
-      (terpri)
-      (print-help-return-message))))
+    (with-displaying-help-buffer
+     (lambda ()
+       (run-hooks 'apropos-mode-hook)
+       (princ "Symbol ")
+       (prin1 symbol)
+       (princ "'s plist is\n (")
+       (with-current-buffer standard-output
+	 (if apropos-symbol-face
+	     (put-text-property 8 (- (point) 14) 'face apropos-symbol-face)))
+       (princ (apropos-format-plist symbol "\n  "))
+       (princ ")")
+       (terpri)
+       (print-help-return-message))
+     (symbol-name symbol))))
 
 (provide 'apropos) ; XEmacs
 

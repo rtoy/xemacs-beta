@@ -117,10 +117,6 @@ Boston, MA 02111-1307, USA.  */
     /* Function to call when insert space past fill column.  */
     MARKED_SLOT (auto_fill_function);
 
-    /* nil: text, t: binary.
-       This value is meaningful only on certain operating systems.  */
-    MARKED_SLOT (buffer_file_type);
-
     /* Case table for case-conversion in this buffer.
        This char-table maps each char into its lower-case version.  */
     MARKED_SLOT (downcase_table);

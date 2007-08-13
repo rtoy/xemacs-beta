@@ -1,3 +1,306 @@
+1998-05-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* loadup.el (really-early-error-handler): Ditto.
+
+	* update-elc.el: Ditto.
+
+	* setup-paths.el (paths-construct-exec-path): Ditto.
+
+	* make-docfile.el: Ditto.
+
+	* find-paths.el (paths-decode-directory-path): Use split-path
+	instead of decode-path.
+
+	* files.el (parse-colon-path): Update docstring reference.
+
+1998-05-15  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* msw-init.el:
+	* x-init.el:
+	Bind cut'n'paste keys to non window-system specific functions.
+
+	* msw-select.el: New function mswindows-clear-clipboard.
+	mswindows-cut-copy-clipboard extended to handle clearing of the
+	selection and renamed to mswindows-cut-copy-clear-clipboard.
+
+	* select.el: on mswindows devices delete-primary-selection
+	calls mswindows-clear-clipboard.
+
+1998-05-15  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* simple.el (quoted-insert): Inhibit quit when using read-char.
+
+	* cmdloop.el (read-char): Don't inhibit quit.
+	(read-char-exclusive): Ditto.
+	(read-char): Signal quit if quit-char was pressed.
+	(read-char-exclusive): Ditto.
+	(read-quoted-char): Return a character, not integer.
+
+	* menubar-items.el (default-popup-menu): Use Andy's generic
+	selection code.
+	(default-popup-menu): Fix code.
+
+1998-05-14  Oliver Graf <ograf@fga.de>
+
+	* dragdrop.el (dragdrop-function-widget): this time it's done
+
+1998-05-13  Oliver Graf <ograf@fga.de>
+
+	* dumped-lisp.el: dragdrop.el now based on dragdrop-api feature
+
+1998-05-15  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* device.el (device-pixel-width): 
+	(device-pixel-height): 
+	(device-mm-width): 
+	(device-mm-height): 
+	(device-bitplanes): 
+	(device-color-cells): Swapped parameters to device-system-metric
+	according to the interface change.
+
+1998-05-14  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* mouse.el (default-mouse-motion-handler): Use new name of the
+	function event-over-vertical-divider-p.
+	Do not set E-W arrow cursor over the divider if
+	vertical-divider-draggable-p is nil in the window.
+	([top-level]): Use new name for the variable
+	vertical-divider-map.
+	(drag-window-divider): Respect vertical-divider-draggable-p.
+	Variable name typo fixes.
+
+1998-05-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* keymap.el (kbd): Define here; handle string constants and
+	others...
+
+1998-05-15  Christian Nybø <chr@mediascience.no>
+
+	* simple.el (zap-up-to-char): New function.  Behaves like `zap-to-char'
+	in Emacs 18.
+
+1998-05-13  Didier Verna  <verna@inf.enst.fr>
+
+	* mouse.el (drag-window-divider): give the vertical divider a
+	pressed look when dragging it.
+
+1998-05-13  Andy Piper  <andyp@parallax.co.uk>
+
+	* faces.el: predicate some more face operations on x or mswindows
+	not just x.
+
+	* modeline.el: enable modeline coloring for mswindows.
+
+1998-05-13  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* minibuf.el (minibuffer-default): Added variable; compatible with
+	FSF Emacs.
+	(next-history-element): Used `minibuffer-default'.
+
+1998-05-12  Oliver Graf <ograf@fga.de>
+
+	* dragdrop.el (dragdrop-function-widget): button and mods ok
+	arguments still look a bit strange
+	(dragdrop-compare-mods) created
+	(dragdrop-drop-do-functions) correctly checks for buttons and
+	modifiers
+
+1998-05-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* setup-paths.el (paths-default-info-directories): Replace
+	path-separator with directory-sep-char.
+
+	* files.el (path-separator): Don't define it here.
+
+1998-05-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* update-elc.el: Ditto.
+
+	* setup-paths.el (paths-construct-exec-path): Ditto.
+
+	* make-docfile.el: Ditto.
+
+	* loadup.el (really-early-error-handler): Ditto.
+
+	* find-paths.el (paths-decode-directory-path): Use decode-path
+	instead of decode-path-internal.
+
+	* files.el (parse-colon-path): Update docstring.
+
+1998-05-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* subr.el (get-buffer-window-list): Make BUFFER optional.
+
+	* window-xemacs.el (windows-of-buffer): Defalias to
+	get-buffer-window-list.
+
+1998-05-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* disass.el: Fix maintainer keyword.
+
+	* bytecomp.el (byte-compile-and-load-file): Autoload.
+	(byte-compile-buffer): Ditto.
+
+	* lisp-mode.el (eval-last-sexp): Skip ` in `variable' so that the
+	value is returned, not the name.
+	(lisp-imenu-generic-expression): Enable it.
+	(lisp-mode-variables): Ditto.
+	(lisp-indent-offset): Change defconst to defvar.
+	(lisp-indent-function): Ditto.
+	(lisp-body-indent): Ditto.
+
+1998-05-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* modeline.el: Use zap-last-kbd-macro-event.
+
+	* lisp-mode.el (eval-interactive): If eval-interactive-verbose is
+	nil, don't attempt to do anything with messages.
+	(eval-last-sexp): Use `letf' for clarity.
+
+1998-05-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* startup.el: It's still `.emacs', not yet `.xemacs/init.el'.
+
+1998-05-11  Martin Buchholz  <martin@xemacs.org>
+
+	* buff-menu.el:
+	* lisp-mode.el:
+	* obsolete.el:
+	Change empty docstrings into no doc strings at all.
+	Fix bogus FSF-format docstrings.
+	* etags.el: Fix docstring.
+
+1998-05-11  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* package-get.el (package-get): Use internal md5
+
+1998-05-13  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (about-xemacs): Correct abuse of concat.
+
+1998-05-11  SL Baur  <steve@altair.xemacs.org>
+
+	* info.el (Info-mode): Use easymenu.
+
+1998-05-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* apropos.el (apropos): Don't use concat with integers.
+
+	* cmdloop.el (describe-last-error): Handle the case when no error
+	was seen gracefully.
+
+	* apropos.el (apropos-print): Use with-displaying-help-buffer as
+ 	defun.
+	(apropos-describe-plist): Ditto.
+
+	* help.el (with-displaying-help-buffer): Revert to a defun.
+	(describe-key): Use it as defun.
+	(describe-mode): Ditto.
+	(describe-bindings): Ditto.
+	(describe-prefix-bindings): Ditto.
+	(describe-installation): Ditto.
+	(view-lossage): Ditto.
+	(describe-function): Ditto.
+	(describe-variable): Ditto.
+	(describe-syntax): Ditto.
+
+1998-05-11  Oliver Graf <ograf@fga.de>
+
+	* dragdrop.el: changed order of require/provide
+	(dragdrop-drop-mime-default) changed to new calling conventions
+	(dragdrop-drop-do-functions) changed to new calling conventions
+	(dragdrop-function-widget) this one needs more work...
+
+1998-05-10  Oliver Graf <ograf@fga.de>
+
+	* about.el: another small change in my entry
+	* dragdrop.el (dragdrop-drop-log-function): logging added
+	plus customizations
+	changed interface to handler functions. now called with event
+ 	and object
+
+1998-05-12  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* glyphs.el (divider-pointer-glyph): Declared new glyph,
+	E-W arrow pointer displayed over draggable dividers.
+
+	* mouse.el (default-mouse-motion-handler): Show it when
+	appropriate.
+	(drag-window-divider): Added.
+	([top-level]): Initialized window-divider-map with a keymap
+	binding the above function to left button down event.
+
+	* x-mouse.el (x-init-pointer-shape): Initialize
+	divider-pointer-glyph from Cursor.dividerPointer, or use default
+	E-W double arrow.
+
+1998-04-30  Gunnar Evermann  <Gunnar.Evermann@nats.informatik.uni-hamburg.de>
+
+	* toolbar-items.el (toolbar-compile): respect should-use-dialog-box-p
+
+1998-05-11  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* simple.el (count-words-buffer): Don't query for buffer.
+	(count-lines-buffer): Ditto.
+
+1998-05-11  Jan Vroonhof <vroonhof@math.ethz.ch>
+
+	* help.el (where-is): add optional insert argument.
+
+1998-05-11  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* help.el (describe-key-briefly): New argument INSERT.
+
+	* simple.el (eval-expression): New optional argument; synch with
+	FSF 20.3.
+
+	* keydefs.el (global-map): Add new register bindings.
+
+	* register.el: Synched with FSF 20.3.
+
+1998-05-11  Jan Vroonhof <vroonhof@math.ethz.ch>
+
+	* window-xemacs.el (recenter): all arguments are optional.
+
+1998-05-10  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* device.el: (device-pixel-width): Reflected name/parameters
+	change to device-system-metric. 
+	(device-pixel-height): Ditto. 
+	(device-mm-width): Ditto.
+	(device-mm-height): Ditto.
+	(device-bitplanes): Ditto.
+	(device-color-cells): Ditto.
+
+1998-05-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cl-extra.el (cl-float-limits): Removed; move code to top-level.
+
+	* cl.el (most-positive-fixnum): Document.
+	(most-negative-fixnum): Ditto.
+
+	* cus-dep.el: Updated comment.
+
+	* cus-load.el: Use most-positive-fixnum as the gc-inhibiting
+	constant.
+
+	* cus-load.el (custom-put): Removed.
+
+	* files.el (after-find-file): Just resignal quit instead of
+	signaling "canceled".
+
+1998-05-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* frame.el (other-frame): Use `focus-frame' instead of
+	select-frame kludges.
+
+	* lisp-mode.el: Update lisp-indent-function for
+	save-selected-frame and with-selected-frame.
+
+	* frame.el (save-selected-frame): New macro.
+	(with-selected-frame): Ditto.
+	(other-frame): Use `set-frame-focus'.
+
 1998-05-06  Oliver Graf <ograf@fga.de>
 
 	* dragdrop.el (dragdrop-drop-dispatch): changed to new list concept

@@ -354,10 +354,11 @@ DOC_SRC1=\
  $(XEMACS)\src\data.c \
  $(XEMACS)\src\device.c
 DOC_SRC2=\
- $(XEMACS)\src\dialog.c \
+# $(XEMACS)\src\dialog.c \
  $(XEMACS)\src\dired.c \
  $(XEMACS)\src\doc.c \
  $(XEMACS)\src\doprnt.c \
+ $(XEMACS)\src\dragdrop.c \
  $(XEMACS)\src\dynarr.c \
  $(XEMACS)\src\editfns.c \
  $(XEMACS)\src\elhash.c \
@@ -615,10 +616,11 @@ TEMACS_OBJS= \
 	$(OUTDIR)\console.obj \
 	$(OUTDIR)\data.obj \
 	$(OUTDIR)\device.obj \
-	$(OUTDIR)\dialog.obj \
+#	$(OUTDIR)\dialog.obj \
 	$(OUTDIR)\dired.obj \
 	$(OUTDIR)\doc.obj \
 	$(OUTDIR)\doprnt.obj \
+	$(OUTDIR)\dragdrop.obj \
 	$(OUTDIR)\dynarr.obj \
 	$(OUTDIR)\editfns.obj \
 	$(OUTDIR)\elhash.obj \
