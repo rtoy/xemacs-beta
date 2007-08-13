@@ -805,7 +805,7 @@ LD=ld
 #endif /* !TOOLTALK */
 
 #ifdef HAVE_CDE
-#  define LIB_CDE -lDtSvc
+#  define LIB_CDE -lDtSvc -ltt
 #else
 #  define LIB_CDE
 #endif

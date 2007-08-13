@@ -99,248 +99,6 @@ continues strong.  Recently, Amdahl Corporation and INS Engineering have
 both contributed significantly to the development of XEmacs.
 
 
-** Why Haven't XEmacs and FSF GNU Emacs Merged?
-===============================================
-
-This question comes up again and again on comp.emacs.xemacs and other
-newsgroups and mailing lists.  Recently in fact there was a long, heated
-thread about this issue.
-
-Here is what one XEmacs developer said about this issue.
-
-DISCLAIMER: This is provided for informational purposes only and does
-_NOT_ necessarily represent the opinions of any of the other XEmacs
-developers or of any of the organizations involved.  Keep in mind
-that this is a highly charged issue with differing and strongly-held
-opinions held by the various parties involved.
-
-   Subject: Re: elisp code in GNU Emacs/XEmacs
-   From: wing@666.com (Ben Wing)
-   Message-ID: <wingDqGwLH.K6w@netcom.com>
-   Date: Fri, 26 Apr 1996 11:44:05 GMT
-   
-   In article <9xo91fmordx.fsf@bcarsf26.nortel.ca>, Stephane Boucher
-   <sbo@bcarsf26.nortel.ca> wrote:
-   
-       Well, I don't think the number of volunteers is greater by having 2
-       Emacsen. I think your affirmation holds true because of the
-       inhability of the various parties involved to work together and
-       compromise. If people could all work together, I don't think there
-       would be any benifit in having 2 Emacsen. It may seem profitable
-       right now, but in the long run, I think everyone loses. The time
-       everyone spends porting back and forth, and imitating what the other
-       has done is not spent to do new features. I've personnally
-       experienced a project split in the past, and in the end everyone
-       lost. 
-       
-       I don't want to try to blame anybody for the current fiasco. But we do
-       have a fiasco. That is unfortunate. There are so many contributors
-       out there that if everyone worked together we might be looking
-       forward to having, say, threads in Emacs. But instead, as someone
-       told me not that long ago, maybe we'll soon see a new editor come out
-       based on Java. Threads will be part of it at no extra cost, and those
-       people still using Emacs will continue to curse at the fact that they
-       can't start GNUS while typing an E-mail, and the various Emacs
-       contributors will continue to argue among themselves, nitpicking
-       about how to get the perfect solution, rather than try to move
-       forward. Meanwhile, people will enjoy using a new state of the art
-       editor.
-   
-   Don't think we're just being needlessly perverse by continuing to have
-   XEmacs. I'm well aware of the problems in having a project split, and
-   don't think for a minute that we haven't tried (extremely hard, in
-   fact) to come up with a merge.
-   
-   Unfortunately, as I have said before, the odds of this happening are
-   quite low due to severe conflicts (both technical, procedural, and
-   philosophical) between RMS and the XEmacs developers. If we were to
-   assent to even half of what RMS wants in a merged Emacs, it would take
-   years of work to produce the merged Emacs, and the result would be
-   less powerful than the existing XEmacs.
-   
-   Since so many people seem so misinformed about this problem, I'll go
-   ahead and state the fundamental dividing issues:
-   
-    1. RMS does not believe in data abstraction, and cannot be convinced
-       of the folly of this. This by itself is such a huge division that
-       it makes a merge basically unthinkable. Because of this, FSF Emacs
-       is basically unmaintainable by anyone other than RMS. RMS has
-       consented to all the data abstraction I want provided that I take
-       sole responsibility for writing this code (which basically means
-       I'd have to write almost all of the code or rewrite most of his
-       code), and provided that he can use this issue as a bargaining
-       chip to get concessions of his own.
-
-    2. RMS sees the merge process as a series of mutual concessions
-       traded back and forth. IMHO this is reasonable for a peace treaty
-       but absurd for a piece of software -- we have to have technical
-       agreement on the major issues involved, and the chance of that
-       happening is basically nil.
-
-    3. RMS has insisted in full backwards compatibility with all aspects
-       of FSF Emacs, no matter how ugly; and furthermore, this backwards
-       compatibility must work fast enough to make existing code run
-       without problem. This basically means that there would have to be
-       parallel C implementations of events, keymaps, and many other data
-       structures. This not only will take months or years of extra work
-       to implement, but poses some fundamental technical problems due to
-       the non-abstractedness of FSF Emacs (e.g. in FSF Emacs keymaps are
-       conses or vectors and a lot of code depends on this, and
-       reconciling this with XEmacs's primitive keymap type is difficult
-       to impossible).
-
-    4. RMS will not even consent to neutral names for the two editors. He
-       objects to calling his editor FSF Emacs because for some unfathomable
-       reason he finds it insulting. He suggests just Emacs, which I find
-       not only insulting (XEmacs is just as much Emacs as is FSF Emacs)
-       but also quite confusing. He will not even consent to calling his
-       editor GNU Emacs without also referring to XEmacs as GNU XEmacs --
-       basically a Borg-like assimilation attempt at making XEmacs a GNU
-       product, which it is not. (None of the developers of Lucid Emacs
-       and XEmacs were or are sanctioned by GNU, and none of us got the
-       least bit of assistance or cooperation in doing our work. In fact,
-       RMS actively made it harder by choosing to ignore all work
-       previously done in XEmacs and adding his own incompatible
-       interfaces for functionality already in XEmacs. This makes it
-       quite difficult to track FSF Emacs and keep a sane API.) He has
-       stated many times, and continues to assert, that most or all of
-       the work done on Lucid Emacs and XEmacs was done primarily as a
-       testing ground for potential features to be added to FSF Emacs.
-       All of the developers of Lucid Emacs and XEmacs assert that this
-       is patently false -- so why does RMS continue to insist that this
-       is the case?
-
-   Ben Wing
-
-
-** Why Another Version of Emacs?  (The Lucid, Inc. Point of View)
-=================================================================
-
-Lucid's latest product, Energize, is a C/C++ development environment.
-Rather than invent (and force our users to learn) a new user-interface, we
-chose to build part of our environment on top of the world's best editor,
-GNU Emacs.  (Though our product is commercial, the work we did on is
-free software, and is useful without having to purchase our product.)
-
-We needed a version of Emacs with mouse-sensitive regions, multiple fonts,
-the ability to mark sections of a buffer as read-only, the ability to detect
-which parts of a buffer has been modified, and many other features.
-
-*** Why Not Epoch or GNU Emacs?
--------------------------------
-
-For our purposes, the existing version of Epoch was not sufficient; it did
-not allow us to put arbitrary pixmaps/icons in buffers, `undo' did not
-restore changes to regions, regions did not overlap and merge their
-attributes in the way we needed, and several other things.
-
-We could have devoted our time to making Epoch do what we needed (and, in
-fact, we spent some time doing that in 1990) but, since the Free Software
-Foundation planned to include Epoch-like features in their Version 19, we
-decided that our efforts would be better spent improving GNU Emacs
-instead of Epoch.
-
-Our original hope was that our changes to GNU Emacs would be
-incorporated into the "official" v19.  However, scheduling conflicts arose,
-and we found that, given the amount of work still remaining to be done, we
-didn't have the time or manpower to do the level of coordination that would
-be necessary to get our changes accepted by the Free Software Foundation.
-Consequently, we released our work as a forked branch of Emacs, instead of
-delaying any longer.
-
-Roughly a year after Lucid Emacs 19.0 was released, a beta version of the
-Free Software Foundation branch of Emacs 19 was released.  This version
-was better in some areas, and worse in others, as reflects the differing
-focus of our development efforts.
-
-We planned to continue developing and supporting Lucid Emacs, and merging in
-bug fixes and new features from the Free Software Foundation branch as
-appropriate; we did not plan to discard any of the functionality that we
-implemented which Richard Stallman of the Free Software Foundation has
-chosen not to include in his version.
-
-However, events have overtaken us, and Lucid, Inc. has effectively ceased
-doing business and is (September 1994) in the process of being sold.  Our
-efforts on Lucid Emacs have also ceased and we've turned over the continued
-enhancement of Lucid Emacs to the University of Illinois under Chuck
-Thompson, a member of the Lucid Emacs team and a maintainer of Epoch.
-At the same time, Lucid Emacs has been renamed XEmacs to reflect the
-substantial contribution of the University of Illinois with the support of
-Sun Microsystems.
-
-Certain elements of Lucid Emacs, or derivatives of them, have been ported to
-FSF GNU Emacs.  We have not been doing work in this direction, because
-we feel that Lucid Emacs has a cleaner and more extensible substrate, and
-that any kind of merger between the two branches would be far easier by
-merging the Free Software Foundation changes into our version than the other
-way around.
-
-We were working closely with the Epoch developers to merge in the
-remaining Epoch functionality which Lucid Emacs does not yet have.  Epoch
-and Lucid Emacs will soon be one and the same thing.  Work is being done on
-a compatibility package which will allow Epoch 4 code to run in XEmacs with
-little or no change.  (As of 19.8, Lucid Emacs is running a descendant of
-the Epoch redisplay engine.)
-
-** Why Another Version of Emacs?  (The Sun Microsystems, Inc. Point of View)
-============================================================
-
-Emacs 18 has been around for a long, long time.  Version 19 was supposed to
-be the successor to Emacs 18 with X support.  It was going to be available
-"real soon" for a long time (some people remember hearing about v19 as early
-as 1984!), but it never came out.  v19 development was going very, very
-slowly, and from the outside it seemed that it was not moving at all.  In
-the meantime other people gave up waiting for v19 and decided to build their
-own X-aware Emacsen.  The most important of these was probably Epoch, which
-came from the University of Illinois ("UofI") and was based on v18.
-
-Around 1990, the Developer Products group within Sun Microsystems
-Inc., decided that it wanted an integrated editor.  (This group is now
-known as DevPro.  It used to be known as SunPro - the name was changed
-in mid-1994.)  They contracted with the University of Illinois to
-provide a number of basic enhancements to the functionality in Epoch.
-UofI initially was planning to deliver this on top of Epoch code.
-
-In the meantime, (actually some time before they talked with UofI)
-Lucid had decided that it also wanted to provide an integrated
-environment with an integrated editor.  Lucid decided that the Version
-19 base was a better one than Version 18 and thus decided not to use
-Epoch but instead to work with Richard Stallman, the head of the Free
-Software Foundation and principal author of Emacs, on getting v19 out.
-At some point Stallman and Lucid parted ways.  Lucid kept working and
-got a v19 out that they called Lucid Emacs 19.
-
-After Lucid's v19 came out it became clear to us (the UofI and Sun)
-that the right thing to do was to push for an integration of both
-Lucid Emacs and Epoch, and to get the deliverables that Sun was asking
-from the University of Illinois on top of this integrated platform.
-Until 1994, Sun and Lucid both actively supported XEmacs as part of
-their product suite and invested a comparable amount of effort into
-it.  Substantial portions of the current code have originated under
-the support of Sun, either directly within Sun, or at UofI but paid
-for by Sun.  This code was kept away from Lucid for a while, but later
-was made available to them.  Initially Lucid didn't know that Sun was
-supporting UofI, but later Sun was open about it.
-
-Around 1992 DevPro-originated code started showing up in Lucid Emacs,
-starting with the infusion of the Epoch redisplay code.  The separate
-code bases at Lucid, Sun, and the University of Illinois were merged,
-allowing a single XEmacs to evolve from that point on.
-
-Sun originally called the integrated product "ERA", for "Emacs
-Rewritten Again".  Sun and Lucid eventually came to an agreement to
-find a name for the product that was not specific to either company.
-An additional constraint that Lucid placed on the name was that it
-must contain the word "Emacs" in it -- thus "ERA" was not
-acceptable.  The tentatively agreed-upon name was "XEmacs", and this
-has been the name of the program since version 19.11.)
-
-As of 1997, Sun is shipping XEmacs as part of its Developer Products
-integrated programming environment "Sun WorkShop".  Sun is
-continuing to support XEmacs development, with focus on
-internationalization and quality improvement.
-
-
 * What's Different?
 ===================
 
@@ -1462,10 +1220,11 @@ now compiles with nary a warning with some compilers.
 -- Although the Mule work is for all languages, particular effort has
    been invested in Japanese, with particular focus on Japanese users
    of Sun WorkShop.  Many menubar labels have been translated into
-   Japanese.  Martin usually runs XEmacs in a Japanese language
-   environment.  Some of the other contributors are Japanese, most
-   importantly Morioka Tomohiko, author of the TM package, providing
-   MIME support for Mail and News.
+   Japanese.  Martin Buchholz, the maintainer of MULE features within
+   XEmacs normaly runs XEmacs in a Japanese language environment.
+   Some of the other contributors are Japanese, most importantly
+   Morioka Tomohiko, author of the TM package, providing MIME support
+   for Mail and News.
 
 -- Input for complex Asian languages is supported via XIM, a mechanism
    introduced in X11R5 to allow applications to get localized input
@@ -1553,8 +1312,10 @@ now compiles with nary a warning with some compilers.
 -- Many many package upgraded (thanks go to countless maintainers):
 
   -- ediff 2.64 (Michael Kifer)
+  -- Gnus 5.2.40 (Lars Magne Ingebrigtsen)
   -- w3 3.0.51  (Bill Perry)
-  -- ilisp 5.8
+  -- ilisp 5.8 (Chris McConnell, Ivan Vasquez, Marco Antoniotti, Rick
+     Campbell)
   -- VM 5.97     (Kyle Jones)
   -- etags 11.78 (Francesco Potorti`)
   -- ksh-mode.el 2.9
@@ -1566,8 +1327,8 @@ now compiles with nary a warning with some compilers.
   -- mode-motion+.el 3.16
   -- backup-dir 2.0 (Greg Klanderman)
   -- ps-print.el-3.05 (Jacques Duthen Prestataire)
-  -- lazy-lock-1.15
-  -- reporter 3.3
+  -- lazy-lock-1.15 (Simon Marshall)
+  -- reporter 3.3 (Barry Warsaw)
   -- hm--html-menus 5.0 (Heiko Muenkel)
   -- cc-mode 4.322 (Barry Warsaw)
   -- elp 2.37 (Barry Warsaw)
@@ -1577,10 +1338,12 @@ now compiles with nary a warning with some compilers.
   -- m4-mode 1.8 (Andrew Csillag)
   -- crisp.el - crisp/brief emulation (Gary D. Foster)
   -- Johan Vroman's iso-acc.el has been ported to XEmacs by Alexandre Oliva
-  -- psgml-1.01
+  -- psgml-1.01 (Lennart Staflin, James Clark)
   -- python-mode.el 2.83 (Barry Warsaw)
   -- vrml-mode.el (Ben Wing)
-  -- enriched.el, face-menu.el (Michael Sperber)
+  -- enriched.el, face-menu.el (Boris Goldowsky, Michael Sperber)
+  -- sh-script.el (Daniel Pfeiffer)
+  -- decipher.el (Christopher J. Madsen)
 
 -- New function x-keysym-on-keyboard-p helps determine keyboard
    characteristics for key rebinding:

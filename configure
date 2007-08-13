@@ -1139,6 +1139,11 @@ case "${canonical}" in
       ;;
     esac
 
+    if [ $opsys = hpux10 ]; then
+      NON_GNU_CC="cc -Ae"
+      NON_GNU_CPP="cc -Ae -E"
+    fi
+
     case "${canonical}" in *-hp-hpux*shr* ) opsys="${opsys}-shr" ;; esac
   ;;
 
@@ -1596,7 +1601,7 @@ if test "${extra_verbose}" = "yes"  ; then
 fi
 
 #### Choose a compiler.
-if test "x$CC" = x  ; then
+if test "x$CC" != x  ; then
   cc_specified=1
 fi
 
@@ -3670,6 +3675,24 @@ fi
       if test ${machine} = sparc -a ${opsys} = linux; then
 	LIBS="${LIBS} -lICE -lSM"
       fi
+      ac_have_lib=""
+      cat > conftest.${ac_ext} <<EOF
+int main() { return 0; }
+EOF
+      if eval $ac_compile; then
+        rm -rf conftest*
+        ac_have_lib="1"
+      fi
+      rm -f conftest*
+      LIBS="${ac_save_LIBS}"
+      test -n "${ac_have_lib}" && with_xmu="yes"
+      # end expansion of ac_have_library
+    fi
+    # Sparc/Linux test - fp
+    if test "${with_xmu}" != "yes" -a  ${machine} = sparc -a ${opsys} = linux; then
+      # begin expansion of ac_have_library
+      ac_save_LIBS="${LIBS}"
+      LIBS="${LIBS} -lXmu -lXt -lXext -lX11 -lm -lICE -lSM"
       ac_have_lib=""
       cat > conftest.${ac_ext} <<EOF
 int main() { return 0; }
