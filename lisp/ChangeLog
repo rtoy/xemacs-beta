@@ -1,3 +1,27 @@
+1998-02-27  SL Baur  <steve@altair.xemacs.org>
+
+	* help.el (describe-installation): New function.
+
+	* x-menubar.el (default-menubar): Add describe-installation to
+	Help menu.
+
+	* packages.el (packages-unbytecompiled-lisp): Installation.el
+	should not be bytecompiled.
+
+	* dumped-lisp.el (preloaded-file-list): Dump Installation with
+	XEmacs.
+
+	* x-menubar.el (default-menubar): Use correct guard for VM menu
+	entry.
+
+	* coding.el: Add coding systems for iso-8859-[12] for No-Mule + file
+	coding.
+	From Andy Piper <andyp@parallax.co.uk>
+
+1998-02-26  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* ldap.el: Do not require ldap-internal at compile time.
+
 Tue Feb 17 12:50:37 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* code-files.el: new file. a virtual copy of mule-files.el

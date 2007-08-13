@@ -111,7 +111,8 @@
   '("paths.el"
     "dumped-lisp.el"
     "dumped-pkg-lisp.el"
-    "version.el")
+    "version.el"
+    "Installation.el")
   "Lisp packages that should not be byte compiled.")
 
 

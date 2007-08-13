@@ -695,6 +695,15 @@ of the key sequence that ran this command."
 ;; run describe-prefix-bindings.
 (setq prefix-help-command 'describe-prefix-bindings)
 
+(defun describe-installation ()
+  "Display a buffer showing information about this XEmacs was compiled."
+  (interactive)
+  (if (and (boundp 'Installation-string)
+	   (stringp Installation-string))
+      (with-displaying-help-buffer "Installation"
+	(princ Installation-string))
+    (error "No Installation information available.")))
+
 (defun view-emacs-news ()
   "Display info on recent changes to XEmacs."
   (interactive)

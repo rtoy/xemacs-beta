@@ -360,9 +360,8 @@ setup_eol_coding_systems (struct Lisp_Coding_System *codesys)
   Lisp_Object codesys_obj = Qnil;
   int len = string_length (XSYMBOL (CODING_SYSTEM_NAME (codesys))->name);
   char *codesys_name = (char *) alloca (len + 7);
-
-  int mlen = XSTRING_LENGTH(CODING_SYSTEM_MNEMONIC (codesys));
-  char *codesys_mnemonic = (char *) alloca (mlen + 7);
+  int mlen = -1;
+  char *codesys_mnemonic;
 
   Lisp_Object codesys_name_sym, sub_codesys_obj;
 
@@ -373,16 +372,24 @@ setup_eol_coding_systems (struct Lisp_Coding_System *codesys)
   memcpy (codesys_name,
 	  string_data (XSYMBOL (CODING_SYSTEM_NAME (codesys))->name), len);
 
-  memcpy (codesys_mnemonic,
-	  XSTRING_DATA (CODING_SYSTEM_MNEMONIC (codesys)), mlen);
+  if (STRINGP (CODING_SYSTEM_MNEMONIC (codesys)))
+    {
+      mlen = XSTRING_LENGTH(CODING_SYSTEM_MNEMONIC (codesys));
+      codesys_mnemonic = (char *) alloca (mlen + 7);
+      memcpy (codesys_mnemonic,
+	      XSTRING_DATA (CODING_SYSTEM_MNEMONIC (codesys)), mlen);
+    }
 
 #define DEFINE_SUB_CODESYS(op_sys, op_sys_abbr, Type) do {	\
     strcpy (codesys_name + len, "-" op_sys);	\
-    strcpy (codesys_mnemonic + mlen, op_sys_abbr);	\
+    if (mlen != -1) \
+      strcpy (codesys_mnemonic + mlen, op_sys_abbr);	\
     codesys_name_sym = intern (codesys_name);	\
     sub_codesys_obj = Fcopy_coding_system (codesys_obj, codesys_name_sym); \
     XCODING_SYSTEM_EOL_TYPE (sub_codesys_obj) = Type; \
-    XCODING_SYSTEM_MNEMONIC(sub_codesys_obj) = build_string(codesys_mnemonic); \
+    if (mlen != -1) \
+      XCODING_SYSTEM_MNEMONIC(sub_codesys_obj) = \
+	build_string(codesys_mnemonic); \
     CODING_SYSTEM_##Type (codesys) = sub_codesys_obj; \
 } while (0)
 
@@ -516,6 +523,7 @@ allocate_coding_system (enum coding_system_type type, Lisp_Object name)
   CODING_SYSTEM_EOL_CR   (codesys) = Qnil;
   CODING_SYSTEM_EOL_LF   (codesys) = Qnil;
   CODING_SYSTEM_TYPE     (codesys) = type;
+  CODING_SYSTEM_MNEMONIC (codesys) = Qnil;
 #ifdef MULE
   if (type == CODESYS_ISO2022)
     {
@@ -4718,7 +4726,6 @@ syms_of_mule_coding (void)
 	     "shift-jis");
   defsymbol (&coding_category_symbol[CODING_CATEGORY_BIG5],
 	     "big5");
-#endif /* MULE */  
   defsymbol (&coding_category_symbol[CODING_CATEGORY_ISO_7],
 	     "iso-7");
   defsymbol (&coding_category_symbol[CODING_CATEGORY_ISO_8_DESIGNATE],
@@ -4729,6 +4736,7 @@ syms_of_mule_coding (void)
 	     "iso-8-2");
   defsymbol (&coding_category_symbol[CODING_CATEGORY_ISO_LOCK_SHIFT],
 	     "iso-lock-shift");
+#endif /* MULE */  
   defsymbol (&coding_category_symbol[CODING_CATEGORY_NO_CONVERSION],
 	     "no-conversion");
 }

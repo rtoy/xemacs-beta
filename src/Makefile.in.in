@@ -756,6 +756,35 @@ unexsunos4.o: config.h
 ## This has been hand-maintained since (at least) some time in 1996
 ## Note:  We deliberately do not include a dependency on lisp.h
 
+#ifdef FILE_CODING
+callproc.o: file-coding.h
+console-tty.o: file-coding.h
+event-Xt.o: file-coding.h
+event-stream.o: file-coding.h
+file-coding.o: buffer.h
+file-coding.o: elhash.h
+file-coding.o: file-coding.h
+file-coding.o: insdel.h
+file-coding.o: lstream.h
+#ifdef MULE
+file-coding.o: mule-ccl.h
+#endif
+fileio.o: file-coding.h
+glyphs-x.o: file-coding.h
+inline.o: file-coding.h
+lread.o: file-coding.h
+md5.o: file-coding.h
+#ifdef HAVE_CANNA
+mule-canna.o: file-coding.h
+#endif
+#ifdef MULE
+mule-ccl.o: file-coding.h
+#endif
+process.o: file-coding.h
+redisplay-x.o: file-coding.h
+redisplay.o: file-coding.h
+#endif
+
 #ifdef MULE
 EmacsFrame.o: mule-charset.h
 abbrev.o: mule-charset.h
@@ -764,14 +793,12 @@ buffer.o: mule-charset.h
 bytecode.o: mule-charset.h
 callint.o: mule-charset.h
 callproc.o: mule-charset.h
-callproc.o: mule-coding.h
 casefiddle.o: mule-charset.h
 casetab.o: mule-charset.h
 chartab.o: mule-charset.h
 cmdloop.o: mule-charset.h
 cmds.o: mule-charset.h
 console-tty.o: mule-charset.h
-console-tty.o: mule-coding.h
 console.o: mule-charset.h
 data.o: mule-charset.h
 device-tty.o: mule-charset.h
@@ -786,12 +813,10 @@ emacs.o: mule-charset.h
 eval.o: mule-charset.h
 event-Xt.o: mule-charset.h
 event-stream.o: mule-charset.h
-event-stream.o: mule-coding.h
 events.o: mule-charset.h
 extents.o: mule-charset.h
 faces.o: mule-charset.h
 fileio.o: mule-charset.h
-fileio.o: mule-coding.h
 filelock.o: mule-charset.h
 fns.o: mule-charset.h
 font-lock.o: mule-charset.h
@@ -802,13 +827,9 @@ glyphs.o: mule-charset.h
 gui-x.o: mule-charset.h
 indent.o: mule-charset.h
 inline.o: mule-charset.h
-inline.o: mule-coding.h
-input-method-xlib.o: mule-charset.h
-input-method-xlib.o: mule-coding.h
 insdel.o: mule-charset.h
 keymap.o: mule-charset.h
 lread.o: mule-charset.h
-lread.o: mule-coding.h
 lstream.o: mule-charset.h
 macros.o: mule-charset.h
 marker.o: mule-charset.h
@@ -829,7 +850,6 @@ mule-ccl.o: bufslots.h
 mule-ccl.o: config.h
 mule-ccl.o: dynarr.h
 mule-ccl.o: mule-charset.h
-mule-ccl.o: mule-coding.h
 mule-charset.o: blocktype.h
 mule-charset.o: buffer.h
 mule-charset.o: bufslots.h
@@ -839,6 +859,7 @@ mule-charset.o: dynarr.h
 mule-charset.o: elhash.h
 mule-charset.o: lstream.h
 mule-charset.o: mule-charset.h
+#if 0
 mule-coding.o: blocktype.h
 mule-coding.o: buffer.h
 mule-coding.o: bufslots.h
@@ -849,6 +870,7 @@ mule-coding.o: insdel.h
 mule-coding.o: lstream.h
 mule-coding.o: mule-charset.h
 mule-coding.o: mule-coding.h
+#endif
 #if 0
 mule-mcpath.o: blocktype.h
 mule-mcpath.o: buffer.h
@@ -878,15 +900,12 @@ objects-x.o: mule-charset.h
 objects.o: mule-charset.h
 print.o: mule-charset.h
 process.o: mule-charset.h
-process.o: mule-coding.h
 redisplay-output.o: mule-charset.h
 redisplay-tty.o: mule-charset.h
 redisplay-x.o: mule-charset.h
-redisplay-x.o: mule-coding.h
 redisplay-msw.o: mule-charset.h
 redisplay-msw.o: mule-ccl.h
 redisplay.o: mule-charset.h
-redisplay.o: mule-coding.h
 regex.o: mule-charset.h
 scrollbar.o: mule-charset.h
 search.o: mule-charset.h

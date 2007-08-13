@@ -74,7 +74,7 @@ Lisp_Object Qread_number;
 Lisp_Object Qread_string;
 Lisp_Object Qevents_to_keys;
 
-#ifdef MULE
+#if defined(MULE) || defined(FILE_CODING)
 Lisp_Object Qread_coding_system;
 Lisp_Object Qread_non_nil_coding_system;
 #endif
@@ -854,7 +854,7 @@ when reading the arguments.
 	    }
 	  case 'Z':		/* Coding-system symbol or nil if no prefix */
 	    {
-#ifdef MULE
+#if defined(MULE) || defined(FILE_CODING)
 	      if (NILP (prefix))
 		{
 		  args[argnum] = Qnil;
@@ -872,7 +872,7 @@ when reading the arguments.
 	    }
 	  case 'z':		/* Coding-system symbol */
 	    {
-#ifdef MULE
+#if defined(MULE) || defined(FILE_CODING)
 	      args[argnum] = call1 (Qread_coding_system, PROMPT ());
 	      arg_from_tty = 1;
 #else
@@ -974,7 +974,7 @@ syms_of_callint (void)
   defsymbol (&Qread_command, "read-command");
   defsymbol (&Qread_number, "read-number");
   defsymbol (&Qread_expression, "read-expression");
-#ifdef MULE
+#if defined(MULE) || defined(FILE_CODING)
   defsymbol (&Qread_coding_system, "read-coding-system");
   defsymbol (&Qread_non_nil_coding_system, "read-non-nil-coding-system");
 #endif

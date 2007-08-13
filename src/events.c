@@ -1000,17 +1000,23 @@ character_to_event (Emchar c, struct Lisp_Event *event, struct console *con,
 	case 'J': k = QKlinefeed; m &= ~MOD_CONTROL; break;
 	case 'M': k = QKreturn;	  m &= ~MOD_CONTROL; break;
 	case '[': k = QKescape;	  m &= ~MOD_CONTROL; break;
+#ifdef HAVE_TTY
 	default:
-	  if (c - '@' == XCHAR(con->tty_erase_char)) {
+	  if (CHARP (con->tty_erase_char) &&
+	      c - '@' == XCHAR (con->tty_erase_char)) {
 	    k = QKbackspace;
 	    m &= ~MOD_CONTROL;
 	  }
 	  break;
+#endif
 	}
       if (c >= 'A' && c <= 'Z') c -= 'A'-'a';
     }
-  else if (c == XCHAR(con->tty_erase_char))
+#ifdef HAVE_TTY
+  else if (CHARP (con->tty_erase_char) &&
+	   c == XCHAR(con->tty_erase_char))
     k = QKbackspace;
+#endif
   else if (c == 127)
     k = QKdelete;
   else if (c == ' ')

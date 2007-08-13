@@ -2531,7 +2531,8 @@ you wish to unilaterally specify the coding system used for one
 particular operation, you should bind the variable
 `coding-system-for-read' rather than changing the other two
 variables just mentioned, which are intended to be used for
-global environment specification.  */ );
+global environment specification.
+*/ );
 #endif
 
   DEFVAR_BUFFER_LOCAL ("auto-fill-function", auto_fill_function /*

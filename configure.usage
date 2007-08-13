@@ -194,6 +194,9 @@ Other options:
 --puresize=VALUE	Override default amount of space for pure Lisp code.
 --rel-alloc		Use the relocating allocator (default for this option
   			is system-dependent).
+--with-dlmalloc		Control usage of Doug Lea malloc on systems that have
+			it in the standard C library (default is to use it if
+			it is available).
 --with-clash-detection	Use lock files to detect multiple edits of the same file.
 			The default is to not do clash detection.
 --lockdir=DIR		The directory to put clash detection files in, such as

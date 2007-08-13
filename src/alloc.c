@@ -3034,6 +3034,7 @@ report_pure_usage (int report_impurities,
 struct gcpro *gcprolist;
 
 /* 415 used Mly 29-Jun-93 */
+/* 1327 used slb 28-Feb-98 */
 #define NSTATICS 1500
 /* Not "static" because of linker lossage on some systems */
 Lisp_Object *staticvec[NSTATICS]
@@ -4317,7 +4318,7 @@ garbage_collect_1 (void)
   char stack_top_variable;
   extern char *stack_bottom;
   int i;
-  struct frame *f = selected_frame ();
+  struct frame *f;
   int speccount = specpdl_depth ();
   Lisp_Object pre_gc_cursor = Qnil;
   struct gcpro gcpro1;
@@ -4332,6 +4333,10 @@ garbage_collect_1 (void)
 
   if (preparing_for_armageddon)
     return;
+
+  /* This function cannot be called inside GC so we move to after the */
+  /* above tests */
+  f = selected_frame ();
 
   GCPRO1 (pre_gc_cursor);
 
@@ -4946,7 +4951,9 @@ init_alloc_once_early (void)
 #ifdef DOUG_LEA_MALLOC
   mallopt (M_TRIM_THRESHOLD, 128*1024); /* trim threshold */
   mallopt (M_MMAP_THRESHOLD, 64*1024); /* mmap threshold */
-  /*  mallopt (M_MMAP_MAX, 64); /* max. number of mmap'ed areas */
+#if 0 /* Moved to emacs.c */
+  mallopt (M_MMAP_MAX, 64); /* max. number of mmap'ed areas */
+#endif
 #endif
   init_string_alloc ();
   init_string_chars_alloc ();

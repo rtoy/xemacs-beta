@@ -372,6 +372,7 @@ do {						\
 /* For detecting the encoding of text */
 enum coding_category_type
 {
+#ifdef MULE
   CODING_CATEGORY_SHIFT_JIS,
   CODING_CATEGORY_ISO_7, /* ISO2022 system using only seven-bit bytes,
 			    no locking shift */
@@ -386,6 +387,7 @@ enum coding_category_type
 			      two-dimension characters in the upper half. */
   CODING_CATEGORY_ISO_LOCK_SHIFT, /* ISO2022 system using locking shift */
   CODING_CATEGORY_BIG5,
+#endif /* MULE */
   CODING_CATEGORY_NO_CONVERSION
 };
 

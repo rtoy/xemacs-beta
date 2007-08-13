@@ -171,7 +171,7 @@
      
      ("Apps"
       ["Read Mail (VM)..." vm
-       :active (fboundp 'vm-easy-menu-define)]
+       :active (fboundp 'vm)]
       ["Read Mail (MH)..." (mh-rmail t)
        :active (fboundp 'mh-rmail)]
       ["Send mail..." mail
@@ -788,6 +788,7 @@
      ("Help"
       ["About XEmacs..." about-xemacs]
       ("Basics"
+       #-infodock ["Installation" describe-installation]
        ;; Tutorials.
        ,(if (featurep 'mule)
 	    ;; Mule tutorials.

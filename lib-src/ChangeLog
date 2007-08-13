@@ -1,3 +1,8 @@
+1998-02-27  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (ignore_pattern): Add Installation.el, remove old
+	stuff from 20.4.
+
 Tue Feb 17 12:50:37 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* lib-src/Makefile.in.in: make sure clean removes msw executables

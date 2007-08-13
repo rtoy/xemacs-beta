@@ -1,4 +1,84 @@
+1998-03-01  SL Baur  <steve@altair.xemacs.org>
+
+	* config.h.in: Add HAVE_UNIX_PROCESSES for 20.6.
+
+	* alloc.c (init_alloc_once_early): Document movement of mmap
+	enabling code to emacs.c.
+
+	* Makefile.in.in: Update FILE_CODING dependencies.
+
+1998-03-01  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* file-coding.c (setup_eol_coding_systems): Don't try 
+	  to copy the mnemonic property of the coding system
+	  unless it is a string.
+
+	  (allocate_coding_system): Initialize coding system
+	  struct member 'mnemonic' to Qnil.  Leaving its value
+	  set to 0 causes a crash.
+
+1998-03-01  SL Baur  <steve@altair.xemacs.org>
+
+	* file-coding.c (DEFINE_SUB_CODESYS): Undo previous patch.
+
+1998-03-01  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* callint.c: Read coding system names for the 'z' and 
+	  'Z' interactive specs if FILE_CODING or MULE is defined.
+	  Previously, coding system names were read only if MULE was
+	  defined.
+
+	* file-coding.h: Removed charset-based category types
+	  from enumerated coding_category_type if not building
+	  with MULE.
+
+	* file-coding.c (syms_of_mule_coding): Don't define
+	  symbols for charset-based coding systems unless
+	  building with MULE.
+
+1998-02-28  SL Baur  <steve@altair.xemacs.org>
+
+	* alloc.c (garbage_collect_1): Guard call to selected_frame so it
+	cannot be called during GC.
+	- Update current count of staticpro'ed objects.
+
+1998-02-28  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* menubar.c (Fmenu_find_real_submenu): Document the
+	  "use struct as array" hack.  Convert struct pointer to
+	  array to avoid compiler warnings.
+
+1998-02-26  SL Baur  <steve@altair.xemacs.org>
+
+	* buffer.c (complex_vars_of_buffer): Fix DOC string for
+	buffer-file-coding-system.
+
+1998-02-26  Damon Lipparelli  <lipp@primus.com>
+
+	* symsinit.h: syms_of_ldap() is actually syms_of_eldap().
+
+	* eldap.c: removed duplicates.
+
+1998-02-26  SL Baur  <steve@altair.xemacs.org>
+
+	* file-coding.c (setup_eol_coding_systems): Disable SUB_CODESYS
+	feature -- it causes stack corruption in Mule.
+
+1998-02-27  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* events.c (character_to_event): The code which guesses TTY
+	backspace character is conditionalized on HAVE_TTY
+
+1998-02-26  SL Baur  <steve@altair.xemacs.org>
+
+	* console.c (complex_vars_of_console): Guard tty_erase_char with
+	HAVE_TTY.
+	* conslots.h: Ditto.
+
 1998-02-25  SL Baur  <steve@altair.xemacs.org>
+
+	* events.c (character_to_event): Correct operations on tty_erase_char.
+	From Martin Buchholz <martin@xemacs.org>
 
 	* file-coding.c (setup_eol_coding_systems): Unix/Binary sub
 	coding-system display should default to the empty string.

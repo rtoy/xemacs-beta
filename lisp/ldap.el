@@ -5,7 +5,7 @@
 ;; Author: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: Jan 1998
-;; Version: $Revision: 1.1 $
+;; Version: $Revision: 1.2 $
 ;; Keywords: help comm
 
 ;; This file is part of XEmacs
@@ -35,7 +35,8 @@
 
 ;;; Code:
 
-(require 'ldap-internal)
+(eval-when '(load eval)
+  (require 'ldap-internal))
 
 (defvar ldap-host-parameters-alist nil
   "An alist describing per host options to use for LDAP transactions

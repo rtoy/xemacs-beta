@@ -157,7 +157,6 @@ done
 # Other special-case filenames that don't get byte-compiled
 ignore_pattern="$ignore_pattern"'
 \!/,!d
-\!/edebug/edebug-test.el$!d
 \!/paths.el$!d
 \!/loadup.el$!d
 \!/loadup-el.el$!d
@@ -168,21 +167,7 @@ ignore_pattern="$ignore_pattern"'
 \!/site-load.el$!d
 \!/site-init.el$!d
 \!/version.el$!d
-\!/language/devanagari.el$!d
-\!/language/indian.el$!d
-\!/language/lao-util.el$!d
-\!/language/lao.el$!d
-\!/language/tibetan.el$!d
-\!/language/tibet-util.el$!d
-\!/language/vietnamese.el$!d
-\!/leim/quail/devanagari.el$!d
-\!/leim/quail/ethiopic.el$!d
-\!/leim/quail/japanese.el$!d
-\!/leim/quail/lao.el$!d
-\!/leim/quail/lrt.el$!d
-\!/leim/quail/thai.el$!d
-\!/leim/quail/tibetan.el$!d
-\!/leim/quail/viqr.el$!d
+\!/Installation.el$!d
 '
 
 echo "Compiling files without .elc..."

@@ -1291,7 +1291,9 @@ complex_vars_of_console (void)
     console_local_flags.default_minibuffer_frame = always_local_resettable;
     console_local_flags.overriding_terminal_local_map =
       always_local_resettable;
+#ifdef HAVE_TTY
     console_local_flags.tty_erase_char = always_local_resettable;
+#endif
 
     console_local_flags.function_key_map = make_int (1);
 
@@ -1328,6 +1330,7 @@ were a prefix key, typing `ESC O P x' would return
 \[#<keypress-event f1> #<keypress-event x>].
 */ );
 
+#ifdef HAVE_TTY
   /* ### Should this somehow go to TTY data?  How do we make it
      accessible from Lisp, then?  */
   DEFVAR_CONSOLE_LOCAL ("tty-erase-char", tty_erase_char /*
@@ -1335,9 +1338,10 @@ The ERASE character as set by the user with stty.
 When this value cannot be determined or would be meaningless (on non-TTY
 consoles, for example), it is set to nil.
 */ );
+#endif
 
   /* While this should be CONST it can't be because some things
-     (i.e. edebug) do maninpulate it. */
+     (i.e. edebug) do manipulate it. */
   DEFVAR_CONSOLE_LOCAL ("defining-kbd-macro", defining_kbd_macro /*
 Non-nil while a console macro is being defined.  Don't set this!
 */ );

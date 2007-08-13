@@ -1,4 +1,16 @@
 							-*- indented-text -*-
+to 20.5 beta29 "Loashan"
+-- Add autodetection of DLL support
+-- bug fixes from Kyle Jones
+-- miscellaneous bug fixes
+-- `make all' really remakes everything 
+-- Installation file changes format:
+   XEmacs version is printed
+   Previous versions are now deleted by default
+-- --with-dlmalloc configure option added
+-- fix multicast support courtesy of Didier Verna
+-- LDAP fixes courtesy of Oscar Figueiredo
+
 to 20.5 beta28 "LaMancha"
 -- eudc/LDAP stuffs courtesy of Oscar Figueiredo
 -- file-coding separation from Mule courtesy of Andy Piper

@@ -1,3 +1,21 @@
+1998-02-28  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (top_distclean): Remove Installation.el.
+	(xemacs): New target.  Formerly it was `all:'.
+	(all): New default, dist: is now superfluous.
+
+1998-02-27  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (GNU_MALLOC): add --with-dlmalloc to allow
+	selective use of Doug Lea malloc in Linux C Library and GNU C Library.
+	(Installation): Add XEmacs version and generate `Installation.el'.
+
+1998-02-26  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (with_ldap: Fix -lldap autodection.
+	Suggested by Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
+	(Installation): Only keep the last configuration.
+
 1998-02-25  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta28 is released.

@@ -195,6 +195,12 @@ Does not modify STR.  Returns the encoded string on successful conversion."
  "Automatic conversion."
  '(mnemonic "Auto"))
 
+;; these are so that gnus and friends work when not mule
+(or (featurep 'mule)
+    (progn
+      (copy-coding-system 'undecided 'iso-8859-1)
+      (copy-coding-system 'undecided 'iso-8859-2)))
+
 ;; compatibility for old XEmacsen (don't use it)
 (copy-coding-system 'undecided 'automatic-conversion)
 

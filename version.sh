@@ -1,5 +1,5 @@
 #!/bin/sh
 emacs_major_version=20
 emacs_minor_version=5
-emacs_beta_version=28
-xemacs_codename="LaMancha"
+emacs_beta_version=29
+xemacs_codename="Loashan"

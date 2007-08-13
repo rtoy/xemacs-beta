@@ -59,7 +59,6 @@ static Lisp_Object Qhost, Qfilter, Qattributes, Qattrsonly, Qbase, Qscope,
 /* Search scope limits */
 static Lisp_Object Qbase, Qonelevel, Qsubtree;
 /* Authentication methods */
-static Lisp_Object Qsimple;
 #ifdef LDAP_AUTH_KRBV41
 static Lisp_Object Qkrbv41;
 #endif
@@ -67,7 +66,7 @@ static Lisp_Object Qkrbv41;
 static Lisp_Object Qkrbv42;
 #endif
 /* Deref policy */
-static Lisp_Object Qnever, Qalways, Qsearch, Qfind;
+static Lisp_Object Qnever, Qalways, Qfind;
 
 DEFUN ("ldap-search-internal", Fldap_search_internal, 1, 1, 0, /*
 Perform a search on a LDAP server.
@@ -430,7 +429,6 @@ syms_of_eldap (void)
   defsymbol (&Qbase, "base");
   defsymbol (&Qonelevel, "onelevel");
   defsymbol (&Qsubtree, "subtree");
-  defsymbol (&Qsimple, "simple");
 #ifdef LDAP_AUTH_KRBV41
   defsymbol (&Qkrbv41, "krbv41");
 #endif
@@ -439,7 +437,6 @@ syms_of_eldap (void)
 #endif
   defsymbol (&Qnever, "never");
   defsymbol (&Qalways, "always");
-  defsymbol (&Qsearch, "search");
   defsymbol (&Qfind, "find");
 }
 

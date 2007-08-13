@@ -82,6 +82,9 @@ Boston, MA 02111-1307, USA.  */
 /* If at first you don't succeed, try, try again. */
 /* #define LOSING_BYTECODE */
 
+/* Undefine on systems which don't have processes */
+#undef HAVE_UNIX_PROCESSES
+
 /* Does XEmacs support floating-point numbers? */
 #undef LISP_FLOAT_TYPE
 

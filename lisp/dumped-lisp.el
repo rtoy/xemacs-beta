@@ -6,6 +6,7 @@
 	"replace" 		; match-string used in version.el.
 	; Ignore compiled-by-mistake version.elc
 	"version.el"
+	#-infodock "../Installation.el"
 	"cl"
 	"cl-extra"
 	"cl-seq"
@@ -28,7 +29,7 @@
 	"events"
 	"text-props"
 	"process" ;; This is bad. network-streams may not be defined.
-	;; #+multicast "multicast" ;; #+network-streams implicitely true
+	#+multicast "multicast" ;; #+network-streams implicitely true
 	"frame"			; move up here cause some stuff needs it here
 	"map-ynp"
 	"simple"

@@ -284,7 +284,7 @@ void vars_of_tooltalk (void);
 void vars_of_undo (void);
 void vars_of_window (void);
 void vars_of_xselect (void);
-void vars_of_ldap (void);
+void vars_of_eldap (void);
 
 /* Initialize specifier variables (dump-time only). */
 
