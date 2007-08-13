@@ -1,3 +1,206 @@
+1998-05-02  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (about-hackers): Update Bob Weiner bio.
+	(about-maintainer-info): Ditto.
+
+1998-05-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* simple.el (display-warning-minimum-level): Docfix.
+
+1998-04-04  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el (:default-get): New keyword.
+	* wid-edit.el (default, widget-default-default-get): Define it.
+	(group, widget-group-default-get): Define it.
+	(menu-choice, widget-choice-default-get): Define it.
+	(widget-default-get): New function.
+	(widget-choice-action): Call it.
+	(widget-editable-list-entry-create): Call it.
+
+1998-05-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* byte-optimize.el (byte-boolean-vars): Removed.
+	(byte-optimize-lapcode): Use `built-in-variable-type' instead of
+	lookup through `byte-boolean-vars'.
+
+1998-05-01  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* x-scrollbar.el (x-init-scrollbar-from-resources): Stuff
+	resource-provided values into ghost specs for scrollbar-height and
+	scrollbar-width.
+
+1998-05-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* byte-optimize.el: Don't attempt to optimize /=.
+
+	* bytecomp.el (byte-compile-one-ore-more-args): New function.
+	(byte-compile-/=): Ditto.
+
+1998-05-02  SL Baur  <steve@altair.xemacs.org>
+
+	* apropos.el: Use `with-displaying-help-buffer'.
+	(apropos-print): Remove explicit mentions of "*Apropos*" buffer.
+	Use `with-displaying-help-buffer'.
+	(apropos-follow): Do not give special treatment to buffer cursor
+	was in prior to a mouse click.
+	(apropos-describe-plist): Use `with-displaying-help-buffer'.
+	(apropos-print-doc): Set correct buffer for setting text
+	properties.
+
+1998-05-01  SL Baur  <steve@altair.xemacs.org>
+
+	* help.el (help-buffer-prefix-string): New variable.
+	(help-buffer-name): Use it.
+
+	* modeline.el (modeline-minor-mode-menu): Alphabetize the minor
+	mode menu.
+
+1998-04-30  Greg Klanderman  <greg@alphatech.com>
+
+	* frame.el (other-frame): Work even when focus-follows-mouse is true.
+
+1998-05-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* files.el (find-file-noselect): Update docstring.
+	(find-file-noselect): Signal an error if found an unreadable file.
+	(file-chase-links): Save the match data.
+	(normal-mode): Use `lwarn' and `error-message-string'.
+	(interpreter-mode-alist): Change defconst to defvar.
+	(inhibit-first-line-modes-regexps): Ditto.
+	(inhibit-first-line-modes-regexps): Added .tgz.
+	(inhibit-first-line-modes-suffixes): Change defconst to defvar.
+	(change-major-mode-with-file-name): New user-option.
+	(set-visited-file-name): Synched with FSF.
+	(file-name-extension): New function, from FSF 20.3.
+	(file-relative-name): Synched with FSF.
+	(save-some-buffers): Support the C-r feature.
+	(recover-session): Synched with FSF.
+	(kill-some-buffers): Ditto.
+	(set-auto-mode): New argument JUST-FROM-FILE-NAME.
+
+1998-04-30  SL Baur  <steve@altair.xemacs.org>
+
+	* files.el (insert-file): Undo previous change and reenable use of
+	format.el.
+
+1998-04-30  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* window-xemacs.el (recenter): Define.
+
+1998-04-29  Andy Piper  <andyp@parallax.co.uk>
+
+	* font.el (mswindows-font-create-name)
+	(mswindows-font-create-object): new functions for mswindows type
+	fonts.
+
+	* msw-faces.el (mswindows-font-canicolize-name): fix so that
+	strings are parsed as well as font objects.
+
+1998-04-30  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* modeline.el (defining-kbd-macro): Restore modeline indication of 
+	kbd-macro being recorded.
+	(add-minor-mode): Simplify docstring.
+	(modeline-minor-mode-menu): Remove stuff.
+
+1998-04-29  Andy Piper  <andyp@parallax.co.uk>
+
+	* code-process.el (call-process): dynamically decide process
+	coding type. 
+
+1998-04-29  Jim Radford  <radford@robby.caltech.edu>
+
+	* modeline.el: Add line-number-mode, column-number-mode to
+	the modeline minor-mode menu.  Button2 on the line number does
+	goto-line.
+
+1998-04-29  Andy Piper  <andyp@parallax.co.uk>
+
+	* mouse.el: move x-selection-owner-p type things to
+	selection-owner-p.
+
+	* msw-init.el: copy zmacs stuff from x-init.el
+
+	* msw-select.el (mswindows-own-selection)
+	(mswindows-disown-selection) (mswindows-selection-owner-p): new
+	functions. Very simple minded implementation of selectio
+	ownership.
+
+	* select.el (own-selection) (disown-selection)
+	(activate-region-as-selection) (select-make-extent-for-selection)
+	(valid-simple-selection-p): functions moved from x-select.el for
+	generalized selection.
+
+	* x-select.el: see select.el changes.
+
+	* x-toolbar.el: use new selection functions.
+
+1998-04-28  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* packages.el (packages-find-package-directories): Fixed bug that
+	would pick up multiple site-package directories.
+	(package-locations): Added "xemacs-packages" as a late package
+	location.
+
+	* find-paths.el: Now uses `emacs-program-name' and
+	`emacs-program-version'.
+	Additions to enforce version-specific directories in
+	`paths-find-version-directory'.
+
+1998-04-29  SL Baur  <steve@altair.xemacs.org>
+
+	* default.el: Removed.
+	* site-start.el: Removed.
+
+1998-04-29  Didier Verna  <verna@inf.enst.fr>
+
+	* minibuf.el (minibuffer-history-minimum-string-length): Default
+	to nil.
+
+1998-04-28  SL Baur  <steve@altair.xemacs.org>
+
+	* find-paths.el (paths-program-name): Rename.
+	(paths-emacs-root-p): Ditto.
+	(paths-find-site-directory): Ditto.
+
+1998-04-26  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* lisp-mode.el (emacs-lisp-mode-popup-menu-1): Add menu entry for
+	`emacs-lisp-byte-compile-and-load'.
+
+1998-04-26  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* ldap.el (ldap-search): Fixed additional parameter passing to
+	`ldap-open'
+
+1998-04-27  Andy Piper  <andyp@parallax.co.uk>
+
+	* select.el (kill-primary-selection) (selection-owner-p)
+	(copy-primary-selection) (yank-clipboard-selection)
+	(selection-exists-p) (delete-primary-selection): new file and
+	functions that do the right thing for the selected device.
+
+	* x-menubar.el: use generalised selection functions.
+
+	* dumped-lisp.el: dump select.el.
+
+1998-04-27  SL Baur  <steve@altair.xemacs.org>
+
+	* find-paths.el (paths-progname): New variable.
+	(paths-emacs-root-p): Use it.
+	(paths-find-site-directory): Ditto.
+
+1998-04-26  SL Baur  <steve@altair.xemacs.org>
+
+	* loadup.el ((member "dump" command-line-args)): Dump as
+	`infodock' if InfoDock.
+
+1998-04-25  SL Baur  <steve@altair.xemacs.org>
+
+	* find-paths.el (construct-emacs-version): Simplify, include
+	program	name in the return value.
+	* (paths-find-version-directory): Use it.
+
 1998-04-25  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
 
 	* info.el (Info-parse-dir-entries): Fixed regexp

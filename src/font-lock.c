@@ -661,8 +661,8 @@ WARNING: this may alter match-data.
   return context_to_symbol (context_cache.context);
 }
 
-DEFUN ("buffer-syntactic-context-depth",
-       Fbuffer_syntactic_context_depth, 0, 1, 0, /*
+DEFUN ("buffer-syntactic-context-depth", Fbuffer_syntactic_context_depth,
+       0, 1, 0, /*
 Return the depth within all parenthesis-syntax delimiters at point.
 If BUFFER is nil or omitted, the current buffer is assumed.
 WARNING: this may alter match-data.

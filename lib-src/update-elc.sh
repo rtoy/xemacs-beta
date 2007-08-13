@@ -42,7 +42,7 @@ if test ! -d lisp/. ; then
   exit 1
 fi
 
-EMACS="./src/xemacs"
+test -z "$EMACS" && EMACS="./src/xemacs"
 export EMACS
 
 echo " (using $EMACS)"

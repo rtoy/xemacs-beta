@@ -208,8 +208,6 @@ syms_of_debug (void)
 void
 vars_of_debug (void)
 {
-  Fprovide (intern ("debug"));
-
   /* If you need to have any classes active early on in startup, then
      the flags should be set here.
      All functions called by this function are "allowed" according

@@ -452,29 +452,34 @@ struct Lisp_Charset
 
   Lisp_Object ccl_program;
 
-  unsigned int leading_byte :8;
-
-  /* Number of bytes (1 - 4) required in the internal representation
-     for characters in this character set.  This is *not* the
-     same as the number of bytes used in the encoding (i.e.
-     the "dimension" of the character set).  That value can
-     be derived from the TYPE. */
-  unsigned int rep_bytes :3;
-
-  /* Number of columns a character in this charset takes up, on TTY
-     devices.  Not used for X devices. */
-  unsigned int columns :2;
-  /* Direction of this character set */
-  unsigned int direction :1;
-
-  /* Type of this character set (94, 96, 94x94, 96x96) */
-  unsigned int type :2;
-
-  /* Which half of font to be used to display this character set */
-  unsigned int graphic :2;
+  Bufbyte leading_byte;
 
   /* Final byte of this character set in ISO2022 designating escape sequence */
   Bufbyte final;
+
+  /* Number of bytes (1 - 4) required in the internal representation
+     for characters in this character set.  This is *not* the
+     same as the dimension of the character set). */
+  unsigned int rep_bytes;
+
+  /* Number of columns a character in this charset takes up, on TTY
+     devices.  Not used for X devices. */
+  unsigned int columns;
+
+  /* Direction of this character set */
+  unsigned int direction;
+
+  /* Type of this character set (94, 96, 94x94, 96x96) */
+  unsigned int type;
+
+  /* Number of bytes used in encoding of this character set (1 or 2) */
+  unsigned int dimension;
+
+  /* Number of chars in each dimension (usually 94 or 96) */
+  unsigned int chars;
+
+  /* Which half of font to be used to display this character set */
+  unsigned int graphic;
 };
 
 DECLARE_LRECORD (charset, struct Lisp_Charset);
@@ -505,11 +510,10 @@ DECLARE_LRECORD (charset, struct Lisp_Charset);
 #define CHARSET_DOC_STRING(cs)	 ((cs)->doc_string)
 #define CHARSET_REGISTRY(cs)	 ((cs)->registry)
 #define CHARSET_CCL_PROGRAM(cs)  ((cs)->ccl_program)
+#define CHARSET_DIMENSION(cs)	 ((cs)->dimension)
+#define CHARSET_CHARS(cs)	 ((cs)->chars)
 #define CHARSET_REVERSE_DIRECTION_CHARSET(cs) ((cs)->reverse_direction_charset)
 
-/* Optimized using inside knowledge of CHARSET_TYPE values */
-#define CHARSET_DIMENSION(cs) ((CHARSET_TYPE (cs) <= CHARSET_TYPE_96) ? 1 : 2)
-#define CHARSET_CHARS(cs)     ((CHARSET_TYPE (cs) & 0x1) ? 96 : 94)
 
 #define CHARSET_PRIVATE_P(cs) LEADING_BYTE_PRIVATE_P (CHARSET_LEADING_BYTE (cs))
 

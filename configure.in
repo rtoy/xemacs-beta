@@ -325,16 +325,16 @@ datadir='${prefix}/lib'
 statedir='${prefix}/lib'
 libdir='${exec_prefix}/lib'
 mandir='${prefix}/man/man1'
-infodir='${datadir}/xemacs-${version}/info'
+infodir='${datadir}/${PROGNAME}-${version}/info'
 infopath=''
 install_pp=''
-lispdir='${datadir}/xemacs-${version}/lisp'
+lispdir='${datadir}/${PROGNAME}-${version}/lisp'
 dnl sitelispdir='${datadir}/xemacs/site-lisp'
-pkgdir='${datadir}/xemacs-${version}/lisp'
+pkgdir='${datadir}/${PROGNAME}-${version}/lisp'
 package_path=''
-etcdir='${datadir}/xemacs-${version}/etc'
-lockdir='${statedir}/xemacs/lock'
-archlibdir='${libdir}/xemacs-${version}/${configuration}'
+etcdir='${datadir}/${PROGNAME}-${version}/etc'
+lockdir='${statedir}/${PROGNAME}/lock'
+archlibdir='${libdir}/${PROGNAME}-${version}/${configuration}'
 with_site_lisp='no'
 with_menubars=''
 with_scrollbars=''
@@ -480,6 +480,7 @@ while test $# != 0; do
 	with_kerberos	| \
 	with_hesiod	| \
 	with_dnet	| \
+	with_infodock	| \
 	external_widget | \
 	verbose		| \
 	extra_verbose	| \
@@ -909,11 +910,25 @@ fi
 AC_DEFINE_UNQUOTED(XEMACS_CODENAME, "$xemacs_codename")
 AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
 
-dnl InfoDock version numbers.  XEmacs will use the same numbering after
-dnl the release of 21.0.
-AC_DEFINE_UNQUOTED(INFODOCK_MAJOR_VERSION, $infodock_major_version)
-AC_DEFINE_UNQUOTED(INFODOCK_MINOR_VERSION, $infodock_minor_version)
-AC_DEFINE_UNQUOTED(INFODOCK_BUILD_VERSION, $infodock_build_version)
+if test "$with_infodock" = "yes"; then
+  if test ! -f ../InfoDock.rules; then
+    echo "Cannot build InfoDock without InfoDock sources"
+    with_infodock=no
+  fi
+fi
+
+if test "$with_infodock" = "yes"; then
+  dnl InfoDock version numbers.  XEmacs will use the same style of numbering
+  dnl after the release of XEmacs 21.0.
+  AC_DEFINE_UNQUOTED(INFODOCK_MAJOR_VERSION, $infodock_major_version)
+  AC_DEFINE_UNQUOTED(INFODOCK_MINOR_VERSION, $infodock_minor_version)
+  AC_DEFINE_UNQUOTED(INFODOCK_BUILD_VERSION, $infodock_build_version)
+  version=${infodock_major_version}.${infodock_minor_version}.${infodock_build_version}
+  PROGNAME=infodock
+  CPPFLAGS="$CPPFLAGS -DINFODOCK"
+else
+  PROGNAME=xemacs
+fi
 
 dnl ----------------------------------
 dnl Error checking and debugging flags
@@ -1461,7 +1476,7 @@ fi
 dnl Use xlc by default on AIX
 case "$opsys" in aix*) NON_GNU_CC=xlc ;; esac
 
-stack_trace_eye_catcher=`echo xemacs_${version}_${canonical} | sed 'y/.-/__/'`
+stack_trace_eye_catcher=`echo ${PROGNAME}_${version}_${canonical} | sed 'y/.-/__/'`
 AC_DEFINE_UNQUOTED(STACK_TRACE_EYE_CATCHER, $stack_trace_eye_catcher)
 
 machfile="m/${machine}.h"
@@ -3535,6 +3550,7 @@ dnl ----------------------------------------------
 dnl what sort of things to edit into Makefile, config.h and paths.h
 dnl configuration here uncanonicalized to avoid exceeding size limits.
 
+AC_SUBST(PROGNAME)
 AC_SUBST(version)
 AC_SUBST(configuration)
 AC_SUBST(canonical)

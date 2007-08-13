@@ -1072,7 +1072,7 @@ DECLARE_NONRECORD (symbol, Lisp_Type_Symbol, struct Lisp_Symbol);
 
 /*********** subr ***********/
 
-typedef Lisp_Object (*lisp_fn_t) ();
+typedef Lisp_Object (*lisp_fn_t) (void);
 
 struct Lisp_Subr
 {
@@ -1152,7 +1152,7 @@ XCHAR (Lisp_Object obj)
 struct Lisp_Float
 {
   struct lrecord_header lheader;
-  union { double d; struct Lisp_Float *next; } data;
+  double data;
 };
 
 DECLARE_LRECORD (float, struct Lisp_Float);
@@ -1163,8 +1163,7 @@ DECLARE_LRECORD (float, struct Lisp_Float);
 #define CHECK_FLOAT(x) CHECK_RECORD (x, float)
 #define CONCHECK_FLOAT(x) CONCHECK_RECORD (x, float)
 
-#define float_next(f) ((f)->data.next)
-#define float_data(f) ((f)->data.d)
+#define float_data(f) ((f)->data)
 
 #define XFLOATINT(n) extract_float (n)
 
@@ -2004,11 +2003,21 @@ DECLARE_DOESNT_RETURN (args_out_of_range_3 (Lisp_Object, Lisp_Object,
 Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
 DECLARE_DOESNT_RETURN (dead_wrong_type_argument (Lisp_Object, Lisp_Object));
 void check_int_range (int, int, int);
+
+enum arith_comparison {
+  arith_equal,
+  arith_notequal,
+  arith_less,
+  arith_grtr,
+  arith_less_or_equal,
+  arith_grtr_or_equal };
+Lisp_Object arithcompare (Lisp_Object, Lisp_Object, enum arith_comparison);
+
 Lisp_Object word_to_lisp (unsigned int);
 unsigned int lisp_to_word (Lisp_Object);
 
 /* Defined in dired.c */
-Lisp_Object make_directory_hash_table (char *);
+Lisp_Object make_directory_hash_table (CONST char *);
 Lisp_Object wasteful_word_to_lisp (unsigned int);
 
 /* Defined in doc.c */
@@ -2557,7 +2566,7 @@ EXFUN (Fforward_char, 2);
 EXFUN (Fforward_line, 2);
 EXFUN (Ffset, 2);
 EXFUN (Ffuncall, MANY);
-EXFUN (Fgeq, 2);
+EXFUN (Fgeq, MANY);
 EXFUN (Fget, 3);
 EXFUN (Fget_buffer_process, 1);
 EXFUN (Fget_coding_system, 1);
@@ -2566,7 +2575,7 @@ EXFUN (Fget_range_table, 3);
 EXFUN (Fgethash, 3);
 EXFUN (Fgettext, 1);
 EXFUN (Fgoto_char, 2);
-EXFUN (Fgtr, 2);
+EXFUN (Fgtr, MANY);
 EXFUN (Fhashtablep, 1);
 EXFUN (Findent_to, 3);
 EXFUN (Findirect_function, 1);
@@ -2583,10 +2592,10 @@ EXFUN (Fkill_local_variable, 1);
 EXFUN (Flax_plist_get, 3);
 EXFUN (Flax_plist_remprop, 2);
 EXFUN (Flength, 1);
-EXFUN (Fleq, 2);
+EXFUN (Fleq, MANY);
 EXFUN (Flist, MANY);
 EXFUN (Flistp, 1);
-EXFUN (Flss, 2);
+EXFUN (Flss, MANY);
 EXFUN (Fmake_byte_code, MANY);
 EXFUN (Fmake_coding_system, 4);
 EXFUN (Fmake_glyph_internal, 1);

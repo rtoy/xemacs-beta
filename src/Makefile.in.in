@@ -22,7 +22,9 @@
 
 ## Synched up with: Not synched with FSF.
 
-all: xemacs
+PROGNAME=@PROGNAME@
+
+all: ${PROGNAME}
 .PHONY : all release dump-elc dump-elcs all-elc all-elcs lint
 
 ## For performance and consistency, no built-in rules.
@@ -288,7 +290,7 @@ DUMPENV = $(LOADPATH)
 
 release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 #ifdef CANNOT_DUMP
-	ln temacs xemacs
+	ln temacs ${PROGNAME}
 #else
 #ifdef HAVE_SHM
 	-if [ -w ${srcdir}/../lisp ]; then \
@@ -310,21 +312,21 @@ release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 	touch release
 #endif /* ! defined (CANNOT_DUMP) */
 
-xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
+${PROGNAME}: temacs ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
 	@$(RM) $@ && touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l ${srcdir}/../lisp/loadup.el dump
 	@if test -f $@;        then if test -f SATISFIED; then \
 		echo "Testing for Lisp shadows ..."; \
-		./xemacs -batch -vanilla -f list-load-path-shadows; fi; \
+		./${PROGNAME} -batch -vanilla -f list-load-path-shadows; fi; \
 		$(RM) SATISFIED; exit 0; fi; \
 	if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi; \
 	$(RECURSIVE_MAKE) $@;
 
 fastdump: temacs 
-	@$(RM) xemacs && touch SATISFIED
+	@$(RM) ${PROGNAME} && touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l ${srcdir}/../lisp/loadup.el dump
-	@if test -f xemacs;        then if test -f SATISFIED; then \
-		./xemacs -batch -vanilla -f list-load-path-shadows; fi; \
+	@if test -f ${PROGNAME};        then if test -f SATISFIED; then \
+		./${PROGNAME} -batch -vanilla -f list-load-path-shadows; fi; \
 		$(RM) SATISFIED; exit 0; fi; \
 	if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi;
 
@@ -659,10 +661,10 @@ clean: mostlyclean versionclean
 ## Do not use it on development directories!
 distclean: clean
 	$(RM) config.h paths.h Emacs.ad.h \
-	  Makefile Makefile.in TAGS xemacs.*
+	  Makefile Makefile.in TAGS ${PROGNAME}.*
 realclean: distclean
 versionclean:
-	$(RM) xemacs xemacs.exe ${libsrc}DOC
+	$(RM) ${PROGNAME} ${PROGNAME}.exe ${libsrc}DOC
 extraclean: realclean
 	$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
 
@@ -676,8 +678,7 @@ relock:
 	chmod -w $(SOURCES)
 
 ## Dependency processing using home-grown script, not makedepend
-FRC.depend :
 depend: FRC.depend
-	$(RM) $@;
+	$(RM) ${srcdir}/depend; mv depend.tmp ${srcdir}/depend
 	perl ${srcdir}/make-src-depend > depend.tmp
 	mv depend.tmp ${srcdir}/depend

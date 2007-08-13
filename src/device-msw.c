@@ -39,22 +39,15 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "sysdep.h"
 
+#ifndef __CYGWIN32__
+#include <commctrl.h>
+#endif
+
 /* win32 DDE management library globals */
 DWORD mswindows_dde_mlid;
 HSZ mswindows_dde_service;
 HSZ mswindows_dde_topic_system;
 HSZ mswindows_dde_item_open;
-
-#ifdef __CYGWIN32__
-typedef struct tagINITCOMMONCONTROLSEX
-{
-  DWORD dwSize;
-  DWORD dwICC;
-} INITCOMMONCONTROLSEX;
-WINAPI BOOL InitCommonControlsEx (INITCOMMONCONTROLSEX*);
-#else
-#include <commctrl.h>
-#endif
 
 /* Control conversion of upper case file names to lower case.
    nil means no, t means yes. */
@@ -73,10 +66,6 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   WNDCLASSEX wc;
   HWND desktop;
   HDC hdc;
-#ifdef HAVE_TOOLBARS
-  INITCOMMONCONTROLSEX iccex;
-  xzero(iccex);
-#endif
 
   DEVICE_INFD (d) = DEVICE_OUTFD (d) = -1;
   init_baud_rate (d);
@@ -119,13 +108,7 @@ mswindows_init_device (struct device *d, Lisp_Object props)
 			  IMAGE_ICON, 16, 16, 0);
   RegisterClassEx (&wc);
 #ifdef HAVE_TOOLBARS
-  iccex.dwSize = sizeof (iccex);
-  iccex.dwICC = ICC_BAR_CLASSES;
-#ifdef __CYGWIN32__
   InitCommonControls ();
-#else
-  InitCommonControlsEx (&iccex);
-#endif
 #endif
 }
 

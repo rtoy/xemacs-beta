@@ -61,20 +61,23 @@
 (defun mswindows-font-canicolize-name (font)
   "Given a mswindows font specification, this returns its name in canonical
 form."
-  (if (font-instance-p font)
-      (let ((name (font-instance-name font)))
-	   (cond ((string-match
-		   "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*:[a-zA-Z 0-9]*$"
-		   name) name)
-		 ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*$"
-				name) (concat name ":ansi"))
-		 ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+$" name)
-		  (concat name "::ansi"))
-		 ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*$" name)
-		  (concat name ":10::ansi"))
-		 ((string-match "^[a-zA-Z ]+$" name)
-		  (concat name ":Normal:10::ansi"))
-		 (t "Courier New:Normal:10::ansi")))))
+  (if (or (font-instance-p font)
+	  (stringp font))
+      (let ((name (if (font-instance-p font) 
+		      (font-instance-name font)
+		    font)))
+	(cond ((string-match
+		"^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*:[a-zA-Z 0-9]*$"
+		name) name)
+	      ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*$"
+			     name) (concat name ":ansi"))
+	      ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+$" name)
+	       (concat name "::ansi"))
+	      ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*$" name)
+	       (concat name ":10::ansi"))
+	      ((string-match "^[a-zA-Z ]+$" name)
+	       (concat name ":Normal:10::ansi"))
+	      (t "Courier New:Normal:10::ansi")))))
 
 (defun mswindows-make-font-bold (font &optional device)
   "Given a mswindows font specification, this attempts to make a bold font.

@@ -1,3 +1,30 @@
+1998-05-02  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta38 is released.
+
+1998-04-29  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Use `PROGNAME' for all generated paths.
+
+	* Makefile.in: Change `progname' to `PROGNAME' for consistency.
+
+1998-04-27  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (progname): Parameterize program name on `progname' 
+	and add --with-infodock.
+
+1998-04-26  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in: Religiously use ${progname} instead of hardcoded
+	`xemacs'.
+	CPPFLAGS was being set correctly in ${subdir}/Makefiles and
+	overridden by the empty one set in the toplevel Makefile.
+
+1998-04-26  Jason R Mastaler  <jason@4b.org>
+
+	* etc/BETA: Replaced SmartList references in favor of
+	Majordomo.
+
 1998-04-25  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs-21.0-beta37 is released.

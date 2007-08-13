@@ -1499,8 +1499,8 @@ name keys on the keyboard.  See `x-keysym-on-keyboard-p'.
   return DEVICE_X_DATA (d)->x_keysym_map_hashtable;
 }
 
-DEFUN ("x-keysym-on-keyboard-sans-modifiers-p",
-       Fx_keysym_on_keyboard_sans_modifiers_p, 1, 2, 0, /*
+DEFUN ("x-keysym-on-keyboard-sans-modifiers-p", Fx_keysym_on_keyboard_sans_modifiers_p,
+       1, 2, 0, /*
 Return true if KEYSYM names a key on the keyboard of DEVICE.
 More precisely, return true if pressing a physical key
 on the keyboard of DEVICE without any modifier keys generates KEYSYM.

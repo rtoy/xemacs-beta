@@ -478,7 +478,10 @@ WARNING: the event object returned may be a reused one; see the function
       return event;
     }
   else if (EQ (type, Qkey_press))
-    e->event_type = key_press_event;
+    {
+      e->event_type = key_press_event;
+      e->event.key.keysym = Qunbound;
+    }
   else if (EQ (type, Qbutton_press))
     e->event_type = button_press_event;
   else if (EQ (type, Qbutton_release))
@@ -700,7 +703,8 @@ WARNING: the event object returned may be a reused one; see the function
   switch (e->event_type)
     {
     case key_press_event:
-      if (!(SYMBOLP (e->event.key.keysym) || CHARP (e->event.key.keysym)))
+      if (UNBOUNDP (e->event.key.keysym)
+	  || !(SYMBOLP (e->event.key.keysym) || CHARP (e->event.key.keysym)))
 	error ("Undefined key for keypress event");
       break;
     case button_press_event:

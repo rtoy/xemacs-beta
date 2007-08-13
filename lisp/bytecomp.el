@@ -2889,11 +2889,12 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler20 old-memq		2)
 (byte-defop-compiler cons		2)
 (byte-defop-compiler aref		2)
-(byte-defop-compiler (= byte-eqlsign)	2)
-(byte-defop-compiler (< byte-lss)	2)
-(byte-defop-compiler (> byte-gtr)	2)
-(byte-defop-compiler (<= byte-leq)	2)
-(byte-defop-compiler (>= byte-geq)	2)
+(byte-defop-compiler (= byte-eqlsign)	byte-compile-one-or-more-args)
+(byte-defop-compiler (< byte-lss)	byte-compile-one-or-more-args)
+(byte-defop-compiler (> byte-gtr)	byte-compile-one-or-more-args)
+(byte-defop-compiler (<= byte-leq)	byte-compile-one-or-more-args)
+(byte-defop-compiler (>= byte-geq)	byte-compile-one-or-more-args)
+(byte-defop-compiler /=			byte-compile-/=)
 (byte-defop-compiler get		2+1)
 (byte-defop-compiler nth		2)
 (byte-defop-compiler substring		2-3)
@@ -3102,6 +3103,21 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler (/ byte-quo) byte-compile-quo)
 (byte-defop-compiler nconc)
 (byte-defop-compiler-1 beginning-of-line)
+
+(defun byte-compile-one-or-more-args (form)
+  (let ((len (length form)))
+    (cond ((= len 1) (byte-compile-subr-wrong-args form "1 or more"))
+	  ((= len 2) (byte-compile-constant t))
+	  ((= len 3) (byte-compile-two-args form))
+	  (t (byte-compile-normal-call form)))))
+
+(defun byte-compile-/= (form)
+  (let ((len (length form)))
+    (cond ((= len 1) (byte-compile-subr-wrong-args form "1 or more"))
+	  ((= len 2) (byte-compile-constant t))
+	  ;; optimize (/= X Y) to (not (= X Y))
+	  ((= len 3) (byte-compile-form-do-effect `(not (= ,@(cdr form)))))
+	  (t (byte-compile-normal-call form)))))
 
 (defun byte-compile-buffer-substring (form)
   (let ((len (length form)))
@@ -3539,18 +3555,18 @@ If FORM is a lambda or a macro, byte-compile it as a function."
     (byte-compile-out 'byte-unbind (length (car (cdr form))))))
 
 
-(byte-defop-compiler-1 /= byte-compile-negated)
+;;(byte-defop-compiler-1 /= byte-compile-negated)
 (byte-defop-compiler-1 atom byte-compile-negated)
 (byte-defop-compiler-1 nlistp byte-compile-negated)
 
-(put '/= 'byte-compile-negated-op '=)
+;;(put '/= 'byte-compile-negated-op '=)
 (put 'atom 'byte-compile-negated-op 'consp)
 (put 'nlistp 'byte-compile-negated-op 'listp)
 
 (defun byte-compile-negated (form)
   (byte-compile-form-do-effect (byte-compile-negation-optimizer form)))
 
-;; Even when optimization is off, /= is optimized to (not (= ...)).
+;; Even when optimization is off, atom is optimized to (not (consp ...)).
 (defun byte-compile-negation-optimizer (form)
   ;; an optimizer for forms where <form1> is less efficient than (not <form2>)
   (list 'not

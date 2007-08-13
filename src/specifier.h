@@ -35,7 +35,13 @@ Boston, MA 02111-1307, USA.  */
 
   A magic specifier consists of two specifier objects. The first one
   behaves like a normal specifier in all sences. The second one, a
-  ghost specifier, is a fallback value for the first one.
+  ghost specifier, is a fallback value for the first one, and contains
+  values provided by window system, resources etc. which reflect
+  default settings for values being specified.
+
+  A magic specifier has an "ultimate" fallback value, as any usual
+  specifier does. This value, an inst-list, is stored in the fallback
+  slot of the ghost specifier object.
 
   Ghost specifiers have the following properties:
   - Have back pointers to their parent specifiers.
@@ -43,15 +49,16 @@ Boston, MA 02111-1307, USA.  */
     data.
   - Have the same methods structure pointer.
   - Share parent's caching scheme.
-  - Store fallback value instead of their parent.
+  - Store fallback value instead of their parents.
 
   Ghost specifiers normally are not modifiable at the lisp level, and
-  only used to supply fallback instance values. Although, under
-  certain rare conditions, all functions that modify specifiers
-  operate on ghost objects. This behavior is controlled by the global
-  variable Vreveal_ghoste_specifiers. It is not exposed to lisp, and
-  is set during calls to lisp functions which initialize global,
-  device and frame defaults, such as
+  only used to supply fallback instance values. They are accessible
+  via (specifier-fallback), but are read-only.  Although, under
+  certain rare conditions, modification of ghost objects is allowed.
+  This behavior is controlled by the global variable
+  Vunlock_ghost_specifiers. It is not exposed to lisp, and is set
+  during calls to lisp functions which initialize global, device and
+  frame defaults, such as
   init-{global,frame,device}-{faces,toolbars,etc}.
 
   Thus, values supplied by resources or other means of a window system 
@@ -63,23 +70,15 @@ Boston, MA 02111-1307, USA.  */
 
   Rules of conduct for magic specifiers
   -------------------------------------
-  1. All functions exposed to lisp operate on a ghost specifier when
-     Vreveal_ghoste_specifiers is non-nil. This includes both
-     modifying and non-modifying functions, such as
-     Fspecifier_instance, for symmetry and consistency.
-  2. These functions deal with the above condition internally, passing 
-     mangled specifier pointer to internal functions. The internal
-     functions always work on a specifier passed, and do not regard
-     the value of Vreveal_ghoste_specifiers.
-  3. recompute_*() functions always operate on the whole specifier
+  1. recompute_*() functions always operate on the whole specifier
      when passed only a ghost object, by substituting it with their
      parent bodily object.
-  4. All specifier methods, except for instantiate method, are passed
+  2. All specifier methods, except for instantiate method, are passed
      the bodily object of the magic specifier. Instantiate method is
      passed the specifier being instantiated.
-  5. Only bodily objects are passed to set_specifier_caching function, 
+  3. Only bodily objects are passed to set_specifier_caching function, 
      and only these may be cached.
-  6. All specifiers are added to Vall_specifiers list, both bodily and 
+  4. All specifiers are added to Vall_specifiers list, both bodily and 
      ghost. The pair of objects is always removed from the list at the 
      same time.
 */
@@ -139,7 +138,10 @@ struct specifier_methods
      safely.
 
      DEPTH is a lisp integer denoting current depth of instantiation
-     calls.  #### WTF a method can do with this?
+     calls. This parameter should be passed as the initial depth value
+     to functions which also instantiate specifiers (of which I can
+     name specifier_instance) to avoid creating "external"
+     specification loops.
 
      This method must presume that both INSTANTIATOR and MATCSPEC are
      already validated by the corresponding validate_* methods, and
@@ -412,15 +414,15 @@ void set_specifier_fallback (Lisp_Object specifier,
 void recompute_all_cached_specifiers_in_window (struct window *w);
 void recompute_all_cached_specifiers_in_frame (struct frame *f);
 
-/* Counterparts of Fadd_spec_to_specifier and Fremove_specifier,
-   which operate directly on ghost objects */
+/* Counterparts of Fadd_spec_to_specifier and Fremove_specifier, which
+   operate directly on ghost objects given a magic specifier. */
 void add_spec_to_ghost_specifier (Lisp_Object specifier, Lisp_Object instantiator,
 				  Lisp_Object locale, Lisp_Object tag_set,
 				  Lisp_Object how_to_add);
 void remove_ghost_specifier (Lisp_Object specifier, Lisp_Object locale,
 			     Lisp_Object tag_set, Lisp_Object exact_p);
 
-int reveal_ghost_specifiers_protected (void);
+int unlock_ghost_specifiers_protected (void);
 
 void cleanup_specifiers (void);
 void prune_specifiers (int (*obj_marked_p) (Lisp_Object));

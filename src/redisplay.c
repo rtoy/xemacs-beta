@@ -6319,18 +6319,11 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
       /* print the current column */
     case 'c':
       {
-	int col = current_column (b) + (column_number_start_at_one != 0);
+	int col = current_column (b) + !!column_number_start_at_one;
 	int temp = col;
 	int size = 2;
-	char *buf;
+	char buf[32];
 
-	while (temp >= 10)
-	  {
-	    temp /= 10;
-	    size++;
-	  }
-
-	buf = alloca_array (char, size);
 	long_to_string (buf, col);
 
 	Dynarr_add_many (mode_spec_bufbyte_string,

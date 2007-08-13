@@ -159,6 +159,7 @@
 	#+window-system "gui"
 	#+window-system "mode-motion"
 	#+window-system "mouse"
+	#+window-system "select"
 ;; preload the X code, for faster startup.
 	#+(and (not infodock) (or x mswindows) menubar) "x-menubar"
 	#+(and infodock (or x mswindows) menubar) "id-menus"

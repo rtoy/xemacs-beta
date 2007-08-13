@@ -50,6 +50,9 @@ can set it to intervals shorter than one second.
 
    (setq echo-keystrokes 0.1)
 
+** The new command `center-to-window-line' works like `recenter'
+(bound to `C-l'), only it does not redisplay the whole display area.
+
 ** The `M-.' command will now first search through exact tags matches,
 and then through inexact matches, as one would expect.
 
@@ -166,6 +169,13 @@ machines.)  Configure with --use-minimal-tagbits to test.  With this
 change, the maximum buffer size on 32-bit machines is bumped from 128M
 to 1G.  This setting will be the default in a future XEmacs version.
 
+** When the variable focus-follows-mouse is non-nil, `select-frame' no
+longer permanently selects a different frame.  The frame selection is
+temporary and is reverted when the current command terminates, much
+like the buffer selected by `set-buffer'.  The `other-frame' command
+(`C-x 5 o') is unaffected by `focus-follows-mouse', and its behaviour
+is unchanged.
+
 ** It is now possible to build XEmacs with LDAP support
 You need to install a LDAP library first.  The following have been
 tested: 
@@ -173,6 +183,14 @@ tested:
     (http://www.umich.edu/~dirsvcs/ldap/)
   - LDAP SDK 1.0 from Netscape Corp.
     (http://developer.netscape.com)
+
+** The arithmetic comparison functions <, >, =, /= now accept 1 or
+more arguments.
+
+This means that if you want to test whether A < B < C, you can write
+it as (< A B C) instead of (and (< A B) (< B C)).  Likewise,
+(apply #'> LIST) now tests if LIST is monotonously increasing -- and
+so on.
 
 ** The XEmacs hashtables now have a consistent read/print syntax.
 This means that a hashtable will be readably printed in a

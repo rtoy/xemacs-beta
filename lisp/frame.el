@@ -517,9 +517,15 @@ the user during startup."
   "Select the ARG'th different visible frame, and raise it.
 All frames are arranged in a cyclic order.
 This command selects the frame ARG steps away in that order.
-A negative ARG moves in the opposite order."
+A negative ARG moves in the opposite order.
+
+This command ignores the value of `focus-follows-mouse'."
   (interactive "p")
-  (let ((frame (selected-frame)))
+  (let ((frame (selected-frame))
+        (old-focus-follows-mouse focus-follows-mouse)
+        ;; Allow selecting another frame even when
+        ;; focus-follows-mouse is true.
+        (focus-follows-mouse nil))
     (while (> arg 0)
       (setq frame (next-frame frame 'visible-nomini))
       (setq arg (1- arg)))
@@ -528,6 +534,10 @@ A negative ARG moves in the opposite order."
       (setq arg (1+ arg)))
     (raise-frame frame)
     (select-frame frame)
+    ;; Allow the focus change to be processed while
+    ;; focus-follows-mouse is nil.
+    (and old-focus-follows-mouse
+	 (sit-for 0))
     ;this is a bad idea; you should in general never warp the
     ;pointer unless the user asks for this.  Furthermore,
     ;our version of `set-mouse-position' takes a window,

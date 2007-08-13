@@ -811,22 +811,22 @@ If the third argument is incorrect, Emacs may crash.
 
 	case Bgtr:
 	  v1 = POP;
-	  TOP = Fgtr (TOP, v1);
+	  TOP = arithcompare (TOP, v1, arith_grtr);
 	  break;
 
 	case Blss:
 	  v1 = POP;
-	  TOP = Flss (TOP, v1);
+	  TOP = arithcompare (TOP, v1, arith_less);
 	  break;
 
 	case Bleq:
 	  v1 = POP;
-	  TOP = Fleq (TOP, v1);
+	  TOP = arithcompare (TOP, v1, arith_less_or_equal);
 	  break;
 
 	case Bgeq:
 	  v1 = POP;
-	  TOP = Fgeq (TOP, v1);
+	  TOP = arithcompare (TOP, v1, arith_grtr_or_equal);
 	  break;
 
 	case Bdiff:

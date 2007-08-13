@@ -1,3 +1,372 @@
+1998-05-03  Olivier Galibert  <galibert@pobox.com>
+
+	* alloc.c  (make_pure_float): Remove reference  to obsolete 'next'
+	field.
+	(make_float): Ditto.
+
+	* lisp.h (struct Lisp_Float): Remove obsolete 'next' field.
+
+1998-05-02  SL Baur  <steve@altair.xemacs.org>
+
+	* lread.c (FSF_KEYS): Remove if built with Mule.
+
+1998-05-01  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* event-msw.c (ntpipe_shove_flusher): Removed.
+	(init_shove_stream): Flusher undeclared.
+
+1998-05-02  SL Baur  <steve@altair.xemacs.org>
+
+	* rangetab.c: `default_dumped' removed.
+
+1998-05-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* events.c (Fmake_event): Initialize key data for key-press
+	events.
+
+1998-05-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (close_stream_unwind): Renamed to delete_stream_unwind.
+ 	Delete the stream.
+	(Finsert_file_contents_internal): Delete STREAM after use.
+	(Fmake_temp_name): Improve randomness of generated file names.
+	(Fmake_temp_name): Don't initialize COUNT if in temacs.
+
+1998-05-02  Olivier Galibert  <galibert@pobox.com>
+
+	* buffer.h: Put  the  range_table  lrecrod  declaration  where  it
+	belongs...
+
+	* rangetab.h: New file - ...which is here.
+
+	* rangetab.c: Move declarations to rangetab.h
+
+1998-05-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* data.c (Fneq): Fix docstring.
+	(arithcompare_many): Slightly simplify.
+
+1998-04-29  Andy Piper  <andyp@parallax.co.uk>
+
+	* s/cygwin32.h: don't define BROKEN_CYGWIN anymore since we normally
+	link with unixoid event loop now.
+
+1998-05-01  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* event-stream.c (event_stream_next_event): Disable polling for
+	quit while XEmacs is blocked waiting for an event.
+
+1998-05-01  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* specifier.h: Corrected documentation on magic specifiers.
+	Documented DEPTH parameter to instantiate_method.
+	Renamed	reveal->unlock_ghost_specifiers_protected(). 
+
+	* specifier.c: Removed the reveal mechanism and made ghost
+	specifiers read-only, so they are accessible as fallbacks of magic
+	specifier, but aren't modifiable unless C code enables so.
+	 (specifier_equal): Compare specifier fallbacks as well.
+
+	* scrollbar.c (init_frame_scrollbars): 
+	(init_device_scrollbars): 
+	(init_global_scrollbars): Renamed
+	reveal->unlock_ghost_specifiers_protected(). 
+
+1998-05-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Fcar_less_than_car): Fix Flss caller.
+	(Fcdr_less_than_cdr): Ditto.
+
+	* lisp.h: Fix declarations.
+
+	* data.c: Enable many arguments versions of <, >, <=, >= and /=.
+
+	* bytecode.c (Fbyte_code): Use arithcompare.
+
+	* data.c (arithcompare): Make non-static.
+
+1998-04-30  Greg Klanderman  <greg@alphatech.com>
+
+	* frame.c (Fselect_frame): update docstring to describe
+	focus-follows-mouse behavior.
+
+1998-05-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* print.c (Fwrite_char): Don't touch Vprint_gensym.
+	(print_error_message): Don't gcpro TAIL.
+	(Fdisplay_error): Simplify.
+
+1998-04-30  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* print.c (print_internal): Use long_to_string().
+
+	* redisplay.c (decode_mode_spec): Remove bogus calculation of the
+	number of digits.
+
+	* print.c (Fprin1): Removed THE_STREAM.
+	(Fprinc): Ditto.
+	(Fprint): Ditto.
+	(Fdisplay_error): Canonicalize STREAM here.
+	(print_error_message): Don't canonicalize STREAM.
+	(print_error_message): Use print_internal() instead of Fprin1 and
+	Fprinc.
+
+	* print.c: (Fprin1_to_string): Delete internal stream explicitly.
+	(Ferror_message_string): Ditto.
+	(Fterpri): Use write_char_internal.
+
+1998-04-18  Martin Buchholz  <martin@xemacs.org>
+
+	* console-x.h: Initialize_Locale should not depend on HAVE_XIM,
+	esp. in the future.
+
+	* Makefile.in.in: be more careful generating depend.
+
+	* *.c (F*): Unfortunately, etags can only detect per-line
+	patterns, and so the DEFUN macro must have the lisp name and the C
+	name on the same line for a complete TAGS file.  Make it so.
+
+	* signal.c (init_signals_very_early):
+	* process.c (Fsignal_process): Order the signals in decreasing
+	order of standardization.  Provide helpful standardization
+	comments.  Add missing signal names.
+
+	* unexhp9k800.c: Remove undefined roundup.
+	* symsinit.h: Add prototype for init_hpplay().
+
+1998-04-30  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* window.c (Fcenter_to_window_line): New function.
+	(Frecenter): Use it.
+
+1998-04-30  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* dired.c (make_directory_hash_table): Constify.
+
+	* scrollbar.c (Fscrollbar_page_up): Use Fcenter_to_window_line
+	instead of Frecenter.
+	(Fscrollbar_page_down): Ditto.
+	(Fscrollbar_to_top): Ditto.
+	(Fscrollbar_to_bottom): Ditto.
+
+	* window.c (Frecenter): Removed.
+
+1998-04-29  Andy Piper  <andyp@parallax.co.uk>
+
+	* console.h: xpm_normalize is not a console method anymore.
+
+	* event-msw.c: honour toolbar help string length.
+
+	* glyphs-msw.c: make copyright more meaningful. implement color
+	symbol support for Xpm. (extract_xpm_color_symbols) new function.
+
+	* glyphs.c (pixmap_to_lisp_data) (xpm_normalize): fucntions moved
+	from glyphs-x.c
+
+	* glyphs.h: declare pixmap_to_lisp_data.
+
+	* toolbar-msw.c: more meaningful copyright.
+
+1998-04-30  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* macros.c (Fend_kbd_macro): New arg REMOVE-LAST.
+
+	* gui-x.c (popup_selection_callback): Treat anonymous interactive
+	and compiled-function interactive callbacks as commands.
+
+1998-04-28  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* abbrev.c (obarray_has_blank_p): Simplify.
+
+1998-04-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* getloadavg.c (getloadavg): Removed some code repetition.
+
+1998-05-01  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* process-nt.c: Document usage of #pragma warning.
+	(alloc_process_memory): Spell _ALPHA_ correctly.
+
+1998-04-29  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: Change `progname' to `PROGNAME' for
+	consistency.
+
+1998-04-29  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* frame.c (change_frame_size_1): Adjust frame row/columns taking
+	real toolbar size into account, not the theoretical one.
+
+	* toolbar.c (set_frame_toolbar): Removed unused parameter.
+	Return void, not unused int.
+	Logic which checks whether toolbar to be recomputed moved here
+	from macro COMPUTE_TOOLBAR_DATA (r.i.p)
+	(compute_frame_toolbars_data): Removed COMPUTE_TOOLBAR_DATA. It
+	did not work due to a bug, and also did not check whether toolbar
+	size has changed.
+	Compute new character sizes passed to change_frame_size, do not
+	use the old (pre-toolbar-change) ones.
+	(update_frame_toolbars): Honor frame_changed and clear frame bits.
+	(recompute_overlaying_specifier): New helper function, called from 
+	default toolbar specifier change handlers.
+	(default_toolbar_specs_changed): Use it.
+	(default_toolbar_size_changed_in_frame): Ditto.
+	(default_toolbar_border_width_changed_in_frame): Ditto.
+	(default_toolbar_visible_p_changed_in_frame): Ditto.
+	(toolbar_geometry_changed_in_window): New handler. The old one,
+	some_windows_value_changed, did not do the trick.
+	(default_toolbar_size_changed_in_window): New handler for default
+	toolbar. 
+	(default_toolbar_border_width_changed_in_window): Ditto.
+	(default_toolbar_visible_p_changed_in_window): Ditto.
+	(specifier_vars_of_toolbar): Use one of the above four handlers
+	instead of some_windows_value_changed in toolbar specifiers.
+
+1998-04-29  Andy Piper  <andyp@parallax.co.uk>
+
+	* redisplay-msw.c (mswindows_output_string)
+	(mswindows_output_string): output the background pixmap if we have
+	one.
+
+1998-04-28  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* paths.h.in: Added PATH_PROGNAME and PATH_VERSION.
+
+1998-04-28  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* emacs.c (complex_vars_of_emacs): Added `emacs-program-name' and
+	`emacs-program-version'.
+
+1998-04-29  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* process-nt.c: Signal support for Windows NT.
+	New code under subheadings "Running remote threads" and "Sending
+	signals".
+	(nt_create_process): Create new process suspended, then enable
+	signals in it, then resume it.
+	(nt_kill_child_process): Implemented
+	(nt_kill_process_by_pid): Ditto.
+	(process_type_create_nt): Registered the two above.
+
+1998-04-28  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-x.c : slight cleanup and bugfix related to memory
+	corruption and possible leaks. Also fix a visual problem
+	with XPM pointers
+
+1998-04-28  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-x.c (x_init_image_instance_from_eimage): Make sure
+	automatic pointers are null...
+
+1998-04-27  Greg Klanderman  <greg@alphatech.com>
+
+	* cmdloop.c (Fcommand_loop_1): Call investigate_frame_change if
+	focus_follows_mouse is true.
+
+	* event-stream.c (next_event_internal): Only call
+	investigate_frame_change if focus_follows_mouse is false.
+
+	* event-stream.c (investigate_frame_change): Fix
+	focus_follows_mouse handling.  It was the case that, with
+	focus_follows_mouse true, (select-frame (next-frame)) could leave
+	next-frame with input focus, but not window manager focus.  Now
+	needs to be called from 2 places, conditional on the value of
+	focus_follows_mouse.
+
+1998-04-24  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* frame.c (Fmake_frame): GC-protect new frame immediately upon
+	creation.
+
+1998-04-27  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* frame.c (delete_frame_internal): Fixed spurious minibuffer
+	frames when creating minibufferless frames (reverted to 20.3
+	source, change not in ChangeLog)
+
+1998-04-26  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* eldap.h: Added CONCHECK_LDAP macro
+
+	* eldap.c: Moved definition of most Lisp_object keywords to
+	general.c
+	(Fldap_close): Modified semantics to match those of
+	`Fclose_database'
+	(Fldap_search_internal): Do not consider a
+	`LDAP_SIZELIMIT_EXCEEDED' a fatal error
+
+	* general.c: Added several keywords needed by eldap.c.  Sorted
+	keywords alphabetically.
+
+1998-04-24  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* eldap.c (finalize_ldap): New function; use it when declaring
+	LDAP lrecord type.
+
+1998-04-27  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* fileio.c (Fwrite_file_contents_internal): Prefer stat() over
+	fstat() back for Windows, where closing a file changes its
+	modification time.
+
+1998-04-26  Amir J. Katz  <amir@ndsoft.com>
+
+	* sysdep.h: Simplified definition of strerror()
+
+Sun Apr 23 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* emacs.c:
+	* symsinit.h:
+	* glyphs-eimage.c: rename glyphs_read to glyphs_eimage.
+
+	* glyphs.c:
+	* console.h:
+	* glyphs-x.c:
+	* glyphx-msw.c: make xpm_normalize and xpm_instantiate device
+	methods and use them appropriately. Remove redundant pixmap file
+	handling functions.
+
+Sun Apr 23 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* glyphs-msw.c: use XINT for lisp ints.
+
+	* console-msw.c: remove redundant functions that break under union
+	type.
+
+	* frame-msw.c: build lisp ints for functions that expect them.
+
+	* objects-msw.c: don't LISP_HASH COLORREF's.
+
+	* sheap.c: remove dependency on VALMASK.
+
+1998-04-27  SL Baur  <steve@altair.xemacs.org>
+
+	* debug.c (vars_of_debug): Remove `Fprovide("internal-debug")'.
+
+1998-04-27  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* device-msw.c: Unconditionally use InitCommonControls() instead
+	of InitcommonControlsEx() - the latter is not defined in all
+	environments.
+
+1998-04-26  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: Religiously use ${progname}.
+
+	* paths.h.in: Remove reference to user-defined site-lisp location.
+	* debug.c (vars_of_debug): Rename feature to 'internal-debug.
+
+1998-04-24  Martin Buchholz  <martin@xemacs.org>
+
+	* mule-charset.h: 
+	* mule-charset.c: 
+	Use ints instead of bitfields for Lisp_Charset fields.  This
+	should work around bugs in the latest egcs snapshot, and make
+	XEmacs faster.  Introduce dimension and chars as fields in
+	Lisp_Charset instead of computing them every time.  The extra
+	space is about 1k, a reasonable price.
+
 1998-04-25  SL Baur  <steve@altair.xemacs.org>
 
 	* glyphs-x.c (xface_normalize): Add console_type parameters to

@@ -24,6 +24,10 @@
 
  If it defines anything, this file should define some subset of the following:
 
+   PATH_PROGNAME        The name of the Emacs variant that's running.
+
+   PATH_VERSION         The version id of the Emacs variant that's running.
+
    PATH_EXEC_PREFIX	The value of --exec-prefix.
 
    PATH_PREFIX		The value of --prefix.
@@ -53,6 +57,10 @@
 			These are additional places info files are searched
 			for. */
 
+#define PATH_PROGNAME "@PROGNAME@"
+
+#define PATH_VERSION "@version@"
+
 #define PATH_EXEC_PREFIX "@EXEC_PREFIX@"
 
 #define PATH_PREFIX "@PREFIX@"
@@ -63,10 +71,6 @@
 
 #ifdef PACKAGE_PATH_USER_DEFINED
 #define PATH_PACKAGEPATH "@PACKAGE_PATH@"
-#endif
-
-#ifdef SITELISPDIR_USER_DEFINED
-#define PATH_SITE "@SITELISPDIR@"
 #endif
 
 #ifdef ARCHLIBDIR_USER_DEFINED

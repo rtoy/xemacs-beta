@@ -14,21 +14,21 @@ xemacs-beta@xemacs.org.
 ---------------
 
 If you are not subscribed to the XEmacs beta list you should be.  Send
-an email message with a subject of `subscribe' (without the quotes) to
-xemacs-beta-request@xemacs.org and follow the directions.  You do not
-have to fill out the survey if you don't want to.
+an email message to xemacs-beta-request@xemacs.org with `subscribe'
+(without the quotes) as the BODY of the message.
 
 *** Unsubscribing
 -----------------
 
-To unsubscribe from the list send an email message with a subject of
-`unsubscribe' (without the quotes) to xemacs-beta-request@xemacs.org.
+To unsubscribe from the list send an email message to
+xemacs-beta-request@xemacs.org with `unsubscribe' (without the quotes)
+as the BODY of the message.
 
 *** Administrivia
 -----------------
 
-The XEmacs beta list is managed by the SmartList mailing list package,
-and the usual SmartList commands work.  Do not send mailing list
+The XEmacs beta list is managed by the Majordomo mailing list package,
+and the usual Majordomo commands work.  Do not send mailing list
 requests to the main address (xemacs-beta@xemacs.org), always send
 them to xemacs-beta-request@xemacs.org.  If you have problems with the
 list itself, they should be brought to the attention of the XEmacs

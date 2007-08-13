@@ -788,7 +788,19 @@ The value returned by @code{save-excursion} is the result of the last of
 
 @defspec save-current-buffer forms@dots{}
 This special form is similar to @code{save-excursion} but it only
-saves and restores the current buffer.
+saves and restores the current buffer.  Beginning with XEmacs 20.3,
+@code{save-current-buffer} is a primitive.
+@end defspec
+
+@defspec with-current-buffer buffer forms@dots{}
+This special form evaluates @var{forms} with @var{buffer} as the current
+buffer.  It returns the value of the last form.
+@end defspec
+
+@defspec with-temp-file file forms@dots{}
+This special form creates a new buffer, evaluates @var{forms} there, and
+writes the buffer to @var{file}.  It returns the value of the last form
+evaluated.
 @end defspec
 
 @defspec save-selected-window forms@dots{}

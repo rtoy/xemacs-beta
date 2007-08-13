@@ -87,7 +87,7 @@ Non-nil arg (prefix arg) means append to last macro defined;
   return Qnil;
 }
 
-DEFUN ("end-kbd-macro", Fend_kbd_macro, 0, 1, "P", /*
+DEFUN ("end-kbd-macro", Fend_kbd_macro, 0, 2, "P", /*
 Finish defining a keyboard macro.
 The definition was started by \\[start-kbd-macro].
 The macro is now available for use via \\[call-last-kbd-macro],
@@ -97,15 +97,28 @@ under that name.
 With numeric arg, repeat macro now that many times,
 counting the definition just completed as the first repetition.
 An argument of zero means repeat until error.
+
+If REMOVE-LAST is an integer, it means to not record the last number
+of events.  This is used internally and will likely be removed.
 */
-       (arg))
+       (arg, remove_last))
 {
   /* This function can GC */
   struct console *con = XCONSOLE (Vselected_console);
-  int repeat;
+  int repeat, kill;
 
   if (NILP (con->defining_kbd_macro))
     error ("Not defining kbd macro.");
+
+  /* #### Read the comment in modeline.el to see why this ugliness is
+     needed.  #### Try to avoid it, somehow!  */
+  if (!NILP (remove_last))
+    {
+      CHECK_NATNUM (remove_last);
+      kill = XINT (remove_last);
+    }
+  else
+    kill = 0;
 
   if (NILP (arg))
     repeat = -1;
@@ -115,9 +128,12 @@ An argument of zero means repeat until error.
   if (!NILP (con->defining_kbd_macro))
     {
       int i;
-      int size = con->kbd_macro_end;
+      int size = con->kbd_macro_end - kill;
+
+      if (size < 0)
+	size = 0;
       con->last_kbd_macro = make_vector (size, Qnil);
-      for (i = 0; i < con->kbd_macro_end; i++)
+      for (i = 0; i < size; i++)
 	XVECTOR_DATA (con->last_kbd_macro) [i] =
 	  XVECTOR_DATA (con->kbd_macro_builder) [i];
       con->defining_kbd_macro = Qnil;

@@ -203,6 +203,14 @@ struct console_methods
   Lisp_Object (*locate_pixmap_file_method) (Lisp_Object file_method);
   int (*colorize_image_instance_method) (Lisp_Object image_instance,
 					 Lisp_Object fg, Lisp_Object bg);
+#ifdef HAVE_XPM
+    /* which is more tacky - this or #defines in glyphs.c? */
+  void (*xpm_instantiate_method)(Lisp_Object image_instance, 
+				 Lisp_Object instantiator,
+				 Lisp_Object pointer_fg, 
+				 Lisp_Object pointer_bg,
+				 int dest_mask, Lisp_Object domain);
+#endif
   Lisp_Object image_conversion_list;
 
 #ifdef HAVE_TOOLBARS

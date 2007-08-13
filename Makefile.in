@@ -62,6 +62,7 @@ CC=@CC@
 CPP=@CPP@
 LN_S=@LN_S@
 CFLAGS=@CFLAGS@
+CPPFLAGS=@CPPFLAGS@
 
 ## These help us choose version- and architecture-specific directories
 ## to install files in.
@@ -73,6 +74,10 @@ version=@version@
 ## This should be the name of the configuration we're building XEmacs
 ## for, like `mips-dec-ultrix' or `sparc-sun-sunos'.
 configuration=@configuration@
+
+## This will be the name of the generated binary and is set automatically
+## by configure.
+PROGNAME=@PROGNAME@
 
 ## ==================== Where To Install Things ====================
 
@@ -134,8 +139,6 @@ blddir=@blddir@
 
 ## These variables hold the values XEmacs will actually use.  They are
 ## based on the values of the standard Make variables above.
-
-progname=xemacs
 
 ## Where to install the lisp files distributed with
 ## XEmacs.  This includes the XEmacs version, so that the
@@ -211,9 +214,9 @@ COPYDESTS = ${etcdir} ${lispdir}
 GENERATED_HEADERS = src/paths.h src/Emacs.ad.h src/puresize-adjust.h src/config.h lwlib/config.h src/sheap-adjust.h
 GENERATED_LISP = lisp/finder-inf.el
 
-all: xemacs all-elc info
+all: ${PROGNAME} all-elc info
 
-xemacs:	${GENERATED_HEADERS} ${MAKE_SUBDIR} ${GENERATED_LISP}
+${PROGNAME}:	${GENERATED_HEADERS} ${MAKE_SUBDIR} ${GENERATED_LISP}
 
 ## For performance and consistency, no built-in rules
 .SUFFIXES:
@@ -249,22 +252,22 @@ depend ${srcdir}/src/depend:
 ## Build XEmacs and recompile out-of-date and missing .elc files along
 ## the way.
 all-elc all-elcs: lib-src lwlib dump-elcs src
-	MAKE='$(MAKE)' sh ${srcdir}/lib-src/update-elc.sh
+	MAKE='$(MAKE)' EMACS='./src/$(PROGNAME)' sh ${srcdir}/lib-src/update-elc.sh
 
 ## Sub-target for all-elc.
 dump-elc dump-elcs: ${GENERATED_HEADERS} FRC.dump-elcs
 	cd src && $(RECURSIVE_MAKE) dump-elcs
 
 autoloads: src
-	MAKE='$(MAKE)' sh ${srcdir}/lib-src/update-autoloads.sh
+	MAKE='$(MAKE)' EMACS='./src/$(PROGNAME)' sh ${srcdir}/lib-src/update-autoloads.sh
 
 custom-loads:
-	MAKE='$(MAKE)' sh ${srcdir}/lib-src/update-custom.sh
+	MAKE='$(MAKE)' EMACS='./src/$(PROGNAME)' sh ${srcdir}/lib-src/update-custom.sh
 
 finder: src
 	@echo "Building finder database ..."
 	@(cd lisp; \
-		${blddir}/src/xemacs -batch -vanilla \
+		${blddir}/src/${PROGNAME} -batch -vanilla \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
 	@echo "Building finder database ...(done)"
@@ -272,7 +275,7 @@ finder: src
 lisp/finder-inf.el:
 	@echo "Building finder database ..."
 	@(cd lisp; \
-		${blddir}/src/xemacs -batch -vanilla \
+		${blddir}/src/${PROGNAME} -batch -vanilla \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
 	@echo "Building finder database ...(done)"
@@ -363,7 +366,7 @@ lwlib/config.h: ${srcdir}/lwlib/config.h.in
 ## all.  --cet
 
 check-features: all
-	${blddir}/src/xemacs -batch -l check-features.el
+	${blddir}/src/${PROGNAME} -batch -l check-features.el
 
 install-only: ${MAKE_SUBDIR} check-features install-arch-dep install-arch-indep
 
@@ -384,15 +387,15 @@ install-arch-dep: mkdir
 	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; \
 	     do (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; done ; \
 	else true; fi
-	${INSTALL_PROGRAM} src/xemacs ${bindir}/${progname}-${version}
-	-chmod 0755 ${bindir}/${progname}-${version}
-	cd ${bindir} && $(RM) ./xemacs && ${LN_S} ${progname}-${version} ./xemacs
+	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}-${version}
+	-chmod 0755 ${bindir}/${PROGNAME}-${version}
+	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${PROGNAME}
 	if test "${prefix}" != "${exec_prefix}"; then \
 	  for dir in \
-		lib/xemacs \
-	 	lib/${progname}-${version}/etc \
-		lib/${progname}-${version}/info \
-		lib/${progname}-${version}/lisp; do \
+		lib/${PROGNAME} \
+	 	lib/${PROGNAME}-${version}/etc \
+		lib/${PROGNAME}-${version}/info \
+		lib/${PROGNAME}-${version}/lisp; do \
 	    if test ! -d ${exec_prefix}/$${dir}; then \
 	      $(LN_S) ${prefix}/$${dir} ${exec_prefix}/$${dir}; fi; \
 	  done; \
@@ -431,6 +434,7 @@ install-arch-indep: mkdir info
 	    chmod 0644 ${infodir}/$${file}; \
 	  done ; \
 	fi
+	## Note it's `xemacs' not ${PROGNAME}
 	cd ${srcdir}/etc && \
 	  for page in xemacs etags ctags gnuserv gnuclient gnuattach gnudoit; do \
 	    ${INSTALL_DATA} ${srcdir}/etc/$${page}.1 ${mandir}/$${page}${manext} ; \
@@ -449,7 +453,7 @@ gzip-el:
 MAKEPATH=./lib-src/make-path
 ## Build all the directories to install XEmacs in.
 ## Since we may be creating several layers of directories,
-## (e.g. /usr/local/lib/${progname}-20.5/sparc-sun-solaris2.6), we use
+## (e.g. /usr/local/lib/${PROGNAME}-20.5/sparc-sun-solaris2.6), we use
 ## make-path instead of mkdir.  Not all mkdirs have the `-p' flag.
 mkdir: FRC.mkdir
 	${MAKEPATH} ${COPYDESTS} ${lockdir} ${infodir} ${archlibdir} \
@@ -474,14 +478,14 @@ mkdir: FRC.mkdir
 #	    * ) $(RM) $${dir} ;;			\
 #	  esac ;					\
 #	  case $${dir} in				\
-#	    ${datadir}/xemacs/${version}/* )		\
-#	      $(RM) -r ${datadir}/xemacs/${version}	\
+#	    ${datadir}/${PROGNAME}/${version}/* )		\
+#	      $(RM) -r ${datadir}/${PROGNAME}/${version}	\
 #	    ;;						\
 #	  esac ;					\
 #	done
-#	cd ${infodir} && $(RM) cl* xemacs* forms* info* vip*
+#	cd ${infodir} && $(RM) cl* ${PROGNAME}* forms* info* vip*
 #	cd ${mandir} && $(RM) xemacs.1 etags.1 ctags.1 gnuserv.1
-#	cd ${bindir} && $(RM) ${progname}-${version} xemacs
+#	cd ${bindir} && $(RM) ${PROGNAME}-${version} ${PROGNAME}
 
 
 ## Some makes seem to remember that they've built something called FRC,
@@ -604,7 +608,7 @@ testdir = ${srcdir}/tests
 tests   = ${testdir}/basic-lisp.el ${testdir}/database.el
 
 check:
-	src/xemacs -batch -l ${testdir}/test-emacs.el -f batch-test-emacs ${tests}
+	src/${PROGNAME} -batch -l ${testdir}/test-emacs.el -f batch-test-emacs ${tests}
 
 info: FRC.info
 	cd ${srcdir}/man && $(RECURSIVE_MAKE) $@
@@ -616,6 +620,6 @@ dvi:
 mcs:
 	date=`LANG=C LC_ALL=C date -u '+%e %b %Y'`; \
 	ident="@(#)RELEASE VERSION XEmacs ${version} $${date}"; \
-	for f in `file lib-src/* src/xemacs | grep ELF | sed -e 's/:.*//'`; do \
+	for f in `file lib-src/* src/${PROGNAME} | grep ELF | sed -e 's/:.*//'`; do \
 	  mcs -da "$${ident} `echo $${f} | sed 's/.*\///'`" $${f}; \
 	done

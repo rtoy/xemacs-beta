@@ -114,6 +114,10 @@ otherwise.
 @defun char-or-string-p object
   This function returns @code{t} if @var{object} is a string or a
 character, @code{nil} otherwise.
+
+In XEmacs addition, this function also returns @code{t} if @var{object}
+is an integer that can be represented as a character.  This is because
+of compatibility with previous XEmacs and should not be depended on.
 @end defun
 
 @node Creating Strings
@@ -121,6 +125,22 @@ character, @code{nil} otherwise.
 
   The following functions create strings, either from scratch, or by
 putting strings together, or by taking them apart.
+
+@defun string &rest characters
+  This function returns of string made up of @var{characters}.
+
+@example
+(string ?X ?E ?m ?a ?c ?s)
+     @result{} "XEmacs"
+(string)
+     @result{} ""
+@end example
+
+Analogous functions operating on other data types include @code{list},
+@code{cons} (@pxref{Building Lists}), @code{vector} (@pxref{Vectors})
+and @code{bit-vector} (@pxref{Bit Vectors}).  This function has not been 
+available in XEmacs prior to 21.0 and FSF Emacs prior to 20.3.
+@end defun
 
 @defun make-string count character
   This function returns a string made up of @var{count} repetitions of
@@ -538,15 +558,18 @@ negative.
 See also the function @code{format} in @ref{Formatting Strings}.
 @end defun
 
-@defun string-to-number string
+@defun string-to-number string &optional base
 @cindex string to number
 This function returns the numeric value of the characters in
-@var{string}, read in base ten.  It skips spaces and tabs at the
+@var{string}, read in @var{base}.  It skips spaces and tabs at the
 beginning of @var{string}, then reads as much of @var{string} as it can
 interpret as a number.  (On some systems it ignores other whitespace at
 the beginning, not just spaces and tabs.)  If the first character after
 the ignored whitespace is not a digit or a minus sign, this function
 returns 0.
+
+If @var{base} is not specified, it defaults to ten.  With @var{base}
+other than ten, only integers can be read.
 
 @example
 (string-to-number "256")
@@ -557,6 +580,8 @@ returns 0.
      @result{} 0
 (string-to-number "-4.5")
      @result{} -4.5
+(string-to-number "ffff" 16)
+     @result{} 65535
 @end example
 
 @findex string-to-int
@@ -738,6 +763,10 @@ integer followed by a @samp{$}.
 @item
 Zero or more of the optional flag characters @samp{-}, @samp{+},
 @samp{ }, @samp{0}, and @samp{#}.
+
+@item
+An asterisk (@samp{*}, meaning that the field width is now assumed to
+have been specified as an argument.
 
 @item
 An optional minimum field width.

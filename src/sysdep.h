@@ -158,15 +158,7 @@ int dup2 (int oldd, int newd);
 # ifdef strerror
 # undef strerror
 # endif
-#if defined (__GNUC__) && defined (__GNUC_MINOR__)
-#if ((__GNUC__ == 2) && (__GNUC_MINOR__ > 7)) || ((__GNUC__ > 2))
-char *strerror (int);
-#else
 CONST char *strerror (int);
-#endif
-#else
-CONST char *strerror (int);
-#endif
 #endif
 
 #ifdef WINDOWSNT

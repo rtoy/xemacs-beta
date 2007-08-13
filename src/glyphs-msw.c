@@ -1,5 +1,10 @@
 /* mswindows-specific Lisp objects.
-   Copyright (C) 1998 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 1995 Tinker Systems
+   Copyright (C) 1995, 1996 Ben Wing
+   Copyright (C) 1995 Sun Microsystems
+   Copyright (C) 1998 Andy Piper.
    
 This file is part of XEmacs.
 
@@ -187,7 +192,7 @@ static BITMAPINFO* convert_EImage_to_DIBitmap (Lisp_Object device,
    where the file might be located.  Return a full pathname if found;
    otherwise, return Qnil. */
 
-Lisp_Object
+static Lisp_Object
 mswindows_locate_pixmap_file (Lisp_Object name)
 {
   /* This function can GC if IN_REDISPLAY is false */
@@ -219,88 +224,6 @@ mswindows_locate_pixmap_file (Lisp_Object name)
     
   return found;
 }
-
-#if 0
-/* If INSTANTIATOR refers to inline data, return Qnil.
-   If INSTANTIATOR refers to data in a file, return the full filename
-   if it exists; otherwise, return a cons of (filename).
-
-   FILE_KEYWORD and DATA_KEYWORD are symbols specifying the
-   keywords used to look up the file and inline data,
-   respectively, in the instantiator.  Normally these would
-   be Q_file and Q_data, but might be different for mask data. */
-
-static Lisp_Object
-potential_pixmap_file_instantiator (Lisp_Object instantiator,
-				    Lisp_Object file_keyword,
-				    Lisp_Object data_keyword)
-{
-  Lisp_Object file;
-  Lisp_Object data;
-
-  assert (VECTORP (instantiator));
-
-  data = find_keyword_in_vector (instantiator, data_keyword);
-  file = find_keyword_in_vector (instantiator, file_keyword);
-
-  if (!NILP (file) && NILP (data))
-    {
-      Lisp_Object retval = locate_pixmap_file(file);
-      if (!NILP (retval))
-	return retval;
-      else
-	return Fcons (file, Qnil); /* should have been file */
-    }
-
-  return Qnil;
-}
-
-static Lisp_Object
-simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
-			     Lisp_Object image_type_tag)
-{
-  /* This function can call lisp */
-  Lisp_Object file = Qnil;
-  struct gcpro gcpro1, gcpro2;
-  Lisp_Object alist = Qnil;
-
-  GCPRO2 (file, alist);
-
-  /* Now, convert any file data into inline data.  At the end of this,
-     `data' will contain the inline data (if any) or Qnil, and `file'
-     will contain the name this data was derived from (if known) or
-     Qnil.
-
-     Note that if we cannot generate any regular inline data, we
-     skip out. */
-
-  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data);
-
-  if (CONSP (file)) /* failure locating filename */
-    signal_double_file_error ("Opening pixmap file",
-			      "no such file or directory",
-			      Fcar (file));
-
-  if (NILP (file)) /* no conversion necessary */
-    RETURN_UNGCPRO (inst);
-
-  alist = tagged_vector_to_alist (inst);
-
-  {
-    Lisp_Object data = make_string_from_file (file);
-    alist = remassq_no_quit (Q_file, alist);
-    /* there can't be a :data at this point. */
-    alist = Fcons (Fcons (Q_file, file),
-		   Fcons (Fcons (Q_data, data), alist));
-  }
-
-  {
-    Lisp_Object result = alist_to_tagged_vector (image_type_tag, alist);
-    free_alist (alist);
-    RETURN_UNGCPRO (result);
-  }
-}
-#endif
 
 
 /* Initialize an image instance from a bitmap
@@ -453,8 +376,8 @@ mswindows_create_icon_from_image(Lisp_Object image, struct frame* f, int size)
   /*   PatBlt(hdcDst, 0, 0, size, size, WHITENESS);*/
   
   x_icon.fIcon=TRUE;
-  x_icon.xHotspot=XIMAGE_INSTANCE_PIXMAP_HOTSPOT_X (image);
-  x_icon.yHotspot=XIMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (image);
+  x_icon.xHotspot=XINT (XIMAGE_INSTANCE_PIXMAP_HOTSPOT_X (image));
+  x_icon.yHotspot=XINT (XIMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (image));
   x_icon.hbmMask=mask;
   x_icon.hbmColor=bmp;
   
@@ -512,15 +435,85 @@ mswindows_resize_dibitmap_instance (struct Lisp_Image_Instance* ii,
  **********************************************************************/
 
 #ifdef HAVE_XPM
+
+struct color_symbol
+{
+  char*		name;
+  COLORREF	color;
+};
+
+static struct color_symbol*
+extract_xpm_color_names (Lisp_Object device,
+			 Lisp_Object domain,
+			 Lisp_Object color_symbol_alist,
+			 int* nsymbols)
+{
+  /* This function can GC */
+  Lisp_Object rest;
+  Lisp_Object results = Qnil;
+  int i, j;
+  struct color_symbol *colortbl;
+  struct gcpro gcpro1, gcpro2;
+
+  GCPRO2 (results, device);
+
+  /* We built up results to be (("name" . #<color>) ...) so that if an
+     error happens we don't lose any malloc()ed data, or more importantly,
+     leave any pixels allocated in the server. */
+  i = 0;
+  LIST_LOOP (rest, color_symbol_alist)
+    {
+      Lisp_Object cons = XCAR (rest);
+      Lisp_Object name = XCAR (cons);
+      Lisp_Object value = XCDR (cons);
+      if (NILP (value))
+	continue;
+      if (STRINGP (value))
+	value =
+	  Fmake_color_instance
+	  (value, device, encode_error_behavior_flag (ERROR_ME_NOT));
+      else
+        {
+          assert (COLOR_SPECIFIERP (value));
+          value = Fspecifier_instance (value, domain, Qnil, Qnil);
+        }
+      if (NILP (value))
+        continue;
+      results = noseeum_cons (noseeum_cons (name, value), results);
+      i++;
+    }
+  UNGCPRO;			/* no more evaluation */
+
+  *nsymbols=i;
+  if (i == 0) return 0;
+
+  colortbl = xnew_array_and_zero (struct color_symbol, i);
+
+  for (j=0; j<i; j++)
+    {
+      Lisp_Object cons = XCAR (results);
+      colortbl[j].color = 
+	COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (XCDR (cons)));
+
+      colortbl[j].name = (char *) XSTRING_DATA (XCAR (cons));
+      free_cons (XCONS (cons));
+      cons = results;
+      results = XCDR (results);
+      free_cons (XCONS (cons));
+    }
+  return colortbl;
+}
+
 static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
 			  unsigned char** data,
 			  int* width, int* height,
 			  int* x_hot, int* y_hot,
-			  COLORREF bg)
+			  COLORREF bg, struct color_symbol* color_symbols,
+			  int nsymbols)
 {
   XpmImage xpmimage;
   XpmInfo xpminfo;
-  int result, i, transp_idx, maskbpline;
+  int result, i, j, transp_idx, maskbpline;
   unsigned char* dptr;
   unsigned int* sptr;
   COLORREF color; /* the american spelling virus hits again .. */
@@ -580,8 +573,30 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
 
   for (i=0; i<xpmimage.ncolors; i++)
     {
+				/* pick up symbolic colors */
+      if (xpmimage.colorTable[i].c_color == 0 
+	  &&
+	  xpmimage.colorTable[i].symbolic != 0)
+	{
+	  if (!color_symbols)
+	    {
+	      xfree (*data);
+	      xfree (colortbl);
+	      XpmFreeXpmImage (&xpmimage);
+	      XpmFreeXpmInfo (&xpminfo);
+	      return 0;
+	    }
+	  for (j = 0; j<nsymbols; j++)
+	    {
+	      if (!strcmp (xpmimage.colorTable[i].symbolic,
+			   color_symbols[j].name ))
+		{
+		  colortbl[i]=color_symbols[j].color;		  
+		}
+	    }
+	}
 				/* pick up transparencies */
-      if (!strcmp (xpmimage.colorTable[i].c_color,"None"))
+      else if (!strcmp (xpmimage.colorTable[i].c_color,"None"))
 	{
 	  colortbl[i]=bg; /* PALETTERGB(0,0,0); */
 	  transp_idx=i;
@@ -615,13 +630,7 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
   return TRUE;
 }
 
-Lisp_Object
-mswindows_xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
-{
-  return simple_image_type_normalize (inst, console_type, Qxpm);
-}
-
-void
+static void
 mswindows_xpm_instantiate (Lisp_Object image_instance,
 			   Lisp_Object instantiator,
 			   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
@@ -637,8 +646,12 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
   unsigned char*	bmp_data;
   int			bmp_bits;
   COLORREF		bkcolor;
+  int 			nsymbols=0;
+  struct color_symbol*	color_symbols=NULL;
   
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
+  Lisp_Object color_symbol_alist = find_keyword_in_vector (instantiator,
+							   Q_color_symbols);
 
   if (!DEVICE_MSWINDOWS_P (XDEVICE (device)))
     signal_simple_error ("Not an mswindows device", device);
@@ -652,13 +665,20 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
   bkcolor = COLOR_INSTANCE_MSWINDOWS_COLOR 
     (XCOLOR_INSTANCE (FACE_BACKGROUND (Vdefault_face, domain)));
 
+  /* in case we have color symbols */
+  color_symbols = extract_xpm_color_names (device, domain,
+					   color_symbol_alist, &nsymbols);
+
   /* convert to an eimage to make processing easier */
   if (!xpm_to_eimage (image_instance, bytes, &eimage, &width, &height,
-		      &x_hot, &y_hot, bkcolor))
+		      &x_hot, &y_hot, bkcolor, color_symbols, nsymbols))
     {
       signal_simple_error ("XPM to EImage conversion failed", 
 			   image_instance);
     }
+  
+  if (color_symbols)
+    xfree(color_symbols);
   
   /* build a bitmap from the eimage */
   if (!(bmp_info=convert_EImage_to_DIBitmap (device, width, height, eimage,
@@ -870,6 +890,9 @@ console_type_create_glyphs_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, image_instance_hash);
   CONSOLE_HAS_METHOD (mswindows, init_image_instance_from_eimage);
   CONSOLE_HAS_METHOD (mswindows, locate_pixmap_file);
+#ifdef HAVE_XPM
+  CONSOLE_HAS_METHOD (mswindows, xpm_instantiate);
+#endif
 }
 
 void

@@ -1148,20 +1148,21 @@ Return a pair of coding-system for decoding and encoding of PROCESS.
 		(XLSTREAM (XPROCESS (process)->coding_outstream)));
 }
 
-DEFUN ("set-process-input-coding-system",
-       Fset_process_input_coding_system, 2, 2, 0, /*
+DEFUN ("set-process-input-coding-system", Fset_process_input_coding_system,
+       2, 2, 0, /*
 Set PROCESS's input coding system to CODESYS.
 */
        (process, codesys))
 {
   codesys = Fget_coding_system (codesys);
   process = get_process (process);
-  set_decoding_stream_coding_system ( XLSTREAM ( XPROCESS (process)->coding_instream ), codesys);
+  set_decoding_stream_coding_system
+    (XLSTREAM (XPROCESS (process)->coding_instream), codesys);
   return Qnil;
 }
 
-DEFUN ("set-process-output-coding-system",
-       Fset_process_output_coding_system, 2, 2, 0, /*
+DEFUN ("set-process-output-coding-system", Fset_process_output_coding_system,
+       2, 2, 0, /*
 Set PROCESS's output coding system to CODESYS.
 */
        (process, codesys))
@@ -1169,22 +1170,22 @@ Set PROCESS's output coding system to CODESYS.
   codesys = Fget_coding_system (codesys);
   process = get_process (process);
   set_encoding_stream_coding_system
-    ( XLSTREAM ( XPROCESS (process)->coding_outstream), codesys);
+    (XLSTREAM (XPROCESS (process)->coding_outstream), codesys);
   return Qnil;
 }
 
-DEFUN ("set-process-coding-system",
-       Fset_process_coding_system, 1, 3, 0, /*
+DEFUN ("set-process-coding-system", Fset_process_coding_system,
+       1, 3, 0, /*
 Set coding-systems of PROCESS to DECODING and ENCODING.
 */
        (process, decoding, encoding))
 {
-  if(!NILP(decoding)){
-    Fset_process_input_coding_system(process, decoding);
-  }
-  if(!NILP(encoding)){
-    Fset_process_output_coding_system(process, encoding);
-  }
+  if (!NILP (decoding))
+    Fset_process_input_coding_system (process, decoding);
+
+  if (!NILP (encoding))
+    Fset_process_output_coding_system (process, encoding);
+
   return Qnil;
 }
 
@@ -1559,7 +1560,11 @@ See function `interrupt-process' for more details on usage.
        (process, current_group))
 {
   /* This function can GC */
+#ifdef SIGKILL
   process_send_signal (process, SIGKILL, !NILP (current_group), 0);
+#else
+  error ("kill-process: Not supported on this system");
+#endif
   return process;
 }
 
@@ -1570,7 +1575,11 @@ See function `interrupt-process' for more details on usage.
        (process, current_group))
 {
   /* This function can GC */
+#ifdef SIGQUIT
   process_send_signal (process, SIGQUIT, !NILP (current_group), 0);
+#else
+  error ("quit-process: Not supported on this system");
+#endif
   return process;
 }
 
@@ -1614,10 +1623,6 @@ SIGCODE may be an integer, or a symbol whose name is a signal name.
 {
   CHECK_INT (pid);
 
-#define handle_signal(NAME, VALUE)			\
-  else if (!strcmp ((CONST char *) name, NAME))		\
-    XSETINT (sigcode, VALUE)
-
   if (INTP (sigcode))
     ;
   else
@@ -1627,97 +1632,144 @@ SIGCODE may be an integer, or a symbol whose name is a signal name.
       CHECK_SYMBOL (sigcode);
       name = string_data (XSYMBOL (sigcode)->name);
 
+#define handle_signal(signal)				\
+  else if (!strcmp ((CONST char *) name, #signal))	\
+    XSETINT (sigcode, signal)
+
       if (0)
 	;
+      handle_signal (SIGINT);  /* ANSI */
+      handle_signal (SIGILL);  /* ANSI */
+      handle_signal (SIGABRT); /* ANSI */
+      handle_signal (SIGFPE);  /* ANSI */
+      handle_signal (SIGSEGV); /* ANSI */
+      handle_signal (SIGTERM); /* ANSI */
+
 #ifdef SIGHUP
-      handle_signal ("SIGHUP", SIGHUP);
-#endif
-#ifdef SIGINT
-      handle_signal ("SIGINT", SIGINT);
+      handle_signal (SIGHUP);  /* POSIX */
 #endif
 #ifdef SIGQUIT
-      handle_signal ("SIGQUIT", SIGQUIT);
+      handle_signal (SIGQUIT); /* POSIX */
 #endif
-#ifdef SIGILL
-      handle_signal ("SIGILL", SIGILL);
-#endif
-#ifdef SIGABRT
-      handle_signal ("SIGABRT", SIGABRT);
-#endif
-#ifdef SIGEMT
-      handle_signal ("SIGEMT", SIGEMT);
+#ifdef SIGTRAP
+      handle_signal (SIGTRAP); /* POSIX */
 #endif
 #ifdef SIGKILL
-      handle_signal ("SIGKILL", SIGKILL);
-#endif
-#ifdef SIGFPE
-      handle_signal ("SIGFPE", SIGFPE);
-#endif
-#ifdef SIGBUS
-      handle_signal ("SIGBUS", SIGBUS);
-#endif
-#ifdef SIGSEGV
-      handle_signal ("SIGSEGV", SIGSEGV);
-#endif
-#ifdef SIGSYS
-      handle_signal ("SIGSYS", SIGSYS);
-#endif
-#ifdef SIGPIPE
-      handle_signal ("SIGPIPE", SIGPIPE);
-#endif
-#ifdef SIGALRM
-      handle_signal ("SIGALRM", SIGALRM);
-#endif
-#ifdef SIGTERM
-      handle_signal ("SIGTERM", SIGTERM);
-#endif
-#ifdef SIGURG
-      handle_signal ("SIGURG", SIGURG);
-#endif
-#ifdef SIGSTOP
-      handle_signal ("SIGSTOP", SIGSTOP);
-#endif
-#ifdef SIGTSTP
-      handle_signal ("SIGTSTP", SIGTSTP);
-#endif
-#ifdef SIGCONT
-      handle_signal ("SIGCONT", SIGCONT);
-#endif
-#ifdef SIGCHLD
-      handle_signal ("SIGCHLD", SIGCHLD);
-#endif
-#ifdef SIGTTIN
-      handle_signal ("SIGTTIN", SIGTTIN);
-#endif
-#ifdef SIGTTOU
-      handle_signal ("SIGTTOU", SIGTTOU);
-#endif
-#ifdef SIGIO
-      handle_signal ("SIGIO", SIGIO);
-#endif
-#ifdef SIGXCPU
-      handle_signal ("SIGXCPU", SIGXCPU);
-#endif
-#ifdef SIGXFSZ
-      handle_signal ("SIGXFSZ", SIGXFSZ);
-#endif
-#ifdef SIGVTALRM
-      handle_signal ("SIGVTALRM", SIGVTALRM);
-#endif
-#ifdef SIGPROF
-      handle_signal ("SIGPROF", SIGPROF);
-#endif
-#ifdef SIGWINCH
-      handle_signal ("SIGWINCH", SIGWINCH);
-#endif
-#ifdef SIGINFO
-      handle_signal ("SIGINFO", SIGINFO);
+      handle_signal (SIGKILL); /* POSIX */
 #endif
 #ifdef SIGUSR1
-      handle_signal ("SIGUSR1", SIGUSR1);
+      handle_signal (SIGUSR1); /* POSIX */
 #endif
 #ifdef SIGUSR2
-      handle_signal ("SIGUSR2", SIGUSR2);
+      handle_signal (SIGUSR2); /* POSIX */
+#endif
+#ifdef SIGPIPE
+      handle_signal (SIGPIPE); /* POSIX */
+#endif
+#ifdef SIGALRM
+      handle_signal (SIGALRM); /* POSIX */
+#endif
+#ifdef SIGCHLD
+      handle_signal (SIGCHLD); /* POSIX */
+#endif
+#ifdef SIGCONT
+      handle_signal (SIGCONT); /* POSIX */
+#endif
+#ifdef SIGSTOP
+      handle_signal (SIGSTOP); /* POSIX */
+#endif
+#ifdef SIGTSTP
+      handle_signal (SIGTSTP); /* POSIX */
+#endif
+#ifdef SIGTTIN
+      handle_signal (SIGTTIN); /* POSIX */
+#endif
+#ifdef SIGTTOU
+      handle_signal (SIGTTOU); /* POSIX */
+#endif
+
+#ifdef SIGBUS
+      handle_signal (SIGBUS);  /* XPG5 */
+#endif
+#ifdef SIGPOLL
+      handle_signal (SIGPOLL); /* XPG5 */
+#endif
+#ifdef SIGPROF
+      handle_signal (SIGPROF); /* XPG5 */
+#endif
+#ifdef SIGSYS
+      handle_signal (SIGSYS);  /* XPG5 */
+#endif
+#ifdef SIGURG
+      handle_signal (SIGURG);  /* XPG5 */
+#endif
+#ifdef SIGXCPU
+      handle_signal (SIGXCPU); /* XPG5 */
+#endif
+#ifdef SIGXFSZ
+      handle_signal (SIGXFSZ); /* XPG5 */
+#endif
+#ifdef SIGVTALRM
+      handle_signal (SIGVTALRM); /* XPG5 */
+#endif
+
+#ifdef SIGIO
+      handle_signal (SIGIO); /* BSD 4.2 */
+#endif
+#ifdef SIGWINCH
+      handle_signal (SIGWINCH); /* BSD 4.3 */
+#endif
+
+#ifdef SIGEMT
+      handle_signal (SIGEMT);
+#endif
+#ifdef SIGINFO
+      handle_signal (SIGINFO);
+#endif
+#ifdef SIGHWE
+      handle_signal (SIGHWE);
+#endif
+#ifdef SIGPRE
+      handle_signal (SIGPRE);
+#endif
+#ifdef SIGUME
+      handle_signal (SIGUME);
+#endif
+#ifdef SIGDLK
+      handle_signal (SIGDLK);
+#endif
+#ifdef SIGCPULIM
+      handle_signal (SIGCPULIM);
+#endif
+#ifdef SIGIOT
+      handle_signal (SIGIOT);
+#endif
+#ifdef SIGLOST
+      handle_signal (SIGLOST);
+#endif
+#ifdef SIGSTKFLT
+      handle_signal (SIGSTKFLT);
+#endif
+#ifdef SIGUNUSED
+      handle_signal (SIGUNUSED);
+#endif
+#ifdef SIGDANGER
+      handle_signal (SIGDANGER);
+#endif
+#ifdef SIGMSG
+      handle_signal (SIGMSG);
+#endif
+#ifdef SIGSOUND
+      handle_signal (SIGSOUND);
+#endif
+#ifdef SIGRETRACT
+      handle_signal (SIGRETRACT);
+#endif
+#ifdef SIGGRANT
+      handle_signal (SIGGRANT);
+#endif
+#ifdef SIGPWR
+      handle_signal (SIGPWR);
 #endif
       else
 	error ("Undefined signal name %s", name);
@@ -1740,9 +1792,7 @@ text to PROCESS after you call this function.
        (process))
 {
   /* This function can GC */
-  Lisp_Object proc;
-
-  proc = get_process (process);
+  Lisp_Object proc = get_process (process);
 
   /* Make sure the process is really alive.  */
   if (! EQ (XPROCESS (proc)->status_symbol, Qrun))

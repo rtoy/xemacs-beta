@@ -73,78 +73,6 @@ says how to convert the data."
   "Return text pasted to the clipboard."
   (x-get-selection 'CLIPBOARD))
 
-
-(defvar primary-selection-extent nil
-  "The extent of the primary selection; don't use this.")
-
-(defvar secondary-selection-extent nil
-  "The extent of the secondary selection; don't use this.")
-
-
-(defun x-select-make-extent-for-selection (selection previous-extent)
-  ;; Given a selection, this makes an extent in the buffer which holds that
-  ;; selection, for highlighting purposes.  If the selection isn't associated
-  ;; with a buffer, this does nothing.
-  (let ((buffer nil)
-	(valid (and (extentp previous-extent)
-		    (extent-object previous-extent)
-		    (buffer-live-p (extent-object previous-extent))))
-	start end)
-    (cond ((stringp selection)
-	   ;; if we're selecting a string, lose the previous extent used
-	   ;; to highlight the selection.
-	   (setq valid nil))
-	  ((consp selection)
-	   (setq start (min (car selection) (cdr selection))
-		 end (max (car selection) (cdr selection))
-		 valid (and valid
-			    (eq (marker-buffer (car selection))
-				(extent-object previous-extent)))
-		 buffer (marker-buffer (car selection))))
-	  ((extentp selection)
-	   (setq start (extent-start-position selection)
-		 end (extent-end-position selection)
-		 valid (and valid
-			    (eq (extent-object selection)
-				(extent-object previous-extent)))
-		 buffer (extent-object selection)))
-	  (t
-	   (signal 'error (list "invalid selection" selection))))
-
-    (if valid
-	nil
-      (condition-case ()
-	  (if (listp previous-extent)
-	      (mapcar 'delete-extent previous-extent)
-	    (delete-extent previous-extent))
-	(error nil)))
-
-    (if (not buffer)
-	;; string case
-	nil
-      ;; normal case
-      (if valid
-	  (set-extent-endpoints previous-extent start end)
-	(setq previous-extent (make-extent start end buffer))
-
-	;; Make the extent be closed on the right, which means that if
-	;; characters are inserted exactly at the end of the extent, the
-	;; extent will grow to cover them.  This is important for shell
-	;; buffers - suppose one makes a selection, and one end is at
-	;; point-max.  If the shell produces output, that marker will remain
-	;; at point-max (its position will increase).  So it's important that
-	;; the extent exhibit the same behavior, lest the region covered by
-	;; the extent (the visual indication), and the region between point
-	;; and mark (the actual selection value) become different!
-	(set-extent-property previous-extent 'end-open nil)
-
-	(cond
-	 (mouse-track-rectangle-p
-	  (setq previous-extent (list previous-extent))
-	  (default-mouse-track-next-move-rect start end previous-extent)
-	  ))
-	previous-extent))))
-
 ;; FSFmacs calls this `x-set-selection', and reverses the
 ;; arguments (duh ...).  This order is more logical.
 (defun x-own-selection (data &optional type)
@@ -185,34 +113,17 @@ Interactively, the text of the region is used as the selection value."
     (x-disown-selection-internal type))
   (cond ((eq type 'PRIMARY)
 	 (setq primary-selection-extent
-	       (x-select-make-extent-for-selection
+	       (select-make-extent-for-selection
 		data primary-selection-extent)))
 	((eq type 'SECONDARY)
 	 (setq secondary-selection-extent
-	       (x-select-make-extent-for-selection
+	       (select-make-extent-for-selection
 		data secondary-selection-extent))))
   (setq zmacs-region-stays t)
   data)
 
 (defun x-valid-simple-selection-p (data)
-  (or (stringp data)
-      ;FSFmacs huh?? (symbolp data)
-      (integerp data)
-      (and (consp data)
-	   (integerp (car data))
-	   (or (integerp (cdr data))
-	       (and (consp (cdr data))
-		    (integerp (car (cdr data))))))
-      (extentp data)
-      (and (consp data)
-	   (markerp (car data))
-	   (markerp (cdr data))
-	   (marker-buffer (car data))
-	   (marker-buffer (cdr data))
-	   (eq (marker-buffer (car data))
-	       (marker-buffer (cdr data)))
-	   (buffer-live-p (marker-buffer (car data)))
-	   (buffer-live-p (marker-buffer (cdr data))))))
+  (valid-simple-selection-p data))
 
 (defun x-own-secondary-selection (selection &optional type)
   "Make a secondary X Selection of the given argument.  The argument may be a

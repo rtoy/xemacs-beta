@@ -131,6 +131,21 @@ the variable @code{scroll-step} has a non-zero value, an attempt is made to
 scroll the buffer by that many lines; if that is enough to bring point back
 into visibility, that is what happens.
 
+  Scrolling happens automatically if point has moved out of the visible
+portion of the text when it is time to display.  Usually scrolling is
+done  to put point vertically centered within the window.  However, if
+the variable @code{scroll-step} has a non-zero value, an attempt is made to
+scroll the buffer by that many lines; if that is enough to bring point back
+into visibility, that is what happens.
+
+@vindex scroll-conservatively
+  If you set @code{scroll-step} to a small value because you want to use 
+arrow keys to scroll the screen without recentering, the redisplay
+preemption will likely make XEmacs keep recentering the screen when
+scrolling fast, regardless of @code{scroll-step}.  To prevent this, set
+@code{scroll-conservatively} to a small value, which will have the
+result of overriding the redisplay preemption.
+
 @node Horizontal Scrolling,, Scrolling, Display
 @section Horizontal Scrolling
 

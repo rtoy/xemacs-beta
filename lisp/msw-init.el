@@ -48,6 +48,18 @@
     ;; any toolbar-related color resources.
     (if (and (featurep 'xpm) (featurep 'toolbar))
         (init-x-toolbar))
+    (add-hook 'zmacs-deactivate-region-hook
+	      (lambda ()
+		(if (console-on-window-system-p)
+		    (disown-selection))))
+    (add-hook 'zmacs-activate-region-hook
+	      (lambda ()
+		(if (console-on-window-system-p)
+		    (activate-region-as-selection))))
+    (add-hook 'zmacs-update-region-hook
+	      (lambda ()
+		(if (console-on-window-system-p)
+		    (activate-region-as-selection))))
     ;; Old-style mswindows bindings. The new-style mswindows bindings
     ;; (namely Ctrl-X, Ctrl-C and Ctrl-V) are already spoken for by XEmacs.
     (define-key global-map '(control insert) 'mswindows-copy-clipboard)

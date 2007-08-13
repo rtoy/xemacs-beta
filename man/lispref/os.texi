@@ -723,24 +723,36 @@ locations, but can find them in a directory related somehow to the one
 containing the Emacs executable.
 @end defvar
 
-@defun load-average
-This function returns the current 1-minute, 5-minute and 15-minute
-load averages in a list.  The values are integers that are 100 times
-the system load averages.  (The load averages indicate the number of
+@defun load-average &optional use-floats
+This function returns a list of the current 1-minute, 5-minute and
+15-minute load averages.  The values are integers that are 100 times the
+system load averages.  (The load averages indicate the number of
 processes trying to run.)
+
+When @var{use-floats} is non-@code{nil}, floats will be returned instead 
+of integers.  These floats are not multiplied by 100.
 
 @example
 @group
 (load-average)
-     @result{} (169 48 36)
+     @result{} (169 158 164)
+(load-average t)
+     @result{} (1.69921875 1.58984375 1.640625)
 @end group
 
 @group
 lewis@@rocky[5] % uptime
- 11:55am  up 1 day, 19:37,  3 users,
- load average: 1.69, 0.48, 0.36
+  8:06pm  up 16 day(s), 21:57,  40 users,
+ load average: 1.68, 1.59, 1.64
 @end group
 @end example
+
+If the 5-minute or 15-minute load averages are not available, return a
+shortened list, containing only those averages which are available.
+
+On some systems, this function may require special privileges to run, or 
+it may be unimplemented for the particular system type.  In that case,
+the function will signal an error.
 @end defun
 
 @defun emacs-pid
@@ -792,13 +804,31 @@ This function returns the user name corresponding to Emacs's real
 environment variables @code{LOGNAME} and @code{USER}.
 @end defun
 
-@defun user-full-name
-This function returns the full name of the user.
+@defvar user-full-name
+This variable holds the name of the user running this Emacs.  It is
+initialized at startup time from the value of @code{NAME} environment
+variable.  You can change the value of this variable to alter the result 
+of the @code{user-full-name} function.
+@end defvar
+
+@defun user-full-name &optional user
+This function returns the full name of @var{user}.  If @var{user} is
+@code{nil}, it defaults to the user running this Emacs.  In that case,
+the value of @code{user-full-name} variable, if non-@code{nil}, will be
+used.
+
+If @var{user} is specified explicitly, @code{user-full-name} variable is 
+ignored.
 
 @example
 @group
 (user-full-name)
-     @result{} "Bil Lewis"
+     @result{} "Hrvoje Niksic"
+(setq user-full-name "Hrvoje \"Niksa\" Niksic")
+(user-full-name)
+     @result{} "Hrvoje \"Niksa\" Niksic"
+(user-full-name "hniksic")
+     @result{} "Hrvoje Niksic"
 @end group
 @end example
 @end defun
@@ -910,9 +940,10 @@ convert calendrical information to a time value.  You can get time
 values from the functions @code{current-time} (@pxref{Time of Day}) and
 @code{file-attributes} (@pxref{File Attributes}).
 
-@defun format-time-string format-string time
+@defun format-time-string format-string &optional time
 This function converts @var{time} to a string according to
-@var{format-string}.  The argument @var{format-string} may contain
+@var{format-string}.  If @var{time} is omitted, it defaults to the
+current time.  The argument @var{format-string} may contain
 @samp{%}-sequences which say to substitute parts of the time.  Here is a
 table of what the @samp{%}-sequences mean:
 

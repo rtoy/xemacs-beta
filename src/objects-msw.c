@@ -850,7 +850,7 @@ mswindows_color_instance_equal (struct Lisp_Color_Instance *c1,
 static unsigned long
 mswindows_color_instance_hash (struct Lisp_Color_Instance *c, int depth)
 {
-  return LISP_HASH (COLOR_INSTANCE_MSWINDOWS_COLOR(c));
+  return (unsigned long)(COLOR_INSTANCE_MSWINDOWS_COLOR(c));
 }
 
 static Lisp_Object

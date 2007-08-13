@@ -721,14 +721,18 @@ compute_frame_toolbar_buttons (struct frame *f, enum toolbar_pos pos,
   return first_button;
 }
 
-static int
-set_frame_toolbar (struct frame *f, enum toolbar_pos pos, int first_time_p)
+static void
+set_frame_toolbar (struct frame *f, enum toolbar_pos pos)
 {
   Lisp_Object toolbar, buttons;
   struct window *w = XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f));
   Lisp_Object buffer = w->buffer;
-  int visible = FRAME_THEORETICAL_TOOLBAR_SIZE (f, pos);
 
+  if (!f->toolbar_changed
+      && !NILP (f->toolbar_data[pos])
+      && EQ (FRAME_TOOLBAR_DATA (f, pos)->last_toolbar_buffer, buffer))
+    return;
+  
   toolbar = w->toolbar[pos];
 
   if (NILP (f->toolbar_data[pos]))
@@ -741,60 +745,29 @@ set_frame_toolbar (struct frame *f, enum toolbar_pos pos, int first_time_p)
       XSETTOOLBAR_DATA (f->toolbar_data[pos], td);
     }
 
-  buttons = visible ? compute_frame_toolbar_buttons (f, pos, toolbar) : Qnil;
+  buttons = (FRAME_REAL_TOOLBAR_VISIBLE (f, pos)
+	     ? compute_frame_toolbar_buttons (f, pos, toolbar) : Qnil);
 
   FRAME_TOOLBAR_DATA (f, pos)->last_toolbar_buffer = buffer;
   FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons = buttons;
-
-  return visible;
 }
-
-#define COMPUTE_TOOLBAR_DATA(position)					 \
-  do									 \
-    {									 \
-      local_toolbar_changed =						 \
-	(f->toolbar_changed						 \
-	 || NILP (f->toolbar_data[position])				 \
-	 || (!EQ (FRAME_TOOLBAR_DATA (f, position)->last_toolbar_buffer, \
-		  XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer))); \
-									 \
-      toolbar_was_visible =						 \
-         (!NILP (f->toolbar_data[position])				 \
-          && !NILP (FRAME_TOOLBAR_DATA (f, position)->toolbar_buttons)); \
-      toolbar_will_be_visible = toolbar_was_visible;			 \
-									 \
-      if (local_toolbar_changed)					 \
-	toolbar_will_be_visible =					 \
-           set_frame_toolbar (f, position, first_time_p);		 \
-									 \
-      toolbar_visibility_changed =					 \
-	(toolbar_was_visible != toolbar_will_be_visible);		 \
-									 \
-      if (toolbar_visibility_changed)					 \
-        frame_changed_size = 1;						 \
-    } while (0)
 
 static void
 compute_frame_toolbars_data (struct frame *f, int first_time_p)
 {
-  int local_toolbar_changed;
-  int toolbar_was_visible, toolbar_will_be_visible;
-  int toolbar_visibility_changed;
-  int frame_changed_size = 0;
+  set_frame_toolbar (f, TOP_TOOLBAR);			 
+  set_frame_toolbar (f, BOTTOM_TOOLBAR);			 
+  set_frame_toolbar (f, LEFT_TOOLBAR);			 
+  set_frame_toolbar (f, RIGHT_TOOLBAR);			 
 
-  COMPUTE_TOOLBAR_DATA (TOP_TOOLBAR);
-  COMPUTE_TOOLBAR_DATA (BOTTOM_TOOLBAR);
-  COMPUTE_TOOLBAR_DATA (LEFT_TOOLBAR);
-  COMPUTE_TOOLBAR_DATA (RIGHT_TOOLBAR);
-
-  /* The frame itself doesn't actually change size, but the usable
-     text area does.  All we have to do is call change_frame_size with
-     the current height and width parameters and it will readjust for
-     all changes in the toolbars. */
-  if (frame_changed_size && !first_time_p)
-    change_frame_size (f, FRAME_HEIGHT (f), FRAME_WIDTH (f), 0);
+  if (!first_time_p)
+    {
+      int height, width;
+      pixel_to_char_size (f, FRAME_PIXWIDTH(f), FRAME_PIXHEIGHT(f),
+			  &width, &height);
+      change_frame_size (f, height, width, 0);
+    }
 }
-#undef COMPUTE_TOOLBAR_DATA
 
 void
 update_frame_toolbars (struct frame *f)
@@ -806,7 +779,7 @@ update_frame_toolbars (struct frame *f)
      last_toolbar_buffer value for any of the toolbars, then the
      toolbars need to be recomputed. */
   if ((HAS_DEVMETH_P (d, output_frame_toolbars))
-      && (f->toolbar_changed
+      && (f->toolbar_changed || f->frame_changed || f->clear
 	  || !EQ (FRAME_TOOLBAR_BUFFER (f, TOP_TOOLBAR), buffer)
 	  || !EQ (FRAME_TOOLBAR_BUFFER (f, BOTTOM_TOOLBAR), buffer)
 	  || !EQ (FRAME_TOOLBAR_BUFFER (f, LEFT_TOOLBAR), buffer)
@@ -1230,6 +1203,17 @@ of the exact format.
 }
 
 
+/*
+  Helper for invalidating the real specifier when default
+  specifier caching changes
+*/
+static void
+recompute_overlaying_specifier (Lisp_Object real_one[4])
+{
+  enum toolbar_pos pos = decode_toolbar_position (Vdefault_toolbar_position);
+  Fset_specifier_dirty_flag (real_one[pos]);
+}
+
 static void
 toolbar_specs_changed (Lisp_Object specifier, struct window *w,
 		       Lisp_Object oldval)
@@ -1245,9 +1229,7 @@ static void
 default_toolbar_specs_changed (Lisp_Object specifier, struct window *w,
 			       Lisp_Object oldval)
 {
-  enum toolbar_pos pos = decode_toolbar_position (Vdefault_toolbar_position);
-
-  Fset_specifier_dirty_flag (Vtoolbar[pos]);
+  recompute_overlaying_specifier (Vtoolbar);
 }
 
 static void
@@ -1313,12 +1295,7 @@ static void
 default_toolbar_size_changed_in_frame (Lisp_Object specifier, struct frame *f,
 				       Lisp_Object oldval)
 {
-  enum toolbar_pos pos = decode_toolbar_position (Vdefault_toolbar_position);
-
-  Fset_specifier_dirty_flag (Vtoolbar_size[pos]);
-
-  /* Let redisplay know that something has possibly changed. */
-  MARK_TOOLBAR_CHANGED;
+  recompute_overlaying_specifier (Vtoolbar_size);
 }
 
 static void
@@ -1326,12 +1303,7 @@ default_toolbar_border_width_changed_in_frame (Lisp_Object specifier,
 					       struct frame *f,
 					       Lisp_Object oldval)
 {
-  enum toolbar_pos pos = decode_toolbar_position (Vdefault_toolbar_position);
-
-  Fset_specifier_dirty_flag (Vtoolbar_border_width[pos]);
-
-  /* Let redisplay know that something has possibly changed. */
-  MARK_TOOLBAR_CHANGED;
+  recompute_overlaying_specifier (Vtoolbar_border_width);
 }
 
 static void
@@ -1339,14 +1311,39 @@ default_toolbar_visible_p_changed_in_frame (Lisp_Object specifier,
 					    struct frame *f,
 					    Lisp_Object oldval)
 {
-  enum toolbar_pos pos = decode_toolbar_position (Vdefault_toolbar_position);
-
-  Fset_specifier_dirty_flag (Vtoolbar_visible_p[pos]);
-
-  /* Let redisplay know that something has possibly changed. */
-  MARK_TOOLBAR_CHANGED;
+  recompute_overlaying_specifier (Vtoolbar_visible_p);
 }
 
+static void
+toolbar_geometry_changed_in_window (Lisp_Object specifier, struct window *w,
+				    Lisp_Object oldval)
+{
+  MARK_TOOLBAR_CHANGED;
+  MARK_WINDOWS_CHANGED (w);
+}
+
+static void
+default_toolbar_size_changed_in_window (Lisp_Object specifier, struct window *w,
+					Lisp_Object oldval)
+{
+  recompute_overlaying_specifier (Vtoolbar_size);
+}
+
+static void
+default_toolbar_border_width_changed_in_window (Lisp_Object specifier,
+						struct window *w,
+						Lisp_Object oldval)
+{
+  recompute_overlaying_specifier (Vtoolbar_border_width);
+}
+
+static void
+default_toolbar_visible_p_changed_in_window (Lisp_Object specifier,
+					     struct window *w,
+					     Lisp_Object oldval)
+{
+  recompute_overlaying_specifier (Vtoolbar_visible_p);
+}
 
 static void
 toolbar_buttons_captioned_p_changed (Lisp_Object specifier, struct window *w,
@@ -1642,7 +1639,7 @@ is not visible, so it is expanded to take up the slack.
   set_specifier_caching (Vdefault_toolbar_height,
 			 slot_offset (struct window,
 				      default_toolbar_height),
-			 some_window_value_changed,
+			 default_toolbar_size_changed_in_window,
 			 slot_offset (struct frame,
 				      default_toolbar_height),
 			 default_toolbar_size_changed_in_frame);
@@ -1657,7 +1654,7 @@ See `default-toolbar-height' for more information.
   set_specifier_caching (Vdefault_toolbar_width,
 			 slot_offset (struct window,
 				      default_toolbar_width),
-			 some_window_value_changed,
+			 default_toolbar_size_changed_in_window,
 			 slot_offset (struct frame,
 				      default_toolbar_width),
 			 default_toolbar_size_changed_in_frame);
@@ -1673,7 +1670,7 @@ See `default-toolbar-height' for more information.
   set_specifier_caching (Vtoolbar_size[TOP_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_size[TOP_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_size[TOP_TOOLBAR]),
 			 toolbar_size_changed_in_frame);
@@ -1689,7 +1686,7 @@ See `default-toolbar-height' for more information.
   set_specifier_caching (Vtoolbar_size[BOTTOM_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_size[BOTTOM_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_size[BOTTOM_TOOLBAR]),
 			 toolbar_size_changed_in_frame);
@@ -1705,7 +1702,7 @@ See `default-toolbar-height' for more information.
   set_specifier_caching (Vtoolbar_size[LEFT_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_size[LEFT_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_size[LEFT_TOOLBAR]),
 			 toolbar_size_changed_in_frame);
@@ -1721,7 +1718,7 @@ See `default-toolbar-height' for more information.
   set_specifier_caching (Vtoolbar_size[RIGHT_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_size[RIGHT_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_size[RIGHT_TOOLBAR]),
 			 toolbar_size_changed_in_frame);
@@ -1786,7 +1783,7 @@ the value in a window domain will not.
   set_specifier_caching (Vdefault_toolbar_border_width,
 			 slot_offset (struct window,
 				      default_toolbar_border_width),
-			 some_window_value_changed,
+			 default_toolbar_border_width_changed_in_window,
 			 slot_offset (struct frame,
 				      default_toolbar_border_width),
 			 default_toolbar_border_width_changed_in_frame);
@@ -1802,7 +1799,7 @@ See `default-toolbar-height' for more information.
   set_specifier_caching (Vtoolbar_border_width[TOP_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_border_width[TOP_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_border_width[TOP_TOOLBAR]),
 			 toolbar_border_width_changed_in_frame);
@@ -1818,7 +1815,7 @@ See `default-toolbar-height' for more information.
   set_specifier_caching (Vtoolbar_border_width[BOTTOM_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_border_width[BOTTOM_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_border_width[BOTTOM_TOOLBAR]),
 			 toolbar_border_width_changed_in_frame);
@@ -1834,7 +1831,7 @@ See `default-toolbar-height' for more information.
   set_specifier_caching (Vtoolbar_border_width[LEFT_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_border_width[LEFT_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_border_width[LEFT_TOOLBAR]),
 			 toolbar_border_width_changed_in_frame);
@@ -1850,7 +1847,7 @@ See `default-toolbar-height' for more information.
   set_specifier_caching (Vtoolbar_border_width[RIGHT_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_border_width[RIGHT_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_border_width[RIGHT_TOOLBAR]),
 			 toolbar_border_width_changed_in_frame);
@@ -1898,7 +1895,7 @@ visibility specifiers have a fallback value of true.
   set_specifier_caching (Vdefault_toolbar_visible_p,
 			 slot_offset (struct window,
 				      default_toolbar_visible_p),
-			 some_window_value_changed,
+			 default_toolbar_visible_p_changed_in_window,
 			 slot_offset (struct frame,
 				      default_toolbar_visible_p),
 			 default_toolbar_visible_p_changed_in_frame);
@@ -1914,7 +1911,7 @@ See `default-toolbar-visible-p' for more information.
   set_specifier_caching (Vtoolbar_visible_p[TOP_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_visible_p[TOP_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_visible_p[TOP_TOOLBAR]),
 			 toolbar_visible_p_changed_in_frame);
@@ -1930,7 +1927,7 @@ See `default-toolbar-visible-p' for more information.
   set_specifier_caching (Vtoolbar_visible_p[BOTTOM_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_visible_p[BOTTOM_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_visible_p[BOTTOM_TOOLBAR]),
 			 toolbar_visible_p_changed_in_frame);
@@ -1946,7 +1943,7 @@ See `default-toolbar-visible-p' for more information.
   set_specifier_caching (Vtoolbar_visible_p[LEFT_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_visible_p[LEFT_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_visible_p[LEFT_TOOLBAR]),
 			 toolbar_visible_p_changed_in_frame);
@@ -1962,7 +1959,7 @@ See `default-toolbar-visible-p' for more information.
   set_specifier_caching (Vtoolbar_visible_p[RIGHT_TOOLBAR],
 			 slot_offset (struct window,
 				      toolbar_visible_p[RIGHT_TOOLBAR]),
-			 some_window_value_changed,
+			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_visible_p[RIGHT_TOOLBAR]),
 			 toolbar_visible_p_changed_in_frame);

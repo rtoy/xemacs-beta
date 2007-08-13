@@ -978,8 +978,7 @@ at the initial click position."
       ))))
 
 (defun default-mouse-track-has-selection-p (buffer)
-  (and (or (not (eq 'x (console-type)))
-	   (x-selection-owner-p))
+  (and (selection-owner-p)
        (extent-live-p primary-selection-extent)
        (not (extent-detached-p primary-selection-extent))
        (eq buffer (extent-object primary-selection-extent))))
@@ -1043,9 +1042,10 @@ at the initial click position."
 	     ;;
 	     (sit-for 0.15 t)
 	     (zmacs-activate-region)))
-	  ((eq 'x (console-type))
+	  ((or (eq 'x (console-type))
+	       (eq 'mswindows (console-type)))
 	   (if (= start end)
-	       (x-disown-selection type)
+	       (disown-selection type)
 	     (if (consp default-mouse-track-extent)
 		 ;; own the rectangular region
 		 ;; this is a hack
@@ -1055,11 +1055,11 @@ at the initial click position."
 		     (while r
 		       (insert (extent-string (car r)) "\n")
 		       (setq r (cdr r)))
-		     (x-own-selection (buffer-substring (point-min) (point-max)))
+		     (own-selection (buffer-substring (point-min) (point-max)))
 		     (kill-buffer (current-buffer))))
-	       (x-own-selection (cons (set-marker (make-marker) start)
-				      (set-marker (make-marker) end))
-				type)))))
+	       (own-selection (cons (set-marker (make-marker) start)
+				    (set-marker (make-marker) end))
+			      type)))))
     (if (and (eq 'x (console-type))
 	     (not (= start end)))
 	;; I guess cutbuffers should do something with rectangles too.

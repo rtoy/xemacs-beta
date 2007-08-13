@@ -178,7 +178,7 @@
     ;; (condition-case () (delete-file "xemacs") (file-error nil))
     (when (fboundp 'really-free)
       (really-free))
-    (dump-emacs "xemacs" "temacs")
+    (dump-emacs (if (featurep 'infodock) "infodock" "xemacs") "temacs")
     (kill-emacs))
 
 (when (member "run-temacs" command-line-args)

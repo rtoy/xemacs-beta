@@ -152,7 +152,7 @@ static void cursor_font_instantiate (Lisp_Object image_instance,
 static XImage *
 convert_EImage_to_XImage (Lisp_Object device, int width, int height,
 			  unsigned char *pic, unsigned long **pixtbl,
-			  int *pixcount, int *npixels)
+			  int *npixels)
 {
   Display *dpy;
   Colormap cmap;
@@ -201,10 +201,10 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
   if (vis->class == PseudoColor)
     {
       unsigned long pixarray[256];
-      int n;
+      int pixcount, n;
       /* use our quantize table to allocate the colors */
-      *pixcount = 32;
-      *pixtbl = xnew_array (unsigned long, *pixcount);
+      pixcount = 32;
+      *pixtbl = xnew_array (unsigned long, pixcount);
       *npixels = 0;
 
       /* ### should implement a sort by popularity to assure proper allocation */
@@ -221,7 +221,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
 	  res = allocate_nearest_color (dpy, cmap, vis, &color);
 	  if (res > 0 && res < 3)
 	    {
-	      DO_REALLOC(*pixtbl, *pixcount, n+1, unsigned long);
+	      DO_REALLOC(*pixtbl, pixcount, n+1, unsigned long);
 	      (*pixtbl)[n] = color.pixel;
 	      n++;
 	    }
@@ -474,7 +474,7 @@ Lisp_Object Vx_bitmap_file_path;
    where the file might be located.  Return a full pathname if found;
    otherwise, return Qnil. */
 
-Lisp_Object
+static Lisp_Object
 x_locate_pixmap_file (Lisp_Object name)
 {
   /* This function can GC if IN_REDISPLAY is false */
@@ -554,90 +554,6 @@ locate_pixmap_file (Lisp_Object name)
 {
   return x_locate_pixmap_file (name);
 }
-
-#if 0
-/* If INSTANTIATOR refers to inline data, return Qnil.
-   If INSTANTIATOR refers to data in a file, return the full filename
-   if it exists; otherwise, return a cons of (filename).
-
-   FILE_KEYWORD and DATA_KEYWORD are symbols specifying the
-   keywords used to look up the file and inline data,
-   respectively, in the instantiator.  Normally these would
-   be Q_file and Q_data, but might be different for mask data. */
-
-static Lisp_Object
-potential_pixmap_file_instantiator (Lisp_Object instantiator,
-				    Lisp_Object file_keyword,
-				    Lisp_Object data_keyword)
-{
-  Lisp_Object file;
-  Lisp_Object data;
-
-  assert (VECTORP (instantiator));
-
-  data = find_keyword_in_vector (instantiator, data_keyword);
-  file = find_keyword_in_vector (instantiator, file_keyword);
-
-  if (!NILP (file) && NILP (data))
-    {
-      Lisp_Object retval = locate_pixmap_file (file);
-      if (!NILP (retval))
-	return retval;
-      else
-	return Fcons (file, Qnil); /* should have been file */
-    }
-
-  return Qnil;
-}
-
-
-static Lisp_Object
-simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
-			     Lisp_Object image_type_tag)
-{
-  /* This function can call lisp */
-  Lisp_Object file = Qnil;
-  struct gcpro gcpro1, gcpro2;
-  Lisp_Object alist = Qnil;
-
-  GCPRO2 (file, alist);
-
-  /* Now, convert any file data into inline data.  At the end of this,
-     `data' will contain the inline data (if any) or Qnil, and `file'
-     will contain the name this data was derived from (if known) or
-     Qnil.
-
-     Note that if we cannot generate any regular inline data, we
-     skip out. */
-
-  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data, 
-					     console_type);
-  
-  if (CONSP (file)) /* failure locating filename */
-    signal_double_file_error ("Opening pixmap file",
-			      "no such file or directory",
-			      Fcar (file));
-
-  if (NILP (file)) /* no conversion necessary */
-    RETURN_UNGCPRO (inst);
-
-  alist = tagged_vector_to_alist (inst);
-
-  {
-    Lisp_Object data = make_string_from_file (file);
-    alist = remassq_no_quit (Q_file, alist);
-    /* there can't be a :data at this point. */
-    alist = Fcons (Fcons (Q_file, file),
-		   Fcons (Fcons (Q_data, data), alist));
-  }
-
-  {
-    Lisp_Object result = alist_to_tagged_vector (image_type_tag, alist);
-    free_alist (alist);
-    RETURN_UNGCPRO (result);
-  }
-}
-#endif
 
 #if 0
 static void
@@ -909,16 +825,18 @@ x_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Colormap cmap = DEVICE_X_COLORMAP (XDEVICE(device));
-  unsigned long *pixtbl;
-  int pixcount;
-  int npixels;
+  unsigned long *pixtbl = NULL;
+  int npixels = 0;
   XImage* ximage;
   
   ximage = convert_EImage_to_XImage (device, width, height, eimage,
-				     &pixtbl, &pixcount, &npixels);
+				     &pixtbl, &npixels);
   if (!ximage)
-    signal_image_error("EImage to XImage conversion failed", instantiator);
-
+    {
+      if (pixtbl) xfree (pixtbl);
+      signal_image_error("EImage to XImage conversion failed", instantiator);
+    }
+  
   /* Now create the pixmap and set up the image instance */
   init_image_instance_from_x_image (ii, ximage, dest_mask,
 				    cmap, pixtbl, npixels,
@@ -1362,145 +1280,6 @@ xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 /**********************************************************************
  *                             XPM                                    *
  **********************************************************************/
-
-static Lisp_Object
-pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
-{
-  char **data;
-  int result;
-
-  result = XpmReadFileToData ((char *) XSTRING_DATA (name), &data);
-
-  if (result == XpmSuccess)
-    {
-      Lisp_Object retval = Qnil;
-      struct buffer *old_buffer = current_buffer;
-      Lisp_Object temp_buffer =
-	Fget_buffer_create (build_string (" *pixmap conversion*"));
-      int elt;
-      int height, width, ncolors;
-      struct gcpro gcpro1, gcpro2, gcpro3;
-      int speccount = specpdl_depth ();
-
-      GCPRO3 (name, retval, temp_buffer);
-
-      specbind (Qinhibit_quit, Qt);
-      set_buffer_internal (XBUFFER (temp_buffer));
-      Ferase_buffer (Qnil);
-
-      buffer_insert_c_string (current_buffer, "/* XPM */\r");
-      buffer_insert_c_string (current_buffer, "static char *pixmap[] = {\r");
-
-      sscanf (data[0], "%d %d %d", &height, &width, &ncolors);
-      for (elt = 0; elt <= width + ncolors; elt++)
-	{
-	  buffer_insert_c_string (current_buffer, "\"");
-	  buffer_insert_c_string (current_buffer, data[elt]);
-
-	  if (elt < width + ncolors)
-	    buffer_insert_c_string (current_buffer, "\",\r");
-	  else
-	    buffer_insert_c_string (current_buffer, "\"};\r");
-	}
-
-      retval = Fbuffer_substring (Qnil, Qnil, Qnil);
-      XpmFree (data);
-
-      set_buffer_internal (old_buffer);
-      unbind_to (speccount, Qnil);
-
-      RETURN_UNGCPRO (retval);
-    }
-
-  switch (result)
-    {
-    case XpmFileInvalid:
-      {
-	if (ok_if_data_invalid)
-	  return Qt;
-	signal_image_error ("invalid XPM data in file", name);
-      }
-    case XpmNoMemory:
-      {
-	signal_double_file_error ("Reading pixmap file",
-				  "out of memory", name);
-      }
-    case XpmOpenFailed:
-      {
-	/* should never happen? */
-	signal_double_file_error ("Opening pixmap file",
-				  "no such file or directory", name);
-      }
-    default:
-      {
-	signal_double_file_error_2 ("Parsing pixmap file",
-				    "unknown error code",
-				    make_int (result), name);
-	break;
-      }
-    }
-
-  return Qnil; /* not reached */
-}
-
-Lisp_Object
-x_xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
-{
-  Lisp_Object file = Qnil;
-  Lisp_Object color_symbols;
-  struct gcpro gcpro1, gcpro2;
-  Lisp_Object alist = Qnil;
-
-  GCPRO2 (file, alist);
-
-  /* Now, convert any file data into inline data.  At the end of this,
-     `data' will contain the inline data (if any) or Qnil, and
-     `file' will contain the name this data was derived from (if
-     known) or Qnil.
-
-     Note that if we cannot generate any regular inline data, we
-     skip out. */
-
-  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data, 
-					     console_type);
-
-  if (CONSP (file)) /* failure locating filename */
-    signal_double_file_error ("Opening pixmap file",
-			      "no such file or directory",
-			      Fcar (file));
-
-  color_symbols = find_keyword_in_vector_or_given (inst, Q_color_symbols,
-						   Qunbound);
-
-  if (NILP (file) && !UNBOUNDP (color_symbols))
-    /* no conversion necessary */
-    RETURN_UNGCPRO (inst);
-
-  alist = tagged_vector_to_alist (inst);
-
-  if (!NILP (file))
-    {
-      Lisp_Object data = pixmap_to_lisp_data (file, 0);
-      alist = remassq_no_quit (Q_file, alist);
-      /* there can't be a :data at this point. */
-      alist = Fcons (Fcons (Q_file, file),
-		     Fcons (Fcons (Q_data, data), alist));
-    }
-
-  if (UNBOUNDP (color_symbols))
-    {
-      color_symbols = evaluate_xpm_color_symbols ();
-      alist = Fcons (Fcons (Q_color_symbols, color_symbols),
-		     alist);
-    }
-
-  {
-    Lisp_Object result = alist_to_tagged_vector (Qxpm, alist);
-    free_alist (alist);
-    RETURN_UNGCPRO (result);
-  }
-}
-
  /* xpm 3.2g and better has XpmCreatePixmapFromBuffer()...
     There was no version number in xpm.h before 3.3, but this should do.
   */
@@ -1594,7 +1373,7 @@ xpm_free (XpmAttributes *xpmattrs)
   XpmFreeAttributes (xpmattrs);
 }
 
-void
+static void
 x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 				   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 				   int dest_mask, Lisp_Object domain)
@@ -1607,6 +1386,7 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Screen *xs;
   Colormap cmap;
   int depth;
+  Visual *visual;
   Pixmap pixmap;
   Pixmap mask = 0;
   XpmAttributes xpmattrs;
@@ -1638,22 +1418,23 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 #if 1
   /* Although I haven't found it documented yet, it appears that pointers are
-     always colored via the default window colormap... Sigh.  However, with
-     the current color structure, this will blow the doors off as things aren't set up
-     to differenciate between two colormaps per console.  AARGH! */
+     always colored via the default window colormap... Sigh. */
   if (type == IMAGE_POINTER)
     {
       cmap = DefaultColormap(dpy, DefaultScreen(dpy));
       depth = DefaultDepthOfScreen (xs);
+      visual = DefaultVisualOfScreen (xs);
     }
   else
     {
       cmap = DEVICE_X_COLORMAP (XDEVICE(device));
       depth = DEVICE_X_DEPTH (XDEVICE(device));
+      visual = DEVICE_X_VISUAL (XDEVICE(device));
     }
 #else
   cmap = DEVICE_X_COLORMAP (XDEVICE(device));
   depth = DEVICE_X_DEPTH (XDEVICE(device));
+  visual = DEVICE_X_VISUAL (XDEVICE(device));
 #endif
 
   x_initialize_pixmap_image_instance (ii, type);
@@ -1680,7 +1461,7 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       xpmattrs.valuemask |= XpmCloseness;
       xpmattrs.depth = depth;
       xpmattrs.valuemask |= XpmDepth;
-      xpmattrs.visual = DEVICE_X_VISUAL (XDEVICE(device));
+      xpmattrs.visual = visual;
       xpmattrs.valuemask |= XpmVisual;
       xpmattrs.colormap = cmap;
       xpmattrs.valuemask |= XpmColormap;
@@ -4575,6 +4356,9 @@ console_type_create_glyphs_x (void)
   CONSOLE_HAS_METHOD (x, colorize_image_instance);
   CONSOLE_HAS_METHOD (x, init_image_instance_from_eimage);
   CONSOLE_HAS_METHOD (x, locate_pixmap_file);
+#ifdef HAVE_XPM
+  CONSOLE_HAS_METHOD (x, xpm_instantiate);
+#endif
 }
 
 void
@@ -4588,6 +4372,7 @@ image_instantiator_format_create_glyphs_x (void)
   IIFORMAT_HAS_METHOD (xbm, normalize);
   IIFORMAT_HAS_METHOD (xbm, possible_dest_types);
   IIFORMAT_HAS_METHOD (xbm, instantiate);
+
 
   IIFORMAT_VALID_KEYWORD (xbm, Q_data, check_valid_xbm_inline);
   IIFORMAT_VALID_KEYWORD (xbm, Q_file, check_valid_string);

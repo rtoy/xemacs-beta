@@ -361,6 +361,7 @@ DOC_SRC3=\
  $(XEMACS)\src\free-hook.c \
  $(XEMACS)\src\general.c \
  $(XEMACS)\src\glyphs.c \
+ $(XEMACS)\src\glyphs-eimage.c \
  $(XEMACS)\src\gmalloc.c \
  $(XEMACS)\src\gui.c  \
  $(XEMACS)\src\hash.c \
@@ -620,6 +621,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\free-hook.obj \
 	$(OUTDIR)\general.obj \
 	$(OUTDIR)\glyphs.obj \
+	$(OUTDIR)\glyphs-eimage.obj \
 	$(OUTDIR)\gmalloc.obj \
 	$(OUTDIR)\gui.obj \
 	$(OUTDIR)\hash.obj \

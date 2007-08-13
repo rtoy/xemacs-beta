@@ -1538,26 +1538,8 @@ canonical form:
 @end group
 @end example
 
-@samp{~/} is expanded into the user's home directory.  A @samp{/} or
-@samp{~} following a @samp{/} is taken to be the start of an absolute
-file name that overrides what precedes it, so everything before that
-@samp{/} or @samp{~} is deleted.  For example:
-
-@example
-@group
-(expand-file-name 
- "/a1/gnu//usr/local/lib/emacs/etc/MACHINES")
-     @result{} "/usr/local/lib/emacs/etc/MACHINES"
-@end group
-@group
-(expand-file-name "/a1/gnu/~/foo")
-     @result{} "/xcssun/users/rms/foo"
-@end group
-@end example
-
-@noindent
-In both cases, @file{/a1/gnu/} is discarded because an absolute file
-name follows it.
+@samp{~/} at the beginning is expanded into the user's home directory.
+A @samp{/} or @samp{~} following a @samp{/}.
 
 Note that @code{expand-file-name} does @emph{not} expand environment
 variables; only @code{substitute-in-file-name} does that.

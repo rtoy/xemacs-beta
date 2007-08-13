@@ -100,7 +100,7 @@
 (defconst font-window-system-mappings
   '((x         . (x-font-create-name x-font-create-object))
     (ns        . (ns-font-create-name ns-font-create-object))
-    (mswindows . (x-font-create-name x-font-create-object)) ; XXX FIXME
+    (mswindows . (mswindows-font-create-name mswindows-font-create-object))
     (pm        . (x-font-create-name x-font-create-object)) ; Change? FIXME
     (tty       . (tty-font-create-plist tty-font-create-object)))
   "An assoc list mapping device types to the function used to create
@@ -763,6 +763,134 @@ for use in the 'weight' field of an X font string.")
 	  (setq font-name "UNKNOWN FORMULA GOES HERE"
 		done (try-font-name font-name device))))
       (if done font-name))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; The window-system dependent code (mswindows-style)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; mswindows fonts look like:
+;;;	fontname[:[weight][ style][:pointsize[:effects[:charset]]]]
+;;; A minimal mswindows font spec looks like:
+;;;	Courier New
+;;; A maximal mswindows font spec looks like:
+;;;	Courier New:Bold Italic:10:underline strikeout:ansi
+;;; Missing parts of the font spec should be filled in with these values:
+;;;	Courier New:Normal:10::ansi
+;;  "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*:[a-zA-Z 0-9]*$"
+(defvar font-mswindows-font-regexp 
+  (let
+      ((- 		":")
+       (fontname	"\\([a-zA-Z ]+\\)")
+       (weight		"\\([a-zA-Z]*\\)")
+       (style		"\\( [a-zA-Z]*\\)?")
+       (pointsize	"\\([0-9]+\\)")
+       (effects		"\\([a-zA-Z ]*\\)")q
+       (charset		"\\([a-zA-Z 0-9]*\\)")
+       )
+    (concat "^"
+	    fontname - weight style - pointsize - effects - charset "$")))
+
+(defconst mswindows-font-weight-mappings
+  '((:extra-light . "Extralight")
+    (:light       . "Light")
+    (:demi-light  . "Demilight")
+    (:demi        . "Demi")
+    (:book        . "Book")
+    (:medium      . "Medium")
+    (:normal      . "Medium")
+    (:demi-bold   . "Demibold")
+    (:bold        . "Bold")
+    (:regular	  . "Regular")
+    (:extra-bold  . "Extrabold"))
+  "An assoc list mapping keywords to actual mswindows specific strings
+for use in the 'weight' field of an mswindows font string.")
+
+
+(defun mswindows-font-create-object (fontname &optional device)
+  (let ((case-fold-search t)
+	(font (mswindows-font-canicolize-name fontname)))
+    (if (or (not (stringp font))
+	    (not (string-match font-mswindows-font-regexp font)))
+	(make-font)
+      (let ((name	(match-string 1 font))
+	    (weight	(match-string 2 font))
+	    (style	(match-string 3 font))
+	    (pointsize	(match-string 4 font))
+	    (effects	(match-string 5 font))
+	    (charset	(match-string 6 font))
+	    (retval nil)
+	    (size nil)
+	    (case-fold-search t)
+	    )
+	(if pointsize (setq size (/ (string-to-int pointsize) 10)))
+	(if weight (setq weight (intern-soft (concat ":" (downcase weight)))))
+	(setq retval (make-font :family name
+				:weight weight
+				:size size))
+	(set-font-bold-p retval (eq :bold weight))
+	(cond
+	 ((null style) nil)
+	 ((string-match "^[iI]talic" style)
+	  (set-font-italic-p retval t)))
+	retval))))
+
+(defun mswindows-font-create-name (fontobj &optional device)
+  (if (and (not (or (font-family fontobj)
+		    (font-weight fontobj)
+		    (font-size fontobj)
+		    (font-registry fontobj)
+		    (font-encoding fontobj)))
+	   (= (font-style fontobj) 0))
+      (face-font 'default)
+    (or device (setq device (selected-device)))
+    (let* ((default (font-default-object-for-device device))
+	   (family (or (font-family fontobj)
+		       (font-family default)))
+	   (weight (or (font-weight fontobj) :medium))
+	   (style (font-style fontobj))
+	   (size (or (if font-running-xemacs
+			 (font-size fontobj))
+		     (font-size default)))
+	   (registry (or (font-registry fontobj)
+			 (font-registry default)))
+	   (encoding (or (font-encoding fontobj)
+			 (font-encoding default))))
+      (if (stringp family)
+	  (setq family (list family)))
+      (setq weight (font-higher-weight weight
+				       (and (font-bold-p fontobj) :bold)))
+      (if (stringp size)
+	  (setq size (truncate (font-spatial-to-canonical size device))))
+      (setq weight (or (cdr-safe 
+			(assq weight mswindows-font-weight-mappings)) ""))
+      (let ((done nil)			; Did we find a good font yet?
+	    (font-name nil)		; font name we are currently checking
+	    (cur-family nil)		; current family we are checking
+	    )
+	(while (and family (not done))
+	  (setq cur-family (car family)
+		family (cdr family))
+	  (if (assoc cur-family font-family-mappings)
+	      ;; If the family name is an alias as defined by
+	      ;; font-family-mappings, then append those families
+	      ;; to the front of 'family' and continue in the loop.
+	      (setq family (append
+			    (cdr-safe (assoc cur-family
+					     font-family-mappings))
+			    family))
+	    ;; We treat oblique and italic as equivalent.  Don't ask.
+            ;; Courier New:Bold Italic:10:underline strikeout:ansi
+	    (setq font-name (format "%s:%s%s:%s:%s:%s"
+				    cur-family weight
+				    (if (font-italic-p fontobj)
+					" Italic" "")
+				    (if size
+					(int-to-string (* 10 size)) "10")
+				    ""
+				    "")
+		  done (try-font-name font-name device))))
+	(if done font-name)))))
 
 
 ;;; Cache building code

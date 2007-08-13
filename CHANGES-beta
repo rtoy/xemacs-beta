@@ -1,4 +1,34 @@
 							-*- indented-text -*-
+to 21.0 beta38 "Repartida"
+-- apropos.el modernization
+-- Documentation updates from Hrvoje Niksic
+-- range table fix from Olivier Galibert
+-- Various changes from Andy Piper
+-- Magic specifier fixes from Kirill Katsnelson
+-- Various changes from Hrvoje Niksic
+-- print changes/find-file changes from Hrvoje Niksic
+-- source formatting changes from Martin Buchholz
+-- font handling for W3 under MS Windows from Andy Piper
+-- Xpm color symbol support for MS Windows from Andy Piper
+-- keyboard macro fixes from Hrvoje Niksic
+-- MS Windows Signal fix from Kirill Katsnelson
+-- All GIFs in core distribution converted to PNGs -- screw Unisys
+-- More build tweaks
+-- Make line-number-mode/column-number-mode appear in minor mode menu from
+   Jim Radford
+-- General toolbar fixes from Kirill Katsnelson
+-- Selection patches from Andy Piper
+-- background pixmaps in MS Windows from Andy Piper
+-- Startup patches from Michael Sperber
+-- Signalling support for MS Windows from Kirill Katsnelson
+-- Startup tweaks
+-- PNG crash fix from Jareth Hein
+-- Keyboard Focus sanity from Greg Klanderman
+-- LDAP fixes from Oscar Figueiredo
+-- Fix Lisp union type on MS Windows from Andy Piper
+-- Miscellaneous patches from Jonathan Harris, Kirill Katsnelson
+-- Build clean up
+
 to 21.0 beta37 "Pygmy"
 -- Bug fixes, generalization of image code from Andy Piper
 -- Installation/startup fixes from Michael Sperber

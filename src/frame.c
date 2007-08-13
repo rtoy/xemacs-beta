@@ -416,6 +416,7 @@ See `set-frame-properties', `default-x-frame-plist', and
     signal_simple_error (". not allowed in frame names", name);
 
   f = allocate_frame_core (device);
+  XSETFRAME (frame, f);
 
   specbind (Qframe_being_created, name);
   f->name = name;
@@ -445,7 +446,6 @@ See `set-frame-properties', `default-x-frame-plist', and
   else
     signal_simple_error ("Invalid value for `minibuffer'", minibuf);
 
-  XSETFRAME (frame, f);
   update_frame_window_mirror (f);
 
   if (initialized)
@@ -667,6 +667,13 @@ function is called.
 Note that this does not actually cause the window-system focus to
 be set to this frame, or the select-frame-hook or deselect-frame-hook
 to be run, until the next time that XEmacs is waiting for an event.
+
+Also note that when focus-follows-mouse is non-nil, the frame
+selection is temporary and is reverted when the current command
+terminates, much like the buffer selected by `set-buffer'.  In order
+to effect a permanent focus change in this case, bind
+focus-follows-mouse to nil, select the frame you want, and do
+a (sit-for 0) within the scope of the binding.
 */
        (frame))
 {
@@ -1511,11 +1518,14 @@ delete_frame_internal (struct frame *f, int force,
     }
  double_break_1:
 
-  if (!called_from_delete_device)
+#if 0
+  /* The following test is degenerate FALSE */
+  if (called_from_delete_device < 0)
     /* then we're being called from delete-console, and we shouldn't
        try to find another default-minibuffer frame for the console.
        */
     con->default_minibuffer_frame = Qnil;
+#endif
 
   /* If we've deleted this console's default_minibuffer_frame, try to
      find another one.  Prefer minibuffer-only frames, but also notice
@@ -2741,23 +2751,34 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
     }
 
   /* when frame_conversion_internal() calculated the number of rows/cols
-     in the frame, the toolbar sizes were subtracted out.  However,
-     if the corresponding toolbar is not actually visible in the
-     selected window, then the extra space needs to be filled in
-     with rows/cols. */
-  if (!FRAME_REAL_TOP_TOOLBAR_VISIBLE (f))
-    new_pixheight += FRAME_THEORETICAL_TOP_TOOLBAR_HEIGHT (f) +
-      2 * FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH (f);
-  if (!FRAME_REAL_BOTTOM_TOOLBAR_VISIBLE (f))
-    new_pixheight += FRAME_THEORETICAL_BOTTOM_TOOLBAR_HEIGHT (f) +
-      2 * FRAME_THEORETICAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f);
-  if (!FRAME_REAL_LEFT_TOOLBAR_VISIBLE (f))
-    new_pixwidth += FRAME_THEORETICAL_LEFT_TOOLBAR_WIDTH (f) +
-      2 * FRAME_THEORETICAL_LEFT_TOOLBAR_BORDER_WIDTH (f);
-  if (!FRAME_REAL_RIGHT_TOOLBAR_VISIBLE (f))
-    new_pixwidth += FRAME_THEORETICAL_RIGHT_TOOLBAR_WIDTH (f) +
-      2 * FRAME_THEORETICAL_RIGHT_TOOLBAR_BORDER_WIDTH (f);
+     in the frame, the theoretical toolbar sizes were subtracted out.
+     The caluclations below adjust for real toolbar height/width in
+     frame, which may be different from frame spec, taking the above
+     fact into account */
+  new_pixheight +=
+    + FRAME_THEORETICAL_TOP_TOOLBAR_HEIGHT (f)
+    + 2 * FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH (f)
+    - FRAME_REAL_TOP_TOOLBAR_HEIGHT (f)
+    - 2 * FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH (f);
+  
+  new_pixheight +=
+    + FRAME_THEORETICAL_BOTTOM_TOOLBAR_HEIGHT (f)
+    + 2 * FRAME_THEORETICAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f)
+    - FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f)
+    - 2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f);
 
+  new_pixwidth +=
+    + FRAME_THEORETICAL_LEFT_TOOLBAR_WIDTH (f)
+    + 2 * FRAME_THEORETICAL_LEFT_TOOLBAR_BORDER_WIDTH (f)
+    - FRAME_REAL_LEFT_TOOLBAR_WIDTH (f)
+    - 2 * FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH (f);
+  
+  new_pixwidth +=
+    + FRAME_THEORETICAL_RIGHT_TOOLBAR_WIDTH (f)
+    + 2 * FRAME_THEORETICAL_RIGHT_TOOLBAR_BORDER_WIDTH (f)
+    - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f)
+    - 2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH (f);
+  
   /* Adjust the width for the end glyph which may be a different width
      than the default character width. */
   {

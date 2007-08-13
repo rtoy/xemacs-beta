@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the XEmacs Lisp Reference Manual.
-@c Copyright (C) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc. 
+@c Copyright (C) 1990, 1991, 1992, 1993, 1994, 1998 Free Software Foundation, Inc. 
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/display.info
 @node Display, Hash Tables, Annotations, Top
@@ -13,6 +13,7 @@ that XEmacs presents to the user.
 * Refresh Screen::      Clearing the screen and redrawing everything on it.
 * Truncation::          Folding or wrapping long text lines.
 * The Echo Area::       Where messages are displayed.
+* Warnings::            Display of Warnings.
 * Invisible Text::      Hiding part of the buffer text.
 * Selective Display::   Hiding part of the buffer text (the old way).
 * Overlay Arrow::       Display of an arrow to indicate position.
@@ -71,16 +72,9 @@ redrawn from scratch.  Normally this occurs the next time that
 @code{next-event} or @code{sit-for} is called; however, a display update
 will not occur if there is input pending.  @xref{Command Loop}.
 
-@deffn Command force-redisplay
-@cindex force redisplay
-This function causes an immediate update of the display in all
-circumstances, whether or not input is pending. (This function does
-not exist in FSF Emacs.)
-@end deffn
-
 @defun force-cursor-redisplay
 This function causes an immediate update of the cursor on the selected
-frame. (This function does not exist in FSF Emacs.)
+frame.  (This function does not exist in FSF Emacs.)
 @end defun
 
 @node Truncation
@@ -208,39 +202,134 @@ Minibuffer depth is 0.
 @end example
 @end defun
 
-Some of the messages displayed in the echo area are also recorded in the
-@samp{ *Message-Log*} buffer.
+In addition to only displaying a message, XEmacs allows you to
+@dfn{label} your messages, giving you fine-grained control of their
+display.  Message label is a symbol denoting the message type.  Some
+standard labels are:
 
-@ignore
-@defopt message-log-max
-This variable specifies how many lines to keep in the @samp{*Messages*}
-buffer.  The value @code{t} means there is no limit on how many lines to
-keep.  The value @code{nil} disables message logging entirely.  Here's
-how to display a message and prevent it from being logged:
-@defopt log-message-max-size
-This variable specifies how many lines to keep in the @samp{* Message-Log*}
-buffer.  The value @code{t} means there is no limit on how many lines to
-keep.  The value @code{nil} disables message logging entirely.  Here's
-how to display a message and prevent it from being logged:
+@itemize @bullet
+@item @code{message}---default label used by the @code{message}
+function;
+
+@item @code{error}---default label used for reporting errors;
+
+@item @code{progress}---progress indicators like
+@samp{Converting... 45%} (not logged by default);
+
+@item @code{prompt}---prompt-like messages like @samp{Isearch: foo} (not 
+logged by default);
+
+@item @code{command}---helper command messages like @samp{Mark set} (not 
+logged by default);
+
+@item @code{no-log}---messages that should never be logged
+@end itemize
+
+Several messages may be stacked in the echo area at once.  Lisp programs 
+may access these messages, or remove them as appropriate, via the
+message stack.
+
+@defun display-message label message &optional frame stdout-p
+This function displays @var{message} (a string) labeled as @var{label},
+as described above.
+
+The @var{frame} argument specifies the frame to whose minibuffer the
+message should be printed.  This is currently unimplemented.  The
+@var{stdout-p} argument is used internally.
 
 @example
-(let (message-log-max)
-  (message @dots{}))
+(display-message 'command "Mark set")
 @end example
-@end defopt
-@end ignore
+@end defun
+
+@defun lmessage label string &rest arguments
+This function displays a message @var{string} with label @var{label}.
+It is similar to @code{message} in that it accepts a @code{printf}-like
+strings and any number of arguments.
+
+@example
+@group
+;; @r{Display a command message.}
+(lmessage 'command "Comment column set to %d" comment-column)
+@end group
+
+@group
+;; @r{Display a progress message.}
+(lmessage 'progress "Fontifying %s... (%d)" buffer percentage)
+@end group
+
+@group
+;; @r{Display a message that should not be logged.}
+(lmessage 'no-log "Done")
+@end group
+@end example
+@end defun
+
+@defun clear-message &optional label frame stdout-p no-restore
+This function remove any message with the given @var{label}
+from the message-stack, erasing it from the echo area if it's currently
+displayed there.
+
+If a message remains at the head of the message-stack and
+@var{no-restore} is @code{nil}, it will be displayed.  The string which
+remains in the echo area will be returned, or @code{nil} if the
+message-stack is now empty.  If @var{label} is nil, the entire
+message-stack is cleared.
+
+@example
+;; @r{Show a message, wait for 2 seconds, and restore old minibuffer}
+;; @r{contents.}
+(message "A message")
+ @print{} A message
+@result{} "A Message"
+(lmessage 'my-label "Newsflash!  Newsflash!")
+ @print{} Newsflash!  Newsflash!
+@result{} "Newsflash!  Newsflash!"
+(sit-for 2)
+(clear-message 'my-label)
+ @print{} A message
+@result{} "A message"
+@end example
+
+Unless you need the return value or you need to specify a label,
+you should just use @code{(message nil)}.
+@end defun
+
+@defun current-message &optional frame
+This function returns the current message in the echo area, or
+@code{nil}.  The @var{frame} argument is currently unused.
+@end defun
+
+Some of the messages displayed in the echo area are also recorded in the
+@samp{ *Message-Log*} buffer.  Exactly which messages will be recorded
+can be tuned using the following variables.
+
 @defopt log-message-max-size
-This variable specifies the maximum size of @samp{* Message-Log*}
+This variable specifies the maximum size of the @samp{ *Message-log*}
 buffer.
 @end defopt
 
+@defvar log-message-ignore-labels
+This variable specifies the labels whose messages will not be logged.
+It should be a list of symbols.
+@end defvar
+
+@defvar log-message-ignore-regexps
+This variable specifies the regular expressions matching messages that
+will not be logged.  It should be a list of regular expressions.
+
+Normally, packages that generate messages that might need to be ignored
+should label them with @code{progress}, @code{prompt}, or @code{no-log},
+so they can be filtered by @code{log-message-ignore-labels}.
+@end defvar
+
 @defvar echo-keystrokes
 This variable determines how much time should elapse before command
-characters echo.  Its value must be an integer, which specifies the
-number of seconds to wait before echoing.  If the user types a prefix
-key (such as @kbd{C-x}) and then delays this many seconds before
-continuing, the prefix key is echoed in the echo area.  Any subsequent
-characters in the same command will be echoed as well.
+characters echo.  Its value must be a number, which specifies the number
+of seconds to wait before echoing.  If the user types a prefix key (such
+as @kbd{C-x}) and then delays this many seconds before continuing, the
+prefix key is echoed in the echo area.  Any subsequent characters in the
+same command will be echoed as well.
 
 If the value is zero, then command input is not echoed.
 @end defvar
@@ -253,6 +342,117 @@ point---not in the echo area at all.
 
 The value is normally @code{nil}; Lisp programs bind it to @code{t}
 for brief periods of time.
+@end defvar
+
+@node Warnings
+@section Warnings
+
+XEmacs contains a facility for unified display of various warnings.
+Unlike errors, warnings are displayed in the situations when XEmacs
+encounters a problem that is recoverable, but which should be fixed for
+safe future operation.
+
+For example, warnings are printed by the startup code when it encounters
+problems with X keysyms, when there is an error in @file{.emacs}, and in
+other problematic situations.  Unlike messages, warnings are displayed
+in a separate buffer, and include an explanatory message that may span
+across several lines.  Here is an example of how a warning is displayed:
+
+@example
+(1) (initialization/error) An error has occured while loading ~/.emacs:
+
+Symbol's value as variable is void: bogus-variable
+
+To ensure normal operation, you should investigate the cause of the error
+in your initialization file and remove it.  Use the `-debug-init' option
+to XEmacs to view a complete error backtrace.
+@end example
+
+Each warning has a @dfn{class} and a @dfn{priority level}.  The class is
+a symbol describing what sort of warning this is, such as
+@code{initialization}, @code{resource} or @code{key-mapping}.
+
+The warning priority level specifies how important the warning is.  The
+recognized warning levels, in increased order of priority, are:
+@code{debug}, @code{info}, @code{notice}, @code{warning}, @code{error},
+@code{critical}, @code{alert} and @code{emergency}.
+
+@defun display-warning class message &optional level
+This function displays a warning message @var{message} (a string).
+@var{class} should be a warning class symbol, as described above, or a
+list of such symbols.  @var{level} describes the warning priority level.
+If unspecified, it default to @code{warning}.
+
+@example
+@group
+(display-warning 'resource
+  "Bad resource specification encountered:
+something like
+
+    Emacs*foo: bar
+
+You should replace the * with a . in order to get proper behavior when
+you use the specifier and/or `set-face-*' functions.")
+@end group
+
+@group
+---------- Warning buffer ----------
+(1) (resource/warning) Bad resource specification encountered:
+something like
+
+    Emacs*foo: bar
+
+You should replace the * with a . in order to get proper behavior when
+you use the specifier and/or `set-face-*' functions.
+---------- Warning buffer ----------
+@end group
+@end example
+@end defun
+
+@defun lwarn class level message &rest args
+This function displays a formatted labeled warning message.  As above,
+@var{class} should be the warning class symbol, or a list of such
+symbols, and @var{level} should specify the warning priority level
+(@code{warning} by default).
+
+Unlike in @code{display-warning}, @var{message} may be a formatted
+message, which will be, together with the rest of the arguments, passed
+to @code{format}.
+
+@example
+(lwarn 'message-log 'warning
+  "Error caught in `remove-message-hook': %s"
+  (error-message-string e))
+@end example
+@end defun
+
+@defvar log-warning-minimum-level
+This variable specifies the minimum level of warnings that should be
+generated.  Warnings with level lower than defined by this variable are
+completely ignored, as if they never happened.
+@end defvar
+
+@defvar display-warning-minimum-level
+This variable specifies the minimum level of warnings that should be
+displayed.  Unlike @code{log-warning-minimum-level}, setting this
+function does not suppress warnings entirely---they are still generated
+in the @samp{*Warnings*} buffer, only they are not displayed by default.
+@end defvar
+
+@defvar log-warning-suppressed-classes
+This variable specifies a list of classes that should not be logged or
+displayed.  If any of the class symbols associated with a warning is the
+same as any of the symbols listed here, the warning will be completely
+ignored, as it they never happened.
+@end defvar
+
+@defvar display-warning-suppressed-classes
+This variable specifies a list of classes that should not be logged or
+displayed.  If any of the class symbols associated with a warning is the
+same as any of the symbols listed here, the warning will not be
+displayed.  The warning will still logged in the *Warnings* buffer
+(unless also contained in `log-warning-suppressed-classes'), but the
+buffer will not be automatically popped up.
 @end defvar
 
 @node Invisible Text

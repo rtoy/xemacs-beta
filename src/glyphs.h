@@ -30,6 +30,7 @@ extern Lisp_Object Qxpm;
 #ifdef HAVE_XPM
 extern Lisp_Object Q_color_symbols;
 Lisp_Object evaluate_xpm_color_symbols (void);
+Lisp_Object pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid);
 #endif
 
 DOESNT_RETURN signal_image_error (CONST char *, Lisp_Object);

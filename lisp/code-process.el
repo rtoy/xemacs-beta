@@ -77,6 +77,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 		    (setq ret (funcall ret 'call-process program))
 		  )
 		(cond ((consp ret) (car ret))
+		      ((not ret) 'undecided)
 		      ((find-coding-system ret) ret)
 		      )
 		))))

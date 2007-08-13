@@ -529,18 +529,18 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 
 
 Lisp_Object
-make_directory_hash_table (char *path)
+make_directory_hash_table (CONST char *path)
 {
   DIR *d;
-  DIRENTRY *dp;
-  Bytecount len;
   Lisp_Object hash = make_lisp_hashtable (100, HASHTABLE_NONWEAK,
 					  HASHTABLE_EQUAL);
   if ((d = opendir (path)))
     {
+      DIRENTRY *dp;
+
       while ((dp = readdir (d)))
 	{
-	  len = NAMLEN (dp);
+	  Bytecount len = NAMLEN (dp);
 	  if (DIRENTRY_NONEMPTY (dp))
 	    Fputhash (make_ext_string ((Bufbyte *) dp->d_name, len,
 				       FORMAT_FILENAME), Qt, hash);

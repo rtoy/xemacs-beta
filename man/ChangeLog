@@ -1,3 +1,71 @@
+1998-05-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lispref/windows.texi (Vertical Scrolling): Fixup docstring for
+ 	scroll-conservatively.
+
+	* lispref/loading.texi (Named Features): Document advanced args to 
+	`feature'.
+
+	* lispref/files.texi (File Name Expansion): Document that
+	expand-file-name does not treat // and ~/ in the middle of file
+	names specially.
+
+	* lispref/positions.texi (Excursions): Document
+	`with-current-buffer' and `with-temp-file'.
+
+	* lispref/strings.texi (Formatting Strings): Document `%*'
+ 	construct.
+
+	* lispref/os.texi (Time Conversion): Document that TIME may be
+	omitted from format-time-string.
+
+	* lispref/strings.texi (String Conversion): Document BASE argument 
+	to `string-to-number'.
+
+	* lispref/searching.texi (Syntax of Regexps): Fix up Perl
+	constructs documentation.
+	(Regexp Search): Document `split-string'.
+
+	* xemacs/display.texi (Scrolling): Document scroll-conservatively.
+
+	* xemacs/killing.texi (Active Regions): Document that errors no
+	longer highlight the region.
+
+	* lispref/display.texi (The Echo Area): Document message log
+ 	stuff, including `display-message', `lmessage', `clear-message',
+	(Warnings): Document warning stuff.
+
+	* lispref/commands.texi (Working With Events): Update `make-event' 
+	for misc-user events.
+	(Using Interactive): Document `function-interactive'.
+
+	* lispref/os.texi (System Environment): Document USE-FLOATS
+ 	argument to `load-average'.
+	(User Identification): Document the new semantics of
+ 	`user-full-name'.
+
+	* lispref/strings.texi (Creating Strings): Document `string'
+ 	function.
+
+1998-05-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lispref/numbers.texi (Comparison of Numbers): Document multi-arg 
+	comparison functions.
+
+1998-04-30  Greg Klanderman  <greg@alphatech.com>
+
+	* lispref/frames.texi (Input Focus): Document behavior of
+	select-frame wrt focus-follows-mouse.
+
+1998-04-30  Martin Buchholz  <martin@xemacs.org>
+
+	* Makefile: Support generic makes by avoiding `%' syntax.
+	It breaks my heart to uglify the Makefile like this, but this is
+	going to be a perpetual FAQ otherwise.
+	General cleanup.
+	Comment out w3 and vm info rules.
+	Use paranoid cd ./$@ syntax to avoid losing with luser's CDPATH.
+
 1998-03-27  Stephen Turnbull  <turnbull@sk.tsukuba.ac.jp>
 
 	* xemacs/frame.texi: Document cursor appearance at end of line.

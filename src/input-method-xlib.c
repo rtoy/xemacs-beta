@@ -28,8 +28,8 @@ Boston, MA 02111-1307, USA.  */
    for further details */
 
 #include <config.h>
-#include <X11/Xlocale.h>        /* More portable than <locale.h> ? */
 #include "lisp.h"
+#include <X11/Xlocale.h>        /* More portable than <locale.h> ? */
 #include "frame.h"
 #include "device.h"
 #include "window.h"

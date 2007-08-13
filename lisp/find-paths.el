@@ -85,7 +85,9 @@ EXCLUDE is a list of directory names to exclude from the search."
   "Check if DIRECTORY is a plausible installation root for XEmacs."
   (or
    ;; installed
-   (file-directory-p (paths-construct-path (list directory "lib" "xemacs")))
+   (file-directory-p (paths-construct-path (list directory
+						 "lib"
+						 emacs-program-name)))
    ;; in-place
    (and 
     (file-directory-p (paths-construct-path (list directory "lib-src")))
@@ -141,14 +143,17 @@ to EXPAND-FILE-NAME."
      suffix
      base))))
 
-(defun paths-find-emacs-directory (roots suffix base &optional envvar default)
+(defun paths-find-emacs-directory (roots suffix base
+				   &optional envvar default keep-suffix)
   "Find a directory in the XEmacs hierarchy.
 ROOTS must be a list of installation roots.
 SUFFIX is the subdirectory from there.
 BASE is the base to look for.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
-DEFAULT is the preferred value."
+DEFAULT is the preferred value.
+If KEEP-SUFFIX is non-nil, the suffix must be respected in searching
+the directory."
   (let ((preferred-value (or (and envvar (getenv envvar))
 			     default)))
     (if (and preferred-value
@@ -157,14 +162,15 @@ DEFAULT is the preferred value."
       (catch 'gotcha
 	(while roots
 	  (let* ((root (car roots))
+		 ;; installed
 		 (path (paths-construct-emacs-directory root suffix base)))
-	    ;; installed
 	    (if (file-directory-p path)
 		(throw 'gotcha path)
-	      (let ((path (paths-construct-emacs-directory root "" base)))
-		;; in-place
-		(if (file-directory-p path)
-		    (throw 'gotcha path)))))
+	      ;; in-place
+	      (if (null keep-suffix)
+		  (let ((path (paths-construct-emacs-directory root "" base)))
+		    (if (file-directory-p path)
+			(throw 'gotcha path))))))
 	  (setq roots (cdr roots)))
 	nil))))
 
@@ -172,20 +178,24 @@ DEFAULT is the preferred value."
   "Find a site-specific directory in the XEmacs hierarchy."
   (paths-find-emacs-directory roots
 			      (file-name-as-directory
-			       (paths-construct-path '("lib" "xemacs")))
+			       (paths-construct-path (list
+						      "lib"
+						      emacs-program-name)))
 			      base
 			      envvar default))
 
-(defun paths-find-version-directory (roots base &optional envvar default)
-  "Find a version-specific directory in the XEmacs hierarchy."
+(defun paths-find-version-directory (roots base
+				     &optional envvar default enforce-version)
+  "Find a version-specific directory in the XEmacs hierarchy.
+If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
   (paths-find-emacs-directory roots
 			      (file-name-as-directory
 			       (paths-construct-path
 				(list "lib"
-				      (concat "xemacs-"
-					      (construct-emacs-version)))))
+				      (construct-emacs-version-name))))
 			      base
-			      envvar default))
+			      envvar default
+			      enforce-version))
 
 (defun paths-find-architecture-directory (roots base &optional envvar default)
   "Find an architecture-specific directory in the XEmacs hierarchy."
@@ -200,27 +210,10 @@ DEFAULT is the preferred value."
    (paths-find-version-directory roots
 				 system-configuration
 				 envvar default)))
-  
-(defvar paths-path-emacs-version nil
-  "Emacs version as it appears in paths.")
 
-(defun construct-emacs-version ()
-  "Construct the raw version number of XEmacs in the form XX.XX."
-  ;; emacs-version isn't available early, but we really don't care then
-  (if (null (boundp 'emacs-version))
-      "XX.XX"
-  (or paths-path-emacs-version		; cache
-      (progn
-	(string-match "\\`[^0-9]*\\([0-9]+\\.[0-9]+\\)" emacs-version)
-	(let ((version (substring emacs-version
-				  (match-beginning 1) (match-end 1))))
-	  (if (string-match "(beta *\\([0-9]+\\))" emacs-version)
-	      (setq version (concat version
-				    "-b"
-				    (substring emacs-version
-					       (match-beginning 1) (match-end 1)))))
-	  (setq paths-path-emacs-version version)
-	  version)))))
+(defun construct-emacs-version-name ()
+  "Construct the raw XEmacs version number."
+  (concat emacs-program-name "-" emacs-program-version))
 
 (defun paths-directories-which-exist (directories)
   "Return the directories among DIRECTORIES."

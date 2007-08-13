@@ -71,6 +71,11 @@ static void mswindows_clear_region (Lisp_Object locale, face_index findex,
 static void mswindows_output_vertical_divider (struct window *w, int clear);
 static void mswindows_redraw_exposed_windows (Lisp_Object window, int x,
 					int y, int width, int height);
+static void mswindows_output_pixmap (struct window *w, struct display_line *dl,
+				     Lisp_Object image_instance, int xpos,
+				     int xoffset, int start_pixpos, int width,
+				     face_index findex, int cursor_start, 
+				     int cursor_width, int cursor_height);
 
 typedef struct textual_run
 {
@@ -244,26 +249,6 @@ mswindows_update_dc (HDC hdc, Lisp_Object font, Lisp_Object fg,
 
   if (!NILP (bg))
     SetBkColor (hdc, COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (bg)));
-
-#if 0	/* XXX Implement me */
-  /* I expect that the Lisp_Image_Instance's data will point to a brush */
-  if (IMAGE_INSTANCEP (bg_pmap)
-      && IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (bg_pmap)))
-    {
-      if (XIMAGE_INSTANCE_PIXMAP_DEPTH (bg_pmap) == 0)
-	{
-	  gcv.fill_style = FillOpaqueStippled;
-	  gcv.stipple = XIMAGE_INSTANCE_X_PIXMAP (bg_pmap);
-	  mask |= (GCStipple | GCFillStyle);
-	}
-      else
-	{
-	  gcv.fill_style = FillTiled;
-	  gcv.tile = XIMAGE_INSTANCE_X_PIXMAP (bg_pmap);
-	  mask |= (GCTile | GCFillStyle);
-	}
-    }
-#endif
 }
 
 
@@ -285,7 +270,7 @@ mswindows_output_hline (struct window *w, struct display_line *dl, struct rune *
  of its face.
  ****************************************************************************/
 static void
-mswindows_output_blank (struct window *w, struct display_line *dl, struct rune *rb)
+mswindows_output_blank (struct window *w, struct display_line *dl, struct rune *rb, int start_pixpos)
 {
   struct frame *f = XFRAME (w->frame);
   RECT rect = { rb->xpos, dl->ypos-dl->ascent,
@@ -298,10 +283,21 @@ mswindows_output_blank (struct window *w, struct display_line *dl, struct rune *
       || !IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (bg_pmap)))
     bg_pmap = Qnil;
 
-  /* #### This deals only with solid colors */
-  mswindows_update_dc (FRAME_MSWINDOWS_DC (f), Qnil, Qnil,
-		       cachel->background, Qnil);
-  ExtTextOut (FRAME_MSWINDOWS_DC (f), 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
+  if (!NILP(bg_pmap))
+    {
+      mswindows_output_pixmap (w, dl, bg_pmap, 
+			       rb->xpos, rb->object.dglyph.xoffset,
+			       start_pixpos, rb->width, rb->findex,
+			       0, 0, 0);
+    }
+  else 
+    {
+      mswindows_update_dc (FRAME_MSWINDOWS_DC (f), Qnil, Qnil,
+			   cachel->background, Qnil);
+      
+      ExtTextOut (FRAME_MSWINDOWS_DC (f), 0, 0, ETO_OPAQUE, 
+		  &rect, NULL, 0, NULL);
+    }
 }
 
 
@@ -483,7 +479,13 @@ mswindows_output_string (struct window *w, struct display_line *dl,
       this_width = mswindows_text_width_single_run (hdc, cachel, runs + i);
 
       /* #### bg_pmap should be output here */
-
+      if (!NILP(bg_pmap))
+	{
+	  mswindows_output_pixmap (w, dl, bg_pmap, 
+				   xpos, xoffset,
+				   clip_start, width, findex,
+				   0, 0, 0);
+	}
       assert (runs[i].dimension == 1);	/* XXX FIXME */
       ExtTextOut (hdc, xpos, dl->ypos,
 		  NILP(bg_pmap) ? ETO_CLIPPED | ETO_OPAQUE : ETO_CLIPPED,
@@ -1061,7 +1063,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
 	  else if (rb->type == RUNE_BLANK || rb->type == RUNE_HLINE)
 	    {
 	      if (rb->type == RUNE_BLANK)
-		mswindows_output_blank (w, dl, rb);
+		mswindows_output_blank (w, dl, rb, start_pixpos);
 	      else
 		{
 		  /* #### Our flagging of when we need to redraw the
@@ -1318,11 +1320,12 @@ mswindows_clear_region (Lisp_Object locale, face_index findex, int x, int y,
 
 	  mswindows_update_dc (FRAME_MSWINDOWS_DC (f),
 			       Qnil, fcolor, bcolor, background_pixmap);
-      }
-
-      /* XX FIXME: Get brush from background_pixmap here */
-      assert(0);
-      FillRect (FRAME_MSWINDOWS_DC(f), &rect, brush);
+	  FillRect (FRAME_MSWINDOWS_DC(f), &rect, brush);
+	}
+      else
+	{
+	  assert(0);
+	}
     }
   else
     {

@@ -104,24 +104,9 @@ struct Lisp_Cons *DCONS(Lisp_Object obj)
   return (CONSP (obj)) ? XCONS (obj) : NULL;
 }
 
-Lisp_Object DCAR(Lisp_Object obj)
-{
-  return (CONSP (obj)) ? XCAR (obj) : 0;
-}
-
-Lisp_Object DCDR(Lisp_Object obj)
-{
-  return (CONSP (obj)) ? XCDR (obj) : 0;
-}
-
 struct Lisp_Cons *DCONSCDR(Lisp_Object obj)
 {
   return ((CONSP (obj)) && (CONSP (XCDR (obj)))) ? XCONS (XCDR (obj)) : 0;
-}
-
-Lisp_Object DCARCDR(Lisp_Object obj)
-{
-  return ((CONSP (obj)) && (CONSP (XCDR (obj)))) ? XCAR (XCDR (obj)) : 0;
 }
 
 char *DSTRING(Lisp_Object obj)

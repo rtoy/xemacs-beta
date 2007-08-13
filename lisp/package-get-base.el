@@ -1,19 +1,19 @@
 (setq package-get-base
 '((eudc
   (standards-version 1.0
-   version "1.04"
-   author-version "1.04"
-   date "1998-04-21"
-   build-date "1998-04-22"
+   version "1.05"
+   author-version "1.05"
+   date "1998-04-29"
+   build-date "1998-05-01"
    maintainer "Oscar Figueiredo <Oscar.Figueiredo@epfl.ch>"
    distribution stable
    priority low
    category "comm"
    dump nil
    description "Emacs Unified Directory Client."
-   filename "eudc-1.04-pkg.tar.gz"
-   md5sum "f1eea3313ad2b7a78c3165042ec9a285"
-   size 39938
+   filename "eudc-1.05-pkg.tar.gz"
+   md5sum "1313a4cf7bb644e807bd846ab0d6e414"
+   size 40378
    provides (eudc eudc-ldap eudc-ph)
    requires (fsf-compat xemacs-base)
    type regular
@@ -58,19 +58,19 @@
 ))
 (gnus
   (standards-version 1.0
-   version "1.13"
-   author-version "5.6.4"
+   version "1.15"
+   author-version "5.6.9"
    date "1998-04-06"
-   build-date "1998-04-17"
+   build-date "1998-05-02"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "comm"
    dump nil
    description "The Gnus Newsreader and Mailreader."
-   filename "gnus-1.13-pkg.tar.gz"
-   md5sum "648162290d6117033466df446e90bc2e"
-   size 1650837
+   filename "gnus-1.15-pkg.tar.gz"
+   md5sum "fd8b38887e680fd04748e6eaf490628e"
+   size 1657321
    provides (gnus message)
    requires (gnus w3 mh-e mailcrypt rmail mail-lib xemacs-base)
    type regular
@@ -191,57 +191,57 @@
 ))
 (tm
   (standards-version 1.0
-   version "1.05"
-   author-version "21.0b36"
-   date "1998-04-07"
-   build-date "1998-04-17"
+   version "1.06"
+   author-version "21.0b38"
+   date "1998-04-23"
+   build-date "1998-05-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "comm"
    dump nil
    description "Emacs MIME support."
-   filename "tm-1.05-pkg.tar.gz"
-   md5sum "8d8f186356ebd4258a7090603c2772b6"
-   size 252141
+   filename "tm-1.06-pkg.tar.gz"
+   md5sum "3f40b731e676c866c5a6133c0bff031b"
+   size 252232
    provides (tm tm-edit tm-view mime-setup)
    requires (gnus mh-e rmail vm mailcrypt mail-lib apel xemacs-base)
    type regular
 ))
 (vm
   (standards-version 1.0
-   version "1.06"
-   author-version "6.41"
+   version "1.07"
+   author-version "6.47"
    date "1998-02-17"
-   build-date "1998-04-04"
+   build-date "1998-04-27"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "comm"
    dump t
    description "An Emacs mailer."
-   filename "vm-1.06-pkg.tar.gz"
-   md5sum "e38e76e531a8e818a29e3231b26b0e8d"
-   size 506233
+   filename "vm-1.07-pkg.tar.gz"
+   md5sum "2e8394bdb84469c492e784cba02e3b04"
+   size 508955
    provides (vm)
    requires (mail-lib xemacs-base)
    type regular
 ))
 (w3
   (standards-version 1.0
-   version "1.04"
-   author-version "4.0pre16"
-   date "1998-03-07"
-   build-date "1998-04-04"
+   version "1.06"
+   author-version "4.0pre18"
+   date "1998-05-01"
+   build-date "1998-05-02"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution experimental
    priority high
    category "comm"
    dump nil
    description "A Web browser."
-   filename "w3-1.04-pkg.tar.gz"
-   md5sum "d8e742ce7e806e14dcfab27b0e6ae767"
-   size 584488
+   filename "w3-1.06-pkg.tar.gz"
+   md5sum "fea5098f9e8dd5b3b82e3ebe7d447b9c"
+   size 581731
    provides (w3 url)
    requires (w3 mail-lib xemacs-base)
    type regular
@@ -438,19 +438,19 @@
 ))
 (mail-lib
   (standards-version 1.0
-   version "1.10"
-   author-version "21.0b37"
-   date "1998-04-22"
-   build-date "1998-04-22"
+   version "1.12"
+   author-version "21.0b38"
+   date "1998-05-01"
+   build-date "1998-05-02"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "libs"
    dump nil
    description "Fundamental lisp files for providing email support."
-   filename "mail-lib-1.10-pkg.tar.gz"
-   md5sum "c13e2168624d382573e6b2470f0a4363"
-   size 119600
+   filename "mail-lib-1.12-pkg.tar.gz"
+   md5sum "287eaaeafd45a778e45200866e6952f4"
+   size 119922
    provides (browse-url highlight-headers mail-abbrevs mail-extr mail-utils reporter rfc822 rmail-mini rmailout sendmail smtpmail)
    requires (xemacs-base)
    type single
@@ -476,19 +476,19 @@
 ))
 (xemacs-base
   (standards-version 1.0
-   version "1.18"
-   author-version "21.0b36"
-   date "1998-04-06"
-   build-date "1998-04-17"
+   version "1.19"
+   author-version "21.0b38"
+   date "1998-04-29"
+   build-date "1998-05-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution mule
    priority high
    category "libs"
    dump nil
    description "Fundamental XEmacs support, you almost certainly need this."
-   filename "xemacs-base-1.18-pkg.tar.gz"
-   md5sum "2c327a8caee676f5bb28e7c42db37f41"
-   size 453497
+   filename "xemacs-base-1.19-pkg.tar.gz"
+   md5sum "3cd0aa1366931e36651f7aee46931e22"
+   size 453658
    provides (add-log advice annotations assoc case-table chistory comint-xemacs comint compile debug ebuff-menu echistory edmacro ehelp electric enriched env facemenu ffap helper imenu iso-syntax macros novice outline overlay passwd pp regi ring shell skeleton sort thing time-stamp timezone xbm-button xpm-button)
    requires ()
    type regular
@@ -609,19 +609,19 @@
 ))
 (skk
   (standards-version 1.0
-   version "1.05"
+   version "1.06"
    author-version "10.38"
-   date "1998-04-14"
-   build-date "1998-04-17"
-   maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
+   date "1998-04-28"
+   build-date "1998-05-01"
+   maintainer "SL Baur <steve@altair.xemacs.org>"
    distribution mule
    priority medium
    category "mule"
    dump t
    description "Japanese Language Input Method."
-   filename "skk-1.05-pkg.tar.gz"
-   md5sum "9582d421dd26c2c888764c0c3aface60"
-   size 1466874
+   filename "skk-1.06-pkg.tar.gz"
+   md5sum "ccc92c60519be92efef3c40696897ef7"
+   size 1467006
    provides (skk skk-tut)
    requires (viper mule-base xemacs-base)
    type regular
@@ -666,19 +666,19 @@
 ))
 (edit-utils
   (standards-version 1.0
-   version "1.18"
-   author-version "21.0b37"
-   date "1998-04-22"
-   build-date "1998-04-22"
+   version "1.21"
+   author-version "21.0b38"
+   date "1998-03-15"
+   build-date "1998-05-02"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority high
    category "oa"
    dump nil
    description "Miscellaneous editor extensions, you probably need this."
-   filename "edit-utils-1.18-pkg.tar.gz"
-   md5sum "0273e49738108d16f69f6dcff734d666"
-   size 570191
+   filename "edit-utils-1.21-pkg.tar.gz"
+   md5sum "5483cfb7d0ed4588332c2185e77d31eb"
+   size 570895
    provides (abbrevlist atomic-extents avoid backup-dir balloon-help big-menubar blink-cursor blink-paren bookmark compare-w completion dabbrev desktop detached-minibuf edit-toolbar fast-lock file-part floating-toolbar flow-ctrl foldout func-menu hippie-exp icomplete id-select info-look iswitchb lazy-lock lazy-shot live-icon man mic-paren paren popper mode-motion+ outl-mouse page-ext blink-paren paren permanent-buffers recent-files redo reportmail rsz-minibuf saveconfsavehist saveplace scroll-in-place tempo toolbar-utils tree-menu uniquify where-was-i-db)
    requires (xemacs-base)
    type single
@@ -761,38 +761,38 @@
 ))
 (pc
   (standards-version 1.0
-   version "1.09"
-   author-version "21.0b37"
+   version "1.10"
+   author-version "21.0b38"
    date "1998-04-22"
-   build-date "1998-04-22"
+   build-date "1998-04-26"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "oa"
    dump nil
    description "PC style interface emulation."
-   filename "pc-1.09-pkg.tar.gz"
-   md5sum "04ddfb122b0dca50ef9f29ee05e24c75"
-   size 15761
+   filename "pc-1.10-pkg.tar.gz"
+   md5sum "e750bebcb0d2b7632796b1c6c4fc4c16"
+   size 16004
    provides (delbs fusion pc-select pending-del s-region)
    requires (xemacs-base)
    type regular
 ))
 (psgml
   (standards-version 1.0
-   version "1.06"
+   version "1.07"
    author-version "1.01"
    date "1998-03-20"
-   build-date "1998-04-04"
+   build-date "1998-05-02"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "oa"
    dump nil
    description "Validated HTML/SGML editing."
-   filename "psgml-1.06-pkg.tar.gz"
-   md5sum "97c4a41f501629201c35de44c0568c83"
-   size 418630
+   filename "psgml-1.07-pkg.tar.gz"
+   md5sum "957f026375a4e4bd4c2d8952eb1bbeba"
+   size 418672
    provides (psgml sgml)
    requires (edit-utils)
    type regular
@@ -894,19 +894,19 @@
 ))
 (time
   (standards-version 1.0
-   version "1.03"
+   version "1.04"
    author-version "1.17"
-   date "1998-01-25"
-   build-date "1998-04-04"
+   date "1998-04-24"
+   build-date "1998-04-26"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "oa"
    dump nil
    description "Display time & date on the modeline."
-   filename "time-1.03-pkg.tar.gz"
-   md5sum "319c60e36fc0e51000323e22e8955f32"
-   size 20087
+   filename "time-1.04-pkg.tar.gz"
+   md5sum "e25caf29cf9684887460d9cd124639d4"
+   size 19905
    provides (time)
    requires (xemacs-base)
    type regular
@@ -1065,38 +1065,38 @@
 ))
 (debug
   (standards-version 1.0
-   version "1.01"
-   author-version "21.0b35"
-   date "1998-01-24"
-   build-date "1998-04-04"
+   version "1.02"
+   author-version "21.0b38"
+   date "1998-04-24"
+   build-date "1998-04-26"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution contrib
    priority low
    category "prog"
    dump nil
    description "GUD, gdb, dbx debugging support."
-   filename "debug-1.01-pkg.tar.gz"
-   md5sum "b36126702924e2822387957b5db68827"
-   size 87176
+   filename "debug-1.02-pkg.tar.gz"
+   md5sum "953ac508318ffcdcf3a81643499dda33"
+   size 87609
    provides ()
    requires (xemacs-base)
    type regular
 ))
 (ediff
   (standards-version 1.0
-   version "1.06"
+   version "1.07"
    author-version "2.70.1"
-   date "1998-02-25"
-   build-date "1998-04-04"
+   date "1998-04-27"
+   build-date "1998-04-27"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "prog"
    dump nil
    description "Interface over GNU patch."
-   filename "ediff-1.06-pkg.tar.gz"
-   md5sum "1bad29a3f9a6e28c34afc1f155ffdb05"
-   size 244476
+   filename "ediff-1.07-pkg.tar.gz"
+   md5sum "78e0193180343fba87ae08a67036b3b4"
+   size 244462
    provides (ediff)
    requires (pcl-cvs dired xemacs-base)
    type regular
@@ -1122,38 +1122,38 @@
 ))
 (pcl-cvs
   (standards-version 1.0
-   version "1.05"
-   author-version "21.0b37"
-   date "1998-04-19"
-   build-date "1998-04-22"
+   version "1.07"
+   author-version "21.0b38"
+   date "1998-04-27"
+   build-date "1998-05-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "prog"
    dump nil
    description "CVS frontend."
-   filename "pcl-cvs-1.05-pkg.tar.gz"
-   md5sum "c11ede6b5e9748b928ffa7f709da9252"
-   size 135472
+   filename "pcl-cvs-1.07-pkg.tar.gz"
+   md5sum "252e448e4d2a6d68d52b7e0389949889"
+   size 170580
    provides (pcl-cvs dll elib-node generic-sc)
    requires (xemacs-base)
    type regular
 ))
 (prog-modes
   (standards-version 1.0
-   version "1.04"
-   author-version "21.0b35"
-   date "1998-02-08"
-   build-date "1998-04-04"
+   version "1.05"
+   author-version "21.0b38"
+   date "1998-04-29"
+   build-date "1998-05-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "prog"
    dump nil
    description "Support for various programming languages."
-   filename "prog-modes-1.04-pkg.tar.gz"
-   md5sum "ab211a10361e9485c502b7c466131640"
-   size 535455
+   filename "prog-modes-1.05-pkg.tar.gz"
+   md5sum "94622c06c1c7416bc4bf69e64ec7acb9"
+   size 539786
    provides (autoconf-mode cperl-mode eiffel3 f90 fortran ksh-mode m4-mode makefile perl-mode postscript python-mode rexx-mode simula-mode tcl teco verilog-mod)
    requires (mail-lib xemacs-base)
    type regular
@@ -1217,19 +1217,19 @@
 ))
 (vc
   (standards-version 1.0
-   version "1.06"
-   author-version "21.0b35"
-   date "1998-03-20"
-   build-date "1998-04-04"
+   version "1.07"
+   author-version "21.0b38"
+   date "1998-04-27"
+   build-date "1998-04-27"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "prog"
    dump t
    description "Version Control for Free systems."
-   filename "vc-1.06-pkg.tar.gz"
-   md5sum "875822474ef43fcb0ad83521279acb7c"
-   size 74620
+   filename "vc-1.07-pkg.tar.gz"
+   md5sum "04b5fb71ac7975479824c0a636b4b510"
+   size 74573
    provides (vc)
    requires (dired xemacs-base)
    type regular
@@ -1350,19 +1350,19 @@
 ))
 (textools
   (standards-version 1.0
-   version "1.04"
-   author-version "21.0b35"
-   date "1998-02-17"
-   build-date "1998-04-04"
+   version "1.05"
+   author-version "21.0b38"
+   date "1998-04-29"
+   build-date "1998-05-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stabl
    priority medium
    category "wp"
    dump nil
    description "Miscellaneous TeX support."
-   filename "textools-1.04-pkg.tar.gz"
-   md5sum "2e90b7dfd81c0b5748ac09b3db86e2c8"
-   size 78964
+   filename "textools-1.05-pkg.tar.gz"
+   md5sum "4b0a417849ca270ed498c1e9c9aaa07b"
+   size 79125
    provides (bib-mode bibtex refer-to-bibtex)
    requires (xemacs-base)
    type single

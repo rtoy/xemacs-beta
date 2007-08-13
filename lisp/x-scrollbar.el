@@ -35,7 +35,7 @@
 
 (defun x-init-scrollbar-from-resources (locale)
   (x-init-specifier-from-resources
-   scrollbar-width 'natnum locale
+   (specifier-fallback scrollbar-width) 'natnum locale
    '("scrollBarWidth" . "ScrollBarWidth")
    ;; The name strings are wrong, but the scrollbar name is
    ;; non-deterministic so it is a poor way to set a resource
@@ -52,12 +52,12 @@
   ;; time.
   (if (featurep 'athena-scrollbars)
       (x-init-specifier-from-resources
-       scrollbar-width 'natnum locale
+       (specifier-fallback scrollbar-width) 'natnum locale
        '("scrollbar.width" . "ScrollBar.Width")))
       
   ;; lather, rinse, repeat.
   (x-init-specifier-from-resources
-   scrollbar-height 'natnum locale
+   (specifier-fallback scrollbar-height) 'natnum locale
    '("scrollBarHeight" . "ScrollBarHeight")
    ;; The name strings are wrong, but the scrollbar name is
    ;; non-deterministic so it is a poor way to set a resource
@@ -74,7 +74,7 @@
   ;; time.
   (if (featurep 'athena-scrollbars)
       (x-init-specifier-from-resources
-       scrollbar-height 'natnum locale
+       (specifier-fallback scrollbar-height) 'natnum locale
        '("scrollbar.height" . "ScrollBar.Height"))))
 
 ;;; x-scrollbar.el ends here

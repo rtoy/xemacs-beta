@@ -457,6 +457,11 @@ make_charset (int id, Lisp_Object name, Bufbyte leading_byte, unsigned char rep_
   CHARSET_CCL_PROGRAM	(cs) = Qnil;
   CHARSET_REVERSE_DIRECTION_CHARSET (cs) = Qnil;
 
+  CHARSET_DIMENSION     (cs) = (CHARSET_TYPE (cs) == CHARSET_TYPE_94 ||
+				CHARSET_TYPE (cs) == CHARSET_TYPE_96) ? 1 : 2;
+  CHARSET_CHARS         (cs) = (CHARSET_TYPE (cs) == CHARSET_TYPE_94 ||
+				CHARSET_TYPE (cs) == CHARSET_TYPE_94X94) ? 94 : 96;
+    
   if (final)
     {
       /* some charsets do not have final characters.  This includes
@@ -765,8 +770,8 @@ character set.  Recognized properties are:
   return charset;
 }
 
-DEFUN ("make-reverse-direction-charset",
-       Fmake_reverse_direction_charset, 2, 2, 0, /*
+DEFUN ("make-reverse-direction-charset", Fmake_reverse_direction_charset,
+       2, 2, 0, /*
 Make a charset equivalent to CHARSET but which goes in the opposite direction.
 NEW-NAME is the name of the new charset.  Return the new charset.
 */
@@ -814,8 +819,8 @@ NEW-NAME is the name of the new charset.  Return the new charset.
 /* #### The defsubr for this is commented out at the moment but no
    reason why is given. */
 #if 0
-DEFUN ("charset-reverse-direction-charset",
-       Fcharset_reverse_direction_charset, 1, 1, 0, /*
+DEFUN ("charset-reverse-direction-charset", Fcharset_reverse_direction_charset,
+       1, 1, 0, /*
 Return the reverse-direction charset parallel to CHARSET, if any.
 This is the charset with the same properties (in particular, the same
 dimension, number of characters per dimension, and final byte) as

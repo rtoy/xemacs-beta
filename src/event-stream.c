@@ -557,15 +557,15 @@ event_stream_next_event (struct Lisp_Event *event)
      Let's hope it doesn't.  I think the code here is fairly
      clean and doesn't do this. */
   emacs_is_blocking = 1;
-#if 0
-  /* Do this if the poll-for-quit timer seems to be taking too
-     much CPU time when idle ... */
+
+  /* Do not poll for quit while blocking, because this prevents idle
+     XEmacs from swapping out from memory */
   reset_poll_for_quit ();
-#endif
+
   event_stream->next_event_cb (event);
-#if 0
+
   init_poll_for_quit ();
-#endif
+
   emacs_is_blocking = 0;
 
 #ifdef DEBUG_XEMACS
@@ -1718,8 +1718,9 @@ run_deselect_frame_hook (void)
   run_hook (Qdeselect_frame_hook);
 }
 
-/* When select-frame is called, we want to tell the window system that
-   the focus should be changed to point to the new frame.  However,
+/* When select-frame is called and focus_follows_mouse is false, we want
+   to tell the window system that the focus should be changed to point to
+   the new frame.  However,
    sometimes Lisp functions will temporarily change the selected frame
    (e.g. to call a function that operates on the selected frame),
    and it's annoying if this focus-change happens exactly when
@@ -1729,9 +1730,17 @@ run_deselect_frame_hook (void)
    an event from the user.  To do this, we keep track of the frame
    where the window-manager focus lies on, and just before waiting
    for user events, check the currently selected frame and change
-   the focus as necessary. */
+   the focus as necessary.
 
-static void
+   On the other hand, if focus_follows_mouse is true, we need to switch the
+   selected frame back to the frame with window manager focus just before we
+   execute the next command in Fcommand_loop_1, just as the selected buffer is
+   reverted after a set-buffer.
+
+   Both cases are handled by this function.  It must be called as appropriate
+   from these two places, depending on the value of focus_follows_mouse. */
+
+void
 investigate_frame_change (void)
 {
   Lisp_Object devcons, concons;
@@ -1751,14 +1760,46 @@ investigate_frame_change (void)
 	 in emacs_handle_focus_change_final() is based on the _FOR_HOOKS
 	 value, we need to do so too. */
       if (!NILP (sel_frame) &&
-	  !focus_follows_mouse &&
 	  !EQ (DEVICE_FRAME_THAT_OUGHT_TO_HAVE_FOCUS (d), sel_frame) &&
 	  !NILP (DEVICE_FRAME_WITH_FOCUS_FOR_HOOKS (d)) &&
 	  !EQ (DEVICE_FRAME_WITH_FOCUS_FOR_HOOKS (d), sel_frame))
 	{
-	  /* prevent us from issuing the same request more than once */
-	  DEVICE_FRAME_THAT_OUGHT_TO_HAVE_FOCUS (d) = sel_frame;
-	  MAYBE_DEVMETH (d, focus_on_frame, (XFRAME (sel_frame)));
+          /* At this point, we know that the frame has been changed.  Now, if
+           * focus_follows_mouse is not set, we finish off the frame change,
+           * so that user events will now come from the new frame.  Otherwise,
+           * if focus_follows_mouse is set, no gratuitous frame changing
+           * should take place.  Set the focus back to the frame which was
+           * originally selected for user input.
+           */
+          if (!focus_follows_mouse)
+            {
+              /* prevent us from issuing the same request more than once */
+              DEVICE_FRAME_THAT_OUGHT_TO_HAVE_FOCUS (d) = sel_frame;
+              MAYBE_DEVMETH (d, focus_on_frame, (XFRAME (sel_frame)));
+            }
+          else
+            {
+              Lisp_Object old_frame = Qnil;
+
+              /* #### Do we really want to check OUGHT ??
+               * It seems to make sense, though I have never seen us
+               * get here and have it be non-nil.
+               */
+              if (FRAMEP (DEVICE_FRAME_THAT_OUGHT_TO_HAVE_FOCUS (d)))
+                old_frame = DEVICE_FRAME_THAT_OUGHT_TO_HAVE_FOCUS (d);              
+              else if (FRAMEP (DEVICE_FRAME_WITH_FOCUS_FOR_HOOKS (d)))
+                old_frame = DEVICE_FRAME_WITH_FOCUS_FOR_HOOKS (d);
+
+              /* #### Can old_frame ever be NIL?  play it safe.. */
+              if (!NILP (old_frame))
+                {
+                  /* Fselect_frame is not really the right thing: it frobs the
+                   * buffer stack.  But there's no easy way to do the right
+                   * thing, and this code already had this problem anyway.
+                   */
+                  Fselect_frame (old_frame);
+                }
+            }
 	}
     }
 }
@@ -1932,7 +1973,12 @@ next_event_internal (Lisp_Object target_event, int allow_queued)
   assert (NILP (XEVENT_NEXT (target_event)));
 
   GCPRO1 (target_event);
-  investigate_frame_change ();
+
+  /* When focus_follows_mouse is nil, if a frame change took place, we need
+   * to actually switch window manager focus to the selected window now.
+   */
+  if (!focus_follows_mouse)
+    investigate_frame_change ();
 
   if (allow_queued && !NILP (command_event_queue))
     {

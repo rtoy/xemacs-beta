@@ -1789,9 +1789,4 @@ UPCASE (struct buffer *buf, Emchar ch)
 
 #define DOWNCASE(buf, ch) DOWNCASE_TABLE_OF (buf, ch)
 
-
-/* put it here, somewhat arbitrarily ...  it needs to be in *some*
-   header file. */
-DECLARE_LRECORD (range_table, struct Lisp_Range_Table);
-
 #endif /* _XEMACS_BUFFER_H_ */

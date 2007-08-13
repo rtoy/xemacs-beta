@@ -525,7 +525,7 @@ getloadavg (double loadavg[], int nelem)
      this function just can't work at all on this system.  */
   errno = 0;
   elem = -2;
-#endif
+#endif /* NO_GET_LOAD_AVG */
 
 #if ! defined (LDAV_DONE) && defined (HAVE_KSTAT_H) && defined (HAVE_LIBKSTAT)
 #define LDAV_DONE
@@ -546,7 +546,7 @@ getloadavg (double loadavg[], int nelem)
   if (nelem > countof (avestrings))
     nelem = countof (avestrings);
 
-  kc = kstat_open();
+  kc = kstat_open ();
   if (!kc)
     return -1;
   ksp = kstat_lookup (kc, "unix", 0, "system_misc");
@@ -568,7 +568,7 @@ getloadavg (double loadavg[], int nelem)
 	  kstat_close (kc);
 	  return -1;
 	}
-      loadavg[elem] = (double)kn->value.ul/FSCALE;
+      loadavg[elem] = (double)kn->value.ul / FSCALE;
     }
   kstat_close (kc);
 #endif /* HAVE_KSTAT_H && HAVE_LIBKSTAT */
@@ -943,14 +943,7 @@ getloadavg (double loadavg[], int nelem)
 #define LDAV_DONE
 #endif /* !LDAV_DONE && LOAD_AVE_TYPE */
 
-#ifdef LDAV_DONE
   return elem;
-#else
-  /* Set errno to zero to indicate that there was no particular error;
-     this function just can't work at all on this system.  */
-  errno = 0;
-  return -2;
-#endif
 }
 
 #endif /* ! HAVE_GETLOADAVG */

@@ -602,10 +602,55 @@ signals an error, @samp{Required feature @var{feature} was not
 provided}.
 @end defun
 
-@defun featurep feature
-This function returns @code{t} if @var{feature} has been provided in the
-current XEmacs session (i.e., @var{feature} is a member of
-@code{features}.)
+@defun featurep fexp
+This function returns @code{t} if feature @var{fexp} is present in this
+Emacs.  Use this to conditionalize execution of lisp code based on the
+presence or absence of emacs or environment extensions.
+
+@var{fexp} can be a symbol, a number, or a list.
+
+If @var{fexp} is a symbol, it is looked up in the `features' variable,
+and @code{t} is returned if it is found, @code{nil} otherwise.
+
+If @var{fexp} is a number, the function returns @code{t} if this Emacs
+has an equal or greater number than @code{fexp}, @code{nil} otherwise.
+Note that minor Emacs version is expected to be 2 decimal places wide,
+so @code{(featurep 20.4)} will return @code{nil} on XEmacs 20.4---you
+must write @code{(featurep 20.04)}, unless you wish to match for XEmacs
+20.40.
+
+If @var{fexp} is a list whose car is the symbol @code{and}, the function
+returns @code{t} if all the features in its cdr are present, @code{nil}
+otherwise.
+
+If @var{fexp} is a list whose car is the symbol @code{or}, the function
+returns @code{t} if any the features in its cdr are present, @code{nil}
+otherwise.
+
+If @var{fexp} is a list whose car is the symbol @code{not}, the function 
+returns @code{t} if the feature is not present, @code{nil} otherwise.
+
+Examples:
+
+@example
+(featurep 'xemacs)
+     @result{} ; @r{t on XEmacs.}
+
+(featurep '(and xemacs gnus))
+     @result{} ; @r{t on XEmacs with Gnus loaded.}
+
+(featurep '(or tty-frames (and emacs 19.30)))
+     @result{} ; @r{t if this Emacs supports TTY frames.}
+
+(featurep '(or (and xemacs 19.15) (and emacs 19.34)))
+     @result{} ; @r{t on XEmacs 19.15 and later, or on}
+               ; @r{FSF Emacs 19.34 and later.}
+@end example
+
+@strong{NOTE}: The advanced arguments of this function (anything other than a
+symbol) are not yet supported by FSF Emacs.  If you feel they are useful
+for supporting multiple Emacs variants, lobby Richard Stallman at
+@samp{<bug-gnu-emacs@@prep.ai.mit.edu>}.
 @end defun
 
 @defvar features

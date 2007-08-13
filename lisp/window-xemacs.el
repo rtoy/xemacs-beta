@@ -39,6 +39,18 @@
   "Windows within a frame."
   :group 'environment)
 
+(defun recenter (n &optional window)
+  "Center point in WINDOW and redisplay frame.  With N, put point on line N.
+The desired position of point is always relative to the window.
+Just C-u as prefix means put point in the center of the window.
+No N (i.e., it is nil) erases the entire frame and then
+redraws with point in the center of the window.
+If WINDOW is nil, the selected window is used."
+  (interactive "_P")
+  (center-to-window-line (if (consp n) nil n) window)
+  (when (null n)
+    (redraw-frame (window-frame window) t)))
+
 (defun backward-other-window (arg &optional all-frames device)
   "Select the ARG'th different window on this frame, going backwards.
 This is just like calling `other-window' with the arg negated."

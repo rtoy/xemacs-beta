@@ -105,18 +105,14 @@
 			 (or (eq buffer-undo-list pending-undo-list)
 			     (eq (cdr buffer-undo-list) pending-undo-list))))
        :suffix (if (eq last-command 'redo) "More" "")]
-      ["Cut" x-kill-primary-selection
-       :active (and (eq 'x (device-type (selected-device)))
-		    (x-selection-owner-p))]
-      ["Copy" x-copy-primary-selection
-       :active (and (eq 'x (device-type (selected-device)))
-		    (x-selection-owner-p))]
-      ["Paste" x-yank-clipboard-selection
-       :active (and (eq 'x (device-type (selected-device)))
-		    (x-selection-exists-p 'CLIPBOARD))]
-      ["Clear" x-delete-primary-selection
-       :active (and (eq 'x (device-type (selected-device)))
-		    (x-selection-owner-p))]
+      ["Cut" kill-primary-selection
+       :active (selection-owner-p)]
+      ["Copy" copy-primary-selection
+       :active (selection-owner-p)]
+      ["Paste" yank-clipboard-selection
+       :active (selection-exists-p 'CLIPBOARD)]
+      ["Clear" delete-primary-selection
+       :active (selection-owner-p)]
       "----"
       ["Search..." isearch-forward]
       ["Search Backward..." isearch-backward]

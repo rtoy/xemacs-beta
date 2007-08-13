@@ -440,9 +440,9 @@ void x_init_modifier_mapping (struct device *d);
 #define HANDLING_X_ERROR(dpy, body)	\
      ( expect_x_error ((dpy)), (body), signal_if_x_error ((dpy), 0))
 
-#ifdef HAVE_XIM
-/* Locale */
 void Initialize_Locale (void);
+
+#ifdef HAVE_XIM
 
 /* X Input Method `methods' */
 void XIM_init_device     (struct device *d);

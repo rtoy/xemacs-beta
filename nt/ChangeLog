@@ -1,3 +1,7 @@
+1998-04-26  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Added glyphs-eimage.{c,obj}
+
 1998-04-20  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* xemacs.mak: Support "Don't panic, I will restart make" exit code.

@@ -574,27 +574,6 @@ ntpipe_shove_was_blocked_p (Lstream *stream)
 }
 
 static int
-ntpipe_shove_flusher (Lstream *stream)
-{
-  struct ntpipe_shove_stream* s = NTPIPE_SHOVE_STREAM_DATA(stream);
-  int i;
-
-  if (s->error_p)
-    return -1;
-
-  /* We do not want to be blocked forever. Instead, we wait
-     about 0.5 second for output to finish. If this does
-     not help, we just return flush failure. */
-  for (i = 0; i < MAX_FLUSH_TIME / 50; ++i)
-    {
-      if (s->idle_p)
-	return 0;
-      Sleep (50);
-    }
-  return -1;
-}
-
-static int
 ntpipe_shove_closer (Lstream *stream)
 {
   struct ntpipe_shove_stream* s = NTPIPE_SHOVE_STREAM_DATA(stream);
@@ -622,7 +601,6 @@ static void
 init_shove_stream (void)
 {
   LSTREAM_HAS_METHOD (ntpipe_shove, writer);
-  LSTREAM_HAS_METHOD (ntpipe_shove, flusher);
   LSTREAM_HAS_METHOD (ntpipe_shove, was_blocked_p);
   LSTREAM_HAS_METHOD (ntpipe_shove, closer);
 }
@@ -1613,7 +1591,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	  if (!NILP(btext))
 	    {
-	      strncpy (tttext->szText, XSTRING_DATA (btext), 80);
+	      strncpy (tttext->szText, XSTRING_DATA (btext), XSTRING_LENGTH(btext)+1);
 	      tttext->lpszText=tttext->szText;
 	    }
 #if 0

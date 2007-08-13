@@ -65,6 +65,8 @@ Lisp_Object Vscrollbar_height;
 
 Lisp_Object Vscrollbar_pointer_glyph;
 
+EXFUN (Fcenter_to_window_line, 2);
+
 static void update_scrollbar_instance (struct window *w, int vertical,
 				       struct scrollbar_instance *instance);
 
@@ -541,7 +543,7 @@ init_frame_scrollbars (struct frame *f)
 
   if (HAS_DEVMETH_P (d, create_scrollbar_instance))
     {
-      int depth = reveal_ghost_specifiers_protected ();
+      int depth = unlock_ghost_specifiers_protected ();
       Lisp_Object frame;
       XSETFRAME (frame, f);
       call_critical_lisp_code (XDEVICE (FRAME_DEVICE (f)),
@@ -556,7 +558,7 @@ init_device_scrollbars (struct device *d)
 {
   if (HAS_DEVMETH_P (d, create_scrollbar_instance))
     {
-      int depth = reveal_ghost_specifiers_protected ();
+      int depth = unlock_ghost_specifiers_protected ();
       Lisp_Object device;
       XSETDEVICE (device, d);
       call_critical_lisp_code (d,
@@ -571,7 +573,7 @@ init_global_scrollbars (struct device *d)
 {
   if (HAS_DEVMETH_P (d, create_scrollbar_instance))
     {
-      int depth = reveal_ghost_specifiers_protected ();
+      int depth = unlock_ghost_specifiers_protected ();
       call_critical_lisp_code (d,
 			       Qinit_scrollbar_from_resources,
 			       Qglobal);
@@ -741,7 +743,7 @@ behavior.
     bufpos = vmotion (XWINDOW (window), XINT (Fwindow_point (window)),
 		      XINT (value), 0);
     Fset_window_point (window, make_int (bufpos));
-    Frecenter (Qzero, window);
+    Fcenter_to_window_line (Qzero, window);
   }
 #endif /* Athena */
   zmacs_region_stays = 1;
@@ -773,7 +775,7 @@ behavior.
     Lisp_Object value = Fcdr (object);
     CHECK_INT (value);
     Fmove_to_window_line (value, window);
-    Frecenter (Qzero, window);
+    Fcenter_to_window_line (Qzero, window);
   }
 #endif /* Athena */
   zmacs_region_stays = 1;
@@ -791,7 +793,7 @@ scrollbar behavior.
 {
   Lisp_Object orig_pt = Fwindow_point (window);
   Fset_window_point (window, Fpoint_min (Fwindow_buffer (window)));
-  Frecenter (Qzero, window);
+  Fcenter_to_window_line (Qzero, window);
   scrollbar_reset_cursor (window, orig_pt);
   zmacs_region_stays = 1;
   return Qnil;
@@ -808,7 +810,7 @@ scrollbar behavior.
 {
   Lisp_Object orig_pt = Fwindow_point (window);
   Fset_window_point (window, Fpoint_max (Fwindow_buffer (window)));
-  Frecenter (make_int (-3), window);
+  Fcenter_to_window_line (make_int (-3), window);
   scrollbar_reset_cursor (window, orig_pt);
   zmacs_region_stays = 1;
   return Qnil;

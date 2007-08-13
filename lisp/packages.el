@@ -88,6 +88,7 @@
    (list "site-packages"     'late  #'(lambda () t))
    (list "infodock-packages" 'late  #'(lambda () (featurep 'infodock)))
    (list "mule-packages"     'late  #'(lambda () (featurep 'mule)))
+   (list "xemacs-packages"   'late  #'(lambda () t))
    (list "packages"          'late  #'(lambda () t)))
   "Locations of the various package directories.
 This is a list each of whose elements describes one directory.
@@ -320,7 +321,9 @@ This function is basically a wrapper over `locate-file'."
 
 (defun packages-find-package-directories (roots base)
   "Find a set of package directories."
-  (let ((version-directory (paths-find-version-directory roots base))
+  ;; make sure paths-find-version-directory and paths-find-site-directory
+  ;; don't both pick up version-independent directories ...
+  (let ((version-directory (paths-find-version-directory roots base nil nil t))
 	(site-directory (paths-find-site-directory roots base)))
     (paths-uniq-append
      (and version-directory (list version-directory))

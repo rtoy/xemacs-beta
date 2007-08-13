@@ -1,5 +1,9 @@
 /* toolbar implementation -- mswindows interface.
-   Copyright (C) 1998 Free Software Foundation.
+   Copyright (C) 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1996 Chuck Thompson.
+   Copyright (C) 1998 Andy Piper.
 
 This file is part of XEmacs.
 

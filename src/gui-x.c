@@ -36,6 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "gui.h"
 #include "opaque.h"
+#include "bytecode.h"		/* for struct Lisp_Compiled_Function */
 
 #ifdef HAVE_POPUPS
 Lisp_Object Qmenu_no_selection_hook;
@@ -258,7 +259,12 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
       fn = Qrun_hooks;
       arg = Qmenu_no_selection_hook;
     }
-  else if (SYMBOLP (data))
+  else if (SYMBOLP (data)
+	   /* poor man's commandp */
+	   || (COMPILED_FUNCTIONP (data)
+	       && XCOMPILED_FUNCTION (data)->flags.interactivep)
+	   || (EQ (XCAR (data), Qlambda)
+	       && !NILP (Fassq (Qinteractive, Fcdr (Fcdr (data))))))
     {
       fn = Qcall_interactively;
       arg = data;

@@ -27,7 +27,7 @@ device-x.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h buffer.h bufslots.h conslots.h con
 dialog-x.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h EmacsFrame.h EmacsManager.h EmacsShell.h buffer.h bufslots.h commands.h conslots.h console-x.h console.h device.h events.h frame.h frameslots.h gui-x.h gui.h mule-charset.h opaque.h redisplay.h scrollbar.h specifier.h systime.h toolbar.h window.h xintrinsic.h
 frame-x.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h EmacsFrame.h EmacsFrameP.h EmacsManager.h EmacsShell.h ExternalShell.h buffer.h bufslots.h conslots.h console-x.h console.h device.h events-mod.h events.h extents.h faces.h frame.h frameslots.h glyphs-x.h glyphs.h mule-charset.h objects-x.h objects.h offix-types.h offix.h redisplay.h scrollbar-x.h scrollbar.h specifier.h systime.h toolbar.h window.h xintrinsic.h xintrinsicp.h xmprimitivep.h xmu.h
 glyphs-x.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h bitmaps.h buffer.h bufslots.h conslots.h console-x.h console.h device.h file-coding.h frame.h frameslots.h glyphs-x.h glyphs.h imgproc.h insdel.h lstream.h msdos.h mule-charset.h nt.h objects-x.h objects.h opaque.h scrollbar.h specifier.h sysfile.h toolbar.h xintrinsic.h xmu.h
-gui-x.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h buffer.h bufslots.h conslots.h console-x.h console.h device.h frame.h frameslots.h gui-x.h gui.h mule-charset.h opaque.h scrollbar.h specifier.h toolbar.h xintrinsic.h
+gui-x.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h buffer.h bufslots.h bytecode.h conslots.h console-x.h console.h device.h frame.h frameslots.h gui-x.h gui.h mule-charset.h opaque.h scrollbar.h specifier.h toolbar.h xintrinsic.h
 input-method-xfs.o: $(LISP_H) EmacsFrame.h buffer.h bufslots.h conslots.h console-x.h console.h device.h events.h frame.h frameslots.h mule-charset.h redisplay.h scrollbar.h specifier.h systime.h toolbar.h window.h xintrinsic.h
 input-method-xlib.o: $(LISP_H) EmacsFrame.h buffer.h bufslots.h conslots.h console-x.h console.h device.h events.h frame.h frameslots.h mule-charset.h redisplay.h scrollbar.h specifier.h systime.h toolbar.h window.h xintrinsic.h
 menubar-x.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h EmacsFrame.h EmacsManager.h EmacsShell.h buffer.h bufslots.h commands.h conslots.h console-x.h console.h device.h events.h frame.h frameslots.h gui-x.h gui.h mule-charset.h opaque.h redisplay.h scrollbar.h specifier.h systime.h toolbar.h window.h xintrinsic.h
@@ -112,6 +112,7 @@ frame.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h events.h ex
 free-hook.o: $(LISP_H) hash.h
 general.o: $(LISP_H)
 getloadavg.o: $(LISP_H) msdos.h nt.h sysfile.h
+glyphs-eimage.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h file-coding.h frame.h frameslots.h glyphs.h imgproc.h insdel.h lstream.h msdos.h mule-charset.h nt.h objects.h opaque.h scrollbar.h specifier.h sysfile.h toolbar.h
 glyphs.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h elhash.h faces.h frame.h frameslots.h glyphs.h insdel.h mule-charset.h objects.h redisplay.h scrollbar.h specifier.h toolbar.h window.h
 gmalloc.o: config.h getpagesize.h
 gpmevent.o: $(LISP_H) conslots.h console-tty.h console.h device.h events-mod.h events.h gpmevent.h sysdep.h syssignal.h systime.h systty.h
@@ -154,7 +155,7 @@ process.o: $(LISP_H) buffer.h bufslots.h commands.h conslots.h console.h device.
 profile.o: $(LISP_H) backtrace.h bytecode.h hash.h syssignal.h systime.h
 pure.o: $(LISP_H) puresize-adjust.h puresize.h
 ralloc.o: $(LISP_H) getpagesize.h
-rangetab.o: $(LISP_H)
+rangetab.o: $(LISP_H) rangetab.h
 realpath.o: config.h
 redisplay-output.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h debug.h device.h faces.h frame.h frameslots.h glyphs.h mule-charset.h redisplay.h scrollbar.h specifier.h sysdep.h toolbar.h window.h
 redisplay-tty.o: $(LISP_H) buffer.h bufslots.h conslots.h console-tty.h console.h device.h events.h faces.h frame.h frameslots.h glyphs.h lstream.h mule-charset.h objects-tty.h objects.h redisplay.h scrollbar.h specifier.h sysdep.h syssignal.h systime.h systty.h toolbar.h window.h

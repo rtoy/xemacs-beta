@@ -1289,7 +1289,8 @@ This variable controls how many lines Emacs tries to scroll before
 recentering.  If you set it to a small number, then when you move point
 a short distance off the screen, XEmacs will scroll the screen just far
 enough to bring point back on screen, provided that does not exceed
-@var{scroll-conservatively} lines.
+@code{scroll-conservatively} lines.  This variable overrides the
+redisplay preemption.
 @end defopt
 
 @defopt next-screen-context-lines

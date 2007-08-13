@@ -74,7 +74,7 @@ make the clicked-on window taller or shorter."
 	  (start-event-frame (event-frame event))
 	  (start-event-window (event-window event))
 	  (start-nwindows (count-windows t))
-	  (hscroll-delta (face-width 'modeline))
+;;	  (hscroll-delta (face-width 'modeline))
 ;;	  (start-hscroll (modeline-hscroll (event-window event)))
 	  (start-x-pixel (event-x-pixel event))
 	  (last-timestamp 0)
@@ -313,25 +313,11 @@ in the list takes precedence.")
 ;;            (append minor-mode-alist
 ;;                    '((isearch-mode isearch-mode))))))
 
-(defvar place)
 (defun add-minor-mode (toggle name &optional keymap after toggle-fun)
   "Add a minor mode to `minor-mode-alist' and `minor-mode-map-alist'.
 
 TOGGLE is a symbol whose value as a variable specifies whether the
 minor mode is active.
-
- If TOGGLE has the `:menu-tag' property set to a string, that string
- will be used as the label on the `modeline-minor-mode-menu' instead
- of TOGGLE's symbol-name.
-
- TOGGLE may have an `:included' property, which determines whether a
- menu button will be shown for this minor mode in the
- `modeline-minor-mode-menu'.  This should be either a boolean
- variable, or an expression evaluating to t or nil.  \(See the
- documentation of `current-menubar' for more information.)
-
- It may have an `:active' property also, as documented in
- `current-menubar'.
 
 NAME is the name that should appear in the modeline.  It should either
 be a string beginning with a space, or a symbol with a similar string
@@ -349,70 +335,61 @@ on the mode, and when button3 is pressed somewhere in the list of
 modes.  If TOGGLE-FUN is nil and TOGGLE names an interactive function,
 TOGGLE is used as the toggle function.
 
-Example: (put 'view-minor-mode :menu-tag \"View (minor)\")
-         (put 'view-minor-mode :included '(buffer-file-name))
-         (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
-  (let (el place
-	(add-elt #'(lambda (elt sym)
-		     (cond ((null after) ; add to front
-			    (set sym (cons elt (symbol-value sym))))
-			   ((and (not (eq after t))
-				 (setq place (memq (assq after
-							 (symbol-value sym))
-						   (symbol-value sym))))
-			    (setq elt (cons elt (cdr place)))
-			    (setcdr place elt))
-			   (t
-			    (set sym (append (symbol-value sym) (list elt))))
-			   )
-		     (symbol-value sym)))
-	toggle-keymap)
+Example: (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
+  (let* ((add-elt #'(lambda (elt sym)
+		      (let (place)
+			(cond ((null after) ; add to front
+			       (push elt (symbol-value sym)))
+			      ((and (not (eq after t))
+				    (setq place (memq (assq after
+							    (symbol-value sym))
+						      (symbol-value sym))))
+			       (push elt (cdr place)))
+			      (t
+			       (set sym (append (symbol-value sym)
+						(list elt))))))
+		      (symbol-value sym)))
+	 el toggle-keymap)
     (if toggle-fun
-	(if (not (commandp toggle-fun))
-	    (error "not an interactive function: %S" toggle-fun))
-      (if (commandp toggle)
-	  (setq toggle-fun toggle)))
-    (if (and toggle-fun name)
-	(progn
-	  (setq toggle-keymap (make-sparse-keymap
-			       (intern (concat "modeline-minor-"
-					       (symbol-name toggle)
-					       "-map"))))
-	  (define-key toggle-keymap 'button2
-	    ;; defeat the DUMB-ASS byte-compiler, which tries to
-	    ;; expand the macro at compile time and fucks up.
-	    (eval '(make-modeline-command-wrapper toggle-fun)))
-	  (put toggle 'modeline-toggle-function toggle-fun)))
-    (and name
-	 (let ((hacked-name
-		(if toggle-keymap
-		    (cons (let ((extent (make-extent nil nil)))
-			    (set-extent-keymap extent toggle-keymap)
-			    (set-extent-property
-			     extent 'help-echo
-			     (concat "button2 turns off "
-				     (if (symbolp toggle-fun)
-					 (symbol-name toggle-fun)
-				       (symbol-name toggle))))
-			    extent)
-			  (cons
-			   modeline-mousable-minor-mode-extent
-			   name))
-		  name)))
-	   (if (setq el (assq toggle minor-mode-alist))
-	       (setcdr el (list hacked-name))
-	     (funcall add-elt 
-		      (list toggle hacked-name)
-		      'minor-mode-alist))))
-    (and keymap
-	 (if (setq el (assq toggle minor-mode-map-alist))
-	     (setcdr el keymap)
-	   (funcall add-elt
-		    (cons toggle keymap)
-		    'minor-mode-map-alist)))
-    ))
+	(check-argument-type 'commandp toggle-fun)
+      (when (commandp toggle)
+	(setq toggle-fun toggle)))
+    (when (and toggle-fun name)
+      (setq toggle-keymap (make-sparse-keymap
+			   (intern (concat "modeline-minor-"
+					   (symbol-name toggle)
+					   "-map"))))
+      (define-key toggle-keymap 'button2
+	;; defeat the DUMB-ASS byte-compiler, which tries to
+	;; expand the macro at compile time and fucks up.
+	(eval '(make-modeline-command-wrapper toggle-fun)))
+      (put toggle 'modeline-toggle-function toggle-fun))
+    (when name
+      (let ((hacked-name
+	     (if toggle-keymap
+		 (cons (let ((extent (make-extent nil nil)))
+			 (set-extent-keymap extent toggle-keymap)
+			 (set-extent-property
+			  extent 'help-echo
+			  (concat "button2 turns off "
+				  (if (symbolp toggle-fun)
+				      (symbol-name toggle-fun)
+				    (symbol-name toggle))))
+			 extent)
+		       (cons modeline-mousable-minor-mode-extent name))
+	       name)))
+	(if (setq el (assq toggle minor-mode-alist))
+	    (setcdr el (list hacked-name))
+	  (funcall add-elt 
+		   (list toggle hacked-name)
+		   'minor-mode-alist))))
+    (when keymap
+      (if (setq el (assq toggle minor-mode-map-alist))
+	  (setcdr el keymap)
+	(funcall add-elt
+		 (cons toggle keymap)
+		 'minor-mode-map-alist)))))
 
-;; gettext anyone?
 (put 'abbrev-mode :menu-tag "Abbreviation Expansion")
 (add-minor-mode 'abbrev-mode " Abbrev")
 ;; only when visiting a file...
@@ -420,10 +397,18 @@ Example: (put 'view-minor-mode :menu-tag \"View (minor)\")
 (put 'auto-fill-function :menu-tag "Auto Fill")
 (add-minor-mode 'auto-fill-function " Fill" nil nil 'auto-fill-mode)
 
-;; what's the meaning of `####' vs `FIXME' or ...?
-;; not really a minor mode...  and it doesn't work right anyway.
-;;(put 'defining-kbd-macro :menu-tag "Defining kbd macro")
-;;(add-minor-mode 'defining-kbd-macro " Def") FIXME
+(put 'defining-kbd-macro :menu-tag "Keyboard Macro")
+(add-minor-mode 'defining-kbd-macro " Def" nil nil
+		(lambda ()
+		  (interactive)
+		  (if defining-kbd-macro
+		      ;; #### 1 means to disregard the last event.
+		      ;; This is needed because the last recorded
+		      ;; event is usually the mouse event that invoked
+		      ;; the menu item (and this function), and having
+		      ;; it in the macro causes problems.
+		      (end-kbd-macro nil 1)
+		    (start-kbd-macro nil))))
 
 (defun modeline-minor-mode-menu (event)
   "The menu that pops up when you press `button3' inside the
@@ -432,38 +417,39 @@ parentheses on the modeline."
   (save-excursion
     (set-buffer (event-buffer event))
     (popup-menu-and-execute-in-window
-     (cons "Minor Mode Toggles"
-	   (apply 'nconc
-		  (mapcar
-		   #'(lambda (x)
-		       (let* ((toggle-sym (car x))
-			      (menu-tag (get toggle-sym :menu-tag nil))
-			      (toggle-fun
-			       (or (get toggle-sym
-					'modeline-toggle-function)
-				   (and (fboundp toggle-sym)
-					(commandp toggle-sym)
-					toggle-sym))))
-			 (if (not toggle-fun) nil
-			   (list (vector
-				  (or (and (stringp menu-tag)
-					   menu-tag)
-				      (setq menu-tag (capitalize
-						      (replace-in-string
-						       (replace-in-string
-							(replace-in-string (if (symbolp toggle-fun)
-									       (symbol-name toggle-fun)
-									     (symbol-name toggle-sym))
-									   "-" " ")
-							"minor" " (minor)")
-						       " mode" ""))))
-				  toggle-fun
-				  :active (get toggle-sym :active t)
-				  :included (get toggle-sym :included t)
-				  :style 'toggle
-				  :selected (and (boundp toggle-sym)
-						 toggle-sym))))))
-		   minor-mode-alist)))
+     (cons
+      "Minor Mode Toggles"
+      (sort
+       (delq nil (mapcar
+		 #'(lambda (x)
+		     (let* ((toggle-sym (car x))
+			    (toggle-fun (or (get toggle-sym
+						 'modeline-toggle-function)
+					    (and (commandp toggle-sym)
+						 toggle-sym)))
+			    (menu-tag (or (get toggle-sym :menu-tag nil)
+					  (symbol-name (if (symbolp toggle-fun)
+							   toggle-fun
+							 toggle-sym))
+					  ;; Here a function should
+					  ;; maybe be invoked to
+					  ;; beautify the symbol's
+					  ;; menu appearance.
+					  )))
+		       (and toggle-fun
+			    (vector menu-tag
+				    toggle-fun
+				    ;; The following two are wrong
+				    ;; because of possible name
+				    ;; clashes.
+				    ;:active (get toggle-sym :active t)
+				    ;:included (get toggle-sym :included t)
+				    :style 'toggle
+				    :selected (and (boundp toggle-sym)
+						   toggle-sym)))))
+		 minor-mode-alist))
+       (lambda (e1 e2)
+	 (string< (aref e1 0) (aref e2 0)))))
      event)))
 
 (defvar modeline-minor-mode-map (make-sparse-keymap 'modeline-minor-mode-map)
@@ -541,6 +527,24 @@ Its default value is \"XEmacs: %17b\" (NOT!).  Major modes that edit things
 other than ordinary files may change this (e.g. Info, Dired,...)")
 (make-variable-buffer-local 'modeline-buffer-identification)
 
+(defvar modeline-line-number-map
+  (make-sparse-keymap 'modeline-line-number-map)
+"Keymap consulted for mouse-clicks on the line number in the modeline.")
+
+(define-key modeline-line-number-map 'button2 'goto-line)
+
+(defvar modeline-line-number-extent (make-extent nil nil)
+  "Extent covering the modeline-line-number string.")
+(set-extent-face modeline-line-number-extent 'modeline-mousable)
+(set-extent-keymap modeline-line-number-extent modeline-line-number-map)
+(set-extent-property modeline-line-number-extent 'help-echo
+		     "button2 to goto a specific line")
+
+(put 'line-number-mode :menu-tag "Line Number")
+(add-minor-mode 'line-number-mode "")
+(put 'column-number-mode :menu-tag "Column Number")
+(add-minor-mode 'column-number-mode "")
+
 (defconst modeline-process nil
   "Modeline control for displaying info on process status.
 Normally nil in most modes, since there is no process to display.")
@@ -587,7 +591,7 @@ Normally nil in most modes, since there is no process to display.")
   (cons modeline-narrowed-extent "%n")
   'modeline-process
   (purecopy ")%]----")
-  (purecopy '(line-number-mode "L%l--"))
+  (cons modeline-line-number-extent (list 'line-number-mode (purecopy "L%l--")))
   (purecopy '(column-number-mode "C%c--"))
   (purecopy '(-3 . "%p"))
   (purecopy "-%-")))

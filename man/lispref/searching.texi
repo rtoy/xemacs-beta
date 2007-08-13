@@ -173,7 +173,7 @@ also make good use of regular expressions.
  The XEmacs regular expression syntax most closely resembles that of
 @cite{ed}, or @cite{grep}, the GNU versions of which all utilize the GNU
 @cite{regex} library.  XEmacs' version of @cite{regex} has recently been
-extended with some perl--like capabilities, described in the next
+extended with some Perl--like capabilities, described in the next
 section.
 
 @menu
@@ -269,26 +269,17 @@ else.
 @item *?
 @cindex @samp{*?} in regexp
 works just like @samp{*}, except that rather than matching the longest
-match, it matches the shortest match.  This is known as a "non-greedy"
-quantifier.  It is a syntax that comes to us from perl.  It is very
-useful for situations where you want to match the text inside a pair of
-delimiters.
+match, it matches the shortest match.  @samp{*?} is known as a
+@dfn{non-greedy} quantifier, a regexp construct borrowed from Perl.
 @c Did perl get this from somewhere?  What's the real history of *? ?
 
-@lisp
-@group
-(setq s "/ blah / / blah2 /")
-    @result{} "/ blah / / blah2 /"
-(string-match "/.*/" s)
-    @result{} 0
-(match-string 0 s)
-    @result{} "/ blah / / blah2 /"
-(string-match "/.*?/" s)
-    @result{} 0
-(match-string 0 s)
-    @result{} "/ blah /"
-@end group
-@end lisp
+This construct very useful for when you want to match the text inside a
+pair of delimiters.  For instance, @samp{/\*.*?\*/} will match C
+comments in a string.  This could not be achieved without the use of
+greedy quantifier.
+
+This construct has not been available prior to XEmacs 20.4.  It is not
+available in FSF Emacs.
 
 @item +?
 @cindex @samp{+?} in regexp
@@ -297,26 +288,10 @@ is the @samp{+} analog to @samp{*?}.
 @item \@{n,m\@}
 @c Note the spacing after the close brace is deliberate.
 @cindex @samp{\@{n,m\@} }in regexp
-this is an interval quantifier, which is analogous to @samp{*} or
-@samp{+}, but specifies that the expression must match at least @samp{n}
-times, but no more than @samp{m} times.  This syntax comes to us from
-@cite{ed}, @cite{grep}, and @cite{perl}.  The @cite{etags} utility also
-supports it.
-
-@lisp
-@group
-(setq s "12 123 1234 12345")
-    @result{} "12 123 1234 12345"
-(string-match "[0-9]\\@{2,4\\@}" s)
-    @result{} 0
-(match-string 0 s)
-    @result{} "12"
-(string-match "[0-9]\\@{3,4\\@}" s)
-    @result{} 3
-(match-string 0 s)
-    @result{} "123"
-@end group
-@end lisp
+serves as an interval quantifier, analogous to @samp{*} or @samp{+}, but
+specifies that the expression must match at least @var{n} times, but no
+more than @var{m} times.  This syntax is supported by most Unix regexp
+utilities, and has been introduced to XEmacs for the version 20.3.
 
 @item [ @dots{} ]
 @cindex character set (in regexp)
@@ -482,26 +457,13 @@ the same exact text.
 @item \(?: @dots{} \)
 @cindex @samp{(?:} in regex
 @cindex regexp grouping
-is called a "shy" grouping operator, and it is used just like @samp{\(
-@dots{} \)}, except that it does not cause the matched substring to be
-recorded for future reference.  This can be useful at times when a
-program wants to refer to a specific @samp{\( @dots{} \)} group's number
-(eg. in a @code{match-string} or @code{match-beginning} function
-application) and you need to use grouping constructs for an alternation
-or multi--character repetition inside a regular expression string that
-can change each time the code is run, but you don't want those groups
-counting because they'd change the reference number of the group you
-want to refer to that is inside the static part of your generated
-regular expression.
+is called a @dfn{shy} grouping operator, and it is used just like
+@samp{\( @dots{} \)}, except that it does not cause the matched
+substring to be recorded for future reference.
 
-@lisp
-;; @r{Here `dynamic-regex' might contain shy groups.}
-(re-search-forward
- (concat "\\(" dynamic-regex "\\)\\(-?[0-9]\\@{2,4\\@}\\)"))
-;; @r{and this `match-string' will still refer to the integer}
-;; @r{captured by the second group in the `concat' string.}
-(match-string 2)
-@end lisp
+This is useful when you need a lot of grouping @samp{\( @dots{} \)}
+constructs, but only want to remember one or two.  Then you can use 
+not want to remember them for later use with @code{match-string}.
 
 Using @samp{\(?: @dots{} \)} rather than @samp{\( @dots{} \)} when you
 don't need the captured substrings ought to speed up your programs some,
@@ -509,8 +471,11 @@ since it shortens the code path followed by the regular expression
 engine, as well as the amount of memory allocation and string copying it
 must do.  The actual performance gain to be observed has not been
 measured or quantified as of this writing.
-@c This is used to good advantage by the font-locking code, and by `regexp-opt.el'.
-@c ... It will be.  It's not yet, but will be.
+@c This is used to good advantage by the font-locking code, and by
+@c `regexp-opt.el'.  ... It will be.  It's not yet, but will be.
+
+The shy grouping operator has been borrowed from Perl, and has not been
+available prior to XEmacs 20.3, nor is it available in FSF Emacs.
 
 @item \w
 @cindex @samp{\w} in regexp
@@ -788,6 +753,35 @@ the match is available as @code{(match-end 0)}.  @xref{Match Data}.
 @group
 (match-end 0)
      @result{} 32
+@end group
+@end example
+@end defun
+
+@defun split-string string &optional pattern
+This function splits @var{string} to substrings delimited by
+@var{pattern}, and returns a list of substrings.  If @var{pattern} is
+omitted, it defaults to @samp{[ \f\t\n\r\v]+}, which means that it
+splits @var{string} by white--space.
+
+@example
+@group
+(split-string "foo bar")
+     @result{} ("foo" "bar")
+@end group
+
+@group
+(split-string "something")
+     @result{} ("something")
+@end group
+
+@group
+(split-string "a:b:c" ":")
+     @result{} ("a" "b" "c")
+@end group
+
+@group
+(split-string ":a::b:c" ":")
+     @result{} ("" "a" "" "b" "c")
 @end group
 @end example
 @end defun

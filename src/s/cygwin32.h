@@ -139,7 +139,7 @@ extern long random();
 #define DATA_END -1
 #define HEAP_IN_DATA
 #define UNEXEC "unexcw.o"
-#define BROKEN_SIGIO
+/* #define BROKEN_SIGIO */
 #define PROCESS_IO_BLOCKING 
 #define strnicmp strncasecmp
 #ifndef HAVE_SOCKETS

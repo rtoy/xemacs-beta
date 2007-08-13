@@ -23,35 +23,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Ben Wing, August 1995. */
 
-#include <config.h>
-#include "lisp.h"
-
-typedef struct range_table_entry range_table_entry;
-struct range_table_entry
-{
-  EMACS_INT first;
-  EMACS_INT last;
-  Lisp_Object val;
-};
-
-typedef struct
-{
-  Dynarr_declare (range_table_entry);
-} range_table_entry_dynarr;
-
-struct Lisp_Range_Table
-{
-  struct lcrecord_header header;
-  range_table_entry_dynarr *entries;
-};
-
-DECLARE_LRECORD (range_table, struct Lisp_Range_Table);
-#define XRANGE_TABLE(x) \
-  XRECORD (x, range_table, struct Lisp_Range_Table)
-#define XSETRANGE_TABLE(x, p) XSETRECORD (x, p, range_table)
-#define RANGE_TABLEP(x) RECORDP (x, range_table)
-#define GC_RANGE_TABLEP(x) GC_RECORDP (x, range_table)
-#define CHECK_RANGE_TABLE(x) CHECK_RECORD (x, range_table)
+#include "rangetab.h"
 
 Lisp_Object Qrange_tablep;
 Lisp_Object Qrange_table;

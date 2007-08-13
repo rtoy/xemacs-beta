@@ -90,7 +90,7 @@ void syms_of_frame_x (void);
 void syms_of_free_hook (void);
 void syms_of_general (void);
 void syms_of_glyphs_x (void);
-void syms_of_glyphs_read (void);
+void syms_of_glyphs_eimage (void);
 void syms_of_glyphs_mswindows (void);
 void syms_of_glyphs (void);
 void syms_of_gui_x (void);
@@ -186,7 +186,7 @@ void structure_type_create_hashtable (void);
 /* Initialize the image instantiator types (dump-time only). */
 
 void image_instantiator_format_create (void);
-void image_instantiator_format_create_glyphs_read (void);
+void image_instantiator_format_create_glyphs_eimage (void);
 void image_instantiator_format_create_glyphs_x (void);
 void image_instantiator_format_create_glyphs_mswindows (void);
 
@@ -251,7 +251,7 @@ void vars_of_frame_mswindows (void);
 void vars_of_frame_x (void);
 void vars_of_frame (void);
 void vars_of_glyphs_x (void);
-void vars_of_glyphs_read (void);
+void vars_of_glyphs_eimage (void);
 void vars_of_glyphs_mswindows (void);
 void vars_of_glyphs (void);
 void vars_of_gui_x (void);
@@ -360,6 +360,7 @@ void init_event_stream (void);
 void init_event_tty_late (void);
 void init_event_mswindows_late (void);
 void init_event_unixoid (void);
+void init_hpplay (void);
 void init_lread (void);
 void init_macros (void);
 /* Not named init_process in order to avoid conflict with NS 3.3 */

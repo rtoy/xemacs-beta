@@ -190,10 +190,10 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
       wordstart = get_buffer_pos_char (buf, Vabbrev_start_location,
 				       GB_COERCE_RANGE);
       Vabbrev_start_location = Qnil;
+#if 0
       /* Previously, abbrev-prefix-mark crockishly inserted a dash to
 	 indicate the abbrev start point.  It now uses an extent with
 	 a begin glyph so there's no dash to remove.  */
-#if 0
       if (wordstart != BUF_ZV (buf)
  	  && BUF_FETCH_CHAR (buf, wordstart) == '-')
 	{
@@ -245,10 +245,7 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
 static int
 obarray_has_blank_p (Lisp_Object obarray)
 {
-  Lisp_Object lookup;
-
-  lookup = oblookup (obarray, (Bufbyte *)" ", 1);
-  return SYMBOLP (lookup);
+  return !ZEROP (oblookup (obarray, (Bufbyte *)" ", 1));
 }
 
 /* Analyze case in the buffer substring, and report it.  */
@@ -256,12 +253,10 @@ static void
 abbrev_count_case (struct buffer *buf, Bufpos pos, Charcount length,
 		   int *lccount, int *uccount)
 {
-  Emchar c;
-
   *lccount = *uccount = 0;
   while (length--)
     {
-      c = BUF_FETCH_CHAR (buf, pos);
+      Emchar c = BUF_FETCH_CHAR (buf, pos);
       if (UPPERCASEP (buf, c))
 	++*uccount;
       else if (LOWERCASEP (buf, c))

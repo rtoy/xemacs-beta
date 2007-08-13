@@ -239,6 +239,13 @@ the prompt string (starting with the first character that is not
 @samp{*}, @samp{@@}, or @samp{_}).
 @end itemize
 
+@defun function-interactive function
+This function retrieves the interactive specification of @var{function},
+which may be any funcallable object.  The specification will be returned
+as the list of the symbol @code{interactive} and the specs.  If
+@var{function} is not interactive, @code{nil} will be returned.
+@end defun
+
 @node Interactive Codes
 @subsection Code Characters for @code{interactive}
 @cindex interactive code description
@@ -1313,8 +1320,8 @@ the latter case.
 This function creates a new event structure.  If no arguments are
 specified, the created event will be empty.  To specify the event type,
 use the @var{type} argument.  The allowed types are @code{empty},
-@code{key-press}, @code{button-press}, @code{button-release}, or
-@code{motion}.
+@code{key-press}, @code{button-press}, @code{button-release},
+@code{motion}, or @code{misc-user}.
 
 @var{plist} is a property list, the properties being compatible to those
 returned by @code{event-properties}.  For events other than
@@ -1385,7 +1392,7 @@ Here are some basic examples of usage:
 @end group
 
 @group
-;; @r{Creating a key-press event, try No. 2.}
+;; @r{Creating a key-press event, try 2}
 (make-event 'key-press '(key home))
      @result{} #<keypress-event home>
 @end group
@@ -1397,8 +1404,8 @@ Here are some basic examples of usage:
 @end group
 
 @group
-;; @r{Create a M-button1 event at coordinates defined by variables
-;; @var{x} and @var{y}.}
+;; @r{Create a M-button1 event at coordinates defined by variables}
+;; @r{@var{x} and @var{y}.}
 (make-event 'button-press `(button 1 modifiers (meta) x ,x y ,y))
      @result{} #<buttondown-event meta-button1>
 @end group
@@ -1412,11 +1419,11 @@ Here are some basic examples of usage:
 @group
 ;; @r{Create a mouse-motion event.}
 (make-event 'motion '(x 20 y 30))
-     @result{} #<motion-event 20, 67>
+     @result{} #<motion-event 20, 30>
 
-;; @r{(the Y coordinate is printed incompatibly; however:)}
 (event-properties (make-event 'motion '(x 20 y 30)))
-     @result{} (channel #<x-frame "emacs" 0x8e2> x 20 y 30 modifiers nil timestamp 0)
+     @result{} (channel #<x-frame "emacs" 0x8e2> x 20 y 30
+         modifiers nil timestamp 0)
 @end group
 @end lisp
 
@@ -1434,7 +1441,7 @@ Note, however, that you cannot use @code{make-event} as the generic
 replacement for @code{copy-event}, because it does not allow creating
 all of the event types.
 
-To create a changed copy of an event, you can use the canonicalization
+To create a modified copy of an event, you can use the canonicalization
 feature of @var{plist}.  The following example creates a copy of
 @var{event}, but with @code{modifiers} reset to @code{nil}.
 

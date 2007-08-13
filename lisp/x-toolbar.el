@@ -93,9 +93,9 @@
   (interactive)
   (call-interactively toolbar-print-function))
 
-(defcustom toolbar-cut-function 'x-kill-primary-selection
+(defcustom toolbar-cut-function 'kill-primary-selection
   "*Function to call when the cut icon is selected."
-  :type '(radio (function-item x-kill-primary-selection)
+  :type '(radio (function-item kill-primary-selection)
                 (function :tag "Other"))
   :group 'toolbar)
 
@@ -103,9 +103,9 @@
   (interactive)
   (call-interactively toolbar-cut-function))
 
-(defcustom toolbar-copy-function 'x-copy-primary-selection
+(defcustom toolbar-copy-function 'copy-primary-selection
   "*Function to call when the copy icon is selected."
-  :type '(radio (function-item x-copy-primary-selection)
+  :type '(radio (function-item copy-primary-selection)
                 (function :tag "Other"))
   :group 'toolbar)
 
@@ -113,9 +113,9 @@
   (interactive)
   (call-interactively toolbar-copy-function))
 
-(defcustom toolbar-paste-function 'x-yank-clipboard-selection
+(defcustom toolbar-paste-function 'yank-clipboard-selection
   "*Function to call when the paste icon is selected."
-  :type '(radio (function-item x-yank-clipboard-selection)
+  :type '(radio (function-item yank-clipboard-selection)
                 (function :tag "Other"))
   :group 'toolbar)
 

@@ -643,8 +643,10 @@ mswindows_update_frame_external_traits (struct frame* frm, Lisp_Object name)
 	    {
 	      Lisp_Object frame;
 	      XSETFRAME (frame, frm);
-	      Fset_frame_size (frame, FRAME_MSWINDOWS_CHARWIDTH (frm),
-			       FRAME_MSWINDOWS_CHARHEIGHT (frm), Qnil);
+	      Fset_frame_size (frame, 
+			       make_int(FRAME_MSWINDOWS_CHARWIDTH (frm)),
+			       make_int(FRAME_MSWINDOWS_CHARHEIGHT (frm)),
+			       Qnil);
 	    }
 	}
 

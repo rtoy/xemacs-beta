@@ -82,6 +82,7 @@
    (nconc
     '("Emacs-Lisp"
       ["Byte-compile This File" emacs-lisp-byte-compile]
+      ["Byte-compile/load This" emacs-lisp-byte-compile-and-load]
       ["Byte-recompile Directory..." byte-recompile-directory]
       "---")
     (cdr lisp-interaction-mode-popup-menu-1))))

@@ -457,13 +457,17 @@ zero or nil, only one help buffer, \"*Help*\" is ever used."
   ;; push new buffer
   (setq help-buffer-list (cons newbuf help-buffer-list)))
 
+(defvar help-buffer-prefix-string "Help"
+  "Initial string to use in constructing help buffer names.
+You should never set this directory, only let-bind it.")
+
 (defun help-buffer-name (name)
   "Return a name for a Help buffer using string NAME for context."
   (if (and (integerp help-max-help-buffers)
            (> help-max-help-buffers 0)
            (stringp name))
-      (format "*Help: %s*" name)
-    "*Help*"))
+      (format "*%s: %s*" help-buffer-prefix-string name)
+    (format "*%s*" help-buffer-prefix-string)))
 
 ;; Use this function for displaying help when C-h something is pressed
 ;; or in similar situations.  Do *not* use it when you are displaying

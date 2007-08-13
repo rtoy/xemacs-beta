@@ -733,11 +733,11 @@ MS Windows operating systems.\n"))
      (widget-insert "\
 Author of the Hyperbole everyday information management hypertext
 system and the OO-Browser multi-language code browser.  He also
-designed the Altrasoft integrated tool framework for software
-engineers.  It runs atop XEmacs and is available from his firm,
-Altrasoft, which offers distributions, custom development, support,
-and training packages for corporate users of XEmacs, GNU Emacs and
-InfoDock.  See ")
+designed the Altrasoft InfoDock integrated development environment
+for software engineers.  It runs atop XEmacs and is available from
+his firm, Altrasoft, which offers distributions, custom development,
+support, and training packages for corporate users of XEmacs, GNU
+Emacs and InfoDock.  See ")
      (about-url-link 'altrasoft "Visit Altrasoft WWW page")
      (widget-insert ".
 
@@ -1061,10 +1061,10 @@ to cygwin under MS-Windows.\n")
     (about-show-linked-info 'bw "\
 Author of the Hyperbole everyday information management hypertext
 system and the OO-Browser multi-language code browser.  He also
-designed the Altrasoft integrated tool framework for software
-engineers.  It runs atop XEmacs and is available from his firm,
-Altrasoft, which offers custom development and support packages for
-corporate users of XEmacs, GNU Emacs and InfoDock.  His interests
+designed the Altrasoft InfoDock integrated development environment
+for software engineers.  It runs atop XEmacs and is available from
+his firm, Altrasoft, which offers custom development and support packages
+for corporate users of XEmacs, GNU Emacs and InfoDock.  His interests
 include user interfaces, information management, CASE tools,
 communications and enterprise integration.\n")
     (about-show-linked-info 'wmperry "\

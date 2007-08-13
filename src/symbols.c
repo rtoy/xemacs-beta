@@ -2888,8 +2888,8 @@ maybe_call_magic_handler (Lisp_Object sym, Lisp_Object funsym, int nargs, ...)
 		bfwd->harg[htype], Qnil);
 }
 
-DEFUN ("dontusethis-set-symbol-value-handler",
-       Fdontusethis_set_symbol_value_handler, 3, 5, 0, /*
+DEFUN ("dontusethis-set-symbol-value-handler", Fdontusethis_set_symbol_value_handler,
+       3, 5, 0, /*
 Don't you dare use this.
 If you do, suffer the wrath of Ben, who is likely to rename
 this function (or change the semantics of its arguments) without

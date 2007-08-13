@@ -47,25 +47,25 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_LDAP_GET_ERRNO
 #endif
 
-
-
 static int ldap_default_port;
 static Lisp_Object Vldap_default_base;
 
 /* ldap-open plist keywords */
-static Lisp_Object Qport, Qauth, Qbinddn, Qpasswd, Qderef, Qtimelimit,
+extern Lisp_Object Qport, Qauth, Qbinddn, Qpasswd, Qderef, Qtimelimit,
   Qsizelimit;
 /* Search scope limits */
-static Lisp_Object Qbase, Qonelevel, Qsubtree;
+extern Lisp_Object Qbase, Qonelevel, Qsubtree;
 /* Authentication methods */
 #ifdef LDAP_AUTH_KRBV41
-static Lisp_Object Qkrbv41;
+extern Lisp_Object Qkrbv41;
 #endif
 #ifdef LDAP_AUTH_KRBV42
-static Lisp_Object Qkrbv42;
+extern Lisp_Object Qkrbv42;
 #endif
 /* Deref policy */
-static Lisp_Object Qnever, Qalways, Qfind;
+extern Lisp_Object Qnever, Qalways, Qfind;
+/* Connection status */
+extern Lisp_Object Qopen, Qclosed;
 
 static Lisp_Object Qldapp;
 
@@ -150,8 +150,24 @@ allocate_ldap (void)
   return ldap;
 }
 
+static void
+finalize_ldap (void *header, int for_disksave)
+{
+  struct Lisp_LDAP *ldap = (struct Lisp_LDAP *) header;
+
+  if (for_disksave)
+    {
+      Lisp_Object obj;
+      XSETLDAP (obj, ldap);
+      signal_simple_error
+	("Can't dump an emacs containing LDAP objects", obj);
+    }
+  if (EQ (ldap->status_symbol, Qopen))
+    ldap_unbind (ldap->ld);
+}
+
 DEFINE_LRECORD_IMPLEMENTATION ("ldap", ldap,
-                               mark_ldap, print_ldap, NULL,
+                               mark_ldap, print_ldap, finalize_ldap,
                                NULL, NULL, struct Lisp_LDAP);
 
 
@@ -320,7 +336,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
                            lisp_strerror (errno));
 
 
-#if HAVE_LDAP_SET_OPTION
+#ifdef HAVE_LDAP_SET_OPTION
   if (ldap_set_option (ld, LDAP_OPT_DEREF, (void *)&ldap_deref) != LDAP_SUCCESS)
     signal_ldap_error (ld);
   if (ldap_set_option (ld, LDAP_OPT_TIMELIMIT,
@@ -331,16 +347,16 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
     signal_ldap_error (ld);
   if (ldap_set_option (ld, LDAP_OPT_REFERRALS, LDAP_OPT_ON) != LDAP_SUCCESS)
     signal_ldap_error (ld);
-#else /* HAVE_LDAP_SET_OPTION */
+#else  /* not HAVE_LDAP_SET_OPTION */
   ld->ld_deref = ldap_deref;
   ld->ld_timelimit = ldap_timelimit;
   ld->ld_sizelimit = ldap_sizelimit;
 #ifdef LDAP_REFERRALS
   ld->ld_options = LDAP_OPT_REFERRALS;
-#else /* LDAP_REFERRALS */
+#else /* not LDAP_REFERRALS */
   ld->ld_options = 0;
-#endif /* LDAP_REFERRALS */
-#endif /* HAVE_LDAP_SET_OPTION */
+#endif /* not LDAP_REFERRALS */
+#endif /* not HAVE_LDAP_SET_OPTION */
 
   /* ldap_bind_s calls select and may be wedged by spurious signals */
   slow_down_interrupts ();
@@ -364,18 +380,14 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
 
 DEFUN ("ldap-close", Fldap_close, 1, 1, 0, /*
 Close an LDAP connection.
-Return t if the connection was actually closed or nil if
-it was already closed before the call
 */
       (ldap))
 {
-  CHECK_LDAP (ldap);
-  if ( EQ ((XLDAP (ldap))->status_symbol, Qopen) )
-    {
-      ldap_unbind ((XLDAP (ldap))->ld);
-      (XLDAP (ldap))->status_symbol = Qclosed;
-      return Qt;
-    }
+  struct Lisp_LDAP *lldap;
+  CHECK_LIVE_LDAP (ldap);
+  lldap = XLDAP (ldap);
+  ldap_unbind (lldap->ld);
+  lldap->status_symbol = Qclosed;
   return Qnil;
 }
 
@@ -562,8 +574,9 @@ an alist of attribute/values.
     {
       signal_ldap_error (ld);
     }
-
-  if ((rc = ldap_result2error (ld, unwind.res, 0)) != LDAP_SUCCESS)
+  rc = ldap_result2error (ld, unwind.res, 0);
+  if ((rc != LDAP_SUCCESS) &&
+      (rc != LDAP_SIZELIMIT_EXCEEDED))
     {
       signal_ldap_error (ld);
     }

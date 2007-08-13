@@ -187,7 +187,7 @@ Special kludge: A character is considered `old-eq' to its equivalent integer
 even though they are not the same object and are in fact of different
 types.  This is ABSOLUTELY AND UTTERLY HORRENDOUS but is necessary to
 preserve byte-code compatibility with v19.  This kludge is known as the
-\"char-to-int confoundance disease\" and appears in a number of other
+\"char-int confoundance disease\" and appears in a number of other
 functions with `old-foo' equivalents.
 
 Do not use this function!
@@ -374,9 +374,9 @@ Return t if OBJECT is a byte-compiled function object.
 
 DEFUN ("characterp", Fcharacterp, 1, 1, 0, /*
 Return t if OBJECT is a character.
-Unlike in XEmacs v19 and Emacs, a character is its own primitive type.
+Unlike in XEmacs v19 and FSF Emacs, a character is its own primitive type.
 Any character can be converted into an equivalent integer using
-`char-to-int'.  To convert the other way, use `int-to-char'; however,
+`char-int'.  To convert the other way, use `int-char'; however,
 only some integers can be converted into characters.  Such an integer
 is called a `char-int'; see `char-int-p'.
 
@@ -434,7 +434,7 @@ nil is returned.
 
 DEFUN ("char-int-p", Fchar_int_p, 1, 1, 0, /*
 Return t if OBJECT is an integer that can be converted into a character.
-See `char-to-int'.
+See `char-int'.
 */
        (object))
 {
@@ -974,10 +974,9 @@ This is only meaningful if I18N3 was enabled when emacs was compiled.
 /*                       Arithmetic functions                         */
 /**********************************************************************/
 
-enum comparison { equal, notequal, less, grtr, less_or_equal, grtr_or_equal };
-
-static Lisp_Object
-arithcompare (Lisp_Object num1, Lisp_Object num2, enum comparison comparison)
+Lisp_Object
+arithcompare (Lisp_Object num1, Lisp_Object num2,
+	      enum arith_comparison comparison)
 {
   CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER (num1);
   CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER (num2);
@@ -990,152 +989,94 @@ arithcompare (Lisp_Object num1, Lisp_Object num2, enum comparison comparison)
 
       switch (comparison)
 	{
-	case equal:         return f1 == f2 ? Qt : Qnil;
-	case notequal:      return f1 != f2 ? Qt : Qnil;
-	case less:          return f1 <  f2 ? Qt : Qnil;
-	case less_or_equal: return f1 <= f2 ? Qt : Qnil;
-	case grtr:          return f1 >  f2 ? Qt : Qnil;
-	case grtr_or_equal: return f1 >= f2 ? Qt : Qnil;
+	case arith_equal:         return f1 == f2 ? Qt : Qnil;
+	case arith_notequal:      return f1 != f2 ? Qt : Qnil;
+	case arith_less:          return f1 <  f2 ? Qt : Qnil;
+	case arith_less_or_equal: return f1 <= f2 ? Qt : Qnil;
+	case arith_grtr:          return f1 >  f2 ? Qt : Qnil;
+	case arith_grtr_or_equal: return f1 >= f2 ? Qt : Qnil;
 	}
     }
 #endif /* LISP_FLOAT_TYPE */
 
   switch (comparison)
     {
-    case equal:         return XINT (num1) == XINT (num2) ? Qt : Qnil;
-    case notequal:      return XINT (num1) != XINT (num2) ? Qt : Qnil;
-    case less:          return XINT (num1) <  XINT (num2) ? Qt : Qnil;
-    case less_or_equal: return XINT (num1) <= XINT (num2) ? Qt : Qnil;
-    case grtr:          return XINT (num1) >  XINT (num2) ? Qt : Qnil;
-    case grtr_or_equal: return XINT (num1) >= XINT (num2) ? Qt : Qnil;
+    case arith_equal:         return XINT (num1) == XINT (num2) ? Qt : Qnil;
+    case arith_notequal:      return XINT (num1) != XINT (num2) ? Qt : Qnil;
+    case arith_less:          return XINT (num1) <  XINT (num2) ? Qt : Qnil;
+    case arith_less_or_equal: return XINT (num1) <= XINT (num2) ? Qt : Qnil;
+    case arith_grtr:          return XINT (num1) >  XINT (num2) ? Qt : Qnil;
+    case arith_grtr_or_equal: return XINT (num1) >= XINT (num2) ? Qt : Qnil;
     }
 
   abort ();
   return Qnil;	/* suppress compiler warning */
 }
 
-DEFUN ("=", Feqlsign, 2, 2, 0, /*
-Return t if two args, both numbers, characters or markers, are equal.
-*/
-       (num1, num2))
-{
-  return arithcompare (num1, num2, equal);
-}
-
-DEFUN ("<", Flss, 2, 2, 0, /*
-Return t if first arg is less than second arg.
-Both must be numbers, characters or markers.
-*/
-       (num1, num2))
-{
-  return arithcompare (num1, num2, less);
-}
-
-DEFUN (">", Fgtr, 2, 2, 0, /*
-Return t if first arg is greater than second arg.
-Both must be numbers, characters or markers.
-*/
-       (num1, num2))
-{
-  return arithcompare (num1, num2, grtr);
-}
-
-DEFUN ("<=", Fleq, 2, 2, 0, /*
-Return t if first arg is less than or equal to second arg.
-Both must be numbers, characters or markers.
-*/
-       (num1, num2))
-{
-  return arithcompare (num1, num2, less_or_equal);
-}
-
-DEFUN (">=", Fgeq, 2, 2, 0, /*
-Return t if first arg is greater than or equal to second arg.
-Both must be numbers, characters or markers.
-*/
-       (num1, num2))
-{
-  return arithcompare (num1, num2, grtr_or_equal);
-}
-
-DEFUN ("/=", Fneq, 2, 2, 0, /*
-Return t if first arg is not equal to second arg.
-Both must be numbers, characters or markers.
-*/
-       (num1, num2))
-{
-  return arithcompare (num1, num2, notequal);
-}
-
-#if 0
-/* I tried implementing Common Lisp multi-arg comparison functions,
-   but failed because the byte-compiler needs to be hacked as well. */
-
 static Lisp_Object
-arithcompare_many (enum comparison comparison, int nargs, Lisp_Object *args)
+arithcompare_many (enum arith_comparison comparison,
+		   int nargs, Lisp_Object *args)
 {
-  REGISTER int argnum;
-  for (argnum = 1; argnum < nargs; argnum++)
-    if (EQ (arithcompare ( args[argnum-1], args[argnum], comparison), Qnil))
+  for (; --nargs > 0; args++)
+    if (NILP (arithcompare (*args, *(args + 1), comparison)))
       return Qnil;
 
   return Qt;
 }
 
-xxxDEFUN ("=", Feqlsign, 1, MANY, 0, /*
-Return t if all the arguments are equal.
+DEFUN ("=", Feqlsign, 1, MANY, 0, /*
+Return t if all the arguments are numerically equal.
 The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
-  return arithcompare (equal, nargs, args);
+  return arithcompare_many (arith_equal, nargs, args);
 }
 
-xxxDEFUN ("<", Flss, 1, MANY, 0, /*
+DEFUN ("<", Flss, 1, MANY, 0, /*
 Return t if the sequence of arguments is monotonically increasing.
 The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
-  return arithcompare (less, nargs, args);
+  return arithcompare_many (arith_less, nargs, args);
 }
 
-xxxDEFUN (">", Fgtr, 1, MANY, 0, /*
+DEFUN (">", Fgtr, 1, MANY, 0, /*
 Return t if the sequence of arguments is monotonically decreasing.
 The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
-  return arithcompare (grtr, nargs, args);
+  return arithcompare_many (arith_grtr, nargs, args);
 }
 
-xxxDEFUN ("<=", Fleq, 1, MANY, 0, /*
+DEFUN ("<=", Fleq, 1, MANY, 0, /*
 Return t if the sequence of arguments is monotonically nondecreasing.
 The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
-  return arithcompare (less_or_equal, nargs, args);
+  return arithcompare_many (arith_less_or_equal, nargs, args);
 }
 
-xxxDEFUN (">=", Fgeq, 1, MANY, 0, /*
+DEFUN (">=", Fgeq, 1, MANY, 0, /*
 Return t if the sequence of arguments is monotonically nonincreasing.
 The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
-  return arithcompare_many (grtr_or_equal, nargs, args);
+  return arithcompare_many (arith_grtr_or_equal, nargs, args);
 }
 
-xxxDEFUN ("/=", Fneq, 1, MANY, 0, /*
-Return t if the sequence of arguments is monotonically increasing.
+DEFUN ("/=", Fneq, 1, MANY, 0, /*
+Return t if no two arguments are numerically equal.
 The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
-  return arithcompare_many (notequal, nargs, args);
+  return arithcompare_many (arith_notequal, nargs, args);
 }
-#endif /* 0 - disabled for now */
 
 DEFUN ("zerop", Fzerop, 1, 1, 0, /*
 Return t if NUMBER is zero.

@@ -131,6 +131,7 @@ Lisp_Object Vinvocation_directory;
 Lisp_Object Vinstallation_directory;
 #endif
 
+Lisp_Object Vemacs_program_name, Vemacs_program_version;
 Lisp_Object Vexec_path;
 Lisp_Object Vexec_directory, Vconfigure_exec_directory;
 Lisp_Object Vlisp_directory, Vconfigure_lisp_directory;
@@ -239,19 +240,19 @@ fatal_error_signal (int sig)
     {
       fatal_error_in_progress = dont_check_for_quit = 1;
       shut_down_emacs (sig, Qnil);
-      stderr_out("\nLisp backtrace follows:\n\n");
-      Fbacktrace(Qexternal_debugging_output, Qt);
+      stderr_out ("\nLisp backtrace follows:\n\n");
+      Fbacktrace (Qexternal_debugging_output, Qt);
 # if 0	/* This is evil, rarely useful, and causes grief in some cases. */
       /* Check for Sun-style stack printing via /proc */
       {
         CONST char *pstack = "/usr/proc/bin/pstack";
-        if (access(pstack, X_OK) == 0)
+        if (access (pstack, X_OK) == 0)
           {
             char buf[100];
-            stderr_out("\nC backtrace follows:\n"
+            stderr_out ("\nC backtrace follows:\n"
                        "(A real debugger may provide better information)\n\n");
-            sprintf(buf, "%s %d >&2", pstack, (int)getpid());
-            system(buf);
+            sprintf (buf, "%s %d >&2", pstack, (int)getpid());
+            system (buf);
           }
       }
 # endif
@@ -903,7 +904,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_frame ();
       syms_of_general ();
       syms_of_glyphs ();
-      syms_of_glyphs_read ();
+      syms_of_glyphs_eimage ();
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       syms_of_gui ();
 #endif
@@ -1149,7 +1150,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	 called before the any calls to the other macros. */
 
       image_instantiator_format_create ();
-      image_instantiator_format_create_glyphs_read ();
+      image_instantiator_format_create_glyphs_eimage ();
 #ifdef HAVE_X_WINDOWS
       image_instantiator_format_create_glyphs_x ();
 #endif /* HAVE_X_WINDOWS */
@@ -1268,7 +1269,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_font_lock ();
       vars_of_frame ();
       vars_of_glyphs ();
-      vars_of_glyphs_read ();
+      vars_of_glyphs_eimage ();
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       vars_of_gui ();
 #endif
@@ -2529,8 +2530,8 @@ assert_failed (CONST char *file, int line, CONST char *expr)
 #endif /* USE_ASSERTIONS */
 
 #ifdef QUANTIFY
-DEFUN ("quantify-start-recording-data",
-       Fquantify_start_recording_data, 0, 0, 0, /*
+DEFUN ("quantify-start-recording-data", Fquantify_start_recording_data,
+       0, 0, 0, /*
 Start recording Quantify data.
 */
        ())
@@ -2539,8 +2540,8 @@ Start recording Quantify data.
   return Qnil;
 }
 
-DEFUN ("quantify-stop-recording-data",
-       Fquantify_stop_recording_data, 0, 0, 0, /*
+DEFUN ("quantify-stop-recording-data", Fquantify_stop_recording_data,
+       0, 0, 0, /*
 Stop recording Quantify data.
 */
        ())
@@ -2772,6 +2773,22 @@ bufpos		- check buffer positions.
 void
 complex_vars_of_emacs (void)
 {
+  /* This is all related to path searching. */
+  
+  DEFVAR_LISP ("emacs-program-name", &Vemacs_program_name /*
+*Name of the Emacs variant.
+For example, this may be \"xemacs\" or \"infodock\".
+This is mainly meant for use in path searching.
+*/ );
+  Vemacs_program_name = build_string ((char *) PATH_PROGNAME);
+
+  DEFVAR_LISP ("emacs-program-version", &Vemacs_program_version /*
+*Version of the Emacs variant.
+This typically has the form XX.XX[-bXX].
+This is mainly meant for use in path searching.
+*/ );
+  Vemacs_program_version = build_string ((char *) PATH_VERSION);
+
   DEFVAR_LISP ("exec-path", &Vexec_path /*
 *List of directories to search programs to run in subprocesses.
 Each element is a string (directory name) or nil (try default directory).

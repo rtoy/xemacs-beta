@@ -677,6 +677,13 @@ to this frame, or the @code{select-frame-hook} or
 @code{deselect-frame-hook} to be run, until the next time that XEmacs is
 waiting for an event.
 
+Also note that when the variable @code{focus-follows-mouse} is non-nil,
+the frame selection is temporary and is reverted when the current
+command terminates, much like the buffer selected by @code{set-buffer}.
+In order to effect a permanent focus change in this case, bind
+@code{focus-follows-mouse} to nil, select the frame you want, and do a
+@code{(sit-for 0)} within the scope of the binding.
+
 @ignore (FSF Emacs)
 XEmacs cooperates with the X server and the window managers by arranging
 to select frames according to what the server and window manager ask

@@ -1593,7 +1593,9 @@ read_escape (Lisp_Object readcharfun)
 	c = read_escape (readcharfun);
       return c | 0200;
 
+#ifndef MULE
 #define FSF_KEYS
+#endif
 #ifdef FSF_KEYS
 
 #define alt_modifier   (0x040000)

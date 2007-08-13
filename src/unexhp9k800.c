@@ -84,7 +84,6 @@ void Save_Shared_Data();
 int run_time_remap();
 #endif
 
-#define roundup(x,n) ( ( (x)+(n-1) ) & ~(n-1) )  /* n is power of 2 */
 #define min(x,y)  ( ((x)<(y))?(x):(y) )
 
 void write_header(int file, struct header *hdr, struct som_exec_auxhdr *auxhdr);

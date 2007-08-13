@@ -3846,8 +3846,8 @@ basis.  See `display-warning-suppressed-classes' and
 
 (defcustom display-warning-minimum-level 'info
   "Minimum level of warnings that should be displayed.
-The warnings in levels below this are completely ignored, as if they never
-happened.
+The warnings in levels below this will be generated, but not
+displayed.
 
 The recognized warning levels, in decreasing order of priority, are
 'emergency, 'alert, 'critical, 'error, 'warning, 'notice, 'info, and

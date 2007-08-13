@@ -5,7 +5,7 @@
 ;; Author: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: Jan 1998
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.4 $
 ;; Keywords: help comm
 
 ;; This file is part of XEmacs
@@ -84,7 +84,7 @@ Additional search parameters can be specified through
     (setq host-alist
 	  (assoc host ldap-host-parameters-alist))
     (message "Opening LDAP connection to %s..." host)
-    (setq ldap (ldap-open host (alist-to-plist host-alist)))
+    (setq ldap (ldap-open host (alist-to-plist (cdr host-alist))))
     (message "Searching with LDAP on %s..." host)
     (setq res (ldap-search-internal ldap filter 
 				    (cdr (assq 'base host-alist))

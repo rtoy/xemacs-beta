@@ -4748,8 +4748,8 @@ canonicalize_extent_property (Lisp_Object prop, Lisp_Object value)
 }
 
 /* Do we need a lisp-level function ? */
-DEFUN ("set-extent-initial-redisplay-function",
-       Fset_extent_initial_redisplay_function, 2,2,0,/*
+DEFUN ("set-extent-initial-redisplay-function", Fset_extent_initial_redisplay_function,
+       2,2,0,/*
 Note: This feature is experimental!
 
 Set initial-redisplay-function of EXTENT to the function
@@ -4984,7 +4984,7 @@ Set this using the `set-extent-begin-glyph-layout' function.
        (extent))
 {
   EXTENT e = decode_extent (extent, 0);
-  return glyph_layout_to_symbol (extent_begin_glyph_layout (e));
+  return glyph_layout_to_symbol ((glyph_layout) extent_begin_glyph_layout (e));
 }
 
 DEFUN ("extent-end-glyph-layout", Fextent_end_glyph_layout, 1, 1, 0, /*
@@ -4994,7 +4994,7 @@ Set this using the `set-extent-end-glyph-layout' function.
        (extent))
 {
   EXTENT e = decode_extent (extent, 0);
-  return glyph_layout_to_symbol (extent_end_glyph_layout (e));
+  return glyph_layout_to_symbol ((glyph_layout) extent_end_glyph_layout (e));
 }
 
 DEFUN ("set-extent-priority", Fset_extent_priority, 2, 2, 0, /*
@@ -5339,7 +5339,7 @@ Do not modify this list; use `set-extent-property' instead.
 {
   EXTENT e, anc;
   Lisp_Object result, face, anc_obj;
-  enum glyph_layout layout;
+  glyph_layout layout;
 
   CHECK_EXTENT (extent);
   e = XEXTENT (extent);
@@ -5359,14 +5359,14 @@ Do not modify this list; use `set-extent-property' instead.
   if (!NILP (face = Fextent_mouse_face (anc_obj)))
     result = cons3 (Qmouse_face, face, result);
 
-  if ((layout = extent_begin_glyph_layout (anc)) != GL_TEXT)
+  if ((layout = (glyph_layout) extent_begin_glyph_layout (anc)) != GL_TEXT)
     {
       Lisp_Object sym = glyph_layout_to_symbol (layout);
       result = cons3 (Qglyph_layout,       sym, result); /* compatibility */
       result = cons3 (Qbegin_glyph_layout, sym, result);
     }
 
-  if ((layout = extent_end_glyph_layout (anc)) != GL_TEXT)
+  if ((layout = (glyph_layout) extent_end_glyph_layout (anc)) != GL_TEXT)
     result = cons3 (Qend_glyph_layout, glyph_layout_to_symbol (layout), result);
 
   if (!NILP (extent_end_glyph (anc)))
@@ -6275,8 +6275,8 @@ defaults to the current buffer.
   return prop;
 }
 
-DEFUN ("put-nonduplicable-text-property",
-       Fput_nonduplicable_text_property, 4, 5, 0, /*
+DEFUN ("put-nonduplicable-text-property", Fput_nonduplicable_text_property,
+       4, 5, 0, /*
 Adds the given property/value to all characters in the specified region.
 The property is conceptually attached to the characters rather than the
 region, however the properties will not be copied when the characters
@@ -6321,8 +6321,8 @@ any property was changed, nil otherwise.
 }
 
 
-DEFUN ("add-nonduplicable-text-properties",
-       Fadd_nonduplicable_text_properties, 3, 4, 0, /*
+DEFUN ("add-nonduplicable-text-properties", Fadd_nonduplicable_text_properties,
+       3, 4, 0, /*
 Add nonduplicable properties to the characters from START to END.
 \(The properties will not be copied when the characters are copied.)
 The third argument PROPS is a property list specifying the property values
@@ -6384,8 +6384,8 @@ defaults to the current buffer.
    the rest of the put-text-prop code here, I moved this as well for
    completeness.
  */
-DEFUN ("text-prop-extent-paste-function",
-       Ftext_prop_extent_paste_function, 3, 3, 0, /*
+DEFUN ("text-prop-extent-paste-function", Ftext_prop_extent_paste_function,
+       3, 3, 0, /*
 Used as the `paste-function' property of `text-prop' extents.
 */
        (extent, from, to))
@@ -6414,7 +6414,8 @@ Used as the `paste-function' property of `text-prop' extents.
    to use it in connection with invisible extents (at least currently).
    If this changes, consider moving this back into Lisp. */
 
-DEFUN ("next-single-property-change", Fnext_single_property_change, 2, 4, 0, /*
+DEFUN ("next-single-property-change", Fnext_single_property_change,
+       2, 4, 0, /*
 Return the position of next property change for a specific property.
 Scans characters forward from POS till it finds a change in the PROP
  property, then returns the position of the change.  The optional third
@@ -6480,8 +6481,8 @@ If two or more extents with conflicting non-nil values for PROP overlap
 
 /* See comment on previous function about why this is written in C. */
 
-DEFUN ("previous-single-property-change",
-       Fprevious_single_property_change, 2, 4, 0, /*
+DEFUN ("previous-single-property-change", Fprevious_single_property_change,
+       2, 4, 0, /*
 Return the position of next property change for a specific property.
 Scans characters backward from POS till it finds a change in the PROP
  property, then returns the position of the change.  The optional third

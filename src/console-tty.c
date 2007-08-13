@@ -216,7 +216,8 @@ decode_tty_console (Lisp_Object console)
   return XCONSOLE (console);
 }
 
-DEFUN ("console-tty-terminal-type", Fconsole_tty_terminal_type, 0, 1, 0, /*
+DEFUN ("console-tty-terminal-type", Fconsole_tty_terminal_type,
+       0, 1, 0, /*
 Return the terminal type of TTY console CONSOLE.
 */
        (console))
@@ -224,8 +225,8 @@ Return the terminal type of TTY console CONSOLE.
   return CONSOLE_TTY_DATA (decode_tty_console (console))->terminal_type;
 }
 
-DEFUN ("console-tty-controlling-process",
-       Fconsole_tty_controlling_process, 0, 1, 0, /*
+DEFUN ("console-tty-controlling-process", Fconsole_tty_controlling_process,
+       0, 1, 0, /*
 Return the controlling process of tty console CONSOLE.
 */
        (console))
@@ -235,8 +236,8 @@ Return the controlling process of tty console CONSOLE.
 
 #ifdef MULE
 
-DEFUN ("console-tty-input-coding-system",
-       Fconsole_tty_input_coding_system, 0, 1, 0, /*
+DEFUN ("console-tty-input-coding-system", Fconsole_tty_input_coding_system,
+       0, 1, 0, /*
 Return the input coding system of tty console CONSOLE.
 */
        (console))
@@ -245,8 +246,8 @@ Return the input coding system of tty console CONSOLE.
     (XLSTREAM (CONSOLE_TTY_DATA (decode_tty_console (console))->instream));
 }
 
-DEFUN ("set-console-tty-input-coding-system",
-       Fset_console_tty_input_coding_system, 0, 2, 0, /*
+DEFUN ("set-console-tty-input-coding-system", Fset_console_tty_input_coding_system,
+       0, 2, 0, /*
 Set the input coding system of tty console CONSOLE to CODESYS.
 CONSOLE defaults to the selected console.
 CODESYS defaults to the value of `keyboard-coding-system'.
@@ -259,8 +260,8 @@ CODESYS defaults to the value of `keyboard-coding-system'.
   return Qnil;
 }
 
-DEFUN ("console-tty-output-coding-system",
-       Fconsole_tty_output_coding_system, 0, 1, 0, /*
+DEFUN ("console-tty-output-coding-system", Fconsole_tty_output_coding_system,
+       0, 1, 0, /*
 Return TTY CONSOLE's output coding system.
 */
        (console))
@@ -269,8 +270,8 @@ Return TTY CONSOLE's output coding system.
     (XLSTREAM (CONSOLE_TTY_DATA (decode_tty_console (console))->outstream));
 }
 
-DEFUN ("set-console-tty-output-coding-system",
-       Fset_console_tty_output_coding_system, 0, 2, 0, /*
+DEFUN ("set-console-tty-output-coding-system", Fset_console_tty_output_coding_system,
+       0, 2, 0, /*
 Set the coding system of tty output of console CONSOLE to CODESYS.
 CONSOLE defaults to the selected console.
 CODESYS defaults to the value of `terminal-coding-system'.
@@ -284,8 +285,8 @@ CODESYS defaults to the value of `terminal-coding-system'.
 }
 
 /* ### Move this function to lisp */
-DEFUN ("set-console-tty-coding-system",
-       Fset_console_tty_coding_system, 0, 2, 0, /*
+DEFUN ("set-console-tty-coding-system", Fset_console_tty_coding_system,
+       0, 2, 0, /*
 Set the input and output coding systems of tty console CONSOLE to CODESYS.
 CONSOLE defaults to the selected console.
 If CODESYS is nil, the values of `keyboard-coding-system' and

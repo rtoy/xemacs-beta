@@ -537,8 +537,8 @@ tt_message_arg_bval_vector (Tt_message m, int n)
   return make_string (value, len);
 }
 
-DEFUN ("get-tooltalk-message-attribute",
-       Fget_tooltalk_message_attribute, 2, 3, 0, /*
+DEFUN ("get-tooltalk-message-attribute", Fget_tooltalk_message_attribute,
+       2, 3, 0, /*
 Return the indicated Tooltalk message attribute.  Attributes are
 identified by symbols with the same name (underscores and all) as the
 suffix of the Tooltalk tt_message_<attribute> function that extracts the value.
@@ -679,8 +679,8 @@ value returned by 'arg_bval like a string is fine.
   return Qnil;
 }
 
-DEFUN ("set-tooltalk-message-attribute",
-       Fset_tooltalk_message_attribute, 3, 4, 0, /*
+DEFUN ("set-tooltalk-message-attribute", Fset_tooltalk_message_attribute,
+       3, 4, 0, /*
 Initialize one Tooltalk message attribute.
 
 Attribute names and values are the same as for

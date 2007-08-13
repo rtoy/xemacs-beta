@@ -533,6 +533,15 @@ Don't call this unless you know what you're doing.
   while (EQ (Vcommand_loop, old_loop))
 #endif /* LISP_COMMAND_LOOP */
     {
+      /* If focus_follows_mouse, make sure the frame with window manager
+         focus is selected. */
+      { extern void investigate_frame_change (void);
+        extern int focus_follows_mouse;
+        
+        if (focus_follows_mouse)
+          investigate_frame_change ();
+      }
+      
       /* Make sure the current window's buffer is selected.  */
       {
 	Lisp_Object selected_window = Fselected_window (Qnil);

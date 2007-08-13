@@ -319,7 +319,7 @@ Each minibuffer output is added with
 (defvar current-minibuffer-contents)
 (defvar current-minibuffer-point)
 
-(defcustom minibuffer-history-minimum-string-length 3
+(defcustom minibuffer-history-minimum-string-length nil
   "*If this variable is non-nil, a string will not be added to the
 minibuffer history if its length is less than that value."
   :type '(choice (const :tag "Any" nil)

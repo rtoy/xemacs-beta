@@ -45,8 +45,6 @@ Boston, MA 02111-1307, USA.  */
 #define DBL_DIG 16
 #endif
 
-static void print_error_message (Lisp_Object data, Lisp_Object stream);
-
 Lisp_Object Vstandard_output, Qstandard_output;
 
 /* The subroutine object for external-debugging-output is kept here
@@ -220,7 +218,7 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
   else if (FRAMEP (function))
     {
       /* This gets used by functions not invoking print_prepare(),
-         such as Fwrite_char.  */
+         such as Fwrite_char, Fterpri, etc..  */
       struct frame *f = XFRAME (function);
       CHECK_LIVE_FRAME (function);
 
@@ -337,21 +335,21 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
       Lstream_delete (str);
     }
 }
-
-/* Used for printing a character.  STRING_OF_LENGTH_1 must contain a
-   single-byte character, not just any emchar.  */
+
+/* Used for printing a single-byte character (*not* any Emchar).  */
 #define write_char_internal(string_of_length_1, stream)			\
-  output_string ((stream), (CONST Bufbyte *) (string_of_length_1),	\
+  output_string (stream, (CONST Bufbyte *) (string_of_length_1),	\
 		 Qnil, 0, 1)
 
-/* NOTE:  Do not call this with the data of a Lisp_String,
- *  as printcharfun might cause a GC, which might cause
- *  the string's data to be relocated.
- *  Use print_internal (string, printcharfun, 0)
- *  to princ a Lisp_String
- * Note: "stream" should be the result of "canonicalize_printcharfun"
- *  (ie Qnil means stdout, not Vstandard_output, etc)
- */
+/* NOTE: Do not call this with the data of a Lisp_String, as
+   printcharfun might cause a GC, which might cause the string's data
+   to be relocated.  To princ a Lisp string, use:
+
+       print_internal (string, printcharfun, 0);
+
+   Also note that STREAM should be the result of
+   canonicalize_printcharfun() (i.e. Qnil means stdout, not
+   Vstandard_output, etc.)  */
 void
 write_string_1 (CONST Bufbyte *str, Bytecount size, Lisp_Object stream)
 {
@@ -381,10 +379,8 @@ STREAM defaults to the value of `standard-output' (which see).
   Bytecount len;
 
   CHECK_CHAR_COERCE_INT (ch);
-  RESET_PRINT_GENSYM;
   len = set_charptr_emchar (str, XCHAR (ch));
   output_string (canonicalize_printcharfun (stream), str, Qnil, 0, len);
-  RESET_PRINT_GENSYM;
   return ch;
 }
 
@@ -478,9 +474,7 @@ If STREAM is omitted or nil, the value of `standard-output' is used.
        (stream))
 {
   /* This function can GC */
-  Bufbyte str[1];
-  str[0] = '\n';
-  output_string (canonicalize_printcharfun (stream), str, Qnil, 0, 1);
+  write_char_internal ("\n", canonicalize_printcharfun (stream));
   return Qt;
 }
 
@@ -493,14 +487,15 @@ Output stream is STREAM, or value of `standard-output' (which see).
        (object, stream))
 {
   /* This function can GC */
-  Lisp_Object the_stream = Qnil, frame = Qnil;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  Lisp_Object frame = Qnil;
+  struct gcpro gcpro1, gcpro2;
+  GCPRO2 (object, stream);
 
-  GCPRO3 (object, stream, the_stream);
   print_depth = 0;
-  the_stream = print_prepare (stream, &frame);
-  print_internal (object, the_stream, 1);
-  print_finish (the_stream, frame);
+  stream = print_prepare (stream, &frame);
+  print_internal (object, stream, 1);
+  print_finish (stream, frame);
+
   UNGCPRO;
   return object;
 }
@@ -514,23 +509,23 @@ second argument NOESCAPE is non-nil.
        (object, noescape))
 {
   /* This function can GC */
-  Lisp_Object stream;
-  Lstream *str;
-  struct gcpro gcpro1, gcpro2;
+  Lisp_Object result = Qnil;
+  Lisp_Object stream = make_resizing_buffer_output_stream ();
+  Lstream *str = XLSTREAM (stream);
+  /* gcpro OBJECT in case a caller forgot to do so */
+  struct gcpro gcpro1, gcpro2, gcpro3;
+  GCPRO3 (object, stream, result);
 
-  stream = make_resizing_buffer_output_stream ();
-  str = XLSTREAM (stream);
-
-  /* Protect OBJECT, in case a caller forgot to protect. */
-  GCPRO2 (object, stream);
   print_depth = 0;
   RESET_PRINT_GENSYM;
   print_internal (object, stream, NILP (noescape));
   RESET_PRINT_GENSYM;
   Lstream_flush (str);
   UNGCPRO;
-  return make_string (resizing_buffer_stream_ptr (str),
-		      Lstream_byte_count (str));
+  result = make_string (resizing_buffer_stream_ptr (str),
+			Lstream_byte_count (str));
+  Lstream_delete (str);
+  return result;
 }
 
 DEFUN ("princ", Fprinc, 1, 2, 0, /*
@@ -539,19 +534,19 @@ No quoting characters are used; no delimiters are printed around
 the contents of strings.
 Output stream is STREAM, or value of standard-output (which see).
 */
-       (obj, stream))
+       (object, stream))
 {
   /* This function can GC */
-  Lisp_Object the_stream = Qnil, frame = Qnil;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  Lisp_Object frame = Qnil;
+  struct gcpro gcpro1, gcpro2;
 
-  GCPRO3 (obj, stream, the_stream);
-  the_stream = print_prepare (stream, &frame);
+  GCPRO2 (object, stream);
+  stream = print_prepare (stream, &frame);
   print_depth = 0;
-  print_internal (obj, the_stream, 0);
-  print_finish (the_stream, frame);
+  print_internal (object, stream, 0);
+  print_finish (stream, frame);
   UNGCPRO;
-  return obj;
+  return object;
 }
 
 DEFUN ("print", Fprint, 1, 2, 0, /*
@@ -560,62 +555,40 @@ Quoting characters are printed when needed to make output that `read'
 can handle, whenever this is possible.
 Output stream is STREAM, or value of `standard-output' (which see).
 */
-       (obj, stream))
+       (object, stream))
 {
   /* This function can GC */
-  Lisp_Object the_stream = Qnil, frame = Qnil;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  Lisp_Object frame = Qnil;
+  struct gcpro gcpro1, gcpro2;
 
-  GCPRO3 (obj, stream, the_stream);
-  the_stream = print_prepare (stream, &frame);
+  GCPRO2 (object, stream);
+  stream = print_prepare (stream, &frame);
   print_depth = 0;
-  write_char_internal ("\n", the_stream);
-  print_internal (obj, the_stream, 1);
-  write_char_internal ("\n", the_stream);
-  print_finish (the_stream, frame);
+  write_char_internal ("\n", stream);
+  print_internal (object, stream, 1);
+  write_char_internal ("\n", stream);
+  print_finish (stream, frame);
   UNGCPRO;
-  return obj;
+  return object;
 }
 
+/* Print an error message for the error DATA to STREAM.  This is a
+   complete implementation of `display-error', which used to be in
+   Lisp (see prim/cmdloop.el).  It was ported to C so it can be used
+   efficiently by Ferror_message_string.  Fdisplay_error and
+   Ferror_message_string are trivial wrappers around this function.
 
-/* Synched with Emacs 19.34 -- underlying implementation (incarnated
-   in print_error_message) is completely divergent, though.  */
-DEFUN ("error-message-string", Ferror_message_string, 1, 1, 0, /*
-Convert an error value (ERROR-SYMBOL . DATA) to an error message.
-*/
-  (data))
-{
-  /* This function can GC */
-  Lisp_Object stream = make_resizing_buffer_output_stream ();
-  struct gcpro gcpro1;
-  GCPRO1 (stream);
-
-  print_error_message (data, stream);
-  Lstream_flush (XLSTREAM (stream));
-  UNGCPRO;
-  return make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
-		      Lstream_byte_count (XLSTREAM (stream)));
-}
-
-/* Print an error message for the error DATA onto Lisp output stream
-   STREAM (suitable for the print functions).
-
-   This is a complete implementation of `display-error', which used to
-   be in Lisp (see prim/cmdloop.el).  It was ported to C so we can use
-   it in Ferror_message_string.  Fdisplay_error and
-   Ferror_message_string are trivial wrappers to this function.  */
+   STREAM should be the result of canonicalize_printcharfun().  */
 static void
 print_error_message (Lisp_Object error_object, Lisp_Object stream)
 {
   /* This function can GC */
-  Lisp_Object type;
+  Lisp_Object type = Fcar_safe (error_object);
   Lisp_Object method = Qnil;
-  Lisp_Object tail = Qnil;
-  struct gcpro gcpro1;
+  Lisp_Object tail;
 
-  GCPRO1 (tail);
-
-  type = Fcar_safe (error_object);
+  /* No need to GCPRO anything under the assumption that ERROR_OBJECT
+     is GCPRO'd.  */
 
   if (! (CONSP (error_object) && SYMBOLP (type)
 	 && CONSP (Fget (type, Qerror_conditions, Qnil))))
@@ -645,44 +618,40 @@ print_error_message (Lisp_Object error_object, Lisp_Object stream)
   /* Default method */
   {
     int first = 1;
-    Lisp_Object printcharfun = canonicalize_printcharfun (stream);
     int speccount = specpdl_depth ();
 
     specbind (Qprint_message_label, Qerror);
     tail = Fcdr (error_object);
     if (EQ (type, Qerror))
       {
-	Fprinc (Fcar (tail), stream);
+	print_internal (Fcar (tail), stream, 0);
 	tail = Fcdr (tail);
       }
     else
       {
 	Lisp_Object errmsg = Fget (type, Qerror_message, Qnil);
 	if (NILP (errmsg))
-	  Fprinc (type, stream);
+	  print_internal (type, stream, 0);
 	else
-	  Fprinc (errmsg, stream);
+	  print_internal (LISP_GETTEXT (errmsg), stream, 0);
       }
     while (!NILP (tail))
       {
-	write_c_string (first ? ": " : ", ", printcharfun);
-	Fprin1 (Fcar (tail), stream);
+	write_c_string (first ? ": " : ", ", stream);
+	print_internal (Fcar (tail), stream, 1);
 	tail = Fcdr (tail);
 	first = 0;
       }
     unbind_to (speccount, Qnil);
-    UNGCPRO;
     return;
-    /* Unreached */
+    /* not reached */
   }
 
  error_throw:
-  UNGCPRO;
   if (NILP (method))
     {
-      write_c_string ("Peculiar error ",
-		      canonicalize_printcharfun (stream));
-      Fprin1 (error_object, stream);
+      write_c_string (GETTEXT ("Peculiar error "), stream);
+      print_internal (error_object, stream, 1);
       return;
     }
   else
@@ -691,13 +660,38 @@ print_error_message (Lisp_Object error_object, Lisp_Object stream)
     }
 }
 
+DEFUN ("error-message-string", Ferror_message_string, 1, 1, 0, /*
+Convert ERROR-OBJECT to an error message, and return it.
+
+The format of ERROR-OBJECT should be (ERROR-SYMBOL . DATA).  The
+message is equivalent to the one that would be issued by
+`display-error' with the same argument.
+*/
+       (error_object))
+{
+  /* This function can GC */
+  Lisp_Object result = Qnil;
+  Lisp_Object stream = make_resizing_buffer_output_stream ();
+  struct gcpro gcpro1;
+  GCPRO1 (stream);
+
+  print_error_message (error_object, stream);
+  Lstream_flush (XLSTREAM (stream));
+  result = make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
+			Lstream_byte_count (XLSTREAM (stream)));
+  Lstream_delete (XLSTREAM (stream));
+
+  UNGCPRO;
+  return result;
+}
+
 DEFUN ("display-error", Fdisplay_error, 2, 2, 0, /*
-Display an error message for ERROR-OBJECT to STREAM.
+Display ERROR-OBJECT on STREAM in a user-friendly way.
 */
        (error_object, stream))
 {
   /* This function can GC */
-  print_error_message (error_object, stream);
+  print_error_message (error_object, canonicalize_printcharfun (stream));
   return Qnil;
 }
 
@@ -707,8 +701,6 @@ Display an error message for ERROR-OBJECT to STREAM.
 Lisp_Object Vfloat_output_format;
 Lisp_Object Qfloat_output_format;
 
-void
-float_to_string (char *buf, double data)
 /*
  * This buffer should be at least as large as the max string size of the
  * largest float, printed in the biggest notation.  This is undoubtably
@@ -722,6 +714,8 @@ float_to_string (char *buf, double data)
  * re-writing _doprnt to be more sane)?
  * 			-wsr
  */
+void
+float_to_string (char *buf, double data)
 {
   Bufbyte *cp, c;
   int width;
@@ -797,12 +791,15 @@ float_to_string (char *buf, double data)
 /* Print NUMBER to BUFFER.  The digits are first written in reverse
    order (the least significant digit first), and are then reversed.
    This is equivalent to sprintf(buffer, "%ld", number), only much
-   faster.  */
+   faster.
+
+   BUFFER should accept 24 bytes.  This should suffice for the longest
+   numbers on 64-bit machines.  */
 void
 long_to_string (char *buffer, long number)
 {
   char *p;
-  int i, l;
+  int i, len;
 
   if (number < 0)
     {
@@ -810,6 +807,7 @@ long_to_string (char *buffer, long number)
       number = -number;
     }
   p = buffer;
+
   /* Print the digits to the string.  */
   do
     {
@@ -817,15 +815,16 @@ long_to_string (char *buffer, long number)
       number /= 10;
     }
   while (number);
+
   /* And reverse them.  */
-  l = p - buffer - 1;
-  for (i = l/2; i >= 0; i--)
+  len = p - buffer - 1;
+  for (i = len / 2; i >= 0; i--)
     {
       char c = buffer[i];
-      buffer[i] = buffer[l - i];
-      buffer[l - i] = c;
+      buffer[i] = buffer[len - i];
+      buffer[len - i] = c;
     }
-  buffer[l + 1] = '\0';
+  buffer[len + 1] = '\0';
 }
 
 static void
@@ -877,7 +876,7 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     {
       obj = XCAR (XCDR (obj));
       GCPRO2 (obj, printcharfun);
-      write_char_internal ("'", printcharfun);
+      write_char_internal ("\'", printcharfun);
       UNGCPRO;
       print_internal (obj, printcharfun, escapeflag);
       return;
@@ -885,6 +884,7 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   GCPRO2 (obj, printcharfun);
   write_char_internal ("(", printcharfun);
+
   {
     int i = 0;
     int max = 0;
@@ -1028,7 +1028,6 @@ void
 print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   /* This function can GC */
-  char buf[256];
 
   QUIT;
 
@@ -1055,12 +1054,13 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       for (i = 0; i < print_depth; i++)
 	if (EQ (obj, being_printed[i]))
 	  {
-	    sprintf (buf, "#%d", i);
+	    char buf[32];
+	    *buf = '#';
+	    long_to_string (buf + 1, i);
 	    write_c_string (buf, printcharfun);
 	    return;
 	  }
     }
-
 
   being_printed[print_depth] = obj;
   print_depth++;
@@ -1077,6 +1077,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case Lisp_Type_Int:
 #endif
       {
+	char buf[24];
 	long_to_string (buf, XINT (obj));
 	write_c_string (buf, printcharfun);
 	break;
@@ -1085,6 +1086,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case Lisp_Type_Char:
       {
 	/* God intended that this be #\..., you know. */
+	char buf[16];
 	Emchar ch = XCHAR (obj);
 	char *p = buf;
 	*p++ = '?';
@@ -1209,8 +1211,9 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
     default:
       {
-	/* We're in trouble if this happens!
-	   Probably should just abort () */
+	char buf[128];
+	/* We're in trouble if this happens!  Probably should just
+	   abort () */
 	if (print_readably)
 	  error ("printing illegal data type #o%03o",
 		 (int) XTYPE (obj));
@@ -1436,8 +1439,13 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 /* #ifdef DEBUG_XEMACS */
-/* I don't like seeing `Note: Strange doc (not fboundp) for function */
-/* alternate-debugging-output @ 429542' -slb */
+
+/* I don't like seeing `Note: Strange doc (not fboundp) for function
+   alternate-debugging-output @ 429542' -slb */
+/* #### Eek!  Any clue how to get rid of it?  In fact, how about
+   getting rid of this function altogether?  Does anything actually
+   *use* it?  --hniksic */
+
 int alternate_do_pointer;
 char alternate_do_string[5000];
 
@@ -1462,7 +1470,7 @@ to 0.
   alternate_do_string[alternate_do_pointer] = 0;
   return character;
 }
-/* #endif /* DEBUG_XEMACS */
+/* #endif / * DEBUG_XEMACS */
 
 DEFUN ("external-debugging-output", Fexternal_debugging_output, 1, 3, 0, /*
 Write CHAR-OR-STRING to stderr or stdout.

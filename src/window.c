@@ -1371,9 +1371,8 @@ left margin. If the window has no modeline, return nil.
 */
        (window))
 {
-  struct window *w;
+  struct window *w = decode_window (window);
 
-  w = decode_window (window);
   return (WINDOW_HAS_MODELINE_P (w)) ? make_int (w->modeline_hscroll) : Qnil;
 }
 
@@ -1384,12 +1383,11 @@ If the window has no modeline, do nothing and return nil.
 */
        (window, ncol))
 {
-  struct window *w;
-  int ncols;
+  struct window *w = decode_window (window);
 
-  w = decode_window (window);
   if (WINDOW_HAS_MODELINE_P (w))
     {
+      int ncols;
       CHECK_INT (ncol);
       ncols = XINT (ncol);
       if (ncols < 0) ncols = 0;
@@ -1536,7 +1534,8 @@ slower with this flag set.
 
   if (NILP (guarantee))
     {
-      Lisp_Object buf = w->buffer;
+      Lisp_Object buf;
+      buf = w->buffer;
       CHECK_BUFFER (buf);
       return make_int (BUF_Z (XBUFFER (buf)) - w->window_end_pos[CURRENT_DISP]);
     }
@@ -2751,8 +2750,8 @@ Otherwise, all windows are considered.
    but there is no sensible way to implement those functions, since
    you can't in general derive a window from a buffer. */
 
-DEFUN ("window-left-margin-pixel-width",
-       Fwindow_left_margin_pixel_width, 0, 1, 0, /*
+DEFUN ("window-left-margin-pixel-width", Fwindow_left_margin_pixel_width,
+       0, 1, 0, /*
 Return the width in pixels of the left outside margin of window WINDOW.
 If WINDOW is nil, the selected window is assumed.
 */
@@ -2761,8 +2760,8 @@ If WINDOW is nil, the selected window is assumed.
   return make_int (window_left_margin_width (decode_window (window)));
 }
 
-DEFUN ("window-right-margin-pixel-width",
-       Fwindow_right_margin_pixel_width, 0, 1, 0, /*
+DEFUN ("window-right-margin-pixel-width", Fwindow_right_margin_pixel_width,
+       0, 1, 0, /*
 Return the width in pixels of the right outside margin of window WINDOW.
 If WINDOW is nil, the selected window is assumed.
 */
@@ -4187,48 +4186,25 @@ Default for ARG is window width minus 2.
 
   return Fset_window_hscroll (window, make_int (w->hscroll - XINT (arg)));
 }
-
-DEFUN ("recenter", Frecenter, 0, 2, "_P", /*
-Center point in WINDOW and redisplay frame.  With N, put point on line N.
+
+DEFUN ("center-to-window-line", Fcenter_to_window_line, 0, 2, "_P", /*
+Center point in WINDOW.  With N, put point on line N.
 The desired position of point is always relative to the window.
-Just C-u as prefix means put point in the center of the window.
-No N (i.e., it is nil) erases the entire frame and then
-redraws with point in the center of the window.
 If WINDOW is nil, the selected window is used.
 */
        (n, window))
 {
-  struct window *w;
-  struct buffer *b;
+  struct window *w = decode_window (window);
+  struct buffer *b = XBUFFER (w->buffer);
+  Bufpos opoint = BUF_PT (b);
   Bufpos startp;
-  Bufpos opoint;
 
-  if (NILP (window))
-    window = Fselected_window (Qnil);
-  else
-    CHECK_WINDOW (window);
-  w = XWINDOW (window);
-  b = XBUFFER (w->buffer);
-
-  opoint = BUF_PT (b);
-
-  if (LISTP (n))
-    {
-      struct frame *f = XFRAME (w->frame);
-
-      if (NILP (n))
-	{
-	  MARK_FRAME_CHANGED (f);
-	  SET_FRAME_CLEAR (f);
-	}
-
-      startp = start_with_line_at_pixpos (w, opoint, window_half_pixpos (w));
-    }
+  if (NILP (n))
+    startp = start_with_line_at_pixpos (w, opoint, window_half_pixpos (w));
   else
     {
       n = Fprefix_numeric_value (n);
       CHECK_INT (n);
-
       startp = start_with_point_on_display_line (w, opoint, XINT (n));
     }
 
@@ -4239,7 +4215,7 @@ If WINDOW is nil, the selected window is used.
   MARK_WINDOWS_CHANGED (w);
   return Qnil;
 }
-
+
 DEFUN ("move-to-window-line", Fmove_to_window_line, 1, 2, "_P", /*
 Position point relative to WINDOW.
 With no argument, position text at center of window.
@@ -4255,6 +4231,8 @@ If WINDOW is nil, the selected window is used.
   Bufpos start, new_point;
   int selected;
 
+  /* Don't use decode_window() because we need the new value of
+     WINDOW.  */
   if (NILP (window))
     window = Fselected_window (Qnil);
   else
@@ -5568,7 +5546,7 @@ syms_of_window (void)
   DEFSUBR (Fscroll_right);
   DEFSUBR (Fother_window_for_scrolling);
   DEFSUBR (Fscroll_other_window);
-  DEFSUBR (Frecenter);
+  DEFSUBR (Fcenter_to_window_line);
   DEFSUBR (Fmove_to_window_line);
 #ifdef MEMORY_USAGE_STATS
   DEFSUBR (Fwindow_memory_usage);

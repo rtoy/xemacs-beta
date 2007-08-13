@@ -240,7 +240,7 @@ point values.  Usually it is better to test for approximate equality.
 Here's a function to do this:
 
 @example
-(defvar fuzz-factor 1.0e-6)
+(defconst fuzz-factor 1.0e-6)
 (defun approx-equal (x y)
   (or (and (= x 0) (= y 0))
       (< (/ (abs (- x y))
@@ -257,40 +257,79 @@ can have just one integer object for any given value because it has a
 limited range of integer values.
 @end quotation
 
-@defun = number-or-marker1 number-or-marker2
-This function tests whether its arguments are numerically equal, and
-returns @code{t} if so, @code{nil} otherwise.
+In addition to numbers, all of the following functions also accept
+characters and markers as arguments, and treat them as their number
+equivalents.
+
+@defun =  number &rest more-numbers
+This function returns @code{t} if all of its arguments are numerically
+equal, @code{nil} otherwise.
+
+@example
+(= 5)
+     @result{} t
+(= 5 6)
+     @result{} nil
+(= 5 5.0)
+     @result{} t
+(= 5 5 6)
+     @result{} nil
+@end example
 @end defun
 
-@defun /= number-or-marker1 number-or-marker2
-This function tests whether its arguments are numerically not equal.  It
-returns @code{t} if so, and @code{nil} otherwise.
+@defun /=  number &rest more-numbers
+This function returns @code{t} if no two arguments are numerically
+equal, @code{nil} otherwise.
+
+@example
+(/= 5 6)
+     @result{} t
+(/= 5 5 6)
+     @result{} nil
+(/= 5 6 1)
+     @result{} t
+@end example
 @end defun
 
-@defun <  number-or-marker1 number-or-marker2
-This function tests whether its first argument is strictly less than
-its second argument.  It returns @code{t} if so, @code{nil} otherwise.
+@defun <  number &rest more-numbers
+This function returns @code{t} if the sequence of its arguments is
+monotonically increasing, @code{nil} otherwise.
+
+@example
+(< 5 6)
+     @result{} t
+(< 5 6 6)
+     @result{} nil
+(< 5 6 7)
+     @result{} t
+@end example
 @end defun
 
-@defun <=  number-or-marker1 number-or-marker2
-This function tests whether its first argument is less than or equal
-to its second argument.  It returns @code{t} if so, @code{nil}
-otherwise.
+@defun <=  number &rest more-numbers
+This function returns @code{t} if the sequence of its arguments is
+monotonically nondecreasing, @code{nil} otherwise.
+
+@example
+(<= 5 6)
+     @result{} t
+(<= 5 6 6)
+     @result{} t
+(<= 5 6 5)
+     @result{} nil
+@end example
 @end defun
 
-@defun >  number-or-marker1 number-or-marker2
-This function tests whether its first argument is strictly greater
-than its second argument.  It returns @code{t} if so, @code{nil}
-otherwise.
+@defun >  number &rest more-numbers
+This function returns @code{t} if the sequence of its arguments is
+monotonically decreasing, @code{nil} otherwise.
 @end defun
 
-@defun >=  number-or-marker1 number-or-marker2
-This function tests whether its first argument is greater than or
-equal to its second argument.  It returns @code{t} if so, @code{nil}
-otherwise.
+@defun >=  number &rest more-numbers
+This function returns @code{t} if the sequence of its arguments is
+monotonically nonincreasing, @code{nil} otherwise.
 @end defun
 
-@defun max number-or-marker &rest numbers-or-markers
+@defun max number &rest more-numbers
 This function returns the largest of its arguments.
 
 @example
@@ -303,7 +342,7 @@ This function returns the largest of its arguments.
 @end example
 @end defun
 
-@defun min number-or-marker &rest numbers-or-markers
+@defun min number &rest more-numbers
 This function returns the smallest of its arguments.
 
 @example

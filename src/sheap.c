@@ -48,11 +48,13 @@ void* more_static_core ( ptrdiff_t increment )
 
   if (!static_heap_initialized)
     {
+#ifdef VALMASK
       if (((unsigned long) static_heap_base & ~VALMASK) != 0)
 	{
 	  printf ("error: The heap was allocated in upper memory.\n");
 	  exit (-1);
 	}
+#endif
       static_heap_base=(char*)ALIGN_ALLOC(static_heap_buffer);
       static_heap_ptr=static_heap_base;
       static_heap_size=STATIC_HEAP_SIZE -

@@ -581,7 +581,7 @@ cursor.
 Any other commands besides cursor-motion commands (such as inserting or
 deleting text) will cause the region to no longer be active; it will no
 longer be highlighted, and will no longer be the primary selection.
-Errors also remove highlighting from a region.
+Region can be explicitly deactivated with @kbd{C-g}.
 
 Commands that require a region (such as @kbd{C-w}) signal an error if
 the region is not active.  Certain commands cause the region to be in

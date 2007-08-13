@@ -1252,12 +1252,12 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 /************************************************************************/
 
 void
-syms_of_glyphs_read (void)
+syms_of_glyphs_eimage (void)
 {
 }
 
 void
-image_instantiator_format_create_glyphs_read (void)
+image_instantiator_format_create_glyphs_eimage (void)
 {
   /* image-instantiator types */
 #ifdef HAVE_JPEG
@@ -1311,7 +1311,7 @@ image_instantiator_format_create_glyphs_read (void)
 }
 
 void
-vars_of_glyphs_read (void)
+vars_of_glyphs_eimage (void)
 {
 #ifdef HAVE_JPEG
   Fprovide (Qjpeg);

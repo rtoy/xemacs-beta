@@ -79,16 +79,6 @@ Lisp_Object mswindows_locate_pixmap_file (Lisp_Object name);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (xpm);
 Lisp_Object Qxpm;
 Lisp_Object Q_color_symbols;
-void x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-						Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-						int dest_mask, Lisp_Object domain);
-void mswindows_xpm_instantiate (Lisp_Object image_instance, 
-				Lisp_Object instantiator,
-				Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-				int dest_mask, Lisp_Object domain);
-Lisp_Object x_xpm_normalize (Lisp_Object inst, Lisp_Object console_type);
-Lisp_Object mswindows_xpm_normalize (Lisp_Object inst,
-									 Lisp_Object console_type);
 #endif
 
 typedef struct image_instantiator_format_entry image_instantiator_format_entry;
@@ -1549,6 +1539,86 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
  *                             XPM                                    *
  **********************************************************************/
 
+Lisp_Object
+pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
+{
+  char **data;
+  int result;
+
+  result = XpmReadFileToData ((char *) XSTRING_DATA (name), &data);
+
+  if (result == XpmSuccess)
+    {
+      Lisp_Object retval = Qnil;
+      struct buffer *old_buffer = current_buffer;
+      Lisp_Object temp_buffer =
+	Fget_buffer_create (build_string (" *pixmap conversion*"));
+      int elt;
+      int height, width, ncolors;
+      struct gcpro gcpro1, gcpro2, gcpro3;
+      int speccount = specpdl_depth ();
+
+      GCPRO3 (name, retval, temp_buffer);
+
+      specbind (Qinhibit_quit, Qt);
+      set_buffer_internal (XBUFFER (temp_buffer));
+      Ferase_buffer (Qnil);
+
+      buffer_insert_c_string (current_buffer, "/* XPM */\r");
+      buffer_insert_c_string (current_buffer, "static char *pixmap[] = {\r");
+
+      sscanf (data[0], "%d %d %d", &height, &width, &ncolors);
+      for (elt = 0; elt <= width + ncolors; elt++)
+	{
+	  buffer_insert_c_string (current_buffer, "\"");
+	  buffer_insert_c_string (current_buffer, data[elt]);
+
+	  if (elt < width + ncolors)
+	    buffer_insert_c_string (current_buffer, "\",\r");
+	  else
+	    buffer_insert_c_string (current_buffer, "\"};\r");
+	}
+
+      retval = Fbuffer_substring (Qnil, Qnil, Qnil);
+      XpmFree (data);
+
+      set_buffer_internal (old_buffer);
+      unbind_to (speccount, Qnil);
+
+      RETURN_UNGCPRO (retval);
+    }
+
+  switch (result)
+    {
+    case XpmFileInvalid:
+      {
+	if (ok_if_data_invalid)
+	  return Qt;
+	signal_image_error ("invalid XPM data in file", name);
+      }
+    case XpmNoMemory:
+      {
+	signal_double_file_error ("Reading pixmap file",
+				  "out of memory", name);
+      }
+    case XpmOpenFailed:
+      {
+	/* should never happen? */
+	signal_double_file_error ("Opening pixmap file",
+				  "no such file or directory", name);
+      }
+    default:
+      {
+	signal_double_file_error_2 ("Parsing pixmap file",
+				    "unknown error code",
+				    make_int (result), name);
+	break;
+      }
+    }
+
+  return Qnil; /* not reached */
+}
+
 static void
 check_valid_xpm_color_symbols (Lisp_Object data)
 {
@@ -1608,18 +1678,59 @@ evaluate_xpm_color_symbols (void)
 static Lisp_Object
 xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
 {
-#ifdef HAVE_X_WINDOWS
-  if (CONSOLE_TYPESYM_X_P (console_type))
-	return x_xpm_normalize (inst, console_type);
-  else
-#endif
-#ifdef HAVE_MS_WINDOWS
-  if (CONSOLE_TYPESYM_MSWINDOWS_P (console_type))
-	return mswindows_xpm_normalize (inst, console_type);
-  else
-#endif
-	signal_image_error ("Can't display XPM images on this console",
-						console_type);
+  Lisp_Object file = Qnil;
+  Lisp_Object color_symbols;
+  struct gcpro gcpro1, gcpro2;
+  Lisp_Object alist = Qnil;
+
+  GCPRO2 (file, alist);
+
+  /* Now, convert any file data into inline data.  At the end of this,
+     `data' will contain the inline data (if any) or Qnil, and
+     `file' will contain the name this data was derived from (if
+     known) or Qnil.
+
+     Note that if we cannot generate any regular inline data, we
+     skip out. */
+
+  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data, 
+					     console_type);
+
+  if (CONSP (file)) /* failure locating filename */
+    signal_double_file_error ("Opening pixmap file",
+			      "no such file or directory",
+			      Fcar (file));
+
+  color_symbols = find_keyword_in_vector_or_given (inst, Q_color_symbols,
+						   Qunbound);
+
+  if (NILP (file) && !UNBOUNDP (color_symbols))
+    /* no conversion necessary */
+    RETURN_UNGCPRO (inst);
+  
+  alist = tagged_vector_to_alist (inst);
+
+  if (!NILP (file))
+    {
+      Lisp_Object data = pixmap_to_lisp_data (file, 0);
+      alist = remassq_no_quit (Q_file, alist);
+      /* there can't be a :data at this point. */
+      alist = Fcons (Fcons (Q_file, file),
+		     Fcons (Fcons (Q_data, data), alist));
+    }
+  
+  if (UNBOUNDP (color_symbols))
+    {
+      color_symbols = evaluate_xpm_color_symbols ();
+      alist = Fcons (Fcons (Q_color_symbols, color_symbols),
+		     alist);
+    }
+
+  {
+    Lisp_Object result = alist_to_tagged_vector (Qxpm, alist);
+    free_alist (alist);
+    RETURN_UNGCPRO (result);
+  }
 }
 
 static int
@@ -1637,27 +1748,11 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 int dest_mask, Lisp_Object domain)
 {
   Lisp_Object device= IMAGE_INSTANCE_DEVICE (XIMAGE_INSTANCE (image_instance));
-#ifdef HAVE_X_WINDOWS
-  if (DEVICE_X_P (XDEVICE (device)))
-	{
-	  x_xpm_instantiate (image_instance, instantiator, 
-						 pointer_fg, pointer_bg, 
-						 dest_mask, domain);
-	  return;
-	}
-  else
-#endif
-#ifdef HAVE_MS_WINDOWS
-  if (DEVICE_MSWINDOWS_P (XDEVICE (device)))
-	{
-      mswindows_xpm_instantiate (image_instance, instantiator, 
-								 pointer_fg, pointer_bg, 
-								 dest_mask, domain);
-	  return;
-	}
-  else
-#endif
-	signal_image_error ("Can't display XPM images on this device", device);
+
+  MAYBE_DEVMETH (XDEVICE (device), 
+		 xpm_instantiate,
+		 (image_instance, instantiator, pointer_fg, 
+		  pointer_bg, dest_mask, domain));
 }
 
 #endif /* HAVE_XPM */

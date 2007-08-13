@@ -631,119 +631,132 @@ emacs_sleep (int secs)
 /*                            initialization                            */
 /************************************************************************/
 
+/* If we've been nohup'ed, keep it that way.
+   This allows `nohup xemacs &' to work.
+   More generally, if a normally fatal signal has been redirected
+   to SIG_IGN by our invocation environment, trust the environment.
+   This keeps xemacs from being killed by a SIGQUIT intended for a
+   different process after having been backgrounded under a
+   non-job-control shell! */
+static void
+handle_signal_if_fatal (int signo)
+{
+  if (signal (signo,  fatal_error_signal) == SIG_IGN)
+    signal (signo, SIG_IGN);
+}
+
 void
 init_signals_very_early (void)
 {
-  /* Catch all signals that would kill us. */
-  if (! noninteractive || initialized)
-    {
-      /* Don't catch these signals in batch mode if not initialized.
-	 On some machines, this sets static data that would make
-	 signal fail to work right when the dumped Emacs is run.  */
+  /* Catch all signals that would kill us.
+     Don't catch these signals in batch mode if not initialized.
+     On some machines, this sets static data that would make
+     signal fail to work right when the dumped Emacs is run.  */
+  if (noninteractive && !initialized)
+    return;
+
+  handle_signal_if_fatal (SIGILL);  /* ANSI */
+  handle_signal_if_fatal (SIGABRT); /* ANSI */
+  handle_signal_if_fatal (SIGFPE);  /* ANSI */
+  handle_signal_if_fatal (SIGSEGV); /* ANSI */
+  handle_signal_if_fatal (SIGTERM); /* ANSI */
+
+
 #ifdef SIGHUP
-      /* If we've been nohup'ed, keep it that way.  */
-      if (signal (SIGHUP,  fatal_error_signal) == SIG_IGN)
-	signal (SIGHUP, SIG_IGN);
+  handle_signal_if_fatal (SIGHUP);  /* POSIX */
 #endif
 #ifdef SIGQUIT
-      signal (SIGQUIT, fatal_error_signal);
-#endif
-#ifdef SIGILL
-      signal (SIGILL,  fatal_error_signal);
+  handle_signal_if_fatal (SIGQUIT); /* POSIX */
 #endif
 #ifdef SIGTRAP
-      signal (SIGTRAP, fatal_error_signal);
-#endif
-#ifdef SIGABRT
-      signal (SIGABRT, fatal_error_signal);
-#endif
-#ifdef SIGHWE
-      signal (SIGHWE, fatal_error_signal);
-#endif
-#ifdef SIGPRE
-      signal (SIGPRE, fatal_error_signal);
-#endif
-#ifdef SIGORE
-      signal (SIGORE, fatal_error_signal);
-#endif
-#ifdef SIGUME
-      signal (SIGUME, fatal_error_signal);
-#endif
-#ifdef SIGDLK
-      signal (SIGDLK, fatal_error_signal);
-#endif
-#ifdef SIGCPULIM
-      signal (SIGCPULIM, fatal_error_signal);
-#endif
-#ifdef SIGIOT
-      signal (SIGIOT, fatal_error_signal);
-#endif
-#ifdef SIGEMT
-      signal (SIGEMT, fatal_error_signal);
-#endif
-      signal (SIGFPE, fatal_error_signal);
-#ifdef SIGBUS
-      signal (SIGBUS, fatal_error_signal);
-#endif
-      signal (SIGSEGV, fatal_error_signal);
-#ifdef SIGSYS
-      signal (SIGSYS, fatal_error_signal);
-#endif
-#ifdef SIGPIPE
-      signal (SIGPIPE, fatal_error_signal);
-#endif
-      signal (SIGTERM, fatal_error_signal);
-#ifdef SIGXCPU
-      signal (SIGXCPU, fatal_error_signal);
-#endif
-#ifdef SIGXFSZ
-      signal (SIGXFSZ, fatal_error_signal);
-#endif /* SIGXFSZ */
-
-#ifdef SIGDANGER
-      /* This just means available memory is getting low.  */
-      signal (SIGDANGER, memory_warning_signal);
-#endif
-
-#ifdef SIGLOST
-      signal (SIGLOST, fatal_error_signal);
-#endif
-#ifdef SIGSTKFLT /* coprocessor stack fault under Linux */
-      signal (SIGSTKFLT, fatal_error_signal);
+  handle_signal_if_fatal (SIGTRAP); /* POSIX */
 #endif
 #ifdef SIGUSR1
-      signal (SIGUSR1, fatal_error_signal);
+  handle_signal_if_fatal (SIGUSR1); /* POSIX */
 #endif
 #ifdef SIGUSR2
-      signal (SIGUSR2, fatal_error_signal);
+  handle_signal_if_fatal (SIGUSR2); /* POSIX */
+#endif
+#ifdef SIGPIPE
+  handle_signal_if_fatal (SIGPIPE); /* POSIX */
 #endif
 #ifdef SIGALRM
-      /* This will get reset later, once we're capable of handling
-	 this properly. */
-      signal (SIGALRM, fatal_error_signal);
+  /* This will get reset later, once we're
+     capable of handling it properly. */
+  handle_signal_if_fatal (SIGALRM); /* POSIX */
+#endif
+
+
+#ifdef SIGBUS
+  handle_signal_if_fatal (SIGBUS);  /* XPG5 */
+#endif
+#ifdef SIGSYS
+  handle_signal_if_fatal (SIGSYS);  /* XPG5 */
+#endif
+#ifdef SIGXCPU
+  handle_signal_if_fatal (SIGXCPU); /* XPG5 */
+#endif
+#ifdef SIGXFSZ
+  handle_signal_if_fatal (SIGXFSZ); /* XPG5 */
 #endif
 #ifdef SIGVTALRM
-      signal (SIGVTALRM, fatal_error_signal);
+  handle_signal_if_fatal (SIGVTALRM); /* XPG5 */
 #endif
 #ifdef SIGPROF
-      /* Messes up the REAL profiler */
-      /* signal (SIGPROF, fatal_error_signal); */
+  /* Messes up the REAL profiler */
+  /* handle_signal_if_fatal (SIGPROF); */ /* XPG5 */
+#endif
+
+
+#ifdef SIGHWE
+  handle_signal_if_fatal (SIGHWE);
+#endif
+#ifdef SIGPRE
+  handle_signal_if_fatal (SIGPRE);
+#endif
+#ifdef SIGORE
+  handle_signal_if_fatal (SIGORE);
+#endif
+#ifdef SIGUME
+  handle_signal_if_fatal (SIGUME);
+#endif
+#ifdef SIGDLK
+  handle_signal_if_fatal (SIGDLK);
+#endif
+#ifdef SIGCPULIM
+  handle_signal_if_fatal (SIGCPULIM);
+#endif
+#ifdef SIGIOT
+  handle_signal_if_fatal (SIGIOT);
+#endif
+#ifdef SIGEMT
+  handle_signal_if_fatal (SIGEMT);
+#endif
+#ifdef SIGLOST
+  handle_signal_if_fatal (SIGLOST);
+#endif
+#ifdef SIGSTKFLT /* coprocessor stack fault under Linux */
+  handle_signal_if_fatal (SIGSTKFLT);
 #endif
 #ifdef SIGUNUSED /* exists under Linux, and will kill process! */
-      signal (SIGUNUSED, fatal_error_signal);
+  handle_signal_if_fatal (SIGUNUSED);
 #endif
 
 #ifdef AIX
 /* 20 is SIGCHLD, 21 is SIGTTIN, 22 is SIGTTOU.  */
 #ifndef _I386
-      signal (SIGIOINT, fatal_error_signal);
+  handle_signal_if_fatal (SIGIOINT);
 #endif
-      signal (SIGGRANT,   fatal_error_signal);
-      signal (SIGRETRACT, fatal_error_signal);
-      signal (SIGSOUND,   fatal_error_signal);
-      signal (SIGMSG,     fatal_error_signal);
+  handle_signal_if_fatal (SIGGRANT);
+  handle_signal_if_fatal (SIGRETRACT);
+  handle_signal_if_fatal (SIGSOUND);
+  handle_signal_if_fatal (SIGMSG);
 #endif /* AIX */
-    }
+
+#ifdef SIGDANGER
+  /* This just means available memory is getting low.  */
+  signal (SIGDANGER, memory_warning_signal);
+#endif
 }
 
 void
@@ -766,7 +779,7 @@ init_interrupts_late (void)
       init_async_timeouts ();
 #ifdef SIGIO
       signal (SIGIO, input_available_signal);
-# ifdef SIGPOLL
+# ifdef SIGPOLL /* XPG5 */
       /* Some systems (e.g. Motorola SVR4) losingly have different
 	 values for SIGIO and SIGPOLL, and send SIGPOLL instead of
 	 SIGIO.  On those same systems, an uncaught SIGPOLL kills the

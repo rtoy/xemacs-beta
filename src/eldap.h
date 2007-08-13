@@ -29,8 +29,6 @@ Boston, MA 02111-1307, USA.  */
 
 #else /* HAVE_LDAP */
 
-extern Lisp_Object Qopen, Qclosed;
-
 struct Lisp_LDAP;
 
 DECLARE_LRECORD (ldap, struct Lisp_LDAP);
@@ -39,6 +37,7 @@ DECLARE_LRECORD (ldap, struct Lisp_LDAP);
 #define LDAPP(x) RECORDP (x, ldap)
 #define GC_LDAPP(x) GC_RECORDP (x, ldap)
 #define CHECK_LDAP(x) CHECK_RECORD (x, ldap)
+#define CONCHECK_LDAP(x) CONCHECK_RECORD (x, ldap)
 #define LDAP_LIVE_P(x) (EQ (x->status_symbol, Qopen))
 
 #define CHECK_LIVE_LDAP(ldap) do {                                       \
@@ -47,8 +46,8 @@ DECLARE_LRECORD (ldap, struct Lisp_LDAP);
     signal_simple_error ("Attempting to access closed LDAP connection",  \
                          ldap);                                          \
 } while (0)
-  
-  
+
+
 
 
 #ifdef emacs

@@ -133,6 +133,8 @@ Lisp_Object Qcar_less_than_car;
 
 Lisp_Object Qcompute_buffer_file_truename;
 
+EXFUN (Frunning_temacs_p, 0);
+
 /* signal a file error when errno contains a meaningful value. */
 
 DOESNT_RETURN
@@ -260,9 +262,9 @@ close_file_unwind (Lisp_Object fd)
 }
 
 static Lisp_Object
-close_stream_unwind (Lisp_Object stream)
+delete_stream_unwind (Lisp_Object stream)
 {
-  Lstream_close (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
   return Qnil;
 }
 
@@ -716,17 +718,25 @@ absolute file name.
   if (!count_initialized_p)
     {
       count = (unsigned)time (NULL);
-      count_initialized_p = 1;
+      /* Dumping temacs with a non-zero count_initialized_p wouldn't
+         make much sense.  */
+      if (NILP (Frunning_temacs_p ()))
+	count_initialized_p = 1;
     }
 
   while (1)
     {
       struct stat ignored;
-      unsigned num = count++;
+      unsigned num = count;
 
       p[0] = tbl[num & 63], num >>= 6;
       p[1] = tbl[num & 63], num >>= 6;
       p[2] = tbl[num & 63], num >>= 6;
+
+      /* Poor man's congruential RN generator.  Replace with ++count
+         for debugging.  */
+      count += 25229;
+      count %= 225307;
 
       if (stat ((CONST char *) data, &ignored) < 0)
 	{
@@ -738,7 +748,7 @@ absolute file name.
 	       can do.  The alternatives are to return nil, which is
 	       as bad as (and in many cases worse than) throwing the
 	       error, or to ignore the error, which will likely result
-	       in looping through 262144 stat's, which is not only
+	       in looping through 225307 stat's, which is not only
 	       dog-slow, but also useless since it will fallback to
 	       the errow below, anyway.  */
 	    report_file_error ("Cannot create temporary name for prefix",
@@ -749,6 +759,7 @@ absolute file name.
   signal_simple_error ("Cannot create temporary name for prefix", prefix);
   RETURN_NOT_REACHED (Qnil);
 }
+
 
 DEFUN ("expand-file-name", Fexpand_file_name, 1, 2, 0, /*
 Convert filename NAME to absolute, and canonicalize it.
@@ -2634,7 +2645,8 @@ otherwise, if FILE2 does not exist, the answer is t.
 /* #define READ_BUF_SIZE (2 << 16) */
 #define READ_BUF_SIZE (1 << 15)
 
-DEFUN ("insert-file-contents-internal", Finsert_file_contents_internal, 1, 7, 0, /*
+DEFUN ("insert-file-contents-internal", Finsert_file_contents_internal,
+       1, 7, 0, /*
 Insert contents of file FILENAME after point; no coding-system frobbing.
 This function is identical to `insert-file-contents' except for the
 handling of the CODESYS and USED-CODESYS arguments under
@@ -2948,7 +2960,7 @@ positions), even in Mule. (Fixing this is very difficult.)
     Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
 #endif /* FILE_CODING */
 
-    record_unwind_protect (close_stream_unwind, stream);
+    record_unwind_protect (delete_stream_unwind, stream);
 
     /* No need to limit the amount of stuff we attempt to read. (It would
        be incorrect, anyway, when Mule is enabled.) Instead, the limiting
@@ -3320,7 +3332,8 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
        but who knows about all the other machines with NFS?)  */
     /* On VMS and APOLLO, must do the stat after the close
        since closing changes the modtime.  */
-#if 1 /* !defined (VMS) && !defined (APOLLO) */
+    /* As it does on Windows too - kkm */
+#if !defined (WINDOWSNT) /* !defined (VMS) && !defined (APOLLO) */
     fstat (desc, &st);
 #endif
 
@@ -3338,8 +3351,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     unbind_to (speccount, Qnil);
   }
 
-
-#if 0 /* defined (VMS) || defined (APOLLO) */
+#if defined (WINDOWSNT) /* defined (VMS) || defined (APOLLO) */
   stat ((char *) XSTRING_DATA (fn), &st);
 #endif
 
@@ -3401,7 +3413,7 @@ Return t if (car A) is numerically less than (car B).
 */
        (a, b))
 {
-  return Flss (Fcar (a), Fcar (b));
+  return arithcompare (Fcar (a), Fcar (b), arith_less);
 }
 
 /* Heh heh heh, let's define this too, just to aggravate the person who
@@ -3411,7 +3423,7 @@ Return t if (cdr A) is numerically less than (cdr B).
 */
        (a, b))
 {
-  return Flss (Fcdr (a), Fcdr (b));
+  return arithcompare (Fcdr (a), Fcdr (b), arith_less);
 }
 
 /* Build the complete list of annotations appropriate for writing out

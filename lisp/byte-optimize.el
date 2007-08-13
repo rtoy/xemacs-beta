@@ -1029,7 +1029,7 @@
 (put 'while 'byte-optimizer 'byte-optimize-while)
 
 ;; byte-compile-negation-optimizer lives in bytecomp.el
-(put '/= 'byte-optimizer 'byte-compile-negation-optimizer)
+;(put '/= 'byte-optimizer 'byte-compile-negation-optimizer)
 (put 'atom 'byte-optimizer 'byte-compile-negation-optimizer)
 (put 'nlistp 'byte-optimizer 'byte-compile-negation-optimizer)
 
@@ -1396,29 +1396,41 @@
 ;;; old-pop-ups are not EQ when really they are.  So we have to know what
 ;;; the BOOL variables are, and not perform this optimization on them.
 ;;;
-(defconst byte-boolean-vars
-  '(abbrev-all-caps purify-flag find-file-compare-truenames
-    find-file-use-truenames find-file-visit-truename
-    find-file-existing-other-name byte-metering-on
-    zmacs-regions zmacs-region-active-p zmacs-region-stays
-    atomic-extent-goto-char-p suppress-early-error-handler
-    noninteractive ignore-kernel debug-on-quit debug-on-next-call
-    modifier-keys-are-sticky x-allow-sendevents vms-stmlf-recfm
-    disable-auto-save-when-buffer-shrinks indent-tabs-mode
-    load-in-progress load-warn-when-source-newer load-warn-when-source-only
-    load-ignore-elc-files load-force-doc-strings
-    fail-on-bucky-bit-character-escapes popup-menu-titles
-    menubar-show-keybindings completion-ignore-case
-    canna-empty-info canna-through-info canna-underline
-    canna-inhibit-hankakukana x-handle-non-fully-specified-fonts
-    print-escape-newlines print-readably
-    delete-exited-processes truncate-partial-width-windows
-    visible-bell no-redraw-on-reenter cursor-in-echo-area
-    inhibit-warning-display parse-sexp-ignore-comments words-include-escapes
-    scroll-on-clipped-lines pop-up-frames pop-up-windows)
-  "DEFVAR_BOOL variables.  Giving these any non-nil value sets them to t.
-If this does not enumerate all DEFVAR_BOOL variables, the byte-optimizer
-may generate incorrect code.")
+
+;;; This used to hold a large list of boolean variables, which had to
+;;; be updated every time a new DEFVAR_BOOL is added, making it very
+;;; hard to maintain.  Such a list is not necessary under XEmacs,
+;;; where we can use `built-in-variable-type' to query for boolean
+;;; variables.
+
+;(defconst byte-boolean-vars
+;  '(abbrev-all-caps purify-flag find-file-compare-truenames
+;    find-file-use-truenames delete-auto-save-files byte-metering-on
+;    x-seppuku-on-epipe zmacs-regions zmacs-region-active-p
+;    zmacs-region-stays atomic-extent-goto-char-p
+;    suppress-early-error-handler-backtrace noninteractive
+;    inhibit-early-packages inhibit-autoloads debug-paths
+;    inhibit-site-lisp debug-on-quit debug-on-next-call
+;    modifier-keys-are-sticky x-allow-sendevents
+;    mswindows-dynamic-frame-resize focus-follows-mouse
+;    inhibit-input-event-recording enable-multibyte-characters
+;    disable-auto-save-when-buffer-shrinks
+;    allow-deletion-of-last-visible-frame indent-tabs-mode
+;    load-in-progress load-warn-when-source-newer
+;    load-warn-when-source-only load-ignore-elc-files
+;    load-force-doc-strings fail-on-bucky-bit-character-escapes
+;    popup-menu-titles menubar-show-keybindings completion-ignore-case
+;    canna-empty-info canna-through-info canna-underline
+;    canna-inhibit-hankakukana enable-multibyte-characters
+;    re-short-flag x-handle-non-fully-specified-fonts
+;    print-escape-newlines print-readably delete-exited-processes
+;    windowed-process-io visible-bell no-redraw-on-reenter
+;    cursor-in-echo-area inhibit-warning-display
+;    column-number-start-at-one parse-sexp-ignore-comments
+;    words-include-escapes scroll-on-clipped-lines)
+;  "DEFVAR_BOOL variables.  Giving these any non-nil value sets them to t.
+;If this does not enumerate all DEFVAR_BOOL variables, the byte-optimizer
+;may generate incorrect code.")
 
 (defun byte-optimize-lapcode (lap &optional for-effect)
   "Simple peephole optimizer.  LAP is both modified and returned."
@@ -1497,7 +1509,8 @@ may generate incorrect code.")
 	      ((and (eq 'byte-varref (car lap2))
 		    (eq (cdr lap1) (cdr lap2))
 		    (memq (car lap1) '(byte-varset byte-varbind)))
-	       (if (and (setq tmp (memq (car (cdr lap2)) byte-boolean-vars))
+	       (if (and (setq tmp (eq (built-in-variable-type (car (cdr lap2)))
+				      'boolean))
 			(not (eq (car lap0) 'byte-constant)))
 		   nil
 		 (setq keep-going t)
@@ -1803,7 +1816,8 @@ may generate incorrect code.")
 		    (eq (car (car (setq tmp (cdr (memq (cdr lap2) lap)))))
 			'byte-varref)
 		    (eq (cdr (car tmp)) (cdr lap1))
-		    (not (memq (car (cdr lap1)) byte-boolean-vars)))
+		    (not (eq (built-in-variable-type (car (cdr lap1)))
+			     'boolean)))
 	       ;;(byte-compile-log-lap "  Pulled %s to end of loop" (car tmp))
 	       (let ((newtag (byte-compile-make-tag)))
 		 (byte-compile-log-lap
