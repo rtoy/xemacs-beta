@@ -32,8 +32,8 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "sysdep.h"
 #include "window.h"
-#ifdef MULE
-#include "mule-coding.h"
+#ifdef FILE_CODING
+#include "file-coding.h"
 #endif
 
 #include "systime.h"
@@ -550,13 +550,13 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     if (EQ (buffer, Qt))
       XSETBUFFER (buffer, current_buffer);
     instream = make_filedesc_input_stream (fd[0], 0, -1, LSTR_ALLOW_QUIT);
-#ifdef MULE
+#ifdef FILE_CODING
     instream =
       make_decoding_input_stream
 	(XLSTREAM (instream),
 	 Fget_coding_system (Vcoding_system_for_read));
     Lstream_set_character_mode (XLSTREAM (instream));
-#endif /* MULE */
+#endif
     NGCPRO1 (instream);
     while (1)
       {
@@ -974,8 +974,10 @@ init_callproc (void)
   {
     char **envp;
     for (envp = environ; envp && *envp; envp++)
-      Vprocess_environment = Fcons (build_ext_string (*envp, FORMAT_OS),
-				    Vprocess_environment);
+      {
+	Vprocess_environment = Fcons (build_ext_string (*envp, FORMAT_OS),
+				      Vprocess_environment);
+      }
   }
 
   /* jwz: don't do these things when in temacs (this used to be the case by

@@ -1665,7 +1665,7 @@ In this case, zeros are shifted in on the left.
   {
     int C_count = XINT (count);
     /* EMACS_UINT C_value = (EMACS_UINT) XUINT (value);*/
-    EMACS_UINT C_value = (EMACS_UINT) XINT (value);
+    EMACS_UINT C_value = (EMACS_UINT) XUINT (value);
     XSETINT (val, C_count > 0 ? C_value << C_count : C_value >> -C_count);
   }
   return val;

@@ -3880,7 +3880,19 @@ The C code calls this periodically, right before redisplay."
 	      (not (eq (marker-buffer warning-marker) buffer)))
       (setq warning-marker (make-marker))
       (set-marker warning-marker 1 buffer))
-    (set-window-start (display-buffer buffer) warning-marker)
+    (if temp-buffer-show-function
+        (let ((show-buffer (get-buffer-create "*Warnings-Show*")))
+          (save-excursion
+            (set-buffer show-buffer)
+            (setq buffer-read-only nil)
+            (erase-buffer))
+          (save-excursion
+            (set-buffer buffer)
+            (copy-to-buffer show-buffer
+                            (marker-position warning-marker)
+                            (point-max)))
+          (funcall temp-buffer-show-function show-buffer))
+      (set-window-start (display-buffer buffer) warning-marker))
     (set-marker warning-marker (point-max buffer) buffer)))
 
 (defun emacs-name ()

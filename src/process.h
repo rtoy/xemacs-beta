@@ -63,6 +63,11 @@ Lisp_Object Fopen_network_stream_internal (Lisp_Object name,
 					   Lisp_Object buffer,
 					   Lisp_Object host,
 					   Lisp_Object service);
+Lisp_Object Fopen_multicast_group_internal (Lisp_Object name,
+					    Lisp_Object buffer,
+					    Lisp_Object dest,
+					    Lisp_Object port,
+					    Lisp_Object ttl);
 Lisp_Object Fprocess_kill_without_query (Lisp_Object, Lisp_Object);
 
 Lisp_Object connect_to_file_descriptor (Lisp_Object name,

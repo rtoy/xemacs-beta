@@ -415,6 +415,13 @@ prove enlightening.
 * Problems with running XEmacs
 ==============================
 
+** `C-z', or `M-x suspend-emacs' hangs instead of suspending.
+
+If you build with `gpm' support on Linux, you cannot suspend XEmacs
+because gpm installs a buggy SIGTSTP handler.  Either compile with
+`--with-gpm=no', or don't suspend XEmacs on the Linux console until
+this bug is fixed.
+
 ** You type Control-H (Backspace) expecting to delete characters.
 
 Emacs has traditionally used Control-H for help; unfortunately this

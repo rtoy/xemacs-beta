@@ -226,6 +226,45 @@ x_init_device_class (struct device *d)
     DEVICE_CLASS (d) = Qmono;
 }
 
+static int
+have_xemacs_resources_in_xrdb(char *disp_name)
+{
+  Display *dpy;
+  char *xdefs, *key;
+  int len, found;
+
+  /*
+  ** This function figures out whether the user has any resources of the
+  ** form "XEmacs.foo" or "XEmacs*foo".
+  **
+  ** Currently we only consult the display's global resources; to look
+  ** for screen specific resources, we would need to also consult:
+  ** xdefs = XScreenResourceString(ScreenOfDisplay(dpy, scrno));
+  */
+
+  key = "XEmacs";
+  len = strlen(key);
+
+  dpy = XOpenDisplay(disp_name);
+
+  if (!dpy) return 0;
+  
+  xdefs = XResourceManagerString(dpy);       /* don't free - owned by X */
+  for (found = 0; xdefs && *xdefs; ) {
+    if (strncmp(xdefs, key, len) == 0  &&
+        (xdefs[len] == '*' || xdefs[len] == '.')) {
+      found = 1;
+      break;
+    }
+
+    while (*xdefs && *xdefs++ != '\n')       /* find start of next entry.. */
+      ;
+  }
+  
+  XCloseDisplay(dpy);
+  return found;
+}
+
 static void
 x_init_device (struct device *d, Lisp_Object props)
 {
@@ -251,13 +290,19 @@ x_init_device (struct device *d, Lisp_Object props)
 
   make_argc_argv (Vx_initial_argv_list, &argc, &argv);
 
+  GET_C_STRING_CTEXT_DATA_ALLOCA (display, disp_name);
+
   if (STRINGP (Vx_emacs_application_class) &&
       XSTRING_LENGTH (Vx_emacs_application_class) > 0)
     GET_C_STRING_CTEXT_DATA_ALLOCA (Vx_emacs_application_class, app_class);
-  else
-    app_class = "Emacs";
-
-  GET_C_STRING_CTEXT_DATA_ALLOCA (display, disp_name);
+  else {
+    app_class = (NILP(Vx_emacs_application_class)  &&
+                 have_xemacs_resources_in_xrdb(disp_name))
+                ? "XEmacs"
+                : "Emacs";
+    /* need to update Vx_emacs_application_class: */
+    Vx_emacs_application_class = build_string(app_class);
+  }
 
   slow_down_interrupts ();
   /* The Xt code can't deal with signals here.  Yuck. */
@@ -1613,8 +1658,17 @@ that XEmacs will use.  For changes to this variable to take effect, they
 must be made before the connection to the X server is initialized, that is,
 this variable may only be changed before emacs is dumped, or by setting it
 in the file lisp/term/x-win.el.
+
+If this variable is nil before the connection to the X server is first
+initialized (which it is by default), the X resource database will be
+consulted and the value will be set according to whether any resources
+are found for the application class `XEmacs'.  If the user has set any
+resources for the XEmacs application class, the XEmacs process will use
+the application class `XEmacs'.  Otherwise, the XEmacs process will use 
+the application class `Emacs' which is backwards compatible to previous
+XEmacs versions but may conflict with resources intended for GNU Emacs.
 */ );
-  Vx_emacs_application_class = Fpurecopy (build_string ("Emacs"));
+  Vx_emacs_application_class = Qnil;
 
   DEFVAR_LISP ("x-initial-argv-list", &Vx_initial_argv_list /*
 You don't want to know.

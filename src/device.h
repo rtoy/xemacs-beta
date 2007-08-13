@@ -209,9 +209,7 @@ struct device
      be inside of device_data; but it is used for both TTY's and X
      device.  Perhaps it should be conditionalized on SIGIO; but
      this requires including syssignal.h and systty.h. */
-  int old_sigio_flag;
   int old_fcntl_owner;
-  unsigned int sigio_enabled :1;
 #endif
 };
 
@@ -318,7 +316,6 @@ int valid_device_class_p (Lisp_Object class);
 #define DEVICE_BAUD_RATE(d) ((d)->baud_rate)
 #define DEVICE_INFD(d) ((d)->infd)
 #define DEVICE_OUTFD(d) ((d)->outfd)
-#define DEVICE_OLD_SIGIO_FLAG(d) ((d)->old_sigio_flag)
 #define DEVICE_OLD_FCNTL_OWNER(d) ((d)->old_fcntl_owner)
 #define DEVICE_ON_CONSOLE_P(d) ((d)->on_console_p)
 #define DEVICE_CONNECTED_TO_NAS_P(d) ((d)->connected_to_nas_p)

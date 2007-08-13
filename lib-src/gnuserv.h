@@ -34,6 +34,8 @@
 static char header_rcsid [] = "!Header: gnuserv.h,v 2.4 95/02/16 11:58:11 arup alpha !";
 #endif
 
+#define USE_TMPDIR
+
 #define NO_SHORTNAMES
 
 #define PATCHLEVEL 2
@@ -189,6 +191,7 @@ static char header_rcsid [] = "!Header: gnuserv.h,v 2.4 95/02/16 11:58:11 arup a
 extern char *optarg;
 extern int optind;
 extern char *progname;
+extern char *tmpdir;
 
 /* The casts shut Sun's compiler up and are safe in the context these
    are actually used. */

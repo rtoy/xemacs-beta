@@ -90,9 +90,8 @@ Boston, MA 02111-1307, USA.  */
 #include "systime.h"		/* to set Vlast_input_time */
 
 #include "events-mod.h"
-
-#ifdef MULE
-#include "mule-coding.h"
+#ifdef FILE_CODING
+#include "file-coding.h"
 #endif
 
 #include <errno.h>
@@ -4817,7 +4816,7 @@ If FILE is nil, close any open dribble file.
       if (fd < 0)
 	error ("Unable to create dribble file");
       Vdribble_file = make_filedesc_output_stream (fd, 0, 0, LSTR_CLOSING);
-#ifdef MULE
+#ifdef FILE_CODING
       Vdribble_file =
 	make_encoding_output_stream (XLSTREAM (Vdribble_file),
 				     Fget_coding_system (Qescape_quoted));

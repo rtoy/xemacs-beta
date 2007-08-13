@@ -3070,7 +3070,8 @@ BUFFER can be a buffer or buffer name.
 
   w->buffer = buffer;
   w->window_end_pos[CURRENT_DISP] = 0;
-  w->hscroll = 0;;
+  w->hscroll = 0;
+  w->modeline_hscroll = 0;
   Fset_marker (w->pointm[CURRENT_DISP],
 	       make_int (BUF_PT (XBUFFER (buffer))),
 	       buffer);

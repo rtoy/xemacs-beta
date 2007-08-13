@@ -27,7 +27,8 @@
 	"extents"
 	"events"
 	"text-props"
-	"process"
+	"process" ;; This is bad. network-streams may not be defined.
+	;; #+multicast "multicast" ;; #+network-streams implicitely true
 	"frame"			; move up here cause some stuff needs it here
 	"map-ynp"
 	"simple"
@@ -51,7 +52,7 @@
 	#-mule "help-nomule"
 	"help"
 	;; (load-gc "hyper-apropos")  Soon...
-	#-mule "files-nomule"
+	#-file-coding "files-nomule"
 	"files"
 	#-infodock "lib-complete" ; InfoDock uses an older version
 	"format"
@@ -85,11 +86,13 @@
 	#+menubar "menubar"
 	#+dialog "dialog"
 	#+mule "mule-charset"
+	#+file-coding "coding"
 	#+mule "mule-coding"
 ;; Handle I/O of files with extended characters.
+	#+file-coding "code-files"
 	#+mule "mule-files"
 ;; Handle process with encoding/decoding non-ascii coding-system.
-	#+mule "mule-process"
+	#+file-coding "code-process"
 	#+mule "mule-help"
 ;; Load the remaining basic files.
 	#+mule "mule-category"

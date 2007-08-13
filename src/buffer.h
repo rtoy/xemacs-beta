@@ -1102,7 +1102,7 @@ Bufpos bytind_to_bufpos (struct buffer *buf, Bytind x);
    format strings back from a library function.
 */
 
-#ifdef MULE
+#ifdef FILE_CODING
 
 /* WARNING: These use a static buffer.  This can lead to disaster if
    these functions are not used *very* carefully.  Under normal

@@ -1,4 +1,21 @@
 							-*- indented-text -*-
+to 20.5 beta28 "LaMancha"
+-- eudc/LDAP stuffs courtesy of Oscar Figueiredo
+-- file-coding separation from Mule courtesy of Andy Piper
+-- Various fixes from Kyle Jones
+-- Support for multicasting courtesy of Didier Verna
+-- Fix for respecting tty-erase-char courtesy of Glynn Clements
+-- Miscellaneous patches from Karl Hegbloom
+-- Miscellaneous patches from Greg Klanderman
+-- Allow `XEmacs' to be used in X resources courtesy of Greg Klanderman
+-- menu fixes courtesy of Aki Vehtari
+-- gnu(serv|client) can use TMPDIR if set courtesy of Glynn Clements
+-- miscellaneous fixes from Greg Klanderman
+-- Various modeline fixes courtesy of Didier Verna
+-- Miscellaneous doc fixes courtesy of Karl Hegbloom
+-- Miscellaneous bug fixes
+-- Glyph changes when dragging modeline courtesy of Didier Verna
+
 to 20.5 beta27 "Kinder"
 -- Locale fix courtesy of Kazuyuki IENAGA
 -- Fix for TZSET problem on Sun via Jens Krinke

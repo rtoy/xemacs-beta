@@ -36,8 +36,8 @@ Boston, MA 02111-1307, USA.  */
 #include "opaque.h"
 #include <paths.h>
 #endif
-#ifdef MULE
-#include "mule-coding.h"
+#ifdef FILE_CODING
+#include "file-coding.h"
 #endif
 
 #include "sysfile.h"
@@ -596,8 +596,7 @@ encoding detection or end-of-line detection.
      the need to gcpro noerror, nomessage and nosuffix.
      (Below here, we care only whether they are nil or not.)  */
   file = Fsubstitute_in_file_name (file);
-
-#ifdef MULE
+#ifdef FILE_CODING
   if (!NILP (used_codesys))
     CHECK_SYMBOL (used_codesys);
 #endif
@@ -732,13 +731,12 @@ encoding detection or end-of-line detection.
        files aren't really all that big. */
     Lstream_set_buffering (XLSTREAM (lispstream), LSTREAM_BLOCKN_BUFFERED,
 			   block_size);
-#ifdef MULE
+#ifdef FILE_CODING
     lispstream = make_decoding_input_stream
       (XLSTREAM (lispstream), Fget_coding_system (codesys));
     Lstream_set_buffering (XLSTREAM (lispstream), LSTREAM_BLOCKN_BUFFERED,
 			   block_size);
-#endif /* MULE */
-
+#endif
     /* NOTE: Order of these is very important.  Don't rearrange them. */
     record_unwind_protect (load_unwind, lispstream);
     record_unwind_protect (load_descriptor_unwind, Vload_descriptor_list);
@@ -782,12 +780,12 @@ encoding detection or end-of-line detection.
       load_byte_code_version = 100; /* no Ebolification needed */
 
     readevalloop (lispstream, file, Feval, 0);
-#ifdef MULE
+#ifdef FILE_CODING
     if (!NILP (used_codesys))
       Fset (used_codesys,
 	    XCODING_SYSTEM_NAME
 	    (decoding_stream_coding_system (XLSTREAM (lispstream))));
-#endif /* MULE */
+#endif
     unbind_to (speccount, Qnil);
 
     NUNGCPRO;

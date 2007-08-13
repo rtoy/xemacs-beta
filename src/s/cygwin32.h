@@ -30,17 +30,27 @@ Boston, MA 02111-1307, USA.  */
  *
  * The important thing about building is that it is done on a binary
  * mounted filesystem. i.e. something mounted like: mount -b c:
- * /binary. If you do not do this then compilation of el files will
- * produce garbage.  Make sure you have installed cygwin32 b18 +
- * patched dll (which can be found at http://www.lexa.ru/sos or on my
- * home page. Alternatively when b19 comes out the patched dll will be
- * unnecessary. Also make sure your HOME path is unix style -
- * i.e. without a drive letter.
+ * /binary. If you do not do this then compilation of el files may
+ * produce garbage.  As of b24 there are fixes in xemacs to make
+ * building on text mounts but I don't generally do this. Make sure
+ * you have installed cygwin32 b18 + patched dll (which can be found
+ * at http://www.lexa.ru/sos or on my home page
+ * http://www.parallax.co.uk/~andyp. Alternatively when b19 comes out
+ * the patched dll will be unnecessary. Also make sure your HOME path
+ * is unix style - i.e. without a drive letter.
+ *
+ * Note that some people have reported problems with the patched
+ * cygwin.dll on Sergey's home page so you may want to use the one on
+ * mine which I *know* works.
  *
  * once you have done this, configure and make. If you want unexec
- * support you need to download coff.h from my web page or use cygwin
+ * support you need to download a.out.h from my web page or use cygwin
  * b19. You probably want to build with mule support since this
  * addresses crlf issues in a sensible way.
+ *
+ * windows '95 - I haven't tested this under '95, it will probably
+ * build but I konw there are some limitations with cygwin under 95 so
+ * YMMV. I build with NT4 SP3.
  *
  * What I want to do:
  *
@@ -66,6 +76,8 @@ Boston, MA 02111-1307, USA.  */
 #else
 #define BROKEN_CYGWIN
 #endif
+extern void cygwin32_win32_to_posix_path_list(const char*, char*);
+extern int cygwin32_win32_to_posix_path_list_buf_size(const char*);
 #endif
 
 #ifdef HAVE_MS_WINDOWS
@@ -114,6 +126,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #undef MAIL_USE_SYSTEM_LOCK
+#define MAIL_USE_POP
 
 /* Define NO_ARG_ARRAY if you cannot take the address of the first of a
  * group of arguments and treat it as an array of the arguments.  */
@@ -208,6 +221,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* We need a little extra space, see ../../lisp/loadup.el */
 #define SYSTEM_PURESIZE_EXTRA 15000
+
+#define CYGWIN_CONV_PATH(src, dst) \
+dst = alloca (cygwin32_win32_to_posix_path_list_buf_size(src)); \
+cygwin32_win32_to_posix_path_list(src, dst)
 
 /*
  * stolen from usg.

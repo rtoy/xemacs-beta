@@ -223,7 +223,7 @@ Otherwise, the element must be a vector, which describes a menu item.
 A menu item can have any of the following forms:
 
  [ "name" callback <active-p> ]
- [ "name" callback <active-p> "suffix" ]
+ [ "name" callback <active-p> <suffix> ]
  [ "name" callback :<keyword> <value>  :<keyword> <value> ... ]
 
 The name is the string to display on the menu; it is filtered through the
@@ -241,10 +241,12 @@ The possible keywords are this:
                      displayed, and the menu will be selectable only if
                      the result is non-nil.
 
- :suffix   "string"  Same as "suffix" in the second form: the suffix is
-                     appended to the displayed name, providing a convenient
-                     way of adding the name of a command's ``argument'' to
-                     the menu, like ``Kill Buffer NAME''.
+ :suffix   <form>    Same as <suffix> in the second form: the expression
+                     is evaluated just before the menu is displayed and
+		     resulting string is appended to the displayed name,
+		     providing a convenient way of adding the name of a
+		     command's ``argument'' to the menu, like
+		     ``Kill Buffer NAME''.
 
  :keys     "string"  Normally, the keyboard equivalents of commands in
                      menus are displayed when the `callback' is a symbol.
@@ -426,7 +428,7 @@ Otherwise, the element must be a vector, which describes a menu item.
 A menu item can have any of the following forms:
 
  [ "name" callback <active-p> ]
- [ "name" callback <active-p> "suffix" ]
+ [ "name" callback <active-p> <suffix> ]
  [ "name" callback :<keyword> <value>  :<keyword> <value> ... ]
 
 The name is the string to display on the menu; it is filtered through the
@@ -444,10 +446,12 @@ The possible keywords are this:
                      displayed, and the menu will be selectable only if
                      the result is non-nil.
 
- :suffix   "string"  Same as "suffix" in the second form: the suffix is
-                     appended to the displayed name, providing a convenient
-                     way of adding the name of a command's ``argument'' to
-                     the menu, like ``Kill Buffer NAME''.
+ :suffix   <form>    Same as <suffix> in the second form: the expression
+                     is evaluated just before the menu is displayed and
+		     resulting string is appended to the displayed name,
+		     providing a convenient way of adding the name of a
+		     command's ``argument'' to the menu, like
+		     ``Kill Buffer NAME''.
 
  :keys     "string"  Normally, the keyboard equivalents of commands in
                      menus are displayed when the `callback' is a symbol.

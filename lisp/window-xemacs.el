@@ -461,7 +461,12 @@ Returns the window displaying BUFFER."
 	     ;; Otherwise, find some window that it's already in, and
 	     ;; return that, unless that window is the selected window
 	     ;; and that isn't ok.  What a contorted mess!
-	     (setq window (get-buffer-window buffer target-frame))
+	     (setq window (or (if (not explicit-frame)
+				  ;; search the selected frame
+				  ;; first if the user didn't
+				  ;; specify an explicit frame.
+				  (get-buffer-window buffer nil))
+			      (get-buffer-window buffer target-frame)))
 	     (if (and window
 		      (or (not not-this-window-p)
 			  (not (eq window (selected-window)))))

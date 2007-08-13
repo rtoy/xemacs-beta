@@ -1,6 +1,6 @@
 ;;; menubar.el --- Menubar support for XEmacs
 
-;; Copyright (C) 1991-4, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1991-4, 1997-1998 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995, 1996 Ben Wing.
 
@@ -122,11 +122,12 @@ See `current-menubar' for a description of the syntax of a menubar."
        ((vectorp menuitem)
 	(let ((L (length menuitem))
 	      plistp)
-	  (and (< L 3)
+	  (and (< L 2)
 	       (signal 'error
-		       (list "button descriptors must be at least 3 long"
+		       (list "button descriptors must be at least 2 long"
 			     menuitem)))
-	  (setq plistp (or (>= L 5) (keywordp (aref menuitem 2))))
+	  (setq plistp (or (>= L 5)
+			   (and (> L 2) (keywordp (aref menuitem 2)))))
 	  (or (stringp (aref menuitem 0))
 	      (signal 'error
 		      (list

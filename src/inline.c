@@ -67,12 +67,15 @@ Boston, MA 02111-1307, USA.  */
 #include "glyphs-x.h"
 #include "gui-x.h"
 #endif
-
-#ifdef MULE
-#include "mule-coding.h"
+#ifdef FILE_CODING
+#include "file-coding.h"
 #endif
 
 #ifdef TOOLTALK
 #include TT_C_H_PATH
 #include "tooltalk.h"
+#endif
+
+#ifdef HAVE_LDAP
+#include "eldap.h"
 #endif

@@ -1,3 +1,118 @@
+Tue Feb 17 12:50:37 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* code-files.el: new file. a virtual copy of mule-files.el
+ 	but without charset
+ 	dependencies. (toggle-buffer-file-ocding-system) new function for
+ 	changing the eol type for the current buffer.
+
+	* code-process.el: new file. a copy of
+ 	mule-process.el. mule-process.el will disappear when things have
+ 	settled.
+
+	* coding.el: new file. a virtual copy of mule-files.el but
+ 	without charset dependencies. (coding-system-base) new function
+ 	for getting the parent coding system of a coding system with eol
+	type set.
+
+	* dumped-lisp.el: add above files for the non-mule case.
+
+1998-02-25  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* window-xemacs.el (display-buffer): If no explicit
+	  frame is specified, search for a window that displays
+	  the buffer on the currently selected frame, before
+	  searching other frames.
+
+1998-02-25  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame.el (get-frame-for-buffer): If not-this-window-p
+	  is non-nil, use window on the selected frame if it is not
+	  also the selected window.  When defaulting, search for
+	  windows on the currently selected fgrame before searching
+	  other frames.
+
+1998-02-25  Didier Verna  <verna@inf.enst.fr>
+
+	* modeline.el (modeline-swap-buffers): originally named
+	`mouse-release-modeline'. Whether to actually swap the buffers is
+	decided in `mouse-drag-modeline'.
+	(mouse-drag-modeline): A button release event is considered a
+	mouse click is both X (modeline scroll) and Y (modeline drag) pos
+	stay unchanged. 
+
+1998-02-25  SL Baur  <steve@altair.xemacs.org>
+
+	* x-menubar.el: Put redo on the menubar.
+	From Aki Vehtari <Aki.Vehtari@hut.fi>
+
+1998-02-22  Greg Klanderman  <greg@alphatech.com>
+
+	* bytecomp.el (displaying-byte-compile-warnings): if
+	temp-buffer-show-function is set, use it to display current set of
+	warnings in the "*Compile-Log-Show*" buffer.
+
+	* simple.el (display-warning-buffer): if temp-buffer-show-function
+	is set, use it to display current set of warnings in the
+	"*Warnings-Show*" buffer.
+
+1998-02-20  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* cl-extra.el (equalp): Make (equalp ?A ?a) return t as in
+	Common Lisp.
+
+1998-02-23  Aki Vehtari  <Aki.Vehtari@hut.fi>
+
+	* menubar.el: Allow button descriptors at least 2 long.
+
+	* x-menubar.el (default-menubar): Use recommended forms.
+	(file-menu-filter): Remove.
+	(edit-menu-filter): Remove.
+
+1998-02-24  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (about-hackers): Updated.
+
+1998-02-22  Greg Klanderman  <greg@alphatech.com>
+
+	* help.el (help-max-help-buffers): new variable
+	(help-register-and-maybe-prune-excess): new function
+	(help-buffer-name): use help-max-help-buffers.
+	(with-displaying-help-buffer): use
+	help-register-and-maybe-prune-excess.
+
+	* help.el (help-maybe-pretty-print-value): if the value fits on
+	one line, let it.
+
+1998-02-21  Greg Klanderman  <greg@alphatech.com>
+
+	* (with-displaying-help-buffer): there is no need to kill the buffer
+	if it exists, becasuse with-output-to-temp-buffer will clear it.
+	further, killing the buffer violates the rule that
+	temp-buffer-show-function, if set, has the full responsibility of
+	showing the temp buffer.  killing the buffer fucks with the window 
+	configuration, hosing temp-buffer-show-function.
+
+
+1998-02-23  Didier Verna  <verna@inf.enst.fr>
+
+	* modeline.el (mouse-drag-modeline): 
+	- Always scroll the modeline that was originally clicked on.
+	- Use x pixels instead of x characters (which doesn't work anyway) 
+	as horizontal reference for modeline dragging. This allows us to
+	keep on dragging the modeline even if the motion event occurs in
+	another window. 
+
+1998-02-23  Didier Verna  <verna@inf.enst.fr>
+
+	* x-mouse.el (x-init-pointer-shape): use a crossed-arrows cursor
+	glyph on the modeline to indicate that dragging the mouse has an
+	effect both horizontally and vertically.
+
+1998-02-24  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (about-xemacs): Get rid of redundant visible version
+	number.
+
 1998-02-19  SL Baur  <steve@altair.xemacs.org>
 
 	* about.el (about-hackers): Update credits.

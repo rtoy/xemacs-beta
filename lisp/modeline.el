@@ -74,8 +74,9 @@ make the clicked-on window taller or shorter."
 	  (start-event-frame (event-frame event))
 	  (start-event-window (event-window event))
 	  (start-nwindows (count-windows t))
-	  (hscroll-offset
-	   (- (modeline-hscroll (event-window event)) (event-x event)))
+	  (hscroll-delta (face-width 'modeline))
+	  (start-hscroll (modeline-hscroll (event-window event)))
+	  (start-x-pixel (event-x-pixel event))
 	  (last-timestamp 0)
 	  default-line-height
 	  modeline-height
@@ -131,8 +132,12 @@ make the clicked-on window taller or shorter."
 		     done t))
 	      ((button-release-event-p event)
 	       (setq done t)
-	       (if modeline-click-swaps-buffers
-		   (mouse-release-modeline event depress-line)))
+	       ;; Consider we have a mouse click neither X pos (modeline
+	       ;; scroll) nore Y pos (modeline drag) have changed.
+	       (and modeline-click-swaps-buffers
+		    (= depress-line (event-y event))
+		    (= start-hscroll (modeline-hscroll start-event-window))
+		    (modeline-swap-buffers event)))
 	      ((button-event-p event)
 	       (setq done t))
 	      ((not (motion-event-p event))
@@ -143,8 +148,11 @@ make the clicked-on window taller or shorter."
 		  drag-modeline-event-lag)
 	       nil)
 	      (t
-	       (set-modeline-hscroll (event-window event)
-				     (+ hscroll-offset (event-x event)))
+	       (set-modeline-hscroll start-event-window
+				     (+ (/ (- (event-x-pixel event) 
+					      start-x-pixel)
+					   hscroll-delta)
+					start-hscroll))
 	       (setq last-timestamp (event-timestamp event)
 		     y (event-y-pixel event)
 		     edges (window-pixel-edges start-event-window)
@@ -201,22 +209,24 @@ make the clicked-on window taller or shorter."
 		   (set-window-configuration wconfig))))))))
 
 ;; from Bob Weiner (bob_weiner@pts.mot.com)
-(defun mouse-release-modeline (event line-num)
-  "Handle modeline click EVENT on LINE-NUM by switching buffers.
+;; Whether this function should be called is now decided in
+;; mouse-drag-modeline - dverna feb. 98
+(defun modeline-swap-buffers (event)
+  "Handle mouse clicks on modeline by switching buffers.
 If click on left half of a frame's modeline, bury current buffer.
 If click on right half of a frame's modeline, raise bottommost buffer.
-Args are: EVENT, the mouse release event, and LINE-NUM, the line number
-within the frame at which the mouse was first depressed."
-  (if (= line-num (event-y event))
-      ;; Button press and release are at same line, treat this as
-      ;; a click and switch buffers.
-	(if (< (event-x event) (/ (window-width (event-window event)) 2))
-	    ;; On left half of modeline, bury current buffer,
-	    ;; displaying second buffer on list.
-	    (mouse-bury-buffer event)
-	  ;; On right half of modeline, raise and display bottommost
-	  ;; buffer in buffer list.
-	  (mouse-unbury-buffer event))))
+Arg EVENT is the button release event that occured on the modeline."
+  (or (event-over-modeline-p event)
+      (error "not over a modeline"))
+  (or (button-release-event-p event)
+      (error "not a button release event"))
+  (if (< (event-x event) (/ (window-width (event-window event)) 2))
+      ;; On left half of modeline, bury current buffer,
+      ;; displaying second buffer on list.
+      (mouse-bury-buffer event)
+    ;; On right half of modeline, raise and display bottommost
+    ;; buffer in buffer list.
+    (mouse-unbury-buffer event)))
 
 (defconst modeline-menu
   '("Window Commands"

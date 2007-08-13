@@ -1,3 +1,27 @@
+Tue Feb 17 12:50:37 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* lib-src/Makefile.in.in: make sure clean removes msw executables
+
+1998-02-24  SL Baur  <steve@altair.xemacs.org>
+
+	* gnuserv.h: Enable USE_TMPDIR.
+
+1998-02-23  Glynn Clements  <glynn@sensei.co.uk>
+
+	* gnuclient.c (main): initialise variable `tmpdir' from the TMPDIR
+ 	environment variable.
+
+	* gnuserv.c (various): replace hardcoded references to /tmp with
+ 	the value of `tmpdir'.
+	(main): initialise variable `tmpdir' from the TMPDIR
+ 	environment variable.
+
+	* gnuserv.h: include (commented-out) definition of USE_TMPDIR.
+	Add `extern char *tmpdir'.
+
+	* gnuslib.c (various): replace hardcoded references to /tmp with
+	the value of `tmpdir'.
+
 1998-02-15  SL Baur  <steve@altair.xemacs.org>
 
 	* getopt.c (_getopt_internal): Add braces for clarity.

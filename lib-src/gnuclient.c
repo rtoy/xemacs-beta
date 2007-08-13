@@ -312,6 +312,12 @@ main (int argc, char *argv[])
   else
     progname = argv[0];
 
+#ifdef USE_TMPDIR
+  tmpdir = getenv ("TMPDIR");
+#endif
+  if (!tmpdir)
+    tmpdir = "/tmp";
+
   display = getenv ("DISPLAY");
   if (!display)
     suppress_windows_system = 1;

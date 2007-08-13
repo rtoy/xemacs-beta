@@ -128,7 +128,7 @@ static char *find_crlf (/* char * */);
 #define ERROR_MAX 80		/* a pretty arbitrary size */
 #define POP_PORT 110
 #define KPOP_PORT 1109
-#ifdef WINDOWSNT
+#if defined(WINDOWSNT) || defined(__CYGWIN32__)
 #define POP_SERVICE "pop3"	/* we don't want the POP2 port! */
 #else
 #define POP_SERVICE "pop"
@@ -1027,7 +1027,11 @@ socket_connection (host, flags)
     {
       hostent = gethostbyname (host);
       try_count++;
-      if ((! hostent) && ((h_errno != TRY_AGAIN) || (try_count == 5)))
+      if ((! hostent) 
+#ifndef BROKEN_CYGWIN	  
+	  && ((h_errno != TRY_AGAIN) || (try_count == 5))
+#endif
+	  )
 	{
 	  strcpy (pop_error, "Could not determine POP server's address");
 	  return (-1);

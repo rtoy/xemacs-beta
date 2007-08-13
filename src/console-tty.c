@@ -35,8 +35,8 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "redisplay.h"
 #include "sysdep.h"
-#ifdef MULE
-#include "mule-coding.h"
+#ifdef FILE_CODING
+#include "file-coding.h"
 #endif
 #ifdef HAVE_GPM
 #include "gpmevent.h"

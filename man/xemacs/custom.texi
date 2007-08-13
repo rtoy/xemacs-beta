@@ -2062,6 +2062,20 @@ frame; otherwise, it is changed in all frames.
 @cindex X resources
 @findex x-create-frame
 
+Historically, XEmacs has used the X resource application class @samp{Emacs}
+for its resources.  Unfortunately, GNU Emacs uses the same application
+class, and resources are not compatible between the two Emacsen.  This
+sharing of the application class often leads to trouble if you want to
+run both variants.
+
+Starting with XEmacs 20.5, XEmacs will use the class @samp{XEmacs} if it
+finds any XEmacs resources in the resource database when the X
+connection is initialized.  Otherwise, it will use the class @samp{Emacs}
+for backwards compatability.  The variable @var{x-emacs-application-class}
+may be consulted to determine the application class being used.
+
+The examples in this section assume the application class is @samp{Emacs}.
+
 The Emacs resources are generally set per-frame. Each Emacs frame can have 
 its own name or the same name as another, depending on the name passed to the 
 @code{make-frame} function.

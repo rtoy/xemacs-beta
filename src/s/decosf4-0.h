@@ -24,6 +24,9 @@
 #define regoff_t sys_regoff_t
 #define regmatch_t sys_regmatch_t
 
+#undef C_SWITCH_SYSTEM
+#define C_SWITCH_SYSTEM "-D_BSD"
+
 #define SYSTEM_MALLOC
 
 /* Some V4.0* versions before V4.0B don't detect rename properly. */

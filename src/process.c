@@ -23,8 +23,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
 
-/* This file has been Mule-ized except for `start-process-internal'
-   and `open-network-stream-internal'. */
+/* This file has been Mule-ized except for `start-process-internal',
+   `open-network-stream-internal' and `open-multicast-group-internal'. */
 
 #include <config.h>
 
@@ -44,8 +44,8 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "sysdep.h"
 #include "window.h"
-#ifdef MULE
-#include "mule-coding.h"
+#ifdef FILE_CODING
+#include "file-coding.h"
 #endif
 
 #include <setjmp.h>
@@ -64,6 +64,10 @@ Boston, MA 02111-1307, USA.  */
 Lisp_Object Qrun, Qstop; /* Qexit from eval.c, Qsignal from data.c. */
 /* Qrun => Qopen, Qexit => Qclosed for "network connection" processes */
 Lisp_Object Qopen, Qclosed;
+
+#ifdef HAVE_MULTICAST
+Lisp_Object Qmulticast; /* Will be used for occasional warnings */
+#endif
 
 /* t means use pty, nil means use a pipe,
    maybe other values to come.  */
@@ -787,7 +791,9 @@ init_process_fds (struct Lisp_Process *p, int in, int out)
       filedesc_stream_set_pty_flushing (XLSTREAM (p->outstream),
 					pty_max_bytes, eof_char);
     }
-#ifdef MULE
+
+#ifdef FILE_CODING
+
   p->instream = make_decoding_input_stream
     (XLSTREAM (p->instream),
      Fget_coding_system (Vcoding_system_for_read));
@@ -797,7 +803,7 @@ init_process_fds (struct Lisp_Process *p, int in, int out)
      Fget_coding_system (Vcoding_system_for_write));
   /* CODE_CNTL (&out_state[outchannel]) |= CC_END; !!####
      What's going on here? */
-#endif /* MULE */
+#endif
 }
 
 static void
@@ -1505,6 +1511,231 @@ Fourth arg SERVICE is name of the service desired, or an integer
   return proc;
 }
 
+#ifdef HAVE_MULTICAST
+/* Didier Verna <verna@inf.enst.fr> Nov. 28 1997.
+
+   This function is similar to open-network-stream-internal, but provides a
+   mean to open an UDP multicast connection instead of a TCP one. Like in the
+   TCP case, the multicast connection will be seen as a sub-process,
+
+   Some notes:
+   - Normaly, we should use sendto and recvfrom with non connected
+   sockets. The current code doesn't allow us to do this. In the future, it
+   would be a good idea to extend the process data structure in order to deal
+   properly with the different types network connections.
+   - For the same reason, when leaving a multicast group, it is better to make
+   a setsockopt - IP_DROP_MEMBERSHIP before closing the descriptors.
+   Unfortunately, this can't be done here because delete_process doesn't know
+   about the kind of connection we have. However, this is not such an
+   important issue.
+*/
+DEFUN ("open-multicast-group-internal", Fopen_multicast_group_internal, 5, 5, 0, /*
+Open a multicast connection on the specified dest/port/ttl.
+Returns a subprocess-object to represent the connection.
+Input and output work as for subprocesses; `delete-process' closes it.
+
+NAME is name for process.  It is modified if necessary to make it unique.
+BUFFER is the buffer (or buffer-name) to associate with the process.
+ Process output goes at end of that buffer, unless you specify
+ an output stream or filter function to handle the output.
+ BUFFER may also be nil, meaning that this process is not associated
+ with any buffer.
+Third, fourth and fifth args are the multicast destination group, port and ttl.
+ dest must be an internet address between 224.0.0.0 and 239.255.255.255
+ port is a communication port like in traditional unicast
+ ttl is the time-to-live (15 for site, 63 for region and 127 for world)
+*/
+       (name, buffer, dest, port, ttl))
+{
+  /* !!#### This function has not been Mule-ized */
+  /* This function can GC */
+  Lisp_Object proc;
+  struct ip_mreq imr;
+  struct sockaddr_in sa;
+  struct protoent *udp;
+  int ws, rs;
+  int theport;
+  unsigned char thettl;
+  int one = 1; /* For REUSEADDR */
+  int ret;
+  volatile int retry = 0;
+  struct gcpro gcpro1;
+  
+  CHECK_STRING (name);
+  CHECK_STRING (dest);
+  
+  CHECK_NATNUM (port);
+  theport = htons ((unsigned short) XINT (port));
+  
+  CHECK_NATNUM (ttl);
+  thettl = (unsigned char) XINT (ttl);
+  
+  if ((udp = getprotobyname ("udp")) == NULL)
+    error ("No info available for UDP protocol");
+  
+  /* Init the sockets. Yes, I need 2 sockets. I couldn't duplicate one. */
+  if ((rs = socket (PF_INET, SOCK_DGRAM, udp->p_proto)) < 0)
+    report_file_error ("error creating socket", list1(name));
+  if ((ws = socket (PF_INET, SOCK_DGRAM, udp->p_proto)) < 0)
+    {
+      close (rs);
+      report_file_error ("error creating socket", list1(name));
+    }
+  
+  /* This will be used for both sockets */
+  bzero(&sa, sizeof(sa));
+  sa.sin_family = AF_INET; 
+  sa.sin_port = theport;
+  sa.sin_addr.s_addr = htonl (inet_addr ((char *) XSTRING_DATA (dest)));
+
+  /* Socket configuration for reading ------------------------ */
+  
+  /* Multiple connections from the same machine. This must be done before
+     bind. If it fails, it shouldn't be fatal. The only consequence is that
+     people won't be able to connect twice from the same machine. */
+  if (setsockopt (rs, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof (one))
+      < 0)
+    warn_when_safe (Qmulticast, Qwarning, "Cannot reuse socket address");
+  
+  /* bind socket name */
+  if (bind (rs, (struct sockaddr *)&sa, sizeof(sa)))
+    {
+      close (rs);
+      close (ws);
+      report_file_error ("error binding socket", list2(name, port));
+    }
+  
+  /* join multicast group */
+  imr.imr_multiaddr.s_addr = htonl (inet_addr ((char *) XSTRING_DATA (dest)));
+  imr.imr_interface.s_addr = htonl (INADDR_ANY);
+  if (setsockopt (rs, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+		 (char *) &imr, sizeof (struct ip_mreq)) < 0)
+    {
+      close (ws);
+      close (rs);
+      report_file_error ("error adding membership", list2(name, dest));
+    }
+  
+  /* Socket configuration for writing ----------------------- */
+  
+  /* Normaly, there's no 'connect' in multicast, since we use preferentialy
+     'sendto' and 'recvfrom'. However, in order to handle this connection in
+     the process-like way it is done for TCP, we must be able to use 'write'
+     instead of 'sendto'. Consequently, we 'connect' this socket. */
+  
+  /* See open-network-stream-internal for comments on this part of the code */
+  slow_down_interrupts ();
+  
+ loop:
+  
+  /* A system call interrupted with a SIGALRM or SIGIO comes back
+     here, with can_break_system_calls reset to 0. */
+  SETJMP (break_system_call_jump);
+  if (QUITP)
+    {
+      speed_up_interrupts ();
+      REALLY_QUIT;
+      /* In case something really weird happens ... */
+      slow_down_interrupts ();
+    }
+  
+  /* Break out of connect with a signal (it isn't otherwise possible).
+     Thus you don't get screwed with a hung network. */
+  can_break_system_calls = 1;
+  ret = connect (ws, (struct sockaddr *) &sa, sizeof (sa));
+  can_break_system_calls = 0;
+  if (ret == -1 && errno != EISCONN)
+    {
+      int xerrno = errno;
+      
+      if (errno == EINTR)
+	goto loop;
+      if (errno == EADDRINUSE && retry < 20)
+	{ 
+	  /* A delay here is needed on some FreeBSD systems,
+	     and it is harmless, since this retrying takes time anyway
+	     and should be infrequent.
+	     `sleep-for' allowed for quitting this loop with interrupts
+	     slowed down so it can't be used here.  Async timers should
+	     already be disabled at this point so we can use `sleep'. */
+	  sleep (1);
+	  retry++;
+	  goto loop;
+	}
+    
+      close (rs);
+      close (ws);
+      speed_up_interrupts ();
+      
+      errno = xerrno;
+      report_file_error ("error connecting socket", list2(name, port));
+    }
+  
+  speed_up_interrupts ();
+  
+  /* scope */
+  if (setsockopt (ws, IPPROTO_IP, IP_MULTICAST_TTL, 
+		  (char *) &thettl, sizeof (thettl)) < 0)
+    {
+      close (rs);
+      close (ws);
+      report_file_error ("error setting ttl", list2(name, ttl));
+    }
+  
+  if (!NILP (buffer))
+    buffer = Fget_buffer_create (buffer);
+
+  proc = make_process_internal (name);
+  GCPRO1 (proc);
+
+  descriptor_to_process[rs] = proc;
+  
+#ifdef PROCESS_IO_BLOCKING
+  {
+    Lisp_Object tail;
+    
+    for (tail = network_stream_blocking_port_list; 
+	 CONSP (tail); tail = XCDR (tail))
+      {
+	Lisp_Object tail_port = XCAR (tail);
+	
+	if (STRINGP (tail_port))
+	  {
+	    struct servent *svc_info;
+	    
+	    svc_info = 
+	      getservbyname ((char *) XSTRING_DATA (tail_port), "udp");
+	    if ((svc_info != 0) && (svc_info->s_port == theport))
+	      break;
+	    else
+	      continue;
+	  }
+	else if ((INTP (tail_port)) && 
+		 (htons ((unsigned short) XINT (tail_port)) == theport))
+	  break;
+      }
+    
+    if (!CONSP (tail))
+      {
+#endif	/* PROCESS_IO_BLOCKING */
+	set_descriptor_non_blocking (rs);
+#ifdef PROCESS_IO_BLOCKING
+      }
+  }
+#endif	/* PROCESS_IO_BLOCKING */
+  
+  XPROCESS (proc)->pid = Fcons (port, dest);
+  XPROCESS (proc)->buffer = buffer;
+  init_process_fds (XPROCESS (proc), rs, ws);
+  XPROCESS (proc)->connected_via_filedesc_p = 0;
+  
+  event_stream_select_process (XPROCESS (proc));
+  
+  UNGCPRO;
+  return proc;
+}
+#endif /* HAVE_MULTICAST */
+
 #endif	/* HAVE_SOCKETS */
 
 Lisp_Object
@@ -1967,7 +2198,7 @@ Output from processes can arrive in between bunches.
   return Qnil;
 }
 
-#ifdef MULE
+#ifdef FILE_CODING
 
 DEFUN ("process-input-coding-system", Fprocess_input_coding_system, 1, 1, 0, /*
 Return PROCESS's input coding system.
@@ -2039,7 +2270,7 @@ Set coding-systems of PROCESS to DECODING and ENCODING.
   return Qnil;
 }
 
-#endif /* MULE */
+#endif
 
 
 /************************************************************************/
@@ -3257,6 +3488,10 @@ syms_of_process (void)
   defsymbol (&Qopen, "open");
   defsymbol (&Qclosed, "closed");
 
+#ifdef HAVE_MULTICAST
+  defsymbol(&Qmulticast, "multicast"); /* Used for occasional warnings */
+#endif
+
   DEFSUBR (Fprocessp);
   DEFSUBR (Fget_process);
   DEFSUBR (Fget_buffer_process);
@@ -3281,6 +3516,9 @@ syms_of_process (void)
   DEFSUBR (Fstart_process_internal);
 #ifdef HAVE_SOCKETS
   DEFSUBR (Fopen_network_stream_internal);
+#ifdef HAVE_MULTICAST
+  DEFSUBR (Fopen_multicast_group_internal);
+#endif /* HAVE_MULTICAST */
 #endif /* HAVE_SOCKETS */
   DEFSUBR (Fprocess_send_region);
   DEFSUBR (Fprocess_send_string);
@@ -3292,14 +3530,14 @@ syms_of_process (void)
   DEFSUBR (Fprocess_send_eof);
   DEFSUBR (Fsignal_process);
 /*  DEFSUBR (Fprocess_connection); */
-#ifdef MULE
+#ifdef FILE_CODING
   DEFSUBR (Fprocess_input_coding_system);
   DEFSUBR (Fprocess_output_coding_system);
   DEFSUBR (Fset_process_input_coding_system);
   DEFSUBR (Fset_process_output_coding_system);
   DEFSUBR (Fprocess_coding_system);
   DEFSUBR (Fset_process_coding_system);
-#endif /* MULE */
+#endif
 }
 
 void
@@ -3308,7 +3546,10 @@ vars_of_process (void)
   Fprovide (intern ("subprocesses"));
 #ifdef HAVE_SOCKETS
   Fprovide (intern ("network-streams"));
-#endif
+#ifdef HAVE_MULTICAST
+  Fprovide (intern ("multicast"));
+#endif /* HAVE_MULTICAST */
+#endif /* HAVE_SOCKETS */
   staticpro (&Vprocess_list);
 
   DEFVAR_BOOL ("delete-exited-processes", &delete_exited_processes /*

@@ -894,14 +894,6 @@ init_sigio_on_device (struct device *d)
 {
   int filedesc = DEVICE_INFD (d);
 
-#if defined (I_SETSIG) && !defined(HPUX10)
-  ioctl (filedesc, I_GETSIG, &DEVICE_OLD_SIGIO_FLAG (d));
-  DEVICE_OLD_SIGIO_FLAG (d) &= ~S_INPUT;
-#elif defined (FASYNC)
-  DEVICE_OLD_SIGIO_FLAG (d) =
-    fcntl (filedesc, F_GETFL, 0) & ~FASYNC;
-#endif
-
 #if defined (FIOSSAIOOWN)
   { /* HPUX stuff */
     int owner = getpid ();
@@ -964,15 +956,14 @@ request_sigio_on_device (struct device *d)
 {
   int filedesc = DEVICE_INFD (d);
 
-  /* prevent redundant ioctl()s, which may cause syslog messages
-     (e.g. on Solaris) */
-  if (d->sigio_enabled)
-    return;
-
 #if defined (I_SETSIG) && !defined(HPUX10)
-  ioctl (filedesc, I_SETSIG, DEVICE_OLD_SIGIO_FLAG (d) | S_INPUT);
+  {
+    int events=0;
+    ioctl (filedesc, I_GETSIG, &events);
+    ioctl (filedesc, I_SETSIG, events | S_INPUT);
+  }
 #elif defined (FASYNC)
-  fcntl (filedesc, F_SETFL, DEVICE_OLD_SIGIO_FLAG (d) | FASYNC);
+  fcntl (filedesc, F_SETFL, fcntl (filedesc, F_GETFL, 0) | FASYNC);
 #elif defined (FIOSSAIOSTAT)
   {
       /* DG: Changed for HP-UX. HP-UX uses different IOCTLs for
@@ -1003,8 +994,6 @@ request_sigio_on_device (struct device *d)
 #if defined (_CX_UX) /* #### Is this crap necessary? */
   EMACS_UNBLOCK_SIGNAL (SIGIO);
 #endif
-
-  d->sigio_enabled = 1;
 }
 
 static void
@@ -1012,15 +1001,14 @@ unrequest_sigio_on_device (struct device *d)
 {
   int filedesc = DEVICE_INFD (d);
 
-  /* prevent redundant ioctl()s, which may cause syslog messages
-     (e.g. on Solaris) */
-  if (!d->sigio_enabled)
-    return;
-
 #if defined (I_SETSIG) && !defined(HPUX10)
-  ioctl (filedesc, I_SETSIG, DEVICE_OLD_SIGIO_FLAG (d));
+  {
+    int events=0;
+    ioctl (filedesc, I_GETSIG, &events);
+    ioctl (filedesc, I_SETSIG, events & ~S_INPUT);
+  }
 #elif defined (FASYNC)
-  fcntl (filedesc, F_SETFL, DEVICE_OLD_SIGIO_FLAG (d));
+  fcntl (filedesc, F_SETFL, fcntl (filedesc, F_GETFL, 0) & ~FASYNC);
 #elif defined (FIOSSAIOSTAT)
   {
       /* DG: Changed for HP-UX. HP-UX uses different IOCTLs for
@@ -1048,8 +1036,6 @@ unrequest_sigio_on_device (struct device *d)
     ioctl (filedesc, FIOASYNC, &off);
   }
 #endif
-
-  d->sigio_enabled = 0;
 }
 
 void

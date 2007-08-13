@@ -165,6 +165,9 @@ a formatted warning, with a non-default CLASS or LABEL.
 very large buffers.  This is achieved by caching the line numbers of
 recent buffer positions, and reusing them.  This cache is used only in
 the buffers where `line-number-mode' is in effect.
+
+** When the new GNU Malloc aka Doug Lea Malloc is available, it will be used.
+
 
 * Changes in XEmacs 20.4
 ========================

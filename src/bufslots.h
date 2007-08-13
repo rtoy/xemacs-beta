@@ -100,11 +100,11 @@ Boston, MA 02111-1307, USA.  */
 #ifdef MULE
     /* This buffer's category table. */
     MARKED_SLOT (category_table);
-
+#endif /* MULE */
+#ifdef FILE_CODING
     /* This buffer's coding system. */
     MARKED_SLOT (buffer_file_coding_system);
-#endif /* MULE */
-
+#endif
     /* Values of several buffer-local variables.
 
        tab-width is buffer-local so that redisplay can find it

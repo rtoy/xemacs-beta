@@ -344,7 +344,7 @@ archlibdir_user_defined='no'
 with_menubars=''
 with_scrollbars=''
 with_dialogs=''
-with_mule_coding=''
+with_file_coding=''
 const_is_losing='yes'
 puresize=''
 cflags='UNSPECIFIED'
@@ -472,13 +472,14 @@ while test $# != 0; do
 	with_xfs	| \
 	with_i18n3	| \
 	with_mule	| \
-	with_mule_coding	| \
+	with_file_coding	| \
 	with_canna	| \
 	with_wnn	| \
 	with_wnn6	| \
 	with_workshop	| \
 	with_sparcworks | \
 	with_tooltalk   | \
+	with_ldap	| \
 	with_pop	| \
 	with_kerberos	| \
 	with_hesiod	| \
@@ -1922,13 +1923,14 @@ dnl Do the opsystem or machine files prohibit the use of the GNU malloc?
 dnl Assume not, until told otherwise.
 GNU_MALLOC=yes
 doug_lea_malloc=yes
+after_morecore_hook_exists=yes
 AC_CHECK_FUNC(malloc_get_state, ,doug_lea_malloc=no)
 AC_CHECK_FUNC(malloc_set_state, ,doug_lea_malloc=no)
 AC_MSG_CHECKING(whether __after_morecore_hook exists)
 AC_TRY_LINK([extern void (* __after_morecore_hook)();],[__after_morecore_hook = 0],
   [AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
-   doug_lea_malloc=no])
+   after_morecore_hook_exists=no])
 if test "$system_malloc" = "yes" ; then
   GNU_MALLOC=no
   GNU_MALLOC_reason="
@@ -1946,10 +1948,15 @@ fi
 if test "$doug_lea_malloc" = "yes" ; then
   if test "$GNU_MALLOC" = yes ; then
     GNU_MALLOC_reason="
-      (Using Doug Lea's new malloc from the GNU C Library.)"
+  (Using Doug Lea's new malloc from the GNU C Library.)"
   fi
   AC_DEFINE(DOUG_LEA_MALLOC)
   AC_DEFINE(USE_MINIMAL_TAGBITS)
+  if test "$after_morecore_hook_exists" = "no" ; then
+    GNU_MALLOC_reason="
+  (Using Doug Lea's new malloc from the Linux C Library.)"
+    AC_DEFINE(_NO_MALLOC_WARNING_)
+  fi
   with_minimal_tagbits=yes
 fi
 
@@ -2152,7 +2159,7 @@ if test "$window_system" = "none" && test -z "$with_tty"; then
     with_toolbars=no
     with_tty=no
     const_is_losing=no
-    #with_mule_coding=yes
+    with_file_coding=yes
     XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o gif_err.o gifalloc.o dgif_lib.o)
   fi
 fi
@@ -2396,6 +2403,30 @@ if test "$with_cde" = "yes" ; then
   need_motif=yes    # CDE requires Motif
 fi
 
+dnl Autodetect LDAP
+AC_CHECKING(for LDAP)
+test -z "$with_ldap" && { AC_CHECK_HEADER(ldap.h,          ,with_ldap=no) }
+test -z "$with_ldap" && { AC_CHECK_HEADER(lber.h,          ,with_ldap=no) }
+test -z "$with_ldap" -o "$with_ldap" = "yes" && { AC_CHECK_LIB(ldap, ldap_open, with_umich_ldap=yes, with_umich_ldap=no, -llber) }
+test \( -z "$with_ldap" -o "$with_ldap" = "yes" \) -a  "$with_umich_ldap" = "no" && { AC_CHECK_LIB(ldap10, ldap_set_option, with_ns_ldap=yes, with_ns_ldap=no) }
+test -z "$with_ldap" -a \( "$with_umich_ldap" = "yes" -o "$with_ns_ldap" = "yes" \) && with_ldap=yes
+if test "$with_ldap" = "yes" -a "$with_umich_ldap" = "yes" ; then
+  AC_DEFINE(HAVE_LDAP)
+  AC_DEFINE(HAVE_UMICH_LDAP)
+  XE_PREPEND(-llber, LIBS)
+  XE_PREPEND(-lldap, LIBS)
+  XE_ADD_OBJS(eldap.o)
+elif test "$with_ldap" = "yes" -a "$with_ns_ldap" = "yes" ; then
+  AC_DEFINE(HAVE_LDAP)
+  AC_DEFINE(HAVE_NS_LDAP)
+  XE_PREPEND(-lldap10, LIBS)
+  XE_ADD_OBJS(eldap.o)
+dnl else
+dnl   AC_DEFINE(HAVE_LDAP)
+dnl   XE_PREPEND(-lldap, LIBS)
+dnl   XE_ADD_OBJS(eldap.o)
+fi
+
 dnl ----------------------
 dnl X11 Graphics libraries
 dnl ----------------------
@@ -2592,7 +2623,7 @@ dnl Mule-dependent options
 dnl ----------------------
 
 test -z "$with_mule" && with_mule=no 
-test -z "$with_mule_coding" && with_mule_coding=no
+test -z "$with_file_coding" && with_file_coding=no
 
 dnl if test "$with_mule" = "yes" && test ! -d "$srcdir/lisp/mule"; then
 dnl	echo "Attempt to Build with Mule without Mule/Lisp"
@@ -2601,16 +2632,16 @@ dnl	echo "rerun configure with --with-mule=no"
 dnl	exit 1
 dnl fi
 
-if test "$with_mule_coding" = "yes" && test "$with_mule" = "no"; then
-  AC_DEFINE(MULE_CODING)
-  XE_ADD_OBJS(mule-coding.o)
+if test "$with_file_coding" = "yes" && test "$with_mule" = "no"; then
+  AC_DEFINE(FILE_CODING)
+  XE_ADD_OBJS(file-coding.o)
 fi
 
 if test "$with_mule" = "yes" ; then
   AC_CHECKING(for Mule-related features)
   AC_DEFINE(MULE)
-  AC_DEFINE(MULE_CODING)
-  XE_ADD_OBJS(mule.o mule-ccl.o mule-charset.o mule-coding.o)
+  AC_DEFINE(FILE_CODING)
+  XE_ADD_OBJS(mule.o mule-ccl.o mule-charset.o mule-coding.o file-coding.o)
 
   dnl Use -lintl to get internationalized strerror for Mule
   AC_CHECK_HEADERS(libintl.h)
@@ -2898,6 +2929,13 @@ AC_CHECK_FUNC(socket,
       ],
       [static struct sockaddr_un x; x.sun_len = 1;],
       [AC_MSG_RESULT(yes); AC_DEFINE(HAVE_SOCKADDR_SUN_LEN)],
+      [AC_MSG_RESULT(no)])
+      AC_MSG_CHECKING("for ip_mreq struct in netinet/in.h")
+      AC_TRY_LINK([
+#include <netinet/in.h>
+      ],
+      [static struct ip_mreq x;],
+      [AC_MSG_RESULT(yes); AC_DEFINE(HAVE_MULTICAST)],
       [AC_MSG_RESULT(no)])])])])
 
 dnl Check for SYS V IPC. (Inferior to sockets.)
@@ -3438,13 +3476,17 @@ test "$old_nas" = yes && echo "        nas library lacks error trapping, will pl
 
 test "$with_database_berkdb" = yes && echo "  Compiling in support for Berkeley DB."
 test "$with_database_dbm"    = yes && echo "  Compiling in support for DBM."
-test "$with_database_gnudbm" = yes && echo "  Compiling in support for DBM."
+test "$with_database_gnudbm" = yes && echo "  Compiling in support for GNU DBM."
+
+test "$with_umich_ldap"	     = yes && echo "  Compiling in support for LDAP (UMich libs)."
+test "$with_ns_ldap"	     = yes && echo "  Compiling in support for LDAP (Netscape SDK)."
+test "$with_ldap" = yes -a "$with_umich_ldap" = no -a "$with_ns_ldap" = no && echo "  Compiling in support for LDAP (Generic)."
 
 test "$with_ncurses"  = yes && echo "  Compiling in support for ncurses."
 test "$with_gpm"      = yes && echo "  Compiling in support for GPM (General Purpose Mouse)."
 
 test "$with_mule"     = yes && echo "  Compiling in Mule (multi-lingual) support."
-test "$with_mule_coding"     = yes && echo "  Compiling in Mule coding support."
+test "$with_file_coding"     = yes && echo "  Compiling in File coding support."
 test "$with_xim"      != no && echo "  Compiling in XIM (X11R5+ I18N input method) support."
 test "$with_xim" = motif    && echo "    Using Motif to provide XIM support."
 test "$with_xim" = xlib     && echo "    Using raw Xlib to provide XIM support."
@@ -3460,7 +3502,7 @@ test "$with_cde"      = yes && echo "  Compiling in support for CDE."
 test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
-test "$with_session"  = yes && echo "  Compiling in support for proper session-management."
+test "$with_session"  != no && echo "  Compiling in support for proper session-management."
 case "$with_menubars" in
   lucid ) echo "  Using Lucid menubars." ;;
   motif ) echo "  Using Motif menubars."

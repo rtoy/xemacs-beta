@@ -875,9 +875,10 @@ unless @var{dont-terminate} is non-@code{nil}.  If @var{sound} is
 specified, it should be a symbol specifying which sound to make.  This
 sound will be played if @code{visible-bell} is @code{nil}. (This only
 works if sound support was compiled into the executable and you are
-running on the console of a Sun SparcStation, SGI, or HP9000s700.
-Otherwise you just get a beep.) The optional third argument specifies
-what device to make the sound on, and defaults to the selected device.
+running on the console of a Sun SparcStation, SGI, HP9000s700, or Linux
+PC. Otherwise you just get a beep.) The optional third argument
+specifies what device to make the sound on, and defaults to the selected
+device.
 @end defun
 
 @defun beep &optional dont-terminate sound device

@@ -236,6 +236,11 @@ XEmacs will use.  For changes to this variable to take effect, they must
 be made before the connection to the X server is initialized, that is,
 this variable may only be changed before XEmacs is dumped, or by setting
 it in the file @file{lisp/term/x-win.el}.
+
+By default, this variable is nil at startup.  When the connection
+to the X server is first initialized, the X resource database will
+be consulted and the value will be set according to whether any
+resources are found for the application class ``XEmacs''.
 @end defvar
 
 @node Server Data

@@ -88,8 +88,11 @@ Boston, MA 02111-1307, USA.  */
 /* Define GNU_MALLOC if you want to use the GNU memory allocator. */
 #undef GNU_MALLOC
 
-/* Define if you are using the GNU C Library. -- experimental */
+/* Define if you are using the GNU C Library. -- experimental. */
 #undef DOUG_LEA_MALLOC
+
+/* Define if you are using dlmalloc from the Linux C library. */
+#undef _NO_MALLOC_WARNING_
 
 /* Use the system malloc? */
 #undef USE_SYSTEM_MALLOC
@@ -276,6 +279,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef HAVE_SOCKETS
 #undef HAVE_SOCKADDR_SUN_LEN
+#undef HAVE_MULTICAST
 #undef HAVE_SYSVIPC
 
 #undef SYSV_SYSTEM_DIR
@@ -324,6 +328,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* Do we have either DBM or Berkeley DB database support? */
 #undef HAVE_DATABASE
+
+/* Do we have LDAP support? */
+#undef HAVE_LDAP
+/* Do we have the LDAP library of the University of Michigan ? */
+#undef HAVE_UMICH_LDAP
+/* Do we have Netscape LDAP SDK library */
+#undef HAVE_NS_LDAP
 
 /* Do you have the Xauth library present?  This will add some extra
    functionality to gnuserv. */
@@ -421,8 +432,8 @@ Boston, MA 02111-1307, USA.  */
    if you're working with ASCII files. */
 #undef MULE
 
-/* Define this if you want Mule coding support */
-#undef MULE_CODING
+/* Define this if you want file coding support */
+#undef FILE_CODING
 
 /* Do we want to use X window input methods for use with Mule? (requires X11R5)
    If so, use raw Xlib or higher level Motif interface? */

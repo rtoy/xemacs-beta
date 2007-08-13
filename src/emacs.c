@@ -941,7 +941,11 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_mule ();
       syms_of_mule_ccl ();
       syms_of_mule_charset ();
+#endif
+#ifdef FILE_CODING
       syms_of_mule_coding ();
+#endif
+#ifdef MULE
 #ifdef HAVE_WNN
       syms_of_mule_wnn ();
 #endif
@@ -974,6 +978,10 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
 #ifdef SUNPRO
       syms_of_sunpro ();
+#endif
+
+#ifdef HAVE_LDAP
+      syms_of_eldap ();
 #endif
 
       /* Now create the subtypes for the types that have them.
@@ -1093,7 +1101,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	 */
 
       lstream_type_create ();
-#ifdef MULE
+#ifdef FILE_CODING
       lstream_type_create_mule_coding ();
 #endif
       lstream_type_create_print ();
@@ -1279,7 +1287,11 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef MULE
       vars_of_mule ();
       vars_of_mule_charset ();
+#endif
+#ifdef FILE_CODING
       vars_of_mule_coding ();
+#endif
+#ifdef MULE
 #ifdef HAVE_WNN
       vars_of_mule_wnn ();
 #endif
@@ -1294,6 +1306,10 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
 #ifdef SUNPRO
       vars_of_sunpro ();
+#endif
+
+#ifdef HAVE_LDAP
+      vars_of_eldap ();
 #endif
 
       /* Now initialize any specifier variables.  We do this later
@@ -1343,6 +1359,8 @@ main_1 (int argc, char **argv, char **envp, int restart)
       /* These two depend on hashtables and various variables declared
 	 earlier.  The second may also depend on the first. */
       complex_vars_of_mule_charset ();
+#endif
+#if defined(FILE_CODING)
       complex_vars_of_mule_coding ();
 #endif
 
@@ -1786,11 +1804,11 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
      (int nargs, Lisp_Object *args))
 {
   int ac;
-  Extbyte *wampum;
+  CONST Extbyte *wampum;
   int namesize;
   int total_len;
   Lisp_Object orig_invoc_name = Fcar (Vcommand_line_args);
-  Extbyte **wampum_all = alloca_array (Extbyte *, nargs);
+  CONST Extbyte **wampum_all = alloca_array (CONST Extbyte *, nargs);
   int *wampum_all_len  = alloca_array (int, nargs);
 
   assert (!gc_in_progress);
@@ -1936,7 +1954,11 @@ main (int argc, char **argv, char **envp)
 #if 0
       free (malloc_state_ptr);
 #endif
-#if !defined(MULE) && !defined(DEBUG_DOUG_LEA_MALLOC)
+      /* mmap works in glibc-2.1, glibc-2.0 (Non-Mule only) and Linux libc5 */
+#if (defined(__GLIBC__) && __GLIBC_MINOR__ >= 1) || \
+    defined(_NO_MALLOC_WARNING_) || \
+    (defined(__GLIBC__) && __GLIBC_MINOR__ < 1 && !defined(MULE)) || \
+    defined(DEBUG_DOUG_LEA_MALLOC)
       mallopt (M_MMAP_MAX, 64);
 #endif
 #ifdef REL_ALLOC

@@ -23,17 +23,16 @@ Boston, MA 02111-1307, USA.  */
 
 /* Rewritten by Ben Wing <wing@666.com>. */
 
-#if 0				/* while file-coding not split up */
-
 #include <config.h>
 #include "lisp.h"
-
 #include "buffer.h"
 #include "elhash.h"
 #include "insdel.h"
 #include "lstream.h"
+#ifdef MULE
 #include "mule-ccl.h"
-#include "mule-coding.h"
+#endif
+#include "file-coding.h"
 
 Lisp_Object Qbuffer_file_coding_system, Qcoding_system_error;
 
@@ -55,7 +54,7 @@ int coding_category_by_priority[CODING_CATEGORY_LAST + 1];
 
 Lisp_Object Qcoding_system_p;
 
-Lisp_Object Qbig5, Qshift_jis, Qno_conversion, Qccl, Qiso2022;
+Lisp_Object Qno_conversion, Qccl, Qiso2022;
 /* Qinternal in general.c */
 
 Lisp_Object Qmnemonic, Qeol_type;
@@ -64,21 +63,24 @@ Lisp_Object Qeol_cr, Qeol_crlf, Qeol_lf;
 Lisp_Object Qpost_read_conversion;
 Lisp_Object Qpre_write_conversion;
 
+#ifdef MULE
+Lisp_Object Qbig5, Qshift_jis;
 Lisp_Object Qcharset_g0, Qcharset_g1, Qcharset_g2, Qcharset_g3;
 Lisp_Object Qforce_g0_on_output, Qforce_g1_on_output;
 Lisp_Object Qforce_g2_on_output, Qforce_g3_on_output;
-Lisp_Object Qshort, Qno_ascii_eol, Qno_ascii_cntl, Qseven, Qlock_shift;
-Lisp_Object Qno_iso6429, Qescape_quoted;
+Lisp_Object Qno_iso6429;
 Lisp_Object Qinput_charset_conversion, Qoutput_charset_conversion;
-
-Lisp_Object Qencode, Qdecode;
-
 Lisp_Object Qctext;
+#endif
+Lisp_Object Qshort, Qno_ascii_eol, Qno_ascii_cntl, Qseven, Qlock_shift;
+
+Lisp_Object Qencode, Qdecode, Qescape_quoted;
 
 Lisp_Object Vcoding_system_hashtable;
 
 int enable_multibyte_characters;
 
+#ifdef MULE
 /* Additional information used by the ISO2022 decoder and detector. */
 struct iso2022_decoder
 {
@@ -141,9 +143,10 @@ struct iso2022_decoder
      but we have to do so now. */
   unsigned int output_direction_sequence :1;
 };
-
+#endif
 Lisp_Object Fcopy_coding_system (Lisp_Object old_coding_system,
 				 Lisp_Object new_name);
+#ifdef MULE
 struct detection_state;
 static int detect_coding_sjis (struct detection_state *st,
 			       CONST unsigned char *src,
@@ -177,6 +180,7 @@ static void decode_coding_iso2022 (Lstream *decoding,
 static void encode_coding_iso2022 (Lstream *encoding,
 				   CONST unsigned char *src,
 				   unsigned_char_dynarr *dst, unsigned int n);
+#endif /* MULE */
 static void decode_coding_no_conversion (Lstream *decoding,
 					 CONST unsigned char *src,
 					 unsigned_char_dynarr *dst,
@@ -239,6 +243,7 @@ mark_coding_system (Lisp_Object obj, void (*markobj) (Lisp_Object))
 
   switch (CODING_SYSTEM_TYPE (codesys))
     {
+#ifdef MULE
       int i;
     case CODESYS_ISO2022:
       for (i = 0; i < 4; i++)
@@ -269,6 +274,7 @@ mark_coding_system (Lisp_Object obj, void (*markobj) (Lisp_Object))
       (markobj) (CODING_SYSTEM_CCL_DECODE (codesys));
       (markobj) (CODING_SYSTEM_CCL_ENCODE (codesys));
       break;
+#endif
     default:
       break;
     }
@@ -302,6 +308,7 @@ finalize_coding_system (void *header, int for_disksave)
     {
       switch (CODING_SYSTEM_TYPE (c))
 	{
+#ifdef MULE
 	case CODESYS_ISO2022:
 	  if (c->iso2022.input_conv)
 	    {
@@ -314,7 +321,7 @@ finalize_coding_system (void *header, int for_disksave)
 	      c->iso2022.output_conv = 0;
 	    }
 	  break;
-
+#endif
 	default:
 	  break;
 	}
@@ -353,6 +360,10 @@ setup_eol_coding_systems (struct Lisp_Coding_System *codesys)
   Lisp_Object codesys_obj = Qnil;
   int len = string_length (XSYMBOL (CODING_SYSTEM_NAME (codesys))->name);
   char *codesys_name = (char *) alloca (len + 7);
+
+  int mlen = XSTRING_LENGTH(CODING_SYSTEM_MNEMONIC (codesys));
+  char *codesys_mnemonic = (char *) alloca (mlen + 7);
+
   Lisp_Object codesys_name_sym, sub_codesys_obj;
 
   /* kludge */
@@ -362,17 +373,22 @@ setup_eol_coding_systems (struct Lisp_Coding_System *codesys)
   memcpy (codesys_name,
 	  string_data (XSYMBOL (CODING_SYSTEM_NAME (codesys))->name), len);
 
-#define DEFINE_SUB_CODESYS(op_sys, Type) do {	\
+  memcpy (codesys_mnemonic,
+	  XSTRING_DATA (CODING_SYSTEM_MNEMONIC (codesys)), mlen);
+
+#define DEFINE_SUB_CODESYS(op_sys, op_sys_abbr, Type) do {	\
     strcpy (codesys_name + len, "-" op_sys);	\
+    strcpy (codesys_mnemonic + mlen, op_sys_abbr);	\
     codesys_name_sym = intern (codesys_name);	\
     sub_codesys_obj = Fcopy_coding_system (codesys_obj, codesys_name_sym); \
     XCODING_SYSTEM_EOL_TYPE (sub_codesys_obj) = Type; \
+    XCODING_SYSTEM_MNEMONIC(sub_codesys_obj) = build_string(codesys_mnemonic); \
     CODING_SYSTEM_##Type (codesys) = sub_codesys_obj; \
 } while (0)
 
-  DEFINE_SUB_CODESYS("unix", EOL_LF);
-  DEFINE_SUB_CODESYS("dos",  EOL_CRLF);
-  DEFINE_SUB_CODESYS("mac",  EOL_CR);
+  DEFINE_SUB_CODESYS("unix", "", EOL_LF);
+  DEFINE_SUB_CODESYS("dos",  "(T)", EOL_CRLF);
+  DEFINE_SUB_CODESYS("mac",  "(t)", EOL_CR);
 }
 
 DEFUN ("coding-system-p", Fcoding_system_p, 1, 1, 0, /*
@@ -500,7 +516,7 @@ allocate_coding_system (enum coding_system_type type, Lisp_Object name)
   CODING_SYSTEM_EOL_CR   (codesys) = Qnil;
   CODING_SYSTEM_EOL_LF   (codesys) = Qnil;
   CODING_SYSTEM_TYPE     (codesys) = type;
-
+#ifdef MULE
   if (type == CODESYS_ISO2022)
     {
       int i;
@@ -512,12 +528,13 @@ allocate_coding_system (enum coding_system_type type, Lisp_Object name)
       CODING_SYSTEM_CCL_DECODE (codesys) = Qnil;
       CODING_SYSTEM_CCL_ENCODE (codesys) = Qnil;
     }
-
+#endif
   CODING_SYSTEM_NAME (codesys) = name;
 
   return codesys;
 }
 
+#ifdef MULE
 /* Given a list of charset conversion specs as specified in a Lisp
    program, parse it into STORE_HERE. */
 
@@ -570,6 +587,8 @@ unparse_charset_conversion_specs (charset_conversion_spec_dynarr *load_here)
 
   return Fnreverse (result);
 }
+
+#endif
 
 DEFUN ("make-coding-system", Fmake_coding_system, 2, 4, 0, /*
 Register symbol NAME as a coding system.
@@ -748,10 +767,12 @@ if TYPE is 'ccl:
   /* Convert type to constant */
   if (NILP (type) || EQ (type, Qundecided))
                                       { ty = CODESYS_AUTODETECT; }
+#ifdef MULE
   else if (EQ (type, Qshift_jis))     { ty = CODESYS_SHIFT_JIS; }
   else if (EQ (type, Qiso2022))       { ty = CODESYS_ISO2022; }
   else if (EQ (type, Qbig5))          { ty = CODESYS_BIG5; }
   else if (EQ (type, Qccl))           { ty = CODESYS_CCL; }
+#endif
   else if (EQ (type, Qno_conversion)) { ty = CODESYS_NO_CONVERSION; }
 #ifdef DEBUG_XEMACS
   else if (EQ (type, Qinternal))      { ty = CODESYS_INTERNAL; }
@@ -788,6 +809,7 @@ if TYPE is 'ccl:
 
       else if (EQ (key, Qpost_read_conversion)) CODING_SYSTEM_POST_READ_CONVERSION (codesys) = value;
       else if (EQ (key, Qpre_write_conversion)) CODING_SYSTEM_PRE_WRITE_CONVERSION (codesys) = value;
+#ifdef MULE
       else if (ty == CODESYS_ISO2022)
 	{
 #define FROB_INITIAL_CHARSET(charset_num) \
@@ -850,6 +872,7 @@ if TYPE is 'ccl:
 	  else
 	    signal_simple_error ("Unrecognized property", key);
 	}
+#endif /* MULE */
       else
 	signal_simple_error ("Unrecognized property", key);
     }
@@ -949,10 +972,12 @@ Return the type of CODING-SYSTEM.
   switch (XCODING_SYSTEM_TYPE (Fget_coding_system (coding_system)))
     {
     case CODESYS_AUTODETECT:	return Qundecided;
+#ifdef MULE
     case CODESYS_SHIFT_JIS:	return Qshift_jis;
     case CODESYS_ISO2022:	return Qiso2022;
     case CODESYS_BIG5:		return Qbig5;
     case CODESYS_CCL:		return Qccl;
+#endif
     case CODESYS_NO_CONVERSION:	return Qno_conversion;
 #ifdef DEBUG_XEMACS
     case CODESYS_INTERNAL:	return Qinternal;
@@ -964,6 +989,7 @@ Return the type of CODING-SYSTEM.
   return Qnil; /* not reached */
 }
 
+#ifdef MULE
 static
 Lisp_Object coding_system_charset (Lisp_Object coding_system, int gnum)
 {
@@ -989,6 +1015,7 @@ GNUM allows 0 .. 3.
 
   return coding_system_charset(coding_system, XINT (gnum));
 }
+#endif
 
 DEFUN ("coding-system-property", Fcoding_system_property, 2, 2, 0, /*
 Return the PROP property of CODING-SYSTEM.
@@ -1010,7 +1037,7 @@ Return the PROP property of CODING-SYSTEM.
 	  {
 	  case CODESYS_PROP_ALL_OK:
 	    break;
-
+#ifdef MULE
 	  case CODESYS_PROP_ISO2022:
 	    if (type != CODESYS_ISO2022)
 	      signal_simple_error
@@ -1024,7 +1051,7 @@ Return the PROP property of CODING-SYSTEM.
 		("Property only valid in CCL coding systems",
 		 prop);
 	    break;
-
+#endif /* MULE */
 	  default:
 	    abort ();
 	  }
@@ -1053,6 +1080,7 @@ Return the PROP property of CODING-SYSTEM.
     return XCODING_SYSTEM_POST_READ_CONVERSION (coding_system);
   else if (EQ (prop, Qpre_write_conversion))
     return XCODING_SYSTEM_PRE_WRITE_CONVERSION (coding_system);
+#ifdef MULE
   else if (type == CODESYS_ISO2022)
     {
       if (EQ (prop, Qcharset_g0))
@@ -1104,6 +1132,7 @@ Return the PROP property of CODING-SYSTEM.
       else
 	abort ();
     }
+#endif /* MULE */
   else
     abort ();
 
@@ -1240,7 +1269,7 @@ struct detection_state
   enum eol_type eol_type;
   int seen_non_ascii;
   int mask;
-
+#ifdef MULE
   struct
     {
       int mask;
@@ -1265,7 +1294,7 @@ struct detection_state
       unsigned int saw_single_shift:1;
     }
   iso2022;
-
+#endif
   struct
     {
       int seen_anything;
@@ -1371,9 +1400,11 @@ detect_coding_type (struct detection_state *st, CONST unsigned char *src,
 	  if ((c < 0x20 && !acceptable_control_char_p (c)) || c >= 0x80)
 	    {
 	      st->seen_non_ascii = 1;
+#ifdef MULE
 	      st->shift_jis.mask = ~0;
 	      st->big5.mask = ~0;
 	      st->iso2022.mask = ~0;
+#endif
 	      break;
 	    }
 	}
@@ -1381,7 +1412,7 @@ detect_coding_type (struct detection_state *st, CONST unsigned char *src,
 
   if (!n)
     return 0;
-
+#ifdef MULE
   if (!mask_has_at_most_one_bit_p (st->iso2022.mask))
     st->iso2022.mask = detect_coding_iso2022 (st, src, n);
   if (!mask_has_at_most_one_bit_p (st->shift_jis.mask))
@@ -1390,7 +1421,7 @@ detect_coding_type (struct detection_state *st, CONST unsigned char *src,
     st->big5.mask = detect_coding_big5 (st, src, n);
 
   st->mask = st->iso2022.mask | st->shift_jis.mask | st->big5.mask;
-
+#endif
   {
     int retval = mask_has_at_most_one_bit_p (st->mask);
     st->mask |= CODING_CATEGORY_NO_CONVERSION_MASK;
@@ -1426,9 +1457,9 @@ coding_system_from_mask (int mask)
     {
       int i;
       int cat = -1;
-
+#ifdef MULE
       mask = postprocess_iso2022_mask (mask);
-
+#endif
       /* Look through the coding categories by priority and find
 	 the first one that is allowed. */
       for (i = 0; i <= CODING_CATEGORY_LAST; i++)
@@ -1543,9 +1574,9 @@ type.  Optional arg BUFFER defaults to the current buffer.
       int i;
 
       val = Qnil;
-
+#ifdef MULE
       decst.mask = postprocess_iso2022_mask (decst.mask);
-
+#endif
       for (i = CODING_CATEGORY_LAST; i >= 0; i--)
 	{
 	  int sys = coding_category_by_priority[i];
@@ -1677,7 +1708,7 @@ struct decoding_stream
      automatic EOL-type detection while the former will always
      indicate a particular EOL type. */
   enum eol_type eol_type;
-
+#ifdef MULE
   /* Additional ISO2022 information.  We define the structure above
      because it's also needed by the detection routines. */
   struct iso2022_decoder iso2022;
@@ -1685,7 +1716,7 @@ struct decoding_stream
   /* Additional information (the state of the running CCL program)
      used by the CCL decoder. */
   struct ccl_program ccl;
-
+#endif
   struct detection_state decst;
 };
 
@@ -1695,6 +1726,7 @@ static int decoding_rewinder   (Lstream *stream);
 static int decoding_seekable_p (Lstream *stream);
 static int decoding_flusher    (Lstream *stream);
 static int decoding_closer     (Lstream *stream);
+
 static Lisp_Object decoding_marker (Lisp_Object stream,
 				    void (*markobj) (Lisp_Object));
 
@@ -1807,6 +1839,7 @@ decoding_writer (Lstream *stream, CONST unsigned char *data, int size)
 static void
 reset_decoding_stream (struct decoding_stream *str)
 {
+#ifdef MULE
   if (CODING_SYSTEM_TYPE (str->codesys) == CODESYS_ISO2022)
     {
       Lisp_Object coding_system = Qnil;
@@ -1817,7 +1850,7 @@ reset_decoding_stream (struct decoding_stream *str)
     {
       setup_ccl_program (&str->ccl, CODING_SYSTEM_CCL_DECODE (str->codesys));
     }
-
+#endif
   str->flags = str->ch = 0;
 }
 
@@ -1854,8 +1887,10 @@ decoding_closer (Lstream *stream)
       decoding_writer (stream, 0, 0);
     }
   Dynarr_free (str->runoff);
+#ifdef MULE
   if (str->iso2022.composite_chars)
     Dynarr_free (str->iso2022.composite_chars);
+#endif
   return Lstream_close (str->other_end);
 }
 
@@ -1982,6 +2017,7 @@ mule_decode (Lstream *decoding, CONST unsigned char *src,
     case CODESYS_NO_CONVERSION:
       decode_coding_no_conversion (decoding, src, dst, n);
       break;
+#ifdef MULE
     case CODESYS_SHIFT_JIS:
       decode_coding_sjis (decoding, src, dst, n);
       break;
@@ -1994,6 +2030,7 @@ mule_decode (Lstream *decoding, CONST unsigned char *src,
     case CODESYS_ISO2022:
       decode_coding_iso2022 (decoding, src, dst, n);
       break;
+#endif
     default:
       abort ();
     }
@@ -2097,7 +2134,7 @@ struct encoding_stream
      with one- and two-byte characters at the moment, we only use
      this to store the first byte of a two-byte character. */
   unsigned int ch;
-
+#ifdef MULE
   /* Additional information used by the ISO2022 encoder. */
   struct
     {
@@ -2125,6 +2162,7 @@ struct encoding_stream
   /* Additional information (the state of the running CCL program)
      used by the CCL encoder. */
   struct ccl_program ccl;
+#endif
 };
 
 static int encoding_reader (Lstream *stream, unsigned char *data, int size);
@@ -2134,6 +2172,7 @@ static int encoding_rewinder   (Lstream *stream);
 static int encoding_seekable_p (Lstream *stream);
 static int encoding_flusher    (Lstream *stream);
 static int encoding_closer     (Lstream *stream);
+
 static Lisp_Object encoding_marker (Lisp_Object stream,
 				    void (*markobj) (Lisp_Object));
 
@@ -2248,6 +2287,7 @@ reset_encoding_stream (struct encoding_stream *str)
 {
   switch (CODING_SYSTEM_TYPE (str->codesys))
     {
+#ifdef MULE
     case CODESYS_ISO2022:
       {
 	int i;
@@ -2269,6 +2309,7 @@ reset_encoding_stream (struct encoding_stream *str)
     case CODESYS_CCL:
       setup_ccl_program (&str->ccl, CODING_SYSTEM_CCL_ENCODE (str->codesys));
       break;
+#endif
     default:
       break;
     }
@@ -2382,6 +2423,7 @@ mule_encode (Lstream *encoding, CONST unsigned char *src,
     case CODESYS_NO_CONVERSION:
       encode_coding_no_conversion (encoding, src, dst, n);
       break;
+#ifdef MULE
     case CODESYS_SHIFT_JIS:
       encode_coding_sjis (encoding, src, dst, n);
       break;
@@ -2394,6 +2436,7 @@ mule_encode (Lstream *encoding, CONST unsigned char *src,
     case CODESYS_ISO2022:
       encode_coding_iso2022 (encoding, src, dst, n);
       break;
+#endif /* MULE */
     default:
       abort ();
     }
@@ -2464,6 +2507,7 @@ text.  BUFFER defaults to the current buffer if unspecified.
   }
 }
 
+#ifdef MULE
 
 /************************************************************************/
 /*                          Shift-JIS methods                           */
@@ -4338,7 +4382,7 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
 
   /* Verbum caro factum est! */
 }
-
+#endif /* MULE */
 
 /************************************************************************/
 /*                     No-conversion methods                            */
@@ -4456,7 +4500,11 @@ convert_to_external_format (CONST Bufbyte *ptr,
 			    Extcount *len_out,
 			    enum external_data_format fmt)
 {
+#ifdef MULE
   Lisp_Object coding_system = FMT_CODING_SYSTEM (fmt);
+#else
+  Lisp_Object coding_system = Qnil;
+#endif
 
   if (!conversion_out_dynarr)
     conversion_out_dynarr = Dynarr_new (Extbyte);
@@ -4524,7 +4572,11 @@ convert_from_external_format (CONST Extbyte *ptr,
 			      Bytecount *len_out,
 			      enum external_data_format fmt)
 {
+#ifdef MULE
   Lisp_Object coding_system = FMT_CODING_SYSTEM (fmt);
+#else
+  Lisp_Object coding_system = Qnil;
+#endif
 
   if (!conversion_in_dynarr)
     conversion_in_dynarr = Dynarr_new (Bufbyte);
@@ -4598,7 +4650,9 @@ syms_of_mule_coding (void)
 
   DEFSUBR (Fcoding_system_type);
   DEFSUBR (Fcoding_system_doc_string);
+#ifdef MULE
   DEFSUBR (Fcoding_system_charset);
+#endif
   DEFSUBR (Fcoding_system_property);
 
   DEFSUBR (Fcoding_category_list);
@@ -4610,19 +4664,20 @@ syms_of_mule_coding (void)
   DEFSUBR (Fdetect_coding_region);
   DEFSUBR (Fdecode_coding_region);
   DEFSUBR (Fencode_coding_region);
+#ifdef MULE
   DEFSUBR (Fdecode_shift_jis_char);
   DEFSUBR (Fencode_shift_jis_char);
   DEFSUBR (Fdecode_big5_char);
   DEFSUBR (Fencode_big5_char);
-
+#endif /* MULE */
   defsymbol (&Qcoding_system_p, "coding-system-p");
-
+  defsymbol (&Qno_conversion, "no-conversion");
+#ifdef MULE
   defsymbol (&Qbig5, "big5");
   defsymbol (&Qshift_jis, "shift-jis");
-  defsymbol (&Qno_conversion, "no-conversion");
   defsymbol (&Qccl, "ccl");
   defsymbol (&Qiso2022, "iso2022");
-
+#endif /* MULE */
   defsymbol (&Qmnemonic, "mnemonic");
   defsymbol (&Qeol_type, "eol-type");
   defsymbol (&Qpost_read_conversion, "post-read-conversion");
@@ -4634,7 +4689,7 @@ syms_of_mule_coding (void)
   defsymbol (&Qeol_cr, "eol-cr");
   defsymbol (&Qeol_lf, "eol-lf");
   defsymbol (&Qeol_crlf, "eol-crlf");
-
+#ifdef MULE
   defsymbol (&Qcharset_g0, "charset-g0");
   defsymbol (&Qcharset_g1, "charset-g1");
   defsymbol (&Qcharset_g2, "charset-g2");
@@ -4643,23 +4698,27 @@ syms_of_mule_coding (void)
   defsymbol (&Qforce_g1_on_output, "force-g1-on-output");
   defsymbol (&Qforce_g2_on_output, "force-g2-on-output");
   defsymbol (&Qforce_g3_on_output, "force-g3-on-output");
+  defsymbol (&Qno_iso6429, "no-iso6429");
+  defsymbol (&Qinput_charset_conversion, "input-charset-conversion");
+  defsymbol (&Qoutput_charset_conversion, "output-charset-conversion");
+#endif
   defsymbol (&Qshort, "short");
   defsymbol (&Qno_ascii_eol, "no-ascii-eol");
   defsymbol (&Qno_ascii_cntl, "no-ascii-cntl");
   defsymbol (&Qseven, "seven");
   defsymbol (&Qlock_shift, "lock-shift");
-  defsymbol (&Qno_iso6429, "no-iso6429");
   defsymbol (&Qescape_quoted, "escape-quoted");
-  defsymbol (&Qinput_charset_conversion, "input-charset-conversion");
-  defsymbol (&Qoutput_charset_conversion, "output-charset-conversion");
 
   defsymbol (&Qencode, "encode");
   defsymbol (&Qdecode, "decode");
 
+#ifdef MULE
   defsymbol (&Qctext, "ctext");
-
   defsymbol (&coding_category_symbol[CODING_CATEGORY_SHIFT_JIS],
 	     "shift-jis");
+  defsymbol (&coding_category_symbol[CODING_CATEGORY_BIG5],
+	     "big5");
+#endif /* MULE */  
   defsymbol (&coding_category_symbol[CODING_CATEGORY_ISO_7],
 	     "iso-7");
   defsymbol (&coding_category_symbol[CODING_CATEGORY_ISO_8_DESIGNATE],
@@ -4670,8 +4729,6 @@ syms_of_mule_coding (void)
 	     "iso-8-2");
   defsymbol (&coding_category_symbol[CODING_CATEGORY_ISO_LOCK_SHIFT],
 	     "iso-lock-shift");
-  defsymbol (&coding_category_symbol[CODING_CATEGORY_BIG5],
-	     "big5");
   defsymbol (&coding_category_symbol[CODING_CATEGORY_NO_CONVERSION],
 	     "no-conversion");
 }
@@ -4707,6 +4764,8 @@ vars_of_mule_coding (void)
       coding_category_system[i] = Qnil;
       coding_category_by_priority[i] = i;
     }
+
+  Fprovide (intern ("file-coding"));
 
   DEFVAR_LISP ("keyboard-coding-system", &Vkeyboard_coding_system /*
 Coding system used for TTY keyboard input.
@@ -4780,7 +4839,7 @@ complex_vars_of_mule_coding (void)
   DEFINE_CODESYS_PROP (CODESYS_PROP_ALL_OK,  Qeol_lf);
   DEFINE_CODESYS_PROP (CODESYS_PROP_ALL_OK,  Qpost_read_conversion);
   DEFINE_CODESYS_PROP (CODESYS_PROP_ALL_OK,  Qpre_write_conversion);
-
+#ifdef MULE
   DEFINE_CODESYS_PROP (CODESYS_PROP_ISO2022, Qcharset_g0);
   DEFINE_CODESYS_PROP (CODESYS_PROP_ISO2022, Qcharset_g1);
   DEFINE_CODESYS_PROP (CODESYS_PROP_ISO2022, Qcharset_g2);
@@ -4801,7 +4860,7 @@ complex_vars_of_mule_coding (void)
 
   DEFINE_CODESYS_PROP (CODESYS_PROP_CCL,     Qencode);
   DEFINE_CODESYS_PROP (CODESYS_PROP_CCL,     Qdecode);
-
+#endif /* MULE */
   /* Need to create this here or we're really screwed. */
   Fmake_coding_system (Qno_conversion, Qno_conversion, build_string ("No conversion"),
 		       list2 (Qmnemonic, build_string ("Noconv")));
@@ -4813,5 +4872,3 @@ complex_vars_of_mule_coding (void)
   coding_category_system[CODING_CATEGORY_NO_CONVERSION] =
     Fget_coding_system (Qno_conversion);
 }
-
-#endif

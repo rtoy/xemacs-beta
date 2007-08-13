@@ -72,6 +72,7 @@
     (kyle     "Kyle Jones"        "kyle_jones@wonderworks.com")
     (larsi    "Lars Magne Ingebrigtsen" "larsi@gnus.org")
     (marcpa   "Marc Paquette"	  "marcpa@CAM.ORG")
+    (mcook    "Michael R. Cook"   "mcook@cognex.com")
     (mly      "Richard Mlynarik"  "mly@adoc.xerox.com")
     (morioka  "MORIOKA Tomohiko"  "morioka@jaist.ac.jp")
     (mrb      "Martin Buchholz"   "mrb@sun.eng.com")
@@ -259,7 +260,7 @@ Note that W3 (XEmacs's own browser), might need customization (due to
 firewalls) in order to work correctly.
 
 XEmacs is the result of the time and effort of many people.  The
-developers responsible for the 20.4 release are:\n\n")
+developers responsible for this release are:\n\n")
 
     (flet ((setup-person (who)
 	    (widget-insert "\t* ")
@@ -1228,6 +1229,9 @@ muck around with things. As a result I started the NT port. Hopefully I
 will get to finish it sometime sooner rather than later. I do vaguely
 remember University where it seems like I had more spare time that I can
 believe now. Oh well, such is life.\n")
+       (print-short "Michael R. Cook" "mcook@cognex.com" "\
+Author of the \"shy groups\" and minimal matching regular expression
+extensions.\n")
        "\n\
 In addition to those just mentioned, the following people have spent a
 great deal of effort providing feedback, testing beta versions of
@@ -1345,6 +1349,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Rob Kooper" "kooper@cc.gatech.edu")
        (print-short "Peter Skov Knudsen" "knu@dde.dk")
        (print-short "Jens Krinke" "krinke@ips.cs.tu-bs.de")
+       (print-short "Maximilien Lincourt" "max@toonboom.com")
        (print-short "Mats Larsson" "Mats.Larsson@uab.ericsson.se")
        (print-short "Simon Leinen" "simon@instrumatic.ch")
        (print-short "Carsten Leonhardt" "leo@arioch.tng.oche.de")
@@ -1367,7 +1372,6 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Pekka Marjola" "pema@iki.fi")
        (print-short "Simon Marshall" "simon@gnu.ai.mit.edu")
        (print-short "Dave Mason" "dmason@plg.uwaterloo.ca")
-       (print-short "Jason R Mastaler" "jason@4b.org")
        (print-short "Jaye Mathisen" "mrcpu@cdsnet.net")
        (print-short "Jason McLaren" "mclaren@math.mcgill.ca")
        (print-short "Michael McNamara" "mac@silicon-sorcery.com")

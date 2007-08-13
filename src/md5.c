@@ -32,8 +32,8 @@ documentation and/or software.
 #include "buffer.h"
 #include "insdel.h"
 #include "lstream.h"
-#ifdef MULE
-#include "mule-coding.h"
+#ifdef FILE_CODING
+#include "file-coding.h"
 #endif
 
 typedef unsigned char *POINTER;/* POINTER defines a generic pointer type */
@@ -390,7 +390,7 @@ determined.  Else assume binary coding if all else fails.
       static Extbyte_dynarr *conversion_out_dynarr;
       char tempbuf[1024]; /* some random amount */
       struct gcpro gcpro1, gcpro2;
-#ifdef MULE
+#ifdef FILE_CODING
       Lisp_Object conv_out_stream, coding_system;
       Lstream *costr;
       struct gcpro gcpro3;
@@ -421,7 +421,7 @@ determined.  Else assume binary coding if all else fails.
 	}
       istr = XLSTREAM (instream);
 
-#ifdef MULE
+#ifdef FILE_CODING
       /* Find out what format the buffer will be saved in, so we can make
 	 the digest based on what it will look like on disk */
       if (NILP(coding))
@@ -457,11 +457,11 @@ determined.  Else assume binary coding if all else fails.
 	      coding_system = Fget_coding_system(Qbinary); /* default to binary */
 	}
 #endif
-      
+
       /* setup the out stream */
       outstream = make_dynarr_output_stream((unsigned_char_dynarr *)conversion_out_dynarr);
       ostr = XLSTREAM (outstream);
-#ifdef MULE
+#ifdef FILE_CODING
       /* setup the conversion stream */
       conv_out_stream = make_encoding_output_stream (ostr, coding_system);
       costr = XLSTREAM (conv_out_stream);
@@ -476,7 +476,7 @@ determined.  Else assume binary coding if all else fails.
 	if (!size_in_bytes)
 	  break;
 	/* It does seem the flushes are necessary... */
-#ifdef MULE
+#ifdef FILE_CODING
 	Lstream_write (costr, tempbuf, size_in_bytes);
 	Lstream_flush (costr);
 #else
@@ -492,7 +492,7 @@ determined.  Else assume binary coding if all else fails.
 	Lstream_rewind(ostr);
       }
       Lstream_close (istr);
-#ifdef MULE
+#ifdef FILE_CODING
       Lstream_close (costr);
 #endif
       Lstream_close (ostr);
@@ -500,7 +500,7 @@ determined.  Else assume binary coding if all else fails.
       UNGCPRO;
       Lstream_delete (istr);
       Lstream_delete (ostr);
-#ifdef MULE
+#ifdef FILE_CODING
       Lstream_delete (costr);
 #endif
     }

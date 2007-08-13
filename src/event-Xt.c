@@ -55,7 +55,7 @@ Boston, MA 02111-1307, USA.  */
 #include <Xm/Xm.h>
 #endif
 #include "lstream.h"
-#include "mule-coding.h"
+#include "file-coding.h"
 #endif
 
 #ifdef HAVE_OFFIX_DND

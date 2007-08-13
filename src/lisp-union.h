@@ -65,6 +65,16 @@ union Lisp_Object
     unsigned bit: GCTYPEBITS - 1;
 #endif
   } si;
+  struct
+  {
+#if (!!defined (WORDS_BIGENDIAN) != !!defined (LOWTAGS))
+    unsigned bit: GCTYPEBITS - 1;
+#endif
+    unsigned EMACS_INT val: VALBITS + 1;
+#if (!!defined (WORDS_BIGENDIAN) == !!defined (LOWTAGS))
+    unsigned bit: GCTYPEBITS - 1;
+#endif
+  } u_i;
 #endif /* USE_MINIMAL_TAGBITS */
   EMACS_UINT ui;
   EMACS_INT i;
@@ -120,6 +130,12 @@ extern Lisp_Object Qnull_pointer;
 # define XREALINT(a) ((a).s.val)
 #endif
 #endif /* EXPLICIT_SIGN_EXTEND */
+
+#ifdef USE_MINIMAL_TAGBITS
+# define XUINT(a) ((a).u_i.val)
+#else
+# define XUINT(a) XPNTRVAL(a)
+#endif
 
 #ifdef USE_MINIMAL_TAGBITS
 # define XPNTRVAL(a) ((a).ui)

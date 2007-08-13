@@ -420,7 +420,7 @@ Filesz      Memsz       Flags       Align
 #include <elf.h>
 #include <sys/mman.h>
 
-#if __GLIBC__ - 0 >= 6
+#if __GLIBC__ - 0 >= 2
 # include <link.h>	/* get ElfW etc */
 #endif
 

@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "mule-charset.h"
 #include "mule-ccl.h"
-#include "mule-coding.h"
+#include "file-coding.h"
 
 #else  /* not emacs */
 

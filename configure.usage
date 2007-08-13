@@ -80,11 +80,15 @@ Window-system options:
 --with-xface (*)	Compile with support for X-Face mail header
 	  		conversion.  Requires the compface library.
 			Get it from the XEmacs FTP site.
---with-imagick (*)	Compile with support for ImageMagick image conversion.
-			Requires ImageMagick from wizards.dupont.com and
-			libraries for whatever image types you wish to have
-			supported.
+--with-gif		Compile with support for GIF image conversion.
+			This support is built-in and defaults to `yes'.
+--with-jpeg (*)		Compile with support for JPEG image conversion.
+			Requires libjpeg from the Independent JPEG Group.
 			Get it from the XEmacs FTP site.
+--with-png (*)		Compile with support for PNG image conversion.
+			Requires libpng.  Get it from the XEmacs FTP site.
+--with-tiff		Compile with support for TIFF image conversion
+			(not yet implemented).
 
 
 TTY options:
@@ -113,6 +117,8 @@ Additional features:
 --with-kerberos		support Kerberos-authenticated POP
 --with-hesiod		support Hesiod to get the POP server host
 --with-dnet (*)		Compile with support for DECnet.
+--with-ldap (*)         Compile with support for the LDAP protocol (requires
+                        installed LDAP libraries on the system).
 --mail-locking=TYPE (*)	Specify the locking to be used by movemail to prevent
 			concurrent updates of mail spool files. Valid types
 			are `lockf', `flock', and `file'.

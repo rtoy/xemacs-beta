@@ -941,22 +941,19 @@ Lisp is to @code{format} them and check for a minus sign.
 
 @defun equalp a b
 This function is a more flexible version of @code{equal}.  In
-particular, it compares strings case-insensitively, and it compares
-numbers without regard to type (so that @code{(equalp 3 3.0)} is
-true).  Vectors and conses are compared recursively.  All other
+particular, it compares strings and characters case-insensitively, and
+it compares numbers without regard to type (so that @code{(equalp 3
+3.0)} is true).  Vectors and conses are compared recursively.  All other
 objects are compared as if by @code{equal}.
 
 This function differs from Common Lisp @code{equalp} in several
-respects.  First, Common Lisp's @code{equalp} also compares
-@emph{characters} case-insensitively, which would be impractical
-in this package since Emacs does not distinguish between integers
-and characters.  In keeping with the idea that strings are less
-vector-like in Emacs Lisp, this package's @code{equalp} also will
-not compare strings against vectors of integers.  Finally, Common
-Lisp's @code{equalp} compares hash tables without regard to
-ordering, whereas this package simply compares hash tables in
-terms of their underlying structure (which means vectors for Lucid
-Emacs 19 hash tables, or lists for other hash tables).
+respects.  First, in keeping with the idea that strings are less
+vector-like in Emacs Lisp, this package's @code{equalp} also will not
+compare strings against vectors of integers.  Second, Common Lisp's
+@code{equalp} compares hash tables without regard to ordering, whereas
+this package simply compares hash tables in terms of their underlying
+structure (which means vectors for Lucid Emacs 19 hash tables, or lists
+for other hash tables).
 @end defun
 
 Also note that the Common Lisp functions @code{member} and @code{assoc}
@@ -3413,10 +3410,11 @@ It is incremented after each use by @code{gensym}.  In Common Lisp
 this is initialized with 0, but this package initializes it with a
 random (time-dependent) value to avoid trouble when two files that
 each used @code{gensym} in their compilation are loaded together.
-(Uninterned symbols become interned when the compiler writes them
-out to a file and the Emacs loader loads them, so their names have to
-be treated a bit more carefully than in Common Lisp where uninterned
-symbols remain uninterned after loading.)
+
+@strong{XEmacs note:} As of XEmacs 20.5, an uninterned symbol remains
+uninterned even after being dumped to bytecode.  Older versions of Emacs
+didn't distinguish the printed representation of interned and uninterned
+symbols, so their names had to be treated more carefully.
 @end defvar
 
 @defun gentemp &optional x

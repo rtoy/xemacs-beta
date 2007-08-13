@@ -66,9 +66,8 @@ extern "C" {
 #else
 #include <setjmp.h>
 #endif
-
-#ifdef MULE
-#include "mule-coding.h"
+#ifdef FILE_CODING
+#include "file-coding.h"
 #endif
 
 #define LISP_DEVICE_TO_X_SCREEN(dev)					\
@@ -452,7 +451,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
   static Extbyte_dynarr *conversion_out_dynarr = NULL;
   Bytecount bstart, bend;
   struct gcpro gcpro1, gcpro2;
-#ifdef MULE
+#ifdef FILE_CODING
   Lisp_Object conv_out_stream;
   Lstream *costr;
   struct gcpro gcpro3;
@@ -489,7 +488,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
   /* setup the out stream */
   outstream = make_dynarr_output_stream((unsigned_char_dynarr *)conversion_out_dynarr);
   ostr = XLSTREAM (outstream);
-#ifdef MULE
+#ifdef FILE_CODING
   /* setup the conversion stream */
   conv_out_stream = make_encoding_output_stream (ostr, Fget_coding_system(Qbinary));
   costr = XLSTREAM (conv_out_stream);
@@ -504,7 +503,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
     if (!size_in_bytes)
       break;
     /* It does seem the flushes are necessary... */
-#ifdef MULE
+#ifdef FILE_CODING
     Lstream_write (costr, tempbuf, size_in_bytes);
     Lstream_flush (costr);
 #else
@@ -524,7 +523,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
   if (fclose (tmpfil) != 0)
     fubar = 1;
   Lstream_close (istr);
-#ifdef MULE
+#ifdef FILE_CODING
   Lstream_close (costr);
 #endif
   Lstream_close (ostr);
@@ -532,9 +531,10 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
   UNGCPRO;
   Lstream_delete (istr);
   Lstream_delete (ostr);
-#ifdef MULE
+#ifdef FILE_CODING
   Lstream_delete (costr);
 #endif
+
   if (fubar)
     report_file_error ("Writing temp file",
 		       list1 (build_string (filename_out)));

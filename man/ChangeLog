@@ -1,3 +1,30 @@
+1998-02-22  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* cl.texi (Creating Symbols): Tell a little bit about the new
+	handling of gensyms.
+
+1998-02-21  Greg Klanderman  <greg@alphatech.com>
+
+	* xemacs/custom.texi (X Resources): update to describe automatic
+	setting of x-emacs-application-class.
+
+	* lispref/x-windows.texi (Resources): update doc for
+	x-emacs-application-class. 
+
+1998-02-20  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* cl.texi (Equality Predicates): Update to reflect change to
+	`equalp' made in "cl-extra.el" - now compares characters case
+	insensitively.
+
+1998-02-23  Aki Vehtari  <Aki.Vehtari@hut.fi>
+
+	* lispref/menus.texi (Menu Format): Doc fix: suffix can be form.
+
+1998-02-19  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* lispref/display.texi (Beeping): Linux has sound too.
+
 1998-02-19  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* cl.texi (Argument Lists): Keywords are handled specially by

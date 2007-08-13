@@ -534,7 +534,9 @@ popmail (char *user, char *outfile, char *password)
       error ("Error in open: %s, %s", strerror (errno), outfile);
       return (1);
     }
+#ifndef __CYGWIN32__
   fchown (mbfi, getuid (), -1);
+#endif
 
   if ((mbf = fdopen (mbfi, "wb")) == NULL)
     {

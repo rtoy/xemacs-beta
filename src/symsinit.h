@@ -134,6 +134,7 @@ void syms_of_undo (void);
 void syms_of_widget (void);
 void syms_of_window (void);
 void syms_of_xselect (void);
+void syms_of_eldap (void);
 
 /* Initialize the console types (dump-time only). */
 
@@ -283,6 +284,7 @@ void vars_of_tooltalk (void);
 void vars_of_undo (void);
 void vars_of_window (void);
 void vars_of_xselect (void);
+void vars_of_ldap (void);
 
 /* Initialize specifier variables (dump-time only). */
 

@@ -2276,7 +2276,7 @@ complex_vars_of_buffer (void)
     buffer_local_flags.cache_long_line_scans = make_int (0x2000);
 #endif
     buffer_local_flags.buffer_file_type = make_int (0x4000);
-#ifdef MULE
+#ifdef FILE_CODING
     buffer_local_flags.buffer_file_coding_system = make_int (0x8000);
 #endif
 
@@ -2482,8 +2482,7 @@ This variable is meaningful on MS-DOS and Windows NT.
 On those systems, it is automatically local in every buffer.
 On other systems, this variable is normally always nil.
 */ );
-
-#ifdef MULE
+#ifdef FILE_CODING
   DEFVAR_BUFFER_DEFAULTS ("default-buffer-file-coding-system", buffer_file_coding_system /*
 Default value of `buffer-file-coding-system' for buffers that do not override it.
 This is the same as (default-value 'buffer-file-coding-system).
@@ -2533,7 +2532,7 @@ particular operation, you should bind the variable
 `coding-system-for-read' rather than changing the other two
 variables just mentioned, which are intended to be used for
 global environment specification.  */ );
-#endif /* MULE */
+#endif
 
   DEFVAR_BUFFER_LOCAL ("auto-fill-function", auto_fill_function /*
 Function called (if non-nil) to perform auto-fill.

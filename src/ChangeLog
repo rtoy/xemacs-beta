@@ -1,3 +1,123 @@
+1998-02-25  SL Baur  <steve@altair.xemacs.org>
+
+	* file-coding.c (setup_eol_coding_systems): Unix/Binary sub
+	coding-system display should default to the empty string.
+	- Use '(t)' for Mac/Text mode.
+
+Tue Feb 17 12:50:37 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* Makefile.in.in: make sure clean removes msw executables. This
+ 	prevents the build stalling after puresize has been adjusted. Add
+ 	file-coding.o to list of objects.
+
+	* buffer.c:
+	* buffer.h:
+	* bufslots.h:
+	* callproc.c:
+	* console-tty.c:
+	* emacs.c:
+	* event-Xt.c:
+	* event-stream.c:
+	* glyphs-x.c:
+	* lread.c:
+	* md5.c:
+	* mule-canna.c:
+	* mule-ccl.c:
+	* process.c:
+	* redisplay-x.c:
+	* redisplay.c: remove #ifdef MULE's from stuff that relates to
+	file-coding. include file-coding.h rather than mule-coding.h
+	where applicable.
+
+	* mule-coding.c: #if 0 out functionality until file-coding is
+	split up.
+
+	* file-coding.h: 
+	* file-coding.c: new files. copies of mule-coding.h and
+ 	mule-coding.c. The mule case is unchanged. The non-mule case
+ 	removes coding relating to other charsets - iso2022, big5, sjis,
+ 	ccl. (setup_eol_coding_systems) add the eol type to the subsidiary
+ 	coding system mnemonics so that it shows on the modeline,
+ 	currently (B) for unix style (T) for mac and dos styles.
+
+	* fileio.c: remove #ifdef MULE's from stuff that relates to
+ 	file-coding. include file-coding.h rather than mule-coding.h where
+ 	applicable. FSFMACS_SPEEDY_INSERT is gone since file coding is
+	always on.
+
+	* sheap.c: (more_static_core) remove spurious \n's from error
+	message.
+
+1998-02-25  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lisp-disunion.h: Added XUINT macro.
+
+	* lisp-union.h: Added XUINT macro.
+
+	* data.c (Flsh): Used XUINT instead of XINT to
+	  extract the value of the first argument to avoid sign
+	  extension of the result.
+
+1998-02-25  SL Baur  <steve@altair.xemacs.org>
+
+	* s/decosf4-0.h: Add -D_BSD.
+	From Tore Olsen <toreo@tihlde.hist.no>
+
+1998-02-21  Greg Klanderman  <greg@alphatech.com>
+
+	* device-x.c (x_init_device): allow `x-emacs-application-class' to
+ 	be nil prior to connecting to the X server.  When this is the
+	case, the application class is chosen based on whether the user
+	has any resources with application class `XEmacs' set in the
+	resource database.
+	(vars_of_device_x): make x-emacs-application-class nil by default 
+	and document new behavior in its doc string.
+
+1998-02-23  Aki Vehtari  <Aki.Vehtari@hut.fi>
+
+	* menubar.c: Doc fix: suffix can be form.
+
+	* gui.c (gui_parse_item_keywords): Allow button descriptors
+	at least 2 long.
+	(gui_item_display_flush_left): Suffix can be form.
+
+	* gui-x.c (button_item_to_widget_value): Allow button descriptors
+	at least 2 long.
+	(button_item_to_widget_value): Suffix can be form.
+
+1998-02-24  SL Baur  <steve@altair.xemacs.org>
+
+	* s/sol2.h: define HAVE_GETLOADAVG for late edition Solaris
+	From Georg Nikodym <georgn@Canada.Sun.COM>
+
+1998-02-24  Didier Verna  <verna@inf.enst.fr>
+
+	* redisplay.c (generate_fstring_runes): fixed the modeline
+	scrolling lossage (the % constructs appearing in the
+	modeline). Now that we can have negative positions and boundaries, 
+	max_pos == -1 can't mean 'no limit' anymore. Me, stupido!
+	(add_string_to_fstring_db_runes): Ditto.
+	(add_glyph_to_fstring_db_runes): Ditto.
+
+1998-02-19  Jim Radford  <radford@robby.caltech.edu>
+
+	* sysdep.c: Don't clobber SIGIO event flags we don't care about.
+	* device.h: removed old_sigio_flag, sigio_enabled from device
+	Secretly (on Solaris) F_SETOWN calls I_SETSIG. We unknowingly
+	clobbered the changes so restoring the owner would cause
+	F_SETOWN's I_SETSIG to fail therby causing an annoying syslog
+	message.  Changed FASYNC version to match (untested).
+
+1998-02-22  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (main): Enable mmap for glibc-2.1 and Linux libc5.
+	Enable mmap only for non-Mule for glibc-2.0.
+
+1998-02-21  SL Baur  <steve@altair.xemacs.org>
+
+	* config.h.in: Define _NO_MALLOC_WARNING_ if using dlmalloc from
+	Linux libc5.
+
 1998-02-19  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
 
 	* emacs.c: declare hooks only if !DOUG_LEA_MALLOC since the

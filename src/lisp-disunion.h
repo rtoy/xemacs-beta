@@ -163,6 +163,13 @@ typedef EMACS_INT Lisp_Object;
 # endif
 #endif
 
+/* Extract the value of a Lisp integer as an unsigned integer. */
+#ifdef USE_MINIMAL_TAGBITS
+# define XUINT(a) ((EMACS_UINT)(a) >> (LONGBITS-VALBITS-1))
+#else
+# define XUINT(a) XPNTRVAL(a)
+#endif
+
 /*
  * Extract the pointer value bits of a pointer based type.
  */

@@ -80,6 +80,12 @@ of problem reporting.  Other items which are most important are:
     down without loss of information.  MIME is the preferred method
     for making the image attachments.
 
+** Getting the Source
+=====================
+
+In addition to the normal tar distribution, XEmacs source is now
+available via CVS.  Please see the URL: <URL:http://cvs.xemacs.org/~xemacs/>.
+
 * Compiling Beta XEmacs
 =======================
 

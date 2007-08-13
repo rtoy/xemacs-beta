@@ -1,3 +1,30 @@
+1998-02-25  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta28 is released.
+
+	* configure.in (with_session): Fix reporting of the setting.
+	(with_database_gnudbm): Correctly report setting.
+
+1998-02-24  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.usage: Restore documentation of graphics library
+	flags.
+	From Karl M. Hegbloom <karlheg@bittersweet.inetarena.com>
+
+1998-02-19  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* PROBLEMS: Tell of the `gpm' SIGTSTP bug and `C-z' on the Linux
+	console.
+
+1998-02-23  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.4 is released to the beta testers.
+
+1998-02-21  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (after_morecore_hook_exists): Modify dlmalloc tests 
+	to also test for Linux libc5.
+
 1998-02-19  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta27 is released.

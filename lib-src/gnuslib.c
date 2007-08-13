@@ -72,6 +72,8 @@ static int connect_to_internet_server (char *serverhost, u_short port);
 
 #include <arpa/inet.h>
 
+char *tmpdir = NULL;
+
 char *progname = NULL;
 
 int make_connection(hostarg, portarg, s)
@@ -134,7 +136,7 @@ static int connect_to_ipc_server (void)
   key_t key;			/* message key */
   char buf[GSERV_BUFSZ+1];		/* buffer for filename */
 
-  sprintf(buf,"/tmp/gsrv%d",(int)geteuid());
+  sprintf(buf,"%s/gsrv%d",tmpdir,(int)geteuid());
   creat(buf,0600);
   if ((key = ftok(buf,1)) == -1) {
     perror(progname);
@@ -263,9 +265,9 @@ static int connect_to_unix_server (void)
   
   server.sun_family = AF_UNIX;
 #ifdef HIDE_UNIX_SOCKET
-  sprintf(server.sun_path,"/tmp/gsrvdir%d/gsrv",(int)geteuid());
+  sprintf(server.sun_path,"%s/gsrvdir%d/gsrv",tmpdir,(int)geteuid());
 #else  /* HIDE_UNIX_SOCKET */
-  sprintf(server.sun_path,"/tmp/gsrv%d",(int)geteuid());
+  sprintf(server.sun_path,"%s/gsrv%d",tmpdir,(int)geteuid());
 #endif /* HIDE_UNIX_SOCKET */
   if (connect(s,(struct sockaddr *)&server,strlen(server.sun_path)+2) < 0) {
     perror(progname);

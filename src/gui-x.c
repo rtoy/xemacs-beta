@@ -2,6 +2,7 @@
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995, 1996 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 1998 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
@@ -375,17 +376,18 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
   int plist_p;
   int selected_spec = 0, included_spec = 0;
 
-  if (length < 3)
-    signal_simple_error ("button descriptors must be at least 3 long", desc);
+  if (length < 2)
+    signal_simple_error ("button descriptors must be at least 2 long", desc);
 
-  /* length 3:		[ "name" callback active-p ]
+  /* length 2:		[ "name" callback ]
+     length 3:		[ "name" callback active-p ]
      length 4:		[ "name" callback active-p suffix ]
      		   or	[ "name" callback keyword  value  ]
      length 5+:		[ "name" callback [ keyword value ]+ ]
    */
-  plist_p = (length >= 5 || KEYWORDP (contents [2]));
+  plist_p = (length >= 5 || (length > 2 && KEYWORDP (contents [2])));
 
-  if (!plist_p)
+  if (!plist_p && length > 2)
     /* the old way */
     {
       name = contents [0];
@@ -453,8 +455,18 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
   if (!NILP (suffix))
     {
       CONST char *const_bogosity;
-      CHECK_STRING (suffix);
-      GET_C_STRING_FILENAME_DATA_ALLOCA (suffix, const_bogosity);
+      Lisp_Object suffix2;
+      
+      /* Shortcut to avoid evaluating suffix each time */
+      if (STRINGP (suffix))
+	suffix2 = suffix;
+      else
+	{
+	  suffix2 = Feval (suffix);
+	  CHECK_STRING (suffix2);
+	}
+
+      GET_C_STRING_FILENAME_DATA_ALLOCA (suffix2, const_bogosity);
       wv->value = (char *) const_bogosity;
       wv->value = xstrdup (wv->value);
     }

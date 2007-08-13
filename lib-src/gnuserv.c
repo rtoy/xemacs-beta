@@ -139,7 +139,7 @@ ipc_init (struct msgbuf **msgpp)
   key_t key;			/* messge key */
   char buf[GSERV_BUFSZ];	/* pathname for key */
 
-  sprintf (buf,"/tmp/gsrv%d",(int)geteuid ());
+  sprintf (buf,"%s/gsrv%d",tmpdir,(int)geteuid ());
   creat (buf,0600);
   key = ftok (buf,1);
 
@@ -743,7 +743,7 @@ unix_init (void)
 
   /* Set up address structure for the listen socket. */
 #ifdef HIDE_UNIX_SOCKET
-  sprintf(server.sun_path,"/tmp/gsrvdir%d",(int)geteuid());
+  sprintf(server.sun_path,"%s/gsrvdir%d",tmpdir,(int)geteuid());
   if (mkdir(server.sun_path, 0700) < 0)
     {
       /* assume it already exists, and try to set perms */
@@ -758,7 +758,7 @@ unix_init (void)
   strcat(server.sun_path,"/gsrv");
   unlink(server.sun_path);	/* remove old file if it exists */
 #else /* HIDE_UNIX_SOCKET */
-  sprintf(server.sun_path,"/tmp/gsrv%d",(int)geteuid());
+  sprintf(server.sun_path,"%s/gsrv%d",tmpdir,(int)geteuid());
   unlink(server.sun_path);	/* remove old file if it exists */
 #endif /* HIDE_UNIX_SOCKET */
 
@@ -849,6 +849,11 @@ main(argc,argv)
   for(chan=3; chan < _NFILE; close(chan++)) /* close unwanted channels */
     ;
 
+#ifdef USE_TMPDIR
+  tmpdir = getenv("TMPDIR");
+#endif
+  if (!tmpdir)
+    tmpdir = "/tmp";
 #ifdef USE_LITOUT
   {
     /* this is to allow ^D to pass to emacs */

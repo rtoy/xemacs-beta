@@ -57,9 +57,8 @@ Boston, MA 02111-1307, USA.  */
 #include "toolbar.h"
 #include "window.h"
 #include "line-number.h"
-
-#ifdef MULE
-#include "mule-coding.h"
+#ifdef FILE_CODING
+#include "file-coding.h"
 #endif
 
 #ifdef HAVE_TTY
@@ -258,7 +257,8 @@ static void generate_formatted_string_db (Lisp_Object format_str,
 					  int modeline);
 static Charcount generate_fstring_runes (struct window *w, pos_data *data,
 					 Charcount pos, Charcount min_pos,
-					 Charcount max_pos, Lisp_Object elt,
+					 Charcount max_pos, int no_limit,
+					 Lisp_Object elt,
 					 int depth, int max_pixsize,
 					 face_index findex, int type);
 static prop_block_dynarr *add_emchar_rune (pos_data *data);
@@ -3613,8 +3613,10 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
      the current modeline horizontal scroll. */
   generate_fstring_runes 
     (w, &data, 
-     (modeline && WINDOW_HAS_MODELINE_P (w)) ? - w->modeline_hscroll : 0, 
-     0, -1, format_str, 0, max_pixpos - min_pixpos, findex, type);
+     (modeline && WINDOW_HAS_MODELINE_P (w)) ? - w->modeline_hscroll : 0,
+     (modeline && WINDOW_HAS_MODELINE_P (w)) ? - w->modeline_hscroll : 0,
+     0, /* no limit */ 1, format_str, 0, max_pixpos - min_pixpos, findex, 
+     type);
   
   if (Dynarr_length (db->runes))
     {
@@ -3689,7 +3691,8 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
    scrolled modeline */
 static Charcount
 add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
-				Charcount pos, Charcount min_pos, Charcount max_pos)
+				Charcount pos, Charcount min_pos,
+				Charcount max_pos, int no_limit)
 {
   /* This function has been Mule-ized. */
   Charcount initial_pos = pos;
@@ -3699,11 +3702,11 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
   
   data->blank_width = space_width (XWINDOW (data->window));
   add_something = ((pos < min_pos) 
-		   || ((*cur_pos) && (max_pos == -1))
+		   || ((*cur_pos) && no_limit)
 		   || ((*cur_pos) && (pos < max_pos)));
   while (add_something)
     {
-      if (((initial_pos < 0) && (pos == 1)) || (pos == initial_pos))
+      if ((initial_pos >= 0) && (pos == initial_pos))
 	while (Dynarr_length (db->runes) < pos)
 	  add_blank_rune (data, NULL, 0);
       
@@ -3742,7 +3745,7 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
 	    }
 	}
       add_something = ((pos < min_pos) 
-		       || ((*cur_pos) && (max_pos == -1))
+		       || ((*cur_pos) && no_limit)
 		       || ((*cur_pos) && (pos < max_pos)));
     }
 
@@ -3753,7 +3756,8 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
    modeline extents. */
 static Charcount
 add_glyph_to_fstring_db_runes (pos_data *data, Lisp_Object glyph,
-			       Charcount pos, Charcount min_pos, Charcount max_pos)
+			       Charcount pos, Charcount min_pos, 
+			       Charcount max_pos, int no_limit)
 {
   /* This function has been Mule-ized. */
   Charcount end;
@@ -3771,7 +3775,7 @@ add_glyph_to_fstring_db_runes (pos_data *data, Lisp_Object glyph,
     add_blank_rune (data, NULL, 0);
   
   end = Dynarr_length (db->runes) + 1;
-  if (max_pos != -1)
+  if (!no_limit)
     end = min (max_pos, end);
   
   gb.glyph = glyph;
@@ -3800,7 +3804,7 @@ add_glyph_to_fstring_db_runes (pos_data *data, Lisp_Object glyph,
    modeline. */
 static Charcount
 generate_fstring_runes (struct window *w, pos_data *data, Charcount pos,
-			Charcount min_pos, Charcount max_pos,
+			Charcount min_pos, Charcount max_pos, int no_limit,
 			Lisp_Object elt, int depth, int max_pixsize,
 			face_index findex, int type)
 {
@@ -3825,7 +3829,7 @@ tail_recurse:
       
       Bufbyte *this = XSTRING_DATA (elt);
       
-      while ((pos < max_pos || max_pos == -1) && *this)
+      while ((no_limit || pos < max_pos) && *this)
 	{
 	  Bufbyte *last = this;
 	  
@@ -3837,10 +3841,10 @@ tail_recurse:
 	      /* The string is just a string. */
 	      Charcount size =
 		bytecount_to_charcount (last, this - last) + pos;
-	      Charcount tmp_max = (max_pos == -1 ? size : min (size, max_pos));
+	      Charcount tmp_max = (no_limit ? size : min (size, max_pos));
 	      
 	      pos = add_string_to_fstring_db_runes (data, last, pos, pos,
-						    tmp_max);
+						    tmp_max, /* limit */0);
 	    }
 	  else /* *this == '%' */
 	    {
@@ -3863,7 +3867,8 @@ tail_recurse:
 	      if (*this == 'M')
 		{
 		  pos = generate_fstring_runes (w, data, pos, spec_width,
-						max_pos, Vglobal_mode_string,
+						max_pos, no_limit,
+						Vglobal_mode_string,
 						depth, max_pixsize, findex,
 						type);
 		}
@@ -3873,7 +3878,7 @@ tail_recurse:
 
 		  if (max_pixsize < 0)
 		    num_to_add = 0;
-		  else if (max_pos != -1)
+		  else if (! no_limit)
 		    num_to_add = max_pos - pos;
 		  else
 		    {
@@ -3892,7 +3897,8 @@ tail_recurse:
 
 		  while (num_to_add--)
 		    pos = add_string_to_fstring_db_runes
-		      (data, (CONST Bufbyte *) "-", pos, pos, max_pos);
+		      (data, (CONST Bufbyte *) "-", 
+		       pos, pos, max_pos, no_limit);
 		}
 	      else if (*this != 0)
 		{
@@ -3902,7 +3908,7 @@ tail_recurse:
 
 		  str = Dynarr_atp (mode_spec_bufbyte_string, 0);
 		  pos = add_string_to_fstring_db_runes (data,str, pos, pos,
-							max_pos);
+							max_pos, no_limit);
 		}
 
 	      /* NOT this++.  There could be any sort of character at
@@ -3934,7 +3940,7 @@ tail_recurse:
             {
 	      pos =
 		add_string_to_fstring_db_runes
-		(data, XSTRING_DATA (tem), pos, min_pos, max_pos);
+		(data, XSTRING_DATA (tem), pos, min_pos, max_pos, no_limit);
             }
           /* Give up right away for nil or t.  */
           else if (!EQ (tem, elt))
@@ -4004,7 +4010,7 @@ tail_recurse:
 	       * (20 -10 . foo) should truncate foo to 10 col
 	       * and then pad to 20.
 	       */
-	      if (max_pos == -1)
+	      if (no_limit)
 		max_pos = pos - lim;
 	      else
 		max_pos = min (max_pos, pos - lim);
@@ -4015,7 +4021,7 @@ tail_recurse:
                * current maximum.
                */
               lim += pos;
-              if (max_pos != -1 && lim > max_pos)
+              if (!no_limit && lim > max_pos)
                 lim = max_pos;
               /* If that's more padding than already wanted, queue it.
                * But don't reduce padding already specified even if
@@ -4024,16 +4030,17 @@ tail_recurse:
               if (lim > min_pos)
                 min_pos = lim;
             }
+	  no_limit = 0;
           goto tail_recurse;
         }
       else if (STRINGP (car) || CONSP (car))
         {
           int limit = 50;
           /* LIMIT is to protect against circular lists.  */
-          while (CONSP (elt) && --limit > 0
-                 && (pos < max_pos || max_pos == -1))
+          while (CONSP (elt) && --limit > 0 && (no_limit || pos < max_pos))
             {
-	      pos = generate_fstring_runes (w, data, pos, pos, max_pos,
+	      pos = generate_fstring_runes (w, data, pos, pos, max_pos, 
+					    no_limit,
 					    XCAR (elt), depth,
 					    max_pixsize, findex, type);
               elt = XCDR (elt);
@@ -4072,7 +4079,8 @@ tail_recurse:
 		new_findex = old_findex;
 
 	      data->findex = new_findex;
-	      pos = generate_fstring_runes (w, data, pos, pos, max_pos,
+	      pos = generate_fstring_runes (w, data, pos, pos, max_pos, 
+					    no_limit,
 					    XCDR (elt), depth - 1,
 					    max_pixsize, new_findex, type);
 	      data->findex = old_findex;
@@ -4084,21 +4092,22 @@ tail_recurse:
     }
   else if (GLYPHP (elt))
     {
-      pos = add_glyph_to_fstring_db_runes (data, elt, pos, pos, max_pos);
+      pos = add_glyph_to_fstring_db_runes 
+	(data, elt, pos, pos, max_pos, no_limit);
     }
   else
     {
     invalid:
       pos =
 	add_string_to_fstring_db_runes
-	  (data, (CONST Bufbyte *) GETTEXT ("*invalid*"), pos, min_pos,
-	   max_pos);
+	(data, (CONST Bufbyte *) GETTEXT ("*invalid*"), pos, min_pos, max_pos,
+	 no_limit);
     }
 
   if (min_pos > pos)
     {
       add_string_to_fstring_db_runes (data, (CONST Bufbyte *) "", pos, min_pos,
-				      -1);
+				      0, /* no limit */ 1);
     }
 
   return pos;
@@ -5808,8 +5817,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 
 	goto decode_mode_spec_done;
       }
-
-#ifdef MULE
+#ifdef FILE_CODING
       /* print the file coding system */
     case 'C':
       {
@@ -5823,7 +5831,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
           }
       }
       break;
-#endif /* MULE */
+#endif
 
       /* print the current line number */
     case 'l':

@@ -172,10 +172,11 @@ is about to be displayed, and the item will be selectable only if the
 result is non-@code{nil}.  If the item is unselectable, it will
 usually be displayed grayed-out to indicate this.
 
-@item :suffix @var{string}
-The string is appended to the displayed name.  This provides a
-convenient way of adding the name of a command's ``argument'' to the
-menu, like @samp{Kill Buffer NAME}.
+@item :suffix @var{form}
+@var{form} will be evaluated when the menu that this item is a part of
+is about to be displayed, and the resulting string is appended to the
+displayed name.  This provides a convenient way of adding the name of a
+command's ``argument'' to the menu, like @samp{Kill Buffer NAME}.
 
 @item :keys @var{string}
 Normally, the keyboard equivalents of commands in menus are displayed

@@ -615,6 +615,9 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	{
 	  DWORD len = DdeGetData (hdata, NULL, 0, 0);
 	  char *cmd = alloca (len+1);
+#ifdef __CYGWIN32__
+	  char *cmd_1;
+#endif
 	  char *end;
           Lisp_Object l_dndlist;
 	  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
@@ -648,7 +651,10 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	    end++;
 	  if (*end)
 	    return DDE_FNOTPROCESSED;
-
+#ifdef __CYGWIN32__
+	  CYGWIN_CONV_PATH(cmd,cmd_1);
+	  cmd = cmd_1;
+#endif
 	  l_dndlist = make_ext_string (cmd, strlen(cmd), FORMAT_FILENAME);
 
 	  event->channel = Qnil;
@@ -1151,6 +1157,9 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       UINT filecount, i, len;
       POINT point;
       char filename[MAX_PATH];
+#ifdef __CYGWIN32__
+      char* fname;
+#endif
       Lisp_Object l_type, l_dndlist = Qnil, l_item;
 
       emacs_event = Fmake_event (Qnil, Qnil);
@@ -1164,7 +1173,13 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
       	  l_type = make_int (DndFile);
 	  len = DragQueryFile ((HANDLE) wParam, 0, filename, MAX_PATH);
+#ifdef __CYGWIN32__
+	  CYGWIN_CONV_PATH(filename, fname);
+	  len=strlen(fname);
+	  l_dndlist = make_ext_string (fname, len, FORMAT_FILENAME);
+#else
 	  l_dndlist = make_ext_string (filename, len, FORMAT_FILENAME);
+#endif
 	}
       else
 	{
@@ -1172,7 +1187,13 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	  for (i=0; i<filecount; i++)
 	    {
   	      len = DragQueryFile ((HANDLE) wParam, i, filename, MAX_PATH);
+#ifdef __CYGWIN32__
+	      CYGWIN_CONV_PATH(filename, fname);
+	      len=strlen(fname);
+	      l_item = make_ext_string (fname, len, FORMAT_FILENAME);
+#else
 	      l_item = make_ext_string (filename, len, FORMAT_FILENAME);
+#endif
 	      l_dndlist = Fcons (l_item, l_dndlist);	/* reverse order */
 	    }
 	}

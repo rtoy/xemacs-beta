@@ -33,8 +33,8 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"             /* minibuf_level */
-#ifdef MULE
-#include "mule-coding.h"
+#ifdef FILE_CODING
+#include "file-coding.h"
 #endif
 
 #ifdef HAVE_LIBGEN_H            /* Must come before sysfile.h */
@@ -2760,7 +2760,7 @@ positions), even in Mule. (Fixing this is very difficult.)
       goto handled;
     }
 
-#ifdef MULE
+#ifdef FILE_CODING
   if (!NILP (used_codesys))
     CHECK_SYMBOL (used_codesys);
 #endif
@@ -2861,7 +2861,7 @@ positions), even in Mule. (Fixing this is very difficult.)
      with the file contents.  Avoid replacing text at the
      beginning or end of the buffer that matches the file contents;
      that preserves markers pointing to the unchanged parts.  */
-#if !defined (MULE)
+#if !defined (FILE_CODING)
   /* The replace-mode code currently only works when the assumption
      'one byte == one char' holds true.  This fails Mule because
      files may contain multibyte characters.  It holds under Windows NT
@@ -3164,7 +3164,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 
     NGCPRO1 (stream);
     Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
-#ifdef MULE
+#ifdef FILE_CODING
     stream = make_decoding_input_stream
       (XLSTREAM (stream), Fget_coding_system (codesys));
     Lstream_set_character_mode (XLSTREAM (stream));
@@ -3278,7 +3278,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	inserted  += cc_inserted;
 	cur_point += cc_inserted;
       }
-#ifdef MULE
+#ifdef FILE_CODING
     if (!NILP (used_codesys))
       {
 	Fset (used_codesys,
@@ -3438,7 +3438,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     = NILP (current_buffer->buffer_file_type) ? O_TEXT : O_BINARY;
 #endif /* DOS_NT */
 
-#ifdef MULE
+#ifdef FILE_CODING
   codesys = Fget_coding_system (codesys);
 #endif /* MULE */
 
@@ -3587,7 +3587,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     outstream = make_filedesc_output_stream (desc, 0, -1, 0);
     Lstream_set_buffering (XLSTREAM (outstream),
 			   LSTREAM_BLOCKN_BUFFERED, 65536);
-#ifdef MULE
+#ifdef FILE_CODING
     outstream =
       make_encoding_output_stream (XLSTREAM (outstream), codesys);
     Lstream_set_buffering (XLSTREAM (outstream),
@@ -4308,7 +4308,7 @@ Non-nil second argument means save only current buffer.
 		 auto save name.  */
 	      if (listdesc >= 0)
 		{
-		  Extbyte *auto_save_file_name_ext;
+		  CONST Extbyte *auto_save_file_name_ext;
 		  Extcount auto_save_file_name_ext_len;
 
 		  GET_STRING_FILENAME_DATA_ALLOCA
@@ -4317,7 +4317,7 @@ Non-nil second argument means save only current buffer.
 		     auto_save_file_name_ext_len);
 		  if (!NILP (b->filename))
 		    {
-		      Extbyte *filename_ext;
+		      CONST Extbyte *filename_ext;
 		      Extcount filename_ext_len;
 
 		      GET_STRING_FILENAME_DATA_ALLOCA (b->filename,

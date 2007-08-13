@@ -503,6 +503,7 @@ version 19.16 released October 31, 1997.
 @item
 version 20.3 (the first stable version of XEmacs 20.x) released November 30,
 1997.
+version 20.4 released February 28, 1998.
 @end itemize
 
 @node GNU Emacs 19

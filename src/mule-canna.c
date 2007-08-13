@@ -153,7 +153,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "mule-coding.h"
+#include "file-coding.h"
 
 #ifdef CANNA2
 #define IROHA_BC

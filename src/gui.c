@@ -2,6 +2,7 @@
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995, 1996 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 1998 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
@@ -130,20 +131,21 @@ gui_parse_item_keywords (Lisp_Object item, struct gui_item *pgui_item)
   length = XVECTOR_LENGTH (item);
   contents = XVECTOR_DATA (item);
 
-  if (length < 3)
-    signal_simple_error ("GUI item descriptors must be at least 3 elts long", item);
+  if (length < 2)
+    signal_simple_error ("GUI item descriptors must be at least 2 elts long", item);
 
-  /* length 3:		[ "name" callback active-p ]
+  /* length 2:		[ "name" callback ]
+     length 3:		[ "name" callback active-p ]
      length 4:		[ "name" callback active-p suffix ]
      		   or	[ "name" callback keyword  value  ]
      length 5+:		[ "name" callback [ keyword value ]+ ]
   */
-  plist_p = (length >= 5 || KEYWORDP (contents [2]));
+  plist_p = (length >= 5 || (length > 2 && KEYWORDP (contents [2])));
 
   pgui_item->name = contents [0];
   pgui_item->callback = contents [1];
 
-  if (!plist_p)
+  if (!plist_p && length > 2)
     /* the old way */
     {
       pgui_item->active = contents [2];
@@ -234,14 +236,26 @@ gui_item_display_flush_left  (CONST struct gui_item *pgui_item,
   buf += (consumed = XSTRING_LENGTH (pgui_item->name));
   buf_len -= consumed;
 
-  /* Add space and suffix text, if there is a suffix */
+  /* Add space and suffix, if there is a suffix.
+  * If suffix is not string evaluate it */
   if (!NILP (pgui_item->suffix))
     {
-      if (XSTRING_LENGTH (pgui_item->suffix) + 1 > buf_len)
+      Lisp_Object suffix2;
+      
+      /* Shortcut to avoid evaluating suffix each time */
+      if (STRINGP (pgui_item->suffix))
+	suffix2 = pgui_item->suffix;
+      else
+	{
+	  suffix2 = Feval (pgui_item->suffix);
+	  CHECK_STRING (suffix2);
+	}
+      
+      if (XSTRING_LENGTH (suffix2) + 1 > buf_len)
 	signal_too_long_error (pgui_item->name);
       *(buf++) = ' ';
-      strcpy (buf, XSTRING_DATA (pgui_item->suffix));
-      consumed += XSTRING_LENGTH (pgui_item->suffix) + 1;
+      strcpy (buf, XSTRING_DATA (suffix2));
+      consumed += XSTRING_LENGTH (suffix2) + 1;
     }
 
   return consumed;

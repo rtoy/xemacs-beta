@@ -1332,11 +1332,24 @@ otherwise pop it")
 	  (set-buffer "*Compile-Log*")
 	  (if (= byte-compile-warnings-point-max (point-max))
 	      nil
-	    (select-window
-	     (prog1 (selected-window)
-	       (select-window (display-buffer (current-buffer)))
-	       (goto-char byte-compile-warnings-point-max)
-	       (recenter 1))))))))
+            (if temp-buffer-show-function
+                (let ((show-buffer (get-buffer-create "*Compile-Log-Show*")))
+                  (save-excursion
+                    (set-buffer show-buffer)
+                    (setq buffer-read-only nil)
+                    (erase-buffer))
+                  (copy-to-buffer show-buffer
+                                  (save-excursion
+                                    (goto-char byte-compile-warnings-point-max)
+                                    (forward-line -1)
+                                    (point))
+                                  (point-max))
+                  (funcall temp-buffer-show-function show-buffer))
+              (select-window
+               (prog1 (selected-window)
+                 (select-window (display-buffer (current-buffer)))
+                 (goto-char byte-compile-warnings-point-max)
+                 (recenter 1)))))))))
 
 
 ;;;###autoload

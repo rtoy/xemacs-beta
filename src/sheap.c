@@ -29,7 +29,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #define STATIC_HEAP_SLOP	0x30000
 #else
 #define STATIC_HEAP_BASE	0x400000
-#define STATIC_HEAP_SLOP	0x20000
+#define STATIC_HEAP_SLOP	0x30000
 #endif
 #define STATIC_HEAP_SIZE \
 (STATIC_HEAP_BASE + SHEAP_ADJUSTMENT + STATIC_HEAP_SLOP)
@@ -84,12 +84,11 @@ void* more_static_core ( ptrdiff_t increment )
 	{
 	  printf(
 
-"\nRequested %d bytes, static heap exhausted!  base is %p,\n
-current ptr is %p. You have exhausted the static heap, if\n
-you want to run temacs, adjust sheap-adjust.h to 0 or a +ve\n
-number.  If you are dumping then STATIC_HEAP_SLOP is too\n
-small.  Generally you should *not* try to run temacs with a\n
-static heap, you should dump first.", size,
+"\nRequested %d bytes, static heap exhausted!  base is %p, current ptr
+is %p. You have exhausted the static heap, if you want to run temacs,
+adjust sheap-adjust.h to 0 or a +ve number.  If you are dumping then
+STATIC_HEAP_SLOP is too small.  Generally you should *not* try to run
+temacs with a static heap, you should dump first.\n", size,
 static_heap_base, static_heap_ptr);
 
 	  exit(-1);
@@ -117,3 +116,4 @@ sheap_adjust_h ()
 	   ((static_heap_ptr - static_heap_buffer) - STATIC_HEAP_BASE));
   fclose (stream);
 }
+

@@ -49,7 +49,7 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef MULE
 #include "mule-ccl.h"
-#include "mule-coding.h" /* for CCL conversion */
+#include "file-coding.h" /* for CCL conversion */
 #endif
 
 /* X_DIVIDER_LINE_WIDTH is the width of the line drawn in the gutter.
