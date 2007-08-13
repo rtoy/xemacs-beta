@@ -582,6 +582,7 @@ sys_subshell (void)
   Lisp_Object dir;
   unsigned char *str = 0;
   int len;
+  struct gcpro gcpro1;
 
   saved_handlers[0].code = SIGINT;
   saved_handlers[1].code = SIGQUIT;
@@ -601,8 +602,11 @@ sys_subshell (void)
   dir = Fsymbol_value (Qdefault_directory);
   if (!STRINGP (dir))
     goto xyzzy;
-  
-  dir = expand_and_dir_to_file (Funhandled_file_name_directory (dir), Qnil);
+
+  GCPRO1 (dir);
+  dir = Funhandled_file_name_directory (dir);
+  dir = expand_and_dir_to_file (dir, Qnil);
+  UNGCPRO;
   str = (unsigned char *) alloca (XSTRING_LENGTH (dir) + 2);
   len = XSTRING_LENGTH (dir);
   memcpy (str, XSTRING_DATA (dir), len);

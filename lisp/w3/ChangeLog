@@ -1,3 +1,21 @@
+Wed Mar 26 06:23:51 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.75 released
+
+* url.el (url-clean-text): Better matchine of bogus process exited
+  messages.
+
+* font.el (font-rgb-color-p): No longer match "^#xxyyzz" as an rgb-color,
+  this screwed up bigtime in font-color-rgb-components.
+  (font-set-face-foreground): Do the test here instead.
+  (font-set-face-background): and here.
+
+* w3-widget.el (widget-image-value-create): For client side imagemaps,
+  make sure case-fold-search or :ignore-case is specified.
+
+* url-gw.el (url-gateway-nslookup-program): Default to using 'nslookup' as
+  url-gateway-nslookup-program
+
 Tue Mar 25 16:06:28 1997  William M. Perry  <wmperry@aventail.com>
 
 * Emacs-W3 3.0.74 released
@@ -19,6 +37,8 @@ Tue Mar 25 15:31:56 1997  Greg Stark <gsstark@great-white>
 
 * w3-toolbar.el (w3-toolbar-make-buttons): Don't warn about toolbar
   directory on Emacsen that can't do toolbars!
+
+Tue Mar 25 15:31:56 1997  William M. Perry  <wmperry@aventail.com>
 
 * Emacs-W3 3.0.73 released
 

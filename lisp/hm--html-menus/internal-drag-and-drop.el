@@ -1,4 +1,4 @@
-;;; $Id: internal-drag-and-drop.el,v 1.3 1997/03/24 01:26:53 steve Exp $
+;;; $Id: internal-drag-and-drop.el,v 1.4 1997/03/26 22:42:40 steve Exp $
 ;;; 
 ;;; Copyright (C) 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -291,9 +291,9 @@ The list ACTIONS contains all possible actions. Look at the variable
 						      actions
 						      '(0 . nil)))
 
-(autoload 'ange-ftp-ftp-path "ange-ftp"
-  "Parse PATH according to ange-ftp-path-format (which see).
-Returns a list (HOST USER PATH), or nil if PATH does not match the format.")
+;(autoload 'ange-ftp-ftp-path "ange-ftp"
+;  "Parse PATH according to ange-ftp-path-format (which see).
+;Returns a list (HOST USER PATH), or nil if PATH does not match the format.")
 
 (defun idd-set-point (source-or-destination)
   "Sets the point and buffer to SOURCE-OR-DESTINATION."
@@ -366,7 +366,7 @@ It returns 1, if this is t."
 (defun idd-if-minor-mode-p (source-or-destination minor-mode-variable)
   "Checks, if the variable MINOR-MODE-VARIABLE is t in SOURCE-OR-DESTINATION.
 MINOR-MODE-VARIABLE is the name of the variable!."
-  (idd-variable-non-nil-p source-or-destination minor-mode-variable))
+  (idd-if-variable-non-nil-p source-or-destination minor-mode-variable))
 
 (defun idd-get-dired-filename-from-line (source-or-destination)
   "Returns the filename form the line in a dired buffer.
@@ -412,7 +412,8 @@ If that is t and VALUE is t, or that is nil and VALUE is nil, then 1
 is returned. Otherwise nil is returned."
   (let ((filename (idd-get-local-filename source-or-destination)))
     (if (and filename
-	     (not (ange-ftp-ftp-path filename)))
+;	     (not (ange-ftp-ftp-path filename)))
+	     (not (file-remote-p filename)))
 	(if value 1 nil)
       (if value nil 1))))
 
@@ -427,14 +428,14 @@ It returns 1 if this is the case or nil otherwise."
 (defun idd-list-1-subset-of-list-2 (list-1 list-2)
   "Returns t, if LIST-1 is a subset of LIST-2."
   (cond ((not list-1))
-	((member (car list-1 list-2))
+	((member (car list-1) list-2)
 	 (idd-list-1-subset-of-list-2 (cdr list-1) list-2))
 	(t nil)))
 
-(defun idd-same-modifiers (list-1 list-2)
+(defun idd-same-elements-p (list-1 list-2)
   "Returns t, if both list have the same modifiers."
-  (and (length list-1 list-2)
-       (idd-list-1-subset-of-list-2 list-1-list-2)))
+  (and (= (length list-1) (length list-2))
+       (idd-list-1-subset-of-list-2 list-1 list-2)))
 
 (defun idd-if-modifiers-p (source-or-destination modifiers)
   "Checks, if the MODIFIERS hold during selecting the SOURCE-OR-DESTINATION.
@@ -447,7 +448,7 @@ Otherwise nil is returned."
     (cond ((not modifiers)
 	   (if event-modifiers nil 1))
 	  ((listp modifiers)
-	   (if (idd-same-elements modifiers event-modifiers)
+	   (if (idd-same-elements-p modifiers event-modifiers)
 	       1
 	     nil))
 	  (t (if event-modifiers 1 nil)))))
@@ -566,7 +567,7 @@ Look at the example `idd-action-move-region'."
 This command could be used to start a drag and drop command without a
 button event. Therefore this should not be bind direct to a mouse button."
   (interactive)
-  (let ((destination-event)
+  (let ((source-event)
 	(drag-and-drop-message "Drag&Drop: Click on the source!"))
     (message drag-and-drop-message)
     (setq source-event
@@ -670,7 +671,6 @@ button-press-event."
 	(dispatch-event (next-command-event)))
     (setq destination-event 
 	  (next-command-event nil drag-and-drop-message))
-(setq heiko source-event)
     (message "")
     (cond ((button-press-event-p destination-event)
 	   (mouse-track destination-event)
@@ -679,6 +679,20 @@ button-press-event."
 	   (idd-set-point destination)
 	   (if (adapt-emacs19p)
 	       (while (not (button-release-event-p (next-command-event)))))
+	   (if idd-help-instead-of-action
+	       (idd-display-help-about-action (idd-get-action source
+							      destination
+							      idd-actions)
+					      source
+					      destination)
+	     (idd-call-action (idd-get-action source destination idd-actions)
+			      source
+			      destination)))
+	  ((and (adapt-emacs19p)
+		(button-click-event-p destination-event))
+	   (setq destination (idd-get-source-or-destination-alist
+			      destination-event))
+	   (idd-set-point destination)
 	   (if idd-help-instead-of-action
 	       (idd-display-help-about-action (idd-get-action source
 							      destination

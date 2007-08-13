@@ -1,7 +1,7 @@
 ;;; url-gw.el --- Gateway munging for URL loading
 ;; Author: wmperry
-;; Created: 1997/03/24 15:13:19
-;; Version: 1.6
+;; Created: 1997/03/26 14:32:29
+;; Version: 1.7
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -68,7 +68,7 @@ This should be used when your version of Emacs cannot correctly use DNS,
 but your machine can.  This usually happens if you are running a statically
 linked Emacs under SunOS 4.x")
 
-(defvar url-gateway-nslookup-program nil
+(defvar url-gateway-nslookup-program "nslookup"
   "*If non-NIL then a string naming nslookup program." )
 
 ;; Stolen from ange-ftp

@@ -1,6 +1,6 @@
 ;;; tmpl-minor-mode.el --- Template Minor Mode
 ;;;
-;;; $Id: tmpl-minor-mode.el,v 1.4 1997/03/24 01:26:54 steve Exp $
+;;; $Id: tmpl-minor-mode.el,v 1.5 1997/03/26 22:42:40 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -483,7 +483,6 @@ HISTROY-VARIABLE contains the last template file names."
 	(table nil)
 	(file nil)
 	(answer nil)
-	(start nil)
 	(anser-not-ok t)
 	(internal-history (mapcar '(lambda (path)
 				     (file-name-nondirectory path))

@@ -31,7 +31,7 @@
 (put 'display-time 'custom-loads '("time"))
 (put 'hypermedia 'custom-loads '("wid-edit" "w3-cus"))
 (put 'w3-advanced 'custom-loads '("w3-cus"))
-(put 'w3-menus 'custom-loads '("w3-cus"))
+(put 'w3-menus 'custom-loads '("w3-cus" "w3-menu"))
 (put 'gnus-summary-mail 'custom-loads '("gnus-sum"))
 (put 'gnus-score-default 'custom-loads '("gnus-score" "gnus-sum"))
 (put 'nnmail-expire 'custom-loads '("nnmail"))

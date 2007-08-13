@@ -45,19 +45,53 @@ The directive is only supported by the NCSA http daemon."
 		 "Include Command: "
 		 hm--html-server-side-include-command-with-parameter-alist)
 		(read-string "Parameterlist sepearted by '?': ")))
-  (let ((start (point)))
+  (if (string= command "")
+      (error "ERROR: No command specified !")
+    (if (string= parameter "")
+	(error "ERROR: No parameter specified !")
+      (if (= ?| (string-to-char command))
+	  (if (= ?? (string-to-char parameter))
+	      (insert "<INC SRVURL \"" command parameter "\">")
+	    (insert "<INC SRVURL \"" command "?" parameter "\">"))
+	(if (= ?? (string-to-char parameter))
+	    (insert "<INC SRVURL \"|" command parameter "\">")
+	  (insert "<INC SRVURL \"|" command "?" parameter "\">"))))))
+
+
+(defun hm--html-add-server-side-include-command-with-isindex-parameter 
+  (command)
+  "This function adds a server side include command directive in the buffer.
+The include command uses the \"isindex\"- parameter for the specified command."
+  (interactive (list 
+		(completing-read "Include Command: "
+				 hm--html-server-side-include-command-alist)))
+  (hm--html-add-server-side-include-command command t))
+
+
+(defun hm--html-add-server-side-include-command (command &optional srvurl)
+  "This function adds a server side include command directive in the buffer.
+The directive is only supported by the NCSA http daemon.
+If SRVURL is t, then the attribute srvurl instead of srv is used for the 
+include command. With srvurl, the include command uses the \"isindex\"-
+parameter for the specified command."
+  (interactive (list 
+		(completing-read "Include Command: "
+				 hm--html-server-side-include-command-alist)))
+  (let ((attribute (if srvurl "SRVURL" "SRV")))
     (if (string= command "")
 	(error "ERROR: No command specified !")
-      (if (string= parameter "")
-	  (error "ERROR: No parameter specified !")
-	(if (= ?| (string-to-char command))
-	    (if (= ?? (string-to-char parameter))
-		(insert "<INC SRVURL \"" command parameter "\">")
-	      (insert "<INC SRVURL \"" command "?" parameter "\">"))
-	  (if (= ?? (string-to-char parameter))
-	      (insert "<INC SRVURL \"|" command parameter "\">")
-	    (insert "<INC SRVURL \"|" command "?" parameter "\">")))
-	(html-maybe-deemphasize-region (1+ start) (1- (point)))))))
+      (if (= ?| (string-to-char command))
+	  (insert "<INC " attribute" \"" command "\">")
+	(insert "<INC " attribute " \"|" command "\">")))))
+
+
+(defun hm--html-add-server-side-include-file (file)
+  "This function adds a server side include file directive in the buffer.
+The directive is only supported by the NCSA http daemon."
+  (interactive "FInclude File: ")
+  (if (string= file "")
+      (error "ERROR: No filename specified !")
+    (insert "<INC SRV \"" file "\">")))
   
 
 (defun hm--html-add-plaintext ()

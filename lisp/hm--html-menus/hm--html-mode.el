@@ -2,7 +2,7 @@
 ;;;
 ;;; Keywords: hypermedia languages help docs wp
 ;;;
-;;; $Id: hm--html-mode.el,v 1.5 1997/03/24 01:26:53 steve Exp $
+;;; $Id: hm--html-mode.el,v 1.6 1997/03/26 22:42:39 steve Exp $
 ;;;
 ;;; Copyright (C) 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -68,6 +68,7 @@
 
 
 (require 'font-lock)
+(require 'cl)
 (require 'adapt)
 (require 'hm--date)
 (require 'hm--html)
@@ -78,12 +79,18 @@
 
 (hm--html-load-config-files)
 (require 'hm--html-indentation)
-(require 'hm--html-keys)
 
 (defvar hm--html-minor-mode nil
   "Non-nil, if the `hm--html-minor-mode' is active.")
 
 (require 'hm--html-menu)
+
+(require 'hm--html-keys)
+
+;(defvar hm--html-minor-mode nil
+;  "Non-nil, if the `hm--html-minor-mode' is active.")
+;
+;(require 'hm--html-menu)
 (require 'hm--html-drag-and-drop)
 
 
@@ -92,7 +99,7 @@
 
 (defconst hm--html-menus-package-name "hm--html-menus")
 
-(defconst hm--html-menus-package-version "5.4")
+(defconst hm--html-menus-package-version "5.5")
   
 
 ;;; Generate the help buffer faces

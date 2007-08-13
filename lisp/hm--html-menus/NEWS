@@ -1,3 +1,37 @@
+25.03.97
+	Fixed a bug in `hm--html-search-place-for-element-in-head'.
+	Fixed bugs in `hm--html-add-base' and `hm--html-add-isindex'.
+	Renamed all calls to `hm--html-add-mail-link*' to
+	`hm--html-add-mail-box-link*' - this fixed bugs in the menus and
+	keybindings.
+	Fixed `hm--html-frame-template-file'.
+	Fixed some keybinding bugs.
+	-- BUILDED the version 5.5 of the package --
+24.03.97
+	Added the function `mouse-event-p' for the Emacs 19 to adapt.el.
+	The internal-drag-and-drop package uses know the function
+	`file-remote-p' instead of `ange-ftp-ftp-path'. If this
+	function is not available in an emacs, the function will be
+	defined and will use the function `ange-ftp-ftp-path'.
+	Fixed bugs in `idd-mouse-drag-and-drop-click' for the Emacs 19.
+23.03.97
+	Fixed some bugs, so that the package is now again loadable
+	in the Emacs 19 (19.34).
+	Changed popup-menu-up-p to popup-up-p, menu-event-p to
+	misc-user-event-p.
+	Fixed some other XEmacs compilation bugs.
+	Fixed bugs in `hm--html-add-isindex' and `hm--html-add-base'.
+	Moved the commands `hm--html-add-server-side-include-file',
+	`hm--html-add-server-side-include-command' and
+	`hm--html-add-server-side-include-command-with-isindex-parameter'
+	to hm--html-not-standard.el.
+	Fixed a bug in `hm--html-add-document-division-to-region'.
+	Deleted some obsolete stuff in `hm--html-add-link'.
+	Fixed bugs in `hm--html-add-basefont', `hm--html-add-mail-box-link',
+	`hm--html-add-mail-box-link-to-region', `idd-list-1-subset-of-list-2',
+	`idd-same-elements-p', `idd-start-mouse-drag-and-drop',
+	`idd-mouse-drag-and-drop-click', `idd-if-minor-mode-p',
+	`idd-if-modifiers-p' and `tmpl-read-template-filename'.
 22.03.97
 	Fixed some documentation bugs in tmpl-minor-mode.el.
 	Changed the key bindings in the tmpl-minor-mode. They are now

@@ -1,7 +1,7 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/03/19 18:28:10
-;; Version: 1.38
+;; Created: 1997/03/26 20:08:55
+;; Version: 1.40
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -976,8 +976,7 @@ The list (R G B) is returned, or an error is signaled if the lookup fails."
 (defsubst font-rgb-color-p (obj)
   (or (and (vectorp obj)
 	   (= (length obj) 4)
-	   (eq (aref obj 0) 'rgb))
-      (string-match "^#[0-9a-fA-F]+$" obj)))
+	   (eq (aref obj 0) 'rgb))))
 
 (defsubst font-rgb-color-red (obj) (aref obj 1))
 (defsubst font-rgb-color-green (obj) (aref obj 2))
@@ -1090,7 +1089,8 @@ is returned."
   (interactive)
   (condition-case nil
       (cond
-       ((font-rgb-color-p color)
+       ((or (font-rgb-color-p color)
+	    (string-match "^#[0-9a-fA-F]+$" color))
 	(apply 'set-face-background face
 	       (font-normalize-color color) args))
        (t
@@ -1101,7 +1101,8 @@ is returned."
   (interactive)
   (condition-case nil
       (cond
-       ((font-rgb-color-p color)
+       ((or (font-rgb-color-p color)
+	    (string-match "^#[0-9a-fA-F]+$" color))
 	(apply 'set-face-foreground face (font-normalize-color color) args))
        (t
 	(apply 'set-face-foreground face color args)))

@@ -4,8 +4,12 @@ if [ -z "$HOME" ]; then
     HOME=`(cd ; pwd)`
 fi
 
-WITH=`   ${EMACS} -batch -l ${HOME}/.emacs             -eval '(princ (file-truename (locate-library "custom")))'`
-WITHOUT=`${EMACS} -batch -q -no-site-file -l docomp.el -eval '(princ (file-truename (locate-library "custom")))'`
+if [ -f "${HOME}/.emacs" ]; then
+    DOTEMACS="-l ${HOME}/.emacs"
+fi
+
+WITH=`   ${EMACS} -batch ${DOTEMACS}      -eval '(princ (file-truename (locate-library "custom")))'`
+WITHOUT=`${EMACS} -batch -q -no-site-file -eval '(princ (file-truename (locate-library "custom")))'`
 
 if [ "${WITH}" = "${WITHOUT}" ]; then
     exit 0

@@ -1,7 +1,7 @@
 ;;; w3-widget.el --- An image widget
 ;; Author: wmperry
-;; Created: 1997/03/25 23:35:03
-;; Version: 1.25
+;; Created: 1997/03/26 15:31:17
+;; Version: 1.27
 ;; Keywords: faces, images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -147,7 +147,8 @@
       (cdr-safe (assoc usemap w3-imagemaps)))))
 
 (defun widget-image-callback (widget widget-ignore &optional event)
-  (and (widget-get widget 'href) (w3-fetch (widget-get widget 'href) (widget-get widget 'target))))
+  (if (widget-get widget 'href)
+      (w3-fetch (widget-get widget 'href) (widget-get widget 'target))))
 
 (defmacro widget-image-create-subwidget (&rest args)
   (` (widget-create (,@ args)
@@ -188,8 +189,6 @@
 	  (cond
 	   (client-map
 	    (let* ((default nil)
-		   (href nil)
-		   (tag nil)
 		   (options (mapcar
 			     (function
 			      (lambda (x)
@@ -204,6 +203,7 @@
 	      (setq real-widget
 		    (apply 'widget-create 'menu-choice
 			   :tag (or (widget-get widget :tag) "Imagemap")
+			   :ignore-case t
 			   :notify (widget-get widget :notify)
 			   :action (widget-get widget :action)
 			   :value default
@@ -248,6 +248,7 @@
 	(widget-put widget :children nil)
 	(set-extent-property extent 'keymap widget-image-keymap)
 	(set-extent-property extent 'begin-glyph glyph)
+	(set-extent-property extent 'detachable t)
 	(set-extent-property extent 'help-echo (cond
 						((and href (or client-map
 							       server-map))
@@ -298,12 +299,10 @@
 	 (usemap (widget-image-usemap widget))
 	 (href   (widget-get widget 'href))
 	 (alt    (widget-get widget 'alt))
-	 (value  (widget-value widget))
-	 (i nil))
+	 (value  (widget-value widget)))
     (cond
      (usemap
-      (setq i (length usemap)
-	    usemap (widget-image-usemap-default usemap))
+      (setq usemap (widget-image-usemap-default usemap))
       ;; Perhaps we should do something here with showing the # of entries
       ;; in the imagemap as well as the default href?  Could get too long.
       (format "Client side imagemap: %s" value))
@@ -335,7 +334,6 @@ Any other value means ask the user each time.")
 	 (href   (widget-get widget 'href))
 	 (img-src (or (widget-get widget 'src)
 		      (and widget-changed (widget-get widget-changed 'src))))
-	 (value  (widget-value widget))
 	 (target (widget-get widget 'target))
 	 )
     (cond
@@ -352,7 +350,8 @@ Any other value means ask the user each time.")
 				(cons
 				 (or (aref entry 3) (aref entry 2))
 				 (aref entry 2)))) usemap))
-	    (choice nil))
+	    (choice nil)
+	    (case-fold-search t))
 	(setq choice (completing-read "Imagemap: " choices nil t)
 	      choice (cdr-safe (assoc choice choices)))
 	(and (stringp choice) (w3-fetch choice target))))

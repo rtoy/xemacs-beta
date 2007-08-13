@@ -1,6 +1,6 @@
 \input texinfo.tex      @c -*-texinfo-*-
 @c %**start of header
-@setfilename ../info/xemacs-faq.info
+@setfilename xemacs-faq.info
 @settitle Frequently asked questions about XEmacs
 @setchapternewpage off
 @c %**end of header
@@ -64,9 +64,13 @@ reorganizing the whole thing.  At which point Anthony took back over,
 but then had to give it up again.  Some of the other contributors to
 this FAQ are listed later in this document.
 
-This version was converted to hypertext format, and edited by Steven
-L. Baur <steve@@altair.xemacs.org>.  It was converted back to texinfo by
-Hrvoje Niksic <hniksic@@srce.hr>.
+The previous version was converted to hypertext format, and edited by
+Steven L. Baur <steve@@altair.xemacs.org>.  It was converted back to
+texinfo by Hrvoje Niksic <hniksic@@srce.hr>.
+
+This version was edited and updated by Andreas Kaempf
+<andreas@@sccon.com>.
+
 
 @menu
 Introduction:
@@ -341,7 +345,7 @@ month.  Preexisting questions that have been changed are marked as such.
 Brand new questions are tagged.
 
 All submissions are welcome.  E-mail submissions to
-<steve@@altair.xemacs.org>.
+<andreas@@sccon.com>.
 
 Please make sure that @samp{XEmacs FAQ} appears on the Subject: line.
 If you think you have a better way of answering a question, or think a
@@ -439,23 +443,13 @@ The following people contributed valuable suggestions to building this
 version of the FAQ (listed in alphabetical order):
 
 @itemize @bullet
-@item Per Abrahamsen <abraham@@dina.kvl.dk>
+@item Steven L Baur <steve@@miranova.com>
 
-@item Vladimir Alexiev <vladimir@@cs.ualberta.ca>
+@item Darrell Kindred <dkindred@@cmu.edu>
 
-@item Martin Buchholz <Martin.Buchholz@@sun.com>
+@item David Moore <dmoore@@ucsd.edu>
 
-@item Brian Denheyer <briand@@iccom.com>
-
-@item Markus Gutschke <gutschk@@ESCHER.UNI-MUENSTER.DE>
-
-@item David Kastrup <dak@@fsnif.neuroinformatik.ruhr-uni-bochum.de>
-
-@item Natalie Kershaw <nataliek@@rd.scitec.com.au>
-
-@item John Turner <turner@@lanl.gov>
-
-@item David Vanderschel <DvdS@@eden.com>
+@item Justin Sheehy <dworkin@@ccs.neu.edu>
 @end itemize
 
 @node Q1.2.3, Q1.3.1, Q1.2.2, Introduction
@@ -640,7 +634,7 @@ Ilya Zakharevich <ilya@@math.ohio-state.edu> writes:
 There is a cyrillic mode in the file @file{mysetup.zip} in
 <URL:ftp://ftp.math.ohio-state.edu/pub/users/ilya/emacs/>.  This is a
 modification to Valery Alexeev's <ava@@math.jhu.ed> @file{russian.el}
-which can be obtained from
+which can be obtained from 
 <URL:ftp://tut.cis.ohio-state.edu/pub/gnu/emacs/elisp-archive/packages/russian.el.Z>.
 @end quotation
 
@@ -826,6 +820,7 @@ Trouble Shooting:
 * Q2.1.19::     XEmacs does not follow the local timezone.
 * Q2.1.20::     @samp{Symbol's function definition is void: hkey-help-show.}
 * Q2.1.21::     Every so often the XEmacs frame freezes.
+* Q2.1.22::     XEmacs seems to take a really long time to do some things.
 @end menu
 
 @node Q2.0.1, Q2.0.2, Installation, Installation
@@ -1127,6 +1122,24 @@ NB: You @emph{must} patch @file{/usr/local/bin/xemacs-19.14}, and not
 @file{xemacs} because @file{xemacs} is a link to @file{xemacs-19.14};
 the Perl @samp{-i} option will cause unwanted side-effects if applied to
 a symbolic link.
+@end quotation
+
+Steve L. Baur <steve@@miranova.com> writes:
+
+@quotation
+If you build against a recent libc-5.4 (late enough to have caused
+problems earlier in the beta cycle) and then run with an earlier version
+of libc, you get a
+
+@example
+$ xemacs
+xemacs: can't resolve symbol '__malloc_hook'
+zsh: 7942 segmentation fault (core dumped)  xemacs
+@end example
+
+(Example binary compiled against libc-5.4.23 and run with libc-5.4.16).
+
+The solution is to upgrade to at least libc-5.4.23.  Sigh.  Drat.
 @end quotation
 
 @node Q2.0.9, Q2.0.10, Q2.0.8, Installation
@@ -1933,11 +1946,46 @@ This is a problem with a partially loaded hyperbole.  Try adding:
 
 where you load hyperbole and the problem should go away.
 
-@node Q2.1.21,  , Q2.1.20, Installation
+@node Q2.1.21, Q2.1.22, Q2.1.20, Installation
 @section Every so often the XEmacs frame freezes
 
 This problem has been fixed in 19.15, and was due to a not easily
 reproducible race condition.
+
+@node Q2.1.22,  , Q2.1.21, Installation
+@section XEmacs seems to take a really long time to do some things
+
+David Moore <dmoore@@ucsd.edu> writes:
+
+@quotation
+Two things you can do:
+
+1) C level:
+
+When you see it going mad like this, you might want to use gdb from an
+'xterm' to attach to the running process and get a stack trace.  To do
+this just run:
+
+@example
+gdb /path/to/xemacs/xemacs ####
+@end example
+
+Where #### is the process id of your xemacs, instead of specifying the
+core.  When gdb attaches, the xemacs will stop [1] and you can type
+`where' in gdb to get a stack trace as usual.  To get things moving
+again, you can just type `quit' in gdb.  It'll tell you the program is
+running and ask if you want to quit anyways.  Say 'y' and it'll quit and
+have your emacs continue from where it was at.
+
+2) Lisp level:
+
+Turn on debug-on-quit early on.  When you think things are going slow
+hit C-g and it may pop you in the debugger so you can see what routine
+is running.  Press `c' to get going again.
+
+debug-on-quit doesn't work if something's turned on inhibit-quit or in
+some other strange cases.
+@end quotation
 
 @node Customization, Subsystems, Installation, Top
 @chapter Customization and Options

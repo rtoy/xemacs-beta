@@ -1,6 +1,6 @@
 ;;; hm--html-configuration.el - Configurationfile for the html-mode
 ;;;
-;;; $Id: hm--html-configuration.el,v 1.5 1997/03/24 01:26:52 steve Exp $
+;;; $Id: hm--html-configuration.el,v 1.6 1997/03/26 22:42:37 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -338,7 +338,7 @@ Look at the variable `tmpl-template-dir-list' for further descriptions.")
 
 (defvar hm--html-frame-template-file (concat data-directory
 					     "../lisp/hm--html-menus/"
-					     "frame.tmpl")
+					     "frame.html.tmpl")
   "File, which is used as template for a html frame.")
 
 (defvar hm--html-automatic-expand-templates t

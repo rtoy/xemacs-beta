@@ -3418,24 +3418,12 @@ directly.
 @cindex Exportability
 @cindex Export Restrictions
 In order to use SSL in Emacs/W3, an implementation of SSL is necessary.
-These are the implementations that I am aware of:
+Emacs/W3 is configued to work out of the box with SSLeay 0.6.6 or later.
+For best results, you should apply a patch that makes the SSLeay client
+much quieter about what it reports.
 
-@table @code
-@item SSLRef 2.0
-Available from Netscape Communications @footnote{http://www.netscape.com/newsref/std/sslref.html}.  This requires the
-RSARef library, which is not exportable.  The RSARef library is
-available from ftp://ftp.rsa.com/rsaref/
-@item SSLeay 0.4
-An implementation by Eric Young (eay@@mincom.oz.au) that is free for
-commerial or noncommercial use, and was developed completely outside the
-US by a non-US citizen.  More information can be found at
-ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/
-@end table
-
-Currently, an external in order to use SSL from within Emacs/W3.  This
-program should be able to take command line parameters for the hostname
-and port number to connect to, and read/write to standard input/output
-(similar to telnet, but without the annoying status messages).  
+You can download SSLeay from
+@url{ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/}
 
 The following variables control how the external program is invoked.
 

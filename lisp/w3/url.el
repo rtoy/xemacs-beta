@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/03/25 00:00:34
-;; Version: 1.68
+;; Created: 1997/03/26 20:11:33
+;; Version: 1.69
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/03/25 00:00:34|1.68|Location Undetermined
+;;; 1997/03/26 20:11:33|1.69|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1281,9 +1281,9 @@ forbidden in URL encoding."
 and decoding any MIME content-transfer-encoding used."
   (set-buffer url-working-buffer)
   (goto-char (point-min))
-  (url-replace-regexp "Connection closed by.*" "")
+  (url-replace-regexp "Connection closed by.*\n*\\'" "")
   (goto-char (point-min))
-  (url-replace-regexp "Process WWW.*" ""))
+  (url-replace-regexp "Process .* exited abnormally.*\n*\\'" ""))
 
 (defun url-remove-compressed-extensions (filename)
   (while (assoc (url-file-extension filename) url-uncompressor-alist)

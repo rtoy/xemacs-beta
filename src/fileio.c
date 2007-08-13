@@ -938,11 +938,11 @@ See also the function `substitute-in-file-name'.
      Putting this call here avoids all that crud.
 
      The EQ test avoids infinite recursion.  */
-  if (! NILP (defalt) && !EQ (defalt, name)
+  if (! NILP(defalt) && !EQ (defalt, name)
       /* This saves time in a common case.  */
       && ! (XSTRING_LENGTH (defalt) >= 3
-	    && IS_DIRECTORY_SEP (XSTRING_BYTE (defalt, 0))
-	    && IS_DEVICE_SEP (XSTRING_BYTE (defalt, 1))))
+	    && (IS_DIRECTORY_SEP (XSTRING_BYTE (defalt, 0))
+		|| IS_DEVICE_SEP (XSTRING_BYTE (defalt, 1)))))
     {
       struct gcpro gcpro1;
 

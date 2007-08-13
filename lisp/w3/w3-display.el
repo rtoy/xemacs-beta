@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/03/26 00:03:00
-;; Version: 1.156
+;; Created: 1997/03/26 15:24:53
+;; Version: 1.157
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -78,7 +78,8 @@
   (defmacro w3-get-face-info (info &optional other)
     (let ((var (intern (format "w3-face-%s" info))))
       (` (push (w3-get-style-info (quote (, info)) node
-				  (or (w3-get-attribute (quote (, other)))
+				  (or (cdr-safe (assq (quote (, other))
+						      (nth 1 node)))
 				      (car (, var))))
 	       (, var)))))
 

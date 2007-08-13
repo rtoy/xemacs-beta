@@ -1,4 +1,4 @@
-This README file describes the emacs lisp package hm--html-menus-5.4.
+This README file describes the emacs lisp package hm--html-menus-5.5.
 
 The package provides functions and various popup and pulldown menus
 for a html mode called hm--html-mode, a mode for writing html pages.
@@ -26,12 +26,6 @@ and epoch.
 This package is tested with the xemacs 19.15 on Suns with SunOS 5.5
 and on PC's with linux. But it should work also on other (possibly
 only UNIX ?) platforms.
-
-NOTE: The current release isn't tested with the Emacs 19 (5.0 is but
-5.1 to 5.4 are not). One of the next releases in the near future :-) will be a
-bug fix only release for the Emacs 19. So please report any bugs to
-muenkel@tnt.uni-hannover.de to shorten the time until the Emacs 19
-related bugs are fixed.
 
 Read the file README-EMACS-19, if you want to use this package with
 GNU Emacs 19. 
