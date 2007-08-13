@@ -346,14 +346,17 @@ arguments."
       (remove-specifier (face-property face property) locale tag-set
 			exact-p))))
 
-(defun reset-face (face)
+(defun reset-face (face &optional locale tag-set exact-p)
   "Clear all existing built-in specifications from FACE.
 This makes FACE inherit all its display properties from 'default.
 WARNING: Be absolutely sure you want to do this!!!  It is a dangerous
-operation and is not undoable."
-  (mapcar (lambda (x)
-	    (remove-specifier (face-property face x)))
-	  built-in-face-specifiers)
+operation and is not undoable.
+
+The arguments LOCALE, TAG-SET and EXACT-P are the same as for
+`remove-specifier'."
+  (mapc (lambda (x)
+	  (remove-specifier (face-property face x) locale tag-set exact-p))
+	built-in-face-specifiers)
   nil)
 
 (defun set-face-parent (face parent &optional locale tag-set how-to-add)
@@ -456,6 +459,19 @@ Normally DOMAIN will be a window or nil (meaning the selected window),
 See `face-property-instance' for more information."
   (face-property-instance face 'foreground domain default no-fallback))
 
+(defun face-foreground-name (face &optional domain default no-fallback)
+  "Return the name of the given face's foreground color in the given domain.
+
+FACE may be either a face object or a symbol representing a face.
+
+Normally DOMAIN will be a window or nil (meaning the selected window),
+  and an instance object describing how the background appears in that
+  particular window and buffer will be returned.
+
+See `face-property-instance' for more information."
+  (color-instance-name (face-foreground-instance
+			face domain default no-fallback)))
+
 (defun set-face-foreground (face color &optional locale tag-set how-to-add)
   "Change the foreground of the given face.
 
@@ -499,6 +515,19 @@ Normally DOMAIN will be a window or nil (meaning the selected window),
 
 See `face-property-instance' for more information."
   (face-property-instance face 'background domain default no-fallback))
+
+(defun face-background-name (face &optional domain default no-fallback)
+  "Return the name of the given face's background color in the given domain.
+
+FACE may be either a face object or a symbol representing a face.
+
+Normally DOMAIN will be a window or nil (meaning the selected window),
+  and an instance object describing how the background appears in that
+  particular window and buffer will be returned.
+
+See `face-property-instance' for more information."
+  (color-instance-name (face-background-instance
+			face domain default no-fallback)))
 
 (defun set-face-background (face color &optional locale tag-set how-to-add)
   "Change the background of the given face.
@@ -597,6 +626,9 @@ See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
   (interactive (face-interactive "display-table"))
   (set-face-property face 'display-table display-table locale tag-set
 		     how-to-add))
+
+;; The following accessors and mutators are, IMHO, good
+;; implementation.  Cf. with `make-face-bold'.
 
 (defun face-underline-p (face &optional domain default no-fallback)
   "Return whether the given face is underlined.
@@ -1011,6 +1043,10 @@ for more specifics on exactly how this function works."
      ([italic] . [default])
      ([bold-italic] . [bold]))))
 
+
+;; Why do the following two functions lose so badly in so many
+;; circumstances?
+
 (defun make-face-smaller (face &optional locale)
   "Make the font of the given face be smaller, if possible.
 LOCALE works as in `make-face-bold' et al., but the ``inheriting-
@@ -1068,9 +1104,170 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
   (font-proportional-p (face-font face) domain charset))
 
 
-(defvar init-face-from-resources t
-  "If non-nil, attempt to initialize faces from the resource database.")
+;; Functions that used to be in cus-face.el, but logically go here.
 
+(defcustom frame-background-mode nil
+  "*The brightness of the background.
+Set this to the symbol dark if your background color is dark, light if
+your background is light, or nil (default) if you want Emacs to
+examine the brightness for you."
+  :group 'faces
+  :type '(choice (choice-item dark) 
+		 (choice-item light)
+		 (choice-item :tag "Auto" nil)))
+
+;; The old variable that many people still have in .emacs files.
+(define-obsolete-variable-alias 'custom-background-mode
+  'frame-background-mode)
+
+(defun get-frame-background-mode (frame)
+  "Detect background mode for FRAME."
+  (let* ((color-instance (face-background-instance 'default frame))
+	 (mode (condition-case nil
+		   (if (< (apply '+ (color-instance-rgb-components
+				     color-instance)) 65536)
+		       'dark 'light)
+		 ;; We'll get an error on a TTY; TTY-s are generally
+		 ;; dark.  ### That's a good one.
+		 (error 'dark))))
+    (set-frame-property frame 'background-mode mode)
+    mode))
+
+(defun extract-custom-frame-properties (frame)
+  "Return a plist with the frame properties of FRAME used by custom."
+  (list 'type (or (frame-property frame 'display-type)
+		  (device-type (frame-device frame)))
+	'class (device-class (frame-device frame))
+	'background (or frame-background-mode
+			(frame-property frame 'background-mode)
+			(get-frame-background-mode frame))))
+
+(defcustom init-face-from-resources t
+  "If non nil, attempt to initialize faces from the resource database."
+  :group 'faces
+  :type 'boolean)
+
+;; Old name, used by custom.  Also, FSFmacs name.
+(defvaralias 'initialize-face-resources 'init-face-from-resources)
+
+(defun face-spec-set (face spec &optional frame)
+  "Set FACE's face attributes according to the first matching entry in SPEC.
+If optional FRAME is non-nil, set it for that frame only.
+If it is nil, then apply SPEC to each frame individually.
+See `defface' for information about SPEC."
+  (if frame
+      (progn
+	(reset-face face frame)
+	(face-display-set face spec frame))
+    (let ((frames (relevant-custom-frames)))
+      (reset-face face)
+      (face-display-set face spec)
+      (while frames
+	(face-display-set face spec (car frames))
+	(pop frames)))))
+
+(defun face-display-set (face spec &optional frame)
+  "Set FACE to the attributes to the first matching entry in SPEC.
+Iff optional FRAME is non-nil, set it for that frame only.
+See `defface' for information about SPEC."
+  (while spec
+    (let ((display (caar spec))
+	  (atts (cadar spec)))
+      (pop spec)
+      (when (face-spec-set-match-display display frame)
+	;; Avoid creating frame local duplicates of the global face.
+	(unless (and frame (eq display (get face 'custom-face-display)))
+	  (apply 'face-custom-attributes-set face frame atts))
+	(unless frame
+	  (put face 'custom-face-display display))
+	(setq spec nil)))))
+
+(defvar default-custom-frame-properties nil
+  "The frame properties used for the global faces.
+Frames not matching these propertiess should have frame local faces.
+The value should be nil, if uninitialized, or a plist otherwise.  
+See `defface' for a list of valid keys and values for the plist.")
+
+(defun get-custom-frame-properties (&optional frame)
+  "Return a plist with the frame properties of FRAME used by custom.
+If FRAME is nil, return the default frame properties."
+  (cond (frame
+	 ;; Try to get from cache.
+	 (let ((cache (frame-property frame 'custom-properties)))
+	   (unless cache
+	     ;; Oh well, get it then.
+	     (setq cache (extract-custom-frame-properties frame))
+	     ;; and cache it...
+	     (set-frame-property frame 'custom-properties cache))
+	   cache))
+	(default-custom-frame-properties)
+	(t
+	 (setq default-custom-frame-properties
+	       (extract-custom-frame-properties (selected-frame))))))
+
+(defun face-spec-set-match-display (display frame)
+  "Non-nil iff DISPLAY matches FRAME.
+DISPLAY is part of a spec such as can be used in `defface'.
+If FRAME is nil, the current FRAME is used."
+  (if (eq display t)
+      t
+    (let* ((props (get-custom-frame-properties frame))
+	   (type (plist-get props 'type))
+	   (class (plist-get props 'class))
+	   (background (plist-get props 'background))
+	   (match t)
+	   (entries display)
+	   entry req options)
+      (while (and entries match)
+	(setq entry (car entries)
+	      entries (cdr entries)
+	      req (car entry)
+	      options (cdr entry)
+	      match (cond ((eq req 'type)
+			   (memq type options))
+			  ((eq req 'class)
+			   (memq class options))
+			  ((eq req 'background)
+			   (memq background options))
+			  (t
+			   (warn "Unknown req `%S' with options `%S'"
+				 req options)
+			   nil))))
+      match)))
+
+(defun relevant-custom-frames ()
+  "List of frames whose custom properties differ from the default."
+  (let ((relevant nil)
+	(default (get-custom-frame-properties))
+	(frames (frame-list))
+	frame)
+    (while frames
+      (setq frame (car frames)
+	    frames (cdr frames))
+      (unless (equal default (get-custom-frame-properties frame))
+	(push frame relevant)))
+    relevant))
+
+(defun initialize-custom-faces (&optional frame)
+  "Initialize all custom faces for FRAME.
+If FRAME is nil or omitted, initialize them for all frames."
+  (mapc (lambda (symbol)
+	  (let ((spec (or (get symbol 'saved-face)
+			  (get symbol 'face-defface-spec))))
+	    (when spec
+	      ;; No need to init-face-from-resources -- code in
+	      ;; `init-frame-faces' does it already.
+	      (face-display-set symbol spec frame))))
+	(face-list)))
+
+(defun custom-initialize-frame (frame)
+  "Initialize frame-local custom faces for FRAME if necessary."
+  (unless (equal (get-custom-frame-properties) 
+		 (get-custom-frame-properties frame))
+    (initialize-custom-faces frame)))
+
+
+
 (defun make-empty-face (name &optional doc-string temporary)
   "Like `make-face', but doesn't query the resource database."
   (let ((init-face-from-resources nil))
@@ -1163,7 +1360,7 @@ and 'global)."
     (make-face-bold 'bold-italic))
   ;;
   ;; Nothing more to be done for X or TTY's?
-)
+  )
 
 
 ;; These warnings are there for a reason.
@@ -1250,11 +1447,13 @@ you want to add code to do stuff like this, use the create-device-hook."
 	    (face-complain-about-font 'bold-italic device))))))
 
   ;; Set the text-cursor colors unless already specified.
-  (when (and (not (face-background 'text-cursor 'global))
+  (when (and (not (eq 'tty (device-type device)))
+	     (not (face-background 'text-cursor 'global))
 	     (face-property-equal 'text-cursor 'default 'background device))
     (set-face-background 'text-cursor [default foreground] 'global
 			 nil 'append))
-  (when (and (not (face-foreground 'text-cursor 'global))
+  (when (and (not (eq 'tty (device-type device)))
+	     (not (face-foreground 'text-cursor 'global))
 	     (face-property-equal 'text-cursor 'default 'foreground device))
     (set-face-foreground 'text-cursor [default background] 'global
 			 nil 'append))
@@ -1352,44 +1551,6 @@ you want to add code to do stuff like this, use the create-device-hook."
   ;; display), at least try making it bold.
   (unless (face-differs-from-default-p 'isearch device)
     (set-face-font 'isearch [bold]))
-
-  ;; Set the modeline face colors/fonts unless already specified.
-
-  ;; modeline-buffer-id:
-  (unless (face-differs-from-default-p 'modeline-buffer-id device)
-    (let ((fg (face-foreground 'modeline-buffer-id 'global))
-	  (font (face-font 'modeline-buffer-id 'global)))
-      (when (and (null fg) (featurep 'x))
-	(set-face-foreground 'modeline-buffer-id "blue4" 'global '(color x)))
-      (unless font
-	(when (featurep 'x)
-	  (set-face-font 'modeline-buffer-id [bold-italic] nil '(mono x))
-	  (set-face-font 'modeline-buffer-id [bold-italic] nil '(grayscale x)))
-	(when (featurep 'tty)
-	  (set-face-font 'modeline-buffer-id [bold-italic] nil 'tty)))))
-  (set-face-parent 'modeline-buffer-id 'modeline nil nil 'append)
-
-  ;; modeline-mousable:
-  (unless (face-differs-from-default-p 'modeline-mousable device)
-    (let ((fg (face-foreground 'modeline-mousable 'global))
-	  (font (face-font 'modeline-mousable 'global)))
-      (when (and (null fg) (featurep 'x))
-	(set-face-foreground 'modeline-mousable "firebrick" 'global '(color x)))
-      (unless font
-	(when (featurep 'x)
-	  (set-face-font 'modeline-mousable [bold] nil '(mono x))
-	  (set-face-font 'modeline-mousable [bold] nil '(grayscale x))))))
-  (set-face-parent 'modeline-mousable 'modeline nil nil 'append)
-
-  ;; modeline-mousable-minor-mode:
-  (unless (face-differs-from-default-p 'modeline-mousable-minor-mode device)
-    (let ((fg (face-foreground 'modeline-mousable-minor-mode 'global)))
-      (when (and (null fg) (featurep 'x))
-	(set-face-foreground 'modeline-mousable-minor-mode
-			     '(((color x) . "green4")
-			       ((color x) . "forestgreen")) 'global))))
-  (set-face-parent 'modeline-mousable-minor-mode 'modeline-mousable
-		   nil nil 'append)
   )
 
 ;; New function with 20.1, suggested by Per Abrahamsen, coded by Kyle Jones.
@@ -1477,6 +1638,8 @@ in that frame; otherwise change each frame."
   (set-face-reverse-p   'text-cursor             t 'global 'tty)
   (set-face-reverse-p   'modeline                t 'global 'tty)
   (set-face-reverse-p   'zmacs-region            t 'global 'tty)
+  (set-face-reverse-p   'primary-selection       t 'global 'tty)
+  (set-face-underline-p 'secondary-selection     t 'global 'tty)
   (set-face-reverse-p   'list-mode-item-selected t 'global 'tty)
   (set-face-reverse-p   'isearch                 t 'global 'tty)
   )

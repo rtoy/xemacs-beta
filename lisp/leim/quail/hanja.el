@@ -1,9 +1,9 @@
 ;;; quail/hanja-ksc.el --- Quail-package for Korean Hanja (KSC5601)
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
-;; Keywords: multilingual, input method, Korean, Hangul
+;; Keywords: multilingual, input method, Korean, Hanja
 
 ;; This file is part of GNU Emacs.
 
@@ -18,22 +18,24 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
 (require 'quail)
 
 (defun quail-hanja-switch-to-symbol-ksc (&rest ignore)
-  "Swith to `quail-symbol-ksc' package."
+  "Swith to `korean-symbol' package."
   (quail-delete-region)
-  (select-input-method "Korean" "quail-symbol-ksc")
+  (select-input-method "korean-symbol")
   (throw 'quail-tag nil))
 
 
-(quail-define-package "quail-hanja" "Korean " "2벌식KSC漢字" t
-		      "該當하는 漢字의 韻을 한글2벌式으로 呼出하여 選擇"
+(quail-define-package 
+ "korean-hanja" "Korean" "벌漢" t
+ "2벌식KSC漢字: 該當하는 漢字의 韻을 한글2벌式으로 呼出하여 選擇"
 		      nil nil nil nil nil nil t)
 
 (quail-define-rules

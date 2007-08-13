@@ -1,6 +1,6 @@
 ;;; custom-load.el --- automatically extracted custom dependencies
 
-;; Created by SL Baur on Sat Sep 27 08:14:13 1997
+;; Created by SL Baur on Tue Sep 30 18:08:56 1997
 
 ;;; Code:
 
@@ -26,6 +26,7 @@
 (custom-put 'fill-comments 'custom-loads '("simple"))
 (custom-put 'windows 'custom-loads '("window" "window-xemacs"))
 (custom-put 'fill 'custom-loads '("simple"))
+(custom-put 'faces 'custom-loads '("faces"))
 (custom-put 'vc 'custom-loads '("files"))
 (custom-put 'isearch 'custom-loads '("isearch-mode"))
 (custom-put 'modeline 'custom-loads '("modeline"))

@@ -86,6 +86,17 @@ Used for compatibility among different emacs variants."
 ;; The call to `read' is to ensure that the value is computed at load time
 ;; and not compiled into the .elc file.  The value is negative on most
 ;; machines, but not on all!
+(defconst listify-key-sequence-1 (logior 128 (read "?\\M-\\^@")))
+
+(defun listify-key-sequence (key)
+  "Convert a key sequence to a list of events."
+  (if (vectorp key)
+      (append key nil)
+    (mapcar (function (lambda (c)
+			(if (> c 127)
+			    (logxor c listify-key-sequence-1)
+			  c)))
+	    (append key nil))))
 ;; XEmacs: This stuff is done in C Code.
 
 ;;;; Obsolescent names for functions.
@@ -524,6 +535,17 @@ yourself.]"
   (let ((string (buffer-substring beg end)))
     (set-text-properties 0 (length string) nil string)
     string))
+
+;; This should probably be written in C (i.e., without using `walk-windows').
+(defun get-buffer-window-list (buffer &optional minibuf frame)
+  "Return windows currently displaying BUFFER, or nil if none.
+See `walk-windows' for the meaning of MINIBUF and FRAME."
+  (let ((buffer (if (bufferp buffer) buffer (get-buffer buffer))) windows)
+    (walk-windows (function (lambda (window)
+			      (if (eq (window-buffer window) buffer)
+				  (setq windows (cons window windows)))))
+		  minibuf frame)
+    windows))
 
 (defun ignore (&rest ignore)
   "Do nothing and return nil.

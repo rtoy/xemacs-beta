@@ -105,21 +105,24 @@ then `set-language-environment' is called with LANGUAGE-ENVIRONMENT.")
       (load (format "locale/%s/locale-start" lang) t t)))
 
   (when (current-language-environment)
-    ;; Translate remaining args on command line using pathname-coding-system
+    ;; Translate remaining args on command line using file-name-coding-system
     (loop for arg in-ref command-line-args-left do
-	  (setf arg (decode-coding-string arg pathname-coding-system)))
+	  (setf arg (decode-coding-string arg file-name-coding-system)))
 
     ;; rman seems to be incompatible with encoded text
     (setq Manual-use-rosetta-man nil)
     
     ;; Make sure ls -l output is readable by dired and encoded using
-    ;; pathname-coding-system
+    ;; file-name-coding-system
     (add-hook
      'dired-mode-hook
      (lambda ()
        (make-local-variable 'process-environment)
        (setenv "LC_MESSAGES" "C")
        (setenv "LC_TIME"     "C"))))
+
+  ;; Register avairable input methods by loading LEIM list file.
+  (load "leim-list.el" 'noerror 'nomessage 'nosuffix)
   )
 
 (add-hook 'before-init-hook 'init-mule)

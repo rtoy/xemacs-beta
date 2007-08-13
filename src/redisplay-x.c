@@ -2225,9 +2225,7 @@ x_flash (struct device *d)
   XFillRectangle (dpy, w, gc, 0, 0, width, height);
   XSync (dpy, False);
 
-#ifdef HAVE_POLL
-  poll (0, 0, 100);
-#else /* !HAVE_POLL */
+#ifdef HAVE_SELECT
   {
     int usecs = 100000;
     struct timeval tv;
@@ -2236,7 +2234,13 @@ x_flash (struct device *d)
     /* I'm sure someone is going to complain about this... */
     select (0, 0, 0, 0, &tv);
   }
-#endif /* !HAVE_POLL */
+#else
+#ifdef HAVE_POLL
+  poll (0, 0, 100);
+#else /* !HAVE_POLL */
+  bite me
+#endif /* HAVE_POLL */
+#endif /* HAVE_SELECT */
 
   XFillRectangle (dpy, w, gc, 0, 0, width, height);
   XSync (dpy, False);

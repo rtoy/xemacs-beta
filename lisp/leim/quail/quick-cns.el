@@ -24,9 +24,10 @@
 ;; REPEATKEY:	\020\022
 ;; # the following line must not be removed
 ;; BEGINDICTIONARY
-(quail-define-package "quail-quick-cns" "Chinese-CNS" "$(Gv|Mx(B(CNS)"
+(quail-define-package
+ "chinese-cns-quick" "Chinese-CNS" "$(Gv|(BC"
  t
- "$(GDcEFrSD+!Jv|Mx!K(B
+ "$(GDcEFrSD+!Jv|Mx!K(BCNS
 
 	$(GiGk#v|MxrSD+uomu(B
 

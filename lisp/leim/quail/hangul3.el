@@ -1,7 +1,7 @@
 ;;; quail/hangul3.el -- Quail package for inputting Korean Hangul characters
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, input method, Korean, Hangul
 
@@ -18,21 +18,22 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
 (require 'quail)
 
 (defun quail-hangul-switch-to-symbol-ksc (&rest ignore)
-  "Swith to `quail-symbol-ksc' package."
+  "Swith to `korean-symbol' package."
   (quail-delete-region)
-  (select-input-method "Korean" "quail-symbol-ksc")
+  (activate-input-method "korean-symbol")
   (throw 'quail-tag nil))
 
 (quail-define-package
- "quail-hangul3" "Korean" "한글 3벌식"
+ "korean-hangul3" "Korean" "한3"
  '(;; first character
    (?k . "ㄱ") (?h . "ㄴ") (?u . "ㄷ") (?y . "ㄹ") (?i . "ㅁ")
    (?\; . "ㅂ") (?n . "ㅅ") (?j . "ㅇ") (?l . "ㅈ") (?o . "ㅊ")
@@ -53,7 +54,7 @@
    (?P . ">")  (?\[ . "「") (?\[ . "」") (?{ . "『") (?{ . "』")
    (?N . "0")  (?M . "1")   (?< . "2")   (?> . "3")  (?J . "4")
    (?K . "5")  (?L . "6")   (?U . "7")   (?I . "8")  (?O . "9"))
- "Hangul input method.
+ "한글 3벌식: Hangul input method
   초성: ㄱ ㄲ ㄴ ㄷ ㄸ ㄹ ㅁ ㅂ ㅃ ㅅ ㅆ ㅇ ㅈ ㅉ ㅊ ㅋ ㅌ ㅍ ㅎ
   KEY : k  kk h  u  uu y  i  ;  ;; n  nn j  l  ll o  0  '  p  m
 

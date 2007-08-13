@@ -1,3 +1,27 @@
+1997-09-30  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta25 is released.
+
+	* Makefile.in (install-arch-dep): Install the `Installation' for
+	future reference.
+
+	* etc/BETA: Document existence of `Installation' file.
+	- Document requirement of rebuilding finder-inf.el when building
+	from the full tarball.
+	
+	* Makefile.in (top_distclean): Remove finder-inf.el*.
+
+	* configure.in (use_union_type): Default to "yes".
+
+1997-09-29  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in:  Add tiff autodetection
+
+1997-09-29  SL Baur  <steve@altair.xemacs.org>
+
+	* lwlib/xlwmenu.c: Add bounds checking.
+	Check error return on XmStringGetLtoR.
+
 1997-09-27  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta24 is released.

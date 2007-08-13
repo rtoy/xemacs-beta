@@ -449,7 +449,7 @@ Window-system options:
 			Get it from the XEmacs FTP site.
 --with-png (*)		Compile with support for PNG image conversion.
 			Requires libpng.  Get it from the XEmacs FTP site.
---with-tiff		Compile with support for TIFF image conversion
+--with-tiff (*)		Compile with support for TIFF image conversion
 			(not yet implemented).
 
 
@@ -2440,13 +2440,15 @@ fi
 AC_SUBST(libs_xauth)
 
 dnl Autodetect OffiX
+OFFIX_O=""
 test -z "$with_offix" && { AC_CHECK_HEADER(OffiX/DragAndDrop.h, , with_offix=no) }
 test -z "$with_offix" && { AC_CHECK_LIB(Dnd, DndInitialize, [:] , with_offix=no) }
 test -z "$with_offix" && with_offix=yes
 if test "$with_offix" = "yes"; then
   AC_DEFINE(HAVE_OFFIX_DND)
-  XE_PREPEND(-lDnd, libs_x)
+  OFFIX_O="offix.o"
 fi
+AC_SUBST(OFFIX_O)
 
 dnl Autodetect tooltalk
 test "$with_cde" = "yes" && with_tooltalk=yes # CDE requires tooltalk
@@ -2581,7 +2583,14 @@ if test "$with_x11" = "yes"; then
     XE_PREPEND($png_libs, libs_x)
   fi
 
-  dnl autodetect TIFF (not yet implemented)
+  dnl autodetect TIFF
+  if test "$with_tiff" != no; then
+    for extra_libs in "" "-lz" "-lgz"; do
+      AC_CHECK_LIB(tiff, TIFFReadScanline, 
+        tiff_libs="-ltiff $extra_libs" with_tiff=yes; break, [:], $extra_libs)
+    done
+  fi
+  test -z "$with_tiff" && with_tiff=no
   if test "$with_tiff" = "yes"; then
     AC_DEFINE(HAVE_TIFF)
     XE_PREPEND(-ltiff, libs_x)

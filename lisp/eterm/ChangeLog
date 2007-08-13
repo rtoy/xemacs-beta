@@ -1,3 +1,10 @@
+1997-09-30  SL Baur  <steve@altair.xemacs.org>
+
+	* term.el (term-mode): Use window-displayed-height instead of
+	window-height.
+	(term-check-size): Ditto.
+	From Glynn Clements <glynn@sensei.co.uk>
+
 1997-06-04  Steven L Baur  <steve@altair.xemacs.org>
 
 	* term.el (make-term): Fix docstring.

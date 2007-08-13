@@ -308,6 +308,10 @@ minibuffer history if its length is less than that value."
 
 (define-error 'input-error "Keyboard input error")
 
+(put 'input-error 'display-error
+     #'(lambda (error-object stream)
+	 (princ (cadr error-object) stream)))
+
 (defun read-from-minibuffer (prompt &optional initial-contents
                                     keymap
                                     readp

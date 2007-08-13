@@ -66,6 +66,9 @@ Lisp_Object Qdelq;
 Lisp_Object Qdevice;
 Lisp_Object Qdimension;
 Lisp_Object Qdisplay;
+#ifdef HAVE_OFFIX_DND
+Lisp_Object Qdnd_data;
+#endif
 Lisp_Object Qdoc_string;
 Lisp_Object Qdynarr_overhead;
 Lisp_Object Qempty;
@@ -198,6 +201,9 @@ syms_of_general (void)
   defsymbol (&Qdevice, "device");
   defsymbol (&Qdimension, "dimension");
   defsymbol (&Qdisplay, "display");
+#ifdef HAVE_OFFIX_DND
+  defsymbol (&Qdnd_data, "dnd-data");
+#endif
   defsymbol (&Qdoc_string, "doc-string");
   defsymbol (&Qdynarr_overhead, "dynarr-overhead");
   defsymbol (&Qempty, "empty");

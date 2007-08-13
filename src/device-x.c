@@ -49,6 +49,10 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "systime.h"
 
+#ifdef HAVE_OFFIX_DND
+#include "offix.h"
+#endif
+
 Lisp_Object Vdefault_x_device;
 
 /* Qdisplay in general.c */
@@ -312,8 +316,13 @@ x_init_device (struct device *d, Lisp_Object props)
       XSetCommand (XtDisplay (shell), XtWindow (shell), new_argv, new_argc);
       free_argc_argv (new_argv);
     }
+
   }
 #endif /* HAVE_SESSION */
+
+#ifdef HAVE_OFFIX_DND
+  DndInitialize ( DEVICE_XT_APP_SHELL (d) );
+#endif
 
   Vx_initial_argv_list = make_arg_list (argc, argv);
   free_argc_argv (argv);

@@ -806,8 +806,10 @@ look nicer." t nil)
 (autoload 'regexp-opt "regexp-opt" "\
 Return a regexp to match a string in STRINGS.
 Each string should be unique in STRINGS and should not contain any regexps,
-quoted or not.  If optional PAREN is non-nil, ensure that the returned regexp
-is enclosed by at least one regexp grouping construct.
+quoted or not. If optional PAREN is non-nil, ensure that the returned
+regexp is enclosed by at least one regexp match grouping construct.  If
+optional NON-SHY is non nil, the inner groupings will use \"\\\\( \\\\)\" grouping,
+rather than the default \"\\\\(?: \\\\)\" 'shy', or non-match-capturing groups.
 The returned regexp is typically more efficient than the equivalent regexp:
 
  (let ((open-paren (if PAREN \"\\\\(\" \"\")) (close-paren (if PAREN \"\\\\)\" \"\")))
@@ -819,7 +821,9 @@ Use `regexp-opt-depth' to count them." nil nil)
 (autoload 'regexp-opt-depth "regexp-opt" "\
 Return the depth of REGEXP.
 This means the number of regexp grouping constructs (parenthesised expressions)
-in REGEXP." nil nil)
+in REGEXP, not counting the \"\\\\(?: \\\\)\" non-match-capturing groups unless
+COUNT-SHY-GROUPS-TOO is non-nil.
+See `regexp-opt'." nil nil)
 
 ;;;***
 

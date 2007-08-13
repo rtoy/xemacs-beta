@@ -1,7 +1,7 @@
 ;;; quail/greek.el -- Quail package for inputting Greek
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, input method, Greek
 
@@ -18,18 +18,21 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
 (require 'quail)
 
-(quail-define-package "quail-jis-greek" "Greek" "Ελληνικα" nil
-		      "JIS X0208.1983 encoding.
+(quail-define-package
+ "greek-jis" "Greek" "Ω" nil
+ "Ελληνικα: Greek keyboard layout (JIS X0208.1983)
+
 The layout is same as greek, but uses JIS characters.
 Sorry, accents and terminal sigma are not supported in JIS."
-		      nil t t t t)
+ nil t t t t nil nil nil nil nil t)
 
 (quail-define-rules
  ("1" ?１)
@@ -130,8 +133,9 @@ Sorry, accents and terminal sigma are not supported in JIS."
 
 ;;
 
-(quail-define-package "quail-greek" "Greek" ",FEkkgmij\" nil
-		      "Greek Keyboard
+(quail-define-package
+ "greek" "Greek" ",FY" nil
+ ",FEkkgmij\: Greek keyboard layout (ISO 8859-7)
 --------------
 
 In the right of ,Fk key is a combination key, where
@@ -142,7 +146,7 @@ e.g.
  ,Fa + ,F4 -> ,F\
  ,Fi + ,F( -> ,Fz
  ,Fi + ,F( + ,F4 -> ,F@"
-		      nil t t t t)
+ nil t t t t nil nil nil nil nil t)
 
 ;; 1!  2@  3#  4$  5%  6^  7&  8*  9(  0)  -_  =+  `~
 ;;  ,F7/  ,FrS  ,FeE  ,FqQ  ,FtT  ,FuU  ,FhH  ,FiI  ,FoO  ,FpP  [{  ]}

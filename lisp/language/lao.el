@@ -1,7 +1,7 @@
 ;;; lao.el --- Support for Lao
 
-;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, Lao
 
@@ -25,47 +25,22 @@
 ;;; Code:
 
 (make-coding-system
- 'lao 2 ?T
- "Coding-system used for ASCII(MSB=0) & LAO(MSB=1)."
+ 'lao 2 ?L
+ "8-bit encoding for ASCII (MSB=0) and LAO (MSB=1)"
  '((ascii t) (lao t) nil nil
    nil ascii-eol))
 
-(register-input-method
- "Lao" '("quail-lao" quail-use-package "quail/lao"))
-
-(register-input-method
- "Lao" '("quail-lrt" quail-use-package "quail/lrt"))
-
-(defun setup-lao-environment ()
-  "Setup multilingual environment (MULE) for Lao."
-  (interactive)
-  (setup-english-environment)
-  (setq coding-category-iso-8-1 'lao)
-
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-8-1))
-
-  (set-default buffer-file-coding-system 'iso-2022-7)
-
-  (setq default-input-method '("Lao" . "quail-lao")))
-
-(defun describe-lao-support ()
-  "Describe how Emacs supports Lao."
-  (interactive)
-  (describe-language-support-internal "Lao"))
-
 (set-language-info-alist
  "Lao" '((setup-function . setup-lao-environment)
-	 (describe-function . describe-lao-support)
 	 (charset . (lao))
 	 (coding-system . (lao))
 	 (sample-text . "Lao((1>RJRERG(B)            (1JP:R-04U1(B, 0(1"i1M-`0;Q190$[19ERG(B")
-	 (documentation . nil)))
+	 (documentation . t)))
 
 (aset use-default-ascent ?(1;(B t)
 (aset use-default-ascent ?(1=(B t)
 (aset use-default-ascent ?(1?(B t)
 (aset use-default-ascent ?(1B(B t)
+(aset ignore-relative-composition ?(1\(B t)
 
 ;;; lao.el ends here

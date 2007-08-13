@@ -1,7 +1,7 @@
 ;;; quail/ipa.el -- Quail package for inputting IPA characters
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, input method, IPA
 
@@ -18,18 +18,20 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
 (require 'quail)
 
 (quail-define-package
- "quail-ipa" "IPA" "IPA" t
- "International Phonetic Alphabet for English, French, German and Italian.
+ "ipa" "IPA" "IPA" t
+ "International Phonetic Alphabet for English, French, German and Italian
+
 Upside-down characters are obtained by a preceding slash (/)."
- nil t)
+ nil t nil nil nil nil nil nil nil nil t)
 
 (quail-define-rules
  ("i" ?,0 (B)

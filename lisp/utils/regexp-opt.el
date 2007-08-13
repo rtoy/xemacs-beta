@@ -5,6 +5,9 @@
 ;; Author: Simon Marshall <simon@gnu.ai.mit.edu>
 ;; Keywords: strings, regexps
 
+;; Modified by Karl M. Hegbloom Sep. 1997 to support the new regexp syntax
+;; with shy groups. (benchmarks pending)
+
 ;; This file is part of XEmacs.
 
 ;; XEmacs is free software; you can redistribute it and/or modify
@@ -43,7 +46,19 @@
 ;; 		    "save-current-buffer" "save-match-data"
 ;; 		    "catch" "throw" "unwind-protect" "condition-case")))
 ;;   (concat "(" (regexp-opt strings t) "\\>"))
+;;
+;;  => "(\\(?:c\\(?:atch\\|ond\\(?:ition-case\\)?\\)\\|if\\|let\\*?\\|prog[12n]\\|save-\\(?:current-buffer\\|excursion\\|match-data\\|restriction\\|window-excursion\\)\\|throw\\|un\\(?:less\\|wind-protect\\)\\|wh\\(?:en\\|ile\\)\\)\\>"
+;;
+;;
+;; (let ((strings '("cond" "if" "when" "unless" "while"
+;; 		    "let" "let*" "progn" "prog1" "prog2"
+;; 		    "save-restriction" "save-excursion" "save-window-excursion"
+;; 		    "save-current-buffer" "save-match-data"
+;; 		    "catch" "throw" "unwind-protect" "condition-case")))
+;;   (concat "(" (regexp-opt strings t t) "\\>"))
+;;                                     ^
 ;;  => "(\\(c\\(atch\\|ond\\(ition-case\\)?\\)\\|if\\|let\\*?\\|prog[12n]\\|save-\\(current-buffer\\|excursion\\|match-data\\|restriction\\|window-excursion\\)\\|throw\\|un\\(less\\|wind-protect\\)\\|wh\\(en\\|ile\\)\\)\\>"
+;;
 ;;
 ;; Searching using the above example `regexp-opt' regexp takes approximately
 ;; two-thirds of the time taken using the equivalent `mapconcat' regexp.
@@ -81,11 +96,13 @@
 ;;; Code:
 
 ;;;###autoload
-(defun regexp-opt (strings &optional paren)
+(defun regexp-opt (strings &optional paren non-shy)
   "Return a regexp to match a string in STRINGS.
 Each string should be unique in STRINGS and should not contain any regexps,
-quoted or not.  If optional PAREN is non-nil, ensure that the returned regexp
-is enclosed by at least one regexp grouping construct.
+quoted or not. If optional PAREN is non-nil, ensure that the returned
+regexp is enclosed by at least one regexp match grouping construct.  If
+optional NON-SHY is non nil, the inner groupings will use \"\\\\( \\\\)\" grouping,
+rather than the default \"\\\\(?: \\\\)\" 'shy', or non-match-capturing groups.
 The returned regexp is typically more efficient than the equivalent regexp:
 
  (let ((open-paren (if PAREN \"\\\\(\" \"\")) (close-paren (if PAREN \"\\\\)\" \"\")))
@@ -97,20 +114,26 @@ Use `regexp-opt-depth' to count them."
     ;; Recurse on the sorted list.
     (let ((max-lisp-eval-depth (* 1024 1024))
 	  (completion-ignore-case nil))
-      (regexp-opt-group (sort (copy-sequence strings) 'string-lessp) paren))))
+      (regexp-opt-group (sort (copy-sequence strings) 'string-lessp) paren nil non-shy))))
 
 ;;;###autoload
-(defun regexp-opt-depth (regexp)
+(defun regexp-opt-depth (regexp &optional count-shy-groups-too)
   "Return the depth of REGEXP.
 This means the number of regexp grouping constructs (parenthesised expressions)
-in REGEXP."
+in REGEXP, not counting the \"\\\\(?: \\\\)\" non-match-capturing groups unless
+COUNT-SHY-GROUPS-TOO is non-nil.
+See `regexp-opt'."
   (save-match-data
     ;; Hack to signal an error if REGEXP does not have balanced parentheses.
     (string-match regexp "")
     ;; Count the number of open parentheses in REGEXP.
-    (let ((count 0) start)
+    (let ((max (1- (length regexp)))
+          (count 0) start)
       (while (string-match "\\\\(" regexp start)
-	(setq count (1+ count) start (match-end 0)))
+        (setq start (match-end 0))
+        (when (or count-shy-groups-too
+                  (not (string= (substring regexp start (min (+ start 2) max)) "?:")))
+          (setq count (1+ count))))
       count)))
 
 ;;; Workhorse functions.
@@ -121,11 +144,12 @@ in REGEXP."
 (unless (fboundp 'make-bool-vector)
   (defalias 'make-bool-vector 'make-vector))
 
-(defun regexp-opt-group (strings &optional paren lax)
+(defun regexp-opt-group (strings &optional paren lax non-shy)
   ;;
   ;; Return a regexp to match a string in STRINGS.
   ;; If PAREN non-nil, output regexp parentheses around returned regexp.
   ;; If LAX non-nil, don't output parentheses if it doesn't require them.
+  ;; If NON-SHY non-nil, don't use \\(?: \\) shy groups, use match capturing ones.
   ;; Merges keywords to avoid backtracking in Emacs' regexp matcher.
   ;;
   ;; The basic idea is to find the shortest common prefix, remove it and
@@ -136,7 +160,10 @@ in REGEXP."
   ;; until we're sure we need them, and try to remove one-character sequences
   ;; so we can use character sets rather than grouping parenthesis.
   ;;
-  (let* ((open-group (if paren "\\(" ""))
+  (let* ((open-group (cond
+                       ((and paren non-shy) "\\(")
+                       (paren "\\(?:")
+                       (t "")))
 	 (close-group (if paren "\\)" ""))
 	 (open-charset (if lax "" open-group))
 	 (close-charset (if lax "" close-group)))
@@ -151,7 +178,7 @@ in REGEXP."
      ;; If there is an empty string, remove it and recurse on the rest.
      ((= (length (car strings)) 0)
       (concat open-charset
-	      (regexp-opt-group (cdr strings) t t) "?"
+	      (regexp-opt-group (cdr strings) t t non-shy) "?"
 	      close-charset))
      ;;
      ;; If all are one-character strings, just return a character set.
@@ -172,7 +199,7 @@ in REGEXP."
 	  (let* ((length (length prefix))
 		 (suffixes (mapcar (lambda (s) (substring s length)) strings)))
 	    (concat open-group
-		    (regexp-quote prefix) (regexp-opt-group suffixes t t)
+		    (regexp-quote prefix) (regexp-opt-group suffixes t t non-shy)
 		    close-group)))
 	 ;;
 	 ;; If there are several one-character strings, remove them and recurse
@@ -181,7 +208,7 @@ in REGEXP."
 	  (let ((rest (let ((completion-regexp-list '("^..+$")))
 			(all-completions "" (mapcar 'list strings)))))
 	    (concat open-group
-		    (regexp-opt-group rest) "\\|" (regexp-opt-charset letters)
+		    (regexp-opt-group rest nil nil non-shy) "\\|" (regexp-opt-charset letters)
 		    close-group)))
 	 ;;
 	 ;; Otherwise, divide the list into those that start with a particular
@@ -191,7 +218,7 @@ in REGEXP."
 		 (half1 (all-completions char (mapcar 'list strings)))
 		 (half2 (nthcdr (length half1) strings)))
 	    (concat open-group
-		    (regexp-opt-group half1) "\\|" (regexp-opt-group half2)
+		    (regexp-opt-group half1 nil nil non-shy) "\\|" (regexp-opt-group half2 nil nil non-shy)
 		    close-group)))))))))
 
 (defun regexp-opt-charset (chars)

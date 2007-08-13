@@ -1,3 +1,288 @@
+1997-09-30  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/dumped-lisp.el (preloaded-file-list): Load
+	cl/auto-autoloads early.
+
+1997-10-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-edit.el (custom-save-delete): Bind `find-file-hooks'
+	to nil.
+
+	* custom/wid-edit.el (widget-next-button-or-field): Use the
+ 	`start-open' flag to `map-extents'.
+	(widget-previous-button-or-field): Ditto.
+
+	* custom/cus-edit.el (custom-face-value-create): Use
+ 	`face-custom-attributes'.
+
+	* packages/font-lock.el: Defcustomed some variables.
+
+1997-09-30  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-face.el: Big changes.  Most of the functionality
+	moved to faces.el.  Internal functions renamed not to start with
+	`custom-'.
+
+	* custom/cus-face.el (face-spec-set): Use `reset-face'.
+
+	* prim/faces.el (reset-face): Accept LOCALE, TAG-SET and EXACT-P.
+
+	* custom/cus-face.el (face-spec-set): Use `remove-specifier'.
+	(get-frame-background-mode): Cache background modes of frames.
+
+	* prim/minibuf.el (input-error): Add a `display-error' property.
+
+	* custom/cus-face.el (initialize-face-resources): Check for
+ 	`make-face-x-resource-internal' before using it.
+	(custom-get-frame-properties): Use `set-frame-property'.
+
+1997-09-29  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-specify-button): Set the `tabable'
+	property.
+	(widget-specify-field): Ditto.
+	(widget-next-button-or-field): Use it.
+	(widget-previous-button-or-field): Ditto.
+
+1997-09-29  Martin Buchholz  <mrb@eng.sun.com>
+
+	* sunpro/sunpro-init.el:  Fix initialization failure if
+	compile/debug toolbar buttons are LAST on the toolbar.
+
+1997-09-29  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* prim/help.el (find-function-noselect): Now finds libraries
+	explicitly loaded from outside `load-path' as it should.
+
+1997-09-29  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/help.el(describe-function-1): Fix for compiled macros.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+Mon Sep 29 01:30:45 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* prim/startup.el: Added defvars for lock-directory
+	  and superlock-file to quiet the byte-compiler.
+
+	  (normal-top-level): Removed call to init-glyphs; it now
+	  runs at dump time from lisp/prim/glyphs.el.
+
+	  (splash-frame-present): Call splash-hack-version-string
+	  once after all the strings have been inserted, instead
+	  of once per string insertion.
+
+	* prim/glyphs.el (init-glyphs): Replaced references
+	  to data-directory with "../etc/" which is the data
+	  directory at dump time.  This is likely a lose for
+	  those who CANNOT_DUMP.  I don't know what the right
+	  answer is in that case.
+
+	  Run init-glyphs at dump time.
+
+	* prim/faces.el (init-other-random-faces): Don't set
+	  colors for the text cursor if we're initializating a
+	  tty device, since it does nothing on a tty.
+
+	  Removed modeline-buffer-id, modeline-mousable and
+	  modeline-mousable-minor-mode-code face initialization; this
+	  code is now run at dump time in lisp/prim/modeline.el.
+
+	* prim/faces.el: Set reverse-p property on tty devices
+	  for the primary-selection face.  Set underline-p property
+	  on tty devices for the secondary-selection face.  Both of
+	  these actions are to prevent init-other-random-faces from
+	  considering these faces the same as the default face on
+	  ttys and applying useless color specs to them.
+
+	* prim/modeline.el: Initialize modeline-buffer-id,
+	  modeline-mousable and modeline-mousable-minor-mode
+	  faces in this file at dump time.
+
+	  Added (defvar place) to quiet the byte-compiler.
+
+Mon Sep 29 02:11:35 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* packages/vc-hooks.el: Move menu installation off
+	  before-init-hook and do it at dump time.
+
+	* ediff/ediff-hook.el: Move menu installation off
+	  before-init-hook and do it at dump time.
+
+1997-09-29  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* prim/help.el (describe-function-1): If the function is not yet
+	loaded, print the autoload file-name.  If function is loaded,
+	print the library name in `load-history' or from
+	`compiled-function-annotation'.
+
+1997-09-28  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* prim/help.el (find-function-noselect): remove reference to
+ 	`path' from the (let* ((path find... since &optional path is no
+ 	longer an argument to this function.  Cures "Signaling:
+ 	(void-variable path)" error when using {M-x find-function}.
+
+1997-09-27  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* utils/regexp-opt.el: Add support for the shy grouping "\\(?:"
+ 		  that came along with the new regexp syntax.
+
+1997-09-29  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* x11/x-toolbar.el: Minor fixes.
+
+1997-09-28  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (color): Buttonify the tag.
+	(widget-color-action): Use `read-color' unconditionally.
+
+	* utils/edmacro.el: Use append/vconcat instead of mapcar/mapvector
+ 	with `identity'.
+	(format-kbd-macro): Use `indirect-function' instead of
+ 	`symbol-function'.
+	(read-kbd-macro): Fix docstring.
+	(edmacro-finish-edit): Use `match-string'.
+	(edmacro-parse-keys): Ditto.
+	(edmacro-parse-word): Use `dotimes' instead of `loop'.
+	(edmacro-format-keys): Ditto.
+
+	* custom/cus-face.el (custom-face-attributes): Use
+	`set-face-background-pixmap', instead of `set-face-stipple'.
+
+	* custom/cus-edit.el (custom-group-menu-create): Check whether
+	`custom-menu-create' returned a list.
+
+1997-09-28  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/finder.el (finder-known-keywords): Ignore mule entry when
+	built without Mule.
+
+1997-09-27  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* quail.el (quail-execute-non-quail-command): `keylist' is not
+	list of characters.
+	(quail-update-translation): Don't use `quail-delete-region'
+	because overlay emulation of XEmacs can not regard 0 length
+	overlay.
+	(quail-show-kbd-layout): Must convert character(code) to event.
+
+1997-09-26  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* quail.el: sync with Emacs 20.2.
+
+1997-09-27  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule-init.el (init-mule): Load leim-list.el (to sync with Emacs
+	20.2).
+
+	* mule-cmds.el: Change key binding for `select-input-method' to
+	sync with Emacs 20.2.
+
+	(get-language-info, set-language-info, set-language-info-alist,
+	read-language-name): Modify to sync with Emacs 20.2.
+
+	(leim-list-file-name): New constant (imported from Emacs 20.2).
+	(leim-list-header, leim-list-entry-regexp,
+	update-leim-list-functions): New variable (imported from Emacs
+	20.2).
+	(update-leim-list-file): New function (imported from Emacs 20.2).
+
+	(current-input-method, current-input-method-title): Modify
+	DOC-string to sync with Emacs 20.2.
+ 	(default-input-method): Use `defcustom' (to sync with Emacs 20.2).
+	(input-method-history): New variable (imported from Emacs 20.2).
+
+	(inactivate-current-input-method-function): Modify DOC-string to
+	sync with Emacs 20.2.
+
+	(input-method-alist): New variable (imported from Emacs 20.2).
+	(register-input-method, read-input-method-name,
+	activate-input-method, inactivate-input-method): New function
+	(imported from Emacs 20.2).
+	(select-input-method, toggle-input-method, describe-input-method,
+	describe-current-input-method, read-multilingual-string): Modify
+	to sync with Emacs 20.2.
+	(input-method-verbose-flag): New variable; abolish
+	`input-method-tersely-flag'; to sync with Emacs 20.2.
+	(input-method-highlight-flag): New variable (imported from Emacs
+	20.2).
+
+	(input-method-activate-hook, input-method-inactivate-hook): Modify
+	DOC-string to sync with Emacs 20.2.
+	(input-method-exit-on-invalid-key): New variable (imported from
+	Emacs 20.2).
+
+	* mule-coding.el (check-coding-system): New alias.
+	(modify-coding-system-alist): New function (imported from Emacs
+	20.2).
+
+	Rename coding-system `iso-2022-7' -> `iso-2022-7bit' to sync with
+	Emacs 20.2; define alias `iso-2022-7' for compatibility.
+
+	* mule-process.el (network-coding-system-alist): New variable.
+	(open-network-stream): Refer it.
+
+1997-09-27  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* viet-util.el: New file; Imported from Emacs 20.2.
+
+	* tibet-util.el: New file; Imported from Emacs 20.2.
+
+	* hebrew.el, lao.el, lao-util.el, vietnamese.el, tibetan.el:
+	Imported from Emacs 20.2.
+
+	* greek.el, european.el, ethiopic.el, english.el, cyrillic.el,
+	chinese.el, korean.el, japanese.el, thai.el, misc-lang.el: Modify
+	to sync with Emacs 20.2.
+
+1997-09-24  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule-process.el (start-process): Refer
+	`process-coding-system-alist'.
+
+	* mule-process.el (call-process-region): Refer
+	`process-coding-system-alist'.
+
+	* mule-process.el (process-coding-system-alist): New variable.
+	(call-process): Refer it.
+
+	* mule-init.el: Rename `pathname-coding-system' to
+	`file-name-coding-system' to sync with Emacs 20.2.
+
+	* mule-coding.el: Rename `pathname-coding-system' to
+	`file-name-coding-system' to sync with Emacs 20.2; define
+	`pathname-coding-system' as an obsolete variable.
+
+1997-09-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/mule/mule-files.el: Implement `file-coding-system-alist' of
+	Emacs 20.0.97 to sync; abolish variable
+	`buffer-file-coding-system-alist'.
+
+	(find-file-coding-system-for-read-from-filename): Renamed from
+	`find-buffer-file-coding-system-from-filename'; modify for new
+	`file-coding-system-alist'.
+
+	(find-file-coding-system-for-write-from-filename): New function.
+
+	(insert-file-contents): Modify for new `file-coding-system-alist'.
+
+	(write-region): Use
+	`find-file-coding-system-for-write-from-filename'.
+
+1997-09-27  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/obsolete.el (define-widget-keywords): Make it obsolete.
+
+	* custom/widget.el (define-widget-keywords): Restore superfluous
+	function `define-widget-keywords'.
+
+	* modes/sh-script.el (sh-script): Restore correct feature.
+
+1997-09-27  Tomasz Cholewo  <tjchol01@mecca.spd.louisville.edu>
+
+	* prim/isearch-mode.el (isearch-help-or-delete-char): New function.
+
 1997-09-27  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* custom/cus-dep.el (Custom-make-dependencies): Minor fixes.
@@ -32,9 +317,8 @@
  	two!  Use `variable-history' in completing-read.
 	(where-is): Mention `find-function-function' in docstring.
 	(find-function-function): improve docstring.
-	(find-function-noselect): Remove optional arg.  Now finds
- 	libraries explicitly loaded from outside `load-path' as it should.
-	Search also for cl's defun*.  Return a pair instead of a list.
+	(find-function-noselect): Remove optional arg.  Search also for
+	cl's defun*.  Return a pair instead of a list.
 	(find-function-read-function): use `function-history'.
 	(find-function-do-it): new function.
 	(find-function): Remove optional arg.  Use `find-function-do-it'.

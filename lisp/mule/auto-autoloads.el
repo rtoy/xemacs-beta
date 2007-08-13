@@ -213,19 +213,19 @@ even if WITH-COMPOSITION-RULE is t." nil nil)
 
 ;;;***
 
-;;;### (autoloads (vn-decompose-viqr-buffer vn-decompose-viqr vn-compose-viqr-buffer vn-compose-viqr) "vietnamese" "mule/vietnamese.el")
+;;;### (autoloads (vn-decompose-viqr-buffer vn-decompose-viqr vn-compose-viqr-buffer vn-compose-viqr) "mule-vietnamese" "mule/mule-vietnamese.el")
 
-(autoload 'vn-compose-viqr "vietnamese" "\
+(autoload 'vn-compose-viqr "mule-vietnamese" "\
 Convert 'VIQR' mnemonics of the current region to
 pre-composed Vietnamese characaters." t nil)
 
-(autoload 'vn-compose-viqr-buffer "vietnamese" nil t nil)
+(autoload 'vn-compose-viqr-buffer "mule-vietnamese" nil t nil)
 
-(autoload 'vn-decompose-viqr "vietnamese" "\
+(autoload 'vn-decompose-viqr "mule-vietnamese" "\
 Convert pre-composed Vietnamese characaters of the current region to
 'VIQR' mnemonics." t nil)
 
-(autoload 'vn-decompose-viqr-buffer "vietnamese" nil t nil)
+(autoload 'vn-decompose-viqr-buffer "mule-vietnamese" nil t nil)
 
 ;;;***
 

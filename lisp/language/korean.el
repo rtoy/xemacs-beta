@@ -1,7 +1,7 @@
 ;;; korean.el --- Support for Korean
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Keywords: multilingual, Korean
@@ -101,46 +101,28 @@
    mnemonic "Ko/7bit"
    eol-type lf))
 
-(register-input-method
- "Korean" '("quail-hangul" quail-use-package "quail/hangul"))
-(register-input-method
- "Korean" '("quail-hangul3" quail-use-package "quail/hangul3"))
-(register-input-method
- "Korean" '("quail-hanja" quail-use-package "quail/hanja"))
-(register-input-method
- "Korean" '("quail-symbol-ksc" quail-use-package "quail/symbol-ksc"))
-(register-input-method
- "Korean" '("quail-hanja-jis" quail-use-package "quail/hanja-jis"))
-
 (defun setup-korean-environment ()
   "Setup multilingual environment (MULE) for Korean."
   (interactive)
   (setup-english-environment)
   (setq coding-category-iso-8-2 'euc-kr)
-  
+
   (set-coding-priority
    '(coding-category-iso-7
      coding-category-iso-8-2
      coding-category-iso-8-1))
-  
-  (setq-default buffer-file-coding-system 'euc-kr)
-  
-  (setq default-input-method '("Korean" . "quail-hangul"))
-  )
 
-(defun describe-korean-support ()
-  "Describe How Emacs supports Korean."
-  (interactive)
-  (describe-language-support-internal "Korean"))
+  (set-default-coding-systems 'euc-kr)
+
+  (setq default-input-method "korean-hangul"))
 
 (set-language-info-alist
  "Korean" '((setup-function . setup-korean-environment)
-	    (describe-function . describe-korean-support)
 	    (tutorial . "TUTORIAL.kr")
 	    (charset . (korean-ksc5601))
-	    (coding-system . (euc-kr iso-2022-kr))
-	    (sample-text . "Hangul (한글)       안녕하세요, 안녕하십니까")
-	    (documentation . nil)))
+	    (coding-system . (iso-2022-kr euc-kr))
+	    (sample-text . "Hangul (한글)	안녕하세요, 안녕하십니까")
+	    (documentation . t)))
 
 ;;; for XEmacs (will be obsoleted)
 

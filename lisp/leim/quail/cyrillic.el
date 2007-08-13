@@ -1,7 +1,7 @@
 ;;; quail/cyrillic.el -- Quail package for inputting Cyrillic characters
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, input method, Cyrillic
 
@@ -18,22 +18,22 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
 (require 'quail)
 
-(quail-define-package "quail-jcuken" "Cyrillic" ",L9FC:5=" nil
-		      "Cyrillic (ISO 8859-5) encoding.
-
-They say this layout is widely used in Russia."
-		      nil t t t t)
+(quail-define-package
+ "cyrillic-jcuken" "Cyrillic" ",L69" nil
+ ",L9FC:5= keyboard layout widely used in Russia (ISO 8859-5 encoding)"
+ nil t t t t nil nil nil nil nil t)
 
 ;;  1! 2@ 3# 4" 5: 6, 7. 8* 9( 0) -_ =+ ,L!
 ;;   ,L9  ,LF  ,LC  ,L:  ,L5  ,L=  ,L3  ,LH  ,LI  ,L7  ,LE  ,Lj
-;;    ,LD  ,LK  ,L2  ,L0  ,L?  ,L@  ,L>  ,L;  ,L4  ,L6  ,LM
+;;    ,LD  ,LK  ,L2  ,L0  ,L?  ,L@  ,L>  ,L;  ,L4 ,L6  ,LM
 ;;     ,LO  ,LG  ,LA  ,L<  ,L8  ,LB  ,LL  ,L1  ,LN  /?
 
 (quail-define-rules
@@ -135,121 +135,10 @@ They say this layout is widely used in Russia."
 
 ;;
 
-(quail-define-package "quail-jis-russian" "Cyrillic" "ЙЦУКЕН" nil
-		      "JIS X0208.1983 encoding.
-
-The layout is same as jcuken, but uses JIS characters."
-		      nil t t t t)
-
-;;  1! 2@ 3# 4" 5: 6, 7. 8* 9( 0) -_ =+ ,L!
-;;   ,L9  ,LF  ,LC  ,L:  ,L5  ,L=  ,L3  ,LH  ,LI  ,L7  ,LE  ,Lj
-;;    ,LD  ,LK  ,L2  ,L0  ,L?  ,L@  ,L>  ,L;  ,L4  ,L6  ,LM
-;;     ,LO  ,LG  ,LA  ,L<  ,L8  ,LB  ,LL  ,L1  ,LN  /?
-
-(quail-define-rules
- ("1" ?１)
- ("2" ?２)
- ("3" ?３)
- ("4" ?４)
- ("5" ?５)
- ("6" ?６)
- ("7" ?７)
- ("8" ?８)
- ("9" ?９)
- ("0" ?０)
- ("-" ?−)
- ("=" ?＝)
- ("`" ?ё)
- ("q" ?й)
- ("w" ?ц)
- ("e" ?у)
- ("r" ?к)
- ("t" ?е)
- ("y" ?н)
- ("u" ?г)
- ("i" ?ш)
- ("o" ?щ)
- ("p" ?з)
- ("[" ?х)
- ("]" ?ъ)
- ("a" ?ф)
- ("s" ?ы)
- ("d" ?в)
- ("f" ?а)
- ("g" ?п)
- ("h" ?р)
- ("j" ?о)
- ("k" ?л)
- ("l" ?д)
- (";" ?ж)
- ("'" ?э)
- ("\\" ?＼)
- ("z" ?я)
- ("x" ?ч)
- ("c" ?с)
- ("v" ?м)
- ("b" ?и)
- ("n" ?т)
- ("m" ?ь)
- ("," ?б)
- ("." ?ю)
- ("/" ?／)
- 
- ("!" ?！)
- ("@" ?＠)
- ("#" ?＃)
- ("$" ?”)
- ("%" ?：)
- ("^" ?，)
- ("&" ?．)
- ("*" ?＊)
- ("(" ?（)
-  (")" ?）)
- ("_" ?＿)
- ("+" ?＋)
- ("~" ?Ё)
- ("Q" ?Й)
- ("W" ?Ц)
- ("E" ?У)
- ("R" ?К)
- ("T" ?Е)
- ("Y" ?Н)
- ("U" ?Г)
- ("I" ?Ш)
- ("O" ?Щ)
- ("P" ?З)
- ("{" ?Х)
- ("}" ?Ъ)
- ("A" ?Ф)
- ("S" ?Ы)
- ("D" ?В)
- ("F" ?А)
- ("G" ?П)
- ("H" ?Р)
- ("J" ?О)
- ("K" ?Л)
- ("L" ?Д)
- (":" ?Ж)
- ("\"" ?Э)
- ("|" ?｜)
- ("Z" ?Я)
- ("X" ?Ч)
- ("C" ?С)
- ("V" ?М)
- ("B" ?И)
- ("N" ?Т)
- ("M" ?Ь)
- ("<" ?Б)
- (">" ?Ю)
- ("?" ?？))
-
-;;
-
-(quail-define-package "quail-macedonian" "Cyrillic" ",L)*5@B7-,L#," nil
-		      "Cyrillic (ISO 8859-5) encoding.
-
-This layout is based on JUS.I.K1.004."
-		      nil t t t t)
+(quail-define-package
+ "cyrillic-macedonian" "Cyrillic" ",L6M" nil
+ ",L)*5@B7-,L#, keyboard layout based on JUS.I.K1.004 (ISO 8859-5 encoding)"
+ nil t t t t nil nil nil nil nil t)
 
 ;;  1! 2" 3# 4$ 5% 6& 7' 8( 9) 0= /? +* <>
 ;;   ,L)  ,L*  ,L5  ,L@  ,LB  ,L7  ,LC  ,L8  ,L>  ,L?  ,LH  ,L#
@@ -355,11 +244,10 @@ This layout is based on JUS.I.K1.004."
 
 ;;
 
-(quail-define-package "quail-serbian" "Cyrillic" ",L)*5@B7-,L"+" nil
-		      "Cyrillic (ISO 8859-5) encoding.
-
-This layout is based on JUS.I.K1.005."
-		      nil t t t t)
+(quail-define-package
+ "cyrillic-serbian" "Cyrillic" ",L6S" nil
+ ",L)*5@B7-,L"+ keyboard layout based on JUS.I.K1.005 (ISO 8859-5 encoding)"
+ nil t t t t nil nil nil nil nil t)
 
 ;;  1! 2" 3# 4$ 5% 6& 7' 8( 9) 0= /? +* <>
 ;;   ,L)  ,L*  ,L5  ,L@  ,LB  ,L7  ,LC  ,L8  ,L>  ,L?  ,LH  ,L"
@@ -465,9 +353,10 @@ This layout is based on JUS.I.K1.005."
 
 ;;
 
-(quail-define-package "quail-beylorussian" "Cyrillic" ",L)*5@B7-,L&." nil
-		      "Cyrillic (ISO 8859-5) encoding."
-		      nil t t t t)
+(quail-define-package
+ "cyrillic-beylorussian" "Cyrillic" ",L6B" nil
+ ",L)*5@B7-,L&. BEYLORUSSIAN (ISO 8859-5 encoding)"
+ nil t t t t nil nil nil nil nil t)
 
 ;;  1! 2" 3# 4$ 5% 6& 7' 8( 9) 0= /? +* <>
 ;;   ,L)  ,L*  ,L5  ,L@  ,LB  ,L7  ,LC  ,L8  ,L>  ,L?  ,LH  ,L&
@@ -573,11 +462,12 @@ This layout is based on JUS.I.K1.005."
 
 ;;
 
-(quail-define-package "quail-ukrainian" "Cyrillic" ",L$'5@B7-,L&." nil
-		      "Cyrillic (ISO 8859-5) encoding.
+(quail-define-package 
+ "cyrillic-ukrainian" "Cyrillic" ",L6U" nil
+ ",L$'5@B7-,L&. UKRAINIAN (ISO 8859-5 encoding)
 
 Sorry, but 'ghe with upturn' is not included in ISO 8859-5"
-		      nil t t t t)
+ nil t t t t nil nil nil nil nil t)
 
 ;;  1! 2" 3# 4$ 5% 6& 7' 8( 9) 0= /? +* <>
 ;;   ,L$  ,L'  ,L5  ,L@  ,LB  ,L7  ,LC  ,L8  ,L>  ,L?  ,LH  ,L&
@@ -683,8 +573,9 @@ Sorry, but 'ghe with upturn' is not included in ISO 8859-5"
 
 ;;
 
-(quail-define-package "quail-yawerty" "Cyrillic" ",LO25@BK" nil
-		      "Cyrillic (ISO 8859-5) encoding.
+(quail-define-package 
+ "cyrillic-yawerty" "Cyrillic" ",L6O" nil
+ ",LO25@BK Roman transcription (ISO 8859-5 encoding)
 
 This layout is based on Roman transcription.
 When preceded by a '/', the second and the third rows (number key row) change
@@ -693,7 +584,7 @@ as follows.
   keytop | Q  W  E  R  T  Y  U  I  O  P  A  S  D
  --------+---------------------------------------
   input  | ,L"  ,L#  ,L$  ,L%  ,L&  ,L'  ,L(  ,L)  ,L*  ,L+  ,L,  ,L.  ,L/"
-		      nil t t t t)
+ nil t t t t nil nil nil nil nil t)
 
 ;;  1! 2,Lq 3,Lj 4,L! 5% 6^ 7& 8* 9( 0) -_ ,LG  ,LN
 ;;   ,LO  ,L2  ,L5  ,L@  ,LB  ,LK  ,LC  ,L8  ,L>  ,L?  ,LH  ,LI
@@ -829,3 +720,128 @@ as follows.
  ("/A" ?,L,)
  ("/S" ?,L.)
  ("/D" ?,L/))
+
+;; This was provided by Valery Alexeev <valery@domovoy.math.uga.edu>.
+
+(quail-define-package
+ "cyrillic-translit" "Cyrillic" ",L6t" nil
+ "Intuitively transliterated keyboard layout.
+Most convenient for entering Russian but all cyrillic characters are included.
+Should handle most cases. However:
+  for ,Lf (TSE) use \"c\", never \"ts\"
+  ,Li (SHCHA = Bulgarian SHT) = \"shch\", \"sj\", \"/sht\" or \"/t\",
+  ,Lm (REVERSE ROUNDED E) = \"e'\" or \"e`\"
+  ,Le (KHA) when after ,La (S) = \"x\" or \"kh\"
+  ,Lj (HARD SIGN) = \"~\", ,LJ (CAPITAL HARD SIGN) = \"~~\",
+  ,Ll (SOFT SIGN) = \"'\", ,LL (CAPITAL SOFT SIGN) = \"''\",
+  ,Lo (YA) = \"ya\", \"ja\" or \"q\".
+
+Russian alphabet: a b v=w g d e yo=jo zh z i j=j' k l m n o p r s t
+u f h=kh=x c ch sh shch=sj=/s=/sht ~ y ' e' yu=ju ya=ja=q
+
+Also included are Ukrainian ,Lt (YE) = \"/e\" and ,Lw (YI) = \"yi\", 
+Belorussian ,L~ (SHORT U) = \"u'\",
+Serbo-Croatian ,Lr (DJE) = \"/d\", ,L{ (CHJE)= \"/ch\", 
+Macedonian ,Ls (GJE) = \"/g\", ,Lu (DZE) = \"/s\", ,L| (KJE) = \"/k\",
+cyrillic ,Lv (I DECIMAL) = \"/i\", ,Lx (JE) = \"/j\", 
+,Ly (LJE) = \"/l\", ,Lz (NJE) = \"/n\" and ,L (DZE) =\"/z\"."
+ nil t t t t nil nil nil nil nil t)
+
+(quail-define-rules
+ ("a" ?,LP)("b" ?,LQ) ("v" ?,LR) ("w" ?,LR) ("g" ?,LS) ("d" ?,LT) 
+ ("e" ?,LU) ("je" ?,LU) 
+ ("yo" ?,Lq) ("jo" ?,Lq)
+ ("zh" ?,LV) ("z" ?,LW) ("i" ?,LX) 
+ ("j" ?,LY) ("j'" ?,LY) ("j`" ?,LY) ("k" ?,LZ) ("l" ?,L[)
+ ("m" ?,L\) ("n" ?,L]) ("o" ?,L^) ("p" ?,L_) ("r" ?,L`) ("s" ?,La) ("t" ?,Lb) ("u" ?,Lc)
+ ("f" ?,Ld) ("x" ?,Le) ("h" ?,Le) ("kh" ?,Le)
+ ("c" ?,Lf) ("ch" ?,Lg)
+ ("sh" ?,Lh) 
+ ("shch" ?,Li) ("sj" ?,Li) 
+ ("/sht" ?,Li) ("/t" ?,Li) 
+ ("~" ?,Lj) ("y" ?,Lk) ("'" ?,Ll) ("`" ?,Ll) 
+ ("e'" ?,Lm) ("e`" ?,Lm) ("@" ?,Lm) 
+ ("yu" ?,Ln) ("ju" ?,Ln) 
+ ("ya" ?,Lo) ("ja" ?,Lo) ("q" ?,Lo)
+
+ ("A" ?,L0) ("B" ?,L1) ("V" ?,L2) ("W" ?,L2) ("G" ?,L3) ("D" ?,L4) 
+ ("E" ?,L5) ("Je" ?,L5) ("JE" ?,L5)
+ ("Yo" ?,L!) ("YO" ?,L!) ("Jo" ?,L!) ("JO" ?,L!) 
+ ("Zh" ?,L6) ("ZH" ?,L6) ("Z" ?,L7) ("I" ?,L8) 
+ ("J" ?,L9) ("J'" ?,L9) ("J`" ?,L9) ("K" ?,L:) ("L" ?,L;)
+ ("M" ?,L<) ("N" ?,L=) ("O" ?,L>) ("P" ?,L?) ("R" ?,L@) ("S" ?,LA) ("T" ?,LB) ("U" ?,LC)
+ ("F" ?,LD) ("X" ?,LE) ("H" ?,LE) ("Kh" ?,LE) ("KH" ?,LE)
+ ("C" ?,LF) ("Ch" ?,LG) ("CH" ?,LG) 
+ ("Sh" ?,LH) ("SH" ?,LH) 
+ ("Shch" ?,LI) ("SHCH" ?,LI) ("Sj" ?,LI) ("SJ" ?,LI) 
+ ("/Sht" ?,LI) ("/SHT" ?,LI) ("/T" ?,LI) 
+ ("~~" ",LJ") ("Y" ?,LK) ("''" ",LL") ("E'" ?,LM) ("E`" ?,LM) 
+ ("Yu" ?,LN) ("YU" ?,LN) ("Ju" ?,LN) ("JU" ?,LN) 
+ ("Ya" ?,LO) ("YA" ?,LO) ("Ja" ?,LO) ("JA" ?,LO) ("Q" ?,LO)
+
+ ("/e" ?,Lt) ("yi" ?,Lw) ("u'" ?,L~)
+ ("/d" ?,Lr) ("/ch" ?,L{)
+ ("/g" ?,Ls) ("/s" ?,Lu) ("/k" ?,L|)
+ ("/i" ?,Lv) ("/j" ?,Lx) ("/l" ?,Ly) ("/n" ?,Lz) ("/z" ?,L)
+ ("/E" ?,L$) ("YE" ?,L$) ("Yi" ?,L') ("YI" ?,L') ("U'" ?,L.) 
+ ("/D" ?,L") ("/Ch" ?,L+) ("/CH" ?,L+)
+ ("/G" ?,L#) ("/S" ?,L%) ("/K" ?,L,) 
+ ("/I" ?,L&) ("/J" ?,L() ("/L" ?,L)) ("/N" ?,L*) ("/Z" ?,L/)
+)
+
+(quail-define-package
+ "cyrillic-translit-bulgarian" "Cyrillic" ",L6tb" nil
+ "Intuitively transliterated keyboard layout optimized for Bulgarian.
+The only difference with cyrillic-translit is that \"sht\" translates as
+,Li (SHCHA = Bulgarian SHT) insteat of ,Lhb (SH+T)."
+ nil t t t t nil nil nil nil nil t)
+
+(quail-define-rules
+ ("a" ?,LP)("b" ?,LQ) ("v" ?,LR) ("w" ?,LR) ("g" ?,LS) ("d" ?,LT) 
+ ("e" ?,LU) ("je" ?,LU) 
+ ("yo" ?,Lq) ("jo" ?,Lq)
+ ("zh" ?,LV) ("z" ?,LW) ("i" ?,LX) 
+ ("j" ?,LY) ("j'" ?,LY) ("j`" ?,LY) ("k" ?,LZ) ("l" ?,L[)
+ ("m" ?,L\) ("n" ?,L]) ("o" ?,L^) ("p" ?,L_) ("r" ?,L`) ("s" ?,La) ("t" ?,Lb) ("u" ?,Lc)
+ ("f" ?,Ld) ("x" ?,Le) ("h" ?,Le) ("kh" ?,Le)
+ ("c" ?,Lf) ("ch" ?,Lg)
+ ("sh" ?,Lh) 
+ ("shch" ?,Li) ("sj" ?,Li) 
+ ("/sht" ?,Li) ("/t" ?,Li) ("sht" ?,Li)
+ ("~" ?,Lj) ("y" ?,Lk) ("'" ?,Ll) ("`" ?,Ll) 
+ ("e'" ?,Lm) ("e`" ?,Lm) ("@" ?,Lm) 
+ ("yu" ?,Ln) ("ju" ?,Ln) 
+ ("ya" ?,Lo) ("ja" ?,Lo) ("q" ?,Lo)
+
+ ("A" ?,L0) ("B" ?,L1) ("V" ?,L2) ("W" ?,L2) ("G" ?,L3) ("D" ?,L4) 
+ ("E" ?,L5) ("Je" ?,L5) ("JE" ?,L5)
+ ("Yo" ?,L!) ("YO" ?,L!) ("Jo" ?,L!) ("JO" ?,L!) 
+ ("Zh" ?,L6) ("ZH" ?,L6) ("Z" ?,L7) ("I" ?,L8) 
+ ("J" ?,L9) ("J'" ?,L9) ("J`" ?,L9) ("K" ?,L:) ("L" ?,L;)
+ ("M" ?,L<) ("N" ?,L=) ("O" ?,L>) ("P" ?,L?) ("R" ?,L@) ("S" ?,LA) ("T" ?,LB) ("U" ?,LC)
+ ("F" ?,LD) ("X" ?,LE) ("H" ?,LE) ("Kh" ?,LE) ("KH" ?,LE)
+ ("C" ?,LF) ("Ch" ?,LG) ("CH" ?,LG) 
+ ("Sh" ?,LH) ("SH" ?,LH) 
+ ("Shch" ?,LI) ("SHCH" ?,LI) ("Sj" ?,LI) ("SJ" ?,LI) 
+ ("/Sht" ?,LI) ("/SHT" ?,LI) ("/T" ?,LI) ("Sht" ?,LI) ("SHT" ?,LI) 
+ ("~~" ",LJ") ("Y" ?,LK) ("''" ",LL") ("E'" ?,LM) ("E`" ?,LM) 
+ ("Yu" ?,LN) ("YU" ?,LN) ("Ju" ?,LN) ("JU" ?,LN) 
+ ("Ya" ?,LO) ("YA" ?,LO) ("Ja" ?,LO) ("JA" ?,LO) ("Q" ?,LO)
+
+ ("/e" ?,Lt) ("yi" ?,Lw) ("u'" ?,L~)
+ ("/d" ?,Lr) ("/ch" ?,L{)
+ ("/g" ?,Ls) ("/s" ?,Lu) ("/k" ?,L|)
+ ("/i" ?,Lv) ("/j" ?,Lx) ("/l" ?,Ly) ("/n" ?,Lz) ("/z" ?,L)
+ ("/E" ?,L$) ("YE" ?,L$) ("Yi" ?,L') ("YI" ?,L') ("U'" ?,L.) 
+ ("/D" ?,L") ("/Ch" ?,L+) ("/CH" ?,L+)
+ ("/G" ?,L#) ("/S" ?,L%) ("/K" ?,L,) 
+ ("/I" ?,L&) ("/J" ?,L() ("/L" ?,L)) ("/N" ?,L*) ("/Z" ?,L/)
+)
+
+
+
+
+
+;; Local Variables:
+;; buffer-file-coding-system: iso-2022-7bit
+;; End:

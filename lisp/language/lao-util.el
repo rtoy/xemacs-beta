@@ -1,7 +1,7 @@
 ;;; lao-util.el --- utilities for Lao
 
-;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, Lao
 
@@ -24,6 +24,13 @@
 
 ;;; Code:
 
+;;;###autoload
+(defun setup-lao-environment ()
+  "Setup multilingual environment (MULE) for Lao."
+  (interactive)
+  (setup-8-bit-environment "Lao" 'lao 'iso-2022-7bit
+			   "lao"))
+
 (let ((l '((?(1!(B consonant "LETTER KOR  KAI'" "CHICKEN")
 	   (?(1"(B consonant "LETTER KHOR KHAI'" "EGG")
 	   (?(1#(B invalid nil)
@@ -45,8 +52,8 @@
 	   (?(1.(B invalid nil)
 	   (?(14(B consonant "LETTER DOR DANG" "NOSE")
 	   (?(15(B consonant "LETTER TOR TAR" "EYE")
-	   (?(16(B consonant "LETTER DHOR DHARM" "TO ASK,QUESTION")
-	   (?(17(B consonant "LETTER THOR THUNG" "FLAG")
+	   (?(16(B consonant "LETTER THOR THUNG" "TO ASK,QUESTION")
+	   (?(17(B consonant "LETTER DHOR DHARM" "FLAG")
 	   (?(18(B invalid nil)
 	   (?(19(B consonant "LETTER NOR NOK" "BIRD")
 	   (?(1:(B consonant "LETTER BOR BED" "FISHHOOK")
@@ -128,6 +135,6 @@
     (setq l (cdr l))))
 
 ;;
-(provide 'language/lao-util)
+(provide 'lao-util)
 
 ;;; lao-util.el ends here

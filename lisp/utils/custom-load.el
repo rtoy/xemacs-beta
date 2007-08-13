@@ -1,6 +1,6 @@
 ;;; custom-load.el --- automatically extracted custom dependencies
 
-;; Created by SL Baur on Sat Sep 27 08:14:20 1997
+;; Created by SL Baur on Tue Sep 30 18:08:59 1997
 
 ;;; Code:
 
@@ -10,6 +10,7 @@
 (custom-put 'minibuffer 'custom-loads '("detached-minibuf" "savehist"))
 (custom-put 'mail 'custom-loads '("highlight-headers" "mail-extr" "ph" "smtpmail"))
 (custom-put 'uniquify 'custom-loads '("uniquify"))
+(custom-put 'xemacs-build-report 'custom-loads '("xemacs-build-report"))
 (custom-put 'hypermedia 'custom-loads '("browse-url"))
 (custom-put 'lisp 'custom-loads '("elp"))
 (custom-put 'elp 'custom-loads '("elp"))

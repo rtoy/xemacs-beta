@@ -1528,6 +1528,5 @@ The document is bounded by `sh-here-document-word'."
   (if (re-search-forward sh-end-of-command nil t)
       (goto-char (match-end 1))))
 
-(provide 'sh)
-;; sh-script.el ends here
-
+(provide 'sh-script)
+;;; sh-script.el ends here

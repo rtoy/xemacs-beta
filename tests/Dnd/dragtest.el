@@ -14,6 +14,10 @@
   (interactive "@e")
   (offix-start-drag event "http://www.xemacs.org/" 8))
 
+(defun files-drag (event)
+  (interactive "@e")
+  (offix-start-drag event '("/tmp/dragtest" "/tmp/droptest" "/tmp/printcap") 3))
+
 (define-key global-map [button1] 'text-drag)
-(define-key global-map [button2] 'file-drag)
+(define-key global-map [button2] 'files-drag)
 (define-key global-map [button3] 'url-drag)

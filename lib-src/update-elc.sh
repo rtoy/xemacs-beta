@@ -97,6 +97,7 @@ if test "$mule_p" = nil ; then
 	ignore_dirs="$ignore_dirs its egg mule language leim"
 	ignore_pattern='\!/tl/char-table.el$!d
 \!/tl/chartblxmas.el$!d
+\!/mu/latex-math-symbol.el$!d
 '
 else
   echo Yes
@@ -172,6 +173,7 @@ ignore_pattern="$ignore_pattern"'
 \!/language/lao-util.el$!d
 \!/language/lao.el$!d
 \!/language/tibetan.el$!d
+\!/language/tibet-util.el$!d
 \!/language/vietnamese.el$!d
 \!/leim/quail/devanagari.el$!d
 \!/leim/quail/ethiopic.el$!d
@@ -179,6 +181,7 @@ ignore_pattern="$ignore_pattern"'
 \!/leim/quail/lao.el$!d
 \!/leim/quail/lrt.el$!d
 \!/leim/quail/thai.el$!d
+\!/leim/quail/tibetan.el$!d
 \!/leim/quail/viqr.el$!d
 '
 

@@ -24,9 +24,10 @@
 ;; REPEATKEY:	\020\022
 ;; # the following line must not be removed
 ;; BEGINDICTIONARY
-(quail-define-package "quail-tsangchi-cns" "Chinese-CNS" "$(GT?on(B(CNS)"
+(quail-define-package
+ "chinese-cns-tsangchi" "Chinese-CNS" "$(GT?(BC"
  t
- "$(GDcEFrSD+!JT?on!K(B
+ "$(GDcEFrSD+!JT?on!K(BCNS
 
 	$(GiGk#T?onrSD+uomu(B
 

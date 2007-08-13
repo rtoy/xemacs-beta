@@ -888,12 +888,11 @@ value of `find-function-function'."
 (defun describe-function-1 (function stream &optional nodoc)
   (princ (format "`%S' is " function) stream)
   (let* ((def function)
-	 file-name
          (doc (condition-case nil
 		  (or (documentation function)
 		      (gettext "not documented"))
 		(void-function "")))
-	 aliases home kbd-macro-p fndef macrop)
+	 aliases file-name autoload-file kbd-macro-p fndef macrop)
     (while (and (symbolp def) (fboundp def))
       (when (not (eq def function))
 	(setq aliases
@@ -906,9 +905,11 @@ value of `find-function-function'."
 		(format "an alias for `%s', " (symbol-name def)))))
       (setq def (symbol-function def)))
     (if (compiled-function-p def)
-	(setq home (compiled-function-annotation def)))
+	(setq file-name (compiled-function-annotation def)))
     (if (eq 'macro (car-safe def))
 	(setq fndef (cdr def)
+	      home (and (compiled-function-p (cdr def))
+			(compiled-function-annotation (cdr def)))
 	      macrop t)
       (setq fndef def))
     (if aliases (princ aliases stream))
@@ -939,19 +940,19 @@ value of `find-function-function'."
             ((eq (car-safe fndef) 'mocklisp)
              (funcall int "mocklisp" nil macrop))
             ((eq (car-safe def) 'autoload)
-	     (setq file-name (elt def 1))
+	     (setq autoload-file (elt def 1))
 	     (funcall int "autoloaded Lisp" t (elt def 4)))
 	    ((and (symbolp def) (not (fboundp def)))
 	     (princ "a symbol with a void (unbound) function definition." stream))
             (t
              nil)))
     (princ "\n")
+    (if autoload-file
+	(princ (format "  -- autoloads from \"%s\"\n" autoload-file) stream))
     (or file-name
 	(setq file-name (describe-function-find-file function)))
     (if file-name
-	(princ (format "  -- loads from \"%s\"\n" file-name) stream))
-    (if home
-	(princ (format "  -- loaded from \"%s\"\n" home)) stream)
+	(princ (format "  -- loaded from \"%s\"\n" file-name)) stream)
 ;;     (terpri stream)
     (if describe-function-show-arglist
         (let ((arglist
@@ -1366,8 +1367,7 @@ The library where FUNCTION is defined is searched for in
 	      (setq aliases (concat aliases
 				    (format ", which is an alias for %s"
 					    (symbol-name def))))
-	    (setq aliases (format "an alias for %s" (symbol-name
-						     def)))))
+	    (setq aliases (format "an alias for %s" (symbol-name def)))))
       (setq function (symbol-function function)
 	    def (symbol-function function)))
     (if aliases
@@ -1382,9 +1382,15 @@ The library where FUNCTION is defined is searched for in
 	(error (format "Don't know where `%s' is defined" function)))
     (if (string-match "\\.el\\(c\\)\\'" library)
 	(setq library (substring library 0 (match-beginning 1))))
-    (let* ((path (or path find-function-source-path))
-	   (filename (or (locate-library (concat library ".el") t path)
-			 (locate-library library t path))))
+    (let* ((path find-function-source-path)
+	   (filename (if (file-exists-p library)
+			 library
+		       (if (string-match "\\(\\.el\\)\\'" library)
+			   (setq library (substring library 0
+						    (match-beginning
+						     1))))
+		       (or (locate-library (concat library ".el") t path)
+			   (locate-library library t path)))))
       (if (not filename)
 	  (error "The library \"%s\" is not in the path." library))
       (with-current-buffer (find-file-noselect filename)

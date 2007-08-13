@@ -254,6 +254,18 @@ Boston, MA 02111-1307, USA.  */
 			Externally, a magic_eval_event just appears as
 			a magic_event; the Lisp programmer need not know
 			anything more.
+
+ #ifdef HAVE_OFFIX_DND
+ dnd_drop_event
+ dnd_drag_event (* to be implemented *)
+    button		What button went down or up.
+    modifiers		Bucky-bits on that button: shift, control, meta, etc.
+    x, y		Where it was at the button-state-change (in pixels).
+    data                A list of type and data.
+                        This events are created by Drag'n'Drop actions.
+			Currently only the OffiX Dnd Protocol is supported.
+ #endif
+
  */
 
 
@@ -290,6 +302,9 @@ typedef enum emacs_event_type
   magic_eval_event,
   eval_event,
   misc_user_event,
+#ifdef HAVE_OFFIX_DND
+  dnd_drop_event,
+#endif
   dead_event
 } emacs_event_type;
 
@@ -340,6 +355,16 @@ struct magic_eval_data
   Lisp_Object	    object;
 };
 
+#ifdef HAVE_OFFIX_DND
+struct dnd_drop_data
+{
+  int               button;
+  unsigned char     modifiers;
+  int               x, y;
+  Lisp_Object       data;
+};
+#endif
+
 #if defined (HAVE_X_WINDOWS) && defined(emacs)
 # include <X11/Xlib.h>
 #endif
@@ -375,6 +400,9 @@ struct Lisp_Event
       struct eval_data		eval;	/* misc_user_event uses this too */
       union magic_data		magic;
       struct magic_eval_data	magic_eval;
+#ifdef HAVE_OFFIX_DND
+      struct dnd_drop_data      dnd_drop;
+#endif
     } event;
 };
 

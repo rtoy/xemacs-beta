@@ -31,15 +31,22 @@
 ;;
 ;; This file only contain the code needed to define new widget types.
 ;; Everything else is autoloaded from `wid-edit.el'.
-;;
-;; IMPORTANT: This version of widget is for Emacs 19.34 and XEmacs
-;; 19.15 - 20.2 only.  If you use Emacs 20.1, XEmacs 20.3, or anything
-;; newer, please use the version of widget bundled with your emacs.
-;; If you use an older emacs, please upgrade.
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+;; Neither XEmacs, nor latest GNU Emacs need this -- provided for
+;; compatibility.
+;; (defalias 'define-widget-keywords 'ignore)
+
+(defmacro define-widget-keywords (&rest keys)
+  "This doesn't do anything in Emacs 20 or XEmacs."
+  (`
+   (eval-and-compile
+    (let ((keywords (quote (, keys))))
+      (while keywords
+	(or (boundp (car keywords))
+           (set (car keywords) (car keywords)))
+       (setq keywords (cdr keywords)))))))
 
 (defun define-widget (name class doc &rest args)
   "Define a new widget type named NAME from CLASS.

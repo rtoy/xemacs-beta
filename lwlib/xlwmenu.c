@@ -412,12 +412,15 @@ string_width_u (XlwMenuWidget mw,
   int i, j;
 
 #ifdef NEED_MOTIF
-  XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars);
+  if (!XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars))
+    {
+      chars = "";
+    }
 #else
   chars = string;
 #endif
 
-  for (i = j = 0; chars[i]; i++)
+  for (i = j = 0; chars[i] && (j < sizeof (newchars)); i++)
     if (chars[i]=='%'&&chars[i+1]=='_')
 	    i++;
     else

@@ -1688,7 +1688,7 @@ The name of the file used as the tag table.
 If not @code{nil}, use reg-exp replace in query replace.
 @item viper-want-ctl-h-help nil
 If not @code{nil}, @kbd{C-h} is bound to @code{help-command};
-if @code{nil}, it is bound to @code{delete-backward-char}.
+otherwise, @kbd{C-h} is bound as usual in Vi.
 @item viper-vi-style-in-minibuffer t
 If not @code{nil}, Viper provides a high degree of compatibility with Vi
 insert mode when you type text in the Minibuffer; if @code{nil}, typing in
@@ -4383,7 +4383,8 @@ sudish@@MindSpring.COM (Sudish Joseph),
 paulk@@summit.esg.apertus.com (Paul Keusemann),
 roderick@@argon.org (Roderick Schertler),
 johnw@@borland.com (John Wiegley),
-zapman@@cc.gatech.edu (Jason Zapman II)
+zapman@@cc.gatech.edu (Jason Zapman II),
+schwab@@issan.informatik.uni-dortmund.de (Andreas Schwab)
 @end example
 
 

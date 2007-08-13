@@ -1,3 +1,32 @@
+1997-09-30  SL Baur  <steve@altair.xemacs.org>
+
+	* mule-canna.c (Fcanna_set_bunsetsu): Return a value.
+	(Fcanna_parse): Remove unused variables `ks' and `ksv'.
+	(Fcanna_henkan_begin): Remove unused variable `res'.
+	(Fcanna_henkan_next): Remove unused variable `nbun'.
+	(count_char): Change return type to void.
+
+	* event-Xt.c (x_event_to_emacs_event): Remove unused variable
+	`event-size'.
+
+	* menubar.c (Fnormalize_menu_item_name): Remove unused variable
+	`res'.
+
+	* redisplay-x.c (x_flash): Reorganize test to prefer select over
+	poll.
+
+	* xselect.c (Fx_store_cutbuffer_internal): Remove unused variable
+	`encoding'.
+
+1997-09-30  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* frame.c (Fmake_frame): Call `custom-initialize-frame'.
+
+1997-09-24  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule-coding.c: Rename `pathname-coding-system' to
+	`file-name-coding-system' to sync with Emacs 20.2.
+
 1997-09-26  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* window.c (saved_window_equal): Ditto.

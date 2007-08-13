@@ -1,7 +1,7 @@
 ;;; chinese.el --- Support for Chinese
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Keywords: multilingual, Chinese
@@ -104,8 +104,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; (make-coding-system
-;;  'iso-2022-cn 2 ?C
-;;  "Coding system ISO-2022-CN for Chinese (GB and CNS character sets)."
+;;  'chinese-iso-7bit 2 ?C
+;;  "ISO 2022 based 7bit encoding for Chinese GB and CNS (MIME:ISO-2022-CN)"
 ;;  '(ascii
 ;;    (nil chinese-gb2312 chinese-cns11643-1)
 ;;    (nil chinese-cns11643-2)
@@ -114,32 +114,33 @@
 ;;    nil ascii-eol ascii-cntl seven locking-shift single-shift nil nil nil
 ;;    init-bol))
 
-;; (define-coding-system-alias 'iso-2022-cn 'iso-2022-cn-ext)
+;; (define-coding-system-alias 'iso-2022-cn 'chinese-iso-7bit)
+;; (define-coding-system-alias 'iso-2022-cn-ext 'chinese-iso-7bit)
 
-(defun describe-chinese-support ()
-  "Describe how Emacs supports Chinese."
-  (interactive)
-  (with-output-to-temp-buffer "*Help*"
-    (princ (get-language-info "Chinese" 'documentation))
-    (princ "\n")))
-	   
-(set-language-info-alist
- "Chinese" '((describe-function . describe-chinese-support)
-	     (documentation . "\
-Emacs provides the following three kinds of Chinese support:
-  Chinese-GB: for users of the charset GB2312
-  Chinese-BIG5: for users of the charset Big5
-  Chinese-CNS: for users of the charset CNS11643 family
-Please specify one of them to get more information.")
-	     ))
+;; (define-prefix-command 'describe-chinese-environment-map)
+;; (define-key-after describe-language-environment-map [Chinese]
+;;   '("Chinese" . describe-chinese-environment-map)
+;;   t)
 
+;; (define-prefix-command 'setup-chinese-environment-map)
+;; (define-key-after setup-language-environment-map [Chinese]
+;;   '("Chinese" . setup-chinese-environment-map)
+;;   t)
+
+;; (defun describe-chinese-support ()
+;;   "Describe how Emacs supports Chinese."
+;;   (interactive)
+;;   (with-output-to-temp-buffer "*Help*"
+;;     (princ (get-language-info "Chinese" 'documentation))
+;;     (princ "\n")))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Chinese GB2312 (simplified) 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; (make-coding-system
-;;  'cn-gb-2312 2 ?C
-;;  "Coding-system of Chinese EUC (so called GB Encoding)."
+;;  'chinese-iso-8bit 2 ?c
+;;  "ISO 2022 based EUC encoding for Chinese GB2312 (MIME:CN-GB-2312)"
 ;;  '((ascii t) chinese-gb2312 chinese-sisheng nil
 ;;    nil ascii-eol ascii-cntl nil nil single-shift nil))
 
@@ -153,17 +154,18 @@ Please specify one of them to get more information.")
    mnemonic "Zh-GB/EUC"
    ))
 
-;;(define-coding-system-alias 'cn-gb-2312 'euc-china)
+;; (define-coding-system-alias 'cn-gb-2312 'chinese-iso-8bit)
+;; (define-coding-system-alias 'euc-china 'chinese-iso-8bit)
 
 (copy-coding-system 'cn-gb-2312 'gb2312)
 (copy-coding-system 'cn-gb-2312 'chinese-euc)
 
 ;; (make-coding-system
-;;  'hz-gb-2312 0 ?z
-;;  "Codins-system of Hz/ZW used for Chinese (GB)."
+;;  'chinese-hz 0 ?z
+;;  "Hz/ZW 7-bit encoding for Chinese GB2312 (MIME:HZ-GB-2312)"
 ;;  nil)
-;; (put 'hz-gb-2312 'post-read-conversion 'post-read-decode-hz)
-;; (put 'hz-gb-2312 'pre-write-conversion 'pre-write-encode-hz)
+;; (put 'chinese-hz 'post-read-conversion 'post-read-decode-hz)
+;; (put 'chinese-hz 'pre-write-conversion 'pre-write-encode-hz)
 
 (make-coding-system
  'hz-gb-2312 'no-conversion
@@ -173,7 +175,8 @@ Please specify one of them to get more information.")
    post-read-conversion post-read-decode-hz
    pre-write-conversion pre-write-encode-hz))
 
-;; (define-coding-system-alias 'hz-gb-2312 'hz)
+;; (define-coding-system-alias 'hz-gb-2312 'chinese-hz)
+;; (define-coding-system-alias 'hz 'chinese-hz)
 
 (copy-coding-system 'hz-gb-2312 'hz)
 (copy-coding-system 'hz-gb-2312 'chinese-hz)
@@ -193,75 +196,61 @@ Please specify one of them to get more information.")
     (encode-hz-region 1 (point-max))
     nil))
 
-(register-input-method
- "Chinese-GB" '("quail-ccdospy" quail-use-package "quail/ccdospy"))
-(register-input-method
- "Chinese-GB" '("quail-ctlau" quail-use-package "quail/ctlau"))
-(register-input-method
- "Chinese-GB" '("quail-punct" quail-use-package "quail/punct"))
-(register-input-method
- "Chinese-GB" '("quail-qj" quail-use-package "quail/qj"))
-(register-input-method
- "Chinese-GB" '("quail-sw" quail-use-package "quail/sw"))
-(register-input-method
- "Chinese-GB" '("quail-ziranma" quail-use-package "quail/ziranma"))
-(register-input-method
- "Chinese-GB" '("quail-tonepy" quail-use-package "quail/tonepy"))
-(register-input-method
- "Chinese-GB" '("quail-py" quail-use-package "quail/py"))
+;; (defun setup-chinese-gb-environment ()
+;;   "Setup multilingual environment (MULE) for Chinese GB2312 users."
+;;   (interactive)
+;;   (setq primary-language "Chinese-GB")
+;; 
+;;   (setq coding-category-iso-8-2 'cn-gb-2312)
+;;   (setq coding-category-iso-else 'iso-2022-cn)
+;;   (setq coding-category-big5 'cn-big5)
+;; 
+;;   (set-coding-priority
+;;    '(coding-category-iso-7
+;;      coding-category-iso-else
+;;      coding-category-iso-8-2
+;;      coding-category-big5
+;;      coding-category-iso-8-1
+;;      coding-category-internal
+;;      ))
+;; 
+;;   (setq-default buffer-file-coding-system 'cn-gb-2312)
+;;   (set-terminal-coding-system 'cn-gb-2312)
+;;   (set-keyboard-coding-system 'cn-gb-2312)
+;; 
+;;   (setq default-input-method '("Chinese-GB" . "quail-py"))
+;;   )
 
-(defun setup-chinese-gb-environment ()
-  "Setup multilingual environment (MULE) for Chinese GB2312 users."
-  (interactive)
-  (setq primary-language "Chinese-GB")
-
-  (setq coding-category-iso-8-2 'cn-gb-2312)
-  (setq coding-category-iso-else 'iso-2022-cn)
-  (setq coding-category-big5 'cn-big5)
-
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-else
-     coding-category-iso-8-2
-     coding-category-big5
-     coding-category-iso-8-1
-     coding-category-internal
-     ))
-
-  (setq-default buffer-file-coding-system 'cn-gb-2312)
-  (set-terminal-coding-system 'cn-gb-2312)
-  (set-keyboard-coding-system 'cn-gb-2312)
-
-  (setq default-input-method '("Chinese-GB" . "quail-py"))
-  )
-
-(defun describe-chinese-gb-support ()
-  "Describe how Emacs supports Chinese for GB2312 users."
-  (interactive)
-  (describe-language-support-internal "Chinese-GB"))
-
+;; (defun describe-chinese-gb-support ()
+;;   "Describe how Emacs supports Chinese for GB2312 users."
+;;   (interactive)
+;;   (describe-language-support-internal "Chinese-GB"))
+	   
 (set-language-info-alist
- "Chinese-GB" '((setup-function . setup-chinese-gb-environment)
-		(describe-function . describe-chinese-gb-support)
+ "Chinese-GB" '((setup-function . (setup-chinese-gb-environment
+				   . setup-chinese-environment-map))
 		(charset . (chinese-gb2312 chinese-sisheng))
-		(coding-system . (cn-gb-2312 hz-gb-2312 iso-2022-cn))
+		(coding-system
+		 . (cn-gb-2312 iso-2022-7bit hz-gb-2312))
 		(sample-text . "Chinese ($AVPND(B,$AFUM(;0(B,$A::So(B)	$ADc:C(B")
-		(documentation . nil)))
+		(documentation . ("Support for Chinese GB2312 character set."
+				  . describe-chinese-environment-map))
+		))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese BIG5 (traditional)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; (make-coding-system
-;;  'big5 3 ?B
-;;  "Coding-system of BIG5.")
-
-;;(define-coding-system-alias 'big5 'cn-big5)
+;;  'chinese-big5 3 ?B "BIG5 8-bit encoding for Chinese (MIME:CN-BIG5)")
 
 (make-coding-system
  'big5 'big5
  "Coding-system of BIG5."
  '(mnemonic "Zh/Big5"))
+
+;; (define-coding-system-alias 'big5 'chinese-big5)
+;; (define-coding-system-alias 'cn-big5 'chinese-big5)
 
 (copy-coding-system 'big5 'cn-big5)
 (copy-coding-system 'big5 'chinese-big5)
@@ -302,108 +291,85 @@ Please specify one of them to get more information.")
 (set-charset-ccl-program 'chinese-big5-1 ccl-encode-big5-1-font)
 (set-charset-ccl-program 'chinese-big5-2 ccl-encode-big5-2-font)
 
-(register-input-method
- "Chinese-BIG5" '("quail-qj-b5" quail-use-package "quail/qj-b5"))
-(register-input-method
- "Chinese-BIG5" '("quail-zozy" quail-use-package "quail/zozy"))
-(register-input-method
- "Chinese-BIG5" '("quail-tsangchi-b5" quail-use-package "quail/tsangchi-b5"))
-(register-input-method
- "Chinese-BIG5" '("quail-py-b5" quail-use-package "quail/py-b5"))
-(register-input-method
- "Chinese-BIG5" '("quail-quick-b5" quail-use-package "quail/quick-bt"))
-(register-input-method
- "Chinese-BIG5" '("quail-etzy" quail-use-package "quail/etzy"))
-(register-input-method
- "Chinese-BIG5" '("quail-ecdict" quail-use-package "quail/ecdict"))
-(register-input-method
- "Chinese-BIG5" '("quail-ctlaub" quail-use-package "quail/ctlaub"))
-(register-input-method
- "Chinese-BIG5" '("quail-array30" quail-use-package "quail/array30"))
-(register-input-method
- "Chinese-BIG5" '("quail-4corner" quail-use-package "quail/4corner"))
+;; (defun setup-chinese-big5-environment ()
+;;   "Setup multilingual environment (MULE) for Chinese Big5 users."
+;;   (interactive)
+;;   (setq primary-language "Chinese-BIG5")
+;; 
+;;   (setq coding-category-big5 'cn-big5)
+;;   (setq coding-category-iso-else 'iso-2022-cn)
+;;   (setq coding-category-iso-8-2 'cn-gb-2312)
+;; 
+;;   (set-coding-priority
+;;    '(coding-category-iso-7
+;;      coding-category-iso-else
+;;      coding-category-big5
+;;      coding-category-iso-8-2))
+;; 
+;;   (setq-default buffer-file-coding-system 'cn-big5)
+;;   (set-terminal-coding-system 'cn-big5)
+;;   (set-keyboard-coding-system 'cn-big5)
+;; 
+;;   (setq default-input-method '("Chinese-BIG5" . "quail-py-b5"))
+;;   )
 
-(defun setup-chinese-big5-environment ()
-  "Setup multilingual environment (MULE) for Chinese Big5 users."
-  (interactive)
-  (setq primary-language "Chinese-BIG5")
-
-  (setq coding-category-big5 'cn-big5)
-  (setq coding-category-iso-else 'iso-2022-cn)
-  (setq coding-category-iso-8-2 'cn-gb-2312)
-
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-else
-     coding-category-big5
-     coding-category-iso-8-2))
-
-  (setq-default buffer-file-coding-system 'cn-big5)
-  (set-terminal-coding-system 'cn-big5)
-  (set-keyboard-coding-system 'cn-big5)
-
-  (setq default-input-method '("Chinese-BIG5" . "quail-py-b5"))
-  )
-
-(defun describe-chinese-big5-support ()
-  "Describe how Emacs supports Chinese for Big5 users."
-  (interactive)
-  (describe-language-support-internal "Chinese-BIG5"))
+;; (defun describe-chinese-big5-support ()
+;;   "Describe how Emacs supports Chinese for Big5 users."
+;;   (interactive)
+;;   (describe-language-support-internal "Chinese-BIG5"))
 
 (set-language-info-alist
- "Chinese-BIG5" '((setup-function . setup-chinese-big5-environment)
-		  (describe-function . describe-chinese-big5-support)
+ "Chinese-BIG5" '((setup-function . (setup-chinese-big5-environment
+				     . setup-chinese-environment-map))
 		  (charset . (chinese-big5-1 chinese-big5-2))
-		  (coding-system . (cn-big5 iso-2022-cn))
+		  (coding-system . (big5 iso-2022-7bit))
 		  (sample-text . "Cantonese ($(0GnM$(B,$(0N]0*Hd(B)	$(0*/=((B, $(0+$)p(B")
-		  (documentation . nil)))
+		  (documentation . ("Support for Chinese Big5 character set."
+				    . describe-chinese-environment-map))
+		  ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese CNS11643 (traditional)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(register-input-method
- "Chinese-CNS" '("quail-quick-cns" quail-use-package "quail/quick-cns"))
-(register-input-method
- "Chinese-CNS" '("quail-tsangchi-cns" quail-use-package "quail/tsangchi-cns"))
+;; (defun setup-chinese-cns-environment ()
+;;   "Setup multilingual environment (MULE) for Chinese CNS11643 family users."
+;;   (interactive)
+;;   (setq primary-language "Chinese-CNS")
+;; 
+;;   (setq coding-category-iso-else 'iso-2022-cn)
+;;   (setq coding-category-big5 'cn-big5)
+;;   (setq coding-category-iso-8-2 'cn-gb-2312)
+;; 
+;;   (set-coding-priority
+;;    '(coding-category-iso-7
+;;      coding-category-iso-else
+;;      coding-category-iso-8-2
+;;      coding-category-big5))
+;; 
+;;   (setq-default buffer-file-coding-system 'iso-2022-cn)
+;;   (set-terminal-coding-system 'iso-2022-cn)
+;;   (set-keyboard-coding-system 'iso-2022-cn)
+;; 
+;;   (setq default-input-method '("Chinese-CNS" . "quail-py-cns"))
+;;   )
 
-(defun setup-chinese-cns-environment ()
-  "Setup multilingual environment (MULE) for Chinese CNS11643 family users."
-  (interactive)
-  (setq primary-language "Chinese-CNS")
-
-  (setq coding-category-iso-else 'iso-2022-cn)
-  (setq coding-category-big5 'cn-big5)
-  (setq coding-category-iso-8-2 'cn-gb-2312)
-
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-else
-     coding-category-iso-8-2
-     coding-category-big5))
-
-  (setq-default buffer-file-coding-system 'iso-2022-cn)
-  (set-terminal-coding-system 'iso-2022-cn)
-  (set-keyboard-coding-system 'iso-2022-cn)
-
-  (setq default-input-method '("Chinese-CNS" . "quail-py-cns"))
-  )
-
-(defun describe-chinese-cns-support ()
-  "Describe how Emacs supports Chinese for CNS11643 family users."
-  (interactive)
-  (describe-language-support-internal "Chinese-CNS"))
+;; (defun describe-chinese-cns-support ()
+;;   "Describe how Emacs supports Chinese for CNS11643 family users."
+;;   (interactive)
+;;   (describe-language-support-internal "Chinese-CNS"))
 
 (set-language-info-alist
- "Chinese-CNS" '((setup-function . setup-chinese-cns-environment)
-		 (describe-function . describe-chinese-cns-support)
+ "Chinese-CNS" '((setup-function . (setup-chinese-cns-environment
+				    . setup-chinese-environment-map))
 		 (charset . (chinese-cns11643-1 chinese-cns11643-2
 			     chinese-cns11643-3 chinese-cns11643-4
 			     chinese-cns11643-5 chinese-cns11643-6
 			     chinese-cns11643-7))
-		 (coding-system . (iso-2022-cn))
-		 (documentation . nil)))
-
+		 (coding-system . (iso-2022-7bit))
+		 (documentation . ("Support for Chinese CNS character sets."
+				   . describe-chinese-environment-map))
+		 ))
 
 ;;; for XEmacs (will be obsoleted)
 

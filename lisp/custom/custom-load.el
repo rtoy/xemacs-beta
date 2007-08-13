@@ -1,6 +1,6 @@
 ;;; custom-load.el --- automatically extracted custom dependencies
 
-;; Created by SL Baur on Sat Sep 27 08:13:41 1997
+;; Created by SL Baur on Tue Sep 30 18:08:42 1997
 
 ;;; Code:
 
@@ -27,7 +27,7 @@
 (custom-put 'widget-faces 'custom-loads '("wid-edit"))
 (custom-put 'languages 'custom-loads '("cus-edit"))
 (custom-put 'custom-magic-faces 'custom-loads '("cus-edit"))
-(custom-put 'faces 'custom-loads '("cus-face" "wid-edit" "cus-edit"))
+(custom-put 'faces 'custom-loads '("auto-autoloads" "wid-edit" "cus-edit"))
 (custom-put 'emacs 'custom-loads '("cus-edit"))
 (custom-put 'processes 'custom-loads '("cus-edit"))
 (custom-put 'wp 'custom-loads '("cus-edit"))

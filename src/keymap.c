@@ -238,6 +238,9 @@ Lisp_Object Qbutton0, Qbutton1, Qbutton2, Qbutton3, Qbutton4, Qbutton5,
   Qbutton6, Qbutton7;
 Lisp_Object Qbutton0up, Qbutton1up, Qbutton2up, Qbutton3up, Qbutton4up,
   Qbutton5up, Qbutton6up, Qbutton7up;
+#ifdef HAVE_OFFIX_DND
+Lisp_Object Qdrop0, Qdrop1, Qdrop2, Qdrop3, Qdrop4, Qdrop5, Qdrop6, Qdrop7;
+#endif
 Lisp_Object Qmenu_selection;
 /* Emacs compatibility */
 Lisp_Object Qdown_mouse_1, Qdown_mouse_2, Qdown_mouse_3;
@@ -1423,6 +1426,32 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
 	    returned_value->modifiers = XEVENT (spec)->event.button.modifiers;
 	    break;
 	  }
+#ifdef HAVE_OFFIX_DND
+	case dnd_drop_event:
+	  {
+	    switch (XEVENT (spec)->event.dnd_drop.button)
+	      {
+	      case 1:
+		returned_value->keysym    = Qdrop1; break;
+	      case 2:
+		returned_value->keysym    = Qdrop2; break;
+	      case 3:
+		returned_value->keysym    = Qdrop3; break;
+	      case 4:
+		returned_value->keysym    = Qdrop4; break;
+	      case 5:
+		returned_value->keysym    = Qdrop5; break;
+	      case 6:
+		returned_value->keysym    = Qdrop6; break;
+	      case 7:
+		returned_value->keysym    = Qdrop7; break;
+	      default:
+		returned_value->keysym    = Qdrop0; break;
+	      }
+            returned_value->modifiers = XEVENT (spec)->event.dnd_drop.modifiers;
+	    break;
+	  }
+#endif
 	default:
 	  signal_error (Qwrong_type_argument,
 			list2 (build_translated_string
@@ -1517,7 +1546,14 @@ key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
       EQ (raw_key.keysym, Qbutton4) || EQ (raw_key.keysym, Qbutton4up) ||
       EQ (raw_key.keysym, Qbutton5) || EQ (raw_key.keysym, Qbutton5up) ||
       EQ (raw_key.keysym, Qbutton6) || EQ (raw_key.keysym, Qbutton6up) ||
-      EQ (raw_key.keysym, Qbutton7) || EQ (raw_key.keysym, Qbutton7up))
+      EQ (raw_key.keysym, Qbutton7) || EQ (raw_key.keysym, Qbutton7up)
+#ifdef HAVE_OFFIX_DND
+      || EQ (raw_key.keysym, Qdrop0)   || EQ (raw_key.keysym, Qdrop1)     ||
+      EQ (raw_key.keysym, Qdrop2)   || EQ (raw_key.keysym, Qdrop3)     ||
+      EQ (raw_key.keysym, Qdrop4)   || EQ (raw_key.keysym, Qdrop5)     ||
+      EQ (raw_key.keysym, Qdrop6)   || EQ (raw_key.keysym, Qdrop7)
+#endif
+      )
     error ("Mouse-clicks can't appear in saved keyboard macros.");
 
   XEVENT (event)->channel = Vselected_console;
@@ -4234,6 +4270,16 @@ syms_of_keymap (void)
   defsymbol (&Qbutton5up, "button5up");
   defsymbol (&Qbutton6up, "button6up");
   defsymbol (&Qbutton7up, "button7up");
+#ifdef HAVE_OFFIX_DND
+  defsymbol (&Qdrop0, "drop0");
+  defsymbol (&Qdrop1, "drop1");
+  defsymbol (&Qdrop2, "drop2");
+  defsymbol (&Qdrop3, "drop3");
+  defsymbol (&Qdrop4, "drop4");
+  defsymbol (&Qdrop5, "drop5");
+  defsymbol (&Qdrop6, "drop6");
+  defsymbol (&Qdrop7, "drop7");
+#endif
   defsymbol (&Qmouse_1, "mouse-1");
   defsymbol (&Qmouse_2, "mouse-2");
   defsymbol (&Qmouse_3, "mouse-3");

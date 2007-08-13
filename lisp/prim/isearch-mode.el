@@ -203,7 +203,6 @@ thing searched for.")
     (define-key map "\C-s" 'isearch-repeat-forward)
     (define-key map "\M-\C-s" 'isearch-repeat-forward)
     (define-key map "\C-r" 'isearch-repeat-backward)
-    (define-key map "\177" 'isearch-delete-char)
     (define-key map "\C-g" 'isearch-abort)
 
     (define-key map "\C-q" 'isearch-quote-char)
@@ -226,9 +225,12 @@ thing searched for.")
     ;; (define-key map "\C-t" 'isearch-toggle-regexp)
     ;; (define-key map "\C-^" 'isearch-edit-string)
 
-    ;; backspace deletes, but C-h is help.
+    ;; delete and backspace delete backward, f1 is help, and C-h can be either
+    (define-key map 'delete 'isearch-delete-char)
     (define-key map 'backspace 'isearch-delete-char)
-    (define-key map '(control h) 'isearch-mode-help)
+    (define-key map '(control h) 'isearch-help-or-delete-char)
+    (define-key map 'f1 'isearch-mode-help)
+    (define-key map 'help 'isearch-mode-help)
 
     (define-key map "\M-n" 'isearch-ring-advance)
     (define-key map "\M-p" 'isearch-ring-retreat)
@@ -619,7 +621,7 @@ The following additional command keys are active while editing.
  item in the search ring.
 \\[isearch-complete-edit] to complete the search string from the search ring."
 
-  ;; Editing doesnt back up the search point.  Should it?
+  ;; Editing doesn't back up the search point.  Should it?
   (interactive)
 
   (condition-case nil
@@ -851,6 +853,17 @@ If no previous match was done, just beep."
     (isearch-pop-state))
   (isearch-update))
 
+(defun isearch-help-or-delete-char ()
+  "Show Isearch help or delete backward in the search string.
+Deletes when `delete-key-deletes-forward' is t and C-h is used for deleting
+backwards."
+  (interactive)
+  (if (and delete-key-deletes-forward
+           (case (device-type)
+             ('tty (eq tty-erase-char ?\C-h))
+             ('x (not (x-keysym-on-keyboard-p "BackSpace")))))
+      (isearch-delete-char)
+    (isearch-mode-help)))
 
 (defun isearch-yank (chunk)
   ;; Helper for isearch-yank-* functions.  CHUNK can be a string or a
@@ -1110,7 +1123,7 @@ Default nil means edit the string from the search ring first."
       ;; isearch-string stays the same
       t)
      ((or completion ; not nil, must be a string
-	  (= 0 (length isearch-string))) ; shouldnt have to say this
+	  (= 0 (length isearch-string))) ; shouldn't have to say this
       (if (equal completion isearch-string)  ;; no extension?
 	  (if completion-auto-help
 	      (with-output-to-temp-buffer "*Isearch completions*"
@@ -1300,6 +1313,7 @@ If there is no completion possible, say so and continue searching."
 (put 'isearch-repeat-forward			'isearch-command t)
 (put 'isearch-repeat-backward			'isearch-command t)
 (put 'isearch-delete-char			'isearch-command t)
+(put 'isearch-help-or-delete-char		'isearch-command t)
 (put 'isearch-abort				'isearch-command t)
 (put 'isearch-quote-char			'isearch-command t)
 (put 'isearch-exit				'isearch-command t)

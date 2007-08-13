@@ -1,7 +1,7 @@
 ;;; japanese.el --- Japanese support
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Keywords: multilingual, Japanese
@@ -138,8 +138,14 @@
 (defvar space-insertable (concat " " aletter "\\|" kanji-space-insertable)
   "Regexp for finding points that can have spaces inserted into them for justification")
 
-;; (define-coding-system-alias 'iso-2022-7 'iso-2022-jp)
-;; (define-coding-system-alias 'iso-2022-7 'junet)
+;; (make-coding-system
+;;  'iso-2022-jp 2 ?J
+;;  "ISO 2022 based 7bit encoding for Japanese (MIME:ISO-2022-JP)"
+;;  '((ascii japanese-jisx0208-1978 japanese-jisx0208
+;;           latin-jisx0201 japanese-jisx0212 katakana-jisx0201 t) nil nil nil
+;;    short ascii-eol ascii-cntl seven))
+
+;; (define-coding-system-alias 'junet 'iso-2022-jp)
 
 (make-coding-system
  'iso-2022-jp 'iso2022
@@ -210,56 +216,16 @@
 (copy-coding-system 'euc-jp 'euc-japan) ; only for w3
 (copy-coding-system 'euc-jp 'japanese-euc)
 
-(register-input-method
- "Japanese" '("quail-ja-hiragana" quail-use-package "quail/japanese"))
-(register-input-method
- "Japanese" '("quail-ja" quail-use-package "quail/japanese"))
-
-(defun setup-japanese-environment ()
-  "Setup multilingual environment (MULE) for Japanese."
-  (interactive)
-  (setq coding-category-iso-8-2 'euc-jp)
-
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-8-2
-     coding-category-sjis
-     coding-category-iso-8-1
-     coding-category-iso-else
-     coding-category-internal))
-
-  (if (eq system-type 'ms-dos)
-      (progn
-	(setq-default buffer-file-coding-system 'shift_jis)
-	(set-terminal-coding-system 'shift_jis)
-	(set-keyboard-coding-system 'shift_jis)
-	(setq default-process-coding-system '(shift_jis-dos . shift_jis-dos)))
-    (setq-default buffer-file-coding-system 'iso-2022-jp)
-    (set-terminal-coding-system 'iso-2022-jp)
-    (set-keyboard-coding-system 'iso-2022-jp))
-
-  (set-default-input-method "Japanese" "quail-ja")
-
-  (setq sendmail-coding-system 'iso-2022-jp
-	rmail-file-coding-system 'iso-2022-jp)
-  )
-
-(defun describe-japanese-support ()
-  "Describe how Emacs supports Japanese."
-  (interactive)
-  (describe-language-support-internal "Japanese"))
-
 (set-language-info-alist
  "Japanese" '((setup-function . setup-japanese-environment)
-	      (describe-function . describe-japanese-support)
 	      (tutorial . "TUTORIAL.jp")
 	      (charset . (japanese-jisx0208 japanese-jisx0208-1978
 			  japanese-jisx0212 latin-jisx0201
 			  katakana-jisx0201))
-	      (coding-system . (euc-jp shift_jis
-				iso-2022-jp iso-2022-jp-1978-irv))
+	      (coding-system . (iso-2022-jp euc-jp
+				shift_jis iso-2022-jp-1978-irv))
 	      (sample-text . "Japanese (日本語)		こんにちは, ｺﾝﾆﾁﾊ")
-	      (documentation . nil)))
+	      (documentation . t)))
 
 ;; for XEmacs (will be obsoleted)
 

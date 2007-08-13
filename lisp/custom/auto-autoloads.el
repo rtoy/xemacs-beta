@@ -144,18 +144,10 @@ The format is suitable for use with `easy-menu-define'." nil nil)
 
 ;;;***
 
-;;;### (autoloads (custom-set-faces custom-initialize-frame custom-declare-face) "cus-face" "custom/cus-face.el")
-
-(defcustom frame-background-mode nil "*The brightness of the background.\nSet this to the symbol dark if your background color is dark, light if\nyour background is light, or nil (default) if you want Emacs to\nexamine the brightness for you." :group 'faces :type '(choice (choice-item dark) (choice-item light) (choice-item :tag "Auto" nil)))
-
-(defcustom initialize-face-resources t "If non nil, allow X resources to initialize face properties.\nThis only affects faces declared with `defface', and only X11 frames." :group 'faces :type 'boolean)
+;;;### (autoloads (custom-set-faces custom-declare-face) "cus-face" "custom/cus-face.el")
 
 (autoload 'custom-declare-face "cus-face" "\
 Like `defface', but FACE is evaluated as a normal argument." nil nil)
-
-(autoload 'custom-initialize-frame "cus-face" "\
-Initialize local faces for FRAME if necessary.
-If FRAME is missing or nil, the first member of (frame-list) is used." nil nil)
 
 (autoload 'custom-set-faces "cus-face" "\
 Initialize faces according to user preferences.

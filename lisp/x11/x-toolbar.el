@@ -24,7 +24,7 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up:  Not synched
+;;; Synched up:  Not in FSF
 
 ;;; Commentary:
 
@@ -41,20 +41,9 @@
   :group 'environment)
 
 
-(defun toolbar-not-configured-message ()
-  (interactive)
-  (message "Toolbar item MUST be configured, first."))
-
-(defcustom toolbar-item-not-configured-function 'toolbar-not-configured-message
-  "*Function to call when News or Mail are not configured yet."
-  :type '(radio (function-item toolbar-not-configured-message)
-                (function :tag "Other"))
-  :group 'toolbar)
-
-(defun toolbar-item-not-configured ()
-  (interactive)
-  (call-interactively toolbar-item-not-configured-function))
-
+(defun toolbar-not-configured ()
+  (ding)
+  (message "Configure the item via `M-x customize RET toolbar RET'"))
 
 (defcustom toolbar-open-function 'find-file
   "*Function to call when the open icon is selected."
@@ -184,7 +173,7 @@
   (apply 'call-process process nil 0 nil args))
 
 (defcustom toolbar-mail-commands-alist
-  `((item-not-configured . toolbar-item-not-configured)
+  `((not-configured . toolbar-not-configured)
     (vm		. vm)
     (gnus	. gnus-no-server)
     (rmail	. rmail)
@@ -197,21 +186,28 @@
   "*Alist of mail readers and their commands.
 The car of each alist element is the mail reader, and the cdr is the form
 used to start it."
-  :type '(repeat (cons (symbol :tag "Mailer") (function :tag "Start with")))
+  :type '(repeat (cons :format "%v"
+		       (symbol :tag "Mailer") (function :tag "Start with")))
   :group 'toolbar)
 
-(defcustom toolbar-mail-reader 'item-not-configured
+(defcustom toolbar-mail-reader 'not-configured
   "*Mail reader toolbar will invoke.
-The legal values are the keys from `toolbar-mail-command-alist', which should
-be used to add new mail readers.
-
-Mail readers known by default are item-not-configured, vm, gnus,
-rmail, mh, pine, elm, mutt, exmh and netscape."
-  :type '(symbol :validate (lambda (wid)
-			     (if (assq (widget-value wid) toolbar-mail-commands-alist)
-				 nil
-			       (widget-put wid :error "Unknown mail reader.")
-			       wid)))
+The legal values are the keys from `toolbar-mail-command-alist', which
+ should be used to add new mail readers.
+Mail readers known by default are vm, gnus, rmail, mh, pine, elm,
+ mutt, exmh and netscape."
+  :type '(choice (const :tag "Not Configured" not-configured)
+		 (const vm) (const gnus) (const rmail) (const mh)
+		 (const pine) (const elm) (const mutt) (const exmh)
+		 (const netscape)
+		 (symbol :tag "Other"
+			 :validate (lambda (wid)
+				     (if (assq (widget-value wid)
+					       toolbar-mail-commands-alist)
+					 nil
+				       (widget-put wid :error
+						   "Unknown mail reader")
+				       wid))))
   :group 'toolbar)
 
 
@@ -264,8 +260,7 @@ rmail, mh, pine, elm, mutt, exmh and netscape."
   (if (featurep 'eos-debugger)
       (call-interactively 'eos::start-debugger)
     (require 'gdbsrc)
-    (call-interactively 'gdbsrc))
-  )
+    (call-interactively 'gdbsrc)))
 
 (defvar compile-command)
 
@@ -285,7 +280,7 @@ rmail, mh, pine, elm, mutt, exmh and netscape."
 ;;
 
 (defcustom toolbar-news-commands-alist
-  `((item-not-configured . toolbar-item-not-configured)
+  `((not-configured . toolbar-not-configured)
     (gnus	. toolbar-gnus)			; M-x all-hail-gnus
     (rn		. (toolbar-external "xterm" "-e" "rn"))
     (nn		. (toolbar-external "xterm" "-e" "nn"))
@@ -298,21 +293,28 @@ rmail, mh, pine, elm, mutt, exmh and netscape."
   "*Alist of news readers and their commands.
 The car of each alist element the pair is the news reader, and the cdr
 is the form used to start it."
-  :type '(repeat (cons (symbol :tag "Reader") (sexp :tag "Start with")))
+  :type '(repeat (cons :format "%v"
+		       (symbol :tag "Reader") (sexp :tag "Start with")))
   :group 'toolbar)
 
-(defcustom toolbar-news-reader 'item-not-configured
+(defcustom toolbar-news-reader 'not-configured
   "*News reader toolbar will invoke.
 The legal values are the keys from `toolbar-news-command-alist', which should
-be used to add new news readers.
-
-Newsreaders known by default are item-not-configured, gnus, rn, nn,
-trn, xrn, slrn, pine and netscape."
-  :type '(symbol :validate (lambda (wid)
-			     (if (assq (widget-value wid) toolbar-news-commands-alist)
-				 nil
-			       (widget-put wid :error "Unknown newsreader.")
-			       wid)))
+ be used to add new news readers.
+Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
+ and netscape."
+  :type '(choice (const :tag "Not Configured" not-configured)
+		 (const gnus) (const rn) (const nn) (const trn)
+		 (const xrn) (const slrn) (const pine) (const tin)
+		 (const netscape)
+		 (symbol :tag "Other"
+			 :validate (lambda (wid)
+				     (if (assq (widget-value wid)
+					       toolbar-news-commands-alist)
+					 nil
+				       (widget-put wid :error
+						   "Unknown news reader")
+				       wid))))
   :group 'toolbar)
 
 (defcustom toolbar-news-use-separate-frame t

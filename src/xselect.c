@@ -1932,7 +1932,6 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
   int max_bytes = SELECTION_QUANTUM (display);
 #ifdef MULE
   CONST Bufbyte *ptr, *end;
-  Atom encoding = XA_STRING;
   enum { ASCII, LATIN_1, WORLD } chartypes = ASCII;
 #endif
 

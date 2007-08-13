@@ -195,7 +195,7 @@ static Lisp_Object kanjiYomiList (int, int);
 static void m2c (unsigned char *, int, unsigned char *);
 static Lisp_Object mule_make_string (unsigned char *, int);
 static mule_strlen (unsigned char *, int);
-static count_char (unsigned char *,int, int, int, int *, int *, int *);
+static void count_char (unsigned char *,int, int, int, int *, int *, int *);
 #define make_string mule_make_string
 #endif
 
@@ -321,6 +321,8 @@ No separator will be used otherwise.
   kugiri = NILP (num) ? 0 : 1;
 
   jrKanjiControl (0, KC_SETBUNSETSUKUGIRI, (char *) kugiri);
+
+  return Qnil;
 }
 
 /* For whatever reason, calling Fding directly from libCanna loses */
@@ -634,8 +636,6 @@ Parse customize string.
 */
        (str))
 {
-  jrKanjiStatusWithValue ksv;
-  jrKanjiStatus ks;
   Lisp_Object val;
   unsigned char **p;
   int n;
@@ -723,7 +723,6 @@ DEFUN ("canna-henkan-begin", Fcanna_henkan_begin, 1, 1, 0, /*
        (yomi))
 {
   int nbun;
-  Lisp_Object res;
 
   CHECK_STRING (yomi);
   if (confirmContext () == 0)
@@ -778,7 +777,7 @@ DEFUN ("canna-henkan-next", Fcanna_henkan_next, 1, 1, 0, /*
 */
        (bunsetsu))
 {
-  int i, nbun, slen, len;
+  int i, slen, len;
   unsigned char *p, RkBuf[RKBUFSIZE];
   Lisp_Object res = Qnil, endp;
 
@@ -1623,7 +1622,7 @@ mule_strlen (unsigned char *p, int l)
 }
 
 /* count number of characters */
-static
+static void
 count_char (unsigned char *p, int len, int pos, int rev, int *clen, int *cpos,
 	    int *crev)
 {

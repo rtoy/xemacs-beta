@@ -1,7 +1,7 @@
 ;;; quail/hangul.el -- Quail package for inputting Korean Hangul characters
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, input method, Korean, Hangul
 
@@ -18,21 +18,22 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
 (require 'quail)
 
 (defun quail-hangul-switch-to-symbol-ksc (&rest ignore)
-  "Swith to `quail-symbol-ksc' package."
+  "Swith to `korean-symbol' package."
   (quail-delete-region)
-  (select-input-method "Korean" "quail-symbol-ksc")
+  (activate-input-method "korean-symbol")
   (throw 'quail-tag nil))
 
 (quail-define-package
- "quail-hangul" "Korean" "한글 2벌식"
+ "korean-hangul" "Korean" "한2"
  '((?r . "ㄱ") (?s . "ㄴ") (?e . "ㄷ") (?f . "ㄹ") (?a . "ㅁ")
    (?q . "ㅂ") (?t . "ㅅ") (?d . "ㅇ") (?w . "ㅈ") (?c . "ㅊ")
    (?z . "ㅋ") (?x . "ㅌ") (?v . "ㅍ") (?g . "ㅎ")
@@ -40,7 +41,7 @@
    (?O . "ㅒ") (?P . "ㅖ")
    (?k . "ㅏ") (?i . "ㅑ") (?j . "ㅓ") (?p . "ㅔ") (?u . "ㅕ") (?h . "ㅗ")
    (?y . "ㅛ") (?n . "ㅜ") (?b . "ㅠ") (?m . "ㅡ") (?l . "ㅣ"))
- "Hangul input method.
+ "한글 2벌식: Hangul input method with Hangul keyboard layout (KSC5601)
   한글:	ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎㅏㅑㅓㅔㅖㅕㅗㅛㅜㅠㅡㅣㅐㅒ
   KEY:	r R s e E f a q Q t T d w W c z x v g k i j p P u h y n b m l o O
 
@@ -48,13 +49,13 @@ The key sequence \"Z<key>\" can be used for \"０..Ａ..ａ..\
 The key sequence \"H<key-sequence>\" can be used for \"ㅥㅦ...\".
 The key sequnece \"S<key>\" can be used for such symbols as \"￥￡‰...\".
 
-You can use the key M-i to know the avairable key combination.
-For instance, typing \"S\" followed by \"M-i\" will tell you
+You can use the key TAB to know the avairable key combination.
+For instance, typing \"S\" followed by TAB will tell you
  which key you should type to input some specific symbol.
 --- Example ---
 <key sequence>		r	k	r	k
 <string inserted>	ㄱ	가	각	가가
-<key sequence>		r	k	r	<M-SP>	k
+<key sequence>		r	k	r	<C-SP>	k
 <string inserted>	ㄱ	가	각	각	각ㅏ"
  nil t t nil nil nil t)
 

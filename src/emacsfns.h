@@ -1200,6 +1200,9 @@ extern Lisp_Object Qdefault;
 extern Lisp_Object Qdevice;
 extern Lisp_Object Qdimension;
 extern Lisp_Object Qdisplay;
+#ifdef HAVE_OFFIX_DND
+extern Lisp_Object Qdnd_data;
+#endif
 extern Lisp_Object Qdoc_string;
 extern Lisp_Object Qdynarr_overhead;
 extern Lisp_Object Qempty;

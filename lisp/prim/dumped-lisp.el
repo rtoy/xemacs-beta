@@ -8,6 +8,7 @@
 	"cl"
 	"cl-extra"
 	"cl-seq"
+	"cl/auto-autoloads"	; Prevents problems later
 	;;"featurep"
 	"widget"
 	"custom"		; Before the world so everything can be
@@ -109,6 +110,8 @@
 	#+mule "mule-coding"
 ;; Handle I/O of files with extended characters.
 	#+mule "mule-files"
+;; Handle process with encoding/decoding non-ascii coding-system.
+	#+mule "mule-process"
 ;; Load the remaining basic files.
 	#+mule "mule-category"
 	#+mule "mule-ccl"

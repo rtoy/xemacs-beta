@@ -1162,13 +1162,11 @@ Returns t if checkout was successful, nil otherwise."
 		  (aset item 3 file)))))
     result))
 
-(add-hook 'before-init-hook
-	  #'(lambda () (and (featurep 'menubar)
-	                    current-menubar
-			    (car (find-menu-item current-menubar '("Tools")))
-			    (add-submenu '("Tools") vc-menu "Compare")
-			    (add-menu-button '("Tools") "---" "Compare"))
-	      ))
+(and (featurep 'menubar)
+     current-menubar
+     (car (find-menu-item current-menubar '("Tools")))
+     (add-submenu '("Tools") vc-menu "Compare")
+     (add-menu-button '("Tools") "---" "Compare"))
 
 ;;; End XEmacs menus
 

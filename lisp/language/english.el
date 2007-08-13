@@ -1,32 +1,35 @@
 ;;; english.el --- English support
 
-;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
+;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Keywords: multibyte character, character set, syntax, category
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;;; Commentary:
 
 ;; We need nothing special to support English on Emacs.  Selecting
 ;; English as a language environment is one of the ways to reset
 ;; various multilingual environment to the original settting.
+
+;; modified for XEmacs by MORIOKA Tomohiko
 
 ;;; Code
 
@@ -36,7 +39,7 @@ The default status is as follows.
 
   The default value of enable-multibyte-characters is t.
 
-  The default value of buffer-file-coding-system is iso-8859-1.
+  The default value of buffer-file-coding-system is nil.
   The coding system for terminal output is nil.
   The coding system for keyboard input is nil.
 
@@ -44,66 +47,61 @@ The default status is as follows.
   bound to each category are as follows
 	coding category			coding system
 	--------------------------------------------------
-	coding-category-iso-7		iso-2022-7
-	coding-category-iso-8-2		iso-8859-1
+	coding-category-iso-7		iso-2022-7bit
 	coding-category-iso-8-1		iso-8859-1
-	coding-category-iso-else	iso-8859-1
-	coding-category-internal 	internal
-	coding-category-binary		no-conversion
-	coding-category-sjis		sjis
-	coding-category-big5		big5
+	coding-category-iso-8-2		iso-8859-1
+	coding-category-iso-7-else	iso-2022-7bit-lock
+	coding-category-iso-8-else	iso-2022-8bit-ss2
+	coding-category-emacs-mule 	no-conversion
+	coding-category-sjis		japanese-shift-jis
+	coding-category-big5		chinese-big5
+	coding-category-binarry		no-conversion
 "
   (interactive)
   (setq-default enable-multibyte-characters t)
-  (if (local-variable-p 'enable-multibyte-characters)
-      (setq enable-multibyte-characters t))
 
-  (setq coding-category-internal	'internal
-	coding-category-iso-7		'iso-2022-7
+  (setq coding-category-iso-7		'iso-2022-7bit
 	coding-category-iso-8-1		'iso-8859-1
 	coding-category-iso-8-2		'iso-8859-1
-	coding-category-iso-else	'iso-8859-1
-	coding-category-sjis		'sjis
-	coding-category-big5		'big5
-	coding-category-binary		'no-conversion)
+	coding-category-iso-7-else	'iso-2022-7bit-lock
+	coding-category-iso-8-else	'iso-2022-8bit-ss2
+	coding-category-emacs-mule	'no-conversion
+	coding-category-sjis		'japanese-shift-jis
+	coding-category-big5		'chinese-big5
+	coding-category-binary		'binary)
 
   (set-coding-priority
    '(coding-category-iso-7
      coding-category-iso-8-2
      coding-category-iso-8-1
-     coding-category-iso-else
-     coding-category-internal 
-     coding-category-binary
+     coding-category-iso-7-else
+     coding-category-iso-8-else
+     coding-category-emacs-mule 
+     coding-category-raw-text
      coding-category-sjis
-     coding-category-big5))
+     coding-category-big5
+     coding-category-binary))
 
-  (setq-default buffer-file-coding-system 'iso-8859-1)
-  (set-terminal-coding-system nil)
-  (set-keyboard-coding-system nil)
+  (set-default-coding-systems nil)
+  ;; Don't alter the terminal and keyboard coding systems here.
+  ;; The terminal still supports the same coding system
+  ;; that it supported a minute ago.
+;;;  (set-terminal-coding-system-internal nil)
+;;;  (set-keyboard-coding-system-internal nil)
 
-  (setq sendmail-coding-system nil
-	rmail-file-coding-system nil)
-  )
-
-(defun describe-english-support ()
-  "Describe how Emacs support English."
-  (interactive)
-  (describe-language-support-internal "English"))
+  (setq nonascii-insert-offset 0))
 
 (set-language-info-alist
  "English" '((setup-function . setup-english-environment)
-	     (describe-function . describe-english-support)
 	     (tutorial . "TUTORIAL")
 	     (charset . (ascii))
 	     (sample-text . "Hello!, Hi!, How are you?")
 	     (documentation . "\
-There's nothing special you should care to handle English in Emacs.
-You can use English both with enable-multibyte-characters t and nil.")
+Nothing special is needed to handle English.")
 	     ))
 
-(register-input-method "English"
-		       '("quail-dvorak" quail-use-package "quail/latin"))
-(register-input-method "British"
-		       '("quail-british" quail-use-package "quail/latin"))
+;; Make "ASCII" an alias of "English" language environment.
+(set-language-info-alist
+ "ASCII" (cdr (assoc "English" language-info-alist)))
 
 ;;; english.el ends here

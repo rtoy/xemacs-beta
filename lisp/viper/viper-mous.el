@@ -607,25 +607,33 @@ bindings in the Viper manual."
 
 (defcustom viper-mouse-search-key '(meta shift 1)
   "*Key used to click-search in Viper.
-Must be a list that specifies the mouse button and modifiers. The supported
-modifiers are `meta', `shift', and `control'. For instance, `(meta shift 1)'
-means that holding the meta and shift keys down and clicking on a word with
-mouse button 1 will initiate search for that word in the buffer that was
-current just before the click. This buffer may be different from the one where
-the click occurred."
-  :type 'list
+This must be a list that specifies the mouse button and modifiers.
+The supported modifiers are `meta', `shift', and `control'.
+For instance, `(meta shift 1)' means that holding the meta and shift
+keys down and clicking on a word with mouse button 1
+will search for that word in the buffer that was current before the click.
+This buffer may be different from the one where the click occurred."
+  :type '(list (set :inline t :tag "Modifiers" :format "%t: %v"
+		     (const :format "%v " meta)
+		     (const :format "%v " shift)
+		     (const control))
+	       (integer :tag "Button"))
   :set 'viper-reset-mouse-search-key
   :group 'viper-mouse)
 
 (defcustom viper-mouse-insert-key '(meta shift 2)
   "*Key used to click-insert in Viper.
-Must be a list that specifies the mouse button and modifiers. The supported
-modifiers are `meta', `shift', and `control'. For instance, `(meta shift 2)'
-means that holding the meta and shift keys down and clicking on a word with
-mouse button 2 will insert that word at the cursor in the buffer that was
-current just before the click. This buffer may be different from the one where 
-the click occurred."
-  :type 'list
+Must be a list that specifies the mouse button and modifiers.
+The supported modifiers are `meta', `shift', and `control'.
+For instance, `(meta shift 2)' means that holding the meta and shift keys
+down, and clicking on a word with mouse button 2, will insert that word
+at the cursor in the buffer that was current just before the click.
+This buffer may be different from the one where the click occurred."
+  :type '(list (set :inline t :tag "Modifiers" :format "%t: %v"
+		     (const :format "%v " meta)
+		     (const :format "%v " shift)
+		     (const control))
+	       (integer :tag "Button"))
   :set 'viper-reset-mouse-insert-key
   :group 'viper-mouse)
 	   

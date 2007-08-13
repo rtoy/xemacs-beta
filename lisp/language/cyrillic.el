@@ -1,7 +1,7 @@
 ;;; cyrillic.el --- Support for languages which use Cyrillic characters
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Keywords: multilingual, Cyrillic
@@ -40,24 +40,37 @@
 ;;; CYRILLIC
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-language-environment 'cyrillic
-  "Cyrillic"
-  (lambda ()
-    (set-coding-category-system 'iso-8-designate 'iso-8859-5)
-    (set-coding-priority-list '(iso-8-designate iso-8-1))
-    (set-default-buffer-file-coding-system 'iso-8859-5)
-    (setq terminal-coding-system 'iso-8859-5)
-    (setq keyboard-coding-system 'iso-8859-5)
-    ;; (setq-default quail-current-package
-    ;;               (assoc "yawerty" quail-package-alist))
-    ))
+;; (define-prefix-command 'describe-cyrillic-environment-map)
+;; (define-key-after describe-language-environment-map [Cyrillic]
+;;   '("Cyrillic" . describe-cyrillic-environment-map)
+;;   t)
+
+;; (define-prefix-command 'setup-cyrillic-environment-map)
+;; (define-key-after setup-language-environment-map [Cyrillic]
+;;   '("Cyrillic" . setup-cyrillic-environment-map)
+;;   t)
+
+;; (define-language-environment 'cyrillic
+;;   "Cyrillic"
+;;   (lambda ()
+;;     (set-coding-category-system 'iso-8-designate 'iso-8859-5)
+;;     (set-coding-priority-list '(iso-8-designate iso-8-1))
+;;     (set-default-buffer-file-coding-system 'iso-8859-5)
+;;     (setq terminal-coding-system 'iso-8859-5)
+;;     (setq keyboard-coding-system 'iso-8859-5)
+;;     ;; (setq-default quail-current-package
+;;     ;;               (assoc "yawerty" quail-package-alist))
+;;     ))
 
 ;; ISO-8859-5 staff
 
 ;; (make-coding-system
-;;  'iso-8859-5 2 ?5 "MIME ISO-8859-5"
+;;  'cyrillic-iso-8bit 2 ?5
+;;  "ISO 2022 based 8-bit encoding for Cyrillic script (MIME:ISO-8859-5)"
 ;;  '((ascii t) (cyrillic-iso8859-5 t) nil nil
 ;;    nil ascii-eol ascii-cntl nil nil nil nil))
+
+;; (define-coding-system-alias 'iso-8859-5 'cyrillic-iso-8bit)
 
 (make-coding-system
  'iso-8859-5 'iso2022
@@ -68,6 +81,15 @@
    charset-g3 t
    mnemonic "ISO8/Cyr"
    ))
+
+(set-language-info-alist
+ "Cyrillic-ISO" '((setup-function . (setup-cyrillic-iso-environment
+				     . setup-cyrillic-environment-map))
+		  (charset . (cyrillic-iso8859-5))
+		  (coding-system . (iso-8859-5))
+		  (sample-text . "Russian (,L@caaZXY(B)	,L7T`PRabRcYbU(B!")
+		  (documentation . ("Support for Cyrillic ISO-8859-5."
+				    . describe-cyrillic-environment-map))))
 
 ;; KOI-8 staff
 
@@ -111,11 +133,18 @@
 	       32 163  32  32  32  32  32  32  32  32  32  32  32  32  32  32])
 	    )))))
   "CCL program to encode KOI8.")
-
+	     
 ;; (make-coding-system
-;;  'koi8-r 4
-;;  ?K "Coding-system used for KOI8."
+;;  'cyrillic-koi8 4
+;;  ;; We used to use ?K.  It is true that ?K is more strictly correct,
+;;  ;; but it is also used for Korean.
+;;  ;; So people who use koi8 for languages other than Russian
+;;  ;; will have to forgive us.
+;;  ?R "KOI8 8-bit encoding for Cyrillic (MIME: KOI8-R)"
 ;;  (cons ccl-decode-koi8 ccl-encode-koi8))
+
+;; (define-coding-system-alias 'koi8-r 'cyrillic-koi8)
+;; (define-coding-system-alias 'koi8 'cyrillic-koi8)
 
 (make-coding-system
  'koi8-r 'ccl
@@ -140,6 +169,15 @@
 
 ;; (setq font-ccl-encoder-alist
 ;;       (cons (cons "koi8" ccl-encode-koi8-font) font-ccl-encoder-alist))
+
+(set-language-info-alist
+ "Cyrillic-KOI8" '((setup-function . (setup-cyrillic-koi8-environment
+				      . setup-cyrillic-environment-map))
+		   (charset . (cyrillic-iso8859-5))
+		   (coding-system . (koi8-r))
+		   (sample-text . "Russian (,L@caaZXY(B)	,L7T`PRabRcYbU(B!")
+		   (documentation . ("Support for Cyrillic KOI-8."
+				     . describe-cyrillic-environment-map))))
 
 ;;; ALTERNATIVNYJ staff
 
@@ -212,50 +250,46 @@
 ;;       (cons (cons "alternativnyj" ccl-encode-alternativnyj-font)
 ;;             font-ccl-encoder-alist))
 
+(set-language-info-alist
+ "Cyrillic-ALT" '((setup-function . (setup-cyrillic-alternativnyj-environment
+				     . setup-cyrillic-environment-map))
+		  (charset . (cyrillic-iso8859-5))
+		  (coding-system . (alternativnyj))
+		  (sample-text . "Russian (,L@caaZXY(B)	,L7T`PRabRcYbU(B!")
+		  (documentation . ("Support for Cyrillic ALTERNATIVNYJ."
+				    . describe-cyrillic-environment-map))))
+
 ;;; GENERAL
 
-(register-input-method
- "Cyrillic" '("quail-jcuken" quail-use-package "quail/cyrillic"))
-(register-input-method
- "Cyrillic" '("quail-macedonian" quail-use-package "quail/cyrillic"))
-(register-input-method
- "Cyrillic" '("quail-serbian" quail-use-package "quail/cyrillic"))
-(register-input-method
- "Cyrillic" '("quail-beylorussian" quail-use-package "quail/cyrillic"))
-(register-input-method
- "Cyrillic" '("quail-ukrainian" quail-use-package "quail/cyrillic"))
-(register-input-method
- "Cyrillic" '("quail-yawerty" quail-use-package "quail/cyrillic"))
+;; (defun setup-cyrillic-environment ()
+;;   "Setup multilingual environment for Cyrillic users."
+;;   (interactive)
+;;   (setq primary-language "Cyrillic")
+;; 
+;;   (setq coding-category-iso-8-1 'iso-8859-5)
+;; 
+;;   (set-coding-priority
+;;    '(coding-category-iso-7
+;;      coding-category-iso-8-1))
+;; 
+;;   (setq-default buffer-file-coding-system 'iso-8859-5)
+;;   (set-terminal-coding-system 'iso-8859-5)
+;;   (set-keyboard-coding-system 'iso-8859-5)
+;; 
+;;   (setq default-input-method '("Cyrillic" . "quail-yawerty"))
+;;   )
 
-(defun setup-cyrillic-environment ()
-  "Setup multilingual environment for Cyrillic users."
-  (interactive)
-  (setq primary-language "Cyrillic")
+;; (defun describe-cyrillic-support ()
+;;   "Describe how Emacs support Cyrillic."
+;;   (interactive)
+;;   (describe-language-support-internal "Cyrillic"))
 
-  (setq coding-category-iso-8-1 'iso-8859-5)
-
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-8-1))
-
-  (setq-default buffer-file-coding-system 'iso-8859-5)
-  (set-terminal-coding-system 'iso-8859-5)
-  (set-keyboard-coding-system 'iso-8859-5)
-
-  (setq default-input-method '("Cyrillic" . "quail-yawerty"))
-  )
-
-(defun describe-cyrillic-support ()
-  "Describe how Emacs support Cyrillic."
-  (interactive)
-  (describe-language-support-internal "Cyrillic"))
-
-(set-language-info-alist
- "Cyrillic" '((setup-function . setup-cyrillic-environment)
-	      (describe-function . describe-cyrillic-support)
-	      (charset . (cyrillic-iso8859-5))
-	      (coding-system . (iso-8859-5 koi8-r alternativnyj))
-	      (sample-text . "Russian (,L@caaZXY(B)	,L7T`PRabRcYbU(B!")
-	      (documentation . nil)))
+;; (set-language-info-alist
+;;  "Cyrillic" '((setup-function . setup-cyrillic-environment)
+;;               (describe-function . describe-cyrillic-support)
+;;               (charset . (cyrillic-iso8859-5))
+;;               (coding-system . (iso-8859-5 koi8-r alternativnyj))
+;;               (sample-text . "Russian (,L@caaZXY(B) ,L7T`PRabRcYbU(B!")
+;;               (documentation . nil)))
 
 ;;; cyrillic.el ends here

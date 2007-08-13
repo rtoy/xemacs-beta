@@ -312,6 +312,7 @@ new value."
 	 (set-extent-property extent 'end-closed t))
     (set-extent-property extent 'detachable nil)
     (set-extent-property extent 'field widget)
+    (set-extent-property extent 'tabable t)
     (set-extent-property extent 'keymap map)
     (set-extent-property extent 'face face)
     (set-extent-property extent 'balloon-help help-echo)
@@ -327,6 +328,7 @@ new value."
       (setq help-echo 'widget-mouse-help))
     (set-extent-property extent 'start-open t)
     (set-extent-property extent 'button widget)
+    (set-extent-property extent 'tabable t)
     (set-extent-property extent 'mouse-face widget-mouse-face)
     (set-extent-property extent 'balloon-help help-echo)
     (set-extent-property extent 'help-echo help-echo)
@@ -1004,7 +1006,7 @@ Recommended as a parent keymap for modes using widgets.")
 	(when (commandp command)
 	  (call-interactively command))))))
 
-(defun widget-tabable-at (&optional pos)
+(defun widget-tabable-at (&optional pos last-tab backwardp)
   "Return the tabable widget at POS, or nil.
 POS defaults to the value of (point)."
   (unless pos
@@ -1013,9 +1015,10 @@ POS defaults to the value of (point)."
     (if widget
 	(let ((order (widget-get widget :tab-order)))
 	  (if order
-	      (if (>= order 0)
-		  widget
-		nil)
+	      (if last-tab (and (= order (if backwardp (1- last-tab)
+					   (1+ last-tab)))
+				widget)
+		(and (> order 0) widget))
 	    widget))
       nil)))
 
@@ -1029,76 +1032,74 @@ POS defaults to the value of (point)."
 		       :field-extent))))
 
 (defun widget-next-button-or-field (pos)
-  "Find the next button, or field, and return its start position.
-If none is found, return (point-max).
+  "Find the next button, or field, and return its start position, or nil.
 Internal function, don't use it outside `wid-edit'."
   (let* ((at-point (widget-button-or-field-extent pos))
 	 (extent (map-extents
 		  (lambda (ext ignore)
-		    (if (or (extent-property ext 'button)
-			    (extent-property ext 'field))
-			ext
-		      nil))
-		  nil (if at-point (extent-end-position at-point) pos) nil)))
-    (if extent
-	(extent-start-position extent)
-      (point-max))))
+		    ext)
+		  nil (if at-point (extent-end-position at-point) pos)
+		  nil nil 'start-open 'tabable)))
+    (and extent
+	 (extent-start-position extent))))
 
 (defun widget-previous-button-or-field (pos)
-  "Find the previous button, or field, and return its start position.
-If none is found, return (point-min).
+  "Find the previous button, or field, and return its start position, or nil.
 Internal function, don't use it outside `wid-edit'."
   (let* ((at-point (widget-button-or-field-extent pos))
 	 previous-extent)
     (map-extents
      (lambda (ext ignore)
-       (when (or (extent-property ext 'button)
-		 (extent-property ext 'field))
-	 (if (eq ext at-point)
-	     previous-extent
-	   (setq previous-extent ext)
-	   nil)))
-     nil nil pos)
-    (if previous-extent
-	(extent-start-position previous-extent)
-    (point-min))))
+       (if (eq ext at-point)
+	   previous-extent
+	 (setq previous-extent ext)
+	 nil))
+     nil nil pos nil 'start-open 'tabable)
+    (and previous-extent
+	 (extent-start-position previous-extent))))
 
 (defun widget-move (arg)
   "Move point to the ARG next field or button.
 ARG may be negative to move backward."
-  (let ((pos (point))
-	(number arg)
-	(old (widget-tabable-at)))
-    ;; Forward.
-    (while (> arg 0)
-      (goto-char (if (eobp)
-		     (point-min)
-		   (widget-next-button-or-field (point))))
-      (and (eq pos (point))
-	   (eq arg number)
-	   (error "No buttons or fields found"))
-      (let ((new (widget-tabable-at)))
-	(when new
-	  (unless (eq new old)
-	    (setq arg (1- arg))
-	    (setq old new)))))
-    ;; Backward.
+  (let ((opoint (point)) (wrapped 0)
+	(last-tab (widget-get (widget-at (point)) :tab-order))
+	nextpos found)
+    ;; Movement backward
     (while (< arg 0)
-      (goto-char (if (bobp)
-		     (point-max)
-		   (widget-previous-button-or-field (point))))
-      (and (eq pos (point))
-	   (eq arg number)
-	   (error "No buttons or fields found"))
-      (let ((new (widget-tabable-at)))
-	(when new
-	  (unless (eq new old)
-	    (incf arg)))))
-    (let ((new (widget-tabable-at)))
-      (goto-char (extent-start-position (or (widget-get new :button-extent)
-					    (widget-get new :field-extent))))))
-  (widget-echo-help (point))
-  (run-hooks 'widget-move-hook))
+      (setq nextpos (widget-previous-button-or-field (point)))
+      (if nextpos
+	  (progn
+	    (goto-char nextpos)
+	    (when (widget-tabable-at nil last-tab t)
+	      (incf arg)
+	      (setq found t
+		    last-tab (widget-get (widget-at (point))
+					 :tab-order))))
+	(if (and (not found) (> wrapped 1))
+	    (setq arg 0
+		  found nil)
+	  (goto-char (point-max))
+	  (incf wrapped))))
+    ;; Movement forward
+    (while (> arg 0)
+      (setq nextpos (widget-next-button-or-field (point)))
+      (if nextpos
+	  (progn
+	    (goto-char nextpos)
+	    (when (widget-tabable-at nil last-tab)
+	      (decf arg)
+	      (setq found t
+		    last-tab (widget-get (widget-at (point))
+					 :tab-order))))
+	(if (and (not found) (> wrapped 1))
+	    (setq arg 0
+		  found nil)
+	  (goto-char (point-min))
+	  (incf wrapped))))
+    (if (not found)
+	(goto-char opoint)
+      (widget-echo-help (point))
+      (run-hooks 'widget-move-hook))))
 
 (defun widget-forward (arg)
   "Move point to the next field or button.
@@ -2225,7 +2226,7 @@ when he invoked the menu."
 	found rest)
     (while values
       (let ((answer (widget-checklist-match-up args values)))
-	(cond (answer 
+	(cond (answer
 	       (let ((vals (widget-match-inline answer values)))
 		 (setq found (append found (car vals))
 		       values (cdr vals)
@@ -3256,7 +3257,7 @@ To use this type, you must define :match or :match-alternatives."
   :format "%{%t%}:\n%v"
   :match 'widget-vector-match
   :value-to-internal (lambda (widget value) (append value nil))
-  :value-to-external (lambda (widget value) (apply 'vector value)))
+  :value-to-external (lambda (widget value) (vconcat value)))
 
 (defun widget-vector-match (widget value) 
   (and (vectorp value)
@@ -3271,7 +3272,7 @@ To use this type, you must define :match or :match-alternatives."
   :value-to-internal (lambda (widget value)
 		       (list (car value) (cdr value)))
   :value-to-external (lambda (widget value)
-		       (cons (nth 0 value) (nth 1 value))))
+		       (cons (car value) (cadr value))))
 
 (defun widget-cons-match (widget value) 
   (and (consp value)
@@ -3362,7 +3363,7 @@ To use this type, you must define :match or :match-alternatives."
 
 (define-widget 'color 'editable-field 
   "Choose a color name (with sample)."
-  :format "%t: %v (%{sample%})\n"
+  :format "%[%t%]: %v (%{sample%})\n"
   :size 10
   :tag "Color"
   :value "black"
@@ -3412,22 +3413,7 @@ To use this type, you must define :match or :match-alternatives."
 (defun widget-color-action (widget &optional event)
   ;; Prompt for a color.
   (let* ((tag (widget-apply widget :menu-tag-get))
-	 (prompt (concat tag ": "))
-	 (value (widget-value widget))
-	 (start (widget-field-start widget))
-	 (pos (cond ((< (point) start)
-		     0)
-		    ((> (point) (+ start (length value)))
-		     (length value))
-		    (t
-		     (- (point) start))))
-	 (answer (if (commandp 'read-color)
-		     (read-color prompt)
-		   (completing-read (concat tag ": ")
-				    (widget-color-choice-list) 
-				    nil nil 
-				    (cons value pos)
-				    'widget-color-history))))
+	 (answer (read-color (concat tag ": "))))
     (unless (zerop (length answer))
       (widget-value-set widget answer)
       (widget-setup)

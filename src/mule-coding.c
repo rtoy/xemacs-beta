@@ -38,7 +38,7 @@ Lisp_Object Vkeyboard_coding_system;
 Lisp_Object Vterminal_coding_system;
 Lisp_Object Vcoding_system_for_read;
 Lisp_Object Vcoding_system_for_write;
-Lisp_Object Vpathname_coding_system;
+Lisp_Object Vfile_name_coding_system;
 
 /* Table of symbols identifying each coding category. */
 Lisp_Object coding_category_symbol[CODING_CATEGORY_LAST + 1];
@@ -4446,16 +4446,16 @@ static Bufbyte_dynarr *conversion_in_dynarr;
 
 /* Determine coding system from coding format */
 
-#define PATHNAME_CODING_SYSTEM 				\
- ((NILP (Vpathname_coding_system) ||			\
-   (EQ ((Vpathname_coding_system), Qbinary))) ?		\
-  Qnil : Fget_coding_system (Vpathname_coding_system))
+#define FILE_NAME_CODING_SYSTEM 			\
+ ((NILP (Vfile_name_coding_system) ||			\
+   (EQ ((Vfile_name_coding_system), Qbinary))) ?	\
+  Qnil : Fget_coding_system (Vfile_name_coding_system))
 
 /* #### not correct for all values of `fmt'! */
 #define FMT_CODING_SYSTEM(fmt)					\
- (((fmt) == FORMAT_FILENAME) ? PATHNAME_CODING_SYSTEM      :	\
+ (((fmt) == FORMAT_FILENAME) ? FILE_NAME_CODING_SYSTEM     :	\
   ((fmt) == FORMAT_CTEXT   ) ? Fget_coding_system (Qctext) :	\
-  ((fmt) == FORMAT_TERMINAL) ? PATHNAME_CODING_SYSTEM      :	\
+  ((fmt) == FORMAT_TERMINAL) ? FILE_NAME_CODING_SYSTEM     :	\
   Qnil)
 
 extern CONST Extbyte *
@@ -4748,10 +4748,10 @@ for permanent changes to the environment.
 */ );
   Vcoding_system_for_write = Qnil;
 
-  DEFVAR_LISP ("pathname-coding-system", &Vpathname_coding_system /*
+  DEFVAR_LISP ("file-name-coding-system", &Vfile_name_coding_system /*
 Coding system used to convert pathnames when accessing files.
 */ );
-  Vpathname_coding_system = Qnil;
+  Vfile_name_coding_system = Qnil;
 
   DEFVAR_BOOL ("enable-multibyte-characters", &enable_multibyte_characters /*
 Non-nil means the buffer contents are regarded as multi-byte form

@@ -1,8 +1,10 @@
 ;;; mule-coding.el --- Coding-system functions for Mule.
 
-;; Copyright (C) 1992,93,94,95 Free Software Foundation, Inc.
+;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; This file is part of XEmacs.
 
@@ -27,6 +29,61 @@
 
 ;;; Code:
 
+(defalias 'check-coding-system 'get-coding-system)
+
+(defun modify-coding-system-alist (target-type regexp coding-system)
+  "Modify one of look up tables for finding a coding system on I/O operation.
+There are three of such tables, `file-coding-system-alist',
+`process-coding-system-alist', and `network-coding-system-alist'.
+
+TARGET-TYPE specifies which of them to modify.
+If it is `file', it affects `file-coding-system-alist' (which see).
+If it is `process', it affects `process-coding-system-alist' (which see).
+If it is `network', it affects `network-codign-system-alist' (which see).
+
+REGEXP is a regular expression matching a target of I/O operation.
+The target is a file name if TARGET-TYPE is `file', a program name if
+TARGET-TYPE is `process', or a network service name or a port number
+to connect to if TARGET-TYPE is `network'.
+
+CODING-SYSTEM is a coding system to perform code conversion on the I/O
+operation, or a cons cell (DECODING . ENCODING) specifying the coding systems
+for decoding and encoding respectively,
+or a function symbol which, when called, returns such a cons cell."
+  (or (memq target-type '(file process network))
+      (error "Invalid target type: %s" target-type))
+  (or (stringp regexp)
+      (and (eq target-type 'network) (integerp regexp))
+      (error "Invalid regular expression: %s" regexp))
+  (if (symbolp coding-system)
+      (if (not (fboundp coding-system))
+	  (progn
+	    (check-coding-system coding-system)
+	    (setq coding-system (cons coding-system coding-system))))
+    (check-coding-system (car coding-system))
+    (check-coding-system (cdr coding-system)))
+  (cond ((eq target-type 'file)
+	 (let ((slot (assoc regexp file-coding-system-alist)))
+	   (if slot
+	       (setcdr slot coding-system)
+	     (setq file-coding-system-alist
+		   (cons (cons regexp coding-system)
+			 file-coding-system-alist)))))
+	((eq target-type 'process)
+	 (let ((slot (assoc regexp process-coding-system-alist)))
+	   (if slot
+	       (setcdr slot coding-system)
+	     (setq process-coding-system-alist
+		   (cons (cons regexp coding-system)
+			 process-coding-system-alist)))))
+	(t
+	 (let ((slot (assoc regexp network-coding-system-alist)))
+	   (if slot
+	       (setcdr slot coding-system)
+	     (setq network-coding-system-alist
+		   (cons (cons regexp coding-system)
+			 network-coding-system-alist)))))))
+
 (defun set-keyboard-coding-system (coding-system)
   "Set the coding system used for TTY keyboard input. Currently broken."
   (interactive "zkeyboard-coding-system: ")
@@ -45,7 +102,7 @@
   "Set the coding system used for file system path names."
   (interactive "zPathname-coding-system: ")
   (get-coding-system coding-system) ; correctness check
-  (setq pathname-coding-system coding-system))
+  (setq file-name-coding-system coding-system))
 
 (defun what-coding-system (start end &optional arg)
   "Show the encoding of text in the region.
@@ -209,13 +266,15 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 (copy-coding-system 'iso-2022-7bit-ss2 'iso-2022-jp-2)
 
 (make-coding-system
- 'iso-2022-7 'iso2022
- "ISO-2022 seven-bit coding system.  No single-shift or locking-shift."
+ 'iso-2022-7bit 'iso2022
+ "ISO 2022 based 7-bit encoding using only G0"
  '(charset-g0 ascii
    seven t
    short t
-   mnemonic "ISO7"
-   ))
+   mnemonic "ISO7"))
+
+;; compatibility for old XEmacsen
+(copy-coding-system 'iso-2022-7bit 'iso-2022-7)
 
 (make-coding-system
  'iso-2022-8 'iso2022
@@ -260,5 +319,8 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 (set-coding-category-system 'no-conversion 'no-conversion)
 
 (make-compatible-variable 'enable-multibyte-characters "Unimplemented")
+
+(define-obsolete-variable-alias
+  'pathname-coding-system 'file-name-coding-system)
 
 ;;; mule-coding.el ends here

@@ -1,6 +1,22 @@
 ;;; viper-cmd.el --- Vi command support for Viper
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 
+;; This file is part of GNU Emacs.
+
+;; GNU Emacs is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;; Code
 
@@ -347,31 +363,29 @@
 	       (not viper-want-emacs-keys-in-insert))
 		   
 	 (if viper-want-ctl-h-help
-	     (progn 
-	       (define-key viper-insert-basic-map [backspace] 'help-command)
-	       (define-key viper-replace-map [backspace] 'help-command)
-	       (define-key viper-insert-basic-map [(control h)] 'help-command)
-	       (define-key viper-replace-map [(control h)] 'help-command))
+	     (progn
+	       (define-key viper-insert-basic-map "\C-h" 'help-command)
+	       (define-key viper-replace-map "\C-h" 'help-command))
 	   (define-key viper-insert-basic-map 
-	     [backspace] 'viper-del-backward-char-in-insert)
+	     "\C-h" 'viper-del-backward-char-in-insert)
 	   (define-key viper-replace-map
-	     [backspace] 'viper-del-backward-char-in-replace)
-	   (define-key viper-insert-basic-map 
-	     [(control h)] 'viper-del-backward-char-in-insert)
-	   (define-key viper-replace-map
-	     [(control h)] 'viper-del-backward-char-in-replace)))
-		     
+	     "\C-h" 'viper-del-backward-char-in-replace))
+	 ;; In XEmacs, C-h overrides backspace, so we make sure it doesn't.
+	 (define-key viper-insert-basic-map
+	   [backspace] 'viper-del-backward-char-in-insert)
+	 (define-key viper-replace-map
+	   [backspace] 'viper-del-backward-char-in-replace)
+	 ) ; end insert/replace case
 	(t ; Vi state
 	 (setq viper-vi-diehard-minor-mode (not viper-want-emacs-keys-in-vi))
 	 (if viper-want-ctl-h-help
-	     (progn
-	       (define-key viper-vi-basic-map [backspace] 'help-command)
-	       (define-key viper-vi-basic-map [(control h)] 'help-command))
-	   (define-key viper-vi-basic-map [backspace] 'viper-backward-char)
-	   (define-key viper-vi-basic-map [(control h)] 'viper-backward-char)))
+	     (define-key viper-vi-basic-map "\C-h" 'help-command)
+	   (define-key viper-vi-basic-map "\C-h" 'viper-backward-char))
+	 ;; In XEmacs, C-h overrides backspace, so we make sure it doesn't.
+	 (define-key viper-vi-basic-map [backspace] 'viper-backward-char))
 	))
 	     
-    
+   
 ;; Normalizes minor-mode-map-alist by putting Viper keymaps first.
 ;; This ensures that Viper bindings are in effect, regardless of which minor
 ;; modes were turned on by the user or by other packages.
@@ -1787,7 +1801,7 @@ Undo previous insertion and inserts new."
 
 (defcustom viper-smart-suffix-list
   '("" "tex" "c" "cc" "C" "el" "java" "html" "htm" "pl" "P" "p")
-  "*List of suffixes that Viper automatically tries to append to filenames ending with a `.'.
+  "*List of suffixes that Viper tries to append to filenames ending with a `.'.
 This is useful when you the current directory contains files with the same
 prefix and many different suffixes. Usually, only one of the suffixes
 represents an editable file. However, file completion will stop at the `.'
@@ -1799,8 +1813,8 @@ corresponding file exists is selected. If no file exists for any of the
 suffixes, the user is asked to confirm.
 
 To turn this feature off, set this variable to nil."
-  :type '(set string)
-  :group 'viper)
+  :type '(repeat string)
+  :group 'viper-misc)
     
 
 ;; Try to add a suitable suffix to files whose name ends with a `.'
@@ -3216,7 +3230,8 @@ controlled by the sign of prefix numeric value."
 (defun viper-forward-sentence (arg)
   "Forward sentence."
   (interactive "P")
-  (push-mark nil t) 
+  (or (eq last-command this-command)
+      (push-mark nil t))
   (let ((val (viper-p-val arg))
 	(com (viper-getcom arg)))
     (if com (viper-move-marker-locally 'viper-com-point (point)))
@@ -3226,7 +3241,8 @@ controlled by the sign of prefix numeric value."
 (defun viper-backward-sentence (arg)
   "Backward sentence."
   (interactive "P")
-  (push-mark nil t) 
+  (or (eq last-command this-command)
+      (push-mark nil t))
   (let ((val (viper-p-val arg))
 	(com (viper-getcom arg)))
     (if com (viper-move-marker-locally 'viper-com-point (point)))
@@ -3236,7 +3252,8 @@ controlled by the sign of prefix numeric value."
 (defun viper-forward-paragraph (arg)
   "Forward paragraph."
   (interactive "P")
-  (push-mark nil t) 
+  (or (eq last-command this-command)
+      (push-mark nil t))
   (let ((val (viper-p-val arg))
 	(com (viper-getCom arg)))
     (if com (viper-move-marker-locally 'viper-com-point (point)))
@@ -3249,7 +3266,8 @@ controlled by the sign of prefix numeric value."
 (defun viper-backward-paragraph (arg)
   "Backward paragraph."
   (interactive "P")
-  (push-mark nil t) 
+  (or (eq last-command this-command)
+      (push-mark nil t))
   (let ((val (viper-p-val arg))
 	(com (viper-getCom arg)))
     (if com (viper-move-marker-locally 'viper-com-point (point)))
@@ -3260,8 +3278,7 @@ controlled by the sign of prefix numeric value."
 	  (viper-execute-com 'viper-backward-paragraph nil com)
 	  (backward-char 1)))))
 
-;; should be mode-specific etc.
-
+;; should be mode-specific
 (defun viper-prev-heading (arg)
   (interactive "P")
   (let ((val (viper-p-val arg))
@@ -4274,13 +4291,10 @@ One can use `` and '' to temporarily jump 1 step back."
 	   (view-register (downcase reg)))
 	  ((viper-valid-register reg '(digit))
 	   (let ((text (current-kill (- reg ?1) 'do-not-rotate)))
-	     (save-excursion 
-	       (set-buffer (get-buffer-create "*Output*"))
-	       (delete-region (point-min) (point-max))
-	       (insert (format "Register %c contains the string:\n" reg))
-	       (insert text)
-	       (goto-char (point-min)))
-	     (display-buffer "*Output*")))
+	     (with-output-to-temp-buffer " *viper-info*"
+	       (princ (format "Register %c contains the string:\n" reg))
+	       (princ text))
+	     ))
 	  ((= ?\] reg)
 	   (viper-next-heading arg))
 	  (t (error
@@ -4296,14 +4310,12 @@ One can use `` and '' to temporarily jump 1 step back."
 	   (viper-heading-end arg))
 	  ((viper-valid-register reg '(letter))
 	   (let* ((val (get-register (1+ (- reg ?a))))
-		  (buf (if (not val) 
+		  (buf (if (not (markerp val))
 			   (error viper-EmptyTextmarker reg)
 			 (marker-buffer val)))
 		  (pos (marker-position val))
 		  line-no text (s pos) (e pos))
-	     (save-excursion 
-	       (set-buffer (get-buffer-create "*Output*"))
-	       (delete-region (point-min) (point-max))
+	     (with-output-to-temp-buffer " *viper-info*"
 	       (if (and buf pos)
 		   (progn
 		     (save-excursion 
@@ -4325,15 +4337,14 @@ One can use `` and '' to temporarily jump 1 step back."
 		       (setq text (format "%s<%c>%s" 
 					  (substring text 0 (- pos s)) 
 					  reg (substring text (- pos s)))))
-		     (insert
+		     (princ
 		      (format
 		       "Textmarker `%c' is in buffer `%s' at line %d.\n"
 				     reg (buffer-name buf) line-no))
-		     (insert (format "Here is some text around %c:\n\n %s" 
+		     (princ (format "Here is some text around %c:\n\n %s" 
 				     reg text)))
-		 (insert (format viper-EmptyTextmarker reg)))
-	       (goto-char (point-min)))
-	     (display-buffer "*Output*")))
+		 (princ (format viper-EmptyTextmarker reg))))
+	     ))
 	  (t (error viper-InvalidTextmarker reg)))))
   
 

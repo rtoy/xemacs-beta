@@ -1,3 +1,7 @@
+1997-09-27  SL Baur  <steve@altair.xemacs.org>
+
+	* gnats/flowchart.eps: New file.
+
 1997-09-23  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* xemacs/custom.texi (Easy Customization): Ditto.

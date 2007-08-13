@@ -1,7 +1,7 @@
 ;;; tibetan.el --- Support for Tibetan language
 
-;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, Tibetan
 
@@ -90,28 +90,12 @@
 
 (make-coding-system
  'tibetan 2 ?Q
- "Coding-system used for ASCII(MSB=0) & TIBETAN(MSB=1)."
+ "8-bit encoding for ASCII (MSB=0) and TIBETAN (MSB=1)"
  '((ascii t) (tibetan t) nil nil
    nil ascii-eol))
 
 (put 'tibetan 'post-read-conversion 'tibetan-post-read-conversion)
 (put 'tibetan 'pre-write-conversion 'tibetan-pre-write-conversion)
-
-(register-input-method
- "Tibetan" '("quail-tibetan-wylie" quail-use-package "quail/tibetan"))
-(register-input-method
- "Tibetan" '("quail-tibetan-tibkey" quail-use-package "quail/tibetan"))
-
-(defun setup-tibetan-environment ()
-  (setq coding-category-iso-7 'tibetan)
-
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-8-1))
-
-  (setq-default buffer-file-coding-system 'iso-2022-7)
-
-  (setq default-input-method '("Tibetan" . "quail-tibetan-wylie")))
 
 (set-language-info-alist
  "Tibetan" '((setup-function . setup-tibetan-environment)

@@ -192,16 +192,15 @@ Menu item names should be converted to normal form before being compared.
   Bufbyte *name_data;
   Bufbyte *string_result;
   Bufbyte *string_result_ptr;
-  Lisp_Object res;
   Emchar elt;
   int expecting_underscore = 0;
-  
+
   CHECK_STRING (name);
-  
+
   n = XSTRING (name);
   end = string_char_length (n);
   name_data = string_data (n);
-  
+
   string_result = (Bufbyte *) alloca (end * MAX_EMCHAR_LEN);
   string_result_ptr = string_result;
   for (i = 0; i < end ; i++)

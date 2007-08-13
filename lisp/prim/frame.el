@@ -817,36 +817,20 @@ For use as the value of `deselect-frame-hook'."
 (or deselect-frame-hook
     (add-hook 'deselect-frame-hook 'default-deselect-frame-hook))
 
-(defun default-drag-and-drop-functions (frame filepath &optional data type)
+(defun default-drag-and-drop-functions (frame filepath &optional data)
   "Implements the `drag-and-drop-functions' variable.
 For use as the value of `drag-and-drop-functions'.
 A file is popped up in a new buffer, some data without
-is inserted at point, and data with a type is handled
-for it's type (NOTE: type is only set for OffiX DnD)."
-  (cond (type 
-	 (cond ((or (< type 2) (> type 9)) ;; this is raw data or unknown stuff
-		(let ((buf (generate-new-buffer "DndRawData")))
-		  (set-buffer buf)
-		  (pop-to-buffer buf nil frame)
-		  (insert data)
-		  (hexlify-buffer)
-		  (make-frame-visible frame)))
-	       ((= type 5) (dired data))
-	       ((= type 8) (funcall browse-url-browser-function data))
-	       ((= type 9)
-		(let ((buf (generate-new-buffer "DndMIME")))
-		  (set-buffer buf)
-		  (pop-to-buffer buf nil frame)
-		  (insert data)
-		  (make-frame-visible frame)))
-	       (t (ding))))
-	(data (insert data))
-	(t
-	 (let ((x pop-up-windows))
-	   (setq pop-up-windows nil)
-	   (pop-to-buffer (find-file-noselect filepath) nil frame)
-	   (make-frame-visible frame)
-	   (setq pop-up-windows x)))))
+is inserted at point."
+  ;; changed this back -- hope it works for CDE ;-) Oliver Graf <ograf@fga.de>
+  ;; the OffiX drop stuff has moved to mouse.el (mouse-offix-drop)
+  (if (data)
+      (insert data)
+    (let ((x pop-up-windows))
+      (setq pop-up-windows nil)
+      (pop-to-buffer (find-file-noselect filepath) nil frame)
+      (make-frame-visible frame)
+      (setq pop-up-windows x))))
 
 (and (boundp 'drag-and-drop-functions)
      (or drag-and-drop-functions
@@ -863,10 +847,13 @@ Calls the internal function cde-start-drag-internal to do the actual work."
 	       (buffer-substring-no-properties begin end))
     (error "CDE functionality not compiled in.")))
 
+;; the OffiX drag stuff will soon move also (perhaps mouse.el)
+;; if the drag event is done
 (defun offix-start-drag (event data &optional type)
   "Implements the OffiX drag operation.
 Calls the internal function offix-start-drag-internal to do the actual work.
 If type is not given, DndText is assumed."
+  ;; Oliver Graf <ograf@fga.de>
   (interactive "esi")
   (if (featurep 'offix)
       (funcall (intern "offix-start-drag-internal") event data type)
@@ -876,6 +863,7 @@ If type is not given, DndText is assumed."
   "Implements the OffiX drag operation for a region.
 Calls the internal function offix-start-drag-internal to do the actual work.
 This always assumes DndText as type."
+  ;; Oliver Graf <ograf@fga.de>
   (interactive "_er")
   (if (featurep 'offix)
       (funcall (intern "offix-start-drag-internal")

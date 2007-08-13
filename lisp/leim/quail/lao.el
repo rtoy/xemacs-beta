@@ -1,7 +1,7 @@
 ;;; quail/lao.el --- Quail package for inputting Lao characters
 
-;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, input method, Lao
 
@@ -18,13 +18,14 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
 (require 'quail)
-(require 'language/lao-util)
+(require 'lao-util)
 
 (eval-and-compile
 
@@ -32,13 +33,13 @@
   [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0	; control codes
    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0	; control codes
    0 "1" "=" "3" "4" "(1l(B" "5" "(1'(B"          ; SPC .. '
-   "7" "8" "6" "(1mh(B" "(1A(B" "9" "(1c(B" "(1=(B"	; ( .. /
+   "7" "8" "6" "(1mh(B" "(1A(B" "(1*(B" "(1c(B" "(1=(B"	; ( .. /
    "(1"(B" "(1B(B" "(1?(B" "(1b(B" "(16(B" "(1X(B" "(1Y(B" "(1$(B"	; 0 .. 7
-   "(15(B" "(1((B" "%" "(1G(B" "(1}(B" "(1m(B" ">" "\)"	; 8 .. ?
+   "(15(B" "(1((B" "%" "(1G(B" "(1}(B" "(1m(B" "$" "\)"	; 8 .. ?
    "2" "(1Qi(B" "(1Vi(B" "(1O(B" "." "(1Si(B" "," ":"	; @ .. G
    "(1j(B" "(1N(B" "(1k(B" "!" "?" "(1f(B" "(1Wi(B" "(1|(B" 	; H .. O
    "(1](B" "(1[i(B" "_" ";" "+" "(1Ui(B" "x" "0"	; P .. W
-   "\(" "(1Ti(B" "\"" "(1:(B" 0 "(1E(B" "(1\(B" "(1*(B"     ; X .. _
+   "\(" "(1Ti(B" "\"" "(1:(B" 0 "(1E(B" "(1\(B" "9"     ; X .. _
    "(1'(B" "(1Q(B" "(1V(B" "(1a(B" "(1!(B" "(1S(B" "(14(B" "(1`(B"	; ` .. g
    "(1i(B" "(1C(B" "(1h(B" "(1R(B" "(1J(B" "(17(B" "(1W(B" "(19(B"	; h .. o
    "(1-(B" "(1[(B" "(1>(B" "(1K(B" "(1P(B" "(1U(B" "(1M(B" "(1d(B"	; p .. w
@@ -93,9 +94,10 @@
 (defun lao-consonant-input (key len)
   (copy-alist lao-consonant-alist))
 
-(quail-define-package "quail-lao" "Lao" "Lao" t
-		      "Lao input method with TIS620 characters:"
-		      nil t t t t)
+(quail-define-package
+ "lao" "Lao" "(1E(B" t
+ "Lao input method simulating Lao keyboard layout based on Thai TIS620"
+ nil t t t t nil nil nil nil nil t)
 
 (defmacro lao-quail-define-rules (&rest rules)
   (let ((l rules)
@@ -167,7 +169,7 @@
  ("*" "6")
  ("+" "0(1mh1(B")
  ("," ("(1A(B" . lao-consonant-input))
- ("-" "9")
+ ("-" ("(1*(B" . lao-consonant-input))
  ("." "(1c(B")
  ("/" ("(1=(B" . lao-consonant-input))
  ("0" ("(1"(B" . lao-consonant-input))
@@ -184,7 +186,7 @@
  (";" ("(1G(B" . lao-consonant-input))
  ("<" ("(1}(B" . lao-consonant-input))
  ("=" "(1m(B")
- (">" ">")
+ (">" "$")
  ("?" ")")
  ("@" "2")
  ("A" "0(1Qi1(B")
@@ -216,7 +218,7 @@
  ("[" ("(1:(B" . lao-consonant-input))
  ("]" ("(1E(B" . lao-consonant-input))
  ("^" "(1\(B")
- ("_" ("(1*(B" . lao-consonant-input))
+ ("_" "9")
  ("`" ("(1'(B" . lao-consonant-input))
  ("a" "(1Q(B")
  ("b" "(1V(B")

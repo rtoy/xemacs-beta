@@ -1,6 +1,6 @@
 ;; quail/devanagari.el -- Quail packages for inputting Devanagari
 
-;; Copyright (C) 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1997 Free Software Foundation, Inc.
 
 ;; Author: KAWABATA, Taichi <kawabata@is.s.u-tokyo.ac.jp>
 
@@ -19,8 +19,9 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -34,7 +35,7 @@
 ;;; Code:
 
 (require 'quail)
-(require 'language/devan-util)
+(require 'devan-util)
 
 ;; This function does nothing for now.  For future use.
 (defun quail-devanagari-update-translation (control-flag)
@@ -62,14 +63,13 @@
 	  (delete-region (point-min) (point-max))
 	  (insert (devanagari-compose-string dstr 'sanskrit))
 	  (goto-char (point-max)))
-	(move-overlay quail-conv-overlay from (point))
-	(setq unread-command-events (list last-command-event))
-	(throw 'exit nil))
-    (setq unread-command-events (list last-command-event))
-    (throw 'exit nil)))
+	(setq overriding-terminal-local-map nil)))
+  (setq unread-command-events (list last-command-event)))
 
-(quail-define-package "quail-devanagari-keyboard-a" "Devanagari" "DevK" t
-		      "ISCII Format of Inputting Devanagari.
+(quail-define-package 
+ "devanagari-keyboard-a" "Devanagari" "DevK" t
+ "Devanagari input method with ISCII format
+
  `$(5!\(B !$(5!.(B @$(5!c(B #x  $x  %x  ^x  &$(5")(B *$(5"((B (   )   _$(5!#(B +$(5!*(B
  ~$(5!/(B 1$(5!r(B 2$(5!s(B 3$(5!t(B 4$(5!u(B 5$(5!v(B 6$(5!w(B 7$(5!x(B 8$(5!y(B 9$(5!z(B 0$(5!q(B -   =$(5!_(B
 
@@ -356,8 +356,9 @@
 	    (setq ml (cdr ml)))
 	  rules)))
 
-(quail-define-package "quail-devanagari-transliteration" "Devanagari" "DEVt" t
-		      "Devanagari inputting method by transliteration
+(quail-define-package
+ "devanagari-transliteration" "Devanagari" "DEVt" t
+ "Devanagari input method by transliteration
 VOWELS     :   a  $(5!$(B   A  $(5!%(B   i  $(5!&(B   I  $(5!'(B   u  $(5!((B   U  $(5!)(B
                R  $(5!*(B   q  $(5#*(B   L  $(5#&(B   E  $(5#'(B   Ex $(5!+(B   e  $(5!,(B
                ai $(5!-(B   EE $(5!.(B   O  $(5!/(B   o  $(5!0(B   au $(5!1(B   OO $(5!2(B
@@ -434,8 +435,9 @@ Specials   :   Anuswar       M  $(5!"(B     Visarg        H  $(5!#(B
 	    (setq ml (cdr ml)))
 	  rules)))
 
-(quail-define-package "quail-devanagari-itrans" "Devanagari" "DEVi" t
-		      "Devanagari inputting method by ITRANS
+(quail-define-package
+ "devanagari-itrans" "Devanagari" "DEVi" t
+ "Devanagari input method by ITRANS
 Special Keys : Anuswar         n'
                Chandrabindu    nn'
                Visarg          nh
@@ -473,11 +475,8 @@ Special Keys : Anuswar         n'
 	  (delete-region (point-min) (point-max))
 	  (insert (devanagari-compose-string dstr))
 	  (goto-char (point-max)))
-	(move-overlay quail-conv-overlay from (point))
-	(setq unread-command-events (list last-command-event))
-	(throw 'exit nil))
-    (setq unread-command-events (list last-command-event))
-    (throw 'exit nil)))
+	(setq overriding-terminal-local-map nil)))
+  (setq unread-command-events (list last-command-event)))
 
 (eval-when-compile
 
@@ -642,8 +641,9 @@ Special Keys : Anuswar         n'
 	    (setq ml (cdr ml)))
 	  rules)))
 
-(quail-define-package "quail-devanagari-hindi-transliteration" "Hindi" "HINt" t
-		      "Devanagari-Hindi inputting method by transliteration
+(quail-define-package
+ "devanagari-hindi-transliteration" "Hindi" "HINt" t
+ "Devanagari-Hindi input method by transliteration
 VOWELS     :   a  $(5!$(B   A  $(5!%(B   i  $(5!&(B   I  $(5!'(B   u  $(5!((B   U  $(5!)(B
                R  $(5!*(B   q  $(5#*(B   L  $(5#&(B   E  $(5#'(B   Ex $(5!+(B   e  $(5!,(B
                ai $(5!-(B   EE $(5!.(B   O  $(5!/(B   o  $(5!0(B   au $(5!1(B   OO $(5!2(B

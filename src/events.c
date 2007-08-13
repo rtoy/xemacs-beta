@@ -66,6 +66,11 @@ Lisp_Object Qprocess_event_p;
 Lisp_Object Qkey_press, Qbutton_press, Qbutton_release, Qmisc_user;
 Lisp_Object Qascii_character;
 
+#ifdef HAVE_OFFIX_DND
+Lisp_Object Qdnd_drop_event_p;
+Lisp_Object Qdnd_drop;
+#endif
+
 /* #### Ad-hoc hack.  Should be part of define_lrecord_implementation */
 void
 clear_event_resource (void)
@@ -138,6 +143,7 @@ mark_event (Lisp_Object obj, void (*markobj) (Lisp_Object))
     case magic_event:
     case empty_event:
     case dead_event:
+    case dnd_drop_event:
       break;
     default:
       abort ();
@@ -211,6 +217,9 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case dead_event:
 	write_c_string ("#<DEALLOCATED-EVENT", printcharfun);
 	break;
+    case dnd_drop_event:
+      print_event_1 ("#<dnd-drop-event ", obj, printcharfun);
+      break;
     default:
 	write_c_string ("#<UNKNOWN-EVENT-TYPE", printcharfun);
 	break;
@@ -263,6 +272,13 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	      e2->event.magic_eval.internal_function &&
 	      internal_equal (e1->event.magic_eval.object,
 			      e2->event.magic_eval.object, 0));
+
+#ifdef HAVE_OFFIX_DND
+    case dnd_drop_event:
+      return (e1->event.dnd_drop.button    == e2->event.dnd_drop.button &&
+	      e1->event.dnd_drop.modifiers == e2->event.dnd_drop.modifiers &&
+	      EQ (e1->event.dnd_drop.data, e2->event.dnd_drop.data));
+#endif
 
     case magic_event:
       {
@@ -327,6 +343,12 @@ event_hash (Lisp_Object obj, int depth)
       return HASH3 (hash,
 		    (unsigned long) e->event.magic_eval.internal_function,
 		    internal_hash (e->event.magic_eval.object, depth + 1));
+
+#ifdef HAVE_OFFIX_DND
+    case dnd_drop_event:
+      return HASH4 (hash, e->event.dnd_drop.button, e->event.dnd_drop.modifiers,
+		    LISP_HASH(e->event.dnd_drop.data));
+#endif
 
     case magic_event:
       {
@@ -397,6 +419,7 @@ WARNING, the event object returned may be a reused one; see the function
     e->event_type = empty_event;
   else
     /* not allowed: Qmisc_user, Qprocess, Qtimeout, Qmagic, Qmagic_eval */
+    /* dnd_drop is also not allowed */
     signal_simple_error ("Invalid event type", type);
 
   /* Process the plist. */
@@ -758,6 +781,7 @@ command_event_p (Lisp_Object event)
     case button_press_event:
     case button_release_event:
     case misc_user_event:
+    case dnd_drop_event:
       return 1;
     default:
       return 0;
@@ -1015,6 +1039,9 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
   int mouse_p = 0;
   int mod = 0;
   Lisp_Object key;
+#ifdef HAVE_OFFIX_DND
+  int dnd_p = 0;
+#endif
 
   switch (event->event_type)
     {
@@ -1059,6 +1086,15 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
 	else strcpy (buf, "???");
 	return;
       }
+#ifdef HAVE_OFFIX_DND
+    case dnd_drop_event:
+      {
+	dnd_p++;
+        mod = event->event.dnd_drop.modifiers;
+        key = make_char (event->event.dnd_drop.button + '0');
+        break;
+      }
+#endif
     case magic_eval_event:	strcpy (buf, "magic-eval"); return;
     case pointer_motion_event:	strcpy (buf, "motion");	    return;
     case misc_user_event:	strcpy (buf, "misc-user");  return;
@@ -1083,6 +1119,15 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
       modprint1 ("button");
       --mouse_p;
     }
+
+#ifdef HAVE_OFFIX_DND
+  switch (dnd_p)
+    {
+    case 1:
+      modprint1 ("drop");
+    }
+#endif
+
 #undef modprint
 #undef modprint1
 
@@ -1216,6 +1261,7 @@ empty		The event has been allocated but not assigned.
     case process_event:		return Qprocess;
     case timeout_event:		return Qtimeout;
     case eval_event:		return Qeval;
+    case dnd_drop_event:	return Qdnd_drop;
     case magic_event:
     case magic_eval_event:
       return Qmagic;
@@ -1270,6 +1316,8 @@ Return the button-number of the given button-press or button-release event.
 */
        (event))
 {
+#ifndef HAVE_OFFIX_DND
+
   CHECK_EVENT_TYPE2 (event, button_press_event, button_release_event,
 		     Qbutton_event_p);
 #ifdef HAVE_WINDOW_SYSTEM
@@ -1277,6 +1325,21 @@ Return the button-number of the given button-press or button-release event.
 #else /* !HAVE_WINDOW_SYSTEM */
   return Qzero;
 #endif /* !HAVE_WINDOW_SYSTEM */
+
+#else /* HAVE_OFFIX_DND */
+
+  CHECK_LIVE_EVENT (event);
+  if (XEVENT(event)->event_type == (button_press_event) ||
+      XEVENT(event)->event_type == (button_release_event))
+    /* we always have X if we have OffiX !! */
+    return make_int (XEVENT (event)->event.button.button);
+  else if (XEVENT(event)->event_type == (dnd_drop_event))
+    /* we always have X if we have OffiX !! */
+    return make_int (XEVENT (event)->event.button.button);
+  else
+    event = wrong_type_argument ((Qbutton_event_p),(event));
+  
+#endif
 }
 
 DEFUN ("event-modifier-bits", Fevent_modifier_bits, 1, 1, 0, /*
@@ -1297,6 +1360,10 @@ See also the function event-modifiers.
       return make_int (XEVENT (event)->event.button.modifiers);
     case pointer_motion_event:
       return make_int (XEVENT (event)->event.motion.modifiers);
+#ifdef HAVE_OFFIX_DND
+    case dnd_drop_event:
+      return make_int (XEVENT (event)->event.dnd_drop.modifiers);
+#endif
     default:
       event = wrong_type_argument (intern ("key-or-mouse-event-p"), event);
       goto again;
@@ -1338,6 +1405,13 @@ event_x_y_pixel_internal (Lisp_Object event, int *x, int *y, int relative)
       *x = XEVENT (event)->event.button.x;
       *y = XEVENT (event)->event.button.y;
     }
+#ifdef HAVE_OFFIX_DND
+  else if (XEVENT (event)->event_type == dnd_drop_event)
+    {
+      *x = XEVENT (event)->event.dnd_drop.x;
+      *y = XEVENT (event)->event.dnd_drop.y;
+    }
+#endif
   else
     return 0;
 
@@ -1486,6 +1560,12 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
       pix_x = XEVENT (event)->event.button.x;
       pix_y = XEVENT (event)->event.button.y;
       break;
+#ifdef HAVE_OFFIX_DND
+    case dnd_drop_event :
+      pix_x = XEVENT (event)->event.dnd_drop.x;
+      pix_y = XEVENT (event)->event.dnd_drop.y;
+      break;
+#endif
     default:
       dead_wrong_type_argument (Qmouse_event_p, event);
     }
@@ -1833,6 +1913,26 @@ EVENT should be a timeout, misc-user, or eval event.
     }
 }
 
+#ifdef HAVE_OFFIX_DND
+DEFUN ("event-dnd-data", Fevent_dnd_data, 1, 1, 0, /*
+Return the Dnd data list of EVENT.
+EVENT should be a dnd_drop (later also dnd_drag) event.
+*/
+       (event))
+{
+ again:
+  CHECK_LIVE_EVENT (event);
+  switch (XEVENT (event)->event_type)
+    {
+    case dnd_drop_event:
+      return XEVENT (event)->event.dnd_drop.data;
+    default:
+      event = wrong_type_argument (Qdnd_drop_event_p, event);
+      goto again;
+    }
+}
+#endif /* HAVE_OFFIX_DND */
+
 DEFUN ("event-properties", Fevent_properties, 1, 1, 0, /*
 Return a list of all of the properties of EVENT.
 This is in the form of a property list (alternating keyword/value pairs).
@@ -1886,6 +1986,16 @@ This is in the form of a property list (alternating keyword/value pairs).
       props = Fcons (Qobject, Fcons (Fevent_object (event), props));
       props = Fcons (Qfunction, Fcons (Fevent_function (event), props));
       break;
+
+#ifdef HAVE_OFFIX_DND
+    case dnd_drop_event:
+      props = Fcons (Qy, Fcons (Fevent_y_pixel (event), props));
+      props = Fcons (Qx, Fcons (Fevent_x_pixel (event), props));
+      props = Fcons (Qmodifiers, Fcons (Fevent_modifiers (event), props));
+      props = Fcons (Qbutton, Fcons (Fevent_button (event), props));
+      props = Fcons (Qdnd_data, Fcons (Fevent_dnd_data (event), props));
+      break;
+#endif
 
     case magic_eval_event:
     case magic_event:
@@ -1953,6 +2063,9 @@ syms_of_events (void)
   DEFSUBR (Fevent_process);
   DEFSUBR (Fevent_function);
   DEFSUBR (Fevent_object);
+#ifdef HAVE_OFFIX_DND
+  DEFSUBR (Fevent_dnd_data);
+#endif
 
   defsymbol (&Qeventp, "eventp");
   defsymbol (&Qevent_live_p, "event-live-p");
@@ -1965,6 +2078,10 @@ syms_of_events (void)
   defsymbol (&Qbutton_release, "button-release");
   defsymbol (&Qmisc_user, "misc-user");
   defsymbol (&Qascii_character, "ascii-character");
+#ifdef HAVE_OFFIX_DND
+  defsymbol (&Qdnd_drop_event_p, "dnd-drop-event-p");
+  defsymbol (&Qdnd_drop, "dnd-drop");
+#endif
 }
 
 void

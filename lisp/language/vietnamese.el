@@ -1,7 +1,7 @@
 ;;; vietnamese.el --- Support for Vietnamese
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, Vietnamese
 
@@ -201,21 +201,27 @@ Both tables are indexed by the position code of Vietnamese characters.")
 
 
 (make-coding-system
- 'viscii 4 ?V
- "Coding-system used for VISCII 1.1."
+ 'vietnamese-viscii 4 ?V
+ "8-bit encoding for Vietnamese VISCII 1.1 (MIME:VISCII)"
  (cons ccl-decode-viscii ccl-encode-viscii))
 
-(make-coding-system
- 'vscii 4 ?V
- "Coding-system used for VSCII-1."
- (cons ccl-decode-vscii ccl-encode-vscii))
+(define-coding-system-alias 'viscii 'vietnamese-viscii)
 
 (make-coding-system
- 'viqr 0 ?v
- "Codins-system used for VIQR."
+ 'vietnamese-vscii 4 ?v
+ "8-bit encoding for Vietnamese VSCII-1"
+ (cons ccl-decode-vscii ccl-encode-vscii))
+
+(define-coding-system-alias 'vscii 'vietnamese-vscii)
+
+(make-coding-system
+ 'vietnamese-viqr 0 ?q
+ "Vietnamese latin transcription (VIQR)"
  nil)
-(put 'viqr 'post-read-conversion 'viqr-post-read-conversion)
-(put 'viqr 'pre-write-conversion 'viqr-pre-write-conversion)
+(put 'vietnamese-viqr 'post-read-conversion 'viqr-post-read-conversion)
+(put 'vietnamese-viqr 'pre-write-conversion 'viqr-pre-write-conversion)
+
+(define-coding-system-alias 'viqr 'vietnamese-viqr)
 
 (setq font-ccl-encoder-alist
       (cons (cons "viscii" ccl-encode-viscii-font) font-ccl-encoder-alist))
@@ -223,39 +229,16 @@ Both tables are indexed by the position code of Vietnamese characters.")
 (setq font-ccl-encoder-alist
       (cons (cons "vscii" ccl-encode-vscii-font) font-ccl-encoder-alist))
 
-(register-input-method
- "Vietnamese" '("quail-viqr" quail-use-package "quail/viqr"))
-
-(defun setup-vietamese-environment ()
-  "Setup multilingual environment (MULE) for Vietnamese."
-  (interactive)
-  ;; for VISCII users
-  (setq coding-category-binary 'viscii)
-
-  ;; for VSCII users
-  ;; (setq coding-category-binary 'vscii)
-
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-binary))
-
-  (setq-default buffer-file-coding-system 'viscii)
-
-  (setq default-input-method '("Vietnamese" . "quail-viqr"))
-  )
-
-(defun describe-vietnamese-support ()
-  "Describe how Emacs supports Vietnamese."
-  (interactive)
-  (describe-langauge-support-internal "Vietnamese"))
-
 (set-language-info-alist
  "Vietnamese" '((setup-function . setup-vietnamese-environment)
-		(describe-function . describe-vietnamese-support)
 		(charset . (vietnamese-viscii-lower
 			    vietnamese-viscii-upper))
-		(coding-system . (viscii vscii viqr))
+		(coding-system . (vietnamese-viscii vietnamese-vscii
+				  vietnamese-viqr))
 		(sample-text . "Vietnamese (Ti,1*(Bng Vi,1.(Bt)	Ch,1`(Bo b,1U(Bn")
-		(documentation . nil)))
+		(documentation . "\
+For Vietnamese, Emacs uses special charasets internally.
+They can be decoded from and encoded to VISCC, VSCII, and VIQR.")
+		))
 
 ;;; vietnamese.el ends here

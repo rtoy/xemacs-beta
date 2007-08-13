@@ -33,10 +33,18 @@
 (global-set-key '(meta button1) 'mouse-track-do-rectangle)
 
 ;; enable drag regions (ograf@fga.de)
+;; if button2 is dragged from within a region, this becomes a drop
 (if (or (featurep 'offix) ;; do we have DnD support?
 	(featurep 'cde))
     (global-set-key 'button2 'mouse-drag-or-yank)
   (global-set-key 'button2 'mouse-yank))
+
+;; enable drops from OffiX (ograf@fga.de)
+;; accept any button1,2,3 drop with `mouse-offix-drop'
+(cond ((featurep 'offix)
+       (global-set-key 'drop1 'mouse-offix-drop)
+       (global-set-key 'drop2 'mouse-offix-drop)
+       (global-set-key 'drop3 'mouse-offix-drop)))
 
 (defcustom mouse-track-rectangle-p nil
   "*If true, then dragging out a region with the mouse selects rectangles
@@ -150,7 +158,7 @@ primary selection-extent, nil otherwise."
  `mouse-yank-at-point' is non-nil, then moves the cursor to the location of
  the click before pasting.
  This functions has to be improved. Until now it is just a (working) test."
-  ;; by ograf@fga.de
+  ;; by Oliver Graf <ograf@fga.de>
   (interactive "e")
   (if (click-inside-extent-p event zmacs-region-extent)
       ;; okay, this is a drag
@@ -169,6 +177,50 @@ primary selection-extent, nil otherwise."
 	 (mouse-set-point event))
     (funcall mouse-yank-function))
   )
+
+(defun mouse-offix-drop (event)
+  "Do something with an OffiX drop event. Inserts Text drops and
+ executes appropriate commands for specific drops.
+ Text drops follow the `mouse-yank-at-point' variable."
+  ;; by Oliver Graf <ograf@fga.de>
+  (interactive "e")
+  (let ((type (car (event-dnd-data event)))
+	(data (cadr (event-dnd-data event)))
+	(frame (event-channel event)))
+    (cond ((= type 2)
+	   (let ((x pop-up-windows))
+	     (setq pop-up-windows nil)
+	     (pop-to-buffer (find-file-noselect data) nil frame)
+	     (make-frame-visible frame)
+	     (setq pop-up-windows x)))
+	  ((= type 3)
+	   (let ((x pop-up-windows))
+	     (setq pop-up-windows nil)
+	     (while (not (eq data ()))
+	       (pop-to-buffer (find-file-noselect (car data)) nil frame)
+	       (setq data (cdr data)))
+	     (make-frame-visible frame)
+	     (setq pop-up-windows x)))
+	  ((= type 4)
+	   (and (not mouse-yank-at-point)
+		(mouse-set-point event))
+	   (insert data))
+	  ((= type 5) (dired data))
+	  ((or (= type 6) (= type 7)) (dired data)) ;; this is junk
+	  ((= type 8) (funcall browse-url-browser-function data))
+	  ((= type 9)
+	   (let ((buf (generate-new-buffer "DndMIME")))
+	     (set-buffer buf)
+	     (pop-to-buffer buf nil frame)
+	     (insert data)
+	     (make-frame-visible frame)))
+	  (t ;; this is raw data or unknown stuff
+	   (let ((buf (generate-new-buffer "DndRawData")))
+	     (set-buffer buf)
+	     (pop-to-buffer buf nil frame)
+	     (insert data)
+	     (hexlify-buffer)
+	     (make-frame-visible frame))))))
 
 (defun mouse-eval-sexp (click force-window)
   "Evaluate the sexp under the mouse.  Usually, this is the last sexp before

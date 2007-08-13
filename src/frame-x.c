@@ -51,6 +51,11 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "window.h"
 
+#ifdef HAVE_OFFIX_DND
+#include "offix.h"
+#include "events-mod.h"
+#endif
+
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_x_frame_plist;
 
@@ -320,6 +325,7 @@ x_wm_store_class_hints (Widget shell, char *frame_name)
   XSetClassHint (dpy, XtWindow (shell), &classhint);
 }
 
+#ifndef HAVE_SESSION
 static void
 x_wm_maybe_store_wm_command (struct frame *f)
 {
@@ -366,12 +372,11 @@ x_wm_maybe_move_wm_command (struct frame *f)
 	return;
       f = XFRAME (XCAR (rest));
 
-#ifndef HAVE_SESSION
       x_wm_maybe_store_wm_command (f);
-#endif /* HAVE_SESSION */
 
     }
 }
+#endif /* !HAVE_SESSION */
 
 static int
 x_frame_iconified_p (struct frame *f)
@@ -1166,124 +1171,83 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 #endif /* HAVE_CDE */
 
 #ifdef HAVE_OFFIX_DND
-#include <OffiX/DragAndDrop.h>
-
-void
-x_offix_drop_event_handler (Widget widget, XtPointer data, XEvent *event,
-			    Boolean *b)
-{
-  int i, len, Type;
-  unsigned char *Data;
-  unsigned long Size;
-
-  Lisp_Object path = Qnil;
-  Lisp_Object frame = Qnil;
-  Lisp_Object dnd_data = Qnil;
-  Lisp_Object dnd_type = Qnil;
-
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-
-  if (!DndIsDropMessage(event)) /* the better way */
-    {
-#if 0
-      stderr_out("DndDropHandler: pseudo drop received (ignore me!)\n");
-#endif
-      return;
-    }
-
-  Type = DndDataType (event);
-  DndGetData (&Data, &Size);
-
-  GCPRO4 (path, frame, dnd_data, dnd_type);
-
-  frame = make_frame ((struct frame *) data);
-#if 0
-  stderr_out("DndDropHandler: valid drop received (T%d S%u)\n",Type,Size);
-#endif
-  switch (Type)
-    {
-    case DndFiles:
-      while (*Data)
-	{
-	  len = strlen ((char*) Data);
-	  path = make_ext_string ((char*) Data, len, FORMAT_FILENAME);
-	  va_run_hook_with_args (Qdrag_and_drop_functions, 2, frame, path);
-	  Data += len+1;
-	}
-      break;
-    case DndFile:
-      path = make_ext_string ((char*) Data, strlen(Data), FORMAT_FILENAME);
-      va_run_hook_with_args (Qdrag_and_drop_functions, 2, frame, path);
-      break;
-    case DndText:
-      dnd_data = make_ext_string ((char *) Data, strlen(Data), FORMAT_FILENAME);
-      va_run_hook_with_args (Qdrag_and_drop_functions, 3, frame, path, dnd_data);
-      break;
-    case DndDir:
-    case DndLink:
-    case DndExe:
-    case DndURL:
-    case DndMIME:
-      dnd_type = make_int (Type);
-      dnd_data = make_ext_string ((char*) Data, strlen(Data), FORMAT_FILENAME);
-      va_run_hook_with_args (Qdrag_and_drop_functions, 4,
-			     frame, path, dnd_data, dnd_type);
-      break;
-    default: /* Unknown, RawData and any other type */
-      dnd_type = make_int (Type);
-      dnd_data = make_ext_string ((char*) Data, Size, FORMAT_BINARY);
-      va_run_hook_with_args (Qdrag_and_drop_functions, 4,
-			     frame, path, dnd_data, dnd_type);
-      break;
-    }
-
-  UNGCPRO;
-  return;
-}
 
 DEFUN ("offix-start-drag-internal", Foffix_start_drag_internal, 2, 3, 0, /*
 First arg is the event that started the drag,
-second arg should be some string.
+second arg should be some string, and the third
+is the type of the data (this should be an int).
+The type defaults to DndText (4).
 Start a OffiX drag from a buffer.
-For now this will only drag as DndText.
-This fun is heavily stolen from the CDE Dnd stuff.
 */
        (event, data, dtyp))
 {
-  if (EVENTP(event) && STRINGP (data))
+  if (EVENTP(event))
     {
       struct frame *f = decode_x_frame (Fselected_frame (Qnil));
       XEvent x_event;
       Widget wid = FRAME_X_TEXT_WIDGET (f);
       Display *display = XtDisplayOfObject (wid);
-      Window root_window, child_window;
-      int root_x, root_y, win_x, win_y;
-      unsigned int keys_and_buttons;
-      char *dnd_data;
-      unsigned long dnd_len;
-      int dnd_typ;
+      struct device *d    = get_device_from_display (display);
+      struct x_device *xd = DEVICE_X_DATA (d);
+      unsigned int modifier = 0, state = 0;
+      char *dnd_data = NULL;
+      unsigned long dnd_len = 0;
+      int dnd_typ = DndText, dnd_dealloc = 0;
       struct Lisp_Event *lisp_event = XEVENT(event);
 
       /* only drag if this is really a press */
       if (EVENT_TYPE(lisp_event) != button_press_event)
 	return Qnil;
 
-      /* and whats with MULE data ??? */
-      dnd_data = XSTRING_DATA (data);
-      dnd_len  = XSTRING_LENGTH (data) + 1; /* the f*cking zero */
-
-      /* set the type */
+      /* get the desired type */
       if (!NILP (dtyp) && INTP (dtyp))
 	dnd_typ = XINT (dtyp);
+
+      if (dnd_typ == DndFiles)
+	{
+	  Lisp_Object run = data;
+	  int len = 0;
+
+	  if (NILP ( Flistp (data)))
+	    return Qnil;
+
+	  /* construct the data from a list of files */
+	  dnd_len = 1;
+	  dnd_data = (char *) xmalloc (1);
+	  *dnd_data = 0;
+	  while (!NILP (run))
+	    {
+	      if (!STRINGP (XCAR (run)))
+		{
+		  xfree (dnd_data);
+		  return Qnil;
+		}
+	      len = XSTRING_LENGTH (XCAR (run)) + 1;
+	      dnd_data = xrealloc (dnd_data, dnd_len + len);
+	      strcpy (dnd_data + dnd_len - 1, XSTRING_DATA (XCAR (run)));
+	      dnd_len += len;
+	      run = XCDR (run);
+	    }
+	  
+	  dnd_data[dnd_len - 1] = 0; /* the list-ending zero */
+	  dnd_dealloc = 1;
+
+	}
       else
-	dnd_typ = DndText; /* the default */
+	{
+	  if (!STRINGP (data))
+	    return Qnil;
+
+	  /* and whats with MULE data ??? */
+	  dnd_data = XSTRING_DATA (data);
+	  dnd_len  = XSTRING_LENGTH (data) + 1; /* the zero */
+
+	}
 
       /*
        * Eek - XEmacs doesn't keep the old X event around so we have to
        * build a dummy event.  This is a truly gross hack. (from CDE)
-       *
-       * Perhaps there is some way to hand back the lisp event object?
-       * Best way: hand through x-event in all Lisp_Events
+       * but it works...
        */
 
       x_event.xbutton.type = ButtonPress;
@@ -1297,11 +1261,23 @@ This fun is heavily stolen from the CDE Dnd stuff.
       x_event.xbutton.y = lisp_event->event.button.y;
       x_event.xbutton.x_root = lisp_event->event.button.x; /* this is wrong */
       x_event.xbutton.y_root = lisp_event->event.button.y;
-      x_event.xbutton.state = 0; /* calc state from modifier */
+
+      modifier = lisp_event->event.button.modifiers;
+      if (modifier && MOD_SHIFT)   state |= ShiftMask;
+      if (modifier && MOD_CONTROL) state |= ControlMask;
+      if (modifier && MOD_META)    state |= xd->MetaMask;
+      if (modifier && MOD_SUPER)   state |= xd->SuperMask;
+      if (modifier && MOD_HYPER)   state |= xd->HyperMask;
+      if (modifier && MOD_ALT)     state |= xd->AltMask;
+      state |= (Button1Mask << (lisp_event->event.button.button-1));
+
+      x_event.xbutton.state = state;
       x_event.xbutton.button = lisp_event->event.button.button;
       x_event.xkey.same_screen = True;
 
       DndSetData(dnd_typ, dnd_data, dnd_len);
+      if (dnd_dealloc)
+	xfree (dnd_data);
 
       if (DndHandleDragging(wid, &x_event))
 	return Qt;
@@ -2007,16 +1983,6 @@ x_popup_frame (struct frame *f)
 			 NULL);
   }
 #endif /* HAVE_CDE */
-
-#ifdef HAVE_OFFIX_DND
-  {
-    DndInitialize (FRAME_X_SHELL_WIDGET (f));
-    DndRegisterDropWidget (FRAME_X_TEXT_WIDGET (f),
-			   x_offix_drop_event_handler,
-			   (XtPointer) f);
-
-  }
-#endif
 
   /* Do a stupid property change to force the server to generate a
      propertyNotify event so that the event_stream server timestamp will

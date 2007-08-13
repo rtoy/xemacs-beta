@@ -58,7 +58,7 @@
 ;; gnudoit and gnuserv, distributed with XEmacs.
 
 ;; gnuserv.el was originally written by Andy Norman as an improvement
-;; ver William Sommerfeld's server.el.  Since then, a number of people
+;; over William Sommerfeld's server.el.  Since then, a number of people
 ;; have worked on it, including Bob Weiner, Darell Kindred, Arup
 ;; Mukherjee, Ben Wing and Jan Vroonhof.  It was completely rewritten
 ;; (labeled as version 3) by Hrvoje Niksic in May 1997.

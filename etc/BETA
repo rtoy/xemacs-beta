@@ -163,7 +163,7 @@ Configured for `i586-unknown-linux2.0.28'.
   Using the Athena-3d scrollbar.
   Using the Athena-3d dialog boxes.
 
-Then type make and you should have a working XEmacs.
+Then type `make; make finder' and you should have a working XEmacs.
 
 After you have verified that you have a functional editor, fire up
 your favorite mail program and send a build report to
@@ -179,6 +179,9 @@ xemacs-beta@xemacs.org.  The build report should include
 3. The options given to configure
 
 4. The configuration report illustrated above
+
+   For convenience all of the above items are placed in a file called
+   `Installation' in the top level source directory.
 
 5. Any other unusual items you feel should be brought to the attention
    of the developers.

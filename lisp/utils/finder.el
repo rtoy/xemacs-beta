@@ -73,7 +73,7 @@ directories to view or extract information from package source code.")
 (defvar finder-headmark)
 
 (defvar finder-known-keywords
-  '(
+  `(
     (abbrev	. "abbreviation handling, typing shortcuts, macros")
     (bib	. "code related to the `bib' bibliography processor")
     (c		. "C, C++, and Objective-C language support")
@@ -98,7 +98,8 @@ directories to view or extract information from package source code.")
     (mail	. "modes for electronic-mail handling")
     (matching	. "various sorts of searching and matching")
     (mouse	. "mouse support")
-    (mule	. "multi-language extensions")
+    ,@(when (featurep 'mule)
+       (cons 'mule "multi-language extensions"))
     (news	. "support for netnews reading and posting")
     (oop	. "support for object-oriented programming")
     (outlines	. "support for hierarchical outlining")

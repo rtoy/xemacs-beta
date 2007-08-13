@@ -425,7 +425,7 @@ Entry to this mode runs the hooks on term-mode-hook"
     (make-local-variable 'term-height)
     (make-local-variable 'term-width)
     (setq term-width (1- (window-width)))
-    (setq term-height (1- (window-height)))
+    (setq term-height (1- (window-displayed-height)))
     (make-local-variable 'term-terminal-parameter)
     (make-local-variable 'term-saved-cursor)
     (make-local-variable 'term-last-input-start)
@@ -662,10 +662,10 @@ Entry to this mode runs the hooks on term-mode-hook"
     found))
 
 (defun term-check-size (process)
-  (if (or (/= term-height (1- (window-height)))
+  (if (or (/= term-height (1- (window-displayed-height)))
 	  (/= term-width (1- (window-width))))
       (progn
-	(term-reset-size (1- (window-height)) (1- (window-width)))
+	(term-reset-size (1- (window-displayed-height)) (1- (window-width)))
 	(set-process-window-size process term-height term-width))))
 
 (defun term-send-raw-string (chars)

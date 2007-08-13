@@ -657,15 +657,15 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
   ;; has a built-in bitmap
   (if (featurep 'xpm)
       (set-glyph-image xemacs-logo
-		       (concat data-directory "xemacs.xpm")
+		       (concat "../etc/" "xemacs.xpm")
 		       'global 'x))
   (cond ((featurep 'xpm)
 	 (set-glyph-image frame-icon-glyph
-			  (concat data-directory "xemacs-icon.xpm")
+			  (concat "../etc/" "xemacs-icon.xpm")
 			  'global 'x))
 	((featurep 'x)
 	 (set-glyph-image frame-icon-glyph
-			  (concat data-directory "xemacs-icon2.xbm")
+			  (concat "../etc/" "xemacs-icon2.xbm")
 			  'global 'x)))
 
   (if (featurep 'tty)
@@ -673,5 +673,7 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 		       "XEmacs <insert spiffy graphic logo here>"
 		       'global 'tty))
 )
+
+(init-glyphs)
 
 ;;; glyphs.el ends here.

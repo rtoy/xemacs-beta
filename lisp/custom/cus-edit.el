@@ -2275,7 +2275,7 @@ Match frames with dark backgrounds")
 		    (spec (or (get symbol 'saved-face)
 			      (get symbol 'face-defface-spec)
 			      ;; Attempt to construct it.
-			      (list (list t (custom-face-attributes-get 
+			      (list (list t (face-custom-attributes-get 
 					     symbol (selected-frame))))))
 		    (form (widget-get widget :custom-form))
 		    (indent (widget-get widget :indent))
@@ -2930,7 +2930,8 @@ explicitly load that file for the settings to take effect."
 (defun custom-save-delete (symbol)
   "Delete the call to SYMBOL form `custom-file'.
 Leave point at the location of the call, or after the last expression."
-  (set-buffer (find-file-noselect custom-file))
+  (let ((find-file-hooks nil))
+    (set-buffer (find-file-noselect custom-file)))
   (goto-char (point-min))
   (catch 'found
     (while t
@@ -3036,8 +3037,9 @@ Leave point at the location of the call, or after the last expression."
   (let ((inhibit-read-only t))
     (custom-save-variables)
     (custom-save-faces)
-    (with-current-buffer (find-file-noselect custom-file)
-      (save-buffer))))
+    (let ((find-file-hooks nil))
+      (with-current-buffer (find-file-noselect custom-file)
+	(save-buffer)))))
 
 
 ;;; The Customize Menu.
@@ -3074,7 +3076,10 @@ Leave point at the location of the call, or after the last expression."
   "Ignoring WIDGET, create a menu entry for customization group SYMBOL."
   `( ,(custom-unlispify-menu-entry symbol t)
      :filter (lambda (&rest junk)
-	       (cdr (custom-menu-create ',symbol)))))
+	       (let ((item (custom-menu-create ',symbol)))
+		 (if (listp item)
+		     (cdr item)
+		   (list item))))))
 
 ;;;###autoload
 (defun custom-menu-create (symbol)

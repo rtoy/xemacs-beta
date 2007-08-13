@@ -1,7 +1,7 @@
 ;;; mule-cmds.el --- Commands for multilingual environment
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Keywords: mule, multilingual
@@ -34,29 +34,22 @@
 ;; Keep "C-x C-m ..." for mule specific commands.
 (define-key ctl-x-map "\C-m" 'mule-prefix)
 
-;; (defvar mule-describe-language-support-map
-;;   (make-sparse-keymap "Describe Language Support"))
-;; (fset 'mule-describe-language-support-prefix
-;;       mule-describe-language-support-map)
-
-;; (defvar mule-set-language-environment-map
-;;   (make-sparse-keymap "Set Language Environment"))
-;; (fset 'mule-set-language-environment-prefix
-;;       mule-set-language-environment-map)
-
 (define-key mule-keymap "f" 'set-buffer-file-coding-system)
 (define-key mule-keymap "F" 'set-default-buffer-file-coding-system) ; XEmacs
 (define-key mule-keymap "t" 'set-terminal-coding-system)
 (define-key mule-keymap "k" 'set-keyboard-coding-system)
 (define-key mule-keymap "p" 'set-current-process-coding-system)
 (define-key mule-keymap "P" 'set-default-process-coding-system) ; XEmacs
-(define-key mule-keymap "i" 'select-input-method)
+(define-key mule-keymap "\C-\\" 'select-input-method)
 (define-key mule-keymap "c" 'list-coding-system-briefly) ; XEmacs
 (define-key mule-keymap "C" 'list-coding-system)	 ; XEmacs
 (define-key mule-keymap "r" 'toggle-display-direction)	 ; XEmacs
+(define-key mule-keymap "l" 'set-language-environment)
 
 (define-key help-map "\C-L" 'describe-language-support)
+(define-key help-map "L" 'describe-language-environment)
 (define-key help-map "\C-\\" 'describe-input-method)
+(define-key help-map "I" 'describe-input-method)
 (define-key help-map "C" 'describe-current-coding-system)
 (define-key help-map "h" 'view-hello-file)
 
@@ -96,35 +89,46 @@ to KEY.")
 
 (defun get-language-info (language-name key)
   "Return the information for LANGUAGE-NAME of the kind KEY.
-LANGUAGE-NAME is a string.
 KEY is a symbol denoting the kind of required information."
-  (let ((lang-slot (assoc language-name language-info-alist)))
+  (if (symbolp language-name)
+      (setq language-name (symbol-name language-name)))
+  (let ((lang-slot (assoc-ignore-case language-name language-info-alist)))
     (if lang-slot
 	(cdr (assq key (cdr lang-slot))))))
 
 (defun set-language-info (language-name key info)
   "Set for LANGUAGE-NAME the information INFO under KEY.
-LANGUAGE-NAME is a string
 KEY is a symbol denoting the kind of information.
 INFO is any Lisp object which contains the actual information.
 
 Currently, the following KEYs are used by Emacs:
-charset: list of symbols whose values are charsets specific to the language.
-coding-system: list of coding systems specific to the langauge.
-tutorial: a tutorial file name written in the language.
-sample-text: one line short text containing characters of the language.
-input-method: alist of input method names for the language vs information
-  for activating them.  Use `register-input-method' (which see)
-  to add a new input method to the alist.
-documentation: a string describing how Emacs supports the langauge.
-describe-function: a function to call for descriebing how Emacs supports
- the language.  The function uses information listed abobe.
-setup-function: a function to call for setting up environment
- convenient for the language.
 
-Emacs will use more KEYs in the future.  To avoid conflict, users
-should use prefix \"user-\" in the name of KEY if he wants to set
-different kind of information."
+charset: list of symbols whose values are charsets specific to the language.
+
+coding-system: list of coding systems specific to the langauge.
+
+tutorial: a tutorial file name written in the language.
+
+sample-text: one line short text containing characters of the language.
+
+documentation: t or a string describing how Emacs supports the language.
+      If a string is specified, it is shown before any other information
+      of the language by the command `describe-language-environment'.
+
+setup-function: a function to call for setting up environment
+       convenient for a user of the language.
+
+If KEY is documentation or setup-function, you can also specify
+a cons cell as INFO, in which case, the car part should be
+a normal value as INFO for KEY (as described above),
+and the cdr part should be a symbol whose value is a menu keymap
+in which an entry for the language is defined.  But, only the car part
+is actually set as the information.
+
+We will define more KEYs in the future.  To avoid conflict,
+if you want to use your own KEY values, make them start with `user-'."
+  (if (symbolp language-name)
+      (setq language-name (symbol-name language-name)))
   (let (lang-slot key-slot)
     (setq lang-slot (assoc language-name language-info-alist))
     (if (null lang-slot)		; If no slot for the language, add it.
@@ -135,9 +139,8 @@ different kind of information."
 	(progn
 	  (setq key-slot (list key))
 	  (setcdr lang-slot (cons key-slot (cdr lang-slot)))))
-    (setcdr key-slot info)
     ;; Setup menu.
-    (cond ((eq key 'describe-function)
+    (cond ((eq key 'documentation)
            ;; (define-key-after mule-describe-language-support-map
            ;;   (vector (intern language-name))
            ;;   (cons language-name info)
@@ -161,54 +164,99 @@ different kind of information."
   "Set for LANGUAGE-NAME the information in ALIST.
 ALIST is an alist of KEY and INFO.  See the documentation of
 `set-langauge-info' for the meanings of KEY and INFO."
+  (if (symbolp language-name)
+      (setq language-name (symbol-name language-name)))
   (while alist
     (set-language-info language-name (car (car alist)) (cdr (car alist)))
     (setq alist (cdr alist))))
 
-(defun read-language-name (key prompt &optional initial-input)
-  "Read language name which has information for KEY, prompting with PROMPT."
+(defun read-language-name (key prompt &optional default)
+  "Read language name which has information for KEY, prompting with PROMPT.
+DEFAULT is the default choice of language.
+This returns a language name as a string."
   (let* ((completion-ignore-case t)
 	 (name (completing-read prompt
 				language-info-alist
 				(function (lambda (elm) (assq key elm)))
-				t
-				initial-input)))
-    (and (> (length name) 0)
-	 (car (assoc-ignore-case (downcase name) language-info-alist)))))
+				t nil nil default)))
+    (if (and (> (length name) 0)
+	     (get-language-info name key))
+	name)))
 
 ;;; Multilingual input methods.
 
+(defconst leim-list-file-name "leim-list.el"
+  "Name of LEIM list file.
+This file contains a list of libraries of Emacs input methods (LEIM)
+in the format of Lisp expression for registering each input method.
+Emacs loads this file at startup time.")
+
+(defvar leim-list-header (format "\
+;;; %s -- list of LEIM (Library of Emacs Input Method)
+;;
+;; This file contains a list of LEIM (Library of Emacs Input Method)
+;; in the same directory as this file.  Loading this file registeres
+;; the whole input methods in Emacs.
+;;
+;; Each entry has the form:
+;;   (register-input-method
+;;    INPUT-METHOD LANGUAGE-NAME ACTIVATE-FUNC
+;;    TITLE DESCRIPTION
+;;    ARG ...)
+;; See the function `register-input-method' for the meanings of arguments.
+;;
+;; If this directory is included in load-path, Emacs automatically
+;; loads this file at startup time.
+
+"
+				 leim-list-file-name)
+  "Header to be inserted in LEIM list file.")
+
+(defvar leim-list-entry-regexp "^(register-input-method"
+  "Regexp matching head of each entry in LEIM list file.
+See also the variable `leim-list-header'")
+
+(defvar update-leim-list-functions
+  '(quail-update-leim-list-file)
+  "List of functions to call to update LEIM list file.
+Each function is called with one arg, LEIM directory name.")
+
+(defun update-leim-list-file (&rest dirs)
+  "Update LEIM list file in directories DIRS."
+  (let ((functions update-leim-list-functions))
+    (while functions
+      (apply (car functions) dirs)
+      (setq functions (cdr functions)))))
+
 (defvar current-input-method nil
   "The current input method for multilingual text.
-The value is a cons of language name and input method name.
-If nil, it means no input method is activated now.")
+If nil, that means no input method is activated now.")
 (make-variable-buffer-local 'current-input-method)
 (put 'current-input-method 'permanent-local t)
 
 (defvar current-input-method-title nil
-  "Title string of the current input method shown in mode line.
-Every input method should set this to an appropriate value when activated.")
+  "Title string of the current input method shown in mode line.")
 (make-variable-buffer-local 'current-input-method-title)
 (put 'current-input-method-title 'permanent-local t)
 
-(defvar default-input-method nil
-  "Default input method.
-The default input method is the one activated automatically by the command
-`toggle-input-method' (\\[toggle-input-method]).
-The value is a cons of language name and input method name.")
+(defcustom default-input-method nil
+  "*Default input method for multilingual text.
+This is the input method activated automatically by the command
+`toggle-input-method' (\\[toggle-input-method])."
+  :group 'mule)
 
-(defvar default-input-method-title nil
-  "Title string of the default input method.")
-
-(defvar previous-input-method nil
-  "Input method selected previously.
-This is the one selected before the current input method is selected.
-See also the documentation of `default-input-method'.")
+(defvar input-method-history nil
+  "History list for some commands that read input methods.")
+(make-variable-buffer-local 'input-method-history)
+(put 'input-method-history 'permanent-local t)
 
 (defvar inactivate-current-input-method-function nil
   "Function to call for inactivating the current input method.
 Every input method should set this to an appropriate value when activated.
-This function is called with no argument.")
+This function is called with no argument.
+
+This function should never change the value of `current-input-method'.
+It is set to nil by the function `inactivate-input-method'.")
 (make-variable-buffer-local 'inactivate-current-input-method-function)
 (put 'inactivate-current-input-method-function 'permanent-local t)
 
@@ -218,104 +266,140 @@ This function is called with no argument.")
 (make-variable-buffer-local 'describe-current-input-method-function)
 (put 'describe-current-input-method-function 'permanent-local t)
 
-(defun register-input-method (language-name input-method)
-  "Register INPUT-METHOD as an input method of LANGUAGE-NAME.
-LANGUAGE-NAME is a string.
-INPUT-METHOD is a list of the form:
-	(METHOD-NAME ACTIVATE-FUNC ARG ...)
-where METHOD-NAME is the name of this method,
-ACTIVATE-FUNC is the function to call for activating this method.
-Arguments for the function are METHOD-NAME and ARGs."
-  (let ((slot (get-language-info language-name 'input-method))
-	method-slot)
-    (if (null slot)
-	(set-language-info language-name 'input-method (list input-method))
-      (setq method-slot (assoc (car input-method) slot))
-      (if method-slot
-	  (setcdr method-slot (cdr input-method))
-	(set-language-info language-name 'input-method
-			   (cons input-method slot))))))
+(defvar input-method-alist nil
+  "Alist of input method names vs the corresponding information to use it.
+Each element has the form:
+	(INPUT-METHOD LANGUAGE-NAME ACTIVATE-FUNC TITLE DESCRIPTION ...)
+See the function `register-input-method' for the meanings of each elements.")
 
-(defun read-language-and-input-method-name ()
-  "Read a language names and the corresponding input method from a minibuffer.
-Return a cons of those names."
-  (let ((language-name (read-language-name
-			'input-method
-			"Language: "
-			(if previous-input-method
-			    (cons (car previous-input-method) 0)))))
-    (if (null language-name)
-	(error "No input method for the specified language"))
-    (let* ((completion-ignore-case t)
-	   (key-slot (cdr (assq 'input-method
-				(assoc language-name language-info-alist))))
-	   (method-name
-	    (completing-read "Input method: " key-slot nil t
-			     (if (and previous-input-method
-				      (string= language-name
-					       (car previous-input-method)))
-				 (cons (cdr previous-input-method) 0)))))
-      (if (= (length method-name) 0)
-	  (error "No input method specified"))
-      (list language-name
-	    (car (assoc-ignore-case (downcase method-name) key-slot))))))
+(defun register-input-method (input-method language-name &rest args)
+  "Register INPUT-METHOD as an input method for LANGUAGE-NAME.
+INPUT-METHOD and LANGUAGE-NAME are symbols or strings.
+The remaining arguments are:
+	ACTIVATE-FUNC, TITLE, DESCRIPTION, and ARG ...
+ where,
+ACTIVATE-FUNC is a function to call for activating this method.
+TITLE is a string shown in mode-line while this method is active,
+DESCRIPTION is a string describing about this method,
+Arguments to ACTIVATE-FUNC are INPUT-METHOD and ARGs."
+  (if (symbolp language-name)
+      (setq language-name (symbol-name language-name)))
+  (if (symbolp input-method)
+      (setq input-method (symbol-name input-method)))
+  (let ((info (cons language-name args))
+	(slot (assoc input-method input-method-alist)))
+    (if slot
+	(setcdr slot info)
+      (setq slot (cons input-method info))
+      (setq input-method-alist (cons slot input-method-alist)))))
 
-(defun set-default-input-method (language-name method-name)
-  "Set the default input method to METHOD-NAME for inputting LANGUAGE-NAME.
-The default input method is the one activated automatically by the command
-`toggle-input-method' (\\[toggle-input-method]).
-This doesn't affect the currently activated input method."
-  (interactive (read-language-and-input-method-name))
-  (let* ((key-slot (get-language-info language-name 'input-method))
-	 (method-slot (assoc method-name key-slot)))
-    (if (null method-slot)
-	(error "No input method `%s' for %s" method-name language-name))
-    (setq default-input-method (cons language-name method-name))))
+(defun read-input-method-name (prompt &optional default inhibit-null)
+  "Read a name of input method from a minibuffer prompting with PROMPT.
+If DEFAULT is non-nil, use that as the default,
+  and substitute it into PROMPT at the first `%s'.
+If INHIBIT-NULL is non-nil, null input signals an error.
 
-(defun select-input-method (language-name method-name)
-  "Select and activate input method METHOD-NAME for inputting LANGUAGE-NAME.
-The information for activating METHOD-NAME is stored
-in `language-info-alist' under the key 'input-method.
-The format of the information has the form:
-	((METHOD-NAME ACTIVATE-FUNC ARG ...) ...)
-where ACTIVATE-FUNC is a function to call for activating this method.
-Arguments for the function are METHOD-NAME and ARGs."
-  (interactive (read-language-and-input-method-name))
-  (let* ((key-slot (get-language-info language-name 'input-method))
-	 (method-slot (assoc method-name key-slot)))
-    (if (null method-slot)
-	(error "No input method `%s' for %s" method-name language-name))
-    (if current-input-method
-	(progn
-	  (if (not (equal previous-input-method current-input-method))
-	      (setq previous-input-method current-input-method))
-	  (funcall inactivate-current-input-method-function)))
-    (setq method-slot (cdr method-slot))
-    (apply (car method-slot) method-name (cdr method-slot))
-    (setq default-input-method
-	  (setq current-input-method (cons language-name method-name)))
-    (setq default-input-method-title current-input-method-title)
-    (setq current-input-method default-input-method)))
+The return value is a string."
+  (if default
+      (setq prompt (format prompt default)))
+  (let* ((completion-ignore-case t)
+	 ;; This binding is necessary because input-method-history is
+	 ;; buffer local.
+	 (input-method (completing-read prompt input-method-alist
+					nil t nil 'input-method-history)
+		       ;;default)
+		       ))
+    (if (> (length input-method) 0)
+	input-method
+      (if inhibit-null
+	  (error "No valid input method is specified")))))
+
+(defun activate-input-method (input-method)
+  "Turn INPUT-METHOD on.
+If some input method is already on, turn it off at first."
+  (if (symbolp input-method)
+      (setq input-method (symbol-name input-method)))
+  (if (and current-input-method
+	   (not (string= current-input-method input-method)))
+    (inactivate-input-method))
+  (unless current-input-method
+    (let ((slot (assoc input-method input-method-alist)))
+      (if (null slot)
+	  (error "Can't activate input method `%s'" input-method))
+      (apply (nth 2 slot) input-method (nthcdr 5 slot))
+      (setq current-input-method input-method)
+      (setq current-input-method-title (nth 3 slot))
+      (run-hooks 'input-method-activate-hook))))
+
+(defun inactivate-input-method ()
+  "Turn off the current input method."
+  (when current-input-method
+    (if input-method-history
+	(unless (string= current-input-method (car input-method-history))
+	  (setq input-method-history
+		(cons current-input-method
+		      (delete current-input-method input-method-history))))
+      (setq input-method-history (list current-input-method)))
+    (unwind-protect
+	(funcall inactivate-current-input-method-function)
+      (unwind-protect
+	  (run-hooks 'input-method-inactivate-hook)
+	(setq current-input-method nil
+	      current-input-method-title nil)))))
+
+(defun select-input-method (input-method)
+  "Select and turn on INPUT-METHOD.
+This sets the default input method to what you specify,
+and turn it on for the current buffer."
+  (interactive
+   (let* ((default (or (car input-method-history) default-input-method)))
+     (list (read-input-method-name
+	    (if default "Select input method (default %s): " "Select input method: ")
+	    default t))))
+  (activate-input-method input-method)
+  (setq default-input-method input-method))
 
 (defun toggle-input-method (&optional arg)
-  "Toggle whether a multilingual input method is activated in this buffer.
-With arg, activate an input method specified interactively.
-Without arg, the method being activated is the one selected most recently,
- but if no input method has ever been selected, select one interactively."
-  (interactive "P")
-  (if arg
-      (call-interactively 'select-input-method)
-    (if (null current-input-method)
-	(if default-input-method
-	    (select-input-method (car default-input-method)
-				 (cdr default-input-method))
-	  (call-interactively 'select-input-method))
-      (funcall inactivate-current-input-method-function)
-      (setq current-input-method nil))))
+  "Turn on or off a multilingual text input method for the current buffer.
 
-(defun describe-input-method ()
-  "Describe the current input method."
-  (interactive)
+With arg, read an input method from minibuffer and turn it on.
+
+Without arg, if some input method is currently activated, turn it off,
+else turn on an input method selected last time
+or the default input method (see `default-input-method').
+
+When there's no input method to turn on, turn on what read from minibuffer."
+  (interactive "P")
+  (if (eq arg 1)
+      (setq arg nil))
+  (let* ((default (or (car input-method-history) default-input-method)))
+    (if (and current-input-method (not arg))
+	(inactivate-input-method)
+      (activate-input-method
+       (if (or arg (not default))
+	   (read-input-method-name
+	    (if default "Input method (default %s): " "Input method: " )
+	    default t)  
+	 default))
+      (or default-input-method
+	  (setq default-input-method current-input-method)))))
+
+(defun describe-input-method (input-method)
+  "Describe  input method INPUT-METHOD."
+  (interactive
+   (list (read-input-method-name
+	  "Describe input method (default, current choice): ")))
+  (if (and input-method (symbolp input-method))
+      (setq input-method (symbol-name input-method)))
+  (if (null input-method)
+      (describe-current-input-method)
+    (with-output-to-temp-buffer "*Help*"
+      (let ((elt (assoc input-method input-method-alist)))
+	(princ (format "Input method: %s (`%s' in mode line) for %s\n  %s\n"
+		       input-method (nth 3 elt) (nth 1 elt) (nth 4 elt)))))))
+
+(defun describe-current-input-method ()
+  "Describe the input method currently in use."
   (if current-input-method
       (if (and (symbolp describe-current-input-method-function)
 	       (fboundp describe-current-input-method-function))
@@ -323,39 +407,73 @@ Without arg, the method being activated is the one selected most recently,
 	(message "No way to describe the current input method `%s'"
 		 (cdr current-input-method))
 	(ding))
-    (message "No input method is activated now")
-    (ding)))
+    (error "No input method is activated now")))
 
 (defun read-multilingual-string (prompt &optional initial-input
-					language-name method-name)
+					input-method)
   "Read a multilingual string from minibuffer, prompting with string PROMPT.
 The input method selected last time is activated in minibuffer.
-If non-nil, second arg INITIAL-INPUT is a string to insert before reading.
-Optional 3rd and 4th arguments LANGUAGE-NAME and METHOD-NAME specify
- the input method to be activated instead of the one selected last time."
-  (let ((minibuffer-setup-hook '(toggle-input-method))
-	(default-input-method default-input-method))
-    (if (and language-name method-name)
-	(set-default-input-method language-name method-name))
-    (read-string prompt initial-input)))
+If optional second arg INITIAL-INPUT is non-nil, insert it in the minibuffer
+initially.
+Optional 3rd argument INPUT-METHOD specifies the input method
+to be activated instead of the one selected last time.  It is a symbol
+or a string."
+  (setq input-method
+	(or input-method
+	    default-input-method
+	    (read-input-method-name "Input method: " nil t)))
+  (if (and input-method (symbolp input-method))
+      (setq input-method (symbol-name input-method)))
+  (let ((current-input-method input-method))
+    (read-string prompt initial-input nil nil t)))
 
 ;; Variables to control behavior of input methods.  All input methods
 ;; should react to these variables.
 
-(defvar input-method-tersely-flag nil
-  "*If this flag is non-nil, input method works rather tersely.
+(defcustom input-method-verbose-flag t
+  "*If this flag is non-nil, input methods give extra guidance.
 
-For instance, Quail input method does not show guidance buffer while
-inputting at minibuffer if this flag is t.")
+The extra guidance is done by showing list of available keys in echo
+area.
+
+For complex input methods such as `chinese-py' and `japanese',
+when you use the input method in the minibuffer, the guidance is
+shown at the bottom short window (split from the existing window).
+For simple input methods, guidance is not shown
+when you are in the minibuffer."
+  :type 'boolean
+  :group 'mule)
+
+(defcustom input-method-highlight-flag t
+  "*If this flag is non-nil, input methods highlight partially-entered text.
+For instance, while you are in the middle of a Quail input method sequence,
+the text inserted so far is temporarily underlined.
+The underlining goes away when you finish or abort the input method sequence."
+  :type 'boolean
+  :group 'mule)
 
 (defvar input-method-activate-hook nil
-  "Normal hook run just after an input method is activated.")
+  "Normal hook run just after an input method is activated.
+
+The variable `current-input-method' keeps the input method name
+just activated.")
 
 (defvar input-method-inactivate-hook nil
-  "Normal hook run just after an input method is inactivated.")
+  "Normal hook run just after an input method is inactivated.
+
+The variable `current-input-method' still keeps the input method name
+just inacitvated.")
 
 (defvar input-method-after-insert-chunk-hook nil
   "Normal hook run just after an input method insert some chunk of text.")
+
+(defvar input-method-exit-on-invalid-key nil
+  "This flag controls the behaviour of an input method on invalid key input.
+Usually, when a user types a key which doesn't start any character
+handled by the input method, the key is handled by turning off the
+input method temporalily.  After the key is handled, the input method is 
+back on.
+But, if this flag is non-nil, the input method is never back on.")
 
 
 ;;; Language specific setup functions.

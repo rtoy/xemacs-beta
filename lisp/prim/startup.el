@@ -345,6 +345,9 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
       (backtrace stream t)))
   (kill-emacs -1))
 
+(defvar lock-directory)
+(defvar superlock-file)
+
 (defun normal-top-level ()
   (if command-line-processed
       (message "Back to top level.")
@@ -495,10 +498,6 @@ If this is nil, no message will be displayed.")
       ;; Setup the toolbar icon directory
       (when (featurep 'toolbar)
 	(init-toolbar-location))
-
-      ;; Initialize the built-in glyphs and default specifier lists
-      (when (not noninteractive)
-	(init-glyphs))
 
       ;; Run the window system's init function.  tty is considered to be
       ;; a type of window system for this purpose.  This creates the
@@ -809,8 +808,7 @@ a new format, when variables have changed, etc."
 
 (defun splash-frame-present (l)
   (cond ((stringp l)
-         (insert l)
-	 (splash-hack-version-string))
+         (insert l))
         ((eq (car-safe l) 'face)
          ;; (face name string)
          (let ((p (point)))
@@ -930,6 +928,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
   (let ((after-change-functions nil))	; no font-lock, thank you
     (dolist (l (startup-splash-frame-body))
       (splash-frame-present l)))
+  (splash-hack-version-string)
   (set-buffer-modified-p nil))
 
 ;;  (let ((present-file

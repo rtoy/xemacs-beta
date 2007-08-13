@@ -1,6 +1,6 @@
 ;;; custom-load.el --- automatically extracted custom dependencies
 
-;; Created by SL Baur on Sat Sep 27 08:13:39 1997
+;; Created by SL Baur on Sun Sep 28 14:03:10 1997
 
 ;;; Code:
 

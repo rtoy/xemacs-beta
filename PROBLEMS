@@ -1,95 +1,32 @@
 -*- mode:outline; minor-mode:outl-mouse -*-
 This file describes various problems that have been encountered
-in compiling, installing and running XEmacs.
+in compiling, installing and running XEmacs.  It has been updated for
+XEmacs 20.3.
 
 This file is large, but we have tried to sort the entries by their
 respective relevance for XEmacs, but may have not succeeded completely
-in that task.  Try finding the things you need using one of the search
-commands XEmacs provides (e.g. `C-s').
+in that task.  The file is divided into four parts:
 
-(updated for 20.2)
+ - Problems with building XEmacs
+ - Problems with running XEmacs
+ - Compatibility problems
+ - Mule issues
 
-* Watch out for .emacs file
+Use `C-c C-f' to move to the next equal level of outline, and
+`C-c C-f' to move to previous equal level.  `C-h m' will give more
+advice about the Outline mode.
 
-~/.emacs is your Emacs init file.  If you observe strange problems,
-invoke XEmacs with the `-q' option and see if you can repeat the
-problem.
+Also, Try finding the things you need using one of the search commands
+XEmacs provides (e.g. `C-s').
+
+A general advice:
+    WATCH OUT for .emacs file!  ~/.emacs is your Emacs init file.  If
+    you observe strange problems, invoke XEmacs with the `-q' option
+    and see if you can repeat the problem.
+
 
 * Problems with building XEmacs
-
-** The compiler generates lots and lots of syntax errors.
-
-Are you using an ANSI C compiler, like lcc or gcc?  The SunOS 4.1 bundled cc
-is not ANSI.
-
-If X has not been configured to compile itself using lcc, gcc, or another ANSI
-compiler, then you will have to hack the automatically-generated makefile in
-the `lwlib' directory by hand to make it use an ANSI compiler.
-
-** test-distrib says that the distribution has been clobbered
-** or, temacs prints "Command key out of range 0-127"
-** or, temacs runs and dumps xemacs, but xemacs totally fails to work.
-** or, temacs gets errors dumping xemacs
-
-This can be because the .elc files have been garbled.  Do not be
-fooled by the fact that most of a .elc file is text: these are
-binary files and can contain all 256 byte values.
-
-In particular `shar' cannot be used for transmitting GNU Emacs.
-It typically truncates "lines".  What appear to be "lines" in
-a binary file can of course be of any length.  Even once `shar'
-itself is made to work correctly, `sh' discards null characters
-when unpacking the shell archive.
-
-I have also seen character \177 changed into \377.  I do not know
-what transfer means caused this problem.  Various network
-file transfer programs are suspected of clobbering the high bit.
-
-If you have a copy of Emacs that has been damaged in its
-nonprinting characters, you can fix them:
-
- 1) Record the names of all the .elc files.
- 2) Delete all the .elc files.
- 3) Recompile alloc.c with a value of PURESIZE twice as large.
-     You might as well save the old alloc.o.
- 4) Remake xemacs.  It should work now.
- 5) Running xemacs, do Meta-x byte-compile-file repeatedly
-  to recreate all the .elc files that used to exist.
-  You may need to increase the value of the variable
-  max-lisp-eval-depth to succeed in running the compiler interpreted
-  on certain .el files.  400 was sufficient as of last report.
- 6) Reinstall the old alloc.o (undoing changes to alloc.c if any)
-  and remake temacs.
- 7) Remake xemacs.  It should work now, with valid .elc files.
-
-** temacs prints "Pure Lisp storage exhausted"
-
-This means that the Lisp code loaded from the .elc and .el
-files during  temacs -l loadup inc dump  took up more
-space than was allocated.
-
-This could be caused by
- 1) adding code to the preloaded Lisp files
- 2) adding more preloaded files in loadup.el
- 3) having a site-init.el or site-load.el which loads files.
-   Note that ANY site-init.el or site-load.el is nonstandard;
-   if you have received Emacs from some other site
-   and it contains a site-init.el or site-load.el file, consider
-   deleting that file.
- 4) getting the wrong .el or .elc files
-   (not from the directory you expected).
- 5) deleting some .elc files that are supposed to exist.
-   This would cause the source files (.el files) to be
-   loaded instead.  They take up more room, so you lose.
- 6) a bug in the Emacs distribution which underestimates
-   the space required.
-
-If the need for more space is legitimate, use the --puresize option
-to `configure' to specify more pure space.
-
-But in some of the cases listed above, this problem is a consequence
-of something else that is wrong.  Be sure to check and fix the real
-problem.
+===============================
 
 ** Don't use -O2 with gcc 2.7.2 under Linux without also using
    `-fno-strength-reduce'.
@@ -98,48 +35,13 @@ gcc will generate incorrect code otherwise.  This bug is present in at
 least 2.6.x and 2.7.[0-2].  This bug has been fixed in GCC 2.7.2.1 and
 later.
 
-** `Error: No ExtNode to pop!' on Linux systems with Lesstif.
-
-This error message has been observed with lesstif-0.75a.  It does not
-appear to cause any harm.
-
-** Movemail on Linux doesn't work any more
-
-Linux now defaults to using .lock mail locking.  To get back to the
-previous flock locking, edit src/s/linux.h and uncomment out the
-`# define MAIL_USE_FLOCK' line.
-
-** Sparc Linux -vs- libXmu.
-
-There have been reports of configure not detecting libXmu on
-SparcLinux.  The fix is to add -lXmu to the link flags.
-
-** Debian Linux and Berkeley db include files.
-
-Debian Linux puts the Berkeley db include files in /usr/include/db
-instead of /usr/include.  The fix is to use
---site-includes=/usr/include/db with configure.
-
-** alloc.c will not compile without -P on HP-UX 9.05
-
-Pekka Marjola <pema@iki.fi> writes:
-  Gcc (2.7.2, with cpplib IIRC) required something (-P worked :) to
-  get it to compile. Otherwise it failed on those DEFUN macros with
-  comments inside parameter lists (like buffer.c, line 296).
-
 ** Excessive optimization with pgcc can break XEmacs
 
 It has been reported on some systems that compiling with -O6 can lead
 to XEmacs failures.  The workaround is to use a lower optimization
 level.  -O2 and -O4 have been tested extensively.
 
-** -O2 optimization on Irix 5.3 can cause compiler complaint.
-
-Nick J. Crabtree <nickc@scopic.com> writes:
-  Comes up OK on a tty (all I have available over this slow link). Ill
-  give it a hammering tomorrow.  The -O2 optimisation complained about
-  sizes exceeding thresholds; I haven't bothered to use the -Olimit
-  option it recommends.
+All of this depends heavily on the version of pgcc.
 
 ** Excessive optimization on AIX 4.2 can lead to compiler failure.
 
@@ -154,6 +56,34 @@ There have been reports of Sun sed truncating very lines in the
 Makefile during configuration.  The workaround is to use GNU sed or,
 even better, think of a better way to generate Makefile, and send us a 
 patch. :-)
+
+** test-distrib says that the distribution has been clobbered
+or, temacs prints "Command key out of range 0-127"
+or, temacs runs and dumps xemacs, but xemacs totally fails to work.
+or, temacs gets errors dumping xemacs
+
+This can be because the .elc files have been garbled.  Do not be
+fooled by the fact that most of a .elc file is text: these are binary
+files and can contain all 256 byte values.
+
+In particular `shar' cannot be used for transmitting GNU Emacs.  It
+typically truncates "lines".  (this does not apply to GNU shar, which
+uses uuencode to encode binary files.)
+
+If you have a copy of Emacs that has been damaged in its nonprinting
+characters, you can fix them by running:
+
+ make all-elc
+
+This will rebuild all the needed .elc files.
+
+** `Error: No ExtNode to pop!' on Linux systems with Lesstif.
+
+This error message has been observed with lesstif-0.75a.  It does not
+appear to cause any harm.
+
+### Does this happen in any of the more recent versions of
+Lesstif/XEmacs?
 
 ** Linking with -rpath on IRIX.
 
@@ -176,14 +106,19 @@ There are a couple of problems [with use of -rpath with Irix ld], though:
      or --site-runtime-libraries, you must use --use-gcc=no,
      or configure will fail.
 
+### Is this valid in 20.3?
+
 ** On Irix 5.x and 6.x, the dumped XEmacs (xemacs) core dumps when executed 
-   on another machine, or after newer SGI IRIX patches have been installed.
+on another machine, or after newer SGI IRIX patches have been installed.
 
 The xemacs binary must be executed with the same "libc.so" file which
 was used when the xemacs binary was dumped.  Some SGI IRIX patches
 update this file.  Make sure that all machines using the xemacs binary
 are using the same set of IRIX patches.  If xemacs core dumps after a
 patch upgrade then you will have to redump it from temacs.
+
+We don't know what causes this tight dependency, but we hope to fix it 
+in the future.
 
 ** xemacs: can't resolve symbol '__malloc_hook'
 
@@ -196,25 +131,20 @@ an earlier version.  The solution is to upgrade your old library.
 Sorry, XEmacs does not work under VMS.  You might consider working on
 the port if you really want to have XEmacs work under VMS.
 
-** On HP/UX configure selects gcc even though it isn't actually present.
-
-Some versions of SoftBench have an executable called 'gcc' that is not
-actually the GNU C compiler.  Use the --with-gcc=no flag when running
-configure.
-
-** On Solaris 2.* I get undefined symbols from libcurses.a.
+** On Solaris 2 I get undefined symbols from libcurses.a.
 
 You probably have /usr/ucblib/ on your LD_LIBRARY_PATH.  Do the link with
-LD_LIBRARY_PATH unset.
+LD_LIBRARY_PATH unset.  Generally, avoid using any ucb* stuff when
+building XEmacs.
 
-** On Solaris 2.* I cannot make alloc.o, glyphs.o or process.o.
+** On Solaris 2 I cannot make alloc.o, glyphs.o or process.o.
 
 The SparcWorks C compiler may have difficulty building those modules
 with optimization level -xO4.  Try using only "-fast" optimization
 for just those modules.  (Or use gcc).
 
 ** On Digital UNIX, the DEC C compiler might have a problem compiling
-   some files.
+some files.
 
 In particular, src/extents.c and src/faces.c might cause the DEC C
 compiler to abort.  When this happens: cd src, compile the files by
@@ -223,10 +153,8 @@ hand, use the old C compiler for the following versions of Digital UNIX:
   - V3.n: Remove "-migrate" from the compile command.
   - V4.n: Add "-oldc" to the compile command.
 
-** On Digital UNIX, TOOLTALK gets misdetected and misconfigured
-
-This problem manifested itself in the beta cycle as putting a literal
-LIB_TOOLTALK string into the Makefile.
+A related compiler bug has been fixed by the DEC compiler team.  The
+new versions of the compiler should run fine.
 
 ** On HPUX, the HP C compiler might have a problem compiling some files
    with optimization.
@@ -242,6 +170,8 @@ Richard Cognot <cognot@ensg.u-nancy.fr> writes:
   remember the patch numbers. I think potential XEmacs builders
   on HP should be warned about this.
 
+### Fixed in 20.3?
+
 ** I don't have `xmkmf' and `imake' on my HP.
 
 You can get these standard X tools by anonymous FTP to hpcvaaz.cv.hp.com.
@@ -250,7 +180,8 @@ Essentially all X programs need these.
 ** Solaris 2.3 /bin/sh coredumps during configuration.
 
 This only occurs if you have LANG != C.  This is a known bug with
-/bin/sh fixed by installing Patch-ID# 101613-01.
+/bin/sh fixed by installing Patch-ID# 101613-01.  Or, you can use
+bash, as a workaround.
 
 ** On Irix 6.0, make tries (and fails) to build a program named unexelfsgi
 
@@ -260,14 +191,16 @@ find that string, and take out the spaces.
 
 Compiler fixes in Irix 6.0.1 should eliminate this problem.
 
+### Fixed in 20.3?
+
 ** Native cc on SCO OpenServer 5 is now OK.  Icc may still throw you
-   a curve.  Here is what Robert Lipe <robertl@arnet.com> says:
+a curve.  Here is what Robert Lipe <robertl@arnet.com> says:
 
 Unlike XEmacs 19.13, building with the native cc on SCO OpenServer 5 
 now produces a functional binary.   I will typically build this
 configuration for COFF with:
 
-	/path_to_XEmacs_source/configure --with-gcc=no \
+	/path_to_xemacs_source/configure --with-gcc=no \
 	  --site-includes=/usr/local/include --site-libraries=/usr/local/lib \
 	  --with-xpm --with-xface --with-sound=nas
 
@@ -324,8 +257,10 @@ The comments at the top of emacskeys.sco describe its function, and
 the emacstrs.sco is a suitable candidate for /usr/lib/keyboard/strings
 to take advantage of the keyboard map in emacskeys.sco.
 
+### Is this valid in 20.3?
+
 ** Under some versions of OSF XEmacs runs fine if built without
-   optimization but will crash randomly if built with optimization.
+optimization but will crash randomly if built with optimization.
 
 Using 'cc -g' is not sufficient to eliminate all optimization.  Try
 'cc -g -O0' instead.
@@ -388,18 +323,6 @@ workaround/fix is:
     ar xv libc_s.a NLtmtime.o
     ar dv libc_s.a NLtmtime.o
 
-** Undefined symbols _dlopen, _dlsym and/or _dlclose on a Sun.
-
-If you see undefined symbols _dlopen, _dlsym, or _dlclose when linking
-with -lX11, compile and link against the file mit/util/misc/dlsym.c in
-the MIT X11R5 distribution.  Alternatively, link temacs using shared
-libraries with s/sunos4shr.h.  (This doesn't work if you use the X
-toolkit.)
-
-If you get the additional error that the linker could not find
-lib_version.o, try extracting it from X11/usr/lib/X11/libvim.a in
-X11R4, then use it in the link.
-
 ** Undefined symbols when linking on Sunos 4.1.
 
 If you get the undefined symbols _atowc _wcslen, _iswprint, _iswspace,
@@ -426,8 +349,8 @@ X11Dev... with smit.
 ** C-z just refreshes the screen instead of suspending Emacs.
 
 You are probably using a shell that doesn't support job control, even
-though the system itself is capable of it.  Either use a different shell,
-or set the variable `cannot-suspend' to a non-nil value.
+though the system itself is capable of it.  Try using a different
+shell.
 
 ** On a Sun running SunOS 4.1.1, you get this error message from GNU ld:
 
@@ -453,7 +376,7 @@ The solution is to install Patch-ID# 100267-03 from Sun.
   broken.  Use the ones in /usr/openwin/{include,lib} instead.
 
 ** When using gcc, you get the error message "undefined symbol __fixunsdfsi".
-** When using gcc, you get the error message "undefined symbol __main".
+When using gcc, you get the error message "undefined symbol __main".
 
 This means that you need to link with the gcc library.  It may be called
 "gcc-gnulib" or "libgcc.a"; figure out where it is, and define LIB_GCC in
@@ -476,7 +399,9 @@ Some users have reported problems in this area.  The reported solution
 is to define the environment variable OPENWINHOME, even if you must set
 it to `/usr/openwin'.
 
+
 * Problems with running XEmacs
+==============================
 
 ** You type Control-H (Backspace) expecting to delete characters.
 
@@ -484,47 +409,79 @@ Emacs has traditionally used Control-H for help; unfortunately this
 interferes with its use as Backspace on TTY's.  One way to solve this
 problem is to put this in your .emacs:
 
-  (keyboard-translate ?\C-h ?\C-?)
-  (global-set-key "\M-?" 'help-command)
+  (when (eq tty-erase-char ?\C-h)
+    (keyboard-translate ?\C-h ?\C-?)
+    (global-set-key "\M-?" 'help-command))
 
-This makes Control-H (Backspace) work sensibly, and moves help to
-Meta-? (ESC ?).
+This checks whether the TTY erase char is C-h, and if it is, makes
+Control-H (Backspace) work sensibly, and moves help to Meta-? (ESC ?).
 
 Note that you can probably also access help using F1.
+
+** Mail agents (VM, Gnus, rmail) cannot get new mail
+
+rmail and VM get new mail from /usr/spool/mail/$USER using a program
+called `movemail'.  This program interlocks with /bin/mail using the
+protocol defined by /bin/mail.
+
+There are two different protocols in general use.  One of them uses
+the `flock' system call.  The other involves creating a lock file;
+`movemail' must be able to write in /usr/spool/mail in order to do
+this.  You control which one is used by defining, or not defining, the
+macro MAIL_USE_FLOCK in config.h or the m- or s- file it includes.  IF
+YOU DON'T USE THE FORM OF INTERLOCKING THAT IS NORMAL ON YOUR SYSTEM,
+YOU CAN LOSE MAIL!
+
+If your system uses the lock file protocol, and fascist restrictions
+prevent ordinary users from writing the lock files in /usr/spool/mail,
+you may need to make `movemail' setgid to a suitable group such as
+`mail'.  To do this, use the following commands (as root) after doing
+the make install.
+
+	chgrp mail movemail
+	chmod 2755 movemail
+
+Installation normally copies movemail from the build directory to an
+installation directory which is usually under /usr/local/lib.  The
+installed copy of movemail is usually in the directory
+/usr/local/lib/emacs/VERSION/TARGET.  You must change the group and
+mode of the installed copy; changing the group and mode of the build
+directory copy is ineffective.
 
 ** On Solaris, C-x doesn't get through to Emacs when you use the console.
 
 This is a Solaris feature (at least on Intel x86 cpus).  Type C-r
 C-r C-t, to toggle whether C-x gets through to Emacs.
 
-** VM appears to hang in large folders
+** VM appears to hang in large folders.
 
 This is normal (trust us) when upgrading to VM-6.22 from earlier
 versions.  Let VM finish what it is doing and all will be well.
 
 ** Changes made to .el files do not take effect.
 
-You may have forgotten to recompile them into .elc files.
-Then the old .elc files will be loaded, and your changes
-will not be seen.  To fix this, do M-x byte-recompile-directory
-and specify the directory that contains the Lisp files.
+You may have forgotten to recompile them into .elc files.  Then the
+old .elc files will be loaded, and your changes will not be seen.  To
+fix this, do `M-x byte-recompile-directory' and specify the directory
+that contains the Lisp files.
 
-Note that you may get a warning when loading a .elc file that
-is older than the corresponding .el file.
+Note that you will get a warning when loading a .elc file that is
+older than the corresponding .el file.
 
-** Things which should be bold or italic (such as the initial copyright notice)
-   are not.
+** Things which should be bold or italic (such as the initial
+copyright notice) are not.
 
-The fonts of the "bold" and "italic" faces are generated from the font of
-the "default" face; in this way, your bold and italic fonts will have the
-appropriate size and family.  However, emacs can only be clever in this
-way if you have specified the default font using the XLFD (X Logical Font
-Description) format, which looks like
+The fonts of the "bold" and "italic" faces are generated from the font
+of the "default" face; in this way, your bold and italic fonts will
+have the appropriate size and family.  However, emacs can only be
+clever in this way if you have specified the default font using the
+XLFD (X Logical Font Description) format, which looks like
 
 	*-courier-medium-r-*-*-*-120-*-*-*-*-*-*
 
-if you use any of the other, less strict font name formats, some of which
-look like
+if you use any of the other, less strict font name formats, some of
+which look like:
+
 		lucidasanstypewriter-12
 and		fixed
 and		9x13
@@ -534,7 +491,7 @@ versions.  All X fonts can be referred to via XLFD-style names, so you
 should use those forms.  See the man pages for X(1), xlsfonts(1), and
 xfontsel(1).
 
-** The dumped Emacs (XEmacs) crashes when run, trying to write pure data.
+** The dumped Emacs crashes when run, trying to write pure data.
 
 Two causes have been seen for such problems.
 
@@ -585,7 +542,6 @@ This shell command should fix it:
 
   xmodmap -e 'keycode 0xb1 = Meta_L'
 
-
 ** When emacs starts up, I get lots of warnings about unknown keysyms.
 
 If you are running the prebuilt binaries, the Motif library expects to find
@@ -603,8 +559,8 @@ sample.Xdefaults).  Perhaps some of the default resources built in to
 emacs are now overriding your existing resources.  Copy and edit the
 resources in Emacs.ad as necessary.
 
-** I get complaints about the mapping of my HP keyboard at startup, but I
-   haven't changed anything.
+** I get complaints about the mapping of my HP keyboard at startup,
+but I haven't changed anything.
 
 The default HP keymap is set up to have Mod1 assigned to two different keys:
 Meta_L and Mode_switch (even though there is not actually a Mode_switch key on
@@ -614,63 +570,30 @@ upon starting X:
 
 	xmodmap -e 'remove mod1 = Mode_switch'
 
-** I have focus problems when I use `M-o' to switch to another screen without
-   using the mouse.
+** I have focus problems when I use `M-o' to switch to another screen
+without using the mouse.
 
-The focus issues with a program like XEmacs, which has multiple homogeneous
-top-level windows, are very complicated, and as a result, most window managers
-don't implement them correctly.
+The focus issues with a program like XEmacs, which has multiple
+homogeneous top-level windows, are very complicated, and as a result,
+most window managers don't implement them correctly.
 
 The R4/R5 version of twm (and all of its descendants) had buggy focus
-handling; there is a patch in .../xemacs/etc/twm-patch which fixes this.
-Sufficiently recent versions of tvtwm do not need this patch, but most other
-versions of twm do.  If you need to apply this patch, please try to get it
-integrated by the maintainer of whichever version of twm you're using.
+handling.  Sufficiently recent versions of tvtwm have been fixed.  In
+addition, if you're using twm, make sure you have not specified
+"NoTitleFocus" in your .tvtwmrc file.  The very nature of this option
+makes twm do some illegal focus tricks, even with the patch.
 
-In addition, if you're using twm, make sure you have not specified
-"NoTitleFocus" in your .tvtwmrc file.  The very nature of this option makes
-twm do some illegal focus tricks, even with the patch.
+It is known that olwm and olvwm are buggy, and in different ways.  If
+you're using click-to-type mode, try using point-to-type, or vice
+versa.
 
-It is known that olwm and olvwm are buggy, and in different ways.  If you're 
-using click-to-type mode, try using point-to-type, or vice versa.
+In older versions of NCDwm, one could not even type at XEmacs windows.
+This has been fixed in newer versions (2.4.3, and possibly earlier).
 
-In older versions of NCDwm, one could not even type at XEmacs windows.  This
-has been fixed in newer versions (2.4.3, and possibly earlier).
-
-(Many people suggest that XEmacs should warp the mouse when focusing on
-another screen in point-to-type mode.  This is not ICCCM-compliant behavior.
-Implementing such policy is the responsibility of the window manager itself,
-it is not legal for a client to do this.)
-
-** Mail agents (VM, Gnus, rmail) cannot get new mail
-
-rmail and VM get new mail from /usr/spool/mail/$USER using a program
-called `movemail'.  This program interlocks with /bin/mail using the
-protocol defined by /bin/mail.
-
-There are two different protocols in general use.  One of them uses
-the `flock' system call.  The other involves creating a lock file;
-`movemail' must be able to write in /usr/spool/mail in order to do
-this.  You control which one is used by defining, or not defining, the
-macro MAIL_USE_FLOCK in config.h or the m- or s- file it includes.  IF
-YOU DON'T USE THE FORM OF INTERLOCKING THAT IS NORMAL ON YOUR SYSTEM,
-YOU CAN LOSE MAIL!
-
-If your system uses the lock file protocol, and fascist restrictions
-prevent ordinary users from writing the lock files in /usr/spool/mail,
-you may need to make `movemail' setgid to a suitable group such as
-`mail'.  To do this, use the following commands (as root) after doing
-the make install.
-
-	chgrp mail movemail
-	chmod 2755 movemail
-
-Installation normally copies movemail from the build directory to an
-installation directory which is usually under /usr/local/lib.  The
-installed copy of movemail is usually in the directory
-/usr/local/lib/emacs/VERSION/TARGET.  You must change the group and
-mode of the installed copy; changing the group and mode of the build
-directory copy is ineffective.
+(Many people suggest that XEmacs should warp the mouse when focusing
+on another screen in point-to-type mode.  This is not ICCCM-compliant
+behavior.  Implementing such policy is the responsibility of the
+window manager itself, it is not legal for a client to do this.)
 
 ** Emacs spontaneously displays "I-search: " at the bottom of the screen.
 
@@ -772,7 +695,7 @@ into C-s and C-q using keyboard-translate-table.  The example above
 shows how to do this with C-^ and C-\.
 
 ** Control-S and Control-Q commands are ignored completely on a net
-   connection.
+connection.
 
 Some versions of rlogin (and possibly telnet) do not pass flow
 control characters to the remote system to which they connect.
@@ -797,6 +720,17 @@ following to your .emacs (on the host running rlogind):
 
 See the entry about spontaneous display of I-search (above) for more
 info.
+
+** TTY redisplay is slow.
+
+XEmacs has fairly new TTY redisplay support (beginning from 19.12),
+which doesn't include some basic TTY optimizations -- like using
+scrolling regions to move around blocks of text.  This is why
+redisplay on the traditional terminals, or over slow lines can be very 
+slow.
+
+If you are interested in fixing this, please let us know at
+<xemacs@xemacs.org>.
 
 ** Screen is updated wrong, but only on one kind of terminal.
 
@@ -834,50 +768,8 @@ needed in commonly used termcap entries for certain terminals.
    any terminal with the termcap entry you were using.
 
 This is unambiguously an Emacs bug, and can probably be fixed in
-termcap.c, tparam.c, term.c, scroll.c, cm.c or dispnew.c.
-
-** Output from Control-V is slow.
-
-On many bit-map terminals, scrolling operations are fairly slow.
-Often the termcap entry for the type of terminal in use fails
-to inform Emacs of this.  The two lines at the bottom of the screen
-before a Control-V command are supposed to appear at the top after
-the Control-V command.  If Emacs thinks scrolling the lines is fast,
-it will scroll them to the top of the screen.
-
-If scrolling is slow but Emacs thinks it is fast, the usual reason is
-that the termcap entry for the terminal you are using does not
-specify any padding time for the `al' and `dl' strings.  Emacs
-concludes that these operations take only as much time as it takes to
-send the commands at whatever line speed you are using.  You must
-fix the termcap entry to specify, for the `al' and `dl', as much
-time as the operations really take.
-
-Currently Emacs thinks in terms of serial lines which send characters
-at a fixed rate, so that any operation which takes time for the
-terminal to execute must also be padded.  With bit-map terminals
-operated across networks, often the network provides some sort of
-flow control so that padding is never needed no matter how slow
-an operation is.  You must still specify a padding time if you want
-Emacs to realize that the operation takes a long time.  This will
-cause padding characters to be sent unnecessarily, but they do
-not really cost much.  They will be transmitted while the scrolling
-is happening and then discarded quickly by the terminal.
-
-Most bit-map terminals provide commands for inserting or deleting
-multiple lines at once.  Define the `AL' and `DL' strings in the
-termcap entry to say how to do these things, and you will have
-fast output without wasted padding characters.  These strings should
-each contain a single %-spec saying how to send the number of lines
-to be scrolled.  These %-specs are like those in the termcap
-`cm' string.
-
-You should also define the `IC' and `DC' strings if your terminal
-has a command to insert or delete multiple characters.  These
-take the number of positions to insert or delete as an argument.
-
-A `cs' string to set the scrolling region will reduce the amount
-of motion you see on the screen when part of the screen is scrolled.
+termcap.c, terminfo.c, tparam.c, cm.c, redisplay-tty.c,
+redisplay-output.c, or redisplay.c.
 
 ** Your Delete key sends a Backspace to the terminal, using an AIXterm.
 
@@ -889,7 +781,7 @@ The solution is to include in your .Xdefaults the lines:
 This makes your Backspace key send DEL (ASCII 127).
 
 ** With certain fonts, when the cursor appears on a character, the
-   character doesn't appear--you get a solid box instead.
+character doesn't appear--you get a solid box instead.
 
 One user on a Linux system reported that this problem went away with
 installation of a new X server.  The failing server was XFree86 3.1.1.
@@ -903,47 +795,49 @@ version number (or let configure figure out the configuration, which
 it can do perfectly well for SunOS).
 
 ** On Irix, I don't see the toolbar icons and I'm getting lots of
-   entries in the warnings buffer.
+entries in the warnings buffer.
 
 SGI ships a really old Xpm library in /usr/lib which does not work at
 all well with XEmacs.  The solution is to install your own copy of the
 latest version of Xpm somewhere and then use the --site-includes and
 --site-libraries flags to tell configure where to find it.
 
-** On HPUX, you get "poll: Interrupted system call" message in the window
-   where XEmacs was launched.
+** On HPUX, you get "poll: Interrupted system call" message in the
+window where XEmacs was launched.
 
 Richard Cognot <cognot@ensg.u-nancy.fr> writes:
 
-  I get a very strange problem when linking libc.a
-  dynamically: every event (mouse, keyboard, expose...) results
-  in a "poll: Interrupted system call" message in the window
-  where XEmacs was launched. Forcing a static link of libc.a
-  alone by adding /usr/lib/libc.a at the end of the link line
-  solves this. Note that my 9.07 build of 19.14b17 and my (old)
-  build of 19.13 both exhibit the same behaviour. I've tried
-  various hpux patches to no avail. If this problem cannot be
-  solved before the release date, binary kits for HP *must* be
-  linked statically against libc, otherwise this problem will
-  show up. (This is directed at whoever will volunteer for this
-  kit, as I won't be available to do it, unless 19.14 gets
-  delayed until mid-june ;-). I think this problem will be an FAQ
-  soon after the release otherwise.
+  I get a very strange problem when linking libc.a dynamically: every
+  event (mouse, keyboard, expose...) results in a "poll: Interrupted
+  system call" message in the window where XEmacs was
+  launched. Forcing a static link of libc.a alone by adding
+  /usr/lib/libc.a at the end of the link line solves this. Note that
+  my 9.07 build of 19.14b17 and my (old) build of 19.13 both exhibit
+  the same behaviour. I've tried various hpux patches to no avail. If
+  this problem cannot be solved before the release date, binary kits
+  for HP *must* be linked statically against libc, otherwise this
+  problem will show up. (This is directed at whoever will volunteer
+  for this kit, as I won't be available to do it, unless 19.14 gets
+  delayed until mid-june ;-). I think this problem will be an FAQ soon
+  after the release otherwise.
+
+### Is this valid for 20.3?
 
 ** When Emacs tries to ring the bell, you get an error like
 
 	audio: sst_open: SETQSIZE" Invalid argument
 	audio: sst_close: SETREG MMR2, Invalid argument
 
-you have probably compiled using an ANSI C compiler, but with non-ANSI include
-files.  In particular, on Suns, the file /usr/include/sun/audioio.h uses the
-_IOW macro to define the constant AUDIOSETQSIZE.  _IOW in turn uses a K&R
-preprocessor feature that is now explicitly forbidden in ANSI preprocessors,
-namely substitution inside character constants.  All ANSI C compilers must 
-provide a workaround for this problem.  Lucid's C compiler is shipped with a 
-new set of system include files.  If you are using GCC, there is a script
-called fixincludes that creates new versions of some system include files that
-use this obsolete feature.
+you have probably compiled using an ANSI C compiler, but with non-ANSI
+include files.  In particular, on Suns, the file
+/usr/include/sun/audioio.h uses the _IOW macro to define the constant
+AUDIOSETQSIZE.  _IOW in turn uses a K&R preprocessor feature that is
+now explicitly forbidden in ANSI preprocessors, namely substitution
+inside character constants.  All ANSI C compilers must provide a
+workaround for this problem.  Lucid's C compiler is shipped with a new
+set of system include files.  If you are using GCC, there is a script
+called fixincludes that creates new versions of some system include
+files that use this obsolete feature.
 
 ** My buffers are full of \000 characters or otherwise corrupt.
 
@@ -952,14 +846,14 @@ without optimization.  If that doesn't work, try recompiling with
 SYSTEM_MALLOC defined, and/or with REL_ALLOC undefined.
 
 ** On AIX 4, some programs fail when run in a Shell buffer
-   with an error message like   No terminfo entry for "unknown".
+with an error message like No terminfo entry for "unknown".
 
 On AIX, many terminal type definitions are not installed by default.
 `unknown' is one of them.  Install the "Special Generic Terminal
 Definitions" to make them defined.
 
 ** Emacs exits with "X protocol error" when run with an X server for
-   Windows.
+Windows.
 
 A certain X server for Windows had a bug which caused this.
 Supposedly the newer 32-bit version of this server doesn't have the
@@ -992,18 +886,13 @@ configures the X server.
     add mod2 = Mode_switch
     EOF
 
-** Emacs does not notice when you release the mouse.
-
-There are reports that this happened with (some) Microsoft mice and
-that replacing the mouse made it stop.
-
 ** Trouble using ptys on IRIX, or running out of ptys.
 
 The program mkpts (which may be in `/usr/adm' or `/usr/sbin') needs to
 be set-UID to root, or non-root programs like Emacs will not be able
 to allocate ptys reliably.
 
-** Motif dialog boxes lose big time on Irix.
+** Motif dialog boxes lose on Irix.
 
 Larry Auton <lda@control.att.com> writes:
 Beware of not specifying
@@ -1012,11 +901,15 @@ Beware of not specifying
 
 if it builds with the motif dialogs [boom!] you're a dead man.
 
+### Does this apply to 20.3?
+
 ** Beware of the default image & graphics library on Irix
 
 Richard Cognot <cognot@ensg.u-nancy.fr> writes:
 You *have* to compile your own jpeg lib. The one delivered with SGI
 systems is a C++ lib, which apparently XEmacs cannot cope with.
+
+### Does this apply to 20.3?
 
 ** Slow startup on Linux.
 
@@ -1058,7 +951,7 @@ simpler solution: create an empty `/etc/host.conf' file.  The command
 file is not necessary with this approach.
 
 ** On Solaris 2.4, Dired hangs and C-g does not work.  Or Emacs hangs
-   forever waiting for termination of a subprocess that is a zombie.
+forever waiting for termination of a subprocess that is a zombie.
 
 casper@fwi.uva.nl says the problem is in X11R6.  Rebuild libX11.so
 after changing the file xc/config/cf/sunLib.tmpl.  Change the lines
@@ -1100,7 +993,7 @@ in sun.cf and did `make World' to rebuild X11R6.  Removing all
 typing 'make install' in that directory also seemed to work.
 
 ** With M-x enable-flow-control, you need to type C-\ twice to do
-   incremental search--a single C-\ gets no response.
+incremental search--a single C-\ gets no response.
 
 This has been traced to communicating with your machine via kermit,
 with C-\ as the kermit escape character.  One solution is to use
@@ -1211,7 +1104,7 @@ This makes Emacs use memory less efficiently, but seems to work around
 the kernel bug.
 
 ** Inability to send an Alt-modified key, when Emacs is communicating
- directly with an X server.
+directly with an X server.
 
 If you have tried to bind an Alt-modified key as a command, and it
 does not work to type the command, the first thing you should check is
@@ -1252,7 +1145,8 @@ value is just ten seconds.
 
 If this happens to you, extend the timeout period.
 
-** `expand-file-name' fails to work on any but the machine you dumped Emacs on.
+** `expand-file-name' fails to work on any but the machine you dumped
+Emacs on.
 
 On Ultrix, if you use any of the functions which look up information
 in the passwd database before dumping Emacs (say, by using
@@ -1269,8 +1163,8 @@ in the dumped Emacs, and is then inaccurate on any other host.
 
 ** Emacs fails to understand most Internet host names, even though
 the names work properly with other programs on the same system.
-** Emacs won't work with X-windows if the value of DISPLAY is HOSTNAME:0.
-** Gnus can't make contact with the specified host for nntp.
+  Emacs won't work with X-windows if the value of DISPLAY is HOSTNAME:0.
+  Gnus can't make contact with the specified host for nntp.
 
 This typically happens on Suns and other systems that use shared
 libraries.  The cause is that the site has installed a version of the
@@ -1302,14 +1196,6 @@ again to say this:
 
 #define LIBS_SYSTEM -lresolv -lfoo -lbar
 
-** Bus errors on startup when compiled with Sun's "acc" (in the routine
-   make_string_internal() called from initialize_environment_alist())
-
-  The Sun ANSI compiler doesn't place uninitialized static variables in BSS
-  space like other compilers do.  This breaks emacs.  If you want to use acc,
-  you need to make the file "lastfile.o" be the *first* file in the link 
-  command.  Better yet, use Lucid C or GCC.
-
 ** Trouble using ptys on AIX.
 
 People often install the pty devices on AIX incorrectly.
@@ -1320,12 +1206,12 @@ Use `smit pty' to reinstall them properly.
 christos@theory.tn.cornell.edu says:
 
 The problem is that in your .cshrc you have something that tries to
-execute `tty`. If you are not running the shell on a real tty then 
-tty will print "not a tty". Csh expects one word in some places, 
-but tty is giving it back 3.
+execute `tty`. If you are not running the shell on a real tty then tty
+will print "not a tty". Csh expects one word in some places, but tty
+is giving it back 3.
 
-The solution is to add a pair of quotes around `tty` to make it a single
-word: 
+The solution is to add a pair of quotes around `tty` to make it a
+single word:
 
 if (`tty` == "/dev/console") 
 
@@ -1336,29 +1222,31 @@ if ("`tty`" == "/dev/console")
 Even better, move things that set up terminal sections out of .cshrc
 and into .login.
 
-** With process-connection-type set to t, each line of subprocess output is
-  terminated with a ^M, making ange-ftp and GNUS not work.
+** With process-connection-type set to t, each line of subprocess
+output is terminated with a ^M, making ange-ftp and GNUS not work.
 
-On SunOS systems, this problem has been seen to be a result of an incomplete
-installation of gcc 2.2 which allowed some non-ANSI compatible include files
-into the compilation.  In particular this affected virtually all ioctl() calls.
+On SunOS systems, this problem has been seen to be a result of an
+incomplete installation of gcc 2.2 which allowed some non-ANSI
+compatible include files into the compilation.  In particular this
+affected virtually all ioctl() calls.
 
 ** Once you pull down a menu from the menubar, it won't go away.
 
-It has been claimed that this is caused by a bug in certain very old (1990?)
-versions of the twm window manager.  It doesn't happen with recent vintages,
-or with other window managers.
+It has been claimed that this is caused by a bug in certain very old
+(1990?)  versions of the twm window manager.  It doesn't happen with
+recent vintages, or with other window managers.
 
 ** Emacs ignores the "help" key when running OLWM.
 
-OLWM grabs the help key, and retransmits it to the appropriate client using
-XSendEvent.  Allowing emacs to react to synthetic events is a security hole,
-so this is turned off by default.  You can enable it by setting the variable
-x-allow-sendevents to t.  You can also cause fix this by telling OLWM to not
-grab the help key, with the null binding "OpenWindows.KeyboardCommand.Help:".
+OLWM grabs the help key, and retransmits it to the appropriate client
+using XSendEvent.  Allowing emacs to react to synthetic events is a
+security hole, so this is turned off by default.  You can enable it by
+setting the variable x-allow-sendevents to t.  You can also cause fix
+this by telling OLWM to not grab the help key, with the null binding
+"OpenWindows.KeyboardCommand.Help:".
 
 ** Programs running under terminal emulator do not recognize `emacs'
-   terminal type.
+terminal type.
 
 The cause of this is a shell startup file that sets the TERMCAP
 environment variable.  The terminal emulator uses that variable to
@@ -1374,11 +1262,13 @@ it only if it is undefined.
 Or you could set TERMCAP only when you set TERM--which should not
 happen in a non-login shell.
 
+
 * Compatibility problems (with Emacs 18, GNU Emacs, or previous XEmacs/lemacs)
+==============================================================================
 
 ** "Symbol's value as variable is void: unread-command-char".
-** "Wrong type argument: arrayp, #<keymap 143 entries>"
-** "Wrong type argument: stringp, [#<keypress-event return>]"
+ "Wrong type argument: arrayp, #<keymap 143 entries>"
+ "Wrong type argument: stringp, [#<keypress-event return>]"
 
 There are a few incompatible changes in XEmacs, and these are the
 symptoms.  Some of the emacs-lisp code you are running needs to be
@@ -1386,15 +1276,15 @@ updated to be compatible with XEmacs.
 
 The code should not treat keymaps as arrays (use `define-key', etc.),
 should not use obsolete variables like `unread-command-char' (use
-`unread-command-event').  Many (most) of the new ways of doing things
+`unread-command-events').  Many (most) of the new ways of doing things
 are compatible in GNU Emacs and XEmacs.
 
-Modern Emacs packages (Gnus, VM, etc) are written to support GNU Emacs
-and XEmacs.  We have provided modified versions of several popular
-emacs packages (dired, etc) which are compatible with this version of
-emacs.  Check to make sure you have not set your load-path so that
-your private copies of these packages are being found before the
-versions in the lisp directory.
+Modern Emacs packages (Gnus, VM, W3, efs, etc) are written to support
+GNU Emacs and XEmacs.  We have provided modified versions of several
+popular emacs packages (dired, etc) which are compatible with this
+version of emacs.  Check to make sure you have not set your load-path
+so that your private copies of these packages are being found before
+the versions in the lisp directory.
 
 Make sure that your load-path and your $EMACSLOADPATH environment
 variable are not pointing at an Emacs18 lisp directory.  This will
@@ -1403,11 +1293,12 @@ cripple emacs.
 ** Some packages that worked before now cause the error
    Wrong type argument: arrayp, #<face ... >
 
-Code which uses the `face' accessor functions must be recompiled with xemacs
-19.9 or later.  The functions whose callers must be recompiled are: face-font,
-face-foreground, face-background, face-background-pixmap, and face-underline-p.
-The .elc files generated by version 19.9 will work in 19.6 and 19.8, but older
-.elc files which contain calls to these functions will not work in 19.9.
+Code which uses the `face' accessor functions must be recompiled with
+xemacs 19.9 or later.  The functions whose callers must be recompiled
+are: face-font, face-foreground, face-background,
+face-background-pixmap, and face-underline-p.  The .elc files
+generated by version 19.9 will work in 19.6 and 19.8, but older .elc
+files which contain calls to these functions will not work in 19.9.
 
 ** Signaling: (error "Byte code stack underflow (byte compiler bug), pc 38")
 
@@ -1417,13 +1308,15 @@ is to rebytecompile the offending file.
 
 ** Signaling: (wrong-type-argument ...) when loading mail-abbrevs
 
-The is seen when installing the Big Brother Data Base (bbdb) which
-includes an outdated copy of mail-abbrevs.el.  Remove the copy that
-comes with bbdb and use the one that comes with XEmacs.
+The is seen when installing the Insidious Big Brother Data Base (bbdb)
+which includes an outdated copy of mail-abbrevs.el.  Remove the copy
+that comes with bbdb and use the one that comes with XEmacs.
+
 
 * MULE issues
+=============
 
-** Internationalized (Asian) Isearch doesn't work
+** Internationalized (Asian) Isearch doesn't work.
 
 Currently, Isearch doesn't directly support any of the input methods
 that are not XIM based (like egg, canna and quail) (and there are
@@ -1437,7 +1330,7 @@ input your Japanese, Korean or Chinese string, then hit return to send
 that to Isearch and then use standard Isearch commands from there.
 
 ** Using egg or canna and mousing around while in 'fence' mode screws
-up my buffer
+up my buffer.
 
 Don't do this. The fence modes of egg and canna are currently very
 modal, and messing with where they expect point to be and what they

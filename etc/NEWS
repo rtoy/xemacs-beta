@@ -186,6 +186,10 @@ move point a short distance off the screen, XEmacs will scroll the
 screen just far enough to bring point back on screen, provided that
 does not exceed `scroll-conservatively' lines.
 
+** Face background colors now take precedence over the default face
+background pixmap, which means that background pixmaps no longer clash
+with zmacs-regions, or clickable buttons.
+
 ** Customize changes.
 
 *** Customize has undergone a massive speedup, and should now operate
@@ -250,9 +254,9 @@ To revert to the old behaviour, use:
 
    (setq add-log-time-format 'current-time-string)
 
-Or `M-x customize-group RET add-log RET'.
+Or `M-x customize RET add-log RET'.
 
-** The key C-x m no longer runs the `mail' command directly.
+** The key `C-x m' no longer runs the `mail' command directly.
 Instead, it runs the command `compose-mail', which invokes the mail
 composition mechanism you have selected with the variable
 `mail-user-agent'.  The default choice of user agent is
@@ -382,6 +386,7 @@ conveniently with a different current buffer.  It looks like this:
 
 BUFFER is the expression that says which buffer to use.
 BODY-FORMS say what to do in that buffer.
+The old `eval-in-buffer' macro is obsoleted by `with-current-buffer'.
 
 ** The new primitive `save-current-buffer' saves and restores the
 choice of current buffer, like `save-excursion', but without saving or
@@ -397,8 +402,8 @@ one to ignore the debugger for some common errors, even when
 `debug-on-error' is t.  It has no effect when `debug-on-signal' is
 non-nil.
 
-** The function current-message returns the message currently displayed
-in the echo area, or nil if there is none.
+** The new function `current-message' returns the message currently
+displayed in the echo area, or nil if there is none.
 
 ** File-access primitive functions no longer discard an extra redundant
 directory name from the beginning of the file name.  In other words,
@@ -409,8 +414,8 @@ they no longer do anything special with // or /~.  The same goes for
 This makes it possible for a Lisp program to open a file whose name
 begins with ~.
 
-** The new function regexp-opt returns an efficient regexp to match a
-string.  The arguments are STRINGS and (optionally) PAREN.  This
+** The new function `regexp-opt' returns an efficient regexp to match
+a string.  The arguments are STRINGS and (optionally) PAREN.  This
 function can be used where regexp matching or searching is intensively
 used and speed is important, e.g., in Font Lock mode.
 

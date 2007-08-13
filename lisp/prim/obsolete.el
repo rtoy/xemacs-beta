@@ -691,6 +691,7 @@ the resulting string may be narrower than END-COLUMN."
 (defalias 'truncate-string 'truncate-string-to-width)
 (make-obsolete 'truncate-string 'truncate-string-to-width)
 
-
+;; Keywords already do The Right Thing in XEmacs
+(make-compatible 'define-widget-keywords "Just use them")
 
 ;;; obsolete.el ends here

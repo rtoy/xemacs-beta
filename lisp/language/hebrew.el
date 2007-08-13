@@ -1,7 +1,7 @@
 ;;; hebrew.el --- Support for Hebrew
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, Hebrew
 
@@ -29,42 +29,27 @@
 ;;; Code:
 
 (make-coding-system
- 'iso-8859-8 2 ?8 "MIME ISO-8859-8"
+ 'hebrew-iso-8bit 2 ?8
+ "ISO 2022 based 8-bit encoding for Hebrew (MIME:ISO-8859-8)"
  '((ascii t) (hebrew-iso8859-8 t) nil nil
    nil ascii-eol ascii-cntl nil nil nil nil nil t))
 
-(register-input-method
- "Hebrew" '("quail-hebrew" quail-use-package "quail/hebrew"))
+(define-coding-system-alias 'iso-8859-8 'hebrew-iso-8bit)
 
 (defun setup-hebrew-environment ()
   "Setup multilingual environment (MULE) for Hebrew.
 But, please note that right-to-left writing is not yet supported."
   (interactive)
-  (setq coding-category-iso-8-1 'iso-8859-8)
-
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-8-1
-     coding-category-iso-8-2))
-
-  (setq-default buffer-file-coding-system 'iso-8859-8)
-  (set-terminal-coding-system 'iso-8859-8)
-  (set-keyboard-coding-system 'iso-8859-8)
-
-  (setq default-input-method '("Hebrew" . "quail-hebrew"))
-  )
-
-(defun describe-hebrew-support ()
-  "Describe how Emacs supports Hebrew."
-  (interactive)
-  (describe-language-support-internal "Hebrew"))
+  (setup-8-bit-environment "Hebrew" 'hebrew-iso8859-8 'hebrew-iso-8bit
+			   "hebrew"))
 
 (set-language-info-alist
  "Hebrew" '((setup-function . setup-hebrew-environment)
 	    (describe-function . describe-hebrew-support)
 	    (charset . (hebrew-iso8859-8))
-	    (coding-system . (iso-8859-8))
+	    (coding-system . (hebrew-iso-8bit))
 	    (sample-text . "Hebrew	,Hylem(B")
-	    (documentation . "Right-to-left writing is not yet supported.")))
+	    (documentation . "Right-to-left writing is not yet supported.")
+	    ))
 
-;;; hebew.el ends here
+;;; hebrew.el ends here

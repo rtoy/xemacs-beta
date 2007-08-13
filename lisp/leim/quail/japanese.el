@@ -1,7 +1,7 @@
 ;;; quail/japanese.el --- Quail package for inputting Japanese
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, input method, Japanese
 
@@ -18,16 +18,17 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
 (require 'quail)
 (require 'kkc)
 
-;; Update Quail translation region for Japanese bizarre translation
-;; rules.
+;; Update Quail translation region while considering Japanese bizarre
+;; translation rules.
 (defun quail-japanese-update-translation (control-flag)
   (cond ((eq control-flag t)
 	 (insert quail-current-str)
@@ -53,48 +54,36 @@
 ;; Convert Hiragana <-> Katakana in the current translation region.
 (defun quail-japanese-toggle-kana ()
   (interactive)
-  (if (quail-point-in-conversion-region)
-      (let ((start (overlay-start quail-conv-overlay))
-	    (end (overlay-end quail-conv-overlay)))
-	(setq quail-japanese-kana-state
-	      (if (eq last-command this-command)
-		  (not quail-japanese-kana-state)))
-	(if quail-japanese-kana-state
-	    (japanese-hiragana-region start end)
-	  (japanese-katakana-region start end))
-	(goto-char (overlay-end quail-conv-overlay))
-	(setq quail-exit-conversion-mode t))
-    ;; When this command is invoked, the point is not in a valid
-    ;; region.  Try the event which invoked this command again out of
-    ;; conversion mode.
-    (setq unread-command-events (list last-command-event))
-    (throw 'exit nil)))
+  (let ((start (overlay-start quail-conv-overlay))
+	(end (overlay-end quail-conv-overlay)))
+    (setq quail-japanese-kana-state
+	  (if (eq last-command this-command)
+	      (not quail-japanese-kana-state)))
+    (if quail-japanese-kana-state
+	(japanese-hiragana-region start end)
+      (japanese-katakana-region start end))
+    (goto-char (overlay-end quail-conv-overlay))))
 
 ;; Convert Hiragana in the current translation region to Kanji by KKC
 ;; (Kana Kanji Converter) utility.
 (defun quail-japanese-kanji-kkc ()
   (interactive)
-  (if (quail-point-in-conversion-region)
-      (let ((from (overlay-start quail-conv-overlay))
-	    (to (overlay-end quail-conv-overlay))
-	    newfrom)
-	(delete-overlay quail-overlay)
-	(delete-overlay quail-conv-overlay)
-	(unwind-protect
-	    (setq newfrom (kkc-region from to))
-	  ;; Activate the original (or shrinked) conversion region
-	  ;; again.	  
-	  (if newfrom
-	      ;; `kkc-region' is canceled.  
-	      (move-overlay quail-conv-overlay newfrom (point))
-	    ;; `kkc-region' is terminated normally.
-	    (move-overlay quail-conv-overlay from (point))
-	    (throw 'exit nil))))
-    ;; When this command is invoked, the point is not in a valid
-    ;; region.  Try the event which invoked this command again out of
-    ;; conversion mode.
-    (setq unread-command-events (list last-command-event))
-    (throw 'exit nil)))
+  (let ((from (overlay-start quail-conv-overlay))
+	(to (overlay-end quail-conv-overlay))
+	newfrom)
+    (quail-delete-overlays)
+    (setq overriding-terminal-local-map nil)
+    (kkc-region from to 'quail-japanese-kkc-mode-exit)))
+
+;; Function to call on exiting KKC mode.  ARG is nil if KKC mode is
+;; exited normally, else ARG is a cons (FROM . TO) where FROM and TO
+;; specify a region not yet processed.
+(defun quail-japanese-kkc-mode-exit (arg)
+  (if arg
+      (progn
+	(setq overriding-terminal-local-map (quail-conversion-keymap))
+	(move-overlay quail-conv-overlay (car arg) (cdr arg)))
+    (run-hooks 'input-method-after-insert-chunk-hook)))
 
 (defun quail-japanese-self-insert-and-switch-to-alpha (key idx)
   (quail-delete-region)
@@ -102,10 +91,10 @@
   (quail-japanese-switch-package "q" 1))
 
 (defvar quail-japanese-switch-table
-  '((?z . "quail-ja-zenkaku")
-    (?k . "quail-ja-hankaku-kana")
-    (?h . "quail-ja")
-    (?q . ("quail-ja-alpha"))))
+  '((?z . "japanese-zenkaku")
+    (?k . "japanese-hankaku-kana")
+    (?h . "japanese")
+    (?q . ("japanese-ascii"))))
 
 (defvar quail-japanese-package-saved nil)
 (make-variable-buffer-local 'quail-japanese-package-saved)
@@ -115,33 +104,35 @@
   (let ((pkg (cdr (assq (aref key (1- idx)) quail-japanese-switch-table))))
     (if (null pkg)
 	(error "No package to be switched")
+      (setq overriding-terminal-local-map nil)
       (quail-delete-region)
       (if (stringp pkg)
-	  (select-input-method "Japanese" pkg)
-	(if (string= (car pkg) (cdr current-input-method))
+	  (activate-input-method pkg)
+	(if (string= (car pkg) current-input-method)
 	    (if quail-japanese-package-saved
-		(select-input-method "Japanese" quail-japanese-package-saved))
-	  (setq quail-japanese-package-saved (cdr current-input-method))
-	  (select-input-method "Japanese" (car pkg))))
-      (throw 'quail-tag nil))))
+		(activate-input-method quail-japanese-package-saved))
+	  (setq quail-japanese-package-saved current-input-method)
+	  (activate-input-method (car pkg))))))
+  (throw 'quail-tag nil))
 
-(quail-define-package "quail-ja" "Japanese" "あ"
-		      nil
-		      "Romaji -> Hiragana -> Kanji&Kana
+(quail-define-package
+ "japanese" "Japanese" "Aあ"
+ nil
+ "Romaji -> Hiragana -> Kanji&Kana
 ---- Special key bindings ----
-qq:	toggle between `quail-ja' and `quail-ja-alpha'
-qz:	use `quail-ja-zenkaku' package, \"qh\" puts you back to `quail-ja'
-K:	convert to Katakana
+qq:	toggle between input methods `japanese' and `japanese-ascii'
+qz:	use `japanese-zenkaku' package, \"qh\" puts you back to `japanese'
+K:	toggle converting region between Katakana and Hiragana
 SPC:	convert to Kanji&Kana
-z:	insert one Japanese symbol according to a following key
+z:	insert one Japanese symbol according to a key which follows
 "
-		      nil t t nil nil nil nil nil
-		      'quail-japanese-update-translation
-		      '(("K" . quail-japanese-toggle-kana)
-			(" " . quail-japanese-kanji-kkc)
-			("\C-m" . quail-no-conversion)
-			([return] . quail-no-conversion))
-		      )
+ nil t t nil nil nil nil nil
+ 'quail-japanese-update-translation
+ '(("K" . quail-japanese-toggle-kana)
+   (" " . quail-japanese-kanji-kkc)
+   ("\C-m" . quail-no-conversion)
+   ([return] . quail-no-conversion))
+ )
 
 (quail-define-rules
 
@@ -262,23 +253,24 @@ z:	insert one Japanese symbol according to a following key
 
 )
 
-(quail-define-package "quail-ja-alpha" "Japanese" "Aa"
-		      nil
-		      "Temporary ASCII input mode.
-Type \"qq\" to go back to previous package.
-"
-		      nil t t)
+(quail-define-package
+ "japanese-ascii" "Japanese" "Aa"
+ nil
+ "Temporary ASCII input mode while using Quail package `japanese'
+Type \"qq\" to go back to previous package."
+ nil t t)
 
 (quail-define-rules ("qq" quail-japanese-switch-package))
 
-(quail-define-package "quail-ja-zenkaku" "Japanese" "Ａ"
-		      nil
-		      "Zenkaku alpha numeric character input method.
+(quail-define-package
+ "japanese-zenkaku" "Japanese" "Ａ"
+ nil
+ "Japanese zenkaku alpha numeric character input method
 ---- Special key bindings ----
-qq:	toggle between `quail-ja-zenkaku' and `quail-ja-alpha'
-qh:	use `quail-ja' package, \"qz\" puts you back to `quail-ja-zenkaku'
+qq:	toggle between `japanese-zenkaku' and `japanese-ascii'
+qh:	use `japanese' package, \"qz\" puts you back to `japanese-zenkaku'
 "
-		      nil t t)
+ nil t t)
 
 (quail-define-rules
 
@@ -331,27 +323,31 @@ qh:	use `quail-ja' package, \"qz\" puts you back to `quail-ja-zenkaku'
 	 (quail-terminate-translation))))
 
 
-(quail-define-package "quail-ja-hankaku-kana" "Japanese" "ｱｱ"
-		      nil
-		      "Hankaku katakana input method.
+(quail-define-package
+ "japanese-hankaku-kana"
+ "Japanese" "ｱ"
+ nil
+ "Japanese hankaku katakana input method by Roman transliteration
 ---- Special key bindings ----
-qq:	toggle between `quail-ja-zenkaku' and `quail-ja-alpha'
+qq:	toggle between `japanese-hankaku-kana' and `japanese-ascii'
 "
-		      nil t t nil nil nil nil nil
-		      'quail-japanese-hankaku-update-translation)
+ nil t t nil nil nil nil nil
+ 'quail-japanese-hankaku-update-translation)
 
-;; Use the same map as that of `quail-ja'.
+;; Use the same map as that of `japanese'.
 (setcar (cdr (cdr quail-current-package))
-	(nth 2 (assoc "quail-ja" quail-package-alist)))
+	(nth 2 (assoc "japanese" quail-package-alist)))
 
-(quail-define-package "quail-ja-hiragana" "Japanese" "あ"
-		      nil
-		      "Hiragana input method by Roman transliteration." 
-		      nil t t nil nil nil nil nil
-		      'quail-japanese-update-translation)
-;; Use the same map as that of `quail-ja'.
+(quail-define-package
+ "japanese-hiragana" "Japanese" "あ"
+ nil
+ "Japanese hiragana input method by Roman transliteration"
+ nil t t nil nil nil nil nil
+ 'quail-japanese-update-translation)
+
+;; Use the same map as that of `japanese'.
 (setcar (cdr (cdr quail-current-package))
-	(nth 2 (assoc "quail-ja" quail-package-alist)))
+	(nth 2 (assoc "japanese" quail-package-alist)))
 
 ;; Update Quail translation region while converting Hiragana to Katakana.
 (defun quail-japanese-katakana-update-translation (control-flag)
@@ -373,12 +369,13 @@ qq:	toggle between `quail-ja-zenkaku' and `quail-ja-alpha'
 	       (list (aref quail-current-key control-flag)))
 	 (quail-terminate-translation))))
 
-(quail-define-package "quail-ja-katakana" "Japanese" "ア"
-		      nil
-		      "Katakana input method by Roman Transliteration."
-		      nil t t nil nil nil nil nil
-		      'quail-japanese-katakana-update-translation)
+(quail-define-package 
+ "japanese-katakana" "Japanese" "ア"
+ nil
+ "Japanese katakana input method by Roman transliteration"
+ nil t t nil nil nil nil nil
+ 'quail-japanese-katakana-update-translation)
 
-;; Use the same map as that of `quail-ja'.
+;; Use the same map as that of `japanese'.
 (setcar (cdr (cdr quail-current-package))
-	(nth 2 (assoc "quail-ja" quail-package-alist)))
+	(nth 2 (assoc "japanese" quail-package-alist)))

@@ -1,7 +1,7 @@
 ;;; quail/symbol-ksc.el --- Quail-package for Korean Symbol (KSC5601)
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, input method, Korean, Hangul
 
@@ -18,8 +18,9 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; 94.10.24   Written for Mule Ver.2.0 (koaunghi.un@zdv.uni-tuebingen.de)
 ;;; 94.11.04   Updated for Mule Ver.2.1 (koaunghi.un@zdv.uni-tuebingen.de)
@@ -31,15 +32,14 @@
 (require 'quail)
 
 (defun quail-hangul-switch-back (key idx)
-  (if (not previous-input-method)
+  (if (not input-method-history)
       (toggle-input-method t)
     (quail-delete-region)
-    (select-input-method (car previous-input-method)
-			 (cdr previous-input-method)))
+    (activate-input-method (car input-method-history)))
   (throw 'quail-tag nil))
 
 (quail-define-package
- "quail-symbol-ksc" "Korean" "한글심벌입력표" t
+ "korean-symbol" "Korean" "한글심벌입력표" t
  "한글심벌입력표:
   【(】괄호열기【arrow】화살【sex】♂♀【index】첨자  【accent】악센트
   【)】괄호닫기【music】음악【dot】점  【quote】따옴표【xtext】§※¶¡¿

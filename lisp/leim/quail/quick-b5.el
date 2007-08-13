@@ -24,9 +24,10 @@
 ;; REPEATKEY:	\020\022
 ;; # the following line must not be removed
 ;; BEGINDICTIONARY
-(quail-define-package "quail-quick-b5" "Chinese-BIG5" "$(0X|/y(B(BIG5)"
+(quail-define-package
+ "chinese-b5-quick" "Chinese-BIG5" "$(0X|(BB"
  t
- "$(0&d'GTT&,!JX|/y!K(B
+ "$(0&d'GTT&,!JX|/y!K(BBIG5
 
 	$(0KHM$X|/yTT&,WoOu(B
 

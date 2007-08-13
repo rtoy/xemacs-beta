@@ -56,6 +56,10 @@ Boston, MA 02111-1307, USA.  */
 #include "mule-coding.h"
 #endif
 
+#ifdef HAVE_OFFIX_DND
+#include "offix.h"
+#endif
+
 #ifdef WINDOWSNT
 /* Hmm, under unix we want X modifiers, under NT we want X modifiers if
    we are running X and Windows modifiers otherwise.
@@ -1036,6 +1040,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	    emacs_event->event.button.button	= ev->button;
 	    emacs_event->event.button.x		= ev->x;
 	    emacs_event->event.button.y		= ev->y;
+
 	  }
       }
     break;
@@ -1091,6 +1096,96 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
            passed as the timestamp of the TAKE_FOCUS, which the ICCCM
            explicitly prohibits. */
         XClientMessageEvent *ev = &x_event->xclient;
+#ifdef HAVE_OFFIX_DND
+	if (DndIsDropMessage(x_event))
+	  {
+	    unsigned int state, modifiers = 0, button=0;
+	    struct frame *frame = x_any_window_to_frame (d, ev->window);
+	    unsigned char *data;
+	    unsigned long size, dtype;
+	    Lisp_Object l_type = Qnil, l_data = Qnil;
+	    Lisp_Object l_dndlist = Qnil, l_item = Qnil;
+	    struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+	    
+	    GCPRO4 (l_type, l_data, l_dndlist, l_item);
+
+	    if (! frame)
+	      return 0;	/* not for us */
+	    XSETFRAME (emacs_event->channel, frame);
+
+	    emacs_event->event_type = dnd_drop_event;
+	    emacs_event->timestamp  = DEVICE_X_LAST_SERVER_TIMESTAMP (d);
+
+	    state=DndDragButtons(x_event);
+
+	    if (state & ShiftMask)	modifiers |= MOD_SHIFT;
+	    if (state & ControlMask)	modifiers |= MOD_CONTROL;
+	    if (state & xd->MetaMask)	modifiers |= MOD_META;
+	    if (state & xd->SuperMask)	modifiers |= MOD_SUPER;
+	    if (state & xd->HyperMask)	modifiers |= MOD_HYPER;
+	    if (state & xd->AltMask)	modifiers |= MOD_ALT;
+
+	    if (state & Button5Mask)    button = Button5;
+	    if (state & Button4Mask)    button = Button4;
+	    if (state & Button3Mask)    button = Button3;
+	    if (state & Button2Mask)    button = Button2;
+	    if (state & Button1Mask)    button = Button1;
+	    
+	    emacs_event->event.dnd_drop.modifiers = modifiers;
+	    emacs_event->event.dnd_drop.button	  = button;
+
+	    DndDropCoordinates(FRAME_X_TEXT_WIDGET(frame), x_event, 
+			       &(emacs_event->event.dnd_drop.x),
+			       &(emacs_event->event.dnd_drop.y) );
+
+	    DndGetData(x_event,&data,&size);
+
+	    dtype=DndDataType(x_event);
+	    switch (dtype)
+	      {
+	      case DndFiles: /* null terminated strings, end null */
+		{
+		  int len;
+		  while (*data)
+		    {
+		      len = strlen ((char*) data);
+		      l_item = make_ext_string ((char*) data, len,
+						FORMAT_FILENAME);
+		      /* order is irrelevant */
+		      l_dndlist = Fcons (l_item, l_dndlist);
+		      data += len+1;
+		    }
+		}
+		break;
+	      case DndText:
+	      case DndMIME:
+		/* is there a better way to format this ? */
+		l_dndlist = make_ext_string ((char*) data, strlen(data),
+					     FORMAT_BINARY);
+		break;
+	      case DndFile:
+	      case DndDir:
+	      case DndLink:
+	      case DndExe:
+	      case DndURL: /* this could also break with FORMAT_FILENAME */
+		l_dndlist = make_ext_string ((char*) data, strlen(data),
+					     FORMAT_FILENAME);
+		break;
+	      default: /* Unknown, RawData and any other type */
+		l_dndlist = make_ext_string ((char*) data, size,
+					     FORMAT_BINARY);
+		break;
+	      }
+	    
+	    l_type=make_int(dtype);
+
+	    emacs_event->event.dnd_drop.data = Fcons (l_type, Fcons (l_dndlist, Qnil));
+
+	    UNGCPRO;
+
+	    break;
+	  }
+#endif
         if (ev->message_type == DEVICE_XATOM_WM_PROTOCOLS (d)
             && ev->data.l[0] == DEVICE_XATOM_WM_TAKE_FOCUS (d)
             && ev->data.l[1] == 0)
@@ -1104,7 +1199,6 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
       {
         struct frame *frame;
         Window w;
-	size_t event_size;
 	XEvent *x_event_copy = &emacs_event->event.magic.underlying_x_event;
 
 #define FROB(event_member, window_member) \

@@ -1,4 +1,16 @@
 							-*- indented-text -*-
+to 20.3 beta25 "Prague"
+-- Default use-union-type to YES because it works better when processing errors
+   occurring during garbage collection
+-- Ediff 2.671 Courtesy of Michael Kifer
+-- Viper 3.001 Courtesy of Michael Kifer
+-- OffiX DnD now binds to XEmacs events and doesn't use an external library
+   Courtesy of Oliver Graf
+-- New file xemacs-build-report.el courtesy of Adrian Aichner
+-- Synch to Emacs 20.2 by MORIOKA Tomohiko
+-- Various patches from Hrvoje Niksic
+-- Miscellaneous bug fixes
+
 to 20.3 beta24 "Ljubljana"
 -- Interface change:  custom-loads now snarfed separately from autoloads.
 -- custom snarfing code rewritten

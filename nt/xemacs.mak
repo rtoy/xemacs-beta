@@ -228,7 +228,8 @@ DOC_SRC6=\
  $(XEMACS)\src\mule.c \
  $(XEMACS)\src\mule-charset.c \
  $(XEMACS)\src\mule-ccl.c \
- $(XEMACS)\src\mule-coding.c
+ $(XEMACS)\src\mule-coding.c \
+ $(XEMACS)\src\widget.c
 
 MAKE_DOCFILE=$(LIB_SRC)\make-docfile.exe
 
@@ -392,6 +393,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\undo.obj \
 	$(OUTDIR)\unexnt.obj \
 	$(OUTDIR)\vm-limit.obj \
+	$(OUTDIR)\widget.obj \
 	$(OUTDIR)\window.obj \
 	$(OUTDIR)\xgccache.obj \
 	$(OUTDIR)\xmu.obj \
@@ -737,6 +739,9 @@ $(OUTDIR)\unexnt.obj:	$(TEMACS_SRC)\unexnt.c
 
 $(OUTDIR)\vm-limit.obj:	$(TEMACS_SRC)\vm-limit.c
 	$(CC) $(TEMACS_FLAGS) $** -Fo$@
+
+$(OUTDIR)\widget.obj:	$(TEMACS_SRC)\widget.c
+	$(CC) $(TEMACS_FLAGS)  $** -Fo$@
 
 $(OUTDIR)\window.obj:	$(TEMACS_SRC)\window.c
 	$(CC) $(TEMACS_FLAGS)  $** -Fo$@

@@ -62,6 +62,7 @@ Lisp_Object Vsynchronize_minibuffers;
 Lisp_Object Qsynchronize_minibuffers;
 Lisp_Object Qbuffer_predicate;
 Lisp_Object Qmake_initial_minibuffer_frame;
+Lisp_Object Qcustom_initialize_frame;
 
 /* We declare all these frame properties here even though many of them
    are currently only used in frame-x.c, because we should generalize
@@ -539,6 +540,10 @@ See `set-frame-properties', `default-x-frame-plist', and
       va_run_hook_with_args (Qcreate_device_hook, 1, device);
     }
   va_run_hook_with_args (Qcreate_frame_hook, 1, frame);
+
+  /* Initialize custom-specific stuff. */
+  if (!UNBOUNDP (symbol_function (XSYMBOL (Qcustom_initialize_frame))))
+    call1 (Qcustom_initialize_frame, frame);
 
   unbind_to (speccount, Qnil);
 
@@ -2867,6 +2872,7 @@ syms_of_frame (void)
   defsymbol (&Qselect_frame_hook, "select-frame-hook");
   defsymbol (&Qdeselect_frame_hook, "deselect-frame-hook");
   defsymbol (&Qcreate_frame_hook, "create-frame-hook");
+  defsymbol (&Qcustom_initialize_frame, "custom-initialize-frame");
   defsymbol (&Qmouse_enter_frame_hook, "mouse-enter-frame-hook");
   defsymbol (&Qmouse_leave_frame_hook, "mouse-leave-frame-hook");
   defsymbol (&Qmap_frame_hook, "map-frame-hook");
@@ -3127,7 +3133,7 @@ For values specific to the separate minibuffer frame, see
 See also the variables `default-x-frame-plist' and
 `default-tty-frame-plist', which are like `default-frame-plist'
 except that they apply only to X or tty frames, respectively
-(whereas `default-frame-plist' applies to all types of frames).
+\(whereas `default-frame-plist' applies to all types of frames).
 */ );
   Vdefault_frame_plist = Qnil;
 

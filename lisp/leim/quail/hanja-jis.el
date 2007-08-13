@@ -1,7 +1,7 @@
 ;;; quail/hanja-jis.el -- Quail package for inputting Korean Hanja (JISX0208)
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, input method, Korean, Hangul
 
@@ -18,16 +18,18 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
 (require 'quail)
 
-(quail-define-package "quail-hanja-jis" "Korean" "2벌식JIS漢字" t
-		      "該當하는 漢字의 韻을 한글2벌式으로 呼出하여 選擇"
-		      nil nil nil nil nil nil t)
+(quail-define-package
+ "korean-hanja-jis" "Korean" "벌漢" t
+ "2벌식JIS漢字: 該當하는 漢字의 韻을 한글2벌式으로 呼出하여 選擇"
+ nil nil nil nil nil nil t)
 
 (quail-define-rules
  ("rk"	"榎仮伽価佳加可嘉嫁家暇架歌珂稼苛茄迦駕街袈个假價呵哥枷柯珈痂笳舸葭訶謌賈跏軻")

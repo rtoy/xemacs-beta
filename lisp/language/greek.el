@@ -1,7 +1,7 @@
 ;;; greek.el --- Support for Greek
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Keywords: multilingual, Greek
@@ -42,17 +42,17 @@
 ;;; GREEK
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-language-environment 'greek
-  "Greek"
-  (lambda ()
-    (set-coding-category-system 'iso-8-designate 'iso-8859-7)
-    (set-coding-priority-list '(iso-8-designate iso-8-1))
-    (set-default-buffer-file-coding-system 'iso-8859-7)
-    (setq terminal-coding-system 'iso-8859-7)
-    (setq keyboard-coding-system 'iso-8859-7)
-    ;; (setq-default quail-current-package
-    ;;               (assoc "greek" quail-package-alist))
-    ))
+;; (define-language-environment 'greek
+;;   "Greek"
+;;   (lambda ()
+;;     (set-coding-category-system 'iso-8-designate 'iso-8859-7)
+;;     (set-coding-priority-list '(iso-8-designate iso-8-1))
+;;     (set-default-buffer-file-coding-system 'iso-8859-7)
+;;     (setq terminal-coding-system 'iso-8859-7)
+;;     (setq keyboard-coding-system 'iso-8859-7)
+;;     ;; (setq-default quail-current-package
+;;     ;;               (assoc "greek" quail-package-alist))
+;;     ))
 
 ;; (make-coding-system
 ;;  'iso-8859-7 2 ?7 "MIME ISO-8859-7"
@@ -68,36 +68,17 @@
    mnemonic "Grk"
    ))
 
-(register-input-method
- "Greek" '("quail-greek" quail-use-package "quail/greek"))
-
 (defun setup-greek-environment ()
   "Setup multilingual environment (MULE) for Greek."
   (interactive)
-  (setq coding-category-iso-8-1 'iso-8859-7)
-
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-8-1))
-
-  (setq-default buffer-file-coding-system 'iso-8859-7)
-  (set-terminal-coding-system 'iso-8859-7)
-  (set-keyboard-coding-system 'iso-8859-7)
-
-  (setq default-input-method '("Greek" . "quail-greek"))
-  )
-
-(defun describe-greek-support ()
-  "Describe how Emacs supports Greek."
-  (interactive)
-  (describe-language-support-internal "Greek"))
+  (setup-8-bit-environment "Greek" 'greek-iso8859-7 'greek-iso-8bit
+			   "greek"))
 
 (set-language-info-alist
  "Greek" '((setup-function . setup-greek-environment)
-	   (describe-function. describe-greek-support)
 	   (charset . (greek-iso8859-7))
 	   (coding-system . (iso-8859-7))
 	   (sample-text . "Greek (,FGkk]mija(B)	,FCei\(B ,Fsar(B")
-	   (documentation . nil)))
+	   (documentation . t)))
 
 ;;; greek.el ends here

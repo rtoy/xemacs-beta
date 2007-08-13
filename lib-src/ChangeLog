@@ -1,3 +1,13 @@
+1997-09-30  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (ignore_pattern): Don't attempt bytecompiling
+	lisp/leim/quail/tibetan.el and lisp/language/tibet-util.el.
+
+1997-09-29  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (mule_p): Ignore mu/latex-math-symbol.el if we're
+	not building with Mule.
+
 1997-09-27  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* update-custom.sh: New file.

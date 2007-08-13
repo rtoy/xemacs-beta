@@ -149,7 +149,19 @@ Returns nil if the required files cannot be found."
     (cond
      ;; Use Sun WorkShop if available
      ((sunpro-update-paths-for-workshop)
-      (require 'workshop))
+      ;; Unfortunately, changes to the default toolbar in 20.3 b21
+      ;; have broken workshop-frob-toolbar in workshop.el.  Since new
+      ;; XEmacsen have to work with older WorkShops, this must be
+      ;; fixed both in workshop.el (distributed on the Sun WorkShop CD)
+      ;; and worked-around here.
+      (set-specifier default-toolbar
+		     (append (specifier-instance default-toolbar)
+			     `([,(toolbar-make-button-list nil)
+				workshop-bugfix nil nil])))
+      (require 'workshop)
+      (set-specifier default-toolbar
+		     (delete-if (lambda (b) (eq (aref b 1) 'workshop-bugfix))
+				(specifier-instance default-toolbar))))
 
      ;; Else, use eos package with sparcworks if available
      ((or
