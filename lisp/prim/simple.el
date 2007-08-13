@@ -73,6 +73,9 @@ In Auto Fill mode, if no numeric arg, break the preceding line if it's long."
 		   (not (get-char-property (1- (point)) 'read-only))
 		   ;; Make sure the newline before point isn't invisible.
 		   (not (get-char-property (1- (point)) 'invisible))
+		   ;; This should probably also test for the previous char
+		   ;;  being the *last* character too.
+		   (not (get-char-property (1- (point)) 'end-open))
 		   ;; Make sure the newline before point has the same
 		   ;; properties as the char before it (if any).
 		   (< (or (previous-extent-change (point)) -2) 

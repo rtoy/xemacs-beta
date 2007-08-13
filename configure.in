@@ -918,7 +918,7 @@ Set it to either \`yes' or \`no'."
           eval "${opt}=\"${val}\""
         ;;
 
-        ## Has the user specified a value for PURESIZE?
+        ## Has the user specified a value for RAW_PURESIZE?
 	"puresize" )
 	  ## If the value was omitted, get it from the next argument.
 	  if [ "${valomitted}" = "yes" ]; then
@@ -1444,27 +1444,13 @@ AC_VERBOSE("setting LN_S to ${LN_S}")
 #### have stuck the source on a read-only partition.  Instead we'll
 #### create it as an actual directory later on if it doesn't already
 #### exist.
-for dir in etc man info site-lisp
+for dir in lisp etc man info site-lisp
 do
   if [ ! -d $dir ]; then
     echo Making symbolic link to ${srcdir}/$dir
     ${LN_S} ${srcdir}/$dir .
   fi
 done
-
-# lisp/ is special
-if [ ! -d lisp ]; then
-	mkdir lisp
-	echo Making symbolic links to lisp libraries
-	${LN_S} ${srcdir}/lisp/* ./lisp
-	rm -f ./lisp/*.el ./lisp/site-packages
-	cp ${srcdir}/lisp/*.el lisp
-	if [ -f ${srcdir}/lisp/site-packages ]; then
-		cp ${srcdir}/lisp/site-packages lisp
-	fi
-fi
-
-cp ${srcdir}/lisp/version.el lisp
 
 #### Make srcdir absolute, if it isn't already.  It's important to
 #### avoid running the path through pwd unnecessary, since pwd can
@@ -4101,7 +4087,7 @@ AC_DEFINE_UNQUOTED(UNEXEC_SRC,       ${UNEXEC_SRC})
 # autodetection.
 
 if [ x"${puresize}" != x ] ; then
-  ] AC_DEFINE_UNQUOTED(PURESIZE,	${puresize}) [
+  ] AC_DEFINE_UNQUOTED(RAW_PURESIZE,	${puresize}) [
 fi
 if [ "${HAVE_X_WINDOWS}" = "yes" ] ; then
   ] AC_DEFINE(HAVE_X_WINDOWS) [

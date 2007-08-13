@@ -29,7 +29,7 @@
 ;; is still better than the way it used to be.
 
 ;;; Code:
-(defvar site-load-package-file "../lisp/site-packages"
+(defvar site-load-package-file "../site-packages"
   "File name containing the list of extra packages to dump with XEmacs.")
 (defvar site-load-packages nil
   "A list of .elc files that should be dumped with XEmacs.

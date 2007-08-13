@@ -902,7 +902,7 @@ Set it to either \`yes' or \`no'."
           eval "${opt}=\"${val}\""
         ;;
 
-        ## Has the user specified a value for PURESIZE?
+        ## Has the user specified a value for RAW_PURESIZE?
 	"puresize" )
 	  ## If the value was omitted, get it from the next argument.
 	  if [ "${valomitted}" = "yes" ]; then
@@ -1438,27 +1438,13 @@ test -n "$verbose" && echo "	"setting LN_S to ${LN_S}""
 #### have stuck the source on a read-only partition.  Instead we'll
 #### create it as an actual directory later on if it doesn't already
 #### exist.
-for dir in etc man info site-lisp
+for dir in lisp etc man info site-lisp
 do
   if [ ! -d $dir ]; then
     echo Making symbolic link to ${srcdir}/$dir
     ${LN_S} ${srcdir}/$dir .
   fi
 done
-
-# lisp/ is special
-if [ ! -d lisp ]; then
-	mkdir lisp
-	echo Making symbolic links to lisp libraries
-	${LN_S} ${srcdir}/lisp/* ./lisp
-	rm -f ./lisp/*.el ./lisp/site-packages
-	cp ${srcdir}/lisp/*.el lisp
-	if [ -f ${srcdir}/lisp/site-packages ]; then
-		cp ${srcdir}/lisp/site-packages lisp
-	fi
-fi
-
-cp ${srcdir}/lisp/version.el lisp
 
 #### Make srcdir absolute, if it isn't already.  It's important to
 #### avoid running the path through pwd unnecessary, since pwd can
@@ -7227,12 +7213,12 @@ if [ x"${puresize}" != x ] ; then
    
 {
 test -n "$verbose" && \
-echo "	defining" PURESIZE to be "${puresize}"
-echo "#define" PURESIZE "${puresize}" >> confdefs.h
-DEFS="$DEFS -DPURESIZE=${puresize}"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}PURESIZE\${ac_dB}PURESIZE\${ac_dC}${puresize}\${ac_dD}
-\${ac_uA}PURESIZE\${ac_uB}PURESIZE\${ac_uC}${puresize}\${ac_uD}
-\${ac_eA}PURESIZE\${ac_eB}PURESIZE\${ac_eC}${puresize}\${ac_eD}
+echo "	defining" RAW_PURESIZE to be "${puresize}"
+echo "#define" RAW_PURESIZE "${puresize}" >> confdefs.h
+DEFS="$DEFS -DRAW_PURESIZE=${puresize}"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}RAW_PURESIZE\${ac_dB}RAW_PURESIZE\${ac_dC}${puresize}\${ac_dD}
+\${ac_uA}RAW_PURESIZE\${ac_uB}RAW_PURESIZE\${ac_uC}${puresize}\${ac_uD}
+\${ac_eA}RAW_PURESIZE\${ac_eB}RAW_PURESIZE\${ac_eC}${puresize}\${ac_eD}
 "
 }
  

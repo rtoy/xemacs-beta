@@ -1821,6 +1821,7 @@ If ADDRESS contains more than one RFC-822 address, only the first is
        ("gov" t			"Government (U.S.A.)")
        ("gr" "Greece"		"The Hellenic Republic (%s)")
        ("hk" "Hong Kong")
+       ("hr" "Croatia"		"The Republic of %s")
        ("hu" "Hungary"		"The Hungarian People's Republic")	;???
        ("ie" "Ireland")
        ("il" "Israel"		"The State of %s")

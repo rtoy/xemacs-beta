@@ -1,4 +1,11 @@
 							-*- indented-text -*-
+to 19.15 beta97
+-- Gnus-5.4.17
+-- Freeze frame fixes Courtesy of Jan Vroonhof and Darrell Kindred [Mistakenly
+   left out of beta96]
+-- mine.el (almost) fully ported to XEmacs
+-- Miscellaneous bug fixes.
+
 to 19.15 beta96
 -- New XEmacs logo Courtesy of Jens Lautenbacher
 -- New default color coordination Courtesy of Hrvoje Niksic
@@ -7,7 +14,6 @@ to 19.15 beta96
 -- some historical files removed from etc for space
 -- id-select.el-1.4.5
 -- M-: (eval-expression) is now enabled by default
--- Freeze frame fixes Courtesy of Jan Vroonhof and Darrell Kindred
 -- PURESIZE is now a dynamic computation
 -- hyperbole-4.022
 -- Customized edit-faces Courtesy of Jens Lautenbacher

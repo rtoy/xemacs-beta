@@ -1,10 +1,10 @@
-;;; custom-edit.el --- Tools for customization Emacs.
+;;; cus-edit.el --- Tools for customization Emacs.
 ;;
 ;; Copyright (C) 1996, 1997 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.46
+;; Version: 1.50
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -13,8 +13,8 @@
 
 ;;; Code:
 
-(require 'custom)
-(require 'widget-edit)
+(require 'cus-face)
+(require 'wid-edit)
 (require 'easymenu)
 
 (define-widget-keywords :custom-prefixes :custom-menu :custom-show
@@ -562,7 +562,17 @@ Push RET or click mouse-2 on the word ")
 		 :tag "Done"
 		 :help-echo "Push me to bury the buffer."
 		 :action (lambda (widget &optional event)
-			   (bury-buffer)))
+			   (bury-buffer)
+			   ;; Steal button release event.
+			   (if (and (fboundp 'button-press-event-p)
+				    (fboundp 'next-command-event))
+			       ;; XEmacs
+			       (and event
+				    (button-press-event-p event)
+				    (next-command-event))
+			     ;; Emacs
+			     (when (memq 'down (event-modifiers event))
+			       (read-event)))))
   (widget-insert "\n")
   (widget-setup))
 
@@ -1268,7 +1278,7 @@ Optional EVENT is the location for the menu."
   :sample-face 'custom-face-tag-face
   :help-echo "Push me to set or reset this face."
   :documentation-property '(lambda (face)
-			     (get-face-documentation face))
+			     (face-documentation face))
   :value-create 'custom-face-value-create
   :action 'custom-face-action
   :custom-set 'custom-face-set
@@ -1357,6 +1367,8 @@ Optional EVENT is the location for the menu."
 	 (child (car (widget-get widget :children)))
 	 (value (widget-value child)))
     (put symbol 'customized-face value)
+    (when (fboundp 'copy-face)
+      (copy-face 'custom-face-empty symbol))
     (custom-face-display-set symbol value)
     (custom-face-state-set widget)
     (custom-redraw-magic widget)))
@@ -1366,6 +1378,8 @@ Optional EVENT is the location for the menu."
   (let* ((symbol (widget-value widget))
 	 (child (car (widget-get widget :children)))
 	 (value (widget-value child)))
+    (when (fboundp 'copy-face)
+      (copy-face 'custom-face-empty symbol))
     (custom-face-display-set symbol value)
     (put symbol 'saved-face value)
     (put symbol 'customized-face nil)
@@ -1380,6 +1394,8 @@ Optional EVENT is the location for the menu."
     (unless value
       (error "No saved value for this face"))
     (put symbol 'customized-face nil)
+    (when (fboundp 'copy-face)
+      (copy-face 'custom-face-empty symbol))
     (custom-face-display-set symbol value)
     (widget-value-set child value)
     (custom-face-state-set widget)
@@ -1396,6 +1412,8 @@ Optional EVENT is the location for the menu."
     (when (get symbol 'saved-face)
       (put symbol 'saved-face nil)
       (custom-save-all))
+    (when (fboundp 'copy-face)
+      (copy-face 'custom-face-empty symbol))
     (custom-face-display-set symbol value)
     (widget-value-set child value)
     (custom-face-state-set widget)
@@ -1838,6 +1856,6 @@ Usage: emacs -batch *.el -f custom-make-dependencies > deps.el"
 
 ;;; The End.
 
-(provide 'custom-edit)
+(provide 'cus-edit)
 
-;; custom-edit.el ends here
+;; cus-edit.el ends here

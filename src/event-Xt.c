@@ -992,6 +992,37 @@ emacs_Xt_handle_focus_event (XEvent *event)
   handle_focus_event_1 (f, event->type == FocusIn);
 }
 
+/* both MapNotify and VisibilityNotify can cause this */
+static void
+change_frame_visibility (struct frame *f, int is_visible)
+{
+  Lisp_Object frame = Qnil;
+
+  XSETFRAME (frame, f);
+
+  if (!FRAME_VISIBLE_P (f) && is_visible)
+    {
+      FRAME_VISIBLE_P (f) = 1;
+      /* This improves the double flicker when uniconifying a frame
+	 some.  A lot of it is not showing a buffer which has changed
+	 while the frame was iconified.  To fix it further requires
+	 the good 'ol double redisplay structure. */
+      MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
+      va_run_hook_with_args (Qmap_frame_hook, 1, frame);
+#ifdef EPOCH
+      dispatch_epoch_event (f, event, Qx_map);
+#endif
+    }
+  else if (FRAME_VISIBLE_P (f) && !is_visible) 
+    {
+      FRAME_VISIBLE_P (f) = 0;
+      va_run_hook_with_args (Qunmap_frame_hook, 1, frame);
+#ifdef EPOCH
+      dispatch_epoch_event (f, event, Qx_unmap);
+#endif
+    }
+}
+
 static void
 handle_map_event (struct frame *f, XEvent *event)
 {
@@ -1048,34 +1079,14 @@ handle_map_event (struct frame *f, XEvent *event)
 	 rather than consulting some internal (and likely
 	 inaccurate) state flag.  Therefore, ignoring the MapNotify
 	 is correct. */
-      if (!f->visible && NILP (Fframe_iconified_p (frame)))
+      if (!FRAME_VISIBLE_P (f) && NILP (Fframe_iconified_p (frame)))
 #endif
-      if (!f->visible)
-	{
-	  f->visible = 1;
-	  /* This improves the double flicker when uniconifying a frame
-	     some.  A lot of it is not showing a buffer which has changed
-	     while the frame was iconified.  To fix it further requires
-	     the good 'ol double redisplay structure. */
-	  MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
-	  va_run_hook_with_args (Qmap_frame_hook, 1, frame);
-#ifdef EPOCH
-	  dispatch_epoch_event (f, event, Qx_map);
-#endif
-	}
+      change_frame_visibility (f, 1);
     }
   else
     {
       FRAME_X_TOTALLY_VISIBLE_P (f) = 0;
-      if (f->visible)
-	{
-	  f->visible = 0;
-	  va_run_hook_with_args (Qunmap_frame_hook, 1, frame);
-#ifdef EPOCH
-	  dispatch_epoch_event (f, event, Qx_unmap);
-#endif
-	}
-
+      change_frame_visibility (f, 0);
       /* Calling Fframe_iconified_p is the only way we have to
          correctly update FRAME_ICONIFIED_P */
       Fframe_iconified_p (frame);
@@ -1221,19 +1232,20 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
       break;
       
     case VisibilityNotify: /* window visiblity has changed */
-#if 0 /* This causes all kinds of strange behavior I don't like. -sb */
+      if (event->xvisibility.window == XtWindow (FRAME_X_SHELL_WIDGET (f)))
 	{
-	  /* Note that the fvwm pager only sends VisibilityNotify when
-	     changing pages. Is this all we need to do ? JV */
-	  FRAME_VISIBLE_P (f) =
-	    ( event->xvisibility.state != VisibilityFullyObscured);
 	  FRAME_X_TOTALLY_VISIBLE_P (f) =
 	    (event->xvisibility.state == VisibilityUnobscured);
+	  /* Note that the fvwm pager only sends VisibilityNotify when
+	     changing pages. Is this all we need to do ? JV */
+	  /* Nope.  We must at least trigger a redisplay here.  
+             Since this case seems similar to MapNotify, I've 
+             factored out some code to change_frame_visibility(). 
+	     This triggers the necessary redisplay and runs
+	     (un)map-frame-hook.  - dkindred@cs.cmu.edu */
+	  change_frame_visibility (f, (event->xvisibility.state
+				       != VisibilityFullyObscured));
 	}
-#else
-        FRAME_X_TOTALLY_VISIBLE_P (f) =
-	  (event->xvisibility.state == VisibilityUnobscured);
-#endif
       break;
       
     case ConfigureNotify:

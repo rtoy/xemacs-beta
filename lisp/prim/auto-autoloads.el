@@ -899,55 +899,73 @@ See also `\\[telnet]'." t nil)
 
 ;;;***
 
-;;;### (autoloads (custom-make-dependencies custom-menu-update custom-buffer-create customize-apropos customize-customized customize-face customize-variable customize) "custom-edit" "custom/custom-edit.el")
+;;;### (autoloads (custom-make-dependencies custom-menu-update custom-buffer-create customize-apropos customize-customized customize-face customize-variable customize) "cus-edit" "custom/cus-edit.el")
 
-(autoload 'customize "custom-edit" "\
+(autoload 'customize "cus-edit" "\
 Customize SYMBOL, which must be a customization group." t nil)
 
-(autoload 'customize-variable "custom-edit" "\
+(autoload 'customize-variable "cus-edit" "\
 Customize SYMBOL, which must be a variable." t nil)
 
-(autoload 'customize-face "custom-edit" "\
+(autoload 'customize-face "cus-edit" "\
 Customize SYMBOL, which should be a face name or nil.
 If SYMBOL is nil, customize all faces." t nil)
 
-(autoload 'customize-customized "custom-edit" "\
+(autoload 'customize-customized "cus-edit" "\
 Customize all already customized user options." t nil)
 
-(autoload 'customize-apropos "custom-edit" "\
+(autoload 'customize-apropos "cus-edit" "\
 Customize all user options matching REGEXP.
 If ALL (e.g., started with a prefix key), include options which are not
 user-settable." t nil)
 
-(autoload 'custom-buffer-create "custom-edit" "\
+(autoload 'custom-buffer-create "cus-edit" "\
 Create a buffer containing OPTIONS.
 OPTIONS should be an alist of the form ((SYMBOL WIDGET)...), where
 SYMBOL is a customization option, and WIDGET is a widget for editing
 that option." nil nil)
 
-(autoload 'custom-menu-update "custom-edit" "\
+(autoload 'custom-menu-update "cus-edit" "\
 Update customize menu." t nil)
 
-(autoload 'custom-make-dependencies "custom-edit" "\
+(autoload 'custom-make-dependencies "cus-edit" "\
 Batch function to extract custom dependencies from .el files.
 Usage: emacs -batch *.el -f custom-make-dependencies > deps.el" nil nil)
 
 ;;;***
 
-;;;### (autoloads (widget-browse-at) "widget-browse" "custom/widget-browse.el")
+;;;### (autoloads (custom-set-faces custom-declare-face) "cus-face" "custom/cus-face.el")
 
-(autoload 'widget-browse-at "widget-browse" "\
+(autoload 'custom-declare-face "cus-face" "\
+Like `defface', but FACE is evaluated as a normal argument." nil nil)
+
+(autoload 'custom-set-faces "cus-face" "\
+Initialize faces according to user preferences.
+The arguments should be a list where each entry has the form:
+
+  (FACE SPEC [NOW])
+
+SPEC will be stored as the saved value for FACE.  If NOW is present
+and non-nil, FACE will also be created according to SPEC.
+
+See `defface' for the format of SPEC." nil nil)
+
+;;;***
+
+;;;### (autoloads (widget-browse-at) "wid-browse" "custom/wid-browse.el")
+
+(autoload 'widget-browse-at "wid-browse" "\
 Browse the widget under point." t nil)
 
 ;;;***
 
-;;;### (autoloads (widget-delete widget-create) "widget-edit" "custom/widget-edit.el")
+;;;### (autoloads (widget-delete widget-create) "wid-edit" "custom/wid-edit.el")
 
-(autoload 'widget-create "widget-edit" "\
+(autoload 'widget-create "wid-edit" "\
 Create widget of TYPE.  
 The optional ARGS are additional keyword arguments." nil nil)
 
-(autoload 'widget-delete "widget-edit" "\
+(autoload 'widget-delete "wid-edit" "\
 Delete WIDGET." nil nil)
 
 ;;;***
@@ -1863,7 +1881,7 @@ When you're sure a square does NOT contain a mine, you can hit it:
 move the mouse over the square and press `\\[mine-mouse-hit]' or 
 move the cursor with the usual keys and press `\\[mine-hit-curpoint]'.
 
-If the square is a mine, you loose.
+If the square is a mine, you lose.
 If the square isn't a mine, a number appears which represents
 the number of mines in the surrounding eight squares.  
 
@@ -3638,7 +3656,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.9 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.10 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4910,7 +4928,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.9 $
+vhdl-mode $Revision: 1.10 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

@@ -1,6 +1,6 @@
 \input texinfo.tex
 
-@c $Id: widget.texi,v 1.5 1997/03/02 03:44:16 steve Exp $
+@c $Id: widget.texi,v 1.6 1997/03/04 08:45:08 steve Exp $
 
 @c %**start of header
 @setfilename widget
@@ -15,7 +15,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.46
+Version: 1.50
 
 @menu
 * Introduction::                
@@ -115,7 +115,7 @@ create any widgets, the code has been split in two files:
 @item widget.el
 This will declare the user variables, define the function
 @code{widget-define}, and autoload the function @code{widget-create}. 
-@item widget-edit.el
+@item wid-edit.el
 Everything else is here, there is no reason to load it explicitly, as
 it will be autoloaded when needed.
 @end table
@@ -278,7 +278,7 @@ Interface}).
 (require 'widget)
 
 (eval-when-compile
-  (require 'widget-edit))
+  (require 'wid-edit))
 
 (defvar widget-example-repeat)
 

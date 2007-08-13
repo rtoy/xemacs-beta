@@ -12,7 +12,7 @@ static char *noname[] = {
 "`f c #363ACC",
 "`g c #E5E5E6",
 "`h c #5458B1",
-"`i c #CDCDCB",
+"`i s background  c None",
 "`j c #5256DA",
 "`k c #282829",
 "`l c #D7D7D8",

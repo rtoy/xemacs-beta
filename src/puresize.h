@@ -24,17 +24,17 @@ Boston, MA 02111-1307, USA.  */
 #ifndef PURESIZE_H
 #define PURESIZE_H
 
-/* If PURESIZE is already defined then the user overrode it at
+/* If RAW_PURESIZE is already defined then the user overrode it at
    configure time. */
-#ifndef PURESIZE
-#if 0
+#ifndef RAW_PURESIZE
+
 /* Basic amount of purespace to use, in the absence of extra
    things configured in. */
 
 #if (LONGBITS == 64)
 # define BASE_PURESIZE 944000
 #else
-# define BASE_PURESIZE 584000
+# define BASE_PURESIZE 527000
 #endif
 
 /* If any particular systems need to change the base puresize, they
@@ -50,29 +50,57 @@ Boston, MA 02111-1307, USA.  */
 
 /* Extra amount of purespace needed for menubars. */
 
+#ifdef HAVE_DIALOGS
+# if (LONGBITS == 64)
+#  define DIALOG_PURESIZE_EXTRA 43000
+# else
+#  define DIALOG_PURESIZE_EXTRA 1800
+# endif
+#else
+# define DIALOG_PURESIZE_EXTRA 0
+#endif
+
 #ifdef HAVE_MENUBARS
 # if (LONGBITS == 64)
 #  define MENUBAR_PURESIZE_EXTRA 43000
 # else
-#  define MENUBAR_PURESIZE_EXTRA 35000
+#  define MENUBAR_PURESIZE_EXTRA 36000
 # endif
 #else
 # define MENUBAR_PURESIZE_EXTRA 0
 #endif
 
-/* Scrollbar purespace needed is only about 2K so there's no sense
-   worrying about it separately. */
+#ifdef HAVE_SCROLLBARS
+# if (LONGBITS == 64)
+#  define SCROLLBAR_PURESIZE_EXTRA 4000
+# else
+#  define SCROLLBAR_PURESIZE_EXTRA 1800
+# endif
+#else
+# define SCROLLBAR_PURESIZE_EXTRA 0
+#endif
 
-/* Extra amount of purespace needed for X11, separate from menubars. */
+#ifdef HAVE_TOOLBARS
+# if (LONGBITS == 64)
+#  define TOOLBAR_PURESIZE_EXTRA 4000
+# else
+#  define TOOLBAR_PURESIZE_EXTRA 8400
+# endif
+#else
+# define TOOLBAR_PURESIZE_EXTRA 0
+#endif
+
+/* Extra amount of purespace needed for X11, separate from menubars
+   and scrollbars. */
 
 #ifdef HAVE_X_WINDOWS
 # if (LONGBITS == 64)
 #  define X11_PURESIZE_EXTRA 95000
 # else
-#  define X11_PURESIZE_EXTRA 63000
+#  define X11_PURESIZE_EXTRA 50000
 # endif
 #else
-# define X11_PURESIZE_EXTRA 10000
+# define X11_PURESIZE_EXTRA 0
 #endif
 
 /* Extra amount of purespace needed for Mule. */
@@ -93,7 +121,7 @@ Boston, MA 02111-1307, USA.  */
 # if (LONGBITS == 64)
 #  define TOOLTALK_PURESIZE_EXTRA 100000
 # else
-#  define TOOLTALK_PURESIZE_EXTRA 69000
+#  define TOOLTALK_PURESIZE_EXTRA 8300
 # endif
 #else
 # define TOOLTALK_PURESIZE_EXTRA 0
@@ -115,16 +143,21 @@ Boston, MA 02111-1307, USA.  */
 # define SUNPRO_PURESIZE_EXTRA 0
 #endif
 
-#define PURESIZE ((BASE_PURESIZE) + (MENUBAR_PURESIZE_EXTRA) +		  \
-		  (X11_PURESIZE_EXTRA) +				  \
-		  (SYSTEM_PURESIZE_EXTRA) + (MULE_PURESIZE_EXTRA) +	  \
-		  (TOOLTALK_PURESIZE_EXTRA) + (ENERGIZE_PURESIZE_EXTRA) + \
-		  (SUNPRO_PURESIZE_EXTRA))
+#define RAW_PURESIZE ((BASE_PURESIZE) +					\
+		      (DIALOG_PURESIZE_EXTRA) +				\
+		      (MENUBAR_PURESIZE_EXTRA) +			\
+		      (SCROLLBAR_PURESIZE_EXTRA) +			\
+		      (TOOLBAR_PURESIZE_EXTRA) +			\
+		      (X11_PURESIZE_EXTRA) +				\
+		      (SYSTEM_PURESIZE_EXTRA) +				\
+		      (MULE_PURESIZE_EXTRA) +				\
+		      (TOOLTALK_PURESIZE_EXTRA) +			\
+		      (ENERGIZE_PURESIZE_EXTRA) +			\
+		      (SUNPRO_PURESIZE_EXTRA))
 
-#endif
+#endif /* !RAW_PURESIZE */
 
-# include "PURESIZE.h"
-
-#endif /* !PURESIZE */
+#include "puresize_adjust.h"
+#define PURESIZE ((RAW_PURESIZE) + (PURESIZE_ADJUSTMENT))
 
 #endif /* PURESIZE_H */

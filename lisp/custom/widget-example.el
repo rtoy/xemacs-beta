@@ -4,13 +4,13 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, extensions, faces, hypermedia
-;; Version: 1.46
+;; Version: 1.50
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 (require 'widget)
 
 (eval-when-compile
-  (require 'widget-edit))
+  (require 'wid-edit))
 
 (defvar widget-example-repeat)
 

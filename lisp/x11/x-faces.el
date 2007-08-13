@@ -371,7 +371,8 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;;; state where signalling an error or entering the debugger would likely
 ;;; result in a crash.
 
-(defun x-init-face-from-resources (face locale)
+(defun x-init-face-from-resources (face &optional locale set-anyway)
+
   ;;
   ;; These are things like "attributeForeground" instead of simply
   ;; "foreground" because people tend to do things like "*foreground",
@@ -384,7 +385,8 @@ Otherwise, it returns the next larger version of this font that is defined."
   ;; "face.attributeForeground", but they're the way they are for
   ;; hysterical reasons. (jwz)
 
-  (let* ((face-sym (face-name face))
+  (let* ((append (if set-anyway nil 'append))
+	 (face-sym (face-name face))
 	 (name (symbol-name face-sym))
 	 (fn (x-get-resource-and-maybe-bogosity-check
 	      (concat name ".attributeFont")
@@ -459,29 +461,32 @@ Otherwise, it returns the next larger version of this font that is defined."
     ;; done when the instancing actually happens, but I'm not
     ;; sure how it should actually be dealt with.
     (if fn
-	(set-face-font face fn locale nil 'append))
+	(set-face-font face fn locale nil append))
     ;; Kludge-o-rooni.  Set the foreground and background resources for
     ;; X devices only -- otherwise things tend to get all messed up
     ;; if you start up an X frame and then later create a TTY frame.
     (if fg
-	(set-face-foreground face fg locale 'x 'append))
+	(set-face-foreground face fg locale 'x append))
     (if bg
-	(set-face-background face bg locale 'x 'append))
+	(set-face-background face bg locale 'x append))
     (if bgp
-	(set-face-background-pixmap face bgp locale nil 'append))
+	(set-face-background-pixmap face bgp locale nil append))
     (if ulp
-	(set-face-underline-p face ulp locale nil 'append))
+	(set-face-underline-p face ulp locale nil append))
     (if stp
-	(set-face-strikethru-p face stp locale nil 'append))
+	(set-face-strikethru-p face stp locale nil append))
     (if hp
-	(set-face-highlight-p face hp locale nil 'append))
+	(set-face-highlight-p face hp locale nil append))
     (if dp
-	(set-face-dim-p face dp locale nil 'append))
+	(set-face-dim-p face dp locale nil append))
     (if bp
-	(set-face-blinking-p face bp locale nil 'append))
+	(set-face-blinking-p face bp locale nil append))
     (if rp
-	(set-face-reverse-p face rp locale nil 'append))
+	(set-face-reverse-p face rp locale nil append))
     ))
+
+;; GNU Emacs compatibility. (move to obsolete.el?)
+(defalias 'make-face-x-resource-internal 'x-init-face-from-resources)
 
 ;;; x-init-global-faces is responsible for ensuring that the
 ;;; default face has some reasonable fallbacks if nothing else is

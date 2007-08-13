@@ -108,7 +108,6 @@
      ;; (load-gc "w3-sysdp")
      (load-gc "widget")
      (load-gc "custom") ; Before loaddefs so that defcustom exists.
-     (load-gc "custom-xmas")
      ;; If SparcWorks support is included some additional packages are
      ;; dumped which would normally have autoloads.  To avoid
      ;; duplicate doc string warnings, SparcWorks uses a separate
