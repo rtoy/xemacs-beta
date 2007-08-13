@@ -54,7 +54,7 @@
 (require 'comint)
 
 (defgroup telnet nil
-  "Telnet/rsh stuff"
+  "Run a telnet session from within an Emacs buffer."
   :group 'comint)
 
 (defvar telnet-new-line "\r")
@@ -76,6 +76,7 @@ while looking for the initial password.")
 
 (defcustom telnet-program "telnet"
   "*Program to run to open a telnet connection."
+  :type 'string
   :group 'telnet)
 
 (defcustom rsh-eat-password-string nil

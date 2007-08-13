@@ -6,7 +6,7 @@
 ;;         OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1993/11/21 (obsolete mh-e-mime.el)
-;; Version: $Revision: 1.2 $
+;; Version: $Revision: 1.3 $
 ;; Keywords: mail, MH, MIME, multimedia, encoded-word, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -48,7 +48,7 @@
 ;;;
 
 (defconst tm-mh-e/RCS-ID
-  "$Id: tm-mh-e.el,v 1.2 1997/07/19 22:11:28 steve Exp $")
+  "$Id: tm-mh-e.el,v 1.3 1997/09/27 16:57:47 steve Exp $")
 
 (defconst tm-mh-e/version (get-version-string tm-mh-e/RCS-ID))
 
@@ -73,13 +73,14 @@
   ;; Display message NUMBER of FOLDER.
   ;; Sets the current buffer to the show buffer.
   (set-buffer folder)
+  (or show-buffer
+      (setq show-buffer mh-show-buffer))
   ;; Bind variables in folder buffer in case they are local
   (let ((formfile mhl-formfile)
 	(clean-message-header mh-clean-message-header)
 	(invisible-headers mh-invisible-headers)
 	(visible-headers mh-visible-headers)
 	(msg-filename (mh-msg-filename msg-num))
-	(show-buffer mh-show-buffer)
 	)
     (if (not (file-exists-p msg-filename))
 	(error "Message %d does not exist" msg-num))

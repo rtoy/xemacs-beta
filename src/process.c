@@ -404,7 +404,7 @@ Return the process named NAME, or nil if there is none.
     {
       Lisp_Object proc = XCAR (tail);
       QUIT;
-      if (!NILP (Fequal (name, XPROCESS (proc)->name)))
+      if (internal_equal (name, XPROCESS (proc)->name, 0))
         return XCAR (tail);
     }
   return Qnil;

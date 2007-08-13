@@ -27,6 +27,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "buffer.h"
 #include "device.h"
 #include "frame.h"
 #include "menubar.h"
@@ -178,11 +179,59 @@ See menubar.el for many more examples.
   return Qnil;
 }
 
+DEFUN ("normalize-menu-item-name", Fnormalize_menu_item_name, 1, 2, 0, /*
+Convert a menu item name string into normal form.  Returns a new string.
+Menu item names should be converted to normal form before being compared.
+*/
+       (name, buffer))
+{
+  struct buffer *buf = decode_buffer (buffer, 0);
+  struct Lisp_String *n;
+  Charcount end;
+  int i;
+  Bufbyte *name_data;
+  Bufbyte *string_result;
+  Bufbyte *string_result_ptr;
+  Lisp_Object res;
+  Emchar elt;
+  int expecting_underscore = 0;
+  
+  CHECK_STRING (name);
+  
+  n = XSTRING (name);
+  end = string_char_length (n);
+  name_data = string_data (n);
+  
+  string_result = (Bufbyte *) alloca (end * MAX_EMCHAR_LEN);
+  string_result_ptr = string_result;
+  for (i = 0; i < end ; i++)
+    {
+      elt = charptr_emchar_n (name_data, i);
+      elt = DOWNCASE (buf, elt);
+      if (elt == '%')
+	expecting_underscore = 1;
+      else if (expecting_underscore)
+	{
+	  expecting_underscore = 0;
+	  if (elt != '_')
+	    {
+	      string_result_ptr += set_charptr_emchar (string_result_ptr, '%');
+	      string_result_ptr += set_charptr_emchar (string_result_ptr, elt);
+	    }
+	}
+      else
+	string_result_ptr += set_charptr_emchar (string_result_ptr, elt);
+    }
+
+  return make_string (string_result, string_result_ptr - string_result);
+}
+
 void
 syms_of_menubar (void)
 {
   defsymbol (&Qcurrent_menubar, "current-menubar");
   DEFSUBR (Fpopup_menu);
+  DEFSUBR (Fnormalize_menu_item_name);
 }
 
 void

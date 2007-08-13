@@ -1898,7 +1898,9 @@ Prefix args ::
 ;;(global-set-key "\M-\r" 'complete)
 ;;(global-set-key [?\C-\r] 'complete)
 ;;(define-key function-key-map [C-return] [?\C-\r])
-(global-set-key '(meta return) 'complete)
+;; Hyperbole binds this key globally and does much more with it,
+;; so use the other binding instead.  -- Bob Weiner, Altrasoft, 08/15/97
+;; (global-set-key '(meta return) 'complete)
 (global-set-key '(control return) 'complete)
 ;; XEmacs: #### still need to take care of function-key-map
 
@@ -2488,6 +2490,7 @@ Also sets up so that exiting emacs will automatically save the file."
 ;; Kill region patch
 ;;-----------------------------------------------
 
+;; Modified for InfoDock and XEmacs by Bob Weiner, Altrasoft, 08/15/97.
 (defun completion-kill-region (&optional beg end)
   "Kill between point and mark.
 The text is deleted but saved in the kill ring.
@@ -2502,7 +2505,10 @@ If the previous command was also a kill command,
 the text killed this time appends to the text killed last time
 to make one entry in the kill ring.
 Patched to remove the most recent completion."
-  (interactive "r")  
+  (interactive
+   (if buffer-read-only (barf-if-buffer-read-only)
+     (if (region-exists-p)
+	 (list (region-beginning) (region-end)))))
   (cond ((eq last-command 'complete)
 	 (delete-region (point) cmpl-last-insert-location)
 	 (insert cmpl-original-string)
@@ -2510,6 +2516,7 @@ Patched to remove the most recent completion."
 	 (cmpl-statistics-block
 	   (record-complete-failed)))
 	(t
+	 (setq this-command 'kill-region)
 	 (kill-region beg end))))
 
 (global-set-key "\C-w" 'completion-kill-region)

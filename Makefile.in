@@ -248,6 +248,9 @@ dump-elc dump-elcs: ${GENERATED_HEADERS} FRC.dump-elcs
 autoloads: src
 	MAKE='$(MAKE)' sh ${srcdir}/lib-src/update-autoloads.sh
 
+custom-loads:
+	MAKE='$(MAKE)' sh ${srcdir}/lib-src/update-custom.sh
+
 finder: src
 	@(cd lisp/utils; \
 		../../src/xemacs -batch -q -no-site-file \

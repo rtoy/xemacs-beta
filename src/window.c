@@ -4592,10 +4592,10 @@ saved_window_equal (struct saved_window *win1, struct saved_window *win2)
   return
     EQ (win1->window, win2->window) &&
     EQ (win1->buffer, win2->buffer) &&
-    !NILP (Fequal (win1->start,    win2->start)) &&
-    !NILP (Fequal (win1->pointm,   win2->pointm)) &&
-    !NILP (Fequal (win1->sb_point, win2->sb_point)) &&
-    !NILP (Fequal (win1->mark,     win2->mark)) &&
+    internal_equal (win1->start,    win2->start, 0) &&
+    internal_equal (win1->pointm,   win2->pointm, 0) &&
+    internal_equal (win1->sb_point, win2->sb_point, 0) &&
+    internal_equal (win1->mark,     win2->mark, 0) &&
     win1->pixel_left   == win2->pixel_left &&
     win1->pixel_top    == win2->pixel_top &&
     win1->pixel_width  == win2->pixel_width &&

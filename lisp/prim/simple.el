@@ -2938,6 +2938,152 @@ when it is off screen."
       (setq alist (cdr alist)))
     element))
 
+
+(defcustom mail-user-agent 'sendmail-user-agent
+  "*Your preference for a mail composition package.
+Various Emacs Lisp packages (e.g. reporter) require you to compose an
+outgoing email message.  This variable lets you specify which
+mail-sending package you prefer.
+
+Valid values include:
+
+    sendmail-user-agent -- use the default Emacs Mail package
+    mh-e-user-agent     -- use the Emacs interface to the MH mail system
+    message-user-agent  -- use the GNUS mail sending package
+
+Additional valid symbols may be available; check with the author of
+your package for details."
+  :type '(radio (function-item :tag "Default Emacs mail"
+			       :format "%t\n"
+			       sendmail-user-agent)
+		(function-item :tag "Gnus mail sending package"
+			       :format "%t\n"
+			       message-user-agent)
+		(function :tag "Other"))
+  :group 'mail)
+
+(defun define-mail-user-agent (symbol composefunc sendfunc
+				      &optional abortfunc hookvar)
+  "Define a symbol to identify a mail-sending package for `mail-user-agent'.
+
+SYMBOL can be any Lisp symbol.  Its function definition and/or
+value as a variable do not matter for this usage; we use only certain
+properties on its property list, to encode the rest of the arguments.
+
+COMPOSEFUNC is program callable function that composes an outgoing
+mail message buffer.  This function should set up the basics of the
+buffer without requiring user interaction.  It should populate the
+standard mail headers, leaving the `to:' and `subject:' headers blank
+by default.
+
+COMPOSEFUNC should accept several optional arguments--the same
+arguments that `compose-mail' takes.  See that function's documentation.
+
+SENDFUNC is the command a user would run to send the message.
+
+Optional ABORTFUNC is the command a user would run to abort the
+message.  For mail packages that don't have a separate abort function,
+this can be `kill-buffer' (the equivalent of omitting this argument).
+
+Optional HOOKVAR is a hook variable that gets run before the message
+is actually sent.  Callers that use the `mail-user-agent' may
+install a hook function temporarily on this hook variable.
+If HOOKVAR is nil, `mail-send-hook' is used.
+
+The properties used on SYMBOL are `composefunc', `sendfunc',
+`abortfunc', and `hookvar'."
+  (put symbol 'composefunc composefunc)
+  (put symbol 'sendfunc sendfunc)
+  (put symbol 'abortfunc (or abortfunc 'kill-buffer))
+  (put symbol 'hookvar (or hookvar 'mail-send-hook)))
+
+(define-mail-user-agent 'sendmail-user-agent
+  'sendmail-user-agent-compose 'mail-send-and-exit)
+
+(define-mail-user-agent 'message-user-agent
+  'message-mail 'message-send-and-exit
+  'message-kill-buffer 'message-send-hook)
+
+(defun sendmail-user-agent-compose (&optional to subject other-headers continue
+					      switch-function yank-action
+					      send-actions)
+  (if switch-function
+      (let ((special-display-buffer-names nil)
+	    (special-display-regexps nil)
+	    (same-window-buffer-names nil)
+	    (same-window-regexps nil))
+	(funcall switch-function "*mail*")))
+  (let ((cc (cdr (assoc-ignore-case "cc" other-headers)))
+	(in-reply-to (cdr (assoc-ignore-case "in-reply-to" other-headers))))
+    (or (mail continue to subject in-reply-to cc yank-action send-actions)
+	continue
+	(error "Message aborted"))
+    (save-excursion
+      (goto-char (point-min))
+      (search-forward mail-header-separator)
+      (beginning-of-line)
+      (while other-headers
+	(if (not (member (car (car other-headers)) '("in-reply-to" "cc")))
+	    (insert (car (car other-headers)) ": "
+		    (cdr (car other-headers)) "\n"))
+	(setq other-headers (cdr other-headers)))
+      t)))
+
+(define-mail-user-agent 'mh-e-user-agent
+  'mh-smail-batch 'mh-send-letter 'mh-fully-kill-draft
+  'mh-before-send-letter-hook)
+
+(defun compose-mail (&optional to subject other-headers continue
+			       switch-function yank-action send-actions)
+  "Start composing a mail message to send.
+This uses the user's chosen mail composition package
+as selected with the variable `mail-user-agent'.
+The optional arguments TO and SUBJECT specify recipients
+and the initial Subject field, respectively.
+
+OTHER-HEADERS is an alist specifying additional
+header fields.  Elements look like (HEADER . VALUE) where both
+HEADER and VALUE are strings.
+
+CONTINUE, if non-nil, says to continue editing a message already
+being composed.
+
+SWITCH-FUNCTION, if non-nil, is a function to use to
+switch to and display the buffer used for mail composition.
+
+YANK-ACTION, if non-nil, is an action to perform, if and when necessary,
+to insert the raw text of the message being replied to.
+It has the form (FUNCTION . ARGS).  The user agent will apply
+FUNCTION to ARGS, to insert the raw text of the original message.
+\(The user agent will also run `mail-citation-hook', *after* the
+original text has been inserted in this way.)
+
+SEND-ACTIONS is a list of actions to call when the message is sent.
+Each action has the form (FUNCTION . ARGS)."
+  (interactive
+   (list nil nil nil current-prefix-arg))
+  (let ((function (get mail-user-agent 'composefunc)))
+    (funcall function to subject other-headers continue
+	     switch-function yank-action send-actions)))
+
+(defun compose-mail-other-window (&optional to subject other-headers continue
+					    yank-action send-actions)
+  "Like \\[compose-mail], but edit the outgoing message in another window."
+  (interactive
+   (list nil nil nil current-prefix-arg))
+  (compose-mail to subject other-headers continue
+		'switch-to-buffer-other-window yank-action send-actions))
+
+
+(defun compose-mail-other-frame (&optional to subject other-headers continue
+					    yank-action send-actions)
+  "Like \\[compose-mail], but edit the outgoing message in another frame."
+  (interactive
+   (list nil nil nil current-prefix-arg))
+  (compose-mail to subject other-headers continue
+		'switch-to-buffer-other-frame yank-action send-actions))
+
+
 (defun set-variable (var val)
   "Set VARIABLE to VALUE.  VALUE is a Lisp object.
 When using this interactively, supply a Lisp expression for VALUE.

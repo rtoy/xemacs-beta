@@ -165,10 +165,6 @@ define `#in' to expand to `#include' in C mode, `s-c-b' to
 `save-current-buffer' in Lisp mode, `call/cc' to
 `call-with-current-continuation' in Scheme mode, etc.
 
-** Customize now has a new `browser' mode of traversing
-customizations, which is in many ways easier to follow than the
-standard one.  Try it with `M-x customize-browse'.
-
 ** `C-x n d' now runs the new command `narrow-to-defun',
 which narrows the accessible parts of the buffer to just
 the current defun.
@@ -184,6 +180,25 @@ quits archive mode in the same fashion dired-quit works.
 prints the message after the command finishes.  After some time, the
 previous echo area contents are restored (in case the command prints
 something useful).
+
+** If you set scroll-conservatively to a small number, then when you
+move point a short distance off the screen, XEmacs will scroll the
+screen just far enough to bring point back on screen, provided that
+does not exceed `scroll-conservatively' lines.
+
+** Customize changes.
+
+*** Customize has undergone a massive speedup, and should now operate
+acceptably fast.  Slowness of the interface used to be the biggest
+gripe.
+
+*** Many more packages have been modified to use the facility, so
+almost all of XEmacs options can be examined through the Customize
+groups.
+
+*** There is a new `browser' mode of traversing customizations, in
+many ways easier to follow than the standard one.  Try it out with
+`M-x customize-browse'.
 
 ** Pending-delete changes.
 
@@ -204,18 +219,20 @@ function:
 
 ** Package starting changes.
 
-*** Loading `paren.el' is no longer sufficient to enable
-paren-blinking.  Use `paren-set-mode' explicitly, or customize
-`paren-mode'.
+*** Loading `paren' no longer enables paren-blinking.  Use
+`paren-set-mode' explicitly, or customize `paren-mode'.
 
-*** Loading `uniquify.el' is no longer sufficient to enable uniquify;
-you have to set `uniquify-buffer-name-style' to a legal value.
+*** Loading `uniquify' no longer enables uniquify.  Set
+`uniquify-buffer-name-style' to a legal value.
 
-*** Loading `time.el' is no longer sufficient to enable display time;
-you have to invoke `display-time' explicitly.
+*** Loading `time' no longer enables display time.  Invoke
+`display-time' explicitly.
 
-*** Loading `jka-compr.el' is no longer sufficient to enable
-on-the-fly compression; you have to use `toggle-auto-compression'.
+*** Loading `jka-compr' no longer enables on-the-fly compression.  Use
+`toggle-auto-compression' instead.
+
+*** Loading `id-select' no longer enables its behaviour.  Use
+`id-select-install' instead.
 
 ** XEmacs can now save the minibuffer histories from various
 minibuffers.  To use this feature, add the line:
@@ -235,9 +252,32 @@ To revert to the old behaviour, use:
 
 Or `M-x customize-group RET add-log RET'.
 
-** The `M-x customize' command now automatically customizes `Emacs'
-group (top of the customize tree).  Use `M-x customize-group' to
-customize settings of a specific group.
+** The key C-x m no longer runs the `mail' command directly.
+Instead, it runs the command `compose-mail', which invokes the mail
+composition mechanism you have selected with the variable
+`mail-user-agent'.  The default choice of user agent is
+`sendmail-user-agent', which gives behavior compatible with the old
+behavior.
+
+C-x 4 m now runs compose-mail-other-window, and C-x 5 m runs
+compose-mail-other-frame.
+
+** When you kill a buffer that visits a file, if there are any
+registers that save positions in the file, these register values no
+longer become completely useless.  If you try to go to such a register
+with `C-x j', then you are asked whether to visit the file again.  If
+you say yes, it visits the file and then goes to the same position.
+
+** When you visit a file that changes frequently outside Emacs--for
+example, a log of output from a process that continues to run--it may
+be useful for Emacs to revert the file without querying you whenever
+you visit the file afresh with `C-x C-f'.
+
+You can request this behavior for certain files by setting the
+variable revert-without-query to a list of regular expressions.  If a
+file's name matches any of these regular expressions, find-file and
+revert-buffer revert the buffer without asking for permission--but
+only if you have not edited the buffer text yourself.
 
 ** Gnuserv changes
 
@@ -330,6 +370,10 @@ defaults to the current time.
 
 ** The PATTERN argument to `split-string' is now optional and defaults
 to whitespace ("[ \f\t\n\r\v]+").
+
+** `set-extent-properties' is a new function that can be used to
+change properties of an extent at once, and is analogous to
+`set-frame-properties'.
 
 ** The new macro `with-current-buffer' lets you evaluate an expression
 conveniently with a different current buffer.  It looks like this:

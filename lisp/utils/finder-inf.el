@@ -6,6 +6,58 @@
 ;;; Code:
 
 (setq finder-package-info '(
+    ("find-function.el"
+        "find the definition of the elisp function near point"
+        (emacs-lisp  help  functions)
+        "/home/steve/.xemacs/lisp/stuff/")
+    ("skk-auto.el"
+        "送り仮名の自動処理のためのプログラム"
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
+    ("skk-comp.el"
+        "補完のためのプログラム"
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
+    ("skk-foreword.el"
+        "前書き"
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
+    ("skk-gadget.el"
+        "実行変換のためのプログラム"
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
+    ("skk-kakasi.el"
+        "KAKASI 関連プログラム"
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
+    ("skk-kcode.el"
+        "漢字コードを使った変換のためのプログラム"
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
+    ("skk-menu.el"
+        "SKK Menul related functions."
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
+    ("skk-num.el"
+        "数値変換のためのプログラム"
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
+    ("skk-server.el"
+        "SKK サーバーのためのプログラム"
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
+    ("skk-tree.el"
+        "木形式データーを使った変換のためのプログラム"
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
+    ("skk-vip.el"
+        "vip related functions for skk.el"
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
+    ("skk-viper.el"
+        "SKK related code for Viper"
+        (japanese)
+        "/usr/local/lib/xemacs/packages/lisp/skk/")
     ("dgnushack.el"
         "a hack to set the load path for byte-compiling"
         (news  path)
@@ -13,6 +65,10 @@
     ("earcon.el"
         "Sound effects for messages"
         (news fun sound)
+        "/usr/local/lib/xemacs/packages/lisp/gnus/")
+    ("gnus-agent.el"
+        "unplugged support for Gnus"
+        (news)
         "/usr/local/lib/xemacs/packages/lisp/gnus/")
     ("gnus-art.el"
         "article mode commands for Gnus"
@@ -44,6 +100,10 @@
         "/usr/local/lib/xemacs/packages/lisp/gnus/")
     ("gnus-demon.el"
         "daemonic Gnus behaviour"
+        (news)
+        "/usr/local/lib/xemacs/packages/lisp/gnus/")
+    ("gnus-draft.el"
+        "draft message support for Gnus"
         (news)
         "/usr/local/lib/xemacs/packages/lisp/gnus/")
     ("gnus-dup.el"
@@ -182,6 +242,10 @@
         "making message mode compatible with mail mode"
         (mail  news)
         "/usr/local/lib/xemacs/packages/lisp/gnus/")
+    ("nnagent.el"
+        "offline backend for Gnus"
+        (news  mail)
+        "/usr/local/lib/xemacs/packages/lisp/gnus/")
     ("nnbabyl.el"
         "rmail mbox access for Gnus"
         (news  mail)
@@ -281,10 +345,6 @@
     ("smiley.el"
         "displaying smiley faces"
         (fun)
-        "/usr/local/lib/xemacs/packages/lisp/gnus/")
-    ("widget.el"
-        "a library of user interface components."
-        (help  extensions  faces  hypermedia)
         "/usr/local/lib/xemacs/packages/lisp/gnus/")
     ("footnote-cyrillic.el"
         "Cyrillic lettering for footnote mode"
@@ -494,6 +554,10 @@
         "Common Lisp extensions for GNU Emacs Lisp (compatibility)"
         (extensions)
         "lisp/cl/")
+    ("cl-defs.el"
+        "Manually maintained autoloads for cl"
+        (extensions  lisp)
+        "lisp/cl/")
     ("cl-extra.el"
         "Common Lisp extensions for GNU Emacs Lisp (part two)"
         (extensions)
@@ -570,13 +634,25 @@
         "run a telnet session from within an Emacs buffer"
         (comm  unix)
         "lisp/comint/")
+    ("cus-dep.el"
+        "Find customization dependencies."
+        (internal)
+        "lisp/custom/")
     ("cus-edit.el"
         "Tools for customizating Emacs and Lisp packages."
         (help  faces)
         "lisp/custom/")
     ("cus-face.el"
-        "XEmacs specific custom support."
+        "Support for Custom faces."
         (help  faces)
+        "lisp/custom/")
+    ("cus-load.el"
+        "Batch load all available cus-load files"
+        (internal  help  faces)
+        "lisp/custom/")
+    ("cus-start.el"
+        "define customization properties of builtins."
+        (internal)
         "lisp/custom/")
     ("custom.el"
         "Tools for declaring and initializing options."
@@ -590,8 +666,8 @@
         "Functions for creating and using widgets."
         (extensions)
         "lisp/custom/")
-    ("widget-example.el"
-        "example of using the widget library"
+    ("widget.el"
+        "a library of user interface components."
         (help  extensions  faces  hypermedia)
         "lisp/custom/")
     ("advise-eval-region.el"
@@ -1044,7 +1120,7 @@
         "lisp/modes/")
     ("ada-mode.el"
         "An Emacs major-mode for editing Ada source."
-        nil
+        (languages oop ada)
         "lisp/modes/")
     ("arc-mode.el"
         "simple editing of archives"
@@ -1129,6 +1205,10 @@
     ("ksh-mode.el"
         "sh (ksh, bash) script editing mode for GNU Emacs."
         (shell  korn  bourne  sh  ksh  bash)
+        "lisp/modes/")
+    ("lazy-shot.el"
+        "Lazy font locking for XEmacs"
+        (languages  faces)
         "lisp/modes/")
     ("linuxdoc-sgml.el"
         "sgml-mode enhancements for linuxdoc"
@@ -1534,6 +1614,10 @@
         "spell checking using Ispell"
         nil
         "lisp/packages/")
+    ("iswitchb.el"
+        "switch between buffers using substrings"
+        (extensions)
+        "lisp/packages/")
     ("jka-compr.el"
         "reading/writing/loading compressed files"
         (data)
@@ -1710,14 +1794,6 @@
         "miscellaneous console functions not written in C"
         (internal)
         "lisp/prim/")
-    ("cus-load.el"
-        "Batch load all available cus-load files"
-        (internal  help  faces)
-        "lisp/prim/")
-    ("cus-start.el"
-        "define customization properties of builtins."
-        (internal)
-        "lisp/prim/")
     ("debug.el"
         "debuggers and related commands for XEmacs"
         nil
@@ -1879,7 +1955,7 @@
         (internal)
         "lisp/prim/")
     ("register.el"
-        "register commands for XEmacs."
+        "register commands for Emacs."
         (internal)
         "lisp/prim/")
     ("replace.el"
@@ -2356,7 +2432,7 @@
         "lisp/utils/")
     ("edmacro.el"
         "keyboard macro editor"
-        (abbrev)
+        (abbrev  internal)
         "lisp/utils/")
     ("eldoc.el"
         "show function arglist or variable docstring in echo area"
@@ -2458,6 +2534,10 @@
         "Redo/undo system for XEmacs"
         (lisp  extensions)
         "lisp/utils/")
+    ("regexp-opt.el"
+        "generate efficient regexps to match strings."
+        (strings  regexps)
+        "lisp/utils/")
     ("regi.el"
         "REGular expression Interpreting engine"
         (extensions  matching)
@@ -2477,6 +2557,10 @@
     ("savehist.el"
         "Save minibuffer history"
         (minibuffer)
+        "lisp/utils/")
+    ("shadow.el"
+        "Locate Emacs Lisp file shadowings."
+        (lisp)
         "lisp/utils/")
     ("shadowfile.el"
         "automatic file copying for Emacs 19"
@@ -2825,6 +2909,10 @@
     ("x-select.el"
         "Elisp interface to X Selections."
         nil
+        "lisp/x11/")
+    ("x-toolbar.el"
+        "Runtime initialization of XEmacs toolbar"
+        (frames)
         "lisp/x11/")
     ("x-win-sun.el"
         "runtime initialization for Sun X servers and keyboards"

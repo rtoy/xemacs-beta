@@ -250,6 +250,10 @@ For use inside Lisp programs, see also `c-macro-expansion'." t nil)
 
 ;;;***
 
+;;;### (autoloads nil "cperl-mode" "modes/cperl-mode.el")
+
+;;;***
+
 ;;;### (autoloads (eiffel-mode) "eiffel3" "modes/eiffel3.el")
 
 (autoload 'eiffel-mode "eiffel3" "\
@@ -567,7 +571,7 @@ Decode XPM image between START and END." nil nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.10 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.11 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -675,6 +679,17 @@ Installation:
          (setq ksh-match-and-tell t)
          (setq ksh-align-to-keyword t)	;; Turn on keyword alignment
 	 )))" t nil)
+
+;;;***
+
+;;;### (autoloads (turn-on-lazy-shot lazy-shot-mode) "lazy-shot" "modes/lazy-shot.el")
+
+(autoload 'lazy-shot-mode "lazy-shot" "\
+Toggle Lazy Lock mode.
+With arg, turn Lazy Lock mode on if and only if arg is positive." t nil)
+
+(autoload 'turn-on-lazy-shot "lazy-shot" "\
+Unconditionally turn on Lazy Lock mode." nil nil)
 
 ;;;***
 
@@ -1477,12 +1492,6 @@ Like `mail' command, but display mail buffer in another window." t nil)
 (autoload 'mail-other-frame "sendmail" "\
 Like `mail' command, but display mail buffer in another frame." t nil)
 
-(define-key ctl-x-map "m" 'mail)
-
-(define-key ctl-x-4-map "m" 'mail-other-window)
-
-(define-key ctl-x-5-map "m" 'mail-other-frame)
-
 (add-hook 'same-window-buffer-names "*mail*")
 
 ;;;***
@@ -1920,7 +1929,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.10 $
+vhdl-mode $Revision: 1.11 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

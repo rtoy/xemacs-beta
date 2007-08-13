@@ -634,12 +634,11 @@ If FRAME is omitted or nil, use the selected frame."
   "Convert STRING to a sequence of TYPE which contains characters in STRING.
 TYPE should be `list' or `vector'.
 Multibyte characters are concerned."
-  (cond ((eq type 'list)
-	 (mapcar #'identity string))
-	((eq type 'vector)
-	 (mapcar #'identity string))
-	(t
-	 (error "Type must be `list' or `vector'"))))
+  (ecase type
+    (list
+     (mapcar #'identity string))
+    (vector
+     (mapvector #'identity string))))
 
 (defun string-to-list (string)
   "Return a list of characters in STRING."

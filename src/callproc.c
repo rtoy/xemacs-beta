@@ -1178,6 +1178,8 @@ especially executable programs intended for XEmacs to invoke.
   DEFVAR_LISP ("data-directory", &Vdata_directory /*
 Directory of architecture-independent files that come with XEmacs,
 intended for XEmacs to use.
+Use of this variable in new code is almost never correct.  See the
+function `locate-data-directory' and the variable `data-directory-list'.
 */ );
 
   DEFVAR_LISP ("data-directory-list", &Vdata_directory_list /*

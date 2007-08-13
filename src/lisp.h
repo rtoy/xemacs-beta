@@ -1080,7 +1080,7 @@ DECLARE_NONRECORD (symbol, Lisp_Type_Symbol, struct Lisp_Symbol);
 
 /*********** subr ***********/
 
-typedef Lisp_Object (*lisp_fn_t) (Lisp_Object, ...);
+typedef Lisp_Object (*lisp_fn_t) ();
 
 struct Lisp_Subr
 {

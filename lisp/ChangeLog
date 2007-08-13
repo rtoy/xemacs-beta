@@ -1,3 +1,341 @@
+1997-09-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-dep.el (Custom-make-dependencies): Minor fixes.
+
+1997-09-27  SL Baur  <steve@altair.xemacs.org>
+
+	* packages/completion.el: Remove keybinding of M-return for
+	hyperbole.
+	(completion-kill-region): The version of this function in InfoDock
+	4.0pre was very broken for XEmacs due to active region handling
+	and because it didn't set the `this-command' variable properly
+	when doing a kill.
+	From:  Bob Weiner <weiner@altrasoft.com>
+
+1997-09-26  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/autoload.el: Removed code dealing with customization.
+	(update-file-autoloads): Fix typo in DOC string, remove custom code.
+	(update-autoloads-from-directory): Remove custom code.
+	(batch-update-autoloads): Fix DOC string, remove custom code.
+	(batch-update-directory): Fix DOC string, remove custom code.
+
+1997-09-26  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* prim/help.el (describe-function-at-point): new function.
+	(describe-variable-at-point): ditto.
+	(help-next-symbol): ditto.
+	(help-prev-symbol): ditto.
+	(describe-function): Mention `find-function-function' in
+ 	docstring.  Use `function-history' in completing-read.
+	(describe-function-1): Only print one filename, even if we know
+ 	two!  Use `variable-history' in completing-read.
+	(where-is): Mention `find-function-function' in docstring.
+	(find-function-function): improve docstring.
+	(find-function-noselect): Remove optional arg.  Now finds
+ 	libraries explicitly loaded from outside `load-path' as it should.
+	Search also for cl's defun*.  Return a pair instead of a list.
+	(find-function-read-function): use `function-history'.
+	(find-function-do-it): new function.
+	(find-function): Remove optional arg.  Use `find-function-do-it'.
+	(find-function-other-window): ditto.
+	(find-function-other-frame): ditto.
+	(find-function-at-point): new function.
+
+1997-09-26  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-edit.el: Issue a message about loading customization
+	dependencies.
+
+	* custom/wid-edit.el (widget-map-buttons): Fixed typo.
+
+1997-09-25  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (after-find-file): Revert synch to Emacs 20 and
+	restore old directory creation behavior.
+
+1997-09-25  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-button-or-field-extent): New
+ 	function.
+	(widget-next-button-or-field): Use it.
+	(widget-previous-button-or-field): Ditto.
+	(widget-move): Don't signal an error when there is only one widget
+ 	in the buffer.
+	(widget-push-button-value-create): Cache glyphs themselves,
+ 	instead of instantiators.
+	(widget-documentation-string-value-create): Better help echo
+	(widget-mouse-help): Use `functionp'.
+	(widget-echo-help): Ditto.
+
+1997-09-25  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/glyphs.el (init-glyphs): Fix jpeg signature.
+
+1997-09-24  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* modes/lazy-shot.el (lazy-shot-shot-function): make the message
+	be displayed as progress.
+
+1997-09-25  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* comint/telnet.el: Minor custom changes.
+
+	* custom/wid-edit.el (widget-field-action): Edit the value in the
+ 	minibuffer.
+
+	* custom/cus-edit.el (custom-group-value-create): Renamed `Go to
+	Group' tag to `Open'.
+
+	* custom/wid-edit.el (widget-shadow-subrs): New variable.
+	(widget-url-link-help-echo): New function.
+	(url-link): Use it.
+	(widget-emacs-library-link-help-echo): New function.
+	(emacs-library-link): Use it.
+
+1997-09-24  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-glyph-insert-glyph): Encode the
+	widget information to extent, not to the glyph.
+	(widget-glyph-click): Extract the widget from the extent, not the
+	glyph.
+	(widget-glyph-find): Set up a glyph cache.
+
+	* prim/about.el: Use :button-prefix and :button-suffix instead of
+	the variables.
+
+	* custom/wid-edit.el (widget-field-keymap): Bind Sh-TAB to
+ 	`widget-backward'.
+	(widget-specify-field): Use extents, not overlays.
+	(widget-specify-button): Ditto.
+	(widget-specify-sample): Ditto.
+	(widget-specify-inactive): Ditto.
+	(widget-button-click): Ditto.
+	(widget-field-value-create): Ditto.
+	(widget-field-value-delete): Ditto.
+	(widget-color-notify): Ditto.
+	(widget-setup): Ditto.
+	(widget-map-buttons): Use `map-extents'.
+	(widget-keymap): Made `global-map' its parent.
+	(widget-next-button-or-field): New function.
+	(widget-previous-button-or-field): Ditto.
+	(widget-move): Use them.
+
+	* custom/custom.el (custom-group-hash-table): Use
+	`make-hashtable', with initial size 300.
+	(custom-add-to-group): Update hash-table unconditionally.
+
+1997-09-24  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/packages.el (packages-useful-lisp): Arrange to bytecompile
+	shadow.elc early.
+
+1997-09-22  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* x11/x-toolbar.el (Info-frame-plist): Added.
+	(toolbar-info) Use new plist variable to make-frame.
+
+1997-09-24  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-button1-click): Would bug out on
+	events with no bindings.
+
+	* custom/cus-edit.el (custom-group-value-create): Update members
+ 	after loading the widget.
+	(custom-group-link-help-echo): New function.
+	(custom-group-link): Use it.
+
+	* prim/cus-load.el (custom-put): Update
+ 	`custom-parent-hash-table'.
+
+	* custom/cus-edit.el (custom-add-parent-links): Use
+	`custom-group-hash-table' to map the groups.
+
+	* custom/custom.el (custom-parent-hash-table): New variable.
+	(custom-add-to-group): Use it.
+
+	* prim/cus-load.el: Don't issue message for every loaded file.
+
+	* custom/cus-edit.el (custom-group-prompt): New function.
+	(customize): Use it.
+	(customize-other-window): Ditto.
+
+	* custom/wid-edit.el (widget-field-keymap): Bind TAB to
+ 	`widget-forward'.
+
+1997-09-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-edit.el: Use `display-message' to indicate progress
+	messages.
+	(customize-set-variable): Use the third argument to `get'.
+	(customize-save-variable): Ditto.
+	(custom-variable-value-create): Ditto.
+	(custom-variable-state-set): Ditto.
+	(custom-variable-set): Ditto.
+	(custom-variable-save): Ditto.
+	(custom-variable-reset-saved): Ditto.
+	(custom-variable-reset-standard): Ditto.
+
+	* custom/cus-edit.el: Removed C-coded routines.
+
+	* custom/cus-edit.el (custom-buffer-create-internal): Print a
+	limited number of messages.
+	(custom-group-value-create): Ditto.
+
+	* custom/wid-edit.el (widget-editable-list-value-get): Revert to
+ 	`append'.
+
+1997-09-22  Colin Rafferty  <craffert@ml.com>
+
+	* modes/lazy-shot.el (lazy-shot-shot-function): Made it do its
+		  work in the correct buffer.  Also, changed obsolete
+		  function call to non-obsolete version.
+
+1997-09-22  Colin Rafferty  <craffert@ml.com>
+
+	* utils/shadow.el (find-emacs-lisp-shadows): Removed extra slash
+		  between directory and filename.
+
+1997-09-23  SL Baur  <steve@altair.xemacs.org>
+
+	* ilisp/Makefile (SHELL): Remove dependency on /bin/csh.
+
+1997-09-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-move): Use `incf'.
+	(widget-after-change): Ditto.
+	(widget-field-value-get): Ditto.
+	(widget-info-link-help-echo): New function.
+	(info-link): Use it.
+
+	* custom/cus-edit.el (custom-last): Removed.
+	(custom-buffer-create-internal): Use `incf'.
+	(custom-group-value-create): Ditto.
+
+	* packages/auto-save.el: Minor custom fixes.
+
+	* prim/cus-dep.el (Custom-make-dependencies): Generate correct
+	output wrt `custom-put'.
+
+	* custom/wid-edit.el (widget-tabable-at): Use `widget-at'.
+
+	* custom/cus-edit.el (custom-group-value-create): Use
+	`custom-group-visibility' instead of `group-visibility'.
+
+	* prim/help.el (help-map): Bound `C-h C' to `customize'.
+
+	* custom/wid-edit.el (widget-princ-to-string): Don't use `let'.
+	(widget-clear-undo): Removed current-buffer argument.
+	(widget-choose): Use minibuffer when there are more than 10 items.
+
+1997-09-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-edit.el (custom-button-face): Made it bold.
+	(custom-group-value-create): Change outlook of buffer.
+	(custom-buffer-create-internal): Ditto.
+	(custom-menu-nesting): Removed -- was unused by XEmacs.
+	(custom-menu-create): Don't use `custom-menu-nesting'.
+	(custom-group-menu-create): Define unconditionally.
+	(customize-menu-create): Ditto.
+	(custom-unlispify-menu-entry): Use `with-current-buffer'.
+
+	* custom/wid-edit.el (widget-checklist-match-inline): Revert to
+ 	`append'.
+	(widget-checklist-value-get): Ditto.
+	(widget-editable-list-match-inline): Ditto.
+	(widget-group-match-inline): Ditto.
+	(widget-glyph-find): Removed compatibility checks; use
+ 	`locate-data-directory'.
+	(widget-glyph-find): Use backquotes.
+	(widget-push-button-value-create): Ditto.
+	(widget-choice-mouse-down-action): Don't use `window-system'.
+	(widget-transpose-chars): New function.
+	(widget-text-keymap): Use it.
+	(widget-princ-to-string): Use `with-current-buffer'.
+	(widget-map-buttons): Ditto.
+	(widget-push-button-gui): Set to value of `widget-glyph-enable' by 
+	default.
+	(widget-push-button-value-create): Call `widget-specify-button'.
+
+	* utils/mail-extr.el: Customized.
+
+1997-09-21  SL Baur  <steve@altair.xemacs.org>
+
+	* packages/man.el: Reverse manual prefix patch.
+
+1997-09-21  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/man.el: Got rid of the `stars', and hard coded a prefix
+ 		  of "Man: " for manual-entry buffers.
+
+1997-09-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-face.el (frame-background-mode): Renamed from
+	`custom-background-mode'.
+	(frame-background-mode): Rewritten.
+
+	* x11/x-menubar.el: Customized.
+
+	* custom/cus-face.el (face-spec-set-match-display): Use `warn' for 
+	warnings.
+
+	* x11/x-font-menu.el: Customized.
+
+	* modes/reftex.el: Add prefixes to customization groups.
+
+	* custom/cus-edit.el (customize): Accept GROUP.
+	(customize-group): Defalias to `customize'.
+	(customize-other-window): New function.
+	(customize-group-other-window): Alias to `customize-other-window'.
+
+	* custom/wid-edit.el (widget-choose): Now works with
+ 	`widget-menu-minibuffer-flag' set to nil.
+	(widget-menu-minibuffer-flag): Default to nil.
+	(widget-specify-insert): Use new blackquote syntax.
+	(widget-checklist-value-get): Ditto.
+	(widget-map-buttons): Ditto.
+	(widget-checklist-match-inline): Ditto.
+	(widget-editable-list-match-inline): Ditto.
+	(widget-group-match-inline): Ditto.
+	(widget-checklist-match-inline): Use `nconc'.
+	(widget-keymap): Bind `M-tab' to `widget-backward'.
+
+	* prim/help.el (find-function-noselect): `locate-library' is
+ 	compression-aware; don't duplicate the work.
+
+	* prim/packages.el (packages-hardcoded-lisp): Remove "cl-defs".
+
+	* custom/wid-edit.el: Use `remove-if'.
+	(widget-glyph-directory): Use `locate-data-directory'.
+
+	* custom/cus-edit.el (custom-unlispify-remove-prefixes): Default
+	to t.
+
+	* custom/wid-edit.el: Removed *lots* of compatibility stuff.
+
+	* custom/wid-edit.el: (widget-editable-list-value-get): Apply
+ 	`nconc' instead of `append'.
+
+	* custom/wid-edit.el: Ditto.
+
+	* custom/cus-edit.el: Ditto.
+
+	* custom/custom.el: Use `mapc' instead of `mapcar', where
+ 	appropriate.
+
+	* custom/wid-edit.el: Ditto.
+
+	* custom/cus-edit.el: Ditto.
+
+	* custom/custom.el: Ditto.
+
+	* custom/widget.el: Don't define widget keywords.
+
+1997-09-21  Joel Peterson  <tarzan@aosi.com>
+
+	* prim/menubar.el: use normalize-menu-item-name instead of downcase
+	to compare menu item names.
+
 1997-09-20  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* packages/etags.el: Lots of changes.

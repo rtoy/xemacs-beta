@@ -37,7 +37,7 @@
   "Filename that autoloads are expected to be found in.")
 
 (defvar packages-hardcoded-lisp
-  '("cl-defs"
+  '(
     ;; "startup"
     )
   "Lisp packages that are always dumped with XEmacs")
@@ -45,7 +45,8 @@
 (defvar packages-useful-lisp
   '("bytecomp"
     "byte-optimize"
-    "advice")
+    "advice"
+    "shadow")
   "Lisp packages that need early byte compilation.")
 
 (defvar packages-unbytecompiled-lisp

@@ -77,6 +77,49 @@ char resolved_path [];
   strcpy(copy_path, path);
   path = copy_path;
   max_path = copy_path + PATH_MAX - 2;
+#ifdef WINDOWSNT
+  /*
+  ** In NT we have two different cases:  (1) the path name begins
+  ** with a drive letter, e.g., "C:"; and (2) the path name begins
+  ** with just a slash, which roots to the current drive. In the 
+  ** first case we are going to leave things alone, in the second
+  ** case we will prepend the drive letter to the given path.
+  ** Note: So far in testing, I'm only seeing case #1, even though
+  ** I've tried to get the other cases to happen. 
+  ** August Hill, 31 Aug 1997.
+  **
+  ** Check for a driver letter...C:/...
+  */
+  if (*(path + 1) == ':')
+    {
+      strncpy(new_path, path, 3);
+      new_path += 3;
+      path += 3;
+    }
+
+  /*
+  ** No drive letter, but a beginning slash? Prepend the drive
+  ** letter...
+  */
+  else if (*path == '/')
+    {
+      getcwd(new_path, PATH_MAX - 1);
+      new_path += 3;
+      path++;
+    }
+
+  /*
+  ** Just a path name, prepend the current directory
+  */
+  else
+    {
+      getcwd(new_path, PATH_MAX - 1);
+      new_path += strlen(new_path);
+      if (new_path[-1] != '/')
+	*new_path++ = '/';
+    }
+
+#else
   /* If it's a relative pathname use getwd for starters. */
   if (*path != '/')
     {
@@ -94,7 +137,7 @@ char resolved_path [];
       *new_path++ = '/';
       path++;
     }
-
+#endif
   /* Expand each slash-separated pathname component. */
   while (*path != '\0')
     {

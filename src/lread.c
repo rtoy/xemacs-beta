@@ -1125,10 +1125,10 @@ locate_file (Lisp_Object path, Lisp_Object str, CONST char *suffix,
       hashtab = locate_file_find_directory_hash_table (pathel);
 
       /* Loop over suffixes.  */
-      for (tail = suffixtab, found = 0; !NILP (tail) && !found;
-	   tail = Fcdr (tail))
+      for (tail = suffixtab, found = 0; !found && CONSP (tail);
+	   tail = XCDR (tail))
 	{
-	  if (!NILP (Fgethash (Fcar (tail), hashtab, Qnil)))
+	  if (!NILP (Fgethash (XCAR (tail), hashtab, Qnil)))
 	    found = 1;
 	}
 
@@ -1215,7 +1215,7 @@ build_load_history (int loading, Lisp_Object source)
       tem = Fcar (tail);
 
       /* Find the feature's previous assoc list... */
-      if (!NILP (Fequal (source, Fcar (tem))))
+      if (internal_equal (source, Fcar (tem), 0))
 	{
 	  foundit = 1;
 
@@ -1235,13 +1235,13 @@ build_load_history (int loading, Lisp_Object source)
 
 	      while (CONSP (tem2))
 		{
-		  newelt = Fcar (tem2);
+		  newelt = XCAR (tem2);
 
 		  if (NILP (Fmemq (newelt, tem)))
 		    Fsetcar (tail, Fcons (Fcar (tem),
 					  Fcons (newelt, Fcdr (tem))));
 
-		  tem2 = Fcdr (tem2);
+		  tem2 = XCDR (tem2);
 		  QUIT;
 		}
 	    }

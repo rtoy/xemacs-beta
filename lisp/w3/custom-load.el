@@ -1,3 +1,9 @@
+;;; custom-load.el --- automatically extracted custom dependencies
+
+;; Created by SL Baur on Sat Sep 27 08:14:25 1997
+
+;;; Code:
+
 (custom-put 'url 'custom-loads '("url-gw" "url-irc" "url-news" "url-vars" "url"))
 (custom-put 'ssl 'custom-loads '("ssl"))
 (custom-put 'url-cookie 'custom-loads '("url-cookie" "url-vars"))
@@ -22,3 +28,5 @@
 (custom-put 'w3-parsing 'custom-loads '("w3-cus"))
 (custom-put 'i18n 'custom-loads '("url-vars"))
 (custom-put 'w3-scripting 'custom-loads '("w3-script"))
+
+;;; custom-load.el ends here

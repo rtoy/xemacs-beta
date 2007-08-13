@@ -144,6 +144,7 @@
 						(symbol :tag "Parameter")
 						(sexp :tag "Value"))))
 	     (disable-auto-save-when-buffer-shrinks auto-save boolean)
+	     (find-file-use-truenames find-file boolean)
 	     (find-file-compare-truenames find-file boolean)
 	     (focus-follows-mouse x boolean)
 	     (help-char keyboard character)

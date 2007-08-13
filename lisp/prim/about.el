@@ -106,10 +106,11 @@
   (or (stringp what)
       (setq what (cdr (assq what about-url-alist))))
   (assert what)
-  (let ((widget-link-prefix "") (widget-link-suffix ""))
-    (widget-create 'url-link
-		   :help-echo echo
-		   what)))
+  (widget-create 'url-link
+		 :button-prefix ""
+		 :button-suffix ""
+		 :help-echo echo
+		 what))
 
 ;; Attach a face to a string, in order to be inserted into the buffer.
 ;; Make sure that the extent is duplicable, but unique.  Returns the
@@ -204,6 +205,8 @@ editor with full GUI support, initially based on an early version of\n"
 date with recent versions of that product.  XEmacs stems from a\n")
     (widget-create 'link :help-echo "An XEmacs history lesson"
 		   :action 'about-collaboration
+		   :button-prefix ""
+		   :button-suffix ""
 		   "collaboration")
     (widget-insert
      " of Lucid, Inc. with Sun Microsystems, Inc. and the
@@ -214,11 +217,16 @@ volunteer effort.
 XEmacs provides a great number of ")
     (widget-create 'link :help-echo "See a list of the new features"
 		   :action 'about-features
+		   :button-prefix ""
+		   :button-suffix ""
 		   "new features")
     (widget-insert ".  More details on
 XEmacs's functionality, including bundled packages, can be obtained
 through the ")
-    (widget-create 'info-link :help-echo "Browse the info system"
+    (widget-create 'info-link
+		   :help-echo "Browse the info system"
+		   :button-prefix ""
+		   :button-suffix ""
 		   :tag "info"
 		   "(dir)")
 
@@ -236,12 +244,13 @@ developers responsible for the 20.3 release are:\n\n")
 
     (flet ((setup-person (who)
 	    (widget-insert "\t* ")
-	    (let* ((widget-link-prefix "") (widget-link-suffix "")
-		   (entry (assq who xemacs-hackers))
+	    (let* ((entry (assq who xemacs-hackers))
 		   (name (cadr entry))
 		   (address (caddr entry)))
 	      (widget-create 'link
 			     :help-echo (concat "Find out more about " name)
+			     :button-prefix ""
+			     :button-suffix ""
 			     :action 'about-maintainer
 			     :tag name
 			     :value who)
@@ -249,10 +258,11 @@ developers responsible for the 20.3 release are:\n\n")
       ;; Setup persons responsible for this release.
       (mapc 'setup-person '(slb mrb hniksic))
       (widget-insert "\n\t* ")
-      (let ((widget-link-prefix "") (widget-link-suffix ""))
-	(widget-create 'link :help-echo "A legion of XEmacs hackers"
-		       :action 'about-hackers
-		       "And many other contributors..."))
+      (widget-create 'link :help-echo "A legion of XEmacs hackers"
+		     :action 'about-hackers
+		     :button-prefix ""
+		     :button-suffix ""
+		     "And many other contributors...")
       (widget-insert "\n
 Chuck Thompson was Mr. XEmacs from 19.11 through 19.14.  Ben Wing was
 crucial to each of these releases.\n\n")
@@ -860,11 +870,12 @@ See also:")
   (let* ((entry (assq who xemacs-hackers))
 	 (name (cadr entry))
 	 (address (caddr entry)))
-    (let ((widget-link-prefix "") (widget-link-suffix ""))
-      (widget-create 'link :help-echo (concat "Find out more about " name)
-		     :action 'about-maintainer
-		     :tag name
-		     :value who))
+    (widget-create 'link :help-echo (concat "Find out more about " name)
+		   :action 'about-maintainer
+		   :button-prefix ""
+		   :button-suffix ""
+		   :tag name
+		   :value who)
     (widget-insert (about-tabs name)
 		   (format "<%s>\n%s\n" address shortinfo))))
 
@@ -1186,6 +1197,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Tore Olsen" "toreo@colargol.idb.hist.no")
        (print-short "Greg Onufer" "Greg.Onufer@eng.sun.com")
        (print-short "Achim Oppelt" "aoppelt@theorie3.physik.uni-erlangen.de")
+       (print-short "Rebecca Ore" "rebecca.ore@op.net")
        (print-short "Sudeep Kumar Palat" "palat@idt.unit.no")
        (print-short "Marc Paquette" "Marc.Paquette@Softimage.com")
        (print-short "Jens-U H Petersen" "petersen@kurims.kyoto-u.ac.jp")

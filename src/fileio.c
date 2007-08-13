@@ -1160,8 +1160,15 @@ See also the function `substitute-in-file-name'.
 	  o [p - nm] = 0;
 
 #ifdef  WINDOWSNT
+	  /*
+	  ** Now if the file given is "~foo/file" and HOME="c:/", then we
+	  ** want the file to be named "c:/file" ("~foo" becomes "c:/").
+	  ** The variable o has "~foo", so we can use the length of
+	  ** that string to offset nm.  August Hill, 31 Aug 1998.
+	  */
 	  newdir = (unsigned char *) egetenv ("HOME");
 	  dostounix_filename (newdir);
+	  nm += strlen(o) + 1;
 #else  /* not WINDOWSNT */
 	  /* Jamie reports that getpwnam() can get wedged by SIGIO/SIGALARM
 	     occurring in it. (It can call select()). */

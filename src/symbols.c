@@ -1510,8 +1510,14 @@ find_symbol_value (Lisp_Object sym)
   /* WARNING: This function can be called when current_buffer is 0
      and Vselected_console is Qnil, early in initialization. */
   struct console *dev;
+  Lisp_Object valcontents;
 
   CHECK_SYMBOL (sym);
+
+  valcontents = XSYMBOL (sym)->value;
+  if (!SYMBOL_VALUE_MAGIC_P (valcontents))
+    return valcontents;
+
   if (CONSOLEP (Vselected_console))
     dev = XCONSOLE (Vselected_console);
   else
@@ -1588,9 +1594,16 @@ Set SYMBOL's value to NEWVAL, and return NEWVAL.
   CHECK_SYMBOL (sym);
 
  retry:
-  reject_constant_symbols (sym, newval, 0,
-			   UNBOUNDP (newval) ? Qmakunbound : Qset);
   valcontents = XSYMBOL (sym)->value;
+  if (NILP (sym) || EQ (sym, Qt) || SYMBOL_VALUE_MAGIC_P (valcontents))
+    reject_constant_symbols (sym, newval, 0,
+			     UNBOUNDP (newval) ? Qmakunbound : Qset);
+  else
+    {
+      XSYMBOL (sym)->value = newval;
+      return newval;
+    }
+
  retry_2:
 
   if (SYMBOL_VALUE_MAGIC_P (valcontents))

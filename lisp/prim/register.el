@@ -1,4 +1,4 @@
-;;; register.el --- register commands for XEmacs.
+;;; register.el --- register commands for Emacs.
 
 ;; Copyright (C) 1985, 1993, 1994 Free Software Foundation, Inc.
 
@@ -7,29 +7,29 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 20.1
 
 ;;; Commentary:
 
 ;; This package of functions emulates and somewhat extends the venerable
 ;; TECO's `register' feature, which permits you to save various useful
 ;; pieces of buffer state to named variables.  The entry points are
-;; documented in the XEmacs Reference Manual.
+;; documented in the Emacs user's manual.
 
 ;;; Code:
 
@@ -38,7 +38,9 @@
 NAME is a character (a number).  CONTENTS is a string, number,
 frame configuration, mark or list.
 A list of strings represents a rectangle.
-A list of the form (file . NAME) represents the file named NAME.")
+A list of the form (file . NAME) represents the file named NAME.
+A list of the form (file-query NAME POSITION) represents position POSITION
+ in the file named NAME, but query before visiting it.")
 
 (defun get-register (reg)
   "Return contents of Emacs register named REG, or nil if none."
@@ -46,7 +48,7 @@ A list of the form (file . NAME) represents the file named NAME.")
 
 (defun set-register (register value)
   "Set contents of Emacs register named REGISTER to VALUE.  Returns VALUE.
-See the documentation of the variable `register-alist' for possible VALUEs."
+See the documentation of the variable `register-alist' for possible VALUE."
   (let ((aelt (assq register register-alist)))
     (if aelt
 	(setcdr aelt value)
@@ -103,8 +105,29 @@ delete any existing frames that the frame configuration doesn't mention.
       (goto-char val))
      ((and (consp val) (eq (car val) 'file))
       (find-file (cdr val)))
+     ((and (consp val) (eq (car val) 'file-query))
+      (or (find-buffer-visiting (nth 1 val))
+	  (y-or-n-p (format "Visit file %s again? " (nth 1 val)))
+	  (error "Register access aborted"))
+      (find-file (nth 1 val))
+      (goto-char (nth 2 val)))
      (t
       (error "Register doesn't contain a buffer position or configuration")))))
+
+;; Turn markers into file-query references when a buffer is killed.
+(defun register-swap-out ()
+  (and buffer-file-name
+       (let ((tail register-alist))
+	 (while tail
+	   (and (markerp (cdr (car tail)))
+		(eq (marker-buffer (cdr (car tail))) (current-buffer))
+		(setcdr (car tail)
+			(list 'file-query
+			      buffer-file-name
+			      (marker-position (cdr (car tail))))))
+	   (setq tail (cdr tail))))))
+
+(add-hook 'kill-buffer-hook 'register-swap-out)
 
 ;(defun number-to-register (arg char)
 ;  "Store a number in a register.
@@ -142,9 +165,10 @@ The Lisp value REGISTER is a character."
     (if (null val)
 	(message "Register %s is empty" (single-key-description register))
       (with-output-to-temp-buffer "*Output*"
-	(princ (format "Register %s contains "
-		       (single-key-description register)))
-	(cond 
+	(princ "Register ")
+	(princ (single-key-description register))
+	(princ " contains ")
+	(cond
 	 ((integerp val)
 	  (princ val))
 
@@ -152,17 +176,16 @@ The Lisp value REGISTER is a character."
 	  (let ((buf (marker-buffer val)))
 	    (if (null buf)
 		(princ "a marker in no buffer")
-	      (princ (format
-		      "a buffer position:\nbuff %s, position %s"
-		      (buffer-name (marker-buffer val))
-		      (marker-position val))))))
+	      (princ "a buffer position:\nbuffer ")
+	      (princ (buffer-name buf))
+	      (princ ", position ")
+	      (princ (marker-position val)))))
 
 	 ((window-configuration-p val)
 	  (princ "a window configuration."))
 
-
-;;       ((frame-configuration-p val)
-;;        (princ "a frame configuration."))
+	 ((frame-configuration-p val)
+	  (princ "a frame configuration."))
 
 	 ((and (consp val) (eq (car val) 'file))
 	  (princ "the file ")
@@ -171,7 +194,7 @@ The Lisp value REGISTER is a character."
 
 	 ((consp val)
 	  (princ "the rectangle:\n")
-          (while val
+	  (while val
 	    (princ (car val))
 	    (terpri)
 	    (setq val (cdr val))))
@@ -185,7 +208,7 @@ The Lisp value REGISTER is a character."
 	  (prin1 val)))))))
 
 (defun insert-register (register &optional arg)
-  "Insert contents of register REGISTER.  (REGISTER is a character).
+  "Insert contents of register REGISTER.  (REGISTER is a character.)
 Normally puts point before and mark after the inserted text.
 If optional second arg is non-nil, puts mark before and point after.
 Interactively, second arg is non-nil if prefix arg is supplied."
@@ -203,8 +226,7 @@ Interactively, second arg is non-nil if prefix arg is supplied."
       (princ (marker-position val) (current-buffer)))
      (t
       (error "Register does not contain text"))))
-  ;; XEmacs: don't activate the region.  It's annoying.
-  (if (not arg) (exchange-point-and-mark t)))
+  (if (not arg) (exchange-point-and-mark)))
 
 (defun copy-to-register (register start end &optional delete-flag)
   "Copy region into register REGISTER.  With prefix arg, delete as well.
@@ -223,7 +245,7 @@ START and END are buffer positions indicating what to append."
   (or (stringp (get-register register))
       (error "Register does not contain text"))
   (set-register register (concat (get-register register)
-			     (buffer-substring start end)))
+			    (buffer-substring start end)))
   (if delete-flag (delete-region start end)))
 
 (defun prepend-to-register (register start end &optional delete-flag)
@@ -235,7 +257,7 @@ START and END are buffer positions indicating what to prepend."
   (or (stringp (get-register register))
       (error "Register does not contain text"))
   (set-register register (concat (buffer-substring start end)
-			     (get-register register)))
+			    (get-register register)))
   (if delete-flag (delete-region start end)))
 
 (defun copy-rectangle-to-register (register start end &optional delete-flag)

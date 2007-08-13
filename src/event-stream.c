@@ -4521,7 +4521,7 @@ Magic events are handled as necessary.
 	      }
 	    execute_command_event
               (command_builder,
-               !NILP (Fequal (event, command_builder-> most_current_event))
+	       internal_equal (event, command_builder-> most_current_event, 0)
                ? event
                /* Use the translated event that was most recently seen.
                   This way, last-command-event becomes f1 instead of

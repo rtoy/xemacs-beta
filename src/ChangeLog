@@ -1,3 +1,161 @@
+1997-09-26  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* window.c (saved_window_equal): Ditto.
+
+	* process.c (Fget_process): Use internal_equal.
+
+	* lread.c (build_load_history): Use internal_equal.
+	(build_load_history): Use XCAR/XCDR where safe.
+
+	* events.c (event_equal): Ditto.
+
+	* event-stream.c (Fdispatch_event): Ditto.
+
+	* elhash.c (lisp_object_eql_equal): Ditto.
+	(lisp_object_equal_equal): Ditto.
+
+	* device.c (find_device_of_type): Ditto.
+
+	* console.c (find_console_of_type): Ditto.
+
+	* console-tty.c (tty_init_console): Ditto.
+
+	* console-stream.c (stream_init_console): Use internal_equal.
+	(stream_canonicalize_console_connection): Ditto.
+
+	* fns.c (Fmember): Use internal_equal, to avoid a necessary
+ 	funcall and NILP check.
+	(Fold_member): Ditto for internal_old_equal.
+	(Fassoc): Use XCAR when we know we deal with a cons.  Use
+ 	internal_equal.  Removed tem.
+	(Fold_assoc): Ditto.
+	(Fassq): Use XCAR.
+	(Frassoc): Use internal_equal; remove tem.
+	(Fold_rassoc): Ditto for internal_old_equal.
+	(Frassq): Use XCDR with what we know is a cons.
+	(Fold_rassq): Ditto.
+	(Fdelete): Use internal_equal.
+	(Fold_delete): Ditto for internal_old_equal.
+	(Fremassoc): Use internal_equal; use XCAR/XCDR with what we know
+	is a cons.
+	(Fremrassoc): Ditto.
+
+	* dired.c (Fdirectory_files): Nreverse the list only if it will be 
+	sorted.
+
+Fri Sep 26 13:55:28 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* faces.c (update_face_cachel_data): Don't allow the
+	  background pixmap of the default face to override the
+	  background of a face if that color has been specified.
+
+1997-09-26  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* dired.c (close_directory_fd): New function.
+	(Fdirectory_files): Use it to set up an unwind-protection to close 
+	the descriptor.
+	(Fdirectory_files): Allow QUIT in re_search.
+	(Fdirectory_files): If the file is too big, allocate necessary
+	data with malloc.
+	(Fdirectory_files): Use simple Fcons to build the list.
+	(close_directory_fd): Free the opaque pointer.
+
+1997-09-25  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* extents.c (Fset_extent_properties): New function.
+
+1997-09-24  SL Baur  <steve@altair.xemacs.org>
+
+	* dired.c (Fdirectory_files): Remove broken VMS stuff.
+	(file_name_completion_stat): Ditto.
+	(file_name_completion): Ditto.
+	(Top Level):  Ditto.
+	(syms_of_dired): Ditto.
+
+1997-09-25  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* widget.c (Fwidget_apply): Don't GCPRO result of Fwidget_get.
+
+1997-09-24  SL Baur  <steve@altair.xemacs.org>
+
+	* symsinit.h: Declare syms_of_widget.
+
+	* emacsfns.h: Declare Fchar_syntax.
+
+	* bytecode.c (Fbyte_code): Call Fchar_syntax for the Bchar_syntax
+	bytecode.
+
+	* syntax.c (Fchar_syntax): convert nil input to \000 for
+	compatibility.
+
+	* alloc.c (report_pure_usage): Increase slop to 512 bytes in betas 
+	and reduce it to 4 bytes in releases.
+
+1997-09-23  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (objs): Add new C file widget.o.
+
+1997-09-22  SL Baur  <steve@altair.xemacs.org>
+
+	* editfns.c (vars_of_editfns): New feature 'ampersand-full-name
+	declared if AMPERSAND_FULL_NAME configuration option is enabled.
+
+	* callproc.c (vars_of_callproc): Update docstring of `data-directory'.
+
+Sun Sep 21 14:14:44 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lisp.h: underspecify lisp_fn_t function prototype
+	  to avoid compiler errors in inline_funcall_subr().
+
+	* eval.c (Fprogn): Walk forms list with XCDR, access
+	  with XCAR.  Check forms list CONSP, so that XCDR and XCAR are
+	  safe.
+
+	* eval.c (Fsetq): replace Flength call with for-loop
+	  to compute list length.  Walk arg list with XCDR,
+	  access with XCAR.  Check arg list with CONSP, so that
+	  XCDR and XCAR are safe.
+
+	* eval.c: New macro inline_funcall_subr, an inline
+	  version of funcall_subr + primitive_funcall.
+
+	* eval.c (Feval): replace Flength call with for-loop
+	  to compute list length.  Use XCAR and XCDR in some
+	  places where it is safe to do so.  Use
+	  inline_funcall_subr() in place of funcall_subr().
+
+	* eval.c (funcall_recording_as): Use XCAR instead of
+	  Fcar where it was safe.
+
+	* eval.c (Fapply): replace Flength call with for-loop
+	  to compute list length.
+	
+	* eval.c (apply_lambda):Use XCAR and XCDR in some
+	  places where it is safe to do so.
+
+	* eval.c (funcall_lambda):  Walk param list with XCDR, access
+	  with XCAR.  Check param list CONSP, so that XCDR and XCAR are
+	  safe.
+
+	* symbols.c (find_symbol_value): return quickly if no
+	  symbol magic is involved, to avoid the expensive call
+	  to find_symbol_value_1.
+
+	* symbols.c (store_symval_forwarding): don't call
+	  reject_constant_symbols unless there is a chance a
+	  constant symbol is involved.  This break the
+	  encapsulation of the constants check, but symbol stores
+	  are used heavily and speed is most important than
+	  cleanliness in this case.
+
+1997-09-21  Joel Peterson  <tarzan@aosi.com>
+
+	* menubar.c (normalize-menu-item-name): New function.
+
+1997-09-21  SL Baur  <steve@altair.xemacs.org>
+
+	* keymap.c (get_relevant_extent_keymaps): Previous patch reversed.
+
 1997-09-20  SL Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in.in (xemacs): Adoption of shadow.el to print

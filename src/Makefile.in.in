@@ -170,7 +170,7 @@ objs=\
  rangetab.o redisplay.o redisplay-output.o regex.o\
  search.o signal.o sound.o\
  specifier.o strftime.o symbols.o syntax.o sysdep.o\
- undo.o $(x_objs) window.o
+ undo.o $(x_objs) widget.o window.o
 
 #ifdef REL_ALLOC
 rallocdocsrc = ralloc.c

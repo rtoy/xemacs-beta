@@ -108,6 +108,7 @@ the left margin) to be used by the fill commands (@pxref{Filling}).
 
 @menu
 * Examining::           Examining or setting one variable's value.
+* Easy Customization::  Convenient and easy customization of variables.
 * Edit Options::        Examining or editing list of all variables' values.
 * Locals::              Per-buffer values of variables.
 * File Variables::      How files can specify variable values.
@@ -170,6 +171,376 @@ sets @code{fill-column} to 75, as if you had executed the Lisp expression
 
   Setting variables in this way, like all means of customizing Emacs
 except where explicitly stated, affects only the current Emacs session.
+
+@node Easy Customization
+@subsection Easy Customization Interface
+
+@findex customize
+@cindex customization buffer
+  A convenient way to find the user option variables that you want to
+change, and then change them, is with @kbd{M-x customize}.  This command
+creates a @dfn{customization buffer} with which you can browse through
+the Emacs user options in a logically organized structure, then edit and
+set their values.  You can also use the customization buffer to save
+settings permanently.  (Not all Emacs user options are included in this
+structure as of yet, but we are adding the rest.)
+
+@menu
+* Groups: Customization Groups.
+                             How options are classified in a structure.
+* Changing an Option::       How to edit a value and set an option.
+* Face Customization::       How to edit the attributes of a face.
+* Specific Customization::   Making a customization buffer for specific
+                                options, faces, or groups.
+@end menu
+
+@node Customization Groups
+@subsubsection Customization Groups
+@cindex customization groups
+
+  For customization purposes, user options are organized into
+@dfn{groups} to help you find them.  Groups are collected into bigger
+groups, all the way up to a master group called @code{Emacs}.
+
+  @kbd{M-x customize} creates a customization buffer that shows the
+top-level @code{Emacs} group and the second-level groups immediately
+under it.  It looks like this, in part:
+
+@smallexample
+/- Emacs group: ---------------------------------------------------\
+      [State]: visible group members are all at standard settings.
+   Customization of the One True Editor.
+   See also [Manual].
+
+Editing group: [Go to Group] 
+Basic text editing facilities.
+
+External group: [Go to Group] 
+Interfacing to external utilities.
+
+@var{more second-level groups}
+
+\- Emacs group end ------------------------------------------------/
+
+@end smallexample
+
+@noindent
+This says that the buffer displays the contents of the @code{Emacs}
+group.  The other groups are listed because they are its contents.  But
+they are listed differently, without indentation and dashes, because
+@emph{their} contents are not included.  Each group has a single-line
+documentation string; the @code{Emacs} group also has a @samp{[State]}
+line.
+
+@cindex editable fields (customization buffer)
+@cindex active fields (customization buffer)
+  Most of the text in the customization buffer is read-only, but it
+typically includes some @dfn{editable fields} that you can edit.  There
+are also @dfn{active fields}; this means a field that does something
+when you @dfn{invoke} it.  To invoke an active field, either click on it
+with @kbd{Mouse-1}, or move point to it and type @key{RET}.
+
+  For example, the phrase @samp{[Go to Group]} that appears in a
+second-level group is an active field.  Invoking the @samp{[Go to
+Group]} field for a group creates a new customization buffer, which
+shows that group and its contents.  This field is a kind of hypertext
+link to another group.
+
+  The @code{Emacs} group does not include any user options itself, but
+other groups do.  By examining various groups, you will eventually find
+the options and faces that belong to the feature you are interested in
+customizing.  Then you can use the customization buffer to set them.
+
+@findex customize-browse
+  You can view the structure of customization groups on a larger scale
+with @kbd{M-x customize-browse}.  This command creates a special kind of
+customization buffer which shows only the names of the groups (and
+options and faces), and their structure.
+
+  In this buffer, you can show the contents of a group by invoking
+@samp{[+]}.  When the group contents are visible, this button changes to
+@samp{[-]}; invoking that hides the group contents.
+
+  Each group, option or face name in this buffer has an active field
+which says @samp{[Group]}, @samp{[Option]} or @samp{[Face]}.  Invoking
+that active field creates an ordinary customization buffer showing just
+that group and its contents, just that option, or just that face.
+This is the way to set values in it.
+
+@node Changing an Option
+@subsubsection Changing an Option
+
+  Here is an example of what a user option looks like in the
+customization buffer:
+
+@smallexample
+Kill Ring Max: [Hide] 30
+   [State]: this option is unchanged from its standard setting.
+Maximum length of kill ring before oldest elements are thrown away.
+@end smallexample
+
+  The text following @samp{[Hide]}, @samp{30} in this case, indicates
+the current value of the option.  If you see @samp{[Show]} instead of
+@samp{[Hide]}, it means that the value is hidden; the customization
+buffer initially hides values that take up several lines.  Invoke
+@samp{[Show]} to show the value.
+
+  The line after the option name indicates the @dfn{customization state}
+of the option: in the example above, it says you have not changed the
+option yet.  The word @samp{[State]} at the beginning of this line is
+active; you can get a menu of various operations by invoking it with
+@kbd{Mouse-1} or @key{RET}.  These operations are essential for
+customizing the variable.
+
+  The line after the @samp{[State]} line displays the beginning of the
+option's documentation string.  If there are more lines of
+documentation, this line ends with @samp{[More]}; invoke this to show
+the full documentation string.
+
+  To enter a new value for @samp{Kill Ring Max}, move point to the value
+and edit it textually.  For example, you can type @kbd{M-d}, then insert
+another number.
+
+  When you begin to alter the text, you will see the @samp{[State]} line
+change to say that you have edited the value:
+
+@smallexample
+[State]: you have edited the value as text, but not set the option.
+@end smallexample
+
+@cindex setting option value
+  Editing the value does not actually set the option variable.  To do
+that, you must @dfn{set} the option.  To do this, invoke the word
+@samp{[State]} and choose @samp{Set for Current Session}.
+
+  The state of the option changes visibly when you set it:
+
+@smallexample
+[State]: you have set this option, but not saved it for future sessions.
+@end smallexample
+
+   You don't have to worry about specifying a value that is not valid;
+setting the option checks for validity and will not really install an
+unacceptable value.
+
+@kindex M-TAB @r{(customization buffer)}
+@findex widget-complete
+  While editing a value or field that is a file name, directory name,
+command name, or anything else for which completion is defined, you can
+type @kbd{M-@key{TAB}} (@code{widget-complete}) to do completion.
+
+  Some options have a small fixed set of possible legitimate values.
+These options don't let you edit the value textually.  Instead, an
+active field @samp{[Value Menu]} appears before the value; invoke this
+field to edit the value.  For a boolean ``on or off'' value, the active
+field says @samp{[Toggle]}, and it changes to the other value.
+@samp{[Value Menu]} and @samp{[Toggle]} edit the buffer; the changes
+take effect when you use the @samp{Set for Current Session} operation.
+
+  Some options have values with complex structure.  For example, the
+value of @code{load-path} is a list of directories.  Here is how it
+appears in the customization buffer:
+
+@smallexample
+Load Path:
+[INS] [DEL] [Current dir?]: /usr/local/share/emacs/19.34.94/site-lisp
+[INS] [DEL] [Current dir?]: /usr/local/share/emacs/site-lisp
+[INS] [DEL] [Current dir?]: /usr/local/share/emacs/19.34.94/leim
+[INS] [DEL] [Current dir?]: /usr/local/share/emacs/19.34.94/lisp
+[INS] [DEL] [Current dir?]: /build/emacs/e19/lisp
+[INS] [DEL] [Current dir?]: /build/emacs/e19/lisp/gnus
+[INS]
+   [State]: this item has been changed outside the customization buffer.
+List of directories to search for files to load....
+@end smallexample
+
+@noindent
+Each directory in the list appears on a separate line, and each line has
+several editable or active fields.
+
+  You can edit any of the directory names.  To delete a directory from
+the list, invoke @samp{[DEL]} on that line.  To insert a new directory in
+the list, invoke @samp{[INS]} at the point where you want to insert it.
+
+  You can also invoke @samp{[Current dir?]} to switch between including
+a specific named directory in the path, and including @code{nil} in the
+path.  (@code{nil} in a search path means ``try the current
+directory.'')
+
+@kindex TAB @r{(customization buffer)}
+@kindex S-TAB @r{(customization buffer)}
+@findex widget-forward
+@findex widget-backward
+  Two special commands, @key{TAB} and @kbd{S-@key{TAB}}, are useful for
+moving through the customization buffer.  @key{TAB}
+(@code{widget-forward}) moves forward to the next active or editable
+field; @kbd{S-@key{TAB}} (@code{widget-backward}) moves backward to the
+previous active or editable field.
+
+  Typing @key{RET} on an editable field also moves forward, just like
+@key{TAB}.  The reason for this is that people have a tendency to type
+@key{RET} when they are finished editing a field.  If you have occasion
+to insert a newline in an editable field, use @kbd{C-o} or @kbd{C-q
+C-j},
+
+@cindex saving option value
+  Setting the option changes its value in the current Emacs session;
+@dfn{saving} the value changes it for future sessions as well.  This
+works by writing code into your @file{~/.emacs} file so as to set the
+option variable again each time you start Emacs.  To save the option,
+invoke @samp{[State]} and select the @samp{Save for Future Sessions}
+operation.
+
+  You can also restore the option to its standard value by invoking
+@samp{[State]} and selecting the @samp{Reset to Standard Settings}
+operation.  There are actually three reset operations:
+
+@table @samp
+@item Reset
+If you have made some modifications and not yet set the option,
+this restores the text in the customization buffer to match
+the actual value.
+
+@item Reset to Saved
+This restores the value of the option to the last saved value,
+and updates the text accordingly.
+
+@item Reset to Standard Settings
+This sets the option to its standard value, and updates the text
+accordingly.  This also eliminates any saved value for the option,
+so that you will get the standard value in future Emacs sessions.
+@end table
+
+  The state of a group indicates whether anything in that group has been
+edited, set or saved.  You can select @samp{Set for Current Session},
+@samp{Save for Future Sessions} and the various kinds of @samp{Reset}
+operation for the group; these operations on the group apply to all
+options in the group and its subgroups.
+
+  Near the top of the customization buffer there are two lines
+containing several active fields:
+
+@smallexample
+ [Set] [Save] [Reset] [Reset to Saved] [Reset to Standard]  [Done]
+@end smallexample
+
+@noindent
+Invoking @samp{[Done]} buries this customization buffer.  Each of the
+other fields performs an operation---set, save or reset---on each of the
+items in the buffer that could meaningfully be set, saved or reset.
+
+@node Face Customization
+@subsubsection Customizing Faces
+@cindex customizing faces
+@cindex bold font
+@cindex italic font
+@cindex fonts and faces
+
+  In addition to user options, some customization groups also include
+faces.  When you show the contents of a group, both the user options and
+the faces in the group appear in the customization buffer.  Here is an
+example of how a face looks:
+
+@smallexample
+Custom Changed Face: (sample)
+   [State]: this face is unchanged from its standard setting.
+Face used when the customize item has been changed.
+Attributes: [ ] Bold: [toggle] off
+            [X] Italic: [toggle] on
+            [ ] Underline: [toggle] off
+            [ ] Inverse-Video: [toggle] on
+            [ ] Foreground: black (sample)
+            [ ] Background: white (sample)
+            [ ] Stipple:  
+@end smallexample
+
+  Each face attribute has its own line.  The @samp{[@var{x}]} field
+before the attribute name indicates whether the attribute is
+@dfn{enabled}; @samp{X} means that it is.  You can enable or disable the
+attribute by invoking that field.  When the attribute is enabled, you
+can change the attribute value in the usual ways.
+
+  On a black-and-white display, the colors you can use for the
+background are @samp{black}, @samp{white}, @samp{gray}, @samp{gray1},
+and @samp{gray3}.  Emacs supports these shades of gray by using
+background stipple patterns instead of a color.
+
+  Setting, saving and resetting a face work like the same operations for
+options (@pxref{Changing an Option}).
+
+  A face can specify different appearances for different types of
+display.  For example, a face can make text red on a color display, but
+use a bold font on a monochrome display.  To specify multiple
+appearances for a face, select @samp{Show Display Types} in the menu you
+get from invoking @samp{[State]}.
+
+@findex modify-face
+  Another more basic way to set the attributes of a specific face is
+with @kbd{M-x modify-face}.  This command reads the name of a face, then
+reads the attributes one by one.  For the color and stipple attributes,
+the attribute's current value is the default---type just @key{RET} if
+you don't want to change that attribute.  Type @samp{none} if you want
+to clear out the attribute.
+
+@node Specific Customization
+@subsubsection Customizing Specific Items
+
+  Instead of finding the options you want to change by moving down
+through the structure of groups, you can specify the particular option,
+face or group that you want to customize.
+
+@table @kbd
+@item M-x customize-option @key{RET} @var{option} @key{RET}
+Set up a customization buffer with just one option, @var{option}.
+@item M-x customize-face @key{RET} @var{face} @key{RET}
+Set up a customization buffer with just one face, @var{face}.
+@item M-x customize-group @key{RET} @var{group} @key{RET}
+Set up a customization buffer with just one group, @var{group}.
+@item M-x customize-apropos @key{RET} @var{regexp} @key{RET}
+Set up a customization buffer with all the options, faces and groups
+that match @var{regexp}.
+@item M-x customize-saved 
+Set up a customization buffer containing all options and faces that you
+have saved with customization buffers.
+@item M-x customize-customized
+Set up a customization buffer containing all options and faces that you
+have customized but not saved.
+@end table
+
+@findex customize-option
+  If you want to alter a particular user option variable with the
+customization buffer, and you know its name, you can use the command
+@kbd{M-x customize-option} and specify the option name.  This sets up
+the customization buffer with just one option---the one that you asked
+for.  Editing, setting and saving the value work as described above, but
+only for the specified option.
+
+@findex customize-face
+  Likewise, you can modify a specific face, chosen by name, using
+@kbd{M-x customize-face}.
+
+@findex customize-group
+  You can also set up the customization buffer with a specific group,
+using @kbd{M-x customize-group}.  The immediate contents of the chosen
+group, including option variables, faces, and other groups, all appear
+as well.  However, these subgroups' own contents start out hidden.  You
+can show their contents in the usual way, by invoking @samp{[Show]}.
+
+@findex customize-apropos
+  To control more precisely what to customize, you can use @kbd{M-x
+customize-apropos}.  You specify a regular expression as argument; then
+all options, faces and groups whose names match this regular expression
+are set up in the customization buffer.  If you specify an empty regular
+expression, this includes @emph{all} groups, options and faces in the
+customization buffer (but that takes a long time).
+
+@findex customize-saved
+@findex customize-customized
+  If you change option values and then decide the change was a mistake,
+you can use two special commands to revisit your previous changes.  Use
+@kbd{customize-saved} to look at the options and faces that you have
+saved.  Use @kbd{M-x customize-customized} to look at the options and
+faces that you have set but not saved.
 
 @node Edit Options
 @subsection Editing Variable Values

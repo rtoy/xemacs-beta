@@ -1,3 +1,9 @@
+;;; custom-load.el --- automatically extracted custom dependencies
+
+;; Created by SL Baur on Sat Sep 27 08:13:39 1997
+
+;;; Code:
+
 (custom-put 'ssh 'custom-loads '("ssh"))
 (custom-put 'telnet 'custom-loads '("telnet"))
 (custom-put 'shell 'custom-loads '("shell"))
@@ -10,3 +16,5 @@
 (custom-put 'processes 'custom-loads '("background" "comint" "rlogin" "shell" "ssh"))
 (custom-put 'background 'custom-loads '("background"))
 (custom-put 'unix 'custom-loads '("rlogin" "shell" "ssh"))
+
+;;; custom-load.el ends here

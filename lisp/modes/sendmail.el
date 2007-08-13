@@ -1268,12 +1268,6 @@ The seventh argument ACTIONS is a list of actions to take
     (pop-to-buffer "*mail*"))
   (mail noerase to subject in-reply-to cc replybuffer sendactions))
 
-;;; Do not execute these when sendmail.el is loaded,
-;;; only in loaddefs.el.
-;;;###autoload (define-key ctl-x-map "m" 'mail)
-;;;###autoload (define-key ctl-x-4-map "m" 'mail-other-window)
-;;;###autoload (define-key ctl-x-5-map "m" 'mail-other-frame)
-
 ;;;###autoload (add-hook 'same-window-buffer-names "*mail*")
 
 ;;; Do not add anything but external entries on this page.

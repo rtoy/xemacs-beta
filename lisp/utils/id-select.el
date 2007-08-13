@@ -164,13 +164,10 @@
 ;;; Public variables
 ;;; ************************************************************************
 
-;; We need the progn to kill off the defgroup-tracking mechanism.
-;; This package changes the state of XEmacs by loading it, which is
-;; why it's potentially dangerous.
-(progn
-  (defgroup id-select nil
-    "Select larger and larger syntax-driven regions in a buffer"
-    :group 'mouse))
+(defgroup id-select nil
+  "Select larger and larger syntax-driven regions in a buffer"
+  :group 'matching
+  :group 'mouse)
 
 
 (defcustom id-select-brace-modes
@@ -246,14 +243,6 @@
   :type 'boolean
   :group 'id-select)
 
-(if (string-match "XEmacs" emacs-version)
-    (add-hook 'mouse-track-click-hook 'id-select-double-click-hook)
-  (if (string-match "^19\\." emacs-version)
-      (progn (transient-mark-mode 1)
-	     (global-set-key [mouse-1] 'mouse-set-point)
-	     (global-set-key [double-mouse-1] 'id-select-thing-with-mouse)
-	     (global-set-key [triple-mouse-1] 'id-select-thing-with-mouse))))
-
 ;;; ************************************************************************
 ;;; Public functions
 ;;; ************************************************************************
@@ -261,6 +250,18 @@
 ;;
 ;; Commands
 ;;
+
+;;;###autoload
+(defun id-select-install ()
+  "Install the id-select mode as the default mode of operation."
+  (interactive)
+  (if (string-match "XEmacs" emacs-version)
+      (add-hook 'mouse-track-click-hook 'id-select-double-click-hook)
+    (if (string-match "^19\\." emacs-version)
+	(progn (transient-mark-mode 1)
+	       (global-set-key [mouse-1] 'mouse-set-point)
+	       (global-set-key [double-mouse-1] 'id-select-thing-with-mouse)
+	       (global-set-key [triple-mouse-1] 'id-select-thing-with-mouse)))))
 
 ;;;###autoload
 (defun id-select-thing ()

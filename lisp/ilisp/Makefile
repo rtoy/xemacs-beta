@@ -28,7 +28,9 @@ Version = 5.8
 EMACS = emacs
 
 # The SHELL variable is used only for making the distribution.
-SHELL = /bin/csh
+#SHELL = /bin/csh
+# Tsk, tsk, Though shalt not use csh in distributed scripts.
+SHELL = /bin/sh
 
 # These are used mostly for packaging the distribution
 Ilisp_src_dir = $(shell pwd)

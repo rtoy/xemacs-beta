@@ -388,8 +388,8 @@ find_console_of_type (struct console_methods *meths, Lisp_Object canon)
       Lisp_Object console = XCAR (concons);
 
       if (EQ (CONMETH_TYPE (meths), CONSOLE_TYPE (XCONSOLE (console)))
-	  && !NILP (Fequal (CONSOLE_CANON_CONNECTION (XCONSOLE (console)),
-			    canon)))
+	  && internal_equal (CONSOLE_CANON_CONNECTION (XCONSOLE (console)),
+			     canon, 0))
 	return console;
     }
 

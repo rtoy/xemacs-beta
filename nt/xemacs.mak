@@ -109,7 +109,7 @@ LIB_SRC_LFLAGS=-nologo $(LIB_SRC_LIBS) -base:0x1000000\
  -nodefaultlib -out:$@ -debug:full
 
 DOC=$(LIB_SRC)\DOC
-DOC_SRCS=\
+DOC_SRC1=\
  $(XEMACS)\src\abbrev.c \
  $(XEMACS)\src\alloc.c \
  $(XEMACS)\src\alloca.c \
@@ -128,7 +128,8 @@ DOC_SRCS=\
  $(XEMACS)\src\console.c \
  $(XEMACS)\src\data.c \
  $(XEMACS)\src\debug.c \
- $(XEMACS)\src\device-x.c \
+ $(XEMACS)\src\device-x.c 
+DOC_SRC2=\
  $(XEMACS)\src\device.c \
  $(XEMACS)\src\dgif_lib.c \
  $(XEMACS)\src\dialog-x.c \
@@ -148,7 +149,8 @@ DOC_SRCS=\
  $(XEMACS)\src\eval.c \
  $(XEMACS)\src\event-stream.c \
  $(XEMACS)\src\event-unixoid.c \
- $(XEMACS)\src\event-Xt.c \
+ $(XEMACS)\src\event-Xt.c 
+DOC_SRC3=\
  $(XEMACS)\src\events.c \
  $(XEMACS)\src\extents.c \
  $(XEMACS)\src\faces.c \
@@ -168,7 +170,8 @@ DOC_SRCS=\
  $(XEMACS)\src\glyphs.c \
  $(XEMACS)\src\gmalloc.c \
  $(XEMACS)\src\gui-x.c \
- $(XEMACS)\src\gui.c \
+ $(XEMACS)\src\gui.c 
+DOC_SRC4=\
  $(XEMACS)\src\hash.c \
  $(XEMACS)\src\indent.c \
  $(XEMACS)\src\inline.c \
@@ -188,7 +191,8 @@ DOC_SRCS=\
  $(XEMACS)\src\ntproc.c \
  $(XEMACS)\src\objects-x.c \
  $(XEMACS)\src\objects.c \
- $(XEMACS)\src\opaque.c \
+ $(XEMACS)\src\opaque.c 
+DOC_SRC5=\
  $(XEMACS)\src\print.c \
  $(XEMACS)\src\process.c \
  $(XEMACS)\src\pure.c \
@@ -208,7 +212,8 @@ DOC_SRCS=\
  $(XEMACS)\src\symbols.c \
  $(XEMACS)\src\syntax.c \
  $(XEMACS)\src\sysdep.c \
- $(XEMACS)\src\termcap.c \
+ $(XEMACS)\src\termcap.c 
+DOC_SRC6=\
  $(XEMACS)\src\tparam.c \
  $(XEMACS)\src\undo.c \
  $(XEMACS)\src\unexnt.c \
@@ -225,13 +230,13 @@ DOC_SRCS=\
  $(XEMACS)\src\mule-ccl.c \
  $(XEMACS)\src\mule-coding.c
 
-MAKE_DOCFILE=$(OUTDIR)\make-docfile.exe
+MAKE_DOCFILE=$(LIB_SRC)\make-docfile.exe
 
 $(MAKE_DOCFILE): $(OUTDIR)\make-docfile.obj
 	link.exe -out:$@ $(LIB_SRC_LFLAGS) $** $(LIB_SRC_LIBS)
 
 $(OUTDIR)\make-docfile.obj:	$(LIB_SRC)\make-docfile.c
-	 $(CC) $(LIB_SRC_FLAGS) $** -Fo$@
+	 $(CC) $(LIB_SRC_FLAGS) -c $** -Fo$@
 
 RUNEMACS=$(XEMACS)\src\runemacs.exe
 
@@ -755,8 +760,14 @@ $(OUTDIR)\xselect.obj:	$(TEMACS_SRC)\xselect.c
 
 # LISP bits 'n bobs
 
-$(DOC): $(OUTDIR)\make-docfile.exe
-	!"$(TEMACS) -batch -l make-docfile.el -o $(DOC) -d $(TEMACS_SRC) -i $(XEMACS)\site-packages $(DOC_SRC)"
+$(DOC): $(LIB_SRC)\make-docfile.exe
+	!$(TEMACS) -batch -l make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
+	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC1)
+	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC2)
+	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC3)
+	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC4)
+	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC4)
+	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC5)
 
 LOADPATH=$(LISP)\prim
 dump-elcs:

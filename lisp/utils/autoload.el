@@ -33,6 +33,10 @@
 ;; lisp source files in various useful ways.  To learn more, read the
 ;; source; if you're going to use this, you'd better be able to.
 
+;; ChangeLog:
+
+;; Sep-26-1997:  slb removed code dealing with customization.
+
 ;;; Code:
 
 (defun make-autoload (form file)
@@ -295,11 +299,9 @@ are used."
 		    (forward-line 1)))
 		  (if dofiles
 		      (setq funlist (cdr funlist)))))))
-	;;(unless visited
+	(unless visited
 	    ;; We created this buffer, so we should kill it.
-	    ;; Customize needs it later, we don't want to read the file
-	    ;; in twice.
-	    ;;(kill-buffer (current-buffer)))
+	    (kill-buffer (current-buffer)))
 	(set-buffer outbuf)
 	(setq output-end (point-marker))))
     (if t ;; done-any
@@ -353,51 +355,17 @@ autoloads go somewhere else.")
   "Generic filename ot put custom loads into.
 Unless you are an XEmacs maintainr, it is probably unwise to change this.")
 
-(defvar generated-custom-file
-  (expand-file-name (concat autoload-target-directory
-			    cusload-file-name)
-		    data-directory)
-  "*File `update-file-autoloads' puts customization into.")
-
-(defvar customized-symbols (make-hash-table :test 'eq))
-
-;; Written by Per Abrahamsen
-(defun autoload-snarf-defcustom (file)
-  "Snarf all customizations in the current buffer."
-  (let ((visited (get-file-buffer file)))
-    (save-excursion
-      (set-buffer (or visited (find-file-noselect file)))
-      (when (and file
-		 (string-match "\\`\\(.*\\)\\.el\\'" file)
-		 (not (buffer-modified-p)))
-	(goto-char (point-min))
-	(let ((name (file-name-nondirectory (match-string 1 file))))
-	  (condition-case nil
-	      (while (re-search-forward
-		      "^(defcustom\\|^(defface\\|^(defgroup"
-		      nil t)
-		(beginning-of-line)
-		(let ((expr (read (current-buffer))))
-		  (eval expr)
-		  (setf (gethash (nth 1 expr) customized-symbols) name)))
-	    (error nil))))
-      (unless (buffer-modified-p)
-	(kill-buffer (current-buffer))))))
-
-(defvar autoload-do-custom-save nil)
-
 ;;;###autoload
 (defun update-file-autoloads (file)
   "Update the autoloads for FILE in `generated-autoload-file'
 \(which FILE might bind in its local variables).
-This functions refuses to update autolaods files and custom loads."
+This functions refuses to update autoloads files."
   (interactive "fUpdate autoloads for file: ")
   (setq file (expand-file-name file))
   (when (and (file-newer-than-file-p file generated-autoload-file)
 	     (not (member (file-name-nondirectory file)
-			  (list autoload-file-name cusload-file-name))))
+			  (list autoload-file-name))))
 
-    (setq autoload-do-custom-save t)
     (let ((load-name (replace-in-string (file-name-nondirectory file)
 					"\\.elc?$"
 					""))
@@ -430,8 +398,7 @@ This functions refuses to update autolaods files and custom loads."
 	    (goto-char (point-max))))	; Append.
 
 	;; Add in new sections for file
-	(generate-file-autoloads file)
-	(autoload-snarf-defcustom file))
+	(generate-file-autoloads file))
 
       (when (interactive-p) (save-buffer)))))
 
@@ -491,7 +458,6 @@ This functions refuses to update autolaods files and custom loads."
 This runs `update-file-autoloads' on each .el file in DIR.
 Obsolete autoload entries for files that no longer exist are deleted."
   (interactive "DUpdate autoloads for directory: ")
-  (setq autoload-do-custom-save nil)
   (setq dir (expand-file-name dir))
   (let ((simple-dir (file-name-as-directory
 		     (file-name-nondirectory
@@ -520,36 +486,6 @@ Obsolete autoload entries for files that no longer exist are deleted."
       (unless noninteractive
 	(save-buffer)))))
 
-;; Based on code from Per Abrahamsen
-(defun autoload-save-customization ()
-  (save-excursion
-    (set-buffer (find-file-noselect generated-custom-file))
-    (erase-buffer)
-    (insert
-     (with-output-to-string
-       (mapatoms (lambda (sym)
-		   (let ((members (get sym 'custom-group))
-			 item where found)
-		     (when members
-		       (while members
-			 (setq item (car (car members))
-			       members (cdr members)
-			       where (gethash item customized-symbols))
-			 (unless (or (null where)
-				     (member where found))
-			   (if found
-			       (insert " ")
-;;;				  (insert "(custom-add-loads '" (symbol-name sym)
-			     (insert "(custom-put '" (symbol-name sym)
-				     " 'custom-loads '("))
-			   (prin1 where (current-buffer))
-			   (push where found)))
-		       (when found
-			 (insert "))\n"))))))
-))
-    (when (= (point-min) (point-max))
-      (set-buffer-modified-p nil))))
-
 ;;;###autoload
 (defun batch-update-autoloads ()
   "Update the autoloads for the files or directories on the command line.
@@ -557,18 +493,12 @@ Runs `update-file-autoloads' on files and `update-directory-autoloads'
 on directories.  Must be used only with -batch, and kills Emacs on completion.
 Each file will be processed even if an error occurred previously.
 For example, invoke `xemacs -batch -f batch-update-autoloads *.el'.
-The directory to which the auto-autoloads.el and custom-load.el files must
-be the first parameter on the command line."
+The directory to which the auto-autoloads.el file must be the first parameter
+on the command line."
   (unless noninteractive
     (error "batch-update-autoloads is to be used only with -batch"))
   (let ((defdir default-directory)
 	(enable-local-eval nil))	; Don't query in batch mode.
-    (when (file-exists-p generated-custom-file)
-      (flet ((custom-put (symbol property value)
-			  (progn
-			    (put symbol property value)
-			    (setf (gethash symbol customized-symbols) value))))
-	(load generated-custom-file nil t)))
     ;; (message "Updating autoloads in %s..." generated-autoload-file)
     (dolist (arg command-line-args-left)
       (setq arg (expand-file-name arg defdir))
@@ -579,9 +509,6 @@ be the first parameter on the command line."
        ((file-exists-p arg)
 	(update-file-autoloads arg))
        (t (error "No such file or directory: %s" arg))))
-    (when autoload-do-custom-save
-      (autoload-save-customization)
-      (clrhash customized-symbols))
     (fixup-autoload-buffer (concat (if autoload-package-name
 				       autoload-package-name
 				     (file-name-nondirectory defdir))
@@ -608,34 +535,20 @@ be the first parameter on the command line."
 ;;;###autoload
 (defun batch-update-directory ()
   "Update the autoloads for the directory on the command line.
-Runs `update-file-autoloads' on each file in the given directory, and must
-be used only with -batch, and kills XEmacs on completion."
+Runs `update-file-autoloads' on each file in the given directory, must
+be used only with -batch and kills XEmacs on completion."
   (unless noninteractive
     (error "batch-update-directory is to be used only with -batch"))
   (let ((defdir default-directory)
 	(enable-local-eval nil))	; Don't query in batch mode.
     (dolist (arg command-line-args-left)
       (setq arg (expand-file-name arg defdir))
-      (let ((generated-autoload-file (concat arg "/" autoload-file-name))
-	    (generated-custom-file (concat arg "/" cusload-file-name)))
-	(when (file-exists-p generated-custom-file)
-	  (flet ((custom-put (symbol property value)
-			      (progn
-				(put symbol property value)
-				;; (message "Loading %s = %s"
-					 ;; (symbol-name symbol)
-					 ;; (prin1-to-string value))
-				(setf (gethash symbol customized-symbols)
-				      value))))
-	    (load generated-custom-file nil t)))
+      (let ((generated-autoload-file (concat arg "/" autoload-file-name)))
 	(cond
 	 ((file-directory-p arg)
-	  (message "Updating autoloads/custom in directory %s..." arg)
+	  (message "Updating autoloads in directory %s..." arg)
 	  (update-autoloads-from-directory arg))
 	 (t (error "No such file or directory: %s" arg)))
-	(when autoload-do-custom-save
-	  (autoload-save-customization)
-	  (clrhash customized-symbols))
 	(fixup-autoload-buffer (concat (if autoload-package-name
 					   autoload-package-name
 					 (file-name-nondirectory arg))

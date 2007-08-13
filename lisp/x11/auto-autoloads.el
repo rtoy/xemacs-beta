@@ -1,14 +1,13 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (featurep 'x11-autoloads) (error "Already loaded"))
+
+(provide 'x11-autoloads)
 
 ;;;### (autoloads (font-menu-weight-constructor font-menu-size-constructor font-menu-family-constructor reset-device-font-menus) "x-font-menu" "x11/x-font-menu.el")
 
-(defvar font-menu-ignore-scaled-fonts t "\
-*If non-nil, then the font menu will try to show only bitmap fonts.")
+(defcustom font-menu-ignore-scaled-fonts t "*If non-nil, then the font menu will try to show only bitmap fonts." :type 'boolean :group 'x)
 
-(defvar font-menu-this-frame-only-p nil "\
-*If non-nil, then changing the default font from the font menu will only
-affect one frame instead of all frames.")
+(defcustom font-menu-this-frame-only-p nil "*If non-nil, then changing the default font from the font menu will only\naffect one frame instead of all frames." :type 'boolean :group 'x)
 
 (fset 'install-font-menus 'reset-device-font-menus)
 
@@ -27,5 +26,3 @@ or if you change your font path, you can call this to re-initialize the menus." 
 (autoload 'font-menu-weight-constructor "x-font-menu" nil nil nil)
 
 ;;;***
-
-(provide 'x11-autoloads)

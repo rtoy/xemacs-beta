@@ -611,7 +611,7 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
        ,@(if (featurep 'jpeg) '(("\\.jpe?g\\'" [jpeg :file nil] 2)))
        ;; all of the JFIF-format JPEG's that I've seen begin with
        ;; the following.  I have no idea if this is standard.
-       ,@(if (featurep 'jpeg) '(("\\`\377\330\340\000\020JFIF"
+       ,@(if (featurep 'jpeg) '(("\\`\377\330\377\340\000\020JFIF"
 				 [jpeg :data nil] 2)))
        ,@(if (featurep 'png) '(("\\.png\\'" [png :file nil] 2)))
        ,@(if (featurep 'png) '(("\\`\211PNG" [png :data nil] 2)))

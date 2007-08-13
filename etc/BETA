@@ -210,3 +210,49 @@ Also note that if you cut & paste from an xterm to an XEmacs mail buffer
 you will probably lose due to tab expansion.  The best thing to do is to
 M-x cd to the appropriate directory, and issue the command `C-u M-!' from
 within XEmacs.
+
+* XEmacs 20.3 packages
+
+XEmacs 20.3 has added the concept of installable packages searched prior
+to dump time when building.
+
+Packages are searched by default under /usr/local/lib/xemacs/packages/.
+The summary message in configure will tell you where XEmacs is looking 
+for them.  The packages hierarchy differs from site-lisp in that you
+do not have install XEmacs to use it, indeed, the package path is
+searched prior to dump time so that installed packages have the same
+status as lisp distributed in the xemacs base tarball.
+
+The structure of each directory in the package search path should look
+like the base installed directory (ie. have etc/, info/, and lisp/,).
+Lisp is searched recursively.  It and all subdirectories are added to
+the `load-path'.  Each etc directory is added to `data-directory-list',
+and each info directory is added to `Info-default-directory-list'.
+
+A `find . -type d -print' in my top-level package directory reveals:
+./etc
+./etc/auctex
+./etc/auctex/style
+./etc/gnus
+./etc/skk
+./etc/gnusrefcard
+./etc/smilies
+./etc/message
+./info
+./lisp
+./lisp/gnus
+./lisp/auctex
+./lisp/auctex/man
+./lisp/footnote
+./lisp/skk
+
+
+AUCTeX and Gnus have package tarballs in
+	ftp://ftp.xemacs.org/pub/beta/packages-20.3/
+that you can simply untar in a package directory to install.
+
+Karl Hegbloom has a set of packages in
+	[I lost the reference]
+that work the same way.
+
+This is not how package installation will work in released 20.3.

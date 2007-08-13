@@ -1,3 +1,12 @@
+1997-09-26  SL Baur  <steve@altair.xemacs.org>
+
+	* iso-sgml.el: Correct email address.
+
+	* psgml-parse.el (sgml-compile-dtd): no-conversion -> binary
+	coding system.
+	(sgml-bdtd-merge): Ditto.
+	(sgml-push-to-entity): Ditto.
+
 1997-06-15  Steven L Baur  <steve@altair.xemacs.org>
 
 	* psgml-parse.el (sgml-parse-chars): De-ebolify.

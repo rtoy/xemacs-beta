@@ -123,8 +123,10 @@ See the documentation for `list-load-path-shadows' for further information."
 		;; This file was seen before, we have a shadowing.
 		(setq shadows
 		      (append shadows
-			      (list (concat (cdr orig-dir) "/" file)
-				    (concat dir "/" file))))
+			      (list (concat (file-name-as-directory (cdr orig-dir))
+					    file)
+				    (concat (file-name-as-directory dir)
+					    file))))
 
 	      ;; Not seen before, add it to the list of seen files.
 	      (setq files (cons (cons file dir) files))))

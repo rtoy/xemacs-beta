@@ -1,4 +1,15 @@
 							-*- indented-text -*-
+to 20.3 beta24 "Ljubljana"
+-- Interface change:  custom-loads now snarfed separately from autoloads.
+-- custom snarfing code rewritten
+-- iswitchb.el added from Emacs 20.2
+-- NT DOC file fix from David Hobley
+-- jpeg detection corrected
+-- bytecode fix to char-syntax
+-- gnuserv.el reverted to 3.09
+-- Various patches/Emacs 20.1 synchs from Hrvoje Niksic
+-- Miscellaneous bug fixes
+
 to 20.3 beta23 "Sarajevo"
 -- Other new and older Hrvoje Niksic patches
 -- 20.1 synching by Hrvoje Niksic

@@ -92,7 +92,7 @@ tty_init_console (struct console *con, Lisp_Object props)
   /* Open the specified console */
 
   allocate_tty_console_struct (con);
-  if (!NILP (Fequal (tty, Vstdio_str)))
+  if (internal_equal (tty, Vstdio_str, 0))
     {
       infd = fileno (stdin);
       outfd = fileno (stdout);

@@ -1,4 +1,9 @@
-(custom-put 'environment 'custom-loads '(("ediff-wind")))
+;;; custom-load.el --- automatically extracted custom dependencies
+
+;; Created by SL Baur on Sat Sep 27 08:13:44 1997
+
+;;; Code:
+
 (custom-put 'tools 'custom-loads '("ediff"))
 (custom-put 'ediff-diff 'custom-loads '("ediff-diff"))
 (custom-put 'frames 'custom-loads '("ediff-wind"))
@@ -6,3 +11,5 @@
 (custom-put 'ediff-merge 'custom-loads '("ediff-merg"))
 (custom-put 'ediff-mult 'custom-loads '("ediff-mult"))
 (custom-put 'ediff 'custom-loads '("ediff-diff" "ediff-init" "ediff-merg" "ediff-mult" "ediff-ptch" "ediff-wind" "ediff"))
+
+;;; custom-load.el ends here

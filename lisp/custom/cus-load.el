@@ -33,16 +33,23 @@
 
 ;;; Code:
 
+(require 'custom)
+
 (defun custom-put (symbol property list)
   (let ((loads (get symbol property)))
     (dolist (el list)
       (unless (member el loads)
 	(setq loads (nconc loads (list el)))))
-    (put symbol property loads)))
+    (put symbol property loads)
+    (puthash symbol t custom-group-hash-table)))
+
+(message "Loading customization dependencies...")
 
 (mapc (lambda (dir)
-	(load (expand-file-name "custom-load" dir) t))
+	(load (expand-file-name "custom-load" dir) t t))
       load-path)
+
+(message "Loading customization dependencies...done")
 
 (provide 'cus-load)
 

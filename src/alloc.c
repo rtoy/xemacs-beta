@@ -2624,6 +2624,8 @@ report_pure_usage (int report_impurities,
     {
       int lost = (get_PURESIZE() - pureptr) / 1024;
       char buf[200];
+      extern Lisp_Object Vemacs_beta_version;
+      int slop = NILP(Vemacs_beta_version) ? 512 : 4;
 
       sprintf (buf, "Purespace usage: %ld of %ld (%d%%",
                pureptr, (long) get_PURESIZE(),
@@ -2631,7 +2633,7 @@ report_pure_usage (int report_impurities,
       if (lost > 2) {
         sprintf (buf + strlen (buf), " -- %dk wasted", lost);
 	if (die_if_pure_storage_exceeded) {
-	  puresize_adjust_h (pureptr + 16);
+	  puresize_adjust_h (pureptr + slop);
 	  rc = -1;
 	}
       }

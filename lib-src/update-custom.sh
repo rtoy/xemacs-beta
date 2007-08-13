@@ -1,8 +1,9 @@
 #!/bin/sh
-### update-autoloads.sh --- update auto-autoloads.el as necessary
+### update-custom.sh --- update Customize group dependencies
 
-# Author: Jamie Zawinski, Ben Wing, Martin Buchholz, Steve Baur
-# Maintainer: Steve Baur
+# Author: Hrvoje Niksic, based on update-autoloads.el by
+#   Jamie Zawinski, Ben Wing, Martin Buchholz, and Steve Baur
+# Maintainer: Hrvoje Niksic
 # Keywords: internal
 
 # This file is part of XEmacs.
@@ -24,12 +25,13 @@
 
 ### Commentary:
 
+# This is much simpler than update-autoloads.el.  All we need to do is
+# compute a list of directories we want to use, and feed it to
+# Custom-make-dependencies.  End of story.
+
 ### Code:
 
 set -eu
-
-# This means we're running in a Sun workspace
-test -d ../era-specific && cd ../editor
 
 # get to the right directory
 test ! -d ./lisp -a -d ../lisp && cd ..
@@ -45,8 +47,7 @@ export EMACS
 
 REAL=`cd \`dirname $EMACS\` ; pwd | sed 's|^/tmp_mnt||'`/`basename $EMACS`
 
-echo "Rebuilding autoloads in `pwd|sed 's|^/tmp_mnt||'`"
-echo "          with $REAL..."
+echo "Rebuilding custom-loads with $REAL..."
 
 if [ "`uname -r | sed 's/\(.\).*/\1/'`" -gt 4 ]; then
   echon()
@@ -61,17 +62,12 @@ else
 fi
 
 # Compute patterns to ignore when searching for files
-# These directories don't have autoloads or are partially broken.
-ignore_dirs="egg eos ilisp its language locale mel mu sunpro term tooltalk"
-
-# Prepare for autoloading directories with directory-specific instructions
-make_special_commands=''
-make_special () {
-	dir="$1"; shift;
-	ignore_dirs="$ignore_dirs $dir"
-	make_special_commands="$make_special_commands \
-		(cd \"lisp/$dir\" && ${MAKE:-make} EMACS=$REAL ${1+$*});"
-}
+# These directories don't have customizations, or are partially broken.
+# If some of the packages listed here are customized, don't forget to
+#  remove the directory!
+ignore_dirs="cl egg eos ilisp its language locale mel mu sunpro term \
+tooltalk iso mailcrypt oobr tl tm mh-e hyperbole electric apel \
+hm--html-menus gnats pcl-cvs vm"
 
 # Only use Mule XEmacs to build Mule-specific autoloads & custom-loads.
 echon "Checking for Mule support..."
@@ -84,20 +80,7 @@ else
 	echo Yes
 fi
 
-## AUCTeX is a Package now
-# if test "$mule_p" = nil ; then
-# 	make_special auctex autoloads
-# else
-# 	make_special auctex autoloads MULE_EL=tex-jp.elc
-# fi
-#make_special cc-mode autoloads
-make_special efs autoloads
-#make_special eos autoloads # EOS doesn't have custom or autoloads
-make_special hyperbole autoloads
-# make_special ilisp autoloads
-make_special oobr HYPB_ELC='' autoloads
-make_special w3 autoloads
-
+echon "Checking directories..."
 dirs=
 for dir in lisp/*; do
 	if test -d $dir \
@@ -108,13 +91,10 @@ for dir in lisp/*; do
 				continue 2
 			fi
 		done
+		rm -f "$dir/custom-load.elc"
 		dirs="$dirs $dir"
 	fi
 done
+echo done
 
-# set -x
-for dir in $dirs; do
-	$EMACS -batch -q -l autoload -f batch-update-directory $dir
-done
-
-eval "$make_special_commands"
+$EMACS -batch -q -l cus-dep -f Custom-make-dependencies $dirs

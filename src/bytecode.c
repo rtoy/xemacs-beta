@@ -972,12 +972,16 @@ If the third argument is incorrect, Emacs may crash.
 	  break;
 
 	case Bchar_syntax:
+#if 0
 	  CHECK_CHAR_COERCE_INT (TOP);
 	  TOP = make_char (syntax_code_spec
 			   [(int) SYNTAX
 			    (XCHAR_TABLE
 			     (current_buffer->mirror_syntax_table),
 			     XCHAR (TOP))]);
+#endif
+	  /*v1 = POP;*/
+	  TOP = Fchar_syntax(TOP, Qnil);
 	  break;
 
 	case Bbuffer_substring:

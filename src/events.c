@@ -233,10 +233,10 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
       return EQ (e1->event.process.process, e2->event.process.process);
 
     case timeout_event:
-      return (!NILP (Fequal (e1->event.timeout.function,
-			     e2->event.timeout.function)) &&
-	      !NILP (Fequal (e1->event.timeout.object,
-			     e2->event.timeout.object)));
+      return (internal_equal (e1->event.timeout.function,
+			      e2->event.timeout.function, 0) &&
+	      internal_equal (e1->event.timeout.object,
+			      e2->event.timeout.object, 0));
 
     case key_press_event:
       return (EQ (e1->event.key.keysym, e2->event.key.keysym) &&
@@ -253,16 +253,16 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 
     case misc_user_event:
     case eval_event:
-      return (!NILP (Fequal (e1->event.eval.function,
-			     e2->event.eval.function)) &&
-	      !NILP (Fequal (e1->event.eval.object,
-			     e2->event.eval.object)));
+      return (internal_equal (e1->event.eval.function,
+			      e2->event.eval.function, 0) &&
+	      internal_equal (e1->event.eval.object,
+			      e2->event.eval.object, 0));
 
     case magic_eval_event:
       return (e1->event.magic_eval.internal_function ==
 	      e2->event.magic_eval.internal_function &&
-	      !NILP (Fequal (e1->event.magic_eval.object,
-			     e2->event.magic_eval.object)));
+	      internal_equal (e1->event.magic_eval.object,
+			      e2->event.magic_eval.object, 0));
 
     case magic_event:
       {

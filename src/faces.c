@@ -1185,6 +1185,26 @@ update_face_cachel_data (struct face_cachel *cachel,
       FROB (background);
       FROB (display_table);
       FROB (background_pixmap);
+
+      /*
+       * A face's background pixmap will override the face's
+       * background color.  But the background pixmap of the
+       * default face should not override the background color of
+       * a face if the background color has been specified or
+       * inherited.
+       *
+       * To accomplish this we remove the background pixmap of the
+       * cachel and mark it as having been specified so that cachel
+       * merging won't override it later.
+       */
+      if (! default_face
+	  && cachel->background_specified
+	  && ! cachel->background_pixmap_specified)
+	{
+	  cachel->background_pixmap = Qunbound;
+	  cachel->background_pixmap_specified = 1;
+	}
+
 #undef FROB
 
       ensure_face_cachel_contains_charset (cachel, domain, Vcharset_ascii);

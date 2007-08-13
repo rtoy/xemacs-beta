@@ -431,20 +431,8 @@ string_width_u (XlwMenuWidget mw,
   return width;
 #else
 # ifdef USE_XFONTSET
-  int i, s=0, w=0;
-  for (i=0; string[i]; ++i) {
-    if (string[i]=='%' && string[i+1]=='_') {
-      XmbTextExtents(mw->menu.font_set, &string[s], i-s, &ri, &rl);
-      w += rl.width;
-      s = i + 2;
-      ++i;
-    }
-  }
-  if (string[s]) {
-    XmbTextExtents(mw->menu.font_set, &string[s], i-s, &ri, &rl);
-    w += rl.width;
-  }
-  return w;
+  XmbTextExtents(mw->menu.font_set, newchars, j, &ri, &rl);
+  return rl.width;
 # else /* ! USE_XFONTSET */
   XTextExtents (mw->menu.font, newchars, j, &drop, &drop, &drop, &xcs);
   return xcs.width;
@@ -837,11 +825,9 @@ string_draw_range (
 		return 0;
 	XmbDrawString (
 		XtDisplay (mw), window, mw->menu.font_set, gc,
-		x, y + mw->menu.font_ascent, &string[start], i-s
-	);
+		x, y + mw->menu.font_ascent, &string[start], end - start);
 	XmbTextExtents (
-		mw->menu.font_set, &string[start], end - start, &ri, &rl
-	);
+		mw->menu.font_set, &string[start], end - start, &ri, &rl);
 	return rl.width;
 # else
 	XCharStruct xcs;

@@ -1,3 +1,9 @@
+1997-09-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* xemacs/custom.texi (Easy Customization): Ditto.
+
+	* xemacs/xemacs.texi (Top): Added pointer to easy customization.
+
 1997-09-18  SL Baur  <steve@altair.xemacs.org>
 
 	* internals/Makefile (../../info/$(NAME).info): Warn and clean up

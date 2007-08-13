@@ -131,13 +131,17 @@
 ;;;   "*If non-nil, then the font menu will only show fixed-width fonts.")
 
 ;;;###autoload
-(defvar font-menu-ignore-scaled-fonts t
-  "*If non-nil, then the font menu will try to show only bitmap fonts.")
+(defcustom font-menu-ignore-scaled-fonts t
+  "*If non-nil, then the font menu will try to show only bitmap fonts."
+  :type 'boolean
+  :group 'x)
 
 ;;;###autoload
-(defvar font-menu-this-frame-only-p nil
+(defcustom font-menu-this-frame-only-p nil
   "*If non-nil, then changing the default font from the font menu will only
-affect one frame instead of all frames.")
+affect one frame instead of all frames."
+  :type 'boolean
+  :group 'x)
 
 ;; only call XListFonts (and parse) once per device.
 ;; ( (device . [parsed-list-fonts family-menu size-menu weight-menu]) ...)

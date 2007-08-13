@@ -858,7 +858,9 @@ main_1 (int argc, char **argv, char **envp)
       syms_of_toolbar ();
 #endif
       syms_of_undo ();
+      syms_of_widget ();
       syms_of_window ();
+
 #ifdef HAVE_TTY
       syms_of_console_tty ();
       syms_of_device_tty ();
@@ -1389,6 +1391,12 @@ main_1 (int argc, char **argv, char **envp)
 #endif
   init_cmdargs (argc, argv, skip_args);	/* Create list Vcommand_line_args */
   init_buffer (); /* Init default directory of *scratch* buffer */
+
+#ifdef WINDOWSNT
+  init_environment();
+  init_ntproc();
+#endif
+
 #ifdef VMS
   init_vms_input ();	/* init_redisplay calls get_tty_device_size,
 			   that needs this */

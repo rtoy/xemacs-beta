@@ -771,7 +771,7 @@ DEFUN ("progn", Fprogn, 0, UNEVALLED, 0, /*
   Lisp_Object args_left;
   struct gcpro gcpro1;
 
-  if (NILP (args))
+  if (! CONSP (args))
     return Qnil;
 
   args_left = args;
@@ -779,10 +779,10 @@ DEFUN ("progn", Fprogn, 0, UNEVALLED, 0, /*
 
   do
     {
-      val = Feval (Fcar (args_left));
-      args_left = Fcdr (args_left);
+      val = Feval (XCAR (args_left));
+      args_left = XCDR (args_left);
     }
-  while (!NILP (args_left));
+  while (CONSP (args_left));
 
   UNGCPRO;
   return val;
@@ -997,21 +997,33 @@ The return value of the `setq' form is the value of the last VAL.
   if (NILP (args))
     return Qnil;
 
-  val = Flength (args);
-  if (XINT (val) & 1)           /* Odd number of arguments? */
-    Fsignal (Qwrong_number_of_arguments, list2 (Qsetq, val));
+  {
+    REGISTER int i;
+    for (i = 0, val = args ; CONSP (val); val = XCDR (val))
+      {
+	i++;
+	/*
+	 * uncomment the QUIT if there is some way a circular
+	 * arglist can get in here.  I think Feval or Fapply would
+	 * spin first and the list would never get here. 
+	 */
+	/* QUIT; */
+      }
+    if (i & 1)           /* Odd number of arguments? */
+      Fsignal (Qwrong_number_of_arguments, list2 (Qsetq, make_int(i)));
+  }
 
   args_left = args;
   GCPRO1 (args);
 
   do
     {
-      val = Feval (Fcar (Fcdr (args_left)));
-      sym = Fcar (args_left);
+      val = Feval (XCAR (XCDR (args_left)));
+      sym = XCAR (args_left);
       Fset (sym, val);
-      args_left = Fcdr (Fcdr (args_left));
+      args_left = XCDR (XCDR (args_left));
     }
-  while (!NILP (args_left));
+  while (CONSP (args_left));
 
   UNGCPRO;
   return val;
@@ -2853,6 +2865,46 @@ in_warnings_restore (Lisp_Object minimus)
   return Qnil;
 }
 
+#define inline_funcall_subr(rv, subr, av) \
+  do { \
+    switch (subr->max_args) { \
+      case  0: rv = (subr_function(subr))(); \
+	       break; \
+      case  1: rv = (subr_function(subr))(av[0]); \
+	       break; \
+      case  2: rv = (subr_function(subr))(av[0], av[1]); \
+	       break; \
+      case  3: rv = (subr_function(subr))(av[0], av[1], av[2]); \
+	       break; \
+      case  4: rv = (subr_function(subr))(av[0], av[1], av[2], av[3]); \
+	       break; \
+      case  5: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4]); \
+	       break; \
+      case  6: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
+					  av[5]); \
+	       break; \
+      case  7: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
+					  av[5], av[6]); \
+	       break; \
+      case  8: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
+					  av[5], av[6], av[7]); \
+	       break; \
+      case  9: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
+					  av[5], av[6], av[7], av[8]); \
+	       break; \
+      case 10: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
+					  av[5], av[6], av[7], av[8], av[9]); \
+	       break; \
+      case 11: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
+					  av[5], av[6], av[7], av[8], av[9], \
+					  av[10]); \
+	       break; \
+      case 12: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
+					  av[5], av[6], av[7], av[8], av[9], \
+					  av[10], av[11]); \
+	       break; \
+    } \
+  } while (0)
 
 DEFUN ("eval", Feval, 1, 1, 0, /*
 Evaluate FORM and return its value.
@@ -2923,9 +2975,29 @@ Evaluate FORM and return its value.
 	error ("Lisp nesting exceeds `max-lisp-eval-depth'");
     }
 
-  original_fun = Fcar (form);
-  original_args = Fcdr (form);
-  nargs = XINT (Flength (original_args));
+  /*
+   * At this point we know that `form' is a Lisp_Cons so we can safely
+   * use XCAR and XCDR.
+   */
+  original_fun = XCAR (form);
+  original_args = XCDR (form);
+
+  /*
+   * Formerly we used a call to Flength here, but that is slow and
+   * wasteful due to type checking, stack push/pop and initialization.
+   * We know we're dealing with a cons, so open code it for speed.
+   *
+   * We call QUIT in the loop so that a circular arg list won't lock
+   * up the editor.
+   */
+  for (nargs = 0, val = original_args ; CONSP (val) ; val = XCDR (val))
+    {
+      nargs++;
+      QUIT;
+    }
+  if (! NILP (val))
+    signal_simple_error ("Argument list must be nil-terminated",
+			 original_args);
 
 #ifdef EMACS_BTL
   backtrace.id_number = 0;
@@ -2982,10 +3054,10 @@ Evaluate FORM and return its value.
 	  gcpro3.nvars = 0;
 
 	  argnum = 0;
-          while (!NILP (args_left))
+          while (CONSP (args_left))
 	    {
-	      vals[argnum++] = Feval (Fcar (args_left));
-	      args_left = Fcdr (args_left);
+	      vals[argnum++] = Feval (XCAR (args_left));
+	      args_left = XCDR (args_left);
 	      gcpro3.nvars = argnum;
 	    }
 
@@ -3016,21 +3088,23 @@ Evaluate FORM and return its value.
 	  gcpro3.var = argvals;
 	  gcpro3.nvars = 0;
 
-	  for (i = 0; i < nargs; args_left = Fcdr (args_left))
+	  for (i = 0; i < nargs; args_left = XCDR (args_left))
 	    {
-	      argvals[i] = Feval (Fcar (args_left));
+	      argvals[i] = Feval (XCAR (args_left));
 	      gcpro3.nvars = ++i;
 	    }
 
 	  UNGCPRO;
 
-	  for (i = nargs; i < max_args; i++)
+	  /* i == nargs at this point */
+	  for (; i < max_args; i++)
             argvals[i] = Qnil;
 
           backtrace.args = argvals;
           backtrace.nargs = nargs;
 
-          val = funcall_subr (subr, argvals);
+          /* val = funcall_subr (subr, argvals); */
+	  inline_funcall_subr(val, subr, argvals);
         }
     }
   else if (COMPILED_FUNCTIONP (fun))
@@ -3041,7 +3115,7 @@ Evaluate FORM and return its value.
 
       if (!CONSP (fun))
         goto invalid_function;
-      funcar = Fcar (fun);
+      funcar = XCAR (fun);
       if (!SYMBOLP (funcar))
         goto invalid_function;
       if (EQ (funcar, Qautoload))
@@ -3050,7 +3124,7 @@ Evaluate FORM and return its value.
 	  goto retry;
 	}
       if (EQ (funcar, Qmacro))
-	val = Feval (apply1 (Fcdr (fun), original_args));
+	val = Feval (apply1 (XCDR (fun), original_args));
       else if (EQ (funcar, Qlambda))
         val = apply_lambda (fun, nargs, original_args);
       else
@@ -3155,10 +3229,12 @@ funcall_recording_as (Lisp_Object recorded_as, int nargs,
 	  for (i = nargs; i < max_args; i++)
 	    argvals[i] = Qnil;
 
-          val = funcall_subr (subr, argvals);
+          /* val = funcall_subr (subr, argvals); */
+	  inline_funcall_subr(val, subr, argvals);
 	}
       else
-        val = funcall_subr (subr, args + 1);
+        /* val = funcall_subr (subr, args + 1); */
+        inline_funcall_subr(val, subr, (&args[1]));
     }
   else if (COMPILED_FUNCTIONP (fun))
     val = funcall_lambda (fun, nargs, args + 1);
@@ -3169,7 +3245,8 @@ funcall_recording_as (Lisp_Object recorded_as, int nargs,
     }
   else
     {
-      Lisp_Object funcar = Fcar (fun);
+      /* `fun' is a Lisp_Cons so XCAR is safe */
+      Lisp_Object funcar = XCAR (fun);
 
       if (!SYMBOLP (funcar))
         goto invalid_function;
@@ -3339,13 +3416,27 @@ Thus, (apply '+ 1 2 '(3 4)) returns 10.
 {
   /* This function can GC */
   Lisp_Object fun = args[0];
-  Lisp_Object spread_arg = args [nargs - 1];
+  Lisp_Object spread_arg = args [nargs - 1], p;
   int numargs;
   int funcall_nargs;
 
   CHECK_LIST (spread_arg);
 
-  numargs = XINT (Flength (spread_arg));
+  /*
+   * Formerly we used a call to Flength here, but that is slow and
+   * wasteful due to type checking, stack push/pop and initialization.
+   * We know we're dealing with a cons, so open code it for speed.
+   *
+   * We call QUIT in the loop so that a circular arg list won't lock
+   * up the editor.
+   */
+  for (numargs = 0, p = spread_arg ; CONSP (p) ; p = XCDR (p))
+    {
+      numargs++;
+      QUIT;
+    }
+  if (! NILP (p))
+    signal_simple_error ("Argument list must be nil-terminated", spread_arg);
 
   if (numargs == 0)
     /* (apply foo 0 1 '()) */
@@ -3482,7 +3573,11 @@ apply_lambda (Lisp_Object fun, int numargs, Lisp_Object unevalled_args)
 
   for (i = 0; i < numargs;)
     {
-      tem = Fcar (unevalled_args), unevalled_args = Fcdr (unevalled_args);
+      /*
+       * unevalled_args is always a normal list, or Feval would have
+       * rejected it, so use XCAR and XCDR.
+       */
+      tem = XCAR (unevalled_args), unevalled_args = XCDR (unevalled_args);
       tem = Feval (tem);
       arg_vector[i++] = tem;
       gcpro1.nvars = i;
@@ -3519,16 +3614,16 @@ funcall_lambda (Lisp_Object fun, int nargs, Lisp_Object arg_vector[])
   int optional = 0, rest = 0;
 
   if (CONSP (fun))
-    syms_left = Fcar (Fcdr (fun));
+    syms_left = Fcar (XCDR (fun));
   else if (COMPILED_FUNCTIONP (fun))
     syms_left = XCOMPILED_FUNCTION (fun)->arglist;
   else abort ();
 
   i = 0;
-  for (; !NILP (syms_left); syms_left = Fcdr (syms_left))
+  for (; CONSP (syms_left); syms_left = XCDR (syms_left))
     {
       QUIT;
-      next = Fcar (syms_left);
+      next = XCAR (syms_left);
       if (!SYMBOLP (next))
 	signal_error (Qinvalid_function, list1 (fun));
       if (EQ (next, Qand_rest))
@@ -3557,7 +3652,7 @@ funcall_lambda (Lisp_Object fun, int nargs, Lisp_Object arg_vector[])
                     list2 (fun, make_int (nargs)));
 
   if (CONSP (fun))
-    val = Fprogn (Fcdr (Fcdr (fun)));
+    val = Fprogn (Fcdr (XCDR (fun)));
   else
     {
       struct Lisp_Compiled_Function *b = XCOMPILED_FUNCTION (fun);

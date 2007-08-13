@@ -454,10 +454,12 @@ Lisp_Object Vinitial_window_system;
 
 Lisp_Object Vglobal_mode_string;
 
-/* The number of lines to try scrolling a
-  window by when point leaves the window; if
+/* The number of lines scroll a window by when point leaves the window; if
   it is <=0 then point is centered in the window */
 int scroll_step;
+
+/* Scroll up to this many lines, to bring point back on screen. */
+int scroll_conservatively;
 
 /* Marker for where to display an arrow on top of the buffer text.  */
 Lisp_Object Voverlay_arrow_position;
@@ -5190,12 +5192,16 @@ redisplay_window (Lisp_Object window, int skip_selected)
      back onto the screen. */
   if (scroll_step)
     {
-      startp = vmotion (w, startp,
-			(pointm < startp) ? -scroll_step : scroll_step, 0);
-      regenerate_window (w, startp, pointm, DESIRED_DISP);
+      int scrolled = scroll_conservatively;
+      for (; scrolled >= 0; scrolled -= scroll_step)
+	{
+	  startp = vmotion (w, startp,
+			    (pointm < startp) ? -scroll_step : scroll_step, 0);
+	  regenerate_window (w, startp, pointm, DESIRED_DISP);
 
-      if (point_visible (w, pointm, DESIRED_DISP))
-	goto regeneration_done;
+	  if (point_visible (w, pointm, DESIRED_DISP))
+	    goto regeneration_done;
+	}
     }
 
   /* We still haven't managed to get the screen drawn with point on
@@ -8205,6 +8211,12 @@ String to display as an arrow.  See also `overlay-arrow-position'.
 If that fails to bring point back on frame, point is centered instead.
 If this is zero, point is always centered after it moves off screen.
 */ );
+  scroll_step = 0;
+
+  DEFVAR_INT ("scroll-conservatively", &scroll_conservatively /*
+*Scroll up to this many lines, to bring point back on screen.
+*/ );
+  scroll_conservatively = 0;
 
   DEFVAR_BOOL_MAGIC ("truncate-partial-width-windows",
 		     &truncate_partial_width_windows /*

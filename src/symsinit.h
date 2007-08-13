@@ -125,6 +125,7 @@ void syms_of_syntax (void);
 void syms_of_toolbar (void);
 void syms_of_tooltalk (void);
 void syms_of_undo (void);
+void syms_of_widget (void);
 void syms_of_window (void);
 void syms_of_xselect (void);
 

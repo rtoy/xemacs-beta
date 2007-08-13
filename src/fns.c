@@ -55,6 +55,8 @@ static Lisp_Object mark_bit_vector (Lisp_Object, void (*) (Lisp_Object));
 static void print_bit_vector (Lisp_Object, Lisp_Object, int);
 static int bit_vector_equal (Lisp_Object o1, Lisp_Object o2, int depth);
 static unsigned long bit_vector_hash (Lisp_Object obj, int depth);
+static int internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth);
+
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bit-vector", bit_vector,
 				     mark_bit_vector, print_bit_vector, 0,
 				     bit_vector_equal, bit_vector_hash,
@@ -1064,7 +1066,7 @@ The value is actually the tail of LIST whose car is ELT.
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
     {
       tem = Fcar (tail);
-      if (! NILP (Fequal (elt, tem)))
+      if (internal_equal (elt, tem, 0))
 	return tail;
       QUIT;
     }
@@ -1083,7 +1085,7 @@ Do not use it.
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
     {
       tem = Fcar (tail);
-      if (! NILP (Fold_equal (elt, tem)))
+      if (internal_old_equal (elt, tem, 0))
 	return tail;
       QUIT;
     }
@@ -1143,13 +1145,14 @@ The value is actually the element of LIST whose car equals KEY.
        (key, list))
 {
   /* This function can GC. */
-  REGISTER Lisp_Object tail, elt, tem;
+  REGISTER Lisp_Object tail, elt;
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
     {
       elt = Fcar (tail);
-      if (!CONSP (elt)) continue;
-      tem = Fequal (Fcar (elt), key);
-      if (!NILP (tem)) return elt;
+      if (!CONSP (elt))
+	continue;
+      if (internal_equal (XCAR (elt), key, 0))
+	return elt;
       QUIT;
     }
   return Qnil;
@@ -1162,13 +1165,14 @@ The value is actually the element of LIST whose car equals KEY.
        (key, list))
 {
   /* This function can GC. */
-  REGISTER Lisp_Object tail, elt, tem;
+  REGISTER Lisp_Object tail, elt;
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
     {
       elt = Fcar (tail);
-      if (!CONSP (elt)) continue;
-      tem = Fold_equal (Fcar (elt), key);
-      if (!NILP (tem)) return elt;
+      if (!CONSP (elt))
+	continue;
+      if (internal_old_equal (XCAR (elt), key, 0))
+	return elt;
       QUIT;
     }
   return Qnil;
@@ -1193,9 +1197,13 @@ Elements of LIST that are not conses are ignored.
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
     {
       elt = Fcar (tail);
-      if (!CONSP (elt)) continue;
-      tem = Fcar (elt);
-      if (EQ_WITH_EBOLA_NOTICE (key, tem)) return elt;
+      if (!CONSP (elt))
+	continue;
+      /* Note: we use a temporary variable to avoid multiple
+         evaluations of XCAR (elt).  */
+      tem = XCAR (elt);
+      if (EQ_WITH_EBOLA_NOTICE (key, tem))
+	return elt;
       QUIT;
     }
   return Qnil;
@@ -1214,9 +1222,11 @@ Do not use it.
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
     {
       elt = Fcar (tail);
-      if (!CONSP (elt)) continue;
-      tem = Fcar (elt);
-      if (HACKEQ_UNSAFE (key, tem)) return elt;
+      if (!CONSP (elt))
+	continue;
+      tem = XCAR (elt);
+      if (HACKEQ_UNSAFE (key, tem))
+	return elt;
       QUIT;
     }
   return Qnil;
@@ -1249,11 +1259,12 @@ The value is actually the element of LIST whose cdr equals KEY.
   REGISTER Lisp_Object tail;
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
     {
-      REGISTER Lisp_Object elt, tem;
+      REGISTER Lisp_Object elt;
       elt = Fcar (tail);
-      if (!CONSP (elt)) continue;
-      tem = Fequal (Fcdr (elt), key);
-      if (!NILP (tem)) return elt;
+      if (!CONSP (elt))
+	continue;
+      if (internal_equal (XCDR (elt), key, 0))
+	return elt;
       QUIT;
     }
   return Qnil;
@@ -1268,11 +1279,12 @@ The value is actually the element of LIST whose cdr equals KEY.
   REGISTER Lisp_Object tail;
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
     {
-      REGISTER Lisp_Object elt, tem;
+      REGISTER Lisp_Object elt;
       elt = Fcar (tail);
-      if (!CONSP (elt)) continue;
-      tem = Fold_equal (Fcdr (elt), key);
-      if (!NILP (tem)) return elt;
+      if (!CONSP (elt))
+	continue;
+      if (internal_old_equal (XCDR (elt), key, 0))
+	return elt;
       QUIT;
     }
   return Qnil;
@@ -1288,9 +1300,11 @@ The value is actually the element of LIST whose cdr is KEY.
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
     {
       elt = Fcar (tail);
-      if (!CONSP (elt)) continue;
-      tem = Fcdr (elt);
-      if (EQ_WITH_EBOLA_NOTICE (key, tem)) return elt;
+      if (!CONSP (elt))
+	continue;
+      tem = XCDR (elt);
+      if (EQ_WITH_EBOLA_NOTICE (key, tem))
+	return elt;
       QUIT;
     }
   return Qnil;
@@ -1306,9 +1320,11 @@ The value is actually the element of LIST whose cdr is KEY.
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
     {
       elt = Fcar (tail);
-      if (!CONSP (elt)) continue;
-      tem = Fcdr (elt);
-      if (HACKEQ_UNSAFE (key, tem)) return elt;
+      if (!CONSP (elt))
+	continue;
+      tem = XCDR (elt);
+      if (HACKEQ_UNSAFE (key, tem))
+	return elt;
       QUIT;
     }
   return Qnil;
@@ -1344,7 +1360,7 @@ of changing the value of `foo'.
   prev = Qnil;
   while (!NILP (tail))
     {
-      if (!NILP (Fequal (elt, Fcar (tail))))
+      if (internal_equal (elt, Fcar (tail), 0))
 	{
 	  if (NILP (prev))
 	    list = Fcdr (tail);
@@ -1374,7 +1390,7 @@ of changing the value of `foo'.
   prev = Qnil;
   while (!NILP (tail))
     {
-      if (!NILP (Fold_equal (elt, Fcar (tail))))
+      if (internal_old_equal (elt, Fcar (tail), 0))
 	{
 	  if (NILP (prev))
 	    list = Fcdr (tail);
@@ -1532,7 +1548,7 @@ the value of `foo'.
   while (!NILP (tail))
     {
       Lisp_Object elt = Fcar (tail);
-      if (CONSP (elt) && ! NILP (Fequal (key, Fcar (elt))))
+      if (CONSP (elt) && internal_equal (key, XCAR (elt), 0))
 	{
 	  if (NILP (prev))
 	    list = Fcdr (tail);
@@ -1629,7 +1645,7 @@ the value of `foo'.
   while (!NILP (tail))
     {
       Lisp_Object elt = Fcar (tail);
-      if (CONSP (elt) && ! NILP (Fequal (value, Fcdr (elt))))
+      if (CONSP (elt) && internal_equal (value, XCDR (elt), 0))
 	{
 	  if (NILP (prev))
 	    list = Fcdr (tail);

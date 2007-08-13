@@ -70,19 +70,6 @@ This is relavent for Solaris and, perhaps, other systems which have
   :type 'boolean
   :group 'man)
 
-(defcustom Manual-buffers-have-stars nil
-  "*When T, manual page buffers are always named like *man*.
-Otherwise, they are not if `buffers-menu-submenus-for-groups-p' is T,
-so that Manual-mode buffers will have their own submenu."
-  :type 'boolean
-  :group 'man)
-
-(defcustom Manual-buffers-have-prefix t
-  "*When non-nil, manual page buffers are named with a prefix of `man '.
-Otherwise, their titles do not have this prefix."
-  :type 'boolean
-  :group 'man)
-
 ;;Here is information on RosettaMan, from Neal.Becker@comsat.com (Neal Becker):
 
 ;;RosettaMan is a filter for UNIX manual pages.  It takes as input man
@@ -212,20 +199,10 @@ potentially taking a long time."
     (if (equal section "-k")
 	(setq apropos-mode t))
 
-    (let ((bufname (flet
-		       ((maybe-star ()
-		          (if (or Manual-buffers-have-stars
-				  (not buffers-menu-submenus-for-groups-p))
-			      "*"
-			    "")))
-		     (if apropos-mode
-			 (concat (maybe-star) "man apropos " topic (maybe-star))
-		       (concat (maybe-star)
-			       (if Manual-buffers-have-prefix
-				   "man ")
-			       topic
-			       (if section (concat "(" section ")") "")
-			       (maybe-star)))))
+    (let ((bufname (concat "Man"
+			   (when apropos-mode " apropos")
+			   ": " topic
+			   (when section (concat "(" section ")") "")))
 	  (temp-buffer-show-function 
 	   (cond ((eq 't Manual-buffer-view-mode)
 		  'view-buffer)
@@ -327,7 +304,7 @@ potentially taking a long time."
   ;; in delete-char alone.)
   (list 'delete-region '(point) (list '+ '(point) n)))
 
-;; Hint: BS stands form more things than "back space"
+;; Hint: BS stands for more things than "back space"
 (defun Manual-nuke-nroff-bs (&optional apropos-mode)
   (interactive "*")
   (if Manual-use-rosetta-man
@@ -658,18 +635,10 @@ on the menu in the order in which they appear in the buffer."
 		  (setq manpage (buffer-substring (match-beginning 1)
 						  (match-end 1)))
 		(setq manpage "???"))
-	      (flet
-		  ((maybe-star ()
-		     (if (or Manual-buffers-have-stars
-			     (not buffers-menu-submenus-for-groups-p))
-			 "*"
-		       "")))
-		(setq buffer
-		      (rename-buffer
-		       (generate-new-buffer-name (concat (maybe-star)
-							 manpage
-							 (maybe-star))))))
-	      (setq buffer-file-name nil)
+	      (setq buffer
+		    (rename-buffer (generate-new-buffer-name
+				    (concat "Man: " manpage)))
+		    buffer-file-name nil)
 	      (goto-char (point-min))
 	      (insert (format "%s\n" buf-name))
 	      (goto-char (point-min))

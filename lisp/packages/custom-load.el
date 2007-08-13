@@ -1,4 +1,10 @@
-(custom-put 'extensions 'custom-loads '("page-ext" "time-stamp"))
+;;; custom-load.el --- automatically extracted custom dependencies
+
+;; Created by SL Baur on Sat Sep 27 08:14:08 1997
+
+;;; Code:
+
+(custom-put 'extensions 'custom-loads '("iswitchb" "page-ext" "time-stamp"))
 (custom-put 'change-log 'custom-loads '("add-log"))
 (custom-put 'filladapt 'custom-loads '("filladapt"))
 (custom-put 'copyright 'custom-loads '("upd-copyr"))
@@ -10,7 +16,7 @@
 (custom-put 'igrep 'custom-loads '("igrep"))
 (custom-put 'menu 'custom-loads '("recent-files"))
 (custom-put 'minibuffer 'custom-loads '("icomplete"))
-(custom-put 'environment 'custom-loads '(("balloon-help" "desktop") ("icomplete") "gnuserv"))
+(custom-put 'environment 'custom-loads '("gnuserv"))
 (custom-put 'texinfo 'custom-loads '("texnfo-tex"))
 (custom-put 'terminals 'custom-loads '("gnuserv"))
 (custom-put 'auto-save 'custom-loads '("auto-save"))
@@ -60,10 +66,11 @@
 (custom-put 'metamail 'custom-loads '("metamail"))
 (custom-put 'icomplete 'custom-loads '("icomplete"))
 (custom-put 'compilation 'custom-loads '("compile"))
+(custom-put 'iswitchb 'custom-loads '("iswitchb"))
 (custom-put 'makeinfo 'custom-loads '("makeinfo"))
 (custom-put 'fume 'custom-loads '("func-menu"))
 (custom-put 'auto-insert 'custom-loads '("autoinsert"))
-(custom-put 'files 'custom-loads '("recent-files"))
+(custom-put 'files 'custom-loads '("auto-save" "recent-files"))
 (custom-put 'fast-lock 'custom-loads '("fast-lock"))
 (custom-put 'gnuserv 'custom-loads '("gnuserv"))
 (custom-put 'ps-print-horizontal 'custom-loads '("ps-print"))
@@ -88,3 +95,5 @@
 (custom-put 'info 'custom-loads '("info"))
 (custom-put 'unix 'custom-loads '("tar-mode"))
 (custom-put 'c 'custom-loads '("func-menu"))
+
+;;; custom-load.el ends here

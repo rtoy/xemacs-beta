@@ -538,10 +538,12 @@
 
 (defgroup reftex-label-support nil
   "Support for creation, insertion and referencing of labels in LaTeX."
+  :prefix "reftex-"
   :group 'reftex)
 
 (defgroup reftex-defining-label-environments nil
   "Definition of environments and macros to do with label."
+  :prefix "reftex-"
   :group 'reftex-label-support)
 
 
@@ -707,6 +709,7 @@ indicating the label types for which it should be true."
 
 (defgroup reftex-making-and-inserting-labels nil
   "Options on how to create new labels."
+  :prefix "reftex-"
   :group 'reftex-label-support)
 
 (defcustom reftex-insert-label-flags '("s" "sft")
@@ -802,6 +805,7 @@ AFTER        Character class after  abbrev point in word."
 
 (defgroup reftex-referencing-labels nil
   "Options on how to reference labels."
+  :prefix "reftex-"
   :group 'reftex-label-support)
 
 (defcustom reftex-label-menu-flags '(t t nil nil nil nil)
@@ -859,6 +863,7 @@ a label type.  If you set this variable to nil, RefTeX will always prompt."
 
 (defgroup reftex-citation-support nil
   "Support for referencing bibliographic data with BibTeX."
+  :prefix "reftex-"
   :group 'reftex)
 
 (defcustom reftex-bibpath-environment-variables '("BIBINPUTS" "TEXBIB")
@@ -940,6 +945,7 @@ the predefined constants.  E.g.:
 
 (defgroup reftex-table-of-contents-browser nil
   "A multifile table of contents browser."
+  :prefix "reftex-"
   :group 'reftex)
 
 (defcustom reftex-toc-follow-mode nil
@@ -953,6 +959,7 @@ This flag can be toggled from within the *toc* buffer with the `f' key."
 
 (defgroup reftex-miscellaneous-configurations nil
   "Collection of further configurations."
+  :prefix "reftex-"
   :group 'reftex)
 
 (defcustom reftex-extra-bindings nil

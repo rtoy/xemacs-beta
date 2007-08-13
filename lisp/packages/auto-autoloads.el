@@ -668,7 +668,7 @@ Emerge two RCS revisions of a file, with another revision as ancestor." t nil)
 
 (defcustom tags-always-exact nil "*If this variable is non-nil, then tags always looks for exact matches." :type 'boolean :group 'etags)
 
-(defcustom tag-table-alist nil "*A list which determines which tags files should be active for a \ngiven buffer.  This is not really an association list, in that all \nelements are checked.  The CAR of each element of this list is a \npattern against which the buffer's file name is compared; if it \nmatches, then the CDR of the list should be the name of the tags\ntable to use.  If more than one element of this list matches the\nbuffer's file name, then all of the associated tags tables will be\nused.  Earlier ones will be searched first.\n\nIf the CAR of elements of this list are strings, then they are treated\nas regular-expressions against which the file is compared (like the\nauto-mode-alist).  If they are not strings, then they are evaluated.\nIf they evaluate to non-nil, then the current buffer is considered to\nmatch.\n\nIf the CDR of the elements of this list are strings, then they are\nassumed to name a TAGS file.  If they name a directory, then the string\n\"TAGS\" is appended to them to get the file name.  If they are not \nstrings, then they are evaluated, and must return an appropriate string.\n\nFor example:\n  (setq tag-table-alist\n	'((\"/usr/src/public/perl/\" . \"/usr/src/public/perl/perl-3.0/\")\n	 (\"\\\\.el$\" . \"/usr/local/emacs/src/\")\n	 (\"/jbw/gnu/\" . \"/usr15/degree/stud/jbw/gnu/\")\n	 (\"\" . \"/usr/local/emacs/src/\")\n	 ))\n\nThis means that anything in the /usr/src/public/perl/ directory should use\nthe TAGS file /usr/src/public/perl/perl-3.0/TAGS; and file ending in .el should\nuse the TAGS file /usr/local/emacs/src/TAGS; and anything in or below the\ndirectory /jbw/gnu/ should use the TAGS file /usr15/degree/stud/jbw/gnu/TAGS.\nA file called something like \"/usr/jbw/foo.el\" would use both the TAGS files\n/usr/local/emacs/src/TAGS and /usr15/degree/stud/jbw/gnu/TAGS (in that order)\nbecause it matches both patterns.\n\nIf the buffer-local variable `buffer-tag-table' is set, then it names a tags\ntable that is searched before all others when find-tag is executed from this\nbuffer.\n\nIf there is a file called \"TAGS\" in the same directory as the file in \nquestion, then that tags file will always be used as well (after the\n`buffer-tag-table' but before the tables specified by this list.)\n\nIf the variable tags-file-name is set, then the tags file it names will apply\nto all buffers (for backwards compatibility.)  It is searched first.\n" :type '(repeat (cons regexp sexp)) :group 'etags)
+(defcustom tag-table-alist nil "*A list which determines which tags files are active for a buffer.\nThis is not really an association list, in that all elements are\nchecked.  The CAR of each element of this list is a pattern against\nwhich the buffer's file name is compared; if it matches, then the CDR\nof the list should be the name of the tags table to use.  If more than\none element of this list matches the buffer's file name, then all of\nthe associated tags tables will be used.  Earlier ones will be\nsearched first.\n\nIf the CAR of elements of this list are strings, then they are treated\nas regular-expressions against which the file is compared (like the\nauto-mode-alist).  If they are not strings, then they are evaluated.\nIf they evaluate to non-nil, then the current buffer is considered to\nmatch.\n\nIf the CDR of the elements of this list are strings, then they are\nassumed to name a TAGS file.  If they name a directory, then the string\n\"TAGS\" is appended to them to get the file name.  If they are not \nstrings, then they are evaluated, and must return an appropriate string.\n\nFor example:\n  (setq tag-table-alist\n	'((\"/usr/src/public/perl/\" . \"/usr/src/public/perl/perl-3.0/\")\n	 (\"\\\\.el$\" . \"/usr/local/emacs/src/\")\n	 (\"/jbw/gnu/\" . \"/usr15/degree/stud/jbw/gnu/\")\n	 (\"\" . \"/usr/local/emacs/src/\")\n	 ))\n\nThis means that anything in the /usr/src/public/perl/ directory should use\nthe TAGS file /usr/src/public/perl/perl-3.0/TAGS; and file ending in .el should\nuse the TAGS file /usr/local/emacs/src/TAGS; and anything in or below the\ndirectory /jbw/gnu/ should use the TAGS file /usr15/degree/stud/jbw/gnu/TAGS.\nA file called something like \"/usr/jbw/foo.el\" would use both the TAGS files\n/usr/local/emacs/src/TAGS and /usr15/degree/stud/jbw/gnu/TAGS (in that order)\nbecause it matches both patterns.\n\nIf the buffer-local variable `buffer-tag-table' is set, then it names a tags\ntable that is searched before all others when find-tag is executed from this\nbuffer.\n\nIf there is a file called \"TAGS\" in the same directory as the file in \nquestion, then that tags file will always be used as well (after the\n`buffer-tag-table' but before the tables specified by this list.)\n\nIf the variable tags-file-name is set, then the tags file it names will apply\nto all buffers (for backwards compatibility.)  It is searched first.\n" :type '(repeat (cons (choice :value "" (regexp :tag "Buffer regexp") (function :tag "Expression")) (string :tag "Tag file or directory"))) :group 'etags)
 
 (autoload 'visit-tags-table "etags" "\
 Tell tags commands to use tags table file FILE first.
@@ -1596,6 +1596,38 @@ in your .emacs file:
 You can bind this to the key C-c i in GNUS or mail by adding to
 `news-reply-mode-hook' or `mail-mode-hook' the following lambda expression:
    (function (lambda () (local-set-key \"\\C-ci\" 'ispell-message)))" t nil)
+
+;;;***
+
+;;;### (autoloads (iswitchb-buffer-other-frame iswitchb-display-buffer iswitchb-buffer-other-window iswitchb-buffer iswitchb-default-keybindings) "iswitchb" "packages/iswitchb.el")
+
+(autoload 'iswitchb-default-keybindings "iswitchb" "\
+Set up default keybindings for `iswitchb-buffer'.
+Call this function to override the normal bindings." t nil)
+
+(autoload 'iswitchb-buffer "iswitchb" "\
+Switch to another buffer.
+
+The buffer name is selected interactively by typing a substring.  The
+buffer is displayed according to `iswitchb-default-method' -- the
+default is to show it in the same window, unless it is already visible
+in another frame.
+For details of keybindings, do `\\[describe-function] iswitchb'." t nil)
+
+(autoload 'iswitchb-buffer-other-window "iswitchb" "\
+Switch to another buffer and show it in another window.
+The buffer name is selected interactively by typing a substring.
+For details of keybindings, do `\\[describe-function] iswitchb'." t nil)
+
+(autoload 'iswitchb-display-buffer "iswitchb" "\
+Display a buffer in another window but don't select it.
+The buffer name is selected interactively by typing a substring.
+For details of keybindings, do `\\[describe-function] iswitchb'." t nil)
+
+(autoload 'iswitchb-buffer-other-frame "iswitchb" "\
+Switch to another buffer and show it in another frame.
+The buffer name is selected interactively by typing a substring.
+For details of keybindings, do `\\[describe-function] iswitchb'." t nil)
 
 ;;;***
 

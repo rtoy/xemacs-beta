@@ -2428,17 +2428,14 @@ get_relevant_extent_keymaps (Lisp_Object pos, Lisp_Object buffer_or_string,
   if (!NILP (pos))
     {
       Lisp_Object extent;
-      for (extent = Fextent_at (pos, buffer_or_string, Qkeymap, Qnil, Qat);
+      for (extent = Fextent_at (pos, buffer_or_string, Qkeymap, Qnil, Qnil);
 	   !NILP (extent);
-	   extent = Fextent_at (pos, buffer_or_string, Qkeymap, extent, Qat))
+	   extent = Fextent_at (pos, buffer_or_string, Qkeymap, extent, Qnil))
 	{
-	  if (!NILP (Fextent_in_region_p (extent, pos, pos, Qnil)))
-	    {
-	      Lisp_Object keymap = Fextent_property (extent, Qkeymap, Qnil);
-	      if (!NILP (keymap))
-		relevant_map_push (get_keymap (keymap, 1, 1), closure);
-	      QUIT;
-	    }
+	  Lisp_Object keymap = Fextent_property (extent, Qkeymap, Qnil);
+	  if (!NILP (keymap))
+	    relevant_map_push (get_keymap (keymap, 1, 1), closure);
+	  QUIT;
 	}
     }
 }

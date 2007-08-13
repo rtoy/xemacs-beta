@@ -109,9 +109,8 @@
 ;; Further comments from the FSF:
 
 ;; Nasty regexps of the form "bar\\(\\|lo\\)\\|f\\(oo\\|u\\(\\|bar\\)\\)\\|lo"
-;; are made thusly: (make-regexp '("foo" "fu" "fubar" "bar" "barlo" "lo")) for
-;; efficiency.  See /pub/gnu/emacs/elisp-archive/functions/make-regexp.el.Z on
-;; archive.cis.ohio-state.edu for this and other functions.
+;; are made thusly: (regexp-opt '("foo" "fu" "fubar" "bar" "barlo" "lo")) for
+;; efficiency.
 
 ;; What is fontification for?  You might say, "It's to make my code look nice."
 ;; I think it should be for adding information in the form of cues.  These cues
@@ -1623,28 +1622,30 @@ Returns whether it is indistinguishable from the default face."
     ;;
     ;; Control structures.  ELisp and CLisp combined.
     ;;
-    ;;(make-regexp
-    ;;  '("cond" "if" "while" "let\\*?" "prog[nv12*]?" "catch" "throw"
-    ;;    "save-restriction" "save-excursion" "save-window-excursion"
+    ;;(regexp-opt
+    ;;  '("cond" "if" "while" "let" "let*" "prog" "progn" "prog1"
+    ;;    "prog2" "progv" "catch" "throw" "save-restriction"
+    ;;    "save-excursion" "save-window-excursion"
     ;;    "save-current-buffer" "with-current-buffer"
-    ;;    "with-temp-file" "with-output-to-.+"
+    ;;    "with-temp-file" "with-temp-buffer" "with-output-to-string"
+    ;;    "with-string-as-buffer-contents"
     ;;    "save-selected-window" "save-match-data" "unwind-protect"
     ;;    "condition-case" "track-mouse" "autoload"
     ;;    "eval-after-load" "eval-and-compile" "eval-when-compile"
-    ;;    "when" "unless" "do" "flet" "labels" "lambda"
-    ;;    "return" "return-from"))
-    ;;
+    ;;    "when" "unless" "do" "dolist" "dotimes" "flet" "labels"
+    ;;    "lambda" "return" "return-from"))
     (cons
      (concat
       "(\\("
-      "autoload\\|c\\(atch\\|ond\\(\\|ition-case\\)\\)\\|do\\|"
-      "eval-\\(a\\(fter-load\\|nd-compile\\)\\|when-compile\\)\\|"
-      "flet\\|if\\|l\\(a\\(bels\\|mbda\\)\\|et\\*?\\)\\|prog[nv12*]?\\|"
-      "return\\(\\|-from\\)\\|save-\\(current-buffer\\|excursion\\|"
-      "match-data\\|restriction\\|selected-window\\|window-excursion\\)\\|"
-      "t\\(hrow\\|rack-mouse\\)\\|un\\(less\\|wind-protect\\)\\|"
-      "w\\(h\\(en\\|ile\\)\\|ith-\\(current-buffer\\|output-to-.+\\|"
-      "temp-file\\)\\)"
+      "autoload\\|c\\(atch\\|ond\\(ition-case\\)?\\)\\|do\\(list\\|"
+      "times\\)?\\|eval-\\(a\\(fter-load\\|nd-compile\\)\\|when-compile\\)\\|"
+      "flet\\|if\\|l\\(a\\(bels\\|mbda\\)\\|et\\*?\\)\\|"
+      "prog[nv12\\*]?\\|return\\(-from\\)?\\|save-\\(current-buffer\\|"
+      "excursion\\|match-data\\|restriction\\|selected-window\\|"
+      "window-excursion\\)\\|t\\(hrow\\|rack-mouse\\)\\|un\\(less\\|"
+      "wind-protect\\)\\|w\\(h\\(en\\|ile\\)\\|ith-\\(current-buffer\\|"
+      "output-to-string\\|string-as-buffer-contents\\|temp-\\(buffer\\|"
+      "file\\)\\)\\)"
       "\\)\\>") 1)
     ;;
     ;; Words inside \\[] tend to be for `substitute-command-keys'.
@@ -1732,7 +1733,7 @@ Returns whether it is indistinguishable from the default face."
 	       nil t))
      ;;
      ;; Control structures.
-;(make-regexp '("begin" "call-with-current-continuation" "call/cc"
+;(regexp-opt '("begin" "call-with-current-continuation" "call/cc"
 ;	       "call-with-input-file" "call-with-output-file" "case" "cond"
 ;	       "do" "else" "for-each" "if" "lambda"
 ;	       "let\\*?" "let-syntax" "letrec" "letrec-syntax"

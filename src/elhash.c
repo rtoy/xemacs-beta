@@ -211,7 +211,7 @@ lisp_object_eql_equal (CONST void *x1, CONST void *x2)
   Lisp_Object obj1, obj2;
   CVOID_TO_LISP (obj1, x1);
   CVOID_TO_LISP (obj2, x2);
-  return FLOATP (obj1) ? !NILP (Fequal (obj1, obj2)) : EQ (obj1, obj2);
+  return FLOATP (obj1) ? internal_equal (obj1, obj2, 0) : EQ (obj1, obj2);
 }
 
 static unsigned long
@@ -231,7 +231,7 @@ lisp_object_equal_equal (CONST void *x1, CONST void *x2)
   Lisp_Object obj1, obj2;
   CVOID_TO_LISP (obj1, x1);
   CVOID_TO_LISP (obj2, x2);
-  return !NILP (Fequal (obj1, obj2));
+  return internal_equal (obj1, obj2, 0);
 }
 
 static unsigned long

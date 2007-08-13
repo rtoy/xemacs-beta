@@ -1737,6 +1737,7 @@ extern Lisp_Object Qconst_specifier;
 /* Defined in syntax.c */
 int scan_words (struct buffer *buf, int from, int count);
 Lisp_Object Fforward_word (Lisp_Object n, Lisp_Object buffer);
+Lisp_Object Fchar_syntax (Lisp_Object ch, Lisp_Object table);
 
 
 /* Defined in sysdep.c, also declared in sysdep.h.

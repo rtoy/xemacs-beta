@@ -543,6 +543,7 @@ Customization
 Variables
 
 * Examining::           Examining or setting one variable's value.
+* Easy Customization::  Convenient and easy customization of variables.
 * Edit Options::        Examining or editing list of all variables' values.
 * Locals::              Per-buffer values of variables.
 * File Variables::      How files can specify variable values.

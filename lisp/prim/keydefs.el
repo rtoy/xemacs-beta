@@ -141,8 +141,6 @@ Keymap for characters following C-c.")
 (define-key global-map "\C-x52" 'make-frame)
 (define-key global-map "\C-x50" 'delete-frame)
 (define-key global-map "\C-x5o" 'other-frame)
-;; XEmacs addition:
-(define-key global-map "\C-x5m" 'mail-other-frame)
 
 ;; FSFmacs help.el
 
@@ -462,9 +460,9 @@ Keymap for characters following C-c.")
 
 (define-key global-map "\M-$" 'ispell-word)
 
-(define-key global-map "\C-x4m" 'mail-other-window)
-
-(define-key global-map "\C-xm" 'mail)
+(define-key global-map "\C-xm" 'compose-mail)
+(define-key global-map "\C-x4m" 'compose-mail-other-window)
+(define-key global-map "\C-x5m" 'compose-mail-other-frame)
 
 (define-key global-map "\M-." 'find-tag)
 

@@ -862,50 +862,75 @@ This function changes the sensitivity of these Edit menu items:
 
 ;;; The Buffers menu
 
-(defvar buffers-menu-max-size 25
+(defgroup buffers-menu nil
+  "Customization of `Buffers' menu."
+  :group 'menu)
+
+(defcustom buffers-menu-max-size 25
   "*Maximum number of entries which may appear on the \"Buffers\" menu.
 If this is 10, then only the ten most-recently-selected buffers will be
 shown.  If this is nil, then all buffers will be shown.  Setting this to
-a large number or nil will slow down menu responsiveness.")
+a large number or nil will slow down menu responsiveness."
+  :type '(choice (const :tag "Show all" nil)
+		 (integer 10))
+  :group 'buffers-menu)
 
-(defvar complex-buffers-menu-p nil
-  "*If true, the buffers menu will contain several commands, as submenus
-of each buffer line.  If this is false, then there will be only one command:
-select that buffer.")
+(defcustom complex-buffers-menu-p nil
+  "*If non-nil, the buffers menu will contain several commands.
+Commands will be presented as submenus of each buffer line.  If this
+is false, then there will be only one command: select that buffer."
+  :type 'boolean
+  :group 'buffers-menu)
 
-(defvar buffers-menu-submenus-for-groups-p nil
-  "*If true, the buffers menu will contain one submenu per group of buffers,
-if a grouping function is specified in `buffers-menu-grouping-function'.
+(defcustom buffers-menu-submenus-for-groups-p nil
+  "*If non-nil, the buffers menu will contain one submenu per group of buffers.
+The grouping function is specified in `buffers-menu-grouping-function'.
 If this is an integer, do not build submenus if the number of buffers
-is not larger than this value.")
+is not larger than this value."
+  :type '(choice (const :tag "No Subgroups" nil)
+		 (integer :tag "Max. submenus" 10)
+		 (sexp :format "%t\n" :tag "Allow Subgroups"))
+  :group 'buffers-menu)
 
-(defvar buffers-menu-switch-to-buffer-function 'switch-to-buffer
+(defcustom buffers-menu-switch-to-buffer-function 'switch-to-buffer
   "*The function to call to select a buffer from the buffers menu.
-`switch-to-buffer' is a good choice, as is `pop-to-buffer'.")
+`switch-to-buffer' is a good choice, as is `pop-to-buffer'."
+  :type '(radio (function-item switch-to-buffer)
+		(function-item pop-to-buffer)
+		(function :tag "Other"))
+  :group 'buffers-menu)
 
-(defvar buffers-menu-omit-function 'buffers-menu-omit-invisible-buffers
-"*If non-nil, a function specifying the buffers to omit from the buffers menu.
+(defcustom buffers-menu-omit-function 'buffers-menu-omit-invisible-buffers
+  "*If non-nil, a function specifying the buffers to omit from the buffers menu.
 This is passed a buffer and should return non-nil if the buffer should be
 omitted.  The default value `buffers-menu-omit-invisible-buffers' omits
 buffers that are normally considered \"invisible\" (those whose name
-begins with a space).")
+begins with a space)."
+  :type '(choice (const :tag "None" nil)
+		 function)
+  :group 'buffers-menu)
 
-(defvar buffers-menu-format-buffer-line-function 'format-buffers-menu-line
+(defcustom buffers-menu-format-buffer-line-function 'format-buffers-menu-line
   "*The function to call to return a string to represent a buffer in the
 buffers menu.  The function is passed a buffer and should return a string.
 The default value `format-buffers-menu-line' just returns the name of
 the buffer.  Also check out `slow-format-buffers-menu-line' which
-returns a whole bunch of info about a buffer.")
+returns a whole bunch of info about a buffer."
+  :type 'function
+  :group 'buffers-menu)
 
-(defvar buffers-menu-sort-function
+(defcustom buffers-menu-sort-function
   'sort-buffers-menu-by-mode-then-alphabetically
   "*If non-nil, a function to sort the list of buffers in the buffers menu.
 It will be passed two arguments (two buffers to compare) and should return
 T if the first is \"less\" than the second.  One possible value is
 `sort-buffers-menu-alphabetically'; another is
-`sort-buffers-menu-by-mode-then-alphabetically'.")
+`sort-buffers-menu-by-mode-then-alphabetically'."
+  :type '(choice (const :tag "None" nil)
+		 function)
+  :group 'buffers-menu)
 
-(defvar buffers-menu-grouping-function
+(defcustom buffers-menu-grouping-function
   'group-buffers-menu-by-mode-then-alphabetically
   "*If non-nil, a function to group buffers in the buffers menu together.
 It will be passed two arguments, successive members of the sorted buffers
@@ -916,7 +941,10 @@ buffers menus.  The last invocation of the function contains nil as the
 second argument, so that the name of the last group can be determined.
 
 The sensible values of this function are dependent on the value specified
-for `buffers-menu-sort-function'.")
+for `buffers-menu-sort-function'."
+  :type '(choice (const :tag "None" nil)
+		 function)
+  :group 'buffers-menu)
 
 (defun buffers-menu-omit-invisible-buffers (buf)
   "For use as a value of `buffers-menu-omit-function'.

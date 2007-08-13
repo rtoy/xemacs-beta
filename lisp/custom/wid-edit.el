@@ -3,24 +3,25 @@
 ;; Copyright (C) 1996, 1997 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
+;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
 ;; Keywords: extensions
-;; Version: 1.9960
+;; Version: 1.9960-x
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
+;; XEmacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
+;; XEmacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -28,79 +29,19 @@
 ;;
 ;; See `widget.el'.
 
+
 ;;; Code:
 
 (require 'widget)
-(eval-when-compile (require 'cl))
 
-;;; Compatibility.
+(autoload 'pp-to-string "pp")
+(autoload 'finder-commentary "finder" nil t)
 
-(eval-and-compile
-  (autoload 'pp-to-string "pp")
-  (autoload 'Info-goto-node "info")
-  (autoload 'finder-commentary "finder" nil t)
-
-  (when (string-match "XEmacs" emacs-version)
-    (condition-case nil
-	(require 'overlay)
-      (error (load-library "x-overlay"))))
-  
-  (if (string-match "XEmacs" emacs-version)
-      (defun widget-event-point (event)
-	"Character position of the end of event if that exists, or nil."
-	(if (mouse-event-p event)
-	    (event-point event)
-	  nil))
-    (defun widget-event-point (event)
-      "Character position of the end of event if that exists, or nil."
-      (posn-point (event-end event))))
-
-  (defalias 'widget-read-event (if (string-match "XEmacs" emacs-version)
-				   'next-event
-				 'read-event))
-
-  ;; The following should go away when bundled with Emacs.
-  (condition-case ()
-      (require 'custom)
-    (error nil))
-
-  (unless (and (featurep 'custom) (fboundp 'custom-declare-variable))
-    ;; We have the old custom-library, hack around it!
-    (defmacro defgroup (&rest args) nil)
-    (defmacro defcustom (var value doc &rest args) 
-      (` (defvar (, var) (, value) (, doc))))
-    (defmacro defface (&rest args) nil)
-    (define-widget-keywords :prefix :tag :load :link :options :type :group)
-    (when (fboundp 'copy-face)
-      (copy-face 'default 'widget-documentation-face)
-      (copy-face 'bold 'widget-button-face)
-      (copy-face 'italic 'widget-field-face)))
-
-  (unless (fboundp 'button-release-event-p)
-    ;; XEmacs function missing from Emacs.
-    (defun button-release-event-p (event)
-      "Non-nil if EVENT is a mouse-button-release event object."
-      (and (eventp event)
-	   (memq (event-basic-type event) '(mouse-1 mouse-2 mouse-3))
-	   (or (memq 'click (event-modifiers event))
-	       (memq  'drag (event-modifiers event))))))
-
-  (unless (fboundp 'functionp)
-    ;; Missing from Emacs 19.34 and earlier.
-    (defun functionp (object)
-      "Non-nil of OBJECT is a type of object that can be called as a function."
-      (or (subrp object) (byte-code-function-p object)
-	  (eq (car-safe object) 'lambda)
-	  (and (symbolp object) (fboundp object)))))
-
-  (unless (fboundp 'error-message-string)
-    ;; Emacs function missing in XEmacs.
-    (defun error-message-string (obj)
-      "Convert an error value to an error message."
-      (let ((buf (get-buffer-create " *error-message*")))
-	(erase-buffer buf)
-	(display-error obj buf)
-	(buffer-string buf)))))
+(defun widget-event-point (event)
+  "Character position of the end of event if that exists, or nil."
+  (if (mouse-event-p event)
+      (event-point event)
+    nil))
 
 ;;; Customization.
 
@@ -162,57 +103,66 @@ This exists as a variable so it can be set locally in certain buffers.")
   "Face used for editable fields."
   :group 'widget-faces)
 
-(defface widget-single-line-field-face '((((class grayscale color)
-					   (background light))
-					  (:background "gray85"))
-					 (((class grayscale color)
-					   (background dark))
-					  (:background "dim gray"))
-					 (t 
-					  (:italic t)))
-  "Face used for editable fields spanning only a single line."
-  :group 'widget-faces)
+;; Currently unused
+;(defface widget-single-line-field-face '((((class grayscale color)
+;					   (background light))
+;					  (:background "gray85"))
+;					 (((class grayscale color)
+;					   (background dark))
+;					  (:background "dim gray"))
+;					 (t 
+;					  (:italic t)))
+;  "Face used for editable fields spanning only a single line."
+;  :group 'widget-faces)
+;
+;(defvar widget-single-line-display-table
+;  (let ((table (make-display-table)))
+;    (aset table 9  "^I")
+;    (aset table 10 "^J")
+;    table)
+;  "Display table used for single-line editable fields.")
+;
+;(set-face-display-table 'widget-single-line-field-face
+;			widget-single-line-display-table)
 
-(defvar widget-single-line-display-table
-  (let ((table (make-display-table)))
-    (aset table 9  "^I")
-    (aset table 10 "^J")
-    table)
-  "Display table used for single-line editable fields.")
 
-(when (fboundp 'set-face-display-table)
-  (set-face-display-table 'widget-single-line-field-face
-			  widget-single-line-display-table))
+;; Some functions from this file have been ported to C for speed.
+;; Setting this to t (*before* loading wid-edit.el) will make them
+;; shadow the subrs.  It should be used only for debugging purposes.
+(defvar widget-shadow-subrs nil)
 
+
 ;;; Utility functions.
 ;;
 ;; These are not really widget specific.
 
-(defsubst widget-plist-member (plist prop)
-  ;; Return non-nil if PLIST has the property PROP.
-  ;; PLIST is a property list, which is a list of the form
-  ;; (PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol.
-  ;; Unlike `plist-get', this allows you to distinguish between a missing
-  ;; property and a property with the value nil.
-  ;; The value is actually the tail of PLIST whose car is PROP.
-  (while (and plist (not (eq (car plist) prop)))
-    (setq plist (cdr (cdr plist))))
-  plist)
+(when (or (not (fboundp 'widget-plist-member))
+	  widget-shadow-subrs)
+  ;; Recoded in C, for efficiency.  It used to be a defsubst, but old
+  ;; compiled code won't fail -- it will just be slower.
+  (defun widget-plist-member (plist prop)
+    ;; Return non-nil if PLIST has the property PROP.
+    ;; PLIST is a property list, which is a list of the form
+    ;; (PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol.
+    ;; Unlike `plist-get', this allows you to distinguish between a missing
+    ;; property and a property with the value nil.
+    ;; The value is actually the tail of PLIST whose car is PROP.
+    (while (and plist (not (eq (car plist) prop)))
+      (setq plist (cddr plist)))
+    plist))
 
 (defun widget-princ-to-string (object)
   ;; Return string representation of OBJECT, any Lisp object.
   ;; No quoting characters are used; no delimiters are printed around
   ;; the contents of strings.
-  (save-excursion
-    (set-buffer (get-buffer-create " *widget-tmp*"))
+  (with-current-buffer (get-buffer-create " *widget-tmp*")
     (erase-buffer)
-    (let ((standard-output (current-buffer)))
-      (princ object))
+    (princ object (current-buffer))
     (buffer-string)))
 
 (defun widget-clear-undo ()
   "Clear all undo information."
-  (buffer-disable-undo (current-buffer))
+  (buffer-disable-undo)
   (buffer-enable-undo))
 
 (defcustom widget-menu-max-size 40
@@ -221,7 +171,7 @@ Larger menus are read through the minibuffer."
   :group 'widgets
   :type 'integer)
 
-(defcustom widget-menu-minibuffer-flag (string-match "XEmacs" emacs-version)
+(defcustom widget-menu-minibuffer-flag nil
   "*Control how to ask for a choice from the keyboard.
 Non-nil means use the minibuffer;
 nil means read a single character."
@@ -242,72 +192,54 @@ and the VALUE of the chosen element will be returned.  If EVENT is a
 mouse event, and the number of elements in items is less than
 `widget-menu-max-size', a popup menu will be used, otherwise the
 minibuffer."
-  (cond ((and (< (length items) widget-menu-max-size)
-	      event (fboundp 'x-popup-menu) window-system)
-	 ;; We are in Emacs-19, pressed by the mouse
-	 (x-popup-menu event
-		       (list title (cons "" items))))
-	((and (< (length items) widget-menu-max-size)
-	      event (fboundp 'popup-menu) window-system)
-	 ;; We are in XEmacs, pressed by the mouse
+  (cond	((and (< (length items) widget-menu-max-size)
+	      event
+	      (console-on-window-system-p))
+	 ;; Pressed by the mouse.
 	 (let ((val (get-popup-menu-response
 		     (cons title
-			   (mapcar
-			    (function
-			     (lambda (x)
-			       (if (stringp x)
-				   (vector x nil nil) 
-				 (vector (car x) (list (car x)) t))))
-			    items)))))
+			   (mapcar (lambda (x)
+				     (if (stringp x)
+					 (vector x nil nil) 
+				       (vector (car x) (list (car x)) t)))
+				   items)))))
 	   (setq val (and val
 			  (listp (event-object val))
 			  (stringp (car-safe (event-object val)))
 			  (car (event-object val))))
 	   (cdr (assoc val items))))
-	(widget-menu-minibuffer-flag
-	 ;; Read the choice of name from the minibuffer.
-	 (setq items (widget-remove-if 'stringp items))
-	 (let ((val (completing-read (concat title ": ") items nil t)))
-	   (if (stringp val)
-	       (let ((try (try-completion val items)))
-		 (when (stringp try)
-		   (setq val try))
-		 (cdr (assoc val items)))
-	     nil)))
-	(t
+	((and (not widget-menu-minibuffer-flag)
+	      ;; Can't handle more than 10 items (as many digits)
+	      (<= (length items) 10))
 	 ;; Construct a menu of the choices
 	 ;; and then use it for prompting for a single character.
-	 (let* ((overriding-terminal-local-map
-		 (make-sparse-keymap))
-		map choice (next-digit ?0)
-		some-choice-enabled
-		value)
+	 (let* ((overriding-terminal-local-map (make-sparse-keymap))
+		(map (make-sparse-keymap title))
+		(next-digit ?0)
+		some-choice-enabled value)
 	   ;; Define SPC as a prefix char to get to this menu.
-	   (define-key overriding-terminal-local-map " "
-	     (setq map (make-sparse-keymap title)))
-	   (save-excursion
-	     (set-buffer (get-buffer-create " widget-choose"))
+	   (define-key overriding-terminal-local-map " " map)
+	   (with-current-buffer (get-buffer-create " widget-choose")
 	     (erase-buffer)
 	     (insert "Available choices:\n\n")
-	     (while items
-	       (setq choice (car items) items (cdr items))
-	       (if (consp choice)
-		   (let* ((name (car choice))
-			 (function (cdr choice)))
-		     (insert (format "%c = %s\n" next-digit name))
-		     (define-key map (vector next-digit) function)
-		     (setq some-choice-enabled t)))
+	     (dolist (choice items)
+	       (when (consp choice)
+		 (let* ((name (car choice))
+			(function (cdr choice)))
+		   (insert (format "%c = %s\n" next-digit name))
+		   (define-key map (vector next-digit) function)
+		   (setq some-choice-enabled t)))
 	       ;; Allocate digits to disabled alternatives
 	       ;; so that the digit of a given alternative never varies.
-	       (setq next-digit (1+ next-digit)))
+	       (incf next-digit))
 	     (insert "\nC-g = Quit"))
 	   (or some-choice-enabled
 	       (error "None of the choices is currently meaningful"))
 	   (define-key map [?\C-g] 'keyboard-quit)
 	   (define-key map [t] 'keyboard-quit)
-	   (setcdr map (nreverse (cdr map)))
+	   ;(setcdr map (nreverse (cdr map)))
 	   ;; Unread a SPC to lead to our new menu.
-	   (setq unread-command-events (cons ?\ unread-command-events))
+	   (push (character-to-event ?\ ) unread-command-events)
 	   ;; Read a char with the menu, and return the result
 	   ;; that corresponds to it.
 	   (save-window-excursion
@@ -315,35 +247,33 @@ minibuffer."
 	     (let ((cursor-in-echo-area t))
 	       (setq value
 		     (lookup-key overriding-terminal-local-map
-				 (read-key-sequence title) t))))
+				 (read-key-sequence (concat title ": ") t)))))
+	   (message "")
 	   (when (eq value 'keyboard-quit)
 	     (error "Canceled"))
-	   value))))
+	   value))
+	(t
+	 ;; Read the choice of name from the minibuffer.
+	 (setq items (remove-if 'stringp items))
+	 (let ((val (completing-read (concat title ": ") items nil t)))
+	   (if (stringp val)
+	       (let ((try (try-completion val items)))
+		 (when (stringp try)
+		   (setq val try))
+		 (cdr (assoc val items)))
+	     nil)))))
 
-(defun widget-remove-if (predictate list)
-  (let (result (tail list))
-    (while tail
-      (or (funcall predictate (car tail))
-	  (setq result (cons (car tail) result)))
-      (setq tail (cdr tail)))
-    (nreverse result)))
-
+
 ;;; Widget text specifications.
 ;; 
 ;; These functions are for specifying text properties. 
 
-(defcustom widget-field-add-space 
-  (or t
-      ;; It shouldn't be necessary in 20.3, but I need to debug it first.
-      (< emacs-major-version 20)
-      (and (eq emacs-major-version 20)
-	   (< emacs-minor-version 3))
-      (not (string-match "XEmacs" emacs-version)))
+(defcustom widget-field-add-space t
+  ;; Setting this to nil might be available, once some problems are resolved.
   "Non-nil means add extra space at the end of editable text fields.
 
-This is needed on all versions of Emacs, and on XEmacs before 20.3.  
-If you don't add the space, it will become impossible to edit a zero
-size field."
+This is needed on all versions of Emacs.  If you don't add the space,
+it will become impossible to edit a zero size field."
   :type 'boolean
   :group 'widgets)
 
@@ -366,40 +296,41 @@ new value."
 	   (forward-char 1))
 	  ;; Terminating space is not part of the field, but necessary in
 	  ;; order for local-map to work.  Remove next sexp if local-map works
-	  ;; at the end of the overlay.
+	  ;; at the end of the extent.
 	  (widget-field-add-space
 	   (insert-and-inherit " ")))
     (setq to (point)))
   (let ((map (widget-get widget :keymap))
 	(face (or (widget-get widget :value-face) 'widget-field-face))
 	(help-echo (widget-get widget :help-echo))
-	(overlay (make-overlay from to nil 
-			       nil (or (not widget-field-add-space)
-				       (widget-get widget :size)))))
+	(extent (make-extent from to)))
     (unless (or (stringp help-echo) (null help-echo))
       (setq help-echo 'widget-mouse-help))    
-    (widget-put widget :field-overlay overlay)
-    (overlay-put overlay 'detachable nil)
-    (overlay-put overlay 'field widget)
-    (overlay-put overlay 'local-map map)
-    (overlay-put overlay 'keymap map)
-    (overlay-put overlay 'face face)
-    (overlay-put overlay 'balloon-help help-echo)
-    (overlay-put overlay 'help-echo help-echo)))
+    (widget-put widget :field-extent extent)
+    (and (or (not widget-field-add-space)
+	     (widget-get widget :size))
+	 (set-extent-property extent 'end-closed t))
+    (set-extent-property extent 'detachable nil)
+    (set-extent-property extent 'field widget)
+    (set-extent-property extent 'keymap map)
+    (set-extent-property extent 'face face)
+    (set-extent-property extent 'balloon-help help-echo)
+    (set-extent-property extent 'help-echo help-echo)))
 
 (defun widget-specify-button (widget from to)
   "Specify button for WIDGET between FROM and TO."
   (let ((face (widget-apply widget :button-face-get))
 	(help-echo (widget-get widget :help-echo))
-	(overlay (make-overlay from to nil t nil)))
-    (widget-put widget :button-overlay overlay)
+	(extent (make-extent from to)))
+    (widget-put widget :button-extent extent)
     (unless (or (null help-echo) (stringp help-echo))
       (setq help-echo 'widget-mouse-help))
-    (overlay-put overlay 'button widget)
-    (overlay-put overlay 'mouse-face widget-mouse-face)
-    (overlay-put overlay 'balloon-help help-echo)
-    (overlay-put overlay 'help-echo help-echo)
-    (overlay-put overlay 'face face)))
+    (set-extent-property extent 'start-open t)
+    (set-extent-property extent 'button widget)
+    (set-extent-property extent 'mouse-face widget-mouse-face)
+    (set-extent-property extent 'balloon-help help-echo)
+    (set-extent-property extent 'help-echo help-echo)
+    (set-extent-property extent 'face face)))
 
 (defun widget-mouse-help (extent)
   "Find mouse help string for button in extent."
@@ -407,7 +338,7 @@ new value."
 	 (help-echo (and widget (widget-get widget :help-echo))))
     (cond ((stringp help-echo)
 	   help-echo)
-	  ((and (symbolp help-echo) (fboundp help-echo)
+	  ((and (functionp help-echo)
 		(stringp (setq help-echo (funcall help-echo widget))))
 	   help-echo)
 	  (t
@@ -416,33 +347,34 @@ new value."
 (defun widget-specify-sample (widget from to)
   ;; Specify sample for WIDGET between FROM and TO.
   (let ((face (widget-apply widget :sample-face-get))
-	(overlay (make-overlay from to nil t nil)))
-    (overlay-put overlay 'face face)
-    (widget-put widget :sample-overlay overlay)))
+	(extent (make-extent from to nil)))
+    (set-extent-property extent 'start-open t)
+    (set-extent-property extent 'face face)
+    (widget-put widget :sample-extent extent)))
 
 (defun widget-specify-doc (widget from to)
   ;; Specify documentation for WIDGET between FROM and TO.
-  (let ((overlay (make-overlay from to nil t nil)))
-    (overlay-put overlay 'widget-doc widget)
-    (overlay-put overlay 'face widget-documentation-face)
-    (widget-put widget :doc-overlay overlay)))
+  (let ((extent (make-extent from to)))
+    (set-extent-property extent 'start-open t)
+    (set-extent-property extent 'widget-doc widget)
+    (set-extent-property extent 'face widget-documentation-face)
+    (widget-put widget :doc-extent extent)))
 
 (defmacro widget-specify-insert (&rest form)
   ;; Execute FORM without inheriting any text properties.
-  (`
-   (save-restriction
+  `(save-restriction
      (let ((inhibit-read-only t)
-	   result
 	   before-change-functions
 	   after-change-functions)
        (insert "<>")
        (narrow-to-region (- (point) 2) (point))
        (goto-char (1+ (point-min)))
-       (setq result (progn (,@ form)))
-       (delete-region (point-min) (1+ (point-min)))
-       (delete-region (1- (point-max)) (point-max))
-       (goto-char (point-max))
-       result))))
+       ;; We use `prog1' instead of a `result' variable, as the latter
+       ;; confuses the byte-compiler in some cases (a warning).
+       (prog1 (progn ,@form)
+	 (delete-region (point-min) (1+ (point-min)))
+	 (delete-region (1- (point-max)) (point-max))
+	 (goto-char (point-max))))))
 
 (defface widget-inactive-face '((((class grayscale color)
 				  (background dark))
@@ -458,56 +390,65 @@ new value."
 (defun widget-specify-inactive (widget from to)
   "Make WIDGET inactive for user modifications."
   (unless (widget-get widget :inactive)
-    (let ((overlay (make-overlay from to nil t nil)))
-      (overlay-put overlay 'face 'widget-inactive-face)
+    (let ((extent (make-extent from to)))
+      (set-extent-property extent 'start-open t)
+      (set-extent-property extent 'face 'widget-inactive-face)
       ;; This is disabled, as it makes the mouse cursor change shape.
-      ;; (overlay-put overlay 'mouse-face 'widget-inactive-face)
-      (overlay-put overlay 'evaporate t)
-      (overlay-put overlay 'priority 100)
-      (overlay-put overlay (if (string-match "XEmacs" emacs-version)
-			       'read-only
-			     'modification-hooks) '(widget-overlay-inactive))
-      (widget-put widget :inactive overlay))))
+      ;(set-extent-property extent 'mouse-face 'widget-inactive-face)
+      ;; ...actually, in XEmacs, we can easily choose our own pointer
+      ;; shapes.  However, the mouse-face of the "inner" extent will
+      ;; still be drawn.
+      (set-extent-property extent 'detachable t)
+      (set-extent-property extent 'priority 100)
+      (set-extent-property extent 'read-only 't)
+      (widget-put widget :inactive extent))))
 
-(defun widget-overlay-inactive (&rest junk)
-  "Ignoring the arguments, signal an error."
-  (unless inhibit-read-only
-    (error "Attempt to modify inactive widget")))
+;; We don't have modification functions, so this is unused.
+;(defun widget-overlay-inactive (&rest junk)
+;  "Ignoring the arguments, signal an error."
+;  (unless inhibit-read-only
+;    (error "Attempt to modify inactive widget")))
 
 
 (defun widget-specify-active (widget)
   "Make WIDGET active for user modifications."
   (let ((inactive (widget-get widget :inactive)))
     (when inactive
-      (delete-overlay inactive)
+      (delete-extent inactive)
       (widget-put widget :inactive nil))))
 
+
 ;;; Widget Properties.
 
-(defsubst widget-type (widget)
+(defun widget-type (widget)
   "Return the type of WIDGET, a symbol."
   (car widget))
 
-(defun widget-put (widget property value)
-  "In WIDGET set PROPERTY to VALUE.
+(when (or (not (fboundp 'widget-put))
+	  widget-shadow-subrs)
+  (defun widget-put (widget property value)
+    "In WIDGET set PROPERTY to VALUE.
 The value can later be retrived with `widget-get'."
-  (setcdr widget (plist-put (cdr widget) property value)))
+    (setcdr widget (plist-put (cdr widget) property value))))
 
-(defun widget-get (widget property)
-  "In WIDGET, get the value of PROPERTY.
+;; Recoded in C, for efficiency:
+(when (or (not (fboundp 'widget-get))
+	  widget-shadow-subrs)
+  (defun widget-get (widget property)
+    "In WIDGET, get the value of PROPERTY.
 The value could either be specified when the widget was created, or
 later with `widget-put'."
-  (let ((missing t)
-	value tmp)
-    (while missing
-      (cond ((setq tmp (widget-plist-member (cdr widget) property))
-	     (setq value (car (cdr tmp))
-		   missing nil))
-	    ((setq tmp (car widget))
-	     (setq widget (get tmp 'widget-type)))
-	    (t 
-	     (setq missing nil))))
-    value))
+    (let ((missing t)
+	  value tmp)
+      (while missing
+	(cond ((setq tmp (widget-plist-member (cdr widget) property))
+	       (setq value (car (cdr tmp))
+		     missing nil))
+	      ((setq tmp (car widget))
+	       (setq widget (get tmp 'widget-type)))
+	      (t 
+	       (setq missing nil))))
+      value)))
 
 (defun widget-get-indirect (widget property)
   "In WIDGET, get the value of PROPERTY.
@@ -526,11 +467,13 @@ Otherwise, just return the value."
 	 (widget-member (get (car widget) 'widget-type) property))
 	(t nil)))
 
-;;;###autoload
-(defun widget-apply (widget property &rest args)
-  "Apply the value of WIDGET's PROPERTY to the widget itself.
+(when (or (not (fboundp 'widget-apply))
+	  widget-shadow-subrs)
+  ;;This is in C, so don't ###utoload
+  (defun widget-apply (widget property &rest args)
+    "Apply the value of WIDGET's PROPERTY to the widget itself.
 ARGS are passed as extra arguments to the function."
-  (apply (widget-get widget property) widget args))
+    (apply (widget-get widget property) widget args)))
 
 (defun widget-value (widget)
   "Extract the current value of WIDGET."
@@ -558,6 +501,7 @@ ARGS are passed as extra arguments to the function."
       (widget-apply widget :action event)
     (error "Attempt to perform action on inactive widget")))
 
+
 ;;; Helper functions.
 ;;
 ;; These are widget specific.
@@ -597,21 +541,16 @@ If FUNCTION returns non-nil, the walk is cancelled.
 
 The arguments MAPARG, and BUFFER default to nil and (current-buffer),
 respectively."
-  (let ((cur (point-min))
-	(widget nil)
-	;; (parent nil)
-	(overlays (if buffer
-		      (save-excursion (set-buffer buffer) (overlay-lists))
-		    (overlay-lists))))
-    (setq overlays (append (car overlays) (cdr overlays)))
-    (while (setq cur (pop overlays))
-      (setq widget (overlay-get cur 'button))
-      (if (and widget (funcall function widget maparg))
-	  (setq overlays nil)))))
+  (map-extents (lambda (extent ignore)
+		 ;; If FUNCTION returns non-nil, we bail out
+		 (funcall function (extent-property extent 'button) maparg))
+	       nil nil nil nil nil
+	       'button))
 
+
 ;;; Glyphs.
 
-(defcustom widget-glyph-directory (concat data-directory "custom/")
+(defcustom widget-glyph-directory (locate-data-directory "custom")
   "Where widget glyphs are located.
 If this variable is nil, widget will try to locate the directory
 automatically."
@@ -633,48 +572,52 @@ automatically."
 		       (repeat :tag "Suffixes"
 			       (string :format "%v")))))
 
+(defvar widget-glyph-cache nil
+  "Cache of glyphs associated with strings (files).")
+
 (defun widget-glyph-find (image tag)
   "Create a glyph corresponding to IMAGE with string TAG as fallback.
-IMAGE should either already be a glyph, or be a file name sans
-extension (xpm, xbm, gif, jpg, or png) located in
-`widget-glyph-directory'." 
-  (cond ((not (and image 
-		   (string-match "XEmacs" emacs-version)
-		   widget-glyph-enable
-		   (fboundp 'make-glyph)
-		   (fboundp 'locate-file)
-		   image))
-	 ;; We don't want or can't use glyphs.
+IMAGE can already be a glyph, or a file name sans extension (xpm,
+ xbm, gif, jpg, or png) located in `widget-glyph-directory', or
+ in one of the data directories.
+It can also be a valid image instantiator, in which case it will be
+ used to make the glyph, with an additional TAG string fallback.
+If IMAGE is a list, it will be given unchanged to `make-glyph'."
+  (cond ((not (and image widget-glyph-enable))
+	 ;; We don't want to use glyphs.
 	 nil)
-	((and (fboundp 'glyphp)
-	      (glyphp image))
+	((glyphp image)
 	 ;; Already a glyph.  Use it.
 	 image)
 	((stringp image)
-	 ;; A string.  Look it up in relevant directories.
-	 (let* ((dirlist (list (or widget-glyph-directory
-				   (concat data-directory
-					   "custom/"))
-			       data-directory))
-		(formats widget-image-conversion)
-		file)
-	   (while (and formats (not file))
-	     (when (valid-image-instantiator-format-p (car (car formats)))
-	       (setq file (locate-file image dirlist
-				       (mapconcat 'identity
-						  (cdr (car formats))
-						  ":"))))
-	     (unless file
-	       (setq formats (cdr formats))))
-	   (and file
-		;; We create a glyph with the file as the default image
-		;; instantiator, and the TAG fallback
-		(make-glyph (list (vector (car (car formats)) ':file file)
-				  (vector 'string ':data tag))))))
+	 ;; A string.  Look it up in the cache first...
+	 (or (lax-plist-get widget-glyph-cache image)
+	     ;; ...and then in the relevant directories
+	     (let* ((dirlist (cons (or widget-glyph-directory
+				       (locate-data-directory "custom"))
+				   data-directory-list))
+		    (formats widget-image-conversion)
+		    file)
+	       (while (and formats (not file))
+		 (when (valid-image-instantiator-format-p (caar formats))
+		   (setq file (locate-file image dirlist
+					   (mapconcat 'identity (cdar formats)
+						      ":"))))
+		 (unless file
+		   (pop formats)))
+	       (when file
+		 ;; We create a glyph with the file as the default image
+		 ;; instantiator, and the TAG fallback
+		 (let ((glyph (make-glyph `([,(caar formats) :file ,file]
+					    [string :data ,tag]))))
+		   ;; Cache the glyph
+		   (setq widget-glyph-cache
+			 (lax-plist-put widget-glyph-cache image glyph))
+		   ;; ...and return it
+		   glyph)))))
 	((valid-instantiator-p image 'image)
 	 ;; A valid image instantiator (e.g. [gif :file "somefile"] etc.)
-	 (make-glyph (list image
-			   (vector 'string ':data tag))))
+	 (make-glyph `(,image [string :data ,tag])))
 	((consp image)
 	 ;; This could be virtually anything.  Let `make-glyph' sort it out.
 	 (make-glyph image))
@@ -684,25 +627,20 @@ extension (xpm, xbm, gif, jpg, or png) located in
 
 (defun widget-glyph-insert (widget tag image &optional down inactive)
   "In WIDGET, insert the text TAG or, if supported, IMAGE.
-IMAGE should either be a glyph, an image instantiator, or an image file
+IMAGE should either be a glyph, an image instantiator, an image file
 name sans extension (xpm, xbm, gif, jpg, or png) located in
-`widget-glyph-directory'.
+`widget-glyph-directory', or anything else allowed by
+`widget-glyph-find'.
 
 Optional arguments DOWN and INACTIVE is used instead of IMAGE when the
 glyph is pressed or inactive, respectively. 
-
-WARNING: If you call this with a glyph, and you want the user to be
-able to invoke the glyph, make sure it is unique.  If you use the
-same glyph for multiple widgets, invoking any of the glyphs will
-cause the last created widget to be invoked.
 
 Instead of an instantiator, you can also use a list of instantiators,
 or whatever `make-glyph' will accept.  However, in that case you must
 provide the fallback TAG as a part of the instantiator yourself."
   (let ((glyph (widget-glyph-find image tag)))
     (if glyph 
-	(widget-glyph-insert-glyph widget 
-				   glyph
+	(widget-glyph-insert-glyph widget glyph
 				   (widget-glyph-find down tag)
 				   (widget-glyph-find inactive tag))
       (insert tag))))
@@ -711,27 +649,23 @@ provide the fallback TAG as a part of the instantiator yourself."
   "In WIDGET, insert GLYPH.
 If optional arguments DOWN and INACTIVE are given, they should be
 glyphs used when the widget is pushed and inactive, respectively."
-  (when widget
-    (set-glyph-property glyph 'widget widget)
-    (when down
-      (set-glyph-property down 'widget widget))
-    (when inactive
-      (set-glyph-property inactive 'widget widget)))
   (insert "*")
-  (let ((ext (make-extent (point) (1- (point))))
+  (let ((extent (make-extent (point) (1- (point))))
 	(help-echo (and widget (widget-get widget :help-echo))))
-    (set-extent-property ext 'invisible t)
-    (set-extent-property ext 'start-open t)
-    (set-extent-property ext 'end-open t)
-    (set-extent-end-glyph ext glyph)
+    (set-extent-property extent 'widget widget)
+    (set-extent-property extent 'invisible t)
+    (set-extent-property extent 'start-open t)
+    (set-extent-property extent 'end-open t)
+    (set-extent-end-glyph extent glyph)
     (when help-echo
-      (set-extent-property ext 'balloon-help help-echo)
-      (set-extent-property ext 'help-echo help-echo)))
+      (set-extent-property extent 'balloon-help help-echo)
+      (set-extent-property extent 'help-echo help-echo)))
   (when widget
     (widget-put widget :glyph-up glyph)
     (when down (widget-put widget :glyph-down down))
     (when inactive (widget-put widget :glyph-inactive inactive))))
 
+
 ;;; Buttons.
 
 (defgroup widget-button nil
@@ -748,6 +682,7 @@ glyphs used when the widget is pushed and inactive, respectively."
   :type 'string
   :group 'widget-button)
 
+
 ;;; Creating Widgets.
 
 ;;;###autoload
@@ -840,7 +775,7 @@ The optional ARGS are additional keyword arguments."
 	(let ((value (widget-get widget :value)))
 	  (widget-put widget
 		      :value (widget-apply widget :value-to-internal value))))
-    ;; Return the newly create widget.
+    ;; Return the newly created widget.
     widget))
 
 (defun widget-insert (&rest args)
@@ -879,26 +814,30 @@ button end points."
   (apply 'widget-convert-text type from to from to args))
 
 (defun widget-leave-text (widget)
-  "Remove markers and overlays from WIDGET and its children."
+  "Remove markers and extents from WIDGET and its children."
   (let ((from (widget-get widget :from))
 	(to (widget-get widget :to))
-	(button (widget-get widget :button-overlay))
-	(sample (widget-get widget :sample-overlay))
-	(doc (widget-get widget :doc-overlay))
-	(field (widget-get widget :field-overlay))
+	(button (widget-get widget :button-extent))
+	(sample (widget-get widget :sample-extent))
+	(doc (widget-get widget :doc-extent))
+	(field (widget-get widget :field-extent))
 	(children (widget-get widget :children)))
     (set-marker from nil)
     (set-marker to nil)
+    ;; Maybe we should delete the extents here?  As this code doesn't
+    ;; remove them from widget structures, maybe it's safer to just
+    ;; detach them.  That's what `delete-overlay' did.
     (when button
-      (delete-overlay button))
+      (detach-extent button))
     (when sample
-      (delete-overlay sample))
+      (detach-extent sample))
     (when doc
-      (delete-overlay doc))
+      (detach-extent doc))
     (when field
-      (delete-overlay field))
-    (mapcar 'widget-leave-text children)))
+      (detach-extent field))
+    (mapc 'widget-leave-text children)))
 
+
 ;;; Keymap and Commands.
 
 (defvar widget-keymap nil
@@ -907,15 +846,13 @@ Recommended as a parent keymap for modes using widgets.")
 
 (unless widget-keymap 
   (setq widget-keymap (make-sparse-keymap))
-  (define-key widget-keymap "\t" 'widget-forward)
+  (define-key widget-keymap [tab] 'widget-forward)
   (define-key widget-keymap [(shift tab)] 'widget-backward)
+  (define-key widget-keymap [(meta tab)] 'widget-backward)
   (define-key widget-keymap [backtab] 'widget-backward)
-  (if (string-match "XEmacs" emacs-version)
-      (progn 
-	;;Glyph support.
-	(define-key widget-keymap [button1] 'widget-button1-click) 
-	(define-key widget-keymap [button2] 'widget-button-click))
-    (define-key widget-keymap [down-mouse-2] 'widget-button-click))
+  ;;Glyph support.
+  (define-key widget-keymap [button1] 'widget-button1-click) 
+  (define-key widget-keymap [button2] 'widget-button-click)
   (define-key widget-keymap "\C-m" 'widget-button-press))
 
 (defvar widget-global-map global-map
@@ -926,26 +863,27 @@ Recommended as a parent keymap for modes using widgets.")
   "Keymap used inside an editable field.")
 
 (unless widget-field-keymap 
-  (setq widget-field-keymap (copy-keymap widget-keymap))
-  (unless (string-match "XEmacs" (emacs-version))
-    (define-key widget-field-keymap [menu-bar] 'nil))
+  (setq widget-field-keymap (make-sparse-keymap))
+  (set-keymap-parents widget-field-keymap global-map)
   (define-key widget-field-keymap "\C-k" 'widget-kill-line)
-  (define-key widget-field-keymap "\M-\t" 'widget-complete)
+  (define-key widget-field-keymap [(meta tab)] 'widget-complete)
+  (define-key widget-field-keymap [tab] 'widget-forward)
+  (define-key widget-field-keymap [(shift tab)] 'widget-backward)
   (define-key widget-field-keymap "\C-m" 'widget-field-activate)
   (define-key widget-field-keymap "\C-a" 'widget-beginning-of-line)
   (define-key widget-field-keymap "\C-e" 'widget-end-of-line)
-  (set-keymap-parent widget-field-keymap global-map))
+  (define-key widget-field-keymap "\C-t" 'widget-transpose-chars))
 
 (defvar widget-text-keymap nil
   "Keymap used inside a text field.")
 
 (unless widget-text-keymap 
-  (setq widget-text-keymap (copy-keymap widget-keymap))
-  (unless (string-match "XEmacs" (emacs-version))
-    (define-key widget-text-keymap [menu-bar] 'nil))
+  (setq widget-text-keymap (make-sparse-keymap))
+  (set-keymap-parents widget-field-keymap global-map)
   (define-key widget-text-keymap "\C-a" 'widget-beginning-of-line)
   (define-key widget-text-keymap "\C-e" 'widget-end-of-line)
-  (set-keymap-parent widget-text-keymap global-map))
+  (define-key widget-text-keymap "\C-t" 'widget-transpose-chars))
+
 
 (defun widget-field-activate (pos &optional event)
   "Invoke the ediable field at point."
@@ -967,61 +905,54 @@ Recommended as a parent keymap for modes using widgets.")
 (defun widget-button-click (event)
   "Invoke button below mouse pointer."
   (interactive "@e")
-  (cond ((and (fboundp 'event-glyph)
-	      (event-glyph event))
+  (cond ((event-glyph event)
 	 (widget-glyph-click event))
 	((widget-event-point event)
 	 (let* ((pos (widget-event-point event))
 		(button (get-char-property pos 'button)))
 	   (if button
-	       (let* ((overlay (widget-get button :button-overlay))
-		      (face (overlay-get overlay 'face))
-		      (mouse-face (overlay-get overlay 'mouse-face)))
+	       (let* ((extent (widget-get button :button-extent))
+		      (face (extent-property extent 'face))
+		      (mouse-face (extent-property extent 'mouse-face)))
 		 (unwind-protect
-		     (let ((track-mouse t))
-		       (overlay-put overlay
-				    'face 'widget-button-pressed-face)
-		       (overlay-put overlay 
-				    'mouse-face 'widget-button-pressed-face)
+		     (progn
+		       (set-extent-property extent 'face
+					    'widget-button-pressed-face)
+		       (set-extent-property extent 'mouse-face
+					    'widget-button-pressed-face)
 		       (unless (widget-apply button :mouse-down-action event)
 			 (while (not (button-release-event-p event))
-			   (setq event (widget-read-event)
+			   (setq event (next-event)
 				 pos (widget-event-point event))
 			   (if (and pos
 				    (eq (get-char-property pos 'button)
 					button))
-			       (progn 
-				 (overlay-put overlay 
-					      'face
-					      'widget-button-pressed-face)
-				 (overlay-put overlay 
-					      'mouse-face 
-					      'widget-button-pressed-face))
-			     (overlay-put overlay 'face face)
-			     (overlay-put overlay 'mouse-face mouse-face))))
+			       (progn
+				 (set-extent-property extent 'face
+						      'widget-button-pressed-face)
+				 (set-extent-property extent 'mouse-face
+						      'widget-button-pressed-face))
+			     (set-extent-property extent 'face face)
+			     (set-extent-property extent
+						  'mouse-face mouse-face))))
 		       (when (and pos 
 				  (eq (get-char-property pos 'button) button))
 			 (widget-apply-action button event)))
-		   (overlay-put overlay 'face face)
-		   (overlay-put overlay 'mouse-face mouse-face)))
+		   (set-extent-property extent 'face face)
+		   (set-extent-property extent 'mouse-face mouse-face)))
 	     (let ((up t)
 		   command)
 	       ;; Find the global command to run, and check whether it
 	       ;; is bound to an up event.
 	       (cond ((setq command	;down event
-			    (lookup-key widget-global-map [ button2 ]))
-		      (setq up nil))
-		     ((setq command	;down event
-			    (lookup-key widget-global-map [ down-mouse-2 ]))
+			    (lookup-key widget-global-map [button2]))
 		      (setq up nil))
 		     ((setq command	;up event
-			    (lookup-key widget-global-map [ button2up ])))
-		     ((setq command	;up event
-			    (lookup-key widget-global-map [ mouse-2]))))
+			    (lookup-key widget-global-map [button2up]))))
 	       (when up
 		 ;; Don't execute up events twice.
 		 (while (not (button-release-event-p event))
-		   (setq event (widget-read-event))))
+		   (setq event (next-event))))
 	       (when command
 		 (call-interactively command))))))
 	(t
@@ -1030,16 +961,17 @@ Recommended as a parent keymap for modes using widgets.")
 (defun widget-button1-click (event)
   "Invoke glyph below mouse pointer."
   (interactive "@e")
-  (if (and (fboundp 'event-glyph)
-	   (event-glyph event))
+  (if (event-glyph event)
       (widget-glyph-click event)
-    (call-interactively (lookup-key widget-global-map (this-command-keys)))))
+    (let ((command (lookup-key widget-global-map (this-command-keys))))
+      (and (commandp command)
+	   (call-interactively command)))))
 
 (defun widget-glyph-click (event)
   "Handle click on a glyph."
   (let* ((glyph (event-glyph event))
-	 (widget (glyph-property glyph 'widget))
 	 (extent (event-glyph-extent event))
+	 (widget (extent-property extent 'widget))
 	 (down-glyph (or (and widget (widget-get widget :glyph-down)) glyph))
 	 (up-glyph (or (and widget (widget-get widget :glyph-up)) glyph))
 	 (last event))
@@ -1054,7 +986,7 @@ Recommended as a parent keymap for modes using widgets.")
       (set-extent-property extent 'end-glyph up-glyph))
     ;; Apply widget action.
     (when (eq extent (event-glyph-extent last))
-      (let ((widget (glyph-property (event-glyph event) 'widget)))
+      (let ((widget (extent-property (event-glyph-extent event) 'widget)))
 	(cond ((null widget)
 	       (message "You clicked on a glyph."))
 	      ((not (widget-apply widget :active))
@@ -1077,8 +1009,7 @@ Recommended as a parent keymap for modes using widgets.")
 POS defaults to the value of (point)."
   (unless pos
     (setq pos (point)))
-  (let ((widget (or (get-char-property (point) 'button)
-		    (get-char-property (point) 'field))))
+  (let ((widget (widget-at pos)))
     (if widget
 	(let ((order (widget-get widget :tab-order)))
 	  (if order
@@ -1088,27 +1019,61 @@ POS defaults to the value of (point)."
 	    widget))
       nil)))
 
-(defcustom widget-use-overlay-change (string-match "XEmacs" emacs-version)
-  "If non-nil, use overlay change functions to tab around in the buffer.
-This is much faster, but doesn't work reliably on Emacs 19.34."
-  :type 'boolean
-  :group 'widgets)
+;; Return the button or field extent at point.
+(defun widget-button-or-field-extent (pos)
+  (or (and (get-char-property pos 'button)
+	   (widget-get (get-char-property pos 'button)
+		       :button-extent))
+      (and (get-char-property pos 'field)
+	   (widget-get (get-char-property pos 'field)
+		       :field-extent))))
+
+(defun widget-next-button-or-field (pos)
+  "Find the next button, or field, and return its start position.
+If none is found, return (point-max).
+Internal function, don't use it outside `wid-edit'."
+  (let* ((at-point (widget-button-or-field-extent pos))
+	 (extent (map-extents
+		  (lambda (ext ignore)
+		    (if (or (extent-property ext 'button)
+			    (extent-property ext 'field))
+			ext
+		      nil))
+		  nil (if at-point (extent-end-position at-point) pos) nil)))
+    (if extent
+	(extent-start-position extent)
+      (point-max))))
+
+(defun widget-previous-button-or-field (pos)
+  "Find the previous button, or field, and return its start position.
+If none is found, return (point-min).
+Internal function, don't use it outside `wid-edit'."
+  (let* ((at-point (widget-button-or-field-extent pos))
+	 previous-extent)
+    (map-extents
+     (lambda (ext ignore)
+       (when (or (extent-property ext 'button)
+		 (extent-property ext 'field))
+	 (if (eq ext at-point)
+	     previous-extent
+	   (setq previous-extent ext)
+	   nil)))
+     nil nil pos)
+    (if previous-extent
+	(extent-start-position previous-extent)
+    (point-min))))
 
 (defun widget-move (arg)
   "Move point to the ARG next field or button.
 ARG may be negative to move backward."
-  (or (bobp) (> arg 0) (backward-char))
   (let ((pos (point))
 	(number arg)
 	(old (widget-tabable-at)))
     ;; Forward.
     (while (> arg 0)
-      (cond ((eobp)
-	     (goto-char (point-min)))
-	    (widget-use-overlay-change
-	     (goto-char (next-overlay-change (point))))
-	    (t
-	     (forward-char 1)))
+      (goto-char (if (eobp)
+		     (point-min)
+		   (widget-next-button-or-field (point))))
       (and (eq pos (point))
 	   (eq arg number)
 	   (error "No buttons or fields found"))
@@ -1119,23 +1084,19 @@ ARG may be negative to move backward."
 	    (setq old new)))))
     ;; Backward.
     (while (< arg 0)
-      (cond ((bobp)
-	     (goto-char (point-max)))
-	    (widget-use-overlay-change
-	     (goto-char (previous-overlay-change (point))))
-	    (t
-	     (backward-char 1)))
+      (goto-char (if (bobp)
+		     (point-max)
+		   (widget-previous-button-or-field (point))))
       (and (eq pos (point))
 	   (eq arg number)
 	   (error "No buttons or fields found"))
       (let ((new (widget-tabable-at)))
 	(when new
 	  (unless (eq new old)
-	    (setq arg (1+ arg))))))
+	    (incf arg)))))
     (let ((new (widget-tabable-at)))
-      (while (eq (widget-tabable-at) new)
-	(backward-char)))
-    (forward-char))
+      (goto-char (extent-start-position (or (widget-get new :button-extent)
+					    (widget-get new :field-extent))))))
   (widget-echo-help (point))
   (run-hooks 'widget-move-hook))
 
@@ -1155,25 +1116,21 @@ With optional ARG, move across that many fields."
 
 (defun widget-beginning-of-line ()
   "Go to beginning of field or beginning of line, whichever is first."
-  (interactive)
+  (interactive "_")
   (let* ((field (widget-field-find (point)))
 	 (start (and field (widget-field-start field))))
     (if (and start (not (eq start (point))))
 	(goto-char start)
-      (call-interactively 'beginning-of-line)))
-  ;; XEmacs: preserve the region
-  (setq zmacs-region-stays t))
+      (call-interactively 'beginning-of-line))))
 
 (defun widget-end-of-line ()
   "Go to end of field or end of line, whichever is first."
-  (interactive)
+  (interactive "_")
   (let* ((field (widget-field-find (point)))
 	 (end (and field (widget-field-end field))))
     (if (and end (not (eq end (point))))
 	(goto-char end)
-      (call-interactively 'end-of-line)))
-  ;; XEmacs: preserve the region
-  (setq zmacs-region-stays t))
+      (call-interactively 'end-of-line))))
 
 (defun widget-kill-line ()
   "Kill to end of field or end of line, whichever is first."
@@ -1184,6 +1141,26 @@ With optional ARG, move across that many fields."
     (if (and field (> newline end))
 	(kill-region (point) end)
       (call-interactively 'kill-line))))
+
+(defun widget-transpose-chars (arg)
+  "Like `transpose-chars', but works correctly at end of widget."
+  (interactive "*P")
+  (let* ((field (widget-field-find (point)))
+	 (start (and field (widget-field-start field)))
+	 (end (and field (widget-field-end field)))
+	 (last-non-space (and start end
+			      (save-excursion
+				(goto-char end)
+				(skip-chars-backward " \t\n" start)
+				(point)))))
+    (if (and last-non-space
+	     (= last-non-space (1+ start)))
+	;; 1-character field
+	nil
+      (when (and (null arg)
+		 (= last-non-space (point)))
+	(forward-char -1))
+      (transpose-chars arg))))
 
 (defcustom widget-complete-field (lookup-key global-map "\M-\t")
   "Default function to call for completion inside fields."
@@ -1200,6 +1177,7 @@ When not inside a field, move to the previous button or field."
 	(widget-apply field :complete)
       (error "Not in an editable field"))))
 
+
 ;;; Setting up the buffer.
 
 (defvar widget-field-new nil)
@@ -1220,12 +1198,11 @@ When not inside a field, move to the previous button or field."
       (setq field (car widget-field-new)
 	    widget-field-new (cdr widget-field-new)
 	    widget-field-list (cons field widget-field-list))
-      (let ((from (car (widget-get field :field-overlay)))
-	    (to (cdr (widget-get field :field-overlay))))
-	(widget-specify-field field 
-			      (marker-position from) (marker-position to))
-	(set-marker from nil)
-	(set-marker to nil))))
+      (let ((extent (widget-get field :field-extent)))
+	(widget-specify-field field
+			      (extent-start-position extent)
+			      (extent-end-position extent))
+	(delete-extent extent))))
   (widget-clear-undo)
   (widget-add-change))
 
@@ -1239,22 +1216,22 @@ When not inside a field, move to the previous button or field."
 
 (defun widget-field-buffer (widget)
   "Return the start of WIDGET's editing field."
-  (let ((overlay (widget-get widget :field-overlay)))
-    (and overlay (overlay-buffer overlay))))
+  (let ((extent (widget-get widget :field-extent)))
+    (and extent (extent-object extent))))
 
 (defun widget-field-start (widget)
   "Return the start of WIDGET's editing field."
-  (let ((overlay (widget-get widget :field-overlay)))
-    (and overlay (overlay-start overlay))))
+  (let ((extent (widget-get widget :field-extent)))
+    (and extent (extent-start-position extent))))
 
 (defun widget-field-end (widget)
   "Return the end of WIDGET's editing field."
-  (let ((overlay (widget-get widget :field-overlay)))
-    ;; Don't subtract one if local-map works at the end of the overlay.
-    (and overlay (if (or widget-field-add-space
-			 (null (widget-get widget :size)))
-		     (1- (overlay-end overlay))
-		   (overlay-end overlay)))))
+  (let ((extent (widget-get widget :field-extent)))
+    ;; Don't subtract one if local-map works at the end of the extent.
+    (and extent (if (or widget-field-add-space
+			(null (widget-get widget :size)))
+		    (1- (extent-end-position extent))
+		  (extent-end-position extent)))))
 
 (defun widget-field-find (pos)
   "Return the field at POS.
@@ -1340,10 +1317,11 @@ Unlike (get-char-property POS 'field) this, works with empty fields too."
 		    (unless (eq old secret)
 		      (subst-char-in-region begin (1+ begin) old secret)
 		      (put-text-property begin (1+ begin) 'secret old))
-		    (setq begin (1+ begin)))))))
+		    (incf begin))))))
 	  (widget-apply field :notify field)))
     (error (debug "After Change"))))
 
+
 ;;; Widget Functions
 ;;
 ;; These functions are used in the definition of multiple widgets. 
@@ -1355,9 +1333,9 @@ Optional EVENT is the event that triggered the action."
 
 (defun widget-children-value-delete (widget)
   "Delete all :children and :buttons in WIDGET."
-  (mapcar 'widget-delete (widget-get widget :children))
+  (mapc 'widget-delete (widget-get widget :children))
   (widget-put widget :children nil)
-  (mapcar 'widget-delete (widget-get widget :buttons))
+  (mapc 'widget-delete (widget-get widget :buttons))
   (widget-put widget :buttons nil))
 
 (defun widget-children-validate (widget)
@@ -1453,7 +1431,7 @@ If that does not exists, call the value of `widget-complete-field'."
 	       ((eq escape ?n)
 		(when (widget-get widget :indent)
 		  (insert "\n")
-		  (insert-char ?  (widget-get widget :indent))))
+		  (insert-char ?\  (widget-get widget :indent))))
 	       ((eq escape ?t)
 		(let ((glyph (widget-get widget :tag-glyph))
 		      (tag (widget-get widget :tag)))
@@ -1477,7 +1455,7 @@ If that does not exists, call the value of `widget-complete-field'."
 		(if (and button-begin (not button-end))
 		    (widget-apply widget :value-create)
 		  (setq value-pos (point))))
-	       (t 
+	       (t
 		(widget-apply widget :format-handler escape)))))
      ;; Specify button, sample, and doc, and insert value.
      (and button-begin button-end
@@ -1553,22 +1531,22 @@ If that does not exists, call the value of `widget-complete-field'."
   ;; Remove widget from the buffer.
   (let ((from (widget-get widget :from))
 	(to (widget-get widget :to))
-	(inactive-overlay (widget-get widget :inactive))
-	(button-overlay (widget-get widget :button-overlay))
-	(sample-overlay (widget-get widget :sample-overlay))
-	(doc-overlay (widget-get widget :doc-overlay))
+	(inactive-extent (widget-get widget :inactive))
+	(button-extent (widget-get widget :button-extent))
+	(sample-extent (widget-get widget :sample-extent))
+	(doc-extent (widget-get widget :doc-extent))
 	before-change-functions
 	after-change-functions
 	(inhibit-read-only t))
     (widget-apply widget :value-delete)
-    (when inactive-overlay
-      (delete-overlay inactive-overlay))
-    (when button-overlay
-      (delete-overlay button-overlay))
-    (when sample-overlay
-      (delete-overlay sample-overlay))
-    (when doc-overlay
-      (delete-overlay doc-overlay))
+    (when inactive-extent
+      (detach-extent inactive-extent))
+    (when button-extent
+      (detach-extent button-extent))
+    (when sample-extent
+      (detach-extent sample-extent))
+    (when doc-extent
+      (detach-extent doc-extent))
     (when (< from to)
       ;; Kludge: this doesn't need to be true for empty formats.
       (delete-region from to))
@@ -1690,7 +1668,7 @@ If END is omitted, it defaults to the length of LIST."
 
 ;;; The `push-button' Widget.
 
-(defcustom widget-push-button-gui t
+(defcustom widget-push-button-gui widget-glyph-enable
   "If non nil, use GUI push buttons when available."
   :group 'widgets
   :type 'boolean)
@@ -1722,28 +1700,26 @@ If END is omitted, it defaults to the length of LIST."
 	 (tag-glyph (widget-get widget :tag-glyph))
 	 (text (concat widget-push-button-prefix
 		       tag widget-push-button-suffix))
-	 (gui (cdr (assoc tag widget-push-button-cache))))
+	 (gui-glyphs (lax-plist-get widget-push-button-cache tag)))
     (cond (tag-glyph
 	   (widget-glyph-insert widget text tag-glyph))
-	  ((and (fboundp 'make-gui-button)
-	     (fboundp 'make-glyph)
-	     widget-push-button-gui
-	     (fboundp 'device-on-window-system-p)
-	     (device-on-window-system-p)
-	     (string-match "XEmacs" emacs-version))
-	   (unless gui
-	     (setq gui (make-gui-button tag 'widget-gui-action widget))
-	     (push (cons tag gui) widget-push-button-cache))
-	   (widget-glyph-insert-glyph widget
-				      (make-glyph
-				       (list (nth 0 (aref gui 1))
-					     (vector 'string ':data text)))
-				      (make-glyph
-				       (list (nth 1 (aref gui 1))
-					     (vector 'string ':data text)))
-				      (make-glyph
-				       (list (nth 2 (aref gui 1))
-					     (vector 'string ':data text)))))
+	  ;; We must check for console-on-window-system-p here,
+	  ;; because GUI will not work otherwise (it needs RGB
+	  ;; components for colors, and they are not known on TTYs).
+	  ((and widget-push-button-gui
+		(console-on-window-system-p))
+	   (unless gui-glyphs
+	     (let ((gui (make-gui-button tag 'widget-gui-action widget)))
+	       (setq
+		gui-glyphs
+		(list
+		 (make-glyph `(,(nth 0 (aref gui 1)) [string :data ,text]))
+		 (make-glyph `(,(nth 1 (aref gui 1)) [string :data ,text]))
+		 (make-glyph `(,(nth 2 (aref gui 1)) [string :data ,text]))))
+	       (setq widget-push-button-cache
+		     (lax-plist-put widget-push-button-cache tag gui-glyphs))))
+	   (widget-glyph-insert-glyph
+	    widget (nth 0 gui-glyphs) (nth 1 gui-glyphs) (nth 2 gui-glyphs)))
 	  (t
 	   (insert text)))))
 
@@ -1774,7 +1750,11 @@ If END is omitted, it defaults to the length of LIST."
 
 (define-widget 'info-link 'link
   "A link to an info file."
+  :help-echo 'widget-info-link-help-echo
   :action 'widget-info-link-action)
+
+(defun widget-info-link-help-echo (widget)
+  (concat "Read the manual entry `" (widget-value widget) "'"))
 
 (defun widget-info-link-action (widget &optional event)
   "Open the info node specified by WIDGET."
@@ -1784,7 +1764,11 @@ If END is omitted, it defaults to the length of LIST."
 
 (define-widget 'url-link 'link
   "A link to an www page."
+  :help-echo 'widget-url-link-help-echo
   :action 'widget-url-link-action)
+
+(defun widget-url-link-help-echo (widget)
+  (concat "Go to <URL:" (widget-value widget) ">"))
 
 (defun widget-url-link-action (widget &optional event)
   "Open the url specified by WIDGET."
@@ -1805,18 +1789,22 @@ If END is omitted, it defaults to the length of LIST."
 
 (define-widget 'emacs-library-link 'link
   "A link to an Emacs Lisp library file."
+  :help-echo 'widget-emacs-library-link-help-echo
   :action 'widget-emacs-library-link-action)
+
+(defun widget-emacs-library-link-help-echo (widget)
+  (concat "Visit " (widget-value widget)))
 
 (defun widget-emacs-library-link-action (widget &optional event)
   "Find the Emacs Library file specified by WIDGET."
   (find-file (locate-library (widget-value widget))))
 
 ;;; The `emacs-commentary-link' Widget.
-    
+
 (define-widget 'emacs-commentary-link 'link
   "A link to Commentary in an Emacs Lisp library file."
   :action 'widget-emacs-commentary-link-action)
-    
+
 (defun widget-emacs-commentary-link-action (widget &optional event)
   "Find the Commentary section of the Emacs file specified by WIDGET."
   (finder-commentary (widget-value widget)))
@@ -1845,7 +1833,7 @@ If END is omitted, it defaults to the length of LIST."
   "History of field minibuffer edits.")
 
 (defun widget-field-prompt-internal (widget prompt initial history)
-  ;; Read string for WIDGET promptinhg with PROMPT.
+  ;; Read string for WIDGET prompting with PROMPT.
   ;; INITIAL is the initial input and HISTORY is a symbol containing
   ;; the earlier input.
   (read-string prompt initial history))
@@ -1864,9 +1852,21 @@ If END is omitted, it defaults to the length of LIST."
 (defvar widget-edit-functions nil)
 
 (defun widget-field-action (widget &optional event)
-  ;; Move to next field.
-  (widget-forward 1)
+  ;; Edit the value in the minibuffer.
+  (let ((invalid (widget-apply widget :validate)))
+    (let ((prompt (concat (widget-apply widget :menu-tag-get) ": "))
+	  (value (unless invalid 
+		   (widget-value widget))))
+      (let ((answer (widget-apply widget :prompt-value prompt value invalid)))
+	(widget-value-set widget answer)))
+    (widget-apply widget :notify widget event)
+    (widget-setup))
   (run-hook-with-args 'widget-edit-functions widget))
+
+;(defun widget-field-action (widget &optional event)
+;  ;; Move to next field.
+;  (widget-forward 1)
+;  (run-hook-with-args 'widget-edit-functions widget))
 
 (defun widget-field-validate (widget)
   ;; Valid if the content matches `:valid-regexp'.
@@ -1882,31 +1882,31 @@ If END is omitted, it defaults to the length of LIST."
   (let ((size (widget-get widget :size))
 	(value (widget-get widget :value))
 	(from (point))
-	;; This is changed to a real overlay in `widget-setup'.  We
-	;; need the end points to behave differently until
-	;; `widget-setup' is called.   
-	(overlay (cons (make-marker) (make-marker))))
-    (widget-put widget :field-overlay overlay)
+	;; This used to make `field-overlay' a cons of two markers,
+	;; and revert them to a real overlay in `widget-setup',
+	;; because you can't change overlay insertion type.  However,
+	;; we can do that with extents.
+	extent)
     (insert value)
     (and size
 	 (< (length value) size)
 	 (insert-char ?\  (- size (length value))))
     (unless (memq widget widget-field-list)
-      (setq widget-field-new (cons widget widget-field-new)))
-    (move-marker (cdr overlay) (point))
-    (set-marker-insertion-type (cdr overlay) nil)
+      (push widget widget-field-new))
+    (setq extent (make-extent from (point)))
+    (set-extent-property extent 'end-open t)
+    (widget-put widget :field-extent extent)
     (when (null size)
       (insert ?\n))
-    (move-marker (car overlay) from)
-    (set-marker-insertion-type (car overlay) t)))
+    (set-extent-property extent 'start-open t)))
 
 (defun widget-field-value-delete (widget)
   ;; Remove the widget from the list of active editing fields.
   (setq widget-field-list (delq widget widget-field-list))
   ;; These are nil if the :format string doesn't contain `%v'.
-  (let ((overlay (widget-get widget :field-overlay)))
-    (when overlay
-      (delete-overlay overlay))))
+  (let ((extent (widget-get widget :field-extent)))
+    (when extent
+      (detach-extent extent))))
 
 (defun widget-field-value-get (widget)
   ;; Return current text in editing field.
@@ -1917,7 +1917,7 @@ If END is omitted, it defaults to the length of LIST."
 	(secret (widget-get widget :secret))
 	(old (current-buffer)))
     (if (and from to)
-	(progn 
+	(progn
 	  (set-buffer buffer)
 	  (while (and size
 		      (not (zerop size))
@@ -1930,7 +1930,7 @@ If END is omitted, it defaults to the length of LIST."
 		(while (< (+ from index) to)
 		  (aset result index
 			(get-char-property (+ from index) 'secret))
-		  (setq index (1+ index)))))
+		  (incf index))))
 	    (set-buffer old)
 	    result))
       (widget-get widget :value))))
@@ -2004,11 +2004,8 @@ when he invoked the menu."
   ;; Return non-nil if we need a menu.
   (let ((args (widget-get widget :args))
 	(old (widget-get widget :choice)))
-    (cond ((not window-system)
+    (cond ((not (console-on-window-system-p))
 	   ;; No place to pop up a menu.
-	   nil)
-	  ((not (or (fboundp 'x-popup-menu) (fboundp 'popup-menu)))
-	   ;; No way to pop up a menu.
 	   nil)
 	  ((< (length args) 2)
 	   ;; Empty or singleton list, just return the value.
@@ -2236,7 +2233,7 @@ when he invoked the menu."
 	      (greedy
 	       (setq rest (append rest (list (car values)))
 		     values (cdr values)))
-	      (t 
+	      (t
 	       (setq rest (append rest values)
 		     values nil)))))
     (cons found rest)))
@@ -2586,7 +2583,7 @@ when he invoked the menu."
 	found)
     (while (and value ok)
       (let ((answer (widget-match-inline type value)))
-	(if answer 
+	(if answer
 	    (setq found (append found (car answer))
 		  value (cdr answer))
 	  (setq ok nil))))
@@ -2738,7 +2735,7 @@ when he invoked the menu."
       (setq argument (car args)
 	    args (cdr args)
 	    answer (widget-match-inline argument vals))
-      (if answer 
+      (if answer
 	  (setq vals (cdr answer)
 		found (append found (car answer)))
 	(setq vals nil
@@ -2877,7 +2874,18 @@ link for that string."
 	  (widget-documentation-link-add widget start (point))
 	  (push (widget-create-child-and-convert
 		 widget 'visibility
-		 :help-echo "Show or hide rest of the documentation."
+		 :help-echo (lambda (widget)
+			      ;; This can get called directly from
+			      ;; default-mouse-motion-handler, with an
+			      ;; extent argument.
+			      (and (extentp widget)
+				   (setq
+				    widget (widget-at
+					    (extent-start-position widget))))
+			      (concat
+			       (if (widget-value widget)
+				   "Hide" "Show")
+			       " the rest of the documentation."))
 		 :off "More"
 		 :action 'widget-parent-action
 		 shown)
@@ -3080,40 +3088,41 @@ It will read a directory name from the minibuffer when invoked."
   :prompt-history 'widget-variable-prompt-value-history
   :tag "Variable")
 
-(when (featurep 'mule)
-  (defvar widget-coding-system-prompt-value-history nil
-    "History of input to `widget-coding-system-prompt-value'.")
-  
-  (define-widget 'coding-system 'symbol
-    "A MULE coding-system."
-    :format "%{%t%}: %v"
-    :tag "Coding system"
-    :prompt-history 'widget-coding-system-prompt-value-history
-    :prompt-value 'widget-coding-system-prompt-value
-    :action 'widget-coding-system-action)
-  
-  (defun widget-coding-system-prompt-value (widget prompt value unbound)
-    ;; Read coding-system from minibuffer.
-    (intern
-     (completing-read (format "%s (default %s) " prompt value)
-		      (mapcar (function
-			       (lambda (sym)
-				 (list (symbol-name sym))
-				 ))
-			      (coding-system-list)))))
+;; This part issues a warning when compiling without Mule.  Is there a
+;; way of shutting it up?
+;;
+;; OK, I'll simply comment the whole thing out, until someone decides
+;; to do something with it.
+;(defvar widget-coding-system-prompt-value-history nil
+;  "History of input to `widget-coding-system-prompt-value'.")
 
-  (defun widget-coding-system-action (widget &optional event)
-    ;; Read a file name from the minibuffer.
-    (let ((answer
-	   (widget-coding-system-prompt-value
-	    widget
-	    (widget-apply widget :menu-tag-get)
-	    (widget-value widget)
-	    t)))
-      (widget-value-set widget answer)
-      (widget-apply widget :notify widget event)
-      (widget-setup)))
-  )
+;(define-widget 'coding-system 'symbol
+;  "A MULE coding-system."
+;  :format "%{%t%}: %v"
+;  :tag "Coding system"
+;  :prompt-history 'widget-coding-system-prompt-value-history
+;  :prompt-value 'widget-coding-system-prompt-value
+;  :action 'widget-coding-system-action)
+
+;(defun widget-coding-system-prompt-value (widget prompt value unbound)
+;  ;; Read coding-system from minibuffer.
+;  (intern
+;   (completing-read (format "%s (default %s) " prompt value)
+;		    (mapcar (lambda (sym)
+;			      (list (symbol-name sym)))
+;			    (coding-system-list)))))
+
+;(defun widget-coding-system-action (widget &optional event)
+;  ;; Read a file name from the minibuffer.
+;  (let ((answer
+;	 (widget-coding-system-prompt-value
+;	  widget
+;	  (widget-apply widget :menu-tag-get)
+;	  (widget-value widget)
+;	  t)))
+;    (widget-value-set widget answer)
+;    (widget-apply widget :notify widget event)
+;    (widget-setup)))
 
 (define-widget 'sexp 'editable-field
   "An arbitrary lisp expression."
@@ -3234,9 +3243,7 @@ To use this type, you must define :match or :match-alternatives."
 			   (aref value 0)
 			 value))
   :match (lambda (widget value)
-	   (if (fboundp 'characterp)
-	       (characterp value)
-	     (integerp value))))
+	   (characterp value)))
 
 (define-widget 'list 'group
   "A lisp list."
@@ -3371,7 +3378,7 @@ To use this type, you must define :match or :match-alternatives."
 	 (list (widget-color-choice-list))
 	 (completion (try-completion prefix list)))
     (cond ((eq completion t)
-	   (message "Exact match."))
+	   (message "Exact match"))
 	  ((null completion)
 	   (error "Can't find completion for \"%s\"" prefix))
 	  ((not (string-equal prefix completion))
@@ -3388,25 +3395,16 @@ To use this type, you must define :match or :match-alternatives."
 		    (widget-value widget)
 		  (error (widget-get widget :value))))
 	 (symbol (intern (concat "fg:" value))))
-    (if (string-match "XEmacs" emacs-version)
-	(prog1 symbol
-	  (or (find-face symbol)
-	      (set-face-foreground (make-face symbol) value)))
-      (condition-case nil
-	  (facemenu-get-face symbol)
-	(error 'default)))))
+    (prog1 symbol
+      (or (find-face symbol)
+	  (set-face-foreground (make-face symbol) value)))))
 
 (defvar widget-color-choice-list nil)
 ;; Variable holding the possible colors.
 
 (defun widget-color-choice-list ()
-  (unless widget-color-choice-list
-    (setq widget-color-choice-list 
-	  (if (fboundp 'read-color-completion-table)
-	      (read-color-completion-table)
-	    (mapcar '(lambda (color) (list color))
-		    (x-defined-colors)))))
-  widget-color-choice-list)
+  (or widget-color-choice-list
+      (setq widget-color-choice-list (read-color-completion-table))))
 
 (defvar widget-color-history nil
   "History of entered colors")
@@ -3436,44 +3434,10 @@ To use this type, you must define :match or :match-alternatives."
       (widget-apply widget :notify widget event))))
 
 (defun widget-color-notify (widget child &optional event)
-  "Update the sample, and notofy the parent."
-  (overlay-put (widget-get widget :sample-overlay) 
-	       'face (widget-apply widget :sample-face-get))
+  "Update the sample, and notify the parent."
+  (set-extent-property (widget-get widget :sample-extent) 
+		       'face (widget-apply widget :sample-face-get))
   (widget-default-notify widget child event))
-
-;;; The Help Echo
-
-(defun widget-echo-help-mouse ()
-  "Display the help message for the widget under the mouse.
-Enable with (run-with-idle-timer 1 t 'widget-echo-help-mouse)"
-  (let* ((pos (mouse-position))
-	 (frame (car pos))
-	 (x (car (cdr pos)))
-	 (y (cdr (cdr pos)))
-	 (win (window-at x y frame))
-	 (where (coordinates-in-window-p (cons x y) win)))
-    (when (consp where)
-      (save-window-excursion
-	(progn ; save-excursion
-	  (select-window win)
-	  (let* ((result (compute-motion (window-start win)
-					 '(0 . 0)
-					 (window-end win)
-					 where
-					 (window-width win)
-					 (cons (window-hscroll) 0)
-					 win)))
-	    (when (and (eq (nth 1 result) x)
-		       (eq (nth 2 result) y))
-	      (widget-echo-help (nth 0 result))))))))
-  (unless track-mouse
-    (setq track-mouse t)
-    (add-hook 'post-command-hook 'widget-stop-mouse-tracking)))
-
-(defun widget-stop-mouse-tracking (&rest args)
-  "Stop the mouse tracking done while idle."
-  (remove-hook 'post-command-hook 'widget-stop-mouse-tracking)
-  (setq track-mouse nil))
 
 (defun widget-at (pos)
   "The button or field at POS."
@@ -3486,7 +3450,7 @@ Enable with (run-with-idle-timer 1 t 'widget-echo-help-mouse)"
 	 (help-echo (and widget (widget-get widget :help-echo))))
     (cond ((stringp help-echo)
 	   (message "%s" help-echo))
-	  ((and (symbolp help-echo) (fboundp help-echo)
+	  ((and (functionp help-echo)
 		(stringp (setq help-echo (funcall help-echo widget))))
 	   (message "%s" help-echo)))))
 

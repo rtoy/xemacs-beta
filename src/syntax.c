@@ -274,7 +274,7 @@ syntax table.
 
   if (NILP(ch))
     {
-      return Qnil;
+      ch = make_char('\000');
     }
   CHECK_CHAR_COERCE_INT (ch);
   table = check_syntax_table (table, current_buffer->syntax_table);

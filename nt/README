@@ -13,15 +13,15 @@ from http://www.cs.washington.edu/homes/voelker/ntemacs.html
 
 To get it working you will need:
 
-1. An X server. MI/X is available on the Internet for free; It is 
-   available from:  http://www.microimages.com/www/html/freestuf/mixdlfrm.htm
-2. The MIT X11R6.3 libraries available from: ftp.x.org
-3. You'll need to compile the MIT libraries without multi-thread support.
-   To do this, there is an example Win32.cf and site.def provided which
-   set the relevant flags. You will also need to apply the patch in 
-   nt/X11.patch in the xc/lib/X11 directory which will fix the DLL definition
-   file. Once compiled and installed, you will need to apply the following
-   patch to Xmd.h. This is messy and better solutions would be appreciated. 
+1.  An X server. MI/X is available on the Internet for free; It is 
+    available from:  http://www.microimages.com/www/html/freestuf/mixdlfrm.htm
+2.  The MIT X11R6.3 libraries available from: ftp.x.org
+3.  You'll need to compile the MIT libraries without multi-thread support.
+    To do this, there is an example Win32.cf and site.def provided which
+    set the relevant flags. You will also need to apply the patch in 
+    nt/X11.patch in the xc/lib/X11 directory which will fix the DLL definition
+    file. Once compiled and installed, you will need to apply the following
+    patch to Xmd.h. This is messy and better solutions would be appreciated. 
 
 --- Xmd.h~	Thu Jun 08 23:20:40 1995
 +++ Xmd.h	Sun Mar 16 13:09:10 1997
@@ -33,24 +33,29 @@ To get it working you will need:
  typedef CARD8           BOOL;
 -
 +#endif
-
-4. You will need Visual C++ V4.2 or later to compile everything. Personally we
-   have tested V4.2 and V5.0.
-5. Grab the latest XEmacs beta from ftp.xemacs.org if necessary. All nt
-   support is in the nt/ subdirectory.
-6. Edit the xemacs.mak file and ensure variables point to the correct place.
-   Note that Visual C++ assumes a couple of environment variables INCLUDE and
-   LIB to be set which specify the location of the includes and libraries.
-7. Copy the files Emacs.ad.h, config.h and paths.h from nt/ to src/.
-   Note, to rebuild Emacs.ad.h a sed script is run. SED for NT is available
-   from the Virtually Unix site: http://www.itribe.net/virtunix
-   This is not required however in normal operation.
-8. Run make. I simply use nmake -f xemacs.mak.
-9. Change directory to the src/ directory and run the temacs executable
-   manually:
+ 
+4.  You will need Visual C++ V4.2 or later to compile everything. Personally we
+    have tested V4.2 and V5.0.
+5.  Grab the latest XEmacs beta from ftp.xemacs.org if necessary. All nt
+    support is in the nt/ subdirectory.
+6.  Edit the xemacs.mak file and ensure variables point to the correct place.
+    Note that Visual C++ assumes a couple of environment variables INCLUDE and
+    LIB to be set which specify the location of the includes and libraries.
+7.  Copy the files Emacs.ad.h, config.h and paths.h from nt/ to src/.
+    Note, to rebuild Emacs.ad.h a sed script is run. SED for NT is available
+    from the Virtually Unix site: http://www.itribe.net/virtunix
+    This is not required however in normal operation.
+8.  Run make. I simply use nmake -f xemacs.mak.
+9.  Change directory to the src/ directory and run the temacs executable
+    manually:
                 temacs -batch -l loadup.el dump
-   This will produce an xemacs.exe which can be run in conjunction with your
-   X server.
+    This will produce an xemacs.exe which can be run in conjunction with your
+    X server.
+10. Ensure your HOME environment variable is set correctly. Also ensure TERM
+    isn't set anywhere.
+11. When you build, the DOC file will get created correctly. However I don't
+    update the elc's by default. This means the build will fail on the DOC
+    file if they don't exist. Just use the update-elcs rule and then rebuild.
 
 Known Problems:
 Please look at the TODO list for the current list of problems and people 

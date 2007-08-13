@@ -1,3 +1,25 @@
+1997-09-27  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta24 is released.
+
+1997-09-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* Makefile.in (custom-loads): New target.
+
+1997-09-24  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/BETA (XEmacs 20.3 packages): Added explanation of package
+	hierarchy.
+
+1997-09-23  SL Baur  <steve@altair.xemacs.org>
+
+	* lwlib/xlwmenu.c: Fix compilation problem with USE_XFONTSET.
+	From Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+1997-09-22  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-pre4 is released.
+
 1997-09-20  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta23 is released.

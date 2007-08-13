@@ -3,24 +3,25 @@
 ;; Copyright (C) 1996, 1997 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
+;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
 ;; Keywords: help, faces
-;; Version: 1.9960
+;; Version: 1.9960-x
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
+;; XEmacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
+;; XEmacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -33,43 +34,10 @@
 ;; `cus-edit.el'. 
 ;;
 ;; The code implementing face declarations is in `cus-face.el'
-;;
-;; IMPORTANT: This version of custom is for Emacs 19.34 and XEmacs
-;; 19.15 - 20.2 only.  If you use Emacs 20.1, XEmacs 20.3, or anything
-;; newer, please use the version of custom bundled with your emacs.
-;; If you use an older emacs, please upgrade.
 
 ;;; Code:
 
 (require 'widget)
-
-(define-widget-keywords :initialize :set :get :require :prefix :tag
-  :load :link :options :type :group) 
-
-;; These autoloads should be deleted eventually. 
-(unless (fboundp 'load-gc)
-  ;; From cus-edit.el
-  (autoload 'customize-set-value "cus-edit" nil t)
-  (autoload 'customize-set-variable "cus-edit" nil t)
-  (autoload 'customize "cus-edit" nil t)
-  (autoload 'customize-browse "cus-edit" nil t)
-  (autoload 'customize-group "cus-edit" nil t)
-  (autoload 'customize-group-other-window "cus-edit" nil t)
-  (autoload 'customize-variable "cus-edit" nil t)
-  (autoload 'customize-variable-other-window "cus-edit" nil t)
-  (autoload 'customize-face "cus-edit" nil t)
-  (autoload 'customize-face-other-window "cus-edit" nil t)
-  (autoload 'customize-apropos "cus-edit" nil t)
-  (autoload 'customize-customized "cus-edit" nil t)
-  (autoload 'customize-saved "cus-edit" nil t)
-  (autoload 'custom-buffer-create "cus-edit")
-  (autoload 'custom-make-dependencies "cus-edit")
-  (autoload 'custom-menu-create "cus-edit")
-  (autoload 'customize-menu-create "cus-edit")
-  
-  ;; From cus-face.el
-  (autoload 'custom-declare-face "cus-face")
-  (autoload 'custom-set-faces "cus-face"))
 
 (defvar custom-define-hook nil
   ;; Customize information for this option is in `cus-edit.el'.
@@ -166,9 +134,9 @@ not using the standard setting.  Otherwise, use the `set-default'."
 		((eq keyword :options)
 		 (if (get symbol 'custom-options)
 		     ;; Slow safe code to avoid duplicates.
-		     (mapcar (lambda (option)
-			       (custom-add-option symbol option))
-			     value)
+		     (mapc (lambda (option)
+			     (custom-add-option symbol option))
+			   value)
 		   ;; Fast code for the common case.
 		   (put symbol 'custom-options (copy-sequence value))))
 		(t
@@ -269,11 +237,11 @@ information."
   "Like `defgroup', but SYMBOL is evaluated as a normal argument."
   (while members 
     (apply 'custom-add-to-group symbol (car members))
-    (setq members (cdr members)))
+    (pop members))
   (put symbol 'custom-group (nconc members (get symbol 'custom-group)))
   (when doc
     (put symbol 'group-documentation doc))
-  (while args 
+  (while args
     (let ((arg (car args)))
       (setq args (cdr args))
       (unless (symbolp arg)
@@ -315,6 +283,10 @@ Read the section about customization in the Emacs Lisp manual for more
 information."
   `(custom-declare-group (quote ,symbol) ,members ,doc ,@args))
 
+;; This is preloaded very early, so we avoid using CL features.
+(defvar custom-group-hash-table (make-hashtable 300 'eq)
+  "Hash-table of non-empty groups.")
+
 (defun custom-add-to-group (group option widget)
   "To existing GROUP add a new OPTION of type WIDGET.
 If there already is an entry for that option, overwrite it."
@@ -322,7 +294,8 @@ If there already is an entry for that option, overwrite it."
 	 (old (assq option members)))
     (if old
 	(setcar (cdr old) widget)
-      (put group 'custom-group (nconc members (list (list option widget)))))))
+      (put group 'custom-group (nconc members (list (list option widget))))))
+  (puthash group t custom-group-hash-table))
 
 ;;; Properties.
 
@@ -407,7 +380,7 @@ the default value for the SYMBOL."
 		   (funcall set symbol (eval value))))
 	    (when requests
 	      (put symbol 'custom-requests requests)
-	      (mapcar 'require requests))
+	      (mapc 'require requests))
 	    (setq args (cdr args)))
 	;; Old format, a plist of SYMBOL VALUE pairs.
 	(message "Warning: old format `custom-set-variables'")

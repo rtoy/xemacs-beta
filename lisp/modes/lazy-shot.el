@@ -77,21 +77,24 @@ With arg, turn Lazy Lock mode on if and only if arg is positive."
    "Lazy lock the extent when it has become visisble"
    (let ((start (extent-start-position extent))
          (end   (extent-end-position extent))
-	 (buffer (extent-buffer extent)))
+	 (buffer (extent-object extent)))
      (delete-extent extent)
-     (save-excursion 
-       ;; This magic should really go into font-lock-fonity-region
-       (goto-char start)
-       (unless (bolp)
-	 (beginning-of-line)
-	 (setq start (point)))
-       (goto-char end)
-       (unless (bolp)
-	 (forward-line)
-	 (setq end (point)))
-       (message "Lazy-shot fontifying from %s to %s in %s" start end buffer)
-       (save-match-data
-	   (font-lock-fontify-region start end)))))
+     (with-current-buffer buffer
+       (save-excursion 
+	 ;; This magic should really go into font-lock-fonity-region
+	 (goto-char start)
+	 (unless (bolp)
+	   (beginning-of-line)
+	   (setq start (point)))
+	 (goto-char end)
+	 (unless (bolp)
+	   (forward-line)
+	   (setq end (point)))
+	 (display-message 'progress
+			  (format "Lazy-shot fontifying from %s to %s in %s"
+				  start end buffer))
+	 (save-match-data
+	   (font-lock-fontify-region start end))))))
 
 (defun lazy-shot-install-extent (spos epos &optional buffer)
   "Make an extent that will lazy-shot if it is displayed"

@@ -2259,4 +2259,7 @@ needed to get the desired behavior for atomic extents and unfortunately
 is not available by any other means.
 */ );
   atomic_extent_goto_char_p = 0;
+#ifdef AMPERSAND_FULL_NAME
+  Fprovide(intern("ampersand-full-name"));
+#endif
 }

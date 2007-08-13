@@ -1,7 +1,19 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (featurep 'custom-autoloads) (error "Already loaded"))
 
-;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all customize-save-customized customize-browse custom-buffer-create-other-window custom-buffer-create customize-apropos-groups customize-apropos-faces customize-apropos-options customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-option-other-window customize-option customize-group-other-window customize-group customize customize-save-variable customize-set-variable customize-set-value) "cus-edit" "custom/cus-edit.el")
+;;;### (autoloads (Custom-make-dependencies) "cus-dep" "custom/cus-dep.el")
+
+(autoload 'Custom-make-dependencies "cus-dep" "\
+Extract custom dependencies from .el files in SUBDIRS.
+SUBDIRS is a list of directories.  If it is nil, the command-line
+arguments are used.  If it is a string, only that directory is
+processed.  This function is especially useful in batch mode.
+
+Batch usage: xemacs -batch -l cus-dep.el -f Custom-make-dependencies DIRS" t nil)
+
+;;;***
+
+;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all customize-save-customized customize-browse custom-buffer-create-other-window custom-buffer-create customize-apropos-groups customize-apropos-faces customize-apropos-options customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-option-other-window customize-variable customize-other-window customize customize-save-variable customize-set-variable customize-set-value) "cus-edit" "custom/cus-edit.el")
 
 (autoload 'customize-set-value "cus-edit" "\
 Set VARIABLE to VALUE.  VALUE is a Lisp object.
@@ -44,18 +56,18 @@ If VARIABLE has a `custom-type' property, it must be a widget and the
 (autoload 'customize "cus-edit" "\
 Select a customization buffer which you can use to set user options.
 User options are structured into \"groups\".
-Initially the top-level group `Emacs' and its immediate subgroups
-are shown; the contents of those subgroups are initially hidden." t nil)
+The default group is `Emacs'." t nil)
 
-(autoload 'customize-group "cus-edit" "\
-Customize GROUP, which must be a customization group." t nil)
+(defalias 'customize-group 'customize)
 
-(autoload 'customize-group-other-window "cus-edit" "\
+(autoload 'customize-other-window "cus-edit" "\
 Customize SYMBOL, which must be a customization group." t nil)
 
-(defalias 'customize-variable 'customize-option)
+(defalias 'customize-group-other-window 'customize-other-window)
 
-(autoload 'customize-option "cus-edit" "\
+(defalias 'customize-option 'customize-variable)
+
+(autoload 'customize-variable "cus-edit" "\
 Customize SYMBOL, which must be a user option variable." t nil)
 
 (defalias 'customize-variable-other-window 'customize-option-other-window)
@@ -134,6 +146,10 @@ The format is suitable for use with `easy-menu-define'." nil nil)
 
 ;;;### (autoloads (custom-set-faces custom-initialize-frame custom-declare-face) "cus-face" "custom/cus-face.el")
 
+(defcustom frame-background-mode nil "*The brightness of the background.\nSet this to the symbol dark if your background color is dark, light if\nyour background is light, or nil (default) if you want Emacs to\nexamine the brightness for you." :group 'faces :type '(choice (choice-item dark) (choice-item light) (choice-item :tag "Auto" nil)))
+
+(defcustom initialize-face-resources t "If non nil, allow X resources to initialize face properties.\nThis only affects faces declared with `defface', and only X11 frames." :group 'faces :type 'boolean)
+
 (autoload 'custom-declare-face "cus-face" "\
 Like `defface', but FACE is evaluated as a normal argument." nil nil)
 
@@ -171,11 +187,7 @@ With arg, turn widget mode on if and only if arg is positive." t nil)
 
 ;;;***
 
-;;;### (autoloads (widget-delete widget-create widget-prompt-value widget-apply) "wid-edit" "custom/wid-edit.el")
-
-(autoload 'widget-apply "wid-edit" "\
-Apply the value of WIDGET's PROPERTY to the widget itself.
-ARGS are passed as extra arguments to the function." nil nil)
+;;;### (autoloads (widget-delete widget-create widget-prompt-value) "wid-edit" "custom/wid-edit.el")
 
 (autoload 'widget-prompt-value "wid-edit" "\
 Prompt for a value matching WIDGET, using PROMPT.

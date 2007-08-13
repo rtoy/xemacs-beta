@@ -2,7 +2,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          auto-save.el
-;; Version:       $Revision: 1.5 $
+;; Version:       $Revision: 1.6 $
 ;; RCS:           
 ;; Description:   Safer autosaving with support for efs and /tmp.
 ;;                This version of auto-save is designed to work with efs,
@@ -11,7 +11,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst auto-save-version (substring "$Revision: 1.5 $" 11 -2)
+(defconst auto-save-version (substring "$Revision: 1.6 $" 11 -2)
   "Version number of auto-save.")
 
 ;;; Copyright (C) 1992 by Sebastian Kremer <sk@thp.uni-koeln.de>
@@ -100,7 +100,7 @@
 ;;;; CUSTOMIZATION =====================================================
 
 (defgroup auto-save nil
-  "Autosaving with support for efs and /tmp"
+  "Autosaving with support for efs and /tmp."
   :group 'data)
 
 (put 'auto-save-interval 'custom-type 'integer)
@@ -149,7 +149,7 @@ as auto save file.
 
 See also variables `auto-save-directory-fallback',
 `efs-auto-save' and `efs-auto-save-remotely'."
-  :type '(choice (const :tag "same as file" nil)
+  :type '(choice (const :tag "Same as file" nil)
 		 directory)
   :group 'auto-save)
 
@@ -175,7 +175,7 @@ that are out of date or were dismissed for recovering.
 Special value 'always deletes those files silently."
   :type '(choice (const :tag "on" t)
 		 (const :tag "off" nil)
-		 (const :tag "delete silently" always))
+		 (const :tag "Delete silently" always))
   :group 'auto-save)
 
 ;;;; end of customization

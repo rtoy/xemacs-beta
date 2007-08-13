@@ -169,7 +169,7 @@ If the item does not exist, the car of the returned value is nil.
 If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
   (or (listp item-path-list)
       (signal 'wrong-type-argument (list 'listp item-path-list)))
-  (or parent (setq item-path-list (mapcar 'downcase item-path-list)))
+  (or parent (setq item-path-list (mapcar 'normalize-menu-item-name item-path-list)))
   (if (not (consp menubar))
       nil
     (let ((rest menubar)
@@ -181,7 +181,7 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
       (while rest
 	(if (and (car rest)
 		 (equal (car item-path-list)
-			(downcase (if (vectorp (car rest))
+			(normalize-menu-item-name (if (vectorp (car rest))
 				      (aref (car rest) 0)
 				    (if (stringp (car rest))
 					(car rest)
@@ -199,7 +199,7 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 (defun add-menu-item-1 (leaf-p menu-path new-item before)
   ;; This code looks like it could be cleaned up some more
   ;; Do we really need 6 calls to find-menu-item?
-  (when before (setq before (downcase before)))
+  (when before (setq before (normalize-menu-item-name before)))
   (let* ((item-name
 	  (cond ((vectorp new-item) (aref new-item 0))
 		((consp   new-item) (car  new-item))

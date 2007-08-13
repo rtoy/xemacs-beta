@@ -40,6 +40,22 @@
   "Configure XEmacs Toolbar functions and properties"
   :group 'environment)
 
+
+(defun toolbar-not-configured-message ()
+  (interactive)
+  (message "Toolbar item MUST be configured, first."))
+
+(defcustom toolbar-item-not-configured-function 'toolbar-not-configured-message
+  "*Function to call when News or Mail are not configured yet."
+  :type '(radio (function-item toolbar-not-configured-message)
+                (function :tag "Other"))
+  :group 'toolbar)
+
+(defun toolbar-item-not-configured ()
+  (interactive)
+  (call-interactively toolbar-item-not-configured-function))
+
+
 (defcustom toolbar-open-function 'find-file
   "*Function to call when the open icon is selected."
   :type '(radio (function-item find-file)
@@ -168,7 +184,8 @@
   (apply 'call-process process nil 0 nil args))
 
 (defcustom toolbar-mail-commands-alist
-  `((vm		. vm)
+  `((item-not-configured . toolbar-item-not-configured)
+    (vm		. vm)
     (gnus	. gnus-no-server)
     (rmail	. rmail)
     (mh		. mh-rmail)
@@ -183,13 +200,13 @@ used to start it."
   :type '(repeat (cons (symbol :tag "Mailer") (function :tag "Start with")))
   :group 'toolbar)
 
-(defcustom toolbar-mail-reader 'vm
+(defcustom toolbar-mail-reader 'item-not-configured
   "*Mail reader toolbar will invoke.
 The legal values are the keys from `toolbar-mail-command-alist', which should
 be used to add new mail readers.
 
-Mail readers known by default are vm, gnus, rmail, mh, pine, elm, mutt,
-exmh and netscape."
+Mail readers known by default are item-not-configured, vm, gnus,
+rmail, mh, pine, elm, mutt, exmh and netscape."
   :type '(symbol :validate (lambda (wid)
 			     (if (assq (widget-value wid) toolbar-mail-commands-alist)
 				 nil
@@ -213,13 +230,23 @@ exmh and netscape."
 (defvar toolbar-info-frame nil
   "The frame in which info is displayed.")
 
+(defcustom Info-frame-plist 
+    (append (list 'width 80)
+	    (let ((h (plist-get default-frame-plist 'height)))
+	      (when h (list 'height h))))
+    "Frame plist for the Info frame."
+  :type '(repeat (group :inline t
+		  (symbol :tag "Property")
+		  (sexp :tag "Value")))
+  :group 'info)
+
 (defun toolbar-info ()
   "Run info in a separate frame."
   (interactive)
   (if (or (not toolbar-info-frame)
 	  (not (frame-live-p toolbar-info-frame)))
       (progn
-	(setq toolbar-info-frame (make-frame))
+	(setq toolbar-info-frame (make-frame Info-frame-plist))
 	(select-frame toolbar-info-frame)
 	(raise-frame toolbar-info-frame)))
   (if (frame-iconified-p toolbar-info-frame)
@@ -258,7 +285,8 @@ exmh and netscape."
 ;;
 
 (defcustom toolbar-news-commands-alist
-  `((gnus	. gnus)			; M-x all-hail-gnus
+  `((item-not-configured . toolbar-item-not-configured)
+    (gnus	. toolbar-gnus)			; M-x all-hail-gnus
     (rn		. (toolbar-external "xterm" "-e" "rn"))
     (nn		. (toolbar-external "xterm" "-e" "nn"))
     (trn	. (toolbar-external "xterm" "-e" "trn"))
@@ -273,13 +301,13 @@ is the form used to start it."
   :type '(repeat (cons (symbol :tag "Reader") (sexp :tag "Start with")))
   :group 'toolbar)
 
-(defcustom toolbar-news-reader 'gnus
+(defcustom toolbar-news-reader 'item-not-configured
   "*News reader toolbar will invoke.
 The legal values are the keys from `toolbar-news-command-alist', which should
 be used to add new news readers.
 
-Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine and
-netscape."
+Newsreaders known by default are item-not-configured, gnus, rn, nn,
+trn, xrn, slrn, pine and netscape."
   :type '(symbol :validate (lambda (wid)
 			     (if (assq (widget-value wid) toolbar-news-commands-alist)
 				 nil
@@ -298,7 +326,7 @@ netscape."
 (defvar toolbar-news-frame-properties nil
   "The properties of the frame in which news is displayed.")
 
-(defun toolbar-news ()
+(defun toolbar-gnus ()
   "Run Gnus in a separate frame."
   (interactive)
   (when (or (not toolbar-news-frame)
@@ -317,6 +345,14 @@ netscape."
       (deiconify-frame toolbar-news-frame))
   (select-frame toolbar-news-frame)
   (raise-frame toolbar-news-frame))
+
+(defun toolbar-news ()
+  "Run News (in a separate frame??)."
+  (interactive)
+  (let ((command (assq toolbar-news-reader toolbar-news-commands-alist)))
+    (if (not command)
+	(error "Unknown news reader %s" toolbar-news-reader))
+    (funcall (cdr command))))
 
 (defvar toolbar-last-win-icon nil "A `last-win' icon set.")
 (defvar toolbar-next-win-icon nil "A `next-win' icon set.")
@@ -412,11 +448,11 @@ netscape."
     [toolbar-undo-icon		toolbar-undo	t	"Undo edit"]
     [toolbar-spell-icon		toolbar-ispell	t	"Spellcheck"]
     [toolbar-replace-icon	toolbar-replace	t	"Replace text"]
-    ;; [toolbar-mail-icon		toolbar-mail	t	"Mail"]
+    [toolbar-mail-icon		toolbar-mail	t	"Mail"]
     [toolbar-info-icon		toolbar-info	t	"Information"]
     [toolbar-compile-icon	toolbar-compile	t	"Compile"]
     [toolbar-debug-icon		toolbar-debug	t	"Debug"]
-    ;; [toolbar-news-icon		toolbar-news	t	"News"]
+    [toolbar-news-icon		toolbar-news	t	"News"]
 )
   "The initial toolbar for a buffer.")
 

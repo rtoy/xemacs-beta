@@ -5272,6 +5272,32 @@ The following symbols have predefined meanings:
   return value;
 }
 
+DEFUN ("set-extent-properties", Fset_extent_properties, 2, 2, 0, /*
+Change some properties of EXTENT.
+PLIST is a property list.
+For a list of built-in properties, see `set-extent-property'.
+*/
+       (extent, plist))
+{
+  /* This function can GC, if one of the properties is `keymap' */
+  Lisp_Object property, value;
+  struct gcpro gcpro1;
+  GCPRO1 (plist);
+
+  plist = Fcopy_sequence (plist);
+  Fcanonicalize_plist (plist, Qnil);
+
+  while (!NILP (plist))
+    {
+      property = Fcar (plist);
+      value = Fcar (Fcdr (plist));
+      plist = Fcdr (Fcdr (plist));
+      Fset_extent_property (extent, property, value);
+    }
+  UNGCPRO;
+  return Qnil;
+}
+
 DEFUN ("extent-property", Fextent_property, 2, 3, 0, /*
 Return EXTENT's value for property PROPERTY.
 See `set-extent-property' for the built-in property names.
@@ -6669,6 +6695,7 @@ syms_of_extents (void)
   DEFSUBR (Fset_extent_priority);
   DEFSUBR (Fextent_priority);
   DEFSUBR (Fset_extent_property);
+  DEFSUBR (Fset_extent_properties);
   DEFSUBR (Fextent_property);
   DEFSUBR (Fextent_properties);
 

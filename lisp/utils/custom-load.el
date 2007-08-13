@@ -1,8 +1,14 @@
+;;; custom-load.el --- automatically extracted custom dependencies
+
+;; Created by SL Baur on Sat Sep 27 08:14:20 1997
+
+;;; Code:
+
 (custom-put 'extensions 'custom-loads '("eldoc"))
 (custom-put 'eldoc 'custom-loads '("eldoc"))
+(custom-put 'mouse 'custom-loads '("id-select"))
 (custom-put 'minibuffer 'custom-loads '("detached-minibuf" "savehist"))
-(custom-put 'environment 'custom-loads '(("detached-minibuf") ("detached-minibuf" "savehist")))
-(custom-put 'mail 'custom-loads '("highlight-headers" "ph" "smtpmail"))
+(custom-put 'mail 'custom-loads '("highlight-headers" "mail-extr" "ph" "smtpmail"))
 (custom-put 'uniquify 'custom-loads '("uniquify"))
 (custom-put 'hypermedia 'custom-loads '("browse-url"))
 (custom-put 'lisp 'custom-loads '("elp"))
@@ -26,3 +32,7 @@
 (custom-put 'highlight-headers 'custom-loads '("highlight-headers"))
 (custom-put 'savehist 'custom-loads '("savehist"))
 (custom-put 'ph 'custom-loads '("ph"))
+(custom-put 'mail-extr 'custom-loads '("mail-extr"))
+(custom-put 'matching 'custom-loads '("id-select"))
+
+;;; custom-load.el ends here

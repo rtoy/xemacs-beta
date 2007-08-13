@@ -1,3 +1,9 @@
+1997-09-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* update-custom.sh: New file.
+
+	* update-autoloads.sh: Minor fixes.
+
 1997-08-11  Jeff Miller <jmiller@smart.net>
 	* Makefile.in.in:  Added a test for system-type equal to linux to
 	lisp/paths.el.  Mail spool dir should be /var/spool/mail.

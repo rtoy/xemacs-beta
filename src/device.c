@@ -412,8 +412,8 @@ find_device_of_type (struct console_methods *meths, Lisp_Object canon)
       Lisp_Object device = XCAR (devcons);
 
       if (EQ (CONMETH_TYPE (meths), DEVICE_TYPE (XDEVICE (device)))
-	  && !NILP (Fequal (DEVICE_CANON_CONNECTION (XDEVICE (device)),
-			    canon)))
+	  && internal_equal (DEVICE_CANON_CONNECTION (XDEVICE (device)),
+			     canon, 0))
 	return device;
     }
 

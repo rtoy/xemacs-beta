@@ -138,6 +138,15 @@ Automatically local in all buffers."
 (defvaralias 'find-file-visit-truename 'find-file-use-truenames)
 (defvaralias 'find-file-existing-other-name 'find-file-compare-truenames)
 
+(defcustom revert-without-query nil
+  "*Specify which files should be reverted without query.
+The value is a list of regular expressions.
+If the file name matches one of these regular expressions,
+then `revert-buffer' reverts the file without querying
+if the file has changed on disk and you have not edited the buffer."
+  :type 'boolean
+  :group 'find-file)
+
 (defvar buffer-file-number nil
   "The device number and file number of the file visited in the current buffer.
 The value is a list of the form (FILENUM DEVNUM).
@@ -993,6 +1002,17 @@ problems will be suppressed."
 	      (verify-visited-file-modtime buf)
 	      (cond ((not (file-exists-p filename))
 		     (error "File %s no longer exists!" filename))
+		    ;; Certain files should be reverted automatically
+		    ;; if they have changed on disk and not in the buffer.
+		    ((and (not (buffer-modified-p buf))
+			  (let (found)
+			    (dolist (rx revert-without-query found)
+			      (when (string-match rx filename)
+				(setq found t)))))
+		     (with-current-buffer buf
+		       (message "Reverting file %s..." filename)
+		       (revert-buffer t t)
+		       (message "Reverting file %s... done" filename)))
 		    ((yes-or-no-p
 		      (if (string= (file-name-nondirectory filename)
 				   (buffer-name buf))
@@ -1116,9 +1136,16 @@ Finishes by calling the functions in `find-file-hooks'."
 		   ;; than when we save the buffer, because we want
 		   ;; autosaving to work.
 		   (setq buffer-read-only nil)
-		   (if (file-exists-p (file-name-directory (directory-file-name (file-name-directory buffer-file-name))))
-		       "Use M-x make-dir RET RET to create the directory"
-		     "Use C-u M-x make-dir RET RET to create directory and its parents")))))
+		   ;; XEmacs
+		   (or (file-exists-p (file-name-directory buffer-file-name))
+		       (if (yes-or-no-p
+			    (format
+			     "The directory containing %s does not exist.  Create? "
+			     (abbreviate-file-name buffer-file-name)))
+			   (make-directory (file-name-directory
+					    buffer-file-name)
+					   t)))
+		   nil))))
       (if msg
 	  (progn
 	    (message msg)
@@ -2564,6 +2591,11 @@ beginning and `after-revert-hook' at the end."
       (cond ((null file-name)
 	     (error "Buffer does not seem to be associated with any file"))
 	    ((or noconfirm
+		 (and (not (buffer-modified-p))
+		      (let (found)
+			(dolist (rx revert-without-query found)
+			  (when (string-match rx file-name)
+			    (setq found t)))))
 		 (yes-or-no-p (format "Revert buffer from file %s? "
 				      file-name)))
 	     (run-hooks 'before-revert-hook)

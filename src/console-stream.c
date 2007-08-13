@@ -58,7 +58,7 @@ stream_init_console (struct console *con, Lisp_Object params)
 
   /* Open the specified console */
 
-  if (NILP (tty) || !NILP (Fequal (tty, Vstdio_str)))
+  if (NILP (tty) || internal_equal (tty, Vstdio_str, 0))
     {
       infd = stdin;
       outfd = stdout;
@@ -134,7 +134,7 @@ Lisp_Object
 stream_canonicalize_console_connection (Lisp_Object connection,
 					Error_behavior errb)
 {
-  if (NILP (connection) || !NILP (Fequal (connection, Vstdio_str)))
+  if (NILP (connection) || internal_equal (connection, Vstdio_str, 0))
     return Vstdio_str;
 
   if (!ERRB_EQ (errb, ERROR_ME))
