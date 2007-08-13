@@ -125,18 +125,18 @@
 		(setq processed (cons arg processed)))))
 	(setq site-load-packages (cdr site-load-packages)))))
 
-(let ((autoloads (packages-list-autoloads-path)))
-  ;; (print (concat "Autoloads: " (prin1-to-string autoloads)))
-  (while autoloads
-    (let ((arg (car autoloads)))
-      (if (null (member arg processed))
-	  (progn
-	    ;; (print arg)
-	    (if (and (null docfile-out-of-date)
-		     (file-newer-than-file-p arg docfile))
-		(setq docfile-out-of-date t))
-	    (setq processed (cons arg processed))))
-      (setq autoloads (cdr autoloads)))))
+;(let ((autoloads (packages-list-autoloads-path)))
+;  ;; (print (concat "Autoloads: " (prin1-to-string autoloads)))
+;  (while autoloads
+;    (let ((arg (car autoloads)))
+;      (if (null (member arg processed))
+;	  (progn
+;	    ;; (print arg)
+;	    (if (and (null docfile-out-of-date)
+;		     (file-newer-than-file-p arg docfile))
+;		(setq docfile-out-of-date t))
+;	    (setq processed (cons arg processed))))
+;      (setq autoloads (cdr autoloads)))))
 
 ;; Now fire up make-docfile and we're done
 

@@ -1,3 +1,18 @@
+Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
+	
+	* gnuserv.h: only set UNIX_DOMAIN_SOCKETS if HAVE_SYS_UN_H is
+	set.
+
+	* gnuserv.c: tidy up so that it builds when we don't have
+ 	UNIX_DOMAIN_SOCKETS.
+
+1998-01-07  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (ignore_pattern): Replace -vanilla with `-q
+	-no-site-file'.
+	* update-autoloads.sh (dirs): Ditto.
+	* update-custom.sh (dirs): Ditto.
+
 1997-12-18  SL Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh (mule_p): Remove skk's special treatment.

@@ -140,6 +140,8 @@ blddir=@blddir@
 ## These variables hold the values XEmacs will actually use.  They are
 ## based on the values of the standard Make variables above.
 
+progname=xemacs
+
 ## Where to install the lisp files distributed with
 ## XEmacs.  This includes the XEmacs version, so that the
 ## lisp files for different versions of XEmacs will install
@@ -418,21 +420,21 @@ install-arch-dep: mkdir
 	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; \
 	     do (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; done ; \
 	else true; fi
-	${INSTALL_PROGRAM} src/xemacs ${bindir}/xemacs-${version}
-	-chmod 0755 ${bindir}/xemacs-${version}
-	cd ${bindir} && $(RM) ./xemacs && ${LN_S} xemacs-${version} ./xemacs
+	${INSTALL_PROGRAM} src/xemacs ${bindir}/${progname}${version}
+	-chmod 0755 ${bindir}/${progname}${version}
+	cd ${bindir} && $(RM) ./xemacs && ${LN_S} ${progname}${version} ./xemacs
 	if test "${prefix}" != "${exec_prefix}"; then \
            test ! -d ${exec_prefix}/lib/xemacs && \
                 $(LN_S) ${prefix}/lib/xemacs ${exec_prefix}/lib/xemacs; \
-           test ! -d ${exec_prefix}/lib/xemacs-${version}/etc && \
-                $(LN_S) ${prefix}/lib/xemacs-${version}/etc \
-                        ${exec_prefix}/lib/xemacs-${version}/etc; \
-           test ! -d ${exec_prefix}/lib/xemacs-${version}/info && \
-                $(LN_S) ${prefix}/lib/xemacs-${version}/info \
-                        ${exec_prefix}/lib/xemacs-${version}/info; \
-           test ! -d ${exec_prefix}/lib/xemacs-${version}/lisp && \
-                $(LN_S) ${prefix}/lib/xemacs-${version}/lisp \
-                        ${exec_prefix}/lib/xemacs-${version}/lisp; \
+           test ! -d ${exec_prefix}/lib/${progname}${version}/etc && \
+                $(LN_S) ${prefix}/lib/${progname}${version}/etc \
+                        ${exec_prefix}/lib/${progname}${version}/etc; \
+           test ! -d ${exec_prefix}/lib/${progname}${version}/info && \
+                $(LN_S) ${prefix}/lib/${progname}${version}/info \
+                        ${exec_prefix}/lib/${progname}${version}/info; \
+           test ! -d ${exec_prefix}/lib/${progname}${version}/lisp && \
+                $(LN_S) ${prefix}/lib/${progname}${version}/lisp \
+                        ${exec_prefix}/lib/${progname}${version}/lisp; \
 	fi
 
 install-arch-indep: mkdir info
@@ -473,7 +475,7 @@ install-arch-indep: mkdir info
 	    ${INSTALL_DATA} ${srcdir}/etc/$${page}.1 ${mandir}/$${page}${manext} ; \
 	    chmod 0644 ${mandir}/$${page}${manext} ; \
 	  done
-	@echo "If you would like to save approximately 15M of disk space, do"
+	@echo "If you would like to save approximately 2M of disk space, do"
 	@echo "make gzip-el"
 	@echo "or you may run "
 	@echo ${srcdir}/lib-src/gzip-el.sh lispdir " from the command line."
@@ -486,7 +488,7 @@ gzip-el:
 MAKEPATH=./lib-src/make-path
 ## Build all the directories to install XEmacs in.
 ## Since we may be creating several layers of directories,
-## (e.g. /usr/local/lib/xemacs-20.5/sparc-sun-solaris2.6), we use
+## (e.g. /usr/local/lib/${progname}20.5/sparc-sun-solaris2.6), we use
 ## make-path instead of mkdir.  Not all mkdirs have the `-p' flag.
 mkdir: FRC.mkdir
 	${MAKEPATH} ${COPYDESTS} ${lockdir} ${infodir} ${archlibdir} \
@@ -518,7 +520,7 @@ mkdir: FRC.mkdir
 #	done
 #	cd ${infodir} && $(RM) cl* xemacs* forms* info* vip*
 #	cd ${mandir} && $(RM) xemacs.1 etags.1 ctags.1 gnuserv.1
-#	cd ${bindir} && $(RM) xemacs-${version} xemacs
+#	cd ${bindir} && $(RM) ${progname}${version} xemacs
 
 
 ## Some makes seem to remember that they've built something called FRC,

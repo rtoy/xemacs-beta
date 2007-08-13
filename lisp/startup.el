@@ -212,6 +212,8 @@ remaining command-line args are in the variable `command-line-args-left'.")
   -no-site-file         Do not load the site-specific init file (site-start.el).
   -no-init-file         Do not load the user-specific init file (~/.emacs).
   -no-packages		Do not process the package path.
+  -no-autoloads		Do not load global symbol files (auto-autoloads) at
+			startup.  Also implies `-vanilla'.
   -vanilla		Equivalent to -q -no-site-file -no-packages.
   -q                    Same as -no-init-file.
   -user <user>          Load user's init file instead of your own.
@@ -467,7 +469,10 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 	    (string= arg "--no-packages"))
 	(setq inhibit-package-init t))
        ((or (string= arg "-vanilla")
-	    (string= arg "--vanilla"))
+	    (string= arg "--vanilla")
+	    ;; Some work on this one already done in emacs.c.
+	    (string= arg "-no-autoloads")
+	    (string= arg "--no-autoloads"))
 	(setq init-file-user nil
 	      site-start-file nil
 	      inhibit-package-init t))
@@ -607,6 +612,20 @@ First try .xemacs/init, then try .emacs, but only load one of the two."
 
 ;;; Load user's init file and default ones.
 (defun load-init-file ()
+  ;; Disabled for now
+  (unless inhibit-update-dumped-lisp
+    (packages-reload-dumped-lisp))
+
+;;  (unless inhibit-update-autoloads
+;;    (packages-reload-autoloads))
+  (unless inhibit-update-autoloads
+    (let ((dir load-path))
+      (while dir
+	(condition-case nil
+	    (load (expand-file-name "auto-autoloads" (car dir)) nil t)
+	  (t nil))
+	(pop dir))))
+
   (run-hooks 'before-init-hook)
 
   ;; Run the site-start library if it exists.  The point of this file is
@@ -614,13 +633,6 @@ First try .xemacs/init, then try .emacs, but only load one of the two."
   ;; .emacs; that is useless.
   (when site-start-file
     (load site-start-file t t))
-
-  ;; Disabled for now
-  (unless inhibit-update-dumped-lisp
-    (packages-reload-dumped-lisp))
-
-  (unless inhibit-update-autoloads
-    (packages-reload-autoloads))
 
   ;; Sites should not disable this.  Only individuals should disable
   ;; the startup message.
@@ -940,10 +952,13 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 
 (defun startup-splash-frame ()
   (let ((p (point))
+	(logo (cond ((featurep 'infodock)
+		     (make-glyph (locate-data-file "altrasoft-logo.xpm")))
+		    (t xemacs-logo)))
         (cramped-p (eq 'tty (console-type))))
     (unless cramped-p (insert "\n"))
-    (indent-to (startup-center-spaces xemacs-logo))
-    (set-extent-begin-glyph (make-extent (point) (point)) xemacs-logo)
+    (indent-to (startup-center-spaces logo))
+    (set-extent-begin-glyph (make-extent (point) (point)) logo)
     (insert (if cramped-p "\n" "\n\n"))
     (splash-frame-present-hack (make-extent p (point)) 'about-xemacs))
 

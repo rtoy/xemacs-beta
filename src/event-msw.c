@@ -201,6 +201,7 @@ mswindows_cancel_dispatch_event (struct Lisp_Event* match)
 	}
       previous_event = event;
     }
+  return Qnil;
 }
 
 static Lisp_Object

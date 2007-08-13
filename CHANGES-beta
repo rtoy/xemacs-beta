@@ -1,4 +1,12 @@
 							-*- indented-text -*-
+to 20.5 beta18 "Daera Din Panah"
+-- Miscellaneous and sundry fixes for 20.4 merged
+-- MS Windows updates from Kirill Katsnelson and Andy Piper
+-- New command line arg `-no-autoloads' to suppress auto-autoloads loading
+   at startup (also implies -vanilla)
+-- auto-autoloads are not dumped
+-- Miscellaneous bug fixes
+
 to 20.5 beta17 "Chapar"
 -- Tutorial menubar support courtesy of Didier Verna
 -- Package-get refined courtesy of Pete Ware

@@ -237,6 +237,33 @@
 	   (x-win-init-xfree86)))))
 
 
+;; Moved from x-toolbar.el, since InfoDock doesn't dump a x-toolbar.el.
+(defun x-init-toolbar-from-resources (locale)
+  (x-init-specifier-from-resources
+   top-toolbar-height 'natnum locale
+   '("topToolBarHeight" . "TopToolBarHeight"))
+  (x-init-specifier-from-resources
+   bottom-toolbar-height 'natnum locale
+   '("bottomToolBarHeight" . "BottomToolBarHeight"))
+  (x-init-specifier-from-resources
+   left-toolbar-width 'natnum locale
+   '("leftToolBarWidth" . "LeftToolBarWidth"))
+  (x-init-specifier-from-resources
+   right-toolbar-width 'natnum locale
+   '("rightToolBarWidth" . "RightToolBarWidth"))
+  (x-init-specifier-from-resources
+   top-toolbar-border-width 'natnum locale
+   '("topToolBarBorderWidth" . "TopToolBarBorderWidth"))
+  (x-init-specifier-from-resources
+   bottom-toolbar-border-width 'natnum locale
+   '("bottomToolBarBorderWidth" . "BottomToolBarBorderWidth"))
+  (x-init-specifier-from-resources
+   left-toolbar-border-width 'natnum locale
+   '("leftToolBarBorderWidth" . "LeftToolBarBorderWidth"))
+  (x-init-specifier-from-resources
+   right-toolbar-border-width 'natnum locale
+   '("rightToolBarBorderWidth" . "RightToolBarBorderWidth")))
+
 (defvar pre-x-win-initted nil)
 
 (defun init-pre-x-win ()
@@ -278,8 +305,10 @@
     ;; We can't load this until after the initial X device is created
     ;; because the icon initialization needs to access the display to get
     ;; any toolbar-related color resources.
-    (if (featurep 'toolbar)
+    (if (and (not (featurep 'infodock)) (featurep 'toolbar))
         (init-x-toolbar))
+    (if (and (featurep 'infodock) (featurep 'toolbar))
+	(require 'id-x-toolbar))
     (if (featurep 'mule)
         (init-mule-x-win))
     ;; these are only ever called if zmacs-regions is true.

@@ -2336,7 +2336,7 @@ always returns non-nil."
 	(basic-save-buffer-1))
     'continue-save-buffer))
 
-(defcustom save-some-buffers-query-display-buffer xemacs-betaname
+(defcustom save-some-buffers-query-display-buffer t
   "*Non-nil makes `\\[save-some-buffers]' switch to the buffer offered for saving."
   :type 'boolean
   :group 'editing-basics)

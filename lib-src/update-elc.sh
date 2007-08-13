@@ -61,11 +61,11 @@ else
 fi
 
 REAL=`cd \`dirname $EMACS\` ; pwd | sed 's|^/tmp_mnt||'`/`basename $EMACS`
-BYTECOMP="$REAL -batch -vanilla "
+BYTECOMP="$REAL -batch -q -no-site-file "
 echo "Recompiling in `pwd|sed 's|^/tmp_mnt||'`"
 echo "          with $REAL..."
 
-$EMACS -batch -vanilla -l `pwd`/lisp/cleantree -f batch-remove-old-elc lisp
+$EMACS -batch -q -no-site-file -l `pwd`/lisp/cleantree -f batch-remove-old-elc lisp
 
 prune_vc="( -name '.*' -o -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 
@@ -91,7 +91,7 @@ ignore_pattern=''
 # Only use Mule XEmacs to compile Mule-specific elisp dirs
 echon "Checking for Mule support..."
 lisp_prog='(princ (featurep (quote mule)))'
-mule_p="`$EMACS -batch -vanilla -eval \"$lisp_prog\"`"
+mule_p="`$EMACS -batch -q -no-site-file -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
 	echo No
 	ignore_dirs="$ignore_dirs its egg mule language leim skk"

@@ -87,10 +87,12 @@
 ;;; For most people this key binding will work and will be equivalent
 ;;; to {C-h h}.
 ;;;
-(or (where-is-internal 'hyperbole)
-    (where-is-internal 'hui:menu)
-    (define-key help-map "h" 'hyperbole))
-(autoload 'hyperbole "hsite" "Hyperbole info manager menus." t)
+(when (featurep 'infodock) ; This isn't used in XEmacs
+  ;; #### This needs fixing for InfoDock 4.0.
+  (or (where-is-internal 'hyperbole)
+      (where-is-internal 'hui:menu)
+      (define-key help-map "h" 'hyperbole))
+  (autoload 'hyperbole "hsite" "Hyperbole info manager menus." t))
 
 (define-key help-map "i" 'info)
 (define-key help-map '(control i) 'Info-query)
@@ -108,8 +110,10 @@
 (define-key help-map "n" 'view-emacs-news)
 
 (define-key help-map "p" 'finder-by-keyword)
-(autoload 'finder-by-keyword "finder"
-  "Find packages matching a given keyword." t)
+
+;; Do this right with an autoload cookie in finder.el.
+;;(autoload 'finder-by-keyword "finder"
+;;  "Find packages matching a given keyword." t)
 
 (define-key help-map "s" 'describe-syntax)
 

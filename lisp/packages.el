@@ -83,7 +83,7 @@
     (cond ((null pkg)
 	   (error "Package %s has not been loaded into this XEmacsen"
 		  name))
-	  ((< (cdr pkg) version)
+	  ((< (package-get-key name :version) version)
 	   (error "Need version %g of package %s, got version %g"
 		  version name (cdr pkg)))
 	  (t t))))
@@ -412,18 +412,11 @@ If no DIR-LIST is supplied, it defaults to `data-directory-list'."
 
 (defun locate-data-file (name &optional dir-list)
   "Locate a file in a search path DIR-LIST (a list of directories).
-If no DIR-LIST is supplied, it defaults to `data-directory-list'."
+If no DIR-LIST is supplied, it defaults to `data-directory-list'.
+This function is basically a wrapper over `locate-file'."
   (unless dir-list
     (setq dir-list data-directory-list))
-  (let (found found-file)
-    (while (and (null found-file) dir-list)
-      (setq found (concat (car dir-list) name)
-	    found-file (and (file-exists-p found)
-			    (not (file-directory-p found))))
-      (or found-file
-	  (setq found nil))
-      (setq dir-list (cdr dir-list)))
-    found))
+  (locate-file name dir-list))
 
 ;; If we are being loaded as part of being dumped, bootstrap the rest of the
 ;; load-path for loaddefs.

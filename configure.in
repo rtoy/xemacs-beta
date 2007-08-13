@@ -330,7 +330,7 @@ infodir_user_defined='no'
 dnl BETA NOTE: ! Will you please add to this list?  Nonexistent dirs
 dnl are dropped from the list at runtime, so it is safe to add
 dnl directories to this list that you don't have at home.
-infopath='/usr/local/info:/usr/info:/usr/local/lib/texmf/doc/info:/usr/lib/texmf/doc/info'
+infopath='/usr/local/lib/texmf/doc/info:/usr/local/lib/texmf/info:/usr/lib/texmf/doc/info:/usr/lib/texmf/info:/usr/local/info:/usr/info'
 infopath_user_defined='no'
 lispdir='${datadir}/xemacs-${version}/lisp'
 lispdir_user_defined='no'
@@ -727,9 +727,10 @@ dnl -------------------------
 dnl Finish options processing
 dnl -------------------------
 
-if test "$infopath_user_defined" = "no" -a -n "$INFOPATH" ; then
-  infopath="$INFOPATH"
-fi
+dnl Personal settings shouldn't affect the configuration process.
+dnl if test "$infopath_user_defined" = "no" -a -n "$INFOPATH" ; then
+dnl   infopath="$INFOPATH"
+dnl fi
 
 dnl Get the arguments back.  See the diatribe on Shell Magic above.
 eval set x "$quoted_arguments"; shift
@@ -1916,6 +1917,7 @@ dnl checks for header files
 AC_CHECK_HEADERS(mach/mach.h sys/stropts.h sys/timeb.h sys/time.h unistd.h)
 AC_CHECK_HEADERS(utime.h locale.h libgen.h fcntl.h ulimit.h)
 AC_CHECK_HEADERS(linux/version.h kstat.h sys/pstat.h inttypes.h limits.h)
+AC_CHECK_HEADERS(sys/un.h)
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDC
 AC_HEADER_TIME
@@ -2091,13 +2093,14 @@ if test "$window_system" = "none"; then
   AC_CHECK_LIB(gdi32,main,have_msw=yes)
   if test "$have_msw" = "yes"; then
     AC_DEFINE(HAVE_MS_WINDOWS)
+    XE_APPEND(-lgdi32 -luser32, libs_system)
     window_system=msw
-    with_scrollbars=msw
+    test "$with_scrollbars"   != "no" && with_scrollbars=msw && XE_ADD_OBJS(scrollbar-msw.o)
+    test "$with_menubars"   != "no" && with_menubars=msw && XE_ADD_OBJS(menubar-msw.o)
     with_dialogs=msw
-    with_menubars=no
     with_toolbars=no
     with_tty=no
-    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o msw-proc.o scrollbar-msw.o)
+    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o msw-proc.o)
   fi
 fi
 

@@ -38,6 +38,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "config.h"
 #include "systime.h"
 #include "syssignal.h"
+#include "sysproc.h"
 
 #undef access
 #undef chdir
@@ -300,19 +301,6 @@ init_user_info ()
     CloseHandle (token);
 }
 
-int
-random ()
-{
-  /* rand () on NT gives us 15 random bits...hack together 30 bits.  */
-  return ((rand () << 15) | rand ());
-}
-
-void
-srandom (int seed)
-{
-  srand (seed);
-}
-
 /* Normalize filename by converting all path separators to
    the specified separator.  Also conditionally convert upper
    case path name components to lower case.  */
@@ -557,13 +545,7 @@ win32_get_long_filename (char * name, char * buf, int size)
 
 /* Routines that are no-ops on NT but are defined to get Emacs to compile.  */
 
-int 
-setpgrp (int pid, int gid) 
-{ 
-  return 0;
-}
-
-
+#if 0 /* #### We do not need those, do we? -kkm */
 int 
 unrequest_sigio (void) 
 { 
@@ -575,6 +557,7 @@ request_sigio (void)
 { 
   return 0;
 }
+#endif /* 0 */
 
 #define REG_ROOT "SOFTWARE\\GNU\\XEmacs"
 
@@ -828,6 +811,9 @@ sys_sleep (int seconds)
   Sleep (seconds * 1000);
 }
 #endif
+
+/* #### This is an evil dirty hack. We must get rid of it.
+   Word "munging" is not in XEmacs lexicon. - kkm */
 
 /* Internal MSVC data and functions for low-level descriptor munging */
 #if (_MSC_VER == 900)
@@ -1447,10 +1433,18 @@ sys_mktemp (char * template)
 int
 sys_open (const char * path, int oflag, int mode)
 {
-  int		fd;
+  int fd;
 
   /* Force all file handles to be non-inheritable. */
   fd = _open (map_win32_filename (path, NULL), oflag | _O_NOINHERIT, mode);
+
+  if (fd >= MAXDESC)
+    {
+      _close (fd);
+      errno = EMFILE;
+      return -1;
+    }
+
   if (fd >= 0)
     {
       fd_info[fd].cp = 0;

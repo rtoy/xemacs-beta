@@ -311,7 +311,6 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
   struct face_cachel *cachel;
   Lisp_Object font = Qnil;
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
-  HBRUSH brush;
   HDC hdc = FRAME_MSWINDOWS_DC (f);
   int real_char_p = (rb->type == RUNE_CHAR && rb->object.chr.ch != '\n');
   char *p_char = NULL;
@@ -321,10 +320,9 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 		xpos + width,
 		dl->ypos + dl->descent - dl->clip};
 
-#if 0	/* XXX FIXME: Whar about the bar_cursor? */
-  Lisp_Object bar_cursor_value = symbol_value_in_buffer (Qbar_cursor,
-							 WINDOW_BUFFER (w));
-#endif
+  Lisp_Object bar = symbol_value_in_buffer (Qbar_cursor,
+					    WINDOW_BUFFER (w));
+  int bar_p = !NILP (bar);
 
   if (real_char_p)
     {
@@ -335,37 +333,53 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
       font = FACE_CACHEL_FONT (cachel, Vcharset_ascii);
     }
 
-  
-  if (focus && real_char_p)
+  if ((focus || bar_p) && real_char_p)
     {
       p_char = (char*) &rb->object.chr.ch;
       n_char = 1;
     }
 
+  /* Use cursor fg/bg for block cursor, or character fg/bg for the bar.
+     Output nothing at eol if bar cursor */
   cachel = WINDOW_FACE_CACHEL (w,
-		get_builtin_face_cache_index (w, Vtext_cursor_face));
+		   (bar_p
+		   ? rb->findex
+		   : get_builtin_face_cache_index (w, Vtext_cursor_face)));
   mswindows_update_gc (hdc, font, cachel->foreground,
 		       cachel->background, Qnil, Qnil);
   ExtTextOut (FRAME_MSWINDOWS_DC (f), xpos, dl->ypos, ETO_OPAQUE,
 	      &rect, p_char, n_char, NULL);
 
-  if (focus)
-    return;
-
-  InflateRect (&rect, -1, -1);
-
-  if (real_char_p)
+  if (focus && bar_p)
     {
-      p_char = (char*) &rb->object.chr.ch;
-      n_char = 1;
+      rect.right = rect.left + (EQ (bar, Qt) ? 1 : 2);
+      cachel = WINDOW_FACE_CACHEL (w,
+		 get_builtin_face_cache_index (w, Vtext_cursor_face));
+      mswindows_update_gc (hdc, Qnil, Qnil,
+			   cachel->background, Qnil, Qnil);
+      ExtTextOut (FRAME_MSWINDOWS_DC (f), xpos, dl->ypos, ETO_OPAQUE,
+		  &rect, NULL, 0, NULL);
     }
+  else if (!focus)
+    {
+      /* Now have real character drawn in its own color. We defalte
+	 the rectangle so character cell will be bounded by the
+	 previously drawn cursor shape */
+      InflateRect (&rect, -1, -1);
 
-  cachel = WINDOW_FACE_CACHEL (w, (real_char_p ? rb->findex
-				   : get_builtin_face_cache_index (w, Vdefault_face)));
-  mswindows_update_gc (hdc, Qnil, cachel->foreground,
-		       cachel->background, Qnil, Qnil);
-  ExtTextOut (FRAME_MSWINDOWS_DC (f), xpos, dl->ypos, ETO_OPAQUE | ETO_CLIPPED,
-	      &rect, p_char, n_char, NULL);
+      if (real_char_p)
+	{
+	  p_char = (char*) &rb->object.chr.ch;
+	  n_char = 1;
+	}
+
+      cachel = WINDOW_FACE_CACHEL (w, (real_char_p ? rb->findex
+				       : get_builtin_face_cache_index (w, Vdefault_face)));
+      mswindows_update_gc (hdc, Qnil, cachel->foreground,
+			   cachel->background, Qnil, Qnil);
+      ExtTextOut (FRAME_MSWINDOWS_DC (f), xpos, dl->ypos, ETO_OPAQUE | ETO_CLIPPED,
+		  &rect, p_char, n_char, NULL);
+    }
 }
 
 
@@ -481,8 +495,8 @@ mswindows_output_string (struct window *w, struct display_line *dl,
  * to by PRC, and paints only the intersection
  */
 static void
-mswindows_redisplay_deadbox_maybe (CONST struct window *w,
-					      CONST RECT* prc)
+mswindows_redisplay_deadbox_maybe (struct window *w,
+				   CONST RECT* prc)
 {
   int sbh = window_scrollbar_height (w);
   int sbw = window_scrollbar_width (w);
@@ -658,24 +672,24 @@ mswindows_bevel_modeline (struct window *w, struct display_line *dl)
 		dl->ypos - dl->ascent - shadow_width,
 		WINDOW_MODELINE_RIGHT (w),
 		dl->ypos + dl->descent + shadow_width};
-
+  UINT edge;
 
   color = WINDOW_FACE_CACHEL_BACKGROUND (w, MODELINE_INDEX);
   mswindows_update_gc(FRAME_MSWINDOWS_DC(f), Qnil, Qnil, color, Qnil, Qnil);
 
-#if 0	/* XXX Eh? */
-  if (shadow_width < 0)
-    {
-      GC temp;
+  if (XINT (w->modeline_shadow_thickness) < 0)
+    shadow_width = -shadow_width;
 
-      temp = top_shadow_gc;
-      top_shadow_gc = bottom_shadow_gc;
-      bottom_shadow_gc = temp;
-    }
-#endif
-
-  DrawEdge (FRAME_MSWINDOWS_DC(f), &rect, shadow_width==1 ? BDR_RAISEDINNER :
-					  EDGE_RAISED, BF_RECT);
+  if (shadow_width < -1)
+    edge = EDGE_SUNKEN;
+  else if (shadow_width < 0)
+    edge = BDR_SUNKENINNER;
+  else if (shadow_width == 1)
+    edge = BDR_RAISEDINNER;
+  else
+    edge = EDGE_RAISED;
+    
+  DrawEdge (FRAME_MSWINDOWS_DC(f), &rect, edge, BF_RECT);
 }
 
 
@@ -741,10 +755,15 @@ static int
 mswindows_flash (struct device *d)
 {
   struct frame *f = device_selected_frame (d);
+  RECT rc;
 
-  /* XXX FIXME: Do something more visible here, maybe involving a timer */
-  FlashWindow (FRAME_MSWINDOWS_HANDLE (f), TRUE);
-  FlashWindow (FRAME_MSWINDOWS_HANDLE (f), FALSE);
+  GetClientRect (FRAME_MSWINDOWS_HANDLE (f), &rc);
+  InvertRect (FRAME_MSWINDOWS_DC (f), &rc);
+  GdiFlush ();
+  Sleep (25);
+  InvertRect (FRAME_MSWINDOWS_DC (f), &rc);
+
+  return 1;
 }
 
 static void
@@ -982,7 +1001,6 @@ mswindows_output_vertical_divider (struct window *w, int clear)
   struct frame *f = XFRAME (w->frame);
   Lisp_Object color;
   RECT rect;
-  HBRUSH brush;
   int shadow_width = MODELINE_SHADOW_THICKNESS (w);
 
   /* We don't use the normal gutter measurements here because the

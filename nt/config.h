@@ -422,7 +422,7 @@ Boston, MA 02111-1307, USA.  */
 
   /* To eliminate use of `const' in the XEmacs sources,
      do `#define CONST_IS_LOSING' */
-#define CONST_IS_LOSING
+/* #define CONST_IS_LOSING hell, const works with VC! - kkm */
 
 # undef CONST
 # ifdef CONST_IS_LOSING

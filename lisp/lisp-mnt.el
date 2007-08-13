@@ -5,10 +5,9 @@
 ;; Author: Eric S. Raymond <esr@snark.thyrsus.com>
 ;; Maintainer: Eric S. Raymond <esr@snark.thyrsus.com>
 ;; Created: 14 Jul 1992
-;; Version: $Id: lisp-mnt.el,v 1.2 1997/12/06 22:26:15 steve Exp $
-;; Keywords: docs
-;; X-Modified-by: Bob Weiner <weiner@mot.com>, 4/14/95, to support InfoDock
-;; 	headers.
+;; Keywords: docs, maint
+;; X-Modified-by: Bob Weiner <weiner@altrasoft.com>, 4/14/95, to support
+;;  InfoDock headers.
 ;; X-Bogus-Bureaucratic-Cruft: Gruad will get you if you don't watch out!
 
 ;; This file is part of XEmacs.
@@ -28,7 +27,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 20.2.
  
 ;;; Commentary:
 
@@ -57,15 +56,15 @@
 ;; the principal author.
 ;; 
 ;;    If there are multiple authors, they should be listed on continuation
-;; lines led by ;;<TAB>, like this:
+;; lines led by ;;<TAB><TAB> (or multiple blanks), like this:
 ;; 
 ;; ;; Author: Ashwin Ram <Ram-Ashwin@cs.yale.edu>
-;; ;;	Dave Sill <de5@ornl.gov>
-;; ;;	David Lawrence <tale@pawl.rpi.edu>
-;; ;;	Noah Friedman <friedman@ai.mit.edu>
-;; ;;	Joe Wells <jbw@maverick.uswest.com>
-;; ;;	Dave Brennan <brennan@hal.com>
-;; ;;	Eric Raymond <esr@snark.thyrsus.com>
+;; ;;		Dave Sill <de5@ornl.gov>
+;; ;;		David Lawrence <tale@pawl.rpi.edu>
+;; ;;		Noah Friedman <friedman@ai.mit.edu>
+;; ;;		Joe Wells <jbw@maverick.uswest.com>
+;; ;;		Dave Brennan <brennan@hal.com>
+;; ;;		Eric Raymond <esr@snark.thyrsus.com>
 ;; 
 ;; This field may have some special values; notably "FSF", meaning
 ;; "Free Software Foundation".
@@ -119,7 +118,7 @@
 ;;; Code:
 
 (require 'picture)		; provides move-to-column-force
-;(require 'emacsbug)
+;(require 'emacsbug) ; XEmacs, not needed for bytecompilation
 
 ;;; Variables:
 
@@ -128,7 +127,7 @@
 For example, you can write the 1st line synopsis string and headers like this
 in your Lisp package:
 
-   ;; @(#) package.el -- pacakge description
+   ;; @(#) package.el -- package description
    ;;
    ;; @(#) $Maintainer:   Person Foo Bar $
 
@@ -324,7 +323,7 @@ The return value has the form (NAME . ADDRESS)."
 	(if (progn
 	      (goto-char (point-min))
 	      (re-search-forward
-	       "\\$Id: [^ ]+ [^ ]+ \\([^/]+\\)/\\([^/]+\\)/\\([^ ]+\\) "
+	       "\\$[I]d: [^ ]+ [^ ]+ \\([^/]+\\)/\\([^/]+\\)/\\([^ ]+\\) "
 	       (lm-code-mark) t))
 	    (format "%s %s %s"
 		    (buffer-substring (match-beginning 3) (match-end 3))
@@ -355,7 +354,7 @@ This can befound in an RCS or SCCS header to crack it out of."
 	   (goto-char (point-min))
 	   (cond
 	    ;; Look for an RCS header
-	    ((re-search-forward "\\$Id: [^ ]+ \\([^ ]+\\) " header-max t)
+	    ((re-search-forward "\\$[I]d: [^ ]+ \\([^ ]+\\) " header-max t)
 	     (buffer-substring (match-beginning 1) (match-end 1)))
 
 	    ;; Look for an SCCS header
@@ -427,9 +426,9 @@ with tag `Commentary' and ends with tag `Change Log' or `History'."
 
 (defun lm-insert-at-column (col &rest strings)
   "Insert list of STRINGS, at column COL."
-   (if (> (current-column) col) (insert "\n"))
-   (move-to-column-force col)
-   (apply 'insert strings))
+  (if (> (current-column) col) (insert "\n"))
+  (move-to-column-force col)
+  (apply 'insert strings))
 
 (defun lm-verify (&optional file showok &optional verb)
   "Check that the current buffer (or FILE if given) is in proper format.
@@ -441,7 +440,7 @@ a temporary buffer."
 	 name
 	 )
     (if verb
-	(setq ret "Ok."))               ;init value
+	(setq ret "Ok."))		;init value
 
     (if (and file (file-directory-p file))
 	(setq
@@ -529,7 +528,7 @@ which do not include a recognizable synopsis."
 	(switch-to-buffer (get-buffer-create "*lm-verify*"))
 	(erase-buffer)
 	(mapcar
-	  '(lambda (f)
+	  (lambda (f) ; XEmacs - dequote
 	    (if (string-match ".*\\.el$" f)
 		(let ((syn (lm-synopsis f)))
 		  (if syn

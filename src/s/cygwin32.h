@@ -1,4 +1,4 @@
-/* System description file for Windows NT.
+/* System description file for cygwin32.
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -18,42 +18,64 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Synched up with: FSF 19.31. */
+/* Building under cygwin
+ *
+ * The approach I have taken with this port is to use primarily the UNIX 
+ * code base adding stuff that is MS-Windows specific. This works quite 
+ * well, and is in keeping with my perception of the cygwin philosophy.
+ * Note that if you make changes to this file you do NOT want to define 
+ * WINDOWSNT, I repeat - do not define this, it will break everything 
+ * horribly. What does get defined is HAVE_MS_WINDOWS, but this is 
+ * done by configure and only applies to the window system.
+ *
+ * The important thing about building is that it is done on a binary
+ * mounted filesystem. i.e. something mounted like: mount -b c:
+ * /binary. If you do not do this then compilation of el files will
+ * produce garbage.  Make sure you have installed cygwin32 b18 +
+ * patched dll (which can be found at http://www.lexa.ru/sos or on my
+ * home page. Alternatively when b19 comes out the patched dll will be
+ * unnecessary. Also make sure your HOME path is unix style -
+ * i.e. without a drive letter.
+ *
+ * once you have done this, configure and make. The
+ * undump phase will fail but that is to be expected. To run you need
+ * to set EMACSLOADPATH, EMACSDOC, EMACSDATA etc appropriately and then do:
+ * temacs -batch -l loadup.el run-temacs
+ * 
+ * What I want to do
+ *
+ * the fileio stuff merely uses the unix system calls this means that
+ * the mount type of your fs will determine how files are edited. This
+ * is fine except in the instance that you want to convert one to the
+ * other. In this instance I would like to bring the buffer_file_type
+ * code into the picture without all the other windows-nt cruft.
+ *
+ * Also the undumped version should be able to do path guessing, I
+ * don't know why it doesn't currently.
+ *
+ * Ideally a dumped version would be done but I'm not sure I am up to
+ * the task.
+ *
+ * Andy Piper <andyp@parallax.co.uk> 8/1/98 
+ * http://parallax.co.uk/~andyp
+ */
 
-/*
-#ifndef WINDOWSNT
-#define WINDOWSNT
-#endif
-
-#ifndef DOS_NT
-#define DOS_NT 
-#endif
-*/
 
 /* Need the win32 api */
 #ifndef NOT_C_CODE
 #ifdef CONST
 #undef CONST
-#endif
+#endif 
 
 /* Start and end of text and data.  */
 extern void* _data_start__;
 extern void* _data_end__;
 
-#include <windows.h>
+#include <windows.h> 
 #endif
 
-#ifndef HAVE_MS_WINDOWS
-#define HAVE_MS_WINDOWS
-#endif
-
-/*#ifndef HAVE_SCROLLBARS
-#define HAVE_SCROLLBARS
-#endif*/
-
-#ifndef HAVE_NTGUI
 #define HAVE_NTGUI
-#endif
+#define HAVE_FACES
 
 #ifndef ORDINARY_LINK
 #define ORDINARY_LINK
@@ -72,8 +94,6 @@ extern void* _data_end__;
 #define SIGPROF	0
 #define NO_LIM_DATA
 #define HAVE_TEXT_START
-
-#define LIBS_SYSTEM "-luser32 -lgdi32"
 
 #undef MAIL_USE_SYSTEM_LOCK
 
@@ -136,7 +156,7 @@ extern void* _data_end__;
 /* SYSTEM_TYPE should indicate the kind of system you are using.
  It sets the Lisp variable system-type.  */
 
-#define SYSTEM_TYPE "cygwin32"
+#define SYSTEM_TYPE "windows-nt"
 
 #define NO_MATHERR
 
@@ -161,10 +181,6 @@ extern void* _data_end__;
    preprocessor symbol "COFF". */
 
 #define COFF
-
-/* NT supports Winsock which is close enough (with some hacks) */
-
-#define HAVE_SOCKETS
 
 /* define MAIL_USE_FLOCK if the mailer uses flock
    to interlock access to /usr/spool/mail/$USER.
@@ -200,33 +216,11 @@ extern void* _data_end__;
 #define NULL_DEVICE     "NUL:"
 #define EXEC_SUFFIXES   ".exe:.com:.bat:.cmd:"
 
-#if 0
-#define HAVE_RENAME
-
-#define HAVE_TZNAME
-
-#define HAVE_LONG_FILE_NAMES
-
-#define HAVE_BCOPY
-#define HAVE_BCMP
-
-#define HAVE_MOUSE
-#endif
-
-#define HAVE_WINDOW_SYSTEM
-#define HAVE_FACES
-
 #define MODE_LINE_BINARY_TEXT(_b_) (NILP ((_b_)->buffer_file_type) ? "T" : "B")
 
 /* For integration with MSDOS support.  
 #define getdisk()               (_getdrive () - 1)
 #define getdefdir(_drv, _buf)   _getdcwd (_drv, _buf, MAXPATHLEN)
-*/
-
-/* Define this so that winsock.h definitions don't get included when windows.h
-   is...  I don't know if they do the right thing for emacs.  For this to
-   have proper effect, config.h must always be included before windows.h.  
-#define _WINSOCKAPI_    1
 */
 
 /* Defines size_t and alloca ().  */

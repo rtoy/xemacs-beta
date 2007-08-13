@@ -1639,7 +1639,7 @@ push_button_draw (XlwMenuWidget mw,
       if (val->enabled)
 	gc = mw->menu.highlight_gc;
       else
-	gc = mw->menu.inactive_button_gc;
+	gc = mw->menu.inactive_gc;
     }
   else if (menu_pb)
     {
@@ -2505,11 +2505,7 @@ remap_menubar (XlwMenuWidget mw)
 
   /* Memorize the previously selected item to be able to refresh it */
   old_selection = last_same + 1 < old_depth ? old_stack [last_same + 1] : NULL;
-  if (old_selection && !old_selection->enabled)
-    old_selection = NULL;
   new_selection = last_same + 1 < new_depth ? new_stack [last_same + 1] : NULL;
-  if (new_selection && !new_selection->enabled)
-    new_selection = NULL;
 
   /* updates old_state from new_state.  It has to be done now because
      display_menu (called below) uses the old_stack to know what to display. */

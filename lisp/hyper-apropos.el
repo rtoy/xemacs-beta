@@ -574,14 +574,14 @@ See also `hyper-apropos' and `hyper-describe-function'."
 	    end 'limit)
       (let ((e (make-extent (match-beginning 1) (match-end 1))))
 	(set-extent-face e 'hyper-apropos-hyperlink)
-	(set-extent-property e 'mouse-face 'highlight))
+	(set-extent-property e 'mouse-face 'highlight)))
     (goto-char beg)
     (while (re-search-forward
 	    "M-x \\([-a-zA-Z0-9_][-a-zA-Z0-9_][-a-zA-Z0-9_.]+\\)"
 	    end 'limit)
       (let ((e (make-extent (match-beginning 1) (match-end 1))))
 	(set-extent-face e 'hyper-apropos-hyperlink)
-	(set-extent-property e 'mouse-face 'highlight))))))
+	(set-extent-property e 'mouse-face 'highlight)))))
 
 (defun hyper-apropos-insert-keybinding (keys string)
   (if keys
@@ -711,9 +711,11 @@ See also `hyper-apropos' and `hyper-describe-function'."
 					       (autoload . "autoloaded Lisp ")
 					       (lambda   . "Lisp "))))
 				  desc
-				  (if (eq symtype 'autoload)
-				      (format ", (autoloaded from \"%s\")"
-				      (nth 1 newsym))))
+				  (case symtype
+				    ((autoload) (format ", (autoloaded from \"%s\")"
+							(nth 1 newsym)))
+				    ((bytecode) (format ", (loaded from \"%s\")"
+							(symbol-file symbol)))))
 		     local (current-local-map)
 		     global (current-global-map)
 		     obsolete (get symbol 'byte-obsolete-info)
@@ -996,26 +998,7 @@ different variables and functions.  Common commands:
 	major-mode	     'hyper-apropos-help-mode
 	mode-name	     "Hyper-Help")
   (set-syntax-table emacs-lisp-mode-syntax-table)
-  (hyper-apropos-highlightify)
   (use-local-map hyper-apropos-help-map))
-
-;; ---------------------------------------------------------------------- ;;
-
-(defun hyper-apropos-highlightify ()
-  (save-excursion
-    (goto-char (point-min))
-    (let ((st (point-min))
-	  sym)
-      (while (not (eobp))
-	(if (zerop (skip-syntax-forward "w_"))
-	    (forward-char 1)
-	  (and (> (- (point) st) 3)
-	       (setq sym (intern-soft (buffer-substring st (point))))
-	       (or (boundp sym)
-		   (fboundp sym))
-	       (set-extent-property (make-extent st (point))
-				    'mouse-face 'highlight)))
-	(setq st (point))))))
 
 ;; ---------------------------------------------------------------------- ;;
 

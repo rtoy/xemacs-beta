@@ -395,6 +395,10 @@ file. An example might be something like:
   :type '(repeat directory)
   :group 'info)
 
+(defvar Info-emacs-info-file-name "xemacs.info"
+  "The filename of the XEmacs info for
+`Info-goto-emacs-command-node' (`\\<help-mode-map>\\[Info-goto-emacs-command-node]')")
+
 (defvar Info-directory-list
   (let ((path (getenv "INFOPATH")))
     (if path

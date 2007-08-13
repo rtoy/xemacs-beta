@@ -675,7 +675,23 @@ encoding detection or end-of-line detection.
      encounter most of the time.  If we're loading a .el, we need
      to reopen it in text mode. */
       if (!reading_elc)
-	fd = open (foundstr, O_RDONLY | O_TEXT);
+	{
+	  /* #### I would simply call _setmode (fd, O_RDONLY | O_TEXT).
+	     This is ok on NT but maybe breaks DOS. Is there
+	     any "DOS" still alive? - kkm */
+	  close (fd);
+	  fd = open (foundstr, O_RDONLY | O_TEXT);
+	  if (fd < 0)
+	    {
+	      if (NILP (no_error))
+		signal_file_error ("Cannot open load file", file);
+	      else
+		{
+		  UNGCPRO;
+		  return Qnil;
+		}
+	    }
+	}	  
 #endif /* DOS_NT */
     }
 
@@ -2970,14 +2986,12 @@ init_lread (void)
   Vload_path = decode_env_path ("EMACSLOADPATH", normal);
 
 /*  Vdump_load_path = Qnil; */
-#ifndef CANNOT_DUMP
   if (purify_flag && NILP (Vload_path))
     {
       /* loadup.el will frob this some more. */
       /* #### unix-specific */
       Vload_path = Fcons (build_string ("../lisp/"), Vload_path);
     }
-#endif /* not CANNOT_DUMP */
   load_in_progress = 0;
 
   Vload_descriptor_list = Qnil;

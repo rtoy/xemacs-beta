@@ -136,7 +136,7 @@ Additional features:
 			exist in the runtime environment. The "dir"
 			file in the first existing directory in this list will
 			become the (dir)Top node of the Info tree.
-    Defaults to the value of `INFOPATH', or:
+    Defaults to the value of:
     `/usr/local/info:/usr/info:/usr/local/lib/texmf/doc/info:/usr/lib/texmf/doc/
 info'.
 

@@ -537,7 +537,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	  pixel_to_char_size (frame, rect.right, rect.bottom, &columns, &rows);
 	  change_frame_size (frame, rows, columns, 1);
 
-	  if (mswindows_dynamic_frame_resize)
+	  if (msframe->sizing && mswindows_dynamic_frame_resize)
 	    redisplay ();
 	}
     }

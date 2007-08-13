@@ -1,3 +1,37 @@
+1998-01-10  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta18 is released.
+
+	* etc/FTP: Update address of what was formerly ftp.ibp.fr.
+
+1998-01-08  Didier Verna  <verna@inf.enst.fr>
+
+	* configure.in: Get rid of INFOPATH for configure time.
+	* configure.usage (Usage): Ditto.
+
+1998-01-09  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefine.in: Correct reported amount of disk savings from
+	compression.
+	From Markus Linnala <maage@cs.tut.fi>
+
+Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
+
+	* configure.in: detect and set scrollbars and menubars with
+ 	MS-Windows more appropriately. Check for sys/un.h to use in
+	gnuserv.
+
+1998-01-07  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (progname): Cleanly parameterize XEmacs-specific
+	naming.
+
+1998-01-05  Glynn Clements  <glynn@sensei.co.uk>
+
+	* lwlib/xlwmenu.c (push_button_draw): use inactive_gc instead of
+	inactive_button_gc for menu entries.
+	(remap_menubar): ignore the enabled status
+
 1998-01-04  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta17 is released.

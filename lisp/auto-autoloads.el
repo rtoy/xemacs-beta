@@ -831,6 +831,13 @@ Display list of all tags in tag table REGEXP matches." t nil)
 
 ;;;***
 
+;;;### (autoloads (finder-by-keyword) "finder" "lisp/finder.el")
+
+(autoload 'finder-by-keyword "finder" "\
+Find packages matching a given keyword." t nil)
+
+;;;***
+
 ;;;### (autoloads (font-lock-set-defaults-1 font-lock-fontify-buffer turn-off-font-lock turn-on-font-lock font-lock-mode) "font-lock" "lisp/font-lock.el")
 
 (defcustom font-lock-auto-fontify t "*Whether font-lock should automatically fontify files as they're loaded.\nThis will only happen if font-lock has fontifying keywords for the major\nmode of the file.  You can get finer-grained control over auto-fontification\nby using this variable in combination with `font-lock-mode-enable-list' or\n`font-lock-mode-disable-list'." :type 'boolean :group 'font-lock)

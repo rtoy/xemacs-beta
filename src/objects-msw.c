@@ -724,7 +724,10 @@ hexval (char c)
 {
   if (c >= 'a' && c <= 'f')
     return c-'a' + 10;
-  return c-'0';
+  else if (c >= 'A' && c <= 'Z')
+    return c-'A' + 10;
+  else
+    return c-'0';
 }
 
     
@@ -744,7 +747,6 @@ mswindows_string_to_color(CONST char *name)
       {
 	if (!isxdigit(name[i]))
 	  return(-1);
-	name[i] = tolower(name[i]);
       }
     r = hexval(name[1]) * 16 + hexval(name[2]);
     g = hexval(name[3]) * 16 + hexval(name[4]);

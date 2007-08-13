@@ -310,7 +310,7 @@ make_arg_list_1 (int argc, char **argv, int skip_args)
     {
       if (i == 0 || i > skip_args)
 	{
-#ifdef _WIN32
+#ifdef WINDOWSNT
 	  if (i == 0)
 	    {
 	      /* Do not trust to what crt0 has stuffed into argv[0] */
@@ -641,8 +641,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
       noninteractive = 1;
     }
 
-  /* Partially handle -no-packages and -vanilla.  Packages are searched */
-  /* prior to the rest of the command line being parsed in startup.el */
+  /* Partially handle -no-autoloads, -no-packages and -vanilla.  Packages */
+  /* are searched prior to the rest of the command line being parsed in */
+  /* startup.el */
   if (argmatch (argv, argc, "-no-packages", "--no-packages",
 		6, NULL, &skip_args))
     {
@@ -652,6 +653,14 @@ main_1 (int argc, char **argv, char **envp, int restart)
   if (argmatch (argv, argc, "-vanilla", "--vanilla",
 		7, NULL, &skip_args))
     {
+      inhibit_package_init = 1;
+      skip_args--;
+    }
+
+  if (argmatch (argv, argc, "-no-autoloads", "--no-autoloads",
+		7, NULL, &skip_args))
+    {
+      /* Inhibit everything */
       inhibit_package_init = 1;
       inhibit_update_autoloads = 1;
       inhibit_update_dumped_lisp = 1;
@@ -1510,7 +1519,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       /* Handle -l loadup-and-dump, args passed by Makefile. */
       if (argc > 2 + skip_args && !strcmp (argv[1 + skip_args], "-l"))
 	load_me = build_string (argv[2 + skip_args]);
-#ifdef CANNOT_DUMP
+#if 0 /* CANNOT_DUMP - this can never be right in XEmacs --andyp */
       /* Unless next switch is -nl, load "loadup.el" first thing.  */
       if (!(argc > 1 + skip_args && !strcmp (argv[1 + skip_args], "-nl")))
 	load_me = build_string ("loadup.el");
@@ -1563,6 +1572,7 @@ static struct standard_args standard_args[] =
   { "-unmapped", 0, 50, 0 },
   { "-no-init-file", 0, 50, 0 },
   { "-vanilla", "--vanilla", 50, 0 },
+  { "-no-autoloads", "--no-autoloads", 50, 0 },
   { "-no-site-file", "--no-site-file", 40, 0 },
   { "-no-packages", "--no-packages", 35, 0 },
   { "-u", "--user", 30, 1 },

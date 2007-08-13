@@ -30,6 +30,17 @@ Boston, MA 02111-1307, USA.  */
 #define DONT_ENCAPSULATE
 
 #include <config.h>
+
+#ifdef WINDOWSNT
+#include <direct.h>
+/* <process.h> should not conflict with "process.h", as per ANSI definition.
+   This is not true though with visual c though. The trick below works with
+   VC4.2b and with VC5.0. It assumes that VC is installed in a kind of
+   standard way, so include files get to what/ever/path/include.
+*/
+#include <../include/process.h>
+#endif /* WINDOWSNT */
+
 #include "lisp.h"
 
 #include <stddef.h>
@@ -69,15 +80,10 @@ Boston, MA 02111-1307, USA.  */
 #ifndef WINDOWSNT
 #include <sys/times.h>
 #endif
-
-#if defined(WINDOWSNT)
-#include <direct.h>
-/* In process.h which conflicts with the local copy.  */
-#define _P_WAIT 0
-int _CRTAPI1 _spawnlp (int, const char *, const char *, ...);
-int _CRTAPI1 _getpid (void);
+#ifdef WINDOWSNT
+#include <sys/utime.h>
+#include "ntheap.h"
 #endif
-
 
 /* ------------------------------- */
 /*         TTY definitions         */
@@ -517,11 +523,17 @@ child_setup_tty (int out)
 
 #if !defined (SIGTSTP) && !defined (USG_JOBCTRL)
 
+#if defined(__STDC__) || defined(_MSC_VER)
+#define SIG_PARAM_TYPE int
+#else
+#define SIG_PARAM_TYPE
+#endif
+
 /* Record a signal code and the handler for it.  */
 struct save_signal
 {
   int code;
-  SIGTYPE (*handler) ();
+  SIGTYPE (*handler) (SIG_PARAM_TYPE);
 };
 
 static void
@@ -530,7 +542,7 @@ save_signal_handlers (struct save_signal *saved_handlers)
   while (saved_handlers->code)
     {
       saved_handlers->handler
-	= (SIGTYPE (*) ()) signal (saved_handlers->code, SIG_IGN);
+	= (SIGTYPE (*) (SIG_PARAM_TYPE)) signal (saved_handlers->code, SIG_IGN);
       saved_handlers++;
     }
 }

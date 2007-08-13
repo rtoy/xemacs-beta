@@ -389,6 +389,15 @@ If nil, the DEL key will erase one character backwards."
   :type 'boolean
   :group 'editing-basics)
 
+(defcustom backward-delete-function 'backward-delete-char
+  "*Function called to delete backwards on a delete keypress.
+If `delete-key-deletes-forward' is nil, `backward-or-forward-delete-char'
+calls this function to erase one character backwards.  Default value
+is 'backward-delete-char, with 'backward-delete-char-untabify being a
+popular alternate setting."
+  :type 'function
+  :group 'editing-basics)
+
 (defun backward-or-forward-delete-char (arg)
   "Delete either one character backwards or one character forwards.
 Controlled by the state of `delete-key-deletes-forward' and whether the
@@ -400,7 +409,7 @@ backwards."
 	   (or (eq 'tty (device-type))
 	       (x-keysym-on-keyboard-p "BackSpace")))
       (delete-char arg)
-    (delete-backward-char arg)))
+    (funcall backward-delete-function arg)))
 
 (defun backward-or-forward-kill-word (arg)
   "Delete either one word backwards or one word forwards.
@@ -3062,7 +3071,7 @@ The properties used on SYMBOL are `composefunc', `sendfunc',
       t)))
 
 (define-mail-user-agent 'mh-e-user-agent
-  'mh-smail-batch 'mh-send-letter 'mh-fully-kill-draft
+  'mh-user-agent-compose 'mh-send-letter 'mh-fully-kill-draft
   'mh-before-send-letter-hook)
 
 (defun compose-mail (&optional to subject other-headers continue

@@ -165,16 +165,14 @@
 
 
 ;;; Load in generated autoloads (made by autoload.el).
-;; (condition-case nil
-    ;; (load "auto-autoloads")
-  ;; (file-error nil))
-(let ((dir load-path)
-      purify-flag)
-  (while dir
-    (condition-case nil
-	(load (concat (car dir) "auto-autoloads"))
-      (t nil))
-    (pop dir)))
+
+;; (let ((dir load-path)
+;;       purify-flag)
+;;   (while dir
+;;     (condition-case nil
+;;	(load (concat (car dir) "auto-autoloads"))
+;;      (t nil))
+;;    (pop dir)))
 
 ;;; Local Variables:
 ;;; no-byte-compile: t

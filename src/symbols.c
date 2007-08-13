@@ -1936,7 +1936,7 @@ for this variable.
 }
 
 DEFUN ("setq-default", Fsetq_default, 2, UNEVALLED, 0, /*
-Set the default value of variable SYN to VALUE.
+Set the default value of variable SYM to VALUE.
 SYM, the variable name, is literal (not evaluated);
 VALUE is an expression and it is evaluated.
 The default value of a variable is seen in buffers

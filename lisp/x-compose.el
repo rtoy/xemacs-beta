@@ -72,8 +72,9 @@
 ;; have any modifier bits associated with it.  This exact command may not
 ;; work, depending on what system and keyboard you are using.  If it
 ;; doesn't, you'll have to read the man page for xmodmap.  You might want
-;; to get the "xkeycaps" program from the host export.lcs.mit.edu in the
-;; file contrib/xkeycaps.tar.Z, which is a graphical front end to xmodmap
+;; to get the "xkeycaps" program from
+;; <URL:http://people.netscape.com/jwz/xkeycaps/>,
+;; which is a graphical front end to xmodmap
 ;; that hides xmodmap's arcane syntax from you.
 
 ;; If for some reason you don't want to have a dedicated compose key on your

@@ -68,6 +68,7 @@
 
 (defun init-toolbar-from-resources (locale)
   (if (and (featurep 'x)
+	   (not (featurep 'infodock))
 	   (or (eq locale 'global)
 	       (eq 'x (device-or-frame-type locale))))
       (x-init-toolbar-from-resources locale)))

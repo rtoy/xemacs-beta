@@ -369,7 +369,8 @@
 		  'new
 		(selected-frame)))
 	:style radio
-	:selected (equal gnuserv-frame (selected-frame))]
+	:selected (and (boundp 'gnuserv-frame)
+		       (equal gnuserv-frame (selected-frame)))]
        )
 
       "-----"
@@ -417,7 +418,8 @@
 		  (font-lock-recompute-variables))
 	:style radio
 	:active (and (boundp 'font-lock-mode) font-lock-mode)
-	:selected (and font-lock-mode
+	:selected (and (boundp 'font-lock-mode)
+		       font-lock-mode
 		       (or (and (not (integerp font-lock-maximum-decoration))
 				(not (eq t font-lock-maximum-decoration)))
 			   (and (integerp font-lock-maximum-decoration)
@@ -429,7 +431,8 @@
 		 (font-lock-recompute-variables))
 	:style radio
 	:active (and (boundp 'font-lock-mode) font-lock-mode)
-	:selected (and font-lock-mode
+	:selected (and (boundp 'font-lock-mode)
+		       font-lock-mode
 		       (integerp font-lock-maximum-decoration)
 		       (= 1 font-lock-maximum-decoration))]
        ["Even More" (if (and (integerp font-lock-maximum-decoration)
@@ -439,7 +442,8 @@
 		      (font-lock-recompute-variables))
 	:style radio
 	:active (and (boundp 'font-lock-mode) font-lock-mode)
-	:selected (and font-lock-mode
+	:selected (and (boundp 'font-lock-mode)
+		       font-lock-mode
 		       (integerp font-lock-maximum-decoration)
 		       (= 2 font-lock-maximum-decoration))]
        ["Most" (if (or (eq font-lock-maximum-decoration t)
@@ -450,7 +454,8 @@
 		 (font-lock-recompute-variables))
 	:style radio
 	:active (and (boundp 'font-lock-mode) font-lock-mode)
-	:selected (and font-lock-mode
+	:selected (and (boundp 'font-lock-mode)
+		       font-lock-mode
 		       (or (eq font-lock-maximum-decoration t)
 			   (and (integerp font-lock-maximum-decoration)
 				(>= font-lock-maximum-decoration 3))))]
@@ -546,7 +551,8 @@
 	:selected (and (boundp 'blink-cursor-mode) blink-cursor-mode)]
        ["Frame-Local Font Menu" (setq font-menu-this-frame-only-p
 				    (not font-menu-this-frame-only-p))
-	:style toggle :selected font-menu-this-frame-only-p]
+	:style toggle :selected (and (boundp 'font-menu-this-frame-only-p)
+				     font-menu-this-frame-only-p)]
 ;     ["Line Numbers" (line-number-mode nil)
 ;      :style toggle :selected line-number-mode]
       )
@@ -595,7 +601,8 @@
        "---"
        ["Ignore Scaled Fonts" (setq font-menu-ignore-scaled-fonts
 				    (not font-menu-ignore-scaled-fonts))
-	:style toggle :selected font-menu-ignore-scaled-fonts]
+	:style toggle :selected (and (boundp 'font-menu-ignore-scaled-fonts)
+				     font-menu-ignore-scaled-fonts)]
        )
       ,@(if (featurep 'toolbar)
 	'(("Toolbar Appearance"

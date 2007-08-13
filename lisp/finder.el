@@ -353,6 +353,8 @@ arguments compiles from `load-path'."
   (goto-char (event-point ev))
   (finder-select))
 
+;; XEmacs change
+;;;###autoload
 (defun finder-by-keyword ()
   "Find packages matching a given keyword."
   (interactive)

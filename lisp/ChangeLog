@@ -1,3 +1,121 @@
+1998-01-08  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* modeline.el (modeline-minor-mode-menu): Add support for :active
+	(add-minor-mode): Document :active property to TOGGLE.
+
+1998-01-07  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* modeline.el (modeline-minor-mode-menu): Add support for an
+ 	`:included' predicate in the `toggle-sym' plist.
+	(add-minor-mode): Document the :included property, format
+ 	docstring some more.
+	(modeline-minor-mode-menu): Documentation string added.
+
+1998-01-02  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* modeline.el (modeline-minor-mode-menu): genmenlab the menu
+ 	labels from the symbol-names by thwacking off the overly redundant
+ 	and overused "mode", parenthesizing "minor", and capitalizing the
+ 	resultant strings.  Also shortened the menu's title by eliminating
+ 	the redundant buffer name.
+	(add-minor-mode): Beautified the docstring, added mention of the
+ 	`:menu-tag' property of TOGGLE.
+	(modeline-minor-mode-menu): Frinked the `:menu-tag' property on
+ 	`toggle-sym' to beatify the mode-life menus.
+	* (abbrev-mode):  (put)'ed a `:menu-tag' on it and
+	`auto-fill-function'.
+
+1998-01-02  Karl M. Hegbloom  <<karlheg@bittersweet.inetarena.com>>
+
+	* modeline.el (modeline-minor-mode-menu): Changed the string-only
+	menus to :style 'toggle.
+
+1997-12-10  Markus Linnala  <maage@cs.tut.fi>
+
+	* simple.el: Use mh-user-agent-compose as mh-e-user-agent.
+
+1997-12-11  Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* packages/hyper-apropos.el (hyper-apropos-insert-face): Would
+	only recognize first hyperlink.
+	(hyper-apropos-highlightify): Deletia, this is already done by
+ 	`hyper-apropos-insert-face'.
+	(hyper-apropos-help-mode): Don't call `hyper-apropos-highlightify.
+
+1998-01-09  SL Baur  <steve@altair.xemacs.org>
+
+	* x-toolbar.el (toolbar-ispell-internal): Use ispell-message for
+	mail.
+	(toolbar-mail-reader): Add support for `send'.
+	From Jonathan Marten <jonathan.marten@UK.Sun.COM>
+
+1998-01-05  Karl M. Hegbloom  <<karlheg@bittersweet.inetarena.com>>
+
+	* info.el (Info-emacs-info-file-name): Add defvar for
+ 	`Info-emacs-info-file-name' so that `Info-goto-emacs-command-node'
+ 	will function properly.
+
+1998-01-05  Gary D. Foster  <gfoster@ragesoft.com>
+
+	* simple.el: make the backwards delete function called by
+	`backward-or-forward-delete-char' user configurable.
+
+1998-01-09  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* hyper-apropos.el (hyper-apropos-get-doc): Print where a byte
+ 	compiled function got loaded from.
+
+1998-01-09  SL Baur  <steve@altair.xemacs.org>
+
+	* term/apollo.el: Synched up with InfoDock 3.6.2.
+
+1998-01-08  SL Baur  <steve@altair.xemacs.org>
+
+	* startup.el (load-init-file): Load autoloads earlier.
+	(startup-splash-frame): Handle InfoDock logo.
+
+	* x-init.el (init-post-x-win): Don't call init-x-toolbar in
+	InfoDock.
+	(x-init-toolbar-from-resources): Move from x-toolbar.el.
+
+	* toolbar.el (init-toolbar-from-resources): InfoDock x-toolbar.el
+	doesn't have this function.
+
+	* packages.el (locate-data-file): Fix to call `locate-file'.
+
+1998-01-07  SL Baur  <steve@altair.xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list): InfoDock uses its own
+	version of version.el.
+	(preloaded-file-list): Ditto for x-menubar.el and x-toolbar.el.
+
+	* x-menubar.el (default-menubar): Guard reference to
+	`gnuserv-frame'.
+	(default-menubar): Guard references to `font-lock-mode'.
+	(default-menubar): Guard references to font-menu-this-frame-only-p'.
+	(default-menubar): Guard references to `font-menu-ignore-scaled-fonts'.
+
+	* make-docfile.el: Don't snarf doc strings from autoloads.
+
+	* startup.el (load-init-file): Use algorithm from loaddefs.el for
+	loading auto-autoloads files.
+
+	* loaddefs.el: Disable dumping autoloads.
+
+1998-01-05  SL Baur  <steve@altair.xemacs.org>
+
+	* lisp-mnt.el: Synch to Emacs 20.2.
+
+	* help.el: Remove manual autoload of `finder-by-keyword'.
+
+	* finder.el (finder-by-keyword): Autoload.
+
+	* help.el: Conditionalize hyperbole setup.
+
+1998-01-04  SL Baur  <steve@altair.xemacs.org>
+
+	* packages.el (package-require): Update to reflect new data format.
+
 1998-01-02  Didier Verna  <verna@inf.enst.fr>
 
 	* x-menubar.el (default-menubar): make the tutorials available

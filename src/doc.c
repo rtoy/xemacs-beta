@@ -428,16 +428,22 @@ when doc strings are referred to in the dumped Emacs.
 
   CHECK_STRING (filename);
 
-#ifndef CANNOT_DUMP
-  name = (char *) alloca (XSTRING_LENGTH (filename) + 14);
-  strcpy (name, "../lib-src/");
-#else /* CANNOT_DUMP */
-  CHECK_STRING (Vdoc_directory);
-  name = (char *) alloca (XSTRING_LENGTH (filename)
-                          + XSTRING_LENGTH (Vdoc_directory)
-                          + 1);
-  strcpy (name, (char *) XSTRING_DATA (Vdoc_directory));
+#ifdef CANNOT_DUMP
+  if (!NILP(Vdoc_directory))
+    {
+      CHECK_STRING (Vdoc_directory);
+      name = (char *) alloca (XSTRING_LENGTH (filename)
+			      + XSTRING_LENGTH (Vdoc_directory)
+			      + 1);
+      strcpy (name, (char *) XSTRING_DATA (Vdoc_directory));
+    }
+  else
 #endif /* CANNOT_DUMP */
+    {
+      name = (char *) alloca (XSTRING_LENGTH (filename) + 14);
+      strcpy (name, "../lib-src/");
+    }
+
   strcat (name, (char *) XSTRING_DATA (filename));
 
   fd = open (name, O_RDONLY, 0);

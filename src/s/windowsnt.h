@@ -34,8 +34,10 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 typedef unsigned short mode_t;
-typedef long ptrdiff_t;
+/* typedef long ptrdiff_t; -kkm */
 typedef int pid_t;
+
+#include <stddef.h>
 
 /* If you are compiling with a non-C calling convention but need to
    declare vararg routines differently, put it here */
@@ -165,11 +167,20 @@ typedef int pid_t;
 
 #define HAVE_MOUSE
 #define HAVE_H_ERRNO
+#define HAVE_STRUCT_UTIMBUF
 
 #ifdef HAVE_NTGUI
 #define HAVE_WINDOW_SYSTEM
 #define HAVE_FACES
 #endif
+
+#define HAVE_STRCASECMP
+
+/* Compatibility macros. Some used to be routines in nt.c */
+#define strcasecmp(x,y) _stricmp(x,y)
+#define random() (rand() << 15 | rand())
+#define srandom(seed) (srand(seed))
+#define setpgrp(pid,gid)
 
 #define MODE_LINE_BINARY_TEXT(_b_) (NILP ((_b_)->buffer_file_type) ? "T" : "B")
 
@@ -219,15 +230,23 @@ typedef int pid_t;
 
 /* IO calls that are emulated or shadowed */
 #define pipe    sys_pipe
+int sys_pipe (int * phandles);
 
 #ifndef HAVE_X_WINDOWS
 #define sleep   sys_sleep
+void sleep (int seconds);
 #endif
 
 /* subprocess calls that are emulated */
 #define spawnve sys_spawnve
+int spawnve (int mode, CONST char *cmdname, 
+	     CONST char * CONST *argv, CONST char *CONST *envp);
+
 #define wait    sys_wait
+int wait (int *status);
+
 #define kill    sys_kill
+int kill (int pid, int sig);
 
 #define select  sys_select
 
@@ -251,7 +270,7 @@ typedef int pid_t;
 #define pclose    _pclose
 #define putw      _putw
 #define umask     _umask
-#define utime     _utime
+/* #define utime     _utime */
 #define index     strchr
 #define rindex    strrchr
 #define read	  _read
@@ -290,10 +309,12 @@ typedef int pid_t;
 #define EMACS_CONFIGURATION 	get_emacs_configuration ()
 #define EMACS_CONFIG_OPTIONS	"NT"	/* Not very meaningful yet.  */
 
+#if 0 /* they do. -kkm */
 /* Define this so that winsock.h definitions don't get included when windows.h
    is...  I don't know if they do the right thing for emacs.  For this to
    have proper effect, config.h must always be included before windows.h.  */
 #define _WINSOCKAPI_    1
+#endif /* 0 */
 
 /* Defines size_t and alloca ().  */
 #include <malloc.h>

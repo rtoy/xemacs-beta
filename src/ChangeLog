@@ -1,3 +1,99 @@
+Sat Jan 10 11:36:11 1998    <andyp@parallax.co.uk>
+
+	* config.h.in: undef HAVE_SYS_UN_H so that it gets defined by
+	configure for gnuserv with UNIX_DOMAIN_SOCKETS.
+
+1998-01-09  SL Baur  <steve@altair.xemacs.org>
+
+	* buffer.c (reset_buffer_local_variables): Synch case-table
+	resetting stuffs from Emacs 20.2.
+	Suggested by Aki Vehtari <Aki.Vehtari@hut.fi>
+
+	* src/symbols.c (Fsetq_default): Fix docstring.
+	From Didier Verna <verna@inf.enst.fr>
+
+1998-01-07  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* msw-proc.c (mswindows_wnd_proc): Calls to redisplay() from out
+	of WM_SIZE handler limited to the case of dragging frame borders.
+
+	* redisplay-msw.c (mswindows_bevel_modeline): Added support for
+	negative modeline height.
+	(mswindows_output_cursor): Added bar cursor drawing
+	(mswindows_flash): Flash frame by inverting client area.
+
+1998-01-08  Andy Piper  <andyp@parallax.co.uk>
+
+	* lread.c: guess load path if its not set just like the dumped
+ 	version does.
+
+	* doc.c: guess doc path if its not set just like the dumped
+ 	version does
+
+Thu Jan 08 09:42:36 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* emacs.c: don't load loadup.el when CANNOT_DUMP is set, this
+	is almost never right on XEmacs.
+
+	* s/cygwin32.h: add comments about how to buid. Move some
+	variables into configure so that we don't have to set them.
+
+	* config.h.in: define HAVE_WINDOW_SYSTEM if HAVE_MS_WINDOWS is
+	set.
+
+1998-01-06  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* lread.c (Fload_internal): On Win32, this reopened the file
+	without first closing the handle. This caused running out of
+	handles.
+	
+	* nt.c (sys_open): This one made big mess when opening a handle
+	next after MAXDESC-1. Fixed.
+
+1998-01-06  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* objects-msw.c (mswindows_string_to_color): Patched not to modify 
+	const char* parameter.
+	(hexval): Modified to accept uppercase hex digits.
+
+	* ntproc.c (sys_spawnve): char* arguments made CONST, to comply
+	with standard header declaration.
+
+	* sysdep.c: Fixed ugly prototypes copied from system headers. Who
+	says the solution is as ugly, is right.
+	Added a couple of #include directives to avoid undefined functions.
+	(struct save_signal): Added parameter to function pointer
+	prototype when compiled under ANSI C.
+	(save_signal_handlers): Ditto
+
+	* s/windowsnt.h: Added prototypes for functions defined via
+	sys_<name> which are not found or differ on Win32: pipe, sleep,
+	spawnve, wait, kill
+	Macros created from former nt.c functions: random srandom setpgrp
+	Defined HAVE_STRCASECMP, and strcasecmp defined to _stricmp which
+	is provided by the compiler.
+	Removed hack which prevented winsock.h from including.
+
+	* nt.c (random): Removed and made a macro in s/windowsnt.h
+	(srandom): Ditto
+	(setpgrp): Ditto
+	(unrequest_sigio): #if0'ed. It is unreferenced; in XEmacs, calls
+	to it seem to be controlled by HAVE_SIGIO.
+	(request_sigio): Ditto
+
+	* nt.h: Removed FD_* macros. Rely on definitions in winsock.h.
+	Changed EMACSDEBUG references to DEBUG_XEMACS
+
+	* event-msw.c (mswindows_cancel_dispatch_event): Returns Qnil when 
+	event not found in the queue. Used to return undefined value.
+
+1998-01-07  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (main_1): Add `-no-autoloads' to suppress loading
+	autoloads at startup.
+
+	* Makefile.in.in (xemacs): Fix call to list load-path shadows.
+
 1998-01-02    Charles G. Waldman <cgw@pgt.com>
 
 	* frame.h:  fix erroneous FRAME_RIGHT_BORDER_START macro.

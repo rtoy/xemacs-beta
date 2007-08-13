@@ -40,8 +40,10 @@ Boston, MA 02111-1307, USA.
 #undef kill
 
 #include <windows.h>
+#include <sys/socket.h>
 
 #include "lisp.h"
+#include "sysproc.h"
 #include "nt.h"
 #include "ntheap.h" /* From 19.34.6 */
 #include "systime.h"
@@ -89,13 +91,12 @@ Lisp_Object Vwin32_get_true_file_attributes;
 
 Lisp_Object Qhigh, Qlow;
 
-#ifndef SYS_SIGLIST_DECLARED
-extern char *sys_siglist[];
+#ifndef DEBUG_XEMACS
+__inline
 #endif
-
-#ifdef EMACSDEBUG
 void _DebPrint (const char *fmt, ...)
 {
+#ifdef DEBUG_XEMACS
   char buf[1024];
   va_list args;
 
@@ -103,8 +104,8 @@ void _DebPrint (const char *fmt, ...)
   vsprintf (buf, fmt, args);
   va_end (args);
   OutputDebugString (buf);
-}
 #endif
+}
 
 /* sys_signal moved to nt.c. It's now called msw_signal... */
 
@@ -675,7 +676,8 @@ merge_and_sort_env (char **envp1, char **envp2, char **new_envp)
 /* When a new child process is created we need to register it in our list,
    so intercept spawn requests.  */
 int 
-sys_spawnve (int mode, char *cmdname, char **argv, char **envp)
+sys_spawnve (int mode, CONST char *cmdname,
+	     CONST char * CONST *argv, CONST char *CONST *envp)
 {
   Lisp_Object program, full;
   char *cmdline, *env, *parg, **targ;
@@ -712,14 +714,16 @@ sys_spawnve (int mode, char *cmdname, char **argv, char **envp)
 	  return -1;
 	}
       cmdname = XSTRING_DATA (full);
-      argv[0] = cmdname;
+      /* #### KLUDGE */
+      *(char**)(argv[0]) = cmdname;
     }
   UNGCPRO;
 
   /* make sure argv[0] and cmdname are both in DOS format */
   strcpy (cmdname = alloca (strlen (cmdname) + 1), argv[0]);
   unixtodos_filename (cmdname);
-  argv[0] = cmdname;
+  /* #### KLUDGE */
+  *(char**)(argv[0]) = cmdname;
 
   /* Determine whether program is a 16-bit DOS executable, or a Win32
      executable that is implicitly linked to the Cygnus dll (implying it

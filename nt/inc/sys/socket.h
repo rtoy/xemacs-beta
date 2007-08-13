@@ -14,6 +14,7 @@
 #define MUST_REDEF_SELECT
 #endif
 
+#if 0 /* What's wrong with winsock.h version ? - kkm */
 /* avoid clashing with our version of FD_SET if already defined */
 #ifdef FD_SET
 #undef FD_SET
@@ -24,6 +25,7 @@
 
 /* allow us to provide our own version of fd_set */
 #define fd_set ws_fd_set
+#endif /* 0 */
 
 /* avoid duplicate definition of timeval */
 #ifdef HAVE_TIMEVAL
@@ -38,6 +40,7 @@
 #undef MUST_REDEF_SELECT
 #endif
 
+#if 0 /* What's wrong with winsock.h version ? - kkm */
 /* revert to our version of FD_SET */
 #undef FD_SET
 #undef FD_CLR
@@ -45,6 +48,7 @@
 #undef FD_ZERO
 #undef fd_set
 #include "nt.h"
+#endif /* 0 */
 
 #ifdef HAVE_TIMEVAL
 #undef timeval

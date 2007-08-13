@@ -154,9 +154,11 @@
 
 (defun toolbar-ispell-internal ()
   (interactive)
-  (if (region-active-p)
-      (ispell-region (region-beginning) (region-end))
-    (ispell-buffer)))
+  (cond
+   ((region-active-p) (ispell-region (region-beginning) (region-end)))
+   ((eq major-mode 'mail-mode) (ispell-message))
+   ((eq major-mode 'message-mode) (ispell-message))
+   (t (ispell-buffer))))
 
 (defcustom toolbar-ispell-function 'toolbar-ispell-internal
   "*Function to call when the ispell icon is selected."
@@ -190,7 +192,8 @@
     (elm	. (toolbar-external "xterm" "-e" "elm"))
     (mutt	. (toolbar-external "xterm" "-e" "mutt"))
     (exmh	. (toolbar-external "exmh"))
-    (netscape	. (toolbar-external "netscape" "mailbox:")))
+    (netscape	. (toolbar-external "netscape" "mailbox:"))
+    (send	. mail))
   "*Alist of mail readers and their commands.
 The car of each alist element is the mail reader, and the cdr is the form
 used to start it."
@@ -203,11 +206,12 @@ used to start it."
 The legal values are the keys from `toolbar-mail-command-alist', which
  should be used to add new mail readers.
 Mail readers known by default are vm, gnus, rmail, mh, pine, elm,
- mutt, exmh and netscape."
+ mutt, exmh, netscape and send."
   :type '(choice (const :tag "Not Configured" not-configured)
 		 (const vm) (const gnus) (const rmail) (const mh)
 		 (const pine) (const elm) (const mutt) (const exmh)
 		 (const netscape)
+                 (const send)
 		 (symbol :tag "Other"
 			 :validate (lambda (wid)
 				     (if (assq (widget-value wid)

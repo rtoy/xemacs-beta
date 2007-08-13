@@ -94,6 +94,9 @@ Boston, MA 02111-1307, USA.  */
 /* Compile in TTY support? */
 #undef HAVE_TTY
 
+/* Compile in support for MS windows? */
+#undef HAVE_MS_WINDOWS
+
 /* Compile in support for the X window system? */
 #undef HAVE_X_WINDOWS
 
@@ -118,7 +121,7 @@ Boston, MA 02111-1307, USA.  */
 #endif /* HAVE_X_WINDOWS */
 
 /* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
-#if defined (HAVE_X_WINDOWS) /* || defined (HAVE_NEXTSTEP) */
+#if defined (HAVE_X_WINDOWS) || defined(HAVE_MS_WINDOWS) /* || defined (HAVE_NEXTSTEP) */
 #define HAVE_WINDOW_SYSTEM
 #endif
 
@@ -166,6 +169,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_LINUX_VERSION_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_LIMITS_H
+#undef HAVE_SYS_UN_H
 #undef STDC_HEADERS
 #undef TIME_WITH_SYS_TIME
 #undef WORDS_BIGENDIAN

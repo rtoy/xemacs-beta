@@ -685,6 +685,7 @@ If BASE is an indirect buffer itself, the base buffer for that buffer
 }
 #endif /* 0 */
 
+
 
 static void
 reset_buffer_local_variables (struct buffer *b, int first_time)
@@ -704,6 +705,28 @@ reset_buffer_local_variables (struct buffer *b, int first_time)
   }
 #include "bufslots.h"
 #undef MARKED_SLOT
+#if 0
+#define STRING256_P(obj) \
+  (STRINGP (obj) && string_char_length (XSTRING (obj)) == 256)
+  /* If the standard case table has been altered and invalidated,
+     fix up its insides first.  */
+  if (!(STRING256_P(Vascii_upcase_table) &&
+	STRING256_P(Vascii_canon_table) &&
+	STRING256_P(Vascii_eqv_table)))
+    {
+      Fset_standard_case_table (Vascii_downcase_table);
+    }
+  b->downcase_table = Vascii_downcase_table;
+  b->upcase_table = Vascii_upcase_table;
+  b->case_canon_table = Vascii_canon_table;
+  b->case_eqv_table = Vascii_eqv_table;
+#ifdef MULE
+  b->mirror_downcase_table = Vmirror_ascii_downcase_table;
+  b->mirror_upcase_table = Vmirror_ascii_upcase_table;
+  b->mirror_case_canon_table = Vmirror_ascii_canon_table;
+  b->mirror_case_eqv_table = Vmirror_ascii_eqv_table;
+#endif
+#endif
 }
 
 

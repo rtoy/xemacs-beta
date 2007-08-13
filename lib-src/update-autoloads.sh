@@ -76,7 +76,7 @@ make_special () {
 # Only use Mule XEmacs to build Mule-specific autoloads & custom-loads.
 echon "Checking for Mule support..."
 lisp_prog='(princ (featurep (quote mule)))'
-mule_p="`$EMACS -batch -vanilla -eval \"$lisp_prog\"`"
+mule_p="`$EMACS -batch -q -no-site-file -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
 	echo No
 	ignore_dirs="$ignore_dirs mule leim language skk"
@@ -116,12 +116,12 @@ for dir in lisp/*; do
 	fi
 done
 
-$EMACS -batch -vanilla -eval '(setq autoload-package-name "Standard")' \
+$EMACS -batch -q -no-site-file -eval '(setq autoload-package-name "Standard")' \
 	-l autoload -f batch-update-directory lisp
 
 # set -x
 for dir in $dirs; do
-	$EMACS -batch -vanilla -l autoload -f batch-update-directory $dir
+	$EMACS -batch -q -no-site-file -l autoload -f batch-update-directory $dir
 done
 
 eval "$make_special_commands"

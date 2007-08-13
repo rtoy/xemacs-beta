@@ -25,9 +25,8 @@ Boston, MA 02111-1307, USA.  */
 /* Sync'ed with Emacs 19.34.6 by Marc Paquette <marcpa@cam.org> */
 
 /* #define FULL_DEBUG */
-#define EMACSDEBUG
 
-#ifdef EMACSDEBUG
+#ifdef DEBUG_XEMACS
 #define DebPrint(stuff) _DebPrint stuff
 #else
 #define DebPrint(stuff)
@@ -39,6 +38,9 @@ Boston, MA 02111-1307, USA.  */
 #define F_OK 0
 
 /* File descriptor set emulation.  */
+
+#if 0 /* These are defined in winsock.h.
+	 FD_SETSIZE is defined 64. Let's not full the runtime. */
 
 /* The MSVC multithreaded statically-linked runtime library has limit
    of 256 descriptors by default (the single-threaded static library
@@ -66,6 +68,9 @@ typedef struct {
 #define FD_ZERO(p) memset((p), 0, sizeof(fd_set))
 
 #define SELECT_TYPE fd_set
+#define MAXDESC FD_SETSIZE
+
+#endif /* 0 */
 
 /* ------------------------------------------------------------------------- */
 
@@ -94,7 +99,6 @@ typedef struct _child_process
   char                  chr;
 } child_process;
 
-#define MAXDESC FD_SETSIZE
 #define MAX_CHILDREN  MAXDESC/2
 #define CHILD_ACTIVE(cp) ((cp)->char_avail != NULL)
 

@@ -837,14 +837,11 @@ main(argc,argv)
      char *argv[];
 {
   int chan;			/* temporary channel number */
-#ifdef INTERNET_DOMAIN_SOCKETS
-  int ils = -1;			/* internet domain listen socket */
-#endif
-#ifdef UNIX_DOMAIN_SOCKETS
-  int uls = -1;			/* unix domain listen socket */
-#endif
 #ifdef SYSV_IPC
   struct msgbuf *msgp;		/* message buffer */
+#else
+  int ils = -1;			/* internet domain listen socket */
+  int uls = -1;			/* unix domain listen socket */
 #endif /* SYSV_IPC */
 
   progname = argv[0];

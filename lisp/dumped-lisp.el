@@ -4,7 +4,9 @@
 	"packages"		; Bootstrap run-time lisp environment
 	"subr" 			; load the most basic Lisp functions
 	"replace" 		; match-string used in version.el.
-	"version.el"		; Ignore compiled-by-mistake version.elc
+	; Ignore compiled-by-mistake version.elc
+	#-infodock "version.el"	; XEmacs
+	#+infodock "id-version.el" ; InfoDock
 	"cl"
 	"cl-extra"
 	"cl-seq"
@@ -52,7 +54,7 @@
 	;; (load-gc "hyper-apropos")  Soon...
 	#-mule "files-nomule"
 	"files"
-	#+xemacs "lib-complete" ; InfoDock uses an older version
+	#-infodock "lib-complete" ; InfoDock uses an older version
 	"format"
 	"indent"
 	"isearch-mode"
@@ -152,6 +154,7 @@
 	#+window-system "mouse"
 ;; preload the X code, for faster startup.
 	#+(and (not infodock) (or x mswindows) menubar) "x-menubar"
+	#+(and infodock (or x mswindows) menubar) "id-menus"
 	#+x "x-faces"
 	#+x "x-iso8859-1"
 	#+x "x-mouse"
@@ -159,7 +162,7 @@
 	#+(and x scrollbar) "x-scrollbar"
 	#+x "x-misc"
 	#+x "x-init"
-	#+(and x toolbar) "x-toolbar"
+	#+(and (not infodock) x toolbar) "x-toolbar"
 	#+x "x-win-xfree86"
 	#+x "x-win-sun"
 ;; preload the mswindows code.
