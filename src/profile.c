@@ -67,7 +67,7 @@ Lisp_Object QSunknown;
    the table while another routine is operating on it.  We also set
    inside_profiling in case the timeout between signal calls is short
    enough to catch us while we're already in there. */
-volatile static int inside_profiling;
+static volatile int inside_profiling;
 
 static SIGTYPE
 sigprof_handler (int signo)

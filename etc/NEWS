@@ -73,6 +73,173 @@ bindings.
 * XEmacs Release Notes
 ======================
 
+** Major Differences Between 19.15 and 19.16
+============================================
+
+Many bugs have been fixed.  XEmacs 19.16 is a bug-fix release only.  No
+new features have been added.
+
+-- shell-command did not respect its output-buffer argument.
+
+-- When using CVS in conjunction with frame-icon, an error
+   would occur when a frame was iconified.
+
+-- dired did not properly protect its data structures durin
+   garbage collection.
+
+-- y-or-n-p-minibuf could crash XEmacs 19.15.
+
+-- overlay-lists did not always return a pair of lists.
+
+-- Starting with the -nw option did not prevent XEmacs 19.15 from
+   attempting to connect to a tooltalk server.
+
+-- XEmacs 19.15 could not be built on a DUNIX4.0 system.
+
+-- appt.el did not respect the user's hooks.
+
+-- outline-mode did not work in a tty-only XEmacs 19.15.
+
+-- MD5 checksum generation did not work on a 64-bit machine.
+
+-- XEmacs 19.15 ignored the user's mail path.
+
+-- The rcompile package checked for ange-ftp instead of efs.
+
+-- vc-directory did not work.
+
+-- Sometimes clicking on a modeline did not advance to the
+   next or previous buffer as it should have.
+
+-- The variable enable-local-variables was sometimes ignored.
+
+-- pending-del did not respect the user's hooks.
+
+-- CRiSP mode was synchronized with FSF emacs.
+
+-- The performance of font-lock was improved.
+
+-- There were numerous holes in the garbage collection.
+
+-- There were 2 minor bugs with using XEmacs 19.15 on a tty.
+
+-- XEmacs 19.15 ignored certain dead_key events.
+
+-- XEmacs 19.15 had minor fontification problems with java.
+
+-- mark-pop did not always restore the mark properly.
+
+-- smtpmail.el had a couple of minor bugs.
+
+-- telnet-mode did not always respond to the telnet prompt.
+
+-- gomoku was broken in XEmacs 19.15.
+
+-- recover-all files did not work in XEmacs 19.15.
+
+-- transient-mark-mode and skeleton.el did not work together.
+
+-- Footnotes were not properly formatted in info.
+
+--  Configuration of XEmacs 19.15 did not work on Sequent
+    computers, because they do not have a working version of alloca.
+
+-- In XEmacs 19.15 it was impossible to compile with Lucid
+   scrollbars without Motif.
+
+-- XEmacs 19.15 would erroneously report an internal error on
+   certain types of minibuffer input.
+
+-- When using virtual screens with your X server, sometimes
+   iconify-frame would cause XEmacs 19.15 to lose one of the frames.
+
+-- server-kill-buffer always returned nil.
+
+-- The :filter keyword on a menubar could crash XEmacs 19.15.
+
+-- psgml-mode did not respect the user's hooks.
+
+-- Many bugs in efs mode were fixed.
+
+-- sh-script.el could hang XEmacs.
+
+-- Options could not be saved after fonts were changed in
+   XEmacs 19.15.
+
+-- read-from-string could not read "1.".
+
+-- dired was confused about where chown lives on Linux.
+
+-- Edebug did not work on floating point numbers.
+
+-- first-change-hook saved the wrong buffer, so unwinding the
+   stack could result in the wrong buffer's being restored.
+
+-- pcl-cvs was incompatible with live-icon.
+
+-- save-buffer deactivated the zmacs region.
+
+-- When running a sub-process, if the standard error could
+   not be opened, the error was reported incorectly.
+
+-- shell-command-on-region had a bogus test for the active
+   region.
+
+-- get-frame-for-buffer ignored relevant properties.
+
+-- make-database did not correctly expand its filename
+   argument.
+
+-- A few minor improvements were made to the optimizer in the
+   byte-compiler.
+
+-- kill-region could get confused when the beginning of the
+   region was after the end of the region.
+
+-- movemail was upgraded to the same version which shipped
+   with XEmacs 20.2; this version understands Linux file locking.
+
+-- The regexp cache size was too small.
+
+-- The "save as" dialog was buggy.
+
+-- Minor bugs in sendmail mode.
+
+-- tm did not understand the png image format.
+
+-- set-text-properties only removed the first text property.
+
+-- add-log.el has been upgraded to the version supported by
+   FSF emacs 20.1.
+
+-- When tags-loop-continue was called inappropriately, the
+   wrong error message resulted.
+
+-- Frame creation was buggy, and could crash XEmacs.
+
+-- PNG support did not work on Linux.
+
+-- Asynchronous process output did not always work.
+
+-- x-compose.el did not support the degree sign or the
+   grave keysym.
+
+-- mh-invisible-headers did not work.
+
+-- Creating a tty frame could crash XEmacs 19.15.
+
+-- detach-extent could crash XEmacs.
+
+-- The minibuffer could get the read-only attribute.
+
+-- When the mouse was in the right side of the frame, its
+   position could be reported incorrectly.
+
+-- lib-complete didn't work with compressed files.
+
+-- getloadavg.c was brought into sync with the XEmacs 20.2
+   version.
+
 ** Major Differences Between 19.14 and 19.15
 ============================================
 
@@ -90,7 +257,6 @@ User visible changes:
    and News.  The primary author is Morioka Tomohiko.
 
 -- There is a new way to customize faces and (some) variables.
-
    Try it with `M-x customize RET', or from the Options->Customize menu.
    Documented in <URL:info:custom>.
 

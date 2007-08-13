@@ -28,6 +28,14 @@
 
 #include "hpux9.h"
 
+/* The curses library seems to have a badly broken version of select(2)
+   that makes "poll: interrupted system call" messages to appear and
+   Emacs suprocesses to hang (e.g. TeX compilation w/ AUCTeX).
+   Althought this is only for hpux 10, linking termcap instead of curses
+   on 9.X ensures a 9.X binary will still run properly on 10.X. */
+#undef LIBS_TERMCAP
+#define LIBS_TERMCAP -ltermcap
+
 #if 0 /* No longer needed, since in current GCC -g no longer does that.  */
 /* We must turn off -g since it forces -static.  */
 #ifdef __GNUC__

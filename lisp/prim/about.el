@@ -1176,6 +1176,7 @@
 	  Raymond L. Toy <toy@rtp.ericsson.se>
 	  John Turner <turner@xdiv.lanl.gov>
 	  Juan E. Villacis <jvillaci@cs.indiana.edu>
+	  Jan Vroonhof <vroonhof@math.ethz.ch>
 	  Vladimir Vukicevic <vladimir@intrepid.com>
 	  Peter Ware <ware@cis.ohio-state.edu>
 	  Yoav Weiss <yoav@zeus.datasrv.co.il>

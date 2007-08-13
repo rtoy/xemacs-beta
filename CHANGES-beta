@@ -1,4 +1,9 @@
 							-*- indented-text -*-
+to 19.16 pre3 -- "Manhattan"
+-- NEWS file updated
+-- a couple of synchs with XEmacs 20.2
+-- warning cleanup
+
 to 19.16 pre2 -- "Brooklyn"
 -- Patch for XEmacs not Dying on quit applied
 -- movemail synched with 20.3
