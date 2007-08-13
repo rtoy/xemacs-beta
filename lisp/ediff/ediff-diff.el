@@ -586,13 +586,7 @@ one optional arguments, diff-number to refine.")
 	    (whitespace-C (ediff-whitespace-diff-region-p n 'C))
 	    cumulative-fine-diff-length)
 	
-	(cond ((and (eq flag 'noforce) (ediff-get-fine-diff-vector n 'A))
-	       ;; don't compute fine diffs if diff vector exists
-	       (if (ediff-no-fine-diffs-p n)
-		   ;;(ediff-message-if-verbose
-		   (message
-		    "Only white-space differences in region %d" (1+ n))))
-	      ;; If one of the regions is empty (or 2 in 3way comparison)
+	(cond ;; If one of the regions is empty (or 2 in 3way comparison)
 	      ;; then don't refine.
 	      ;; If the region happens to be entirely whitespace or empty then
 	      ;; mark as such.
@@ -621,6 +615,20 @@ one optional arguments, diff-number to refine.")
 		 ;; if some regions are white and others don't, then mark as
 		 ;; non-white-space-only
 		 (ediff-mark-diff-as-space-only n nil)))
+
+	      ;; don't compute fine diffs if diff vector exists
+	      ((and (eq flag 'noforce) (ediff-get-fine-diff-vector n 'A))
+	       (if (ediff-no-fine-diffs-p n)
+		   (message
+		    "Only white-space differences in region %d %s"
+		    (1+ n)
+		    (cond ((eq (ediff-no-fine-diffs-p n) 'A)
+			   "in buffers B & C")
+			  ((eq (ediff-no-fine-diffs-p n) 'B)
+			   "in buffers A & C")
+			  ((eq (ediff-no-fine-diffs-p n) 'C)
+			   "in buffers A & B")
+			  (t "")))))
 	      ;; don't compute fine diffs for this region
 	      ((eq flag 'skip)
 	       (or (ediff-get-fine-diff-vector n 'A)
@@ -701,13 +709,15 @@ one optional arguments, diff-number to refine.")
 		      (ediff-message-if-verbose
 		       "Only white-space differences in region %d" (1+ n)))
 		     ((eq cumulative-fine-diff-length 0)
-		      (ediff-mark-diff-as-space-only n t)
 		      (ediff-message-if-verbose
 		       "Only white-space differences in region %d %s"
 		       (1+ n)
-		       (cond (whitespace-A "in buffers B & C")
-			     (whitespace-B "in buffers A & C")
-			     (whitespace-C "in buffers A & B"))))
+		       (cond (whitespace-A (ediff-mark-diff-as-space-only n 'A)
+					   "in buffers B & C")
+			     (whitespace-B (ediff-mark-diff-as-space-only n 'B)
+					   "in buffers A & C")
+			     (whitespace-C (ediff-mark-diff-as-space-only n 'C)
+					   "in buffers A & B"))))
 		     (t 
 		      (ediff-mark-diff-as-space-only n nil)))
 	       )

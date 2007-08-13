@@ -16,6 +16,22 @@ A: This usually means you compiled W3 in an emacs that could not find
    emacs.  Set the environment variable WIDGETDIR to where your custom
    library lives (ie: ~/lisp/gnus/lisp)
 
+Q: W3 under OS/2 is incredibly slow
+A: This appears to be a problem with how fonts are looked up.  Thanks
+   to chang@wsu.edu for this analysis.
+
+   In OS/2, the font name default to forms like
+
+   "-*-Courier-medium-r-normal--*-100-*-*-m-*-cp850" ...... [1]
+   or
+   "10.Courier"
+
+   In these two cases, font detection fails because this does not
+   match x-font-regexp.
+
+   To solve this, set the default font as
+   "-*-Courier-medium-r-normal--*-100-*-*-m-*-cp850-1" 
+
 Q: I like being warned about invalid HTML on my own pages, but how can
    I make Emacs/W3 stop telling me almost everything on the Web is
    invalid?

@@ -7,7 +7,7 @@ respective relevance for XEmacs, but may have not succeeded completely
 in that task.  Try finding the things you need using one of the search
 commands XEmacs provides (e.g. `C-s').
 
-(updated for 20.1)
+(updated for 20.2)
 
 * Watch out for .emacs file
 
@@ -154,16 +154,6 @@ There have been reports of Sun sed truncating very lines in the
 Makefile during configuration.  The workaround is to use GNU sed or,
 even better, think of a better way to generate Makefile, and send us a 
 patch. :-)
-
-** CDE is not autodetected on HP.
-
-Richard Cognot <cognot@ensg.u-nancy.fr> writes:
-  I have to force /usr/dt/{lib,include} into the site include/lib
-  command line options. I could add these in hpux10.h, but then I
-  would think these should be pretty standard (to my knowledge, that's
-  also where Sun puts its CDE stuff), so that wouldn't fix the problem
-  on other architectures. AAMOF, when these path are given, CDE is
-  detected, and DragAndDrop works (more or less, see next issue).
 
 ** Linking with -rpath on IRIX.
 
@@ -1474,3 +1464,30 @@ is to rebytecompile the offending file.
 The is seen when installing the Big Brother Data Base (bbdb) which
 includes an outdated copy of mail-abbrevs.el.  Remove the copy that
 comes with bbdb and use the one that comes with XEmacs.
+
+* MULE issues
+
+** Internationalized (Asian) Isearch doesn't work
+
+Currently, Isearch doesn't directly support any of the input methods
+that are not XIM based (like egg, canna and quail) (and there are
+potential problems with XIM version too...). This is something
+we are working on, but for the moment, if you're using egg there is a
+workaround. Hitting <RET> right after C-s to invoke Isearch will put
+Isearch in string mode, where a complete string can be typed into the
+minibuffer and then processed by Isearch afterwards. Since egg is now
+supported in the minibuffer using string mode you can now use egg to
+input your Japanese, Korean or Chinese string, then hit return to send 
+that to Isearch and then use standard Isearch commands from there.
+
+** Using egg or canna and mousing around while in 'fence' mode screws
+up my buffer
+
+Don't do this. The fence modes of egg and canna are currently very
+modal, and messing with where they expect point to be and what they
+think is the current buffer is just asking for trouble. If you're
+lucky they will realize that something is awry, and simply delete the
+fence, but worst case can trash other buffers too. We've tried to
+protect against this where we can, but there still are many ways to
+shoot yourself in the foot. So just finish what you are typing into
+the fence before reaching for the mouse.

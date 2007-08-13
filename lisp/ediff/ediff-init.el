@@ -129,10 +129,18 @@ that Ediff doesn't know about.")
       (symbol-value
        (intern (format "ediff-difference-vector-%S" (, buf-type)))) (, n))))
   
-;; tell if it has been previously determined that the region has
+;; Tell if it has been previously determined that the region has
 ;; no diffs other than the white space and newlines
 ;; The argument, N, is the diff region number used by Ediff to index the
 ;; diff vector. It is 1 less than the number seen by the user.
+;; Returns:
+;;		t  if the diffs are whitespace in all buffers
+;;		'A (in 3-buf comparison only) if there are only whitespace
+;;		   diffs in bufs B and C
+;;		'B (in 3-buf comparison only) if there are only whitespace
+;;		   diffs in bufs A and C
+;;		'C (in 3-buf comparison only) if there are only whitespace
+;;		   diffs in bufs A and B
 ;;
 ;; A difference vector has the form:
 ;; [diff diff diff ...]

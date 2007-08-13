@@ -2925,14 +2925,19 @@ On reaching beginning of line, stop and signal error."
   (interactive "P")
   (vip-leave-region-active)
   (let ((val (vip-p-val arg))
-	(com (vip-getcom arg)))
-    (save-excursion
-      (end-of-line)
-      (if (> val (1+ (current-column))) (error "")))
+	(com (vip-getcom arg))
+	line-len)
+    (setq line-len (- (vip-line-pos 'end) (vip-line-pos 'start)))
     (if com (vip-move-marker-locally 'vip-com-point (point)))
     (beginning-of-line)
-    (forward-char (1- val))
-    (if com (vip-execute-com 'vip-goto-col val com))))
+    (forward-char (1- (min line-len val)))
+    (while (> (current-column) (1- val))
+      (backward-char 1))
+    (if com (vip-execute-com 'vip-goto-col val com))
+    (save-excursion
+      (end-of-line)
+      (if (> val (current-column)) (error "")))
+    ))
     
 
 (defun vip-next-line (arg)

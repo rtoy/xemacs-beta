@@ -1,7 +1,7 @@
 ;;; devices.el -- XEmacs device API emulation
 ;; Author: wmperry
-;; Created: 1997/04/22 14:48:02
-;; Version: 1.3
+;; Created: 1997/04/25 21:27:01
+;; Version: 1.4
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -31,6 +31,7 @@
 ;; XEmacs 19.14.  A 'device' for Emacs 19 is just a frame, from which we can
 ;; determine the connection to an X display, etc.
 
+(require 'cl)
 (eval-when-compile
   (if (string-match "XEmacs" (emacs-version))
       (set 'byte-optimize nil)))

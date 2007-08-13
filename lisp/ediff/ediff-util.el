@@ -243,12 +243,11 @@ to invocation.")
 
 ;;; Setup functions
 
-;; No longer needed: XEmacs has surrogate minibuffers now.
-;;(or (boundp 'synchronize-minibuffers)
-;;    (defvar synchronize-minibuffers nil))
-
-;; Common startup entry for all Ediff functions
-;; It now returns control buffer so other functions can do post-processing
+;; Common startup entry for all Ediff functions It now returns control buffer
+;; so other functions can do post-processing SETUP-PARAMETERS is a list of the
+;; form ((param .val) (param . val)...)  This serves a similar purpose to
+;; STARTUP-HOOKS, but these parameters are set in the new control buffer right
+;; after this buf is created and before any windows are set and such.
 (defun ediff-setup (buffer-A file-A buffer-B file-B buffer-C file-C
 			     startup-hooks setup-parameters)
   ;; ediff-convert-standard-filename puts file names in the form appropriate
@@ -264,12 +263,6 @@ to invocation.")
 			   (get-buffer-create control-buffer-name))))
     (ediff-eval-in-buffer control-buffer
       (ediff-mode)                 
-      
-      ;; unwrap set up parameters passed as argument
-      (while setup-parameters
-	(set (car (car setup-parameters)) (cdr (car setup-parameters)))
-	(setq setup-parameters (cdr setup-parameters)))
-	
       ;; set variables classifying the current ediff job
       (setq ediff-3way-comparison-job (ediff-3way-comparison-job)
 	    ediff-merge-job (ediff-merge-job)
@@ -287,6 +280,12 @@ to invocation.")
       (make-local-variable 'ediff-merge-window-share)
       (make-local-variable 'ediff-window-setup-function)
       (make-local-variable 'ediff-keep-variants)
+      
+      ;; unwrap set up parameters passed as argument
+      (while setup-parameters
+	(set (car (car setup-parameters)) (cdr (car setup-parameters)))
+	(setq setup-parameters (cdr setup-parameters)))
+	
 
       ;; Don't delete variants in case of ediff-buffer-* jobs without asking.
       ;; This is because u may loose work---dangerous.
@@ -1593,7 +1592,7 @@ With a prefix argument, go forward that many differences."
 					(or (ediff-get-state-of-merge n) "")))
 		     ;; skip difference regions that differ in white space
 		     (and ediff-ignore-similar-regions
-			  (ediff-no-fine-diffs-p n))))
+			  (eq (ediff-no-fine-diffs-p n) t))))
 	  (setq n (1+ n))
 	  (if (= 0 (mod n 20))
 	      (message "Skipped over region %d and counting ..."  n))
@@ -1630,7 +1629,7 @@ With a prefix argument, go back that many differences."
 					(or (ediff-get-state-of-merge n) "")))
 		     ;; skip difference regions that differ in white space
 		     (and ediff-ignore-similar-regions
-			  (ediff-no-fine-diffs-p n))))
+			  (eq (ediff-no-fine-diffs-p n) t))))
 	  (if (= 0 (mod (1+ n) 20))
 	      (message "Skipped over region %d and counting ..."  (1+ n)))
 	  (setq n (1- n))
@@ -3132,9 +3131,11 @@ Ediff Control Panel to restore highlighting."
 
     (ediff-regions-internal
      bufA begA endA bufB begB endB
-     nil  			; startup hook
+     nil			; setup-hook
      'ediff-regions-linewise	; job name
-     nil)			; no word mode
+     nil			; no word mode
+     ;; setup param to pass to ediff-setup
+     (list (cons 'ediff-split-window-function ediff-split-window-function)))
     ))
       
     

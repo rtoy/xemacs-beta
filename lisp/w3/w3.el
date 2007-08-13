@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/04/21 23:55:57
-;; Version: 1.112
+;; Created: 1997/05/09 04:54:28
+;; Version: 1.119
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -619,6 +619,7 @@ the cdr is the 'next' node."
 	 ((equal '(0 . 0) lastmod) (setq lastmod possible-lastmod))
 	 ((consp lastmod) (setq lastmod (current-time-string lastmod)))
 	 (t (setq lastmod possible-lastmod)))
+	(setq url-current-mime-type "text/html")
 	(insert "<html>\n"
 		" <head>\n"
 		"  <title>Document Information</title>\n"
@@ -646,10 +647,12 @@ the cdr is the 'next' node."
 			(lambda (x)
 			  (if (/= (length (car x)) 0)
 			      (format fmtstring
-				      (capitalize (car x))
-				      (if (numberp (cdr x))
-					  (int-to-string (cdr x))
-					(cdr x))))))
+				      (url-insert-entities-in-string
+				       (capitalize (car x)))
+				      (url-insert-entities-in-string
+				       (if (numberp (cdr x))
+					   (int-to-string (cdr x))
+					 (cdr x)))))))
 		       (sort hdrs
 			     (function
 			      (lambda (x y) (string-lessp (car x) (car y)))))
@@ -666,8 +669,11 @@ the cdr is the 'next' node."
 		   (fmtstring (format "   <tr><td>%%%ds:</td><td>%%s</td></tr>" maxlength)))
 	      (insert "   <tr><th>Miscellaneous Variables</th></tr>\n")
 	      (while info
-		(insert (format fmtstring (capitalize (caar info))
-				(cdar info)) "\n")
+		(insert (format fmtstring
+				(url-insert-entities-in-string
+				 (capitalize (caar info)))
+				(url-insert-entities-in-string
+				 (cdar info))) "\n")
 		(setq info (cdr info))
 		)
 	      )
@@ -894,12 +900,14 @@ and convert newlines into spaces."
 	     ((and under (equal "PostScript" format))
 	      (setq content-type "application/postscript")
 	      (w3-fetch url)
+	      (require 'ps-print)
 	      (let ((ps-spool-buffer-name " *w3-temp*"))
 		(if (get-buffer ps-spool-buffer-name)
 		    (kill-buffer ps-spool-buffer-name))
 		(ps-spool-buffer-with-faces)
 		(set-buffer ps-spool-buffer-name)))
 	     ((equal "PostScript" format)
+	      (require 'ps-print)
 	      (let ((ps-spool-buffer-name " *w3-temp*"))
 		(if (get-buffer ps-spool-buffer-name)
 		    (kill-buffer ps-spool-buffer-name))
@@ -1190,6 +1198,7 @@ ftp.w3.org:/pub/www/doc."
 	    (equal "" format))
 	nil)				; Do nothing - we have the text already
        ((equal "PostScript" format)
+	(require 'ps-print)
 	(let ((ps-spool-buffer-name " *w3-temp*"))
 	  (if (get-buffer ps-spool-buffer-name)
 	      (kill-buffer ps-spool-buffer-name))
@@ -2084,7 +2093,25 @@ dumped with emacs."
 	  (sit-for 3)
 	  (kill-buffer buff)))))
 
+(defun w3-download-url-at-point ()
+  "Download the URL under point."
+  (interactive)
+  (w3-download-url-wrapper t))
+
+(defun w3-download-this-url ()
+  "Download the current URL."
+  (interactive)
+  (w3-download-url-wrapper nil))
+  
+(defun w3-download-url-wrapper (under-pt)
+  "Download current URL."
+  (let ((x (if under-pt (w3-view-this-url t) (url-view-url t))))
+    (if x
+	(w3-download-url x)
+      (error "No link found."))))
+	     
 (defun w3-download-url (url)
+  (interactive (list (w3-read-url-with-default)))
   (let* ((old-asynch url-be-asynchronous)
 	 (url-inhibit-uncompression t)
 	 (url-mime-accept-string "*/*")

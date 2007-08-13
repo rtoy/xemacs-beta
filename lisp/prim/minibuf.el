@@ -371,7 +371,7 @@ See also the variable completion-highlight-first-word-only for control over
 	     (make-local-variable 'mode-motion-hook)
 	     (or mode-motion-hook
 		 ;;####disgusting
-		 (setq mode-motion-hook 'minibuffer-mouse-tracker))
+		 (setq mode-motion-hook 'minibuffer-smart-mouse-tracker))
 	     (make-local-variable 'mouse-track-click-hook)
 	     (add-hook 'mouse-track-click-hook
 		       'minibuffer-smart-maybe-select-highlighted-completion))

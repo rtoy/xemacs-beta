@@ -503,7 +503,7 @@ x      start a new itimer
 	tab-stop-list '(22 32 40 60 67))
   (abbrev-mode 0)
   (auto-fill-mode 0)
-  (buffer-flush-undo (current-buffer))
+  (buffer-disable-undo (current-buffer))
   (use-local-map itimer-edit-map)
   (set-syntax-table emacs-lisp-mode-syntax-table))
 

@@ -60,6 +60,14 @@ A list of names of previously visited man page buffers.")
 
 ;; New variables.
 
+(defcustom Manual-snip-subchapter
+  (not (string-match "solaris" system-configuration))
+  "*Should man look in chapter 3 for ctime(3c)?
+This is relavent for Solaris and, perhaps, other systems which have 
+`man -s 3' not find things in chapter 3c, or other such sub-chapters"
+  :type 'boolean
+  :group 'man)
+
 (defcustom Manual-use-rosetta-man (not (null (locate-file "rman" exec-path))) "\
 If non-nil, use RosettaMan (rman) to filter man pages.
 This makes man-page cleanup virtually instantaneous, instead of
@@ -184,9 +192,10 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 	    (setq section "-k"
 		  topic (substring topic (match-beginning 1))))))
 
-    ;; jwz: turn section "3x11" and "3n" into "3".
-    (if (and section (string-match "\\`\\([0-9]+\\)[^0-9]" section))
-	(setq section (substring section 0 (match-end 1))))
+    (when Manual-snip-subchapter
+      ;; jwz: turn section "3x11" and "3n" into "3".
+      (if (and section (string-match "\\`\\([0-9]+\\)[^0-9]" section))
+	  (setq section (substring section 0 (match-end 1)))))
     (if (equal section "-k")
 	(setq apropos-mode t))
 

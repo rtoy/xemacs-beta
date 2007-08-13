@@ -6,8 +6,8 @@
 ;; Maintainer: Alexandre Oliva <oliva@dcc.unicamp.br>
 ;; Keywords: i18n
 ;; Adapted to XEmacs 19.14 by Alexandre Oliva <oliva@dcc.unicamp.br>
-;; $Revision: 1.3 $
-;; $Date: 1997/02/06 02:08:34 $
+;; $Revision: 1.4 $
+;; $Date: 1997/05/10 23:20:58 $
 
 ;; This file is part of GNU Emacs.
 
@@ -70,8 +70,10 @@
 (provide 'iso-acc)
 
 ;; needed for compatibility with XEmacs 19.14
-(if (fboundp 'read-event) ()
-  (defun read-event () (event-key (next-command-event))))
+(if (fboundp 'read-event)
+    (defalias 'iso-read-event 'read-event)
+  (defun iso-read-event ()
+    (event-key (next-command-event))))
 
 (if (fboundp 'character-to-event)
     (defun iso-char-to-event (ch)
@@ -148,6 +150,7 @@
 	 (?U . ?\331) (?a . ?\340) (?e . ?\350) (?i . ?\354)
 	 (?o . ?\362) (?u . ?\371) (?\  . ?`) (space . ?`)))
 
+    ;;; Thanks to Tudor <tudor@cs.unh.edu> for some fixes and additions.
     ("latin-2"
      (?' (?A . ?\301) (?C . ?\306) (?D . ?\320) (?E . ?\311) (?I . ?\315)
 	 (?L . ?\305) (?N . ?\321) (?O . ?\323) (?R . ?\300) (?S . ?\246)
@@ -159,7 +162,8 @@
 	 (?T . ?\336) (?Z . ?\257) (?a . ?\261) (?l . ?\263) (?c . ?\347)
 	 (?e . ?\352) (?s . ?\272) (?t . ?\376) (?z . ?\277) (?` . ?\252)
 	 (?. . ?\377) (?\  . ?`) (space . ?`))
-     (?^ (?A . ?\302) (?O . ?\324) (?a . ?\342) (?o . ?\364)
+     (?^ (?A . ?\302) (?I . ?\316) (?O . ?\324)
+	 (?a . ?\342) (?i . ?\356) (?o . ?\364)
 	 (?^ . ?^)			; no special code?
 	 (?\  . ?^) (space . ?^))
      (?\" (?A . ?\304) (?E . ?\313) (?O . ?\326) (?U . ?\334) (?a . ?\344)
@@ -167,7 +171,7 @@
 	  (?\  . ?\") (space . ?\"))
      (?\~ (?A . ?\303) (?C . ?\310) (?D . ?\317) (?L . ?\245) (?N . ?\322)
 	  (?O . ?\325) (?R . ?\330) (?S . ?\251) (?T . ?\253) (?U . ?\333)
-	  (?Z . ?\256) (?a . ?\323) (?c . ?\350) (?d . ?\357) (?l . ?\265)
+	  (?Z . ?\256) (?a . ?\343) (?c . ?\350) (?d . ?\357) (?l . ?\265)
 	  (?n . ?\362) (?o . ?\365) (?r . ?\370) (?s . ?\271) (?t . ?\273)
 	  (?u . ?\373) (?z . ?\276)
 	  (?v . ?\242)			; v accent
@@ -257,9 +261,9 @@ the language you choose).")
 			    (message "%s%c"
 				     (or prompt "Compose with ")
 				     first-char)
-			    (read-event))
+			    (iso-read-event))
 			(insert first-char)
-			(prog1 (read-event)
+			(prog1 (iso-read-event)
 			  (delete-region (1- (point)) (point)))))
 	 (entry (cdr (assq second-char list))))
     (if entry

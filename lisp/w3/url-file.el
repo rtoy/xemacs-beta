@@ -1,7 +1,7 @@
 ;;; url-file.el --- File retrieval code
 ;; Author: wmperry
-;; Created: 1997/04/04 16:19:42
-;; Version: 1.16
+;; Created: 1997/05/09 04:39:15
+;; Version: 1.19
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -151,7 +151,34 @@
 				     (substring (system-name) 0
 						(match-beginning 0))
 				   (system-name)))))))
-     
+
+(defun url-file-build-continuation (name)
+  (list 'url-file-asynch-callback
+	name (current-buffer)
+	url-current-callback-func url-current-callback-data))
+
+(defun url-file-asynch-callback (x y name buff func args &optional efs)
+  (if (featurep 'efs)
+      ;; EFS passes us an extra argument
+      (setq name buff
+	    buff func
+	    func args
+	    args efs))
+  (cond
+   ((not name) nil)
+   ((not (file-exists-p name)) nil)
+   (t
+    (if (not buff)
+	(setq buff (generate-new-buffer " *url-asynch-file*")))
+    (set-buffer buff)
+    (insert-file-contents-literally name)
+    (condition-case ()
+	(delete-file name)
+      (error nil))))
+  (if func
+      (apply func args)
+    (url-sentinel (current-buffer) nil)))
+
 (defun url-file (url)
   ;; Find a file
   (let* ((urlobj (url-generic-parse-url url))
@@ -175,15 +202,13 @@
 	   nil)))
     (cond
      ((file-directory-p filename)
-      (if (string-match "/$" filename)
-	  nil
-	(setq filename (concat filename "/")))
-      (if (string-match "/$" file)
-	  nil
-	(setq file (concat file "/")))
+      (if (not (string-match "/$" filename))
+	  (setq filename (concat filename "/")))
+      (if (not (string-match "/$" file))
+	  (setq file (concat file "/")))
       (url-set-filename urlobj file)
       (url-format-directory filename))
-     ((and (boundp 'w3-dump-to-disk) (symbol-value 'w3-dump-to-disk))
+     (url-be-asynchronous
       (cond
        ((file-exists-p filename) nil)
        ((file-exists-p (concat filename ".Z"))
@@ -192,31 +217,29 @@
 	(setq filename (concat filename ".gz")))
        ((file-exists-p (concat filename ".z"))
 	(setq filename (concat filename ".z")))
-       (t
-	(error "File not found %s" filename)))
-      (cond
-       ((url-host-is-local-p site)
-	(copy-file
-	 filename 
-	 (read-file-name "Save to: " nil (url-basepath filename t)) t))
-       ((featurep 'ange-ftp)
-	(ange-ftp-copy-file-internal
-	 filename
-	 (expand-file-name
-	  (read-file-name "Save to: " nil (url-basepath filename t))) t
-	 nil t nil t))
-       ((or (featurep 'efs) (featurep 'efs-auto))
-	(let ((new (expand-file-name
-		    (read-file-name "Save to: " nil
-				    (url-basepath filename t)))))
+       (t nil))
+      (let ((new (mm-generate-unique-filename)))
+	(cond
+	 ((url-host-is-local-p site)
+	  (insert-file-contents-literally filename)
+	  (if (featurep 'efs)
+	      (url-file-asynch-callback nil nil nil nil nil
+					url-current-callback-func
+					url-current-callback-data)
+	    (url-file-asynch-callback nil nil nil nil
+				      url-current-callback-func
+				      url-current-callback-data)))
+	 ((featurep 'ange-ftp)
+	  (ange-ftp-copy-file-internal filename (expand-file-name new) t
+				       nil t
+				       (url-file-build-continuation new)
+				       t))
+	 ((or (featurep 'efs) (featurep 'efs-auto))
 	  (efs-copy-file-internal filename (efs-ftp-path filename)
 				  new (efs-ftp-path new)
-				  t nil 0 nil 0 nil)))
-       (t (copy-file
-	   filename 
-	   (read-file-name "Save to: " nil (url-basepath filename t)) t)))
-      (if (get-buffer url-working-buffer)
-	  (kill-buffer url-working-buffer)))
+				  t nil 0
+				  (url-file-build-continuation new)
+				  0 nil)))))
      (t
       (let ((viewer (mm-mime-info
 		     (mm-extension-to-mime (url-file-extension file))))

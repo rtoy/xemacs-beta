@@ -2,6 +2,44 @@ Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 * Makefile (xemacs-w3): Special target for XEmacs Build.
 
+Thu May  8 14:06:40 1997  William M. Perry  <wmperry@aventail.com>
+
+* mule-sysdp.el (mule-code-convert-region): Try to deal gracefully with
+  the recent XEmacs 20.0 -> 20.2 renaming of the autodetect coding system
+  to automatic-conversion
+
+* w3-sysdp.el (event-point): New stub.
+
+* url-cookie.el (url-cookie-handle-set-cookie): Don't use the 'warn'
+  facility for bad cookie 'set' commands, was too annoying.
+
+* w3.el (w3-save-as): Make sure to require ps-print before trying to
+  save/mail a document as postscript.  The local binding of
+  ps-spool-buffer-name was causing the defvar not to happen, and you would 
+  get errors when trying to kill emacs later.  Ugh.
+  (w3-document-information): Make sure to escape entities for meta and
+  other info we throw in.
+
+* url-file.el (url-file): ftp/file retrieval can now be asynchronous
+  through the magic of [ange-ftp|efs]-copy-file-internal
+
+* url.el (url-sentinel): Allow a buffer as the first argument to
+  the sentinel function.
+  (url-retrieve-internally): Allow asynch ftp transfers
+
+* url-file.el (url-file): Asynchronous ftp downloads work now.
+
+* w3.el (w3-download-url): Made this function interactive.
+
+Mon Apr 28 13:31:36 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-download-url-at-point): new function to download document
+  under point.
+  (w3-download-this-url): new function to download current document.
+
+* w3-vars.el (w3-mode-map): Added 'D' and 'd' bindings for starting
+  document downloads.
+
 Thu Apr 24 08:29:34 1997  William M. Perry  <wmperry@aventail.com>
 
 * Emacs/W3 3.0.85 released

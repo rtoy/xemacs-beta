@@ -185,7 +185,7 @@ expressions in C mode.
 ** A number of new packages are added, and many packages were
 updated.
 
-** Gnus-5.4.50, courtesy of Lars Magne Ingebrigtsen
+** Gnus-5.4.52, courtesy of Lars Magne Ingebrigtsen
 
 *** nntp.el has been totally rewritten in an asynchronous fashion.
 
@@ -309,7 +309,7 @@ See the "Lisp Changes" section later for a short description of why
 and how to add custom support to your Lisp packages.  Custom is also
 documented in the XEmacs info manuals.
 
-** W3-3.0.85, courtesy of William Perry
+** W3-3.0.86, courtesy of William Perry
 
 Version 3 of Emacs/W3, the Emacs World Wide Web browser, has been
 included.  It is significantly faster than any of the previous
@@ -401,7 +401,7 @@ different FTP servers, and integration with dired.
 ** VM-6.30, courtesy of Kyle Jones
 ** OO-Browser-2.10, courtesy of Bob Weiner
 ** viper-2.93, courtesy of Michael Kifer
-** ediff-2.64, courtesy of Michael Kifer
+** ediff-2.65, courtesy of Michael Kifer
 ** detached-minibuf-1.1, courtesy of Alvin Shelton
 ** whitespace-mode.el, courtesy of Heiko Muenkel
 ** winmgr-mode.el, courtesy of David Konerding, Stefan Strobel & Barry Warsaw
@@ -414,7 +414,7 @@ different FTP servers, and integration with dired.
 ** overlay.el, courtesy of Joseph Nuspl
 ** live-icon.el-1.3, fixes courtesy of Karl Hegbloom
 ** tpu-edt.el, fixes courtesy of R. Kevin Oberman
-** etags.c-11.83 Courtesy of F. Potortì
+** etags.c-11.86 Courtesy of F. Potortì
 
 
 

@@ -1,7 +1,7 @@
 ;;; w3-hot.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/03/11 15:04:05
-;; Version: 1.13
+;; Created: 1997/05/09 04:30:54
+;; Version: 1.14
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -175,6 +175,7 @@
   (if (eq (assoc x alist) (car alist)) (cdr alist)
     (delq (assoc x alist) alist)))
 
+;;;###autoload
 (defun w3-hotlist-delete ()
   "Deletes a document from your hotlist file"
   (interactive)
@@ -206,6 +207,7 @@
 		(kill-buffer (current-buffer)))
 	    (message "%s was not found in %s" title w3-hotlist-file)))))))
 
+;;;###autoload
 (defun w3-hotlist-rename-entry (title)
   "Rename a hotlist item"
   (interactive (list (let ((completion-ignore-case t))
@@ -248,6 +250,7 @@
 		  (w3-build-FSF19-menu))))
 	(message "%s was not found in %s" title w3-hotlist-file)))))
 
+;;;###autoload
 (defun w3-hotlist-append (fname)
   "Append a hotlist to the one in memory"
   (interactive "fAppend hotlist file: ")
@@ -326,6 +329,7 @@ visited or interesting items you have found on the World Wide Web."
 				      (widget-get widget :to))))
     (w3-hotlist-add-document pref-arg (or title url) url)))
 
+;;;###autoload
 (defun w3-hotlist-add-document (pref-arg &optional the-title the-url)
   "Add this documents url to the hotlist"
   (interactive "P")

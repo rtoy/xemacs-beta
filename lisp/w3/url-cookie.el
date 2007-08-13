@@ -1,7 +1,7 @@
 ;;; url-cookie.el --- Netscape Cookie support
 ;; Author: wmperry
-;; Created: 1997/04/11 14:41:18
-;; Version: 1.16
+;; Created: 1997/05/09 05:05:21
+;; Version: 1.17
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -381,10 +381,7 @@
 	  (url-cookie-store (car cur) (cdr cur)
 			    expires domain path secure))))
      (t
-      (url-warn 'url (format
-		      (concat "%s tried to set a cookie for domain %s\n"
-			      "Permission denied - cookie rejected.\n"
-			      "Set-Cookie: %s")
-		      (url-host url-current-object) domain str))))))
+      (message "%s tried to set a cookie for domain %s - rejected."
+	       (url-host url-current-object) domain)))))
 
 (provide 'url-cookie)

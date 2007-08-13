@@ -4586,6 +4586,7 @@ if test "${with_wnn}" = "yes" ; then
     if test -f `echo "${arg}/wnnerror.h" | sed 's/^\-I//'` ; then
       C_SWITCH_SITE="${C_SWITCH_SITE} ${arg}"
       wnn_includes=${arg}
+      break
     fi
   done
   for arg in "-L${wnn_libraries}" "-L/usr/X11R6/lib" "-L/usr/lib"
@@ -4593,6 +4594,7 @@ if test "${with_wnn}" = "yes" ; then
     if test -f `echo "${arg}/libwnn.a" | sed 's/^\-L//'` ; then
       LD_SWITCH_SITE="${LD_SWITCH_SITE} ${arg}"
       wnn_libraries=${arg}
+      break
     fi
   done
 fi
@@ -4606,6 +4608,7 @@ if test "${with_canna}" = "yes" ; then
     if test -f `echo "${arg}/canna/RK.h" | sed 's/^\-I//'` ; then
       C_SWITCH_SITE="${C_SWITCH_SITE} ${arg}"
       canna_includes=${arg}
+      break
     fi
   done
   for arg in "-L${canna_libraries}" "-L/usr/X11R6/lib"
@@ -4613,6 +4616,7 @@ if test "${with_canna}" = "yes" ; then
     if test -f `echo "${arg}/libcanna.a" | sed 's/^\-L//'` ; then
       LD_SWITCH_SITE="${LD_SWITCH_SITE} ${arg}"
       canna_libraries=${arg}
+      break
     fi
   done
 fi

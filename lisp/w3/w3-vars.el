@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/04/24 20:22:16
-;; Version: 1.127
+;; Created: 1997/05/09 06:21:55
+;; Version: 1.129
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -33,7 +33,7 @@
 (require 'w3-cus)			; Grab everything that is customized
 
 (defconst w3-version-number
-  (let ((x "p3.0.85"))
+  (let ((x "p3.0.86"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -41,7 +41,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/04/24 20:22:16"))
+(defconst w3-version-date (let ((x "1997/05/09 06:21:55"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -528,6 +528,7 @@ returns.")
 (define-key w3-mode-map ">"        'end-of-buffer)
 (define-key w3-mode-map "?"        'w3-help)
 (define-key w3-mode-map "B"        'w3-history-backward)
+(define-key w3-mode-map "D"        'w3-download-url-at-point)
 (define-key w3-mode-map "F"        'w3-history-forward)
 (define-key w3-mode-map "G"        'w3-show-graphics)
 (define-key w3-mode-map "I"        'w3-popup-info)
@@ -550,6 +551,7 @@ returns.")
 (define-key w3-mode-map "\n"       'w3-widget-button-press)
 (define-key w3-mode-map "b"	   'w3-widget-backward)
 (define-key w3-mode-map "c"        'w3-mail-document-author)
+(define-key w3-mode-map "d"        'w3-download-this-url)
 (define-key w3-mode-map "f"	   'w3-widget-forward)
 (define-key w3-mode-map "g"        'w3-reload-document)
 (define-key w3-mode-map "i"        'w3-document-information)

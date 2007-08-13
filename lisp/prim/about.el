@@ -1170,6 +1170,7 @@
 	  Holger Franz <hfranz@physik.rwth-aachen.de>
 	  Benjamin Fried <bf@morgan.com>
 	  Barry Friedman <friedman@nortel.ca>
+	  Noah Friedman <friedman@splode.com>
 	  Kazuyoshi Furutaka <furutaka@Flux.tokai.jaeri.go.jp>
 	  Lew Gaiter III <lew@StarFire.com>
 	  Itay Gat <itay@cs.huji.ac.il>

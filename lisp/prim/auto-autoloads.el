@@ -3631,7 +3631,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.25 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.26 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4991,7 +4991,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.25 $
+vhdl-mode $Revision: 1.26 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -9600,13 +9600,25 @@ be honored before this function exits." nil nil)
 
 ;;;***
 
-;;;### (autoloads (w3-use-hotlist) "w3-hot" "w3/w3-hot.el")
+;;;### (autoloads (w3-hotlist-add-document w3-use-hotlist w3-hotlist-append w3-hotlist-rename-entry w3-hotlist-delete) "w3-hot" "w3/w3-hot.el")
+
+(autoload 'w3-hotlist-delete "w3-hot" "\
+Deletes a document from your hotlist file" t nil)
+
+(autoload 'w3-hotlist-rename-entry "w3-hot" "\
+Rename a hotlist item" t nil)
+
+(autoload 'w3-hotlist-append "w3-hot" "\
+Append a hotlist to the one in memory" t nil)
 
 (autoload 'w3-use-hotlist "w3-hot" "\
 Possibly go to a link in your W3/Mosaic hotlist.
 This is part of the emacs World Wide Web browser.  It will prompt for
 one of the items in your 'hotlist'.  A hotlist is a list of often
 visited or interesting items you have found on the World Wide Web." t nil)
+
+(autoload 'w3-hotlist-add-document "w3-hot" "\
+Add this documents url to the hotlist" t nil)
 
 ;;;***
 

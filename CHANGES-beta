@@ -1,4 +1,10 @@
 							-*- indented-text -*-
+to 20.2 beta6
+-- ediff-2.65 Courtesy of Michael Kifer
+-- Gnus-5.4.52
+-- Miscellaneous bug fixes
+-- W3-3.0.86
+
 to 20.2 beta5
 -- Interface Changes:
    `allow-deletion-of-last-visible-frame' becomes a boolean

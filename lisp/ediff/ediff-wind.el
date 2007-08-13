@@ -908,7 +908,7 @@ into icons, regardless of the window manager."
 	  fheight lines
 	  fwidth (max (+ (ediff-help-message-line-length) 2)
 		      (ediff-compute-toolbar-width))
-	  adjusted-parameters ;;(append
+	  adjusted-parameters
 	  (list
 	   ;; possibly change surrogate minibuffer
 	   (cons 'minibuffer
@@ -916,10 +916,6 @@ into icons, regardless of the window manager."
 		  designated-minibuffer-frame))
 	   (cons 'width fwidth)
 	   (cons 'height fheight))
-	  ;;(funcall
-	   ;;ediff-control-frame-position-function
-	   ;;ctl-buffer fwidth fheight)
-	  ;;)
 	  )
     (if ediff-use-long-help-message
 	(setq adjusted-parameters

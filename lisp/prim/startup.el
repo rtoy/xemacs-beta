@@ -1,6 +1,6 @@
 ;;; startup.el --- process XEmacs shell arguments
 
-;; Copyright (C) 1985-1986, 1990, 1992-1995 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1990, 1992-1997 Free Software Foundation, Inc.
 ;; Copyright (c) 1993, 1994 Sun Microsystems, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
 

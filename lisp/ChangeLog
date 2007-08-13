@@ -1,8 +1,21 @@
+Fri May  9 10:41:44 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* iso/iso-acc.el (iso-accents-compose): Fix XEmacs 19.14
+	compatibility (patch suggested by Hrvoje Niksic).
+
+	* packages/man.el (manual-entry): (Patch from Soren Dayton) Allow
+	subchapters not to be trimmed on Solaris.
+
+	* prim/itimer.el (itimer-edit-mode): Correct use of obsolete
+	function.
+
+	* prim/startup.el: Update copyright notice.
+
 Thu May  8 14:35:34 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* hm--html-menus/hm--html.el: Define obsolete aliases for the
 	previous function spellings.
-0
+
 	* hm--html-menus/hm--html-keys.el: Define obsolete aliases for the 
 	previous variable spellings.
 

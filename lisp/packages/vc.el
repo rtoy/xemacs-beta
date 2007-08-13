@@ -1145,7 +1145,7 @@ If the optional third argument NESTED is non-nil,
 scan the entire tree of subdirectories of the current directory."
   (interactive "DVC status of directory: \nP")
   (let* (nonempty
-	 (dl (length dir))
+	 (dl (+ 1 (length (directory-file-name (expand-file-name dir)))))
 	 (filelist nil) (userlist nil)
 	 dired-buf
 	 (subfunction
@@ -1155,7 +1155,7 @@ scan the entire tree of subdirectories of the current directory."
 			    (and (or verbose user)
 				 (setq filelist (cons (substring f dl) filelist))
 				 (setq userlist (cons user userlist)))))))))
-    (let ((default-directory dir))
+    (let ((default-directory (expand-file-name dir)))
       (if nested
 	  (vc-file-tree-walk subfunction)
 	(vc-dir-all-files subfunction)))

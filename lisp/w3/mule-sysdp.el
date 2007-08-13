@@ -75,7 +75,11 @@
        (set-buffer-file-coding-system code)))
     (xemacs
      (if (and (listp code) (not (car code)))
-	 (setq code 'automatic-conversion))
+	 (progn
+	   (setq code 'autodetect)
+	   (condition-case ()
+	       (get-coding-system 'autodetect)
+	     (error (setq code 'automatic-conversion)))))
      (decode-coding-region (point-min) (point-max) code)
      (set-buffer-file-coding-system code))
     (otherwise

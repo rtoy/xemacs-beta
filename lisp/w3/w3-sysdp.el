@@ -280,7 +280,12 @@
 (sysdep-defalias 'x-display-grayscale-p 'x-grayscale-display-p)
 (sysdep-defalias 'menu-event-p 'misc-user-event-p)
 
-;; WMP - commention these out so that Emacs 19 doesn't get screwed by them.
+(sysdep-defun event-point (event)
+  (let ((posn (event-end event)))
+    (if posn 
+ 	(posn-point posn))))
+
+;; WMP - commenting these out so that Emacs 19 doesn't get screwed by them.
 ;; In particular, this makes the 'custom' package blow up quite well.
 ;;(sysdep-defun add-submenu (menu-path submenu &optional before)
 ;;  "Add a menu to the menubar or one of its submenus.

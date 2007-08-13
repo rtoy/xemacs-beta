@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/04/22 15:08:38
-;; Version: 1.76
+;; Created: 1997/05/08 22:17:40
+;; Version: 1.78
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/04/22 15:08:38|1.76|Location Undetermined
+;;; 1997/05/08 22:17:40|1.78|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1356,7 +1356,7 @@ forbidden in URL encoding."
     (message "Retrieval for %s complete." buf))))
 
 (defun url-sentinel (proc string)
-  (let* ((buf (process-buffer proc))
+  (let* ((buf (if (processp proc) (process-buffer proc) proc))
 	 (url-working-buffer (and buf (get-buffer buf)))
 	 status)
     (if (not url-working-buffer)
@@ -1372,10 +1372,12 @@ forbidden in URL encoding."
 	       ((url-mime-response-p)
 		(setq status (url-parse-mime-headers))))
 	      (if (not url-current-mime-type)
-		  (setq url-current-mime-type (mm-extension-to-mime
-					       (url-file-extension
-						(url-filename
- 						 url-current-object))))))))
+		  (setq url-current-mime-type (or
+					       (mm-extension-to-mime
+						(url-file-extension
+						 (url-filename
+						  url-current-object)))
+					       "text/plain"))))))
       (if (member status '(401 301 302 303 204))
 	  nil
 	(funcall url-default-retrieval-proc (buffer-name url-working-buffer)))))
@@ -1957,7 +1959,7 @@ retrieve a URL by its HTML source."
 	      "<address>" url-bug-address "</address>"))
     (cond
      ((and url-be-asynchronous (not cached)
-	   (member type '("http" "https" "proxy")))
+	   (member type '("http" "https" "proxy" "file" "ftp")))
       nil)
      ((and url-be-asynchronous (get-buffer url-working-buffer))
       (funcall url-default-retrieval-proc (buffer-name)))
@@ -1969,12 +1971,10 @@ retrieve a URL by its HTML source."
 		 (not (equal type "http")))
 	     url-current-object
 	     (not url-current-mime-type))
-	(if (url-buffer-is-hypertext)
-	    (setq url-current-mime-type "text/html")
-	  (setq url-current-mime-type (mm-extension-to-mime
-				       (url-file-extension
-					(url-filename
-					 url-current-object))))))
+	(setq url-current-mime-type (mm-extension-to-mime
+				     (url-file-extension
+				      (url-filename
+				       url-current-object)))))
     (if (not url-be-asynchronous)
 	(url-store-in-cache url-working-buffer))
     (if (not url-global-history-hash-table)

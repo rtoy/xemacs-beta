@@ -6,8 +6,8 @@
 ;; Created: February 2, 1994
 ;; Keywords: comparing, merging, patching, version control.
 
-(defconst ediff-version "2.64" "The current version of Ediff")
-(defconst ediff-date "January 7, 1997" "Date of last update")  
+(defconst ediff-version "2.65" "The current version of Ediff")
+(defconst ediff-date "May 1, 1997" "Date of last update")  
 
 
 ;; This file is part of GNU Emacs.
@@ -786,7 +786,7 @@ If WIND-B is nil, use window next to WIND-A."
 	      end-B (window-end))))
     (ediff-regions-internal
      buffer-A beg-A end-A buffer-B beg-B end-B
-     startup-hooks job-name word-mode)))
+     startup-hooks job-name word-mode nil)))
      
 ;;;###autoload
 (defun ediff-regions-wordwise (buffer-A buffer-B &optional startup-hooks)
@@ -823,7 +823,7 @@ lines. For large regions, use `ediff-regions-linewise'."
     (ediff-regions-internal
      (get-buffer buffer-A) reg-A-beg reg-A-end
      (get-buffer buffer-B) reg-B-beg reg-B-end
-     startup-hooks 'ediff-regions-wordwise 'word-mode)))
+     startup-hooks 'ediff-regions-wordwise 'word-mode nil)))
      
 ;;;###autoload
 (defun ediff-regions-linewise (buffer-A buffer-B &optional startup-hooks)
@@ -883,7 +883,8 @@ lines. For small regions, use `ediff-regions-wordwise'."
 ;; compare region beg-A to end-A of buffer-A
 ;; to regions beg-B -- end-B in buffer-B. 
 (defun ediff-regions-internal (buffer-A beg-A end-A buffer-B beg-B end-B
-					startup-hooks job-name word-mode)
+					startup-hooks job-name word-mode
+					setup-parameters)
   (let ((tmp-buffer (get-buffer-create ediff-tmp-buffer))
 	overl-A overl-B
 	file-A file-B)
@@ -934,9 +935,11 @@ Continue anyway? (y/n) "))
 			    (delete-file (, file-A))
 			    (delete-file (, file-B))))
 		       startup-hooks)
-		 (list (cons 'ediff-word-mode  word-mode)
-		       (cons 'ediff-narrow-bounds (list overl-A overl-B))
-		       (cons 'ediff-job-name job-name))
+		 (append
+		  (list (cons 'ediff-word-mode  word-mode)
+			(cons 'ediff-narrow-bounds (list overl-A overl-B))
+			(cons 'ediff-job-name job-name))
+		  setup-parameters)
 		 )
     ))
     
@@ -1151,7 +1154,7 @@ buffer."
 ;;;###autoload
 (defun run-ediff-from-cvs-buffer (pos)
   "Run Ediff-merge on appropriate revisions of the selected file.
-First run after `M-x cvs-update'. Then place the cursor on a lide describing a
+First run after `M-x cvs-update'. Then place the cursor on a line describing a
 file and then run `run-ediff-from-cvs-buffer'."
   (interactive "d")
   (ediff-load-version-control)

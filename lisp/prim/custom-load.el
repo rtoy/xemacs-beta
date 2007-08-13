@@ -277,5 +277,4 @@
 (put 'w3-scripting 'custom-loads '("w3-script"))
 (put 'unix 'custom-loads '("rlogin" "shell" "sh-script"))
 (put 'x 'custom-loads '())
-(put 't 'custom-loads '("ps-print"))
 (put 'c 'custom-loads '("cc-mode" "cmacexp"))

@@ -57,11 +57,13 @@ h4,h5,h6  {
             font-weight : bold;
           }
 
+@media xemacs {
       h1  { font-size : +12pt }
       h2  { font-size : +6pt  }
       h3  { font-size : +4pt  }
       h5  { font-size : -2pt  }
       h6  { font-size : -4pt  }
+}
 
 /* This causes problems with Emacs 19 */
 @media xemacs {
@@ -108,6 +110,7 @@ input:text,
 input:int,
 input:float,
 input:url,
+input:password,
 input:text    { text-decoration: underline; }
 input:submit  { color: green;  text-decoration: none; }
 input:reset   { color: red;    text-decoration: none; }
