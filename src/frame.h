@@ -178,6 +178,7 @@ Value : Emacs meaning                           :f-v-p : X meaning
   unsigned int windows_changed :1;
   unsigned int windows_structure_changed :1;
   unsigned int window_face_cache_reset :1;	/* used by expose handler */
+  unsigned int echo_area_garbaged :1;	/* used by Fredisplay_echo_area */
 
   unsigned int size_change_pending :1;
   unsigned int mirror_dirty :1;

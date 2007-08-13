@@ -2198,19 +2198,14 @@ static int
 x_flash (struct device *d)
 {
   Display *dpy;
-  Window w;
+  Window win;
   XGCValues gcv;
   GC gc;
   XColor tmp_fcolor, tmp_bcolor;
   Lisp_Object tmp_pixel, frame;
   struct frame *f = device_selected_frame (d);
+  struct window *w = XWINDOW (FRAME_ROOT_WINDOW (f));
   Widget shell = FRAME_X_SHELL_WIDGET (f);
-  Dimension width, height;
-  Arg al [2];
-
-  XtSetArg (al [0], XtNwidth,  &width);
-  XtSetArg (al [1], XtNheight, &height);
-  XtGetValues (shell, al, 2);
 
   XSETFRAME (frame, f);
 
@@ -2220,14 +2215,15 @@ x_flash (struct device *d)
   tmp_bcolor = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (tmp_pixel));
 
   dpy = XtDisplay (shell);
-  w = XtWindow (FRAME_X_TEXT_WIDGET (f));
+  win = XtWindow (FRAME_X_TEXT_WIDGET (f));
   memset (&gcv, ~0, sizeof (XGCValues)); /* initialize all slots to ~0 */
   gcv.foreground = (tmp_fcolor.pixel ^ tmp_bcolor.pixel);
   gcv.function = GXxor;
   gcv.graphics_exposures = False;
   gc = gc_cache_lookup (DEVICE_X_GC_CACHE (XDEVICE (f->device)), &gcv,
 			(GCForeground | GCFunction | GCGraphicsExposures));
-  XFillRectangle (dpy, w, gc, 0, 0, width, height);
+  XFillRectangle (dpy, win, gc, w->pixel_left, w->pixel_top,
+		  w->pixel_width, w->pixel_height);
   XSync (dpy, False);
 
 #ifdef HAVE_SELECT
@@ -2247,7 +2243,8 @@ x_flash (struct device *d)
 #endif /* HAVE_POLL */
 #endif /* HAVE_SELECT */
 
-  XFillRectangle (dpy, w, gc, 0, 0, width, height);
+  XFillRectangle (dpy, win, gc, w->pixel_left, w->pixel_top,
+		  w->pixel_width, w->pixel_height);
   XSync (dpy, False);
 
   return 1;

@@ -92,7 +92,7 @@
 ;; (print (prin1-to-string update-elc-files-to-compile))
 
 (let (preloaded-file-list site-load-packages)
-  (load (concat default-directory "../lisp/prim/dumped-lisp.el"))
+  (load (concat default-directory "../lisp/dumped-lisp.el"))
   ;; (print (prin1-to-string preloaded-file-list))
   (load (concat default-directory "../site-packages") t t)
   (setq preloaded-file-list

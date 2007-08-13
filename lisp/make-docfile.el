@@ -103,7 +103,7 @@
 ;; (load "featurep")
 
 (let (preloaded-file-list)
- (load (concat default-directory "../lisp/prim/dumped-lisp.el"))
+ (load (concat default-directory "../lisp/dumped-lisp.el"))
  (setq preloaded-file-list
        (append preloaded-file-list packages-hardcoded-lisp))
  (while preloaded-file-list

@@ -1671,8 +1671,6 @@ in that frame; otherwise change each frame."
 ;; on having already resourced the global face specs, which happens
 ;; when the first X device is created.
 
-(set-face-background-pixmap 'modeline [nothing])
-
 (when (featurep 'tty)
   (set-face-highlight-p 'bold                    t 'global 'tty)
   (set-face-underline-p 'italic                  t 'global 'tty)

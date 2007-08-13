@@ -1,3 +1,37 @@
+1997-11-27  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.4-beta7 is released.
+
+	* configure.in: When testing for -ltiff, fall back on the extra
+	libraries -ljpeg, and -lz since some -ltiff's need them.
+
+1997-11-26  SL Baur  <steve@altair.xemacs.org>
+
+	* lwlib/xlwmenu.c (display_menu): Defer incremental menus properly.
+	From Glynn Clements <glynn@sensei.co.uk>
+
+1997-11-25  Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+	* configure.in: Improve auto detect of libraries ImageMagick rely
+	on.
+
+1997-11-23  Jeff Miller <jmiller@smart.net>
+
+	* Energize is dead.  Removed ENERGIZE ifdef's from code in lwlib
+	  and src.  Configure.in modified.  --with-energize is no longer a
+	  valid configure option.
+
+	* lwlib/Makefile.in.in  removed energize support
+	* lwlib/lwlib-Xm.c      removed energize support
+	* lwlib/lwlib-config.c  removed energize support
+
+	* lwlib/energize/*      removed
+
+1997-11-23  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in: Change references of lisp/utils/finder-inf.el to
+	lisp/finder-inf.el.
+
 1997-11-20  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.4-beta6 is released.
@@ -12,7 +46,7 @@
 
 1997-11-20  SL Baur  <steve@altair.xemacs.org>
 
-	* XEmacs 20.3 is released.
+	* XEmacs 20.3 is released for binary kit building.
 
 1997-11-19  Tor Arntsen <tor@spacetec.no>
 

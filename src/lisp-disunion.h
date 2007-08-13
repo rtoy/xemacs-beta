@@ -74,7 +74,7 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef USE_MINIMAL_TAGBITS
 # define Qzero Lisp_Type_Int_Even
-# define VALMASK (((1L << (VALBITS)) - 1L) << (GCTYPEBITS))
+# define VALMASK (((1UL << (VALBITS)) - 1L) << (GCTYPEBITS))
 #else
 # define Qzero Lisp_Type_Int
 # define VALMASK ((1L << (VALBITS)) - 1L)

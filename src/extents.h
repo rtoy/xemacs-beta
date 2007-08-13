@@ -135,9 +135,6 @@ struct extent_auxiliary
   Lisp_Object read_only;
   Lisp_Object mouse_face;
   Lisp_Object initial_redisplay_function;
-#ifdef ENERGIZE
-  Energize_Extent_Data *energize_data;
-#endif
   int priority;
 };
 
@@ -258,9 +255,6 @@ MAC_END
 #define extent_read_only(e)	extent_aux_field (e, read_only)
 #define extent_mouse_face(e)	extent_aux_field (e, mouse_face)
 #define extent_initial_redisplay_function(e)	extent_aux_field (e, initial_redisplay_function)
-#ifdef ENERGIZE
-#define extent_energize_data(e)	extent_aux_field (e, energize_data)
-#endif
 
 #define set_extent_begin_glyph(e, value)				\
   set_extent_aux_field (e, begin_glyph, value)
@@ -277,10 +271,6 @@ MAC_END
 /* Use Fset_extent_initial_redisplay_function unless you know what you are ding */
 #define set_extent_initial_redisplay_function(e, value)			         \
   set_extent_aux_field (e, initial_redisplay_function, value)
-#ifdef ENERGIZE
-#define set_extent_energize_data(e, value)				\
-  set_extent_aux_field (e, energize_data, value)
-#endif
 
 #define extent_face(e)		extent_normal_field (e, face)
 #define extent_begin_glyph_layout(e) \

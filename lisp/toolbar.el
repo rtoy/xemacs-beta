@@ -69,8 +69,8 @@
 (defun init-toolbar-from-resources (locale)
   (if (and (featurep 'x)
 	   (or (eq locale 'global)
-	       (eq 'x (device-or-frame-type locale)))
-	   (x-init-toolbar-from-resources locale))))
+	       (eq 'x (device-or-frame-type locale))))
+      (x-init-toolbar-from-resources locale)))
 
 
 ;; #### Is this actually needed or will the code in

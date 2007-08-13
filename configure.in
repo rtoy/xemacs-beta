@@ -351,7 +351,6 @@ dynamic=''
 with_x11=''
 rel_alloc='default'
 with_system_malloc='default'
-energize_version=''
 native_sound_lib=''
 dnl use-assertions should be 'yes' by default.  Too many people in this
 dnl world have core dumps turned off by default or \"cannot find where the
@@ -464,7 +463,6 @@ while test $# != 0; do
 	with_canna	| \
 	with_wnn	| \
 	with_wnn6	| \
-	with_energize	| \
 	with_workshop	| \
 	with_sparcworks | \
 	with_tooltalk   | \
@@ -736,12 +734,6 @@ fi
 dnl Get the arguments back.  See the diatribe on Shell Magic above.
 eval set x "$quoted_arguments"; shift
 
-dnl Argument interdependencies
-if test "$with_energize" = "yes" ; then
-  with_menubars=lucid with_scrollbars=motif with_dialogs=motif with_tooltalk=yes
-  XE_APPEND(lwlib/energize, MAKE_SUBDIR)
-fi
-
 dnl --extra-verbose implies --verbose
 test "$extra_verbose" = "yes" && verbose=yes
 
@@ -907,8 +899,8 @@ dnl names of the m/*.h and s/*.h files we should use.
 
 dnl Canonicalize the configuration name.
 AC_CHECKING("the configuration name")
-dnl allow -energize or -workshop suffix on configuration name
-internal_configuration=`echo $configuration | sed 's/-\(energize\|workshop\)//'`
+dnl allow -workshop suffix on configuration name
+internal_configuration=`echo $configuration | sed 's/-\(workshop\)//'`
 if canonical=`$srcdir/config.sub "$internal_configuration"` ; then : ; else
   exit $?
 fi
@@ -2316,27 +2308,6 @@ if test "$with_cde" = "yes" ; then
   need_motif=yes    # CDE requires Motif
 fi
 
-dnl if Energize specified, make sure we can find its libraries/headers
-if test "$with_energize" = "yes" ; then
-  AC_DEFINE(ENERGIZE)
-  AC_CHECK_LIB(energize, main, [
-     XE_PREPEND(-lenergize, LIBS)
-     energize_version="3.X"
-     AC_DEFINE(ENERGIZE_3)])
-  if test -z "$energize_version"; then
-    AC_CHECK_LIB(conn, main, [
-      XE_PREPEND(-lconn, LIBS)
-      energize_version="2.X"
-      AC_DEFINE(ENERGIZE_2)],
-     [AC_MSG_ERROR(Unable to find Energize library.)])
-  fi
-  AC_CHECK_HEADER(editorconn.h, ,
-    [AC_MSG_ERROR(Unable to find Energize editorconn.h header file.)])
-
-  test "$energize_version" = "2.X" && AC_DEFINE(ENERGIZE_2)
-  test "$energize_version" = "3.X" && AC_DEFINE(ENERGIZE_3)
-fi
-
 dnl ----------------------
 dnl X11 Graphics libraries
 dnl ----------------------
@@ -2385,6 +2356,21 @@ if test "$with_x11" = "yes"; then
 
   dnl autodetect ImageMagick
   test -z "$with_imagick" && { AC_CHECK_HEADER(magick/magick.h,                    ,with_imagick=no) }
+  test -z "$with_imagick" && {
+    dnl check the appropriate libraries for ImageMagick
+    imagick_libs=""
+    AC_CHECK_LIB(dps, XDPSPixelsPerPoint, XE_APPEND(-ldpstk -ldps, imagick_libs),,,-ldpstk)
+    AC_CHECK_LIB(fpx, FPX_SetToolkitMemoryLimit, XE_APPEND(-lfpx, imagick_libs))
+    AC_CHECK_LIB(df, DF24getdims, XE_APPEND(-ldf, imagick_libs))
+    AC_CHECK_LIB(jbig, jbg_dec_init, XE_APPEND(-ljbig, imagick_libs))
+    AC_CHECK_LIB(jpeg, jpeg_read_header, XE_APPEND(-ljpeg, imagick_libs))
+    AC_CHECK_LIB(mpeg, OpenMPEG, XE_APPEND(-lmpeg, imagick_libs))
+    AC_CHECK_LIB(png, png_create_read_struct, XE_APPEND(-lpng, imagick_libs),
+      AC_CHECK_LIB(png, png_create_read_struct, XE_APPEND(-lpng -lz, imagick_libs),,-lz))
+    AC_CHECK_LIB(tiff, TIFFOpen, XE_APPEND(-ltiff, imagick_libs),
+      AC_CHECK_LIB(tiff, TIFFOpen, XE_APPEND(-ltiff -ljpeg -lz, imagick_libs),,-ljpeg -lz))
+    XE_APPEND($imagick_libs, libs_x)
+  }
   test -z "$with_imagick" && { AC_CHECK_LIB(Magick, MogrifyImage,[:],with_imagick=no) }
   test -z "$with_imagick" && with_imagick=yes
   if test "$with_imagick" = "yes"; then
@@ -3351,7 +3337,6 @@ test "$with_cde"      = yes && echo "  Compiling in support for CDE."
 test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
-test "$with_energize" = yes && echo "  Compiling in support for Lucid Energize (doesn't currently work)."
 test "$with_session"  != no && echo "  Compiling in support for proper session-management."
 case "$with_menubars" in
   lucid ) echo "  Using Lucid menubars." ;;

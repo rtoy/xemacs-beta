@@ -1032,7 +1032,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
      ;; If this directory is a plausible root of the XEmacs tree, return it.
      ;;
      (and (or (not lisp-p)
-	      (file-directory-p (expand-file-name "lisp/prim" dir)))
+	      (file-directory-p (expand-file-name "lisp" dir)))
 	  (or (file-directory-p (expand-file-name "lib-src" dir))
 	      (file-directory-p (expand-file-name system-configuration dir)))
 	  dir)
@@ -1041,7 +1041,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
      ;; (But don't do so recursively!)
      ;;
      (and (or (not lisp-p)
-	      (file-directory-p (expand-file-name "../lisp/prim" dir)))
+	      (file-directory-p (expand-file-name "../lisp" dir)))
 	  (or (file-directory-p (expand-file-name
 				 (format "../%s" system-configuration)
 				 dir))
@@ -1052,7 +1052,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
      ;; (--run-in-place) Same thing, but from one directory level deeper.
      ;;
      (and (or (not lisp-p)
-	      (file-directory-p (expand-file-name "../../lisp/prim" dir)))
+	      (file-directory-p (expand-file-name "../../lisp" dir)))
 	  (or (file-directory-p (expand-file-name
 				 (format "../%s" system-configuration)
 				 dir))
@@ -1067,7 +1067,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
      (let ((ver-dir (concat "../" (startup-make-version-dir))))
        (and (or (not lisp-p)
 		(file-directory-p (expand-file-name
-				   (format "%s/lisp/prim" ver-dir)
+				   (format "%s/lisp" ver-dir)
 				   dir)))
 	    (or (file-directory-p (expand-file-name
 				   (format "%s/%s" ver-dir
@@ -1083,7 +1083,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
      (let ((ver-dir (concat "../../" (startup-make-version-dir))))
        (and (or (not lisp-p)
 		(file-directory-p (expand-file-name
-				   (format "%s/lisp/prim" ver-dir)
+				   (format "%s/lisp" ver-dir)
 				   dir)))
 	    (or (file-directory-p (expand-file-name
 				   (format "%s/%s" ver-dir
@@ -1110,7 +1110,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 
 (defun find-emacs-root-internal (path)
   ;;  (send-string-to-terminal (format "FINDING ROOT FOR %S\n" path))
-  ;; first look for lisp/prim and lib-src; then just look for lib-src.
+  ;; first look for lisp and lib-src; then just look for lib-src.
   ;; XEmacs can run (kind of) if the lisp directory is omitted, which
   ;; some people might want to do for space reasons.
   (or (find-emacs-root-internal-1 path t)

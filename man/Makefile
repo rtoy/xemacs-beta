@@ -43,9 +43,9 @@ SUBDIR = xemacs lispref new-users-guide internals gnats
 	-$(MAKEINFO) -o $@ $<
 
 srcs = cl custom external-widget forms \
-	info ispell oo-browser \
-	standards supercite term \
-	termcap texinfo vhdl-mode widget xemacs-faq
+	info \
+	standards term \
+	termcap texinfo widget xemacs-faq
 
 info = $(srcs:%=../info/%.info)
 dvi  = $(srcs:%=%.dvi)

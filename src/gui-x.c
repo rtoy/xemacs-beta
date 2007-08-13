@@ -625,11 +625,6 @@ sanity_check_lwlib (void)
 #elif defined (HAVE_DIALOGS)
   MACROLET (lwlib_dialogs_athena);
 #endif
-#ifdef ENERGIZE
-  MACROLET (lwlib_uses_energize);
-#else
-  MACROLET (lwlib_does_not_use_energize);
-#endif
 
 #undef MACROLET
 }

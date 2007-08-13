@@ -147,6 +147,13 @@ typedef struct position_redisplay_data_type
 			   to be skipped before anything is displayed. */
   Bytind bi_start_col_enabled;
 
+  int hscroll_glyph_width_adjust;  /* how much the width of the hscroll
+				      glyph differs from space_width (w).
+				      0 if no hscroll glyph was used,
+				      i.e. the window is not scrolled
+				      horizontally.  Used in tab
+				      calculations. */
+
   /* Information about the face the text should be displayed in and
      any begin-glyphs and end-glyphs. */
   struct extent_fragment *ef;
@@ -817,10 +824,14 @@ add_hscroll_rune (pos_data *data)
 
   gb.extent = Qnil;
   gb.glyph = Vhscroll_glyph;
-  retval = add_glyph_rune (data, &gb, BEGIN_GLYPHS, 1,
-			   GLYPH_CACHEL (XWINDOW (data->window),
-						HSCROLL_GLYPH_INDEX));
-
+  {
+    int oldpixpos = data->pixpos;
+    retval = add_glyph_rune (data, &gb, BEGIN_GLYPHS, 1,
+			     GLYPH_CACHEL (XWINDOW (data->window),
+					   HSCROLL_GLYPH_INDEX));
+    data->hscroll_glyph_width_adjust =
+      data->pixpos - oldpixpos - space_width (XWINDOW (data->window));
+  }
   data->bi_endpos = 0;
   data->bi_cursor_bufpos = bi_old_cursor_bufpos;
   data->cursor_type = old_cursor_type;
@@ -1932,6 +1943,7 @@ create_text_block (struct window *w, struct display_line *dl,
 
   data.start_col = w->hscroll;
   data.bi_start_col_enabled = (w->hscroll ? bi_start_pos : 0);
+  data.hscroll_glyph_width_adjust = 0;
 
   /* We regenerate the line from the very beginning. */
   Dynarr_reset (db->runes);
@@ -2283,8 +2295,10 @@ create_text_block (struct window *w, struct display_line *dl,
 	      if (data.start_col > 1)
 		tab_start_pixpos -= (space_width (w) * (data.start_col - 1));
 
-	      next_tab_start = next_tab_position (w, tab_start_pixpos,
-						  dl->bounds.left_in);
+	      next_tab_start =
+		next_tab_position (w, tab_start_pixpos,
+				   dl->bounds.left_in +
+				   data.hscroll_glyph_width_adjust);
 	      if (next_tab_start > data.max_pixpos)
 		{
 		  prop_width = next_tab_start - data.max_pixpos;
@@ -5428,6 +5442,7 @@ redisplay_frame (struct frame *f, int preemption_check)
   f->windows_changed  = 0;
   f->windows_structure_changed = 0;
   f->window_face_cache_reset = 0;
+  f->echo_area_garbaged = 0;
 
   f->clear = 0;
 
@@ -7810,17 +7825,16 @@ Ensure that all minibuffers are correctly showing the echo area.
 	    {
 	      Lisp_Object window = FRAME_MINIBUF_WINDOW (f);
 	      /*
-	       * If the frame has changed, there may be random chud
-	       * on the screen left from previous messages because
-	       * redisplay_frame hasn't been called yet.  Clear the
-	       * screen to get rid of the potential mess.
-	       *
-	       * It would be nice if a way could be found not to
-	       * have to do this for every message until the next
-	       * full redisplay.
+	       * If the frame size has changed, there may be random
+	       * chud on the screen left from previous messages
+	       * because redisplay_frame hasn't been called yet.
+	       * Clear the screen to get rid of the potential mess.
 	       */
-	      if (f->frame_changed)
-		DEVMETH (d, clear_frame, (f));
+	      if (f->echo_area_garbaged)
+		{
+		  DEVMETH (d, clear_frame, (f));
+		  f->echo_area_garbaged = 0;
+		}
 	      redisplay_window (window, 0);
 	      call_redisplay_end_triggers (XWINDOW (window), 0);
 	    }

@@ -508,7 +508,7 @@ $(TEMACS_BROWSE): $(TEMACS_OBJS)
 
 LOADPATH=$(LISP)
 
-$(DOC): $(LOADPATH)\startup.elc $(LIB_SRC)\make-docfile.exe
+$(DOC): $(LIB_SRC)\make-docfile.exe
 	-del $(DOC)
 	!$(TEMACS) -batch -l make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC1)

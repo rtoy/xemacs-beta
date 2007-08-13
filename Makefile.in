@@ -229,7 +229,7 @@ INSTALL_ARCH_DEP_SUBDIR = @INSTALL_ARCH_DEP_SUBDIR@
 COPYDIR = ${srcdir}/etc ${srcdir}/lisp
 COPYDESTS = ${etcdir} ${lispdir}
 GENERATED_HEADERS = src/paths.h src/Emacs.ad.h src/puresize-adjust.h src/config.h lwlib/config.h
-GENERATED_LISP = lisp/utils/finder-inf.el
+GENERATED_LISP = lisp/finder-inf.el
 
 all:	${GENERATED_HEADERS} ${MAKE_SUBDIR} ${GENERATED_LISP}
 
@@ -270,14 +270,14 @@ custom-loads:
 
 finder: src
 	@echo "Building finder database"
-	@(cd lisp/utils; \
+	@(cd lisp; \
 		${blddir}/src/xemacs -batch -q -no-site-file \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
 
-lisp/utils/finder-inf.el:
+lisp/finder-inf.el:
 	@echo "Building finder database"
-	@(cd lisp/utils; \
+	@(cd lisp; \
 		${blddir}/src/xemacs -batch -q -no-site-file \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
@@ -344,7 +344,7 @@ lib-src: FRC.lib-src
 lwlib:	FRC.lwlib
 dynodump: FRC.dynodump
 FRC.src FRC.lib-src FRC.lwlib FRC.dynodump pkg-src/FRC.tree-x:
-FRC.lisp.utils.finder-inf.el:
+FRC.lisp.finder-inf.el:
 
 .RECURSIVE: ${SUBDIR}
 
@@ -560,7 +560,7 @@ top_distclean=\
 	  $(RM) $$d/Makefile $$d/Makefile.in ; \
 	done ; \
 	$(RM) core .sbinit Makefile lock/*; \
-	$(RM) lisp/utils/finder-inf.el*
+	$(RM) lisp/finder-inf.el*
 
 distclean: FRC.distclean
 	for d in $(SUBDIR); do (cd $$d && $(RECURSIVE_MAKE) $@); done

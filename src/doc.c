@@ -394,10 +394,7 @@ translation.
 static void
 weird_doc (Lisp_Object sym, CONST char *weirdness, CONST char *type, int pos)
 {
-/*#if defined(ENERGIZE) || defined(SUNPRO)*/	/* hide kludgery... */
-						/* (for everyone) */
   if (!strcmp (weirdness, GETTEXT ("duplicate"))) return;
-/*#endif*/
   message ("Note: Strange doc (%s) for %s %s @ %d",
            weirdness, type, string_data (XSYMBOL (sym)->name), pos);
 }

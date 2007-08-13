@@ -20,16 +20,13 @@ hardware (as true compiled code is), byte-code is completely
 transportable from machine to machine without recompilation.  It is not,
 however, as fast as true compiled code.
 
-  In general, any version of Emacs can run byte-compiled code produced
+In general, any version of Emacs can run byte-compiled code produced
 by recent earlier versions of Emacs, but the reverse is not true.  In
-particular, if you compile a program with Emacs 19.29, the compiled
-code does not run in earlier versions.
+particular, if you compile a program with XEmacs 20, the compiled code
+may not run in earlier versions.
 @iftex
 @xref{Docs and Compilation}.
 @end iftex
-Files compiled in versions before 19.29 may not work in 19.29 if they
-contain character constants with modifier bits, because the bits were
-renumbered in Emacs 19.29.
 
   @xref{Compilation Errors}, for how to investigate errors occurring in
 byte compilation.
@@ -70,7 +67,7 @@ Here is an example:
 
 @group
 (byte-compile 'silly-loop)
-@result{} @r{[Compiled code not shown]}
+@result{} #<compiled-function ...>
 @end group
 
 @group
@@ -138,10 +135,10 @@ way to ``compile the same definition again.''
 @group
 (byte-compile 'factorial)
      @result{}
-#<byte-code (integer)
- "ÁU«‚Á‡ÂS!_‡"
- [integer 1 factorial]
- 3 "Compute factorial of INTEGER.">
+#<compiled-function (integer)
+  "ÁU«‚Á‡ÂS!_‡"
+  [integer 1 factorial]
+  3 "Compute factorial of INTEGER.">
 @end group
 @end example
 

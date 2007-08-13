@@ -1,3 +1,12 @@
+1997-11-27  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh: Obliterate usage of make_special, since nothing
+	requires it any more.
+
+1997-11-23  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (BYTECOMP): cleantree.el has been moved.
+
 1997-11-18  Colin Rafferty  <craffert@ml.com>
 
 	* update-elc.sh (prune_vc): Made it ignore any directory that

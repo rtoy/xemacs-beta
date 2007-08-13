@@ -69,15 +69,6 @@ static int window_char_height_to_pixel_height (struct window *w,
 static void change_window_height (struct window *w, int delta, int widthflag);
 
 
-#ifdef ENERGIZE
-extern void energize_buffer_shown_hook ();
-extern void energize_buffer_hidden_hook ();
-extern void energize_window_selected_hook ();
-extern void energize_window_deselected_hook ();
-extern Lisp_Object desired_psheet_buffer ();
-extern void make_psheets_desired ();
-#endif /* ENERGIZE */
-
 /* Thickness of shadow border around 3d modelines. */
 Lisp_Object Vmodeline_shadow_thickness;
 
@@ -1573,10 +1564,6 @@ unshow_buffer (struct window *w)
   if (XBUFFER (buf) != XMARKER (w->pointm[CURRENT_DISP])->buffer)
     abort ();
 
-#ifdef ENERGIZE
-    energize_buffer_hidden_hook (w);
-#endif
-
   /* FSF disables this check, so I'll do it too.  I hope it won't
      break things.  --ben */
 #if 0
@@ -3064,9 +3051,6 @@ BUFFER can be a buffer or buffer name.
   if (EQ (window, Fselected_window (Qnil)))
     {
       Fset_buffer (buffer);
-#ifdef ENERGIZE
-      energize_buffer_shown_hook (w);
-#endif
     }
   return Qnil;
 }
@@ -3097,11 +3081,6 @@ before each command.
   if (!NILP (old_selected_window))
     {
       struct window *ow = XWINDOW (old_selected_window);
-
-#ifdef ENERGIZE
-      if (! MINI_WINDOW_P (w))
-	energize_window_deselected_hook (ow);
-#endif
 
       Fset_marker (ow->pointm[CURRENT_DISP],
 		   make_int (BUF_PT (XBUFFER (ow->buffer))),
@@ -3135,11 +3114,6 @@ before each command.
   }
 
   MARK_WINDOWS_CHANGED (w);
-
-#ifdef ENERGIZE
-  if (! MINI_WINDOW_P (w))
-    energize_window_selected_hook (w);
-#endif
 
   return window;
 }
@@ -4512,10 +4486,6 @@ struct window_config
   /* Record the values of window-min-width and window-min-height
      so that window sizes remain consistent with them.  */
   int min_width, min_height;
-#ifdef ENERGIZE
-  /* The buffer whose p_sheets are visible */
-  Lisp_Object p_sheet_buffer;
-#endif
   int saved_windows_count;
   /* Zero-sized arrays aren't ANSI C */
   struct saved_window saved_windows[1];
@@ -4548,9 +4518,7 @@ mark_window_config (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (config->current_buffer));
   ((markobj) (config->minibuf_scroll_window));
   ((markobj) (config->root_window));
-#ifdef ENERGIZE
-  ((markobj) (config->p_sheet_buffer));
-#endif
+
   for (i = 0; i < config->saved_windows_count; i++)
     {
       struct saved_window *s = SAVED_WINDOW_N (config, i);
@@ -4636,9 +4604,6 @@ window_config_equal (Lisp_Object conf1, Lisp_Object conf2)
 	EQ (fig1->current_buffer,        fig2->current_buffer) &&
 	EQ (fig1->root_window,           fig2->root_window) &&
 	EQ (fig1->minibuf_scroll_window, fig2->minibuf_scroll_window) &&
-#ifdef ENERGIZE
-	EQ (fig1->p_sheet_buffer,        fig2->p_sheet_buffer) &&
-#endif
 	fig1->frame_width  == fig2->frame_width &&
 	fig1->frame_height == fig2->frame_height))
     return 0;
@@ -4761,20 +4726,6 @@ by `current-window-configuration' (which see).
   if (FRAME_LIVE_P (f))
     {
       /* restore the frame characteristics */
-#ifdef ENERGIZE
-      if (FRAME_X_P (f))
-	{
-	  Lisp_Object new_desired = config->p_sheet_buffer;
-
-	  if (BUFFERP (new_desired) &&
-	      !BUFFER_LIVE_P (XBUFFER (new_desired)))
-	    new_desired = Qnil;	/* the desired buffer was killed */
-
-	  /* need to restore the desired buffer */
-	  if (!EQ (new_desired, desired_psheet_buffer (f)))
-	    make_psheets_desired (f, new_desired);
-	}
-#endif
 
       new_current_buffer = config->current_buffer;
       if (!BUFFER_LIVE_P (XBUFFER (new_current_buffer)))
@@ -5024,9 +4975,6 @@ by `current-window-configuration' (which see).
 	    Fset_buffer (new_current_buffer);
 	  else
 	    Fset_buffer (XWINDOW (Fselected_window (Qnil))->buffer);
-#ifdef ENERGIZE
-	  energize_buffer_shown_hook (XWINDOW (Fselected_window (Qnil)));
-#endif
 	}
       else
 	set_frame_selected_window (f, config->current_window);
@@ -5253,13 +5201,6 @@ its value is -not- saved.
   config->min_height = window_min_height;
   config->min_width = window_min_width;
   config->saved_windows_count = n_windows;
-#ifdef ENERGIZE
-  {
-    config->p_sheet_buffer = desired_psheet_buffer (f);
-    if (ZEROP (config->p_sheet_buffer)) /* #### necessaryp? */
-      config->p_sheet_buffer = Qnil;
-  }
-#endif
   save_window_save (FRAME_ROOT_WINDOW (f), config, 0);
   return result;
 }

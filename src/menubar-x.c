@@ -454,28 +454,6 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
     }
 }
 
-#ifdef ENERGIZE
-extern int *get_psheets_for_buffer (Lisp_Object, int *);
-
-static void
-set_panel_button_sensitivity (struct frame *f, widget_value *data)
-{
-  struct window *window = XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f));
-  int current_buffer_psheets_count = 0;
-  int *current_buffer_psheets =
-    get_psheets_for_buffer (window->buffer, &current_buffer_psheets_count);
-  int panel_enabled = FRAME_X_DESIRED_PSHEETS (f) ||
-    current_buffer_psheets_count;
-  widget_value *val;
-  for (val = data->contents; val; val = val->next)
-    if (val->name && !strcmp (val->name, "sheet"))
-      {
-	val->enabled = panel_enabled;
-	return;
-      }
-}
-#endif /* ENERGIZE */
-
 static widget_value *
 compute_menubar_data (struct frame *f, Lisp_Object menubar, int deep_p)
 {
@@ -493,10 +471,6 @@ compute_menubar_data (struct frame *f, Lisp_Object menubar, int deep_p)
       Fset_buffer ( XWINDOW (FRAME_SELECTED_WINDOW (f))->buffer);
       data = menu_item_descriptor_to_widget_value (menubar, MENUBAR_TYPE,
 						   deep_p, 0);
-#ifdef ENERGIZE
-      if (data)
-	set_panel_button_sensitivity (f, data);
-#endif
       Fset_buffer (old_buffer);
       unbind_to (count, Qnil);
     }
@@ -678,12 +652,6 @@ make_dummy_xbutton_event (XEvent *dummy,
 }
 
 
-#ifdef ENERGIZE
-extern int desired_debuggerpanel_exposed_p;
-extern int current_debuggerpanel_exposed_p;
-extern int debuggerpanel_sheet;
-extern void notify_energize_sheet_hidden (unsigned long);
-#endif
 
 static void
 x_update_frame_menubar_internal (struct frame *f)
@@ -704,37 +672,12 @@ x_update_frame_menubar_internal (struct frame *f)
   Cardinal new_num_top_widgets = 1; /* for the menubar */
   Widget container = FRAME_X_CONTAINER_WIDGET (f);
 
-#ifdef ENERGIZE
-  int *old_sheets = FRAME_X_CURRENT_PSHEETS (f);
-  int *new_sheets = FRAME_X_DESIRED_PSHEETS (f);
-  int old_count = FRAME_X_CURRENT_PSHEET_COUNT (f);
-  int new_count = FRAME_X_DESIRED_PSHEET_COUNT (f);
-  Lisp_Object old_buf = FRAME_X_CURRENT_PSHEET_BUFFER (f);
-  Lisp_Object new_buf = FRAME_X_DESIRED_PSHEET_BUFFER (f);
-  int psheets_changed = (old_sheets != new_sheets
-			 || old_count != new_count
-			 || !EQ (old_buf, new_buf));
-  int debuggerpanel_changed = (desired_debuggerpanel_exposed_p
-			       != current_debuggerpanel_exposed_p);
-
-  if (desired_debuggerpanel_exposed_p && FRAME_X_TOP_WIDGETS (f) [1] == 0)
-    /* This happens when the frame was just created. */
-    debuggerpanel_changed = 1;
-
-  FRAME_X_CURRENT_PSHEETS (f) = FRAME_X_DESIRED_PSHEETS (f);
-  FRAME_X_CURRENT_PSHEET_COUNT (f) = FRAME_X_DESIRED_PSHEET_COUNT (f);
-  FRAME_X_CURRENT_PSHEET_BUFFER (f) = FRAME_X_DESIRED_PSHEET_BUFFER (f);
-#endif /* ENERGIZE */
-
   if (menubar_contents_changed)
     menubar_will_be_visible = set_frame_menubar (f, 0, 0);
 
   menubar_visibility_changed = menubar_was_visible != menubar_will_be_visible;
 
   if (! (menubar_visibility_changed
-#ifdef ENERGIZE
-	 || psheets_changed || debuggerpanel_changed
-#endif
 	 ))
     return;
 
@@ -743,67 +686,6 @@ x_update_frame_menubar_internal (struct frame *f)
   if (menubar_visibility_changed)
     (menubar_will_be_visible ? XtManageChild : XtUnmanageChild)
       (FRAME_X_MENUBAR_WIDGET (f));
-
-
-#ifdef ENERGIZE
-  /* Set debugger panel visibility */
-  if (debuggerpanel_changed)
-    {
-      Widget w;
-      int sheet = debuggerpanel_sheet;
-
-      w = lw_get_widget (sheet, container, 0);
-      if (desired_debuggerpanel_exposed_p)
-	{
-	  if (! w)
-	    w = lw_make_widget (sheet, container, 0);
-	  FRAME_X_TOP_WIDGETS (f)[1] = w;
-	  XtManageChild (w);
-	}
-      else
-	{
-	  notify_energize_sheet_hidden (sheet);
-	  if (w)
-	    XtUnmanageChild (w);
-	}
-    }
-
-  /* Set psheet visibility.  For the moment we just unmanage all the old
-   ones, and then manage all the new ones.  If the number of psheets
-   ever becomes a large number (i.e. > 1), then we can worry about a
-   more sophisticated way of doing this. */
-  if (psheets_changed)
-    {
-      int i;
-      Widget w;
-      unsigned long sheet;
-
-      for (i=0; i<old_count; i++)
-	{
-	  sheet = old_sheets[i];
-	  w = lw_get_widget (sheet, container, 0);
-	  notify_energize_sheet_hidden (sheet);
-	  if (w)
-	    XtUnmanageChild (w);
-	}
-
-      for (i=0; i<new_count; i++)
-	{
-	  sheet = new_sheets[i];
-	  /* #### This unconditional call to lw_make_widget() is a bad
-	     idea.  Doesn't it cause a memory leak if the widget
-	     already exists?
-
-	     #### How does Energize know that a sheet just got displayed?
-	     #### Energize knows all.  */
-	  w = lw_make_widget (sheet, container, 0);
-	  FRAME_X_TOP_WIDGETS (f)[2+i] = w;
-	  XtManageChild (w);
-	}
-    }
-
-  new_num_top_widgets += 1+new_count;
-#endif /* ENERGIZE */
 
   /* Note that new_num_top_widgets doesn't need to reflect the actual
      number of top widgets, but just the limit of FRAME_X_TOP_WIDGETS (f)[]. */
@@ -828,15 +710,6 @@ x_update_frame_menubar_internal (struct frame *f)
     EmacsShellUpdateSizeHints (FRAME_X_SHELL_WIDGET (f));
   }
 
-#ifdef ENERGIZE
-  /* Give back the focus to emacs if no psheets are displayed anymore */
-  if (psheets_changed)
-    {
-      Lisp_Object frame;
-      XSETFRAME (frame, f);
-      Fselect_frame (frame);
-    }
-#endif /* ENERGIZE */
 }
 
 static void
@@ -848,9 +721,6 @@ x_update_frame_menubars (struct frame *f)
 
   /* #### This isn't going to work right now that this function works on
      a per-frame, not per-device basis.  Guess what?  I don't care. */
-#ifdef ENERGIZE
-  current_debuggerpanel_exposed_p = desired_debuggerpanel_exposed_p;
-#endif
 }
 
 static void
@@ -867,43 +737,6 @@ x_free_frame_menubars (struct frame *f)
       lw_destroy_all_widgets (id);
       XFRAME_MENUBAR_DATA (f)->id = 0;
     }
-
-#ifdef ENERGIZE
-  {
-    /* Also destroy this frame's psheets */
-    Widget parent = FRAME_X_CONTAINER_WIDGET (f);
-    int *sheets = FRAME_X_CURRENT_PSHEETS (f);
-    int i = FRAME_X_CURRENT_PSHEET_COUNT (f);
-    while (i--)
-      {
-	unsigned long sheet = sheets [i];
-	Widget w = lw_get_widget (sheet, parent, 0);
-	if (w)
-	  lw_destroy_widget (w);
-      }
-    FRAME_X_CURRENT_PSHEET_COUNT (f) = 0;
-
-    /* Is this necessary? */
-    sheets = FRAME_X_DESIRED_PSHEETS (f);
-    i = FRAME_X_DESIRED_PSHEET_COUNT (f);
-    while (i--)
-      {
-	unsigned long sheet = sheets [i];
-	Widget w = lw_get_widget (sheet, parent, 0);
-	if (w)
-	  lw_destroy_widget (w);
-      }
-    FRAME_X_DESIRED_PSHEET_COUNT (f) = 0;
-
-    /* sigh... debugger panel is special... */
-    if (debuggerpanel_sheet)
-      {
-	Widget w = lw_get_widget (debuggerpanel_sheet, parent, 0);
-	if (w)
-	  lw_destroy_widget (w);
-      }
-  }
-#endif /* ENERGIZE */
 }
 
 static void

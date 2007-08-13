@@ -1,16 +1,0 @@
-
-"DEMO"
-("Smart_Mouse_Keys" nil nil link-to-string-match ("* Smart Mouse Keys" 1 "./DEMO") "weiner" "19940530:05:17:23" nil nil)
-("as_long_as_you_click_within_its_first_line" nil nil eval-elisp ((message "Hyperbole simplifies your work.")) "ex594bw" "19921024:23:08:43" nil nil)
-("factorial_button" nil nil link-to-ebut ("./DEMO" "factorial") "ex594bw" "19921014:18:57:35" nil nil)
-("toggle-scroll-proportional" nil nil eval-elisp ((progn (setq smart-scroll-proportional (not smart-scroll-proportional)) (message "smart-scroll-proportional = %s" smart-scroll-proportional))) "ex594bw" "19920923:05:33:32" nil nil)
-("glossary" nil nil link-to-Info-node ("(hypb.info)Glossary") "rsw@cs.brown.edu" "19911210:07:11:29" nil nil)
-(".login" nil nil link-to-file ("~/.login") "rsw@cs.brown.edu" "19911126:05:01:08" "rsw" "19911213:19:12:02")
-("tmp_directory" nil nil link-to-directory ("/tmp") "rsw@cs.brown.edu" "19911126:04:03:37" nil nil)
-("Info-directory" nil nil eval-elisp ((message "Info-directory = %s" Info-directory)) "rsw@cs.brown.edu" "19911126:03:46:54" nil nil)
-("Info-directory-list" nil nil eval-elisp ((describe-variable (quote Info-directory-list))) "rsw@cs.brown.edu" "19911126:03:46:16" "rsw" "19911230:07:17:52")
-("keyboard_macros" nil nil link-to-Info-node ("(emacs)Keyboard Macros") "rsw@cs.brown.edu" "19911126:01:08:12" nil nil)
-("factorial_alias" nil nil link-to-ebut ("./DEMO" "factorial") "rsw@cs.brown.edu" "19911126:00:54:30" "rsw" "19911126:00:56:10")
-("maximum_length" nil nil eval-elisp ((message "Max length of explicit button labels = %d characters." ebut:max-len)) "rsw@cs.brown.edu" "19911126:00:48:26" nil nil)
-("shell_command" nil nil exec-shell-cmd ("ls -l DEMO" nil nil) "rsw@cs.brown.edu" "19911126:00:42:32" "rsw" "19911213:19:07:43")
-("keyboard_macro" nil nil exec-kbd-macro ("(f("factorial" nil nil eval-elisp ((message "Factorial of 5 = %d" (* 5 4 3 2))) "rsw@cs.brown.edu" "19911125:09:52:22" "rsw" "19911125:09:54:00")

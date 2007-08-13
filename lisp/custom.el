@@ -145,6 +145,9 @@ not using the standard setting.  Otherwise, use the `set-default'."
     (put symbol 'custom-requests requests)
     ;; Do the actual initialization.
     (funcall initialize symbol value))
+  ;; #### This is a rough equivalent of LOADHIST_ATTACH.  However,
+  ;; LOADHIST_ATTACH also checks for `initialized'.
+  (push symbol current-load-list)
   (run-hooks 'custom-define-hook)
   symbol)
 

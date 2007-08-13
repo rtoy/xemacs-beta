@@ -2004,10 +2004,6 @@ allocate_x_frame_struct (struct frame *f)
   /* yeah, except the lisp ones */
   FRAME_X_ICON_PIXMAP (f) = Qnil;
   FRAME_X_ICON_PIXMAP_MASK (f) = Qnil;
-#ifdef ENERGIZE
-  FRAME_X_CURRENT_PSHEET_BUFFER (f) = Qnil;
-  FRAME_X_DESIRED_PSHEET_BUFFER (f) = Qnil;
-#endif
 }
 
 
@@ -2076,10 +2072,6 @@ x_mark_frame (struct frame *f, void (*markobj) (Lisp_Object))
 {
   ((markobj) (FRAME_X_ICON_PIXMAP (f)));
   ((markobj) (FRAME_X_ICON_PIXMAP_MASK (f)));
-#ifdef ENERGIZE
-  ((markobj) (FRAME_X_CURRENT_PSHEET_BUFFER (f)));
-  ((markobj) (FRAME_X_DESIRED_PSHEET_BUFFER (f)));
-#endif
 }
 
 static void

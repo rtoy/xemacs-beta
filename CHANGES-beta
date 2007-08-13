@@ -1,4 +1,199 @@
 							-*- indented-text -*-
+to 20.4 beta7 "Appenzell"
+-- Miscellaneous MS Windows patches from David Hobley and Jeff Sparkes
+-- ImageMagick is not autodetected by configure courtesy of IENAGA Kazuyuki
+-- (broken) energize support has been removed courtesy of Jeff Miller
+-- lisp/eos has been packaged
+-- lisp/sunpro has been packaged
+-- lisp/tooltak has been packaged
+-- abbrevlist.el has been packaged
+-- advice.el has been packaged
+-- annotations.el has been packaged
+-- assoc.el has been packaged
+-- atomic-extents.el has been packaged
+-- bench.el has been packaged
+-- browse-url.el has been packaged
+-- edit-toolbar.el has been packaged
+-- edmacro.el has been packaged
+-- eldoc.el has been packaged
+-- facemenu.el has been packaged
+-- floating-toolbar.el has been packaged
+-- foldout.el has been packaged
+-- frame-icon.el has been packaged
+-- hippie-exp.el has been packaged
+-- live-icon.el has been packaged
+-- loadhist.el has been packaged
+-- passwd.el has been packaged
+-- ph.el has been packaged
+-- pp.el has been packaged
+-- pretty-print.el has been packaged
+-- redo.el has been packaged
+-- regexp-opt.el has been packaged
+-- regi.el has been packaged
+-- reporter.el has been packaged
+-- ring.el has been packaged
+-- savehist.el has been packaged
+-- shadowfile.el has been packaged
+-- skeleton.el has been packaged
+-- symbol-syntax.el has been packaged
+-- sysdep.el has been packaged
+-- thing.el has been packaged
+-- timezone.el has been packaged
+-- toolbar-utils.el has been packaged
+-- tree-menu.el has been packaged
+-- xbm-button.el has been packaged
+-- xpm-button.el has been packaged
+-- advocacy.el has been packaged
+-- case-table.el has been packaged
+-- debug.el has been packaged
+-- disp-table.el has been packaged
+-- env.el has been packaged
+-- find-func.el has been packaged
+-- lisp-file-db.el has been packaged
+-- macros.el has been packaged
+-- novice.el has been packaged
+-- options.el has been removed
+-- overlay.el has been packaged
+-- profile.el has been packaged
+-- rect.el has been packaged
+-- reposition.el has been packaged
+-- sort.el has been packaged
+-- tabify.el has been packaged
+-- userlock.el has been packaged
+-- elp.el has been packaged
+-- highlight-headers.el has been packaged
+-- id-select.el has been packaged
+-- rfc822.el has been packaged
+-- smtp.el has been packaged
+-- soundex.el has been packaged
+-- tq.el has been packaged
+-- trace.el has been packaged
+-- uniquify.el has been packaged
+-- cmdloop1.el has been removed
+-- inc-vers.el has been removed
+-- icomplete.el has been packaged
+-- igrep.el has been packaged
+-- informat.el has been packaged
+-- iswitchb.el has been packaged
+-- jka-compr.el has been packaged
+-- makeinfo.el has been packaged
+-- makesum.el has been packaged
+-- man.el has been packaged
+-- metamail.el has been packaged
+-- mic-paren.el has been packaged
+-- mode-motion+.el has been packaged
+-- rcompile.el has been packaged
+-- recent-files.el has been packaged
+-- refbib.el has been packaged
+-- reportmail.el has been packaged
+-- resume.el has been packaged
+-- generic-sc.el has been packaged
+-- gopher.el has been packaged
+-- hexl.el has been packaged
+-- fast-lock.el has been packaged
+-- feedmail.el has been packaged
+-- file-part.el has been packaged
+-- filladapt.el has been packaged
+-- func-menu.el has been packaged
+-- saveconf.el has been packaged
+-- saveplace.el has been packaged
+-- scroll-in-place.el has been packaged
+-- shell-font.el has been packaged
+-- spell.el has been packaged
+-- supercite.el has been packaged
+-- page-ext.el has been packaged
+-- paren.el has been packaged
+-- pending-del.el has been packaged
+-- ps-print.el has been packaged
+-- edit-faces.el has been packaged
+-- emacsbug.el has been packaged
+-- emerge.el has been packaged
+-- lazy-lock.el has been packaged
+-- ledit.el has been packaged
+-- lispm-fonts.el has been packaged
+-- lpr.el has been packaged
+-- tar-mode.el has been packaged
+-- terminal.el has been packaged
+-- tex-latin1.el has been packaged
+-- texinfmt.el has been packaged
+-- texnfo-tex.el has been packaged
+-- texnfo-upd.el has been packaged
+-- time-stamp.el has been packaged
+-- time.el has been packaged
+-- uncompress.el has been packaged
+-- underline.el has been packaged
+-- upd-copyr.el has been packaged
+-- webjump.el has been packaged
+-- webster-www.el has been packaged
+-- xscheme.el has been packaged
+-- dabbrev.el has been packaged
+-- desktop.el has been packaged
+-- detexinfo.el has been packaged
+-- diff.el has been packaged
+-- doctex.el has been packaged
+-- chistory.el has been packaged
+-- cmuscheme.el has been packaged
+-- compare-w.el has been packaged
+-- compile.el has been packaged
+-- completion.el has been packaged
+-- crypt.el has been packaged
+-- bookmark.el has been packaged
+-- blink-paren.el has been packaged
+-- blink-cursor.el has been packaged
+-- big-menubar.el has been packaged
+-- balloon-help.el has been packaged
+-- backup-dir.el has been packaged
+-- avoid.el has been packaged
+-- autoinsert.el has been packaged
+-- array.el has been packaged
+-- add-log.el has been packaged
+-- oobr has been packaged
+-- mail-extr.el, mail-utils.el have been packaged
+-- view-process has been packaged
+-- vhdl-mode has been packaged
+-- texinfo.el has been packaged
+-- tex-mode.el has been packaged
+-- sendmail.el has been packaged
+-- sgml-mode.el has been packaged
+-- scribe.el has been packaged
+-- scheme.el has been packaged
+-- rsz-minibuf.el has been packaged
+-- rexx-mode.el has been packaged
+-- reftex.el has been packaged
+-- python-mode.el has been packaged
+-- prolog.el has been packaged
+-- postscript.el has been packaged
+-- picture.el has been packaged
+-- perl-mode.el has been packaged
+-- pascal.el has been packaged
+-- outline.el has been packaged
+-- outl-mouse.el has been packaged
+-- nroff-mode.el has been packaged
+-- modula2.el has been packaged
+-- make-mode.el has been packaged
+-- mail-abbrevs.el has been packaged
+-- lisp-mnt.el has been packaged
+-- linuxdoc-sgml.el has been packaged
+-- lazy-shot.el has been packaged
+-- image-mode.el has been packaged
+-- icon.el has been packaged
+-- hideshow.el has been packaged
+-- hideif.el has been packaged
+-- executable.el has been packaged
+-- enriched.el has been packaged
+-- eiffel3.el has been packaged
+-- cperl-mode.el has been packaged
+-- cmacexp.el has been packaged
+-- cl-indent.el has been packaged
+-- c-style.el has been packged
+-- c-fill.el has been packaged
+-- c-comment.el has been packaged
+-- bibtex.el has been packaged
+-- bib-mode.el has been packaged
+-- awk-mode.el has been packaged
+-- autoconf-mode.el has been packaged
+-- Miscellaneous bug fixes
+
 to 20.4 beta6 "Angora"
 -- New package-path syntax.  A null package indicates where the default lisp
    should go.  This allows specifying packages that must be appended to the
@@ -11,7 +206,7 @@ to 20.4 beta6 "Angora"
 -- Egg update courtesy of Jareth Hein
 -- Update to Norwegian TUTORIAL courtesy of Stig Bjørlykke
 -- Polish translation of the TUTORIAL courtesy of Remek Trzaska, update and
-   corrections courtesy of Rysiek Kubiak.
+   corrections courtesy of Rysiek Kubiak
 -- Toolbar improvements courtesy of Kyle Jones
 -- Miscellaneous bug fixes
 

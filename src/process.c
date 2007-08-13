@@ -422,13 +422,6 @@ BUFFER may be a buffer or the name of one.
   buf = Fget_buffer (name);
   if (GC_NILP (buf)) return Qnil;
 
-#ifdef ENERGIZE
-  {
-    Lisp_Object p = energize_get_buffer_process (buf);
-    if (!GC_NILP (p)) return p;
-  }
-#endif
-
   for (tail = Vprocess_list; GC_CONSP (tail); tail = XCDR (tail))
     {
       /* jwz: do not quit here - it isn't necessary, as there is no way for
@@ -1887,10 +1880,6 @@ Return the marker for the end of the last output from PROCESS.
        (proc))
 {
   CHECK_PROCESS (proc);
-#ifdef ENERGIZE
-  if (EQ (proc, Venergize_process)) /* per buffer rather than per process */
-    return Fenergize_user_input_buffer_mark (Qnil); /* ## current_buffer ok? */
-#endif
   return XPROCESS (proc)->mark;
 }
 

@@ -62,7 +62,6 @@
 (defvar packages-useful-lisp
   '("bytecomp"
     "byte-optimize"
-    "advice"
     "shadow"
     "cl-macs")
   "Lisp packages that need early byte compilation.")

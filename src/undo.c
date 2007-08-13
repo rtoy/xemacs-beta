@@ -144,22 +144,12 @@ record_insert (struct buffer *b, Bufpos beg, Charcount length)
 /* Record that a deletion is about to take place,
    for LENGTH characters at location BEG.  */
 
-#ifdef ENERGIZE
-extern int inside_parse_buffer; /* total kludge */
-#endif
-
 void
 record_delete (struct buffer *b, Bufpos beg, Charcount length)
 {
   /* This function can GC */
   Lisp_Object sbeg;
   int at_boundary;
-
-#ifdef ENERGIZE
-  /* #### why is this necessary? */
-  if (inside_parse_buffer)
-    return;
-#endif
 
   if (!undo_prelude (b, 1))
     return;

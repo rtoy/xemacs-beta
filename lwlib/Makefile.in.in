@@ -49,19 +49,9 @@ vpath %.h @srcdir@
 VPATH=@srcdir@
 #endif
 
-#ifdef ENERGIZE
-EZ_OBJS =\
- energize/blpsheet.o energize/build.o energize/classbr_ps.o\
- energize/ctreebr_ps.o energize/debuggerps.o energize/editmode.o\
- energize/leb_psheet.o energize/projectdisp.o energize/projectps.o\
- energize/search.o energize/target.o
-ENERGIZEP = -DENERGIZE
-EZ_SUBDIR = ez_dialog
-#endif
+objs = lwlib.o lwlib-utils.o lwlib-config.o @lwlib_objs@
 
-objs = lwlib.o lwlib-utils.o lwlib-config.o $(EZ_OBJS) @lwlib_objs@
-
-all: $(EZ_SUBDIR) liblw.a
+all: liblw.a
 
 c_switch_general=@c_switch_general@
 c_switch_window_system=@c_switch_window_system@
@@ -73,10 +63,10 @@ ld_libs_general=@ld_libs_general@
 ld_libs_window_system=@ld_libs_window_system@
 ld_libs_all=@ld_libs_all@
 
-cppflags = $(CPPFLAGS) -I. $(c_switch_all) $(ENERGIZEP)
+cppflags = $(CPPFLAGS) -I. $(c_switch_all) 
 cflags = $(CFLAGS) $(cppflags)
 
-ALL_CFLAGS= $(CFLAGS) $(CPPFLAGS) -I. $(c_switch_all) $(ENERGIZEP)
+ALL_CFLAGS= $(CFLAGS) $(CPPFLAGS) -I. $(c_switch_all) 
 #ifdef SOLARIS2
 %.o : %.c
 #else
@@ -93,18 +83,10 @@ liblw.a: $(objs)
 	$(AR) $@ $(objs)
 	@-test -n "$(RANLIB)" && $(RANLIB) $@
 
-#ifdef ENERGIZE
-ez_dialog:
-	cd energize && $(RECURSIVE_MAKE)
-#endif
-
 .PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:
 	$(RM) liblw.a liblw_pure_*.a *.o *.i core
 clean: mostlyclean
-#ifdef ENERGIZE
-	cd energize && $(RECURSIVE_MAKE) clean
-#endif
 distclean: clean
 	$(RM) Makefile Makefile.in config.h TAGS
 realclean: distclean

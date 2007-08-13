@@ -410,11 +410,6 @@ typedef int Endpoint_Index;
 #define DE_MUST_HAVE_BUFFER 1
 #define DE_MUST_BE_ATTACHED 2
 
-/* #### remove this crap */
-#ifdef ENERGIZE
-extern void restore_energize_extent_state (EXTENT extent);
-#endif
-
 Lisp_Object Vlast_highlighted_extent;
 int mouse_highlight_priority;
 
@@ -3675,17 +3670,6 @@ copy_extent (EXTENT original, Bytind from, Bytind to, Lisp_Object object)
       }
   }
 
-  /* #### it's still unclear to me that this Energize-specific junk
-     needs to be in here.  Just use the general mechanisms, or fix
-     them up! --ben */
-#ifdef ENERGIZE
-  if (energize_extent_data (original))
-    {
-      extent_plist_slot (e) = Qnil; /* slightly antisocial... */
-      restore_energize_extent_state (e);
-    }
-#endif
-
   return e;
 }
 
@@ -5565,10 +5549,6 @@ static void
 update_extent (EXTENT extent, Bytind from, Bytind to)
 {
   set_extent_endpoints (extent, from, to, Qnil);
-/* #### remove this crap */
-#ifdef ENERGIZE
-  restore_energize_extent_state (extent);
-#endif
 }
 
 /* Insert an extent, usually from the dup_list of a string which

@@ -2751,6 +2751,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 
   MARK_FRAME_TOOLBARS_CHANGED (f);
   MARK_FRAME_CHANGED (f);
+  f->echo_area_garbaged = 1;
 }
 
 void

@@ -2247,21 +2247,6 @@ display_menu (XlwMenuWidget mw, int level, Boolean just_compute_p,
   puts("===================================================================");
   print_widget_value (following_item, 1, 0);
 #endif
-  if (following_item
-      && following_item->type == CASCADE_TYPE
-      && following_item->contents
-      && following_item->contents->type == INCREMENTAL_TYPE)
-    {
-      /* okay, we're now doing a lisp callback to incrementally generate
-	 more of the menu. */
-      XtCallCallbackList ((Widget)mw,
-			  mw->menu.open,
-			  (XtPointer)following_item->contents);
-#if SLOPPY_TYPES == 1
-  puts("==== NEW ==== NEW ==== NEW ==== NEW ==== NEW ==== NEW ==== NEW ====");
-  print_widget_value(following_item, 1, 0);
-#endif
-    }
 
   if (hit)
     *hit_return = NULL;
@@ -2542,6 +2527,18 @@ remap_menubar (XlwMenuWidget mw)
 
       /* take into account the slab around the new menu */
       ws->y -= mw->menu.shadow_thickness;
+
+      {
+	widget_value *val = mw->menu.old_stack [i];
+	if (val->contents->type == INCREMENTAL_TYPE)
+	{
+	  /* okay, we're now doing a lisp callback to incrementally generate
+	     more of the menu. */
+	  XtCallCallbackList ((Widget)mw,
+			      mw->menu.open,
+			      (XtPointer)val->contents);
+	}
+      }
 
       size_menu (mw, i);
 

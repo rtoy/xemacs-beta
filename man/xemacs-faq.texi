@@ -8,7 +8,7 @@
 @titlepage
 @title XEmacs FAQ
 @subtitle Frequently asked questions about XEmacs
-@subtitle Last Modified: 1997-11-18 23:08:35 EET
+@subtitle Last Modified: 1997-11-21 14:09:42 EET
 @sp 1
 @author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <wing@@666.com>
@@ -146,13 +146,13 @@ Customization and Options
 * Q3.0.6::      Can I force the output of @code{(face-list)} to a buffer?
 * Q3.0.7::      Font selections don't get saved after @code{Save Options}. 
 * Q3.0.8::      How do I make a single minibuffer frame?
-* Q3.0.9::      @code{Customize}.
+* Q3.0.9::      What is @code{Customize}?
 
 X Window System & Resources:
 * Q3.1.1::      Where is a list of X resources?
 * Q3.1.2::      How can I detect a color display?
 * Q3.1.3::      @code{(set-screen-width)} worked in 19.6, but not in 19.13?
-* Q3.1.4::      Specifiying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?
+* Q3.1.4::      Specifying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?
 * Q3.1.5::      How can I get the icon to just say @samp{XEmacs}?
 * Q3.1.6::      How can I have the window title area display the full path?
 * Q3.1.7::      @samp{xemacs -name junk} doesn't work?
@@ -232,7 +232,7 @@ Major Subsystems
 * Q4.0.5::      How do I get my outgoing mail archived?
 * Q4.0.6::      I have various addresses at which I receive mail.  How can I tell VM to ignore them when doing a "reply-all"?
 * Q4.0.7::      Is there a mailing list or FAQ for VM?
-* Q4.0.8::      Remote Mailreading with VM.
+* Q4.0.8::      Remote mail reading with VM.
 * Q4.0.9::      rmail or VM gets an error incorporating new mail.
 * Q4.0.10::     How do I make VM stay in a single frame?
 * Q4.0.11::     How do I make VM or mh-e display graphical smilies?
@@ -244,7 +244,7 @@ Web browsing with W3:
 * Q4.1.3::      Is it true that W3 supports style sheets and tables?
 
 Reading Netnews and Mail with Gnus:
-* Q4.2.1::      GNUS, (ding) Gnus, Gnus 5, September Gnus, Red Gnus,argh! 
+* Q4.2.1::      GNUS, (ding) Gnus, Gnus 5, September Gnus, Red Gnus, Quassia Gnus, argh! 
 * Q4.2.2::      [This question intentionally left blank]
 * Q4.2.3::      How do I make Gnus stay within a single frame?
 * Q4.2.4::      How do I customize the From: line?
@@ -859,7 +859,7 @@ non-@sc{MULE} XEmacs.
 
   Individual characters are not often used in programs.  It is far more
 common to work with @emph{strings}, which are sequences composed of
-characters.  @xref{String Type}.
+characters.
 @end quotation
 
 @node Q1.3.2, Q1.3.3, Q1.3.1, Introduction
@@ -2287,7 +2287,7 @@ compiled with optimization on.
 
 I've just discovered that my hpux 10.01 binary was working less well
 than expected. In fact, on a 10.10 system, @code{(while t)} was not
-interupted by @kbd{C-g}. I defined @code{BROKEN_SIGIO} and recompiled on
+interrupted by @kbd{C-g}. I defined @code{BROKEN_SIGIO} and recompiled on
 10.10, and... the hang is now gone.
 
 As far as configure goes, this will be a bit tricky: @code{BROKEN_SIGIO}
@@ -2393,7 +2393,7 @@ some other strange cases.
 @end quotation
 
 @node Q2.1.23,  , Q2.1.22, Installation
-@section  Movemail on Linux doe snot work for XEmacs 19.15 and later. 
+@section  Movemail on Linux does not work for XEmacs 19.15 and later. 
 
 Movemail used to work fine in 19.14 but has stopped working in 19.15
 and 20.x.  I am using Linux.
@@ -2427,13 +2427,13 @@ Customization---Emacs Lisp and @file{.emacs}:
 * Q3.0.6::      Can I force the output of @code{(face-list)} to a buffer?
 * Q3.0.7::      Font selections don't get saved after @code{Save Options}. 
 * Q3.0.8::      How do I make a single minibuffer frame?
-* Q3.0.9::      @code{Customize}.
+* Q3.0.9::      What is @code{Customize}?
 
 X Window System & Resources:
 * Q3.1.1::      Where is a list of X resources?
 * Q3.1.2::      How can I detect a color display?
 * Q3.1.3::      @code{(set-screen-width)} worked in 19.6, but not in 19.13?
-* Q3.1.4::      Specifiying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?
+* Q3.1.4::      Specifying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?
 * Q3.1.5::      How can I get the icon to just say @samp{XEmacs}?
 * Q3.1.6::      How can I have the window title area display the full path?
 * Q3.1.7::      @samp{xemacs -name junk} doesn't work?
@@ -2659,17 +2659,17 @@ taste, and there any number of other XEmacs options settings that may
 make it difficult or inconvenient to use.
 
 @node Q3.0.9, Q3.1.1, Q3.0.8, Customization
-@section @code{Customize}.
+@section What is @code{Customize}?
 
-Strating with XEmacs 20.2 there is new system 'Customize' for customizing
+Starting with XEmacs 20.2 there is new system 'Customize' for customizing
 XEmacs options.
 
 You can access @code{Customize} from the @code{Options} menu
-or invoking one of customize commands byt typing eg.
+or invoking one of customize commands by typing eg.
 @kbd{M-x customize}, @kbd{M-x customize-face},
 @kbd{M-x customize-variable} or @kbd{M-x customize-apropos}.
 
-Strating with XEmacs 20.3 there is also new `browser' mode for Customize.
+Starting with XEmacs 20.3 there is also new `browser' mode for Customize.
 Try it out with @kbd{M-x customize-browse}
 
 @node Q3.1.1, Q3.1.2, Q3.0.9, Customization
@@ -2716,7 +2716,7 @@ These two functions now take frame arguments:
 @end lisp
 
 @node Q3.1.4, Q3.1.5, Q3.1.3, Customization
-@section Specifiying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?
+@section Specifying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?
 
 In XEmacs 19.11 I specified @code{Emacs*EmacsScreen.geometry} in
 my @file{.emacs} but this does not work in XEmacs 19.15.
@@ -3769,7 +3769,7 @@ Reading Mail with VM:
 * Q4.0.5::      How do I get my outgoing mail archived?
 * Q4.0.6::      I have various addresses at which I receive mail.  How can I tell VM to ignore them when doing a "reply-all"?
 * Q4.0.7::      Is there a mailing list or FAQ for VM?
-* Q4.0.8::      Remote Mailreading with VM.
+* Q4.0.8::      Remote mail reading with VM.
 * Q4.0.9::      rmail or VM gets an error incorporating new mail.
 * Q4.0.10::     How do I make VM stay in a single frame?
 * Q4.0.11::     How do I make VM or mh-e display graphical smilies?
@@ -3878,7 +3878,7 @@ A FAQ for VM exists at <URL:http://www.cyberpass.net/~gorkab/vmfaq.htm>.
 VM has its own newsgroups gnu.emacs.vm.info and gnu.emacs.vm.bug.
 
 @node Q4.0.8, Q4.0.9, Q4.0.7, Subsystems
-@section Remote Mailreading with VM.
+@section Remote mail reading with VM.
 
 My mailbox lives at the office on a big honkin server.  My regular INBOX
 lives on my honkin desktop machine.  I now can PPP to the office from
@@ -4505,7 +4505,7 @@ additional package.
 
 Each package bundled with XEmacs means more work for the maintainers,
 whether they want it or not.  If you are ready to take over the
-maintainence responsibilities for the package you port, be sure to say
+maintenance responsibilities for the package you port, be sure to say
 so -- we will more likely include it.
 
 @item
@@ -4929,7 +4929,7 @@ form for the Control and the Meta modifiers to string-characters (the
 ASCII characters), as in @samp{\M-\C-a}.  XEmacs users need to be aware
 that the abbreviated form works only for one-character key sequences,
 while Emacs users need to be aware that the string-character is rather
-limited.  Specifically, the string-character can accomodate only 256
+limited.  Specifically, the string-character can accommodate only 256
 different values, 128 of which have the Meta modifier and 128 of which
 have not.  In each of these blocks, only 32 characters have the Control
 modifier.  Whereas @code{[(meta control A)]} differs from @code{[(meta
@@ -5055,7 +5055,7 @@ use whitespace.
 @node Q5.1.4, Q5.1.5, Q5.1.3, Miscellaneous
 @section What is the performance hit of @code{let}?
 
-In most cases, not noticable.  Besides, there's no avoiding
+In most cases, not noticeable.  Besides, there's no avoiding
 @code{let}---you have to bind your local variables, after all.  Some
 pose a question whether to nest @code{let}s, or use one @code{let} per
 function.  I think because of clarity and maintenance (and possible
@@ -5489,7 +5489,7 @@ static char* eye = @{
 @end lisp
 
 Note that you might want to make this a function, and put it to a hook.
-We leave that as an excercise for the reader.
+We leave that as an exercise for the reader.
 
 @node Q5.3.8, Q5.3.9, Q5.3.7, Miscellaneous
 @section How do I insert today's date into a buffer?
@@ -5640,7 +5640,7 @@ directories scanned from #1 and magically concatenates them together.
 @item
 XEmacs Info looks for a @file{localdir} file (which consists of just the
 menu entries from a @file{dir} file) in each of the directories scanned
-from #1 (except the first), does a simple concatentation of them, and
+from #1 (except the first), does a simple concatenation of them, and
 magically attaches the resulting list to the end of the menu in the
 @file{dir} file in the first directory.
 @end enumerate
@@ -5711,7 +5711,7 @@ various FAQ FTP sites, as this file is surely out of date.
 @node Q6.0.1, Q6.0.2, Current Events, Current Events
 @section What is new in 20.2?
 
-The biggest changes in 20.2 include intergration of EFS (the next
+The biggest changes in 20.2 include integration of EFS (the next
 generation of ange-ftp) and AUC Tex (the Emacs subsystem that includes a
 major mode for editing Tex and LaTeX, and a lot of other stuff).  Many
 bugs from 20.0 have been fixed for this release.  20.2 also contains a

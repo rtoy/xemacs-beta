@@ -57,7 +57,7 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 
 #ifdef HAVE_IMAGEMAGICK
-#include <magick.h>
+#include <magick/magick.h>
 /*#include <image.h>*/
 #include <assert.h>
 #endif

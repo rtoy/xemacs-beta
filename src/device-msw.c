@@ -86,6 +86,7 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   DEVICE_MSWINDOWS_VERTSIZE(d) = GetDeviceCaps(hdc, VERTSIZE);
   ReleaseDC(desktop, hdc);
 
+  DEVICE_CLASS(d) = Qcolor;
   /* Wait for windows thread to be ready */
   GetMessage (&msg, NULL, WM_XEMACS_ACK, WM_XEMACS_ACK);
 }

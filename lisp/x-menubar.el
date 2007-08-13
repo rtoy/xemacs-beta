@@ -88,25 +88,9 @@
       ["Search Backward (Regexp)..." isearch-backward-regexp t]
       ["Replace (Regexp)..."	query-replace-regexp	t]
       "----"
-      ("Bookmarks"
-       ("Jump to bookmark"
-	:filter bookmark-menu-filter)
-       ["Set bookmark"  	bookmark-set		t]
-       "---"
-       ["Insert contents"  	bookmark-menu-insert	t]
-       ["Insert location"  	bookmark-menu-locate	t]
-       "---"
-       ["Rename bookmark"  	bookmark-menu-rename	t]
-       ("Delete bookmark"
-  	:filter bookmark-delete-filter)
-       ["Edit Bookmark List"    bookmark-bmenu-list	t]
-       "---"
-       ["Save bookmarks"        bookmark-save		t]
-       ["Save bookmarks as..."  bookmark-write		t]
-       ["Load a bookmark file"  bookmark-load		t])
-      "----"
       ["Goto Line..."		goto-line		t]
       ["What Line"		what-line		t]
+      ("Bookmarks":filter bookmark-menu-filter)
       "----"
       ["Start Macro Recording"	start-kbd-macro	      (not defining-kbd-macro)]
       ["End Macro Recording"	end-kbd-macro		defining-kbd-macro]
@@ -280,11 +264,19 @@
 	 :style radio
 	 :selected (eq ps-paper-type 'b5)]
 	)
-       ["Enable Color Printing"
-	(progn
-	  (set-face-background 'default "white")
-	  (setq ps-print-color-p t))
-	t]
+       ["Color Printing"
+	(when (boundp 'ps-print-color-p)
+	  (if ps-print-color-p
+	      (progn
+		(setq ps-print-color-p nil)
+		(when (and (boundp 'original-face-background)
+			   original-face-background)
+		  (set-face-background 'default original-face-background)))
+	    (setq original-face-background (face-background-instance 'default))
+	    (set-face-background 'default "white")
+	    (setq ps-print-color-p t)))
+	:style toggle :selected (and (boundp 'ps-print-color-p)
+				     ps-print-color-p)]
        )
       ("\"Other Window\" Location"
        ["Always in Same Frame"
@@ -847,21 +839,35 @@ This function changes the sensitivity of these Edit menu items:
 
 ;;; The Bookmarks menu
 
-(defun bookmark-menu-filter (menu-items)
-  "*Build the bookmark jump submenu dynamically from all defined bookmarks."
-  (if (bookmark-all-names)
-      (mapcar
-       #'(lambda (bmk)
-	   (vector bmk `(bookmark-jump ',bmk) t)) (bookmark-all-names))
-    '(["No Bookmarks Set" nil nil])))
-
-(defun bookmark-delete-filter (menu-items)
-  "*Build the bookmark delete submenu dynamically from all defined bookmarks."
-  (if (bookmark-all-names)
-      (mapcar
-       #'(lambda (bmk)
-	   (vector bmk `(bookmark-delete ',bmk) t)) (bookmark-all-names))
-    '(["No Bookmarks Set" nil nil])))
+(defun bookmark-menu-filter (&rest ignore)
+  (let ((definedp (and (boundp 'bookmark-alist)
+		       bookmark-alist
+		       t)))
+    `(,(if definedp
+	   '("Jump to Bookmark"
+	     :filter (lambda (&rest junk)
+		       (mapcar #'(lambda (bmk)
+				   `[,bmk (bookmark-jump ',bmk) t])
+			       (bookmark-all-names))))
+	 ["Jump to Bookmark" nil nil])
+      ["Set bookmark"  	bookmark-set		t]
+      "---"
+      ["Insert contents"  	bookmark-menu-insert	t]
+      ["Insert location"  	bookmark-menu-locate	t]
+      "---"
+      ["Rename bookmark"  	bookmark-menu-rename	t]
+      ,(if definedp
+	   '("Delete Bookmark"
+	     :filter (lambda (&rest junk)
+		       (mapcar #'(lambda (bmk)
+				   `[,bmk (bookmark-delete ',bmk) t])
+			       (bookmark-all-names))))
+	 ["Delete Bookmark" nil nil])
+      ["Edit Bookmark List"    bookmark-bmenu-list	,definedp]
+      "---"
+      ["Save bookmarks"        bookmark-save		,definedp]
+      ["Save bookmarks as..."  bookmark-write		,definedp]
+      ["Load a bookmark file"  bookmark-load		t])))
 
 ;;; The Buffers menu
 

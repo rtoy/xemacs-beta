@@ -505,14 +505,6 @@ extern "C" {
    Currently this is only Solaris 2.x, for x < 6. */
 #undef DYNODUMP
 
-/* Define ENERGIZE to compile with support for the Energize Programming System.
-   If you do this, don't forget to define ENERGIZE in lwlib/Imakefile as well.
-   You will need to set your C_SWITCH_SITE and LD_SWITCH_SITE to point at the
-   Energize connection library (libconn.a) and associated header files. */
-#undef ENERGIZE
-#undef ENERGIZE_2
-#undef ENERGIZE_3
-
 /* Compile in support for Sun Sparcworks/WorkShop? */
 #undef SUNPRO
 

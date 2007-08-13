@@ -533,15 +533,13 @@ second argument NOESCAPE is non-nil.
        (object, noescape))
 {
   /* This function can GC */
-  Lisp_Object old = Fcurrent_buffer ();
   struct buffer *out = XBUFFER (Vprin1_to_string_buffer);
   Lisp_Object stream = Qnil;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1, gcpro2;
 
-  GCPRO3 (object, old, stream);
+  GCPRO2 (object, stream);
   stream = print_prepare (Vprin1_to_string_buffer);
-  set_buffer_internal (out);
-  Ferase_buffer (Fcurrent_buffer ());
+  Ferase_buffer (Vprin1_to_string_buffer);
   print_depth = 0;
   print_internal (object, stream, NILP (noescape));
   print_finish (stream);
@@ -549,8 +547,7 @@ second argument NOESCAPE is non-nil.
   object = make_string_from_buffer (out,
 				    BUF_BEG (out),
 				    BUF_Z (out) - 1);
-  Ferase_buffer (Fcurrent_buffer ());
-  Fset_buffer (old);
+  Ferase_buffer (Vprin1_to_string_buffer);
   UNGCPRO;
   return object;
 }

@@ -910,10 +910,6 @@ main_1 (int argc, char **argv, char **envp)
       syms_of_btl ();
 #endif
 
-#ifdef ENERGIZE
-      syms_of_energize ();
-#endif
-
 #if defined (GNU_MALLOC) && defined (ERROR_CHECK_MALLOC)
 #if 0
       syms_of_free_hook ();
@@ -1228,10 +1224,6 @@ main_1 (int argc, char **argv, char **envp)
 #endif /* HAVE_CANNA */
 #endif /* MULE */
 
-#ifdef ENERGIZE
-      vars_of_energize ();
-#endif
-
 #ifdef TOOLTALK
       vars_of_tooltalk ();
 #endif
@@ -1318,11 +1310,6 @@ main_1 (int argc, char **argv, char **envp)
 
       /* This calls allocate_glyph(). */
       complex_vars_of_frame ();
-
-      /* Depends on hashtables. */
-#ifdef ENERGIZE
-      complex_vars_of_energize ();
-#endif
 
       /* This calls Fcopy_category_table() under Mule, which calls who
          knows what. */

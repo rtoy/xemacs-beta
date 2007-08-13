@@ -1,3 +1,83 @@
+1997-11-28  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* x-toolbar.el (toolbar-news-frame-properties): Made customizable.
+
+1997-11-27  Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* lazy-shot.el (lazy-shot-stealth-timer): `defvar'.  Would
+	bug out when setting `lazy-shot-stealth-time' to nil and visiting
+	a buffer smaller than `lazy-shot-minimum-size'.
+	(font-lock-mode-hook): Option is turn-on-lazy-shot.
+
+1997-11-27  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* etags.el: Support new `include'
+	  directive.  Search for exact tag matches and then
+	  inexact matches.
+
+1997-11-26  SL Baur  <steve@altair.xemacs.org>
+
+	* packages.el (packages-useful-lisp): advice.el is a package.
+
+	* x-menubar.el (default-menubar): Make `Options ... Color Printing' 
+	a toggle.
+
+1997-11-26  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* toolbar.el (init-toolbar-from-resrouces): Fix
+	  parens to make valid if-expression.
+
+1997-11-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* x-toolbar.el (toolbar-gnus): Respect
+	`toolbar-news-use-separate-frame'.
+
+1997-11-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* x-menubar.el (default-menubar): Use `bookmark-menu-filter'
+	for the Bookmarks menu.
+	(bookmark-menu-filter): Handle inactive submenus.
+
+1997-11-25  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom.el (custom-declare-variable): Attach the symbol to 
+	load history.
+
+1997-11-23  SL Baur  <steve@altair.xemacs.org>
+
+	* startup.el (find-emacs-root-internal-1): Erase references to
+	prim.
+
+	* blessmail.el: dumped-lisp.el has been moved.
+	* font.el: ditto.
+	* make-docfile.el: ditto.
+	* package-admin.el: ditto.
+	* update-elc.el: ditto.
+
+	* about.el: Moved.
+	* cleantree.el: ditto.
+	* dumped-lisp.el: ditto.
+	* sound.el: ditto.
+	* winnt.el: ditto.
+
+1997-11-22  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* faces.el: Don't set global background pixmap
+	  property of the modeline face to [nothing], as that
+	  the attributeBackgroundPixmap X resource.
+
+1997-11-21  SL Baur  <steve@altair.xemacs.org>
+
+	* autoload.el: Moved.
+	* config.el: ditto.
+	* etags.el: ditto.
+	* font-lock.el: ditto.
+	* fontl-hooks.el: ditto.
+	* gnuserv.el: ditto.
+	* info.el: ditto.
+	* shadow.el: ditto.
+	* view-less.el: ditto.
+
 1997-11-18  Colin Rafferty  <craffert@ml.com>
 
 	* packages.el (packages-find-packages): Modified to allow `nil'

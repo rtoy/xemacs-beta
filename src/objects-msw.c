@@ -904,7 +904,7 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
       logfont.lfWeight = FW_MEDIUM;
     else if (stricmp (weight,"italic") == 0)	/* Hack for early exit */
     {
-      logfont.lfWeight = FW_NORMAL;
+      logfont.lfItalic = TRUE;
       style=weight;
     }
     /* the rest */

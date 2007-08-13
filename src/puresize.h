@@ -142,14 +142,6 @@ Boston, MA 02111-1307, USA.  */
 # define TOOLTALK_PURESIZE_EXTRA 0
 #endif
 
-/* Extra amount of purespace needed for Energize builds. */
-
-#ifdef ENERGIZE
-# define ENERGIZE_PURESIZE_EXTRA 290000
-#else
-# define ENERGIZE_PURESIZE_EXTRA 0
-#endif
-
 /* Extra amount of purespace needed for Sunpro builds. */
 
 #ifdef SUNPRO
@@ -167,7 +159,6 @@ Boston, MA 02111-1307, USA.  */
 		      (SYSTEM_PURESIZE_EXTRA) +				\
 		      (MULE_PURESIZE_EXTRA) +				\
 		      (TOOLTALK_PURESIZE_EXTRA) +			\
-		      (ENERGIZE_PURESIZE_EXTRA) +			\
 		      (SUNPRO_PURESIZE_EXTRA))
 
 #endif /* !RAW_PURESIZE */

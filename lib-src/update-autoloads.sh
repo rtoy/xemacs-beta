@@ -116,6 +116,9 @@ for dir in lisp/*; do
 	fi
 done
 
+$EMACS -batch -vanilla -eval '(setq autoload-package-name "Standard")' \
+	-l autoload -f batch-update-directory lisp
+
 # set -x
 for dir in $dirs; do
 	$EMACS -batch -vanilla -l autoload -f batch-update-directory $dir

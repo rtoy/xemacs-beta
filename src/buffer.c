@@ -216,11 +216,6 @@ DEFINE_LRECORD_IMPLEMENTATION ("buffer", buffer,
                                mark_buffer, print_buffer, 0, 0, 0,
 			       struct buffer);
 
-#ifdef ENERGIZE
-extern void mark_energize_buffer_data (struct buffer *b,
-				       void (*markobj) (Lisp_Object));
-#endif
-
 Lisp_Object
 make_buffer (struct buffer *buf)
 {
@@ -242,10 +237,6 @@ mark_buffer (Lisp_Object obj, void (*markobj) (Lisp_Object))
 #define MARKED_SLOT(x) ((markobj) (buf->x));
 #include "bufslots.h"
 #undef MARKED_SLOT
-
-#ifdef ENERGIZE
-  mark_energize_buffer_data (XBUFFER (obj), markobj);
-#endif
 
   ((markobj) (buf->extent_info));
 
@@ -959,12 +950,6 @@ as BUFFER means use current buffer.
   /* This function can GC */
   struct buffer *buf = decode_buffer (buffer, 0);
 
-#ifdef ENERGIZE
-  Lisp_Object starting_flag =
-    (BUF_SAVE_MODIFF (buf) < BUF_MODIFF (buf)) ? Qt : Qnil;
-  Lisp_Object argument_flag = (NILP (flag)) ? Qnil : Qt;
-#endif
-
 #ifdef CLASH_DETECTION
   /* If buffer becoming modified, lock the file.
      If buffer becoming unmodified, unlock the file.  */
@@ -999,22 +984,6 @@ as BUFFER means use current buffer.
   BUF_MODIFF (buf)++;
   BUF_SAVE_MODIFF (buf) = NILP (flag) ? BUF_MODIFF (buf) : 0;
   MARK_MODELINE_CHANGED;
-
-#ifdef ENERGIZE
-  /* don't send any notification if we are "setting" the modification bit
-     to be the same as it already was */
-  if (!EQ (starting_flag, argument_flag))
-    {
-      extern Lisp_Object Qenergize_buffer_modified_hook;
-      int count = specpdl_depth ();
-      record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
-      set_buffer_internal (buf);
-      va_run_hook_with_args (Qenergize_buffer_modified_hook, 3,
-			     flag, make_int (BUF_BEG (buf)),
-			     make_int (BUF_Z (buf)));
-      unbind_to (count, Qnil);
-    }
-#endif /* ENERGIZE */
 
   return flag;
 }

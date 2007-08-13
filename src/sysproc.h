@@ -105,12 +105,6 @@ extern int cadillac_stop_logging ();
 extern int cadillac_start_logging ();
 #endif
 
-#ifdef ENERGIZE
-extern Lisp_Object energize_get_buffer_process (Lisp_Object);
-extern Lisp_Object Fenergize_user_input_buffer_mark (Lisp_Object);
-extern Lisp_Object Venergize_process;
-#endif
-
 extern int poll_fds_for_input (SELECT_TYPE mask);
 
 #ifdef MSDOS

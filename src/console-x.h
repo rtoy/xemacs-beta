@@ -257,18 +257,6 @@ struct x_frame
   Widget top_widgets[MAX_CONCURRENT_TOP_WIDGETS];
   int num_top_widgets;
 
-#ifdef ENERGIZE
-  /* The Energize property-sheets.  The current_* slots are the ones
-     which are actually on the frame.  The desired_ slots are the ones
-     which should be there.  Redisplay synchs these.  */
-  int *current_psheets;
-  int *desired_psheets;
-  int current_psheet_count;
-  int desired_psheet_count;
-  Lisp_Object current_psheet_buffer;
-  Lisp_Object desired_psheet_buffer;
-#endif /* ENERGIZE */
-
   /*************************** Miscellaneous **************************/
 
   /* The icon pixmaps; these are Lisp_Image_Instance objects, or Qnil. */
@@ -328,15 +316,6 @@ struct x_frame
 #define FRAME_X_TEXT_WIDGET(f)	    (FRAME_X_DATA (f)->edit_widget)
 #define FRAME_X_TOP_WIDGETS(f)	    (FRAME_X_DATA (f)->top_widgets)
 #define FRAME_X_NUM_TOP_WIDGETS(f)  (FRAME_X_DATA (f)->num_top_widgets)
-
-#ifdef ENERGIZE
-#define FRAME_X_CURRENT_PSHEETS(f)	 (FRAME_X_DATA (f)->current_psheets)
-#define FRAME_X_DESIRED_PSHEETS(f)	 (FRAME_X_DATA (f)->desired_psheets)
-#define FRAME_X_CURRENT_PSHEET_COUNT(f)  (FRAME_X_DATA (f)->current_psheet_count)
-#define FRAME_X_DESIRED_PSHEET_COUNT(f)  (FRAME_X_DATA (f)->desired_psheet_count)
-#define FRAME_X_CURRENT_PSHEET_BUFFER(f) (FRAME_X_DATA (f)->current_psheet_buffer)
-#define FRAME_X_DESIRED_PSHEET_BUFFER(f) (FRAME_X_DATA (f)->desired_psheet_buffer)
-#endif /* ENERGIZE */
 
 #define FRAME_X_ICON_PIXMAP(f)	    (FRAME_X_DATA (f)->icon_pixmap)
 #define FRAME_X_ICON_PIXMAP_MASK(f) (FRAME_X_DATA (f)->icon_pixmap_mask)

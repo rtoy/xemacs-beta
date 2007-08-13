@@ -55,8 +55,6 @@ Local Packages:
 * External-Widget::
 		Use XEmacs as a text widget inside of another program.
 * Forms::	A package for editing databases by filling in forms.
-* Ispell::	Interactive spelling corrector.
-* OO-Browser::	The Multi-Language Object-Oriented Browser.
 * PH::		Client interface to the CCSO white pages directory system
 * Standards::	The GNU coding standards.
 * Supercite::	Lets you cite parts of messages you're replying to.
@@ -65,6 +63,5 @@ Local Packages:
 		to handle all types of character-display terminals.
 * Texinfo::	With one source file, make either a printed manual (through
 		TeX) or an Info file (through texinfo).
-* Vhdl-mode::	A major mode for editing VHDL files.
 * Widget::	An Emacs Lisp widget library
 * Locals:

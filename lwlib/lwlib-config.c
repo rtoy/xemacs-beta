@@ -88,9 +88,3 @@ int lwlib_dialogs_athena;
 int lwlib_does_not_support_dialogs;
 # endif
 #endif
-
-#ifdef ENERGIZE
-int lwlib_uses_energize;
-#else
-int lwlib_does_not_use_energize;
-#endif

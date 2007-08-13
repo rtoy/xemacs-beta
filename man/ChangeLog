@@ -1,3 +1,7 @@
+1997-11-21  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile (srcs): vhdl-mode has been packaged.
+
 1997-11-15  SL Baur  <steve@altair.xemacs.org>
 
 	* lispref/windows.texi (scroll-conservatively): Fix typo.

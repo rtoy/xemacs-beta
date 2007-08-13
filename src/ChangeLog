@@ -1,3 +1,93 @@
+1997-11-27  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* src/keymap.c (munging_key_map_event_binding): Don't do
+	  the meta char hack when processing key-translation-map.
+	  Return nil if the map to be processed (function-key-map
+	  or key-translation-map) is not a keymap.
+
+1997-11-27  SL Baur  <steve@altair.xemacs.org>
+
+	* device-msw.c: Turn on italic flag if appropriate
+	* objects-msw.c: Set device-class to color.
+	From Jeff Sparkes <jsparkes@internetivity.com>
+
+	* glyphs-x.c: Should include <magick/magick.h> since that is what
+	is autodetected by configure.
+
+1997-11-26  SL Baur  <steve@altair.xemacs.org>
+
+	* events.c (Fmake_event): correct type bug.
+	From Colin Rafferty <craffert@ml.com>
+
+1997-11-26  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lisp-disunion.h (VALMASK): Use 1UL instead of 1L to
+	  shut up Sun's niggling compiler warnings about integer
+	  overflow.
+
+	* print.c (Fprin1_to_string): Don't change and
+	  restore the current buffer; no buffer change is needed
+	  to accomplish the task.
+
+1997-11-23  Jeff Miller <jmiller@smart.net>
+
+	* Makefile.in.in  removed energize support
+	* buffer.c        removed energize support
+	* config.h.in     removed energize support
+	* console-x.h     removed energize support
+	* doc.c           removed energize support
+	* emacs.c         removed energize support
+	* extents.c       removed energize support
+	* extents.h       removed energize support
+	* frame-x.c       removed energize support
+	* gui-x.c         removed energize support
+	* menubar-x.c     removed energize support
+	* process.c       removed energize support
+	* puresize.h      removed energize support
+	* symsinit.h      removed energize support
+	* sysproc.h       removed energize support
+	* syssignal.h     removed energize support
+	* undo.c          removed energize support
+	* window.c        removed energize support
+
+	* energize.c      removed
+	* energize.h      removed
+
+1997-11-23  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* faces.c (face_property_was_changed): Don't call
+	  update_faces_inheritance, it isn't needed.
+
+1997-11-22  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* redisplay-x.c (x_flash): Flash the root window
+	  area instead of the entire frame area.
+
+	* frame.h: Added echo_area_garbaged field to frame
+	  struct.
+
+	* frame.c (change_frame_size_1): Set the
+	  echo_area_garbaged flag in a frame that has been
+	  resized.
+
+	* redisplay.c (redisplay_frame): Clear echo_area_garbaged
+	  flag on frame after displaying the frame.
+
+	  (Fredisplay_echo_area): Clear echo_area_garbaged
+	  flag on frame after displaying in echo area.
+
+	* redisplay.c: Added hscroll_glyph_width_adjust field 
+	  to position_redisplay_data_type struct.
+
+	  (add_hscroll_rune): Compute the difference in width
+	  between the hscroll glyph and a canonical space; store
+	  it in data->hscroll_glyph_width_adjust.
+
+	  (create_text_block): In tab field computation, adjust
+	  left margin to account for the difference between the
+	  width of the hscroll glyph and the width of a canonical
+	  space.
+
 1997-11-19  Kyle Jones  <kyle_jones@wonderworks.com>
 
 	* Emacs.ad: Change uses of Gray75 to Gray80.

@@ -101,8 +101,6 @@ Additional features:
 --with-tooltalk (*)	Support the ToolTalk IPC protocol.
 --with-workshop		Support the Sun WorkShop (formerly Sparcworks)
 			development environment.
---with-energize		Support the Lucid Energize development environment.
-			This doesn't currently work.
 --with-socks		Compile with support for SOCKS (an Internet proxy).
 --with-term		Compile with support for TERM (a way to multiplex
 			serial lines and provide vaguely Internet-like

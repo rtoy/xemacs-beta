@@ -376,13 +376,8 @@ xm_update_toggle (widget_instance* instance, Widget widget, widget_value* val)
 {
   Arg al [2];
   XtRemoveAllCallbacks (widget, XmNvalueChangedCallback);
-#ifndef ENERGIZE
   XtAddCallback (widget, XmNvalueChangedCallback, xm_generic_callback,
 		 instance);
-#else
-  XtAddCallback (widget, XmNvalueChangedCallback,
-		 xm_internal_update_other_instances, instance);
-#endif
   XtSetArg (al [0], XmNset, val->selected);
   XtSetArg (al [1], XmNalignment, XmALIGNMENT_BEGINNING);
   XtSetValues (widget, al, 2);
@@ -1580,106 +1575,6 @@ make_horizontal_scrollbar (widget_instance *instance)
 
 /* Table of functions to create widgets */
 
-#ifdef ENERGIZE
-
-/* interface with the XDesigner generated functions */
-typedef Widget (*widget_maker) (Widget);
-extern Widget create_project_p_sheet (Widget parent);
-extern Widget create_debugger_p_sheet (Widget parent);
-extern Widget create_breaklist_p_sheet (Widget parent);
-extern Widget create_le_browser_p_sheet (Widget parent);
-extern Widget create_class_browser_p_sheet (Widget parent);
-extern Widget create_call_browser_p_sheet (Widget parent);
-extern Widget create_build_dialog (Widget parent);
-extern Widget create_editmode_dialog (Widget parent);
-extern Widget create_search_dialog (Widget parent);
-extern Widget create_project_display_dialog (Widget parent);
-
-static Widget
-make_one (widget_instance* instance, widget_maker fn)
-{
-  Widget result;
-  Arg 	al [64];
-  int 	ac = 0;
-
-  if (instance->pop_up_p)
-    {
-      XtSetArg (al [ac], XmNallowShellResize, TRUE); ac++;
-      result = XmCreateDialogShell (instance->parent, "dialog", NULL, 0);
-      XtAddCallback (result, XmNpopdownCallback, &xm_nosel_callback,
-		     (XtPointer) instance);
-      (*fn) (result);
-    }
-  else
-    {
-      result = (*fn) (instance->parent);
-      XtRealizeWidget (result);
-    }
-  return result;
-}
-
-static Widget
-make_project_p_sheet (widget_instance* instance)
-{
-  return make_one (instance, create_project_p_sheet);
-}
-
-static Widget
-make_debugger_p_sheet (widget_instance* instance)
-{
-  return make_one (instance, create_debugger_p_sheet);
-}
-
-static Widget
-make_breaklist_p_sheet (widget_instance* instance)
-{
-  return make_one (instance, create_breaklist_p_sheet);
-}
-
-static Widget
-make_le_browser_p_sheet (widget_instance* instance)
-{
-  return make_one (instance, create_le_browser_p_sheet);
-}
-
-static Widget
-make_class_browser_p_sheet (widget_instance* instance)
-{
-  return make_one (instance, create_class_browser_p_sheet);
-}
-
-static Widget
-make_call_browser_p_sheet (widget_instance* instance)
-{
-  return make_one (instance, create_call_browser_p_sheet);
-}
-
-static Widget
-make_build_dialog (widget_instance* instance)
-{
-  return make_one (instance, create_build_dialog);
-}
-
-static Widget
-make_editmode_dialog (widget_instance* instance)
-{
-  return make_one (instance, create_editmode_dialog);
-}
-
-static Widget
-make_search_dialog (widget_instance* instance)
-{
-  return make_one (instance, create_search_dialog);
-}
-
-static Widget
-make_project_display_dialog (widget_instance* instance)
-{
-  return make_one (instance, create_project_display_dialog);
-}
-
-#endif /* ENERGIZE */
-
 widget_creation_entry
 xm_creation_table [] = 
 {
@@ -1691,18 +1586,6 @@ xm_creation_table [] =
   {"vertical-scrollbar",	make_vertical_scrollbar},
   {"horizontal-scrollbar",	make_horizontal_scrollbar},
 #endif
-#ifdef ENERGIZE
-  {"project_p_sheet",		make_project_p_sheet},
-  {"debugger_p_sheet",		make_debugger_p_sheet},
-  {"breaklist_psheet",		make_breaklist_p_sheet},
-  {"leb_psheet",       		make_le_browser_p_sheet},
-  {"class_browser_psheet",	make_class_browser_p_sheet},
-  {"ctree_browser_psheet",	make_call_browser_p_sheet},
-  {"build",			make_build_dialog},
-  {"editmode",			make_editmode_dialog},
-  {"search",			make_search_dialog},
-  {"project_display",		make_project_display_dialog},
-#endif /* ENERGIZE */
   {NULL, NULL}
 };
 
@@ -1894,7 +1777,7 @@ xm_internal_update_other_instances (Widget widget, XtPointer closure,
 static void
 xm_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
 {
-#if !defined (ENERGIZE) && (defined (MENUBARS_MOTIF) || defined (DIALOGS_MOTIF))
+#if (defined (MENUBARS_MOTIF) || defined (DIALOGS_MOTIF))
   /* We want the selected status to change only when we decide it
      should change.  Yuck but correct. */
   if (XtClass (widget) == xmToggleButtonWidgetClass

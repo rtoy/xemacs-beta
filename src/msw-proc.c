@@ -396,6 +396,7 @@ mswindows_handle_request (MSG *msg)
     struct frame *f = request->thing1;
     Lisp_Object *props = request->thing2;
     Lisp_Object name, height, width, popup, top, left;
+    int pixel_width, pixel_height;
     RECT rect;
     DWORD style;
     HWND hwnd;
@@ -409,9 +410,11 @@ mswindows_handle_request (MSG *msg)
 
     style = (NILP(popup)) ? MSWINDOWS_FRAME_STYLE : MSWINDOWS_POPUP_STYLE;
 
+    /* The +1 is because there is no msw-glyph.c yet. */
+    char_to_pixel_size (f, 80+1, 24+1, &pixel_width, &pixel_height);
     rect.left = rect.top = 0;
-    rect.right = INTP(width) ? XINT(width) : 640;
-    rect.bottom = INTP(height) ? XINT(height) : 480;
+    rect.right = INTP(width) ? XINT(width) : pixel_width;
+    rect.bottom = INTP(height) ? XINT(height) : pixel_height;
 #ifdef HAVE_MENUBARS
     AdjustWindowRect(&rect, style, TRUE);
 #else

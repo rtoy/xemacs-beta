@@ -330,28 +330,34 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
 (defvar toolbar-news-frame nil
   "The frame in which news is displayed.")
 
-(defvar toolbar-news-frame-properties nil
-  "The properties of the frame in which news is displayed.")
+(defcustom toolbar-news-frame-properties nil
+  "*The properties of the frame in which news is displayed."
+  :type '(repeat (group :inline t
+			(symbol :tag "Property")
+			(sexp :tag "Value")))
+  :group 'toolbar)
 
 (defun toolbar-gnus ()
   "Run Gnus in a separate frame."
   (interactive)
-  (when (or (not toolbar-news-frame)
-	    (not (frame-live-p toolbar-news-frame)))
-    (setq toolbar-news-frame (make-frame toolbar-news-frame-properties))
-    (add-hook 'gnus-exit-gnus-hook
-	      (lambda ()
-		(when (frame-live-p toolbar-news-frame)
-		  (if (cdr (frame-list))
-		      (delete-frame toolbar-news-frame))
-                  (setq toolbar-news-frame nil))))
-    (select-frame toolbar-news-frame)
-    (raise-frame toolbar-news-frame)
-    (gnus))
-  (if (frame-iconified-p toolbar-news-frame)
-      (deiconify-frame toolbar-news-frame))
-  (select-frame toolbar-news-frame)
-  (raise-frame toolbar-news-frame))
+  (if (not toolbar-news-use-separate-frame)
+      (gnus)
+    (unless (frame-live-p toolbar-news-frame)
+      (setq toolbar-news-frame (make-frame toolbar-news-frame-properties))
+      (add-hook 'gnus-exit-gnus-hook
+		(lambda ()
+		  (when (frame-live-p toolbar-news-frame)
+		    (if (cdr (frame-list))
+			(delete-frame toolbar-news-frame))
+		    (setq toolbar-news-frame nil))))
+      (select-frame toolbar-news-frame)
+      (raise-frame toolbar-news-frame)
+      (gnus))
+    (when (framep toolbar-news-frame)
+      (when (frame-iconified-p toolbar-news-frame)
+	(deiconify-frame toolbar-news-frame))
+      (select-frame toolbar-news-frame)
+      (raise-frame toolbar-news-frame))))
 
 (defun toolbar-news ()
   "Run News (in a separate frame??)."

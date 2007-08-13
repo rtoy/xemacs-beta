@@ -1724,7 +1724,24 @@ face_property_was_changed (Lisp_Object face, Lisp_Object property,
 	MARK_DEVICE_FRAMES_FACES_CHANGED (XDEVICE (XCAR (devcons)));
     }
 
-  update_faces_inheritance (face, property);
+  /*
+   * This call to update_faces_inheritance isn't needed and makes
+   * creating and modifying faces _very_ slow.  The point of
+   * update_face_inheritances is to find all faces that inherit
+   * directly from this face property and set the specifier "dirty"
+   * flag on the corresponding specifier.  This forces recaching of
+   * cached specifier values in frame and window struct slots.  But
+   * currently no face properties are cached in frame and window
+   * struct slots, so calling this function does nothing useful!
+   *
+   * Further, since update_faces_inheritance maps over the whole
+   * face table every time it is called, it gets terribly slow when
+   * there are many faces.  Creating 500 faces on a 50Mhz 486 took
+   * 433 seconds when update_faces_inheritance was called.  With the
+   * call commented out, creating those same 500 faces took 0.72
+   * seconds.
+   */
+  /* update_faces_inheritance (face, property);*/
   XFACE (face)->dirty = 1;
 }
 

@@ -143,17 +143,6 @@ ldflags  = $(ld_switch_all)
 .c.i:
 	$(CC) -P $(cppflags) $<
 
-#ifdef ENERGIZE
-# ifdef EMACS_BTL
-BTL_dir=$(srcdir)/../btl
-BTL_objs = cadillac-btl.o cadillac-btl-process.o cadillac-btl-asm.o cadillac-btl-emacs.o
-# endif /* EMACS_BTL */
-# if defined(FREE_CHECKING) || defined(DEBUG_INPUT_BLOCKING) || defined(DEBUG_GCPRO)
-freecheck_objs = free-hook.o
-# endif /* FREE */
-energize_objs = energize.o $(freecheck_objs)
-#endif /* ENERGIZE */
-
 ## lastfile must follow all files whose initialized data areas should
 ## be dumped as pure by dump-emacs.
 
@@ -166,7 +155,7 @@ objs=\
  cmdloop.o cmds.o console.o console-stream.o\
  data.o device.o dired.o doc.o doprnt.o dynarr.o\
  editfns.o elhash.o emacs.o\
- $(energize_objs) eval.o events.o $(extra_objs)\
+ eval.o events.o $(extra_objs)\
  event-stream.o extents.o faces.o\
  fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o font-lock.o\
  frame.o general.o getloadavg.o glyphs.o\
@@ -603,11 +592,6 @@ cadillac-btl.o cadillac-btl-process.o cadillac-btl-emacs.o:
 cadillac-btl-asm.o:
 	$(CC) $(CFLAGS) -c $(BTL_compile)
 #endif /* EMACS_BTL */
-
-#ifdef ENERGIZE
-energize.o: ${srcdir}/energize.c
-	$(CC) -c $(cppflags) $(cflags) $(BTL_includes) ${srcdir}/energize.c
-#endif /* ENERGIZE */
 
 #ifdef HAVE_NATIVE_SOUND
 sunplay.o: ${srcdir}/sunplay.c
@@ -1382,7 +1366,6 @@ emacs.o: sysdep.h
 emacs.o: sysfile.h
 emacs.o: systime.h
 emacs.o: systty.h
-energize.o: config.h
 eval.o: backtrace.h
 eval.o: blocktype.h
 eval.o: buffer.h

@@ -624,7 +624,7 @@ WARNING: the event object returned may be a reused one; see the function
 	      CHECK_CONS (XCDR (value));
 	      if (XINT (Flength (value)) != 2)
 		signal_simple_error ("`dnd-data' should be a two-element list",
-				     XINT (Flength (value)));
+				     Flength (value));
 	      /* Check validity of DATA. */
 	      EXTERNAL_LIST_LOOP (dnd_tail, XCAR (XCDR (value)))
 		{

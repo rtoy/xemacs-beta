@@ -65,7 +65,7 @@ BYTECOMP="$REAL -batch -vanilla "
 echo "Recompiling in `pwd|sed 's|^/tmp_mnt||'`"
 echo "          with $REAL..."
 
-$EMACS -batch -vanilla -l `pwd`/lisp/prim/cleantree -f batch-remove-old-elc lisp
+$EMACS -batch -vanilla -l `pwd`/lisp/cleantree -f batch-remove-old-elc lisp
 
 prune_vc="( -name '.*' -o -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 
@@ -110,15 +110,17 @@ fi
 #$BYTECOMP -f batch-byte-recompile-directory lisp/bytecomp
 
 # Prepare for byte-compiling directories with directory-specific instructions
-make_special_commands=''
-make_special () {
-  dir="$1"; shift;
-  ignore_dirs="$ignore_dirs $dir"
-  make_special_commands="$make_special_commands \
-echo \"Compiling in lisp/$dir\"; \
-(cd \"lisp/$dir\" && ${MAKE:-make} EMACS=$REAL ${1+$*}); \
-echo \"lisp/$dir done.\";"
-}
+# Not necessary any more, but I want to keep the text current to cut & paste
+# into the package lisp maintenance tree.
+#make_special_commands=''
+#make_special () {
+#  dir="$1"; shift;
+#  ignore_dirs="$ignore_dirs $dir"
+#  make_special_commands="$make_special_commands \
+#echo \"Compiling in lisp/$dir\"; \
+#(cd \"lisp/$dir\" && ${MAKE:-make} EMACS=$REAL ${1+$*}); \
+#echo \"lisp/$dir done.\";"
+#}
 
 ## AUCTeX is a package now
 # if test "$mule_p" = nil ; then
@@ -129,7 +131,7 @@ echo \"lisp/$dir done.\";"
 #make_special cc-mode all
 # EFS is now packaged
 # make_special efs x20
-make_special eos -k		# not strictly necessary...
+#make_special eos -k		# not strictly necessary...
 ## make_special gnus  some	# Now this is a package.
 # hyperbole is now packaged
 # make_special hyperbole elc
@@ -190,4 +192,4 @@ comm -23 $els $elcs | \
  xargs -t -n$NUMTOCOMPILE $BYTECOMP -f batch-byte-compile
 echo "Compiling files without .elc... Done"
 
-eval "$make_special_commands"
+#eval "$make_special_commands"
