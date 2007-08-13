@@ -1,0 +1,212 @@
+# Generated automatically from Makefile.in.in by configure.
+/* Makefile for man subdirectory in XEmacs
+   Copyright (C) 1995 Board of Trustees, University of Illinois
+   Copyright (C) 1994, 1995 Sun Microsystems.
+
+This file is part of XEmacs.
+
+XEmacs is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs; see the file COPYING.  If not, write to the Free
+Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+
+/* Avoid trouble on systems where the `SHELL' variable might be
+   inherited from the environment. */
+SHELL = /bin/sh
+
+/* Some people use these in paths they define.  We don't want their paths
+   getting changed on them. */
+#undef sparc
+#undef sun
+#undef unix
+#undef i386
+#undef ppc
+#undef sgi
+
+/* ==================== Things `configure' will edit ==================== */
+
+CC=gcc
+CFLAGS=-bi486-linuxaout -O4 -m486 -malign-functions=2 -malign-jumps=2 -malign-loops=2
+YACC=bison -y
+version=19.14
+configuration=i486-unknown-linux2.0.0
+
+/* ==================== Where To Install Things ==================== */
+
+/* The default location for installation.  Everything is placed in
+   subdirectories of this directory.  The default values for many of
+   the variables below are expressed in terms of this one, so you may
+   not need to change them.  This is set with the --prefix option to
+   `../configure'. */
+prefix=/usr/local
+
+/* Like `prefix', but used for architecture-specific files.  This is
+   set with the --exec-prefix option to `../configure'. */
+exec_prefix=${prefix}
+
+/* Where to install Emacs and other binaries that people will want to
+   run directly (like etags).  This is set with the --bindir option
+   to `../configure'. */
+bindir=${exec_prefix}/bin
+
+/* Where to install and expect executable files to be run by Emacs
+   rather than directly by users, and other architecture-dependent
+   data.  ${archlibdir} is usually below this.  This is set with the
+   --libdir option to `../configure'. */
+libdir=${exec_prefix}/lib
+
+/* Where to find the source code.  This is set by the configure
+   script's `--srcdir' option.  However, the value of ${srcdir} in
+   this makefile is not identical to what was specified with --srcdir,
+   since the variable here has `/man' added at the end. */
+srcdir=/m/xemacs-19.14/man
+
+/* ============================= Targets ============================== */
+
+#define NO_SHORTNAMES
+#define THIS_IS_YMAKEFILE
+#define NOT_C_CODE
+#include "../src/config.h"
+
+/* With the traditional VPATH setting, it is not possible to
+   simultaneously compile in-place and in another directory.  The
+   mistaken definition is that *all* dependencies are searched for in
+   the VPATH directory, rather than just the dependencies that are not
+   themselves targets.  Thus, if there is an up-to-date .o file in the
+   in-place location, it will not get recompiled in the not-in-place
+   location.
+
+   The GNU Make `vpath' directive continues this tradition, but at
+   least lets you restrict the classes of files that it applies to.
+   This allows us to kludge around the problem. */
+#ifdef USE_GNU_MAKE
+vpath %.c /m/xemacs-19.14/man
+vpath %.h /m/xemacs-19.14/man
+/* now list files that should NOT be searched in the srcdir.
+   This includes any .c or .h that's built from something else
+   (e.g. a .in file). */
+/* none here */
+#else
+VPATH=/m/xemacs-19.14/man
+#endif
+
+#ifndef C_SWITCH_SYSTEM
+#define C_SWITCH_SYSTEM
+#endif
+
+#ifndef C_SWITCH_SITE
+#define C_SWITCH_SITE
+#endif
+
+#ifndef LD_SWITCH_SITE
+#define LD_SWITCH_SITE
+#endif
+
+LOADLIBES=LD_SWITCH_SITE  -lgcc -lc -lgcc /usr/lib/crtn.o 
+
+CPPFLAGS=
+
+ALL_CFLAGS = C_SWITCH_SITE C_SWITCH_SYSTEM -Demacs -DHAVE_CONFIG_H \
+   -DHAVE_STDARG_H -DHAVE_STRING_H -DHAVE_ALLOCA_H -Dxfree=free \
+   -I. -I../src -I${srcdir} -I${srcdir}/../src ${CFLAGS}
+CPP_CFLAGS = C_SWITCH_SITE C_SWITCH_SYSTEM -Demacs -DHAVE_CONFIG_H \
+   -DHAVE_STDARG_H -DHAVE_STRING_H -DHAVE_ALLOCA_H -Dxfree=free \
+   -I. -I../src -I${srcdir} -I${srcdir}/../src ${CPPFLAGS} ${CFLAGS}
+OBJS = makeinfo.o getopt.o getopt1.o alloca.o
+
+/* Subdirectories to make recursively. */
+SUBDIR = xemacs lispref new-users-guide internals
+
+/* The makefiles of the directories in $SUBDIR. */
+SUBDIR_MAKEFILES = xemacs/Makefile lispref/Makefile new-users-guide/Makefile internals/Makefile
+
+.c.o:
+	${CC} -c ${CPP_CFLAGS} $<
+
+../info/%.info : %.texi
+	-./makeinfo -o $@ $<
+
+srcs = ange-ftp cc-mode cl dired ediff external-widget forms gnus \
+       hyperbole ilisp info internals ispell mailcrypt message mh-e \
+       oo-browser pcl-cvs psgml rmail standards supercite term termcap \
+       texinfo viper vm w3 xemacs-faq
+
+info = $(srcs:%=../info/%.info)
+
+all : ${SUBDIR} $(info)
+
+.RECURSIVE: ${SUBDIR}
+
+xemacs: FRC.xemacs
+lispref: FRC.lispref
+new-users-guide: FRC.new-users-guide
+internals: FRC.internals
+
+${SUBDIR}: ${SUBDIR_MAKEFILES} makeinfo FRC
+	cd $@ && $(MAKE) all $(MFLAGS) \
+		CC='${CC}' CFLAGS='${CFLAGS}' MAKE='${MAKE}'
+
+makeinfo: ../src/config.h $(OBJS)
+	$(CC) -o makeinfo $(OBJS)
+
+texindex: texindex.o
+	$(CC) -o texindex texindex.o
+
+alloca.c :
+	[ -h alloca.c ] || ln -s ../src/alloca.c .
+
+getopt.h :
+	[ -h getopt.h ] || ln -s ../lib-src/getopt.h .
+
+getopt.c :
+	[ -h getopt.c ] || ln -s ../lib-src/getopt.c .
+
+getopt1.c :
+	[ -h getopt1.c ] || ln -s ../lib-src/getopt1.c .
+
+mostlyclean: clean
+	(cd xemacs &&	$(MAKE) $(MFLAGS) mostlyclean)
+	(cd lispref &&	$(MAKE) $(MFLAGS) mostlyclean)
+	(cd new-users-guide && $(MAKE) $(MFLAGS) mostlyclean)
+	(cd internals && $(MAKE) $(MFLAGS) mostlyclean)
+
+clean:
+	rm -f *.dvi
+	rm -f getopt1.c getopt.c getopt.h alloca.c makeinfo texindex
+	rm -f *.toc *.aux *.log *.cp *.fn *.ky *.pg *.vr *.o core
+
+/* These are needed because they are present in the other makefiles. */
+distclean: mostlyclean
+	(cd xemacs &&	$(MAKE) $(MFLAGS) distclean)
+	(cd lispref &&	$(MAKE) $(MFLAGS) distclean)
+	(cd new-users-guide && $(MAKE) $(MFLAGS) distclean)
+	(cd internals && $(MAKE) $(MFLAGS) distclean)
+	rm -f Makefile Makefile.in
+realclean: distclean
+	(cd xemacs &&	$(MAKE) $(MFLAGS) realclean)
+	(cd lispref &&	$(MAKE) $(MFLAGS) realclean)
+	(cd new-users-guide && $(MAKE) $(MFLAGS) realclean)
+	(cd internals && $(MAKE) $(MFLAGS) realclean)
+extraclean: distclean
+	(cd xemacs &&	$(MAKE) $(MFLAGS) extraclean)
+	(cd lispref &&	$(MAKE) $(MFLAGS) extraclean)
+	(cd new-users-guide && $(MAKE) $(MFLAGS) extraclean)
+	(cd internals && $(MAKE) $(MFLAGS) extraclean)
+	-rm -f *~ \#*
+
+makeinfo.o : getopt.h
+getopt.o : getopt.h
+getopt1.o : getopt.h
+texindex.o : getopt.h
+
+FRC FRC.xemacs FRC.lispref FRC.new-users-guide FRC.internals:
+

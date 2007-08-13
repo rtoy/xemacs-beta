@@ -1,0 +1,29 @@
+- What should be the default escape key for char mode?
+  Currently; I'm using ^C.
+
+- What other keybindings should we have for char mode?
+
+- What terminal type should we use?
+  The old shell.el defined TERM=emacs.
+  To avoid confusion, we should use something different.  (E.g. if TERM
+  is "emacs", bash turns off editing, which is not what we want.)
+  I'm currently using TERM=emacs-terminal.
+  This is somewhat verbose.
+  Other ideas:  TERM=eterm TERM=emacsterm TERM=emacst.
+
+- How should buffer-local variables be defined and documented?
+
+; Features in comint.el not supported:
+; comint-scroll-to-bottom-on-input
+; comint-process-echoes (would be always true)
+; comint-password-prompt-regexp (not useful)
+; comint-watch-for-password-prompt (not useful)
+; comint-eol-on-send
+; comint-run
+; comint-preinput-scroll-to-bottom
+; comint-postoutput-scroll-to-bottom (inlined into term-emulate-terminal).
+
+; Should set EMACS env var to emacs-version?
+; Should set TERM to vt100 if using terminfo?
+; Should we set COLUMNS if using terminfo?
+; New C-c kodes?

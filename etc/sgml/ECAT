@@ -1,0 +1,6 @@
+FILE html.dtd	[ HTML.Recommended "INCLUDE" ]	cdtd/html-r
+FILE html.dtd					cdtd/html
+FILE html-2.dtd					cdtd/html-2
+FILE html-3.dtd					cdtd/html-3
+FILE html-netscape.dtd				cdtd/html-netscape
+FILE html-3.2.dtd				cdtd/html-3.2

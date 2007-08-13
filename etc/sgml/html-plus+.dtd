@@ -1,0 +1,545 @@
+<!DOCTYPE HTMLPLUS [
+
+<!-- DTD for HTML+ It assumes the default <!SGML> declaration.
+
+ Markup minimisation should be avoided with the exception of </>
+ for the endtag. Browsers should be forgiving of markup errors.
+
+ Common Attributes:
+
+    id      The id attribute allows authors to name elements such as 
+            headers and paragraphs as potential destinations for links. 
+            Note links don't specify points, but rather extended objects.
+
+    index   Allows authors to specify how given headers etc should be 
+            indexed as primary or secondary keys, where "/" separates
+            primary from secondary keys ";" separates multiple entries
+-->
+
+<!-- ENTITY DECLARATIONS with <!ENTITY>
+
+  <!ENTITY % foo "X | Y | Z"> is a macro definition for parameters and
+  in subsequent statements, the string "%foo;" is expanded to "X | Y | Z"
+
+  Various classes of SGML text types:
+
+    #CDATA      text which doesn't include markup or entity references
+
+    #RCDATA     text with entity references but no markup
+
+    #PCDATA     text occurring in a context in which markup and entity
+                references may occur.
+-->
+
+<!ENTITY % URL "CDATA" -- a URL or URN designating a hypertext node -->
+<!ENTITY % text "#PCDATA|A|IMG|EM|EMBED|INPUT|SP|BR|ADDRESS|CHANGED">
+<!ENTITY % paras "P|PRE|FIG|HR">
+<!ENTITY % lists "UL|OL|DL">
+<!ENTITY % misc "TBL|FORM|PANEL|GROUP">
+<!ENTITY % heading "H1|H2|H3|H4|H5|H6"> 
+<!ENTITY % table "%text;|P|%heading;|%lists;">
+<!ENTITY % main "%heading;|%misc;|%lists;|%paras;|%text;">
+<!ENTITY % setup "(TITLE? & HTML? &ISINDEX? & NEXTID? & LINK* & BASE?)">
+
+<!--
+   <!ELEMENT tagname - - CONTENT> elements needing closing tags
+   <!ELEMENT tagname - O CONTENT> elements without closing tags
+   <!ELEMENT tagname - O EMPTY> elements without content or closing tags
+
+ The content definition is:
+    a)  an entity reference as defined above
+    b)  a tagname
+    c)  (brackets enclosing the above)
+
+ These may be combined with the operators:
+
+    A*   A occurs zero or more times
+    A+   A occurs one or more times
+   AÝB   implies either A or B
+    A?   A may occur zero or one times
+   A,B   implies first A then B
+-->
+
+<!ELEMENT HTMLPLUS O O ((HEAD, BODY) | ((%setup;), (%main;)*))>
+
+<!ELEMENT HEAD - - (%setup;)>
+
+<!ELEMENT BODY - - (%main;)*>
+
+<!-- Document title -->
+
+<!ELEMENT TITLE - - (#PCDATA | EM)+>
+<!ATTLIST TITLE
+        id      ID      #IMPLIED -- link destination --
+        index   CDATA   #IMPLIED -- entries for index compilation -->
+
+<!-- Document/Node role for cataloging documents held by servers -->
+
+<!ELEMENT HTML - O (EMPTY)>
+
+<!ATTLIST HTML role CDATA #IMPLIED -- home page, index, ... -->
+
+<!-- Floating panel which can be moved around relative to the normal text 
+ flow. Often rendered with a different background and possibly framed. The 
+ panel can be anchored to a named point in the document as specified by the 
+ AT attribute. The panel may be placed at that point or after, but not 
+ before.
+-->
+
+<!ELEMENT PANEL - - (TITLE?, (%main;)*)>
+
+<!ATTLIST PANEL
+        id      ID      #IMPLIED -- defines link destination --
+        at      IDREF   #IMPLIED -- anchor point --
+        index   CDATA   #IMPLIED -- entries for index compilation -->
+
+<!-- Document headers -->
+
+<!ELEMENT (%heading;) - - (#PCDATA | A | EM)+>
+
+<!ATTLIST (%heading;)
+        id      ID      #IMPLIED -- defines link destination --
+        index   CDATA   #IMPLIED -- entries for index compilation -->
+
+<!-- logical emphasis with optional style hints -->
+
+<!ELEMENT EM - - (%text;)*>
+
+<!ATTLIST EM
+    role    CDATA   #IMPLIED -- semantic category e.g. CITE --
+    b       (b)     #IMPLIED -- render in bold font --
+    i       (i)     #IMPLIED -- render in italic font --
+    u       (u)     #IMPLIED -- underline text --
+    tt      (tt)    #IMPLIED -- render in typewriter font --
+    tr      (tr)    #IMPLIED -- render in serif (Times Roman) font --
+    hv      (hv)    #IMPLIED -- render in sans serif (Helvetica) font --
+    sup     (sup)   #IMPLIED -- superscript --
+    sub     (sub)   #IMPLIED -- subscript --
+    index   CDATA   #IMPLIED -- entries for index compilation -->
+
+<!-- Paragraphs with different roles and optional style hints -->
+
+<!ELEMENT P - O (%text;)+>
+
+<!ATTLIST P
+    id      ID        #IMPLIED -- link destination --
+    role    CDATA     #IMPLIED -- semantic role --
+    align   CDATA     #IMPLIED -- left, center or right --
+    indent  (indent)  #IMPLIED -- indented margins --
+    index   CDATA     #IMPLIED -- entries for index compilation -->
+
+<!ELEMENT HR - O EMPTY -- horizontal rule -->
+
+<!ELEMENT BR - O EMPTY -- line break -->
+
+<!ELEMENT SP - O EMPTY -- unbreakable space -->
+
+<!-- Preformatted text with fixed pitch font, respecting original spacing 
+ and newlines. Authors can also request proportional fonts. Further control 
+ is possible with EM.
+-->
+
+<!ELEMENT ADDRESS - - (%text;|P)+>
+
+<!ELEMENT PRE - - (%text;)+>
+
+<!ATTLIST PRE
+    id      ID      #IMPLIED -- link destination --
+    style   CDATA   #IMPLIED -- various styles --
+    tr      (tr)    #IMPLIED -- serif (Times Roman) font --
+    hv      (hv)    #IMPLIED -- sans serif (Helvetica) font --
+    width   NUMBER  #IMPLIED -- e.g. 40, 80, 132 --
+    index   CDATA   #IMPLIED -- entries for index compilation -->
+
+<!-- Lists which can be nested -->
+
+<!ELEMENT OL - - (LI | UL | OL)+ -- ordered list -->
+
+<!ATTLIST OL
+    id      ID          #IMPLIED
+    compact (compact)   #IMPLIED
+    index   CDATA       #IMPLIED -- entries for index compilation -->
+
+<!ELEMENT UL - - (LI | UL | OL)+ -- unordered list -->
+
+<!ATTLIST UL
+    id      ID          #IMPLIED -- link destination --
+    compact (compact)   #IMPLIED -- reduced interitem spacing --
+    narrow  (narrow)    #IMPLIED -- narrow perhaps multi columns --
+    index   CDATA       #IMPLIED -- entries for index compilation -->
+
+<!-- List items for UL and OL lists -->
+
+<!ELEMENT LI - O (P|%text;)+>
+
+<!ATTLIST LI
+    id      ID      #IMPLIED
+    src     %URL;   #IMPLIED -- icon for use in place of bullet --
+    index   CDATA   #IMPLIED -- entries for index compilation -->
+
+<!-- Definition Lists (terms + definitions) -->
+
+<!ELEMENT DL - - (DT,DD)+ -- DT and DD *MUST* be paired -- >
+
+<!ATTLIST DL
+    id      ID          #IMPLIED
+    compact (compact)   #IMPLIED
+    index   CDATA       #IMPLIED -- entries for index compilation -->
+
+<!ELEMENT DT - O (%text;)+ -- term text -- >
+
+<!ELEMENT DD - O (P|QUOTE|UL|OL|%text;)+ -- definition text -- >
+
+<!ATTLIST (DT|DD)
+    id      ID      #IMPLIED
+    index   CDATA   #IMPLIED -- entries for index compilation -->
+
+<!-- Tables with titles and column headers, e.g.
+
+    <tbl border>
+        <tt> An Example of a Table
+        <th> <th s="2"> average <th> other <tr>
+        <th> <th> height <th> weight <th> category <tr>
+        <td> males <td> 1.9 <td> .003 <td> yyy <tr>
+        <td> females <td> 1.7 <td> .002 <td> xxx
+    </tbl>
+-->
+
+<!ELEMENT TBL - - (TT?, (TH|TD|TR|TB)*) -- mixed headers and data -->
+
+<!ATTLIST TBL
+    id      ID          #IMPLIED
+    compact (compact)   #IMPLIED -- if present use compact style --
+    border  (border)    #IMPLIED -- if present draw borders --
+    index   CDATA       #IMPLIED -- entries for index compilation -->
+
+<!ELEMENT TT - O (%text;)+ -- table title -->
+
+<!ATTLIST TT top (top) #IMPLIED -- place title above table -->
+
+<!ELEMENT TH - O (%table;)* -- a header cell -->
+
+<!ATTLIST TH
+    colspan NUMBER    1       -- columns spanned --
+    rowspan NUMBER    1       -- rows spanned --
+    align   CDATA   #IMPLIED  -- left, center or right -->
+
+<!ELEMENT TD - O (%table;)* -- a data cell -->
+
+<!ATTLIST TD
+    colspan NUMBER    1       -- columns spanned --
+    rowspan NUMBER    1       -- rows spanned --
+    align   CDATA   #IMPLIED  -- left, center or right -->
+
+<!ELEMENT TR - O EMPTY -- row *separator* not terminator -->
+
+<!ELEMENT TB - O EMPTY -- vertical break of 1/2 line spacing -->
+
+<!-- Forms composed from input fields and selection menus
+
+ These elements define fields which users can type into or select with mouse 
+ clicks. The browser should manage the input focus e.g. with the tab/shift 
+ tab keys and mouse clicks.
+
+ The enter/return key is then taken to mean the use has filled in the form 
+ and wants the apppropriate action taken:
+
+   -  send as query/update to WWW server
+   -  email/fax to designated person
+
+ The action is specified as a URL, e.g. "mailto:dsr@hplb.hpl.hp.com You can 
+ specify additional mail headers with the MH tag:
+
+    <MH>Subject: Please add me to tennis tournament</MH>
+
+ Each FORM should include one or more INPUT elements which can be layed out 
+ with normal and preformatted text, lists and tables.
+-->
+
+<!ELEMENT FORM - - (MH?,(%main;)*)>
+
+<!ATTLIST FORM
+        id      ID      #IMPLIED
+        action  %URL;   #IMPLIED
+        index   CDATA   #IMPLIED -- entries for index compilation -->
+
+<!ELEMENT MH - - CDATA -- one or more RFC 822 header fields -->
+
+<!ATTLIST MH hidden (hidden) #IMPLIED -- hide mail headers from view -->
+
+<!-- INPUT elements should be defined within a FORM element.
+
+ Users can alter the value of the INPUT element by typing or clicking with 
+ the mouse. Use radio buttons for selecting one attribute value from a set 
+ of alternatives. In this case there will be several INPUT elements with the 
+ same name. Attributes which can take multiple values at the same time 
+ should be defined with checkboxes: define each allowed value in a separate 
+ INPUT element but with the same attribute name. For checkboxes and radio 
+ buttons, the value doesn't change, instead the state of the button shown by 
+ the presence or absence of the checked attribute in each element.
+ The size attribute specifies the size of the input field as appropriate to 
+ each type. For text this gives the width in characters and height in lines 
+ (separated by an "x"). For numbers this gives the maximum precision.
+-->
+
+<!ELEMENT INPUT - O EMPTY>
+
+<!ATTLIST INPUT
+    name      CDATA     #IMPLIED -- attribute name (may not be unique) --
+    type      CDATA     #IMPLIED --TEXT,URL,INT,FLOAT,DATE,CHECKBOX,RADIO--
+    size      CDATA     #IMPLIED -- e.g."32x4" for multiline text --
+    value     CDATA     #IMPLIED -- attribute value (altered by user) --
+    checked  (checked)  #IMPLIED -- for check boxes and radio buttons --
+    disabled (disabled) #IMPLIED -- if grayed out --
+    error    (error)    #IMPLIED -- if in error -->
+
+<!-- Embedded Data
+
+ You can embed information in a foreign format into the HTML+ document. This 
+ is very convenient for mathematical equations and simple drawings. Images 
+ and complex drawings are better specified as linked documents using the FIG 
+ or IMG elements.
+
+ Arbitrary 8 bit data is allowed but any occurrences of the following chars 
+ must be escaped as shown:
+
+        "&"     by      "&amp;"
+        "<"     by      "&lt;"
+        ">"     by      "&gt;"
+
+ The browser can pipe such data thru filters to generate the corresponding 
+ pixmap The data format is specified as a MIME content type, e.g. "text/eqn"
+-->
+
+<!ELEMENT EMBED - - (RCDATA)>
+
+<!ATTLIST EMBED
+    id      ID      #IMPLIED
+    type    CDATA   #IMPLIED  -- mime content type --
+    index   CDATA   #IMPLIED -- entries for index compilation -->
+
+<!-- Figures
+
+ The image/drawing is specified by a URL or as embedded data for simple 
+ drawings. The element's text serves as the caption. Use the emphasis with 
+ style = "credits" to record photo credits etc.
+
+ FIGD allows dumb terminals etc to show a textual description in place
+ of the actual sound sequence, image, movie or graphic.
+-->
+
+<!ELEMENT FIG - - (EMBED?, FIGD?, (FIGA|FIGT)*, (%text;)*)>
+<!ATTLIST FIG
+    id      ID          #IMPLIED
+    align   CDATA       #IMPLIED -- position: left, right or center --
+    cap     CDATA       #IMPLIED -- caption at left, right, top, bottom --
+    noflow  (noflow)    #IMPLIED -- disables text flow --
+    ismap   (ismap)     #IMPLIED -- server can handle mouse clicks/drags --
+    src     %URL;       #IMPLIED -- link to image data --
+    index   CDATA       #IMPLIED -- entries for index compilation -->
+
+<!ELEMENT FIGD - - (%table;) -- figure description -->
+
+<!-- Figure anchors designate polygonal areas on the figure which can be 
+ clicked with the mouse. The default area is the whole of the figure. This 
+ mechanism interprets mouse clicks locally, and browsers can choose to 
+ highlight the designated area (or change the mouse sprite) when the mouse 
+ is moved over the area.
+
+ Note that polygons may be non-convex or even intersect themselves, thereby 
+ complicating the definition of what is enclosed by the polygon. Holes are 
+ excluded.
+-->
+
+<!ELEMENT FIGA - O EMPTY>
+
+<!ATTLIST FIGA
+        href    %URL;   #REQUIRED -- link to traverse when clicked --
+        area    NUMBERS #IMPLIED -- x1,y1,x2,y2,x3,y3,... -->
+
+<!-- FIGT Text on top of an figure background, or in a colored background 
+ box which sits arbitrarily on top of an figure background. The text can 
+ include headers, lists and tables etc. The width attribute allows you to 
+ limit the width of the text box. The height is then determined 
+ automatically by the browser.
+
+ FIGT can also be used to position a graphic on top of a picture using an 
+ IMG element within FIGT. In this case the chromakey attribute may allow 
+ parts of the underlying image to show through.
+ You can make the whole of the box into a hypertext link. This will act as 
+ if it is underneath any hypertext links specified by the overlay markup 
+ itself.
+-->
+
+<!ELEMENT FIGT - - (%main;)>
+<!ATTLIST FIGT
+    at      NUMBERS     #IMPLIED -- upper left origin for text --
+    width   NUMBER      #IMPLIED -- given as fraction of picture --
+    framed  (framed)    #IMPLIED -- framed with coloured background --
+    href    %URL;       #IMPLIED -- link to traverse when clicked -->
+
+<!-- inline icons/small graphics
+
+ The align attribute defines whether the top middle or bottom of the graphic 
+ and current text line should be aligned vertically
+
+ The SEETHRU attribute is intended as a chromakey to allow a given colour to 
+ be designated as "transparent". Pixels with this value should not be 
+ painted. The exact format of this attribute's value has yet to be defined.
+
+ Use the FIG tag for captioned figures with active areas etc.
+-->
+
+<!ELEMENT IMG - O EMPTY>
+
+<!ATTLIST IMG
+        src     %URL;   #REQUIRED -- where to get image data --
+        align   CDATA   #IMPLIED  -- top, middle or bottom --
+        seethru CDATA   #IMPLIED  -- for transparency --
+        ismap   (ismap) #IMPLIED  -- send mouse clicks/drags to server -->
+
+<!-- Hierarchical groups for books, chapters, sections etc. -->
+
+<!ELEMENT GROUP - - ((TITLE|LINK*), (%main;)*)>
+
+<!ATTLIST GROUP
+    id      ID      #IMPLIED
+    role    CDATA   #IMPLIED -- book, chapter, section etc. --
+    inset   (inset) #IMPLIED -- rendering hint: indent margins -->
+
+<!-- change bars defined by a matched pair of CHANGED elements:
+
+        <changed id=z34> changed text <changed idref=z34>
+
+ This tag can't act as a container, since changes don't respect
+ the nesting implied by paragraphs, headers, lists etc.
+-->
+
+<!ELEMENT CHANGED - O EMPTY>
+
+<!ATTLIST CHANGED -- one of id and idref is always required --
+    id      ID      #IMPLIED -- signals start of changes --
+    idref   IDREF   #IMPLIED -- signals end of changes -->
+
+<!-- Hypertext Links from points within document nodes -->
+
+<!ELEMENT A - - (#PCDATA | IMG | EM | EMBED)*>
+
+<!ATTLIST A
+    id      ID      #IMPLIED -- as target of link --
+    name    CDATA   #IMPLIED -- backwards compatibility --
+    href    %URL;   #IMPLIED -- destination node --
+    role    CDATA   #IMPLIED -- role of link, e.g. "partof" --
+    effect  CDATA   #IMPLIED -- replace/new/overlay --
+    print   CDATA   #IMPLIED -- reference/footnote/section --
+    title   CDATA   #IMPLIED -- when otherwise unavailable --
+    type    CDATA   #IMPLIED -- for presentation cues --
+    size    NAMES   #IMPLIED -- for progress cues -->
+
+<!-- Other kinds of relationships between documents -->
+
+<!ELEMENT LINK - O EMPTY>
+
+<!ATTLIST LINK
+    href    %URL;   #IMPLIED -- destination node --
+    role    CDATA   #IMPLIED -- role played, e.g. "toc" -->
+
+<!-- Original document URL for resolving relative URLs  -->
+
+<!ELEMENT BASE - O EMPTY>
+
+<!ATTLIST BASE HREF %URL; #IMPLIED>
+
+<!-- Signifies the document's URL accepts queries -->
+
+<!ELEMENT ISINDEX - O (EMPTY)>
+
+<!ATTLIST ISINDEX href %URL; #IMPLIED -- defaults to document's URL -->
+
+<!-- For use with autonumbering editors - don't reuse ids,
+ instead, allocate next one starting from this one -->
+
+<!ELEMENT NEXTID - O (EMPTY)>
+
+<!ATTLIST NEXTID N NAME #REQUIRED>
+
+<!-- Mnemonic character entities. -->
+
+<!ENTITY AElig "&#198;" -- capital AE diphthong (ligature) -->
+<!ENTITY Aacute "&#193;" -- capital A, acute accent -->
+<!ENTITY Acirc "&#194;" -- capital A, circumflex accent -->
+<!ENTITY Agrave "&#192;" -- capital A, grave accent -->
+<!ENTITY Aring "&#197;" -- capital A, ring -->
+<!ENTITY Atilde "&#195;" -- capital A, tilde -->
+<!ENTITY Auml "&#196;" -- capital A, dieresis or umlaut mark -->
+<!ENTITY Ccedil "&#199;" -- capital C, cedilla -->
+<!ENTITY ETH "&#208;" -- capital Eth, Icelandic -->
+<!ENTITY Eacute "&#201;" -- capital E, acute accent -->
+<!ENTITY Ecirc "&#202;" -- capital E, circumflex accent -->
+<!ENTITY Egrave "&#200;" -- capital E, grave accent -->
+<!ENTITY Euml "&#203;" -- capital E, dieresis or umlaut mark -->
+<!ENTITY Iacute "&#205;" -- capital I, acute accent -->
+<!ENTITY Icirc "&#206;" -- capital I, circumflex accent -->
+<!ENTITY Igrave "&#204;" -- capital I, grave accent -->
+<!ENTITY Iuml "&#207;" -- capital I, dieresis or umlaut mark -->
+<!ENTITY Ntilde "&#209;" -- capital N, tilde -->
+<!ENTITY Oacute "&#211;" -- capital O, acute accent -->
+<!ENTITY Ocirc "&#212;" -- capital O, circumflex accent -->
+<!ENTITY Ograve "&#210;" -- capital O, grave accent -->
+<!ENTITY Oslash "&#216;" -- capital O, slash -->
+<!ENTITY Otilde "&#213;" -- capital O, tilde -->
+<!ENTITY Ouml "&#214;" -- capital O, dieresis or umlaut mark -->
+<!ENTITY THORN "&#222;" -- capital THORN, Icelandic -->
+<!ENTITY Uacute "&#218;" -- capital U, acute accent -->
+<!ENTITY Ucirc "&#219;" -- capital U, circumflex accent -->
+<!ENTITY Ugrave "&#217;" -- capital U, grave accent -->
+<!ENTITY Uuml "&#220;" -- capital U, dieresis or umlaut mark -->
+<!ENTITY Yacute "&#221;" -- capital Y, acute accent -->
+<!ENTITY aacute "&#225;" -- small a, acute accent -->
+<!ENTITY acirc "&#226;" -- small a, circumflex accent -->
+<!ENTITY aelig "&#230;" -- small ae diphthong (ligature) -->
+<!ENTITY agrave "&#224;" -- small a, grave accent -->
+<!ENTITY amp "&amp;" -- ampersand -->
+<!ENTITY aring "&#229;" -- small a, ring -->
+<!ENTITY atilde "&#227;" -- small a, tilde -->
+<!ENTITY auml "&#228;" -- small a, dieresis or umlaut mark -->
+<!ENTITY ccedil "&#231;" -- small c, cedilla -->
+<!ENTITY eacute "&#233;" -- small e, acute accent -->
+<!ENTITY ecirc "&#234;" -- small e, circumflex accent -->
+<!ENTITY egrave "&#232;" -- small e, grave accent -->
+<!ENTITY eth "&#240;" -- small eth, Icelandic -->
+<!ENTITY euml "&#235;" -- small e, dieresis or umlaut mark -->
+<!ENTITY gt "&#62;" -- greater than -->
+<!ENTITY iacute "&#237;" -- small i, acute accent -->
+<!ENTITY icirc "&#238;" -- small i, circumflex accent -->
+<!ENTITY igrave "&#236;" -- small i, grave accent -->
+<!ENTITY iuml "&#239;" -- small i, dieresis or umlaut mark -->
+<!ENTITY lt "&lt;" -- less than -->
+<!ENTITY ntilde "&#241;" -- small n, tilde -->
+<!ENTITY oacute "&#243;" -- small o, acute accent -->
+<!ENTITY ocirc "&#244;" -- small o, circumflex accent -->
+<!ENTITY ograve "&#242;" -- small o, grave accent -->
+<!ENTITY oslash "&#248;" -- small o, slash -->
+<!ENTITY otilde "&#245;" -- small o, tilde -->
+<!ENTITY ouml "&#246;" -- small o, dieresis or umlaut mark -->
+<!ENTITY szlig "&#223;" -- small sharp s, German (sz ligature) -->
+<!ENTITY thorn "&#254;" -- small thorn, Icelandic -->
+<!ENTITY uacute "&#250;" -- small u, acute accent -->
+<!ENTITY ucirc "&#251;" -- small u, circumflex accent -->
+<!ENTITY ugrave "&#249;" -- small u, grave accent -->
+<!ENTITY uuml "&#252;" -- small u, dieresis or umlaut mark -->
+<!ENTITY yacute "&#253;" -- small y, acute accent -->
+<!ENTITY yuml "&#255;" -- small y, dieresis or umlaut mark -->
+
+<!-- dash entities -->
+
+<!ENTITY endash "--"  -- En dash -->
+<!ENTITY emdash "---" -- Em dash -->
+
+<!-- The END -->
+
+]>
+
+
+
+

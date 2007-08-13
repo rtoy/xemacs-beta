@@ -1,0 +1,26 @@
+From @yonge.cs.toronto.edu:qobi@cs.toronto.edu Tue Nov  1 18:50:53 1994
+From: Jeffrey Mark Siskind <qobi@cs.toronto.edu>
+To: ebg@hip.atr.co.jp
+Cc: ilisp@lehman.com
+In-Reply-To: <9411012332.AA23484@hoshi> (message from Ed Gamble on Tue, 1 Nov 1994 18:32:03 -0500)
+Subject: Re: Scheme dialect init-files
+Reply-To: Qobi@cs.toronto.edu
+Date: 	Tue, 1 Nov 1994 18:47:37 -0500
+
+To get Scheme->C to work under ILisp I had to create my own executable with
+the following C foreign function:
+
+#include <stdio.h>
+void nobuff(){setbuf(stdout, (char*)0);}
+
+(define-c-external (nobuff) void "nobuff")
+(nobuff)
+
+I had to do a similar thing to get SCM to work in an Epsilon process buffer
+under DOS.
+
+This may or may not have to do with your problem.
+
+    Jeff (home page http://www.cdf.toronto.edu/DCS/Personal/Siskind.html)
+
+

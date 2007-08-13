@@ -1,0 +1,101 @@
+Hello,
+
+I've written a new version (4.16) of my html package for the XEmacs 
+(lemacs) and the GNU Emacs 19. It is based on the html-mode from Marc
+Andreessen. 
+
+With this package it is very easy to write html pages for the World Wide 
+Web (WWW). Eg: In most cases the user gets help to construct a specific 
+link by examples or by a completition list with possible input strings.
+
+Read the NEWS file to see what's new in this release..
+
+The name of the package is
+	hm--html-menus-4.16.tar.gz
+
+You should find it on the following ftp server:
+	info.cern.ch in /pub/www/contrib
+	sunsite.unc.edu in /pub/Linux/apps/editors/emacs/
+	ftp.rrzn.uni-hannover.de in /pub/unix/editors/lemacs/contrib
+	ftp.tnt.uni-hannover.de in /pub/editors/xemacs/contrib
+
+It make take some time, before the package is copied by the ftp admins
+from the incoming directories to the above listed directories.
+
+There is also a html documentation about the package. You can find it on:
+http://www.tnt.uni-hannover.de:80/data/info/www/tnt/soft/info/www/html-editors/hm--html-menus/overview.html
+
+At the moment it describes the version (4.15), but it will be updated in the 
+near future.
+
+
+The package provides functions to insert the following stuff in html-pages:
+1. Anchors:
+	html link, info link, gopher link, file link;
+	ftp link, news link, mail link, wais (direct) link,
+	wais (gateway) link;
+	proggate link, local proggate link, general link;
+	link target;
+2. Frame elements:
+	full html frame with html, head, body, title, header and signature
+	elements or only the single elements;
+	link element;
+	html 'created'- and 'changed'- comments;  
+	the current date in the title; 
+3. Structure elements:
+	menu or list item, menu, unordered list, ordered list, directory list;
+	description list, description title, description entry;
+	new paragraph, new line, horizontal rule, table, table title, 
+	table header, table row, table entry;
+4. for formatting paragraphs:
+	without links, with links, blockquote, listing, abstract;
+5. formatting:
+	bold, italic, underline, typewriter, strikethru, super and subscript,
+	emphasized, strong, 
+	definition, keyboard, command, argument, option, variable, instance,
+	code, sample,  
+	quote, acronym, abbrevation, citation, literature, publication, isbn,
+	person, author, editor, credits, copyright,
+	footnote, margin,
+	html comment;
+6. include:
+	top aligned image, middle aligned image, bottom aligned image;
+7. forms:
+	form;
+	text, password, isindex, integer, float, date, url, scribble fields; 
+	checkbox, radio, reset, image, audio and submit buttons;
+	option menus, scrolled lists and option entries;
+	textarea;
+8. entities:
+	most of the special ISO- characters, less, greater and ampersand;
+
+If it makes sense, the functions worked also on selected regions.
+I've used the same menu items and the same keystrokes. Therefore, you
+don't need to learn different menus or keys for similar functions.
+
+You can choose the popup menus between an expert menu, an novice menu and
+the menu from Marc Andreessen interactively.
+
+With the pulldown menu, you can do the following things:
+- select the pulldown menu
+- remove numeric names
+- quotify hrefs
+- reload the config files
+- load html templates from a template directory (two templates are included
+  in the package); templates written in a special template language are
+  expanded automatically;
+- preview html documents with the netscape
+- preview html documents with the xmosaic
+- preview html documents with the w3 package for the lemacs and emacs
+
+You can configure the html mode with a special configuration file for
+your site and with another file specific for a user.
+
+The html specification is under development and therefore this
+package is also under development. So, if you have any ideas to
+extend the package, feel free to email them to muenkel@tnt.uni-hannover.de.
+
+
+Heiko
+
+

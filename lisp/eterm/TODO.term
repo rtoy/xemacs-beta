@@ -1,0 +1,48 @@
+* Define a sentinel function, so that the display doesn't get
+screwed up the default sentinel when the process finishes.
+
+* Performance improvements?  (It is zippy enough on reasonably
+fast machines, though.)
+
+* Should more terminal escape sequences be supported?
+Yes:  At least the ANSI color escapes (as in colour_xterm).
+
+* The caching variables (e.g. term-current-row) assume that there
+is be no random editing of the buffer that we don't know about.  In that
+respect, they are somewhat fragile.
+
+* Document the internals better, and make it easier to write
+emulators for other kinds of terminals.
+
+* The scrolling behavior is still not quite right.
+
+* Stallman has expressed dislike for the xterm style of switching to the
+alternate buffer on the "ti" capability.  An alternative would be to
+defer this until the screen is cleared.  That assumes there are programs
+that emit ti without following that by a command to erase the window.
+I'm not sure there are any such programs (that we care about) ...
+
+*** CHANGES THAT REQUIRE NEW EMACS PRIMITIVES ***
+
+* If ioctl is made accessible to elisp, it may be possible
+to support some kind of automatic switching between char mode
+and line mode.  It also becomes possible to privide term
+primitives to turn off echoing in the inferior.
+
+*** CHANGES TO DO IN OTHER PROGRAMS ***
+
+* In gdb-mode, a keysequence like \C-c\C-s works by sending the command
+"step" in gdb-mode.  Emacs goes to a fair bit of trouble to delete the
+prompt preceding the command, as well as the echo from the inferior.
+In addition to being hairy, it is somewhat fragile (because of possible
+type-ahead, and because the inferior might be mixing other output with
+the echo).
+More robust would be for emacs to send the command "noecho step" (or
+"step #noecho") where the "noecho" is an instruction to gdb (readline)
+to erase the prompt for this command, and suppress its echo.
+
+* Bash (and perhaps other shells) should be modified so that before
+the prompt (and PROMPT_COMMAND) are printed, they emit:
+	printf("\032/%s\n", PWD);
+This will tell the shell window which directory it should assume,
+and obviates the need for all that hairy directory tracking.

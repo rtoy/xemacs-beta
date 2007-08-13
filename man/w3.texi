@@ -1,0 +1,3146 @@
+\input texinfo
+@setfilename ../info/w3.info
+@settitle Emacs-W3 User's Manual
+@iftex
+@finalout
+@end iftex
+@c @setchapternewpage odd
+@c @smallbook
+@tex
+\overfullrule=0pt
+%\global\baselineskip 30pt      % for printing in double space
+@end tex
+@synindex cp fn
+@synindex vr fn
+@ifinfo
+This file documents the Emacs-W3 World Wide Web browser.
+
+Copyright (C) 1993, 1994, 1995 William M. Perry
+Copyright (C) 1996 Free Software Foundation
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through Tex and print the
+results, provided the printed document carries copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+@end ifinfo
+@c
+@titlepage
+@sp 6
+@center @titlefont{Emacs-W3}
+@center @titlefont{User's Manual}
+@sp 4
+@center Third Edition, Emacs-W3 Version 2.3.0
+@sp 1
+@center February 1996
+@sp 5
+@center William M. Perry
+@center @i{wmperry@@cs.indiana.edu}
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1993, 1994, 1995 William M. Perry@*
+Copyright @copyright{} 1996 Free Software Foundation
+
+Permission is granted to make and distribute verbatim copies of@*
+this manual provided the copyright notice and this permission notice@*
+are preserved on all copies.
+
+@end titlepage
+@page
+@ifinfo
+@node Top, Introduction,, (DIR)
+This manual documents the Emacs-W3 World Wide Web browser, a Lisp program
+which runs as a subsystem under Emacs.  The manual is divided into the
+following chapters.
+
+@menu
+* Introduction::                What exactly is Emacs-W3?
+* Setting Up::                  How to set up and install Emacs-W3.
+* Basic Usage::                 Basic movement and usage of Emacs-W3.
+* Compatibility::               Explanation of compatibility with
+                                other web browsers.
+* Controlling Formatting::	How to control HTML formatting
+* MIME Support::                Support for MIME
+* Security::                    Various forms of security
+* Non-Unix Operating Systems::	Special considerations necessary to get
+                                up and running correctly under non-unix
+                                OS's.
+* Advanced Features::           Some of the more arcane features.
+* More Help::                   How to get more help---mailing lists,
+                                newsgroups, etc.
+* Future Directions::           Plans for future revisions
+* Programming Interface::       How to use Emacs-W3 from other emacs
+                                programs.
+
+Appendices:
+* Reporting Bugs::              How to report a bug in Emacs-W3
+* Installing SSL::              Turning on SSL support
+* Using PGP/PEM::               Turning on PGP/PEM encryption support
+* Mailcap Files::               An explanation of Mailcap files
+
+Indices:
+* General Index::               General Index
+* Key Index::                   Menus of command keys and their references
+@end menu
+@end ifinfo
+
+@node Introduction, Setting Up, Top, Top
+@chapter Introduction
+@cindex World Wide Web
+Emacs-W3 is an Emacs subsystem that allows the user to browse the wonderful
+World Wide Web (WWW).
+
+The World Wide Web was begun at the CERN physics institute in
+Switzerland in 1991.  The project was initiated by Tim Berners-Lee
+(@i{timbl@@w3.org}) for distributing data between different research
+groups effectively.
+
+
+The Web has since grown into the most advanced information system
+currently on the internet.  It is now a global hypertext system with
+servers and @dfn{browsers} (programs written to interpret the hypertext
+language and display it correctly, and allow the user to follow links)
+exist for all major platforms (VMS, Windows, DOS, Unix, VM, NeXTstep,
+Amiga, and Macintosh).
+
+The basic concepts used in the Web are @b{hypertext} and @b{hypermedia}.
+Hypertext is the same as regular text, with one exception---it can
+contain links (cross-references) to other textual documents.  Hypermedia
+is slightly different---it can contain links to other forms of media
+(movies, sounds, interactive programs, etc.).
+
+WWW also allows searches of indices that are located anywhere on the
+network; in this respect, it mirrors certain capabilities found in both
+WAIS and Gopher.
+@iftex
+@section Client Side View of WWW
+@end iftex
+@ifinfo
+@center ----------------
+@center CLIENT SIDE VIEW
+@center ----------------
+@end ifinfo
+The WWW consists of documents and links.  Indexes are special documents
+which, rather than being read, may be searched.  The result of such a
+search is another @i{virtual} document containing links to the documents
+found.  A simple protocol, Hypertext Transfer Protocol or @i{HTTP}, is
+used to allow a browser program to request a keyword search by a remote
+information server.
+
+
+The web contains documents in many formats.  Those documents which are
+hypertext, (real or virtual) contain links to other documents, or places
+within documents.  All documents, whether real, virtual or indexes, look
+similar to the reader and are contained within the same addressing
+scheme.
+@iftex
+@section Information Provider View of WWW
+@end iftex
+@ifinfo
+@center -------------------------
+@center INFORMATION PROVIDER VIEW
+@center -------------------------
+@end ifinfo
+WWW browsers can access many existing data systems via existing
+protocols (FTP, NNTP) or via HTTP and a gateway.  In this way, the
+critical mass of data is quickly exceeded, and the increasing use of the
+system by readers and information suppliers encourage each other.
+
+Providing information is as simple as running a WWW server and pointing
+it at an existing directory structure.  The server automatically
+generates a hypertext view of the files to guide the user around.
+
+
+To personalize it, a few @b{SGML} hypertext files can be written to give
+an even more friendly view.  Also, any file available by anonymous FTP,
+or any internet newsgroup can be immediately linked into the web.  The
+small start-up effort is designed to allow open contributions.  At the
+other end of the scale, large information providers may provide an HTTP
+server with full text or keyword indexing.  This may allow access to a
+large existing database without changing the way that database is
+managed.  Such gateways have already been made into Oracle(tm), WAIS,
+and Digital's VMS/Help systems, to name but a few.
+
+
+The WWW model gets over the frustrating incompatibilities of data format
+between suppliers and reader by allowing negotiation of format between a
+smart browser and a smart server.  This provides a basis for extension
+into multimedia, and allow those who share application standards to make
+full use of them across the web.
+
+
+@ifinfo
+Here is some more specific information about what Emacs-W3 does and does
+not understand:
+@menu
+* Markup Languages Supported::	The different markup languages that
+				Emacs-W3 understands natively.
+* Supported Protocols::		The different network protocols that
+				Emacs-W3 speaks to.
+@end menu
+@end ifinfo
+@node Markup Languages Supported, Supported Protocols, Introduction, Introduction
+@chapter Supported Markup Languages
+Several different markup languages, and various extensions to those
+languages, are supported by Emacs-W3.
+@ifinfo
+@center ----------
+@center HTML 2.0
+@center ----------
+@end ifinfo
+@iftex
+@section HTML 2.0
+@end iftex
+The Hypertext Markup Language, or HTML, is composed of a set of elements
+that define a document and guide its display.  An HTML element may
+include a name, some attributes and some text or hypertext, and appears
+in an HTML document as <tag_name>text</tag_name>, <tag_name
+attribute_name=argument>text</tag_name>, or just <tag_name>.
+
+
+For example: @samp{<title>My Useful Document</title>}, and @samp{<pre
+width=60> A lot of text here.  </pre>}. 
+
+An HTML document is composed of a single element: <html>...</html>, that
+is, in turn, composed of head and body elements: <head>...</head>, and
+<body>...</body>.  To allow older HTML documents to remain readable,
+<html>, <head>, and <body> are actually optional within HTML
+documents.
+
+All the tags and attributes of HTML are fully supported in Emacs-W3.
+
+The full HTML 2.0 specification is available at any RFC
+archive@footnote{ftp://ds.internic.net/}.  It is RFC 1866.
+
+
+@ifinfo
+@center ----------
+@center HTML 3.0
+@center ----------
+@end ifinfo
+@iftex
+@section HTML 3.0
+@end iftex
+@cindex HTML 3.0
+The HTML 3.0 language is an extension of HTML, with a large degree of
+backward compatibility with HTML 2.0.  The idea of having one huge HTML
+3.0 document has been dropped in favor of several smaller supplementatry
+RFCs.  This will allow the standard to be upgraded much more quickly
+than trying to agree on all the features at once.
+
+As each new chunk of HTML 3.0 is proposed and agreed upon, Emacs-W3 will
+support it.
+
+:: WORK :: List currently supported chunks (embed, etc) ::
+@itemize @bullet
+@item Embed
+Embedding of arbitrary objects into an HTML document.  With the <embed>
+tag, any type of document can be inserted.  The most entertaining use of
+this is with embedding MPEG movies into an emacs buffer.  This requires
+Lucid Emacs 19.10, or XEmacs 19.11, as well as a slightly patched
+version of mpeg_play 2.0@footnote{The patch is available from
+ftp://ftp.cs.indiana.edu/pub/elisp/w3/mpeg_patch}.
+
+@end itemize
+@ifinfo
+@center ----------
+@center Netscape-HTML
+@center ----------
+@end ifinfo
+@iftex
+@section Netscape-HTML
+@end iftex
+I hate to say it, but I broke down and actually included some of the
+Netscape extensions into Emacs-W3.
+
+@table @b
+@item <font>...</font>
+Changes the font size.  Valid values range from 0-7. The default
+font size is 3. The value given can optionally have a '+' or '-'
+character in front of it to specify that it is relative to the document
+basefont.  Stylesheets are recommended instead, as they allow much
+greater control.@xref{Style Sheets}
+@item <center>...</center>
+This ugly, ill-thought-out alternative to the HTML 3.0 align attribute on
+headers and paragraphs was included for compatibility, and as an example
+of how @b{not} to do things.
+@item <isindex>
+The isindex tag can now take a prompt attribute, to get rid of the
+default 'This is a searchable index' label.
+@item <hr width=xx align=xx>
+The width and alignment of a horizontal rule can now be controlled.  The
+WIDTH attribute specifies how wide the rule should be, as a percentage
+of the window width.
+
+
+The ALIGN attribute specifies where the horizontal rule is placed.
+Valid values are left, right, center, and indent.
+@item <body background=@var{URL} bgcolor=@var{RGB} TEXT=@var{RGB} LINK=@var{RGB} ALINK=@var{RGB} VLINK=@var{RGB}>
+Various colors can now be set on a document wide basis.  This is done
+with various attributes on the BODY tag.  Stylesheets are really a
+better way to do this, and are recommended.  This is just for
+compatibility.  @xref{Style Sheets}
+@b{NOTE:} Netscape requires that all colors be specified in RGB values -
+this is not very intuitive for the avergage author, so Emacs-W3 allows
+you to use logical system colors (ie: @samp{"PaleGoldenrod"} instead of
+@samp{"#eee8aa"}).
+@table @b
+@item BACKGROUND=@var{url}
+Specifies a graphic to tile in the background of the document.  This
+only works in XEmacs 19.12 or later.
+@item BGCOLOR=@var{color}
+Specifies the background of the document, as a color instead of a
+graphic.
+@item TEXT=@var{color}
+Specifies the color of text on the page.
+@item LINK=@var{color}
+Specifies the color of hypertext links on the page.
+@item VLINK=@var{color}
+Specifies the color of hypertext links that have been visited already.
+@item ALINK=@var{color}
+Specifies the color of active hypertext links (links that have been
+clicked on, but not yet fully retrieved).
+@end table
+@end table
+@ifinfo
+@center ----------
+@center SGML Features
+@center ----------
+@end ifinfo
+@iftex
+@section SGML Features
+@end iftex
+@cindex SGML Features
+@cindex Entity Definitions
+@cindex Marked Sections
+:: WORK :: Document marked sections, SGML features
+@ifinfo
+@center ----------
+@center Extras
+@center ----------
+@end ifinfo
+@iftex
+@section Extra Markup
+@end iftex
+@cindex Easter Eggs
+@cindex Fluff
+@cindex Pomp & Circumstance
+There are several different markup elements that are not officially part
+of HTML or HTML 3.0 that Emacs-W3 supports.  These are either items that
+were dropped from HTML 3.0 after I had implemented them, or experimental
+parts of HTML that should not be counted as "official" or long
+lived.
+@itemize @bullet
+@item
+More <HR> improvements.  Text can be added into a horizontal rule by
+using the LABEL and TEXTALIGN attributes.
+
+@example
+<hr label="testing" textalign="right">
+yields
+----------------------------------------------------------testing-
+
+<hr label="testing" textalign="center">
+yields
+-----------------------------testing------------------------------
+
+<hr label="testing" textalign="left">
+yields
+-Testing----------------------------------------------------------
+@end example
+@item
+FLAME support.  For truly interesting dynamic documents.  This is
+replaced with a random quote from Mr. Angry (see @kbd{M-x flame} for a
+sample).
+@item
+The top ten tags that did not make it into netscape.  These tags were
+posted to the newsgroup comp.infosystems.www.misc by Laura Lemay
+(@i{lemay@@netcom.com}).  Much thanks to her for the humor.
+@table @b
+@item <wired>...</wired>
+Renders the enclosed text in a suitably ugly font/color combination.  If
+no default has been set up by the user, this is the default font, with
+red text on a yellow background.
+@item <roach>...</roach>
+When selected, the enclosed text runs and hides under the nearest
+window.  OR, giggles a lot and demands nachos, depending on the
+definition of "roach." (the formal definition, of course, to be
+determined by the Official Honorary Internet Standards Committee For
+Moving Really Slowly.)
+@item <pinhead>
+Inserts "zippyisms" into the enclosed text.  Perfect for those professional
+documents.  This is sure to be a favorite of mine!
+@item <secret>...</secret>
+Must use secret spy decoder glasses (available direct from Netscape for
+a reasonable fee) in order to read the enclosed text.  Can also be read
+by holding the computer in front of a full moon during the autumn
+solstice.
+
+In Emacs-W3, this displays the text using rot13 encoding.
+@item <hype>
+Causes Marc Andreesen to magically appear and grant an interview (wanted
+or not).  Please use this tag sparingly.
+@item <peek>....</peek>
+@item <poke>...</poke>
+Need more control over screen layout in HTML?  Well, here ya go.
+
+Actually, <peek> could almost be considered useful.  The VARIABLE
+attribute can be used to insert the value of an emacs variable into the
+current document.  Things like 'Welcome to my page, <peek
+variable=user-mail-address>' can be useful in freaking people
+out.
+@item <yogsothoth>
+@cindex Gates Bill
+@cindex Yogsothoth
+Summons the elder gods to suck away your immortal soul.  Or Bill Gates,
+if the elder gods are busy.  Unpredictable (but amusing) results occur
+when the <YOGSOTHOTH> and <HYPE> tags are used in close proximity.
+
+@item <blink>...</blink>
+Causes the enclosed text to .... ooops that one made it in.
+@end table
+@end itemize
+@node Supported Protocols, , Markup Languages Supported, Introduction
+@chapter Supported Protocols
+@cindex Network Protocols
+@cindex Protocols Supported
+@cindex Supported Protocols
+Emacs-W3 supports the following protocols
+@table @b
+@item Usenet News
+Can either display an entire newsgroup or specific articles by
+Message-ID: header.  This supports a unix-style .newsrc file, so the
+user does not see articles they have read using another newsreader, but
+due to how news URLs work, the .newsrc file cannot be updated
+reliably.
+
+To be more in line with the other URL schemes, the hostname and port of
+an NNTP server can be specified.  URLs of the form
+news://hostname:port/messageID work, but will not work in most other
+browsers.
+
+
+@item HTTP
+Supports both the HTTP/0.9 and HTTP/1.0 protocols.  Fully MIME-compliant
+with regards to HTTP/1.0.
+@item Gopher
+Support for all gopher types, including CSO queries.
+@item Gopher+
+Support for Gopher+ retrievals. Support for converting ASK blocks into
+HTML 3.0 FORMS and submitting them back to the server.
+@item FTP
+FTP is handled by either ange-ftp or efs.
+@item Local files
+Local files are handled, and MIME content-types are derived from the
+file extensions.
+@item Telnet
+Telnet is handled by running the Emacs Lisp function @code{telnet}, or
+spawning an xterm running telnet.
+@item TN3270
+TN3270 is handled by running a tn3270 program in an Emacs buffer, or
+spawning an xterm running tn3270.
+@item Mailto
+Causes a mail message to be started to a specific address.
+@item mailserver
+A more powerful version of mailto, which allows the author to specify
+the subject and body text of the mail message.  This type of link is
+never fully executed without user confirmation, because it is possible
+to insert insulting or threatening (and possibly illegal) data into the
+message.  The mail message is displayed, and the user must type 'yes' to
+send it.
+@item X-exec
+A URL can cause a local executable to be run, and its output interpreted
+as if it had come from an HTTP server.  This is very useful, but is
+still an experimental protocol, hence the X- prefix.
+@item SSL
+SSL requires a set of patches to the Emacs C code and SSLRef 2.0, or an
+external program to run in a subprocess (similar to the @file{tcp.el}
+package that comes with GNUS.  @xref{Installing SSL}
+@item Secure HTTP
+Work is in progress to add support for the Secure HTTP specification
+from Enterprise Information Technologies.  The specification for SHTTP
+can be found on EIT's web server at
+http://www.commerce.net/information/standards/drafts/shttp.txt.
+@end table
+
+@node Setting Up, Retrieving Emacs-W3, Introduction, Top
+@comment  node-name,  next,  previous,  up
+@chapter Setting Up
+@cindex Setting Up Emacs-W3
+@cindex Retrieving Emacs-W3
+This section of the manual deals with getting, compiling, and
+configuring @i{Emacs-W3}.
+@ifinfo
+@menu
+* Retrieving Emacs-W3::         Retrieving Emacs-W3 via anonymous ftp
+* Compiling Emacs-W3::          Compiling Emacs-W3 and its associated files
+* Basic Setup::                 Basic setup that everyone needs to do
+* Firewalls::                   How to set Emacs-W3 up to use a particular
+                                firewall setup.
+* Proxy Gateways::              Using a proxy server
+@end menu
+@end ifinfo
+@node Retrieving Emacs-W3, Compiling Emacs-W3, Setting Up, Setting Up
+@comment  node-name,  next,  previous,  up
+@section Retrieving Emacs-W3
+
+:: WORK :: Document that Emacs-W3 now requires the URL package as well
+
+@node Compiling Emacs-W3, Basic Setup, Retrieving Emacs-W3, Setting Up
+@comment  node-name,  next,  previous,  up
+@section Compiling Emacs-W3
+To install Emacs-W3, go into the @file{w3} subdirectory and edit the
+@file{Makefile}.  These variables might need to be changed:
+@table @code
+@item EMACS
+This variable controls what version of Emacs is used to compile the
+programs.  It should be the full path to the Emacs executable on the
+system.  The default is to use GNU Emacs (@file{emacs}).
+@item LISPDIR
+This variable controls where the lisp code is copied to when it is
+installed (with @code{make install}).  This is usually the users
+personal lisp code directory.  The value is run through
+@dfn{expand-file-name} and then added to the load-path.  Default is
+@file{~/lisp}.
+@item DOTEMACS
+This variable points to the Emacs customization file, default is
+@file{~/.emacs}.
+@item INFODIR
+This variable points to the local info directory.  This can be any valid
+directory, as long as it is in @code{Info-default-directory-list} so
+that info-mode can find it.  Default is @file{/usr/local/info/}.
+
+@item MAKEINFO
+This variables controls how the info files are built.  Possible values
+are @code{makeinfo} or @code{emacs -batch -q -f
+batch-texinfo-format}.  Default is @code{makeinfo}.
+@end table
+Once the @file{Makefile} has been modified, several different targets
+can be built.
+@table @code
+@item make w3
+This compiles all the .el files into the much faster .elc files.
+@item make install
+Compiles all the .el files and copies .el and .elc files into the
+directory specified by @code{LISPDIR}.
+@item make emacs
+Modifies the file specified by @code{DOTEMACS}.  A statement modifying
+the load-path variable and several autoload statements are added to the
+end of the file.
+@item make all
+Compiles and installs the .el files, and also modify/create the
+@code{DOTEMACS} file.
+@item make w3.info
+Creates the Emacs-readable info files.  The info files are created in
+the directory specified by @code{INFODIR}.  The makefile variable
+@code{MAKEINFO} determines how the info file is built.
+@item make w3.dvi
+Creates the printable documentation, using tex and texindex to properly
+generate the indices.  A @file{w3.dvi} file is left in the current
+directory.
+@end table
+@node Basic Setup, Firewalls, Compiling Emacs-W3, Setting Up
+@comment  node-name,  next,  previous,  up
+@section Basic Setup
+There are a few variables that almost all people need to change.
+
+@table @code
+@item w3-default-homepage
+@vindex w3-default-homepage
+The url to open at startup.  This defaults to the environment variable
+WWW_HOME if it is not set it in the users @file{.emacs} file. If
+WWW_HOME is undefined, then it defaults to the hypertext documentation
+for Emacs-W3.
+
+@item w3-delay-image-loads
+@vindex w3-delay-image-loads
+Controls the loading of inlined images.  If non-@code{nil}, images are
+not loaded.  If the correct image converters are not installed or the
+network connection is very slow, it is best to set this to @code{t}.
+Defaults to @code{nil}.
+@item url-global-history-file
+@vindex url-global-history-file
+The global history file used by both Mosaic/X and Emacs-W3.  This file
+contains a list of all the URLs that have been visited.  This file is parsed
+at startup and used to provide URL completion.  Emacs-W3 can read and
+write Mosaic/X or Netscape 1.x style history files, or use its own
+internal format (faster).  The file type is determined automatically, or
+prompted for if the file does not exist.
+@item w3-hotlist-file
+@vindex w3-hotlist-file
+Hotlist filename.  This should be the name of a file that is stored in
+NCSA's Mosaic/X or Netscape's format.  It is used to keep a listing of
+commonly accessed URLs.
+@item w3-personal-annotation-directory
+@vindex w3-personal-annotation-directory
+The directory where Emacs-W3 looks for personal annotations.  This is a
+directory that should hold the personal annotations stored in a
+Mosaic/X-compatible format.
+@item url-pgp/pem-entity
+@findex user-real-login-name
+@findex system-name
+The name by which the user is known to PGP and/or PEM entities.  If this
+is not set when Emacs-W3 is loaded, it defaults to
+@code{user-mail-address} if it is set, otherwise @code{(user-real-login-name)}@@@code{(system-name)}.
+@item url-personal-mail-address
+@vindex url-personal-mail-address
+@vindex url-pgp/pem-entity
+User's full email address.  This is what is sent to HTTP/1.0 servers as
+the FROM header.  If this is not set when Emacs-W3 is loaded, then it
+defaults to the value of @code{url-pgp/pem-entity}.
+
+@item w3-right-border
+@vindex w3-right-border
+@findex window-width
+Amount of space to leave on right margin of WWW buffers.  This amount is
+subtracted from the width of the window for each new WWW buffer and used
+as the new @code{fill-column}.
+
+@item w3-track-mouse
+@vindex w3-track-mouse
+Controls whether to track the mouse and message the url under the mouse.
+If this is non-@code{nil}, then a description of the hypertext area
+under the mouse is shown in the minibuffer.  This shows what type of
+link (inlined image, form entry area, delayed image, delayed MPEG, or
+hypertext reference) is under the cursor, and the destination.
+@item w3-echo-link
+@vindex w3-echo-link
+Controls how a URL is shown when a link is reached with @key{f},
+@key{b}, or the mouse moves over it.  Possible values are:
+@table @b
+@item url
+Displays the URL (ie: @samp{http://www.cs.indiana.edu/}).
+@item text
+Displays the text of the link (ie: @samp{A link to Indiana University}).
+@item nil
+Show nothing.
+@end table
+@item w3-use-forms-index
+@vindex w3-use-forms-index
+@cindex ISINDEX handling
+@cindex Forms based searching
+@cindex Searching with forms
+Non-@code{nil} means translate <ISINDEX> tags into a hypertext form.  A
+single text entry box is shown where the ISINDEX tag appears.
+@item url-use-hypertext-gopher
+@vindex url-use-hypertext-gopher
+@cindex Gopher+
+Controls how gopher documents are retrieved.  If non-@code{nil}, the
+gopher pages are converted into HTML and parsed just like any other
+page.  If @code{nil}, the requests are passed off to the
+@file{gopher.el} package by Scott Snyder.  Using the @file{gopher.el}
+package loses the gopher+ support, and inlined searching.
+@item url-xterm-command
+@vindex url-xterm-command
+Command used to start a windowed shell, similar to an xterm.  This
+string is passed through @code{format}, and should expect four strings:
+the title of the window, the program name to execute, and the server and
+port number.  The default is for xterm, which is very UNIX and
+XWindows-centric.
+@end table
+@node Firewalls, Proxy Gateways, Basic Setup, Setting Up
+@comment  node-name,  next,  previous,  up
+@section Firewalls
+@cindex Gateways
+There are several different reasons why the gateway support might be
+required.
+@enumerate
+@cindex Firewalls
+@item
+Stuck behind a firewall.  This is usually the case at large corporations
+with paranoid system-administrators.
+
+@cindex TERM
+@item
+Using TERM @footnote{TERM is a user-level protocol for emulating IP over
+a serial line.  More information is available at
+ftp://sunsite.unc.edu/pub/Linux/apps/comm/term} for slip-like access to
+the internet.
+
+
+NOTE: Emacs 19.22 has patches to enable native TERM networking.  To
+enable it, #define TERM in the appropriate s/*.h file for the operating
+system, then change the SYSTEM_LIBS define to include the @file{termnet}
+library that comes with the latest versions of TERM.
+ 
+@item
+@cindex Faulty hostname resolvers
+@cindex Broken SUN libc
+@cindex Can't resolve hostnames
+Emacs cannot resolve hostnames.  This happens quite often on Sun
+workstations and some ULTRIX machines.  Some C libraries do not include
+the hostname resolver routines in their static libraries.  If Emacs was
+linked statically, this means it won't be able to get to any machines
+off the local network.  This is characterized by being able to reach
+someplace with a raw ip number, but not its hostname
+(http://129.79.254.191/ works, but http://www.cs.indiana.edu/ doesn't).
+
+
+If for some reason it is not feasible to recompile Emacs with the
+@file{-lresolv} library or dynamic linking, it is just like being behind
+a firewall.  Another alternative is to set the variable
+@code{url-broken-resolution} - this will use the support in ange-ftp or
+EFS to use @file{nslookup} in a subprocess to do all hostname resolving.
+See the variables @code{efs-nslookup-program},
+@code{efs-nslookup-on-connect}, and @code{efs-nslookup-threshold} if are
+using EFS, or @code{ange-ftp-nslookup-program} if using Ange-FTP.
+
+@cindex Connections hanging with XEmacs & solaris
+@cindex Solaris networking problems
+@cindex XEmacs & Solaris network problems
+@item
+Running XEmacs 19.x and Solaris 2.x (SunOS 5.x).  For some reason,
+network processes under Solaris and XEmacs never get a status of
+@code{exit} or @code{closed}.  This causes retrieval of HTTP and gopher
+pages to hang indefinitely, with Emacs chewing up large amounts of CPU
+time.
+
+@end enumerate
+
+@vindex url-gateway-local-host-regexp
+Emacs-W3 has support for using the gateway mechanism for certain
+domains, and directly connecting to others.  To use this, change the
+value of @code{url-gateway-local-host-regexp}.  This should be a regular
+expression @footnote{Please see the full Emacs distribution for a
+description of regular expressions} that matches local hosts that do not
+require the use of a gateway.  If @code{nil}, then all connections are
+made through the gateway.
+
+
+@vindex url-gateway-method
+Emacs-W3 supports several methods of getting around gateways.  The variable
+@code{url-gateway-method} controls which of these methods is used.  This
+variable can have several values (use these as symbol names, not
+strings):
+@table @dfn
+@item program
+Run a program in a subprocess to connect to remote hosts (examples are
+@i{itelnet}@footnote{Itelnet is a standard name for a telnet executable
+that is capable of escaping the firewall.  Check with system
+administrators to see if anything similar is available}, an
+@i{expect}@footnote{Expect is a scripting language that allows control
+of interactive programs (like telnet) very easily.  It is available from
+gatekeeper.dec.com:/pub/GNU/expect-3.24.0.tar.gz} script, etc.).
+
+@item host
+Log into another local computer that has access to the internet, and run
+a telnet-like program from there.
+@item tcp
+Masanobu UMEDA (@i{umerin@@mse.kyutech.ac.jp}) has written a very nice
+replacement for the standard networking in Emacs.  This does basically
+the same thing that a method of @code{program} does, but is slightly
+more transparent to the user.
+@item native
+This means that Emacs-W3 should use the builtin networking code of Emacs.
+This should be used only if there is no firewall, or the Emacs source
+has already been hacked to get around the firewall.
+@end table
+Two of these need a bit more explanation than that:
+@vindex url-gateway-telnet-ready-regexp
+@vindex url-gateway-telnet-program
+When running a program in a subprocess to emulate a network connection,
+a few extra variables need to be set.  The variable
+@code{url-gateway-telnet-program} should point to an executable that
+accepts a hostname and port # as its arguments, and passes standard
+input to the remote host.  This can be either the full path to the
+executable or just the basename.  The variable
+@code{url-gateway-telnet-ready-regexp} controls how long Emacs-W3 should
+wait after spawning the subprocess to start sending to its standard
+input.  This gets around a bug where telnet would miss the beginning of
+requests becausse it did not buffer its input before opening a
+connection.  This should be a regular expression to watch for that
+signifies the end of the setup of @code{url-gateway-telnet-program}.
+The default should work fine for telnet.
+
+
+@cindex Host-based gateways
+@cindex Hair-pulling gateway-headaches
+@vindex url-gateway-host
+When using the @code{host}-based gatway method, things get a bit more
+complicated.  This is basically my attempt to do some of the basic stuff
+of @i{expect} within elisp.  First off, set the variable
+@code{url-gateway-host} to be the name of the gateway machine.
+
+
+@vindex url-gateway-connect-program
+The variable @code{url-gateway-connect-program} controls how the host is
+reached.  The easiest way is to have a program that does not require a
+username and password to login.  The most common of these is the
+@dfn{rsh} command.
+
+
+@vindex url-gateway-program-interactive
+@vindex url-gateway-handholding-password-regexp
+@vindex url-gateway-handholding-login-regexp
+@vindex url-gateway-host-username
+@vindex url-gateway-host-password
+If @i{rsh} is not available, then things get very ugly.  First, set the
+variable @code{url-gateway-program-interactive} to non-@code{nil}.  Then
+set the variables @code{url-gateway-host-username} and
+@code{url-gateway-host-password} to be the username and password
+necessary to log into the gateway machine.  The regular expressions in
+the variables @code{url-gateway-handholding-login-regexp} and
+@code{url-gateway-handholding-password-regexp} should match the login
+and password prompts on the gateway system respectively.  For example:
+
+
+@example
+(setq url-gateway-connect-program "telnet"
+      url-gateway-host-program "telnet"
+      url-gateway-program-interactive t
+      url-gateway-host-username "wmperry"
+      url-gateway-host-password "yeahrightkeepdreaming"
+      url-gateway-host "moose.cs.indiana.edu"
+      url-gateway-host-program-ready-regexp "Escape character is .*"
+      url-gateway-handholding-login-regexp "ogin:"
+      url-gateway-handholding-password-regexp "ord:")
+@end example
+
+@vindex url-gateway-host-prompt-pattern
+This should take care of logging in to the remote system.  The variable
+@code{url-gateway-host-prompt-pattern} should contain a regular
+expression that matches the shell prompt on the remote machine.  This
+should appear @b{no where} in the login banner/setup, or things could
+get very confused.
+
+
+@vindex url-gateway-host-program-ready-regexp
+@vindex url-gateway-host-program
+The variable @code{url-gateway-host-program-ready-regexp} should contain
+a regular expression that matches the end of the setup of
+@code{url-gateway-host-program} when it tries to make a connection to an
+off-firewall machine.  (Basically the same as
+@code{url-gateway-telnet-ready-regexp}.
+
+
+Emacs-W3 should now be able to get outside the local network.  If none
+of this makes sense, its probably my fault.  Please check with the
+network administrators to see if they have a program that does most of
+this already, since somebody somewhere at the company has probably been
+through something similar to this before, and would be much more
+helpful/knowledgeable about the local setup than I would be.  But feel
+free to mail me as a last resort.
+
+
+@node Proxy Gateways, Basic Usage, Firewalls, Setting Up
+@comment  node-name,  next,  previous,  up
+@section Proxy Gateways
+In late January 1993, Kevin Altis and Lou Montulli proposed and implemented a
+new proxy service.  This service requires the use of environment
+variables to specify a gateway server/port # to send protocol requests
+to.  Each protocol (HTTP, WAIS, gopher, FTP, etc.@:) can have a
+different gateway server.  The environment variables are
+@var{PROTOCOL}_proxy, where @var{PROTOCOL} is one of gopher, file, HTTP,
+FTP, or WAIS.
+
+:: WORK ::
+
+@node Basic Usage, , Proxy Gateways, Top
+@comment  node-name,  next,  previous,  up
+@chapter Basic Usage
+Emacs-W3 is similar to the Info package all Emacs users hold near and dear to
+their hearts (@xref{Top,,Info,info, The Info Manual}, for a description
+of Info).  Basically, @kbd{space} and @kbd{backspace} control scrolling,
+and @kbd{return} or @kbd{mouse2} follows a hypertext link.  The @kbd{f}
+and @kbd{b} keys maneuver around the various links on the page.
+
+@b{NOTE:} To enter data into a form entry area, select it using
+@kbd{return} or the middle mouse button, just like a hypertext link.
+
+
+On non-graphic terminals (VT100, DOS, etc.), hypertext links are
+surrounded by '[[' and ']]' by default.  On a graphics terminal, the
+links are in bold print.  @xref{Controlling Formatting} for information
+on how to change this, or for help on getting the highlighting to work
+on graphics terminals.
+
+There are approximately 50 keys bound to special Emacs-W3 functions.
+The basic rule of thumb regarding keybindings in Emacs-W3 is that a
+lowercase key takes an action on the @b{current document}, and an
+uppercase key takes an action on the document pointed to by the
+hypertext link @b{under the cursor}.
+
+There are several areas that the keybindings fall into: movement,
+information, action, and miscellaneous.
+
+@ifinfo
+@menu
+* Movement::		Moving around in a Emacs-W3 buffer
+* Information::		Getting information about the Emacs-W3 document being
+			viewed, and/or links within that document.
+* Action::		Taking actions in a Emacs-W3 buffer (following links,
+			printing, etc.)
+* Miscellaneous::	Miscellaneous keybindings
+@end menu
+@end ifinfo
+@node Movement, Information, Basic Usage, Basic Usage
+@section Movement
+:: WORK :: Document the 'h' and 'a' keymaps
+@table @kbd
+@findex scroll-up
+@kindex SPC
+@item SPC
+Scroll downward in the buffer.  With prefix arg, scroll down that many
+screenfuls. 
+@kindex DEL
+@findex scroll-down
+@item DEL
+Scroll upward in the buffer.  With prefix arg, scroll up that many
+screenfuls. 
+@kindex <
+@findex w3-start-of-document
+@item <
+Goes to the start of document
+@kindex >
+@findex w3-end-of-document
+@item >
+Goes to the end of document
+@kindex b
+@kindex Shift-TAB
+@findex w3-back-link
+@item Shift-TAB, b
+Attempts to move backward one link area in the current document.
+Signals an error if no previous links are found.
+@kindex hl
+@findex w3-show-hotlist
+@item hl
+Displays a complete listing of the items in the hotlist.
+@kindex hu
+@findex w3-use-hotlist
+@item hu
+Go to a link in the hotlist.
+@kindex m
+@findex w3-complete-link
+@item m
+Choose a link from the current buffer and follow it.  A completing-read
+is done on all the links, so @kbd{space} and @kbd{TAB} can be used for
+completion.
+@kindex f
+@kindex TAB
+@kindex n
+@findex w3-forward-link
+@item TAB, f, n
+Attempts to move forward one link area in the current document.  Signals
+an error if no more links are found.
+@end table
+@node Information, Action, Movement, Basic Usage
+@section Information
+These functions relate information about one or more links on the
+current document.
+@table @kbd
+@kindex v
+@findex url-view-url
+@item v
+This shows the URL of the current document in the minibuffer.
+@kindex V
+@findex w3-view-this-url
+@item V
+This shows the URL of the hypertext link under point in the minibuffer.
+If there is not a hypertext link under point, then it shows the type of
+form entry area under point.  If there is no form entry area under
+point, then it shows the inlined image's URL that is under point, if
+any.
+@kindex i
+@findex w3-document-information
+@item i
+Shows miscellaneous information about the currently displayed document.
+This includes the URL, the last modified date, MIME headers, the HTTP
+response code, and any relationships to other documents.  Any security
+information is also displayed.
+@kindex I
+@findex w3-document-information-this-url
+@item I
+Shows information about the URL at point.
+@kindex s
+@findex w3-source-document
+@item s
+This shows the HTML source of the current document in a separate buffer.
+The buffer's name is based on the document's URL.
+@kindex S
+@findex w3-source-document-at-point
+@item S
+Shows the HTML source of the hypertext link under point in a separate
+buffer.  The buffer's name is based on the document's URL.
+@kindex k
+@findex w3-save-url
+@item k
+This stores the current document's URL in the kill ring, and also in the
+current window-system's clipboard, if possible.
+@kindex K
+@findex w3-save-this-url
+@item K
+Stores the URL of the document under point in the kill ring, and also in
+the current window-system's clipboard, if possible.
+@end table
+@node Action, Miscellaneous, Information, Basic Usage
+@section Action
+First, here are the keys and functions that bring up a new hypertext
+page, usually creating a new buffer.
+@table @kbd
+@kindex return
+@findex w3-follow-link
+@item return 
+Pressing return when over a hyperlink attempts to follow the link
+under the cursor.  With a prefix argument (@kbd{C-u}), this forces the
+file to be saved to disk instead of being passed off to other viewers
+or being parsed as HTML.
+
+Pressing return when over a form input field will prompt in the
+minibuffer for the data to insert into the input field.  Type checking
+is done, and the data is only entered into the form when data of the
+correct type is entered (ie: cannot enter 44 for 'date' field, etc).
+
+@kindex Middle Mouse Button
+@findex w3-follow-mouse
+@item Middle Mouse Button
+Attempt to follow a hypertext link under the mouse cursor.  Clicking on
+a form input field will prompt in the minibuffer for the data to insert
+into the input field.  Type checking is done, and the data is only
+entered into the form when data of the correct type is entered (ie:
+cannot enter 44 for 'date' field, etc).
+
+@kindex Control Middle Mouse Button
+@kindex Meta return
+@findex w3-follow-inlined-image
+@item Control Middle Mouse Button, Meta return
+Tries to retrieve the inlined image that is under point.  It ignores any
+form entry areas or hyperlinks, and blindly follows any inlined image.
+Useful for seeing images that are meant to be used as hyperlinks when
+not on a terminal capable of displaying graphics.
+
+@kindex p
+@findex w3-print-this-url
+@item p
+Prints out the current buffer in a variety of formats, including
+PostScript, HTML source, or formatted text.
+@kindex P
+@findex w3-print-url-under-point
+@item P
+Prints out the URL under point in a variety of formats, including
+PostScript, HTML source, or formatted text.
+@kindex m
+@findex w3-complete-link
+@item m
+Selects a destination from a list of all the hyperlinks in the current
+buffer.  Use @kbd{space} and @kbd{tab} to complete on the links.
+
+@kindex r
+@kindex g
+@findex w3-reload-document
+@item r, g
+Reloads the current document.  The position within the buffer remains
+the same (unless the document has changed since it was last retrieved,
+in which case it should be relatively close).  This causes an
+unconditional reload from the remote server - the locally cached copy is
+not consulted.
+@kindex C-o
+@findex w3-fetch
+@item C-o
+Prompts for a URL in the minibuffer, and attempts to fetch
+it.  If there are any errors, or Emacs-W3 cannot understand the type of link
+requested, the errors are displayed in a hypertext buffer.
+@kindex o
+@findex w3-open-local
+@vindex url-use-hypertext-dired
+@item o
+Opens a local file, interactively.  This prompts for a local file name
+to open.  The file must exist, and may be a directory.  If the requested
+file is a directory and @code{url-use-hypertext-dired} is @code{nil},
+then a dired-mode buffer is displayed.  If non@code{nil}, then Emacs-W3
+automatically generates a hypertext listing of the directory.  The
+hypertext mode is the default, so that all the keys and functions remain
+the same.
+
+@kindex M-s
+@findex w3-search
+@item M-s
+Perform a search, if this is a searchable index.  Searching requires a
+server - Emacs-W3 can not do local file searching, as there are too many
+possible types of searches people could want to do.  Generally, the only
+URL types that allow searching are HTTP, gopher, and X-EXEC.
+@kindex Hv
+@findex w3-show-history-list
+@vindex w3-keep-history
+@item Hv
+If @code{url-keep-history} is non-@code{nil}, then Emacs-W3 keeps track
+of all the URLs visited in an Emacs session.  This function takes all
+the links that are in that internal list, and formats them as hypertext
+links in a list.
+@end table
+
+@cindex Buffer movement
+And here are the commands to move around between Emacs-W3 buffers:
+
+@table @kbd
+@kindex l
+@findex w3-goto-last-buffer
+@item l
+Goes to the last WWW buffer seen.
+@kindex q
+@findex w3-quit
+@item q
+Quits WWW mode.  This kills the current buffer and goes to the most
+recently visited buffer.
+@kindex Q
+@findex w3-leave-buffer
+@item u
+This is similar to w3-quit, but the buffer is not killed, it is moved to
+the bottom of the buffer list (so it is the least likely to show up as
+the default with switch-to-buffer).  This is different from
+@code{w3-goto-last-buffer} in that it does not return to the last WWW
+page visited - it is the same as using @code{switch-to-buffer} - the
+buffer left in the window is fairly random. 
+@kindex HB
+@kindex B
+@findex w3-backward-in-history
+@item HB, B
+Takes one step back along the path in the current history.  Has no
+effect if at the beginning of the session history.
+@kindex HF
+@kindex F
+@findex w3-forward-in-history
+@item HF, F
+Takes one step forward along the path in the current history.  Has no
+effect if at the end of the session history.
+@end table
+
+@node Miscellaneous, , Action, Basic Usage
+@section Miscellaneous
+@table @kbd
+@kindex M-m
+@findex w3-mail-current-document
+@item M-m
+Mails the current document to someone.  Choose from several different
+formats to mail: formatted text, HTML source, PostScript, or LaTeX source.
+When the HTML source is mailed, then an appropriate <base> tag is inserted
+at the beginning of the document so that relative links may be followed
+correctly by whoever receives the mail.
+@kindex M-M
+@findex w3-mail-document-under-point
+@item M-M
+Mails the document pointed to by the hypertext link under point to someone.
+Choose from several different formats to mail: formatted text, HTML source,
+PostScript, or LaTeX source.  When the HTML source is mailed, then an
+appropriate <base> tag is inserted at the beginning of the document so that
+relative links may be followed correctly by whoever receives the
+mail.
+@kindex p
+@findex w3-print-this-url
+@item p
+Prints the current document.  Choose from several different formats to
+print: formatted text, HTML source, PostScript (with ps-print), or by using
+LaTeX and dvips).
+
+@findex lpr-buffer
+@vindex lpr-command
+@vindex lpr-switches
+When the formatted text is printed, the normal @code{lpr-buffer} function
+is called, and the variables @code{lpr-command} and @code{lpr-switches}
+control how the document is printed.
+
+When the HTML source is printed, then an appropriate <base> tag is
+inserted at the beginning of the document.
+@vindex w3-use-html2latex
+@vindex w3-html2latex-prog
+@vindex w3-html2latex-args
+@vindex w3-print-commnad
+@vindex w3-latex-docstyle
+When postscript is printed, then the HTML source of the document is
+converted into LaTeX source.  If the variable @code{w3-use-html2latex}
+is non-@code{nil}, then the program specified by
+@code{w3-html2latex-prog} is run in a subprocess with the arguments in
+@code{w3-html2latex-args}.  The @code{w3-html2latex-prog} must accept
+HTML source on its standard input and send the LaTeX output to standard
+output.  If @code{w3-use-html2latex} is @code{nil}, then an Emacs Lisp
+function uses regular expressions to replace the HTML code with LaTeX
+markup.  The variable @code{w3-latex-docstyle} controls how the document
+is laid out in this case, and postscript figures are printed as
+well.
+@kindex P
+@findex w3-print-url-under-point
+@item P
+Prints the document pointed to by the hypertext link under point.
+Please see the previous item for more information.
+@kindex M-x w3-insert-formatted-url
+@findex w3-insert-formatted-url
+@item M-x w3-insert-formatted-url
+Insert a fully formatted HTML link into another buffer.  This gets the
+name and URL of either the current buffer, or, with a prefix arg, of the
+link under point, and construct the appropriate <a...>...</a> markup and
+insert it into the desired buffer.
+@kindex M-tab
+@findex w3-insert-this-url
+@item M-tab
+Inserts the URL of the current document into another buffer.  Buffer is
+prompted for in the minibuffer.  With prefix arg, uses the URL of the
+link under point.
+@kindex U
+@findex w3-use-links
+@item U
+Selects one of the <LINK> tags from this document and fetch it.  Links
+are attributes of a specific document, and can tell such things as who
+made the document, where a table of contents is located, etc.
+
+Link tags specify relationships between documents in two ways.  Normal
+(forward) relationships (where the link has a REL="xxx" attribute), and
+reverse relationships (where the link has a REV="xxx" attribute).  This
+first asks what type of link to follow (Normal or Reverse), then does
+a @code{completing-read} on only the links that have that type of
+relationship.
+@end table
+
+@node Compatibility, , , Top
+@comment  node-name,  next,  previous,  up
+@chapter Compatibility with other Browsers
+Due to the popularity of several other browsers, Emacs-W3 offers an easy
+transition to its much better way of life.  This ranges from being able
+to share the same preferences files and disk cache to actually emulating
+the keybindings used in other browsers.
+
+@ifinfo
+@menu
+* Emulation::			Emacs-W3 can emulate the keybindings and
+				other behaviours of other browsers.
+* Hotlist Handling::            A hotlist is an easy way to keep track of
+				interesting Web pages without having to
+				remember the exact path to get there.
+* Session History::             Keeping a history of documents visited
+				in one Emacs sessions allows the use of
+				'forward' and 'back' buttons easily.
+* Global History::		Keeping a history of all the places ever
+				visited on the web.
+* Annotations::                 Annotations allow comments on other
+				people's Web documents without needing
+				to change the document.
+@end menu
+@end ifinfo
+@node Emulation, Hotlist Handling, Compatibility, Compatibility
+@section Emulation
+:: WORK :: Document lynx emulation
+:: WORK :: Document netscape emulation
+@cindex Browser emulation
+@cindex Emulation of other browsers
+@cindex Netscape emulation
+@cindex Lynx emulation
+@findex turn-on-netscape-emulation
+@findex turn-on-lynx-emulation
+@findex w3-netscape-emulation-minor-mode
+@findex w3-lynx-emulation-minor-mode
+@vindex w3-mode-hook
+
+@node Hotlist Handling, Session History, Emulation, Compatibility
+@section Hotlist Handling
+:: WORK :: Document that it supports different types of hotlist formats
+:: WORK :: Make sure everything hotlist related can be accessed via 'h'
+In order to avoid having to traverse many documents to get to the same
+document over and over, Emacs-W3 supports a ``hotlist'' like Mosaic.  This is
+a file that contains URLs and aliases.  Hotlists allow quick access to any
+document in the Web, providing it has been visited and added to the hotlist.
+The variable @code{w3-hotlist-file} determines where this information
+is saved.  The structure of the file is compatible with Mosaic's
+hotlist file, so this defaults to @file{~/.mosaic-hotlist-default}.
+
+Hotlist commands are:
+@table @kbd
+@kindex hi
+@findex w3-hotlist-add-document
+@vindex w3-hotlist-file
+@item a
+Adds the current document to the hotlist, with the buffer name as its
+identifier.  Modifies the file specified by @code{w3-hotlist-file}.  If
+this is given a @var{prefix-argument} (via @kbd{C-u}), the title is
+prompted for instead of automatically defaulting to the
+document title.
+
+@findex w3-hotlist-refresh
+@vindex w3-hotlist-file
+@kindex hR
+@item hR
+This rereads the default hostlist file specified by
+@code{w3-hotlist-file}.
+@findex w3-hotlist-delete
+@vindex w3-hotlist-file
+@kindex hd
+@item d
+Prompts for the alias of the entry to kill.  Pressing the spacebar or
+tab will list out partial completions.  The internal representation of
+the hotlist and the file specified by @code{w3-hotlist-file} are
+updated. 
+@item hr
+@kindex hr
+@findex w3-hotlist-rename-entry
+@vindex w3-hotlist-file
+Some hotlist item names can be very unwieldy (`Mosaic for X level 2 fill
+out form support'), or uninformative (`Index of /').  Prompts for the
+item to rename in the minibuffer---use the spacebar or tab key for
+completion.  After having chosen an item to rename, prompts for a new
+title until a unique title is entered.  Modifies the file specified by
+@code{w3-hotlist-file}.
+
+@item hu
+@kindex hu
+@findex w3-use-hotlist
+Prompts for the alias to jump to.  Pressing the @key{spacebar} or
+@key{tab} key shows partial completions.
+
+@item hv
+@kindex hv
+@findex w3-show-hotlist
+Converts the hotlist into HTML and displays it.
+@item ha
+@kindex ha
+@findex w3-hotlist-apropos
+Shows the hotlist entries matching a regular expression.
+@item hA
+@kindex hA
+@findex w3-hotlist-append
+Appends another hotlist file to the one currently in memory.
+@end table
+@node Session History, Global History, Hotlist Handling, Compatibility
+@section History
+@cindex History Lists
+Almost all web browsers keep track of the URLs followed from a page, so
+that it can provide @b{forward} and @b{back} buttons to keep a @i{path}
+of URLs that can be traversed easily.
+@vindex url-keep-history
+If the variable @code{url-keep-history} is @code{t}, then Emacs-W3
+keeps a list of all the URLs visited in a session.
+@findex w3-show-history
+To view a listing of the history for this session of Emacs-W3, use
+@code{M-x w3-show-history} from any buffer, and Emacs-W3 generates an
+HTML document showing every URL visited since Emacs started (or
+cleared the history list), and then format it.  Any of the links can
+be chosen and followed to the original document.  To clear the history
+list, choose 'Clear History' from the 'Options' menu.
+
+@findex w3-forward-in-history
+@findex w3-backward-in-history
+@findex w3-fetch
+Another twist on the history list mechanism is the fact that all
+Emacs-W3 buffers remember what URL, buffer, and buffer position of the
+last document, and also keeps track of the next location jumped @b{to}
+from that buffer.  This means that the user can go forwards and
+backwards very easily along the path taken to reach a particular
+document.  To go forward, use the function @code{w3-forward-in-history},
+to go backward, use the function @code{w3-backward-in-history}.
+
+@node Global History, Annotations, Session History, Compatibility
+@section Global History
+:: WORK :: Document that the global history can have diff. formats
+Most web browsers also support the idea of a ``history'' of URLs the
+user has visited, and it displays them in a different style than normal
+URLs.
+
+@vindex url-keep-history
+@vindex url-global-history-file
+If the variable @code{url-keep-history} is @code{t}, then Emacs-W3
+keeps a list of all the URLs visited in a session.  The file is
+automatically written to disk when exiting emacs.  The list is added to
+those already in the file specified by @code{url-global-history-file},
+which defaults to @file{~/.mosaic-global-history}.
+
+If any URL in the list is found in the file, it is not saved, but new
+ones are added at the end of the file.
+
+The function that saves the global history list is smart enough to
+notice what style of history list is being used (Netscape, Emacs-W3, or
+XMosaic), and writes out the new additions appropriately.
+
+@cindex Completion of URLs
+@cindex Usefulness of global history
+One of the nice things about keeping a global history files is that Emacs-W3
+can use it as a completion table.  When doing @kbd{M-x w3-fetch}, pressing
+the @kbd{tab} or @kbd{space} key will show all completions for a
+partial URL.  This is very useful, especially for very long URLs that
+are not in a hotlist, or for seeing all the pages from a particular web
+site before choosing which to retrieve.
+
+@node Annotations, Group Annotations, Global History, Compatibility
+@section Annotations
+@cindex Annotations
+Mosaic can @i{annotate} documents.  Annotations are comments about the
+current document, and these annotations appear as a link to the comments
+at the end of the document.  The original file is not changed.
+ 
+@ifinfo
+@menu
+* Group Annotations::             Annotations accessible by everyone
+* Personal Annotations::          Private annotations only accessible
+				  to the user who created them
+@end menu
+@end ifinfo
+@node Group Annotations, Personal Annotations, Annotations, Annotations
+@subsection Group Annotations
+@cindex Group Annotations
+@b{@i{NOTE}}: The group annotation experiment has been terminated.  It
+will be replaced with support on the server side for adding <LINK> tags
+to documents.
+
+@node Personal Annotations, , Group Annotations, Annotations
+@subsection Personal Annotations
+@cindex Personal Annotations
+@vindex w3-personal-annotation-directory
+Emacs-W3 looks in the directory specified by
+@code{w3-personal-annotation-directory} (defaults to
+@file{~/.mosaic-personal-annotations}).  Any personal annotations for a
+document are automatically appended when it is retrieved.
+
+:: WORK :: Document the new 'a' prefix keymap
+:: WORK :: Tell where the annotations are stored
+
+@findex w3-add-personal-annotation
+@vindex w3-annotation-mode
+To add a new personal annotation, type @kbd{M-x
+w3-add-personal-annotation}.  This creates a new buffer, in the mode
+specified by @code{w3-annotation-mode}.  This defaults to
+@code{html-mode}.  If this variable is @code{nil}, or it points to an
+undefined function, then @code{default-major-mode} is consulted.
+
+A minor mode redefines @kbd{C-c C-c} to complete the annotation and
+store it on the local disk.
+
+@findex w3-delete-personal-annotation
+To delete a personal annotation, it must be the current page.  Once
+reading the annotation, @kbd{M-x w3-delete-personal-annotation} will
+remove it.  This deletes the file containing the annotation, and any
+references to it in the annotation log file.
+
+Editing personal annotations is not yet supported.
+
+@node Controlling Formatting, General Formatting, Top, Top
+@comment  node-name,  next,  previous,  up
+@chapter Controlling Formatting
+@cindex Customizing formatting
+@cindex Specifying Fonts
+@cindex Fonts
+@cindex Colors
+How Emacs-W3 formats a document is very customizable.  How a document is
+displayed depends on whether the user is on a terminal
+capable of graphics and a few variables.
+
+The following sections describe in more detail how to change the
+formatting of a document.
+
+@ifinfo
+@menu
+* General Formatting::                 Changing general things about a
+                                       document.
+* Character based terminals::          Changing how a document is
+                                       displayed on a non-graphics
+                                       terminal (vt100, etc.@:) or if
+                                       @code{w3-delimit-emphasis} is @code{t}.
+* Graphics workstations::              Changing how a document is
+                                       displayed on a graphics terminal
+                                       (Xwindows, Windows, NeXTstep,
+                                       OS/2, etc.)
+* Inlined images::                     How to specify how Emacs-W3
+                                       handles inlined images/mpegs.
+@end menu
+@end ifinfo
+@node General Formatting, Character based terminals, Controlling Formatting, Controlling Formatting
+@section General formatting conventions
+@iftex
+@heading Setting the fill column
+@end iftex
+@ifinfo
+@center --------------------
+@center Setting the fill column
+@center --------------------
+@end ifinfo
+@vindex fill-column
+@vindex w3-right-border
+Each time a document is parsed, the @code{fill-column} is recalculated
+using @code{window-width} and @code{w3-right-border}.
+@code{w3-right-border} is an integer specifying how much room at the
+right edge of the screen to leave blank.  The @code{fill-column} is set
+to @code{(- (window-width) @code{w3-right-border})}.
+@iftex
+@heading Formatting of hypertext links
+@end iftex
+@ifinfo
+@center --------------------
+@center Formatting of hypertext links
+@center --------------------
+@end ifinfo
+@vindex w3-delimit-links
+@vindex w3-link-start-delimiter
+@vindex w3-link-end-delimiter
+If the variable @code{w3-delimit-links} is non-@code{nil} (the default
+for text-terminals), then hypertext links are surrounded by text
+specified by the user.  The variables @code{w3-link-start-delimiter} and
+@code{w3-link-end-delimiter} control what text is at the start and end
+of a hypertext link.  These variables are cons-pairs of two
+strings.
+
+If a link has never been visited before (it is not in the @i{global
+history}), then the @code{car} of these variables is inserted at the
+start and end of the link.  If the link has been visited before, then
+the @code{cdr} is inserted.  So, links look like:
+
+@example
+[[This is a hypertext link]] that has never been visited.
+@{@{This one, however@}@} has been seen before at some point in time.
+@end example
+
+@iftex
+@heading Formatting of lists
+@end iftex
+@ifinfo
+@center --------------------
+@center Formatting of lists
+@center --------------------
+@end ifinfo
+@cindex Indentation
+@vindex w3-indent-level
+There are several different ways to control the formatting of lists.
+The most obvious is how deeply they are indented relative to the rest of
+the paragraphs in the document.  To control this, set the
+variable @code{w3-indent-level}.  This is the number of spaces to
+indent lists and other items requiring special margins.
+
+@vindex w3-list-chars-assoc
+Another thing that is easy to change about lists is the bullet character
+put at the front of each list item.  This is controlled by the variable
+@code{w3-list-chars-assoc}, which is an assoc list.  This is a list of
+lists, each sublist describing what to put at the start of each
+particular list type.  The @code{car} of this list should be a symbol
+(@b{not} a string) representing the type of list (e.g., @samp{ul}).
+The rest of the list should consist of strings to insert at certain
+levels of lists.  The @code{n}th element of this list is used when the
+list is nested @code{n + 1} levels.  If the list is not long enough to
+define a string for a certain nesting level, then it defaults to either
+a '*' or a '.'.
+@iftex
+@heading Formatting of directory listings
+@end iftex
+@ifinfo
+@center --------------------
+@center Formatting of directory listings
+@center --------------------
+@end ifinfo
+@vindex url-use-hypertext-dired
+When Emacs-W3 encounters a link to a directory (whether by local file access
+or via FTP), it can either create an HTML document on the fly, or use
+@code{dired-mode} to peruse the listing.  The variable
+@code{url-use-hypertext-dired} controls this behavior.
+
+If the value is @code{t}, Emacs-W3 uses @code{directory-files} to list them
+out and transform the directory into a hypertext document, then pass it
+through the parser like any other document.
+
+If the value is @code{nil}, just pass the directory off to dired using
+@code{find-file}.  Using this option loses all the hypertext abilities
+of Emacs-W3, and the users is unable to load documents in the directory
+directly into Emacs-W3 by clicking with the mouse, etc.
+
+@ignore
+@cindex Downloading multiple files
+@cindex FTP'ing multiple files
+@vindex url-forms-based-ftp
+A new option in the 2.2 series is @code{url-forms-based-ftp} - this is
+still in the experimental stages, but can be useful.  If
+@code{url-forms-based-ftp} is @code{t}, then all automatically generated
+directory listings will have a form mixed in with the file listing.
+Each file will have a checkbox next to it, and a row of buttons at the
+bottom of the screen.  Selecting one of the buttons at the bottom of the
+screen will take the designated action on all the marked files.
+Currently, only deleting and copying marked files is supported.
+@end ignore
+@iftex
+@heading Formatting of gopher directories
+@end iftex
+@ifinfo
+@center --------------------
+@center Formatting of gopher directories
+@center --------------------
+@end ifinfo
+@vindex w3-use-hypertext-gopher
+@cindex Gopher+
+@cindex ASK blocks
+There are two different ways of viewing gopher links.  The built-in
+support that converts gopher directories into HTML, or the
+@file{gopher.el} package by Scott Snyder (@i{snyder@@fnald0.fnal.gov}).
+The variable that controls this is @code{w3-use-hypertext-gopher}.  If
+set to @code{nil}, then @file{gopher.el} is used.  Any other value
+causes Emacs-W3 to use its internal gopher support.  If using
+@file{gopher.el}, all the hypertext capabilities of Emacs-W3 are lost.
+All the functionality of @file{gopher.el} is now available in the
+hypertext version, and the hypertext version supports Gopher+ and ASK
+blocks. 
+
+@vindex w3-gopher-labels
+The main way to control the display of gopher directories is by the
+variable @code{w3-gopher-labels}.  This variable controls the text that
+is inserted at the front of each item.  This is an assoc list of gopher
+types (as one character strings), and a string to insert just after the
+list item.  All the normal gopher types are defined.  Entries should be
+similar to: @samp{("0" . "(TXT)")}.  I have tried to keep all the tags
+to three characters plus two parentheses. 
+@iftex
+@heading Creating a horizontal rule
+@end iftex
+@ifinfo
+@center --------------------
+@center Creating a horizontal rule
+@center --------------------
+@end ifinfo
+@vindex w3-horizontal-rule-char
+Horizontal rules (@b{<HR>} tags in HTML[+]) are used to separate chunks
+of a document, and is meant to be rendered as a solid line across the
+page.  Some terminals display characters differently, so the variable
+@code{w3-horizontal-rule-char} controls which character is used to draw a
+horizontal bar.  This variable must be the ASCII value of the character,
+@b{not a string}.  The variable is passed through make-string whenever a
+horizontal rule of a certain width is necessary.
+
+@node Character based terminals, Graphics workstations, General Formatting, Controlling Formatting
+@section On character based terminals
+@vindex w3-delimit-emphasis
+On character based terminals, there is no easy way to show that a
+certain range of text is in bold or italics.  If the variable
+@code{w3-delimit-emphasis} is non-@code{nil}, then Emacs-W3 can insert
+characters before and after character formatting commands in HTML
+documents.  The defaul value of @code{w3-delimit-emphasis} is
+automatically set based on the type of window system and version of
+Emacs being used. 
+
+@vindex w3-header-chars-assoc
+:: WORK ::
+
+@findex w3-upcase-region
+@code{w3-header-chars-assoc} is an assoc list of header tags and a list
+of formatting instructions.  The @code{car} of the list is the level of
+the header (1--6).  The rest of the list should contain three items.
+The first item is text to insert before the header.  The second item is
+text to insert after the header.  Both should have reserved characters
+converted to their HTML[+] entity definitions.  The third item is a
+function to call on the area the header is in.  This function is called
+with arguments specifying the start and ending character positions of
+the header.  The starting point is always first.  To convert a region to
+upper case, please use @code{w3-upcase-region} instead of
+@code{upcase-region}, so that entities are converted properly.
+
+@node Graphics workstations, Inlined images, Character based terminals, Controlling Formatting
+@section With graphics workstations
+Starting with the first public release of version 2.3.0, all formatting
+is controlled by the use of stylesheets.
+
+:: WORK :: Graphic workstation stuff - redo for stylesheets
+
+@node Inlined images, , Graphics workstations, Controlling Formatting
+@cindex Inlined images
+@cindex Images
+@cindex Movies
+@cindex Inlined MPEGs
+@cindex MPEGs
+When running in Lucid Emacs 19.10 or XEmacs 19.11 and higher, Emacs-W3 can
+display inlined images and MPEG movies.  There are several variables that
+control how and when the images are displayed.
+
+@cindex Netpbm
+@cindex Pbmplus
+@vindex w3-graphic-converter-alist
+Since Lucid/XEmacs only natively understands XPixmaps and XBitmaps, GIFs
+and other image types must first be converted to one of these formats.
+To do this, the @b{netpbm utilities}@footnote{Available via anonymous
+ftp from ftp.x.org:/R5contrib/netpbm-1mar1994.tar.gz, and most large ftp
+sites.} programs are normally used.  This is a suite of freeware image
+conversion tools.  The variable @code{w3-graphic-converter-alist}
+controls how each image type is converted.  This is an assoc list, keyed
+on the MIME content-type.  The @code{car} is the content-type, and the
+@code{cdr} is a string suitable to pass to @code{format}.  A %s in this
+string will be replaced with a converter from the ppm image format to an
+XPixmap (or XBitmap, if being run on a monochrome display).  By default,
+the Emacs-W3 browser has converters for:
+
+@enumerate
+@item
+image/x-xbitmap
+@item
+image/xbitmap
+@item
+image/xbm
+@item
+image/gif
+@item
+image/jpeg
+@item
+image/x-fax
+@item
+image/x-raster
+@item
+image/windowdump
+@item
+image/x-icon
+@item
+image/portable-graymap
+@item
+image/portable-pixmap
+@item
+image/x-pixmap
+@item
+image/x-xpixmap
+@item
+image/pict
+@item
+image/x-macpaint
+@item
+image/x-targa
+@item
+image/tiff
+@end enumerate
+
+@vindex w3-color-max-blue
+@vindex w3-color-max-green
+@vindex w3-color-max-red
+@vindex w3-color-use-reducing
+@vindex w3-color-filter
+Since most displays are (sadly) not 24-bit, Emacs-W3 can automatically
+dither an image, so that it does not fill up the application' colormap too
+quickly.  If @code{w3-color-use-reducing} is non-@code{nil}, then the
+images will use reduced colors.  If @code{w3-color-filter} is @code{eq} to
+@code{'ppmquant}, then the ppmquant program will be used.  If @code{eq} to
+@code{'ppmdither}, then the ppmdither program will be used.  The ppmdither
+program tends to give better results.  The values of
+@code{w3-color-max-red}, @code{w3-color-max-blue}, and
+@code{w3-color-max-green} control how many colors the inlined images can
+use.  If using ppmquant, then the product of these three variables is used
+as the maximum number of colors per image.  If using ppmdither, then only
+the set number of color cells can be allocated per image.  See the man
+pages for ppmdither and ppmquant for more information on how the dithering
+is actually done.  @code{w3-color-filter} may also be a string, specifying
+exactly what external filter to use.  An example is: @samp{ppmquant -fs
+-map ~/pixmaps/colormap.ppm}.
+
+@cindex MPEGs
+@cindex Inlined animations
+When running in XEmacs 19.11 or XEmacs 19.12, Emacs-W3 can insert an
+MPEG movie in the middle of a buffer.  
+
+:: WORK :: Need a pointer to the new EMBED Internet Draft ::
+
+The basic syntax is:
+@example
+<embed href="somevideo.mpg" type="video/mpeg">
+@end example
+
+@vindex w3-mpeg-args
+@vindex w3-mpeg-program
+This requires a special version of the standard @file{mpeg_play} mpeg
+player.  Patches against the 2.0 version are available at
+ftp://ftp.cs.indiana.edu/pub/elisp/w3/mpeg_patch.  The variable
+@code{w3-mpeg-program} should point to this executable, and
+@code{w3-mpeg-args} should be a list of any additional arguments to be
+passed to the player.  By default, this includes @var{-loop}, so the
+mpeg plays continuously.
+
+@cindex Delaying inlined images
+@cindex Delaying inlined animations
+@vindex w3-delay-image-loads
+@vindex w3-delay-mpeg-loads
+Because images and movies can take up an incredible amount of bandwidth,
+it is useful to be able to control whether they are loaded or not.  By
+default, images and movies are loaded automatically, but the variables
+@code{w3-delay-image-loads} and @code{w3-delay-mpeg-loads} control this.
+If set to non-@code{nil}, then the images or movies are not
+loaded until explicitly requested by the user.
+
+@cindex Loading delayed images
+@cindex Loading delayed movies
+@findex w3-load-delayed-images
+@findex w3-load-delayed-mpegs
+To load any delayed images, use the function
+@code{w3-load-delayed-images}.  Its counterpart for delayed movies is
+@code{w3-load-delayed-mpegs}
+
+@node MIME Support, Adding MIME types based on file extensions, , Top
+@chapter MIME Support
+MIME is an emerging standard for multimedia mail.  It offers a very
+flexible typing mechanism.  The type of a file or message is specified
+in two parts, separated by a '/'.  The first part is the general
+category of the data (text, application, image, etc.).  The second part
+is the specific type of data (postscript, gif, jpeg, etc.).  So
+@samp{text/html} specifies an HTML document, whereas
+@samp{image/x-xwindowdump} specifies an image of an Xwindow taken with
+the @file{xwd} program.
+
+
+This typing allows much more flexibility in naming files.  HTTP/1.0
+servers can now send back content-type headers in response to a request,
+and not have the client second-guess it based on file extensions.  HTML
+files can now be named @file{something.gif} (not a great idea, but
+possible).
+
+@ifinfo
+@menu
+* Adding MIME types based on file extensions::  How to map file
+                                                extensions onto MIME
+                                                types (e.g., @samp{.gif ->
+                                                image/gif)}.
+* Specifying Viewers::  How to specify external and internal viewers
+                        for files that Emacs-W3 cannot handle natively.
+@end menu
+@end ifinfo
+
+@node Adding MIME types based on file extensions, Specifying Viewers, MIME Support, MIME Support
+@section Adding MIME types based on file extensions
+@vindex mm-mime-extensions
+For some protocols however, it is still necessary to guess the content
+of a file based on the file extension.  This type of guess-work should
+only be needed when accessing files via FTP, local file access, or old
+HTTP/0.9 servers.
+
+Instead of specifying how to view things twice, once based on
+content-type and once based on the file extension, it is easier to map
+file extensions to MIME content-types.  The variable that controls this
+is @code{mm-mime-extensions}.
+
+This variable is an assoc list of file extensions and the corresponding
+MIME content-type.  A sample entry looks like: @samp{(".movie"
+. "video/x-sgi-movie")} This makes all files that end in @file{.movie}
+(@file{foo.movie} and @file{bar.movie}) be interpreted as SGI animation
+files.  If a content-type is defined for the document, then this is
+over-ridden.  Regular expressions can @b{NOT} be used.
+
+@cindex mime-types file
+@findex mm-parse-mimetypes
+Both Mosaic and the NCSA HTTP daemon rely on a separate file for mapping
+file extensions to MIME types.  Instead of having the users of Emacs-W3
+duplicate this in lisp, this file can be parsed using the
+@code{url-parse-mimetypes} function.  This function is called each time
+w3 is loaded.  It tries to locate mimetype files in several places. If
+the environment variable @code{MIMETYPES} is nonempty, then this is
+assumed to specify a UNIX-like path of mimetype files (this is a colon
+separated string of pathnames).  If the @code{MIMETYPES} environment
+variable is empty, then Emacs-W3 looks for these files:
+
+@enumerate
+@item
+@file{~/.mime-types}
+@item
+@file{/etc/mime-types}
+@item
+@file{/usr/etc/mime-types}
+@item
+@file{/usr/local/etc/mime-types}
+@item
+@file{/usr/local/www/conf/mime-types}
+@end enumerate
+
+Each line contains information for one http type.  These types resemble
+MIME types.  To add new ones, use subtypes beginning with x-, such as
+application/x-myprogram.  Lines beginning with # are comment lines, and
+suitably ignored.  Each line consists of:
+
+type/subtype ext1 ext2 ...  ext@var{n}
+
+type/subtype is the MIME-like type of the document. ext* is any number
+of space-separated filename extensions which correspond to the MIME
+type.
+
+@node Specifying Viewers, ,Adding MIME types based on file extensions, MIME Support
+@section Specifying Viewers
+Not all files look as they should when parsed as an HTML document
+(whitespace is stripped, paragraphs are reformatted, and lots of little
+changes that make the document look unrecognizable).  Files may be
+passed to external programs or Emacs Lisp functions to be viewed.
+
+Not all files can be viewed accurately from within an Emacs session (GIF
+files for example, or audio files).  For this reason, the user can
+specify file "viewers" based on MIME content-types.  This is done with
+a standard mailcap file.  @xref{Mailcap Files}
+
+@findex mm-add-mailcap-entry
+As an alternative, the function @code{mm-add-mailcap-entry} can also be
+used from an appropriate hook.@xref{Hooks}  This functions takes three
+arguments, the major type ("@i{image}"), the minor type ("@i{gif}"), and
+an assoc list of information about the viewer.  Please see the URL
+documentation for more specific information on what this assoc list
+should look like.
+
+@node Security, Non-Unix Operating Systems, , Top
+@chapter Security
+@cindex Security
+@cindex Paranoia
+There are an increasing number of ways to authenticate a user to a web
+service.  Emacs-W3 tries to support as many as possible.  Emacs-W3
+currently supports:
+
+@table @b
+@item Basic Authentication
+@cindex Security, Basic
+@cindex HTTP/1.0 Authentication
+@cindex Authentication, Basic
+The weakest authentication available, not recommended if serious
+security is necessary.  This is simply a string that looks like
+@samp{user:password} that has been Base64 encoded, as defined in RFC
+1421.
+@item Digest Authentication
+@cindex Security, Digest
+@cindex HTTP/1.0 Authentication
+@cindex Authentication, Digest
+Jeffery L. Hostetler, John Franks, Philip Hallam-Baker, Ari Luotonen,
+Eric W. Sink, and Lawrence C. Stewart have an internet draft for a new
+authentication mechanism.  For the complete specification, please see
+draft-ietf-http-digest-aa-01.txt in the nearest internet drafts
+archive@footnote{One is ftp://ds.internic.net/internet-drafts}.
+@item SSL Encryption
+@cindex HTTP/1.0 Authentication
+@cindex Secure Sockets Layer
+@cindex SSL
+@cindex Gag Puke Retch
+@cindex Exportability
+@cindex Export Restrictions
+SSL is the @code{Secure Sockets Layer} interface developed by Netscape
+Communications @footnote{http://www.netscape.com/}.  Emacs-W3 supports
+HTTP transfers over an SSL encrypted channel, if the appropriate files
+have been installed.@xref{Installing SSL}
+@item PGP/PEM
+@cindex HTTP/1.0 Authentication
+@cindex Public Key Cryptography
+@cindex Authentication, PGP
+@cindex Authentication, PEM
+@cindex RIPEM
+@cindex Public Key Cryptography
+@cindex PGP
+@cindex Pretty Good Privacy
+@cindex Encryption
+@cindex Security
+@cindex ITAR must die
+@cindex Stupid export restrictions
+@cindex Support your local crypto-anarchist
+@cindex NSA freaks
+A few servers still support this method of authentication, but it has
+been superseded by SSL and Secure-HTTP.@xref{Using PGP/PEM}
+@end table
+
+@node Non-Unix Operating Systems, VMS, Security, Top
+@chapter Non-Unix Operating Systems
+@cindex Non-Unix Operating Systems
+@ifinfo
+@menu
+* VMS::                 The wonderful world of VAX|AXP-VMS!
+* OS/2::                The next-best thing to Unix.
+* MS-DOS::              The wonderful world of MS-DOG!
+* 16-Bit Windows::      Windows 3.1, 3.11, and WFW 3.11.
+* 32-Bit Windows::      Windows NT, Chicago/Windows 95.
+* Amiga::               The Amiga, for those who still love them.
+@end menu
+@end ifinfo
+
+@node VMS, OS/2, Non-Unix Operating Systems, Non-Unix Operating Systems
+@section VMS
+@cindex VAX-VMS
+@cindex AXP-VMS
+@cindex Digital VMS
+@cindex VMS
+:: WORK :: VMS Specific instriuctions
+
+@node OS/2, MS-DOS, VMS, Non-Unix Operating Systems
+@section OS/2
+@cindex OS/2
+@cindex Warp
+:: WORK :: OS/2 Specific instructions
+
+@node MS-DOS, 16-Bit Windows, OS/2, Non-Unix Operating Systems
+@section MS-DOS
+@cindex MS-DOS
+@cindex Microsloth
+@cindex DOS
+@cindex MS-DOG
+:: WORK :: DOS Specific instructions
+
+@node 16-Bit Windows, 32-Bit Windows, MS-DOS, Non-Unix Operating Systems
+@section 16-Bit Windows
+@cindex 16-Bit Windows
+@cindex Microsloth
+@cindex Windows (16-Bit)
+@cindex Windows For Workgroups
+:: WORK :: 16bit Windows Specific instructions
+
+@node 32-Bit Windows, Amiga, 16-Bit Windows, Non-Unix Operating Systems
+@section 32-Bit Windows
+@cindex Chicago
+@cindex Windows (32-Bit)
+@cindex 32-Bit Windows
+@cindex Microsloth
+@cindex Windows '95
+:: WORK :: 32bit Windows Specific instructions
+
+@node Amiga, Advanced Features, 32-Bit Windows, Non-Unix Operating Systems
+@section Amiga
+@cindex Amiga
+@cindex Commodore
+:: WORK :: Amiga specific instructions
+
+@node Advanced Features, Style Sheets, Amiga, Top
+@comment  node-name,  next,  previous,  up
+@chapter Advanced Features
+
+@ifinfo
+@menu
+* Style Sheets::        Formatting control, the right way
+* Disk Caching::        Improving performance by using a local disk cache
+* Interfacing to Mail/News::	How to make VM understand hypertext links
+* Debugging HTML::      How to make Emacs-W3 display warnings about invalid
+                        HTML/HTML+ constructs.
+* Native WAIS Support:: How to make Emacs-W3 understand WAIS links without
+                        using a gateway.
+* Rating Links::        How to make Emacs-W3 put an 'interestingness' value
+                        next to each link.
+* Gopher Plus Support:: How Emacs-W3 makes use of the Gopher+ protocol.
+* Hooks::               Various hooks to use throughout Emacs-W3
+* Other Variables::     Miscellaneous variables that control the real
+                        guts of Emacs-W3.
+@end menu
+@end ifinfo
+
+@node Style Sheets, Disk Caching, Advanced Features, Advanced Features
+@section Style Sheets
+@cindex Formatting control
+@cindex Style sheets
+@cindex Look and Feel
+@cindex Layout control
+@cindex Experimental style sheet mechanism
+Emacs-W3 currently supports the experimental style sheet mechanism
+proposed by H&kon W. Lie of the W3 Consortium.  This allows for the
+author to specify what a document should look like, and yet allow the
+end user to override any of the stylistic changes.  This allows for
+people with special needs (most notably the visually impaired) to
+override style bindings that could make a document totally
+unreadable.
+
+@example
+<style notation="css">
+/* This is a comment
+** These will be ignored, up to the terminating end-of-line
+#
+h1 @{ align: center,
+     color: yellow,
+     background: red,
+     font-size: 24pt
+   @}
+h2 @{ align: right,
+     font-family: palatino,
+     font-size: 18pt
+   @}
+</style>
+@end example
+
+:: WORK :: Much more information on stylesheets
+
+@cindex <style>
+To include a stylesheet into a document, simply use the <style> tag.
+Use the @b{notation} attribute to specify what language the stylesheet
+is specified in.  The default is @b{css}.  The data between the <style>
+and </style> tags is the stylsheet proper - no HTML parsing is done to
+this data - it is treated similar to an <XMP> section of text.  To
+reference an external stylesheet, use the <link> tag.
+@example
+<link rel="stylesheet" href="/bill.style">
+@end example
+If these two mechanisms are mixed, then the URL is resolved first, and
+the contents of the <style> tag take precedence if there are any
+conflicting directives.
+
+@cindex DSSSL
+@cindex DSSSL-lite
+In the future, DSSSL and DSSSL-lite will be supported as valid
+stylesheet languages, but not in this release.  For more information on
+DSSSL-lite see http://www.falch.no/~pepper/DSSSL-Lite/ - for more
+information on full DSSSL, see
+ftp://ftp.jclark.com/pub/dsssl/dsssl.ps.gz
+
+@node Disk Caching, Interfacing to Mail/News, Style Sheets, Advanced Features
+@section Disk Caching
+@cindex Caching
+@cindex Persistent Cache
+@cindex Disk Cache
+A cache stores the information on a page on the local machine.  When
+requesting a page that is in the cache, Emacs-W3 can retrieve the page
+from the cache more quickly than retrieving the page again from its
+location out on the network.  With a well-populated cache, browsing the
+web is dramatically faster.
+
+The first time a page is requested, Emacs-W3 retrieves the page from the
+network.  When requesting a page that is in the cache, Emacs-W3 checks
+to see if the page has changed since it was last retrieved from the
+remote machine.  If it has not changed, the local copy is used, saving
+the transmission of the file over the network.
+
+@vindex url-automatic-caching
+@cindex Turning on caching
+@cindex Cleaning the cache
+@cindex Clearing the cache
+@cindex Cache cleaning
+@cindex Limiting the size of the cache
+To turn on disk caching, set the variable @code{url-automatic-caching}
+to non-@code{nil}, or choose the 'Caching' menu item (under `Options').
+That is all there is to it.  Running the @code{clean-cache} shell script
+fist is recommended, to allow for future cleaning of the cache.  This
+shell script will remove all files that have not been accessed since it
+was last run.  To keep the cache pared down, it is recommended that this
+script be run from @i{at} or @i{cron} (see the manual pages for
+crontab(5) or at(1) for more information)
+
+
+@cindex Relying on cache
+@cindex Cache only mode
+@cindex Standalone mode
+@cindex Browsing with no network connection
+@cindex Netless browsing
+@vindex url-standalone-mode
+With a large cache of documents on the local disk, it can be very handy
+when traveling, or any other time the network connection is not active
+(a laptop with a dial-on-demand PPP connection, etc).  Emacs-W3 can rely
+solely on its cache, and avoid checking to see if the page has changed
+on the remote server.  In the case of a dial-on-demand PPP connection,
+this will keep the phone line free as long as possible, only bringing up
+the PPP connection when asking for a page that is not located in the
+cache.  This is very useful for demonstrations as well.  To turn this
+feature on, set the variable @code{url-standalone-mode} to
+non-@code{nil}, or choose the `Use Cache Only' menu item (under
+`Options')
+
+@cindex Caching options
+@cindex Alternate caching method
+Emacs-W3 caches files under the temporary directory specified by
+@code{url-temporary-directory}, in a user-specific subdirectory
+(determined by the @code{user-real-login-name} function).  The cache
+files are stored under their original names, so a URL like:
+http://www.spry.com/foo/bar/baz.html would be stored in a cache file
+named: /tmp/wmperry/com/spry/www/foo/bar/baz.html.  Sometimes, espcially
+with gopher links, there will be name conflicts, and an error will be
+signalled.  This cannot be avoided, and still have reasonable
+performance at startup time (reading in an index file of all the cached
+pages can take a long time on slow machines, or even fast machines with
+large caches).  When running XEmacs 19.12 or later, a different naming
+scheme can be used.  This avoids name conflicts, but loses the human
+readability of the cache file names.  The cache files will look like:
+/tmp/wmperry/acbd18db4cc2f85cedef654fccc4a4d8, which is certainly
+unique, but not very user-friendly.  To turn this on, add this to the
+@file{.emacs} file:
+
+
+@example
+(add-hook 'w3-load-hooks '(lambda ()
+                             (fset 'url-create-cached-filename
+                                   'url-create-cached-filename-using-md5)))
+@end example
+
+If other versions of emacs will not be sharing the cache, I highly
+recommend this method of creating the cache filename.
+ 
+
+@node Interfacing to Mail/News, Debugging HTML, Disk Caching, Advanced Features
+@section Interfacing to Mail/News
+@cindex Interfacing to Mail/News
+@cindex VM
+@cindex Using Emacs-W3 with VM
+@cindex GNUS
+@cindex Using Emacs-W3 with GNUS
+@cindex RMAIL
+@cindex Using Emacs-W3 with RMAIL
+More and more people are including URLs in their signatures, and within
+the body of mail messages.  It can get quite tedious to type these into
+the minibuffer to follow one. 
+
+With the latest versions of VM (the 5.9x series of betas), URLs are
+highlighted, and can be followed with the mouse or the return
+key.
+
+To access URLs from within RMAIL, the following hook should do the
+trick.
+@example
+(add-hook 'rmail-mode-hook
+	  (function
+	   (lambda ()
+	     (define-key rmail-mode-map [mouse-2] 'w3-maybe-follow-link-mouse)
+	     (define-key rmail-mode-map "\r"      'w3-maybe-follow-link))))
+@end example
+
+To access URLs from within GNUS, the following hook should do the
+trick.
+@example
+(add-hook 'gnus-article-mode-hook
+          (function
+            (lambda ()
+              (define-key gnus-article-mode-map [mouse-2]
+                          'w3-maybe-follow-link-mouse)
+              (define-key gnus-article-mode-map "\r"
+                          'w3-maybe-follow-link))))
+@end example
+
+@node Debugging HTML, Native WAIS Support, Interfacing to Mail/News, Advanced Features
+@section Debugging HTML
+@cindex Debugging
+@cindex Invalid HTML
+@cindex Bad HTML
+@vindex w3-debug-buffer
+@vindex w3-debug-html
+For those people that are adventurous, or are just as anal as I am about
+people writing valid HTML, set the variable @code{w3-debug-html} to
+@code{t} and see what happens.
+
+
+If a Emacs-W3 thinks it has encountered invalid HTML, then a debugging
+message is displayed.
+
+:: WORK :: Need to list the different values w3-debug-html can have, and
+:: WORK :: what they do ::
+
+@node Native WAIS Support, Rating Links, Debugging HTML, Advanced Features
+@section Native WAIS Support
+This version of Emacs-W3 supports native WAIS querying (earlier
+versions required the use of a gateway program).  In order to use the
+native WAIS support, a working @dfn{waisq} binary is required.  I
+recommend the distribution from think.com -
+ftp://think.com/wais/wais-8-b6.1.tar.Z is a good place to start.
+
+@vindex url-waisq-prog
+@vindex url-wais-gateway-server
+@vindex url-wais-gateway-port
+The variable @code{url-waisq-prog} must point to this executable, and
+one of @code{url-wais-gateway-server} or @code{url-wais-gateway-port}
+should be @code{nil}.
+
+When a WAIS URL is encountered, a form will be automatically generated
+and displayed.  After typing in the search term, the query will be sent
+to the server by running the @code{url-waisq-prog} in a subprocess.  The
+results will be converted into HTML and displayed.
+
+@node Rating Links, Gopher Plus Support, Native WAIS Support, Advanced Features
+@section Rating Links
+The @code{w3-link-info-display-function} variable can be used to 'rate' a URL
+when it shows up in an HTML page.  If non-@code{nil}, then this should
+be a list specifying (or a symbol specifying the name) of a function.
+This function should expect one argument, a fully specified URL, and
+should return a string.  This string is inserted after the link
+text.
+
+If a user has decided that all links served from blort.com are too laden
+with images, and wants to be warned that a link points at this host,
+they could do something like this:
+
+@example
+(defun check-url (url)
+  (if (string-match "://[^/]blort.com" url)
+     "[SLOW!]" ""))
+
+(setq w3-link-info-display-function 'check-url)
+@end example
+
+So that all links pointing to any site at blort.com shows up as "Some
+link[SLOW!]" instead of just "Some link".
+
+@node Gopher Plus Support, Hooks, Rating Links, Advanced Features
+@section Gopher+ Support
+@cindex Gopher+
+The gopher+ support in Emacs-W3 is limited to the conversion of ASK
+blocks into HTML 3.0 forms, and the usage of the content-length given by
+the gopher+ server to give a nice status bar on the bottom of the
+screen.
+
+This will hopefully be extended to include the Gopher+ method of
+content-type negotiation, but this may be a while.
+
+@node Hooks, Other Variables, Gopher Plus Support, Advanced Features
+@section Hooks
+@cindex Hooks
+These are the various hooks that can be used to customize some of
+Emacs-W3's behavior.  They are arranged in the order in which they would
+happen when retrieving a document.  All of these are functions (or lists
+of functions) that are called consecutively.
+
+@table @code
+@vindex w3-load-hooks
+@item w3-load-hooks
+These hooks are run by @code{w3-do-setup} the first time a URL is
+fetched.  All the w3 variables are initialized before this hook is
+run.
+@item w3-file-done-hooks
+These hooks are run by @code{w3-prepare-buffer} after all parsing on a
+document has been done.  All @code{url-current-}@var{*} and
+@code{w3-current-}@var{*} variables are initialized when this hook is run.
+This is run before the buffer is shown, and before any inlined images
+are downloaded and converted.
+@item w3-file-prepare-hooks
+These hooks are run by @code{w3-prepare-buffer} before any parsing is
+done on the HTML file.  The HTTP/1.0 headers specified by
+@code{w3-show-headers} have been inserted, the syntax table has been set
+to @code{w3-parse-args-syntax-table}, and any personal annotations have
+been inserted by the time this hook is run.
+@item w3-mode-hooks
+These hooks are run after a buffer has been parsed and displayed, but
+before any inlined images are downloaded and converted.
+@item w3-source-file-hooks
+These hooks are run after displaying a document's source
+@end table
+
+@node Other Variables, , Hooks, Advanced Features
+@section Miscellaneous variables
+There are lots of variables that control the real nitty-gritty of Emacs-W3
+that the beginning user probably shouldn't mess with.  Here they are.
+
+@table @code
+@item url-bad-port-list
+@vindex url-bad-port-list
+List of ports to warn the user about connecting to.  Defaults to just
+the mail and NNTP ports so a malicious HTML author cannot spoof mail or
+news to other people.
+@item url-confirmation-func
+@vindex url-confirmation-func
+What function to use for asking yes or no functions.  Possible values
+are @code{'yes-or-no-p} or @code{'y-or-n-p}, or any function that takes
+a single argument (the prompt), and returns @code{t} only if a positive
+answer is gotten.  Defaults to @code{'yes-or-no-p}.
+@item w3-delimit-links
+@vindex w3-delimit-links
+:: WORK :: This is going away, and should be specified with stylesheets instead
+@item w3-delimit-emphasis
+@vindex w3-delimit-emphasis
+:: WORK :: This is going away, and should be specified with stylesheets instead
+@item w3-default-action
+@vindex w3-default-action
+A lisp symbol specifying what action to take for files with extensions
+that are not in the @code{mm-mime-extensions} assoc list.  This is
+useful in case Emacs-W3 ever run across files with weird extensions
+(.foo, .README, .READMEFIRST, etc.).  In most circumstances, this should
+not be required anymore.
+
+Possible values: any lisp symbol.  Should be a function that takes no
+arguments.  The return value does not matter, it is ignored.  Some examples
+are @code{'w3-prepare-buffer} or @code{'indented-text-mode}.
+@ignore
+@item w3-icon-directory-list
+@vindex w3-icon-directory-list
+A list of directorys to look in for the w3 standard icons...  must end
+in a /!  If the directory @code{data-directory}/w3 exists, then this is
+automatically added to the default value of
+http://cs.indiana.edu/elisp/w3/icons/.
+@end ignore
+@item w3-keep-old-buffers
+@vindex w3-keep-old-buffers
+Whether to keep old buffers around when following links.  To avoid lots
+of buffers in one Emacs session, set this variable to @code{nil}.  I
+recommend setting it to @code{t}, so that backtracking from one link to
+another is faster.
+
+@item url-passwd-entry-func
+@vindex url-passwd-entry-func
+This is a symbol indicating which function to call to read in a
+password.  If this variable is @code{nil} at startup, it is initialized
+depending on whether @dfn{EFS} or @dfn{ange-ftp} is being used.  This
+function should accept the prompt string as its first argument, and the
+default value as its second argument.
+
+@item w3-reuse-buffers
+@vindex w3-reuse-buffers
+Determines what happens when @code{w3-fetch} is called on a document
+that has already been loaded into another buffer.  Possible values are:
+@code{nil}, @code{yes}, and @code{no}.  @code{nil} will ask the user if
+Emacs-W3 should reuse the buffer (this is the default value).  A value of
+@code{yes} means assume the user wants to always reuse the buffer.  A
+value of @code{no} means assume the user always wants to re-fetch the
+document.
+@item w3-show-headers
+@vindex w3-show-headers
+This is a list of HTTP/1.0 headers to show at the end of a buffer.  All
+the headers should be in lowercase.  They are inserted at the end of the
+buffer in a <UL> list.  Alternatively, if this is simply @code{t}, then
+all the HTTP/1.0 headers are shown.  The default value is
+@code{nil}.
+@item w3-show-status, url-show-status
+@vindex url-show-status
+@vindex w3-show-status
+Whether to show progress messages in the minibuffer.
+@code{w3-show-status} controls if messages about the parsing are
+displayed, and @code{url-show-status} controls if a running total of the
+number of bytes transferred is displayed.  These Can cause a large
+performance hit if using a remote X display over a slow link, or a
+terminal with a slow modem.
+@item mm-content-transfer-encodings
+@vindex mm-content-transfer-encodings
+An assoc list of @var{Content-Transfer-Encodings} or
+@var{Content-Encodings} and the appropriate decoding algorithms for each.
+If the @code{cdr} of a node is a list, then this specifies the decoder is
+an external program, with the program as the first item in the list, and
+the rest of the list specifying arguments to be passed on the command line.
+If using an external decoder, it must accept its input from @code{stdin}
+and send its output to @code{stdout}.
+
+If the @code{cdr} of a node is a symbol whose function definition is
+non-@code{nil}, then that encoding can be handled internally.  The function
+is called with 2 arguments, buffer positions bounding the region to be
+decoded.  The function should completely replace that region with the
+unencoded information.
+
+Currently supported transfer encodings are: base64, x-gzip, 7bit, 8bit,
+binary, x-compress, x-hqx, and quoted-printable.
+@item url-uncompressor-alist
+@vindex url-uncompressor-alist
+An assoc list of file extensions and the appropriate uncompression
+programs for each.  This is used to build the Accept-encoding header for
+HTTP/1.0 requests.
+@item url-waisq-prog
+@vindex url-waisq-prog
+Name of the waisq executable on this system.  This should be the
+@file{waisq} program from think.com's wais8-b5.1 distribution.
+@end table
+
+@node More Help, Future Directions, , Top
+@chapter More Help
+@cindex Relevant Newsgroups
+@cindex Newsgroups
+@cindex Support
+For more help on Emacs-W3, please send me mail
+(@i{wmperry@@cs.indiana.edu}).  Several discussion lists have also been
+created for Emacs-W3.  To subscribe, send mail to
+@i{majordomo@@indiana.edu}, with the body of the message 'subscribe
+@var{listname} @var{<email addres>}'.  All other mail should go to
+@i{<listname>@@indiana.edu}.
+
+
+@itemize @bullet
+@item
+w3-announce -- this list is for anyone interested in Emacs-W3, and
+should in general only be used by me.  The gnu.emacs.sources newsgroup
+and a few other mailing lists are included on this.  Please only use
+this list for major package releases related to Emacs-W3.
+(@i{www-announce@@w3.org} is included on this list).
+@item
+w3-beta -- this list is for beta testers of Emacs-W3.  These brave souls test
+out not-quite stable code.
+@item
+w3-dev -- a list consisting of myself and a few other people who are
+interested in the internals of Emacs-W3, and doing active development work.
+Pretty dead right now, but I hope it will grow.
+@end itemize
+
+For more help on the World Wide Web in general, please refer to the
+comp.infosystems.www.* newsgroups.  There are also several discussion
+lists concerning the Web.  Send mail to @i{<listname>-request@@w3.org}
+with a subject line of 'subscribe <listname>'.  All mail should go to
+@i{<listname>@@w3.org}.  Administrative mail should go to
+@i{www-admin@@w3.org}.  The lists are:
+
+
+@itemize @bullet
+@item
+www-talk -- for general discussion of the World Wide Web, where its
+going, new features, etc.  All the major developers are subscribed to
+this list.
+@item
+www-announce -- for announcements concerning the World Wide Web.  Server
+changes, new servers, new software, etc.
+@end itemize
+
+As a last resort, mail me.  I'll try to answer as quickly as I can.
+
+@node Future Directions, Programming Interface, More Help, Top
+@chapter Future Directions
+Changes are constantly being made to the Emacs browser (hopefully all
+for the better).  This is a list of the things that are being worked on
+right now.
+
+:: WORK :: Revamp the todo list
+@node Programming Interface, Generalized ZONES, Future Directions, Top
+@comment  node-name,  next,  previous,  up
+@chapter Internals of Emacs-W3
+@cindex Internals of Emacs-W3
+@cindex Using Emacs-W3 from other programs
+This chapter attempts to explain some of the internal workings of
+Emacs-W3 and various data structures that are used.  It also details
+some functions that are useful for using some of the Emacs-W3
+functionality from within other programs, or extending the current
+capabilities of Emacs-W3.
+
+@ifinfo
+@menu
+* Generalized ZONES::           A generic interface to 'zones' of text
+                                that can contain information.
+* Global Variables::            Global variables used throughout Emacs-W3
+* Data Structures::             The various data structures used in Emacs-W3
+* Miscellaneous Functions::     Miscellaneous functions to interface
+                                with w3 and access its data structures
+* MIME functions::              MIME functions---parsing messages,
+                                mailcap files, and more.
+@end menu
+@end ifinfo
+@node Generalized ZONES, Global Variables,Programming Interface, Programming Interface, Programming Interface
+@comment  node-name,  next,  previous,  up
+@section Generalized ZONES
+Due to the many different @i{flavors} of Emacs in existence, the
+addition of data and font information to arbitrary regions of text has
+been generalized.  The following functions are defined for
+using/manipulating these @dfn{zones} of data.
+
+@table @code
+@findex w3-add-zone
+@item w3-add-zone (start end style data &optional highlight)
+Creates a zone between buffer positions start and end, with font
+information specified by style, and a data segment of data.  If the
+optional argument highlight is non-@code{nil}, then the region
+highlights when the mouse moves over it.
+
+
+@findex w3-zone-at
+@item w3-zone-at (point)
+Returns the zone at @var{point}.  Preference is given to hypertext
+links, then to form entry areas, then to inlined images.  So if an
+inlined image was part of a hypertext link, this would always return the
+hypertext link.
+
+@findex w3-zone-data
+@item w3-zone-data (zone)
+Returns the zone's data segment. The data structures used in Emacs-W3 are
+relatively simple.  They are just list structures that follow a certain
+format.  The two main data types are @dfn{form objects}, @dfn{link
+objects},and @dfn{inlined images}.  All the information for these types
+of links are stored as lists.
+
+@findex w3-zone-hidden-p
+@item w3-zone-hidden-p (zone)
+Returns @code{t} if and only if a zone is currently invisible.
+@findex w3-hide-zone
+@item w3-hide-zone (start end)
+Makes a region of text from @code{start} to @code{end} invisible.
+@findex w3-unhide-zone
+@item w3-unhide-zone (start end)
+Makes a region of text from @code{start} to @code{end} visible
+again.
+@findex w3-zone-start
+@item w3-zone-start (zone)
+Returns an integer that is the start of zone, as a buffer position.  In
+Emacs 18.xx, this returns a marker instead of an integer, but it can be
+used just like an integer.
+@findex w3-zone-end
+@item w3-zone-end (zone)
+Returns an integer that is the end of zone, as a buffer position.  In
+Emacs 18.xx, this returns a marker instead of an integer, but it can be
+used just like an integer.
+@findex w3-zone-eq
+@item w3-zone-eq (zone1 zone2)
+Returns @code{t} if and only if zone1 and zone2 represent the same
+region of text in the same buffer, with the same properties and
+data.
+@findex w3-delete-zone
+@item w3-delete-zone (zone)
+Removes zone from its buffer (or current buffer).  The return value is
+irrelevant, and varies for each version of Emacs.
+@findex w3-all-zones
+@item w3-all-zones ()
+Returns a list of all the zones contained in the current buffer.  Useful
+for extracting information about hypertext links or form entry
+areas.  Programs should not rely on this list being sorted, as the order
+varies with each version of Emacs.
+@item w3-zone-at (pt)
+Returns the zone at character position PT in the current buffer that is
+either a link or a forms entry area.  Returns @code{nil} if no link at
+point.
+
+@end table
+@findex w3-zone-data
+These data structures are what is generally returned by
+@code{w3-zone-data}.
+
+@node Global Variables, Data Structures , Generalized ZONES, Programming Interface
+@comment  node-name,  next,  previous,  up
+@section Global variables
+There are also some variables that may be useful when writing a program
+or function that interacts with Emacs-W3.  All of the
+@code{w3-current-*} variables are local to each buffer.
+
+
+@table @code
+@vindex url-current-mime-headers
+@item url-current-mime-headers
+An assoc list of all the MIME headers for the current document.  Keyed
+on the lowercase MIME header (e.g., @samp{content-type} or
+@samp{content-encoding}.
+@vindex url-current-server
+@item url-current-server
+Server that the current document was retrieved from.
+@vindex url-current-file
+@item url-current-file
+Filename of the current document
+@vindex url-current-type
+@item url-current-type
+A string representing what network protocol was used to retrieve the
+current buffer's document.  Can be one of http, gopher, file, ftp, news,
+or mailto.
+@vindex url-current-port
+@item url-current-port
+Port # of the current document.
+@vindex w3-current-last-buffer
+@item w3-current-last-buffer
+The last buffer seen before this one.
+@vindex w3-running-FSF19
+@item w3-running-FSF19
+This is @code{t} if and only if we are running in FSF Emacs 19.
+@vindex w3-running-xemacs
+@item w3-running-xemacs
+This is @code{t} if and only if we are running in Lucid Emacs, WinEmacs, or
+XEmacs.
+@end table
+
+@node Data Structures, Miscellaneous Functions, Global Variables, Programming Interface
+@comment  node-name,  next,  previous,  up
+@section Data Structures
+Form objects are used to store information about a FORM data entry area.
+@enumerate
+@item
+@code{'w3form}
+@item
+A cons pair of (METHOD . URL), where METHOD specifies what method to use
+to retrieve the form when it is submitted (e.g., @samp{GET}) and URL is a
+fully specified URL pointing at where to submit the FORM data to.
+@item
+The type of input area this is.  (e.g., @samp{CHECKBOX} or
+@samp{RADIO})
+@item
+The name of the input tag.  This is used when sending the form to the
+server, so that the server can tell what data is what.
+@item
+The default value of the input area.  Gotten from the INPUT tag at
+creation time.
+@item
+The current value of the input area.
+@item
+Whether the item is checked or not.  Only used for RADIO or CHECKBOX
+items.
+@item
+The size (in characters) of the input area.  Not used for CHECKBOX,
+RADIO, or TEXTAREA input areas.
+@item
+The maximum length of the input.  Only used for TEXT or PASSWORD input
+areas.
+@item
+The form that this input area belongs to.  Each form in the same buffer
+has a unique identifier assigned when the document is parsed.  It is
+used when the form is submitted to get only the data for the correct
+form.
+@item
+A list of strings that represent the choices for this input area.  Only
+used for SELECT tags.
+@item
+A string or @code{nil}, specifying the ID attribute on this input
+tag.
+@end enumerate
+
+A new development in the World Wide Web is the concept of collapsible
+areas of text.  If a zone controls one of these regions, it is marked
+with the @b{w3expandlist} property.  The format of this structure
+is:
+
+@enumerate
+@item
+@code{'w3expandlist}
+@item
+A marker representing the start of the hidden text as a buffer position.
+@item
+A marker representing the end of the hidden text as a buffer position.
+@end enumerate
+
+A zone with the @b{w3graphic} property is a link to an inlined image's
+source file.
+@enumerate
+@item
+@code{'w3graphic}
+@item
+@findex w3-follow-inlined-image
+The full URL of the inlined image.  This is only ever returned if the
+inlined image is the only extent under point, or
+@code{w3-follow-inlined-image} is invoked.
+@end enumerate
+
+A zone with the @b{w3} property is a full-fledged hypertext link to
+another document.
+@enumerate
+@item
+@code{'w3}
+@item
+The ID attribute of this link.  Used for resolving references to
+specific points within a document (e.g., @samp{file.html#sectionA}.
+@item
+The HREF attribute of this link.  This is a fully specified URL pointing
+at a network resource.  All relative directory references should have
+been removed before being stored in this structure.
+@item
+The text between the <A> and </A> tags.  This is used to build menus or
+to get the text of a link without doing a buffer-substring.
+@item
+The URN attribute of this link.  Currently not used for anything,
+waiting for the URN specification to be hammered out.
+@item
+The REL attribute of this link.  Specifies the links relevance to the
+current document.
+@item
+The REV attribute of this link.  Specifies the current documents
+relevance to the link.
+@item
+The METHODS attribute, which tells what methods can be used on this
+link.  (e.g., @samp{GET, HEAD, PUT}.
+@end enumerate
+@node Miscellaneous Functions, MIME functions, Data Structures, Programming Interface
+@comment  node-name,  next,  previous,  up
+@section Miscellaneous Functions
+I have done quite a bit of work trying to make a clean interface to the
+internals of Emacs-W3.
+
+@table @code
+@findex url-clear-tmp-buffer
+@vindex url-working-buffer
+@item url-clear-tmp-buffer
+Sets the current buffer to be @code{url-working-buffer}, creating it if
+necessary, and erase it.  This should usually be called before
+retrieving URLs.
+
+@findex w3-convert-html-to-latex
+@item w3-convert-html-to-latex
+Takes a buffer of HTML markup (which should be in
+@code{w3-working-buffer}), and convert it into LaTeX.  This is an
+adaptation of the simple sed scripts from Cern.  Does as good a job as
+the html2latex program, and I usually prefer its formatting over
+html2latex's.
+
+@findex w3-fetch
+@item w3-fetch
+Takes a URL as its only argument. It then attempts to retrieve the URL.
+For example: @samp{(w3-fetch "http://cs.indiana.edu/")} would retrieve
+the Indiana University CS home page and parse it as HTML.
+
+
+@findex url-generate-new-buffer-name
+@item url-generate-new-buffer-name
+Takes a string, and returns the first unique buffer name using that
+string as a base.  For example @samp{(url-generate-new-buffer-name
+"new-buff")} would return @samp{"new-buff<1>"} if buffer @code{new-buff}
+already existed.
+
+
+@findex url-generate-unique-filename
+@item url-generate-unique-filename
+Returns a string that represents a unique filename in the /tmp
+directory.  For example, @samp{(url-generate-unique-filename)} would
+return @samp{"/tmp/url-tmp129440"}.  The filename is arrived at by using
+a unique prefix (url-tmp), the uid of the current user (12944 in my
+case), and a number that is incremented if a file already exists.
+
+
+@findex url-buffer-visiting
+@item url-buffer-visiting (url)
+Returns the name of a buffer (if any) that is visiting URL.
+
+@findex url-create-mime-request
+@vindex url-request-extra-headers
+@vindex url-request-data
+@vindex url-request-method
+@vindex url-mime-accept-string
+@vindex url-current-server
+@cindex Creating an HTTP request
+@item url-create-mime-request (fname ref-url)
+Creates a MIME request for the file fname.  The Referer: field of the
+HTTP/1.0 request is set to the value of ref-url if necessary.  Returns a
+string that can be sent to an HTTP server.  The request uses several
+variables that control how the request looks.
+
+
+If the value of @code{url-request-extra-headers} is non-@code{nil}, then
+it is used as extra MIME headers when an HTTP/1.0 request is
+created.
+
+@findex url-get-url-at-point
+@item url-get-url-at-point
+Returns the url at a point specified by an optional argument.  If no
+argument is given to the function, the current buffer position is used.
+Tries to find the URL closest to that point, but does not change the
+users position in the buffer.  Has a preference for looking backward
+when not directly on a URL.
+
+
+@findex url-hexify-string
+@item url-hexify-string
+Takes a string and replaces any characters that are not acceptable in a
+URL with the "escaped" encoding that is standard for URLs (replaces the
+character with a % followed by the hexadecimal representation of the
+ASCII value of the character).  For example, @samp{(url-hexify-string
+"this is a test")} would return @samp{"this%20is%20a%20test"}.
+
+
+@findex url-open-stream
+@item url-open-stream
+Takes the same parameters as @code{open-network-stream}, and functions
+similarly.  It takes a process name, a buffer name, a host name, and a
+port number or server name.  It attempts to open a network connection to
+the remote host on the specified port/service name, with output going to
+the buffer.  It returns the process object that is the network
+connection.
+
+
+@findex url-retrieve
+@item url-retrieve
+:: WORK :: Need to describe the url-request-* variables and the no-cache and
+   expected-md5 arguments to url-retrieve ::
+
+
+@findex url-unhex-string
+@item url-unhex-string
+This is the opposite of @code{url-hexify-string}.  It removes any %XXX
+encoded characters in a string.  For example @samp{(url-unhex-string
+"this%20is%20a%20test")} would return @samp{"this is a test"}.
+
+@findex w3-view-this-url
+@item w3-view-this-url
+Returns the URL of the hyperlink under point (if no hyperlink is under
+point, then it returns @code{nil}).  If the optional argument is
+@code{nil}, then the URL is also displayed in the minibuffer.
+
+
+@findex url-view-url
+@item url-view-url
+Returns the URL of current document.  If the optional argument is
+@code{nil}, then the URL is also displayed in the minibuffer.
+
+@end table
+
+@node MIME functions, Reporting Bugs, Miscellaneous Functions, Programming Interface
+@section MIME Functions
+@table @code
+@item mm-compose-type(TYPE)
+Composes a body section of MIME-type TYPE.  This uses the compose field
+of a mailcap entry to generate the data, and returns a string that
+contains the data, with a correct content-type header.
+
+@item mm-extension-to-mime(EXTN)
+Returns the MIME content-type of the file extension EXTN.
+@item mm-mime-info(ST ND REQUEST)
+Returns the mime viewer command for a specific MIME type.  If ST is a
+number, then the MIME type is the @code{buffer-substring} between ST and
+ND, otherwise ST should be a string specifying the MIME type and
+associated data.  Returns @code{nil} if the specified type is not found.
+
+
+Expects a complete content-type header line as its argument.  This can
+be simple like text/html, or complex like text/plain; charset=blah; foo=bar
+
+
+Third argument REQUEST specifies what information to return.  If it is
+@code{nil} or the empty string, the viewer (second field of the mailcap
+entry) is returned.  If it is a string, then the mailcap field
+corresponding to that string is returned (print, description, whatever).
+If a number, then all the information for this specific viewer is
+returned.
+@item mm-parse-mailcap(FILE)
+Parses the mailcap file specified by FILE.
+@item mm-parse-mailcaps(PATH)
+Parses the default mailcap files.  Optional argument PATH specifies a
+UNIX-style path of where to find the mailcap files.  This function must
+be run before the rest of the mm-* functions.
+@item mm-parse-mimetype-file(FILE)
+Parses out a mime-types file specified by FILE.
+@item mm-parse-mimetypes(PATH)
+Parses the default mimetypes files.  Optional argument PATH specifies a
+UNIX-style path of where to find the mimetypes files.
+@end table
+
+@node Reporting Bugs, Installing SSL, MIME functions, Top
+@appendix Reporting Bugs
+@cindex Reporting Bugs
+@cindex Bugs
+@cindex Contacting the author
+
+:: WORK :: Reporting bugs needs work.
+
+@node Installing SSL, Using PGP/PEM, Reporting Bugs, Top 
+@appendix Installing SSL
+@cindex HTTP/1.0 Authentication
+@cindex Secure Sockets Layer
+@cindex SSL
+@cindex Gag Puke Retch
+@cindex Exportability
+@cindex Export Restrictions
+In order to use SSL in Emacs-W3, an implementation of SSL is necessary.
+These are the implementations that I am aware of:
+
+@table @code
+@item SSLRef 2.0
+Available from Netscape Communications @footnote{http://www.netscape.com/newsref/std/sslref.html}.  This requires the
+RSARef library, which is not exportable.  The RSARef library is
+available from ftp://ftp.rsa.com/rsaref/
+@item SSLeay 0.4
+An implementation by Eric Young (eay@@mincom.oz.au) that is free for
+commerial or noncommercial use, and was developed completely outside the
+US by a non-US citizen.  More information can be found at
+ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/
+@end table
+
+@vindex ssl-program-name
+Whichever reference implementation is used (I recommend the SSLeay
+distribution, just to thumb a nose at the NSA :), there is a program
+that can be run in a subprocess that takes a hostname and port number on
+the command line, and reads/writes to standard input/output (the
+Netscape implementation comes with one of these by default).  Set the
+variable @code{ssl-program-name} to point to this program.
+
+
+This should be all the configuration necessary.  In the future, I will
+be distributing a set of patches to Emacs 19.xx and XEmacs 19.xx to
+SSL-enable them, for the sake of speed.
+
+@node Using PGP/PEM, Mailcap Files, Installing SSL, Top
+@appendix Using PGP/PEM
+@cindex HTTP/1.0 Authentication
+@cindex Public Key Cryptography
+@cindex Authentication, PGP
+@cindex Authentication, PEM
+@cindex RIPEM
+@cindex Public Key Cryptography
+@cindex PGP
+@cindex Pretty Good Privacy
+@cindex Encryption
+@cindex Security
+@cindex ITAR must die
+@cindex Stupid export restrictions
+@cindex Support your local crypto-anarchist
+@cindex NSA freaks
+Most of this chapter has been reproduced from the original documentation
+written by Rob McCool (@i{robm@@netscape.com})@footnote{See
+http://hoohoo.ncsa.uiuc.edu/docs/PEMPGP.html for the original}.
+
+RIPEM is 'Riordan's Internet Privacy Enhanced Mail', and is currently on
+version 1.2b3.  US citizens can ftp it from
+ftp://ripem.msu.edu/pub/crypt/ripem.
+
+PGP is 'Pretty Good Privacy', and is currently on version 2.6.  The
+legal controversies that plagued earlier versions have been resolved, so
+this is a competely legal program now.  There is also a legal version
+for european users, called 2.6ui (the Unofficial International
+version).
+
+PGP and PEM are programs that allow two parties to communicate in a way
+which does not allow third parties to read them, and which certify that
+the person who sent the message is really who they claim they are.
+
+
+PGP and PEM both use RSA encryption.  The U.S.  government has strict
+export controls over foreign use of this technology, so people outside
+the U.S.  may have a difficult time finding programs which perform the
+encryption.
+
+A working copy of either Pretty Good Privacy or RIPEM is required.  You
+should be familiar with the program and have generated a public/private
+key pair.
+
+
+Currently, the protocol has been implemented with PEM and PGP using
+local key files on the server side, and on the client side with PEM
+using finger to retrieve the server's public key.
+
+Parties who wish to use Emacs-W3 with PEM or PGP encryption will need to
+communicate beforehand and find a tamper-proof way to exchange their
+public keys.
+
+Pioneers get shot full of arrows.  This work is currently in the
+experimental stages and thus may have some problems that I have
+overlooked.  The only known problem that I know about is that the
+messages are currently not timestamped.  This means that a malicious
+user could record the encrypted message with a packet sniffer and repeat
+it back to the server ad nauseum.  Although they would not be able to
+read the reply, if the request was for something being charged for, this
+could be very inconvenient.
+
+This protocol is almost word-for-word a copy of Tony Sander's RIPEM
+based scheme, generalized a little.  Below, wherever PEM is used,
+replace it with PGP, and the behaviour should remain the same.
+
+@example
+*Client:*
+
+GET /docs/protected.html HTTP/1.0
+UserAgent: Emacs-W3/2.1.x
+
+*Server:* 
+
+HTTP/1.0 401 Unauthorized
+WWW-Authenticate: PEM entity="webmaster@@hoohoo.ncsa.uiuc.edu"
+Server: NCSA/1.1
+
+*Client:* 
+
+GET / HTTP/1.0
+Authorization: PEM entity="robm@@ncsa.uiuc.edu"
+Content-type: application/x-www-pem-request
+
+--- BEGIN PRIVACY-ENHANCED MESSAGE ---
+this is the real request, encrypted
+--- END PRIVACY-ENHANCED MESSAGE ---
+
+*Server:* 
+
+HTTP/1.0 200 OK
+Content-type: application/x-www-pem-reply
+
+--- BEGIN PRIVACY-ENHANCED MESSAGE ---
+this is the real reply, encrypted
+--- END PRIVACY-ENHANCED MESSAGE ---
+That's it.  
+@end example
+
+@cindex Mailcrypt
+Emacs-W3 uses the excellent @i{mailcrypt}@footnote{Available from
+http://www.cs.indiana.edu/LCD/cover.html?mailcrypt} package written by
+Jin S Choi (@i{jsc@@mit.edu}).  This package takes care of calling ripem
+and/or pgp with the correct arguments.  Please see the documentation at
+the top of mailcrypt.el for instructions on using mailcrypt.  All bug
+reports about mailcrypt should go to Jin S Choi, but bugs about how I
+use it in Emacs-W3 should of course be directed to me.
+
+@node Mailcap Files, General Index, Using PGP/PEM, Top
+@appendix Mailcap Files
+NCSA Mosaic and almost all other WWW browsers rely on a separate file
+for mapping MIME types to external viewing programs.  This takes some of
+the burden off of browser developers, so each browser does not have to
+support all image formats, or postscript, etc.  Instead of having the
+users of Emacs-W3 duplicate this in lisp, this file can be parsed using
+the @code{mm-parse-mailcaps} function.  This function is called each
+time Emacs-W3 is loaded.  It tries to locate mimetype files in several
+places. If the environment variable @code{MAILCAPS} is nonempty, then
+this is assumed to specify a UNIX-like path of mimetype files (this is a
+colon separated string of pathnames).  If the @code{MAILCAPS}
+environment variable is empty, then Emacs-W3 looks for these
+files:
+
+@enumerate
+@item
+@file{~/.mailcap}
+@item
+@file{/etc/mailcap}
+@item
+@file{/usr/etc/mailcap}
+@item
+@file{/usr/local/etc/mailcap}
+@end enumerate
+
+This format of this file is specified in RFC 1343, but a brief synopsis
+follows (this is taken verbatim from sections of RFC 1343).
+
+Each mailcap file consists of a set of entries that describe the proper
+handling of one media type at the local site.  For example, one line
+might tell how to display a message in Group III fax format.  A mailcap
+file consists of a sequence of such individual entries, separated by
+newlines (according to the operating system's newline
+conventions). Blank lines and lines that start with the "#" character
+(ASCII 35) are considered comments, and are ignored.  Long entries may
+be continued on multiple lines if each non-terminal line ends with a
+backslash character ('\', ASCII 92), in which case the multiple lines
+are to be treated as a single mailcap entry.  Note that for such
+"continued" lines, the backslash must be the last character on the line
+to be continued.
+
+Each mailcap entry consists of a number of fields, separated by
+semi-colons.  The first two fields are required, and must occur in the
+specified order.  The remaining fields are optional, and may appear in
+any order.
+
+The first field is the content-type, which indicates the type of data
+this mailcap entry describes how to handle.  It is to be matched against
+the type/subtype specification in the "Content-Type" header field of an
+Internet mail message.  If the subtype is specified as "*", it is
+intended to match all subtypes of the named content-type.
+
+The second field, view-command, is a specification of how the message or
+body part can be viewed at the local site.  Although the syntax of this
+field is fully specified, the semantics of program execution are
+necessarily somewhat operating system dependent.
+
+The optional fields, which may be given in any order, are as follows:
+@itemize @bullet
+@item
+The "compose" field may be used to specify a program that can be used to
+compose a new body or body part in the given format.  Its intended use
+is to support mail composing agents that support the composition of
+multiple types of mail using external composing agents.  As with the
+view- command, the semantics of program execution are operating system
+dependent.  The result of the composing program may be data that is not
+yet suitable for mail transport---that is, a Content-Transfer-Encoding
+may need to be applied to the data.
+@item
+The "composetyped" field is similar to the "compose" field, but is to be
+used when the composing program needs to specify the Content-type header
+field to be applied to the composed data.  The "compose" field is
+simpler, and is preferred for use with existing (non-mail-oriented)
+programs for composing data in a given format.  The "composetyped" field
+is necessary when the Content-type information must include auxilliary
+parameters, and the composition program must then know enough about mail
+formats to produce output that includes the mail type
+information.
+@item
+The "edit" field may be used to specify a program that can be used to
+edit a body or body part in the given format.  In many cases, it may be
+identical in content to the "compose" field, and shares the
+operating-system dependent semantics for program execution.
+@item
+The "print" field may be used to specify a program that can be used to
+print a message or body part in the given format.  As with the
+view-command, the semantics of program execution are operating system
+dependent.
+@item
+The "test" field may be used to test some external condition (e.g.  the
+machine architecture, or the window system in use) to determine whether
+or not the mailcap line applies.  It specifies a program to be run to
+test some condition.  The semantics of execution and of the value
+returned by the test program are operating system dependent.  If the
+test fails, a subsequent mailcap entry should be sought.  Multiple test
+fields are not permitted---since a test can call a program, it can
+already be arbitrarily complex.
+@item
+The "needsterminal" field indicates that the view-command must be run on
+an interactive terminal.  This is needed to inform window-oriented user
+agents that an interactive terminal is needed.  (The decision is not
+left exclusively to the view-command because in some circumstances it
+may not be possible for such programs to tell whether or not they are on
+interactive terminals.)  The needsterminal command should be assumed to
+apply to the compose and edit commands, too, if they exist.  Note that
+this is NOT a test---it is a requirement for the environment in which
+the program will be executed, and should typically cause the creation of
+a terminal window when not executed on either a real terminal or a
+terminal window.
+@item
+The "copiousoutput" field indicates that the output from the
+view-command will be an extended stream of output, and is to be
+interpreted as advice to the UA (User Agent mail- reading program) that
+the output should be either paged or made scrollable. Note that it is
+probably a mistake if needsterminal and copiousoutput are both
+specified.
+@item
+The "description" field simply provides a textual description,
+optionally quoted, that describes the type of data, to be used
+optionally by mail readers that wish to describe the data before
+offering to display it.
+@item
+The "x11-bitmap" field names a file, in X11 bitmap (xbm) format, which
+points to an appropriate icon to be used to visually denote the presence
+of this kind of data.
+@item
+Any other fields beginning with "x-" may be included for local or
+mailer-specific extensions of this format.  Implementations should
+simply ignore all such unrecognized fields to permit such extensions,
+some of which might be standardized in a future version of this
+document.
+@end itemize
+
+@node General Index, Key Index, Mailcap Files, Top
+@appendix General Index
+@printindex fn
+@node Key Index, , General Index, Top
+@appendix Key Index
+@printindex ky
+@contents
+@bye

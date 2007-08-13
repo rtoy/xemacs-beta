@@ -1,0 +1,177 @@
+/*       File: default.css
+**    Purpose: Default Stylesheet for Emacs-W3
+**       Info: Copyright (c) 1995 William M. Perry <wmperry@spry.com>
+**    Created: William M. Perry <wmperry@spry.com>, Aug-31-1995
+** Maintainer: William M. Perry <wmperry@spry.com>
+**
+**  This contains the top level fallback default styles for Emacs-w3
+*/
+
+/*
+** Headers
+*/
+
+h1,h2,h3,
+h4,h5,h6  {
+	    display: block;
+            font-family : utopia charter times itc-zapf-chancery inja;
+            font-weight : bold;
+          }
+
+/*
+** Since Emacs-19 doesn't handle mixed-sized fonts very well just yet,
+** we only use them under XEmacs.  Hopefully, this will change soon.
+*/
+
+:xemacs:
+      h1  { font-size : 24pt }
+      h2  { font-size : 18pt }
+      h3  { font-size : 16pt }
+      h4  { font-size : 14pt }
+      h5  { font-size : 12pt }
+      h6  { font-size : 10pt }
+
+/*
+** Best we can do under Emacs-19 is use the default font and try to make
+** the headers stand out somehow.
+*/
+
+:emacs:
+h1,h2,h3,
+h4,h5,h6  { font-style: small-caps; text-decoration: underline }
+
+:normal:
+       p  { display: block }
+
+/*
+** List formatting instructions
+*/
+
+ dl,ul,ol {
+ 	    display: block;
+	    margin-left: 5em
+	  }
+
+       li { display: list-item }
+       dt { font-weight: bold; display: block }
+       dd { insert-before: 3em; display: list-item }
+
+/*
+** All items that require fixed-width fonts
+*/
+
+   pre,xmp,
+  plaintext { font-family: monospace; display: block }
+key,code,tt { font-family: monospace }
+
+/*
+** All logical emphasis tags, the way god intended
+*/
+
+  strong,em { font-weight: bold }
+        dfn { font-style: italic }
+   s,strike { text-decoration: line-through }
+        sub { text-position: sub }
+        sup { text-position: sup }
+     secret { text-transform: rot13 }
+
+/*
+** Physical emphasis - spawn of evil
+*/
+          b { font-weight: bold }
+	  i { font-style: italic }
+          u { text-decoration: underline }
+      blink { text-decoration: blink }
+
+/*
+** Various and sundry
+*/
+         br { display: list-item }
+         hr { display: list-item }
+    hr[SRC] { replace: {SRC} }
+
+
+/*
+** Hypertext link coloring
+*/
+
+a         { cursor: hand2  }
+a.link    { color: #FF0000 }
+a.visited { color: #B22222 }
+a.active  { color: #FF0000 }
+
+/*
+** Various other character-level formatting issues
+*/
+
+ address { align : right }
+abstract { font-style : bold & italic ; align : indent }
+   quote { font-style : italic ; align : indent }
+
+/*
+** Now for monochrome defaults
+** Anything up to the next :xxx: media descriptor is only used if
+** you are on that type of media.
+*/
+:mono:
+   a.link { color: black; text-decoration: underline }
+a.visited { color: black; text-decoration: underline }
+ a.active { color: white }
+
+/*
+** All the TTY specific formatting
+*/
+
+:tty:
+
+/*
+** First, handle some stuff for generic TTYs to emulate our old
+** behaviour with w3-delimit-links and a subset of w3-delimit-emphasis
+*/
+
+h1,h2,h3,
+h4,h5,h6 {
+           insert-before: *;
+           insert-after: *
+         }
+
+a.visited{
+           insert.before: "{{";
+           insert.after: "}}"
+         }
+
+a.link   {
+           insert.before: "[[";
+           insert.after: "]]"
+         }
+
+/* End Generic TTY */
+
+:ansi-tty:
+
+/*
+** Now comes the cool TTY stuff.  You will need to be using XEmacs 19.14
+** or later (or Emacs 19.30 under DOS) in order to get any benefit from
+** these whatsoever.  But if you are using one of these, wow, cool, eh?
+**
+** ANSI specifies these colors, and most (all?) TTYs that support color
+** will generally have 2 versions.  One normal and one bright or 'standout'
+** version.
+**
+**  Color     R     G     B
+** --------------------------
+**   white - 1.0 , 1.0 , 1.0
+**    cyan - 0.0 , 1.0 , 1.0
+** magenta - 1.0 , 0.0 , 1.0
+**    blue - 0.0 , 0.0 , 1.0
+**  yellow - 1.0 , 1.0 , 0.0
+**   green - 0.0 , 1.0 , 0.0
+**     red - 1.0 , 0.0 , 0.0
+**   black - 0.0 , 0.0 , 0.0
+*/
+
+h1,h2,h3,
+h4,h5,h6  { color : cyan     }
+a.visited { color : magenta  }
+   a.link { color : red      }
+ a.active { color : yellow   }

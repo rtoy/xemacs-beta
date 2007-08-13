@@ -1,0 +1,231 @@
+This README file describes the emacs lisp package hm--html-menus-4.16.
+
+The package provides various popup and pulldown menus and functions
+for the html-mode from Marc Andreessen, and support for the w3-package
+from William M. Perry and the file html-view.el from Ron Tapia.
+
+Look at the file NEWS, to see what is new in this release. 
+
+You should (but need not) also get the w3 package from:
+
+ cs.indiana.edu:/pub/elisp/w3/w3.tar.z
+
+which provides an world wide web browser mode for the xemacs, emacs
+and epoch.
+
+
+This package is tested with the xemacs 19.13 on Suns with
+SunOS 4.1.3 and on PC's with linux. But it should work also on other
+(possibly only UNIX ?) platforms.
+
+Read the file README-EMACS-19, if you want to use this package with 
+GNU Emacs 19.
+
+Thanks to Richard Stallman, who has helped me to port this package to
+the Emacs 19 and thanks to John Ladwig, who has corrected a lot of the
+text and comments in this package and to all the other people, who had
+provided code, ideas, bug fixes or bug reports for this package.
+
+
+The package consists of the following files:
+
+README				: this file;
+README-EMACS-19			: only for the GNU Emacs 19 user;
+ANNOUNCEMENT			: Text of the announcement of this package;
+LSM				: Entry for the Linux Software Map;
+NEWS				: Change logfile;
+adapt.el			: provides functions to use this package 
+				  with the GNU Emacs 19
+hm--html.el			: provides functions to write html pages;
+				  some of these functions are similar to
+				  functions of the html-mode.el;
+hm--html-keys.el		: provides the new keybindings;
+hm--html-menu.el		: provides the menus; this is the main file;
+hm--html-configuration.el	: configuration file for the html mode;
+				  choose this as system configuration file
+hm--date.el			: Defines the function hm--date, which 
+				  returns the date in the format 
+				  "day-month-year" like "30-Jun-1993".
+html-mode.el			: Marc Andreessen's html-mode file; use this
+				  one if your html-mode.el is older or 
+				  doesn't work together with my files;
+				  I've changed it, to fix a bug !
+html-view.el			: Ron Tapia's html-view.el to view html-pages
+				  in the Xmosaic; it is patched for use
+				  with the xemacs;
+templates.doc			: describes the syntax of the templates 
+				  provided in the file tmpl-minor-mode.el
+tmpl-minor-mode.el		: provides functions for the tmpl-minor-mode;
+				  with this mode you can expand templates,
+				  which are described in the file
+				  templates-syntax.doc (look at the files
+				  command-description.tmpl and frame.tmpl for
+				  examples);
+				  templates can be expanded automatically, if
+				  you include a file with templates via the
+				  html pulldown menu item "Templates ...";
+command-description.tmpl	: Templatefile for the use with the
+				  tmpl-minor-mode;
+frame.tmpl			: Templatefile, provides a simple frame;
+emacs-19/*			: only for the GNU emacs 19 user;
+
+
+
+
+
+INSTALLATION:
+=============
+
+Note: In this version the setting of the environment variables 
+HTML_CONFIG_FILE and HTML_USER_CONFIG_FILE are no longer necessary,
+if you put the user configuration file in the home directrory and
+the system (site) configuration file in one of the load path directories
+of your xemacs or GNU Emacs 19.
+
+1.	Put all the *.el files (except .hm--html-configuration.el and
+	the files in the subdirectory emacs-19)
+	in one of your xemacs (or emacs) lisp load directories 
+	(i.e. lisp/packages).
+
+2.	Put the following in your .emacs (or default.el or site-init.el):
+
+	(autoload 'html-mode "hm--html-menu" "HTML major mode." t)
+	  (or (assoc "\\.html$" auto-mode-alist)
+            (setq auto-mode-alist (cons '("\\.html$" . html-mode) 
+				        auto-mode-alist)))
+
+	(autoload 'tmpl-expand-templates-in-buffer "tmpl-minor-mode"
+	  "Expand all templates in the current buffer." t)
+
+        (autoload 'html-view-start-mosaic "html-view" "Start Xmosaic." t)
+        (autoload 'html-view-view-buffer 
+	  "html-view"
+	  "View the current buffer in Xmosaic."
+	  t)
+        (autoload 'html-view-view-file 
+	  "html-view"
+	  "View a file in Xmosaic."
+	  t)
+        (autoload 'html-view-goto-url
+	  "html-view"
+	  "Goto url in Xmosaic."
+	  t)
+        (autoload 'html-view-get-display
+	  "html-view"
+	  "Get the display for Xmosaic (i.e. hostxy:0.0)."
+	  t)
+        (autoload 'w3-preview-this-buffer "w3" "WWW Previewer" t)
+	(autoload 'w3 "w3" "WWW Browser" t)
+	(autoload 'w3-open-local "w3" "Open local file for WWW browsing" t)
+	(autoload 'w3-fetch "w3" "Open remote file for WWW browsing" t)
+	(autoload 'w3-use-hotlist "w3" "Use shortcuts to view WWW docs" t)
+
+	The above lines assume that you have not installed the older
+	html-mode.el.  You should remove the appropriate (old) lines,
+	if that isn't true. It could also be, that you've already the
+        autoload lines for the w3 package in your emacs.
+
+3.	Set the environment variable HTML_CONFIG_FILE to the html system 
+	configuration file i.e.:	
+	setenv HTML_CONFIG_FILE /usr/xemacs/lisp/hm--html-configuration.el
+
+4.	Set (if you want) the environment variable HTML_USER_CONFIG_FILE to 
+	the html user configuration file i.e.:
+	setenv HTML_USER_CONFIG_FILE ~/.hm--html-configuration.el
+	And put the file .hm--html-configuration.el in your Home directory.
+	An example for this user specific file is given below.
+
+5.	Check the files hm--html-configuration.el and 
+	.hm--html-configuration.el whether all variables are set suitable for 
+	you and your site or not. You can make changes in both of these files.
+	Note that .hm--html-configuration.el precedes the settings in
+	hm--html-configuration.el, because it is the user specific
+	configuration file. So you should made site specific changes in 
+	hm--html-configuration.el.
+
+	Look at first at the following variables:
+
+		hm--html-signaturefile
+		hm--html-username
+		hm--html-template-dir
+		hm--html-favorite-http-server-host-name
+		html-document-previewer
+		html-view-html-document-previewermosaic-command
+		w3-default-homepage
+
+6.	If you want to use templatefiles, you should put these files
+	in the directory to which `hm--html-template-dir' points.
+	You can use the file command-description.tmpl as
+	an example.
+
+7.	If you don't want to use the feature of adding html comments
+	about the creation date and author and with a change log, then
+	you should set the following three variables to nil:
+ 		 hm--html-automatic-changed-comment
+		 hm--html-automatic-created-comment
+
+8.      If you don't want to set a date in the title line, than you should
+        set the following to nil:
+		 hm--html-automatic-new-date
+
+The following is an example for a user specific configuration file
+called .hm--html-configuration.el. You should put such a file in your
+home directory and put all the variable settings in it, which are user
+specific. 
+
+---- BEGIN of .hm--html-configuration.el ----
+;;; Private html configuration file
+
+;; Signature file
+(setq hm--html-signature-file 
+      "http://www.tnt.uni-hannover.de:80/data/info/www/tnt/org/tnt/whois/wissmit/muenkel.html")
+
+;; Username (Only necessary if it differs from the passwd entry)
+(setq hm--html-username "Heiko Münkel")
+
+
+;; X Window System display for the html-view
+(setq html-view-display "daedalus:0.0")
+
+
+;; Use the expert menus?
+(setq hm--html-expert t)
+
+
+;; Delete the automounter path prefix /tmp_mount
+(setq hm--html-delete-wrong-path-prefix "/tmp_mount")
+
+
+;;;
+;
+; W3 
+
+;; Default Home Page for w3-mode in lemacs or GNU Emacs
+(setq w3-default-homepage "file:/home/muenkel/data/docs/www/home.html")
+---- END of .hm--html-configuration.el ----
+
+
+Every hm--*.el file has a description and installation part. Look at first
+at these parts, if you have any questions.
+
+Look at first at the configuration files, if you have problems with
+this package!
+
+
+Sorry, I know that the documentation of this package isn't so good as
+it should be, but at the moment I've not the time to make a better
+one.
+
+There is also a html documentation about the package. You can find it on:
+http://www.tnt.uni-hannover.de:80/data/info/www/tnt/soft/info/www/html-editors/hm--html-menus/overview.html
+
+
+Please send any bug reports, fixes or comments to 
+		muenkel@daedalus.tnt.uni-hannover.de
+
+
+I hope these files will be useful,
+
+Heiko
+
+

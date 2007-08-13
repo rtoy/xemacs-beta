@@ -1,0 +1,91 @@
+;;; buffer.el --- buffer routines taken from C
+;;; Copyright (C) 1985-1989, 1992-1995 Free Software Foundation, Inc.
+;;; Copyright (C) 1995 Sun Microsystems.
+;;; Copyright (C) 1995, 1996 Ben Wing.
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+;;; Synched up with: FSF 19.30 buffer.c.
+
+;;; Code:
+
+(defun switch-to-buffer (bufname &optional norecord)
+  "Select buffer BUFNAME in the current window.
+BUFNAME may be a buffer or a buffer name.
+Optional second arg NORECORD non-nil means
+do not put this buffer at the front of the list of recently selected ones.
+
+WARNING: This is NOT the way to work on another buffer temporarily
+within a Lisp program!  Use `set-buffer' instead.  That avoids messing with
+the window-buffer correspondences."
+  (interactive "BSwitch to buffer: ")
+  ;; #ifdef I18N3
+  ;; #### Doc string should indicate that the buffer name will get
+  ;; translated.
+  ;; #endif
+  (if (eq (minibuffer-window) (selected-window))
+      (error "Cannot switch buffers in minibuffer window"))
+  (if (window-dedicated-p (selected-window))
+      (error "Cannot switch buffers in a dedicated window"))
+  (let (buf)
+    (if (null bufname)
+	(setq buf (other-buffer (current-buffer)))
+      (setq buf (get-buffer bufname))
+      (if (null buf)
+	  (progn
+	    (setq buf (get-buffer-create bufname))
+	    (set-buffer-major-mode buf))))
+    (push-window-configuration)
+    (set-buffer buf)
+    (or norecord (record-buffer buf))
+    (set-window-buffer (if (eq (selected-window) (minibuffer-window))
+			   (next-window (minibuffer-window))
+			 (selected-window))
+		       buf)
+    buf))
+
+(defun pop-to-buffer (bufname &optional not-this-window-p on-frame)
+  "Select buffer BUFNAME in some window, preferably a different one.
+If BUFNAME is nil, then some other buffer is chosen.
+If `pop-up-windows' is non-nil, windows can be split to do this.
+If optional second arg NOT-THIS-WINDOW-P is non-nil, insist on finding
+another window even if BUFNAME is already visible in the selected window.
+If optional third arg is non-nil, it is the frame to pop to this
+buffer on."
+  ;; #ifdef I18N3
+  ;; #### Doc string should indicate that the buffer name will get
+  ;; translated.
+  ;; #endif
+  (let (buf window frame)
+    (if (null bufname)
+	(setq buf (other-buffer (current-buffer)))
+      (setq buf (get-buffer bufname))
+      (if (null buf)
+	  (progn
+	    (setq buf (get-buffer-create bufname))
+	    (set-buffer-major-mode buf))))
+    (push-window-configuration)
+    (set-buffer buf)
+    (setq window (display-buffer buf not-this-window-p on-frame))
+    (setq frame (window-frame window))
+    ;; if the display-buffer hook decided to show this buffer in another
+    ;; frame, then select that frame.
+    (if (not (eq frame (selected-frame)))
+	(select-frame frame))
+    (record-buffer buf)
+    (select-window window)
+    buf))

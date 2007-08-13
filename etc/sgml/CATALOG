@@ -1,0 +1,28 @@
+PUBLIC	"-//IETF//DTD HTML//EN"  			html-netscape.dtd
+PUBLIC	"-//IETF//DTD HTML Netscape//EN"		html-netscape.dtd
+PUBLIC	"-//IETF//ENTITIES Added Latin 1 for HTML//EN"	ISOlat1.sgml
+PUBLIC  "ISO 8879-1986//ENTITIES Added Latin 1//EN//HTML" ISOlat1.sgml
+PUBLIC "-//W3C//DTD HTML 3.2//EN"			html-3.2.dtd
+PUBLIC  "-//IETF//DTD HTML//EN//3.0"		        html-3.dtd
+PUBLIC  "-//W3O//DTD W3 HTML 3.0//EN//"         	html-3.dtd
+PUBLIC  "-//W3O//DTD W3 HTML 3.0//EN"           	html-3.dtd
+PUBLIC  "-//IETF//DTD HTML 3.0//EN"             	html-3.dtd
+PUBLIC  "-//IETF//DTD HTML 3.0//EN//"           	html-3.dtd
+PUBLIC  "-//IETF//DTD HTML Level 3//EN"         	html-3.dtd
+PUBLIC  "-//IETF//DTD HTML Level 3//EN//3.0"    	html-3.dtd
+PUBLIC  "-//IETF//DTD HTML//EN//2.0"            	html-2.dtd
+PUBLIC  "-//IETF//DTD HTML 2.0//EN"             	html-2.dtd
+PUBLIC  "-//IETF//DTD HTML Level 2//EN"         	html-2.dtd
+PUBLIC  "-//IETF//DTD HTML Level 2//EN//2.0"    	html-2.dtd
+PUBLIC "-//Microsoft//DTD Internet Explorer 2.0 HTML//EN"       iehtml.dtd
+PUBLIC "-//Microsoft//DTD Internet Explorer 2.0 HTML Strict//EN" iehtml-s.dtd
+PUBLIC "-//Microsoft//DTD Internet Explorer 2.0 Tables//EN"     ietables.dtd
+PUBLIC "-//Netscape Comm. Corp.//DTD HTML//EN"          html-netscape.dtd
+PUBLIC "-//WebTechs//DTD Mozilla HTML//EN"              html-netscape.dtd
+PUBLIC "-//WebTechs//DTD Mozilla HTML 2.0//EN"          html-netscape.dtd
+PUBLIC "-//Netscape Comm. Corp.//DTD Strict HTML//EN"   html-netscape.dtd
+PUBLIC "-//WebTechs//DTD Strict HTML//EN"               html-netscape.dtd
+PUBLIC "-//WebTechs//DTD Strict HTML 2.0//EN"           html-netscape.dtd
+DOCTYPE HTML						html-netscape.dtd
+DOCTYPE HTML-3						html-3.dtd
+

@@ -1,0 +1,84 @@
+This new term-mode is a merge of the comint shell mode with a
+ANSI-compatible terminal-emulator.
+
+If you're using emacs-19.23 (or newer) or xemacs-19.11 (or newer),
+and only want the terminal-emulator itself, just load the file
+term.el.  (You probably want to byte-compile it first, especially
+if you have a slow machine.)
+
+To start term do M-x term RETURN.
+
+Compared to terminal.el:
+* Uses standard ANSI (vt102) escape sequences.
+* High-lighting (inverse video, underline, bold) are supported.
+* Fully integrated into shell mode.
+* Can switch back and forth between character mode (acts like xterm)
+  and line mode (acts like old shell mode).
+* Tab and line breaks are stored in buffer (so cut and paste will get
+  the correct tabs and line breaks), but terminal motion uses the
+  "visible" layout of the screen (and display programs can assume
+  tab, cr and lf work as on plain terminal).
+
+In character ("raw") sub-mode:
+Each character type is sent to the inferior process, except for C-c.
+C-c C-c	Send a C-c to the inferior.
+C-c C-j	Enter line sub-mode
+C-c OTHER Same as cooked C-x map
+Can use bash line editing, filename completion, and history.
+Can run emacs in an emacs window! (bash users first do: export -n DISPLAY)
+
+In line ("cooked") mode:
+Like traditional shell mode
+C-c C-k	Enter character sub-mode
+
+Either character or line sub-mode:
+C-c C-q Toggle pager sub-mode (enable or disable)
+The "pager" provides functionality similar to the "more" program:
+Whenever a screenful has been received, emacs stops reading from
+the process until you type the appropriate key.  (The key 'h' provides help.)
+The pager is smart enough that you can leave it on,  even while
+running full-screen interactive programs inside a shell window.
+(The pager does not work under xemacs 19.11.)
+
+The file tshell.el is a preliminary replacement for shell mode.
+After loading it, you invoke it with M-x tshell RET.
+This needs a little work, and is not recommended.  It differs from
+term-mode in that it starts in line mode, and it performs directory
+tracking.  Such directory tracking cannot be made reliable.
+It you're running bash, it is better to just use term-mode and have
+bash tell term the current directory.  You can do that by adding
+the following to your ~/.bashrc:
+
+	if [ "$TERM" = "eterm" ]; then
+	  PROMPT_COMMAND='echo "/${PWD}"'
+	fi
+
+The file tgud.el is a preliminary replacement for gud.el, including
+gdb-mode.  After loading it, invoke "tgdb-mode" with M-x tgdb RET.
+
+An alternative is to run gdb from term (or tshell) mode.
+Just start gdb with the --fullname flag.  This will cause gdb to
+ask emacs to display proper source frame on break-points -
+even over a telnet/rlogin link!  You would not be able to use the
+gud-specific commands, but you can use gdb/readline line editing.
+
+If you're using terminfo, copy the e directory (itself, not just
+the files in it) into the emacs 'etc' directory (as given by
+ESC ESC data-directory RET), so you have ..../etc/e/eterm.
+(Your system uses terminfo if ESC ESC (boundp 'system-uses-terminfo) RET
+return t.)  If you can't do that, replace the word "data-directory"
+in term.el by a string naming this directory.
+
+The file TODO.term notes ideas for improvements.
+
+The file term.texi contain some notes that one day may become part
+of a manual.
+
+Term.el will be in the next emacs release from the FSF.
+It will also probably be in the next xemacs release.
+The comint-based shell.el and gud.el will be replaced later.
+Telnet.el can then be junked.
+Long-term, term.el will replace comint.el, but can co-exist with it.
+
+Comments and bug fixes should be sent to Per Bothner (bothner@cygnus.com).
+Note that I'm new to emacs hacking, so improvements are very welcome.

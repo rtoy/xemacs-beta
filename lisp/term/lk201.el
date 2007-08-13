@@ -1,0 +1,68 @@
+;; Define function key sequences for DEC terminals.
+
+;; Termcap or terminfo should set these.
+;; (define-key function-key-map "\e[A" [up])
+;; (define-key function-key-map "\e[B" [down])
+;; (define-key function-key-map "\e[C" [right])
+;; (define-key function-key-map "\e[D" [left])
+
+(define-key function-key-map "\e[1~" [find])
+(define-key function-key-map "\e[2~" [insert])
+(define-key function-key-map "\e[3~" [delete])
+(define-key function-key-map "\e[4~" [select])
+(define-key function-key-map "\e[5~" [prior])
+(define-key function-key-map "\e[6~" [next])
+(define-key function-key-map "\e[11~" [f1])
+(define-key function-key-map "\e[12~" [f2])
+(define-key function-key-map "\e[13~" [f3])
+(define-key function-key-map "\e[14~" [f4])
+(define-key function-key-map "\e[15~" [f5])
+(define-key function-key-map "\e[17~" [f6])
+(define-key function-key-map "\e[18~" [f7])
+(define-key function-key-map "\e[19~" [f8])
+(define-key function-key-map "\e[20~" [f9])
+(define-key function-key-map "\e[21~" [f10])
+;; Customarily F11 is used as the ESC key.
+;; The file that includes this one, takes care of that.
+(define-key function-key-map "\e[23~" [f11])
+(define-key function-key-map "\e[24~" [f12])
+(define-key function-key-map "\e[25~" [f13])
+(define-key function-key-map "\e[26~" [f14])
+(define-key function-key-map "\e[28~" [help])
+(define-key function-key-map "\e[29~" [menu])
+(define-key function-key-map "\e[31~" [f17])
+(define-key function-key-map "\e[32~" [f18])
+(define-key function-key-map "\e[33~" [f19])
+(define-key function-key-map "\e[34~" [f20])
+
+;; Termcap or terminfo should set these.
+;; (define-key function-key-map "\eOA" [up])
+;; (define-key function-key-map "\eOB" [down])
+;; (define-key function-key-map "\eOC" [right])
+;; (define-key function-key-map "\eOD" [left])
+
+;; Termcap or terminfo should set these, but doesn't properly.
+;; Termcap sets these to k1-k4, which get mapped to f1-f4 in term.c
+(define-key function-key-map "\eOP" [kp_f1])
+(define-key function-key-map "\eOQ" [kp_f2])
+(define-key function-key-map "\eOR" [kp_f3])
+(define-key function-key-map "\eOS" [kp_f4])
+
+(define-key function-key-map "\eOI" [kp_tab])
+(define-key function-key-map "\eOj" [kp_multiply])
+(define-key function-key-map "\eOk" [kp_add])
+(define-key function-key-map "\eOl" [kp_separator])
+(define-key function-key-map "\eOM" [kp_enter])
+(define-key function-key-map "\eOm" [kp_subtract])
+(define-key function-key-map "\eOn" [kp_decimal])
+(define-key function-key-map "\eOo" [kp_divide])
+(define-key function-key-map "\eOp" [kp_0])
+(define-key function-key-map "\eOq" [kp_1])
+(define-key function-key-map "\eOr" [kp_2])
+(define-key function-key-map "\eOs" [kp_3])
+(define-key function-key-map "\eOt" [kp_4])
+(define-key function-key-map "\eOu" [kp_5])
+(define-key function-key-map "\eOv" [kp_6])
+(define-key function-key-map "\eOw" [kp_7])
+(define-key function-key-map "\eOx" [kp_8])
+(define-key function-key-map "\eOy" [kp_9])

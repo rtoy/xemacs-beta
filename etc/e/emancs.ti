@@ -1,0 +1,7 @@
+emancs,
+	cols#80,
+	sgr0=\003,
+	smso=\001,
+	smul=\002,
+	rmul=\003,
+	it#1,

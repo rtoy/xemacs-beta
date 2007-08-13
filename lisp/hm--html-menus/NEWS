@@ -1,0 +1,249 @@
+18.02.96:
+	-- BUILDED the version 4.16 of the package
+17.02.96:
+	Added the mailto link.
+03.02.96:
+	Fixed the 'void function font-lock-hack-keywords' bug.
+15.10.95:
+	Added support for the swedish ISO-Characters aring and Aring.
+	It was a patch from Ola Stromfors <Ola.Stromfors@linkoping.trab.se>.
+17.09.95:
+	It is now possible to disable the keybindings for the ISO Latin 1
+ 	character entities.
+	-- BUILDED the version 4.15 of the package --
+05.09.95:
+	Fixed a bug in the changed comment functions.
+	Fixed a description typo.
+	-- BUILDED the version 4.14 of the package --
+24.08.95:
+	Fixed the new keybindings for the Emacs 19.
+22.08.95:
+	Added smart functions for inserting <,> or their html entities.
+	Added the function 'hm--html-send-buffer-to-netscape' to support
+	netscape.
+	Added a menu item to view the WWW page of the package.
+	-- BUILDED the version 4.13 of the package --
+18.08.95:
+	Fixed the Makefile to include also the file hm--html-keys.el.
+	Fixed the 'missing util-return-end-of-line' bug.
+	Fixed the read-file-name bug in the Emacs 19.
+	Fixed a bug in the changed comment functions.
+29.07.95:
+	Fixed some bugs in the table code.
+	New, better and more key bindings.
+	Added functions to insert ISO 8851-1 characters as html entities.
+	Thanks to Berthold Crysmann <crysmann@rrz.uni-hamburg.de> for
+	providing the code for it.
+	-- BUILDED the version 4.12 of the package --
+12.05.95:
+	Changed the color handling functions, so that the font-lock colors
+	are now longer overwritten by this mode.
+	Added functions to insert the paragraph element with start and
+	end tag.
+	Applied a patch from Noriaki Seki <kerolyn@rst.fujixerox.co.jp>,
+	which fixes a bug in searching the string </head>.
+	Fixed a typo in hm--html-load-config-files (Thanks to 
+	"Valeriy E. Ushakov" <uwe@snark.niif.spb.su>).
+	Added a command to insert a <LINK> element as suggested by
+	ssd@tad.eds.com (Sean Dowd).
+	Fixed a typo in hm--html-set-point-for-signature.
+	Added a new template file: frame.tmpl.
+	Changed the name of command-description-template-2.html to
+	command-description.tmpl and deleted the file
+	command-description-template.html.
+	Added the new menu item: "Frame Template" as suggested by
+	ssd@tad.eds.com (Sean Dowd).
+	Fixed a bug hm--html-remove-numeric-names (Thanks to 
+	D-P Deng <deng@owl.rhic.bnl.gov>).
+	Added a command to submit bug reports (suggested by 
+	D-P Deng <deng@owl.rhic.bnl.gov>).
+	Changed `(defconst html-font-lock-keywords' to
+	`(defvar html-font-lock-keywords' (suggested by
+	rickb@isdn-szerelem.mti.sgi.com (Rick Braumoeller).
+	Fixed the table functions.
+	-- BUILDED the version 4.11 of the package --
+02.03.95:
+	-- BUILDED the version 4.8 of the package --
+	Included the changes from the XEmacs 19.12 Beta 26.
+	Added Support for the finder package.
+	-- BUILDED the version 4.9 of the package --
+	Fixed some minor documentation bugs.
+	-- BUILDED the version 4.10 of the package --
+30.03.95:
+	Changed all calls of `concat', so that no longer numbers are
+	given as arguments to concat.
+	Removed the file .hm--html-configuration.el from the distribution.
+	This does not mean, that the file is no longer supported. The
+	file was only an example and the user has to build his own one.
+	The example is now given in the README file.
+	Fixed a bug in the region minor mode.
+	
+14.01.95:
+	-- BUILDED the version 4.7 of the package --
+12.01.95:
+	Changed the behaviour of the function `hm--html-add-table'.
+06.01.95:
+	Added the variable `hm--html-user-config-file', as onother way
+	to specify the user config file.
+	-- BUILDED the version 4.6 of the package --
+04.01.95:
+	Added functions to insert tables.
+	-- BUILDED the version 4.5 of the package --
+03.01.95:
+	Faces are only modified, if they don't exist (I hope :-).
+	html-view.el works now with Mosaic 2.4.
+	`hm--html-add-full-html-frame' now tries only to insert a signature,
+	if `hm--html-signature-file' is non-nil.
+	Added the functions:
+	`hm--html-add-strikethru' and `hm--html-add-strikethru-to-region',
+	`hm--html-add-superscript' and `hm--html-add-superscript-to-region',
+	`hm--html-add-subscript' and `hm--html-add-subscript-to-region',
+	`hm--html-add-command' and `hm--html-add-command-to-region',
+	`hm--html-add-argument' and `hm--html-add-argument-to-region',
+	`hm--html-add-quote' and `hm--html-add-quote-to-region',
+	`hm--html-add-person' and `hm--html-add-person-to-region',
+	`hm--html-add-acronym' and `hm--html-add-acronym-to-region',
+	`hm--html-add-abbrevation' and `hm--html-add-abbrevation-to-region',
+	`hm--html-add-literature' and `hm--html-add-literature-to-region',
+	`hm--html-add-abstract' and `hm--html-add-abstract-to-region',
+	`hm--html-add-footnote' and `hm--html-add-footnote-to-region',
+	`hm--html-add-margin' and `hm--html-add-margin-to-region',
+	`hm--html-add-author' and `hm--html-add-author-to-region',
+	`hm--html-add-publication' and `hm--html-add-publication-to-region',
+	`hm--html-add-editor' and `hm--html-add-editor-to-region',
+	`hm--html-add-credits' and `hm--html-add-credits-to-region',
+	`hm--html-add-copyright' and `hm--html-add-copyright-to-region',
+	`hm--html-add-isbn' and `hm--html-add-isbn-to-region',
+	`hm--html-form-add-input-integer',
+	`hm--html-form-add-input-float',
+	`hm--html-form-add-input-date',
+	`hm--html-form-add-input-url',
+	`hm--html-form-add-input-scribble',
+	`hm--html-form-add-input-audio'.
+15.03.94:
+	-- ANNOUNCEMENT of version 4.0 of the package --
+	Added the missing file hm--date.el to the package.
+	Changed the line ` (let ((config-file (format "/tmp/xmosaic.%d"'
+	to `(let ((config-file (format "/tmp/Mosaic.%d"' in the file
+	html-mode.el for the new Mosaic.
+03.03.94:
+	Deleted the wrong "external viewer stuff" for the include images.
+17.02.94:
+	Fixed a bug in the function `hm--html-insert-changed-comment'.
+	-- ANNOUNCEMENT of version 3.9 of the package --
+14.02.94:
+	Changed the function adapt-emacsp to adapt-emacs19p.
+	-- ANNOUNCEMENT of version 3.8 of the package --
+13.02.94:
+	One can now set the font lock color also in the GNU Emacs 19.
+	Deleted the highlighting stuff.
+01.02.94:
+	Fixed a lot of spelling errors by jml.
+18.01.94:
+	-- ANNOUNCEMENT of version 3.7 of the package --
+11.01.94:
+	Fixed a bug in html-view.el.
+10.01.94:
+	Fixed a bug in the function read-number.
+	The automatic switch between region and noregion commands is now
+	working also in the GNU Emacs 19.
+	Fixed a bug in the region popup menu fo novice users.
+	The font-lock-mode (except of the use of colors) is now working in
+        then GNU Emacs 19.
+	-- ANNOUNCEMENT of version 3.6 of the package --
+09.01.94:
+	Added the highlighting feature of the examples for the GNU Emacs 19.
+07.01.94:
+	The pulldown menu and the popup menus are now working in the 
+	GNU Emacs 19.
+	-- ANNOUNCEMENT of version 3.5 of the package --
+29.12.93:
+	Added a function to insert the image input field.
+	Added a function to insert the form tags to an active region.
+	Changed the function hm--html-select-directory.
+	Added a function to remove numeric names.
+	The variable hm--html-delete-wrong-path-prefix can now be used as 
+	string and as list of strings. Therfore it is now possible to
+	specify more than one path prefixes, which should be removed.
+	Changed the pulldown menu.
+	The package can now be loaded in the GNU Emacs 19. But the menus
+	doesn't work correct and the functions are not tested.
+28.12.93:
+	Added a function to expand templates (Look at templates.el).
+	Whitespaces are now allowed between the closing bracket of the date
+	and the tag </TITLE>, if you want to update the date of the document.
+	Fixed the wrong use of the html command <inc srvurl "|command">.
+	Fixed a little Bug in the function, which includes the tags for a form.
+	The config files are now searched on standard places, if no environment
+	variables are specified.
+	Changed the file html-view.el for the use of the Mosaic-2.1. It uses 
+	now also the variable html-sigusr1-signal-value instead of a hard coded
+	value for the SIGUSR1 value.
+	Added a function to insert the isindex input field in a form tag.
+15.12.93:
+	-- ANNOUNCEMENT of version 3.0 of the package --
+
+11.12.93:
+	New functions, to insert the tags <BR>, <HR> and <P> (<P> without a 
+	leading Blank).
+	Fixed a Bug in the function hm--html-add-description-list-to-region
+	(<DT> instead of </DT>).
+	Added the function hm--html-add-normal-link-to-region to fix the 
+	problem with inactivating the region during the link generation.
+	Added functions to insert direct links to wais server 
+	(HREF="wais://...).
+	Changed the wrong functionnamess html-add-definion-to-region and 
+	html-add-definion in the menus to hm--html-add-definion-to-region 
+	and hm--html-add-definion (the old symbols were void).
+	Added function to insert middle aligned inline images.
+	Added the 'ALT'- attribute to the 'add-image'- functions.
+	Changed the submenu "Inligned images".
+	Added support for the server side include directives.
+	Added functions to insert "created" and "changed" comments.
+	Added function to update the date in the title.
+	Added support for forms.
+27.10.93:
+	Setting of hm--html-font-lock-color in one of the files
+	.hm--html-configuration.el or hm--html-configuration.el to determine
+	the color of the html-tags works now correct.
+24.10.93: 
+	-- ANNOUNCEMENT of version 2.0 of the package --
+	The file hm--date.el is now also in this package.
+	Deleted the numeric anchor name stuff altogether. Therefore the
+        package can now use the version 2.1 of Marc Andreessens html-mode.el
+	instead of the version 2.0.
+	Added some keytable entrys.
+	Added the minor mode html-region-mode, which is active, if a region
+	is active. The minor-mode has its own keytable. That is why it is now
+	possible to use the same key sequences with different two functions,
+	one for adding something to an active region and one for adding some-
+	thing without a region.
+	All keys, without the keys which are defined by Marc Andreessen in
+	his file html-mode.el, are now defined in the general configuration
+	file hm--html-configuration.el.
+25.09.93:
+	Fixed the wrong string "adress".
+	Added functions and menu items to insert html, head, and body elements
+	and to insert a complete html frame with the above elements, the title
+	the header and the signature.
+	The functions, which adds the header and the title at the same time
+	are now only using the header size 1.
+	Added functions for inserting underline and definition styles.
+	Changed the menu "Formated" according to the HTML quick reference
+	from Michael Grobe.
+	Changed the menu item name "Fixed" to "Typewriter".
+	Added functions to insert directory lists.
+	Changed the names of menu items in the submenu "Structure" according
+	to the HTML quick reference from Michael Grobe.
+23.09.93:
+	Changed the functions to add the signature and the title.
+	This functions uses now the new tags <html>, </html>,
+	<head>, </body> and <isindex> to places the signature and
+	the title in a html-file.
+	Fixed also some minor bugs;
+
+
+
+
+
+

@@ -1,0 +1,78 @@
+-*- Text -*-
+
+This is the file .../info/dir, which contains the topmost node of the Info
+hierarchy.  The first time you invoke Info you start off looking at that node,
+which is (dir)Top.
+
+Rather than adding new nodes to this directory (and this file) it is a better
+idea to put them in a site-local directory, and then configure info to search
+in that directory as well.  That way, you won't have to re-edit this file when
+a new release of the editor comes out.
+
+For example, you could add this code to .../lisp/site-start.el, which is
+loaded before ~/.emacs each time the editor starts up:
+
+  ;; find local info nodes
+  (setq Info-default-directory-list
+        (append Info-default-directory-list '("/private/info/")))
+
+Then, when you enter info, the contents of the file "/private/info/localdir"
+will be appended to the contents of this file (where the "* Locals:" line is.)
+The "localdir" file should simply contain lines like in this file, listing the
+names of the info files in its directory.
+
+
+File: dir	Node: Top	This is the top of the INFO tree
+
+  This is Info, the online documentation browsing system.
+  This page (the Directory node) gives a menu of major topics.
+
+  button1 or button2 on a highlighted word follows that cross-reference.
+  button3 anywhere brings up a menu of commands.
+  ? lists additional keyboard commands.
+  h invokes the Info tutorial.
+
+* Menu:
+
+* Info::	Documentation browsing system.
+* XEmacs::	The extensible user-friendly self-documenting text editor.
+		This manual is for XEmacs 19.14.
+* Lispref::	XEmacs Lisp technical reference.
+		This manual is for XEmacs 19.14.
+* New-Users-Guide::
+	        XEmacs User's Guide for XEmacs 19.14.
+* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 19.14.
+* Internals::	Guide to the internals of XEmacs.
+
+Packages:
+
+* Ange-FTP::	Making the entire network accessible as a pseudo-filesystem.
+* CC-MODE::	Mode for editing C, C++, and Objective-C code.
+* CL::		A Common Lisp compatibility package for Emacs-Lisp.
+* Dired::	Manual for Tree Dired.
+* Ediff::	A Visual Interface to Unix Diff and Patch Utilities.
+* External-Widget::
+		Use XEmacs as a text widget inside of another program.
+* Forms::	A package for editing databases by filling in forms.
+* GNUS::	An NNTP-based newsreader for XEmacs.
+* Hyperbole::	A programmable information management and hypertext system.
+* ILISP::	Multi-dialect inferior LISP interface.
+* Ispell::	Interactive spelling corrector.
+* Mailcrypt::	Emacs interface to cryptographic functions for mail and news.
+* Message::	Emacs message composition mode.
+* MH-E::	Emacs interface to MH, a mail-handling package.
+* OO-Browser::	The Multi-Language Object-Oriented Browser.
+* PCL-CVS::	An XEmacs-based front end to CVS.
+* PSGML::	A powerful mode for HTML and other SGML documents.
+* Rmail::	An older mail reader for Emacs.
+* Standards::	The GNU coding standards.
+* Supercite::	Lets you cite parts of messages you're replying to.
+* Term::	ANSI-compatible terminal emulator.
+* Termcap::	The termcap library, which enables application programs
+		to handle all types of character-display terminals.
+* Texinfo::	With one source file, make either a printed manual (through
+		TeX) or an Info file (through texinfo).
+* Viper::	A VI Plan for Emacs Rescue and a venomous VI PERil.
+* VM::		View Mail, a replacement for Rmail.
+* W3::		A browser for the World Wide Web global hypertext system.
+* Locals:

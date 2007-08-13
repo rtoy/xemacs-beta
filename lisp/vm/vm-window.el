@@ -1,0 +1,602 @@
+;;; Window management code for VM
+;;; Copyright (C) 1989, 1990, 1991, 1993, 1994, 1995 Kyle E. Jones
+;;;
+;;; This program is free software; you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation; either version 1, or (at your option)
+;;; any later version.
+;;;
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;;
+;;; You should have received a copy of the GNU General Public License
+;;; along with this program; if not, write to the Free Software
+;;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+(provide 'vm-window)
+
+(defun vm-display (buffer display commands configs)
+;; the clearinghouse VM display function.
+;;
+;; First arg BUFFER non-nil is a buffer to display or undisplay.
+;; nil means there is no request to display or undisplay a
+;; buffer.
+;;
+;; Second arg DISPLAY non-nil means to display the buffer, nil means
+;; to undisplay it.  This function guarantees to display the
+;; buffer if requested.  Undisplay is not guaranteed.
+;;
+;; Third arg COMMANDS is a list of symbols.  this-command must
+;; match one of these symbols for a window configuration to be
+;; applied.
+;;
+;; Fourth arg CONFIGS is a list of window configurations to try.
+;; vm-set-window-configuration will step through the list looking
+;; for an existing configuration, and apply the one it finds.
+;;
+;; Display is done this way:
+;;  1. if the buffer is visible in an invisible frame, make that frame visible
+;;  2. if the buffer is already displayed, quit
+;;  3. if vm-display-buffer-hook in non-nil
+;;        run the hooks
+;;        use the selected window/frame to display the buffer
+;;        quit
+;;  4. apply a window configuration
+;;        if the buffer is displayed now, quit
+;;  5. call vm-display-buffer which will display the buffer.
+;;
+;; Undisplay is done this way:
+;;  1. if the buffer is not displayed, quit
+;;  2. if vm-undisplay-buffer-hook is non-nil
+;;        run the hooks
+;;        quit
+;;  3. apply a window configuration
+;;  4, if a window configuration was applied
+;;        quit
+;;  5. call vm-undisplay-buffer which will make the buffer
+;;     disappear from at least one window/frame.
+;;
+;; If display/undisplay is not requested, only window
+;; configuration is done, and only then if the value of
+;; this-command is found in the COMMANDS list.
+  (vm-save-buffer-excursion
+   (let ((w (and buffer (vm-get-buffer-window buffer))))
+     (and buffer (set-buffer buffer))
+;     (and w display (vm-raise-frame (vm-window-frame w)))
+     (and w display (vm-window-frame w))
+     (and w display (not (eq (vm-selected-frame) (vm-window-frame w)))
+	  (vm-select-frame (vm-window-frame w)))
+     (cond ((and buffer display)
+	    (if (and vm-display-buffer-hook
+		     (null (vm-get-visible-buffer-window buffer)))
+		(progn (run-hooks 'vm-display-buffer-hook)
+		       (switch-to-buffer buffer)
+		       (vm-record-current-window-configuration nil))
+	      (if (not (and (memq this-command commands)
+			    (apply 'vm-set-window-configuration configs)
+			    (vm-get-visible-buffer-window buffer)))
+		  (vm-display-buffer buffer))))
+	   ((and buffer (not display))
+	    (if (and vm-undisplay-buffer-hook
+		     (vm-get-visible-buffer-window buffer))
+		(progn (run-hooks 'vm-undisplay-buffer-hook)
+		       (vm-record-current-window-configuration nil))
+	      (if (not (and (memq this-command commands)
+			    (apply 'vm-set-window-configuration configs)))
+		  (vm-undisplay-buffer buffer))))
+	   ((memq this-command commands)
+	    (apply 'vm-set-window-configuration configs))))))
+
+(defun vm-display-buffer (buffer)
+  (let ((pop-up-windows (eq vm-mutable-windows t))
+	(pop-up-frames vm-mutable-frames))
+    (vm-record-current-window-configuration nil)
+    (if (or pop-up-frames
+	    (and (eq vm-mutable-windows t)
+		 (symbolp
+		  (vm-buffer-to-label
+		   (window-buffer
+		    (selected-window))))))
+	(select-window (display-buffer buffer))
+      (switch-to-buffer buffer))))
+
+(defun vm-undisplay-buffer (buffer)
+  (vm-save-buffer-excursion
+    (vm-delete-windows-or-frames-on buffer)
+    (let ((w (vm-get-buffer-window buffer)))
+      (and w (set-window-buffer w (other-buffer))))))
+
+(defun vm-load-window-configurations (file)
+  (save-excursion
+    (let ((work-buffer nil))
+      (unwind-protect
+	  (progn
+	    (set-buffer (setq work-buffer (get-buffer-create "*vm-wconfig*")))
+	    (erase-buffer)
+	    (setq vm-window-configurations
+		  (condition-case ()
+		      (progn
+			(insert-file-contents file)
+			(read (current-buffer)))
+		    (error nil))))
+	(and work-buffer (kill-buffer work-buffer))))))
+
+(defun vm-store-window-configurations (file)
+  (save-excursion
+    (let ((work-buffer nil))
+      (unwind-protect
+	  (progn
+	    (set-buffer (setq work-buffer (get-buffer-create "*vm-wconfig*")))
+	    (erase-buffer)
+	    (print vm-window-configurations (current-buffer))
+	    (write-region (point-min) (point-max) file nil 0))
+	(and work-buffer (kill-buffer work-buffer))))))
+
+(defun vm-set-window-configuration (&rest tags)
+  (catch 'done
+    (if (not vm-mutable-windows)
+	(throw 'done nil))
+    (let ((nonexistent " *vm-nonexistent*")
+	  (nonexistent-summary " *vm-nonexistent-summary*")
+	  (selected-frame (vm-selected-frame))
+	  summary message composition edit config)
+      (while (and tags (null config))
+	(setq config (assq (car tags) vm-window-configurations)
+	      tags (cdr tags)))
+      (or config (setq config (assq 'default vm-window-configurations)))
+      (or config (throw 'done nil))
+      (setq config (vm-copy config))
+      (setq composition (vm-find-composition-buffer t))
+      (cond ((eq major-mode 'vm-summary-mode)
+	     (if (or (null vm-mail-buffer) (null (buffer-name vm-mail-buffer)))
+		 (throw 'done nil)
+	       (setq summary (current-buffer))
+	       (setq message vm-mail-buffer)))
+	    ((eq major-mode 'vm-mode)
+	     (setq message (current-buffer)))
+	    ((eq major-mode 'vm-virtual-mode)
+	     (setq message (current-buffer)))
+	    ((eq major-mode 'mail-mode)
+	     (if (or (null vm-mail-buffer) (null (buffer-name vm-mail-buffer)))
+		 (throw 'done nil)
+	       (setq message vm-mail-buffer)))
+	    ((eq vm-system-state 'editing)
+	     (if (or (null vm-mail-buffer) (null (buffer-name vm-mail-buffer)))
+		 (throw 'done nil)
+	       (setq edit (current-buffer))
+	       (setq message vm-mail-buffer)))
+	    ;; not in a VM related buffer, bail...
+	    (t (throw 'done nil)))
+      (set-buffer message)
+      ;; if this configuration is already the current one, don't
+      ;; set it up again.
+      (if (or (and vm-mutable-frames (eq (car config) vm-window-configuration))
+	      (and (not vm-mutable-frames)
+		   (listp vm-window-configuration)
+		   (eq (car config)
+		       (cdr (assq selected-frame vm-window-configuration)))))
+	  (throw 'done nil))
+      (vm-check-for-killed-summary)
+      (or summary (setq summary (or vm-summary-buffer nonexistent-summary)))
+      (or composition (setq composition nonexistent))
+      (or edit (setq edit nonexistent))
+      (tapestry-replace-tapestry-element (nth 1 config) 'buffer-name
+					 (function
+					  (lambda (x)
+					    (if (symbolp x)
+						(symbol-value x)
+					      x ))))
+      (set-tapestry (nth 1 config) 1)
+      (and (get-buffer nonexistent)
+	   (vm-delete-windows-or-frames-on nonexistent))
+      (if (and (vm-get-buffer-window nonexistent-summary)
+	       (not (vm-get-buffer-window message)))
+	  ;; user asked for summary to be displayed but doesn't
+	  ;; have one, nor is the folder buffer displayed.  Help
+	  ;; the user not to lose here.
+	  (vm-replace-buffer-in-windows nonexistent-summary message)
+	(and (get-buffer nonexistent-summary)
+	     (vm-delete-windows-or-frames-on nonexistent-summary)))
+      (vm-record-current-window-configuration config)
+      config )))
+
+(defun vm-record-current-window-configuration (config)
+  ;; this function continues to be a no-op.
+  ;;
+  ;; the idea behind this function is that VM can remember what
+  ;; the current window configuration is and not rebuild the
+  ;; configuration for the next command if it matches what we
+  ;; have recorded.
+  ;;
+  ;; the problem with this idea is that the user can do things
+  ;; like C-x 0 and VM has no way of knowing.  So VM thinks the
+  ;; right configuration is displayed when in fact it is not,
+  ;; which can cause incorrect displays.
+  '(let (cell)
+    (if (and (listp vm-window-configuration)
+	     (setq cell (assq (vm-selected-frame) vm-window-configuration)))
+	(setcdr cell (car config))
+      (setq vm-window-configuration
+	    (cons
+	     (cons (vm-selected-frame) (car config))
+	     vm-window-configuration)))))
+
+(defun vm-save-window-configuration (tag)
+  "Name and save the current window configuration.
+With this command you associate the current window setup with an
+action.  Each time you perform this action VM will duplicate this
+window setup.
+
+Nearly every VM command can have a window configuration
+associated with it.  VM also allows some category configurations,
+`startup', `reading-message', `composing-message', `editing-message',
+`marking-message' and `searching-message' for the commands that
+do these things.  There is also a `default' configuration that VM
+will use if no other configuration is applicable.  Command
+specific configurations are searched for first, then the category
+configurations and then the default configuration.  The first
+configuration found is the one that is applied.
+
+The value of vm-mutable-windows must be non-nil for VM to use
+window configurations.
+
+If vm-mutable-frames is non-nil and Emacs is running under X
+windows, then VM will use all existing frames.  Otherwise VM will
+restrict its changes to the frame in which it was started."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command))
+     (if (null vm-window-configuration-file)
+	 (error "Configurable windows not enabled.  Set vm-window-configuration-file to enable."))
+     (list
+      (intern
+       (completing-read "Name this window configuration: "
+			vm-supported-window-configurations
+			'identity t)))))
+  (if (null vm-window-configuration-file)
+      (error "Configurable windows not enabled.  Set vm-window-configuration-file to enable."))
+  (let (map p)
+    (setq map (tapestry (list (vm-selected-frame))))
+    ;; set frame map to nil since we don't use it.  this prevents
+    ;; cursor objects and any other objects that have an
+    ;; "unreadable" read syntax appearing in the window
+    ;; configuration file by way of frame-parameters.
+    (setcar map nil)
+    (tapestry-replace-tapestry-element map 'buffer-name 'vm-buffer-to-label)
+    (tapestry-nullify-tapestry-elements map t nil t t t nil)
+    (setq p (assq tag vm-window-configurations))
+    (if p
+	(setcar (cdr p) map)
+      (setq vm-window-configurations
+	    (cons (list tag map) vm-window-configurations)))
+    (vm-store-window-configurations vm-window-configuration-file)
+    (message "%s configuration recorded" tag)))
+
+(defun vm-buffer-to-label (buf)
+  (save-excursion
+    (set-buffer buf)
+    (cond ((eq major-mode 'vm-summary-mode)
+	   'summary)
+	  ((eq major-mode 'mail-mode)
+	   'composition)
+	  ((eq major-mode 'vm-mode)
+	   'message)
+	  ((eq major-mode 'vm-virtual-mode)
+	   'message)
+	  ((eq vm-system-state 'editing)
+	   'edit)
+	  (t buf))))
+
+(defun vm-delete-window-configuration (tag)
+  "Delete the configuration saved for a particular action.
+This action will no longer have an associated window configuration.
+The action will be read from the minibuffer."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command))
+     (if (null vm-window-configuration-file)
+	 (error "Configurable windows not enabled.  Set vm-window-configuration-file to enable."))
+     (list
+      (intern
+       (completing-read "Delete window configuration: "
+			(mapcar (function
+				 (lambda (x)
+				   (list (symbol-name (car x)))))
+				vm-window-configurations)
+			'identity t)))))
+  (if (null vm-window-configuration-file)
+      (error "Configurable windows not enabled.  Set vm-window-configuration-file to enable."))
+  (let (p)
+    (setq p (assq tag vm-window-configurations))
+    (if p
+	(if (eq p (car vm-window-configurations))
+	    (setq vm-window-configurations (cdr vm-window-configurations))
+	  (setq vm-window-configurations (delq p vm-window-configurations)))
+      (error "No window configuration set for %s" tag)))
+  (vm-store-window-configurations vm-window-configuration-file)
+  (message "%s configuration deleted" tag))
+
+(defun vm-apply-window-configuration (tag)
+  "Change the current window configuration to be one
+associated with a particular action.  The action will be read
+from the minibuffer."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command))
+     (list
+      (intern
+       (completing-read "Apply window configuration: "
+			(mapcar (function
+				 (lambda (x)
+				   (list (symbol-name (car x)))))
+				vm-window-configurations)
+			'identity t)))))
+  (vm-set-window-configuration tag))
+
+(defun vm-window-help ()
+  (interactive)
+  (message "WS = save configuration, WD = delete configuration, WW = apply configuration"))
+
+(defun vm-iconify-frame ()
+  "Iconify the current frame.
+Run the hooks in vm-iconify-frame-hook before doing so."
+  (interactive)
+  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer)
+  (if (vm-multiple-frames-possible-p)
+      (progn
+	(run-hooks 'vm-iconify-frame-hook)
+	(vm-iconify-frame-xxx))))
+
+(defun vm-window-loop (action obj-1 &optional obj-2)
+  (let ((delete-me nil)
+	(done nil)
+	(all-frames (if vm-mutable-frames t nil))
+	start w)
+    (setq start (next-window (selected-window) 'nomini all-frames)
+	  w start)
+    (and obj-1 (setq obj-1 (get-buffer obj-1)))
+    (while (not done)
+      (if (and delete-me (not (eq delete-me (next-window delete-me 'nomini))))
+	  (progn
+	    (delete-window delete-me)
+	    (if (eq delete-me start)
+		(setq start nil))
+	    (setq delete-me nil)))
+      (cond ((and (eq action 'delete) (eq obj-1 (window-buffer w)))
+	     ;; a deleted window has no next window, so we
+	     ;; defer the deletion until after we've moved
+	     ;; to the next window.
+	     (setq delete-me w))
+	    ((and (eq action 'replace) (eq obj-1 (window-buffer w)))
+	     (set-window-buffer w obj-2)))
+      (setq done (eq start
+		     (setq w
+			  (condition-case nil
+			      (next-window w 'nomini all-frames)
+			    (wrong-number-of-arguments
+			     (next-window w 'nomini))))))
+      (if (null start)
+	  (setq start w)))
+    (if (and delete-me (not (eq delete-me (next-window delete-me 'nomini))))
+	(delete-window delete-me))))
+
+(defun vm-frame-loop (action obj-1)
+  (if (fboundp 'vm-next-frame)
+      (let ((start (vm-next-frame (vm-selected-frame)))
+	    (delete-me nil)
+	    (done nil)
+	    f)
+	(setq f start)
+	(and obj-1 (setq obj-1 (get-buffer obj-1)))
+	(while (not done)
+	  (if delete-me
+	      (progn
+		(condition-case nil
+		    (progn
+		      (vm-delete-frame delete-me)
+		      (if (eq delete-me start)
+			  (setq start nil)))
+		  (error nil))
+		(setq delete-me nil)))
+	  (cond ((and (eq action 'delete)
+		      ;; one-window-p doesn't take a frame argument
+		      (eq (next-window (vm-frame-selected-window f) 'nomini)
+			  (previous-window (vm-frame-selected-window f)
+					   'nomini))
+		      ;; the next-window call is to avoid looking
+		      ;; at the minibuffer window
+		      (eq obj-1 (window-buffer
+				 (next-window
+				  (vm-frame-selected-window f)
+				  'nomini))))
+		 ;; a deleted frame has no next frame, so we
+		 ;; defer the deletion until after we've moved
+		 ;; to the next frame.
+		 (setq delete-me f))
+		((eq action 'bury)
+		 (bury-buffer obj-1)))
+	  (setq done (eq start (setq f (vm-next-frame f))))
+	  (if (null start)
+	      (setq start f)))
+	(if delete-me
+	    (progn
+	      (vm-error-free-call 'vm-delete-frame delete-me)
+	      (setq delete-me nil))))))
+
+(defun vm-delete-windows-or-frames-on (buffer)
+  (and (eq vm-mutable-windows t) (vm-window-loop 'delete buffer))
+  (and vm-mutable-frames (vm-frame-loop 'delete buffer)))
+
+(defun vm-replace-buffer-in-windows (old new)
+  (vm-window-loop 'replace old new))
+
+(defun vm-bury-buffer (&optional buffer)
+  (or buffer (setq buffer (current-buffer)))
+  (if (vm-xemacs-p)
+      (if (vm-multiple-frames-possible-p)
+	  (vm-frame-loop 'bury buffer)
+	(bury-buffer buffer))
+    (bury-buffer buffer)))
+
+(defun vm-unbury-buffer (buffer)
+  (save-excursion
+    (save-window-excursion
+      (switch-to-buffer buffer))))
+
+(defun vm-get-buffer-window (buffer)
+  (condition-case nil
+      (or (get-buffer-window buffer nil nil)
+	  (and vm-search-other-frames
+	       (get-buffer-window buffer t t)))
+    (wrong-number-of-arguments
+     (condition-case nil
+	 (or (get-buffer-window buffer nil)
+	     (and vm-search-other-frames
+		  (get-buffer-window buffer t)))
+       (wrong-number-of-arguments
+	(get-buffer-window buffer))))))
+
+(defun vm-get-visible-buffer-window (buffer)
+  (condition-case nil
+      (or (get-buffer-window buffer nil nil)
+	  (and vm-search-other-frames
+	       (get-buffer-window buffer t nil)))
+    (wrong-number-of-arguments
+     (condition-case nil
+	 (or (get-buffer-window buffer nil)
+	     (and vm-search-other-frames
+		  (get-buffer-window buffer 'visible)))
+       (wrong-number-of-arguments
+	(get-buffer-window buffer))))))
+
+(defun vm-set-hooks-for-frame-deletion ()
+  (make-local-variable 'vm-undisplay-buffer-hook)
+  (make-local-variable 'kill-buffer-hook)
+  (add-hook 'vm-undisplay-buffer-hook 'vm-delete-buffer-frame)
+  (add-hook 'kill-buffer-hook 'vm-delete-buffer-frame))
+
+(defun vm-delete-buffer-frame ()
+  (save-excursion
+    (let ((w (vm-get-visible-buffer-window (current-buffer)))
+	  (b (current-buffer)))
+      (and w (eq (vm-selected-frame) (vm-window-frame w))
+	   (vm-error-free-call 'vm-delete-frame (vm-window-frame w)))
+      (and w (let ((vm-mutable-frames t))
+	       (vm-delete-windows-or-frames-on b)))))
+  ;; do it only once
+  (remove-hook 'vm-undisplay-buffer-hook 'vm-delete-buffer-frame)
+  (remove-hook 'kill-buffer-hook 'vm-delete-buffer-frame))
+
+(defun vm-goto-new-frame (&rest types)
+  (let ((params nil))
+    (while (and types (null params))
+      (setq params (car (cdr (assq (car types) vm-frame-parameter-alist)))
+	    types (cdr types)))
+    ;; these functions might be defined in an Emacs that isn't
+    ;; running under a window system, but VM always checks for
+    ;; multi-frame support before calling this function.
+    (cond ((fboundp 'make-frame)
+	   (select-frame (make-frame params)))
+	  ((fboundp 'make-screen)
+	   (select-screen (make-screen params)))
+	  ((fboundp 'new-screen)
+	   (select-screen (new-screen params))))
+    (and vm-warp-mouse-to-new-frame
+	 (vm-warp-mouse-to-frame-maybe (vm-selected-frame)))))
+
+(defun vm-warp-mouse-to-frame-maybe (&optional frame)
+  (or frame (setq frame (vm-selected-frame)))
+  (if (vm-mouse-support-possible-p)
+      (cond ((vm-mouse-xemacs-mouse-p)
+	     (cond ((fboundp 'mouse-position);; XEmacs 19.12
+		    (let ((mp (mouse-position)))
+		      (if (and (car mp)
+			       (eq (window-frame (car mp)) (selected-frame)))
+			  nil
+			(set-mouse-position (frame-highest-window frame)
+					    (/ (frame-width frame) 2)
+					    (/ (frame-height frame) 2)))))
+		   (t ;; XEmacs 19.11
+		    ;; use (apply 'screen-...) instead of
+		    ;; (screen-...) to avoid stimulating a
+		    ;; byte-compiler bug in Emacs 19.29 that
+		    ;; happens when it encounters 'obsolete'
+		    ;; functions.  puke, puke, puke.
+		    (let ((mp (read-mouse-position frame)))
+		      (if (and (>= (car mp) 0)
+			       (<= (car mp) (apply 'screen-width frame))
+			       (>= (cdr mp) 0)
+			       (<= (cdr mp) (apply 'screen-height frame)))
+			  nil
+			(set-mouse-position frame
+					    (/ (apply 'screen-width frame) 2)
+					    (/ (apply 'screen-height frame) 2)))))))
+	    ((vm-fsfemacs-19-p)
+	     (let ((mp (mouse-position)))
+	       (if (and (eq (car mp) frame)
+			;; nil coordinates mean that the mouse
+			;; pointer isn't really within the frame
+			(car (cdr mp)))
+		   nil
+		 (set-mouse-position frame
+				     (/ (frame-width frame) 2)
+				     (/ (frame-height frame) 2))
+		 ;; doc for set-mouse-position says to do this
+		 (unfocus-frame)))))))
+
+(fset 'vm-selected-frame
+      (symbol-function
+       (cond ((fboundp 'selected-frame) 'selected-frame)
+	     ((fboundp 'selected-screen) 'selected-screen)
+	     (t 'ignore))))
+
+(fset 'vm-delete-frame
+      (symbol-function
+       (cond ((fboundp 'delete-frame) 'delete-frame)
+	     ((fboundp 'delete-screen) 'delete-screen)
+	     (t 'ignore))))
+
+;; xxx because vm-iconify-frame is a command
+(defun vm-iconify-frame-xxx (&optional frame)
+  (cond ((fboundp 'iconify-frame)
+	 (iconify-frame frame))
+	((fboundp 'iconify-screen)
+	 (iconify-screen (or frame (selected-screen))))))
+
+(fset 'vm-raise-frame
+      (symbol-function
+       (cond ((fboundp 'raise-frame) 'raise-frame)
+	     ((fboundp 'raise-screen) 'raise-screen)
+	     (t 'ignore))))
+
+(fset 'vm-frame-visible-p
+      (symbol-function
+       (cond ((fboundp 'frame-visible-p) 'frame-visible-p)
+	     ((fboundp 'screen-visible-p) 'screen-visible-p)
+	     (t 'ignore))))
+
+(fset 'vm-window-frame
+      (symbol-function
+       (cond ((fboundp 'window-frame) 'window-frame)
+	     ((fboundp 'window-screen) 'window-screen)
+	     (t 'ignore))))
+
+(cond ((fboundp 'next-frame)
+       (fset 'vm-next-frame (symbol-function 'next-frame))
+       (fset 'vm-select-frame (symbol-function 'select-frame))
+       (fset 'vm-frame-selected-window
+	     (symbol-function 'frame-selected-window)))
+      ((fboundp 'next-screen)
+       (fset 'vm-next-frame (symbol-function 'next-screen))
+       (fset 'vm-select-frame (symbol-function 'select-screen))
+       (fset 'vm-frame-selected-window
+	     (if (fboundp 'epoch::selected-window)
+		 (symbol-function 'epoch::selected-window)
+	       (symbol-function 'screen-selected-window))))
+      (t
+       ;; it is useful for this to be a no-op, but don't bind the
+       ;; others.
+       (fset 'vm-select-frame 'ignore)))

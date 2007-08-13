@@ -1,0 +1,299 @@
+# Some useful commands for debugging XEmacs with gdb 4.* or better.
+# If you have gdb 4.14 or better, you should use the version provided
+# for that debugger -- it's much easier to use.  See that file
+# (called "gdbinit" in the src/ directory of the XEmacs 19.14+ distribution)
+# for more info.
+#
+# Used on machines with NO_UNION_TYPE defined (everyone except DEC Alpha).
+
+set print union off
+set print pretty off
+
+define temacs
+run -batch -l loadup.el run-temacs -q
+end
+
+echo \n>>> Use the `temacs' command to run temacs\n\n
+
+# if you use Purify, do this:
+# set env PURIFYOPTIONS -pointer-mask=0x0fffffff
+
+# was frob, but p1 is short for prin1
+define p1
+call debug_print ($)
+end
+
+define lbt
+call Fbacktrace (Qexternal_debugging_output, Qt)
+end
+
+
+set $vector_length_mask = ~(1<<31)
+
+define xtype
+# this is really xgctype, as we mask off the mark bit
+output (enum Lisp_Type) (($ >> 28) & 7)
+echo \n
+end
+
+define xint
+print ((int)($1 << 4))>>4
+end
+
+define xmarkbit
+print ($1 >> 31)
+end
+
+define xrecord
+print (struct lrecord_header *) ($ & 0xFFFFFFF)
+output *($->implementation)
+echo \n
+end
+
+define xbitvec
+print (struct Lisp_Bit_Vector *) ($ & 0xFFFFFFF)
+end
+
+define xbuffer
+print (struct buffer *) ($ & 0xFFFFFFF)
+end
+
+define xbytecode
+print (struct Lisp_Bytecode *) ($ & 0xFFFFFFF)
+end
+
+define xcharset
+print (struct Lisp_Charset *) ($ & 0xFFFFFFF)
+end
+
+define xchartab
+print (struct Lisp_Char_Table *) ($ & 0xFFFFFFF)
+end
+
+define xchartabentry
+print (struct Lisp_Char_Table_Entry *) ($ & 0xFFFFFFF)
+end
+
+define xcodesys
+print (struct Lisp_Coding_System *) ($ & 0xFFFFFFF)
+end
+
+define xcolorinst
+print (struct Lisp_Color_Instance *) ($ & 0xFFFFFFF)
+end
+
+define xcons
+print (struct Lisp_Cons *) ($ & 0xFFFFFFF)
+end
+
+define xcursor
+print (struct Lisp_Cursor *) ($ & 0xFFFFFFF)
+end
+
+define xdevice
+print (struct device *) ($ & 0xFFFFFFF)
+end
+
+define xevent
+print (struct Lisp_Event *) ($ & 0xFFFFFFF)
+end
+
+define xextent
+print (struct extent *) ($ & 0xFFFFFFF)
+end
+
+define xextentaux
+print (struct extent_auxiliary *) ($ & 0xFFFFFFF)
+end
+
+define xextentinfo
+print (struct extent_info *) ($ & 0xFFFFFFF)
+end
+
+define xfloat
+print (struct Lisp_Float *) ($ & 0xFFFFFFF)
+output (double) $->data.d
+echo \n
+end
+
+define xfontinst
+print (struct Lisp_Font_Instance *) ($ & 0xFFFFFFF)
+end
+
+define xframe
+print (struct frame *) ($ & 0xFFFFFFF)
+end
+
+define xglyph
+print (struct Lisp_Glyph *) ($ & 0xFFFFFFF)
+end
+
+define xhashtable
+print (struct hashtable_struct *) ($ & 0xFFFFFFF)
+end
+
+define ximageinst
+print (struct Lisp_Image_Instance *) ($ & 0xFFFFFFF)
+end
+
+define xkeymap
+print (struct keymap *) ($ & 0xFFFFFFF)
+end
+
+define xlstream
+print (struct lstream *) ($ & 0xFFFFFFF)
+end
+
+define xmarker
+print (struct Lisp_Marker *) ($ & 0xFFFFFFF)
+end
+
+define xmenubardata
+print (struct menubar_data *) ($ & 0xFFFFFFF)
+end
+
+define xopaque
+print (struct Lisp_Opaque *) ($ & 0xFFFFFFF)
+end
+
+define xprocess
+print (struct Lisp_Process *) ($ & 0xFFFFFFF)
+end
+
+define xrangetab
+print (struct Lisp_Range_Table *) ($ & 0xFFFFFFF)
+end
+
+define xspec
+print (struct Lisp_Specifier *) ($ & 0xFFFFFFF)
+end
+
+define xstring
+print (struct Lisp_String *) ($ & 0xFFFFFFF)
+output (char *) $->_data
+echo \n
+end
+
+define xsubr
+print (struct Lisp_Subr *) ($ & 0xFFFFFFF)
+end
+
+define xsubwindow
+print (struct Lisp_Subwindow *) ($ & 0xFFFFFFF)
+end
+
+define xtoolbarbutton
+print (struct toolbar_button *) ($ & 0xFFFFFFF)
+end
+
+define xtoolbardata
+print (struct toolbar_data *) ($ & 0xFFFFFFF)
+end
+
+define xtooltalkmess
+print (struct Lisp_Tooltalk_Message *) ($ & 0xFFFFFFF)
+end
+
+define xtooltalkpatt
+print (struct Lisp_Tooltalk_Pattern *) ($ & 0xFFFFFFF)
+end
+
+define xvector
+print (struct Lisp_Vector *) ($ & 0xFFFFFFF)
+end
+
+define xwindow
+print (struct window *) ($ & 0xFFFFFFF)
+end
+
+define xwindowconfig
+print (struct window_config *) ($ & 0xFFFFFFF)
+end
+
+define nilp
+print $ == Qnil
+end
+
+define car
+set $tem = ((struct Lisp_Cons *) ($ & 0xFFFFFFF))->car
+end
+
+define cdr
+set $tem = ((struct Lisp_Cons *) ($ & 0xFFFFFFF))->cdr
+end
+
+define string-length
+print ((struct Lisp_String *) ($ & 0xFFFFFFF))->_size & $vector_length_mask
+end
+
+define string-contents
+print (char *) ((struct Lisp_String *) ($ & 0xFFFFFFF))->_data
+end
+
+define vector-length
+print ((struct Lisp_Vector *) ($ & 0xFFFFFFF))->size & $vector_length_mask
+end
+
+define vector-contents
+set $tem = (struct Lisp_Vector *) ($ & 0xFFFFFFF)
+print *($tem->contents) @ ($tem->size & $vector_length_mask)
+set $ = $tem->contents
+end
+
+define symbol-name
+set $tem = ((struct Lisp_Symbol *) ($ & 0xFFFFFFF))->name
+# output *($tem->_data) @ ($tem->_size & $vector_length_mask)
+output ($tem->_data) 
+echo \n
+set $type = Lisp_String
+echo \n
+end
+
+define xsymbol
+symbol-name
+end
+
+define symbol-value
+set $tem = ((struct Lisp_Symbol *) ($ & 0xFFFFFFF))->value
+end
+
+define symbol-function
+set $tem = ((struct Lisp_Symbol *) ($ & 0xFFFFFFF))->function
+end
+
+define symbol-plist
+set $tem = ((struct Lisp_Symbol *) ($ & 0xFFFFFFF))->plist
+end
+
+define wtype
+p $->core.widget_class->core_class.class_name
+end
+
+define xtname
+print XrmQuarkToString(((Object)($))->object.xrm_name)
+end
+
+# 
+# GDB, with the losing command-line parser that it has,
+# cannot handle nested blocks.
+# 
+define breaks
+
+br Fsignal
+# command
+# bt 3
+# p sig
+# xsymbol
+# end
+
+br Fkill_emacs
+# command
+# bt 3
+# end
+
+br assertion_failed
+# command
+# bt 3
+# end
+
+end

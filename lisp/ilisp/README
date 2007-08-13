@@ -1,0 +1,54 @@
+-*- Mode: Text -*-
+
+ILISP is a powerful GNU Emacs interface to many dialects of Lisp,
+including Lucid, Allegro, Harlequin LispWorks, KCL, AKCL, ECL, IBCL,
+and CMUCL.
+Written by Chris McConnell <ccm+@cs.cmu.edu> and now maintained by
+Marco Antoniotti <marcoxa@cs.nyu.edu> and Rick Busdiecker <rfb@lehman.com>.
+
+Please refer to the following files in this directory:
+ HISTORY - A detailed summary of changes over the course of ILISP's
+	   existence.
+ GETTING-ILISP - Directions for obtaining this collection using
+		 anonymous FTP.
+
+Please send bug reports, questions, suggestions, etc. to:
+  ILISP Discussion <ilisp@lehman.com>
+
+Please address all list administration messages, such as requests to
+subscribe or unsubscribe from ilisp@lehman.com, to:
+  ILISP Administrivia <ilisp-request@lehman.com>
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Future developments:
+
+ILISP might become part of the standard FSF distribution in the
+future. There are numerous little things that need to be done in that
+direction in order to conform to FSF coding and interface standards
+(e.g. the behavior of C-a is not acceptable by the FSF interface
+standard and numerous doc strings in ILISP need to be rewritten).
+This will happen slowly over the next(s) releases.
+
+Thanks go to the following people (and to many others who need our
+apologies for having let them out of the list):
+
+	Tim Bradshaw <tfb@edinburgh.ac.uk>
+	Kimball Collins <kpc@ptolemy-ethernet.arc.nasa.gov>
+	David Gadbois <gadbois@mcc.com>
+	Robert P. Goldman <goldman@src.honeywell.com>
+	Marty Hall <hall@aplcenmp.apl.jhu.edu>
+	Richard Harris <rharris@chestnut.com>
+	Christopher Hoover <ch@lks.csi.com>
+	Larry Hunter <hunter@work.nlm.nih.gov>
+	Todd Kaufmann <toad+@cs.cmu.edu>
+	Mark Kantrowitz <mkant+@cs.cmu.edu>
+	Qiegang Long <qlong@luke.cs.umass.edu>
+	Christopher McConnell <ccm@HITECH.CHESS.CS.CMU.EDU>
+	Yusuf Pisan <yusuf@SPD-13.ils.nwu.edu>
+	Jeffrey Mark Siskind <qobi@qobi.ai.toronto.edu>
+	Richard Stallman <rms@gnu.ai.mit.edu>
+	Jason Trenouth <jason@harlequin.co.uk>
+	Christof Ullwer <Ullwer@informatik.uni-stuttgart.de>
+	Ivan Vazquez <ivan@darwin.bu.edu>
+	Matsuo Yoshihiro <yosihiro@nttkb.ntt.jp>

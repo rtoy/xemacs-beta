@@ -1,0 +1,409 @@
+# Some useful commands for debugging emacs with gdb 4.14.* or better.
+# Install this as your .gdbinit file in your home directory.
+# If you have an older version of gdb 4.x, consider using the
+# file "gdbinit.pre-4.14" in the XEmacs src directory.
+# If you're one of the few who has an XEmacs compiled with
+# --use-union-type, you'll need to use the file "gdbinit.union".
+# Currently that file is of the pre-4.14 variety, but it should
+# be easy to update it to 4.14+, along the same lines as this file.
+#
+# See also question 2.1.15 of the XEmacs FAQ, titled
+# "How to Debug an XEmacs problem with a debugger".
+
+set print union off
+set print pretty off
+
+define temacs
+  run -batch -l loadup.el run-temacs -q
+end
+
+echo \n>>> Use the `temacs' command to run temacs\n\n
+
+# if you use Purify, do this:
+# set env PURIFYOPTIONS -pointer-mask=0x0fffffff
+
+################ Print using the Lisp printer
+
+define p1
+  call debug_print ($arg0)
+  printf "\n"
+end
+
+define lbt
+# "&" to compensate for GDB struct-passing bug
+# but I've removed the &'s because it doesn't work with my GDB,
+# and not having them works fine.
+call Fbacktrace (Qexternal_debugging_output, Qt)
+end
+
+################ Print using GDB built-ins
+
+define xint
+print ((int)($arg0 << 4))>>4
+end
+
+define xbitvec
+print (struct Lisp_Bit_Vector *) ($arg0 & 0xFFFFFFF)
+end
+
+define xbuffer
+print (struct buffer *) ($arg0 & 0xFFFFFFF)
+end
+
+define xbytecode
+print (struct Lisp_Bytecode *) ($arg0 & 0xFFFFFFF)
+end
+
+define xcharset
+print (struct Lisp_Charset *) ($arg0 & 0xFFFFFFF)
+end
+
+define xchartab
+print (struct Lisp_Char_Table *) ($arg0 & 0xFFFFFFF)
+end
+
+define xchartabentry
+print (struct Lisp_Char_Table_Entry *) ($arg0 & 0xFFFFFFF)
+end
+
+define xcodesys
+print (struct Lisp_Coding_System *) ($arg0 & 0xFFFFFFF)
+end
+
+define xcolorinst
+print (struct Lisp_Color_Instance *) ($arg0 & 0xFFFFFFF)
+end
+
+define xcons
+print (struct Lisp_Cons *) ($arg0 & 0xFFFFFFF)
+end
+
+define xdevice
+print (struct device *) ($arg0 & 0xFFFFFFF)
+end
+
+define xevent
+print (struct Lisp_Event *) ($arg0 & 0xFFFFFFF)
+end
+
+define xextent
+print (struct extent *) ($arg0 & 0xFFFFFFF)
+end
+
+define xextentaux
+print (struct extent_auxiliary *) ($arg0 & 0xFFFFFFF)
+end
+
+define xextentinfo
+print (struct extent_info *) ($arg0 & 0xFFFFFFF)
+end
+
+define xfloat
+print (struct Lisp_Float *) ($arg0 & 0xFFFFFFF)
+output (double) $arg0->data.d
+echo \n
+end
+
+define xfontinst
+print (struct Lisp_Font_Instance *) ($arg0 & 0xFFFFFFF)
+end
+
+define xframe
+print (struct frame *) ($arg0 & 0xFFFFFFF)
+end
+
+define xglyph
+print (struct Lisp_Glyph *) ($arg0 & 0xFFFFFFF)
+end
+
+define xhashtable
+print (struct hashtable_struct *) ($arg0 & 0xFFFFFFF)
+end
+
+define ximageinst
+print (struct Lisp_Image_Instance *) ($arg0 & 0xFFFFFFF)
+end
+
+define xkeymap
+print (struct keymap *) ($arg0 & 0xFFFFFFF)
+end
+
+define xlstream
+print (struct lstream *) ($arg0 & 0xFFFFFFF)
+end
+
+define xmarker
+print (struct Lisp_Marker *) ($arg0 & 0xFFFFFFF)
+end
+
+define xmenubardata
+print (struct menubar_data *) ($arg0 & 0xFFFFFFF)
+end
+
+define xopaque
+print (struct Lisp_Opaque *) ($arg0 & 0xFFFFFFF)
+end
+
+define xprocess
+print (struct Lisp_Process *) ($arg0 & 0xFFFFFFF)
+end
+
+define xrangetab
+print (struct Lisp_Range_Table *) ($arg0 & 0xFFFFFFF)
+end
+
+define xspec
+print (struct Lisp_Specifier *) ($arg0 & 0xFFFFFFF)
+end
+
+define xstring
+print (struct Lisp_String *) ($arg0 & 0xFFFFFFF)
+output (char *) $arg0->_data
+echo \n
+end
+
+define xsubr
+print (struct Lisp_Subr *) ($arg0 & 0xFFFFFFF)
+end
+
+define xsubwindow
+print (struct Lisp_Subwindow *) ($arg0 & 0xFFFFFFF)
+end
+
+define xsymbol
+set $tem = (struct Lisp_Symbol *) ($arg0 & 0xFFFFFFF)
+output $tem->name->_data
+printf "\n"
+print $tem
+end
+
+define xtoolbarbutton
+print (struct toolbar_button *) ($arg0 & 0xFFFFFFF)
+end
+
+define xtoolbardata
+print (struct toolbar_data *) ($arg0 & 0xFFFFFFF)
+end
+
+define xtooltalkmess
+print (struct Lisp_Tooltalk_Message *) ($arg0 & 0xFFFFFFF)
+end
+
+define xtooltalkpatt
+print (struct Lisp_Tooltalk_Pattern *) ($arg0 & 0xFFFFFFF)
+end
+
+define xvector
+print (struct Lisp_Vector *) ($arg0 & 0xFFFFFFF)
+end
+
+define xwindow
+print (struct window *) ($arg0 & 0xFFFFFFF)
+end
+
+define xwindowconfig
+print (struct window_config *) ($arg0 & 0xFFFFFFF)
+end
+
+define xrecord
+  print ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))
+  output (((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation->name)
+  echo \n
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_symbol
+    xsymbol $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_extent
+    xextent $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_marker
+    xmarker $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_event
+    xevent $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_buffer
+    xbuffer $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_window
+    xwindow $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_frame
+    xframe $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_device
+    xdevice $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_console
+    xconsole $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_process
+    xprocess $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_subr
+    xsubr $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_compiled_function
+    xbytecode $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_window_configuration
+    xwindowconfig $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_float
+    xfloat $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_opaque
+    xopaque $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_glyph
+    xglyph $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_keymap
+    xkeymap $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_lstream
+    xlstream $arg0
+  else
+  if ((struct lrecord_header *) ($arg0 & 0xFFFFFFF))->implementation == lrecord_bit_vector
+    xbitvec $arg0
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+end
+
+define frob
+  if (enum Lisp_Type) (($arg0 >> 28) & 7) == Lisp_Int
+    xint $arg0
+  else
+  if (enum Lisp_Type) (($arg0 >> 28) & 7) == Lisp_String
+    xstring $arg0
+  else
+  if (enum Lisp_Type) (($arg0 >> 28) & 7) == Lisp_Cons
+    xcons $arg0
+  else
+  if (enum Lisp_Type) (($arg0 >> 28) & 7) == Lisp_Vector
+    xvector $arg0
+  else
+  if (enum Lisp_Type) (($arg0 >> 28) & 7) == Lisp_Record
+    xrecord $arg0
+  else
+    printf "Unknown type?\n"
+  end
+  end
+  end
+  end
+  end
+end
+
+################ Miscellaneous
+
+define xtype
+# this is really xgctype, as we mask off the mark bit
+output (enum Lisp_Type) (($arg0 >> 28) & 7)
+echo \n
+end
+
+define xmarkbit
+print ($arg0 >> 31)
+end
+
+define nilp
+print $arg0 == Qnil
+end
+
+define xcar
+  frob ((struct Lisp_Cons *) ($arg0 & 0xFFFFFFF))->car
+end
+
+define xcdr
+  frob ((struct Lisp_Cons *) ($arg0 & 0xFFFFFFF))->cdr
+end
+
+set $vector_length_mask = ~(1<<31)
+
+define string-length
+  print ((struct Lisp_String *) ($arg0 & 0xFFFFFFF))->_size & $vector_length_mask
+end
+
+define string-contents
+  print (char *) ((struct Lisp_String *) ($ & 0xFFFFFFF))->_data
+end
+
+define vector-length
+  print ((struct Lisp_Vector *) ($ & 0xFFFFFFF))->size & $vector_length_mask
+end
+
+define vector-contents
+set $tem = (struct Lisp_Vector *) ($ & 0xFFFFFFF)
+print *($tem->contents) @ ($tem->size & $vector_length_mask)
+set $ = $tem->contents
+end
+
+define symbol-name
+set $tem = ((struct Lisp_Symbol *) ($ & 0xFFFFFFF))->name
+# output *($tem->_data) @ ($tem->_size & $vector_length_mask)
+output ($tem->_data) 
+echo \n
+set $type = Lisp_String
+echo \n
+end
+
+define symbol-value
+set $tem = ((struct Lisp_Symbol *) ($ & 0xFFFFFFF))->value
+end
+
+define symbol-function
+set $tem = ((struct Lisp_Symbol *) ($ & 0xFFFFFFF))->function
+end
+
+define symbol-plist
+set $tem = ((struct Lisp_Symbol *) ($ & 0xFFFFFFF))->plist
+end
+
+define wtype
+p $->core.widget_class->core_class.class_name
+end
+
+define xtname
+print XrmQuarkToString(((Object)($))->object.xrm_name)
+end
+
+# 
+# GDB, with the losing command-line parser that it has,
+# cannot handle nested blocks.
+# 
+define breaks
+
+br Fsignal
+# command
+# bt 3
+# p sig
+# xsymbol
+# end
+
+br Fkill_emacs
+# command
+# bt 3
+# end
+
+br assertion_failed
+# command
+# bt 3
+# end
+
+end
