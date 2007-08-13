@@ -1,3 +1,37 @@
+1998-06-01  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta42 is released.
+
+	* etc/sounds: Removed, now in the sounds-au package.
+
+1998-05-29  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: don't use -O3 for cygwin.
+
+	* etc/check_cygwin_setup.sh: new file to check that cygwin is setup
+	correctly for XEmacs operation.
+
+1998-05-28  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* configure.in: Switch from giflib to gifreader for
+	our GIF image support (no other mods needed)
+
+1998-05-28  Oliver Graf <ograf@fga.de>
+
+	* configure.in: only one DnD protocol, CDE has priority over OffiX
+
+	* tests/Dnd/README: some changes reflecting recent modifications
+	* tests/Dnd/dragtest.el: removed
+	* tests/Dnd/droptest.el: cosmetics and comments
+
+1998-05-26  Oliver Graf <ograf@fga.de>
+
+	* tests/Dnd/droptest.el: adapted to CDE extensions
+
+1998-05-21  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: check for msw dialogs.
+
 1998-05-23  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-beta41 is released.

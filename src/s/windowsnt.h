@@ -122,11 +122,6 @@ typedef int pid_t;
    your system and must be used only through an encapsulation
    (Which you should place, by convention, in sysdep.c).  */
 
-#if 0
-/* Define this to be the separator between path elements */
-#define DIRECTORY_SEP XINT (Vdirectory_sep_char)
-#endif
-
 /* XEmacs file I/O for DOS text files requires FILE_CODING */
 #define FILE_CODING
 
@@ -252,6 +247,10 @@ int wait (int *status);
 int kill (int pid, int sig);
 
 /* map to MSVC names */
+#define popen     _popen
+#define pclose    _pclose
+
+#if 0
 #define chdir     _chdir
 #define execlp    _execlp
 #define execvp    _execvp
@@ -267,8 +266,6 @@ int kill (int pid, int sig);
 #define logb      _logb
 #define _longjmp  longjmp
 #define lseek     _lseek
-#define popen     _popen
-#define pclose    _pclose
 #define putw      _putw
 #define umask     _umask
 /* #define utime     _utime */
@@ -282,10 +279,32 @@ int kill (int pid, int sig);
 #define abort	win32_abort
 #endif
 
+#endif /* 0 */
+
+/* Encapsulation of system calls */
+#ifndef DONT_ENCAPSULATE
+#define getpid sys_getpid
+int getpid (void);
+#endif
+
 /* Random global functions called everywhere. Implemented in nt.c */
+/* #### Most of these are FSFisms and must be avoided */
+/* #### All of these are FSFisms and must be avoided */
 void dostounix_filename (char *p);
 void unixtodos_filename (char *p);
+int crlf_to_lf (int n, unsigned char *buf, unsigned int *lf_count);
+
 char *getwd (char *dir);
+
+void *sbrk (unsigned long increment);
+
+struct passwd;
+struct passwd *getpwuid (int uid);
+struct passwd *getpwnam (const char *name);
+int getuid ();
+int geteuid ();
+int getgid (void);
+int getegid ();
 
 /* Setitimer is emulated */
 #define HAVE_SETITIMER
@@ -310,6 +329,7 @@ char *getwd (char *dir);
 #define getdefdir(_drv, _buf)   _getdcwd (_drv, _buf, MAXPATHLEN)
 
 #define EMACS_CONFIGURATION 	get_emacs_configuration ()
+const char *get_emacs_configuration (void);
 #define EMACS_CONFIG_OPTIONS	"NT"	/* Not very meaningful yet.  */
 
 #if 0 /* they do. -kkm */
@@ -340,14 +360,6 @@ char *getwd (char *dir);
 
 /* Define process implementation */
 #define HAVE_WIN32_PROCESSES
-
-#if 0
-/* Emacs takes care of ensuring that these are defined.  */
-#ifdef max
-#undef max
-#undef min
-#endif
-#endif
 
 /* We need a little extra space, see ../../lisp/loadup.el */
 #define SYSTEM_PURESIZE_EXTRA 15000

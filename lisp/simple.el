@@ -3937,7 +3937,7 @@ suppression in the .emacs file will be honored."
     (setq before-init-deferred-warnings
 	  (cdr before-init-deferred-warnings))))
 
-#-infodock (add-hook 'after-init-hook 'after-init-display-warnings)
+(add-hook 'after-init-hook 'after-init-display-warnings)
 
 (defun display-warning (class message &optional level)
   "Display a warning message.

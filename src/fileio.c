@@ -988,7 +988,7 @@ See also the function `substitute-in-file-name'.
       if (IS_DIRECTORY_SEP (nm[1])
 	  || nm[1] == 0)	/* ~ by itself */
 	{
-	  if (!(newdir = (Bufbyte *) egetenv ("HOME")))
+	  if (!(newdir = (Bufbyte *) get_home_directory()))
 	    newdir = (Bufbyte *) "";
 	  nm++;
 #ifdef WINDOWSNT
@@ -1015,7 +1015,7 @@ See also the function `substitute-in-file-name'.
 	     "c:/").  The variable o has "~foo", so we can use the
 	     length of that string to offset nm.  August Hill, 31 Aug
 	     1998.  */
-	  newdir = (Bufbyte *) egetenv ("HOME");
+	  newdir = (Bufbyte *) get_home_directory();
 	  dostounix_filename (newdir);
 	  nm += strlen(o) + 1;
 #else  /* not WINDOWSNT */

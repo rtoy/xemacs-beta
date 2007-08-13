@@ -36,9 +36,6 @@ Boston, MA 02111-1307, USA.  */
 #define DEVICE_SUPPORTS_TOOLBARS_P(d)		\
   (HAS_DEVMETH_P ((d), output_frame_toolbars))
 
-/* These are chained together through toolbar_buttons in struct
-   toolbar_data.  These don't need to be an lrecord either, but again,
-   it makes marking easier. */
 struct toolbar_button
 {
   struct lcrecord_header header;

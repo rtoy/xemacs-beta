@@ -1365,7 +1365,7 @@ This is the first-created X device that still exists.
 }
 
 DEFUN ("x-display-visual-class", Fx_display_visual_class, 0, 1, 0, /*
-Return the visual class of the X display `device' is using.
+Return the visual class of the X display DEVICE is using.
 This can be altered from the default at startup using the XResource "EmacsVisual".
 The returned value will be one of the symbols `static-gray', `gray-scale',
 `static-color', `pseudo-color', `true-color', or `direct-color'.
@@ -1388,7 +1388,7 @@ The returned value will be one of the symbols `static-gray', `gray-scale',
 }
 
 DEFUN ("x-display-visual-depth", Fx_display_visual_depth, 0, 1, 0, /*
-Return the bitplane depth of the visual the X display `device' is using.
+Return the bitplane depth of the visual the X display DEVICE is using.
 */
        (device))
 {
@@ -1406,25 +1406,21 @@ x_device_system_metrics (struct device *d,
     case DM_size_device:
       return Fcons (make_int (DisplayWidth (dpy, DefaultScreen (dpy))),
 		    make_int (DisplayHeight (dpy, DefaultScreen (dpy))));
-      break;
     case DM_size_device_mm:
       return Fcons (make_int (DisplayWidthMM (dpy, DefaultScreen (dpy))),
 		    make_int (DisplayHeightMM (dpy, DefaultScreen (dpy))));
-      break;
     case DM_num_bit_planes:
       return make_int (DisplayPlanes (dpy, DefaultScreen (dpy)));
-      break;
     case DM_num_color_cells:
       return make_int (DisplayCells (dpy, DefaultScreen (dpy)));
-      break;
+    default: /* No such device metric property for X devices  */
+      return Qunbound;
     }
-
-  /* Do not know such property */
-  return Qunbound;
 }
 
 DEFUN ("x-server-vendor", Fx_server_vendor, 0, 1, 0, /*
-Return the vendor ID string of the X server `device' on.
+Return the vendor ID string of the X server DEVICE is on.
+Return the empty string if the vendor ID string cannot be determined.
 */
        (device))
 {
@@ -1435,7 +1431,7 @@ Return the vendor ID string of the X server `device' on.
 }
 
 DEFUN ("x-server-version", Fx_server_version, 0, 1, 0, /*
-Return the version numbers of the X server `device' is on.
+Return the version numbers of the X server DEVICE is on.
 The returned value is a list of three integers: the major and minor
 version numbers of the X Protocol in use, and the vendor-specific release
 number.  See also `x-server-vendor'.
@@ -1739,7 +1735,7 @@ just reside in C.
   Vx_initial_argv_list = Qnil;
 
   DEFVAR_BOOL ("x-seppuku-on-epipe", &x_seppuku_on_epipe /*
-When non-nil terminate XEmacs immediately on SIGPIPE from the X server.
+When non-nil, terminate XEmacs immediately on SIGPIPE from the X server.
 XEmacs doesn't terminate properly on some systems.
 When this variable is non-nil, XEmacs will commit immediate suicide
 when it gets a sigpipe from the X Server.

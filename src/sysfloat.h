@@ -44,6 +44,12 @@ Boston, MA 02111-1307, USA.  */
 
 #include <math.h>
 
+#ifdef WINDOWSNT
+/* A quirky way to obtain logb prototype */
+#include <float.h>
+#define logb _logb
+#endif
+
 #ifdef HAVE_MATHERR
 /* Work around symbol conflict on Linux/glibc */
 #ifndef DOMAIN

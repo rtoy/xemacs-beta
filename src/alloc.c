@@ -693,7 +693,6 @@ enum dbg_constants
 #endif
 #ifndef HAVE_TOOLBARS
   lrecord_toolbar_button   = 208,
-  lrecord_toolbar_data     = 209,
 #endif
 #ifndef HAVE_TOOLTALK
   lrecord_tooltalk_message = 210,
@@ -4315,6 +4314,8 @@ disksave_object_finalization (void)
   Vexec_path = Qnil;
   Vload_path = Qnil;
   /* Vdump_load_path = Qnil; */
+  uncache_home_directory();
+
 #if defined(LOADHIST) && !(defined(LOADHIST_DUMPED) || \
 			   defined(LOADHIST_BUILTIN))
   Vload_history = Qnil;

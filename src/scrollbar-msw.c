@@ -166,14 +166,15 @@ void
 mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
 {
   struct frame *f;
-  Lisp_Object win;
+  Lisp_Object win, frame;
   struct scrollbar_instance *sb;
   SCROLLINFO scrollinfo;
   int vert = GetWindowLong (hwnd, GWL_STYLE) & SBS_VERT;
 
   sb = (struct scrollbar_instance *)GetWindowLong (hwnd, GWL_USERDATA);
   win = real_window (sb->mirror, 1);
-  f = XFRAME (XWINDOW (win)->frame);
+  frame = XWINDOW (win)->frame;
+  f = XFRAME (frame);
 
   inhibit_slider_size_change = code == SB_THUMBTRACK;
 
@@ -184,39 +185,36 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
   switch (code)
     {
     case SB_LINEDOWN:
-      enqueue_misc_user_event(win,
-			      vert ? Qscrollbar_line_down : Qscrollbar_char_right,
-			      win);
+      mswindows_enqueue_misc_user_event
+	(frame, vert ? Qscrollbar_line_down : Qscrollbar_char_right, win);
       break;
 	  
     case SB_LINEUP:
-      enqueue_misc_user_event(win,
-			      vert ? Qscrollbar_line_up : Qscrollbar_char_left,
-			      win);
+      mswindows_enqueue_misc_user_event
+	(frame, vert ? Qscrollbar_line_up : Qscrollbar_char_left, win);
       break;
 	  
     case SB_PAGEDOWN:
-      enqueue_misc_user_event(win,
-			      vert ? Qscrollbar_page_down : Qscrollbar_page_right,
-			      vert ? Fcons (win, Qnil) : win);
+      mswindows_enqueue_misc_user_event
+	(win, vert ? Qscrollbar_page_down : Qscrollbar_page_right,
+	 vert ? Fcons (win, Qnil) : win);
       break;
 
     case SB_PAGEUP:
-      enqueue_misc_user_event(win,
-			      vert ? Qscrollbar_page_up : Qscrollbar_page_left,
-			      vert ? Fcons (win, Qnil) : win);
+      mswindows_enqueue_misc_user_event
+	(frame,
+	 vert ? Qscrollbar_page_up : Qscrollbar_page_left,
+	 vert ? Fcons (win, Qnil) : win);
       break;
 	  
     case SB_BOTTOM:
-      enqueue_misc_user_event(win,
-			      vert ? Qscrollbar_to_bottom : Qscrollbar_to_right,
-			      win);
+      mswindows_enqueue_misc_user_event
+	(frame, vert ? Qscrollbar_to_bottom : Qscrollbar_to_right, win);
       break;
 
     case SB_TOP:
-      enqueue_misc_user_event(win,
-			      vert ? Qscrollbar_to_top : Qscrollbar_to_left,
-			      win);
+      mswindows_enqueue_misc_user_event
+	(frame, vert ? Qscrollbar_to_top : Qscrollbar_to_left, win);
       break;
 
     case SB_THUMBTRACK:
@@ -224,10 +222,10 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
       scrollinfo.cbSize = sizeof(SCROLLINFO);
       scrollinfo.fMask = SIF_TRACKPOS;
       GetScrollInfo (hwnd, SB_CTL, &scrollinfo);
-      enqueue_misc_user_event (win,
-			       (vert ? Qscrollbar_vertical_drag
-				: Qscrollbar_horizontal_drag),
-			       Fcons (win, make_int (scrollinfo.nTrackPos)));
+      mswindows_enqueue_misc_user_event
+	(frame,
+	 vert ? Qscrollbar_vertical_drag : Qscrollbar_horizontal_drag,
+	 Fcons (win, make_int (scrollinfo.nTrackPos)));
       break;
     }
 }

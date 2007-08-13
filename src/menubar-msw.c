@@ -594,7 +594,7 @@ unsafe_handle_wm_initmenu_1 (struct frame* f)
 
   /* We simply ignore return value. In any case, we construct the bar
      on the fly */
-  run_hook (Vactivate_menubar_hook);
+  run_hook (Qactivate_menubar_hook);
 
   update_frame_menubar_maybe (f);
 
@@ -631,15 +631,9 @@ mswindows_handle_wm_command (struct frame* f, WORD id)
   menu_cleanup (f);
 
   /* Ok, this is our one. Enqueue it. */
-  get_callback (data, &fn, &arg);
-
+  get_gui_callback (data, &fn, &arg);
   XSETFRAME (frame, f);
-  enqueue_misc_user_event (frame, fn, arg);
-
-  /* Needs good bump also, for WM_COMMAND may have been dispatched from
-     mswindows_need_event, which will block again despite new command
-     event has arrived */
-  mswindows_bump_queue ();
+  mswindows_enqueue_misc_user_event (frame, fn, arg);
 
   UNGCPRO; /* data */
   return Qt;

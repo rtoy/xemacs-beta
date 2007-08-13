@@ -160,10 +160,7 @@ Boston, MA 02111-1307, USA.  */
 			   command builder) will get affected.
 			-- for timer, process, magic-eval, and eval events,
 			   channel will be nil.
-			-- for scrollbar misc-user events, channel
-			   will be a window.
-			-- for menubar misc-user events, channel
-			   will be a frame.
+			-- for misc-user events, channel will be a frame.
 			-- for magic events, channel will be a frame
 			   (usually) or a device.
 

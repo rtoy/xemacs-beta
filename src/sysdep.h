@@ -174,6 +174,8 @@ extern int h_errno;
 
 #ifdef HAVE_REALPATH
 #define xrealpath realpath
+#else
+char *xrealpath(CONST char *path, char resolved_path []);
 #endif
 
 #endif /* _XEMACS_SYSDEP_H_ */

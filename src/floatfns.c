@@ -694,7 +694,7 @@ This is the same as the exponent of a float.
   double f = extract_float (arg);
 
   if (f == 0.0)
-    return (make_int (- (((EMACS_UINT) 1) << (VALBITS - 1)))); /* most-negative-fixnum */
+    return make_int (- (int)((((EMACS_UINT) 1) << (VALBITS - 1)))); /* most-negative-fixnum */
 #ifdef HAVE_LOGB
   {
     Lisp_Object val;

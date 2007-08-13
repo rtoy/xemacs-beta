@@ -39,12 +39,20 @@
 
 ;; Suppress warning message from bytecompiler
 (eval-when-compile
-  (defvar pending-delete-mode))
+  (defvar pending-delete-mode)
+  ;; #### The compiler still warns about missing
+  ;; `pending-delete-pre-hook'.  Any way to get rid of the warning?
+  )
 
 (defgroup toolbar nil
   "Configure XEmacs Toolbar functions and properties"
   :group 'environment)
 
+;; #### The following function is slightly obnoxious as it stands.  I
+;; think it should print a message like "Toolbar not configured; press
+;; me again to configure it", and when the button is pressed again
+;; (within a reasonable period of time), `customize-variable' should
+;; be invoked for the appropriate variable.
 
 (defun toolbar-not-configured ()
   (interactive)
@@ -330,7 +338,7 @@ is the form used to start it."
 		       (symbol :tag "Reader") (sexp :tag "Start with")))
   :group 'toolbar)
 
-(defcustom toolbar-news-reader 'not-configured
+(defcustom toolbar-news-reader 'gnus
   "*News reader toolbar will invoke.
 The legal values are the keys from `toolbar-news-command-alist', which should
  be used to add new news readers.
@@ -372,7 +380,7 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
   (if (not toolbar-news-use-separate-frame)
       (gnus)
     (unless (frame-live-p toolbar-news-frame)
-      (setq toolbar-news-frame (make-frame toolbar-news-frame-properties))
+      (setq toolbar-news-frame (make-frame toolbar-news-frame-plist))
       (add-hook 'gnus-exit-gnus-hook
 		(lambda ()
 		  (when (frame-live-p toolbar-news-frame)
@@ -449,6 +457,9 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
   (mapcar
    (lambda (cons)
      (let ((prefix (expand-file-name (cdr cons)  icon-dir)))
+       ;; #### This should use a better mechanism for finding the
+       ;; glyphs, allowing for formats other than x[pb]m.  Look at
+       ;; `widget-glyph-find' for an example how it might be done.
        (set (car cons)
 	    (if (featurep 'xpm)
 		(toolbar-make-button-list
@@ -461,17 +472,15 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
 	      (toolbar-make-button-list
 	       (concat prefix "-up.xbm")
 	       (concat prefix "-dn.xbm")
-	       (concat prefix "-xx.xbm")
-	       )))))
-   icon-list  )
-  )
+	       (concat prefix "-xx.xbm"))))))
+   icon-list))
 
 (defvar toolbar-vector-open 
   [toolbar-file-icon            toolbar-open	t       "Open a file"]
   "Define the vector for the \"Open\" toolbar button")
 
 (defvar toolbar-vector-dired
-  [toolbar-folder-icon	        toolbar-dired	t	"View directory"]
+  [toolbar-folder-icon	        toolbar-dired	t	"Edit a directory"]
   "Define the vector for the \"Dired\" toolbar button")
 
 (defvar toolbar-vector-save
@@ -499,31 +508,31 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
   "Define the vector for the \"Undo\" toolbar button")
 
 (defvar toolbar-vector-spell
-  [toolbar-spell-icon		toolbar-ispell	t	"Spellcheck"]
+  [toolbar-spell-icon		toolbar-ispell	t	"Check spelling"]
   "Define the vector for the \"Spell\" toolbar button")
 
 (defvar toolbar-vector-replace
-  [toolbar-replace-icon	        toolbar-replace	t	"Replace text"]  
+  [toolbar-replace-icon	        toolbar-replace	t	"Search & Replace"]  
   "Define the vector for the \"Replace\" toolbar button")
 
 (defvar toolbar-vector-mail
-  [toolbar-mail-icon		toolbar-mail	t	"Mail"]
+  [toolbar-mail-icon		toolbar-mail	t	"Read mail"]
   "Define the vector for the \"Mail\" toolbar button")
 
 (defvar toolbar-vector-info
-  [toolbar-info-icon		toolbar-info	t	"Information"]
+  [toolbar-info-icon		toolbar-info	t	"Info documentation"]
   "Define the vector for the \"Info\" toolbar button")
 
 (defvar toolbar-vector-compile
-  [toolbar-compile-icon	        toolbar-compile	t	"Compile"]
+  [toolbar-compile-icon	        toolbar-compile	t	"Start a compilation"]
   "Define the vector for the \"Compile\" toolbar button")
 
 (defvar toolbar-vector-debug
-  [toolbar-debug-icon		toolbar-debug	t	"Debug"]
+  [toolbar-debug-icon		toolbar-debug	t	"Start a debugger"]
   "Define the vector for the \"Debug\" toolbar button")
 
 (defvar toolbar-vector-news
-  [toolbar-news-icon		toolbar-news	t	"News"]
+  [toolbar-news-icon		toolbar-news	t	"Read news"]
   "Define the vector for the \"News\" toolbar button")
 
 (defvar initial-toolbar-spec

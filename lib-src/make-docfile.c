@@ -56,9 +56,10 @@ Boston, MA 02111-1307, USA.  */
 #include <fcntl.h>
 #endif /* MSDOS */
 #ifdef WINDOWSNT
-#include <stdlib.h>
-#include <fcntl.h>
 #include <direct.h>
+#include <fcntl.h>
+#include <io.h>
+#include <stdlib.h>
 #endif /* WINDOWSNT */
 
 #if defined(DOS_NT) || defined(__CYGWIN32__)

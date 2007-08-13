@@ -26,16 +26,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "specifier.h"
 
-extern Lisp_Object Qxpm;
-#ifdef HAVE_XPM
-extern Lisp_Object Q_color_symbols;
-Lisp_Object evaluate_xpm_color_symbols (void);
-Lisp_Object pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid);
-#endif
-
-DOESNT_RETURN signal_image_error (CONST char *, Lisp_Object);
-DOESNT_RETURN signal_image_error_2 (CONST char *, Lisp_Object, Lisp_Object);
-
 /************************************************************************/
 /*			Image Instantiators				*/
 /************************************************************************/
@@ -207,6 +197,8 @@ void check_valid_int (Lisp_Object data);
 DECLARE_DOESNT_RETURN (incompatible_image_types (Lisp_Object instantiator,
                                                  int given_dest_mask,
                                                  int desired_dest_mask));
+DECLARE_DOESNT_RETURN (signal_image_error (CONST char *, Lisp_Object));
+DECLARE_DOESNT_RETURN (signal_image_error_2 (CONST char *, Lisp_Object, Lisp_Object));
 
 /************************************************************************/
 /*			Image Specifier Object				*/
@@ -404,6 +396,21 @@ struct Lisp_Image_Instance
 #define XIMAGE_INSTANCE_PIXMAP_BG(i) \
   IMAGE_INSTANCE_PIXMAP_BG (XIMAGE_INSTANCE (i))
 
+#ifdef HAVE_XPM
+Lisp_Object evaluate_xpm_color_symbols (void);
+Lisp_Object pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid);
+#endif /* HAVE_XPM */
+#ifdef HAVE_WINDOW_SYSTEM
+Lisp_Object bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
+				 int ok_if_data_invalid);
+int read_bitmap_data_from_file (CONST char *filename, unsigned int *width, 
+				unsigned int *height, unsigned char **datap,
+				int *x_hot, int *y_hot);
+Lisp_Object xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
+				   Lisp_Object mask_file, 
+				   Lisp_Object console_type);
+#endif
+
 /************************************************************************/
 /*				Glyph Object				*/
 /************************************************************************/
@@ -472,7 +479,11 @@ DECLARE_LRECORD (glyph, struct Lisp_Glyph);
 #define XGLYPH_BASELINE(g) GLYPH_BASELINE (XGLYPH (g))
 #define XGLYPH_FACE(g) GLYPH_FACE (XGLYPH (g))
 
-extern Lisp_Object Q_data, Q_file, Qconst_glyph_variable;
+extern Lisp_Object Qxpm;
+extern Lisp_Object Q_data, Q_file, Q_color_symbols, Qconst_glyph_variable;
+extern Lisp_Object Qxbm;
+extern Lisp_Object Q_mask_file, Q_mask_data, Q_hotspot_x, Q_hotspot_y;
+extern Lisp_Object Q_foreground, Q_background;
 extern Lisp_Object Qimage_conversion_error;
 extern Lisp_Object Vcontinuation_glyph, Vcontrol_arrow_glyph, Vhscroll_glyph;
 extern Lisp_Object Vinvisible_text_glyph, Voctal_escape_glyph, Vtruncation_glyph;

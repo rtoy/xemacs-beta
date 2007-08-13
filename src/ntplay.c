@@ -22,36 +22,80 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #undef CONST
 #include <config.h>
 #include <stdio.h>
+#include "sysfile.h"
+#include "lisp.h"
 
 #ifdef __CYGWIN32__
 extern BOOL WINAPI PlaySound(LPCSTR,HMODULE,DWORD);
 #endif
+static void play_sound_data_1 (unsigned char *data, int length,
+			       int volume, int convert);
 
-void play_sound_file (char *sound_file, int volume);
 void play_sound_file (char *sound_file, int volume)
 {
   DWORD flags = SND_ASYNC | SND_NODEFAULT | SND_FILENAME;
-  char* dst=0;
-#ifdef __CYGWIN32__
-  CYGWIN_WIN32_PATH(sound_file, dst);
-  sound_file=dst;
-#endif
-  if (PlaySound(sound_file, NULL, flags)==FALSE)
+  OFSTRUCT ofs;
+  Lisp_Object fname = Ffile_name_nondirectory (build_string (sound_file));
+
+  CHECK_STRING (fname);
+  if (OpenFile (XSTRING_DATA (fname), &ofs, OF_EXIST) < 0)
     {
-      perror(sound_file);
+      /* file isn't in the path so read it as data */
+      int size;
+      unsigned char* data;
+      int ofd = open (sound_file, O_RDONLY | OPEN_BINARY, 0);
+      
+      if (ofd <0)
+	return;
+
+      size = lseek (ofd, 0, SEEK_END);
+      data = xmalloc (size);
+      lseek (ofd, 0, SEEK_SET);
+      
+      if (!data)
+	{
+	  close (ofd);
+	  return;
+	}
+
+      if (read (ofd, data, size) != size)
+	{
+	  close (ofd);
+	  xfree (data);
+	  return;
+	}
+      
+      play_sound_data_1 (data, size, 100, FALSE);
+      
+      xfree (data);
+      close (ofd);
     }
+  else 
+    PlaySound (XSTRING_DATA (fname), NULL, flags);
+}
+
+/* mswindows can't cope with playing a sound from alloca space so we
+   have to convert if necessary */
+static void play_sound_data_1 (unsigned char *data, int length, int volume,
+			       int convert_to_malloc)
+{
+  DWORD flags = SND_ASYNC | SND_MEMORY | SND_NODEFAULT;
+  unsigned char* sound_data;
+  if (convert_to_malloc)
+    {
+      sound_data = xmalloc (length);
+      memcpy (sound_data, data, length);
+    }
+  else
+    sound_data = data;
+
+  PlaySound(sound_data, NULL, flags);
+  if (convert_to_malloc)
+    xfree (sound_data);
   return;
 }
 
-/* Call "linux_play_data_or_file" with the appropriate parameters for
-   playing pre-loaded data */
-void play_sound_data (unsigned char *data, int length, int volume);
 void play_sound_data (unsigned char *data, int length, int volume)
 {
-  DWORD flags = SND_ASYNC | SND_MEMORY | SND_NODEFAULT;
-  if (PlaySound(data, NULL, flags)==FALSE)
-    {
-      perror("couldn't play sound file");
-    }
-  return;
+  play_sound_data_1 (data, length, volume, TRUE);
 }

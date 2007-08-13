@@ -37,7 +37,7 @@
 ;; I think this is a better name for the custom group
 ;; looks better in the menu and the group display as dragdrop
 ;; Anyway: is dragdrop- a good prefix for all this?
-;; What if someone type drop<TAB> into the minibuffer?
+;; What if someone trys drop<TAB> in the minibuffer?
 (defgroup drag-n-drop nil
   "Window system-independent drag'n'drop support."
   :group 'editing)
@@ -83,11 +83,6 @@ Otherwise, the buffer is only decoded if tm-view is already avaiable."
 		  (sexp :tag "Arg" :value nil)))
   :value '(nil t t))
 
-;; button and widget selectors are still "shaky":
-;; button may be a number or t (or nil?), t means "Ignore"
-;; mods may be t or nil or a list of mod-syms, t means "Ignore"
-;; but this seems to be a porblem for the widget, well perhaps I find
-;; a solution...
 (defcustom dragdrop-drop-functions '((dragdrop-drop-url-default t t)
 				     (dragdrop-drop-mime-default t t))
   "This is the standart drop function search list.
@@ -119,6 +114,9 @@ Set dragdrop-drop-log to non-nil to enable this feature."
 (defvar dragdrop-drop-log-buffer nil
   "Buffer to log drops in debug mode.")
 
+;;
+;; Drop API
+;;
 (defun dragdrop-drop-dispatch (object)
   "This function identifies DROP type misc-user-events.
 It calls functions which will handle the drag."
@@ -231,14 +229,16 @@ Finds files and URLs. Returns nil if object does not contain URL data."
   (cond ((eq (car object) 'dragdrop-URL)
 	 (let ((data (cdr object))
 	       (frame (event-channel event))
-	       (x pop-up-windows))
+	       (x pop-up-windows)
+	       (window (event-window event)))
 	   (setq pop-up-windows nil)
 	   (while (not (eq data ()))
 	     (cond ((dragdrop-is-some-url "file" (car data))
 		    ;; if it is some file, pop it to a buffer
-		    (pop-to-buffer (find-file-noselect
-				    (substring (car data) 5))
-				   nil frame))
+		    (cond (window
+			   (select-window window)))
+		    (switch-to-buffer (find-file-noselect
+				       (substring (car data) 5))))
 		   ;; to-do: open ftp URLs with efs...
 		   (t 
 		    ;; some other URL, try to fire up some browser for it
@@ -338,5 +338,85 @@ compare."
 	     (setq method (concat method ":")))
 	 (string= method (substring url 0 (length method))))
 	(t nil)))
+
+;;
+;; Drag API
+;;
+(defun dragdrop-drag (event object)
+  "The generic drag function.
+Tries to do the best with object in the selected protocol.
+Object must comply to the standart drag'n'drop object 
+format."
+  (error "Not implemented"))
+
+(defun dragdrop-drag-region (event begin end)
+  "Drag a region.
+This function uses special data types if the low-level
+protocol requires it. It does so by calling
+dragdrop-drag-pure-text."
+  (dragdrop-drag-pure-text event
+			   (buffer-substring-no-properties begin end)))
+
+(defun dragdrop-drag-pure-text (event text)
+  "Drag text-only data.
+Takes care of special low-level protocol data types.
+Text must be a list of strings."
+  (error "Not implemented"))
+
+(defun dragdrop-drag-pure-file (event file)
+  "Drag filepath-only data.
+Takes care of special low-level protocol data types.
+file must be a list of strings."
+  (error "Not implemented"))
+
+;;
+;; The following ones come from frame.el but the better belong here
+;; until changed
+;;
+(defun cde-start-drag (event type data)
+  "Implement the CDE drag operation.
+Calls the internal function cde-start-drag-internal to do the actual work."
+  (interactive "_eXX")
+  (if (featurep 'cde)
+      ;; Avoid build-time doc string warning by calling the function
+      ;; in the following roundabout way:
+      (funcall (intern "cde-start-drag-internal")
+	       event type data)
+    (error "CDE functionality not compiled in.")))
+
+(defun cde-start-drag-region (event begin end)
+  "Implement the CDE drag operation for a region.
+Calls the internal function CDE-start-drag-internal to do the actual work.
+This always does buffer transfers."
+  ;; Oliver Graf <ograf@fga.de>
+  (interactive "_er")
+  (if (featurep 'cde)
+      (funcall (intern "cde-start-drag-internal")
+	       event nil (list (buffer-substring-no-properties begin end)))
+    (error "CDE functionality not compiled in.")))
+
+;; the OffiX drag stuff will soon move also (perhaps mouse.el)
+;; if the drag event is done
+(defun offix-start-drag (event data &optional type)
+  "Implement the OffiX drag operation.
+Calls the internal function offix-start-drag-internal to do the actual work.
+If type is not given, DndText is assumed."
+  ;; Oliver Graf <ograf@fga.de>
+  (interactive "esi")
+  (if (featurep 'offix)
+      (funcall (intern "offix-start-drag-internal") event data type)
+    (error "OffiX functionality not compiled in.")))
+
+(defun offix-start-drag-region (event begin end)
+  "Implement the OffiX drag operation for a region.
+Calls the internal function offix-start-drag-internal to do the actual work.
+This always assumes DndText as type."
+  ;; Oliver Graf <ograf@fga.de>
+  (interactive "_er")
+  (if (featurep 'offix)
+      (funcall (intern "offix-start-drag-internal")
+	       event (buffer-substring-no-properties begin end))
+    (error "OffiX functionality not compiled in.")))
+
 
 ;;; dragdrop.el ends here

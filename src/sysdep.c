@@ -37,6 +37,9 @@ Boston, MA 02111-1307, USA.  */
    This is not true though with visual c though. The trick below works with
    VC4.2b and with VC5.0. It assumes that VC is installed in a kind of
    standard way, so include files get to what/ever/path/include.
+
+   Unfortunately, this must go before lisp.h, since process.h defines abort()
+   which will conflict with the macro defined in lisp.h
 */
 #include <../include/process.h>
 #endif /* WINDOWSNT */
@@ -563,6 +566,14 @@ restore_signal_handlers (struct save_signal *saved_handlers)
       saved_handlers++;
     }
 }
+
+#ifdef WINDOWSNT
+int
+sys_getpid (void)
+{
+  return abs (getpid ());
+}
+#endif /* WINDOWSNT */
 
 /* Fork a subshell.  */
 static void

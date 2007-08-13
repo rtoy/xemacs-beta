@@ -1393,20 +1393,9 @@ mswindows_clear_region (Lisp_Object locale, face_index findex, int x, int y,
       mswindows_update_dc (FRAME_MSWINDOWS_DC (f),
 			   Qnil, fcolor, bcolor, background_pixmap);
 
-      if (XIMAGE_INSTANCE_PIXMAP_DEPTH (background_pixmap) == 0)
-	{
-	  /* is this expensive? - I haven't seen it used as yet. */
-	  HBRUSH brush = CreateSolidBrush 
-	    (COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (bcolor)));
-	  FillRect (FRAME_MSWINDOWS_DC(f), &rect, brush);
-	  DeleteObject (brush);
-	}
-      else
-	{
-	  mswindows_output_dibitmap_region 
-	    ( f, XIMAGE_INSTANCE (background_pixmap),
-	      x, y, 0, 0, 0, 0, width, height, 0, TRUE);
-	}
+      mswindows_output_dibitmap_region 
+	( f, XIMAGE_INSTANCE (background_pixmap),
+	  x, y, 0, 0, 0, 0, width, height, 0, TRUE);
     }
   else
     {

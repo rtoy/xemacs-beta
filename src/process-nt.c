@@ -220,7 +220,7 @@ run_in_other_process (HANDLE h_process,
 /*
  * We handle the following signals:
  *
- * SIGKILL, SIGTERM, SIGQUIT - These three translate to ExitProcess
+ * SIGKILL, SIGTERM, SIGQUIT, SIGHUP - These four translate to ExitProcess
  *    executed by the remote process
  * SIGINT - The remote process is sent CTRL_BREAK_EVENT
  */
@@ -311,6 +311,7 @@ send_signal (HANDLE h_process, int signo)
     case SIGKILL:
     case SIGTERM:
     case SIGQUIT:
+    case SIGHUP:
       {
 	sigkill_data d;
 	d.adr_ExitProcess = GetProcAddress (h_kernel, "ExitProcess");
@@ -366,7 +367,8 @@ static void
 validate_signal_number (int signo)
 {
   if (signo != SIGKILL && signo != SIGTERM
-      && signo != SIGQUIT && signo != SIGINT)
+      && signo != SIGQUIT && signo != SIGINT
+      && signo != SIGHUP)
     signal_simple_error ("Signal number not supported", make_int (signo));
 }
   
@@ -417,15 +419,16 @@ nt_init_process (void)
 /* #### This function completely ignores Vprocess_environment */
 
 static void
-signal_cannot_launch (char* image_file, DWORD err)
+signal_cannot_launch (Lisp_Object image_file, DWORD err)
 {
   mswindows_set_errno (err);
-  error ("Starting \"%s\": %s", image_file, strerror (errno));
+  error ("Starting \"%S\": %s", image_file, strerror (errno));
 }
 
 static int
 nt_create_process (struct Lisp_Process *p,
-		   char **argv, CONST char *current_dir)
+		   Lisp_Object *argv, int nargv,
+		   Lisp_Object program, Lisp_Object cur_dir)
 {
   HANDLE hmyshove, hmyslurp, hprocin, hprocout;
   LPTSTR command_line;
@@ -435,9 +438,10 @@ nt_create_process (struct Lisp_Process *p,
   {
     /* SHGetFileInfo tends to return ERROR_FILE_NOT_FOUND on most
        errors. This leads to bogus error message. */
-    DWORD image_type = SHGetFileInfo (argv[0], 0, NULL, 0, SHGFI_EXETYPE);
+    DWORD image_type = SHGetFileInfo ((char *)XSTRING_DATA (program), 0,NULL,
+				      0, SHGFI_EXETYPE);
     if (image_type == 0)
-      signal_cannot_launch (argv[0], (GetLastError () == ERROR_FILE_NOT_FOUND
+      signal_cannot_launch (program, (GetLastError () == ERROR_FILE_NOT_FOUND
 				      ? ERROR_BAD_FORMAT : GetLastError ()));
     windowed = HIWORD (image_type) != 0;
   }
@@ -475,15 +479,16 @@ nt_create_process (struct Lisp_Process *p,
   /* Convert an argv vector into Win32 style command line by a call to
      lisp function `nt-quote-process-args' which see (in winnt.el)*/
   {
-    char** thisarg;
+    int i;
     Lisp_Object args_or_ret = Qnil;
     struct gcpro gcpro1;
-    
+
     GCPRO1 (args_or_ret);
 
-    for (thisarg = argv; *thisarg; ++thisarg)
-      args_or_ret = Fcons (build_string (*thisarg), args_or_ret);
+    for (i = 0; i < nargv; ++i)
+      args_or_ret = Fcons (*argv++, args_or_ret);
     args_or_ret = Fnreverse (args_or_ret);
+    args_or_ret = Fcons (program, args_or_ret);
 
     args_or_ret = call1 (Qnt_quote_process_args, args_or_ret);
 
@@ -491,9 +496,9 @@ nt_create_process (struct Lisp_Process *p,
       /* Luser wrote his/her own clever version */
       error ("Bogus return value from `nt-quote-process-args'");
 
-    command_line = alloca_array (char, (strlen (argv[0])
+    command_line = alloca_array (char, (XSTRING_LENGTH (program)
 					+ XSTRING_LENGTH (args_or_ret) + 2));
-    strcpy (command_line, argv[0]);
+    strcpy (command_line, XSTRING_DATA (program));
     strcat (command_line, " ");
     strcat (command_line, XSTRING_DATA (args_or_ret));
 
@@ -520,7 +525,7 @@ nt_create_process (struct Lisp_Process *p,
     err = (CreateProcess (NULL, command_line, NULL, NULL, TRUE,
 			  CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP
 			  | CREATE_SUSPENDED,
-			  NULL, current_dir, &si, &pi)
+			  NULL, (char *) XSTRING_DATA (cur_dir), &si, &pi)
 	   ? 0 : GetLastError ());
 
     if (do_io)
@@ -538,7 +543,7 @@ nt_create_process (struct Lisp_Process *p,
 	    CloseHandle (hmyshove);
 	    CloseHandle (hmyslurp);
 	  }
-	signal_cannot_launch (argv[0], GetLastError ());
+	signal_cannot_launch (program, GetLastError ());
       }
 
     /* The process started successfully */
@@ -945,4 +950,3 @@ void
 vars_of_process_nt (void)
 {
 }
-

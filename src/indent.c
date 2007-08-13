@@ -649,8 +649,7 @@ vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
   return vmotion_1 (w, orig, vtarget, ret_vpos, NULL);
 }
 
-/* Helper for Fvertical_motion and Fvertical_motion_pixels.
- * Share as much code as possible so these stay synched.
+/* Helper for Fvertical_motion.
  */
 static
 Lisp_Object vertical_motion_1 (Lisp_Object lines, Lisp_Object window,
@@ -692,7 +691,7 @@ Lisp_Object vertical_motion_1 (Lisp_Object lines, Lisp_Object window,
   return make_int (value);
 }
 
-DEFUN ("vertical-motion", Fvertical_motion, 1, 2, 0, /*
+DEFUN ("vertical-motion", Fvertical_motion, 1, 3, 0, /*
 Move to start of frame line LINES lines down.
 If LINES is negative, this is moving up.
 Optional second argument is WINDOW to move in,
@@ -700,33 +699,171 @@ the default is the selected window.
 
 Sets point to position found; this may be start of line
 or just the start of a continuation line.
-Returns number of lines moved; may be closer to zero than LINES
-if beginning or end of buffer was reached.
+If optional third argument PIXELS is nil, returns number
+of lines moved; may be closer to zero than LINES if beginning
+or end of buffer was reached.  If PIXELS is non-nil, the
+vertical pixel height of the motion which took place is
+returned instead of the actual number of lines moved.  A
+motion of zero lines returns the height of the current line.
 
 Note that `vertical-motion' sets WINDOW's buffer's point, not
 WINDOW's point. (This differs from FSF Emacs, which buggily always
 sets current buffer's point, regardless of WINDOW.)
 */
-       (lines, window))
+       (lines, window, pixels))
 {
-  return vertical_motion_1 (lines, window, /* pixels = */ 0);
+  return vertical_motion_1 (lines, window, !NILP (pixels));
 }
 
-DEFUN ("vertical-motion-pixels", Fvertical_motion_pixels, 1, 2, 0, /*
-Move to start of frame line LINES lines down.
-If LINES is negative, this is moving up.
+/*
+ * Like vmotion() but requested and returned movement is in pixels.
+ * HOW specifies the stopping condition.  Positive means move at least
+ * PIXELS.  Negative means at most.  Zero means as close as possible.
+ */
+Bufpos
+vmotion_pixels (Lisp_Object window, Bufpos start, int pixels, int how,
+                int *motion)
+{
+  struct window *w;
+  Bufpos eobuf, bobuf;
+  int defheight;
+  int needed;
+  int line, next;
+  int remain, abspix, dirn;
+  int elt, nelt;
+  int i;
+  line_start_cache_dynarr *cache;
+  int previous = -1;
+  int lines;
+
+  if (NILP (window))
+    window = Fselected_window (Qnil);
+
+  CHECK_WINDOW (window);
+  w = XWINDOW (window);
+
+  eobuf = BUF_ZV (XBUFFER (w->buffer));
+  bobuf = BUF_BEGV (XBUFFER (w->buffer));
+
+  default_face_height_and_width (window, &defheight, NULL);
+
+  /* guess num lines needed in line start cache + a few extra */
+  abspix = abs (pixels);
+  needed = (abspix + defheight-1)/defheight + 3;
+
+  dirn = (pixels >= 0) ? 1 : -1;
+
+  while (1)
+    {
+      elt = point_in_line_start_cache (w, start, needed);
+      assert (elt >= 0); /* in the cache */
+
+      cache = w->line_start_cache;
+      nelt  = Dynarr_length (cache);
+
+      *motion = 0;
+
+      if (pixels == 0)
+        /* No vertical motion requested so we just return the position
+           of the beginning of the current display line. */
+        return Dynarr_atp (cache, elt)->start;
+
+      if ((dirn < 0 && elt == 0      &&
+           Dynarr_atp (cache, elt)->start <= bobuf) ||
+          (dirn > 0 && elt == nelt-1 &&
+           Dynarr_atp (cache, elt)->end   >= eobuf))
+        return Dynarr_atp (cache, elt)->start;
+
+      remain = abspix;
+      for (i = elt; (dirn > 0) ? (i < nelt) : (i > 0); i += dirn)
+        {
+          /* cache line we're considering moving over */
+          int ii = (dirn > 0) ? i : i-1;
+
+          if (remain < 0)
+            return Dynarr_atp (cache, i)->start;
+
+          line = Dynarr_atp (cache, ii)->height;
+          next = remain - line;
+
+          /* is stopping condition satisfied? */
+          if ((how >  0  &&  remain <= 0)  ||       /* at least */
+              (how <  0  &&  next < 0)     ||       /* at most */
+              (how == 0  &&  remain <= abs (next))) /* closest */
+            return Dynarr_atp (cache, i)->start;
+
+          /* moving down and nowhere left to go? */
+          if (dirn > 0 && Dynarr_atp (cache, ii)->end >= eobuf)
+            return Dynarr_atp (cache, ii)->start;
+
+          /* take the step */
+          remain   = next;
+          *motion += dirn * line;
+
+          /* moving up and nowhere left to go? */
+          if (dirn < 0 && Dynarr_atp (cache, ii)->start <= bobuf)
+            return Dynarr_atp (cache, ii)->start;
+        }
+
+      /* get here => need more cache lines.  try again. */
+      assert (abs (*motion) > previous); /* progress? */
+      previous = abs (*motion);
+
+      lines   = (pixels < 0) ? elt : (nelt - elt);
+      needed += (remain*lines + abspix-1)/abspix + 3;
+    }
+
+  RETURN_NOT_REACHED(0)	/* shut up compiler */
+}
+
+DEFUN ("vertical-motion-pixels", Fvertical_motion_pixels, 1, 3, 0, /*
+Move to start of frame line PIXELS vertical pixels down.
+If PIXELS is negative, this is moving up.
+The actual vertical motion in pixels is returned.
+
 Optional second argument is WINDOW to move in,
 the default is the selected window.
 
-This function is identical in behavior to `vertical-motion'
-except that the vertical pixel height of the motion which
-took place is returned instead of the actual number of lines
-moved.  A motion of zero lines returns the height of the
-current line.
+Optional third argument HOW specifies when to stop.  A value
+less than zero indicates that the motion should be no more
+than PIXELS.  A value greater than zero indicates that the
+motion should be at least PIXELS.  Any other value indicates
+that the motion should be as close as possible to PIXELS.
 */
-       (lines, window))
+       (pixels, window, how))
 {
-  return vertical_motion_1 (lines, window, /* pixels = */ 1);
+  Bufpos bufpos;
+  Bufpos orig;
+  int selected;
+  int motion;
+  int howto;
+  struct window *w;
+
+  if (NILP (window))
+    window = Fselected_window (Qnil);
+
+  CHECK_WINDOW (window);
+  CHECK_INT (pixels);
+
+  selected = (EQ (window, Fselected_window (Qnil)));
+
+  w = XWINDOW (window);
+
+  orig = selected ? BUF_PT (XBUFFER (w->buffer))
+                  : marker_position (w->pointm[CURRENT_DISP]);
+
+  howto = INTP (how) ? XINT (how) : 0;
+
+  bufpos = vmotion_pixels (window, orig, XINT (pixels), howto, &motion);
+
+  if (selected) 
+    BUF_SET_PT (XBUFFER (w->buffer), bufpos);
+  else
+    set_marker_restricted (w->pointm[CURRENT_DISP],
+			   make_int(bufpos),
+			   w->buffer);
+
+  return make_int (motion);
 }
 
 

@@ -284,8 +284,6 @@ function pobj {
     pstruct symbol_value_varalias
   elif lrecord_type_p toolbar_button; then
     pstruct toolbar_button
-  elif lrecord_type_p toolbar_data; then
-    pstruct toolbar_data
   elif lrecord_type_p tooltalk_message; then
     pstruct Lisp_Tooltalk_Message
   elif lrecord_type_p tooltalk_pattern; then

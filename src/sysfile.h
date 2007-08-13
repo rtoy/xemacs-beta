@@ -52,22 +52,8 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef WINDOWSNT
 #include <io.h>
+#include <direct.h>
 #endif
-
-#if 0
-#ifdef WINDOWSNT
-#include <windows.h>
-#include <stdlib.h>	/* for proper declaration of environ */
-#include <fcntl.h>
-#include "nt.h"
-#define _P_NOWAIT 1	/* from process.h */
-#endif
-#endif
-
-#ifdef MSDOS
-#include <dos.h>
-#include "msdos.h"
-#endif /* MSDOS */
 
 #ifndef O_RDONLY
 #define O_RDONLY 0

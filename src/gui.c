@@ -67,7 +67,7 @@ separator_string_p (CONST char *s)
 /* Massage DATA to find the correct function and argument.  Used by
    popup_selection_callback() and the msw code. */
 void
-get_callback (Lisp_Object data, Lisp_Object *fn, Lisp_Object *arg)
+get_gui_callback (Lisp_Object data, Lisp_Object *fn, Lisp_Object *arg)
 {
   if (SYMBOLP (data)
       || (COMPILED_FUNCTIONP (data)
@@ -107,7 +107,7 @@ gui_item_init (struct gui_item *pgui_item)
   pgui_item->suffix   = Qnil;
   pgui_item->active   = Qt;
   pgui_item->included = Qt;
-  pgui_item->config   = Qunbound;
+  pgui_item->config   = Qnil;
   pgui_item->filter   = Qnil;
   pgui_item->style    = Qnil;
   pgui_item->selected = Qnil;

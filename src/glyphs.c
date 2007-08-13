@@ -55,7 +55,6 @@ Lisp_Object Qsubwindow_image_instance_p;
 Lisp_Object Qconst_glyph_variable;
 Lisp_Object Qmono_pixmap, Qcolor_pixmap, Qsubwindow;
 Lisp_Object Q_file, Q_data, Q_face;
-Lisp_Object Qicon;
 Lisp_Object Qformatted_string;
 
 Lisp_Object Vcurrent_display_table;
@@ -72,8 +71,19 @@ DEFINE_IMAGE_INSTANTIATOR_FORMAT (inherit);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (string);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (formatted_string);
 
-Lisp_Object x_locate_pixmap_file (Lisp_Object name);
-Lisp_Object mswindows_locate_pixmap_file (Lisp_Object name);
+#ifdef HAVE_WINDOW_SYSTEM
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (xbm);
+Lisp_Object Qxbm;
+
+Lisp_Object Q_mask_file, Q_mask_data, Q_hotspot_x, Q_hotspot_y;
+Lisp_Object Q_foreground, Q_background;
+#ifndef BitmapSuccess
+#define BitmapSuccess           0
+#define BitmapOpenFailed        1
+#define BitmapFileInvalid       2
+#define BitmapNoMemory          3
+#endif
+#endif
 
 #ifdef HAVE_XPM
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (xpm);
@@ -1531,6 +1541,243 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
     RETURN_UNGCPRO (result);
   }
 }
+
+
+#ifdef HAVE_WINDOW_SYSTEM
+/**********************************************************************
+ *                             XBM                                    *
+ **********************************************************************/
+
+/* Check if DATA represents a valid inline XBM spec (i.e. a list
+   of (width height bits), with checking done on the dimensions).
+   If not, signal an error. */
+
+static void
+check_valid_xbm_inline (Lisp_Object data)
+{
+  Lisp_Object width, height, bits;
+
+  if (!CONSP (data) ||
+      !CONSP (XCDR (data)) ||
+      !CONSP (XCDR (XCDR (data))) ||
+      !NILP (XCDR (XCDR (XCDR (data)))))
+    signal_simple_error ("Must be list of 3 elements", data);
+
+  width  = XCAR (data);
+  height = XCAR (XCDR (data));
+  bits   = XCAR (XCDR (XCDR (data)));
+
+  CHECK_STRING (bits);
+
+  if (!NATNUMP (width))
+    signal_simple_error ("Width must be a natural number", width);
+
+  if (!NATNUMP (height))
+    signal_simple_error ("Height must be a natural number", height);
+
+  if (((XINT (width) * XINT (height)) / 8) > XSTRING_CHAR_LENGTH (bits))
+    signal_simple_error ("data is too short for width and height",
+			 vector3 (width, height, bits));
+}
+
+/* Validate method for XBM's. */
+
+static void
+xbm_validate (Lisp_Object instantiator)
+{
+  file_or_data_must_be_present (instantiator);
+}
+
+/* Given a filename that is supposed to contain XBM data, return
+   the inline representation of it as (width height bits).  Return
+   the hotspot through XHOT and YHOT, if those pointers are not 0.
+   If there is no hotspot, XHOT and YHOT will contain -1.
+
+   If the function fails:
+
+   -- if OK_IF_DATA_INVALID is set and the data was invalid,
+      return Qt.
+   -- maybe return an error, or return Qnil.
+ */
+
+
+Lisp_Object
+bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
+		     int ok_if_data_invalid)
+{
+  unsigned int w, h;
+  Extbyte *data;
+  int result;
+  CONST char *filename_ext;
+
+  GET_C_STRING_FILENAME_DATA_ALLOCA (name, filename_ext);
+  result = read_bitmap_data_from_file (filename_ext, &w, &h, 
+				       &data, xhot, yhot);
+
+  if (result == BitmapSuccess)
+    {
+      Lisp_Object retval;
+      int len = (w + 7) / 8 * h;
+
+      retval = list3 (make_int (w), make_int (h),
+		      make_ext_string (data, len, FORMAT_BINARY));
+      XFree ((char *) data);
+      return retval;
+    }
+
+  switch (result)
+    {
+    case BitmapOpenFailed:
+      {
+	/* should never happen */
+	signal_double_file_error ("Opening bitmap file",
+				  "no such file or directory",
+				  name);
+      }
+    case BitmapFileInvalid:
+      {
+	if (ok_if_data_invalid)
+	  return Qt;
+	signal_double_file_error ("Reading bitmap file",
+				  "invalid data in file",
+				  name);
+      }
+    case BitmapNoMemory:
+      {
+	signal_double_file_error ("Reading bitmap file",
+				  "out of memory",
+				  name);
+      }
+    default:
+      {
+	signal_double_file_error_2 ("Reading bitmap file",
+				    "unknown error code",
+				    make_int (result), name);
+      }
+    }
+
+  return Qnil; /* not reached */
+}
+
+Lisp_Object
+xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
+		       Lisp_Object mask_file, Lisp_Object console_type)
+{
+  /* This is unclean but it's fairly standard -- a number of the
+     bitmaps in /usr/include/X11/bitmaps use it -- so we support
+     it. */
+  if (NILP (mask_file)
+      /* don't override explicitly specified mask data. */
+      && NILP (assq_no_quit (Q_mask_data, alist))
+      && !NILP (file))
+    {
+      mask_file = MAYBE_LISP_CONTYPE_METH
+	(decode_console_type(console_type, ERROR_ME), 
+	 locate_pixmap_file, (concat2 (file, build_string ("Mask"))));
+      if (NILP (mask_file))
+	mask_file = MAYBE_LISP_CONTYPE_METH
+	  (decode_console_type(console_type, ERROR_ME), 
+	   locate_pixmap_file, (concat2 (file, build_string ("msk"))));
+    }
+
+  if (!NILP (mask_file))
+    {
+      Lisp_Object mask_data =
+	bitmap_to_lisp_data (mask_file, 0, 0, 0);
+      alist = remassq_no_quit (Q_mask_file, alist);
+      /* there can't be a :mask-data at this point. */
+      alist = Fcons (Fcons (Q_mask_file, mask_file),
+		     Fcons (Fcons (Q_mask_data, mask_data), alist));
+    }
+
+  return alist;
+}
+
+/* Normalize method for XBM's. */
+
+static Lisp_Object
+xbm_normalize (Lisp_Object inst, Lisp_Object console_type)
+{
+  Lisp_Object file = Qnil, mask_file = Qnil;
+  struct gcpro gcpro1, gcpro2, gcpro3;
+  Lisp_Object alist = Qnil;
+
+  GCPRO3 (file, mask_file, alist);
+
+  /* Now, convert any file data into inline data for both the regular
+     data and the mask data.  At the end of this, `data' will contain
+     the inline data (if any) or Qnil, and `file' will contain
+     the name this data was derived from (if known) or Qnil.
+     Likewise for `mask_file' and `mask_data'.
+
+     Note that if we cannot generate any regular inline data, we
+     skip out. */
+
+  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data,
+					     console_type);
+  mask_file = potential_pixmap_file_instantiator (inst, Q_mask_file,
+						  Q_mask_data, console_type);
+
+  if (CONSP (file)) /* failure locating filename */
+    signal_double_file_error ("Opening bitmap file",
+			      "no such file or directory",
+			      Fcar (file));
+
+  if (NILP (file) && NILP (mask_file)) /* no conversion necessary */
+    RETURN_UNGCPRO (inst);
+
+  alist = tagged_vector_to_alist (inst);
+
+  if (!NILP (file))
+    {
+      int xhot, yhot;
+      Lisp_Object data = bitmap_to_lisp_data (file, &xhot, &yhot, 0);
+      alist = remassq_no_quit (Q_file, alist);
+      /* there can't be a :data at this point. */
+      alist = Fcons (Fcons (Q_file, file),
+		     Fcons (Fcons (Q_data, data), alist));
+
+      if (xhot != -1 && NILP (assq_no_quit (Q_hotspot_x, alist)))
+	alist = Fcons (Fcons (Q_hotspot_x, make_int (xhot)),
+		       alist);
+      if (yhot != -1 && NILP (assq_no_quit (Q_hotspot_y, alist)))
+	alist = Fcons (Fcons (Q_hotspot_y, make_int (yhot)),
+		       alist);
+    }
+
+  alist = xbm_mask_file_munging (alist, file, mask_file, console_type);
+
+  {
+    Lisp_Object result = alist_to_tagged_vector (Qxbm, alist);
+    free_alist (alist);
+    RETURN_UNGCPRO (result);
+  }
+}
+
+
+static int
+xbm_possible_dest_types (void)
+{
+  return
+    IMAGE_MONO_PIXMAP_MASK  |
+    IMAGE_COLOR_PIXMAP_MASK |
+    IMAGE_POINTER_MASK;
+}
+
+static void
+xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		 int dest_mask, Lisp_Object domain)
+{
+  Lisp_Object device= IMAGE_INSTANCE_DEVICE (XIMAGE_INSTANCE (image_instance));
+
+  MAYBE_DEVMETH (XDEVICE (device), 
+		 xbm_instantiate,
+		 (image_instance, instantiator, pointer_fg, 
+		  pointer_bg, dest_mask, domain));
+}
+
+#endif
 
 
 #ifdef HAVE_XPM
@@ -3000,7 +3247,14 @@ syms_of_glyphs (void)
 #ifdef HAVE_XPM
   defkeyword (&Q_color_symbols, ":color-symbols");
 #endif
-
+#ifdef HAVE_WINDOW_SYSTEM
+  defkeyword (&Q_mask_file, ":mask-file");
+  defkeyword (&Q_mask_data, ":mask-data");
+  defkeyword (&Q_hotspot_x, ":hotspot-x");
+  defkeyword (&Q_hotspot_y, ":hotspot-y");
+  defkeyword (&Q_foreground, ":foreground");
+  defkeyword (&Q_background, ":background");
+#endif
   /* image specifiers */
 
   DEFSUBR (Fimage_specifier_p);
@@ -3067,7 +3321,6 @@ syms_of_glyphs (void)
 
   /* Qbuffer defined in general.c. */
   /* Qpointer defined above */
-  defsymbol (&Qicon, "icon");
 
   /* Errors */
   deferror (&Qimage_conversion_error,
@@ -3131,6 +3384,24 @@ image_instantiator_format_create (void)
   IIFORMAT_HAS_METHOD (formatted_string, instantiate);
 
   IIFORMAT_VALID_KEYWORD (formatted_string, Q_data, check_valid_string);
+
+#ifdef HAVE_WINDOW_SYSTEM
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (xbm, "xbm");
+
+  IIFORMAT_HAS_METHOD (xbm, validate);
+  IIFORMAT_HAS_METHOD (xbm, normalize);
+  IIFORMAT_HAS_METHOD (xbm, possible_dest_types);
+  IIFORMAT_HAS_METHOD (xbm, instantiate);
+
+  IIFORMAT_VALID_KEYWORD (xbm, Q_data, check_valid_xbm_inline);
+  IIFORMAT_VALID_KEYWORD (xbm, Q_file, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (xbm, Q_mask_data, check_valid_xbm_inline);
+  IIFORMAT_VALID_KEYWORD (xbm, Q_mask_file, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (xbm, Q_hotspot_x, check_valid_int);
+  IIFORMAT_VALID_KEYWORD (xbm, Q_hotspot_y, check_valid_int);
+  IIFORMAT_VALID_KEYWORD (xbm, Q_foreground, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (xbm, Q_background, check_valid_string);
+#endif /* HAVE_WINDOW_SYSTEM */
 
 #ifdef HAVE_XPM
   INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (xpm, "xpm");

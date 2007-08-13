@@ -1521,6 +1521,12 @@ do						\
 
 extern struct buffer *current_buffer;
 
+/* This is the initial (startup) directory, as used for the *scratch* buffer.
+   We're making this a global to make others aware of the startup directory.
+ */
+extern char initial_directory[];
+extern void init_initial_directory (void);   /* initialize initial_directory */
+
 EXFUN (Fbuffer_disable_undo, 1);
 EXFUN (Fbuffer_modified_p, 1);
 EXFUN (Fbuffer_name, 1);

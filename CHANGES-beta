@@ -1,4 +1,25 @@
 							-*- indented-text -*-
+to 21.0 beta42 "Somali"
+-- Sounds are no longer included in the core distribution
+-- Unexec fix for SGI from Olivier Galibert
+-- xbm support for MS Windows
+-- pixel function updates from Greg Klanderman
+-- Miscellaneous cygwin patches from Andy Piper
+-- Miscellaneous patches from Martin Buchholz
+-- New GIF lite readonly GIF support from Jareth Hein
+-- $HOME fixes for MS Windows from Darryl Okahata
+-- Miscellaneous changes from Kirill Katsnelson
+-- DnD update from Oliver Graf
+-- pixel function naming cleanup from Greg Klanderman
+-- specifier fixes from Hrvoje Niksic
+-- tooltalk crash fix from Gunnar Evermann
+-- various changes from Andy Piper
+-- toolbar button size and glyph patch from Andy Piper
+-- Miscellaneous changes from Hrvoje Niksic
+-- Miscellaneous changes from Martin Buchholz
+-- warnings cleanup from Kirill Katsnelson
+-- msw graphics patch from Andy Piper
+
 to 21.0 beta41 "San Clemente"
 -- MS Windows font charset support from Kirill Katsnelson
 -- Special glyph fixes from Kirill Katsnelson

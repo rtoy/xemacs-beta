@@ -2040,6 +2040,8 @@ Lisp_Object emacs_doprnt_string_lisp_2 (CONST Bufbyte *, Lisp_Object,
 					Bytecount, int, ...);
 
 /* Defined in editfns.c */
+void uncache_home_directory (void);
+char *get_home_directory (void);
 Bufpos bufpos_clip_to_bounds (Bufpos, Bufpos, Bufpos);
 Bytind bytind_clip_to_bounds (Bytind, Bytind, Bytind);
 void buffer_insert1 (struct buffer *, Lisp_Object);
@@ -2275,6 +2277,7 @@ int column_at_point (struct buffer *, Bufpos, int);
 int current_column (struct buffer *);
 void invalidate_current_column (void);
 Bufpos vmotion (struct window *, Bufpos, int, int *);
+Bufpos vmotion_pixels (Lisp_Object, Bufpos, int, int, int *);
 
 /* Defined in keymap.c */
 void where_is_to_char (Lisp_Object, char *);
@@ -2694,14 +2697,16 @@ EXFUN (Fupcase, 2);
 EXFUN (Fupcase_initials, 2);
 EXFUN (Fupcase_initials_region, 3);
 EXFUN (Fupcase_region, 3);
+EXFUN (Fuser_home_directory, 0);
 EXFUN (Fuser_login_name, 1);
 EXFUN (Fvector, MANY);
 EXFUN (Fverify_visited_file_modtime, 1);
-EXFUN (Fvertical_motion, 2);
+EXFUN (Fvertical_motion, 3);
 EXFUN (Fwiden, 1);
 
 
-extern Lisp_Object Q_style, Qactually_requested, Qafter, Qall, Qand;
+extern Lisp_Object Q_style, Qactually_requested, Qactivate_menubar_hook;
+extern Lisp_Object Qafter, Qall, Qand;
 extern Lisp_Object Qarith_error, Qarrayp, Qassoc, Qat, Qautodetect, Qautoload;
 extern Lisp_Object Qbackground, Qbackground_pixmap, Qbad_variable, Qbefore;
 extern Lisp_Object Qbeginning_of_buffer, Qbig5, Qbinary, Qbitmap, Qbitp, Qblinking;
@@ -2764,7 +2769,8 @@ extern Lisp_Object Qsubwindow_image_instance_p, Qsymbol, Qsyntax, Qt, Qtest;
 extern Lisp_Object Qtext, Qtext_image_instance_p, Qtimeout, Qtimestamp;
 extern Lisp_Object Qtoolbar, Qtop, Qtop_level, Qtrue_list_p, Qtty, Qtype;
 extern Lisp_Object Qunbound, Qundecided, Qundefined, Qunderflow_error;
-extern Lisp_Object Qunderline, Qunimplemented, Qvalue_assoc, Qvalues;
+extern Lisp_Object Qunderline, Qunimplemented, Quser_files_and_directories;
+extern Lisp_Object Qvalue_assoc, Qvalues;
 extern Lisp_Object Qvariable_documentation, Qvariable_domain, Qvector;
 extern Lisp_Object Qvoid_function, Qvoid_variable, Qwarning, Qwidth, Qwindow;
 extern Lisp_Object Qwindow_live_p, Qwindow_system, Qwrong_number_of_arguments;

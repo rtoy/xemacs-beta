@@ -1421,6 +1421,9 @@ Unprocessed messages are messages that didn't match any patterns.
   Tooltalk_Message_plist_str = build_string ("Tooltalk Message plist");
   Tooltalk_Pattern_plist_str = build_string ("Tooltalk Pattern p plist");
 
+  staticpro(&Tooltalk_Message_plist_str);
+  staticpro(&Tooltalk_Pattern_plist_str);
+
 #define MAKE_CONSTANT(name) do { \
     defsymbol (&Q_ ## name, #name); \
     Fset (Q_ ## name, make_int (name)); \

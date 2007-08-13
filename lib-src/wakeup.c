@@ -10,6 +10,15 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#ifdef WINDOWSNT
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef sleep
+#define sleep(t) Sleep ((t) * 1000)
+#define getppid() (0)
+#undef HAVE_SYS_TIME_H
+#endif /* WINDOWSNT */
+
 #ifdef TIME_WITH_SYS_TIME
 #include <sys/time.h>
 #include <time.h>
@@ -35,7 +44,9 @@ main (int argc, char *argv[])
       if (getppid () == 1)
 	return 0;
       printf ("Wake up!\n");
-      fflush (stdout);
+      /* If fflush fails, then our stdout pipe is broken. */
+      if (fflush (stdout) != 0)
+	return 0;
       /* If using a period of 60, produce the output when the minute
 	 changes. */
       if (period == 60)

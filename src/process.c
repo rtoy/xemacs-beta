@@ -495,8 +495,8 @@ init_process_io_handles (struct Lisp_Process *p, void* in, void* out, int flags)
 }
 
 static void
-create_process (Lisp_Object process,
-                char **new_argv, CONST char *current_dir)
+create_process (Lisp_Object process, Lisp_Object *argv, int nargv,
+		Lisp_Object program, Lisp_Object cur_dir)
 {
   struct Lisp_Process *p = XPROCESS (process);
   int pid;
@@ -506,7 +506,7 @@ create_process (Lisp_Object process,
   p->status_symbol = Qrun;
   p->exit_code = 0;
 
-  pid = PROCMETH (create_process, (p, new_argv, current_dir));
+  pid = PROCMETH (create_process, (p, argv, nargv, program, cur_dir));
 
   p->pid = make_int (pid);
   if (!NILP(p->pipe_instream))
@@ -549,8 +549,6 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   Lisp_Object tem;
   int speccount = specpdl_depth ();
   struct gcpro gcpro1, gcpro2, gcpro3;
-  char **new_argv;
-  int i;
 
   name = args[0];
   buffer = args[1];
@@ -607,17 +605,6 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 	error ("Specified program for new process is a directory");
     }
 
-  /* Nothing below here GCs so our string pointers shouldn't move. */
-  new_argv = alloca_array (char *, nargs - 1);
-  new_argv[0] = (char *) XSTRING_DATA (program);
-  for (i = 3; i < nargs; i++)
-    {
-      tem = args[i];
-      CHECK_STRING (tem);
-      new_argv[i - 2] = (char *) XSTRING_DATA (tem);
-    }
-  new_argv[i - 2] = 0;
-
   proc = make_process_internal (name);
 
   XPROCESS (proc)->buffer = buffer;
@@ -635,7 +622,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
      itself; it's all taken care of here.  */
   record_unwind_protect (start_process_unwind, proc);
 
-  create_process (proc, new_argv, (char *) XSTRING_DATA (current_dir));
+  create_process (proc, args + 3, nargs - 3, program, current_dir);
 
   UNGCPRO;
   return unbind_to (speccount, proc);

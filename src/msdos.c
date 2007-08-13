@@ -1140,11 +1140,11 @@ and then the scan code.
   else
     {
       val = Fvector (NUM_RECENT_DOSKEYS, keys);
-      memcpy (keys + recent_doskeys_index,
-	      XVECTOR_DATA (val),
+      memcpy (XVECTOR_DATA (val),
+	      keys + recent_doskeys_index,
 	      (NUM_RECENT_DOSKEYS - recent_doskeys_index) * sizeof (Lisp_Object));
-      memcpy (keys,
-	      XVECTOR_DATA (val) + NUM_RECENT_DOSKEYS - recent_doskeys_index,
+      memcpy (XVECTOR_DATA (val) + NUM_RECENT_DOSKEYS - recent_doskeys_index,
+	      keys,
 	      recent_doskeys_index * sizeof (Lisp_Object));
       return val;
     }

@@ -650,7 +650,7 @@ See also the variable completion-highlight-first-word-only for control over
                  (setq tem (car (car tail)))
                  (if (or (equal tem buffer-string)
                          (equal tem s)
-                         (equal (upcase tem) s))
+                        (if tem (equal (upcase tem) s)))
                      (setq s 'win
                            tail nil)    ;exit
                      (setq tail (cdr tail))))

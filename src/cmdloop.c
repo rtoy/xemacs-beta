@@ -580,7 +580,11 @@ Don't call this unless you know what you're doing.
 
       if (!was_locked)
 	any_console_state ();
-#if defined (__SUNPRO_C) || defined (__SUNPRO_CC) || (defined (DEC_ALPHA) && defined (OSF1))
+#if (defined (_MSC_VER) 			\
+     || defined (__SUNPRO_C)			\
+     || defined (__SUNPRO_CC)			\
+     || (defined (DEC_ALPHA)			\
+	 && defined (OSF1)))
       if (0) return Qnil; /* Shut up compiler */
 #endif
     }

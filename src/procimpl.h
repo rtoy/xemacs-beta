@@ -46,7 +46,8 @@ struct process_methods
   void (*init_process_io_handles) (struct Lisp_Process *p,
 				   void* in, void* out, int flags);
   int  (*create_process) (struct Lisp_Process *p,
-			  char **new_argv, CONST char *current_dir);
+			  Lisp_Object *argv, int nargv,
+			  Lisp_Object program, Lisp_Object cur_dir);
   int  (*tooltalk_connection_p) (struct Lisp_Process *p);
 #ifdef HAVE_SOCKETS
   void (*open_network_stream) (Lisp_Object name, Lisp_Object host,

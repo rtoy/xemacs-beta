@@ -211,7 +211,9 @@ HDDEDATA CALLBACK mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 					  HSZ hszTopic, HSZ hszItem, HDDEDATA hdata,
 					  DWORD dwData1, DWORD dwData2);
 
-void mswindows_bump_queue (void);
+void mswindows_enqueue_misc_user_event (Lisp_Object channel,
+					Lisp_Object function,
+					Lisp_Object object);
 Lisp_Object mswindows_cancel_dispatch_event (struct Lisp_Event* event);
 Lisp_Object mswindows_pump_outstanding_events (void);
 Lisp_Object mswindows_protect_modal_loop (Lisp_Object (*bfun) (Lisp_Object barg),

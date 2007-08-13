@@ -1735,7 +1735,10 @@ if test "$cflags_specified" = "no"; then
     CFLAGS="-g -O3 -Wall -Wno-switch"
     dnl I'm not convinced this is a good idea any more. -sb
     dnl test "$opsys $machine" = "linux intel386" && \
-      dnl CFLAGS="$CFLAGS -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2"
+    dnl CFLAGS="$CFLAGS -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2"
+    dnl cygwin can't cope with -O3
+    test "$opsys $machine" = "cygwin32 intel386" && \
+      CFLAGS="-g -O2 -Wall -Wno-switch"
   elif test "$__sunpro_c" = "yes"; then
     case "$opsys" in
       sol2    ) CFLAGS="-v -xO4" ;;
@@ -2420,11 +2423,13 @@ if test "$with_msw" != "no"; then
 	    && XE_ADD_OBJS(menubar-msw.o)
 	test "$with_toolbars"   != "no" && with_toolbars=msw \
 	    && XE_ADD_OBJS(toolbar-msw.o)
-	with_dialogs=msw
+	test "$with_dialogs"   != "no" && with_dialogs=msw \
+	    && XE_ADD_OBJS(dialog-msw.o)
     else
 	test "$with_scrollbars"   != "no" && XE_ADD_OBJS(scrollbar-msw.o)
 	test "$with_menubars"   != "no" && XE_ADD_OBJS(menubar-msw.o)
 	test "$with_toolbars"   != "no" && XE_ADD_OBJS(toolbar-msw.o)
+	test "$with_dialogs"   != "no" && XE_ADD_OBJS(dialog-msw.o)
     fi
     dnl check for our special version of select 	
     AC_TRY_RUN([#include <fcntl.h>
@@ -2519,25 +2524,6 @@ if test "$with_xauth" = "yes"; then
 fi
 AC_SUBST(libs_xauth)
 
-dnl Always compile OffiX unless --without-offix is given, no
-dnl X11 support is compiled in, no standard Xmu is avaiable,
-dnl or dragndrop support is disabled
-test "$window_system" != "x11" && with_offix=no
-if test "$with_xmu" != yes -a "$with_x11" = yes; then
-  AC_MSG_WARN([No OffiX without real Xmu support])
-  with_offix=no
-fi
-if test "$with_dragndrop" = no; then
-  AC_MSG_WARN([No OffiX without generic Drag'n'Drop support])
-  with_offix=no
-fi
-test -z "$with_offix" && with_offix=yes
-if test "$with_offix" = "yes"; then
-  AC_DEFINE(HAVE_OFFIX_DND)
-  XE_APPEND(offix.o, dnd_objs)
-  XE_APPEND(OffiX, dragndrop_proto)
-fi
-
 dnl This one is for the static initializeds variables in
 dnl offix.c, so that the thing is dumped after lastfile.o
 AC_SUBST(dnd_objs)
@@ -2590,6 +2576,29 @@ if test "$with_cde" = "yes" ; then
   XE_APPEND(CDE, dragndrop_proto)
   with_tooltalk=yes # CDE requires Tooltalk
   need_motif=yes    # CDE requires Motif
+fi
+
+dnl Always compile OffiX unless --without-offix is given, no
+dnl X11 support is compiled in, no standard Xmu is avaiable,
+dnl or dragndrop support is disabled
+test "$window_system" != "x11" && with_offix=no
+if test "$with_xmu" != yes -a "$with_x11" = yes; then
+  AC_MSG_WARN([No OffiX without real Xmu support])
+  with_offix=no
+fi
+if test "$with_dragndrop" = no; then
+  AC_MSG_WARN([No OffiX without generic Drag'n'Drop support])
+  with_offix=no
+fi
+if test "$with_cde" = yes; then
+  AC_MSG_WARN([CDE already found, disabling OffiX support])
+  with_offix=no
+fi
+test -z "$with_offix" && with_offix=yes
+if test "$with_offix" = "yes"; then
+  AC_DEFINE(HAVE_OFFIX_DND)
+  XE_APPEND(offix.o, dnd_objs)
+  XE_APPEND(OffiX, dragndrop_proto)
 fi
 
 dnl Autodetect Drag'n'Drop support
@@ -2693,13 +2702,13 @@ if test "$window_system" != "none"; then
   fi
 
   dnl Autodetect GIFlib
-  AC_MSG_CHECKING(for giflib - no older than 3.1)
-  test -z "$with_gif" && { AC_CHECK_HEADER(gif_lib.h,        ,with_gif=no) }
-  test -z "$with_gif" && { AC_CHECK_LIB(gif, GetGifError,[:] ,with_gif=no) }
+  AC_MSG_CHECKING(for gifreader)
+  test -z "$with_gif" && { AC_CHECK_HEADER(gifrlib.h,        ,with_gif=no) }
+  test -z "$with_gif" && { AC_CHECK_LIB(gifreader, GetGifError,[:] ,with_gif=no) }
   test -z "$with_gif" && with_gif=yes
   if test "$with_gif" = "yes"; then
     AC_DEFINE(HAVE_GIF)
-    XE_PREPEND(-lgif, libs_x)
+    XE_PREPEND(-lgifreader, libs_x)
   fi
 
   dnl autodetect JPEG

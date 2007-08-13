@@ -4,11 +4,7 @@ This path contains test code for the new XEmacs
 Drag'n'Drop code.
 
 Currently only drops are of interest. The internal
-functions only work for OffiX and MSWindows. CDE
-is broken with this.
-
-The OffiX functions in mouse.el also work no longer,
-because drops are now misc-user-events.
+functions should work for OffiX, CDE, and MSWindows.
 
 The misc-user-event now also responds as a button-x-event
 to the event-* query functions.
@@ -17,10 +13,6 @@ The function of a drag is called dragdrop-drop-dispatch
 as you can see in droptest.el. From within the function
 you can access the actual misc-user-event through the
 current-mouse-event variable.
-
-dragtest.el works theoretically, but it needs to be
-adapted to some new scheme fitting the drop code (droptest.el
-has it's own dragsources).
 
 Short description of the object part of a drop misc-user-event:
 ( TYPE . DATA )

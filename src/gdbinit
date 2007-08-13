@@ -345,9 +345,6 @@ define pobj
   if $imp == lrecord_toolbar_button
     pstruct toolbar_button
   else
-  if $imp == lrecord_toolbar_data
-    pstruct toolbar_data
-  else
   if $imp == lrecord_tooltalk_message
     pstruct Lisp_Tooltalk_Message
   else
@@ -366,7 +363,6 @@ define pobj
     echo Unknown Lisp Object type\n
     print $arg0
   # Barf, gag, retch
-  end
   end
   end
   end

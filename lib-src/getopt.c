@@ -76,6 +76,7 @@ USA.  */
 #if defined (WIN32) && !defined (__CYGWIN32__)
 /* It's not Unix, really.  See?  Capital letters.  */
 #include <windows.h>
+#undef getpid
 #define getpid() GetCurrentProcessId()
 #endif
 

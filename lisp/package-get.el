@@ -267,11 +267,8 @@ of the package, an error is signalled."
 	    (error "Package %s does not match md5 checksum" filename)))
       (message "Retrieved package %s" filename) (sit-for 0)
       (let ((status
-	     (if (eq (package-get-info-prop this-package 'type) 'single)
-					 (package-admin-add-single-file-package filename
-		  (package-get-staging-dir filename))
-	       (package-admin-add-binary-package
-		(package-get-staging-dir filename)))))
+	     (package-admin-add-binary-package
+	      (package-get-staging-dir filename))))
 	(when (not (= status 0))
 	  (message "Package failed.")
 	  (switch-to-buffer package-admin-temp-buffer)))
@@ -421,7 +418,7 @@ some built in variables.  For now, use packages-package-list."
 	    t)
 	  package-get-base))
 
-(defun package-get-ever-installedp (pkg &optional notused)
+(defun package-get-ever-installed-p (pkg &optional notused)
   (string-match "-package$" (symbol-name pkg))
   (custom-initialize-set 
    pkg 
@@ -430,6 +427,22 @@ some built in variables.  For now, use packages-package-list."
 	(intern (substring (symbol-name pkg) 0 (match-beginning 0))))
        t)))
 
+(defun package-get-file-installed-p (file &optional paths)
+  "Return absolute-path of FILE if FILE exists in PATHS.
+If PATHS is omitted, `load-path' is used."
+  (if (null paths)
+      (setq paths load-path)
+    )
+  (catch 'tag
+    (let (path)
+      (while paths
+	(setq path (expand-file-name file (car paths)))
+	(if (file-exists-p path)
+	    (throw 'tag path)
+	  )
+	(setq paths (cdr paths))
+	))))
+
 (defun package-get-create-custom ()
   "Creates a package customization file package-get-custom.el.
 Entries in the customization file are retrieved from package-get-base.el."
@@ -437,9 +450,11 @@ Entries in the customization file are retrieved from package-get-base.el."
   ;; Load a fresh copy
   (load "package-get-base.el")
   (let ((custom-buffer (find-file-noselect 
-			(or (file-installed-p "package-get-custom.el")
+			(or (package-get-file-installed-p 
+			     "package-get-custom.el")
 			    (concat (file-name-directory 
-				     (file-installed-p "package-get-base.el"))
+				     (package-get-file-installed-p 
+				      "package-get-base.el"))
 				    "package-get-custom.el"))))
 	(pkg-groups nil))
 
@@ -463,7 +478,7 @@ Entries in the customization file are retrieved from package-get-base.el."
 			 "-package nil \n"
 			 "  \"" (plist-get (car (cdr pkg)) 'description) "\"\n"
 			 "  :group '" category "-packages\n"
-			 "  :initialize 'package-get-ever-installedp\n"
+			 "  :initialize 'package-get-ever-installed-p\n"
 			 "  :type 'boolean)\n\n") custom-buffer)))
 	      package-get-base) custom-buffer)
   )
@@ -472,8 +487,8 @@ Entries in the customization file are retrieved from package-get-base.el."
 (provide 'package-get)
 
 ;; potentially update the custom dependencies every time we load this
-(let ((custom-file (file-installed-p "package-get-custom.el"))
-      (package-file (file-installed-p "package-get-base.el")))
+(let ((custom-file (package-get-file-installed-p "package-get-custom.el"))
+      (package-file (package-get-file-installed-p "package-get-base.el")))
   ;; update custom file if it doesn't exist
   (if (or (not custom-file)
 	  (and (< (car (nth 5 (file-attributes custom-file)))

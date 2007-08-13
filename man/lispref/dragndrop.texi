@@ -8,10 +8,19 @@
 @chapter Drag'n'Drop
 @cindex drag'n'drop
 
+@emph{WARNING}: the Drag'n'Drop API is still under development and the
+interface may change!
+
   Drag'n'drop is a way to transfer information between multiple applications.
 To do this serveral GUIs define their own protocols. Examples are OffiX, CDE,
 Motif, KDE, MSWindows, GNOME, and many more. To catch all these protocols,
 XEmacs provides a generic API.
+
+One prime idea behind the API is to use a data interface that is
+transparent for all systems. The author thinks that this is best
+archived by using URL and MIME data, cause any internet enabled system
+must support these for email already. XEmacs also already provides
+powerful interfaces to support these types of data (tm and w3).
 
 @menu
 * Supported Protocols:: Which low-level protocols are supported.
@@ -29,6 +38,7 @@ protocols. Some of these only support limited options avaiable in the API.
 * OffiX DND::           A generic X based protocol.
 * CDE dt::              Common Desktop Environment used on suns.
 * MSWindows OLE::       Mr. Gates way of live.
+* Loose ends::          The other protocols.
 @end menu
 
 @node OffiX DND
@@ -42,6 +52,10 @@ any X platform supporting them.
 OffiX is supported if 'offix is member of the variable dragdrop-protocols, or
 the feature 'offix is defined.
 
+Unfortunately it uses it's own data types. Examples are: File, Files,
+Exe, Link, URL, MIME. The API tries to choose the right type for the data that 
+is dragged from XEmacs (well, not yet...).
+
 XEmacs supports both MIME and URL drags and drops using this API. No application 
 interaction is possible while dragging is in progress.
 
@@ -51,21 +65,48 @@ For infomation about the OffiX project have a look at http://leb.net/~offix/
 @subsection CDE dt
 @cindex CDE dt
 
-to be written
+CDE stands for Common Desktop Environment. It is based on the Motif
+widget library. It's drag'n'drop protocol is also an abstraction of the
+Motif protocol (so it might be possible, that XEmacs will also support
+the Motif protocol soon).
+
+CDE has three different types: file, buffer, and text. XEmacs only uses
+file and buffer drags. The API will disallow full URL drags, only file
+method URLs are passed through.
+
+Buffer drags are always converted to plain text.
 
 @node MSWindows OLE
 @subsection MSWindows OLE
 @cindex MSWindows OLE
 
-to be written
+Only allows file drags and drops.
+
+@node Loose ends
+@subsection Loose ends
+
+The following protocols will be supported soon: Xdnd, Motif, Xde (if I
+get some specs).
+
+In particular Xdnd will be one of the protocols that can benefit from
+the XEmacs API, cause it also uses MIME types to encode dragged data.
 
 @node Drop Interface
 @section Drop Interface
 @cindex drop
+@cindex Drop API
 
-This describes the drop API (under construction)
+For each activated low-level protocol, a internal routine will catch
+incoming drops and convert them to a dragdrop-drop type
+misc-user-event.
+
+This misc-user-event has its function argument set to
+dragdrop-drop-dispatch and the object contains the data of the drop
+(converted to URL/MIME specific data).
 
 @node Drag Interface
 @section Drag Interface
+@cindex drag
+@cindex Drag API
 
 This describes the drag API (not implemented yet).

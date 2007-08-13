@@ -365,7 +365,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
     (setq command-line-processed t)
     ;; Canonicalize HOME (PWD is canonicalized by init_buffer in buffer.c)
     (unless (eq system-type 'vax-vms)
-      (let ((value (getenv "HOME")))
+      (let ((value (user-home-directory)))
 	(if (and value
 		 (< (length value) (length default-directory))
 		 (equal (file-attributes default-directory)

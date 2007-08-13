@@ -839,7 +839,8 @@ mswindows_user_event_p (struct Lisp_Event* sevt)
 {
   return (sevt->event_type == key_press_event
 	  || sevt->event_type == button_press_event
-	  || sevt->event_type == button_release_event);
+	  || sevt->event_type == button_release_event
+	  || sevt->event_type == misc_user_event);
 }
 
 /* 
@@ -859,16 +860,25 @@ mswindows_enqueue_dispatch_event (Lisp_Object event)
   PostMessage (NULL, XM_BUMPQUEUE, 0, 0);
 }
 
+/*
+ * Add a misc-user event to the dispatch queue.
+ *
+ * Stuff it into our own dispatch queue, so we have something
+ * to return from next_event callback.
+ */
 void
-mswindows_bump_queue (void)
+mswindows_enqueue_misc_user_event (Lisp_Object channel, Lisp_Object function,
+				   Lisp_Object object)
 {
-  /* Bump queue, by putting in an empty event */
-  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
-  struct Lisp_Event* event = XEVENT (emacs_event);
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
+  struct Lisp_Event* e = XEVENT (event);
 
-  event->event_type = empty_event;
+  e->event_type = misc_user_event;
+  e->channel = channel;
+  e->event.misc.function = function;
+  e->event.misc.object = object;
 
-  mswindows_enqueue_dispatch_event (emacs_event);
+  mswindows_enqueue_dispatch_event (event);
 }
 
 static void
@@ -877,7 +887,7 @@ mswindows_enqueue_magic_event (HWND hwnd, UINT message)
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
   struct Lisp_Event* event = XEVENT (emacs_event);
 
-  event->channel = mswindows_find_frame (hwnd);
+  event->channel = hwnd ? mswindows_find_frame (hwnd) : Qnil;
   event->timestamp = GetMessageTime();
   event->event_type = magic_event;
   EVENT_MSWINDOWS_MAGIC_TYPE (event) = message;
@@ -1321,7 +1331,7 @@ mswindows_need_event (int badly_p)
                          that a cycle of the command loop will
                          occur. */
 		      drain_signal_event_pipe ();
-		      mswindows_bump_queue();
+		      mswindows_enqueue_magic_event (NULL, XM_BUMPQUEUE);
 		    }
 		}
 	    }
@@ -1382,7 +1392,7 @@ mswindows_need_event (int badly_p)
 	    kick_status_notify ();
 	    /* Have to return something: there may be no accompanying
 	       process event */
-	    mswindows_bump_queue ();
+	    mswindows_enqueue_magic_event (NULL, XM_BUMPQUEUE);
 	  }
       }
 #endif
@@ -1559,8 +1569,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
   case WM_CLOSE:
     fobj = mswindows_find_frame (hwnd);
-    enqueue_misc_user_event (fobj, Qeval, list3 (Qdelete_frame, fobj, Qt));
-    mswindows_bump_queue ();
+    mswindows_enqueue_misc_user_event (fobj, Qeval, list3 (Qdelete_frame, fobj, Qt));
     break;
 
   case WM_KEYDOWN:
@@ -1584,6 +1593,9 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	  MSG msg = { hwnd, message, wParam, lParam, GetMessageTime(), (GetMessagePos()) };
 	  memcpy (keymap_orig, keymap, 256);
 
+	  /* Remove shift modifier from an ascii character */
+	  mods &= ~MOD_SHIFT;
+
 	  /* Clear control and alt modifiers out of the keymap */
 	  keymap [VK_RCONTROL] = 0;
 	  keymap [VK_LMENU] = 0;
@@ -1602,14 +1614,8 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	  while (PeekMessage (&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE)
 		 || PeekMessage (&msg, hwnd, WM_SYSCHAR, WM_SYSCHAR, PM_REMOVE))
 	    {
+	      int mods1 = mods;
 	      WPARAM ch = msg.wParam;
-	      /* CH is a character code for the key: 
-		 'C' for Shift+C and Ctrl+Shift+C
-		 'c' for c and Ctrl+c */
-
-	      /* XEmacs doesn't seem to like Shift on non-alpha keys */
-	      if (!IsCharAlpha ((TCHAR)ch))
-		mods &= ~MOD_SHIFT;
 
 	      /* If a quit char with no modifiers other than control and
 		 shift, then mark it with a fake modifier, which is removed
@@ -1620,16 +1626,19 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		   || (quit_ch >= ' ' && !(mods & MOD_CONTROL) && quit_ch == ch))
 		  && ((mods  & ~(MOD_CONTROL | MOD_SHIFT)) == 0))
 		{
-		  mods |= FAKE_MOD_QUIT;
+		  mods1 |= FAKE_MOD_QUIT;
 		  ++mswindows_quit_chars_count;
 		}
 
-	      mswindows_enqueue_keypress_event (hwnd, make_char(ch), mods);
+	      mswindows_enqueue_keypress_event (hwnd, make_char(ch), mods1);
 	    } /* while */
 	  SetKeyboardState (keymap_orig);
 	} /* else */
     }
-    goto defproc;
+    /* F10 causes menu activation by default. We do not want this */
+    if (wParam != VK_F10)
+      goto defproc;
+    break;
 
   case WM_MBUTTONDOWN:
   case WM_MBUTTONUP:
@@ -1832,8 +1841,9 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	  if (!NILP(btext))
 	    {
-	      strncpy (tttext->szText, XSTRING_DATA (btext), XSTRING_LENGTH(btext)+1);
-	      tttext->lpszText=tttext->szText;
+	      /* I think this is safe since the text will only go away
+                 when the toolbar does...*/
+	      tttext->lpszText=XSTRING_DATA (btext);
 	    }
 #if 0
 	  tttext->uFlags |= TTF_DI_SETITEM;
@@ -2005,7 +2015,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
     msframe->sizing = 0;
     /* Queue noop event */
-    mswindows_bump_queue ();
+    mswindows_enqueue_magic_event (NULL, XM_BUMPQUEUE);
     return 0;
 
 #ifdef HAVE_SCROLLBARS
@@ -2407,40 +2417,43 @@ static void
 emacs_mswindows_handle_magic_event (struct Lisp_Event *emacs_event)
 {
   switch (EVENT_MSWINDOWS_MAGIC_TYPE(emacs_event))
-  {
-  case WM_SETFOCUS:
-  case WM_KILLFOCUS:
     {
-      Lisp_Object frame = EVENT_CHANNEL (emacs_event);
-      struct frame *f = XFRAME (frame);
-      int in_p = (EVENT_MSWINDOWS_MAGIC_TYPE(emacs_event) == WM_SETFOCUS);
-      Lisp_Object conser;
+    case XM_BUMPQUEUE:
+      break;
+    
+    case WM_SETFOCUS:
+    case WM_KILLFOCUS:
+      {
+	Lisp_Object frame = EVENT_CHANNEL (emacs_event);
+	struct frame *f = XFRAME (frame);
+	int in_p = (EVENT_MSWINDOWS_MAGIC_TYPE(emacs_event) == WM_SETFOCUS);
+	Lisp_Object conser;
 
-      /* struct gcpro gcpro1; */
+	/* struct gcpro gcpro1; */
 
-      /* Clear sticky modifiers here (if we had any) */
+	/* Clear sticky modifiers here (if we had any) */
 
-      conser = Fcons (frame, Fcons (FRAME_DEVICE (f), in_p ? Qt : Qnil));
-      /* GCPRO1 (conser); XXX Not necessary? */
-      emacs_handle_focus_change_preliminary (conser);
-      /* Under X the stuff up to here is done in the X event handler.
-	 I Don't know why */
-      emacs_handle_focus_change_final (conser);
-      /* UNGCPRO; */
+	conser = Fcons (frame, Fcons (FRAME_DEVICE (f), in_p ? Qt : Qnil));
+	/* GCPRO1 (conser); XXX Not necessary? */
+	emacs_handle_focus_change_preliminary (conser);
+	/* Under X the stuff up to here is done in the X event handler.
+	   I Don't know why */
+	emacs_handle_focus_change_final (conser);
+	/* UNGCPRO; */
 
-    }
-    break;
+      }
+      break;
 
-  case XM_MAPFRAME:
-  case XM_UNMAPFRAME:
-    {
-      Lisp_Object frame = EVENT_CHANNEL (emacs_event);
-      va_run_hook_with_args (EVENT_MSWINDOWS_MAGIC_TYPE(emacs_event) 
-			      == XM_MAPFRAME ?
-			      Qmap_frame_hook : Qunmap_frame_hook, 
-			      1, frame);
-    }
-    break;
+    case XM_MAPFRAME:
+    case XM_UNMAPFRAME:
+      {
+	Lisp_Object frame = EVENT_CHANNEL (emacs_event);
+	va_run_hook_with_args (EVENT_MSWINDOWS_MAGIC_TYPE(emacs_event) 
+			       == XM_MAPFRAME ?
+			       Qmap_frame_hook : Qunmap_frame_hook, 
+			       1, frame);
+      }
+      break;
 			    
       /* #### What about Enter & Leave */
 #if 0
@@ -2448,9 +2461,9 @@ emacs_mswindows_handle_magic_event (struct Lisp_Event *emacs_event)
 			     Qmouse_leave_frame_hook, 1, frame);
 #endif
 
-  default:
-    assert(0);
-  }
+    default:
+      assert(0);
+    }
 }
 
 static HANDLE

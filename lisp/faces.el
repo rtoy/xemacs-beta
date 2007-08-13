@@ -1661,6 +1661,32 @@ in that frame; otherwise change each frame."
 		       ((mswindows default color) . "green"))
 		     'global)
 
+;; Define some logical color names to be used when reading the pixmap files.
+(if (featurep 'xpm)
+    (setq xpm-color-symbols
+	  (list
+	   (purecopy '("foreground" (face-foreground 'default)))
+	   (purecopy '("background" (face-background 'default)))
+	   (purecopy '("backgroundToolBarColor"
+		       (or
+			(and 
+			 (featurep 'x)
+			 (or 
+			  (x-get-resource "backgroundToolBarColor"
+					  "BackgroundToolBarColor" 'string)
+			  (x-get-resource "background" "Background" 'string)))
+			"Gray80")))
+	   (purecopy '("foregroundToolBarColor"
+		       (or
+			(and 
+			 (featurep 'x)
+			 (or
+			  (x-get-resource "foregroundToolBarColor"
+					  "ForegroundToolBarColor" 'string)
+			  (x-get-resource "foreground" "Foreground" 'string)))
+			"Black")))
+	   )))
+
 (when (featurep 'tty)
   (set-face-highlight-p 'bold                    t 'global '(default tty))
   (set-face-underline-p 'italic                  t 'global '(default tty))

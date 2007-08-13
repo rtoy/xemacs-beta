@@ -1,3 +1,29 @@
+1998-05-31  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Added lib-src/wakeup.exe
+
+1998-05-30  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Added rules for hexl.exe, movemail.exe, mmencode.exe
+	sorted-doc.exe, etags.exe
+
+1998-05-30  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Support building InfoDock, with INFODOCK=1 macro
+	in the command line.
+
+1998-05-26  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* inc/sys/dir.h: Removed #ifndef WINDOWSNT around the code which
+	should be compiled in (sic!).
+	Removed 'extern' before function prototypes.
+
+1998-05-20  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Unified -nologo compiler switch handling and lib-src 
+	programs build (only make-docfile currently, adding other tools
+	soon). 
+
 1998-05-23  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* xemacs.mak: Added HAVE_DIALOGS macro, and dialog-*.* files to

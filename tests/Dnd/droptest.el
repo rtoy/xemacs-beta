@@ -4,18 +4,23 @@
 
 (defun dnd-drop-message (event object text)
   (message "Dropped %s with :%s" text object)
+  ;; signal that we have done something with the data
   t)
 
 (defun do-nothing (event object)
+  ;; signal that the data is still unprocessed
   nil)
 
 (defun start-drag (event what &optional typ)
+  ;; short drag interface, until the real one is implemented
   (cond ((featurep 'offix)
 	 (if (numberp typ)
 	     (offix-start-drag event what typ)
 	   (offix-start-drag event what)))
 	((featurep 'cde)
-	 (funcall (intern "cde-start-drag-internal") what))
+	 (if (not typ)
+	     (funcall (intern "cde-start-drag-internal") event nil (list what))
+	   (funcall (intern "cde-start-drag-internal") event t what)))
 	(t display-message 'error "no valid drag protocols implemented")))
 
 (defun make-drop-targets ()
@@ -62,7 +67,16 @@
     (set-buffer buf)
     (pop-to-buffer buf)
     (erase-buffer buf)
-    (insert "Try to drag data from one of the upper extents to one\nof the lower extents. Make sure that your minibuffer is big\ncause it is used to display the data.\n\nYou may also try to select some of this text and drag it with button2.")
+    (insert "Try to drag data from one of the upper extents to one\nof the lower extents. Make sure that your minibuffer is big\ncause it is used to display the data.\n\nYou may also try to select some of this text and drag it with button2.\n\nTo ")
+    (setq s (point))
+    (insert "EXIT")
+    (setq e (point))
+    (insert " this demo, press 'q'.")
+    (setq ext (make-extent s e))
+    (setq kmap (make-keymap))
+    (define-key kmap [button1] 'end-dnd-demo)
+    (set-extent-property ext 'keymap kmap)
+    (set-extent-property ext 'mouse-face 'highlight)
     (newline 2)
     (setq s (point))
     (insert "[ TEXT DRAG TEST ]")
@@ -79,7 +93,9 @@
     (setq ext (make-extent s e))
     (set-extent-property ext 'mouse-face 'isearch)
     (setq kmap (make-keymap))
-    (define-key kmap [button1] 'file-drag)
+    (if (featurep 'cde)
+	(define-key kmap [button1] 'cde-file-drag)
+      (define-key kmap [button1] 'file-drag))
     (set-extent-property ext 'keymap kmap)
     (insert "    ")
     (setq s (point))
@@ -97,7 +113,9 @@
     (setq ext (make-extent s e))
     (set-extent-property ext 'mouse-face 'isearch)
     (setq kmap (make-keymap))
-    (define-key kmap [button1] 'url-drag)
+    (if (featurep 'cde)
+	(define-key kmap [button1] 'cde-file-drag)
+      (define-key kmap [button1] 'url-drag))
     (set-extent-property ext 'keymap kmap)
     (newline 3)))
     
@@ -109,6 +127,10 @@
   (interactive "@e")
   (start-drag event "/tmp/printcap" 2))
 
+(defun cde-file-drag (event)
+  (interactive "@e")
+  (start-drag event '("/tmp/printcap") t))
+
 (defun url-drag (event)
   (interactive "@e")
   (start-drag event "http://www.xemacs.org/" 8))
@@ -118,8 +140,22 @@
   (start-drag event '("/tmp/dragtest" "/tmp/droptest" "/tmp/printcap") 3))
 
 (setq dragdrop-drop-functions '((do-nothing t t)
+				;; CDE does not have any button info...
+				(dnd-drop-message 0 t "cde-drop somewhere else")
 				(dnd-drop-message 2 t "region somewhere else")
 				(dnd-drop-message 1 t "drag-source somewhere else")
 				(do-nothing t t)))
+
 (make-drag-starters)
 (make-drop-targets)
+
+(defun end-dnd-demo ()
+  (interactive)
+  (global-set-key [button2] button2-func)
+  (bury-buffer))
+
+(setq lmap (make-keymap))
+(use-local-map lmap)
+(local-set-key [q] 'end-dnd-demo)
+(setq button2-func (lookup-key global-map [button2]))
+(global-unset-key [button2])

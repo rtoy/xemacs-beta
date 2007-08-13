@@ -362,26 +362,6 @@ Otherwise, it returns the next larger version of this font that is defined."
 (make-obsolete 'x-make-face-unitalic 'make-face-unitalic)
 
 
-;; Define some logical color names to be used when reading the pixmap files.
-(if (featurep 'xpm)
-    (setq xpm-color-symbols
-	  (list
-	   (purecopy '("foreground" (face-foreground 'default)))
-	   (purecopy '("background" (face-background 'default)))
-	   (purecopy '("backgroundToolBarColor"
-		       (or
-			(x-get-resource "backgroundToolBarColor"
-					"BackgroundToolBarColor" 'string)
-			(x-get-resource "background" "Background" 'string)
-			"Gray80")))
-	   (purecopy '("foregroundToolBarColor"
-		       (or
-			(x-get-resource "foregroundToolBarColor"
-					"ForegroundToolBarColor" 'string)
-			(x-get-resource "foreground" "Foreground" 'string)
-			"Black")))
-	   )))
-
 ;;; internal routines
 
 ;;; x-init-face-from-resources is responsible for initializing a

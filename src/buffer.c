@@ -123,6 +123,11 @@ Lisp_Object Vbuffer_defaults;
    buffers and as a reset-value when local-vars are killed.  */
 struct buffer buffer_local_flags;
 
+/* This is the initial (startup) directory, as used for the *scratch* buffer.
+   We're making this a global to make others aware of the startup directory.
+ */
+char initial_directory[MAXPATHLEN+1];
+
 /* This structure holds the names of symbols whose values may be
    buffer-local.  It is indexed and accessed in the same way as the above. */
 static Lisp_Object Vbuffer_local_symbols;
@@ -2744,17 +2749,15 @@ handled:
 }
 
 void
-init_buffer (void)
+init_initial_directory (void)
 {
   /* This function can GC */
-  char buf[MAXPATHLEN+1];
+
   char *pwd;
   struct stat dotstat, pwdstat;
   int rc;
 
-  buf[0] = 0;
-
-  Fset_buffer (Fget_buffer_create (QSscratch));
+  initial_directory[0] = 0;
 
   /* If PWD is accurate, use it instead of calling getcwd.  This is faster
      when PWD is right, and may avoid a fatal error.  */
@@ -2764,17 +2767,17 @@ init_buffer (void)
       && dotstat.st_ino == pwdstat.st_ino
       && dotstat.st_dev == pwdstat.st_dev
       && (int) strlen (pwd) < MAXPATHLEN)
-    strcpy (buf, pwd);
-  else if (getcwd (buf, MAXPATHLEN) == NULL)
+    strcpy (initial_directory, pwd);
+  else if (getcwd (initial_directory, MAXPATHLEN) == NULL)
     fatal ("`getcwd' failed: %s\n", strerror (errno));
 
   /* Maybe this should really use some standard subroutine
      whose definition is filename syntax dependent.  */
-  rc = strlen (buf);
-  if (!(IS_DIRECTORY_SEP (buf[rc - 1])))
+  rc = strlen (initial_directory);
+  if (!(IS_DIRECTORY_SEP (initial_directory[rc - 1])))
     {
-      buf[rc] = DIRECTORY_SEP;
-      buf[rc + 1] = '\0';
+      initial_directory[rc] = DIRECTORY_SEP;
+      initial_directory[rc + 1] = '\0';
     }
   /* XEmacs change: store buffer's default directory
      using prefered (i.e. as defined at compile-time)
@@ -2785,9 +2788,18 @@ init_buffer (void)
        else unixtodos_filename (s); \
   } while (0)
 
-  CORRECT_DIR_SEPS(buf);
+  CORRECT_DIR_SEPS(initial_directory);
 #endif
-  current_buffer->directory = build_string (buf);
+}
+
+void
+init_buffer (void)
+{
+  /* This function can GC */
+
+  Fset_buffer (Fget_buffer_create (QSscratch));
+
+  current_buffer->directory = build_string (initial_directory);
 
 #if 0 /* FSFmacs */
   /* #### is this correct? */

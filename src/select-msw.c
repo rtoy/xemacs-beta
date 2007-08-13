@@ -145,7 +145,7 @@ Return the contents of the mswindows clipboard.
 }
 
 DEFUN ("mswindows-selection-exists-p", Fmswindows_selection_exists_p, 0, 0, 0, /*
-Whether there is an mswindows selection.
+Whether there is an MS-Windows selection.
 */
        ())
 {
@@ -153,7 +153,7 @@ Whether there is an mswindows selection.
 }
 
 DEFUN ("mswindows-delete-selection", Fmswindows_delete_selection, 0, 0, 0, /*
-Whether there is an mswindows selection.
+Remove the current MS-Windows selection from the clipboard.
 */
        ())
 {

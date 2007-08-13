@@ -1,38 +1,38 @@
 (setq package-get-base
 '((eudc
   (standards-version 1.0
-   version "1.06"
-   author-version "1.06"
-   date "1998-05-03"
-   build-date "1998-05-04"
+   version "1.07"
+   author-version "1.07"
+   date "1998-05-21"
+   build-date "1998-05-27"
    maintainer "Oscar Figueiredo <Oscar.Figueiredo@epfl.ch>"
    distribution stable
    priority low
    category "comm"
    dump nil
-   description "Emacs Unified Directory Client."
-   filename "eudc-1.06-pkg.tar.gz"
-   md5sum "aff14f51353f6ad31f28f10104bb4996"
-   size 40382
+   description "Emacs Unified Directory Client (LDAP, PH)."
+   filename "eudc-1.07-pkg.tar.gz"
+   md5sum "53131f9b5b7ae01038e579b4b55dc844"
+   size 40751
    provides (eudc eudc-ldap eudc-ph)
    requires (fsf-compat xemacs-base)
    type regular
 ))
 (footnote
   (standards-version 1.0
-   version "1.02"
-   author-version "0.18"
-   date "1998-01-24"
-   build-date "1998-04-04"
+   version "1.03"
+   author-version "0.18x"
+   date "1998-06-01"
+   build-date "1998-06-01"
    maintainer "SL Baur <steve@xemacs.org>"
    distribution stable
    priority low
    category "comm"
    dump nil
    description "Footnoting in mail message editing modes."
-   filename "footnote-1.02-pkg.tar.gz"
-   md5sum "145e79418bac020596e7bc66654aab4f"
-   size 18065
+   filename "footnote-1.03-pkg.tar.gz"
+   md5sum "bea3aa23b37988f690fa56ba8cc11e92"
+   size 18199
    provides (footnote)
    requires (mail-lib xemacs-base)
    type regular
@@ -58,19 +58,19 @@
 ))
 (gnus
   (standards-version 1.0
-   version "1.15"
-   author-version "5.6.9"
-   date "1998-04-06"
-   build-date "1998-05-02"
+   version "1.16"
+   author-version "5.6.10"
+   date "1998-06-01"
+   build-date "1998-06-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "comm"
    dump nil
    description "The Gnus Newsreader and Mailreader."
-   filename "gnus-1.15-pkg.tar.gz"
-   md5sum "fd8b38887e680fd04748e6eaf490628e"
-   size 1657321
+   filename "gnus-1.16-pkg.tar.gz"
+   md5sum "e78088ca22f5566ba7d9b7075ed70cff"
+   size 1658207
    provides (gnus message)
    requires (gnus w3 mh-e mailcrypt rmail mail-lib xemacs-base)
    type regular
@@ -115,41 +115,22 @@
 ))
 (net-utils
   (standards-version 1.0
-   version "1.05"
-   author-version "21.0b36"
-   date "1998-04-05"
-   build-date "1998-04-17"
+   version "1.06"
+   author-version "21.0b42"
+   date "1998-05-18"
+   build-date "1998-06-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "comm"
    dump nil
    description "Miscellaneous Networking Utilities."
-   filename "net-utils-1.05-pkg.tar.gz"
-   md5sum "8a4368d99ccdc3ccc468dcd557cf8f54"
-   size 82006
+   filename "net-utils-1.06-pkg.tar.gz"
+   md5sum "fe144ff7f6ef3582ed7dd9bd64d316c2"
+   size 83496
    provides (ilisp-browse-cltl2 emacsbug feedmail metamail net-utils rcompile shadowfile webjump webster-www)
    requires (w3 efs mail-lib xemacs-base)
    type single
-))
-(ph
-  (standards-version 1.0
-   version "1.02"
-   author-version "2.6"
-   date "1998-01-24"
-   build-date "1998-04-04"
-   maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
-   distribution stable
-   priority low
-   category "comm"
-   dump nil
-   description "LDAP support."
-   filename "ph-1.02-pkg.tar.gz"
-   md5sum "83a6feef756065a093450fa000d2724a"
-   size 27567
-   provides (ph)
-   requires (xemacs-base)
-   type regular
 ))
 (rmail
   (standards-version 1.0
@@ -267,19 +248,19 @@
 ))
 (games
   (standards-version 1.0
-   version "1.03"
-   author-version "1.0"
+   version "1.04"
+   author-version "1.02"
    date "1998-04-07"
-   build-date "1998-04-17"
+   build-date "1998-06-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "games"
    dump nil
    description "Tetris, Sokoban, and Snake."
-   filename "games-1.03-pkg.tar.gz"
-   md5sum "5fe869c517652083641cbdcae80defa2"
-   size 29340
+   filename "games-1.04-pkg.tar.gz"
+   md5sum "05d820825de83a3b717cca756a12fd8c"
+   size 31208
    provides (gamegrid snake tetris sokoban)
    requires (xemacs-base)
    type regular
@@ -438,19 +419,19 @@
 ))
 (mail-lib
   (standards-version 1.0
-   version "1.14"
-   author-version "21.0b40"
-   date "1998-05-10"
-   build-date "1998-05-15"
+   version "1.15"
+   author-version "21.0b42"
+   date "1998-06-01"
+   build-date "1998-06-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "libs"
    dump nil
    description "Fundamental lisp files for providing email support."
-   filename "mail-lib-1.14-pkg.tar.gz"
-   md5sum "929ca9e3b14577139704a67bb019c996"
-   size 120134
+   filename "mail-lib-1.15-pkg.tar.gz"
+   md5sum "15eab095de71085ea3dbd0c05cac7494"
+   size 120187
    provides (browse-url highlight-headers mail-abbrevs mail-extr mail-utils reporter rfc822 rmail-mini rmailout sendmail smtpmail)
    requires (xemacs-base)
    type regular
@@ -514,19 +495,19 @@
 ))
 (edict
   (standards-version 1.0
-   version "1.01"
-   author-version "0.9.7"
-   date "1998-03-13"
-   build-date "1998-05-06"
+   version "1.02"
+   author-version "0.9.8"
+   date "1998-06-01"
+   build-date "1998-06-01"
    maintainer "Stephen J. Turnbull <turnbull@sk.tsukuba.ac.jp>"
    distribution mule
    priority high
    category "mule"
    dump t
    description "Lisp Interface to EDICT, Kanji Dictionary"
-   filename "edict-1.01-pkg.tar.gz"
-   md5sum "45881df2e316f5fb38bed46f46c9992e"
-   size 144862
+   filename "edict-1.02-pkg.tar.gz"
+   md5sum "0169ee34db577ac5555765b90f09ac4c"
+   size 94768
    provides ()
    requires (mule-base xemacs-base)
    type regular
@@ -666,19 +647,19 @@
 ))
 (edit-utils
   (standards-version 1.0
-   version "1.22"
-   author-version "21.0b40"
-   date "1998-05-12"
-   build-date "1998-05-15"
+   version "1.23"
+   author-version "21.0b42"
+   date "1998-05-29"
+   build-date "1998-06-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority high
    category "oa"
    dump nil
    description "Miscellaneous editor extensions, you probably need this."
-   filename "edit-utils-1.22-pkg.tar.gz"
-   md5sum "2b3de19afb781c06a69cfe340bda8c70"
-   size 572566
+   filename "edit-utils-1.23-pkg.tar.gz"
+   md5sum "c443222618ef92d748e1f8f365cf0665"
+   size 583389
    provides (abbrevlist atomic-extents avoid backup-dir balloon-help big-menubar blink-cursor blink-paren bookmark compare-w completion dabbrev desktop detached-minibuf edit-toolbar fast-lock file-part floating-toolbar flow-ctrl foldout func-menu hippie-exp icomplete id-select info-look iswitchb lazy-lock lazy-shot live-icon man mic-paren paren popper mode-motion+ outl-mouse page-ext blink-paren paren permanent-buffers recent-files redo reportmail rsz-minibuf saveconfsavehist saveplace scroll-in-place tempo toolbar-utils tree-menu uniquify where-was-i-db)
    requires (xemacs-base)
    type single
@@ -1065,19 +1046,19 @@
 ))
 (debug
   (standards-version 1.0
-   version "1.02"
-   author-version "21.0b38"
-   date "1998-04-24"
-   build-date "1998-04-26"
+   version "1.03"
+   author-version "21.0b42"
+   date "1998-06-01"
+   build-date "1998-06-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution contrib
    priority low
    category "prog"
    dump nil
    description "GUD, gdb, dbx debugging support."
-   filename "debug-1.02-pkg.tar.gz"
-   md5sum "953ac508318ffcdcf3a81643499dda33"
-   size 87609
+   filename "debug-1.03-pkg.tar.gz"
+   md5sum "8714c8ed2dd221501b2ec9818c773d29"
+   size 90336
    provides ()
    requires (xemacs-base)
    type regular
@@ -1122,19 +1103,19 @@
 ))
 (jde
   (standards-version 1.0
-   version "1.0"
-   author-version "2.0"
+   version "1.01"
+   author-version "2.01"
    date "1998-04-19"
-   build-date "1998-05-06"
+   build-date "1998-06-01"
    maintainer "Andy Piper <andyp@parallax.co.uk>"
    distribution stable
    priority medium
    category "prog"
    dump nil
    description "Java language and development support."
-   filename "jde-1.0-pkg.tar.gz"
-   md5sum "f17436f90709e197ea7937d75b8ede15"
-   size 112195
+   filename "jde-1.01-pkg.tar.gz"
+   md5sum "e8c52579687f2fcafc045937f9f01781"
+   size 115790
    provides (jde)
    requires (cc-mode debug speedbar edit-utils mail-lib xemacs-base)
    type regular
@@ -1236,19 +1217,19 @@
 ))
 (vc
   (standards-version 1.0
-   version "1.08"
-   author-version "21.0b40"
-   date "1998-05-14"
-   build-date "1998-05-15"
+   version "1.09"
+   author-version "21.0b42"
+   date "1998-05-30"
+   build-date "1998-06-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "prog"
    dump t
    description "Version Control for Free systems."
-   filename "vc-1.08-pkg.tar.gz"
-   md5sum "10b3a769fce6d64e7662b3d4629bff30"
-   size 83873
+   filename "vc-1.09-pkg.tar.gz"
+   md5sum "233d46c01ab9e5052395cf730420f41d"
+   size 83688
    provides (vc)
    requires (dired xemacs-base)
    type regular
@@ -1407,19 +1388,19 @@
 ))
 (viper
   (standards-version 1.0
-   version "1.07"
-   author-version "3.02"
+   version "1.08"
+   author-version "3.03"
    date "1998-02-25"
-   build-date "1998-05-15"
+   build-date "1998-06-01"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "wp"
    dump nil
    description "VI emulation support."
-   filename "viper-1.07-pkg.tar.gz"
-   md5sum "7f8fc245699c2036b62789d455196654"
-   size 260876
+   filename "viper-1.08-pkg.tar.gz"
+   md5sum "f36b7e49bda79a19d7beeeeb6092bedd"
+   size 261090
    provides (viper)
    requires (xemacs-base)
    type regular

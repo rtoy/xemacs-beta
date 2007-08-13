@@ -1898,7 +1898,7 @@ parse_integer (CONST Bufbyte *buf, Bytecount len, int base)
     }
 
   {
-    EMACS_INT int_result = negativland ? -num : num;
+    EMACS_INT int_result = negativland ? - (EMACS_INT) num : (EMACS_INT) num;
     Lisp_Object result = make_int (int_result);
     if (num && ((XINT (result) < 0) != negativland))
       goto overflow;

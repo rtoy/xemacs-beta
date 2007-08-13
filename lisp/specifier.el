@@ -411,9 +411,9 @@ is no possibility for ambiguity and no need to go through the function
 ;; expects.)
 ;;
 ;; This macro might perhaps be made simpler, with an addition to
-;; `remove-specifier'.  Example (modulo gensyms for clarity):
+;; `remove-specifier'.  Example (simplified for clarity):
 ;;
-;; (defmacro with-specifier-instance (specifier value domain &rest body)
+;; (defmacro let-specifier (specifier value domain &rest body)
 ;;   `(unwind-protect
 ;;        (progn
 ;;	    (add-spec-to-specifier ,specifier ,value ,domain nil 'prepend)
@@ -430,26 +430,62 @@ is no possibility for ambiguity and no need to go through the function
 ;; The following version remembers the old speclist and returns it
 ;; later.  It's probably less error-prone anyway.
 
-(defmacro with-specifier-instance (specifier value domain &rest body)
-  "Evaluate forms in BODY with SPECIFIER instantiating to VALUE in DOMAIN.
-The value returned is the value of the last form in BODY.
+(defmacro let-specifier (specifier-list &rest body)
+  "(let-specifier SPECIFIER-LIST BODY): bind specifiers and evaluate BODY.
+The value of the last form in BODY is returned.
+Each element of SPECIFIER-LIST should be a list of
+\(SPECIFIER VALUE DOMAIN).  VALUE and DOMAIN may be omitted, and default
+to nil.  The elements of SPECIFIER-LIST are evaluated sequentially.
+
 For meaning of DOMAIN, see `specifier-instance'."
-  (let ((specvar (gensym "wsi-"))
-	(valvar (gensym "wsi-"))
-	(domvar (gensym "wsi-"))
-	(oldvar (gensym "wsi-")))
-    ;; Remember the arguments to prevent multiple evaluation.
-    `(let* ((,specvar ,specifier)
-	    (,valvar ,value)
-	    (,domvar ,domain)
-	    (,oldvar (specifier-spec-list ,specvar ,domvar)))
+  ;; Error-checking
+  (dolist (listel specifier-list)
+    (or (and (consp listel)
+	     (<= (length listel) 3))
+	(signal 'error (list "Should be a 3-element list" listel))))
+  ;; Set up fresh symbols to avoid name clashes.
+  (let* ((specvarlist (mapcar #'(lambda (ignored) (gensym "specifier-"))
+			      specifier-list))
+	 (valvarlist (mapcar #'(lambda (ignored) (gensym "value-"))
+			     specifier-list))
+	 (domvarlist (mapcar #'(lambda (ignored) (gensym "domain-"))
+			     specifier-list))
+	 (oldvarlist (mapcar #'(lambda (ignored) (gensym "old-"))
+			     specifier-list)))
+    ;; Bind the appropriate variables.
+    `(let* (,@(mapcar* (lambda (symbol listel)
+			 (list symbol (nth 0 listel)))
+		       specvarlist specifier-list)
+	      ,@(mapcar* (lambda (symbol listel)
+			   (list symbol (nth 1 listel)))
+			 valvarlist specifier-list)
+	      ,@(mapcar* (lambda (symbol listel)
+			   (list symbol (nth 2 listel)))
+			 domvarlist specifier-list)
+	      ,@(mapcar* (lambda (symbol specifier domain)
+			   (list symbol `(specifier-spec-list
+					  ,specifier ,domain)))
+			 oldvarlist specvarlist domvarlist))
        (unwind-protect
 	   (progn
-	     (add-spec-to-specifier ,specvar ,valvar ,domvar nil 'prepend)
+	     ,@(mapcar* (lambda (specifier value domain)
+			  `(add-spec-to-specifier
+			    ,specifier ,value ,domain
+			    nil 'prepend))
+			specvarlist valvarlist domvarlist)
 	     ,@body)
-	 (remove-specifier ,specvar ,domvar nil t)
-	 (add-spec-list-to-specifier ,specvar ,oldvar)))))
+	 ,@(apply
+	    #'nconc
+	    ;; Reverse the unwinding order for marginal safety gain.
+	    (nreverse
+	     (mapcar*
+	      (lambda (specifier domain oldvalue)
+		`((remove-specifier ,specifier ,domain)
+		  (add-spec-list-to-specifier ,specifier ,oldvalue)))
+	      specvarlist domvarlist oldvarlist)))))))
 
+;; (cl-prettyexpand '(let-specifier ((modeline-shadow-thickness 0 (selected-window)) (fubar 0 baz)) (sit-for 1)))
+
 (define-specifier-tag 'win 'device-on-window-system-p)
 
 ;; Add tags for device types that don't have support compiled

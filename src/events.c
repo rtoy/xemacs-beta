@@ -384,7 +384,7 @@ DEFUN ("make-event", Fmake_event, 0, 2, 0, /*
 Return a new event of type TYPE, with properties described by PLIST.
 
 TYPE is a symbol, either `empty', `key-press', `button-press',
- `button-release', or `motion'.  If TYPE is nil, it
+ `button-release', `misc-user' or `motion'.  If TYPE is nil, it
  defaults to `empty'.
 
 PLIST is a property list, the properties being compatible to those
@@ -392,11 +392,10 @@ PLIST is a property list, the properties being compatible to those
  allowed:
 
  channel	-- The event channel, a frame or a console.  For
-		   button-press, button-release, motion events,
-		   this must be a frame.  For key-press
-		   events, it must be a console.  If channel is
-		   unspecified, it will be set to the selected frame
-		   or selected console, as appropriate.
+		   button-press, button-release, misc-user and motion events,
+		   this must be a frame.  For key-press events, it must be
+                   a console.  If channel is unspecified, it will be set to
+                   the selected frame or selected console, as appropriate.
  key		-- The event key, a symbol or character.  Allowed only for
 		   keypress events.
  button		-- The event button, integer 1, 2 or 3.  Allowed for
@@ -404,6 +403,9 @@ PLIST is a property list, the properties being compatible to those
  modifiers	-- The event modifiers, a list of modifier symbols.  Allowed
 		   for key-press, button-press, button-release, motion and
 		   misc-user events.
+ function       -- Function. Allowed for misc-user events only.
+ object         -- An object, function's parameter. Allowed for misc-user
+                   events only.
  x		-- The event X coordinate, an integer.  This is relative
 		   to the left of CHANNEL's root window.  Allowed for
 		   motion, button-press, button-release and misc-user events.
@@ -501,7 +503,7 @@ WARNING: the event object returned may be a reused one; see the function
 	      if (!CONSOLEP (value))
 		value = wrong_type_argument (Qconsolep, value);
 	    }
-	  else if (e->event_type != misc_user_event)
+	  else
 	    {
 	      if (!FRAMEP (value))
 		value = wrong_type_argument (Qframep, value);
@@ -671,8 +673,8 @@ WARNING: the event object returned may be a reused one; see the function
 	       ? "buton-press" : "button-release");
       break;
     case misc_user_event:
-      if (!e->event.misc.button)
-	error ("Undefined button for misc-user event");
+      if (NILP (e->event.misc.function))
+	error ("Undefined function for misc-user event");
       break;
     default:
       break;

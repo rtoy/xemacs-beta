@@ -95,6 +95,7 @@ static char * strerror (int errnum);
    client or something other than Samba, the locking call might work
    properly - make sure it does before you enable this! */
 #define DISABLE_DIRECT_ACCESS
+#include <io.h>
 #endif /* WINDOWSNT */
 
 #if defined (HAVE_UNISTD_H) || defined (USG)
@@ -154,9 +155,11 @@ int
 main (int argc, char *argv[])
 {
   char *inname, *outname;
+#ifndef DISABLE_DIRECT_ACCESS
   int indesc, outdesc;
   int nread;
   int status;
+#endif
 
 #ifndef MAIL_USE_SYSTEM_LOCK
   struct stat st;

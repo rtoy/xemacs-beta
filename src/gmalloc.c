@@ -500,7 +500,7 @@ morecore (__malloc_size_t size)
       newinfo = (malloc_info *) align (newsize * sizeof (malloc_info));
       if (newinfo == NULL)
 	{
-	  (*__morecore) (-size);
+	  (*__morecore) (-(int)size);
 	  return NULL;
 	}
       memcpy (newinfo, _heapinfo, heapsize * sizeof (malloc_info));
@@ -842,7 +842,7 @@ _free_internal (__ptr_t ptr)
 	{
 	  __malloc_size_t bytes = blocks * BLOCKSIZE;
 	  _heaplimit -= blocks;
-	  (*__morecore) (-bytes);
+	  (*__morecore) (-(int)bytes);
 	  _heapinfo[_heapinfo[block].free.prev].free.next
 	    = _heapinfo[block].free.next;
 	  _heapinfo[_heapinfo[block].free.next].free.prev

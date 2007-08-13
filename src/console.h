@@ -224,6 +224,14 @@ struct console_methods
 				 Lisp_Object pointer_bg,
 				 int dest_mask, Lisp_Object domain);
 #endif
+#ifdef HAVE_WINDOW_SYSTEM
+    /* which is more tacky - this or #defines in glyphs.c? */
+  void (*xbm_instantiate_method)(Lisp_Object image_instance, 
+				 Lisp_Object instantiator,
+				 Lisp_Object pointer_fg, 
+				 Lisp_Object pointer_bg,
+				 int dest_mask, Lisp_Object domain);
+#endif
   Lisp_Object image_conversion_list;
 
 #ifdef HAVE_TOOLBARS

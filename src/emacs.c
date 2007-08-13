@@ -1572,6 +1572,17 @@ main_1 (int argc, char **argv, char **envp, int restart)
      of this stuff involves querying the current environment and needs
      to be done both at dump time and at run time. */
 
+  init_initial_directory();		/* get the directory to use for the
+					   "*scratch*" buffer, etc. */
+
+#ifdef WINDOWSNT
+  /*
+   * For Win32, call init_environment() now, so that environment/registry
+   * variables will be properly entered into Vprocess_envonment.
+   */
+  init_environment();
+#endif
+
   init_callproc ();	/* Set up the process environment (so that egetenv
 			   works), the basic directory variables
 			   (exec-directory and so on), and stuff
@@ -1586,10 +1597,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
   init_environment (argc, argv, skip_args);
 #endif
   init_cmdargs (argc, argv, skip_args);	/* Create list Vcommand_line_args */
-  init_buffer (); /* Init default directory of *scratch* buffer */
+  init_buffer ();	/* Set default directory of *scratch* buffer */
 
 #ifdef WINDOWSNT
-  init_environment();
   init_ntproc();
 #endif
 

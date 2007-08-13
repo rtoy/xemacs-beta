@@ -65,9 +65,10 @@ make the clicked-on window taller or shorter."
   (or (event-over-modeline-p event)
       (error "not over a modeline"))
   ;; Give the modeline a "pressed" look.  --hniksic
-  (with-specifier-instance modeline-shadow-thickness
-      (- (specifier-instance modeline-shadow-thickness (event-window event)))
-      (event-window event)
+  (let-specifier ((modeline-shadow-thickness
+		   (- (specifier-instance modeline-shadow-thickness
+					  (event-window event)))
+		   (event-window event)))
     (let ((done nil)
 	  (depress-line (event-y event))
 	  (start-event-frame (event-frame event))

@@ -42,6 +42,10 @@ Boston, MA 02111-1307, USA.  */
 extern int errno;
 #endif
 
+#ifdef WINDOWSNT
+#include <direct.h>
+#endif
+
 #include <sys/stat.h>			/* for S_IFLNK */
 
 #ifndef PATH_MAX
@@ -67,11 +71,13 @@ char resolved_path [];
 #endif
 {
   char copy_path[PATH_MAX];
-  char link_path[PATH_MAX];
   char *new_path = resolved_path;
   char *max_path;
   int readlinks = 0;
+#ifdef S_IFLNK
+  char link_path[PATH_MAX];
   int n;
+#endif
 
   /* Make a copy of the source path since we may need to modify it. */
   strcpy(copy_path, path);

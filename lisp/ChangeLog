@@ -1,3 +1,119 @@
+1998-06-01  SL Baur  <steve@altair.xemacs.org>
+
+	* sound.el (default-sound-directory): Use `locate-data-directory'
+	to find the sounds directory.
+
+1998-05-29  Andy Piper  <andyp@parallax.co.uk>
+
+	* sound.el: default sound-ext to .wav under mswindows, .au
+	otherwise. load-default sounds without extensions.
+
+1998-05-27  Bjrn Torkelsson  <torkel@hpc2n.umu.se>
+
+	* menubar-items.el (default-menubar): Dim out "Submit Bug Report"
+	if send-pr is not bound.
+
+1998-06-01  Andy Piper  <andyp@parallax.co.uk>
+
+	* files.el: grok idl files in auto-mode-alist.
+1998-06-01  Jeff Miller  <jmiller@smart.net>
+
+	* minibuf.el (exact-minibuffer-completion-p): check for nil before
+	calling `upcase'.
+
+1998-05-30  Andy Piper  <andyp@parallax.co.uk>
+
+	* msw-glyphs.el: add xbm to the list of image types supported.
+
+1998-05-30  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* msw-init.el (init-post-mswindows-win): Load InfoDock toolbar
+	instead of XEmacs one when dumping InfoDock.
+
+1998-05-30  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* obsolete.el (has-modeline-p): Added obsolete alias `has-modeline-p'
+ 	for `modeline-visible-p'
+
+	* winnt.el (nt-quote-process-args): Fix for duplicating argv[0].
+
+1998-05-29  Andy Piper  <andyp@parallax.co.uk>
+
+	* msw-select.el (mswindows-cut-copy-clear-clipboard): deleted
+	since it's not used anymore. doc string fixes.
+
+	* package-get.el (package-get-file-installed-p): new function. use
+	instead of file-installed-p which is in an external package.
+
+1998-05-28  Oliver Graf <ograf@fga.de>
+
+	* dragdrop.el (dragdrop-drop-url-default): dropped pop-to-buffer in
+	favor of select-window/switch-to-buffer
+
+Wed May 27, 1998  Darryl Okahata  <darrylo@sr.hp.com>
+
+	* startup.el: changed (getenv "HOME") to (user-home-directory)
+
+1998-05-25  Oliver Graf <ograf@fga.de>
+
+	* frame.el (cde-start-drag) moved to dragdrop.el
+	(offix-start-drag-region) moved to dragdrop.el
+	(offix-start-drag) moved to dragdrop.el
+	* dragdrop.el (cde-start-drag) moved from frame.el
+	(offix-start-drag-region) moved from frame.el
+	(offix-start-drag) moved from frame.el
+	(cde-start-drag-region) cde drag regions
+	* mouse.el (mouse-drag-or-yank) will now call cde-start-drag-region
+
+1998-05-26  Oliver Graf <ograf@fga.de>
+
+	* dragdrop.el: created dragdrop-drag prototypes
+	(cde-start-drag-region) fixed typo
+
+1998-05-28  SL Baur  <steve@altair.xemacs.org>
+
+	* simple.el (after-init-hook): Remove reader macro.
+
+	* packages.el (packages-hardcoded-lisp): Get rid of reader
+	macros.  Update DOC string.
+
+1998-05-25  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* mouse.el (drag-window-divider): Ditto.
+
+	* modeline.el (mouse-drag-modeline): Use it.
+
+	* lisp-mode.el (let-specifier): Specify indentation.
+
+	* specifier.el (let-specifier): Renamed from
+	`with-specifier-instance'.
+
+1998-05-27  Andy Piper  <andyp@parallax.co.uk>
+
+	* x-faces.el:
+	* faces.el: move definition of xpm-color-symbols from x-faces.el
+	to faces. Predicate x-get-resource on the presence of x.
+
+	* msw-faces.el: set 3d-object face rather than modeline. Specifiy
+	faces as specfier defaults.
+
+	* package-get.el: don't use package-admin-add-single-file-package.
+
+1998-05-25  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* toolbar-items.el: Fixup tooltips.
+	(toolbar-gnus): Don't use obsolete variable
+	toolbar-news-frame-properties.
+	(toolbar-news-reader): Default to `gnus' instead of
+	`not-configured'.
+
+	* files.el (auto-mode-alist): Correctly recognize `.emacs' under
+	Windows.
+
+1998-05-25  Andy Piper  <andyp@parallax.co.uk>
+
+	* package-get.el: rename -installedp -> -installed-p.
+
 1998-05-23  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* glyphs.el (init-glyphs): Created `border-glyph' face, with no
@@ -86,6 +202,12 @@
 	* x-faces.el:
 	* faces.el (try-font-name): moved from x-faces.el since it is
 	required by w3 under mswindows as well X.
+
+1998-05-18  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* winnt.el: Removed evil (setq completion-ignore-case t)
+	clause, one more overlookef fsfism.
+	(nt-quote-args-functions-alist): End sentences with double space.
 
 1998-05-18  Kirill M. Katsnelson  <kkm@kis.ru>
 
@@ -248,7 +370,7 @@
 	* keymap.el (kbd): Define here; handle string constants and
 	others...
 
-1998-05-15  Christian Nybø <chr@mediascience.no>
+1998-05-15  Christian Nyb <chr@mediascience.no>
 
 	* simple.el (zap-up-to-char): New function.  Behaves like `zap-to-char'
 	in Emacs 18.

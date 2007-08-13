@@ -42,6 +42,7 @@
    `(("\\.bmp\\'" [bmp :file nil] 2)
      ("\\`BM" [bmp :data nil] 2)
      ,@(if (featurep 'xpm) '(("\\.xpm\\'" [xpm :file nil] 2)))
+     ("\\.xbm\\'" [xbm :file nil] 2)
      ,@(if (featurep 'xpm) '(("\\`/\\* XPM \\*/" [xpm :data nil] 2)))
      ,@(if (featurep 'gif) '(("\\.gif\\'" [gif :file nil] 2)
 			     ("\\`GIF8[79]" [gif :data nil] 2)))

@@ -67,6 +67,7 @@ void syms_of_device (void);
 void syms_of_dialog_x (void);
 void syms_of_dialog (void);
 void syms_of_dired (void);
+void syms_of_dired_mswindows (void);
 void syms_of_dll (void);
 void syms_of_doc (void);
 void syms_of_dragdrop (void);
@@ -235,6 +236,7 @@ void vars_of_dialog (void);
 void vars_of_dialog_x (void);
 void vars_of_dialog_mswindows (void);
 void vars_of_dired (void);
+void vars_of_dired_mswindows (void);
 void vars_of_doc (void);
 void vars_of_dragdrop (void);
 void vars_of_editfns (void);
@@ -369,6 +371,7 @@ void init_event_unixoid (void);
 void init_hpplay (void);
 void init_lread (void);
 void init_macros (void);
+void init_ntproc (void); /* #### delete me, please! */
 /* Not named init_process in order to avoid conflict with NS 3.3 */
 void init_xemacs_process (void);
 void init_redisplay (void);

@@ -70,6 +70,8 @@ Lisp_Object Qformat;
 
 Lisp_Object Qpoint, Qmark, Qregion_beginning, Qregion_end;
 
+Lisp_Object Quser_files_and_directories;
+
 /* This holds the value of `environ' produced by the previous
    call to Fset_time_zone_rule, or 0 if Fset_time_zone_rule
    has never been called.  */
@@ -768,6 +770,103 @@ value of `user-full-name' is returned.
 #endif /* AMPERSAND_FULL_NAME */
 
   return tem;
+}
+
+static char *cached_home_directory;
+
+void
+uncache_home_directory (void)
+{
+  cached_home_directory = NULL;	/* in some cases, this may cause the leaking
+				   of a few bytes */
+}
+
+char *
+get_home_directory (void)
+{
+  int output_home_warning = 0;
+
+  if (cached_home_directory == NULL)
+    {
+      if ((cached_home_directory = getenv("HOME")) == NULL)
+	{
+#if defined(WINDOWSNT) && !defined(__CYGWIN32__)
+	  char	*homedrive, *homepath;
+ 
+	  if ((homedrive = getenv("HOMEDRIVE")) != NULL &&
+	      (homepath = getenv("HOMEPATH")) != NULL)
+	    {
+	      cached_home_directory =
+		(char *) xmalloc(strlen(homedrive) + strlen(homepath) + 1);
+	      sprintf(cached_home_directory, "%s%s", homedrive, homepath);
+	    }
+	  else
+	    {
+# if 1
+	      /*
+	       * Use the current directory.
+	       * This preserves the existing XEmacs behavior, but is different
+	       * from NT Emacs.
+	       */
+	      if (initial_directory[0] != '\0')
+		{
+		  cached_home_directory = initial_directory;
+		}
+	      else
+		{
+		  /* This will probably give the wrong value */
+		  cached_home_directory = getcwd (NULL, 0);
+		}
+# else
+	      /*
+	       * This is NT Emacs behavior
+	       */
+	      cached_home_directory = "C:\\";
+	      output_home_warning = 1;
+# endif
+	    }
+#else	/* !WINDOWSNT */
+	  /*
+	   * Unix, typically.
+	   * Using "/" isn't quite right, but what should we do?
+	   * We probably should try to extract pw_dir from /etc/passwd,
+	   * before falling back to this.
+	   */
+	  cached_home_directory = "/";
+	  output_home_warning = 1;
+#endif	/* !WINDOWSNT */
+	}
+      if (initialized && output_home_warning)
+	{
+	  warn_when_safe(Quser_files_and_directories, Qwarning, "\n"
+"	Xemacs was unable to determine a good value for the user's $HOME\n"
+"	directory, and will be using the value:\n"
+"		%s\n"
+"	This is probably incorrect.",
+			 cached_home_directory
+			 );
+	}
+    }
+  return (cached_home_directory);
+}
+
+DEFUN ("user-home-directory", Fuser_home_directory, 0, 0, 0, /*
+Return the user's home directory, as a string.
+*/
+       ())
+{
+  Lisp_Object directory;
+  char *path;
+
+  directory = Qnil;
+  path = get_home_directory ();
+  if (path != NULL)
+    {
+      directory =
+	Fexpand_file_name (Fsubstitute_in_file_name (build_string (path)),
+			   Qnil);
+    }
+  return (directory);
 }
 
 DEFUN ("system-name", Fsystem_name, 0, 0, 0, /*
@@ -2116,6 +2215,7 @@ syms_of_editfns (void)
   defsymbol (&Qregion_beginning, "region-beginning");
   defsymbol (&Qregion_end, "region-end");
   defsymbol (&Qformat, "format");
+  defsymbol (&Quser_files_and_directories, "user-files-and-directories");
 
   DEFSUBR (Fchar_equal);
   DEFSUBR (Fchar_Equal);
@@ -2157,6 +2257,7 @@ syms_of_editfns (void)
   DEFSUBR (Fuser_uid);
   DEFSUBR (Fuser_real_uid);
   DEFSUBR (Fuser_full_name);
+  DEFSUBR (Fuser_home_directory);
   DEFSUBR (Femacs_pid);
   DEFSUBR (Fcurrent_time);
   DEFSUBR (Fcurrent_process_time);

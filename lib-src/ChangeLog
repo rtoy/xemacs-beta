@@ -1,3 +1,19 @@
+1998-05-31  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* wakeup.c (sleep): Added NT preprocessor quirkfest.
+	(main): Exit when fflush() fails on stdout.
+
+1998-05-30  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* getopt.c: Undefine getpid before redefinition.
+
+	* make-docfile.c: Added <io.h> when compiling on NT
+
+	* movemail.c: Ditto.
+	(main): Declare some auto variables only when DISABLE_DIRECT_ACCESS
+	is undefined, so they are actually used, to supress compilation
+	warnings.
+
 1998-05-16  SL Baur  <steve@altair.xemacs.org>
 
 	* etags.c (C_entries): Avoid short circuiting comparisons on

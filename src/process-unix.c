@@ -715,7 +715,8 @@ unix_init_process_io_handles (struct Lisp_Process *p, void* in, void* out, int f
 
 static int
 unix_create_process (struct Lisp_Process *p,
-		     char **new_argv, CONST char *current_dir)
+		     Lisp_Object *argv, int nargv,
+		     Lisp_Object program, Lisp_Object cur_dir)
 {
   /* This function rewritten by wing@666.com. */
 
@@ -724,10 +725,25 @@ unix_create_process (struct Lisp_Process *p,
   volatile int forkin, forkout;
   volatile int pty_flag = 0;
   char **env;
+  char **new_argv;
+  char *current_dir;
+  int i;
 
   env = environ;
 
   inchannel = outchannel = forkin = forkout = -1;
+
+  /* Nothing below here GCs so our string pointers shouldn't move. */
+  new_argv = alloca_array (char *, nargv + 2);
+  new_argv[0] = (char *) XSTRING_DATA (program);
+  for (i = 0; i < nargv; i++)
+    {
+      Lisp_Object tem = argv[i];
+      CHECK_STRING (tem);
+      new_argv[i + 1] = (char *) XSTRING_DATA (tem);
+    }
+  new_argv[i + 1] = 0;
+  current_dir = (char *) XSTRING_DATA (cur_dir);
 
 #ifdef HAVE_PTYS
   if (!NILP (Vprocess_connection_type))

@@ -869,7 +869,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 	  /* Let the new bss section address alignment be the same as the
 	     section address alignment followed the old bss section, so 
 	     this section will be placed in exactly the same place.  */
-	  NEW_SECTION_H (nn).sh_addralign = OLD_SECTION_H (nn).sh_addralign;
+	  NEW_SECTION_H (nn).sh_addralign = OLD_SECTION_H (n).sh_addralign;
 	  NEW_SECTION_H (nn).sh_size = 0;
 	}
       else			/* n > old_bss_index */
@@ -894,7 +894,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 	PATCH_INDEX (NEW_SECTION_H (nn).sh_info);
       
       /* Fix the type and alignment for the .sbss section */
-      if ((old_sbss_index != -1) && !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".sbss"))
+      if ((old_sbss_index != -1) && !strcmp (old_section_names + NEW_SECTION_H (nn).sh_name, ".sbss"))
 	{
 	  NEW_SECTION_H (nn).sh_type = SHT_PROGBITS;
 	  NEW_SECTION_H (nn).sh_offset = round_up (NEW_SECTION_H (nn).sh_offset,
@@ -909,10 +909,10 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
       /* Write out the sections. .data, .data1 and .sbss (and data2, called
 	 ".data" in the strings table) get copied from the current process
 	 instead of the old file.  */
-      if (!strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data")
-	  || !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data1")
-	  || !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".got")
-	  || !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".sbss"))
+      if (!strcmp (old_section_names + NEW_SECTION_H (nn).sh_name, ".data")
+	  || !strcmp (old_section_names + NEW_SECTION_H (nn).sh_name, ".data1")
+	  || !strcmp (old_section_names + NEW_SECTION_H (nn).sh_name, ".got")
+	  || !strcmp (old_section_names + NEW_SECTION_H (nn).sh_name, ".sbss"))
 	src = (caddr_t) OLD_SECTION_H (n).sh_addr;
       else
 	src = old_base + OLD_SECTION_H (n).sh_offset;
@@ -992,15 +992,6 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 	    }
 	}
     }
-
-  /* Kludge around the stupid 5.3 run time loader which always
-     zero-fills the .sbss section no matter what. */
-
-  if (old_sbss_index != -1)
-    strcpy (new_base
-	    + NEW_SECTION_H (new_file_h->e_shstrndx).sh_offset
-	    + NEW_SECTION_H (old_sbss_index).sh_name,
-	    ".zbzz");
 
   /* Close the files and make the new file executable.  */
 

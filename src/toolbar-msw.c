@@ -49,8 +49,14 @@ GetDlgItem(FRAME_MSWINDOWS_HANDLE(f), TOOLBAR_ID_BIAS + p)
 #ifndef TB_SETIMAGELIST
 #define TB_SETIMAGELIST (WM_USER + 48)
 #define TB_GETIMAGELIST (WM_USER + 49)
+#define TB_SETDISABLEDIMAGELIST (WM_USER + 54)
+#define TB_GETDISABLEDIMAGELIST (WM_USER + 55)
+#endif
+#ifndef TB_SETPADDING
 #define TB_SETPADDING   (WM_USER + 87)
 #endif
+#define MSWINDOWS_BUTTON_SHADOW_THICKNESS 2
+#define MSWINDOWS_BLANK_SIZE 5
 
 #define SET_TOOLBAR_WAS_VISIBLE_FLAG(frame, pos, flag)			\
   do {									\
@@ -129,14 +135,18 @@ static void
 mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 {
   int x, y, bar_width, bar_height, vert;
-  int width=-1, height=-1, bmwidth=-1, bmheight=-1;
+  int width=-1, height=-1, bmwidth=0, bmheight=0, maxbmwidth, maxbmheight;
+  int style_3d=0;
   int border_width = FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, pos);
-  Lisp_Object button, window, glyph, instance;
+  Lisp_Object button, glyph, instance;
+  Lisp_Object window = FRAME_LAST_NONMINIBUF_WINDOW (f);
+
   int nbuttons=0;
   int shadow_thickness = 2;	/* get this from somewhere else? */
   int window_frame_width = 3;
+  int padding = (border_width + shadow_thickness) * 2;
   unsigned int checksum=0;
-  struct window *w;
+  struct window *w = XWINDOW (window);
   TBBUTTON* button_tbl, *tbbutton;
   HIMAGELIST ilist=NULL;
   HWND toolbarwnd=NULL;
@@ -146,23 +156,32 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
   if (x==1)
     x=0;
 
-  window = FRAME_LAST_NONMINIBUF_WINDOW (f);
-  w = XWINDOW (window);
-
   toolbarwnd = TOOLBAR_HANDLE (f,pos);
   
   /* set button sizes based on bar size */
   if (vert)
     {
-      width = height = bar_width
-	- (window_frame_width + shadow_thickness) * 2; 
-      bmwidth = bmheight = width - (border_width + shadow_thickness) * 2;
+      if (style_3d)
+	{
+	  width = height = bar_width
+	    - (window_frame_width + shadow_thickness) * 2; 
+	}
+      else 
+	width = height = bar_width;
+
+      maxbmwidth = maxbmheight = width - padding;
     }
   else
     {
-      height = width = bar_height 
-	- (window_frame_width + shadow_thickness) * 2; 
-      bmwidth = bmheight = width - (border_width + shadow_thickness) * 2; 
+      if (style_3d)
+	{
+	  height = width = bar_height 
+	    - (window_frame_width + shadow_thickness) * 2; 
+	}
+      else 
+	width = height = bar_height;
+
+      maxbmwidth = maxbmheight = width - padding;
     }
 
   button = FRAME_TOOLBAR_BUTTONS (f, pos);
@@ -200,88 +219,139 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	{
 	  struct toolbar_button *tb = XTOOLBAR_BUTTON (button);
 	  HBITMAP bitmap=NULL, mask=NULL;
-	  
-	  tbbutton->idCommand = allocate_toolbar_item_id (f, tb, pos);
-	  tbbutton->fsState=tb->enabled ? TBSTATE_ENABLED 
-	    : TBSTATE_INDETERMINATE;
-	  tbbutton->fsStyle=tb->blank ? TBSTYLE_SEP : TBSTYLE_BUTTON;
-	  tbbutton->dwData=0; 
-	  tbbutton->iString=0;
-	  
-	  /* note that I am not doing the button size here. This is
-             because it is slightly out of my control and the main
-             place they are used is in redisplay for getting events
-             over toolbar buttons. Since the right way to do help echo
-             is with tooltips I'm not going to bother with the extra
-             work involved. */
-	  
-	  /* mess with the button image */
-	  glyph = get_toolbar_button_glyph (w, tb);
-	  
-	  if (GLYPHP (glyph))
-	    instance = glyph_image_instance (glyph, window, ERROR_ME_NOT, 1);
-	  else
-	    instance = Qnil;
-	  
-	  if (IMAGE_INSTANCEP (instance))
+	  bitmap=mask=NULL;
+
+	  if (tb->blank)
+	    tbbutton->fsStyle = TBSTYLE_SEP;
+	  else 
 	    {
-	      struct Lisp_Image_Instance* p = XIMAGE_INSTANCE (instance);
+	      tbbutton->idCommand = allocate_toolbar_item_id (f, tb, pos);
+	      /* currently we output the toolbar again with disabled
+		 buttons it might be good to use the ms disabled code
+		 instead but that means another image list, so we'll stick
+		 with the emacs model. */
+	      tbbutton->fsState = tb->enabled ? TBSTATE_ENABLED :
+		TBSTATE_INDETERMINATE;
+	      tbbutton->fsStyle = TBSTYLE_BUTTON;
+	      tbbutton->dwData=0; 
+	      tbbutton->iString=0;
 	      
-	      if (IMAGE_INSTANCE_PIXMAP_TYPE_P (p))
+	      /* mess with the button image */
+	      glyph = get_toolbar_button_glyph (w, tb);
+	      
+	      if (GLYPHP (glyph))
+		instance = glyph_image_instance (glyph, window, 
+						 ERROR_ME_NOT, 1);
+	      else
+		instance = Qnil;
+	      
+	      if (IMAGE_INSTANCEP (instance))
 		{
-		  /* we are going to honour the toolbar settings and
-		     resize the bitmaps accordingly */
+		  struct Lisp_Image_Instance* p = XIMAGE_INSTANCE (instance);
 		  
-		  if (IMAGE_INSTANCE_PIXMAP_WIDTH (p) != bmwidth
-		      ||
-		      IMAGE_INSTANCE_PIXMAP_HEIGHT (p) != bmheight)
+		  if (IMAGE_INSTANCE_PIXMAP_TYPE_P (p))
 		    {
-		      if (! (bitmap = mswindows_create_resized_bitmap 
-			     (p, f, bmwidth, bmheight)))
+		      /* we are going to honour the toolbar settings
+			 and resize the bitmaps accordingly if they are
+			 too big.  If they are too small we leave them
+			 and pad the difference - unless a different size
+			 crops up in the middle, at which point we *have*
+			 to resize since the ImageList won't cope.*/
+		      
+		      if ((bmwidth 
+			   && 
+			   IMAGE_INSTANCE_PIXMAP_WIDTH (p) != bmwidth)
+			  ||
+			  (bmheight 
+			   && 
+			   IMAGE_INSTANCE_PIXMAP_HEIGHT (p) != bmheight)
+			  ||
+			  IMAGE_INSTANCE_PIXMAP_WIDTH (p) > maxbmwidth
+			  ||
+			  IMAGE_INSTANCE_PIXMAP_HEIGHT (p) > maxbmheight)
+			{
+			  if (!bmheight)
+			    bmheight = min (maxbmheight, 
+					    IMAGE_INSTANCE_PIXMAP_HEIGHT (p));
+			  if (!bmwidth)
+			    bmwidth = min (maxbmwidth,
+					   IMAGE_INSTANCE_PIXMAP_WIDTH (p));
+		      
+			  if (! (bitmap = mswindows_create_resized_bitmap 
+				 (p, f, bmwidth, bmheight)))
+			    {
+			      xfree (button_tbl);
+			      if (ilist) ImageList_Destroy (ilist);
+			      signal_simple_error ("couldn't resize pixmap", 
+						   instance);
+			    }
+			  /* we don't care if the mask fails */
+			  mask = mswindows_create_resized_mask 
+			    (p, f, bmwidth, bmheight);
+			}
+		      else 
+			{
+			  if (!bmwidth)
+			    bmwidth = IMAGE_INSTANCE_PIXMAP_WIDTH (p);
+			  if (!bmheight)
+			    bmheight = IMAGE_INSTANCE_PIXMAP_HEIGHT (p);
+			}
+	      
+		      /* need to build an image list for the bitmaps */
+		      if (!ilist && !(ilist = ImageList_Create 
+				      ( bmwidth, bmheight,
+					ILC_COLOR24, nbuttons, nbuttons * 2 )))
+			{
+			  xfree (button_tbl);
+			  signal_simple_error ("couldn't create image list",
+					       instance);
+			}
+		  
+		      /* add a bitmap to the list */
+		      if ((tbbutton->iBitmap =
+			   ImageList_Add 
+			   (ilist,
+			    bitmap ? bitmap 
+			    : IMAGE_INSTANCE_MSWINDOWS_BITMAP (p),
+			    mask ? mask 
+			    : IMAGE_INSTANCE_MSWINDOWS_MASK (p))) < 0)
 			{
 			  xfree (button_tbl);
 			  if (ilist) ImageList_Destroy (ilist);
-			  signal_simple_error ("couldn't resize pixmap", 
-					       instance);
+			  signal_simple_error 
+			    ("couldn't add image to image list", instance);
 			}
-		      /* we don't care if the mask fails */
-		      mask = mswindows_create_resized_mask 
-			(p, f, bmwidth, bmheight);
+		      /* we're done with these now */
+		      DeleteObject (bitmap);
+		      DeleteObject (mask);
 		    }
-		  else 
-		    {
-		      bmwidth = IMAGE_INSTANCE_PIXMAP_WIDTH (p);
-		      bmheight = IMAGE_INSTANCE_PIXMAP_HEIGHT (p);
-		    }
-	      
-		  /* need to build an image list for the bitmaps */
-		  if (!ilist && !(ilist = ImageList_Create 
-				  ( bmwidth, bmheight,
-				    ILC_COLOR24, nbuttons, nbuttons * 2 )))
-		    {
-		      xfree (button_tbl);
-		      signal_simple_error ("couldn't create image list",
-					   instance);
-		    }
-		  
-		  /* add a bitmap to the list */
-		  if ((tbbutton->iBitmap =
-		       ImageList_Add (ilist, bitmap, mask)) < 0)
-		    {
-		      xfree (button_tbl);
-		      if (ilist) ImageList_Destroy (ilist);
-		      signal_simple_error ("image list creation failed", 
-					   instance);
-		    }
-		  /* we're done with these now */
-		  DeleteObject (bitmap);
-		  DeleteObject (mask);
 		}
+
+	      Fputhash (make_int (tbbutton->idCommand), 
+			button, FRAME_MSWINDOWS_TOOLBAR_HASHTABLE (f));
 	    }
 
-	  Fputhash (make_int (tbbutton->idCommand), 
-		    button, FRAME_MSWINDOWS_TOOLBAR_HASHTABLE (f));
-      
+	  /* now fix up the button size */
+	  tb->x = x;
+	  tb->y = y;
+	  tb->vertical = vert;
+	  tb->border_width = border_width;
+	  tb->width = width + MSWINDOWS_BUTTON_SHADOW_THICKNESS * 2;
+	  tb->height = height + MSWINDOWS_BUTTON_SHADOW_THICKNESS * 2;
+
+	  if (tb->blank)
+	    {
+	      if (vert)
+		tb->height = MSWINDOWS_BLANK_SIZE;
+	      else
+		tb->width = MSWINDOWS_BLANK_SIZE;
+	    }
+	  
+	  if (vert)							
+	    y += tb->height;
+	  else
+	    x += tb->width;
+	  /* move on to the next button */
 	  tbbutton++;
 	  button = tb->next;
 	}
@@ -295,8 +365,9 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	   CreateWindowEx ( WS_EX_WINDOWEDGE,
 			    TOOLBARCLASSNAME,
 			    NULL,
-			    WS_CHILD | WS_VISIBLE | WS_DLGFRAME
-			    | TBSTYLE_TOOLTIPS | CCS_NORESIZE
+			    WS_CHILD | WS_VISIBLE 
+			    | (style_3d ? WS_DLGFRAME : 0)
+			    | TBSTYLE_TOOLTIPS | CCS_NORESIZE 
 			    | CCS_NOPARENTALIGN | CCS_NODIVIDER,
 			    x, y, bar_width, bar_height,
 			    FRAME_MSWINDOWS_HANDLE (f),
@@ -309,10 +380,6 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	  error ("couldn't create toolbar");
 	}
 
-#if 0
-      SendMessage (toolbarwnd, TB_SETPADDING,
-		   0, MAKELPARAM(border_width, border_width));
-#endif
       /* finally populate with images */
       if (SendMessage (toolbarwnd, TB_BUTTONSTRUCTSIZE,
 		       (WPARAM)sizeof(TBBUTTON), (LPARAM)0) == -1) 
@@ -320,6 +387,15 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	  mswindows_clear_toolbar (f, pos, 0);
 	  error ("couldn't set button structure size");
 	}
+
+      if (vert)
+	height = min (bmheight + padding, height);
+      else
+	width = min (bmwidth + padding, width);
+	
+      /* pad the buttons */
+      SendMessage (toolbarwnd, TB_SETPADDING,
+		   0, MAKELPARAM(width - bmwidth, height - bmheight));
 
       /* set the size of buttons */
       SendMessage (toolbarwnd, TB_SETBUTTONSIZE, 0, 
@@ -357,7 +433,10 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 
       /* finally populate with images */
       if (SendMessage (toolbarwnd, TB_SETIMAGELIST, 0,
-		       (LPARAM)ilist) == -1) 
+		       (LPARAM)ilist) < 0
+	  ||
+	  SendMessage (toolbarwnd, TB_SETDISABLEDIMAGELIST, 0,
+		       (LPARAM)ilist) < 0)
 	{
 	  mswindows_clear_toolbar (f, pos, 0);
 	  error ("couldn't add image list to toolbar");
@@ -377,7 +456,7 @@ mswindows_move_toolbar (struct frame *f, enum toolbar_pos pos)
 {
   int bar_x, bar_y, bar_width, bar_height, vert;
   HWND toolbarwnd = TOOLBAR_HANDLE(f,pos);
-  
+
   if (toolbarwnd)
     {
       get_toolbar_coords (f, pos, &bar_x, &bar_y, &bar_width, &bar_height,
@@ -389,23 +468,24 @@ mswindows_move_toolbar (struct frame *f, enum toolbar_pos pos)
       switch (pos)
 	{
 	case TOP_TOOLBAR:
-	  bar_x -= 2; bar_y--;
-	  bar_width++; bar_height++;
+	  bar_x--; bar_y-=2;
+	  bar_width+=3; bar_height+=3;
 	  break;
 	case LEFT_TOOLBAR:
-	  bar_x -= 2; bar_y--;
-	  bar_width++; bar_height++;
+	  bar_x--; bar_y-=2;
+	  bar_height++; bar_width++;
 	  break;
 	case BOTTOM_TOOLBAR:
-	  bar_x--;
-	  bar_width++;
+	  bar_y-=2; 
+	  bar_width+=4; bar_height+=4;
 	  break;
 	case RIGHT_TOOLBAR:
-	  bar_y--;
+	  bar_y-=2; bar_x++;
+	  bar_width++; bar_height++;
 	  break;
 	}
       SetWindowPos (toolbarwnd, NULL, bar_x, bar_y, 
-		    bar_width + 1, bar_height + 1, SWP_NOZORDER);
+		    bar_width, bar_height, SWP_NOZORDER);
     }
 }
 
@@ -522,18 +602,12 @@ mswindows_handle_toolbar_wm_command (struct frame* f, HWND ctrl, WORD id)
     return Qnil;
 
   /* Ok, this is our one. Enqueue it. */
-  get_callback (data, &fn, &arg);
-
+  get_gui_callback (data, &fn, &arg);
   XSETFRAME (frame, f);
-  enqueue_misc_user_event (frame, fn, arg);
+  mswindows_enqueue_misc_user_event (frame, fn, arg);
 
-  /* Needs good bump also, for WM_COMMAND may have been dispatched from
-     mswindows_need_event, which will block again despite new command
-     event has arrived */
-  mswindows_bump_queue ();
   return Qt;
 }
-
 
 /************************************************************************/
 /*                            initialization                            */

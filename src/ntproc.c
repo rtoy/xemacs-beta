@@ -53,6 +53,9 @@ Boston, MA 02111-1307, USA.
 #include "process.h"
 /*#include "w32term.h"*/ /* From 19.34.6: sync in ? --marcpa */
 
+/* #### I'm not going to play with shit. */
+#pragma warning (disable:4013 4024 4090)
+
 /* Control whether spawnve quotes arguments as necessary to ensure
    correct parsing by child process.  Because not all uses of spawnve
    are careful about constructing argv arrays, we make this behaviour
@@ -272,7 +275,7 @@ reader_thread (void *arg)
 /* To avoid Emacs changing directory, we just record here the directory
    the new process should start in.  This is set just before calling
    sys_spawnve, and is not generally valid at any other time.  */
-static char * process_dir;
+static const char * process_dir;
 
 static BOOL 
 create_child (char *exe, char *cmdline, char *env,
@@ -1215,7 +1218,7 @@ reset_standard_handles (int in, int out, int err, HANDLE handles[3])
 }
 
 void
-set_process_dir (char * dir)
+set_process_dir (const char * dir)
 {
   process_dir = dir;
 }
@@ -1238,7 +1241,7 @@ All path elements in FILENAME are converted to their short names.
 {
   char shortname[MAX_PATH];
 
-  CHECK_STRING (filename, 0);
+  CHECK_STRING (filename);
 
   /* first expand it.  */
   filename = Fexpand_file_name (filename, Qnil);
@@ -1262,7 +1265,7 @@ All path elements in FILENAME are converted to their long names.
 {
   char longname[ MAX_PATH ];
 
-  CHECK_STRING (filename, 0);
+  CHECK_STRING (filename);
 
   /* first expand it.  */
   filename = Fexpand_file_name (filename, Qnil);
@@ -1290,7 +1293,7 @@ If successful, the return value is t, otherwise nil.
   DWORD  priority_class = NORMAL_PRIORITY_CLASS;
   Lisp_Object result = Qnil;
 
-  CHECK_SYMBOL (priority, 0);
+  CHECK_SYMBOL (priority);
 
   if (!NILP (process))
     {
@@ -1470,6 +1473,7 @@ If successful, the new locale id is returned, otherwise nil.
 }
 
 
+void
 syms_of_ntproc ()
 {
   Qhigh = intern ("high");

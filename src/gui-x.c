@@ -259,7 +259,7 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
       arg = Qmenu_no_selection_hook;
     }
   else
-    get_callback (data, &fn, &arg);
+    get_gui_callback (data, &fn, &arg);
 
   /* This is the timestamp used for asserting focus so we need to get an
      up-to-date value event if no events has been dispatched to emacs

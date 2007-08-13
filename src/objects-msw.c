@@ -775,14 +775,25 @@ mswindows_string_to_color(CONST char *name)
     {
       unsigned int r,g,b;
 
-      if (sscanf(name, "rgb:%04x/%04x/%04x", &r, &g, &b) <0)
+      if (sscanf(name, "rgb:%04x/%04x/%04x", &r, &g, &b) == 3)
+	{
+	  int len = strlen (name);
+	  if (len == 18)
+	    {
+	      r /= 257;
+	      g /= 257;
+	      b /= 257;
+	    }
+	  else if (len == 15)
+	    {
+	      r /= 17;
+	      g /= 17;
+	      b /= 17;
+	    }
+	  return (PALETTERGB (r, g, b));
+	}
+      else 
 	return -1;
-
-      r /= 257;
-      g /= 257;
-      b /= 257;
-
-      return (PALETTERGB (r, g, b));
     }
   else if (*name)	/* Can't be an empty string */
     {

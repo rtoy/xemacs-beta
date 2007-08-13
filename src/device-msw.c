@@ -105,6 +105,7 @@ mswindows_init_device (struct device *d, Lisp_Object props)
      take over */
   wc.hbrBackground = (HBRUSH)(COLOR_APPWORKSPACE + 1);
   wc.lpszMenuName = NULL;
+
   wc.lpszClassName = XEMACS_CLASS;
   wc.hIconSm = LoadImage (GetModuleHandle (NULL), XEMACS_CLASS,
 			  IMAGE_ICON, 16, 16, 0);
@@ -192,7 +193,10 @@ mswindows_device_system_metrics (struct device *d,
 		    make_int (DEVICE_MSWINDOWS_VERTSIZE(d)));
       break;
     case DM_num_bit_planes:
-      return make_int (DEVICE_MSWINDOWS_PLANES(d));
+      /* this is what X means by bitplanes therefore we ought to be
+         consistent. num planes is always 1 under mswindows and
+         therefore useless */
+      return make_int (DEVICE_MSWINDOWS_BITSPIXEL(d));
       break;
     case DM_num_color_cells:
       return make_int (DEVICE_MSWINDOWS_CELLS(d));

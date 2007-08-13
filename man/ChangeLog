@@ -1,6 +1,19 @@
+1998-05-28  Oliver Graf <ograf@fga.de>
+
+	* lispref/dragndrop.texi: a warning, and a bit more text this time
+
+1998-05-26  Oliver Graf <ograf@fga.de>
+
+	* lispref/dragndrop.texi: only small changes
+
 1998-05-15  Christian Nybø <chr@mediascience.no>
 
 	* xemacs/killing.texi: Properly document `zap-to-char'.
+
+1998-05-13  Greg Klanderman  <greg@alphatech.com>
+
+	* lispref/frames.texi (Input Focus): cleanup select-frame
+	documentation. 
 
 1998-05-10  Oliver Graf <ograf@fga.de>
 

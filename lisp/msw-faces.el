@@ -32,15 +32,13 @@
 ;;; ensure that the default face has some reasonable fallbacks if nothing
 ;;; else is specified.
 (defun mswindows-init-device-faces (device)
-  (or (face-font 'default 'global)
-      (set-face-font 'default "Courier New:Regular:10")
-      'global)
-  (or (face-foreground 'default 'global)
-      (set-face-foreground 'default "black" 'global 'mswindows))
-  (or (face-background 'default 'global)
-      (set-face-background 'default "white" 'global 'mswindows))
-  (or (face-background 'modeline 'global)
-      (set-face-background 'modeline "grey75" 'global 'mswindows))
+  (set-face-font 'default 
+		 '((mswindows default) . "Courier New:Regular:10") 'global)
+  ;; 3d objects
+  (set-face-foreground '3d-object '((mswindows default) . "Black") 'global)
+  (set-face-background '3d-object '((mswindows default) . "Gray75") 'global)
+  (set-face-foreground 'default '((mswindows default) . "black") 'global)
+  (set-face-background 'default '((mswindows default) . "white") 'global)
   )
 
 

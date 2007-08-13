@@ -302,7 +302,7 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
    * Construct new symbol table header
    */
 
-  memcpy (oldptr + nhdr.fhdr.f_symptr, buffer, cbHDRR);
+  memcpy (buffer, oldptr + nhdr.fhdr.f_symptr, cbHDRR);
 
 #define symhdr ((pHDRR)buffer)
   newsyms = nhdr.aout.tsize + nhdr.aout.dsize;
@@ -394,7 +394,7 @@ update_dynamic_symbols (old, new_name, new, newsyms, nsyms, symoff, stroff)
       if (!strcmp(s,"_edata"))
 	{
 	  found++;
-          memcpy (x, &n_edata, cbEXTR);
+          memcpy (&n_edata, x, cbEXTR);
 	  n_edata.asym.value = Brk;
 	  SEEK (new, newsyms + cbHDRR + i,
 		"seeking to symbol _edata in %s", new_name);
@@ -404,7 +404,7 @@ update_dynamic_symbols (old, new_name, new, newsyms, nsyms, symoff, stroff)
       else if (!strcmp(s,"_end"))
 	{
 	  found++;
-          memcpy (x, &n_end, cbEXTR);
+          memcpy (&n_end, x, cbEXTR);
 	  n_end.asym.value = Brk;
 	  SEEK (new, newsyms + cbHDRR + i,
 		"seeking to symbol _end in %s", new_name);

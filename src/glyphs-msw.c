@@ -43,6 +43,9 @@ Boston, MA 02111-1307, USA.  */
 #ifdef FILE_CODING
 #include "file-coding.h"
 #endif
+#include <stdio.h>
+#include <ctype.h>
+
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (bmp);
 Lisp_Object Qbmp;
@@ -61,6 +64,8 @@ mswindows_initialize_image_instance_mask (struct Lisp_Image_Instance* image,
 					  struct frame* f);
 
 COLORREF mswindows_string_to_color (CONST char *name);
+
+#define BPLINE(width) ((int)(~3UL & (unsigned long)((width) +3)))
 
 /************************************************************************/
 /* convert from a series of RGB triples to a BITMAPINFO formated for the*/
@@ -81,7 +86,7 @@ static BITMAPINFO* convert_EImage_to_DIBitmap (Lisp_Object device,
 
   if (DEVICE_MSWINDOWS_BITSPIXEL (d) > 0)
     {
-      int bpline=(int)(~3UL & (unsigned long)((width*3) +3));
+      int bpline = BPLINE(width * 3);
       /* FIXME: we can do this because 24bpp implies no colour table, once
        * we start paletizing this is no longer true. The X versions of
        * this function quantises to 256 colours or bit masks down to a
@@ -126,7 +131,7 @@ static BITMAPINFO* convert_EImage_to_DIBitmap (Lisp_Object device,
     {
       int rd,gr,bl;
       quant_table *qtable;
-      int bpline= (int)(~3UL & (unsigned long)(width +3));
+      int bpline = BPLINE (width * 3);
       /* Quantize the image and get a histogram while we're at it.
 	 Do this first to save memory */
       qtable = build_EImage_quantable(pic, width, height, 256);
@@ -250,7 +255,7 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   struct device *d = XDEVICE (device);
-  struct frame *f = XFRAME (DEVICE_SELECTED_FRAME (d));
+  struct frame *f;
   void* bmp_buf=0;
   int type;
   HBITMAP bitmap;
@@ -262,6 +267,8 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
   if (NILP (DEVICE_SELECTED_FRAME (d)))
     signal_simple_error ("No selected frame on mswindows device", device);
 
+  f = XFRAME (DEVICE_SELECTED_FRAME (d));
+  
   if (dest_mask & IMAGE_COLOR_PIXMAP_MASK)
     type = IMAGE_COLOR_PIXMAP;
   else if (dest_mask & IMAGE_POINTER_MASK)
@@ -269,7 +276,7 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
   else 
     incompatible_image_types (instantiator, dest_mask,
 			      IMAGE_COLOR_PIXMAP_MASK | IMAGE_POINTER_MASK);
-  hdc = FRAME_MSWINDOWS_DC (f);
+  hdc = FRAME_MSWINDOWS_CDC (f);
 
   bitmap=CreateDIBSection (hdc,  
 			  bmp_info,
@@ -371,14 +378,18 @@ mswindows_initialize_image_instance_mask (struct Lisp_Image_Instance* image,
   HBITMAP mask;
   HGDIOBJ old = NULL;
   HDC hcdc = FRAME_MSWINDOWS_CDC (f);
+  unsigned char* dibits;
   BITMAPINFO* bmp_info = 
     xmalloc_and_zero (sizeof(BITMAPINFO) + sizeof(RGBQUAD));
   int i, j;
   int height = IMAGE_INSTANCE_PIXMAP_HEIGHT (image);
   
-  void* and_bits;
-  int bpline= (int)(~3UL & (unsigned long)
-		    (((IMAGE_INSTANCE_PIXMAP_WIDTH (image)+7)/8) +3));
+  void* and_bits; 
+  int maskbpline = BPLINE (((IMAGE_INSTANCE_PIXMAP_WIDTH (image)+7)/8));
+  int bpline = BPLINE (IMAGE_INSTANCE_PIXMAP_WIDTH (image) * 3); 
+
+  if (!bmp_info)
+    return;
 
   bmp_info->bmiHeader.biWidth=IMAGE_INSTANCE_PIXMAP_WIDTH (image);
   bmp_info->bmiHeader.biHeight = height;
@@ -388,7 +399,7 @@ mswindows_initialize_image_instance_mask (struct Lisp_Image_Instance* image,
   bmp_info->bmiHeader.biCompression=BI_RGB; 
   bmp_info->bmiHeader.biClrUsed = 2; 
   bmp_info->bmiHeader.biClrImportant = 2; 
-  bmp_info->bmiHeader.biSizeImage = height * bpline; 
+  bmp_info->bmiHeader.biSizeImage = height * maskbpline; 
   bmp_info->bmiColors[0].rgbRed = 0;
   bmp_info->bmiColors[0].rgbGreen = 0;
   bmp_info->bmiColors[0].rgbBlue = 0;
@@ -408,26 +419,64 @@ mswindows_initialize_image_instance_mask (struct Lisp_Image_Instance* image,
       return;
     }
 
-  xfree (bmp_info);
   old = SelectObject (hcdc, IMAGE_INSTANCE_MSWINDOWS_BITMAP (image));
-  
+  /* build up an in-memory set of bits to mess with */
+  xzero (*bmp_info);
+
+  bmp_info->bmiHeader.biWidth=IMAGE_INSTANCE_PIXMAP_WIDTH (image);
+  bmp_info->bmiHeader.biHeight = -height;
+  bmp_info->bmiHeader.biPlanes=1;
+  bmp_info->bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
+  bmp_info->bmiHeader.biBitCount=24; 
+  bmp_info->bmiHeader.biCompression=BI_RGB; 
+  bmp_info->bmiHeader.biClrUsed = 0; 
+  bmp_info->bmiHeader.biClrImportant = 0; 
+  bmp_info->bmiHeader.biSizeImage = height * bpline;
+
+  dibits = xmalloc_and_zero (bpline * height);
+  if (GetDIBits (hcdc,
+		 IMAGE_INSTANCE_MSWINDOWS_BITMAP (image),
+		 0,
+		 height,
+		 dibits,
+		 bmp_info,
+		 DIB_RGB_COLORS) <= 0)
+    {
+      xfree (bmp_info);
+      return;
+    }
+
+  /* now set the colored bits in the mask and transparent ones to
+     black in the original */
   for(i=0; i<IMAGE_INSTANCE_PIXMAP_WIDTH (image); i++)     
     { 
       for(j=0; j<height; j++)         
 	{ 
-	  if( GetPixel( hcdc, i, j ) == transparent_color )
+	  unsigned char* idx = &dibits[j * bpline + i * 3];
+
+	  if( RGB (idx[2], idx[1], idx[0]) == transparent_color )
 	    { 
-	      SetPixel( hcdc, i, j, RGB (0,0,0));  
-	      set_mono_pixel( and_bits, bpline, height, i, j, TRUE );
+	      idx[0] = idx[1] = idx[2] = 0;
+	      set_mono_pixel( and_bits, maskbpline, height, i, j, TRUE );
 	    }
 	  else             
 	    { 
-	      set_mono_pixel( and_bits, bpline, height, i, j, FALSE );
+	      set_mono_pixel( and_bits, maskbpline, height, i, j, FALSE );
             }
 	}
     }
 
-  GdiFlush();
+  SetDIBits (hcdc,
+	     IMAGE_INSTANCE_MSWINDOWS_BITMAP (image),
+	     0,
+	     height,
+	     dibits,
+	     bmp_info,
+	     DIB_RGB_COLORS);
+
+  xfree (bmp_info);
+  xfree (dibits);
+  
   SelectObject(hcdc, old);
 
   IMAGE_INSTANCE_MSWINDOWS_MASK (image) = mask;
@@ -663,8 +712,7 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
   
   *width = xpmimage.width;
   *height = xpmimage.height;
-  maskbpline = (int)(~3UL & (unsigned long)
-		     (((~7UL & (unsigned long)(*width + 7)) / 8) + 3));
+  maskbpline = BPLINE (((~7UL & (unsigned long)(*width + 7)) / 8));
   
   *data = xnew_array_and_zero (unsigned char, *width * *height * 3);
 
@@ -687,46 +735,60 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
 
   for (i=0; i<xpmimage.ncolors; i++)
     {
-				/* pick up symbolic colors */
-      if (xpmimage.colorTable[i].c_color == 0 
-	  &&
-	  xpmimage.colorTable[i].symbolic != 0)
+      /* goto alert!!!! */
+      /* pick up symbolic colors in preference */
+      if (xpmimage.colorTable[i].symbolic)
 	{
-	  if (!color_symbols)
+	  if (!strcasecmp (xpmimage.colorTable[i].symbolic,"BgColor")
+	      ||
+	      !strcasecmp (xpmimage.colorTable[i].symbolic,"None"))
 	    {
-	      xfree (*data);
-	      xfree (colortbl);
-	      XpmFreeXpmImage (&xpmimage);
-	      XpmFreeXpmInfo (&xpminfo);
-	      return 0;
+	      *transp=TRUE;
+	      colortbl[i]=transparent_color; 
+	      transp_idx=i;
+	      goto label_found_color;
 	    }
-	  for (j = 0; j<nsymbols; j++)
+	  else if (color_symbols)
 	    {
-	      if (!strcmp (xpmimage.colorTable[i].symbolic,
-			   color_symbols[j].name ))
+	      for (j = 0; j<nsymbols; j++)
 		{
-		  colortbl[i]=color_symbols[j].color;		  
+		  if (!strcmp (xpmimage.colorTable[i].symbolic,
+			       color_symbols[j].name ))
+		    {
+		      colortbl[i]=color_symbols[j].color;
+		      goto label_found_color;
+		    }
 		}
 	    }
+	  else if (xpmimage.colorTable[i].c_color == 0)
+	    {
+	      goto label_no_color;
+	    }
 	}
-				/* pick up transparencies */
-      else if (!strcasecmp (xpmimage.colorTable[i].c_color,"None")
-	       ||
-	       (xpmimage.colorTable[i].symbolic
-		&&
-		(!strcasecmp (xpmimage.colorTable[i].symbolic,"BgColor")
-		 ||
-		 !strcasecmp (xpmimage.colorTable[i].symbolic,"None"))))
+      /* pick up transparencies */
+      if (!strcasecmp (xpmimage.colorTable[i].c_color,"None"))
 	{
 	  *transp=TRUE;
 	  colortbl[i]=transparent_color; 
 	  transp_idx=i;
+	  goto label_found_color;
 	}
-      else
+      /* finally pick up a normal color spec */
+      if (xpmimage.colorTable[i].c_color)
 	{
 	  colortbl[i]=
 	    mswindows_string_to_color (xpmimage.colorTable[i].c_color);
+	  goto label_found_color;
 	}
+      
+    label_no_color:
+      xfree (*data);
+      xfree (colortbl);
+      XpmFreeXpmImage (&xpmimage);
+      XpmFreeXpmInfo (&xpminfo);
+      return 0;
+      
+    label_found_color:;
     }
 
   /* convert the image */
@@ -1179,6 +1241,483 @@ check_valid_string_or_int (Lisp_Object data)
     CHECK_INT (data);
 }
 
+/**********************************************************************
+ *                             XBM                                    *
+ **********************************************************************/
+#ifndef HAVE_X_WINDOWS
+/* $XConsortium: RdBitF.c,v 1.10 94/04/17 20:16:13 kaleb Exp $ */
+
+/*
+
+Copyright (c) 1988  X Consortium
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name of the X Consortium shall not be
+used in advertising or otherwise to promote the sale, use or other dealings
+in this Software without prior written authorization from the X Consortium.
+
+*/
+
+/*
+ * This file contains miscellaneous utility routines and is not part of the
+ * Xlib standard.
+ *
+ * Public entry points:
+ *
+ *     XmuReadBitmapData		read data from FILE descriptor
+ *     XmuReadBitmapDataFromFile	read X10 or X11 format bitmap files
+ *					and return data
+ *
+ * Note that this file and ../X/XRdBitF.c look very similar....  Keep them
+ * that way (but don't use common source code so that people can have one 
+ * without the other).
+ */
+
+
+/*
+ * Based on an optimized version provided by Jim Becker, Auguest 5, 1988.
+ */
+#ifndef BitmapSuccess
+#define BitmapSuccess           0
+#define BitmapOpenFailed        1
+#define BitmapFileInvalid       2
+#define BitmapNoMemory          3
+#endif
+#define MAX_SIZE 255
+
+/* shared data for the image read/parse logic */
+static short hexTable[256];		/* conversion value */
+static int initialized = FALSE;	/* easier to fill in at run time */
+
+/*
+ *	Table index for the hex values. Initialized once, first time.
+ *	Used for translation value or delimiter significance lookup.
+ */
+static void initHexTable()
+{
+    /*
+     * We build the table at run time for several reasons:
+     *
+     *     1.  portable to non-ASCII machines.
+     *     2.  still reentrant since we set the init flag after setting table.
+     *     3.  easier to extend.
+     *     4.  less prone to bugs.
+     */
+    hexTable['0'] = 0;	hexTable['1'] = 1;
+    hexTable['2'] = 2;	hexTable['3'] = 3;
+    hexTable['4'] = 4;	hexTable['5'] = 5;
+    hexTable['6'] = 6;	hexTable['7'] = 7;
+    hexTable['8'] = 8;	hexTable['9'] = 9;
+    hexTable['A'] = 10;	hexTable['B'] = 11;
+    hexTable['C'] = 12;	hexTable['D'] = 13;
+    hexTable['E'] = 14;	hexTable['F'] = 15;
+    hexTable['a'] = 10;	hexTable['b'] = 11;
+    hexTable['c'] = 12;	hexTable['d'] = 13;
+    hexTable['e'] = 14;	hexTable['f'] = 15;
+
+    /* delimiters of significance are flagged w/ negative value */
+    hexTable[' '] = -1;	hexTable[','] = -1;
+    hexTable['}'] = -1;	hexTable['\n'] = -1;
+    hexTable['\t'] = -1;
+	
+    initialized = TRUE;
+}
+
+/*
+ *	read next hex value in the input stream, return -1 if EOF
+ */
+static int NextInt ( FILE *fstream )
+{
+    int	ch;
+    int	value = 0;
+    int gotone = 0;
+    int done = 0;
+    
+    /* loop, accumulate hex value until find delimiter  */
+    /* skip any initial delimiters found in read stream */
+
+    while (!done) {
+	ch = getc(fstream);
+	if (ch == EOF) {
+	    value	= -1;
+	    done++;
+	} else {
+	    /* trim high bits, check type and accumulate */
+	    ch &= 0xff;
+	    if (isascii(ch) && isxdigit(ch)) {
+		value = (value << 4) + hexTable[ch];
+		gotone++;
+	    } else if ((hexTable[ch]) < 0 && gotone)
+	      done++;
+	}
+    }
+    return value;
+}
+
+
+/*
+ * The data returned by the following routine is always in left-most byte
+ * first and left-most bit first.  If it doesn't return BitmapSuccess then
+ * its arguments won't have been touched.  This routine should look as much
+ * like the Xlib routine XReadBitmapfile as possible.
+ */
+int read_bitmap_data (fstream, width, height, datap, x_hot, y_hot)
+    FILE *fstream;			/* handle on file  */
+    unsigned int *width, *height;	/* RETURNED */
+    unsigned char **datap;		/* RETURNED */
+    int *x_hot, *y_hot;			/* RETURNED */
+{
+    unsigned char *data = NULL;		/* working variable */
+    char line[MAX_SIZE];		/* input line from file */
+    int size;				/* number of bytes of data */
+    char name_and_type[MAX_SIZE];	/* an input line */
+    char *type;				/* for parsing */
+    int value;				/* from an input line */
+    int version10p;			/* boolean, old format */
+    int padding;			/* to handle alignment */
+    int bytes_per_line;			/* per scanline of data */
+    unsigned int ww = 0;		/* width */
+    unsigned int hh = 0;		/* height */
+    int hx = -1;			/* x hotspot */
+    int hy = -1;			/* y hotspot */
+
+#define Xmalloc(size) malloc(size)
+
+    /* first time initialization */
+    if (initialized == FALSE) initHexTable();
+
+    /* error cleanup and return macro	*/
+#define	RETURN(code) { if (data) free (data); return code; }
+
+    while (fgets(line, MAX_SIZE, fstream)) {
+	if (strlen(line) == MAX_SIZE-1) {
+	    RETURN (BitmapFileInvalid);
+	}
+	if (sscanf(line,"#define %s %d",name_and_type,&value) == 2) {
+	    if (!(type = strrchr(name_and_type, '_')))
+	      type = name_and_type;
+	    else
+	      type++;
+
+	    if (!strcmp("width", type))
+	      ww = (unsigned int) value;
+	    if (!strcmp("height", type))
+	      hh = (unsigned int) value;
+	    if (!strcmp("hot", type)) {
+		if (type-- == name_and_type || type-- == name_and_type)
+		  continue;
+		if (!strcmp("x_hot", type))
+		  hx = value;
+		if (!strcmp("y_hot", type))
+		  hy = value;
+	    }
+	    continue;
+	}
+    
+	if (sscanf(line, "static short %s = {", name_and_type) == 1)
+	  version10p = 1;
+	else if (sscanf(line,"static unsigned char %s = {",name_and_type) == 1)
+	  version10p = 0;
+	else if (sscanf(line, "static char %s = {", name_and_type) == 1)
+	  version10p = 0;
+	else
+	  continue;
+
+	if (!(type = strrchr(name_and_type, '_')))
+	  type = name_and_type;
+	else
+	  type++;
+
+	if (strcmp("bits[]", type))
+	  continue;
+    
+	if (!ww || !hh)
+	  RETURN (BitmapFileInvalid);
+
+	if ((ww % 16) && ((ww % 16) < 9) && version10p)
+	  padding = 1;
+	else
+	  padding = 0;
+
+	bytes_per_line = (ww+7)/8 + padding;
+
+	size = bytes_per_line * hh;
+	data = (unsigned char *) Xmalloc ((unsigned int) size);
+	if (!data) 
+	  RETURN (BitmapNoMemory);
+
+	if (version10p) {
+	    unsigned char *ptr;
+	    int bytes;
+
+	    for (bytes=0, ptr=data; bytes<size; (bytes += 2)) {
+		if ((value = NextInt(fstream)) < 0)
+		  RETURN (BitmapFileInvalid);
+		*(ptr++) = value;
+		if (!padding || ((bytes+2) % bytes_per_line))
+		  *(ptr++) = value >> 8;
+	    }
+	} else {
+	    unsigned char *ptr;
+	    int bytes;
+
+	    for (bytes=0, ptr=data; bytes<size; bytes++, ptr++) {
+		if ((value = NextInt(fstream)) < 0) 
+		  RETURN (BitmapFileInvalid);
+		*ptr=value;
+	    }
+	}
+	break;
+    }					/* end while */
+
+    if (data == NULL) {
+	RETURN (BitmapFileInvalid);
+    }
+
+    *datap = data;
+    data = NULL;
+    *width = ww;
+    *height = hh;
+    if (x_hot) *x_hot = hx;
+    if (y_hot) *y_hot = hy;
+
+    RETURN (BitmapSuccess);
+}
+
+
+int read_bitmap_data_from_file (CONST char *filename, unsigned int *width, 
+				unsigned int *height, unsigned char **datap,
+				int *x_hot, int *y_hot)
+{
+    FILE *fstream;
+    int status;
+
+    if ((fstream = fopen (filename, "r")) == NULL) {
+	return BitmapOpenFailed;
+    }
+    status = read_bitmap_data (fstream, width, height, datap, x_hot, y_hot);
+    fclose (fstream);
+    return status;
+}
+#endif /* HAVE_X_WINDOWS */
+
+/* this table flips four bits around. */
+static int flip_table[] =
+{
+  0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15
+};
+
+/* the bitmap data comes in the following format: Widths are padded to
+   a multiple of 8.  Scan lines are stored in increasing byte order
+   from left to right, little-endian within a byte.  0 = white, 1 =
+   black.  It must be converted to the following format: Widths are
+   padded to a multiple of 16.  Scan lines are stored in increasing
+   byte order from left to right, big-endian within a byte.  0 =
+   black, 1 = white.  */
+static HBITMAP
+xbm_create_bitmap_from_data (char *data,
+			     unsigned int width, unsigned int height)
+{
+  int old_width = (width + 7)/8;
+  int new_width = 2*((width + 15)/16);
+  unsigned char *offset;
+  unsigned char *new_data, *new_offset;
+  unsigned int i;
+  int j;
+  HBITMAP hb;
+
+  new_data = (unsigned char *) xmalloc (height*new_width);
+  for (i=0; i<height; i++)
+    {
+      offset = data + i*old_width;
+      new_offset = new_data + i*new_width;
+      new_offset[new_width - 1] = 0; /* there may be an extra byte
+                                        that needs to be padded */
+      for (j=0; j<old_width; j++)
+	{
+	  int byte = offset[j];
+	  new_offset[j] = ~ (unsigned char)
+	    ((flip_table[byte & 0xf] << 4) + flip_table[byte >> 4]);
+	}
+    }
+  hb = CreateBitmap (width, height, 1, 1, new_data);
+  xfree (new_data);
+
+  return hb;
+}
+
+/* Given inline data for a mono pixmap, initialize the given
+   image instance accordingly. */
+
+static void
+init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
+				     int width, int height,
+				     /* Note that data is in ext-format! */
+				     CONST char *bits,
+				     Lisp_Object instantiator,
+				     Lisp_Object pointer_fg,
+				     Lisp_Object pointer_bg,
+				     int dest_mask,
+				     HBITMAP mask,
+				     Lisp_Object mask_filename)
+{
+  Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
+  Lisp_Object foreground = find_keyword_in_vector (instantiator, Q_foreground);
+  Lisp_Object background = find_keyword_in_vector (instantiator, Q_background);
+  enum image_instance_type type;
+
+  if (!DEVICE_MSWINDOWS_P (XDEVICE (device)))
+    signal_simple_error ("Not an MS-Windows device", device);
+
+  if ((dest_mask & IMAGE_MONO_PIXMAP_MASK) &&
+      (dest_mask & IMAGE_COLOR_PIXMAP_MASK))
+    {
+      if (!NILP (foreground) || !NILP (background))
+	type = IMAGE_COLOR_PIXMAP;
+      else
+	type = IMAGE_MONO_PIXMAP;
+    }
+  else if (dest_mask & IMAGE_MONO_PIXMAP_MASK)
+    type = IMAGE_MONO_PIXMAP;
+  else if (dest_mask & IMAGE_COLOR_PIXMAP_MASK)
+    type = IMAGE_COLOR_PIXMAP;
+  else if (dest_mask & IMAGE_POINTER_MASK)
+    type = IMAGE_POINTER;
+  else
+    incompatible_image_types (instantiator, dest_mask,
+			      IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK
+			      | IMAGE_POINTER_MASK);
+
+  mswindows_initialize_dibitmap_image_instance (ii, type);
+  IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = width;
+  IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = height;
+  IMAGE_INSTANCE_PIXMAP_FILENAME (ii) =
+    find_keyword_in_vector (instantiator, Q_file);
+  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), 0);
+  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), 0);
+  IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = 1;
+  IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = mask;
+  IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) =
+    xbm_create_bitmap_from_data ((Extbyte *) bits, width, height);
+
+  switch (type)
+    {
+    case IMAGE_MONO_PIXMAP:
+      break;
+
+    case IMAGE_COLOR_PIXMAP:
+      {
+	unsigned long fg = PALETTERGB (0,0,0);
+	unsigned long bg = PALETTERGB (255,255,255);
+
+	if (!NILP (foreground) && !COLOR_INSTANCEP (foreground))
+	  foreground =
+	    Fmake_color_instance (foreground, device,
+				  encode_error_behavior_flag (ERROR_ME));
+
+	if (COLOR_INSTANCEP (foreground))
+	  fg = COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (foreground));
+
+	if (!NILP (background) && !COLOR_INSTANCEP (background))
+	  background =
+	    Fmake_color_instance (background, device,
+				  encode_error_behavior_flag (ERROR_ME));
+
+	if (COLOR_INSTANCEP (background))
+	  bg = COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (background));
+
+	IMAGE_INSTANCE_PIXMAP_FG (ii) = foreground;
+	IMAGE_INSTANCE_PIXMAP_BG (ii) = background;
+      }
+      break;
+
+    case IMAGE_POINTER:
+      {
+	if (NILP (foreground))
+	  foreground = pointer_fg;
+	if (NILP (background))
+	  background = pointer_bg;
+
+	IMAGE_INSTANCE_PIXMAP_FG (ii) = foreground;
+	IMAGE_INSTANCE_PIXMAP_BG (ii) = background;
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) =
+	  find_keyword_in_vector (instantiator, Q_hotspot_x);
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) =
+	  find_keyword_in_vector (instantiator, Q_hotspot_y);
+      }
+      break;
+
+    default:
+      abort ();
+    }
+}
+
+static void
+xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
+		   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		   int dest_mask, int width, int height,
+		   /* Note that data is in ext-format! */
+		   CONST char *bits)
+{
+  Lisp_Object mask_data = find_keyword_in_vector (instantiator, Q_mask_data);
+  Lisp_Object mask_file = find_keyword_in_vector (instantiator, Q_mask_file);
+  struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  HBITMAP mask = 0;
+  CONST char *gcc_may_you_rot_in_hell;
+
+  if (!NILP (mask_data))
+    {
+      GET_C_STRING_BINARY_DATA_ALLOCA (XCAR (XCDR (XCDR (mask_data))),
+				       gcc_may_you_rot_in_hell);
+      mask =
+	xbm_create_bitmap_from_data ( (unsigned char *)
+				      gcc_may_you_rot_in_hell,
+				      XINT (XCAR (mask_data)),
+				      XINT (XCAR (XCDR (mask_data))));
+    }
+
+  init_image_instance_from_xbm_inline (ii, width, height, bits,
+				       instantiator, pointer_fg, pointer_bg,
+				       dest_mask, mask, mask_file);
+}
+
+/* Instantiate method for XBM's. */
+
+static void
+mswindows_xbm_instantiate (Lisp_Object image_instance, 
+			   Lisp_Object instantiator,
+			   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+			   int dest_mask, Lisp_Object domain)
+{
+  Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
+  CONST char *gcc_go_home;
+
+  assert (!NILP (data));
+
+  GET_C_STRING_BINARY_DATA_ALLOCA (XCAR (XCDR (XCDR (data))),
+				   gcc_go_home);
+
+  xbm_instantiate_1 (image_instance, instantiator, pointer_fg,
+		     pointer_bg, dest_mask, XINT (XCAR (data)),
+		     XINT (XCAR (XCDR (data))), gcc_go_home);
+}
+
 
 /************************************************************************/
 /*                      image instance methods                          */
@@ -1315,6 +1854,7 @@ console_type_create_glyphs_mswindows (void)
 #ifdef HAVE_XPM
   CONSOLE_HAS_METHOD (mswindows, xpm_instantiate);
 #endif
+  CONSOLE_HAS_METHOD (mswindows, xbm_instantiate);
 }
 
 void

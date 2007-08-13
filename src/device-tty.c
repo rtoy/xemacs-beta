@@ -190,11 +190,9 @@ tty_device_system_metrics (struct device *d,
     case DM_size_device:
       return Fcons (make_int (CONSOLE_TTY_DATA (con)->width),
 		    make_int (CONSOLE_TTY_DATA (con)->height));
-      break;
+    default: /* No such device metric property for TTY devices */
+      return Qunbound;
     }
-
-  /* Do not know such property */
-  return Qunbound;
 }
 
 /************************************************************************/

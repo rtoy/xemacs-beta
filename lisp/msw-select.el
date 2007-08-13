@@ -53,37 +53,12 @@ replacing the active selection if there is one."
   "Paste the given string to the mswindows clipboard."
   (mswindows-set-clipboard string))
 
-(defun mswindows-cut-copy-clear-clipboard (mode)
-  "Don't use this function.
-Use mswindows-cut-clipboard, mswindows-copy-clipboard or
-mswindows-clear-clipboard instead."
-  (or (memq mode '(cut copy clear)) (error "unkown mode %S" mode))
-  (setq last-command nil)
-  (let ((s (mark-marker)) (e (point-marker)))
-    (if s
-	(progn
-	  (if mouse-track-rectangle-p
-	      (progn
-		(setq killed-rectangle (extract-rectangle s e))
-		(kill-new (mapconcat 'identity killed-rectangle "\n")))
-	    (copy-region-as-kill s e))
-	  (if (memq mode '(cut copy))	  
-	      (mswindows-set-clipboard (car kill-ring)))
-	  (if (memq mode '(cut clear))
-	      (if mouse-track-rectangle-p
-		  (delete-rectangle s e)
-		(delete-region s e))
-;; mswindows apps normally leave the selection active but that feels weird here
-;;	    (setq zmacs-region-stays t)
-	    ))
-      (error "there is no selection to cut or copy"))))
-
 (defvar mswindows-selection-owned-p nil
   "Whether we have a selection or not. 
 MS-Windows has no concept of ownership; don't use this.")
 
 (defun mswindows-own-selection (data &optional type)
-  "Make an MS Windows selection of type TYPE and value DATA.
+  "Make an MS-Windows selection of type TYPE and value DATA.
 The argument TYPE is ignored, and DATA specifies the contents.  
 DATA may be a string,
 a symbol, an integer (or a cons of two integers or list of two integers).

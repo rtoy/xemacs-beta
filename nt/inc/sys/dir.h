@@ -65,13 +65,11 @@ typedef struct
 	char	dd_buf[DIRBLKSIZ];	/* directory block */
 	}	DIR;			/* stream data from opendir() */
 
-#ifndef WINDOWSNT
-extern DIR *opendir (CONST char *filename);
-extern int closedir (DIR *dirp);
-extern struct direct *readdir (DIR *dirp);
-extern struct direct *readdirver (DIR *dirp);
-extern long telldir (DIR *dirp);
-extern void seekdir (DIR *dirp, long loc);
+DIR *opendir (CONST char *filename);
+void closedir (DIR *dirp);
+struct direct *readdir (DIR *dirp);
+struct direct *readdirver (DIR *dirp);
+long telldir (DIR *dirp);
+void seekdir (DIR *dirp, long loc);
 
 #define rewinddir( dirp )	seekdir( dirp, 0L )
-#endif

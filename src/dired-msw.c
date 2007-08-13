@@ -75,11 +75,16 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "regex.h"
 
-#include "sysfile.h"
 #include "sysdir.h"
+#include "sysfile.h"
+#include "sysproc.h"
 
 #include <windows.h>
 #include <limits.h>
+#include <time.h>
+
+#include <winsock.h>		/* To make nt.h happy */
+#include "nt.h"		/* For prototypes */
 
 #if ROUND_FILE_SIZES > 0
 #include <math.h>		/* for floor() */

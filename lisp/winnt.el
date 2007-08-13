@@ -132,6 +132,6 @@ If not found, then `nt-quote-args-verbatim' is called on the argument list.")
       (if (string-match (car assoc) fname)
 	  (setq return-me (funcall (cdr assoc) (cdr args)))))
     (or return-me
-	(nt-quote-args-verbatim args))))
+	(nt-quote-args-verbatim (cdr args)))))
 
 ;;; winnt.el ends here

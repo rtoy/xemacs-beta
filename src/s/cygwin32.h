@@ -133,6 +133,8 @@ extern long random();
 #define SND_NODEFAULT		2
 #define SND_MEMORY		4
 #define SND_FILENAME		0x2000L
+#define JOHAB_CHARSET 		130
+#define MAC_CHARSET 		77
 
 #define TEXT_START -1
 #define TEXT_END -1

@@ -43,11 +43,10 @@
 (defun init-post-mswindows-win (console)
   "Initialize mswindows GUI at startup (post).  Don't call this."
   (unless mswindows-post-win-initted
-    ;; We can't load this until after the initial device is created
-    ;; because the icon initialization needs to access the display to get
-    ;; any toolbar-related color resources.
-    (if (and (featurep 'xpm) (featurep 'toolbar))
-        (init-x-toolbar))
+    (if (featurep 'toolbar)
+	(if (featurep 'infodock)
+	    (require 'id-x-toolbar)
+	  (init-x-toolbar)))
     (add-hook 'zmacs-deactivate-region-hook
 	      (lambda ()
 		(if (console-on-window-system-p)

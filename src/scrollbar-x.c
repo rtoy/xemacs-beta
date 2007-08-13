@@ -400,7 +400,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
   scroll_event *data = (scroll_event *) client_data;
   struct device *d = get_device_from_display (XtDisplay (widget));
   struct frame *f = x_any_window_to_frame (d, XtWindow (widget));
-  Lisp_Object win;
+  Lisp_Object win, frame;
   struct scrollbar_instance *instance;
   struct window_mirror *mirror;
 
@@ -413,6 +413,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
   if (NILP (win))
     return;
   instance = mirror->scrollbar_vertical_instance;
+  frame = WINDOW_FRAME (XWINDOW (win));
 
   /* It seems that this is necessary whenever signal_special_Xt_user_event()
      is called.  #### Why??? */
@@ -421,11 +422,11 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
   switch (data->action)
     {
     case SCROLLBAR_LINE_UP:
-      signal_special_Xt_user_event (win, Qscrollbar_line_up, win);
+      signal_special_Xt_user_event (frame, Qscrollbar_line_up, win);
       break;
 
     case SCROLLBAR_LINE_DOWN:
-      signal_special_Xt_user_event (win, Qscrollbar_line_down, win);
+      signal_special_Xt_user_event (frame, Qscrollbar_line_down, win);
       break;
 
       /* The Athena scrollbar paging behavior is that of xterms.
@@ -442,11 +443,11 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 
 	if (line > -1.0)
 	  line = -1.0;
-	signal_special_Xt_user_event (win, Qscrollbar_page_up,
+	signal_special_Xt_user_event (frame, Qscrollbar_page_up,
 				      Fcons (win, make_int ((int) line)));
       }
 #else
-      signal_special_Xt_user_event (win, Qscrollbar_page_up,
+      signal_special_Xt_user_event (frame, Qscrollbar_page_up,
 				    Fcons (win, Qnil));
 #endif
       break;
@@ -465,23 +466,23 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	  {
 	    if (line < 1.0)
 	      line = 1.0;
-	    signal_special_Xt_user_event (win, Qscrollbar_page_down,
+	    signal_special_Xt_user_event (frame, Qscrollbar_page_down,
 					  Fcons (win,
 						 make_int ((int) line)));
 	  }
       }
 #else
-      signal_special_Xt_user_event (win, Qscrollbar_page_down,
+      signal_special_Xt_user_event (frame, Qscrollbar_page_down,
 				    Fcons (win, Qnil));
 #endif
       break;
 
     case SCROLLBAR_TOP:
-      signal_special_Xt_user_event (win, Qscrollbar_to_top, win);
+      signal_special_Xt_user_event (frame, Qscrollbar_to_top, win);
       break;
 
     case SCROLLBAR_BOTTOM:
-      signal_special_Xt_user_event (win, Qscrollbar_to_bottom, win);
+      signal_special_Xt_user_event (frame, Qscrollbar_to_bottom, win);
       break;
 
 
@@ -583,7 +584,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	if (value < SCROLLBAR_X_POS_DATA (instance).minimum)
 	  value = SCROLLBAR_X_POS_DATA (instance).minimum;
 
-	signal_special_Xt_user_event (win, Qscrollbar_vertical_drag,
+	signal_special_Xt_user_event (frame, Qscrollbar_vertical_drag,
 				      Fcons (win, make_int (value)));
       }
       break;
@@ -603,7 +604,7 @@ x_update_horizontal_scrollbar_callback (Widget widget, LWLIB_ID id,
   scroll_event *data = (scroll_event *) client_data;
   struct device *d = get_device_from_display (XtDisplay (widget));
   struct frame *f = x_any_window_to_frame (d, XtWindow (widget));
-  Lisp_Object win;
+  Lisp_Object win, frame;
   struct window_mirror *mirror;
 
   if (!f)
@@ -614,6 +615,7 @@ x_update_horizontal_scrollbar_callback (Widget widget, LWLIB_ID id,
 
   if (NILP (win))
     return;
+  frame = WINDOW_FRAME (XWINDOW (win));
 
   /* It seems that this is necessary whenever signal_special_Xt_user_event()
      is called.  #### Why??? */
@@ -622,22 +624,22 @@ x_update_horizontal_scrollbar_callback (Widget widget, LWLIB_ID id,
   switch (data->action)
     {
     case SCROLLBAR_LINE_UP:
-      signal_special_Xt_user_event (win, Qscrollbar_char_left, win);
+      signal_special_Xt_user_event (frame, Qscrollbar_char_left, win);
       break;
     case SCROLLBAR_LINE_DOWN:
-      signal_special_Xt_user_event (win, Qscrollbar_char_right, win);
+      signal_special_Xt_user_event (frame, Qscrollbar_char_right, win);
       break;
     case SCROLLBAR_PAGE_UP:
-      signal_special_Xt_user_event (win, Qscrollbar_page_left, win);
+      signal_special_Xt_user_event (frame, Qscrollbar_page_left, win);
       break;
     case SCROLLBAR_PAGE_DOWN:
-      signal_special_Xt_user_event (win, Qscrollbar_page_right, win);
+      signal_special_Xt_user_event (frame, Qscrollbar_page_right, win);
       break;
     case SCROLLBAR_TOP:
-      signal_special_Xt_user_event (win, Qscrollbar_to_left, win);
+      signal_special_Xt_user_event (frame, Qscrollbar_to_left, win);
       break;
     case SCROLLBAR_BOTTOM:
-      signal_special_Xt_user_event (win, Qscrollbar_to_right, win);
+      signal_special_Xt_user_event (frame, Qscrollbar_to_right, win);
       break;
     case SCROLLBAR_CHANGE:
       inhibit_slider_size_change = 0;
@@ -647,11 +649,11 @@ x_update_horizontal_scrollbar_callback (Widget widget, LWLIB_ID id,
       /* #### Fix the damn toolkit code so they all work the same way.
          Lucid is the one mostly wrong.*/
 #if defined (LWLIB_SCROLLBARS_LUCID) || defined (LWLIB_SCROLLBARS_ATHENA3D)
-      signal_special_Xt_user_event (win, Qscrollbar_horizontal_drag,
+      signal_special_Xt_user_event (frame, Qscrollbar_horizontal_drag,
 				    (Fcons
 				     (win, make_int (data->slider_value))));
 #else
-      signal_special_Xt_user_event (win, Qscrollbar_horizontal_drag,
+      signal_special_Xt_user_event (frame, Qscrollbar_horizontal_drag,
 				    (Fcons
 				     (win,
 				      make_int (data->slider_value - 1))));

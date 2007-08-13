@@ -33,6 +33,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <fcntl.h>
 #include <ctype.h>
 #include <signal.h>
+#include <direct.h>
 
 /* must include CRT headers *before* config.h */
 /* ### I don't believe it - martin */
@@ -82,6 +83,8 @@ extern Lisp_Object Vmswindows_downcase_file_names;
 extern Lisp_Object Vwin32_generate_fake_inodes;
 #endif
 extern Lisp_Object Vmswindows_get_true_file_attributes;
+
+extern char *get_home_directory(void);
 
 static char startup_dir[ MAXPATHLEN ];
 
@@ -174,7 +177,7 @@ getpwuid (int uid)
 }
 
 struct passwd *
-getpwnam (char *name)
+getpwnam (const char *name)
 {
   struct passwd *pw;
   
@@ -267,13 +270,18 @@ init_user_info ()
     }
 
   /* Ensure HOME and SHELL are defined. */
+#if 0
+  /*
+   * With XEmacs, setting $HOME is deprecated.
+   */
   if (getenv ("HOME") == NULL)
     putenv ("HOME=c:/");
+#endif
   if (getenv ("SHELL") == NULL)
     putenv ((GetVersion () & 0x80000000) ? "SHELL=command" : "SHELL=cmd");
 
   /* Set dir and shell from environment variables. */
-  strcpy (the_passwd.pw_dir, getenv ("HOME"));
+  strcpy (the_passwd.pw_dir, get_home_directory());
   strcpy (the_passwd.pw_shell, getenv ("SHELL"));
 
   if (token)
@@ -690,7 +698,7 @@ init_environment ()
 
 static char configuration_buffer[32];
 
-char *
+const char *
 get_emacs_configuration (void)
 {
   char *arch, *oem, *os;
@@ -1122,7 +1130,7 @@ static char   dir_pathname[MAXPATHLEN+1];
 static WIN32_FIND_DATA dir_find_data;
 
 DIR *
-opendir (char *filename)
+opendir (const char *filename)
 {
   DIR *dirp;
 
@@ -1724,7 +1732,7 @@ stat (const char * path, struct stat * buf)
 	    default:
 	      buf->st_mode = _S_IFCHR;
 	    }
-	  buf->st_nlink = info.nNumberOfLinks;
+	  buf->st_nlink = (short) info.nNumberOfLinks;
 	  /* Might as well use file index to fake inode values, but this
 	     is not guaranteed to be unique unless we keep a handle open
 	     all the time (even then there are situations where it is
@@ -1759,11 +1767,8 @@ stat (const char * path, struct stat * buf)
     }
 #endif
 
-  /* MSVC defines _ino_t to be short; other libc's might not.  */
-  if (sizeof (buf->st_ino) == 2)
-    buf->st_ino = fake_inode ^ (fake_inode >> 16);
-  else
-    buf->st_ino = fake_inode;
+  /* #### MSVC defines _ino_t to be short; other libc's might not.  */
+  buf->st_ino = (unsigned short) (fake_inode ^ (fake_inode >> 16));
 
   /* consider files to belong to current user */
   buf->st_uid = the_passwd.pw_uid;
@@ -1906,7 +1911,6 @@ sys_pipe (int * phandles)
 {
   int rc;
   unsigned flags;
-  child_process * cp;
 
   /* make pipe handles non-inheritable; when we spawn a child, we
      replace the relevant handle with an inheritable one.  Also put
@@ -1952,7 +1956,7 @@ _sys_read_ahead (int fd)
   if ((fd_info[fd].flags & (FILE_PIPE | FILE_SOCKET)) == 0
       || (fd_info[fd].flags & FILE_READ) == 0)
     {
-      DebPrint (("_sys_read_ahead: internal error: fd %d is not a pipe or socket!\n", fd));
+      /* fd is not a pipe or socket */
       abort ();
     }
   
@@ -2047,7 +2051,6 @@ sys_read (int fd, char * buffer, size_t count)
 
 	    case STATUS_READ_READY:
 	    case STATUS_READ_IN_PROGRESS:
-	      DebPrint (("sys_read called when read is in progress\n"));
 	      errno = EWOULDBLOCK;
 	      return -1;
 
@@ -2063,7 +2066,6 @@ sys_read (int fd, char * buffer, size_t count)
 	      break;
 
 	    default:
-	      DebPrint (("sys_read: bad status %d\n", current_status));
 	      errno = EBADF;
 	      return -1;
 	    }
@@ -2170,7 +2172,7 @@ sys_write (int fd, const void * buffer, size_t count)
 
 
 void
-term_ntproc ()
+term_ntproc (int unused)
 {
 }
 
@@ -2314,19 +2316,20 @@ msw_sighandler msw_sigset (int nsig, msw_sighandler handler)
 {
   /* We delegate some signals to the system function */
   if (nsig == SIGFPE || nsig == SIGABRT || nsig == SIGINT)
-    {
-      signal (nsig, handler);
-      return;
-    }
+    return signal (nsig, handler);
 
   if (nsig < 0 || nsig > SIG_MAX)
     {
       errno = EINVAL;
-      return;
+      return NULL;
     }
 
   /* Store handler ptr */
-  signal_handlers[nsig] = handler;
+  {
+    msw_sighandler old_handler = signal_handlers[nsig];
+    signal_handlers[nsig] = handler;
+    return old_handler;
+  }
 }
   
 int msw_sighold (int nsig)

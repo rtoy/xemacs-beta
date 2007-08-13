@@ -1139,6 +1139,7 @@ run `normal-mode' explicitly."
     ("\\.\\([CH]\\|cc\\|hh\\)\\'" . c++-mode)
     ("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode)
     ("\\.java\\'" . java-mode)
+    ("\\.idl\\'" . idl-mode)
     ("\\.f\\(or\\)?\\'" . fortran-mode)
     ("\\.F\\(OR\\)?\\'" . fortran-mode)
     ("\\.[fF]90\\'" . f90-mode)
@@ -1160,6 +1161,7 @@ run `normal-mode' explicitly."
     ("\\.m\\([mes]\\|an\\)\\'" . nroff-mode)
     ("\\.icn\\'" . icon-mode)
     ("\\.\\([ckz]?sh\\|shar\\)\\'" . sh-mode)
+    ;; #### Unix-specific!
     ("/\\.\\(bash_\\|z\\)?\\(profile\\|login\||logout\\)\\'" . sh-mode)
     ("/\\.\\([ckz]sh\\|bash\\|tcsh\\|es\\|xinit\\|startx\\)rc\\'" . sh-mode)
     ("/\\.\\([kz]shenv\\|xsession\\)\\'" . sh-mode)
@@ -1178,9 +1180,9 @@ run `normal-mode' explicitly."
     ("\\.prolog\\'" . prolog-mode)
     ("\\.tar\\'" . tar-mode)
     ("\\.\\(arc\\|zip\\|lzh\\|zoo\\)\\'" . archive-mode)
-    ;; Mailer puts message to be edited in
-    ;; /tmp/Re.... or Message
-    ("^/tmp/Re" . text-mode)
+    ;; Mailer puts message to be edited in /tmp/Re.... or Message
+    ;; #### Unix-specific!
+    ("\\`/tmp/Re" . text-mode)
     ("/Message[0-9]*\\'" . text-mode)
     ("/drafts/[0-9]+\\'" . mh-letter-mode)
     ;; some news reader is reported to use this
@@ -1193,18 +1195,16 @@ run `normal-mode' explicitly."
     ("\\.htm?l?3\\'" . html3-mode)
     ("\\.\\(sgml?\\|dtd\\)\\'" . sgml-mode)
     ("\\.c?ps\\'" . postscript-mode)
-    ;; .emacs following a directory delimiter
-    ;; in either Unix or VMS syntax.
-    ("[]>:/]\\..*emacs\\'" . emacs-lisp-mode)
-    ;; _emacs following a directory delimiter
-    ;; in MsDos syntax
-    ("[:/]_emacs\\'" . emacs-lisp-mode)
+    ;; .emacs following a directory delimiter in either Unix or
+    ;; Windows syntax.
+    ("[/\\][._].*emacs\\'" . emacs-lisp-mode)
     ("\\.m4\\'" . autoconf-mode)
     ("configure\\.in\\'" . autoconf-mode)
     ("\\.ml\\'" . lisp-mode)
     ("\\.ma?k\\'" . makefile-mode)
     ("[Mm]akefile\\(\\.\\|\\'\\)" . makefile-mode)
     ("\\.X\\(defaults\\|environment\\|resources\\|modmap\\)\\'" . xrdb-mode)
+    ;; #### The following three are Unix-specific (but do we care?)
     ("/app-defaults/" . xrdb-mode)
     ("\\.[^/]*wm\\'" . winmgr-mode)
     ("\\.[^/]*wm2?rc" . winmgr-mode)

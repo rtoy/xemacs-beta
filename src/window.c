@@ -1307,7 +1307,8 @@ This includes the window's modeline and horizontal scrollbar (if any).
   return make_int (decode_window (window)->pixel_height);
 }
 
-DEFUN ("window-text-pixel-height", Fwindow_text_pixel_height, 0, 1, 0, /*
+DEFUN ("window-text-area-pixel-height",
+       Fwindow_text_area_pixel_height, 0, 1, 0, /*
 Return the height in pixels of the text-displaying portion of WINDOW.
 Unlike `window-pixel-height', the space occupied by the modeline and
 horizontal scrollbar, if any, is not counted.
@@ -1317,6 +1318,69 @@ horizontal scrollbar, if any, is not counted.
   struct window *w = decode_window (window);
 
   return make_int (WINDOW_TEXT_HEIGHT (w));
+}
+
+DEFUN ("window-displayed-text-pixel-height",
+       Fwindow_displayed_text_pixel_height, 0, 2, 0, /*
+Return the height in pixels of the text displayed in WINDOW.
+Unlike `window-text-area-pixel-height', any blank space below the
+end of the buffer is not included.  If optional argument NOCLIPPED
+is non-nil, do not include space occupied by clipped lines.
+*/
+     (window, noclipped))
+{
+  struct window *w;
+  Bufpos start, eobuf;
+  int defheight;
+  int hlimit, height, prev_height = -1;
+  int line;
+  int elt, nelt, i;
+  int needed;
+  line_start_cache_dynarr *cache;
+
+  if (NILP (window))
+    window = Fselected_window (Qnil);
+
+  CHECK_WINDOW (window);
+  w = XWINDOW (window);
+
+  start  = marker_position (w->start[CURRENT_DISP]);
+  hlimit = WINDOW_TEXT_HEIGHT (w);
+  eobuf  = BUF_ZV (XBUFFER (w->buffer));
+
+  default_face_height_and_width (window, &defheight, NULL);
+
+  /* guess lines needed in line start cache + a few extra */
+  needed = (hlimit + defheight-1) / defheight + 3;
+
+  while (1) {
+    elt = point_in_line_start_cache (w, start, needed);
+    assert (elt >= 0); /* in the cache */
+
+    cache = w->line_start_cache;
+    nelt  = Dynarr_length (cache);
+
+    height = 0;
+    for (i = elt; i < nelt; i++) {
+      line = Dynarr_atp (cache, i)->height;
+
+      if (height + line > hlimit)
+        return make_int (!NILP (noclipped) ? height : hlimit);
+
+      height += line;
+
+      if (height == hlimit || Dynarr_atp (cache, i)->end >= eobuf)
+        return make_int (height);
+    }
+
+    /* get here => need more cache lines.  try again. */
+    assert(height > prev_height); /* progress? */
+    prev_height = height;
+
+    needed += ((hlimit - height)*(nelt - elt) + height-1)/height + 3;
+  }
+
+  RETURN_NOT_REACHED(make_int (0))        /* shut up compiler */
 }
 
 DEFUN ("window-width", Fwindow_width, 0, 1, 0, /*
@@ -1336,7 +1400,8 @@ Return the width of WINDOW in pixels.  Defaults to current window.
   return make_int (decode_window (window)->pixel_width);
 }
 
-DEFUN ("window-text-pixel-width", Fwindow_text_pixel_width, 0, 1, 0, /*
+DEFUN ("window-text-area-pixel-width",
+       Fwindow_text_area_pixel_width, 0, 1, 0, /*
 Return the width in pixels of the text-displaying portion of WINDOW.
 Unlike `window-pixel-width', the space occupied by the vertical
 scrollbar or divider, if any, is not counted.  
@@ -1458,7 +1523,8 @@ The frame toolbars and menubars are considered to be outside of this area.
 		make_int (top + w->pixel_height));
 }
 
-DEFUN ("window-text-pixel-edges", Fwindow_text_pixel_edges, 0, 1, 0, /*
+DEFUN ("window-text-area-pixel-edges",
+       Fwindow_text_area_pixel_edges, 0, 1, 0, /*
 Return a list of the pixel edge coordinates of the text area of WINDOW.
 Returns the list \(LEFT TOP RIGHT BOTTOM), all relative to 0, 0 at the
 top left corner of the window.
@@ -3895,7 +3961,8 @@ window_scroll (Lisp_Object window, Lisp_Object n, int direction,
   tem = Fpos_visible_in_window_p (point, window);
   if (NILP (tem))
     {
-      Fvertical_motion (make_int (-window_char_height (w, 0) / 2), window);
+      Fvertical_motion (make_int (-window_char_height (w, 0) / 2),
+                        window, Qnil);
       Fset_marker (w->start[CURRENT_DISP], point, w->buffer);
       w->start_at_line_beg = beginning_of_line_p (b, XINT (point));
       MARK_WINDOWS_CHANGED (w);
@@ -4317,7 +4384,7 @@ If WINDOW is nil, the selected window is used.
     }
 
   if (selected)
-    return Fvertical_motion (arg, window);
+    return Fvertical_motion (arg, window, Qnil);
   else
     {
       int vpos;
@@ -5388,8 +5455,9 @@ syms_of_window (void)
   DEFSUBR (Fwindow_width);
   DEFSUBR (Fwindow_pixel_height);
   DEFSUBR (Fwindow_pixel_width);
-  DEFSUBR (Fwindow_text_pixel_height);
-  DEFSUBR (Fwindow_text_pixel_width);
+  DEFSUBR (Fwindow_text_area_pixel_height);
+  DEFSUBR (Fwindow_displayed_text_pixel_height);
+  DEFSUBR (Fwindow_text_area_pixel_width);
   DEFSUBR (Fwindow_hscroll);
 #ifdef MODELINE_IS_SCROLLABLE
   DEFSUBR (Fmodeline_hscroll);
@@ -5401,7 +5469,7 @@ syms_of_window (void)
 #endif
   DEFSUBR (Fset_window_hscroll);
   DEFSUBR (Fwindow_pixel_edges);
-  DEFSUBR (Fwindow_text_pixel_edges);
+  DEFSUBR (Fwindow_text_area_pixel_edges);
   DEFSUBR (Fwindow_point);
   DEFSUBR (Fwindow_start);
   DEFSUBR (Fwindow_end);

@@ -83,13 +83,13 @@
 				       (integer :tag "Duration"))))))
 
 (defcustom sound-load-alist
-  '((load-sound-file "drum-beep.au"	'drum)
-    (load-sound-file "quiet-beep.au"	'quiet)
-    (load-sound-file "bass-snap.au"	'bass 80)
-    (load-sound-file "whip.au"		'whip 70)
-    (load-sound-file "cuckoo.au"		'cuckoo)
-    (load-sound-file "yeep.au"		'yeep)
-    (load-sound-file "hype.au"		'hype 100)
+  '((load-sound-file "drum-beep"	'drum)
+    (load-sound-file "quiet-beep"	'quiet)
+    (load-sound-file "bass-snap"	'bass 80)
+    (load-sound-file "whip"		'whip 70)
+    (load-sound-file "cuckoo"		'cuckoo)
+    (load-sound-file "yeep"		'yeep)
+    (load-sound-file "hype"		'hype 100)
     )
   "A list of calls to load-sound-file to be processed by load-default-sounds.
 
@@ -99,20 +99,22 @@
   :type '(repeat  (sexp :tag "Sound")
 		  ))
 
-(defcustom default-sound-directory (file-name-as-directory
-				    (concat data-directory "sounds"))
+(defcustom default-sound-directory (locate-data-directory "sounds")
   "Default directory to load a sound file from."
   :group 'sound
   :type 'directory
   )
 
-(defcustom sound-ext ""
+(defcustom sound-ext (if (or (eq system-type 'cygwin32)
+			     (eq system-type 'windows-nt))
+			 ".wav" ".au")
   "Filename extensions to complete sound file name with. If more than one
    extension is used, they should be separated by \":\". "
   :group 'sound
   :type 'string)
 
 (defcustom default-sound-directory-list ( list default-sound-directory )
+
   "List of directories which to search for sound files"
   :group 'sound
   :type '(repeat directory )

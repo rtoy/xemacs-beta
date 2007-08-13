@@ -57,6 +57,8 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_OFFIX_DND
 #include "offix.h"
+#endif
+#if defined (HAVE_OFFIX_DND) || defined (HAVE_CDE)
 #include "events-mod.h"
 #endif
 
@@ -990,22 +992,37 @@ x_cde_convert_callback (Widget widget, XtPointer clientData,
   DtDndConvertCallbackStruct *convertInfo =
     (DtDndConvertCallbackStruct *) callData;
   char *textdata = (char *) clientData;
+  char *textptr = NULL;
+  int i;
 
   if(convertInfo == NULL)
     {
       return;
     }
 
-  if((convertInfo->dragData->protocol != DtDND_BUFFER_TRANSFER) ||
+  if((convertInfo->dragData->protocol != DtDND_BUFFER_TRANSFER
+      && convertInfo->dragData->protocol != DtDND_FILENAME_TRANSFER) ||
      (convertInfo->reason != DtCR_DND_CONVERT_DATA))
     {
       return;
     }
 
-  convertInfo->dragData->data.buffers[0].bp = XtNewString(textdata);
-  convertInfo->dragData->data.buffers[0].size = strlen(textdata);
-  convertInfo->dragData->data.buffers[0].name = NULL;
-  convertInfo->dragData->numItems = 1;
+  for (textptr=textdata, i=0;
+       i<convertInfo->dragData->numItems;
+       textptr+=strlen(textptr)+1, i++)
+    {
+      if (convertInfo->dragData->protocol == DtDND_BUFFER_TRANSFER)
+	{
+	  convertInfo->dragData->data.buffers[i].bp = XtNewString(textptr);
+	  convertInfo->dragData->data.buffers[i].size = strlen(textptr);
+	  convertInfo->dragData->data.buffers[i].name = NULL;
+	}
+      else
+	{
+	  convertInfo->dragData->data.files[i] = XtNewString(textptr);
+	}
+    }
+
   convertInfo->status = DtDND_SUCCESS;
 }
 
@@ -1025,66 +1042,132 @@ abort_current_drag(Lisp_Object arg)
   return arg;
 }
 
-DEFUN ("cde-start-drag-internal", Fcde_start_drag_internal, 1, 1, 0, /*
+DEFUN ("cde-start-drag-internal", Fcde_start_drag_internal, 3, 3, 0, /*
 Start a CDE drag from a buffer.
+First argument is the event that started the drag (must be a
+button-press-event),
+second arg defines if the data should be treated as a buffer or
+a filename transfer (set to nil for buffer transfer),
+and the third argument is a list of data strings.
+WARNING: can only handle plain/text and file: transfers!
 */
-       (text))
+       (event, dragtype, dragdata))
 {
-  if (STRINGP (text))
+  if (EVENTP (event))
     {
       struct frame *f = decode_x_frame (Fselected_frame (Qnil));
-      XEvent event;
-      Widget Wuh = FRAME_X_TEXT_WIDGET (f);
+      XEvent x_event;
+      Widget wid = FRAME_X_TEXT_WIDGET (f);
+      Display *display = XtDisplayOfObject (wid);
+      struct device *d    = get_device_from_display (display);
+      struct x_device *xd = DEVICE_X_DATA (d);
+      unsigned int modifier = 0, state = 0;
       char *Ctext;
-      Display *display = XtDisplayOfObject (Wuh);
-      Window root_window, child_window;
-      int root_x, root_y, win_x, win_y;
-      unsigned int keys_and_buttons;
+      int numItems = 0, textlen = 0, pos = 0;
+      struct Lisp_Event *lisp_event = XEVENT(event);
+      Lisp_Object item = Qnil;
+      struct gcpro gcpro1;
 
-      if (XQueryPointer (display, RootWindow (display, DefaultScreen (display)),
-			 &root_window, &child_window, &root_x, &root_y,
-			 &win_x, &win_y, &keys_and_buttons) == False)
-	  return Qnil;
+      /* only drag if this is really a press */
+      if (EVENT_TYPE(lisp_event) != button_press_event
+	  || !LISTP(dragdata))
+	return Qnil;
 
-      Ctext = xstrdup ((char *) XSTRING_DATA (text));
+      GCPRO1 (item);
 
       /*
-       * Eek - XEmacs doesn't keep the old X event around so we have to
-       * build a dummy event.  This is a truly gross hack.
+       * not so cross hack that converts a emacs event back to a XEvent
        */
 
-      event.xbutton.type = ButtonPress;
-      event.xbutton.send_event = False;
-      event.xbutton.display = XtDisplayOfObject(Wuh);
-      event.xbutton.window = XtWindowOfObject(Wuh);
-      event.xbutton.root = XRootWindow(event.xkey.display, 0);
-      event.xbutton.subwindow = 0;
-      event.xbutton.time = 0;
-      event.xbutton.x = win_x;
-      event.xbutton.y = win_y;
-      event.xbutton.x_root = root_x;
-      event.xbutton.y_root = root_y;
-      event.xbutton.state = 0;
-      event.xbutton.button = 1;
-      event.xkey.same_screen = True;
+      x_event.xbutton.type = ButtonPress;
+      x_event.xbutton.send_event = False;
+      x_event.xbutton.display = XtDisplayOfObject(wid);
+      x_event.xbutton.window = XtWindowOfObject(wid);
+      x_event.xbutton.root = XRootWindow(x_event.xkey.display, 0);
+      x_event.xbutton.subwindow = 0;
+      x_event.xbutton.time = lisp_event->timestamp;
+      x_event.xbutton.x = lisp_event->event.button.x;
+      x_event.xbutton.y = lisp_event->event.button.y;
+      x_event.xbutton.x_root = lisp_event->event.button.x; /* this is wrong */
+      x_event.xbutton.y_root = lisp_event->event.button.y;
 
-      dnd_convert_cb_rec[0].callback = x_cde_convert_callback;
-      dnd_convert_cb_rec[0].closure  = (XtPointer) Ctext;
-      dnd_convert_cb_rec[1].callback = NULL;
-      dnd_convert_cb_rec[1].closure  = NULL;
+      modifier = lisp_event->event.button.modifiers;
+      if (modifier & MOD_SHIFT)   state |= ShiftMask;
+      if (modifier & MOD_CONTROL) state |= ControlMask;
+      if (modifier & MOD_META)    state |= xd->MetaMask;
+      if (modifier & MOD_SUPER)   state |= xd->SuperMask;
+      if (modifier & MOD_HYPER)   state |= xd->HyperMask;
+      if (modifier & MOD_ALT)     state |= xd->AltMask;
+      state |= Button1Mask << (lisp_event->event.button.button-1);
 
-      dnd_destroy_cb_rec[0].callback = x_cde_destroy_callback;
-      dnd_destroy_cb_rec[0].closure  = (XtPointer) Ctext;
-      dnd_destroy_cb_rec[1].callback = NULL;
-      dnd_destroy_cb_rec[1].closure  = NULL;
+      x_event.xbutton.state = state;
+      x_event.xbutton.button = lisp_event->event.button.button;
+      x_event.xkey.same_screen = True;
 
-      CurrentDragWidget =
-	DtDndDragStart (Wuh, &event, DtDND_BUFFER_TRANSFER, 1, XmDROP_COPY,
-			dnd_convert_cb_rec,
-			dnd_destroy_cb_rec,
-			NULL, 0);
-      return Qt;
+      /* convert data strings into a big string */
+      item = dragdata;
+      while (!NILP (item))
+	{
+	  if (!STRINGP (XCAR (item)))
+	    {
+	      numItems=0;
+	      break;
+	    }
+	  textlen += XSTRING_LENGTH (XCAR (item)) + 1;
+	  numItems++;
+	  item = XCDR (item);
+	}
+	
+      if (numItems)
+	{
+	  /*
+	   * concatenate all strings given to one large string, with
+	   * \0 as separator. List is ended by \0.
+	   */
+	  Ctext = (char *)xmalloc (textlen+1);
+	  Ctext[0] = 0;
+	  
+	  item = dragdata;
+	  while (!NILP (item))
+	    {
+	      if (!STRINGP (XCAR (item)))
+		{
+		  numItems=0;
+		  xfree(Ctext);
+		  Ctext=NULL;
+		  break;
+		}
+	      strcpy (Ctext+pos, (CONST char *)XSTRING_DATA (XCAR (item)));
+	      pos += XSTRING_LENGTH (XCAR (item)) + 1;
+	      item = XCDR (item);
+	    }
+	  Ctext[pos] = 0;
+	  
+	  dnd_convert_cb_rec[0].callback = x_cde_convert_callback;
+	  dnd_convert_cb_rec[0].closure  = (XtPointer) Ctext;
+	  dnd_convert_cb_rec[1].callback = NULL;
+	  dnd_convert_cb_rec[1].closure  = NULL;
+	  
+	  dnd_destroy_cb_rec[0].callback = x_cde_destroy_callback;
+	  dnd_destroy_cb_rec[0].closure  = (XtPointer) Ctext;
+	  dnd_destroy_cb_rec[1].callback = NULL;
+	  dnd_destroy_cb_rec[1].closure  = NULL;
+
+	  CurrentDragWidget =
+	    DtDndDragStart (wid, &x_event,
+			    (NILP(dragtype)?DtDND_BUFFER_TRANSFER:DtDND_FILENAME_TRANSFER),
+			    numItems,
+			    XmDROP_COPY,
+			    dnd_convert_cb_rec,
+			    dnd_destroy_cb_rec,
+			    NULL, 0);
+	}
+
+      UNGCPRO;
+	  
+      return numItems?Qt:Qnil;
     }
+
   return Qnil;
 }
 
@@ -1178,11 +1261,11 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 #ifdef HAVE_OFFIX_DND
 
 DEFUN ("offix-start-drag-internal", Foffix_start_drag_internal, 2, 3, 0, /*
+Start a OffiX drag from a buffer.
 First arg is the event that started the drag,
 second arg should be some string, and the third
 is the type of the data (this should be an int).
 The type defaults to DndText (4).
-Start a OffiX drag from a buffer.
 */
        (event, data, dtyp))
 {
@@ -1250,9 +1333,7 @@ Start a OffiX drag from a buffer.
 	}
 
       /*
-       * Eek - XEmacs doesn't keep the old X event around so we have to
-       * build a dummy event.  This is a truly gross hack. (from CDE)
-       * but it works...
+       * not so cross hack that converts a emacs event back to a XEvent
        */
 
       x_event.xbutton.type = ButtonPress;

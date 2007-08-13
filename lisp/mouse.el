@@ -190,9 +190,9 @@ This functions has to be improved.  Currently it is just a (working) test."
 				      (extent-end-position zmacs-region-extent)))
 	    ((featurep 'cde)
 	     ;; should also work with CDE
-	     (cde-start-drag
-	      (extent-start-position zmacs-region-extent)
-	      (extent-end-position zmacs-region-extent)))
+	     (cde-start-drag-region event
+				    (extent-start-position zmacs-region-extent)
+				    (extent-end-position zmacs-region-extent)))
 	    (t (error "No offix or CDE support compiled in")))
     ;; no drag, call region-funct
     (and (not mouse-yank-at-point)
@@ -1417,11 +1417,10 @@ other mouse buttons."
   (if (not (specifier-instance vertical-divider-draggable-p
 			       (event-window event)))
       (error "Not over a window!"))
-  (with-specifier-instance
-      vertical-divider-shadow-thickness
-      (- (specifier-instance vertical-divider-shadow-thickness
-			     (event-window event)))
-      (event-window event)
+  (let-specifier ((vertical-divider-shadow-thickness
+		   (- (specifier-instance vertical-divider-shadow-thickness
+					  (event-window event)))
+		   (event-window event)))
     (let* ((window (event-window event))
 	   (frame (event-channel event))
 	   (last-timestamp (event-timestamp event))
@@ -1501,8 +1500,7 @@ other mouse buttons."
 					      (setq new-right-ok new)))))
 				    (window-list) old-edges-all-windows)
 			   all-that-bad))
-		     (set-window-configuration backup-conf))))
-	  )))))
+		     (set-window-configuration backup-conf)))))))))
 
 (setq vertical-divider-map (make-keymap))
 (define-key vertical-divider-map 'button1 'drag-window-divider)

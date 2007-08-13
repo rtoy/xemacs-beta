@@ -44,6 +44,8 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef WINDOWSNT
 #define _P_NOWAIT 1	/* from process.h */
+#include <windows.h>
+#include "nt.h"
 #endif
 
 #ifdef DOS_NT
@@ -825,6 +827,8 @@ When invoked interactively, prints the value in the echo area.
       if (NILP (v))
 	message ("%s not defined in environment", XSTRING_DATA (var));
       else
+	/* #### Should use Fprin1_to_string or Fprin1 to handle string
+           containing quotes correctly.  */
 	message ("\"%s\"", value);
     }
   RETURN_UNGCPRO (v);
@@ -869,35 +873,25 @@ init_callproc (void)
   ** If NT then we look at COMSPEC for the shell program.
   */
   sh = egetenv ("COMSPEC");
-  {
-    char *tem;
-    /*
-    ** If COMSPEC has been set, then convert the
-    ** DOS formatted name into a UNIX format. Then
-    ** create a LISP object.
-    */
-    if (sh)
-      {
-#if 0 /* This breaks everything -kkm */
-	tem = (char *) alloca (strlen (sh) + 1);
-	dostounix_filename (strcpy (tem, sh));
-	Vshell_file_name = build_string (tem);
-#else
-	Vshell_file_name = build_string (sh);
-#endif
-      }
-    /*
-    ** Odd, no COMSPEC, so let's default to our
-    ** best guess for NT.
-    */
-    else
-      {
-	Vshell_file_name = build_string ("\\WINNT\\system32\\cmd.exe");
-      }
-  }
+  /*
+  ** If COMSPEC has been set, then convert the
+  ** DOS formatted name into a UNIX format. Then
+  ** create a LISP object.
+  */
+  if (sh)
+    Vshell_file_name = build_string (sh);
+  /*
+  ** Odd, no COMSPEC, so let's default to our
+  ** best guess for NT.
+  */
+  else
+    Vshell_file_name = build_string ("\\WINNT\\system32\\cmd.exe");
+
 #else /* not WINDOWSNT */
+
   sh = (char *) egetenv ("SHELL");
   Vshell_file_name = build_string (sh ? sh : "/bin/sh");
+
 #endif
 }
 

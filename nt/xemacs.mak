@@ -66,11 +66,18 @@ USE_MINIMAL_TAGBITS=0
 !if !defined(USE_INDEXED_LRECORD_IMPLEMENTATION)
 USE_INDEXED_LRECORD_IMPLEMENTATION=0
 !endif
+!if !defined(INFODOCK)
+INFODOCK=0
+!endif
 
 #
 # Conf error checks
 #
 CONFIG_ERROR=0
+!if $(INFODOCK) && !exist("..\..\Infodock.rules")
+!message Cannot build InfoDock without InfoDock sources
+CONFIG_ERROR=1
+!endif
 !if !$(HAVE_MSW) && !$(HAVE_X)
 !message Please specify at least one HAVE_MSW=1 and/or HAVE_X=1
 CONFIG_ERROR=1
@@ -114,6 +121,9 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !if [set CONF_REPORT_ALREADY_PRINTED=1]
 !endif
 !message ------------------------------------------------
+!if $(INFODOCK)
+!message Building InfoDock.
+!endif
 !if $(HAVE_MSW)
 !message Compiling in support for native GUI.
 !endif
@@ -161,9 +171,9 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 VERBOSECC=0
 !endif
 !if $(VERBOSECC)
-CCV=$(CC)
+CCV=$(CC) -nologo
 !else
-CCV=@$(CC)
+CCV=@$(CC) -nologo
 !endif
 
 !if $(DEBUG_XEMACS)
@@ -228,10 +238,35 @@ UNION_DEFINES=-DUSE_UNION_TYPE
 
 !include "..\version.sh"
 
+# Hard-coded paths
+
+!if $(INFODOCK)
+PATH_PREFIX=../..
+!else
+PATH_PREFIX=..
+!endif
+
+PATH_DEFINES=-DPATH_PREFIX=\"$(PATH_PREFIX)\"
+
+# Program name and version
+
+!if $(INFODOCK)
+INFODOCK_VERSION_STRING=$(infodock_major_version).$(infodock_minor_version).$(infodock_build_version)
+PROGRAM_DEFINES=-DINFODOCK 					\
+	-DPATH_VERSION=\"$(INFODOCK_VERSION_STRING)\"		\
+	-DPATH_PROGNAME=\"infodock\" 				\
+	-DINFODOCK_MAJOR_VERSION=$(infodock_major_version)	\
+	-DINFODOCK_MINOR_VERSION=$(infodock_minor_version)	\
+	-DINFODOCK_BUILD_VERSION=$(infodock_build_version)
+!else
 !if defined(emacs_beta_version)
 XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)-b$(emacs_beta_version)
 !else
 XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)
+!endif
+PROGRAM_DEFINES=						\
+	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
+	-DPATH_PROGNAME=\"xemacs\"
 !endif
 
 # Generic variables
@@ -241,8 +276,7 @@ INCLUDES=$(X_INCLUDES) $(MSW_INCLUDES) -I$(XEMACS)\nt\inc -I$(XEMACS)\src -I$(XE
 DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MULE_DEFINES) \
 	$(TAGBITS_DEFINES) $(LRECORD_DEFINES) $(UNION_DEFINES) \
 	-DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN -DWINDOWSNT -Demacs \
-	-DHAVE_CONFIG_H -DPATH_PROGNAME=\"xemacs\" \
-	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"
+	-DHAVE_CONFIG_H $(PROGRAM_DEFINES) $(PATH_DEFINES)
 
 OUTDIR=obj
 
@@ -273,11 +307,38 @@ $(XEMACS)\src\puresize-adjust.h:	puresize-adjust.h
 
 #------------------------------------------------------------------------------
 
+# lib-src programs
+
+LIB_SRC = $(XEMACS)\lib-src
+LIB_SRC_DEFINES = -DHAVE_CONFIG_H -DWIN32 -DWINDOWSNT
+
+# Inferred rule
+{$(LIB_SRC)}.c{$(LIB_SRC)}.exe :
+	@cd $(LIB_SRC)
+	$(CCV) -I. -I$(XEMACS)/src -I$(XEMACS)/nt/inc $(LIB_SRC_DEFINES) -O2 -W3 -Fe$@ $**
+	@cd $(XEMACS)\nt
+
+# Individual dependencies
+ETAGS_DEPS = $(LIB_SRC)/getopt.c $(LIB_SRC)/getopt1.c $(LIB_SRC)/../src/regex.c
+$(LIB_SRC)/etags.exe : $(LIB_SRC)/etags.c $(ETAGS_DEPS)
+#### ootags???
+
+LIB_SRC_TOOLS = \
+	$(LIB_SRC)/make-docfile.exe	\
+	$(LIB_SRC)/hexl.exe		\
+	$(LIB_SRC)/movemail.exe		\
+	$(LIB_SRC)/mmencode.exe		\
+	$(LIB_SRC)/sorted-doc.exe	\
+	$(LIB_SRC)/wakeup.exe		\
+	$(LIB_SRC)/etags.exe		
+
 # LASTFILE Library
+
+#------------------------------------------------------------------------------
 
 LASTFILE=$(OUTDIR)\lastfile.lib
 LASTFILE_SRC=$(XEMACS)\src
-LASTFILE_FLAGS=-nologo $(WARN_CPP_FLAGS) $(OPT) $(INCLUDES) -Fo$@ -c
+LASTFILE_FLAGS=$(WARN_CPP_FLAGS) $(OPT) $(INCLUDES) -Fo$@ -c
 LASTFILE_OBJS= \
 	$(OUTDIR)\lastfile.obj
 
@@ -295,7 +356,7 @@ $(OUTDIR)\lastfile.obj:	$(LASTFILE_SRC)\lastfile.c
 
 LWLIB=$(OUTDIR)\lwlib.lib
 LWLIB_SRC=$(XEMACS)\lwlib
-LWLIB_FLAGS=-nologo $(WARN_CPP_FLAGS) $(OPT) $(INCLUDES) $(DEFINES) \
+LWLIB_FLAGS=$(WARN_CPP_FLAGS) $(OPT) $(INCLUDES) $(DEFINES) \
  -DNEED_ATHENA -DNEED_LUCID \
  -D_WINDOWS -DMENUBARS_LUCID -DSCROLLBARS_LUCID -DDIALOGS_ATHENA \
  -Fo$@ -c
@@ -335,16 +396,6 @@ $(OUTDIR)\xlwscrollbar.obj:	$(LWLIB_SRC)\xlwscrollbar.c
 !endif
 #------------------------------------------------------------------------------
 
-# lib-src programs
-
-LIB_SRC=$(XEMACS)\lib-src
-LIB_SRC_FLAGS=$(INCLUDES) $(DEFINES) -ML
-LIB_SRC_LIBS= kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
- advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib libc.lib
-LIB_SRC_LFLAGS=-nologo $(LIB_SRC_LIBS) -base:0x1000000\
- -subsystem:console -pdb:none $(DEBUG_FLAGS) -machine:I386\
- -nodefaultlib -out:$@
-
 DOC=$(LIB_SRC)\DOC
 DOC_SRC1=\
  $(XEMACS)\src\abbrev.c \
@@ -365,7 +416,6 @@ DOC_SRC1=\
  $(XEMACS)\src\data.c \
  $(XEMACS)\src\device.c
 DOC_SRC2=\
-# $(XEMACS)\src\dialog.c \
  $(XEMACS)\src\dired.c \
  $(XEMACS)\src\doc.c \
  $(XEMACS)\src\doprnt.c \
@@ -499,30 +549,6 @@ DOC_SRC9=\
  $(XEMACS)\src\debug.c
 !endif
 
-MAKE_DOCFILE=$(LIB_SRC)\make-docfile.exe
-
-$(MAKE_DOCFILE): $(OUTDIR)\make-docfile.obj
-	link.exe -out:$@ $(LIB_SRC_LFLAGS) $** $(LIB_SRC_LIBS)
-
-$(OUTDIR)\make-docfile.obj:	$(LIB_SRC)\make-docfile.c
-	 $(CCV) -nologo $(LIB_SRC_FLAGS) -c $** -Fo$@
-
-RUNEMACS=$(XEMACS)\src\runemacs.exe
-
-$(RUNEMACS): $(OUTDIR)\runemacs.obj
-	link.exe -nologo -out:$@ -subsystem:windows -entry:WinMainCRTStartup \
-	-pdb:none -release -incremental:no $** \
-	kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
-	advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib libc.lib
-
-$(OUTDIR)\runemacs.obj:	$(XEMACS)\nt\runemacs.c
-	$(CCV) -nologo -ML $(WARN_CPP_FLAGS) $(OPT) -c \
-	-D_DEBUG -DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN \
-	-D_X86_ -Demacs -DHAVE_CONFIG_H \
-	$** -Fo$@
-
-SUPPORT_PROGS=$(MAKE_DOCFILE) $(RUNEMACS)
-
 #------------------------------------------------------------------------------
 
 # TEMACS Executable
@@ -543,10 +569,9 @@ TEMACS_CPP_FLAGS= $(WARN_CPP_FLAGS) $(INCLUDES) $(DEFINES) $(DEBUG_DEFINES) \
  -DEMACS_MINOR_VERSION=$(emacs_minor_version) \
  -DEMACS_BETA_VERSION=$(emacs_beta_version) \
  -DXEMACS_CODENAME=\"$(xemacs_codename)\" \
- -DPATH_PREFIX=\"$(XEMACS)\" \
  -DPATH_PACKAGEPATH=\"$(PATH_PACKAGEPATH)\"
 
-TEMACS_FLAGS=-nologo -ML $(WARN_CPP_FALGS) $(OPT) -c $(TEMACS_CPP_FLAGS)
+TEMACS_FLAGS=-ML $(WARN_CPP_FALGS) $(OPT) -c $(TEMACS_CPP_FLAGS)
 
 !if $(HAVE_X)
 TEMACS_X_OBJS=\
@@ -628,7 +653,6 @@ TEMACS_OBJS= \
 	$(OUTDIR)\console.obj \
 	$(OUTDIR)\data.obj \
 	$(OUTDIR)\device.obj \
-#	$(OUTDIR)\dialog.obj \
 	$(OUTDIR)\dired.obj \
 	$(OUTDIR)\doc.obj \
 	$(OUTDIR)\doprnt.obj \
@@ -778,7 +802,7 @@ dump-xemacs: $(TEMACS)
 #------------------------------------------------------------------------------
 
 # use this rule to build the complete system
-all:	$(OUTDIR)\nul $(LASTFILE) $(LWLIB) $(SUPPORT_PROGS) \
+all:	$(OUTDIR)\nul $(LASTFILE) $(LWLIB) $(LIB_SRC_TOOLS) \
 	$(TEMACS) $(TEMACS_BROWSE) update-elc $(DOC) dump-xemacs
 
 temacs: $(TEMACS)
