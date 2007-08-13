@@ -86,6 +86,7 @@
 (autoload 'url-gopher "url-gopher")
 (autoload 'url-irc "url-irc")
 (autoload 'url-http "url-http")
+(autoload 'url-nfs "url-nfs")
 (autoload 'url-mailserver "url-mail")
 (autoload 'url-mailto "url-mail")
 (autoload 'url-info "url-misc")
@@ -280,58 +281,87 @@
 (defun url-after-change-function (&rest args)
   ;; The nitty gritty details of messaging the HTTP/1.0 status messages
   ;; in the minibuffer."
-  (save-excursion
-    (set-buffer url-working-buffer)
-    (let (status-message)
-      (if url-current-content-length
-	  nil
-	(goto-char (point-min))
-	(skip-chars-forward " \t\n")
-	(if (not (looking-at "HTTP/[0-9]\.[0-9]"))
-	    (setq url-current-content-length 0)
-	  (setq url-current-isindex
-		(and (re-search-forward "$\r*$" nil t) (point)))
-	  (if (re-search-forward
-	       "^content-type:[ \t]*\\([^\r\n]+\\)\r*$"
-	       url-current-isindex t)
-	      (setq url-current-mime-type (downcase
-					  (url-eat-trailing-space
-					   (buffer-substring
-					    (match-beginning 1)
-					    (match-end 1))))))
-	  (if (re-search-forward "^content-length:\\([^\r\n]+\\)\r*$"
-				 url-current-isindex t)
-	      (setq url-current-content-length
-		    (string-to-int (buffer-substring (match-beginning 1)
-						     (match-end 1))))
-	    (setq url-current-content-length nil))))
-      (goto-char (point-min))
-      (if (re-search-forward "^status:\\([^\r]*\\)" url-current-isindex t)
-	  (progn
-	    (setq status-message (buffer-substring (match-beginning 1)
-						   (match-end 1)))
-	    (replace-match (concat "btatus:" status-message))))
-      (goto-char (point-max))
-      (cond
-       (status-message (url-lazy-message "%s" status-message))
-       ((and url-current-content-length (> url-current-content-length 1)
-	     url-current-mime-type)
-	(url-lazy-message "Read %d of %d bytes (%d%%) [%s]"
-			 (point-max) url-current-content-length
-			 (url-percentage (point-max) url-current-content-length)
-			 url-current-mime-type))
-       ((and url-current-content-length (> url-current-content-length 1))
-	(url-lazy-message "Read %d of %d bytes (%d%%)"
-			 (point-max) url-current-content-length
-			 (url-percentage (point-max)
-					 url-current-content-length)))
-       ((and (/= 1 (point-max)) url-current-mime-type)
-	(url-lazy-message "Read %d bytes. [%s]" (point-max)
-			 url-current-mime-type))
-       ((/= 1 (point-max))
-	(url-lazy-message "Read %d bytes." (point-max)))
-       (t (url-lazy-message "Waiting for response."))))))
+  (if (get-buffer url-working-buffer)
+      (save-excursion
+	(set-buffer url-working-buffer)
+	(let (status-message)
+	  (if url-current-content-length
+	      nil
+	    (goto-char (point-min))
+	    (skip-chars-forward " \t\n")
+	    (if (not (looking-at "HTTP/[0-9]\.[0-9]"))
+		(setq url-current-content-length 0)
+	      (setq url-current-isindex
+		    (and (re-search-forward "$\r*$" nil t) (point)))
+	      (if (re-search-forward
+		   "^content-type:[ \t]*\\([^\r\n]+\\)\r*$"
+		   url-current-isindex t)
+		  (setq url-current-mime-type (downcase
+					       (url-eat-trailing-space
+						(buffer-substring
+						 (match-beginning 1)
+						 (match-end 1))))))
+	      (if (re-search-forward "^content-length:\\([^\r\n]+\\)\r*$"
+				     url-current-isindex t)
+		  (setq url-current-content-length
+			(string-to-int (buffer-substring (match-beginning 1)
+							 (match-end 1))))
+		(setq url-current-content-length nil))))
+	  (goto-char (point-min))
+	  (if (re-search-forward "^status:\\([^\r]*\\)" url-current-isindex t)
+	      (progn
+		(setq status-message (buffer-substring (match-beginning 1)
+						       (match-end 1)))
+		(replace-match (concat "btatus:" status-message))))
+	  (goto-char (point-max))
+	  (cond
+	   (status-message (url-lazy-message "%s" status-message))
+	   ((and url-current-content-length (> url-current-content-length 1)
+		 url-current-mime-type)
+	    (url-lazy-message "Read %d of %d bytes (%d%%) [%s]"
+			      (point-max) url-current-content-length
+			      (url-percentage (point-max)
+					      url-current-content-length)
+			      url-current-mime-type))
+	   ((and url-current-content-length (> url-current-content-length 1))
+	    (url-lazy-message "Read %d of %d bytes (%d%%)"
+			      (point-max) url-current-content-length
+			      (url-percentage (point-max)
+					      url-current-content-length)))
+	   ((and (/= 1 (point-max)) url-current-mime-type)
+	    (url-lazy-message "Read %d bytes. [%s]" (point-max)
+			      url-current-mime-type))
+	   ((/= 1 (point-max))
+	    (url-lazy-message "Read %d bytes." (point-max)))
+	   (t (url-lazy-message "Waiting for response.")))))))
 
+(defun url-insert-entities-in-string (string)
+  "Convert HTML markup-start characters to entity references in STRING.
+  Also replaces the \" character, so that the result may be safely used as
+  an attribute value in a tag.  Returns a new string with the result of the
+  conversion.  Replaces these characters as follows:
+    &  ==>  &amp;
+    <  ==>  &lt;
+    >  ==>  &gt;
+    \"  ==>  &quot;"
+  (if (string-match "[&<>\"]" string)
+      (save-excursion
+	(set-buffer (get-buffer-create " *entity*"))
+	(erase-buffer)
+	(buffer-disable-undo (current-buffer))
+	(insert string)
+	(goto-char (point-min))
+	(while (progn
+		 (skip-chars-forward "^&<>\"")
+		 (not (eobp)))
+	  (insert (cdr (assq (char-after (point))
+			     '((?\" . "&quot;")
+			       (?& . "&amp;")
+			       (?< . "&lt;")
+			       (?> . "&gt;")))))
+	  (delete-char 1))
+	(buffer-string))
+    string))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Information information
@@ -562,6 +592,7 @@ accessible."
 
 (defun url-insert-file-contents (url &rest args)
   "Insert the contents of the URL in this buffer."
+  (interactive "sURL: ")
   (save-excursion
     (let ((old-asynch url-be-asynchronous))
       (setq-default url-be-asynchronous nil)
@@ -801,7 +832,10 @@ or 1 second has elapsed."
 		  (save-excursion
 		    (set-buffer (get-buffer-create buffer))
 		    (setq mc-flag nil)
-		    (set-process-coding-system conn *noconv* *noconv*)))
+		    (if (not url-running-xemacs)
+			(set-process-coding-system conn *noconv* *noconv*)
+		      (set-process-input-coding-system conn 'noconv)
+		      (set-process-output-coding-system conn 'noconv))))
  	      conn)
 	  (error "Unable to connect to %s:%s" host service))))
      ((eq tmp-gateway-method 'program)
@@ -1471,7 +1505,7 @@ path components followed by `..' are removed, along with the `..' itself."
 			(and (< char ?a)
 			     (> char ?Z))
 			(and (< char ?@)
-			     (> char ?:)))
+			     (>= char ?:)))
 		    (if (< char 16)
 			(upcase (format "%%0%x" char))
 		      (upcase (format "%%%x" char)))
@@ -1543,6 +1577,11 @@ and decoding any MIME content-transfer-encoding used."
   (url-replace-regexp "Connection closed by.*" "")
   (goto-char (point-min))
   (url-replace-regexp "Process WWW.*" ""))
+
+(defun url-remove-compressed-extensions (filename)
+  (while (assoc (url-file-extension filename) url-uncompressor-alist)
+    (setq filename (url-file-extension filename t)))
+  filename)
 
 (defun url-uncompress ()
   "Do any necessary uncompression on `url-working-buffer'"
@@ -2201,16 +2240,13 @@ retrieve a URL by its HTML source.")
   (let* ((urlobj (url-generic-parse-url url))
 	 (type (url-type urlobj))
 	 (url-using-proxy (and
+			   (url-host urlobj)
 			   (if (assoc "no_proxy" url-proxy-services)
 			       (not (string-match
 				     (cdr
 				      (assoc "no_proxy" url-proxy-services))
-				     url))
+				     (url-host urlobj)))
 			     t)
-			   (not
-			    (and
-			     (string-match "file:" url)
-			     (not (string-match "file://" url))))
 			   (cdr (assoc type url-proxy-services))))
 	 (handler nil)
 	 (original-url url)
@@ -2227,8 +2263,8 @@ retrieve a URL by its HTML source.")
     (save-excursion
       (set-buffer (get-buffer-create url-working-buffer))
       (setq url-current-can-be-cached (not no-cache)))
-    (if url-be-asynchronous
-	(url-download-minor-mode t))
+;    (if url-be-asynchronous
+;	(url-download-minor-mode t))
     (if (and handler (fboundp handler))
 	(funcall handler url)
       (set-buffer (get-buffer-create url-working-buffer))

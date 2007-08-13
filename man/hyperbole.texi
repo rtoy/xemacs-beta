@@ -443,7 +443,7 @@ archive entries.
 
 If you maintain or use Hyperbole, you should consider joining one of the
 two Hyperbole interest mailing lists.  @xref{Menus}, and the description
-of the the Msg/ menu item, for a convenient means of joining and mailing
+of the Msg/ menu item, for a convenient means of joining and mailing
 to these lists.
 
 @cindex mail lists
@@ -2999,7 +2999,7 @@ sequence.  @xref{Links}.
 The current view spec is saved whenever the outline is saved.  The next
 time the outline is read in, this will be the initial view.
 
-The rest of this section documents the the view spec characters that are
+The rest of this section documents the view spec characters that are
 presently supported and explains how to invoke a view spec.  There is no
 user-level way to add your own view spec characters, so all character
 codes are reserved for future use.
@@ -3478,7 +3478,7 @@ Move to the next entry at any level.
 Move to the previous entry at any level.
 @kindex u
 @item u
-Move the the previous entry one level up.
+Move to the previous entry one level up.
 @kindex .
 @kindex <
 @item .

@@ -609,10 +609,11 @@ HTTP/1.0 specification for more details." x redir) 'error)
 		      (condition-case ()
 			  (url-kill-process process)
 			(error nil))))
-		  (if (not url-be-asynchronous)
-		      (message "Retrieval complete."))
-		  (remove-hook 'after-change-functions
-			       'url-after-change-function)))))
+		  (if url-be-asynchronous
+		      nil
+		    (message "Retrieval complete.")
+		    (remove-hook 'after-change-functions
+				 'url-after-change-function))))))
 	(progn
 	  (ding)
 	  (url-warn 'security "Aborting connection to bad port..."))))))

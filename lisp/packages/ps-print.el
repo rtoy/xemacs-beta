@@ -1,8 +1,9 @@
 ;;; ps-print.el --- Jim's Pretty-Good PostScript Generator for Emacs 19.
 
-;; Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
 
 ;; Author: Jim Thompson <thompson@wg2.waii.com>
+;; Maintainer: duthen@cegelec-red.fr (Jacques Duthen Prestataire)
 ;; Keywords: print, PostScript
 
 ;; This file is part of XEmacs.
@@ -19,7 +20,8 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;; LCD Archive Entry:
 ;; ps-print|James C. Thompson|thompson@wg2.waii.com|
@@ -31,7 +33,7 @@
 ;; version number.  When reporting bugs, please also report the
 ;; version of Emacs, if any, that ps-print was distributed with.)
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -85,7 +87,7 @@
 ;; printout than to find 50 single-page printouts).
 ;; 
 ;; Ps-print has a hook in the kill-emacs-hooks so that you won't
-;; accidently quit from Emacs while you have unprinted PostScript
+;; accidentally quit from Emacs while you have unprinted PostScript
 ;; waiting in the spool buffer.  If you do attempt to exit with
 ;; spooled PostScript, you'll be asked if you want to print it, and if
 ;; you decline, you'll be asked to confirm the exit; this is modeled
@@ -200,7 +202,7 @@
 ;; Ps-print keeps internal lists of which fonts are bold and which are
 ;; italic; these lists are built the first time you invoke ps-print.
 ;; For the sake of efficiency, the lists are built only once; the same
-;; lists are referred in later invokations of ps-print.
+;; lists are referred in later invocations of ps-print.
 ;;
 ;; Because these lists are built only once, it's possible for them to
 ;; get out of sync, if a face changes, or if new faces are added.  To
@@ -257,7 +259,7 @@
 ;; or variables.  Functions are called, and should return a string to
 ;; show in the header.  Variables should contain strings to display in
 ;; the header.  In either case, function or variable, the PostScript
-;; strings delimeters are added by ps-print, and should not be part of
+;; string delimeters are added by ps-print, and should not be part of
 ;; the returned value.
 ;;
 ;; Here's an example: say we want the left header to display the text
@@ -304,29 +306,9 @@
 ;; formats for; it should contain one of the symbols ps-letter,
 ;; ps-legal, or ps-a4.  The default is ps-letter.
 ;;
-;; 
-;; Installing ps-print
-;; -------------------
-;;
-;; 1. Place ps-print.el somewhere in your load-path and byte-compile
-;;    it.  You can ignore all byte-compiler warnings; they are the
-;;    result of multi-Emacs support.  This step is necessary only if
-;;    you're installing your own ps-print; if ps-print came with your
-;;    copy of Emacs, this been done already.
-;;
-;; 2. Place in your .emacs file the line
-;;
-;;        (require 'ps-print)
-;;
-;;    to load ps-print.  Or you may cause any of the ps-print commands
-;;    to be autoloaded with an autoload command such as:
-;;
-;;      (autoload 'ps-print-buffer "ps-print"
-;;        "Generate and print a PostScript image of the buffer..." t)
-;;
-;; 3. Make sure that the variables ps-lpr-command and ps-lpr-switches
-;;    contain appropriate values for your system; see the usage notes
-;;    below and the documentation of these variables.
+;; Make sure that the variables ps-lpr-command and ps-lpr-switches
+;; contain appropriate values for your system; see the usage notes
+;; below and the documentation of these variables.
 ;; 
 ;; New since version 1.5
 ;; ---------------------
@@ -459,6 +441,8 @@ Note: page numbers are displayed as part of headers, see variable
 `ps-print-headers'.")
 
 ;;;###autoload
+;;; The 19.33 fsf version includes a test on pixel components instead
+;;;  of color-instance-rgb-components
 (defvar ps-print-color-p (and (or (fboundp 'x-color-values)	; fsf
 				  (fboundp 'color-instance-rgb-components))
 					; xemacs
@@ -608,9 +592,9 @@ number, prompt the user for the name of the file to save in."
 ;;;###autoload
 (defun ps-print-buffer-with-faces (&optional filename)
   "Generate and print a PostScript image of the buffer.
-
 Like `ps-print-buffer', but includes font, color, and underline
-information in the generated image."
+information in the generated image.  This command works only if you
+are using a window system, so it has a way to determine color values."
   (interactive (list (ps-print-preprint current-prefix-arg)))
   (ps-generate (current-buffer) (point-min) (point-max)
 	       'ps-generate-postscript-with-faces)
@@ -620,7 +604,6 @@ information in the generated image."
 ;;;###autoload
 (defun ps-print-region (from to &optional filename)
   "Generate and print a PostScript image of the region.
-
 Like `ps-print-buffer', but prints just the current region."
 
   (interactive (list (point) (mark) (ps-print-preprint current-prefix-arg)))
@@ -632,9 +615,9 @@ Like `ps-print-buffer', but prints just the current region."
 ;;;###autoload
 (defun ps-print-region-with-faces (from to &optional filename)
   "Generate and print a PostScript image of the region.
-
 Like `ps-print-region', but includes font, color, and underline
-information in the generated image."
+information in the generated image.  This command works only if you
+are using a window system, so it has a way to determine color values."
 
   (interactive (list (point) (mark) (ps-print-preprint current-prefix-arg)))
   (ps-generate (current-buffer) from to
@@ -645,7 +628,6 @@ information in the generated image."
 ;;;###autoload
 (defun ps-spool-buffer ()
   "Generate and spool a PostScript image of the buffer.
-
 Like `ps-print-buffer' except that the PostScript image is saved in a
 local buffer to be sent to the printer later.
 
@@ -658,9 +640,9 @@ Use the command `ps-despool' to send the spooled images to the printer."
 ;;;###autoload
 (defun ps-spool-buffer-with-faces ()
   "Generate and spool a PostScript image of the buffer.
-
 Like `ps-spool-buffer', but includes font, color, and underline
-information in the generated image.
+information in the generated image.  This command works only if you
+are using a window system, so it has a way to determine color values.
 
 Use the command `ps-despool' to send the spooled images to the printer."
 
@@ -672,7 +654,6 @@ Use the command `ps-despool' to send the spooled images to the printer."
 ;;;###autoload
 (defun ps-spool-region (from to)
   "Generate a PostScript image of the region and spool locally.
-
 Like `ps-spool-buffer', but spools just the current region.
 
 Use the command `ps-despool' to send the spooled images to the printer."
@@ -684,9 +665,9 @@ Use the command `ps-despool' to send the spooled images to the printer."
 ;;;###autoload
 (defun ps-spool-region-with-faces (from to)
   "Generate a PostScript image of the region and spool locally.
-
 Like `ps-spool-region', but includes font, color, and underline
-information in the generated image.
+information in the generated image.  This command works only if you
+are using a window system, so it has a way to determine color values.
 
 Use the command `ps-despool' to send the spooled images to the printer."
   (interactive "r")
@@ -745,12 +726,12 @@ StandardEncoding 46 82 getinterval aload pop
 %*** NOTE: the following are missing in the Adobe documentation,
 %*** but appear in the displayed table:
 %*** macron at 0225, dieresis at 0230, cedilla at 0233, space at 0240.
-% \20x
+% ^Px
     /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
     /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
     /dotlessi /grave /acute /circumflex /tilde /macron /breve /dotaccent
     /dieresis /.notdef /ring /cedilla /.notdef /hungarumlaut /ogonek /caron
-% \24x
+% ^Tx
     /space /exclamdown /cent /sterling
 	/currency /yen /brokenbar /section
     /dieresis /copyright /ordfeminine /guillemotleft
@@ -759,7 +740,7 @@ StandardEncoding 46 82 getinterval aload pop
 	/acute /mu /paragraph /periodcentered
     /cedilla /onesuperior /ordmasculine /guillemotright
 	/onequarter /onehalf /threequarters /questiondown
-% \30x
+% ^Xx
     /Agrave /Aacute /Acircumflex /Atilde
 	/Adieresis /Aring /AE /Ccedilla
     /Egrave /Eacute /Ecircumflex /Edieresis
@@ -768,7 +749,7 @@ StandardEncoding 46 82 getinterval aload pop
 	/Ocircumflex /Otilde /Odieresis /multiply
     /Oslash /Ugrave /Uacute /Ucircumflex
 	/Udieresis /Yacute /Thorn /germandbls
-% \34x
+% ^\\x
     /agrave /aacute /acircumflex /atilde
 	/adieresis /aring /ae /ccedilla
     /egrave /eacute /ecircumflex /edieresis
@@ -1198,9 +1179,11 @@ StandardEncoding 46 82 getinterval aload pop
 	       (listp filename)))
       (let* ((name (concat (buffer-name) ".ps"))
 	     (prompt (format "Save PostScript to file: (default %s) "
-			     name)))
-	(read-file-name prompt default-directory
-			name nil))))
+			     name))
+	     (res (read-file-name prompt default-directory name nil)))
+	(if (file-directory-p res)
+	    (expand-file-name name (file-name-as-directory res))
+	  res))))
 
 ;; The following functions implement a simple list-buffering scheme so
 ;; that ps-print doesn't have to repeatedly switch between buffers
@@ -1565,6 +1548,9 @@ EndDSCPage\n"))
 (defun ps-color-values (x-color)
   (cond ((fboundp 'x-color-values)
 	 (x-color-values x-color))
+        ;; From fsf 19.33
+        ;; ((fboundp 'pixel-components)
+	;;  (pixel-components x-color))
 	((and (fboundp 'color-instance-rgb-components)
 	      (xemacs-color-device))
 	 (color-instance-rgb-components
@@ -1644,6 +1630,9 @@ EndDSCPage\n"))
      (memq face kind-list))))
 
 (defun ps-xemacs-face-kind-p (face kind kind-regex kind-list)
+  ;; fsf 19.33:
+  ;; (let* ((frame-font (or (face-font face) (face-font 'default)))
+  ;;       (kind-cons (assq kind (x-font-properties frame-font)))
   (let* ((frame-font
 	  (or (face-font-instance face) (face-font-instance 'default)))
 	 (kind-cons (and frame-font
@@ -1802,8 +1791,20 @@ EndDSCPage\n"))
 			   (min (next-overlay-change from) to)))
 		 (setq position
 		       (min property-change overlay-change))
+		 ;; The code below is not quite correct,
+		 ;; because a non-nil overlay invisible property
+		 ;; which is inactive according to the current value
+		 ;; of buffer-invisibility-spec nonetheless overrides
+		 ;; a face text property.
 		 (setq face
-		       (cond ((get-text-property from 'invisible) nil)
+		       (cond ((let ((prop (get-text-property from 'invisible)))
+				;; Decide whether this invisible property
+				;; really makes the text invisible.
+				(if (eq buffer-invisibility-spec t)
+				    (not (null prop))
+				  (or (memq prop buffer-invisibility-spec)
+				      (assq prop buffer-invisibility-spec))))
+			      nil)
 			     ((get-text-property from 'face))
 			     (t 'default)))
 		 (let ((overlays (overlays-at from))
@@ -1817,7 +1818,11 @@ EndDSCPage\n"))
 						  0)))
 		       (if (and (or overlay-invisible overlay-face)
 				(> overlay-priority face-priority))
-			   (setq face (cond (overlay-invisible nil)
+			   (setq face (cond ((if (eq buffer-invisibility-spec t)
+						 (not (null overlay-invisible))
+					       (or (memq overlay-invisible buffer-invisibility-spec)
+						   (assq overlay-invisible buffer-invisibility-spec)))
+					     nil)
 					    ((and face overlay-face)))
 				 face-priority overlay-priority)))
 		     (setq overlays (cdr overlays))))
@@ -1831,7 +1836,10 @@ EndDSCPage\n"))
 
 (defun ps-generate (buffer from to genfunc)
   (let ((from (min to from))
-	(to (max to from)))
+	(to (max to from))
+	;; This avoids trouble if chars with read-only properties
+	;; are copied into ps-spool-buffer.
+	(inhibit-read-only t))
     (save-restriction
       (narrow-to-region from to)
       (if ps-razzle-dazzle
@@ -1875,11 +1883,11 @@ EndDSCPage\n"))
 	      (while (re-search-backward "^/PageCount 0 def$" nil t)
 		(replace-match (format "/PageCount %d def" ps-page-count) t))
 
-	      ;; Setting this variable tells the unwind form that the
+	      ;; Setting this variable tells the unwind form that
 	      ;; the postscript was generated without error.
 	      (setq completed-safely t))
 
-	  ;; Unwind form: If some bad mojo ocurred while generating
+	  ;; Unwind form: If some bad mojo occurred while generating
 	  ;; postscript, delete all the postscript that was generated.
 	  ;; This protects the previously spooled files from getting
 	  ;; corrupted.
@@ -1911,9 +1919,14 @@ EndDSCPage\n"))
 	  (message "Printing..."))
       (save-excursion
 	(set-buffer ps-spool-buffer)
-	(apply 'call-process-region
-	       (point-min) (point-max) ps-lpr-command nil 0 nil
-	       ps-lpr-switches))
+	(if (and (eq system-type 'ms-dos) (stringp dos-ps-printer))
+	    (write-region (point-min) (point-max) dos-ps-printer t 0)
+	  (let ((binary-process-input t)) ; for MS-DOS
+	    (apply 'call-process-region
+		   (point-min) (point-max) ps-lpr-command nil
+		   (if (fboundp 'start-process) 0 nil)
+		   nil
+		   ps-lpr-switches))))
       (if ps-razzle-dazzle
 	  (message "Printing...done")))
     (kill-buffer ps-spool-buffer)))
@@ -1959,7 +1972,7 @@ EndDSCPage\n"))
 (defun ps-article-subject ()
   (save-excursion
     (goto-char (point-min))
-    (if (re-search-forward "^Subject:[ \t]+\\(.*\\)$")
+    (if (re-search-forward "^Subject:[ \t]+\\(.*\\)$" nil t)
 	(buffer-substring (match-beginning 1) (match-end 1))
       "Subject ???")))
 
@@ -1969,7 +1982,7 @@ EndDSCPage\n"))
 (defun ps-article-author ()
   (save-excursion
     (goto-char (point-min))
-    (if (re-search-forward "^From:[ \t]+\\(.*\\)$")
+    (if (re-search-forward "^From:[ \t]+\\(.*\\)$" nil t)
 	(let ((fromstring (buffer-substring (match-beginning 1) (match-end 1))))
 	  (cond
 
@@ -2042,7 +2055,7 @@ EndDSCPage\n"))
 (defun ps-info-file ()
   (save-excursion
     (goto-char (point-min))
-    (if (re-search-forward "File:[ \t]+\\([^, \t\n]*\\)")
+    (if (re-search-forward "File:[ \t]+\\([^, \t\n]*\\)" nil t)
 	(buffer-substring (match-beginning 1) (match-end 1))
       "File ???")))
 
@@ -2051,7 +2064,7 @@ EndDSCPage\n"))
 (defun ps-info-node ()
   (save-excursion
     (goto-char (point-min))
-    (if (re-search-forward "Node:[ \t]+\\([^,\t\n]*\\)")
+    (if (re-search-forward "Node:[ \t]+\\([^,\t\n]*\\)" nil t)
 	(buffer-substring (match-beginning 1) (match-end 1))
       "Node ???")))
 

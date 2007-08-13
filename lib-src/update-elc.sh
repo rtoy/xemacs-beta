@@ -17,6 +17,7 @@
 ##  'era-specific' instead.)
 
 set -eu
+unset MAKEFLAGS   # GNU make sets MAKEFLAGS to -w; confuses non-GNU make
 
 # This means we're running in a Sun workspace
 if [ -d ../era-specific ]; then

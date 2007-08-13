@@ -1,11 +1,11 @@
-;;; w3-draw.el,v --- Emacs-W3 drawing functions for new display engine
+;;; w3-draw.el --- Emacs-W3 drawing functions for new display engine
 ;; Author: wmperry
-;; Created: 1996/06/03 16:59:57
-;; Version: 1.365
+;; Created: 1996/08/25 17:12:32
+;; Version: 1.17
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -25,7 +25,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; This function will take a stream of HTML from w3-preparse-buffer
+;;; This function will take a stream of HTML from w3-parse-buffer
 ;;; and draw it out
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -76,15 +76,27 @@
     prefix-vector))
 
 (defsubst w3-set-fill-prefix-length (len)
-  (let ((len len))
-    (setq fill-prefix (if (< len 80)
-			  (aref w3-fill-prefixes-vector len)
-			(make-string len ? )))))
+  (setq fill-prefix (if (< len (- (or w3-strict-width (window-width)) 4))
+			(if (< len 80)
+			    (aref w3-fill-prefixes-vector len)
+			  (make-string len ? ))
+		      (url-warn
+		       'html
+		       "Runaway indentation!  Too deep for window width!")
+		      fill-prefix)))
 
 (defsubst w3-get-default-style-info (info)
   (and w3-current-stylesheet
        (or
-	;; Check for tag/class first!
+	;; Check for tag/id|name first!
+	(cdr-safe (assq info
+			(cdr-safe
+			 (assoc (or (cdr-safe (assq 'id args))
+				    (cdr-safe (assq 'name args)))
+				(cdr-safe
+				 (assq tag w3-current-stylesheet))))))
+
+	;; Check for tag/class next
 	(cdr-safe (assq info
 			(cdr-safe
 			 (assoc (cdr-safe (assq 'class args))
@@ -105,7 +117,7 @@
 			       (cdr-safe
 				(assq tag w3-current-stylesheet)))))))))
 
-(defun w3-normalize-color (color)
+(defsubst w3-normalize-color (color)
   (cond
    ((valid-color-name-p color)
     color)
@@ -115,7 +127,9 @@
     (w3-normalize-color
      (mapconcat (function (lambda (x) (if (memq x '(?\t ?\r ?\n ? )) ""
 					(char-to-string x)))) color "")))
-   (t 
+   ((valid-color-name-p (font-normalize-color color))
+    (font-normalize-color color))
+   (t
     (w3-warn 'html (format "Bad color specification: %s" color))
     nil)))
 
@@ -156,19 +170,9 @@
 (defvar w3-face-cache nil
   "Cache for w3-face-for-element")
 
-;; This is just for if we don't have Emacspeak loaded so we do not
-;; get compile/run-time errors.
-(defvar dtk-voice-table  nil
-  "Association between symbols and strings to set dtk voices.
-The string can set any dtk parameter. ")
-
-(defsubst w3-valid-voice-p (voice)
-  (cadr (assq voice dtk-voice-table)))
- 
 (defsubst w3-voice-for-element ()
   (let ((temporary-voice (w3-get-default-style-info 'voice-spec)))
-    (and temporary-voice (w3-valid-voice-p temporary-voice)
-	 (cons tag temporary-voice))))
+    (and temporary-voice (cons tag temporary-voice))))
 
 (defsubst w3-face-for-element ()
   (let* ((font-spec  (w3-get-default-style-info 'font-spec))
@@ -202,6 +206,7 @@ The string can set any dtk parameter. ")
 	  (id (and (listp args)
 		   (or (cdr-safe (assq 'name args))
 		       (cdr-safe (assq 'id args))))))
+      
       ;; This allows _ANY_ tag, whether it is known or not, to be
       ;; the target of a # reference in a URL
       (if id
@@ -211,6 +216,16 @@ The string can set any dtk parameter. ")
 					 (set-marker (make-marker)
 						     (point-max)))
 				   w3-id-positions))))
+
+      (if (and (listp args) (cdr-safe (assq 'style args)))
+	  (let ((unique-id (or id (url-create-unique-id)))
+		(sheet ""))
+	    (setq sheet (format "%s.%s { %s }\n" tag unique-id
+				(cdr-safe (assq 'style args)))
+		  args (cons (cons 'id unique-id) args))
+	    
+	    (w3-handle-style (list (cons 'data sheet)
+				   (cons 'notation "css")))))
       (goto-char (point-max))
       (if (and (w3-get-state :next-break)
 	       (not (memq tag
@@ -232,13 +247,13 @@ The string can set any dtk parameter. ")
 		  (setq data-after (and tag
 					(w3-get-default-style-info
 					 'insert.after))))))
-	  (if data-before (w3-handle-single-tag 'text data-before))
+	  (if data-before (w3-handle-text data-before))
 	  (setq w3-current-formatter (get tag 'w3-formatter))
 	  (cond
 	   ((eq w3-current-formatter 'ack) nil)
 	   ((null w3-current-formatter) (w3-handle-unknown-tag tag args))
 	   (t (funcall w3-current-formatter args)))
-	  (if data-after (w3-handle-single-tag 'text data-after)))))
+	  (if data-after (w3-handle-text data-after)))))
       (if (not (eq tag 'text))
 	  (setq w3-last-tag tag))
       (goto-char opos))))
@@ -255,6 +270,9 @@ The string can set any dtk parameter. ")
   (let* ((tag 'html)
 	 (args nil)
 	 (face (cdr (w3-face-for-element))))
+    (if (not face)
+	(setq tag 'body
+	      face (cdr (w3-face-for-element))))
     (and face
 	 (if (not (fboundp 'valid-specifier-locale-p))
 	     nil
@@ -284,7 +302,6 @@ The string can set any dtk parameter. ")
   (w3-put-state :href nil)		; Current link destination
   (w3-put-state :name nil)		; Current link ID tag
   (w3-put-state :image nil)		; Current image destination
-  (w3-put-state :mpeg nil)		; Current mpeg destination
   (w3-put-state :form nil)		; Current form information
   (w3-put-state :optarg nil)		; Option arguments
   (w3-put-state :w3-graphic nil)	; Image stuff for non-xemacs
@@ -365,9 +382,11 @@ The string can set any dtk parameter. ")
       (put tag 'w3-formatter handler)
       (funcall handler args))
      (end-tag-p
-      (put tag 'w3-formatter 'w3-handle-emphasis-end))
+      (put tag 'w3-formatter 'w3-handle-emphasis-end)
+      (w3-handle-emphasis-end args))
      (t 
-      (put tag 'w3-formatter 'w3-handle-emphasis)))))
+      (put tag 'w3-formatter 'w3-handle-emphasis)
+      (w3-handle-emphasis args)))))
 
 (defun w3-handle-text (&optional args)
   ;; This is the main workhorse of the display engine.
@@ -423,7 +442,7 @@ The string can set any dtk parameter. ")
 	   (t nil)))
 	(add-text-properties st (point) (list 'face faces))
 	(if (car voices)
-	    (add-text-properties st (point) (list 'personality (car voices))))
+	    (add-text-properties st (point) (list 'personality (cdar voices))))
 	)
       (if (not (memq (char-after (1- (point))) '(?  ?.)))
 	  (w3-put-state :needspace t))
@@ -640,7 +659,7 @@ The string can set any dtk parameter. ")
     (w3-pop-alignment)))
 
 (defun w3-handle-p (&optional args)
-  (if (or (not (memq w3-last-tag '(li dt dd)))
+  (if (or (not (memq w3-last-tag '(li tr td th dt dd)))
 	  (memq tag '(ol ul dl menu dir)))
       (let ((name (or (cdr-safe (assq 'name args))
 		      (cdr-safe (assq 'id args))))
@@ -913,14 +932,28 @@ The string can set any dtk parameter. ")
   (w3-handle-text "[END MATH]")
   (w3-handle-br))
 
+(defun w3-handle-tr (&optional args)
+  (w3-handle-br))
+
+(defun w3-handle-/tr (&optional args)
+  (w3-handle-br))
+
+(defun w3-handle-td (&optional args)
+  (w3-handle-text " | "))
+
+(defun w3-handle-/td (&optional args)
+  (w3-handle-text " | "))
+
+(defun w3-handle-th (&optional args)
+  (w3-handle-text " | "))
+
+(defun w3-handle-/th (&optional args)
+  (w3-handle-text " | "))
+
 (defun w3-handle-table (&optional args)
-  (w3-handle-br)
-  (w3-handle-text "[START TABLE - Not Implemented (Yet)]")
   (w3-handle-br))
 
 (defun w3-handle-/table (&optional args)
-  (w3-handle-br)
-  (w3-handle-text "[END TABLE]")
   (w3-handle-br))
 
 (defun w3-handle-div (&optional args)
@@ -985,6 +1018,37 @@ The string can set any dtk parameter. ")
 ; For some reason netscape treats </br> like <br> - ugh.
 (fset 'w3-handle-/br 'w3-handle-br)
 
+(defun w3-create-blank-pixmap (width height)
+  (let ((retval
+	 (concat "/* XPM */\n"
+		 "static char *pixmap[] = {\n"
+		 ;;"/* width height num_colors chars_per_pixel */\n"
+		 (format "\"    %d   %d   2     1\",\n" width height)
+		 ;;"/* colors */\n"
+		 "\". c #000000 s background\",\n"
+		 "\"# c #FFFFFF s foreground\",\n"
+		 ;;"/* pixels /*\n"
+		 ))
+	(line (concat "\"" (make-string width ?.) "\"")))
+    (while (/= 1 height)
+      (setq retval (concat retval line ",\n")
+	    height (1- height)))
+    (concat retval line "\n};")))
+
+(defun w3-handle-spacer (&optional args)
+  (let ((type (cdr-safe (assq 'type args)))
+	(size (cdr-safe (assq 'size args)))
+	(w (or (cdr-safe (assq 'width args)) 1))
+	(h (or (cdr-safe (assq 'height args)) 1))
+	(align (cdr-safe (assq 'align args)))
+	(glyph nil))
+    (condition-case ()
+	(setq glyph (make-glyph
+		     (vector 'xpm :data (w3-create-blank-pixmap w h))))
+      (error nil))
+    )
+  )
+
 (defun w3-handle-font (&optional args)
   (let* ((sizearg (cdr-safe (assq 'size args)))
 	 (sizenum (cond
@@ -996,13 +1060,16 @@ The string can set any dtk parameter. ")
 		   ((string= sizearg (int-to-string (string-to-int sizearg)))
 		    (string-to-int sizearg))
 		   (t nil)))
+	 (family (cdr-safe (assq 'face args)))
 	 (color (cdr-safe (assq 'color args)))
 	 (normcolor (if color (w3-normalize-color color)))
-	 (w3-current-stylesheet  (` ((font
-				      (internal
-				       (font-size-index . (, sizenum))
-				       (foreground . (, normcolor))))))))
-    (w3-generate-stylesheet-faces w3-current-stylesheet)
+	 (w3-current-stylesheet  (list
+				  (list 'font
+					(list 'internal
+					      (cons 'font-family family)
+					      (cons 'font-size-index sizenum)
+					      (cons 'foreground normcolor))))))
+    (w3-style-post-process-stylesheet w3-current-stylesheet)
     (w3-handle-emphasis args)))
 
 (defun w3-handle-/font (&optional args)
@@ -1021,47 +1088,8 @@ The string can set any dtk parameter. ")
 ;;; Bonus HTML Tags just for fun :)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun w3-handle-embed (&optional args)
-  (let* ((buf (url-generate-new-buffer-name " *embed*"))
-	 (w3-draw-buffer (current-buffer))
-	 (url-working-buffer buf)
-	 (data (cdr-safe (assq 'data args)))
-	 (href (and (not data)
-		    (url-expand-file-name
-		     (or (cdr-safe (assq 'src args))
-			 (cdr-safe (assq 'href args)))
-		     (cdr-safe (assoc (cdr-safe (assq 'base args))
-				      w3-base-alist)))))
-	 (type (or (cdr-safe (assq 'type args)) "text/plain"))
-	 (parse nil))
-    (if (and href (not (string= type "video/mpeg")))
-	;; MPEG movies can be _HUGE_, delay loading them as
-	;; long as possible
-	(save-excursion
-	  (set-buffer (get-buffer-create buf))
-	  (setq url-be-asynchronous nil)
-	  (url-retrieve href)
-	  (setq data (buffer-string))
-	  (kill-buffer (current-buffer))))
-    (cond
-     ((string= type "text/plain")
-      (insert data))
-     ((string-match "^text/html" type)
-      (save-excursion
-	(set-buffer (get-buffer-create
-		     (url-generate-new-buffer-name " *embed*")))
-	(erase-buffer)
-	(insert data)
-	(setq parse (w3-preparse-buffer (current-buffer) t))
-	(kill-buffer (current-buffer)))
-      (while parse
-	(w3-handle-single-tag (car (car parse)) (cdr (car parse)))
-	(setq parse (cdr parse))))
-     ((string= type "video/mpeg")
-      (let ((width (cdr-safe (assq 'width args)))
-	    (height (cdr-safe (assq 'height args))))
-	(setq width (if width (string-to-int width))
-	      height (if height (string-to-int height)))
-	(w3-add-delayed-mpeg href (point) width height))))))
+  ;; This needs to be reimplemented!!!
+  )
 
 (defun w3-handle-blink (&optional args)
   ;; Keep track of all the buffers with blinking in them, and do GC
@@ -1273,6 +1301,11 @@ amount to rotate the text.  Defaults to caesar (13)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Tags that don't really get drawn, etc.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun w3-handle-/html (&optional args)
+  ;; Technically, we are not supposed to have any text outside the
+  ;; html element, so start ignoring everything.
+  (put 'text 'w3-formatter 'ack))
+
 (defun w3-handle-body (&optional args)
   (if (not w3-user-colors-take-precedence)
       (let* ((vlink (cdr-safe (assq 'vlink args)))
@@ -1399,13 +1432,13 @@ amount to rotate the text.  Defaults to caesar (13)."
   (let* ((src (widget-get widget 'src))
 	 (cached-glyph (w3-image-cached-p src)))
     (if (and cached-glyph (w3-glyphp cached-glyph))
-	(setq w3-image-widgets-waiting (cons widget
-					     w3-image-widgets-waiting))
+	(setq w3-image-widgets-waiting (cons widget w3-image-widgets-waiting))
       (cond
        ((or w3-delay-image-loads (not (fboundp 'valid-specifier-domain-p)))
-	nil)				; Do nothing, cannot do images
+	(w3-add-delayed-graphic widget))
        ((not (w3-image-loadable-p src nil)) ; Hey, we can't load it!
-	(w3-warn 'images (format "Skipping image %s" (url-basepath src t))))
+	(w3-warn 'images (format "Skipping image %s" (url-basepath src t)))
+	(w3-add-delayed-graphic widget))
        (t				; Grab the images
 	(let (
 	      (url-request-method "GET")
@@ -1528,10 +1561,8 @@ amount to rotate the text.  Defaults to caesar (13)."
 (defun w3-handle-/title (&optional args)
   (put 'text 'w3-formatter nil)
   (let ((ttl (w3-get-state :title)))
-    (cond
-     ((and (symbolp ttl) (eq ttl t))
-      nil)
-     ((stringp ttl)
+    (if (not (stringp ttl))
+	nil
       (setq ttl (w3-fix-spaces ttl))
       (if (and ttl (string= ttl ""))
 	  (setq ttl (w3-fix-spaces (url-view-url t))))
@@ -1539,8 +1570,7 @@ amount to rotate the text.  Defaults to caesar (13)."
       ;; Make the URL show in list-buffers output
       (make-local-variable 'list-buffers-directory)
       (setq list-buffers-directory (url-view-url t))
-      (w3-put-state :title t))
-     (t nil))))
+      (w3-put-state :title t))))
 
 (fset 'w3-handle-/head 'w3-handle-/title)
 
@@ -1557,12 +1587,6 @@ amount to rotate the text.  Defaults to caesar (13)."
 						 (assoc base w3-base-alist))))
 	  (setcdr href-node href)))
     (w3-put-state :seen-this-url (url-have-visited-url href))
-    (if (and w3-delimit-links (not (eq w3-delimit-links 'linkname)) href)
-	(progn
-	  (if (w3-get-state :seen-this-url)
-	      (w3-handle-text (cdr w3-link-start-delimiter))
-	    (w3-handle-text (car w3-link-start-delimiter)))
-	  (w3-put-state :needspace 'never)))
     (w3-put-state :zone (point))
     (w3-put-state :link-args args)
     (if title (w3-put-state :link-title title))
@@ -1570,9 +1594,20 @@ amount to rotate the text.  Defaults to caesar (13)."
     (if name (w3-put-state :name name))))
 
 (defun w3-follow-hyperlink (widget &rest ignore)
-  (let ((target (widget-get widget 'target))
-	(href (widget-get widget 'href)))
+  (let* ((target (widget-get widget 'target))
+	 (href (widget-get widget 'href))
+	 (tag 'a)
+	 (args '((class . "visited")))
+	 (face (cdr (w3-face-for-element)))
+	 (old-face (and (widget-get widget :from)
+			(get-text-property (widget-get widget :from) 'face)))
+	 (faces (cond
+		 ((and old-face (consp old-face)) (cons face old-face))
+		 (old-face (cons face (list old-face)))
+		 (t (list face)))))	       
     (if target (setq target (intern (downcase target))))
+    (put-text-property (widget-get widget :from) (widget-get widget :to)
+		       'face faces)
     (case target
       ((_blank external)
        (w3-fetch-other-frame href))
@@ -1581,6 +1616,13 @@ amount to rotate the text.  Defaults to caesar (13)."
        (w3-fetch href))
       (otherwise
        (w3-fetch href)))))
+
+(defun w3-balloon-help-callback (object &optional event)
+  (let* ((widget (widget-at (extent-start-position object)))
+	 (href (and widget (widget-get widget 'href))))
+    (if href
+	(url-truncate-url-for-viewing href)
+      nil)))
 
 (defun w3-handle-hyperlink-end (&optional args)
   (let* ((href (w3-get-state :href))
@@ -1606,14 +1648,10 @@ amount to rotate the text.  Defaults to caesar (13)."
 					:notify 'w3-follow-hyperlink
 					:from (set-marker (make-marker) zone)
 					:to (set-marker (make-marker) (point))
-					:help-echo (case w3-echo-link
-						     (text
-						      (buffer-substring
-						       zone (point)))
-						     (url href)
-						     (otherwise nil)))
+					)
 				  (alist-to-plist old-args))
 				 'face faces
+				 'balloon-help 'w3-balloon-help-callback
 				 'title (cons
 					 (set-marker (make-marker) zone)
 					 (set-marker (make-marker) (point)))
@@ -1621,21 +1659,6 @@ amount to rotate the text.  Defaults to caesar (13)."
       (w3-put-state :zone nil)
       (w3-put-state :href nil)
       (w3-put-state :name nil)
-
-      (if (and w3-delimit-links href)
-	  (progn
-	    (delete-region (point) (progn (skip-chars-backward " ")
-					  (point)))
-	    (if (eq w3-delimit-links 'linkname)
-		(w3-handle-text (concat (if btdt (cdr w3-link-start-delimiter)
-					  (car w3-link-start-delimiter))
-					(or name "noname")
-					(if btdt (cdr w3-link-end-delimiter)
-					  (car w3-link-end-delimiter))))
-	      (if btdt
-		  (w3-handle-text (cdr w3-link-end-delimiter))
-		(w3-handle-text (car w3-link-end-delimiter)))))
-	(goto-char (point-max)))
       (if (and w3-link-info-display-function
 	       (fboundp w3-link-info-display-function))
 	  (let ((info (condition-case ()
@@ -1940,6 +1963,9 @@ amount to rotate the text.  Defaults to caesar (13)."
   (let* ((tag 'html)
 	 (args nil)
 	 (face (cdr (w3-face-for-element))))
+    (if (not face)
+	(setq tag 'body
+	      face (cdr (w3-face-for-element))))
     (and face
 	 (if (not (fboundp 'valid-specifier-locale-p))
 	     nil

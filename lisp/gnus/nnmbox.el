@@ -286,6 +286,9 @@
   (let ((buf (current-buffer))
 	result)
     (goto-char (point-min))
+    ;; The From line may have been quoted by movemail.
+    (when (looking-at (concat ">" message-unix-mail-delimiter))
+      (delete-char 1))
     (if (looking-at "X-From-Line: ")
 	(replace-match "From ")
       (insert "From nobody " (current-time-string) "\n"))
@@ -484,7 +487,7 @@
 	   (buffer-name nnmbox-mbox-buffer)
 	   (save-excursion
 	     (set-buffer nnmbox-mbox-buffer)
-	     (= (buffer-size) (nth 7 (file-attributes nnmbox-mbox-file)))))
+	     (= (buffer-size) (nnheader-file-size nnmbox-mbox-file))))
       ()
     (save-excursion
       (let ((delim (concat "^" message-unix-mail-delimiter))

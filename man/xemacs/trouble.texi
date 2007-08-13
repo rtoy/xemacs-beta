@@ -354,7 +354,7 @@ the last line is terminated, but tell that to the bugs).
 
 @findex open-dribble-file
 @cindex dribble file
-  The easy way to record the input to Emacs precisely is to to write a
+  The easy way to record the input to Emacs precisely is to write a
 dribble file; execute the Lisp expression:
 
 @example

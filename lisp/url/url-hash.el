@@ -50,22 +50,6 @@
 	    clrhash
 	    maphash
 	    copy-hashtable)))
- ((fboundp 'w3-maphash)
-  (mapcar (function
-	   (lambda (sym)
-	     (let ((new-sym (intern (format "url-%s" sym)))
-		   (old-sym (intern (format "w3-%s" sym))))
-	       (defalias new-sym old-sym))))
-	  '(make-hashtable 
-	    make-key-weak-hashtable
-	    make-value-weak-hashtable
-	    make-weak-hashtable
-	    hashtablep
-	    puthash
-	    gethash
-	    clrhash
-	    maphash
-	    copy-hashtable)))
  (t
   (defconst url-hashtable-primes
     '(13 29 37 47 59 71 89 107 131 163 197 239 293 353 431 521 631 761 919
@@ -125,22 +109,6 @@ each key and value in the table."
     "Make a new hashtable which contains the same keys and values
 as the given table.  The keys and values will not themselves be copied."
     (copy-sequence old-table))
-  (mapcar (function
-	   (lambda (sym)
-	     (let ((new-sym (intern (format "w3-%s" sym)))
-		   (old-sym (intern (format "url-%s" sym))))
-	       (fset new-sym old-sym))))
-	  '(make-hashtable 
-	    make-key-weak-hashtable
-	    make-value-weak-hashtable
-	    make-weak-hashtable
-	    hashtablep
-	    puthash
-	    gethash
-	    clrhash
-	    maphash
-	    copy-hashtable))
   ))
 
 (provide 'url-hash)
-(provide 'w3-hash)

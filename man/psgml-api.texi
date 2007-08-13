@@ -1,10 +1,18 @@
 \input texinfo   @c -*-texinfo-*-
 @c %**start of header
-@setfilename psgml-api.info
+@setfilename ../info/psgml-api.info
 @settitle psgml-api
 @c @setchapternewpage odd
 @c %**end of header
-@c $Id: psgml-api.texi,v 1.1.1.1 1996/12/18 03:36:11 steve Exp $
+@c $Id: psgml-api.texi,v 1.1.1.2 1996/12/18 03:47:33 steve Exp $
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* PSGML-API: (psgml-api).  PSGML, the API documentation.
+END-INFO-DIR-ENTRY
+@end format
+@end ifinfo
 
 @ifinfo
 Documentation for PSGML, a major mode for SGML.
@@ -591,6 +599,23 @@ If the function can handle that identifier, it should insert the text
 of the entity into the current buffer at point and return t.  If the
 system identifier is not handled the function should return nil.
 @end defvar
+
+@defvar sgml-doctype-parsed-hook
+This hook is caled after the doctype has been parsed.
+It can be used to load any additional information into the DTD structure.
+@end defvar
+
+@defvar sgml-close-element-hook
+@c ***
+The hook run by `sgml-close-element'.
+These functions are invoked with `sgml-current-tree' bound to the
+element just parsed.
+@end defvar
+
+*** sgml-new-attribute-list-function
+This hook is run when a new element is inserted to construct the
+attribute specification list. The default function prompts for the
+required attributes.
 
 
 @c ------------------------------------------------------------------

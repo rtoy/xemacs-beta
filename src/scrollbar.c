@@ -825,8 +825,8 @@ DEFUN ("scrollbar-vertical-drag", Fscrollbar_vertical_drag,
        Sscrollbar_vertical_drag, 1, 1, 0 /*
 Function called when the user drags the vertical scrollbar thumb.
 One argument, a cons containing the scrollbar's window and a value
-(#### document me!).  You can advise this function to change the
-scrollbar behavior.
+between point-min and point-max.  You can advise this function to
+change the scrollbar behavior.
 */ )
      (object)
      Lisp_Object object;

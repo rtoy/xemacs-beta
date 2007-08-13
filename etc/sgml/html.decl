@@ -18,7 +18,7 @@ CHARSET
      BASESET   "ISO Registration Number 100//CHARSET
                 ECMA-94 Right Part of Latin Alphabet Nr. 1//ESC 2/13 4/1"
      DESCSET   128 32 UNUSED
-               160 96 32
+               160 96 UNUSED
 
 CAPACITY        SGMLREF
                 TOTALCAP        150000
@@ -90,7 +90,7 @@ FEATURES
   APPINFO    NONE
 >
 <!-- 
-	$Id: html.decl,v 1.1.1.1 1996/12/18 03:28:57 steve Exp $
+	$Id: html.decl,v 1.1.1.2 1996/12/18 03:43:03 steve Exp $
 
 	Author: Daniel W. Connolly <connolly@hal.com>
 

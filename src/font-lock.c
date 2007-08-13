@@ -443,7 +443,7 @@ find_context (struct buffer *buf, Bufpos pt)
 		 a) If you move past the start of defun, you will
 		    have to recompute defun, which in this case
 		    means that start of defun goes all the way back
-		    to the beginning of the the file; so you want
+		    to the beginning of the file; so you want
 		    to set start of defun a ways back from the
 		    current point.
 		 b) If you move a line backwards but within start of

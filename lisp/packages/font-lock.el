@@ -656,7 +656,7 @@ This can take a while for large buffers."
   (put-nonduplicable-text-property start end 'font-lock nil))
 
 (defsubst font-lock-any-faces-p (start end)
-  ;; Return non-nil if we've put any syntax highlighting on the
+  ;; Return non-nil if we've put any syntax highlighting on
   ;; the characters in the range.
   ;;
   ;; used to look for 'text-prop property, but this has problems if

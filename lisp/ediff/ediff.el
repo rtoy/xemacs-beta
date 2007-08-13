@@ -1059,7 +1059,7 @@ buffer."
 ;;;###autoload
 (defun ediff-merge-revisions-with-ancestor (&optional file startup-hooks)
   "Run Ediff by merging two revisions of a file with a common ancestor.
-The file is the the optional FILE argument or the file visited by the current
+The file is the optional FILE argument or the file visited by the current
 buffer."
   (interactive)
   (if (stringp file) (find-file file))

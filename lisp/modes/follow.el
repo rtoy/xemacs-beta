@@ -9,19 +9,22 @@
 ;; Keywords: display, window, minor-mode
 ;; Date: 20 Feb 1996
 
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -1217,7 +1220,7 @@ Note that this handles the case when the cache has been set to nil."
       follow-windows-start-end-cache)))
 
 
-(defun follow-pos-visible (pos win win-start-end)
+(defsubst follow-pos-visible (pos win win-start-end)
   "Non-nil when POS is visible in WIN."
   (let ((wstart-wend-bend (cdr (assq win win-start-end))))
     (and (>= pos (car wstart-wend-bend))
@@ -1229,7 +1232,7 @@ Note that this handles the case when the cache has been set to nil."
 ;; first is equal with the start of the successor.  The first window
 ;; should start at a full screen line.
 
-(defun follow-windows-aligned-p (win-start-end)
+(defsubst follow-windows-aligned-p (win-start-end)
   "Non-nil if the follower WINDOWS are alinged."
   (let ((res t)) 
     (save-excursion
@@ -1307,10 +1310,10 @@ Return the selected window."
 
 
 ;; Lets select a window showing the end. Make sure we only select it if it
-;; it wasn't just moved here. (i.e. M-> shall not unconditionally place
+;; wasn't just moved here. (i.e. M-> shall not unconditionally place
 ;; the point in the selected window.)
 ;;
-;; (Compability cludge: in Emacs 19 `window-end' is equal to `point-max';
+;; (Compatibility kludge: in Emacs 19 `window-end' is equal to `point-max';
 ;; in XEmacs, it is equal to `point-max + 1'. Should I really bother
 ;; checking `window-end' now when I check `end-of-buffer' explicitylt?)
 
@@ -1370,7 +1373,7 @@ Return the selected window."
 ;;{{{ Redisplay 
 
 ;; Redraw all the windows on the screen, starting with the top window.
-;; The window used as as marker is WIN, or the selcted window if WIN
+;; The window used as marker is WIN, or the selcted window if WIN
 ;; is nil.
 
 (defun follow-redisplay (&optional windows win)
@@ -1641,7 +1644,7 @@ non-first windows in Follow Mode."
 	      (or follow-internal-force-redisplay
 		  (progn
 		    (if (eq dest (point-max))
-			;; We're at the end, we have be be careful since
+			;; We're at the end, we have to be careful since
 			;; the display can be aligned while `dest' can
 			;; be visible in several windows.
 			(cond
@@ -2158,7 +2161,7 @@ report this using the `follow-submit-feedback' function."
 		  (cond
 		   ;; The window was moved. Move it back and
 		   ;; select a new.  If no better could be found,
-		   ;; we stick the the new start position.  This
+		   ;; we stick to the new start position.  This
 		   ;; is used when the original process filter
 		   ;; tries to position the cursor at the bottom
 		   ;; of the window.  Example: `lyskom'.

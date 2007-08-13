@@ -433,5 +433,6 @@ Normally nil in most modes, since there is no process to display.")
 		    'modeline-process
 		    (purecopy ")%]----")
 		    (purecopy '(line-number-mode "L%l--"))
+		    (purecopy '(column-number-mode "C%c--"))
 		    (purecopy '(-3 . "%p"))
 		    (purecopy "-%-")))

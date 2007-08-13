@@ -16,8 +16,11 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -25,7 +28,7 @@
 
 ;;; Change Log:
 
-;; $Id: mh-utils.el,v 1.1.1.1 1996/12/18 03:34:39 steve Exp $
+;; $Id: mh-utils.el,v 1.1.1.2 1996/12/18 03:46:49 steve Exp $
 
 ;;; Code:
 
@@ -300,7 +303,7 @@ Type \"\\[mh-header-display]\" to see the message with all its headers."
 	   ;; Changing contents, so this hook needs to be reinitialized.
 	   ;; pgp.el uses this.
 	   (if (boundp 'write-contents-hooks) ;Emacs 19
-	       (setq write-contents-hooks nil))
+	       (kill-local-variable 'write-contents-hooks))
 	   (if formfile
 	       (mh-exec-lib-cmd-output "mhl" "-nobell" "-noclear"
 				       (if (stringp formfile)
@@ -512,7 +515,7 @@ Non-nil third argument means not to show the message."
 	     (end-of-line)
 	     (buffer-substring start (point)))))))
 
-(defvar mua-paradigm "MH-E")		;from mua.el
+(defvar mail-user-agent 'mh-e-user-agent) ;from reporter.el 3.2
 
 (defun mh-find-path ()
   ;; Set mh-progs and mh-lib.
@@ -556,7 +559,7 @@ Non-nil third argument means not to show the message."
       (setq mh-previous-seq (mh-get-profile-field "Previous-Sequence:"))
       (if mh-previous-seq
 	  (setq mh-previous-seq (intern mh-previous-seq)))
-      (setq mua-paradigm "MH-E")
+      (setq mail-user-agent 'mh-e-user-agent)
       (run-hooks 'mh-find-path-hook))))
 
 (defun mh-find-progs ()
@@ -894,23 +897,23 @@ Non-nil third argument means not to show the message."
   (cond ((eql status 0)			;success
 	 status)
 	((stringp status)		;kill string
-	 (error (format "%s: %s" command status)))
+	 (error "%s: %s" command status))
 	(t				;exit code
 	 (cond
 	  ((= (buffer-size) 0)		;program produced no error message
-	   (error (format "%s: exit code %d" command status)))
+	   (error "%s: exit code %d" command status))
 	  (t
 	   ;; will error message fit on one line?
 	   (goto-line 2)
 	   (if (and (< (buffer-size) (screen-width))
 		    (eobp))
-	       (error (buffer-substring 1 (progn (goto-char 1)
+	       (error "%s"
+		      (buffer-substring 1 (progn (goto-char 1)
 						 (end-of-line)
 						 (point))))
 	     (display-buffer (current-buffer))
-	     (error (format
-		     "%s failed with status %d.  See error message in other window."
-		     command status))))))))
+	     (error "%s failed with status %d.  See error message in other window."
+		    command status)))))))
 
 
 (defun mh-expand-file-name (filename &optional default)

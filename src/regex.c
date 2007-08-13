@@ -1042,7 +1042,9 @@ static CONST char *re_error_msgid[] =
    This is a variable only so users of regex can assign to it; we never
    change it ourselves.  */
 #if defined (MATCH_MAY_ALLOCATE)
-int re_max_failures = 200000;
+/* 4400 was enough to cause a crash on Alpha OSF/1,
+   whose default stack limit is 2mb.  */
+int re_max_failures = 4000;
 #else
 int re_max_failures = 2000;
 #endif
@@ -2660,7 +2662,7 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
             default:
             normal_backslash:
               /* You might think it would be useful for \ to mean
-                 not to translate; but if we don't translate it
+                 not to translate; but if we don't translate it,
                  it will never match anything.  */
               c = TRANSLATE (c);
               goto normal_char;
@@ -3604,9 +3606,9 @@ re_match (struct re_pattern_buffer *bufp, CONST char *string, int size,
 
 
 /* re_match_2 matches the compiled pattern in BUFP against the
-   the (virtual) concatenation of STRING1 and STRING2 (of length SIZE1
-   and SIZE2, respectively).  We start matching at POS, and stop
-   matching at STOP.
+   (virtual) concatenation of STRING1 and STRING2 (of length SIZE1 and
+   SIZE2, respectively).  We start matching at POS, and stop matching
+   at STOP.
    
    If REGS is non-null and the `no_sub' field of BUFP is nonzero, we
    store offsets for the substring each group matched in REGS.  See the
@@ -3668,7 +3670,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
      to resume scanning the pattern; the second one is where to resume
      scanning the strings.  If the latter is zero, the failure point is
      a ``dummy''; if a failure happens and the failure point is a dummy,
-     it gets discarded and the next next one is tried.  */
+     it gets discarded and the next one is tried.  */
 #ifdef MATCH_MAY_ALLOCATE /* otherwise, this is global.  */
   fail_stack_type fail_stack;
 #endif

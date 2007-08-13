@@ -118,8 +118,10 @@ Otherwise, only update on button releases or when asked to.  This is slow.")
 	  (beginning-of-line)))))
   (if (not (eq major-mode 'picture-mode))
       (picture-mode))
-  (set-specifier left-toolbar-width (cons (selected-frame) 16))
-  (set-specifier left-toolbar (cons (current-buffer) xpm-palette))
+  (if (featurep 'toolbar)
+      (progn
+	(set-specifier left-toolbar-width (cons (selected-frame) 16))
+	(set-specifier left-toolbar (cons (current-buffer) xpm-palette))))
   (message "Parsing body...")
   (xpm-color-data)
   (message "Parsing body...done")
@@ -194,17 +196,18 @@ defs!)"
 		  (> (elt ccc 2) 32767))
 	      (set-face-foreground new-face "black")
 	    (set-face-foreground new-face "white"))))
-    (setq xpm-pixel-values (cons (cons str new-face) xpm-pixel-values)
-	  xpm-palette
-	  (cons (vector 
-		 (list (xpm-make-solid-pixmap color 12 12))
-		 ;; Major cool things with quotes.....
-		 (` 
-		  (lambda (event)
-		    (interactive "e")
-		    (xpm-toolbar-select-colour event (, str))))
-		 t
-		 color) xpm-palette))
+    (setq xpm-pixel-values (cons (cons str new-face) xpm-pixel-values))
+    (if (featurep 'toolbar)
+	(setq xpm-palette
+	      (cons (vector 
+		     (list (xpm-make-solid-pixmap color 12 12))
+		     ;; Major cool things with quotes.....
+		     (` 
+		      (lambda (event)
+			(interactive "e")
+			(xpm-toolbar-select-colour event (, str))))
+		     t
+		     color) xpm-palette)))
     ))
 
 (defun xpm-parse-color ()

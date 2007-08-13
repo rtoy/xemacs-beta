@@ -26,7 +26,5 @@
 
 /* #### why the hell is configure so broken on this system? */
 #define HAVE_SELECT
-#define HAVE_UNION_WAIT
-#undef HAVE_WAITPID
 
 #define BROKEN_SIGIO

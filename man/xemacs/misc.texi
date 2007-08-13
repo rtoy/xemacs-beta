@@ -737,7 +737,7 @@ the most useful XEmacs commands.
 To start Viper, put the command
 
 @example
-(require 'viper)
+(viper-mode)
 @end example
 
 in your @file{.emacs} file.
@@ -745,6 +745,7 @@ in your @file{.emacs} file.
 Viper comes with a separate manual that is provided standard
 with the XEmacs distribution.
 
+@ignore
 @item evi (alternative vi emulator)
 @cindex evi
 evi is an alternative vi emulator that also provides a nearly complete
@@ -755,6 +756,7 @@ with the XEmacs distribution.
 
 Warning: loading more than one vi emulator at once may cause name
 conflicts; no one has checked.
+@end ignore
 
 @item EDT (DEC VMS editor)
 @findex edt-emulation-on

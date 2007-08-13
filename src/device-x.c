@@ -62,23 +62,30 @@ Lisp_Object Vx_initial_argv_list; /* #### ugh! */
 
 static XrmOptionDescRec emacs_options[] =
 {
-  {"-geometry",	".geometry", XrmoptionSepArg, NULL},
-  {"-iconic",	".iconic",   XrmoptionNoArg, (XtPointer) "yes"},
-  
-  {"-internal-border-width", "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL},
-  {"-ib",                    "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL},
-  {"-scrollbar-width",       "*EmacsFrame.scrollBarWidth",      XrmoptionSepArg, NULL},
-  {"-scrollbar-height",      "*EmacsFrame.scrollBarHeight",     XrmoptionSepArg, NULL},
+  {(String)"-geometry", (String)".geometry", XrmoptionSepArg, NULL},
+  {(String)"-iconic", (String)".iconic", XrmoptionNoArg, (XtPointer) "yes"},
+
+  {(String)"-internal-border-width", (String)"*EmacsFrame.internalBorderWidth",
+   XrmoptionSepArg, NULL},
+  {(String)"-ib", (String)"*EmacsFrame.internalBorderWidth", XrmoptionSepArg,
+   NULL},
+  {(String)"-scrollbar-width", (String)"*EmacsFrame.scrollBarWidth",
+   XrmoptionSepArg, NULL},
+  {(String)"-scrollbar-height", (String)"*EmacsFrame.scrollBarHeight",
+   XrmoptionSepArg, NULL},
 
   /* #### Beware!  If the type of the shell changes, update this. */
-  {"-T",        "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
-  {"-wn",       "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
-  {"-title",    "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
-  {"-iconname", "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL},
-  {"-in",       "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL},
-  {"-mc",      	"*pointerColor",                XrmoptionSepArg, NULL},
-  {"-cr",	"*cursorColor",                 XrmoptionSepArg, NULL},
-  {"-fontset",  "*FontSet",                     XrmoptionSepArg, NULL},
+  {(String)"-T", (String)"*TopLevelEmacsShell.title", XrmoptionSepArg, NULL},
+  {(String)"-wn", (String)"*TopLevelEmacsShell.title", XrmoptionSepArg, NULL},
+  {(String)"-title", (String)"*TopLevelEmacsShell.title", XrmoptionSepArg,
+   NULL},
+  {(String)"-iconname", (String)"*TopLevelEmacsShell.iconName",
+   XrmoptionSepArg, NULL},
+  {(String)"-in", (String)"*TopLevelEmacsShell.iconName", XrmoptionSepArg,
+   NULL},
+  {(String)"-mc", (String)"*pointerColor", XrmoptionSepArg, NULL},
+  {(String)"-cr", (String)"*cursorColor", XrmoptionSepArg, NULL},
+  {(String)"-fontset", (String)"*FontSet", XrmoptionSepArg, NULL},
 };
 
 static void validify_resource_string (char *str);
@@ -278,7 +285,7 @@ x_init_device (struct device *d, Lisp_Object props)
   Xatoms_of_objects_x (d);
   x_init_device_class (d);
 
-  /* Run the the elisp side of the X device initialization. */
+  /* Run the elisp side of the X device initialization. */
   call0 (Qinit_pre_x_win);
 }
 
@@ -1187,7 +1194,7 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
   CONST char *keysym_string;
   KeySym  keysym_KeySym;
   KeySym *keysym_ptr, *keysym_last;
-  int code, min_code, max_code, keysyms_per_code;
+  int min_code, max_code, keysyms_per_code;
   
   if (!DEVICE_X_P (d))
     signal_simple_error ("Not an X device", device);

@@ -363,7 +363,7 @@ morecore (nu)			/* ask system for more memory */
 
 #ifndef VMS
   /* Maximum virtual memory on VMS is difficult to calculate since it
-   * depends on several dynmacially changing things. Also, alignment
+   * depends on several dynamically changing things. Also, alignment
    * isn't that important. That is why much of the code here is ifdef'ed
    * out for VMS systems.
    */

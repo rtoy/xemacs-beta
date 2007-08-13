@@ -703,17 +703,6 @@ font_mark (Lisp_Object obj, void (*markobj) (Lisp_Object))
 
 /* No equal or hash methods; ignore the face the font is based off
    of for `equal' */
-
-int
-font_spec_matches_charset (struct device *d, Lisp_Object charset,
-			   CONST Bufbyte *nonreloc, Lisp_Object reloc,
-			   Bytecount offset, Bytecount length)
-{
-  return DEVMETH_OR_GIVEN (d, font_spec_matches_charset,
-			   (d, charset, nonreloc, reloc, offset, length),
-			   1);
-}
-
 static Lisp_Object
 font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 		  Lisp_Object domain, Lisp_Object instantiator,
@@ -734,7 +723,8 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	}
       instantiator = Ffont_instance_name (instantiator);
     }
-  else if (STRINGP (instantiator))
+  
+  if (STRINGP (instantiator))
     {
       /* First, look to see if we can retrieve a cached value. */
       instance = Fgethash (instantiator, d->font_instance_cache, Qunbound);

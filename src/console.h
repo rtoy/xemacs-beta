@@ -105,8 +105,8 @@ struct console_methods
   int (*frame_visible_p_method) (struct frame *f);
   int (*frame_totally_visible_p_method) (struct frame *f);
   int (*frame_iconified_p_method) (struct frame *f);
-  void (*set_title_from_char_method) (struct frame *f, char *title);
-  void (*set_icon_name_from_char_method) (struct frame *f, char *title);
+  void (*set_title_from_bufbyte_method) (struct frame *f, Bufbyte *title);
+  void (*set_icon_name_from_bufbyte_method) (struct frame *f, Bufbyte *title);
   void (*set_frame_pointer_method) (struct frame *f);
   void (*set_frame_icon_method) (struct frame *f);
   void (*popup_menu_method) (Lisp_Object menu, Lisp_Object event);
@@ -523,16 +523,12 @@ int valid_console_type_p (Lisp_Object type);
 #define CONSOLE_LAST_NONMINIBUF_FRAME(con) NON_LVALUE ((con)->_last_nonminibuf_frame)
 #define CONSOLE_QUIT_CHAR(con) ((con)->quit_char)
 
-#define CDFW_CONSOLE(obj)			\
-  (WINDOWP (obj)				\
-   ? WINDOW_CONSOLE (XWINDOW (obj))		\
-   : (FRAMEP (obj)				\
-      ? FRAME_CONSOLE (XFRAME (obj))		\
-      : (DEVICEP (obj)				\
-	 ? DEVICE_CONSOLE (XDEVICE (obj))    	\
-	 : (CONSOLEP (obj)			\
-	    ? obj				\
-	    : Qnil))))
+#define CDFW_CONSOLE(obj)				\
+   (WINDOWP  (obj) ? WINDOW_CONSOLE (XWINDOW (obj))	\
+ : (FRAMEP   (obj) ?  FRAME_CONSOLE (XFRAME  (obj))	\
+ : (DEVICEP  (obj) ? DEVICE_CONSOLE (XDEVICE (obj))    	\
+ : (CONSOLEP (obj) ? obj				\
+ : Qnil))))
 
 #define CONSOLE_LOOP(concons) LIST_LOOP (concons, Vconsole_list)
 #define CONSOLE_DEVICE_LOOP(devcons, con) \

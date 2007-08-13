@@ -136,7 +136,7 @@ When you run XEmacs under X, each Emacs frame has a menu-bar at the top
 which provides commands for editing, help and other
 options. All these options are also available via key commands, the
 menus just provide convenient short-cuts. The key commands are displayed
-right besides some of the the options. The following is a brief
+right besides some of the options. The following is a brief
 description of the four default menus on the menu bar:
 
 @menu

@@ -1,3 +1,102 @@
+15.08.96:
+	The items of the menu "Set popup menu" are now radio items.
+	-- BUILDED the version 5.0 of the package
+03.08.96:
+	Applied a patch from Jerry G. DeLapp <jgd@lanl.gov> to
+	`html-font-lock-keywords'.
+	Added the param tag for the applet element.
+	Added the functions `hm--html-add-relative-link' and
+	`hm--html-add-relative-link-to-region', which have better
+	support for relative links than the functions for inserting
+	general links.
+	Added functions to insert the center element.
+	Added functions to insert the small and big elements.
+31.07.96:
+	Added the applet element.
+	The tags for menu items and description entries and titles
+	are now inserted with a start and a end tag.
+	Fixed some keybinding bugs.
+	Added the function 'hm--html-indent-region'. At the moment
+	the indentation works only in the minor mode and if the major
+	mode provides an indentation function, like it is in the psgml 
+	mode.
+20.07.96:
+	Fixed bugs in the popup and pulldown menu handling in the Emacs 19.
+	Speeded up the first popup of some of the menus in the Emacs 19.
+	The keybinding for the popup menu in the Emacs 19 has changed to
+	C-down-mouse-3. The variables 
+	`hm--html-emacs19-popup-noregion-menu-button' and
+	`hm--html-emacs19-popup-region-menu-button' should be used in the Emacs
+	19 to change the keybindings. They are defined in hm--html-keys.el.
+	Fixed a bug in the font-lock stuff for the Emacs 19.
+	The popup menus of the minor mode worked now also in the Emacs 19.
+	The pulldown menu of the minor mode worked now also in the Emacs 19.
+	The name of the pulldown menu can now be changed with the variable
+	`hm--html-mode-pulldown-menu-name'.
+	All settings in hm--configuration.el are now made with `defvar'.
+	So it's easier now to overwrite this values in other files.
+	All old lisp stuff deleted.
+	Added Keybindings for the commands in the include and the forms 
+	submenu.
+	Fixed a bug in the command `hm--html-smart-less-than'.
+19.07.96:
+	Changed the functions hm--popup-html* to hm--html-popup*.
+	The Emacs 19 popup menus are now realized as direct bindings of
+	the menu maps to the mouse button. This fixed a bug.
+18.07.96:
+	The popup menus in the Emacs 19 are now much faster, because
+	the keymaps are only computed once from the XEmacs menu
+	description instead of each time.
+	Fixed a bug in the keybinding stuff for the Emacs 19.
+16.07.96:
+	Added the function `hm--html-smart-ampersand'.
+	Added the minor modes `hm--html-minor-mode' and
+	`hm--html-minor-region-mode'. They should provide
+	the menus and commands of this package for the
+	psgml-html-mode.
+	The prefix key of the minor and of the major modes
+	could now be changed with `hm--html-minor-mode-prefix-key'
+	and `hm--html-mode-prefix-key'.
+14.07.96:
+	Ported the internal drag and drop interface for the Emacs 19.
+	Changed the Keybinding for the drag and drop function to
+	M-C-button1 (M-C-mouse-1).
+	Changed hm--install-html-menu for the Emacs 19. It uses now the
+	package easy-menu to install the pulldown menu. This fixes the
+	bug, that the HTML pulldown menu is a global menu.
+13.07.96:
+	Updated the file header comments a little bit.
+10.07.96:
+	Added the file hm--html-mode.el instead of html-mode.el.
+	Changed the mode name to hm--html-mode.
+	Fixed a bug in the function `hm--html-generate-help-buffer-faces',
+	which occurs, if a color is set to nil.
+	The font-lock mode is no longer called direct from the 
+	hm--html-mode.
+	The file html-mode.el should no longer be needed for this mode.
+09.07.96:
+	Added the functions `hm--html-add-normal-link', 
+	`hm--html-add-address', `html-add-list-or-menu-item`, 
+	`hm--html-add-list', `hm--html-add-menu',
+	`hm--html-add-description-list', `hm--html-add-description-entry',
+	`hm--html-add-plaintext', `hm--html-add-blockquote',
+	`hm--html-add-listing', `hm--html-add-fixed',
+	`hm--html-add-emphasized', `hm--html-add-strong',
+	`hm--html-add-keyboard', `hm--html-add-variable',
+	`hm--html-add-sample', `hm--html-add-citation',
+	`hm--html-quotify-hrefs' to the file hm--html.el. Similar
+	functions are defined in the past in the file html-mode without
+	the prefix hm--.
+	Removed Marc's menu. Maybe a simple flat menu will be added
+	in the future, similar to Marc's menu.
+	Removed the old keymaps from the configuration file.
+	Moved the provide forms to the end of the files.
+07.07.96:
+	Added the drag and drop interface. With that it is possible
+	to insert links and images by just Meta Button 1 clicking
+	on its source and destination.
+01.03.96:
+	Added the function `tmpl-insert-template-file'.
 18.02.96:
 	-- BUILDED the version 4.16 of the package
 17.02.96:

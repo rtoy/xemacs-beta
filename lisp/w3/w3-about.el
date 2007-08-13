@@ -1,11 +1,11 @@
-;;; w3-about.el,v --- About pages for emacs-w3
+;;; w3-about.el --- About pages for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/05/07 16:04:04
-;; Version: 1.29
+;; Created: 1996/06/30 18:02:26
+;; Version: 1.3
 ;; Keywords: hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -44,7 +44,7 @@
 <html>
   <head>
     <title>Emacs-W3 v%s</title>
-    <link rel=\"made\" href=\"mailto:wmperry@spry.com\">
+    <link rel=\"made\" href=\"mailto:wmperry@cs.indiana.edu\">
     <link rel=\"stylesheet\" href=\"about:style\">
   </head>
   <body>
@@ -353,7 +353,7 @@ D/epxqqSuHtY9j//2Q==
 <html>
   <head>
     <title>Versions of Emacs</title>
-    <link rel=\"made\" href=\"mailto:wmperry@spry.com\">
+    <link rel=\"made\" href=\"mailto:wmperry@cs.indiana.edu\">
     <link rel=\"stylesheet\" href=\"about:style\">
   </head>
   <body>
@@ -431,15 +431,14 @@ experiment! :)
  <body>
   <hr width=\"85%\">
   <hr width=\"75%\" label=\" The Emacs-W3 Team \">
-  <hr width=\"65%\" label=\" 1993 - 1995 \">
+  <hr width=\"65%\" label=\" 1993 - 1996 \">
   <hr width=\"55%\">
   <dl>
    <dt> Author
-   <dd> William Perry &lt;wmperry@spry.com&gt; (Hey, that's <i>me</i>)!
+   <dd> William Perry &lt;wmperry@cs.indiana.edu&gt; (Hey, that's <i>me</i>)!
         <br>
-        The main author of Emacs-W3, actually employed by SPRY,
-        Inc. to work on HTTP servers and sometimes client issues when
-        he is bored.
+        The main author of Emacs-W3.  Currently unsure what to put in here
+        about his employer. :)
    <dt> Supporting Cast
    <dd>
     <dl>

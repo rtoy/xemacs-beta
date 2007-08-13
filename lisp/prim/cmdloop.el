@@ -134,8 +134,9 @@ or go back to just one window (by deleting all but the selected window)."
   "Redisplay the last error-message.  See the variable `last-error'."
   (interactive)
   (with-displaying-help-buffer
-    (princ "Last error was:\n" standard-output)
-    (display-error last-error standard-output)))
+   (lambda ()
+     (princ "Last error was:\n" standard-output)
+     (display-error last-error standard-output))))
 
 
 ;;#### Must be done later in the loadup sequence

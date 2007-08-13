@@ -649,7 +649,7 @@ enum Lisp_Type
 /* unsafe! */
 #define POINTER_TYPE_P(type) ((type) != Lisp_Int)
 
-/* This should be the underlying type intowhich a Lisp_Object must fit.
+/* This should be the underlying type into which a Lisp_Object must fit.
    In a strict ANSI world, this must be `int', since ANSI says you can't
    use bitfields on any type other than `int'.  However, on a machine
    where `int' and `long' are not the same size, this should be the
@@ -820,7 +820,7 @@ struct Lisp_String
 #ifdef LRECORD_STRING
   struct lrecord_header lheader;
 #endif
-  long _size;
+  Bytecount _size;
   Bufbyte *_data;
   Lisp_Object plist;
 };
@@ -852,8 +852,11 @@ DECLARE_NONRECORD (string, Lisp_String, struct Lisp_String);
 # define charcount_to_bytecount(ptr, len) (len)
 
 #define string_length(s) ((s)->_size)
+#define XSTRING_length(s) string_length (XSTRING (s))
 #define string_data(s) ((s)->_data + 0)
+#define XSTRING_data(s) string_data (XSTRING (s))
 #define string_byte(s, i) ((s)->_data[i] + 0)
+#define XSTRING_byte(s, i) string_byte (XSTRING (s), i)
 #define string_byte_addr(s, i) (&((s)->_data[i]))
 #define set_string_length(s, len) do { (s)->_size = (len); } while (0)
 #define set_string_data(s, ptr) do { (s)->_data = (ptr); } while (0)
@@ -876,7 +879,7 @@ struct Lisp_Vector
 #endif
   long size;
   /* next is now chained through v->contents[size], terminated by Qzero.
-   * This means that pure vectors don't need a "next" */
+     This means that pure vectors don't need a "next" */
   /* struct Lisp_Vector *next; */
   Lisp_Object contents[1];
 };

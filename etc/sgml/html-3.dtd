@@ -360,17 +360,17 @@ each class of block-like elements.
 <!-- a range of standard icons such as &folder; for use
      in speeding up display of directory listings etc. -->
 
-<!-- <!ENTITY % HTMLicons PUBLIC -->
-<!--   "-//IETF//ENTITIES icons for HTML//EN"> -->
-<!-- %HTMLicons; -->
+<!ENTITY % HTMLicons PUBLIC
+  "-//IETF//ENTITIES icons for HTML//EN">
+%HTMLicons;
 
 <!--================ Entities for math symbols ============================-->
 
 <!-- ISO subset chosen for use with the widely available Adobe math font -->
 
-<!-- <!ENTITY % HTMLmath PUBLIC -->
-<!--   "-//IETF//ENTITIES Math and Greek for HTML//EN"> -->
-<!-- %HTMLmath; -->
+<!ENTITY % HTMLmath PUBLIC
+  "-//IETF//ENTITIES Math and Greek for HTML//EN">
+%HTMLmath;
 
 <!--=================== Text Markup =======================================-->
 
@@ -577,7 +577,7 @@ each class of block-like elements.
         seqnum   NUMBER   #IMPLIED  -- starting sequence number --
         skip     NUMBER   0         -- skip seq nums for missing items --
         dingbat  ENTITY   #IMPLIED  -- dingbat entity from HTMLicons --
-        src      (%URI;)  #IMPLIED  -- bullet defined by graphic --
+        src      %URI;  #IMPLIED  -- bullet defined by graphic --
         %url.link;                  -- standard link attributes --
         nowrap   (nowrap)  #IMPLIED -- disable wordwrap --
         >
@@ -684,7 +684,7 @@ each class of block-like elements.
         wrap (vert|horiz|none) none -- multicolumn list style --
         plain   (plain)  #IMPLIED   -- suppress bullets --
         dingbat  ENTITY  #IMPLIED   -- dingbat entity from HTMLicons --
-        src     (%URI;)  #IMPLIED   -- bullet defined by graphic --
+        src     %URI;  #IMPLIED   -- bullet defined by graphic --
         %url.link;                  -- standard link attributes --
         compact (compact) #IMPLIED  -- reduced interitem spacing --
         >
@@ -707,7 +707,7 @@ each class of block-like elements.
         %attrs;
         %needs; -- for control of text flow --
         dingbat ENTITY #IMPLIED -- dingbat entity from HTMLicons --
-        src  (%URI;) #IMPLIED   -- custom bullet graphic --
+        src  %URI; #IMPLIED   -- custom bullet graphic --
         %url.link;              -- standard link attributes --
         skip NUMBER 0           -- skip seq nums for missing items --
         >
@@ -1062,7 +1062,7 @@ each class of block-like elements.
         width  NUMBER #IMPLIED   -- desired width in units --
         height NUMBER #IMPLIED   -- desired height in units --
         units (en|pixels) pixels -- specifies units as en's or pixels --
-        imagemap (%URI) #IMPLIED -- pass background clicks to server --
+        imagemap %URI; #IMPLIED -- pass background clicks to server --
         >
         
 <!ELEMENT FIGTEXT O O %body.content -- dummy element -->
@@ -1082,7 +1082,7 @@ each class of block-like elements.
         y      NUMBER   0        -- offset from top in units --
         width  NUMBER #IMPLIED   -- desired width in units --
         height NUMBER #IMPLIED   -- desired height in units --
-        imagemap (%URI) #IMPLIED -- pass background clicks to server --
+        imagemap %URI; #IMPLIED -- pass background clicks to server --
         >
 
 <!ELEMENT CREDIT - - (%text;)* -- source of image -->
@@ -1416,10 +1416,13 @@ used in normal text!
 -->
 
 <!ENTITY % style-notations "dsssl-lite | w3c-style">
+
+<!--
 <!NOTATION dsssl-lite PUBLIC
       "ISO/IEC 10179:1995//NOTATION DSSSL Style Language//EN">
       
 <!NOTATION w3c-style PUBLIC "IETF/RFC nnn/W3C Style Language//EN">
+-->
 
 <!ELEMENT STYLE - O (#PCDATA)>
 <!ATTLIST STYLE
@@ -1431,7 +1434,7 @@ used in normal text!
 <!ENTITY % html.content "HEAD, BODY">
 
 <!ELEMENT HTML O O  (%html.content)>
-<!ENTITY % version.attr 'VERSION CDATA #FIXED "&HTML.Version;"'>
+<!ENTITY % version.attr 'VERSION CDATA #FIXED "%HTML.Version;"'>
 
 <!-- suggested roles are: TOC, DOC, DOCPART, HITLIST, DIALOG -->
 

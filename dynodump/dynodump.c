@@ -73,7 +73,7 @@
  * N.B. The above commentary is not quite correct in the flags have been hardwired
  *      to RTLD_SAVREL.
  */
-#pragma ident	"@(#) $Id: dynodump.c,v 1.1.1.1 1996/12/18 03:37:22 steve Exp $ - SMI"
+#pragma ident	"@(#) $Id: dynodump.c,v 1.1.1.2 1996/12/18 03:48:00 steve Exp $ - SMI"
 
 #include	<sys/param.h>
 #include	<sys/procfs.h>
@@ -99,6 +99,7 @@ elferr(const char * str)
     return (1);
 }
 
+int dynodump (const char * file);
 int
 dynodump(const char * file)
 {
@@ -228,7 +229,7 @@ dynodump(const char * file)
      * Traverse each section from the input file.
      */
     for (ndx = 1, scn = 0;
-	 _icache->c_scn = elf_nextscn(ielf, scn);
+	 (_icache->c_scn = elf_nextscn(ielf, scn));
 	 ndx++, scn = _icache->c_scn, _icache++) {
 
 	if ((_icache->c_shdr = shdr = elf_getshdr(_icache->c_scn)) == NULL)
@@ -468,7 +469,7 @@ dynodump(const char * file)
      */
     _ndx = _addr = 0;
     for (ndx = 1, scn = 0;
-	 _ocache->c_scn = elf_nextscn(oelf, scn);
+	 (_ocache->c_scn = elf_nextscn(oelf, scn));
 	 ndx++, scn = _ocache->c_scn, _ocache++, _icache++) {
 
 	const char *strs;

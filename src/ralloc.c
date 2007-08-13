@@ -909,7 +909,7 @@ find_mmap_handle (POINTER *alias)
    blocks of the given size left.
 
    Note that this scheme, given it's first-fit strategy, is prone to
-   fragmentation of the the first part of memory earmarked for this
+   fragmentation of the first part of memory earmarked for this
    purpose. [ACP Vol I].  We can't use the workaround of using a
    randomized first fit because we don't want to presume too much
    about the memory map.  Instead, we try to coalesce empty or

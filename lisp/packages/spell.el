@@ -1,7 +1,9 @@
 ;;; spell.el --- spelling correction interface for Emacs.
-;; Keywords: wp, unix
 
 ;; Copyright (C) 1985 Free Software Foundation, Inc.
+
+;; Maintainer: FSF
+;; Keywords: wp, unix
 
 ;; This file is part of XEmacs.
 
@@ -17,9 +19,19 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.28.
+;;; Synched up with: FSF 19.34.
+
+;;; Commentary:
+
+;; This mode provides an Emacs interface to the UNIX spell(1) program.
+;; Entry points are `spell-buffer', `spell-word', `spell-region' and
+;; `spell-string'.  These facilities are documented in the Emacs user's
+;; manual.
+
+;;; Code:
 
 (defvar spell-command "spell"
   "*Command to run the spell program.")
@@ -29,6 +41,10 @@
 This function might remove text-processor commands.
 nil means don't alter the text before checking it.")
 
+;;;###autoload
+(put 'spell-filter 'risky-local-variable t)
+
+;;;###autoload
 (defun spell-buffer ()
   "Check spelling of every word in the buffer.
 For each incorrect word, you are asked for the correct spelling
@@ -38,6 +54,7 @@ as its \"correct\" spelling; then the query replace is skipped."
   (interactive)
   (spell-region (point-min) (point-max) "buffer"))
 
+;;;###autoload
 (defun spell-word ()
   "Check spelling of word at or before point.
 If it is not correct, ask user for the correct spelling
@@ -52,6 +69,7 @@ and `query-replace' the entire buffer to substitute it."
      (setq end (point)))
     (spell-region beg end (buffer-substring beg end))))
 
+;;;###autoload
 (defun spell-region (start end &optional description)
   "Like `spell-buffer' but applies only to region.
 Used in a program, applies from START to END.
@@ -113,6 +131,7 @@ for example, \"word\"."
 				   newword)))))))
 
 
+;;;###autoload
 (defun spell-string (string)
   "Check spelling of string supplied as argument."
   (interactive "sSpell string: ")
@@ -133,3 +152,5 @@ for example, \"word\"."
        (while (search-forward "\n" nil t)
 	 (replace-match " "))
        (message "%sincorrect" (buffer-substring 1 (point-max)))))))
+
+;;; spell.el ends here

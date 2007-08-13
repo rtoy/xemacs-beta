@@ -1,11 +1,11 @@
-;;; w3-keyword.el,v --- Emacs-W3 binding style sheet mechanism
+;;; w3-keyword.el --- Emacs-W3 binding style sheet mechanism
 ;; Author: wmperry
-;; Created: 1996/05/30 14:37:30
+;; Created: 1996/07/23 00:40:54
 ;; Version: 1.4
 ;; Keywords: hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1996 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -32,18 +32,25 @@
 ;;; defconst doesn't work either, because the byte-compiler gets too
 ;;; smart for us, and the .elc files are no longer portable.  Joy oh joy!
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (let ((keywords '(
 		  :align
+		  :average-pitch
 		  :link-title
 		  :background
 		  :center
+		  :data
 		  :depth
+		  :left-volume
+		  :right-volume
+		  :pitch-range
+		  :stress
+		  :richness
 		  :figalt
 		  :figdata
 		  :fillcol
 		  :form
 		  :formnum
+		  :gain
 		  :header-start
 		  :help-echo
 		  :href
@@ -51,7 +58,6 @@
 		  :image
 		  :lists
 		  :map
-		  :mpeg
 		  :name
 		  :needspace
 		  :next-break

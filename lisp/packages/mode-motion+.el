@@ -32,6 +32,9 @@
 ;; at all.
 
 ; Change History
+; Revision 3.16 Fri Jun 28 13:01:12 1996 ritchier@msc.ie
+; Stop multiple highlighting lossage with 19.14 release.
+
 ; Revision 3.15 Thu Feb 15 14:26:34 GMT 1996 Russell.Ritchie@gssec.bt.co.uk
 ; lisp-interaction-popup-menu => lisp-interaction-mode-popup-menu,
 ; emacs-lisp-popup-menu => emacs-lisp-mode-popup-menu.
@@ -245,7 +248,7 @@
 
 (require 'thing)
 (require 'mode-motion)
-(defconst mode-motion+-version "3.15")
+(defconst mode-motion+-version "3.16")
 
 ;;; This file defines a set of mouse motion handlers that do some
 ;;; highlighting of the text when the mouse moves over.
@@ -1101,13 +1104,6 @@ See list-motion-handlers for more details."
 	       (and buffer
 		    (set-buffer buffer)
 		    (select-window window))
-	   
-	       ;; kludge: if point = end-of-window, then probably the mouse
-	       ;; is actually between the last line and the modeline.  In
-	       ;; this case move point to back one
-	       (and point
-		    (not (< point (window-end window)))
-		    (setq point (1- point)))
 	       ;; Create a new mode-motion-extent if there isn't one 
 	       ;; (or a destroyed one)
 	       (if (and (extent-live-p mode-motion-extent)
@@ -1162,18 +1158,10 @@ See list-motion-handlers for more details."
 		   (if (or (not (motion-handler-follow-point handler))
 			   (pos-visible-in-window-p point))
 		       (progn
-			 ;; set the extent face
+			 (set-extent-endpoints
+			  mode-motion-extent (car region) (cdr region))
 			 (set-extent-face
 			  mode-motion-extent (motion-handler-face handler))
-			 ;; set the new boundary
-			 (set-extent-endpoints 
-			  mode-motion-extent (car region) (cdr region))
-			 ;; highlight if required
-			 (set-extent-property
-			  mode-motion-extent 'highlight
-			  (motion-handler-highlight handler))
-			 (highlight-extent mode-motion-extent
-					   (motion-handler-highlight handler))
 			 ;; make point follow the mouse or point to
 			 ;; the beginning of the line do not move the
 			 ;; cursor if a mark is set.

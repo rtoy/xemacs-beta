@@ -298,7 +298,7 @@ Typical Hyperbole applications include:
     - {C-h h r e}, rolo-edit, just displays your personal rolodex file if you
       hit {RET} without specifying an entry name to edit.
 
-    - {m} within a rolodex match buffer composes mail to the the e-mail
+    - {m} within a rolodex match buffer composes mail to the e-mail
       address at point or the first address following point.  Also added as
       Rolo/Mail minibuffer menu item and Rolodex/Mail-to-Address for window
       system menus.

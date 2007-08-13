@@ -106,17 +106,31 @@ play_bucket_internal(audio, pSBucket, volume)
 
     playParams.priority = APriorityNormal;          /* normal priority */
 
-    speaker = (char *) (string_data (XSYMBOL (Vhp_play_speaker)->name));
-    
     /*
-     * setup the playback parameters
+     * We can't signal an error, because all h*ll would break loose if
+     * we did.
      */
+    if (SYMBOLP (Vhp_play_speaker))
+    {
+	speaker = (char *) (string_data (XSYMBOL (Vhp_play_speaker)->name));
+    
+	/*
+	 * setup the playback parameters
+	 */
 
-    /* speaker selection */
-    if ( strcmp(speaker,"external") == 0 ) {
-      gainEntry.u.o.out_dst = AODTMonoJack;
-    } else {
-      gainEntry.u.o.out_dst = AODTMonoIntSpeaker;
+	/* speaker selection */
+	if ( strcmp(speaker,"external") == 0 ) {
+	    gainEntry.u.o.out_dst = AODTMonoJack;
+	} else {
+	    gainEntry.u.o.out_dst = AODTMonoIntSpeaker;
+	}
+    }
+    else
+    {
+	/*
+	 * Quietly revert to the internal speaker
+	 */
+	gainEntry.u.o.out_dst = AODTMonoIntSpeaker;
     }
 
     gainEntry.u.o.out_ch = AOCTMono;

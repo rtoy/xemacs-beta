@@ -1703,7 +1703,7 @@ Making this value too large will slow you down, so exercise restraint.
 Set this to @code{nil}, if you want @kbd{l,h} to cross
 lines, etc. @xref{Movement and Markers}, for more info.
 @item vip-ex-style-editing-in-insert t
-Set this to to @code{nil}, if you want @kbd{ESC} to not move back and
+Set this to @code{nil}, if you want @kbd{ESC} to not move back and
 @kbd{C-h} to not stop
 at the beginning of a line in Insert state.
 @item vip-always t

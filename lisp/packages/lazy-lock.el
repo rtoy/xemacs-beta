@@ -691,7 +691,7 @@ Does not restore the value of point in the selected window, or anything else."
 ;; mouse dragging.
 (defun lazy-lock-post-command-fontify-stealthily ()
   ;; Do groovy things if (a-d) above, (e) not moving the mouse, and (f) no
-  ;; input after after waiting for `lazy-lock-stealth-time'.
+  ;; input after waiting for `lazy-lock-stealth-time'.
   (if (and lazy-lock-cache-continue lazy-lock-stealth-time)
       (condition-case data
 	  (if (lazy-lock-sit-for lazy-lock-stealth-time)

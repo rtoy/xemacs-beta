@@ -32,9 +32,9 @@ Boston, MA 02111-1307, USA.  */
    things configured in. */
 
 #if (LONGBITS == 64)
-# define BASE_PURESIZE 905000
+# define BASE_PURESIZE 912000
 #else
-# define BASE_PURESIZE 540000
+# define BASE_PURESIZE 552000
 #endif
 
 /* If any particular systems need to change the base puresize, they

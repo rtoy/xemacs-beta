@@ -114,7 +114,7 @@ value of this flag.")
 
 ;;; XEmacs - This is dumped into loaddefs.el already.
 ;; (defvar diff-switches "-c"
-;;   "*A string or list of strings specifying switches to be be passed to diff.")
+;;   "*A string or list of strings specifying switches to be passed to diff.")
 
 ;;;###autoload
 (defvar vc-checkin-hook nil

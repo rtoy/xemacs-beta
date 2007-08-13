@@ -229,17 +229,17 @@ xlw_create_scrollbar (widget_instance *instance, int vertical)
   int ac = 0;
   Widget scrollbar;
 
-  XtSetArg (al[ac], XmNminimum, 1); ac++;
-  XtSetArg (al[ac], XmNmaximum, INT_MAX); ac++;
-  XtSetArg (al[ac], XmNincrement, 1); ac++;
-  XtSetArg (al[ac], XmNpageIncrement, 1); ac++;
+  XtSetArg (al[ac], (String) XmNminimum, 1); ac++;
+  XtSetArg (al[ac], (String) XmNmaximum, INT_MAX); ac++;
+  XtSetArg (al[ac], (String) XmNincrement, 1); ac++;
+  XtSetArg (al[ac], (String) XmNpageIncrement, 1); ac++;
   if (vertical)
     {
-      XtSetArg (al[ac], XmNorientation, XmVERTICAL); ac++;
+      XtSetArg (al[ac], (String) XmNorientation, XmVERTICAL); ac++;
     }
   else
     {
-      XtSetArg (al[ac], XmNorientation, XmHORIZONTAL); ac++;
+      XtSetArg (al[ac], (String) XmNorientation, XmHORIZONTAL); ac++;
     }
 
   scrollbar =

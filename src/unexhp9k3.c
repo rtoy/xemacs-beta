@@ -41,6 +41,9 @@ Modified Jan 93 by Hamish Macdonald for HPUX
 #include <string.h>
 #include <stdio.h>
 #include <signal.h>
+#ifdef __hp9000s300
+# include </usr/include/debug.h>
+#endif
 #include <a.out.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -382,6 +385,14 @@ unexec (char *new_name, char *old_name,
     unexec_pad (new_fd, old_dataddr - old_hdr.a_text);
 
     /*
+     * Update debug header spoo
+     */
+    if (new_hdr.a_extension > 0)
+    {
+	new_hdr.a_extension += LESYM_OFFSET(new_hdr) - LESYM_OFFSET(old_hdr);
+    }
+
+    /*
      * go back and write the new header.
      */
     unexec_write (new_fd, 0, (char *) &new_hdr, sizeof (new_hdr));
@@ -448,8 +459,43 @@ unexec (char *new_name, char *old_name,
 #endif
     unexec_copy (new_fd, old_fd, old_mcaloff, new_mcaloff,
                  old_buf.st_size - old_mcaloff);
+
+    {
+	long			curpos, offset;
+	struct _debug_header	dhdr;
+	int			new_header_delta;
+
+	new_header_delta = LESYM_OFFSET(new_hdr) - LESYM_OFFSET(old_hdr);
+	if ((new_header_delta > 0) &&
+	    ((offset = EXT_OFFSET(old_hdr)) > 0))
+	{
+	    curpos = lseek(new_fd, 0, SEEK_CUR);
+	    lseek(old_fd, offset, 0);
+	    if (read(old_fd, &dhdr, sizeof(dhdr)) == sizeof(dhdr))
+	    {
+		dhdr.header_offset += new_header_delta;
+		dhdr.gntt_offset += new_header_delta;
+		dhdr.lntt_offset += new_header_delta;
+		dhdr.slt_offset += new_header_delta;
+		dhdr.vt_offset += new_header_delta;
+		dhdr.xt_offset += new_header_delta;
+		lseek(new_fd, EXT_OFFSET(new_hdr), SEEK_SET);
+		if (write(new_fd, &dhdr, sizeof(dhdr)) != sizeof(dhdr))
+		{
+		    unexec_error("Unable to write debug information to \"%s\"\n",
+				 1, new_name);
+		}
+		lseek(new_fd, curpos, SEEK_SET);
+	    }
+	    else
+	    {
+		unexec_error("Unable to read debug information from \"%s\"\n",
+			     1, old_name);
+	    }
+	}
+    }
   }
-     
+  
      
   /* make the output file executable -- then quit */
   unexec_fchmod (new_fd, 0755);

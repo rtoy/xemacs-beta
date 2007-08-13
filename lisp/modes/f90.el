@@ -1,27 +1,31 @@
 ;;; f90.el --- Fortran-90 mode (free format)
-;; Copyright (C) 1995 Free Software Foundation, Inc.
+
+;; Copyright (C) 1995, 1996 Free Software Foundation, Inc.
 
 ;; Author: Torbj\"orn Einarsson <T.Einarsson@clab.ericsson.se>
 ;; Created: Apr. 18, 1996
 ;; Keywords: fortran, f90, languages
 
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2 of the License, or
 ;; (at your option) any later version.
 
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; if not, write to the Free Software Foundation,
+;; Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
+
 ;; Smart mode for editing F90 programs in FREE FORMAT.
 ;; Knows about continuation lines, named structured statements, and other
 ;; new features in F90 including HPF (High Performance Fortran) structures.
@@ -114,6 +118,7 @@
 ;;    mechanism for treating multi-line directives (continued by \ ).
 ;; 7) f77 do-loops do 10 i=.. ; ; 10 continue are not correctly indented.
 ;;    You are urged to use f90-do loops (with labels if you wish).
+;; 8) The highlighting mode under XEmacs is not as complete as under Emacs.
 
 ;; List of user commands
 ;;   f90-previous-statement         f90-next-statement
@@ -136,8 +141,8 @@
 ;; Also thanks to the authors of the fortran and pascal modes, on which some
 ;; of this code is built.
 
-
 ;;; Code:
+
 (defconst bug-f90-mode "T.Einarsson@clab.ericsson.se"
   "Address of mailing list for F90 mode bugs.")
 
@@ -713,7 +718,7 @@ Variables controlling indentation style and extra features:
     Do not left-justify line numbers. (default nil)
  f90-startup-message
     Set to nil to inhibit message first time F90 mode is used. (default t)
- f90-keywords
+ f90-keywords-re
     List of keywords used for highlighting/upcase-keywords etc.
 
 Turning on F90 mode calls the value of the variable `f90-mode-hook'
@@ -743,30 +748,23 @@ with no args, if that value is non-nil."
   ;; Setting up things for font-lock
   (if (string-match "XEmacs" emacs-version)
       (progn
+	(put 'f90-mode 'font-lock-keywords-case-fold-search t)
 	(if (and current-menubar
 		 (not (assoc "F90" current-menubar)))
 	    (progn
 	      (set-buffer-menubar (copy-sequence current-menubar))
-	      (add-submenu nil f90-xemacs-menu)))
-	;; XEmacs now does things like FSF Emacs -- ben
-	(make-local-variable 'font-lock-defaults)
-	(setq font-lock-defaults 
-	      '((f90-font-lock-keywords f90-font-lock-keywords-1
-					f90-font-lock-keywords-2
-					f90-font-lock-keywords-3
-					f90-font-lock-keywords-4)
-		nil t)))
-    ;; Emacs
-    (make-local-variable 'font-lock-defaults)
-    (setq font-lock-defaults 
-	  '((f90-font-lock-keywords f90-font-lock-keywords-1
-				    f90-font-lock-keywords-2
-				    f90-font-lock-keywords-3
-				    f90-font-lock-keywords-4)
-	    nil t))
-    ;; Tell imenu how to handle f90.
-    (make-local-variable 'imenu-generic-expression)
-    (setq imenu-generic-expression f90-imenu-generic-expression))
+	      (add-submenu nil f90-xemacs-menu)))))
+  ;; XEmacs: (Don't need a special case, since both emacsen work alike -sb)
+  (make-local-variable 'font-lock-defaults)
+  (setq font-lock-defaults 
+	'((f90-font-lock-keywords f90-font-lock-keywords-1
+				  f90-font-lock-keywords-2
+				  f90-font-lock-keywords-3
+				  f90-font-lock-keywords-4)
+	  nil t))
+  ;; Tell imenu how to handle f90.
+  (make-local-variable 'imenu-generic-expression)
+  (setq imenu-generic-expression f90-imenu-generic-expression)
   (run-hooks 'f90-mode-hook)
   (if f90-startup-message
       (message "Emacs F90 mode; please report bugs to %s" bug-f90-mode))
@@ -1332,14 +1330,14 @@ If run in the middle of a line, the line is not broken."
       (setq program (f90-mark-subprogram))
       (if program
 	  (progn
-	    (message (concat "Indenting " (car program) " "
-			     (car (cdr program))"."))
+	    (message "Indenting %s %s..."
+		     (car program) (car (cdr program)))
 	    (f90-indent-region (point) (mark))
-	    (message (concat "Indenting " (car program) " "
-			     (car (cdr program)) "...done.")))
-	(message "Indenting the whole file.")
+	    (message "Indenting %s %s...done"
+		     (car program) (car (cdr program))))
+	(message "Indenting the whole file...")
 	(f90-indent-region (point) (mark))
-	(message (concat "Indenting the whole file...done."))))))
+	(message "Indenting the whole file...done")))))
 
 ;; autofill and break-line
 (defun f90-break-line (&optional no-update)
@@ -1524,11 +1522,11 @@ Leave point at the end of line."
 	      (f90-update-line)
 	      (if (eq f90-smart-end 'blink)
 		  (if (< (point) top-of-window)
-		      (message (concat 
-				"Matches " (what-line) ": "
-				(buffer-substring
-				 (progn (beginning-of-line) (point))
-				 (progn (end-of-line) (point)))))
+		      (message "Matches %d: %s"
+			       (what-line)
+			       (buffer-substring
+				(progn (beginning-of-line) (point))
+				(progn (end-of-line) (point))))
 		    (sit-for 1)))
 	      (setq beg-block (car matching-beg))
 	      (setq beg-name (car (cdr matching-beg)))

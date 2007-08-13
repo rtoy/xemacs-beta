@@ -1,4 +1,4 @@
-;;; cc-mode.el --- major mode for editing C, C++, and Objective-C code
+;;; cc-mode.el --- major mode for editing C, C++, Objective-C, and Java code
 
 ;; Copyright (C) 1985, 87, 92, 93, 94, 95, 96 Free Software Foundation, Inc.
 
@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         4.282
-;; Last Modified:   1996/02/09 23:15:14
+;; Version:         4.315
+;; Last Modified:   1996/08/20 21:08:13
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -45,12 +45,19 @@
 ;; but there really is no top-level cc-mode.  Usage and programming
 ;; details are contained in an accompanying texinfo manual.
 
+;; NOTE: This mode does not perform font-locking (a.k.a syntactic
+;; coloring, keyword highlighting, etc.).  Typically this is done by a
+;; package called font-lock.el which I do *not* maintain.  You should
+;; contact the Emacs maintainer for questions about coloring or
+;; highlighting in any language mode.
+
 ;; To submit bug reports, type "C-c C-b".  These will be sent to
-;; bug-gnu-emacs@prep.ai.mit.edu and I'll read about them there (this
-;; is mirrored as the Usenet newsgroup gnu.emacs.bug).  Questions can
-;; sent to help-gnu-emacs@prep.ai.mit.edu (mirrored as
-;; gnu.emacs.help).  Please do not send bugs or questions to my
-;; personal account.
+;; bug-gnu-emacs@prep.ai.mit.edu as well as cc-mode-help@python.org,
+;; and I'll read about them there (the former is mirrored as the
+;; Usenet newsgroup gnu.emacs.bug).  Questions can sent to
+;; help-gnu-emacs@prep.ai.mit.edu (mirrored as gnu.emacs.help) or
+;; cc-mode-help@python.org.  Please do not send bugs or questions to
+;; my personal account.
 
 ;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
 ;; the multi-Emacsen support.  Emacs 19 (from the FSF), XEmacs 19
@@ -70,8 +77,8 @@
 ;; (makunbound 'c++-mode-map)
 ;; (makunbound 'c-style-alist)
 
-;; If your Emacs comes with cc-mode already (and as of 18-Jan-1996,
-;; XEmacs 19.13 and Emacs 19.30 both do), you only need to add the
+;; If your Emacs comes with cc-mode already (and as of 5-Jul-1996
+;; XEmacs 19.14 and Emacs 19.31 both do), you only need to add the
 ;; following to use the latest version of cc-mode:
 ;;
 ;; (load "cc-mode")
@@ -107,9 +114,15 @@
 ;; Without their patience, testing, insight, code contributions, and
 ;; encouragement cc-mode.el would be a far inferior package.
 
-;; Anonymous ftp URL:
+;; You can get the latest version of cc-mode, including PostScript
+;; documentation and separate individual files from:
 ;;
-;;    ftp://ftp.python.org/pub/emacs/cc-mode.tar.gz
+;;     http://www.python.org/ftp/emacs/
+
+;; Or if you don't have access to the World Wide Web, through
+;; anonymous ftp from:
+;;
+;;    ftp://ftp.python.org/pub/emacs
 
 ;;; Code:
 
@@ -182,6 +195,9 @@ reported and the syntactic symbol is ignored.")
     (objc-method-intro     . -1000)
     (objc-method-args-cont . c-lineup-ObjC-method-args)
     (objc-method-call-cont . c-lineup-ObjC-method-call)
+    (extern-lang-open      . 0)
+    (extern-lang-close     . 0)
+    (inextern-lang         . +)
     )
   "*Association list of syntactic element symbols and indentation offsets.
 As described below, each cons cell in this list has the form:
@@ -245,8 +261,8 @@ Here is the current list of valid syntactic element symbols:
  brace-list-close       -- close brace of an enum or static array list
  brace-list-intro       -- first line in an enum or static array list
  brace-list-entry       -- subsequent lines in an enum or static array list
- statement              -- a C/C++/ObjC statement
- statement-cont         -- a continuation of a C/C++/ObjC statement
+ statement              -- a C (or like) statement
+ statement-cont         -- a continuation of a C (or like) statement
  statement-block-intro  -- the first line in a new statement block
  statement-case-intro   -- the first line in a case `block'
  statement-case-open    -- the first line in a case block starting with brace
@@ -254,14 +270,14 @@ Here is the current list of valid syntactic element symbols:
  substatement-open      -- the brace that opens a substatement block
  case-label             -- a case or default label
  access-label           -- C++ private/protected/public access label
- label                  -- any non-special C/C++/ObjC label
+ label                  -- any non-special C (or like) label
  do-while-closure       -- the `while' that ends a do/while construct
  else-clause            -- the `else' of an if/else construct
  comment-intro          -- a line containing only a comment introduction
  arglist-intro          -- the first line in an argument list
  arglist-cont           -- subsequent argument list lines when no
                            arguments follow on the same line as the
-                           the arglist opening paren
+                           arglist opening paren
  arglist-cont-nonempty  -- subsequent argument list lines when at
                            least one argument follows on the same
                            line as the arglist opening paren
@@ -273,19 +289,32 @@ Here is the current list of valid syntactic element symbols:
  objc-method-intro      -- the first line of an Objective-C method definition
  objc-method-args-cont  -- lines continuing an Objective-C method definition
  objc-method-call-cont  -- lines continuing an Objective-C method call
+ extern-lang-open       -- brace that opens an external language block
+ extern-lang-close      -- brace that closes an external language block
+ inextern-lang          -- analogous to `inclass' syntactic symbol
 ")
 
 (defvar c-tab-always-indent t
   "*Controls the operation of the TAB key.
 If t, hitting TAB always just indents the current line.  If nil,
 hitting TAB indents the current line if point is at the left margin or
-in the line's indentation, otherwise it insert a real tab character.
-If other than nil or t, then tab is inserted only within literals
--- defined as comments and strings -- and inside preprocessor
+in the line's indentation, otherwise it insert a `real' tab character
+\(see note\).  If other than nil or t, then tab is inserted only within
+literals -- defined as comments and strings -- and inside preprocessor
 directives, but line is always reindented.
 
-Note that indentation of lines containing only comments is also
-controlled by the `c-comment-only-line-offset' variable.")
+Note: The value of `indent-tabs-mode' will determine whether a real
+tab character will be inserted, or the equivalent number of space.
+When inserting a tab, actually the function stored in the variable
+`c-insert-tab-function' is called.
+
+Note: indentation of lines containing only comments is also controlled
+by the `c-comment-only-line-offset' variable.")
+
+(defvar c-insert-tab-function 'insert-tab
+  "*Function used when inserting a tab for \\[TAB].
+Only used when `c-tab-always-indent' indicates a `real' tab character
+should be inserted.  Value must be a function taking no arguments.")
 
 (defvar c-comment-only-line-offset 0
   "*Extra offset for line which contains only the start of a comment.
@@ -355,7 +384,9 @@ Valid symbols are:
 
 (defvar c-hanging-braces-alist '((brace-list-open)
 				 (substatement-open after)
-				 (block-close . c-snug-do-while))
+				 (block-close . c-snug-do-while)
+				 (extern-lang-open after)
+				 )
   "*Controls the insertion of newlines before and after braces.
 This variable contains an association list with elements of the
 following form: (SYNTACTIC-SYMBOL . ACTION).
@@ -368,9 +399,10 @@ before and after the brace.
 
 SYNTACTIC-SYMBOL can be any of: defun-open, defun-close, class-open,
 class-close, inline-open, inline-close, block-open, block-close,
-substatement-open, statement-case-open, brace-list-open,
-brace-list-close, brace-list-intro, or brace-list-entry. See
-`c-offsets-alist' for details.
+substatement-open, statement-case-open, extern-lang-open,
+extern-lang-close, brace-list-open, brace-list-close,
+brace-list-intro, or brace-list-entry. See `c-offsets-alist' for
+details.
 
 ACTION can be either a function symbol or a list containing any
 combination of the symbols `before' or `after'.  If the list is empty,
@@ -422,14 +454,8 @@ This hook gets called after a line is indented by the mode.")
 (defvar c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'.")
-
-(defvar c-recognize-knr-p nil		; Emacs version uses t
-  "*If non-nil, `c-mode' and `objc-mode' will recognize K&R constructs.
-This variable is needed because of ambiguities in C syntax that make
-fast recognition of K&R constructs problematic, and slow.  If you are
-coding with ANSI prototypes, set this variable to nil to speed up
-recognition of certain constructs.  By setting this variable to nil, I
-have seen an increase of 20 times under some circumstance.")
+(defvar c-label-minimum-indentation 1
+  "*Minimum indentation for labels and case tags in `gnu' style.")
 
 (defvar c-progress-interval 5
   "*Interval used to update progress status during long re-indentation.
@@ -437,7 +463,7 @@ If a number, percentage complete gets updated after each interval of
 that many seconds.   Set to nil to inhibit updating.  This is only
 useful for Emacs 19.")
 
-(defvar c-style-alist
+(defconst c-style-alist
   '(("gnu"
      (c-basic-offset . 2)
      (c-comment-only-line-offset . (0 . 0))
@@ -450,6 +476,7 @@ useful for Emacs 19.")
 			 (arglist-intro . c-lineup-arglist-intro-after-paren)
 			 (arglist-close . c-lineup-arglist)
 			 ))
+     (c-special-indent-hook . c-gnu-impose-minimum)
      )
     ("k&r"
      (c-basic-offset . 5)
@@ -580,7 +607,7 @@ re-dump Emacs.")
   "*Hook called by `java-mode'.")
 
 (defvar c-mode-common-hook nil
-  "*Hook called by `c-mode', `c++-mode', and 'objc-mode' during common init.")
+  "*Hook called by all cc-mode modes for common initializations.")
 
 (defvar c-mode-menu
   '(["Comment Out Region"     comment-region (mark)]
@@ -684,18 +711,21 @@ re-dump Emacs.")
 			 flavor (if (or (string-match "Lucid" emacs-version)
 					(string-match "XEmacs" emacs-version))
 				    'XEmacs 'FSF)))
+     ((= major 20) (setq major 'v20	;XEmacs 20
+			 flavor 'XEmacs))
      ;; I don't know
      (t (error "Cannot recognize major version number: %s" major)))
     ;; Regular expression suites...
-    (if (and (eq major 'v19)
-	     (or (and (eq flavor 'XEmacs) (>= minor 14))
-		 (and (eq flavor 'FSF) (>= minor 30))))
+    (if (or (eq major 'v20)
+	    (and (eq major 'v19)
+		 (or (and (eq flavor 'XEmacs) (>= minor 14))
+		     (and (eq flavor 'FSF) (>= minor 30)))))
 	(setq re-suite 'new-re))
     ;; XEmacs 19 uses 8-bit modify-syntax-entry flags, as do all
     ;; patched Emacs 19, Emacs 18, Epoch 4's.  Only Emacs 19 uses a
     ;; 1-bit flag.  Let's be as smart as we can about figuring this
     ;; out.
-    (if (eq major 'v19)
+    (if (or (eq major 'v20) (eq major 'v19))
 	(let ((table (copy-syntax-table)))
 	  (modify-syntax-entry ?a ". 12345678" table)
 	  (cond
@@ -767,6 +797,7 @@ supported list, along with the values for this variable:
  Emacs 18/Epoch 4:           (v18 no-dual-comments RS)
  Emacs 18/Epoch 4 (patch2):  (v18 8-bit RS)
  XEmacs 19:                  (v19 8-bit RS)
+ XEmacs 20:                  (v20 8-bit RS)
  Emacs 19:                   (v19 1-bit RS)
 
 RS is the regular expression suite to use.  XEmacs versions after
@@ -846,7 +877,7 @@ All other Emacsen use the `old-re' suite.")
   ;; (define-key c-mode-map "\e{" 'c-insert-braces)
   ;; Commented out electric square brackets because nobody likes them.
   ;; (define-key c-mode-map "[" 'c-insert-brackets)
-  (define-key c-mode-map "\e\C-h"    'c-mark-function)
+  (define-key c-mode-map "\C-c\C-m"  'c-mark-function)
   (define-key c-mode-map "\e\C-q"    'c-indent-exp)
   (define-key c-mode-map "\ea"       'c-beginning-of-statement)
   (define-key c-mode-map "\ee"       'c-end-of-statement)
@@ -894,7 +925,9 @@ All other Emacsen use the `old-re' suite.")
 (if c++-mode-map
     ()
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
-  (if (memq 'v19 c-emacs-features)
+  (if (or
+       (memq 'v19 c-emacs-features)
+       (memq 'v20 c-emacs-features))
       ;; XEmacs and Emacs 19 do this differently
       (cond
        ;; XEmacs 19.13
@@ -921,7 +954,7 @@ All other Emacsen use the `old-re' suite.")
 (if objc-mode-map
     ()
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
-  (if (memq 'v19 c-emacs-features)
+  (if (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
       ;; XEmacs and Emacs 19 do this differently
       (cond
        ;; XEmacs 19.13
@@ -945,7 +978,7 @@ All other Emacsen use the `old-re' suite.")
 (if java-mode-map
     ()
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
-  (if (memq 'v19 c-emacs-features)
+  (if (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
       ;; XEmacs and Emacs 19 do this differently
       (cond
        ;; XEmacs 19.13
@@ -1084,6 +1117,10 @@ behavior that users are familiar with.")
    c-protection-key "[ \t]+\\)" c-symbol-key)
   "Regexp describing C++ base classes in a derived class definition.")
 
+;; defconst'd instead of defvar'd to override any old pre-loaded versions
+(defconst c-recognize-knr-p t
+  "Non-nil means K&R style argument declarations are valid.")
+
 ;; minor mode variables
 (make-variable-buffer-local 'c-auto-newline)
 (make-variable-buffer-local 'c-hungry-delete-key)
@@ -1122,16 +1159,22 @@ behavior that users are familiar with.")
   "\\(\\(case[( \t]+\\S .*\\)\\|default[ \t]*\\):"
   "Regexp describing a switch's case or default label")
 (defconst c-C++-access-key
-  (concat c-protection-key ":")
+  (concat c-protection-key "[ \t]*:")
   "Regexp describing C++ access specification keywords.")
 (defconst c-label-key
   (concat c-symbol-key ":\\([^:]\\|$\\)")
   "Regexp describing any label.")
+(defconst c-C-conditionals '("for" "if" "do" "else" "while" "switch")
+  "Shared conditional keywords for C-like languages.")
 (defconst c-C-conditional-key
-  "\\b\\(for\\|if\\|do\\|else\\|while\\|switch\\)\\b[^_]"
-  "Regexp describing a conditional control.")
+  (concat "\\b\\("
+	  (mapconcat 'identity c-C-conditionals "\\|")
+	  "\\)\\b[^_]")
+  "Regexp describing a conditional control for C.")
 (defconst c-C++-conditional-key
-  "\\b\\(for\\|if\\|do\\|else\\|while\\|switch\\|try\\|catch\\)\\b[^_]"
+  (concat "\\b\\(" (mapconcat 'identity
+			      (append '("try" "catch") c-C-conditionals) "\\|")
+	  "\\)\\b[^_]")
   "Regexp describing a conditional control for C++.")
 (defconst c-C++-friend-key
   "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+"
@@ -1161,10 +1204,6 @@ behavior that users are familiar with.")
    )
   "Regexp describing a class or protocol declaration for Objective-C.")
 
-(defconst c-Java-conditional-key
-  "\\b\\(for\\|if\\|do\\|else\\|while\\|switch\\|try\\|catch\\|finally\\|synchronized\\)\\b[^_]"
-  "Regexp describing a conditional control for Java.")
-
 (defconst c-Java-method-key
   (concat
    "^\\s *[+-]\\s *"
@@ -1184,6 +1223,13 @@ behavior that users are familiar with.")
    ;;"\\(\\s *implements *[^{]+{\\)?"	;and maybe the adopted protocols list
    )
   "Regexp describing a class or protocol declaration for Java.")
+(defconst c-Java-conditional-key
+  (concat "\\b\\("
+	  (mapconcat 'identity
+		     (append '("try" "catch" "finally" "synchronized")
+			     c-C-conditionals) "\\|")
+	  "\\)\\b[^_]")
+  "Regexp describing a conditional control for Java.")
 
 ;; KLUDGE ALERT.  We default these variables to their `C' values so
 ;; that non-cc-mode-ized modes that depend on c-mode will still work
@@ -1264,6 +1310,7 @@ Key bindings:
 	c-class-key c-C++-class-key
 	c-access-key c-C++-access-key
 	c-double-slash-is-comments-p t
+	c-recognize-knr-p nil
 	imenu-generic-expression cc-imenu-c++-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c++-mode-hook))
@@ -1319,7 +1366,9 @@ To see what version of cc-mode you are running, enter `\\[c-version]'.
 
 The hook variable `java-mode-hook' is run with no args, if that value
 is bound and has a non-nil value.  Also the common hook
-`c-mode-common-hook' is run first.
+`c-mode-common-hook' is run first.  Note that this mode automatically
+sets the \"java\" style before calling any hooks so be careful if you
+set styles in `c-mode-common-hook'.
 
 Key bindings:
 \\{java-mode-map}"
@@ -1340,11 +1389,17 @@ Key bindings:
 	c-method-key c-Java-method-key
 	c-double-slash-is-comments-p t
  	c-baseclass-key nil
+	c-recognize-knr-p nil
  	c-access-key c-Java-access-key)
-  (c-set-style "Java")
+  (c-set-style "java")
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'java-mode-hook))
 (setq c-list-of-mode-names (cons "Java" c-list-of-mode-names))
+
+(defun c-use-java-style ()
+  "Institutes `java' indentation style.
+For use with the variable `java-mode-hook'."
+  (c-set-style "java"))
 
 (defun c-common-init ()
   ;; Common initializations for c++-mode and c-mode.
@@ -1638,7 +1693,7 @@ global and affect all future `c-mode' buffers."
 	    (if c-hungry-delete-key "/ah" "/a")
 	  (if c-hungry-delete-key "/h" nil)))
   ;; updates the modeline for all Emacsen
-  (if (memq 'v19 c-emacs-features)
+  (if (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
       (force-mode-line-update)
     (set-buffer-modified-p (buffer-modified-p))))
 
@@ -1757,7 +1812,8 @@ the brace is inserted inside a literal."
       (let* ((syms '(class-open class-close defun-open defun-close 
 		     inline-open inline-close brace-list-open brace-list-close
 		     brace-list-intro brace-list-entry block-open block-close
-		     substatement-open statement-case-open))
+		     substatement-open statement-case-open
+		     extern-lang-open extern-lang-close))
 	    ;; we want to inhibit blinking the paren since this will
 	    ;; be most disruptive. we'll blink it ourselves later on
 	    (old-blink-paren (if (boundp 'blink-paren-function)
@@ -1788,7 +1844,7 @@ the brace is inserted inside a literal."
 	;; If syntax is a function symbol, then call it using the
 	;; defined semantics.
 	(if (and (not (consp (cdr newlines)))
-		 (fboundp (cdr newlines)))
+		 (c-functionp (cdr newlines)))
 	    (let ((c-syntactic-context syntax))
 	      (setq newlines
 		    (funcall (cdr newlines) (car newlines) insertion-point))))
@@ -2152,7 +2208,7 @@ supplied, or point is inside a literal."
 			 "or in [+,-,++,--,*,/] "
 			 defstr))
 	 (prompt (concat "Offset " defstr))
-	 offset input interned)
+	 offset input interned raw)
     (while (not offset)
       (setq input (read-string prompt)
 	    offset (cond ((string-equal "" input) oldoff)  ; default
@@ -2164,8 +2220,15 @@ supplied, or point is inside a literal."
 			 ((string-equal "/" input) '/)
 			 ((string-match "^-?[0-9]+$" input)
 			  (string-to-int input))
+			 ;; a symbol with a function binding
 			 ((fboundp (setq interned (intern input)))
 			  interned)
+			 ;; a lambda function
+			 ((condition-case nil
+			      (c-functionp (setq raw (read input)))
+			    (error nil))
+			  raw)
+			 ;; a symbol with variable binding
 			 ((boundp interned) interned)
 			 ;; error, but don't signal one, keep trying
 			 ;; to read an input value
@@ -2197,7 +2260,8 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 		    (let* ((syntax (c-guess-basic-syntax))
 			   (len (length syntax))
 			   (ic (format "%s" (car (nth (1- len) syntax)))))
-		      (if (memq 'v19 c-emacs-features)
+		      (if (or (memq 'v19 c-emacs-features)
+			      (memq 'v20 c-emacs-features))
 			  (cons ic 0)
 			ic))
 		    )))
@@ -2211,7 +2275,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
       (eq offset '*)
       (eq offset '/)
       (integerp offset)
-      (fboundp offset)
+      (c-functionp offset)
       (boundp offset)
       (error "Offset must be int, func, var, or in [+,-,++,--,*,/]: %s"
 	     offset))
@@ -2230,9 +2294,8 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
     (lambda (conscell)
       (let ((attr (car conscell))
 	    (val  (cdr conscell)))
-	;; KLUDGE ALERT: special case for c-offsets-alist
-	(if (not (eq attr 'c-offsets-alist))
-	    (set attr val)
+	(cond
+	 ((eq attr 'c-offsets-alist)
 	  (mapcar
 	   (function
 	    (lambda (langentry)
@@ -2241,6 +2304,13 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 		(c-set-offset langelem offset)
 		)))
 	   val))
+	 ((eq attr 'c-special-indent-hook)
+	  (if (listp val)
+	      (while val
+		(add-hook 'c-special-indent-hook (car val))
+		(setq val (cdr val)))
+	    (add-hook 'c-special-indent-hook val)))
+	 (t (set attr val)))
 	)))
    stylevars))
 
@@ -2254,8 +2324,8 @@ for details of setting up styles."
 					   mode-name)))
 		       (completing-read prompt c-style-alist nil t))))
   (let ((vars (cdr (or (assoc (downcase stylename) c-style-alist)
-		       ;; backwards compatibility
 		       (assoc (upcase stylename) c-style-alist)
+		       (assoc stylename c-style-alist)
 		       )))
 	(default (cdr (assoc "cc-mode" c-style-alist))))
     (or vars (error "Invalid indentation style `%s'" stylename))
@@ -2323,9 +2393,9 @@ Optional prefix ARG means justify paragraph as well."
 	    (beginning-of-line)
 	    ;; Move up to first line of this comment.
 	    (while (and (not (bobp))
-			(looking-at "[ \t]*//"))
+ 			(looking-at "[ \t]*//[ \t]*[^ \t\n]"))
 	      (forward-line -1))
-	    (if (not (looking-at ".*//"))
+ 	    (if (not (looking-at ".*//[ \t]*[^ \t\n]"))
 		(forward-line 1))
 	    ;; Find the comment start in this line.
 	    (re-search-forward "[ \t]*//[ \t]*")
@@ -2457,6 +2527,7 @@ Optional prefix ARG means justify paragraph as well."
 		      (fill-region-as-paragraph (point) (point-max))))))
 	    t)))))
 
+
 ;; better movement routines for ThisStyleOfVariablesCommonInCPlusPlus
 ;; originally contributed by Terry_Glanfield.Southern@rxuk.xerox.com
 (defun c-forward-into-nomenclature (&optional arg)
@@ -2545,6 +2616,9 @@ comment."
   (c-beginning-of-statement (- (or count 1)) lim sentence-flag)
   (c-keep-region-active))
 
+;; WARNING: Be *exceptionally* careful about modifications to this
+;; function!  Much of cc-mode depends on this Doing The Right Thing.
+;; If you break it you will be sorry.
 (defun c-beginning-of-statement-1 (&optional lim)
   ;; move to the start of the current statement, or the previous
   ;; statement if already at the beginning of one.
@@ -2830,7 +2904,7 @@ of the expression are preserved."
 	(if (save-excursion
 	      (skip-chars-backward " \t")
 	      (not (bolp)))
-	    (insert-tab)
+	    (funcall c-insert-tab-function)
 	  (c-indent-line)))
        ;; CASE 2: just indent the line
        ((eq c-tab-always-indent t)
@@ -2839,7 +2913,7 @@ of the expression are preserved."
        ;; line
        (t
 	(if (c-in-literal bod)
-	    (insert-tab))
+	    (funcall c-insert-tab-function))
 	(c-indent-line)
 	)))))
 
@@ -3451,13 +3525,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 (defun c-skip-conditional ()
   ;; skip forward over conditional at point, including any predicate
   ;; statements in parentheses. No error checking is performed.
-  (forward-sexp
-   ;; else if()
-   (if (looking-at "\\<else\\>[ \t]+\\<if\\>")
-       3
-     ;; do and else aren't followed by parens
-     (if (looking-at "\\<\\(do\\|else\\)\\>")
-	 1 2))))
+  (forward-sexp (cond
+		 ;; else if()
+		 ((looking-at "\\<else\\>[ \t]+\\<if\\>") 3)
+		 ;; do, else, try, finally
+		 ((looking-at "\\<\\(do\\|else\\|try\\|finally\\)\\>") 1)
+		 ;; for, if, while, switch, catch, synchronized
+		 (t 2))))
 
 (defun c-skip-case-statement-forward (state &optional lim)
   ;; skip forward over case/default bodies, with optional maximal
@@ -3536,12 +3610,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	(save-excursion
 	  (save-restriction
 	    (goto-char search-start)
-	    (let (foundp class match-end)
+	    (let ((search-key (concat c-class-key "\\|extern[^_]"))
+		  foundp class match-end)
 	      (while (and (not foundp)
 			  (progn
 			    (c-forward-syntactic-ws)
 			    (> search-end (point)))
-			  (re-search-forward c-class-key search-end t))
+			  (re-search-forward search-key search-end t))
 		(setq class (match-beginning 0)
 		      match-end (match-end 0))
 		(if (c-in-literal search-start)
@@ -3710,8 +3785,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 				     (looking-at c-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder c-in-literal-cache inswitch-p
-	     ;; narrow out any enclosing class
+	     ;; narrow out any enclosing class or extern "C" block
 	     (inclass-p (c-narrow-out-enclosing-class state indent-point))
+	     (inextern-p (and inclass-p
+			      (save-excursion
+				(save-restriction
+				  (widen)
+				  (goto-char (aref inclass-p 0))
+				  (looking-at "extern[^_]")))))
 	     )
 
 	;; get the buffer position of the most nested opening brace,
@@ -3782,7 +3863,20 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   ;; inline-inclass method opening brace
 	   ((= char-after-ip ?{)
 	    (cond
-	     ;; CASE 5A.1: we are looking at a class opening brace
+	     ;; CASE 5A.1: extern declaration
+	     ((save-excursion
+		(goto-char indent-point)
+		(skip-chars-forward " \t")
+		(and (c-safe (progn (backward-sexp 2) t))
+		     (looking-at "extern[^_]")
+		     (progn
+		       (setq placeholder (point))
+		       (forward-sexp 1)
+		       (c-forward-syntactic-ws)
+		       (= (following-char) ?\"))))
+	      (goto-char placeholder)
+	      (c-add-syntax 'extern-lang-open (c-point 'boi)))
+	     ;; CASE 5A.2: we are looking at a class opening brace
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t{")
@@ -3803,7 +3897,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (setq placeholder (aref decl 0)))
 		  ))
 	      (c-add-syntax 'class-open placeholder))
-	     ;; CASE 5A.2: brace list open
+	     ;; CASE 5A.3: brace list open
 	     ((save-excursion
 		(c-beginning-of-statement-1 lim)
 		;; c-b-o-s could have left us at point-min
@@ -3817,10 +3911,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (not (memq (following-char) '(?\; ?\()))
 		       )))
 	      (c-add-syntax 'brace-list-open placeholder))
-	     ;; CASE 5A.3: inline defun open
-	     (inclass-p
-	      (c-add-syntax 'inline-open (aref inclass-p 0)))
-	     ;; CASE 5A.4: ordinary defun open
+	     ;; CASE 5A.4: inline defun open
+	     ((and inclass-p (not inextern-p))
+	      (c-add-syntax 'inline-open)
+	      (c-add-syntax 'inclass (aref inclass-p 0)))
+	     ;; CASE 5A.5: ordinary defun open
 	     (t
 	      (goto-char placeholder)
 	      (c-add-syntax 'defun-open (c-point 'bol))
@@ -3955,7 +4050,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		 (looking-at c-access-key))
 	    (c-add-syntax 'access-label (c-point 'bonl))
 	    (c-add-syntax 'inclass (aref inclass-p 0)))
-	   ;; CASE 5F: we are looking at the brace which closes the
+	   ;; CASE 5F: extern-lang-close?
+	   ((and inextern-p
+		 (= char-after-ip ?}))
+	    (c-add-syntax 'extern-lang-close (aref inclass-p 1)))
+	   ;; CASE 5G: we are looking at the brace which closes the
 	   ;; enclosing nested class decl
 	   ((and inclass-p
 		 (= char-after-ip ?})
@@ -3973,34 +4072,43 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (widen)
 	      (goto-char (aref inclass-p 0))
 	      (c-add-syntax 'class-close (c-point 'boi))))
-	   ;; CASE 5G: we could be looking at subsequent knr-argdecls
+	   ;; CASE 5H: we could be looking at subsequent knr-argdecls
 	   ((and c-recognize-knr-p
-		 (save-excursion
-		   (c-backward-syntactic-ws lim)
-		   (while (memq (preceding-char) '(?\; ?,))
-		     (beginning-of-line)
-		     (setq placeholder (point))
-		     (c-backward-syntactic-ws lim))
-		   (and (= (preceding-char) ?\))
-			(or (not c-method-key)
-			    (progn
-			      (forward-sexp -1)
-			      (forward-char -1)
-			      (c-backward-syntactic-ws)
-			      (not (or (= (preceding-char) ?-)
-				       (= (preceding-char) ?+)
-				       ;; or a class category
-				       (progn
-					 (forward-sexp -2)
-					 (looking-at c-class-key))
-				       )))))
-		   )
+		 ;; here we essentially use the hack that is used in
+		 ;; Emacs' c-mode.el to limit how far back we should
+		 ;; look.  The assumption is made that argdecls are
+		 ;; indented at least one space and that function
+		 ;; headers are not indented.
+		 (let ((limit (save-excursion
+				(re-search-backward "^[^ \^L\t\n#]" nil 'move)
+				(point))))
+		   (save-excursion
+		     (c-backward-syntactic-ws limit)
+		     (while (and (memq (preceding-char) '(?\; ?,))
+				 (> (point) limit))
+		       (beginning-of-line)
+		       (setq placeholder (point))
+		       (c-backward-syntactic-ws limit))
+		     (and (= (preceding-char) ?\))
+			  (or (not c-method-key)
+			      (progn
+				(forward-sexp -1)
+				(forward-char -1)
+				(c-backward-syntactic-ws)
+				(not (or (= (preceding-char) ?-)
+					 (= (preceding-char) ?+)
+					 ;; or a class category
+					 (progn
+					   (forward-sexp -2)
+					   (looking-at c-class-key))
+					 )))))
+		     ))
 		 (save-excursion
 		   (c-beginning-of-statement-1)
 		   (not (looking-at "typedef[ \t\n]+"))))
 	    (goto-char placeholder)
 	    (c-add-syntax 'knr-argdecl (c-point 'boi)))
-	   ;; CASE 5H: we are at the topmost level, make sure we skip
+	   ;; CASE 5I: we are at the topmost level, make sure we skip
 	   ;; back past any access specifiers
 	   ((progn
 	      (c-backward-syntactic-ws lim)
@@ -4022,8 +4130,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (if inclass-p
 		  (progn
 		    (goto-char (aref inclass-p 1))
-		    (c-add-syntax 'inclass (c-point 'boi))))))
-	   ;; CASE 5I: we are at an ObjC or Java method definition
+		    (if inextern-p
+			(c-add-syntax 'inextern-lang)
+		      (c-add-syntax 'inclass (c-point 'boi)))))
+		))
+	   ;; CASE 5J: we are at an ObjC or Java method definition
 	   ;; continuation line.
 	   ((and c-method-key
 		 (progn
@@ -4031,7 +4142,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (beginning-of-line)
 		   (looking-at c-method-key)))
 	    (c-add-syntax 'objc-method-args-cont (point)))
-	   ;; CASE 5J: we are at a topmost continuation line
+	   ;; CASE 5K: we are at a topmost continuation line
 	   (t
 	    (c-beginning-of-statement-1 lim)
 	    (c-forward-syntactic-ws)
@@ -4280,14 +4391,21 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			   (c-point 'boi))))
 	    (cond
 	     ;; CASE 14A: does this close an inline?
-	     ((progn
-		(goto-char containing-sexp)
-		(c-search-uplist-for-classkey state))
+	     ((let ((inclass-p (progn
+				 (goto-char containing-sexp)
+				 (c-search-uplist-for-classkey state))))
+		;; inextern-p in higher level let*
+		(setq inextern-p (and inclass-p
+				      (progn
+					(goto-char (aref inclass-p 0))
+					(looking-at "extern[^_]"))))
+		(and inclass-p (not inextern-p)))
 	      (c-add-syntax 'inline-close relpos))
 	     ;; CASE 14B: if there an enclosing brace that hasn't
 	     ;; been narrowed out by a class, then this is a
 	     ;; block-close
-	     ((c-most-enclosing-brace state)
+	     ((and (not inextern-p)
+		   (c-most-enclosing-brace state))
 	      (c-add-syntax 'block-close relpos))
 	     ;; CASE 14C: find out whether we're closing a top-level
 	     ;; class or a defun
@@ -4430,17 +4548,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (error "don't know how to indent a %s" symbol)
 	(setq offset 0
 	      relpos 0)))
-     ((eq offset '+)  (setq offset c-basic-offset))
-     ((eq offset '-)  (setq offset (- c-basic-offset)))
-     ((eq offset '++) (setq offset (* 2 c-basic-offset)))
-     ((eq offset '--) (setq offset (* 2 (- c-basic-offset))))
-     ((eq offset '*)  (setq offset (/ c-basic-offset 2)))
-     ((eq offset '/)  (setq offset (/ (- c-basic-offset) 2)))
-     ((and (not (numberp offset))
-	   (fboundp offset))
-      (setq offset (funcall offset langelem)))
-     ((not (numberp offset))
-      (setq offset (eval offset)))
+     ((eq offset '+)         (setq offset c-basic-offset))
+     ((eq offset '-)         (setq offset (- c-basic-offset)))
+     ((eq offset '++)        (setq offset (* 2 c-basic-offset)))
+     ((eq offset '--)        (setq offset (* 2 (- c-basic-offset))))
+     ((eq offset '*)         (setq offset (/ c-basic-offset 2)))
+     ((eq offset '/)         (setq offset (/ (- c-basic-offset) 2)))
+     ((c-functionp offset)   (setq offset (funcall offset langelem)))
+     ((not (numberp offset)) (setq offset (symbol-value offset)))
      )
     (+ (if (and relpos
 		(< relpos (c-point 'bol)))
@@ -4475,10 +4590,16 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
     (run-hooks 'c-special-indent-hook)
     shift-amt))
 
-(defun c-show-syntactic-information ()
-  "Show syntactic information for current line."
-  (interactive)
-  (message "syntactic analysis: %s" (c-guess-basic-syntax))
+(defun c-show-syntactic-information (arg)
+  "Show syntactic information for current line.
+With universal argument, inserts the analysis as a comment on that line."
+  (interactive "P")
+  (let ((syntax (c-guess-basic-syntax)))
+    (if (not (consp arg))
+	(message "syntactic analysis: %s" (c-guess-basic-syntax))
+      (indent-for-comment)
+      (insert (format "%s" syntax))
+      ))
   (c-keep-region-active))
 
 
@@ -4539,6 +4660,18 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (current-column))))
       (- ce-curcol cs-curcol -1))))
 
+(defun c-lineup-arglist-close-under-paren (langelem)
+  ;; lineup an arglist-intro line to just after the open paren
+  (save-excursion
+    (let ((cs-curcol (save-excursion
+		       (goto-char (cdr langelem))
+		       (current-column)))
+	  (ce-curcol (save-excursion
+		       (beginning-of-line)
+		       (backward-up-list 1)
+		       (current-column))))
+      (- ce-curcol cs-curcol))))
+
 (defun c-lineup-streamop (langelem)
   ;; lineup stream operators
   (save-excursion
@@ -4592,14 +4725,25 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; only-lines
   (save-excursion
     (back-to-indentation)
-    ;; indent as specified by c-comment-only-line-offset
-    (if (not (bolp))
+    ;; this highly kludgiforous flag prevents the mapcar over
+    ;; c-syntactic-context from entering an infinite loop
+    (let ((recurse-prevention-flag (boundp 'recurse-prevention-flag)))
+      (cond
+       ;; CASE 1: preserve comment-column
+       (recurse-prevention-flag 0)
+       ((= (current-column) comment-column)
+	;; we have to subtract out all other indentation
+	(- comment-column (apply '+ (mapcar 'c-get-offset
+					    c-syntactic-context))))
+       ;; indent as specified by c-comment-only-line-offset
+       ((not (bolp))
 	(or (car-safe c-comment-only-line-offset)
-	    c-comment-only-line-offset)
-      (or (cdr-safe c-comment-only-line-offset)
-	  (car-safe c-comment-only-line-offset)
-	  -1000				;jam it against the left side
-	  ))))
+	    c-comment-only-line-offset))
+       (t
+	(or (cdr-safe c-comment-only-line-offset)
+	    (car-safe c-comment-only-line-offset)
+	    -1000))			;jam it against the left side
+       ))))
 
 (defun c-lineup-runin-statements (langelem)
   ;; line up statements in coding standards which place the first
@@ -4733,6 +4877,32 @@ ACTION associated with `block-close' syntax."
 	  '(before)
 	'(before after)))))
 
+(defun c-gnu-impose-minimum ()
+  "Imposes a minimum indentation for labels and case tags.
+The variable `c-label-minimum-indentation' specifies the minimum
+indentation amount."
+  (let ((non-top-levels '(defun-block-intro statement statement-cont
+			   statement-block-intro statement-case-intro
+			   statement-case-open substatement substatement-open
+			   case-label label do-while-closure else-clause
+			   ))
+	(syntax c-syntactic-context)
+	langelem)
+    (while syntax
+      (setq langelem (car (car syntax))
+	    syntax (cdr syntax))
+      ;; don't adjust comment-only lines
+      (cond ((eq langelem 'comment-intro)
+	     (setq syntax nil))
+	    ((memq langelem non-top-levels)
+	     (save-excursion
+	       (setq syntax nil)
+	       (back-to-indentation)
+	       (if (zerop (current-column))
+		   (insert (make-string c-label-minimum-indentation 32)))
+	       ))
+	    ))))
+
 
 ;;; This page handles insertion and removal of backslashes for C macros.
 
@@ -4796,17 +4966,18 @@ definition and conveniently use this command."
   (end-of-line)
   (or (bolp)
       (progn
-	(forward-char -1)
-	(if (looking-at "\\\\")
-	    (delete-region (1+ (point))
-			   (progn (skip-chars-backward " \t") (point)))))))
+ 	(forward-char -1)
+ 	(if (looking-at "\\\\")
+ 	    (delete-region (1+ (point))
+ 			   (progn (skip-chars-backward " \t") (point)))))))
 
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "4.282"
+(defconst c-version "4.315"
   "cc-mode version number.")
-(defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
+(defconst c-mode-help-address
+  "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
   "Address for cc-mode bug reports.")
 
 (defun c-version ()
@@ -4853,6 +5024,7 @@ definition and conveniently use this command."
 		   'c-hanging-comment-ender-p
 		   'c-tab-always-indent
 		   'c-recognize-knr-p
+		   'c-label-minimum-indentation
 		   'defun-prompt-regexp
 		   'tab-width
 		   )))
@@ -4884,6 +5056,20 @@ definition and conveniently use this command."
   (c-keep-region-active))
     
 
+;; Emacs/XEmacs Compatibility
+;; XEmacs has these, Emacs (even 19.31) does not
+
+;; Lift XEmacs 19.13's functionp from subr.el
+(defun c-functionp (obj)
+  "Returns t if OBJ is a function, nil otherwise."
+  (cond
+   ((symbolp obj) (fboundp obj))
+   ((subrp obj))
+   ((compiled-function-p obj))
+   ((consp obj)
+    (if (eq (car obj) 'lambda) (listp (car (cdr obj)))))
+   (t nil)))
+
 (defun c-copy-tree (tree)
   ;; Lift XEmacs 19.12's copy-tree
   (if (consp tree)
@@ -4909,6 +5095,8 @@ definition and conveniently use this command."
 		  )))
     ))
 
+
+
 ;; Dynamically append the default value of most variables. This is
 ;; crucial because future c-set-style calls will always reset the
 ;; variables first to the `cc-mode' style before instituting the new
@@ -4928,13 +5116,12 @@ definition and conveniently use this command."
 			     c-hanging-colons-alist
 			     c-hanging-comment-ender-p
 			     c-offsets-alist
-			     c-recognize-knr-p
 			     c-strict-syntax-p
 			     c-tab-always-indent
 			     c-inhibit-startup-warnings-p
 			     )))
       ;; the default style is now GNU.  This can be overridden in
-      ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
+      ;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
       (c-set-style c-site-default-style)))
 
 ;; style variables
@@ -4949,7 +5136,8 @@ definition and conveniently use this command."
 (make-variable-buffer-local 'c-hanging-colons-alist)
 (make-variable-buffer-local 'c-hanging-comment-ender-p)
 (make-variable-buffer-local 'c-backslash-column)
-
+(make-variable-buffer-local 'c-label-minimum-indentation)
+(make-variable-buffer-local 'c-special-indent-hook)
 
 
 ;; fsets for compatibility with BOCM
@@ -4967,7 +5155,7 @@ definition and conveniently use this command."
 ;; set up bc warnings for obsolete variables, but for now lets not
 ;; worry about obsolete functions.  maybe later some will be important
 ;; to flag
-(and (memq 'v19 c-emacs-features)
+(and (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
      (let* ((na "Nothing appropriate.")
 	    (vars
 	     (list

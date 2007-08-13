@@ -1,86 +1,103 @@
-;;; jka-compr.el - reading/writing/loading compressed files.
-;;; Copyright (C) 1993, 1994  Free Software Foundation, Inc.
+;;; jka-compr.el --- reading/writing/loading compressed files
+
+;; Copyright (C) 1993, 1994  Free Software Foundation, Inc.
 
 ;; Author: jka@ece.cmu.edu (Jay K. Adams)
 ;; Keywords: data
 
-;;; Synched up with: Very close to the version supplied with
-;;; FSF 19.29 but not quite synched.
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;; Synched up with: FSF 19.34
 
 ;;; Commentary: 
 
-;;; This package implements low-level support for reading, writing,
-;;; and loading compressed files.  It hooks into the low-level file
-;;; I/O functions (including write-region and insert-file-contents) so
-;;; that they automatically compress or uncompress a file if the file
-;;; appears to need it (based on the extension of the file name).
-;;; Packages like Rmail, VM, GNUS, and Info should be able to work
-;;; with compressed files without modification.
+;; This package implements low-level support for reading, writing,
+;; and loading compressed files.  It hooks into the low-level file
+;; I/O functions (including write-region and insert-file-contents) so
+;; that they automatically compress or uncompress a file if the file
+;; appears to need it (based on the extension of the file name).
+;; Packages like Rmail, VM, GNUS, and Info should be able to work
+;; with compressed files without modification.
 
 
-;;; INSTRUCTIONS:
-;;;
-;;; To use jka-compr, simply load this package, and edit as usual.
-;;; Its operation should be transparent to the user (except for
-;;; messages appearing when a file is being compressed or
-;;; uncompressed).
-;;;
-;;; The variable, jka-compr-compression-info-list can be used to
-;;; customize jka-compr to work with other compression programs.
-;;; The default value of this variable allows jka-compr to work with
-;;; Unix compress and gzip.
-;;;
-;;; If you are concerned about the stderr output of gzip and other
-;;; compression/decompression programs showing up in your buffers, you
-;;; should set the discard-error flag in the compression-info-list.
-;;; This will cause the stderr of all programs to be discarded.
-;;; However, it also causes emacs to call compression/uncompression
-;;; programs through a shell (which is specified by jka-compr-shell).
-;;; This may be a drag if, on your system, starting up a shell is
-;;; slow.
-;;;
-;;; If you don't want messages about compressing and decompressing
-;;; to show up in the echo area, you can set the compress-name and
-;;; decompress-name fields of the jka-compr-compression-info-list to
-;;; nil.
+;; INSTRUCTIONS:
+;;
+;; To use jka-compr, simply load this package, and edit as usual.
+;; Its operation should be transparent to the user (except for
+;; messages appearing when a file is being compressed or
+;; uncompressed).
+;;
+;; The variable, jka-compr-compression-info-list can be used to
+;; customize jka-compr to work with other compression programs.
+;; The default value of this variable allows jka-compr to work with
+;; Unix compress and gzip.
+;;
+;; If you are concerned about the stderr output of gzip and other
+;; compression/decompression programs showing up in your buffers, you
+;; should set the discard-error flag in the compression-info-list.
+;; This will cause the stderr of all programs to be discarded.
+;; However, it also causes emacs to call compression/uncompression
+;; programs through a shell (which is specified by jka-compr-shell).
+;; This may be a drag if, on your system, starting up a shell is
+;; slow.
+;;
+;; If you don't want messages about compressing and decompressing
+;; to show up in the echo area, you can set the compress-name and
+;; decompress-name fields of the jka-compr-compression-info-list to
+;; nil.
 
 
-;;; APPLICATION NOTES:
-;;;
-;;; crypt++
-;;;   jka-compr can coexist with crpyt++ if you take all the decompression
-;;;   entries out of the crypt-encoding-list.  Clearly problems will arise if
-;;;   you have two programs trying to compress/decompress files.  jka-compr
-;;;   will not "work with" crypt++ in the following sense: you won't be able to
-;;;   decode encrypted compressed files--that is, files that have been
-;;;   compressed then encrypted (in that order).  Theoretically, crypt++ and
-;;;   jka-compr could properly handle a file that has been encrypted then
-;;;   compressed, but there is little point in trying to compress an encrypted
-;;;   file.
-;;;
+;; APPLICATION NOTES:
+;;
+;; crypt++
+;;   jka-compr can coexist with crpyt++ if you take all the decompression
+;;   entries out of the crypt-encoding-list.  Clearly problems will arise if
+;;   you have two programs trying to compress/decompress files.  jka-compr
+;;   will not "work with" crypt++ in the following sense: you won't be able to
+;;   decode encrypted compressed files--that is, files that have been
+;;   compressed then encrypted (in that order).  Theoretically, crypt++ and
+;;   jka-compr could properly handle a file that has been encrypted then
+;;   compressed, but there is little point in trying to compress an encrypted
+;;   file.
+;;
 
 
-;;; ACKNOWLEDGMENTS
-;;; 
-;;; jka-compr is a V19 adaptation of jka-compr for V18 of Emacs.  Many people
-;;; have made helpful suggestions, reported bugs, and even fixed bugs in 
-;;; jka-compr.  I recall the following people as being particularly helpful.
-;;;
-;;;   Jean-loup Gailly
-;;;   David Hughes
-;;;   Richard Pieri
-;;;   Daniel Quinlan
-;;;   Chris P. Ross
-;;;   Rick Sladkey
-;;;
-;;; Andy Norman's ange-ftp was the inspiration for the original jka-compr for
-;;; Version 18 of Emacs.
-;;;
-;;; After I had made progress on the original jka-compr for V18, I learned of a
-;;; package written by Kazushi Jam Marukawa, called jam-zcat, that did exactly
-;;; what I was trying to do.  I looked over the jam-zcat source code and
-;;; probably got some ideas from it.
-;;;
+;; ACKNOWLEDGMENTS
+;; 
+;; jka-compr is a V19 adaptation of jka-compr for V18 of Emacs.  Many people
+;; have made helpful suggestions, reported bugs, and even fixed bugs in 
+;; jka-compr.  I recall the following people as being particularly helpful.
+;;
+;;   Jean-loup Gailly
+;;   David Hughes
+;;   Richard Pieri
+;;   Daniel Quinlan
+;;   Chris P. Ross
+;;   Rick Sladkey
+;;
+;; Andy Norman's ange-ftp was the inspiration for the original jka-compr for
+;; Version 18 of Emacs.
+;;
+;; After I had made progress on the original jka-compr for V18, I learned of a
+;; package written by Kazushi Jam Marukawa, called jam-zcat, that did exactly
+;; what I was trying to do.  I looked over the jam-zcat source code and
+;; probably got some ideas from it.
+;;
 
 ;;; Code:
 
@@ -155,7 +172,7 @@ invoked.")
   nil
   "The entry in `file-name-handler-alist' used by the jka-compr I/O functions.")
 
-;;; Functions for accessing the return value of jka-get-compression-info
+;;; Functions for accessing the return value of jka-compr-get-compression-info
 (defun jka-compr-info-regexp               (info)  (aref info 0))
 (defun jka-compr-info-compress-message     (info)  (aref info 1))
 (defun jka-compr-info-compress-program     (info)  (aref info 2))
@@ -485,13 +502,18 @@ There should be no more than seven characters after the final `/'")
 							(if (and beg end)
 							    (- end beg)
 							  end))
-			(jka-compr-call-process uncompress-program
-						(concat uncompress-message
-							" " base-name)
-						local-file
-						t
-						nil
-						uncompress-args))
+			;; If visiting, bind off buffer-file-name so that
+			;; file-locking will not ask whether we should
+			;; really edit the buffer.
+			(let ((buffer-file-name
+			       (if visit nil buffer-file-name)))
+			  (jka-compr-call-process uncompress-program
+						  (concat uncompress-message
+							  " " base-name)
+						  local-file
+						  t
+						  nil
+						  uncompress-args)))
 		      (setq size (- (point) start))
 		      (if replace
 			  (let* ((del-beg (point))
@@ -609,6 +631,7 @@ There should be no more than seven characters after the final `/'")
 
 
 ;;; Support for loading compressed files.
+;;; XEmacs: autoload this function
 ;;;###autoload
 (defun jka-compr-load (file &optional noerror nomessage nosuffix)
   "Documented as original."
@@ -623,7 +646,8 @@ There should be no more than seven characters after the final `/'")
 	  (or nomessage
 	      (message "Loading %s..." file))
 
-	  (load load-file noerror t t)
+	  (let ((load-force-doc-strings t))
+	    (load load-file noerror t t))
 
 	  (or nomessage
 	      (message "Loading %s...done." file)))
@@ -631,11 +655,20 @@ There should be no more than seven characters after the final `/'")
       (jka-compr-delete-temp-file local-copy))
 
     t))
+
+(defun jka-compr-byte-compiler-base-file-name (file)
+  (let ((info (jka-compr-get-compression-info file)))
+    (if (and info (jka-compr-info-strip-extension info))
+	(save-match-data
+	 (substring file 0 (string-match (jka-compr-info-regexp info) file)))
+      file)))
 
 (put 'write-region 'jka-compr 'jka-compr-write-region)
 (put 'insert-file-contents 'jka-compr 'jka-compr-insert-file-contents)
 (put 'file-local-copy 'jka-compr 'jka-compr-file-local-copy)
 (put 'load 'jka-compr 'jka-compr-load)
+(put 'byte-compiler-base-file-name 'jka-compr
+     'jka-compr-byte-compiler-base-file-name)
 
 (defun jka-compr-handler (operation &rest args)
   (save-match-data
@@ -656,12 +689,29 @@ There should be no more than seven characters after the final `/'")
 	(inhibit-file-name-operation operation))
     (apply operation args)))
 
+;; XEmacs change:  I don't have a clue what this is trying do. -sb
+;; ;;;###autoload(defun auto-compression-mode (&optional arg)
+;; ;;;###autoload  "\
+;; ;;;###autoloadToggle automatic file compression and uncompression.
+;; ;;;###autoloadWith prefix argument ARG, turn auto compression on if positive, else off.
+;; ;;;###autoloadReturns the new status of auto compression (non-nil means on)."
+;; ;;;###autoload  (interactive "P")
+;; ;;;###autoload  (if (not (fboundp 'jka-compr-installed-p))
+;; ;;;###autoload      (progn
+;; ;;;###autoload        (require 'jka-compr)
+;; ;;;###autoload        ;; That turned the mode on, so make it initially off.
+;; ;;;###autoload        (toggle-auto-compression)))
+;; ;;;###autoload  (toggle-auto-compression arg t))
+
+;; XEmacs:  autoload this function
 ;;;###autoload
-(defun toggle-auto-compression (arg)
-  "Toggle automatic file compression and decompression.
+(defun toggle-auto-compression (&optional arg message)
+  "Toggle automatic file compression and uncompression.
 With prefix argument ARG, turn auto compression on if positive, else off.
-Returns the new status of auto compression (non-nil means on)."
-  (interactive "P")
+Returns the new status of auto compression (non-nil means on).
+If the argument MESSAGE is non-nil, it means to print a message
+saying whether the mode is now on or off."
+  (interactive "P\np")
   (let* ((installed (jka-compr-installed-p))
 	 (flag (if (null arg)
 		   (not installed)
@@ -679,7 +729,7 @@ Returns the new status of auto compression (non-nil means on)."
       (jka-compr-uninstall)))
 
 
-    (and (interactive-p)
+    (and message
 	 (if flag
 	     (message "Automatic file (de)compression is now ON.")
 	   (message "Automatic file (de)compression is now OFF.")))
@@ -722,6 +772,7 @@ and `inhibit-first-line-modes-suffixes'."
 		    ;; inhibit-first-line-modes-suffixes, so that a
 		    ;; -*- line in the first file of a compressed tar
 		    ;; file doesn't override tar-mode.
+		    ;; XEmacs: the (now)superfluous conditional doesn't hurt
 		    (and (boundp 'inhibit-first-line-modes-suffixes)
 			 (setq inhibit-first-line-modes-suffixes
 			       (cons (jka-compr-info-regexp x)
@@ -741,6 +792,7 @@ by `jka-compr-installed'."
   (mapcar
      (function (lambda (x)
 		 (and (jka-compr-info-strip-extension x)
+		      ;; XEmacs: the (now)superfluous conditional doesn't hurt
 		      (and (boundp 'inhibit-first-line-modes-suffixes)
 			   (setq inhibit-first-line-modes-suffixes
 				 (delete (jka-compr-info-regexp x)

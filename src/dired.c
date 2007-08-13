@@ -63,7 +63,7 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
 
   char statbuf [MAXNAMLEN+2];
   char *statbuf_tail;
-  Lisp_Object tail_cons;
+  Lisp_Object tail_cons = Qnil;
   char slashfilename[MAXNAMLEN+2];
   char *filename = slashfilename;
 
@@ -335,7 +335,6 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
   file = FILE_SYSTEM_CASE (file);
 #endif
   dirname = Fexpand_file_name (dirname, Qnil);
-  bestmatch = Qnil;
   file_name_length = string_char_length (XSTRING (file));
 
   /* With passcount = 0, ignore files that end in an ignored extension.
@@ -354,7 +353,6 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 	report_file_error ("Opening directory", list1 (dirname));
 
       /* Loop reading blocks */
-      /* (att3b compiler bug requires do a null comparison this way) */
       while (1)
 	{
 	  DIRENTRY *dp;
@@ -371,12 +369,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 
 	  d_name = (Bufbyte *) dp->d_name;
 	  len = NAMLEN (dp);
-          /* mrb: #### FIX: The Name must be converted using
-             file-name-coding system or some such.  At least this
-             change allows the saving of files in directories with
-             Japanese file names */
-	  /*cclen = bytecount_to_charcount (d_name, len);*/
-	  cclen = len;
+	  cclen = bytecount_to_charcount (d_name, len);
 
 	  /* Can't just use QUIT because we have to make sure the file
              descriptor gets closed. */
@@ -403,14 +396,14 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 #define TRIVIAL_DIRECTORY_ENTRY(n) (!strcmp (n, ".") || !strcmp (n, ".."))
 #endif
 	      /* "." and ".." are never interesting as completions, but are
-		 actually in the way in a directory contains only one file.  */
+		 actually in the way in a directory containing only one file.  */
 	      if (!passcount && TRIVIAL_DIRECTORY_ENTRY (dp->d_name))
 		continue;
 	    }
 	  else
             {
 	      /* Compare extensions-to-be-ignored against end of this file name */
-	      /* if name is not an exact match against specified string */
+	      /* if name is not an exact match against specified string.  */
 	      if (!passcount && cclen > file_name_length)
 		{
 		  Lisp_Object tem;
@@ -442,7 +435,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 	  if (!passcount && ignored_extension_p)
 	    continue;
 
-	  if (!passcount && regexp_ignore_completion_p (d_name, Qnil, 0, len))
+	  if (!passcount && regexp_ignore_completion_p (d_name, Qnil, 0, cclen))
             continue;
 
           /* Update computation of how much all possible completions match */
@@ -454,16 +447,9 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
               struct gcpro ngcpro1;
               NGCPRO1 (name);
               /* This is a possible completion */
-              if (directoryp)
-                {
-                  /* This completion is a directory; make it end with '/' */
-                  name = Ffile_name_as_directory
-                    /* make_string (d_name, len); */
-		    (make_ext_string (d_name, len, FORMAT_BINARY));
-                }
-              else
-                /* name = make_string (d_name, len) */
-                name = make_ext_string (d_name, len, FORMAT_BINARY);
+              name = make_string (d_name, len);
+              if (directoryp) /* Completion is a directory; end it with '/' */
+                name = Ffile_name_as_directory (name);
               if (all_flag)
                 {
                   bestmatch = Fcons (name, bestmatch);
@@ -490,14 +476,14 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
                      use it as the best match rather than one that is not
                      an exact match.  This way, we get the case pattern
                      of the actual match.  */
-                  if ((matchsize == len
+                  if ((matchsize == cclen
                        && matchsize + !!directoryp 
                        < string_char_length (XSTRING (bestmatch)))
                       ||
                       /* If there is no exact match ignoring case,
                          prefer a match that does not change the case
                          of the input.  */
-                      (((matchsize == len)
+                      (((matchsize == cclen)
                         ==
                         (matchsize + !!directoryp 
                          == string_char_length (XSTRING (bestmatch))))
@@ -509,11 +495,9 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
                        && 0 <= scmp_1 (p1, string_data (XSTRING (file)),
 				       file_name_length, 0)))
                     {
-                      /* bestmatch = make_string (d_name, len); */ /* mrb */
-                      bestmatch = make_ext_string (d_name, len, FORMAT_BINARY);
+                      bestmatch = make_string (d_name, len);
                       if (directoryp)
-                        bestmatch =
-			  Ffile_name_as_directory (bestmatch);
+                        bestmatch = Ffile_name_as_directory (bestmatch);
                     }
                 }
 

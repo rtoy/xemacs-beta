@@ -1,9 +1,8 @@
 ;;; time.el --- display time and load in mode line of Emacs.
 
-;; Copyright (C) 1985, 1986, 1987, 1992-1994 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 86, 87, 93, 94, 1996 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
-;; Keywords: extensions
 
 ;; This file is part of XEmacs.
 
@@ -19,18 +18,19 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: Not synched with FSF.
 
 ;;; Commentary:
 
-;;; Facilities to display current time/date and a new-mail indicator
-;;; in the Emacs mode line.  The single entry point is `display-time'.
+;; Facilities to display current time/date and a new-mail indicator
+;; in the Emacs mode line.  The single entry point is `display-time'.
 
-;;; See also reportmail.el.
-;;; This uses the XEmacs timeout-event mechanism, via a version
-;;; of Kyle Jones' itimer package.
+;; See also reportmail.el.
+;; This uses the XEmacs timeout-event mechanism, via a version
+;; of Kyle Jones' itimer package.
 
 ;;; Code:
 

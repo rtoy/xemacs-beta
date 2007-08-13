@@ -20,9 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -53,6 +54,8 @@
 (defvar asm-comment-char ?;
   "*The comment-start character assumed by Asm mode.")
 
+;; XEmacs change (This is the primary difference, why was this
+;;  feature removed? -sb)
 (defvar asm-support-c-comments-p t
   "*Support C style comments.  If t C style comments will be
 supported.  This is mainly for the benefit of font-lock.")
@@ -69,17 +72,15 @@ supported.  This is mainly for the benefit of font-lock.")
 
 (if asm-mode-map
     nil
+  ;; XEmacs change
   (setq asm-mode-map (make-sparse-keymap 'asm-mode-map))
   ;; Note that the comment character isn't set up until asm-mode is called.
   (define-key asm-mode-map ":"		'asm-colon)
+  (define-key asm-mode-map "\C-c;"	'comment-region)
   (define-key asm-mode-map "\C-i"	'tab-to-tab-stop)
   (define-key asm-mode-map "\C-j"	'asm-newline)
   (define-key asm-mode-map "\C-m"	'asm-newline)
   )
-
-(defvar asm-code-level-empty-comment-pattern nil)
-(defvar asm-flush-left-empty-comment-pattern nil)
-(defvar asm-inline-empty-comment-pattern nil)
 
 (defconst asm-font-lock-keywords
  '(("^\\(\\(\\sw\\|\\s_\\)+\\)\\>:?[ \t]*\\(\\sw+\\)?"
@@ -87,7 +88,11 @@ supported.  This is mainly for the benefit of font-lock.")
    ("^\\s +\\(\\(\\sw\\|\\s_\\)+\\)" 1 font-lock-keyword-face))
  "Additional expressions to highlight in Assembler mode.")
 
+;; XEmacs change
 (put 'asm-mode 'font-lock-defaults '(asm-font-lock-keywords))
+(defvar asm-code-level-empty-comment-pattern nil)
+(defvar asm-flush-left-empty-comment-pattern nil)
+(defvar asm-inline-empty-comment-pattern nil)
 
 ;;;###autoload
 (defun asm-mode ()
@@ -107,13 +112,16 @@ which is called near the beginning of mode initialization.
 
 Turning on Asm mode runs the hook `asm-mode-hook' at the end of initialization.
 
-Special commands:\\{asm-mode-map}
+Special commands:
+\\{asm-mode-map}
 "
   (interactive)
   (kill-all-local-variables)
   (setq mode-name "Assembler")
   (setq major-mode 'asm-mode)
   (setq local-abbrev-table asm-mode-abbrev-table)
+  (make-local-variable 'font-lock-defaults)
+  (setq font-lock-defaults '(asm-font-lock-keywords))
   (make-local-variable 'asm-mode-syntax-table)
   (setq asm-mode-syntax-table (make-syntax-table))
   (set-syntax-table asm-mode-syntax-table)
@@ -121,10 +129,12 @@ Special commands:\\{asm-mode-map}
   (run-hooks 'asm-mode-set-comment-hook)
   ;; Make our own local child of asm-mode-map
   ;; so we can define our own comment character.
+  ;; XEmacs change
   (let ((ourmap (make-sparse-keymap)))
     (set-keymap-parents ourmap (list asm-mode-map))
     (use-local-map ourmap))
   (local-set-key (vector asm-comment-char) 'asm-comment)
+  ;; XEmacs change
   (if asm-support-c-comments-p
       (progn
 	(modify-syntax-entry ?/ ". 14" asm-mode-syntax-table)

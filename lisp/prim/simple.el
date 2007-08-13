@@ -213,7 +213,8 @@ Leave one space or none, according to the context."
 (defun just-one-space ()
   "Delete all spaces and tabs around point, leaving one space."
   (interactive "*")
-  (expand-abbrev)
+  (if abbrev-mode
+      (expand-abbrev))
   (skip-chars-backward " \t")
   (if (= (following-char) ? )
       (forward-char 1)

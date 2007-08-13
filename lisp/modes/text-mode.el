@@ -18,9 +18,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -51,7 +52,9 @@ inherit all the commands defined in this map.")
 (if text-mode-map
     ()
   (setq text-mode-map (make-sparse-keymap))
+  ;; XEmacs change
   (set-keymap-name text-mode-map 'text-mode-map)
+  (define-key text-mode-map "\e\t" 'ispell-complete-word)
   (define-key text-mode-map "\t" 'tab-to-tab-stop)
   (define-key text-mode-map "\es" 'center-line)
   (define-key text-mode-map "\eS" 'center-paragraph))
@@ -65,7 +68,8 @@ inherit all the commands defined in this map.")
 
 (defun text-mode ()
   "Major mode for editing text intended for humans to read.
-Special commands:\\{text-mode-map}
+Special commands:
+\\{text-mode-map}
 Turning on Text mode calls the value of the variable `text-mode-hook',
 if that value is non-nil."
   (interactive)
@@ -85,6 +89,7 @@ All the commands defined in Text mode are inherited unless overridden.")
     ()
   ;; Make different definition for TAB before the one in text-mode-map, but
   ;; share the rest.
+  ;; XEmacs change
   (setq indented-text-mode-map (make-sparse-keymap))
   (set-keymap-name indented-text-mode-map 'indented-text-mode-map)
   (set-keymap-parents indented-text-mode-map (list text-mode-map))

@@ -6,26 +6,27 @@
 ;; Keywords: docs, help, lisp
 ;; original name was cross-ref.el.
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
-;;
+
 ;; This package allows you to use a simple form of cross references in
 ;; your Emacs Lisp documentation strings. Cross-references look like
 ;; \\(type@[label@]data), where type defines a method for retrieving
@@ -129,7 +130,7 @@ Find cross-reference information in a buffer and
 highlight them with face defined by \\(v@docref-highlight-face).
 
 Cross-reference has the following format: \\ (TYPE[@LABEL]@DATA), where
-TYPE defines method used to retrive xref data (like reading from file or
+TYPE defines method used to retrieve xref data (like reading from file or
 calling \\(f@describe-function)), DATA is an argument to this method
 \(like file name or function name), and LABEL is displayed in text using
 \\(v@docref-highlight-face).
@@ -148,7 +149,8 @@ See \\(v@docref-methods-alist) for currently defined methods."
 	(let ((old-modified (buffer-modified-p)))
 	  (while (re-search-forward "[\\](\\([^\)\@]+\\)\\(@[^\)\@]+\\)?@\\([^\)]*\\))"
 				    nil t)
-	    (let* ((type (buffer-substring (match-beginning 1) (match-end 1)))
+	    (let* ((start (match-beginning 0))
+		   (type (buffer-substring (match-beginning 1) (match-end 1)))
 		   (data (buffer-substring (match-beginning 3) (match-end 3)))
 		   (label
 		    (if (match-beginning 2)
@@ -169,7 +171,8 @@ See \\(v@docref-methods-alist) for currently defined methods."
 	  (set-buffer-modified-p old-modified)))))
 
 (defun docref-insert-label (string ref)
-  (let ((label (concat string)))
+  (let ((label (concat string))
+	(pos (point)))
     ;; decorate the label
     (let ((leading-space-end (save-match-data
 			       (if (string-match "^\\([ \t\n]+\\)" label)

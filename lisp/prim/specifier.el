@@ -274,7 +274,7 @@ type of SPECIFIER (which you can determine using `specifier-type').
 The specifier `scrollbar-width', for example, is of type `integer',
 meaning its valid instantiators are integers.  The specifier
 governing the background color of the `default' face (you can
-retrieve this specifier using `(face-foreground 'default)') is
+retrieve this specifier using `(face-background 'default)') is
 of type `color', meaning its valid instantiators are strings naming
 colors and color-instance objects.  For some types of specifiers,
 such as `image' and `toolbar', the instantiators can be very
@@ -297,7 +297,7 @@ you might like the color \"darkseagreen2\", but some X servers
 don't recognize this color, so you could provide a backup
 \"forest green\".  Color TTY devices probably won't recognize this
 either, so you could provide a second backup \"green\".  You'd
-do this by specifying an instantiator
+do this by specifying this list of instantiators:
 
 '(\"darkseagreen2\" \"forest green\" \"green\")
 
@@ -337,8 +337,8 @@ you try this.)
 Finally, VALUE can itself be a specifier (of the same type as
 SPECIFIER), if you want to copy specifications from one specifier
 to another; this is equivalent to calling `copy-specifier', and
-LOCALE, TAG-SET, and HOW-TO-ADD have the same semantics as that
-function.
+LOCALE, TAG-SET, and HOW-TO-ADD have the same semantics as with
+that function.
 
 Note that `set-specifier' is exactly complementary to `specifier-specs'
 except in the case where SPECIFIER has no specs at all in it but nil
@@ -349,7 +349,7 @@ or in strange cases where there is an ambiguity between a spec-list
 and an inst-list, etc. (The built-in specifier types are designed
 in such a way as to avoid any such ambiguities.)
 
-NOTE: If you want to to work with spec-lists, you should probably not
+NOTE: If you want to work with spec-lists, you should probably not
 use either `set-specifier' or `specifier-specs', but should use the
 lower-level functions `add-spec-list-to-specifier' and `specifier-spec-list'.
 These functions always work with fully-qualified spec-lists; thus, there

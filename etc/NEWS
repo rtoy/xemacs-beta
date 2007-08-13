@@ -347,7 +347,7 @@ ancient ASCII code used to represent a particular overlapping subset of them.
 In XEmacs, keymaps are first-class opaque objects.  FSF 19 represents them as
 complicated combinations of association lists and vectors.  If you use the
 advertised functional interface to manipulation of keymaps, the same code
-will work in XEmacs, Emacs 18, and and FSF GNU Emacs 19; if your code depends
+will work in XEmacs, Emacs 18, and FSF GNU Emacs 19; if your code depends
 on the underlying implementation of keymaps, it will not.
 
 XEmacs uses "extents" to represent all non-textual aspects of buffers;
@@ -815,8 +815,8 @@ As does this:
     /usr/local/bin/xemacs -> ../xemacs/src/xemacs-19.14 ; A link...
     /usr/local/xemacs/src/xemacs-19.14*                 ; The executable,
     /usr/local/xemacs/lisp/                             ; and the rest of
-    /usr/local/xemacs/etc/                              ; the the source
-    /usr/local/xemacs/lock/                             ; tree.
+    /usr/local/xemacs/etc/                              ; the source tree
+    /usr/local/xemacs/lock/
     /usr/local/xemacs/info/
 
 This configuration might be used for a multi-architecture installation; assume
@@ -1169,7 +1169,7 @@ Faces accept the following resources:
      These are the faces that the left and right annotation margins are
      displayed in.
 
-`primary-selection'
+`zmacs-region'
      This is the face that mouse selections are displayed in.
 
 `text-cursor'
@@ -1285,8 +1285,8 @@ To customize it, see the descriptions of the function `font-lock-mode' and
 the variables `font-lock-keywords', `c-font-lock-keywords', etc.
 
 There exist several other source code highlighting packages, but font-lock
-does does one thing that most others don't do: highlights as you type new
-text; and one thing that no others do: bases part of its decoration on the
+does one thing that most others don't do: highlights as you type new text;
+and one thing that no others do: bases part of its decoration on the
 syntax table of the major mode.  Font-lock has C-level support to do this
 efficiently, so it should also be significantly faster than the others.
 
@@ -2776,7 +2776,7 @@ Scrollbars!  If you have Motif, these are real Motif scrollbars; otherwise,
 Athena scrollbars are used.  They obey all the usual resources of their
 respective toolkits.
 
-There is now an implementation of dialog boxes based based on the Athena
+There is now an implementation of dialog boxes based on the Athena
 widgets, as well as the existing Motif implementation.
 
 This release works with Motif 1.2 as well as 1.1.  If you link with Motif, 

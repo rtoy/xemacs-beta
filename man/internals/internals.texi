@@ -146,6 +146,7 @@ Rules When Writing New C Code
 * General Coding Rules::
 * Writing Lisp Primitives::
 * Adding Global Lisp Variables::
+* Techniques for XEmacs Developers::
 
 A Summary of the Various XEmacs Modules
 
@@ -369,6 +370,9 @@ version 18.35 (a beta version) released on January 5, 1987.
 @item
 version 18.36 (a beta version) released on January 21, 1987.
 @item
+January 27, 1987: The Great Usenet Renaming.  net.emacs is now
+comp.emacs.
+@item
 version 18.37 (a beta version) released on February 12, 1987.
 @item
 version 18.38 (a beta version) released on March 3, 1987.
@@ -395,9 +399,6 @@ version 18.50 released on February 13, 1988.
 version 18.51 released on May 7, 1988.
 @item
 version 18.52 released on September 1, 1988.
-@item
-January 27, 1989: The Great Usenet Renaming.  net.emacs is now
-comp.emacs.
 @item
 version 18.53 released on February 24, 1989.
 @item
@@ -1002,7 +1003,7 @@ garbage collect, etc.
 etc.
 
   The important idea here is that there are a number of independent
-subsystems each with their own responsibility and persistent state, just
+subsystems each with its own responsibility and persistent state, just
 like different employees in a company, and each subsystem is
 periodically given commands from other subsystems.  Commands can flow
 from any one subsystem to any other, but there is usually some sort of
@@ -1574,6 +1575,7 @@ often in code far away from where the actual breakage is.
 * General Coding Rules::
 * Writing Lisp Primitives::
 * Adding Global Lisp Variables::
+* Techniques for XEmacs Developers::
 @end menu
 
 @node General Coding Rules
@@ -1946,6 +1948,33 @@ is in use, and will happily collect it and reuse its storage for another
 Lisp object, and you will be the one who's unhappy when you can't figure
 out how your variable got overwritten.
 
+@node Techniques for XEmacs Developers
+@section Techniques for XEmacs Developers
+
+To make a quantified XEmacs, do: @code{make quantmacs}.
+
+You simply can't dump Quantified and Purified images.  Run the image
+like so:  @code{quantmacs -batch -l loadup.el run-temacs -q}.
+
+Before you go through the trouble, are you compiling with all
+debugging and error-checking off?  If not try that first.  Be warned
+that while Quantify is directly responsible for quite a few
+optimizations which have been made to XEmacs, doing a run which
+generates results which can be acted upon is not necessarily a trivial
+task.
+
+Also, if you're still willing to do some runs make sure you configure
+with the @samp{--quantify} flag.  That will keep Quantify from starting
+to record data until after the loadup is completed and will shut off
+recording right before it shuts down (which generates enough bogus data
+to throw most results off).  It also enables three additional elisp
+commands: @code{quantify-start-recording-data},
+@code{quantify-stop-recording-data} and @code{quantify-clear-data}.
+
+To get started debugging XEmacs, take a look at the @file{gdbinit} and
+@file{dbxrc} files in the @file{src} directory.
+
+
 @node A Summary of the Various XEmacs Modules, Allocation of Objects in XEmacs Lisp, Rules When Writing New C Code, Top
 @chapter A Summary of the Various XEmacs Modules
 
@@ -2235,7 +2264,7 @@ basic ones.
 
 @file{emacsfns.h} contains prototypes for most of the exported functions
 in the various modules. (In particular, prototypes for Lisp primitives
-should always go in this header file.  Prototypes for other functions
+should always go into this header file.  Prototypes for other functions
 can either go here or in a module-specific header file, depending on how
 general-purpose the function is and whether it has special-purpose
 argument types requiring definitions not in @file{lisp.h}.)  All
@@ -2409,15 +2438,15 @@ written in Lisp.
    6059  bufslots.h
 @end example
 
-@file{buffer.c} implements the buffer Lisp object type.  This includes
-functions that create and destroy buffers; retrieve buffers by name or
-by other properties; manipulate lists of buffers (remember that buffers
-are permanent objects and stored in various ordered lists); retrieve or
-change buffer properties; etc.  It also contains the definitions of all
-the built-in buffer-local variables (which can be viewed as buffer
-properties).  It does @emph{not} contain code to manipulate buffer-local
-variables (that's in @file{symbols.c}, described above); or code to manipulate
-the text in a buffer.
+@file{buffer.c} implements the @dfn{buffer} Lisp object type.  This
+includes functions that create and destroy buffers; retrieve buffers by
+name or by other properties; manipulate lists of buffers (remember that
+buffers are permanent objects and stored in various ordered lists);
+retrieve or change buffer properties; etc.  It also contains the
+definitions of all the built-in buffer-local variables (which can be
+viewed as buffer properties).  It does @emph{not} contain code to
+manipulate buffer-local variables (that's in @file{symbols.c}, described
+above); or code to manipulate the text in a buffer.
 
 @file{buffer.h} defines the structures associated with a buffer and the various
 macros for retrieving text from a buffer and special buffer positions
@@ -2453,13 +2482,13 @@ convert between byte offsets and character offsets.
   10975  marker.c
 @end example
 
-This module implements the marker Lisp object type, which conceptually
-is a pointer to a text position in a buffer that moves around as text is
-inserted and deleted, so as to remain in the same relative position.
-This module doesn't actually move the markers around -- that's handled
-in @file{insdel.c}.  This module just creates them and implements the
-primitives for working with them.  As markers are simple objects, this
-does not entail much.
+This module implements the @dfn{marker} Lisp object type, which
+conceptually is a pointer to a text position in a buffer that moves
+around as text is inserted and deleted, so as to remain in the same
+relative position.  This module doesn't actually move the markers around
+-- that's handled in @file{insdel.c}.  This module just creates them and
+implements the primitives for working with them.  As markers are simple
+objects, this does not entail much.
 
 Note that the standard arithmetic primitives (e.g. @code{+}) accept
 markers in place of integers and automatically substitute the value of
@@ -2473,8 +2502,8 @@ current buffer position of the marker.
   15686  extents.h
 @end example
 
-This module implements the extent Lisp object type, which is like a
-marker that works over a range of text rather than a single position.
+This module implements the @dfn{extent} Lisp object type, which is like
+a marker that works over a range of text rather than a single position.
 Extents are also much more complex and powerful than markers and have a
 more efficient (and more algorithmically complex) implementation.  The
 implementation is described in detail in comments in @file{extents.c}.
@@ -2586,8 +2615,8 @@ Most of this could be implemented in Lisp.
 These implement the handling of events (user input and other system
 notifications).
 
-@file{events.c} and @file{events.h} define the event Lisp object type
-and primitives for manipulating it.
+@file{events.c} and @file{events.h} define the @dfn{event} Lisp object
+type and primitives for manipulating it.
 
 @file{event-stream.c} implements the basic functions for working with
 event queues, dispatching an event by looking it up in relevant keymaps
@@ -2624,8 +2653,8 @@ events from all different kinds of frames.
    2621  keymap.h
 @end example
 
-@file{keymap.c} and @file{keymap.h} define the keymap Lisp object type
-and associated methods and primitives. (Remember that keymaps are
+@file{keymap.c} and @file{keymap.h} define the @dfn{keymap} Lisp object
+type and associated methods and primitives. (Remember that keymaps are
 objects that associate event descriptions with functions to be called to
 ``execute'' those events; @code{dispatch-event} looks up events in the
 relevant keymaps.)
@@ -2687,12 +2716,12 @@ code is loaded).
   22993  device.h
 @end example
 
-These modules implement the device Lisp object type.  This abstracts a
-particular screen or connection on which frames are displayed.  As with
-Lisp objects, event interfaces, and other subsystems, the device code is
-separated into a generic component that contains a standardized
-interface (in the form of a set of methods) onto particular device
-types.
+These modules implement the @dfn{device} Lisp object type.  This
+abstracts a particular screen or connection on which frames are
+displayed.  As with Lisp objects, event interfaces, and other
+subsystems, the device code is separated into a generic component that
+contains a standardized interface (in the form of a set of methods) onto
+particular device types.
 
 The device subsystem defines all the methods and provides method
 services for not only device operations but also for the frame, window,
@@ -2718,9 +2747,9 @@ number of overlapping child windows within a top-level window, using the
 MDI (Multiple Document Interface) protocol in Microsoft Windows or a
 similar scheme.
 
-The @file{frame-*} files implement the frame Lisp object type and provide the
-generic and device-type-specific operations on frames (e.g. raising,
-lowering, resizing, moving, etc.).
+The @file{frame-*} files implement the @dfn{frame} Lisp object type and
+provide the generic and device-type-specific operations on frames
+(e.g. raising, lowering, resizing, moving, etc.).
 
 
 
@@ -2736,8 +2765,8 @@ known as @dfn{panes} in standard window-system terminology) in which a
 buffer's text can be displayed.  Windows can also have scrollbars
 displayed around their edges.
 
-@file{window.c} and @file{window.h} implement the window Lisp object
-type and provide code to manage windows.  Since windows have no
+@file{window.c} and @file{window.h} implement the @dfn{window} Lisp
+object type and provide code to manage windows.  Since windows have no
 associated resources in the window system (the window system knows only
 about the frame; no child windows or anything are used for XEmacs
 windows), there is no device-type-specific code here; all of that code
@@ -2911,7 +2940,7 @@ probably be merged into @file{redisplay-tty.c}.
   14240  lstream.h
 @end example
 
-These modules implement the stream Lisp object type.  This is an
+These modules implement the @dfn{stream} Lisp object type.  This is an
 internal-only Lisp object that implements a generic buffering stream.
 The idea is to provide a uniform interface onto all sources and sinks of
 data, including file descriptors, stdio streams, chunks of memory, Lisp
@@ -3016,11 +3045,11 @@ a broken implementation.
    3369  hash.h
 @end example
 
-These files implement the hashtable Lisp object type.  @file{hash.c} and
-@file{hash.h} provide a generic C implementation of hash tables (which
-can stand independently of XEmacs), and @file{elhash.c} and
-@file{elhash.h} provide a Lisp interface onto the C hash tables using
-the hashtable Lisp object type.
+These files implement the @dfn{hashtable} Lisp object type.
+@file{hash.c} and @file{hash.h} provide a generic C implementation of
+hash tables (which can stand independently of XEmacs), and
+@file{elhash.c} and @file{elhash.h} provide a Lisp interface onto the C
+hash tables using the hashtable Lisp object type.
 
 
 
@@ -3029,7 +3058,7 @@ the hashtable Lisp object type.
   11167  specifier.h
 @end example
 
-This module implements the specifier Lisp object type.  This is
+This module implements the @dfn{specifier} Lisp object type.  This is
 primarily used for displayable properties, and allows for values that
 are specific to a particular buffer, window, frame, device, or device
 class, as well as a default value existing.  This is used, for example,
@@ -3094,8 +3123,9 @@ and capitalizing strings or regions of buffers.
   20234  rangetab.c
 @end example
 
-This module implements the range table Lisp object type, which provides
-for a mapping from ranges of integers to arbitrary Lisp objects.
+This module implements the @dfn{range table} Lisp object type, which
+provides for a mapping from ranges of integers to arbitrary Lisp
+objects.
 
 
 
@@ -3104,13 +3134,13 @@ for a mapping from ranges of integers to arbitrary Lisp objects.
    2206  opaque.h
 @end example
 
-This module implements the opaque Lisp object type, an internal-only
-Lisp object that encapsulates an arbitrary block of memory so that it
-can be managed by the Lisp allocation system.  To create an opaque
-object, you call @code{make_opaque()}, passing a pointer to a block of
-memory.  An object is created that is big enough to hold the memory,
-which is copied into the object's storage.  The object will then stick
-around as long as you keep pointers to it, after which it will be
+This module implements the @dfn{opaque} Lisp object type, an
+internal-only Lisp object that encapsulates an arbitrary block of memory
+so that it can be managed by the Lisp allocation system.  To create an
+opaque object, you call @code{make_opaque()}, passing a pointer to a
+block of memory.  An object is created that is big enough to hold the
+memory, which is copied into the object's storage.  The object will then
+stick around as long as you keep pointers to it, after which it will be
 automatically reclaimed.
 
 @cindex mark method
@@ -3629,17 +3659,20 @@ just Asian languages (although they are generally the most complicated
 to support).  This code is still in beta.
 
 @file{mule-charset.*} and @file{mule-coding.*} provide the heart of the
-XEmacs MULE support.  @file{mule-charset.*} implements the @dfn{charset} Lisp object,
-which encapsulates a character set (an ordered one- or two-dimensional
-set of characters, such as US ASCII or JISX0208 Japanese Kanji).
-@file{mule-coding.*} implements the coding-system Lisp object, which
-encapsulates a method of converting between different encodings.  An
-encoding is a representation of a stream of characters from multiple
-character sets using a stream of bytes or words and defines (e.g.) which
-escape sequences are used to specify particular character sets, how the
-indices for a character are converted into bytes (sometimes this
-involves setting the high bit; sometimes complicated rearranging of the
-values takes place, as in the Shift-JIS encoding), etc.
+XEmacs MULE support.  @file{mule-charset.*} implements the @dfn{charset}
+Lisp object type, which encapsulates a character set (an ordered one- or
+two-dimensional set of characters, such as US ASCII or JISX0208 Japanese
+Kanji).  
+
+@file{mule-coding.*} implements the @dfn{coding-system} Lisp object
+type, which encapsulates a method of converting between different
+encodings.  An encoding is a representation of a stream of characters
+from multiple character sets using a stream of bytes or words and
+defines (e.g.) which escape sequences are used to specify particular
+character sets, how the indices for a character are converted into bytes
+(sometimes this involves setting the high bit; sometimes complicated
+rearranging of the values takes place, as in the Shift-JIS encoding),
+etc.
 
 @file{mule-ccl.c} provides the CCL (Code Conversion Language)
 interpreter.  CCL is similar in spirit to Lisp byte code and is used to
@@ -4091,7 +4124,7 @@ garbage collection.
 lrecord_header} at their beginning.  lcrecords, however, actually have a
 @code{struct lcrecord_header}.  This, in turn, has a @code{struct
 lrecord_header} at its beginning, so sanity is preserved; but it also
-has a pointer used to chain all lrecords together, and a special ID
+has a pointer used to chain all lcrecords together, and a special ID
 field used to distinguish one lcrecord from another. (This field is used
 only for debugging and could be removed, but the space gain is not
 significant.)
@@ -4462,7 +4495,7 @@ reclaimed, the garbage collector goes through all string-chars blocks,
 looking for unused strings.  Each chunk of string data is preceded by a
 pointer to the corresponding @code{struct Lisp_String}, which indicates
 both whether the string is used and how big the string is, i.e. how to
-get to the next chuck of string data.  Holes are compressed by
+get to the next chunk of string data.  Holes are compressed by
 block-copying the next string into the empty space and relocating the
 pointer stored in the corresponding @code{struct Lisp_String}.
 @strong{This means you have to be careful with strings in your code.}
@@ -4534,7 +4567,7 @@ through a callback being called) and are converted into a
 synchronous event queue (first-in, first-out) in a process that
 we will call @dfn{collection}.
 
-  Note that each application has their own event queue. (It is
+  Note that each application has its own event queue. (It is
 immaterial whether the collection process directly puts the
 events in the proper application's queue, or puts them into
 a single system queue, which is later split up.)
@@ -5005,8 +5038,7 @@ an array).  @code{apply1()} uses @code{apply} while the others use
 struct specbinding
 @{
   Lisp_Object symbol, old_value;
-  Lisp_Object (*func) ();
-  Lisp_Object unused;         /* Dividing by 16 is faster than by 12 */
+  Lisp_Object (*func) (Lisp_Object); /* for unwind-protect */
 @};
 @end example
 
@@ -6398,17 +6430,16 @@ TTY.
 
   Thus, there is a hierarchy console -> display -> frame -> window.
 There is a separate Lisp object type for each of these four concepts.
-Furthermore, there is logically a @dfn{selected console},
+Furthermore, there is logically a @dfn{selected console}, 
 @dfn{selected display}, @dfn{selected frame}, and @dfn{selected window}.
-This particular object is distinguished in various ways, such as
-that it is the default object for various functions that act
-on objects of that type.  Note that every containing object
-rememembers the ``selected'' object among the objects that it
-contains: e.g. not only is there a selected window, but
-every frame remembers the last window in it that was selected,
-and changing the selected frame causes the remembered window
-within it to become the selected window.  Similar relationships
-apply for consoles to devices and devices to frames.
+Each of these objects is distinguished in various ways, such as being the
+default object for various functions that act on objects of that type.
+Note that every containing object rememembers the ``selected'' object
+among the objects that it contains: e.g. not only is there a selected
+window, but every frame remembers the last window in it that was
+selected, and changing the selected frame causes the remembered window
+within it to become the selected window.  Similar relationships apply
+for consoles to devices and devices to frames.
 
 @node Point
 @section Point
@@ -6465,8 +6496,8 @@ combination window.
 
 @enumerate
 @item
-Horizontal combination windows can never have children that
-are horizontal combination windows; same for vertical.
+Horizontal combination windows can never have children that are
+horizontal combination windows; same for vertical.
 
 @item
 Only leaf windows can be split (obviously) and this splitting does one

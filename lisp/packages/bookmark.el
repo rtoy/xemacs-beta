@@ -1214,7 +1214,7 @@ probably because we were called from there."
   (let ((will-go (bookmark-get-bookmark bookmark)))
     (setq bookmark-alist (delq will-go bookmark-alist))
     ;; Added by db, nil bookmark-current-bookmark if the last
-    ;; occurence has been deleted
+    ;; occurrence has been deleted
     (or (bookmark-get-bookmark bookmark-current-bookmark)
         (setq bookmark-current-bookmark nil)))
   ;; Don't rebuild the list

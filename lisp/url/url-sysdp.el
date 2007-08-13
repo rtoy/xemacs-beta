@@ -148,7 +148,8 @@
 (sysdep-defconst window-system-version 0)
 
 (sysdep-defvar list-buffers-directory nil)
-(sysdep-defvar x-library-search-path '("/usr/X11R6/lib/X11/"
+(sysdep-defvar x-library-search-path (`
+				      ("/usr/X11R6/lib/X11/"
 				       "/usr/X11R5/lib/X11/"
 				       "/usr/lib/X11R6/X11/"
 				       "/usr/lib/X11R5/X11/"
@@ -167,7 +168,10 @@
 				       "/usr/local/x11r5/lib/X11/"
 				       "/usr/lpp/Xamples/lib/X11/"
 				       "/usr/openwin/lib/X11/"
-				       "/usr/openwin/share/lib/X11/")
+				       "/usr/openwin/share/lib/X11/"
+				       (, data-directory)
+				       )
+				      )
   "Search path used for X11 libraries.")
 
 ;; frame-related stuff.
@@ -291,6 +295,15 @@ BEFORE, if provided, is the name of a menu item before which this item should
 
 (sysdep-defalias 'face-list 'list-faces)
 
+(sysdep-defun facep (face)
+  "Return t if X is a face name or an internal face vector."
+  ;; CAUTION!!! This is Emacs 19.x, for x <= 28, specific
+  ;; I know of no version of Lucid Emacs or XEmacs that did not have
+  ;; facep.  Even if they did, they are unsupported, so big deal.
+  (and (or (internal-facep face)
+           (and (symbolp face) (assq face global-face-data)))
+       t))
+
 (sysdep-defun set-face-property (face property value &optional locale
 				      tag-set how-to-add)
   "Change a property of FACE."
@@ -301,8 +314,32 @@ BEFORE, if provided, is the name of a menu item before which this item should
   "Return FACE's value of the given PROPERTY."
   (and (symbolp face) (get face property)))
 
+;; Property list functions
+;;
+(sysdep-defun plist-put (plist prop val)
+  "Change value in PLIST of PROP to VAL.
+PLIST is a property list, which is a list of the form
+(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol and VAL is any object.
+If PROP is already a property on the list, its value is set to VAL,
+otherwise the new PROP VAL pair is added.  The new plist is returned;
+use `(setq x (plist-put x prop val))' to be sure to use the new value.
+The PLIST is modified by side effects."
+  (let ((node (memq prop plist)))
+    (if node
+	(setcar (cdr node) val)
+      (setq plist (cons prop (cons val plist))))
+    plist))
+
+(sysdep-defun plist-get (plist prop)
+  "Extract a value from a property list.
+PLIST is a property list, which is a list of the form
+(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
+corresponding to the given PROP, or nil if PROP is not
+one of the properties on the list."
+  (car-safe (cdr-safe (memq prop plist))))
+
 ;; Device functions
-;; By wmperry@spry.com
+;; By wmperry@cs.indiana.edu
 ;; This is a complete implementation of all the device-* functions found in
 ;; XEmacs 19.14.  A 'device' for Emacs 19 is just a frame, from which we can
 ;; determine the connection to an X display, etc.
@@ -457,7 +494,6 @@ the toolbar, glyphs, etc."
       str))
    (t "stdio")))
 
-
 (sysdep-defun device-connection (&optional device)
   "Return the connection of the specified device.
 DEVICE defaults to the selected device if omitted"
@@ -555,6 +591,7 @@ will automatically call `save-buffers-kill-emacs'.)"
 
 (sysdep-defalias 'device-class
   (cond
+   ;; First, Xwindows
    ((and (eq window-system 'x) (fboundp 'x-display-visual-class))
     (function
      (lambda (&optional device)
@@ -563,6 +600,22 @@ will automatically call `save-buffers-kill-emacs'.)"
 	  ((string-match "color" val) 'color)
 	  ((string-match "gray-scale" val) 'grayscale)
 	  (t 'mono))))))
+   ;; Now, Presentation-Manager under OS/2
+   ((and (eq window-system 'pm) (fboundp 'pm-display-visual-class))
+    (function
+     (lambda (&optional device)
+       (let ((val (symbol-name (pm-display-visual-class device))))
+	 (cond
+	  ((string-match "color" val) 'color)
+	  ((string-match "gray-scale" val) 'grayscale)
+	  (t 'mono))))))
+   ;; A slightly different way of doing it under OS/2
+   ((and (eq window-system 'pm) (fboundp 'pm-display-color-p))
+    (function
+     (lambda (&optional device)
+       (if (pm-display-color-p)
+	   'color
+	 'mono))))
    ((fboundp 'number-of-colors)
     (function
      (lambda (&optional device)
@@ -598,7 +651,8 @@ Valid classes are 'color, 'grayscale, and 'mono."
   "Return the type (e.g. `x' or `tty') of DEVICE-OR-FRAME.
 DEVICE-OR-FRAME should be a device or a frame object.  See `device-type'
 for a description of the possible types."
-  (if (cdr-safe (assq 'display (frame-parameters device-or-frame)))
+  (if (or (cdr-safe (assq 'display (frame-parameters device-or-frame)))
+	  (cdr-safe (assq 'window-id (frame-parameters device-or-frame))))
       window-system
     'tty))
 
@@ -628,6 +682,8 @@ Value is `tty' for a tty device (a character-only terminal),
 (sysdep-fset 'extent-end-position 'overlay-end)
 (sysdep-fset 'extent-start-position 'overlay-start)
 (sysdep-fset 'set-extent-endpoints 'move-overlay)
+(sysdep-fset 'set-extent-property 'overlay-put)
+(sysdep-fset 'make-extent 'make-overlay)
 
 (sysdep-defun extent-property (extent property &optional default)
   (or (overlay-get extent property) default))
@@ -648,7 +704,6 @@ Value is `tty' for a tty device (a character-only terminal),
 	    (lambda (a b)
 	      (< (- (extent-end-position a) (extent-start-position a))
 		 (- (extent-end-position b) (extent-start-position b)))))))))
-
 
 (sysdep-defun overlays-in (beg end)
   "Return a list of the overlays that overlap the region BEG ... END.
@@ -693,6 +748,12 @@ or between BEG and END."
 	    (throw 'done tmp))))))
 
 ;; misc
+(sysdep-fset 'make-local-hook 'make-local-variable)
+
+(sysdep-defun buffer-substring-no-properties (beg end)
+  "Return the text from BEG to END, without text properties, as a string."
+  (format "%s" (buffer-substring beg end)))
+  
 (sysdep-defun symbol-value-in-buffer (symbol buffer &optional unbound-value)
   "Return the value of SYMBOL in BUFFER, or UNBOUND-VALUE if it is unbound."
   (save-excursion
@@ -796,6 +857,9 @@ Returns nil if FUNCTION was already present in HOOK-VAR, else new
 	 (fboundp 'color-defined-p))	; NS/Emacs 19
     'color-defined-p)
    ((and window-system
+	 (fboundp 'pm-color-defined-p))
+    'pm-color-defined-p)
+   ((and window-system
 	 (fboundp 'x-color-defined-p))	; Emacs 19
     'x-color-defined-p)
    ((fboundp 'get-color)		; Epoch
@@ -882,6 +946,12 @@ Returns nil if FUNCTION was already present in HOOK-VAR, else new
 (sysdep-defun find-face (face)
   (car-safe (memq face (face-list))))
 
+(sysdep-defun set-marker-insertion-type (marker type)
+  "Set the insertion-type of MARKER to TYPE.
+If TYPE is t, it means the marker advances when you insert text at it.
+If TYPE is nil, it means the marker stays behind when you insert text at it."
+  nil)
+
 ;; window functions
 
 ;; not defined in v18
@@ -894,7 +964,6 @@ Returns nil if FUNCTION was already present in HOOK-VAR, else new
   "Returns non-nil if WINDOW is a minibuffer window."
   (eq window (minibuffer-window)))
 
-;; not defined in v18
 (sysdep-defun window-live-p (window)
   "Returns t if OBJ is a window which is currently visible."
   (and (windowp window)

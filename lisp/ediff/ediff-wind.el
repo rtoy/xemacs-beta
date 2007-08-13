@@ -1189,7 +1189,7 @@ It assumes that it is called from within the control buffer."
 	    (or (not ediff-3way-job)
 		(eq (window-buffer C-wind) ediff-buffer-C))
 	    (string= ediff-window-config-saved
-		     (format "%S%S%S%S%S%S%S"
+		     (format "\%S\%S\%S\%S\%S\%S\%S"
 			     ctl-wind A-wind B-wind C-wind
 			     ediff-split-window-function
 			     (ediff-multiframe-setup-p)

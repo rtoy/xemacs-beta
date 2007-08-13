@@ -20,9 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -85,11 +86,12 @@ strings case-insensitively."
   (cond ((eq x y) t)
 	((stringp x)
 	 (and (stringp y) (= (length x) (length y))
-	      (or (equal x y)
-		  (equal (downcase x) (downcase y)))))   ; lazy but simple!
+	      (or (string-equal x y)
+		  (string-equal (downcase x) (downcase y)))))   ; lazy but simple!
 	((numberp x)
 	 (and (numberp y) (= x y)))
 	((consp x)
+	 ;; XEmacs change
 	 (while (and (consp x) (consp y) (equalp (cl-pop x) (cl-pop y))))
 	 (and (not (consp x)) (equalp x y)))
 	((vectorp x)
@@ -373,6 +375,7 @@ If so, return the true (non-nil) value returned by PREDICATE."
 (defun isqrt (a)
   "Return the integer square root of the argument."
   (if (and (integerp a) (> a 0))
+      ;; XEmacs change
       (let ((g (cond ((>= a 1000000) 10000) ((>= a 10000) 1000)
 		     ((>= a 100) 100) (t 10)))
 	    g2)
@@ -383,7 +386,7 @@ If so, return the true (non-nil) value returned by PREDICATE."
 
 (defun cl-expt (x y)
   "Return X raised to the power of Y.  Works only for integer arguments."
-  (if (<= y 0) (if (= y 0) 1 (if (memq x '(-1 1)) x 0))
+  (if (<= y 0) (if (= y 0) 1 (if (memq x '(-1 1)) (cl-expt x (- y)) 0))
     (* (if (= (% y 2) 0) 1 x) (cl-expt (* x x) (/ y 2)))))
 (or (and (fboundp 'expt) (subrp (symbol-function 'expt)))
     (defalias 'expt 'cl-expt))
@@ -593,7 +596,7 @@ If STATE is t, return a new state object seeded from the time of day."
 (defun cl-copy-tree (tree &optional vecp)
   "Make a copy of TREE.
 If TREE is a cons cell, this recursively copies both its car and its cdr.
-Constrast to copy-sequence, which copies only along the cdrs.  With second
+Contrast to copy-sequence, which copies only along the cdrs.  With second
 argument VECP, this copies vectors as well as conses."
   (if (consp tree)
       (let ((p (setq tree (copy-list tree))))
@@ -655,11 +658,12 @@ PROPLIST is a list of the sort returned by `symbol-plist'."
 (defun make-hash-table (&rest cl-keys)
   "Make an empty Common Lisp-style hash-table.
 If :test is `eq', `eql', or `equal', this can use XEmacs built-in hash-tables.
-In XEmacs, or with a different test, this internally uses a-lists.
+In Emacs 19, or with a different test, this internally uses a-lists.
 Keywords supported:  :test :size
 The Common Lisp keywords :rehash-size and :rehash-threshold are ignored."
   (let ((cl-test (or (car (cdr (memq ':test cl-keys))) 'eql))
 	(cl-size (or (car (cdr (memq ':size cl-keys))) 20)))
+    ;; XEmacs change
     (if (and (memq cl-test '(eq eql equal)) (fboundp 'make-hashtable))
 	(funcall 'make-hashtable cl-size cl-test)
       (list 'cl-hash-table-tag cl-test
@@ -893,7 +897,10 @@ This also does some trivial optimizations to make the form prettier."
 					     cl-closure-vars)
 				     '((quote --cl-rest--)))))))
 		 (list (car form) (list* 'lambda (cadadr form) body))))
-	   form))
+	   (let ((found (assq (cadr form) env)))
+	     (if (eq (cadr (caddr found)) 'cl-labels-args)
+		 (cl-macroexpand-all (cadr (caddr (cadddr found))) env)
+	       form))))
 	((memq (car form) '(defun defmacro))
 	 (list* (car form) (nth 1 form) (cl-macroexpand-body (cddr form) env)))
 	((and (eq (car form) 'progn) (not (cddr form)))

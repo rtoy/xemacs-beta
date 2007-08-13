@@ -2512,7 +2512,7 @@ Keymaps
 
      The function `minor-mode-key-binding' returns a list of all the
      active minor mode bindings of KEY.  More precisely, it returns an
-     alist of pairs `(MODENAME . BINDING)', where MODENAME is the the
+     alist of pairs `(MODENAME . BINDING)', where MODENAME is the
      variable which enables the minor mode, and BINDING is KEY's
      definition in that mode.  If KEY has no minor-mode bindings, the
      value is `nil'.

@@ -2240,7 +2240,7 @@ directory.
 
 Default: @kbd{C-o}
 
-Temporary marker used by by Dired to implement omitting.
+Temporary marker used by Dired to implement omitting.
 Should never be used as marker by the user or other packages.
 @cindex Omitting additional files
 There is one exception to this rule: by doing

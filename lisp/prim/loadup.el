@@ -3,7 +3,7 @@
 ;; It is not a good idea to edit this file.  Use site-init.el or site-load.el
 ;; instead.
 ;;
-;; Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1986, 1992, 1994 Free Software Foundation, Inc.
 ;; Copyright (C) 1996 Richard Mlynarik.
 ;; Copyright (C) 1995, 1996 Ben Wing.
 
@@ -24,9 +24,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: Last synched with FSF 19.30, with divergence since.
 
 ;;; Commentary:
 
@@ -64,146 +65,143 @@
      (setq load-warn-when-source-newer t ; set to nil at the end
 	   load-warn-when-source-only t)
 
-     (let ((l #'(lambda (x)
-                  (load x)
-                  ;; garbage collect after loading every file in an attempt to
-                  ;; minimize the size of the dumped image (if we don't do
-                  ;; this, there will be lots of extra space in the data
-                  ;; segment filled with garbage-collected junk)
-                  (garbage-collect))))
-       (funcall l "backquote") ; needed for defsubst etc.
-       (funcall l "bytecomp-runtime")	; define defsubst
-       (funcall l "subr") ;; now load the most basic Lisp functions
-       (funcall l "replace") ;; match-string used in version.el.
-       (funcall l "version.el")	;Ignore compiled-by-mistake version.elc
-       (funcall l "cl")
-       (funcall l "cmdloop")
-       (or (fboundp 'recursive-edit) (funcall l "cmdloop1"))
-       (funcall l "keymap")
-       (funcall l "syntax")
-       (funcall l "device")
-       (funcall l "console")
-       (funcall l "obsolete")
-       (funcall l "specifier")
-       (funcall l "faces")	; must be loaded before any make-face call
-       ;(funcall l "facemenu") #### not yet ported
-       (funcall l "glyphs")
-       (funcall l "objects")
-       (funcall l "extents")
-       (funcall l "events")
-       (funcall l "text-props")
-       (funcall l "process")
-       (funcall l "frame") ; move up here cause some stuff needs it here
-       (funcall l "map-ynp")
-       (funcall l "simple")
-       (funcall l "keydefs")	; Before loaddefs so that keymap vars exist.
-       (funcall l "abbrev")
-       (funcall l "derived")
-       (funcall l "minibuf")
-       (funcall l "list-mode")
-       (funcall l "modeline") ;after simple.el so it can reference functions
-			      ;defined there.
-       ;; If SparcWorks support is included some additional packages are
-       ;; dumped which would normally have autoloads.  To avoid
-       ;; duplicate doc string warnings, SparcWorks uses a separate
-       ;; autoloads file with the dumped packages removed.
-       (if (featurep 'sparcworks)
-           (funcall l "eos/loaddefs-eos")
-           (funcall l "loaddefs"))
-       (funcall l "misc")
-       (funcall l "profile")
-       (funcall l "help")
-       ;; (funcall l "hyper-apropos")  Soon...
-       (funcall l "files")
-       (funcall l "lib-complete")
-       (funcall l "format")
-       (funcall l "indent")
-       (funcall l "isearch-mode")
-       (funcall l "buffer")
-       (funcall l "buff-menu")
-       (funcall l "undo-stack")
-       (funcall l "window")
-       (funcall l "paths.el")		; don't get confused if paths compiled.
-       (funcall l "startup")
-       (funcall l "lisp")
-       (funcall l "page")
-       (funcall l "register")
-       (funcall l "iso8859-1")		; This must be before any modes
+     ;; garbage collect after loading every file in an attempt to
+     ;; minimize the size of the dumped image (if we don't do this,
+     ;; there will be lots of extra space in the data segment filled
+     ;; with garbage-collected junk)
+     (defmacro load-gc (file)
+       (list 'prog1 (list 'load file) '(garbage-collect)))
+     (load-gc "backquote") 		; needed for defsubst etc.
+     (load-gc "bytecomp-runtime")	; define defsubst
+     (load-gc "subr") 			; load the most basic Lisp functions
+     (load-gc "replace") 		; match-string used in version.el.
+     (load-gc "version.el")		; Ignore compiled-by-mistake version.elc
+     (load-gc "cl")
+     (load-gc "cmdloop")
+     (or (fboundp 'recursive-edit) (load-gc "cmdloop1"))
+     (load-gc "keymap")
+     (load-gc "syntax")
+     (load-gc "device")
+     (load-gc "console")
+     (load-gc "obsolete")
+     (load-gc "specifier")
+     (load-gc "faces")	; must be loaded before any make-face call
+     ;(load-gc "facemenu") #### not yet ported
+     (load-gc "glyphs")
+     (load-gc "objects")
+     (load-gc "extents")
+     (load-gc "events")
+     (load-gc "text-props")
+     (load-gc "process")
+     (load-gc "frame") ; move up here cause some stuff needs it here
+     (load-gc "map-ynp")
+     (load-gc "simple")
+     (load-gc "keydefs") ; Before loaddefs so that keymap vars exist.
+     (load-gc "abbrev")
+     (load-gc "derived")
+     (load-gc "minibuf")
+     (load-gc "list-mode")
+     (load-gc "modeline") ; after simple.el so it can reference functions
+			  ; defined there.
+     ;; If SparcWorks support is included some additional packages are
+     ;; dumped which would normally have autoloads.  To avoid
+     ;; duplicate doc string warnings, SparcWorks uses a separate
+     ;; autoloads file with the dumped packages removed.
+     ;;; After fixing, eos/loaddefs-eos and loaddefs appear identical?!!
+     ;;; So just make loaddefs-eos go away...
+     ;;;(load-gc (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
+     (load-gc "loaddefs")
+     (load-gc "misc")
+     (load-gc "profile")
+     (load-gc "help")
+     ;; (load-gc "hyper-apropos")  Soon...
+     (load-gc "files")
+     (load-gc "lib-complete")
+     (load-gc "format")
+     (load-gc "indent")
+     (load-gc "isearch-mode")
+     (load-gc "buffer")
+     (load-gc "buff-menu")
+     (load-gc "undo-stack")
+     (load-gc "window")
+     (load-gc "paths.el")		; don't get confused if paths compiled.
+     (load-gc "startup")
+     (load-gc "lisp")
+     (load-gc "page")
+     (load-gc "register")
+     (load-gc "iso8859-1")		; This must be before any modes
                                         ; (sets standard syntax table.)
-       (funcall l "paragraphs")
-       (funcall l "lisp-mode")
-       (funcall l "text-mode")
-       (funcall l "fill")
-       (funcall l "cc-mode")
-       (if (eq system-type 'vax-vms)
-           (funcall l "vmsproc"))
-       (if (eq system-type 'vax-vms)
-           (funcall l "vms-patch"))
-       (if (eq system-type 'windows-nt)
-	   (progn
-	     (funcall l "ls-lisp")
-	     (funcall l "winnt")))
-       (if (eq system-type 'ms-dos)
-	   (progn
-	     (funcall l "ls-lisp")
-	     (funcall l "dos-fns")
-	     (funcall l "disp-table")	; needed to setup ibm-pc char set,
-					; see internal.el
-	     ))
-       (if (featurep 'lisp-float-type)
-           (funcall l "float-sup"))
-       (funcall l "itimer") ; for vars auto-save-timeout and auto-gc-threshold
-       (if (featurep 'toolbar)
-           (funcall l "toolbar")
-         (progn
-           ;; but still define a few functions.
-           (defun toolbar-button-p (obj) "No toolbar support." nil)
-           (defun toolbar-specifier-p (obj) "No toolbar support." nil)))
-       (if (featurep 'scrollbar)
-           (funcall l "scrollbar"))
-       (if (featurep 'menubar)
-           (funcall l "menubar"))
-       (if (featurep 'dialog)
-           (funcall l "dialog"))
-       (if (featurep 'window-system)
-           (progn
-	     (funcall l "gui")
-             (funcall l "mode-motion")
-             (funcall l "mouse")))
-       (if (featurep 'x)
-           ;; preload the X code, for faster startup.
-           (progn
-             (if (featurep 'menubar)
-                 (progn
-                   (funcall l "x-menubar")
-                   ;; autoload this.
-                   ;;(funcall l "x-font-menu")
-                   ))
-             (funcall l "x-faces")
-             (funcall l "x-iso8859-1")
-             (funcall l "x-mouse")
-             (funcall l "x-select")
-             (if (featurep 'scrollbar)
-                 (funcall l "x-scrollbar"))
-             (funcall l "x-misc")
-             (funcall l "x-init")
-             (if (featurep 'toolbar)
-                 (funcall l "x-toolbar"))
-             ))
-        (if (featurep 'tty)
-            ;; preload the TTY init code.
-            (funcall l "tty-init"))
-       (if (featurep 'tooltalk)
-           (funcall l "tooltalk/tooltalk-load"))
-       (funcall l "vc-hooks")
-       (funcall l "ediff-hook")
-       (funcall l "fontl-hooks")
-       (funcall l "auto-show")
-       (if (featurep 'energize)
-           (funcall l "energize/energize-load.el"))
-       (if (featurep 'sparcworks)
-           (funcall l "sunpro/sunpro-load.el"))
-     ))) ;; end of call-with-condition-handler
+     (load-gc "paragraphs")
+     (load-gc "lisp-mode")
+     (load-gc "text-mode")
+     (load-gc "fill")
+     (load-gc "cc-mode")
+     ;; we no longer load buff-menu automatically.
+     ;; it will get autoloaded if needed.
+     
+     (cond  ; Differences based on system-type
+      ((eq system-type 'vax-vms)
+       (load-gc "vmsproc")
+       (load-gc "vms-patch"))
+      ((eq system-type 'windows-nt)
+       (load-gc "ls-lisp")
+       (load-gc "winnt"))
+      ((eq system-type 'ms-dos)
+       (load-gc "ls-lisp")
+       (load-gc "dos-fns")
+       (load-gc "disp-table")))	; needed to setup ibm-pc char set,
+				; see internal.el
+     (when (featurep 'lisp-float-type)
+       (load-gc "float-sup"))
+     (load-gc "itimer") ; for vars auto-save-timeout and auto-gc-threshold
+     (if (featurep 'toolbar)
+         (load-gc "toolbar")
+       ;; else still define a few functions.
+       (defun toolbar-button-p    (obj) "No toolbar support." nil)
+       (defun toolbar-specifier-p (obj) "No toolbar support." nil))
+     (when (featurep 'scrollbar)
+       (load-gc "scrollbar"))
+     (when (featurep 'menubar)
+       (load-gc "menubar"))
+     (when (featurep 'dialog)
+       (load-gc "dialog"))
+     (when (featurep 'window-system)
+       (load-gc "gui")
+       (load-gc "mode-motion")
+       (load-gc "mouse"))
+     (when (featurep 'x)
+       ;; preload the X code, for faster startup.
+       (when (featurep 'menubar)
+         (load-gc "x-menubar")
+         ;; autoload this.
+         ;;(load-gc "x-font-menu")
+         )
+       (load-gc "x-faces")
+       (load-gc "x-iso8859-1")
+       (load-gc "x-mouse")
+       (load-gc "x-select")
+       (when (featurep 'scrollbar)
+         (load-gc "x-scrollbar"))
+       (load-gc "x-misc")
+       (load-gc "x-init")
+       (when (featurep 'toolbar)
+         (load-gc "x-toolbar"))
+       )
+     (when (featurep 'tty)
+       ;; preload the TTY init code.
+       (load-gc "tty-init"))
+     (when (featurep 'tooltalk)
+       (load-gc "tooltalk/tooltalk-load"))
+     (load-gc "vc-hooks")
+     (load-gc "ediff-hook")
+     (load-gc "fontl-hooks")
+     (load-gc "auto-show")
+     (when (featurep 'energize)
+       (load-gc "energize/energize-load.el"))
+     (when (featurep 'sparcworks)
+       (load-gc "sunpro/sunpro-load.el"))
+     (fmakunbound 'load-gc)
+     )) ;; end of call-with-condition-handler
 
 
 (setq load-warn-when-source-newer nil ; set to t at top of file
@@ -215,12 +213,12 @@
 	(equal (nth 5 command-line-args) "no-site-file"))
     (setq site-start-file nil))
 
-;;; If you want additional libraries to be preloaded and their
-;;; doc strings kept in the DOC file rather than in core,
-;;; you may load them with a "site-load.el" file.
-;;; But you must also cause them to be scanned when the DOC file
-;;; is generated.  For VMS, you must edit ../../vms/makedoc.com.
-;;; For other systems, you must edit ../../src/Makefile.in.in.
+;; If you want additional libraries to be preloaded and their
+;; doc strings kept in the DOC file rather than in core,
+;; you may load them with a "site-load.el" file.
+;; But you must also cause them to be scanned when the DOC file
+;; is generated.  For VMS, you must edit ../../vms/makedoc.com.
+;; For other systems, you must edit ../../src/Makefile.in.in.
 (if (load "site-load" t)
     (garbage-collect))
 
@@ -248,13 +246,13 @@
 ;				       (1+ (apply 'max versions))
 ;				     1)))))
 
-;;; Note: all compiled Lisp files loaded above this point
-;;; must be among the ones parsed by make-docfile
-;;; to construct DOC.  Any that are not processed
-;;; for DOC will not have doc strings in the dumped XEmacs.
+;; Note: all compiled Lisp files loaded above this point
+;; must be among the ones parsed by make-docfile
+;; to construct DOC.  Any that are not processed
+;; for DOC will not have doc strings in the dumped XEmacs.
 
-;;; Don't bother with these if we're running temacs, i.e. if we're
-;;; just debugging don't waste time finding doc strings.
+;; Don't bother with these if we're running temacs, i.e. if we're
+;; just debugging don't waste time finding doc strings.
 
 (if (or (equal (nth 3 command-line-args) "dump")
 	(equal (nth 4 command-line-args) "dump"))
@@ -285,9 +283,9 @@
       (Verify-documentation)
       ))
 
-;;; Note: You can cause additional libraries to be preloaded
-;;; by writing a site-init.el that loads them.
-;;; See also "site-load" above.
+; Note: You can cause additional libraries to be preloaded
+; by writing a site-init.el that loads them.
+; See also "site-load" above.
 (if (stringp site-start-file)
     (load "site-init" t))
 (setq current-load-list nil)
@@ -316,10 +314,10 @@
 	    (setq name (substring name 0 (match-beginning 0))))
 	(if (eq system-type 'ms-dos)
 	    (message "Dumping under the name xemacs")
-	  (message "Dumping under names xemacs and %s" name)))
-      (condition-case ()
-	  (delete-file "xemacs")
-	(file-error nil))
+	  (message "Dumping under names xemacs and %s" name))
+        (condition-case () (delete-file  name   ) (file-error nil))
+        (condition-case () (delete-file "xemacs") (file-error nil))
+        )
       (if (fboundp 'really-free)
 	  (really-free))
       ;; Note that FSF used to dump under `xemacs'!
@@ -360,12 +358,13 @@
       ;; run-emacs-from-temacs doesn't actually return anyway.
       (kill-emacs)))
 
-;;; Avoid error if user loads some more libraries now.
+;; Avoid error if user loads some more libraries now.
 (setq purify-flag nil)
 
-;;; If you are using 'recompile', then you should have used -l loadup-el.el
-;;; so that the .el files always get loaded (the .elc files may be out-of-
-;;; date or bad).
+;; XEmacs change
+;; If you are using 'recompile', then you should have used -l loadup-el.el
+;; so that the .el files always get loaded (the .elc files may be out-of-
+;; date or bad).
 (if (or (equal (nth 3 command-line-args) "recompile")
 	(equal (nth 4 command-line-args) "recompile"))
     (progn
@@ -376,10 +375,6 @@
 	(batch-byte-recompile-directory)
 	(kill-emacs))))
 
-
-;;; For machines with CANNOT_DUMP defined in config.h,
-;;; this file must be loaded each time XEmacs is run.
-;;; So run the startup code now.
 
 ;; For machines with CANNOT_DUMP defined in config.h,
 ;; this file must be loaded each time Emacs is run.

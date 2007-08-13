@@ -65,15 +65,15 @@ xlwMenuResources[] =
 	It's fair to assume that those who do have $LANG set also have the
 	*fontList resource set, or at least know how to deal with this.
       */
-     XtRString, "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1"},
+     XtRString, (String) "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1"},
 #else
   {XtNfont,  XtCFont, XtRFontStruct, sizeof(XFontStruct *),
-     offset(menu.font),XtRString, "XtDefaultFont"},
+     offset(menu.font), XtRString, "XtDefaultFont"},
 #endif
   {XtNforeground, XtCForeground, XtRPixel, sizeof(Pixel),
-     offset(menu.foreground), XtRString, "XtDefaultForeground"},
+     offset(menu.foreground), XtRString, (String) "XtDefaultForeground"},
   {XtNbuttonForeground, XtCButtonForeground, XtRPixel, sizeof(Pixel),
-     offset(menu.button_foreground), XtRString, "XtDefaultForeground"},
+     offset(menu.button_foreground), XtRString, (String)"XtDefaultForeground"},
   {XtNmargin, XtCMargin, XtRDimension,  sizeof(Dimension),
      offset(menu.margin), XtRImmediate, (XtPointer)2},
   {XmNmarginWidth, XmCMarginWidth, XmRHorizontalDimension, sizeof(Dimension),
@@ -139,9 +139,9 @@ static XFontStruct *default_font_of_font_list (XmFontList);
 static XtActionsRec 
 xlwMenuActionsList [] =
 {
-  {"start",		Start},
-  {"drag",		Drag},
-  {"select",		Select},
+  {(String) "start",	Start},
+  {(String) "drag",	Drag},
+  {(String) "select",	Select},
 };
 
 #define SuperClass ((CoreWidgetClass)&coreClassRec)
@@ -150,7 +150,7 @@ XlwMenuClassRec xlwMenuClassRec =
 {
   {  /* CoreClass fields initialization */
     (WidgetClass) SuperClass,		/* superclass		  */	
-    "XlwMenu",				/* class_name		  */
+    (String) "XlwMenu",			/* class_name		  */
     sizeof(XlwMenuRec),			/* size			  */
     XlwMenuClassInitialize,		/* class_initialize	  */
     NULL,				/* class_part_initialize  */
@@ -367,6 +367,7 @@ massage_resource_name (CONST char *in, char *out)
      "Kill Buffer"		->	"killBuffer"
      "Find File..."		->	"findFile"
      "Search and Replace..."	->	"searchAndReplace"
+     "C++ Mode Commands"        ->      "cppModeCommands"
    */
 
 # define GOOD_CHAR(c) (((c) >= 'a' && (c) <= 'z') || \
@@ -393,12 +394,25 @@ massage_resource_name (CONST char *in, char *out)
 	      out++;
 	    }
 	}
+      else if ((unsigned char)*in == '+')
+        {
+          /* for char '+' convert to 'P', e.g for C++ to cPP */
+          *out = 'P';
+          in++;
+          out++;
+        }
       else
 	{
 	  /* A bogus char between words; skip it. */
 	  in++;
 	}
     }
+  
+  /* Add the following define to --cflags to generate a translation
+     file for menu localizations */
+#ifdef PRINT_XLWMENU_RESOURCE_CONVERSIONS
+  printf("Emacs*XlwMenu.%s.labelString:\t%s\n", outpointer, inpointer);
+#endif
   *out = 0;
 #undef GOOD_CHAR
 }
@@ -406,7 +420,7 @@ massage_resource_name (CONST char *in, char *out)
 static XtResource
 nameResource[] =
 { 
-  { "labelString",  "LabelString", XtRString, sizeof(String),
+  { (String) "labelString", (String) "LabelString", XtRString, sizeof(String),
     0, XtRImmediate, 0 }
 };
 

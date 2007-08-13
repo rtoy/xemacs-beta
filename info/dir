@@ -36,12 +36,12 @@ File: dir	Node: Top	This is the top of the INFO tree
 
 * Info::	Documentation browsing system.
 * XEmacs::	The extensible user-friendly self-documenting text editor.
-		This manual is for XEmacs 19.14.
+		This manual is for XEmacs 19.15.
 * Lispref::	XEmacs Lisp technical reference.
-		This manual is for XEmacs 19.14.
+		This manual is for XEmacs 19.15.
 * New-Users-Guide::
-	        XEmacs User's Guide for XEmacs 19.14.
-* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 19.14.
+	        XEmacs User's Guide for XEmacs 19.15.
+* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 19.15.
 * Internals::	Guide to the internals of XEmacs.
 
 Packages:
@@ -64,6 +64,7 @@ Packages:
 * OO-Browser::	The Multi-Language Object-Oriented Browser.
 * PCL-CVS::	An XEmacs-based front end to CVS.
 * PSGML::	A powerful mode for HTML and other SGML documents.
+* PSGML-API::	PSGML, the API documentation.
 * Rmail::	An older mail reader for Emacs.
 * Standards::	The GNU coding standards.
 * Supercite::	Lets you cite parts of messages you're replying to.

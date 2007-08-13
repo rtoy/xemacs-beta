@@ -279,8 +279,8 @@ Alternatively, click \\[occur-mode-mouse-goto] on an item to go to it.
   (run-hooks 'occur-mode-hook))
 
 (defun occur-mode-mouse-goto (e)
-  "go to occurence highlighted by mouse.  This function is only reasonable when bound
-to a mouse key in the occur buffer"
+  "Go to the occurrence highlighted by mouse.
+This function is only reasonable when bound to a mouse key in the occur buffer"
   (interactive "e")
   (let ((window-save (selected-window))
 	(frame-save (selected-frame)))

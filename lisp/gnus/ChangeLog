@@ -1,3 +1,497 @@
+Fri Aug 30 02:23:23 1996  Lars Magne Ingebrigtsen  <larsi@hrym.ifi.uio.no>
+
+	* message.el (message-do-fcc): Set the FROM-GNUS flag.
+
+Sat Aug 24 23:32:02 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el (gnus-group-enter-directory): Would temporarily bind
+	`nneething-read-only', shadowing the proper `defvar'.
+
+Fri Aug  2 22:25:31 1996  Lars Magne Ingebrigtsen  <larsi@hrym.ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.39 is released.
+
+Wed Jul 31 15:23:54 1996  Ken Olstad  <ken@mn.cheyenne.com>
+
+	* gnus-xmas.el (gnus-xmas-redefine): Disbale XFace when running
+	under tty.
+
+Wed Jul 31 14:21:38 1996  Lars Magne Ingebrigtsen  <lars@eyesore.no>
+
+	* gnus.el (gnus-group-read-group): Use `gnus-range-length' instead
+	of `length'.
+
+Tue Jul 30 21:42:59 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.38 is released.
+
+Tue Jul 30 00:00:28 1996  Lars Magne Ingebrigtsen  <lars@eyesore.no>
+
+	* nntp.el (nntp-open-server): Init server buffer.
+
+	* gnus.el (gnus-group-prefixed-name): Do the right thing with nil
+	methods. 
+	(gnus-group-rename-group): Would act oddly when renaming native
+	groups. 
+
+Sat Jul 27 17:46:42 1996  Lars Magne Ingebrigtsen  <lars@eyesore.no>
+
+	* message.el (message-check-news-syntax): Use signature
+	separator. 
+
+	* gnus.el (gnus-group-make-group): Beep at "" methods.
+	(gnus-group-make-group): Don't prefix native groups.
+
+	* nnmail.el (nnmail-move-inbox): Bug out on movemail errors.
+
+	* gnus-cache.el (gnus-cache-file-name): Would bug out on group
+	names containing slashes.
+
+	* gnus-topic.el (gnus-topic-check-topology): Make sure all groups
+	in topics are living.
+
+	* nntp.el (nntp-send-strings-to-server): Give a better error
+	message. 
+
+Sat Jul 27 17:33:22 1996  Teddy  <teddy@fukt.hk-r.se>
+
+	* nntp.el (nntp-open-rlogin): Change parameter order.
+
+Sat Jul 27 17:19:47 1996  Lars Magne Ingebrigtsen  <lars@eyesore.no>
+
+	* gnus-topic.el (gnus-topic-check-topology): Make sure all
+	topologies have alists.
+
+Wed Jul 24 08:23:26 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus.el (gnus-group-jump-to-group): Don't activate group.
+
+Wed Jul 24 07:47:47 1996  Katsumi Yamaoka  <yamaoka@ga.sony.co.jp>
+
+	* message.el (message-rename-buffer): Rename autosave name.
+
+Wed Jul 24 06:24:07 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus-vis.el (gnus-group-make-menu-bar): Moved Misc menu last.
+	(gnus-summary-make-menu-bar): Ditto.
+
+Sat Jul 20 00:59:22 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* smiley.el (smiley-buffer): Only do smilies under X.
+
+	* gnus.el (gnus-make-directory): Beep on nil dirs.
+	(gnus-article-archive-name): Prepend the save directory.
+
+Fri Jul 19 23:08:52 1996  Hallvard B. Furuseth  <hallvard@menja.ifi.uio.no>
+
+	* message.el (message-y-or-n-p): Doc fix.
+
+Fri Jul 19 02:12:58 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.37 is released.
+
+Fri Jul 19 00:31:22 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus.el (gnus-subscribe-newsgroup): Add new groups to top-level
+	topic. 
+	(gnus-group-make-archive-group): Add a to-address group param.
+
+	* gnus-topic.el (gnus-topic-hide-topic): Doc fix.
+	(gnus-topic-select-group): Doc fix.
+	(gnus-topic-rename): Keep point nearby.
+
+	* gnus.el (gnus-group-goto-group): More efficient (and more
+	correct) implementation.
+	(gnus-group-sort-function): Doc fix.
+	(gnus-group-edit-buffer): Changed to defvar.
+	(gnus-group-edit-group-done): Use new name.
+	(gnus-group-edit-group): Include name of group in grup buffer
+	name. 
+
+	* nnfolder.el (nnfolder-save-mail): Handle babylish ">From"
+	lines. 
+	* nnmbox.el (nnmbox-request-accept-article): Ditto.
+
+Thu Jul 18 23:50:31 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* nnmail.el (nnmail-move-inbox): Don't substitute in command
+	name. 
+
+	* gnus-xmas.el (gnus-xmas-modeline-glyph): New variable.
+
+Thu Jul 18 16:35:22 1996  Lars Magne Ingebrigtsen  <lars@eyesore.no>
+
+	* custom.el (custom-facep): Didn't work under non-X Emacs.
+
+Thu Jul 18 00:02:32 1996  Lars Magne Ingebrigtsen  <larsi@hler.ifi.uio.no>
+
+	* nntp.el (nntp-open-telnet): Use more permissive regexps.
+
+	* gnus-uu.el (gnus-uu-uustrip-article): `cd' to make gnus-uu work
+	under NT.
+
+Mon Jul 15 18:11:13 1996  Jan Vroonhof  <vroonhof@math.ethz.ch (Jan Vroonhof)>
+
+	* smiley.el (smiley-regexp-alist): Don't match important parts of URLs
+	(smiley-nosey-regexp-alist): New variable.
+
+Wed Jul 17 23:48:50 1996  Mark Borges  <mdb@cdc.noaa.gov>
+
+	* messagexmas.el (nnheader): Required.
+
+Wed Jul 17 02:02:25 1996  Michael Cook  <mcook@cognex.com>
+
+	* nnmail.el (nnmail-split-abbrev-alist): New default.
+
+Wed Jul 17 00:27:13 1996  Lars Magne Ingebrigtsen  <larsi@hler.ifi.uio.no>
+
+	* message.el (message-mode-abbrev-table): New variable. 
+	(message-mode): New variable.
+
+Wed Jul 17 00:05:00 1996  Lars Magne Ingebrigtsen  <larsi@hler.ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.36 is released.
+
+Tue Jul 16 20:05:49 1996  Lars Magne Ingebrigtsen  <larsi@hler.ifi.uio.no>
+
+	* message.el (message-send-mail): Bugged out under Emacs.
+	(message-send-news): Ditto.
+
+	* nntp.el (nntp-retrieve-headers-with-xover): Would hang
+	sometimes. 
+
+Sun Jul 14 20:01:26 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.35 is released.
+
+Sun Jul 14 18:21:14 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus-uu.el (gnus-uu-mark-over): Would bug out.
+
+	* smiley.el (smiley-regexp-alist): New definition didn't work.
+
+Sun Jul 14 16:52:31 1996  Lars Magne Ingebrigtsen  <larsi@hler.ifi.uio.no>
+
+	* gnus.el ((provide 'gnus)): Make sure `gnus-directory' is set
+	when compiling.
+
+Sun Jul 14 15:38:21 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus.el: autoload `gnus-copy-article-buffer'.
+
+	* message.el (message-do-send-housekeeping): Kill a superfluous
+	buffers. 
+
+	* gnus-picon.el (gnus-article-display-picons): Don't bug out on
+	nil addresses.
+
+	* custom.el ((fboundp 'plist-get)): Removed.
+	((fboundp 'add-to-list)): Removed.
+
+Sun Jul 14 15:30:27 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* gnus.el: Many typo fixes.
+
+Thu Jul 11 18:06:24 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* nntp.el (nntp-retrieve-headers-with-xover):
+	`accept-process-output' from `nntp-server-process'.
+
+Tue Jul  9 07:51:31 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus-vis.el (gnus-group-make-menu-bar): Un-randomize.
+
+Mon Jul  8 09:53:39 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el (gnus-decode-rfc1522): Goto point-min before decoding. 
+
+Mon Jul  8 08:53:50 1996  Nat Makarevitch  <nat@nataa.fr.eu.org>
+
+	* smiley.el (smiley-regexp-alist): New definition.
+
+Sun Jul  7 13:33:44 1996  Sudish Joseph  <sudish@mindspring.com>
+
+	* nnmail.el (nnmail-split-fancy-syntax-table): `%' should have
+		  punctuation syntax to support the %-hack in addresses.
+
+Sat Jul  6 08:11:41 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.34 is released.
+
+Sat Jul  6 05:46:12 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* nnheader.el (nnheader-re-read-dir): Would sometimes bug out.
+
+Fri Jul  5 03:14:43 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el (gnus-summary-toggle-threads): Message the state.
+
+Thu Jul  4 07:52:07 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.33 is released.
+
+Thu Jul  4 06:08:11 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* nntp.el (nntp-open-telnet): Working function.
+	(nntp-telnet-parameters, (nntp-telnet-user-name,
+	nntp-telnet-passwd): New variables.
+
+	* gnus.el (gnus-summary-prepare-threads): Would infloop.
+	(gnus-summary-isearch-article): Don't go to the start of the
+	article. 
+
+Thu Jul  4 05:44:22 1996  Steven L. Baur  <steve@miranova.com>
+
+	* gnus.el (gnus-article-hide-pem): New command and keystroke.
+
+Thu Jul  4 05:00:58 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* gnus.el (gnus-summary-local-variables): Init reffed to 0.
+	(gnus-set-global-variables): Set reffed.
+
+Wed Jul  3 06:15:28 1996  Lars Magne Ingebrigtsen  <larsi@menja.ifi.uio.no>
+
+	* gnus.el (gnus-reffed-article-number): Make buffer-local.
+
+Wed Jul  3 03:17:42 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el (gnus-article-setup-buffer): Make the original buffer go
+	away on exit.
+
+	* message.el (message-reply): Insert proper number of commas. 
+	(message-tokenize-header): Tokenize properly.
+
+Wed Jul  3 03:01:59 1996  Joe Wells  <jbw@cs.bu.edu>
+
+	* gnus.el (gnus-check-new-newsgroups): Doc fix.
+
+Wed Jul  3 02:58:09 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.33 is released.
+
+Wed Jul  3 00:27:35 1996  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* nnheader.el (nnheader-re-read-dir): Prefer efs over ange-ftp.
+
+Sun Jun 30 23:19:38 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.32 is released.
+
+Sun Jun 30 21:57:31 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el (gnus-check-bogus-groups-hook): New hook.
+
+Sun Jun 30 21:54:46 1996  Joe Wells  <jbw@cs.bu.edu>
+
+	* gnus-topic.el (gnus-topic-clean-alist): New function.
+
+Sun Jun 30 20:00:18 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el (gnus-group-next-unread-group): Allow silence.
+
+	* gnus-cache.el (gnus-cache-possibly-alter-active): Would check
+	the obarray.
+
+	* gnus.el (gnus-summary-read-group): Don't signal an error when
+	including expunged articles.
+
+	* gnus-vis.el (gnus-header-button-alist): Would include ":".
+
+	* message.el (message-reply): Inhibit point-motion hooks.
+
+	* gnus.el (gnus-compile): Mark the .newsrc.eld file as dirty.
+
+	* gnus-scomo.el: Renamed to "score-mode".
+
+Sat Jun 29 01:03:19 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.30 is released.
+
+Sat Jun 29 00:23:44 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el (gnus-article-read-summary-keys): Deal with message
+	composition more gracefully.
+
+Fri Jun 28 23:58:37 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el (gnus-group-describe-group): Re-read when given a
+	prefix. 
+
+Fri Jun 28 23:34:17 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* gnus.el (gnus-group-kill-level): Put groups on killed list.
+
+	* nnfolder.el (nnfolder-read-folder): Would bug out when group not
+	in active file.
+
+Fri Jun 28 22:42:49 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus-score.el (gnus-summary-score-entry): Get rid of text
+	props. 
+
+	* gnus.el (gnus-article-read-summary-keys): Allow `A RET' to work
+	properly. 
+	(gnus-summary-limit): Inhibit marking low-scored articles as
+	read. 
+
+	* gnus-msg.el (gnus-article-mail): Reply from the right address.
+	(gnus-article-mail): Yank properly.
+
+	* gnus.el (gnus-article-mode-map): Entry for info find node.
+	(gnus-summary-describe-briefly): Display proper message.
+
+	* smiley.el (smiley-circle-color): Doc fix.
+
+	* gnus.el (gnus-summary-prepare-threads): Would display expunged
+	articles after a dummy line.
+	(gnus-group-faq-directory): Doc fix.
+	(gnus-summary-mode): Clear moved inboxes.
+
+Fri Jun 28 21:48:27 1996  Steven L. Baur  <steve@miranova.com>
+
+	* earcon.el: New file.
+
+	* gnus-sound.el: New file.
+
+Fri Jun 28 04:02:25 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.29 is released.
+
+Thu Jun 27 23:14:54 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* browse-url.el: Removed from distribution.
+
+	* nnmh.el (nnmh-request-group): Re-read dir.
+
+Thu Jun 27 23:13:17 1996  Andy Norman  <ange@hplb.hpl.hp.com>
+
+	* nnheader.el (nnheader-re-read-dir): New function.
+
+Thu Jun 27 21:50:16 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* gnus.el (gnus-summary-next-article): Would stall on canceled
+	articles. 
+	(gnus-dribble-enter): Would bury the wrong buffer.
+
+	* gnus-score.el (gnus-score-followup-thread,
+	gnus-score-followup-article): Would switch to wrong buffer.
+
+	* gnus.el (gnus-adjust-marked-articles): Possible fix for killed
+	articles. 
+	(gnus-subscribe-hierarchically): Kill .newsrc buffer.
+
+	* gnus-nocem.el (gnus-nocem-check-article): Would not search
+	properly. 
+
+Thu Jun 27 21:50:16 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.28 is released.
+
+Thu Jun 27 23:33:18 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* nnmail.el (nnmail-get-spool-files): Wouldn't get much mail. 
+
+Thu Jun 27 19:26:42 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* nnheader.el (nnheader-find-etc-directory): New function.
+
+	* gnus.el (gnus-dribble-enter): Bury the buffer.
+	(gnus-buffer-configuration): Redundant entry.
+	(message): Don't require.
+	(gnus-archive-server-wanted-p): Be even more strict in when touse
+	the archive server.
+
+Thu Jun 27 19:16:56 1996  Katsumi Yamaoka  <yamaoka@ga.sony.co.jp>
+
+	* nnheader.el (nnheader-file-size): New function.
+
+Wed Jun 26 22:14:45 1996  Alastair Burt  <burt@dfki.uni-kl.de>
+
+	* gnus.el (gnus-group-kill-level): Applied `car' to an integer. 
+
+Wed Jun 26 21:53:34 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.27 is released.
+
+Wed Jun 26 20:40:39 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* gnus.el (gnus-summary-edit-article-done): Don't beep after a
+	`C-u e'. 
+
+	* message.el (message-autosave-directory): New default value.
+
+	* gnus-cache.el (gnus-cache-open): Don't create cache things
+	unconditionally. 
+
+	* gnus.el (gnus-server-status): New function.
+	(gnus-group-get-new-news-this-group): Better error message.
+	(gnus-clear-system): Clear state alist.
+	(gnus-error): Doc fix.
+
+	* nnmail.el (nnmail-get-spool-files): Use the spool file even when
+	using procmail.
+
+Wed Jun 26 20:36:40 1996  Philippe Troin  <ptroin@compass-da.com>
+
+	* gnus.el (gnus-thread-total-score-1): New version.
+
+Wed Jun 26 20:31:25 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* nnspool.el (nnspool-find-id): Quote the Message-ID.
+
+	* message.el (message-check-news-syntax): Would respond to
+	i-have-a-mi-etc in References.
+
+Wed Jun 26 19:59:27 1996  Nat Makarevitch  <nat@nataa.fr.eu.org>
+
+	* smiley.el (smiley-regexp-alist): New definition.
+
+Wed Jun 26 17:45:00 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* message.el (message-reply): Name the message buffer "wide
+	reply..." if following up on a mail group.
+
+	* gnus.el (gnus-auto-subscribed-groups): Doc fix.
+	(gnus-options-subscribe): Doc fix.
+
+	* smiley.el (smiley-buffer): Autoload.
+	(messagexmas): Required.
+
+	* gnus.el (gnus-message-archive-group): Moved here.
+	(gnus-archive-server-wanted-p): New function used throughout.
+	(gnus-message-archive-group): Default to nil.
+
+Tue Jun 25 21:15:41 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* gnus.el: Gnus v5.3 is released.
+
+Tue Jun 25 21:13:37 1996  Lars Magne Ingebrigtsen  <larsi@aegir.ifi.uio.no>
+
+	* gnus.el: Gnus v5.2.26 is released.
+
+Tue Jun 25 20:58:40 1996  Richard Stallman  <rms@gnu.ai.mit.edu>
+
+	* gnus-ems.el: Multiply color value by .6 instead of dividing by
+	3. 
+
+Tue Jun 25 12:34:24 1996  Lars Magne Ingebrigtsen  <larsi@ylfing.ifi.uio.no>
+
+	* message.el (message-send-news): Disable `existing-groups' check
+	when given a prefix.
+
+Mon Jun 24 16:54:26 1996  Alastair Burt  <burt@dfki.uni-kl.de>
+
+	* gnus-vis.el (gnus-summary-highlight-line): `default' mixed up
+	with fonts.
+
+Sat Jun 22 13:56:49 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus-cite.el (gnus-cache-close): New function.
+
+Sat Jun 22 11:33:42 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uiof.no>
+
+	* gnus.el: Gnus v5.2.25 is released.
+
 Sat Jun 22 11:16:57 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
 
 	* gnus.el (gnus-adjust-marked-articles): Would bug out on some

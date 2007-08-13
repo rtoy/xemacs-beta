@@ -33,22 +33,31 @@
  	    (set-buffer nntp-server-buffer)
  	    (buffer-string)))
   (url-parse-mime-headers)
-  (let ((from  (cdr (assoc "from" url-current-mime-headers)))
- 	(subj  (cdr (assoc "subject" url-current-mime-headers)))
- 	(org   (cdr (assoc "organization" url-current-mime-headers)))
- 	(typ   (or (cdr (assoc "content-type" url-current-mime-headers))
- 		   "text/plain"))
- 	(grps  (mapcar 'car
- 		       (url-split
- 			(or (cdr (assoc "newsgroups" url-current-mime-headers))
- 			    "")
- 			"[ \t\n,]+")))
- 	(refs  (mapcar 'car
- 		       (url-split
- 			(or (cdr (assoc "references" url-current-mime-headers))
- 			    "")
- 			"[ \t,\n<>]+")))
- 	(date  (cdr (assoc "date" url-current-mime-headers))))
+  (let* ((from  (cdr (assoc "from" url-current-mime-headers)))
+	 (qfrom (if from (url-insert-entities-in-string from) nil))
+	 (subj  (cdr (assoc "subject" url-current-mime-headers)))
+	 (qsubj (if subj (url-insert-entities-in-string subj) nil))
+	 (org   (cdr (assoc "organization" url-current-mime-headers)))
+	 (qorg  (if org (url-insert-entities-in-string org) nil))
+	 (typ   (or (cdr (assoc "content-type" url-current-mime-headers))
+		    "text/plain"))
+	 (qgrps (mapcar 'car
+			(url-split
+			 (url-insert-entities-in-string
+			  (or (cdr (assoc "newsgroups" 
+					  url-current-mime-headers))
+			      ""))
+			 "[ \t\n,]+")))
+	 (qrefs (delete "" 
+			(mapcar
+			 'url-insert-entities-in-string
+			 (mapcar 'car
+				 (url-split
+				  (or (cdr (assoc "references" 
+						  url-current-mime-headers))
+				      "")
+				  "[ \t,\n<>]+")))))
+	 (date  (cdr (assoc "date" url-current-mime-headers))))
     (setq url-current-file ""
  	  url-current-type "")
     (if (or (not (string-match "text/" typ))
@@ -56,27 +65,27 @@
  	nil				; Let natural content-type take over
       (insert "<html>\n"
  	      " <head>\n"
- 	      "  <title>" subj "</title>\n"
- 	      "  <link rev=\"made\" href=\"mailto:" from "\">\n"
+ 	      "  <title>" qsubj "</title>\n"
+ 	      "  <link rev=\"made\" href=\"mailto:" qfrom "\">\n"
  	      " </head>\n"
  	      " <body>\n"
  	      "  <div>\n"
- 	      "   <h1 align=center>" subj "</h1>\n"
+ 	      "   <h1 align=center>" qsubj "</h1>\n"
  	      "   <p role=\"headers\">\n"
- 	      "    <b>From</b>: <address> " from "</address><br>\n"
+ 	      "    <b>From</b>: " qfrom "<br>\n"
  	      "    <b>Newsgroups</b>: "
  	      (mapconcat
  	       (function
  		(lambda (grp)
- 		  (concat "<a href=\"" grp "\"> " grp "</a>"))) grps ", ")
+ 		  (concat "<a href=\"" grp "\">" grp "</a>"))) qgrps ", ")
  	      "<br>\n"
  	      (if org
  		  (concat
- 		   "    <b>Organization</b>: <i> " org "</i> <br>\n")
+ 		   "    <b>Organization</b>: <i> " qorg "</i> <br>\n")
  		"")
  	      "    <b>Date</b>: <date> " date "</date> <br>\n"
  	      "   </p> <hr>\n"
- 	      (if (null refs)
+ 	      (if (null qrefs)
  		  ""
  		(concat
  		 "   <p>References\n"
@@ -86,18 +95,21 @@
  		   (lambda (ref)
  		     (concat "     <li> <a href=\"" ref "\"> " 
  			     ref "</a></li>\n")))
- 		  refs "")
+ 		  qrefs "")
  		 "    </ol>\n"
 		 "   </p>\n"
  		 "   <hr>\n"))
  	      "   <ul plain>\n"
  	      "    <li><a href=\"newspost:disfunctional\"> "
  	      "Post to this group </a></li>\n"
- 	      "    <li><a href=\"mailto:" from "\"> Reply to " from
+ 	      "    <li><a href=\"mailto:" qfrom "\"> Reply to " qfrom
  	      "</a></li>\n"
  	      "   </ul>\n"
  	      "   <hr>"
- 	      "   <xmp>\n")
+ 	      "   <pre>\n")
+      (let ((s (buffer-substring (point) (point-max))))
+	(delete-region (point) (point-max))
+	(insert (url-insert-entities-in-string s)))
       (goto-char (point-max))
       (setq url-current-mime-type "text/html"
  	    url-current-mime-viewer (mm-mime-info url-current-mime-type nil 5))
@@ -108,7 +120,7 @@
  						     "text/html")
  					       url-current-mime-headers))))
       (insert "\n"
- 	      "   </xmp>\n"
+ 	      "   </pre>\n"
  	      "  </div>\n"
  	      " </body>\n"
  	      "</html>\n"
@@ -154,6 +166,8 @@
 	  "</html>\n"))
 
 (defun url-news-open-host (host port user pass)
+  (if (fboundp 'nnheader-init-server-buffer)
+      (nnheader-init-server-buffer))
   (nntp-open-server host (list (string-to-int port)))
   (if (and user pass)
       (progn
@@ -232,7 +246,7 @@
     (url-news-open-host host port (url-user urlobj) (url-password urlobj))
     (cond
      ((string-match "@" article)	; Its a specific article
-      (url-news-fetch-message-id article))
+      (url-news-fetch-message-id host port article))
      ((string= article "")		; List all newsgroups
       (gnus)
       (kill-buffer url-working-buffer))
@@ -256,7 +270,7 @@
     (url-news-open-host host port (url-user urlobj) (url-password urlobj))
     (cond
      ((string-match "@" article)	; Its a specific article
-      (url-news-fetch-message-id article))
+      (url-news-fetch-message-id host port article))
      ((string-match "/\\([0-9]+\\)$" article)
       (url-news-fetch-article-number (substring article 0
 						(match-beginning 0))

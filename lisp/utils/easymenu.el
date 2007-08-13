@@ -1,11 +1,11 @@
 ;;; easymenu.el - Easy menu support for Emacs 19 and XEmacs.
 ;; 
-;; $Id: easymenu.el,v 1.1.1.1 1996/12/18 03:32:46 steve Exp $
+;; $Id: easymenu.el,v 1.1.1.2 1996/12/18 03:45:41 steve Exp $
 ;;
 ;; LCD Archive Entry:
 ;; easymenu|Per Abrahamsen|abraham@iesd.auc.dk|
 ;; Easy menu support for XEmacs|
-;; $Date: 1996/12/18 03:32:46 $|$Revision: 1.1.1.1 $|~/misc/easymenu.el.gz|
+;; $Date: 1996/12/18 03:45:41 $|$Revision: 1.1.1.2 $|~/misc/easymenu.el.gz|
 
 ;; Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
 ;;
@@ -144,49 +144,55 @@ is a list of menu items, as above."
        (easy-menu-do-define (quote (, symbol)) (, maps) (, doc) (, menu)))))
 
 (defun easy-menu-do-define (symbol maps doc menu)
-  (set symbol menu)
-  (fset symbol (list 'lambda '(e)
-		     doc
-		     '(interactive "@e")
-		     '(run-hooks 'activate-menubar-hook)
-		     '(setq zmacs-region-stays 't)
-		     (list 'popup-menu symbol))))
+  (if (featurep 'menubar)
+      (progn
+	(set symbol menu)
+	(fset symbol (list 'lambda '(e)
+			   doc
+			   '(interactive "@e")
+			   '(run-hooks 'activate-menubar-hook)
+			   '(setq zmacs-region-stays 't)
+			   (list 'popup-menu symbol))))))
 
 (fset 'easy-menu-change (symbol-function 'add-menu))
 
+;; This variable hold the easy-menu mode menus of all major and
+;; minor modes currently in effect.
 (defvar easy-menu-all-popups nil)
-  ;; This variable hold the easy-menu mode menus of all major and
-  ;; minor modes currently in effect.
-  (make-variable-buffer-local 'easy-menu-all-popups)
+(make-variable-buffer-local 'easy-menu-all-popups)
 
 (defun easy-menu-add (menu &optional map)
   "Add MENU to the current menu bar."
-  (if easy-menu-all-popups
-      (setq easy-menu-all-popups (cons menu easy-menu-all-popups))
-    (setq easy-menu-all-popups (list menu mode-popup-menu)))
-  (setq mode-popup-menu menu)
+  (if (featurep 'menubar)
+      (progn
+	(if easy-menu-all-popups
+	    (setq easy-menu-all-popups (cons menu easy-menu-all-popups))
+	  (setq easy-menu-all-popups (list menu mode-popup-menu)))
+	(setq mode-popup-menu menu)
   
-  (cond ((null current-menubar)
-	 ;; Don't add it to a non-existing menubar.
-	 nil)
-	((assoc (car menu) current-menubar)
-	 ;; Already present.
-	 nil)
-	((equal current-menubar '(nil))
-	 ;; Set at left if only contains right marker.
-	 (set-buffer-menubar (list menu nil)))
-	(t
-	 ;; Add at right.
-	 (set-buffer-menubar (copy-sequence current-menubar))
-	 (add-menu nil (car menu) (cdr menu)))))
+	(cond ((null current-menubar)
+	       ;; Don't add it to a non-existing menubar.
+	       nil)
+	      ((assoc (car menu) current-menubar)
+	       ;; Already present.
+	       nil)
+	      ((equal current-menubar '(nil))
+	       ;; Set at left if only contains right marker.
+	       (set-buffer-menubar (list menu nil)))
+	      (t
+	       ;; Add at right.
+	       (set-buffer-menubar (copy-sequence current-menubar))
+	       (add-menu nil (car menu) (cdr menu)))))))
 
 (defun easy-menu-remove (menu)
   "Remove MENU from the current menu bar."
-  (setq easy-menu-all-popups (delq menu easy-menu-all-popups)
-	mode-popup-menu (car easy-menu-all-popups))
-  (and current-menubar
-       (assoc (car menu) current-menubar)
-       (delete-menu-item (list (car menu)))))
+  (if (featurep 'menubar)
+      (progn
+	(setq easy-menu-all-popups (delq menu easy-menu-all-popups)
+	      mode-popup-menu (car easy-menu-all-popups))
+	(and current-menubar
+	     (assoc (car menu) current-menubar)
+	     (delete-menu-item (list (car menu)))))))
 
 (provide 'easymenu)
 

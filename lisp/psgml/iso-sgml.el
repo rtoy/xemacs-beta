@@ -16,7 +16,7 @@
 ;; Edit SGML or HTML buffers with ISO 8859-1 (Latin-1) display|
 ;; 10-May-1995|1.4|~/misc/iso-sgml.el.Z|
 
-;; $Id: iso-sgml.el,v 1.1.1.1 1996/12/18 03:35:17 steve Exp $
+;; $Id: iso-sgml.el,v 1.1.1.2 1996/12/18 03:47:13 steve Exp $
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -37,6 +37,8 @@
 ;; Based on iso-cvt.el from Michael Gschwind <mike@vlsivie.tuwien.ac.at>,
 ;; iso-sgml.el transparently displays entity references in SGML or HTML
 ;; buffers as ISO 8859-1 (aka Latin-1) characters.
+;; Modified for XEmacs 19.15 to include the proposed extensions to Latin-1
+;;  by Steve Baur <steve@miranova.com>
 
 ;; SEE ALSO:
 ;; iso-cvt.el
@@ -54,7 +56,7 @@
 
 ;; Code:
 
-(defconst isosgml-version "$Id: iso-sgml.el,v 1.1.1.1 1996/12/18 03:35:17 steve Exp $"
+(defconst isosgml-version "$Id: iso-sgml.el,v 1.1.1.2 1996/12/18 03:47:13 steve Exp $"
   "iso-sgml RCS version number")
 
 (defvar isosgml-modes-list '(html-mode html-helper-mode sgml-mode)
@@ -106,29 +108,61 @@
     ("&Yacute\;"  "Ý")
     ("&aacute\;"  "á")
     ("&acirc\;"  "â")
+    ("&acute\;" "´")
     ("&aelig\;"  "æ")
     ("&agrave\;"  "à")
     ("&aring\;"  "å")
     ("&atilde\;"  "ã")
+    ("&brvbar\;" "¦")
     ("&ccedil\;"  "ç")
+    ("&cedil\;" "¸")
+    ("&cent\;" "¢")
+    ("&copy\;" "©")
+    ("&curren\;" "¤")
+    ("&deg\;" "°")
     ("&eacute\;"  "é")
     ("&ecirc\;"  "ê")
     ("&egrave\;"  "è")
     ("&euml\;"  "ë")
+    ("&frac12\;" "½")
+    ("&frac14\;" "¼")
+    ("&frac34\;" "¾")
     ("&iacute\;"  "í")
     ("&icirc\;"  "î")
     ("&igrave\;"  "ì")
+    ("&iexcl\;" "¡")
+    ("&iquest\;" "¿")
     ("&iuml\;"  "ï")
+    ("&laquo\;" "«")
+    ("&macr\;" "¯")
+    ("&micro\;" "µ")
+    ("&middot\;" "·")
+    ("&nbsp\;" " ")
+    ("&not\;" "¬")
     ("&ntilde\;"  "ñ")
     ("&oacute\;"  "ó")
     ("&ocirc\;"  "ô")
     ("&ograve\;"  "ò")
+    ("&ordf\;" "ª")
+    ("&ordm\;" "º")
     ("&oslash\;"  "ø")
     ("&otilde\;"  "õ")
+    ("&para\;" "¶")
+    ("&pound\;" "£")
+    ("&plusmn\;" "±")
+    ("&laquo\;" "»")
+    ("&reg\;" "®")
+    ("&sect\;" "§")
+    ("&shy\;" "­")
+    ("&sup1\;" "¹")
+    ("&sup2\;" "²")
+    ("&sup2\;" "³")
     ("&uacute\;"  "ú")
     ("&ucirc\;"  "û")
     ("&ugrave\;"  "ù")
+    ("&uml\;" "¨")
     ("&yacute\;"  "ý")
+    ("&yen\;" "¥")
     ("&Auml\;"  "Ä")
     ("&auml\;"  "ä")
     ("&Ouml\;"  "Ö")
@@ -194,8 +228,8 @@
 ;; iso-sgml.el ends here
 
 ; $Log: iso-sgml.el,v $
-; Revision 1.1.1.1  1996/12/18 03:35:17  steve
-; XEmacs 19.14 -- Release
+; Revision 1.1.1.2  1996/12/18 03:47:13  steve
+; XEmacs 19.15-b2
 ;
 ; Revision 1.4  1995/05/10  06:19:41  lepied
 ; 	* protect code with unwind-protect to prevent errors

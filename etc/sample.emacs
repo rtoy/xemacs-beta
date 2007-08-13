@@ -1,4 +1,4 @@
-;;; -*- Mode: Emacs-Lisp -*-
+;; -*- Mode: Emacs-Lisp -*-
 
 ;;; This is a sample .emacs file.
 ;;;
@@ -17,11 +17,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Enable the commands `narrow-to-region' ("C-x n n") and 
-;; `eval-expression' ("M-ESC", or "ESC ESC").  Both are useful
+;; `eval-expression' ("M-:", or "ESC :").  Both are useful
 ;; commands, but they can be confusing for a new user, so they're
 ;; disabled by default.
 (put 'narrow-to-region 'disabled nil)
-(put 'eval-expression 'disabled nil)
+(put 'eval-expression  'disabled nil)
 
 ;;; Define a variable to indicate whether we're running XEmacs/Lucid Emacs.
 ;;; (You do not have to defvar a global variable before using it --
@@ -106,16 +106,15 @@
 	   ;; Note that if you want to put more than one form in the
 	   ;; `THEN' clause of an IF-THEN-ELSE construct, you have to
 	   ;; surround the forms with `progn'.  You don't have to
-	   ;; do this for the `ELSE' clause.
+	   ;; do this for the `ELSE' clauses.
 	   (progn
 	     (setq-default modeline-buffer-identification '("XEmacs: %17b"))
-	     (setq modeline-buffer-identification '("XEmacs: %17b")))
+	     (setq         modeline-buffer-identification '("XEmacs: %17b")))
 	 (setq-default mode-line-buffer-identification '("XEmacs: %17b"))
-	 (setq mode-line-buffer-identification '("XEmacs: %17b")))
+	 (setq         mode-line-buffer-identification '("XEmacs: %17b")))
 
        (cond ((or (not (fboundp 'device-type))
 		  (equal (device-type) 'x))
-	      ;;
 	      ;; Code which applies only when running emacs under X goes here.
 	      ;; (We check whether the function `device-type' exists
 	      ;; before using it.  In versions before 19.12, there
@@ -212,14 +211,14 @@
 			(set-glyph-image gc-pointer-glyph file))))
 	 
 	      ;; Add `dired' to the File menu
-	      (add-menu-item '("File") "Edit Directory" 'dired t)
+	      (add-menu-button '("File") ["Edit Directory" dired t])
 
 	      ;; Here's a way to add scrollbar-like buttons to the menubar
-	      (add-menu-item nil "Top" 'beginning-of-buffer t)
-	      (add-menu-item nil "<<<" 'scroll-down t)
-	      (add-menu-item nil " . " 'recenter t)
-	      (add-menu-item nil ">>>" 'scroll-up t)
-	      (add-menu-item nil "Bot" 'end-of-buffer t)
+	      (add-menu-button nil ["Top" beginning-of-buffer t])
+	      (add-menu-button nil ["<<<" scroll-down         t])
+	      (add-menu-button nil [" . " recenter            t])
+	      (add-menu-button nil [">>>" scroll-up           t])
+	      (add-menu-button nil ["Bot" end-of-buffer       t])
 	      
 	      ;; Change the behavior of mouse button 2 (which is normally
 	      ;; bound to `mouse-yank'), so that it inserts the selected text
@@ -235,7 +234,7 @@
 	      ;; like to insert tabs into comments and such.  It gets to be
 	      ;; a pain to always have to use `C-q TAB', so I set up a more
 	      ;; convenient binding.  Note that this does not work in
-	      ;; TTY frames.
+	      ;; TTY frames, where tab and shift-tab are indistinguishable.
 	      (define-key global-map '(shift tab) 'self-insert-command)
 
 	      ;; LISPM bindings of Control-Shift-C and Control-Shift-E.
@@ -453,7 +452,7 @@
        ;; from the default face.  For example, if the default face
        ;; is bold, then the 'bold face will be unbold.)
        (copy-face 'italic 'font-lock-comment-face)
-       ;; Underling comments looks terrible on tty's
+       ;; Underlining comments looks terrible on tty's
        (set-face-underline-p 'font-lock-comment-face nil 'global 'tty)
        (set-face-highlight-p 'font-lock-comment-face t 'global 'tty)
        (copy-face 'font-lock-comment-face 'font-lock-doc-string-face)
@@ -542,9 +541,9 @@
 ;;; Emacs provides a nice front-end onto MH, called "mh-e".
 ;;;
 ;; Bindings that let you send or read mail using MH
-;(global-set-key "\C-xm" 'mh-smail)
+;(global-set-key "\C-xm"  'mh-smail)
 ;(global-set-key "\C-x4m" 'mh-smail-other-window)
-;(global-set-key "\C-cr" 'mh-rmail)
+;(global-set-key "\C-cr"  'mh-rmail)
 
 ;; Customization of MH behavior.
 (setq mh-delete-yanked-msg-window t)

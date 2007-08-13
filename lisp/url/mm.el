@@ -92,6 +92,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variables, etc
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(eval-and-compile
+  (require 'cl))
+
 (defconst mm-version (let ((x "1.96"))
 		       (if (string-match "Revision: \\([^ \t\n]+\\)" x)
 			   (substring x (match-beginning 1) (match-end 1))
@@ -347,31 +350,42 @@ not.")
 	      fname (format fmt (concat base (int-to-string x)))))
       (expand-file-name fname mm-temporary-directory))))
 
-(if (not (fboundp 'copy-tree))
-    (defun copy-tree (tree)
-      (if (consp tree)
-	  (cons (copy-tree (car tree))
-		(copy-tree (cdr tree)))
-	(if (vectorp tree)
-	    (let* ((new (copy-sequence tree))
-		   (i (1- (length new))))
-	      (while (>= i 0)
-		(aset new i (copy-tree (aref new i)))
-		(setq i (1- i)))
-	      new)
-	  tree))))
+(if (and (fboundp 'copy-tree)
+	 (subrp (symbol-function 'copy-tree)))
+    (fset 'mm-copy-tree 'copy-tree)
+  (defun mm-copy-tree (tree)
+    (if (consp tree)
+	(cons (mm-copy-tree (car tree))
+	      (mm-copy-tree (cdr tree)))
+      (if (vectorp tree)
+	  (let* ((new (copy-sequence tree))
+		 (i (1- (length new))))
+	    (while (>= i 0)
+	      (aset new i (mm-copy-tree (aref new i)))
+	      (setq i (1- i)))
+	    new)
+	tree))))
 
 (if (not (fboundp 'w3-save-binary-file))
     (defun mm-save-binary-file ()
-      (let ((x (read-file-name "Filename to save as: "
-			       (or mm-download-directory "~/")))
-            (require-final-newline nil))
-	(save-excursion
-	  (if (featurep 'mule)
-	      (let ((mc-flag t))
-		(write-region (point-min) (point-max) x nil nil *noconv*))
-	    (write-region (point-min) (point-max) x))
-	  (kill-buffer (current-buffer)))))
+      ;; Ok, this is truly fucked.  In XEmacs, if you use the mouse to select
+      ;; a URL that gets saved via this function, read-file-name will pop up a
+      ;; dialog box for file selection.  For some reason which buffer we are in
+      ;; gets royally screwed (even with save-excursions and the whole nine
+      ;; yards).  SO, we just keep the old buffer name around and away we go.
+      (let ((old-buff (current-buffer))
+	    (file (read-file-name "Filename to save as: "
+				  (or mm-download-directory "~/")
+				  (file-name-nondirectory (url-view-url t))
+				  nil
+				  (file-name-nondirectory (url-view-url t))))
+	    (require-final-newline nil))
+	(set-buffer old-buff)
+	(if (featurep 'mule)
+	    (let ((mc-flag t))
+	      (write-region (point-min) (point-max) file nil nil *noconv*))
+	  (write-region (point-min) (point-max) file))
+	(kill-buffer (current-buffer))))
   (fset 'mm-save-binary-file 'w3-save-binary-file))
 
 (if (not (fboundp 'w3-maybe-eval))
@@ -386,6 +400,21 @@ not.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The mailcap parser
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun mm-viewer-unescape (format &optional filename url)
+  (save-excursion
+    (set-buffer (get-buffer-create " *mm-parse*"))
+    (erase-buffer)
+    (insert format)
+    (goto-char (point-min))
+    (while (re-search-forward "%\\(.\\)" nil t)
+       (let ((escape (aref (match-string 1) 0)))
+	 (replace-match "" t t)
+	 (case escape
+	   (?% (insert "%"))
+	   (?s (insert (or filename "\"\"")))
+	   (?u (insert (or url "\"\""))))))
+    (buffer-string)))
+
 (defun mm-in-assoc (elt list)
   ;; Check to see if ELT matches any of the regexps in the car elements of LIST
   (let (rslt)
@@ -841,7 +870,7 @@ viewer is returned."
 	    (mm-unescape-mime-test (cdr-safe (assoc request viewer)) info)))
        (t
 	;; MUST make a copy *sigh*, else we modify mm-mime-data
-	(setq viewer (copy-tree viewer))
+	(setq viewer (mm-copy-tree viewer))
 	(let ((view (assoc "viewer" viewer))
 	      (test (assoc "test" viewer)))
 	  (if view (setcdr view (mm-unescape-mime-test (cdr view) info)))

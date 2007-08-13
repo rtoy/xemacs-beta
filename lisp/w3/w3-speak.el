@@ -1,11 +1,12 @@
-;;; w3-speak.el,v --- Emacs-W3 speech interface
-;; Author: wmperry
-;; Created: 1996/06/03 15:53:35
-;; Version: 1.6
+;;; w3-speak.el --- Emacs-W3 speech interface
+;; Authors: wmperry and Raman
+;; Created: 1996/07/09 14:08:09
+;; Version: 1.4
 ;; Keywords: hypermedia, speech
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1996 by William M. Perry (wmperry@spry.com)
+;;{{{  Copyright
+
+;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -31,7 +32,10 @@
 ;;; This file would not be possible without the help of
 ;;; T.V. Raman (raman@adobe.com) and his continued efforts to make Emacs-W3
 ;;; even remotely useful. :)
+
+;;}}}
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;{{{  Required modules
 
 (require 'widget)
 (require 'w3-forms)
@@ -45,11 +49,14 @@
     (progn
       (require 'emacspeak)
       (require 'dtk-voices)
+      (require 'dtk-css-speech)
       (require 'emacspeak-speak)
       (require 'emacspeak-sounds)
       (eval-when (compile)
 	(require 'emacspeak-fix-interactive)))
   (error (message "Emacspeak not found - speech will not work.")))
+
+;;}}}
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -69,20 +76,6 @@
   (get type 'w3-speak-summarizer))
 
 ;;}}}
-;;{{{  Associate summarizer functions for form fields 
- 
-(w3-speak-define-field-summarizer 'text)
-(w3-speak-define-field-summarizer 'option)
-(w3-speak-define-field-summarizer 'checkbox)
-(w3-speak-define-field-summarizer 'reset)
-(w3-speak-define-field-summarizer 'submit)
-(w3-speak-define-field-summarizer 'button)
-(w3-speak-define-field-summarizer 'radio)
-(w3-speak-define-field-summarizer 'multiline)
-(w3-speak-define-field-summarizer 'image)
-
-;;}}}
-
 ;;{{{  define the form field summarizer functions
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -99,13 +92,23 @@
   (let (
 	(label (w3-speak-extract-form-field-label data))
 	(name  (w3-form-element-name data))
-	(value (widget-get (w3-form-element-widget data))))
+	(value (widget-value (w3-form-element-widget data))))
     (dtk-speak
      (format "Text  field  %s  %s " (or label (concat "called " name))
 	     (concat "set to " value)))))
 
+(defun w3-speak-summarize-file-field (data)
+  "Summarize a f field of type file  given the field data."
+  (let (
+	(label (w3-speak-extract-form-field-label data))
+	(name  (w3-form-element-name data))
+	(value (widget-value (w3-form-element-widget data))))
+    (dtk-speak
+     (format "File   field  %s  %s " (or label (concat "called " name))
+	     (concat "set to " value)))))
+
 (defun w3-speak-summarize-textarea-field (data)
-  "Summarize a text field given the field data."
+  "Summarize a textarea  field given the field data."
   (let (
         (name (w3-form-element-name data))
         (label (w3-speak-extract-form-field-label data))
@@ -170,6 +173,21 @@ Currently, only the NYNEX server uses this."
      (format "Radio button   %s is %s" (or label name) (if checked
 							"pressed"
 						      "not pressed")))))
+
+;;}}}
+;;{{{  Associate summarizer functions for form fields 
+
+(w3-speak-define-field-summarizer 'text)
+(w3-speak-define-field-summarizer 'option)
+(w3-speak-define-field-summarizer 'checkbox)
+(w3-speak-define-field-summarizer 'reset)
+(w3-speak-define-field-summarizer 'submit)
+(w3-speak-define-field-summarizer 'button)
+(w3-speak-define-field-summarizer 'radio)
+(w3-speak-define-field-summarizer 'multiline)
+(w3-speak-define-field-summarizer 'image)
+(w3-speak-define-field-summarizer 'file)
+
 ;;}}}
 
 ;;{{{ speaking form fields
@@ -193,6 +211,7 @@ Currently, only the NYNEX server uses this."
      (data
       (message "Please define a summarizer function for %s"  type))
      (t nil))))
+
 ;;}}}
 
 ;;{{{ Movement notification
@@ -212,22 +231,21 @@ Currently, only the NYNEX server uses this."
 (defadvice w3-follow-link (around emacspeak pre act)
   "Provide feedback on what you did. "
   (let ((data (w3-speak-extract-form-field-information))
-        (form-field-p nil)
-        (this-zone nil)
-        (opoint nil))
+        (form-field-p nil))
     (if data
-	(setq form-field-p t 
-	      opoint (point)))
+	(setq form-field-p t))
     ad-do-it
     (when form-field-p
       (w3-speak-summarize-form-field)
       (case (w3-form-element-type data)
-	((radio checkbox)
+	((radio checkbox button)
 	 (emacspeak-auditory-icon 'button))
+        ((text textarea)
+         (emacspeak-auditory-icon 'close-object)
 	;; fill in any others here
 	(otherwise
 	 nil)))
-    ad-return-value))
+    ad-return-value)))
 
 (defadvice w3-revert-form (after emacspeak pre act)
   "Announce that you cleared the form. "
@@ -241,16 +259,20 @@ Currently, only the NYNEX server uses this."
 (defadvice widget-forward (after emacspeak pre act)
   "Produce an auditory icon when moving forward.
 If on a form field, then summarize it."
+  (declare   (special emacspeak-lazy-message-time))
   (when (interactive-p)
-    (w3-speak-summarize-form-field)
-    (emacspeak-auditory-icon 'large-movement)))
+    (let ((emacspeak-lazy-message-time 0))
+      (w3-speak-summarize-form-field)
+      (emacspeak-auditory-icon 'large-movement))))
 
 (defadvice widget-backward (after emacspeak pre act)
   "Produce an auditory icon when moving backward.
 If on a form field, then summarize it."
+  (declare (special emacspeak-lazy-message-time))
   (when (interactive-p )
+    (let ((emacspeak-lazy-message-time 0))
     (w3-speak-summarize-form-field)
-    (emacspeak-auditory-icon 'large-movement)))
+    (emacspeak-auditory-icon 'large-movement))))
 
 (defadvice w3-start-of-document (after emacspeak pre act)
   "Produce an auditory icon.  Also speak the first line. "
@@ -259,7 +281,7 @@ If on a form field, then summarize it."
     (emacspeak-auditory-icon 'large-movement)))
 
 (defadvice w3-end-of-document (after emacspeak pre act)
-  "Produce an auditory icon.  Also speak the first line."
+  "Produce an auditory icon.  "
   (when (interactive-p)
     (emacspeak-speak-line)
     (emacspeak-auditory-icon 'large-movement)))
@@ -277,13 +299,21 @@ If on a form field, then summarize it."
     (emacspeak-speak-mode-line)))
 
 (defadvice w3-fetch (around  emacspeak  act comp )
-  "First produce an auditory icon to indicate retrieval.
-After retrieval, 
-set  voice-lock-mode to t after displaying the buffer,
-and then speak the mode-line. "
+  "First produce an auditory icon to indicate retrieval.  After
+retrieval, set voice-lock-mode to t after displaying the buffer, and
+then speak the mode-line. "
   (declare (special dtk-punctuation-mode))
-  (emacspeak-auditory-icon 'select-object)
-  ad-do-it)
+  (when (interactive-p)
+    (emacspeak-auditory-icon 'select-object)
+    ad-do-it
+    (set (make-local-variable 'voice-lock-mode) t)
+    (setq dtk-punctuation-mode "some")
+    (modify-syntax-entry 10 " ")
+    (emacspeak-auditory-icon 'open-object)
+    (emacspeak-speak-mode-line )))
+  
+;;}}}
+;;{{{  top level
 
 (defun w3-speak-mode-hook ()
   (set (make-local-variable 'voice-lock-mode) t)
@@ -310,4 +340,14 @@ Interactive prefix arg does the opposite. "
           w3-delimit-emphasis nil)
     (add-hook 'w3-mode-hook 'w3-speak-mode-hook)))
 
+;;}}}
+;;{{{ make-local-hook
+
+;;; hope this is correct:
+(unless (fboundp 'make-local-hook)
+(defun make-local-hook (var)
+  (make-variable-buffer-local var))
+)
+
+;;}}}
 (provide 'w3-speak)

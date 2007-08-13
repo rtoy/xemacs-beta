@@ -252,10 +252,10 @@ STARTFILES =
 
 ILD=/cadillac1/code/bin.sun4/ild
 
-PURIFY_PROG=/local/bin/purify
-QUANTIFY_PROG=/local/bin/quantify -windows=no -record-data=no
-PURECOV_PROG=/local/bin/purecov
-#ifdef QUANTIFY
+PURIFY_PROG=purify
+QUANTIFY_PROG=quantify
+PURECOV_PROG=purecov
+#ifdef  QUANTIFY
 #define QUANTIFY_INCLUDES -I/local/include
 #define QUANTIFY_LIBS /local/lib/quantify_stubs.a
 #else
@@ -717,7 +717,7 @@ LD=ld
 
 #ifdef TOOLTALK
 # define TOOLTALK_OBJS tooltalk.o
-# if (defined (IRIX5) || defined (HPUX) || defined (POWERPC))
+# if (defined (IRIX5) || defined (HPUX) || defined (POWERPC) || defined (AIX4))
 #  define LIB_TOOLTALK -ltt
 # else
 #  if (defined (SPARC) && !defined (USG))
@@ -737,6 +737,12 @@ LD=ld
 #  define LIB_CDE -lDtSvc
 #else
 #  define LIB_CDE
+#endif
+
+#ifdef HAVE_OFFIX_DND
+#  define LIB_OFFIX_DND -lDnd
+#else
+#  define LIB_OFFIX_DND
 #endif
 
 #if (defined(LIB_INTL) && (!(defined(I18N3) || defined(I18N4))))
@@ -895,7 +901,11 @@ mallocobjs =
 mallocdocsrc =
 #endif /* SYSTEM_MALLOC */
 
+#ifdef FORCE_ALLOCA_H
+allocaobjs = alloca.o
+#else /* !FORCE_ALLOCA_H */
 allocaobjs = @ALLOCA@
+#endif /* !FORCE_ALLOCA_H */
 
 #ifdef HAVE_X_WINDOWS
 
@@ -1056,7 +1066,7 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 		${lispdir}eos/sun-eos-toolbar.elc \
 		${lispdir}eos/sun-eos-menubar.elc \
 		${lispdir}utils/annotations.elc \
-		${lispdir}eos/loaddefs-eos.elc
+		${lispdir}prim/loaddefs.elc
 #else
 #define SUNPRO_LISP	${lispdir}prim/loaddefs.elc
 #endif
@@ -1106,8 +1116,8 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 
 /* List of Lisp files loaded into the dumped Emacs.
    Every file that is loaded from loadup.el must be enumerated
-   here, or the functions won't have have docstrings.
-   This is dumb, this list should be generated automatically.
+   here, or the functions won't have docstrings.
+   This is dumb - this list should be generated automatically.
    [Note: "version.el" is included in the doc separately, but is not listed 
     here because we don't want things to appear to be out-of-date just 
     because the version number has been incremented. -- D.N.G. 8/28/93]
@@ -1157,7 +1167,7 @@ otherlisp= ${lispdir}bytecomp/bytecomp.elc \
 	   ${lispdir}bytecomp/byte-optimize.elc \
 	   ${lispdir}utils/advice.elc
 
-LIBES = NAS_LIBS SOUND_LIBS SOCKS_LIBS ENERGIZE_LIBS LIB_CDE \
+LIBES = NAS_LIBS SOUND_LIBS SOCKS_LIBS ENERGIZE_LIBS LIB_CDE LIB_OFFIX_DND \
 	LIB_TOOLTALK $(LIBX) \
 	LIBS_SYSTEM LIBS_MACHINE LIBS_TERMCAP LIB_INTL QUANTIFY_LIBS \
 	DATABASE_LIBS LIBS_DEBUG $(GNULIB_VAR) LIB_MATH LIB_STANDARD \
@@ -1245,7 +1255,8 @@ LINTINCLUDES = -Demacs -DHAVE_CONFIG_H $(MYCPPFLAG) -I. \
 	   -I${srcdir} LCCFLAGS C_SWITCH_MACHINE C_SWITCH_SYSTEM \
 	   C_SWITCH_SITE C_SWITCH_X_SITE C_SWITCH_X_MACHINE \
 	   C_SWITCH_X_SYSTEM $(LIBX11_INCLUDES)
-LINTFLAGS= -fd -m -p -s -u -v -x
+/* LINTFLAGS= -fd -m -p -s -u -v -x */
+LINTFLAGS= -fd -m -s -u -v -x
 lint: $(LINTFILES)
 	$(LINT.c) $(LINTFILES)
 /* end of Lint Section */

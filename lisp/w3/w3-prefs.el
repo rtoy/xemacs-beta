@@ -1,11 +1,11 @@
-;;; w3-prefs.el,v --- Preferences panels for Emacs-W3
+;;; w3-prefs.el --- Preferences panels for Emacs-W3
 ;; Author: wmperry
-;; Created: 1996/06/06 14:14:34
-;; Version: 1.10
+;; Created: 1996/06/30 18:10:45
+;; Version: 1.5
 ;; Keywords: hypermedia, preferences
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1996 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -32,6 +32,7 @@
 (require 'w3-vars)
 (require 'w3-keyword)
 (require 'w3-widget)
+(require 'w3-toolbar)
 
 (defvar w3-preferences-glyph nil)
 (defvar w3-preferences-map nil)

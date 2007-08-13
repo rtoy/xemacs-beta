@@ -2773,7 +2773,7 @@ you do this properly, the order will not matter.
 The function @code{minor-mode-key-binding} returns a list of all the
 active minor mode bindings of @var{key}.  More precisely, it returns an
 alist of pairs @code{(@var{modename} . @var{binding})}, where
-@var{modename} is the the variable which enables the minor mode, and
+@var{modename} is the variable which enables the minor mode, and
 @var{binding} is @var{key}'s definition in that mode.  If @var{key} has
 no minor-mode bindings, the value is @code{nil}.
 

@@ -37,6 +37,7 @@
  * to deal with "initialization idempotency issues".
  */
 
+void dynodump_uninit(void);
 void
 dynodump_uninit(void)
 {

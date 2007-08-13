@@ -124,7 +124,7 @@ each of these languages was done in a single day as a dramatic
 demonstration of the generality of the concept.
 
 The road from prototype to a professional tool required a good amount
-of work over an extended period as as an independent project.  Browser
+of work over an extended period as an independent project.  Browser
 performance, structure and features were improved throughout this
 period.  A number of new languages were also added and all of these were
 integrated via a single common kernel.  A complete user manual was

@@ -24,7 +24,7 @@
 ;;; Requires C-Scheme release 5 or later
 ;;; Changes to Control-G handler require runtime version 13.85 or later
 
-;;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/packages/xscheme.el,v 1.1.1.1 1996/12/18 03:31:43 steve Exp $
+;;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/packages/xscheme.el,v 1.1.1.2 1996/12/18 03:45:01 steve Exp $
 
 (require 'scheme)
 
@@ -288,7 +288,7 @@ disabled, and the keys which normally self insert instead send
 themselves to the Scheme process.  The command character ? will list
 the available commands.
 
-For older releases of Scheme, the major mode will be be
+For older releases of Scheme, the major mode will be
 scheme-interaction-mode , and the command characters must be sent as
 if they were expressions.
 

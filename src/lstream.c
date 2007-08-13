@@ -1527,7 +1527,7 @@ make_lisp_buffer_input_stream (struct buffer *buf, Bufpos start, Bufpos end,
 Lisp_Object
 make_lisp_buffer_output_stream (struct buffer *buf, Bufpos pos, int flags)
 {
-  Lisp_Object lstr = make_lisp_buffer_stream_1 (buf, pos, 0, flags, "w");
+  Lisp_Object lstr = make_lisp_buffer_stream_1 (buf, pos, 0, flags, "wc");
 
   Lstream_set_character_mode (XLSTREAM (lstr));
   return lstr;

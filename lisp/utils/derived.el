@@ -1,11 +1,9 @@
 ;;; derived.el --- allow inheritance of major modes.
-
 ;;; (formerly mode-clone.el)
 
 ;; Copyright (C) 1993, 1994 Free Software Foundation, Inc.
 
 ;; Author: David Megginson (dmeggins@aix1.uottawa.ca)
-;; Keywords: extensions
 ;; Maintainer: FSF
 
 ;; This file is part of XEmacs.
@@ -22,9 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -104,6 +103,7 @@
 
 ;; PUBLIC: define a new major mode which inherits from an existing one.
 
+;; XEmacs -- no autoload
 (defmacro define-derived-mode (child parent name &optional docstring &rest body)
   "Create a new mode as a variant of an existing mode.
 
@@ -212,6 +212,7 @@ Use the `derived-mode-parent' property of the symbol to trace backwards."
 
 ;; Utility functions for defining a derived mode.
 
+;; XEmacs -- don't autoload
 (defun derived-mode-init-mode-variables (mode)
   "Initialise variables for a new mode. 
 Right now, if they don't already exist, set up a blank keymap, an
@@ -220,7 +221,8 @@ the first time the mode is used."
 
   (if (boundp (derived-mode-map-name mode))
       t
-    (eval (` (defvar (, (derived-mode-map-name mode)) 
+    (eval (` (defvar (, (derived-mode-map-name mode))
+	       ;; XEmacs change
 	       (make-sparse-keymap (derived-mode-map-name mode))
 	       (, (format "Keymap for %s." mode)))))
     (put (derived-mode-map-name mode) 'derived-mode-unmerged t))
@@ -228,6 +230,11 @@ the first time the mode is used."
   (if (boundp (derived-mode-syntax-table-name mode))
       t
     (eval (` (defvar (, (derived-mode-syntax-table-name mode))
+	       ;; XEmacs change
+	       ;; Make a syntax table which doesn't specify anything
+	       ;; for any char.  Valid data will be merged in by
+	       ;; derived-mode-merge-syntax-tables.
+	       ;; (make-char-table 'syntax-table nil)
 	       (make-syntax-table)
 	       (, (format "Syntax table for %s." mode)))))
     (put (derived-mode-syntax-table-name mode) 'derived-mode-unmerged t))
@@ -263,8 +270,8 @@ which more-or-less shadow
 	 (new-map (eval map-name))
 	 (old-map (current-local-map)))
     (and old-map
-       (get map-name 'derived-mode-unmerged)
-       (derived-mode-merge-keymaps old-map new-map))
+	 (get map-name 'derived-mode-unmerged)
+	 (derived-mode-merge-keymaps old-map new-map))
     (put map-name 'derived-mode-unmerged nil)
     (use-local-map new-map)))
 
@@ -307,7 +314,7 @@ Always merge its parent into it, since the merge is non-destructive."
   "Merge an old keymap into a new one.
 The old keymap is set to be the parent of the new one, so that there will
 be automatic inheritance."
-  ;; XEmacs change.  FSF 19.30 has a whole bunch of weird crap here
+  ;; XEmacs change.  FSF 19.30 & 19.34 has a whole bunch of weird crap here
   ;; for merging prefix keys and such.  Hopefully none of this is
   ;; necessary in XEmacs.
   (set-keymap-parents new (list old)))
@@ -315,6 +322,7 @@ be automatic inheritance."
 (defun derived-mode-merge-syntax-tables (old new)
   "Merge an old syntax table into a new one.
 Where the new table already has an entry, nothing is copied from the old one."
+  ;; XEmacs change (no set-char-table-parent)
   (let ((idx 0)
 	(end (min (length new) (length old))))
     (while (< idx end)

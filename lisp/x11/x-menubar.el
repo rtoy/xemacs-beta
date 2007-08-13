@@ -168,8 +168,9 @@
        )
       ("Printing Options"
        ["Command-Line Switches for `lpr'/`lp'..."
-	(setq lpr-switches (read-string "Switches for `lpr'/`lp': "
-					lpr-switches))
+	(setq lpr-switches
+	      (read-expression "Switches for `lpr'/`lp': "
+			       (format "%S" lpr-switches)))
 	t]
        ["Pretty-Print With Color"
 	(setq ps-print-color-p (not ps-print-color-p))
@@ -561,8 +562,9 @@
      )))
 
 
-;;; Add Load Init button to menubar when starting up with -q
 (defun maybe-add-init-button ()
+  "Don't call this.
+Adds `Load .emacs' button to menubar when starting up with -q."
   ;; by Stig@hackvan.com
   (cond
    (init-file-user nil)
@@ -1113,7 +1115,10 @@ If this is a relative filename, it is put into the same directory as your
 	   (expand-file-name
 	    save-options-file
 	    (file-name-directory actual-save-options-init-file))
-	   t))
+	   ;; Don't hack-homedir in abbreviate-file-name.  This will
+	   ;; cause an incorrect expansion if the save-options variables
+	   ;; have ~ in them.
+	   ))
 	 (init-output-buffer (find-file-noselect
 			      actual-save-options-init-file))
 	 init-output-marker

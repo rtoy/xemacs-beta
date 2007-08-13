@@ -668,7 +668,7 @@ Fields:
            School name (for theses)
     series
            The name of a series or set of books.
-           An individual book will will also have it's own title
+           An individual book will also have its own title
     title
            The title of the thing being referenced
     type

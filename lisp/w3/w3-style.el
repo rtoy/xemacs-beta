@@ -1,11 +1,11 @@
-;;; w3-style.el,v --- Emacs-W3 binding style sheet mechanism
+;;; w3-style.el --- Emacs-W3 binding style sheet mechanism
 ;; Author: wmperry
-;; Created: 1996/05/31 21:34:16
-;; Version: 1.82
+;; Created: 1996/08/12 03:10:30
+;; Version: 1.13
 ;; Keywords: faces, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -139,6 +139,7 @@ CSS stylesheets.")
 	(url-retrieve url)
 	(w3-style-css-clean)
 	(setq sheet (buffer-string))
+	(set-buffer-modified-p nil)
 	(kill-buffer (current-buffer)))
       (insert sheet)
       (goto-char save-pos))))
@@ -175,6 +176,40 @@ CSS stylesheets.")
     (widen)
     results))
 
+(defun w3-style-active-device-types (&optional device)
+  (let ((types (list 'normal 'default (if w3-running-xemacs 'xemacs 'emacs)))
+	(type (device-type device)))
+    (cond
+     ((featurep 'emacspeak)
+      (setq types (cons 'speech types)))
+     ((eq type 'tty)
+      (if (and (fboundp 'tty-color-list)
+	       (/= 0 (length (tty-color-list))))
+	  (setq types (cons 'ansi-tty types))
+	(setq types (cons 'tty types))))
+     ((eq 'color (device-class))
+      (if (not (device-bitplanes))
+	  (setq types (cons 'color types))
+	(setq types
+	      (append
+	       (list (intern (format "%dbit-color"
+				     (device-bitplanes)))
+		     (intern (format "%dbit"
+				     (device-bitplanes)))
+		     'color) types))
+	(if (= 24 (device-bitplanes))
+	    (setq types (cons 'truecolor types)))))
+     ((eq 'grayscale (device-class))
+      (setq types (append (list (intern (format "%dbit-grayscale"
+						(device-bitplanes)))
+				'grayscale)
+			  types)))
+     ((eq 'mono (device-class))
+      (setq types (append (list 'mono 'monochrome) types)))
+     (t
+      (setq types (cons 'unknown types))))
+    types))
+
 (defun w3-style-parse-css (fname &optional string inherit)
   (let (
 	(url-mime-accept-string
@@ -189,38 +224,8 @@ CSS stylesheets.")
 	(class nil)
 	(defines nil)
 	(device-type nil)
-	(active-device-types (list 'normal 'default
-				   (if w3-running-FSF19 'emacs 'xemacs)))
+	(active-device-types (w3-style-active-device-types (selected-device)))
 	(sheet inherit))
-    (let ((type (device-type)))
-      (cond
-       ((eq type 'tty)
-	(if (and (fboundp 'tty-color-list)
-		 (/= 0 (length (tty-color-list))))
-	    (setq active-device-types (cons 'ansi-tty active-device-types))
-	  (setq active-device-types (cons 'tty active-device-types))))
-       ((eq 'color (device-class))
-	(setq active-device-types
-	      (append
-	       (list (intern (format "%dbit-color"
-				     (device-bitplanes)))
-		     (intern (format "%dbit"
-				     (device-bitplanes)))
-		     'color) active-device-types))
-	(if (= 24 (device-bitplanes))
-	    (setq active-device-types (cons 'truecolor active-device-types))))
-       ((eq 'grayscale (device-class))
-	(setq active-device-types (append
-				   (list (intern (format "%dbit-grayscale"
-							 (device-bitplanes)))
-					 'grayscale)
-				   active-device-types)))
-       ((eq 'mono (device-class))
-	(setq active-device-types (append (list 'mono 'monochrome)
-					  active-device-types)))
-       (t
-	(setq active-device-types (cons 'unknown active-device-types)))))
-
     (save-excursion
       (set-buffer (get-buffer-create
 		   (url-generate-new-buffer-name " *style*")))
@@ -234,6 +239,11 @@ CSS stylesheets.")
       (while (not (eobp))
 	(setq save-pos (point))
 	(cond
+	 ;; *sigh* SGML comments are being used to 'hide' data inlined
+	 ;; with the <style> tag from older browsers.
+	 ((or (looking-at "<!--+")	; begin
+	      (looking-at "--+>"))	; end
+	  (goto-char (match-end 0)))
 	 ;; C++ style comments, and we are doing IE compatibility
 	 ((and (looking-at "//") w3-style-ie-compatibility)
 	  (end-of-line))
@@ -258,7 +268,7 @@ CSS stylesheets.")
 	      (w3-warn 'style (format "Unknown directive: @%s" directive)
 		       'warning)))))
 	 ;; Giving us some output device information
-	 ((looking-at "[ \t\r]*:\\([^:]+\\):")
+	 ((looking-at "[ \t\r]*:\\([^: \n]+\\):")
 	  (downcase-region (match-beginning 1) (match-end 1))
 	  (setq device-type (intern (buffer-substring (match-beginning 1)
 						      (match-end 1))))
@@ -266,13 +276,13 @@ CSS stylesheets.")
 	  (if (not (memq device-type active-device-types))
 	      ;; Not applicable to us... skip the info
 	      (progn
-		(if (re-search-forward ":[^:]*:" nil t)
+		(if (re-search-forward ":[^:{ ]*:" nil t)
 		    (goto-char (match-beginning 0))
 		  (goto-char (point-max))))))
 	 ;; Default is to treat it like a stylesheet declaration
 	 (t
-	  (skip-chars-forward "^{:")
-	  (downcase-region save-pos (point))
+	  (skip-chars-forward "^{")
+	  ;;(downcase-region save-pos (point))
 	  (setq applies-to (w3-style-css-applies-to save-pos (point)))
 	  (skip-chars-forward "^{")
 	  (setq save-pos (point))
@@ -288,7 +298,7 @@ CSS stylesheets.")
 	    (setq cur (car applies-to)
 		  applies-to (cdr applies-to))
 	    (cond
-	     ((string-match "\\(.*\\)\\.\\(.*\\)" cur) ; Normal class
+	     ((string-match "\\([^.]*\\)\\.\\(.*\\)" cur) ; Normal class
 	      (setq tag (intern (downcase (match-string 1 cur)))
 		    class (match-string 2 cur)))
 	     ((string-match "\\(.*\\):\\(.*\\)" cur) ; Pseudo class
@@ -379,14 +389,84 @@ CSS stylesheets.")
     ;; This rounds to the nearest '10'
     (format "%dpt" (* 10 (round (/ size 10))))))
 
+(defsubst w3-style-speech-normalize-number (num)
+  (if num (% (abs (read num)) 9)))
+
+(defun w3-generate-stylesheet-voices (sheet)
+  (let ((todo sheet)
+	cur cur-classes
+	node family gain
+	left right pitch
+	pitch-range stress
+	richness voice
+	)
+    (while todo
+      (setq cur (car todo)
+	    cur-classes (cdr cur)
+	    todo (cdr todo))
+      (while cur-classes
+	(setq node (cdr (car cur-classes))
+	      cur (car cur-classes)
+	      cur-classes (cdr cur-classes)
+	      family (cdr-safe (assq 'voice-family node))
+	      family (if family (intern (downcase family)))
+	      gain (w3-style-speech-normalize-number
+		    (cdr-safe (assq 'gain node)))
+	      left (w3-style-speech-normalize-number
+		    (cdr-safe (assq 'left-volume node)))
+	      right (w3-style-speech-normalize-number
+		     (cdr-safe (assq 'right-volume node)))
+	      pitch (w3-style-speech-normalize-number
+		     (cdr-safe (assq 'pitch node)))
+	      pitch-range (w3-style-speech-normalize-number
+			   (cdr-safe (assq 'pitch-range node)))
+	      stress (w3-style-speech-normalize-number
+		      (cdr-safe (assq 'stress node)))
+	      richness (w3-style-speech-normalize-number
+			(cdr-safe (assq 'richness node))))
+	(if (or family gain left right pitch pitch-range stress richness)
+	    (setq voice (dtk-personality-from-speech-style
+			 (make-dtk-speech-style :family (or family 'paul)
+						:gain (or gain 5)
+						:left-volume (or left 5)
+						:right-volume (or right 5)
+						:average-pitch (or pitch 5)
+						:pitch-range (or pitch-range 5)
+						:stress (or stress 5)
+						:richness (or richness 5))))
+	  (setq voice nil))
+	(if voice (setcdr cur (cons (cons 'voice-spec voice) (cdr cur))))
+	)
+      )
+    )
+  )
+
+(defun w3-style-post-process-stylesheet (sheet)
+  (w3-generate-stylesheet-faces sheet)
+  (if (featurep 'emacspeak)
+      (w3-generate-stylesheet-voices w3-user-stylesheet)))
+
+(defun w3-style-css-split-font-shorthand (font)
+  ;; [<font-weight> || <font-style>]? <font-size> [ / <line-height> ]? <font-family>
+  (let (weight size height family)
+    (if (not (string-match " *\\([0-9.]+[^ /]+\\)" font))
+	(error "Malformed font shorthand: %s" font))
+    (setq weight (if (/= 0 (match-beginning 0))
+		     (substring font 0 (match-beginning 0)))
+	  size (match-string 1 font)
+	  font (substring font (match-end 0) nil))
+    (if (string-match " */ *\\([^ ]+\\) *" font)
+	;; they specified a line-height as well
+	(setq height (match-string 1 font)
+	      family (substring font (match-end 0) nil))
+      (setq family (url-strip-leading-spaces font)))
+    (list weight size height family)))
+
 (defun w3-generate-stylesheet-faces (sheet)
   (let ((todo sheet)
 	(cur nil)
 	(cur-classes nil)
 	(node nil)
-	(voice nil)
-	(voice-person nil)
-	(voice-tone nil)
 	(fore nil)
 	(back nil)
 	(pixmap nil)
@@ -409,8 +489,6 @@ CSS stylesheets.")
 	      cur-classes (cdr cur-classes)
 	      fore (cdr-safe (assq 'color node))
 	      back (cdr-safe (assq 'background node))
-	      voice-person (cdr-safe (assq 'voice node))
-	      voice-tone (cdr-safe (assq 'voice-tone node))
 	      decoration (cdr-safe (assq 'text-decoration node))
 	      pixmap (cdr-safe (assq 'backdrop node))
 	      index (cdr-safe (assq 'font-size-index node))
@@ -424,17 +502,6 @@ CSS stylesheets.")
 	      style (cdr-safe (assq 'font-style node))
 	      shorthand (cdr-safe (assq 'font node)))
 
-	(setq voice (if (or voice-person voice-tone)
-			(intern
-			 (cond
-			  ((and voice-person voice-tone)
-			   (concat voice-person "-" voice-tone))
-			  (voice-person voice-person)
-			  (voice-tone
-			   (concat "default-voice-" voice-tone))
-			  (t
-			   (error "IMPOSSIBLE"))))))
-		  
 	;; Make sure all 'break' items get intern'd
 	(if (or style decoration)
 	    (setq style (concat style decoration)))
@@ -442,15 +509,15 @@ CSS stylesheets.")
 	(if (and (cdr break-style) (stringp (cdr break-style)))
 	    (setcdr break-style (intern (cdr break-style))))
 	(if shorthand
-	    (let ((shorthand (split-string shorthand "[ \t]")))
-	      (setq size (or (nth 0 shorthand) size)
-		    family (or (nth 1 shorthand) size)
-		    weight (or (nth 2 shorthand) weight)
+	    (progn
+	      (setq shorthand (w3-style-css-split-font-shorthand shorthand))
+	      (setq weight (or (nth 0 shorthand) weight)
+		    size (or (nth 1 shorthand) size)
+		    family (or (nth 3 shorthand) family)
 		    weight (or (cdr-safe
 				(assoc weight
 				       w3-style-font-weight-mappings))
-			       weight)
-		    style (or (nth 3 shorthand) style))))
+			       weight))))
 	(if style
 	    (setq style (mapcar
 			 (function
@@ -462,7 +529,7 @@ CSS stylesheets.")
 			    (intern-soft
 			     (concat "font-set-" (downcase x) "-p"))))
 			 (delete "" (split-string style "[ \t&,]")))))
-	(if family (setq family (delete "" (split-string family "[ \t]"))))
+	(if family (setq family (delete "" (split-string family ","))))
 	(if (or family weight style size)
 	    (progn
 	      (setq font (make-font :family family :weight weight :size size))
@@ -471,7 +538,6 @@ CSS stylesheets.")
 		     (funcall (car style) font t))
 		(setq style (cdr style))))
 	  (setq font nil))
-	(if voice (setcdr cur (cons (cons 'voice-spec voice) (cdr cur))))
 	(if font (setcdr cur (cons (cons 'font-spec font) (cdr cur))))
 	(if fore (setcdr cur (cons (cons 'foreground fore) (cdr cur))))
 	(if back (setcdr cur (cons (cons 'background back) (cdr cur))))
@@ -507,8 +573,7 @@ CSS stylesheets.")
        (t
 	(w3-warn 'html "Unknown stylesheet notation: %s" type))))
     (setq w3-current-stylesheet stylesheet)
-    (if (and w3-current-stylesheet (fboundp 'make-face))
-	(w3-generate-stylesheet-faces w3-current-stylesheet))))
+    (w3-style-post-process-stylesheet w3-current-stylesheet)))
 
 (defun w3-display-stylesheet (&optional sheet)
   (interactive)

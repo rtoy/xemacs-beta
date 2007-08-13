@@ -796,7 +796,7 @@ The function is called with no args.")
 	   'find-tag-history))
     (if (string-equal tag-name "")
 	;; #### - This is a really LAME way of doing it!  --Stig
-	(list default)			;indicate exact symbol match
+	default			;indicate exact symbol match
       tag-name)))
 
 (defvar last-tag-data nil

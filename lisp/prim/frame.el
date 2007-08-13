@@ -773,15 +773,18 @@ For use as the value of `deselect-frame-hook'."
 (or deselect-frame-hook
     (add-hook 'deselect-frame-hook 'default-deselect-frame-hook))
 
-(defun default-drag-and-drop-functions (frame filepath)
+(defun default-drag-and-drop-functions (frame filepath &optional data)
   "Implements the `drag-and-drop-functions' variable.
 For use as the value of `drag-and-drop-functions'.
-This default simply pops up the file in the selected frame."
-  (let ((x pop-up-windows))
-    (setq pop-up-windows nil)
-    (pop-to-buffer (find-file-noselect filepath) nil frame)
-    (make-frame-visible frame)
-    (setq pop-up-windows x)))
+This default simply pops up the file in the selected frame or,
+if the dragged object is a buffer, inserts it at point."
+  (if data
+      (insert data)
+    (let ((x pop-up-windows))
+      (setq pop-up-windows nil)
+      (pop-to-buffer (find-file-noselect filepath) nil frame)
+      (make-frame-visible frame)
+      (setq pop-up-windows x))))
 
 (and (boundp 'drag-and-drop-functions)
      (or drag-and-drop-functions

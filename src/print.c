@@ -1010,7 +1010,8 @@ print_compiled_function_internal (CONST char *start, CONST char *end,
   /* we don't really want to see that junk in the bytecode instructions. */
   if (STRINGP (b->bytecodes) && !print_readably)
     {
-      sprintf (buf, "\"...(%ld)\"", string_length (XSTRING (b->bytecodes)));
+      sprintf (buf, "\"...(%ld)\"",
+	       (long) string_length (XSTRING (b->bytecodes)));
       write_c_string (buf, printcharfun);
     }
   else

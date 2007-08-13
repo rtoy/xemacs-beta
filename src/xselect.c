@@ -353,7 +353,7 @@ hack_motif_clipboard_selection (Atom selection_atom,
       /* No, this is no good, because then Motif text fields don't bother
 	 to look up the new value, and you can't Copy from a buffer, Paste
 	 into a text field, then Copy something else from the buffer and
-	 paste it intot he text field -- it pastes the first thing again. */
+	 paste it into the text field -- it pastes the first thing again. */
 /*      && !owned_p */
       )
     {
@@ -367,7 +367,8 @@ hack_motif_clipboard_selection (Atom selection_atom,
       int dataid;	/* 1.2 wants long, but 1.1.5 wants int... */
 #endif
       XmString fmh;
-      fmh = XmStringCreateLtoR ("Clipboard", XmSTRING_DEFAULT_CHARSET);
+      fmh = XmStringCreateLtoR ((String) "Clipboard",
+				XmSTRING_DEFAULT_CHARSET);
       while (ClipboardSuccess !=
 	     XmClipboardStartCopy (display, selecting_window, fmh, thyme,
 #ifdef MOTIF_INCREMENTAL_CLIPBOARDS_WORK
@@ -379,7 +380,8 @@ hack_motif_clipboard_selection (Atom selection_atom,
 	;
       XmStringFree (fmh);
       while (ClipboardSuccess !=
-	     XmClipboardCopy (display, selecting_window, itemid, "STRING",
+	     XmClipboardCopy (display, selecting_window, itemid,
+			      (String) "STRING",
 #ifdef MOTIF_INCREMENTAL_CLIPBOARDS_WORK
 			      /* O'Reilly examples say size can be 0, 
 				 but this clearly is not the case. */
@@ -503,8 +505,8 @@ x_get_local_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
   if (STRINGP (check) ||
       VECTORP (check) ||
       SYMBOLP (check) ||
-      INTP (check) ||
-      CHARP (check) ||
+      INTP    (check) ||
+      CHARP   (check) ||
       NILP (value))
     return value;
 
@@ -2112,17 +2114,18 @@ void
 Xatoms_of_xselect (struct device *d)
 {
 #define ATOM(x) XInternAtom (DEVICE_X_DISPLAY (d), (x), False)
+#define ATOMIZE(x) DEVICE_XATOM_##x (d) = ATOM(#x)
 
   /* Non-predefined atoms that we might end up using a lot */
-  DEVICE_XATOM_CLIPBOARD (d) =		ATOM ("CLIPBOARD");
-  DEVICE_XATOM_TIMESTAMP (d) =		ATOM ("TIMESTAMP");
-  DEVICE_XATOM_TEXT (d) =		ATOM ("TEXT");
-  DEVICE_XATOM_DELETE (d) =		ATOM ("DELETE");
-  DEVICE_XATOM_MULTIPLE (d) =		ATOM ("MULTIPLE");
-  DEVICE_XATOM_INCR (d) =		ATOM ("INCR");
-  DEVICE_XATOM_EMACS_TMP (d) =		ATOM ("_EMACS_TMP_");
-  DEVICE_XATOM_TARGETS (d) =		ATOM ("TARGETS");
-  DEVICE_XATOM_NULL (d) =		ATOM ("NULL");
-  DEVICE_XATOM_ATOM_PAIR (d) =		ATOM ("ATOM_PAIR");
-  DEVICE_XATOM_COMPOUND_TEXT (d) =	ATOM ("COMPOUND_TEXT");
+  ATOMIZE (CLIPBOARD);
+  ATOMIZE (TIMESTAMP);
+  ATOMIZE (TEXT);
+  ATOMIZE (DELETE);
+  ATOMIZE (MULTIPLE);
+  ATOMIZE (INCR);
+  ATOMIZE (TARGETS);
+  ATOMIZE (NULL);
+  ATOMIZE (ATOM_PAIR);
+  ATOMIZE (COMPOUND_TEXT);
+  DEVICE_XATOM_EMACS_TMP (d) = ATOM ("_EMACS_TMP_");
 }

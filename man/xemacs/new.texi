@@ -8,6 +8,7 @@ XEmacs.
 @unnumberedsec General Changes
 
 @itemize @bullet
+@ignore
 @item 
 XEmacs has a new vi emulation mode called evi mode.  To
 start evi mode in Emacs, type the command @kbd{M-x evi}.  If you want
@@ -17,6 +18,17 @@ line in your @file{.emacs} file:
 (setq term-setup-hook 'evi)
 @end example
 @xref{evi Mode} for a brief discussion.
+@end ignore
+
+@item 
+XEmacs has a new vi emulation mode called ``viper'' mode.  To start
+viper mode in XEmacs, type the command @kbd{M-x viper-mode}.  If you
+want XEmacs to automatically put you in viper-mode all the time, include
+this line in your @file{.emacs} file:
+@example
+(viper-mode)
+@end example
+
 @item
 Earlier versions of Emacs only allowed keybindings to ASCII character
 sequences.  XEmacs has greatly expanded this by allowing you to

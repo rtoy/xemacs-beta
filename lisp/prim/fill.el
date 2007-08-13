@@ -1,6 +1,6 @@
 ;;; fill.el --- fill commands for XEmacs.
 
-;; Copyright (C) 1985, 1986, 1992-1995 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 86, 92, 94, 95, 1996 Free Software Foundation, Inc.
 
 ;; Keywords: wp
 
@@ -18,9 +18,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -29,26 +30,27 @@
 
 ;;; Code:
 
-(defvar fill-individual-varying-indent nil
+(defconst fill-individual-varying-indent nil
   "*Controls criterion for a new paragraph in `fill-individual-paragraphs'.
 Non-nil means changing indent doesn't end a paragraph.
 That mode can handle paragraphs with extra indentation on the first line,
 but it requires separator lines between paragraphs.
 A value of nil means that any change in indentation starts a new paragraph.")
 
-(defvar sentence-end-double-space t
+(defconst sentence-end-double-space t
   "*Non-nil means a single space does not end a sentence.")
 
 (defconst colon-double-space nil
   "*Non-nil means put two spaces after a colon when filling.")
 
 (defvar fill-paragraph-function nil
-  "Mode-specific function to fill a paragraph.")
+  "Mode-specific function to fill a paragraph, or nil if there is none.
+If the function returns nil, then `fill-paragraph' does its normal work.")
 
 (defun set-fill-prefix ()
   "Set the fill prefix to the current line up to point.
-Filling expects lines to start with the fill prefix
-and reinserts the fill prefix in each resulting line."
+Filling expects lines to start with the fill prefix and
+reinserts the fill prefix in each resulting line."
   (interactive)
   (setq fill-prefix (buffer-substring
 		     (save-excursion (move-to-left-margin) (point))
@@ -59,12 +61,12 @@ and reinserts the fill prefix in each resulting line."
       (message "fill-prefix: \"%s\"" fill-prefix)
     (message "fill-prefix cancelled")))
 
-(defvar adaptive-fill-mode t
+(defconst adaptive-fill-mode t
   "*Non-nil means determine a paragraph's fill prefix from its text.")
 
 ;; #### - this is still weak.  Yeah, there's filladapt, but this should
 ;; still be better...  --Stig
-(defvar adaptive-fill-regexp (purecopy "[ \t]*\\([#;>*]+ +\\)?")
+(defconst adaptive-fill-regexp (purecopy "[ \t]*\\([#;>*]+ +\\)?")
   "*Regexp to match text at start of line that constitutes indentation.
 If Adaptive Fill mode is enabled, whatever text matches this pattern
 on the second line of a paragraph is used as the standard indentation
@@ -103,8 +105,9 @@ number equals or exceeds the local fill-column - right-margin difference."
 
 (defun canonically-space-region (beg end)
   "Remove extra spaces between words in region.
-Puts one space between words in region; two between sentences.
-Remove indentation from each line."
+Leave one space between words, two at end of sentences or after colons
+(depending on values of `sentence-end-double-space' and `colon-double-space').
+ Remove indentation from each line."
   (interactive "r")
   (save-excursion
     (goto-char beg)
@@ -136,7 +139,12 @@ Remove indentation from each line."
     (goto-char beg)
     (while (and (< (point) end)
 		(re-search-forward "[.?!][])}\"']*$" end t))
+      ;; We insert before markers in case a caller such as
+      ;; do-auto-fill has done a save-excursion with point at the end
+      ;; of the line and wants it to stay at the end of the line.
       (insert ? ))))
+;; XEmacs: we don't have this function.
+;; (insert-before-markers-and-inherit ? ))))
 
 ;; XEmacs -- added DONT-SKIP-FIRST.  Port of older code changes by Stig.
 ;; #### probably this junk is broken -- do-auto-fill doesn't actually use
@@ -144,7 +152,7 @@ Remove indentation from each line."
 (defun fill-context-prefix (from to &optional first-line-regexp
 				 dont-skip-first)
   "Compute a fill prefix from the text between FROM and TO.
-This uses the variables `adapive-fill-prefix' and `adaptive-fill-function'.
+This uses the variables `adaptive-fill-prefix' and `adaptive-fill-function'.
 If FIRST-LINE-REGEXP is non-nil, then when taking a prefix from the
 first line, insist it must match FIRST-LINE-REGEXP."
   (save-excursion
@@ -155,12 +163,14 @@ first line, insist it must match FIRST-LINE-REGEXP."
 	  ;; Non-nil if we are on the second line.
 	  at-second
 	  result)
+      ;; XEmacs change
       (if (not dont-skip-first)
 	  (forward-line 1))
       (if (>= (point) to)
 	  (goto-char firstline)
 	(setq at-second t))
       (move-to-left-margin)
+      ;; XEmacs change
       (let ((start (point))
 	    (eol (save-excursion (end-of-line) (point))))
 	(setq result
@@ -182,7 +192,8 @@ first line, insist it must match FIRST-LINE-REGEXP."
 	   (or (null fill-prefix) (string= fill-prefix "")))
       (setq fill-prefix (fill-context-prefix from to nil dont-skip-first))))
 
-(defun fill-region-as-paragraph (from to &optional justify nosqueeze)
+(defun fill-region-as-paragraph (from to &optional justify
+				      nosqueeze squeeze-after)
   "Fill the region as one paragraph.
 It removes any paragraph breaks in the region and extra newlines at the end,
 indents and fills lines between the margins given by the
@@ -193,8 +204,9 @@ Normally performs justification according to the `current-justification'
 function, but with a prefix arg, does full justification instead.
 
 From a program, optional third arg JUSTIFY can specify any type of
-justification, and fourth arg NOSQUEEZE non-nil means not to make spaces
-between words canonical before filling.
+ustification.  Fourth arg NOSQUEEZE non-nil means not to make spaces
+between words canonical before filling.  Fifth arg SQUEEZE-AFTER, if non-nil,
+means don't canonicalize spaces before that position.
 
 If `sentence-end-double-space' is non-nil, then period followed by one
 space does not end a sentence, so don't break a line there."
@@ -221,6 +233,7 @@ space does not end a sentence, so don't break a line there."
     (setq from (point))
   
     ;; Delete all but one soft newline at end of region.
+    ;; And leave TO before that one.
     (goto-char to)
     (while (and (> (point) from) (eq ?\n (char-after (1- (point)))))
       (if (and oneleft
@@ -287,7 +300,8 @@ space does not end a sentence, so don't break a line there."
 			 (delete-region (point) (match-end 0)))
 		     (forward-line 1))
 		   (goto-char from)
-		   (and (looking-at fpre) (goto-char (match-end 0)))
+		   (if (looking-at fpre)
+		       (goto-char (match-end 0)))
 		   (setq from (point)))))
 	  ;; Remove indentation from lines other than the first.
 	  (beginning-of-line 2)
@@ -300,6 +314,7 @@ space does not end a sentence, so don't break a line there."
 	  ;; Make sure sentences ending at end of line get an extra space.
 	  ;; loses on split abbrevs ("Mr.\nSmith")
 	  (while (re-search-forward "[.?!][])}\"']*$" nil t)
+	    ;; XEmacs change (no insert-and-inherit)
 	    (or (eobp) (insert ?\ )))
 	  (goto-char from)
 	  (skip-chars-forward " \t")
@@ -307,9 +322,10 @@ space does not end a sentence, so don't break a line there."
 	  (subst-char-in-region from (point-max) ?\n ?\ )
 	  (if (and nosqueeze (not (eq justify 'full)))
 	      nil
-	    (canonically-space-region (point) (point-max))
+	    (canonically-space-region (or squeeze-after (point)) (point-max))
 	    (goto-char (point-max))
 	    (delete-horizontal-space)
+	    ;; XEmacs change (no insert-and-inherit)
 	    (insert " "))
 	  (goto-char (point-min))
 
@@ -336,7 +352,9 @@ space does not end a sentence, so don't break a line there."
 		      (forward-char -2)
 		      (skip-chars-backward "^ \n" linebeg)))
 		;; If the left margin and fill prefix by themselves
-		;; pass the fill-column, keep at least one word.
+		;; pass the fill-column. or if they are zero
+		;; but we have no room for even one word,
+		;; keep at least one word anyway.
 		;; This handles ALL BUT the first line of the paragraph.
 		(if (if (zerop prefixcol)
 			(save-excursion
@@ -385,20 +403,23 @@ space does not end a sentence, so don't break a line there."
 			(skip-chars-forward " \t")
 			(skip-chars-forward "^ \t\n")
 			(setq first nil))))
-		;; Replace whitespace here with one newline, then indent to left
-		;; margin.
-		(skip-chars-backward " \t")
-		(insert ?\n)
-		;; Give newline the properties of the space(s) it replaces
-		(set-text-properties (1- (point)) (point)
-				     (text-properties-at (point)))
-		(indent-to-left-margin)
-		;; Insert the fill prefix after indentation.
-		;; Set prefixcol so whitespace in the prefix won't get lost.
-		(and fill-prefix (not (equal fill-prefix ""))
-		     (progn
-		       (insert fill-prefix)
-		       (setq prefixcol (current-column)))))
+		;; Check again to see if we got to the end of the paragraph.
+		(if (save-excursion (skip-chars-forward " \t") (eobp))
+		    (or nosqueeze (delete-horizontal-space))
+		  ;; Replace whitespace here with one newline, then indent to left
+		  ;; margin.
+		  (skip-chars-backward " \t")
+		  (insert ?\n)
+		  ;; Give newline the properties of the space(s) it replaces
+		  (set-text-properties (1- (point)) (point)
+				       (text-properties-at (point)))
+		  (indent-to-left-margin)
+		  ;; Insert the fill prefix after indentation.
+		  ;; Set prefixcol so whitespace in the prefix won't get lost.
+		  (and fill-prefix (not (equal fill-prefix ""))
+		       (progn
+			 (insert fill-prefix)
+			 (setq prefixcol (current-column))))))
 	      ;; Justify the line just ended, if desired.
 	      (if justify
 		  (if (eobp)
@@ -532,6 +553,7 @@ breaks.
 When calling from a program, operates just on region between BEGIN and END,
 unless optional fourth arg WHOLE-PAR is non-nil.  In that case bounds are
 extended to include entire paragraphs as in the interactive command."
+  ;; XEmacs change (was mark-active)
   (interactive (list (if (region-active-p) (region-beginning) (point))
 		     (if (region-active-p) (region-end) (point))
 		     (let ((s (completing-read
@@ -565,6 +587,7 @@ extended to include entire paragraphs as in the interactive command."
 (defun set-justification-none (b e)
   "Disable automatic filling for paragraphs in the region.
 If the mark is not active, this applies to the current paragraph."
+  ;; XEmacs change (was mark-active)
   (interactive (list (if (region-active-p) (region-beginning) (point))
 		     (if (region-active-p) (region-end) (point))))
   (set-justification b e 'none t))
@@ -573,6 +596,7 @@ If the mark is not active, this applies to the current paragraph."
   "Make paragraphs in the region left-justified.
 This is usually the default, but see the variable `default-justification'.
 If the mark is not active, this applies to the current paragraph."
+  ;; XEmacs change (was mark-active)
   (interactive (list (if (region-active-p) (region-beginning) (point))
 		     (if (region-active-p) (region-end) (point))))
   (set-justification b e 'left t))
@@ -581,6 +605,7 @@ If the mark is not active, this applies to the current paragraph."
   "Make paragraphs in the region right-justified:
 Flush at the right margin and ragged on the left.
 If the mark is not active, this applies to the current paragraph."
+  ;; XEmacs change (was mark-active)
   (interactive (list (if (region-active-p) (region-beginning) (point))
 		     (if (region-active-p) (region-end) (point))))
   (set-justification b e 'right t))
@@ -589,6 +614,7 @@ If the mark is not active, this applies to the current paragraph."
   "Make paragraphs in the region fully justified:
 This makes lines flush on both margins by inserting spaces between words.
 If the mark is not active, this applies to the current paragraph."
+  ;; XEmacs change (was mark-active)
   (interactive (list (if (region-active-p) (region-beginning) (point))
 		     (if (region-active-p) (region-end) (point))))
   (set-justification b e 'full t))
@@ -596,6 +622,7 @@ If the mark is not active, this applies to the current paragraph."
 (defun set-justification-center (b e)
   "Make paragraphs in the region centered.
 If the mark is not active, this applies to the current paragraph."
+  ;; XEmacs change (was mark-active)
   (interactive (list (if (region-active-p) (region-beginning) (point))
 		     (if (region-active-p) (region-end) (point))))
   (set-justification b e 'center t))
@@ -737,6 +764,7 @@ otherwise it is made canonical."
 				       (search-backward " ")))
 				 (skip-chars-backward " ")
 				 (setq nmove (1- nmove))))
+			     ;; XEmacs change
 			     (insert " ")
 			     (skip-chars-backward " ")
 			     (setq ncols (1- ncols)))))))
@@ -748,7 +776,7 @@ otherwise it is made canonical."
 (defun unjustify-current-line ()
   "Remove justification whitespace from current line.
 If the line is centered or right-justified, this function removes any
-indentation past the left margin.  If the line is full-jusitified, it removes
+indentation past the left margin.  If the line is full-justified, it removes
 extra spaces between words.  It does nothing in other justification modes."
   (let ((justify (current-justification)))
     (cond ((eq 'left justify) nil)
@@ -774,7 +802,7 @@ extra spaces between words.  It does nothing in other justification modes."
 (defun unjustify-region (&optional begin end)
   "Remove justification whitespace from region.
 For centered or right-justified regions, this function removes any indentation
-past the left margin from each line.  For full-jusitified lines, it removes 
+past the left margin from each line.  For full-justified lines, it removes 
 extra spaces between words.  It does nothing in other justification modes.
 Arguments BEGIN and END are optional; default is the whole buffer."
   (save-excursion
@@ -851,7 +879,10 @@ MAIL-FLAG for a mail message, i. e. don't fill header lines."
 						(point))))
 			     fill-prefix-regexp (regexp-quote fill-prefix)))
 		   (forward-line 1)
-		   (move-to-left-margin)
+		   (if (bolp)
+		       ;; If forward-line went past a newline
+		       ;; move further to the left margin.
+		       (move-to-left-margin))
 		   ;; Now stop the loop if end of paragraph.
 		   (and (not (eobp))
 			(if fill-individual-varying-indent
@@ -861,6 +892,7 @@ MAIL-FLAG for a mail message, i. e. don't fill header lines."
 			     (not (looking-at paragraph-separate))
 			     (save-excursion
 			       (not (and (looking-at fill-prefix-regexp)
+					 ;; XEmacs change
 					 (progn
 					   (forward-char (length fill-prefix))
 					   (looking-at paragraph-separate))))))

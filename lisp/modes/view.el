@@ -6,23 +6,24 @@
 ;; Keywords: wp unix
 ;; Maintainer: FSF
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -36,13 +37,17 @@
 ;;; Code:
 
 (defvar view-highlight-face 'highlight
+  ;; XEmacs change
    "*The extent face used for highlighting the match found by View mode search.")
 
 (defvar view-mode nil "Non-nil if View mode is enabled.")
 (make-variable-buffer-local 'view-mode)
 
 (defvar view-mode-auto-exit nil
-  "Non-nil means scrolling past the end of buffer exits View mode.")
+  "Non-nil means scrolling past the end of buffer exits View mode.
+Some commands, such as \\[view-file], set this to t locally;
++the only way to override that is to set it to nil using `view-mode-hook'.")
+
 (make-variable-buffer-local 'view-mode-auto-exit)
 
 (defvar view-old-buffer-read-only nil)
@@ -63,6 +68,7 @@
 (defvar view-exit-position nil)
 (make-variable-buffer-local 'view-exit-position)
 
+;; XEmacs change
 (defvar view-extent nil
   "Extent used to display where a search operation found its match.
 This is local in each buffer, once it is used.")
@@ -76,7 +82,9 @@ This is local in each buffer, once it is used.")
 (if view-mode-map
     nil
   (setq view-mode-map (make-keymap 'view-mode-map))
-  (suppress-keymap view-mode-map)
+  ;; We used to call suppress-keymap here, but that isn't good in a minor mode.
+  ;; Self-inserting characters will beep anyway, since the buffer is read-only,
+  ;; and we should not interfere with letters that serve as useful commands.
   (define-key view-mode-map "q" 'view-exit)
   (define-key view-mode-map "<" 'beginning-of-buffer)
   (define-key view-mode-map ">" 'end-of-buffer)
@@ -182,10 +190,13 @@ This command runs the normal hook `view-mode-hook'."
 
 (defun view-mode (&optional arg)
   "Toggle View mode.
-If you use this function to turn on View mode,
-\"exiting\" View mode does nothing except turn View mode off.
-The other way to turn View mode on is by calling
-`view-mode-enter'.
+With a prefix argument, turn View mode on if the argument is >= zero
+and off if it is not.
+
+If you use this function to turn on View mode, then subsequently
+\"exiting\" View mode does nothing except turn View mode off.  The
+other way to turn View mode on is by calling `view-mode-enter';
+that is what Lisp programs usually use.
 
 Letters do not insert themselves.  Instead these commands are provided.
 Most commands take prefix arguments.  Commands dealing with lines
@@ -272,6 +283,7 @@ If you viewed an existing buffer, that buffer returns to its previous mode.
 If you viewed a file that was not present in Emacs, its buffer is killed."
   (interactive)
   (setq view-mode nil)
+  ;; XEmacs change
   (and view-extent (delete-extent view-extent))
   (force-mode-line-update)
   (cond (view-mode-auto-exit
@@ -343,7 +355,8 @@ Arg is number of lines to scroll."
 	(scroll-up lines)))
     (cond ((pos-visible-in-window-p (point-max))
 	   (goto-char (point-max))
-	   (message (substitute-command-keys
+	   (message "%"
+		    (substitute-command-keys
 		     "End.  Type \\[view-exit] to quit viewing."))))
     (move-to-window-line -1)
     (beginning-of-line)))
@@ -408,7 +421,9 @@ and pushes mark ring.
 The variable `view-highlight-face' controls the face that is used
 for highlighting the match that is found."
   (interactive "p")
-  (View-search-regexp-forward n view-last-regexp))
+  (if view-last-regexp
+      (View-search-regexp-forward n view-last-regexp)
+    (error "No previous View-mode search")))
 
 (defun View-search-last-regexp-backward (n)
   "Search backward from window start for Nth instance of last regexp.
@@ -418,7 +433,9 @@ pushes mark ring.
 The variable `view-highlight-face' controls the face that is used
 for highlighting the match that is found."
   (interactive "p")
-  (View-search-regexp-backward n view-last-regexp))
+  (if view-last-regexp
+      (View-search-regexp-backward n view-last-regexp)
+    (error "No previous View-mode search")))
 
 (defun View-back-to-mark (&optional ignore)
   "Return to last mark set in View mode, else beginning of file.
@@ -440,6 +457,7 @@ invocations return to earlier marks."
 	(progn
 	  (push-mark)
 	  (goto-char where)
+	  ;; XEmacs change.
 	  (if view-extent
 	      (set-extent-endpoints view-extent (match-beginning 0)
 				    (match-end 0))

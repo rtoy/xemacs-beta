@@ -20,7 +20,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* #pragma ident "@(#) $Id: unexsol2.c,v 1.1.1.1 1996/12/18 03:39:00 steve Exp $" */
+/* #pragma ident "@(#) $Id: unexsol2.c,v 1.1.1.2 1996/12/18 03:48:53 steve Exp $" */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,6 +29,8 @@ Boston, MA 02111-1307, USA.  */
 #define DYNODUMP_SO	"../dynodump/dynodump.so"
 #define DYNODUMP_SYM	"dynodump"
 
+int unexec (char *new_name, char *old_name, unsigned int data_start,
+	    unsigned int bss_start, unsigned int entry_address);
 int
 unexec(char *new_name, char *old_name, unsigned int data_start,
        unsigned int bss_start, unsigned int entry_address)

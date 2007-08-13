@@ -1,11 +1,11 @@
-;;; w3-xemac.el,v --- XEmacs specific functions for emacs-w3
+;;; w3-xemac.el --- XEmacs specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/06/06 14:14:34
-;; Version: 1.165
+;; Created: 1996/07/21 06:38:10
+;; Version: 1.4
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -33,30 +33,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun w3-mouse-handler (e)
   "Function to message the url under the mouse cursor"
+  (interactive "e")
   (let* ((pt (event-point e))
-	 (props (and pt (extent-properties-at pt)))
-	 (link (nth 1 (nth 1 (memq 'w3 props)))) ; The link info if it exists
-	 (form (nth 1 (memq 'w3form props))) 	 ; The form info it it exists
-	 (dely (nth 0 (nth 1 (memq 'w3delayed props))))	 ; The delayed img info
-	 (mpeg (nth 1 (memq 'w3mpeg props)))     ; the delayed mpeg info
-	 (imag (nth 1 (memq 'w3graphic props)))) ; The image info if it exists
+	 (good (eq (event-window e) (selected-window)))
+	 (widget (and good pt (number-or-marker-p pt) (widget-at pt)))
+	 (link (and widget (widget-get widget 'href)))
+	 (form (and widget (widget-get widget 'w3-form-data)))
+	 (imag nil)
+	 )
     (cond
      (link (message "%s" link))
      (form
-      (let ((args (nth 0 form)))
-	(cond
-	 ((string= "SUBMIT" (nth 1 form))
-	  (message "Submit form to %s" (cdr-safe (assq 'action args))))
-	 ((string= "RESET" (nth 1 form))
-	  (message "Reset form contents"))
-	 (t
-	  (message "Form entry (name=%s, type=%s)" (nth 2 form)
-		   (if (equal "" (nth 1 form))
-		       "text"
-		     (downcase (nth 1 form))))))))
-     (dely (message "Delayed image (%s)" (car dely)))
+      (cond
+       ((eq 'submit (w3-form-element-type form))
+	(message "Submit form to %s"
+		 (cdr-safe (assq 'action (w3-form-element-action form)))))
+       ((eq 'reset (w3-form-element-type form))
+	(message "Reset form contents"))
+       (t
+	(message "Form entry (name=%s, type=%s)" (w3-form-element-name form)
+		 (w3-form-element-type form)))))
      (imag (message "Inlined image (%s)" (car imag)))
-     (mpeg (message "Delayed mpeg (%s)" (car mpeg)))
      (t (message "")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -133,9 +130,8 @@
   "XEmacs specific stuff for w3-mode"
   (cond
    ((not w3-track-mouse)
-    nil)
-   ((or (not (boundp 'inhibit-help-echo))
-	inhibit-help-echo)
+    (setq inhibit-help-echo nil))
+   (inhibit-help-echo
     (setq mode-motion-hook 'w3-mouse-handler))
    (t nil))
   (if (eq (device-type) 'tty)

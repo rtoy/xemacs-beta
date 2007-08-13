@@ -1824,7 +1824,10 @@ Info-annotations-path) is to be edited; default is 1."
   (if Info-standalone
       (save-buffers-kill-emacs)
     (switch-to-buffer (prog1 (other-buffer (current-buffer))
-			(bury-buffer (current-buffer))))))
+			(bury-buffer (current-buffer))
+			(if (featurep 'toolbar)
+			    (if (frame-live-p toolbar-info-frame)
+				(delete-frame toolbar-info-frame)))))))
 
 (defun Info-undefined ()
   "Make command be undefined in Info."

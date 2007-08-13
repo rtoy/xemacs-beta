@@ -29,6 +29,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'timezone)
+(require 'cl)
 
 (let ((keywords 
        '(:name :value :expires :path :domain :test :secure)))
@@ -280,9 +281,13 @@
 	    last (1+ last)))
     (if (string-match url-cookie-two-dot-domains domain)
 	(setq mindots 2))
-    (if (< numdots mindots)		; Not enough dots in domain name!
-	nil
-      (string-match (concat (regexp-quote domain) "$") host))))
+    (cond
+     ((string= host domain)		; Apparently netscape lets you do this
+      t)
+     ((< numdots mindots)		; Not enough dots in domain name!
+      nil)
+     (t
+      (string-match (concat (regexp-quote domain) "$") host)))))
 
 (defun url-header-comparison (x y)
   (string= (downcase x) (downcase y)))
@@ -319,15 +324,27 @@
 			      (url-match expires 3) " "
 			      (url-match expires 4) " ["
 			      (url-match expires 5) "]")))
-    (if (url-cookie-host-can-set-p url-current-server domain)
-	(while rest
-	  (url-cookie-store (car (car rest)) (cdr (car rest))
-			    expires domain path secure)
-	  (setq rest (cdr rest)))
+    (cond
+     ((and (listp url-privacy-level) (memq 'cookies url-privacy-level))
+      ;; user never wants cookies
+      nil)
+     ((and url-cookie-confirmation
+	   (not (funcall url-confirmation-func
+			 (format "Allow %s to set a cookie? "
+				 url-current-server))))
+      ;; user wants to be asked, and declined.
+      nil)
+     ((url-cookie-host-can-set-p url-current-server domain)
+      ;; Cookie is accepted by the user, and passes our security checks
+      (while rest
+	(url-cookie-store (car (car rest)) (cdr (car rest))
+			  expires domain path secure)
+	(setq rest (cdr rest))))
+     (t
       (url-warn 'url (format
 		      (concat "%s tried to set a cookie for domain %s\n"
 			      "Permission denied - cookie rejected.\n"
 			      "Set-Cookie: %s")
-		      url-current-server domain str)))))
+		      url-current-server domain str))))))
 
 (provide 'url-cookie)

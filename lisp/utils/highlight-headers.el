@@ -230,7 +230,7 @@ interpreted as cited text.)"
 			   (setq e (make-extent (match-end 0)
 						(match-end 0))))
 			  (t
-			   ;; okay, make the beginning of the the invisible
+			   ;; okay, make the beginning of the invisible
 			   ;; move forward to only hide the modem noise...
 			   (set-extent-endpoints e
 						 (match-beginning 2)

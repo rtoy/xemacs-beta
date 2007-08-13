@@ -70,7 +70,7 @@
 ;;; - bitmap fonts, which can be assumed to look as good as possible;
 ;;; - bitmap fonts which have been (or can be) automatically scaled to
 ;;;   a new size, and which almost always look awful;
-;;; - and true outline fonts, which should look ok any any size, but in
+;;; - and true outline fonts, which should look ok at any size, but in
 ;;;   practice (on at least some systems) look awful at any size, and
 ;;;   even in theory are unlikely ever to look as good as non-scaled
 ;;;   bitmap fonts.
@@ -367,24 +367,25 @@ or if you change your font path, you can call this to re-initialize the menus."
 	(and (string-match x-font-regexp-foundry-and-family name)
 	     (setq family (capitalize (match-string 1 name))))
 	(setq entry (vassoc family (aref dcache 0)))
-	(mapcar #'(lambda (item)
-		    ;;
-		    ;; Items on the Size menu are enabled iff current font has
-		    ;; that size.  Only the size of the current font is
-		    ;; selected.  (If the current font comes in size 0, it is
-		    ;; scalable, and thus has every size.)
-		    ;;
-		    (setq s (nth 3 (aref item 1)))
-		    (if (or (member s (aref entry 2))
-			    (and (not font-menu-ignore-scaled-fonts)
-				 (member 0 (aref entry 2))))
-			(enable-menu-item item)
-		      (disable-menu-item item))
-		    (if (eq size s)
-			(select-toggle-menu-item item)
-		      (deselect-toggle-menu-item item))
-		    item)
-		(aref dcache 2)))
+	(mapcar
+         (lambda (item)
+           ;;
+           ;; Items on the Size menu are enabled iff current font has
+           ;; that size.  Only the size of the current font is
+           ;; selected.  (If the current font comes in size 0, it is
+           ;; scalable, and thus has every size.)
+           ;;
+           (setq s (nth 3 (aref item 1)))
+           (if (or (member s (aref entry 2))
+                   (and (not font-menu-ignore-scaled-fonts)
+                        (member 0 (aref entry 2))))
+               (enable-menu-item item)
+             (disable-menu-item item))
+           (if (eq size s)
+               (select-toggle-menu-item item)
+             (deselect-toggle-menu-item item))
+           item)
+         (aref dcache 2)))
       )))
 
 ;;;###autoload

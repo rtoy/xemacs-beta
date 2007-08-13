@@ -45,6 +45,9 @@ Boston, MA 02111-1307, USA.  */
    SunOS 4.1.2 host, reading a directory that is remote-mounted from a
    Solaris 2.1 host and is in a native Solaris 2.1 filesystem.
 
+   (and Solaris 2 doesn't have a d_nameln member at all!  Posix.1
+   doesn't specify it -- mrb)
+
    Since applying strlen to the name always works, we'll just do that.  */
 #define NAMLEN(p) strlen (p->d_name)
 

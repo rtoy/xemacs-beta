@@ -33,8 +33,19 @@
 #include <sys/fcntl.h>
 #include <sys/file.h>
 
+/* libaudio.h includes a header which defines CONST.  We temporarily
+   undefine it in order to eliminate a compiler warning.  Yes, this is
+   a hack. */
+#undef CONST
 #include <multimedia/libaudio.h>
 #include <multimedia/audio_device.h>
+
+#undef CONST
+#ifdef CONST_IS_LOSING
+# define CONST
+#else
+# define CONST const
+#endif /* CONST */
 
 #if __STDC__ || defined(STDC_HEADERS)	       /* warning suppression */
 extern int audio__setplayhdr();
@@ -45,7 +56,6 @@ extern int audio_read_filehdr();
 extern int audio_cmp_hdr();
 extern int audio_enc_to_str();
 extern int audio_drain();
-extern void usleep();
 #endif
 
 

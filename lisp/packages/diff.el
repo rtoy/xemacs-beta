@@ -18,9 +18,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -35,7 +36,7 @@
 ;;; This is duplicated in vc.el.
 ;;;###autoload
 (defvar diff-switches (purecopy "-c")
-  "*A string or list of strings specifying switches to be be passed to diff.")
+  "*A string or list of strings specifying switches to be passed to diff.")
 
 (defvar diff-command "diff"
   "*The command to use to run diff.")
@@ -44,7 +45,7 @@
   '(
     ;; -u format: @@ -OLDSTART,OLDEND +NEWSTART,NEWEND @@
     ("^@@ -\\([0-9]+\\),[0-9]+ \\+\\([0-9]+\\),[0-9]+ @@$" 1 2)
-  
+
     ;; -c format: *** OLDSTART,OLDEND ****
     ("^\\*\\*\\* \\([0-9]+\\),[0-9]+ \\*\\*\\*\\*$" 1 nil)
     ;;            --- NEWSTART,NEWEND ----
@@ -60,7 +61,7 @@
     ;; -n format: {a,d,c}OLDSTART LINES-CHANGED
     ("^[adc]\\([0-9]+\\)\\( [0-9]+\\)?$" 1)
     )
-  "Alist (REGEXP OLD-IDX NEW-IDX) of regular expressions to match difference 
+  "Alist (REGEXP OLD-IDX NEW-IDX) of regular expressions to match difference
 sections in \\[diff] output.  If REGEXP matches, the OLD-IDX'th
 subexpression gives the line number in the old file, and NEW-IDX'th
 subexpression gives the line number in the new file.  If OLD-IDX or NEW-IDX
@@ -121,7 +122,7 @@ is nil, REGEXP matches only half a section.")
 						(match-end subexpr)))))
 				    (save-excursion
 				      (save-match-data
-                                        (set-buffer (find-file-noselect file)))
+					(set-buffer (find-file-noselect file)))
 				      (save-excursion
 					(goto-line line)
 					(point-marker)))))
@@ -232,6 +233,18 @@ With prefix arg, prompt for diff switches."
 				  "No more differences" "Diff"
 				  'diff-parse-differences))
 	  (pop-to-buffer buf)
+	  ;; Avoid frightening people with "abnormally terminated"
+	  ;; if diff finds differences.
+	  (set (make-local-variable 'compilation-exit-message-function)
+	       (lambda (status code msg)
+		 (cond ((not (eq status 'exit))
+			(cons msg code))
+		       ((zerop code)
+			'("finished (no differences)\n" . "no differences"))
+		       ((= code 1)
+			'("finished\n" . "differences found"))
+		       (t
+			(cons msg code)))))
 	  (set (make-local-variable 'diff-old-file) old)
 	  (set (make-local-variable 'diff-new-file) new)
 	  (set (make-local-variable 'diff-old-temp-file) old-alt)

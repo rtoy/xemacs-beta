@@ -1795,28 +1795,22 @@ TAG-SET, EXACT-P, and HOW-TO-ADD are as in `copy-specifier'.
   fold = XFACE (old_face);
   fnew = XFACE (new_face);
 
-  Fcopy_specifier (fold->foreground, fnew->foreground, locale,
-		   tag_set, exact_p, how_to_add);
-  Fcopy_specifier (fold->background, fnew->background, locale,
-		   tag_set, exact_p, how_to_add);
-  Fcopy_specifier (fold->font, fnew->font, locale,
-		   tag_set, exact_p, how_to_add);
-  Fcopy_specifier (fold->display_table, fnew->display_table, locale,
-		   tag_set, exact_p, how_to_add);
-  Fcopy_specifier (fold->background_pixmap, fnew->background_pixmap,
-		   locale, tag_set, exact_p, how_to_add);
-  Fcopy_specifier (fold->underline, fnew->underline, locale,
-		   tag_set, exact_p, how_to_add);
-  Fcopy_specifier (fold->strikethru, fnew->strikethru, locale,
-		   tag_set, exact_p, how_to_add);
-  Fcopy_specifier (fold->highlight, fnew->highlight, locale,
-		   tag_set, exact_p, how_to_add);
-  Fcopy_specifier (fold->dim, fnew->dim, locale,
-		   tag_set, exact_p, how_to_add);
-  Fcopy_specifier (fold->blinking, fnew->blinking, locale,
-		   tag_set, exact_p, how_to_add);
-  Fcopy_specifier (fold->reverse, fnew->reverse, locale,
-		   tag_set, exact_p, how_to_add);
+#define COPY_PROPERTY(property) \
+  Fcopy_specifier (fold->property, fnew->property, \
+                   locale, tag_set, exact_p, how_to_add);
+
+  COPY_PROPERTY (foreground);
+  COPY_PROPERTY (background);
+  COPY_PROPERTY (font);
+  COPY_PROPERTY (display_table);
+  COPY_PROPERTY (background_pixmap);
+  COPY_PROPERTY (underline);
+  COPY_PROPERTY (strikethru);
+  COPY_PROPERTY (highlight);
+  COPY_PROPERTY (dim);
+  COPY_PROPERTY (blinking);
+  COPY_PROPERTY (reverse);
+#undef COPY_PROPERTY
   /* #### should it copy the individual specifiers, if they exist? */
   fnew->plist = Fcopy_sequence (fold->plist);
 

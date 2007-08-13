@@ -27,7 +27,7 @@
    files. */
 int getpagesize (void);
 long random (void);
-int srandom (unsigned int seed);
+void srandom (unsigned int seed);
 #endif /* NOT_C_CODE */
 
 /* 2.5 now has random back in libc but we don't want to use it. */

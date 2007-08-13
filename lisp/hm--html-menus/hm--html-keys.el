@@ -1,5 +1,5 @@
-;;; hm--html-keys.el
-;;; v1.50; 17-Feb-1996
+;;; $Id: hm--html-keys.el,v 1.1.1.2 1996/12/18 03:46:48 steve Exp $
+;;; 
 ;;; Copyright (C) 1995, 1996 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
 ;;;
@@ -21,16 +21,29 @@
 ;;; Description:
 ;;;
 ;;;	Defines the new keybindigs for the hm--html-menus package.
-;;;	At the moment it will only be used, if the variable
-;;;	'hm--html-use-old-keymap' in hm--html-configuration.el
-;;;	is set to nil, which is the default.
 ;;; 
 ;;; Installation: 
 ;;;   
 ;;;	Put this file in one of your load path directories.
 ;;;
 
-(provide 'hm--html-keys)
+;; This is necessary to get the definition of hm--html-mode-prefix-key.
+(require 'hm--html-configuration)
+
+(if (adapt-emacs19p)
+    (progn
+
+      (defvar hm--html-emacs19-popup-noregion-menu-button [C-down-mouse-3]
+	"This is the mouse button , which pops up the noregion menus.
+It could have the same value as 
+`hm--html-emacs19-popup-region-menu-button'.")
+      
+      (defvar hm--html-emacs19-popup-region-menu-button [C-down-mouse-3]
+	"This is the mouse button , which pops up the region menus.
+It could have the same value as 
+`hm--html-emacs19-popup-noregion-menu-button'.")
+
+      ))
 
 
 (defvar hm--html-noregion-anchor-map nil
@@ -39,6 +52,7 @@
 (if hm--html-noregion-anchor-map
     ()
   (setq hm--html-noregion-anchor-map (make-sparse-keymap))
+  (define-key hm--html-noregion-anchor-map "r" 'hm--html-add-relative-link)
   (define-key hm--html-noregion-anchor-map "h" 'hm--html-add-html-link)
   (define-key hm--html-noregion-anchor-map "i" 'hm--html-add-info-link)
   (define-key hm--html-noregion-anchor-map "g" 'hm--html-add-gopher-link)
@@ -54,7 +68,7 @@
   (define-key hm--html-noregion-anchor-map "p" 'hm--html-add-proggate-link)
   (define-key hm--html-noregion-anchor-map 
     "\C-p" 'hm--html-add-local-proggate-link)
-  (define-key hm--html-noregion-anchor-map "l" 'html-add-normal-link)
+  (define-key hm--html-noregion-anchor-map "l" 'hm--html-add-normal-link)
   (define-key hm--html-noregion-anchor-map "t" 'hm--html-add-link-target)
   )
 
@@ -64,6 +78,8 @@
 (if hm--html-region-anchor-map
     ()
   (setq hm--html-region-anchor-map (make-sparse-keymap))
+  (define-key hm--html-region-anchor-map
+    "r" 'hm--html-add-relative-link-to-region)
   (define-key hm--html-region-anchor-map "h" 'hm--html-add-html-link-to-region)
   (define-key hm--html-region-anchor-map "i" 'hm--html-add-info-link-to-region)
   (define-key hm--html-region-anchor-map 
@@ -88,7 +104,7 @@
   (define-key hm--html-region-anchor-map 
     "l" 'hm--html-add-normal-link-to-region)
   (define-key hm--html-region-anchor-map 
-    "t" 'html-add-reference-to-region)
+    "t" 'hm--html-add-link-target-to-region)
   )
 
 (defvar hm--html-noregion-frame-map nil
@@ -106,7 +122,7 @@
   (define-key hm--html-noregion-frame-map "t" 'hm--html-add-title)
   (define-key hm--html-noregion-frame-map "h" 'hm--html-add-header)
   (define-key hm--html-noregion-frame-map "n" 'hm--html-add-normal-node-link)
-  (define-key hm--html-noregion-frame-map "a" 'html-add-address)
+  (define-key hm--html-noregion-frame-map "a" 'hm--html-add-address)
   (define-key hm--html-noregion-frame-map "s" 'hm--html-add-signature)
   (define-key hm--html-noregion-frame-map 
     [(control c)] 'hm--html-insert-created-comment)
@@ -138,19 +154,20 @@
 (if hm--html-noregion-structure-map
     ()
   (setq hm--html-noregion-structure-map (make-sparse-keymap))
-  (define-key hm--html-noregion-structure-map "i" 'html-add-list-or-menu-item)
-  (define-key hm--html-noregion-structure-map "m" 'html-add-menu)
-  (define-key hm--html-noregion-structure-map "u" 'html-add-list)
+  (define-key hm--html-noregion-structure-map
+    "i" 'hm--html-add-list-or-menu-item)
+  (define-key hm--html-noregion-structure-map "m" 'hm--html-add-menu)
+  (define-key hm--html-noregion-structure-map "u" 'hm--html-add-list)
   (define-key hm--html-noregion-structure-map "o" 'hm--html-add-numberlist)
   (define-key hm--html-noregion-structure-map "d" 'hm--html-add-directory-list)
   (define-key hm--html-noregion-structure-map 
-    "\C-dl" 'html-add-description-list)
+    "\C-dl" 'hm--html-add-description-list)
   (define-key hm--html-noregion-structure-map 
     "\C-dt" 'hm--html-add-description-title)
   (define-key hm--html-noregion-structure-map 
-    "\C-de" 'hm--html-add-only-description-entry)
+    "\C-de" 'hm--html-add-description-entry)
   (define-key hm--html-noregion-structure-map 
-    "\C-d\C-t" 'html-add-description-entry)
+    "\C-d\C-t" 'hm--html-add-description-title-and-entry)
   (define-key hm--html-noregion-structure-map
     "\C-tt" 'hm--html-add-table)
   (define-key hm--html-noregion-structure-map 
@@ -175,6 +192,8 @@
 (if hm--html-region-structure-map
     ()
   (setq hm--html-region-structure-map (make-sparse-keymap))
+  (define-key hm--html-noregion-structure-map
+    "i" 'hm--html-add-list-or-menu-item-to-region)
   (define-key hm--html-region-structure-map "m" 'hm--html-add-menu-to-region)
   (define-key hm--html-region-structure-map "u" 'hm--html-add-list-to-region)
   (define-key hm--html-region-structure-map 
@@ -182,7 +201,13 @@
   (define-key hm--html-region-structure-map 
     "d" 'hm--html-add-directory-list-to-region)
   (define-key hm--html-region-structure-map 
-    "\C-dl" 'html-add-description-list-to-region)
+    "\C-dl" 'hm--html-add-description-list-to-region)
+  (define-key hm--html-region-structure-map 
+    "\C-dt" 'hm--html-add-description-title-to-region)
+  (define-key hm--html-region-structure-map 
+    "\C-de" 'hm--html-add-description-entry-to-region)
+;  (define-key hm--html-region-structure-map 
+;    "\C-d\C-t" 'html-add-description-title-and-entry-to-region))
   (define-key hm--html-region-structure-map
     "\C-tt" 'hm--html-add-table-to-region)
   (define-key hm--html-region-structure-map 
@@ -198,13 +223,13 @@
     ()
   (setq hm--html-noregion-formating-paragraph-map (make-sparse-keymap))
   (define-key hm--html-noregion-formating-paragraph-map
-    "o" 'html-add-plaintext)
+    "o" 'hm--html-add-plaintext)
   (define-key hm--html-noregion-formating-paragraph-map
     "w" 'hm--html-add-preformated)
   (define-key hm--html-noregion-formating-paragraph-map
-    "b" 'html-add-blockquote)
+    "b" 'hm--html-add-blockquote)
   (define-key hm--html-noregion-formating-paragraph-map
-    "l" 'html-add-listing)
+    "l" 'hm--html-add-listing)
   (define-key hm--html-noregion-formating-paragraph-map
     "a" 'hm--html-add-abstract)
   )
@@ -227,38 +252,6 @@
     "a" 'hm--html-add-abstract-to-region)
   )
 
-;(defvar hm--html-noregion-entity-map nil
-;  "Noregion sub keymap for inserting entities.")
-
-;(if hm--html-noregion-entity-map
-;    ()
-;  (setq hm--html-noregion-entity-map (make-sparse-keymap))
-;  )
-
-;(defvar hm--html-region-entity-map nil
-;  "Region sub keymap for inserting entities.")
-
-;(if hm--html-region-entity-map
-;    ()
-;  (setq hm--html-region-entity-map (make-sparse-keymap))
-;  )
-
-;(defvar hm--html-noregion-logical-map nil
-;  "Noregion sub keymap for inserting logical text formating elements.")
-
-;(if hm--html-noregion-logical-map
-;    ()
-;  (setq hm--html-noregion-logical-map (make-sparse-keymap))
-;  )
-
-;(defvar hm--html-region-logical-map nil
-;  "Region sub keymap for inserting logical text formating elements.")
-
-;(if hm--html-region-logical-map
-;    ()
-;  (setq hm--html-region-logical-map (make-sparse-keymap))
-;  )
-
 (defvar hm--html-noregion-formating-word-map nil
   "Norgion sub keymap for inserting physical text formating elements.")
 
@@ -272,7 +265,7 @@
   (define-key hm--html-noregion-formating-word-map
     "u" 'hm--html-add-underline)
   (define-key hm--html-noregion-formating-word-map
-    "t" 'html-add-fixed)
+    "t" 'hm--html-add-fixed)
   (define-key hm--html-noregion-formating-word-map
     "s" 'hm--html-add-strikethru)
   (define-key hm--html-noregion-formating-word-map
@@ -280,9 +273,13 @@
   (define-key hm--html-noregion-formating-word-map
     "\C-b" 'hm--html-add-subscript)
   (define-key hm--html-noregion-formating-word-map
-    "e" 'html-add-emphasized)
+    "e" 'hm--html-add-emphasized)
   (define-key hm--html-noregion-formating-word-map
-    "\C-s" 'html-add-strong)
+    "\C-s" 'hm--html-add-strong)
+  (define-key hm--html-noregion-formating-word-map
+    "\M-s" 'hm--html-add-small)
+  (define-key hm--html-noregion-formating-word-map
+    "\M-b" 'hm--html-add-big)
   )
 
 (defvar hm--html-region-formating-word-map nil
@@ -309,87 +306,48 @@
     "e" 'hm--html-add-emphasized-to-region)
   (define-key hm--html-region-formating-word-map
     "\C-s" 'hm--html-add-strong-to-region)
+  (define-key hm--html-region-formating-word-map
+    "\M-s" 'hm--html-add-small-to-region)
+  (define-key hm--html-region-formating-word-map
+    "\M-b" 'hm--html-add-big-to-region)
   )
 
-;(defvar hm--html-noregion-header-map nil
-;  "Noregion sub keymap for inserting header elements.")
+(defvar hm--html-noregion-include-map nil
+  "Noregion sub keymap for include images and other stuff.")
 
-;(if hm--html-noregion-header-map
-;    ()
-;  (setq hm--html-noregion-header-map (make-sparse-keymap))
-;  )
-
-;(defvar hm--html-region-header-map nil
-;  "Region sub keymap for inserting header elements.")
-
-;(if hm--html-region-header-map
-;    ()
-;  (setq hm--html-region-header-map (make-sparse-keymap))
-;  )
-
-;(defvar hm--html-noregion-head-map nil
-;  "Noregion sub keymap for inserting head elements.")
-
-;(if hm--html-noregion-head-map
-;    ()
-;  (setq hm--html-noregion-head-map (make-sparse-keymap))
-;  )
-
-;(defvar hm--html-region-head-map nil
-;  "Region sub keymap for inserting head elements.")
-
-;(if hm--html-region-head-map
-;    ()
-;  (setq hm--html-region-head-map (make-sparse-keymap))
-;  )
-
-;(defvar hm--html-noregion-list-map nil
-;  "Noregion sub keymap for inserting lists.")
-
-;(if hm--html-noregion-list-map
-;    ()
-;  (setq hm--html-noregion-list-map (make-sparse-keymap))
-;  )
-
-;(defvar hm--html-region-list-map nil
-;  "Region sub keymap for inserting lists.")
-
-;(if hm--html-region-list-map
-;    ()
-;  (setq hm--html-region-list-map (make-sparse-keymap))
-;  )
-
-(defvar hm--html-noregion-graphics-map nil
-  "Noregion sub keymap for inserting graphics (images).")
-
-(if hm--html-noregion-graphics-map
+(if hm--html-noregion-include-map
     ()
-  (setq hm--html-noregion-graphics-map (make-sparse-keymap))
+  (setq hm--html-noregion-include-map (make-sparse-keymap))
+  (define-key hm--html-noregion-include-map "t" 'hm--html-add-image-top)
+  (define-key hm--html-noregion-include-map "m" 'hm--html-add-image-middle)
+  (define-key hm--html-noregion-include-map "b" 'hm--html-add-image-bottom)
+  (define-key hm--html-noregion-include-map "a" 'hm--html-add-applet)
+  (define-key hm--html-noregion-include-map "p" 'hm--html-add-applet)
   )
 
-(defvar hm--html-region-graphics-map nil
-  "Region sub keymap for inserting graphics (images).")
+(defvar hm--html-region-include-map nil
+  "Region sub keymap for include images and other stuff.")
 
-(if hm--html-region-graphics-map
+(if hm--html-region-include-map
     ()
-  (setq hm--html-region-graphics-map (make-sparse-keymap))
+  (setq hm--html-region-include-map (make-sparse-keymap))
   )
 
-(defvar hm--html-noregion-text-elements-map nil
-  "Noregion sub keymap for inserting text elements.")
+;(defvar hm--html-noregion-text-elements-map nil
+;  "Noregion sub keymap for inserting text elements.")
 
-(if hm--html-noregion-text-elements-map
-    ()
-  (setq hm--html-noregion-text-elements-map (make-sparse-keymap))
-  )
+;(if hm--html-noregion-text-elements-map
+;    ()
+;  (setq hm--html-noregion-text-elements-map (make-sparse-keymap))
+;  )
 
-(defvar hm--html-region-text-elements-map nil
-  "Region sub keymap for inserting text elements.")
+;(defvar hm--html-region-text-elements-map nil
+;  "Region sub keymap for inserting text elements.")
 
-(if hm--html-region-text-elements-map
-    ()
-  (setq hm--html-region-text-elements-map (make-sparse-keymap))
-  )
+;(if hm--html-region-text-elements-map
+;    ()
+;  (setq hm--html-region-text-elements-map (make-sparse-keymap))
+;  )
 
 (defvar hm--html-noregion-forms-map nil
   "Noregion sub keymap for inserting forms.")
@@ -397,6 +355,36 @@
 (if hm--html-noregion-forms-map
     ()
   (setq hm--html-noregion-forms-map (make-sparse-keymap))
+
+  (define-key hm--html-noregion-forms-map "f" 'hm--html-add-form)
+  (define-key hm--html-noregion-forms-map "a" 'hm--html-form-add-input-audio)
+  (define-key hm--html-noregion-forms-map
+    "c" 'hm--html-form-add-input-checkbox)
+  (define-key hm--html-noregion-forms-map
+    "d" 'hm--html-form-add-input-date)
+  (define-key hm--html-noregion-forms-map
+    "\C-f" 'hm--html-form-add-input-float)
+  (define-key hm--html-noregion-forms-map "i" 'hm--html-form-add-input-image)
+  (define-key hm--html-noregion-forms-map
+    "\C-i" 'hm--html-form-add-input-integer)
+  (define-key hm--html-noregion-forms-map
+    "\M-i" 'hm--html-form-add-input-isindex)
+  (define-key hm--html-noregion-forms-map
+    "p" 'hm--html-form-add-input-password)
+  (define-key hm--html-noregion-forms-map "r" 'hm--html-form-add-input-radio)
+  (define-key hm--html-noregion-forms-map
+    "\C-r" 'hm--html-form-add-input-reset)
+  (define-key hm--html-noregion-forms-map
+    "\C-s" 'hm--html-form-add-input-scribble)
+  (define-key hm--html-noregion-forms-map "s" 'hm--html-form-add-input-submit)
+  (define-key hm--html-noregion-forms-map "t" 'hm--html-form-add-input-text)
+  (define-key hm--html-noregion-forms-map "u" 'hm--html-form-add-input-url)
+  (define-key hm--html-noregion-forms-map "o" 'hm--html-form-add-select-option)
+  (define-key hm--html-noregion-forms-map
+    "m" 'hm--html-form-add-select-option-menu)
+  (define-key hm--html-noregion-forms-map
+    "l" 'hm--html-form-add-select-scrolled-list)
+  (define-key hm--html-noregion-forms-map "\C-t" 'hm--html-form-add-textarea)
   )
 
 (defvar hm--html-region-forms-map nil
@@ -405,25 +393,21 @@
 (if hm--html-region-forms-map
     ()
   (setq hm--html-region-forms-map (make-sparse-keymap))
+
+  (define-key hm--html-region-forms-map "f" 'hm--html-add-form-to-region)
   )
 
 (defvar hm--html-region-sub-map-1 nil
-  "Region sub keymap for the html-mode.")
+  "Region sub keymap for the `hm--html-mode'.")
 
 (if hm--html-region-sub-map-1
     ()
   (setq hm--html-region-sub-map-1 (make-sparse-keymap))
-;  (define-key hm--html-region-sub-map-1 "\C-e" hm--html-region-entity-map)
-;  (define-key hm--html-region-sub-map-1 "\C-l" hm--html-region-logical-map)
-;  (define-key hm--html-region-sub-map-1 "\C-p" hm--html-region-physical-map)
-;  (define-key hm--html-region-sub-map-1 "\C-h" hm--html-region-header-map)
   (define-key hm--html-region-sub-map-1 "\C-o" hm--html-region-forms-map)
-;  (define-key hm--html-region-sub-map-1 "\C-l" hm--html-region-list-map)
   (define-key hm--html-region-sub-map-1 "\C-a" hm--html-region-anchor-map)
-  (define-key hm--html-region-sub-map-1 "\C-i" hm--html-region-graphics-map)
-  (define-key hm--html-region-sub-map-1 
-    "\C-t" hm--html-region-text-elements-map)
-;  (define-key hm--html-region-sub-map-1 "\C-b" hm--html-region-head-map)
+  (define-key hm--html-region-sub-map-1 "\C-i" hm--html-region-include-map)
+;  (define-key hm--html-region-sub-map-1 
+;    "\C-t" hm--html-region-text-elements-map)
   (define-key hm--html-region-sub-map-1 "\C-f" hm--html-region-frame-map)
   (define-key hm--html-region-sub-map-1 "\C-s" hm--html-region-structure-map)
   (define-key hm--html-region-sub-map-1 
@@ -433,28 +417,18 @@
   )
 
 (defvar hm--html-noregion-sub-map-1 nil
-  "Noregion sub keymap for the html-mode.")
+  "Noregion sub keymap for the `hm--html-mode'.")
 
 (if hm--html-noregion-sub-map-1
     ()
   (setq hm--html-noregion-sub-map-1 (make-sparse-keymap))
   
-
-;  (define-key hm--html-noregion-sub-map-1 "\C-e" hm--html-noregion-entity-map)
-;  (define-key hm--html-noregion-sub-map-1 
-;    "\C-l" hm--html-noregion-logical-map)
-;  (define-key hm--html-noregion-sub-map-1 
-;    "\C-p" hm--html-noregion-physical-map)
-;  (define-key hm--html-noregion-sub-map-1 
-;	[(control h)] hm--html-noregion-header-map)
   (define-key hm--html-noregion-sub-map-1 "\C-o" hm--html-noregion-forms-map)
-;  (define-key hm--html-noregion-sub-map-1 "\C-l" hm--html-noregion-list-map)
   (define-key hm--html-noregion-sub-map-1 "\C-a" hm--html-noregion-anchor-map)
   (define-key hm--html-noregion-sub-map-1 
-    [(control i)] hm--html-noregion-graphics-map)
-  (define-key hm--html-noregion-sub-map-1 
-    "\C-t" hm--html-noregion-text-elements-map)
-;  (define-key hm--html-noregion-sub-map-1 "\C-b" hm--html-noregion-head-map)
+    [(control i)] hm--html-noregion-include-map)
+;  (define-key hm--html-noregion-sub-map-1 
+;    "\C-t" hm--html-noregion-text-elements-map)
   (define-key hm--html-noregion-sub-map-1 "\C-f" hm--html-noregion-frame-map)
   (define-key hm--html-noregion-sub-map-1 
     "\C-s" hm--html-noregion-structure-map)
@@ -465,7 +439,7 @@
   )
 
 (defvar hm--html-region-sub-map nil
-  "Region sub keymap for the html-mode.")
+  "Region sub keymap for the `hm--html-mode'.")
 
 (if hm--html-region-sub-map
     ()
@@ -478,7 +452,8 @@
   (if (adapt-emacs19p)
       (map-keymap '(lambda (key-description-list binding)
 		     (define-key hm--html-region-sub-map
-		       (single-key-description key-description-list) binding))
+		       (vector key-description-list) binding))
+;		       (single-key-description key-description-list) binding))
 		  hm--html-region-sub-map-1)
     (map-keymap '(lambda (key-description-list binding)
 		   (define-key hm--html-region-sub-map
@@ -488,7 +463,7 @@
   )
 
 (defvar hm--html-noregion-sub-map nil
-  "Noregion keymap for the html-mode.")
+  "Noregion keymap for the `hm--html-mode'.")
 
 (if hm--html-noregion-sub-map
     ()
@@ -500,9 +475,10 @@
 
   (if (adapt-emacs19p)
       (map-keymap '(lambda (key-description-list binding)
-		     (define-key hm--html-region-sub-map
-		       (single-key-description key-description-list) binding))
-		  hm--html-region-sub-map-1)
+		     (define-key hm--html-noregion-sub-map
+		       (vector key-description-list) binding))
+;		       (single-key-description key-description-list) binding))
+		  hm--html-noregion-sub-map-1)
     (map-keymap '(lambda (key-description-list binding)
 		   (define-key hm--html-noregion-sub-map
 		     key-description-list binding))
@@ -511,15 +487,28 @@
   )
 
 (defvar hm--html-mode-map nil
-  "Normal and noregion keymap for the html-mode.")
+  "Normal and noregion keymap for the `hm--html-mode'.")
 
 (if hm--html-mode-map
     ()
   (setq hm--html-mode-map (make-sparse-keymap))
-  (define-key hm--html-mode-map "\C-c" hm--html-noregion-sub-map)
+  (define-key hm--html-mode-map 
+    hm--html-mode-prefix-key hm--html-noregion-sub-map)
   (if (adapt-xemacsp)
-      (define-key hm--html-mode-map '(button3) 'hm--popup-html-menu)
-    (define-key hm--html-mode-map [mouse-3] 'hm--popup-html-menu))
+      (progn
+	(define-key hm--html-mode-map '(button3) 'hm--html-popup-menu)
+	(define-key hm--html-mode-map 
+	  [(meta control button1)] 'idd-mouse-drag-and-drop))
+;    (define-key hm--html-mode-map [down-mouse-3] 'hm--html-popup-menu)
+    (if hm--html-expert
+	(define-key hm--html-mode-map
+	  hm--html-emacs19-popup-noregion-menu-button
+	  hm--html-menu-noregion-expert-map)
+      (define-key hm--html-mode-map
+	  hm--html-emacs19-popup-noregion-menu-button
+	  hm--html-menu-noregion-novice-map))
+    (define-key hm--html-mode-map
+      [(meta control mouse-1)] 'idd-mouse-drag-and-drop))
   (if hm--html-bind-latin-1-char-entities
       (progn
 	(define-key hm--html-mode-map [adiaeresis] 'hm--html_ae)
@@ -580,122 +569,171 @@
 	))
   (define-key hm--html-mode-map "<" 'hm--html-smart-less-than)
   (define-key hm--html-mode-map ">" 'hm--html-smart-greater-than)
-  (define-key hm--html-mode-map "&" 'html-ampersand)
+  (define-key hm--html-mode-map "&" 'hm--html-smart-ampersand)
   )
 
 (defvar hm--html-region-mode-map nil
-  "Region keymap for the html-mode.")
+  "Region keymap for the `hm--html-mode'.")
 
 (if hm--html-region-mode-map
     ()
   (setq hm--html-region-mode-map (make-sparse-keymap))
-  (define-key hm--html-region-mode-map "\C-c" hm--html-region-sub-map)
+  (define-key hm--html-region-mode-map 
+    hm--html-mode-prefix-key hm--html-region-sub-map)
   (if (adapt-xemacsp)
-      (define-key hm--html-region-mode-map 
-	'(button3) 'hm--popup-html-menu-region)
-    (define-key hm--html-region-mode-map 
-	[mouse-3] 'hm--popup-html-menu-region))
-  ;; It maybe a better idea to set the following to undefine in this list...
-  (if hm--html-bind-latin-1-char-entities
       (progn
-	(define-key hm--html-region-mode-map [adiaeresis] 'hm--html_ae)
-	(define-key hm--html-region-mode-map [odiaeresis] 'hm--html_oe) 
-	(define-key hm--html-region-mode-map [udiaeresis] 'hm--html_ue)
-	(define-key hm--html-region-mode-map [aring]      'hm--html_aa)
-	(define-key hm--html-region-mode-map [Adiaeresis] 'hm--html_Ae) 
-	(define-key hm--html-region-mode-map [Odiaeresis] 'hm--html_Oe) 
-	(define-key hm--html-region-mode-map [Udiaeresis] 'hm--html_Ue)
- 	(define-key hm--html-region-mode-map [Aring]      'hm--html_Aa)
 	(define-key hm--html-region-mode-map 
-	  [ediaeresis] 'hm--html_ediaeresis) 
+	  '(button3) 'hm--html-popup-menu-region)
 	(define-key hm--html-region-mode-map 
-	  [Ediaeresis] 'hm--html_Ediaeresis) 
-	(define-key hm--html-region-mode-map 
-	  [idiaeresis] 'hm--html_idiaeresis) 
-	(define-key hm--html-region-mode-map 
-	  [Idiaeresis] 'hm--html_Idiaeresis) 
-	(define-key hm--html-region-mode-map [ssharp] 'hm--html_sz) 
-	(define-key hm--html-region-mode-map [aacute] 'hm--html_aacute) 
-	(define-key hm--html-region-mode-map [eacute] 'hm--html_eacute) 
-	(define-key hm--html-region-mode-map [iacute] 'hm--html_iacute) 
-	(define-key hm--html-region-mode-map [oacute] 'hm--html_oacute) 
-	(define-key hm--html-region-mode-map [uacute] 'hm--html_uacute) 
-	(define-key hm--html-region-mode-map [Aacute] 'hm--html_Aacute) 
-	(define-key hm--html-region-mode-map [Eacute] 'hm--html_Eacute) 
-	(define-key hm--html-region-mode-map [Iacute] 'hm--html_Iacute) 
-	(define-key hm--html-region-mode-map [Oacute] 'hm--html_Oacute) 
-	(define-key hm--html-region-mode-map [Uacute] 'hm--html_Uacute) 
-	(define-key hm--html-region-mode-map [agrave] 'hm--html_agrave) 
-	(define-key hm--html-region-mode-map [egrave] 'hm--html_egrave) 
-	(define-key hm--html-region-mode-map [igrave] 'hm--html_igrave) 
-	(define-key hm--html-region-mode-map [ograve] 'hm--html_ograve) 
-	(define-key hm--html-region-mode-map [ugrave] 'hm--html_ugrave) 
-	(define-key hm--html-region-mode-map [Agrave] 'hm--html_Agrave) 
-	(define-key hm--html-region-mode-map [Egrave] 'hm--html_Egrave) 
-	(define-key hm--html-region-mode-map [Igrave] 'hm--html_Igrave) 
-	(define-key hm--html-region-mode-map [Ograve] 'hm--html_Ograve) 
-	(define-key hm--html-region-mode-map [Ugrave] 'hm--html_Ugrave) 
-	(define-key hm--html-region-mode-map [ccedilla] 'hm--html_ccedilla) 
-	(define-key hm--html-region-mode-map [Ccedilla] 'hm--html_Ccedilla) 
-	(define-key hm--html-region-mode-map 
-	  [acircumflex] 'hm--html_acircumflex) 
-	(define-key hm--html-region-mode-map 
-	  [ecircumflex] 'hm--html_ecircumflex) 
-	(define-key hm--html-region-mode-map 
-	  [icircumflex] 'hm--html_icircumflex) 
-	(define-key hm--html-region-mode-map 
-	  [ocircumflex] 'hm--html_ocircumflex) 
-	(define-key hm--html-region-mode-map 
-	  [ucircumflex] 'hm--html_ucircumflex) 
-	(define-key hm--html-region-mode-map 
-	  [Acircumflex] 'hm--html_Acircumflex) 
-	(define-key hm--html-region-mode-map 
-	  [Ecircumflex] 'hm--html_Ecircumflex) 
-	(define-key hm--html-region-mode-map 
-	  [Icircumflex] 'hm--html_Icircumflex) 
-	(define-key hm--html-region-mode-map 
-	  [Ocircumflex] 'hm--html_Ocircumflex) 
-	(define-key hm--html-region-mode-map 
-	  [Ucircumflex] 'hm--html_Ucircumflex)
-	(define-key hm--html-region-mode-map [atilde] 'hm--html_atilde) 
-	(define-key hm--html-region-mode-map [otilde] 'hm--html_otilde) 
-	(define-key hm--html-region-mode-map [ntilde] 'hm--html_ntilde) 
-	(define-key hm--html-region-mode-map [Atilde] 'hm--html_Atilde) 
-	(define-key hm--html-region-mode-map [Otilde] 'hm--html_Otilde) 
-	(define-key hm--html-region-mode-map [Ntilde] 'hm--html_Ntilde) 
-	(define-key hm--html-region-mode-map [eth] 'hm--html_eth) 
-	(define-key hm--html-region-mode-map [ETH] 'hm--html_Eth) 
-	(define-key hm--html-region-mode-map [thorn] 'hm--html_thorn) 
-	(define-key hm--html-region-mode-map [THORN] 'hm--html_Thorn) 
-	))
-  (define-key hm--html-region-mode-map "<" 'html-less-than)
-  (define-key hm--html-region-mode-map ">" 'html-greater-than)
-  (define-key hm--html-region-mode-map "&" 'html-ampersand)
+	  [(meta control button1)] 'idd-mouse-drag-and-drop))
+;    (define-key hm--html-region-mode-map
+;      [down-mouse-3] 'hm--html-popup-menu-region)
+    (if hm--html-expert
+	(define-key hm--html-region-mode-map
+	  hm--html-emacs19-popup-region-menu-button
+	  hm--html-menu-region-expert-map)
+      (define-key hm--html-region-mode-map
+	hm--html-emacs19-popup-region-menu-button
+	hm--html-menu-region-novice-map))
+    (define-key hm--html-region-mode-map
+      [(meta control mouse-1)] 'idd-mouse-drag-and-drop))
+  ;; It maybe a better idea to set the following to undefine in this list...
+;  (if hm--html-bind-latin-1-char-entities
+;      (progn
+;	(define-key hm--html-region-mode-map [adiaeresis] 'hm--html_ae)
+;	(define-key hm--html-region-mode-map [odiaeresis] 'hm--html_oe) 
+;	(define-key hm--html-region-mode-map [udiaeresis] 'hm--html_ue)
+;	(define-key hm--html-region-mode-map [aring]      'hm--html_aa)
+;	(define-key hm--html-region-mode-map [Adiaeresis] 'hm--html_Ae) 
+;	(define-key hm--html-region-mode-map [Odiaeresis] 'hm--html_Oe) 
+;	(define-key hm--html-region-mode-map [Udiaeresis] 'hm--html_Ue)
+; 	(define-key hm--html-region-mode-map [Aring]      'hm--html_Aa)
+;	(define-key hm--html-region-mode-map 
+;	  [ediaeresis] 'hm--html_ediaeresis) 
+;	(define-key hm--html-region-mode-map 
+;	  [Ediaeresis] 'hm--html_Ediaeresis) 
+;	(define-key hm--html-region-mode-map 
+;	  [idiaeresis] 'hm--html_idiaeresis) 
+;	(define-key hm--html-region-mode-map 
+;	  [Idiaeresis] 'hm--html_Idiaeresis) 
+;	(define-key hm--html-region-mode-map [ssharp] 'hm--html_sz) 
+;	(define-key hm--html-region-mode-map [aacute] 'hm--html_aacute) 
+;	(define-key hm--html-region-mode-map [eacute] 'hm--html_eacute) 
+;	(define-key hm--html-region-mode-map [iacute] 'hm--html_iacute) 
+;	(define-key hm--html-region-mode-map [oacute] 'hm--html_oacute) 
+;	(define-key hm--html-region-mode-map [uacute] 'hm--html_uacute) 
+;	(define-key hm--html-region-mode-map [Aacute] 'hm--html_Aacute) 
+;	(define-key hm--html-region-mode-map [Eacute] 'hm--html_Eacute) 
+;	(define-key hm--html-region-mode-map [Iacute] 'hm--html_Iacute) 
+;	(define-key hm--html-region-mode-map [Oacute] 'hm--html_Oacute) 
+;	(define-key hm--html-region-mode-map [Uacute] 'hm--html_Uacute) 
+;	(define-key hm--html-region-mode-map [agrave] 'hm--html_agrave) 
+;	(define-key hm--html-region-mode-map [egrave] 'hm--html_egrave) 
+;	(define-key hm--html-region-mode-map [igrave] 'hm--html_igrave) 
+;	(define-key hm--html-region-mode-map [ograve] 'hm--html_ograve) 
+;	(define-key hm--html-region-mode-map [ugrave] 'hm--html_ugrave) 
+;	(define-key hm--html-region-mode-map [Agrave] 'hm--html_Agrave) 
+;	(define-key hm--html-region-mode-map [Egrave] 'hm--html_Egrave) 
+;	(define-key hm--html-region-mode-map [Igrave] 'hm--html_Igrave) 
+;	(define-key hm--html-region-mode-map [Ograve] 'hm--html_Ograve) 
+;	(define-key hm--html-region-mode-map [Ugrave] 'hm--html_Ugrave) 
+;	(define-key hm--html-region-mode-map [ccedilla] 'hm--html_ccedilla) 
+;	(define-key hm--html-region-mode-map [Ccedilla] 'hm--html_Ccedilla) 
+;	(define-key hm--html-region-mode-map 
+;	  [acircumflex] 'hm--html_acircumflex) 
+;	(define-key hm--html-region-mode-map 
+;	  [ecircumflex] 'hm--html_ecircumflex) 
+;	(define-key hm--html-region-mode-map 
+;	  [icircumflex] 'hm--html_icircumflex) 
+;	(define-key hm--html-region-mode-map 
+;	  [ocircumflex] 'hm--html_ocircumflex) 
+;	(define-key hm--html-region-mode-map 
+;	  [ucircumflex] 'hm--html_ucircumflex) 
+;	(define-key hm--html-region-mode-map 
+;	  [Acircumflex] 'hm--html_Acircumflex) 
+;	(define-key hm--html-region-mode-map 
+;	  [Ecircumflex] 'hm--html_Ecircumflex) 
+;	(define-key hm--html-region-mode-map 
+;	  [Icircumflex] 'hm--html_Icircumflex) 
+;	(define-key hm--html-region-mode-map 
+;	  [Ocircumflex] 'hm--html_Ocircumflex) 
+;	(define-key hm--html-region-mode-map 
+;	  [Ucircumflex] 'hm--html_Ucircumflex)
+;	(define-key hm--html-region-mode-map [atilde] 'hm--html_atilde) 
+;	(define-key hm--html-region-mode-map [otilde] 'hm--html_otilde) 
+;	(define-key hm--html-region-mode-map [ntilde] 'hm--html_ntilde) 
+;	(define-key hm--html-region-mode-map [Atilde] 'hm--html_Atilde) 
+;	(define-key hm--html-region-mode-map [Otilde] 'hm--html_Otilde) 
+;	(define-key hm--html-region-mode-map [Ntilde] 'hm--html_Ntilde) 
+;	(define-key hm--html-region-mode-map [eth] 'hm--html_eth) 
+;	(define-key hm--html-region-mode-map [ETH] 'hm--html_Eth) 
+;	(define-key hm--html-region-mode-map [thorn] 'hm--html_thorn) 
+;	(define-key hm--html-region-mode-map [THORN] 'hm--html_Thorn) 
+;	))
+  (define-key hm--html-region-mode-map "<" 'hm--html-smart-less-than)
+  (define-key hm--html-region-mode-map ">" 'hm--html-smart-greater-than)
+  (define-key hm--html-region-mode-map "&" 'hm--html-smart-ampersand)
   )
 
 
-;;; -----
+;;; For the hm--html minor modes
+(defvar hm--html-minor-mode-map nil
+  "Normal and noregion keymap for the `hm--html-minor-mode'.")
 
-;(use-local-map hm--html-mode-map)
+(if hm--html-minor-mode-map
+    ()
+  (setq hm--html-minor-mode-map (make-sparse-keymap))
+  (define-key hm--html-minor-mode-map 
+    hm--html-minor-mode-prefix-key hm--html-noregion-sub-map)
+  (if (adapt-xemacsp)
+      (progn
+	(define-key hm--html-minor-mode-map 
+	  '(button3) 'hm--html-popup-minor-html-menu)
+	(define-key hm--html-minor-mode-map 
+	  [(meta control button1)] 'idd-mouse-drag-and-drop))
+    (if hm--html-expert
+	(define-key hm--html-minor-mode-map 
+	  hm--html-emacs19-popup-noregion-menu-button
+	  hm--html-menu-noregion-expert-map)
+      (define-key hm--html-minor-mode-map 
+	  hm--html-emacs19-popup-noregion-menu-button
+	  hm--html-menu-noregion-novice-map))
+    (define-key hm--html-minor-mode-map
+      [(meta control mouse-1)] 'idd-mouse-drag-and-drop))
+  (define-key hm--html-minor-mode-map "<" 'hm--html-smart-less-than)
+  (define-key hm--html-minor-mode-map ">" 'hm--html-smart-greater-than)
+  (define-key hm--html-minor-mode-map "&" 'hm--html-smart-ampersand)
+  )
 
-(or (assq 'hm--html-region-mode minor-mode-alist)
-    (setq minor-mode-alist
-	  (purecopy
-	   (append minor-mode-alist
-		   '((hm--html-region-mode " Region"))))))
+
+(defvar hm--html-minor-region-mode-map nil
+  "Region keymap for the `hm--html-minor-mode'.")
+
+(if hm--html-minor-region-mode-map
+    ()
+  (setq hm--html-minor-region-mode-map (make-sparse-keymap))
+  (define-key hm--html-minor-region-mode-map 
+    hm--html-minor-mode-prefix-key hm--html-region-sub-map)
+  (if (adapt-xemacsp)
+      (progn
+	(define-key hm--html-minor-region-mode-map 
+	  '(button3) 'hm--html-popup-menu-region)
+	(define-key hm--html-minor-region-mode-map 
+	  [(meta control button1)] 'idd-mouse-drag-and-drop))
+    (if hm--html-expert
+	(define-key hm--html-minor-region-mode-map
+	  hm--html-emacs19-popup-region-menu-button 
+	  hm--html-menu-region-expert-map)
+      (define-key hm--html-minor-region-mode-map
+	  hm--html-emacs19-popup-region-menu-button
+	  hm--html-menu-region-novice-map))
+    (define-key hm--html-minor-region-mode-map
+      [(meta control mouse-1)] 'idd-mouse-drag-and-drop))
+  (define-key hm--html-minor-region-mode-map "<" 'hm--html-smart-less-than)
+  (define-key hm--html-minor-region-mode-map ">" 'hm--html-smart-greater-than)
+  (define-key hm--html-minor-region-mode-map "&" 'hm--html-smart-ampersand)
+  )
 
 
-
-(defun html-region-mode (on)
-  "Turns the minor mode html-region-mode on or off.
-The function turns the html-region-mode on, if ON is t and off otherwise."
-  (if (string= mode-name "HTML")
-      (if on
-	  ;; html-region-mode on
-	  (progn
-	    (setq hm--html-region-mode t)
-	    (use-local-map hm--html-region-mode-map))
-	;; html-region-mode off
-	(setq hm--html-region-mode nil)
-	(use-local-map hm--html-mode-map))))
-
+;;; Announce the feature hm--html-keys
+(provide 'hm--html-keys)

@@ -45,7 +45,7 @@ maybe_run_dbox_text_callback (LWLIB_ID id)
   widget_value *wv;
   int got_some;
   wv = xmalloc_widget_value ();
-  wv->name = "value";
+  wv->name = (char *) "value";
   got_some = lw_get_some_values (id, wv);
   if (got_some)
     {
@@ -145,7 +145,7 @@ dbox_descriptor_to_widget_value (Lisp_Object desc)
 
   wv_closure = make_opaque_ptr (kids);
   record_unwind_protect (widget_value_unwind, wv_closure);
-  prev->name = "message";
+  prev->name = (char *) "message";
   prev->value = xstrdup (name);
   prev->enabled = 1;
 

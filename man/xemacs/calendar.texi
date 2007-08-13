@@ -1085,7 +1085,7 @@ elapsed years (@pxref{Sexp Diary Entries}).@refill
 
 @kindex i b (Calendar mode)
 @findex insert-block-diary-entry
-  You can make a diary entry entry for a block of dates by setting the mark
+  You can make a diary entry for a block of dates by setting the mark
 at the date at one end of the block, moving point to the date at the other
 end of the block, and using the @kbd{i b} command.  This command
 causes the end of your diary file to be displayed in another window and the

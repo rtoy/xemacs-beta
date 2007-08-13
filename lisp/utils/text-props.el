@@ -90,7 +90,7 @@
 ;;; shell-font.el and font-lock.el could put-text-property to attach fonts to
 ;;; the buffer.  However, what these packages are interested in is the
 ;;; efficient extent partitioning behavior which this code exhibits, not the
-;;; duplicability aspect of it.  In fact, either of these packages could be be
+;;; duplicability aspect of it.  In fact, either of these packages could be
 ;;; implemented by creating a one-character non-expandable extent for each
 ;;; character in the buffer, except that that would be extremely wasteful of
 ;;; memory.  (Redisplay performance would be fine, however.)

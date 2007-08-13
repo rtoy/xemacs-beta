@@ -5,74 +5,70 @@
 -->
 <!-- Character entity set. Typical invocation:
      <!ENTITY % ISOlat1 PUBLIC
-       "ISO 8879:1986//ENTITIES Added Latin 1//EN">
+       "-//IETF//ENTITIES Added Latin 1 for HTML//EN">
      %ISOlat1;
 -->
-<!-- Added (Ben Wing) 4-4-96: the most common entities were omitted ... -->
-<!ENTITY quot   SDATA "[quot  ]" -- quotation mark -->
-<!ENTITY amp    SDATA "[amp   ]" -- ampersand -->
-<!ENTITY lt     SDATA "[lt    ]" -- less than -->
-<!ENTITY gt     SDATA "[gt    ]" -- greater than -->
-<!-- end added (Ben Wing) 4-4-96 -->
-<!ENTITY aacute SDATA "[aacute]"--=small a, acute accent-->
-<!ENTITY Aacute SDATA "[Aacute]"--=capital A, acute accent-->
-<!ENTITY acirc  SDATA "[acirc ]"--=small a, circumflex accent-->
-<!ENTITY Acirc  SDATA "[Acirc ]"--=capital A, circumflex accent-->
-<!ENTITY agrave SDATA "[agrave]"--=small a, grave accent-->
-<!ENTITY Agrave SDATA "[Agrave]"--=capital A, grave accent-->
-<!ENTITY aring  SDATA "[aring ]"--=small a, ring-->
-<!ENTITY Aring  SDATA "[Aring ]"--=capital A, ring-->
-<!ENTITY atilde SDATA "[atilde]"--=small a, tilde-->
-<!ENTITY Atilde SDATA "[Atilde]"--=capital A, tilde-->
-<!ENTITY auml   SDATA "[auml  ]"--=small a, dieresis or umlaut mark-->
-<!ENTITY Auml   SDATA "[Auml  ]"--=capital A, dieresis or umlaut mark-->
-<!ENTITY aelig  SDATA "[aelig ]"--=small ae diphthong (ligature)-->
-<!ENTITY AElig  SDATA "[AElig ]"--=capital AE diphthong (ligature)-->
-<!ENTITY ccedil SDATA "[ccedil]"--=small c, cedilla-->
-<!ENTITY Ccedil SDATA "[Ccedil]"--=capital C, cedilla-->
-<!ENTITY eth    SDATA "[eth   ]"--=small eth, Icelandic-->
-<!ENTITY ETH    SDATA "[ETH   ]"--=capital Eth, Icelandic-->
-<!ENTITY eacute SDATA "[eacute]"--=small e, acute accent-->
-<!ENTITY Eacute SDATA "[Eacute]"--=capital E, acute accent-->
-<!ENTITY ecirc  SDATA "[ecirc ]"--=small e, circumflex accent-->
-<!ENTITY Ecirc  SDATA "[Ecirc ]"--=capital E, circumflex accent-->
-<!ENTITY egrave SDATA "[egrave]"--=small e, grave accent-->
-<!ENTITY Egrave SDATA "[Egrave]"--=capital E, grave accent-->
-<!ENTITY euml   SDATA "[euml  ]"--=small e, dieresis or umlaut mark-->
-<!ENTITY Euml   SDATA "[Euml  ]"--=capital E, dieresis or umlaut mark-->
-<!ENTITY iacute SDATA "[iacute]"--=small i, acute accent-->
-<!ENTITY Iacute SDATA "[Iacute]"--=capital I, acute accent-->
-<!ENTITY icirc  SDATA "[icirc ]"--=small i, circumflex accent-->
-<!ENTITY Icirc  SDATA "[Icirc ]"--=capital I, circumflex accent-->
-<!ENTITY igrave SDATA "[igrave]"--=small i, grave accent-->
-<!ENTITY Igrave SDATA "[Igrave]"--=capital I, grave accent-->
-<!ENTITY iuml   SDATA "[iuml  ]"--=small i, dieresis or umlaut mark-->
-<!ENTITY Iuml   SDATA "[Iuml  ]"--=capital I, dieresis or umlaut mark-->
-<!ENTITY ntilde SDATA "[ntilde]"--=small n, tilde-->
-<!ENTITY Ntilde SDATA "[Ntilde]"--=capital N, tilde-->
-<!ENTITY oacute SDATA "[oacute]"--=small o, acute accent-->
-<!ENTITY Oacute SDATA "[Oacute]"--=capital O, acute accent-->
-<!ENTITY ocirc  SDATA "[ocirc ]"--=small o, circumflex accent-->
-<!ENTITY Ocirc  SDATA "[Ocirc ]"--=capital O, circumflex accent-->
-<!ENTITY ograve SDATA "[ograve]"--=small o, grave accent-->
-<!ENTITY Ograve SDATA "[Ograve]"--=capital O, grave accent-->
-<!ENTITY oslash SDATA "[oslash]"--=small o, slash-->
-<!ENTITY Oslash SDATA "[Oslash]"--=capital O, slash-->
-<!ENTITY otilde SDATA "[otilde]"--=small o, tilde-->
-<!ENTITY Otilde SDATA "[Otilde]"--=capital O, tilde-->
-<!ENTITY ouml   SDATA "[ouml  ]"--=small o, dieresis or umlaut mark-->
-<!ENTITY Ouml   SDATA "[Ouml  ]"--=capital O, dieresis or umlaut mark-->
-<!ENTITY szlig  SDATA "[szlig ]"--=small sharp s, German (sz ligature)-->
-<!ENTITY thorn  SDATA "[thorn ]"--=small thorn, Icelandic-->
-<!ENTITY THORN  SDATA "[THORN ]"--=capital THORN, Icelandic-->
-<!ENTITY uacute SDATA "[uacute]"--=small u, acute accent-->
-<!ENTITY Uacute SDATA "[Uacute]"--=capital U, acute accent-->
-<!ENTITY ucirc  SDATA "[ucirc ]"--=small u, circumflex accent-->
-<!ENTITY Ucirc  SDATA "[Ucirc ]"--=capital U, circumflex accent-->
-<!ENTITY ugrave SDATA "[ugrave]"--=small u, grave accent-->
-<!ENTITY Ugrave SDATA "[Ugrave]"--=capital U, grave accent-->
-<!ENTITY uuml   SDATA "[uuml  ]"--=small u, dieresis or umlaut mark-->
-<!ENTITY Uuml   SDATA "[Uuml  ]"--=capital U, dieresis or umlaut mark-->
-<!ENTITY yacute SDATA "[yacute]"--=small y, acute accent-->
-<!ENTITY Yacute SDATA "[Yacute]"--=capital Y, acute accent-->
-<!ENTITY yuml   SDATA "[yuml  ]"--=small y, dieresis or umlaut mark-->
+<!--	Modified for use in HTML
+	$Id: ISOlat1.sgml,v 1.1.1.2 1996/12/18 03:43:02 steve Exp $ -->
+<!ENTITY AElig  CDATA "&#198;" -- capital AE diphthong (ligature) -->
+<!ENTITY Aacute CDATA "&#193;" -- capital A, acute accent -->
+<!ENTITY Acirc  CDATA "&#194;" -- capital A, circumflex accent -->
+<!ENTITY Agrave CDATA "&#192;" -- capital A, grave accent -->
+<!ENTITY Aring  CDATA "&#197;" -- capital A, ring -->
+<!ENTITY Atilde CDATA "&#195;" -- capital A, tilde -->
+<!ENTITY Auml   CDATA "&#196;" -- capital A, dieresis or umlaut mark -->
+<!ENTITY Ccedil CDATA "&#199;" -- capital C, cedilla -->
+<!ENTITY ETH    CDATA "&#208;" -- capital Eth, Icelandic -->
+<!ENTITY Eacute CDATA "&#201;" -- capital E, acute accent -->
+<!ENTITY Ecirc  CDATA "&#202;" -- capital E, circumflex accent -->
+<!ENTITY Egrave CDATA "&#200;" -- capital E, grave accent -->
+<!ENTITY Euml   CDATA "&#203;" -- capital E, dieresis or umlaut mark -->
+<!ENTITY Iacute CDATA "&#205;" -- capital I, acute accent -->
+<!ENTITY Icirc  CDATA "&#206;" -- capital I, circumflex accent -->
+<!ENTITY Igrave CDATA "&#204;" -- capital I, grave accent -->
+<!ENTITY Iuml   CDATA "&#207;" -- capital I, dieresis or umlaut mark -->
+<!ENTITY Ntilde CDATA "&#209;" -- capital N, tilde -->
+<!ENTITY Oacute CDATA "&#211;" -- capital O, acute accent -->
+<!ENTITY Ocirc  CDATA "&#212;" -- capital O, circumflex accent -->
+<!ENTITY Ograve CDATA "&#210;" -- capital O, grave accent -->
+<!ENTITY Oslash CDATA "&#216;" -- capital O, slash -->
+<!ENTITY Otilde CDATA "&#213;" -- capital O, tilde -->
+<!ENTITY Ouml   CDATA "&#214;" -- capital O, dieresis or umlaut mark -->
+<!ENTITY THORN  CDATA "&#222;" -- capital THORN, Icelandic -->
+<!ENTITY Uacute CDATA "&#218;" -- capital U, acute accent -->
+<!ENTITY Ucirc  CDATA "&#219;" -- capital U, circumflex accent -->
+<!ENTITY Ugrave CDATA "&#217;" -- capital U, grave accent -->
+<!ENTITY Uuml   CDATA "&#220;" -- capital U, dieresis or umlaut mark -->
+<!ENTITY Yacute CDATA "&#221;" -- capital Y, acute accent -->
+<!ENTITY aacute CDATA "&#225;" -- small a, acute accent -->
+<!ENTITY acirc  CDATA "&#226;" -- small a, circumflex accent -->
+<!ENTITY aelig  CDATA "&#230;" -- small ae diphthong (ligature) -->
+<!ENTITY agrave CDATA "&#224;" -- small a, grave accent -->
+<!ENTITY aring  CDATA "&#229;" -- small a, ring -->
+<!ENTITY atilde CDATA "&#227;" -- small a, tilde -->
+<!ENTITY auml   CDATA "&#228;" -- small a, dieresis or umlaut mark -->
+<!ENTITY ccedil CDATA "&#231;" -- small c, cedilla -->
+<!ENTITY eacute CDATA "&#233;" -- small e, acute accent -->
+<!ENTITY ecirc  CDATA "&#234;" -- small e, circumflex accent -->
+<!ENTITY egrave CDATA "&#232;" -- small e, grave accent -->
+<!ENTITY eth    CDATA "&#240;" -- small eth, Icelandic -->
+<!ENTITY euml   CDATA "&#235;" -- small e, dieresis or umlaut mark -->
+<!ENTITY iacute CDATA "&#237;" -- small i, acute accent -->
+<!ENTITY icirc  CDATA "&#238;" -- small i, circumflex accent -->
+<!ENTITY igrave CDATA "&#236;" -- small i, grave accent -->
+<!ENTITY iuml   CDATA "&#239;" -- small i, dieresis or umlaut mark -->
+<!ENTITY ntilde CDATA "&#241;" -- small n, tilde -->
+<!ENTITY oacute CDATA "&#243;" -- small o, acute accent -->
+<!ENTITY ocirc  CDATA "&#244;" -- small o, circumflex accent -->
+<!ENTITY ograve CDATA "&#242;" -- small o, grave accent -->
+<!ENTITY oslash CDATA "&#248;" -- small o, slash -->
+<!ENTITY otilde CDATA "&#245;" -- small o, tilde -->
+<!ENTITY ouml   CDATA "&#246;" -- small o, dieresis or umlaut mark -->
+<!ENTITY szlig  CDATA "&#223;" -- small sharp s, German (sz ligature) -->
+<!ENTITY thorn  CDATA "&#254;" -- small thorn, Icelandic -->
+<!ENTITY uacute CDATA "&#250;" -- small u, acute accent -->
+<!ENTITY ucirc  CDATA "&#251;" -- small u, circumflex accent -->
+<!ENTITY ugrave CDATA "&#249;" -- small u, grave accent -->
+<!ENTITY uuml   CDATA "&#252;" -- small u, dieresis or umlaut mark -->
+<!ENTITY yacute CDATA "&#253;" -- small y, acute accent -->
+<!ENTITY yuml   CDATA "&#255;" -- small y, dieresis or umlaut mark -->

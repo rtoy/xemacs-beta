@@ -1186,7 +1186,7 @@
 	    (progn (setq ptr (1+ ptr))
 		   (lsh (aref bytes ptr) 8))))
 	;; XEmacs: this code was here before.  FSF's first comparison
-	;; is (>= op byte-listN).  It appears the the rel-goto stuff
+	;; is (>= op byte-listN).  It appears that the rel-goto stuff
 	;; does not exist in FSF 19.30.  It doesn't exist in 19.28
 	;; either, so I'm going to assume that this is an improvement
 	;; on our part and leave it in. --ben

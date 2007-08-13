@@ -6,23 +6,24 @@
 ;; Adapted-By: ESR
 ;; Keywords: extensions
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
  
@@ -102,9 +103,9 @@ that's how we tell where the answer ends."
 	  (copy-to-buffer buf (point-min) (point-max))
 	  (delete-region (point-min) (point))
 	  (pop-to-buffer buf nil)
-	  (error (concat "Spurious communication from process "
-			 (process-name (tq-process tq))
-			 ", see buffer " (buffer-name buf) ".")))
+	  (error "Spurious communication from process %s, see buffer %s"
+		 (process-name (tq-process tq))
+		 (buffer-name buf)))
       (goto-char (point-min))
       (if (re-search-forward (tq-queue-head-regexp tq) nil t)
 	  (let ((answer (buffer-substring (point-min) (point))))

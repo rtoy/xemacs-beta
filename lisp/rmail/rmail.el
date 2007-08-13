@@ -208,7 +208,7 @@ that file, but does not copy any new mail into the file."
 		   (list (read-file-name "Run rmail on RMAIL file: "
 					 nil nil t))))
   (if (string-match "XEmacs" emacs-version)
-      (require 'rmail-lucid))
+      (require 'rmail-xemacs))
   (or rmail-last-file
       (setq rmail-last-file (expand-file-name "~/xmail")))
   (let* ((file-name (expand-file-name (or file-name-arg rmail-file-name)))

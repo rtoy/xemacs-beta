@@ -41,15 +41,23 @@ when praising XEmacs")
  	  (max-faces (length (face-list))))
       (with-output-to-temp-buffer "*Praise*"
 	(set-buffer "*Praise*")
+        (if (glyphp xemacs-logo)
+            (let ((p (point)))
+              (insert "\n")
+              (indent-to (startup-center-spaces xemacs-logo))
+              (set-extent-begin-glyph (make-extent (point) (point)) xemacs-logo)
+              (insert "\n\n")))
 	(while (> count 0)
 	  (progn
 	    (insert-face xemacs-praise-message
 			 (get-face (nth (random max-faces) (face-list))))
 	    (setq count (- count 1))))))
     (let ((sound-file
-	   (or (file-exists-p xemacs-praise-sound-file)
-	       (file-exists-p
-		(concat data-directory xemacs-praise-sound-file)))))
+	   (or (and (file-exists-p xemacs-praise-sound-file)
+		    xemacs-praise-sound-file)
+	       (and (file-exists-p
+		     (concat data-directory xemacs-praise-sound-file))
+		    (concat data-directory xemacs-praise-sound-file)))))
       (if (and (device-sound-enabled-p) sound-file)
 	  (progn
 	    (sit-for 0)

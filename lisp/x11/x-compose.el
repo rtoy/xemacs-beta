@@ -767,7 +767,7 @@ which it understands) are:
 		   (define-key binding 'help 'compose-help)))))
  compose-map nil)
 
-;; Make display display the accented letters
+;; Make redisplay display the accented letters
 (if (memq (default-value 'ctl-arrow) '(t nil))
     (setq-default ctl-arrow 'iso-8859/1))
 

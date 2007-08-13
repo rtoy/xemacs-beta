@@ -7,7 +7,7 @@ The message will be physically deleted from the current folder the next
 time the current folder is expunged.
 
 With a prefix argument COUNT, the current message and the next
-COUNT - 1 messages are deleted.  A negative argument means the
+COUNT - 1 messages are deleted.  A negative argument means
 the current message and the previous |COUNT| - 1 messages are
 deleted.
 
@@ -19,7 +19,7 @@ only marked messages are deleted, other messages are ignored." t nil)
 (autoload (quote vm-undelete-message) "vm-delete" "Remove the `deleted' attribute from the current message.
 
 With a prefix argument COUNT, the current message and the next
-COUNT - 1 messages are undeleted.  A negative argument means the
+COUNT - 1 messages are undeleted.  A negative argument means
 the current message and the previous |COUNT| - 1 messages are
 deleted.
 
@@ -100,6 +100,19 @@ KEEP-LIST and DISCARD-REGEXP are used to order and trim the headers
 to be forwarded.  See the docs for vm-reorder-message-headers
 to find out how KEEP-LIST and DISCARD-REGEXP are used." nil nil)
 
+(autoload (quote vm-rfc1521-encapsulate-messages) "vm-digest" "Encapsulate the messages in MESSAGE-LIST as per RFC 1521 (MIME).
+The resulting digest is inserted at point in the current buffer.
+MIME headers at point-max are added/updated.
+Point is not moved.
+
+MESSAGE-LIST should be a list of message structs (real or virtual).
+These are the messages that will be encapsulated.
+KEEP-LIST should be a list of regexps matching headers to keep.
+DISCARD-REGEXP should be a regexp that matches headers to be discarded.
+KEEP-LIST and DISCARD-REGEXP are used to order and trim the headers
+to be forwarded.  See the docs for vm-reorder-message-headers
+to find out how KEEP-LIST and DISCARD-REGEXP are used." nil nil)
+
 (autoload (quote vm-rfc1153-or-rfc934-burst-message) "vm-digest" "Burst messages from the digest message M.
 M should be a message struct for a real message.
 If RFC1153 is non-nil, assume the digest is of the form specified by
@@ -127,9 +140,11 @@ all marked messages will be burst." t nil)
 
 (autoload (quote vm-burst-rfc1153-digest) "vm-digest" "Burst an RFC 1153 style digest" t nil)
 
+(autoload (quote vm-burst-rfc1521-digest) "vm-digest" "Burst an RFC 1521 (MIME) style digest" t nil)
+
 (autoload (quote vm-guess-digest-type) "vm-digest" "Guess the digest type of the message M.
 M should be the message struct of a real message.
-Returns either \"rfc934\" or \"rfc1153\"." nil nil)
+Returns either \"rfc934\", \"rfc1153\", or  \"rfc1521\"." nil nil)
 
 (autoload (quote vm-easy-menu-define) "vm-easymenu" "Define a menu bar submenu in maps MAPS, according to MENU.
 The menu keymap is stored in symbol SYMBOL, both as its value
@@ -386,7 +401,7 @@ by vm-match-header." nil nil)
 This function works by examining the beginning of a folder.
 If optional arg FILE is present the type of FILE is returned instead.
 If optional second and third arg START and END are provided,
-vm-get-folder-type will examine the the text between those buffer
+vm-get-folder-type will examine the text between those buffer
 positions.  START and END default to 1 and (buffer-size) + 1.
 
 Returns
@@ -1472,6 +1487,8 @@ only marked messages will be put into the digest." t nil)
 
 (autoload (quote vm-send-rfc1153-digest) "vm-reply" "Like vm-send-digest but always sends an RFC 1153 digest." t nil)
 
+(autoload (quote vm-send-rfc1521-digest) "vm-reply" "Like vm-send-digest but always sends an RFC 1521 (MIME) digest." t nil)
+
 (autoload (quote vm-continue-composing-message) "vm-reply" "Find and select the most recently used mail composition buffer.
 If the selected buffer is already a Mail mode buffer then it is
 buried before beginning the search.  Non Mail mode buffers and
@@ -1502,6 +1519,8 @@ found, the current buffer remains selected." t nil)
 (autoload (quote vm-send-rfc934-digest-other-frame) "vm-reply" "Like vm-send-rfc934-digest, but run in a newly created frame." t nil)
 
 (autoload (quote vm-send-rfc1153-digest-other-frame) "vm-reply" "Like vm-send-rfc1153-digest, but run in a newly created frame." t nil)
+
+(autoload (quote vm-send-rfc1521-digest-other-frame) "vm-reply" "Like vm-send-rfc1521-digest, but run in a newly created frame." t nil)
 
 (autoload (quote vm-match-data) "vm-save" nil nil nil)
 

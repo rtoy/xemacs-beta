@@ -305,14 +305,12 @@ decode_hashtable_test_fun (Lisp_Object sym)
 
   CHECK_SYMBOL (sym);
 
-  if (EQ (sym, Qeq))
-    return HASHTABLE_EQ;
-  if (EQ (sym, Qequal))
-    return HASHTABLE_EQUAL;
-  if (EQ (sym, Qeql))
-    return HASHTABLE_EQL;
+  if (EQ (sym, Qeq))    return HASHTABLE_EQ;
+  if (EQ (sym, Qequal)) return HASHTABLE_EQUAL;
+  if (EQ (sym, Qeql))   return HASHTABLE_EQL;
+  
   signal_simple_error ("Invalid hashtable test fun", sym);
-  return 0; /* not reached */
+  return HASHTABLE_EQ; /* not reached */
 }
 
 DEFUN ("make-hashtable", Fmake_hashtable, Smake_hashtable, 1, 2, 0 /*
@@ -911,6 +909,6 @@ syms_of_elhash (void)
 void
 vars_of_elhash (void)
 {
-  /* This must not be staticpro'd */
+  /* This must NOT be staticpro'd */
   Vall_weak_hashtables = Qnil;
 }

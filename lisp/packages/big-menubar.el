@@ -122,6 +122,7 @@
 	 (not (and (= (point-min) 1) (= (point-max) (1+ (buffer-size)))))]
 	)
        ))
+    (assoc "Apps" default-menubar)
     (assoc "Options" default-menubar)
     '("Motion"
       ["Goto Mark"			exchange-point-and-mark	     (mark t)]
@@ -220,6 +221,7 @@
       :filter buffers-menu-filter
       ["List All Buffers" list-buffers t]
       "---")
+    (assoc "Tools" default-menubar)
     nil
     (assoc "Help" default-menubar)
     )))

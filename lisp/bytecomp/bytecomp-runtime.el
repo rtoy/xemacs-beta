@@ -144,12 +144,12 @@ The result of the body appears to the compiler as a quoted constant."
 
 ;;; The great RMS speaketh:
 ;;;
-;;; I nuked this because it's not a good idea for users to think of using it.
-;;; These options are a matter of installation preference, and have nothing to
-;;; with particular source files; it's a mistake to suggest to users
-;;; they should associate these with particular source files.
-;;; There is hardly any reason to change these parameters, anyway.
-;;; --rms.
+;;; I nuked this because it's not a good idea for users to think of
+;;; using it.  These options are a matter of installation preference,
+;;; and have nothing to do with particular source files; it's a
+;;; mistake to suggest to users that they should associate these with
+;;; particular source files.  There is hardly any reason to change
+;;; these parameters, anyway.  --rms.
 ;;;
 ;;; But I'll leave this stuff alone. --ben
 
@@ -157,7 +157,7 @@ The result of the body appears to the compiler as a quoted constant."
 (defmacro byte-compiler-options (&rest args)
   "Set some compilation-parameters for this file.  
 This will affect only the file in which it appears; this does nothing when
-evaluated, and when loaded from a .el file.
+evaluated, or when loaded from a .el file.
 
 Each argument to this macro must be a list of a key and a value.
 

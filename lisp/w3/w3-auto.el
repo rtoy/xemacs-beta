@@ -53,6 +53,10 @@
 (autoload 'widget-put "widget-edit")
 (autoload 'widget-forward "widget-edit")
 (autoload 'widget-backward "widget-edit")
+
+;; Preferences
+(autoload 'w3-preferences-edit "w3-prefs")
+
 (defvar widget-field-new nil)
 
 (provide 'w3-auto)

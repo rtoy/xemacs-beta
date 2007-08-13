@@ -1,12 +1,21 @@
-This README file describes the emacs lisp package hm--html-menus-4.16.
+This README file describes the emacs lisp package hm--html-menus-5.0.
 
-The package provides various popup and pulldown menus and functions
-for the html-mode from Marc Andreessen, and support for the w3-package
-from William M. Perry and the file html-view.el from Ron Tapia.
+The package provides functions and various popup and pulldown menus
+for a html mode called hm--html-mode, a mode for writing html pages.
 
-Look at the file NEWS, to see what is new in this release. 
+It has an interface to view the html documents in a W3 browser with
+Netscape, the w3-package from William M. Perry and Mosaic with the
+file html-view.el from Ron Tapia.  It provides also a drag and drop
+interface, which makes it very easy to insert links or images, by just
+clicking on them.
 
-You should (but need not) also get the w3 package from:
+Look at the file NEWS, to see what is new in this release. One of the
+main changes is, that it is no longer based on the html-mode.el
+package from Marc Andreessen. Therefore the name of the mode has
+changed to hm--html-mode and also the way to install the package is a
+little bit different. So please read the installtion hints CAREFULLY!
+
+You should (but don't need) also get the w3 package from:
 
  cs.indiana.edu:/pub/elisp/w3/w3.tar.z
 
@@ -14,9 +23,9 @@ which provides an world wide web browser mode for the xemacs, emacs
 and epoch.
 
 
-This package is tested with the xemacs 19.13 on Suns with
-SunOS 4.1.3 and on PC's with linux. But it should work also on other
-(possibly only UNIX ?) platforms.
+This package is tested with the xemacs 19.14 and the emacs 19.30 on
+Suns with SunOS 4.1.3 and 5.5 and on PC's with linux. But it should
+work also on other (possibly only UNIX ?) platforms.
 
 Read the file README-EMACS-19, if you want to use this package with 
 GNU Emacs 19.
@@ -40,19 +49,23 @@ hm--html.el			: provides functions to write html pages;
 				  some of these functions are similar to
 				  functions of the html-mode.el;
 hm--html-keys.el		: provides the new keybindings;
-hm--html-menu.el		: provides the menus; this is the main file;
+hm--html-menu.el		: provides the menus;
+hm--html-mode.el		: provides the functions for the definition
+				  of the hm--html-mode; this is now the
+				  main file of the package;
 hm--html-configuration.el	: configuration file for the html mode;
-				  choose this as system configuration file
-hm--date.el			: Defines the function hm--date, which 
+				  choose this as system configuration file;
+hm--html-drag-and-drop.el	: defines the HTML- specific functions
+				  for the drag and drop interface;
+hm--date.el			: defines the function hm--date, which 
 				  returns the date in the format 
 				  "day-month-year" like "30-Jun-1993".
-html-mode.el			: Marc Andreessen's html-mode file; use this
-				  one if your html-mode.el is older or 
-				  doesn't work together with my files;
-				  I've changed it, to fix a bug !
 html-view.el			: Ron Tapia's html-view.el to view html-pages
 				  in the Xmosaic; it is patched for use
 				  with the xemacs;
+internal-drag-and-drop.el	: provides the general (html-mode 
+				  independend functions) of the drag and
+				  drop interface;
 templates.doc			: describes the syntax of the templates 
 				  provided in the file tmpl-minor-mode.el
 tmpl-minor-mode.el		: provides functions for the tmpl-minor-mode;
@@ -67,7 +80,6 @@ tmpl-minor-mode.el		: provides functions for the tmpl-minor-mode;
 command-description.tmpl	: Templatefile for the use with the
 				  tmpl-minor-mode;
 frame.tmpl			: Templatefile, provides a simple frame;
-emacs-19/*			: only for the GNU emacs 19 user;
 
 
 
@@ -82,16 +94,15 @@ if you put the user configuration file in the home directrory and
 the system (site) configuration file in one of the load path directories
 of your xemacs or GNU Emacs 19.
 
-1.	Put all the *.el files (except .hm--html-configuration.el and
-	the files in the subdirectory emacs-19)
-	in one of your xemacs (or emacs) lisp load directories 
-	(i.e. lisp/packages).
+1. 	Put all the *.el files in one of your xemacs (or emacs) lisp load
+        directories (i.e. lisp/packages).
 
 2.	Put the following in your .emacs (or default.el or site-init.el):
 
-	(autoload 'html-mode "hm--html-menu" "HTML major mode." t)
-	  (or (assoc "\\.html$" auto-mode-alist)
-            (setq auto-mode-alist (cons '("\\.html$" . html-mode) 
+	(autoload 'hm--html-mode "hm--html-mode" "HTML major mode." t)
+	(autoload 'hm--html-minor-mode "hm--html-mode" "HTML minor mode." t)
+	(or (assoc "\\.html$" auto-mode-alist)
+            (setq auto-mode-alist (cons '("\\.html$" . hm--html-mode) 
 				        auto-mode-alist)))
 
 	(autoload 'tmpl-expand-templates-in-buffer "tmpl-minor-mode"
@@ -120,10 +131,20 @@ of your xemacs or GNU Emacs 19.
 	(autoload 'w3-fetch "w3" "Open remote file for WWW browsing" t)
 	(autoload 'w3-use-hotlist "w3" "Use shortcuts to view WWW docs" t)
 
-	The above lines assume that you have not installed the older
-	html-mode.el.  You should remove the appropriate (old) lines,
-	if that isn't true. It could also be, that you've already the
-        autoload lines for the w3 package in your emacs.
+	The above lines assume that you have not installed already another
+	html mode. If this isn't true, then you should use the following
+
+	(setq auto-mode-alist (cons '("\\.html$" . hm--html-mode) 
+				        auto-mode-alist))
+
+	instead of
+
+	(or (assoc "\\.html$" auto-mode-alist)
+            (setq auto-mode-alist (cons '("\\.html$" . hm--html-mode) 
+				        auto-mode-alist)))
+
+	It could also be, that you've already the autoload lines for
+        the w3 package in your emacs.
 
 3.	Set the environment variable HTML_CONFIG_FILE to the html system 
 	configuration file i.e.:	
@@ -150,7 +171,7 @@ of your xemacs or GNU Emacs 19.
 		hm--html-template-dir
 		hm--html-favorite-http-server-host-name
 		html-document-previewer
-		html-view-html-document-previewermosaic-command
+		html-view-mosaic-command
 		w3-default-homepage
 
 6.	If you want to use templatefiles, you should put these files

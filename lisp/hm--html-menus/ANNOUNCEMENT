@@ -1,33 +1,37 @@
 Hello,
 
-I've written a new version (4.16) of my html package for the XEmacs 
-(lemacs) and the GNU Emacs 19. It is based on the html-mode from Marc
-Andreessen. 
+I've written a new version (5.0) of my html package for the XEmacs 
+and the GNU Emacs 19. The name of the package is:
+
+		 hm--html-menus-5.0.tar.gz
 
 With this package it is very easy to write html pages for the World Wide 
 Web (WWW). Eg: In most cases the user gets help to construct a specific 
 link by examples or by a completition list with possible input strings.
+It is also possible to insert links and images by just clicking on its
+source and destination (drag and drop feature).
 
-Read the NEWS file to see what's new in this release..
+The biggest new features in this release are:
+- drag and drop functions to insert links with the mouse
+- a minor mode to extent other html modes like the psgml mode
+- some new html tags, like the <applet> tags
+- fixed some old html tags 
+- the pulldown menu in the Emacs 19 is no longer a global menu
+- the popup menus in the Emacs 19 are now much fastere 
+- the name of the mode has changed from html-mode to hm--html-mode
+- the package is longer based on the package of Marc Andreessen
+Read the NEWS file to see news in detail...
 
-The name of the package is
-	hm--html-menus-4.16.tar.gz
-
-You should find it on the following ftp server:
-	info.cern.ch in /pub/www/contrib
+You should find hm--html-menus-5.0.tar.gz on the following ftp server:
 	sunsite.unc.edu in /pub/Linux/apps/editors/emacs/
 	ftp.rrzn.uni-hannover.de in /pub/unix/editors/lemacs/contrib
 	ftp.tnt.uni-hannover.de in /pub/editors/xemacs/contrib
 
-It make take some time, before the package is copied by the ftp admins
+It may take some time, before the package is copied by the ftp admins
 from the incoming directories to the above listed directories.
 
 There is also a html documentation about the package. You can find it on:
 http://www.tnt.uni-hannover.de:80/data/info/www/tnt/soft/info/www/html-editors/hm--html-menus/overview.html
-
-At the moment it describes the version (4.15), but it will be updated in the 
-near future.
-
 
 The package provides functions to insert the following stuff in html-pages:
 1. Anchors:
@@ -51,15 +55,12 @@ The package provides functions to insert the following stuff in html-pages:
 	without links, with links, blockquote, listing, abstract;
 5. formatting:
 	bold, italic, underline, typewriter, strikethru, super and subscript,
-	emphasized, strong, 
-	definition, keyboard, command, argument, option, variable, instance,
-	code, sample,  
-	quote, acronym, abbrevation, citation, literature, publication, isbn,
-	person, author, editor, credits, copyright,
-	footnote, margin,
+	emphasized, strong, big,
+	definition, keyboard, variable,	code, sample, citation,
 	html comment;
 6. include:
-	top aligned image, middle aligned image, bottom aligned image;
+	top aligned image, middle aligned image, bottom aligned image,
+	applet, parameter
 7. forms:
 	form;
 	text, password, isindex, integer, float, date, url, scribble fields; 
@@ -73,8 +74,8 @@ If it makes sense, the functions worked also on selected regions.
 I've used the same menu items and the same keystrokes. Therefore, you
 don't need to learn different menus or keys for similar functions.
 
-You can choose the popup menus between an expert menu, an novice menu and
-the menu from Marc Andreessen interactively.
+You can choose the popup menus between an expert menu and an novice
+menu interactively.
 
 With the pulldown menu, you can do the following things:
 - select the pulldown menu
@@ -87,6 +88,25 @@ With the pulldown menu, you can do the following things:
 - preview html documents with the netscape
 - preview html documents with the xmosaic
 - preview html documents with the w3 package for the lemacs and emacs
+
+You can insert links and images by clicking with Meta Button1 on its
+source and then on its destination. For this drag and drop interface
+the following destinations and links are supported:
+- the inclusion of an GIF- or JPEG- image by clicking on its name
+  in a dired buffer
+- a file or relative link to any other file by clicking on its name
+  in a dired buffer
+- a file or relative link to a directory by clicking on a line without
+  a filename in the dired buffer
+- a file or relative link to a file by clicking in a buffer with this
+  file
+- a http or relative link to a html page by clicking in the w3 buffer, 
+  which displays this page
+- a http or relative link, which is in another html page by clicking 
+  on the link in a w3 buffer
+If there is an activated region in the source buffer, then the link
+is inserted around it, so that the region is used as the name of the
+link.
 
 You can configure the html mode with a special configuration file for
 your site and with another file specific for a user.

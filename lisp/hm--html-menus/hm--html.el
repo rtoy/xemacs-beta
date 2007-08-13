@@ -1,5 +1,5 @@
-;;; hm--html.el: 
-;;; v6.00; 17 Feb 1996
+;;; $Id: hm--html.el,v 1.1.1.2 1996/12/18 03:46:47 steve Exp $
+;;;
 ;;; Copyright (C) 1993, 1994, 1995, 1996  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
 ;;;
@@ -27,48 +27,62 @@
 ;;;	Put this file in one of your load path directories.
 ;;;
 
-
-
-(provide 'hm--html)
-(require 'hm--date)
-(require 'adapt)
+;(require 'hm--date)
+;(require 'adapt)
   
 
-(defconst hm--html-menus-package-maintainer "muenkel@tnt.uni-hannover.de")
+;;; Indentation
 
-(defconst hm--html-menus-package-name "hm--html-menus")
+(defun hm--html-indent-region (begin end)
+  "Indents the region between BEGIN and END according to the major mode."
+  (when (< end begin)
+    (let ((a end))
+      (setq end start)
+      (setq start a)))
+  (save-excursion
+    (goto-char begin)
+    (let ((old-point))
+      (while (and (<= (point) end)
+		  (not (eq (point) old-point)))
+	(setq old-point (point))
+	(indent-according-to-mode)
+	(forward-line)
+	))))
 
-(defconst hm--html-menus-package-version "4.16")
-  
 
 ;;; Functions for adding html commands which consists of a start and a
 ;;; end tag and some text between them. (Basicfunctions)
 
 (defun hm--html-add-tags (function-insert-start-tag 
 			  start-tag
-			  &optional function-insert-end-tag
-			  &optional end-tag
-			  &optional function-insert-middle-tag
-			  &optional middle-tag)
+			  &optional
+			  function-insert-end-tag
+			  end-tag
+			  function-insert-middle-start-tag
+			  middle-start-tag
+			  function-insert-middle-end-tag
+			  middle-end-tag)
   "Adds the start and the end html tag at point.
 The first parameter specifies the funtion which insert the start tag
 and the third parameter specifies the function which insert the end tag.
 The second parameter is the string for the start tag and the fourth parameter
 is the string for the end tag. The third and fourth parameters are optional.
 The fifth parameter is optional. If it exists, it specifies a function which
-inserts the sixth parameter (the middle-tag) between the start and the end
+inserts the sixth parameter (the middle-start-tag) between the start and the end
 tag."
 ;  (interactive "aFunction, which adds the HTML start tag: \n\
 ;aFunction, which adds the HTML end tag: \n\
 ;sThe HTML start tag: \n\
 ;sThe HTML end tag: ")
   (eval (list function-insert-start-tag start-tag))
-  (if function-insert-middle-tag
-      (eval (list function-insert-middle-tag middle-tag)))
-  (if function-insert-end-tag
-      (let ((position (point)))
-	(eval (list function-insert-end-tag end-tag))
-	(goto-char position))))
+  (if function-insert-middle-start-tag
+      (eval (list function-insert-middle-start-tag middle-start-tag)))
+  (let ((position (point)))
+    (if function-insert-middle-end-tag
+      (eval (list function-insert-middle-end-tag middle-end-tag)))
+    (if function-insert-end-tag
+	(eval (list function-insert-end-tag end-tag)))
+    (goto-char position)))
 
 
 (defun hm--html-add-tags-to-region (function-insert-start-tag 
@@ -106,7 +120,8 @@ tag."
 The parameter must be a string (i.e. \"<B>\")"
   (let ((start (point)))
     (insert tag)
-    (html-maybe-deemphasize-region start (- (point) 1))))
+    (hm--html-indent-region start (point))))
+;    (html-maybe-deemphasize-region start (- (point) 1))))
 
 
 (defun hm--html-insert-end-tag (tag)
@@ -114,7 +129,8 @@ The parameter must be a string (i.e. \"<B>\")"
 The parameter must be a string (i.e. \"</B>\")"
   (let ((start (point)))
     (insert tag)
-    (html-maybe-deemphasize-region start (- (point) 1))))
+    (hm--html-indent-region start (point))))
+;    (html-maybe-deemphasize-region start (- (point) 1))))
 
 
 (defun hm--html-insert-start-tag-with-newline (tag)
@@ -122,7 +138,9 @@ The parameter must be a string (i.e. \"</B>\")"
 The parameter must be a string (i.e. \"<PRE>\")"
   (let ((start (point)))
     (insert tag)
-    (html-maybe-deemphasize-region start (- (point) 1)))
+    (hm--html-indent-region start (point))
+    )
+;    (html-maybe-deemphasize-region start (- (point) 1)))
   (insert "\n"))
 
 
@@ -132,11 +150,29 @@ The parameter must be a string (i.e. \"</PRE>\")"
   (insert "\n")
   (let ((start (point)))
     (insert tag)
-    (html-maybe-deemphasize-region start (- (point) 1))))
+    (hm--html-indent-region start (point))))
+;    (html-maybe-deemphasize-region start (- (point) 1))))
 
 
 
 ;;; Functions which add simple tags of the form <tag>
+
+(defun hm--html-add-list-or-menu-item-separator ()
+  "Adds a list or menu item.  Assume we're at the end of the last item."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-end-tag-with-newline "<LI> "))
+
+(defun hm--html-add-list-or-menu-item ()
+  "Adds the tags for a menu item at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-end-tag-with-newline "<LI> "
+		     'hm--html-insert-end-tag " </LI>"))
+
+(defun hm--html-add-list-or-menu-item-to-region ()
+  "Adds the tags for a menu item to the region in the current buffer."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag "<LI> "
+			       'hm--html-insert-end-tag " </LI>"))
 
 (defun hm--html-add-line-break ()
   "Adds the HTML tag for a line break."
@@ -255,34 +291,77 @@ URL will be used as the default URL for the external viewer."
   "Add an image, bottom aligned."
   (interactive (let ((url (hm--html-read-url "Image URL: ")))
 		 (list url (hm--html-read-altenate url))))
-  (let ((start (point)))
-    (if alt
-	(insert "<IMG ALIGN=BOTTOM SRC=\"" href "\" ALT=\"" alt "\">")
-      (insert "<IMG ALIGN=BOTTOM SRC=\"" href "\">"))
-    (html-maybe-deemphasize-region (1+ start) (1- (point)))))
+  (hm--html-add-tags 
+   'hm--html-insert-start-tag 
+   (concat "<IMG ALIGN=BOTTOM SRC=\""
+	   href
+	   (when alt
+	     (concat "\" ALT=\"" alt))
+	   "\">")))
 
 
 (defun hm--html-add-image-middle (href alt)
   "Add an image, middle aligned."
   (interactive (let ((url (hm--html-read-url "Image URL: ")))
 		 (list url (hm--html-read-altenate url))))
-  (let ((start (point)))
-    (if alt
-	(insert "<IMG ALIGN=MIDDLE SRC=\"" href "\" ALT=\"" alt "\">")
-      (insert "<IMG ALIGN=MIDDLE SRC=\"" href "\">"))
-    (html-maybe-deemphasize-region (1+ start) (1- (point)))))
+  (hm--html-add-tags 
+   'hm--html-insert-start-tag 
+   (concat "<IMG ALIGN=MIDDLE SRC=\""
+	   href
+	   (when alt
+	     (concat "\" ALT=\"" alt))
+	   "\">")))
 
 
 (defun hm--html-add-image-top (href alt)
   "Add an image, top aligned."
   (interactive (let ((url (hm--html-read-url "Image URL: ")))
 		 (list url (hm--html-read-altenate url))))
-  (let ((start (point)))
-    (if alt
-	(insert "<IMG ALIGN=TOP SRC=\"" href "\" ALT=\"" alt "\">")
-      (insert "<IMG ALIGN=TOP SRC=\"" href "\">"))
-    (html-maybe-deemphasize-region (1+ start) (1- (point)))))
+    (hm--html-add-tags 
+     'hm--html-insert-start-tag 
+     (concat "<IMG ALIGN=TOP SRC=\""
+	     href
+	     (when alt
+	       (concat "\" ALT=\"" alt))
+	     "\">")))
 
+
+(defun hm--html-add-applet (name code width height)
+  "Add an applet."
+  (interactive (let ((name (read-string "Applet Name: " "applet"))
+		     (code (read-file-name "Applet Class File: "))
+		     (width (read-number "Width (i.e.: 100): " t))
+		     (height (read-number "Height (i.e.: 100): " t)))
+		 (list name code width height)))
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     (concat "<APPLET "
+			     (if (string= name "")
+				 ""
+			       (concat "NAME=\"" name "\"\n"))
+			     "CODE=\""
+			     code
+			     "\"\n"
+			     "WIDTH=\""
+			     width
+			     "\"\n"
+			     "HEIGHT=\""
+			     height
+			     "\">")
+		     'hm--html-insert-start-tag-with-newline
+		     "</APPLET>"))
+
+(defun hm--html-add-applet-parameter (name value)
+  "Adds the tag for an applet parameter at the current point.
+This tag must be added between <APPLET> and </APPLET>."
+  (interactive "sParameter Name: \nsParameter Value: ")
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     (concat "<PARAM "
+			     "NAME=\""
+			     name
+			     "\" VALUE=\""
+			     value
+			     "\">")))
+		     
 
 (defun hm--html-add-server-side-include-file (file)
   "This function adds a server side include file directive in the buffer.
@@ -291,8 +370,8 @@ The directive is only supported by the NCSA http daemon."
   (let ((start (point)))
     (if (string= file "")
 	(error "ERROR: No filename specified !")
-      (insert "<INC SRV \"" file "\">")
-      (html-maybe-deemphasize-region (1+ start) (1- (point))))))
+      (insert "<INC SRV \"" file "\">"))))
+;      (html-maybe-deemphasize-region (1+ start) (1- (point))))))
   
 
 (defun hm--html-add-server-side-include-command-with-isindex-parameter 
@@ -320,8 +399,8 @@ parameter for the specified command."
 	(error "ERROR: No command specified !")
       (if (= ?| (string-to-char command))
 	  (insert "<INC " attribute" \"" command "\">")
-	(insert "<INC " attribute " \"|" command "\">")
-	(html-maybe-deemphasize-region (1+ start) (1- (point)))))))
+	(insert "<INC " attribute " \"|" command "\">")))))
+;	(html-maybe-deemphasize-region (1+ start) (1- (point)))))))
   
 
 ;(defun hm--html-add-server-side-include-command-with-parameter (command 
@@ -350,6 +429,42 @@ parameter for the specified command."
 
 
 ;;; Functions, which adds tags of the form <starttag> ... </endtag>
+
+(defun hm--html-add-big ()
+  "Adds the HTML tags for Big at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<BIG>"
+		     'hm--html-insert-end-tag
+		     "</BIG>"))
+
+
+(defun hm--html-add-big-to-region ()
+  "Adds the HTML tags for Big to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<BIG>"
+			       'hm--html-insert-end-tag
+			       "</BIG>"))
+
+
+(defun hm--html-add-small ()
+  "Adds the HTML tags for Small at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<SMALL>"
+		     'hm--html-insert-end-tag
+		     "</SMALL>"))
+
+
+(defun hm--html-add-small-to-region ()
+  "Adds the HTML tags for Small to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<SMALL>"
+			       'hm--html-insert-end-tag
+			       "</SMALL>"))
+
 
 (defun hm--html-add-bold ()
   "Adds the HTML tags for Bold at the point in the current buffer."
@@ -441,6 +556,14 @@ parameter for the specified command."
 			       "</CODE>"))
 
 
+(defun hm--html-add-citation ()
+  "Adds the HTML tags for Citation."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<CITE>"
+		     'hm--html-insert-end-tag
+		     "</CITE>"))
+
 (defun hm--html-add-citation-to-region ()
   "Adds the HTML tags for Citation to the region."
   (interactive)
@@ -448,6 +571,15 @@ parameter for the specified command."
 			       "<CITE>"
 			       'hm--html-insert-end-tag
 			       "</CITE>"))
+
+
+(defun hm--html-add-emphasized ()
+  "Adds the HTML tags for Emphasized."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<EM>"
+		     'hm--html-insert-end-tag
+		     "</EM>"))
 
 
 (defun hm--html-add-emphasized-to-region ()
@@ -459,6 +591,15 @@ parameter for the specified command."
 			       "</EM>"))
 
 
+(defun hm--html-add-fixed ()
+  "Adds the HTML tags for Fixed."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<TT>"
+		     'hm--html-insert-end-tag
+		     "</TT>"))
+
+
 (defun hm--html-add-fixed-to-region ()
   "Adds the HTML tags for Fixed to the region."
   (interactive)
@@ -466,6 +607,15 @@ parameter for the specified command."
 			       "<TT>"
 			       'hm--html-insert-end-tag
 			       "</TT>"))
+
+
+(defun hm--html-add-keyboard ()
+  "Adds the HTML tags for Keyboard."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<KBD>"
+		     'hm--html-insert-end-tag
+		     "</KBD>"))
 
 
 (defun hm--html-add-keyboard-to-region ()
@@ -477,6 +627,14 @@ parameter for the specified command."
 			       "</KBD>"))
 
 
+(defun hm--html-add-sample ()
+  "Adds the HTML tags for Sample."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<SAMP>"
+		     'hm--html-insert-end-tag
+		     "</SAMP>"))
+
 (defun hm--html-add-sample-to-region ()
   "Adds the HTML tags for Sample to the region."
   (interactive)
@@ -484,6 +642,15 @@ parameter for the specified command."
 			       "<SAMP>"
 			       'hm--html-insert-end-tag
 			       "</SAMP>"))
+
+
+(defun hm--html-add-strong ()
+  "Adds the HTML tags for Strong."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<STRONG>"
+		     'hm--html-insert-end-tag
+		     "</STRONG>"))
 
 
 (defun hm--html-add-strong-to-region ()
@@ -494,6 +661,14 @@ parameter for the specified command."
 			       'hm--html-insert-end-tag
 			       "</STRONG>"))
 
+
+(defun hm--html-add-variable ()
+  "Adds the HTML tags for Variable."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<VAR>"
+		     'hm--html-insert-end-tag
+		     "</VAR>"))
 
 (defun hm--html-add-variable-to-region ()
   "Adds the HTML tags for Variable to the region."
@@ -541,6 +716,15 @@ parameter for the specified command."
 			       "</PRE>"))
 
 
+(defun hm--html-add-plaintext ()
+  "Adds the HTML tags for plaintext."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     "<XMP>"
+		     'hm--html-insert-end-tag-with-newline
+		     "</XMP>"))
+
+
 (defun hm--html-add-plaintext-to-region ()
   "Adds the HTML tags for plaintext to the region."
   (interactive)
@@ -548,6 +732,15 @@ parameter for the specified command."
 			       "<XMP>"
 			       'hm--html-insert-end-tag-with-newline
 			       "</XMP>"))
+
+
+(defun hm--html-add-blockquote ()
+  "Adds the HTML tags for blockquote."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     "<BLOCKQUOTE>"
+		     'hm--html-insert-end-tag-with-newline
+		     "</BLOCKQUOTE>"))
 
 
 (defun hm--html-add-blockquote-to-region ()
@@ -943,6 +1136,15 @@ parameter for the specified command."
 ;;; Lists
 
 
+(defun hm--html-add-listing ()
+  "Adds the HTML tags for listing."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     "<LISTING>"
+		     'hm--html-insert-end-tag-with-newline
+		     "</LISTING>"))
+
+
 (defun hm--html-add-listing-to-region ()
   "Adds the HTML tags for listing to the region."
   (interactive)
@@ -951,6 +1153,21 @@ parameter for the specified command."
 			       'hm--html-insert-end-tag-with-newline
 			       "</LISTING>"))
 
+(defun hm--html-add-center ()
+  "Adds the HTML tags for center at the current point."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     "<CENTER>"
+		     'hm--html-insert-end-tag-with-newline
+		     "</CENTER>"))
+
+(defun hm--html-add-center-to-region ()
+  "Adds the HTML tags for center to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
+			       "<CENTER>"
+			       'hm--html-insert-end-tag-with-newline
+			       "</CENTER>"))
 
 (defun hm--html-add-numberlist ()
   "Adds the HTML tags for a numbered list at the point in the current buffer."
@@ -994,6 +1211,17 @@ parameter for the specified command."
 			       "<LI> "))
 
 
+(defun hm--html-add-list ()
+  "Adds the HTML tags for a (unnumbered) list to the region."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+			       "<UL>"
+			       'hm--html-insert-end-tag-with-newline
+			       "</UL>"
+			       'hm--html-insert-start-tag
+			       "<LI> "))
+
+
 (defun hm--html-add-list-to-region ()
   "Adds the HTML tags for a (unnumbered) list to the region."
   (interactive)
@@ -1005,16 +1233,66 @@ parameter for the specified command."
 			       "<LI> "))
 
 
+(defun hm--html-add-menu ()
+  "Adds the HTML tags for a menu."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     "<MENU>"
+		     'hm--html-insert-end-tag-with-newline
+		     "</MENU>"
+		     'hm--html-insert-start-tag
+		     "<LI> "))
+
+
+(defun hm--html-add-menu ()
+  "Adds the HTML tags for a menu."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     "<MENU>"
+		     'hm--html-insert-end-tag-with-newline
+		     "</MENU>"
+		     'hm--html-insert-start-tag
+		     "<LI> "
+		     'hm--html-insert-end-tag
+		     " </LI>"))
+
+
 (defun hm--html-add-menu-to-region ()
   "Adds the HTML tags for a menu to the region."
   (interactive)
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
 			       "<MENU>"
 			       'hm--html-insert-end-tag-with-newline
-			       "</MENU>"
-			       'hm--html-insert-start-tag
-			       "<LI> "))
+			       "</MENU>"))
 
+;			       'hm--html-insert-start-tag
+;			       "<LI> "))
+
+
+(defun hm--html-add-description-title-and-entry ()
+  "Adds a definition title and entry.
+Assumes we're at the end of a previous entry."
+  (interactive)
+  (hm--html-add-description-title)
+  (let ((position (point)))
+    (search-forward "</DT>")
+    (hm--html-add-only-description-entry)
+    (goto-char position)))
+
+
+(defun hm--html-add-description-list ()
+  "Adds the HTML tags for a description list.
+It also inserts a tag for the description title."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     "<DL>"
+		     'hm--html-insert-end-tag-with-newline
+		     "</DL>"
+		     'hm--html-insert-start-tag
+		     "<DT> "
+		     'hm--html-insert-end-tag
+		     " </DT>"))
+  
 
 (defun hm--html-add-description-list-to-region ()
   "Adds the HTML tags for a description list to a region.
@@ -1023,32 +1301,63 @@ It also inserts a tag for the description title."
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
 			       "<DL>"
 			       'hm--html-insert-end-tag-with-newline
-			       "</DL>"
-			       'hm--html-insert-start-tag
-			       "<DT> "))
+			       "</DL>"))
+
+;			       'hm--html-insert-start-tag
+;			       "<DT> "))
   
 
 (defun hm--html-add-description-title ()
-  "Adds the HTML tag for a description title at current point in the buffer."
+  "Adds the HTML tags for a description title at current point in the buffer."
   (interactive)
   (hm--html-add-tags 'hm--html-insert-end-tag-with-newline
-		     "<DT> "))
+		     "<DT> "
+		     'hm--html-insert-end-tag
+		     " </DT>"))
 
 
-(defun hm--html-add-only-description-entry ()
-  "Adds the HTML tag for a description entry at current point in the buffer."
+(defun hm--html-add-description-title-to-region ()
+  "Adds the HTML tags for a description title to the region in the buffer."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<DT> "
+			       'hm--html-insert-end-tag
+			       " </DT>"))
+
+
+(defun hm--html-add-description-entry ()
+  "Adds the HTML tags for a description entry at current point in the buffer."
   (interactive)
   (hm--html-add-tags 'hm--html-insert-end-tag-with-newline
-		     "<DD> "))
+		     "<DD> "
+		     'hm--html-insert-end-tag
+		     " </DD>"))
 
+
+(defun hm--html-add-description-entry-to-region ()
+  "Adds the HTML tags for a description entry to the region in the buffer."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<DD> "
+			       'hm--html-insert-end-tag
+			       " </DD>"))
+
+
+(defun hm--html-add-address ()
+  "Adds the HTML tags for an address."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<ADDRESS>"
+		     'hm--html-insert-end-tag
+		     "</ADDRESS>"))
 
 (defun hm--html-add-address-to-region ()
   "Adds the HTML tags for an address to the region"
   (interactive)
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag
-			       "<ADDRESS> "
+			       "<ADDRESS>"
 			       'hm--html-insert-end-tag
-			       "  </ADDRESS>"))
+			       "</ADDRESS>"))
 
 
 (defvar hm--html-signature-reference-name "Signature"
@@ -1398,6 +1707,14 @@ the string for the title and the header of the document."
       (hm--html-insert-created-comment)))
 
 
+(defun hm--html-add-link-target-to-region (name)
+  "Adds the HTML tags for a link target to the region."
+  (interactive "sName: ")
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       (concat "<A NAME=\"" name "\">")
+			       'hm--html-insert-end-tag
+			       "</A>"))
+
 (defun hm--html-add-link-target (name)
   "Adds the HTML tags for a link target at point in the current buffer."
 ;  (interactive "sName (or RET for numeric): ")
@@ -1597,14 +1914,11 @@ also nil it returns an empty string."
       (progn
 	(setq hm--html-faces-exist t)
 	(make-face 'hm--html-help-face)
-	(and hm--html-help-foreground
-	     (set-face-foreground 'hm--html-help-face
-				  hm--html-help-foreground))
-	(and hm--html-help-background
-	     (set-face-background 'hm--html-help-face
-				  hm--html-help-background))
-	(and hm--html-help-font
-	     (set-face-font 'hm--html-help-face hm--html-help-font))
+	(if hm--html-help-foreground
+	    (set-face-foreground 'hm--html-help-face hm--html-help-foreground))
+	(if hm--html-help-background
+	    (set-face-background 'hm--html-help-face hm--html-help-background))
+	(set-face-font 'hm--html-help-face hm--html-help-font)
 	)))
 
 
@@ -2389,7 +2703,7 @@ returns '((\"\"))"
 			t
 			nil)
 		       (list				; servername:port
-			"Mailadresse: "
+			"Mailaddress: "
 			mailto-alist
 			nil
 			nil
@@ -2414,13 +2728,55 @@ returns '((\"\"))"
   (interactive)
   (hm--html-add-mailto-link-1 'hm--html-add-tags-to-region))
 
+(defun hm--html-add-relative-link (relative-file-path)
+  "Adds the HTML tags for a relative link at the current point."
+  (interactive (list (read-file-name "Relative Filename: "
+				     nil
+				     nil
+				     nil
+				     "")))
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     (concat "<A HREF=\""
+			     relative-file-path
+			     "\">")
+		     'hm--html-insert-end-tag
+		     "</A>"))
 
-(defun hm--html-add-normal-link-to-region ()
-  "Adds the HTML tags for a normal general link to region."
-  (interactive)
+(defun hm--html-add-relative-link-to-region (relative-file-path)
+  "Adds the HTML tags for a relative link to the region."
+  (interactive (list (read-file-name "Relative Filename: "
+				     nil
+				     nil
+				     nil
+				     "")))
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag
 			       (concat "<A HREF=\""
-				       (read-string "Link to: ")
+				       relative-file-path
+				       "\">")
+			       'hm--html-insert-end-tag
+			       "</A>"))
+
+(defun hm--html-add-normal-link (link-object)
+  "Adds the HTML tags for a normal general link.
+Single argument LINK-OBJECT is value of HREF in the new anchor.
+Mark is set after anchor."
+  (interactive "sNode Link to: ")
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     (concat "<A HREF=\""
+			     link-object
+			     "\">")
+		     'hm--html-insert-end-tag
+		     "</A>"))
+
+(defun hm--html-add-normal-link-to-region (link-object)
+  "Adds the HTML tags for a normal general link to region.
+Single argument LINK-OBJECT is value of HREF in the new anchor.
+Mark is set after anchor."
+  (interactive "sNode Link to: ")
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       (concat "<A HREF=\""
+;				       (read-string "Link to: ")
+				       link-object
 				       "\">")
 			       'hm--html-insert-end-tag
 			       "</A>"))
@@ -2616,7 +2972,7 @@ else in such a line !"
 
 ;;; Functions for font lock mode
 
-(if html-running-emacs-19
+(if (adapt-emacs19p)
     (progn
       (make-face 'font-lock-comment-face)
       (make-face 'font-lock-doc-string-face)
@@ -3307,6 +3663,77 @@ A prefix arg is used as no of ROWS."
 
 
 ;;; ISO-Characters for Emacs HTML-mode (Berthold Crysmann)
+;(setq buffer-invisibility-spec '(hm--html-iso-entity-invisible-flag))
+
+;(defvar hm--html-iso-entity-invisible-flag t
+;  "Controls the visibility of the iso entities.")
+
+;(defvar hm--html-iso-glyph-invisible-flag nil
+;  "Controls the visibility of the iso character glyphs.")
+
+;(defvar hm--html-glyph-cache nil
+;  "Internal variable. An assoc list with the already created glyphs.")
+
+;(defun hm--html-create-glyph (string)
+;  "Creates a glyph from the string or returns an existing one.
+;The glyph is stored in `hm--html-glyph-cache'."
+;  (if nil ;(assoc string hm--html-glyph-cache)
+;      (cdr (assoc string hm--html-glyph-cache))
+;    (let ((glyph (make-glyph string)))
+;      (setq hm--html-glyph-cache (cons (cons string glyph)
+;				       hm--html-glyph-cache))
+;      glyph)))
+
+;(defun hm--html-attach-glyph-to-region (start
+;					end
+;					string
+;					region-invisible-flag
+;					glyph-invisible-flag)
+;  "Make the region invisible and attach a glyph STRING.
+;The invisible flags could be used, to toggle the visibility."
+;  (mapcar 'delete-annotation (annotations-at end)) ; delete old anotations
+;  ;; delete old extents
+;  (let ((extent (make-extent start end))
+;	(annotation nil))
+;    (set-extent-property extent 'invisible region-invisible-flag)
+;    (set-extent-property extent 'end-open t)
+;    (set-extent-property extent 'start-open t)
+;    (set-extent-property extent 'intangible t)
+;    (setq annotation (make-annotation "Hallo Du da" ;(hm--html-create-glyph string) 
+;				      end
+;				      'text))
+;    (goto-char end)))
+
+
+;(defun hm--html-insert-iso-char-as-entity-and-glyph (char entity)
+;  "Inserts an iso char as html ENTITY and displays a glyph.
+;The glyph is created from the string CHAR."
+;  (let ((start (point)))
+;    (insert entity)
+;    (hm--html-attach-glyph-to-region start 
+;				     (point) 
+;				     char
+;				     'hm--html-iso-entity-invisible-flag
+;				     'hm--html-iso-glyph-invisible-flag)))
+
+;(defun hm--html_ue ()
+;  (interactive)
+;  (hm--html-insert-iso-char-as-entity-and-glyph "ü" "&uuml;"))
+
+
+;(defun hm--html-insert-iso-char-as-entity-and-glyph (char entity)
+;  (let ((start (point))
+;	(end nil)
+;	(extent nil))
+;    (insert entity)
+;    (setq end (point))
+;    (setq extent (make-extent start end))
+;    (set-extent-begin-glyph extent char)
+;    (set-extent-property extent 'invisible t)))
+
+;(defun hm--html_ue ()
+;  (interactive)
+;  (hm--html-insert-iso-char-as-entity-and-glyph ?ü "&uuml;"))
 
 (defun hm--html_ue ()
   "Insert the character 'ue'."
@@ -3591,6 +4018,11 @@ A prefix arg is used as no of ROWS."
 (defvar hm--just-insert-less-than nil
   "Internal variable.")
 
+(defun hm--html-less-than ()
+  "Inserts the entity '&gt;'."
+  (interactive)
+  (insert "&lt;"))
+
 (defun hm--html-smart-less-than ()
   "Insert a '<' or the entity '&lt;' if you execute this command twice."
   (interactive)
@@ -3598,13 +4030,18 @@ A prefix arg is used as no of ROWS."
 	   hm--just-insert-less-than)
       (progn
 	(delete-char -1)
-	(html-less-than)
+	(hm--html-less-than)
 	(setq hm--just-insert-less-than nil))
     (insert ?<)
     (setq hm--just-insert-less-than t)))
 
 (defvar hm--just-insert-greater-than nil
   "Internal variable.")
+
+(defun hm--html-greater-than ()
+  "Inserts the entity '&gt;'."
+  (interactive)
+  (insert "&gt;"))
 
 (defun hm--html-smart-greater-than ()
   "Insert a '>' or the entity '&gt;' if you execute this command twice."
@@ -3613,10 +4050,31 @@ A prefix arg is used as no of ROWS."
 	   hm--just-insert-greater-than)
       (progn
 	(delete-char -1)
-	(html-greater-than)
+	(hm--html-greater-than)
 	(setq hm--just-insert-greater-than nil))
     (insert ?>)
     (setq hm--just-insert-greater-than t)))
+
+
+(defvar hm--just-insert-ampersand nil
+  "Internal variable.")
+
+(defun hm--html-ampersand ()
+  "Inserts the entity '&amp;'."
+  (interactive)
+  (insert "&amp;"))
+
+(defun hm--html-smart-ampersand ()
+  "Insert a '&' or the entity '&amp;' if you execute this command twice."
+  (interactive)
+  (if (and (eq last-command 'hm--html-smart-ampersand)
+	   hm--just-insert-ampersand)
+      (progn
+	(delete-char -1)
+	(hm--html-ampersand)
+	(setq hm--just-insert-ampersand nil))
+    (insert ?&)
+    (setq hm--just-insert-ampersand t)))
 
 
 ;;;
@@ -3719,15 +4177,15 @@ the number should be removed."
 	   'hm--html-wais-path-alist
 	   'hm--html-wais-servername:port-alist
 	   'hm--html-wais-servername:port-default
-	   'html-deemphasize-color
+;	   'html-deemphasize-color
 	   'html-document-previewer
-	   'html-document-previewer-args
-	   'html-emphasize-color
-	   'html-quotify-hrefs-on-find
-	   'html-region-mode
+;	   'html-document-previewer-args
+;	   'html-emphasize-color
+;	   'html-quotify-hrefs-on-find
+	   'hm--html-region-mode
 	   'html-sigusr1-signal-value
-	   'html-use-font-lock
-	   'html-use-highlighting
+;	   'html-use-font-lock
+;	   'html-use-highlighting
 	   )
      nil
      nil
@@ -3742,31 +4200,35 @@ the number should be removed."
 (if (adapt-xemacsp)
     (progn
 
-      (add-hook 'zmacs-activate-region-hook 
-		(function (lambda () (html-region-mode t))))
+      (add-hook 'zmacs-activate-region-hook
+		'hm--html-switch-region-modes-on)
+;		(function (lambda () (hm--html-region-mode 1))))
 
       (add-hook 'zmacs-deactivate-region-hook
-		(function (lambda () (html-region-mode nil))))
+		'hm--html-switch-region-modes-off)
+;		(function (lambda () (hm--html-region-mode -1))))
 
       )
 
   (transient-mark-mode t)
 
   (add-hook 'activate-mark-hook 
-	    (function (lambda () (html-region-mode t))))
+	    'hm--html-switch-region-modes-on)
+;	    (function (lambda () (hm--html-region-mode t))))
   
   (add-hook 'deactivate-mark-hook
-	    (function (lambda () (html-region-mode nil))))
+	    'hm--html-switch-region-modes-off)
+;	    (function (lambda () (hm--html-region-mode nil))))
 
   )
 
 
-(add-hook 'html-mode-hook
-	  (function
-	   (lambda ()
-	     (make-variable-buffer-local 'write-file-hooks)
-	     (add-hook 'write-file-hooks 
-		       'hm--html-maybe-new-date-and-changed-comment))))
+;(add-hook 'hm--html-mode-hook
+;	  (function
+;	   (lambda ()
+;	     (make-variable-buffer-local 'write-file-hooks)
+;	     (add-hook 'write-file-hooks 
+;		       'hm--html-maybe-new-date-and-changed-comment))))
 	  
 ;(add-hook 'zmacs-activate-region-hook 'hm--set-hm--region-active)
 ;
@@ -3824,39 +4286,39 @@ also doesn't exist, then the file ~/.hm--html-configuration.el(c) is used."
 
 ;;; Definition of the minor mode html-region-mode
 
-(defvar html-region-mode nil
-  "*t, if the minor mode html-region-mode is on and nil otherwise.")
+;(defvar html-region-mode nil
+;  "*t, if the minor mode html-region-mode is on and nil otherwise.")
 
-(make-variable-buffer-local 'html-region-mode)
+;(make-variable-buffer-local 'html-region-mode)
 
-(defvar html-region-mode-map nil "")
+;(defvar html-region-mode-map nil "")
 
-(hm--html-load-config-files)
+;(hm--html-load-config-files)
 
-(if hm--html-use-old-keymap
-    (progn
+;(if hm--html-use-old-keymap
+;    (progn
 
-;(setq minor-mode-alist (cons '(html-region-mode " Region") minor-mode-alist))
-(or (assq 'html-region-mode minor-mode-alist)
-    (setq minor-mode-alist
-	  (purecopy
-	   (append minor-mode-alist
-		   '((html-region-mode " Region"))))))
+;;(setq minor-mode-alist (cons '(html-region-mode " Region") minor-mode-alist))
+;(or (assq 'html-region-mode minor-mode-alist)
+;    (setq minor-mode-alist
+;	  (purecopy
+;	   (append minor-mode-alist
+;		   '((html-region-mode " Region"))))))
 
-(defun html-region-mode (on)
-  "Turns the minor mode html-region-mode on or off.
-The function turns the html-region-mode on, if ON is t and off otherwise."
-  (if (string= mode-name "HTML")
-      (if on
-	  ;; html-region-mode on
-	  (progn
-	    (setq html-region-mode t)
-	    (use-local-map html-region-mode-map))
-	;; html-region-mode off
-	(setq html-region-mode nil)
-	(use-local-map html-mode-map))))
+;(defun html-region-mode (on)
+;  "Turns the minor mode html-region-mode on or off.
+;The function turns the html-region-mode on, if ON is t and off otherwise."
+;  (if (string= mode-name "HTML")
+;      (if on
+;	  ;; html-region-mode on
+;	  (progn
+;	    (setq html-region-mode t)
+;	    (use-local-map html-region-mode-map))
+;	;; html-region-mode off
+;	(setq html-region-mode nil)
+;	(use-local-map html-mode-map))))
 
-))
+;))
 
 
 
@@ -3867,12 +4329,12 @@ The function turns the html-region-mode on, if ON is t and off otherwise."
 ; (hm--html-font-lock-color should be defined in hm--html-configuration.el
 ; oder .hm--html-configuration.el)
 ;
-(require 'font-lock)
+;(require 'font-lock)
 ;(load-library "font-lock")
 ;(set-face-foreground 'font-lock-comment-face hm--html-font-lock-color)
 
 
-(hm--html-generate-help-buffer-faces)
+;(hm--html-generate-help-buffer-faces)
 
 
 
@@ -3886,3 +4348,36 @@ The function turns the html-region-mode on, if ON is t and off otherwise."
 ;  (search-forward-regexp hm--html-hostname-search-string)
 ;  (buffer-substring (match-beginning 0) (match-end 0)))
 ;
+
+;;; Announce the feature hm--html-configuration
+
+;;; quotify href
+
+(defvar hm--html-quotify-href-regexp
+  "<[aA][ \t\n]+\\([nN][aA][mM][eE]=[a-zA-Z0-9]+[ \t\n]+\\)?[hH][rR][eE][fF]="
+  "Regular expression used for searching hrefs.")
+
+(defun hm--html-quotify-hrefs ()
+  "Insert quotes around all HREF and NAME attribute value literals.
+
+This remedies the problem with old HTML files that can't be processed
+by SGML parsers. That is, changes <A HREF=foo> to <A HREF=\"foo\">.
+
+Look also at the variable `hm--html-quotify-href-regexp'."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (while 
+        (re-search-forward hm--html-quotify-href-regexp
+			   (point-max)
+			   t)
+      (cond
+       ((null (looking-at "\""))
+        (insert "\"")
+        (re-search-forward "[ \t\n>]" (point-max) t)
+        (forward-char -1)
+        (insert "\""))))))
+
+
+
+(provide 'hm--html)

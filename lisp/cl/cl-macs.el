@@ -20,9 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -418,6 +419,7 @@ The result of the body appears to the compiler as a quoted constant."
 				    (symbol-function 'byte-compile-file-form)))
 			(list 'byte-compile-file-form (list 'quote set))
 			'(byte-compile-file-form form)))
+	  ;; XEmacs change
 	  (print set (symbol-value ;;'outbuffer
 				   'byte-compile-output-buffer
 				   )))
@@ -1225,6 +1227,10 @@ go back to their previous definitions, or lack thereof)."
 	 (mapcar
 	  (function
 	   (lambda (x)
+	     (if (or (and (fboundp (car x))
+			  (eq (car-safe (symbol-function (car x))) 'macro))
+		     (cdr (assq (car x) cl-macro-environment)))
+		 (error "Use `labels', not `flet', to rebind macro names"))
 	     (let ((func (list 'function*
 			       (list 'lambda (cadr x)
 				     (list* 'block (car x) (cddr x))))))
@@ -1236,7 +1242,22 @@ go back to their previous definitions, or lack thereof)."
 	  bindings)
 	 body))
 
-(defmacro labels (&rest args) (cons 'flet args))
+(defmacro labels (bindings &rest body)
+  "(labels ((FUNC ARGLIST BODY...) ...) FORM...): make temporary func bindings.
+This is like `flet', except the bindings are lexical instead of dynamic.
+Unlike `flet', this macro is fully complaint with the Common Lisp standard."
+  (let ((vars nil) (sets nil) (cl-macro-environment cl-macro-environment))
+    (while bindings
+      (let ((var (gensym)))
+	(cl-push var vars)
+	(cl-push (list 'function* (cons 'lambda (cdar bindings))) sets)
+	(cl-push var sets)
+	(cl-push (list (car (cl-pop bindings)) 'lambda '(&rest cl-labels-args)
+		       (list 'list* '(quote funcall) (list 'quote var)
+			     'cl-labels-args))
+		 cl-macro-environment)))
+    (cl-macroexpand-all (list* 'lexical-let vars (cons (cons 'setq sets) body))
+			cl-macro-environment)))
 
 ;; The following ought to have a better definition for use with newer
 ;; byte compilers.
@@ -1406,6 +1427,7 @@ values.  For compatibility, (values A B C) is a synonym for (list A B C)."
 
 	((and (eq (car-safe spec) 'warn) (boundp 'byte-compile-warnings))
 	 (if (eq byte-compile-warnings t)
+	     ;; XEmacs change
 	     (setq byte-compile-warnings byte-compile-default-warnings))
 	 (while (setq spec (cdr spec))
 	   (if (consp (car spec))
@@ -1578,6 +1600,7 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf extent-data set-extent-data) ; obsolete
 (defsetf extent-face set-extent-face)
 (defsetf extent-priority set-extent-priority)
+;; XEmacs change
 (defsetf extent-property set-extent-property)
 (defsetf extent-end-position (ext) (store)
   (list 'progn (list 'set-extent-endpoints (list 'extent-start-position ext)
@@ -2021,6 +2044,7 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 	 (tag (intern (format "cl-struct-%s" name)))
 	 (tag-symbol (intern (format "cl-struct-%s-tags" name)))
 	 (include-descs nil)
+	 ;; XEmacs change
 	 (include-tag-symbol nil)
 	 (side-eff nil)
 	 (type nil)
@@ -2054,6 +2078,7 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 					    (lambda (x)
 					      (if (consp x) x (list x))))
 					   (cdr args))
+		     ;; XEmacs change
 		     include-tag-symbol (intern (format "cl-struct-%s-tags"
 							include))))
 	      ((eq opt ':print-function)
@@ -2093,8 +2118,12 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 		type (car inc-type)
 		named (assq 'cl-tag-slot descs))
 	  (if (cadr inc-type) (setq tag name named t))
-	  (cl-push (list 'pushnew (list 'quote tag) include-tag-symbol)
-		   forms))
+	  (let ((incl include))
+	    (while incl
+	      (cl-push (list 'pushnew (list 'quote tag)
+			     (intern (format "cl-struct-%s-tags" incl)))
+		       forms)
+	      (setq incl (get incl 'cl-struct-include)))))
       (if type
 	  (progn
 	    (or (memq type '(vector list))
@@ -2201,6 +2230,8 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 			  (list 'quote descs))
 		    (list 'put (list 'quote name) '(quote cl-struct-type)
 			  (list 'quote (list type (eq named t))))
+		    (list 'put (list 'quote name) '(quote cl-struct-include)
+			  (list 'quote include))
 		    (list 'put (list 'quote name) '(quote cl-struct-print)
 			  print-auto)
 		    (mapcar (function (lambda (x)
@@ -2597,6 +2628,7 @@ surrounded by (block NAME ...)."
 
 ;;; Things that are inline.
 (proclaim '(inline floatp-safe acons map concatenate notany notevery
+;; XEmacs change
 		   cl-set-elt revappend nreconc))
 
 ;;; Things that are side-effect-free.

@@ -724,7 +724,7 @@ last-command-event
 
 @defvar last-command-char
 If the value of @code{last-command-event} is a keyboard event, then this
-is the nearest @sc{ASCII} equivalent to it.  This the the value that
+is the nearest @sc{ASCII} equivalent to it.  This is the value that
 @code{self-insert-command} will put in the buffer.  Remember that there
 is @emph{not} a 1:1 mapping between keyboard events and @sc{ASCII}
 characters: the set of keyboard events is much larger, so writing code
@@ -1087,7 +1087,7 @@ modeline) that a mouse event occurred over or near.
 
 @defun event-over-text-area-p event
 Given a mouse-motion, button-press, or button-release event, this
-function returns @code{t} if the event is over the the text area of a
+function returns @code{t} if the event is over the text area of a
 window.  Otherwise, @code{nil} is returned.  The modeline is not
 considered to be part of the text area.
 @end defun

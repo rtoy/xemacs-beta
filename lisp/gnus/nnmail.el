@@ -238,7 +238,7 @@ Example:
 	  \"misc.misc\"))")
 
 (defvar nnmail-split-abbrev-alist
-  '((any . "from\\|to\\|cc\\|sender\\|apparently-to")
+  '((any . "from\\|to\\|cc\\|sender\\|apparently-to\\|resent-from\\|resent-to\\|resent-cc")
     (mail . "mailer-daemon\\|postmaster"))
   "*Alist of abbreviations allowed in `nnmail-split-fancy'.")
 
@@ -269,9 +269,14 @@ parameter.  It should return nil, `warn' or `delete'.")
 (defvar nnmail-pop-password nil
   "*Password to use when reading mail from a POP server, if required.")
 
-(defvar nnmail-split-fancy-syntax-table
-  (copy-syntax-table (standard-syntax-table))
+(defvar nnmail-split-fancy-syntax-table nil
   "Syntax table used by `nnmail-split-fancy'.")
+(unless (syntax-table-p nnmail-split-fancy-syntax-table)
+  (setq nnmail-split-fancy-syntax-table
+	(copy-syntax-table (standard-syntax-table)))
+  ;; support the %-hack
+  (modify-syntax-entry ?\% "." nnmail-split-fancy-syntax-table))
+
 
 (defvar nnmail-prepare-save-mail-hook nil
   "Hook called before saving mail.")
@@ -353,10 +358,8 @@ parameter.  It should return nil, `warn' or `delete'.")
 ;; Function rewritten from rmail.el.
 (defun nnmail-move-inbox (inbox)
   "Move INBOX to `nnmail-crash-box'."
-  (let ((inbox (file-truename
-		(expand-file-name (substitute-in-file-name inbox))))
-	(tofile (file-truename (expand-file-name 
-				(substitute-in-file-name nnmail-crash-box))))
+  (let ((inbox (file-truename (expand-file-name inbox)))
+	(tofile (file-truename (expand-file-name nnmail-crash-box)))
 	movemail popmail errors password)
     ;; If getting from mail spool directory,
     ;; use movemail to move rather than just renaming,
@@ -382,9 +385,9 @@ parameter.  It should return nil, `warn' or `delete'.")
 			     (substring inbox (+ popmail 3))))))
 	    (message "Getting mail from post office ..."))
 	(when (or (and (file-exists-p tofile)
-		       (/= 0 (nth 7 (file-attributes tofile))))
+		       (/= 0 (nnheader-file-size tofile)))
 		  (and (file-exists-p inbox)
-		       (/= 0 (nth 7 (file-attributes inbox)))))
+		       (/= 0 (nnheader-file-size inbox))))
 	  (message "Getting mail from %s..." inbox)))
       ;; Set TOFILE if have not already done so, and
       ;; rename or copy the file INBOX to TOFILE if and as appropriate.
@@ -437,11 +440,7 @@ parameter.  It should return nil, `warn' or `delete'.")
 		(goto-char (point-min))
 		(if (looking-at "movemail: ")
 		    (delete-region (point-min) (match-end 0)))
-		(beep t)
-		(message (concat "movemail: "
-				 (buffer-substring (point-min)
-						   (point-max))))
-		(sit-for 3)
+		(error (concat "movemail: " (buffer-string)))
 		(setq tofile nil))))))
       (and errors
 	   (buffer-name errors)
@@ -923,8 +922,8 @@ See the documentation for the variable `nnmail-split-fancy' for documentation."
 			    nnmail-procmail-suffix "$") t)))
 	   (p procmails)
 	   (crash (when (and (file-exists-p nnmail-crash-box)
-			     (> (nth 7 (file-attributes
-					(file-truename nnmail-crash-box))) 0))
+			     (> (nnheader-file-size
+				 (file-truename nnmail-crash-box)) 0))
 		    (list nnmail-crash-box))))
       ;; Remove any directories that inadvertantly match the procmail
       ;; suffix, which might happen if the suffix is "". 
@@ -937,8 +936,12 @@ See the documentation for the variable `nnmail-split-fancy' for documentation."
        crash
        (cond ((and group
 		   (or (eq nnmail-spool-file 'procmail)
-		       nnmail-use-procmail))
+		       nnmail-use-procmail)
+		   procmails)
 	      procmails)
+	     ((and group
+		   (eq nnmail-spool-file 'procmail))
+	      nil)
 	     ((listp nnmail-spool-file)
 	      (append nnmail-spool-file procmails))
 	     ((stringp nnmail-spool-file)
@@ -1107,7 +1110,7 @@ See the documentation for the variable `nnmail-split-fancy' for documentation."
 	;; existance of POPped mail.
 	(when (or (string-match "^po:" spool)
 		  (and (file-exists-p spool)
-		       (> (nth 7 (file-attributes (file-truename spool))) 0)))
+		       (> (nnheader-file-size (file-truename spool)) 0)))
 	  (nnheader-message 3 "%s: Reading incoming mail..." method)
 	  (when (and (nnmail-move-inbox spool)
 		     (file-exists-p nnmail-crash-box))

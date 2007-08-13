@@ -1,6 +1,6 @@
 ;;; lisp-mode.el --- Lisp mode, and its idiosyncratic commands.
 
-;; Copyright (C) 1985, 1993, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1996 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems
 
 ;; Maintainer: FSF
@@ -20,9 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34 (but starting to diverge).
 
 ;;; Commentary:
 
@@ -35,6 +36,7 @@
 (defvar emacs-lisp-mode-syntax-table nil "")
 (defvar lisp-mode-abbrev-table nil "")
 
+;; XEmacs change
 (defvar lisp-interaction-mode-popup-menu
   (purecopy '("Lisp Interaction Menu"
 	      ["Evaluate Last S-expression" eval-last-sexp      t]
@@ -98,6 +100,7 @@
       (modify-syntax-entry ?\n ">   " emacs-lisp-mode-syntax-table)
       ;; Give CR the same syntax as newline, for selective-display.
       (modify-syntax-entry ?\^m ">   " emacs-lisp-mode-syntax-table)
+      ;; XEmacs change
       ;; Treat ^L as whitespace.
       (modify-syntax-entry ?\f "    " emacs-lisp-mode-syntax-table)
       (modify-syntax-entry ?\; "<   " emacs-lisp-mode-syntax-table)
@@ -117,7 +120,9 @@
 (if (not lisp-mode-syntax-table)
     (progn (setq lisp-mode-syntax-table
 		 (copy-syntax-table emacs-lisp-mode-syntax-table))
+	   (modify-syntax-entry ?\| "\"   " lisp-mode-syntax-table)
 	   (modify-syntax-entry ?\[ "_   " lisp-mode-syntax-table)
+	   ;; XEmacs changes
 	   (modify-syntax-entry ?\] "_   " lisp-mode-syntax-table)
            ;;
            ;; If emacs was compiled with NEW_SYNTAX, then do
@@ -126,8 +131,8 @@
                (progn
                  (modify-syntax-entry ?#  "' 58" lisp-mode-syntax-table)
                  (modify-syntax-entry ?|  ". 67" lisp-mode-syntax-table))
-               ;; else, old style
-               (modify-syntax-entry ?\| "\"   " lisp-mode-syntax-table))))
+	     ;; else, old style
+	     (modify-syntax-entry ?\| "\"   " lisp-mode-syntax-table))))
 
 (define-abbrev-table 'lisp-mode-abbrev-table ())
 
@@ -144,8 +149,8 @@
 ;  "Imenu generic expression for Lisp mode.  See `imenu-generic-expression'.")
 
 (defun lisp-mode-variables (lisp-syntax)
-  (if lisp-syntax
-      (set-syntax-table lisp-mode-syntax-table))
+  (cond (lisp-syntax
+	 (set-syntax-table lisp-mode-syntax-table)))
   (setq local-abbrev-table lisp-mode-abbrev-table)
   (make-local-variable 'paragraph-start)
   (setq paragraph-start (concat page-delimiter "\\|$" ))
@@ -155,6 +160,11 @@
   (setq paragraph-ignore-fill-prefix t)
   (make-local-variable 'fill-paragraph-function)
   (setq fill-paragraph-function 'lisp-fill-paragraph)
+  ;; Adaptive fill mode gets in the way of auto-fill,
+  ;; and should make no difference for explicit fill
+  ;; because lisp-fill-paragraph should do the job.
+  (make-local-variable 'adaptive-fill-mode)
+  (setq adaptive-fill-mode nil)
   (make-local-variable 'indent-line-function)
   (setq indent-line-function 'lisp-indent-line)
   (make-local-variable 'indent-region-function)
@@ -163,14 +173,19 @@
   (setq parse-sexp-ignore-comments t)
   (make-local-variable 'outline-regexp)
   (setq outline-regexp ";;; \\|(....")
-  (set (make-local-variable 'comment-start) ";")
+  (make-local-variable 'comment-start)
+  (setq comment-start ";")
+  ;; XEmacs change
   (set (make-local-variable 'block-comment-start) ";;")
   (make-local-variable 'comment-start-skip)
-  (setq comment-start-skip ";+[ \t]*")
+  ;; Look within the line for a ; following an even number of backslashes
+  ;; after either a non-backslash or the line beginning.
+  (setq comment-start-skip "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
   (make-local-variable 'comment-column)
   (setq comment-column 40)
   (make-local-variable 'comment-indent-function)
   (setq comment-indent-function 'lisp-comment-indent)
+  ;; XEmacs changes
 ;  (make-local-variable 'imenu-generic-expression)
 ;  (setq imenu-generic-expression lisp-imenu-generic-expression)
   (set (make-local-variable 'dabbrev-case-fold-search) nil)
@@ -184,10 +199,11 @@
 (if shared-lisp-mode-map
     ()
    (setq shared-lisp-mode-map (make-sparse-keymap))
+   ;; XEmacs changes
    (set-keymap-name shared-lisp-mode-map 'shared-lisp-mode-map)
+   (define-key shared-lisp-mode-map "\M-;" 'lisp-indent-for-comment)
    (define-key shared-lisp-mode-map "\e\C-q" 'indent-sexp)
-   (define-key shared-lisp-mode-map "\177" 'backward-delete-char-untabify)
-   (define-key shared-lisp-mode-map "\M-;" 'lisp-indent-for-comment))
+   (define-key shared-lisp-mode-map "\177" 'backward-delete-char-untabify))
 
 (defvar emacs-lisp-mode-map ()
   "Keymap for Emacs Lisp mode.
@@ -195,20 +211,40 @@ All commands in `shared-lisp-mode-map' are inherited by this map.")
 
 (if emacs-lisp-mode-map
     ()
+  ;; XEmacs:  Ignore FSF nconc stuff
   (setq emacs-lisp-mode-map (make-sparse-keymap))
   (set-keymap-name emacs-lisp-mode-map 'emacs-lisp-mode-map)
   (set-keymap-parents emacs-lisp-mode-map (list shared-lisp-mode-map))
   (define-key emacs-lisp-mode-map "\e\t" 'lisp-complete-symbol)
-  (define-key emacs-lisp-mode-map "\e\C-x" 'eval-defun))
+  (define-key emacs-lisp-mode-map "\e\C-x" 'eval-defun)
+  ;; XEmacs: Not sure what the FSF menu bindings are.  I hope XEmacs
+  ;; doesn't need them.
+)
 
 (defun emacs-lisp-byte-compile ()
   "Byte compile the file containing the current buffer."
   (interactive)
   (if buffer-file-name
+      ;; XEmacs change.  Force buffer save first
       (progn
 	(save-buffer)
 	(byte-compile-file buffer-file-name))
     (error "The buffer must be saved in a file first.")))
+
+(defun emacs-lisp-byte-compile-and-load ()
+  "Byte-compile the current file (if it has changed), then load compiled code."
+  (interactive)
+  (or buffer-file-name
+      (error "The buffer must be saved in a file first"))
+  (require 'bytecomp)
+  ;; Recompile if file or buffer has changed since last compilation.
+  (if (and (buffer-modified-p)
+	   (y-or-n-p (format "save buffer %s first? " (buffer-name))))
+      (save-buffer))
+  (let ((compiled-file-name (byte-compile-dest-file buffer-file-name)))
+    (if (file-newer-than-file-p compiled-file-name buffer-file-name)
+	(load-file compiled-file-name)
+      (byte-compile-file buffer-file-name t))))
 
 (defun emacs-lisp-mode ()
   "Major mode for editing Lisp code to run in Emacs.
@@ -222,6 +258,7 @@ if that value is non-nil."
   (kill-all-local-variables)
   (use-local-map emacs-lisp-mode-map)
   (set-syntax-table emacs-lisp-mode-syntax-table)
+  ;; XEmacs changes
   (setq major-mode 'emacs-lisp-mode
 	mode-popup-menu emacs-lisp-mode-popup-menu
 	mode-name "Emacs-Lisp")
@@ -241,6 +278,7 @@ All commands in `shared-lisp-mode-map' are inherited by this map.")
 
 (if lisp-mode-map
     ()
+  ;; XEmacs changes
   (setq lisp-mode-map (make-sparse-keymap))
   (set-keymap-name lisp-mode-map 'lisp-mode-map)
   (set-keymap-parents lisp-mode-map (list shared-lisp-mode-map))
@@ -270,18 +308,20 @@ if that value is non-nil."
   (run-hooks 'lisp-mode-hook))
 
 ;; This will do unless shell.el is loaded.
+;; XEmacs change
 (defun lisp-send-defun ()
   "Send the current defun to the Lisp process made by \\[run-lisp]."
   (interactive)
   (error "Process lisp does not exist"))
 
 ;; XEmacs change: emacs-lisp-mode-map is a more appropriate parent.
-(defvar lisp-interaction-mode-map nil
+(defvar lisp-interaction-mode-map ()
   "Keymap for Lisp Interaction moe.
-All commands in `emacs-lisp-mode-map' are inherited by this map.")
+All commands in `shared-lisp-mode-map' are inherited by this map.")
 
 (if lisp-interaction-mode-map
     ()
+  ;; XEmacs set keymap our way
   (setq lisp-interaction-mode-map (make-sparse-keymap))
   (set-keymap-name lisp-interaction-mode-map 'lisp-interaction-mode-map)
   (set-keymap-parents lisp-interaction-mode-map (list emacs-lisp-mode-map))
@@ -296,16 +336,18 @@ before point, and prints its value into the buffer, advancing point.
 
 Commands:
 Delete converts tabs to spaces as it moves back.
-Paragraphs are separated only by blank lines.  Semicolons start comments.
+Paragraphs are separated only by blank lines.
+Semicolons start comments.
 \\{lisp-interaction-mode-map}
 Entry to this mode calls the value of `lisp-interaction-mode-hook'
 if that value is non-nil."
   (interactive)
   (kill-all-local-variables)
   (use-local-map lisp-interaction-mode-map)
-  (setq major-mode 'lisp-interaction-mode
-	mode-popup-menu lisp-interaction-mode-popup-menu
-	mode-name "Lisp Interaction")
+  (setq major-mode 'lisp-interaction-mode)
+  (setq mode-name "Lisp Interaction")
+  ;; XEmacs change
+  (setq mode-popup-menu lisp-interaction-mode-popup-menu)
   (set-syntax-table emacs-lisp-mode-syntax-table)
   (lisp-mode-variables nil)
   (run-hooks 'lisp-interaction-mode-hook))
@@ -318,6 +360,7 @@ if that value is non-nil."
     (eval-last-sexp t)
     (terpri)))
 
+;; XEmacs change
 (defun eval-interactive (expr)
   "Like `eval' except that it transforms defvars to defconsts."
   ;; by Stig@hackvan.com
@@ -330,13 +373,14 @@ if that value is non-nil."
 	     (message ""))
     (eval expr)))
 
-(defun eval-last-sexp (eval-last-sexp-arg-internal) ;dynamic scoping wonderment
+(defun eval-last-sexp (eval-last-sexp-arg-internal)
   "Evaluate sexp before point; print value in minibuffer.
 With argument, print output into current buffer."
   (interactive "P")
   (let ((standard-output (if eval-last-sexp-arg-internal (current-buffer) t))
 	(opoint (point)))
     (prin1 (let ((stab (syntax-table)))
+	     ;; XEmacs change use eval-interactive not eval
 	     (eval-interactive (unwind-protect
 				   (save-excursion
 				     (set-syntax-table emacs-lisp-mode-syntax-table)
@@ -346,16 +390,21 @@ With argument, print output into current buffer."
 				       (read (current-buffer))))
 				 (set-syntax-table stab)))))))
 
-(defun eval-defun (eval-defun-arg-internal) ;dynamic scoping wonderment
+(defun eval-defun (eval-defun-arg-internal)
   "Evaluate defun that point is in or before.
 Print value in minibuffer.
 With argument, insert value in current buffer after the defun."
   (interactive "P")
-  (let ((standard-output (if eval-defun-arg-internal (current-buffer) t)))
-    (prin1 (eval-interactive (save-excursion
-			       (end-of-defun)
-			       (beginning-of-defun)
-			       (read (current-buffer)))))))
+  ;; XEmacs: FSF version works, so use it
+  (let ((standard-output (if eval-defun-arg-internal (current-buffer) t))
+	(form (save-excursion
+		(end-of-defun)
+		(beginning-of-defun)
+		(read (current-buffer)))))
+    (if (and (eq (car form) 'defvar)
+	     (cdr-safe (cdr-safe form)))
+	(setq form (cons 'defconst (cdr form))))
+    (prin1 (eval form))))
 
 (defun lisp-comment-indent ()
   (if (looking-at "\\s<\\s<\\s<")
@@ -367,6 +416,7 @@ With argument, insert value in current buffer after the defun."
       (max (if (bolp) 0 (1+ (current-column)))
 	   comment-column))))
 
+;; XEmacs change
 (defun lisp-indent-for-comment ()
   "Indent this line's comment appropriately, or insert an empty comment.
 If adding a new comment on a blank line, use `block-comment-start' instead
@@ -435,6 +485,7 @@ of the start of the containing expression."
   (save-excursion
     (beginning-of-line)
     (let ((indent-point (point))
+	  ;; XEmacs change (remove paren-depth)
           state ;;paren-depth
           ;; setting this to a number inhibits calling hook
           (desired-indent nil)
@@ -449,6 +500,7 @@ of the start of the containing expression."
       ;; Find innermost containing sexp
       (while (and retry
 		  state
+		  ;; XEmacs change (remove paren-depth)
                   (> ;;(setq paren-depth (elt state 0))
 		     (elt state 0)
 		     0))
@@ -517,6 +569,7 @@ of the start of the containing expression."
                     (not retry))
                (or (funcall lisp-indent-function indent-point state)
                    normal-indent))
+	      ;; XEmacs change:
               ;; lisp-indent-offset shouldn't override lisp-indent-function !
               ((and (integerp lisp-indent-offset) containing-sexp)
                ;; Indent by constant offset
@@ -551,7 +604,7 @@ of the start of the containing expression."
 					(progn (forward-sexp 1) (point))))
 	    method)
 	(setq method (or (get (intern-soft function) 'lisp-indent-function)
-                         (get (intern-soft function) 'lisp-indent-hook)))
+			 (get (intern-soft function) 'lisp-indent-hook)))
 	(cond ((or (eq method 'defun)
 		   (and (null method)
 			(> (length function) 3)
@@ -649,21 +702,15 @@ If optional arg ENDPOS is given, indent each line, stopping when
 ENDPOS is encountered."
   (interactive)
   (let ((indent-stack (list nil))
-        (next-depth 0) 
+	(next-depth 0) 
 	;; If ENDPOS is non-nil, use nil as STARTING-POINT
 	;; so that calculate-lisp-indent will find the beginning of
 	;; the defun we are in.
 	;; If ENDPOS is nil, it is safe not to scan before point
 	;; since every line we indent is more deeply nested than point is.
 	(starting-point (if endpos nil (point)))
-        (last-point (point))
-        last-depth 
-        bol
-	(outer-loop-done nil)
-        inner-loop-done
-        state
-        this-indent)
-    ;; Get error now if we don't have a complete sexp after point.
+	(last-point (point))
+	last-depth bol outer-loop-done inner-loop-done state this-indent)
     (or endpos
 	;; Get error now if we don't have a complete sexp after point.
 	(save-excursion (forward-sexp 1)))
@@ -700,15 +747,6 @@ ENDPOS is encountered."
 		(forward-line 1)
 		(setcar (nthcdr 5 state) nil))
 	    (setq inner-loop-done t)))
-;	Chuck had a comment here saying that the alternate code
-;	(the next sexp after this one) led to an infine loop.
-;	Since merging some changes in from FSF 19.30, I'm going
-;	to try going the FSF way and see what happens.
-;	(and endpos
-;	     (while (<= next-depth 0)   ;XEmacs change
-;	       (setq indent-stack (append indent-stack (list nil)))
-;	       (setq next-depth (1+ next-depth))
-;	       (setq last-depth (1+ last-depth))))
 	(and endpos
 	     (<= next-depth 0)
 	     (progn
@@ -717,7 +755,7 @@ ENDPOS is encountered."
 		     last-depth (- last-depth next-depth)
 		     next-depth 0)))
 	(or outer-loop-done endpos
-            (setq outer-loop-done (<= next-depth 0)))
+	    (setq outer-loop-done (<= next-depth 0)))
 	(if outer-loop-done
 	    (forward-line 1)
 	  (while (> last-depth next-depth)
@@ -739,9 +777,8 @@ ENDPOS is encountered."
 		     (>= (car indent-stack) 0))
 		(setq this-indent (car indent-stack))
 	      (let ((val (calculate-lisp-indent
-			  (if (car indent-stack) 
-                              (- (car indent-stack))
-                              starting-point))))
+			  (if (car indent-stack) (- (car indent-stack))
+			    starting-point))))
 		(if (integerp val)
 		    (setcar indent-stack
 			    (setq this-indent val))
@@ -763,7 +800,6 @@ ENDPOS is encountered."
 	   (lisp-indent-line))
       (indent-sexp endmark)
       (set-marker endmark nil))))
-
 
 ;;;; Lisp paragraph filling commands.
 
@@ -776,6 +812,9 @@ and initial semicolons."
   (let (
 	;; Non-nil if the current line contains a comment.
 	has-comment
+
+	;; Non-nil if the current line contains code and a comment.
+	has-code-and-comment
 
 	;; If has-comment, the appropriate fill-prefix for the comment.
 	comment-fill-prefix
@@ -795,50 +834,87 @@ and initial semicolons."
        ;; A line with some code, followed by a comment?  Remember that the
        ;; semi which starts the comment shouldn't be part of a string or
        ;; character.
-       ((progn
-	  (while (not (looking-at ";\\|$"))
-	    (skip-chars-forward "^;\n\"\\\\?")
-	    (cond
-	     ((eq (char-after (point)) ?\\) (forward-char 2))
-	     ((memq (char-after (point)) '(?\" ??)) (forward-sexp 1))))
-	  (looking-at ";+[\t ]*"))
-	(setq has-comment t)
+       ;; XEmacs Try this the FSF and see if it works.
+;       ((progn
+;	  (while (not (looking-at ";\\|$"))
+;	    (skip-chars-forward "^;\n\"\\\\?")
+;	    (cond
+;	     ((eq (char-after (point)) ?\\) (forward-char 2))
+;	     ((memq (char-after (point)) '(?\" ??)) (forward-sexp 1))))
+;	  (looking-at ";+[\t ]*"))
+;	(setq has-comment t)
+       ((condition-case nil
+	    (save-restriction
+	      (narrow-to-region (point-min)
+				(save-excursion (end-of-line) (point)))
+	      (while (not (looking-at ";\\|$"))
+		(skip-chars-forward "^;\n\"\\\\?")
+		(cond
+		 ((eq (char-after (point)) ?\\) (forward-char 2))
+		 ((memq (char-after (point)) '(?\" ??)) (forward-sexp 1))))
+	      (looking-at ";+[\t ]*"))
+	  (error nil))
+	(setq has-comment t has-code-and-comment t)
 	(setq comment-fill-prefix
-	      (concat (make-string (current-column) ? )
+	      (concat (make-string (/ (current-column) 8) ?\t)
+		      (make-string (% (current-column) 8) ?\ )
 		      (buffer-substring (match-beginning 0) (match-end 0)))))))
 
     (if (not has-comment)
 	(fill-paragraph justify)
 
       ;; Narrow to include only the comment, and then fill the region.
-      (save-restriction
-	(narrow-to-region
-	 ;; Find the first line we should include in the region to fill.
-	 (save-excursion
-	   (while (and (zerop (forward-line -1))
-		       (looking-at "^[ \t]*;")))
-	   ;; We may have gone to far.  Go forward again.
-	   (or (looking-at "^[ \t]*;")
-	       (forward-line 1))
-	   (point))
-	 ;; Find the beginning of the first line past the region to fill.
-	 (save-excursion
-	   (while (progn (forward-line 1)
+      (save-excursion
+	(save-restriction
+	  (beginning-of-line)
+	  (narrow-to-region
+	   ;; Find the first line we should include in the region to fill.
+	   (save-excursion
+	     (while (and (zerop (forward-line -1))
 			 (looking-at "^[ \t]*;")))
-	   (point)))
+	     ;; We may have gone too far.  Go forward again.
+	     (or (looking-at ".*;")
+		 (forward-line 1))
+	     (point))
+	   ;; Find the beginning of the first line past the region to fill.
+	   (save-excursion
+	     (while (progn (forward-line 1)
+			   (looking-at "^[ \t]*;")))
+	     (point)))
 
-	;; Lines with only semicolons on them can be paragraph boundaries.
-	(let ((paragraph-start (concat paragraph-start "\\|[ \t;]*$"))
-	      (paragraph-separate (concat paragraph-start "\\|[ \t;]*$"))
-	      (fill-prefix comment-fill-prefix))
-	  (fill-paragraph justify))))
+	  ;; Lines with only semicolons on them can be paragraph boundaries.
+	  (let* ((paragraph-start (concat paragraph-start "\\|[ \t;]*$"))
+		 (paragraph-separate (concat paragraph-start "\\|[ \t;]*$"))
+		 (paragraph-ignore-fill-prefix nil)
+		 (fill-prefix comment-fill-prefix)
+		 (after-line (if has-code-and-comment
+				 (save-excursion
+				   (forward-line 1) (point))))
+		 (end (progn
+			(forward-paragraph)
+			(or (bolp) (newline 1))
+			(point)))
+		 ;; If this comment starts on a line with code,
+		 ;; include that like in the filling.
+		 (beg (progn (backward-paragraph)
+			     (if (eq (point) after-line)
+				 (forward-line -1))
+			     (point))))
+	    (fill-region-as-paragraph beg end
+				      justify nil
+				      (save-excursion
+					(goto-char beg)
+					(if (looking-at fill-prefix)
+					    nil
+					  (re-search-forward comment-start-skip)
+					  (point))))))))
     t))
-
 
 (defun indent-code-rigidly (start end arg &optional nochange-regexp)
   "Indent all lines of code, starting in the region, sideways by ARG columns.
-Does not affect lines starting inside comments or strings,
-assuming that the start of the region is not inside them.
+Does not affect lines starting inside comments or strings, assuming that
+the start of the region is not inside them.
+
 Called from a program, takes args START, END, COLUMNS and NOCHANGE-REGEXP.
 The last is a regexp which, if matched at the beginning of a line,
 means don't indent that line."

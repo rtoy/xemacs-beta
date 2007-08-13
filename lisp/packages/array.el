@@ -22,7 +22,7 @@
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
 ;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -806,7 +806,7 @@ but will cause many functions to give errors if they encounter one.
 
   Upon entering array mode, you will be prompted for the values of
 several variables.  Others will be calculated based on the values you
-supply.  These variables are all local the the buffer.  Other buffer
+supply.  These variables are all local to the buffer.  Other buffers
 in array mode may have different values assigned to the variables.
 The variables are:
 

@@ -353,6 +353,10 @@ Boston, MA 02111-1307, USA.  */
 */
 #undef HAVE_CDE
 
+/* Define this if you want to use the OffiX Drag and Drop
+*/
+#undef HAVE_OFFIX_DND
+
 /* Mocklisp Support. */
 #undef MOCKLISP_SUPPORT
 
@@ -479,7 +483,7 @@ typedef unsigned long EMACS_UINT;
 
 /* Define NEED_XILDOFF if the -xildoff flag must be passed to cc to
    avoid invoking the incremental linker ild which is incompatible
-   with dynodump.  This is needed for recent Sunsoft compilers. */
+   with dynodump.  This is needed for recent Sun compilers. */
 #undef NEED_XILDOFF
 
 /* Define ENERGIZE to compile with support for the Energize Programming System.
@@ -599,6 +603,9 @@ on various systems. */
 /* file-information calls */
 
 #if defined (DEBUG_ENCAPSULATION)
+#ifdef HAVE_EACCESS
+# define ENCAPSULATE_EACCESS
+#endif
 # define ENCAPSULATE_ACCESS
 # define ENCAPSULATE_LSTAT
 # define ENCAPSULATE_READLINK

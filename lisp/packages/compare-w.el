@@ -20,7 +20,7 @@
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
 ;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Whatever was here before didn't look any more correct than the
 ;;; FSF version, so I've junked it and replaced it with the FSF version.

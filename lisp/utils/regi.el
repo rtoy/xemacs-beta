@@ -1,13 +1,13 @@
 ;;; regi.el --- REGular expression Interpreting engine
 
+;; Copyright (C) 1993 Free Software Foundation, Inc.
+
 ;; Author: 1993 Barry A. Warsaw, Century Computing, Inc. <bwarsaw@cen.com>
 ;; Maintainer:    bwarsaw@cen.com
 ;; Created:       24-Feb-1993
 ;; Version:       1.8
 ;; Last Modified: 1993/06/01 21:33:00
-;; Keywords:      extensions, matching, wp
-
-;; Copyright (C) 1993 Barry A. Warsaw
+;; Keywords:      extensions, matching
 
 ;; This file is part of XEmacs.
 
@@ -23,14 +23,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;; LCD Archive Entry
-;; regi|Barry A. Warsaw|bwarsaw@cen.com
-;; |REGular expression Interpreting engine
-;; |1993/06/01 21:33:00|1.8|
-
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Code:
 
@@ -113,7 +109,7 @@ t       -- always produces a true outcome
 `every' -- execute after frame is matched on a line
 
 Note that NEGATE-P and CASE-FOLD-SEARCH are meaningless if PRED is one
-of these special symbols.  Only the first occurance of each symbol in
+of these special symbols.  Only the first occurrence of each symbol in
 a frame entry is used, the rest are ignored.
 
 Your FUNC can return values which control regi processing.  If a list

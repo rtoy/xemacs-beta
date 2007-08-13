@@ -347,7 +347,7 @@ See also the variable completion-highlight-first-word-only for control over
 		 (setq mode-motion-hook 'minibuffer-mouse-tracker))
 	     (make-local-variable 'mouse-track-click-hook)
 	     (add-hook 'mouse-track-click-hook
-		       'minibuffer-maybe-select-highlighted-completion))
+		       'minibuffer-smart-maybe-select-highlighted-completion))
            (set-window-buffer window buffer)
            (select-window window)
            (set-window-hscroll window 0)
@@ -999,7 +999,7 @@ This is not enabled by default because
 (defun minibuffer-smart-select-kludge-filename (string)
   (save-excursion
     (set-buffer mouse-grabbed-buffer) ; the minibuf
-    (let ((kludge-string (append (buffer-string) string)))
+    (let ((kludge-string (concat (buffer-string) string)))
       (if (or (and (fboundp 'ange-ftp-ftp-path)
 		   (ange-ftp-ftp-path kludge-string))
 	       (and (fboundp 'efs-ftp-path) (efs-ftp-path kludge-string)))
@@ -1015,7 +1015,7 @@ when the mouse moves over them.  Clicking \\<minibuffer-local-map>\
 \\[minibuffer-smart-select-highlighted-completion] will select the
 highlighted completion under the mouse.
 
-If the mouse is clicked while while not over a highlighted completion,
+If the mouse is clicked while not over a highlighted completion,
 then the global binding of \\[minibuffer-smart-select-highlighted-completion] \
 will be executed instead.  In this\nway you can get at the normal global \
 behavior of \\[minibuffer-smart-select-highlighted-completion] as well as

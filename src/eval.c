@@ -114,7 +114,7 @@ struct specbinding *specpdl;
 /* Pointer to first unused element in specpdl.  */
 struct specbinding *specpdl_ptr;
 
-/* specpdl_ptr - specpdl.  Callers outside this this file should use
+/* specpdl_ptr - specpdl.  Callers outside this file should use
  *  specpdl_depth () function-call */
 static int specpdl_depth_counter;
 
@@ -4620,13 +4620,15 @@ call2_trapping_errors (CONST char *warning_string, Lisp_Object function,
 /*                     The special binding stack                      */
 /**********************************************************************/
 
+#define min_max_specpdl_size 400
+
 static void
 grow_specpdl (void)
 {
   if (specpdl_size >= max_specpdl_size)
     {
-      if (max_specpdl_size < 400)
-	max_specpdl_size = 400;
+      if (max_specpdl_size < min_max_specpdl_size)
+	max_specpdl_size = min_max_specpdl_size;
       if (specpdl_size >= max_specpdl_size)
 	{
 	  if (!NILP (Vdebug_on_error) || !NILP (Vdebug_on_signal))

@@ -347,7 +347,7 @@ saved as a result of copying from, say, buffer B to A).
 
 Some commands take negative prefix arguments as well.
 For instance, typing @kbd{-} and then @kbd{j} will take Ediff to the last
-difference. Typing @kbd{-2} then @kbd{j} takes Ediff to to the penultimate
+difference. Typing @kbd{-2} then @kbd{j} takes Ediff to the penultimate
 difference region, etc.
 
 Without the prefix argument, all commands operate on the current

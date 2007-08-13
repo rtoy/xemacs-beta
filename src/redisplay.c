@@ -140,8 +140,8 @@ typedef struct position_redisplay_data_type
   face_index findex;
 
   /* The height of a pixmap may either be predetermined if the user
-     has set a baseline value, or it may be depedent on whatever the
-     line ascent and descent values end up being based just on font
+     has set a baseline value, or it may be dependent on whatever the
+     line ascent and descent values end up being, based just on font
      information.  In the first case we can immediately update the
      values, thus their inclusion here.  In the last case we cannot
      determine the actual contribution to the line height until we
@@ -416,7 +416,7 @@ int toolbar_changed_set;
 /* non-nil if any window has changed since the last time redisplay completed */
 int windows_changed;
 
-/* non-nil if any frame's window struture has changed since the last
+/* non-nil if any frame's window structure has changed since the last
    time redisplay completed */
 int windows_structure_changed;
 
@@ -869,7 +869,7 @@ add_emchar_rune (pos_data *data)
 	    data->last_char_width = fi->width;
 	  else
 	    data->last_char_width = -1;
-	  data->new_ascent = max (data->new_ascent, (int) fi->ascent);
+	  data->new_ascent  = max (data->new_ascent,  (int) fi->ascent);
 	  data->new_descent = max (data->new_descent, (int) fi->descent);
 	}
 
@@ -4035,14 +4035,13 @@ tail_recurse:
 }
 
 /* The caller is responsible for freeing the returned string. */
-char *
+Bufbyte *
 generate_formatted_string (struct window *w, Lisp_Object format_str,
 			   Lisp_Object result_str, face_index findex, int type)
 {
   struct display_line *dl;
   struct display_block *db;
   int elt = 0;
-  char *retval;
 
   dl = &formatted_string_display_line;
   db = get_display_block_from_line (dl, TEXT);
@@ -4057,15 +4056,13 @@ generate_formatted_string (struct window *w, Lisp_Object format_str,
       if (Dynarr_atp (db->runes, elt)->type == RUNE_CHAR)
 	Dynarr_add (formatted_string_emchar_dynarr,
 		    Dynarr_atp (db->runes, elt)->object.chr.ch);
-
       elt++;
     }
 
-  retval = (char *) (convert_emchar_string_into_malloced_string
-		     (Dynarr_atp (formatted_string_emchar_dynarr, 0),
-		      Dynarr_length (formatted_string_emchar_dynarr), 0));
-
-  return retval;
+  return
+    convert_emchar_string_into_malloced_string
+    ( Dynarr_atp (formatted_string_emchar_dynarr, 0),
+      Dynarr_length (formatted_string_emchar_dynarr), 0);
 }
 
 /* Update just the modeline.  Assumes the desired display structs.  If
@@ -4144,6 +4141,7 @@ int
 real_current_modeline_height (struct window *w)
 {
   Fset_marker (w->start[CMOTION_DISP], w->start[CURRENT_DISP], w->buffer);
+  Fset_marker (w->pointm[CMOTION_DISP], w->pointm[CURRENT_DISP], w->buffer);
 
   if (ensure_modeline_generated (w, CMOTION_DISP))
     {

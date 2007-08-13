@@ -36,9 +36,9 @@ notice identical to this one except for the removal of this paragraph
 @center @titlefont{Emacs-W3}
 @center @titlefont{User's Manual}
 @sp 4
-@center Third Edition, Emacs-W3 Version 2.3.0
+@center Third Edition, Emacs-W3 Version 3.0
 @sp 1
-@center February 1996
+@center August 1996
 @sp 5
 @center William M. Perry
 @center @i{wmperry@@cs.indiana.edu}
@@ -60,8 +60,8 @@ which runs as a subsystem under Emacs.  The manual is divided into the
 following chapters.
 
 @menu
-* Introduction::                What exactly is Emacs-W3?
-* Setting Up::                  How to set up and install Emacs-W3.
+* Introduction::                Overview of Emacs-W3.
+* Starting Up::                 What happens when you start Emacs-W3
 * Basic Usage::                 Basic movement and usage of Emacs-W3.
 * Compatibility::               Explanation of compatibility with
                                 other web browsers.
@@ -75,8 +75,6 @@ following chapters.
 * More Help::                   How to get more help---mailing lists,
                                 newsgroups, etc.
 * Future Directions::           Plans for future revisions
-* Programming Interface::       How to use Emacs-W3 from other emacs
-                                programs.
 
 Appendices:
 * Reporting Bugs::              How to report a bug in Emacs-W3
@@ -90,7 +88,7 @@ Indices:
 @end menu
 @end ifinfo
 
-@node Introduction, Setting Up, Top, Top
+@node Introduction, Starting Up, Top, Top
 @chapter Introduction
 @cindex World Wide Web
 Emacs-W3 is an Emacs subsystem that allows the user to browse the wonderful
@@ -225,29 +223,13 @@ archive@footnote{ftp://ds.internic.net/}.  It is RFC 1866.
 @center ----------
 @end ifinfo
 @iftex
-@section HTML 3.0
+@section HTML 3.2
 @end iftex
-@cindex HTML 3.0
-The HTML 3.0 language is an extension of HTML, with a large degree of
-backward compatibility with HTML 2.0.  The idea of having one huge HTML
-3.0 document has been dropped in favor of several smaller supplementatry
-RFCs.  This will allow the standard to be upgraded much more quickly
-than trying to agree on all the features at once.
+@cindex HTML 3.2
+The HTML 3.2 language is an extension of HTML, with a large degree of
+backward compatibility with HTML 2.0.  This basically documents current
+practice as of January, 1996.
 
-As each new chunk of HTML 3.0 is proposed and agreed upon, Emacs-W3 will
-support it.
-
-:: WORK :: List currently supported chunks (embed, etc) ::
-@itemize @bullet
-@item Embed
-Embedding of arbitrary objects into an HTML document.  With the <embed>
-tag, any type of document can be inserted.  The most entertaining use of
-this is with embedding MPEG movies into an emacs buffer.  This requires
-Lucid Emacs 19.10, or XEmacs 19.11, as well as a slightly patched
-version of mpeg_play 2.0@footnote{The patch is available from
-ftp://ftp.cs.indiana.edu/pub/elisp/w3/mpeg_patch}.
-
-@end itemize
 @ifinfo
 @center ----------
 @center Netscape-HTML
@@ -257,15 +239,11 @@ ftp://ftp.cs.indiana.edu/pub/elisp/w3/mpeg_patch}.
 @section Netscape-HTML
 @end iftex
 I hate to say it, but I broke down and actually included some of the
-Netscape extensions into Emacs-W3.
+Netscape extensions into Emacs-W3.  The thing I hate to say even more,
+is that most of the uglier things in Netscape-HTML are now in the HTML
+3.2 specification.  All hail the W3Cs lack of backbone.
 
 @table @b
-@item <font>...</font>
-Changes the font size.  Valid values range from 0-7. The default
-font size is 3. The value given can optionally have a '+' or '-'
-character in front of it to specify that it is relative to the document
-basefont.  Stylesheets are recommended instead, as they allow much
-greater control.@xref{Style Sheets}
 @item <center>...</center>
 This ugly, ill-thought-out alternative to the HTML 3.0 align attribute on
 headers and paragraphs was included for compatibility, and as an example
@@ -273,40 +251,6 @@ of how @b{not} to do things.
 @item <isindex>
 The isindex tag can now take a prompt attribute, to get rid of the
 default 'This is a searchable index' label.
-@item <hr width=xx align=xx>
-The width and alignment of a horizontal rule can now be controlled.  The
-WIDTH attribute specifies how wide the rule should be, as a percentage
-of the window width.
-
-
-The ALIGN attribute specifies where the horizontal rule is placed.
-Valid values are left, right, center, and indent.
-@item <body background=@var{URL} bgcolor=@var{RGB} TEXT=@var{RGB} LINK=@var{RGB} ALINK=@var{RGB} VLINK=@var{RGB}>
-Various colors can now be set on a document wide basis.  This is done
-with various attributes on the BODY tag.  Stylesheets are really a
-better way to do this, and are recommended.  This is just for
-compatibility.  @xref{Style Sheets}
-@b{NOTE:} Netscape requires that all colors be specified in RGB values -
-this is not very intuitive for the avergage author, so Emacs-W3 allows
-you to use logical system colors (ie: @samp{"PaleGoldenrod"} instead of
-@samp{"#eee8aa"}).
-@table @b
-@item BACKGROUND=@var{url}
-Specifies a graphic to tile in the background of the document.  This
-only works in XEmacs 19.12 or later.
-@item BGCOLOR=@var{color}
-Specifies the background of the document, as a color instead of a
-graphic.
-@item TEXT=@var{color}
-Specifies the color of text on the page.
-@item LINK=@var{color}
-Specifies the color of hypertext links on the page.
-@item VLINK=@var{color}
-Specifies the color of hypertext links that have been visited already.
-@item ALINK=@var{color}
-Specifies the color of active hypertext links (links that have been
-clicked on, but not yet fully retrieved).
-@end table
 @end table
 @ifinfo
 @center ----------
@@ -425,10 +369,9 @@ an NNTP server can be specified.  URLs of the form
 news://hostname:port/messageID work, but will not work in most other
 browsers.
 
-
 @item HTTP
-Supports both the HTTP/0.9 and HTTP/1.0 protocols.  Fully MIME-compliant
-with regards to HTTP/1.0.
+Supports the HTTP/0.9, HTTP/1.0, and HTTP/1.1 protocols.  Fully
+MIME-compliant with regards to HTTP/1.0.
 @item Gopher
 Support for all gopher types, including CSO queries.
 @item Gopher+
@@ -469,83 +412,22 @@ can be found on EIT's web server at
 http://www.commerce.net/information/standards/drafts/shttp.txt.
 @end table
 
-@node Setting Up, Retrieving Emacs-W3, Introduction, Top
+@node Starting Up, Basic Setup, Introduction, Top
 @comment  node-name,  next,  previous,  up
-@chapter Setting Up
-@cindex Setting Up Emacs-W3
-@cindex Retrieving Emacs-W3
+@chapter Starting Up
+@cindex Starting Up Emacs-W3
 This section of the manual deals with getting, compiling, and
 configuring @i{Emacs-W3}.
 @ifinfo
 @menu
-* Retrieving Emacs-W3::         Retrieving Emacs-W3 via anonymous ftp
-* Compiling Emacs-W3::          Compiling Emacs-W3 and its associated files
 * Basic Setup::                 Basic setup that everyone needs to do
 * Firewalls::                   How to set Emacs-W3 up to use a particular
                                 firewall setup.
 * Proxy Gateways::              Using a proxy server
 @end menu
 @end ifinfo
-@node Retrieving Emacs-W3, Compiling Emacs-W3, Setting Up, Setting Up
-@comment  node-name,  next,  previous,  up
-@section Retrieving Emacs-W3
 
-:: WORK :: Document that Emacs-W3 now requires the URL package as well
-
-@node Compiling Emacs-W3, Basic Setup, Retrieving Emacs-W3, Setting Up
-@comment  node-name,  next,  previous,  up
-@section Compiling Emacs-W3
-To install Emacs-W3, go into the @file{w3} subdirectory and edit the
-@file{Makefile}.  These variables might need to be changed:
-@table @code
-@item EMACS
-This variable controls what version of Emacs is used to compile the
-programs.  It should be the full path to the Emacs executable on the
-system.  The default is to use GNU Emacs (@file{emacs}).
-@item LISPDIR
-This variable controls where the lisp code is copied to when it is
-installed (with @code{make install}).  This is usually the users
-personal lisp code directory.  The value is run through
-@dfn{expand-file-name} and then added to the load-path.  Default is
-@file{~/lisp}.
-@item DOTEMACS
-This variable points to the Emacs customization file, default is
-@file{~/.emacs}.
-@item INFODIR
-This variable points to the local info directory.  This can be any valid
-directory, as long as it is in @code{Info-default-directory-list} so
-that info-mode can find it.  Default is @file{/usr/local/info/}.
-
-@item MAKEINFO
-This variables controls how the info files are built.  Possible values
-are @code{makeinfo} or @code{emacs -batch -q -f
-batch-texinfo-format}.  Default is @code{makeinfo}.
-@end table
-Once the @file{Makefile} has been modified, several different targets
-can be built.
-@table @code
-@item make w3
-This compiles all the .el files into the much faster .elc files.
-@item make install
-Compiles all the .el files and copies .el and .elc files into the
-directory specified by @code{LISPDIR}.
-@item make emacs
-Modifies the file specified by @code{DOTEMACS}.  A statement modifying
-the load-path variable and several autoload statements are added to the
-end of the file.
-@item make all
-Compiles and installs the .el files, and also modify/create the
-@code{DOTEMACS} file.
-@item make w3.info
-Creates the Emacs-readable info files.  The info files are created in
-the directory specified by @code{INFODIR}.  The makefile variable
-@code{MAKEINFO} determines how the info file is built.
-@item make w3.dvi
-Creates the printable documentation, using tex and texindex to properly
-generate the indices.  A @file{w3.dvi} file is left in the current
-directory.
-@end table
-@node Basic Setup, Firewalls, Compiling Emacs-W3, Setting Up
+@node Basic Setup, Firewalls, Starting Up, Starting Up
 @comment  node-name,  next,  previous,  up
 @section Basic Setup
 There are a few variables that almost all people need to change.
@@ -644,7 +526,7 @@ the title of the window, the program name to execute, and the server and
 port number.  The default is for xterm, which is very UNIX and
 XWindows-centric.
 @end table
-@node Firewalls, Proxy Gateways, Basic Setup, Setting Up
+@node Firewalls, Proxy Gateways, Basic Setup, Starting Up
 @comment  node-name,  next,  previous,  up
 @section Firewalls
 @cindex Gateways
@@ -663,11 +545,10 @@ a serial line.  More information is available at
 ftp://sunsite.unc.edu/pub/Linux/apps/comm/term} for slip-like access to
 the internet.
 
-
-NOTE: Emacs 19.22 has patches to enable native TERM networking.  To
-enable it, #define TERM in the appropriate s/*.h file for the operating
-system, then change the SYSTEM_LIBS define to include the @file{termnet}
-library that comes with the latest versions of TERM.
+NOTE: XEmacs and Emacs 19.22 or later have patches to enable native TERM
+networking.  To enable it, #define TERM in the appropriate s/*.h file
+for the operating system, then change the SYSTEM_LIBS define to include
+the @file{termnet} library that comes with the latest versions of TERM.
  
 @item
 @cindex Faulty hostname resolvers
@@ -681,7 +562,6 @@ off the local network.  This is characterized by being able to reach
 someplace with a raw ip number, but not its hostname
 (http://129.79.254.191/ works, but http://www.cs.indiana.edu/ doesn't).
 
-
 If for some reason it is not feasible to recompile Emacs with the
 @file{-lresolv} library or dynamic linking, it is just like being behind
 a firewall.  Another alternative is to set the variable
@@ -690,16 +570,6 @@ EFS to use @file{nslookup} in a subprocess to do all hostname resolving.
 See the variables @code{efs-nslookup-program},
 @code{efs-nslookup-on-connect}, and @code{efs-nslookup-threshold} if are
 using EFS, or @code{ange-ftp-nslookup-program} if using Ange-FTP.
-
-@cindex Connections hanging with XEmacs & solaris
-@cindex Solaris networking problems
-@cindex XEmacs & Solaris network problems
-@item
-Running XEmacs 19.x and Solaris 2.x (SunOS 5.x).  For some reason,
-network processes under Solaris and XEmacs never get a status of
-@code{exit} or @code{closed}.  This causes retrieval of HTTP and gopher
-pages to hang indefinitely, with Emacs chewing up large amounts of CPU
-time.
 
 @end enumerate
 
@@ -758,7 +628,6 @@ connection.  This should be a regular expression to watch for that
 signifies the end of the setup of @code{url-gateway-telnet-program}.
 The default should work fine for telnet.
 
-
 @cindex Host-based gateways
 @cindex Hair-pulling gateway-headaches
 @vindex url-gateway-host
@@ -774,7 +643,6 @@ reached.  The easiest way is to have a program that does not require a
 username and password to login.  The most common of these is the
 @dfn{rsh} command.
 
-
 @vindex url-gateway-program-interactive
 @vindex url-gateway-handholding-password-regexp
 @vindex url-gateway-handholding-login-regexp
@@ -788,7 +656,6 @@ necessary to log into the gateway machine.  The regular expressions in
 the variables @code{url-gateway-handholding-login-regexp} and
 @code{url-gateway-handholding-password-regexp} should match the login
 and password prompts on the gateway system respectively.  For example:
-
 
 @example
 (setq url-gateway-connect-program "telnet"
@@ -809,7 +676,6 @@ expression that matches the shell prompt on the remote machine.  This
 should appear @b{no where} in the login banner/setup, or things could
 get very confused.
 
-
 @vindex url-gateway-host-program-ready-regexp
 @vindex url-gateway-host-program
 The variable @code{url-gateway-host-program-ready-regexp} should contain
@@ -817,7 +683,6 @@ a regular expression that matches the end of the setup of
 @code{url-gateway-host-program} when it tries to make a connection to an
 off-firewall machine.  (Basically the same as
 @code{url-gateway-telnet-ready-regexp}.
-
 
 Emacs-W3 should now be able to get outside the local network.  If none
 of this makes sense, its probably my fault.  Please check with the
@@ -827,19 +692,55 @@ through something similar to this before, and would be much more
 helpful/knowledgeable about the local setup than I would be.  But feel
 free to mail me as a last resort.
 
-
-@node Proxy Gateways, Basic Usage, Firewalls, Setting Up
+@node Proxy Gateways, Basic Usage, Firewalls, Starting Up
 @comment  node-name,  next,  previous,  up
 @section Proxy Gateways
-In late January 1993, Kevin Altis and Lou Montulli proposed and implemented a
-new proxy service.  This service requires the use of environment
-variables to specify a gateway server/port # to send protocol requests
-to.  Each protocol (HTTP, WAIS, gopher, FTP, etc.@:) can have a
-different gateway server.  The environment variables are
-@var{PROTOCOL}_proxy, where @var{PROTOCOL} is one of gopher, file, HTTP,
-FTP, or WAIS.
+@vindex url-proxy-services
+@cindex Proxy Servers
+@cindex Proxies
+@cindex Proxies, environment variables
+@cindex HTTP Proxy
+In late January 1993, Kevin Altis and Lou Montulli proposed and
+implemented a new proxy service.  This service requires the use of
+environment variables to specify a gateway server/port # to send
+protocol requests to.  Each protocol (HTTP, WAIS, gopher, FTP, etc.@:)
+can have a different gateway server.  The environment variables are
+@var{PROTOCOL}_proxy, where @var{PROTOCOL} is one of the supported
+network protocols (gopher, file, HTTP, FTP, etc.)
 
-:: WORK ::
+@cindex No Proxy
+@cindex Proxies, exclusion lists
+@vindex NO_PROXY
+For companies with internal intranets, it will usually be helpful to
+define a list of hosts that should be contacted directly, @b{not} sent
+through the proxy.  The @var{NO_PROXY} environment variable controls
+what hosts are able to be contacted directly.  This should be a comma
+separated list of hostnames, domain names, or a mixture of both.
+Asterisks can be used as a wildcard.  For example:
+
+@example
+NO_PROXY=*.aventail.com,home.com,*.seanet.com
+@end example
+
+tells Emacs-W3 to contact all machines in the @b{aventail.com} and
+@b{seanet.com} domains directly, as well as the machine named
+@b{home.com}.
+
+@vindex url-proxy-services
+@cindex Proxies, setting from lisp
+For those adventurous souls who enjoy writing regular expressions, all
+the proxy settings can be manipulated from Emacs-Lisp.  The variable
+@code{url-proxy-services} controls this.  This is an assoc list, keyed
+on the protocol type (http, gopher, etc) in all lowercase.  The
+@code{cdr} of each entry should be the fully-specified URL of the proxy
+server to contact, or, in the case of the special "no_proxy" entry, a
+regular expression that matches any hostnames that should be contacted
+directly.
+
+@example
+(setq url-proxy-services '(("http"     . "http://proxy.aventail.com/")
+                           ("no_proxy" . "^.*\\(aventail\\|seanet\\)\.com")))
+@end example
 
 @node Basic Usage, , Proxy Gateways, Top
 @comment  node-name,  next,  previous,  up
@@ -1928,7 +1829,6 @@ been superseded by SSL and Secure-HTTP.@xref{Using PGP/PEM}
 * VMS::                 The wonderful world of VAX|AXP-VMS!
 * OS/2::                The next-best thing to Unix.
 * MS-DOS::              The wonderful world of MS-DOG!
-* 16-Bit Windows::      Windows 3.1, 3.11, and WFW 3.11.
 * 32-Bit Windows::      Windows NT, Chicago/Windows 95.
 * Amiga::               The Amiga, for those who still love them.
 @end menu
@@ -1948,7 +1848,7 @@ been superseded by SSL and Secure-HTTP.@xref{Using PGP/PEM}
 @cindex Warp
 :: WORK :: OS/2 Specific instructions
 
-@node MS-DOS, 16-Bit Windows, OS/2, Non-Unix Operating Systems
+@node MS-DOS, 32-Bit Windows, OS/2, Non-Unix Operating Systems
 @section MS-DOS
 @cindex MS-DOS
 @cindex Microsloth
@@ -1956,17 +1856,8 @@ been superseded by SSL and Secure-HTTP.@xref{Using PGP/PEM}
 @cindex MS-DOG
 :: WORK :: DOS Specific instructions
 
-@node 16-Bit Windows, 32-Bit Windows, MS-DOS, Non-Unix Operating Systems
-@section 16-Bit Windows
-@cindex 16-Bit Windows
-@cindex Microsloth
-@cindex Windows (16-Bit)
-@cindex Windows For Workgroups
-:: WORK :: 16bit Windows Specific instructions
-
-@node 32-Bit Windows, Amiga, 16-Bit Windows, Non-Unix Operating Systems
+@node 32-Bit Windows, Amiga, MS-DOS, Non-Unix Operating Systems
 @section 32-Bit Windows
-@cindex Chicago
 @cindex Windows (32-Bit)
 @cindex 32-Bit Windows
 @cindex Microsloth
@@ -2019,8 +1910,8 @@ unreadable.
 @example
 <style notation="css">
 /* This is a comment
-** These will be ignored, up to the terminating end-of-line
-#
+** These will be ignored, up to the terminating */
+
 h1 @{ align: center,
      color: yellow,
      background: red,
@@ -2114,10 +2005,10 @@ Emacs-W3 caches files under the temporary directory specified by
 @code{url-temporary-directory}, in a user-specific subdirectory
 (determined by the @code{user-real-login-name} function).  The cache
 files are stored under their original names, so a URL like:
-http://www.spry.com/foo/bar/baz.html would be stored in a cache file
-named: /tmp/wmperry/com/spry/www/foo/bar/baz.html.  Sometimes, espcially
-with gopher links, there will be name conflicts, and an error will be
-signalled.  This cannot be avoided, and still have reasonable
+http://www.aventail.com/foo/bar/baz.html would be stored in a cache file
+named: /tmp/wmperry/com/aventail/www/foo/bar/baz.html.  Sometimes,
+espcially with gopher links, there will be name conflicts, and an error
+will be signalled.  This cannot be avoided, and still have reasonable
 performance at startup time (reading in an index file of all the cached
 pages can take a long time on slow machines, or even fast machines with
 large caches).  When running XEmacs 19.12 or later, a different naming
@@ -2144,16 +2035,19 @@ recommend this method of creating the cache filename.
 @cindex VM
 @cindex Using Emacs-W3 with VM
 @cindex GNUS
-@cindex Using Emacs-W3 with GNUS
+@cindex Using Emacs-W3 with Gnus
 @cindex RMAIL
 @cindex Using Emacs-W3 with RMAIL
 More and more people are including URLs in their signatures, and within
 the body of mail messages.  It can get quite tedious to type these into
 the minibuffer to follow one. 
 
-With the latest versions of VM (the 5.9x series of betas), URLs are
-highlighted, and can be followed with the mouse or the return
-key.
+@vindex browse-url-browser-function
+With the latest versions of VM (the 5.9x series of betas) and Gnus
+(5.x), URLs are automatically highlighted, and can be followed with the
+mouse or the return key.  How the URLs are viewed is determined by the
+variable @code{browse-url-browser-function}, and it should be set to the
+symbol @code{browse-url-w3}.
 
 To access URLs from within RMAIL, the following hook should do the
 trick.
@@ -2163,18 +2057,6 @@ trick.
 	   (lambda ()
 	     (define-key rmail-mode-map [mouse-2] 'w3-maybe-follow-link-mouse)
 	     (define-key rmail-mode-map "\r"      'w3-maybe-follow-link))))
-@end example
-
-To access URLs from within GNUS, the following hook should do the
-trick.
-@example
-(add-hook 'gnus-article-mode-hook
-          (function
-            (lambda ()
-              (define-key gnus-article-mode-map [mouse-2]
-                          'w3-maybe-follow-link-mouse)
-              (define-key gnus-article-mode-map "\r"
-                          'w3-maybe-follow-link))))
 @end example
 
 @node Debugging HTML, Native WAIS Support, Interfacing to Mail/News, Advanced Features
@@ -2300,12 +2182,6 @@ What function to use for asking yes or no functions.  Possible values
 are @code{'yes-or-no-p} or @code{'y-or-n-p}, or any function that takes
 a single argument (the prompt), and returns @code{t} only if a positive
 answer is gotten.  Defaults to @code{'yes-or-no-p}.
-@item w3-delimit-links
-@vindex w3-delimit-links
-:: WORK :: This is going away, and should be specified with stylesheets instead
-@item w3-delimit-emphasis
-@vindex w3-delimit-emphasis
-:: WORK :: This is going away, and should be specified with stylesheets instead
 @item w3-default-action
 @vindex w3-default-action
 A lisp symbol specifying what action to take for files with extensions
@@ -2443,414 +2319,15 @@ changes, new servers, new software, etc.
 
 As a last resort, mail me.  I'll try to answer as quickly as I can.
 
-@node Future Directions, Programming Interface, More Help, Top
+@node Future Directions, Reporting Bugs, More Help, Top
 @chapter Future Directions
 Changes are constantly being made to the Emacs browser (hopefully all
 for the better).  This is a list of the things that are being worked on
 right now.
 
 :: WORK :: Revamp the todo list
-@node Programming Interface, Generalized ZONES, Future Directions, Top
-@comment  node-name,  next,  previous,  up
-@chapter Internals of Emacs-W3
-@cindex Internals of Emacs-W3
-@cindex Using Emacs-W3 from other programs
-This chapter attempts to explain some of the internal workings of
-Emacs-W3 and various data structures that are used.  It also details
-some functions that are useful for using some of the Emacs-W3
-functionality from within other programs, or extending the current
-capabilities of Emacs-W3.
 
-@ifinfo
-@menu
-* Generalized ZONES::           A generic interface to 'zones' of text
-                                that can contain information.
-* Global Variables::            Global variables used throughout Emacs-W3
-* Data Structures::             The various data structures used in Emacs-W3
-* Miscellaneous Functions::     Miscellaneous functions to interface
-                                with w3 and access its data structures
-* MIME functions::              MIME functions---parsing messages,
-                                mailcap files, and more.
-@end menu
-@end ifinfo
-@node Generalized ZONES, Global Variables,Programming Interface, Programming Interface, Programming Interface
-@comment  node-name,  next,  previous,  up
-@section Generalized ZONES
-Due to the many different @i{flavors} of Emacs in existence, the
-addition of data and font information to arbitrary regions of text has
-been generalized.  The following functions are defined for
-using/manipulating these @dfn{zones} of data.
-
-@table @code
-@findex w3-add-zone
-@item w3-add-zone (start end style data &optional highlight)
-Creates a zone between buffer positions start and end, with font
-information specified by style, and a data segment of data.  If the
-optional argument highlight is non-@code{nil}, then the region
-highlights when the mouse moves over it.
-
-
-@findex w3-zone-at
-@item w3-zone-at (point)
-Returns the zone at @var{point}.  Preference is given to hypertext
-links, then to form entry areas, then to inlined images.  So if an
-inlined image was part of a hypertext link, this would always return the
-hypertext link.
-
-@findex w3-zone-data
-@item w3-zone-data (zone)
-Returns the zone's data segment. The data structures used in Emacs-W3 are
-relatively simple.  They are just list structures that follow a certain
-format.  The two main data types are @dfn{form objects}, @dfn{link
-objects},and @dfn{inlined images}.  All the information for these types
-of links are stored as lists.
-
-@findex w3-zone-hidden-p
-@item w3-zone-hidden-p (zone)
-Returns @code{t} if and only if a zone is currently invisible.
-@findex w3-hide-zone
-@item w3-hide-zone (start end)
-Makes a region of text from @code{start} to @code{end} invisible.
-@findex w3-unhide-zone
-@item w3-unhide-zone (start end)
-Makes a region of text from @code{start} to @code{end} visible
-again.
-@findex w3-zone-start
-@item w3-zone-start (zone)
-Returns an integer that is the start of zone, as a buffer position.  In
-Emacs 18.xx, this returns a marker instead of an integer, but it can be
-used just like an integer.
-@findex w3-zone-end
-@item w3-zone-end (zone)
-Returns an integer that is the end of zone, as a buffer position.  In
-Emacs 18.xx, this returns a marker instead of an integer, but it can be
-used just like an integer.
-@findex w3-zone-eq
-@item w3-zone-eq (zone1 zone2)
-Returns @code{t} if and only if zone1 and zone2 represent the same
-region of text in the same buffer, with the same properties and
-data.
-@findex w3-delete-zone
-@item w3-delete-zone (zone)
-Removes zone from its buffer (or current buffer).  The return value is
-irrelevant, and varies for each version of Emacs.
-@findex w3-all-zones
-@item w3-all-zones ()
-Returns a list of all the zones contained in the current buffer.  Useful
-for extracting information about hypertext links or form entry
-areas.  Programs should not rely on this list being sorted, as the order
-varies with each version of Emacs.
-@item w3-zone-at (pt)
-Returns the zone at character position PT in the current buffer that is
-either a link or a forms entry area.  Returns @code{nil} if no link at
-point.
-
-@end table
-@findex w3-zone-data
-These data structures are what is generally returned by
-@code{w3-zone-data}.
-
-@node Global Variables, Data Structures , Generalized ZONES, Programming Interface
-@comment  node-name,  next,  previous,  up
-@section Global variables
-There are also some variables that may be useful when writing a program
-or function that interacts with Emacs-W3.  All of the
-@code{w3-current-*} variables are local to each buffer.
-
-
-@table @code
-@vindex url-current-mime-headers
-@item url-current-mime-headers
-An assoc list of all the MIME headers for the current document.  Keyed
-on the lowercase MIME header (e.g., @samp{content-type} or
-@samp{content-encoding}.
-@vindex url-current-server
-@item url-current-server
-Server that the current document was retrieved from.
-@vindex url-current-file
-@item url-current-file
-Filename of the current document
-@vindex url-current-type
-@item url-current-type
-A string representing what network protocol was used to retrieve the
-current buffer's document.  Can be one of http, gopher, file, ftp, news,
-or mailto.
-@vindex url-current-port
-@item url-current-port
-Port # of the current document.
-@vindex w3-current-last-buffer
-@item w3-current-last-buffer
-The last buffer seen before this one.
-@vindex w3-running-FSF19
-@item w3-running-FSF19
-This is @code{t} if and only if we are running in FSF Emacs 19.
-@vindex w3-running-xemacs
-@item w3-running-xemacs
-This is @code{t} if and only if we are running in Lucid Emacs, WinEmacs, or
-XEmacs.
-@end table
-
-@node Data Structures, Miscellaneous Functions, Global Variables, Programming Interface
-@comment  node-name,  next,  previous,  up
-@section Data Structures
-Form objects are used to store information about a FORM data entry area.
-@enumerate
-@item
-@code{'w3form}
-@item
-A cons pair of (METHOD . URL), where METHOD specifies what method to use
-to retrieve the form when it is submitted (e.g., @samp{GET}) and URL is a
-fully specified URL pointing at where to submit the FORM data to.
-@item
-The type of input area this is.  (e.g., @samp{CHECKBOX} or
-@samp{RADIO})
-@item
-The name of the input tag.  This is used when sending the form to the
-server, so that the server can tell what data is what.
-@item
-The default value of the input area.  Gotten from the INPUT tag at
-creation time.
-@item
-The current value of the input area.
-@item
-Whether the item is checked or not.  Only used for RADIO or CHECKBOX
-items.
-@item
-The size (in characters) of the input area.  Not used for CHECKBOX,
-RADIO, or TEXTAREA input areas.
-@item
-The maximum length of the input.  Only used for TEXT or PASSWORD input
-areas.
-@item
-The form that this input area belongs to.  Each form in the same buffer
-has a unique identifier assigned when the document is parsed.  It is
-used when the form is submitted to get only the data for the correct
-form.
-@item
-A list of strings that represent the choices for this input area.  Only
-used for SELECT tags.
-@item
-A string or @code{nil}, specifying the ID attribute on this input
-tag.
-@end enumerate
-
-A new development in the World Wide Web is the concept of collapsible
-areas of text.  If a zone controls one of these regions, it is marked
-with the @b{w3expandlist} property.  The format of this structure
-is:
-
-@enumerate
-@item
-@code{'w3expandlist}
-@item
-A marker representing the start of the hidden text as a buffer position.
-@item
-A marker representing the end of the hidden text as a buffer position.
-@end enumerate
-
-A zone with the @b{w3graphic} property is a link to an inlined image's
-source file.
-@enumerate
-@item
-@code{'w3graphic}
-@item
-@findex w3-follow-inlined-image
-The full URL of the inlined image.  This is only ever returned if the
-inlined image is the only extent under point, or
-@code{w3-follow-inlined-image} is invoked.
-@end enumerate
-
-A zone with the @b{w3} property is a full-fledged hypertext link to
-another document.
-@enumerate
-@item
-@code{'w3}
-@item
-The ID attribute of this link.  Used for resolving references to
-specific points within a document (e.g., @samp{file.html#sectionA}.
-@item
-The HREF attribute of this link.  This is a fully specified URL pointing
-at a network resource.  All relative directory references should have
-been removed before being stored in this structure.
-@item
-The text between the <A> and </A> tags.  This is used to build menus or
-to get the text of a link without doing a buffer-substring.
-@item
-The URN attribute of this link.  Currently not used for anything,
-waiting for the URN specification to be hammered out.
-@item
-The REL attribute of this link.  Specifies the links relevance to the
-current document.
-@item
-The REV attribute of this link.  Specifies the current documents
-relevance to the link.
-@item
-The METHODS attribute, which tells what methods can be used on this
-link.  (e.g., @samp{GET, HEAD, PUT}.
-@end enumerate
-@node Miscellaneous Functions, MIME functions, Data Structures, Programming Interface
-@comment  node-name,  next,  previous,  up
-@section Miscellaneous Functions
-I have done quite a bit of work trying to make a clean interface to the
-internals of Emacs-W3.
-
-@table @code
-@findex url-clear-tmp-buffer
-@vindex url-working-buffer
-@item url-clear-tmp-buffer
-Sets the current buffer to be @code{url-working-buffer}, creating it if
-necessary, and erase it.  This should usually be called before
-retrieving URLs.
-
-@findex w3-convert-html-to-latex
-@item w3-convert-html-to-latex
-Takes a buffer of HTML markup (which should be in
-@code{w3-working-buffer}), and convert it into LaTeX.  This is an
-adaptation of the simple sed scripts from Cern.  Does as good a job as
-the html2latex program, and I usually prefer its formatting over
-html2latex's.
-
-@findex w3-fetch
-@item w3-fetch
-Takes a URL as its only argument. It then attempts to retrieve the URL.
-For example: @samp{(w3-fetch "http://cs.indiana.edu/")} would retrieve
-the Indiana University CS home page and parse it as HTML.
-
-
-@findex url-generate-new-buffer-name
-@item url-generate-new-buffer-name
-Takes a string, and returns the first unique buffer name using that
-string as a base.  For example @samp{(url-generate-new-buffer-name
-"new-buff")} would return @samp{"new-buff<1>"} if buffer @code{new-buff}
-already existed.
-
-
-@findex url-generate-unique-filename
-@item url-generate-unique-filename
-Returns a string that represents a unique filename in the /tmp
-directory.  For example, @samp{(url-generate-unique-filename)} would
-return @samp{"/tmp/url-tmp129440"}.  The filename is arrived at by using
-a unique prefix (url-tmp), the uid of the current user (12944 in my
-case), and a number that is incremented if a file already exists.
-
-
-@findex url-buffer-visiting
-@item url-buffer-visiting (url)
-Returns the name of a buffer (if any) that is visiting URL.
-
-@findex url-create-mime-request
-@vindex url-request-extra-headers
-@vindex url-request-data
-@vindex url-request-method
-@vindex url-mime-accept-string
-@vindex url-current-server
-@cindex Creating an HTTP request
-@item url-create-mime-request (fname ref-url)
-Creates a MIME request for the file fname.  The Referer: field of the
-HTTP/1.0 request is set to the value of ref-url if necessary.  Returns a
-string that can be sent to an HTTP server.  The request uses several
-variables that control how the request looks.
-
-
-If the value of @code{url-request-extra-headers} is non-@code{nil}, then
-it is used as extra MIME headers when an HTTP/1.0 request is
-created.
-
-@findex url-get-url-at-point
-@item url-get-url-at-point
-Returns the url at a point specified by an optional argument.  If no
-argument is given to the function, the current buffer position is used.
-Tries to find the URL closest to that point, but does not change the
-users position in the buffer.  Has a preference for looking backward
-when not directly on a URL.
-
-
-@findex url-hexify-string
-@item url-hexify-string
-Takes a string and replaces any characters that are not acceptable in a
-URL with the "escaped" encoding that is standard for URLs (replaces the
-character with a % followed by the hexadecimal representation of the
-ASCII value of the character).  For example, @samp{(url-hexify-string
-"this is a test")} would return @samp{"this%20is%20a%20test"}.
-
-
-@findex url-open-stream
-@item url-open-stream
-Takes the same parameters as @code{open-network-stream}, and functions
-similarly.  It takes a process name, a buffer name, a host name, and a
-port number or server name.  It attempts to open a network connection to
-the remote host on the specified port/service name, with output going to
-the buffer.  It returns the process object that is the network
-connection.
-
-
-@findex url-retrieve
-@item url-retrieve
-:: WORK :: Need to describe the url-request-* variables and the no-cache and
-   expected-md5 arguments to url-retrieve ::
-
-
-@findex url-unhex-string
-@item url-unhex-string
-This is the opposite of @code{url-hexify-string}.  It removes any %XXX
-encoded characters in a string.  For example @samp{(url-unhex-string
-"this%20is%20a%20test")} would return @samp{"this is a test"}.
-
-@findex w3-view-this-url
-@item w3-view-this-url
-Returns the URL of the hyperlink under point (if no hyperlink is under
-point, then it returns @code{nil}).  If the optional argument is
-@code{nil}, then the URL is also displayed in the minibuffer.
-
-
-@findex url-view-url
-@item url-view-url
-Returns the URL of current document.  If the optional argument is
-@code{nil}, then the URL is also displayed in the minibuffer.
-
-@end table
-
-@node MIME functions, Reporting Bugs, Miscellaneous Functions, Programming Interface
-@section MIME Functions
-@table @code
-@item mm-compose-type(TYPE)
-Composes a body section of MIME-type TYPE.  This uses the compose field
-of a mailcap entry to generate the data, and returns a string that
-contains the data, with a correct content-type header.
-
-@item mm-extension-to-mime(EXTN)
-Returns the MIME content-type of the file extension EXTN.
-@item mm-mime-info(ST ND REQUEST)
-Returns the mime viewer command for a specific MIME type.  If ST is a
-number, then the MIME type is the @code{buffer-substring} between ST and
-ND, otherwise ST should be a string specifying the MIME type and
-associated data.  Returns @code{nil} if the specified type is not found.
-
-
-Expects a complete content-type header line as its argument.  This can
-be simple like text/html, or complex like text/plain; charset=blah; foo=bar
-
-
-Third argument REQUEST specifies what information to return.  If it is
-@code{nil} or the empty string, the viewer (second field of the mailcap
-entry) is returned.  If it is a string, then the mailcap field
-corresponding to that string is returned (print, description, whatever).
-If a number, then all the information for this specific viewer is
-returned.
-@item mm-parse-mailcap(FILE)
-Parses the mailcap file specified by FILE.
-@item mm-parse-mailcaps(PATH)
-Parses the default mailcap files.  Optional argument PATH specifies a
-UNIX-style path of where to find the mailcap files.  This function must
-be run before the rest of the mm-* functions.
-@item mm-parse-mimetype-file(FILE)
-Parses out a mime-types file specified by FILE.
-@item mm-parse-mimetypes(PATH)
-Parses the default mimetypes files.  Optional argument PATH specifies a
-UNIX-style path of where to find the mimetypes files.
-@end table
-
-@node Reporting Bugs, Installing SSL, MIME functions, Top
+@node Reporting Bugs, Installing SSL, Future Directions, Top
 @appendix Reporting Bugs
 @cindex Reporting Bugs
 @cindex Bugs

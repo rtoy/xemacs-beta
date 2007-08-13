@@ -57,11 +57,12 @@ Editing commands:
   ;; auto-show-mode is too confusing in this mode
   (setq auto-show-mode nil)
   (setq	mode-popup-menu edit-faces-menu)
-  (if current-menubar
-      (progn
-	(set (make-local-variable 'current-menubar)
-	     (copy-sequence current-menubar))
-	(add-submenu nil edit-faces-menu))))
+  (if (featurep 'menubar)
+      (if current-menubar
+	  (progn
+	    (set (make-local-variable 'current-menubar)
+		 (copy-sequence current-menubar))
+	    (add-submenu nil edit-faces-menu)))))
 
 (let ((map edit-faces-mode-map))
   (define-key map "<" 'ef-smaller)

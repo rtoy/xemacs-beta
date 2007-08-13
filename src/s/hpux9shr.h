@@ -5,7 +5,7 @@
 #define ORDINARY_LINK
 
 /* XEmacs change */
-/* Only support for hp9000s300 currently */
+/* Only support for hp9000s700 currently */
 #if !defined(__hp9000s300)
 /* #ifndef USE_GCC */
 #define HPUX_USE_SHLIBS

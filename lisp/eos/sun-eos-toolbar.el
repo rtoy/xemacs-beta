@@ -272,6 +272,49 @@ static char * file[] = {
      (expand-file-name "eos-step-into.xbm" eos::toolbar-icon-directory)))
   "A Step Into icon pair.")
 
+(defvar eos::toolbar-step-up-icon
+  (if (featurep 'xpm)
+      (toolbar-make-button-list
+       "/* XPM */
+static char * file[] = {
+\"28 28 5 1\",
+\" 	c #C8C8C8C8C8C8 s backgroundToolBarColor\",
+\".	c #000000000000\",
+\"O	c #0000FFFF0000\",
+\"+	c #000077770000\",
+\"@	c #000044440000\",
+\"                            \",
+\"                            \",
+\"                            \",
+\"                            \",
+\"                            \",
+\"                            \",
+\"         .                  \",
+\"         ..      .......    \",
+\"         .O.                \",
+\"      ....O@.               \",
+\"     .++++++@.   .......    \",
+\"    .O+++++++@.             \",
+\"    .O++OOO+@.              \",
+\"    .O+...O@.    .......    \",
+\"    .O+. .O.                \",
+\"    .O+. ..                 \",
+\"    .O+. .                  \",
+\"    .O+.                    \",
+\"    .O+....   ........      \",
+\"    .O++++.                 \",
+\"     .OOOO.                 \",
+\"      .....   .......       \",
+\"                            \",
+\"                            \",
+\"                            \",
+\"                            \",
+\"                            \",
+\"                            \"};")
+    (toolbar-make-button-list
+     (expand-file-name "eos-step-up.xbm" eos::toolbar-icon-directory)))
+  "A Step up icon pair.")
+
 (defvar eos::toolbar-step-over-icon
   (if (featurep 'xpm)
       (toolbar-make-button-list
@@ -921,6 +964,10 @@ static char * info[] = {
 	 eos::step
 	 eos::current-debugger-clique-id
 	 "step: Step into subprogram calls)"]
+	[eos::toolbar-step-up-icon
+	 eos::step-up
+	 eos::current-debugger-clique-id
+	 "step up: Step up from subprogram calls)"]
 	[eos::toolbar-build-icon
 	 eos::build
 	 eos::current-debugger-clique-id
@@ -989,6 +1036,10 @@ static char * info[] = {
 	 eos::step
 	 eos::current-debugger-clique-id
 	 "step: Step into subprogram calls)"]
+	[eos::toolbar-step-up-icon
+	 eos::step-up
+	 eos::current-debugger-clique-id
+	 "step up: Step up from subprogram calls)"]
 	[eos::toolbar-build-icon
 	 eos::build
 	 eos::current-debugger-clique-id

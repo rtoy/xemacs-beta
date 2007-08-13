@@ -670,7 +670,7 @@ the ancestor."
 
 (autoload 'emerge-execute-line "emerge"
   "Process the current line.  Based on entries found, call emerge correctly
-on the files files listed."
+on the files listed."
 	t)
 
 - Use with Ange-FTP

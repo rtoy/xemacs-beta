@@ -93,6 +93,11 @@
  ;; kp_enter is ok
  (append
   ;; Sun Function keys
+  (cond ((x-keysym-on-keyboard-p "F21")
+         '((f21 . pause)
+           (f22 . print)
+           (f23 . scroll_lock))))
+         
   (cond ((x-keysym-on-keyboard-p "SunCut") ; X11 R6 mappings
          '((SunProps . props) (Undo     . undo)
            (SunFront . front) (SunCopy  . copy)
@@ -114,41 +119,54 @@
          (f25 . kp_divide)
          (f26 . kp_multiply)
          (f31 . kp_5))
+       
+       ;; Map f33 and r13 to end or kp_end
+       (cond
+        ((not (x-keysym-on-keyboard-p "End"))
+         '((f33 . end)    (r13 . end)))
+        ((not (x-keysym-on-keyboard-p "KP_End"))
+         '((f33 . kp_end) (r13 . kp_end))))
+  
        (if (x-keysym-on-keyboard-p "F36")
            '((f36 . stop) (f37 . again)) ; MIT Type 5 name
-         '((f11 . stop) (f12 . again))))) ; Sun name or MIT Type 4 name
+         '((f11 . stop) (f12 . again)))  ; Sun name or MIT Type 4 name
     
-  ;; Type 4 keyboards have a real kp_subtract  and a f24 labelled `='
-  ;; Type 5 keyboards have no key labelled `=' and a f24 labelled `-'
-  (if (x-keysym-on-keyboard-p "F24")
-      (if (x-keysym-on-keyboard-p "KP_Subtract")
-          '((f24 . kp_equal))
-        '((f24 . kp_subtract))))
+       ;; Type 4 keyboards have a real kp_subtract  and a f24 labelled `='
+       ;; Type 5 keyboards have no key labelled `=' and a f24 labelled `-'
+       (if (x-keysym-on-keyboard-p "F24")
+           (if (x-keysym-on-keyboard-p "KP_Subtract")
+               '((f24 . kp_equal))
+             '((f24 . kp_subtract))))
   
-  ;; Map f33 (Sun name) or r13 (MIT name) to end or kp_end
-  (cond ((x-keysym-on-keyboard-p "F33")
-         (cond ((not (x-keysym-on-keyboard-p "End"))    '((f33 . end)))
-               ((not (x-keysym-on-keyboard-p "KP_End")) '((f33 . kp_end)))))
-        ((x-keysym-on-keyboard-p "R13")
-         (cond ((not (x-keysym-on-keyboard-p "End"))    '((r13 . end)))
-               ((not (x-keysym-on-keyboard-p "KP_End")) '((r13 . kp_end))))))
-  
-   ;; Map f27 to home or kp_home, as appropriate
-  (cond ((not (x-keysym-on-keyboard-p "Home"))    '((f27 . home)))
-        ((not (x-keysym-on-keyboard-p "KP_Home")) '((f27 . kp_home))))
+       ;; Map f27 to home or kp_home, as appropriate
+       (cond ((not (x-keysym-on-keyboard-p "Home"))    '((f27 . home)))
+             ((not (x-keysym-on-keyboard-p "KP_Home")) '((f27 . kp_home))))
 
-   ;; Map f29 to prior or kp_prior, as appropriate
-  (cond ((not (x-keysym-on-keyboard-p "Prior"))     '((f29 . prior)))
-        ((not (x-keysym-on-keyboard-p "KP_Prior"))  '((f29 . kp_prior))))
+       ;; Map f29 to prior or kp_prior, as appropriate
+       (cond ((not (x-keysym-on-keyboard-p "Prior"))     '((f29 . prior)))
+             ((not (x-keysym-on-keyboard-p "KP_Prior"))  '((f29 . kp_prior))))
 
-  ;; Map f35 to next or kp_next, as appropriate
-  (cond ((not (x-keysym-on-keyboard-p "Next"))    '((f35 . next)))
-        ((not (x-keysym-on-keyboard-p "KP_Next")) '((f35 . kp_next))))
+       ;; Map f35 to next or kp_next, as appropriate
+       (cond ((not (x-keysym-on-keyboard-p "Next"))    '((f35 . next)))
+             ((not (x-keysym-on-keyboard-p "KP_Next")) '((f35 . kp_next))))
+       ))
 
   (cond ((x-keysym-on-keyboard-p "apRead") ; SunOS 4.1.1
          '((apRead . f11) (apEdit . f12)))
         ((x-keysym-on-keyboard-p "SunF36") ; SunOS 5
          '((SunF36 . f11) (SunF37 . f12))))
+
+  ;; !@#$ SunOS 4 with SunOS5 X server
+  (if (string-match "sunos4.1" system-configuration)
+      '((unknown_keysym_0xFF9A . kp_prior)
+        (unknown_keysym_0xFF9B . kp_next)
+        (unknown_keysym_0xFF95 . kp_home)
+        (unknown_keysym_0xFF9C . kp_end)
+        (unknown_keysym_0xFF96 . kp_left)
+        (unknown_keysym_0xFF97 . kp_up)
+        (unknown_keysym_0xFF98 . kp_right)
+        (unknown_keysym_0xFF99 . kp_down)
+        (unknown_keysym_0xFF9E . kp_insert)))
   ))
 
 (fmakunbound 'x11-remap-keysyms-using-function-key-map)

@@ -1,6 +1,6 @@
-;;; $Id: eiffel3.el,v 1.1.1.1 1996/12/18 03:30:45 steve Exp $
+;;; $Id: eiffel3.el,v 1.1.1.2 1996/12/18 03:44:36 steve Exp $
 ;;;--------------------------------------------------------------------------
-;;; TowerEiffel -- Copyright (c) 1993,1994 Tower Technology Corporation. 
+;;; TowerEiffel -- Copyright (c) 1993-1996 Tower Technology Corporation. 
 ;;; All Rights Reserved.
 ;;; 
 ;;; Use, duplication, or disclosure is subject to restrictions as set forth 
@@ -12,9 +12,11 @@
 ;;; as granting such availability to the rest of TowerEiffel.
 ;;;--------------------------------------------------------------------------
 ;;; Portions of the file, as indicated below, were derived from "eiffel.el"
-;;; and "eif-mult-fmt.el
-;;; Copyright (C) 1989, 1990 Free Software Foundation, Inc. and Bob Weiner
-;;; Available for use and distribution under the same terms as GNU Emacs.
+;;; (developed by Stephen Omohundro, ISE and Bob Weiner) and "eif-mult-fmt.el"
+;;; (developed by Bob Weiner):
+;;;   eiffel.el and eif-mult-fmt.el are Copyright (C) 1989, 1990 
+;;;   Free Software Foundation, Inc. and Bob Weiner
+;;;   Available for use and distribution under the same terms as GNU Emacs.
 
 ;;; Synched up with: Not in FSF.
 
@@ -458,7 +460,7 @@ negative.")
        (defconst eiffel-font-lock-keywords
 	 (purecopy
 	  '(;; major keywords
-	    ("\\(^[ \t]*\\|[ \t]+\\)creation\\|^deferred[ \t]+class\\|^expanded[ \t]+class\\|^class\\|^feature\\|^indexing\\|\\(^[ \t]*\\|[ \t]+\\)inherit\\|^obsolete" 0 eif-major-keyword nil)
+	    ("\\(\\(^[ \t]*\\|[ \t]+\\)creation\\|^deferred[ \t]+class\\|^expanded[ \t]+class\\|^class\\|^feature\\|^indexing\\|\\(^[ \t]*\\|[ \t]+\\)inherit\\|^obsolete\\)[ \t\n]" 0 eif-major-keyword nil)
 	    ;; assertions
 	    ("\\(^\\|[^_\n]\\<\\)\\(check\\|ensure then\\|ensure\\|invariant\\|require else\\|require\\|variant\\)\\($\\|\\>[^_\n]\\)" 2 eif-assertion nil)
 	    ;; minor keywords
@@ -1345,21 +1347,6 @@ the `end' minus the value of eif-check-keyword-indent."
     )
   )
 
-(defun eif-current-line-indent ()
-  "Return the indentation of the line containing the point."
-  (save-excursion
-    (let ((line-end 0)
-	  (indent   0)
-	  )
-      (end-of-line)
-      (setq line-end (point))
-      (beginning-of-line)
-      (re-search-forward eif-white-space-regexp line-end t)
-      (setq indent (current-column))
-      )
-    )
-  )
-
 (defun eif-line-contains-close-paren ()
   "This function returns t if the current line contains a close paren and
 nil otherwise. If a close paren is found, the point is placed immediately
@@ -1394,41 +1381,6 @@ placed at the beginning of the line."
 ;;;    (looking-at "^\\([ \t]*%\\|[^\"\n]*\"\\)[^\"\n]*\\(%$\\|\"\\)")
 ;;;  )
 ;;;)
-
-(defun eif-in-quoted-string-p (&optional non-strict-p)
-  "t if point is in a quoted string. Optional argument NON-STRICT-P if true
-causes the function to return true even if the point is located in leading
-white space on a continuation line. Normally leading white space is not
-considered part of the string."
-  (let ((initial-regexp "^[ \t]*%\\|[^%]\"\\|%[ \t]*$")
-	(search-limit (point))
-	(count 0)
-	)
-    (save-excursion
-      ;; Line must either start with optional whitespace immediately followed
-      ;; by a '%' or include a '\"' before the search-limit.
-      (beginning-of-line)
-      (while (re-search-forward initial-regexp search-limit t)
-	(setq count (1+ count))
-	(if (= count 1) (setq search-limit (1+ search-limit)))
-	)
-      ;; If the number of quotes (including continuation line markers) is odd, 
-      ;; then we are inside of a string. Also if non-strict-p and we are in 
-      ;; the leading white space of a continuation line, then we are in a quote.
-      (if (= (% count 2) 1)
-	  t
-	(beginning-of-line)
-	(if non-strict-p
-	    (if (looking-at "^[ \t]*%")
-		t
-	      nil
-	      )
-	  nil
-	  );; if
-	);; if
-      );; save-excursion
-    );; let
-  );; e-in-quoted-string
 
 (defvar eif-opening-regexp 
   "\\<\\(external\\|check\\|deferred\\|do\\|once\\|from\\|if\\|inspect\\)\\>"
@@ -1484,7 +1436,7 @@ construct containing the point."
 	  (beginning-of-line)
 	  ;; Set starting state: If direction was specified use it.
 	  ;; If direction is nil, search for a keyword on the current line
-	  ;; If the keyword in in eif-opening-regexp, set the search 
+	  ;; If the keyword is in eif-opening-regexp, set the search 
 	  ;; direction to 'forward, if the keyword on the current line is `end' 
 	  ;; set the search direction to 'backward.
 	  (cond ((eq direction 'forward)
@@ -1830,6 +1782,9 @@ only that line is indented"
   (setq eiffel-mode-map (make-sparse-keymap))
   (define-key eiffel-mode-map "\t" 'eif-indent-line)
   (define-key eiffel-mode-map "\C-j" 'eif-newline)
+  (if (and (boundp 'eif-cr-function) eif-cr-function)
+      (define-key eiffel-mode-map "\C-m" eif-cr-function)
+    )
   (define-key eiffel-mode-map "\177" 'backward-delete-char-untabify)
   (define-key eiffel-mode-map "\M-\C-q" 'eif-indent-construct)
   (define-key eiffel-mode-map "\M-'" 'eif-feature-quote)
@@ -1882,6 +1837,85 @@ only that line is indented"
     (search-backward "--" (save-excursion (beginning-of-line) (point)) t)))
 
 
+;; ENHANCEME: Currently eif-beginning-of-feature only works for routines. 
+;;            It should be made more general.
+;;
+
+(defun eif-beginning-of-feature (&optional arg)
+  "Move backward to next feature beginning. With argument, do this that many 
+times. Returns t unless search stops due to beginning of buffer."
+  (interactive "p")
+  (and arg (< arg 0) (forward-char 1))
+  (if (or (re-search-backward eif-multiline-routine-is-keyword-regexp 
+			      nil t (or arg 1))
+	  (re-search-backward eif-is-keyword-regexp 
+			      nil 'move (or arg 1))	  
+	  )
+      (progn
+	(backward-sexp 1)
+	(if (looking-at "(")
+	    (backward-word 1)
+	  )
+	(beginning-of-line)
+	)
+    nil
+    )
+  )
+
+(defun eif-current-line-indent ()
+  "Return the indentation of the line containing the point."
+  (save-excursion
+    (let ((line-end 0)
+	  (indent   0)
+	  )
+      (end-of-line)
+      (setq line-end (point))
+      (beginning-of-line)
+      (re-search-forward eif-white-space-regexp line-end t)
+      (setq indent (current-column))
+      )
+    )
+  )
+
+(defun eif-in-quoted-string-p (&optional non-strict-p)
+  "t if point is in a quoted string. Optional argument NON-STRICT-P if true
+causes the function to return true even if the point is located in leading
+white space on a continuation line. Normally leading white space is not
+considered part of the string."
+  (let ((initial-regexp "^[ \t]*%\\|[^%]\"\\|%[ \t]*$")
+	(search-limit (point))
+	(count 0)
+	)
+    (save-excursion
+      ;; Line must either start with optional whitespace immediately followed
+      ;; by a '%' or include a '\"' before the search-limit.
+      (beginning-of-line)
+      (while (re-search-forward initial-regexp search-limit t)
+	(setq count (1+ count))
+	(if (= count 1) (setq search-limit (1+ search-limit)))
+	)
+      ;; If the number of quotes (including continuation line markers) is odd, 
+      ;; then we are inside of a string. Also if non-strict-p and we are in 
+      ;; the leading white space of a continuation line, then we are in a quote.
+      (if (= (% count 2) 1)
+	  t
+	(beginning-of-line)
+	(if non-strict-p
+	    (if (looking-at "^[ \t]*%")
+		t
+	      nil
+	      )
+	  nil
+	  );; if
+	);; if
+      );; save-excursion
+    );; let
+  );; e-in-quoted-string
+
+;;; ----------------------------------------------------------------------
+;;; End of portion derived from "eiffel.el"
+;;; ----------------------------------------------------------------------
+
 (defun eif-comment-prefix ()
   "Prefix that starts a comment that begins a line.
    Comments that are not the only thing on a line return nil as their prefix."
@@ -1910,28 +1944,26 @@ only that line is indented"
 
 
 (defun eif-auto-fill ()
-  (if (> (current-column) fill-column)
-      (let ((fill-prefix (eif-comment-prefix)) (pm (point-marker)))
-	(if fill-prefix
-	    (if (string-match "^[ \t]*%" fill-prefix)
-		(progn
-		  (backward-char 1)
-		  (re-search-backward "[^][a-zA-Z0-9]" nil t)
-		  (forward-char 1)
-		  (insert "%\n")
-		  (insert fill-prefix)
-		  (goto-char pm)
-		  )
-	      ;; (do-auto-fill)
+  (let ((fill-prefix (eif-comment-prefix)) (pm (point-marker)))
+    (if (and (> (current-column) fill-column) fill-prefix)
+	(if (string-match "^[ \t]*%" fill-prefix)
+	    (progn
 	      (backward-char 1)
-	      (re-search-backward "\\s-" nil t)
+	      (re-search-backward "[^][a-zA-Z0-9]" nil t)
 	      (forward-char 1)
-	      (insert "\n")
+	      (insert "%\n")
 	      (insert fill-prefix)
 	      (goto-char pm)
 	      )
+	  ;; (do-auto-fill)
+	  (backward-char 1)
+	  (re-search-backward "\\s-" nil t)
+	  (forward-char 1)
+	  (insert "\n")
+	  (insert fill-prefix)
+	  (goto-char pm)
 	  )
-	)
+      )
     )
   )
 
@@ -1991,6 +2023,14 @@ only that line is indented"
   (eif-indent-line)
   )
 
+(defun eif-indent-and-newline ()
+  "Indent the current line. Insert a newline and indent the new line."
+  (interactive)
+  (eif-indent-line)
+  (insert "\n")
+  (eif-indent-line)
+  )
+
 (defun eif-indent-line (&optional whole-exp)
   "Indent the current line as Eiffel code.
 With argument, indent any additional lines of the same clause
@@ -2009,31 +2049,6 @@ rigidly along with this one (not implemented yet)."
       )
     )
   (skip-chars-forward " \t"))
-
-;; ENHANCEME: Currently eif-beginning-of-feature only works for routines. 
-;;            It should be made more general.
-;;
-
-(defun eif-beginning-of-feature (&optional arg)
-  "Move backward to next feature beginning. With argument, do this that many 
-times. Returns t unless search stops due to beginning of buffer."
-  (interactive "p")
-  (and arg (< arg 0) (forward-char 1))
-  (if (or (re-search-backward eif-multiline-routine-is-keyword-regexp 
-			      nil t (or arg 1))
-	  (re-search-backward eif-is-keyword-regexp 
-			      nil 'move (or arg 1))	  
-	  )
-      (progn
-	(backward-sexp 1)
-	(if (looking-at "(")
-	    (backward-word 1)
-	  )
-	(beginning-of-line)
-	)
-    nil
-    )
-  )
 
 (defun eif-move-to-prev-non-blank ()
   "Moves point to previous line excluding blank lines. 
@@ -2159,7 +2174,7 @@ Returns t if successful, nil if not."
   )
 
 ;;; ----------------------------------------------------------------------
-;;; The portion of the file below this point is derived from "eif-mult-fmt.el"
+;;; The function below is derived from "eif-mult-fmt.el"
 ;;; Copyright (C) 1985 Free Software Foundation, Inc.
 ;;; Copyright (C) 1990 Bob Weiner, Motorola Inc.
 ;;; Available for use and distribution under the same terms as GNU Emacs.

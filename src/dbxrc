@@ -1,0 +1,107 @@
+# -*- ksh -*-
+# You can use this file to debug XEmacs using Sun WorkShop's dbx.
+# Add the contents of this file to $HOME/.dbxrc or
+# Source the contents of this file with something like:
+# test -r ./dbxrc && . ./dbxrc
+
+ignore POLL
+ignore IO
+
+function lbt {
+  call Fbacktrace (Qexternal_debugging_output, Qt)
+}
+
+function dp {
+  call debug_print ($1);
+}
+
+function xptr {
+  print ("$1"<<4) & 0xFFFFFFF)
+}
+
+function xint {
+  print ((int)($1 << 4))>>4;
+}
+
+#function xstring {
+#  print *(struct Lisp_String *) ($1 & 0xFFFFFFF);
+#  #print ((struct Lisp_String *) ($1 & 0xFFFFFFF))->_data;
+#}
+
+function xlisp {
+  print $1 ($2 & 0xFFFFFFF);
+  #print ((struct Lisp_String *) ($1 & 0xFFFFFFF))->_data;
+}
+
+function defxlisp {
+  eval "function $1 { print $2 (\$1 & 0xFFFFFFF) ; }"
+}
+
+function defxstruct {
+  defxlisp "$1" "*(struct $2 *)"
+}
+
+defxstruct xstring        'Lisp_String'
+defxstruct xlstream       'lstream'
+defxstruct xsubr          'Lisp_Subr'
+defxstruct xbitvec        'Lisp_Bit_Vector'
+defxstruct xbuffer        'buffer'
+defxstruct xbytecode      'Lisp_Bytecode'
+defxstruct xcharset       'Lisp_Charset'
+defxstruct xchartab       'Lisp_Char_Table'
+defxstruct xchartabentry  'Lisp_Char_Table_Entry'
+defxstruct xcodesys       'Lisp_Coding_System'
+defxstruct xcolorinst     'Lisp_Color_Instance'
+defxstruct xcons          'Lisp_Cons'
+defxstruct xdevice        'device'
+defxstruct xevent         'Lisp_Event'
+defxstruct xextent        'extent'
+defxstruct xextentaux     'extent_auxilliary'
+defxstruct xfloat         'Lisp_Float'
+defxstruct xfontinst      'Lisp_Font_Instance'
+defxstruct xframe         'frame'
+defxstruct xglyph         'Lisp_Glyph'
+defxstruct xhashtable     'hashtable_struct'
+defxstruct ximageinst     'Lisp_Image_Instance'
+defxstruct xkeymap        'keymap'
+defxstruct xmarker        'Lisp_Marker'
+defxstruct xmenubardata   'menubar_data'
+defxstruct xopaque        'Lisp_Opaque'
+defxstruct xprocess       'Lisp_Process'
+defxstruct xrangetab      'Lisp_Range_Table'
+defxstruct xspec          'Lisp_Specifier'
+defxstruct xsubwindow     'Lisp_Subwindow'
+defxstruct xsymbol        'Lisp_Symbol'
+defxstruct xtoolbarbutton 'toolbar_button'
+defxstruct xtoolbardata   'toolbar_data'
+defxstruct xtooltalkmess  'Lisp_Tooltalk_Message'
+defxstruct xtooltalkpatt  'Lisp_Tooltalk_Pattern'
+defxstruct xvector        'Lisp_Vector'
+defxstruct xwindow        'window'
+defxstruct xwindowconfig  'window_config'
+
+function pproc {
+  print *(`process.c`struct Lisp_Process*)$1 ;
+  dp "(`process.c`struct Lisp_Process*)$1->name" ;
+  dp "(`process.c`struct Lisp_Process*)$1->command" ;
+}
+
+function xtype {
+  print (enum Lisp_Type) (($1 >> 28) & 7)
+}
+
+dbxenv suppress_startup_message 4.0
+
+function dp_args {
+  dp "*(((Lisp_Object*)($1))+0)"
+  dp "*(((Lisp_Object*)($1))+1)"
+}
+
+function dp_core {
+  print ((struct x_frame *)(((struct frame*)(Fselected_frame(Qnil)&0x00FFFFFF))->frame_data))->widget->core
+}
+
+# Barf!
+function print_shell {
+  print *(`frame-x.c`TopLevelShellRec*) (((struct `frame-x.c`x_frame*) (((struct `frame-x.c`frame*) (Fselected_frame(Qnil)&0x00FFFFFF))->frame_data))->widget)
+}

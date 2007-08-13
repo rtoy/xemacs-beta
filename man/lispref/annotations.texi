@@ -100,7 +100,7 @@ appears in) is non-@code{nil}.
 The annotation is placed in the inside margin area, as close as possible
 to the first or last non-whitespace character on a line.  If the inside
 margin is not wide enough for the annotation to fit, it will be
-displayed if and only if the the specifier @code{use-left-overflow} or
+displayed if and only if the specifier @code{use-left-overflow} or
 @code{use-right-overflow} (depending on which side the annotation
 appears in) is non-@code{nil}.
 

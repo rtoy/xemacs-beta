@@ -74,7 +74,7 @@ to @code{buffer}.  @xref{Glyph Types}.
 @end defun
 
 @defun make-glyph-internal &optional type
-This function creates a new, uninitialzed glyph of type @var{type}.
+This function creates a new, uninitialized glyph of type @var{type}.
 @end defun
 
 @defun make-pointer-glyph &optional spec-list
@@ -185,7 +185,7 @@ If @var{locale} is supplied, then instead of returning the actual value,
 the specification(s) for the given locale or locale type will be
 returned.  This will only work if the actual value of @var{property} is
 a specifier (this will always be the case for built-in properties, but
-not or not may apply to user-defined properties).  If the actual value
+may or may not apply to user-defined properties).  If the actual value
 of @var{property} is not a specifier, this value will simply be returned
 regardless of @var{locale}.
 
@@ -243,7 +243,7 @@ one).
 @var{domain} defaults to the selected window if omitted.
 
 @var{domain} can be a frame or device, instead of a window.  The value
-returned for a such a domain is used in special circumstances when a
+returned for such a domain is used in special circumstances when a
 more specific domain does not apply; for example, a frame value might be
 used for coloring a toolbar, which is conceptually attached to a frame
 rather than a particular window.  The value is also useful in
@@ -496,8 +496,9 @@ disable it at configure time.)
 @item jpeg
 (A JPEG-format image; only if JPEG support was compiled into this
 XEmacs.  Can be instanced as @code{color-pixmap}.  If you have the JPEG
-libraries present on your system, XEmacs will automatically detect this
-and use them, unless you explicitly disable it at configure time.)
+libraries present on your system when XEmacs is built, XEmacs will
+automatically detect this and use them, unless you explicitly disable it
+at configure time.)
 @item png
 (A PNG/GIF24 image; only if PNG support was compiled into this XEmacs.
 Can be instanced as @code{color-pixmap}.)
@@ -596,12 +597,13 @@ the domain (usually a window; sometimes a frame or device) over which
 the image is being instantiated.
 
 If the instantiator specifies data from a file, the data will be read in
-at the time that the instantiator is added to the image (which may be
-well before when the image is actually displayed), and the instantiator
-will be converted into one of the inline-data forms, with the filename
-retained using a @code{:file} keyword.  This implies that the file must
-exist when the instantiator is added to the image, but does not need to
-exist at any other time (e.g. it may safely be a temporary file).
+at the time that the instantiator is added to the image specifier (which
+may be well before the image is actually displayed), and the
+instantiator will be converted into one of the inline-data forms, with
+the filename retained using a @code{:file} keyword.  This implies that
+the file must exist when the instantiator is added to the image, but
+does not need to exist at any other time (e.g. it may safely be a
+temporary file).
 
 @defun valid-image-instantiator-format-p format
 This function returns non-@code{nil} if @var{format} is a valid image
@@ -1007,7 +1009,7 @@ the current mouse pointer for a frame.
 @defun set-frame-pointer frame image-instance
 This function sets the mouse pointer of @var{frame} to the given pointer
 image instance.  You should not call this function directly.
-(If you do, the pointer will change the next time the mouse moves.)
+(If you do, the pointer will change again the next time the mouse moves.)
 @end defun
 
 @node Redisplay Glyphs

@@ -165,15 +165,18 @@ x_reset_key_mapping (struct device *d)
 static CONST char *
 index_to_name (int indice)
 {
-  return ((indice == ShiftMapIndex ? "ModShift"
-           : (indice == LockMapIndex ? "ModLock"
-              : (indice == ControlMapIndex ? "ModControl"
-                 : (indice == Mod1MapIndex ? "Mod1"
-                    : (indice == Mod2MapIndex ? "Mod2"
-                       : (indice == Mod3MapIndex ? "Mod3"
-                          : (indice == Mod4MapIndex ? "Mod4"
-                             : (indice == Mod5MapIndex ? "Mod5"
-                                : "???")))))))));
+  switch (indice)
+    {
+    case ShiftMapIndex:   return "ModShift";
+    case LockMapIndex:    return "ModLock";   
+    case ControlMapIndex: return "ModControl";
+    case Mod1MapIndex:    return "Mod1";
+    case Mod2MapIndex:    return "Mod2";
+    case Mod3MapIndex:    return "Mod3";
+    case Mod4MapIndex:    return "Mod4";
+    case Mod5MapIndex:    return "Mod5";
+    default:              return "???";
+    }
 }
 
 /* Boy, I really wish C had local functions... */
@@ -196,13 +199,13 @@ x_reset_modifier_mapping (struct device *d)
   struct x_device *xd = DEVICE_X_DATA (d);
   int modifier_index, modifier_key, column, mkpm;
   int warned_about_overlapping_modifiers = 0;
-  int warned_about_predefined_modifiers = 0;
-  int warned_about_duplicate_modifiers = 0;
-  int meta_bit = 0;
+  int warned_about_predefined_modifiers  = 0;
+  int warned_about_duplicate_modifiers   = 0;
+  int meta_bit  = 0;
   int hyper_bit = 0;
   int super_bit = 0;
-  int alt_bit = 0;
-  int mode_bit = 0;
+  int alt_bit   = 0;
+  int mode_bit  = 0;
 
   xd->lock_interpretation = 0;
 
@@ -413,18 +416,22 @@ x_key_is_modifier_p (KeyCode keycode, struct device *d)
 static void
 x_handle_sticky_modifiers (XEvent *ev, struct device *d)
 {
-  struct x_device *xd = DEVICE_X_DATA (d);
-  KeyCode keycode = ev->xkey.keycode;
-  int type = ev->xany.type;
-  int is_modifier =
-    (type == KeyPress || type == KeyRelease) &&
-      x_key_is_modifier_p (keycode, d);
-    
-  if (!modifier_keys_are_sticky)
+  struct x_device *xd;
+  KeyCode keycode;
+  int type;
+
+  if (!modifier_keys_are_sticky) /* Optimize for non-sticky modifiers */
     return;
 
-  if (!is_modifier)
-    {
+  xd = DEVICE_X_DATA (d);
+  keycode = ev->xkey.keycode;
+  type = ev->type;
+  
+  if (! ((type == KeyPress || type == KeyRelease) &&
+         x_key_is_modifier_p (keycode, d)))
+    { /* Not a modifier key */
+      Bool key_event_p = (type == KeyPress || type == KeyRelease);
+      
       if (type == KeyPress && !xd->last_downkey)
 	xd->last_downkey = keycode;
       else if (type == ButtonPress ||
@@ -440,7 +447,10 @@ x_handle_sticky_modifiers (XEvent *ev, struct device *d)
       if (type == KeyPress || type == ButtonPress)
 	xd->down_mask = 0;
 
-      ev->xkey.state |= xd->need_to_add_mask;
+      if (key_event_p)
+        ev->xkey.state    |= xd->need_to_add_mask;
+      else
+        ev->xbutton.state |= xd->need_to_add_mask;
 
       if (type == KeyRelease && keycode == xd->last_downkey)
 	/* If I hold press-and-release the Control key and then press
@@ -458,13 +468,25 @@ x_handle_sticky_modifiers (XEvent *ev, struct device *d)
 	   occur at the same time, the key was actually auto-
 	   repeated.  Under Open-Windows, at least, this works.
 	   */
-	xd->release_time = ev->xkey.time;
+	xd->release_time = key_event_p ? ev->xkey.time : ev->xbutton.time;
     }
-  else
+  else                          /* Modifier key pressed */
     {
+      int i;
       KeySym *syms = &xd->x_keysym_map [(keycode - xd->x_keysym_map_min_code) *
 					xd->x_keysym_map_keysyms_per_code];
-      int i;
+
+      /* If a non-modifier key was pressed in the middle of a bunch
+	 of modifiers, then it unsticks all the modifiers that were
+	 previously pressed.  We cannot unstick the modifiers until
+	 now because we want to check for auto-repeat of the
+	 non-modifier key. */
+
+      if (xd->last_downkey)
+	{
+	  xd->last_downkey = 0;
+	  xd->need_to_add_mask = 0;
+	}
 
 #define FROB(mask)				\
 do {						\
@@ -493,33 +515,16 @@ do {						\
     }						\
 } while (0)
 
-      /* If a non-modifier key was pressed in the middle of a bunch
-	 of modifiers, then it unsticks all the modifiers that were
-	 previously pressed.  We cannot unstick the modifiers until
-	 now because we want to check for auto-repeat of the
-	 non-modifier key. */
-
-      if (xd->last_downkey)
-	{
-	  xd->last_downkey = 0;
-	  xd->need_to_add_mask = 0;
-	}
-
       for (i = 0; i < xd->x_keysym_map_keysyms_per_code; i++)
-	{
-	  if (syms[i] == XK_Control_L || syms[i] == XK_Control_R)
-	    FROB (ControlMask);
-	  if (syms[i] == XK_Shift_L || syms[i] == XK_Shift_R)
-	    FROB (ShiftMask);
-	  if (syms[i] == XK_Meta_L || syms[i] == XK_Meta_R)
-	    FROB (xd->MetaMask);
-	  if (syms[i] == XK_Super_L || syms[i] == XK_Super_R)
-	    FROB (xd->SuperMask);
-	  if (syms[i] == XK_Hyper_L || syms[i] == XK_Hyper_R)
-	    FROB (xd->HyperMask);
-	  if (syms[i] == XK_Alt_L || syms[i] == XK_Alt_R)
-	    FROB (xd->AltMask);
-	}
+        switch (syms[i])
+          {
+          case XK_Control_L: case XK_Control_R: FROB (ControlMask);   break;
+          case XK_Shift_L:   case XK_Shift_R:   FROB (ShiftMask);     break;
+          case XK_Meta_L:    case XK_Meta_R:    FROB (xd->MetaMask);  break;
+          case XK_Super_L:   case XK_Super_R:   FROB (xd->SuperMask); break;
+          case XK_Hyper_L:   case XK_Hyper_R:   FROB (xd->HyperMask); break;
+          case XK_Alt_L:     case XK_Alt_R:     FROB (xd->AltMask);   break;
+          }
     }
 #undef FROB
 }
@@ -539,28 +544,32 @@ static int
 keysym_obeys_caps_lock_p (KeySym sym, struct device *d)
 {
   struct x_device *xd = DEVICE_X_DATA (d);
-  /* Eeeeevil hack.  Don't apply caps-lock to things that aren't alphabetic
+  /* Eeeeevil hack.  Don't apply Caps_Lock to things that aren't alphabetic
      characters, where "alphabetic" means something more than simply A-Z.
-     That is, if caps-lock is down, typing ESC doesn't produce Shift-ESC.
+     That is, if Caps_Lock is down, typing ESC doesn't produce Shift-ESC.
      But if shift-lock is down, then it does.
    */
   if (xd->lock_interpretation == XK_Shift_Lock)
     return 1;
-  if (((sym >= XK_A) && (sym <= XK_Z)) ||
-      ((sym >= XK_a) && (sym <= XK_z)) ||
-      ((sym >= XK_Agrave) && (sym <= XK_Odiaeresis)) ||
-      ((sym >= XK_agrave) && (sym <= XK_odiaeresis)) ||
-      ((sym >= XK_Ooblique) && (sym <= XK_Thorn)) ||
-      ((sym >= XK_oslash) && (sym <= XK_thorn)))
-    return 1;
-  else
-    return 0;
+  
+  return
+    ((sym >= XK_A)        && (sym <= XK_Z))          ||
+    ((sym >= XK_a)        && (sym <= XK_z))          ||
+    ((sym >= XK_Agrave)   && (sym <= XK_Odiaeresis)) ||
+    ((sym >= XK_agrave)   && (sym <= XK_odiaeresis)) ||
+    ((sym >= XK_Ooblique) && (sym <= XK_Thorn))      ||
+    ((sym >= XK_oslash)   && (sym <= XK_thorn));
 }
 
 /* called from EmacsFrame.c (actually from Xt itself) when a
-   MappingNotify event is received.  For non-obvious reasons,
-   our event handler does not see these events, so we need a
-   special translation. */
+   MappingNotify event is received.  In its infinite wisdom, Xt
+   decided that Xt event handlers never get MappingNotify events.
+   O'Reilly Xt Programming Manual 9.1.2 says:
+   
+     MappingNotify is automatically handled by Xt, so it isn't passed
+     to event handlers and you don't need to worry about it.
+
+   Of course, we DO worry about it, so we need a special translation. */
 void
 emacs_Xt_mapping_action (Widget w, XEvent* event)
 {
@@ -574,10 +583,13 @@ emacs_Xt_mapping_action (Widget w, XEvent* event)
      take extra MappingKeyboard events out of the queue before requesting
      the current keymap from the server.
      */
-  if (event->xmapping.request == MappingKeyboard)
-    x_reset_key_mapping (d);
-  else if (event->xmapping.request == MappingModifier)
-    x_reset_modifier_mapping (d);
+  switch (event->xmapping.request)
+    {
+    case MappingKeyboard:  x_reset_key_mapping      (d); break;
+    case MappingModifier:  x_reset_modifier_mapping (d); break;
+    case MappingPointer:   /* Do something here? */      break;
+    default: abort();
+    }
 }
 
 
@@ -601,7 +613,7 @@ x_to_emacs_keysym (XEvent *event, int simple_p)
 {
   char *name;
   KeySym keysym = 0;
-  struct device *d = get_device_from_display (event->xany.display);
+  /* struct device *d = get_device_from_display (event->xany.display); */
   /* Apparently it's necessary to specify a dummy here (rather than
      passing in 0) to avoid crashes on German IRIX */
   char dummy[256];
@@ -693,55 +705,35 @@ x_to_emacs_keysym (XEvent *event, int simple_p)
 static void
 set_last_server_timestamp (struct device *d, XEvent *x_event)
 {
-  switch (x_event->xany.type)
+  Time t;
+  switch (x_event->type)
     {
     case KeyPress:
-    case KeyRelease:
-      DEVICE_X_LAST_SERVER_TIMESTAMP (d) = x_event->xkey.time;
-      break;
-
+    case KeyRelease:       t = x_event->xkey.time;              break;
     case ButtonPress:
-    case ButtonRelease:
-      DEVICE_X_LAST_SERVER_TIMESTAMP (d) = x_event->xbutton.time;
-      break;
-
-    case MotionNotify:
-      DEVICE_X_LAST_SERVER_TIMESTAMP (d) = x_event->xmotion.time;
-      break;
-
+    case ButtonRelease:    t = x_event->xbutton.time;           break;
     case EnterNotify:
-    case LeaveNotify:
-      DEVICE_X_LAST_SERVER_TIMESTAMP (d) = x_event->xcrossing.time;
-      break;
-      
-    case PropertyNotify:
-      DEVICE_X_LAST_SERVER_TIMESTAMP (d) = x_event->xproperty.time;
-      break;
-
-    case SelectionClear:
-      DEVICE_X_LAST_SERVER_TIMESTAMP (d) = x_event->xselectionclear.time;
-      break;
-
-    case SelectionRequest:
-      DEVICE_X_LAST_SERVER_TIMESTAMP (d) = x_event->xselectionrequest.time;
-      break;
-
-    case SelectionNotify:
-      DEVICE_X_LAST_SERVER_TIMESTAMP (d) = x_event->xselection.time;
-      break;
+    case LeaveNotify:      t = x_event->xcrossing.time;         break;
+    case MotionNotify:     t = x_event->xmotion.time;           break;
+    case PropertyNotify:   t = x_event->xproperty.time;         break;
+    case SelectionClear:   t = x_event->xselectionclear.time;   break;
+    case SelectionRequest: t = x_event->xselectionrequest.time; break;
+    case SelectionNotify:  t = x_event->xselection.time;        break;
+    default: return;
     }
+  DEVICE_X_LAST_SERVER_TIMESTAMP (d) = t;
 }
 
 static int
 x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 {
-  Display *display = x_event->xany.display;
-  struct device *d = get_device_from_display (display);
+  Display *display    = x_event->xany.display;
+  struct device *d    = get_device_from_display (display);
   struct x_device *xd = DEVICE_X_DATA (d);
 
   set_last_server_timestamp (d, x_event);
 
-  switch (x_event->xany.type)
+  switch (x_event->type)
     {
     case KeyRelease:
       x_handle_sticky_modifiers (x_event, d);
@@ -751,283 +743,229 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
     case ButtonPress:
     case ButtonRelease:
       {
-	unsigned int modifiers = 0;
-	int shift_p;
-	int lock_p;
+        unsigned int modifiers = 0;
+        int shift_p;
+        int lock_p;
+        Bool key_event_p = (x_event->type == KeyPress);
+        unsigned int *state =
+          key_event_p ? &x_event->xkey.state : &x_event->xbutton.state;
+	
+        /* If this is a synthetic KeyPress or Button event, and the user
+           has expressed a disinterest in this security hole, then drop
+           it on the floor. */
+        if ((key_event_p
+             ? x_event->xkey.send_event
+             : x_event->xbutton.send_event)
 #ifdef EXTERNAL_WIDGET
-	struct frame *f = x_any_window_to_frame (d, x_event->xany.window);
+            /* ben: events get sent to an ExternalShell using XSendEvent.
+               This is not a perfect solution. */
+            && !FRAME_X_EXTERNAL_WINDOW_P (
+              x_any_window_to_frame (d, x_event->xany.window))
 #endif
-	
-	/* If this is a synthetic KeyPress or Button event, and the user
-	   has expressed a disinterest in this security hole, then drop
-	   it on the floor.
-	   */
-	if (((x_event->xany.type == KeyPress)
-	     ? x_event->xkey.send_event
-	     : x_event->xbutton.send_event)
-#ifdef EXTERNAL_WIDGET
-	    /* ben: events get sent to an ExternalShell using XSendEvent.
-	       This is not a perfect solution. */
-	    && !FRAME_X_EXTERNAL_WINDOW_P (f)
-#endif
-	    && !x_allow_sendevents)
-	  return 0;
-	
-	x_handle_sticky_modifiers (x_event, d);
+            && !x_allow_sendevents)
+          return 0;
 
-	shift_p = x_event->xkey.state & ShiftMask;
-	lock_p  = x_event->xkey.state & LockMask;
+        DEVICE_X_MOUSE_TIMESTAMP (d) =
+          DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (d) =
+          key_event_p ? x_event->xkey.time : x_event->xbutton.time;
 
-	if (x_event->xany.type == KeyPress)
-	  DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (d) = x_event->xkey.time;
-	else
-	  DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (d) = x_event->xbutton.time;
-	
-	/* Ignore the caps-lock key w.r.t. mouse presses and releases. */
-	if (x_event->xany.type != KeyPress)
-	  lock_p = 0;
-	
-	if (x_event->xkey.state & ControlMask)    modifiers |= MOD_CONTROL;
-	if (x_event->xkey.state & xd->MetaMask)   modifiers |= MOD_META;
-	if (x_event->xkey.state & xd->SuperMask)  modifiers |= MOD_SUPER;
-	if (x_event->xkey.state & xd->HyperMask)  modifiers |= MOD_HYPER;
-	if (x_event->xkey.state & xd->AltMask)    modifiers |= MOD_ALT;
+        x_handle_sticky_modifiers (x_event, d);
 
-	/* Ignore the caps-lock key if any other modifiers are down; this is
-	   so that Caps doesn't turn C-x into C-X, which would suck. */
-	if (modifiers)
-	  {
-	    x_event->xkey.state &= (~LockMask);
-	    lock_p = 0;
-	  }
-	
-	if (shift_p || lock_p)
-	  modifiers |= MOD_SHIFT;
-	
-	DEVICE_X_MOUSE_TIMESTAMP (d) = DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (d);
+        if (*state & ControlMask)    modifiers |= MOD_CONTROL;
+        if (*state & xd->MetaMask)   modifiers |= MOD_META;
+        if (*state & xd->SuperMask)  modifiers |= MOD_SUPER;
+        if (*state & xd->HyperMask)  modifiers |= MOD_HYPER;
+        if (*state & xd->AltMask)    modifiers |= MOD_ALT;
 
-	switch (x_event->xany.type)
-	  {
-	  case KeyPress:
-	    {
-	      Lisp_Object keysym;
-	      KeyCode keycode = x_event->xkey.keycode;
+        /* Ignore the Caps_Lock key if:
+           - any other modifiers are down, so that Caps_Lock doesn't
+             turn C-x into C-X, which would suck.
+           - the event was a mouse event. */
+        if (modifiers || ! key_event_p)
+          *state &= (~LockMask);
+
+        shift_p = *state & ShiftMask;
+        lock_p  = *state & LockMask;
+
+        if (shift_p || lock_p)
+          modifiers |= MOD_SHIFT;
+
+        if (key_event_p)
+          {
+            Lisp_Object keysym;
+            XKeyEvent *ev = &x_event->xkey;
+            KeyCode keycode = ev->keycode;
+
+
+            if (x_key_is_modifier_p (keycode, d)) /* it's a modifier key */
+              return 0;
+
+            /* This used to compute the frame from the given X window and
+               store it here, but we really don't care about the frame. */
+            emacs_event->channel = DEVICE_CONSOLE (d);
+            keysym = x_to_emacs_keysym (x_event, 0);
 	      
-	      if (x_key_is_modifier_p (keycode, d)) /* it's a modifier key */
-		return 0;
-
-	      /* This used to compute the frame from the given X window
-		 and store it here, but we really don't care about the
-		 frame. */
-	      emacs_event->channel = DEVICE_CONSOLE (d);
-	      keysym = x_to_emacs_keysym (x_event, 0);
+            /* If the emacs keysym is nil, then that means that the
+               X keysym was NoSymbol, which probably means that
+               we're in the midst of reading a Multi_key sequence,
+               or a "dead" key prefix.  Ignore it. */
+            if (NILP (keysym))
+              return 0;
 	      
-	      /* If the emacs keysym is nil, then that means that the
-		 X keysym was NoSymbol, which probably means that
-		 we're in the midst of reading a Multi_key sequence,
-		 or a "dead" key prefix.  Ignore it. */
-	      if (NILP (keysym))
-		return 0;
+            /* More Caps_Lock garbage: Caps_Lock should *only* add the
+               shift modifier to two-case keys (that is, A-Z and
+               related characters). So at this point (after looking up
+               the keysym) if the keysym isn't a dual-case alphabetic,
+               and if the caps lock key was down but the shift key
+               wasn't, then turn off the shift modifier.  Gag barf */
+            /* #### type lossage: assuming equivalence of emacs and
+               X keysyms */
+            /* !!#### maybe fix for Mule */
+            if (lock_p && !shift_p &&
+                ! (CHAR_OR_CHAR_INTP (keysym)
+                   && keysym_obeys_caps_lock_p
+                   ((KeySym) XCHAR_OR_CHAR_INT (keysym), d)))
+              modifiers &= (~MOD_SHIFT);
 	      
-	      /* More caps-lock garbage: caps-lock should *only* add
-		 the shift modifier to two-case keys (that is, A-Z and
-		 related characters).  So at this point (after looking
-		 up the keysym) if the keysym isn't a dual-case
-		 alphabetic, and if the caps lock key was down but the
-		 shift key wasn't, then turn off the shift modifier.
-		 Gag barf retch. */
-	      /* #### type lossage: assuming equivalence of emacs and
-		 X keysyms */
-	      /* !!#### maybe fix for Mule */
-	      if (! (CHAR_OR_CHAR_INTP (keysym)
-		     && keysym_obeys_caps_lock_p
-		     ((KeySym) XCHAR_OR_CHAR_INT (keysym), d))
-		  && lock_p
-		  && !shift_p)
-		modifiers &= (~MOD_SHIFT);
-	      
-	      /* If this key contains two distinct keysyms, that is,
-		 "shift" generates a different keysym than the
-		 non-shifted key, then don't apply the shift modifier
-		 bit: it's implicit.  Otherwise, if there would be no
-		 other way to tell the difference between the shifted
-		 and unshifted version of this key, apply the shift
-		 bit.  Non-graphics, like Backspace and F1 get the
-		 shift bit in the modifiers slot.  Neither the
-		 characters "a", "A", "2", nor "@" normally have the
-		 shift bit set.  However, "F1" normally does. */
-	      if (modifiers & MOD_SHIFT)
-		{
-		  KeySym top, bot;
-		  if (x_event->xkey.state & xd->ModeMask)
-		    bot = XLookupKeysym (&x_event->xkey, 2),
-		    top = XLookupKeysym (&x_event->xkey, 3);
-		  else
-		    bot = XLookupKeysym (&x_event->xkey, 0),
-		    top = XLookupKeysym (&x_event->xkey, 1);
-		  if (top && bot && top != bot)
-		    modifiers &= ~MOD_SHIFT;
-		}
-	      emacs_event->event_type	   = key_press_event;
-	      emacs_event->timestamp	   = x_event->xkey.time;
-	      emacs_event->event.key.modifiers = modifiers;
-	      emacs_event->event.key.keysym   = keysym;
-	      break;
-	    }
-	  case ButtonPress:
-	  case ButtonRelease:
-	    {
-	      struct frame *frame =
-		x_window_to_frame (d, x_event->xbutton.window);
-	      if (! frame)
-		return 0;	/* not for us */
-	      XSETFRAME (emacs_event->channel, frame);
-	    }
-	    
-	    if (x_event->type == ButtonPress)
-	      emacs_event->event_type    = button_press_event;
-	    else emacs_event->event_type = button_release_event;
-	    emacs_event->timestamp		    = x_event->xbutton.time;
-	    emacs_event->event.button.modifiers = modifiers;
-	    emacs_event->event.button.button    = x_event->xbutton.button;
-	    emacs_event->event.button.x         = x_event->xbutton.x;
-	    emacs_event->event.button.y         = x_event->xbutton.y;
-	    break;
-	  }
+            /* If this key contains two distinct keysyms, that is,
+               "shift" generates a different keysym than the
+               non-shifted key, then don't apply the shift modifier
+               bit: it's implicit.  Otherwise, if there would be no
+               other way to tell the difference between the shifted
+               and unshifted version of this key, apply the shift bit.
+               Non-graphics, like Backspace and F1 get the shift bit
+               in the modifiers slot.  Neither the characters "a",
+               "A", "2", nor "@" normally have the shift bit set.
+               However, "F1" normally does. */
+            if (modifiers & MOD_SHIFT)
+              {
+                int Mode_switch_p = *state & xd->ModeMask;
+                KeySym bot = XLookupKeysym (ev, Mode_switch_p ? 2 : 0);
+                KeySym top = XLookupKeysym (ev, Mode_switch_p ? 3 : 1);
+                if (top && bot && top != bot)
+                  modifiers &= ~MOD_SHIFT;
+              }
+            emacs_event->event_type	     = key_press_event;
+            emacs_event->timestamp	     = ev->time;
+            emacs_event->event.key.modifiers = modifiers;
+            emacs_event->event.key.keysym    = keysym;
+          }
+        else                    /* Mouse press/release event */
+          {
+            XButtonEvent *ev = &x_event->xbutton;
+            struct frame *frame = x_window_to_frame (d, ev->window);
+            if (! frame)
+              return 0;	/* not for us */
+            XSETFRAME (emacs_event->channel, frame);
+            
+            emacs_event->event_type = (x_event->type == ButtonPress) ?
+              button_press_event : button_release_event;
+            
+            emacs_event->event.button.modifiers = modifiers;
+            emacs_event->timestamp		= ev->time;
+            emacs_event->event.button.button	= ev->button;
+            emacs_event->event.button.x		= ev->x;
+            emacs_event->event.button.y		= ev->y;
+          }
       }
-      break;
+    break;
       
     case MotionNotify:
       {
-	Window w = x_event->xmotion.window;
-	struct frame *frame = x_window_to_frame (d, w);
-	XEvent event2;
+        XMotionEvent *ev = &x_event->xmotion;
+        struct frame *frame = x_window_to_frame (d, ev->window);
+        unsigned int modifiers = 0;
+        XMotionEvent event2;
 	
-	if (! frame)
-	  return 0; /* not for us */
+        if (! frame)
+          return 0; /* not for us */
 	
-	/* We use MotionHintMask, so we will get only one motion event
-	   until the next time we call XQueryPointer or the user clicks
-	   the mouse.  So call XQueryPointer now (meaning that the event
-	   will be in sync with the server just before Fnext_event()
-	   returns).  If the mouse is still in motion, then the server
-	   will immediately generate exactly one more motion event, which
-	   will be on the queue waiting for us next time around.
-	   */
-	event2 = *x_event;
-	if (XQueryPointer (x_event->xmotion.display, event2.xmotion.window,
-			   &event2.xmotion.root, &event2.xmotion.subwindow,
-			   &event2.xmotion.x_root, &event2.xmotion.y_root,
-			   &event2.xmotion.x, &event2.xmotion.y,
-			   &event2.xmotion.state))
-	  *x_event = event2;
+        /* We use MotionHintMask, so we will get only one motion event
+           until the next time we call XQueryPointer or the user
+           clicks the mouse.  So call XQueryPointer now (meaning that
+           the event will be in sync with the server just before
+           Fnext_event() returns).  If the mouse is still in motion,
+           then the server will immediately generate exactly one more
+           motion event, which will be on the queue waiting for us
+           next time around. */
+        event2 = *ev;
+        if (XQueryPointer (event2.display, event2.window,
+                           &event2.root,   &event2.subwindow,
+                           &event2.x_root, &event2.y_root,
+                           &event2.x,      &event2.y,
+                           &event2.state))
+          ev = &event2; /* only one structure copy */
 	
-	DEVICE_X_MOUSE_TIMESTAMP (d) = x_event->xmotion.time;
-	
-	XSETFRAME (emacs_event->channel, frame);
-	emacs_event->event_type	  = pointer_motion_event;
-	emacs_event->timestamp	  = x_event->xmotion.time;
-	emacs_event->event.motion.x = x_event->xmotion.x;
-	emacs_event->event.motion.y = x_event->xmotion.y;
-	{
-	  unsigned int modifiers = 0;
-	  if (x_event->xmotion.state & ShiftMask)   modifiers |= MOD_SHIFT;
-	  if (x_event->xmotion.state & ControlMask) modifiers |= MOD_CONTROL;
-	  if (x_event->xmotion.state & xd->MetaMask)    modifiers |= MOD_META;
-	  if (x_event->xmotion.state & xd->SuperMask)   modifiers |= MOD_SUPER;
-	  if (x_event->xmotion.state & xd->HyperMask)   modifiers |= MOD_HYPER;
-	  if (x_event->xmotion.state & xd->AltMask)     modifiers |= MOD_ALT;
-	  /* Currently ignores Shift_Lock but probably shouldn't
-	     (but it definitely should ignore Caps_Lock). */
-	  emacs_event->event.motion.modifiers = modifiers;
-	}
+        DEVICE_X_MOUSE_TIMESTAMP (d) = ev->time;
+
+        XSETFRAME (emacs_event->channel, frame);
+        emacs_event->event_type	    = pointer_motion_event;
+        emacs_event->timestamp      = ev->time;
+        emacs_event->event.motion.x = ev->x;
+        emacs_event->event.motion.y = ev->y;
+        if (ev->state & ShiftMask)	modifiers |= MOD_SHIFT;
+        if (ev->state & ControlMask)	modifiers |= MOD_CONTROL;
+        if (ev->state & xd->MetaMask)	modifiers |= MOD_META;
+        if (ev->state & xd->SuperMask)	modifiers |= MOD_SUPER;
+        if (ev->state & xd->HyperMask)	modifiers |= MOD_HYPER;
+        if (ev->state & xd->AltMask)	modifiers |= MOD_ALT;
+        /* Currently ignores Shift_Lock but probably shouldn't
+           (but it definitely should ignore Caps_Lock). */
+        emacs_event->event.motion.modifiers = modifiers;
       }
-      break;
+    break;
       
     case ClientMessage:
-      /* Patch bogus TAKE_FOCUS messages from MWM; CurrentTime is passed as the
-	 timestamp of the TAKE_FOCUS, which the ICCCM explicitly prohibits. */
-      if (x_event->xclient.message_type == DEVICE_XATOM_WM_PROTOCOLS (d)
-	  && x_event->xclient.data.l[0] == DEVICE_XATOM_WM_TAKE_FOCUS (d)
-	  && x_event->xclient.data.l[1] == 0)
-	{
-	  x_event->xclient.data.l[1] = DEVICE_X_LAST_SERVER_TIMESTAMP (d);
-	}
-      /* fall through */
+      {
+        /* Patch bogus TAKE_FOCUS messages from MWM; CurrentTime is
+           passed as the timestamp of the TAKE_FOCUS, which the ICCCM
+           explicitly prohibits. */
+        XClientMessageEvent *ev = &x_event->xclient;
+        if (ev->message_type == DEVICE_XATOM_WM_PROTOCOLS (d)
+            && ev->data.l[0] == DEVICE_XATOM_WM_TAKE_FOCUS (d)
+            && ev->data.l[1] == 0)
+          {
+            ev->data.l[1] = DEVICE_X_LAST_SERVER_TIMESTAMP (d);
+          }
+      }
+    /* fall through */
       
     default: /* it's a magic event */
       {
-	struct frame *f;
-	  
-	switch (x_event->type)
-	  {
-	    /* Note: the number of cases could be reduced to two or
-	       three by using xany.window, but it's perhaps clearer
-	       and potentially more robust this way */
-	  case SelectionRequest:
-	    f = x_window_to_frame (d, x_event->xselectionrequest.owner);
-	    break;
-      
-	  case SelectionClear:
-	    f = x_window_to_frame (d, x_event->xselectionclear.window);
-	    break;
-      
-	  case SelectionNotify:
-	    f = x_window_to_frame (d, x_event->xselection.requestor);
-	    break;
-      
-	  case PropertyNotify:
-	    f = x_window_to_frame (d, x_event->xproperty.window);
-	    break;
-      
-	  case Expose:
-	  case GraphicsExpose:
-	    f = x_window_to_frame (d, x_event->xexpose.window);
-	    break;
-      
-	  case MapNotify:
-	  case UnmapNotify:
-	    f = x_any_window_to_frame (d, x_event->xmap.window);
-	    break;
-      
-	  case EnterNotify:
-	  case LeaveNotify:
-	    f = x_any_window_to_frame (d, x_event->xcrossing.window);
-	    break;
+        struct frame *frame;
+        Window w;
+    
+        switch (x_event->type)
+          {
+            /* Note: the number of cases could be reduced to two or
+               three by using xany.window, but it's perhaps clearer
+               and potentially more robust this way */
+          case SelectionRequest: w = x_event->xselectionrequest.owner; break;
+          case SelectionClear:   w = x_event->xselectionclear.window;  break;
+          case SelectionNotify:  w = x_event->xselection.requestor;    break;
+          case PropertyNotify:   w = x_event->xproperty.window;        break;
+          case ClientMessage:    w = x_event->xclient.window;          break;
+          case ConfigureNotify:  w = x_event->xconfigure.window;       break;
+          case Expose:
+          case GraphicsExpose:   w = x_event->xexpose.window;          break;
+          case MapNotify:
+          case UnmapNotify:      w = x_event->xmap.window;             break;
+          case EnterNotify:
+          case LeaveNotify:      w = x_event->xcrossing.window;        break;
+          case FocusIn:
+          case FocusOut:         w = x_event->xfocus.window;           break;
+          case VisibilityNotify: w = x_event->xvisibility.window;      break;
+          default:               w = x_event->xany.window;             break;
+          }
+        frame = x_any_window_to_frame (d, w);
+       
+        if (!frame)
+          return 0;
 
-	  case FocusIn:
-	  case FocusOut:
-	    /* It's curious that we're using x_any_window_to_frame()
-	       here.  I don't know if this causes problems. */
-	    f = x_any_window_to_frame (d, x_event->xfocus.window);
-      
-	  case ClientMessage:
-	    f = x_any_window_to_frame (d, x_event->xclient.window);
-	    break;
-      
-	  case MappingNotify:
-	  case VisibilityNotify:
-	    f = x_any_window_to_frame (d, x_event->xvisibility.window);
-	    break;
-      
-	  case ConfigureNotify:
-	    f = x_any_window_to_frame (d, x_event->xconfigure.window);
-	    break;
-
-	  default:
-	    f = x_any_window_to_frame (d, x_event->xany.window);
-	    break;
-	  }
-
-	if (!f)
-	  return 0;
-
-	emacs_event->event_type = magic_event;
-	XSETFRAME (emacs_event->channel, f);
-	memcpy ((char *) &emacs_event->event.magic.underlying_x_event,
-		(char *) x_event,
-		sizeof (XEvent));
-	break;
+        emacs_event->event_type = magic_event;
+        XSETFRAME (emacs_event->channel, frame);
+        emacs_event->event.magic.underlying_x_event = *x_event;
+        break;
       }
     }
   return 1;
@@ -1086,7 +1024,7 @@ emacs_Xt_handle_focus_event (XEvent *event)
     /* focus events are sometimes generated just before
        a frame is destroyed. */
     return;
-  handle_focus_event_1 (f, event->xany.type == FocusIn);
+  handle_focus_event_1 (f, event->type == FocusIn);
 }
 
 static void
@@ -1095,7 +1033,7 @@ handle_map_event (struct frame *f, XEvent *event)
   Lisp_Object frame = Qnil;
 
   XSETFRAME (frame, f);
-  if (event->xany.type == MapNotify)
+  if (event->type == MapNotify)
     {
       XWindowAttributes xwa;
 
@@ -1310,18 +1248,12 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
       if (FRAME_X_EXTERNAL_WINDOW_P (f))
 	break;
 #endif
-      handle_focus_event_1 (f, event->xany.type == FocusIn);
+      handle_focus_event_1 (f, event->type == FocusIn);
       break;
       
     case ClientMessage:
       handle_client_message (f, event);
       break;
-      
-#if 0
-      /* this is where we ought to be handling this event, but
-	 we don't see it here. --ben */
-    case MappingNotify:	/* The user has run xmodmap */
-#endif    
       
     case VisibilityNotify: /* window visiblity has changed */
       if (event->xvisibility.state == VisibilityUnobscured)
@@ -1331,10 +1263,26 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
       break;
       
     case ConfigureNotify:
-      if (event->xconfigure.window != XtWindow (FRAME_X_SHELL_WIDGET (f)))
-	break;
-      FRAME_X_SHELL_WIDGET (f)->core.x = event->xconfigure.x;
-      FRAME_X_SHELL_WIDGET (f)->core.y = event->xconfigure.y;
+#ifdef HAVE_XIM
+      XIC_SetGeometry (f);
+#endif
+      /* ### If the following code fails to work, simply always call
+         x_smash_bastardly_shell_position always.  In this case we no
+         longer rely on the data in the events, merely on their
+         occurrence.  */
+      /* ### Well, actually we shouldn't have to ever call
+         x_smash_bastardly_shell_position.  We should just call
+         XtTranslateCoordinates and only access the core.{x,y} fields
+         using XtGetValue -- mrb */
+      {
+        XConfigureEvent *ev = &event->xconfigure;
+      if (ev->window == XtWindow (FRAME_X_SHELL_WIDGET (f)) &&
+          ! (ev->x == 0 && ev->y == 0 && !ev->send_event))
+        {
+          FRAME_X_SHELL_WIDGET (f)->core.x = ev->x;
+          FRAME_X_SHELL_WIDGET (f)->core.y = ev->y;
+        }
+      }
       break;
 
     default:
@@ -1759,12 +1707,11 @@ XEvent_mode_to_string (int mode)
 {
   switch (mode)
   {
-  case NotifyNormal: return "Normal";
-  case NotifyGrab: return "Grab";
-  case NotifyUngrab: return "Ungrab";
+  case NotifyNormal:	   return "Normal";
+  case NotifyGrab:	   return "Grab";
+  case NotifyUngrab:	   return "Ungrab";
   case NotifyWhileGrabbed: return "WhileGrabbed";
-  default:
-    return "???";
+  default:		   return "???";
   }
 }
 
@@ -1773,15 +1720,14 @@ XEvent_detail_to_string (int detail)
 {
   switch (detail)
   {
-  case NotifyAncestor: return "Ancestor";
-  case NotifyInferior: return "Inferior";
-  case NotifyNonlinear: return "Nonlinear";
-  case NotifyNonlinearVirtual: return "NonlinearVirtual";
-  case NotifyPointer: return "Pointer";
-  case NotifyPointerRoot: return "PointerRoot";
-  case NotifyDetailNone: return "DetailNone";
-  default:
-    return "???";
+  case NotifyAncestor:		return "Ancestor";
+  case NotifyInferior:		return "Inferior";
+  case NotifyNonlinear:		return "Nonlinear";
+  case NotifyNonlinearVirtual:	return "NonlinearVirtual";
+  case NotifyPointer:		return "Pointer";
+  case NotifyPointerRoot:	return "PointerRoot";
+  case NotifyDetailNone:	return "DetailNone";
+  default:			return "???";
   }
 }
 
@@ -1790,11 +1736,10 @@ XEvent_visibility_to_string (int state)
 {
   switch (state)
   {
-  case VisibilityFullyObscured: return "FullyObscured";
+  case VisibilityFullyObscured:	    return "FullyObscured";
   case VisibilityPartiallyObscured: return "PartiallyObscured";
-  case VisibilityUnobscured: return "Unobscured";
-  default:
-    return "???";
+  case VisibilityUnobscured:        return "Unobscured";
+  default:			    return "???";
   }
 }
 
@@ -1854,11 +1799,11 @@ describe_event (XEvent *event)
 	keysym = x_to_emacs_keysym (event, 0);
 	if (CHAR_OR_CHAR_INTP (keysym))
 	  {
-	    if (XCHAR_OR_CHAR_INT (keysym) > 32
-		&& XCHAR_OR_CHAR_INT (keysym) < 127)
-	      stderr_out ("   keysym: %c\n", XCHAR_OR_CHAR_INT (keysym));
+            Emchar c = XCHAR_OR_CHAR_INT (keysym);
+	    if (c > 32 && c < 127)
+	      stderr_out ("   keysym: %c\n", c);
 	    else
-	      stderr_out ("   keysym: %d\n", XCHAR_OR_CHAR_INT (keysym));
+	      stderr_out ("   keysym: %d\n", c);
 	  }
 	else
 	  stderr_out ("   keysym: %s\n", string_data (XSYMBOL (keysym)->name));
@@ -1870,8 +1815,8 @@ describe_event (XEvent *event)
 	{
 	  XExposeEvent *ev = &event->xexpose;
 	  describe_event_window (ev->window, ev->display);
-	  stderr_out ("   region: %d %d %d %d\n", ev->x, ev->y,
-		      ev->width, ev->height);
+	  stderr_out ("   region: x=%d y=%d width=%d height=%d\n",
+                      ev->x, ev->y, ev->width, ev->height);
 	  stderr_out ("    count: %d\n", ev->count);
 	}
       else
@@ -1886,8 +1831,8 @@ describe_event (XEvent *event)
 	  stderr_out ("    major: %s\n",
 		      (ev ->major_code == X_CopyArea  ? "CopyArea" :
 		       (ev->major_code == X_CopyPlane ? "CopyPlane" : "?")));
-	  stderr_out ("   region: %d %d %d %d\n", ev->x, ev->y,
-		      ev->width, ev->height);
+	  stderr_out ("   region: x=%d y=%d width=%d height=%d\n",
+                      ev->x, ev->y, ev->width, ev->height);
 	  stderr_out ("    count: %d\n", ev->count);
 	}
       else
@@ -2016,9 +1961,9 @@ emacs_Xt_next_event (struct Lisp_Event *emacs_event)
  we_didnt_get_an_event:
 
   while (NILP (dispatch_event_queue) &&
-	 !completed_timeouts &&
-	 !fake_event_occurred &&
-	 !process_events_occurred &&
+	 !completed_timeouts         &&
+	 !fake_event_occurred        &&
+	 !process_events_occurred    &&
 	 !tty_events_occurred)
     {
 

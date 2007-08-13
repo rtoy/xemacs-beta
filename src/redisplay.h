@@ -26,9 +26,9 @@ Boston, MA 02111-1307, USA.  */
 #define _XEMACS_REDISPLAY_H_
 
 /* Redisplay DASSERT types */
-#define DB_DISP_POS			1
-#define DB_DISP_TEXT_LAYOUT		2
-#define DB_DISP_REDISPLAY		4
+#define DB_DISP_POS		1
+#define DB_DISP_TEXT_LAYOUT	2
+#define DB_DISP_REDISPLAY	4
 
 /* These are the possible return values from pixel_to_glyph_translation. */
 #define OVER_MODELINE		0
@@ -249,7 +249,7 @@ struct display_line
 					   and control chars */
   int cursor_elt;			/* rune block of TEXT display
 					   block cursor is at or -1 */
-  char used_prop_data;			/* can't incrementally updated if line
+  char used_prop_data;			/* can't incrementally update if line
 					   used propogation data */
 
   layout_bounds bounds;			/* line boundary positions */
@@ -298,10 +298,10 @@ struct extent_fragment
   Bytind pos, end;
   extent_dynarr *extents;
   glyph_block_dynarr *begin_glyphs, *end_glyphs;
-  int invisible:1;
-  int invisible_ellipses:1;
-  int previously_invisible:1;
-  int invisible_ellipses_already_displayed:1;
+  unsigned int invisible:1;
+  unsigned int invisible_ellipses:1;
+  unsigned int previously_invisible:1;
+  unsigned int invisible_ellipses_already_displayed:1;
 };
 
 
@@ -455,7 +455,7 @@ extern int scroll_on_clipped_lines;
 
 extern Lisp_Object Vglobal_mode_string;
 
-/* The following two variables are defined in emacs.c are are used
+/* The following two variables are defined in emacs.c and are used
    to convey information discovered on the command line way early
    (before *anything* is initialized). */
 
@@ -490,9 +490,9 @@ int line_at_center (struct window *w, int type, Bufpos start, Bufpos point);
 int window_half_pixpos (struct window *w);
 void redisplay_echo_area (void);
 void free_display_structs (struct window_mirror *mir);
-char *generate_formatted_string (struct window *w, Lisp_Object format_str,
-				 Lisp_Object result_str, face_index findex,
-				 int type);
+Bufbyte *generate_formatted_string (struct window *w, Lisp_Object format_str,
+                                    Lisp_Object result_str, face_index findex,
+                                    int type);
 int real_current_modeline_height (struct window *w);
 int pixel_to_glyph_translation (struct frame *f, int x_coord,
 				int y_coord, int *col, int *row,

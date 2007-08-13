@@ -477,7 +477,7 @@ allowed.  Often they tell a command to move or act backwards.
   If your keyboard has a @key{META} key (labelled with a diamond on
 Sun-type keyboards and labelled @samp{Alt} on some other keyboards), the
 easiest way to specify a numeric argument is to type digits and/or a
-minus sign while holding down the the @key{META} key.  For example,
+minus sign while holding down the @key{META} key.  For example,
 @example
 M-5 C-n
 @end example

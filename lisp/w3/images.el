@@ -1,11 +1,11 @@
-;;; images.el,v --- Automatic image converters
+;;; images.el --- Automatic image converters
 ;; Author: wmperry
-;; Created: 1996/05/26 01:17:31
-;; Version: 1.14
+;; Created: 1996/06/30 18:00:34
+;; Version: 1.2
 ;; Keywords: images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1995 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;

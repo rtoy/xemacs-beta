@@ -519,7 +519,7 @@ user is prompted for a password. The default is @code{nil}.
 @code{ange-ftp-dumb-unix-host-regexp}: The FTP servers on some machines have
 problems if the @code{ls} command is used. The usual indication that
 something is wrong is when ange-ftp erroneously thinks that a directory
-is just a plain file. The routine @code{ange-ftp-add-dumb-unix-host} can can
+is just a plain file. The routine @code{ange-ftp-add-dumb-unix-host} can
 be called to tell ange-ftp to limit itself to the @code{DIR} command and
 not @code{ls} for a given host (but this change will take effect for the
 current GNU Emacs session only). If a large number of machines with
@@ -576,7 +576,7 @@ hosts.
 @vindex ange-ftp-make-backup-files
 @cindex backup files
 
-@code{ange-ftp-path-format}: This variable dictates the the format of a
+@code{ange-ftp-path-format}: This variable dictates the format of a
 fully expanded remote pathname. This is a cons @code{(REGEXP . (HOST
 USER PATH))}, where @code{REGEXP} is a regular expression matching the
 full remote pathname, and @code{HOST}, @code{USER}, and @code{PATH} are
@@ -761,7 +761,7 @@ does not know about. If you have
 executing @code{revert-buffer}
 @pindex revert-buffer
 with a prefix argument (@kbd{C-u g} in the Dired buffer) 
-will force a refresh of both the the buffer @emph{and also ange-ftp's
+will force a refresh of both the buffer @emph{and also ange-ftp's
 internal cache}. If you find that filename completion isn't working on a
 @cindex filename completion
 file that you @emph{know} is there, this is how to fix the problem.
@@ -1025,7 +1025,7 @@ to inform ange-ftp manually. For a more permanent effect, or
 if you use a VMS host regularly, it's a good idea to set
 @code{ange-ftp-vms-host-regexp} to a regular expression matching that
 @vindex ange-ftp-vms-host-regexp
-host's name. For instance, if use use @code{ymir.claremont.edu} a lot,
+host's name. For instance, if you use @code{ymir.claremont.edu} a lot,
 place the following in your .emacs:
 @example
 (setq ange-ftp-vms-host-regexp "^ymir.claremont.edu$")

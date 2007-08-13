@@ -108,6 +108,7 @@ e -- Last mouse-button or misc-user event that invoked this command.
      Does not do I/O.
 f -- Existing file name.
 F -- Possibly nonexistent file name.
+i -- Always nil, ignore.  Use to skip arguments when interactive.
 k -- Key sequence (a vector of events).
 K -- Key sequence to be redefined (do not automatically down-case).
 m -- Value of mark as number.  Does not do I/O.
@@ -702,6 +703,11 @@ when reading the arguments.
 	      arg_from_tty = 1;
 	      break;
 	    }
+	  case 'i':		/* Ignore: always nil. Use to skip arguments. */
+            {
+              args[argnum] = Qnil;
+              break;
+            }
 	  case 'k':		/* Key sequence (vector of events) */
 	    {
 	      Lisp_Object tem = Fread_key_sequence (PROMPT (), Qnil, Qnil);

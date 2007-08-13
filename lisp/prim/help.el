@@ -352,6 +352,9 @@ the window.")
 ;; a help message and then prompting for input in the minibuffer --
 ;; this macro usually selects the help buffer, which is not what you
 ;; want in those situations.
+
+;;; ### Should really be a macro (as suggested above) to eliminate the
+;;; requirement of caller to code a lambda form in THUNK -- mrb
 (defun with-displaying-help-buffer (thunk)
   (let ((winconfig (current-window-configuration))
         (was-one-window (one-window-p)))

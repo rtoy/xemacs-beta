@@ -169,7 +169,7 @@ usually be displayed grayed-out to indicate this.
 @item :suffix @var{string}
 The string is appended to the displayed name.  This provides a
 convenient way of adding the name of a command's ``argument'' to the
-menu, like  like @samp{Kill Buffer NAME}.
+menu, like @samp{Kill Buffer NAME}.
 
 @item :keys @var{string}
 Normally, the keyboard equivalents of commands in menus are displayed

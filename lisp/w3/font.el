@@ -1,11 +1,11 @@
-;;; font.el,v --- New font model
+;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1996/05/29 15:44:56
-;; Version: 1.45
+;; Created: 1996/08/11 16:40:36
+;; Version: 1.8
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -28,8 +28,10 @@
 ;;; The emacsen compatibility package - load it up before anything else
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-and-compile
-  (load-library "w3-sysdp"))
+  (load-library "w3-sysdp")
+  (require 'cl))
 
+(require 'disp-table)
 (if (not (fboundp '<<))   (fset '<< 'lsh))
 (if (not (fboundp '&))    (fset '& 'logand))
 (if (not (fboundp '|))    (fset '| 'logior))
@@ -92,7 +94,12 @@ for use in the 'weight' field of an X font string.")
 
 (defvar font-family-mappings
   '(
-    ("serif"        . ("garamond"
+    ("serif"        . ("new century schoolbook"
+		       "utopia"
+		       "charter"
+		       "times"
+		       "lucidabright"
+		       "garamond"
 		       "palatino"
 		       "times new roman"
 		       "baskerville"
@@ -102,15 +109,19 @@ for use in the 'weight' field of an X font string.")
 		       "rockwell"
 		       ))
     ("sans-serif"   . ("lucida"
-		       "lucidatypewriter"
+		       "helvetica"
 		       "gills-sans"
 		       "avant-garde"
 		       "univers"
-		       "helvetica"
 		       "optima"))
     ("elfin"        . ("tymes"))
-    ("monospace"    . ("courier" "lucidatypewriter" "fixed"))
-    ("cursive"      . ("sirene" "zapf chancery"))
+    ("monospace"    . ("courier"
+		       "fixed"
+		       "lucidatypewriter"
+		       "clean"
+		       "terminal"))
+    ("cursive"      . ("sirene"
+		       "zapf chancery"))
     )
   "A list of font family mappings.")
 
@@ -228,11 +239,24 @@ for use in the 'weight' field of an X font string.")
 	  (pix-width (float (or (device-pixel-width device) 1024)))
 	  (mm-width (float (or (device-mm-width device) 293)))
 	  (retval nil))
-      (if (string-match "[^0-9.]+$" spec)
-	  (setq type (substring spec (match-beginning 0))
-		spec (substring spec 0 (match-beginning 0)))
+      (cond
+       ((string-match "^ *\\([-+*/]\\) *" spec) ; math!  whee!
+	(let ((math-func (intern (match-string 1 spec)))
+	      (other (font-spatial-to-canonical
+		      (substring spec (match-end 0) nil)))
+	      (default (font-spatial-to-canonical
+			(font-default-size-for-device device))))
+	  (if (fboundp math-func)
+	      (setq type "px"
+		    spec (int-to-string (funcall math-func default other)))
+	    (setq type "px"
+		  spec (int-to-string other)))))
+       ((string-match "[^0-9.]+$" spec)
+	(setq type (substring spec (match-beginning 0))
+	      spec (substring spec 0 (match-beginning 0))))
+       (t
 	(setq type "px"
-	      spec spec))
+	      spec spec)))
       (setq num (string-to-number spec))
       (cond
        ((member type '("pixel" "px" "pix"))
@@ -486,7 +510,9 @@ for use in the 'weight' field of an X font string.")
 (defun font-default-font-for-device (&optional device)
   (or device (setq device (selected-device)))
   (if font-running-xemacs
-      (face-font-name 'default device)
+      (font-truename
+       (make-font-specifier
+	(face-font-name 'default device)))
     (cdr-safe (assq 'font (frame-parameters device)))))
 
 (defun font-default-object-for-device (&optional device)
@@ -505,9 +531,10 @@ for use in the 'weight' field of an X font string.")
 
 (defun font-default-size-for-device (&optional device)
   (or device (setq device (selected-device)))
-  (if font-running-xemacs
-      (format "%dpx" (face-height 'default device))
-    (font-size (font-default-object-for-device device))))
+  ;; face-height isn't the right thing (always 1 pixel too high?)
+  ;; (if font-running-xemacs
+  ;;    (format "%dpx" (face-height 'default device))
+  (font-size (font-default-object-for-device device)))
        
 (defun x-font-create-name (fontobj &optional device)
   (if (and (not (or (font-family fontobj)
@@ -532,7 +559,7 @@ for use in the 'weight' field of an X font string.")
       (setq weight (font-higher-weight weight
 				       (and (font-bold-p fontobj) :bold)))
       (if (stringp size)
-	  (setq size (round (font-spatial-to-canonical size device))))
+	  (setq size (truncate (font-spatial-to-canonical size device))))
       (setq weight (or (cdr-safe (assq weight x-font-weight-mappings)) "*"))
       (let ((done nil)			; Did we find a good font yet?
 	    (font-name nil)		; font name we are currently checking

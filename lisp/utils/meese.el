@@ -1,12 +1,15 @@
 ;;; meese.el --- protect the impressionable young minds of America
 
-;;; Synched up with: FSF 19.30.
-
 ;; This is in the public domain on account of being distributed since
 ;; 1985 or 1986 without a copyright notice.
 
 ;; Maintainer: FSF
 ;; Keywords: games
+
+;;; Commentary:
+;; This file is grossly misnamed.  It should be called reno.el.
+
+;;; Synched up with: FSF 19.34.
 
 ;;; Code:
 

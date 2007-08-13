@@ -19,9 +19,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -41,17 +42,19 @@ See `beginning-of-defun'.")
 
 (defun forward-sexp (&optional arg)
   "Move forward across one balanced expression (sexp).
-With argument, do it that many times.
-Negative arg -N means move backward across N balanced expressions."
+With argument, do it that many times.  Negative arg -N means
+move backward across N balanced expressions."
+  ;; XEmacs change (for zmacs regions)
   (interactive "_p")
   (or arg (setq arg 1))
-  ;; #### evil hack! The other half of the evil hack below.
+  ;; XEmacs: evil hack! The other half of the evil hack below.
   (if (and (> arg 0) (looking-at "#s("))
       (goto-char (+ (point) 2)))
   (goto-char (or (scan-sexps (point) arg) (buffer-end arg)))
   (if (< arg 0) (backward-prefix-chars))
-  ;; #### evil hack! Skip back over #s so that structures are read properly.
-  ;; the current cheesified syntax tables just aren't up to this.
+  ;; XEmacs: evil hack! Skip back over #s so that structures are read
+  ;; properly.  the current cheesified syntax tables just aren't up to
+  ;; this.
   (if (and (< arg 0)
 	   (eq (char-after (point)) ?\()
 	   (>= (- (point) (point-min)) 2)
@@ -61,24 +64,27 @@ Negative arg -N means move backward across N balanced expressions."
 
 (defun backward-sexp (&optional arg)
   "Move backward across one balanced expression (sexp).
-With argument, do it that many times.
-Negative arg -N means move forward across N balanced expressions."
+With argument, do it that many times.  Negative arg -N means
+move forward across N balanced expressions."
+  ;; XEmacs change (for zmacs regions)
   (interactive "_p")
   (or arg (setq arg 1))
   (forward-sexp (- arg)))
 
 (defun mark-sexp (arg)
   "Set mark ARG sexps from point.
-The place mark goes is the same place \\[forward-sexp] would move to
-with the same argument.
+The place mark goes is the same place \\[forward-sexp] would
+move to with the same argument.
 Repeat this command to mark more sexps in the same direction."
   (interactive "p")
+  ;; XEmacs change
   (mark-something 'mark-sexp 'forward-sexp arg))
 
 (defun forward-list (&optional arg)
   "Move forward across one balanced group of parentheses.
 With argument, do it that many times.
 Negative arg -N means move backward across N groups of parentheses."
+  ;; XEmacs change
   (interactive "_p")
   (or arg (setq arg 1))
   (goto-char (or (scan-lists (point) arg 0) (buffer-end arg))))
@@ -87,6 +93,7 @@ Negative arg -N means move backward across N groups of parentheses."
   "Move backward across one balanced group of parentheses.
 With argument, do it that many times.
 Negative arg -N means move forward across N groups of parentheses."
+  ;; XEmacs change (for zmacs regions)
   (interactive "_p")
   (or arg (setq arg 1))
   (forward-list (- arg)))
@@ -96,6 +103,7 @@ Negative arg -N means move forward across N groups of parentheses."
 With argument, do this that many times.
 A negative argument means move backward but still go down a level.
 In Lisp programs, an argument is required."
+  ;; XEmacs change (for zmacs regions)
   (interactive "_p")
   (let ((inc (if (> arg 0) 1 -1)))
     (while (/= arg 0)
@@ -115,6 +123,7 @@ In Lisp programs, an argument is required."
 With argument, do this that many times.
 A negative argument means move backward but still to a less deep spot.
 In Lisp programs, an argument is required."
+  ;; XEmacs change (for zmacs regions)
   (interactive "_p")
   (let ((inc (if (> arg 0) 1 -1)))
     (while (/= arg 0)
@@ -147,6 +156,7 @@ Normally a defun starts when there is an char with open-parenthesis
 syntax at the beginning of a line.  If `defun-prompt-regexp' is
 non-nil, then a string which matches that regexp may precede the
 open-parenthesis, and point ends up at the beginning of the line."
+  ;; XEmacs change (for zmacs regions)
   (interactive "_p")
   (and (beginning-of-defun-raw arg)
        (progn (beginning-of-line) t)))
@@ -164,6 +174,7 @@ to the beginning of the line when `defun-prompt-regexp' is non-nil."
 			   nil 'move (or arg 1))
        (progn (goto-char (1- (match-end 0)))) t))
 
+;; XEmacs change (optional buffer parameter)
 (defun buffer-end (arg &optional buffer)
   "Return `point-max' of BUFFER if ARG is > 0; return `point-min' otherwise.
 BUFFER defaults to the current buffer if omitted."
@@ -175,11 +186,12 @@ Negative argument -N means move back to Nth preceding end of defun.
 
 An end of a defun occurs right after the close-parenthesis that matches
 the open-parenthesis that starts a defun; see `beginning-of-defun'."
+  ;; XEmacs change (for zmacs regions)
   (interactive "_p")
   (if (or (null arg) (= arg 0)) (setq arg 1))
   (let ((first t))
     (while (and (> arg 0) (< (point) (point-max)))
-      (let ((pos (point)))
+      (let ((pos (point)) npos)
 	(while (progn
 		(if (and first
 			 (progn
@@ -257,18 +269,18 @@ before and after, depending on the surrounding characters."
 
 (defun lisp-complete-symbol ()
   "Perform completion on Lisp symbol preceding point.
-That symbol is compared against the symbols that exist
-and any additional characters determined by what is there
-are inserted.
-If the symbol starts just after an open-parenthesis,
-only symbols with function definitions are considered.
-Otherwise, all symbols with function definitions, values
-or properties are considered."
+Compare that symbol against the known Lisp symbols.
+
+The context determines which symbols are considered.
+If the symbol starts just after an open-parenthesis, only symbols
+with function definitions are considered.  Otherwise, all symbols with
+function definitions, values or properties are considered."
   (interactive)
   (let* ((end (point))
 	 (buffer-syntax (syntax-table))
 	 (beg (unwind-protect
 		  (save-excursion
+		    ;; XEmacs change
 		    (if emacs-lisp-mode-syntax-table
 			(set-syntax-table emacs-lisp-mode-syntax-table))
 		    (backward-sexp 1)
@@ -280,6 +292,7 @@ or properties are considered."
 	 (predicate
 	  (if (eq (char-after (1- beg)) ?\()
 	      'fboundp
+	    ;; XEmacs change
 	    #'(lambda (sym)
 		(or (boundp sym) (fboundp sym)
 		    (symbol-plist sym)))))
@@ -294,10 +307,10 @@ or properties are considered."
 	  (t
 	   (message "Making completion list...")
 	   (let ((list (all-completions pattern obarray predicate))
-		 ;FSFmacs crock unnecessary in XEmacs
+		 ;FSFmacs crock unnecessary in XEmacs (ROTFL -sb)
 		 ;see minibuf.el
 		 ;(completion-fixup-function
-		 ; #'(lambda () (if (save-excursion
+		 ; (function (lambda () (if (save-excursion
 		 ;		(goto-char (max (point-min)
 		 ;				(- (point) 4)))
 		 ;		(looking-at " <f>"))
@@ -314,6 +327,6 @@ or properties are considered."
 		   (setq list (nreverse new))))
 	     (with-output-to-temp-buffer "*Completions*"
 	       (display-completion-list list)))
-	   (message "Making completion list...done")))))
+	   (message "Making completion list...%s" "done")))))
 
 ;;; lisp.el ends here

@@ -608,13 +608,12 @@ Normally, each frame has its own minibuffer window at the bottom, which
 is used whenever that frame is selected.  If the frame has a minibuffer,
 you can get it with @code{minibuffer-window} (@pxref{Minibuffer Misc}).
 
-However, you can also create a frame with no minibuffer (this is not
-implemented as of 19.13, but will be in 19.14).  Such a frame must use
-the minibuffer window of some other frame.  When you create the frame,
-you can specify explicitly the minibuffer window to use (in some other
-frame).  If you don't, then the minibuffer is found in the frame which is
-the value of the variable @code{default-minibuffer-frame}.  Its value
-should be a frame which does have a minibuffer.
+However, you can also create a frame with no minibuffer.  Such a frame
+must use the minibuffer window of some other frame.  When you create the
+frame, you can specify explicitly the minibuffer window to use (in some
+other frame).  If you don't, then the minibuffer is found in the frame
+which is the value of the variable @code{default-minibuffer-frame}.  Its
+value should be a frame which does have a minibuffer.
 
 @ignore Not yet in XEmacs
 If you use a minibuffer-only frame, you might want that frame to raise

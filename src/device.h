@@ -314,9 +314,9 @@ int valid_device_class_p (Lisp_Object class);
 #define INVALIDATE_DEVICE_PIXEL_TO_GLYPH_CACHE(d)			\
   (d)->pixel_to_glyph_cache.valid = 0
 
-#define INVALIDATE_PIXEL_TO_GLYPH_CACHE do {				 \
-  Lisp_Object _devcons_, _concons_;					 \
-  DEVICE_LOOP_NO_BREAK (_devcons_, _concons_)				 \
+#define INVALIDATE_PIXEL_TO_GLYPH_CACHE do {				\
+  Lisp_Object _devcons_, _concons_;					\
+  DEVICE_LOOP_NO_BREAK (_devcons_, _concons_)				\
     INVALIDATE_DEVICE_PIXEL_TO_GLYPH_CACHE (XDEVICE (XCONS (_devcons_)->car));\
   } while (0)
 
@@ -354,14 +354,11 @@ int valid_device_class_p (Lisp_Object class);
    inline.  Also, the majority of the time the object will turn out to
    be a window so we move it from being checked last to being checked
    first. */
-#define DFW_DEVICE(obj)				\
-  (WINDOWP (obj)				\
-   ? WINDOW_DEVICE (XWINDOW (obj))		\
-   : (FRAMEP (obj)				\
-      ? FRAME_DEVICE (XFRAME (obj))		\
-      : (DEVICEP (obj)				\
-	 ? obj					\
-	 : Qnil)))
+#define DFW_DEVICE(obj)					\
+   (WINDOWP (obj) ? WINDOW_DEVICE (XWINDOW (obj))	\
+ : (FRAMEP  (obj) ? FRAME_DEVICE (XFRAME (obj))		\
+ : (DEVICEP (obj) ? obj					\
+ : Qnil)))
 
 /* NO_BREAK means that "break" doesn't do what you think it does!
    Use goto instead.  "continue" is OK, though. */

@@ -27,18 +27,18 @@ Boston, MA 02111-1307, USA.  */
 #define _EmacsManager_h
 
 #ifndef XtNresizeCallback
-#define XtNresizeCallback "resizeCallback"
+#define XtNresizeCallback (String) "resizeCallback"
 #endif
 
 #ifndef XtNqueryGeometryCallback
-#define XtNqueryGeometryCallback "queryGeometryCallback"
+#define XtNqueryGeometryCallback (String) "queryGeometryCallback"
 #endif
 
 #ifndef XtNuserData
-#define XtNuserData "userData"
+#define XtNuserData (String) "userData"
 #endif
 #ifndef XtCUserData
-#define XtCUserData "UserData"
+#define XtCUserData (String) "UserData"
 #endif
 
 /* scrollbar placement types; like in ScrolledW.h */

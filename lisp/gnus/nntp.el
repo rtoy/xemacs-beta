@@ -92,12 +92,24 @@ does an rlogin on the remote system, and then does a telnet to the
 NNTP server available there (see nntp-rlogin-parameters).")
 
 (defvoo nntp-rlogin-parameters '("telnet" "${NNTPSERVER:=localhost}" "nntp")
-  "*Parameters to `nntp-open-login'.
+  "*Parameters to `nntp-open-rlogin'.
 That function may be used as `nntp-open-server-function'.  In that
 case, this list will be used as the parameter list given to rsh.")
 
 (defvoo nntp-rlogin-user-name nil
   "*User name on remote system when using the rlogin connect method.")
+
+(defvoo nntp-telnet-parameters '("exec" "telnet" "-8" "${NNTPSERVER:=localhost}" "nntp")
+  "*Parameters to `nntp-open-telnet'.
+That function may be used as `nntp-open-server-function'.  In that
+case, this list will be executed as a command after logging in
+via telnet.")
+
+(defvoo nntp-telnet-user-name nil
+  "User name to log in via telnet with.")
+
+(defvoo nntp-telnet-passwd nil
+  "Password to use to log in via telnet with.")
 
 (defvoo nntp-address nil
   "*The name of the NNTP server.")
@@ -108,7 +120,7 @@ case, this list will be used as the parameter list given to rsh.")
 (defvoo nntp-end-of-line "\r\n"
   "String to use on the end of lines when talking to the NNTP server.
 This is \"\\r\\n\" by default, but should be \"\\n\" when
-using rlogin to communicate with the server.")
+using rlogin or telnet to communicate with the server.")
 
 (defvoo nntp-large-newsgroup 50
   "*The number of the articles which indicates a large newsgroup.
@@ -339,6 +351,7 @@ instead use `nntp-server-buffer'.")
   "Open the virtual server SERVER.
 If CONNECTIONLESS is non-nil, don't attempt to connect to any physical
 servers."
+  (nnheader-init-server-buffer)
   ;; Called with just a port number as the defs.
   (when (or (stringp (car defs))
 	    (numberp (car defs)))
@@ -397,7 +410,8 @@ servers."
 	     (buffer-name proc)
 	     (kill-buffer proc))))
     (nnoo-close-server 'nntp)
-    (setq nntp-async-group-alist nil)))
+    (setq nntp-async-group-alist nil
+	  nntp-async-articles nil)))
 
 (deffoo nntp-server-opened (&optional server)
   "Say whether a connection to SERVER has been opened."
@@ -720,13 +734,20 @@ It will prompt for a password."
   (save-excursion
     ;; Replace `.' at beginning of line with `..'.
     (goto-char (point-min))
-    (while (search-forward "\n." nil t)
+    (while (re-search-forward "^\\." nil t)
       (insert "."))
     (goto-char (point-max))
     ;; Insert newline at end of buffer.
     (or (bolp) (insert "\n"))
+    ;(goto-char (point-min))
+    ;(while (not (eobp))
+    ;  (end-of-line)
+    ;  (insert "\r")
+    ;  (forward-line 1))
     ;; Insert `.' at end of buffer (end of text mark).
+    (goto-char (point-max))
     (insert "." nntp-end-of-line)))
+
 
 
 ;;;
@@ -961,7 +982,7 @@ It will prompt for a password."
 	  ;; order to avoid deadlocks.
 	  (when (or (null articles)	;All requests have been sent.
 		    (zerop (% count nntp-maximum-request)))
-	    (accept-process-output)
+	    (accept-process-output nntp-server-process 1)
 	    ;; On some Emacs versions the preceding function has
 	    ;; a tendency to change the buffer. Perhaps. It's
 	    ;; quite difficult to reproduce, because it only
@@ -974,7 +995,7 @@ It will prompt for a password."
 		       (setq received (1+ received)))
 		     (setq last-point (point))
 		     (< received count))
-	      (accept-process-output)
+	      (accept-process-output nntp-server-process)
 	      (set-buffer buf)))))
 
       (when nntp-server-xover
@@ -1038,7 +1059,7 @@ It will prompt for a password."
     ;; We open the nntp server if it is down.
     (or (nntp-server-opened (nnoo-current-server 'nntp))
 	(nntp-open-server (nnoo-current-server 'nntp))
-	(error (nntp-status-message)))
+	(error "Couldn't open server: " (nntp-status-message)))
     ;; Send the strings.
     (process-send-string nntp-server-process cmd)
     t))
@@ -1069,7 +1090,7 @@ It will prompt for a password."
 (defun nntp-open-server-semi-internal (server &optional service)
   "Open SERVER.
 If SERVER is nil, use value of environment variable `NNTPSERVER'.
-If SERVICE, this this as the port number."
+If SERVICE, use this as the port number."
   (nnheader-insert "")
   (let ((server (or server (getenv "NNTPSERVER")))
 	(status nil)
@@ -1087,7 +1108,8 @@ If SERVICE, this this as the port number."
 		   (condition-case nil
 		       (nntp-wait-for-response "^[23].*\r?\n" 'slow)
 		     (error nil)
-		     (quit nil)))
+		     ;(quit nil)
+		     ))
 	     (unless status
 	       (nntp-close-server-internal server)
 	       (nnheader-report 
@@ -1104,8 +1126,7 @@ If SERVICE, this this as the port number."
 	    ((null server)
 	     (nnheader-report 'nntp "NNTP server is not specified."))
 	    (t				; We couldn't open the server.
-	     (nnheader-report 
-	      'nntp (buffer-substring (point-min) (point-max)))))
+	     (nnheader-report 'nntp (buffer-string))))
       (when timer 
 	(nnheader-cancel-timer timer))
       (message "")
@@ -1173,10 +1194,11 @@ If SERVICE, this this as the port number."
    "nntpd" nntp-server-buffer server nntp-port-number))
 
 (defun nntp-open-rlogin (server)
+  "Open a connection to SERVER using rsh."
   (let ((proc (if nntp-rlogin-user-name
 		  (start-process
 		   "nntpd" nntp-server-buffer "rsh"
-		   "-l" nntp-rlogin-user-name server
+		   server "-l" nntp-rlogin-user-name
 		   (mapconcat 'identity
 			      nntp-rlogin-parameters " "))
 		(start-process
@@ -1185,23 +1207,54 @@ If SERVICE, this this as the port number."
 			    nntp-rlogin-parameters " ")))))
     proc))
 
-(defun nntp-telnet-to-machine ()
-  (let (b)
-    (telnet "localhost")
+(defun nntp-wait-for-string (regexp)
+  "Wait until string arrives in the buffer."
+  (let ((buf (current-buffer)))
     (goto-char (point-min))
-    (while (not (re-search-forward "^login: *" nil t))
-      (sit-for 1)
-      (goto-char (point-min)))
-    (goto-char (point-max))
-    (insert "larsi")
-    (telnet-send-input)
-    (setq b (point))
-    (while (not (re-search-forward ">" nil t))
-      (sit-for 1)
-      (goto-char b))
-    (goto-char (point-max))
-    (insert "ls")
-    (telnet-send-input)))
+    (while (not (re-search-forward regexp nil t))
+      (accept-process-output nntp-server-process)
+      (set-buffer buf)
+      (goto-char (point-min)))))
+
+(defun nntp-open-telnet (server)
+  (save-excursion
+    (set-buffer nntp-server-buffer)
+    (erase-buffer)
+    (let ((proc (start-process
+		 "nntpd" nntp-server-buffer "telnet" "-8"))
+	  (case-fold-search t))
+      (when (memq (process-status proc) '(open run))
+	(process-send-string proc "set escape \^X\n")
+	(process-send-string proc (concat "open " server "\n"))
+	(nntp-wait-for-string "^\r*.?login:")
+	(process-send-string
+	 proc (concat
+	       (or nntp-telnet-user-name
+		   (setq nntp-telnet-user-name (read-string "login: ")))
+	       "\n"))
+	(nntp-wait-for-string "^\r*.?password:")
+	(process-send-string
+	 proc (concat
+	       (or nntp-telnet-passwd
+		   (setq nntp-telnet-passwd
+			 (nnmail-read-passwd "Password: ")))
+	       "\n"))
+	(erase-buffer)
+	(nntp-wait-for-string "bash\\|\$ *\r?$\\|> *\r?")
+	(process-send-string
+	 proc (concat (mapconcat 'identity nntp-telnet-parameters " ") "\n"))
+	(nntp-wait-for-string "^\r*200")
+	(beginning-of-line)
+	(delete-region (point-min) (point))
+	(process-send-string proc "\^]")
+	(nntp-wait-for-string "^telnet")
+	(process-send-string proc "mode character\n")
+	(accept-process-output proc 1)
+	(sit-for 1)
+	(goto-char (point-min))
+	(forward-line 1)
+	(delete-region (point) (point-max)))
+      proc)))
 
 (defun nntp-close-server-internal (&optional server)
   "Close connection to news server."
@@ -1209,7 +1262,8 @@ If SERVICE, this this as the port number."
   (if nntp-server-process
       (delete-process nntp-server-process))
   (setq nntp-server-process nil)
-  (setq nntp-address ""))
+  ;(setq nntp-address "")
+  )
 
 (defun nntp-accept-response ()
   "Read response of server.

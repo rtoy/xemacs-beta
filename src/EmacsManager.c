@@ -70,7 +70,7 @@ EmacsManagerClassRec emacsManagerClassRec = {
 #else
     /* superclass         */    (WidgetClass) &compositeClassRec,
 #endif
-    /* class_name         */    "EmacsManager",
+    /* class_name         */    (String) "EmacsManager",
     /* widget_size        */    sizeof(EmacsManagerRec),
     /* class_initialize   */    ClassInitialize,
     /* class_part_init    */	NULL,

@@ -91,8 +91,10 @@ NOTE-END  */
 /* Must use the system's termcap, if we use any termcap.
    It does special things.  */
 
+#ifndef LIBS_TERMCAP
 #ifndef TERMINFO
 #define LIBS_TERMCAP -ltermcap
+#endif
 #endif
 
 /* Mask for address bits within a memory segment */

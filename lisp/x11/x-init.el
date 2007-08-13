@@ -49,8 +49,8 @@
 
 ;;; OpenWindows-like "find" processing.  These functions are really Sunisms,
 ;;; but we put them here instead of in x-win-sun.el in case someone wants
-;;; to use them when not running on a Sun console (presumably after adding
-;;; the to different keys, or putting them on menus.)
+;;; to use them when not running on a Sun console (presumably after binding
+;;; them to different keys, or putting them on menus.)
 
 (defvar ow-find-last-string nil)
 (defvar ow-find-last-clipboard nil)
@@ -77,7 +77,7 @@
     (zmacs-activate-region)))
 
 (defun ow-find-backward ()
-  "Search backward the previous occurence of the text of the selection."
+  "Search backward the previous occurrence of the text of the selection."
   (interactive)
   (ow-find t))
 
@@ -86,104 +86,95 @@
 ;;; Sun have done to the default keymap for the Sun keyboards.
 
 (defun x-initialize-keyboard ()
-  "Don't call this."
-  (cond (;; This is some heuristic junk that tries to guess whether this is
-	 ;; a Sun keyboard.
-	 ;;
-	 ;; One way of implementing this (which would require C support) would
-	 ;; be to examine the X keymap itself and see if the layout looks even
-	 ;; remotely like a Sun - check for the Find key on a particular
-	 ;; keycode, for example.  It'd be nice to have a table of this to
-	 ;; recognize various keyboards; see also xkeycaps.
-	 ;;
-	 (let ((vendor (x-server-vendor)))
-	   (or (string-match "Sun Microsystems" vendor)
+  "Perform X-Server-specific initializations.  Don't call this."
+  ;; This is some heuristic junk that tries to guess whether this is
+  ;; a Sun keyboard.
+  ;;
+  ;; One way of implementing this (which would require C support) would
+  ;; be to examine the X keymap itself and see if the layout looks even
+  ;; remotely like a Sun - check for the Find key on a particular
+  ;; keycode, for example.  It'd be nice to have a table of this to
+  ;; recognize various keyboards; see also xkeycaps.
+  (let ((vendor (x-server-vendor)))
+    (cond ((or (string-match "Sun Microsystems" vendor)
 	       ;; MIT losingly fails to tell us what hardware the X server
 	       ;; is managing, so assume all MIT displays are Suns...  HA HA!
 	       (string-equal "MIT X Consortium" vendor)
-	       (string-equal "X Consortium" vendor)))
-       ;;
-       ;; Ok, we think this could be a Sun keyboard.  Load the Sun code.
-       ;;
-       (or (load "x-win-sun" t t)
-	   (warn "Unable to load term file x-win-sun"))
-       )
-	((string-match "XFree86" (x-server-vendor))
-	 ;; Those XFree86 people do some weird keysym stuff, too.
-	 (or (load "x-win-xfree86" t t)
-	     (warn "Unable to load term file x-win-xfree86")))
-      ))
+	       (string-equal "X Consortium" vendor))
+           ;; Ok, we think this could be a Sun keyboard.  Load the Sun code.
+           (or (load "x-win-sun" t t)
+               (warn "Unable to load term file x-win-sun")))
+          ((string-match "XFree86" vendor)
+           ;; Those XFree86 people do some weird keysym stuff, too.
+           (or (load "x-win-xfree86" t t)
+               (warn "Unable to load term file x-win-xfree86")))
+          )))
 
 
 (defvar pre-x-win-initted nil)
 
 (defun init-pre-x-win ()
   "Initialize X Windows at startup (pre).  Don't call this."
-  (if (not pre-x-win-initted)
-      (progn
-	(require 'x-iso8859-1)
-	(setq character-set-property 'x-iso8859/1) ; see x-iso8859-1.el
+  (when (not pre-x-win-initted)
+    (require 'x-iso8859-1)
+    (setq character-set-property 'x-iso8859/1) ; see x-iso8859-1.el
 
-	(setq initial-frame-plist (if initial-frame-unmapped-p
-				      '(initially-unmapped t)
-				    nil))
-	(setq pre-x-win-initted t))))
+    (setq initial-frame-plist (if initial-frame-unmapped-p
+                                  '(initially-unmapped t)
+                                nil))
+    (setq pre-x-win-initted t)))
 
 (defvar x-win-initted nil)
 
 (defun init-x-win ()
   "Initialize X Windows at startup.  Don't call this."
-  (if (not x-win-initted)
-      (progn
-	(init-pre-x-win)
+  (when (not x-win-initted)
+    (init-pre-x-win)
 
-	;; Open the X display when this file is loaded
-	;; (Note that the first frame is created later.)
-	(setq x-initial-argv-list (cons (car command-line-args)
-					command-line-args-left))
-	(make-x-device nil)
-	(setq command-line-args-left (cdr x-initial-argv-list))
-	(setq x-win-initted t))))
+    ;; Open the X display when this file is loaded
+    ;; (Note that the first frame is created later.)
+    (setq x-initial-argv-list (cons (car command-line-args)
+                                    command-line-args-left))
+    (make-x-device nil)
+    (setq command-line-args-left (cdr x-initial-argv-list))
+    (setq x-win-initted t)))
     
 (defvar post-x-win-initted nil)
 
 (defun init-post-x-win ()
   "Initialize X Windows at startup (post).  Don't call this."
-  (if (not post-x-win-initted)
-      (progn
-	;; We can't load this until after the initial X device is created
-	;; because the icon initialization needs to access the display to get
-	;; any toolbar-related color resources.
-	(if (featurep 'toolbar)
-	    (init-x-toolbar))
-	;; these are only ever called if zmacs-regions is true.
-	(add-hook 'zmacs-deactivate-region-hook 'x-disown-selection)
-	(add-hook 'zmacs-activate-region-hook 'x-activate-region-as-selection)
-	(add-hook 'zmacs-update-region-hook 'x-activate-region-as-selection)
+  (when (not post-x-win-initted)
+    ;; We can't load this until after the initial X device is created
+    ;; because the icon initialization needs to access the display to get
+    ;; any toolbar-related color resources.
+    (if (featurep 'toolbar)
+        (init-x-toolbar))
+    ;; these are only ever called if zmacs-regions is true.
+    (add-hook 'zmacs-deactivate-region-hook 'x-disown-selection)
+    (add-hook 'zmacs-activate-region-hook   'x-activate-region-as-selection)
+    (add-hook 'zmacs-update-region-hook     'x-activate-region-as-selection)
 
-	;; Motif-ish bindings
-	;; The following two were generally unliked.
-	;;(define-key global-map '(shift delete)
-	;;  'x-kill-primary-selection)
-	;;(define-key global-map '(control delete)
-	;;  'x-delete-primary-selection)
-	(define-key global-map '(shift insert)	'x-yank-clipboard-selection)
-	(define-key global-map '(control insert) 'x-copy-primary-selection)
-	;; (Are these Sunisms?)
-	(define-key global-map 'copy		'x-copy-primary-selection)
-	(define-key global-map 'paste		'x-yank-clipboard-selection)
-	(define-key global-map 'cut		'x-kill-primary-selection)
+    ;; Motif-ish bindings
+    ;; The following two were generally unliked.
+    ;;(define-key global-map '(shift delete)   'x-kill-primary-selection)
+    ;;(define-key global-map '(control delete) 'x-delete-primary-selection)
+    (define-key global-map '(shift insert)   'x-yank-clipboard-selection)
+    (define-key global-map '(control insert) 'x-copy-primary-selection)
+    ;; These are Sun-isms.
+    (define-key global-map 'copy	'x-copy-primary-selection)
+    (define-key global-map 'paste	'x-yank-clipboard-selection)
+    (define-key global-map 'cut		'x-kill-primary-selection)
 
-	(define-key global-map 'menu		'popup-mode-menu)
-	;;(define-key global-map '(shift menu)	'x-goto-menubar) ;NYI
+    (define-key global-map 'menu	'popup-mode-menu)
+    ;;(define-key global-map '(shift menu) 'x-goto-menubar) ;NYI
 
-	;; This runs after the first frame has been created (we can't
-	;; talk to the X server before that) but before the
-	;; site-start-file or .emacs file, so sites and users have a
-	;; chance to override it.
-	(add-hook 'before-init-hook 'x-initialize-keyboard)
+    ;; This runs after the first frame has been created (we can't
+    ;; talk to the X server before that) but before the
+    ;; site-start-file or .emacs file, so sites and users have a
+    ;; chance to override it.
+    (add-hook 'before-init-hook 'x-initialize-keyboard)
 
-	(setq post-x-win-initted t))))
+    (setq post-x-win-initted t)))
 
 (defun make-frame-on-display (display &optional parms)
   "Create a frame on the X display named DISPLAY.

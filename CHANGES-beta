@@ -1,0 +1,40 @@
+							-*- indented-text -*-
+
+to 19.15 beta2
+
+-- fast-lock.el 3.10.01
+-- ksh-mode.el 2.9
+-- mode-motion+.el 3.16
+-- psgml-1a12
+-- executable.el, imenu.el, sh-script.el and uniquify.el now included
+-- rfc1521 patches to VM from Jamie
+-- OffiX support added
+-- lots of 19.34 syncing, most by Steven Baur
+-- NetBSD on sparc platform fixes
+-- additional featurep checks on 'scrollbar and 'menubar
+-- configure changes to allow sunos4shr args to be picked up correctly
+
+to 19.15 beta1
+
+-- gnus 5.2.40
+-- etc 0.22
+-- w3 3.0.12
+-- url 1.0.41
+-- reporter 3.3
+-- psgml 1a11
+-- cc-mode 4.315
+-- hm--html-menus 5.0
+-- stringp nil error when starting sparcworks
+-- call7 and call8 had incorrect array sizes
+-- makefile mode Error in `pre-idle-hook' (setting hook to nil):
+   (void-function makefile-space-face)
+-- Crashes when built on X11R5 and run on X11R6 fixed
+-- Lisp backtrace is now printed on all crashes, not just debug build
+-- LOTS of typos fixed.
+-- sunpro-init no longer opens /net/bin with possible hang at startup.
+-- switch-to-buffer-other-window reverted to old-style behaviour
+-- python-mode 2.67
+-- auto-mode-alist regexps reorganized for efficiency
+-- interpreter-mode-alist regexps now look at entire first line.
+-- new (interactive) spec `i' can be used to skip arguments.
+-- other assorted fixes and changes

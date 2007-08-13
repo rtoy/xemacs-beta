@@ -1,11 +1,11 @@
-;;; w3-forms.el,v --- Emacs-w3 forms parsing code for new display engine
+;;; w3-forms.el --- Emacs-w3 forms parsing code for new display engine
 ;; Author: wmperry
-;; Created: 1996/06/06 14:14:34
-;; Version: 1.51
+;; Created: 1996/08/10 16:14:08
+;; Version: 1.14
 ;; Keywords: faces, help, comm, data, languages
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -74,7 +74,8 @@
 	 (buffer-read-only nil)
 	 (inhibit-read-only t)
 	 (widget-creation-function nil)
-	 (action (nth 6 args))
+	 (action (cons (cons 'form-number (w3-get-state :formnum))
+		       (nth 6 args)))
 	 (node (assoc action w3-form-elements))
 	 (name (or (nth 1 args)
 		   (if (memq (nth 0 args) '(submit reset))
@@ -129,9 +130,20 @@
     (if formobj
 	(progn
 	  (setq widget (w3-form-element-widget formobj))
-	  (widget-radio-add-item widget (list 'item :format "%t" :tag ""))
+	  (widget-radio-add-item widget
+				 (list 'item
+				       :format "%t"
+				       :tag ""
+				       :value (w3-form-element-value el)))
+	  (if (w3-form-element-default-value el)
+	      (widget-value-set widget (w3-form-element-value el)))
 	  nil)
-      (setq widget (widget-create 'radio (list 'item :format "%t" :tag ""))
+      (setq widget (widget-create 'radio
+				  :value (w3-form-element-value el)
+				  (list 'item
+					:format "%t"
+					:tag ""
+					:value (w3-form-element-value el)))
 	    w3-form-radio-elements (cons (cons name el)
 					 w3-form-radio-elements))
       widget)))
@@ -161,7 +173,6 @@
 
 (defun w3-form-create-file-browser (el face)
   (widget-create 'file :value-face face :value (w3-form-element-value el)))
-
 
 (defvar w3-form-valid-key-sizes
   '(
@@ -193,19 +204,16 @@
 (defun w3-form-create-option-list (el face)
   (let ((widget (apply 'widget-create 'choice :value (w3-form-element-value el)
 		       :tag "Choose"
+		       :format "%v"
 		       :size (w3-form-element-size el)
 		       :value-face face
 		       (mapcar
 			(function
 			 (lambda (x)
 			   (list 'choice-item :format "%[%t%]"
-				 :tag (car x) :value (cdr x))))
+				 :tag (car x) :value (car x))))
 			(reverse (w3-form-element-options el))))))
-    (widget-value-set widget (cdr-safe (assoc (w3-form-element-value el)
-					      (w3-form-element-options el))))
-    (goto-char (point-max))
-    (skip-chars-backward "\r\n")
-    (delete-region (point) (point-max))
+    (widget-value-set widget (w3-form-element-value el))
     widget))
 
 ;(defun w3-form-create-multiline (el face)
@@ -392,13 +400,17 @@
 			(cons (w3-form-element-name formobj)
 			      (w3-form-element-value formobj))))
 		   (radio
-		    ;; this is probably broken
-		    (let ((x (widget-radio-chosen widget)))
-		      (if (or (not x)
-			      (not (eq x (w3-form-element-widget formobj))))
+		    (let* ((radio-name (w3-form-element-name formobj))
+			   (radio-object (cdr-safe
+					  (assoc radio-name
+						 w3-form-radio-elements)))
+			   (chosen-widget (and radio-object
+					       (widget-radio-chosen
+						(w3-form-element-widget
+						 radio-object)))))
+		      (if (assoc radio-name result)
 			  nil
-			(cons (w3-form-element-name formobj)
-			      (w3-form-element-value formobj)))))
+			(cons radio-name (widget-value chosen-widget)))))
 		   (checkbox
 		    (if (widget-value widget)
 			(cons (w3-form-element-name formobj)
@@ -416,7 +428,9 @@
 			(cons (w3-form-element-name formobj) dat))))
 		   (option
 		    (cons (w3-form-element-name formobj)
-			  (widget-value widget)))
+			  (cdr-safe
+			   (assoc (widget-value widget)
+				  (w3-form-element-options formobj)))))
 		   (keygen
 		    (cons (w3-form-element-name formobj)
 			  (format "Should create a %d bit RSA key"
@@ -475,7 +489,10 @@
 (defun w3-form-encode (result &optional enctype)
   "Create a string suitably encoded for a URL request."
   (let ((func (intern (concat "w3-form-encode-" enctype))))
-    (if (fboundp func) (funcall func result))))
+    (if (fboundp func)
+	(funcall func result)
+      (w3-warn 'html (format "Bad encoding type for form data: %s" enctype))
+      (w3-form-encode-application/x-www-form-urlencoded result))))
 
 (defun w3-form-encode-text/plain (result)
   (let ((query ""))
@@ -495,33 +512,40 @@
 	   (w3-form-encode-helper result) "\n"))
     query))
 
+(defun w3-form-encode-application/x-w3-wais (result)
+  (cdr (car (w3-form-encode-helper result))))
+
 (defun w3-form-encode-application/x-gopher-query (result)
-  (concat "\t" (nth 5 (car result))))
+  (concat "\t" (cdr (car (w3-form-encode-helper result)))))
 
 (defconst w3-xwfu-acceptable-chars
  (list
   ?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m ?n ?o ?p ?q ?r ?s ?t ?u ?v ?w ?x ?y ?z
   ?A ?B ?C ?D ?E ?F ?G ?H ?I ?J ?K ?L ?M ?N ?O ?P ?Q ?R ?S ?T ?U ?V ?W ?X ?Y ?Z
   ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9
-  ?_;; BOGUS!  This is for #!%#@!ing netscape compatibility
+  ?_ ;; BOGUS!  This is for #!%#@!ing netscape compatibility
+  ?. ;; BOGUS!  This is for #!%#@!ing netscape compatibility
   )
   "A list of characters that we do not have to escape in the media type
-application/x-www/form-urlencoded")
+application/x-www-form-urlencoded")
    
 (defun w3-form-encode-xwfu (chunk)
   "Escape characters in a string for application/x-www-form-urlencoded.
 Blasphemous crap because someone didn't think %20 was good enough for encoding
 spaces.  Die Die Die."
   (if (and (featurep 'mule) chunk)
-      (setq chunk (code-convert-string 
-		   chunk *internal* url-mule-retrieval-coding-system)))
+      (setq chunk (if w3-running-xemacs
+		      (decode-coding-string
+		       chunk url-mule-retrieval-coding-system)
+		    (code-convert-string 
+		     chunk *internal* url-mule-retrieval-coding-system))))
   (mapconcat
    (function
     (lambda (char)
       (cond
        ((= char ?  ) "+")
        ((memq char w3-xwfu-acceptable-chars) (char-to-string char))
-       (t (format "%%%02x" char)))))
+       (t (upcase (format "%%%02x" char))))))
    chunk ""))
 
 (defun w3-form-encode-application/x-www-form-urlencoded (result)
@@ -576,7 +600,8 @@ spaces.  Die Die Die."
 	     (cons (cons "Content-type" enctype) url-request-extra-headers)))
 	(w3-fetch theurl)))
      ((string= "GET" themeth)
-      (let ((theurl (concat theurl "?" query)))
+      (let ((theurl (concat theurl (if (string-match "gopher" enctype)
+				       "" "?") query)))
 	(w3-fetch theurl)))
      (t
       (w3-warn 'html (format "Unknown submit method: %s" themeth))

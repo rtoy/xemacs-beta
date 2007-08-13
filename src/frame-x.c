@@ -491,7 +491,7 @@ x_smash_bastardly_shell_position (Widget shell)
 {
   /* Naturally those bastards who wrote Xt couldn't be bothered
      to learn about race conditions and such.  We can't trust
-     the X and Y values to have any resemblance of correctness,
+     the X and Y values to have any semblance of correctness,
      so we smash the right values in place. */
  
  /* We might be called before we've actually realized the window (if
@@ -509,12 +509,12 @@ x_frame_property (struct frame *f, Lisp_Object property)
   EmacsFrame w = (EmacsFrame) FRAME_X_TEXT_WIDGET (f);
   Widget gw = (Widget) w;
 
-#define FROB(propprop, value) 						\
-do {									\
-  if (EQ (property, propprop))						\
-    {									\
-      return (value);							\
-    }									\
+#define FROB(propprop, value) 	\
+do {				\
+  if (EQ (property, propprop))	\
+    {				\
+      return (value);		\
+    }				\
 } while (0)
 
   if (EQ (property, Qleft) || EQ (property, Qtop))
@@ -573,12 +573,12 @@ x_frame_properties (struct frame *f)
   EmacsFrame w = (EmacsFrame) FRAME_X_TEXT_WIDGET (f);
   Widget gw = (Widget) w;
 
-#define FROB(propprop, value)					\
-do {								\
-  Lisp_Object temtem = (value);					\
-  if (!NILP (temtem))						\
-    /* backwards order; we reverse it below */			\
-    result = Fcons (temtem, Fcons (propprop, result));		\
+#define FROB(propprop, value)				\
+do {							\
+  Lisp_Object temtem = (value);				\
+  if (!NILP (temtem))					\
+    /* backwards order; we reverse it below */		\
+    result = Fcons (temtem, Fcons (propprop, result));	\
 } while (0)
 
   x_smash_bastardly_shell_position (shell);
@@ -608,40 +608,40 @@ do {								\
 
 
 /* Functions called only from `x_set_frame_properties' to set
-** individual properties. */
+   individual properties. */
 
-static void 
-x_set_title_from_char (struct frame *f, char *name)
+static void
+x_set_frame_text_value (struct frame *f, Bufbyte *value,
+			String Xt_resource_name,
+			String Xt_resource_encoding_name)
 {
-  CONST char *old_name = 0;
-  CONST char *new_name;
-  Arg av[1];
+  Atom encoding = XA_STRING;
+  String new_XtValue = (String) value;
+  String old_XtValue;
+  Bufbyte *ptr;
+  Arg av[2];
 
-  GET_C_CHARPTR_EXT_CTEXT_DATA_ALLOCA (name, new_name);
-  XtSetArg (av[0], XtNtitle, &old_name);
+  /* ### Caching is device-independent - belongs in update_frame_title. */
+  XtSetArg (av[0], Xt_resource_name, &old_XtValue);
   XtGetValues (FRAME_X_SHELL_WIDGET (f), av, 1);
-  if (!old_name || strcmp (new_name, old_name))
+  if (!old_XtValue || strcmp (new_XtValue, old_XtValue))
     {
-      XtSetArg (av[0], XtNtitle, new_name);
-      XtSetValues (FRAME_X_SHELL_WIDGET (f), av, 1);
+      XtSetArg (av[0], Xt_resource_name, new_XtValue);
+      XtSetArg (av[1], Xt_resource_encoding_name, encoding);
+      XtSetValues (FRAME_X_SHELL_WIDGET (f), av, 2);
     }
 }
 
-static void
-x_set_icon_name_from_char (struct frame *f, char *name)
+static void 
+x_set_title_from_bufbyte (struct frame *f, Bufbyte *name)
 {
-  CONST char *old_name = 0;
-  CONST char *new_name;
-  Arg av[1];
+  x_set_frame_text_value (f, name, XtNtitle, XtNtitleEncoding);
+}
 
-  GET_C_CHARPTR_EXT_CTEXT_DATA_ALLOCA (name, new_name);
-  XtSetArg (av[0], XtNiconName, &old_name);
-  XtGetValues (FRAME_X_SHELL_WIDGET (f), av, 1);
-  if (!old_name || strcmp (new_name, old_name))
-    {
-      XtSetArg (av[0], XtNiconName, new_name);
-      XtSetValues (FRAME_X_SHELL_WIDGET (f), av, 1);
-    }
+static void
+x_set_icon_name_from_bufbyte (struct frame *f, Bufbyte *name)
+{
+  x_set_frame_text_value (f, name, XtNiconName, XtNiconNameEncoding);
 }
 
 /* Set the initial frame size as specified.  This function is used
@@ -941,7 +941,7 @@ void
 x_cde_transfer_callback (Widget widget, XtPointer clientData,
 			 XtPointer callData)
 {
-  char *filePath;
+  char *filePath, *buf, *data;
   int ii;
   Lisp_Object path = Qnil;
   Lisp_Object frame = Qnil;
@@ -965,11 +965,69 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	  va_run_hook_with_args (Qdrag_and_drop_functions, 2, frame, path);
 	}
     }
-  
+  else if (transferInfo->dropData->protocol == DtDND_BUFFER_TRANSFER)
+    {
+      for (ii = 0; ii < transferInfo->dropData->numItems; ii++)
+ 	{
+ 	  filePath = transferInfo->dropData->data.buffers[ii].name;
+ 	  path = (filePath != NULL) ?
+            make_string (filePath, strlen (filePath)) : Qnil;
+ 	  buf = transferInfo->dropData->data.buffers[ii].bp;
+ 	  data = make_string (buf, transferInfo->dropData->data.buffers[ii].size);
+ 	  va_run_hook_with_args(Qdrag_and_drop_functions, 3, frame, path, data);
+ 	}
+    }
+
   UNGCPRO;
   return;
 }
 #endif
+
+#ifdef HAVE_OFFIX_DND
+#include <OffiX/DragAndDrop.h>
+
+void 
+x_offix_drop_event_handler (Widget widget, XtPointer data, XEvent *event,
+			    Boolean *b)
+{
+  int i, len, Type;	
+  unsigned char *Data;
+  unsigned long Size;
+
+  Lisp_Object path = Qnil;
+  Lisp_Object frame = Qnil;
+
+  struct gcpro gcpro1, gcpro2;
+
+  Type = DndDataType (event); 
+  if ((Type != DndFile) && (Type != DndFiles) && (Type != DndExe))
+    return;
+  DndGetData (&Data, &Size);
+  
+  GCPRO2 (path, frame);
+
+  frame = make_frame ((struct frame *) data);
+
+  if (Type == DndFiles)
+    {
+      while (*Data)
+	{
+	  len = strlen ((char*) Data);
+	  path = make_string ((char*) Data, len);
+	  va_run_hook_with_args (Qdrag_and_drop_functions, 2, frame, path);
+	  Data += len+1;
+	}
+    }
+  else
+    {
+      path = make_string ((char*) Data, strlen (Data));    
+      va_run_hook_with_args (Qdrag_and_drop_functions, 2, frame, path);
+    }
+
+  UNGCPRO;
+  return;
+}
+#endif /* HAVE_OFFIX_DND */
 
 
 /************************************************************************/
@@ -1470,8 +1528,8 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 #endif
     {
       XtSetArg (av[ac], XtNinput, True); ac++;
-      XtSetArg (av[ac], XtNminWidthCells, 10); ac++;
-      XtSetArg (av[ac], XtNminHeightCells, 1); ac++;
+      XtSetArg (av[ac], (String) XtNminWidthCells, 10); ac++;
+      XtSetArg (av[ac], (String) XtNminHeightCells, 1); ac++;
     }
 
   if (!NILP (parent))
@@ -1507,7 +1565,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
   /* Create the text area */
   ac = 0;
   XtSetArg (av[ac], XtNborderWidth, 0); ac++;	/* should this be settable? */
-  XtSetArg (av[ac], XtNemacsFrame, f); ac++;
+  XtSetArg (av[ac], (String) XtNemacsFrame, f); ac++;
   text = XtCreateWidget (name,
 			 emacsFrameClass,
 			 container, av, ac);
@@ -1631,11 +1689,21 @@ x_popup_frame (struct frame *f)
     dnd_transfer_cb_rec[1].closure = NULL;
 
     DtDndVaDropRegister (FRAME_X_TEXT_WIDGET (f),
-			 DtDND_FILENAME_TRANSFER,
-			 XmDROP_COPY,
-			 dnd_transfer_cb_rec,
+ 			 DtDND_FILENAME_TRANSFER | DtDND_BUFFER_TRANSFER,
+ 			 XmDROP_COPY, dnd_transfer_cb_rec,
+ 			 DtNtextIsBuffer, True,
 			 DtNpreserveRegistration, False,
 			 NULL);
+  }
+#endif
+
+#ifdef HAVE_OFFIX_DND
+  {
+    DndInitialize (FRAME_X_SHELL_WIDGET (f));
+    DndRegisterDropWidget (FRAME_X_TEXT_WIDGET (f),
+			   x_offix_drop_event_handler, 
+			   (XtPointer) f);
+
   }
 #endif
 
@@ -1854,7 +1922,7 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
 
      doesn't put the frame where you expect it to:
      i.e. it's closer to the lower-right corner than
-)     it should be, and it appears that the size of
+     it should be, and it appears that the size of
      the WM decorations was not taken into account.
      This is *not* a problem with this function.
      Both mwm and twm have bugs in handling this
@@ -2223,8 +2291,8 @@ console_type_create_frame_x (void)
   CONSOLE_HAS_METHOD (x, internal_frame_property_p);
   CONSOLE_HAS_METHOD (x, frame_properties);
   CONSOLE_HAS_METHOD (x, set_frame_properties);
-  CONSOLE_HAS_METHOD (x, set_title_from_char);
-  CONSOLE_HAS_METHOD (x, set_icon_name_from_char);
+  CONSOLE_HAS_METHOD (x, set_title_from_bufbyte);
+  CONSOLE_HAS_METHOD (x, set_icon_name_from_bufbyte);
   CONSOLE_HAS_METHOD (x, frame_visible_p);
   CONSOLE_HAS_METHOD (x, frame_totally_visible_p);
   CONSOLE_HAS_METHOD (x, frame_iconified_p);

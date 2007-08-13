@@ -7,21 +7,24 @@
 ;; Lindberg's last update version: 5.7
 ;; Keywords: abbrev expand completion
 
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2 of the License, or
 ;; (at your option) any later version.
 ;;
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -43,7 +46,7 @@
 ;;
 ;; Set the variables you want special for your mode like this:
 ;; (set (make-local-variable 'dabbrev-case-replace) nil)
-;; Then you don't interfer with other modes.
+;; Then you don't interfere with other modes.
 ;;
 ;; If your mode handles buffers that refers to other buffers
 ;; (i.e. compilation-mode, gud-mode), then try to set
@@ -92,11 +95,9 @@
 
 ;;; Code:
 
-;;;----------------------------------------------------------------
-;;;----------------------------------------------------------------
-;;; Customization variables
-;;;----------------------------------------------------------------
-;;;----------------------------------------------------------------
+;;----------------------------------------------------------------
+;; Customization variables
+;;----------------------------------------------------------------
 (defvar dabbrev-backward-only nil
   "*If non-nil, `dabbrev-expand' only looks backwards.")
 
@@ -108,7 +109,7 @@
 
 Example: Set this to \"\\\\$\" for programming languages
 in which variable names may appear with or without a leading `$'.
-(For example, in Makefiles.)
+\(For example, in Makefiles.)
 
 Set this to nil if no characters should be skipped.")
 
@@ -218,11 +219,9 @@ If this variable is non-nil, dabbrev will only look in these buffers.
 It will not even look in the current buffer if it is not a member of
 this list.")
 
-;;;----------------------------------------------------------------
-;;;----------------------------------------------------------------
-;;; Internal variables
-;;;----------------------------------------------------------------
-;;;----------------------------------------------------------------
+;;----------------------------------------------------------------
+;; Internal variables
+;;----------------------------------------------------------------
 
 ;; Last obarray of completions in `dabbrev-completion'
 (defvar dabbrev--last-obarray nil)
@@ -257,17 +256,19 @@ this list.")
 ;; The buffer we last did a completion in.
 (defvar dabbrev--last-completion-buffer nil)
 
+;; Non-nil means we should upcase
+;; when copying successive words.
+(defvar dabbrev--last-case-pattern nil)
+
 ;; Same as dabbrev-check-other-buffers, but is set for every expand.
 (defvar dabbrev--check-other-buffers dabbrev-check-other-buffers)
 
 ;; The regexp for recognizing a character in an abbreviation.
 (defvar dabbrev--abbrev-char-regexp nil)
 
-;;;----------------------------------------------------------------
-;;;----------------------------------------------------------------
-;;; Macros
-;;;----------------------------------------------------------------
-;;;----------------------------------------------------------------
+;;----------------------------------------------------------------
+;; Macros
+;;----------------------------------------------------------------
 
 ;;; Get the buffer that mini-buffer was activated from
 (defsubst dabbrev--minibuffer-origin ()
@@ -297,11 +298,9 @@ this list.")
     (goto-char point)
     (dabbrev--substitute-expansion nil init (extent-string extent))))
 
-;;;----------------------------------------------------------------
-;;;----------------------------------------------------------------
-;;; Exported functions
-;;;----------------------------------------------------------------
-;;;----------------------------------------------------------------
+;;----------------------------------------------------------------
+;; Exported functions
+;;----------------------------------------------------------------
 
 ;; XEmacs changes:
 ;;;###autoload
@@ -358,7 +357,8 @@ if there is a suitable one already."
 	(setq dabbrev--last-abbreviation abbrev)
 	;; Find all expansion
 	(let ((completion-list
-	       (dabbrev--find-all-expansions abbrev ignore-case-p)))
+	       (dabbrev--find-all-expansions abbrev ignore-case-p))
+	      (completion-ignore-case ignore-case-p))
 	  ;; Make an obarray with all expansions
 	  (setq my-obarray (make-vector (length completion-list) 0))
 	  (or (> (length my-obarray) 0)
@@ -413,8 +413,9 @@ if there is a suitable one already."
 		       (current-window-configuration))))
 	(with-output-to-temp-buffer " *Completions*"
 	  (display-completion-list (all-completions init my-obarray)
+				   :activate-callback
 				   'dabbrev--extent-clicked-on
-				   arg)))
+				   :user-data arg)))
       (message "Making completion list...done")))
     (and (window-minibuffer-p (selected-window))
 	 (message nil))))
@@ -441,7 +442,8 @@ direction of search to backward if set non-nil.
 
 See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]."
   (interactive "*P")
-  (let (abbrev expansion old direction (orig-point (point)))
+  (let (abbrev record-case-pattern
+	       expansion old direction (orig-point (point)))
     ;; abbrev -- the abbrev to expand
     ;; expansion -- the expansion found (eventually) or nil until then
     ;; old -- the text currently in the buffer
@@ -486,6 +488,8 @@ See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]."
 		(setq expansion
 		      (buffer-substring dabbrev--last-expansion-location
 					(point)))
+		(if dabbrev--last-case-pattern
+		    (setq expansion (upcase expansion)))
 
 		;; Record the end of this expansion, in case we repeat this.
 		(setq dabbrev--last-expansion-location (point)))
@@ -499,6 +503,7 @@ See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]."
 			      (if dabbrev-backward-only 1 0)
 			    (prefix-numeric-value arg)))
 	  (setq abbrev (dabbrev--abbrev-at-point))
+	  (setq record-case-pattern t)
 	  (setq old nil)))
 
       ;;--------------------------------
@@ -538,16 +543,23 @@ See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]."
       ;; Success: stick it in and return.
       (setq buffer-undo-list (cons orig-point buffer-undo-list))
       (dabbrev--substitute-expansion old abbrev expansion)
+
+;; If we are not copying successive words now,
+;; set dabbrev--last-case-pattern.
+      (and record-case-pattern
+	   (setq dabbrev--last-case-pattern
+		 (and (eval dabbrev-case-fold-search)
+		      (not dabbrev-upcase-means-case-search)
+		      (equal abbrev (upcase abbrev)))))
+
       ;; Save state for re-expand.
       (setq dabbrev--last-expansion expansion)	
       (setq dabbrev--last-abbreviation abbrev)
       (setq dabbrev--last-abbrev-location (point-marker))))))
 
-;;;----------------------------------------------------------------
-;;;----------------------------------------------------------------
-;;; Local functions
-;;;----------------------------------------------------------------
-;;;----------------------------------------------------------------
+;;----------------------------------------------------------------
+;; Local functions
+;;----------------------------------------------------------------
 
 ;;; Checks if OTHER-BUFFER has the same major mode as current buffer.
 (defun dabbrev--same-major-mode-p (other-buffer)
@@ -779,6 +791,19 @@ See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]."
     (and nil use-case-replace
 	 (setq old (concat abbrev (or old "")))
 	 (setq expansion (concat abbrev expansion)))
+    ;; If the given abbrev is mixed case and its case pattern
+    ;; matches the start of the expansion,
+    ;; copy the expansion's case
+    ;; instead of downcasing all the rest.
+    (if (and (string= abbrev
+		      (substring expansion 0 (length abbrev)))
+	     (not (string= abbrev (downcase abbrev)))
+	     (not (string= abbrev (upcase abbrev))))
+	(setq use-case-replace nil))
+    (if (equal abbrev " ")
+	(setq use-case-replace nil))
+    (if use-case-replace
+	(setq expansion (downcase expansion)))
     (if old
 	(save-excursion
 	  (search-backward old))
@@ -797,7 +822,7 @@ See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]."
 
 ;;; ABBREV is string to find as prefix of word.  Second arg, REVERSE,
 ;;; is t for reverse search, nil for forward.  Variable dabbrev-limit
-;;; controls the maximum search region size.  Third argment IGNORE-CASE
+;;; controls the maximum search region size.  Third argument IGNORE-CASE
 ;;; non-nil means treat case as insignificant while looking for a match
 ;;; and when comparing with previous matches.  Also if that's non-nil
 ;;; and the match is found at the beginning of a sentence and is in
@@ -860,11 +885,11 @@ See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]."
 	      (setq dabbrev--last-table
 		    (cons found-string dabbrev--last-table))
 	      (if (and ignore-case (eval dabbrev-case-replace))
+		  ;; XEmacs:  FSF has just `result', which makes absolutely
+		  ;; no sense in this context
 		  (downcase result)
 		result)))))))
 
 (provide 'dabbrev)
 
 ;; dabbrev.el ends here
-
-

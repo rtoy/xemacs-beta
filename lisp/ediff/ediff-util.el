@@ -465,7 +465,7 @@ to invocation.")
     (ediff-refresh-mode-lines)
     (setq ediff-control-window (selected-window))
     (setq ediff-window-config-saved
-	  (format "%S%S%S%S%S%S%S"
+	  (format "\%S\%S\%S\%S\%S\%S\%S"
 		  ediff-control-window
 		  ediff-window-A
 		  ediff-window-B

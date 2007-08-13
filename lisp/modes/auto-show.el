@@ -6,7 +6,24 @@
 ;;; Modified by: Ben Wing <wing@666.com>
 ;;; Maintainer: FSF
 
-;;; Synched up with: FSF 19.30.
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34 (But starting to deviate).
 
 ;;; Commentary:
 
@@ -59,6 +76,7 @@ visible.  Setting this to 0 disables this feature.")
 
 (defun auto-show-truncationp ()
   "True if line truncation is enabled for the selected window."
+  ;; XEmacs change (use specifiers)
   ;; ### There should be a more straightforward way to do this from elisp.
   (or truncate-lines 
       (and truncate-partial-width-windows
@@ -76,6 +94,7 @@ With arg, turn auto scrolling on if arg is positive, off otherwise."
 	    (not auto-show-mode)
 	  (> (prefix-numeric-value arg) 0))))
 
+;; XEmacs addition:
 (defvar auto-show-inhibiting-commands
   '(scrollbar-char-left
     scrollbar-char-right
@@ -87,6 +106,7 @@ With arg, turn auto scrolling on if arg is positive, off otherwise."
   "Commands that inhibit auto-show behavior.
 This normally includes the horizontal scrollbar commands.")
 
+;; XEmacs addition:
 (defun auto-show-should-take-action-p ()
   (and auto-show-mode (auto-show-truncationp)
        (equal (window-buffer) (current-buffer))
@@ -123,6 +143,7 @@ This function only does something if `auto-show-mode' is non-nil
 and longlines are being truncated in the selected window.
 See also the command `auto-show-toggle'."
   (interactive)
+  ;; XEmacs change
   (if (auto-show-should-take-action-p)
       (let* ((col (current-column))	;column on line point is at
 	     (scroll (window-hscroll))	;how far window is scrolled

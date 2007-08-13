@@ -440,7 +440,7 @@ by vm-match-header."
 This function works by examining the beginning of a folder.
 If optional arg FILE is present the type of FILE is returned instead.
 If optional second and third arg START and END are provided,
-vm-get-folder-type will examine the the text between those buffer
+vm-get-folder-type will examine the text between those buffer
 positions.  START and END default to 1 and (buffer-size) + 1.
 
 Returns

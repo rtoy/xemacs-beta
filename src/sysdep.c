@@ -51,6 +51,9 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 
 #include <setjmp.h>
+#ifdef HAVE_LIBGEN_H            /* Must come before sysfile.h */
+#include <libgen.h>
+#endif
 #include "sysfile.h"
 #include "syswait.h"
 #include "sysdir.h"
@@ -908,7 +911,7 @@ init_sigio_on_device (struct device *d)
 {
   int filedesc = DEVICE_INFD (d);
 
-#if defined (I_SETSIG)
+#if defined (I_SETSIG) && !defined(HPUX10)
   ioctl (filedesc, I_GETSIG, &DEVICE_OLD_SIGIO_FLAG (d));
   DEVICE_OLD_SIGIO_FLAG (d) &= ~S_INPUT;
 #elif defined (FASYNC)
@@ -929,8 +932,6 @@ init_sigio_on_device (struct device *d)
 #ifdef HAVE_WINDOW_SYSTEM
     else if (!DEVICE_STREAM_P (d))
       {
-	/* Process group for socket should be -pid for delivery to self. */
-	owner = -owner;
 	ioctl_status = ioctl (filedesc, SIOCGPGRP,
 			      &DEVICE_OLD_FCNTL_OWNER (d));
 	ioctl_status = ioctl (filedesc, SIOCSPGRP, &owner);
@@ -965,8 +966,6 @@ reset_sigio_on_device (struct device *d)
 #ifdef HAVE_WINDOW_SYSTEM
     else if (!DEVICE_STREAM_P (d))
       {
-	/* Process group for socket should be -pid for delivery to self. */
-	owner = -owner;
 	ioctl_status = ioctl (filedesc, SIOCSPGRP,
 			      &DEVICE_OLD_FCNTL_OWNER (d));
       }
@@ -987,7 +986,7 @@ request_sigio_on_device (struct device *d)
   if (d->sigio_enabled)
     return;
 
-#if defined (I_SETSIG)
+#if defined (I_SETSIG) && !defined(HPUX10)
   ioctl (filedesc, I_SETSIG, DEVICE_OLD_SIGIO_FLAG (d) | S_INPUT);
 #elif defined (FASYNC)
   fcntl (filedesc, F_SETFL, DEVICE_OLD_SIGIO_FLAG (d) | FASYNC);
@@ -999,7 +998,6 @@ request_sigio_on_device (struct device *d)
 	 use the following crud to do the appropriate thing. */
     int on = 1;
     int ioctl_status;		/* ####DG: check if IOCTL succeeds here. */
-    int socket_pgroup = -getpid ();
 
     if (DEVICE_TTY_P (d))
       {
@@ -1009,7 +1007,6 @@ request_sigio_on_device (struct device *d)
     else if (!DEVICE_STREAM_P (d))
       {
 	ioctl_status = ioctl (filedesc, FIOASYNC, &on);
-	ioctl_status = ioctl (filedesc, SIOCSPGRP, &socket_pgroup);
       }
 #endif
   }
@@ -1037,7 +1034,7 @@ unrequest_sigio_on_device (struct device *d)
   if (!d->sigio_enabled)
     return;
 
-#if defined (I_SETSIG)
+#if defined (I_SETSIG) && !defined(HPUX10)
   ioctl (filedesc, I_SETSIG, DEVICE_OLD_SIGIO_FLAG (d));
 #elif defined (FASYNC)
   fcntl (filedesc, F_SETFL, DEVICE_OLD_SIGIO_FLAG (d));
@@ -1049,7 +1046,6 @@ unrequest_sigio_on_device (struct device *d)
 	 use the following crud to do the appropriate thing. */
 
     int off = 0;
-    int socket_pgroup = 0;
     int ioctl_status;
 
     /* See comment for request_sigio_on_device */
@@ -1061,7 +1057,6 @@ unrequest_sigio_on_device (struct device *d)
     else 
       {
 	ioctl_status = ioctl (filedesc, FIOASYNC, &off);
-	ioctl_status = ioctl (filedesc, SIOCSPGRP, &socket_pgroup);
       }
   }
 #elif defined (FIOASYNC)
@@ -3058,7 +3053,6 @@ sys_readdir (DIR *dirp)
 { 
   DIRENTRY *rtnval;
 
-  /* #### currently we don't do conversions on the incoming data */
   /* Apparently setting errno is necessary on some systems?
      Maybe readdir() doesn't always set errno ?! */
   while (!(errno = 0, rtnval = readdir (dirp))
@@ -3112,6 +3106,20 @@ sys_access (CONST char *path, int mode)
 }
 
 #endif /* ENCAPSULATE_ACCESS */
+
+#ifdef HAVE_EACCESS
+#ifdef ENCAPSULATE_EACCESS
+
+int
+sys_eaccess (CONST char *path, int mode)
+{
+  PATHNAME_CONVERT_OUT (path);
+  return eaccess (path, mode);
+}
+
+#endif /* ENCAPSULATE_EACCESS */
+#endif /* HAVE_EACCESS */
+
 
 #ifdef ENCAPSULATE_LSTAT
 

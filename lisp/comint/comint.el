@@ -581,7 +581,7 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
     (popup-menu (if history
 		    (append comint-popup-menu
 			    (list "---" (cons "Command History" history)))
-		  comint-menu))))
+		  comint-popup-menu))))
 
 (defvar comint-history-menu-max 40
   "*Maximum number of entries to display on the Comint command-history menu.")
@@ -635,7 +635,7 @@ STARTFILE is the name of a file to send the contents of to the process.
 
 If PROGRAM is a string, any more args are arguments to PROGRAM."
   (or (fboundp 'start-process)
-      (error "Multi-processing is not supported for this system"))
+      (error "Multiple processes are not supported for this system"))
   (let ((buffer (get-buffer-create (concat "*" name "*"))))
     ;; If no process, or nuked process, crank up a new one and put buffer in
     ;; comint mode.  Otherwise, leave buffer and existing process alone.
@@ -1828,7 +1828,7 @@ See `comint-prompt-regexp'."
 ;;; your cursor over a string that's a filename and have it taken as default.
 ;;;
 ;;; If the command is given in a file buffer whose major mode is in
-;;; SOURCE-MODES, then the the filename is the default file, and the
+;;; SOURCE-MODES, then the filename is the default file, and the
 ;;; file's directory is the default directory.
 ;;;
 ;;; If the buffer isn't a source file buffer (e.g., it's the process buffer),

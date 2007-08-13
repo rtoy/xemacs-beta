@@ -212,6 +212,10 @@ The `--with-cde option allows you to enable or disable CDE drag and
 drop support.  `configure' will attempt to detect this option and
 define `--with-cde' for you.
 
+The `--with-offix option allows you to enable or disable OffiX drag and
+drop support.  `configure' will attempt to detect this option and
+define `--with-offix' for you.
+
 The `--with-energize' option specifies that XEmacs should be built
 with support for the Lucid Energize system.  (If you have not
 purchased Energize, specifying this option won't gain you anything.)

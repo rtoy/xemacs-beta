@@ -293,16 +293,16 @@ as instantiators so no special instantiation function is needed.
 
 @item font
 The valid instantiators are strings describing fonts or vectors
-indicating inheritance from the font of some face.  Instance objects
-are font-instance objects, which are specific to a particular device.
-The instantiation method in this specifier can fail, unlike for
-integer, natnum, boolean, and generic specifiers.
+indicating inheritance from the font of some face.  Instance objects are
+font-instance objects, which are specific to a particular device.  The
+instantiation method for font specifiers can fail, unlike for integer,
+natnum, boolean, and generic specifiers.
 
 @item color
 The valid instantiators are strings describing colors or vectors
 indicating inheritance from the foreground or background of some face.
 Instance objects are color-instance objects, which are specific to a
-particular device.  The instantiation method in this specifier can fail,
+particular device.  The instantiation method for color specifiers can fail,
 as for font specifiers.
 
 @item image
@@ -313,7 +313,7 @@ data of various sorts or indicating inheritance from the
 background-pixmap property of some face.  Instance objects are either
 strings (for text images), image-instance objects (for pixmap images),
 or subwindow objects (for subwindow images).  The instantiation method
-in this specifier can fail, as for font and color specifiers.
+for image specifiers can fail, as for font and color specifiers.
 
 @item face-boolean
 The valid instantiators are the symbols @code{t} and @code{nil} and
@@ -327,6 +327,13 @@ The valid instantiators are toolbar descriptors, which are lists
 of toolbar-button descriptors (each of which is a vector of two
 or four elements).  @xref{Toolbar} for more information.
 @end table
+
+Color and font instance objects can also be used in turn as
+instantiators for a new color or font instance object.  Since these
+instance objects are device-specific, the instantiator can be used
+directly as the new instance object, but only if they are of the same
+device.  If the devices differ, the base color or font of the
+instantiating object is effectively used instead as the instantiator.
 
 @xref{Faces and Window-System Objects} for more information on fonts,
 colors, and face-boolean specifiers.  @xref{Glyphs} for more information

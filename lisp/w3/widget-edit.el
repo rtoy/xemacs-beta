@@ -44,6 +44,11 @@ into the buffer visible in the event's window."
 (defvar widget-mouse-face 'highlight)
 (defvar widget-field-face 'italic)
 
+(defvar widget-motion-hook nil
+  "*Hook to be run after widget traversal (via `widget-forward|backward').
+The hooks will all be called with on argument - the widget that was just
+selected.")
+
 ;;; Utility functions.
 ;;
 ;; These are not really widget specific.
@@ -125,7 +130,8 @@ into the buffer visible in the event's window."
 
 (defmacro widget-specify-insert (&rest form)
   ;; Execute FORM without inheriting any text properties.
-  `(save-restriction
+  (`
+   (save-restriction
      (let ((inhibit-read-only t)
 	   result
 	   after-change-functions)
@@ -133,11 +139,11 @@ into the buffer visible in the event's window."
        (narrow-to-region (- (point) 2) (point))
        (widget-specify-none (point-min) (point-max))
        (goto-char (1+ (point-min)))
-       (setq result (progn ,@form))
+       (setq result (progn (,@ form)))
        (delete-region (point-min) (1+ (point-min)))
        (delete-region (1- (point-max)) (point-max))
        (goto-char (point-max))
-       result)))
+       result))))
 
 ;;; Widget Properties.
 
@@ -350,10 +356,10 @@ With optional ARG, move across that many fields."
 	     (goto-char (max button field)))
 	    (button (goto-char button))
 	    (field (goto-char field)))))
-  (let ((help-echo (or (get-text-property (point) 'button)
-		       (get-text-property (point) 'field))))
-    (if (and help-echo (setq help-echo (widget-get help-echo :help-echo)))
-	(message "%s" help-echo))))
+  (run-hook-with-args 'widget-motion-hook (or
+					   (get-text-property (point) 'button)
+					   (get-text-property (point) 'field)))
+  )
 
 (defun widget-backward (arg)
   "Move point to the previous field or button.

@@ -1,10 +1,10 @@
-;;; fs.el --- Format a SGML-file according to a style file
+;;; psgml-fs.el --- Format a SGML-file according to a style file
 ;; Copyright (C) 1995 Lennart Staflin
 
 ;; Author: Lennart Staflin <lenst@lysator.liu.se>
-;; Version: $Id: psgml-fs.el,v 1.1.1.1 1996/12/18 03:35:17 steve Exp $
+;; Version: $Id: psgml-fs.el,v 1.1.1.2 1996/12/18 03:47:13 steve Exp $
 ;; Keywords: 
-;; Last edited: Mon Jan  8 22:12:00 1996 by lenst@triton.lstaflin.pp.se (Lennart Staflin)
+;; Last edited: Thu Mar 21 22:32:27 1996 by lenst@triton.lstaflin.pp.se (Lennart Staflin)
 
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -23,9 +23,9 @@
 ;;;
 ;;; Commentary:
 
-;; The function `style-format' formats the SGML-file in the current buffer
-;; according to the style defined in the file `style.el' (or the file given
-;; by the variable `fs-style').
+;; The function `style-format' formats the SGML-file in the current
+;; buffer according to the style defined in the file `psgml-style.fs'
+;; (or the file given by the variable `fs-style').
 
 ;; To try it load this file and open the test file example.sgml. Then
 ;; run the emacs command `M-x style-format'.
@@ -159,7 +159,7 @@
 
 ;;;; Style driven engine
 
-(defvar fs-style "psgml-style.el"
+(defvar fs-style "psgml-style.fs"
   "*Style sheet to use for `style-format'.
 The value can be the style-sheet list, or it can be a file name
 \(string) of a file containing the style sheet or it can be the name
@@ -238,4 +238,4 @@ The value can be the style-sheet list, or it can be a file name
   (sgml-element-attval e name))
 
 
-;;; fs.el ends here
+;;; psgml-fs.el ends here

@@ -725,7 +725,7 @@ Set SYMBOL's property list to NEWVAL, and return NEWVAL.
    SYMVAL_BOOLEAN_FORWARD:
       (declare with DEFVAR_INT or DEFVAR_BOOL)
       Similar to SYMVAL_OBJECT_FORWARD except that the C variable
-      is is of type "int" and is an integer or boolean, respectively.
+      is of type "int" and is an integer or boolean, respectively.
 
    SYMVAL_CONST_OBJECT_FORWARD:
    SYMVAL_CONST_FIXNUM_FORWARD:

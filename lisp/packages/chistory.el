@@ -21,7 +21,7 @@
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
 ;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -40,10 +40,10 @@
 ;;;###autoload
 (defun repeat-matching-complex-command (&optional pattern)
   "Edit and re-evaluate complex command with name matching PATTERN.
-Matching occurrences are displayed, most recent first, until you
-select a form for evaluation.  If PATTERN is empty (or nil), every form
-in the command history is offered.  The form is placed in the minibuffer
-for editing and the result is evaluated."
+Matching occurrences are displayed, most recent first, until you select
+a form for evaluation.  If PATTERN is empty (or nil), every form in the
+command history is offered.  The form is placed in the minibuffer for
+editing and the result is evaluated."
   (interactive "sRedo Command (regexp): ")
   (if pattern
       (if (string-match "[^ \t]" pattern)

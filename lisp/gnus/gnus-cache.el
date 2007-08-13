@@ -66,9 +66,15 @@ variable to \"^nnml\".")
 
 (defun gnus-cache-open ()
   "Initialize the cache."
-  (gnus-cache-read-active))
+  (when (or (file-exists-p gnus-cache-directory)
+	    (and gnus-use-cache
+		 (not (eq gnus-use-cache 'passive))))
+    (gnus-cache-read-active)))
 
-(gnus-add-shutdown 'gnus-cache-close 'gnus)
+(condition-case ()
+    (gnus-add-shutdown 'gnus-cache-close 'gnus)
+  ;; Complexities of byte-compiling makes this kludge necessary.  Eeek.
+  (error nil))
 
 (defun gnus-cache-close ()
   "Shut down the cache."
@@ -233,13 +239,14 @@ variable to \"^nnml\".")
 
 (defun gnus-cache-possibly-alter-active (group active)
   "Alter the ACTIVE info for GROUP to reflect the articles in the cache."
-  (let ((cache-active (gnus-gethash group gnus-cache-active-hashtb)))
-    (and cache-active 
-	 (< (car cache-active) (car active))
-	 (setcar active (car cache-active)))
-    (and cache-active
-	 (> (cdr cache-active) (cdr active))
-	 (setcdr active (cdr cache-active)))))
+  (when gnus-cache-active-hashtb
+    (let ((cache-active (gnus-gethash group gnus-cache-active-hashtb)))
+      (and cache-active 
+	   (< (car cache-active) (car active))
+	   (setcar active (car cache-active)))
+      (and cache-active
+	   (> (cdr cache-active) (cdr active))
+	   (setcdr active (cdr cache-active))))))
 
 (defun gnus-cache-retrieve-headers (articles group &optional fetch-old)
   "Retrieve the headers for ARTICLES in GROUP."
@@ -367,9 +374,10 @@ Returns the list of articles removed."
 	  (file-name-as-directory
 	   (if (gnus-use-long-file-name 'not-cache)
 	       group 
-	     (let ((group (concat group "")))
-	       (if (string-match ":" group)
-		   (aset group (match-beginning 0) ?/))
+	     (let ((group (nnheader-replace-chars-in-string group ?/ ?_)))
+	       ;; Translate the first colon into a slash.
+	       (when (string-match ":" group)
+		 (aset group (match-beginning 0) ?/))
 	       (nnheader-replace-chars-in-string group ?. ?/))))
 	  (if (stringp article) article (int-to-string article))))
 

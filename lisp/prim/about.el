@@ -437,11 +437,13 @@
 	been the name of the product since version 19.11.)")
 
 	  (insert "\n\n\n\t")
-	  (about-face "SunPro is now DevPro (SunSoft Developer Products)\n" 'italic)
+	  (about-face "SunPro is now DevPro (Sun Developer Products)\n" 'italic)
 	  (insert "
-	In mid-'94 Sun completed a reorganization where SunPro moved to
-	SunSoft.  As a consequence, SunPro is now called SunSoft Developer
-	Products, or DevPro for short. ")
+	In mid-'94 Sun completed a reorganization where SunPro moved
+	to SunSoft.  As a consequence, SunPro was then called SunSoft
+	Developer Products, or DevPro for short.  De-planetization is
+	continuing in 1996, and the name `Sunsoft' is falling into
+	disuse in favour of `Sun'.")
 
 	  (insert "\n\n\n\t")
 	  (about-face "Lucid goes under\n" 'italic)

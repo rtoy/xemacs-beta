@@ -979,7 +979,7 @@ embedded nulls (use 'arg_bval).
   CHECK_STRING (vtype);
   CHECK_TOOLTALK_CONSTANT (mode);
 
-  n = tooltalk_constant_value (mode);
+  n = (Tt_mode) tooltalk_constant_value (mode);
 
   if (!VALID_TOOLTALK_MESSAGEP (m))
     return Qnil;
@@ -1195,10 +1195,11 @@ is added.  At present there's no way to add a binary data argument.
   CHECK_STRING (vtype);
   CHECK_TOOLTALK_CONSTANT (mode);
 
-  n = tooltalk_constant_value (mode);
+  n = (Tt_mode) tooltalk_constant_value (mode);
 
   if (!VALID_TOOLTALK_PATTERNP (p))
     return Qnil;
+  
   {
     CONST char *vtype_ext;
 

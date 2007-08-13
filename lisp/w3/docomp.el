@@ -52,6 +52,7 @@
 ;; For XEmacs/Lucid
 (w3-declare-variables 'current-menubar 'default-menubar 'extent
 		      'mode-motion-hook 'mode-popup-menu 'sound-alist
+		      'menubar-visible-p
 		      'inhibit-help-echo 'default-toolbar
 		      'bottom-toolbar-height 'top-toolbar-height
 		      'toolbar-buttons-captioned-p
@@ -62,7 +63,7 @@
 
 ;; For MULE
 (w3-declare-variables '*noconv* '*autoconv* '*euc-japan* '*internal*
-		      'w3-mime-list-for-code-conversion
+		      'w3-mime-list-for-code-conversion 'lc-ltn1
 		      'file-coding-system-for-read 'file-coding-system)
 
 ;; For Mailcrypt

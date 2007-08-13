@@ -90,16 +90,19 @@ With arg, enable flow control mode if arg is positive, otherwise disable."
 Use `(enable-flow-control-on \"vt100\" \"h19\")' to enable flow control
 on VT-100 and H19 terminals.  When flow control is enabled,
 you must type C-\\ to get the effect of a C-s, and type C-^
-to get the effect of a C-q."
-  (let ((term (getenv "TERM"))
-	hyphend)
-    (if term
-	(progn
-	  ;; Strip off hyphen and what follows
-	  (while (setq hyphend (string-match "[-_][^-_]+$" term))
-	    (setq term (substring term 0 hyphend)))
-	  (and (member term losing-terminal-types)
-	       (enable-flow-control))))))
+to get the effect of a C-q.
+
+This function has no effect unless the current device is a tty.
+
+The tty terminal type is determined from the TERM environment variable.
+Trailing hyphens and everything following is stripped, so a TERM
+value of \"vt100-nam\" is treated the same as \"vt100\"."
+  (and
+   (eq (device-type) 'tty)
+   (getenv "TERM")
+   (member (replace-in-string (getenv "TERM") "[-_].*$" "")
+           losing-terminal-types)
+   (enable-flow-control)))
 
 (provide 'flow-ctrl)
 

@@ -1,6 +1,6 @@
 ;;;; psgml-charent.el
 ;;; Last edited: Mon Nov 28 22:18:09 1994 by lenst@lysistrate (Lennart Staflin)
-;;; $Id: psgml-charent.el,v 1.1.1.1 1996/12/18 03:35:18 steve Exp $
+;;; $Id: psgml-charent.el,v 1.1.1.2 1996/12/18 03:47:13 steve Exp $
 
 ;; Copyright (C) 1994 Lennart Staflin
 
@@ -31,12 +31,13 @@
 ;;;; Code:
 
 (provide 'psgml-charent)
+(require 'psgml-parse)
 
 
 ;;;; Variable declarations
 
 (defvar sgml-display-char-list-filename
-  (expand-file-name sgml-data-directory "iso88591.map")
+  "iso88591.map"
   "*Name of file holding relations between character codes and character
 names of displayable characters")
 
@@ -114,7 +115,4 @@ Alist with entity name as key and display character as content."
 
 
 
-
-(require 'psgml-parse)
-
 ;;; psgml-charent.el ends here

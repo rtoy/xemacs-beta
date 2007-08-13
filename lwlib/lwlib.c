@@ -35,7 +35,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define alloca __builtin_alloca
 #endif
 
-#if ((!__GNUC__) && !defined(__hpux)) && !defined(_AIX) && !defined (_SCO_DS) && !defined (__USLC__)
+#if ((!__GNUC__) && !defined(__hpux)) && !defined(_AIX) && !defined (_SCO_DS) && !defined (__USLC__) && !defined(sinix)
 #include <alloca.h>
 #endif
 
@@ -475,10 +475,10 @@ safe_strcmp (CONST char *s1, CONST char *s2)
   return (s1 && s2) ? strcmp (s1, s2) : s1 ? False : !!s2;
 }
 
-static int
-max (int i1, int i2)
+static change_type
+max (change_type i1, change_type i2)
 {
-  return i1 > i2 ? i1 : i2;
+  return (int)i1 > (int)i2 ? i1 : i2;
 }
 
 

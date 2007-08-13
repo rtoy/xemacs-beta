@@ -42,7 +42,7 @@ PASSWORD - What password to use")
 			      (format "%s:%d" host port)))
 	(zenirc-server-alist
 	 (list
-	  (list host port pass nil user))))
+	  (list host port password nil user))))
     (zenirc)
     (goto-char (point-max))
     (if (not channel)

@@ -1218,7 +1218,7 @@ find_entries (CONST char *file, FILE *inf)
 	continue;
       *cp = '\0';
 
-      if (strlen (lp) > 0)
+      if (strlen (lp) > (size_t) 0)
 	{
 	  function = get_language_from_interpreter (lp);
 	  if (function != NULL)
@@ -3436,7 +3436,7 @@ skip_comment (struct linebuffer *plb, FILE *inf, int *plineno,
 #ifdef ETAGS_REGEXPS
 /* Take a string like "/blah/" and turn it into "blah", making sure
    that the first and last characters are the same, and handling
-   quoted separator characters.  Actually, stops on the occurence of
+   quoted separator characters.  Actually, stops on the occurrence of
    an unquoted separator.  Also turns "\t" into a Tab character.
    Returns pointer to terminating separator.  Works in place.  Null
    terminates name string. */

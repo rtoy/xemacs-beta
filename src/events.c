@@ -416,7 +416,7 @@ You MUST NOT use this event object after calling this function with it.
 You will lose.  It is not necessary to call this function, as event
 objects are garbage-collected like all other objects; however, it may
 be more efficient to explicitly deallocate events when you are sure
-that that is safe.
+that it is safe to do so.
 */ )
     (event)
     Lisp_Object event;
@@ -713,11 +713,11 @@ character_to_event (Emchar c, struct Lisp_Event *event, struct console *con,
   else if (c == ' ')
     k = QKspace;
   
-  event->event_type		= key_press_event;
-  event->timestamp		= 0; /* #### */
-  event->channel		= make_console (con);
-  event->event.key.keysym	= (!NILP (k) ? k : make_char (c));
-  event->event.key.modifiers	= m;
+  event->event_type	     = key_press_event;
+  event->timestamp	     = 0; /* #### */
+  event->channel	     = make_console (con);
+  event->event.key.keysym    = (!NILP (k) ? k : make_char (c));
+  event->event.key.modifiers = m;
 }
 
 
@@ -824,32 +824,32 @@ Note that specifying both ALLOW-META and ALLOW-NON-ASCII is ambiguous, as
 
 DEFUN ("character-to-event", Fcharacter_to_event, Scharacter_to_event,
        1, 4, 0 /*
-Converts a keystroke specifier intoto an event structure, replete with
+Converts a keystroke specifier into an event structure, replete with
 bucky bits.  The keystroke is the first argument, and the event to fill
 in is the second.  This function contains knowledge about what the codes
 ``mean'' -- for example, the number 9 is converted to the character ``Tab'',
 not the distinct character ``Control-I''.
 
 Note that CH (the keystroke specifier) can be an integer, a character,
- a symbol such as 'clear, or a list such as '(control backspace).
+a symbol such as 'clear, or a list such as '(control backspace).
 
-If the optional second argument is an event, it is modified; otherwise, a
- new event object is created.
+If the optional second argument is an event, it is modified;
+otherwise, a new event object is created.
 
-Optional third arg CONSOLE is the console to store in the event, and defaults
- to the selected console.
+Optional third arg CONSOLE is the console to store in the event, and
+defaults to the selected console.
 
 If CH is an integer or character, the high bit may be interpreted as the
- meta key. (This is done for backward compatibility in lots of places.)
- If USE-CONSOLE-META-FLAG is nil, this will always be the case.  If
- USE-CONSOLE-META-FLAG is non-nil, the `meta' flag for CONSOLE affects
- whether the high bit is interpreted as a meta key. (See `set-input-mode'.)
- If you don't want this silly meta interpretation done, you should pass
- in a list containing the character.
+meta key. (This is done for backward compatibility in lots of places.)
+If USE-CONSOLE-META-FLAG is nil, this will always be the case.  If
+USE-CONSOLE-META-FLAG is non-nil, the `meta' flag for CONSOLE affects
+whether the high bit is interpreted as a meta key. (See `set-input-mode'.)
+If you don't want this silly meta interpretation done, you should pass
+in a list containing the character.
 
 Beware that character-to-event and event-to-character are not strictly
- inverse functions, since events contain much more information than the
- ASCII character set can encode.
+inverse functions, since events contain much more information than the
+ASCII character set can encode.
 */ )
      (ch, event, console, use_console_meta_flag)
      Lisp_Object ch, event, console, use_console_meta_flag;

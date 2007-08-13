@@ -7,12 +7,20 @@
 @syncodeindex vr cp
 @synindex ky cp
 @c %**end of header
-@c $Id: psgml.texi,v 1.1.1.1 1996/12/18 03:36:10 steve Exp $
+@c $Id: psgml.texi,v 1.1.1.2 1996/12/18 03:47:31 steve Exp $
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* PSGML: (psgml).          PSGML, a major mode for SGML documents.
+END-INFO-DIR-ENTRY
+@end format
+@end ifinfo
 
 @ifinfo
 Documentation for PSGML, a major mode for SGML.
 
-Copyright 1994 Lennart Staflin
+Copyright 1994, 1996 Lennart Staflin
      
 Permission is granted to make and distribute verbatim
 copies of this manual provided the copyright notice and
@@ -49,7 +57,7 @@ translation approved by the Free Software Foundation.
 @c  start the copyright page.
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1994 Lennart Staflin
+Copyright @copyright{} 1994, 1996 Lennart Staflin
 
 @c Published by ...
 
@@ -83,9 +91,8 @@ translation approved by the Free Software Foundation.
 @ifinfo
 @top PSGML
 
-PSGML is a major mode for editing SGML documents, with special
-additions for HTML.  This is the DRAFT documentation for PSGML
-version 1.0.
+PSGML is a major mode for editing SGML documents.  This is the DRAFT
+documentation for PSGML version 1.0.
 @end ifinfo
 
 @menu
@@ -98,9 +105,14 @@ version 1.0.
 * Managing the DTD::            Specifying what DTD to use
 * Edit::                        Commands for editing
 * Display::                     Appearance of text in the buffer
+* Miscellaneous options::        
 * Bugs::                        Reporting bugs
 * Index::                       
 @end menu
+
+
+@c *** section about error recovery ??
+
 
 @c ------------------------------------------------------------------
 
@@ -113,11 +125,10 @@ version 1.0.
 @cindex RANK
 @cindex SGML Declaration
 
-PSGML is a major mode for editing SGML documents, and includes a number
-of features for working specifically with HTML.  It works with GNU Emacs
-19.19 and later or with Lucid Emacs 19.9 and later.  PSGML contains a
-simple SGML parser and can work with any DTD.  Functions provided
-includes menus and commands for inserting tags with only the
+PSGML is a major mode for editing SGML documents.  It works with GNU
+Emacs 19.19 and later or with Lucid Emacs 19.9 and later.  PSGML
+contains a simple SGML parser and can work with any DTD.  Functions
+provided includes menus and commands for inserting tags with only the
 contextually valid tags, identification of structural errors, editing of
 attribute values in a separate window with information about types and
 defaults, and structure based editing.
@@ -128,8 +139,11 @@ systems -- Standard Generalized Markup Language (SGML)''.
 
 A good introduction to SGML is @cite{A Gentle Introduction to SGML}
 produced by Text Encoding Initiative (this is really chapter 2 of TEI
-P3). This can be found on
+P3).  This can be found on
+
+@display
 @file{ftp://ftp.ifi.uio.no/pub/SGML/TEI/P3SG.DOC}.
+@end display
 
 A SGML document has three major parts, in order:
 
@@ -143,11 +157,11 @@ Document Element (@samp{<@var{name}> @dots{} </@var{name}>})
 @end enumerate
 
 The SGML declaration contains general information about character sets,
-concrete syntax, and SGML features used. PSGML does not use the SGML
-Declaration, it can be left out, and if included is ignored. Many SGML
+concrete syntax, and SGML features used.  PSGML does not use the SGML
+Declaration, it can be left out, and if included is ignored.  Many SGML
 systems allow the SGML declaration to be defaulted.  PSGML always use
 the Concrete Reference Syntax but without limitations on
-lengths. Features used has to be indicated with variables (@pxref{SGML
+lengths.  Features used has to be indicated with variables (@pxref{SGML
 declaration}).
 
 The document type declaration specifies the valid elements and entities
@@ -155,7 +169,7 @@ and how they can be nested. A document type is usually needed, but can
 reside in another file (@pxref{Managing the DTD}).
 
 The system declaration for PSGML:
-@format
+@example
 SYSTEM "ISO 8879:1986"
    CHARSET
      BASESET  "ISO 646-1983//CHARSET
@@ -173,7 +187,7 @@ SYSTEM "ISO 8879:1986"
               GENERAL NO  MODEL    NO   EXCLUDE  NO  CAPACITY NO
               NONSGML NO  SGML     NO   FORMAL   NO
      SDIF     PACK    NO  UNPACK   NO
-@end format
+@end example
 
 
 @c -------------------------------------------------------------------------
@@ -181,13 +195,32 @@ SYSTEM "ISO 8879:1986"
 @comment  node-name,  next,  previous,  up
 @chapter Installing PSGML
 
+To install PSGML you first need to uncompress and unpack the source
+archive.  This is done with the @code{gunzip} and @code{tar} commands.
+
+@example
+gunzip psgml-1.0a12.tar.gz; tar xf psgml-1.0a12.tar
+@end example
+
+This should create a subdirectory to the current directory with the
+source code. This directory contains a @code{configure} command (see the
+file INSTALL for more information about configure).  You can use the
+@code{configure} command to configure the package or you can load the
+file @file{psgml-maint} and execute the @code{psgml-compile-files}
+command.
+
 Place the @file{*.el} and the @file{*.elc} files in a directory where
 Emacs can find it (i.e. one of the directories in the @code{load-path}
 variable, you can add a directory to this variable in your
-@file{.emacs}.)  If you obtained PSGML without @file{*.elc} files, you
-can create them by letting Emacs byte compile the @file{*.el} files (use
-@kbd{M-x byte-compile-file}).  Parsing SGML in Emacs Lisp is slow and
-needs all the speed it can get.
+@file{.emacs}.)  
+
+If you use the @code{configure} approach, compile psgml with @code{make}
+and the you can run @code{make install} to install it in the system
+library @file{site-lisp}.  The files are installed in a subdirectory
+named @file{psgml}.  The location of @file{site-lisp} is figured out by
+@code{configure}, but you can change it in the @file{Makefile}.  You
+need to make sure that this subdirectory is in Emacs @code{load-path}.
+
 
 Put the following line in your .emacs:
 
@@ -258,10 +291,13 @@ declaration}.
 @cindex public identifier
 @cindex system identifier
 @cindex external identifier
+@cindex entity catalog
+
+@c *** sgml-sysid-resolve-functions
 
 SGML can refer to an external file (really entity) with an
 @emph{external identifier}, this is a @emph{public identifier} or a
-@emph{system identifier}.
+@emph{system identifier}, or both.
 
 A typical public identifier looks like
 
@@ -285,36 +321,68 @@ To map external identifiers to file names, PSGML first searches entity
 catalog files and then search the list of file name templates in the
 variable @code{sgml-public-map}.
 
-*** Describe the catalog format
-
-The catalog format is according to SGML/Opens resoution on entity
-management. The catalog consists of a series of entries and comment. A
+The catalog format is according to SGML/Opens resolution on entity
+management.  The catalog consists of a series of entries and comments.  A
 comment is delimited by @samp{--} like in a markup declaration.
 The entry types recognized are described in the following table.
 
 @table @samp
 
-@item PUBLIC @var{pubid} @var{file}
+@item public @var{pubid} @var{file}
 The @var{file} will be used for the entity text of an entity
 with the public identifier @var{pubid}.
 
-@item ENTITY @var{name} @var{file}
+@item entity @var{name} @var{file}
 The @var{file} will be used for the entity text of an entity
-with the name @var{name}. If the @var{name} starts with a @samp{%} the
+with the name @var{name}.  If the @var{name} starts with a @samp{%} the
 rest of the name will be matched against parameter entities.
 
-@item DOCTYPE @var{name} @var{file}
-The DOCTYPE keyword indicates that an entity manager should use the
-associated |storage object identifier| to locate the entity text
-(to be used as the external subset) for a doctype declaration whose
-document type name is specified by the |entity name spec|.
+@item doctype @var{name} @var{file}
+The @var{file} will be used for the entity text of an entity
+used as external subset of a document declaration with @var{name} as
+document type name.
 
-@item SGMLDECL @var{file}
-The SGMLDECL keyword indicates that an entity manager should use
-the associated |storage object identifier| to locate the entity
-text to be used as the SGML declaration.
+@item sgmldecl @var{file}
+Used to specify a default SGML declaration.  Recognized but not used by
+PSGML other than to pass to an external validation command
+(@code{sgml-validate-command}).
 
 @end table
+
+When PSGML is looking for the file containing an external entity, the
+following things will be tried in order:
+
+@enumerate
+
+@vindex sgml-system-identifiers-are-preferred
+@item
+Try the system identifier, as a file name, if there is a system
+identifier and the variable @code{sgml-system-identifiers-are-preferred}
+is non-@code{nil} and there is no elements containing @samp{%s} in
+@code{sgml-public-map}.  If the system identifier is a relative file name
+it will be relative to the directory containing the defining entity.
+
+@item
+Look thru each catalog in @code{sgml-local-catalogs} and
+@code{sgml-catalog-files} in order.  For each catalog look first for
+entries matching the public identifier, if any.  Then look for other
+matching entries in the order they appear in the catalog.
+
+Currently an entry will be ignored if it is matching but its file is
+non-existent or unreadable.  (This is under reconsideration, perhaps it
+should signal error instead).
+
+@item
+Try the system identifier, if any, as a file name.
+If @code{sgml-system-identifiers-are-preferred} is @code{nil}
+and there is no elements containing @samp{%s} in @code{sgml-public-map}.
+
+@item
+Try the entries in @code{sgml-public-map}.  Using the catalogs are
+preferred.  The @code{sgml-public-map} may disappear in a future version
+of PSGML (not soon though).
+
+@end enumerate
 
 The @code{sgml-public-map} variable can contain a list of file name
 templates where @samp{%P} will be substituted with the whole public
@@ -323,7 +391,12 @@ identifier, owner is substituted for @samp{%O}, public text class for
 will be converted to lower case and the owner and description will be
 transliterated according to the variable
 @code{sgml-public-transliterations}.  The templates in the list is tried
-in order until an existing file is found.
+in order until an existing file is found.  The @code{sgml-public-map} is
+modeled after @file{sgmls} environment variable @code{SGML_PATH} and
+psgml understand the following substitution characters: %%, %N, %P, %S,
+%Y, %C, %L, %O, %T, and %V.  The the default value of
+@code{sgml-public-map} is taken from the environment variable
+@code{SGML_PATH}.
 
 Given the public identifier above and the file name template 
 @samp{/usr/local/lib/sgml/%o/%c/%d}, the resulting file name is
@@ -356,9 +429,19 @@ buffer.  This is used in addition to @code{sgml-catalog-files}, and
 buffer.
 @end defopt
 
+@defopt sgml-system-identifiers-are-preferred
+If @code{nil}, PSGML will look up external entities by searching the
+catalogs in @code{sgml-local-catalogs} and @code{sgml-catalog-files} and
+only if the entity is not found in the catalogs will a given system
+identifier be used.  If the variable is non-nil and a system identifier is
+given, the system identifier will be used for the entity.  If no system
+identifier is given the catalogs will searched.
+@end defopt
+
+
 @defopt sgml-public-map
-This should be a list of file name templates. This variable is
-initialized from the environment variable @code{SGML_PATH}. This is
+This should be a list of file name templates.  This variable is
+initialized from the environment variable @code{SGML_PATH}.  This is
 the same environment variable that @file{sgmls} uses.  If the
 environment variable is undefined the default is
 
@@ -377,34 +460,49 @@ environment variable is undefined the default is
 
 @kindex C-c C-v
 @findex sgml-validate
-PSGML can not validate an SGML document (see below what it can and can't
-do).  If you have a validating SGML parser, like @file{sgmls}, you can
-run the parser on your file with the command @kbd{C-c C-v}
-(@code{sgml-validate}).
+PSGML can not validate an SGML document (see below what it can
+and can't do).  If you have a validating SGML parser, like
+@file{sgmls}, you can run the parser on your file with the
+command @kbd{C-c C-v} (@code{sgml-validate}).
 
 Some variables control this function:
 
 @defopt sgml-validate-command
 The shell command to validate an SGML document.
 
-This is a @code{format} control string that by default should contain
-two `%s' conversion specifications: the first will be replaced by the
+This is a @code{format} control string that by default should contain two
+@code{%s} conversion specifications: the first will be replaced by the
 value of @code{sgml-declaration} (or the empty string, if nil); the
-second will be replaced by the current buffer's file name (or the empty
-string, if nil).
+second will be replaced by the current buffer's file name (or the
+empty string, if nil).
 
-If @code{sgml-validate-files} is non-nil, the format string should
-contain one `%s' conversion specification for each element of its
-result.
+If @code{sgml-validate-files} is non-nil, the format string should contain
+one @code{%s} conversion specification for each element of its result.
 
-The default value is @code{sgml -s %s %s}.
+If sgml-validate-command is a list, then every element should be a
+string.  The strings will be tried in order and @samp{%}-sequences in the
+string will be replaced according to the list below, if the string contains
+@samp{%}-sequences with no replacement value the next string will be tried.
+
+@table @code
+@item %b
+means the visited file of the current buffer
+
+@item %s
+means the SGML declaration specified in the sgml-declaration variable
+
+@item %d
+means the file containing the DOCTYPE declaration, if not in the buffer 
+@end table
+
+The default value is @code{nsgmls -s %s %s}.
 @end defopt
 
 @defopt sgml-validate-files
-If non-nil, a function of no arguments that returns a list of file
-names.  These file names will serve as the arguments to the
-@code{sgml-validate-command} format control string instead of the
-defaults.
+If non-nil, a function of no arguments that returns a list of
+file names.  These file names will serve as the arguments to the
+@code{sgml-validate-command} format control string instead of
+the defaults.
 @end defopt
 
 @defopt sgml-declaration
@@ -412,9 +510,9 @@ The name of the SGML declaration file.
 @end defopt
 
 @defopt sgml-offer-save
-If non-nil, @kbd{C-c C-v} (@code{sgml-validate}) will ask about saving
-modified buffers before running the validate command.  The default value
-is @code{t}.
+If non-nil, @kbd{C-c C-v} (@code{sgml-validate}) will ask about
+saving modified buffers before running the validate command.
+The default value is @code{t}.
 @end defopt
 
 
@@ -433,12 +531,11 @@ Errors in the SGML declaration.
 @item
 Errors in attribute specifications.
 @item
-Markup errors in entity replacement text.
-@item
 Omitted start-tags for empty elements.
 @end itemize
 
 
+@c --------------------------------------------------------------------------
 @node SGML declaration, Managing the DTD, Validate, Top
 @comment  node-name,  next,  previous,  up
 @chapter SGML Declaration
@@ -485,41 +582,110 @@ will only be done if they produce legal SGML (assuming
 @comment  node-name,  next,  previous,  up
 @chapter Document Type Declaration
 @cindex DOCTYPE
+@cindex DTD
+
+@vindex sgml-default-doctype-name
+PSGML needs to know about the DTD you are using for many of its commands.
+If you do not have a @samp{DOCTYPE} declaration in your file, 
+PSGML will try assume that there is one of the form
+
+@example
+<!DOCTYPE @var{name} SYSTEM>
+@end example
+
+where @var{name} is the value of @code{sgml-default-doctype-name}, if
+the value is non-@code{nil}, else the GI of the first tag will be used.
 
 @findex sgml-parse-prolog
-PSGML needs to know about the DTD you are using for many of its commands.
-You can use PSGML without specifying a DTD, it will then accept any tags
-and assume a content model of @code{ANY} with no omissible tags.
-
-If you have a @samp{DOCTYPE} declaration in your file, PSGML will try to
-parse this.  Either the first time you do something that needs to parse
-the document or with the command @code{sgml-parse-prolog}.  Big DTDs
-take some time to parse.  
-
-@vindex sgml-system-path
-@vindex sgml-default-dtd-file
-@vindex sgml-parent-document
-You can have the @samp{DOCTYPE} declaration in another file either by
-setting @code{sgml-parent-document} to the other file or by creating a
-saved DTD and setting @code{sgml-default-dtd-file} to that file.  If
-@code{sgml-default-dtd-file} contains a relative file name, the
-directories in @code{sgml-system-path} will be searched for the file.
-
-
-@findex sgml-save-dtd
-@findex sgml-load-dtd
-If parsing the DTD takes too long time you can save the parsed DTD in a
-file using the command @kbd{M-x sgml-save-dtd}.  Next time PSGML can
-load that file instead of parsing the DTD.  For PSGML to find the saved
-DTD you must either save the DTD using the default name or do a @kbd{M-x
-sgml-save-options} after saving the DTD.  To directly use an already
-parsed and saved DTD, load the file containing the saved DTD with the
-command @kbd{M-x sgml-load-dtd}.
+@vindex sgml-auto-activate-dtd
+PSGML will try to parse the document type declaration the first time
+you do something that needs to parse the document or immediately if the
+variable @code{sgml-auto-activate-dtd} is @code{t}.  You can also
+initiate the parsing of the document type declaration with the command
+@code{sgml-parse-prolog}.  Big DTDs take some time to parse.
 
 When the DTD has been parsed or loaded the name of the document element
 will be displayed in the mode line inside brackets.  If there was an
 error parsing the DTD or there is no DTD, the mode line will display
-@samp{[ANY]}.
+@samp{[ANY]} (*** this is not really correct! a DTD will be established
+even if there are missing entities, it may even be empty).
+
+@menu
+* Precompiled DTD Subsets::     
+* Using a Split Document::      
+* Inserting a DOCTYPE::         
+* Information from the DTD::    
+@end menu
+
+
+@c ------------------------------------------------------------
+@node  Precompiled DTD Subsets, Using a Split Document, Managing the DTD, Managing the DTD
+@comment  node-name,  next,  previous,  up
+@section Precompiled DTD Subsets
+
+If parsing the DTD takes too long time you can arrange to have PSGML
+cache an internal complied version of the DTD.  Caching can be done of
+DTD fragments in favourable situations.  It is possible to have an
+external DTD subset cached but still have an internal DTD subset as long
+as the internal subset does not define parameter entities that affect
+the parsing of the external subset (*** what is the exact conditions?,
+probably you can't use the cached external subset if the internal subset
+defines parameter entities that are also defined in the external subset
+with another value).
+
+@vindex sgml-ecat-files
+@vindex sgml-local-ecat-files
+To enable caching you have to create special catalog files, hear after
+called ECAT files due to (temporary) lack of imagination.  These catalogs
+have similar syntax to the entity catalogs and there are two variables
+containing lists of catalogs to search: @code{sgml-ecat-files} and
+@code{sgml-local-ecat-files}.  The ECAT files can contain the following
+types of entries:
+
+@table @samp
+@item file @var{dtdfile} @var{entitydef} @var{cfile}
+The @var{dtdfile} is the name of a file containing a DTD subset that
+should be cached in @var{cfile}.  The @var{entitydef} is optional and if
+given have the following syntax:
+@example
+[ @var{name1} @var{literal1} @var{name2} @var{literal2} @dots{} ]
+@end example
+Using @var{entitydef} will modify the DTD subset by defining the
+parameter entity with name @var{name1} to be @var{literal1}, @dots{}.  The
+cached version of the subset will be created with those entity
+definitions, and when PSGML search for a matching cached subset will check
+that the parameter entities in @var{entitydef} has been defined with
+those values before trying to use @file{cfile}. 
+
+@item public @var{pubid} @var{entitydef} @var{cfile}
+Cache the DTD subset with public identifier @var{pubid} in file
+@var{cfile}. 
+@end table
+
+
+@defopt sgml-recompile-out-of-date-cdtd
+If non-@code{nil}, out of date compiled DTDs will be automatically
+recompiled.  If the value is @code{ask}, PSGML will ask before
+recompiling.  A @code{nil} value will cause PSGML to silently load an out
+of date compiled DTD.  A DTD that refers to undefined external entities
+is always out of date, thus in such case it can be useful to set this
+variable to @code{nil}.
+@end defopt
+
+
+Previous versions of PSGML have had another way of speeding up DTD
+parsing.  This code remains in this version of PSGML, but is not actively
+maintained and may disappear in the future.
+
+@findex sgml-save-dtd
+@findex sgml-load-dtd
+@vindex sgml-default-dtd-file
+You can save the parsed DTD in a file using the command @kbd{M-x
+sgml-save-dtd}.  Next time PSGML can load that file instead of parsing
+the DTD.  For PSGML to find the saved DTD you must either save the DTD
+using the default name or do a @kbd{M-x sgml-save-options} after saving
+the DTD.  To directly use an already parsed and saved DTD, load the file
+containing the saved DTD with the command @kbd{M-x sgml-load-dtd}.
 
 @defopt sgml-default-dtd-file
 This is the default file name for saved DTD.  This is set by
@@ -528,13 +694,70 @@ extension @code{.ced}, if that file exists.  Can be changed in the Local
 variables section of the file.
 @end defopt
 
+@c true with system-path
+@c either or by creating a saved DTD and setting
+@c @code{sgml-default-dtd-file} to that file.  If
+@c @code{sgml-default-dtd-file} contains a relative file name, the
+@c directories in @code{sgml-system-path} will be searched for the file.
+
+
+@c ------------------------------------------------------------
+@node  Using a Split Document, Inserting a DOCTYPE, Precompiled DTD Subsets, Managing the DTD
+@comment  node-name,  next,  previous,  up
+@section Using a Split Document
+
+@c *** why not defopt??
+@vindex sgml-doctype
+You can have the @samp{DOCTYPE} declaration in another file by setting
+@code{sgml-doctype} to the other file.
+
 @defopt sgml-parent-document
-This can be set to the name (a string) of a file containing the
-@samp{DOCTYPE} declaration to use, or a list @code{(@var{filename}
-@var{doctypename})}, where @var{filename} is the name of a file
-containing the @samp{DOCTYPE} declaration to use, with the modification
-that the document type name is @var{doctypename}.
+Used when the current file is part of a bigger document.
+
+The variable describes how the current file's content fit into the element
+hierarchy.  The variable should have the form
+
+@lisp
+(@var{parent-file} @var{context-element}* @var{top-element} (@var{has-seen-element}*)?)
+@end lisp
+
+@table @var
+@item parent-file
+is a string, the name of the file containing the
+document entity.
+
+@item context-element
+is a string, that is the name of an element type.
+It can occur 0 or more times and is used to set up
+exceptions and short reference map.  Good candidates
+for these elements are the elements open when the
+entity pointing to the current file is used. 
+
+@item top-element
+is a string that is the name of the element type
+of the top level element in the current file.  The file
+should contain one instance of this element, unless
+the last (lisp) element of sgml-parent-document is a
+list.  If it is a list, the top level of the file
+should follow the content model of top-element. 
+
+@item has-seen-element
+is a string that is the name of an element type.  This
+element is satisfied in the content model of top-element.
+@end table
 @end defopt
+
+
+@c ------------------------------------------------------------
+@node  Inserting a DOCTYPE, Information from the DTD, Using a Split Document, Managing the DTD
+@comment  node-name,  next,  previous,  up
+@section Inserting a DOCTYPE
+
+@kindex C-c C-u C-d
+@findex sgml-custom-dtd
+*** Describe the DTD menu in general.  Describe customized entries for
+special DTDs.  Mention @kbd{C-c C-u C-d} for inserting a DOCTYPE from
+keyboard.
 
 If you change the doctype you must execute @code{sgml-parse-prolog},
 changes in the doctype are not automatically recognized.
@@ -543,7 +766,7 @@ changes in the doctype are not automatically recognized.
 Menu entries to be added to the DTD menu.  The value should be a list of
 entries to be added to the DTD menu.
 
-Every entry should be a list. The first element of the entry is a string
+Every entry should be a list.  The first element of the entry is a string
 used as the menu entry.  The second element is a string containing a
 doctype declaration (this can be nil if no doctype).  The rest of the
 list should be a list of variables and values.  For backward
@@ -570,6 +793,55 @@ Example:
 @end example
 @end defopt
 
+
+@c ------------------------------------------------------------
+@node  Information from the DTD,  , Inserting a DOCTYPE, Managing the DTD
+@comment  node-name,  next,  previous,  up
+@section Information from the DTD
+@cindex DTD
+@cindex Element
+
+PSGML can list various information about the current DTD.  
+The following commands can be used via @kbd{M-x} and 
+can also be found in the DTD menu.
+
+@table @code
+@findex sgml-general-dtd-info
+@item sgml-general-dtd-info
+Display information about the current DTD.
+
+@findex sgml-describe-element-type
+@item sgml-describe-element-type
+Describe the properties of an element type as declared in the current DTD.
+
+@cindex entity
+@findex sgml-describe-entity
+@item sgml-describe-entity
+Describe the properties of an entity as declared in the current DTD.
+
+@findex sgml-list-elements
+@item sgml-list-elements
+Will list all elements and the attributes declared for the element.
+
+@findex sgml-list-attributes
+@item sgml-list-attributes
+  Will list all attributes declared and the elements that use them.
+
+@findex sgml-list-terminals
+@item sgml-list-terminals
+Will list all elements that can contain data.
+
+@findex sgml-list-occur-in-elements
+@item sgml-list-occur-in-elements
+Will list all element types and where it can occur.
+
+@findex sgml-list-content-elements
+@item sgml-list-content-elements
+Will list all element types and the element types that can occur
+in its content.
+@end table
+
+
 @c ---------------------------------------------------------------------------
 @node  Edit, Display, Managing the DTD, Top
 @comment  node-name,  next,  previous,  up
@@ -583,6 +855,7 @@ Example:
 * Move::                        Move in the element structure
 * Attributes::                  Editing attributes
 * Change and delete::           Changing and deleting markup
+* Translating characters and entities::  
 @end menu
 
 @c ------------------------------------------------------------------
@@ -627,17 +900,28 @@ elements that can occur within the current element.
 
 @kindex C-c C-e
 @findex sgml-insert-element
+@vindex sgml-insert-end-tag-on-new-line
 @item C-c C-e
-Insert start and end-tags for an element (@code{sgml-insert-element}).
-The name of the element is read from the mini-buffer with completion on
-valid elements.
+Insert start and end-tags for an element
+(@code{sgml-insert-element}).  The name of the element is read
+from the mini-buffer with completion on valid elements.  If
+@code{sgml-insert-end-tag-on-new-line} is non-nil or the
+element has element content, the end-tag will be inserted on a
+new line after the start-tag.
 
+@vindex sgml-omittag-transparent
 If @code{sgml-omittag-transparent} is nil, the list of valid elements
 will only contain the elements that can be in the content of the current
 element.
 
+@vindex sgml-auto-insert-required-elements
+@vindex sgml-insert-missing-element-comment
 Required elements in the content will be automatically inserted if the
-option @code{sgml-auto-insert-required-elements} is non-nil.
+option @code{sgml-auto-insert-required-elements} is non-nil. 
+When the content model demands an element but there is more
+than one to choose from, a comment can be inserted with the
+available choices if the option
+@code{sgml-insert-missing-element-comment} is non-nil.
 
 @kindex C-c C-r
 @findex sgml-tag-region
@@ -673,6 +957,13 @@ completion.  The prompt for attribute value will typically look like:
 @example
 Value for @var{attribute} (@var{type} Default: @var{current value}):
 @end example
+
+@kindex C-c C-u C-m
+@findex sgml-custom-markup
+@item C-c C-u C-m
+Give keyboard access to the customized part of the Markup menu.
+Emacs will prompt for the markup to insert using the menu line as
+selector. (See @var{sgml-custom-markup} below.)
 
 @end table
 
@@ -723,7 +1014,7 @@ pair.
 @kindex S-@key{mouse-1}
 A menu is also available directly with a mouse button click in the
 buffer.  In GNU Emacs it is the first mouse button combined with shift
-(@kbd{S-@key{mouse-1}}).  In Lucid Emacs it is bound to the third mouse
+(@kbd{S-@key{mouse-1}}).  In XEmacs it is bound to the third mouse
 button.  The mouse button click will pop-up a menu of valid tags or a
 menu of attributes if the point is in a start-tag.  The attributes menu
 works as the ``Insert attribute'' menu from the menu-bar.  The tags list
@@ -787,6 +1078,19 @@ Example:
   (("Version1" "<![%Version1[\r]]>")
    ("New page"  "<?NewPage>"))
 @end example
+@end defopt
+
+
+@defopt sgml-insert-missing-element-comment
+If non-nil, and sgml-auto-insert-required-elements also true,
+@code{sgml-insert-element} will insert a comment if there is an
+element required but there is more than one to choose from.
+@end defopt
+
+@defopt sgml-insert-end-tag-on-new-line
+If non-nil, @code{sgml-insert-element} will put the end-tag on
+a new line after the start-tag.  Useful on slow terminals if you
+find the end-tag after the cursor irritating.
 @end defopt
 
 
@@ -1012,7 +1316,7 @@ make the attribute be implied.
 
 
 @c --------------------------------------------------------------------------
-@node Change and delete,  , Attributes, Edit
+@node Change and delete, Translating characters and entities, Attributes, Edit
 @comment  node-name,  next,  previous,  up
 @section Changing and deleting markup
 
@@ -1071,6 +1375,13 @@ content then fill what is between the pure elements as paragraphs and
 fill the pure elements recursively.
 @end enumerate
 
+@findex sgml-expand-all-shortrefs
+@item M-x sgml-expand-all-shortrefs
+Short references to text entities are expanded to the replacement text
+of the entity other short references are expanded into general entity
+references.  If argument, @var{to-entity}, is non-@code{nil}, or if
+called interactive with numeric prefix argument, all short references
+are replaced by generally entity references.
 
 @findex sgml-normalize
 @item M-x sgml-normalize
@@ -1078,12 +1389,17 @@ Normalize the document in the buffer.  This will
 
 @enumerate
 @item
+expand short references,
+@item
 insert missing tags,
 @item
 replace minimized tags with full tags,
 @item
 fix attribute specification lists according to options set.
 @end enumerate
+
+There is one argument, @var{to-entity}, with the same meaning as for
+@code{sgml-expand-all-shortrefs}.
 
 There is one option for the normalize command.  With its default value,
 normalize may actually change the data content of some elements.  But
@@ -1099,18 +1415,44 @@ Default: @code{t}.
 @end defopt
 
 
+@c --------------------------------------------------------------------------
+@node Translating characters and entities,  , Change and delete, Edit
+@comment  node-name,  next,  previous,  up
+@section Translating between characters and entity references
+
+@c *** Need work..
+
+Set the variable @code{sgml-display-char-list-filename} to a file file that
+contains mappings between all characters present in the presentation
+character set, and their "standard replacement text" names, e.g. "å"
+-> "[aring ]", e.t.c.
+
+The default value for this variable is `iso88591.map'. 
+
+The use the functions (also in the Modify menu)
+
+@table @code
+@findex sgml-charent-to-display-char
+@item sgml-charent-to-display-char
+@findex sgml-display-char-to-charent
+@item sgml-display-char-to-charent
+@end table
+
+to translate between entities and characters.
+
 @c ---------------------------------------------------------------------------
-@node Display, Bugs, Edit, Top
+@node Display, Miscellaneous options, Edit, Top
 @comment  node-name,  next,  previous,  up
 @chapter Appearance of text in the buffer
 
 @menu
 * Fold::                        Folding editing
+* Hiding markup::               
 * Highlight::                   Highlighting markup
 @end menu
 
 @c ---------------------------------------------------------------------------
-@node  Fold, Highlight, Display, Display
+@node  Fold, Hiding markup, Display, Display
 @comment  node-name,  next,  previous,  up
 @section Folding editing
 
@@ -1171,20 +1513,28 @@ expands what is visible.
 @end table
 
 
+@c ---------------------------------------------------------------------------
+@node  Hiding markup, Highlight, Fold, Display
+@comment  node-name,  next,  previous,  up
+@section Hiding markup
+
+*** Describe hide-tags
 
 
 @c ---------------------------------------------------------------------------
-@node  Highlight,  , Fold, Display
+@node  Highlight,  , Hiding markup, Display
 @comment  node-name,  next,  previous,  up
 @section Highlighting markup
 
 
-PSGML can highlight the markup as it parses it by giving the markup a
-different @dfn{face} (@pxref{Faces, , Using Multiple Typefaces, emacs,
-The Emacs Editor}).  The highlighting will only be done if the variable
-@code{sgml-set-face} is non-nil.  The default settings make tags bold
-and comments italic, but this can be modified with the variable
-@code{sgml-markup-faces}.
+PSGML can highlight the markup giving the markup a different @dfn{face}
+(@pxref{Faces, , Using Multiple Typefaces, emacs, The Emacs Editor}).
+The highlighting will only be done if the variable @code{sgml-set-face}
+is non-@code{nil}.  The default settings make tags bold and comments
+italic, but this can be modified with the variable
+@code{sgml-markup-faces}.  When highlighting is on PSGML will parse after
+every command until the whole buffer has been parsed or user event
+occurs. 
 
 @findex sgml-clear-faces
 To remove the highlighting type @kbd{M-x sgml-clear-faces}.
@@ -1224,8 +1574,35 @@ short reference
 @end table
 @end defopt
 
+
+
 @c ------------------------------------------------------------------
-@node Bugs, Index, Display, Top
+@node  Miscellaneous options, Bugs, Display, Top
+@comment  node-name,  next,  previous,  up
+@chapter Miscellaneous options
+
+*** describe sgml-save-options
+
+@defopt sgml-ignore-undefined-elements
+Start-tags for undefined elements will either be ignored, if
+@code{sgml-ignore-undefined-elements} is @code{t}, or assumed to be
+acceptable in the current element and defined with @code{O O ANY}
+@end defopt
+
+@defopt sgml-range-indicator-max-length
+Maximum number of characters used from the first and last entry
+of a sub-menu to indicate the range of that menu.
+
+@vindex sgml-max-menu-size
+This is used for long menus of elements, tags or entities that are split
+into @code{sgml-max-menu-size} big sub-menus.
+@end defopt
+
+
+
+
+@c ------------------------------------------------------------------
+@node Bugs, Index, Miscellaneous options, Top
 @comment  node-name,  next,  previous,  up
 @chapter Bugs
 
@@ -1237,7 +1614,7 @@ A test case that exhibits the bug, would also be useful.
 You can report a bug with the command @kbd{M-x sgml-submit-bug-report}.
 
 When PSGML needs contextual information it parses the document up to
-the point. During the parsing, it builds a parse tree.  The parse
+the point.  During the parsing, it builds a parse tree.  The parse
 tree is used to initialize the next parse, to avoid having to parse
 things already parsed.  Changes to the buffer is supposed to prune
 the tree of all outdated information.  But if you get strange
@@ -1253,4 +1630,5 @@ C-o} (@code{sgml-next-trouble-spot}).
      
 @printindex cp
 
+@contents
 @bye

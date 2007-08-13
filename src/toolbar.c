@@ -252,16 +252,13 @@ get_toolbar_button_glyph (struct window *w, struct toolbar_button *tb)
 static enum toolbar_pos
 decode_toolbar_position (Lisp_Object position)
 {
-  if (EQ (position, Qtop))
-    return TOP_TOOLBAR;
-  else if (EQ (position, Qbottom))
-    return BOTTOM_TOOLBAR;
-  else if (EQ (position, Qleft))
-    return LEFT_TOOLBAR;
-  else if (EQ (position, Qright))
-    return RIGHT_TOOLBAR;
+  if (EQ (position, Qtop))    return TOP_TOOLBAR;
+  if (EQ (position, Qbottom)) return BOTTOM_TOOLBAR;
+  if (EQ (position, Qleft))   return LEFT_TOOLBAR;
+  if (EQ (position, Qright))  return RIGHT_TOOLBAR;
   signal_simple_error ("Invalid toolbar position", position);
-  return 0; /* not reached */
+  
+  return TOP_TOOLBAR; /* not reached */
 }
 
 DEFUN ("set-default-toolbar-position", Fset_default_toolbar_position,
@@ -664,7 +661,7 @@ compute_frame_toolbar_buttons (struct frame *f, enum toolbar_pos pos,
     {
       if (!NILP (buttons))
 	{
-	  /* If this is the case the the only thing we saw was a
+	  /* If this is the case the only thing we saw was a
              pushright marker. */
 	  if (EQ (buttons, first_button))
 	    {
@@ -1249,13 +1246,13 @@ static void
 toolbar_size_changed_in_frame (Lisp_Object specifier, struct frame *f,
 			       Lisp_Object oldval)
 {
-  enum toolbar_pos pos;
+  int pos;
 
-  for (pos = 0; pos < 4; pos++)
-    if (EQ (specifier, Vtoolbar_size[pos]))
+  for (pos = 0; pos < countof (Vtoolbar_size); pos++)
+    if (EQ (specifier, Vtoolbar_size[(enum toolbar_pos) pos]))
       break;
 
-  assert (pos < 4);
+  assert (pos < countof (Vtoolbar_size));
 
   MAYBE_FRAMEMETH (f, toolbar_size_changed_in_frame,
 		   (f, pos, oldval));
@@ -1268,13 +1265,13 @@ static void
 toolbar_visible_p_changed_in_frame (Lisp_Object specifier, struct frame *f,
 				    Lisp_Object oldval)
 {
-  enum toolbar_pos pos;
+  int pos;
 
-  for (pos = 0; pos < 4; pos++)
-    if (EQ (specifier, Vtoolbar_visible_p[pos]))
+  for (pos = 0; pos < countof (Vtoolbar_visible_p); pos++)
+    if (EQ (specifier, Vtoolbar_visible_p[(enum toolbar_pos) pos]))
       break;
 
-  assert (pos < 4);
+  assert (pos < countof (Vtoolbar_visible_p));
 
   MAYBE_FRAMEMETH (f, toolbar_visible_p_changed_in_frame,
 		   (f, pos, oldval));

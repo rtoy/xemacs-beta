@@ -20,7 +20,7 @@
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
 ;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -59,7 +59,7 @@ This defaults to the value of `user-mail-address'.")
 (defvar change-log-font-lock-keywords
   '(("^[SMTWF].+" . font-lock-function-name-face)	; Date line.
     ("^\t\\* \\([^ :\n]+\\)" 1 font-lock-comment-face)	; File name.
-    ("\(\\([^)\n]+\\)\)" 1 font-lock-keyword-face))	; Function name.
+    ("(\\([^)\n]+\\)):" 1 font-lock-keyword-face))	; Function name.
   "Additional expressions to highlight in Change Log mode.")
 (put 'change-log-mode 'font-lock-defaults
      '(change-log-font-lock-keywords t))
@@ -100,6 +100,7 @@ This defaults to the value of `user-mail-address'.")
 ;;;###autoload
 (defun find-change-log (&optional file-name)
   "Find a change log file for \\[add-change-log-entry] and return the name.
+
 Optional arg FILE-NAME specifies the file to use.
 If FILE-NAME is nil, use the value of `change-log-default-name'.
 If 'change-log-default-name' is nil, behave as though it were 'ChangeLog'
@@ -196,6 +197,8 @@ never append to an existing entry."
     (if (and other-window (not (equal file-name buffer-file-name)))
 	(find-file-other-window file-name)
       (find-file file-name))
+    (or (eq major-mode 'change-log-mode)
+	(change-log-mode))
     (undo-boundary)
     (goto-char (point-min))
     (if (looking-at (concat (regexp-quote (substring (current-time-string)
@@ -299,7 +302,9 @@ Runs `change-log-mode-hook'."
   (setq major-mode 'change-log-mode
 	mode-name "Change Log"
 	left-margin 8
-	fill-column 74)
+	fill-column 74
+	indent-tabs-mode t
+	tab-width 8)
   (use-local-map change-log-mode-map)
   ;; Let each entry behave as one paragraph:
   ;; We really do want "^" in paragraph-start below: it is only the lines that
@@ -355,7 +360,8 @@ Has a preference of looking backwards."
 		 (or (eobp) (forward-char 1))
 		 (beginning-of-defun)
 		 ;; Make sure we are really inside the defun found, not after it.
-		 (if (and (progn (end-of-defun)
+		 (if (and (looking-at "\\s(")
+			  (progn (end-of-defun)
 				 (< location (point)))
 			  (progn (forward-sexp -1)
 				 (>= location (point))))

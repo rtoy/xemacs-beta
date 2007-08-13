@@ -168,13 +168,12 @@ fatal_error_signal (int sig)
     {
       fatal_error_in_progress = 1;
       shut_down_emacs (sig, Qnil);
-#ifdef DEBUG_XEMACS
       stderr_out("\nLisp backtrace follows:\n\n");
       Fbacktrace(Qexternal_debugging_output, Qt);
       
       /* Check for Sun-style stack printing via /proc */
       {
-        char *pstack = "/usr/proc/bin/pstack";
+        CONST char *pstack = "/usr/proc/bin/pstack";
         if (access(pstack, X_OK) == 0)
           {
             char buf[100];
@@ -184,7 +183,6 @@ fatal_error_signal (int sig)
             system(buf);
           }
       }
-#endif
     }
 #ifdef VMS
   LIB$STOP (SS$_ABORT);
@@ -1562,6 +1560,13 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 	 "Use `M-x recover-session' to recover them.\n"
 	 "\n"
 	 "Please report this bug to the address `crashes@xemacs.org'.\n"
+	 "*MAKE SURE* to include as much configuration information as\n"
+	 "possible; at the very least what OS and hardware you are running\n"
+	 "on, and hopefully also what compiler and compiler options the\n"
+	 "binary was compiled with, what options XEmacs was compiled with,\n"
+	 "whether you are using a prebuilt binary from ftp.xemacs.org or\n"
+	 "compiled XEmacs yourself for your system, etc.\n"
+	 "\n"
 	 "If at all possible, *please* try to obtain a C stack backtrace;\n"
 	 "it will help us immensely in determining what went wrong.\n"
 	 "To do this, locate the core file that was produced as a result\n"
@@ -1571,7 +1576,7 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 	 "\n"
 	 "  gdb ");
       {
-	char *name;
+	CONST char *name;
 	char *dir = 0;
 
 	/* Now try to determine the actual path to the executable,
@@ -1608,8 +1613,11 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 
 #ifdef TOOLTALK
   tt_session_quit (tt_default_session ());
+#if 0
+  /* The following crashes when built on X11R5 and run on X11R6 */
   tt_close ();
 #endif
+#endif /* TOOLTALK */
 
 #ifdef VMS
   kill_vms_processes ();
@@ -1621,7 +1629,7 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 /* Nothing like this can be implemented on an Apollo.
    What a loss!  */
 
-extern int my_edata;
+extern char my_edata[];
 
 #ifdef HAVE_SHM
 

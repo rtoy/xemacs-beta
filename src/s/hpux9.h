@@ -31,7 +31,11 @@
 #define C_SWITCH_SYSTEM -Wp,-H200000 -D_BSD
 */
 #undef C_SWITCH_SYSTEM
-#define C_SWITCH_SYSTEM -Ae -Wp,-H100000
+# ifdef __hp9000s300
+#  define C_SWITCH_SYSTEM -Aa -D_HPUX_SOURCE
+# else
+#  define C_SWITCH_SYSTEM -Ae -Wp,-H100000
+# endif
 /* XEmacs: commented out
 #else
 #define C_SWITCH_SYSTEM -D_BSD
@@ -72,3 +76,7 @@
 /* XEmacs: apparently rint() is totally broken in HPUX 9. */
 #undef HAVE_RINT
 
+/* XEmacs addition */
+#ifndef OBJECTS_SYSTEM
+#define OBJECTS_SYSTEM strcat.o
+#endif

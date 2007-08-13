@@ -872,7 +872,7 @@ Some AT&T folks claim to use something called `pftp' here.")
 
 (defvar ange-ftp-make-backup-files ()
   "*A list of operating systems for which ange-ftp will make Emacs backup
-files files on the remote host. For example, '\(unix\) makes sense, but
+files on the remote host. For example, '\(unix\) makes sense, but
 '\(unix vms\) or '\(vms\) would be silly, since vms makes its own backups.")
 
 (defvar ange-ftp-retry-time 5
@@ -2145,7 +2145,7 @@ and NOWAIT."
   "^[A-Z0-9._][A-Z0-9._][A-Z0-9._][A-Z0-9._]:$")
 
 (defun ange-ftp-guess-host-type (host user)
-  "Guess at the the host type of HOST by doing a pwd, and examining
+  "Guess at the host type of HOST by doing a pwd, and examining
 the directory syntax."
   (let ((host-type (ange-ftp-host-type host))
 	(key (concat host "/" user "/~")))

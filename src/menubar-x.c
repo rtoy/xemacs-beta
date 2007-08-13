@@ -228,7 +228,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	}
       else if (menubar_root_p)
 	{
-	  wv->name = "menubar";
+	  wv->name = (char *) "menubar";
 	  wv->type = CASCADE_TYPE; /* Well, nothing else seems to fit and
 				      this is ignored anyway...  */
 	}
@@ -367,7 +367,7 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 	  wv->next = NULL;
 	  wv->contents = xmalloc_widget_value ();
 	  wv->contents->type = TEXT_TYPE;
-	  wv->contents->name = "No menu";
+	  wv->contents->name = (char *) "No menu";
 	  wv->contents->next = NULL;
 	}
       assert (wv && wv->type == CASCADE_TYPE && wv->contents);

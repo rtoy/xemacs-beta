@@ -812,7 +812,7 @@ execute_help_form (struct command_builder *command_builder,
   redisplay ();
   if (event_matches_key_specifier_p (XEVENT (event), make_char (' ')))
     {
-      /* Discard next key if is is a space */
+      /* Discard next key if it is a space */
       reset_key_echo (command_builder, 1);
       Fnext_command_event (event, Qnil);
     }
@@ -2969,8 +2969,7 @@ munge_keymap_translate (struct command_builder *builder,
 
 /* Compare the current state of the command builder against the local and
    global keymaps, and return the binding.  If there is no match, try again,
-   case-insensitively.  The return value will be
-
+   case-insensitively.  The return value will be one of:
       -- nil (there is no binding)
       -- a keymap (part of a command has been specified)
       -- a command (anything that satisfies `commandp'; this includes
@@ -2989,7 +2988,7 @@ command_builder_find_leaf (struct command_builder *builder,
       && (NILP (XEVENT_NEXT (evee)))
       && (XEVENT_TYPE (evee) == misc_user_event))
     {
-      Lisp_Object fn = XEVENT (evee)->event.eval.function;
+      Lisp_Object fn  = XEVENT (evee)->event.eval.function;
       Lisp_Object arg = XEVENT (evee)->event.eval.object;
       return (list2 (fn, arg));
     }
@@ -3022,44 +3021,40 @@ command_builder_find_leaf (struct command_builder *builder,
 
   /* If key-sequence wasn't bound, we'll try some fallbacks.  */
 
-  {
-    Lisp_Object terminal = builder->most_current_event;
-
   /* If we didn't find a binding, and the last event in the sequence is
      a shifted character, then try again with the lowercase version.  */
 
-    if (!NILP (Vretry_undefined_key_binding_unshifted)
-	&& XEVENT_TYPE (terminal) == key_press_event
-	&& ((XEVENT (terminal)->event.key.modifiers & MOD_SHIFT)
-	    || (CHAR_OR_CHAR_INTP (XEVENT (terminal)->event.key.keysym)
-		&& XCHAR_OR_CHAR_INT (XEVENT (terminal)->event.key.keysym)
-		>= 'A'
-		&& XCHAR_OR_CHAR_INT (XEVENT (terminal)->event.key.keysym)
-		<= 'Z')))
-      {
-	struct Lisp_Event terminal_copy;
-	terminal_copy = *XEVENT (terminal);
+  if (XEVENT_TYPE (builder->most_current_event) == key_press_event
+      && !NILP (Vretry_undefined_key_binding_unshifted))
+    {
+      Lisp_Object terminal = builder->most_current_event;
+      struct key_data* key = & XEVENT (terminal)->event.key;
+      Emchar c;
+      if ((key->modifiers & MOD_SHIFT)
+          || (CHAR_OR_CHAR_INTP (key->keysym)
+              && ((c = XCHAR_OR_CHAR_INT (key->keysym)), c >= 'A' && c <= 'Z')))
+        {
+          struct Lisp_Event terminal_copy;
+          terminal_copy = *XEVENT (terminal);
+          
+          if (key->modifiers & MOD_SHIFT)
+            key->modifiers &= (~ MOD_SHIFT);
+          else
+            key->keysym = make_char (c + 'a' - 'A');
 
-	if (XEVENT (terminal)->event.key.modifiers & MOD_SHIFT)
-	  XEVENT (terminal)->event.key.modifiers &= (~ MOD_SHIFT);
-	else
-	  XEVENT (terminal)->event.key.keysym
-            = make_char (XCHAR_OR_CHAR_INT (XEVENT (terminal)->
-					    event.key.keysym)
-			 + 'a' - 'A');
+          result = command_builder_find_leaf (builder, allow_misc_user_events_p);
+          if (!NILP (result))
+            return (result);
+          /* If there was no match with the lower-case version either,
+             then put back the upper-case event for the error
+             message.  But make sure that function-key-map didn't
+             change things out from under us. */
+          if (EQ (terminal, builder->most_current_event))
+            *XEVENT (terminal) = terminal_copy;
+        }
+    }
 
-	result = command_builder_find_leaf (builder, allow_misc_user_events_p);
-	if (!NILP (result))
-	  return (result);
-	/* If there was no match with the lower-case version either, then
-	   put back the upper-case event for the error message.
-	   But make sure that function-key-map didn't change things out
-	   from under us. */
-	if (EQ (terminal, builder->most_current_event))
-	  *XEVENT (terminal) = terminal_copy;
-      }
-  }
-
+  /* help-char is `auto-bound' in every keymap */
   if (!NILP (Vprefix_help_command) &&
       event_matches_key_specifier_p (XEVENT (builder->most_current_event),
 				     Vhelp_char))
@@ -3157,7 +3152,7 @@ modify them.
 
 /* Vthis_command_keys having value Qnil means that the next time
    push_this_command_keys is called, it should start over.
-   The times at which the the command-keys are reset
+   The times at which the command-keys are reset
    (instead of merely being augmented) are pretty conterintuitive.
    (More specifically:
 
@@ -3294,13 +3289,12 @@ current_events_into_vector (struct command_builder *command_builder)
 
    -- add the event to the event chain forming the current command
       (doing meta-translation as necessary)
-   -- return the binding of the this event chain; this will be one of
+   -- return the binding of this event chain; this will be one of:
       -- nil (there is no binding)
       -- a keymap (part of a command has been specified)
       -- a command (anything that satisfies `commandp'; this includes
                     some symbols, lists, subrs, strings, vectors, and
 		    compiled-function objects)
-
  */
 static Lisp_Object
 lookup_command_event (struct command_builder *command_builder,
@@ -3452,7 +3446,7 @@ execute_command_event (struct command_builder *command_builder,
 
     w = XWINDOW (Fselected_window (Qnil));
 
-    /* We're executing a new command, so the old value of is irrelevant. */
+    /* We're executing a new command, so the old value is irrelevant. */
     zmacs_region_stays = 0;
 
     /* If the previous command tried to force a specific window-start,
@@ -3540,12 +3534,21 @@ post_command_hook (void)
      This could be done via a function on the post-command-hook, but
      we don't want the user to accidentally remove it.
    */
+
+  Lisp_Object win = Fselected_window (Qnil);
+
+#if 0
+  /* If the last command deleted the frame, `win' might be nil.
+     It seems safest to do nothing in this case. */
+  /* ### This doesn't really fix the problem,
+     if delete-frame is called by some hook */
+  if (NILP (win))
+    return;
+#endif
+  
   if (! zmacs_region_stays
-      && (!MINI_WINDOW_P (XWINDOW (Fselected_window (Qnil)))
-	  /* but don't leave the region around if it's in the
-	     minibuffer. */
-	  || EQ (zmacs_region_buffer (),
-		 WINDOW_BUFFER (XWINDOW (Fselected_window (Qnil))))))
+      && (!MINI_WINDOW_P (XWINDOW (win))
+          || EQ (zmacs_region_buffer (), WINDOW_BUFFER (XWINDOW (win)))))
     zmacs_deactivate_region ();
   else
     zmacs_update_region ();
@@ -3733,7 +3736,7 @@ Magic events are handled as necessary.
 	    /* Reset the command builder for reading the next sequence. */
 	    reset_this_command_keys (console, 1);
 	  }
-	else
+	else /* key sequence is bound to a command */
 	  {
 	    Vthis_command = leaf;
 	    /* Don't push an undo boundary if the command set the prefix arg,
@@ -3762,20 +3765,15 @@ Magic events are handled as necessary.
 		if (--command_builder->self_insert_countdown < 0)
 		  command_builder->self_insert_countdown = 20;
 	      }
-	    execute_command_event (command_builder,
-				   !NILP (Fequal (event,
-						  command_builder->
-						  most_current_event))
-				   ? event
-				   /* Use the translated event that
-				      was most recently seen.  This way,
-				      last-command-event becomes f1
-				      instead of the P from ESC O P.
-				      But must copy it, else we'll lose
-				      when the command-builder events
-				      are deallocated. */
-				   : Fcopy_event (command_builder->
-						  most_current_event, Qnil));
+	    execute_command_event
+              (command_builder,
+               !NILP (Fequal (event, command_builder-> most_current_event))
+               ? event
+               /* Use the translated event that was most recently seen.
+                  This way, last-command-event becomes f1 instead of
+                  the P from ESC O P.  But we must copy it, else we'll
+                  lose when the command-builder events are deallocated. */
+               : Fcopy_event (command_builder-> most_current_event, Qnil));
 	  }
 	break;
       }
@@ -4207,7 +4205,7 @@ you want to keep a pointer to this value, you must use `copy-event'.
 
   DEFVAR_LISP ("last-command-char", &Vlast_command_char /*
 If the value of `last-command-event' is a keyboard event, then
-this is the nearest ASCII equivalent to it.  This the the value that
+this is the nearest ASCII equivalent to it.  This is the value that
 `self-insert-command' will put in the buffer.  Remember that there is
 NOT a 1:1 mapping between keyboard events and ASCII characters: the set
 of keyboard events is much larger, so writing code that examines this
@@ -4332,6 +4330,7 @@ you should *bind* this, not set it.
 
   Vdribble_file = Qnil;
   staticpro (&Vdribble_file);
+
 
 #ifdef DEBUG_XEMACS
   DEFVAR_INT ("debug-emacs-events", &debug_emacs_events /*

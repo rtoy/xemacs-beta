@@ -827,50 +827,67 @@ a new format, when variables have changed, etc."
     (+ left-margin
        (round (/ (/ (- fill-area-width glyph-pixwidth) 2) avg-pixwidth)))))
 
-(defun startup-splash-frame ()
-  (let ((p (point)))
-    (if (eq 'x (console-type (selected-console))) (insert "\n"))
-    (indent-to (startup-center-spaces xemacs-logo))
-    (set-extent-begin-glyph (make-extent (point) (point)) xemacs-logo)
-    (if (eq 'x (console-type (selected-console)))
-	(insert "\n\n")
-      (insert "\n"))
-    (splash-frame-present-hack (make-extent p (point)) 'about-xemacs))
-
-  (insert "\n" (emacs-version) "\n")
-  (let ((after-change-functions nil) ; no font-lock, thank you
-	(l `((face bold-italic
-"Copyright (C) 1985-1996 Free Software Foundation, Inc.
+(defun startup-splash-frame-body ()
+  `("\n" ,(emacs-version) "\n"
+    (face bold-italic "\
+Copyright (C) 1985-1996 Free Software Foundation, Inc.
 Copyright (C) 1990-1994 Lucid, Inc.
 Copyright (C) 1993-1996 Sun Microsystems, Inc. All Rights Reserved.
 Copyright (C) 1994-1996 Board of Trustees, University of Illinois
-Copyright (C) 1995-1996 Ben Wing.")
-	     ,@(if (featurep 'sparcworks) '(
-"\n\nSunSoft provides support for the SPARCworks/XEmacs EOS integration package
-only.  All other XEmacs packages are provided to you \"AS IS\"."))
-	     "\n\nType " (key describe-no-warranty) " to refer to the GPL "
-	     "Version 2, dated June 1991, for full details.\n"
-	     "You may give out copies of XEmacs; type "
-	     (key describe-copying) " to see the conditions.\n"
-	     "Type " (key describe-distribution)
-	     " for information on getting the latest version."
+Copyright (C) 1995-1996 Ben Wing\n\n")
+    
+    ,@(if (featurep 'sparcworks)
+          `( "\
+Sun provides support for the WorkShop/XEmacs integration package only.
+All other XEmacs packages are provided to you \"AS IS\".
+For full details, type " (key describe-no-warranty)
+" to refer to the GPL Version 2, dated June 1991.\n\n"
+,@(let ((lang (or (getenv "LANG") (getenv "LC_ALL"))))
+    (if (and
+         (not (featurep 'mule))         ; Already got mule?
+         (not (eq 'tty (console-type))) ; No Mule support on tty's yet
+         lang                           ; Non-English locale?
+         (not (string-equal lang "C"))
+         (not (string-match "^en" lang))
+         (locate-file "xemacs-mule" exec-path)) ; Comes with Sun WorkShop
+        '( "\
+This version of XEmacs has been built with support for Latin-1 languages only.
+To handle other languages you need to run a Multi-lingual (`Mule') version of
+XEmacs, by either running the command `xemacs-mule', or by using the X resource
+`ESERVE*defaultXEmacsPath: xemacs-mule' when starting XEmacs from Sun WorkShop.\n\n"))))
 
-             "\n\nType " (key help-command) " for help; "
-             (key advertised-undo)
-             " to undo changes.  (`C-' means use the CTRL key.)\n"
-             "To get out of XEmacs, type " (key save-buffers-kill-emacs) ".\n"
-             "Type " (key help-with-tutorial)
-             " for a tutorial on using XEmacs.\n"
-             "Type " (key info) " to enter Info, "
-             "which you can use to read documentation.\n\n"
-	     (face (bold red)
-		   (
-"For tips and answers to frequently asked questions, see the XEmacs FAQ.\n"
-		    "(It's on the Help menu, or type "
-		    (key xemacs-local-faq) " [a capital F!].)")))))
-    (while l
-      (splash-frame-present (car l))
-      (setq l (cdr l))))
+        '("XEmacs comes with ABSOLUTELY NO WARRANTY; type "
+          (key describe-no-warranty) " for full details.\n"))
+    
+    "You may give out copies of XEmacs; type "
+    (key describe-copying) " to see the conditions.\n"
+    "Type " (key describe-distribution)
+    " for information on getting the latest version.\n\n"
+
+    "Type " (key help-command) " or use the " (face bold "Help") " menu to get help.\n"
+    "Type " (key advertised-undo) " to undo changes  (`C-' means use the Control key).\n"
+    "To get out of XEmacs, type " (key save-buffers-kill-emacs) ".\n"
+    "Type " (key help-with-tutorial) " for a tutorial on using XEmacs.\n"
+    "Type " (key info) " to enter Info, "
+    "which you can use to read online documentation.\n\n"
+    (face (bold red) ( "\
+For tips and answers to frequently asked questions, see the XEmacs FAQ.
+\(It's on the Help menu, or type " (key xemacs-local-faq) " [a capital F!].\)"))))
+
+(defun startup-splash-frame ()
+  (let ((p (point))
+        (cramped-p (eq 'tty (console-type))))
+    (unless cramped-p (insert "\n"))
+    (indent-to (startup-center-spaces xemacs-logo))
+    (set-extent-begin-glyph (make-extent (point) (point)) xemacs-logo)
+    (insert (if cramped-p "\n" "\n\n"))
+    (splash-frame-present-hack (make-extent p (point)) 'about-xemacs))
+
+  (let ((after-change-functions nil)) ; no font-lock, thank you
+    (dolist (l (startup-splash-frame-body))
+      (splash-frame-present l)))
+  (set-buffer-modified-p nil))
+
 ;  (let ((present-file
 ;         #'(lambda (f)
 ;             (splash-frame-present
@@ -883,7 +900,7 @@ only.  All other XEmacs packages are provided to you \"AS IS\"."))
 ;    (insert " and ")
 ;    (funcall present-file "sample.Xdefaults")
 ;    (insert (format "\nin the directory %s." data-directory)))
-  (set-buffer-modified-p nil))
+
 
 ;;;; Computing the default load-path, etc.
 ;;;

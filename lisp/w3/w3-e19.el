@@ -1,11 +1,11 @@
-;;; w3-e19.el,v --- Emacs 19.xx specific functions for emacs-w3
+;;; w3-e19.el --- Emacs 19.xx specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/06/06 14:14:34
-;; Version: 1.157
+;; Created: 1996/07/11 04:49:02
+;; Version: 1.3
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -169,6 +169,8 @@
   (cond
    ((eq window-system 'x)
     (x-color-values color))
+   ((eq window-system 'pm)
+    (pm-color-values color))
    ((eq window-system 'ns)
     (ns-color-values color))
    (t nil)))

@@ -18,9 +18,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -47,6 +48,7 @@ The variable `tab-width' controls the spacing of tab stops."
 		(indent-tabs-mode nil))
 	    (skip-chars-backward "\t" start)
 	    (delete-region tab-beg (point))
+	    ;; XEmacs change -- show progress
 	    (indent-to column)
 	    (if (> (/ (* 100 (- (point) start)) (- (point-max) start)) percent)
 		(progn
@@ -76,6 +78,7 @@ The variable `tab-width' controls the spacing of tab stops."
 	  (let ((column (current-column))
 		(indent-tabs-mode t))
 	    (delete-region (match-beginning 0) (point))
+	    ;; XEmacs change -- show progress
 	    (indent-to column)
 	    (if (> (/ (* 100 (- (point) start)) (- (point-max) start)) percent)
 		(progn

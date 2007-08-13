@@ -210,6 +210,88 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 	  (insert (format "This is an RFC 1153 digest.\n(%d message%s)\n----------------------------------------------------------------------\n" (length message-list) (if (cdr message-list) "s" "")))
 	  (goto-char start)))))
 
+(defun vm-rfc1521-encapsulate-messages (message-list keep-list discard-regexp)
+  "Encapsulate the messages in MESSAGE-LIST as per RFC 1521 (MIME).
+The resulting digest is inserted at point in the current buffer.
+MIME headers at point-max are added/updated.
+Point is not moved.
+
+MESSAGE-LIST should be a list of message structs (real or virtual).
+These are the messages that will be encapsulated.
+KEEP-LIST should be a list of regexps matching headers to keep.
+DISCARD-REGEXP should be a regexp that matches headers to be discarded.
+KEEP-LIST and DISCARD-REGEXP are used to order and trim the headers
+to be forwarded.  See the docs for vm-reorder-message-headers
+to find out how KEEP-LIST and DISCARD-REGEXP are used."
+  (if message-list
+      (let ((target-buffer (current-buffer))
+	    (mlist message-list)
+	    (boundary (format "-----%07X%07X" (abs (random)) (abs (random))))
+;	    insertion-point
+	    source-buffer m start)
+	(save-restriction
+	  ;; narrow to a zero length region to avoid interacting
+	  ;; with anything that might have already been inserted
+	  ;; into the buffer.
+	  (narrow-to-region (point) (point))
+	  (setq start (point))
+	  (while mlist
+	    (insert "--" boundary "\nContent-Type: message/rfc822\n\n")
+	    (setq m (vm-real-message-of (car mlist))
+		  source-buffer (vm-buffer-of m))
+	    (save-excursion
+	      (set-buffer source-buffer)
+	      (save-restriction
+		(widen)
+		(save-excursion
+		  (set-buffer target-buffer)
+		  (let ((beg (point)))
+		    (insert-buffer-substring source-buffer (vm-headers-of m)
+					     (vm-text-end-of m))
+		    (goto-char beg)
+		    (vm-reorder-message-headers nil nil
+						"\\(X-VM-\\|Status:\\)")
+		    (vm-reorder-message-headers nil keep-list discard-regexp)
+		    ))))
+	    (goto-char (point-max))
+	    (insert "\n")
+	    (setq mlist (cdr mlist)))
+	  (insert "--" boundary "--\n")
+
+	  (goto-char start)
+	  (insert "--" boundary "\nContent-Type: text/plain\n\n")
+	  (insert (format
+		   "This is an RFC 1521 (MIME) digest; %d message%s.\n\n\n\n\n"
+			  (length message-list)
+			  (if (cdr message-list) "s" "")))
+;	  (setq insertion-point (point-marker))
+	  (goto-char start))
+
+	;; outside of the save-restriction
+	(save-excursion
+	  (let (end)
+	    (goto-char (point-min))
+	    (re-search-forward
+	     (concat "^" (regexp-quote mail-header-separator) "$")
+	     nil t)
+	    (setq end (point))
+	    (goto-char (point-min))
+	    (cond
+	     ((re-search-forward "^content-type:" end t)
+	      (delete-region (point) (progn (forward-line 1) (point)))
+	      (while (looking-at " \t")
+		(delete-region (point) (progn (forward-line 1) (point))))))
+	    (goto-char end)
+	    (insert "MIME-Version: 1.0\n"
+		    "Content-Type: multipart/digest; boundary=\""
+		    boundary "\"\n")
+	    ))
+
+;	(goto-char insertion-point)
+;	(set-marker insertion-point nil)
+	)))
+
+
 (defun vm-rfc1153-or-rfc934-burst-message (m rfc1153)
   "Burst messages from the digest message M.
 M should be a message struct for a real message.
@@ -371,6 +453,8 @@ all marked messages will be burst."
 	       (vm-rfc934-burst-message m))
 	      ((equal digest-type "rfc1153")
 	       (vm-rfc1153-burst-message m))
+	      ((equal digest-type "rfc1521")
+	       (error "Don't yet know how to burst MIME digests."))
 	      (t (error "Unknown digest type: %s" digest-type)))
 	(message "Bursting %s digest... done" digest-type)
 	(vm-clear-modification-flag-undos)
@@ -393,7 +477,8 @@ all marked messages will be burst."
     (setq totals-blurb (vm-emit-totals-blurb))
     (vm-display nil nil '(vm-burst-digest
 			  vm-burst-rfc934-digest
-			  vm-burst-rfc1153-digest)
+			  vm-burst-rfc1153-digest
+			  vm-burst-rfc1521-digest)
 		(list this-command))
     (if (vm-thoughtfully-select-message)
 	(vm-preview-current-message)
@@ -410,16 +495,25 @@ all marked messages will be burst."
   (interactive)
   (vm-burst-digest "rfc1153"))
 
+(defun vm-burst-rfc1521-digest ()
+  "Burst an RFC 1521 (MIME) style digest"
+  (interactive)
+  (vm-burst-digest "rfc1521"))
+
 (defun vm-guess-digest-type (m)
   "Guess the digest type of the message M.
 M should be the message struct of a real message.
-Returns either \"rfc934\" or \"rfc1153\"."
+Returns either \"rfc934\", \"rfc1153\", or  \"rfc1521\"."
   (save-excursion
     (set-buffer (vm-buffer-of m))
     (save-excursion
       (save-restriction
 	(widen)
-	(goto-char (vm-text-of m))
-	(if (search-forward "\n----------------------------------------------------------------------\n" nil t)
-	    "rfc1153"
-	  "rfc934")))))
+	(goto-char (vm-headers-of m))
+	(if (let ((case-fold-search t))
+	      (re-search-forward "^MIME-Version:" nil t))
+	    "rfc1521"
+	  (goto-char (vm-text-of m))
+	  (if (search-forward "\n----------------------------------------------------------------------\n" nil t)
+	      "rfc1153"
+	    "rfc934"))))))

@@ -456,7 +456,8 @@ If DIRNAME is already in a dired buffer, that buffer is used without refresh."
       ;; dired-readin's output, nothing else.  The hook can
       ;; successfully use dired functions (e.g. dired-get-filename)
       ;; as the subdir-alist has been built in dired-readin.
-      (run-hooks 'dired-after-readin-hook)
+      (let ((buffer-read-only nil))
+	(run-hooks 'dired-after-readin-hook))
       (goto-char (point-min))
       (dired-initial-position dirname))
     (set-buffer old-buf)
@@ -3107,7 +3108,7 @@ The next char is either \\n, or \\r if DIR is hidden."
 			;; filenames are preceded by SPC, this makes
 			;; the search faster (e.g. for the filename "-"!).
 			(search-forward (concat " " base) boundary 'move))
-	      ;; Match could have BASE just as initial substring or
+	      ;; Match could have BASE just as initial substring
 	      ;; or in permission bits or date or
 	      ;; not be a proper filename at all:
 	      (if (equal base (dired-get-filename 'no-dir t))

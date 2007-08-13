@@ -136,8 +136,8 @@ SUBDIR_MAKEFILES = xemacs/Makefile lispref/Makefile new-users-guide/Makefile int
 
 srcs = ange-ftp cc-mode cl dired ediff external-widget forms gnus \
        hyperbole ilisp info internals ispell mailcrypt message mh-e \
-       oo-browser pcl-cvs psgml rmail standards supercite term termcap \
-       texinfo viper vm w3 xemacs-faq
+       oo-browser pcl-cvs psgml psgml-api rmail standards supercite term \
+       termcap texinfo viper vm w3 xemacs-faq
 
 info = $(srcs:%=../info/%.info)
 

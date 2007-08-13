@@ -23,7 +23,7 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.31.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -60,6 +60,8 @@
 ;;; Code:
 
 ;; I see a degradation of maybe 10-20% only.
+;; [sb -- FSF protects the face declarations with `if window-system'
+;;  I see no reason why we should do so]
 (defvar apropos-do-all nil
   "*Whether the apropos commands should do more.
 Slows them down more or less.  Set this non-nil if you have a fast machine.")
@@ -90,9 +92,9 @@ This looks good, but slows down the commands several times.")
 
 (defvar apropos-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "\C-m" 'apropos-follow)
-    (define-key map 'button2up 'apropos-mouse-follow)
-    (define-key map 'button2 'undefined)
+    (define-key map [(control m)] 'apropos-follow)
+    (define-key map [(button2up)] 'apropos-mouse-follow)
+    (define-key map [(button2down)] 'undefined)
     map)
   "Keymap used in Apropos mode.")
 
@@ -474,7 +476,7 @@ found."
 		    (substitute-command-keys
 		     "you can click \\[apropos-mouse-follow] to get more information.\n")))
 	(insert (substitute-command-keys
-		 "In this buffer, type \\[apropos-follow] to get full documentation.\n\n"))
+		 "Type \\[apropos-follow] in this buffer to get full documentation.\n\n"))
 	(while (consp p)
 	  (or (not spacing) (bobp) (terpri))
 	  (setq apropos-item (car p)

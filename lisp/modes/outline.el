@@ -1,9 +1,9 @@
 ;;; outline.el --- outline mode commands for Emacs
 
 ;; Copyright (C) 1986, 1993, 1994 Free Software Foundation, Inc.
-;; Keywords: outlines
 
-;; Maintainer: Tim Bradshaw <tfb@ed.ac.uk>
+;; Maintainer: FSF
+;; Keywords: outlines
 
 ;; This file is part of XEmacs.
 
@@ -19,17 +19,16 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
 ;; This package is a major mode for editing outline-format documents.
 ;; An outline can be `abstracted' to show headers at any given level,
 ;; with all stuff below hidden.  See the Emacs manual for details.
-
-;; This is taken from the FSF 19.23 outline.el and modified to work
-;; with XEmacs 19.10+.  Changes are marked with a comment with
-;; `#+XEmacs' in it. --tfb
 
 ;;; Code:
 
@@ -46,6 +45,7 @@ in the file it applies to.  See also outline-heading-end-regexp.")
 (or (default-value 'outline-regexp)
     (setq-default outline-regexp "[*\^L]+"))
   
+;; XEmacs change
 (defvar outline-heading-end-regexp (purecopy "[\n\^M]")
   "*Regular expression to match the end of a heading line.
 You can assume that point is at the beginning of a heading when this
@@ -53,30 +53,87 @@ regexp is searched for.  The heading ends at the end of the match.
 The recommended way to set this is with a \"Local Variables:\" list
 in the file it applies to.")
 
+;; XEmacs:  There is no point in doing this differently now. -sb
+(defvar outline-mode-prefix-map nil)
+
+(if outline-mode-prefix-map
+    nil
+  (setq outline-mode-prefix-map (make-sparse-keymap))
+  (define-key outline-mode-prefix-map "\C-n" 'outline-next-visible-heading)
+  (define-key outline-mode-prefix-map "\C-p" 'outline-previous-visible-heading)
+  (define-key outline-mode-prefix-map "\C-i" 'show-children)
+  (define-key outline-mode-prefix-map "\C-s" 'show-subtree)
+  (define-key outline-mode-prefix-map "\C-d" 'hide-subtree)
+  (define-key outline-mode-prefix-map "\C-u" 'outline-up-heading)
+  (define-key outline-mode-prefix-map "\C-f" 'outline-forward-same-level)
+  (define-key outline-mode-prefix-map "\C-b" 'outline-backward-same-level)
+  (define-key outline-mode-prefix-map "\C-t" 'hide-body)
+  (define-key outline-mode-prefix-map "\C-a" 'show-all)
+  (define-key outline-mode-prefix-map "\C-c" 'hide-entry)
+  (define-key outline-mode-prefix-map "\C-e" 'show-entry)
+  (define-key outline-mode-prefix-map "\C-l" 'hide-leaves)
+  (define-key outline-mode-prefix-map "\C-k" 'show-branches)
+  (define-key outline-mode-prefix-map "\C-q" 'hide-sublevels)
+  (define-key outline-mode-prefix-map "\C-o" 'hide-other))
+
+(defvar outline-mode-menu-bar-map nil)
+(if outline-mode-menu-bar-map
+    nil
+  (setq outline-mode-menu-bar-map (make-sparse-keymap))
+
+  (define-key outline-mode-menu-bar-map [hide]
+    (cons "Hide" (make-sparse-keymap "Hide")))
+
+  (define-key outline-mode-menu-bar-map [hide hide-other]
+    '("Hide Other" . hide-other))
+  (define-key outline-mode-menu-bar-map [hide hide-sublevels]
+    '("Hide Sublevels" . hide-sublevels))
+  (define-key outline-mode-menu-bar-map [hide hide-subtree]
+    '("Hide Subtree" . hide-subtree))
+  (define-key outline-mode-menu-bar-map [hide hide-entry]
+    '("Hide Entry" . hide-entry))
+  (define-key outline-mode-menu-bar-map [hide hide-body]
+    '("Hide Body" . hide-body))
+  (define-key outline-mode-menu-bar-map [hide hide-leaves]
+    '("Hide Leaves" . hide-leaves))
+
+  (define-key outline-mode-menu-bar-map [show]
+    (cons "Show" (make-sparse-keymap "Show")))
+
+  (define-key outline-mode-menu-bar-map [show show-subtree]
+    '("Show Subtree" . show-subtree))
+  (define-key outline-mode-menu-bar-map [show show-children]
+    '("Show Children" . show-children))
+  (define-key outline-mode-menu-bar-map [show show-branches]
+    '("Show Branches" . show-branches))
+  (define-key outline-mode-menu-bar-map [show show-entry]
+    '("Show Entry" . show-entry))
+  (define-key outline-mode-menu-bar-map [show show-all]
+    '("Show All" . show-all))
+
+  (define-key outline-mode-menu-bar-map [headings]
+    (cons "Headings" (make-sparse-keymap "Headings")))
+
+  (define-key outline-mode-menu-bar-map [headings outline-backward-same-level]
+    '("Previous Same Level" . outline-backward-same-level))
+  (define-key outline-mode-menu-bar-map [headings outline-forward-same-level]
+    '("Next Same Level" . outline-forward-same-level))
+  (define-key outline-mode-menu-bar-map [headings outline-previous-visible-heading]
+    '("Previous" . outline-previous-visible-heading))
+  (define-key outline-mode-menu-bar-map [headings outline-next-visible-heading]
+    '("Next" . outline-next-visible-heading))
+  (define-key outline-mode-menu-bar-map [headings outline-up-heading]
+    '("Up" . outline-up-heading)))
+
 (defvar outline-mode-map nil "")
 
 (if outline-mode-map
     nil
-  ;; #+XEmacs: this replaces some horrid nconcing in FSF
-  (setq outline-mode-map (make-sparse-keymap))
-  (set-keymap-name outline-mode-map 'outline-mode-map)
-  (set-keymap-parents outline-mode-map (list text-mode-map))
-  (define-key outline-mode-map "\C-c\C-n" 'outline-next-visible-heading)
-  (define-key outline-mode-map "\C-c\C-p" 'outline-previous-visible-heading)
-  (define-key outline-mode-map "\C-c\C-i" 'show-children)
-  (define-key outline-mode-map "\C-c\C-s" 'show-subtree)
-  (define-key outline-mode-map "\C-c\C-d" 'hide-subtree)
-  (define-key outline-mode-map "\C-c\C-u" 'outline-up-heading)
-  (define-key outline-mode-map "\C-c\C-f" 'outline-forward-same-level)
-  (define-key outline-mode-map "\C-c\C-b" 'outline-backward-same-level)
-  (define-key outline-mode-map "\C-c\C-t" 'hide-body)
-  (define-key outline-mode-map "\C-c\C-a" 'show-all)
-  (define-key outline-mode-map "\C-c\C-c" 'hide-entry)
-  (define-key outline-mode-map "\C-c\C-e" 'show-entry)
-  (define-key outline-mode-map "\C-c\C-l" 'hide-leaves)
-  (define-key outline-mode-map "\C-c\C-k" 'show-branches)
-  (define-key outline-mode-map "\C-c\C-q" 'hide-sublevels)
-  (define-key outline-mode-map "\C-c\C-o" 'hide-other))
+  ;; XEmacs change
+  ;(setq outline-mode-map (nconc (make-sparse-keymap) text-mode-map))
+  (setq outline-mode-map (make-sparse-keymap 'text-mode-map))
+  (define-key outline-mode-map "\C-c" outline-mode-prefix-map)
+  (define-key outline-mode-map [menu-bar] outline-mode-menu-bar-map))
 
 ;;; #+XEmacs
 (defvar outline-mode-menu
@@ -140,6 +197,20 @@ in the file it applies to.")
 ;;;###autoload
 (add-minor-mode 'outline-minor-mode " Outl")
 
+(defvar outline-font-lock-keywords
+  '(;; Highlight headings according to the level.
+    ("^\\(\\*+\\)[ \t]*\\(.+\\)?[ \t]*$"
+     (1 font-lock-string-face)
+     (2 (let ((len (- (match-end 1) (match-beginning 1))))
+	  (or (cdr (assq len '((1 . font-lock-function-name-face)
+			       (2 . font-lock-keyword-face)
+			       (3 . font-lock-comment-face))))
+	      font-lock-variable-name-face))
+	nil t))
+    ;; Highlight citations of the form [1] and [Mar94].
+    ("\\[\\([A-Z][A-Za-z]+\\)*[0-9]+\\]" . font-lock-type-face))
+  "Additional expressions to highlight in Outline mode.")
+
 ;;;###autoload
 (defun outline-mode ()
   "Set major mode for editing outlines with selective display.
@@ -190,28 +261,35 @@ Turning on outline mode calls the value of `text-mode-hook' and then of
   (setq local-abbrev-table text-mode-abbrev-table)
   (set-syntax-table text-mode-syntax-table)
   (make-local-variable 'paragraph-start)
-  (setq paragraph-start (concat paragraph-start "\\|^\\("
+  (setq paragraph-start (concat paragraph-start "\\|\\("
 				outline-regexp "\\)"))
   ;; Inhibit auto-filling of header lines.
   (make-local-variable 'auto-fill-inhibit-regexp)
   (setq auto-fill-inhibit-regexp outline-regexp)
   (make-local-variable 'paragraph-separate)
-  (setq paragraph-separate (concat paragraph-separate "\\|^\\("
+  (setq paragraph-separate (concat paragraph-separate "\\|\\("
 				   outline-regexp "\\)"))
   ;; #+XEmacs
   (outline-install-menubar)
+  (make-local-variable 'font-lock-defaults)
+  (setq font-lock-defaults '(outline-font-lock-keywords t))
+  (make-local-variable 'change-major-mode-hook)
   (add-hook 'change-major-mode-hook 'show-all)
   (run-hooks 'text-mode-hook 'outline-mode-hook))
 
-(defvar outline-minor-mode-prefix "\C-c\C-o"
-  "*Prefix key to use for Outline commands in Outline minor mode.")
+(defvar outline-minor-mode-prefix "\C-c@"
+  "*Prefix key to use for Outline commands in Outline minor mode.
+The value of this variable is checked as part of loading Outline mode.
+After that, changing the prefix key requires manipulating keymaps.")
 
 (defvar outline-minor-mode-map nil)
 (if outline-minor-mode-map
     nil
   (setq outline-minor-mode-map (make-sparse-keymap))
+  (define-key outline-minor-mode-map [menu-bar]
+    outline-mode-menu-bar-map)
   (define-key outline-minor-mode-map outline-minor-mode-prefix
-    (lookup-key outline-mode-map "\C-c")))
+    outline-mode-prefix-map))
 
 (or (assq 'outline-minor-mode minor-mode-map-alist)
     (setq minor-mode-map-alist
@@ -233,13 +311,16 @@ See the command `outline-mode' for more information on this mode."
 	;; #+XEmacs
 	(outline-install-menubar)
 	(run-hooks 'outline-minor-mode-hook))
-    (setq selective-display nil)
-    ;; When turning off outline mode, get rid of any ^M's.
-    (or outline-minor-mode
-	(outline-flag-region (point-min) (point-max) ?\n))
-    (set-buffer-modified-p (buffer-modified-p))
-    ;; #+XEmacs
-    (outline-install-menubar 'remove)))
+    (setq selective-display nil))
+  ;; When turning off outline mode, get rid of any ^M's.
+  (or outline-minor-mode
+      (outline-flag-region (point-min) (point-max) ?\n))
+  ;; XEmacs change
+  (set-buffer-modified-p (buffer-modified-p))
+  ;; #+XEmacs
+  (outline-install-menubar 'remove)
+  ;; XEmacs change
+  (redraw-modeline))
 
 (defvar outline-level 'outline-level
   "Function of no args to compute a header's nesting level in an outline.
@@ -253,19 +334,20 @@ It can assume point is at the beginning of a header line.")
 (defun outline-level ()
   "Return the depth to which a statement is nested in the outline.
 Point must be at the beginning of a header line.  This is actually
-the column number of the end of what `outline-regexp' matches."
+the number of characters that `outline-regexp' matches."
   (save-excursion
     (looking-at outline-regexp)
     (- (match-end 0) (match-beginning 0))))
 
 (defun outline-next-preface ()
-  "Skip forward to just before the next heading line."
+  "Skip forward to just before the next heading line.
+If there's no following heading line, stop before the newline
+at the end of the buffer."
   (if (re-search-forward (concat "[\n\^M]\\(" outline-regexp "\\)")
 			 nil 'move)
-      (progn
-      (goto-char (match-beginning 0))
-      (if (memq (preceding-char) '(?\n ?\^M))
- 	  (forward-char -1)))))
+      (goto-char (match-beginning 0)))
+  (if (memq (preceding-char) '(?\n ?\^M))
+      (forward-char -1)))
 
 (defun outline-next-heading ()
   "Move to the next (possibly invisible) heading line."
@@ -406,7 +488,8 @@ while if FLAG is `\\^M' (control-M) the text is hidden."
   "Hide everything except for the current body and the parent headings."
   (interactive)
   (hide-sublevels 1)
-  (let ((last (point)))
+  (let ((last (point))
+	(pos (point)))
     (while (save-excursion
 	     (and (re-search-backward "[\n\r]" nil t)
 		  (eq (following-char) ?\r)))
@@ -429,7 +512,8 @@ while if FLAG is `\\^M' (control-M) the text is hidden."
 
 (defun outline-end-of-subtree ()
   (outline-back-to-heading)
-  (let ((first t)
+  (let ((opoint (point))
+	(first t)
 	(level (funcall outline-level)))
     (while (and (not (eobp))
 		(or first (> (funcall outline-level) level)))

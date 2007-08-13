@@ -38,11 +38,18 @@
  */
 
 extern void __delete_all_module_tags(void);
+extern void __exithandle(void);
 
 void
 dynodump_uninit(void)
 {
-    __delete_all_module_tags();
+  /* There are 2 possible ways to do this.  It is not clear which way
+     will be blessed by the Sun Gods.  Both appear to work. */
 
-    return;
+  /* _exithandle has recently been blessed. */
+  
+  /* __delete_all_module_tags(); */
+  _exithandle();
+
+  return;
 }

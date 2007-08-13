@@ -140,7 +140,7 @@ form as follows:
   @dots{} )
 @end example
 
-It is most efficient to specify the domain in the first line of of the
+It is most efficient to specify the domain in the first line of the
 function body, before the @code{interactive} form.
 
 For variables and constants which have documentation strings, specify the

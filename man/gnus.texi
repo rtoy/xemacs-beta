@@ -539,9 +539,15 @@ Subscribe all new groups randomly.
 @vindex gnus-subscribe-alphabetically
 Subscribe all new groups alphabetically.
 
-@item gnus-subscribe-hierarchically
-@vindex gnus-subscribe-hierarchically
-Subscribe all new groups hierarchically.
+@item gnus-subscribe-hierarchically 
+@vindex gnus-subscribe-hierarchically 
+Subscribe all new groups hierarchically.  The difference between this
+function and @code{gnus-subscribe-alphabetically} is slight.
+@code{gnus-subscribe-alphabetically} will subscribe new groups in a
+strictly alphabetical fashion, while this function will enter groups
+into it's hierarchy.  So if you want to have the @samp{rec} hierarchy
+before the @samp{comp} hierarchy, this function will not mess that
+configuration up.  Or something like that.
 
 @item gnus-subscribe-interactively
 @vindex gnus-subscribe-interactively
@@ -696,6 +702,11 @@ saving the @file{.newsrc.eld} file, and
 @file{.newsrc} file.  The latter two are commonly used to turn version
 control on or off.  Version control is off by default when saving the
 startup files.
+
+@vindex gnus-init-file
+When Gnus starts, it will read the @code{gnus-init-file} file, which is
+@file{~/.gnus.el} by default.  This is a normal Emacs Lisp file and can
+be used to avoid cluttering your @file{.emacs} file with Gnus stuff.
 
 
 @node Auto Save
@@ -1490,9 +1501,9 @@ to subscribe to @sc{nntp} groups, @pxref{Browse Foreign Server}.
 @kindex G r (Group)
 @findex gnus-group-rename-group
 Rename the current group to something else
-(@code{gnus-group-rename-group}).  This is legal only on some groups --
-mail groups mostly.  This command might very well be quite slow on some
-backends. 
+(@code{gnus-group-rename-group}).  This is legal only on some
+groups---mail groups mostly.  This command might very well be quite slow
+on some backends.
 
 @item G e
 @kindex G e (Group)
@@ -1531,7 +1542,7 @@ Make the Gnus help group (@code{gnus-group-make-help-group}).
 Make a Gnus archive group (@code{gnus-group-make-archive-group}).  By
 default a group pointing to the most recent articles will be created
 (@code{gnus-group-recent-archive-directory}), but given a prefix, a full
-group will be created from from @code{gnus-group-archive-directory}.
+group will be created from @code{gnus-group-archive-directory}.
 
 @item G k
 @kindex G k (Group)
@@ -1539,6 +1550,7 @@ group will be created from from @code{gnus-group-archive-directory}.
 Make a kiboze group.  You will be prompted for a name, for a regexp to
 match groups to be ``included'' in the kiboze group, and a series of
 strings to match on headers (@code{gnus-group-make-kiboze-group}).
+@xref{Kibozed Groups}
 
 @item G D
 @kindex G D (Group)
@@ -1768,7 +1780,7 @@ List all zombie groups (@code{gnus-group-list-zombies}).
 @item A m
 @kindex A m (Group)
 @findex gnus-group-list-matching
-List all subscribed groups with unread articles that match a regexp
+List all unread, subscribed groups with names that match a regexp
 (@code{gnus-group-list-matching}). 
 
 @item A M
@@ -2459,10 +2471,10 @@ Save the @file{.newsrc.eld} file (and @file{.newsrc} if wanted)
 (@code{gnus-group-save-newsrc}).  If given a prefix, force saving the
 file(s) whether Gnus thinks it is necessary or not.
 
-@item Z
-@kindex Z (Group)
-@findex gnus-group-clear-dribble
-Clear the dribble buffer (@code{gnus-group-clear-dribble}).
+@c @item Z
+@c @kindex Z (Group)
+@c @findex gnus-group-clear-dribble
+@c Clear the dribble buffer (@code{gnus-group-clear-dribble}).
 
 @end table
 
@@ -2779,7 +2791,9 @@ command will go to the next group without confirmation.  Also
 @item gnus-auto-select-same
 @vindex gnus-auto-select-same
 If non-@code{nil}, all the movement commands will try to go to the next
-article with the same subject as the current.  This variable is not
+article with the same subject as the current.  (@dfn{Same} here might
+mean @dfn{roughly equal}.  See @code{gnus-summary-gather-subject-limit}
+for details (@pxref{Customizing Threading}).)  This variable is not
 particularly useful if you use a threaded display.
 
 @item gnus-summary-check-current
@@ -5050,6 +5064,12 @@ Hide signature (@code{gnus-article-hide-signature}).
 @findex gnus-article-hide-pgp
 Hide @sc{pgp} signatures (@code{gnus-article-hide-pgp}). 
 
+@item W W P
+@kindex W W P (Summary)
+@findex gnus-article-hide-pem
+Hide @sc{pem} (privacy enhavnced hessages) gruft
+(@code{gnus-article-hide-pem}).
+
 @item W W c
 @kindex W W c (Summary)
 @findex gnus-article-hide-citation
@@ -5167,7 +5187,9 @@ Treat overstrike (@code{gnus-article-treat-overstrike}).
 @item W w
 @kindex W w (Summary)
 @findex gnus-article-fill-cited-article
-Do word wrap (@code{gnus-article-fill-cited-article}).
+Do word wrap (@code{gnus-article-fill-cited-article}).  If you use this
+function in @code{gnus-article-display-hook}, it should be run fairly
+late and certainly after any highlighting.
 
 @item W c
 @kindex W c (Summary)
@@ -5194,19 +5216,19 @@ Treat quoted-printable (@code{gnus-article-de-quoted-unreadable}).
 @vindex gnus-article-x-face-too-ugly
 Look for and display any X-Face headers
 (@code{gnus-article-display-x-face}).  The command executed by this
-function is given by the @code{gnus-article-x-face-command} variable.  If
-this variable is a string, this string will be executed in a sub-shell.
-If it is a function, this function will be called with the face as the
-argument.  If the @code{gnus-article-x-face-too-ugly} (which is a regexp)
-matches the @code{From} header, the face will not be shown.  The default
-action under Emacs is to fork off an @code{xv} to view the face; under
-XEmacs the default action is to display the face before the @code{From}
-header.  (It's nicer if XEmacs has been compiled with X-Face support --
-that will make display somewhat faster.  If there's no native X-Face
-support, Gnus will try to convert the @code{X-Face} header using
+function is given by the @code{gnus-article-x-face-command} variable.
+If this variable is a string, this string will be executed in a
+sub-shell.  If it is a function, this function will be called with the
+face as the argument.  If the @code{gnus-article-x-face-too-ugly} (which
+is a regexp) matches the @code{From} header, the face will not be shown.
+The default action under Emacs is to fork off an @code{xv} to view the
+face; under XEmacs the default action is to display the face before the
+@code{From} header.  (It's nicer if XEmacs has been compiled with X-Face
+support---that will make display somewhat faster.  If there's no native
+X-Face support, Gnus will try to convert the @code{X-Face} header using
 external programs from the @code{pbmplus} package and friends.)  If you
 want to have this function in the display hook, it should probably come
-last. 
+last.
 
 @item W b
 @kindex W b (Summary)
@@ -6541,6 +6563,8 @@ Messages will be saved in that group.
 Messages will be saved in all those groups.
 @item an alist of regexps, functions and forms
 When a key ``matches'', the result is used.
+@item @code{nil}
+No message archiving will take place.  This is the default.
 @end itemize
 
 Let's illustrate:
@@ -6571,8 +6595,6 @@ More complex stuff:
           "misc-mail")))
 @end lisp       
 
-This is the default.
-
 How about storing all news messages in one file, but storing all mail
 messages in one file per month:
 
@@ -6591,8 +6613,8 @@ archive group will appear in the group buffer the next time you start
 Gnus, or the next time you press @kbd{F} in the group buffer.  You can
 enter it and read the articles in it just like you'd read any other
 group.  If the group gets really big and annoying, you can simply rename
-if (using @kbd{G r} in the group buffer) to something nice --
-@samp{misc-mail-september-1995}, or whatever.  New messages will
+if (using @kbd{G r} in the group buffer) to something
+nice---@samp{misc-mail-september-1995}, or whatever.  New messages will
 continue to be stored in the old (now empty) group.
 
 That's the default method of archiving sent mail.  Gnus also offers two
@@ -7108,8 +7130,8 @@ Remove all marks to whether Gnus was denied connection from all servers
 @cindex news backends
 
 A newsreader is normally used for reading news.  Gnus currently provides
-only two methods of getting news -- it can read from an @sc{nntp}
-server, or it can read from a local spool.
+only two methods of getting news---it can read from an @sc{nntp} server,
+or it can read from a local spool.
 
 @menu
 * NNTP::               Reading news from an @sc{nntp} server.
@@ -8728,6 +8750,10 @@ the news feed''.  @code{nnkiboze} is a backend that will do this for
 you.  Oh joy!  Now you can grind any @sc{nntp} server down to a halt
 with useless requests!  Oh happiness!
 
+@kindex G k (Group)
+To create a kibozed group, use the @kbd{G k} command in the group
+buffer. 
+
 The address field of the @code{nnkiboze} method is, as with
 @code{nnvirtual}, a regexp to match groups to be ``included'' in the
 @code{nnkiboze} group.  There most similarities between @code{nnkiboze}
@@ -8799,7 +8825,7 @@ silently to help keep the sizes of the score files down.
 * Score Variables::          Customize your scoring.  (My, what terminology).
 * Score File Format::        What a score file may contain.
 * Score File Editing::       You can edit score files by hand as well.
-* Adaptive Scoring::         Big Sister Gnus *knows* what you read.
+* Adaptive Scoring::         Big Sister Gnus @emph{knows} what you read.
 * Followups To Yourself::    Having Gnus notice when people answer you.
 * Scoring Tips::             How to score effectively.
 * Reverse Scoring::          That problem child of old is not problem.
@@ -8913,11 +8939,12 @@ The rest of these commands modify the local score file.
 Prompt for a score, and mark all articles with a score below this as
 read (@code{gnus-score-set-mark-below}).
 
-@item V E
-@kindex V E (Summary)
+@item V x
+@kindex V x (Summary)
 @findex gnus-score-set-expunge-below
-Expunge all articles with a score below the default score (or the
-numeric prefix) (@code{gnus-score-set-expunge-below}).
+Prompt for a score, and add a score rule to the current score file to
+expunge all articles below this score
+(@code{gnus-score-set-expunge-below}).
 @end table
 
 The keystrokes for actually making score entries follow a very regular
@@ -9309,6 +9336,8 @@ and @code{after}.  I can't really imagine this ever being useful, but,
 like, it would feel kinda silly not to provide this function.  Just in
 case.  You never know.  Better safe than sorry.  Once burnt, twice shy.
 Don't judge a book by its cover.  Never not have sex on a first date.
+(I have been told that at least one person, and I quote, ``found this
+function indispensable'', however.)
 
 @item Head, Body, All
 These three match keys use the same match types as the @code{From} (etc)
@@ -9381,7 +9410,7 @@ interesting (with @kbd{I T} or @kbd{I S}), and ignore (@kbd{C y}) the
 rest.  Next time you enter the group, you will see new articles in the
 interesting threads, plus any new threads.
 
-I.e. -- the orphan score atom is for high-volume groups where there
+I.e.---the orphan score atom is for high-volume groups where there
 exist a few interesting threads which can't be found automatically by
 ordinary scoring rules.
 
@@ -9581,8 +9610,7 @@ your own article.
 
 @vindex gnus-inews-article-hook
 These two functions are both primarily meant to be used in hooks like
-@code{gnus-inews-article-hook}.  
-
+@code{message-send-hook}.  
 
 @node Scoring Tips
 @section Scoring Tips
@@ -10130,7 +10158,7 @@ spec, and pad with spaces to get a 5-character field''.  Just like a
 normal format spec, almost.
 
 You can also say @samp{%6,4y}, which means that the field will never be
-more than 6 characters wide and never less than 4 characters wide.
+more than 4 characters wide and never less than 6 characters wide.
 
 There are also specs for highlighting, and these are shared by all the
 format variables.  Text inside the @samp{%(} and @samp{%)} specifiers
@@ -10306,7 +10334,7 @@ may contain any number of @code{vertical} and @code{horizontal} splits.
 @cindex window height
 @cindex window width
 Finding the right sizes can be a bit complicated.  No window may be less
-than @code{gnus-window-min-height} (default 2) characters high, and all
+than @code{gnus-window-min-height} (default 1) characters high, and all
 windows must be at least @code{gnus-window-min-width} (default 1)
 characters wide.  Gnus will try to enforce this before applying the
 splits.  If you want to use the normal Emacs window width/height limit,
@@ -10370,10 +10398,25 @@ Here's a list of all possible keys for
 @code{gnus-buffer-configuration}:
 
 @code{group}, @code{summary}, @code{article}, @code{server},
-@code{browse}, @code{group-mail}, @code{summary-mail},
-@code{summary-reply}, @code{info}, @code{summary-faq},
-@code{edit-group}, @code{edit-server}, @code{reply}, @code{reply-yank},
-@code{followup}, @code{followup-yank}, @code{edit-score}.  
+@code{browse}, @code{message}, @code{pick}, @code{info},
+@code{summary-faq}, @code{edit-group}, @code{edit-server},
+@code{edit-score}, @code{post}, @code{reply}, @code{forward},
+@code{reply-yank}, @code{mail-bounce}, @code{draft},
+@code{pipe}, @code{bug}, @code{compose-bounce}.  
+
+Note that the @code{message} key is used for both
+@code{gnus-group-mail} and @code{gnus-summary-mail-other-window}.  If
+it is desireable to distinguish between the two, something like this
+might be used:
+
+@lisp
+(message (horizontal 1.0
+		     (vertical 1.0 (message 1.0 point))
+		     (vertical 0.24
+			       (if (buffer-live-p gnus-summary-buffer)
+				   '(summary 0.5))
+			       (group 1.0)))))
+@end lisp
 
 @findex gnus-add-configuration
 Since the @code{gnus-buffer-configuration} variable is so long and
@@ -10390,7 +10433,7 @@ you want to change the @code{article} setting, you could say:
 @end lisp
 
 You'd typically stick these @code{gnus-add-configuration} calls in your
-@file{.gnus} file or in some startup hook -- they should be run after
+@file{.gnus} file or in some startup hook---they should be run after
 Gnus has been loaded.
 
 
@@ -10801,7 +10844,7 @@ over your shoulder as you read news.
 @menu
 * Picon Basics::           What are picons and How do I get them.
 * Picon Requirements::     Don't go further if you aren't using XEmacs.
-* Easy Picons::            Displaying Picons -- the easy way.
+* Easy Picons::            Displaying Picons---the easy way.
 * Hard Picons::            The way you should do it.  You'll learn something.
 * Picon Configuration::    Other variables you can trash/tweak/munge/play with.
 @end menu
@@ -10878,8 +10921,8 @@ Where the picon images should be displayed.  It is @code{picons} by
 default (which by default maps to the buffer @samp{*Picons*}).  Other
 valid places could be @code{article}, @code{summary}, or
 @samp{"*scratch*"} for all I care.  Just make sure that you've made the
-buffer visible using the standard Gnus window configuration routines --
-@xref{Windows Configuration}.
+buffer visible using the standard Gnus window configuration
+routines---@xref{Windows Configuration}.
 
 @end table
 
@@ -11030,6 +11073,11 @@ makes invisible text invisible and intangible.
 A hook called before parsing headers.  It can be used, for instance, to
 gather statistics on the headers fetched, or perhaps you'd like to prune
 some headers.  I don't see why you'd want that, though.
+
+@item gnus-shell-command-separator
+@vindex gnus-shell-command-separator
+String used to separate to shell commands.  The default is @samp{;}. 
+
 
 @end table
 
@@ -11228,10 +11276,10 @@ There are no known breaches of this standard.
 @cindex RFC 1036
 There are no known breaches of this standard, either.
 
-@item Usenet Seal of Approval
-@cindex Usenet Seal of Approval
-Gnus hasn't been formally through the Seal process, but I have read
-through the Seal text and I think Gnus would pass.
+@item Good Net-Keeping Seal of Approval
+@cindex Good Net-Keeping Seal of Approval
+Gnus has been through the Seal process and failed.  I think it'll pass
+the next inspection.
 
 @item Son-of-RFC 1036
 @cindex Son-of-RFC 1036
@@ -12657,9 +12705,9 @@ basically, with each header (ouch) having one slot.
 
 These slots are, in order: @code{number}, @code{subject}, @code{from},
 @code{date}, @code{id}, @code{references}, @code{chars}, @code{lines},
-@code{xref}.  There are macros for accessing and setting these slots --
-they all have predictable names beginning with @code{mail-header-} and
-@code{mail-header-set-}, respectively.  
+@code{xref}.  There are macros for accessing and setting these
+slots---they all have predictable names beginning with
+@code{mail-header-} and @code{mail-header-set-}, respectively.
 
 The @code{xref} slot is really a @code{misc} slot.  Any extra info will
 be put in there.
@@ -12822,7 +12870,7 @@ following function:
 @end lisp
 
 This sort of thing has been done for bunches of functions.  Gnus does
-not redefine any native Emacs functions while running under XEmacs -- it
+not redefine any native Emacs functions while running under XEmacs---it
 does this @code{defalias} thing with Gnus equivalents instead.  Cleaner
 all over.
 

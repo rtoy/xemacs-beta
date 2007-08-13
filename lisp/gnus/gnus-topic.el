@@ -378,6 +378,7 @@ articles in the topic and its subtopics."
 	gnus-topic-tallied-groups nil
 	gnus-topology-checked-p nil))
 
+
 (defun gnus-topic-check-topology ()  
   ;; The first time we set the topology to whatever we have
   ;; gotten here, which can be rather random.
@@ -385,6 +386,8 @@ articles in the topic and its subtopics."
     (gnus-topic-init-alist))
 
   (setq gnus-topology-checked-p t)
+  ;; Go through the topic alist and make sure that all topics
+  ;; are in the topic topology.
   (let ((topics (gnus-topic-list))
 	(alist gnus-topic-alist)
 	changed)
@@ -395,7 +398,15 @@ articles in the topic and its subtopics."
 	(setq changed t))
       (setq alist (cdr alist)))
     (when changed
-      (gnus-topic-enter-dribble)))
+      (gnus-topic-enter-dribble))
+    ;; Conversely, go through the topology and make sure that all
+    ;; topologies have alists.
+    (while topics
+      (unless (assoc (car topics) gnus-topic-alist)
+	(push (list (car topics)) gnus-topic-alist))
+      (pop topics)))
+  ;; Go through all living groups and make sure that
+  ;; they belong to some topic.
   (let* ((tgroups (apply 'append (mapcar (lambda (entry) (cdr entry))
 					 gnus-topic-alist)))
 	 (entry (assoc (caar gnus-topic-topology) gnus-topic-alist))
@@ -403,7 +414,15 @@ articles in the topic and its subtopics."
 	 group)
     (while newsrc
       (unless (member (setq group (gnus-info-group (pop newsrc))) tgroups)
-	(setcdr entry (cons group (cdr entry)))))))
+	(setcdr entry (cons group (cdr entry))))))
+  ;; Go through all topics and make sure they contain only living groups.
+  (let ((alist gnus-topic-alist)
+	topic)
+    (while (setq topic (pop alist))
+      (while (cdr topic)
+	(if (gnus-gethash (cadr topic) gnus-newsrc-hashtb)
+	    (setq topic (cdr topic))
+	  (setcdr topic (cddr topic)))))))
 
 (defvar gnus-tmp-topics nil)
 (defun gnus-topic-list (&optional topology)
@@ -670,6 +689,8 @@ articles in the topic and its subtopics."
       (make-local-variable 'gnus-group-indentation-function)
       (setq gnus-group-indentation-function
 	    'gnus-topic-group-indentation)
+      (gnus-make-local-hook 'gnus-check-bogus-groups-hook)
+      (add-hook 'gnus-check-bogus-groups-hook 'gnus-topic-clean-alist)
       (setq gnus-topology-checked-p nil)
       ;; We check the topology.
       (when gnus-newsrc-alist
@@ -680,6 +701,7 @@ articles in the topic and its subtopics."
       (remove-hook 'gnus-summary-exit-hook 'gnus-topic-update-topic)
       (remove-hook 'gnus-group-change-level-function 
 		   'gnus-topic-change-level)
+      (remove-hook 'gnus-check-bogus-groups-hook 'gnus-topic-clean-alist)
       (setq gnus-group-prepare-function 'gnus-group-prepare-flat))
     (when redisplay
       (gnus-group-list-groups))))
@@ -688,7 +710,9 @@ articles in the topic and its subtopics."
   "Select this newsgroup.
 No article is selected automatically.
 If ALL is non-nil, already read articles become readable.
-If ALL is a number, fetch this number of articles."
+If ALL is a number, fetch this number of articles.
+
+If performed over a topic line, toggle folding the topic."
   (interactive "P")
   (if (gnus-group-topic-p)
       (let ((gnus-group-list-mode 
@@ -708,7 +732,9 @@ If the prefix argument ALL is non-nil, already read articles become
 readable.  IF ALL is a number, fetch this number of articles.  If the
 optional argument NO-ARTICLE is non-nil, no article will be
 auto-selected upon group entry.  If GROUP is non-nil, fetch that
-group."
+group.
+
+If performed over a topic line, toggle folding the topic."
   (interactive "P")
   (if (gnus-group-topic-p)
       (let ((gnus-group-list-mode 
@@ -789,6 +815,22 @@ If COPYP, copy the groups instead."
       (or (save-excursion
 	    (gnus-topic-goto-topic (gnus-group-parent-topic))
 	    (gnus-group-topic-level)) 0)) ? ))
+
+(defun gnus-topic-clean-alist ()
+  "Remove bogus groups from the topic alist."
+  (let ((topic-alist gnus-topic-alist)
+	result topic)
+    (unless gnus-killed-hashtb
+      (gnus-make-hashtable-from-killed))
+    (while (setq topic (pop topic-alist))
+      (let ((topic-name (pop topic))
+	    group filtered-topic)
+	(while (setq group (pop topic))
+	  (if (and (gnus-gethash group gnus-active-hashtb)
+		   (not (gnus-gethash group gnus-killed-hashtb)))
+	      (push group filtered-topic)))
+	(push (cons topic-name (nreverse filtered-topic)) result)))
+    (setq gnus-topic-alist (nreverse result))))
 
 (defun gnus-topic-change-level (group level oldlevel)
   "Run when changing levels to enter/remove groups from topics."
@@ -920,7 +962,7 @@ If COPYP, copy the groups instead."
     (gnus-topic-update-topic)))
 
 (defun gnus-topic-hide-topic ()
-  "Hide all subtopics under the current topic."
+  "Hide the current topic."
   (interactive)
   (when (gnus-group-parent-topic)
     (gnus-topic-goto-topic (gnus-group-parent-topic))
@@ -1004,6 +1046,7 @@ If COPYP, copy the groups instead."
       (setcar (cadr top) new-name))
     (when entry 
       (setcar entry new-name))
+    (forward-line -1)
     (gnus-group-list-groups)))
 
 (defun gnus-topic-indent (&optional unindent)

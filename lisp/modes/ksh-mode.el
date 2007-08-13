@@ -1,6 +1,6 @@
 ;; ksh-mode.el --- sh (ksh, bash) script editing mode for GNU Emacs.
 
-;; Copyright (C) 1992-95 Gary Ellison.
+;; Copyright (C) 1992-96 Gary Ellison.
 
 ;; This file is part of XEmacs.
 
@@ -18,25 +18,27 @@
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
 ;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
+;; $Source: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/modes/ksh-mode.el,v $ --  
+;;
 ;; LCD Archive Entry:
-;; ksh-mode|Gary F. Ellison|Gary_F_Ellison@ATT.COM
-;; Mode for editing sh/ksh/bash scripts
-;; 23-Feb-95|2.6|~/modes/ksh-mode.el.Z|
+;; ksh-mode|Gary F. Ellison|Gary.F.Ellison@ATT.COM
+;; |Mode for editing sh/ksh/bash scripts
+;; |$Date: 1996/12/18 03:44:42 $|$Revision: 1.1.1.2 $|~/modes/ksh-mode.el.Z|
 
 ;; Author: Gary F. Ellison <Gary.F.Ellison@ATT.COM>
-;;                   AT&T Bell Laboratories
+;;                   AT&T  Laboratories
 ;;                   6200 East Broad Street
 ;;                   Columbus, Ohio 43213 USA
 ;;
 ;; Maintainer: Gary F. Ellison <Gary.F.Ellison@ATT.COM>
 ;; Created: Fri Jun 19
-;; Version: 2.6
-;; Keywords: languages, shell, korn, bourne, sh, ksh, bash, unix
+;; $Revision: 1.1.1.2 $
+;; Keywords: shell, korn, bourne, sh, ksh, bash
 ;;
-;; Delta On        : 2/23/95
+;; Delta On   $Date: 1996/12/18 03:44:42 $
 ;; Last Modified By: Gary Ellison
-;; Last Modified On: Thu Feb 23 11:32:03 1995
-;; Update Count    : 33
+;; Last Modified On: Mon Sep 11 12:26:47 1995
+;; Update Count    : 35
 ;; Status          : Highly Functional
 ;;
 
@@ -78,6 +80,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; HISTORY 
+;; 6-Apr-96             Gary Ellison <gary.f.ellison@att.com>
+;;    Depreciated font-lock-doc-string-face.
+;;    Narly keywords inside strings bug fixed. 
+;;
 ;; 8-Aug-95		Jack Repenning <jackr@sgi.com>
 ;;    Fix documentation of `ksh-align-to-keyword' to conform to the 23
 ;;    Feb default change.  Search for keywords obeying case, since the
@@ -224,7 +230,7 @@
 ;;    Conception of this mode.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst ksh-mode-version "2.6"
+(defconst ksh-mode-version "$Revision: 1.1.1.2 $"
   "*Version numbers of this version of ksh-mode")
 
 ;;
@@ -262,8 +268,7 @@ insert a tab.")
 the current indentation. If non-nil, indentation will be relative to
 the column the keyword starts. If nil, indentation will be relative to
 the current indentation of the line the keyword is on.
-The default value is nil.
-The non-nil case doesn't work very well.")
+The default value is non-nil.  The non-nil case doesn't work very well.")
 
 (defvar ksh-comment-regexp "^\\s *#"
   "*Regular expression used to recognize comments. Customize to support
@@ -301,15 +306,15 @@ ksh-like languages.")
 ;;
 (defvar ksh-keywords '("for" "in" "do" "done" "select" "case" "esac" "if"
 "then" "elif" "else" "fi" "while" "until" "function" "time"
-"alias" "bg" "break" "continue" "cd" "echo" "fc" "fg" "getopts" "jobs" "kill"
-"let" "newgrp" "print" "pwd" "read" "readonly" "return" "set" "shift" "test"
-"times" "trap" "typeset" "ulimit" "umask" "unalias" "unset" "wait" "whence"))
+"alias" "bg" "break" "continue" "cd" "exit" "echo" "fc" "fg" "getopts" "jobs"
+"kill" "let" "newgrp" "print" "pwd" "read" "readonly" "return" "set" "shift"
+"test" "times" "trap" "typeset" "ulimit" "umask" "unalias" "unset" "wait" "whence"))
 
 ;;       '("\\<function[ \t]+\\([^(; \t]+\\)" 1 font-lock-function-name-face)
 (defconst ksh-font-lock-keywords
       (list
        ;; Fontify [[ ]] expressions
-       '("\\(\\[.*\\]\\)"  1 font-lock-doc-string-face t)
+       '("\\(\\[.*\\]\\)"  1 font-lock-string-face t)
        ;; Fontify keywords
        (cons (concat
 	      "\\(\\<"
@@ -321,65 +326,53 @@ ksh-like languages.")
        '("\\(^[ \t]*[A-Za-z_][A-Za-z_0-9]*[ \t]*()\\)" 1 font-lock-function-name-face)
        ))
 
+;; XEmacs addition
 (put 'ksh-mode	'font-lock-keywords 'ksh-font-lock-keywords)
-
-;; XEmacs change -- This can incorrectly set some Perl scripts to
-;; ksh-mode.  It also won't work for some other shells which ksh-mode
-;; nominally works with.
-;(defun ksh-check-hook ()
-;    (save-excursion
-;     (save-restriction
-;       (widen)
-;       (goto-char (point-min))
-;       (cond ((looking-at "#![ \t]*/.*/k?sh[ \t]*")
-;	      (ksh-mode))))))
-;
-;(add-hook 'find-file-hooks 'ksh-check-hook)
 
 ;;
 ;; Context/indentation regular expressions
 ;; 
 ;; indenting expressions
 ;;
-(defconst ksh-then-do-re     "^[^#\n]*\\s\"*\\b\\(then\\|do\\)\\b"
+;(defconst ksh-then-do-re     "^[^#\n]*\\s\"*\\b\\(then\\|do\\)\\b"
+(defconst ksh-then-do-re     "\\s *\\b\\(then\\|do\\)\\b"
   "*Regexp used to locate grouping keywords: \"then\" and \"do\"" )
 
-;;(defconst ksh-do-re          "^[ \t]*\\bdo\\(\\b\\|$\\)"
-(defconst ksh-do-re          "^\\s *\\bdo\\(\\b\\|$\\)"
+(defconst ksh-do-re          "\\s *\\bdo\\(\\b\\|$\\)"
   "*Regexp used to match keyword: do")
 
-(defconst ksh-then-re        "^\\s *\\bthen\\(\\b\\|$\\)"
+(defconst ksh-then-re        "\\s *\\bthen\\(\\b\\|$\\)"
   "*Regexp used to match keyword: then")
 
 ;;
 ;; Structure starting/indenting keywords
 ;;
-(defconst ksh-else-re           "^\\s *\\belse\\(\\b\\|$\\)"
+(defconst ksh-else-re           "\\s *\\belse\\(\\b\\|$\\)"
   "*Regexp used to match keyword: else")
 
-(defconst ksh-elif-re           "^\\s *\\belif\\(\\b\\|$\\)"
+(defconst ksh-elif-re           "\\s *\\belif\\(\\b\\|$\\)"
   "*Regexp used to match keyword: elif")
 
-(defconst ksh-brace-re           "^\\S>*{[ \t\n]"
+(defconst ksh-brace-re           "\\S>*{[ \t\n]"
   "*Regexp used to match syntactic entity: { ")
 
-(defconst ksh-case-item-end-re           "^\\S>*;;[ \t\n]"
+(defconst ksh-case-item-end-re           "\\S>*;;[ \t\n]"
   "*Regexp used to match case item end syntactic entity: ;;")
 
 (defconst ksh-keywords-re
-  "^[^#\n]*\\s\"*\\b\\(else\\|if\\|elif\\|case\\|while\\|for\\|until\\|select\\)\\b"
+  "\\s *\\b\\(else\\|if\\|elif\\|case\\|while\\|for\\|until\\|select\\)\\b"
   "*Regexp used to detect compound command keywords: if, else, elif case, 
 while, for, until, and select")
 
 
-(defconst ksh-if-re         "^[^#\n]*\\s\"*\\b\\(if\\)\\b"
+(defconst ksh-if-re         "\\s *\\b\\(if\\)\\b"
   "*Regexp used to match keyword: if")
 
 (defconst ksh-iteration-keywords-re 
-  "^[^#\n]*\\s\"*\\b\\(while\\|for\\|until\\|select\\)\\b"
+  "\\s *\\b\\(while\\|for\\|until\\|select\\)\\b"
   "*Match one of the keywords: while, until, for, select")
 
-(defconst ksh-case-re           "^[^#\n]*\\s\"*\\b\\(case\\)\\b"
+(defconst ksh-case-re           "\\s *\\bcase\\b"
   "*Regexp used to match keyword: case")
 
 (defconst ksh-explicit-func-re
@@ -403,16 +396,16 @@ while, for, until, and select")
 
 ;;
 ;; structure ending keyword regular expressions
-(defconst ksh-fi-re            "^\\s *fi\\b"
+(defconst ksh-fi-re            "\\s *\\bfi\\b"
   "*Regexp used to match keyword: fi")
 
-(defconst ksh-esac-re          "^\\s *esac\\b"
+(defconst ksh-esac-re          "\\s *\\besac\\b"
   "*Regexp used to match keyword: esac")
 
-(defconst ksh-done-re          "^\\s *done\\b"
+(defconst ksh-done-re          "\\s *\\bdone\\b"
   "*Regexp used to match keyword: done")
 
-(defconst ksh-brace-end-re  "^\\s *}\\s *"
+(defconst ksh-brace-end-re  "\\s *}\\s *"
   "*Regexp used to match function brace-groups")
 
 (defconst ksh-multiline-re "^.*\\\\$"
@@ -425,7 +418,13 @@ while, for, until, and select")
   "Syntax table used while in ksh mode.")
 (if ksh-mode-syntax-table
     ()
-  (setq ksh-mode-syntax-table (make-syntax-table))
+  (setq ksh-mode-syntax-table (make-syntax-table (standard-syntax-table)))
+  (modify-syntax-entry ?\( "." ksh-mode-syntax-table)
+  (modify-syntax-entry ?\) "." ksh-mode-syntax-table)
+  (modify-syntax-entry ?{ "." ksh-mode-syntax-table)
+  (modify-syntax-entry ?} "." ksh-mode-syntax-table)
+  (modify-syntax-entry ?\[ "(]" ksh-mode-syntax-table)
+  (modify-syntax-entry ?\] ")[" ksh-mode-syntax-table)
   (modify-syntax-entry ?\' "\"" ksh-mode-syntax-table)
   (modify-syntax-entry ?` "\"" ksh-mode-syntax-table)
   (modify-syntax-entry ?\n ">" ksh-mode-syntax-table)
@@ -436,7 +435,7 @@ while, for, until, and select")
   (modify-syntax-entry ?> "." ksh-mode-syntax-table)
   (modify-syntax-entry ?& "." ksh-mode-syntax-table)
   (modify-syntax-entry ?| "." ksh-mode-syntax-table)
-  (modify-syntax-entry ?$ "." ksh-mode-syntax-table)
+  (modify-syntax-entry ?$ "\\" ksh-mode-syntax-table)
   (modify-syntax-entry ?% "." ksh-mode-syntax-table)
   (modify-syntax-entry ?= "." ksh-mode-syntax-table)
   (modify-syntax-entry ?/ "." ksh-mode-syntax-table)
@@ -444,6 +443,7 @@ while, for, until, and select")
   (modify-syntax-entry ?* "." ksh-mode-syntax-table)
   (modify-syntax-entry ?- "." ksh-mode-syntax-table)
   (modify-syntax-entry ?\; "." ksh-mode-syntax-table)
+  (modify-syntax-entry ?: "." ksh-mode-syntax-table)
   )
 
 (defvar ksh-mode-abbrev-table nil
@@ -457,8 +457,6 @@ while, for, until, and select")
     ()
   (setq ksh-mode-map (make-sparse-keymap))
   (define-key ksh-mode-map "\t"    'ksh-indent-command)
-;;  (define-key ksh-mode-map "\n"    'reindent-then-newline-and-indent)
-;;  (define-key ksh-mode-map '[return] 'reindent-then-newline-and-indent)
 ;;  (define-key ksh-mode-map "\t"    'ksh-indent-line)
 ;;  (define-key ksh-mode-map "\177"    'backward-delete-char-untabify)
   (define-key ksh-mode-map "\C-j"    'reindent-then-newline-and-indent)
@@ -469,7 +467,7 @@ while, for, until, and select")
 
 ;;;###autoload
 (defun ksh-mode ()
-  "ksh-mode 2.6 - Major mode for editing (Bourne, Korn or Bourne again)
+  "ksh-mode $Revision: 1.1.1.2 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -566,27 +564,19 @@ Style Guide.
     
 
 Installation:
-  Put ksh-mode.el in some directory in your load-path.
-  Put the following forms in your .emacs file.
-
- (setq auto-mode-alist
-      (append auto-mode-alist
-              (list
-               '(\"\\\\.sh$\" . ksh-mode)
-               '(\"\\\\.ksh$\" . ksh-mode)
-               '(\"\\\\.bashrc\" . ksh-mode)
-               '(\"\\\\..*profile\" . ksh-mode))))
 
  (setq ksh-mode-hook
       (function (lambda ()
          (font-lock-mode 1)             ;; font-lock the buffer
          (setq ksh-indent 8)
-	 (setq ksh-group-offset -8))
+	 (setq ksh-group-offset -8)
 	 (setq ksh-brace-offset -8)   
          (setq ksh-tab-always-indent t)
          (setq ksh-match-and-tell t)
          (setq ksh-align-to-keyword t)	;; Turn on keyword alignment
 	 )))"
+  ;;
+  ;; and away we go
   (interactive)
   (kill-all-local-variables)
   (use-local-map ksh-mode-map)
@@ -663,7 +653,7 @@ current line"
   "Return a 2 element list (nest-level nest-line) describing where the
 current line should nest."
   (let ((case-fold-search)
-    	(level))
+	(level))
     (save-excursion
       (forward-line -1)
       (while (and (not (bobp))
@@ -715,6 +705,7 @@ current line should nest."
     )
   ) ;; defun
 
+
 (defun ksh-get-case-indent ()
   "Return the column of the closest open case statement"
   (save-excursion
@@ -730,6 +721,7 @@ current line should nest."
     )
   )
 
+
 ;;
 ;; Functions which make this mode what it is
 ;;
@@ -739,118 +731,126 @@ current line should nest."
 into consideration keywords and other nesting constructs."
   (save-excursion 
     (let ((fence-post)
+;	  (start-post)
 	  (nester-column)
-	  (case-fold-search)
+ 	  (case-fold-search)
 	  (start-line (ksh-current-line)))
-      ;;
-      ;; Handle case item indentation constructs for this line
-      (cond ((ksh-looking-at-case-item)
-	     (save-excursion
-	       (goto-line nest-line)
-	       (let ((fence-post (save-excursion (end-of-line) (point))))
-		 ;;
-		 ;; Now know there is a case-item so detect whether
-		 ;; it is first under case, just another case-item, or
-		 ;; a case-item and case-item-end all rolled together.
-		 ;;
-		 (cond ((re-search-forward ksh-case-re fence-post t)
-			(goto-char (match-beginning 1))
-			(+ (ksh-current-indentation) ksh-case-item-offset))
-
-		       ((ksh-looking-at-case-item)
-			(current-indentation))
-
-		       ((looking-at ksh-case-item-end-re)
-			(end-of-line)
-			(+ (ksh-get-case-indent) ksh-case-item-offset))
-		       )
-		 )))
-	    (t;; Not a case-item.  What to do relative to the nest-line?
-	     (save-excursion
-	       (goto-line nest-line)
-	       (setq fence-post (save-excursion (end-of-line) (point)))
-	       (setq nester-column
-		     (save-excursion
-		       (cond
-			;;
-			;; Check if we are in a continued statement
-			((and (looking-at ksh-multiline-re)
-			      (save-excursion
-				(goto-line (1- start-line))
-				(looking-at ksh-multiline-re)))
-			 (+ (current-indentation) ksh-multiline-offset))
-
-			;; In order to locate the column of the keyword,
-			;; which might be embedded within a case-item,
-			;; it is necessary to use re-search-forward.
-			;; Search by literal case, since shell is
-			;; case-sensitive.
-			((re-search-forward ksh-keywords-re fence-post t)
-			 (goto-char (match-beginning 1))
-			 (if (looking-at ksh-case-re)
-			     (+ (ksh-current-indentation) ksh-case-item-offset)
-			   (+ (ksh-current-indentation)
+      (cond
+       ;;
+       ;; Handle case item indentation constructs for this line
+       ((ksh-looking-at-case-item)
+	(save-excursion
+	  (goto-line nest-line)
+	  (back-to-indentation)
+	  (let ((fence-post (ksh-eol-point)))
+	    ;;
+	    ;; Now know there is a case-item so detect whether
+	    ;; it is first under case, just another case-item, or
+	    ;; a case-item and case-item-end all rolled together.
+	    ;;
+	    (cond ((ksh-search-forward-sexp ksh-case-re fence-post)
+		   (+ (ksh-current-indentation) ksh-case-item-offset))
+		  
+		  ((ksh-looking-at-case-item)
+		   (current-indentation))
+		  
+		  ((looking-at ksh-case-item-end-re)
+		   (end-of-line)
+		   (+ (ksh-get-case-indent) ksh-case-item-offset))
+		  )
+	    )))
+       (t;; Not a case-item.  What to do relative to the nest-line?
+	(save-excursion
+	  (goto-line nest-line)
+;	  (setq start-post (point))
+	  (setq fence-post (ksh-eol-point))
+	  (setq nester-column
+		(save-excursion
+		  (cond
+		   ;;
+		   ;; Check if we are in a continued statement
+		   ((and (looking-at ksh-multiline-re)
+			 (save-excursion
+			   (goto-line (1- start-line))
+			   (looking-at ksh-multiline-re)))
+		    (+ (current-indentation) ksh-multiline-offset))
+		   ;; In order to locate the column of the keyword,
+		   ;; which might be embedded within a case-item,
+		   ;; it is necessary to iterate over sexp.
+		   ((progn
+		      (save-excursion
+			(back-to-indentation)
+			(if (ksh-search-forward-sexp ksh-keywords-re fence-post)
+			    (progn
+			      ;;
+			      ;; special pun intended 'case'
+			      (if (looking-at ksh-case-re)
+				  (+ (ksh-current-indentation)
+				     ksh-case-item-offset)
+				(+ (ksh-current-indentation)
+				   (if (null ksh-indent)
+				       2 ksh-indent))))	
+			  nil))
+		      ))
+		   ;;
+		   ;;  handle then or do
+		   ((progn
+		      (save-excursion
+			(back-to-indentation)
+			(if (ksh-search-forward-sexp ksh-then-do-re fence-post)
+			    (progn
 			      (if (null ksh-indent)
-				  2 ksh-indent)
-			      )))
+				  (+ (ksh-current-indentation) 1)
+				(+ (ksh-current-indentation) ksh-indent)))
+			  nil))))
 
-			((re-search-forward ksh-then-do-re fence-post t)
-			 (if (null ksh-indent)
-			     (progn 
-			       (goto-char (match-end 1))
-			       (+ (ksh-current-indentation) 1))
-			   (progn
-			     (goto-char (match-beginning 1))
-			     (+ (ksh-current-indentation) ksh-indent))
-			   ))
-
-			((looking-at ksh-brace-re)
-			 (+ (current-indentation)
-			    (if (null ksh-indent)
-				2 ksh-indent)
-			    ))
-			;;
-			;; Forces functions to first column
-			((or (looking-at ksh-implicit-func-re)
-			     (looking-at ksh-explicit-func-re))
-			 (if (looking-at ksh-func-brace-re)
-			     (if (null ksh-indent)
-				 2 ksh-indent)
-			   ksh-brace-offset))
-
-			;;
-			;; Need to first detect the end of a case-item
-			((looking-at ksh-case-item-end-re)
-			 (end-of-line)
-			 (+ (ksh-get-case-indent) ksh-case-item-offset))
-			;;
-			;; Now detect first statement under a case item
-			((ksh-looking-at-case-item)
-			 (if (null ksh-case-indent)
-			     (progn
-			       (re-search-forward ksh-case-item-re fence-post t)
-			       (goto-char (match-end 1))
-			       (+ (current-column) 1))
-			   (+ (current-indentation) ksh-case-indent)))
-
-			;; This is hosed when using current-column
-			;; and there is a multi-command expression as the
-			;; nester.
-			(t (current-indentation)))
-		       )
-		     ));; excursion over
-	     ;;
-	     ;; Handle additional indentation constructs for this line
-	     (cond ((ksh-looking-at-compound-list)
-		    (+ nester-column ksh-group-offset))
 		   ((looking-at ksh-brace-re)
-		    (+ nester-column ksh-brace-offset))
-		   (t nester-column))
-	     );; Not a case-item
-	    )
+		    (+ (current-indentation)
+		       (if (null ksh-indent)
+			   2 ksh-indent)
+		       ))
+		   ;;
+		   ;; Forces functions to first column
+		   ((or (looking-at ksh-implicit-func-re)
+			(looking-at ksh-explicit-func-re))
+		    (if (looking-at ksh-func-brace-re)
+			(if (null ksh-indent)
+			    2 ksh-indent)
+		      ksh-brace-offset))
+
+		   ;;
+		   ;; Need to first detect the end of a case-item
+		   ((looking-at ksh-case-item-end-re)
+		    (end-of-line)
+		    (+ (ksh-get-case-indent) ksh-case-item-offset))
+		   ;;
+		   ;; Now detect first statement under a case item
+		   ((ksh-looking-at-case-item)
+		    (if (null ksh-case-indent)
+			(progn
+			  (re-search-forward ksh-case-item-re fence-post t)
+			  (goto-char (match-end 1))
+			  (+ (current-column) 1))
+		      (+ (current-indentation) ksh-case-indent)))
+		   
+		   ;; This is hosed when using current-column
+		   ;; and there is a multi-command expression as the
+		   ;; nester.
+		   (t (current-indentation)))
+		  )
+		));; excursion over
+	;;
+	;; Handle additional indentation constructs for this line
+	(cond ((ksh-looking-at-compound-list)
+	       (+ nester-column ksh-group-offset))
+	      ((looking-at ksh-brace-re)
+	       (+ nester-column ksh-brace-offset))
+	      (t nester-column))
+	);; Not a case-item
+       )
       );;let
     );; excursion
-  );; defun
+  ) ;; defun
 
 (defun ksh-indent-command ()
   "Indent current line relative to containing block and allow for
@@ -905,9 +905,7 @@ to the syntax/context"
     (let*
 	(
 	 (this-line-level (current-indentation))
-	 (this-bol (save-excursion
-		     (beginning-of-line)
-		     (point)))
+	 (this-bol (ksh-bol-point))
 	 (this-point (- (point) this-bol))
 	 )
       (cond ((> this-line-level this-point);; point in initial white space
@@ -959,6 +957,7 @@ the minibuffer"
   (let (case-fold-search)
     (save-excursion
       (beginning-of-line)
+      (back-to-indentation)
       (cond ((looking-at ksh-else-re)
 	     (ksh-match-indent-level ksh-if-re ksh-fi-re))
 	    ((looking-at ksh-elif-re)
@@ -981,14 +980,83 @@ the minibuffer"
       )
     ))
 
-(defun ksh-get-compound-level 
+
+(defun ksh-search-backward-sexp (sexp-re fence-post)
+  (let
+      ((old-pnt (point))
+       (sentinal nil)
+       )
+    (while
+	(progn
+	  (if (not sentinal)
+	      (backward-sexp 1))
+	  (and (> (point) fence-post)
+	       (not sentinal))
+	  )
+      (if (looking-at sexp-re)
+	  (save-excursion			;avoid comment foolage
+	    (let ((key-fence (point)))
+	      (beginning-of-line)
+	      (back-to-indentation)
+	      (while (and (ksh-search-forward-sexp sexp-re key-fence)
+			  (< (point) key-fence)))
+	      
+	      (if (= key-fence (point))
+		  (setq sentinal t))
+	      ))
+	))
+      
+      (if (< (point) fence-post)
+	  (progn (goto-char old-pnt)
+		 nil)
+	t)
+      ))
+
+(defun ksh-forward-sexp ()
+  "Special incantation to march over syntax expressions and
+avoid all sorts of nonsense"
+  (if (char-equal ?< (char-syntax (char-after (point))))
+      (end-of-line)
+    (if (char-equal ?. (char-syntax (char-after (point))))
+	(forward-char)
+      (forward-sexp 1))
+    )
+  (if (eolp)
+      (forward-line))
+  (skip-chars-forward ") \t")		;damn case
+  )
+
+(defun ksh-search-forward-sexp (sexp-re fence-post)
+  "Search for an sexp. Return t on success with point at the
+beginning of the sexp. Return nil on failure and restoring point
+to it's original position"
+  (let
+      ((old-pnt (point))
+       )
+    (while (and (< (point) fence-post)
+		(not (looking-at sexp-re)))
+      (ksh-forward-sexp))
+    
+    (if (> (point) fence-post)
+	(progn (goto-char old-pnt)
+	       nil)
+      t)
+    ))
+
+
+(defun ksh-get-compound-level
   (begin-re end-re anchor-point &optional balance-list)
   "Determine how much to indent this structure. Return a list (level line) 
 of the matching compound command or nil if no match found."
   (let* 
       (;; Locate the next compound begin keyword bounded by point-min
-       (match-point (if (re-search-backward begin-re (point-min) t)
-			(match-beginning 1) 0))
+       (match-point
+	(if (and (ksh-search-backward-sexp begin-re (point-min))
+		 (>= (point) (point-min))
+		 )
+	    (point)
+	  0))
+
        (nest-column (if (zerop match-point)
 			1 
 		      (progn
@@ -1002,16 +1070,21 @@ of the matching compound command or nil if no match found."
 	(if (nlistp balance-list)
 	    (setq balance-list (list)))
 	;; Now search forward from matching start keyword for end keyword
+	;; which will locate interceding compound commands
 	(while (and (consp nest-list) (zerop (cdr nest-list))
-		    (re-search-forward end-re anchor-point t))
+		    (ksh-search-forward-sexp end-re anchor-point)
+		    (> anchor-point (point))
+		    )
 	  (if (not (memq (point) balance-list))
 	      (progn
 		(setq balance-list (cons (point) balance-list))
 		(goto-char match-point)  ;; beginning of compound cmd
 		(setq nest-list
 		      (ksh-get-compound-level begin-re end-re
-					     anchor-point balance-list))
-		)))
+					      anchor-point balance-list))
+		)
+	    (ksh-forward-sexp)
+	    ))
 
 	(cond ((consp nest-list)
 	       (if (zerop (cdr nest-list))

@@ -762,6 +762,7 @@ Legal values of this variable are:
 
 \"rfc934\"
 \"rfc1153\"
+\"rfc1521\"
 nil
 
 A nil value means don't use a digest, just mark the beginning and
@@ -791,18 +792,20 @@ values of this variable are:
 
    \"rfc934\"
    \"rfc1153\"
+   \"rfc1521\"
    \"guess\"
 
 If the value is \"guess\", and you take the default
 response when vm-burst-digest queries you, VM will try to guess
 the digest type.")
 
-(defvar vm-digest-send-type "rfc934"
+(defvar vm-digest-send-type "rfc1521"
   "*String that specifies the type of digest vm-send-digest will use.
 Legal values of this variable are:
 
 \"rfc934\"
 \"rfc1153\"
+\"rfc1521\"
 
 ")
 
@@ -895,6 +898,48 @@ will be kept.  vm-rfc1153-digest-headers determines the order of
 appearance in that case, with headers not matching any in the
 vm-rfc1153-digest-headers list appearing last in the headers of
 the digestified messages.")
+
+(defvar vm-rfc1521-digest-headers
+  '()
+  "*List of headers that should be appear in RFC 1521 digests
+created by VM.  These should be listed in the order you wish them
+to appear in the digest.  Regular expressions are allowed.
+There is no need to anchor patterns with \"^\", as searches always
+start at the beginning of a line.  Put a colon at the end of
+patterns to get exact matches.  (E.g. \"Date\" matches \"Date\"
+and \"Date-Sent\".)  Header names are always matched case
+insensitively.
+
+If the value of vm-rfc1521-digest-discard-header-regexp is nil, the headers
+matched by vm-rfc1521-digest-headers are the only headers that will be
+kept.
+
+If vm-rfc1521-digest-discard-header-regexp is non-nil, then only
+headers matched by that variable will be discarded; all others
+will be kept.  vm-rfc1521-digest-headers determines the order of
+appearance in that case, with headers not matching any in the
+vm-rfc1521-digest-headers list appearing last in the headers of
+the digestified messages.")
+
+
+(defvar vm-rfc1521-digest-discard-header-regexp "\\(X400-\\)?Received:"
+  "*Non-nil value should be a regular expression header that tells
+what headers should not appear in RFC 1521 digests created by VM.  This
+variable along with vm-rfc1521-digest-headers determines which headers
+are kept and which headers are discarded.
+
+If the value of vm-rfc1521-digest-discard-header-regexp is nil, the headers
+matched by vm-rfc1521-digest-headers are the only headers that will be
+kept.
+
+If vm-rfc1521-digest-discard-header-regexp is non-nil, then only
+headers matched by this variable will be discarded; all others
+will be kept.  vm-rfc1521-digest-headers determines the order of
+appearance in that case, with headers not matching any in the
+vm-1521-digest-headers list appearing last in the headers of
+the digestified messages.")
+
+
 
 (defvar vm-resend-bounced-headers
   '("Resent-"
@@ -1045,7 +1090,7 @@ The field width may be followed by a `.' and a number specifying
 the maximum allowed length of the substituted string.  If the
 string is longer than this value the right end of the string is
 truncated.  If the value is negative, the string is truncated on
-on the left instead of the right.
+the left instead of the right.
 
 The summary format need not be one line per message but it must end with
 a newline, otherwise the message pointer will not be displayed correctly
@@ -1522,7 +1567,7 @@ Mail.")
 (defvar vm-strip-reply-headers nil
   "*Non-nil value causes VM to strip away all comments and extraneous text
 from the headers generated in reply messages.  If you use the \"fakemail\"
-program as distributed with Emacs, you probably want to set this variable to
+program as distributed with Emacs, you probably want to set this variable
 to t, because as of Emacs v18.52 \"fakemail\" could not handle unstripped
 headers.")
 
@@ -2020,6 +2065,7 @@ mail is not sent.")
     ("vm-burst-digest")
     ("vm-burst-rfc934-digest")
     ("vm-burst-rfc1153-digest")
+    ("vm-burst-rfc1521-digest")
     ("vm-edit-message")
     ("vm-discard-cached-data")
     ("vm-edit-message-end")
@@ -2088,6 +2134,7 @@ mail is not sent.")
     ("vm-send-digest")
     ("vm-send-rfc934-digest")
     ("vm-send-rfc1153-digest")
+    ("vm-send-rfc1521-digest")
     ("vm-reply-other-frame")
     ("vm-reply-include-text-other-frame")
     ("vm-followup-other-frame")
@@ -2101,6 +2148,7 @@ mail is not sent.")
     ("vm-send-digest-other-frame")
     ("vm-send-rfc934-digest-other-frame")
     ("vm-send-rfc1153-digest-other-frame")
+    ("vm-send-rfc1521-digest-other-frame")
     ("vm-continue-composing-message")
     ("vm-auto-archive-messages")
     ("vm-save-message")
@@ -2176,7 +2224,7 @@ mail is not sent.")
     "unanswered"))
 
 (defvar vm-key-functions nil)
-(defconst vm-digest-type-alist '(("rfc934") ("rfc1153")))
+(defconst vm-digest-type-alist '(("rfc934") ("rfc1153") ("rfc1521")))
 (defvar vm-completion-auto-correct t
   "Non-nil means that minibuffer-complete-file should aggressively erase
 the trailing part of a word that caused completion to fail, and retry

@@ -37,7 +37,7 @@
 ; Arup Mukherjee <arup+@cmu.edu> May/1994
 ; Updated for XEmacs 19.10, and others:
 ;    - use find-file-other-screen if present
-;    - new variable gnuserv-frame can be set to a frame or screen which is 
+;    - new variable gnuserv-frame can be set to a frame or screen which
 ;      is used for all edited files. 
 ;    - check to see if server.el is already loaded and complain if it is, since
 ;      gnuserv.el can't coexist with server.el
@@ -222,10 +222,12 @@ afterwards in order to not keep the client waiting."
 
 (defun server-make-window-visible ()
   "Try to make this window even more visible."
-  (and (boundp 'window-system)
-       (boundp 'window-system-version)
-       (eq window-system 'x)
-       (eq window-system-version 11)
+  (and (or (and (boundp 'window-system)
+		(boundp 'window-system-version)
+		(eq window-system 'x)
+		(eq window-system-version 11))
+	   (and (fboundp 'console-type)
+		(eq 'x (console-type))))
        (cond ((fboundp 'raise-frame)
 	      (raise-frame (selected-frame)))
 	     ((fboundp 'deiconify-screen)
@@ -496,7 +498,15 @@ starts server process and that is all.  Invoked by \\[server-edit]."
       (server-start nil)
     (if server-buffer-clients
 	(progn (server-switch-buffer (server-done))
-	       (cond ((or ;(not window-system) #### someone examine!
+	       (cond ((fboundp 'console-type)        ;; XEmacs 19.14+
+		      (or (and (equal (console-type) 'x)
+			       gnuserv-frame
+			       (frame-live-p gnuserv-frame))
+			  (condition-case ()
+			      (delete-frame (selected-frame) nil)
+			    (error 
+			     (message "Not deleting last visible frame...")))))
+		     ((or (not window-system) 
 			  (and gnuserv-frame 
 			       (or (and (fboundp 'frame-live-p)
 					(frame-live-p gnuserv-frame))

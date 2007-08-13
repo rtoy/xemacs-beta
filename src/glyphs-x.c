@@ -1881,12 +1881,11 @@ struct png_memory_storage
 static void png_read_from_memory(png_structp png_ptr, png_bytep data,
 				 png_uint_32 length)
 {
-   png_uint_32 check;
    struct png_memory_storage *tbr =
      (struct png_memory_storage *) png_get_io_ptr (png_ptr);
 
    if (length > (tbr->len - tbr->index))
-     png_error(png_ptr, "Read Error");
+     png_error (png_ptr, (png_const_charp) "Read Error");
    memcpy(data,tbr->bytes + tbr->index,length);
    tbr->index = tbr->index + length;
 }
@@ -1939,6 +1938,8 @@ png_instantiate_unwind (Lisp_Object unwind_obj)
   return Qnil;
 }
 
+/* This doesn't appear to be used. */
+#if 0
 #define get_png_val(p) _get_png_val (&(p), info_ptr.bit_depth)
 png_uint_16
 _get_png_val (png_byte **pp, int bit_depth)
@@ -1952,6 +1953,7 @@ _get_png_val (png_byte **pp, int bit_depth)
 
   return c;
 }
+#endif
 
 static void
 png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,

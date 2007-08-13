@@ -550,7 +550,10 @@ time saver for large mailboxes.")
 	 (delim (concat "^" message-unix-mail-delimiter))
 	 save-list group-art)
     (goto-char (point-min))
-    ;; This might come from somewhere else.
+    ;; The From line may have been quoted by movemail.
+    (when (looking-at (concat ">" message-unix-mail-delimiter))
+      (delete-char 1))
+    ;; This might come from somewhere else.    
     (unless (looking-at delim)
       (insert "From nobody " (current-time-string) "\n")
       (goto-char (point-min)))
@@ -670,8 +673,9 @@ time saver for large mailboxes.")
 	(let ((delim (concat "^" message-unix-mail-delimiter))
 	      (marker (concat "\n" nnfolder-article-marker))
 	      (number "[0-9]+")
-	      (active (cadr (assoc nnfolder-current-group 
-				   nnfolder-group-alist)))
+	      (active (or (cadr (assoc nnfolder-current-group 
+				       nnfolder-group-alist))
+			  (cons 1 0)))
 	      (scantime (assoc nnfolder-current-group nnfolder-scantime-alist))
 	      (minid (lsh -1 -1))
 	      maxid start end newscantime)

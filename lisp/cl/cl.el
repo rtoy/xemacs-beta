@@ -20,9 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -281,6 +282,7 @@ definitions to shadow the loaded ones for use in file byte-compilation."
 (defvar cl-compiling-file nil)
 (defun cl-compiling-file ()
   (or cl-compiling-file
+      ;; XEmacs change
 ;      (and (boundp 'outbuffer) (bufferp (symbol-value 'outbuffer))
 ;	   (equal (buffer-name (symbol-value 'outbuffer))
 ;		  " *Compiler Output*"))

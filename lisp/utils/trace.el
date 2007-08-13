@@ -20,9 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;; LCD Archive Entry:
 ;; trace|Hans Chalupsky|hans@cs.buffalo.edu|
@@ -165,6 +166,7 @@
 
 (require 'advice)
 
+;; XEmacs change (leave the version # in place)
 (defconst trace-version "2.0")
 
 ;;;###autoload

@@ -34,29 +34,29 @@ used as the prefix bit flag (see below).
 */
 
 enum syntaxcode
-  {
-    Swhitespace, /* for a whitespace character */
-    Spunct,	 /* for random punctuation characters */
-    Sword,	 /* for a word constituent */
-    Ssymbol,	 /* symbol constituent but not word constituent */
-    Sopen,	 /* for a beginning delimiter */
-    Sclose,      /* for an ending delimiter */
-    Squote,	 /* for a prefix character like Lisp ' */
-    Sstring,	 /* for a string-grouping character like Lisp " */
-    Smath,	 /* for delimiters like $ in Tex. */
-    Sescape,	 /* for a character that begins a C-style escape */
-    Scharquote,  /* for a character that quotes the following character */
-    Scomment,    /* for a comment-starting character */
-    Sendcomment, /* for a comment-ending character */
-    Sinherit,    /* use the standard syntax table for this character */
-    Sextword,	 /* extended word; works mostly like a word constituent.
-		    See the comment in syntax.c. */
-    Smax	 /* Upper bound on codes that are meaningful */
-  };
+{
+  Swhitespace,	/* whitespace character */
+  Spunct,	/* random punctuation character */
+  Sword,	/* word constituent */
+  Ssymbol,	/* symbol constituent but not word constituent */
+  Sopen,	/* a beginning delimiter */
+  Sclose,	/* an ending delimiter */
+  Squote,	/* a prefix character like Lisp ' */
+  Sstring,	/* a string-grouping character like Lisp " */
+  Smath,	/* delimiters like $ in TeX. */
+  Sescape,	/* a character that begins a C-style escape */
+  Scharquote,	/* a character that quotes the following character */
+  Scomment,	/* a comment-starting character */
+  Sendcomment,	/* a comment-ending character */
+  Sinherit,	/* use the standard syntax table for this character */
+  Sextword,	/* extended word; works mostly like a word constituent.
+		   See the comment in syntax.c. */
+  Smax	 /* Upper bound on codes that are meaningful */
+};
 
 extern Lisp_Object Qsyntax_table_p;
 Lisp_Object Fsyntax_table_p (Lisp_Object);
-Lisp_Object Fsyntax_table (Lisp_Object);
+Lisp_Object Fsyntax_table   (Lisp_Object);
 Lisp_Object Fset_syntax_table (Lisp_Object, Lisp_Object);
 
 /* Return the raw syntax code for a particular character and table */
@@ -207,9 +207,9 @@ WORD_SYNTAX_P (Lisp_Object table, Emchar c)
       ? SYNTAX_COMMENT_STYLE_B					\
 	 : 0)))
 
-/* This array, indexed by a character, contains the syntax code which that
- character signifies (as a char).  For example,
- (enum syntaxcode) syntax_spec_code['w'] is Sword. */
+/* This array, indexed by a character, contains the syntax code which
+   that character signifies (as a char).
+   For example, (enum syntaxcode) syntax_spec_code['w'] is Sword. */
 
 extern CONST unsigned char syntax_spec_code[0400];
 

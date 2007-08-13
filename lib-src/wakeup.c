@@ -21,8 +21,6 @@
 #endif
 #endif
 
-struct tm *localtime ();
-
 void
 main (argc, argv)
      int argc;

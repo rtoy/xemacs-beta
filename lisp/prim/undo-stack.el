@@ -104,7 +104,7 @@
 ;;; Conceptually, we can implement the "undoable stack" using
 ;;; two stacks of a sort called "truncatable stack", which are
 ;;; just simple stacks, but where you can truncate elements
-;;; of of the bottom of the stack.  Then, the undoable stack
+;;; off of the bottom of the stack.  Then, the undoable stack
 ;;;
 ;;;   1 -> 2 -> 3 -> 4 -> 5 -> 6
 ;;;                  ^^

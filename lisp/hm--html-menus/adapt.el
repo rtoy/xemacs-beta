@@ -1,4 +1,4 @@
-;;; $Id: adapt.el,v 1.1.1.1 1996/12/18 03:34:31 steve Exp $
+;;; $Id: adapt.el,v 1.1.1.2 1996/12/18 03:46:45 steve Exp $
 ;;;
 ;;; Copyright (C) 1993, 1994, 1995  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -182,7 +182,137 @@ It's only a dummy function in the Emacs 19, which returns always nil."
 ;	    "Change a property of an extent.
 ;Only a dummy version in Emacs 19."))
 
+      (if (not (fboundp 'region-active-p))
+	  (defun region-active-p ()
+	    "Non-nil iff the region is active.
+If `zmacs-regions' is true, this is equivalent to `region-exists-p'.
+Otherwise, this function always returns false."
+	    (adapt-region-active-p)))
+
+      (if (not (fboundp 'next-command-event))
+	  (defun next-command-event (&optional event prompt)
+	    "Unlike the XEmacs version it reads the next event, if
+it is a command event or not.
+
+Return the next available \"user\" event.
+ Pass this object to `dispatch-event' to handle it.
+
+ If EVENT is non-nil, it should be an event object and will be filled in
+ and returned; otherwise a new event object will be created and returned.
+ If PROMPT is non-nil, it should be a string and will be displayed in the
+ echo area while this function is waiting for an event.
+
+ The event returned will be a keyboard, mouse press, or mouse release event.
+ If there are non-command events available (mouse motion, sub-process output,
+ etc) then these will be executed (with `dispatch-event') and discarded.  This
+ function is provided as a convenience; it is equivalent to the lisp code
+
+	 (while (progn
+		  (next-event event prompt)
+		  (not (or (key-press-event-p event)
+			   (button-press-event-p event)
+			   (button-release-event-p event)
+			   (misc-user-event-p event))))
+	    (dispatch-event event))"
+	    (message prompt)
+	    (or event
+		(read-event))))
+
+      (if (not (fboundp 'button-event-p))
+	  (defun button-event-p (obj)
+	    "True if OBJ is a button-press or button-release event object."
+	    (and (eventp obj)
+		 (or (eq 'mouse-1 (event-basic-type obj))
+		     (eq 'mouse-2 (event-basic-type obj))
+		     (eq 'mouse-3 (event-basic-type obj))))))
+
+      (if (not (fboundp 'button-press-event-p))
+	  (defun button-press-event-p (obj)
+	    "True if OBJ is a mouse-button-press event object."
+	    (and (button-event-p obj)
+		 (member 'down (event-modifiers obj)))))
+
+      (if (not (fboundp 'button-release-event-p))
+	  (defun button-release-event-p (obj)
+	    "True if OBJ is a mouse-button-release event object."
+	    (and (button-event-p obj)
+		 (not (button-press-event-p obj)))))
+
+      (if (not (fboundp 'event-window))
+	  (defun event-window (event)
+	    "Return the window of the given mouse event.
+ This may be nil if the event occurred in the border or over a toolbar.
+ The modeline is considered to be in the window it represents."
+	    (and (eventp event)
+		 (listp event)
+		 (listp (cdr event))
+		 (listp (car (cdr event)))
+		 (car (car (cdr event))))))
+
+      (if (not (fboundp 'event-buffer))
+	  (defun event-buffer (event)
+	    "Given a mouse-motion, button-press, or button-release event, return
+ the buffer on which that event occurred.  This will be nil for non-mouse
+ events.  If event-over-text-area-p is nil, this will also be nil."
+	    (if (button-event-p event)
+		(window-buffer (event-window event)))))
+
+
+      (if (not (fboundp 'event-closest-point))
+	  (defun event-closest-point (event)
+	    "Return the character position of the given mouse event.
+If the event did not occur over a window or over text, return the
+closest point to the location of the event.  If the Y pixel position
+overlaps a window and the X pixel position is to the left of that
+window, the closest point is the beginning of the line containing the
+Y position.  If the Y pixel position overlaps a window and the X pixel
+position is to the right of that window, the closest point is the end
+of the line containing the Y position.  If the Y pixel position is
+above a window, return 0.  If it is below a window, return the value
+of (window-end)."
+	    (posn-point (event-start event))))
+
+      (if (not (fboundp 'add-minor-mode))
+	  (defun add-minor-mode (toggle 
+				 name 
+				 &optional 
+				 keymap 
+				 after 
+				 toggle-fun)
+	    "Add a minor mode to `minor-mode-alist' and `minor-mode-map-alist'.
+TOGGLE is a symbol whose value as a variable specifies whether the
+minor mode is active.  NAME is the name that should appear in the
+modeline (it should be a string beginning with a space).  KEYMAP is a
+keymap to make active when the minor mode is active.  AFTER is the
+toggling symbol used for another minor mode.  If AFTER is non-nil,
+then it is used to position the new mode in the minor-mode alists.
+
+TOGGLE-FUN is only a dummy variable in the Emacs 19. In the XEmacs
+it has the following description:
+TOGGLE-FUN specifies an interactive function that is called to toggle
+the mode on and off; this affects what happens when button2 is pressed
+on the mode, and when button3 is pressed somewhere in the list of
+modes.  If TOGGLE-FUN is nil and TOGGLE names an interactive function,
+TOGGLE is used as the toggle function.
+
+Example:  (add-minor-mode 'view-minor-mode \" View\" view-mode-map)
+
+WARNING: THIS FUNCTION ISN'T READ YET."
+	    (if after
+		(add-minor-mode-1 toggle name keymap after)
+	      (if (not (assq toggle minor-mode-alist))
+		  (progn
+		    (setq minor-mode-alist
+			  (cons (list toggle name)
+				minor-mode-alist))))
+	      (if (not (assq toggle minor-mode-map-alist))
+		  (progn
+		    (setq minor-mode-map-alist
+			  (cons (cons toggle keymap)
+				minor-mode-map-alist))))
+	      ))
+	)
       ))
-    
+
 
 (provide 'adapt)

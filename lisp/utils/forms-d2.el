@@ -1,7 +1,9 @@
 ;;; forms-d2.el --- demo forms-mode
-;; Keywords: extensions
 
-;;; Synched up with: FSF 19.30.
+;; Author: Johan Vromans
+;; Created: 1989
+
+;;; Synched up with: FSF 19.34.
 
 ;; This sample forms exploit most of the features of forms mode.
 
@@ -41,14 +43,14 @@ used to fill to the column."
   (arch-tocol (- target (length (nth field forms-fields))) fill))
 
 ;; Record filters.
-;; This example uses the (defun ...) method of defining.
 ;;
-(defun forms-new-record-filter (the-record)
+(defun arch-new-record-filter (the-record)
   "Form a new record with some defaults."
   (aset the-record arch-from (user-full-name))
   (aset the-record arch-date (current-time-string))
   the-record				; return it
 )
+(setq forms-new-record-filter 'arch-new-record-filter)
 
 ;; The format list.
 (setq forms-format-list

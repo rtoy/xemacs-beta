@@ -3057,7 +3057,7 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
 	    }
 
 	  pos = (((old_pos * new_pixsize) << 1) + old_pixsize) / div_val;
-	  /* All but the the last window should have a height which is
+	  /* All but the last window should have a height which is
              a multiple of the default line height. */
 	  if (!NILP (c->next))
 	    pos = (pos / line_size) * line_size;

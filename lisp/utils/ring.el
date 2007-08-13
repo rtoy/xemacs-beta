@@ -5,42 +5,44 @@
 ;; Maintainer: FSF
 ;; Keywords: extensions
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
-;;; This code defines a ring data structure. A ring is a 
-;;;     (hd-index length . vector) 
-;;; list. You can insert to, remove from, and rotate a ring. When the ring
-;;; fills up, insertions cause the oldest elts to be quietly dropped.
-;;;
-;;; In ring-ref, 0 is the index of the newest element.  Higher indexes
-;;; correspond to older elements until they wrap.
-;;;
-;;; hd-index = index of the newest item on the ring.
-;;; length = number of ring items.
-;;;
-;;; These functions are used by the input history mechanism, but they can
-;;; be used for other purposes as well.
+;; This code defines a ring data structure. A ring is a 
+;;     (hd-index length . vector) 
+;; list. You can insert to, remove from, and rotate a ring. When the ring
+;; fills up, insertions cause the oldest elts to be quietly dropped.
+;;
+;; In ring-ref, 0 is the index of the newest element.  Higher indexes
+;; correspond to older elements until they wrap.
+;;
+;; hd-index = index of the newest item on the ring.
+;; length = number of ring items.
+;;
+;; These functions are used by the input history mechanism, but they can
+;; be used for other purposes as well.
 
 ;;; Code:
 
+;; XEmacs change
 ;;;###autoload
 (defun ringp (x) 
   "Returns t if X is a ring; nil otherwise."
@@ -48,6 +50,7 @@
        (consp (cdr x)) (integerp (car (cdr x)))
        (vectorp (cdr (cdr x)))))
 
+;; XEmacs change
 ;;;###autoload
 (define-obsolete-function-alias 'ring-p 'ringp)
 

@@ -41,7 +41,7 @@
   (let (face)
     (while (= (length face) 0) ; nil or ""
       (setq face (completing-read prompt
-				  (mapcar '(lambda (x) (list (symbol-name x)))
+				  (mapcar (lambda (x) (list (symbol-name x)))
 					  (face-list))
 				  nil t)))
     (intern face)))
@@ -697,7 +697,7 @@ See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
   (null props))
 
 (defun face-equal (face1 face2 &optional domain)
-  "True if the given faces will display in the the same way.
+  "True if the given faces will display in the same way.
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (if (null domain) (setq domain (selected-window)))
   (if (not (valid-specifier-domain-p domain))
@@ -1167,15 +1167,27 @@ and 'global)."
 (defun face-complain-about-font (face device)
   (if (symbolp face) (setq face (symbol-name face)))
 ;;  (if (not inhibit-font-complaints)
-      (display-warning
-       'font
-       (format "%s: couldn't deduce %s %s version of %S\n"
-		invocation-name
-		(if (string-match "\\`[aeiouAEIOU]" face) "an" "a")
-		face
-		(face-font-name 'default device)))
-;;    )
-  )
+  (display-warning
+   'font
+   (let ((default-name (face-font-name 'default device)))
+     (format "%s: couldn't deduce %s %s version of the font
+%S.
+
+Please specify X resources to make the %s face
+visually distinguishable from the default face.
+For example, you could add one of the following to $HOME/Emacs:
+
+Emacs.%s.attributeFont: -dt-*-medium-i-*
+or
+Emacs.%s.attributeForeground: hotpink\n"
+             invocation-name
+             (if (string-match "\\`[aeiouAEIOU]" face) "an" "a")
+             face
+             default-name
+             face
+             face
+             face
+             ))))
 
 (defun init-other-random-faces (device)
   "Initializes the colors and fonts of the bold, italic, bold-italic,
@@ -1198,7 +1210,7 @@ you want to add code to do stuff like this, use the create-device-hook."
       (make-face-italic 'italic device))
   (or (face-differs-from-default-p 'italic device)
       (progn
-	(make-face-bold 'bold device) ; bold if possible, then complain
+	(make-face-bold 'italic device) ; bold if possible, then complain
 	(face-complain-about-font 'italic device)))
 
   ;; similar for bold-italic.

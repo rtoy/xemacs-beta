@@ -504,7 +504,7 @@ Valid locales are a device, a frame, a window, a buffer, and 'global.
 {
   /* This cannot GC. */
   if ((DEVICEP (locale) && DEVICE_LIVE_P (XDEVICE (locale))) ||
-      (FRAMEP (locale) && FRAME_LIVE_P (XFRAME (locale))) ||
+      (FRAMEP  (locale) && FRAME_LIVE_P  (XFRAME  (locale))) ||
       (BUFFERP (locale) && BUFFER_LIVE_P (XBUFFER (locale))) ||
       /* dead windows are allowed because they may become live
 	 windows again when a window configuration is restored */
@@ -528,7 +528,7 @@ value in that domain).  Valid domains are a window, frame, or device.
 {
   /* This cannot GC. */
   if ((DEVICEP (domain) && DEVICE_LIVE_P (XDEVICE (domain))) ||
-      (FRAMEP (domain) && FRAME_LIVE_P (XFRAME (domain))) ||
+      (FRAMEP  (domain) && FRAME_LIVE_P  (XFRAME  (domain))) ||
       (WINDOWP (domain) && WINDOW_LIVE_P (XWINDOW (domain))))
     return Qt;
   else
@@ -549,7 +549,7 @@ type, 'global is considered an individual locale.)
   /* This cannot GC. */
   if (EQ (locale_type, Qglobal) ||
       EQ (locale_type, Qdevice) ||
-      EQ (locale_type, Qframe) ||
+      EQ (locale_type, Qframe)  ||
       EQ (locale_type, Qwindow) ||
       EQ (locale_type, Qbuffer))
     return Qt;
@@ -609,18 +609,14 @@ static enum spec_locale_type
 decode_locale_type (Lisp_Object locale_type)
 {
   /* This cannot GC. */
-  if (EQ (locale_type, Qglobal))
-    return LOCALE_GLOBAL;
-  if (EQ (locale_type, Qdevice))
-    return LOCALE_DEVICE;
-  if (EQ (locale_type, Qframe))
-    return LOCALE_FRAME;
-  if (EQ (locale_type, Qwindow))
-    return LOCALE_WINDOW;
-  if (EQ (locale_type, Qbuffer))
-    return LOCALE_BUFFER;
+  if (EQ (locale_type, Qglobal)) return LOCALE_GLOBAL;
+  if (EQ (locale_type, Qdevice)) return LOCALE_DEVICE;
+  if (EQ (locale_type, Qframe))  return LOCALE_FRAME;
+  if (EQ (locale_type, Qwindow)) return LOCALE_WINDOW;
+  if (EQ (locale_type, Qbuffer)) return LOCALE_BUFFER;
+  
   signal_simple_error ("Invalid specifier locale type", locale_type);
-  return 0;
+  return LOCALE_GLOBAL; /* not reached */
 }
 
 Lisp_Object

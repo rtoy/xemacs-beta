@@ -276,6 +276,13 @@ evaluation was suppressed.  See also `enable-local-variables' and
 ;		      inhibit-file-name-handlers)))
 ;	  (inhibit-file-name-operation op))
 ;      (apply op args))
+
+(defun convert-standard-filename (filename)
+  "Convert a standard file's name to something suitable for the current OS.
+This function's standard definition is trivial; it just returns the argument.
+However, on some systems, the function is redefined
+with a definition that really does change some file names."
+  filename)
 
 (defun pwd ()
   "Show the current default directory."
@@ -284,7 +291,7 @@ evaluation was suppressed.  See also `enable-local-variables' and
 
 (defvar cd-path nil
   "Value of the CDPATH environment variable, as a list.
-Not actually set up until the first time you you use it.")
+Not actually set up until the first time you use it.")
 
 (defvar path-separator ":"
   "Character used to separate concatenated paths.")
@@ -544,7 +551,9 @@ bottom of the buffer stack."
     ;; XEmacs: this used to have (selected-frame) as the third argument,
     ;; but this is obnoxious.  If the user wants the buffer in a
     ;; different frame, then it should be this way.
-    (pop-to-buffer buffer t)))
+
+    ;; Change documented above undone --mrb
+    (pop-to-buffer buffer t (selected-frame))))
 
 (defun switch-to-buffer-other-frame (buffer)
   "Switch to buffer BUFFER in a newly-created frame."
@@ -1017,99 +1026,73 @@ run `normal-mode' explicitly."
          (error (message "File local-variables error: %s"
                          (prin1-to-string err))))))
 
-(defvar auto-mode-alist (mapcar 'purecopy
-				'(("\\.te?xt\\'" . text-mode)
-				  ("\\.c\\'" . c-mode)
-				  ("\\.h\\'" . c-mode)
-				  ("\\.tex\\'" . tex-mode)
-				  ("\\.ltx\\'" . latex-mode)
-				  ("\\.e\\'" . eiffel-mode)
-				  ("\\.el\\'" . emacs-lisp-mode)
-				  ("\\.mm\\'" . nroff-mode)
-				  ("\\.me\\'" . nroff-mode)
-				  ("\\.ms\\'" . nroff-mode)
-				  ("\\.man\\'" . nroff-mode)
-				  ("\\.scm\\'" . scheme-mode)
-				  ("\\.l\\'" . lisp-mode)
-				  ("\\.lisp\\'" . lisp-mode)
-				  ("\\.f\\'" . fortran-mode)
-				  ("\\.for\\'" . fortran-mode)
-				  ("\\.p\\'" . pascal-mode)
-				  ("\\.pas\\'" . pascal-mode)
-				  ("\\.mss\\'" . scribe-mode)
-				  ("\\.ad[abs]\\'" . ada-mode)
-				  ("\\.icn\\'" . icon-mode)
-				  ("\\.pl\\'" . perl-mode)
-				  ("\\.cc\\'" . c++-mode)
-				  ("\\.hh\\'" . c++-mode)
-				  ("\\.C\\'" . c++-mode)
-				  ("\\.H\\'" . c++-mode)
-				  ("\\.cpp\\'" . c++-mode)
-				  ("\\.cxx\\'" . c++-mode)
-				  ("\\.hxx\\'" . c++-mode)
-				  ("\\.c\\+\\+\\'" . c++-mode)
-				  ("\\.h\\+\\+\\'" . c++-mode)
-				  ("\\.java\\'" . java-mode)
-				  ("\\.mk\\'" . makefile-mode)
-				  ("\\.mak\\'" . makefile-mode)
-				  ("[Mm]akefile\\(.in\\)?\\'" . makefile-mode)
+(defvar auto-mode-alist
+  (mapcar
+   'purecopy
+   '(("\\.te?xt\\'" . text-mode)
+     ("\\.[ch]\\'" . c-mode)
+     ("\\.ltx\\'" . latex-mode)
+     ("\\.el\\'" . emacs-lisp-mode)
+     ("\\.l\\(i?sp\\)?\\'" . lisp-mode)
+     ("\\.f\\(or\\)?\\'" . fortran-mode)
+     ("\\.p\\(as\\)?\\'" . pascal-mode)
+     ("\\.ad[abs]\\'" . ada-mode)
+     ("\\.pl\\'" . perl-mode)
+     ("\\.\\([CH]\\|cc\\|hh\\)\\'" . c++-mode)
+     ("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode)
+     ("\\.java\\'" . java-mode)
+     ("\\.ma?k\\'" . makefile-mode)
+     ("[Mm]akefile\\(.in\\)?\\(.in\\)?\\'" . makefile-mode)
 ;;; Less common extensions come here
 ;;; so more common ones above are found faster.
-				  ("\\.texinfo\\'" . texinfo-mode)
-				  ("\\.texi\\'" . texinfo-mode)
-				  ("\\.s\\'" . asm-mode)
-				  ("ChangeLog\\'" . change-log-mode)
-				  ("change.log\\'" . change-log-mode)
-				  ("changelo\\'" . change-log-mode)
-				  ("ChangeLog.[0-9]+\\'" . change-log-mode)
-				  ("\\$CHANGE_LOG\\$\\.TXT" . change-log-mode)
-				  ("\\.scm\\.[0-9]*\\'" . scheme-mode)
+     ("\\.texi\\(nfo\\)?\\'" . texinfo-mode)
+     ("\\.s\\'" . asm-mode)
+     ("[Cc]hange.?[Ll]og?\\(.[0-9]+\\)?\\'" . change-log-mode)
+     ("\\$CHANGE_LOG\\$\\.TXT" . change-log-mode)
+     ("\\.scm\\(\\.[0-9]*\\)?\\'" . scheme-mode)
+     ("\\.py\\'" . python-mode)
+     ("\\.e\\'" . eiffel-mode)
+     ("\\.mss\\'" . scribe-mode)
+     ("\\.m\\([mes]\\|an\\)\\'" . nroff-mode)
+     ("\\.icn\\'" . icon-mode)
 ;;; The following should come after the ChangeLog pattern
 ;;; for the sake of ChangeLog.1, etc.
 ;;; and after the .scm.[0-9] pattern too.
-				  ("\\.[12345678]\\'" . nroff-mode)
-				  ("\\.TeX\\'" . tex-mode)
-				  ("\\.sty\\'" . latex-mode)
-				  ("\\.cls\\'" . latex-mode) ;LaTeX 2e class
-				  ("\\.bbl\\'" . latex-mode)
-				  ("\\.bib\\'" . bibtex-mode)
-				  ("\\.article\\'" . text-mode)
-				  ("\\.letter\\'" . text-mode)
-				  ("\\.tcl\\'" . tcl-mode)
-				  ("\\.wrl\\'" . vrml-mode)
-				  ("\\.f90\\'" . f90-mode)
-				  ("\\.lsp\\'" . lisp-mode)
-				  ("\\.awk\\'" . awk-mode)
-				  ("\\.prolog\\'" . prolog-mode)
-				  ("\\.tar\\'" . tar-mode)
-				  ("\\.\\(arc\\|zip\\|lzh\\|zoo\\)\\'" . archive-mode)
-				  ;; Mailer puts message to be edited in
-				  ;; /tmp/Re.... or Message
-				  ("^/tmp/Re" . text-mode)
-				  ("/Message[0-9]*\\'" . text-mode)
-				  ("/drafts/[0-9]+\\'" . mh-letter-mode)
-				  ;; some news reader is reported to use this
-				  ("^/tmp/fol/" . text-mode)
-				  ("\\.y\\'" . c-mode)
-				  ("\\.lex\\'" . c-mode)
-				  ("\\.oak\\'" . scheme-mode)
-				  ("\\.html\\'" . html-mode)
-				  ("\\.htm\\'" . html-mode)
-				  ("\\.shtml\\'" . html-mode)
-				  ("\\.html3\\'" . html3-mode)
-				  ("\\.ht3\\'" . html3-mode)
-				  ("\\.sgm\\'" . sgml-mode)
-				  ("\\.sgml\\'" . sgml-mode)
-				  ("\\.dtd\\'" . sgml-mode)
-				  ("\\.c?ps\\'" . postscript-mode)
-				  ;; .emacs following a directory delimiter
-				  ;; in either Unix or VMS syntax.
-				  ("[]>:/]\\..*emacs\\'" . emacs-lisp-mode)
-				  ;; _emacs following a directory delimiter
-				  ;; in MsDos syntax
-				  ("[:/]_emacs\\'" . emacs-lisp-mode)
-				  ("\\.ml\\'" . lisp-mode)))
-  "Alist of filename patterns vs corresponding major mode functions.
+     ("\\.[12345678]\\'" . nroff-mode)
+     ("\\.[tT]e[xX]\\'" . tex-mode)
+     ("\\.\\(sty\\|cls\\|bbl\\)\\'" . latex-mode)
+     ("\\.bib\\'" . bibtex-mode)
+     ("\\.article\\'" . text-mode)
+     ("\\.letter\\'" . text-mode)
+     ("\\.\\(tcl\\|exp\\)\\'" . tcl-mode)
+     ("\\.wrl\\'" . vrml-mode)
+     ("\\.f90\\'" . f90-mode)
+     ("\\.awk\\'" . awk-mode)
+     ("\\.prolog\\'" . prolog-mode)
+     ("\\.tar\\'" . tar-mode)
+     ("\\.\\(arc\\|zip\\|lzh\\|zoo\\)\\'" . archive-mode)
+     ;; Mailer puts message to be edited in
+     ;; /tmp/Re.... or Message
+     ("^/tmp/Re" . text-mode)
+     ("/Message[0-9]*\\'" . text-mode)
+     ("/drafts/[0-9]+\\'" . mh-letter-mode)
+     ;; some news reader is reported to use this
+     ("^/tmp/fol/" . text-mode)
+     ("\\.y\\'" . c-mode)
+     ("\\.lex\\'" . c-mode)
+     ("\\.oak\\'" . scheme-mode)
+     ("\\.s?html?\\'" . html-mode)
+     ("\\.htm?l?3\\'" . html3-mode)
+     ("\\.\\(sgml?\\|dtd\\)\\'" . sgml-mode)
+     ("\\.c?ps\\'" . postscript-mode)
+     ;; .emacs following a directory delimiter
+     ;; in either Unix or VMS syntax.
+     ("[]>:/]\\..*emacs\\'" . emacs-lisp-mode)
+     ;; _emacs following a directory delimiter
+     ;; in MsDos syntax
+     ("[:/]_emacs\\'" . emacs-lisp-mode)
+     ("\\.ml\\'" . lisp-mode)))
+  "Alist of filename patterns vs. corresponding major mode functions.
 Each element looks like (REGEXP . FUNCTION) or (REGEXP FUNCTION NON-NIL).
 \(NON-NIL stands for anything that is not nil; the value does not matter.)
 Visiting a file whose name matches REGEXP specifies FUNCTION as the
@@ -1119,30 +1102,30 @@ If the element has the form (REGEXP FUNCTION NON-NIL), then after
 calling FUNCTION (if it's not nil), we delete the suffix that matched
 REGEXP and search the list again for another match.")
 
-(defconst interpreter-mode-alist (mapcar 'purecopy
-  '(("perl" . perl-mode)
-    ("suidperl" . perl-mode)
-    ("taintperl" . perl-mode)
-    ("sh" . ksh-mode)
-    ("bash" . ksh-mode)
-    ("ksh" . ksh-mode)
-    ("scope" . tcl-mode)
-    ("wish" . tcl-mode)
-    ("wishx" . tcl-mode)
-    ("tcl" . tcl-mode)
-    ("tclsh" . tcl-mode)
-    ("expect" . tcl-mode)
-    ("rexx" . rexx-mode)
-    ("awk" . awk-mode)
-    ("nawk" . awk-mode)
-    ("gawk" . awk-mode)
-    ("mawk" . awk-mode)
-    ("scm" . scheme-mode)))
+(defconst interpreter-mode-alist
+  (mapcar 'purecopy
+          '(("^#!.*csh"	  . csh-mode)
+            ("^#!.*sh\\b" . ksh-mode)
+            ("^#!.*\\b\\(scope\\|wish\\|tcl\\|expect\\)" . tcl-mode)
+            ("perl"   . perl-mode)
+            ("python" . python-mode)
+            ("awk\\b" . awk-mode)
+            ("rexx"   . rexx-mode)
+            ("scm"    . scheme-mode)
+            ("^:"     . ksh-mode)
+            ))
   "Alist mapping interpreter names to major modes.
-This alist applies to files whose first line starts with `#!'.
-Each element looks like (INTERPRETER . MODE).
-The car of each element is compared with
-the name of the interpreter specified in the first line.
+This alist is used to guess the major mode of a file based on the
+contents of the first line.  This line often contains something like:
+#!/bin/sh
+but may contain something more imaginative like
+#! /bin/env python
+or
+eval 'exec perl -w -S $0 ${1+\"$@\"}'.
+
+Each alist element looks like (INTERPRETER . MODE).
+The car of each element is a regular expression which is compared
+with the name of the interpreter specified in the first line.
 If it matches, mode MODE is selected.")
 
 (defconst inhibit-first-line-modes-regexps (purecopy '("\\.tar\\'"))
@@ -1199,23 +1182,24 @@ If `enable-local-variables' is nil, this function does not check for a
 			(setq mode (cdr (car alist))
 			      keep-going nil)))
 		  (setq alist (cdr alist))))
-	      (if mode
-		  (funcall mode)
-		;; If we can't deduce a mode from the file name,
-		;; look for an interpreter specified in the first line.
-		(let ((interpreter
-		       (save-excursion
-			 (goto-char (point-min))
-			 (if (looking-at "#! *\\([^ \t\n]+\\)")
-			     (buffer-substring (match-beginning 1)
-					       (match-end 1))
-                           "")))
-		      elt)
-		  ;; Map interpreter name to a mode.
-		  (setq elt (assoc (file-name-nondirectory interpreter)
-				   interpreter-mode-alist))
-		  (if elt
-		      (funcall (cdr elt)))))))))))
+              ;; If we can't deduce a mode from the file name,
+              ;; look for an interpreter specified in the first line.
+	      (if (null mode)
+                  (let ((firstline
+                         (buffer-substring
+                          (point-min)
+                          (save-excursion
+                            (goto-char (point-min)) (end-of-line) (point)))))
+                    (setq alist interpreter-mode-alist)
+                    (while alist
+                      (if (string-match (car (car alist)) firstline)
+                          (progn
+                            (setq mode (cdr (car alist)))
+                            (setq alist nil))
+                        (setq alist (cdr alist))))))
+              (if mode
+                  (funcall mode))
+              ))))))
 
 (defun hack-local-variables (&optional force)
   "Parse, and bind or evaluate as appropriate, any local variables
@@ -1355,12 +1339,11 @@ for current buffer."
 (defun hack-local-variables-prop-line (&optional force)
   ;; Set local variables specified in the -*- line.
   ;; Returns t if mode was set.
-  (let (modes mode-p)
+  (let ((result nil))
     (save-excursion
       (goto-char (point-min))
       (skip-chars-forward " \t\n\r")
-      (let ((result nil)
-	    (end (save-excursion 
+      (let ((end (save-excursion 
 		   ;; If the file begins with "#!"
 		   ;; (un*x exec interpreter magic), look
 		   ;; for mode frobs in the first two
@@ -1402,36 +1385,28 @@ for current buffer."
 		       (val (save-restriction
 			      (narrow-to-region (point) end)
 			      (read (current-buffer)))))
+		   ;; Case sensitivity!  Icepicks in my forehead!
+		   (if (equal (downcase (symbol-name key)) "mode")
+		       (setq key 'mode))
 		   (setq result (cons (cons key val) result))
 		   (skip-chars-forward " \t;")))
-	       (setq result (nreverse result))))
+	       (setq result (nreverse result))))))
 	
-	;; Mode is magic.
-	(let (mode)
-	  ;; with the removal of the downcase above, we have to
-	  ;; add a check for Mode:, which is common.
-	  (while (setq mode (or (assq 'mode result)
-				(assq 'Mode result)))
-	    (setq result (delq mode result))
-	    (setq modes (cons (intern (concat (downcase (symbol-name
-							 (cdr mode)))
-					      "-mode"))
-			      modes))))
-	
-	(if (and result
-		 (or force (hack-local-variables-p t)))
-	    (while result
-	      (let ((key (car (car result)))
-		    (val (cdr (car result))))
-		;; 'mode has already been removed from this list.
-		(hack-one-local-variable key val))
-	      (setq result (cdr result))))))
-    ;; If we found modes to use, invoke them now,
-    ;; outside the save-excursion.
-    (if modes
-	(progn (mapcar 'funcall modes)
-	       (setq mode-p t)))
-    mode-p))
+    (let ((set-any-p (or force (hack-local-variables-p t)))
+	  (mode-p nil))
+      (while result
+	(let ((key (car (car result)))
+	      (val (cdr (car result))))
+	  (cond ((eq key 'mode)
+		 (setq mode-p t)
+		 (funcall (intern (concat (downcase (symbol-name val))
+					  "-mode"))))
+		(set-any-p
+		 (hack-one-local-variable key val))
+		(t
+		 nil)))
+	(setq result (cdr result)))
+      mode-p)))
 
 (defconst ignored-local-variables
   (list 'enable-local-eval)

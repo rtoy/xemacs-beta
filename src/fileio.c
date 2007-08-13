@@ -33,6 +33,9 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "window.h"             /* minibuf_level */
 
+#ifdef HAVE_LIBGEN_H            /* Must come before sysfile.h */
+#include <libgen.h>
+#endif
 #include "sysfile.h"
 #include "sysproc.h"
 #include "syspwd.h"
@@ -44,10 +47,6 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HPUX_PRE_8_0
 #include <errnet.h>
 #endif
-#endif
-
-#ifdef HAVE_LIBGEN_H
-#include <libgen.h>
 #endif
 
 /* Nonzero during writing of auto-save files */
@@ -2908,7 +2907,9 @@ otherwise, if FILE2 does not exist, the answer is t.
 Lisp_Object Qfind_buffer_file_type;
 #endif /* DOS_NT */
 
-#define READ_BUF_SIZE (2 << 16)
+/* Stack sizes > 2**16 is a good way to elicit compiler bugs */
+/* #define READ_BUF_SIZE (2 << 16) */
+#define READ_BUF_SIZE (1 << 15)
 
 DEFUN ("insert-file-contents-internal", Finsert_file_contents_internal,
        Sinsert_file_contents_internal, 1, 5, 0 /*

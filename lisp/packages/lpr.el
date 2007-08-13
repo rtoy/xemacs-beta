@@ -19,9 +19,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -33,10 +34,14 @@
 
 ;;;###autoload
 (defvar lpr-switches nil 
-  "*List of strings to pass as extra switch args to `lpr' when it is invoked.")
+  "*List of strings to pass as extra options for the printer program.
+See `lpr-command'.")
 
 (defvar lpr-add-switches (eq system-type 'berkeley-unix)
-  "*Non-nil means construct -T and -J options for the `lpr'.")
+  "*Non-nil means construct -T and -J options for the printer program.
+These are made assuming that the program is `lpr';
+if you are using some other incompatible printer program,
+this variable should be nil.")
 
 ;;;###autoload
 (defvar lpr-command
@@ -47,7 +52,7 @@
 ;; Default is nil, because that enables us to use pr -f
 ;; which is more reliable than pr with no args, which is what lpr -p does.
 (defvar lpr-headers-switches nil
-  "*List of strings to use as options for `lpr' to request page headings.
+  "*List of strings of options to request page headings in the printer program.
 If nil, we run `lpr-page-header-program' to make page headings
 and print the result.")
 
@@ -59,7 +64,8 @@ See definition of `print-region-1' for calling conventions.")
   "*Name of program for adding page headers to a file.")
 
 (defvar lpr-page-header-switches '("-f")
-  "*List of strings to use as options for `lpr-page-header-program'.")
+  "*List of strings to use as options for the page-header-generating program.
+The variable `lpr-page-header-program' specifies the program to use.")
 
 ;;;###autoload
 (defun lpr-buffer ()
@@ -95,6 +101,10 @@ See definition of `print-region-1' for calling conventions.")
   ;; and it seems to annoying to do for that MIPS system.
   (let ((name (concat (buffer-name) " Emacs buffer"))
 	(title (concat (buffer-name) " Emacs buffer"))
+	;; On MS-DOS systems, make pipes use binary mode if the
+	;; original file is binary.
+	(binary-process-input buffer-file-type)
+	(binary-process-output buffer-file-type)
 	(width tab-width)
 	switch-string)
     (save-excursion

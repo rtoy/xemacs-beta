@@ -24,8 +24,8 @@
 ;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst url-version (let ((x "1.13"))
-			(if (string-match "Revision: \\([^ \t\n]+\\)" x)
+(defconst url-version (let ((x "p1.0.41"))
+			(if (string-match "State: \\([^ \t\n]+\\)" x)
 			    (substring x (match-beginning 1) (match-end 1))
 			  x))
   "Version # of URL package.")
@@ -65,6 +65,7 @@ each item in the list will be an argument to the url-current-callback-func.")
 				      url-current-object
 				      url-current-port
 				      url-current-referer
+				      url-current-server
 				      url-current-type
 				      url-current-user
 				      ))
@@ -116,14 +117,31 @@ time.")
 
 (defvar url-bug-address "wmperry@spry.com" "Where to send bug reports.")
 
+(defvar url-cookie-confirmation nil
+  "*If non-nil, confirmation by the user is required before accepting any
+HTTP cookies.")
+
 (defvar url-personal-mail-address nil
   "*Your full email address.  This is what is sent to HTTP/1.0 servers as
 the FROM field.  If not set when url-do-setup is run, it defaults to
 the value of url-pgp/pem-entity.")
 
-(defvar url-mule-retrieval-coding-system (if (featurep 'mule) *euc-japan*
+(defvar url-mule-retrieval-coding-system (if (featurep 'mule)
+					     (if (boundp '*euc-japan*)
+						 *euc-japan*
+					       'euc-japan-unix)
 					  nil)
   "Coding system for retrieval, used before hexified.")
+
+(defvar url-mule-no-coding-system (cond
+				   ((and (featurep 'mule)
+					 (string-match "XEmacs" emacs-version))
+				    'noconv)
+				   ((featurep 'mule)
+				    '*noconv*)
+				   (t nil))
+  "*Variable containing a symbol that specifies no coding system is to be used.
+Only used if you are in a Mule-enabled Emacsen.")
 
 (defvar url-directory-index-file "index.html"
   "*The filename to look for when indexing a directory.  If this file
@@ -152,6 +170,7 @@ email    -- the email address
 os       -- the operating system info
 lastloc  -- the last location
 agent    -- Do not send the User-Agent string
+cookie   -- never accept HTTP cookies
 
 Samples:
 
@@ -184,8 +203,8 @@ session.")
 				(".uue" . "x-uuencoded")
 				(".hqx" . "x-hqx")
 				(".Z"  . "x-compress"))
-  "*An assoc list of file extensions and the appropriate uncompression
-programs for each.")
+  "*An assoc list of file extensions and the appropriate
+content-transfer-encodings for each.")
 
 (defvar url-xterm-command "xterm -title %s -ut -e %s %s %s"
   "*Command used to start an xterm window.")
@@ -486,6 +505,9 @@ ready to accept input.")
 
 (defvar url-remote-telnet-prog "telnet"
   "*Program for remote telnet connections.")  
+
+(defvar url-running-xemacs (string-match "XEmacs" emacs-version)
+  "*In XEmacs?.")
 
 (defvar url-gateway-telnet-program "itelnet"
   "*Program to run in a subprocess when using gateway-method 'program.")

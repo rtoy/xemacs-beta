@@ -94,7 +94,7 @@ extern int getpagesize (void);
 
 # ifdef __GNUC__
   /* XEmacs addition: */
-  /* gcc has the bug that it claims to conform the the ANSI C standard
+  /* gcc has the bug that it claims to conform to the ANSI C standard
      (which is what setting __STDC__ to 1 means) but does not necessarily
      provide all of the library routines which the standard requires of a
      conforming compiler -- such as memmove.  The other Sun ANSI compilers

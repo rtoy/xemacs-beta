@@ -1432,10 +1432,13 @@ with `delete-process'.
 
 DEFUN ("record-buffer", Frecord_buffer,
        Srecord_buffer, 1, 1, 0 /*
-Put the element for buffer BUF at the front of buffer-alist.
-This is done when a buffer is selected \"visibly\".
-It keeps buffer-alist in the order of recency of selection
-so that other-buffer will return something nice.
+Place buffer BUF first in the buffer order.
+Call this function when a buffer is selected \"visibly\".
+
+This function changes the global buffer order and the per-frame buffer
+order for the selected frame.  The buffer order keeps track of recency
+of selection so that `other-buffer' will return a recently selected
+buffer.  See `other-buffer' for more information.
 */ )
   (buf)
      Lisp_Object buf;
@@ -1966,7 +1969,7 @@ vars_of_buffer (void)
 
   DEFVAR_LISP ("change-major-mode-hook", &Vchange_major_mode_hook /*
 List of hooks to be run before killing local variables in a buffer.
-This should be used by by any mode that temporarily alters the contents or
+This should be used by any mode that temporarily alters the contents or
 the read-only state of the buffer.  See also `kill-all-local-variables'.
 */ );
   Vchange_major_mode_hook = Qnil;
@@ -2465,8 +2468,7 @@ Automatically becomes buffer-local when set in any fashion.
 Note that this is overridden by the variable
 `truncate-partial-width-windows' if that variable is non-nil
 and this buffer is not full-frame width.
-*/ ,
-			     redisplay_variable_changed);
+*/ , redisplay_variable_changed);
 
   DEFVAR_BUFFER_LOCAL ("default-directory", directory /*
 Name of default directory of current buffer.  Should end with slash.
@@ -2760,7 +2762,7 @@ init_buffer (void)
       && (int) strlen (pwd) < MAXPATHLEN)
     strcpy (buf, pwd);
   else if (getwd (buf) == 0)
-    fatal ("`getwd' failed: %s\n", buf);
+    fatal ("`getwd' failed: errno %d\n", errno);
 
 #ifndef VMS
   /* Maybe this should really use some standard subroutine

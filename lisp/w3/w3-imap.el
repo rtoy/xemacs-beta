@@ -1,11 +1,11 @@
-;;; w3-imap.el,v --- Imagemap functions
+;;; w3-imap.el --- Imagemap functions
 ;; Author: wmperry
-;; Created: 1996/05/27 17:50:43
-;; Version: 1.19
+;; Created: 1996/06/30 18:07:16
+;; Version: 1.2
 ;; Keywords: hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1996 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;

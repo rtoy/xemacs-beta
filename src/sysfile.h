@@ -177,6 +177,17 @@ extern int sys_access (CONST char *path, int mode);
 # define sys_access access
 #endif
 
+#ifdef ENCAPSULATE_EACCESS
+extern int sys_eaccess (CONST char *path, int mode);
+#endif
+#if defined (ENCAPSULATE_EACCESS) && !defined (DONT_ENCAPSULATE)
+# undef eaccess
+# define eaccess sys_eaccess
+#endif
+#if !defined (ENCAPSULATE_EACCESS) && defined (DONT_ENCAPSULATE)
+# define sys_eaccess eaccess
+#endif
+
 #ifdef ENCAPSULATE_LSTAT
 extern int sys_lstat (CONST char *path, struct stat *buf);
 #endif

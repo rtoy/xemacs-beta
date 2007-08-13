@@ -168,3 +168,7 @@ Boston, MA 02111-1307, USA.  */
 # endif
 
 #endif /* not __GNUC__ */
+
+#ifdef HAVE_INET_SOCKETS	/* this comes from autoconf  */
+# define HAVE_SOCKETS		/* NSE may or may not have been installed */
+#endif

@@ -484,23 +484,23 @@ keymap_lookup_directly (Lisp_Object keymap,
     }
 
   if (modifiers & MOD_META)     /* Utterly hateful ESC lossage */
-  {
-    Lisp_Object submap = Fgethash (MAKE_MODIFIER_HASH_KEY (MOD_META),
-                                   k->table, Qnil);
-    if (NILP (submap))
-      return (Qnil);
-    k = XKEYMAP (submap);
-    modifiers &= ~MOD_META;
-  }
+    {
+      Lisp_Object submap = Fgethash (MAKE_MODIFIER_HASH_KEY (MOD_META),
+                                     k->table, Qnil);
+      if (NILP (submap))
+        return (Qnil);
+      k = XKEYMAP (submap);
+      modifiers &= ~MOD_META;
+    }
 
   if (modifiers != 0)
-  {
-    Lisp_Object submap = Fgethash (MAKE_MODIFIER_HASH_KEY (modifiers),
-                                   k->table, Qnil);
-    if (NILP (submap))
-      return (Qnil);
-    k = XKEYMAP (submap);
-  }
+    {
+      Lisp_Object submap = Fgethash (MAKE_MODIFIER_HASH_KEY (modifiers),
+                                     k->table, Qnil);
+      if (NILP (submap))
+        return (Qnil);
+      k = XKEYMAP (submap);
+    }
   return (Fgethash (keysym, k->table, Qnil));
 }
 
@@ -518,7 +518,6 @@ keymap_store_inverse_internal (Lisp_Object inverse_table,
       /* keys = Fcons (keysym, Qnil); */
       Fputhash (value, keys, inverse_table);
     }
-
   else if (!CONSP (keys))
     {
       /* Now it's necessary to cons */
@@ -1970,17 +1969,16 @@ these features.
 /************************************************************************/
 
 /* We need a very fast (i.e., non-consing) version of lookup-key in order 
-   to make where-is-internal really fly.
- */
+   to make where-is-internal really fly. */
 
 struct raw_lookup_key_mapper_closure
-  {
-    int remaining;
-    CONST struct key_data *raw_keys;
-    int raw_keys_count;
-    int keys_so_far;
-    int accept_default;
-  };
+{
+  int remaining;
+  CONST struct key_data *raw_keys;
+  int raw_keys_count;
+  int keys_so_far;
+  int accept_default;
+};
 
 static Lisp_Object raw_lookup_key_mapper (Lisp_Object k, void *);
 
@@ -2191,7 +2189,7 @@ it takes to reach a non-prefix command.
       keys = wrong_type_argument (Qsequencep, keys);
       return Flookup_key (keymap, keys, accept_default);
     }
-  else
+  else /* STRINGP (keys) */
     {
       int length = string_char_length (XSTRING (keys));
       int i;

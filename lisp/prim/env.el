@@ -1,6 +1,6 @@
 ;;; env.el --- functions to manipulate environment variables.
 
-;;; Copyright 1991, 1994 Free Software Foundation, Inc.
+;; Copyright 1991, 1994 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: processes, unix
@@ -19,16 +19,17 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
-;; UNIX processes inherit a list of name-to-string associations from
-;; their parents called their `environment'; these are commonly used
-;; to control program options.  This package permits you to set
-;; environment variables to be passed to any sub-process run under XEmacs.
+;; UNIX processes inherit a list of name-to-string associations from their
+;; parents called their `environment'; these are commonly used to control
+;; program options.  This package permits you to set environment variables
+;; to be passed to any sub-process run under XEmacs.
 
 ;;; Code:
 

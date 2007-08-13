@@ -1,11 +1,11 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/06/06 14:20:01
-;; Version: 1.219
+;; Created: 1996/08/29 04:09:40
+;; Version: 1.18
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -28,7 +28,7 @@
 ;;; Variable definitions for w3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defconst w3-version-number
-  (let ((x "p2-3-67"))
+  (let ((x "p3.0.12"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -36,7 +36,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1996/06/06 14:20:01"))
+(defconst w3-version-date (let ((x "1996/08/29 04:09:40"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -360,7 +360,7 @@ in later garbage collections taking more time.")
 ;;; Figure out what flavor of emacs we are running
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-running-xemacs (string-match "XEmacs\\|Lucid" emacs-version)
-  "*In XEmacs or Lucid Emacs?.")
+  "*In XEmacs?.")
 
 (defvar w3-running-FSF19 (and (string-match "^19" emacs-version)
 			      (not w3-running-xemacs))
@@ -389,34 +389,6 @@ to be t iff in normal emacs.  Nil if in XEmacs or lucid emacs, since links
 should be in different colors/fonts.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; embedded document variables
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-mpeg-size 150 "*The height and width of an mpeg window.")
-(defvar w3-mpeg-args '("-loop") "*Arguments to mpeg_play.")
-(defvar w3-mpeg-program "mpeg_play" "*The mpeg_play executable.")
-(defvar w3-delayed-movies nil "A list of mpeg movies for this buffer.")
-  
-(defvar w3-embedded-data-converters
-  '(("application/eqn" . w3-embed-eqn)
-    ("application/postscript" . w3-embed-postscript)
-    ("text/plain". w3-embed-text)
-    ("text/html" . w3-embed-text)
-    ("image/.*"  . w3-embed-image))
-  "An assoc list of regular expressions to match against MIME content-types
-for embedded data in HTML documents.  The cdr is a function to be passed
-to 'funcall', with the embedded data and content-type as the sole arguments
-passed to the function.")
-
-(if w3-running-xemacs
-    (progn
-      (condition-case ()
-	  (require 'annotations)
-	(error nil))
-      (setq w3-embedded-data-converters
-	    (cons (cons "video/mpeg" 'w3-embed-mpeg)
-		  w3-embedded-data-converters))))
-  
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Graphics parsing stuff
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-graphics-always-show-entities t
@@ -433,9 +405,6 @@ worried about the transfer time on something that small.")
 (defvar w3-delayed-images nil
   "*A buffer-local variable holding positions and urls of images within
 the buffer.")
-
-(defvar w3-delay-mpeg-loads t
-  "*Whether to delay loading mpegs or not.")
 
 (defvar w3-image-mappings
   '(
@@ -749,6 +718,8 @@ of the headers.")
     (play.start          "play.start"             )
     (play.stop           "play.stop"              )
     (previous            "previous"               )
+    (prince              "prince" "the artist formerly known as prince")
+    (princesymbol        "prince" "the artist formerly known as prince")
     (printer             "printer"                )
     (sadsmiley           "sadsmiley"          ":(")
     (smiley              "smiley"             ":)")
@@ -845,7 +816,6 @@ the URL of the link.")
     :image
     :lists
     :map
-    :mpeg
     :name
     :needspace
     :next-break
@@ -936,7 +906,8 @@ when it is referenced.")
 
 (defvar w3-annotation-marker "<ncsa-annotation-format-1>")
 (defvar w3-annotation-minor-mode nil "Whether we are in the minor mode.")
-(defconst w3-bug-address "wmperry@spry.com" "Address of current maintainer.")
+(defconst w3-bug-address "wmperry@cs.indiana.edu"
+  "Address of current maintainer, where to send bug reports.")
 (defvar w3-continuation '(url-uncompress url-clean-text)
   "List of functions to call to process a document completely.")
 (defvar w3-current-annotation nil "URL of document we are annotating...")
@@ -1008,7 +979,6 @@ returns.")
     w3-current-links
     w3-current-source
     w3-delayed-images
-    w3-delayed-movies
     w3-hidden-forms
     w3-invisible-href-list
     w3-state-vector

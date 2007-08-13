@@ -1,31 +1,32 @@
 ;;; arc-mode.el --- simple editing of archives
 
-;;; Copyright (C) 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1995 Free Software Foundation, Inc.
 
 ;; Author: Morten Welinder (terra@diku.dk)
 ;; Keywords: archives msdog editing major-mode
 ;; Favourite-brand-of-beer: None, I hate beer.
 
-;;; This file is part of GNU Emacs.
-;;;
-;;; GNU Emacs is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2, or (at your option)
-;;; any later version.
-;;;
-;;; GNU Emacs is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; This file is part of XEmacs.
 
-;;; Synched up with: FSF 19.30.
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
-;;
+
 ;; NAMING: "arc" is short for "archive" and does not refer specifically
 ;; to files whose name end in ".arc"
 ;;
@@ -89,7 +90,7 @@
 ;;             Each member header points to the next.  The archive is
 ;;             terminated by a bogus header with a zero next link.
 ;; -------------------------------------
-;; HOOKS: `foo' means one the the supported archive types.
+;; HOOKS: `foo' means one of the supported archive types.
 ;;
 ;; archive-mode-hook
 ;; archive-foo-mode-hook
@@ -168,7 +169,7 @@ Extraction should happen to standard output.  Archive and member name will
 be added.  If `archive-zip-use-pkzip' is non-nil then this program is
 expected to extract to a file junking the directory part of the name.")
 
-;; For several reasons the latter behaviour is not desireable in general.
+;; For several reasons the latter behaviour is not desirable in general.
 ;; (1) It uses more disk space.  (2) Error checking is worse or non-
 ;; existent.  (3) It tends to do funny things with other systems' file
 ;; names.
@@ -254,9 +255,10 @@ Archive and member name will be added.")
 a vector of [ext-file-name int-file-name case-fiddled mode ...]")
 (make-variable-buffer-local 'archive-files)
 
-(defvar archive-lemacs
+;; XEmacs change
+(defvar archive-xemacs
   (string-match "\\(Lucid\\|XEmacs\\)" emacs-version)
-  "*Non-nil when running under under Lucid Emacs or Xemacs.")
+  "*Non-nil when running under Lucid Emacs or XEmacs.")
 ;; -------------------------------------------------------------------------
 ;; Section: Support functions.
 
@@ -498,7 +500,7 @@ archive.
   (define-key archive-mode-map "G" 'archive-chgrp-entry)
   (define-key archive-mode-map "O" 'archive-chown-entry)
 
-  (if archive-lemacs
+  (if archive-xemacs
       (progn
 	;; Not a nice "solution" but it'll have to do
 	(define-key archive-mode-map "\C-xu" 'archive-undo)
@@ -507,9 +509,9 @@ archive.
 			       archive-mode-map global-map))
 
   (define-key archive-mode-map
-    (if archive-lemacs 'button2 [mouse-2]) 'archive-mouse-extract)
+    (if archive-xemacs 'button2 [mouse-2]) 'archive-mouse-extract)
 
-  (if archive-lemacs
+  (if archive-xemacs
       ()				; out of luck
     ;; Get rid of the Edit menu bar item to save space.
     (define-key archive-mode-map [menu-bar edit] 'undefined)
@@ -618,7 +620,7 @@ is visible (and the real data of the buffer is hidden)."
     (archive-next-line no)))
 
 (defun archive-summarize-files (files)
-  "Insert a desciption of a list of files annotated with proper mouse face"
+  "Insert a description of a list of files annotated with proper mouse face"
   (setq archive-file-list-start (point-marker))
   (setq archive-file-name-indent (if files (aref (car files) 1) 0))
   ;; We don't want to do an insert for each element since that takes too
@@ -632,7 +634,7 @@ is visible (and the real data of the buffer is hidden)."
 	;; Using `concat' here copies the text also, so we can add
 	;; properties without problems.
 	(let ((text (concat (aref fil 0) "\n")))
-	  (if archive-lemacs
+	  (if archive-xemacs
 	      ()			; out of luck
 	    (put-text-property (aref fil 1) (aref fil 2)
 			       'mouse-face 'highlight

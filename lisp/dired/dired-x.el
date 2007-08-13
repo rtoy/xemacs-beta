@@ -627,8 +627,8 @@ whole pathname.")
 
 ;; \017=^O for Omit - other packages can chose other control characters.
 (defvar dired-omit-marker-char ?\017
-  "Temporary marker used by by dired-omit.
-Should never be used as marker by the user or other packages.")
+  "Temporary marker used by dired-omit.
+Should never be used as a marker by the user or other packages.")
 
 (defun dired-omit-startup ()
   (or (assq 'dired-omit-files-p minor-mode-alist)
@@ -1400,7 +1400,7 @@ Like function `background' but in the current Tree Dired directory."
 If Dired finds a file with that name in the current directory, it will
 temporarily insert it into the dired buffer and run `hack-local-variables'.
 
-Type \\[info] and and `g' `(emacs)File Variables' `RET' for more info on
+Type \\[info] and `g' `(emacs)File Variables' `RET' for more info on
 local variables.")
 
 (defun dired-hack-local-variables ()

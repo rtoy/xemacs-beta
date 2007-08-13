@@ -523,7 +523,7 @@ See also: `save-current-buffer' and `save-excursion'."
 ; alternate names (not obsolete)
 (if (not (fboundp 'mod)) (define-function 'mod '%))
 (define-function 'move-marker 'set-marker)
-(define-function 'beep 'ding) ;preserve lingual purtity
+(define-function 'beep 'ding)  ; preserve lingual purity
 (define-function 'indent-to-column 'indent-to)
 (define-function 'backward-delete-char 'delete-backward-char)
 (define-function 'search-forward-regexp (symbol-function 're-search-forward))

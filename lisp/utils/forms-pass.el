@@ -1,7 +1,6 @@
 ;;; forms-pass.el --- passwd file demo for forms-mode
-;; Keywords: extensions
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;; This demo visits your passwd file.
 

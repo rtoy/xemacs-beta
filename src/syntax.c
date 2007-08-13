@@ -55,26 +55,26 @@ Lisp_Object Vsyntax_designator_chars_string;
 /* This is the internal form of the parse state used in parse-partial-sexp.  */
 
 struct lisp_parse_state
-  {
-    int depth;		/* Depth at end of parsing */
-    Emchar instring;	/* -1 if not within string, else desired terminator. */
-    int incomment;	/* Nonzero if within a comment at end of parsing */
-    int comstyle;	/* comment style a=0, or b=1 */
-    int quoted;		/* Nonzero if just after an escape char at end of
+{
+  int depth;		/* Depth at end of parsing */
+  Emchar instring;	/* -1 if not within string, else desired terminator */
+  int incomment;	/* Nonzero if within a comment at end of parsing */
+  int comstyle;		/* comment style a=0, or b=1 */
+  int quoted;		/* Nonzero if just after an escape char at end of
 			   parsing */
-    Bufpos thislevelstart;/* Char number of most recent start-of-expression
-			     at current level */
-    Bufpos prevlevelstart;/* Char number of start of containing expression */
-    Bufpos location;	/* Char number at which parsing stopped. */
-    int mindepth;	/* Minimum depth seen while scanning.  */
-    Bufpos comstart;	/* Position just after last comment starter.  */
-  };
+  Bufpos thislevelstart;/* Char number of most recent start-of-expression
+                           at current level */
+  Bufpos prevlevelstart;/* Char number of start of containing expression */
+  Bufpos location;	/* Char number at which parsing stopped */
+  int mindepth;		/* Minimum depth seen while scanning  */
+  Bufpos comstart;	/* Position just after last comment starter  */
+};
 
 /* These variables are a cache for finding the start of a defun.
-   find_start_pos is the place for which the defun start was found.
-   find_start_value is the defun start position found for it.
+   find_start_pos    is the place for which the defun start was found.
+   find_start_value  is the defun start position found for it.
    find_start_buffer is the buffer it was found in.
-   find_start_begv is the BEGV value when it was found.
+   find_start_begv   is the BEGV value when it was found.
    find_start_modiff is the value of MODIFF when it was found.  */
 
 static Bufpos find_start_pos;
@@ -117,11 +117,11 @@ find_defun_start (struct buffer *buf, Bufpos pos)
     }
 
   /* Record what we found, for the next try.  */
-  find_start_value = tem;
+  find_start_value  = tem;
   find_start_buffer = buf;
   find_start_modiff = BUF_MODIFF (buf);
-  find_start_begv = BUF_BEGV (buf);
-  find_start_pos = pos;
+  find_start_begv   = BUF_BEGV (buf);
+  find_start_pos    = pos;
 
   return find_start_value;
 }
@@ -131,7 +131,7 @@ Return t if ARG is a syntax table.
 Any vector of 256 elements will do.
 */ )
   (obj)
-     Lisp_Object obj;
+  Lisp_Object obj;
 {
   if (VECTORP (obj) && vector_length (XVECTOR (obj)) == 0400)
     return Qt;
@@ -201,8 +201,8 @@ BUFFER defaults to the current buffer if omitted.
 }
 
 /* Convert a letter which signifies a syntax code
- into the code it signifies.
- This is used by modify-syntax-entry, and other things. */
+   into the code it signifies.
+   This is used by modify-syntax-entry, and other things. */
 
 CONST unsigned char syntax_spec_code[0400] =
   { 0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
@@ -252,7 +252,7 @@ Optional second argument TABLE defaults to the current buffer's
 syntax table.
 */ )
   (ch, table)
-     Lisp_Object ch, table;
+  Lisp_Object ch, table;
 {
   CHECK_CHAR_COERCE_INT (ch);
   table = check_syntax_table (table, current_buffer->syntax_table);
@@ -389,7 +389,7 @@ If an edge of the buffer is reached, point is left there
 and nil is returned.
 */ )
   (count, buffer)
-     Lisp_Object count, buffer;
+  Lisp_Object count, buffer;
 {
   Bufpos val;
   struct buffer *buf = decode_buffer (buffer, 0);
@@ -595,8 +595,8 @@ between them, return t; otherwise return nil.
 Point is set in either case.
 Optional argument BUFFER defaults to the current buffer.
 */ )
-     (n, buffer)
-     Lisp_Object n, buffer;
+  (n, buffer)
+  Lisp_Object n, buffer;
 {
   Bufpos from;
   Bufpos stop;

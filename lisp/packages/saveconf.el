@@ -269,8 +269,10 @@ point is set in each window to what is was when the context was saved."
 	;; Recover buffer contexts, if any.
 	;;
 	(while (setq sexpr (read context-buffer))
-	  (set-buffer (find-file-noselect sexpr))
-	  (goto-char (read context-buffer)))
+	  (set-buffer (find-file-noselect sexpr t))
+	  (if (zerop (buffer-size))
+	      (kill-buffer (current-buffer))
+	    (goto-char (read context-buffer))))
 	(bury-buffer "*scratch*")
 	(kill-buffer context-buffer)
 	t )

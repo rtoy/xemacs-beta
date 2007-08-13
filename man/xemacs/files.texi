@@ -254,7 +254,7 @@ except that it creates a new frame in which the file is displayed.
 @findex find-this-file-other-window
  Use the function @code{find-this-file-other-window} to edit a file
 mentioned in the buffer you are editing or to test if that file exists.
-To do do this, use the minibuffer completion after snatching the part or
+To do this, use the minibuffer completion after snatching the part or
 all of the filename. By providing a prefix argument, the function calls
 @code{filename-at-point} and switches you to a buffer visiting the file
 @var{filename} in another window. The function creates a buffer if none

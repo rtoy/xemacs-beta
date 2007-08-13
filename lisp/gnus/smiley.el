@@ -33,25 +33,59 @@
 ;; (require 'smiley)
 ;; (add-hook 'gnus-article-display-hook 'gnus-smiley-display t)
 
+;; The smilies were drawn by Joe Reiss <joe@jreiss.async.vt.edu>. 
+
 (require 'annotations)
+(require 'messagexmas)
 (eval-when-compile (require 'cl))
 
 (defvar smiley-data-directory (message-xmas-find-glyph-directory "smilies")
   "Location of the smiley faces files.")
 
-(defvar smiley-regexp-alist
-  '(("\\s-\\(:-*\\]\\)" 1 "FaceGrinning.xpm")
-    ("\\s-\\(:-*[oO]\\)" 1 "FaceStartled.xpm")
-    ("\\s-\\(:-*[)>]\\)" 1 "FaceHappy.xpm")
-    ("\\s-\\(;-*[>)]\\)" 1 "FaceWinking.xpm")
-    ("\\s-\\(:-[/\\]\\)" 1 "FaceIronic.xpm")
-    ("\\s-\\(:-*|\\)" 1 "FaceStraight.xpm")
-    ("\\s-\\(:-*<\\)" 1 "FaceAngry.xpm")
-    ("\\s-\\(:-*d\\)" 1 "FaceTasty.xpm")
-    ("\\s-\\(:-*[pP]\\)" 1 "FaceYukky.xpm")
-    ("\\s-\\(8-*|\\)" 1 "FaceKOed.xpm")
-    ("\\s-\\(:-*(\\)" 1 "FaceAngry.xpm"))
-  "A list of regexps to map smilies to real images.")
+;; Notice the subtle differences in the regular expessions in the two alists below
+
+(defvar smiley-deformed-regexp-alist
+  '(("\\(:-*[<«]+\\)\\W" 1 "FaceAngry.xpm")
+    ("\\(:-+\\]+\\)\\W" 1 "FaceGoofy.xpm")
+    ("\\(:-*D\\)\\W" 1 "FaceGrinning.xpm")
+    ("\\(:-*[)>}»]+\\)\\W" 1 "FaceHappy.xpm")
+    ("\\(:-*[/\\\"]\\)[^/]" 1 "FaceIronic.xpm")
+    ("\\([8|]-*[|Oo%]\\)\\W" 1 "FaceKOed.xpm")
+    ("\\([:|]-*#+\\)\\W" 1 "FaceNyah.xpm")
+    ("\\(:-*[({]+\\)\\W" 1 "FaceSad.xpm")
+    ("\\(:-*[Oo\*]\\)\\W" 1 "FaceStartled.xpm")
+    ("\\(:-*|\\)\\W" 1 "FaceStraight.xpm")
+    ("\\(:-*p\\)\\W" 1 "FaceTalking.xpm")
+    ("\\(:-*d\\)\\W" 1 "FaceTasty.xpm")
+    ("\\(;-*[>)}»]+\\)\\W" 1 "FaceWinking.xpm")
+    ("\\(:-*[Vvµ]\\)\\W" 1 "FaceWry.xpm")
+    ("\\([:|]-*P\\)\\W" 1 "FaceYukky.xpm"))
+  "Normal and deformed faces for smilies.")
+
+(defvar smiley-nosey-regexp-alist
+  '(("\\(:-+[<«]+\\)\\W" 1 "FaceAngry.xpm")
+    ("\\(:-+\\]+\\)\\W" 1 "FaceGoofy.xpm")
+    ("\\(:-+D\\)\\W" 1 "FaceGrinning.xpm")
+    ("\\(:-+[}»]+\\)\\W" 1 "FaceHappy.xpm")
+    ("\\(:-*)+\\)\\W" 1 "FaceHappy.xpm") ;; The exception that confirms the rule
+    ("\\(:-+[/\\\"]+\\)\\W" 1 "FaceIronic.xpm")
+    ("\\([8|]-+[|Oo%]\\)\\W" 1 "FaceKOed.xpm")
+    ("\\([:|]-+#+\\)\\W" 1 "FaceNyah.xpm")
+    ("\\(:-+[({]+\\)\\W" 1 "FaceSad.xpm")
+    ("\\(:-+[Oo\*]\\)\\W" 1 "FaceStartled.xpm")
+    ("\\(:-+|\\)\\W" 1 "FaceStraight.xpm")
+    ("\\(:-+p\\)\\W" 1 "FaceTalking.xpm")
+    ("\\(:-+d\\)\\W" 1 "FaceTasty.xpm")
+    ("\\(;-+[>)}»]+\\)\\W" 1 "FaceWinking.xpm")
+    ("\\(:-+[Vvµ]\\)\\W" 1 "FaceWry.xpm")
+    ("\\([:|]-+P\\)\\W" 1 "FaceYukky.xpm"))
+  "Smileys with noses. These get less false matches.")
+
+(defvar smiley-regexp-alist smiley-deformed-regexp-alist
+  "A list of regexps to map smilies to real images.
+Defaults to the content of smiley-deformed-regexp-alist.
+An alternative smiley-nose-regexp-alist that
+matches less aggresively is available.")
 
 (defvar smiley-flesh-color "yellow"
   "Flesh color.")
@@ -63,7 +97,7 @@
   "Tongue color.")
 
 (defvar smiley-circle-color "black"
-  "Tongue color.")
+  "Circle color.")
 
 (defvar smiley-glyph-cache nil)
 (defvar smiley-running-xemacs (string-match "XEmacs" emacs-version))
@@ -87,43 +121,45 @@
       (set-glyph-face glyph 'default)
       glyph))))
 
-;;;###interactive
+;;;###autoload
 (defun smiley-region (beg end)
   "Smilify the region between point and mark."
   (interactive "r")
   (smiley-buffer (current-buffer) beg end))
 
-;;;###interactive
+;;;###autoload
 (defun smiley-buffer (&optional buffer st nd)
   (interactive)
-  (save-excursion
-    (and buffer (set-buffer buffer))
-    (let ((buffer-read-only nil)
-	  (alist smiley-regexp-alist)
-	  entry regexp beg group file)
-      (goto-char (or st (point-min)))
-      (setq beg (point))
-      ;; loop through alist
-      (while (setq entry (pop alist))
-	(setq regexp (car entry)
-	      group (cadr entry)
-	      file (caddr entry))
-	(goto-char beg)
-	(while (re-search-forward regexp nd t)
-	  (let* ((start (match-beginning group))
-		 (end (match-end group))
-		 (glyph (smiley-create-glyph (buffer-substring start end)
-					     file)))
-	    (when glyph
-	      (mapcar 'delete-annotation (annotations-at end))
-	      (let ((ext (make-extent start end)))
-		(set-extent-property ext 'invisible t)
-		(set-extent-property ext 'end-open t)
-		(set-extent-property ext 'intangible t))
-	      (make-annotation glyph end 'text)
-	      (when (smiley-end-paren-p start end)
-		(make-annotation ")" end 'text))
-	      (goto-char end))))))))
+  (when (featurep 'x)
+    (save-excursion
+      (when buffer
+	(set-buffer buffer))
+      (let ((buffer-read-only nil)
+	    (alist smiley-regexp-alist)
+	    entry regexp beg group file)
+	(goto-char (or st (point-min)))
+	(setq beg (point))
+	;; loop through alist
+	(while (setq entry (pop alist))
+	  (setq regexp (car entry)
+		group (cadr entry)
+		file (caddr entry))
+	  (goto-char beg)
+	  (while (re-search-forward regexp nd t)
+	    (let* ((start (match-beginning group))
+		   (end (match-end group))
+		   (glyph (smiley-create-glyph (buffer-substring start end)
+					       file)))
+	      (when glyph
+		(mapcar 'delete-annotation (annotations-at end))
+		(let ((ext (make-extent start end)))
+		  (set-extent-property ext 'invisible t)
+		  (set-extent-property ext 'end-open t)
+		  (set-extent-property ext 'intangible t))
+		(make-annotation glyph end 'text)
+		(when (smiley-end-paren-p start end)
+		  (make-annotation ")" end 'text))
+		(goto-char end)))))))))
 
 (defun smiley-end-paren-p (start end)
   "Try to guess whether the current smiley is an end-paren smiley."

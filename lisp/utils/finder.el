@@ -31,9 +31,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -51,6 +52,7 @@
 
 (require 'lisp-mnt)
 (require 'finder-inf)
+;; XEmacs addition
 (require 'picture)
 (require 'mode-motion)
 
@@ -74,7 +76,7 @@ directories to view or extract information from package source code.")
   '(
     (abbrev	. "abbreviation handling, typing shortcuts, macros")
     (bib	. "code related to the `bib' bibliography processor")
-    (c		. "C, C++, and Objective-C language support")
+    (c		. "support for the C language and related languages")
     (calendar	. "calendar and time management support")
     (comm	. "communications, networking, remote access to files")
     (data	. "support editing files of data")
@@ -82,7 +84,7 @@ directories to view or extract information from package source code.")
     (emulations	. "emulations of other editors")
     (extensions	. "Emacs Lisp language extensions")
     (faces	. "support for multiple fonts")
-    (frames	. "support for Emacs frames and windows")
+    (frames	. "support for Emacs frames and window systems")
     (games	. "games, jokes and amusements")
     (hardware	. "support for interfacing with exotic hardware")
     (help	. "support for on-line help systems")
@@ -114,11 +116,13 @@ directories to view or extract information from package source code.")
       (define-key map " "	'finder-select)
       (define-key map "f"	'finder-select)
       (define-key map "\C-m"	'finder-select)
+      ;; XEmacs changes
       (define-key map "e"	'finder-edit)
       (define-key map "v"	'finder-view)
       (define-key map "?"	'finder-summary)
       (define-key map "q"	'finder-exit)
       (define-key map "d"	'finder-list-keywords)
+      ;; XEmacs change
       (define-key map [button2]	'finder-mouse-select)
       (setq finder-mode-map map)))
 
@@ -136,6 +140,7 @@ directories to view or extract information from package source code.")
 Optional arguments are a list of Emacs Lisp directories to compile from; no
 arguments compiles from `load-path'."
   (save-excursion
+    ;; XEmacs change
     (find-file "finder-inf.el")
     (let ((processed nil)
 	  (directory-abbrev-alist
@@ -197,7 +202,26 @@ arguments compiles from `load-path'."
       (eval-current-buffer) ;; So we get the new keyword list immediately
       (basic-save-buffer))))
 
+(defun finder-compile-keywords-make-dist ()
+  "Regenerate `finder-inf.el' for the Emacs distribution."
+  (finder-compile-keywords default-directory))
+
 ;;; Now the retrieval code
+
+(defun finder-insert-at-column (column &rest strings)
+  "Insert list of STRINGS, at column COLUMN."
+  (if (> (current-column) column) (insert "\n"))
+  (move-to-column column)
+  (let ((col (current-column)))
+    (if (< col column)
+	(indent-to column)
+      (if (and (/= col column)
+	       (= (preceding-char) ?\t))
+	  (let (indent-tabs-mode)
+	    (delete-char -1)
+            (indent-to col)
+            (move-to-column column)))))
+  (apply 'insert strings))
 
 (defun finder-list-keywords ()
   "Display descriptions of the keywords in the Finder buffer."
@@ -205,16 +229,17 @@ arguments compiles from `load-path'."
   (setq buffer-read-only nil)
   (erase-buffer)
   (mapcar
-   (function (lambda (assoc)
-	       (let ((keyword (car assoc)))
-		 (insert (symbol-name keyword))
-		 (insert-at-column 14 (concat (cdr assoc) "\n"))
-		 (cons (symbol-name keyword) keyword))))
+   (lambda (assoc)
+     (let ((keyword (car assoc)))
+       (insert (symbol-name keyword))
+       (finder-insert-at-column 14 (concat (cdr assoc) "\n"))
+       (cons (symbol-name keyword) keyword)))
    finder-known-keywords)
   (goto-char (point-min))
   (setq finder-headmark (point))
   (setq buffer-read-only t)
   (set-buffer-modified-p nil)
+  ;; XEmacs change
   (if (not (one-window-p))
       (balance-windows))
   (finder-summary))
@@ -227,14 +252,11 @@ arguments compiles from `load-path'."
      "The following packages match the keyword `" key "':\n\n")
     (setq finder-headmark (point))
     (mapcar
-     (function (lambda (x)
-		 (if (memq id (car (cdr (cdr x))))
-		     (progn
-		       (insert (car x))
-		       (insert-at-column 16
-					 (concat (car (cdr x)) "\n"))
-		       ))
-		 ))
+     (lambda (x)
+       (if (memq id (car (cdr (cdr x))))
+	   (progn
+	     (insert (car x))
+	     (finder-insert-at-column 16 (concat (car (cdr x)) "\n")))))
      finder-package-info)
     (goto-char (point-min))
     (forward-line)
@@ -243,27 +265,8 @@ arguments compiles from `load-path'."
     (shrink-window-if-larger-than-buffer)
     (finder-summary)))
 
-;; Return full pathname for FILE from finder-package-info
-;; or by searching for library in load-path.
-(defun finder-find-library (file)
-  (let ((dir (nth 3 (assoc file finder-package-info)))
-	(path))
-    (if dir
-	(setq path (expand-file-name
-		    file
-		    ;; Dir may be relative, in which case, we first expand it
-		    ;; relative to the first element of
-		    ;; finder-abbreviate-directory-list or to the local emacs
-		    ;; root directory.
-		    (expand-file-name
-		     dir (or (car finder-abbreviate-directory-list)
-			     finder-emacs-root-directory)))))
-    (if (and path (file-exists-p path))
-	path
-      (finder-find-library-in-load-path file))))
-
 ;; Search for a file named FILE the same way `load' would search.
-(defun finder-find-library-in-load-path (file)
+(defun finder-find-library (file)
   (if (file-name-absolute-p file)
       file
     (let ((dirs load-path)
@@ -282,6 +285,7 @@ arguments compiles from `load-path'."
     (if (null str)
 	(error "Can't find any Commentary section"))
     (pop-to-buffer "*Finder*")
+    ;; XEmacs change
     (setq buffer-read-only nil
 	  mode-motion-hook 'mode-motion-highlight-line)
     (erase-buffer)
@@ -297,8 +301,7 @@ arguments compiles from `load-path'."
     (setq buffer-read-only t)
     (set-buffer-modified-p nil)
     (shrink-window-if-larger-than-buffer)
-    (finder-summary)
-    ))
+    (finder-summary)))
 
 (defun finder-current-item ()
   (if (and finder-headmark (< (point) finder-headmark))
@@ -307,6 +310,7 @@ arguments compiles from `load-path'."
       (beginning-of-line)
       (current-word))))
 
+;; XEmacs change
 (defun finder-edit ()
   (interactive)
   (let ((entry (finder-current-item)))
@@ -318,6 +322,7 @@ arguments compiles from `load-path'."
       ;; a finder keyword
       (error "Finder-edit works on Emacs Lisp libraries only"))))
 
+;; XEmacs change
 (defun finder-view ()
   (interactive)
   (let ((entry (finder-current-item)))
@@ -332,10 +337,12 @@ arguments compiles from `load-path'."
 (defun finder-select ()
   (interactive)
   (let ((key (finder-current-item)))
+    ;; XEmacs change
     (if (string-match finder-file-regexp key)
 	(finder-commentary key)
       (finder-list-matches key))))
 
+;; XEmacs change
 (defun finder-mouse-select (ev)
   (interactive "e")
   (goto-char (event-point ev))
@@ -357,6 +364,7 @@ arguments compiles from `load-path'."
 "
   (interactive)
   (pop-to-buffer "*Finder*")
+  ;; XEmacs change
   (setq buffer-read-only nil
 	mode-motion-hook 'mode-motion-highlight-line)
   (erase-buffer)
@@ -365,19 +373,20 @@ arguments compiles from `load-path'."
   (setq mode-name "Finder")
   (setq major-mode 'finder-mode)
   (make-local-variable 'finder-headmark)
-  (setq finder-headmark nil)
-)
+  (setq finder-headmark nil))
 
 (defun finder-summary ()
   "Summarize basic Finder commands."
   (interactive)
-  (message
+  (message "%s"
    (substitute-command-keys
+    ;; XEmacs change
     "\\<finder-mode-map>\\[finder-select] = select, \\[finder-list-keywords] = keywords, \\[finder-edit] = edit, \\[finder-view] = view, \\[finder-exit] = quit, \\[finder-summary] = help")))
 
 (defun finder-exit ()
   "Exit Finder mode and kill the buffer"
   (interactive)
+  ;; XEmacs change
   (or (one-window-p t 0)
       (delete-window))
   (kill-buffer "*Finder*"))

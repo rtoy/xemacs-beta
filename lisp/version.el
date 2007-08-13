@@ -23,10 +23,10 @@
 
 ;; The following line is modified automatically
 ;; by loading inc-version.el, each time a new Emacs is dumped.
-(defconst emacs-version "19.14" "\
+(defconst emacs-version "19.15" "\
 Version numbers of this version of Emacs.")
 
-(setq emacs-version (purecopy (concat emacs-version " XEmacs Lucid")))
+(setq emacs-version (purecopy (concat emacs-version " XEmacs Lucid (beta2)")))
 
 (defconst emacs-major-version
   (progn (or (string-match "^[0-9]+" emacs-version)

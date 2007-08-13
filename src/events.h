@@ -27,14 +27,14 @@ Boston, MA 02111-1307, USA.  */
 
 #include "systime.h"
 
-/* There is one object, called an event_stream.  This object contains 
-   callback functions for doing the window-system dependent operations that
-   XEmacs requires.
+/* There is one object called an event_stream.  This object contains
+   callback functions for doing the window-system-dependent operations
+   that XEmacs requires.
 
    If XEmacs is compiled with support for X11 and the X Toolkit, then this
    event_stream structure will contain functions that can cope with input
    on XEmacs windows on multiple displays, as well as input from dumb tty
-   frames.  
+   frames.
 
    If it is desired to have XEmacs able to open frames on the displays of
    multiple heterogeneous machines, X11 and SunView, or X11 and NeXT, for
@@ -52,7 +52,7 @@ Boston, MA 02111-1307, USA.  */
 
   The slots of the event_stream structure:
 
- next_event_cb		A function which fills in an XEmacs_event struture
+ next_event_cb		A function which fills in an XEmacs_event structure
 			with the next event available.  If there is no event
 			available, then this should block.
 
@@ -174,7 +174,7 @@ Boston, MA 02111-1307, USA.  */
 			If this is an integer, it will be in the printing
 			ASCII range: >32 and <127.
     modifiers		Bucky-bits on that key: control, meta, etc.
-			For most keys, Shift is not a bit; that is implicit
+			For many keys, Shift is not a bit; that is implicit
 			in the keyboard layout.
 
  button_press_event
@@ -462,7 +462,7 @@ Lisp_Object event_chain_find_previous (Lisp_Object event_chain,
 Lisp_Object event_chain_nth (Lisp_Object event_chain, int n);
 Lisp_Object copy_event_chain (Lisp_Object event_chain);
 
-/* True is this is a non-internal event
+/* True if this is a non-internal event
    (keyboard press, menu, scrollbar, mouse button) */
 int command_event_p (Lisp_Object event);
 
@@ -471,9 +471,9 @@ struct console *event_console_or_selected (Lisp_Object event);
 int event_stream_event_pending_p (int user);
 void event_stream_next_event (struct Lisp_Event *event);
 void event_stream_handle_magic_event (struct Lisp_Event *event);
-void event_stream_select_console (struct console *c);
+void event_stream_select_console   (struct console *c);
 void event_stream_unselect_console (struct console *c);
-void event_stream_select_process (struct Lisp_Process *proc);
+void event_stream_select_process   (struct Lisp_Process *proc);
 void event_stream_unselect_process (struct Lisp_Process *proc);
 void event_stream_quit_p (void);
 
@@ -523,9 +523,9 @@ void drain_signal_event_pipe (void);
 
 extern int fake_event_occurred;
 
-int event_stream_unixoid_select_console (struct console *con);
+int event_stream_unixoid_select_console   (struct console *con);
 int event_stream_unixoid_unselect_console (struct console *con);
-int event_stream_unixoid_select_process (struct Lisp_Process *proc);
+int event_stream_unixoid_select_process   (struct Lisp_Process *proc);
 int event_stream_unixoid_unselect_process (struct Lisp_Process *proc);
 int read_event_from_tty_or_stream_desc (struct Lisp_Event *event,
 					struct console *c, int fd);

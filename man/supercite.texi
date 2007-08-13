@@ -961,7 +961,7 @@ to:
 (setq mail-citation-hook 'sc-cite-original)
 @end example
 
-Note the lack of of a single quote on the first argument to @code{setq}.
+Note the lack of a single quote on the first argument to @code{setq}.
 
 @node  MH-E with any Emacsen, VM with any Emacsen, Emacs 18 MUAs, Getting Connected
 @comment  node-name,  next,  previous,  up
@@ -1236,7 +1236,7 @@ yanked text.  This allows you to easily undo Supercite's changes to
 affect alternative citing styles.
 
 @item 
-@emph{Processes the the mail headers.}
+@emph{Processes the mail headers.}
 @vindex sc-confirm-always-p
 @vindex confirm-always-p (sc-)
 @vindex sc-mail-warn-if-non-rfc822-p

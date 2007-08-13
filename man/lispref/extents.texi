@@ -407,7 +407,7 @@ the following function may be more convenient than @code{map-extents}.
 
 @defun mapcar-extents function &optional predicate buffer-or-string from to flags property value
 This function applies @var{function} to all extents which overlap a
-region in @var{buffer-or-string}.  The region is is delimited by
+region in @var{buffer-or-string}.  The region is delimited by
 @var{from} and @var{to}.  @var{function} is called with one argument,
 the extent.  A list of the values returned by @var{function} is
 returned.  An optional @var{predicate} may be used to further limit the

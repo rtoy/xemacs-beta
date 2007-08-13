@@ -291,6 +291,7 @@ This includes variable references and calls to functions such as `car'.")
   "This is completely ignored.  It is only around for backwards
 compatibility.")
 
+
 ;; FSF enables byte-compile-dynamic-docstrings but not byte-compile-dynamic
 ;; by default.  This would be a reasonable conservative approach except
 ;; for the fact that if you enable either of these, you get incompatible
@@ -342,7 +343,7 @@ If it is 'byte, then only byte-level optimizations will be logged.")
 
 (defvar byte-compile-warnings t
   "*List of warnings that the compiler should issue (t for the default set).
-Elements of the list may be be:
+Elements of the list may be:
 
   free-vars	references to variables not in the current lexical scope.
   unused-vars	references to non-global variables bound but not referenced.
@@ -1701,6 +1702,7 @@ With argument, insert value in current buffer after the form."
       (insert "(or (boundp 'current-load-list) (setq current-load-list nil))\n"
 	      "\n")
       )))
+
 
 
 (defun byte-compile-output-file-form (form)

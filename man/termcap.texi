@@ -2116,7 +2116,7 @@ present if @samp{im} is.
 
 On a few old terminals the same string is used to enter and exit
 insert mode.  This string turns insert mode on if it was off, and off
-it it was on.  You can tell these terminals because the @samp{ei}
+if it was on.  You can tell these terminals because the @samp{ei}
 string equals the @samp{im} string.  If you want to support these
 terminals, you must always remember accurately whether insert mode is
 in effect.  However, these terminals are obsolete, and it is

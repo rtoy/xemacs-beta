@@ -1,8 +1,9 @@
 ;;; scheme.el --- Scheme mode, and its idiosyncratic commands.
-;; Keywords: languages, lisp
 
 ;; Copyright (C) 1986, 1987, 1988 Free Software Foundation, Inc.
-;; Adapted from Lisp mode by Bill Rozas, jinx@prep.
+
+;; Author: Bill Rozas <jinz@prep.ai.mit.edu>
+;; Keywords: languages, lisp
 
 ;; This file is part of XEmacs.
 
@@ -18,14 +19,19 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
+;;; Synched up with: FSF 19.34.
 
+;;; Commentary:
+
+;; Adapted from Lisp mode by Bill Rozas, jinx@prep.
 ;; Initially a query replace of Lisp mode, except for the indentation 
 ;; of special forms.  Probably the code should be merged at some point 
 ;; so that there is sharing between both libraries.
 
-(provide 'scheme)
+;;; Code:
 
 (defvar scheme-mode-syntax-table nil "")
 (if (not scheme-mode-syntax-table)
@@ -88,21 +94,27 @@
   (set-syntax-table scheme-mode-syntax-table)
   (setq local-abbrev-table scheme-mode-abbrev-table)
   (make-local-variable 'paragraph-start)
-  (setq paragraph-start (concat "^$\\|" page-delimiter))
+  (setq paragraph-start (concat "$\\|" page-delimiter))
   (make-local-variable 'paragraph-separate)
   (setq paragraph-separate paragraph-start)
   (make-local-variable 'paragraph-ignore-fill-prefix)
   (setq paragraph-ignore-fill-prefix t)
   (make-local-variable 'indent-line-function)
   (setq indent-line-function 'scheme-indent-line)
+  (make-local-variable 'parse-sexp-ignore-comments)
+  (setq parse-sexp-ignore-comments t)
   (make-local-variable 'comment-start)
   (setq comment-start ";")
   (make-local-variable 'comment-start-skip)
-  (setq comment-start-skip ";+[ \t]*")
+  ;; Look within the line for a ; following an even number of backslashes
+  ;; after either a non-backslash or the line beginning.
+  (setq comment-start-skip "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+[ \t]*")
   (make-local-variable 'comment-column)
   (setq comment-column 40)
-  (make-local-variable 'comment-indent-hook)
-  (setq comment-indent-hook 'scheme-comment-indent)
+  (make-local-variable 'comment-indent-function)
+  (setq comment-indent-function 'scheme-comment-indent)
+  (make-local-variable 'parse-sexp-ignore-comments)
+  (setq parse-sexp-ignore-comments t)
   (setq mode-line-process '("" scheme-mode-line-process)))
 
 (defvar scheme-mode-line-process "")
@@ -265,7 +277,7 @@ of the start of the containing expression."
       (if first-sexp-list-p
 	  (setq desired-indent (current-column)))
       ;; Point is at the point to indent under unless we are inside a string.
-      ;; Call indentation hook except when overriden by scheme-indent-offset
+      ;; Call indentation hook except when overridden by scheme-indent-offset
       ;; or if the desired indentation has already been computed.
       (cond ((car (nthcdr 3 state))
 	     ;; Inside a string, don't change indentation.
@@ -378,7 +390,7 @@ of the start of the containing expression."
 
 (defun scheme-let-indent (state indent-point)
   (skip-chars-forward " \t")
-  (if (looking-at "[a-zA-Z0-9+-*/?!@$%^&_:~]")
+  (if (looking-at "[-a-zA-Z0-9+*/?!@$%^&_:~]")
       (scheme-indent-specform 2 state indent-point)
       (scheme-indent-specform 1 state indent-point)))
 
@@ -493,8 +505,13 @@ of the start of the containing expression."
 		(if (integerp val)
 		    (setcar indent-stack
 			    (setq this-indent val))
-		  (setcar indent-stack (- (car (cdr val))))
+		  (if (cdr val)
+		      (setcar indent-stack (- (car (cdr val)))))
 		  (setq this-indent (car val)))))
 	    (if (/= (current-column) this-indent)
 		(progn (delete-region bol (point))
 		       (indent-to this-indent)))))))))
+
+(provide 'scheme)
+
+;;; scheme.el ends here

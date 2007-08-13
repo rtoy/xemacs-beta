@@ -1,11 +1,11 @@
-;;; w3.el,v --- Main functions for emacs-w3 on all platforms/versions
+;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1996/06/06 15:03:12
-;; Version: 1.550
+;; Created: 1996/08/19 03:30:47
+;; Version: 1.22
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -285,21 +285,15 @@ See the variable `w3-notify' for the different notification behaviors."
 	    (w3-notify-when-ready bufnam))
 	(funcall view)))
      ((stringp view)
-      (let ((fname (url-generate-unique-filename fmt)) proc)
+      (let ((fname (url-generate-unique-filename fmt))
+	    (proc nil)
+	    (file-coding-system url-mule-no-coding-system))
 	(if (url-file-directly-accessible-p (url-view-url t))
 	    (make-symbolic-link url-current-file fname t)
-	  (if (featurep 'mule)
-	      (write-region (point-min) (point-max) fname nil nil *noconv*)
-	    (write-region (point-min) (point-max) fname)))
+	  (write-region (point-min) (point-max) fname))
 	(if (get-buffer url-working-buffer)
 	    (kill-buffer url-working-buffer))
-	(if (string-match "%s" view)
-	    (setq view (concat (substring view 0 (match-beginning 0))
-			       fname (substring view (match-end 0)))))
-	(if (string-match "%u" view)
-	    (setq view (concat (substring view 0 (match-beginning 0))
-			       url
-			       (substring view (match-end 0)))))
+	(setq view (mm-viewer-unescape view fname url))
 	(message "Passing to viewer %s " view)
 	(setq proc (w3-start-viewer fname view))
 	(set-process-filter proc 'w3-viewer-filter)
@@ -314,30 +308,25 @@ See the variable `w3-notify' for the different notification behaviors."
 
 (defun w3-save-binary-file ()
   "Save a buffer to disk - this is used when `w3-dump-to-disk' is non-nil"
-  (interactive)
-  (let ((x (read-file-name "Filename to save as: "
-			   (or mm-download-directory "~/")
-			   (concat (or mm-download-directory "~/")
-				   (url-basepath (or url-current-file "") t))
-			   nil
-			   (url-basepath (or url-current-file "") t)))
-        (require-final-newline nil))
-    (save-excursion
-      ;; more fixes from the MULE guys
-      (if w3-dump-to-disk
-	  (let (jka-compr-compression-info-list
-		jam-zcat-filename-list)
-	    (if (featurep 'mule)
-		(let ((mc-flag t))
-		  (write-file x *noconv*))
-	      (write-file x)))
-	(let ((fnha file-name-handler-alist)
-	      (file-name-handler-alist nil))
-	  (if (featurep 'mule)
-	      (let ((mc-flag t))
-		(write-file x *noconv*))
-	    (write-file x))))
-      (kill-buffer (current-buffer)))))
+  ;; Ok, this is truly fucked.  In XEmacs, if you use the mouse to select
+  ;; a URL that gets saved via this function, read-file-name will pop up a
+  ;; dialog box for file selection.  For some reason which buffer we are in
+  ;; gets royally screwed (even with save-excursions and the whole nine
+  ;; yards).  SO, we just keep the old buffer name around and away we go.
+  (let ((old-buff (current-buffer))
+	(file (read-file-name "Filename to save as: "
+			      (or mm-download-directory "~/")
+			      (url-remove-compressed-extensions
+			       (file-name-nondirectory (url-view-url t)))
+			      nil
+			      (url-remove-compressed-extensions
+			       (file-name-nondirectory (url-view-url t)))))
+	(require-final-newline nil))
+    (set-buffer old-buff)
+    (let ((mc-flag t)
+	  (file-coding-system url-mule-no-coding-system))
+      (write-region (point-min) (point-max) file))
+    (kill-buffer (current-buffer))))
 
 (defun w3-build-url (protocol)
   "Build a url for PROTOCOL, return it as a string"
@@ -568,7 +557,8 @@ passed to an external viewer as appropriate.  Variable
 		  (w3-sentinel lastbuf)))))
 	(if w3-track-last-buffer
 	    (setq w3-last-buffer buf))
-	(let ((w3-notify (if (memq w3-notify '(newframe bully aggressive))
+	(let ((w3-notify (if (memq w3-notify '(newframe bully 
+					       semibully aggressive))
 			     w3-notify
 			   'aggressive)))
 	  (w3-notify-when-ready buf))
@@ -796,8 +786,8 @@ under point."
       (setq str (format "<A HREF=\"%s\">%s</A>" (widget-get p 'href)
 			(read-string "Link text: "
 				     (buffer-substring
-				      (car (widget-get p 'title))
-				      (cdr (widget-get p 'title)))))))
+                                      (widget-get p :from)
+                                      (widget-get p :to))))))
      (t
       (setq str (format "<A HREF=\"%s\">%s</A>" (url-view-url t)
 			(read-string "Link text: " (buffer-name))))))
@@ -1026,9 +1016,10 @@ and convert newlines into spaces."
       (goto-char (point-min))
       (setq buffer-file-truename nil
 	    buffer-file-name nil)
-      ;; Null filename bugs `set-auto-mode' in Mule ... 
-      (if (not (featurep 'mule))
- 	  (set-auto-mode))
+      ;; Null filename bugs `set-auto-mode' in Mule ...
+      (condition-case ()
+ 	  (set-auto-mode)
+	(error nil))
       (buffer-enable-undo)
       (set-buffer-modified-p nil)
       (w3-notify-when-ready (get-buffer tmp))))
@@ -1493,34 +1484,6 @@ ftp.w3.org:/pub/www/doc."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Functions to handle formatting an html buffer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun w3-insert-entities-in-string (string)
-  "Convert HTML markup-start characters to entity references in STRING.
-  Also replaces the \" character, so that the result may be safely used as
-  an attribute value in a tag.  Returns a new string with the result of the
-  conversion.  Replaces these characters as follows:
-    &  ==>  &amp;
-    <  ==>  &lt;
-    >  ==>  &gt;
-    \"  ==>  &quot;"
-  (if (string-match "[&<>\"]" string)
-      (save-excursion
-	(set-buffer (get-buffer-create " *entity*"))
-	(erase-buffer)
-	(buffer-disable-undo (current-buffer))
-	(insert string)
-	(goto-char (point-min))
-	(while (progn
-		 (skip-chars-forward "^&<>\"")
-		 (not (eobp)))
-	  (insert (cdr (assq (char-after (point))
-			     '((?\" . "&quot;")
-			       (?& . "&amp;")
-			       (?< . "&lt;")
-			       (?> . "&gt;")))))
-	  (delete-char 1))
-	(buffer-string))
-    string))
-
 (defun w3-insert-headers ()
   ;; Insert some HTTP/1.0 headers if necessary
   (url-lazy-message "Inserting HTTP/1.0 headers...")
@@ -1530,7 +1493,7 @@ ftp.w3.org:/pub/www/doc."
     (goto-char (setq y (point-max)))
     (while hdrs
       (if (setq x (w3-in-assoc (car hdrs) url-current-mime-headers))
-	  (insert "<LI> <B>" (car x) "</B>: " (w3-insert-entities-in-string
+	  (insert "<LI> <B>" (car x) "</B>: " (url-insert-entities-in-string
 					       (if (numberp (cdr x))
 						   (int-to-string (cdr x))
 						 (cdr x)))))
@@ -1542,23 +1505,9 @@ ftp.w3.org:/pub/www/doc."
       (url-lazy-message "Inserting HTTP/1.0 headers... done.")
       (insert "<HR><UL>"))))
 
-(defun w3-add-delayed-mpeg (src st &optional width height)
-  ;; Add a delayed mpeg for the current buffer.
-  (setq w3-delayed-movies (cons (list src
-				      (set-marker (make-marker) st)
-				      width height)
-				w3-delayed-movies))
-  (w3-handle-text (concat "[MPEG(" (url-basepath src t) ")]"))
-  (put-text-property st (point) 'w3mpeg (list 'w3mpeg src st)))
-
-(defun w3-add-delayed-graphic (src st align alt args)
+(defun w3-add-delayed-graphic (widget)
   ;; Add a delayed image for the current buffer.
-  (setq st (set-marker (make-marker) st)
-	w3-delayed-images (cons (list src st align alt args)
-				w3-delayed-images))
-  (w3-handle-text alt)
-  (if (string= alt "") nil
-    (put-text-property st (point) 'w3delayed t)))
+  (setq w3-delayed-images (cons widget w3-delayed-images)))
 
 
 (defun w3-load-flavors ()
@@ -1611,6 +1560,8 @@ ftp.w3.org:/pub/www/doc."
 				     vars
 				     nil nil
 				     "Description of Problem:"))))
+
+(defalias 'w3-bug 'w3-submit-bug)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Support for searching						    ;;;
@@ -1768,7 +1719,7 @@ displayed in a new buffer."
 	      "</h1>\n\t\t\t<ol>\n")
       (while tmp
 	(insert  "\t\t\t\t<li> <a href=\"" (car (cdr (car tmp)))
-		 "\">" (w3-insert-entities-in-string
+		 "\">" (url-insert-entities-in-string
 			(car (car tmp))) "</a></li>\n")
 	(setq tmp (cdr tmp)))
       (insert "\n\t\t\t</ol>\n\t\t</div>\n\t</body>\n</html>\n")))
@@ -1795,7 +1746,7 @@ displayed in a new buffer."
        (function
 	(lambda (url desc)
 	  (insert (format "\t\t\t\t<li> <a href=\"%s\">%s</a>\n"
-			  url (w3-insert-entities-in-string desc)))))
+			  url (url-insert-entities-in-string desc)))))
        url-history-list)
       (insert "\n\t\t\t</ol>\n\t\t</div>\n\t</body>\n</html>\n")))))
 
@@ -1929,7 +1880,6 @@ cached and in local mode."
 		(w3-quit nil)))))
        (buffer-list))
     (let ((x w3-current-last-buffer))
-      (and (fboundp 'w3-mpeg-kill-processes) (w3-mpeg-kill-processes))
       (kill-buffer (current-buffer))
       (if (and (bufferp x) (buffer-name x))
 	  (w3-notify-when-ready x)))))
@@ -1950,15 +1900,14 @@ cached and in local mode."
       nil))))
 
 (defun w3-load-delayed-images ()
-    "Load inlined images that were delayed, if necessary.
-This function searches through `w3-delayed-images' and fetches the
-appropriate picture for each point in the buffer and inserts it."
+    "Load inlined images that were delayed, if any."
   (interactive)
-  (and (fboundp 'w3-insert-graphic)
-       (let ((buffer-read-only nil))
-	 (mapcar (function (lambda (data) (apply 'w3-insert-graphic data)))
-		 (nreverse w3-delayed-images))))
-  (setq w3-delayed-images nil))
+  (let ((w3-delay-image-loads nil)
+	(todo w3-delayed-images))
+    (setq w3-delayed-images nil)
+    (while todo
+      (w3-maybe-start-image-download (car todo))
+      (setq todo (cdr todo)))))
 
 (defun w3-save-this-url ()
   "Save url under point in the kill ring"
@@ -2142,6 +2091,14 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
 	"\tftp://ftp.cs.indiana.edu/pub/elisp/w3/images/\n"
 	))))
 
+(defun w3-refresh-stylesheets ()
+  "Reload all stylesheets."
+  (interactive)
+  (setq w3-user-stylesheet nil
+	w3-face-cache nil)
+  (w3-find-default-stylesheets)
+  (w3-style-post-process-stylesheet w3-user-stylesheet))
+
 (defun w3-find-default-stylesheets ()
   (let* ((lightp (w3-color-light-p 'default))
 	 (longname (if lightp "stylesheet-light" "stylesheet-dark"))
@@ -2244,17 +2201,13 @@ dumped with emacs."
 	(setq w3-user-colors-take-precedence t)
 	(w3-warn
 	 'html
-	 "Disabled document color specification because of mono display."))
-    (setq w3-user-colors-take-precedence nil))
+	 "Disabled document color specification because of mono display.")))
 
-  (w3-find-default-stylesheets)
+  (w3-refresh-stylesheets)
   (if (not url-global-history-file)
       (setq url-global-history-file
 	    (expand-file-name "history"
 			      w3-configuration-directory)))
-
-  (if w3-user-stylesheet
-      (w3-generate-stylesheet-faces w3-user-stylesheet))
 
   (if (and w3-use-netscape-configuration-file
 	   w3-netscape-configuration-file
@@ -2376,11 +2329,10 @@ dumped with emacs."
 	(let ((require-final-newline nil)
 	      (file-name-handler-alist nil)
 	      (write-file-hooks nil)
-	      (write-contents-hooks nil))
-	  (if (featurep 'mule)
-	      (let ((mc-flag t))
-		(write-file fname nil *noconv*))
-	    (write-file fname))
+	      (write-contents-hooks nil)
+	      (mc-flag t)
+	      (file-coding-system url-mule-no-coding-system))
+	  (write-file fname)
 	  (message "Download of %s complete." (url-view-url t))
 	  (sit-for 3)
 	  (kill-buffer buff)))))
@@ -2392,11 +2344,11 @@ dumped with emacs."
 	 (urlobj (url-generic-parse-url url))
 	 (url-working-buffer
 	  (generate-new-buffer (concat " *" url " download*")))
-	 (stub-fname (url-basepath (or (url-filename urlobj) "") t))
+	 (stub-fname (url-remove-compressed-extensions
+		      (url-basepath (or (url-filename urlobj) "") t)))
 	 (fname (read-file-name "Filename to save as: "
 				(or mm-download-directory "~/")
-				(concat (or mm-download-directory "~/")
-					stub-fname)
+				stub-fname
 				nil
 				stub-fname)))
     (setq-default url-be-asynchronous t)
@@ -2484,6 +2436,17 @@ to disk."
 	(w3-follow-link)
       (w3-fetch (cdr (assoc choice links-alist))))))
 
+(defun w3-widget-motion-hook (widget)
+  (assert widget nil "Bad data to w3-widget-motion-hook!  Bad hook bad!")
+  (case w3-echo-link
+    (text
+     (message "%s" (w3-fix-spaces (buffer-substring (widget-get widget :from)
+						    (widget-get widget :to)))))
+    (url
+     (if (widget-get widget 'href)
+	 (message "%s" (widget-get widget 'href))))
+    (otherwise nil)))
+
 (defun w3-mode ()
   "Mode for viewing HTML documents.  If called interactively, will
 display the current buffer as HTML.
@@ -2503,6 +2466,8 @@ Current keymap is:
       (mapcar (function (lambda (x) (set-variable (car x) (cdr x)))) tmp)
       (w3-mode-version-specifics)
       (w3-menu-install-menus)
+      (make-local-hook 'widget-motion-hook)
+      (add-hook 'widget-motion-hook 'w3-widget-motion-hook)
       (run-hooks 'w3-mode-hook)
       (widget-setup)
       (setq url-current-passwd-count 0

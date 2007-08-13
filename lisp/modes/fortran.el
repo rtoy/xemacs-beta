@@ -1,6 +1,6 @@
 ;;; fortran.el --- Fortran mode for GNU Emacs
 
-;;; Copyright (c) 1986, 1993, 1994, 1995 Free Software Foundation, Inc.
+;; Copyright (c) 1986, 1993, 1994, 1995 Free Software Foundation, Inc.
 
 ;; Author: Michael D. Prange <prange@erl.mit.edu>
 ;; Maintainer: bug-fortran-mode@erl.mit.edu
@@ -21,9 +21,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -38,19 +39,19 @@
 ;; Dr. Anil Gokhale, Ulrich Mueller, Mark Neale, Eric Prestemon, 
 ;; Gary Sabot and Richard Stallman.
 
-;;; This file may be used with GNU Emacs version 18.xx if the following
-;;; variable and function substitutions are made.
-;;;  Replace:
-;;;   frame-width                           with screen-width
-;;;   auto-fill-function                    with auto-fill-hook
-;;;   comment-indent-function               with comment-indent-hook
-;;;   (setq unread-command-events (list c)) with (setq unread-command-char c)
+;; This file may be used with GNU Emacs version 18.xx if the following
+;; variable and function substitutions are made.
+;;  Replace:
+;;   frame-width                           with screen-width
+;;   auto-fill-function                    with auto-fill-hook
+;;   comment-indent-function               with comment-indent-hook
+;;   (setq unread-command-events (list c)) with (setq unread-command-char c)
 
-;;; Bugs to bug-fortran-mode@erl.mit.edu
-
-(defconst fortran-mode-version "version 1.30.6")
+;; Bugs to bug-fortran-mode@erl.mit.edu
 
 ;;; Code:
+
+(defconst fortran-mode-version "version 1.30.6")
 
 ;;;###autoload
 (defvar fortran-tab-mode-default nil
@@ -172,6 +173,7 @@ This variable used in TAB format mode.")
   (modify-syntax-entry ?+ "." fortran-mode-syntax-table)
   (modify-syntax-entry ?- "." fortran-mode-syntax-table)
   (modify-syntax-entry ?= "." fortran-mode-syntax-table)
+  ;; XEmacs change
   ;;(modify-syntax-entry ?* "." fortran-mode-syntax-table)
   (modify-syntax-entry ?/ "." fortran-mode-syntax-table)
   (modify-syntax-entry ?\' "\"" fortran-mode-syntax-table)
@@ -180,6 +182,7 @@ This variable used in TAB format mode.")
   (modify-syntax-entry ?. "w" fortran-mode-syntax-table)
   (modify-syntax-entry ?_ "w" fortran-mode-syntax-table)
   (modify-syntax-entry ?\! "<" fortran-mode-syntax-table)
+  ;; XEmacs change
   ;;(modify-syntax-entry ?\n ">" fortran-mode-syntax-table)
 
   ;; XEmacs: an attempt to make font-lock understand fortran comments.
@@ -320,6 +323,7 @@ This variable used in TAB format mode.")
 (defvar fortran-font-lock-keywords fortran-font-lock-keywords-1
   "Default expressions to highlight in Fortran mode.")
 
+;; XEmacs change
 (put 'fortran-mode 'font-lock-defaults '((fortran-font-lock-keywords
 					  fortran-font-lock-keywords-1
 					  fortran-font-lock-keywords-2
@@ -580,6 +584,13 @@ with no args, if that value is non-nil."
   (setq fortran-startup-message nil)
   (setq local-abbrev-table fortran-mode-abbrev-table)
   (set-syntax-table fortran-mode-syntax-table)
+  ;; Font Lock mode support. (Removed for XEmacs)
+  ;; (make-local-variable 'font-lock-defaults)
+  ;; (setq font-lock-defaults '((fortran-font-lock-keywords
+			      ;; fortran-font-lock-keywords-1
+			      ;; fortran-font-lock-keywords-2
+			      ;; fortran-font-lock-keywords-3)
+			     ;; t t ((?/ . "$/"))))
   (make-local-variable 'fortran-break-before-delimiters)
   (setq fortran-break-before-delimiters t)
   (make-local-variable 'indent-line-function)
@@ -694,6 +705,7 @@ With non-nil ARG, uncomments the region."
   "Typing ;\\[help-command] or ;? lists all the Fortran abbrevs. 
 Any other key combination is executed normally."
   (interactive)
+  ;; XEmacs change
   (let (e c)
     (insert last-command-char)
     (setq e (next-command-event)
@@ -701,7 +713,7 @@ Any other key combination is executed normally."
     ;; insert char if not equal to `?'
     (if (or (= c ??) (eq c help-char))
 	(fortran-abbrev-help)
-      (setq unread-command-event e))))
+      (setq unread-command-events e))))
 
 (defun fortran-abbrev-help ()
   "List the currently defined abbrevs in Fortran mode."
@@ -765,9 +777,10 @@ See also `fortran-window-create'."
       (save-window-excursion
 	(if (not (equal (fortran-window-create) 'error))
 	    (progn (message "Type SPC to continue editing.")
+		   ;; XEmacs change
 		   (let ((char (next-command-event)))
 		     (or (equal (event-to-character char) ? )
-			 (setq unread-command-event char))))))
+			 (setq unread-command-events char))))))
     (fortran-window-create)))
 
 (defun fortran-split-line ()
@@ -1531,7 +1544,7 @@ automatically breaks the line at a previous space."
 		     (> (prefix-numeric-value arg) 0))
 		   'fortran-do-auto-fill
 		 nil))
-    (force-mode-line-update)))
+    (redraw-modeline)))
 
 (defun fortran-do-auto-fill ()
   (if (> (current-column) fill-column)
@@ -1675,4 +1688,3 @@ file before the end or the first `fortran-analyze-depth' lines."
 (provide 'fortran)
 
 ;;; fortran.el ends here
-

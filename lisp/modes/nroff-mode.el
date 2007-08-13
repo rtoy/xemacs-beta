@@ -1,6 +1,6 @@
 ;;; nroff-mode.el --- GNU Emacs major mode for editing nroff source
 
-;; Copyright (C) 1985, 1986 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1986, 1994, 1995 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: wp
@@ -19,7 +19,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -29,10 +32,14 @@
 ;; a command to count text lines (excluding nroff constructs), a command
 ;; to center a line, and movement commands that know how to skip macros.
 
+;; Paragraph filling and line-counting currently don't respect comments,
+;; as they should.
+
 ;;; Code:
 
 (defvar nroff-mode-abbrev-table nil
   "Abbrev table used while in nroff mode.")
+(define-abbrev-table 'nroff-mode-abbrev-table ())
 
 (defvar nroff-mode-map nil
      "Major mode keymap for nroff mode.")
@@ -46,6 +53,32 @@
       (define-key nroff-mode-map "\en" 'forward-text-line)
       (define-key nroff-mode-map "\ep" 'backward-text-line)))
 
+(defvar nroff-mode-syntax-table nil
+  "Syntax table used while in nroff mode.")
+
+(defvar nroff-font-lock-keywords
+  (list
+   ;; Directives are . or ' at start of line, followed by
+   ;; optional whitespace, then command (which my be longer than
+   ;; 2 characters in groff).  Perhaps the arguments should be
+   ;; fontified as well.
+   "^[.']\\s-*\\sw+"
+   ;; There are numerous groff escapes; the following get things
+   ;; like \-, \(em (standard troff) and \f[bar] (groff
+   ;; variants).  This won't currently do groff's \A'foo' and
+   ;; the like properly.  One might expect it to highlight an escape's
+   ;; arguments in common cases, like \f.
+   (concat "\\\\"			; backslash
+	   "\\("			; followed by various possibilities
+         (mapconcat 'identity
+                    '("[f*n]*\\[.+]"	; some groff extensions
+                      "(.."		; two chars after (
+                      "[^(\"]"		; single char escape
+                      ) "\\|")
+         "\\)")
+   )
+  "Font-lock highlighting control in nroff-mode.")
+
 ;;;###autoload
 (defun nroff-mode ()
   "Major mode for editing text intended for nroff to format.
@@ -58,17 +91,33 @@ closing requests for requests that are used in matched pairs."
   (use-local-map nroff-mode-map)
   (setq mode-name "Nroff")
   (setq major-mode 'nroff-mode)
-  (set-syntax-table text-mode-syntax-table)
+  (if nroff-mode-syntax-table
+      ()
+    (setq nroff-mode-syntax-table (copy-syntax-table text-mode-syntax-table))
+    ;; " isn't given string quote syntax in text-mode but it
+    ;; (arguably) should be for use round nroff arguments (with ` and
+    ;; ' used otherwise).
+    (modify-syntax-entry ?\" "\"  2" nroff-mode-syntax-table)
+    ;; Comments are delimited by \" and newline.
+    (modify-syntax-entry ?\\ "\\  1" nroff-mode-syntax-table)
+    (modify-syntax-entry ?\n ">  1" nroff-mode-syntax-table))
+  (set-syntax-table nroff-mode-syntax-table)
+  (make-local-variable 'font-lock-defaults)
+  (setq font-lock-defaults '(nroff-font-lock-keywords nil t))
   (setq local-abbrev-table nroff-mode-abbrev-table)
   (make-local-variable 'nroff-electric-mode)
   (setq nroff-electric-mode nil)
+  (make-local-variable 'outline-regexp)
+  (setq outline-regexp "\\.H[ ]+[1-7]+ ")
+  (make-local-variable 'outline-level)
+  (setq outline-level 'nroff-outline-level)
   ;; now define a bunch of variables for use by commands in this mode
   (make-local-variable 'page-delimiter)
   (setq page-delimiter "^\\.\\(bp\\|SK\\|OP\\)")
   (make-local-variable 'paragraph-start)
-  (setq paragraph-start (concat "^[.']\\|" paragraph-start))
+  (setq paragraph-start (concat "[.']\\|" paragraph-start))
   (make-local-variable 'paragraph-separate)
-  (setq paragraph-separate (concat "^[.']\\|" paragraph-separate))
+  (setq paragraph-separate (concat "[.']\\|" paragraph-separate))
   ;; comment syntax added by mit-erl!gildea 18 Apr 86
   (make-local-variable 'comment-start)
   (setq comment-start "\\\" ")
@@ -79,6 +128,12 @@ closing requests for requests that are used in matched pairs."
   (make-local-variable 'comment-indent-function)
   (setq comment-indent-function 'nroff-comment-indent)
   (run-hooks 'text-mode-hook 'nroff-mode-hook))
+
+(defun nroff-outline-level ()
+  (save-excursion
+    (looking-at outline-regexp)
+    (skip-chars-forward ".H ")
+    (string-to-int (buffer-substring (point) (+ 1 (point))))))
 
 ;;; Compute how much to indent a comment in nroff/troff source.
 ;;; By mit-erl!gildea April 86

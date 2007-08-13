@@ -108,11 +108,13 @@ Face used for group or summary buffer mouse highlighting.
 The line beneath the mouse pointer will be highlighted with this
 face.")
 	(name . gnus-mouse-face)
-	(calculate . (if (gnus-visual-p 'mouse-face 'highlight)
-			 (if (boundp 'gnus-mouse-face)
-			     gnus-mouse-face
-			   'highlight)
-		       'default))
+	(calculate . (condition-case ()
+			 (if (gnus-visual-p 'mouse-face 'highlight)
+			     (if (boundp 'gnus-mouse-face)
+				 gnus-mouse-face
+			       'highlight)
+			   'default)
+		       (error nil)))
 	(type . face))
        ((tag . "Article Display")
 	(doc . "Controls how the article buffer will look.
@@ -333,7 +335,7 @@ should contain the name of the header.  The field actually contains a
 regular expression that should match the beginning of the header line,
 but if you don't know what a regular expression is, just write the
 name of the header.  The second field is the `Name' field, which
-determines how the the header name (i.e. the part of the header left
+determines how the header name (i.e. the part of the header left
 of the `:') is displayed.  The third field is the `Content' field,
 which determines how the content (i.e. the part of the header right of
 the `:') is displayed.  

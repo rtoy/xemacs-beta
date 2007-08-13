@@ -358,14 +358,14 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
   /* !!#### This function has not been Mule-ized */
   /* This function cannot GC because gc_currently_forbidden is set when
      it's called */
-  Lisp_Object name = Qnil;
-  Lisp_Object callback = Qnil;
-  Lisp_Object suffix = Qnil;
-  Lisp_Object active_p = Qt;
-  Lisp_Object include_p = Qt;
+  Lisp_Object name       = Qnil;
+  Lisp_Object callback   = Qnil;
+  Lisp_Object suffix     = Qnil;
+  Lisp_Object active_p   = Qt;
+  Lisp_Object include_p  = Qt;
   Lisp_Object selected_p = Qnil;
-  Lisp_Object keys = Qnil;
-  Lisp_Object style = Qnil;
+  Lisp_Object keys       = Qnil;
+  Lisp_Object style      = Qnil;
   Lisp_Object config_tag = Qnil;
   int length = vector_length (XVECTOR (desc));
   Lisp_Object *contents = vector_data (XVECTOR (desc));
@@ -409,12 +409,12 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
 	  if (!KEYWORDP (key))
 	    signal_simple_error_2 ("not a keyword", key, desc);
 
-	  if      (EQ (key, Q_active))   active_p = val;
-	  else if (EQ (key, Q_suffix))   suffix = val;
-	  else if (EQ (key, Q_keys))     keys = val;
-	  else if (EQ (key, Q_style))    style = val;
+	  if      (EQ (key, Q_active))   active_p   = val;
+	  else if (EQ (key, Q_suffix))   suffix     = val;
+	  else if (EQ (key, Q_keys))     keys       = val;
+	  else if (EQ (key, Q_style))    style      = val;
 	  else if (EQ (key, Q_selected)) selected_p = val, selected_spec = 1;
-	  else if (EQ (key, Q_included)) include_p = val, included_spec = 1;
+	  else if (EQ (key, Q_included)) include_p  = val, included_spec = 1;
 	  else if (EQ (key, Q_config))	 config_tag = val;
 	  else if (EQ (key, Q_filter))
 	    signal_simple_error(":filter keyword not permitted on leaf nodes", desc);
@@ -439,7 +439,7 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
     {
       CONST char *const_bogosity;
       CHECK_STRING (suffix);
-      GET_C_STRING_CTEXT_DATA_ALLOCA (suffix, const_bogosity);
+      GET_C_STRING_FILENAME_DATA_ALLOCA (suffix, const_bogosity);
       wv->value = (char *) const_bogosity;
       wv->value = xstrdup (wv->value);
     }

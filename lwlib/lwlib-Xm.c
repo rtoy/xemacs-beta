@@ -152,8 +152,8 @@ resource_string (Widget widget, char *name)
   XtResource resource;
   char *result = NULL;
   
-  resource.resource_name = "labelString";
-  resource.resource_class = "LabelString"; /* #### should be Xmsomething... */
+  resource.resource_name = (String) "labelString";
+  resource.resource_class = (String) "LabelString"; /* #### should be Xmsomething... */
   resource.resource_type = XtRString;
   resource.resource_size = sizeof (String);
   resource.resource_offset = 0;
@@ -222,9 +222,9 @@ static void
 xm_update_label (widget_instance* instance, Widget widget, widget_value* val)
 {
   XmString built_string = 0;
-  XmString key_string = 0;
-  XmString val_string = 0;
-  XmString name_string = 0;
+  XmString key_string   = 0;
+  XmString val_string   = 0;
+  XmString name_string  = 0;
   Arg al [256];
   int ac;
   
@@ -236,7 +236,7 @@ xm_update_label (widget_instance* instance, Widget widget, widget_value* val)
       /*
        * Sigh.  The main text of a label is the name field for menubar
        * entries.  The value field is a possible additional field to be
-       * contatenated on to the name field.  HOWEVER, with dialog boxes
+       * concatenated on to the name field.  HOWEVER, with dialog boxes
        * the value field is the complete text which is supposed to be
        * displayed as the label.  Yuck.
        */
@@ -667,7 +667,7 @@ xm_update_menu (widget_instance* instance, Widget widget, widget_value* val,
 static void
 xm_update_text (widget_instance* instance, Widget widget, widget_value* val)
 {
-  XmTextSetString (widget, val->value ? val->value : "");
+  XmTextSetString (widget, val->value ? val->value : (char *) "");
   XtRemoveAllCallbacks (widget, XmNactivateCallback);
   XtAddCallback (widget, XmNactivateCallback, xm_generic_callback, instance);
   XtRemoveAllCallbacks (widget, XmNvalueChangedCallback);
@@ -679,7 +679,7 @@ static void
 xm_update_text_field (widget_instance* instance, Widget widget,
 		      widget_value* val)
 {
-  XmTextFieldSetString (widget, val->value ? val->value : "");
+  XmTextFieldSetString (widget, val->value ? val->value : (char *) "");
   XtRemoveAllCallbacks (widget, XmNactivateCallback);
   XtAddCallback (widget, XmNactivateCallback, xm_generic_callback, instance);
   XtRemoveAllCallbacks (widget, XmNvalueChangedCallback);
@@ -1011,8 +1011,8 @@ static char disable_dnd_trans[] = "<Btn2Down>: ";
 
 static Widget
 make_dialog (char* name, Widget parent, Boolean pop_up_p,
-	     char* shell_title, char* icon_name, Boolean text_input_slot,
-	     Boolean radio_box, Boolean list,
+	     CONST char* shell_title, CONST char* icon_name,
+	     Boolean text_input_slot, Boolean radio_box, Boolean list,
 	     int left_buttons, int right_buttons)
 {
   Widget result;
@@ -1043,19 +1043,19 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
       XtSetArg(al[ac], XmNtitle, shell_title); ac++;
       XtSetArg(al[ac], XtNallowShellResize, True); ac++;
       XtSetArg(al[ac], XmNdeleteResponse, XmUNMAP); ac++;
-      result = XmCreateDialogShell (parent, "dialog", al, ac);
+      result = XmCreateDialogShell (parent, (char *) "dialog", al, ac);
 
       XtSetArg(al[ac], XmNautoUnmanage, FALSE); ac++;
 /*      XtSetArg(al[ac], XmNautoUnmanage, TRUE); ac++; */ /* ####is this ok? */
       XtSetArg(al[ac], XmNnavigationType, XmTAB_GROUP); ac++;
-      form = XmCreateForm (result, shell_title, al, ac);
+      form = XmCreateForm (result, (char *) shell_title, al, ac);
     }
   else
     {
       ac = 0;
       XtSetArg(al[ac], XmNautoUnmanage, FALSE); ac++;
       XtSetArg(al[ac], XmNnavigationType, XmTAB_GROUP); ac++;
-      form = XmCreateForm (parent, shell_title, al, ac);
+      form = XmCreateForm (parent, (char *) shell_title, al, ac);
       result = form;
     }
 
@@ -1076,7 +1076,7 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
   XtSetArg(al[ac], XmNleftOffset, 13); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
   XtSetArg(al[ac], XmNrightOffset, 13); ac++;
-  row = XmCreateRowColumn (form, "row", al, ac);
+  row = XmCreateRowColumn (form, (char *) "row", al, ac);
   
   n_children = 0;
   for (i = 0; i < left_buttons; i++)
@@ -1115,7 +1115,8 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
   /* invisible seperator button */
   ac = 0;
   XtSetArg (al[ac], XmNmappedWhenManaged, FALSE); ac++;
-  children [n_children] = XmCreateLabel (row, "separator_button", al, ac);
+  children [n_children] = XmCreateLabel (row, (char *) "separator_button",
+					 al, ac);
   DO_DND_KLUDGE (children [n_children]);
   n_children++;
   
@@ -1142,7 +1143,7 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
   XtSetArg(al[ac], XmNleftOffset, 0); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
   XtSetArg(al[ac], XmNrightOffset, 0); ac++;
-  separator = XmCreateSeparator (form, "", al, ac);
+  separator = XmCreateSeparator (form, (char *) "", al, ac);
 
   ac = 0;
   XtSetArg(al[ac], XmNlabelType, XmPIXMAP); ac++;
@@ -1152,7 +1153,7 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM); ac++;
   XtSetArg(al[ac], XmNleftOffset, 13); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_NONE); ac++;
-  icon = XmCreateLabel (form, icon_name, al, ac);
+  icon = XmCreateLabel (form, (char *) icon_name, al, ac);
   DO_DND_KLUDGE (icon);
 
   ac = 0;
@@ -1165,7 +1166,7 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
   XtSetArg(al[ac], XmNbottomWidget, separator); ac++;
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_NONE); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_NONE); ac++;
-  icon_separator = XmCreateLabel (form, "", al, ac);
+  icon_separator = XmCreateLabel (form, (char *) "", al, ac);
   DO_DND_KLUDGE (icon_separator);
 
   if (text_input_slot)
@@ -1181,7 +1182,7 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
       XtSetArg(al[ac], XmNleftWidget, icon); ac++;
       XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
       XtSetArg(al[ac], XmNrightOffset, 13); ac++;
-      value = XmCreateTextField (form, "value", al, ac);
+      value = XmCreateTextField (form, (char *) "value", al, ac);
       DO_DND_KLUDGE (value);
     }
   else if (radio_box)
@@ -1201,14 +1202,17 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
       XtSetArg(al[ac], XmNleftWidget, icon); ac++;
       XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
       XtSetArg(al[ac], XmNrightOffset, 13); ac++;
-      value = XmCreateRadioBox (form, "radiobutton1", al, ac);
+      value = XmCreateRadioBox (form, (char *) "radiobutton1", al, ac);
       ac = 0;
       i = 0;
-      radio_butt = XmCreateToggleButtonGadget (value, "radio1", al, ac);
+      radio_butt = XmCreateToggleButtonGadget (value, (char *) "radio1",
+					       al, ac);
       children [i++] = radio_butt;
-      radio_butt = XmCreateToggleButtonGadget (value, "radio2", al, ac);
+      radio_butt = XmCreateToggleButtonGadget (value, (char *) "radio2",
+					       al, ac);
       children [i++] = radio_butt;
-      radio_butt = XmCreateToggleButtonGadget (value, "radio3", al, ac);
+      radio_butt = XmCreateToggleButtonGadget (value, (char *) "radio3",
+					       al, ac);
       children [i++] = radio_butt;
       XtManageChildren (children, i);
     }
@@ -1225,7 +1229,7 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
       XtSetArg(al[ac], XmNleftWidget, icon); ac++;
       XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
       XtSetArg(al[ac], XmNrightOffset, 13); ac++;
-      value = XmCreateScrolledList (form, "list", al, ac);
+      value = XmCreateScrolledList (form, (char *) "list", al, ac);
 
       /* this is the easiest way I found to have the dble click in the
 	 list activate the default button */
@@ -1245,7 +1249,7 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
   XtSetArg(al[ac], XmNleftWidget, icon); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
   XtSetArg(al[ac], XmNrightOffset, 13); ac++;
-  message = XmCreateLabel (form, "message", al, ac);
+  message = XmCreateLabel (form, (char *) "message", al, ac);
   DO_DND_KLUDGE (message);
   
   if (list)
@@ -1406,8 +1410,8 @@ xm_create_dialog (widget_instance* instance)
   Widget 	parent = instance->parent;
   Widget	widget;
   Boolean 	pop_up_p = instance->pop_up_p;
-  char*		shell_name = 0;
-  char* 	icon_name = 0;
+  CONST char*	shell_name = 0;
+  CONST char* 	icon_name = 0;
   Boolean	text_input_slot = False;
   Boolean	radio_box = False;
   Boolean	list = False;

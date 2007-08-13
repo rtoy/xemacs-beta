@@ -20,7 +20,7 @@
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
 ;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -88,16 +88,8 @@ If this contains a %s, that will be replaced by the matching rule.")
 
     ("[Mm]akefile\\'" . "makefile.inc")
 
-    ("\\.html\\'"
-     nil
-     "<html>\n"
-     "<head>\n"
-     "<title>" _ "</title>\n"
-     "</head>\n"
-     "<body>\n\n"
-     "</body>\n"
-     "</html>")
-    
+    (html-mode . (lambda () (sgml-tag "html")))
+
     (plain-tex-mode . "tex-insert.tex")
     (bibtex-mode . "tex-insert.tex")
     (latex-mode
@@ -140,20 +132,20 @@ If this contains a %s, that will be replaced by the matching rule.")
     (completing-read "Keyword, C-h: " v1 nil t))
     str ", ") & -2 "
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
+;; XEmacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
+;; XEmacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
+;; along with XEmacs; see the file COPYING.  If not, write to
 ;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;; Commentary:

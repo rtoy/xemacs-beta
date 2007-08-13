@@ -132,6 +132,7 @@ This shouldn't match socket or symbolic link lines (which aren't editable).")
 					 ((looking-at "x") "o-x")
 					 (t "o-x")))))))
 
+;;;###autoload
 (defun dired-make-permissions-interactive ()
   (save-excursion
     (beginning-of-line 0)

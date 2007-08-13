@@ -19,7 +19,7 @@ in the larger process of developing and maintaining programs.
 @end menu
 
 @node Compilation, Lisp Modes, Running, Running
-@section Running `make', or Compilers Generally
+@section Running ``make'', or Compilers Generally
 @cindex inferior process
 @cindex make
 @cindex compilation errors

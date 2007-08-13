@@ -26,7 +26,7 @@
 ;; Users are encouraged to add functionality to this file.
 ;; The present file contains all the infrastructure needed for that.
 ;;
-;; Generally, to to implement a new multisession capability within Ediff,
+;; Generally, to implement a new multisession capability within Ediff,
 ;; you need to tell it 
 ;;
 ;;	1. How to display the session group buffer.

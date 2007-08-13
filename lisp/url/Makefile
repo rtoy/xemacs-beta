@@ -2,7 +2,7 @@
 ELISP-TO-COMPILE = /tmp/elc-url-${USER}
 
 # what emacs is called on your system
-EMACS = xemacs
+EMACS = emacs
 
 # where the Info file should go
 INFODIR = .
@@ -19,9 +19,8 @@ DOTEMACS      = $$HOME/.emacs
 # MAKEINFO       = makeinfo
 MAKEINFO         = makeinfo
 
-# How to make a directory
-# need a -p if you want to make the parents!
-MKDIR = mkdir
+# Where your version of 'install' lives
+INSTALL = install
 
 # Various other stuff used
 RM    = rm -f
@@ -99,27 +98,6 @@ url:	docomp.el $(OBJECTS)
 clean:
 	rm -f $(OBJECTS)
 
-ChangeLog:
-	/usr/local/bin/rcs2log -h cs.indiana.edu -i 0 >| ChangeLog
-
-version: ChangeLog url.info
-	@echo -n "Creating new version "
-	@mkdir $(DIRNAME)
-	@./incvers
-	@co -q $(DISTFILES)
-	@rcs -q -s$(VTYPE)$(MAJOR)-$(MINOR)-`cat .version` url-vars.el
-	@rcs -q -s$(VTYPE)$(MAJOR)-$(MINOR)-`cat .version` url.texi
-	@co -q -kv $(SOURCES) docomp.el url.texi
-	@mv $(DISTFILES) $(DIRNAME)
-	@cp Makefile $(DIRNAME)/Makefile
-	@touch $(DIRNAME)/THIS-IS-VERSION-$(MAJOR).$(MINOR).`cat .version`
-	@mv ChangeLog url.info* $(DIRNAME)
-	@echo -n "$(MAJOR).$(MINOR)."
-	@echo `cat .version`
-	@tar czf url-$(MAJOR).$(MINOR).`cat .version`.tar.gz $(DIRNAME)
-	@rcs -nv$(MAJOR)-$(MINOR)-`cat .version`: $(SOURCES)
-	@rm -fr $(DIRNAME)
-
 url.html: url.texi
 	@texi2html -menu -split_node -verbose url.texi
 
@@ -136,8 +114,7 @@ url.dvi: url.texi
 
 install: url
 	@echo Installing in $(LISPDIR)
-	if [ ! -d $(LISPDIR) ] ; then $(MKDIR) $(LISPDIR) ; fi
-	(cd $(LISPDIR) ; $(RM) $(SOURCES) $(OBJECTS) url-sysdp.el*)
-	$(CP) $(SOURCES) $(OBJECTS) $(LISPDIR)
-	if [ ! -d $(INFODIR) ] ; then $(MKDIR) $(INFODIR) ; fi
-	$(CP) url.info* $(INFODIR)
+	$(INSTALL) -d $(LISPDIR)
+	$(INSTALL) -m 644 $(SOURCES) $(OBJECTS) $(LISPDIR)
+#	$(INSTALL) -d $(INFODIR)
+#	$(INSTALL) -m 644 url.info* $(INFODIR)

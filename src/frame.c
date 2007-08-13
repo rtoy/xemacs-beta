@@ -22,7 +22,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
-/* This file has been Mule-ized except for the frame-title stuff. */
+/* This file has been Mule-ized. */
 
 #include <config.h>
 #include "lisp.h"
@@ -54,7 +54,7 @@ Lisp_Object Vmouse_leave_frame_hook, Qmouse_leave_frame_hook;
 Lisp_Object Vmap_frame_hook, Qmap_frame_hook;
 Lisp_Object Vunmap_frame_hook, Qunmap_frame_hook;
 Lisp_Object Vallow_deletion_of_last_visible_frame;
-#ifdef HAVE_CDE
+#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND)
 Lisp_Object Vdrag_and_drop_functions, Qdrag_and_drop_functions;
 #endif
 Lisp_Object Vmouse_motion_handler;
@@ -95,8 +95,8 @@ Lisp_Object Qframep, Qframe_live_p;
 Lisp_Object Qframe_x_p, Qframe_tty_p;
 Lisp_Object Qdelete_frame;
 
-Lisp_Object Vframe_title_format;
-Lisp_Object Vframe_icon_title_format;
+Lisp_Object Qframe_title_format, Vframe_title_format;
+Lisp_Object Qframe_icon_title_format, Vframe_icon_title_format;
 
 Lisp_Object Vdefault_frame_name;
 Lisp_Object Vdefault_frame_plist;
@@ -1144,7 +1144,7 @@ window-system consoles.  If CONSOLE is nil or omitted, return frames only
 on the FRAME's console.  Otherwise, all frames are considered.
 */ )
   (frame, frametype, console)
-     Lisp_Object frame, frametype, console;
+  Lisp_Object frame, frametype, console;
 {
   XSETFRAME (frame, decode_frame (frame));
 
@@ -1306,7 +1306,7 @@ delete_frame_internal (struct frame *f, int force,
 
   minibuffer_selected = EQ (minibuf_window, Fselected_window (Qnil));
 
-  /* If we were focussed on this frame, then we're not any more.
+  /* If we were focused on this frame, then we're not any more.
      Assume that we lost the focus; that way, the call to
      Fselect_frame() below won't end up making us explicitly
      focus on another frame, which is generally undesirable in
@@ -1384,7 +1384,7 @@ delete_frame_internal (struct frame *f, int force,
 	Fselect_window (minibuf_window);
     }
 
-  /* Before here, we haven't made any dangerous changed (just checked for
+  /* Before here, we haven't made any dangerous changes (just checked for
      error conditions).  Now run the delete-frame-hook.  Remember that
      user code there could do any number of dangerous things, including
      signalling an error.
@@ -1468,7 +1468,7 @@ delete_frame_internal (struct frame *f, int force,
      another one.  */
   if (EQ (frame, CONSOLE_LAST_NONMINIBUF_FRAME (con)))
     {
-      Lisp_Object frmcons, devcons, concons;
+      Lisp_Object frmcons, devcons;
       
       set_console_last_nonminibuf_frame (con, Qnil);
       
@@ -1571,8 +1571,8 @@ use `save-buffers-kill-emacs' or `kill-emacs').  However, if optional
 second argument FORCE is non-nil, you can delete the last frame. (This
 will automatically call `save-buffers-kill-emacs'.)
 */ )
-     (frame, force)
-     Lisp_Object frame, force;
+  (frame, force)
+  Lisp_Object frame, force;
 {
   /* This function can GC */
   struct frame *f;
@@ -1623,14 +1623,16 @@ the device's selected window for WINDOW and nil for X and Y.
   y = XINT (XCDR (XCDR (val)));
   f = XFRAME (w->frame);
 
-  if (x >= 0 && y >= 0 &&
-      pixel_to_glyph_translation (f, x, y, &x, &y, &obj_x, &obj_y, &w,
-				  &bufpos, &closest, &modeline_closest,
-				  &obj1, &obj2)
-      != OVER_NOTHING)
+  if (x >= 0 && y >= 0)
     {
-      XCAR (XCDR (val)) = make_int (x);
-      XCDR (XCDR (val)) = make_int (y);
+      if (pixel_to_glyph_translation (f, x, y, &x, &y, &obj_x, &obj_y, &w,
+				      &bufpos, &closest, &modeline_closest,
+				      &obj1, &obj2)
+	  != OVER_NOTHING)
+	{
+	  XCAR (XCDR (val)) = make_int (x);
+	  XCDR (XCDR (val)) = make_int (y);
+	}
     }
   else
     {
@@ -1676,8 +1678,8 @@ defaults to the selected device.  If the device is a mouseless terminal
 or Emacs hasn't been programmed to read its mouse position, it returns
 the device's selected window for WINDOW and nil for X and Y.
 */ )
-     (device)
-     Lisp_Object device;
+  (device)
+  Lisp_Object device;
 {
   struct device *d = decode_device (device);
   Lisp_Object frame;
@@ -1726,8 +1728,8 @@ DEVICE specifies the device on which to read the mouse position, and
 defaults to the selected device.  If the mouse position can't be determined
 (e.g. DEVICE is a TTY device), nil is returned instead of an event.
 */ )
-     (device)
-     Lisp_Object device;
+  (device)
+  Lisp_Object device;
 {
   struct device *d = decode_device (device);
   Lisp_Object frame;
@@ -1755,8 +1757,8 @@ before calling this function on it, like this.
 Note also: Warping the mouse is contrary to the ICCCM, so be very sure
  that the behavior won't end up being obnoxious!
 */ )
-     (window, x, y)
-     Lisp_Object window, x, y;
+  (window, x, y)
+  Lisp_Object window, x, y;
 {
   struct window *w;
   int pix_x, pix_y;
@@ -1782,8 +1784,8 @@ If you have just created a frame, you must wait for it to become visible
 before calling this function on it, like this.
   (while (not (frame-visible-p frame)) (sleep-for .5))
 */ )
-     (window, x, y)
-     Lisp_Object window, x, y;
+  (window, x, y)
+  Lisp_Object window, x, y;
 {
   struct window *w;
 
@@ -1804,8 +1806,8 @@ Make the frame FRAME visible (assuming it is an X-window).
 If omitted, FRAME defaults to the currently selected frame.
 Also raises the frame so that nothing obscures it.
 */ )
-     (frame)
-     Lisp_Object frame;
+  (frame)
+  Lisp_Object frame;
 {
   struct frame *f = decode_frame (frame);
 
@@ -1855,7 +1857,7 @@ Make the frame FRAME into an icon, if the window manager supports icons.
 If omitted, FRAME defaults to the currently selected frame.
 */ )
   (frame)
-     Lisp_Object frame;
+  Lisp_Object frame;
 {
   struct frame *f, *sel_frame;
   struct device *d;
@@ -1885,7 +1887,7 @@ If omitted, FRAME defaults to the currently selected frame.
 Also raises the frame so that nothing obscures it.
 */ )
   (frame)
-     Lisp_Object frame;
+  Lisp_Object frame;
 {
   return Fmake_frame_visible (frame);
 }
@@ -1912,7 +1914,7 @@ Return T if frame is not obscured by any other X windows, NIL otherwise.
 Always returns t for tty frames.
 */ )
   (frame)
-     Lisp_Object frame;
+  Lisp_Object frame;
 {
   struct frame *f = decode_frame (frame);
   return (FRAMEMETH_OR_GIVEN (f, frame_totally_visible_p, (f), f->visible)
@@ -1943,7 +1945,7 @@ Return a list of all frames now \"visible\" (being updated).
 If DEVICE is specified only frames on that device will be returned.
 */ )
   (device)
-     Lisp_Object device;
+  Lisp_Object device;
 {
   Lisp_Object devcons, concons;
   struct frame *f;
@@ -1981,7 +1983,7 @@ If Emacs is displaying on an ordinary terminal or some other device which
 doesn't support multiple overlapping frames, this function does nothing.
 */ )
   (frame)
-     Lisp_Object frame;
+  Lisp_Object frame;
 {
   struct frame *f = decode_frame (frame);
 
@@ -2143,8 +2145,8 @@ Frame properties can be retrieved using `frame-property' or `frame-properties'.
 
 The following symbols etc. have predefined meanings:
 
- name		Name of the frame, used for resourcing.  Unchangeable
-		after creation.
+ name		Name of the frame, used with X resources.
+		Unchangeable after creation.
 
  height		Height of the frame, in lines.
 
@@ -2186,7 +2188,7 @@ The following symbols etc. have predefined meanings:
  etc.
 		[Giving a vector of a face and a property is equivalent
 		to calling `set-face-property' on the face and property,
-		with a local of FRAME.  Giving the vector to
+		with a locale of FRAME.  Giving the vector to
 		`frame-property' calls `face-property-instance' on the
 		face and property.]
 
@@ -2200,7 +2202,7 @@ for a description of the properties recognized for particular types of
 frames.
 */ )
   (frame, plist)
-     Lisp_Object frame, plist;
+  Lisp_Object frame, plist;
 {
   struct frame *f = decode_frame (frame);
   Lisp_Object tail;
@@ -2219,8 +2221,6 @@ frames.
 
       prop = get_property_alias (prop);
 
-      if (EQ (prop, Qminibuffer))
-	store_minibuf_frame_prop (f, val);
 #if 0
       /* mly wants this, but it's not reasonable to change the name of a
 	 frame after it has been created, because the old name was used
@@ -2300,24 +2300,22 @@ See `set-frame-properties' for the built-in property names.
 
   property = get_property_alias (property);
 
-#define FROB(propprop, value) 						\
-do {									\
-  if (EQ (property, propprop))						\
-    {									\
-      return (value);							\
-    }									\
+#define FROB(propprop, value) 	\
+do {				\
+  if (EQ (property, propprop))	\
+      return (value);		\
 } while (0)
 
   FROB (Qname, f->name);
   FROB (Qheight, make_int (FRAME_HEIGHT (f)));
-  FROB (Qwidth, make_int (FRAME_WIDTH (f)));
+  FROB (Qwidth,  make_int (FRAME_WIDTH  (f)));
   /* NOTE: FSF returns Qnil instead of Qt for FRAME_HAS_MINIBUF_P.
      This is over-the-top bogosity, because it's inconsistent with
      the semantics of `minibuffer' when passed to `make-frame'.
      Returning Qt makes things consistent. */
-  FROB (Qminibuffer, (! FRAME_HAS_MINIBUF_P (f) ? Qt
-		      : FRAME_MINIBUF_ONLY_P (f) ? Qonly
-		      : FRAME_MINIBUF_WINDOW (f)));
+  FROB (Qminibuffer, (FRAME_HAS_MINIBUF_P  (f) ? Qt    :
+		      FRAME_MINIBUF_ONLY_P (f) ? Qonly :
+		      FRAME_MINIBUF_WINDOW (f)));
   FROB (Qunsplittable, FRAME_NO_SPLIT_P (f) ? Qt : Qnil);
   FROB (Qbuffer_predicate, f->buffer_predicate);
 
@@ -2369,24 +2367,24 @@ Do not modify this list; use `set-frame-property' instead.
 
   GCPRO1 (result);
   
-#define FROB(propprop, value)					\
-do {								\
-  Lisp_Object temtem = (value);					\
-  if (!NILP (temtem))						\
-    /* backwards order; we reverse it below */			\
-    result = Fcons (temtem, Fcons (propprop, result));		\
+#define FROB(propprop, value)				\
+do {							\
+  Lisp_Object temtem = (value);				\
+  if (!NILP (temtem))					\
+    /* backwards order; we reverse it below */		\
+    result = Fcons (temtem, Fcons (propprop, result));	\
 } while (0)
 
   FROB (Qname, f->name);
   FROB (Qheight, make_int (FRAME_HEIGHT (f)));
-  FROB (Qwidth, make_int (FRAME_WIDTH (f)));
+  FROB (Qwidth,  make_int (FRAME_WIDTH  (f)));
  /* NOTE: FSF returns Qnil instead of Qt for FRAME_HAS_MINIBUF_P.
      This is over-the-top bogosity, because it's inconsistent with
      the semantics of `minibuffer' when passed to `make-frame'.
      Returning Qt makes things consistent. */
-  FROB (Qminibuffer, (! FRAME_HAS_MINIBUF_P (f) ? Qt
-		      : FRAME_MINIBUF_ONLY_P (f) ? Qonly
-		      : FRAME_MINIBUF_WINDOW (f)));
+  FROB (Qminibuffer, (FRAME_HAS_MINIBUF_P  (f) ? Qt    :
+                      FRAME_MINIBUF_ONLY_P (f) ? Qonly :
+		      FRAME_MINIBUF_WINDOW (f)));
   FROB (Qunsplittable, FRAME_NO_SPLIT_P (f) ? Qt : Qnil);
   FROB (Qbuffer_predicate, f->buffer_predicate);
 
@@ -2414,7 +2412,7 @@ DEFUN ("frame-pixel-height", Fframe_pixel_height, Sframe_pixel_height, 0, 1, 0 /
 Return the height in pixels of FRAME.
 */ )
   (frame)
-     Lisp_Object frame;
+  Lisp_Object frame;
 {
   struct frame *f = decode_frame (frame);
   return (make_int (f->pixheight));
@@ -2424,7 +2422,7 @@ DEFUN ("frame-pixel-width", Fframe_pixel_width, Sframe_pixel_width, 0, 1, 0 /*
 Return the width in pixels of FRAME.
 */ )
   (frame)
-     Lisp_Object frame;
+  Lisp_Object frame;
 {
   struct frame *f = decode_frame (frame);
   return (make_int (f->pixwidth));
@@ -2434,8 +2432,8 @@ DEFUN ("frame-name", Fframe_name, Sframe_name, 0, 1, 0 /*
 Return the name of FRAME (defaulting to the selected frame).
 This is not the same as the `title' of the frame.
 */ )
-     (frame)
-     Lisp_Object frame;
+  (frame)
+  Lisp_Object frame;
 {
   return (decode_frame (frame)->name);
 }
@@ -2450,8 +2448,8 @@ frame, the window-start of a window in the frame has changed, or
 anything else interesting has happened.  It wraps around occasionally.
 No argument or nil as argument means use selected frame as FRAME.
 */ )
-     (frame)
-     Lisp_Object frame;
+  (frame)
+  Lisp_Object frame;
 {
   return make_int (decode_frame (frame)->modiff);
 }
@@ -2471,7 +2469,7 @@ Optional third arg non-nil means that redisplay should use LINES lines
 but that the idea of the actual height of the frame should not be changed.
 */ )
   (frame, rows, pretend)
-     Lisp_Object frame, rows, pretend;
+  Lisp_Object frame, rows, pretend;
 {
   struct frame *f = decode_frame (frame);
   XSETFRAME (frame, f);
@@ -2488,7 +2486,7 @@ Optional third arg non-nil means that redisplay should use COLS columns
 but that the idea of the actual width of the frame should not be changed.
 */ )
   (frame, cols, pretend)
-     Lisp_Object frame, cols, pretend;
+  Lisp_Object frame, cols, pretend;
 {
   struct frame *f = decode_frame (frame);
   XSETFRAME (frame, f);
@@ -2506,7 +2504,7 @@ Optional fourth arg non-nil means that redisplay should use COLS by ROWS
 but that the idea of the actual size of the frame should not be changed.
 */ )
   (frame, cols, rows, pretend)
-     Lisp_Object frame, cols, rows, pretend;
+  Lisp_Object frame, cols, rows, pretend;
 {
   struct frame *f = decode_frame (frame);
   XSETFRAME (frame, f);
@@ -2525,7 +2523,7 @@ Negative values for XOFFSET or YOFFSET are interpreted relative to
 the rightmost or bottommost possible position (that stays within the screen).
 */ )
   (frame, xoffset, yoffset)
-     Lisp_Object frame, xoffset, yoffset;
+  Lisp_Object frame, xoffset, yoffset;
 {
   struct frame *f = decode_frame (frame);
   CHECK_INT (xoffset);
@@ -2774,7 +2772,7 @@ update_frame_title (struct frame *f)
   struct window *w = XWINDOW (FRAME_SELECTED_WINDOW (f));
   Lisp_Object title_format;
   Lisp_Object icon_format;
-  char *frame_title_string = 0;
+  Bufbyte *title;
 
   /* We don't change the title for the minibuffer unless the frame
      only has a minibuffer. */
@@ -2782,38 +2780,35 @@ update_frame_title (struct frame *f)
     return;
 
   /* And we don't want dead buffers to blow up on us. */
-  else if (!BUFFER_LIVE_P (XBUFFER (w->buffer)))
+  if (!BUFFER_LIVE_P (XBUFFER (w->buffer)))
     return;
 
-  title_format = Vframe_title_format;
-  icon_format = Vframe_icon_title_format;
+  title = NULL;
+  title_format = symbol_value_in_buffer (Qframe_title_format,      w->buffer);
+  icon_format  = symbol_value_in_buffer (Qframe_icon_title_format, w->buffer);
 
-  if (HAS_FRAMEMETH_P (f, set_title_from_char))
+  if (HAS_FRAMEMETH_P (f, set_title_from_bufbyte))
     {
-      frame_title_string =
-	generate_formatted_string (w, title_format, Qnil, DEFAULT_INDEX,
-				   CURRENT_DISP);
-      FRAMEMETH (f, set_title_from_char, (f, frame_title_string));
+      title = generate_formatted_string (w, title_format, Qnil,
+                                         DEFAULT_INDEX, CURRENT_DISP);
+      FRAMEMETH (f, set_title_from_bufbyte, (f, title));
     }
 
-  if (HAS_FRAMEMETH_P (f, set_icon_name_from_char))
+  if (HAS_FRAMEMETH_P (f, set_icon_name_from_bufbyte))
     {
-      if (!EQ (icon_format, title_format) ||
-	  !HAS_FRAMEMETH_P (f, set_title_from_char))
+      if (!EQ (icon_format, title_format) || !title)
 	{
-	  if (frame_title_string)
-	    xfree (frame_title_string);
+	  if (title)
+	    xfree (title);
 
-	  frame_title_string =
-	    generate_formatted_string (w, icon_format, Qnil, DEFAULT_INDEX,
-				       CURRENT_DISP);
+	  title = generate_formatted_string (w, icon_format, Qnil,
+                                             DEFAULT_INDEX, CURRENT_DISP);
 	}
-
-      FRAMEMETH (f, set_icon_name_from_char, (f, frame_title_string));
+      FRAMEMETH (f, set_icon_name_from_bufbyte, (f, title));
     }
 
-  if (frame_title_string)
-    xfree (frame_title_string);
+  if (title)
+    xfree (title);
 }
 
 
@@ -2879,7 +2874,7 @@ syms_of_frame (void)
   defsymbol (&Qmouse_leave_frame_hook, "mouse-leave-frame-hook");
   defsymbol (&Qmap_frame_hook, "map-frame-hook");
   defsymbol (&Qunmap_frame_hook, "unmap-frame-hook");
-#ifdef HAVE_CDE
+#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND)
   defsymbol (&Qdrag_and_drop_functions, "drag-and-drop-functions");
 #endif
 
@@ -2892,6 +2887,9 @@ syms_of_frame (void)
   defsymbol (&Qbuffer_predicate, "buffer-predicate");
   defsymbol (&Qframe_being_created, "frame-being-created");
   defsymbol (&Qmake_initial_minibuffer_frame, "make-initial-minibuffer-frame");
+
+  defsymbol (&Qframe_title_format, "frame-title-format");
+  defsymbol (&Qframe_icon_title_format, "frame-icon-title-format");
 
   defsymbol (&Qvisible, "visible");
   defsymbol (&Qiconic, "iconic");
@@ -3014,6 +3012,8 @@ See `select-frame-hook'.
   DEFVAR_LISP ("delete-frame-hook", &Vdelete_frame_hook /*
 Function or functions to call when a frame is deleted.
 One argument, the to-be-deleted frame.
+When this hook is called, the selected frame is different from
+the to-be-deleted frame, and the hook should not change that.
 */ );
   Vdelete_frame_hook = Qnil;
 
@@ -3057,10 +3057,13 @@ One argument, the frame.
 */ );
   Vallow_deletion_of_last_visible_frame = Qnil;
 
-#ifdef HAVE_CDE
+#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND)
   DEFVAR_LISP ("drag-and-drop-functions", &Vdrag_and_drop_functions /*
 Function or functions to run when an object is dropped on a frame.
-Each function is called with two args, a frame and a pathname.
+Each function is called with either two or three args.  If called with
+two args, the args are a frame and a pathname.  If with three, the
+args are a frame, a pathname (which is may be either a string or nil)
+and the textual representation of the dragged object.
 */ );
   Vdrag_and_drop_functions = Qnil;
 #endif

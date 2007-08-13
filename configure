@@ -100,7 +100,7 @@ energize_version='no'
 native_sound_lib=''
 # make normal error-checking be the default in alpha and beta versions, so
 # that bugs get noticed.  Change this for released versions.
-error_check_default='no'
+error_check_default='yes'
 error_check_extents=$error_check_default
 error_check_typecheck=$error_check_default
 error_check_bufpos=$error_check_default
@@ -211,6 +211,7 @@ Window-system options:
 			 Motif dialog boxes will be used if Motif can be
 			 found.)
 --with-cde (*)		Compile in support for CDE drag and drop.
+--with-offix (*)	Compile in support for OffiX drag and drop.
 --with-xpm (*)		Compile with support for XPM files.
 			It is highly recommended that you obtain XPM
 			(version 3.4g or better) if you don't already
@@ -611,6 +612,22 @@ Set it to either \`yes' or \`no'."
 
         ## Has the user requested CDE support?
 	"with_cde" )
+	  ## Make sure the value given was either "yes" or "no".
+	  case "${val}" in
+	    y | ye | yes )	val=yes ;;
+	    n | no )		val=no  ;;
+	    * )
+	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
+Set it to either \`yes' or \`no'."
+	       echo "${short_usage}") >&2
+	      exit 1
+	    ;;
+	  esac
+          eval "${opt}=\"${val}\""
+        ;;
+
+        ## Has the user requested OffiX support?
+	"with_offix" )
 	  ## Make sure the value given was either "yes" or "no".
 	  case "${val}" in
 	    y | ye | yes )	val=yes ;;
@@ -2135,14 +2152,14 @@ case "${canonical}" in
     case "${canonical}" in
       ## The Sun386 didn't get past 4.0.
       i[3-9]86-*-sunos4	   ) opsys=sunos4-0      ;;
-      *-sunos4.0*	   ) opsys=sunos4-0      ;;
-      *-sunos4.1.2*        ) opsys=sunos4-1-2    ;;
-      *-sunos4.1.[3-9]*	   ) opsys=sunos4-1-3    ;;
       *-sunos4shr*	   ) opsys=sunos4-0shr   ;;
       *-sunos4-0shr*	   ) opsys=sunos4-0shr   ;;
       *-sunos4-1shr*	   ) opsys=sunos4-1shr   ;;
       *-sunos4-1-2shr*	   ) opsys=sunos4-1-2shr ;;
       *-sunos4-1-[3-9]shr* ) opsys=sunos4-1-3shr ;;
+      *-sunos4.0*	   ) opsys=sunos4-0      ;;
+      *-sunos4.1.2*        ) opsys=sunos4-1-2    ;;
+      *-sunos4.1.[3-9]*	   ) opsys=sunos4-1-3    ;;
       *-sunos4* | *-sunos  ) opsys=sunos4-1	 ;;
 
       *-solaris2.3*	   ) opsys=sol2-3 	 ;;
@@ -3557,6 +3574,10 @@ if [ "${window_system}" = "none" ]; then
      echo "configure: warning: --with-cde ignored:  Not valid without X support" >&2 
     with_menubars='no'
   fi
+  if [ "x${with_offix}" != x ]; then
+     echo "configure: warning: --with-offix ignored:  Not valid without X support" >&2 
+    with_offix='no'
+  fi
   if [ "x${with_menubars}" != x ]; then
      echo "configure: warning: --with-menubars ignored:  Not valid without X support" >&2 
     with_menubars='no'
@@ -3574,6 +3595,7 @@ if [ "${window_system}" = "none" ]; then
     with_toolbars='no'
   fi
   with_cde='no'
+  with_offix='no'
   with_menubars='no'
   with_scrollbars='no'
   with_dialogs='no'
@@ -4223,6 +4245,66 @@ DEFS="$DEFS -DHAVE_CDE=1"
 ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_CDE\${ac_dB}HAVE_CDE\${ac_dC}1\${ac_dD}
 \${ac_uA}HAVE_CDE\${ac_uB}HAVE_CDE\${ac_uC}1\${ac_uD}
 \${ac_eA}HAVE_CDE\${ac_eB}HAVE_CDE\${ac_eC}1\${ac_eD}
+"
+}
+
+fi
+
+#
+# See if we can find OffiX.
+#
+if test "${window_system}" != "none" ; then
+  if test "${with_offix}" != "no" ; then
+    if test "${with_offix}" != "yes" ; then
+      internal_offix_lib_found='no'
+      ac_save_LIBS="${LIBS}"
+LIBS="${LIBS} -lDnd"
+ac_have_lib=""
+test -n "$silent" || echo "checking for -lDnd"
+cat > conftest.${ac_ext} <<EOF
+#include "confdefs.h"
+
+int main() { return 0; }
+int t() { main();; return 0; }
+EOF
+if eval $ac_compile; then
+  rm -rf conftest*
+  ac_have_lib="1"
+
+fi
+rm -f conftest*
+LIBS="${ac_save_LIBS}"
+if test -n "${ac_have_lib}"; then
+   :; internal_offix_lib_found='yes'
+else
+   :; 
+fi
+
+      if test "${internal_offix_lib_found}" = "yes" ; then
+        internal_offix_includes_found='no'
+        for arg in ${DEFS} /usr/include
+          do
+            if test -f `echo "${arg}/OffiX/DragAndDrop.h" | sed 's/^\-I//'` ; then
+  	      internal_offix_includes_found='yes'
+            fi
+          done
+        if test "${internal_offix_includes_found}" = "yes" ; then
+          with_offix='yes'
+        fi
+      fi
+    fi
+  fi
+fi
+if test "${with_offix}" = "yes" ; then
+  
+{
+test -n "$verbose" && \
+echo "	defining HAVE_OFFIX_DND"
+echo "#define" HAVE_OFFIX_DND "1" >> confdefs.h
+DEFS="$DEFS -DHAVE_OFFIX_DND=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_OFFIX_DND\${ac_dB}HAVE_OFFIX_DND\${ac_dC}1\${ac_dD}
+\${ac_uA}HAVE_OFFIX_DND\${ac_uB}HAVE_OFFIX_DND\${ac_uC}1\${ac_uD}
+\${ac_eA}HAVE_OFFIX_DND\${ac_eB}HAVE_OFFIX_DND\${ac_eC}1\${ac_eD}
 "
 }
 
@@ -8010,6 +8092,9 @@ if [ "$with_tooltalk" = "yes" ]; then
 fi
 if [ "$with_cde" = "yes" ]; then
   echo "  Compiling in support for CDE."
+fi
+if [ "$with_offix" = "yes" ]; then
+  echo "  Compiling in support for OffiX."
 fi
 if [ "$with_mocklisp" = "yes" ]; then
   echo "  Compiling in support for Mocklisp."

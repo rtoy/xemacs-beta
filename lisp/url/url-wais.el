@@ -240,7 +240,7 @@
 	(insert "<title>WAIS search</title>\n"
 		"<h1>WAIS search of " (nth 2 href) "</h1>"
 		"<hr>\n"
-		"<form>\n"
+		(format "<form action=\"%s\" enctype=\"application/x-w3-wais\">\n" url)
 		"Enter search term: <input name=\"internal-wais\">\n"
 		"</form>\n"
 		"<hr>\n"))))))

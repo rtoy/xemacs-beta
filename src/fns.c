@@ -3136,8 +3136,8 @@ Lisp_Object Vfeatures;
 
 DEFUN ("featurep", Ffeaturep, Sfeaturep, 1, 1, 0 /*
 Return t if FEATURE is present in this Emacs.
-Use this to conditionalize execution of lisp code based on the presence or
-absence of emacs or environment extensions.
+Use this to conditionalize execution of lisp code based on the
+presence or absence of emacs or environment extensions.
 Use `provide' to declare that a feature is available.
 This function looks at the value of the variable `features'.
 */ )
@@ -3152,6 +3152,7 @@ This function looks at the value of the variable `features'.
 
 DEFUN ("provide", Fprovide, Sprovide, 1, 1, 0 /*
 Announce that FEATURE is a feature of the current Emacs.
+This function updates the value of the variable `features'.
 */ )
      (feature)
      Lisp_Object feature;

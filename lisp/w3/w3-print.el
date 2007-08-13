@@ -1,11 +1,11 @@
-;;; w3-print.el,v --- Printing support for emacs-w3
+;;; w3-print.el --- Printing support for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/06/06 15:03:15
-;; Version: 1.15
+;; Created: 1996/07/09 02:54:01
+;; Version: 1.3
 ;; Keywords: faces, help, printing, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -67,6 +67,7 @@ will be correctly listed in ps-bold-faces and ps-italic-faces"
 	function (or function 'ps-print-buffer-with-faces))
   (let ((ps-bold-faces ps-bold-faces)
 	(ps-italic-faces ps-italic-faces)
+	(inhibit-read-only t)
 	(ps-underline-faces (cond
 			     ((boundp 'ps-underline-faces)
 			      (symbol-value 'ps-underline-faces))

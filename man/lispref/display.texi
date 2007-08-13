@@ -208,11 +208,17 @@ Minibuffer depth is 0.
 @end example
 @end defun
 
-Almost all the messages displayed in the echo area are also recorded
-in the @samp{*Messages*} buffer.
+Some of the messages displayed in the echo area are also recorded in the
+@samp{ *Message-Log*} buffer.
 
+@ignore
 @defopt message-log-max
 This variable specifies how many lines to keep in the @samp{*Messages*}
+buffer.  The value @code{t} means there is no limit on how many lines to
+keep.  The value @code{nil} disables message logging entirely.  Here's
+how to display a message and prevent it from being logged:
+@defopt log-message-max-size
+This variable specifies how many lines to keep in the @samp{* Message-Log*}
 buffer.  The value @code{t} means there is no limit on how many lines to
 keep.  The value @code{nil} disables message logging entirely.  Here's
 how to display a message and prevent it from being logged:
@@ -221,6 +227,11 @@ how to display a message and prevent it from being logged:
 (let (message-log-max)
   (message @dots{}))
 @end example
+@end defopt
+@end ignore
+@defopt log-message-max-size
+This variable specifies the maximum size of @samp{* Message-Log*}
+buffer.
 @end defopt
 
 @defvar echo-keystrokes

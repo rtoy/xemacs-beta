@@ -204,8 +204,8 @@
 ; Change History
 ; 
 ; $Log: cl-read.el,v $
-; Revision 1.1.1.1  1996/12/18 03:33:25  steve
-; XEmacs 19.14 -- Release
+; Revision 1.1.1.2  1996/12/18 03:46:06  steve
+; XEmacs 19.15-b2
 ;
 ; Revision 1.19  94/03/21  19:59:24  liberte
 ; Add invalid-cl-read-syntax error symbol.
@@ -556,7 +556,7 @@ Returns nil if there is no such function."
 	   (return 
 	    (prog1 
 		(, reader-call)
-	      ;; this occurence of the after hook fires if the 
+	      ;; this occurrence of the after hook fires if the 
 	      ;; reader-call returns normally ...
 	      (run-hooks 'after-read-hook))))
        ;; ... and that one if  it was thrown to the tag 'reader-ignore

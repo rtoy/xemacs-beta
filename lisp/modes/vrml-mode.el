@@ -66,7 +66,7 @@ to take place:
   6. Move backward to start of comment, indenting if necessary.")
 
 (defvar vrml-use-hairy-comment-detector t
-  "*If not `nil', the the more complicated, but slower, comment
+  "*If not `nil', then the more complicated, but slower, comment
 detecting function is used.")
 
 (defvar vrml-mode-abbrev-table nil
@@ -443,7 +443,7 @@ Returns nil if line starts inside a string, t if in a comment."
 				   (looking-at "children")))))
 		   (progn
 		     ;; Line is continuation line, or the sexp opener
-		     ;; is not a curly brace, or we are are looking at
+		     ;; is not a curly brace, or we are looking at
 		     ;; an `expr' expression (which must be split
 		     ;; specially).  So indentation is column of first
 		     ;; good spot after sexp opener.  If there is no

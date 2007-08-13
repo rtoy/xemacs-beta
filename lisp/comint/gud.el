@@ -403,7 +403,7 @@ The key should be one of the cars in `gdb-instance-buffer-rules-assoc'."
 ;;	      instance.
 ;; The remaining function(s) are optional:
 ;;
-;;     MODE - called in new new buffer with no arguments, should establish
+;;     MODE - called in the new buffer with no arguments, should establish
 ;;	      the proper mode for the buffer.
 ;;
 

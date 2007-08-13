@@ -1,5 +1,11 @@
+;;; w3-hot.el --- Main functions for emacs-w3 on all platforms/versions
+;; Author: wmperry
+;; Created: 1996/07/26 05:22:59
+;; Version: 1.5
+;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -35,6 +41,25 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-html-bookmarks nil)
 
+(defun w3-hotlist-break-shit ()
+  (let ((todo '(w3-hotlist-apropos
+		w3-hotlist-delete
+		w3-hotlist-rename-entry
+		w3-hotlist-append
+		w3-use-hotlist
+		w3-hotlist-add-document
+		w3-hotlist-add-document-at-point
+		))
+	(cur nil))
+    (while todo
+      (setq cur (car todo)
+	    todo (cdr todo))
+      (fset cur
+	    (`
+	     (lambda (&rest ignore)
+	       (error "Sorry, `%s' does not work with html bookmarks"
+		      (quote (, cur)))))))))
+
 (defun w3-read-html-bookmarks (fname)
   "Import an HTML file into the Emacs-w3 format."
   (interactive "fBookmark file: ")
@@ -49,7 +74,8 @@
 	   (parse (w3-parse-buffer (current-buffer) t)))
       (setq parse w3-last-parse-tree
 	    bkmarks (nreverse (w3-grok-html-bookmarks parse))
-	    w3-html-bookmarks bkmarks))))
+	    w3-html-bookmarks bkmarks)))
+  (w3-hotlist-break-shit))
 
 (eval-when-compile
   (defvar cur-stack nil)
@@ -84,11 +110,11 @@
        ((eq tag 'title)
 	(setq cur-title (list (w3-normalize-spaces (car content))))
 	(w3-grok-html-bookmarks-internal content))
-       ((eq tag 'dl)
+       ((memq tag '(dl ol ul))
 	(push-new-menu)
 	(w3-grok-html-bookmarks-internal content)
 	(finish-submenu))
-       ((and (eq tag 'dt)
+       ((and (memq tag '(dt li))
 	     (stringp (car content)))
 	(setq cur-title (cons (w3-normalize-spaces (car content))
 			      cur-title)))
@@ -231,6 +257,25 @@
     (setq w3-hotlist (nconc x w3-hotlist))
     (and (fboundp 'w3-add-hotlist-menu) (funcall 'w3-add-hotlist-menu))))
 
+(defun w3-hotlist-parse-old-mosaic-format ()
+  (let (cur-link cur-alias)
+    (while (re-search-forward "^\n" nil t) (replace-match ""))
+    (goto-line 3)
+    (while (not (eobp))
+      (re-search-forward "^[^ ]*" nil t)
+      (setq cur-link (buffer-substring (match-beginning 0) (match-end 0)))
+      (setq cur-alias (buffer-substring (progn
+					  (forward-line 1)
+					  (beginning-of-line)
+					  (point))
+					(progn
+					  (end-of-line)
+					  (point))))
+      (if (not (equal cur-alias ""))
+	  (setq w3-hotlist (cons (list cur-alias cur-link) w3-hotlist)))
+      (if (fboundp 'w3-add-hotlist-menu)
+	  (funcall 'w3-add-hotlist-menu)))))
+
 (defun w3-parse-hotlist (&optional fname)
   "Read in the hotlist specified by FNAME"
   (if (not fname) (setq fname w3-hotlist-file))
@@ -239,28 +284,21 @@
       (message "%s does not exist!" fname)
     (let* ((old-buffer (current-buffer))
 	   (buffer (get-buffer-create " *HOTW3*"))
-	   cur-link
-	   cur-alias)
+	   (case-fold-search t))
       (set-buffer buffer)
       (erase-buffer)
       (insert-file-contents fname)
       (goto-char (point-min))
-      (while (re-search-forward "^\n" nil t) (replace-match ""))
-      (goto-line 3)
-      (while (not (eobp))
-	(re-search-forward "^[^ ]*" nil t)
-	(setq cur-link (buffer-substring (match-beginning 0) (match-end 0)))
-	(setq cur-alias (buffer-substring (progn
-					    (forward-line 1)
-					    (beginning-of-line)
-					    (point))
-					  (progn
-					    (end-of-line)
-					    (point))))
-	(if (not (equal cur-alias ""))
-	    (setq w3-hotlist (cons (list cur-alias cur-link) w3-hotlist))))
+      (cond
+       ((looking-at "ncsa-xmosaic-hotlist-format-1");; Old-style NCSA Mosaic
+	(w3-hotlist-parse-old-mosaic-format))
+       ((or (looking-at "<!DOCTYPE")	; Some HTML style, including netscape
+	    (re-search-forward "<a[ \n]+href" nil t))
+	(w3-read-html-bookmarks fname))
+       (t
+	(message "Cannot determine format of hotlist file: %s" fname)))
+      (set-buffer-modified-p nil)
       (kill-buffer buffer)
-      (and (fboundp 'w3-add-hotlist-menu) (funcall 'w3-add-hotlist-menu))
       (set-buffer old-buffer))))
 
 ;;;###autoload
@@ -288,9 +326,8 @@ visited or interesting items you have found on the World Wide Web."
     (if (and title
 	     (marker-buffer (car title))
 	     (marker-buffer (cdr title)))
-	(setq title (buffer-substring (car title) (cdr title)))
+	(setq title (buffer-substring-no-properties (car title) (cdr title)))
       (setq title "None"))
-    (remove-text-properties 1 (length title))
     (w3-hotlist-add-document pref-arg title url)
     (and (fboundp 'w3-add-hotlist-menu) (funcall 'w3-add-hotlist-menu))))
 

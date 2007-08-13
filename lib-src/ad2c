@@ -20,7 +20,7 @@ sed '
 s/\\/\\\\/g
 s/\\$//g
 s/"/\\"/g
-s/^/"/
+s/^/(String) "/
 : test
 /\\$/b slash
 s/$/",/

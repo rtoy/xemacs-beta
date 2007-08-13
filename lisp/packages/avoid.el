@@ -1,8 +1,8 @@
-;;; avoid.el --- make mouse pointer stay out of the way of editing.
+;;; avoid.el --- make mouse pointer stay out of the way of editing
 
 ;;; Copyright (C) 1993, 1994 Free Software Foundation, Inc.
 
-;; Author: Boris Goldowsky <boris@cs.rochester.edu>
+;; Author: Boris Goldowsky <boris@gnu.ai.mit.edu>
 ;; Keywords: mouse
 ;; Version: 1.10
 
@@ -20,58 +20,54 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.28.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
-;;;
-;;; For those who are annoyed by the mouse pointer obscuring text,
-;;; this mode moves the mouse pointer - either just a little out of
-;;; the way, or all the way to the corner of the frame. 
-;;; To use, load or evaluate this file and type M-x mouse-avoidance-mode .
-;;; To set up permanently, put this file on your load-path and put the
-;;; following in your .emacs: 
-;;;
-;;; (cond (window-system
-;;;        (require 'avoid)
-;;;        (mouse-avoidance-mode 'animate)))
-;;;
-;;; The 'animate can be 'jump or 'banish or 'exile or 'protean if you prefer.
-;;; See the documentation for function `mouse-avoidance-mode' for
-;;; details of the different modes.
-;;;
-;;; For added silliness, make the animatee animate...
-;;; put something similar to the following into your .emacs:
-;;;
-;;; (cond (window-system
-;;;       (setq x-pointer-shape 
-;;;	     (eval (nth (random 4)
-;;;			'(x-pointer-man x-pointer-spider
-;;;			  x-pointer-gobbler x-pointer-gumby))))
-;;;       (set-mouse-color (cdr (assoc 'mouse-color (frame-parameters))))))
-;;;
-;;; For completely random pointer shape, replace the setq above with:
-;;; (setq x-pointer-shape (mouse-avoidance-random-shape))
-;;; 
-;;; Bugs / Warnings / To-Do:
-;;;
-;;; - Using this code does slow emacs down.  "banish" mode shouldn't
-;;;   ever be too bad though, and on my workstation even "animate" doesn't
-;;;   seem to have a noticable effect during editing.
-;;;
-;;; - It should find out where any overlapping frames are and avoid them,
-;;;   rather than always raising the frame.
 
-;;; Credits:
-;;; This code was helped by all those who contributed suggestions, 
-;;;   fixes, and additions
-;;; Joe Harrington (and his advisor), for the original inspiration.
-;;; Ken Manheimer, for dreaming up the Protean mode.
-;;; Richard Stallman, for the awful cat-and-mouse pun, among other things.
-;;; Mike Williams, Denis Howe, Bill Benedetto, Chris Moore, Don Morris,
-;;; Simon Marshall, and M.S. Ashton, for their feedback.
-;;;
+;; For those who are annoyed by the mouse pointer obscuring text,
+;; this mode moves the mouse pointer - either just a little out of
+;; the way, or all the way to the corner of the frame. 
+;; To use, load or evaluate this file and type M-x mouse-avoidance-mode .
+;; To set up permanently, put this file on your .emacs: 
+;;
+;; (if window-system (mouse-avoidance-mode 'animate))
+;;
+;; The 'animate can be 'jump or 'banish or 'exile or 'protean if you prefer.
+;; See the documentation for function `mouse-avoidance-mode' for
+;; details of the different modes.
+;;
+;; For added silliness, make the animatee animate...
+;; put something similar to the following into your .emacs:
+;;
+;; (if window-system
+;;     (mouse-avoidance-set-pointer-shape
+;;	     (eval (nth (random 4)
+;;			'(x-pointer-man x-pointer-spider
+;;                       x-pointer-gobbler x-pointer-gumby)))))
+;;
+;; For completely random pointer shape, replace the setq above with:
+;; (setq x-pointer-shape (mouse-avoidance-random-shape))
+;; 
+;; Bugs / Warnings / To-Do:
+;;
+;; - Using this code does slow emacs down.  "banish" mode shouldn't
+;;   be too bad, and on my workstation even "animate" is reasonable.
+;;
+;; - It ought find out where any overlapping frames are and avoid them,
+;;   rather than always raising the frame.
+
+;; Credits:
+;; This code was helped by all those who contributed suggestions, 
+;;   fixes, and additions
+;; Joe Harrington (and his advisor), for the original inspiration.
+;; Ken Manheimer, for dreaming up the Protean mode.
+;; Richard Stallman, for the awful cat-and-mouse pun, among other things.
+;; Mike Williams, Denis Howe, Bill Benedetto, Chris Moore, Don Morris,
+;; Simon Marshall, and M.S. Ashton, for their feedback.
+
 ;;; Code:
 
 (provide 'avoid)
@@ -102,10 +98,16 @@ Only applies in mouse-avoidance-modes `animate' and `jump'.")
 (defvar mouse-avoidance-state nil)
 (defvar mouse-avoidance-pointer-shapes nil)
 (defvar mouse-avoidance-n-pointer-shapes 0)
+(defvar mouse-avoidance-old-pointer-shape nil)
 
 ;;; Functions:
 
-;; XEmacs change -- this is so ugly.
+(defsubst mouse-avoidance-set-pointer-shape (shape)
+  "Set the shape of the mouse pointer to SHAPE."
+  (setq x-pointer-shape shape)
+  (set-mouse-color nil))
+
+;; XEmacs change -- this is so ugly. [FSF version is totally different -sb]
 (defun mouse-avoidance-point-position ()
   "Returns (WINDOW X . Y) of current point - analogous to mouse-position"
   (let* ((beg (window-start))
@@ -129,6 +131,7 @@ Only applies in mouse-avoidance-modes `animate' and `jump'.")
   ;; Returns t if it moved the mouse.
   (let ((f (selected-frame)))
     (raise-frame f)
+    ;; XEmacs: FSF version of set-mouse-position requires FRAME parameter
     (set-mouse-position (frame-selected-window f) (car pos) (cdr pos))
     t))
       
@@ -158,7 +161,7 @@ You can redefine this if you want the mouse banished to a different corner."
   ;; Args are the CURRENT location, the desired DELTA for
   ;; warp-conservation, the DISTANCE we like to move, the VARIABILITY
   ;; in distance allowed, and the MIN and MAX possible window positions.
-  ;; Returns something as close to DELTA as possible withing the constraints.
+  ;; Returns something as close to DELTA as possible within the constraints.
   (let ((L1 (max (- min cur) (+ (- dist) (- var))))
 	(R1                  (+ (- dist)    var ))
 	(L2                  (+    dist  (- var)))
@@ -179,6 +182,7 @@ You can redefine this if you want the mouse banished to a different corner."
   ;; For these modes, state keeps track of the total offset that we've
   ;; accumulated, and tries to keep it close to zero.
   (let* ((cur (mouse-position))
+	 (cur-frame (car cur))
 	 (cur-pos (cdr cur))
 	 (deltax (mouse-avoidance-delta 
 		  (car cur-pos) (- (random mouse-avoidance-nudge-var)
@@ -189,13 +193,14 @@ You can redefine this if you want the mouse banished to a different corner."
 		  (cdr cur-pos) (- (random mouse-avoidance-nudge-var)
 				   (cdr mouse-avoidance-state))
 		  mouse-avoidance-nudge-dist mouse-avoidance-nudge-var
-		  0 (window-height))))
+		  0 (frame-height))))
     (setq mouse-avoidance-state
 	  (cons (+ (car mouse-avoidance-state) deltax)
 		(+ (cdr mouse-avoidance-state) deltay)))
     (if (or (eq mouse-avoidance-mode 'animate) 
 	    (eq mouse-avoidance-mode 'proteus))
 	(let ((i 0.0)
+	      ;; XEmacs change
 	      (color (cdr (assoc 'mouse-color (frame-parameters)))))
 	  (while (<= i 1)
 	    (mouse-avoidance-set-mouse-position 
@@ -203,6 +208,7 @@ You can redefine this if you want the mouse banished to a different corner."
 		   (+ (cdr cur-pos) (round (* i deltay)))))
     	    (setq i (+ i (max .1 (/ 1.0 mouse-avoidance-nudge-dist))))
 	    (if (eq mouse-avoidance-mode 'proteus)
+		;; XEmacs change
 		(progn
 		  (setq x-pointer-shape (mouse-avoidance-random-shape))
 		  (set-mouse-color color)))
@@ -245,6 +251,7 @@ redefine this function to suit your own tastes."
 	       (mouse-avoidance-banish-mouse))
 	      ((and mouse-avoidance-state
 		    (not (mouse-avoidance-too-close-p mouse-avoidance-state)))
+	       ;; XEmacs change
 	       (if (and (eq (car mp) (if (< emacs-minor-version 12)
 					 (selected-frame)
 				       (selected-window)))
@@ -262,6 +269,7 @@ redefine this function to suit your own tastes."
 	   (mouse-avoidance-too-close-p (mouse-position)))
       (let ((old-pos (mouse-position)))
 	(mouse-avoidance-nudge-mouse)
+	;; XEmacs change
 	(if (not (eq (if (< emacs-minor-version 12)
 			 (selected-frame)
 		       (selected-window)) (car old-pos))) ; move went awry
@@ -284,6 +292,7 @@ Return nil if there are any lists in the key sequence."
 	       (setq i (1+ i))))
 	   t))))
 
+;;;###autoload
 (defun mouse-avoidance-mode (&optional mode)
   "Set cursor avoidance mode to MODE.
 MODE should be one of the symbols `banish', `exile', `jump', `animate',
@@ -316,21 +325,27 @@ definition of \"random distance\".)"
 		  nil t))))
   (if (eq mode 'cat-and-mouse)
       (setq mode 'animate))
-  (setq post-command-hook
-	(delete 'mouse-avoidance-banish-hook (append post-command-hook nil)))
-  (setq post-command-hook
-	(delete 'mouse-avoidance-exile-hook (append post-command-hook nil)))
-  (setq post-command-hook
-	(delete 'mouse-avoidance-fancy-hook (append post-command-hook nil)))
+  ;; XEmacs change - We don't have post-command-idle-hook
+  (remove-hook 'post-command-hook 'mouse-avoidance-banish-hook)
+  (remove-hook 'post-command-hook 'mouse-avoidance-exile-hook)
+  (remove-hook 'post-command-hook 'mouse-avoidance-fancy-hook)
+  ;; Restore pointer shape if necessary
+  (if (eq mouse-avoidance-mode 'proteus)
+      (mouse-avoidance-set-pointer-shape mouse-avoidance-old-pointer-shape))
+
+  ;; Do additional setup depending on version of mode requested
   (cond	((eq mode 'none)
 	 (setq mouse-avoidance-mode nil))
 	((or (eq mode 'jump)
 	     (eq mode 'animate)
 	     (eq mode 'proteus))
+	 ;; XEmacs: we don't have post-command-idle-hook
 	 (add-hook 'post-command-hook 'mouse-avoidance-fancy-hook)
 	 (setq mouse-avoidance-mode mode
-	       mouse-avoidance-state (cons 0 0)))
+	       mouse-avoidance-state (cons 0 0)
+	       mouse-avoidance-old-pointer-shape x-pointer-shape))
 	((eq mode 'exile)
+	 ;; XEmacs: FSF uses post-command-idle-hook
 	 (add-hook 'post-command-hook 'mouse-avoidance-exile-hook)
 	 (setq mouse-avoidance-mode mode
 	       mouse-avoidance-state nil))
@@ -338,6 +353,7 @@ definition of \"random distance\".)"
 	     (eq mode t)
 	     (and (null mode) (null mouse-avoidance-mode))
 	     (and mode (> (prefix-numeric-value mode) 0)))
+	 ;; XEmacs: FSF uses post-command-idle-hook
 	 (add-hook 'post-command-hook 'mouse-avoidance-banish-hook)
 	 (setq mouse-avoidance-mode 'banish))
 	(t (setq mouse-avoidance-mode nil)))

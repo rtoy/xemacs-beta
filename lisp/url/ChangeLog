@@ -1,14 +1,144 @@
-Thu Jun 13 00:20:04 1996  William Perry  <wmperry@monolith.spry.com>
+Thu Aug  1 13:26:02 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: made url-insert-file-contents  interactive
+
+* url-sysdp.el:
+added data-directory to sysdep version of x-library-search-path for
+emacs under windows 95/nt
+
+Tue Jul 23 00:19:22 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: fix for no_proxy checking for local files
+
+Mon Jul 22 03:22:52 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: added stub for make-local-hook - more Emacs 19.2x lossage.
+
+Sun Jul 21 20:10:42 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el: Created version 1.0.40
+
+* url.el:
+In url-after-change-function, don't change buffers if its been killed.
+
+Fri Jul 19 04:39:08 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el: Created version 1.0.39
+
+Thu Jul 18 14:06:54 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el: duh - make url-current-server buffer local.
+
+Fri Jul 12 06:10:02 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Only match against the hostname in the URL for the no_proxy checking
+
+* url-hash.el: removed old aliases for w3-*hash functions
+
+Thu Jul 11 05:10:47 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: version of valid-color-name-p and device-class for the OS/2
+presentation manager.
+
+* url.el, url-file.el: handle : in filenames gracefully
+
+* url-vars.el: Created version 1.0.38
+
+Wed Jul 10 23:33:39 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* dist.Makefile: fixed install target - duh
+
+* url-irc.el: fixed bad variable name
+
+* mm.el: require cl to avoid stupid compiler errors
+
+* url.el: new function url-remove-compressed-extensions
+
+* url-vars.el, mm.el: *** empty log message ***
+
+* url-cookie.el, url-vars.el:
+can now control when/how/if an HTTP cookie is accepted
+
+Tue Jul  9 21:01:15 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: added more overlay functions
+
+* url-vars.el: Created version 1.0.37
+
+* url-vars.el, dist.Makefile, mm.el: *** empty log message ***
+
+* url.el: autoload url-nfs
+
+* url-http.el: *** empty log message ***
+
+* mm.el: Fixed mm-save-binary-file
+
+* url-vars.el: fix for mule stuff Emacs vs. XEmacs
+
+* url-wais.el: *** empty log message ***
+
+* url.el: turn off url-download-minor-mode stuff
+
+Mon Jul  1 15:32:13 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Added stub for buffer-substring-no-properties
+
+* url-sysdp.el: Fix to device-or-frame-type to work under Emacs 19.28
+
+* url-sysdp.el: Added in stubs for plist-put and plist-get, and an Emacs 19.2x
+specific version of facep.  everything almost works in 19.28 now.
+
+Sun Jun 30 18:12:20 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Changed email address info
+
+Fri Jun 28 16:08:08 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Fix for stupid problem in mm-copy-tree
+
+Wed Jun 26 16:37:12 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-news.el, url.el:
+Patch from Darrell Kindred <dkindred+@cmu.edu> for news problems
+  1. nnheader-init-server-buffer isn't called, so the
+     first call to nntp-open-server fails.  (Patch inserts
+     a call to nnheader-init-server-buffer in url-news-open-host.)
+  2. The `&', '<', and '>' characters don't get turned into
+     entities in news from lines, subject, body, etc.  The result
+     is that "William Perry <wmperry@monolith.spry.com>" shows up
+     as "William Perry @monolith.spry.com>".  (The patch moves
+     w3-insert-entities-in-string to url.el and renames it to
+     url-insert-entities-in-string, then calls it from url-format-news.
+  3. When displayed, news articles get an extra, empty
+     "References" entry.  (Patch inserts a `(delete "" ...)'
+     to remove the trailing empty reference from the list.)
+
+Tue Jun 25 18:44:30 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Potential fix for cl's version of copy-tree fucking things up in mm.el
+
+* url-sysdp.el: Added bogus definition of set-marker-insertion-type
+
+Fri Jun 14 17:45:16 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-cookie.el: fixed bug in cookie support
+
+* url-cookie.el: Require cl for the def. of assoc*
+
+* url-vars.el, url.el:
+Fixes for mule from MORIOKA Tomohiko <morioka@jaist.ac.jp>
+
+Thu Jun 13 00:20:04 1996  William Perry  <wmperry@cs.indiana.edu>
 
 * url-misc.el, url.el: fixed asynch stuff through a proxy
 
-Wed Jun 12 04:00:39 1996  William Perry  <wmperry@monolith.spry.com>
+Wed Jun 12 04:00:39 1996  William Perry  <wmperry@cs.indiana.edu>
 
 * url-nfs.el: Initial revision
 
 * url.el: Added 'nfs' url type as per the WebNFS specification
 
-Tue Jun 11 17:28:53 1996  William Perry  <wmperry@monolith.spry.com>
+Tue Jun 11 17:28:53 1996  William Perry  <wmperry@cs.indiana.edu>
 
 * url-vars.el: *** empty log message ***
 
@@ -18,7 +148,7 @@ Tue Jun 11 17:28:53 1996  William Perry  <wmperry@monolith.spry.com>
 
 * url-irc.el: Initial revision
 
-Mon Jun 10 18:58:03 1996  William Perry  <wmperry@monolith.spry.com>
+Mon Jun 10 18:58:03 1996  William Perry  <wmperry@cs.indiana.edu>
 
 * md5.el: compilation warnings removed
 
@@ -26,7 +156,7 @@ Mon Jun 10 18:58:03 1996  William Perry  <wmperry@monolith.spry.com>
 New version of md5.el that actually incorporates an md5 implementation
 in lisp!  Whoah.
 
-Sun Jun  9 17:32:55 1996  William Perry  <wmperry@monolith.spry.com>
+Sun Jun  9 17:32:55 1996  William Perry  <wmperry@cs.indiana.edu>
 
 * url-http.el:
 protect against malformed HTTP URLs getting passed in via url-retrieve
@@ -35,9 +165,9 @@ protect against malformed HTTP URLs getting passed in via url-retrieve
 
 * url-file.el: fixed problem with ftp links
 
-* dist.Makefile: Initial revision
+* url-sysdp.el, dist.Makefile: Initial revision
 
-* base64.el, descrip.mms, docomp.el, md5.el, mm.el, ssl.el, url-cookie.el, url-file.el, url-gopher.el, url-hash.el, url-http.el, url-mail.el, url-misc.el, url-news.el, url-parse.el, url-pgp.el, url-sysdp.el, url-vars.el, url-wais.el, url.el, urlauth.el:
+* base64.el, descrip.mms, docomp.el, md5.el, mm.el, ssl.el, url-cookie.el, url-file.el, url-gopher.el, url-hash.el, url-http.el, url-mail.el, url-misc.el, url-news.el, url-parse.el, url-pgp.el, url-vars.el, url-wais.el, url.el, urlauth.el:
 Initial rev
 
 Wed Jun  5 14:31:40 1996  William Perry  <wmperry@cs.indiana.edu>

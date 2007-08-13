@@ -1,11 +1,11 @@
-;;; $RCSFile: w3-menu.el,v $ --- menu functions for emacs-w3
+;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/06/03 17:35:14
-;; Version: 1.28
+;; Created: 1996/07/21 18:29:01
+;; Version: 1.7
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1996 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -118,12 +118,10 @@ menubar.")
   (interactive)
   (cond
    ;; XEmacs style
-   ((and w3-running-xemacs (w3-menubar-active))
-    ;; Turn the menubar off
-    (setq current-menubar nil))
    (w3-running-xemacs
-    ;; Turn the menubar on
-    (w3-menu-install-menus))
+    (set-specifier menubar-visible-p (cons (current-buffer)
+					   (not (specifier-instance
+						 menubar-visible-p)))))
    ;; Emacs 19 style
    (t
     (menu-bar-mode (if (w3-menubar-active) -1 1)))))
@@ -135,7 +133,7 @@ menubar.")
 
 (defun w3-menubar-active ()
   (if w3-running-xemacs
-      (and (featurep 'menubar) current-menubar)
+      (and (featurep 'menubar) (specifier-instance menubar-visible-p))
     (and (boundp 'menu-bar-mode) menu-bar-mode)))
 
 (defun w3-menu-global-menubar ()
@@ -253,6 +251,8 @@ menubar.")
 
 (defconst w3-menu-options-menu
   (list "Options"
+	["Edit Preferences" w3-preferences-edit t]
+	"---"
 	["Show Menubar" w3-toggle-menubar
 	 :style toggle :selected (w3-menubar-active)]
 	(if (and w3-running-xemacs (featurep 'toolbar))
@@ -276,20 +276,6 @@ menubar.")
 	 :style toggle :selected (not w3-delay-image-loads)]
 	["Flush Image Cache" (setq w3-graphics-list nil) w3-graphics-list]
 	"----"
-	["Privacy Mode" (progn
-			  (setq url-privacy-level
-				(if (eq 'paranoid url-privacy-level)
-				    'none
-				  'paranoid))
-			  (url-setup-privacy-info))
-	 :style toggle :selected (not (eq url-privacy-level 'none))]
-	["Color Printing" (setq ps-print-color-p (not ps-print-color-p))
-	 :style toggle :selected (and (boundp 'ps-print-color-p)
-				      ps-print-color-p)]
-	["Honor Automatic Refreshes"
-	 (setq url-honor-refresh-requests (not url-honor-refresh-requests))
-	 :style toggle :selected (not (null url-honor-refresh-requests))]
-	"----"
 	["Download to disk" (setq w3-dump-to-disk (not w3-dump-to-disk))
 	 :style toggle :selected w3-dump-to-disk]
 	["Caching" (setq url-automatic-caching (not url-automatic-caching))
@@ -297,13 +283,6 @@ menubar.")
 	["Use Cache Only"
 	 (setq url-standalone-mode (not url-standalone-mode))
 	 :style toggle :selected url-standalone-mode]
-	"----"
-	["Fancy Gopher"
-	 (setq url-use-hypertext-gopher (not url-use-hypertext-gopher))
-	 :style toggle :selected url-use-hypertext-gopher]
-	["Fancy Directory Listings"
-	 (setq url-use-hypertext-dired (not url-use-hypertext-dired))
-	 :style toggle :selected url-use-hypertext-dired]
 	"----"
 	["Save Options" w3-menu-save-options t]
 	)
@@ -322,6 +301,8 @@ menubar.")
    ["Honor Color Requests" (setq w3-user-colors-take-precedence
 				 (not w3-user-colors-take-precedence))
     :style toggle :selected (not w3-user-colors-take-precedence)]
+   "---"
+   ["Reload Stylesheets" w3-refresh-stylesheets t]
    )
   "W3 menu style list.")
 
@@ -493,7 +474,9 @@ menubar.")
       (lookup-key w3-mode-menu-map [rootmenu])))))
 
 (defun w3-menu-install-menus ()
-  (cond ((consp w3-use-menus)
+  (cond ((= emacs-minor-version 28)	; Hey, get with the times people!!
+	 nil)
+	((consp w3-use-menus)
 	 (w3-menu-install-menubar))
 	((eq w3-use-menus 1)
 	 (w3-menu-install-menubar-item))
@@ -569,23 +552,39 @@ menubar.")
 					(list 'quote val))))))
 		   (if var (princ "\n"))))
 		'(
-		  w3-delay-image-loads
-		  w3-delay-mpeg-loads
 		  ps-print-color-p
-		  w3-color-use-reducing
-		  w3-color-filter
-		  w3-dump-to-disk
-		  w3-user-colors-take-precedence
-		  w3-do-incremental-display
 		  url-automatic-caching
-		  url-standalone-mode
-		  url-use-hypertext-gopher
-		  url-use-hypertext-dired
-		  url-proxy-services
 		  url-be-asynchronous
-		  w3-default-homepage
+		  url-honor-refresh-requests
 		  url-privacy-level
+		  url-proxy-services
+		  url-standalone-mode
+		  url-use-hypertext-dired
+		  url-use-hypertext-gopher
+		  w3-color-filter
+		  w3-color-use-reducing
+		  w3-default-homepage
+		  w3-default-stylesheet
+		  w3-delay-image-loads
+		  w3-do-incremental-display
+		  w3-dump-to-disk
+		  w3-file-done-hook
+		  w3-file-prepare-hook
+		  w3-honor-stylesheets
+		  w3-image-mappings
+		  w3-load-hook
+		  w3-mode-hook
+		  w3-netscape-compatible-comments
+		  w3-preferences-cancel-hook
+		  w3-preferences-default-hook
+		  w3-preferences-ok-hook
+		  w3-preferences-setup-hook
+		  w3-source-file-hook
+		  w3-style-ie-compatibility
 		  w3-toolbar-orientation
+		  w3-toolbar-type
+		  w3-use-menus
+		  w3-user-colors-take-precedence
 		  )
 		)
 	(princ ";; ==========================\n")

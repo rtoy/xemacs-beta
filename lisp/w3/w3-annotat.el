@@ -1,11 +1,11 @@
-;;; w3-annotat.el,v --- Annotation functions for Emacs-W3
+;;; w3-annotat.el --- Annotation functions for Emacs-W3
 ;; Author: wmperry
-;; Created: 1996/06/06 14:14:34
+;; Created: 1996/06/30 18:02:56
 ;; Version: 1.3
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -177,13 +177,13 @@
     (setq w3-current-annotation (cons url title))
     (insert "<html>\n"
 	    " <head>\n"
-	    "  <title>" (w3-insert-entities-in-string title) "</title>"
+	    "  <title>" (url-insert-entities-in-string title) "</title>"
 	    " </head>\n"
-	    "  <h1>" (w3-insert-entities-in-string title) "</h1>\n"
+	    "  <h1>" (url-insert-entities-in-string title) "</h1>\n"
 	    "  <p>\n"
-	    "   <address>" (w3-insert-entities-in-string (user-full-name))
+	    "   <address>" (url-insert-entities-in-string (user-full-name))
             (if (stringp url-personal-mail-address)
-                (concat " &lt;" (w3-insert-entities-in-string
+                (concat " &lt;" (url-insert-entities-in-string
 			      url-personal-mail-address) "&gt;")
               "")
 	    "</address>\n"

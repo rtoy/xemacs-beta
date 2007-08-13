@@ -21,57 +21,58 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with FSF 19.30.
+;;; Synched up with FSF 19.34.
 
 ;;; Commentary:
 
-;;; This Lisp code is run in Emacs when it is to operate as
-;;; a server for other processes.
+;; This Lisp code is run in Emacs when it is to operate as
+;; a server for other processes.
 
-;;; Load this library and do M-x server-edit to enable Emacs as a server.
-;;; Emacs runs the program ../etc/emacsserver as a subprocess
-;;; for communication with clients.  If there are no client buffers to edit, 
-;;; server-edit acts like (switch-to-buffer (other-buffer))
+;; Load this library and do M-x server-edit to enable Emacs as a server.
+;; Emacs runs the program ../../lib-src/emacsserver as a subprocess
+;; for communication with clients.  If there are no client buffers to edit, 
+;; server-edit acts like (switch-to-buffer (other-buffer))
 
-;;; When some other program runs "the editor" to edit a file,
-;;; "the editor" can be the Emacs client program ../etc/emacsclient.
-;;; This program transmits the file names to Emacs through
-;;; the server subprocess, and Emacs visits them and lets you edit them.
+;; When some other program runs "the editor" to edit a file,
+;; "the editor" can be the Emacs client program ../../lib-src/emacsclient.
+;; This program transmits the file names to Emacs through
+;; the server subprocess, and Emacs visits them and lets you edit them.
 
-;;; Note that any number of clients may dispatch files to emacs to be edited.
+;; Note that any number of clients may dispatch files to emacs to be edited.
 
-;;; When you finish editing a Server buffer, again call server-edit
-;;; to mark that buffer as done for the client and switch to the next 
-;;; Server buffer.  When all the buffers for a client have been edited 
-;;; and exited with server-edit, the client "editor" will return
-;;; to the program that invoked it.  
+;; When you finish editing a Server buffer, again call server-edit
+;; to mark that buffer as done for the client and switch to the next 
+;; Server buffer.  When all the buffers for a client have been edited 
+;; and exited with server-edit, the client "editor" will return
+;; to the program that invoked it.  
 
-;;; Your editing commands and Emacs's display output go to and from
-;;; the terminal in the usual way.  Thus, server operation is possible
-;;; only when Emacs can talk to the terminal at the time you invoke
-;;; the client.  This is possible in four cases:
+;; Your editing commands and Emacs's display output go to and from
+;; the terminal in the usual way.  Thus, server operation is possible
+;; only when Emacs can talk to the terminal at the time you invoke
+;; the client.  This is possible in four cases:
 
-;;; 1. On a window system, where Emacs runs in one window and the
-;;; program that wants to use "the editor" runs in another.
+;; 1. On a window system, where Emacs runs in one window and the
+;; program that wants to use "the editor" runs in another.
 
-;;; 2. On a multi-terminal system, where Emacs runs on one terminal and the
-;;; program that wants to use "the editor" runs on another.
+;; 2. On a multi-terminal system, where Emacs runs on one terminal and the
+;; program that wants to use "the editor" runs on another.
 
-;;; 3. When the program that wants to use "the editor" is running
-;;; as a subprocess of Emacs.
+;; 3. When the program that wants to use "the editor" is running
+;; as a subprocess of Emacs.
 
-;;; 4. On a system with job control, when Emacs is suspended, the program
-;;; that wants to use "the editor" will stop and display
-;;; "Waiting for Emacs...".  It can then be suspended, and Emacs can be
-;;; brought into the foreground for editing.  When done editing, Emacs is
-;;; suspended again, and the client program is brought into the foreground.
+;; 4. On a system with job control, when Emacs is suspended, the program
+;; that wants to use "the editor" will stop and display
+;; "Waiting for Emacs...".  It can then be suspended, and Emacs can be
+;; brought into the foreground for editing.  When done editing, Emacs is
+;; suspended again, and the client program is brought into the foreground.
 
-;;; The buffer local variable "server-buffer-clients" lists 
-;;; the clients who are waiting for this buffer to be edited.  
-;;; The global variable "server-clients" lists all the waiting clients,
-;;; and which files are yet to be edited for each.
+;; The buffer local variable "server-buffer-clients" lists 
+;; the clients who are waiting for this buffer to be edited.  
+;; The global variable "server-clients" lists all the waiting clients,
+;; and which files are yet to be edited for each.
 
 ;;; Code:
 
@@ -194,7 +195,7 @@ Prefix arg means just kill any existing server communications subprocess."
       ;; Remove this line from STRING.
       (setq string (substring string (match-end 0)))	  
       (if (string-match "^Error: " request)
-	  (message (concat "Server error: " (substring request (match-end 0))))
+	  (message "Server error: %s" (substring request (match-end 0)))
 	(if (string-match "^Client: " request)
 	    (progn
 	      (setq request (substring request (match-end 0)))
@@ -205,7 +206,11 @@ Prefix arg means just kill any existing server communications subprocess."
 		       (substring request (match-beginning 0) (1- (match-end 0)))))
 		  (setq request (substring request (match-end 0)))
 		  (if (string-match "\\`\\+[0-9]+\\'" arg)
+		      ;; ARG is a line number option.
 		      (setq lineno (read (substring arg 1)))
+		    ;; ARG is a file name.
+		    ;; Collapse multiple slashes to single slashes.
+		    (setq arg (command-line-normalize-file-name arg))
 		    (setq files
 			  (cons (list arg lineno)
 				files))
@@ -223,7 +228,9 @@ Prefix arg means just kill any existing server communications subprocess."
 (defun server-visit-files (files client)
   "Finds FILES and returns the list CLIENT with the buffers nconc'd.
 FILES is an alist whose elements are (FILENAME LINENUMBER)."
-  (let (client-record (obuf (current-buffer)))
+  ;; Bind last-nonmenu-event to force use of keyboard, not mouse, for queries.
+  ;; XEmacs: this doesn't work as far as I can tell. -sb
+  (let (client-record (last-nonmenu-event t) (obuf (current-buffer)))
     ;; Restore the current buffer afterward, but not using save-excursion,
     ;; because we don't want to save point in this buffer
     ;; if it happens to be one of those specified by the server.
@@ -284,6 +291,7 @@ or nil.  KILLED is t if we killed BUFFER (because it was a temp file)."
 		;; It cannot handle that.
 		(or first (sit-for 1))
 		(setq first nil)
+		;; XEmacs: FSF uses obsolete send-string
 		(process-send-string server-process 
 				     (format "Close: %s Done\n" (car client)))
 		(server-log (format "Close: %s Done\n" (car client)))))

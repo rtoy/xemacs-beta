@@ -39,15 +39,17 @@
 (defun describe-display-table (dt)
   "Describe the display table DT in a help buffer."
   (with-displaying-help-buffer
-   (princ "\nCharacter display glyph sequences:\n")
-    (save-excursion
-      (set-buffer standard-output)
-      (let ((vector (make-vector 256 nil))
-	    (i 0))
-	(while (< i 256)
-	  (aset vector i (aref dt i))
-	  (setq i (1+ i)))
-	(describe-vector vector)))))
+   (lambda ()
+     (princ "\nCharacter display glyph sequences:\n")
+     (save-excursion
+       (set-buffer standard-output)
+       (let ((vector (make-vector 256 nil))
+             (i 0))
+         (while (< i 256)
+           (aset vector i (aref dt i))
+           (setq i (1+ i)))
+         ;;; ### No such function `describe-vector'...
+         (describe-vector vector))))))
 
 ;;;###autoload
 (defun describe-current-display-table (&optional domain)
@@ -78,9 +80,9 @@
    current-display-table
    (list (cons fdt-locale
 	       (mapcar
-		#'(lambda (fdt-x)
-		    (funcall fdt-function (cdr fdt-x))
-		    fdt-x)
+		(lambda (fdt-x)
+                  (funcall fdt-function (cdr fdt-x))
+                  fdt-x)
 		(cdar (specifier-spec-list current-display-table
 					   fdt-locale)))))))
 
@@ -93,8 +95,8 @@
 (defun standard-display-8bit (l h &optional locale)
   "Display characters in the range L to H literally."
   (frob-display-table
-   #'(lambda (x)
-       (standard-display-8bit-1 x l h))
+   (lambda (x)
+     (standard-display-8bit-1 x l h))
    locale))
 
 (defun standard-display-default-1 (dt l h)
@@ -106,16 +108,16 @@
 (defun standard-display-default (l h &optional locale)
   "Display characters in the range L to H using the default notation."
   (frob-display-table
-   #'(lambda (x)
-       (standard-display-default-1 x l h))
+   (lambda (x)
+     (standard-display-default-1 x l h))
    locale))
 
 ;;;###autoload
 (defun standard-display-ascii (c s &optional locale)
   "Display character C using printable string S."
   (frob-display-table
-   #'(lambda (x)
-       (aset x c s))
+   (lambda (x)
+     (aset x c s))
    locale))
 
 
@@ -127,8 +129,8 @@
 This function assumes that your terminal uses the SO/SI characters;
 it is meaningless for an X frame."
   (frob-display-table
-   #'(lambda (x)
-       (aset x c (concat "\016" (char-to-string sc) "\017")))
+   (lambda (x)
+     (aset x c (concat "\016" (char-to-string sc) "\017")))
    locale))
 
 
@@ -140,8 +142,8 @@ it is meaningless for an X frame."
 This function assumes VT100-compatible escapes; it is meaningless for an
 X frame."
   (frob-display-table
-   #'(lambda (x)
-       (aset x c (concat "\e(0" (char-to-string gc) "\e(B")))
+   (lambda (x)
+     (aset x c (concat "\e(0" (char-to-string gc) "\e(B")))
    locale))
 
 ;;; #### should frob in a 'tty locale.
@@ -153,8 +155,8 @@ X frame."
 (defun standard-display-underline (c uc &optional locale)
   "Display character C as character UC plus underlining."
   (frob-display-table
-   #'(lambda (x)
-       (aset x c (concat "\e[4m" (char-to-string uc) "\e[m")))
+   (lambda (x)
+     (aset x c (concat "\e[4m" (char-to-string uc) "\e[m")))
    locale))
 
 ;;;###autoload
@@ -165,12 +167,12 @@ as octal escapes, but as accented characters.
 With prefix argument, enable European character display iff arg is positive."
   (interactive "P")
   (frob-display-table
-   #'(lambda (x)
-       (if (or (<= (prefix-numeric-value arg) 0)
-	       (and (null arg)
-		    (equal (aref x 160) (char-to-string 160))))
-	   (standard-display-default-1 x 160 255)
-	 (standard-display-8bit-1 x 160 255)))
+   (lambda (x)
+     (if (or (<= (prefix-numeric-value arg) 0)
+             (and (null arg)
+                  (equal (aref x 160) (char-to-string 160))))
+         (standard-display-default-1 x 160 255)
+       (standard-display-8bit-1 x 160 255)))
    locale))
 
 (provide 'disp-table)

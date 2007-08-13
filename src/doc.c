@@ -111,7 +111,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
 	  space_left = buffer_size - (p - buffer);
 	}
 
-      /* Don't read too too much at one go.  */
+      /* Don't read too much at one go.  */
       if (space_left > 1024 * 8)
 	space_left = 1024 * 8;
       nread = read (fd, p, space_left);
@@ -171,6 +171,12 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
   return return_me;
 }
 
+#define string_join(dest, s1, s2) \
+  memcpy ((void *) dest, (void *) XSTRING_data (s1), XSTRING_length (s1)); \
+  memcpy ((void *) ((Bufbyte *) dest + XSTRING_length (s1)), \
+          (void *) XSTRING_data (s2), XSTRING_length (s2));  \
+          dest[XSTRING_length (s1) + XSTRING_length (s2)] = '\0'
+
 /* Extract a doc string from a file.  FILEPOS says where to get it.
    (This could actually be byte code instructions/constants instead
    of a doc string.)
@@ -227,8 +233,11 @@ get_doc_string (Lisp_Object filepos)
 	minsize = 12;
       name_nonreloc
 	= (char *) alloca (minsize + string_length (XSTRING (file)) + 8);
+      /*
       strcpy (name_nonreloc, (char *) string_data (XSTRING (Vdoc_directory)));
       strcat (name_nonreloc, (char *) string_data (XSTRING (file)));
+      */
+      string_join (name_nonreloc, Vdoc_directory, file);
       munge_doc_file_name (name_nonreloc);
     }
   else

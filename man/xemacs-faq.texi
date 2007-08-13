@@ -1022,7 +1022,7 @@ the modeline font to vary based on the current mode.
 @chapter 8. The keyboard
 
 @menu
-* 8.1.::          8.1. What is the difference in in key sequences between XEmacs and GNU Emacs? 
+* 8.1.::          8.1. What is the difference in key sequences between XEmacs and GNU Emacs? 
 * 8.2.::          8.2. How can I make XEmacs recognize the Alt key of my HP workstation as a Meta key?
 * 8.3.::          8.3. How can I stop the down-arrow-key from adding empty lines at the bottom of my buffers?
 * 8.4.::          8.4. I wonder if there is an interactive function that can generate "fake" keyboard events. This way, I could simply map them inside XEmacs.

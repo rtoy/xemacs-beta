@@ -102,13 +102,13 @@ static XtResource resources[] = {
   {XtNrightToolBarWidth, XtCRightToolBarWidth, XtRInt, sizeof (int),
      offset (right_toolbar_width), XtRImmediate, (XtPointer)-1},
   {XtNtopToolBarShadowColor, XtCTopToolBarShadowColor, XtRPixel, sizeof(Pixel),
-     offset(top_toolbar_shadow_pixel), XtRString, "Gray90"},
+     offset(top_toolbar_shadow_pixel), XtRString, (String) "Gray90"},
   {XtNbottomToolBarShadowColor, XtCBottomToolBarShadowColor, XtRPixel,
      sizeof(Pixel), offset(bottom_toolbar_shadow_pixel), XtRString,
-     "Gray40"},
+     (String) "Gray40"},
   {XtNbackgroundToolBarColor, XtCBackgroundToolBarColor, XtRPixel,
      sizeof(Pixel), offset(background_toolbar_pixel), XtRString,
-     "Gray75"},
+     (String) "Gray75"},
   {XtNtopToolBarShadowPixmap, XtCTopToolBarShadowPixmap, XtRPixmap,
      sizeof (Pixmap), offset(top_toolbar_shadow_pixmap), XtRImmediate,
      (XtPointer)None},
@@ -130,9 +130,9 @@ static XtResource resources[] = {
     offset(font), XtRImmediate, (XtPointer)0
   },
   {XtNforeground, XtCForeground, XtRPixel, sizeof(Pixel),
-     offset(foreground_pixel), XtRString, "XtDefaultForeground"},
+     offset(foreground_pixel), XtRString, (String) "XtDefaultForeground"},
   {XtNcursorColor, XtCForeground, XtRPixel, sizeof(Pixel),
-     offset(cursor_color), XtRString, "XtDefaultForeground"},
+     offset(cursor_color), XtRString, (String) "XtDefaultForeground"},
   {XtNbarCursor, XtCBarCursor, XtRBoolean, sizeof (Boolean),
      offset (bar_cursor), XtRImmediate, (XtPointer)0},
   {XtNvisualBell, XtCVisualBell, XtRBoolean, sizeof (Boolean),
@@ -155,7 +155,7 @@ static XtResource resources[] = {
 
 static XtActionsRec
 emacsFrameActionsTable [] = {
-  {"mapping",  (XtActionProc) emacs_Xt_mapping_action},
+  {(String) "mapping",  (XtActionProc) emacs_Xt_mapping_action},
 };
 
 static char
@@ -174,7 +174,7 @@ EmacsFrameClassRec emacsFrameClassRec = {
 #else
     /* superclass		*/	&widgetClassRec,
 #endif
-    /* class_name		*/	"EmacsFrame",
+    /* class_name		*/	(String) "EmacsFrame",
     /* widget_size		*/	sizeof(EmacsFrameRec),
     /* class_initialize		*/	EmacsFrameClassInitialize,
     /* class_part_initialize	*/	0,
@@ -265,22 +265,23 @@ EmacsFrameRealize (Widget widget, XtValueMask *mask,
   struct frame *f = ew->emacs_frame.frame;
   Widget shell_widget = FRAME_X_SHELL_WIDGET (f);
 
-  attrs->event_mask = (ExposureMask           |
-                       StructureNotifyMask    |
-		       VisibilityChangeMask   |
-                       PropertyChangeMask     |
-		       StructureNotifyMask    |
-                       /*SubstructureNotifyMask |*/
-		       /*SubstructureRedirectMask |*/ /* Only for WMs! */
-                       KeyPressMask      |
-		       KeyReleaseMask    |
-		       ButtonPressMask   |
-                       ButtonReleaseMask |
-		       FocusChangeMask   |
-                       PointerMotionHintMask |
-		       PointerMotionMask |
-                       LeaveWindowMask   |
-		       EnterWindowMask);
+  attrs->event_mask =
+    ExposureMask           |
+    VisibilityChangeMask   |
+    PropertyChangeMask     |
+    StructureNotifyMask    |
+    SubstructureNotifyMask |
+    /*SubstructureRedirectMask |*/ /* Only for WMs! */
+    KeyPressMask           |
+    KeyReleaseMask         |
+    ButtonPressMask        |
+    ButtonReleaseMask      |
+    FocusChangeMask        |
+    PointerMotionHintMask  |
+    PointerMotionMask      |
+    LeaveWindowMask        |
+    EnterWindowMask;
+
 
 #ifdef I18N4
   /* Make sure that events wanted by the input method are selected. */

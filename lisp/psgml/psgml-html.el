@@ -640,6 +640,7 @@ will should insert an appropriate timestamp in the buffer."
 	    (substring time 0 20)
 	    (nth 1 (current-time-zone))
 	    " "
+	    (substring time -4)
 	    "\n")))
 
 (defun html-helper-insert-timestamp-delimiter-at-point ()
@@ -733,7 +734,7 @@ get those characters to appear literally in the output."
 		  "---"
 		  ["HTML-Quote Region" html-quote-region t]
 		  "---")
-		(cdr sgml-sgml-menu))))
+		(cdr sgml-main-menu))))
 
 (defun sgml-html-netscape-file ()
   "Preview the file for the current buffer in Netscape."

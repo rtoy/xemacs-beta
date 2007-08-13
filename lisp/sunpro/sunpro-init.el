@@ -79,35 +79,44 @@ Returns nil if the required files cannot be found."
 (defun sunpro-startup ()
   (when (not (noninteractive))
 
-    (let ((sunpro-dir-p
-           #'(lambda (dir)
-               (and dir
-                    (file-exists-p (concat dir "bin/workshop"))
-                    (file-exists-p (concat dir "lib/workshop.el"))))))
-    
+    (flet
+        ((sunpro-dir-p (dir)
+                       (and dir
+                            (file-exists-p (concat dir "bin/workshop"))
+                            (file-exists-p (concat dir "lib/workshop.el")))))
       (defconst sunpro-dir
         (cond
+         ;; Look on the PATH
          ((let ((path exec-path) dir (found nil))
             (while (and path (not found))
-              (setq dir (car path))
+              (setq dir (or (car path) "."))
               (setq path (cdr path))
               (setq dir (concat dir (if (string-match "/$" dir) "../" "/../")))
-              (setq found (funcall sunpro-dir-p dir)))
-            (if found
-                (expand-file-name dir))))
-       
-         ((let ((dir exec-directory) (i 0) (found nil))
-            (while (and (< i 8) (not found))
-              (setq i (1+ i))
-              (setq dir (concat dir "../"))
-              (setq found (funcall sunpro-dir-p dir))
-              )
+              (setq found (sunpro-dir-p dir)))
             (if found
                 (expand-file-name dir))))
 
-         ("/opt/SUNWspro/"))                  ; Default install location
+         ;; Check for standard Sun DevPro CD Install layout
+         ((if (string-match "contrib/[^/]+/[^/]+/[^/]+/[^/]+/$" exec-directory)
+              (let ((dir (substring exec-directory 0 (match-beginning 0))))
+                (if (sunpro-dir-p dir)
+                    (expand-file-name dir)))))
+         
+         ;; Default install location
+         ("/opt/SUNWspro/"))
 
-        "Directory where Sunsoft Developer Products are installed."))
+        "Directory where Sun Developer Products are installed."))
+
+    ;; Sunpro ships the mule version as a 2-file addition to the
+    ;; non-mule distribution - the binary and the doc file.
+    ;;
+    ;; This is a quick hack, I know...
+    ;; There ought to be a better way to do this.
+    ;; Perhaps a --xemacs-flavor=mule flag?
+    (if (featurep 'mule)
+        (let ((mule-doc-file-name (concat internal-doc-file-name "-mule")))
+          (if (file-exists-p (concat doc-directory mule-doc-file-name))
+              (setq internal-doc-file-name mule-doc-file-name))))
 
     ;; Connect to tooltalk
     (and (featurep 'tooltalk)
@@ -129,7 +138,7 @@ Returns nil if the required files cannot be found."
     ;     'global 'x))
     
     (cond
-     ;; Use Sunsoft WorkShop if available
+     ;; Use Sun WorkShop if available
      ((sunpro-update-paths-for-workshop)
       (require 'workshop))
 

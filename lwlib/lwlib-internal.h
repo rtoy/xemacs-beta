@@ -39,7 +39,7 @@ typedef Widget
 
 typedef struct _widget_creation_entry
 {
-  char*				type;
+  CONST char*			type;
   widget_creation_function	function;
 } widget_creation_entry;
 

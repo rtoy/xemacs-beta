@@ -301,7 +301,7 @@
 ;(and (fboundp 'tpu-set-scroll-margins) (tpu-set-scroll-margins "10%" "15%"))
 
 ;; Load the vtxxx terminal control functions, but don't complain if
-;; if the file is not found.
+;; the file is not found.
 (load "vt-control" t)
 
 ;; TPU-edt treats words like EDT; here's how to add word separators.

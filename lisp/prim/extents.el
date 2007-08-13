@@ -28,7 +28,7 @@
 (defun mapcar-extents (function &optional predicate buffer-or-string from to
 				flags property value)
   "Applies FUNCTION to all extents which overlap a region in BUFFER-OR-STRING.
-The region is is delimited by FROM and TO.  FUNCTION is called with
+The region is delimited by FROM and TO.  FUNCTION is called with
 one argument, the extent.  A list of the values returned by FUNCTION
 is returned.  An optional PREDICATE may be used to further limit the
 extents over which FUNCTION is mapped.  The optional arguments FLAGS,

@@ -289,8 +289,15 @@ copy_relocation_site (struct relocation_info *ri,
   /* We can get relocation sites in the bss region, for objects whose
      contents are copied from a shared library.  We don't need or want
      to restore these at present. */
+#ifndef sparc
   if (ri->r_copy)
     return;
+#else
+  /* Struct relocation_info_sparc doesn't have member r_copy.
+     Instead, we use the address to check if this is run-time-copied. */
+  if (ri->r_address >= ts->bssaddr && ri->r_address < ts->endaddr)
+    return;
+#endif
 
   offset = unexec_addr_to_offset (ri->r_address, ts);
   if (offset == -1)
@@ -351,6 +358,7 @@ copy_relocation_site (struct relocation_info *ri,
         source++;
         *target = *source;
       }
+      break;
     default:
       unexec_error ("unknown reloc type %d seen during unexec()",
 		    0, ri->r_type);

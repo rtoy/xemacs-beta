@@ -21,7 +21,7 @@
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
 ;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: Not synched with FSF, we appear to have a newer version
 
 ;;; Commentary:
 

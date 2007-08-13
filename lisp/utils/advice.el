@@ -21,14 +21,15 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;; LCD Archive Entry:
 ;; advice|Hans Chalupsky|hans@cs.buffalo.edu|
 ;; Overloading mechanism for Emacs Lisp functions|
 ;; 1994/08/05 03:42:04|2.14|~/packages/advice.el.Z|
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34 (In a fashion.  Many comments are dated).
 
 ;;; Commentary:
 
@@ -3952,6 +3953,13 @@ Use only in REAL emergencies."
   (ad-safe-fset 'ad-activate 'ad-activate-off)
   (ad-recover-all)
   (setq ad-advised-functions nil))
+
+;; Until the Advice-related changes to `data.c' are part of Lemacs we
+;; have to load the old implementation of advice activation hooks:
+;; XEmacs:  Not sure what this is supposed to accomplish.  There is no
+;;  ad-hooks.el. -sb
+;(if (ad-lemacs-p)
+;    (require 'ad-hooks))
 
 (ad-start-advice)
 

@@ -820,7 +820,7 @@ Please use SCCS, RCS, CVS, or Atria."
 		system)
 	     (funcall f)
 	     (add-hook 'find-file-hooks 'sc-mode-line)
-	     (add-menu '() sc-generic-name sc-menu)
+	     (add-submenu '() (cons sc-generic-name sc-menu))
 	     (add-hook 'activate-menubar-hook 'sc-sensitize-menu)
 	     (run-hooks 'sc-mode-hook)
 	     (setq sc-mode system))))))
@@ -1140,7 +1140,7 @@ the variable sccs-headers-wanted"
 (defun rcs-register (file revision)
   (if (and (not (file-exists-p "RCS"))
 	   (y-or-n-p "Directory RCS does not exist, create it?"))
-      (make-directory "SCCS"))
+      (make-directory "RCS"))
   (sc-do-command "*RCS*" "ci" "ci" file (rcs-name file) "-u"))
 
 (defun rcs-check-out (file lockp)

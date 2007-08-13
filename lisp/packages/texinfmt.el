@@ -1,26 +1,28 @@
-;;;; texinfmt.el
-;;; Copyright (C) 1985, 1986, 1988, 1990, 1991,
-;;;               1992, 1993, 1994, 1995  Free Software Foundation, Inc.
+;;; texinfmt.el --- format Texinfo files into Info files.
+
+;; Copyright (C) 1985, 1986, 1988, 1990, 1991, 1992, 1993 Free Software
+;; Foundation, Inc.
 
 ;; Maintainer: Robert J. Chassell <bug-texinfo@prep.ai.mit.edu>
 
-;;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Code:
 
@@ -891,11 +893,6 @@ lower types.")
           (file-name-nondirectory (expand-file-name arg)))
     (insert "Info file: "
             texinfo-format-filename ",    -*-Text-*-\n"
-            ;; Date string removed so that regression testing is easier.
-            ;; "produced on "
-            ;; (substring (current-time-string) 8 10) " "
-            ;; (substring (current-time-string) 4 7) " "
-            ;; (substring (current-time-string) -4)  " "
             "produced by `texinfo-format-buffer'\n"
             "from file"
             (if (buffer-file-name input-buffer)
@@ -1568,10 +1565,7 @@ Used by @refill indenting command to avoid indenting within lists, etc.")
 ; The `@today{}' command requires a pair of braces, like `@dots{}'.
 (defun texinfo-format-today ()
   (texinfo-parse-arg-discard)
-  (insert (format "%s %s %s"
-          (substring (current-time-string) 8 10)
-          (substring (current-time-string) 4 7)
-          (substring (current-time-string) -4))))
+  (insert (format-time-string "%e %b %Y")))
 
 
 ;;; @ignore
@@ -2792,11 +2786,11 @@ Default is to leave paragraph indentation as is."
 ;;; @set, @clear, @ifset, @ifclear
 
 ;; If a flag is set with @set FLAG, then text between @ifset and @end
-;; ifset is formatted normally, but if the flag is is cleared with
+;; ifset is formatted normally, but if the flag is cleared with
 ;; @clear FLAG, then the text is not formatted; it is ignored.
 
 ;; If a flag is cleared with @clear FLAG, then text between @ifclear
-;; and @end ifclear is formatted normally, but if the flag is is set with
+;; and @end ifclear is formatted normally, but if the flag is set with
 ;; @set FLAG, then the text is not formatted; it is ignored.  @ifclear
 ;; is the opposite of @ifset.
 
@@ -2896,7 +2890,7 @@ The command  `@value{foo}'  expands to the value."
 ;; In the original version, include files were ignored by Info but
 ;; incorporated in to the printed manual.  To make references to the
 ;; included file, the Texinfo source file has to refer to the included
-;; files using the `(filename)nodename' format for refering to other
+;; files using the `(filename)nodename' format for referring to other
 ;; Info files.  Also, the included files had to be formatted on their
 ;; own.  It was just like they were another file.
 
@@ -2989,7 +2983,6 @@ The command  `@value{foo}'  expands to the value."
 (put 'settitle 'texinfo-format 'texinfo-discard-line-with-args)
 (put 'setx 'texinfo-format 'texinfo-discard-line-with-args)
 (put 'shortcontents 'texinfo-format 'texinfo-discard-line-with-args)
-(put 'shorttitlepage 'texinfo-format 'texinfo-discard-line-with-args)
 (put 'smallbook 'texinfo-format 'texinfo-discard-line)
 (put 'summarycontents 'texinfo-format 'texinfo-discard-line-with-args)
 

@@ -19,9 +19,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -38,6 +39,7 @@
 Works by overstriking underscores.
 Called from program, takes two arguments START and END
 which specify the range to operate on."
+  ;; XEmacs: FSF doesn't use a '*', a bug?  -sb
   (interactive "*r")
   (save-excursion
     (let ((end1 (make-marker)))
@@ -60,6 +62,9 @@ which specify the range to operate on."
       (goto-char (min start end))
       (while (re-search-forward "_\b\\|\b_" end1 t)
 	(delete-char -2)))))
+
+;; XEmacs:  The rest of these functions are not in FSF.  I don't see any
+;; point in removing them.  -sb
 
 ;;;###autoload
 (defun unoverstrike-region (start end)

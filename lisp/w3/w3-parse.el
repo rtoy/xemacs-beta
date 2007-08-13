@@ -3,8 +3,8 @@
 ;; Filename: w3-parse.el
 ;; Purpose: Parse HTML and/or SGML for Emacs W3 browser.
 
-;; Copyright © 1995  Joseph Brian Wells
-;; Copyright © 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;; Copyright © 1995, 1996  Joseph Brian Wells
+;; Copyright © 1993, 1994, 1995 by William M. Perry (wmperry@cs.indiana.edu)
 ;; 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -288,7 +288,16 @@ which must be a string to use as the error message."
   (while html-entities
     (put (car (car html-entities)) 'html-entity-expansion
 	 (cons 'CDATA (if (integerp (cdr (car html-entities)))
-			  (char-to-string (cdr (car html-entities)))
+                          (char-to-string
+                           (let ((c (cdr (car html-entities))))
+                             (cond
+                              ((and (> c 127) (boundp 'MULE))
+                               (make-character lc-ltn1 c))
+                              ;;((and (> c 127) (featurep 'mule))
+                              ;; What???
+                              ;;)
+                              (t
+                               c))))
 			(cdr (car html-entities)))))
     (setq html-entities (cdr html-entities))))
 
@@ -315,7 +324,7 @@ which must be a string to use as the error message."
     (setq cur (car html-entities)
           html-entities (cdr html-entities))
     (put (nth 0 cur) 'html-entity-expansion
-	 (cons 'nil (format "img src=\"%s/%s%s\" alt=\"%s\""
+	 (cons 'nil (format "<img src=\"%s/%s%s\" alt=\"%s\">"
                             w3-icon-directory
                             (nth 1 cur)
                             (if w3-icon-format
@@ -433,8 +442,17 @@ which must be a string to use as the error message."
       ;; that functionality belongs in char-to-string.
       ;; The largest valid character in the I18N version of HTML is 65533.
       ;; <URL:ftp://ds.internic.net/internet-drafts/draft-ietf-html-i18n-01.txt>
-      (insert (char-to-string w3-p-s-num)))
-     
+      ;; wrongo!  Apparently, mule doesn't do sane things with char-to-string
+      ;; -wmp 7/9/96
+      (insert (char-to-string
+               (cond
+                ((and (boundp 'MULE) (> w3-p-s-num 127))
+                 (make-character lc-ltn1 w3-p-s-num))
+                ;;((and (featurep 'mule) (> w3-p-s-num 127))
+                ;;what??
+                ;;)
+                (t
+                 w3-p-s-num)))))
      ((looking-at "&#\\(re\\|rs\\|space\\|tab\\)[\ ;\n]?") ; \n should be \r
       (replace-match (assq (upcase (char-after (+ 3 (point))))
                            '(;; *** Strictly speaking, record end should be
@@ -604,7 +622,7 @@ which must be a string to use as the error message."
 ;;     NEW-STATE (optional, default *same) is the index of the state to
 ;;     move to after processing the element or one of these:
 ;;       *same: no state change occurs.
-;;       *next: change the the current state + 1.
+;;       *next: change the current state + 1.
 ;;     The initial state is 0.  NEW-STATE does not matter if ACTION is
 ;;     *close.
 ;;    
@@ -1150,6 +1168,7 @@ skip-chars-forward."
     (w3-expand-parameters
      '(
        (%headempty . (link base meta range))
+       (%headmisc . (script))
        (%head-deprecated . (nextid))
 
        ;; client-side imagemaps
@@ -1160,22 +1179,12 @@ skip-chars-forward."
 
        (%heading . (h1 h2 h3 h4 h5 h6))
 
-       ;; Netscape's CENTER, FONT, and BASEFONT are handled
-       ;; non-standardly.  In actual psuedo-HTML on the net, these are
-       ;; used as both text-level constructs and block-level constructs.
-       ;; They are the only items in both %block and %text in this
-       ;; definition here.
-       ;; *** Perhaps add BLINK here too?  But no one uses that as a block
-       ;; construct.  What about NOBR?
-       (%netscape-crud . (center font basefont))
-
        ;; Emacs-w3 extensions
-       (%emacsw3-crud-nonempty . (roach secret wired))
        (%emacsw3-crud  . (pinhead flame cookie yogsothoth hype peek))
 
-       (%block . (p %list dl form %preformatted %netscape-crud font
+       (%block . (p %list dl form %preformatted font
                     %blockquote isindex fn table fig note
-                    %block-deprecated %block-obsoleted))
+                    center %block-deprecated %block-obsoleted))
        (%list . (ul ol))
        (%preformatted . (pre))
        (%blockquote . (bq))
@@ -1185,14 +1194,13 @@ skip-chars-forward."
        ;; Why is IMG in this list?
        (%pre.exclusion . (*include img *discard tab math big small sub sup))
        
-       (%text . (*data b %notmath %netscape-crud sub sup
-                       %emacsw3-crud %emacsw3-crud-nonempty))
+       (%text . (*data b %notmath sub sup %emacsw3-crud))
        (%notmath . (%special %font %phrase %misc))
-       (%font . (i u s strike tt big small))   ; B left out for MATH handling
-       (%phrase . (em strong code samp kbd var cite blink))
-       ;; Don't know if this is right place for EMBED.
-       (%special . (a img br wbr nobr tab math embed))
-       (%misc . (q lang au dfn person acronym abbrev ins del))
+       (%font . (i u s strike tt big small sub sup
+                   roach secret wired)) ;; B left out for MATH
+       (%phrase . (em strong dfn code samp kbd var cite blink))
+       (%special . (a img applet font br script map math tab))
+       (%misc . (q lang au person acronym abbrev ins del))
        
        (%formula . (*data %math))
        (%math . (box above below %mathvec root sqrt array sub sup
@@ -1258,7 +1266,8 @@ skip-chars-forward."
                           ])
         (end-tag-omissible . t))
        ((head)
-        (content-model . [((title isindex %headempty style %head-deprecated)
+        (content-model . [((title isindex %headempty %headmisc
+                                  style %head-deprecated)
                            nil
                            nil
                            ;; *** Should only close if tag can
@@ -1266,6 +1275,11 @@ skip-chars-forward."
                            ;; I haven't bothered to enumerate them.
                            (*close))])
         (end-tag-omissible . t))
+       ;; SCRIPT - - (#PCDATA)
+       ((script)
+        (content-model . CDATA          ; not official, but allows
+                                        ; comment hiding of script
+                       ))
        ;; TITLE - - (#PCDATA)
        ((title)
         (content-model . RCDATA         ; not official
@@ -1274,13 +1288,7 @@ skip-chars-forward."
        ;; STYLE - O (#PCDATA)
        ;; STYLE needs to be #PCDATA to allow omitted end tag.  Bleagh.
        ((style)
-        (content-model . [((*data)
-                           include-space
-                           nil
-                           ;; *** Should only close if tag can
-                           ;; legitimately follow style.  So many can that
-                           ;; I haven't bothered to enumerate them.
-                           (*close))])
+        (content-model . CDATA)
         (end-tag-omissible . t))
        ((body)
         (content-model . [((banner) nil nil (*retry *next))
@@ -1302,7 +1310,7 @@ skip-chars-forward."
                             ((credit plaintext) *close))
                            nil)])
         (end-tag-omissible . t))
-       ((div banner)
+       ((div banner center)
         (content-model . [((%body.content)
                            nil
                            ;; Push <P> before data characters.  Non-SGML.
@@ -1450,9 +1458,6 @@ skip-chars-forward."
         (end-tag-omissible . t))
        ((%emacsw3-crud)
         (content-model . EMPTY))
-       ((%netscape-crud)
-        ;; Special non-SGML treatment of Netscape's shit.
-        (content-model . XINHERIT))
        ;; FORM - - %body.content -(FORM) +(INPUT|KEYGEN|SELECT|TEXTAREA)
        ((form)
         ;; Same as BODY.  Ugh!
@@ -1515,7 +1520,7 @@ skip-chars-forward."
                             )
                            nil)])
         (exclusions . (a)))
-       ((b %font %phrase %misc nobr %emacsw3-crud-nonempty)
+       ((b font %font %phrase %misc nobr)
         (content-model . [((%text)
                            include-space
                            ((%in-text-ignore))

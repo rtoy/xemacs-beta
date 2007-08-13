@@ -5,38 +5,40 @@
 ;; Original author: Boris Goldowsky <boris@gnu.ai.mit.edu>
 ;; Keywords: wp, faces
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
-;;
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-;;
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: FSF 19.30.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 ;;
 ;; This file implements reading, editing, and saving files with
-;; text-properties such as faces, levels of indentation, and true line breaks
-;; distinguished from newlines just used to fit text into the window.
+;; text-properties such as faces, levels of indentation, and true line
+;; breaks distinguished from newlines just used to fit text into the
+;; window.
 ;;
 ;; The file format used is the MIME text/enriched format, which is a
 ;; standard format defined in internet RFC 1563.  All standard
 ;; annotations are supported.
 ;; 
-;; A separate file, enriched.doc, contains further documentation and other
-;; important information about this code.  It also serves as an example file
-;; in text/enriched format.  It should be in the etc directory of your emacs
-;; distribution.
+;; A separate file, enriched.doc, contains further documentation and
+;; other important information about this code.  It also serves as an
+;; example file in text/enriched format.  It should be in the etc
+;; directory of your emacs distribution.
 ;;
 ;;; TODO for the XEmacs port:
 ;;
@@ -47,7 +49,7 @@
 ;; Mike Sperber <sperber@informatik.uni-tuebingen.de>.
 
 (provide 'enriched)
-(require 'facemenu)
+(if window-system (require 'facemenu))
 
 ;;;
 ;;; Variables controlling the display
@@ -73,6 +75,7 @@ stored in the file.")
 ;;; Set up faces & display table
 ;;;
 
+;; XEmacs change (Can't cheat, we have variable width fonts)
 (if (not (find-face 'fixed))
     (copy-face 'default 'fixed))
 			      
@@ -81,6 +84,10 @@ stored in the file.")
 
 (defconst enriched-display-table (make-display-table))
 (aset enriched-display-table ?\f (make-string (1- (frame-width)) ?-))
+
+(defconst enriched-par-props '(left-margin right-margin justification)
+  "Text-properties that usually apply to whole paragraphs.
+These are set front-sticky everywhere except at hard newlines.")
 
 ;;;
 ;;; Variables controlling the file format
@@ -109,26 +116,31 @@ expression, which is evaluated to get the string to insert.")
 		   (excerpt     "excerpt")
 		   (default     )
 		   (nil         enriched-encode-other-face))
-    (size          (nil         enriched-encode-size))
+    (left-margin   (4           "indent"))
+    (right-margin  (4           "indentright"))
     (justification (none        "nofill")
 		   (right       "flushright")
 		   (left        "flushleft")
 		   (full        "flushboth")
 		   (center      "center"))
-    (left-margin   (4           "indent"))
-    (right-margin  (4           "indentright"))
     (PARAMETER     (t           "param")) ; Argument of preceding annotation
+    ;; The following are not part of the standard:
     (FUNCTION      (enriched-decode-foreground "x-color")
 		   (enriched-decode-background "x-bg-color")
+		   ;; XEmacs addition
 		   (facemenu-make-larger "bigger")
 		   (facemenu-make-smaller "smaller"))
     (read-only     (t           "x-read-only"))
-    (unknown       (nil         format-annotate-value)))
+    (unknown       (nil         format-annotate-value))
+;   (font-size     (2           "bigger")       ; unimplemented
+;                  (-2          "smaller"))
+)
   "List of definitions of text/enriched annotations.
 See `format-annotate-region' and `format-deannotate-region' for the definition
 of this structure.")
 
-(defconst enriched-ignore '(hard)
+(defconst enriched-ignore
+  '(front-sticky rear-nonsticky hard)
   "Properties that are OK to ignore when saving text/enriched files.
 Any property that is neither on this list nor dealt with by
 `enriched-translations' will generate a warning.")
@@ -136,7 +148,7 @@ Any property that is neither on this list nor dealt with by
 ;;; Internal variables
 
 (defvar enriched-mode nil
-  "True if `enriched-mode' is in use.")
+  "True if Enriched mode is in use.")
 (make-variable-buffer-local 'enriched-mode)
 
 (if (not (assq 'enriched-mode minor-mode-alist))
@@ -144,10 +156,10 @@ Any property that is neither on this list nor dealt with by
 	  (cons '(enriched-mode " Enriched")
 		minor-mode-alist)))
 
-(defvar enriched-mode-hooks nil
-  "Functions to run when entering `enriched-mode'.
+(defvar enriched-mode-hook nil
+  "Functions to run when entering Enriched mode.
 If you set variables in this hook, you should arrange for them to be restored
-to their old values if enriched-mode is left.  One way to do this is to add
+to their old values if you leave Enriched mode.  One way to do this is to add
 them and their old values to `enriched-old-bindings'.")
 
 (defvar enriched-old-bindings nil
@@ -167,9 +179,9 @@ The value is a list of \(VAR VALUE VAR VALUE...).")
   "Minor mode for editing text/enriched files.
 These are files with embedded formatting information in the MIME standard
 text/enriched format.
-Turning the mode on runs `enriched-mode-hooks'.
+Turning the mode on runs `enriched-mode-hook'.
 
-More information about enriched-mode is available in the file 
+More information about Enriched mode is available in the file 
 etc/enriched.doc  in the Emacs distribution directory.
 
 Commands:
@@ -195,28 +207,33 @@ Commands:
 		 (setq buffer-file-format 
 		       (cons 'text/enriched buffer-file-format)))
 	     ;; Save old variable values before we change them.
-	     ;; These will be restored if we exit enriched-mode.
+	     ;; These will be restored if we exit Enriched mode.
 	     (setq enriched-old-bindings
-		   (list 'indent-line-function indent-line-function
-			 'use-hard-newlines    use-hard-newlines))
+		   ;; XEmacs change
+		   (list ; 'buffer-display-table buffer-display-table
+			 'indent-line-function indent-line-function
+			 'use-hard-newlines    use-hard-newlines
+			 'default-text-properties default-text-properties))
 	     (make-local-variable 'indent-line-function)
 	     (make-local-variable 'use-hard-newlines)
+	     (make-local-variable 'default-text-properties)
 	     (setq indent-line-function 'indent-to-left-margin
-		   use-hard-newlines    t)
-
-	     ;; copy display table
-	     (frob-display-table
-	      #'(lambda (dt)
-		  (let ((l (length enriched-display-table))
-			(c 0))
-		    (while (< c l)
-		      (let ((v (aref enriched-display-table c)))
-			(if v
-			    (aset dt c v)))
-		      (setq c (1+ c)))))
-	      (current-buffer))
-	     (run-hooks 'enriched-mode-hooks)))
+		   ;; XEmacs change
+		   ;; buffer-display-table  enriched-display-table
+		   use-hard-newlines     t)
+	     (let ((sticky (plist-get default-text-properties 'front-sticky))
+		   (p enriched-par-props))
+	       (while p
+		 (if (not (memq (car p) sticky))
+		     (setq sticky (cons (car p) sticky)))
+		 (setq p (cdr p)))
+	       (if sticky
+		   (setq default-text-properties
+			 (plist-put default-text-properties
+				    'front-sticky sticky))))
+	     (run-hooks 'enriched-mode-hook)))
     (set-buffer-modified-p mod)
+    ;; XEmacs change
     (redraw-modeline)))
 
 ;;;
@@ -224,7 +241,7 @@ Commands:
 ;;;
 
 (defvar enriched-mode-map nil
-  "Keymap for `enriched-mode'.")
+  "Keymap for Enriched mode.")
 
 (if (null enriched-mode-map)
     (fset 'enriched-mode-map (setq enriched-mode-map (make-sparse-keymap))))
@@ -341,6 +358,7 @@ matching close."
 			      params ""))))
 	(t (format enriched-annotation-format "/" (car name)))))
 
+;; XEmacs addition
 (defun enriched-face-strip-size (face)
   "Create a symbol from the name of FACE devoid of size information,
 i.e. remove all larger- and smaller- prefixes."
@@ -372,6 +390,7 @@ One annotation each for foreground color, background color, italic, etc."
 	    
 (defun enriched-face-ans (face)
   "Return annotations specifying FACE."
+  ;; XEmacs change (entire body of this function)
   (let ((face-name (symbol-name face)))
     (cond ((string-match "^fg:" face-name)
 	   (list (list "x-color" (substring face-name 3))))
@@ -394,7 +413,7 @@ One annotation each for foreground color, background color, italic, etc."
 	     (if bg (setq ans (cons (list "x-bg-color" bg) ans)))
 	     ans)))))
 
-
+;; XEmacs addition
 (defun enriched-size-annotation (n annotation)
   "Generate ANNOTATION N times."
   (let ((l '()))
@@ -403,6 +422,7 @@ One annotation each for foreground color, background color, italic, etc."
       (setq n (1- n)))
     l))
 
+;; XEmacs addition
 (defun enriched-encode-size (old new)
   "Return annotations specifying SIZE."
   (let* ((old (or old 0))
@@ -468,8 +488,8 @@ Return value is \(begin end name positive-p), or nil if none was found."
 	(delete-char 1)
       ;; A single < that does not start an annotation is an error,
       ;; which we note and then ignore.
-      (message (format "Warning: malformed annotation in file at %s" 
-		       (1- (point))))))
+      (message "Warning: malformed annotation in file at %s" 
+	       (1- (point)))))
   (if (not (eobp))
       (let* ((beg (match-beginning 0))
 	     (end (match-end 0))
@@ -492,6 +512,7 @@ Return value is \(begin end name positive-p), or nil if none was found."
       (delete-char 1)))
 
 (defun enriched-decode-foreground (from to color)
+  ;; XEmacs change
   (let ((face (facemenu-get-face (intern (concat "fg:" color)))))
     (if (not face)
 	(progn
@@ -500,6 +521,7 @@ Return value is \(begin end name positive-p), or nil if none was found."
     (list from to 'face face)))
 
 (defun enriched-decode-background (from to color)
+  ;; XEmacs change
   (let ((face (facemenu-get-face (intern (concat "bg:" color)))))
     (if (not face)
 	(progn

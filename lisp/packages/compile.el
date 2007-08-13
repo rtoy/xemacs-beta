@@ -1,6 +1,6 @@
 ;;; compile.el --- run compiler as inferior of Emacs, parse error messages.
 
-;; Copyright (C) 1985, 86, 87, 93, 94, 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 86, 87, 93, 94, 1995, 1996 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 
 ;; Author: Roland McGrath <roland@prep.ai.mit.edu>
@@ -21,9 +21,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34, with a lot of divergence.
 
 ;;; Commentary:
 
@@ -40,6 +41,7 @@
 (defvar compilation-window-height nil
   "*Number of lines in a compilation window.  If nil, use Emacs default.")
 
+;; XEmacs change
 (defvar compilation-error-list 'invalid ; only valid buffer-local
   "List of error message descriptors for visiting erring functions.
 Each error descriptor is a cons (or nil).  Its car is a marker pointing to
@@ -52,7 +54,7 @@ The value may be t instead of a list; this means that the buffer of
 error messages should be reparsed the next time the list of errors is wanted.
 
 Some other commands (like `diff') use this list to control the error
-message tracking facilites; if you change its structure, you should make
+message tracking facilities; if you change its structure, you should make
 sure you also change those packages.  Perhaps it is better not to change
 it at all.")
 
@@ -93,6 +95,7 @@ or when it is used with \\[next-error] or \\[compile-goto-error].")
     (setq minor-mode-alist (cons '(compilation-in-progress " Compiling")
 				 minor-mode-alist)))
 
+;; XEmacs change
 (defvar compilation-always-signal-completion nil
   "Always give an audible signal upon compilation completion.
 By default that signal is only given if the bottom of the compilation
@@ -123,25 +126,37 @@ buffer is not visible in its window.")
     ;; paren, because otherwise this matches just about anything
     ;; containing a number with spaces around it.
     ("\n\
-\\([^:( \t\n]+\\)[:(][ \t]*\\([0-9]+\\)\\([) \t]\\|\
+\\([a-zA-Z]?:?[^:( \t\n]+\\)[:(][ \t]*\\([0-9]+\\)\\([) \t]\\|\
 :\\([^0-9\n]\\|\\([0-9]+:\\)\\)\\)" 1 2 5)
+
+    ;; Microsoft C/C++:
+    ;;  keyboard.c(537) : warning C4005: 'min' : macro redefinition
+    ;;  d:\tmp\test.c(23) : error C2143: syntax error : missing ';' before 'if'
+    ("\n\\(\\([a-zA-Z]:\\)?[^:( \t\n-]+\\)[:(][ \t]*\\([0-9]+\\)[:) \t]" 1 3)
 
     ;; Borland C++:
     ;;  Error ping.c 15: Unable to open include file 'sys/types.h'
     ;;  Warning ping.c 68: Call to function 'func' with no prototype
-    ("\n\\(Error\\|Warning\\) \\([^:( \t\n]+\\)\
+    ("\n\\(Error\\|Warning\\) \\([a-zA-Z]?:?[^:( \t\n]+\\)\
  \\([0-9]+\\)\\([) \t]\\|:[^0-9\n]\\)" 2 3)
 
     ;; 4.3BSD lint pass 2
     ;; 	strcmp: variable # of args. llib-lc(359)  ::  /usr/src/foo/foo.c(8)
-    ("[ \t:]\\([^:( \t\n]+\\)[:(](+[ \t]*\\([0-9]+\\))[:) \t]*$" 1 2)
+    ("[ \t:]\\([a-zA-Z]?:?[^:( \t\n]+\\)[:(](+[ \t]*\\([0-9]+\\))[:) \t]*$"
+     1 2)
 
     ;; 4.3BSD lint pass 3
     ;; 	bloofle defined( /users/wolfgang/foo.c(4) ), but never used
     ;; This used to be
-    ;; ("[ \t(]+\\([^:( \t\n]+\\)[:( \t]+\\([0-9]+\\)[:) \t]+" 1 2)
+    ;; ("[ \t(]+\\([a-zA-Z]?:?[^:( \t\n]+\\)[:( \t]+\\([0-9]+\\)[:) \t]+" 1 2)
     ;; which is regexp Impressionism - it matches almost anything!
-    ("([ \t]*\\([^:( \t\n]+\\)[:(][ \t]*\\([0-9]+\\))" 1 2)
+    ("([ \t]*\\([a-zA-Z]?:?[^:( \t\n]+\\)[:(][ \t]*\\([0-9]+\\))" 1 2)
+
+    ;; MIPS lint pass<n>; looks good for SunPro lint also
+    ;;  TrimMask (255) in solomon.c may be indistinguishable from TrimMasks (93) in solomon.c due to truncation
+    ("[^ ]+ (\\([0-9]+\\)) in \\([^ ]+\\)" 2 1)
+    ;;  name defined but never used: LinInt in cmap_calc.c(199)
+    ("in \\([^(]+\\)(\\([0-9]+\\))$" 1 2)
 
     ;; Ultrix 3.0 f77:
     ;;  fort: Severe: addstf.f, line 82: Missing operator or delimiter symbol
@@ -150,12 +165,12 @@ buffer is not visible in its window.")
     ("\n\\(cfe\\|fort\\): [^:\n]*: \\([^ \n]*\\), line \\([0-9]+\\):" 2 3)
     ;;  Error on line 3 of t.f: Execution error unclassifiable statement    
     ;; Unknown who does this:
-    ;;  Line 45 of "foo.c": bloofel undefined
+    ;;  Line 45 of "foo.c": bloofle undefined
     ;; Absoft FORTRAN 77 Compiler 3.1.3
     ;;  error on line 19 of fplot.f: spelling error?
     ;;  warning on line 17 of fplot.f: data type is undefined for variable d
     ("\\(\n\\|on \\)[Ll]ine[ \t]+\\([0-9]+\\)[ \t]+\
-of[ \t]+\"?\\([^\":\n]+\\)\"?:" 3 2)
+of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2)
 
     ;; Apollo cc, 4.3BSD fc:
     ;;	"foo.f", line 3: Error: syntax error near end of statement
@@ -167,7 +182,10 @@ of[ \t]+\"?\\([^\":\n]+\\)\"?:" 3 2)
     ;;  "foo.c", line 32 pos 1; (E) syntax error; unexpected symbol: "lossage"
     ;; GNAT (as of July 94): 
     ;;  "foo.adb", line 2(11): warning: file name does not match ...
-    ("\"\\([^,\" \n\t]+\\)\", lines? \\([0-9]+\\)[:., (-]" 1 2)
+    ;; IBM AIX xlc compiler:
+    ;;  "src/swapping.c", line 30.34: 1506-342 (W) "/*" detected in comment.
+    ("\"\\([^,\" \n\t]+\\)\", lines? \
+\\([0-9]+\\)\\([\(.]\\([0-9]+\\)\)?\\)?[:., (-]" 1 2 4)
 
     ;; MIPS RISC CC - the one distributed with Ultrix:
     ;;	ccom: Error: foo.c, line 2: syntax error
@@ -186,7 +204,7 @@ of[ \t]+\"?\\([^\":\n]+\\)\"?:" 3 2)
     ("\n[EW], \\([^(\n]*\\)(\\([0-9]+\\),[ \t]*\\([0-9]+\\)" 1 2 3)
 
     ;; GNU messages with program name and optional column number.
-    ("\n[^0-9 \n\t:]+:[ \t]*\\([^ \n\t:]+\\):\
+    ("\n[a-zA-Z]?:?[^0-9 \n\t:]+:[ \t]*\\([^ \n\t:]+\\):\
 \\([0-9]+\\):\\(\\([0-9]+\\)[: \t]\\)?" 1 2 4)
 
     ;; jwz:
@@ -228,7 +246,7 @@ Otherwise, M-x compile just uses the value of `compile-command'.")
 Otherwise, it saves all modified buffers without asking.")
 
 (defvar grep-regexp-alist
-  '(("^\\([^:( \t\n]+\\)[:( \t]+\\([0-9]+\\)[:) \t]" 1 2))
+  '(("^\\([a-zA-Z]?:?[^:( \t\n]+\\)[:( \t]+\\([0-9]+\\)[:) \t]" 1 2))
   "Regexp used to match grep hits.  See `compilation-error-regexp-alist'.")
 
 (defvar grep-command "grep -n "
@@ -275,15 +293,16 @@ The head element is the directory the compilation was started in.")
 
 (defvar compilation-exit-message-function nil "\
 If non-nil, called when a compilation process dies to return a status message.
-This should be a function a two arguments as passed to a process sentinel
-\(see `set-process-sentinel\); it returns a cons (MESSAGE . MODELINE) of the
-strings to write into the compilation buffer, and to put in its mode line.")
+This should be a function of three arguments: process status, exit status,
+and exit message; it returns a cons (MESSAGE . MODELINE) of the strings to
+write into the compilation buffer, and to put in its mode line.")
 
 ;; History of compile commands.
 (defvar compile-history nil)
 ;; History of grep commands.
 (defvar grep-history nil)
 
+;; XEmacs
 (defconst compilation-font-lock-keywords (purecopy
   (list
    '("^[-_.\"A-Za-z0-9/+]+\\(:\\|, line \\)[0-9]+: \\([wW]arning:\\).*$" .
@@ -296,11 +315,13 @@ strings to write into the compilation buffer, and to put in its mode line.")
   "Additional expressions to highlight in Compilation mode.")
 
 ;FSF's version.  Ours looks better.
-;(defvar compilation-font-lock-keywords
+;(defvar compilation-mode-font-lock-keywords
 ;  ;; This regexp needs a bit of rewriting.  What is the third grouping for?
-;  '(("^\\([^ \n:]*:\\([0-9]+:\\)+\\)\\(.*\\)$" 1 font-lock-function-name-face))
-;;;;  ("^\\([^\n:]*:\\([0-9]+:\\)+\\)\\(.*\\)$" 0 font-lock-keyword-face keep)
-;  "Additional expressions to highlight in Compilation mode.")
+;  '(("^\\([a-zA-Z]?:?[^ \n:]*:\\([0-9]+:\\)+\\)\\(.*\\)$"
+;     1 font-lock-function-name-face))
+;;;  ("^\\([^\n:]*:\\([0-9]+:\\)+\\)\\(.*\\)$" 0 font-lock-keyword-face keep)
+
+;; XEmacs change
 (put 'compilation-mode 'font-lock-defaults
      '(compilation-font-lock-keywords t))
 
@@ -326,6 +347,7 @@ the function in `compilation-buffer-name-function', so you can set that
 to a function that generates a unique name."
   (interactive 
    (if (or compilation-read-command current-prefix-arg)
+       ;; XEmacs change
        (list (read-shell-command "Compile command: "
                                  compile-command
                                  ;; #### minibuffer code should do this
@@ -357,6 +379,7 @@ to find the text that grep hits refer to.
 This command uses a special history list for its arguments, so you can
 easily repeat a grep command."
   (interactive
+   ;; XEmacs change
    (list (read-shell-command "Run grep (like this): "
 			     grep-command 'grep-history)))
   (let ((buf (compile-internal (concat command-args " " grep-null-device)
@@ -366,6 +389,7 @@ easily repeat a grep command."
     (save-excursion
       (set-buffer buf)
       (set (make-local-variable 'compilation-exit-message-function)
+	   ;; XEmacs change
 	   (lambda (proc msg)
 	     (let ((code (process-exit-status proc)))
 	       (if (eq (process-status proc) 'exit)
@@ -425,9 +449,11 @@ Returns the compilation buffer created."
     (let ((regexp-alist (or regexp-alist compilation-error-regexp-alist))
 	  (parser (or parser compilation-parse-errors-function))
 	  (thisdir default-directory)
+	  ;; XEmacs change
 	  (buffer-save (current-buffer))
 	  outwin)
-      
+
+      ;; XEmacs change
       ;; Pop up the compilation buffer.
       (setq outwin (display-buffer outbuf))
       
@@ -437,7 +463,7 @@ Returns the compilation buffer created."
 	;; Change its default-directory to the directory where the compilation
 	;; will happen, and insert a `cd' command to indicate this.
 	(set-buffer outbuf)
-	
+
 	(setq buffer-read-only nil)
 	(buffer-disable-undo (current-buffer))
 	(erase-buffer)
@@ -446,13 +472,16 @@ Returns the compilation buffer created."
 	(insert "cd " thisdir "\n" command "\n")
 	(set-buffer-modified-p nil)
 
+	;; XEmacs change
 	;; set it so the window will scroll to show compile output
 	(save-window-excursion
 	  (select-window outwin)
 	  (goto-char (point-max)))
 	
+	;; XEmacs change
 	(compilation-mode name-of-mode)
 	;; (setq buffer-read-only t)  ;;; Non-ergonomic.
+	;; XEmacs change
 	(set (make-local-variable 'compile-command) command)
 	(set (make-local-variable 'compilation-parse-errors-function) parser)
 	(set (make-local-variable 'compilation-error-message) error-message)
@@ -461,12 +490,10 @@ Returns the compilation buffer created."
 	      compilation-directory-stack (list default-directory))
 	(set-window-start outwin (point-min))
 	(setq mode-name name-of-mode)
+	;; XEmacs change
 ;	(or (eq outwin (selected-window))
 ;	    (set-window-point outwin (point-min)))
 	(compilation-set-window-height outwin)
-
-	;; Set up the menus
-
 	;; Start the compilation.
 	(if (fboundp 'start-process)
 	    (let* ((process-environment (cons "EMACS=t" process-environment))
@@ -478,12 +505,15 @@ Returns the compilation buffer created."
 	      (set-marker (process-mark proc) (point) outbuf)
 	      (setq compilation-in-progress 
 		    (cons proc compilation-in-progress)))
-	  ;; No asynchronous processes available
-	  (message (format "Executing `%s'..." command))
-	  (sit-for 0) ;; Force redisplay
+	  ;; No asynchronous processes available.
+	  (message "Executing `%s'..." command)
+	  ; FSF
+	  ; (setq mode-line-process ":run")
+	  ; (force-mode-line-update)
+	  (sit-for 0)			;; Force redisplay
 	  (let ((status (call-process shell-file-name nil outbuf nil "-c"
 				      command))))
-	  (message (format "Executing `%s'...done" command))))
+	  (message "Executing `%s'...done" command)))
        (set-buffer buffer-save)))
 
     ;; Make it so the next C-x ` will use this buffer.
@@ -704,11 +734,38 @@ See `compilation-mode'.
   (if (setq compilation-minor-mode (if (null arg)
 				       (null compilation-minor-mode)
 				     (> (prefix-numeric-value arg) 0)))
-      (compilation-setup)))
+      (progn
+	(compilation-setup)
+	(run-hooks 'compilation-minor-mode-hook))))
+
+;; Write msg in the current buffer and hack its mode-line-process.
+(defun compilation-handle-exit (process-status exit-status msg)
+  (let ((buffer-read-only nil)
+	(status (if compilation-exit-message-function
+		    (funcall compilation-exit-message-function
+			     process-status exit-status msg)
+		  (cons msg exit-status)))
+	(omax (point-max))
+	(opoint (point)))
+    ;; Record where we put the message, so we can ignore it
+    ;; later on.
+    (goto-char omax)
+    (insert ?\n mode-name " " (car status))
+    (forward-char -1)
+    (insert " at " (substring (current-time-string) 0 19))
+    (forward-char 1)
+    (setq mode-line-process (format ":%s [%s]" process-status (cdr status)))
+    ;; Force mode line redisplay soon.
+    (force-mode-line-update)
+    (if (and opoint (< opoint omax))
+	(goto-char opoint))
+    (if compilation-finish-function
+	(funcall compilation-finish-function (current-buffer) msg))))
 
 ;; Called when compilation process changes state.
 (defun compilation-sentinel (proc msg)
   "Sentinel for compilation buffers."
+  ;; XEmacs change
   (let* ((buffer (process-buffer proc))
 	 (window (get-buffer-window buffer)))
     (if (memq (process-status proc) '(signal exit))
@@ -781,6 +838,7 @@ Just inserts the text, but uses `insert-before-markers'."
 	  (save-excursion
 	    (goto-char (process-mark proc))
 	    (insert-before-markers string)
+	    (run-hooks 'compilation-filter-hook)
 	    (set-marker (process-mark proc) (point)))))))
 
 ;; Return the cdr of compilation-old-error-list for the error containing point.
@@ -792,7 +850,7 @@ Just inserts the text, but uses `insert-before-markers'."
       (setq errors (cdr errors)))
     errors))
 
-(defun compilation-buffer-p (buffer)
+(defsubst compilation-buffer-p (buffer)
   (save-excursion
     (set-buffer buffer)
     (or compilation-minor-mode (eq major-mode 'compilation-mode))))
@@ -951,6 +1009,8 @@ Does NOT find the source line like \\[next-error]."
 	    (select-window w)
 	  (switch-to-buffer compilation-last-buffer)))
 
+      ;; This was here for a long time (before my rewrite); why? --roland
+      ;;(switch-to-buffer compilation-last-buffer)
       (set-buffer-modified-p nil)
       (if (< compilation-parsing-end (point-max))
 	  ;; compilation-error-list might be non-nil if we have a non-nil
@@ -976,6 +1036,16 @@ Does NOT find the source line like \\[next-error]."
 		;; errors before parsing more; restore that position.
 		(setq compilation-error-list error-list-pos))
 	    ))))))
+
+;; XEmacs addition
+;; FSF has added this by 19.34, but it is highly complex, why? -sb
+(defun compile-mouse-goto-error (event)
+  "Visit the source for the error under the mouse.
+Use this command in a compilation log buffer."
+  (interactive "e")
+  (mouse-set-point event)
+  (beginning-of-line)
+  (compile-goto-error))
 
 (defun compile-goto-error (&optional argp)
   "Visit the source for the error message point is on.
@@ -1011,15 +1081,6 @@ other kinds of prefix arguments are ignored."
   (next-error 1))
 
 ;; XEmacs addition
-(defun compile-mouse-goto-error (event)
-  "Visit the source for the error under the mouse.
-Use this command in a compilation log buffer."
-  (interactive "e")
-  (mouse-set-point event)
-  (beginning-of-line)
-  (compile-goto-error))
-
-;; XEmacs addition
 (defun compile-mouse-maybe-goto-error (event &optional click-count)
   (interactive "e")
   (if (equal (event-button event) 2)
@@ -1047,6 +1108,7 @@ Use this command in a compilation log buffer."
       ;; The current buffer is a compilation buffer.
       (current-buffer)
     (if (and compilation-last-buffer (buffer-name compilation-last-buffer)
+	     (compilation-buffer-p compilation-last-buffer)
 	     (or (not other-buffer) (not (eq compilation-last-buffer
 					     (current-buffer)))))
 	compilation-last-buffer
@@ -1095,6 +1157,7 @@ See variables `compilation-parse-errors-function' and
 			   (and (not (consp argp))
 				(prefix-numeric-value argp))
 			   (consp argp))))
+;;;###autoload (define-key ctl-x-map "`" 'next-error)
 
 ;; XEmacs change
 ;;;###autoload
@@ -1176,7 +1239,8 @@ The current buffer should be the desired compilation output buffer."
 		      (throw 'no-next-error nil)
 		    (error (concat compilation-error-message
 				   (and (get-buffer-process (current-buffer))
-					(eq (process-status (get-buffer-process
+					(eq (process-status
+					     (get-buffer-process
 							     (current-buffer)))
 					    'run)
 					" yet")))))
@@ -1336,8 +1400,7 @@ Selects a window with point at SOURCE, with another window displaying ERROR."
 	(progn
 	  (widen)
 	  (goto-char (cdr next-error))))))
-
-;;;###autoload (define-key ctl-x-map "`" 'next-error)
+    
 
 ;; Find a buffer for file FILENAME.
 ;; Search the directories in compilation-search-path.
@@ -1481,14 +1544,15 @@ See variable `compilation-parse-errors-function' for the interface it uses."
 		    (error "compilation-error-regexp-alist is empty!"))
 	  subexpr (1+ error-group))
     (while alist
-      (setq error-regexp-groups (cons (list subexpr
-					    (+ subexpr (nth 1 (car alist)))
-					    (+ subexpr (nth 2 (car alist)))
-                                            ;;#### This is buggy in FSFmacs
-					    (let ((col (nth 3 (car alist))))
-					      (and col
-						   (+ subexpr col))))
-				      error-regexp-groups))
+      (setq error-regexp-groups
+	    (cons (list subexpr
+			(+ subexpr (nth 1 (car alist)))
+			(+ subexpr (nth 2 (car alist)))
+			;;#### This is buggy in FSFmacs
+			(let ((col (nth 3 (car alist))))
+			  (and col
+			       (+ subexpr col))))
+		  error-regexp-groups))
       (setq subexpr (+ subexpr 1 (count-regexp-groupings (car (car alist)))))
       (setq alist (cdr alist)))
 
@@ -1605,6 +1669,15 @@ See variable `compilation-parse-errors-function' for the interface it uses."
 		    ;; compile-abbreviate-directory).
 		    (file-name-absolute-p filename)
 		    (setq filename (concat comint-file-name-prefix filename)))
+
+	       ;; Some compilers (e.g. Sun's java compiler, reportedly)
+	       ;; produce bogus file names like "./bar//foo.c" for the file
+	       ;; "bar/foo.c"; expand-file-name will collapse these into
+	       ;; "/foo.c" and fail to find the appropriate file.  So we look
+	       ;; for doubled slashes in the file name and fix them up in the
+	       ;; buffer.
+	       (when (fboundp 'command-line-normalize-file-name)
+		 (setq filename (command-line-normalize-file-name filename)))
 	       (setq filename (cons filename (cons default-directory
 						   (nthcdr 4 alist))))
 				     
@@ -1656,9 +1729,11 @@ See variable `compilation-parse-errors-function' for the interface it uses."
 	    (t
 	     (error "compilation-parse-errors: known groups didn't match!")))
 
-      (message "Parsing error messages...%d (%d%% of buffer)"
+      (message "Parsing error messages...%d (%.0f%% of buffer)"
 	       compilation-num-errors-found
-	       (/ (* 100 (point)) (point-max)))
+	       ;; Use floating-point because (* 100 (point)) frequently
+	       ;; exceeds the range of Emacs Lisp integers.
+	       (/ (* 100.0 (point)) (point-max)))
 
       (and limit-search (>= (point) limit-search)
 	   ;; The user wanted a specific error, and we're past it.
@@ -1702,7 +1777,6 @@ See variable `compilation-parse-errors-function' for the interface it uses."
 		  (substring dir (length parent-expanded)))))
   dir)
 
-
 (provide 'compile)
 
 ;;; compile.el ends here

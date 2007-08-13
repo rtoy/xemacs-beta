@@ -1,7 +1,7 @@
-;;; w3-latex.el,v --- Emacs-W3 printing via LaTeX
+;;; w3-latex.el --- Emacs-W3 printing via LaTeX
 ;; Author: wmperry
-;; Created: 1996/06/06 15:00:18
-;; Version: 1.4
+;; Created: 1996/06/30 18:08:34
+;; Version: 1.3
 ;; Keywords: hypermedia, printing, typesetting
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -25,7 +25,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Elisp code to convert a W3 parse tree into a LaTeX buffer.
 ;;;
-;;; Heavily hacked upon by William Perry <wmperry@spry.com> to add more
+;;; Heavily hacked upon by William Perry <wmperry@cs.indiana.edu> to add more
 ;;; bells and whistles.
 ;;;
 ;;; KNOWN BUGS:
@@ -40,7 +40,8 @@
 (require 'w3-print)
 
 (defvar w3-latex-print-links nil
-  "*If non-nil, prints the URLs of hypertext links as footnotes on a page.")
+  "*If non-nil, prints the URLs of hypertext links as endnotes at the end of
+the document.  If `footnote', prints the URL's as footnotes on a page.")
 
 (defvar w3-latex-use-latex2e nil
   "*If non-nil, configures LaTeX parser to use LaTeX2e syntax.  A `nil' 
@@ -57,6 +58,7 @@ document titles.")
 ;; Internal variables - do not touch!
 (defvar w3-latex-current-url nil "What URL we are formatting")
 (defvar w3-latex-verbatim nil "Whether we are in a {verbatim} block or not")
+(defvar w3-latex-links-list nil "List of links for endnote usage")
 
 (defvar w3-latex-entities
   '((nbsp . "~")
@@ -84,7 +86,7 @@ document titles.")
     (para . "\\P ")
     (middot . "$\\cdot$")
     (cedil . "\\c{ }")
-    (sup1 . "$^{1}")
+    (sup1 . "$^{1}$")
 ;   (ordm . "")
     (raquo . "$\\gg$")
     (frac14 . "$\frac{1}{4}$")
@@ -175,17 +177,16 @@ document titles.")
 
 (defun w3-latex-insert-string (str)
   ;;; convert string to a LaTeX-compatible one.
-  (let ((todo (list (cons "\\\\"          "\\BaCkSlAsH")
+  (let ((todo (list (cons "\\\\"          "-BaCkSlAsH-")
 		    (cons "[%&#_{}$]"     "\\\\\\&")
-		    (cons "[~^]"          "\\\\\\&{ }")
+		    (cons "\\^"           "{\\\\textasciicircum}")
+		    (cons "~"             "{\\\\textasciitilde}")
 		    (cons "[*]"           "{\\&}")
 		    (cons "[><|]"         "$\\&$")
-		    (cons "\\\\BaCkSlAsH" "$\\backslash$")
-		    (cons "\n"            (if w3-latex-verbatim
-					      "\\\\newline\n"
-					    " ")))))
+		    (cons "-BaCkSlAsH-"   "$\\\\backslash$"))))
     (if w3-latex-verbatim
-	(setq todo (append todo '((" " . "\\\\ ")))))
+	(setq todo (append todo '(("\n" . "\\\\newline\\\\nullspace\n")
+				  (" " . "\\\\ ")))))
     (save-excursion
       (set-buffer (get-buffer-create " *w3-latex-munging*"))
       (erase-buffer)
@@ -197,6 +198,10 @@ document titles.")
 	(setq todo (cdr todo)))
       (setq str (w3-latex-replace-entities (buffer-string))))
     (insert str)))
+
+(defun w3-latex-ignore (tree)
+  ;;; ignores any contents of this tree.
+  nil)
 
 (defun w3-latex-contents (tree)
   ;;; passes contents of subtree through to the latex-subtree
@@ -211,8 +216,12 @@ document titles.")
   (if w3-latex-current-url
       (insert "% from <URL:" w3-latex-current-url ">\n"))
   (insert "%\n"
-	  "\\begin{document}\n")
+	  "\\batchmode\n\\begin{document}\n")
+  (insert "\\setlength{\\parindent}{0pt}\n"
+	  "\\setlength{\\parskip}{1.5ex}\n")
+  (insert "\\newcommand{\\nullspace}{\\rule{0pt}{0pt}}")
   (w3-latex-contents tree)
+  (if w3-latex-links-list (w3-latex-endnotes))
   (insert "\\end{document}\n"))
 
 (defun w3-latex-title (tree)
@@ -312,25 +321,57 @@ document titles.")
 
 (defun w3-latex-break (tree)
   ;; no content allowed
-  (insert "\\linebreak"))
+  (insert "\\newline "))
+
+(defun w3-latex-endnotes ()
+  (let ((i 1))
+    (insert "\\begin{thebibliography}{99}\n")
+    (while w3-latex-links-list
+      (insert (concat "\\bibitem{ref" (number-to-string i) "}"))
+      (w3-latex-insert-string (car w3-latex-links-list))
+      (insert "\n")
+      (setq w3-latex-links-list (cdr w3-latex-links-list))
+      (setq i (1+ i)))
+    (insert "\\end{thebibliography}\n")))
 
 (defun w3-latex-href (tree)
-  (let ((href (cdr-safe (assq 'href (cadr tree)))))
+  (let ((href (cdr-safe (assq 'href (cadr tree))))
+	(name (cdr-safe (assq 'name (cadr tree)))))
     (cond
      ((not w3-latex-print-links)	; No special treatment
       (w3-latex-contents tree))
+     (name
+      (w3-latex-contents tree)
+      (insert (concat "\\label{" name "}")))
      (href				; Special treatment requested
-      (insert "\\underline{")		; and we have a URL - underline
-      (w3-latex-contents tree)		; it and prepare a footnote.
-      (insert "}\\footnote{" href "}"))
+;      (insert "\\underline{")		; and we have a URL - underline
+      (w3-latex-contents tree)		; it.
+;      (insert "}")
+      (cond 
+       ((char-equal ?# (aref href 0))
+	(insert (concat " (see page~\\pageref{"
+			(substring href 1)
+			"})")))
+       ((eq w3-latex-print-links 'footnote)
+	(insert "\\footnote{")		; Request to prepare footnote 
+	(w3-latex-insert-string href)
+	(insert "}"))
+       (t				; Otherwise, prepare endnotes
+	(let ((mem (member href w3-latex-links-list))
+	      (i (1+ (length w3-latex-links-list))))
+	  (if mem
+	      (setq i (- i (length mem)))
+	    (setq w3-latex-links-list
+		  (append w3-latex-links-list (cons href nil))))
+	  (insert (concat "~\\cite{ref" (number-to-string i) "}"))))))
      (t					; Special treatment requested, but
       (w3-latex-contents tree)))))	; no URL - do nothing.
 
 (defun w3-latex-preformatted (tree)
   (let ((w3-latex-verbatim t))
-    (insert "\\tt{")
+    (insert "\\par\\noindent\\begin{tt}")
     (w3-latex-contents tree)
-    (insert "}")
+    (insert "\\end{tt}\\par")
     ))
 
 (defun w3-latex-xmp (tree)
@@ -423,7 +464,7 @@ document titles.")
 				    w3-temporary-directory) nil 5)
     (shell-command
      (format 
-      "(cd %s ; latex w3-tmp.latex ; xdvi w3-tmp.dvi ; rm -f w3-tmp*) &"
+      "(cd %s ; latex w3-tmp.latex ; latex w3-tmp.latex ; xdvi w3-tmp.dvi ; rm -f w3-tmp*) &"
       w3-temporary-directory))))
 
 (provide 'w3-latex)

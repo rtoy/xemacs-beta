@@ -118,6 +118,7 @@
 		mod-time (nth 5 attr)
 		size (nth 7 attr)
 		typ (or (mm-extension-to-mime (url-file-extension file)) ""))
+	  (setq file (url-hexify-string file))
 	  (if (equal '(0 0) mod-time) ; Set to null if unknown or
 	      (setq mod-time "Unknown                 ")
 	    (setq mod-time (current-time-string mod-time)))

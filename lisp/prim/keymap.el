@@ -201,7 +201,7 @@ as described in the documentation for the `define-key' function."
 ;; Yet more RMS brain-death.
 (defun minor-mode-key-binding (key &optional accept-default)
   "Find the visible minor mode bindings of KEY.
-Return an alist of pairs (MODENAME . BINDING), where MODENAME is the
+Return an alist of pairs (MODENAME . BINDING), where MODENAME is
 the symbol which names the minor mode binding KEY, and BINDING is
 KEY's definition in that mode.  In particular, if KEY has no
 minor-mode bindings, return nil.  If the first binding is a

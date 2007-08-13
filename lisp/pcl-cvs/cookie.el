@@ -1,4 +1,4 @@
-;;; $Id: cookie.el,v 1.1.1.1 1996/12/18 03:32:25 steve Exp $
+;;; $Id: cookie.el,v 1.1.1.2 1996/12/18 03:45:29 steve Exp $
 ;;; cookie.el -- Utility to display cookies in buffers
 
 ;; Copyright (C) 1991-1995   Free Software Foundation
@@ -809,7 +809,7 @@ If the COLLECTION is empty, nil is returned."
      ((>= pos (elib-wrapper->start-marker (dll-last dll)))
       (dll-nth dll -2))
 
-     ;; We now now that pos is within a cookie.
+     ;; We now know that pos is within a cookie.
      (t
       ;; Make an educated guess about which of the three known
       ;; cookies (the first, the last, or GUESS) is nearest.

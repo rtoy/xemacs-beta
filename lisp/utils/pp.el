@@ -1,10 +1,9 @@
 ;;; pp.el --- pretty printer for Emacs Lisp
 
-;; Keywords: lisp, tools, language, extensions
-
 ;; Copyright (C) 1989, 1993 Free Software Foundation, Inc.
 
-;; Author: Randal Schwartz <merlyn@ora.com>
+;; Author: Randal Schwartz <merlyn@stonehenge.com>
+;; Keywords: lisp, tools, language, extensions
 
 ;; This file is part of XEmacs.
 
@@ -20,24 +19,18 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.28.
+;;; Synched up with: FSF 19.34.
 
 ;;; Code:
 
 (defvar pp-escape-newlines t 
-  "*Value of `print-escape-newlines' used by pp-* functions.")
+  "*Value of print-escape-newlines used by pp-* functions.")
+;; XEmacs changes
 (defvar pp-print-readably t
   "*Value of `print-readably' used by pp-* functions.")
-
-;;;###autoload
-(defun pp (object &optional stream)
-  "Output the pretty-printed representation of OBJECT, any Lisp object.
-Quoting characters are printed when needed to make output that `read'
-can handle, whenever this is possible.
-Output stream is STREAM, or value of `standard-output' (which see)."
-  (princ (pp-to-string object) (or stream standard-output)))
 
 ;;;###autoload
 (defalias 'pprint 'pp)
@@ -50,16 +43,15 @@ that `read' can handle, whenever this is possible."
     (set-buffer (generate-new-buffer " pp-to-string"))
     (unwind-protect
 	(progn
-	  (emacs-lisp-mode)
-	  (let ((print-escape-newlines pp-escape-newlines)
-		(print-readably pp-print-readably))
+	  (lisp-mode-variables t)
+	  (let ((print-escape-newlines pp-escape-newlines))
 	    (prin1 object (current-buffer)))
 	  (goto-char (point-min))
 	  (while (not (eobp))
 	    ;; (message "%06d" (- (point-max) (point)))
 	    (cond
-	     ((looking-at "\\s\(")
-	      (while (looking-at "\\s(")
+	     ((looking-at "\\s(\\|#\\s(")
+	      (while (looking-at "\\s(\\|#\\s(")
 		(forward-char 1)))
 	     ((and (looking-at "\\(quote[ \t]+\\)\\([^.)]\\)")
 		   (> (match-beginning 1) 1)
@@ -106,6 +98,15 @@ that `read' can handle, whenever this is possible."
 	  (buffer-string))
       (kill-buffer (current-buffer)))))
 
+;;;###autoload
+(defun pp (object &optional stream)
+  "Output the pretty-printed representation of OBJECT, any Lisp object.
+Quoting characters are printed when needed to make output that `read'
+can handle, whenever this is possible.
+Output stream is STREAM, or value of `standard-output' (which see)."
+  (princ (pp-to-string object) (or stream standard-output)))
+
+;;;###autoload
 (defun pp-eval-expression (expression)
   "Evaluate EXPRESSION and pretty-print value into a new display buffer.
 If the pretty-printed value fits on one line, the message line is used
@@ -113,13 +114,11 @@ instead.  Value is also consed on to front of variable  values 's
 value."
   (interactive "xPp-eval: ")
   (setq values (cons (eval expression) values))
-  (let* ((old-show-hook
-	  (or (let ((sym (if (> (string-to-int emacs-version) 18)
-			     'temp-buffer-show-function
-			   'temp-buffer-show-hook)))
-		(and (boundp 'sym) (symbol-value sym)))
-	      'display-buffer))
-	 (temp-buffer-show-hook
+  (let* ((old-show-function temp-buffer-show-function)
+	 ;; Use this function to display the buffer.
+	 ;; This function either decides not to display it at all
+	 ;; or displays it in the usual way.
+	 (temp-buffer-show-function
 	  (function
 	   (lambda (buf)
 	     (save-excursion
@@ -127,20 +126,27 @@ value."
 	       (goto-char (point-min))
 	       (end-of-line 1)
 	       (if (or (< (1+ (point)) (point-max))
-		       (>= (- (point) (point-min)) (screen-width)))
-		   (progn
+		       (>= (- (point) (point-min)) (frame-width)))
+		   (let ((temp-buffer-show-function old-show-function)
+			 (old-selected (selected-window))
+			 (window (display-buffer buf)))
 		     (goto-char (point-min)) ; expected by some hooks ...
-		     (funcall old-show-hook buf))
+		     (make-frame-visible (window-frame window))
+		     (unwind-protect
+			 (progn
+			   (select-window window)
+			   (run-hooks 'temp-buffer-show-hook))
+		       (select-window old-selected)))
 		 (message "%s" (buffer-substring (point-min) (point)))
-		 (delete-windows-on buf) ; no need to kill it
-		 )))))
-	 (temp-buffer-show-function temp-buffer-show-hook)) ; emacs19 name
+		 ))))))
     (with-output-to-temp-buffer "*Pp Eval Output*"
       (pp (car values)))
     (save-excursion
       (set-buffer "*Pp Eval Output*")
-      (emacs-lisp-mode))))
+      (let (emacs-lisp-mode-hook)
+	(emacs-lisp-mode)))))
 
+;;;###autoload
 (defun pp-eval-last-sexp (arg)
   "Run `pp-eval-expression' on sexp before point (which see).
 With argument, pretty-print output into current buffer.

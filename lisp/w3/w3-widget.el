@@ -1,12 +1,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; w3-widget.el,v --- An image widget
+;;; w3-widget.el --- An image widget
 ;; Author: wmperry
-;; Created: 1996/05/29 03:11:24
-;; Version: 1.14
+;; Created: 1996/07/21 18:11:36
+;; Version: 1.3
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -183,11 +183,15 @@
 				 :delete 'widget-default-delete
 				 :notify 'w3-image-widget-callback)))
 	   (alt
-	    (setq real-widget (widget-create 'item :format "%v" :value alt))))
+	    (setq real-widget
+		  (widget-create 'push :tag alt :format "%[%t%]"
+				 :delete 'widget-default-delete
+				 :notify 'w3-image-widget-callback))))
 	  (if (not real-widget)
 	      nil
 	    (widget-put real-widget 'usemap (widget-get widget 'usemap))
 	    (widget-put real-widget 'href href)
+	    (widget-put real-widget 'src (widget-get widget 'src))
 	    (widget-put real-widget 'ismap server-map)
 	    (widget-put real-widget :parent widget)
 	    (widget-put widget :children (list real-widget))))

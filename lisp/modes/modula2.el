@@ -1,16 +1,46 @@
 ;;; modula2.el --- Modula-2 editing support package
+
+;; Author: Michael Schmidt <michael@pbinfo.UUCP> 
+;;     Tom Perrine <Perrin@LOGICON.ARPA>
 ;; Keywords: languages
 
-; Author Mick Jordan
-; amended Peter Robinson
-; ported to GNU Michael Schmidt
-;;;From: "Michael Schmidt" <michael@pbinfo.UUCP>
-;;;Modified by Tom Perrine <Perrin@LOGICON.ARPA> (TEP)
+;; This file is part of XEmacs.
 
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
 
-;;; Added by TEP
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34.
+
+;; The authors distributed this without a copyright notice
+;; back in 1988, so it is in the public domain.  The original included
+;; the following credit:
+
+;; Author Mick Jordan
+;; amended Peter Robinson
+
+;;; Commentary:
+
+;; A major mode for editing Modula-2 code.  It provides convenient abbrevs
+;; for Modula-2 keywords, knows about the standard layout rules, and supports
+;; a native compile command.
+
+;;; Code:
+
+;;; Added by Tom Perrine (TEP)
 (defvar m2-mode-syntax-table nil
-  "Syntax table in use in Modula-2-mode buffers.")
+  "Syntax table in use in Modula-2 buffers.")
 
 (defvar m2-compile-command "m2c"
   "Command to compile Modula-2 programs")
@@ -79,28 +109,28 @@
   
 ;;;###autoload
 (defun modula-2-mode ()
-"This is a mode intended to support program development in Modula-2.
-All control constructs of Modula-2 can be reached by typing
-Control-C followed by the first character of the construct.
-\\{m2-mode-map}
-  Control-c b begin         Control-c c case
-  Control-c d definition    Control-c e else
-  Control-c f for           Control-c h header
-  Control-c i if            Control-c m module
-  Control-c l loop          Control-c o or
-  Control-c p procedure     Control-c Control-w with
-  Control-c r record        Control-c s stdio
-  Control-c t type          Control-c u until
-  Control-c v var           Control-c w while
-  Control-c x export        Control-c y import
-  Control-c { begin-comment Control-c } end-comment
-  Control-c Control-z suspend-emacs     Control-c Control-t toggle
-  Control-c Control-c compile           Control-x ` next-error
-  Control-c Control-l link
+  "This is a mode intended to support program development in Modula-2.
+All control constructs of Modula-2 can be reached by typing C-c
+followed by the first character of the construct.
+\\<m2-mode-map>
+  \\[m2-begin] begin         \\[m2-case] case
+  \\[m2-definition] definition    \\[m2-else] else
+  \\[m2-for] for           \\[m2-header] header
+  \\[m2-if] if            \\[m2-module] module
+  \\[m2-loop] loop          \\[m2-or] or
+  \\[m2-procedure] procedure     Control-c Control-w with
+  \\[m2-record] record        \\[m2-stdio] stdio
+  \\[m2-type] type          \\[m2-until] until
+  \\[m2-var] var           \\[m2-while] while
+  \\[m2-export] export        \\[m2-import] import
+  \\[m2-begin-comment] begin-comment \\[m2-end-comment] end-comment
+  \\[suspend-emacs] suspend Emacs     \\[m2-toggle] toggle
+  \\[m2-compile] compile           \\[m2-next-error] next-error
+  \\[m2-link] link
 
-   m2-indent controls the number of spaces for each indentation.
-   m2-compile-command holds the command to compile a Modula-2 program.
-   m2-link-command holds the command to link a Modula-2 program."
+   `m2-indent' controls the number of spaces for each indentation.
+   `m2-compile-command' holds the command to compile a Modula-2 program.
+   `m2-link-command' holds the command to link a Modula-2 program."
   (interactive)
   (kill-all-local-variables)
   (use-local-map m2-mode-map)
@@ -112,7 +142,7 @@ Control-C followed by the first character of the construct.
   (setq end-comment-column 75)
   (set-syntax-table m2-mode-syntax-table)
   (make-local-variable 'paragraph-start)
-  (setq paragraph-start (concat "^$\\|" page-delimiter))
+  (setq paragraph-start (concat "$\\|" page-delimiter))
   (make-local-variable 'paragraph-separate)
   (setq paragraph-separate paragraph-start)
   (make-local-variable 'paragraph-ignore-fill-prefix)
@@ -129,8 +159,8 @@ Control-C followed by the first character of the construct.
   (setq comment-column 41)
   (make-local-variable 'comment-start-skip)
   (setq comment-start-skip "/\\*+ *")
-  (make-local-variable 'comment-indent-hook)
-  (setq comment-indent-hook 'c-comment-indent)
+  (make-local-variable 'comment-indent-function)
+  (setq comment-indent-function 'c-comment-indent)
   (make-local-variable 'parse-sexp-ignore-comments)
   (setq parse-sexp-ignore-comments t)
   (run-hooks 'm2-mode-hook))
@@ -155,7 +185,7 @@ Control-C followed by the first character of the construct.
   (m2-tab))
 
 (defun m2-case ()
-  "Build skeleton CASE statment, prompting for the <expression>."
+  "Build skeleton CASE statement, prompting for the <expression>."
   (interactive)
   (let ((name (read-string "Case-Expression: ")))
     (insert "CASE " name " OF")
@@ -183,7 +213,7 @@ Control-C followed by the first character of the construct.
   (m2-tab))
 
 (defun m2-for ()
-  "Build skeleton FOR loop statment, prompting for the loop parameters."
+  "Build skeleton FOR loop statement, prompting for the loop parameters."
   (interactive)
   (insert "FOR ")
   (let ((name (read-string "Loop Initialiser: ")) limit by)
@@ -213,7 +243,7 @@ Control-C followed by the first character of the construct.
   (insert "*)\n\n"))
 
 (defun m2-if ()
-  "Insert skeleton IF statment, prompting for <boolean-expression>."
+  "Insert skeleton IF statement, prompting for <boolean-expression>."
   (interactive)
   (insert "IF ")
   (let ((thecondition (read-string "<boolean-expression>: ")))
@@ -306,14 +336,14 @@ Control-C followed by the first character of the construct.
 (defun m2-stdio ()
   (interactive)
   (insert "
->FROM TextIO IMPORT 
+FROM TextIO IMPORT 
    WriteCHAR, ReadCHAR, WriteINTEGER, ReadINTEGER,
    WriteCARDINAL, ReadCARDINAL, WriteBOOLEAN, ReadBOOLEAN,
    WriteREAL, ReadREAL, WriteBITSET, ReadBITSET,
    WriteBasedCARDINAL, ReadBasedCARDINAL, WriteChars, ReadChars,
    WriteString, ReadString, WhiteSpace, EndOfLine;
 
->FROM SysStreams IMPORT sysIn, sysOut, sysErr;
+FROM SysStreams IMPORT sysIn, sysOut, sysErr;
 
 "))
 
@@ -387,7 +417,7 @@ Control-C followed by the first character of the construct.
 		     (setq m2-link-name (read-string "Name of executable: "
 						     modulename))))))
 
-(defun execute-monitor-command (command)
+(defun m2-execute-monitor-command (command)
   (let* ((shell shell-file-name)
 	 (csh (equal (file-name-nondirectory shell) "csh")))
     (call-process shell nil t t "-cf" (concat "exec " command))))
@@ -401,7 +431,7 @@ Control-C followed by the first character of the construct.
       (setq modulename
 	    (read-string "Module name: "))
       (switch-to-buffer "*Command Execution*")
-      (execute-monitor-command (concat "m2whereis " modulename))
+      (m2-execute-monitor-command (concat "m2whereis " modulename))
       (goto-char (point-min))
       (condition-case ()
 	  (progn (re-search-forward "\\(.*\\.def\\) *$")
@@ -439,3 +469,5 @@ Control-C followed by the first character of the construct.
 	((string-equal (substring (buffer-name) -3) ".md")
 	 (find-file-other-window
 	  (concat (substring (buffer-name) 0 -3)  ".mi")))))
+
+;;; modula2.el ends here

@@ -1,11 +1,11 @@
-;;; w3-toolbar.el,v --- Toolbar functions for emacs-w3
+;;; w3-toolbar.el --- Toolbar functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/05/01 16:00:48
-;; Version: 1.10
+;; Created: 1996/06/30 18:12:43
+;; Version: 1.2
 ;; Keywords: mouse, toolbar
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;

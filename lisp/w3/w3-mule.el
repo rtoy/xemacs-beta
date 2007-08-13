@@ -1,11 +1,11 @@
-;;; w3-mule.el,v --- MULE 18/19 specific functions for emacs-w3
+;;; w3-mule.el --- MULE 18/19 specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/04/25 14:41:19
-;; Version: 1.15
+;; Created: 1996/06/30 18:09:59
+;; Version: 1.2
 ;; Keywords: faces, help, i18n, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;

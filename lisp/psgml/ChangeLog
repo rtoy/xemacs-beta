@@ -1,0 +1,878 @@
+Tue Sep 10 17:52:40 1996  Steven L Baur  <steve@miranova.com>
+
+	* Various files: Sync'ed with 1.0a12
+
+Fri Jul 12 18:20:07 1996  Steven L Baur  <steve@miranova.com>
+
+	* Various files: Sync'ed up to Wingpsgml
+
+	* iso-sgml.el:  Added Appendix 2 Proposed entity additions to Latin-2
+
+Fri Jul 12 03:38:10 1996  Adrian Aichner <aichner@ecf.teradyne.com>
+
+	* psgml-edit.el: Allow user to control capitalization of auto-inserted
+	keywords.
+	
+
+Sun Sep  1 01:53:33 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Version 1.0a12
+
+	* psgml-maint.el: new file. Used to compile psgml.
+
+Tue Aug 20 23:11:30 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml.el:
+	(sgml-validate-error-regexps): Fixes from Dave Love <d.love@dl.ac.uk>
+	and David Megginson <dmeggins@uottawa.ca> for use with nsgmls.
+	(sgml-validate-command): changed default validate command to use
+	nsgmls.
+	
+Sun Aug 11 19:21:56 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* iso88591.map: added code to character mappings.
+
+Thu Jun 13 20:43:53 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-get-and-move): use sgml-final, not
+	sgml-state-final-p. In this case the substate can be an AND-state.
+
+Tue May 21 07:39:34 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Version 1.0a11 released.
+
+Mon May 20 23:14:02 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml.el (psgml-version): bump version.
+	(sgml-build-custom-menus): fix button3 after easy-menu redefines
+	it. (this was actually done at an earlier date).
+	
+Fri May  3 18:16:18 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-push-to-entity): remove binding
+	before/after change functions. This probably made them nil in the
+	main buffer.
+
+Fri Apr  5 14:37:47 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* psgml.texi, psgml-api.texi: Add INFO-DIR-ENTRY.
+
+	* aclocal.m4, configure.in, Makefile.in: New.
+	* INSTALL, install-sh, mkinstalldirs: Add from autoconf-2.9
+	package.
+
+Fri Apr  5 09:47:01 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Version 1.0a10 released.
+
+Thu Mar 21 22:14:43 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-cache-catalog): use file-truename on file
+	to be cached.
+
+Wed Mar 20 20:59:35 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-info.el (sgml-eltype-refrenced-elements): allow for
+	exceptions.
+	
+Tue Mar 19 21:59:27 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-api.el (sgml-map-content): use max from main buffer when
+	setting parser goal. (fix bug 75).
+
+Sun Mar 17 15:06:26 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-list-valid-tags): Show current
+	shortreference map name.
+
+	* psgml-parse.el (sgml-lookup-shortref-name): new func.
+
+	* psgml-edit.el (sgml-what-element): display 'shortref' if cursor
+	over beginning of a shortref
+
+	* psgml-parse.el (sgml-is-goal-after-start): handle stag in entity
+	differently from stag in buffer.
+
+Tue Mar 12 21:22:52 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el: removed use of & in functions and variable
+	names.
+	
+	* psgml-dtd.el (sgml-remove-redundant-states-1): remove unused
+	variable res.
+
+	* psgml.el (sgml-parse-colon-path): remove unused variable cd-prefix
+
+Sun Feb 18 16:33:43 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-push-to-entity): set mc-flag to nil so that
+	MULE does not mangle binary data. (reported by Jeffrey Friedl
+	<jfriedl@nff.ncl.omron.co.jp>)
+
+Mon Jan 22 22:57:54 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-down-element): make sure sgml-last-element
+	has a reasonable value even if there is an error
+
+Sat Jan  6 22:07:44 1996  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-parse-nametoken): change buffer-substring
+	to buffer-substring-no-properties
+
+Sun Nov  5 13:41:36 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-dtd.el (sgml-parse-attribute-definition): remove
+	unnecessary call to sgml-general-case.
+	(sgml-check-nametoken-group): added a revers to get name tokens in
+	same order as declared.
+
+Sat Nov  4 12:58:56 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml.el (sgml-validate-error-regexps): added new regexp for
+	nsgmls (from David M).
+
+	* psgml-edit.el (sgml-insert-attributes): call auto-fill-function
+	after.
+
+	* psgml.el (sgml-default-validate-command): add %v for
+	sgml-declaration variable
+
+Sat Aug 26 13:57:07 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* fs.el (fs-para): fix typo (bug 61).
+
+	* psgml-edit.el (sgml-custom-dtd): new arglist to
+	sgml-doctype-insert.
+	
+	* psgml-api.el (sgml-map-content): don't take hook-variables as
+	parameters. Move data parsing to separate function. (bug 59)
+
+Wed Aug 23 20:53:50 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Version 1.0 a8 released.
+
+	* psgml-edit.el (sgml-expand-shortref-to-text): use
+	sgml-rs-ignore-pos.
+	(sgml-expand-shortref-to-entity): dito.
+
+	* psgml-other.el (sgml-build-custom-menus): make menu entry call
+	sgml-insert-markup.
+
+	* psgml.el (sgml-doctype): typo.
+
+	* psgml-parse.el (sgml-rs-ignore-pos): Replaces
+	sgml-last-start-pos, now buffer local. (bug 49)
+	(sgml-push-to-entity): set sgml-rs-ignore-pos to start of entity
+	reference. (bug 49)
+
+ 	* psgml-edit.el (sgml-doctype-insert): Remove &rest (bug 56).
+
+	* psgml-lucid.el (sgml-build-custom-menus): Fix (bug 56).
+
+	* psgml-other.el (sgml-build-custom-menus): Fix (bug 56).
+
+	* psgml-edit.el (sgml-edit-attrib-specification-list): Use the
+	attlist for attribute names, not the name parsed from the
+	buffer. This fixes problems with attached text properties.
+	(fixes bug 53).
+
+Tue Aug 22 20:56:06 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Version 1.0a7 released
+
+	* psgml.el (psgml-version): bump version
+
+Mon Aug 21 23:38:49 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-extid-sysid): handle old style extids.
+	(sgml-check-entities): log message on missmatch
+
+Wed Aug 16 22:54:42 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el 
+	(sgml-make-extid): optional argument dir added. New representation
+	for external identifiers. 	
+	(sgml-extid-dir): New attr of extid
+	(sgml-extid-expand): new fun.
+	(sgml-path-lookup): use sgml-extid-expand
+	(sgml-lookup-sysid-as-file): take extid as argument instead of sysid,
+	use sgml-extid-expand
+	(sgml-parse-external): don't expand sysid
+
+
+Thu Aug 10 22:33:50 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml.el (sgml-default-validate-command): new function.
+	(sgml-validate): use new func.
+	(sgml-validate-command): new possible value: a list of templates
+	to try.
+
+Mon Jul 31 22:34:10 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-entity-insert-text): mark entities not
+	found.
+	(sgml-entity-marked-undefined-p): new func.
+	(sgml-push-to-entity): set default-directory to that of external
+	entities file.
+	(sgml-parse-external): expand sysid as file name
+
+	* psgml-info.el (sgml-display-table): add  nosort option.
+	(sgml-general-dtd-info): more info. including undef entities.
+
+Sun Jul 30 22:23:15 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* test/son2.sgml: check that inclusions are inherited from the doc
+	element.
+
+	* test/doc.dtd: adding ix element as inclusion in doc.
+
+Wed Jul 26 22:07:16 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-parse-catalog-buffer): recoded. Now all
+	entries are on the format (type name file) and name might be nil
+	for "noname" entries.
+	(sgml-catalog-lookup): changed to handle new internal catalog
+	format.
+	
+Mon Jul 24 00:07:02 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-parse-catalog-buffer): Handle full catalog
+	format.
+	(sgml-catalog-lookup): Handle new catalog format including
+	parameter entities.
+	(sgml-search-catalog): new function, can be used to look up
+	SGMLDECL etc..
+
+	* psgml.el (sgml-system-identifiers-are-preferred): new option.
+
+Sun Jul 23 20:56:00 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-other.el (sgml-popup-multi-menu): kludge to force
+	x-popup-menu to be two level.
+
+	* psgml-parse.el (sgml-do-data): move start after data consumed.
+
+Mon May  1 20:57:29 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-normalize-content): fixing arithmetic error
+
+	* psgml-parse.el (sgml-make-shortmap): add missing = to skip strings
+
+Sun Apr 23 23:01:35 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Id 46: turns on autofill, fixed.
+
+	* psgml-parse.el (sgml-auto-fill-inhibit-function): new variable
+	(do-auto-fill): advise do-auto-fill to honour above variable
+	(sgml-need-dtd): set sgml-auto-fill-inhibit-function, and don't
+	set auto-fill-function.
+	(sgml-safe-context-of): new fun
+	(sgml-safe-element-at): new fun
+	(sgml-in-prolog-p): new fun
+
+Mon Apr 10 21:26:30 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-dtd.el (sgml-write-dtd): set file-type for oemacs.
+
+Tue Mar 28 19:01:53 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-try-merge-compiled-dtd): entd should be
+	ents.
+	
+
+Mon Mar 27 18:31:26 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-bdtd-load): var. renamed.
+	(sgml-eltypes-in-state): fix som inconsitencies with
+	token/eltype/symbol.
+	(sgml-list-implications): fix bug handling empty elements.
+
+	* psgml.el (sgml-recompile-out-of-date-cdtd): renamed from
+	sgml-ignore-out-of-date-cdtd.
+
+Sun Mar 26 16:25:10 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Id 34: CATALOG searching priorities, fixed.
+
+	* psgml-parse.el (sgml-catalog-lookup): 
+	Giv PUBLIC entries priority over ENTITY and DOCTYPE
+
+	* Id 35: Entity manager handling of system id, fixed.
+
+	* psgml-parse.el (sgml-lookup-sysid-as-file): new func.
+	(sgml-external-file): call new func.
+
+	* Id 41: selecting from a popup menu should not be an error
+	Installing patch from Tim Bradshaw <tfb@edinburgh.ac.uk>,
+	Also fixing consequences.
+	Also making new menu function sgml-popup-multi-menu,
+	which uses call-back style. Nicer attributes menu.
+
+	* psgml-other.el (sgml-set-face-for): Use sgml-type instead of
+	type for overlay property.
+
+	* psgml-edit.el (sgml-attrib-menu): Make all attributes into one
+	list with submenues for every attribute.
+
+Thu Mar 23 20:23:26 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml.el (sgml-mode): append to post-command-hook, this makes
+	psgml work better with auto-show.
+
+	* psgml-parse.el (sgml-throw-on-error): new var.
+	(sgml-error): Throw if sgml-throw-on-error is set.
+	(sgml-push-to-entity): remove fifth arg to insert-file-contents
+	
+	* psgml-edit.el: (sgml-indent-line)
+	Make sgml-indent-line better behaved.
+	1. Don't tab outside document element.
+	2. Ignore parse errors.
+
+
+Sun Mar 19 16:46:45 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-bdtd-load): if sgml-ignore-out-of-date-cdtd
+	is ask, ask before recompiling.
+
+Thu Mar  2 19:08:59 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Id 38: auto-fill breaks pubid, fixed
+
+	* psgml-parse.el (sgml-do-auto-fill): new function, won't
+	auto-fill outside document element
+	(sgml-need-dtd): set auto-fill-function.
+
+Wed Feb 22 22:51:30 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Id 37: sgml-kill-element with cursor inside tag
+	fixed.
+
+	* psgml-edit.el (sgml-kill-element): signal error if point is
+	inside markup
+
+Sat Jan 28 14:35:01 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-insert-element): Leave point at the end of
+	the element.
+
+	* psgml.texi: Patch from Kevin R
+
+Mon Jan 23 19:29:33 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-tag-regexp): make it handle unclosed tags
+	and net tags.
+
+	* psgml-parse.el (struct sgml-tree): new field asl, constuctor
+	changed.
+	(sgml-open-element): pass asl to sgml-make-tree
+	(sgml-element-attribute-specification-list): use sgml-tree-asl.
+
+Sat Jan 14 16:27:46 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml.el (sgml-mode-abbrev-table): new var. From patch by Karl
+	Eichwalder. 
+	(sgml-validate-command): fixed doc. (Kevin Rodgers)
+
+Thu Jan 12 16:57:05 1995  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-other.el (sgml-set-face-for): installed patch from Kevin
+
+	* psgml-parse.el (sgml-do-end-tag): move call to sgml-set-markup-type
+
+Sun Dec 11 16:38:29 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-do-set-option): take care of
+	read-from-string.
+
+	* psgml.el (psgml-version): bump
+	(sgml-ignore-out-of-date-cdtd): new option
+
+	* psgml-parse.el (sgml-bdtd-load): make up to date test optional.
+
+Fri Dec  9 22:02:13 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-other.el: Add ranges to multipart menus.
+
+	* psgml-edit.el	(sgml-normalize-start-tag): Don't recreate
+	NET-start tags. 
+
+Sun Dec  4 01:23:46 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-expand-shortref-to-text): update sgml-goal
+	(sgml-expand-shortref-to-entity): dito
+
+Tue Nov 29 13:13:13 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-dtd.el (sgml-before-eltype-modification): obsolete?
+
+	* psgml-parse.el: Major changes to handling of compiled dtds
+
+Fri Nov 25 23:01:46 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-entities-menu): sort entities menu
+
+Thu Nov 17 20:45:02 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-path-lookup): set cand not res.
+
+Sat Nov 12 08:09:13 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-dtd.el (sgml-code-dtd): map over all eltypes, not only
+	defined, when outputing the names
+
+Thu Nov  3 06:47:17 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Patch from Norman Walsh
+
+	* psgml-parse.el (sgml-do-entity-ref): check
+	sgml-warn-about-undefined-entities.
+
+	* psgml.el (sgml-warn-about-undefined-entities): new var.
+
+Mon Oct 31 20:10:58 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-try-merge-compiled-dtd): Immediately exit
+	entity check loop if discrepancy found.
+
+Sun Oct 30 17:02:09 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-copy-eltypes): remove
+
+	* psgml.el ((fboundp 'run-hook-with-args)): conditionally define
+
+	* psgml-edit.el (sgml-list-valid-tags): don't show shortmap.
+
+	* psgml-dtd.el (sgml-before-eltype-modification): use
+	sgml-merge-eltypes instead of sgml-copy-eltypes.
+	(sgml-do-usemap-element): call sgml-before-eltype-modification.
+
+	* psgml-parse.el (sgml-merge-eltypes): don't overwrite values in
+	old eltypes.
+
+Sat Oct 29 00:15:41 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-setup-doctype): new func.
+
+
+Thu Oct 27 01:51:37 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-show-warnings): instead of suppress
+	warnings, defualt nil. Set to t by next trouble spot.  Warnings
+	also shown when parsing dtd.
+	(sgml-parse-external): moved
+	(sgml-do-doctype): include the code that sgml-check-doctype-body
+	did have
+	(sgml-make-primitive-content-token): moved
+
+Wed Oct 26 23:23:26 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml.el (psgml-version): bump version
+	(sgml-ignore-undefined-elements): new option
+
+	* psgml-parse.el (sgml-eltype-all-miscdata): replace the function
+        sgml-eltype-all-appdata.
+	(sgml-eltype-set-all-miscdata): new func.
+
+Tue Oct 25 01:26:03 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-dtd.el (sgml-declare-entity): handle #DEFAULT
+
+	* psgml-parse.el (sgml-lookup-entity): support default entity
+	(sgml-entity-declare): dito
+	(sgml-merge-entity-tables): dito
+
+Sat Oct 22 01:24:50 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-read-dtd): Decode current buffer.
+
+Fri Oct 14 00:41:19 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-dtd.el (sgml-code-dtd): take dtd as argument
+	(sgml-save-dtd): take optional dtd
+
+	* Id 27: insert-element looping
+	Test if inside markup when producing menus and completion tables.
+
+Wed Sep 28 08:10:19 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-set-parse-state): Use smgl-goto-epos
+	(sgml-push-to-entity): reuse buffers always
+	(sgml-close-element): don't promote position of tag
+
+	* psgml-dtd.el (sgml-parse-external): remove use of sgml-gname-symbol
+	(sgml-check-declared-value): "-
+	(sgml-check-default-value): "-
+
+Tue Sep 27 20:11:57 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-open-element): take attribute specification
+	list as argument.  Call hook sgml-open-element-hook.
+	(sgml-data-function): new var
+	(sgml-pi-function): new var
+	remove sgml-{g,e}name-symbol
+	(sgml-skip-cdata): rename to sgml-do-data
+
+Mon Sep 26 09:44:35 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Version 1.0 a3
+
+Sun Sep 25 16:12:06 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el: move sgml-set-markup-type
+
+	* psgml-edit.el (sgml-do-set-option): add event argument
+
+	* Id 1: C-c C-d may hang
+	psgml-edit.el (sgml-next-data-field): check if at end of buffer
+
+	* psgml-edit.el (sgml-normalize-start-tag): can`t use
+	sgml-change-start-tag becuse trimming may have moved cursor to
+	some other place if the tag is implied.
+
+
+Sun Sep 25 14:54:19 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-lucid.el: Implement changes in psgml-other.
+	* Id 24: Lucid menubar problems, see above.
+
+Sun Sep 25 10:17:25 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-other.el (sgml-popup-menu): new func.
+	(sgml-max-menu-size): move here
+
+	* psgml.el: split sgml-user-options into sgml-file-options and
+	sgml-user-options.  Fix some properties and buffer local status.
+	(sgml-valid-option): new func.
+	(sgml-save-options): save all file options that are valid.
+
+	* psgml-edit.el: options menu split into file and user options,
+	sgml-split-menu move to emacs specific files (psgml-other,
+	psgml-lucid).  The emacs specific provides a sgml-popup-menu.
+
+	* psgml.el (sgml-live-element-indicator): remove buffer localness
+
+	* psgml-parse.el (sgml-parse-catalog-buffer): use sgml-parse-name
+	for doctype.
+
+Fri Sep 23 00:19:18 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-dtd.el (sgml-reduce-|): inline sgml-make-alt
+
+	* psgml-parse.el (sgml-add-move-to-set): make into macro
+	(sgml-state-final-p): make into macro
+
+	* psgml-dtd.el (sgml-make-primitive-content-token): make defsubst
+
+	* psgml-parse.el (sgml-parse-name): remove defsubst
+	(sgml-parse-name): add compiler macro
+
+	* psgml-dtd.el (sgml-remove-redundant-states-1): new optimizer
+	(sgml-make-*): use it
+	(sgml-make-+): use it
+	(sgml-make-conc): use it
+
+	* psgml-parse.el (sgml-parse-ds): make defsubst
+	(sgml-parse-parameter-entity-ref): make defsubst
+	(sgml-do-parameter-entity-ref): new sub for above
+	(sgml-eltype-token): def compiler macro
+	(sgml-token-eltype): def compiler macro
+
+	* psgml-dtd.el (sgml-parse-connector): make defsubst
+	(sgml-make-opt): nconc instead of append
+
+	* psgml-parse.el (sgml-parser-loop): check for end tag before
+	skipping cdata
+	(sgml-skip-ps): make defsubst
+
+	* psgml-dtd.el (sgml-parse-prolog): add cleanup entities
+
+	* psgml-parse.el (sgml-parser-loop): move parsing of end-tag to
+	after shortref
+
+	* psgml.el (sgml-debug): use sgml-log-message
+
+	* psgml-parse.el (sgml-deref-shortmap): respect the nobol argument
+	(sgml-last-start-pos): New variable
+	(sgml-push-to-entity): set sgml-last-start-pos to buffer start if
+	entering an internal entity
+	(sgml-pop-entity): set sgml-last-start-pos
+	(sgml-parse-to): set sgml-last-start-pos
+	(sgml-parser-loop): call deref map with disabling of &#RS if point
+	is equal to sgml-last-start-pos
+
+Thu Sep 22 01:03:56 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-cleanup-entities): clean up buffers used by
+	sgml-push-to-entity if some looping code has left a lot of buffers.
+	(sgml-need-dtd): call sgml-cleanup-entities
+	(sgml-push-to-entity): check that the sgml-cleanup-entities works,
+	cludge to make sure shortref maps don't find record-start in the
+	beginning of internal entities.  This cludge breaks the epos
+	promotion code.
+	(sgml-set-parse-state): when setting parse state to start of a
+	element goto epos-end (not start+len).
+
+Sun Sep 18 05:49:17 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el 
+	(sgml-parse-parameter-entity-ref): call sgml-push-to-entity with
+	optional argument 'param.
+	(sgml-push-to-entity): take new optional argument and pass it to
+	sgml-entity-insert-text. 
+	(sgml-entity-insert-text): take extra type argument.
+	ci 2.8
+	(sgml-eltype-mixed): add comp.macro
+	(sgml-parse-name): make defsubst
+
+Thu Sep 15 02:06:22 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-parse.el (sgml-current-entity-map): add default-directory
+	(sgml-set-global): set default-directory in
+	sgml-current-entity-map
+	(sgml-check-name): fix bug in compiler-macro
+	(sgml-insert-external-entity): don't accepty directories as result
+	(sgml-push-to-entity): copy default-directory to new buffer
+
+	* psgml.el (sgml-catalog-files): new default value
+
+Wed Sep 14 04:36:29 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-parse.el (sgml-dtd): make type an untyped vector
+
+Tue Sep 13 06:35:43 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-check-name): add comp-mac
+	(sgml-final): make defsubst
+	(sgml-final&): sub for above
+	(sgml-parse-pcdata): make defsubst
+	(sgml-eltype-name): add comp-mac
+
+Mon Sep 12 05:11:38 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-parse.el (sgml-parse-processing-instruction): make defsubst
+	(sgml-do-processing-instruction): broken out from above
+
+Mon Sep 12 01:36:46 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-parse-general-entity-ref): make defsubst
+	(sgml-do-general-entity-ref): broken out from above
+	(sgml-set-markup-type): make defsubst
+
+Sun Sep 11 21:49:14 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-is-enabled-net): make defsubst
+	(sgml-parse-s): make defsubst
+	(sgml-element-mixed): add a compiler macro
+
+Sun Sep 11 00:00:45 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-lucid.el: Install patch 
+	From: Tim Bradshaw <tfb@edinburgh.ac.uk>
+	in 4.0b2 with lemacs 19.10 and up I don't think you want to add
+	the SGML menus before the "Help" menu since then they come out at
+	the right hand of the menubar.  Attached patch to psgml-lucid does
+	the trick. 
+
+
+Thu Sep  8 23:38:20 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-dtd.el (sgml-check-content): ANY also mixed
+
+
+Thu Sep  8 22:35:19 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-parse.el (sgml-make-shortmap): Only warning for strange
+	short ref delimiter
+
+	* psgml-dtd.el (sgml-dtd-shortmaps): New variable
+	(sgml-declare-shortref): add mapping to variable
+	(sgml-check-doctype-body): add shortref maps from variable to dtd
+	struct
+
+	* psgml-edit.el (sgml-custom-dtd): new command
+	(sgml-custom-markup): new command
+
+Thu Sep  8 01:17:59 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-normalize): expand short references also
+
+Wed Sep  7 20:56:41 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-reparse-buffer): New function.
+
+	* nefarious.el (sgml-map-element-types): Update for 1.0
+
+
+Sun Sep  4 17:09:27 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-untag-element): require tags to be in the
+	buffer 
+
+	* psgml-parse.el (sgml-update-display): parse to point-max after
+	parse to window-end
+
+	* psgml.el (sgml-validate-command): change to use format string
+	(sgml-validate): use format
+
+	* psgml-edit.el (sgml-operate-on-tags): give tags uniq numbers as
+	invisible property
+
+Sun Sep  4 10:21:54 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-dtd.el (sgml-check-element-type): Fix problem with ranked
+	groups
+
+
+Sun Sep  4 00:10:50 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-indent-line): use sgml-find-context-of at
+	end of buffer.
+
+Sun Sep 3 23:00:00 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* Version 0.4b2
+
+Fri Sep  2 19:48:41 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml.el (sgml-local-catalogs): new variable
+
+	* psgml-parse.el: Implement local serach maps for entities
+
+
+Tue Aug 30 17:28:42 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-parse.el: Introduce sgml-current-omittag and
+	sgml-current-shorttag that holds golbal copies of sgml-omittag and
+	sgml-shorttag.  Change variable references where apropriate
+
+	* psgml-edit.el (sgml-next-trouble-spot): ignore warnings before
+	point
+	(sgml-expand-entity-reference): New command
+
+Mon Aug 29 07:44:48 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-parse.el (sgml-parser-loop): Take argument: a function
+	that should return t if the loop should be prematurely exited
+	(sgml-parse-to): take optional argument to pass to sgml-parser-loop
+
+	* psgml.el (sgml-command-post): function called from
+	post-command-hook. Activates DTD is `sgml-auto-activate-dtd' is
+	set and call `sgml-update-display' in psgml-parse if there is an
+	active DTD.
+	(sgml-auto-activate-dtd): New variable.
+
+	* psgml-parse.el (sgml-update-display): instead of
+	sgml-set-live-indicator 
+
+	* psgml-dtd.el (sgml-parse-character-reference): only parse
+	function character refrences if optional argument is true
+
+Sat Aug 27 10:53:54 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-parse.el: Implement short references
+
+Fri Aug 26 02:47:35 1994  Lennart Staflin  <lenst@lysator.liu.se>
+
+	* psgml-edit.el (sgml-operate-on-tags): only set inivisible
+	property (and rear-nonsticky)
+
+	* psgml-parse.el (sgml-parse-to): remove sgml-hide manipulation
+
+Fri Aug 26 00:02:30 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-parse.el (sgml-set-live-element-indicator): don't let
+	point be inside an invisible region.
+
+Thu Aug 25 04:35:33 1994  Lennart Staflin  (lenst@konrad)
+
+	* psgml-edit.el (sgml-operate-on-tags): use category sgml-hide
+	instead of invisible+read-only.
+
+	* psgml-parse.el (sgml-parse-to): temporary set sgml-hide's
+	property intangible to nil when parsing.
+
+	* psgml.el (sgml-max-menu-size): set as 2/3 of frame-height
+	(psgml-version): bump version
+
+	* psgml-parse.el (sgml-do-pcdata): set markup type nil, to delete
+	any overlays left from previous parse.
+
+	* psgml-other.el (sgml-mode-map): change Fold to View
+	(sgml-set-face-after-change): disable
+
+	* Version 1a1
+
+Wed Aug 24 20:29:37 1994  Lennart Staflin  (lenst@dell)
+
+	* psgml-edit.el: changing append to nconc
+
+	* psgml-parse.el: changing append to nconc
+
+Wed Aug 24 07:06:39 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-parse.el (sgml-set-live-element-indicator): parse to
+	window-end after sit-for to set faces.
+
+	* psgml.el (sgml-exposed-tags): new variable.
+
+	* psgml-edit.el (sgml-operate-on-tags): install patch
+	From: kevinr@airedale (Kevin Rodgers)
+	(sgml-operate-on-tags): installed another patch from above. Added
+	variable sgml-exposed-tags.
+
+Tue Aug 23 02:32:45 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-parse.el (sgml-load-dtd): install patch
+	date: 1994/08/19 18:30:03; author: kevinr; state: Exp;
+	lines: +3 -3 sgml-load-dtd, sgml-external-file: Use
+	`expand-file-name' instead of `concat'.
+
+	* psgml-dtd.el (sgml-make-pcdata): change sgml-make-opt to
+	sgml-make-* 
+
+Mon Aug 22 21:30:04 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-edit.el: split psgml-parse into psgml-parse and psgml-edit
+
+Sat Aug 20 02:10:32 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml.texi (Attributes): add C-c C-d in attribute edit mode.
+
+Sat Aug 13 00:59:17 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml.el (sgml-mode): add some documentation.
+
+Mon Jul 19 1994 00:33:28  Kevin Rodgers <kevinr@ihs.com>
+
+	* psgml-parse.el (sgml-close-element-hook): Define.
+	(sgml-close-element): Invoke `sgml-close-element-hook' after
+	`(sgml-tree-end sgml-current-tree)' and `(sgml-tree-etag-len
+	sgml-current-tree)' have been set.
+
+Fri Aug 12 21:19:52 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-parse.el (sgml-pub-expand-char): remove test -- expand any
+	character. 
+
+	* experiment.el (sgml-pub-expand-char): remove test -- expand any
+	character.
+
+Thu Aug 11 20:13:44 1994  Lennart Staflin  (lenst@lysita)
+
+	* psgml-parse.el (sgml-push-to-param): move call to
+	sgml-external-file to before set-buffer.  Simplify testing.
+
+Tue Jul 12 1994 21:39:20  Kevin Rodgers <kevinr@ihs.com>
+
+	* psgml-parse.el (sgml-map-public): Accept an additional
+	optional argument, NAME, and map `n' to it if it's not nil.
+	(sgml-external-file): Pass the optional argument NAME to
+	`sgml-map-public'.
+	(sgml-pub-expand-char): Recognize `n' as well as `c', `o', and
+	`d' (and their upper-case variants).
+
+Wed Jul  6 21:17:41 1994  Lennart Staflin  (lenst@konrad)
+
+	* psgml-parse.el (sgml-next-data-field): stop any where but avoid
+	current element (previously only stopped at the beginning of an
+	element)

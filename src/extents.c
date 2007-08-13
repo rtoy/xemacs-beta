@@ -975,7 +975,7 @@ allocate_extent_auxiliary (EXTENT ext)
    the stack of extents, it might not be there.  If you need it to
    be there, use the _force version.
 
-   Similarly, a string may or may not have an extent_info struture.
+   Similarly, a string may or may not have an extent_info structure.
    (Generally it won't if there haven't been any extents added to the
    string.) So use the _force version if you need the extent_info
    structure to be there. */
@@ -6129,7 +6129,7 @@ put_text_prop_mapper (EXTENT e, void *arg)
   /* Note: in some cases when the property itself is 'start-open
      or 'end-closed, the checks to set the openness may do a bit
      of extra work; but it won't hurt because we then fix up the
-     openness later in in put_text_prop_openness_mapper(). */
+     openness later on in put_text_prop_openness_mapper(). */
   if (!EQ (Fextent_property (extent, Qtext_prop, Qnil), closure->prop))
     /* It's not for this property; do nothing. */
     return 0;
@@ -6171,7 +6171,7 @@ put_text_prop_mapper (EXTENT e, void *arg)
   /* Even if we're adding a prop, at this point, we want all other extents of
      this prop to go away (as now they overlap).  So the theory here is that,
      when we are adding a prop to a region that has multiple (disjoint)
-     occurences of that prop in it already, we pick one of those and extend
+     occurrences of that prop in it already, we pick one of those and extend
      it, and remove the others.
    */
 

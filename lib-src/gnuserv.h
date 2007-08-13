@@ -186,14 +186,9 @@ static char header_rcsid [] = "!Header: gnuserv.h,v 2.4 95/02/16 11:58:11 arup a
 #undef TRUE
 #define TRUE 1
 
-extern char *getenv();
 extern char *optarg;
 extern int optind;
 extern char *progname;
-
-#ifndef BSD
-extern char *getcwd();
-#endif
 
 /* The casts shut Sun's compiler up and are safe in the context these
    are actually used. */

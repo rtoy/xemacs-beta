@@ -8,21 +8,21 @@
 ;; Keywords: languages tcl modes
 ;; Version: 1.50
 
-;; This file is part of XEmacs.
+;; This file is part of GNU Emacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
+;; GNU Emacs is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 1, or (at your option)
 ;; any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;; HOW TO INSTALL:
 ;; Put the following forms in your .emacs to enable autoloading of Tcl
@@ -403,7 +403,7 @@ to take place:
   6. Move backward to start of comment, indenting if necessary.")
 
 (defvar tcl-use-hairy-comment-detector t
-  "*If not `nil', the the more complicated, but slower, comment
+  "*If not `nil', then the more complicated, but slower, comment
 detecting function is used.  This variable is only used in GNU Emacs
 19 (the fast function is always used elsewhere).")
 

@@ -1,6 +1,6 @@
-;;; rcompile.el Run a compilation on a remote machine
+;;; rcompile.el --- run a compilation on a remote machine
 
-;;; Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1994 Free Software Foundation, Inc.
 
 ;; Author: Albert    <alon@milcse.rtsg.mot.com>
 ;; Maintainer: FSF
@@ -8,59 +8,60 @@
 ;; Version: 1.1
 ;; Keywords: tools, processes
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
-;;; This package is for running a remote compilation and using emacs to parse
-;;; the error messages. It works by rsh'ing the compilation to a remote host
-;;; and parsing the output. If the file visited at the time remote-compile was
-;;; called was loaded remotely (ange-ftp), the host and user name are obtained
-;;; by the calling ange-ftp-ftp-name on the current directory. In this case the
-;;; next-error command will also ange-ftp the files over. This is achieved
-;;; automatically because the compilation-parse-errors function uses
-;;; default-directory to build it's file names. If however the file visited was
-;;; loaded locally, remote-compile prompts for a host and user and assumes the
-;;; files mounted locally (otherwise, how was the visited file loaded).
+;; This package is for running a remote compilation and using emacs to parse
+;; the error messages. It works by rsh'ing the compilation to a remote host
+;; and parsing the output. If the file visited at the time remote-compile was
+;; called was loaded remotely (ange-ftp), the host and user name are obtained
+;; by the calling ange-ftp-ftp-name on the current directory. In this case the
+;; next-error command will also ange-ftp the files over. This is achieved
+;; automatically because the compilation-parse-errors function uses
+;; default-directory to build it's file names. If however the file visited was
+;; loaded locally, remote-compile prompts for a host and user and assumes the
+;; files mounted locally (otherwise, how was the visited file loaded).
 
-;;; See the user defined variables section for more info.
+;; See the user defined variables section for more info.
 
-;;; I was contemplating redefining "compile" to "remote-compile" automatically
-;;; if the file visited was ange-ftp'ed but decided against it for now. If you
-;;; feel this is a good idea, let me know and I'll consider it again.
+;; I was contemplating redefining "compile" to "remote-compile" automatically
+;; if the file visited was ange-ftp'ed but decided against it for now. If you
+;; feel this is a good idea, let me know and I'll consider it again.
 
 ;;; Installation:
 
-;;; To use rcompile, you also need to give yourself permission to connect to
-;;; the remote host.  You do this by putting lines like:
+;; To use rcompile, you also need to give yourself permission to connect to
+;; the remote host.  You do this by putting lines like:
 
-;;; monopoly alon
-;;; vme33
-;;;
-;;; in a file named .rhosts in the home directory (of the remote machine).
-;;; Be careful what you put in this file. A line like:
-;;;
-;;; +
-;;;
-;;; Will allow anyone access to your account without a password. I suggest you
-;;; read the rhosts(5) manual page before you edit this file (if you are not
-;;; familiar with it already) 
+;; monopoly alon
+;; vme33
+;;
+;; in a file named .rhosts in the home directory (of the remote machine).
+;; Be careful what you put in this file. A line like:
+;;
+;; +
+;;
+;; Will allow anyone access to your account without a password. I suggest you
+;; read the rhosts(5) manual page before you edit this file (if you are not
+;; familiar with it already) 
 
 ;;; Code:
 
@@ -80,7 +81,7 @@ nil means use the value returned by \\[user-login-name].")
 
 (defvar remote-compile-run-before nil
   "*Command to run before compilation.
-This can be used for setting up enviroment variables,
+This can be used for setting up environment variables,
 since rsh does not invoke the shell as a login shell and files like .login
 \(tcsh\) and .bash_profile \(bash\) are not run.
 nil means run no commands.")
@@ -102,7 +103,7 @@ nil means run no commands.")
 
 ;;;###autoload
 (defun remote-compile (host user command)
-  "Compile the the current buffer's directory on HOST.  Log in as USER.
+  "Compile the current buffer's directory on HOST.  Log in as USER.
 See \\[compile]."
   (interactive
    (let ((parsed (and (featurep 'ange-ftp)

@@ -139,7 +139,7 @@ struct Lisp_Color_Instance
   void *data;
 };
 
-#define COLOR_INSTANCE_NAME(c) ((c)->name)
+#define COLOR_INSTANCE_NAME(c)   ((c)->name)
 #define COLOR_INSTANCE_DEVICE(c) ((c)->device)
 
 /****************************************************************************
@@ -154,15 +154,10 @@ DECLARE_LRECORD (font_instance, struct Lisp_Font_Instance);
 #define CHECK_FONT_INSTANCE(x) CHECK_RECORD (x, font_instance)
 #define CONCHECK_FONT_INSTANCE(x) CONCHECK_RECORD (x, font_instance)
 
-int font_spec_matches_charset (struct device *d, Lisp_Object charset,
-			       CONST Bufbyte *nonreloc,
-			       Lisp_Object reloc, Bytecount offset,
-			       Bytecount length);
-
 Lisp_Object Fmake_font_instance (Lisp_Object name, Lisp_Object device,
 				 Lisp_Object no_error);
-Lisp_Object Ffont_instance_p (Lisp_Object obj);
-Lisp_Object Ffont_instance_name (Lisp_Object obj);
+Lisp_Object Ffont_instance_p        (Lisp_Object obj);
+Lisp_Object Ffont_instance_name     (Lisp_Object obj);
 Lisp_Object Ffont_instance_truename (Lisp_Object obj);
 
 extern Lisp_Object Vthe_null_font_instance;
@@ -183,12 +178,11 @@ struct Lisp_Font_Instance
   void *data;
 };
 
-#define FONT_INSTANCE_NAME(f) ((f)->name)
-#define FONT_INSTANCE_DEVICE(f) ((f)->device)
-
-#define FONT_INSTANCE_WIDTH(f) ((f)->width)
-#define FONT_INSTANCE_HEIGHT(f) ((f)->height)
-#define FONT_INSTANCE_ASCENT(f) ((f)->ascent)
+#define FONT_INSTANCE_NAME(f)	 ((f)->name)
+#define FONT_INSTANCE_DEVICE(f)	 ((f)->device)
+#define FONT_INSTANCE_ASCENT(f)	 ((f)->ascent)
 #define FONT_INSTANCE_DESCENT(f) ((f)->descent)
+#define FONT_INSTANCE_WIDTH(f)	 ((f)->width)
+#define FONT_INSTANCE_HEIGHT(f)	 ((f)->height)
 
 #endif /* _XEMACS_OBJECTS_H_ */

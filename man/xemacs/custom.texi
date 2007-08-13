@@ -380,9 +380,9 @@ XEmacs allows you to specify local variables in the first line
 of a file, in addition to specifying them in the @code{Local Variables}
 section at the end of a file.
 
-If the first line of a file contains two occurences of @code{`-*-'}, Emacs
-uses the information between them to determine what the major mode and
-variable settings should be.  For example, these are all legal:
+If the first line of a file contains two occurrences of @code{`-*-'},
+XEmacs uses the information between them to determine what the major
+mode and variable settings should be.  For example, these are all legal:
 
 @example
 	;;; -*- mode: emacs-lisp -*-
@@ -1862,10 +1862,10 @@ your particular build of XEmacs was configured.
 
 @item @code{scrollBarPlacement} (class @code{ScrollBarPlacement}): string
 Where the horizontal and vertical scrollbars should be positioned.  This
-should be one of the four strings @samp{bottom-left},
-@samp{bottom-right}, @samp{top-left}, and @samp{top-right}.  Default is
-@samp{bottom-right} for the Motif and Lucid scrollbars and
-@samp{bottom-left} for the Athena scrollbars.
+should be one of the four strings @samp{BOTTOM_LEFT},
+@samp{BOTTOM_RIGHT}, @samp{TOP_LEFT}, and @samp{TOP_RIGHT}.  Default is
+@samp{BOTTOM_RIGHT} for the Motif and Lucid scrollbars and
+@samp{BOTTOM_LEFT} for the Athena scrollbars.
 
 @item @code{topToolBarHeight} (class @code{TopToolBarHeight}): integer
 @itemx @code{bottomToolBarHeight} (class @code{BottomToolBarHeight}): integer

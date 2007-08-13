@@ -135,7 +135,7 @@ over is selected before anything else is done.  You may use both
 Normally, when describing a command that is run by name, we omit the
 @key{RET} that is needed to terminate the name.  Thus we may refer to
 @kbd{M-x auto-fill-mode} rather than @kbd{M-x auto-fill-mode} @key{RET}.
-We mention the @key{RET} only when it it necessary to emphasize its
+We mention the @key{RET} only when it is necessary to emphasize its
 presence, for example, when describing a sequence of input that contains
 a command name and arguments that follow it.
 

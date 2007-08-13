@@ -26,9 +26,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -93,8 +94,8 @@
 (provide 'makefile)
 
 ;; Sadly we need this for a macro.
-;(eval-when-compile
-;  (require 'imenu))
+(eval-when-compile
+  (require 'imenu))
 
 ;;; ------------------------------------------------------------
 ;;; Configurable stuff
@@ -179,7 +180,7 @@ You will be offered to complete on one of those in the minibuffer whenever
 you enter a \".\" at the beginning of a line in makefile-mode.")
 
 (defvar makefile-runtime-macros-list
-  '(("@") ("&") (">") ("<") ("*") ("^") ("?") ("%") ("$"))
+  '(("@") ("&") (">") ("<") ("*") ("^") ("+") ("?") ("%") ("$"))
   "List of macros that are resolved by make at runtime.
 If you insert a macro reference using makefile-insert-macro-ref, the name
 of the macro is checked against this list. If it can be found its name will
@@ -206,8 +207,8 @@ not be enclosed in { } or ( ).")
 ;####
 ;(add-to-list 'facemenu-unlisted-faces 'makefile-space-face)
 ;  Bogus FSFmacs crap.
-(defvar makefile-space-face 'makefile-space-face)
-;  "Face to use for highlighting leading spaces in Font-Lock mode.")
+(defvar makefile-space-face 'makefile-space-face
+  "Face to use for highlighting leading spaces in Font-Lock mode.")
 
 ;Older version of same.
 ;(defconst makefile-font-lock-keywords (purecopy
@@ -234,10 +235,10 @@ not be enclosed in { } or ( ).")
    (list makefile-macroassign-regex 1 'font-lock-variable-name-face)
    ;;
    ;; Variable references even in targets/strings/comments:
-   '("\\$[({]\\([a-zA-Z0-9_]+\\)[})]" 1 font-lock-reference-face t)
+   '("\\$[({]\\([a-zA-Z0-9_]+\\)[})]" 1 font-lock-reference-face prepend)
    ;;
    ;; Do dependencies.  These get the function name face.
-   (list makefile-dependency-regex 1 'font-lock-function-name-face)
+   (list makefile-dependency-regex 1 'font-lock-function-name-face 'prepend)
 
    ;; Highlight lines that contain just whitespace.
    ;; They can cause trouble, especially if they start with a tab.
@@ -245,7 +246,7 @@ not be enclosed in { } or ( ).")
 
    ;; Highlight shell comments that Make treats as commands,
    ;; since these can fool people.
-   '("^\t+#" makefile-space-face t)
+   '("^\t+#" 0 makefile-space-face t)
 
    ;; Highlight spaces that precede tabs.
    ;; They can make a tab fail to be effective.
@@ -321,6 +322,7 @@ The function must satisfy this calling convention:
   (define-key makefile-mode-map "\M-n"     'makefile-next-dependency)
   (define-key makefile-mode-map "\e\t"     'makefile-complete))
 
+;; XEmacs change
 (defconst makefile-menubar-menu
   (purecopy
    '("Makefile"
@@ -331,6 +333,7 @@ The function must satisfy this calling convention:
      ["Complete Target or Macro" makefile-complete t]
      ["Pop up Makefile Browser" makefile-switch-to-browser t])))
 
+;; XEmacs change
 (defconst makefile-popup-menu
   (purecopy
    (cons "Makefile Mode Commands"
@@ -409,6 +412,7 @@ The function must satisfy this calling convention:
     ("notdir" "Names")
     ("suffix" "Names")
     ("basename" "Names")
+    ("addprefix" "Prefix" "Names")
     ("addsuffix" "Suffix" "Names")
     ("join" "List 1" "List 2")
     ("word" "Index" "Text")
@@ -512,16 +516,18 @@ makefile-special-targets-list:
   (make-local-variable 'makefile-need-macro-pickup)
 
   ;; Font lock.
-  (if (fboundp 'makefile-define-space-face)
+  (if (fboundp 'make-face)
       (makefile-define-space-face))
+  (make-local-variable 'font-lock-defaults)
+  (setq font-lock-defaults '(makefile-font-lock-keywords))
 
   ;; Add-log.
   (make-local-variable 'add-log-current-defun-function)
   (setq add-log-current-defun-function 'makefile-add-log-defun)
 
-;  ;; Imenu.
-;  (make-local-variable 'imenu-create-index-function)
-;  (setq imenu-create-index-function 'makefile-menu-index-function)
+  ;; Imenu.
+  (make-local-variable 'imenu-create-index-function)
+  (setq imenu-create-index-function 'makefile-menu-index-function)
 
   ;; Dabbrev.
   (make-local-variable 'dabbrev-abbrev-skip-leading-regexp)
@@ -544,6 +550,7 @@ makefile-special-targets-list:
   (set-syntax-table makefile-mode-syntax-table)
 
   ;; Set menu
+  ;; XEmacs addition
   (setq mode-popup-menu makefile-popup-menu)
   (if (featurep 'menubar)
       (progn
@@ -893,7 +900,7 @@ The context determines which are considered."
 (defun makefile-backslash-region (beg end arg)
   "Insert backslashes at end of every line in region.
 Useful for defining multi-line rules.
-If called with a prefix argument, trailing backslahes are removed."
+If called with a prefix argument, trailing backslashes are removed."
   (interactive "r\nP")
   (save-excursion
     (let ((do-lastline-p (progn (goto-char end) (not (bolp)))))
@@ -1000,13 +1007,13 @@ If called with a prefix argument, trailing backslahes are removed."
       (beginning-of-line)
       (if (makefile-browser-on-macro-line-p)
 	  (let ((macro-name (makefile-browser-this-line-macro-name)))
-	    (kill-line)
+	    (delete-region (point) (progn (end-of-line) (point)))
 	    (insert
 	     (makefile-browser-format-macro-line
 		macro-name
 		(makefile-browser-get-state-for-line this-line))))
 	(let ((target-name (makefile-browser-this-line-target-name)))
-	  (kill-line)
+	  (delete-region (point) (progn (end-of-line) (point)))
 	  (insert
 	   (makefile-browser-format-target-line
 	      target-name
@@ -1359,43 +1366,55 @@ Uses `makefile-use-curly-braces-for-macros-p'."
 ;;; Support for other packages, like add-log and imenu.
 
 (defun makefile-add-log-defun ()
-  ;; "Return name of target or macro point is in, or nil."
+  "Return name of target or variable assignment that point is in.
+If it isn't in one, return nil."
   (save-excursion
-    (beginning-of-line)
-    (cond
-     ((looking-at makefile-macroassign-regex)
-      (buffer-substring (match-beginning 1)
-			(match-end 1)))
-     ((progn
-	(or (eobp) (forward-char))
-	(re-search-backward makefile-dependency-regex nil t))
-      (buffer-substring (match-beginning 1)
-			(match-end 1)))
-     (t nil))))
+    (let (found)
+      (beginning-of-line)
+      ;; Scan back line by line, noticing when we come to a
+      ;; variable or rule definition, and giving up when we see
+      ;; a line that is not part of either of those.
+      (while (not found)
+	(cond
+	 ((looking-at makefile-macroassign-regex)
+	  (setq found (buffer-substring-no-properties (match-beginning 1)
+						      (match-end 1))))
+	 ((looking-at makefile-dependency-regex)
+	  (setq found (buffer-substring-no-properties (match-beginning 1)
+						      (match-end 1))))
+	 ;; Don't keep looking across a blank line or comment.  Give up.
+	 ((looking-at "$\\|#")
+	  (setq found 'bobp))
+	 ((bobp)
+	  (setq found 'bobp)))
+	(or found
+	    (forward-line -1)))
+      (if (stringp found) found))))
 
-;;; FIXME it might be nice to have them separated by macro vs target.
-;(defun makefile-menu-index-function ()
-;  ;; "Generate alist of indices for imenu."
-;  (let (alist
-;	stupid
-;	(re (concat makefile-dependency-regex
-;		    "\\|"
-;		    makefile-macroassign-regex)))
-;    (imenu-progress-message stupid 0)
-;    (goto-char (point-min))
-;    (while (re-search-forward re nil t)
-;      (imenu-progress-message stupid)
-;      (let ((n (if (match-beginning 1) 1 5)))
-;	(setq alist (cons
-;		     (cons (buffer-substring (match-beginning n)
-;					     (match-end n))
-;			   (match-beginning n))
-;		     alist))))
-;    (imenu-progress-message stupid 100)
-;    (nreverse alist)))
+;; FIXME it might be nice to have them separated by macro vs target.
+(defun makefile-menu-index-function ()
+  ;; "Generate alist of indices for imenu."
+  (let (alist
+	stupid
+	(re (concat makefile-dependency-regex
+		    "\\|"
+		    makefile-macroassign-regex)))
+    (imenu-progress-message stupid 0)
+    (goto-char (point-min))
+    (while (re-search-forward re nil t)
+      (imenu-progress-message stupid)
+      (let ((n (if (match-beginning 1) 1 5)))
+	(setq alist (cons
+		     (cons (buffer-substring (match-beginning n)
+					     (match-end n))
+			   (match-beginning n))
+		     alist))))
+    (imenu-progress-message stupid 100)
+    (nreverse alist)))
 
 (defun makefile-define-space-face ()
   (make-face 'makefile-space-face)
+  ;; XEmacs change
   (let* ((light-bg t)) ; ####
     (set-face-background 'makefile-space-face
 			 (if light-bg "black" "white")
