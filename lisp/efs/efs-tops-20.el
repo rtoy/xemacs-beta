@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-tops-20.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  TOPS-20 support for efs
 ;; Author:       Sandy Rutherford <sandy@math.ubc.ca, sandy@itp.ethz.ch>
@@ -22,7 +22,7 @@
 (defconst efs-tops-20-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "#Revision: 1.1 $" 11 -2)))
 
 ;;;; ------------------------------------------------------------
 ;;;; TOPS-20 support

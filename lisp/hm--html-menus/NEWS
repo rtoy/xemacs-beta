@@ -1,3 +1,16 @@
+22.03.97
+	Fixed some documentation bugs in tmpl-minor-mode.el.
+	Changed the key bindings in the tmpl-minor-mode. They are now
+	using all the prefix C-c C-c.
+	Fixed some documentation bugs in internal-drag-and-drop.el.
+	Added a package documentation as Texinfo file. It documents also
+	the included packages for internal drag and drop and for
+	templates.
+	-- BUILDED the version 5.4 of the package --
+18.03.97
+	Applied a patch from Martin Buchholz <mrb@Eng.Sun.COM>,
+	to fix some spelling errors.
+	Changed the value of the variable `tmpl-sign' to \000.
 25.02.97
 	Fixed two bugs, which occured during loading the mode
 	after the psgml-html-mode.

@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-hell.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  Hellsoft FTP server support for efs
 ;; Author:       Sandy Rutherford <sandy@ibm550.sissa.it>
@@ -22,7 +22,7 @@
 (defconst efs-hell-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "#Revision: 1.1 $" 11 -2)))
 
 ;;;; --------------------------------------------------------------
 ;;;; Hellsoft FTP server support for efs

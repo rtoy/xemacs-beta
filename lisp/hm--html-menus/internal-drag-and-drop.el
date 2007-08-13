@@ -1,4 +1,4 @@
-;;; $Id: internal-drag-and-drop.el,v 1.2 1997/02/16 01:29:11 steve Exp $
+;;; $Id: internal-drag-and-drop.el,v 1.3 1997/03/24 01:26:53 steve Exp $
 ;;; 
 ;;; Copyright (C) 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -92,7 +92,7 @@ then this key sequence will not be bind.")
 				       [(meta control mouse-3)]
 				     [(meta control button3)])
   "The mouse keys for the command `idd-help-mouse-drag-and-drop'.
-The command `idd-mouse-drag-and-drop' is bound during the loading
+The command `idd-help-mouse-drag-and-drop' is bound during the loading
 of the package internal-drag-and-drop to this keys in the global
 key map. 
 

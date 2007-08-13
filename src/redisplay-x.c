@@ -2063,12 +2063,10 @@ x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos)
     default_face_font_info (window, &defascent, 0, &defheight, 0, 0);
   }
   
-  cursor_y = dl->ypos - defascent;
-  if (cursor_y < y)
-    cursor_y = y;
-  cursor_height = defheight;
-  if (cursor_y + cursor_height > y + height)
-    cursor_height = y + height - cursor_y;
+  /* make sure the cursor is entirely contained between y and y+height */
+  cursor_height = min (defheight, height);
+  cursor_y = max (y, min (y + height - cursor_height, 
+			  dl->ypos - defascent));
   
   if (focus)
     {

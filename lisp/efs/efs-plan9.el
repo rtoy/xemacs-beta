@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-plan9.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  efs support for the Plan 9 FTP Server
 ;; Author:       Sandy Rutherford <sandy@ibm550.sissa.it>
@@ -24,7 +24,7 @@
 (defconst efs-plan9-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "#Revision: 1.1 $" 11 -2)))
 
 (efs-defun efs-fix-dir-path plan9 (dir-path)
   ;; Convert DIR-PATH from UN*X-ish to Plan 9. Does nothing actually.

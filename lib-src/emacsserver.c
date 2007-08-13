@@ -59,13 +59,6 @@ main ()
 #if ! defined (HAVE_SYSVIPC)
 /* BSD code is very different from SYSV IPC code */
 
-#include <sys/types.h>
-#include <sys/file.h>
-#include <sys/signal.h>
-#include <sys/stat.h> /* Needed for chmod, at least on Linux */
-#include <sys/un.h>
-#include <stdio.h>
-#include <errno.h>
 #include "../src/sysproc.h" /* Needed for select */
 #ifndef SOCK_STREAM
 /* this is normally included by src/sysproc.h.  might be safe to omit
@@ -73,6 +66,13 @@ main ()
  * twice, so we can't include unconditionally.  */
 #include <sys/socket.h>
 #endif
+#include <sys/types.h>
+#include <sys/file.h>
+#include <sys/signal.h>
+#include <sys/stat.h> /* Needed for chmod, at least on Linux */
+#include <sys/un.h>
+#include <stdio.h>
+#include <errno.h>
 
 void
 main ()

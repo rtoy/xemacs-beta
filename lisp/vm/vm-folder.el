@@ -2611,26 +2611,26 @@ run vm-expunge-folder followed by vm-save-folder."
 	   nil
 	 (write-region opoint-max (point-max) buffer-file-name t t)
 	 (vm-increment vm-modification-counter)
-	 (set-buffer-modified-p old-buffer-modified-p)
-	 (kill-buffer crash-buf)
-	 (if (not (stringp vm-keep-crash-boxes))
-	     (vm-error-free-call 'delete-file crash-box)
-	   (let ((time (decode-time (current-time)))
-		 name)
+	 (set-buffer-modified-p old-buffer-modified-p))
+       (kill-buffer crash-buf)
+       (if (not (stringp vm-keep-crash-boxes))
+	   (vm-error-free-call 'delete-file crash-box)
+	 (let ((time (decode-time (current-time)))
+	       name)
+	   (setq name
+		 (expand-file-name (format "Z-%02d-%02d-%05d"
+					   (nth 4 time)
+					   (nth 3 time)
+					   (% (vm-abs (random)) 100000))
+				   vm-keep-crash-boxes))
+	   (while (file-exists-p name)
 	     (setq name
 		   (expand-file-name (format "Z-%02d-%02d-%05d"
 					     (nth 4 time)
 					     (nth 3 time)
 					     (% (vm-abs (random)) 100000))
-				     vm-keep-crash-boxes))
-	     (while (file-exists-p name)
-	       (setq name
-		     (expand-file-name (format "Z-%02d-%02d-%05d"
-					       (nth 4 time)
-					       (nth 3 time)
-					       (% (vm-abs (random)) 100000))
-				       vm-keep-crash-boxes)))
-	     (rename-file crash-box name))))
+				     vm-keep-crash-boxes)))
+	   (rename-file crash-box name)))
        got-mail ))))
 
 (defun vm-compute-spool-files ()

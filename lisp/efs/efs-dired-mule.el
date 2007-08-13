@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-dired.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  Makes efs-dired.el work with MULE.
 ;; Author:       Ishikawa Ichiro <ichiro@ccsr.u-tokyo.ac.jp>
@@ -16,7 +16,7 @@
 (defconst efs-dired-mule-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "#Revision: 1.1 $" 11 -2)))
 
 ;; Keep the byte-compiler happy
 (defvar efs-version-host-types)

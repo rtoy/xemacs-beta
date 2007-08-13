@@ -377,12 +377,14 @@ time saver for large mailboxes.")
 	 (delete-region (point) (progn (forward-line 1) (point))))
        (when nnmail-cache-accepted-message-ids
 	 (nnmail-cache-insert (nnmail-fetch-field "message-id")))
-       (setq result
-	     (car (nnfolder-save-mail
-		   (if (stringp group)
-		       (list (cons group (nnfolder-active-number group)))
-		     (setq art-group
-			   (nnmail-article-group 'nnfolder-active-number)))))))
+       (setq result (if (stringp group)
+			(list (cons group (nnfolder-active-number group)))
+		      (setq art-group
+			    (nnmail-article-group 'nnfolder-active-number))))
+       (if (null result)
+	   (setq result 'junk)
+	 (setq result
+	       (car (nnfolder-save-mail result)))))
      (when last
        (save-excursion
 	 (nnfolder-possibly-change-folder (or (caar art-group) group))
@@ -490,7 +492,7 @@ time saver for large mailboxes.")
   (when (and server
 	     (not (nnfolder-server-opened server)))
     (nnfolder-open-server server))
-  (unless (gnus-buffer-live-p nnfolder-current-buffer)
+  (unless (buffer-live-p nnfolder-current-buffer)
     (setq nnfolder-current-buffer nil
 	  nnfolder-current-group nil))
   ;; Change group.
@@ -517,7 +519,7 @@ time saver for large mailboxes.")
 	;; is live, verify that nobody else has touched the file since last
 	;; time.
 	(when (and nnfolder-current-buffer
-		   (not (gnus-buffer-live-p nnfolder-current-buffer)))
+		   (not (buffer-live-p nnfolder-current-buffer)))
 	  (setq nnfolder-buffer-alist (delq inf nnfolder-buffer-alist)
 		nnfolder-current-buffer nil))
 
@@ -609,7 +611,7 @@ time saver for large mailboxes.")
 (defun nnfolder-possibly-change-folder (group)
   (let ((inf (assoc group nnfolder-buffer-alist)))
     (if (and inf
-	     (gnus-buffer-live-p (cadr inf)))
+	     (buffer-live-p (cadr inf)))
 	(set-buffer (cadr inf))
       (when inf
 	(setq nnfolder-buffer-alist (delq inf nnfolder-buffer-alist)))
@@ -682,6 +684,8 @@ time saver for large mailboxes.")
 			 (< maxid 2)))
 	    (goto-char (point-max))
 	    (unless (re-search-backward marker nil t)
+	      (goto-char (point-min)))
+	    (when (nnmail-search-unix-mail-delim)
 	      (goto-char (point-min))))
 
 	  ;; Keep track of the active number on our own, and insert it back

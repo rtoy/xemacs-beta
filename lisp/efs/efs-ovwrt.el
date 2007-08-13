@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-ovwrt.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.2 $
+;; Version:      #Revision: 1.2 $
 ;; RCS:
 ;; Description:  Utilities for overwriting functions with new definitions.
 ;; Author:       Andy Norman <ange@hplb.hpl.hp.com>
@@ -15,11 +15,15 @@
 ;;; makes it easier for other programs to require them.
 
 (provide 'efs-ovwrt)
+(eval-when-compile
+  (condition-case nil
+      (require 'advice)
+    (error)))
 
 (defconst efs-ovwrt-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.2 $" 11 -2)))
+	  (substring "#Revision: 1.2 $" 11 -2)))
 
 (defvar efs-overwrite-fmt
   "Note: This function has been modified to work with %s.")

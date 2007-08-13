@@ -1,0 +1,2038 @@
+\input texinfo   @c -*-texinfo-*-
+@comment %**start of header (This is for running Texinfo on a region.)
+@setfilename hm--html-mode.info
+@settitle HM HTML Mode
+@setchapternewpage odd
+@comment %**end of header (This is for running Texinfo on a region.)
+@comment $Id: hm--html-mode.texi,v 1.1 1997/03/23 00:28:12 steve Exp $
+@ifinfo
+This file documents the Elisp package @code{hm--html-menus}.
+
+Copyright @copyright{} 1997 Heiko Münkel
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries a copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that the
+sections entitled ``Distribution'' and ``General Public License'' are
+included exactly as in the original, and provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that the sections entitled ``Distribution'' and ``General Public
+License'' may be included in a translation approved by the author instead
+of in the original English.
+
+@end ifinfo
+@iftex
+@input umlaute.texinfo
+@end iftex
+@titlepage
+@sp 10
+@center @titlefont{The Elisp Package hm---html-menus}
+
+@sp 4
+@center by Heiko Münkel
+@sp 4
+@center Version 5.4, March 1997
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1997 Heiko Münkel
+@sp 4
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries a copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that the
+sections entitled ``Distribution'' and ``General Public License'' are
+included exactly as in the original, and provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that the sections entitled ``Distribution'' and ``General Public
+License'' may be included in a translation approved by the author instead
+of in the original English.
+
+@end titlepage
+
+@comment The Top node contains the master menu for the Info file.
+@comment This appears only in the Info file, not in the printed manual.
+
+@node Top, License, (dir), (dir)
+@comment  node-name,  next,  previous,  up
+
+
+
+@menu
+* License::                     Your rights
+* Overview::                    Overview
+* Distribution::                How to get the latest version
+* Installation::                How to install the package
+* Customization::               How to customize the package
+* Add New Elements::            How to add new HTML elements
+* Use With psgml-html::         Use this package as an add-on minor mode
+* Internal Drag And Drop::      The HTML independent drag and drop package
+* Template Minor Mode::         The HTML independent template package
+* Bug Reports::                 How and to whom you should send bug reports
+* Concept Index::               Concept Index
+* Function Index::              Function Index
+* Variable Index::              Variable Index
+@end menu
+
+
+@node License, Overview, Top, Top
+@comment  node-name,  next,  previous,  up
+@chapter License
+@cindex license to copy hm---html-menus
+@cindex General Public License
+Copyright (C) 1993 - 1997 Heiko Münkel, muenkel@@tnt.uni-hannover.de
+@sp 2
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2, or (at your option)
+any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+@node Overview, Distribution, License, Top
+@comment  node-name,  next,  previous,  up
+@chapter  Overview
+@cindex overview 
+@cindex version 
+@findex hm--html-mode 
+@findex hm--html-minor-mode 
+
+This document describes the Elisp package @emph{hm---html-menus 5.4}.
+
+The version of the document is:@*
+$Id: hm--html-mode.texi,v 1.1 1997/03/23 00:28:12 steve Exp $
+
+The package provides commands and various popup and pulldown menus for
+a HTML mode called @dfn{hm---html-mode}, a mode for writing HTML pages
+for the World Wide Web (WWW).  It provides also a minor mode
+(@dfn{hm---html-minor-mode}), which can be used together with another
+HTML major mode, like the psgml-html modes in the XEmacs 19.14.
+
+You can easily view the HTML documents by calling the browsers w3 (a
+nice elisp package from William M. Perry), Netscape or Mosaic direct
+from the pulldown menu of the mode.
+
+An integrated (emacs internal) drag and drop interface makes it
+very easy to insert links or images, by just clicking on them.
+
+If it makes sense, then the commands are working also on selected
+regions.  You'll see the same menu items and can use the same
+keystrokes, regardless if the region is activated or not, but if it's
+activated, then the commands are working on the region. Therefore, you
+don't need to learn different menus or keys for similar functions!
+
+One major design issue of the package was to make it easier to write a
+HTML page, even if you don't know much about HTML. For that I've tried
+to put more knowledge about HTML, URL's and so on in it as an SGML based
+mode could find out from a DTD file. In most cases the user gets help to
+construct a specific link by examples or by a completion list with
+possible input strings. And you can choose between an expert popup menu
+and an novice popup menu interactively. The novice menu contains only
+the basic HTML elements, so that you're not bothered by the quantity of
+different HTML elements. And if you want to use more HTML elements, then
+you could easily switch to the expert menus.
+
+You can configure the html mode with a special configuration file for
+your site and with another file specific for a user. Look at the
+customization chapter for this, @xref{Customization, Customization}.
+
+
+@node Distribution, Installation, Overview, Top
+@comment  node-name,  next,  previous,  up
+@chapter  Distribution
+The name of the distribution file is
+@file{hm--html-menus-<version>.tar.gz}, where @var{<version>} is the
+version number. The package is part of the XEmacs. You should find the
+latest version of the package always on the following ftp server:
+
+@display
+@emph{ftp.tnt.uni-hannover.de} in @file{/pub/editors/xemacs/contrib}
+@end display
+
+You should also find the package in the USA on the ftp server
+(which is mirrored on many other servers in the world):
+
+@display
+@emph{sunsite.unc.edu} in @file{/pub/Linux/apps/editors/emacs}
+@end display
+
+@menu
+* Contents::                    Contents of the distribution
+@end menu
+
+@node Contents,  , Distribution, Distribution
+@comment  node-name,  next,  previous,  up
+@section  Contents
+@cindex contents 
+
+The package consists of the following files:
+
+@table @file
+@item README 
+Please, read this first.
+@itemx README-EMACS-19
+Some special hints only for the GNU Emacs 19 users.
+@itemx ANNOUNCEMENT
+Text of the announcement of this package.
+@itemx LSM
+Entry for the Linux Software Map.
+@itemx NEWS
+The NEWS and Change log file.
+@itemx adapt.el
+Provides (emulates XEmacs) functions for the use of this package with
+the GNU Emacs 19.
+@itemx hm--html.el
+Provides functions to write html pages. It defines all commands which
+inserts html elements and entities.
+@itemx hm--html-indentation.el
+Provides the lisp code for the indentation.
+@itemx hm--html-keys.el
+Defines the key bindings.
+@itemx hm--html-menu.el
+Provides the menus.
+@itemx hm--html-mode.el
+Provides the functions for the definition of the hm--html-mode and the
+hm--html-minor-mode. This is the main file of the package.
+@itemx hm--html-not-standard.el
+Provides functions to insert some non standard html elements. This file
+is not evaluated by default and it may be a bad idea to use it.
+@itemx hm--html-configuration.el
+Configuration file for the html mode. All the user variables are defined
+in this file. 
+@itemx hm--html-drag-and-drop.el
+Defines the HTML- specific functions for the drag and drop interface.
+@itemx hm--date.el
+Defines the function hm--date, which returns the date in the format
+"day-month-year" like "30-Jun-1993".
+@itemx html-view.el
+Ron Tapia's html-view.el to view html-pages in the Mosaic. It is
+patched for the use with the xemacs.
+@itemx internal-drag-and-drop.el
+Provides the general (html mode independent functions) of the drag and
+drop interface.
+@itemx templates.doc
+Describes the syntax of the templates provided in the file
+@file{tmpl-minor-mode.el}
+@itemx tmpl-minor-mode.el
+Provides functions for the tmpl-minor-mode. With this mode you can
+expand templates, which are described in the file
+@file{templates-syntax.doc} (look at the files
+@file{command-description.html.tmpl} and @file{frame.html.tmpl} for
+examples).  Templates can be expanded automatically, if you include a
+file with templates via the html pulldown menu item "Templates ..." or
+with the item "Templates (fixed dirs)...".
+@itemx command-description.html.tmpl
+Template file for the use with the tmpl-minor-mode.
+@itemx frame.html.tmpl
+Template file, provides a simple frame.
+@itemx doc/hm--html-mode.texinfo 
+Package documentation in the Texinfo format.
+@itemx doc/umlaute.texinfo
+Texinfo include file for german vowel mutation (deutsche Umlaute).
+@end table
+
+@node Installation, Customization, Distribution, Top
+@comment  node-name,  next,  previous,  up
+@chapter  Installation
+@cindex installation 
+
+
+@enumerate
+@item Put all the *.el files in one of your xemacs (or emacs) lisp load
+directories (i.e. site-lisp/hm--html-menus).
+
+@item Put the following in your .emacs (or default.el or site-init.el):
+@lisp
+(autoload 'hm--html-mode "hm--html-mode" "HTML major mode." t)
+(autoload 'hm--html-minor-mode "hm--html-mode" "HTML minor mode." t)
+(or (assoc "\\.html$" auto-mode-alist)
+    (setq auto-mode-alist (cons '("\\.html$" . hm--html-mode) 
+				auto-mode-alist)))
+
+(autoload 'tmpl-expand-templates-in-buffer "tmpl-minor-mode"
+  "Expand all templates in the current buffer." t)
+
+(autoload 'html-view-start-mosaic "html-view" "Start Xmosaic." t)
+(autoload 'html-view-view-buffer 
+  "html-view"
+  "View the current buffer in Xmosaic."
+  t)
+(autoload 'html-view-view-file 
+  "html-view"
+  "View a file in Xmosaic."
+  t)
+(autoload 'html-view-goto-url
+  "html-view"
+  "Goto url in Xmosaic."
+  t)
+(autoload 'html-view-get-display
+  "html-view"
+  "Get the display for Xmosaic (i.e. hostxy:0.0)."
+  t)
+@end lisp
+
+The above lines assume that you have not installed already another
+html mode. If this isn't true, then you should use the following:
+@lisp
+(setq auto-mode-alist (cons '("\\.html$" . hm--html-mode)
+                            auto-mode-alist))
+@end lisp
+
+instead of:
+@lisp
+(or (assoc "\\.html$" auto-mode-alist)
+    (setq auto-mode-alist (cons '("\\.html$" . hm--html-mode) 
+			        auto-mode-alist)))
+@end lisp
+If you want to use the hm---html-minor-mode together
+with the psgml-html modes, then you should add the following
+line (works only in XEmacs version >= 19.15 and != 20.0):
+@lisp
+(add-hook 'html-mode-hook 'hm--html-minor-mode)
+@end lisp
+@end enumerate
+
+@node Customization, Add New Elements, Installation, Top
+@comment  node-name,  next,  previous,  up
+@chapter  Customization
+@cindex customization
+@cindex configuration 
+
+You should be able to use the package after it's installation without
+any further customization. But it contains a lot of user variables to
+adapt the package better to your special needs. How to do this is
+described in this chapter.
+
+@menu
+* Customization (Configuration) Files::  
+* Customization Variables::     
+@end menu
+
+@node Customization (Configuration) Files, Customization Variables, Customization, Customization
+@comment  node-name,  next,  previous,  up
+@section  Customization (Configuration) Files
+@cindex customization files 
+@cindex configuration files 
+
+This package uses 3 different files to customize the mode, but you must
+not use all of them. Only one of them, the file
+@file{hm--html-configuration.el} is delivered together with the package.
+The reason for three different files is to provide the possibility to
+have different customization for the package, the site and the
+user. There's also a pulldown menu item to reload all customization
+files. The files are described in the following sections.
+
+@menu
+* Where Are All The Customization Variables Defined::  
+* Where To Put Site Specific Customization::  
+* Where To Put User Specific Customization::  
+@end menu
+
+@node Where Are All The Customization Variables Defined, Where To Put Site Specific Customization, Customization (Configuration) Files, Customization (Configuration) Files
+@comment  node-name,  next,  previous,  up
+@subsection  Where Are All The Customization Variables Defined
+@cindex package specific customization 
+@cindex hm--configuration.el 
+@vindex HTML_CONFIG_FILE 
+
+All variables, which can be used to customize the mode, are defined in
+the package configuration file @file{hm--configuration.el}. You should
+take a look at this file, if you don't find how to customize a feature 
+in this documentation (the documentation of a program is never as
+complete as it's program code :-). 
+
+This file is searched in one of your lisp load directories. You can
+change this by setting the environment variable @code{HTML_CONFIG_FILE}
+to another file. But I don't recommend this.
+
+@emph{Note}: This file is loaded before the other customization files,
+so that it's definitions could be overwritten. All variables are set by
+@code{defvar}, so that it's values could also be overwritten with
+@code{setq} in any standard emacs customization files (i.e. in
+@file{.emacs}).
+
+
+@node Where To Put Site Specific Customization, Where To Put User Specific Customization, Where Are All The Customization Variables Defined, Customization (Configuration) Files
+@comment  node-name,  next,  previous,  up
+@subsection  Where To Put Site Specific Customization
+@cindex site specific customization 
+@cindex hm--site-configuration-file.el
+@vindex HTML_SITE_CONFIG_FILE 
+@vindex hm--html-site-config-file 
+
+In general all users at a site are writing there html pages for the same
+WWW server. Therefore it is very likely, that most of the customizations
+are site specific and only a few are user specific. But however, you
+don't have to use a site specific customization, if you don't like it.
+
+If you'd like to make a site specific customization of the
+@code{hm--html-mode}, then it's possible to put it in a special file
+called @file{hm--site-configuration-file.el}. If you do this, you've to
+set either the lisp variable @code{hm--html-site-config-file} or the
+environment variable @code{HTML_SITE_CONFIG_FILE} to the file and it's
+path. If you write the filename without it's extension (.el), the emacs
+tries to load at first a compiled version of the file.
+
+The environment variables overwrites the lisp variable.
+
+You can also put the site specific customization in any standard emacs
+customization files like @file{default.el}. But an advantage, if you
+use @file{hm--site-configuration-file.el} is, that it is very likely,
+that you can use this file also together with future versions of the
+package. I'll try to make it as backward compatible as possible.
+
+@emph{Note}: This file is loaded after the package customization file
+and before the user customization file.
+
+@node Where To Put User Specific Customization,  , Where To Put Site Specific Customization, Customization (Configuration) Files
+@comment  node-name,  next,  previous,  up
+@subsection  Where To Put User Specific Customization
+@cindex user specific customization 
+@cindex ~/.hm--configuration-file.el
+@vindex HTML_USER_CONFIG_FILE 
+@vindex hm--html-user-config-file 
+
+User specific customization can be put in the file
+@file{.hm--configuration-file.el}, which is searched by default in the
+home directory of the user. This can be overwritten by setting either
+the environment variable @code{HTML_USER_CONFIG_FILE} or the lisp
+variable @code{hm--html-user-config-file} to the name of the file and
+it's path. If you write the filename without it's extension (.el), the
+emacs tries to load at first a compiled version of the file.
+
+You can also put the user specific customization in your
+@file{.emacs}. It's up to you, to decide which way is the better one.
+
+@emph{Note}: This file is loaded after the package and the site specific
+one. Therefore it overwrites all other customization files. 
+
+
+@node Customization Variables,  , Customization (Configuration) Files, Customization
+@comment  node-name,  next,  previous,  up
+@section  Customization Variables
+
+In the following subsections the main customization variables are
+described.
+
+@menu
+* User Name/Signature::         
+* Switching Between Expert And Novice Menus ::  
+* HTML Doctype::                
+* Defaults Used For Generating Links::  
+* Templates::                   
+* Deleting Automounter Path Prefix::  
+* Automatic Insert Of Information::  
+* Latin 1 Characters::          
+* Drag And Drop::               
+* Font Lock Keywords::          
+* Prefix Keys::                 
+* Pulldown Menu Names::         
+* Hook Variables::              
+* Previewing HTML Files::       
+* Meta Element::                
+* Indentation::                 
+@end menu
+
+
+@node User Name/Signature, Switching Between Expert And Novice Menus , Customization Variables, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  User Name/Signature
+@cindex user name 
+@cindex signature 
+@vindex hm--html-username 
+@vindex hm--html-signature-file 
+
+@itemize @bullet
+@item
+@code{hm--html-username}: Your real name. This is used as the name of
+the signature links. You have only to specify it, if your name in the
+file @file{/etc/passwd} isn't the one, you'd like to see in the html
+files. Otherwise this could be set to nil.
+@item
+@code{hm--html-signature-file}: The link, used in your signature. In
+general this should be a link to your home page.
+@end itemize
+
+
+@node Switching Between Expert And Novice Menus , HTML Doctype, User Name/Signature, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Switching Between Expert And Novice Menus 
+@cindex expert menus 
+@cindex novice menus 
+@vindex hm--html-expert 
+
+@itemize @bullet
+@item
+@code{hm--html-expert}: If you're a html novice and don't want to be
+bothered with lot's of possible html elements, then you should use the
+novice popup menus. For that you've to set this variable to @code{nil},
+which is the default. But if you are more familiar with html and would
+like to use more html elements, then you should use the expert menus and
+set this variable to @code{t}.
+@end itemize
+
+
+@node HTML Doctype, Defaults Used For Generating Links, Switching Between Expert And Novice Menus , Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  HTML Doctype
+@vindex hm--html-html-doctype-version 
+@cindex HTML doctype 
+
+@itemize @bullet
+@item
+@code{hm--html-html-doctype-version}: The HTML version. This is used in
+the doctype element. Change this, if you use non HTML 3.2 elements. This
+package (@xref{Overview, version}.) defines by default only HTML 3.2 elements.
+@end itemize
+
+
+@node Defaults Used For Generating Links, Templates, HTML Doctype, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Defaults Used For Generating Links
+@cindex links 
+
+One of the main features of the @code{hm--html-mode} are the easy ways
+to insert special links to html pages, ftp servers, news servers and so
+on. I think, that most people will have their own (this may be site
+specific, @xref{Where To Put Site Specific Customization, Where To Put
+Site Specific Customization}.) favourite servers, directories and so
+on. Therefore it should be useful to customize the default values and the
+alists with useful alternatives, which are used from the mode in the
+inserting functions for the links.
+
+@menu
+* Your Favourite HTTP Server::  
+* Links to WWW Server::         
+* Links To Files::              
+* Links To FTP Server::         
+* Links To Emacs Info Files::   
+* Links To Gopher Server::      
+* Links To WAIS Gateways::      
+* Links To The Mail Gateway::   
+* Links For Sending Mails::     
+* Links To The Program Gateway ::  
+* Links To The Local Program Gateway::  
+* URL For Forms And Image Tags::  
+* Marking Of Examples::         
+@end menu
+
+
+@node Your Favourite HTTP Server, Links to WWW Server, Defaults Used For Generating Links, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection  Your Favourite HTTP Server
+@cindex favourite HTTP server 
+@vindex hm--html-favorite-http-server-host-name 
+
+@itemize @bullet
+@item
+@code{hm--html-favorite-http-server-host-name}: The name of your
+favorite http server host. It must be specified! This variable is used
+in many other variables.
+@end itemize
+
+
+@node Links to WWW Server, Links To Files, Your Favourite HTTP Server, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection  Links to WWW Server
+@cindex WWW server links
+@cindex HTTP links 
+@vindex hm--html-html-hostname:port-default 
+@vindex hm--html-html-hostname:port-alist 
+@vindex hm--html-html-path-alist 
+
+@itemize @bullet
+@item
+@code{hm--html-html-hostname:port-default}: Default hostname with port
+for http links to a HTML server.
+@item
+@code{hm--html-html-hostname:port-alist}: Alist with hostnames and ports
+for http links to HTML servers. It contains useful alternatives.
+@item
+@code{hm--html-html-path-alist}: Alist with directories for the HTML
+server. Each alist element must consist of a number and a directory
+string. The number is used to select the directory during the query
+about the directory for a http link.
+@end itemize
+
+
+@node Links To Files, Links To FTP Server, Links to WWW Server, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection  Links To Files
+@cindex file gateway links 
+@vindex hm--html-file-path-alist 
+
+@itemize @bullet
+@item
+@code{hm--html-file-path-alist}: Alist with directories for the file
+gateway.Each alist element must consist of a number and a directory
+string. The number is used to select the directory during the query
+about the directory for a file link.
+@end itemize
+
+
+@node Links To FTP Server, Links To Emacs Info Files, Links To Files, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection Links To FTP Server
+@cindex FTP links 
+@vindex hm--html-ftp-hostname:port-default 
+@vindex hm--html-ftp-hostname:port-alist 
+@vindex hm--html-ftp-path-alist 
+
+@itemize @bullet
+@item
+@code{hm--html-ftp-hostname:port-default}: Default hostname with port
+for links to ftp server. This is the default FTP server. In general
+you've not to specify a port for this.
+@item
+@code{hm--html-ftp-hostname:port-alist}: Alist with hostnames and ports
+for links to ftp servers. It contains useful alternatives. In general
+you've not to specify ports for the ftp servers.
+@item
+@code{hm--html-ftp-path-alist}: Alist with directories for the ftp
+server links. It contains useful alternatives with /pub, /pub/gnu and
+so on. Each alist element must consist of a number and a directory
+string. The number is used to select the directory during the query
+about the directory for a ftp link.
+@end itemize
+
+
+@node Links To Emacs Info Files, Links To Gopher Server, Links To FTP Server, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection  Links To Emacs Info Files
+@cindex emacs info links 
+@vindex hm--html-info-hostname:port-alist 
+@vindex hm--html-info-hostname:port-default 
+@vindex hm--html-info-path-alist 
+
+@itemize @bullet
+@item
+@code{hm--html-info-hostname:port-default}: Default hostname with port
+for the Info gateway.
+@item
+@code{hm--html-info-hostname:port-alist}: Alist with hostnames and ports
+for the Info gateway. It contains useful alternatives.
+@item
+@code{hm--html-info-path-alist}: Alist with directories for the Info
+gateway. This may be a list with all of your emacs info directories.
+@end itemize
+
+
+@node Links To Gopher Server, Links To WAIS Gateways, Links To Emacs Info Files, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection  Links To Gopher Server
+@cindex Gopher gateway links 
+@vindex hm--html-gopher-hostname:port-default 
+@vindex hm--html-gopher-hostname:port-alist 
+@vindex hm--html-gopher-doctype-default 
+@vindex hm--html-gopher-doctype-alist 
+@vindex hm--html-gopher-anchor-alist 
+
+There are a lot of useful gopher information server in the Internet.
+You can access them with a gopher browser or with a WWW browser. In the
+second case you've to use the gopher gateway.
+
+@itemize @bullet
+@item
+@code{hm--html-gopher-hostname:port-default}: Default hostname with port
+for links to gopher server.
+@item
+@code{hm--html-gopher-hostname:port-alist}: Alist with hostnames and
+ports for links to gopher server. It contains useful alternatives.
+@item
+@code{hm--html-gopher-doctype-default}: For gopher links you've to
+specify the doctype. In most cases this should be the string \"/1\".
+Therefore this is the default doctype, but you might change it to
+another doctype.
+@item
+@code{hm--html-gopher-doctype-alist}: Alist with doctype strings for links
+to gopher server. The strings \"/1\", \"/11\" and \"/00\" are the only
+doctype strings that I know. Please let me know, if there are other
+strings.
+@item
+@code{hm--html-gopher-anchor-alist}: Alist with directories for links to
+gopher server. It contains useful alternatives on the main gopher
+servers. Each alist element must consist of a number and a directory
+string. The number is used to select the directory during the query
+about the directory for a local program gateway link.
+@end itemize
+
+
+@node Links To WAIS Gateways, Links To The Mail Gateway, Links To Gopher Server, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection  Links To WAIS Gateways
+@cindex WAIS gateway links
+@vindex hm--html-wais-hostname:port-alist 
+@vindex hm--html-wais-hostname:port-default 
+@vindex hm--html-wais-servername:port-alist 
+@vindex hm--html-wais-servername:port-default 
+@vindex hm--html-wais-path-alist 
+
+You can either make a link direct to a WAIS server (it may be, that not
+all WWW browsers support this), or a http link to a server (relay host)
+which queries the WAIS server. The variables
+@code{hm--html-wais-hostname:port-default} and
+@code{hm--html-wais-hostname} refers to these relay hosts and the
+variables @code{hm--html-wais-servername:port-default} and
+@code{hm--html-wais-servername:port-alist} are refers to the WAIS servers.
+
+@itemize @bullet
+@item
+@code{hm--html-wais-hostname:port-default}: Default hostname of the
+relay host with port for the WAIS gateway.
+@item
+@code{hm--html-wais-hostname:port-alist}: Alist with hostnames of
+possible relay hosts and ports for the WAIS gateway. It contains
+useful alternatives.
+@item
+@code{hm--html-wais-servername:port-default}: Default WAIS servername
+with port for the WAIS gateway.
+@item
+@code{hm--html-wais-servername:port-alist}: Alist with WAIS servernames
+and ports for the WAIS gateway. It contains useful alternatives.
+@item
+@code{hm--html-wais-path-alist}: Alist with directories for the wais gateway.
+@end itemize
+
+
+@node Links To The Mail Gateway, Links For Sending Mails, Links To WAIS Gateways, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection  Links To The Mail Gateway
+@cindex Mail gateway links 
+@cindex Mail folder links 
+@vindex hm--html-mail-hostname:port-default 
+@vindex hm--html-mail-hostname:port-alist 
+@vindex hm--html-mail-path-alist 
+
+The following variables are for customizing the insert of links to mail
+folder. You need a special server for this, which sends the emails back
+to the browser.
+
+@itemize @bullet
+@item
+@code{hm--html-mail-hostname:port-default}: Default hostname with port
+for the mail gateway.
+@item
+@code{hm--html-mail-hostname:port-alist}: Alist with hostnames and ports
+for the mail gateway. It contains useful alternatives.
+@item
+@code{hm--html-mail-path-alist}: Alist with directories for the mail
+gateway. In these directories you'll find probably mail folder.  Each
+alist element must consist of a number and a directory string. The
+number is used to select the directory during the query about the
+directory for a mail folder link.
+@end itemize
+
+
+@node Links For Sending Mails, Links To The Program Gateway , Links To The Mail Gateway, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection Links For Sending Mails
+@cindex mailto links 
+@vindex hm--html-mailto-alist 
+
+@itemize @bullet
+@item
+@code{hm--html-mailto-alist}: Alist with mail addresses for the mailto
+alist.  The value of `user-mail-address' will also be added by the
+package to this alist.
+@end itemize
+
+
+@node Links To The Program Gateway , Links To The Local Program Gateway, Links For Sending Mails, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection  Links To The Program Gateway 
+@cindex program gateway links 
+@vindex hm--html-proggate-hostname:port-default 
+@vindex hm--html-proggate-hostname:port-alist 
+@vindex hm--html-proggate-allowed-file 
+
+The program gateway is a special TNT site specific gateway for starting
+programs out of a html page. The programs are started by a special
+server, which looks in an allowed file, to determine if it is allowed to
+start the program. This is necessary, because the programs are running
+under the user id of the server. We've only allowed to start simple
+display programs like man, ls and so on.
+
+@itemize @bullet
+@item
+@code{hm--html-proggate-hostname:port-default}: Default hostname with
+port for the proggate server.
+@item
+@code{hm--html-proggate-hostname:port-alist}: Alist with hostnames and
+ports for the proggate server. It contains useful alternatives.
+@item
+@code{hm--html-proggate-allowed-file}: The filename (with path) of the
+proggate allowed file.
+@end itemize
+
+
+@node Links To The Local Program Gateway, URL For Forms And Image Tags, Links To The Program Gateway , Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection  Links To The Local Program Gateway
+@cindex local program gateway links 
+@vindex hm--html-local-proggate-path-alist 
+
+Another TNT site specific way to start programs from a html page. These
+programs are started with the id of the user on the host where the
+client (browser) is running. Therefore no restriction about the allowed
+programs is made. With this you can start only programs and do only
+things, which you can do also without the WWW browser.
+
+@itemize @bullet
+@item
+@code{hm--html-local-proggate-path-alist}: Alist with directories for
+the local program gateway. Contains directories, where you can find
+programs. 
+@end itemize
+
+
+@node URL For Forms And Image Tags, Marking Of Examples, Links To The Local Program Gateway, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection  URL For Forms And Image Tags
+@cindex forms URL 
+@cindex image URL 
+@vindex hm--html-url-alist 
+
+@itemize @bullet
+@item
+@code{hm--html-url-alist}: Alist with URL's for FORMS and IMAGE tags.
+The cdr of each list contains symbols, which specifies the use of the
+URL.
+@end itemize
+
+
+@node Marking Of Examples,  , URL For Forms And Image Tags, Defaults Used For Generating Links
+@comment  node-name,  next,  previous,  up
+@subsubsection  Marking Of Examples
+@cindex color of help text
+@cindex font of help text
+@vindex hm--html-help-foreground 
+@vindex hm--html-help-background 
+@vindex hm--html-help-font 
+
+The following variables are for marking the examples in the help
+buffer.
+
+@itemize @bullet
+@item
+@code{hm--html-help-foreground}: The foreground color for highlighting
+examples.
+@item
+@code{hm--html-help-background}: The background color for highlighting
+examples.
+@item
+@code{hm--html-help-font}: The font for highlighting examples.
+@end itemize
+
+
+@node Templates, Deleting Automounter Path Prefix, Defaults Used For Generating Links, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Templates
+@cindex templates 
+@vindex hm--html-template-dir 
+@vindex hm--html-frame-template-file 
+@vindex hm--html-automatic-expand-templates 
+
+For inserting html template files you can customize, where you've your
+templates.
+
+@itemize @bullet
+@item
+@code{hm--html-template-dir}: A directory with template files.  It is now
+also possible to use it as a list of directories.  Look at the variable
+@code{tmpl-template-dir-list} for further descriptions.  If this
+variable is set to a non existing directory, than it is set to a
+directory, where the package in the XEmacs is. This is done during
+loading the file @file{hm--html-configuration.el} (@xref{Where Are All
+The Customization Variables Defined, Where Are All The Customization
+Variables Defined}.).  This may only be useful, in the XEmacs >= 19.12.
+@item
+@code{hm--html-frame-template-file}: File, which is used as template for
+a html frame. Such a file is in the package
+@emph{hm--html-menus}. @xref{Contents, Contents}.
+@item
+@code{hm--html-automatic-expand-templates}: Automatic expansion of
+templates. This feature needs the file @file{tmpl-minor-mode.el} from Heiko
+Münkel (@cite{muenkel@@tnt.uni-hannover.de}), which is distributed with the
+package hm--html-menus.
+@item
+@code{hm--html-template-filter-regexp}: Regexp for filtering out non
+(html) template files in a directory.
+@end itemize
+
+
+@node Deleting Automounter Path Prefix, Automatic Insert Of Information, Templates, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Deleting Automounter Path Prefix
+@cindex automounter path 
+@vindex hm--html-delete-wrong-path-prefix 
+
+@itemize @bullet
+@item
+@code{hm--html-delete-wrong-path-prefix}: If non nil, it specifies path-prefixes, which should be deleted in paths.
+The Sun automounter adds a temporary prefix to the automounted directories
+ (At our site the prefix is /tmp_mnt). But you can't select such a path,
+if the automounter has currently not mounted the directory and so you
+can't follow a html-link, which consists of such a path. To overcome
+this behaviour, you can set this variable to the prefix
+(eg "/tmp_mnt"). After that, the prefix should be stripped from the
+paths during the creation of the links.  ATTENTION: This variable is
+used as regular expression !  It can be set to a string or to a list of
+strings.
+@end itemize
+
+@node Automatic Insert Of Information, Latin 1 Characters, Deleting Automounter Path Prefix, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Automatic Insert Of Information
+@cindex automatic insert 
+@cindex date 
+@cindex changed comment 
+@cindex created comment 
+@vindex hm--html-automatic-new-date 
+@vindex hm--html-automatic-changed-comment 
+@vindex hm--html-automatic-created-comment 
+
+The @code{hm--html-mode} automatic inserts some useful informations in
+html pages. This behaviour could be changed by the following variables.
+
+@itemize @bullet
+@item
+@code{hm--html-automatic-new-date}: t => The date in the title line will
+be updated before file saving.  nil => No automatic update of the date.
+@item
+@code{hm--html-automatic-changed-comment}: t => A "changed comment"
+line will be added before file saving.  nil => No automatic insert
+of a "changed comment" line.
+@item
+@code{hm--html-automatic-created-comment}: t => A "created comment"
+line will be added.  nil => No automatic insert of a "created
+comment" line.
+@end itemize
+ 
+
+@node Latin 1 Characters, Drag And Drop, Automatic Insert Of Information, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Latin 1 Characters
+@cindex latin 1 characters 
+@vindex hm--html-bind-latin-1-char-entities 
+
+@itemize @bullet
+@item
+@code{hm--html-bind-latin-1-char-entities}: Set this to nil, if you
+don't want to use the ISO Latin 1 character entities.  This is only
+useful, if `hm--html-use-old-keymap' is set to nil. It is only used
+during loading the html package the first time.
+@end itemize
+
+
+@node Drag And Drop, Font Lock Keywords, Latin 1 Characters, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Drag And Drop
+@cindex drag and drop 
+@vindex hm--html-idd-create-relative-links 
+@vindex hm--html-idd-actions 
+
+@itemize @bullet
+@item
+@code{hm--html-idd-create-relative-links}: If t, then the
+@code{hm--html-idd-*} functions are creating relative links.  Otherwise
+absolute links are used. The idd functions are used for drag and drop.
+@item
+@code{hm--html-idd-actions}: The action list for the destination mode
+@code{hm--html-mode}.  Look at the description of the variable
+idd-actions.
+@end itemize
+
+
+@node Font Lock Keywords, Prefix Keys, Drag And Drop, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Font Lock Keywords
+@cindex font lock keywords 
+@vindex hm--html-font-lock-keywords-1 
+@vindex hm--html-font-lock-keywords-2 
+@vindex hm--html-font-lock-keywords 
+
+@itemize @bullet
+@item
+@code{hm--html-font-lock-keywords-1}: Subdued level highlighting for
+@code{hm--html-mode}.
+@item
+@code{hm--html-font-lock-keywords-2}: Gaudy level highlighting for
+@code{hm--html-mode}.
+@item
+@code{hm--html-font-lock-keywords}: Default expressions to highlight in
+the @code{hm--html-mode}.
+@end itemize
+
+
+@node Prefix Keys, Pulldown Menu Names, Font Lock Keywords, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Prefix Keys
+@cindex prefix keys 
+@kindex prefix keys 
+@vindex hm--html-minor-mode-prefix-key 
+@vindex hm--html-mode-prefix-key 
+
+@itemize @bullet
+@item
+@code{hm--html-minor-mode-prefix-key}: The prefix key for the key tables
+in the @code{hm--html-minor-mode}.
+@item
+@code{hm--html-mode-prefix-key}: The prefix key for the hm--html keys in
+the @code{hm--html-mode}.
+@end itemize
+
+
+@node Pulldown Menu Names, Hook Variables, Prefix Keys, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Pulldown Menu Names
+@cindex pulldown menu names 
+@vindex hm--html-minor-mode-pulldown-menu-name 
+@vindex hm--html-mode-pulldown-menu-name 
+
+It may be, that You'd like to change the names to get the same menu
+names in the major and in the minor modes of the @code{hm--html-menus}
+package.
+
+@itemize @bullet
+@item
+@code{hm--html-mode-pulldown-menu-name}: The name of the pulldown menu
+in the major html mode.
+@item
+@code{hm--html-minor-mode-pulldown-menu-name}: The name of the pulldown
+menu in the minor html mode.
+@end itemize
+
+
+@node Hook Variables, Previewing HTML Files, Pulldown Menu Names, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Hook Variables
+@vindex hm--html-mode-hook 
+
+You may use the following two variables, if you'd like to call special
+functions each time the major html mode is entered or the package is
+loaded.
+
+@itemize @bullet
+@item
+@code{hm--html-mode-hook}: This hook will be called each time, when the
+@code{hm--html-mode} is invoked.
+@item
+@code{hm--html-load-hook}: Hook variable to execute functions after
+loading the package
+@end itemize
+
+
+@node Previewing HTML Files, Meta Element, Hook Variables, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Previewing HTML Files
+@cindex previewing HTML files
+@vindex html-view-mosaic-command 
+@vindex html-sigusr1-signal-value 
+
+The following two variables are only used, if you preview the html
+documents with @code{Mosaic}.  There are also some other variables in
+@file{hmtl-view.el}, @xref{Contents, Contents}. Look at that file, if
+you've trouble with the functions to preview the html document with the
+@code{Mosaic}.
+
+@itemize @bullet
+@item
+@code{html-view-mosaic-command}: The command that runs @code{Mosaic} on your
+system.
+@item
+@code{html-sigusr1-signal-value}: Value for the SIGUSR1 signal on your
+system. See, usually, @file{/usr/include/sys/signal.h}.
+@example
+ 	SunOS 4.1.x	: (setq html-sigusr1-signal-value 30)
+	SunOS 5.x	: (setq html-sigusr1-signal-value 16)
+	Linux		: (setq html-sigusr1-signal-value 10))
+@end example
+@end itemize
+
+
+@node Meta Element, Indentation, Previewing HTML Files, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Meta Element
+@cindex meta element 
+@vindex hm--html-meta-name-alist 
+
+@itemize @bullet
+@item
+@code{hm--html-meta-name-alist}: Alist with possible names for the name
+or http-equiv attribute of meta. Currently I know of the names
+@code{Expires}, @code{Keys} and @code{Author}. Please send me
+(@emph{muenkel@@tnt.uni-hannover.de}) an email, if you know other
+standard html names for the meta element.
+@end itemize
+
+
+@node Indentation,  , Meta Element, Customization Variables
+@comment  node-name,  next,  previous,  up
+@subsection  Indentation
+@cindex indentation 
+@vindex hm--html-disable-indentation 
+@vindex hm--html-inter-tag-indent 
+@vindex hm--html-comment-indent 
+@vindex hm--html-intra-tag-indent 
+@vindex hm--html-tag-name-alist 
+
+@itemize @bullet
+@item
+@code{hm--html-disable-indentation}: Set this to t, if you want to
+disable the indentation in the @code{hm--html-mode}.  And may be send me
+(@emph{muenkel@@tnt.uni-hannover.de}) a note, why you've done this.
+@item
+@code{hm--html-inter-tag-indent}: The indentation after a start tag.
+@item
+@code{hm--html-comment-indent}: The indentation of a comment.
+@item
+@code{hm--html-intra-tag-indent}: The indentation after the start of a
+tag.
+@item
+@code{hm--html-tag-name-alist}: An alist with tag names known by the
+@code{hm--html-mode}. It is used to determine, if a tag is a one element
+tag or not. In the future it should also be used to get possible
+parameters of the tag. Use lower case characters in this list!!!!  If
+you've problems with the indentation of
+@code{:hm--html-one-or-two-element-tag} elements, then you should set
+them to either @code{:hm--html-one-element-tag} or
+@code{:hm--html-two-element-tag}, depending on how you use these
+elements. In the future I'll try to implement a better indentation for
+these elements.
+@end itemize
+
+
+@node Add New Elements, Use With psgml-html, Customization, Top
+@comment  node-name,  next,  previous,  up
+@chapter  Add New Elements
+@cindex add new html elements 
+@cindex non standard html 
+@vindex hm--html-tag-name-alist 
+
+If you'd like to add new HTML elements to this package, you should take
+at first a look at the file @file{hm--html-not-standard.el}, which
+contains already some non standard elements. If you find your tags
+there, you should uncomment the line @code{(require
+'hm--html-not-standard)} in the file @file{hm--html-mode.el}. There are
+also menu entries for these elements in the file
+@file{hm--html-menu.el}, which are commented out. Don't forget to
+recompile the changed lisp files after that!
+
+If you don't find your new elements there, you should do the following
+steps to add them:
+
+@enumerate
+@item
+Search a tag, which is similar to the one you want to add. Similar
+means, that it is inserted in the way you want to insert the new
+tags. Now let's assume, that you chose @samp{<strong></strong>}.
+@item
+Look at the file @file{hm--html.el} and search the function(s) which
+inserts the "similar tags". If the HTML element consists of only one
+tag, then there should be only one function for inserting the tag.  If
+the element consists of a start and an end tag, there are at least two
+functions. Only in some special cases, if it is possible to insert
+elements with different attribute values, there are more than two
+functions. In the case of @samp{<strong></strong>}, there are the two
+functions @code{hm--html-add-strong} and
+@code{hm--html-add-strong-to-region}.  The first one is used, if no
+region is active and the second if a region is active. The naming scheme
+of these functions are always @var{hm--html-add-<tagname>} and
+@var{hm--html-add-<tagname>-to-region}.  @var{<tagname>} is not in all
+cases the tagname. Sometimes a more human readable name is used (eg:
+bold instead of b).
+@item
+To get the right indentation for the new tags you should add an entry
+for it to the variable @code{hm--html-tag-name-alist}, which is defined
+in @file{hm--html-configuration.el}.  Lets assume, that the new tagname
+is @samp{foo}, then the entry in @code{hm--html-tag-name-alist} should
+be
+@lisp
+     ("foo" (:hm--html-one-element-tag t))
+@end lisp
+if the new element consists only of one tag (@samp{img} is such an
+element) or
+@lisp
+     ("foo" (:hm--html-two-element-tag t))
+@end lisp
+if the new element consists of two tags (@samp{strong} is such an
+element) or
+@lisp
+     ("foo" (:hm--html-one-or-two-element-tag t))
+@end lisp
+if the new element consists of two tags, but it is allowed to use the
+start tag without it's end tag (@samp{p} is such an element).
+@end enumerate
+
+Now you are ready and able to insert the new tags with
+@example
+	M-x hm--html-add-foo
+@end example
+and
+@example
+	M-x hm--html-add-foo-to-region
+@end example
+
+But if you want to add the new commands also to the popup menu,
+then you've to take a look at @file{hm--html-menu.el}, where all the
+menus are defined. Look at @code{hm--html-menu-noregion-expert} and
+@code{hm--html-menu-region-expert}. The first one is used, if no region is
+active and the second, if a region is active (both are only used,
+if the "expert menus" are used; this is an option in the pulldown
+menu). You should now add an entry like
+@lisp
+	["Foo" hm--html-add-foo t]
+@end lisp
+to the @code{hm--html-menu-noregion-expert} variable and an entry
+@lisp
+	["Foo" hm--html-add-foo-to-region t]
+@end lisp
+to the @code{hm--html-menu-region-expert} variable (only if
+@code{hm--html-add-foo-to-region} exists). You can do this by setting the
+whole variable to a new value or by using the function
+@code{add-menu-button}. I recommend the last method.
+
+If you'd like to have also a key sequence for inserting the new tag,
+then you've to take a look at @file{hm--html-keys.el}. There are
+different key tables defined for region and no region cases and for
+different sorts of elements, like anchors, frame elements (doesn't mean
+the Netscape element frame) and so on. These "groups" are the same as
+the sub menu groups.
+
+
+@node Use With psgml-html, Internal Drag And Drop, Add New Elements, Top
+@comment  node-name,  next,  previous,  up
+@chapter  Use With psgml-html
+@cindex use with other HTML modes 
+@findex hm--html-minor-mode 
+
+The package provides a minor mode called @code{hm--html-minor-mode},
+which could be used to join the features of this package with another
+HTML package. Currently this is only tested with the psgml html mode in
+the XEmacs. Please let me know, if it works or not with other packages
+or in the Emacs 19.
+
+If you'd like to use the minor mode in the psgml html mode, you've to
+put the following line in your @file{.emacs}:
+
+@lisp
+     (add-hook 'html-mode-hook 'hm--html-minor-mode)   
+@end lisp
+
+Note: This should work only in XEmacs versions greater than 19.14 and not
+in 20.0. It doesn't work in other versions, because the hook variable
+@code{html-mode-hook} exists not in that versions. Therefore in that
+versions you've to called the minor mode either by hand or change the
+lisp file of the psgml html mode.
+
+
+@node Internal Drag And Drop, Template Minor Mode, Use With psgml-html, Top
+@comment  node-name,  next,  previous,  up
+@chapter  Internal Drag And Drop
+@cindex drag and drop 
+@cindex internal drag and drop 
+@vindex idd-actions 
+@vindex hm--html-idd-actions 
+
+
+The file @file{internal-drag-and-drop.el}, which is shipped with the
+@file{hm--html-menus}, provides a general package for internal drag and
+drop in the emacs. General means, that it can be used also without the
+@code{hm--html-mode} in any other mode. 
+
+You can start such an action by clicking with the mouse in the source
+buffer and then in the destination buffer. The action could depend on
+the points where you've clicked with the mouse, on the state of the
+region, the point, the mark and any other properties of the source and
+the destination buffers. The actions are defined by the variable
+@code{idd-actions}, which is a buffer local variable.
+
+
+@menu
+* Drag And Drop Customization::  
+* The Drag And Drop Commands::  
+@end menu
+
+@node Drag And Drop Customization, The Drag And Drop Commands, Internal Drag And Drop, Internal Drag And Drop
+@comment  node-name,  next,  previous,  up
+@section  Drag And Drop Customization
+@cindex customization
+@cindex configuration 
+
+The internal drag and drop functions could be used in all
+modes. Therefore it's general customization isn't done in
+@file{hm--html-configuration.el}. It's variables are defined in the file
+@file{internal-drag-and-drop.el} instead. You can set them in your
+@file{.emacs} or in one of the other emacs init files (eg:
+@file{default.el}). The following subsections describes the main
+customization variables.
+
+
+@menu
+* Defining The Drag And Drop Actions::  
+* The Mouse Bindings::          
+@end menu
+
+@node Defining The Drag And Drop Actions, The Mouse Bindings, Drag And Drop Customization, Drag And Drop Customization
+@comment  node-name,  next,  previous,  up
+@subsection  Defining The Drag And Drop Actions
+@cindex actions 
+@cindex drag and drop actions 
+@vindex idd-actions 
+
+The drag and drop actions are commands, which are called after an
+internal drag and drop. They depends from the source and the destination
+of the drag and drop. Drag and drop actions must be defined by the
+variable:
+
+@itemize @bullet
+@item
+@code{idd-actions}: A list with actions, depending on the source and the
+destination of the drag and drop command.
+@end itemize
+
+The list looks like:
+@lisp
+'((@var{<destination-specification-1>} (@var{<source-specification-1>} @var{<action-1-1>})
+                            (@var{<source-specification-2>} @var{<action-1-2>})
+                                            :
+   )
+  (@var{<destination-specification-2>} (@var{<source-specification-1>} @var{<action-2-1>})
+                            (@var{<source-specification-2>} @var{<action-2-2>})
+                                            :
+   )
+                          :
+  )
+@end lisp
+The @var{<source-specification>} looks like the following:
+@lisp
+'([(@var{<specification-type>} @var{<value>})])
+@end lisp
+with 
+@lisp
+@table @var
+@item <specification-type> :==
+@w{@code{idd-if-minor-mode-p}} | @w{@code{idd-if-buffer-name-p}} |
+@w{@code{idd-if-region-active-p}} | @w{@code{idd-if-url-at-point-p}} |
+@w{@code{idd-if-major-mode-p}} | @w{@code{idd-if-variable-non-nil-p}} |
+@w{@code{idd-if-dired-file-on-line-p}} |
+@w{@code{idd-if-dired-no-file-on-line-p}} |
+@w{@code{idd-if-local-file-p}} | @w{@code{idd-if-buffer-name-p}} |
+@w{@code{idd-if-modifiers-p}} | ...
+@end table
+@end lisp
+
+The @var{<specification-type>} - functions must have two arguments, the
+first one is the source or destination and the second is the
+@var{<value>}. It must return @code{nil}, if the test wasn't successful
+and a number (in general 1), which specifies the weight of the test
+function. The weights of all single tests are added to a summary weight
+and assigned to the action. The action with the highest weight is called
+from the action handler. Look at the definition of
+@w{@code{idd-if-major-mode-p}}, @w{@code{idd-if-minor-mode-p}} and so on for
+examples. Look at the function
+@code{idd-get-source-or-destination-alist}, if you want to know the
+structure of the @code{source-or-destination} argument of these
+functions.
+
+The @var{<destination-specification>} looks like
+@var{<source-specification>}, but in general it could be set to
+@code{nil} in mode specific idd-action lists.
+
+If @var{<destination-specification-1>} or @var{<source-specification-1>}
+is set to @code{nil}, then every source or source
+matches. @code{idd-actions} is a buffer local variable, which should be
+at least mode depended. So if the @var{<destination-specification-1>} is
+set to @code{nil} it says, that the destination buffer must only have a
+specific mode. But however, it's also possible to define a general
+@code{idd-actions} list, where the destination mode is specified by
+@code{idd-if-major-mode-p}.
+
+@var{<action>} is a function, which has two arguments, the first
+specifies the source and the second the destination. Look at the
+function definition of @code{idd-action-copy-region} and
+@code{idd-action-copy-replace-region}. They are examples for such
+actions.
+
+The following is an example for the @code{hm--html-mode}:
+
+@lisp
+(defvar idd-actions
+  '((nil (((idd-if-major-mode-p . dired-mode)
+           (idd-if-dired-file-on-line-p . ".*\\.\\(gif\\)\\|\\(jpq\\)"))
+          hm--html-idd-add-include-image-from-dired-line)
+         (((idd-if-major-mode-p . dired-mode)
+           (idd-if-dired-no-file-on-line-p . nil))
+          hm--html-idd-add-file-link-to-file-on-dired-line)
+         (((idd-if-major-mode-p . dired-mode)
+           (idd-if-dired-no-file-on-line-p . t))
+          hm--html-idd-add-file-link-to-directory-of-buffer)
+         (((idd-if-major-mode-p . w3-mode)
+           (idd-if-url-at-point-p . t))
+          hm--html-idd-add-html-link-from-w3-buffer-point)
+         (((idd-if-major-mode-p . w3-mode))
+          hm--html-idd-add-html-link-to-w3-buffer)
+         (((idd-if-local-file-p . t))
+          hm--html-idd-add-file-link-to-buffer)))
+@end lisp
+
+
+@node The Mouse Bindings,  , Defining The Drag And Drop Actions, Drag And Drop Customization
+@comment  node-name,  next,  previous,  up
+@subsection  The Mouse Bindings
+@cindex mouse bindings 
+@vindex idd-global-mouse-keys 
+@vindex idd-global-help-mouse-keys 
+@vindex idd-drag-and-drop-mouse-binding-type 
+@findex idd-mouse-drag-and-drop
+@findex idd-help-mouse-drag-and-drop 
+
+There are the following three variables, which determines the mouse
+bindings and the mouse behaviour for the internal drag and drop package:
+
+@itemize @bullet
+@item
+@code{idd-global-mouse-keys}: The mouse keys for the command
+@code{idd-mouse-drag-and-drop}.  The command
+@code{idd-mouse-drag-and-drop} is bound during the loading of the
+package @file{internal-drag-and-drop} to these keys in the @b{global
+keymap}. The drag and drop action @b{must be bound global}, because the
+drag and drop action must be started by a click in the source
+buffer. Therefore no action will be performed, if the mouse keys are not
+bound to @code{idd-mouse-drag-and-drop} in the destination buffer.
+
+Set it to @code{nil}, if you don't want to bind this function during
+loading.
+
+If the command is already bound in the global keymap during loading,
+then this key sequence will not be bind.
+
+By default the mouse binding is @key{meta} @key{control} @key{button1}.
+
+@item
+@code{idd-global-help-mouse-keys}: The mouse keys for the command
+@code{idd-help-mouse-drag-and-drop}.  The command
+@code{idd-help-mouse-drag-and-drop} is bound during the loading of the
+package @file{internal-drag-and-drop} to this keys in the @b{global
+keymap}.
+
+Set it to @code{nil}, if you don't want to bind this function during
+loading.
+
+If the command is already bound in the global keymap during loading,
+then this key sequence will not be bind.
+
+By default the mouse binding is @key{meta} @key{control} @key{button3}.
+
+@item
+@code{idd-drag-and-drop-mouse-binding-type}: The type of the drag and
+drop mouse binding.  The value maybe @code{click} or
+@code{press-button-during-move}.  A value of @code{click} means, that
+you've to click over the source, leave the button and click it again
+over the destination.  A value of @code{press-button-during-move} means,
+that you've to press the button down over the source and hold it until
+the mouse pointer is over the destination.
+
+The @emph{disadvantage} of the @code{press-button-during-move} type
+compared with the @code{click} type is, that you can't select a destination
+region and therefore a drag and drop action depending on a selected
+region can't be started with that type of mouse binding.
+@end itemize
+
+@node The Drag And Drop Commands,  , Drag And Drop Customization, Internal Drag And Drop
+@comment  node-name,  next,  previous,  up
+@section  The Drag And Drop Commands
+@cindex drag and drop commands 
+
+There are 2 groups of commands. The first one contains commands, which
+performs the drag and drop action and the second displayed a help
+message about a possible drag and drop action.
+
+
+@menu
+* Performing The Drag And Drop Action::  
+* Displaying Help On Drag And Drop::  
+@end menu
+
+@node Performing The Drag And Drop Action, Displaying Help On Drag And Drop, The Drag And Drop Commands, The Drag And Drop Commands
+@comment  node-name,  next,  previous,  up
+@subsection  Performing The Drag And Drop Action
+@cindex drag and drop commands 
+@cindex performing drag and drop 
+@findex idd-mouse-drag-and-drop 
+@findex idd-start-mouse-drag-and-drop 
+@findex idd-mouse-drag-and-drop-press-button-during-move 
+@findex idd-mouse-drag-and-drop-click 
+@findex idd-help-start-action 
+@vindex idd-drag-and-drop-mouse-binding-type 
+
+There are the following five different commands, which performs internal
+drag and drop actions:
+
+@itemize @bullet
+@item
+@code{idd-mouse-drag-and-drop}: Performs a drag and drop action.  It
+calls the command @code{idd-mouse-drag-and-drop-click} or
+@code{idd-mouse-drag-and-drop-press-button-during-move} depending on the
+value of @code{idd-drag-and-drop-mouse-binding-type}. However you've set
+this, you start a drag and drop action with this command by pressing
+down it's mouse button over the source. This command is bind by default
+to a global mouse key sequence. @xref{The Mouse Bindings}.
+
+@item
+@code{idd-start-mouse-drag-and-drop}: Starts a drag and drop command.
+This command could be used to start a drag and drop command without a
+button event. Therefore this should not be bind direct to a mouse
+button. This command can be used to start a drag and drop action with a
+click on a menu item or tool bar icon. After that you've to press down a
+mouse button over the source. The rest depends on the value of
+@code{idd-drag-and-drop-mouse-binding-type}, like with the command
+@code{idd-mouse-drag-and-drop}.
+
+@item
+@code{idd-help-start-action}: It is possible to display a help buffer
+with a message in it, which describes the action instead of performing
+it immediately (@pxref{Displaying Help On Drag And Drop}). In this case
+you can perform the action by clicking on a special extent in the help
+buffer, which runs this command.
+
+@item
+@code{idd-mouse-drag-and-drop-press-button-during-move}: Performs a drag
+and drop action in a more traditional way than
+@code{idd-mouse-drag-and-drop-click}. At first you must press the button
+down over the source and then move with the pressed button to the
+destination, where you must leave the button up.  This must be bind to a
+mouse button. The @code{SOURCE-EVENT} must be a
+@code{button-press-event}.
+
+The disadvantage of this command compared with the command
+@code{idd-mouse-drag-and-drop-click} is, that you can't select a
+destination region.
+
+You should bind the command @code{idd-mouse-drag-and-drop} instead of
+this one, because it's then possible to switch between both drag and
+drop behaviour by changing only one variable.
+
+@item
+@code{idd-mouse-drag-and-drop-click}: Performs a drag and drop action in
+a more useful way than
+@code{idd-mouse-drag-and-drop-press-button-during-move}. At first you
+must click on the source and after that on the destination.  This must
+be bind to a mouse button. The @code{SOURCE-EVENT} must be a
+@code{button-press-event}.
+
+You should bind the command @code{idd-mouse-drag-and-drop} instead of
+this one, because it's then possible to switch between both drag and
+drop behaviour by changing only one variable.
+@end itemize
+
+
+@node Displaying Help On Drag And Drop,  , Performing The Drag And Drop Action, The Drag And Drop Commands
+@comment  node-name,  next,  previous,  up
+@subsection  Displaying Help On Drag And Drop
+@cindex help on drag and drop 
+@cindex displaying help on drag and drop 
+@findex idd-help-mouse-drag-and-drop 
+@findex idd-start-help-mouse-drag-and-drop 
+
+It's possible to display a buffer with a help message describing the
+action before actually performing it. To perform the action, you've then
+to click on a special extent in the help buffer. To get the help buffer,
+you've to do the same things, as you've to do to perform the action
+direct. Only the mouse key differs. There are two commands for this:
+
+@itemize @bullet
+@item
+@code{idd-help-mouse-drag-and-drop}: Displays help about the drag and
+drop action. It works similar as @code{idd-mouse-drag-and-drop}
+(@pxref{Performing The Drag And Drop Action}).
+
+By default this command is global bound to @key{meta} @key{control}
+@key{button3}. This could be changed with the variable
+@code{idd-global-help-mouse-keys} (@pxref{The Mouse Bindings}).
+
+@item
+@code{idd-start-help-mouse-drag-and-drop}: Starts displaying help about
+the drag and drop action. It works similar as
+@code{idd-start-mouse-drag-and-drop} (@pxref{Performing The Drag And
+Drop Action}) and can be used to start the help by clicking on a menu
+item or a tool bar icon.
+@end itemize
+
+
+@node Template Minor Mode, Bug Reports, Internal Drag And Drop, Top
+@comment  node-name,  next,  previous,  up
+@chapter  Template Minor Mode
+@cindex templates 
+
+There's a file called @file{tmpl-minor-mode.el} in the distribution
+of the package @emph{hm---html-menus}. It provides functions to use
+templates for the @code{hm--html-mode} and also for other modes. It
+needs nothing from the rest of the package and therefore it can be used
+independently of the @code{hm--html-mode}.
+
+
+@menu
+* What Are Templates::          
+* Syntax Of Templates::         
+* Template Customization::      
+* Template Commands::           
+@end menu
+
+@node What Are Templates, Syntax Of Templates, Template Minor Mode, Template Minor Mode
+@comment  node-name,  next,  previous,  up
+@section  What Are Templates
+@cindex templates 
+@findex tmpl-insert-template-file 
+@findex tmpl-expand-templates-in-buffer 
+@findex tmpl-expand-templates-in-region 
+
+Templates are special pieces of text, which can be expanded by the
+emacs. Expansion means, that the template is replaced by something else,
+which is determined by evaluating lisp forms or emacs commands.  The
+expansion can be done automaticly after the insert of templates
+with the command @code{tmpl-insert-template-file} in a buffer or by hand
+with the commands @code{tmpl-expand-templates-in-buffer} or
+@code{tmpl-expand-templates-in-region}.
+
+Templates can be put together with normal text in a so called template
+file to provide prototype files. You should name these files with the
+following naming scheme:
+
+@example
+        @var{<file>}.@var{<type>}.tmpl
+@end example
+
+where @var{<file>} is a string which describes for what the template
+could be used and @var{<type>} the normal file extension, e.g. @samp{c}
+for C- files or @samp{html} for HTML- files. 
+
+
+@node Syntax Of Templates, Template Customization, What Are Templates, Template Minor Mode
+@comment  node-name,  next,  previous,  up
+@section  Syntax Of Templates
+@cindex template syntax 
+@vindex tmpl-sign 
+
+The templates are marked with the sign ^@@, which stands for the null
+character (\000). It can be inserted in a buffer with the keys @kbd{C-q
+C-SPC}. You can also use any other character or string of characters by
+changing the variable @code{tmpl-sign}.
+
+At the moment, there are 3 different mayor types of templates:
+
+@enumerate
+@item
+@emph{Emacs Lisp function templates}: The expansion of such a template
+evals a lisp form. It is possible to use functions or variables as lisp
+forms. The following is a simple example:
+
+@lisp
+^@@LISP^@@ (insert-file "~/.emacs") ^@@END LISP^@@
+@end lisp
+
+It inserts the contents of the file @file{~/.emacs} in the current
+buffer during the expansion.
+
+@item
+@emph{Emacs command templates}: The expansion of a command template
+evals a template in the same way as an interactive command, which is
+invoked with @kbd{M-x command}. For example:
+
+@lisp
+^@@COMMAND^@@ insert-file ^@@END COMMAND^@@
+@end lisp
+
+It runs the interactive command @code{insert-file} during the expansion.
+
+@item
+@emph{Template comments} Nothing will be evaluated during the expansion
+of a template comment. It is only a comment. For example:
+
+@lisp
+^@@C^@@ This is a comment
+@end lisp
+
+The end of the comment is the end of the line. Therefore it has the same
+syntax as a lisp or C++ comment.
+@end enumerate
+
+The default is, that a template will be deleted after its expansion, but 
+without the linefeed. Look at the following examples:
+
+Before the expansion:
+
+@example
+	Line before the template
+        ^@@C^@@ The Text of a comment template
+	Line after the template
+@end example
+
+After the expansion:
+
+	Line before the template
+
+	Line after the template
+
+
+Templates can start in every column and only the template will be deleted
+after its expansion.
+
+
+There is also the possibility to put an attribute list in a template. The
+attributes of the list are controlling the deletion of the template. It
+may be, that this will be extended in the future with other attributes.
+The attribute list must be specified as an alist (assoc list) in the start
+tag of a template and after its type. Each element of the alist consists
+of the name of the attribute following its value.
+If no attribute list is specified or if an attribute is missing, then the
+default values are used. At the moment there are the following 2 attributes:
+
+@enumerate
+@item @emph{don't delete attribute} (@code{DONT_DELETE}): If the value
+is t, then the template will not be deleted after its expansion or else
+if the value is nil then the template will be deleted. The default is
+nil. For example: 
+
+Before the expansion:
+
+@example
+	Line before the template
+	^@@LISP ((DONT-DELETE t))^@@ (insert-file "~/.cshrc") ^@@END LISP^@@
+	Line after the template
+@end example
+	
+After the expansion:
+
+@example
+	Line before the template
+	^@@LISP ((DONT-DELETE t))^@@ (insert-file "~/.cshrc") ^@@END LISP^@@
+	Line after the template
+@end example
+
+It was assumed, that the file @file{~/.cshrc} was empty !
+
+@item
+@emph{delete line attribute} (@code{DELETE-LINE}): If the value is t,
+then the linefeed before or after the template will be deleted or else
+if the value is nil then no linefeed will be deleted. The default is
+nil. For example:
+	
+Before the expansion:
+
+@example
+	Line before the template
+	^@@LISP ((DELETE-LINE t))^@@ (insert-file "~/.cshrc") ^@@END LISP^@@
+	Line after the template
+@end example
+	
+After the expansion:
+
+@example
+	Line before the template
+	Line after the template
+@end example
+
+It was assumed, that the file @file{~/.cshrc} was empty !
+@end enumerate
+
+The attributes can be combined. For example:
+
+@example
+	^@@COMMAND ((DELETE-LINE t) (DONT-DELETE nil))^@@
+	insert-file
+	^@@END COMMAND^@@
+@end example
+
+The last examples shows also, that whitespaces (blanks, tabs, linefeeds)
+are allowed at the most positions in a template.
+
+Look at the file @file{tmpl-minor-mode.el}, for a description of the
+commands to expand templates.
+
+
+@node Template Customization, Template Commands, Syntax Of Templates, Template Minor Mode
+@comment  node-name,  next,  previous,  up
+@section  Template Customization
+@cindex customization
+@cindex configuration 
+@vindex tmpl-template-dir-list 
+@vindex tmpl-automatic-expand 
+@vindex tmpl-filter-regexp 
+@vindex tmpl-sign 
+@vindex tmpl-minor-mode-map 
+
+Templates could be used for all editing modes and not only for the
+@code{hm--html-mode}. Therefore it's general customization isn't done in
+@file{hm--html-configuration.el}. It's variables are defined in the file
+@file{tmpl-minor-mode.el} instead. You can set them in your
+@file{.emacs} or in one of the other emacs init files (eg:
+@file{default.el}). The following are the main variables for
+customization.
+
+@itemize @bullet
+@item
+@code{tmpl-template-dir-list}: A list of directories with template
+files. If it is nil, the default-directory will be used.  If more than
+one directory is specified, then the template filenames should differ
+in all directories.
+
+This variable is used in the commands for inserting templates.  Look at
+@code{tmpl-insert-template-file-from-fixed-dirs} and at
+@code{tmpl-insert-template-file}. The command
+@code{tmpl-insert-template-file} uses only the car of the list (if it is
+a list).")
+@item
+@code{tmpl-filter-regexp}: It determines an regular expression used for
+filtering out non template files in template directories. It is used in
+the command @code{tmpl-insert-template-file-from-fixed-dirs} to allow
+only the selecting of files, which are matching the regexp.  If it is
+nil, then the Filter @code{".*\\.tmpl$"} is used.  Set it to
+@code{\".*\"} if you want to disable the filter function or use the
+command @code{tmpl-insert-template-file}.
+@item
+@code{tmpl-automatic-expand}: If you insert a template file with
+@code{tmpl-insert-template-file-from-fixed-dirs} or with
+@code{tmpl-insert-template-file}, this variable is used. In this case
+the templates in the buffer will be automaticly expanded, if the
+variable is set to t, which is the default.
+@item
+@code{tmpl-sign}: It determines the sign which marks the beginning and
+the end of template expressions. By default it is set to the null
+character (displayed in the emacs as ^@@). You can also set this to a
+string. Be careful, if you change it, so that the templates will not be
+mixed up with other non template text! Note: The expansion function
+looks at the whole template, so that it is very unlikely that the
+function will make a mistake.
+@item
+@code{tmpl-minor-mode-map}: The keymap for the template minor mode.
+@end itemize
+
+
+@node Template Commands,  , Template Customization, Template Minor Mode
+@comment  node-name,  next,  previous,  up
+@section  Template Commands
+@cindex commands 
+
+In this section the commands of the template package are described.
+
+
+@menu
+* Insert Of Template Files::    
+* Expansion Of Templates::      
+* Escaping Of Template Signs::  
+* The Template Minor Mode::     
+@end menu
+
+@node Insert Of Template Files, Expansion Of Templates, Template Commands, Template Commands
+@comment  node-name,  next,  previous,  up
+@subsection  Insert Of Template Files
+@cindex template insert
+@cindex template files 
+@findex tmpl-insert-template-file-from-fixed-dirs 
+@findex tmpl-insert-template-file 
+
+The template package provides the following two commands for inserting
+template files in an emacs buffer.
+
+@itemize @bullet
+@item
+@code{tmpl-insert-template-file}: This command can be used to insert a
+template file in the current buffer. It will expand the templates in the
+buffer, if @code{tmpl-automatic-expand} is set to @code{t}. You can set
+a default directory for this command by setting the variable
+@code{tmpl-template-dir-list}, @xref{Template Customization}.
+@item
+@code{tmpl-insert-template-file-from-fixed-dirs}: The difference to the
+simpler command @code{tmpl-insert-template-file} is, that this command
+will build a list for filename completion from a list of predefined
+directories (look at @code{tmpl-template-dir-list}). The filename
+completion list will also be filtered with the regular expression
+defined by @code{tmpl-filer-regexp}. @xref{Template Customization}. You
+can set the directory list and/or the filter different in each mode,
+where you use templates, so that you will get only template files in the
+completion list, which could be used for the current mode.
+
+If you want to insert a template file with this command, which is not in
+one of the directories from @code{tmpl-template-dir-list}, then you've
+to enter the string @emph{"Change the directory"} instead of a template
+file. This string is also in the completion list.
+@end itemize
+
+Both commands can also be used as functions. In this case the template
+file with is directory path must be given to them as an parameter.
+
+You can also use commands like @code{insert-file} to insert template
+files and expand them by hand (@pxref{Expansion Of Templates}).
+
+
+@node Expansion Of Templates, Escaping Of Template Signs, Insert Of Template Files, Template Commands
+@comment  node-name,  next,  previous,  up
+@subsection  Expansion Of Templates
+@cindex template expansion 
+@cindex expansion 
+@findex tmpl-expand-templates-in-region 
+@findex tmpl-expand-templates-in-buffer 
+
+You can expand templates by hand or automaticly after their
+insert. @xref{Insert Of Template Files}, for automatic
+expansion. The expansion by hand can be done with one of the
+following two functions:
+
+@itemize @bullet
+@item
+@code{tmpl-expand-templates-in-region}: Expands the templates in the
+region. The region is determined by it's optional arguments @code{BEGIN}
+and @code{END}. If the arguments are @code{nil}, or if the function is called
+interactive, then the current region will be used.
+@item
+@code{tmpl-expand-templates-in-buffer}: Expands all templates in the
+current buffer.
+@end itemize
+
+Both commands are bind to keys in the @code{tmpl-minor-mode}. @xref{The
+Template Minor Mode}.
+
+
+@node Escaping Of Template Signs, The Template Minor Mode, Expansion Of Templates, Template Commands
+@comment  node-name,  next,  previous,  up
+@subsection  Escaping Of Template Signs
+@cindex template escaping 
+@cindex escaping 
+@findex tmpl-escape-tmpl-sign-in-region 
+@findex tmpl-escape-tmpl-sign-in-buffer 
+
+It is possible to escape template signs in a buffer or in a
+region. Templates with escaped template signs are not expanded, but they
+are un-escaped by the expansion functions. Therefore it is possible to
+prevent single templates from the expansion by escaping them. Note:
+You can't escape template twice. The commands, which can be used for
+this are:
+
+@itemize @bullet
+@item
+@code{tmpl-escape-tmpl-sign-in-region}: Escapes all @code{tmpl-sign}'s
+(@pxref{Template Customization}) with a @code{tmpl-sign} in a
+region. The region is determined by it's optional arguments @code{BEGIN}
+and @code{END}. If the arguments are @code{nil}, or if the function is
+called interactive, then the current region will be used.
+@item
+@code{tmpl-escape-tmpl-sign-in-buffer}: Same as
+@code{tmpl-escape-tmpl-sign-in-region}, but escapes all templates in the
+whole buffer.
+@end itemize
+
+Both commands are bind to keys in the @code{tmpl-minor-mode}. @xref{The
+Template Minor Mode}.
+
+
+@node The Template Minor Mode,  , Escaping Of Template Signs, Template Commands
+@comment  node-name,  next,  previous,  up
+@subsection  The Template Minor Mode
+@cindex template minor mode 
+@cindex minor mode 
+@cindex key bindings 
+@findex tmpl-minor-mode 
+
+The template minor mode can be toggled with the command
+@code{tmpl-minor-mode}. The purpose of this mode is only to provide
+key bindings for some of the commands of the package
+@file{tmpl-minor-mode}. So if you don't want to use the key bindings, you
+don't need this minor mode.
+
+Look at the key table @code{tmpl-minor-mode-map} (@pxref{Template
+Customization}) for the definition of the keys.
+
+It may be, that I'll provide also a pulldown or popup menu for the minor
+mode in a future release.
+
+
+@node Bug Reports, Concept Index, Template Minor Mode, Top
+@comment  node-name,  next,  previous,  up
+@chapter  Bug Reports
+@cindex bug report 
+@findex hm--html-submit-bug-report 
+
+There's no software out there without bugs. This package contains
+software, therefore it has bus. I (Heiko Münkel
+<muenkel@@tnt.uni-hannover.de>) have inserted most of the bugs in this
+package by myself, but I've forgotten where. So please help me out of
+this disaster and send bug reports, if you've found one of these little
+animals. I'll try to do my very best to fix them and to insert new ones.
+
+If it's possible, you should use the command
+
+@lisp
+        M-x hm--html-submit-bug-report
+@end lisp
+
+There's also an entry in the pulldown menu for this.
+
+In some cases a backtrace would also be fine.
+
+If you can't send the report with this function, than you should at
+least insert the package version and your @code{Emacs}/@code{XEmacs}
+version. 
+
+In the best of all worlds you include also a patch to fix the bug.
+
+@emph{Note}: It's not true, that I've inserted the bugs as a marketing trick,
+so that you must buy the next version to get some of them fixed. This is
+false, because this software is free.
+
+
+@node     Concept Index, Function Index, Bug Reports, Top
+@comment  node-name, 		next, 		previous, 		up 
+@unnumbered  Concept Index
+
+@printindex cp
+
+@node     Function Index, Variable Index, Concept Index, Top
+@comment  node-name, 		next, 		previous, 		up 
+@unnumbered  Function Index
+
+@printindex fn
+
+@node     Variable Index,  , Function Index, Top
+@comment  node-name, 		next, 		previous, 		up 
+@unnumbered  Variable Index
+
+@printindex vr
+
+@summarycontents 
+@contents 
+@bye 

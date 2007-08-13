@@ -1,9 +1,9 @@
 Hello,
 
-I've written a new version (5.3) of my html package for the XEmacs 
+I've written a new version (5.4) of my html package for the XEmacs 
 and the GNU Emacs 19. The name of the package is:
 
-		 hm--html-menus-5.3.tar.gz
+		 hm--html-menus-5.4.tar.gz
 
 With this package it is very easy to write html pages for the World Wide 
 Web (WWW). Eg: In most cases the user gets help to construct a specific 
@@ -25,9 +25,8 @@ The biggest new features compared with release 5.0 are:
 - a lot of bug fixes
 Read the NEWS file to see news in detail...
 
-You should find hm--html-menus-5.3.tar.gz on the following ftp server:
+You should find hm--html-menus-5.4.tar.gz on the following ftp server:
 	sunsite.unc.edu in /pub/Linux/apps/editors/emacs/
-	ftp.rrzn.uni-hannover.de in /pub/unix/editors/lemacs/contrib
 	ftp.tnt.uni-hannover.de in /pub/editors/xemacs/contrib
 
 It may take some time, before the package is copied by the ftp admins

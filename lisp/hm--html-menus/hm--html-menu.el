@@ -1,6 +1,6 @@
 ;;;  hm--html-menu ---  A menu for the hm--html-mode.
 ;;;  
-;;;  $Id: hm--html-menu.el,v 1.4 1997/03/02 03:43:16 steve Exp $
+;;;  $Id: hm--html-menu.el,v 1.5 1997/03/24 01:26:52 steve Exp $
 ;;;
 ;;;  Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;;  email: muenkel@tnt.uni-hannover.de
@@ -189,7 +189,7 @@
 ;	  ("Literature"
 ;	   ["Quote" hm--html-add-quote t]
 ;	   ["Acronym" hm--html-add-acronym t]
-;	   ["Abbrevation" hm--html-add-abbrevation t]
+;	   ["Abbreviation" hm--html-add-abbreviation t]
 ;	   ["Citation" hm--html-add-citation t]
 ;	   ["Literature" hm--html-add-literature t]
 ;	   ["Publication" hm--html-add-publication t]

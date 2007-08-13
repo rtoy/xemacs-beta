@@ -51,10 +51,12 @@ Packages:
 * CL::		A Common Lisp compatibility package for Emacs-Lisp.
 * Custom::	Customization Library for Emacs
 * Ediff::	A Visual Interface to Unix Diff and Patch Utilities.
+* EFS::		Transparent remote file access via FTP
 * External-Widget::
 		Use XEmacs as a text widget inside of another program.
 * Forms::	A package for editing databases by filling in forms.
 * Gnus::	A netnews and mail reader for XEmacs.
+* HM--HTML-Mode::  HTML Editing Mode.
 * Hyperbole::	A programmable information management and hypertext system.
 * ILISP::	Multi-dialect inferior LISP interface.
 * Ispell::	Interactive spelling corrector.

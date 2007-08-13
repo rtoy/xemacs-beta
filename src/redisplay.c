@@ -6635,7 +6635,8 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
 {
   struct buffer *b = XBUFFER (w->buffer);
   int cur_elt;
-  Bufpos cur_pos;
+  Bufpos cur_pos, prev_pos = point;
+  int point_line_height;
   int pixheight = pixpos - WINDOW_TEXT_TOP (w);
 
   validate_line_start_cache (w);
@@ -6645,6 +6646,9 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
   /* #### See comment in update_line_start_cache about big minibuffers. */
   if (cur_elt < 0)
     return point;
+
+  point_line_height = Dynarr_atp (w->line_start_cache, cur_elt)->height;
+
   while (1)
     {
       cur_pos = Dynarr_atp (w->line_start_cache, cur_elt)->start;
@@ -6656,7 +6660,12 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
       if (pixheight < 0)
 	{
 	  w->line_cache_validation_override--;
-	  return cur_pos;
+	  if (-pixheight > point_line_height)
+	    /* We can't make the target line cover pixpos, so put it
+	       above pixpos.  That way it will at least be visible. */
+	    return prev_pos;  
+	  else
+	    return cur_pos;
 	}
 
       cur_elt--;
@@ -6682,6 +6691,7 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
 	  cur_elt = point_in_line_start_cache (w, cur_pos, 2) - 1;
 	  assert (cur_elt >= 0);
 	}
+      prev_pos = cur_pos;
     }
 }
 

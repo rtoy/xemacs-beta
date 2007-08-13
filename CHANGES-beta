@@ -1,4 +1,12 @@
 							-*- indented-text -*-
+to 19.15 beta104
+-- EFS fixes courtesy of Michael Sperber
+-- time.el-1.6
+-- Miscellaneous bug fixes
+-- hm--html-mode-5.4
+-- VM-6.22
+-- Gnus-5.4.36
+
 to 19.15 beta103
 -- VM-6.21
 -- tm-7.106

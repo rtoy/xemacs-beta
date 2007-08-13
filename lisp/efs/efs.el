@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.56 $
+;; Version:      #Revision: 1.56 $
 ;; RCS:          
 ;; Description:  Transparent FTP support for the original GNU Emacs
 ;;               from FSF and Lucid Emacs
@@ -1049,7 +1049,7 @@
 (defconst efs-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.56 $" 11 -2)))
+	  (substring "#Revision: 1.56 $" 11 -2)))
 
 (defconst efs-time-zero 1970) ; we count time from midnight, Jan 1, 1970 GMT.
 
@@ -3235,8 +3235,9 @@ is popped up in another window."
     (if efs-ftp-activity-function
 	(funcall efs-ftp-activity-function num))))
 
+;;;###autoload
 (defun efs-display-ftp-activity ()
-  "Displays the number of active background ftp sessions.
+  "Displays the number of active background ftp sessions in the modeline.
 Uses the variable `efs-mode-line-format' to determine how this will be
 displayed."
   (interactive)
@@ -10730,7 +10731,10 @@ in file name expansion."
 ;;;###autoload
 (defun efs-file-handler-function (operation &rest args)
   "Function to call special file handlers for remote files."
-  (let ((handler (get operation 'efs)))
+  (let ((handler (and (if (boundp 'allow-remote-paths)
+			  allow-remote-paths
+			t)
+		      (get operation 'efs))))
     (if handler
 	(apply handler args)
       (let ((inhibit-file-name-handlers
@@ -10742,7 +10746,10 @@ in file name expansion."
 
 (defun efs-sifn-handler-function (operation &rest args)
   ;; Handler function for substitute-in-file-name
-  (if (eq operation 'substitute-in-file-name)
+  (if (and (if (boundp 'allow-remote-paths)
+			  allow-remote-paths
+			t)
+	   (eq operation 'substitute-in-file-name))
       (apply 'efs-substitute-in-file-name args)
     (let ((inhibit-file-name-handlers
 	   (cons 'efs-sifn-handler-function

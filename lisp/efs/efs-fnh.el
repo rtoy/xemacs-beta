@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-fnh.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.3 $
+;; Version:      #Revision: 1.3 $
 ;; RCS:
 ;; Description:  Look for the emacs version, and install into
 ;;               the file-name-handler-alist
@@ -20,7 +20,7 @@
 (defconst efs-fnh-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.3 $" 11 -2)))
+	  (substring "#Revision: 1.3 $" 11 -2)))
 
 ;;;; ----------------------------------------------------------------
 ;;;; Loading emacs version files
@@ -96,7 +96,10 @@
 
 (defun efs-root-handler-function (operation &rest args)
   "Function to handle completion in the root directory."
-  (let ((handler (get operation 'efs-root)))
+  (let ((handler (and (if (boundp 'allow-remote-paths)
+			  allow-remote-paths
+			t)
+		      (get operation 'efs-root))))
     (if handler
 	(apply handler args)
       (let ((inhibit-file-name-handlers
@@ -135,7 +138,8 @@
 			       nil)
 			   (and (not
 				 (memq (cdr x)
-				       '(efs-file-handler-function
+				       '(remote-path-file-handler-function
+					 efs-file-handler-function
 					 efs-root-handler-function
 					 ange-ftp-hook-function
 					 ange-ftp-completion-hook-function)))

@@ -5,7 +5,7 @@
 ;;
 ;; File:          dired.el
 ;; RCS:           
-;; Dired Version: $Revision: 7.9 $
+;; Dired Version: #Revision: 7.9 $
 ;; Description:   The DIRectory EDitor is for manipulating, and running
 ;;                commands on files in a directory.
 ;; Authors:       FSF,
@@ -36,7 +36,7 @@
 
 ;;; Dired Version
 
-(defconst dired-version (substring "$Revision: 7.9 $" 11 -2)
+(defconst dired-version (substring "#Revision: 7.9 $" 11 -2)
   "The revision number of Tree Dired (as a string).
 
 Don't forget to mention this when reporting bugs to:

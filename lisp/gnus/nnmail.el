@@ -393,7 +393,9 @@ Example:
 
 (defcustom nnmail-split-abbrev-alist
   '((any . "from\\|to\\|cc\\|sender\\|apparently-to\\|resent-from\\|resent-to\\|resent-cc")
-    (mail . "mailer-daemon\\|postmaster\\|uucp"))
+    (mail . "mailer-daemon\\|postmaster\\|uucp")
+    (to . "to\\|cc\\|apparently-to\\|resent-to\\|resent-cc")
+    (from . "from\\|sender\\|resent-from"))
   "Alist of abbreviations allowed in `nnmail-split-fancy'."
   :group 'nnmail-split
   :type '(repeat (cons :format "%v" symbol regexp)))
@@ -1414,7 +1416,7 @@ See the documentation for the variable `nnmail-split-fancy' for documentation."
 
 (defun nnmail-cache-insert (id)
   (when nnmail-treat-duplicates
-    (unless (gnus-buffer-live-p nnmail-cache-buffer)
+    (unless (buffer-live-p nnmail-cache-buffer)
       (nnmail-cache-open))
     (save-excursion
       (set-buffer nnmail-cache-buffer)

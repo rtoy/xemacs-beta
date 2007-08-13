@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-faces.el
-;; Dired Version: $Revision: 1.2 $
+;; Dired Version: #Revision: 7.9 $
 ;; RCS:
 ;; Description:   rudimentary face customization support for dired
 ;; Author:        Mike Sperber <sperber@informatik.uni-tuebingen.de>

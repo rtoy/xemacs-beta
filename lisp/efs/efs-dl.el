@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-dl.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.3 $
+;; Version:      #Revision: 1.3 $
 ;; RCS:          
 ;; Description:  Unix descriptive listing support for efs
 ;; Author:       Sandy Rutherford <sandy@tsmi19.sissa.it>
@@ -21,7 +21,7 @@
 (defconst efs-dl-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.3 $" 11 -2)))
+	  (substring "#Revision: 1.3 $" 11 -2)))
 
 ;;;-----------------------------------------------------------------
 ;;; Unix descriptive listing (dl) support for efs

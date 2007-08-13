@@ -23,6 +23,10 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
+;;; Version: 1.6   (I choose the version number starting at 1.1
+;;;                to indicate that 1.0 was the old version
+;;;                before I hacked away on it -JTL)
+
 ;;; Synched up with: Not synched with FSF.
 
 ;;; Commentary:
@@ -49,13 +53,6 @@
   "Facilities to display the current time/date/load and a new-mail indicator
 in the XEmacs mode line or echo area."
   :group 'applications)
-
-(defcustom display-time-compatible nil 
-  "*This variable may be set to t to get the old behaviour of display-time.
-This means no display of a spiffy mail icon or use of the
-display-time-form-list instead of the old display-time-string-form."
-  :group 'display-time
-  :type 'boolean)
 
 (defcustom display-time-mail-file nil
   "*File name of mail inbox file, for indicating existence of new mail.
@@ -98,8 +95,14 @@ This affects the spec 'time in the variable display-time-form-list."
    "Time when mail file's file system was recorded to be down.
 If that file system seems to be up, the value is nil.")
 
-(defcustom display-time-ignore-read-mail nil
+(defcustom display-time-ignore-read-mail t
   "*Non-nil means displays the mail icon on any non-empty mailbox."
+  :group 'display-time
+  :type 'boolean)
+
+(defcustom display-time-balloon-show-mail-from t
+  "*Non-nil means displays the `From' lines of your new mail in the help balloon.
+This feature needs `balloon-help' to be loaded."
   :group 'display-time
   :type 'boolean)
 
@@ -196,6 +199,11 @@ This can be 'transparent or a string describing the color it should have"
 		 (const transparent)
 		 (string :tag "Color")))
 
+(defvar display-time-balloon-date-string nil)
+
+(defvar display-time-spool-file-modification nil)
+
+(defvar display-time-mail-header nil)
 
 (defvar display-time-display-pad-old nil)
 
@@ -215,6 +223,15 @@ as a load indicator"
 	       (number :tag "Threshold 4")
 	       (number :tag "Threshold 5")
 	       (number :tag "Threshold 6")))
+
+(defcustom display-time-compatible nil 
+  "*This variable may be set to t to get the old behaviour of display-time.
+It should be considered obsolete and only be used if you really want the
+old behaviour (eq. you made extensive customizations yourself).
+This means no display of a spiffy mail icon or use of the
+display-time-form-list instead of the old display-time-string-form."
+  :group 'display-time
+  :type 'boolean)
 
 (defun display-time-string-to-char-list (str)
   (mapcar (function identity) str))
@@ -365,11 +382,48 @@ as a load indicator"
 	elem tmp)
     (if (not (display-time-can-do-graphical-display textual)) time-string 
       (display-time-generate-time-glyphs)
+      (setq display-time-balloon-date-string
+	    (format "%s, %s %s %s %s" dayname day monthname year
+		    (if (not (equal load ""))
+			(concat "-- Average load: " load)
+		      "")))
       (while (setq elem (pop list))
-	(push (eval (intern-soft (concat "display-time-"
+	(setq elem (eval (intern-soft (concat "display-time-"
 					 (char-to-string elem)
-					 "-glyph"))) tmp))
-      (reverse tmp)))) 
+					 "-glyph"))))
+	(set-extent-property (car elem) 'balloon-help 'display-time-balloon)
+	(push elem tmp))
+      (reverse tmp))))
+
+(defun display-time-balloon (&rest ciao)
+  (let ((header display-time-balloon-date-string)
+	header-ext)
+    (setq header-ext
+	  (make-extent 0 (length display-time-balloon-date-string)
+		       header))
+    (set-extent-property header-ext 'face 'red)
+    (set-extent-property header-ext 'duplicable t)
+    (concat header
+	    (if display-time-balloon-show-mail-from
+		(display-time-scan-spool-file)))))
+
+
+(defun display-time-scan-spool-file ()
+  (let* ((mail-spool-file (or display-time-mail-file
+			     (getenv "MAIL")
+			     (concat rmail-spool-directory
+				     (user-login-name))))
+	 (mod (nth 5 (file-attributes mail-spool-file))))
+    (if (equal mod display-time-spool-file-modification)
+	display-time-mail-header
+      (setq tmp  (exec-to-string
+		 (concat "grep \"^From \" " mail-spool-file)))
+      (if (equal tmp "") ()
+	(setq tmp (concat "\n\nYou have mail:\n-------------\n" tmp))
+	(setq tmp (substring tmp 0 (1- (length tmp)))))
+      (setq display-time-spool-file-modification mod)
+      (setq display-time-mail-header tmp))))
+
 
 (defun display-time-convert-load (load-string &optional textual)
   (let ((load-number (string-to-number load-string))
@@ -381,16 +435,14 @@ as a load indicator"
 		    (cons 2.5 (cadr (cdddr display-time-load-list)))
 		    (cons 3.0 (caddr (cdddr display-time-load-list)))
 		    (cons 100000 100000)))
-	result elem)
+	elem load-elem)
     (if (not (display-time-can-do-graphical-display textual))
 	load-string
       (display-time-generate-load-glyphs)
       (while (>= load-number (cdr (setq elem (pop alist))))
-	(setq result (eval (intern-soft (concat
-					 "display-time-load-"
-					 (number-to-string (car elem))
-					 "-glyph")))))
-      result)))
+	(setq load-elem elem))
+      (eval (intern-soft (concat "display-time-load-"
+				 (number-to-string (car load-elem)) "-glyph"))))))
 
 (defun display-time-convert-am-pm (ampm-string &optional textual)
   (if (not (display-time-can-do-graphical-display textual))

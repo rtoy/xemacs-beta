@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-auto.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.7 $
+;; Version:      #Revision: 1.7 $
 ;; RCS:          
 ;; Description:  Simple way of autoloading efs
 ;; Author:       Andy Norman, Dawn
@@ -37,7 +37,7 @@
 (defconst efs-auto-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.7 $" 11 -2)))
+	  (substring "#Revision: 1.7 $" 11 -2)))
 
 ;;; Interactive functions that should be accessible from here.
 

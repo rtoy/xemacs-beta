@@ -3,7 +3,7 @@
 ;;
 ;; File:         default-dir.el
 ;; RCS:
-;; Version:      $Revision: 1.5 $
+;; Version:      #Revision: 1.5 $
 ;; Description:  Defines the function default-directory, for fancy handling
 ;;               of the initial contents in the minibuffer when reading
 ;;               file names.

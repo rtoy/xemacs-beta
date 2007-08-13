@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-report.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.9 $
+;; Version:      #Revision: 1.9 $
 ;; RCS:          
 ;; Description:  Function to report efs bugs in a usable way.
 ;; Author:       Andy Norman, Dawn
@@ -22,7 +22,7 @@
 (defconst efs-report-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.9 $" 11 -2)))
+	  (substring "#Revision: 1.9 $" 11 -2)))
 
 (defconst efs-report-salutations
   ["Dear bug team:"

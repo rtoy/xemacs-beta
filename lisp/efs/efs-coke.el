@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-coke.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  Coke Machine support for efs
 ;; Author:       Sandy Rutherford <sandy@imb550.sissa.it>
@@ -22,7 +22,7 @@
 (defconst efs-coke-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "#Revision: 1.1 $" 11 -2)))
 
 ;;;; ------------------------------------------------------------
 ;;;; Coke Machine support

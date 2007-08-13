@@ -2,7 +2,7 @@
 #
 # File:         Makefile
 # Release:      $efs release: 1.15 $
-# Version:      $Revision: 1.4 $
+# Version:      $Revision: 1.5 $
 # RCS:
 # Description:  Makefile for byte-compiling efs and dired.
 # Author:       Andy Norman, HPLabs, Bristol, UK.
@@ -21,7 +21,8 @@
 #             19.1 and 19.22, inclusive.
 #      19.23  for version 19.23 and later of the original GNU Emacs from FSF
 #      l19.11 for XEmacs 19.11 trhu 19.14
-#      x19.15 for XEmacs 19.15 and later
+#      x19.15 for XEmacs 19.15
+#      x20    for XEmacs 20.1 and later
 #    LISPDIR should be the directory in which you want the .elc
 #      files installed.
 #    BDIR should be the directory containing the .elc files for the
@@ -41,7 +42,8 @@
 #             19.22, inclusive
 #    19.23  for the original GNU Emacs from FSF, version 19.23 and later.
 #    l19.11 for Lucid XEmacs 19.11 thru 19.14
-#    x19.15 for XEmacs 19.15 and later
+#    x19.15 for XEmacs 19.15
+#    x20    for XEmacs 20.1 and later
 #
 #    If you have set the VERSION variable correctly, then typing just    
 #    make will suffice.
@@ -72,6 +74,10 @@ VERSION=x19.15
 CWD=`pwd`
 # Directory in which to install the lisp files
 LISPDIR=
+# Directory in which to install the info files
+INFODIR=
+# Directory in which to install the Texinfo file
+TEXIDIR=
 # Directory containing byte-compiler.  This is used by fixup.el
 BDIR=
 # Directory containing VM's .elc files.
@@ -112,12 +118,18 @@ EFSSRC = $(CORESRC) efs-auto.el \
           efs-vms.el efs-vos.el efs-plan9.el efs-ms-unix.el
 VMOBJS = efs-vm.elc
 VMSRC = efs-vm.el
-GEOBJS = dired-fsf.elc dired-mule.elc efs-dired-mule.elc \
-	 passwd.elc diff.elc auto-save.elc
-GESRC = dired-fsf.el dired-mule.el efs-dired-mule.el \
-	passwd.el diff.el auto-save.el
-XEOBJS = dired-faces.elc dired-xemacs.elc
-XESRC = dired-faces.el dired-xemacs.el
+MULEOBJS = dired-mule.elc efs-dired-mule.elc
+MULESRC = dired-mule.el efs-dired-mule.el
+GEOBJS = dired-fsf.elc \
+	 passwd.elc diff.elc auto-save.elc \
+	 $(MULEOBJS)
+GESRC = dired-fsf.el \
+	passwd.el diff.el auto-save.el \
+	$(MULESRC)
+XEOBJS = dired-faces.elc dired-xemacs.elc \
+	$(VMOBJS)
+XESRC = dired-faces.el dired-xemacs.el \
+	$(VMSRC) $(MULESRC)
 OBJS = $(DOBJS) $(EFSOBJS) $(VMOBJS) $(GEOBJS) $(XEOBJS) \
        efs-18.elc efs-19.elc efs-19.23.elc \
        efs-l19.11.elc efs-x19.15.elc \
@@ -259,20 +271,22 @@ info: efs.info
 19.23: efs dired efs-19.23.elc $(GEOBJS)
 l19.11: efs dired efs-l19.11.elc $(XEOBJS)
 x19.15: efs dired efs-x19.15.elc $(XEOBJS)
+x20: efs dired efs-x19.15.elc $(XEOBJS) $(MULEOBJS)
 
 # Installation
 install:
 	@echo "Installing in $(LISPDIR)..."
-	@ls -C *.elc
 	cp *.elc $(LISPDIR)
+	cp efs.info $(INFODIR)
 install_src:
 	@echo "Installing in $(LISPDIR)..."
-	@ls -C `ls *.el 2>&1 | grep -v "fixup"` 2> /dev/null
 	cp `ls *.el | grep -v "fixup"` $(LISPDIR)
+	cp efs.texi $(TEXIDIR)
 install_xemacs:
 	@echo "Installing source in $(LISPDIR)..."
 	cp $(EFSSRC) $(DSRC) $(XESRC) efs-x19.15.el $(LISPDIR)
 	cp Makefile README fixup.el $(LISPDIR)
+	cp efs.texi $(TEXIDIR)
 diff_xemacs:
 	for f in $(EFSSRC) $(DSRC) $(XESRC) efs-x19.15.el \
 	         Makefile README fixup.el; do \

@@ -2,7 +2,7 @@
 ;;
 ;; File:           dired-mob.el
 ;; RCS:
-;; Dired Version:  $Revision: 7.9 $
+;; Dired Version:  #Revision: 7.9 $
 ;; Description:    Commands for marking files from another buffer.
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

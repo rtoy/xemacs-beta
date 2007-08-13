@@ -1,4 +1,4 @@
-;;; $Id: hm--html.el,v 1.4 1997/03/02 03:43:20 steve Exp $
+;;; $Id: hm--html.el,v 1.5 1997/03/24 01:26:53 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -2503,7 +2503,7 @@ this gateway."
 (defun hm--html-make-newsgroup-alist ()
   "Makes a hm--html-make-newsgroup-alist from a .newsrc.el file.
 The function looks at the environment variable NNTPSERVER.
-If this variable exists, it trys to open the file with the Name
+If this variable exists, it tries to open the file with the Name
 ~/$NNTPSERVER.el. If this file exists, the alist of the file is
 returned as the newsgroup-alist. If the file doesn't exist, it
 tries to use the file ~/$NNTPSERVER to make the alist. The function

@@ -2,7 +2,7 @@
 ;;;
 ;;; Keywords: hypermedia languages help docs wp
 ;;;
-;;; $Id: hm--html-mode.el,v 1.4 1997/03/02 03:43:19 steve Exp $
+;;; $Id: hm--html-mode.el,v 1.5 1997/03/24 01:26:53 steve Exp $
 ;;;
 ;;; Copyright (C) 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -71,6 +71,7 @@
 (require 'adapt)
 (require 'hm--date)
 (require 'hm--html)
+;(require 'hm--html-not-standard)
 
 (eval-when-compile
   (require 'hm--html-configuration))
@@ -91,7 +92,7 @@
 
 (defconst hm--html-menus-package-name "hm--html-menus")
 
-(defconst hm--html-menus-package-version "5.3")
+(defconst hm--html-menus-package-version "5.4")
   
 
 ;;; Generate the help buffer faces

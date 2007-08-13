@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-vms.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.13 $
+;; Version:      #Revision: 1.13 $
 ;; RCS:          
 ;; Description:  VMS support for efs
 ;; Authors:      Andy Norman, Joe Wells, Sandy Rutherford <sandy@itp.ethz.ch>
@@ -20,7 +20,7 @@
 (defconst efs-vms-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.13 $" 11 -2)))
+	  (substring "#Revision: 1.13 $" 11 -2)))
 
 ;;;; ------------------------------------------------------------
 ;;;; VMS support.

@@ -1,6 +1,6 @@
 ;;; tmpl-minor-mode.el --- Template Minor Mode
 ;;;
-;;; $Id: tmpl-minor-mode.el,v 1.3 1997/03/04 08:44:56 steve Exp $
+;;; $Id: tmpl-minor-mode.el,v 1.4 1997/03/24 01:26:54 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -61,8 +61,8 @@
 
 (defvar tmpl-template-dir-list nil
   "*A list of directories with the template files.
-If it is nil, then the default-directory is used. 
-If more the one directories are given, then the
+If it is nil, then the default-directory will be used. 
+If more than one directory is given, then the
 template filenames should differ in all directories.
 
 This variable is used in the commands for inserting templates.
@@ -388,8 +388,8 @@ The point must be after the sign ^@."
 
 ;;;###autoload
 (defun tmpl-expand-templates-in-region (&optional begin end)
-  "Expand the templates in the region from BEGIN to END.
-If BEGIN and and are nil, then the current region is used."
+  "Expands the templates in the region from BEGIN to END.
+If BEGIN and END are nil, then the current region is used."
   (interactive)
   (tmpl-save-excursion
     (narrow-to-region (or begin (region-beginning))
@@ -402,13 +402,13 @@ If BEGIN and and are nil, then the current region is used."
 
 ;;;###autoload
 (defun tmpl-expand-templates-in-buffer ()
-  "Expand all templates in the current buffer."
+  "Expands all templates in the current buffer."
   (interactive)
   (tmpl-expand-templates-in-region (point-min) (point-max)))
 
 
 (defun tmpl-escape-tmpl-sign-in-region (&optional begin end)
-  "Escape all `tmpl-sign' with a `tmpl-sign' in the region from BEGIN to END.
+  "Escapes all `tmpl-sign' with a `tmpl-sign' in the region from BEGIN to END.
 If BEGIN and END are nil, then the active region between mark and point is 
 used."
   (interactive)
@@ -522,15 +522,15 @@ HISTROY-VARIABLE contains the last template file names."
 (defun tmpl-insert-template-file-from-fixed-dirs (file)
   "Inserts a template FILE and expands it, if `tmpl-automatic-expand' is t.
 This command tries to read the template file from a list of
-predefined directries (look at `tmpl-template-dir-list') and it filters
-the contents of this directories with the regular expression
+predefined directories (look at `tmpl-template-dir-list') and it filters
+the contents of these directories with the regular expression
 `tmpl-filter-regexp' (look also at this variable). 
 The command uses a history variable, which could be changed with the
 variable `tmpl-history-variable-name'.
 
-The user of the command is able to change interactive to another
+The user of the command is able to change interactively to another
 directory by entering at first the string \"Change the directory\".
-This maybe to difficult for the user. Therefore another command
+This may be too difficult for the user. Therefore another command
 called `tmpl-insert-template-file' exist, which doesn't use fixed
 directories and filters."
   (interactive
@@ -545,7 +545,7 @@ directories and filters."
 
 ;;;###autoload
 (defun tmpl-insert-template-file (file)
-  "Insert a template FILE and expand it, if `tmpl-automatic-expand' is t.
+  "Inserts a template FILE and expand it, if `tmpl-automatic-expand' is t.
 Look also at `tmpl-template-dir-list', to specify a default template directory.
 You should also take a look at `tmpl-insert-template-file-from-fixed-dirs'
 which has additional advantages (and disadvantages :-).
@@ -622,23 +622,24 @@ now be used instead of the args TEMPLATE-DIR and AUTOMATIC-EXPAND."
 (if (adapt-xemacsp)
     (defun tmpl-define-minor-mode-keymap ()
       "Defines the minor mode keymap."
-      (define-key tmpl-minor-mode-map [(control c) x] 
+      (define-key tmpl-minor-mode-map [(control c) (control c) x] 
 	'tmpl-expand-templates-in-region)
-      (define-key tmpl-minor-mode-map [(control c) (control x)] 
+      (define-key tmpl-minor-mode-map [(control c) (control c) (control x)] 
 	'tmpl-expand-templates-in-buffer)
-      (define-key tmpl-minor-mode-map [(control c) escape] 
+      (define-key tmpl-minor-mode-map [(control c) (control c) e] 
 	'tmpl-escape-tmpl-sign-in-region)
-      (define-key tmpl-minor-mode-map [(control c) (control escape)]
+      (define-key tmpl-minor-mode-map
+	[(control c) (control c) (control e)]
 	'tmpl-escape-tmpl-sign-in-buffer))
   (defun tmpl-define-minor-mode-keymap ()
     "Defines the minor mode keymap."
-    (define-key tmpl-minor-mode-map [?\C-c ?x] 
+    (define-key tmpl-minor-mode-map [?\C-c ?\C-c ?x] 
       'tmpl-expand-templates-in-region)
-    (define-key tmpl-minor-mode-map [?\C-c ?\C-x] 
+    (define-key tmpl-minor-mode-map [?\C-c ?\C-c ?\C-x] 
       'tmpl-expand-templates-in-buffer)
-    (define-key tmpl-minor-mode-map [?\C-c escape] 
+    (define-key tmpl-minor-mode-map [?\C-c ?\C-c ?e] 
       'tmpl-escape-tmpl-sign-in-region)
-    (define-key tmpl-minor-mode-map [?\C-c C-escape]
+    (define-key tmpl-minor-mode-map [?\C-c ?\C-c ?\C-e]
       'tmpl-escape-tmpl-sign-in-buffer))
     )
 
