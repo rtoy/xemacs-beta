@@ -145,9 +145,6 @@ Boston, MA 02111-1307, USA.  */
 /* Avoid error in xrdb.c - d.m.cooke@larc.nasa.gov.  */
 #define DECLARE_GETPWUID_WITH_UID_T
 
-/* Call getpgrp properly.  */
-#define GETPGRP_NO_ARG
-
 /* Tested for both Convex C and GNUC by d.m.cooke@larc.nasa.gov.  */
 #define LIBS_MACHINE "-lC2"
 

@@ -423,7 +423,6 @@ ticked: The number of ticked articles."
     "n" gnus-group-next-unread-group
     "p" gnus-group-prev-unread-group
     "\177" gnus-group-prev-unread-group
-    [backspace] gnus-group-prev-unread-group
     [delete] gnus-group-prev-unread-group
     "N" gnus-group-next-group
     "P" gnus-group-prev-group
@@ -506,7 +505,6 @@ ticked: The number of ticked articles."
     "r" gnus-group-rename-group
     "c" gnus-group-customize
     "\177" gnus-group-delete-group
-    [backspace] gnus-group-delete-group
     [delete] gnus-group-delete-group)
 
   (gnus-define-keys (gnus-group-soup-map "s" gnus-group-group-map)

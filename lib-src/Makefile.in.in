@@ -128,10 +128,6 @@ ld_libs_general=@ld_libs_general@
 ld_libs_window_system=@ld_libs_window_system@
 ld_libs_all=@ld_libs_all@
 
-LOADLIBES=$(ld_switch_general) $(ld_libs_general)
-LOAD_X_LIBES=$(ld_switch_window_system)
-C_SWITCH_X=$(c_switch_window_system)
-
 ## We need to #define emacs to get the right versions of some files.
 
 lib_src_cppflags = -Demacs -I../src -I${srcdir} -I${srcdir}/../src $(CPPFLAGS)

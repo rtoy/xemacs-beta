@@ -303,6 +303,7 @@ variable.
 @item
 Support undo using lmi's @file{gnus-undo.el}.
 
+
 @item
 Make it possible to append to `choice', `radio', and `set' options.
 
@@ -400,6 +401,11 @@ There should be more buffer styles.  The default `nested style, the old
 `outline' style, a `numeric' style with numbers instead of stars, an
 `empty' style with just the group name, and `compact' with only one line
 per item.
+
+@item
+Newline and tab should be displayed as @samp{^J} and @samp{^I} in the
+@code{regexp} and @code{file} widgets.  I think this can be done in
+XEmacs by adding a display table to the face.
 
 @end itemize
 

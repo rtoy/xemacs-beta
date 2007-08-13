@@ -208,6 +208,9 @@ SUBDIR = ${MAKE_SUBDIR} man
 ## The makefiles of the directories in ${MAKE_SUBDIR}.
 SUBDIR_MAKEFILES = @SUBDIR_MAKEFILES@
 
+## Subdirectories to `make install-arch-dep' recursively
+INSTALL_ARCH_DEP_SUBDIR = @INSTALL_ARCH_DEP_SUBDIR@
+
 ## Subdirectories to install, and where they'll go.
 ## lib-src's makefile knows how to install it, so we don't do that here.
 ## When installing the info files, we need to do special things to
@@ -299,10 +302,11 @@ src/puresize_adjust.h:	${srcdir}/src/puresize.h
 	 echo "#define PURESIZE_ADJUSTMENT 0") > $@
 
 src:	@SRC_SUBDIR_DEPS@ FRC.src
+pkg-src/tree-x: pkg-src/FRC.tree-x
 lib-src: FRC.lib-src
 lwlib:	FRC.lwlib
 dynodump: FRC.dynodump
-FRC.src FRC.lib-src FRC.lwlib FRC.dynodump:
+FRC.src FRC.lib-src FRC.lwlib FRC.dynodump pkg-src/FRC.tree-x:
 
 .RECURSIVE: ${SUBDIR}
 
@@ -322,10 +326,13 @@ lib-src/Makefile: ${srcdir}/lib-src/Makefile.in.in config.status
 lwlib/Makefile: ${srcdir}/lwlib/Makefile.in.in config.status
 	./config.status
 
-lwlib/config.h: ${srcdir}/lwlib/config.h.in
-	./config.status && touch $@
+pkg-src/tree-x/Makefile: ${srcdir}/pkg-src/tree-x/Makefile.in.in config.status
+	./config.status
 
 src/config.h: ${srcdir}/src/config.h.in
+	./config.status && touch $@
+
+lwlib/config.h: ${srcdir}/lwlib/config.h.in
 	./config.status && touch $@
 
 ## ==================== Installation ====================
@@ -358,21 +365,18 @@ install-only: ${MAKE_SUBDIR} install-arch-dep install-arch-indep
 install: all install-arch-dep install-arch-indep;
 
 install-arch-dep: mkdir
-	cd lib-src && \
-	  $(MAKE) install $(MFLAGS) prefix=${prefix} \
+	for subdir in ${INSTALL_ARCH_DEP_SUBDIR}; do \
+	( cd $${subdir} && $(MAKE) install $(MFLAGS) prefix=${prefix} \
 	    exec_prefix=${exec_prefix} bindir=${bindir} libdir=${libdir} \
-	    archlibdir=${archlibdir}
-	if [ `(cd ${archlibdir} && $(pwd))` != `(cd ./lib-src && $(pwd))` ]; \
-	then \
+	    archlibdir=${archlibdir} ) ; done
+	if test `(cd ${archlibdir} && $(pwd))` != `(cd lib-src && $(pwd))`; then \
 	   ${INSTALL_DATA} lib-src/DOC ${archlibdir}/DOC ; \
-	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; do \
-	     (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; \
-	   done ; \
+	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; \
+	     do (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; done ; \
 	else true; fi
 	${INSTALL_PROGRAM} src/xemacs ${bindir}/xemacs-${version}
 	-chmod 0755 ${bindir}/xemacs-${version}
-	$(RM) ${bindir}/xemacs
-	cd ${bindir} && ${LN_S} xemacs-${version} ./xemacs
+	cd ${bindir} && $(RM) ./xemacs && ${LN_S} xemacs-${version} ./xemacs
 
 install-arch-indep: mkdir
 	-@set ${COPYDESTS} ; \

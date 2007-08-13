@@ -151,7 +151,8 @@ Overlap means that at least one character is contained within the overlay
 and also contained within the specified region.
 Empty overlays are included in the result if they are located at BEG
 or between BEG and END."
-  (mapcar-extents #'identity nil nil beg end nil 'overlay))
+  (mapcar-extents #'identity nil nil beg end
+		  'all-extents-closed-open 'overlay))
 
 (defun next-overlay-change (pos)
   "Return the next position after POS where an overlay starts or ends.
@@ -166,7 +167,7 @@ If there are no more overlay boundaries after POS, return (point-max)."
 			   (> tmp pos)))
 	      (setq next tmp))
        nil)
-     nil pos nil nil nil 'overlay)
+     nil pos nil nil 'all-extents-closed-open 'overlay)
     next))
 
 (defun previous-overlay-change (pos)
@@ -182,7 +183,7 @@ If there are no more overlay boundaries before POS, return (point-min)."
 		      (< tmp pos)))
 	 (setq prev tmp))
        nil)
-     nil nil pos nil nil 'overlay)
+     nil nil pos nil 'all-extents-closed-open 'overlay)
     prev))
 
 (defun overlay-lists ()
@@ -201,7 +202,7 @@ However, the overlays you get are the real objects that the buffer uses."
 		       (push overlay before)
 		     (push overlay after))
 		   nil)
-		 nil nil nil nil nil 'overlay)
+		 nil nil nil nil 'all-extents-closed-open 'overlay)
     (cons (nreverse before) (nreverse after))))
 
 (defun overlay-recenter (pos)

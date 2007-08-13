@@ -9,5 +9,3 @@
 extern double atof ();
 
 #define LD_SWITCH_SYSTEM "-non_shared"
-
-#define GETPGRP_NO_ARG

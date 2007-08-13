@@ -1,3 +1,9 @@
+;;; DO NOT MODIFY THIS FILE
+(if (not (featurep 'leim-autoloads))
+    (progn
+
+(provide 'leim-autoloads)
+))
 
 ;;;### (autoloads (quail-use-package) "quail" "leim/quail.el")
 

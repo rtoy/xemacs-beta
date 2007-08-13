@@ -3,7 +3,7 @@
 #define TrNcontourColor    "contourColor"
 #define TrNsplitColor      "splitColor"
 #define TrNhighlightColor  "highlightColor"
-#define TrNactionColor     "actionColor"   
+#define TrNactionColor     "actionColor"
 #define TrNcontourWidth    "contourWidth"
 
 #define TrCBackgroundColor "BackgroundColor"
@@ -11,7 +11,7 @@
 #define TrCContourColor    "ContourColor"
 #define TrCSplitColor      "SplitColor"
 #define TrCHighlightColor  "HighlightColor"
-#define TrCActionColor     "ActionColor"    
+#define TrCActionColor     "ActionColor"
 #define TrCContourWidth    "ContourWidth"
 
 #define TrDefaultBackgroundColor "white"
@@ -31,4 +31,3 @@ typedef struct {
    Pixel action_color;
    int   contour_width;
 } ApplRsrcData, *ApplRsrcDataPtr;
-

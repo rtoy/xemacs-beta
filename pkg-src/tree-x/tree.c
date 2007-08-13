@@ -9,84 +9,74 @@
 #include "dbl.h"
 #include "intf.h"
 #include <string.h>
+#include <stdlib.h>
 
 /* ------------------------------------------------------------------------- */
 /*				Global Variables                             */
 /* ------------------------------------------------------------------------- */
 
-int NumLines = 0;
-int NumNodes = 0;
+static int NumLines = 0;
+static int NumNodes = 0;
 
 
 /* ----------------------------------------------------------------------------
- * 
- *   MakeLine() allocates the memory required for a Polyline and 
+ *
+ *   MakeLine() allocates the memory required for a Polyline and
  *   initializes the fields of a Polyline to the arguments. The
  *   newly-allocated Polyline is returned by the function.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 Polyline*
-MakeLine(dx, dy, link)
-   short dx;
-   short dy;
-   Polyline *link;
+MakeLine(short dx, short dy, Polyline *line)
 {
-   Polyline *new;
-
-   new = (Polyline *) malloc(sizeof(Polyline));
-   NASSERT(new, "could not allocate memory for polyline");
+   Polyline *new_line = (Polyline *) malloc(sizeof(Polyline));
+   
+   NASSERT(new_line, "could not allocate memory for polyline");
    NumLines++;
 
-   new->dx = dx;
-   new->dy = dy;
-   new->link = link;
+   new_line->dx = dx;
+   new_line->dy = dy;
+   new_line->link = line;
 
-   return (new);
+   return new_line;
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   MakeNode() allocates the memory required for a tree node, and
  *   zeros out all the fields in the Node. It returns a pointer to the
  *   tree node upon success, and NULL upon failure.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 Tree*
-MakeNode()
+MakeNode(void)
 {
-   Tree *node;
+   Tree *node = (Tree *) malloc(sizeof(Tree));
    
-   node = (Tree *) malloc(sizeof(Tree));
    NASSERT(node, "could not allocate memory for node");
    NumNodes++;
 
    if (node == NULL)
       return (NULL);
    else {
-#ifdef SYSV
-      memset((char *) node, 0, sizeof(Tree));
-#else
-      bzero((char *) node, sizeof(Tree));
-#endif
-      return (node);
+     memset((char *) node, 0, sizeof(Tree));
+     return (node);
    }
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   MakeBridge()
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-Polyline*
-MakeBridge(line1, x1, y1, line2, x2, y2)
-   Polyline *line1, *line2;
-   int x1, x2, y1, y2;
+static Polyline*
+MakeBridge(Polyline *line1, int x1, int y1, Polyline *line2, int x2, int y2)
 {
    int dx, dy, s;
    Polyline *r;
@@ -105,27 +95,26 @@ MakeBridge(line1, x1, y1, line2, x2, y2)
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   Offset() computes the necessary offset that prevents two line segments
  *   from intersecting each other. This is the "heart" of the merge step
- *   that computes how two subtree contours should be separated. 
- * 
+ *   that computes how two subtree contours should be separated.
+ *
  *   The code is taken directly from Sven Moen's paper, with changes in
- *   some variable names to give more meaning: 
- *   
+ *   some variable names to give more meaning:
+ *
  *   - px,py indicate the x- and y-coordinates of the point on the longer
  *     segment if the previous Offset() call had two unequal segments
- * 
+ *
  *   - lx,ly indicate the dx and dy values of the "lower" line segment
- * 
+ *
  *   - ux,uy indicate the dx and dy values of the "upper" line segment
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-int
-Offset(px, py, lx, ly, ux, uy)
-   int px, py, lx, ly, ux, uy;
+static int
+Offset(int px, int py, int lx, int ly, int ux, int uy)
 {
    int d, s, t;
 
@@ -165,22 +154,21 @@ Offset(px, py, lx, ly, ux, uy)
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   Merge()
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-int
-Merge(c1, c2)
-   Polygon *c1, *c2;
+static int
+Merge(Polygon *c1, Polygon *c2)
 {
    int x, y, total, d;
    Polyline *lower, *upper, *bridge;
 
    x = y = total = 0;
 
-   /*  compare lower part of upper child's contour 
+   /*  compare lower part of upper child's contour
     *  with upper part of lower child's contour
     */
    upper = c1->lower.head;
@@ -202,7 +190,7 @@ Merge(c1, c2)
 	 upper = upper->link;
       }
    }
-	 
+
    if (lower) {
       bridge = MakeBridge(c1->upper.tail, 0, 0, lower, x, y);
       c1->upper.tail = (bridge->link) ? c2->upper.tail : bridge;
@@ -210,7 +198,7 @@ Merge(c1, c2)
    }
    else {
       bridge = MakeBridge(c2->lower.tail, x, y, upper, 0, 0);
-      if (!bridge->link) 
+      if (!bridge->link)
 	 c1->lower.tail = bridge;
    }
    c1->lower.head = c2->lower.head;
@@ -219,17 +207,16 @@ Merge(c1, c2)
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   DetachParent() reverses the effects of AttachParent by removing
  *   the four line segments that connect the subtree contour to the
- *   node specified by 'tree'. 
- * 
+ *   node specified by 'tree'.
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-DetachParent(tree)
-   Tree *tree;
+static void
+DetachParent(Tree *tree)
 {
    free(tree->contour.upper.head->link);
    free(tree->contour.upper.head);
@@ -245,19 +232,17 @@ DetachParent(tree)
 }
 
 /* ----------------------------------------------------------------------------
- * 
- *   AttachParent() 
+ *
+ *   AttachParent()
  *   This function also establishes the position of the first child
  *   The code follows Sven Moen's version, with slight modification to
  *   support varying borders at different levels.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-AttachParent(tree, h)
-   Tree *tree;
-   int h;
+static void
+AttachParent(Tree *tree, int h)
 {
    int x, y1, y2;
 
@@ -267,7 +252,7 @@ AttachParent(tree, h)
    else
       x = tree->border + TreeParentDistance;
    y2 = (h - tree->height)/2 - tree->border;
-   y1 = y2 + tree->height + (2 * tree->border) - h; 
+   y1 = y2 + tree->height + (2 * tree->border) - h;
    tree->child->offset.x = x + tree->width;
    tree->child->offset.y = y1;
    tree->contour.upper.head = MakeLine(tree->width, 0,
@@ -279,29 +264,28 @@ AttachParent(tree, h)
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   Split()
  *   The tree passed to Split() must have at least 1 child, because
  *   it doesn't make sense to split a leaf (there are no bridges)
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-Split(tree)
-   Tree *tree;
+static void
+Split(Tree *tree)
 {
    Tree *child;
    Polyline *link;
 
    FOREACH_CHILD(child, tree) {
-      if (link = child->contour.upper.tail->link) {
+      if ((link = child->contour.upper.tail->link)) {
 	 free(link->link);
 	 free(link);
 	 child->contour.upper.tail->link = NULL;
 	 NumLines -= 2;
       }
-      if (link = child->contour.lower.tail->link) {
+      if ((link = child->contour.lower.tail->link)) {
 	 free(link->link);
 	 free(link);
 	 NumLines -= 2;
@@ -311,22 +295,21 @@ Split(tree)
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   Join() merges all subtree contours of the given tree and returns the
- *   height of the entire tree contour. 
- * 
+ *   height of the entire tree contour.
+ *
  * ----------------------------------------------------------------------------
  */
 
-int
-Join(tree)
-   Tree *tree;
+static int
+Join(Tree *tree)
 {
    Tree *child;
    int d, h, sum;
 
    /*   to start, set the parent's contour and height
-    *   to contour and height of first child 
+    *   to contour and height of first child
     */
    child = tree->child;
    tree->contour = child->contour;
@@ -345,39 +328,37 @@ Join(tree)
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   RuboutLeaf() accepts a single node (leaf) and removes its contour.
- *   The memory associated with the contour is deallocated. 
- * 
+ *   The memory associated with the contour is deallocated.
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-RuboutLeaf(tree)
-   Tree *tree;
+RuboutLeaf(Tree *tree)
 {
    free(tree->contour.upper.head);
    free(tree->contour.lower.tail);
    free(tree->contour.lower.head);
-   tree->contour.upper.head = NULL;   
-   tree->contour.upper.tail = NULL;   
-   tree->contour.lower.head = NULL;   
-   tree->contour.lower.tail = NULL;   
+   tree->contour.upper.head = NULL;
+   tree->contour.upper.tail = NULL;
+   tree->contour.lower.head = NULL;
+   tree->contour.lower.tail = NULL;
    NumLines -= 3;
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   LayoutLeaf() accepts a single node (leaf) and forms its contour. This
- *   function assumes that the width, height, and border fields of the 
+ *   function assumes that the width, height, and border fields of the
  *   node have been assigned meaningful values.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-LayoutLeaf(tree)
-   Tree *tree;
+LayoutLeaf(Tree *tree)
 {
    tree->node_height = 0;
    tree->border = TreeBorderSize;
@@ -385,7 +366,7 @@ LayoutLeaf(tree)
    tree->contour.upper.tail = MakeLine(tree->width + 2 * tree->border, 0,
 				       NULL);
    tree->contour.upper.head = tree->contour.upper.tail;
-   
+
    tree->contour.lower.tail = MakeLine(0, -tree->height - 2 * tree->border,
 				       NULL);
    tree->contour.lower.head = MakeLine(tree->width + 2 * tree->border, 0,
@@ -394,20 +375,19 @@ LayoutLeaf(tree)
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   LayoutTree() traverses the given tree (in depth-first order), and forms
  *   subtree or leaf contours at each node as needed. Each node's contour is
  *   stored in its "contour" field. Elision is also supported by generating
  *   the contour for both the expanded and collapsed node. This routine
  *   also computes the tree height of each node in the tree, so that variable
  *   density layout can be demonstrated.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-LayoutTree(tree)
-   Tree *tree;
+LayoutTree(Tree *tree)
 {
    Tree *child;
    int   height = 0;
@@ -424,7 +404,7 @@ LayoutTree(tree)
 
    if (tree->child) {
 
-      FOREACH_CHILD(child, tree) 
+      FOREACH_CHILD(child, tree)
 	 height = MAX(child->node_height, height);
       tree->node_height = height + 1;
 
@@ -443,8 +423,7 @@ LayoutTree(tree)
 /* ------------------------------------------------------------------------- */
 
 void
-Unzip(tree)
-   Tree *tree;
+Unzip(Tree *tree)
 {
    Tree *child;
 
@@ -452,10 +431,10 @@ Unzip(tree)
    if (TreeShowSteps) {
       HiliteNode(tree, New);
       tree->on_path = TRUE;
-      StatusMsg("Unzip: follow parent links up to root");
+      StatusMsg("Unzip: follow parent links up to root", 0);
       Pause();
    }
-#endif   
+#endif
 
    if (tree->parent)
       Unzip(tree->parent);
@@ -464,8 +443,8 @@ Unzip(tree)
 
 #ifdef INTF
       /*   draw entire contour; do it only for root, because the last
-       *   frame drawn in this function will have already drawn the  
-       *   contour for the most recently split subtree.              
+       *   frame drawn in this function will have already drawn the
+       *   contour for the most recently split subtree.
        */
       if (TreeShowSteps) {
 	 if (tree->parent == NULL) {
@@ -473,7 +452,7 @@ Unzip(tree)
 	      DrawTreeContour(tree, New, CONTOUR_COLOR, FALSE, FALSE, FALSE);
 	      DrawTree(TheTree, New);
 	    EndFrame();
-	    StatusMsg("Unzip: disassemble entire contour");
+	    StatusMsg("Unzip: disassemble entire contour", 0);
 	    Pause();
 	 }
       }
@@ -483,11 +462,15 @@ Unzip(tree)
       /* draw contour as it would appear after DetachParent() */
       if (TreeShowSteps) {
 	 BeginFrame();
+#if 0 /* mrb */
 	   DrawTreeContour(tree, New, CONTOUR_COLOR, TRUE,
 			   FALSE, FALSE, FALSE);
+#endif
+	   DrawTreeContour(tree, New, CONTOUR_COLOR, TRUE,
+			   FALSE, FALSE);
 	   DrawTree(TheTree, New);
 	 EndFrame();
-	 StatusMsg("Unzip: detach parent");
+	 StatusMsg("Unzip: detach parent", 0);
 	 Pause();
       }
 #endif
@@ -501,7 +484,7 @@ Unzip(tree)
            /* mark other subtree contours as split, and */
 	   /* draw only the contour on path in full     */
 	   FOREACH_CHILD(child, tree) {
-	      if (!child->on_path) 
+	      if (!child->on_path)
 		 child->split = TRUE;
 	      else
 		 DrawTreeContour(child, New, CONTOUR_COLOR,
@@ -509,7 +492,7 @@ Unzip(tree)
 	   }
 	   DrawTree(TheTree, New);
 	 EndFrame();
-	 StatusMsg("Unzip: split tree");
+	 StatusMsg("Unzip: split tree", 0);
 	 Pause();
       }
 #endif
@@ -522,8 +505,7 @@ Unzip(tree)
 /* ------------------------------------------------------------------------- */
 
 void
-Zip(tree)
-   Tree *tree;
+Zip(Tree *tree)
 {
    if (tree->child)
       AttachParent(tree, Join(tree));
@@ -535,16 +517,15 @@ Zip(tree)
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   Insert() adds the specified child to parent, just after the specified
  *   sibling. If 'sibling' is Null, the child is added as the first child.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-Insert(parent, child, sibling)
-   Tree *parent, *child, *sibling;
+Insert(Tree *parent, Tree *child, Tree *sibling)
 {
    Unzip(parent);
    child->parent = parent;
@@ -563,17 +544,17 @@ Insert(parent, child, sibling)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   Delete() traverses the specified tree and frees all storage
  *   allocated to the subtree, including contours and bridges.
  *   If the tree had a preceding sibling, the preceding sibling is
  *   modified to point to the tree's succeeding sibling, if any.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-Delete(tree)
-   Tree *tree;
+void
+Delete(Tree *tree)
 {
    Tree *sibling = NULL;
    Tree *parent, *child;
@@ -591,26 +572,25 @@ Delete(tree)
       sibling->sibling = tree->sibling;
    else if (parent)
       parent->child = tree->sibling;
-   
+
    DeleteTree(tree, FALSE);
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
- *   DeleteTree() is the recursive function that supports Delete(). 
+ *
+ *   DeleteTree() is the recursive function that supports Delete().
  *   If 'contour' is True, then only the contours are recursively deleted.
  *   This flag should be True when you are regenerating a tree's layout
  *   and still want to preserve the nodes. Since contours would be deleted
  *   only due to a change in sibling or level distance, each node's border
  *   value is updated with the current value of TreeBorderSize;
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-DeleteTree(tree, contour)
-   Tree *tree;
-   int   contour;
+void
+DeleteTree(Tree *tree, int contour)
 {
    Tree *child;
 
@@ -630,7 +610,7 @@ DeleteTree(tree, contour)
    else
       RuboutLeaf(tree);
 
-   if (contour) 
+   if (contour)
       tree->border = TreeBorderSize;
    else {
       free(tree->label.text);
@@ -641,18 +621,17 @@ DeleteTree(tree, contour)
 
 
 /* ----------------------------------------------------------------------------
- * 
- *   ComputeTreeSize() 
+ *
+ *   ComputeTreeSize()
  *   This function should be called after tree layout.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-ComputeTreeSize(tree, width, height, x_offset, y_offset)
-   Tree *tree;
-   int *width, *height;
-   int *x_offset, *y_offset;
+ComputeTreeSize(Tree *tree,
+		int *width, int *height,
+		int *x_offset, int *y_offset)
 {
    Polyline *contour, *tail;
    int upper_min_y = 0, lower_max_y = 0;
@@ -663,7 +642,7 @@ ComputeTreeSize(tree, width, height, x_offset, y_offset)
    contour = tree->contour.upper.head;
    tail    = tree->contour.upper.tail;
    while (contour) {
-      if ((contour->dy + upper_abs_y) < upper_min_y) 
+      if ((contour->dy + upper_abs_y) < upper_min_y)
 	 upper_min_y = contour->dy + upper_abs_y;
       upper_abs_y += contour->dy;
       if (contour == tail)
@@ -696,26 +675,24 @@ ComputeTreeSize(tree, width, height, x_offset, y_offset)
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   PetrifyTree()
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-PetrifyTree(tree, x, y)
-   Tree *tree;
-   int x, y;
+PetrifyTree(Tree *tree, int x, int y)
 {
    int width, height;
    int x_offset, y_offset;
-   
+
    tree->old_pos = tree->pos;	/* used by AnimateTree */
 
    /* fix position of each node */
    tree->pos.x = x + tree->offset.x;
    tree->pos.y = y + tree->offset.y;
-   
+
    if (tree->child) {
       PetrifyTree(tree->child, tree->pos.x, tree->pos.y);
       ComputeSubTreeExtent(tree); /* for benefit of interface picking */

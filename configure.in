@@ -313,6 +313,7 @@ dnl Establish some default values
 dnl -----------------------------
 
 XE_APPEND(lib-src, MAKE_SUBDIR)
+XE_APPEND(lib-src, INSTALL_ARCH_DEP_SUBDIR)
 
 dnl run_in_place='no'
 prefix='/usr/local'
@@ -1613,6 +1614,7 @@ AC_AIX
 AC_MSG_CHECKING(whether we are using SunPro C)
 AC_TRY_COMPILE([],[#ifndef __SUNPRO_C
 #error Not a  SunPro compiler :-(
+******* ======= ******** &&&&&&&&
 #endif
 ], __sunpro_c=yes, __sunpro_c=no)
 AC_MSG_RESULT($__sunpro_c)
@@ -2311,6 +2313,11 @@ EOF
 
   dnl Autodetect -lXaw
   AC_CHECK_LIB(Xaw, XawScrollbarSetThumb, have_xaw=yes, have_xaw=no)
+  if test "$have_xaw" = "yes"; then
+    AC_CHECK_HEADER(X11/Xaw/Reports.h, [
+     XE_APPEND(pkg-src/tree-x, MAKE_SUBDIR)
+     XE_APPEND(pkg-src/tree-x, INSTALL_ARCH_DEP_SUBDIR)])
+  fi
 
 fi dnl $with_x11 = yes
 
@@ -2399,7 +2406,7 @@ if test "$with_cde" = "yes" ; then
   AC_DEFINE(HAVE_CDE)
   XE_PREPEND(-lDtSvc, libs_x)
   with_tooltalk=yes # CDE requires Tooltalk
-  with_motif=yes    # CDE requires Motif
+  need_motif=yes    # CDE requires Motif
 fi
 
 dnl if Energize specified, make sure we can find its need libraries/headers
@@ -2620,7 +2627,13 @@ if test "$with_mule" = "yes" ; then
 
   dnl Autodetect WNN
   test "$with_wnn6" = "yes" && with_wnn=yes # wnn6 implies wnn support
-  test -z "$with_wnn" && { AC_CHECK_HEADER(wnn/jllib.h,      ,with_wnn=no) }
+  test -z "$with_wnn" && { AC_CHECK_HEADER(wnn/jllib.h, ,with_wnn=no) }
+  dnl Detour to find crypt
+  if test "$with_wnn" != "no"; then
+    AC_CHECK_FUNCS(crypt)
+    test "$ac_cv_func_crypt" != "yes" && { AC_CHECK_LIB(crypt, crypt) }
+  fi
+  dnl Back to our regularly scheduled wnn hunting
   test -z "$with_wnn" && { AC_CHECK_LIB(wnn,jl_dic_list_e,[:],with_wnn=no) }
   test -z "$with_wnn" && with_wnn=yes
   if test "$with_wnn" = "yes"; then
@@ -2658,7 +2671,7 @@ if test "$need_motif" = "yes" ; then
   XE_COMPUTE_RUNPATH()
 fi
 
-AC_CHECK_FUNCS(acosh asinh atanh cbrt closedir dup2 eaccess fmod fpathconf frexp ftime gethostname getpagesize gettimeofday getcwd getwd logb lrand48 matherr mkdir mktime perror poll random rename res_init rint rmdir select setitimer setpgid setlocale setsid sigblock sighold sigprocmask strcasecmp strerror tzset utimes waitpid)
+AC_CHECK_FUNCS(acosh asinh atanh cbrt closedir dup2 eaccess fmod fpathconf frexp ftime gethostname getpagesize gettimeofday getcwd getwd logb lrand48 matherr mkdir mktime perror poll random rename res_init rint rmdir select setitimer setpgid setlocale setsid sigblock sighold sigprocmask strcasecmp strerror tzset usleep utimes waitpid)
 
 dnl realpath is buggy on linux, decosf and aix4
 
@@ -3177,10 +3190,16 @@ internal_makefile_list="Makefile"
 SUBDIR_MAKEFILES=''
 test -d lock || mkdir lock
 for dir in $MAKE_SUBDIR; do
-  test -d "$dir" || mkdir "$dir"
+  case "$dir" in */* ) dnl Implement mkdir -p
+    ( for d in `echo $dir | sed 's:/: :g'` ; do
+        test -d "$d" || mkdir "$d"; cd "$d"
+      done ) ;;
+   * ) test -d "$dir" || mkdir "$dir" ;;
+  esac
   XE_SPACE(SUBDIR_MAKEFILES, $SUBDIR_MAKEFILES $dir/Makefile)
   XE_SPACE(internal_makefile_list, $internal_makefile_list $dir/Makefile.in)
 done
+AC_SUBST(INSTALL_ARCH_DEP_SUBDIR)
 AC_SUBST(MAKE_SUBDIR)
 AC_SUBST(SUBDIR_MAKEFILES)
 
@@ -3303,7 +3322,6 @@ test -n "$puresize" && AC_DEFINE_UNQUOTED(RAW_PURESIZE, $puresize)
 if   test "$GNU_MALLOC"        = "yes"; then AC_DEFINE(GNU_MALLOC)
 elif test "$use_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
 fi
-test "$with_motif"         = "yes" && AC_DEFINE(LWLIB_USES_MOTIF)
 test "$with_i18n3"         = "yes" && AC_DEFINE(I18N3)
 test "$with_gcc"           = "yes" && AC_DEFINE(USE_GCC)
 test "$with_term"          = "yes" && AC_DEFINE(HAVE_TERM)

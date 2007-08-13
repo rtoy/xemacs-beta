@@ -4,6 +4,7 @@
 (put 'copyright 'custom-loads '("upd-copyr"))
 (put 'eldoc 'custom-loads '())
 (put 'recent-files-menu 'custom-loads '("recent-files"))
+(put 'auto-show 'custom-loads '())
 (put 'execute 'custom-loads '())
 (put 'mouse 'custom-loads '("avoid"))
 (put 'mail-abbrevs 'custom-loads '())

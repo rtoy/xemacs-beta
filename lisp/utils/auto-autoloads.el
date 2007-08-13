@@ -176,7 +176,7 @@ be used only with -batch, and kills XEmacs on completion." nil nil)
 
 ;;;### (autoloads (browse-url-lynx-emacs browse-url-lynx-xterm browse-url-w3 browse-url-iximosaic browse-url-grail browse-url-mosaic browse-url-netscape) "browse-url" "utils/browse-url.el")
 
-(defcustom browse-url-browser-function 'browse-url-w3 "*Function to display the current buffer in a WWW browser.\nUsed by the `browse-url-at-point', `browse-url-at-mouse', and\n`browse-url-of-file' commands." :type 'function :group 'browse-url)
+(defcustom browse-url-browser-function 'browse-url-w3 "*Function to display the current buffer in a WWW browser.\nUsed by the `browse-url-at-point', `browse-url-at-mouse', and\n`browse-url-of-file' commands." :type '(radio (function-item browse-url-w3) (function-item browse-url-netscape) (function-item browse-url-mosaic) (function-item browse-url-cci) (function-item browse-url-iximosaic) (function-item browse-url-lynx-xterm) (function-item browse-url-lynx-emacs) (function-item browse-url-grail) (function :tag "Other" nil)) :group 'browse-url)
 
 (autoload 'browse-url-netscape "browse-url" "\
 Ask the Netscape WWW browser to load URL.
@@ -995,16 +995,6 @@ word, and if `skeleton-pair-filter' returns nil, pairing is performed.
 If a match is found in `skeleton-pair-alist', that is inserted, else
 the defaults are used.  These are (), [], {}, <> and `' for the
 symmetrical ones, and the same character twice for the others." t nil)
-
-;;;***
-
-;;;### (autoloads (speedbar-frame-mode) "speedbar" "utils/speedbar.el")
-
-(autoload 'speedbar-frame-mode "speedbar" "\
-Enable or disable use of a speedbar.  Positive number means turn
-on, negative turns speedbar off, and nil means toggle.  Once the
-speedbar frame is activated, a buffer in `speedbar-mode' will be
-displayed.  Currently, only one speedbar is supported at a time." t nil)
 
 ;;;***
 

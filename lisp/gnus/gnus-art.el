@@ -981,8 +981,8 @@ always hide."
 	    (while (re-search-forward "^- " nil t)
 	      (gnus-article-hide-text-type
 	       (match-beginning 0) (match-end 0) 'pgp))
-	    (widen)))
-	(run-hooks 'gnus-article-hide-pgp-hook)))))
+	    (widen))
+	  (run-hooks 'gnus-article-hide-pgp-hook))))))
 
 (defun article-hide-pem (&optional arg)
   "Toggle hiding of any PEM headers and signatures in the current article.
@@ -1750,7 +1750,6 @@ If variable `gnus-use-long-file-name' is non-nil, it is
 (gnus-define-keys gnus-article-mode-map
   " " gnus-article-goto-next-page
   "\177" gnus-article-goto-prev-page
-  [backspace] gnus-article-goto-prev-page
   [delete] gnus-article-goto-prev-page
   "\C-c^" gnus-article-refer-article
   "h" gnus-article-show-summary

@@ -4,14 +4,15 @@
  */
 
 
+#include <stdlib.h>
 #include "dbl.h"
 
-struct {                                               
-    unsigned short red;                                        
+struct {
+    unsigned short red;
     unsigned short green;
     unsigned short blue;
 } color[] = {
-    { 65280, 65280, 65280 }, /* white  */                      
+    { 65280, 65280, 65280 }, /* white  */
     {     0,     0, 65280 }, /* blue   */
     {     0, 65280,     0 }, /* green  */
     { 65280,     0,     0 }, /* red    */
@@ -19,18 +20,17 @@ struct {
     { 65280, 32512,     0 }, /* orange */
     { 32512, 32512, 32512 }, /* gray   */
     {     0,     0,     0 }  /* black  */
-};                       
+};
 
 /* ------------------------------------------------------------------------- */
 
 DoubleBuffer *
-DBLcreate_double_buffer (display, window, backing_store, colors, num_colors)
-   Display *display;
-   Window   window;
-   int      backing_store;
-   XColor  *colors;
-   int      num_colors;
-{                                                                
+DBLcreate_double_buffer (Display *display,
+			 Window   window,
+			 int      backing_store,
+			 XColor  *colors,
+			 int      num_colors)
+{
    int i, j, k, l, m, offset, mask, size;
    int max_planes;
 
@@ -45,7 +45,7 @@ DBLcreate_double_buffer (display, window, backing_store, colors, num_colors)
    if ((db = (DoubleBuffer *)calloc(1, sizeof(DoubleBuffer))) == 0) {
       printf("DBLopen_double_buffer : memory allocation error\n");
       return (NULL);
-   }                                                          
+   }
 
 /* note the display */
 
@@ -69,7 +69,7 @@ DBLcreate_double_buffer (display, window, backing_store, colors, num_colors)
       color[i].green = colors[i].green;
       color[i].blue  = colors[i].blue;
    }
-   
+
 /* see if the user wanted to limit the number of planes used
    then see how many are available,  make it a multiple of 2 */
 
@@ -130,7 +130,7 @@ DBLcreate_double_buffer (display, window, backing_store, colors, num_colors)
          offset = offset + 1;
       }
 
-      mask = (1 << (db->num_planes >> 1)) - 1;                             
+      mask = (1 << (db->num_planes >> 1)) - 1;
 
    /* now create the surfaces that will contain plane mask and
       colormap information that we use to do double  buffering */
@@ -149,7 +149,7 @@ DBLcreate_double_buffer (display, window, backing_store, colors, num_colors)
          surface->offset     = offset + i * (db->num_planes >> 1);
          surface->mask       = mask << surface->offset;
          surface->num_colors = 1 << db->num_planes;
-  
+
       /* compute our pixel values by taking every permutation
          of the pixel and planes returned by XAllocColorCells */
 
@@ -159,19 +159,19 @@ DBLcreate_double_buffer (display, window, backing_store, colors, num_colors)
 
          for (j = 0; j < db->num_planes; j++) {
             for (k = (1 << j); k < (surface->num_colors); k += (2 << j)) {
-               for (l = k; l < (k + (1 << j)); l++) {                  
+               for (l = k; l < (k + (1 << j)); l++) {
                   surface->color[l].pixel |= db->planes[j];
                }
             }
          }
 
-       /* now populate those pixels with the proper  colors  so             
+       /* now populate those pixels with the proper  colors  so
           that we can do animation by banging in a new colormap */
 
          for (j = 0; j < surface->num_colors; j++) {
             k = (j & surface->mask) >> surface->offset;
 
-            surface->color[j].red   = color[k].red;                 
+            surface->color[j].red   = color[k].red;
             surface->color[j].green = color[k].green;
             surface->color[j].blue  = color[k].blue;
 
@@ -212,14 +212,14 @@ DBLcreate_double_buffer (display, window, backing_store, colors, num_colors)
 
 /* if there are no surfaces then we are doing animation with
    a frame buffer,  so create a pixmap as our frame buffer   */
-                         
+
    if (db->num_surfaces > 0)
-      db->drawable = db->window;   
+      db->drawable = db->window;
    else {
       db->frame = XCreatePixmap(db->display, db->window,
 				db->width, db->height, db->depth);
       db->drawable = db->frame;
-   }                                                                    
+   }
 
 /* if they have requested backing store,  then create an extra
    pixmap which we can use as backing store to handle exposures */
@@ -227,7 +227,7 @@ DBLcreate_double_buffer (display, window, backing_store, colors, num_colors)
    if (backing_store) {
       db->backing = XCreatePixmap(db->display, db->window,
 				  db->width, db->height, db->depth);
-   }                                                   
+   }
 
 /*  use the 0 pixel from one of the surfaces for the background */
 
@@ -236,9 +236,9 @@ DBLcreate_double_buffer (display, window, backing_store, colors, num_colors)
    xgcv.line_width = 0;
    xgcv.cap_style  = CapButt;
    xgcv.join_style = JoinRound;
-   xgcvmask = GCBackground | GCLineStyle | GCLineWidth | GCCapStyle | 
+   xgcvmask = GCBackground | GCLineStyle | GCLineWidth | GCCapStyle |
               GCJoinStyle;
-   
+
    db->gc = XCreateGC(db->display, db->drawable, xgcvmask, &xgcv);
 
 /* do an initial frame to setup the colormap,  and return */
@@ -251,92 +251,84 @@ DBLcreate_double_buffer (display, window, backing_store, colors, num_colors)
 /* ------------------------------------------------------------------------- */
 
 void
-DBLdelete_double_buffer (db)
-     DoubleBuffer *db;
+DBLdelete_double_buffer (DoubleBuffer *db)
 {
   int i;
 
   /* remove and and all surfaces that are out there */
-  
+
   for (i = 0; i < DBL_MAX_SURFACES; i++) {
     if (db->surface[i] != 0) {
-      free(db->surface[i]);                               
+      free(db->surface[i]);
     }
   }
 
   /* now clean up the various resources used for this double buffer */
-  
+
   if (db->frame != 0) {
     XFreePixmap(db->display, db->frame);
   }
-  
+
   if (db->backing != 0) {
     XFreePixmap(db->display, db->backing);
   }
-  
+
   /* if we created our own private colormap,  then free the colormap */
-  
+
   if (db->colormap != DefaultColormapOfScreen(db->screen)) {
     XFreeColormap(db->display, db->colormap);
   }
-  
+
   free (db);
 }
 
 /* ------------------------------------------------------------------------- */
 
 unsigned long
-DBLinq_background(db)
-   DoubleBuffer *db;
+DBLinq_background(DoubleBuffer *db)
 {
    if (db->num_surfaces > 0)
       return(db->surface[0]->color[0].pixel);
-   else 
+   else
       return(WhitePixelOfScreen(db->screen));
 }
 
 /* ------------------------------------------------------------------------- */
 
-DBLbegin_frame(db)
-     DoubleBuffer *db;
+void
+DBLbegin_frame(DoubleBuffer *db)
 {
-  Surface   *surface;
-  
-  /* there will be at most two surfaces optimize with "&"*/
-  
-  if (db->num_surfaces > 0) {                       
-    db->current_surface = (db->current_surface + 1) & 1;                  
-    surface = db->surface[db->current_surface];
+  /* there will be at most two surfaces optimized with "&"*/
+
+  if (db->num_surfaces > 0) {
+    db->current_surface = (db->current_surface + 1) & 1;
+
+    /* clear the back surface of the window which may actually be a pixmap */
+    
+    XSetPlaneMask (db->display, db->gc, db->surface[db->current_surface]->mask);
   }
-   
-  /* clear the back surface of the window which may actually be a pixmap */ 
-  
-  if (db->num_surfaces > 0) 
-    XSetPlaneMask (db->display, db->gc, surface->mask);
-  
+
   /* clear out the back surface or frame buffer as appropriate */
-  
+
   XSetFunction(db->display, db->gc, GXclear);
   XFillRectangle(db->display, db->drawable, db->gc,
 		 0, 0, db->width, db->height);
-  
+
   /* set writing mode back to copy */
   XSetFunction (db->display, db->gc, GXcopy);
-  
+
   XSync(db->display, False);
-}  
-         
+}
+
 
 /* ------------------------------------------------------------------------- */
-                                            
 
-DBLend_frame(db, init)
-     DoubleBuffer *db;                                                   
-     short init;
+void
+DBLend_frame(DoubleBuffer *db, short init)
 {
   Surface  *surface;
-  
-  /* if there are no drawing surfaces,  then we are doing animation   
+
+  /* if there are no drawing surfaces,  then we are doing animation
      with a frame buffer, copy the frame buffers to their viewports */
 
   if (db->num_surfaces == 0) {
@@ -344,7 +336,7 @@ DBLend_frame(db, init)
         XCopyArea (db->display, db->frame, db->window,
 	           db->gc, 0,0, db->width, db->height, 0,0);
   } else {
-    
+
     /* otherwise,  we can flip the surface by banging in the new colormap */
 
     XSync(db->display, False);
@@ -357,21 +349,8 @@ DBLend_frame(db, init)
     XCopyArea (db->display, db->window, db->backing,
 	       db->gc, 0,0, db->width, db->height, 0,0);
   }
-  
+
   /* make sure this all goes off to the server,  right away */
-  
+
   XSync(db->display, False);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

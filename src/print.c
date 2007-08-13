@@ -597,22 +597,20 @@ Output stream is STREAM, or value of `standard-output' (which see).
 DEFUN ("error-message-string", Ferror_message_string, 1, 1, 0, /*
 Convert an error value (ERROR-SYMBOL . DATA) to an error message.
 */
-  (obj))
+  (data))
 {
-  struct buffer *old = XBUFFER(Fcurrent_buffer());
+  struct buffer *pbuf;
   Lisp_Object original, printcharfun, value;
   struct gcpro gcpro1;
 
-  print_error_message (obj, Vprin1_to_string_buffer);
+  print_error_message (data, Vprin1_to_string_buffer);
 
-  set_buffer_internal (XBUFFER (Vprin1_to_string_buffer));
-  value = Fbuffer_substring (Fpoint_min(Fcurrent_buffer()),
-			     Fpoint_max(Fcurrent_buffer()),
-			     Fcurrent_buffer());
-
+  pbuf = XBUFFER (Vprin1_to_string_buffer);
+  value = make_string_from_buffer (pbuf,
+				   BUF_BEGV (pbuf),
+				   BUF_ZV (pbuf) - BUF_BEGV (pbuf));
   GCPRO1 (value);
-  Ferase_buffer (Fcurrent_buffer());
-  set_buffer_internal (old);
+  Ferase_buffer (Vprin1_to_string_buffer);
   UNGCPRO;
 
   return value;

@@ -1,3 +1,65 @@
+1997-06-28  Steven L Baur  <steve@altair.xemacs.org>
+
+	* config.h.in: Back out previous change to LOSING_BYTECODE.  It's
+	just not worth it.
+
+1997-06-27  Mike Scheidler  <c23mts@eng.delcoelect.com>
+
+	* s/sol2.h: Undefined _XOPEN_SOURCE for Solaris 2.4.
+
+1997-06-28  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* abbrev.c (abbrev_match): New function.
+	(abbrev_oblookup): New function.
+	(obarray_has_blank_p): New function.
+	(abbrev_count_case): New function.
+	(Fexpand_abbrev): Use them.  Allow abbreviations to contain
+	arbitrary characters.
+
+1997-06-28  Steven L Baur  <steve@altair.xemacs.org>
+
+	* config.h.in: LOSING_BYTECODE will not be compiled into XEmacs.
+
+	* doc.c (Fsnarf_documentation): Remove VMS dependent stuff for
+	cleanliness.
+
+1997-06-28  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* print.c (Ferror_message_string): Simplify.
+
+1997-06-27  Steven L Baur  <steve@altair.xemacs.org>
+
+	* symbols.c (Fdefine_function): Correct docstring.
+	(Fsetplist): Ditto.
+	(Ffset): Ditto.
+	(Fsetq_default): Ditto.
+
+1997-06-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* eval.c (skip_debugger): Removed comment and #ifdef-ed code.
+	(signal_call_debugger): Call skip_debugger after wants_debugger.
+	(signal_call_debugger): Gcpro cons sent to skip_debugger.
+
+1997-06-26  Steven L Baur  <steve@altair.xemacs.org>
+
+	* process.c (create_process): Default to fork instead of vfork.
+
+	* callproc.c (Fcall_process_internal): Default to fork instead of
+	vfork.
+
+	* emacsfns.h: Add declarations of Ferror_message_string(),
+	Frunning_temacs_p().
+
+	* eval.c: Remove declarations of Ferror_message_string(),
+	Frunning_temacs_p().
+
+	* Makefile.in.in (${libsrc}DOC): Correct dependency for the docfile.
+	(${mo_dir}emacs.po): Remove obsolete references to lisp source.
+
+1997-06-29  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule-charset.c: Modify charset DOC-strings to be more detailed.
+
 1997-06-25  Steven L Baur  <steve@altair.xemacs.org>
 
 	* alloc.c (Flist): Optimize.

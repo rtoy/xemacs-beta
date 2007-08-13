@@ -108,7 +108,11 @@ echo \"lisp/$dir done.\";"
 #make_special vm
 #make_special ediff elc
 #make_special viper elc
-make_special auctex some
+if test "$mule_p" = nil ; then
+	make_special auctex some
+else
+	make_special auctex some MULE_ELC=tex-jp.elc
+fi
 make_special cc-mode all
 make_special efs x20
 make_special eos -k		# not strictly necessary...

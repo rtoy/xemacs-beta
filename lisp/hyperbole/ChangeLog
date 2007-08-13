@@ -1,3 +1,8 @@
+1997-06-27  Steven L Baur  <steve@altair.xemacs.org>
+
+	* wrolo-menu.el (TopLevel): Fix tests so that W3's id-menubar
+	simulation doesn't bollux up feature tests.
+
 Thu Mar 13 22:01:52 1997  Bob Weiner  <weiner@infodock.com>
 
 * wrolo.el (rolo-toggle-datestamps): Added.

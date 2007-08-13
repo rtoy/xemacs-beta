@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.9931
+Version: 1.9940
 
 @menu
 * Introduction::                
@@ -1468,7 +1468,7 @@ the parent.
 The following predefined function can be used here:
 
 @defun widget-parent-action widget &optional event
-Tell @code{:parent} of @var{widget} to handle the @code{:action}.@br
+Tell @code{:parent} of @var{widget} to handle the @code{:action}.@*
 Optional @var{event} is the event that triggered the action.
 @end defun
 
@@ -1538,13 +1538,13 @@ Keymap used in @code{widget-minor-mode}.
 @section Utilities.
 
 @defun widget-prompt-value widget prompt [ value unbound ]
-Prompt for a value matching @var{widget}, using @var{prompt}.@br
+Prompt for a value matching @var{widget}, using @var{prompt}.@*
 The current value is assumed to be @var{value}, unless @var{unbound} is
 non-nil.@refill
 @end defun
 
 @defun widget-get-sibling widget
-Get the item @var{widget} is assumed to toggle.@br
+Get the item @var{widget} is assumed to toggle.@*
 This is only meaningful for radio buttons or checkboxes in a list.
 @end defun
 

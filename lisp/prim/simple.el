@@ -3290,6 +3290,11 @@ a string (message).  It should return non-nil to indicate a message
 should be logged.  Possible values include 'log-message-filter and
 'log-message-filter-errors-only.")
 
+(defun show-message-log ()
+  "Show the \" *Message-Log*\" buffer, which contains old messages and errors."
+  (interactive)
+  (pop-to-buffer " *Message-Log*"))
+
 (defun log-message-filter (label message)
   "Default value of log-message-filter-function.
 Mesages whose text matches one of the log-message-ignore-regexps

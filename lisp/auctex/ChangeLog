@@ -1,3 +1,9 @@
+1997-06-27  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile (CONTRIBELC): Remove hardcoded dependency on
+	tex-jp.el -- only bytecompile if running XEmacs/Mule.
+	- Add byte-compilation of custom-load.el.
+	
 Sat Apr  5 09:40:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile (STYLESRC): Move style/*.el files to etc/auctex/style.

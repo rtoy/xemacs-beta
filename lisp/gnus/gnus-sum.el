@@ -1036,7 +1036,6 @@ increase the score of each group you read."
   (gnus-define-keys gnus-summary-mode-map
     " " gnus-summary-next-page
     "\177" gnus-summary-prev-page
-    [backspace] gnus-summary-prev-page
     [delete] gnus-summary-prev-page
     "\r" gnus-summary-scroll-up
     "n" gnus-summary-next-unread-article
@@ -1236,7 +1235,6 @@ increase the score of each group you read."
     " " gnus-summary-next-page
     "n" gnus-summary-next-page
     "\177" gnus-summary-prev-page
-    [backspace] gnus-summary-prev-page
     [delete] gnus-summary-prev-page
     "p" gnus-summary-prev-page
     "\r" gnus-summary-scroll-up
@@ -1309,7 +1307,6 @@ increase the score of each group you read."
     "e" gnus-summary-expire-articles
     "\M-\C-e" gnus-summary-expire-articles-now
     "\177" gnus-summary-delete-article
-    [backspace] gnus-summary-delete-article
     [delete] gnus-summary-delete-article
     "m" gnus-summary-move-article
     "r" gnus-summary-respool-article
@@ -3829,6 +3826,10 @@ If READ-ALL is non-nil, all articles in the group are selected."
 	    (set var (delq article (symbol-value var))))))
        ;; Adjust assocs.
        ((memq mark uncompressed)
+	(when (not (listp (car (symbol-value var)))))
+	  (set var (list (symbol-value var)))
+	(when (not (listp (cdr articles)))
+	  (setq articles (list articles)))
 	(while articles
 	  (when (or (not (consp (setq article (pop articles))))
 		    (< (car article) min)
@@ -5000,7 +5001,7 @@ which existed when entering the ephemeral is reset."
   (suppress-keymap gnus-dead-summary-mode-map)
   (substitute-key-definition
    'undefined 'gnus-summary-wake-up-the-dead gnus-dead-summary-mode-map)
-  (let ((keys '("\C-d" "\r" "\177" [backspace] [delete])))
+  (let ((keys '("\C-d" "\r" "\177")))
     (while keys
       (define-key gnus-dead-summary-mode-map
 	(pop keys) 'gnus-summary-wake-up-the-dead))))
@@ -6344,6 +6345,7 @@ Optional argument BACKWARD means do search for backward.
 	(gnus-mark-article-hook nil)	;Inhibit marking as read.
 	(gnus-use-article-prefetch nil)
 	(gnus-xmas-force-redisplay nil)	;Inhibit XEmacs redisplay.
+	(gnus-use-trees nil)		;Inhibit updating tree buffer.
 	(sum (current-buffer))
 	(found nil)
 	point)

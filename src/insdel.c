@@ -1405,20 +1405,18 @@ Bufpos
 get_buffer_or_string_pos_char (Lisp_Object object, Lisp_Object pos,
 			       unsigned int flags)
 {
-  if (STRINGP (object))
-    return get_string_pos_char (object, pos, flags);
-  else
-    return get_buffer_pos_char (XBUFFER (object), pos, flags);
+  return STRINGP (object) ?
+    get_string_pos_char (object, pos, flags) :
+    get_buffer_pos_char (XBUFFER (object), pos, flags);
 }
 
 Bytind
 get_buffer_or_string_pos_byte (Lisp_Object object, Lisp_Object pos,
 			       unsigned int flags)
 {
-  if (STRINGP (object))
-    return get_string_pos_byte (object, pos, flags);
-  else
-    return get_buffer_pos_byte (XBUFFER (object), pos, flags);
+  return STRINGP (object) ?
+    get_string_pos_byte (object, pos, flags) :
+    get_buffer_pos_byte (XBUFFER (object), pos, flags);
 }
 
 void
@@ -1429,8 +1427,7 @@ get_buffer_or_string_range_char (Lisp_Object object, Lisp_Object from,
   if (STRINGP (object))
     get_string_range_char (object, from, to, from_out, to_out, flags);
   else
-    get_buffer_range_char (XBUFFER (object), from, to, from_out, to_out,
-			   flags);
+    get_buffer_range_char (XBUFFER (object), from, to, from_out, to_out, flags);
 }
 
 void
@@ -1441,72 +1438,59 @@ get_buffer_or_string_range_byte (Lisp_Object object, Lisp_Object from,
   if (STRINGP (object))
     get_string_range_byte (object, from, to, from_out, to_out, flags);
   else
-    get_buffer_range_byte (XBUFFER (object), from, to, from_out, to_out,
-			   flags);
+    get_buffer_range_byte (XBUFFER (object), from, to, from_out, to_out, flags);
 }
 
 Bufpos
 buffer_or_string_accessible_begin_char (Lisp_Object object)
 {
-  if (STRINGP (object))
-    return 0;
-  return BUF_BEGV (XBUFFER (object));
+  return STRINGP (object) ? 0 : BUF_BEGV (XBUFFER (object));
 }
 
 Bufpos
 buffer_or_string_accessible_end_char (Lisp_Object object)
 {
-  if (STRINGP (object))
-    return string_char_length (XSTRING (object));
-  return BUF_ZV (XBUFFER (object));
+  return STRINGP (object) ?
+    string_char_length (XSTRING (object)) : BUF_ZV (XBUFFER (object));
 }
 
 Bytind
 buffer_or_string_accessible_begin_byte (Lisp_Object object)
 {
-  if (STRINGP (object))
-    return 0;
-  return BI_BUF_BEGV (XBUFFER (object));
+  return STRINGP (object) ? 0 : BI_BUF_BEGV (XBUFFER (object));
 }
 
 Bytind
 buffer_or_string_accessible_end_byte (Lisp_Object object)
 {
-  if (STRINGP (object))
-    return XSTRING_LENGTH (object);
-  return BI_BUF_ZV (XBUFFER (object));
+  return STRINGP (object) ?
+    XSTRING_LENGTH (object) : BI_BUF_ZV (XBUFFER (object));
 }
 
 Bufpos
 buffer_or_string_absolute_begin_char (Lisp_Object object)
 {
-  if (STRINGP (object))
-    return 0;
-  return BUF_BEG (XBUFFER (object));
+  return STRINGP (object) ? 0 : BUF_BEG (XBUFFER (object));
 }
 
 Bufpos
 buffer_or_string_absolute_end_char (Lisp_Object object)
 {
-  if (STRINGP (object))
-    return string_char_length (XSTRING (object));
-  return BUF_Z (XBUFFER (object));
+  return STRINGP (object) ?
+    string_char_length (XSTRING (object)) : BUF_Z (XBUFFER (object));
 }
 
 Bytind
 buffer_or_string_absolute_begin_byte (Lisp_Object object)
 {
-  if (STRINGP (object))
-    return 0;
-  return BI_BUF_BEG (XBUFFER (object));
+  return STRINGP (object) ? 0 : BI_BUF_BEG (XBUFFER (object));
 }
 
 Bytind
 buffer_or_string_absolute_end_byte (Lisp_Object object)
 {
-  if (STRINGP (object))
-    return XSTRING_LENGTH (object);
-  return BI_BUF_Z (XBUFFER (object));
+  return STRINGP (object) ?
+    XSTRING_LENGTH (object) : BI_BUF_Z (XBUFFER (object));
 }
 
 
@@ -2326,9 +2310,6 @@ prepare_to_modify_buffer (struct buffer *buf, Bufpos start, Bufpos end,
 #endif
 
   buf->point_before_scroll = Qnil;
-
-  /* BUF_MODIFF (buf)++; -- should be done by callers (insert, delete range)
-     else record_first_change isn't called */
 }
 
 

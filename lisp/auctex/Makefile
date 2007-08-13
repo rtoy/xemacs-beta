@@ -71,8 +71,9 @@ REMOVE =  ltx-help.el
 
 MINMAPSRC = auc-menu.el maniac.el outln-18.el all.el multi-prompt.el
 
-CONTRIB = bib-cite.el tex-jp.el font-latex.el
-CONTRIBELC = bib-cite.elc tex-jp.elc font-latex.elc
+## MULE_ELC is set by update-elc.sh if bytecompiling for XEmacs/Mule
+CONTRIB = bib-cite.el font-latex.el custom-load.el
+CONTRIBELC = bib-cite.elc $(MULE_ELC) font-latex.elc custom-load.elc
 
 AUCSRC = auc-old.el tex.el tex-buf.el latex.el tex-info.el multi-prompt.el
 AUCELC = auc-old.elc tex.elc tex-buf.elc latex.elc tex-info.elc \

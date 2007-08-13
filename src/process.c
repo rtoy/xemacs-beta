@@ -889,7 +889,7 @@ create_process (Lisp_Object process,
 #endif
 
 #ifndef WINDOWSNT
-    pid = vfork ();
+    pid = fork ();
     if (pid == 0)
 #endif /* not WINDOWSNT */
       {
@@ -1038,7 +1038,7 @@ create_process (Lisp_Object process,
   if (pid < 0)
     {
       close_descriptor_pair (forkin, forkout);
-      report_file_error ("Doing vfork", Qnil);
+      report_file_error ("Doing fork", Qnil);
     }
 
   p->pid = make_int (pid);

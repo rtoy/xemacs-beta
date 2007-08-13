@@ -66,12 +66,26 @@
      (setq load-warn-when-source-newer t ; set to nil at the end
 	   load-warn-when-source-only  t)
 
+     ;; Inserted for debugging.  Something is corrupting a single symbol
+     ;; somewhere to have an integer 0 property list.  -slb 6/28/1997.
+     (defun test-atoms ()
+       (mapatoms
+	#'(lambda (symbol)
+	    (condition-case nil
+		(get symbol 'custom-group)
+	      (t (princ
+		  (format "Bad plist in %s, %s\n"
+			  (symbol-name symbol)
+			  (prin1-to-string (object-plist symbol)))))))))
+
      ;; garbage collect after loading every file in an attempt to
      ;; minimize the size of the dumped image (if we don't do this,
      ;; there will be lots of extra space in the data segment filled
      ;; with garbage-collected junk)
      (defmacro load-gc (file)
-       (list 'prog1 (list 'load file) '(garbage-collect)))
+       (list 'prog1 (list 'load file)
+	     ;; '(test-atoms)
+	     '(garbage-collect)))
      ;; Need a minimal number hardcoded to get going for now.
      ;; (load-gc "backquote")		; needed for defsubst etc.
      ;; (load-gc "bytecomp-runtime")	; define defsubst
@@ -130,9 +144,13 @@
 ;; purify-flag is nil if called from loadup-el.el.
 (when purify-flag
   (message "Finding pointers to doc strings...")
+  ;; (test-atoms) ; Debug -- Doesn't happen here
   (Snarf-documentation "DOC")
+  ;; (test-atoms) ; Debug -- Doesn't happen here
   (message "Finding pointers to doc strings...done")
-  (Verify-documentation))
+  (Verify-documentation)
+  ;; (test-atoms) ; Debug -- Doesn't happen here
+  )
 
 ;; Note: You can cause additional libraries to be preloaded
 ;; by writing a site-init.el that loads them.

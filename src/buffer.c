@@ -994,7 +994,7 @@ as BUFFER means use current buffer.
 	  unbind_to (count, Qnil);
 	}
     }
-#endif                          /* CLASH_DETECTION */
+#endif /* CLASH_DETECTION */
 
   /* This is often called when the buffer contents are altered but we
      don't want to treat the changes that way (e.g. selective
@@ -1034,7 +1034,7 @@ No argument or nil as argument means use current buffer as BUFFER.
        (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
-
+  
   return make_int (BUF_MODIFF (buf));
 }
 

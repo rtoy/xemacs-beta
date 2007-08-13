@@ -42,8 +42,6 @@ Boston, MA 02111-1307, USA.  */
 #define TABDLY OXTABS
 #define TAB3 OXTABS
 
-#define GETPGRP_NO_ARG
-
 /* GNU needs its own crt0, and libc defines data_start.  */
 #define ORDINARY_LINK
 #define DATA_START ({ extern int data_start; (char *) &data_start; })

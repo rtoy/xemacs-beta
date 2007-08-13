@@ -19,9 +19,11 @@
 #define _POSIX_C_SOURCE 199506L
 #endif
 #undef  _XOPEN_SOURCE
-#define _XOPEN_SOURCE 1
 #undef  _XOPEN_SOURCE_EXTENDED
+#if OS_RELEASE >= 55
+#define _XOPEN_SOURCE 1
 #define _XOPEN_SOURCE_EXTENDED 1
+#endif /* >= SunOS 5.5 */
 #endif
 
 #if 1 /* mrb */
@@ -98,15 +100,16 @@ void srandom (unsigned int seed);
 #endif /* SunOS 5.5 */
 
 #if OS_RELEASE < 55
-/* Another missing prototype, added in Solaris 2.5 */
+/* Missing prototype, added in Solaris 2.5 */
 extern void *__builtin_alloca(size_t);
 #endif /* before SunOS 5.5 */
 
 #if OS_RELEASE < 56
-/* XEmacs: Solaris include files miss this. */
+/* Missing prototypes, added in Solaris 2.6 */
 struct timeval;
 int utimes (char *file, struct timeval *tvp);
-extern int gethostname(char *, unsigned);
+int gethostname(char *name, int namelen);
+int usleep(unsigned int useconds);
 #endif /* before SunOS 5.6 */
 
 #include <sys/utsname.h> /* warning: macro redefined: SYS_NMLN */

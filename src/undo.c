@@ -206,19 +206,23 @@ record_change (struct buffer *b, Bufpos beg, Charcount length)
 void
 record_extent (Lisp_Object extent, int attached)
 {
-  Lisp_Object buffer = Fextent_object (extent);
-  struct buffer *b = XBUFFER (buffer); /* !!#### */
-  Lisp_Object token;
+  Lisp_Object obj = Fextent_object (extent);
 
-  if (!undo_prelude (b, 1))
-    return;
-
-  if (attached)
-    token = extent;
+  if (BUFFERP (obj))
+    {
+      Lisp_Object token;
+      struct buffer *b = XBUFFER (obj);
+      if (!undo_prelude (b, 1))
+	return;
+      if (attached)
+	token = extent;
+      else
+	token = list3 (extent, Fextent_start_position (extent),
+		       Fextent_end_position (extent));
+      b->undo_list = Fcons (token, b->undo_list);
+    }
   else
-    token = list3 (extent, Fextent_start_position (extent),
-		   Fextent_end_position (extent));
-  b->undo_list = Fcons (token, b->undo_list);
+    return;
 }
 
 #if 0 /* FSFmacs */

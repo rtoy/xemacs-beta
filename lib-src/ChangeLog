@@ -1,3 +1,13 @@
+1997-06-27  Steven L Baur  <steve@altair.xemacs.org>
+
+	* update-autoloads.sh:  Major rework.  Avoid looking at MULE
+	directories if not running XEmacs/Mule.
+	- Look into all Mule directories for building autoloads.
+
+	* update-elc.sh (make_special_commands): Fix handling of
+	bytecompilation of AUCTeX to avoid looking at tex-jp.el if not
+	running MULE.
+
 1997-06-24  Steven L Baur  <steve@altair.xemacs.org>
 
 	* gnuattach: Needed executable bit set.

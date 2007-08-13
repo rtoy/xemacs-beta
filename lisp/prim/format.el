@@ -66,10 +66,21 @@
 
 (put 'buffer-file-format 'permanent-local t)
 
-(defvar format-alist 
-  '((text/enriched "Extended MIME text/enriched format."
+(defvar format-alist
+  '((image/jpeg "JPEG image" "\377\330\377\340\000\020JFIF"
+		image-decode-jpeg nil t image-mode)
+    (image/gif "GIF image" "GIF8[79]"
+	       image-decode-gif nil t image-mode)
+    (image/png "Portable Network Graphics" "\211PNG"
+	       image-decode-png nil t image-mode)
+    (image/x-xpm "XPM image" "/\\* XPM \\*/"
+		 image-decode-xpm nil t image-mode)
+    (text/enriched "Extended MIME text/enriched format."
 		   "Content-[Tt]ype:[ \t]*text/enriched"
 		   enriched-decode enriched-encode t enriched-mode)
+    (text/richtext "Extended MIME obsolete text/richtext format."
+		   "Content-[Tt]ype:[ \t]*text/richtext"
+		   richtext-decode richtext-encode t enriched-mode)
     (plain "Standard ASCII format, no text properties."
 	   ;; Plain only exists so that there is an obvious neutral choice in
 	   ;; the completion list.

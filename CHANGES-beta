@@ -1,4 +1,23 @@
 							-*- indented-text -*-
+to 20.3 beta10 "Athens"
+-- Linuxdoc-sgml.el courtesy of Arun Sharma.
+-- rewritten abbreviations from Hrvoje Niksic
+-- Gnus-5.4.60
+-- New file image-mode.el (Major mode for displaying image files)
+-- Miscellaneous Mule patches from MORIOKA Tomohiko
+-- Miscellaneous Hrvoje Niksic patches
+-- Configure/tree-x patches from Martin Buchholz
+-- Restore Show Message Log in Edit menu.
+-- `make autoloads' updated and should now work without Mule [untested].
+-- New boolean variable `x-seppuku-on-epipe' to handle case of X Server going
+   away and XEmacs not exiting.  Set to `t' to force immediate exit.
+-- custom-1.9940
+-- gnuserv.el-3.6
+-- speedbar-0.5 courtesy of Eric Ludlam
+-- Internals change -- Use fork() instead of vfork() for invoking
+   subprocesses
+-- Miscellaneous bug fixes
+
 to 20.3 beta9 "Sofia".
 -- cc-mode-5.11
 -- custom-1.9937

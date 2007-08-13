@@ -1,6 +1,8 @@
+(put 'extensions 'custom-loads '())
 (put 'copyright 'custom-loads '())
 (put 'eldoc 'custom-loads '())
 (put 'url 'custom-loads '("url-gw" "url-irc" "url-vars" "url"))
+(put 'auto-show 'custom-loads '())
 (put 'execute 'custom-loads '())
 (put 'mouse 'custom-loads '())
 (put 'mail-abbrevs 'custom-loads '())

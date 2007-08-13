@@ -138,6 +138,13 @@ On consoles that display only one frame at a time (e.g. TTY consoles),
 creating a new frame with `C-x 5 2' also raises and selects that
 frame.  The behavior of window system frames is unchanged.
 
+** Abbreviations can now contain non-word characters.
+
+This means that it is finally possible to do such simple things as
+define `#if' to expand to `#include' in C mode, `s-c-b' to
+`save-current-buffer' in Lisp mode, `call/cc' to
+`call-with-current-continuation' in Scheme mode, etc.
+
 ** `C-x n d' now runs the new command `narrow-to-defun',
 which narrows the accessible parts of the buffer to just
 the current defun.
@@ -149,9 +156,10 @@ confirmation first.
 ** arc-mode has a new function called `archive-quit' bound to q, which
 quits archive mode in the same fashion dired-quit works.
  
-** The feature to teach the key bindings of extended commands after
-the command finishes.  The message suggesting key bindings appears
-temporarily in the echo area.  The previous echo area contents come
+** The feature to teach the key bindings of extended commands now
+prints the message after the command finishes.  After some time, the
+previous echo area contents is restored (in case the command prints
+something useful.)
 
 ** XEmacs can now save the minibuffer histories from various
 minibuffers.  To use this feature, add the line:

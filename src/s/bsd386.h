@@ -34,5 +34,3 @@
 #undef BSD
 #include <sys/param.h> /* To get BSD defined consistently.  */
 #endif
-  
-#define GETPGRP_NO_ARG 1

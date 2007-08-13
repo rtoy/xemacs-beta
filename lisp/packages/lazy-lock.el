@@ -3,6 +3,8 @@
 ;; Copyright (C) 1994, 1995 Free Software Foundation, Inc.
 
 ;; Author: Simon Marshall <simon@gnu.ai.mit.edu>
+;; X-Modified-By: Ben Wing <ben@666.com>
+;; Maintainer: XEmacs Development Team
 ;; Keywords: faces files
 ;; Version: 1.14
 
@@ -26,12 +28,16 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: Not in FSF. (This seems very strange to me.)
+;;; Synched up with: Divergent from Official Version.
 
 ;;; Commentary:
+
+;; This version of Lazy Lock has special modifications for XEmacs by Ben Wing
+;; that have never been merged into the official version.
 
 ;; Purpose:
 ;;

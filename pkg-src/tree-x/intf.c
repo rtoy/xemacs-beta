@@ -4,9 +4,22 @@
  * ----------------------------------------------------------------------------
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_USLEEP
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif /* HAVE_UNISTD_H */
+#else
+int usleep(unsigned long microSeconds);
+#endif /* HAVE_USLEEP */
+
 #define GLOBALS 1
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 
@@ -33,7 +46,7 @@
   #include <X11/Xaw3d/Paned.h>
   #include <X11/Xaw3d/Panner.h>
   #include <X11/Xaw3d/Reports.h>
-#else  
+#else
   #include <X11/Xaw/Box.h>
   #include <X11/Xaw/Simple.h>
   #include <X11/Xaw/MenuButton.h>
@@ -50,7 +63,7 @@
   #include <X11/Xaw/Paned.h>
   #include <X11/Xaw/Panner.h>
   #include <X11/Xaw/Reports.h>
-  #endif
+#endif
 
 #include "defs.h"
 #include "tree.h"
@@ -59,9 +72,9 @@
 #include "rsrc.h"
 #include "input.h"
 #include "help.h"
+#include "dissolve.h"
 
 #include <X11/cursorfont.h>
-
 
 /* ------------------------------------------------------------------------- */
 /*				Global Variables                             */
@@ -69,7 +82,6 @@
 
 extern char  *EnvNm;    /* Stores name of current Envir file */
 
-Atom	      wm_delete_window;
 Widget        TreeTopLevel;
 Widget        TreeDrawingArea;
 Display      *TreeDisplay;
@@ -126,7 +138,7 @@ static Widget dialog[NUM_DLG];
 
 /* globals used for state values */
 
-static Widget dlgLevelScale, dlgLevelValuator, 
+static Widget dlgLevelScale, dlgLevelValuator,
               dlgSiblingValuator, dlgSiblingScale;
 static int dlgLevelValue;
 static int dlgSiblingValue;
@@ -184,25 +196,24 @@ static XtResource applRsrcsDesc[] = {
    },
 };
 
-static void popdown_action();
-static void activate_action();
-static void quit_action();
-static void Action();
+static void popdown_action    (Widget, XEvent *, String *, Cardinal *);
+static void activate_action   (Widget, XEvent *, String *, Cardinal *);
+static void quit_action       (Widget, XEvent *, String *, Cardinal *);
 
-static void select_action();
-static void button_action();
-static void menu_popup_action();
+static void select_action     (Widget, XEvent *, String *, Cardinal *);
+static void button_action     (Widget, XEvent *, String *, Cardinal *);
+static void menu_popup_action (Widget, XEvent *, String *, Cardinal *);
 
-static void set_levelscale_CB();
-static void levelscale_CB();
-static void set_siblingscale_CB();
-static void siblingscale_CB();
-static void set_levelvalue_CB();
-static void set_siblingvalue_CB();
-static void levelvalue_CB();
-static void siblingvalue_CB();
+static void set_levelscale_CB   (Widget, XtPointer, XtPointer);
+static void     levelscale_CB   (Widget, XtPointer, XtPointer);
+static void set_levelvalue_CB   (Widget, XtPointer, XtPointer);
+static void     levelvalue_CB   (Widget, XtPointer, XtPointer);
+static void set_siblingscale_CB (Widget, XtPointer, XtPointer);
+static void     siblingscale_CB (Widget, XtPointer, XtPointer);
+static void set_siblingvalue_CB (Widget, XtPointer, XtPointer);
+static void     siblingvalue_CB (Widget, XtPointer, XtPointer);
 
-static void center_widget();
+static void center_widget(Widget w, int x, int y);
 
 static XtActionsRec local_actions[] = {
   {"wmpopdown", popdown_action},
@@ -291,7 +302,7 @@ static unsigned char check_bits[] = {
 
 #define slider_pixmap_width 4
 #define slider_pixmap_height 4
-static char slider_pixmap_bits[] = {
+static unsigned char slider_pixmap_bits[] = {
   0x05, 0x0a, 0x05, 0x0a
 };
 
@@ -299,68 +310,60 @@ static char slider_pixmap_bits[] = {
 /*			 Forward Function Declarations                       */
 /* ------------------------------------------------------------------------- */
 
-static void popup_dialog();
+static void popup_dialog(Widget, XtGrabKind );
 
-static void Quit_CB();
+static void Help_CB       (Widget, XtPointer, XtPointer);
+static void HelpDone_CB   (Widget, XtPointer, XtPointer);
+static void Scale_CB      (Widget, XtPointer, XtPointer);
 
-static void Contours_CB();
-static void ShowContours_CB();
-static void Pause_CB();
-static void Speed_CB();
+static void TreeMenu_CB   (Widget, XtPointer, XtPointer);
+static void LayoutMenu_CB (Widget, XtPointer, XtPointer);
+static void NodeMenu_CB   (Widget, XtPointer, XtPointer);
 
-static void Help_CB();
-static void HelpDone_CB();
-static void Scale_CB();
+static void NodeLabel_CB  (Widget, XtPointer, XtPointer);
+static void NewTree_CB    (Widget, XtPointer, XtPointer);
+static void File_CB       (Widget, XtPointer, XtPointer);
 
-static void TreeMenu_CB();
-static void LayoutMenu_CB();
-static void NodeMenu_CB();
-
-static void NodeLabel_CB();
-static void NewTree_CB();
-static void File_CB();
-
-static void Popdown_CB();
-static void ButtonHandler();
-
-extern void ExposeHandler();
+static void Popdown_CB    (Widget, XtPointer, XtPointer);
 
 /* ------------------------------------------------------------------------- */
 /*				   Functions                                 */
 /* ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   Status() displays the specified text in the status area.
  *   'urgent' overrides the value of TreeShowSteps.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-StatusMsg(msg, urgent)
-     char *msg;
-     int  urgent;
+StatusMsg(char *msg, int urgent)
 {
-  if (TreeShowSteps || urgent) 
-    XtVaSetValues(statusText, XtNlabel, msg, NULL);
+  if (TreeShowSteps || urgent)
+    {
+      Arg al [1];
+      XtSetArg (al [0], XtNlabel, msg);
+      XtSetValues(statusText, al, 1);
+    }
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *  Pause is a trivial function, for the benefit of interface-dependent code
  *  inside tree.c. This avoids having to include X11 stuff inside that file.
  *  PauseTime is expected to contain an integer indicating 1/10ths of a sec.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-Pause()
+Pause(void)
 {
   XEvent event;
-  
+
   if (PauseAfterStep) {
     XGrabKeyboard(TreeDisplay, XtWindow(TreeTopLevel), False,
 		  GrabModeAsync, GrabModeAsync, CurrentTime);
@@ -379,50 +382,49 @@ Pause()
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   BuildPopupMenus() builds the popup menus for use in the application
  *   window.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-BuildPopupMenus(parent)
-     Widget parent;
+static void
+BuildPopupMenus(Widget parent)
 {
   Arg      args[2];
   String   xstr;
-  
+
   labelStr[STR_NODE_COLLAPSE] = "Collapse Node";
   labelStr[STR_NODE_EXPAND]   = "Expand Node";
-  
+
   treeMenus[NODE_MENU] = XtVaCreatePopupShell("nodeMenu",
 					      simpleMenuWidgetClass,
-					      parent, 
+					      parent,
 					      XtNlabel, " ",
 					      NULL);
-  
+
   (void)  XtVaCreateManagedWidget("nodeMenuAddChild", smeLineObjectClass,
 				  treeMenus[NODE_MENU],
 				  NULL);
-  
-  nodeMenuItems[NODE_MENU_ADD_CHILD] = 
+
+  nodeMenuItems[NODE_MENU_ADD_CHILD] =
     XtVaCreateManagedWidget("nodeMenuAddChild", smeBSBObjectClass,
 			    treeMenus[NODE_MENU],
 			    XtNlabel, "Add Child",
 			    NULL);
   XtAddCallback(nodeMenuItems[NODE_MENU_ADD_CHILD],
 		XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_ADD_CHILD);
-  
-  nodeMenuItems[NODE_MENU_ADD_BEFORE] = 
+
+  nodeMenuItems[NODE_MENU_ADD_BEFORE] =
     XtVaCreateManagedWidget("nodeMenuAddSiblingBefore", smeBSBObjectClass,
 			    treeMenus[NODE_MENU],
 			    XtNlabel, "Add Sibling Before",
 			    NULL);
   XtAddCallback(nodeMenuItems[NODE_MENU_ADD_BEFORE],
 		 XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_ADD_BEFORE);
-		 
-   nodeMenuItems[NODE_MENU_ADD_AFTER] = 
+
+   nodeMenuItems[NODE_MENU_ADD_AFTER] =
        XtVaCreateManagedWidget("nodeMenuAddSiblingAfter", smeBSBObjectClass,
 			       treeMenus[NODE_MENU],
 			       XtNlabel, "Add Sibling After",
@@ -438,7 +440,7 @@ BuildPopupMenus(parent)
    XtAddCallback(nodeMenuItems[NODE_MENU_ELISION],
 		 XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_ELISION);
 
-   
+
    nodeMenuItems[NODE_MENU_DELETE] =
        XtVaCreateManagedWidget("nodeMenuDeleteNode", smeBSBObjectClass,
 			       treeMenus[NODE_MENU],
@@ -447,98 +449,93 @@ BuildPopupMenus(parent)
    XtAddCallback(nodeMenuItems[NODE_MENU_DELETE],
 		 XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_DELETE);
 
-		 
+
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   BuildMenubar() builds the menubar that appears in the main window.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 
-void
-BuildMenubar(parent)
-   Widget parent;
+static void
+BuildMenubar(Widget parent)
 {
-   Arg args[4];
+   Arg al[4];
    int i;
    Widget box;
 
-   box = XtVaCreateManagedWidget("menuBox",
-				 boxWidgetClass,
-				 parent,
-				 XtNshowGrip, FALSE,
-				 XtNborderWidth, 0,
-				 NULL);
-				 
+   XtSetArg (al [0], XtNshowGrip, FALSE);
+   XtSetArg (al [1], XtNborderWidth, 0);
+   box = XtCreateManagedWidget("menuBox",
+			       boxWidgetClass,
+			       parent,
+			       al, 2);
 
    /* menu button widgets */
-   treeMenuBtns[TREE_MENU] = 
-       XtVaCreateManagedWidget("treeMenuBtn",
-			       menuButtonWidgetClass,
-			       box,
-			       XtNmenuName, "treeMenu",
-			       NULL);
+   XtSetArg (al [0], XtNmenuName, "treeMenu");
+   treeMenuBtns[TREE_MENU] =
+     XtCreateManagedWidget("treeMenuBtn",
+			   menuButtonWidgetClass,
+			   box, al, 1);
+   XtSetArg (al [0], XtNmenuName, "layoutMenu");
    treeMenuBtns[LAYOUT_MENU] =
-       XtVaCreateManagedWidget("layoutMenuBtn",
-			       menuButtonWidgetClass,
-			       box,
-			       XtNmenuName, "layoutMenu",
-			       NULL);
+     XtCreateManagedWidget("layoutMenuBtn",
+			   menuButtonWidgetClass,
+			   box, al, 1);
 
-   helpBtn = XtVaCreateManagedWidget("helpBtn",
-				     commandWidgetClass,
-				     box,
-				     NULL);
+   helpBtn = XtCreateManagedWidget("helpBtn",
+				   commandWidgetClass,
+				   box, NULL, 0);
 
    XtAddCallback(helpBtn, XtNcallback, Help_CB, NULL);
 
-   /* create pulldwon menus */
+   /* create pulldown menus */
 
-   treeMenus[TREE_MENU] = XtVaCreatePopupShell("treeMenu",
+   treeMenus[TREE_MENU] = XtCreatePopupShell("treeMenu",
+					     simpleMenuWidgetClass,
+					     treeMenuBtns[TREE_MENU],
+					     NULL, 0);
+
+   treeMenus[LAYOUT_MENU] = XtCreatePopupShell("layoutMenu",
 					       simpleMenuWidgetClass,
-					       treeMenuBtns[TREE_MENU],
+					       treeMenuBtns[LAYOUT_MENU],
 					       NULL, 0);
-   treeMenus[LAYOUT_MENU] = XtVaCreatePopupShell("layoutMenu",
-						 simpleMenuWidgetClass,
-						 treeMenuBtns[LAYOUT_MENU],
-						 NULL, 0);
 
 
    /* adding menu entries */
-   
+
    /* Tree menu */
 
-   treeMenuItems[TREE_MENU_NEW] = 
-       XtVaCreateManagedWidget("treeMenuNew", smeBSBObjectClass,
-			       treeMenus[TREE_MENU],
-			       NULL);
+   treeMenuItems[TREE_MENU_NEW] =
+     XtCreateManagedWidget("treeMenuNew", smeBSBObjectClass,
+			   treeMenus[TREE_MENU], NULL, 0);
    XtAddCallback(treeMenuItems[TREE_MENU_NEW],
 		 XtNcallback, TreeMenu_CB, TREE_MENU_NEW);
-   
-   treeMenuItems[TREE_MENU_LOAD] = 
+
+   treeMenuItems[TREE_MENU_LOAD] =
        XtVaCreateManagedWidget("treeMenuLoad", smeBSBObjectClass,
 			       treeMenus[TREE_MENU],
 			       NULL);
    XtAddCallback(treeMenuItems[TREE_MENU_LOAD],
 		 XtNcallback, TreeMenu_CB, (XtPointer) TREE_MENU_LOAD);
-		 
-   treeMenuItems[TREE_MENU_SAVE] = 
+
+   treeMenuItems[TREE_MENU_SAVE] =
        XtVaCreateManagedWidget("treeMenuSave", smeBSBObjectClass,
 			       treeMenus[TREE_MENU],
 			       NULL);
    XtAddCallback(treeMenuItems[TREE_MENU_SAVE],
 		 XtNcallback, TreeMenu_CB, (XtPointer) TREE_MENU_SAVE);
-		 
-   treeMenuItems[TREE_MENU_SEP1] = 
+
+   treeMenuItems[TREE_MENU_SEP1] =
        XtVaCreateManagedWidget("treeMenuSep1", smeLineObjectClass,
 			       treeMenus[TREE_MENU],
 			       NULL);
 
 #ifdef COMMENT
-   treeMenuItems[TREE_MENU_STATS] = 
+   treeMenuItems[TREE_MENU_STATS] =
        XtVaCreateManagedWidget("treeMenuStats", smeBSBObjectClass,
 			       treeMenus[TREE_MENU],
 			       XtNlabel, labelStr[STR_SHOW_STATS],
@@ -549,25 +546,25 @@ BuildMenubar(parent)
 
    XtSetSensitive(treeMenuItems[TREE_MENU_STATS], FALSE);
 
-   treeMenuItems[TREE_MENU_SEP2] = 
+   treeMenuItems[TREE_MENU_SEP2] =
        XtVaCreateManagedWidget("treeMenuSep2", smeLineObjectClass,
 			       treeMenus[TREE_MENU],
 			       NULL);
 #endif /* COMMENT */
-   
-   treeMenuItems[TREE_MENU_QUIT] = 
+
+   treeMenuItems[TREE_MENU_QUIT] =
        XtVaCreateManagedWidget("treeMenuQuit", smeBSBObjectClass,
 			       treeMenus[TREE_MENU],
 			       NULL);
    XtAddCallback(treeMenuItems[TREE_MENU_QUIT],
 		 XtNcallback, TreeMenu_CB, (XtPointer) TREE_MENU_QUIT);
-		 
+
 
 
    /* Layout menu */
 
 #ifdef COMMENT
-   treeMenuItems[LAYOUT_MENU_FIXED] = 
+   treeMenuItems[LAYOUT_MENU_FIXED] =
        XtVaCreateManagedWidget("layoutMenuFixed", smeBSBObjectClass,
 			       treeMenus[LAYOUT_MENU],
 			       XtNleftMargin, 18,
@@ -576,7 +573,7 @@ BuildMenubar(parent)
    XtAddCallback(treeMenuItems[LAYOUT_MENU_FIXED],
 		 XtNcallback, LayoutMenu_CB, (XtPointer) LAYOUT_MENU_FIXED);
 
-   treeMenuItems[LAYOUT_MENU_VARIABLE] = 
+   treeMenuItems[LAYOUT_MENU_VARIABLE] =
        XtVaCreateManagedWidget("layoutMenuVariable", smeBSBObjectClass,
 			       treeMenus[LAYOUT_MENU],
 			       XtNleftMargin, 18,
@@ -586,13 +583,13 @@ BuildMenubar(parent)
 		 XtNcallback, LayoutMenu_CB, (XtPointer) LAYOUT_MENU_VARIABLE);
 
 
-   treeMenuItems[LAYOUT_MENU_SEP1] = 
+   treeMenuItems[LAYOUT_MENU_SEP1] =
        XtVaCreateManagedWidget("layoutSep1", smeLineObjectClass,
 			       treeMenus[LAYOUT_MENU],
 			       NULL);
 #endif /* COMMENT */
 
-   treeMenuItems[LAYOUT_MENU_SPACING] = 
+   treeMenuItems[LAYOUT_MENU_SPACING] =
        XtVaCreateManagedWidget("layoutMenuSpacing", smeBSBObjectClass,
 			       treeMenus[LAYOUT_MENU],
 			       XtNleftMargin, 18,
@@ -600,43 +597,42 @@ BuildMenubar(parent)
    XtAddCallback(treeMenuItems[LAYOUT_MENU_SPACING],
 		 XtNcallback, LayoutMenu_CB, (XtPointer) LAYOUT_MENU_SPACING);
 
-   treeMenuItems[LAYOUT_MENU_SEP2] = 
+   treeMenuItems[LAYOUT_MENU_SEP2] =
        XtVaCreateManagedWidget("layoutMenuSep2", smeLineObjectClass,
 			       treeMenus[LAYOUT_MENU],
 			       NULL);
 
    /* the following is a toggle button - we hack it using a bitmap */
-   treeMenuItems[LAYOUT_MENU_ALIGN_NODES] = 
+   treeMenuItems[LAYOUT_MENU_ALIGN_NODES] =
        XtVaCreateManagedWidget("layoutMenuAlignNodes", smeBSBObjectClass,
 			       treeMenus[LAYOUT_MENU],
 			       XtNleftMargin, 18,
 			       NULL);
    XtAddCallback(treeMenuItems[LAYOUT_MENU_ALIGN_NODES],
-		 XtNcallback, LayoutMenu_CB, 
+		 XtNcallback, LayoutMenu_CB,
 		 (XtPointer) LAYOUT_MENU_ALIGN_NODES);
 
 }
 
 /* ----------------------------------------------------------------------------
- * 
- *   BuildDialogs() builds all the dialogs used in this application. 
- * 
+ *
+ *   BuildDialogs() builds all the dialogs used in this application.
+ *
  * ----------------------------------------------------------------------------
  */
 
-
-BuildDialogs(parent)
-     Widget parent;
+static void
+BuildDialogs (Widget parent)
 {
   int	i;
-  Widget 
-    tmpwidget, dlgForm, dlgValue, 
-    dlgLevelLabel, dlgSiblingLabel, 
+  Widget
+    tmpwidget, dlgForm, dlgValue,
+    dlgLevelLabel, dlgSiblingLabel,
     dlgOkButton, dlgCancelButton;
-  
+
   labelStr[STR_LOAD_FILE] = "Name of file to load:";
   labelStr[STR_SAVE_FILE] = "Name of file to save:";
-  
+
   errStr[ERR_OPENFAIL]  = "Failed to open file.";
   errStr[ERR_EMPTYFILE] = "Input file is empty.";
   errStr[ERR_MEMALLOC]  = "Memory allocation failed.";
@@ -644,119 +640,119 @@ BuildDialogs(parent)
   errStr[ERR_NOEND] = "Beginning of list does not have a matching end.";
   errStr[ERR_NOROOT] = "Input file does not have a root label.";
   errStr[ERR_MANYROOT] = "Input file has more than one root label.";
-  
-  
+
+
   dialog[DLG_NEW] = XtVaCreatePopupShell("dlgNewTree",
 					 transientShellWidgetClass,
 					 parent,
 					 XtNresizable, TRUE,
 					 NULL);
-  
+
   tmpwidget = XtVaCreateManagedWidget("dlgNewTreeForm",
 				      dialogWidgetClass,
-				      dialog[DLG_NEW], 
+				      dialog[DLG_NEW],
 				      XtNresizable, TRUE,
 				      XtNvalue, "",
 				      NULL);
-  
-  XawDialogAddButton(tmpwidget, "dlgNewTreeOk", NewTree_CB, 
+
+  XawDialogAddButton(tmpwidget, "dlgNewTreeOk", NewTree_CB,
 		     (XtPointer) TRUE);
-  XawDialogAddButton(tmpwidget, "dlgNewTreeCancel", NewTree_CB, 
+  XawDialogAddButton(tmpwidget, "dlgNewTreeCancel", NewTree_CB,
 		     (XtPointer) FALSE);
-  
+
   dlgValue = XtNameToWidget(tmpwidget, "value");
-  
+
   XtOverrideTranslations
     (dlgValue, XtParseTranslationTable
      ("<Key>Return:dlg_activate(dlgNewTreeOk)\n"));
-  
-  
+
+
   dialog[DLG_NODE_NAME] = XtVaCreatePopupShell("dlgNodeName",
 					       transientShellWidgetClass,
 					       TreeTopLevel,
 					       XtNresizable, TRUE,
 					       NULL);
-				    
-  
+
+
   tmpwidget= XtVaCreateManagedWidget("dlgNodeNameForm",
 				     dialogWidgetClass,
-				     dialog[DLG_NODE_NAME], 
+				     dialog[DLG_NODE_NAME],
 				     XtNresizable, TRUE,
 				     XtNvalue, "",
 				     NULL);
-  
-  XawDialogAddButton(tmpwidget, "dlgNodeNameOk", NodeLabel_CB, 
+
+  XawDialogAddButton(tmpwidget, "dlgNodeNameOk", NodeLabel_CB,
 		     (XtPointer) TRUE);
-  XawDialogAddButton(tmpwidget, "dlgNodeNameCancel", NodeLabel_CB, 
+  XawDialogAddButton(tmpwidget, "dlgNodeNameCancel", NodeLabel_CB,
 		     (XtPointer) FALSE);
-  
+
   dlgValue = XtNameToWidget(tmpwidget, "value");
-  
+
   XtOverrideTranslations
     (dlgValue, XtParseTranslationTable
      ("<Key>Return: dlg_activate(dlgNodeNameOk)\n"));
-  
+
 
   dialog[DLG_FILE] = XtVaCreatePopupShell("dlgFile",
 					  transientShellWidgetClass,
-					  TreeTopLevel, 
+					  TreeTopLevel,
 					  XtNresizable, TRUE,
 					  NULL);
 
   tmpwidget = XtVaCreateManagedWidget("dlgFileForm",
 				      dialogWidgetClass,
-				      dialog[DLG_FILE], 
+				      dialog[DLG_FILE],
 				      XtNresizable, TRUE,
 				      XtNvalue, "",
 				      NULL);
-   
+
   XawDialogAddButton(tmpwidget, "dlgFileOk", File_CB, (XtPointer) TRUE);
   XawDialogAddButton(tmpwidget, "dlgFileCancel", File_CB, (XtPointer) FALSE);
 
   dlgValue = XtNameToWidget(tmpwidget, "value");
-  
+
   XtOverrideTranslations
     (dlgValue, XtParseTranslationTable
      ("<Key>Return:dlg_activate(dlgFileOk)\n"));
-  
+
 
   dialog[DLG_INFO] = XtVaCreatePopupShell("dlgInfo",
 					  transientShellWidgetClass,
-					  TreeTopLevel, 
+					  TreeTopLevel,
 					  XtNresizable, TRUE,
 					  NULL);
-  
+
   tmpwidget = XtVaCreatePopupShell("dlgInfoForm",
 				   dialogWidgetClass,
-				   dialog[DLG_INFO], 
+				   dialog[DLG_INFO],
 				   XtNresizable, TRUE,
 				   XtNvalue, "",
 				   NULL);
-  
-  XawDialogAddButton(tmpwidget, "dlgInfoButton", Popdown_CB, 
+
+  XawDialogAddButton(tmpwidget, "dlgInfoButton", Popdown_CB,
 		     (XtPointer) dialog[DLG_INFO]);
-  
-  
+
+
   dialog[DLG_ERROR] = XtVaCreatePopupShell("dlgError",
 					   transientShellWidgetClass,
-					   TreeTopLevel, 
+					   TreeTopLevel,
 					   XtNresizable, TRUE,
 					   NULL);
-   
+
   tmpwidget = XtVaCreateManagedWidget("dlgErrorForm",
 				      dialogWidgetClass,
-				      dialog[DLG_ERROR], 
+				      dialog[DLG_ERROR],
 				      XtNresizable, TRUE,
 				      XtNvalue, "",
 				      NULL);
-   
-  XawDialogAddButton(tmpwidget, "dlgErrorButton", Popdown_CB, 
+
+  XawDialogAddButton(tmpwidget, "dlgErrorButton", Popdown_CB,
 		     (XtPointer) dialog[DLG_ERROR]);
-   
+
 
   dialog[DLG_SPACING] = XtVaCreatePopupShell("dlgSpacing",
 					     transientShellWidgetClass,
-					     TreeTopLevel, 
+					     TreeTopLevel,
 					     XtNresizable, FALSE,
 					     NULL);
   dlgForm = XtVaCreateManagedWidget("dlgSpacingForm",
@@ -764,7 +760,7 @@ BuildDialogs(parent)
 				    dialog[DLG_SPACING],
 				    XtNresizable, FALSE,
 				    NULL);
-   
+
   dlgLevelLabel = XtVaCreateManagedWidget("dlgLevelLabel",
 					  labelWidgetClass,
 					  dlgForm,
@@ -789,7 +785,7 @@ BuildDialogs(parent)
 					     XtNlabel, "   ",
 					     NULL);
 
-  
+
   dlgLevelScale = XtVaCreateManagedWidget("dlgLevelScale",
 					  pannerWidgetClass,
 					  dlgForm,
@@ -809,7 +805,7 @@ BuildDialogs(parent)
 					  XtNsliderWidth, 10,
 					  XtNheight, 15,
 					  NULL);
-  
+
   XtOverrideTranslations(dlgLevelScale, XtParseTranslationTable("\
 <Btn2Down>:		start()\n\
 <Btn2Motion>:		move()\n\
@@ -863,7 +859,7 @@ BuildDialogs(parent)
 					    XtNsliderWidth, 10,
 					    XtNheight, 15,
 					    NULL);
-  
+
   XtOverrideTranslations(dlgSiblingScale, XtParseTranslationTable("\
 <Btn2Down>:		start()\n\
 <Btn2Motion>:		move()\n\
@@ -874,7 +870,7 @@ BuildDialogs(parent)
 		(XtPointer) dlgSiblingValuator);
   XtAddCallback(dlgSiblingScale, XtNreportCallback, siblingvalue_CB,
 		(XtPointer) &dlgSiblingValue);
-  
+
   dlgOkButton = XtVaCreateManagedWidget("dlgOkButton",
 					commandWidgetClass,
 					dlgForm,
@@ -885,7 +881,7 @@ BuildDialogs(parent)
 					XtNleft, XawChainLeft,
 					XtNright, XawChainLeft,
 					NULL);
-  
+
   dlgCancelButton = XtVaCreateManagedWidget("dlgCancelButton",
 					    commandWidgetClass,
 					    dlgForm,
@@ -896,30 +892,29 @@ BuildDialogs(parent)
 					    XtNleft, XawChainLeft,
 					    XtNright, XawChainLeft,
 					    NULL);
-  
+
   XtAddCallback(dlgOkButton, XtNcallback, Scale_CB, (XtPointer) TRUE);
   XtAddCallback(dlgCancelButton, XtNcallback, Scale_CB, (XtPointer) FALSE);
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   BuildHelpWindow() builds the help window that is displayed when the
  *   Help button on the application main window is pressed.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 
 static void
-BuildHelpWindow(parent)
-     Widget parent;
+BuildHelpWindow(Widget parent)
 {
   int	i;
 
   helpShell = XtVaCreatePopupShell("helpShell", transientShellWidgetClass,
 				   parent,
 				   NULL);
-  
+
   helpForm = XtVaCreateManagedWidget("helpForm",
 				     formWidgetClass,
 				     helpShell,
@@ -935,8 +930,8 @@ BuildHelpWindow(parent)
 					   XtNleft, XawChainLeft,
 					   XtNright, XawChainLeft,
 					   NULL);
-  
-  XtAddCallback(helpDoneButton, XtNcallback, Popdown_CB, 
+
+  XtAddCallback(helpDoneButton, XtNcallback, Popdown_CB,
 		(XtPointer) helpShell);
 
   helpTitle = XtVaCreateManagedWidget("helpTitle",
@@ -964,7 +959,7 @@ BuildHelpWindow(parent)
 				     XtNeditType, XawtextRead,
 				     XtNdisplayCaret, FALSE,
 				     XtNscrollVertical, XawtextScrollAlways,
-				     XtNscrollHorizontal, 
+				     XtNscrollHorizontal,
 				     XawtextScrollWhenNeeded,
 				     XtNuseStringInPlace, TRUE,
 				     XtNstring, help_text,
@@ -974,18 +969,17 @@ BuildHelpWindow(parent)
 }
 
 /* ----------------------------------------------------------------------------
- * 
- *   BuildApplicationWindow() assumes that TreeTopLevel has been initialized 
+ *
+ *   BuildApplicationWindow() assumes that TreeTopLevel has been initialized
  *   by XtInitialize(). TreeDrawingArea is set to the drawing area in this
  *   application window.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 
 static void
-BuildApplicationWindow(parent)
-     Widget parent;
+BuildApplicationWindow(Widget parent)
 {
   Widget	topPane, box;
 
@@ -1005,7 +999,7 @@ BuildApplicationWindow(parent)
 
   scrolledWindow = XtVaCreateManagedWidget("scrolledWindow",
 					   viewportWidgetClass,
-					   topPane, 
+					   topPane,
 					   XtNshowGrip, FALSE,
 					   XtNallowHoriz, TRUE,
 					   XtNallowVert, TRUE,
@@ -1020,65 +1014,50 @@ BuildApplicationWindow(parent)
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   HandleError() is used when ReadTreeFromFile() or SaveTreeToFile() returns
- *   an error. 
- * 
+ *   an error.
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-HandleError(error, tree)
-     ErrCode error;
-     Tree *tree;
+static void
+HandleError(ErrCode error, Tree *tree)
 {
-  Widget	dlg, text;
-  
-  if (tree) {
-    dlg = XtNameToWidget(dialog[DLG_INFO], "dlgInfoForm");
-    if (dlg) {
-      XtVaSetValues(dlg, 
-		    XtNvalue, errStr[error],
-		    XtNwidth, 200,
-		    NULL);
-      text = XtNameToWidget(dlg, "value");
-      if (text) {
-	XtVaSetValues(text, XtNdisplayCaret, FALSE, NULL);
-	XtVaSetValues(XawTextGetSource(text), XtNeditType, XawtextRead, NULL);
-      }
+  Widget dlg, text;
+
+  dlg = tree ?
+    XtNameToWidget(dialog[DLG_INFO],  "dlgInfoForm") :
+    XtNameToWidget(dialog[DLG_ERROR], "dlgErrorForm");
+
+  if (dlg) {
+    Arg al [2];
+    XtSetArg (al [0], XtNvalue, errStr[error]);
+    XtSetArg (al [1], XtNwidth, 200);
+    XtSetValues(dlg, al, 2);
+    text = XtNameToWidget(dlg, "value");
+    if (text) {
+      XtSetArg (al [0], XtNdisplayCaret, FALSE);
+      XtSetValues(text, al, 1);
+      XtSetArg (al [0], XtNeditType, XawtextRead);
+      XtSetValues(XawTextGetSource(text), al, 1);
     }
-    popup_dialog(dialog[DLG_INFO], XtGrabExclusive);
-  } else {
-    dlg = XtNameToWidget(dialog[DLG_ERROR], "dlgErrorForm");
-    if (dlg) {
-      XtVaSetValues(dlg, 
-		    XtNvalue, errStr[error], 
-		    XtNwidth, 200,
-		    NULL);
-      text = XtNameToWidget(dlg, "value");
-      if (text) {
-	XtVaSetValues(text, XtNdisplayCaret, FALSE, NULL);
-	XtVaSetValues(XawTextGetSource(text), XtNeditType, XawtextRead, NULL);
-      }
-    }
-    popup_dialog(dialog[DLG_ERROR], XtGrabExclusive);
   }
+  popup_dialog (tree ? dialog[DLG_INFO] : dialog[DLG_ERROR], XtGrabExclusive);
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   InitializeInterface() initializes the environment for displaying
  *   the tree and creates the necessary supporting structures for interaction
  *   and display. This function should be called only once.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-InitializeInterface(argc, argv)
-     int *argc;
-     char *argv[];
+static void
+InitializeInterface(int *argc, char *argv[])
 {
   XrmValue       rmvalue;
   char          *rmtype;
@@ -1088,6 +1067,7 @@ InitializeInterface(argc, argv)
   Colormap       cmap;
   Pixmap         gray_pixmap;
   Atom		 wm_delete_window;
+  Arg		 al [2];
 
   /* XtSetLanguageProc is broken on some systems.
      The symptom is an error of the form:
@@ -1096,15 +1076,15 @@ InitializeInterface(argc, argv)
 
         XtSetLanguageProc(NULL, NULL, NULL);
   */
-  
-  TreeTopLevel = XtVaAppInitialize(&app, "Xoobr", 
+
+  TreeTopLevel = XtVaAppInitialize(&app, "Xoobr",
 				   NULL, 0,
-				   argc, argv, 
-				   fallback_resources, 
+				   argc, argv,
+				   fallback_resources,
 				   NULL);
-  
+
   ASSERT(TreeTopLevel, "failed to open connection to X server");
-  
+
   TreeDisplay = XtDisplay(TreeTopLevel);
   TreeScreen  = DefaultScreen(TreeDisplay);
 
@@ -1117,9 +1097,9 @@ InitializeInterface(argc, argv)
   /* add actions */
   XtAppAddActions(app, local_actions, 6);
   XawSimpleMenuAddGlobalActions(app);
-  
+
   TreeContourWidth = applRsrcsPtr->contour_width;
-  
+
   /* set up label font info */
   if (XrmGetResource(XtDatabase(TreeDisplay),
 		     X11_FONT_RESOURCE, X11_FONT_CLASS_RESOURCE,
@@ -1133,31 +1113,30 @@ InitializeInterface(argc, argv)
   else
     TreeLabelFont = XLoadQueryFont(TreeDisplay, X11_DEFAULT_FONT);
   TreeLabelFont = XLoadQueryFont(TreeDisplay, "fixed");
-  
+
   check_pixmap =
     XCreateBitmapFromData(TreeDisplay, RootWindow(TreeDisplay, TreeScreen),
-			  check_bits, check_width, check_height);
-  
+			  (char *) check_bits, check_width, check_height);
+
   slider_pixmap =
     XCreateBitmapFromData(TreeDisplay, RootWindow(TreeDisplay, TreeScreen),
-			  slider_pixmap_bits, slider_pixmap_width, 
+			  (char *) slider_pixmap_bits, slider_pixmap_width,
 			  slider_pixmap_height);
-  
+
   BuildApplicationWindow(TreeTopLevel);
   BuildHelpWindow(TreeTopLevel);
   BuildPopupMenus(TreeTopLevel);
   BuildDialogs(TreeTopLevel);
-  
-  
+
+
   XtAddEventHandler(TreeDrawingArea, ExposureMask, FALSE,
 		    ExposeHandler, (XtPointer) NULL);
-  
-  XtVaSetValues(TreeDrawingArea, 
-		XtNbackground, applRsrcsPtr->background_color, 
-		NULL);
+
+  XtSetArg (al [0], XtNbackground, applRsrcsPtr->background_color);
+  XtSetValues(TreeDrawingArea, al, 1);
   
   XtRealizeWidget(TreeTopLevel);
-  
+
   XtOverrideTranslations
     (TreeTopLevel,
      XtParseTranslationTable("<Message>WM_PROTOCOLS: quit()"));
@@ -1169,7 +1148,7 @@ InitializeInterface(argc, argv)
 
   win = XtWindow(TreeDrawingArea);
   cmap = DefaultColormap(TreeDisplay, TreeScreen);
-  
+
   /* set up double buffer */
   colors[BACKGROUND_COLOR].pixel = applRsrcsPtr->background_color;
   XQueryColor(TreeDisplay, cmap, &(colors[BACKGROUND_COLOR]));
@@ -1183,60 +1162,61 @@ InitializeInterface(argc, argv)
   XQueryColor(TreeDisplay, cmap, &(colors[SPLIT_COLOR]));
   colors[ACTION_COLOR].pixel = applRsrcsPtr->action_color;
   XQueryColor(TreeDisplay, cmap, &(colors[ACTION_COLOR]));
-  
-  TreeDrawingAreaDB = 
-    DBLcreate_double_buffer(TreeDisplay, 
+
+  TreeDrawingAreaDB =
+    DBLcreate_double_buffer(TreeDisplay,
 			    XtWindow(TreeDrawingArea), TRUE,
 			    colors, NUM_COLORS);
 
   ASSERT(TreeDrawingAreaDB, "could not create double buffer");
-  
+
   background = DBLinq_background(TreeDrawingAreaDB);
-  
-  
-  XtVaSetValues(TreeDrawingArea, XtNbackground, background, NULL);
-  
+
+
+  XtSetArg(al [0], XtNbackground, background);
+  XtSetValues(TreeDrawingArea, al, 1);
+
   /* also set the scrolledWindow background to same color */
-  XtVaSetValues(XtParent(TreeDrawingArea), XtNbackground, background, NULL);
-  
+  XtSetArg(al [0], XtNbackground, background);
+  XtSetValues(XtParent(TreeDrawingArea), al, 1);
+
   XSetFont(TreeDrawingAreaDB->display, TreeDrawingAreaDB->gc,
-	   TreeLabelFont->fid); 
-  
+	   TreeLabelFont->fid);
+
   gray_pixmap =
     XCreatePixmapFromBitmapData(TreeDisplay, XtWindow(TreeDrawingArea),
-				gray_bits, gray_width, gray_height,
+				(char *)gray_bits, gray_width, gray_height,
 				TreeDrawingAreaDB->colors[TREE_COLOR],
 				background,
 				DefaultDepth(TreeDisplay, TreeScreen));
-  
+
 #ifdef COMMENT
-  XtVaSetValues(treeMenuItems[LAYOUT_MENU_VARIABLE],
-		XtNleftBitmap, check_pixmap, 
-		NULL);
+  XtSetArg(al [0], XtNleftBitmap, check_pixmap);
+  XtSetValues(treeMenuItems[LAYOUT_MENU_VARIABLE], al, 1);
 #endif
 
   XSetTile(TreeDrawingAreaDB->display, TreeDrawingAreaDB->gc, gray_pixmap);
   SetDrawColor(TREE_COLOR);
-  
+
   InitializeDissolveEffect(TreeDisplay, XtWindow(TreeDrawingArea),
 			   TreeDrawingAreaDB->colors[TREE_COLOR], background);
-  
+
   PauseCursor = XCreateFontCursor(TreeDisplay, XC_watch);
-  
+
   StatusMsg("Ready", TRUE);
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   UserEventLoop() is called after InitializeInterface() to handle
  *   processing of events.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-UserEventLoop()
+static void
+UserEventLoop(void)
 {
   XtAppMainLoop(app);
 }
@@ -1247,36 +1227,38 @@ UserEventLoop()
 /* ------------------------------------------------------------------------- */
 
 static void
-TreeMenu_CB(w, client_data, call_data)
-     Widget w;
-     XtPointer client_data;
-     XtPointer call_data;
+TreeMenu_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
   long		menuItem = (long) client_data;
   Widget	dlgFileForm;
-  
+  Arg		al [2];
+
   switch (menuItem) {
   case TREE_MENU_NEW:
     popup_dialog(dialog[DLG_NEW], XtGrabExclusive);
     break;
   case TREE_MENU_LOAD:
     loading_file = 1;
-    XtVaSetValues(dialog[DLG_FILE],  XtNtitle, "Load File", NULL);
+    XtSetArg (al [0], XtNtitle, "Load File");
+    XtSetValues(dialog[DLG_FILE],  al, 1);
     dlgFileForm = XtNameToWidget(dialog[DLG_FILE], "dlgFileForm");
-    XtVaSetValues(dlgFileForm, XtNvalue, "", NULL);
+    XtSetArg (al [0], XtNvalue, "");
+    XtSetValues(dlgFileForm, al, 1);
     popup_dialog(dialog[DLG_FILE], XtGrabExclusive);
     break;
   case TREE_MENU_SAVE:
     loading_file = 0;
-    XtVaSetValues(dialog[DLG_FILE],  XtNtitle, "Save File", NULL);
+    XtSetArg (al [0], XtNtitle, "Save File");
+    XtSetValues(dialog[DLG_FILE],  al, 1);
     dlgFileForm = XtNameToWidget(dialog[DLG_FILE], "dlgFileForm");
-    XtVaSetValues(dlgFileForm, XtNvalue, "", NULL);
+    XtSetArg (al [0], XtNvalue, "");
+    XtSetValues(dlgFileForm, al, 1);
     popup_dialog(dialog[DLG_FILE], XtGrabExclusive);
     break;
   case TREE_MENU_QUIT:
     exit(0);
     break;
-    
+
   default:
     WARN("unknown menu item in TreeMenu_CB");
   }
@@ -1286,34 +1268,34 @@ TreeMenu_CB(w, client_data, call_data)
 /* ------------------------------------------------------------------------- */
 
 static void
-LayoutMenu_CB(w, client_data, call_data)
-     Widget w;
-     XtPointer client_data;
-     XtPointer call_data;
+LayoutMenu_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
   long	menuItem = (long) client_data;
   char	tmpstr[10];
-  
+  Arg	al [2];
+
   switch (menuItem) {
 #ifdef COMMENT
   case LAYOUT_MENU_FIXED:
-    XtVaSetValues(layoutMenuItems[LAYOUT_MENU_VARIABLE],
-                  XtNleftBitmap, None, NULL);
-    XtVaSetValues(layoutMenuItems[LAYOUT_MENU_FIXED], 
-                  XtNleftBitmap, check_pixmap, NULL);
+    XtSetArg (al [0], XtNleftBitmap, None);
+    XtSetValues(layoutMenuItems[LAYOUT_MENU_VARIABLE], al, 1);
+
+    XtSetArg (al [0], XtNleftBitmap, check_pixmap);
+    XtSetValues(layoutMenuItems[LAYOUT_MENU_FIXED], al, 1);
 
     if (TreeLayoutDensity != Fixed) {
       TreeLayoutDensity = Fixed;
       DeleteTree(TheTree, TRUE);
       SetupTree(TheTree);
     }
-    break;    
+    break;
   case LAYOUT_MENU_VARIABLE:
-    XtVaSetValues(layoutMenuItems[LAYOUT_MENU_VARIABLE],
-                  XtNleftBitmap, check_pixmap, NULL);
-    XtVaSetValues(layoutMenuItems[LAYOUT_MENU_FIXED], 
-                  XtNleftBitmap, None, NULL);
-    
+    XtSetArg (al [0], XtNleftBitmap, check_pixmap);
+    XtSetValues(layoutMenuItems[LAYOUT_MENU_VARIABLE], al, 1);
+
+    XtSetArg (al [0], XtNleftBitmap, None);
+    XtSetValues(layoutMenuItems[LAYOUT_MENU_FIXED], al, 1);
+
     if (TreeLayoutDensity != Variable) {
       TreeLayoutDensity = Variable;
       DeleteTree(TheTree, TRUE);
@@ -1325,24 +1307,23 @@ LayoutMenu_CB(w, client_data, call_data)
     dlgLevelValue = TreeParentDistance;
     dlgSiblingValue = TreeBorderSize;
     sprintf(tmpstr, "%d  ", dlgLevelValue);
-    XtVaSetValues(dlgLevelValuator, XtNlabel, tmpstr, NULL);
+    XtSetArg (al [0], XtNlabel, tmpstr);
+    XtSetValues(dlgLevelValuator, al, 1);
 
     /* These setvalues need some adjustments... */
-    XtVaSetValues(dlgLevelScale, 
-		  XtNsliderX, (dlgLevelValue * 2),
-		  NULL);
+    XtSetArg (al [0], XtNsliderX, dlgLevelValue * 2);
+    XtSetValues(dlgLevelScale, al, 1);
     sprintf(tmpstr, "%d  ", dlgSiblingValue);
-    XtVaSetValues(dlgSiblingValuator, XtNlabel, tmpstr, NULL);
-    XtVaSetValues(dlgSiblingScale, 
-		  XtNsliderX, (dlgSiblingValue * 4),
-		  NULL);
+    XtSetArg (al [0], XtNlabel, tmpstr);
+    XtSetValues(dlgSiblingValuator, al, 1);
+    XtSetArg (al [0], XtNsliderX, dlgSiblingValue * 4);
+    XtSetValues(dlgSiblingScale, al, 1);
     popup_dialog(dialog[DLG_SPACING], XtGrabNone);
     break;
   case LAYOUT_MENU_ALIGN_NODES:
     TreeAlignNodes = !TreeAlignNodes;
-    XtVaSetValues(treeMenuItems[LAYOUT_MENU_ALIGN_NODES],
-		  XtNleftBitmap, TreeAlignNodes ? check_pixmap : None, 
-		  NULL);
+    XtSetArg (al [0], XtNleftBitmap, TreeAlignNodes ? check_pixmap : None);
+    XtSetValues(treeMenuItems[LAYOUT_MENU_ALIGN_NODES], al, 1);
     DeleteTree(TheTree, TRUE);
     ResetLabels(TheTree);
     SetupTree(TheTree);
@@ -1356,13 +1337,10 @@ LayoutMenu_CB(w, client_data, call_data)
 /* ------------------------------------------------------------------------- */
 
 static void
-NodeMenu_CB(w, client_data, call_data)
-     Widget w;
-     XtPointer client_data;
-     XtPointer call_data;
+NodeMenu_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
   long	menuItem = (long) client_data;
-   
+
   switch (menuItem) {
   case NODE_MENU_ADD_CHILD:
     NodePos = Child;
@@ -1393,10 +1371,7 @@ NodeMenu_CB(w, client_data, call_data)
 /* ------------------------------------------------------------------------- */
 
 static void
-Help_CB(w, client_data, call_data)
-     Widget w;
-     XtPointer client_data;
-     XtPointer call_data;
+Help_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
   popup_dialog(helpShell, XtGrabNone);
 }
@@ -1405,10 +1380,7 @@ Help_CB(w, client_data, call_data)
 /* ------------------------------------------------------------------------- */
 
 static void
-HelpDone_CB(w, client_data, call_data)
-     Widget w;
-     XtPointer client_data;
-     XtPointer call_data;
+HelpDone_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
   XtPopdown(helpShell);
 }
@@ -1417,10 +1389,7 @@ HelpDone_CB(w, client_data, call_data)
 /* ------------------------------------------------------------------------- */
 
 static void
-NodeLabel_CB(w, client_data, call_data)
-     Widget w;
-     XtPointer client_data;
-     XtPointer call_data;
+NodeLabel_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
   char	*node_label;
 
@@ -1429,23 +1398,20 @@ NodeLabel_CB(w, client_data, call_data)
     node_label = XtMalloc(strlen(XawDialogGetValueString(XtParent(w)))
 			  * sizeof(char));
     node_label = strcpy(node_label, XawDialogGetValueString(XtParent(w)));
-    if (*node_label) 
+    if (*node_label)
       InsertNode(PopupNode, NodePos, node_label);
   }
 }
-      
+
 
 /* ------------------------------------------------------------------------- */
 
 static void
-NewTree_CB(w, client_data, call_data)
-     Widget w;
-     XtPointer client_data;
-     XtPointer call_data;
+NewTree_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
   char	*node_label;
   Tree	*tree;
-  
+
   XtPopdown(dialog[DLG_NEW]);
   if (client_data == (XtPointer) TRUE) {
     node_label = XtMalloc((strlen(XawDialogGetValueString(XtParent(w))) + 1)
@@ -1469,21 +1435,18 @@ NewTree_CB(w, client_data, call_data)
 /* ------------------------------------------------------------------------- */
 
 static void
-File_CB(w, client_data, call_data)
-     Widget w;
-     XtPointer client_data;
-     XtPointer call_data;
+File_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
   char *fname;
   Tree *tree;
   ErrCode error;
   Arg args[1];
   int menuItem;
-  
+
   if (client_data == (XtPointer) TRUE) {
     fname = XawDialogGetValueString(XtParent(w));
-    if (*fname) { 
-      
+    if (*fname) {
+
       if (loading_file == 1) {
 	if (TheTree) {
 	  Delete(TheTree);
@@ -1511,33 +1474,30 @@ File_CB(w, client_data, call_data)
       }
     } else
       XtPopdown(dialog[DLG_FILE]);
-  } else 
-    XtPopdown(dialog[DLG_FILE]); 
+  } else
+    XtPopdown(dialog[DLG_FILE]);
 }
 
 
 /* ------------------------------------------------------------------------- */
 
 static void
-Scale_CB(w, client_data, call_data)
-     Widget w;
-     XtPointer client_data;
-     XtPointer call_data;
+Scale_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
   int	level_value, sibling_value;
   float	tmp;
-    
+
   XtPopdown(dialog[DLG_SPACING]);
 
   /* check if OK button was selected */
   if (client_data) {
     level_value = dlgLevelValue;
-    
+
     sibling_value = dlgSiblingValue;
-    
+
     if (level_value != TreeParentDistance ||
 	sibling_value != TreeBorderSize) {
-      
+
       TreeParentDistance = level_value;
       TreeBorderSize = sibling_value;
       XSync(TreeDisplay, 0);
@@ -1559,39 +1519,26 @@ Scale_CB(w, client_data, call_data)
 /* ------------------------------------------------------------------------- */
 
 static void
-Popdown_CB(w, client_data, call_data)
-     Widget w;
-     XtPointer client_data;
-     XtPointer call_data;
+Popdown_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
-  Widget	widget = (Widget) client_data;
-    
+  Widget widget = (Widget) client_data;
+
   XtPopdown(widget);
 }
 
 static void
-activate_action(w, event, params, num_params)
-     Widget w;
-     XButtonEvent *event;
-     String *params;
-     Cardinal *num_params;
+activate_action(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
-  Widget	button;
-  
   if (*num_params == 1) {
-    button = XtNameToWidget(XtParent(w), params[0]);
-    
+    Widget button = XtNameToWidget(XtParent(w), params[0]);
+
     if (button)
       XtCallCallbacks(button, XtNcallback, (XtPointer) TRUE);
   }
 }
 
 static void
-quit_action(w, event, params, num_params)
-     Widget w;
-     XButtonEvent *event;
-     String *params;
-     Cardinal *num_params;
+quit_action(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
   exit(0);
 }
@@ -1600,38 +1547,34 @@ quit_action(w, event, params, num_params)
 
 /* ------------------------------------------------------------------------- */
 
-static void 
-select_action(w, event, params, num_params)
-     Widget w;
-     XButtonEvent *event;
-     String *params;
-     Cardinal *num_params;
+static void
+select_action(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
   Tree		*node;
   int		height;
   Boolean	edit = FALSE;
 
-  if ((*num_params > 0) && 
+  if ((*num_params > 0) &&
       (!strcmp(params[0], "EDIT") ||
        !strcmp(params[0], "edit")))
     edit = TRUE;
 
-  if (SearchTree(TheTree, event->x, event->y, &node)) {
+  if (SearchTree(TheTree, event->xbutton.x, event->xbutton.y, &node)) {
     static Tree *PrevNode = NULL;
     Tree *ParNode = NULL;
-    
+
     PopupNode = node;
     if (PrevNode != NULL)
       DrawNode(PrevNode, New);
     PrevNode = PopupNode;
-    
-    printf("%s^^%s^^%s\n", 
+
+    printf("%s^^%s^^%s\n",
 	   EnvNm,
 	   edit ? "br-edit" : "br-view",
 	   (PopupNode->value) ? PopupNode->value : PopupNode->label.text);
 
     StatusMsg(PopupNode->label.text, 1);
-    
+
     ParNode = PopupNode->parent;
     PopupNode->parent = NULL;
     HiliteNode(PopupNode, New);
@@ -1639,26 +1582,18 @@ select_action(w, event, params, num_params)
   }
 }
 
-static void 
-menu_popup_action(w, event, params, num_params)
-     Widget w;
-     XEvent *event;
-     String *params;
-     Cardinal *num_params;
+static void
+menu_popup_action(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
-  Widget menu;
+  char *strargs[] = {"nodeMenu", NULL};
+  Widget menu = XtNameToWidget(TreeTopLevel, params[0]);
   Boolean popup;
-  ShellWidget shell_widget;
+  ShellWidget shell_widget = (ShellWidget) menu;
 
-  char	    *strargs[] = {"nodeMenu", NULL};
-  
-  menu = XtNameToWidget(TreeTopLevel, params[0]);
-  shell_widget = (ShellWidget) menu;
-  
   if (nodeFound) {
 
-    /* This is giving me a headache. 
-     * Why does popup menus come up unselectable? 
+    /* This is giving me a headache.
+     * Why do popup menus come up unselectable?
      */
 
     XtCallActionProc(TreeDrawingArea,
@@ -1666,7 +1601,7 @@ menu_popup_action(w, event, params, num_params)
 		     event,
 		     strargs,
 		     1);
-		 
+
 /*
     XtSetSensitive(menu, TRUE);
     XtPopupSpringLoaded(menu);
@@ -1676,100 +1611,93 @@ menu_popup_action(w, event, params, num_params)
       printf("error: not shell widget!\n");
     } else {
       if (! shell_widget->shell.popped_up) {
-	
+
 	XtGrabKind call_data = XtGrabExclusive;
-	
+
 	XtCallCallbacks(menu, XtNpopupCallback, (XtPointer) &call_data);
-	
+
 	shell_widget->shell.popped_up = TRUE;
 	shell_widget->shell.grab_kind = XtGrabExclusive;
 	shell_widget->shell.spring_loaded = TRUE;
-	
+
 	if (shell_widget->shell.create_popup_child_proc != NULL) {
 	  (*(shell_widget->shell.create_popup_child_proc))(menu);
 	}
-	
+
 	XtAddGrab(menu, TRUE, TRUE);
-	
+
 	XtRealizeWidget(menu);
-	
+
 	XMapRaised(XtDisplay(menu), XtWindow(menu));
-	
+
       } else
-	XRaiseWindow(XtDisplay(menu), XtWindow(menu));   
+	XRaiseWindow(XtDisplay(menu), XtWindow(menu));
     }
     */
   }
 }
 
 
-static void 
-button_action(w, event, params, num_params)
-     Widget w;
-     XEvent *event;
-     String *params;
-     Cardinal *num_params;
+static void
+button_action(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
-  Tree     *node;
-  
+  Tree *node;
+  Arg	al [2];
+
   if (SearchTree(TheTree, event->xbutton.x, event->xbutton.y, &node)) {
-    
+
     nodeFound = TRUE;
-    
+
     XtSetSensitive(nodeMenuItems[NODE_MENU_DELETE], TRUE);
 
-    XtVaSetValues(treeMenus[NODE_MENU], 
-		  XtNlabel, node->label.text, 
-		  NULL);
+    XtSetArg (al [0], XtNlabel, node->label.text);
+    XtSetValues(treeMenus[NODE_MENU], al, 1);
+
     PopupNode = node;
     if (IS_LEAF(node))  {
-      
+
       XtSetSensitive(nodeMenuItems[NODE_MENU_ELISION], FALSE);
-      
-      XtVaSetValues(nodeMenuItems[NODE_MENU_ELISION], 
-		    XtNlabel, labelStr[STR_NODE_COLLAPSE], 
-		    NULL);
-      
+
+      XtSetArg (al [0], XtNlabel, labelStr[STR_NODE_COLLAPSE]);
+      XtSetValues(nodeMenuItems[NODE_MENU_ELISION], al, 1);
+
     } else {
-      
+
       XtSetSensitive(nodeMenuItems[NODE_MENU_ELISION], TRUE);
       if (node->elision) {
-	XtVaSetValues(nodeMenuItems[NODE_MENU_ELISION],
-		      XtNlabel, labelStr[STR_NODE_EXPAND],
-		      NULL);
+	XtSetArg (al [0], XtNlabel, labelStr[STR_NODE_EXPAND]);
+	XtSetValues(nodeMenuItems[NODE_MENU_ELISION], al, 1);
       } else {
-	XtVaSetValues(nodeMenuItems[NODE_MENU_ELISION],
-		      XtNlabel, labelStr[STR_NODE_COLLAPSE],
-		      NULL);
+	XtSetArg (al [0], XtNlabel, labelStr[STR_NODE_COLLAPSE]);
+	XtSetValues(nodeMenuItems[NODE_MENU_ELISION], al, 1);
       }
     }
-    
+
     if (node->parent) {
       XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_BEFORE], TRUE);
-      XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_AFTER], TRUE);
+      XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_AFTER] , TRUE);
     } else {
       XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_BEFORE], FALSE);
-      XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_AFTER], FALSE);
+      XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_AFTER] , FALSE);
     }
-    
+
     if (node->elision) {
       XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_CHILD], FALSE);
     } else {
       XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_CHILD], TRUE);
     }
-    
+
   } else {
     nodeFound = FALSE;
 
-    XtVaSetValues(treeMenus[NODE_MENU], 
-		  XtNlabel, " ", 
-		  NULL);
+    XtSetArg (al [0], XtNlabel, " ");
+    XtSetValues(treeMenus[NODE_MENU], al, 1);
 
     XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_BEFORE], FALSE);
-    XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_AFTER], FALSE);
-    XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_CHILD], FALSE);
-    XtSetSensitive(nodeMenuItems[NODE_MENU_ELISION], FALSE);
-    XtSetSensitive(nodeMenuItems[NODE_MENU_DELETE], FALSE);
+    XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_AFTER],  FALSE);
+    XtSetSensitive(nodeMenuItems[NODE_MENU_ADD_CHILD],  FALSE);
+    XtSetSensitive(nodeMenuItems[NODE_MENU_ELISION],    FALSE);
+    XtSetSensitive(nodeMenuItems[NODE_MENU_DELETE],     FALSE);
   }
 }
 
@@ -1780,194 +1708,176 @@ button_action(w, event, params, num_params)
 /*									     */
 /* ------------------------------------------------------------------------- */
 
-static void center_widget(w, x, y)
-Widget w;
-int x, y;
+static void center_widget(Widget w, int x, int y)
 {
   Dimension	width, height, border;
   Position	max_x, max_y;
-  
-  XtVaGetValues(w,
-		XtNwidth, &width,
-		XtNheight, &height,
-		XtNborderWidth, &border,
-		NULL);
-  
-  width += 2 * border;
+  Arg		al [3];
+
+  XtSetArg (al [0], XtNwidth,       &width);
+  XtSetArg (al [1], XtNheight,      &height);
+  XtSetArg (al [2], XtNborderWidth, &border);
+  XtGetValues(w, al, 3);
+
+  width  += 2 * border;
   height += 2 * border;
-  
+
   x -= ((Position) width / 2);
   y -= ((Position) height / 2);
-  
+
   if (x < 0) x = 0;
   if (y < 0) y = 0;
-  
+
   if (x > (max_x = (Position) (XtScreen(w)->width - width)) )
     x = max_x;
-  
+
   if (y > (max_y = (Position) (XtScreen(w)->height - height)) )
     y = max_y;
-  
-  XtVaSetValues(w,
-		XtNx, x,
-		XtNy, y,
-		NULL);
+
+  XtSetArg (al [0], XtNx, x);
+  XtSetArg (al [1], XtNy, y);
+  XtSetValues(w, al, 2);
 }
 
 #define shell_translations "<Message>WM_PROTOCOLS: wmpopdown()\n"
-		     
-static void 
-popup_dialog(shell, grab_kind)
-     Widget shell;
-     XtGrabKind grab_kind;
+
+static void
+popup_dialog(Widget shell, XtGrabKind grab_kind)
 {
   int		idummy, x, y;
+  unsigned int  uidummy;
   Window	wdummy;
+  Atom		wm_delete_window;
 
   XtOverrideTranslations(shell, XtParseTranslationTable(shell_translations));
   XtRealizeWidget(shell);
-  wm_delete_window = XInternAtom(XtDisplay(shell), "WM_DELETE_WINDOW", 
+  wm_delete_window = XInternAtom(XtDisplay(shell), "WM_DELETE_WINDOW",
 				 FALSE);
   (void) XSetWMProtocols(XtDisplay(shell), XtWindow(shell),
 			 &wm_delete_window, 1);
-  
-  XQueryPointer(TreeDisplay, DefaultRootWindow(TreeDisplay), 
+
+  XQueryPointer(TreeDisplay, DefaultRootWindow(TreeDisplay),
 		&wdummy, &wdummy,
-		&x, &y, &idummy, &idummy, &idummy);
-  
+		&x, &y, &idummy, &idummy, &uidummy);
+
   center_widget(shell, x, y);
-  
+
   XtPopup(shell, grab_kind);
 }
 
-static void 
-popdown_action(widget, event, params, num_params)
-     Widget widget;
-     XEvent *event;
-     String *params;
-     Cardinal *num_params;
+static void
+popdown_action(Widget widget, XEvent *event, String *params, Cardinal *num_params)
 {
   XtPopdown(widget);
 }
 
-static void 
-set_siblingscale_CB(widget, w, percent_ptr)
-     Widget widget;
-     XtPointer w;
-     XtPointer percent_ptr;
+static void
+set_siblingscale_CB(Widget widget, XtPointer w, XtPointer percent_ptr)
 {
   char tmpstr[10];
-  
-  sprintf(tmpstr, "%d  ", (int) (*(float*) percent_ptr*MAX_BORDER_SIZE));
-  
-  XtVaSetValues((Widget) w, XtNlabel, tmpstr, NULL);
-}
+  Arg al [1];
 
-static void 
-siblingscale_CB(widget, w, report)
-     Widget widget;
-     XtPointer w;
-     XawPannerReport *report;
-{
-  char tmpstr[10];
-  
-  sprintf(tmpstr, "%d ", (int) 
-	  ((float) report->slider_x / report->slider_width 
-	   * MAX_BORDER_SIZE / 10));
-  
-  XtVaSetValues((Widget) w, XtNlabel, tmpstr, NULL);
+  sprintf(tmpstr, "%d  ", (int) (*(float*) percent_ptr*MAX_BORDER_SIZE));
+
+  XtSetArg (al [0], XtNlabel, tmpstr);
+  XtSetValues((Widget) w, al, 1);
 }
 
 static void
-set_levelscale_CB(widget, w, percent_ptr)
-     Widget widget;
-     XtPointer w;
-     XtPointer percent_ptr;
+siblingscale_CB(Widget widget, XtPointer w, XtPointer call_data)
+{
+  char tmpstr[10];
+  XawPannerReport *report = (XawPannerReport *) call_data;
+  Arg al [1];
+
+  sprintf(tmpstr, "%d ", (int)
+	  ((float) report->slider_x / report->slider_width
+	   * MAX_BORDER_SIZE / 10));
+
+  XtSetArg (al [0], XtNlabel, tmpstr);
+  XtSetValues((Widget) w, al, 1);
+}
+
+static void
+set_levelscale_CB(Widget widget, XtPointer w, XtPointer percent_ptr)
 {
   char	tmpstr[10];
+  Arg al [1];
 
   sprintf(tmpstr, "%d  ", (int) (*(float*) percent_ptr*MAX_PARENT_DISTANCE));
 
-  XtVaSetValues((Widget) w, XtNlabel, tmpstr, NULL);
+  XtSetArg (al [0], XtNlabel, tmpstr);
+  XtSetValues((Widget) w, al, 1);
 }
 
 static void
-levelscale_CB(widget, w, report)
-     Widget widget;
-     XtPointer w;
-     XawPannerReport *report;
+levelscale_CB(Widget widget, XtPointer w, XtPointer call_data)
 {
   char	tmpstr[10];
-  
-  sprintf(tmpstr, "%d ", (int) 
-	  ((float) report->slider_x / report->slider_width 
+  XawPannerReport *report = (XawPannerReport *) call_data;
+  Arg al [1];
+
+  sprintf(tmpstr, "%d ", (int)
+	  ((float) report->slider_x / report->slider_width
 	   * MAX_PARENT_DISTANCE / 10));
-  
-  XtVaSetValues((Widget) w, XtNlabel, tmpstr, NULL);
+
+  XtSetArg (al [0], XtNlabel, tmpstr);
+  XtSetValues((Widget) w, al, 1);
 }
 
-static void 
-set_siblingvalue_CB(widget, var_ptr, percent_ptr)
-     Widget widget;
-     XtPointer var_ptr;
-     XtPointer percent_ptr;
+static void
+set_siblingvalue_CB(Widget widget, XtPointer var_ptr, XtPointer percent_ptr)
 {
   * (int *)var_ptr = (int) (*(float*) percent_ptr*MAX_BORDER_SIZE);
 }
 
-static void 
-set_levelvalue_CB(widget, var_ptr, percent_ptr)
-     Widget widget;
-     XtPointer var_ptr;
-     XtPointer percent_ptr;
+static void
+set_levelvalue_CB(Widget widget, XtPointer var_ptr, XtPointer percent_ptr)
 {
   * (int *)var_ptr = (int) (*(float*) percent_ptr*MAX_PARENT_DISTANCE);
 }
 
 
-static void 
-siblingvalue_CB(widget, var_ptr, report)
-     Widget widget;
-     XtPointer var_ptr;
-     XawPannerReport *report;
+static void
+siblingvalue_CB(Widget widget, XtPointer var_ptr, XtPointer call_data)
 {
-  * (int *) var_ptr = (int) 
-    ((float) report->slider_x / report->slider_width 
+  XawPannerReport *report = (XawPannerReport *) call_data;
+
+  * (int *) var_ptr = (int)
+    ((float) report->slider_x / report->slider_width
      * MAX_BORDER_SIZE / 10);
 }
 
-static void 
-levelvalue_CB(widget, var_ptr, report)
-     Widget widget;
-     XtPointer var_ptr;
-     XawPannerReport *report;
+static void
+levelvalue_CB(Widget widget, XtPointer var_ptr, XtPointer call_data)
 {
-  * (int *) var_ptr = (int) 
-    ((float) report->slider_x / report->slider_width 
+  XawPannerReport *report = (XawPannerReport *) call_data;
+
+  * (int *) var_ptr = (int)
+    ((float) report->slider_x / report->slider_width
      * MAX_PARENT_DISTANCE / 10);
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   Main routine
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-main(argc, argv)
-     int argc;
-     char *argv[];
+int
+main(int argc, char *argv[])
 {
   Tree *tree = NULL;
   ErrCode error = ERR_NONE;
-  
+
   ProgramName = strdup(argv[0]);
   if (ProgramName == NULL) {
     fprintf(stderr, "%s: insufficient memory available\n", argv[0]);
     exit(0);
   }
-  
+
   InitializeInterface(&argc, argv);
   XSync(TreeDisplay, 0);
 
@@ -1976,8 +1886,8 @@ main(argc, argv)
     if (tree) StatusMsg(argv[1], TRUE);
     if (argc > 2)
       WARN("extraneous arguments ignored");
-  } 
-     
+  }
+
   if (tree) {
     SetupTree(tree);
     XtSetSensitive(treeMenuItems[TREE_MENU_SAVE], TRUE);
@@ -1988,17 +1898,13 @@ main(argc, argv)
 
   if (error != ERR_NONE)
     HandleError(error, tree);
-  
+
   StatusMsg("Left = Edit Node; Mid = View Node; Right = Node Menu", 1);
   UserEventLoop();
+
+  return 0;
 }
 
 /* ------------------------------------------------------------------------- */
 /*				  End of File                                */
 /* ------------------------------------------------------------------------- */
-
-
-
-
-
-

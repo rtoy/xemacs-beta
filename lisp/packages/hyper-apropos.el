@@ -118,8 +118,6 @@ Otherwise, only the interactive functions and user variables will be listed."
      (:foreground "gray90")))
   "Hyper-apropos documentation."
   :group 'hyper-apropos-faces)
-(define-obsolete-variable-alias
-  'hypropos-documentation 'hyper-apropos-documentation)
 
 (defface hyper-apropos-hyperlink
   '((((class color) (background light))
@@ -130,32 +128,22 @@ Otherwise, only the interactive functions and user variables will be listed."
      (:bold t)))
   "Hyper-apropos hyperlinks."
   :group 'hyper-apropos-faces)
-(define-obsolete-variable-alias
-  'hypropos-hyperlink 'hyper-apropos-hyperlink)
 
 (defface hyper-apropos-major-heading '((t (:bold t)))
   "Hyper-apropos major heading."
   :group 'hyper-apropos-faces)
-(define-obsolete-variable-alias
-  'hypropos-major-heading 'hyper-apropos-major-heading)
 
 (defface hyper-apropos-section-heading '((t (:bold t :italic t)))
   "Hyper-apropos section heading."
   :group 'hyper-apropos-faces)
-(define-obsolete-variable-alias
-  'hypropos-section-heading 'hyper-apropos-section-heading)
 
 (defface hyper-apropos-heading '((t (:bold t)))
   "Hyper-apropos heading."
   :group 'hyper-apropos-faces)
-(define-obsolete-variable-alias
-  'hypropos-heading 'hyper-apropos-heading)
 
 (defface hyper-apropos-warning '((t (:bold t :foreground "red")))
   "Hyper-apropos warning."
   :group 'hyper-apropos-faces)
-(define-obsolete-variable-alias
-  'hypropos-warning 'hyper-apropos-warning)
 
 ;;; Internal variables below this point
 

@@ -894,8 +894,6 @@ articles in the topic and its subtopics."
     [tab] gnus-topic-indent
     "r" gnus-topic-rename
     "\177" gnus-topic-delete
-    [backpace] gnus-topic-delete
-    [delete] gnus-topic-delete
     "h" gnus-topic-toggle-display-empty-topics)
 
   (gnus-define-keys (gnus-topic-sort-map "S" gnus-group-topic-map)

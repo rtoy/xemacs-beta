@@ -1,7 +1,7 @@
 ;;; gnuserv.el --- Lisp interface code between Emacs and gnuserv
 ;; Copyright (C) 1989-1997 Free Software Foundation, Inc.
 
-;; Version: 3.4
+;; Version: 3.6
 ;; Author: Andy Norman (ange@hplb.hpl.hp.com), originally based on server.el
 ;;         Hrvoje Niksic <hniksic@srce.hr>
 ;; Maintainer: Jan Vroonhof <vroonhof@math.ethz.ch>,
@@ -80,7 +80,7 @@
 ;;; Code:
 
 (defconst gnuserv-rcs-version
-  "$Id: gnuserv.el,v 1.11 1997/06/26 02:31:17 steve Exp $")
+  "$Id: gnuserv.el,v 1.12 1997/06/29 23:13:06 steve Exp $")
 
 (defgroup gnuserv nil
   "The gnuserv suite of programs to talk to Emacs from outside."
@@ -88,6 +88,32 @@
   :group 'processes
   :group 'terminals)
 
+
+
+;; Provide the old variables as aliases, to avoid breaking .emacs
+;; files.  However, they are obsolete and should be converted to the
+;; new forms.  This ugly crock must be before the variable
+;; declaration, or the scheme fails.
+
+(define-obsolete-variable-alias 'server-frame 'gnuserv-frame)
+(define-obsolete-variable-alias 'server-done-function
+  'gnuserv-done-function)
+(define-obsolete-variable-alias 'server-done-temp-file-function
+  'gnuserv-done-temp-file-function)
+(define-obsolete-variable-alias 'server-find-file-function
+  'gnuserv-find-file-function)
+(define-obsolete-variable-alias 'server-program
+  'gnuserv-program)
+(define-obsolete-variable-alias 'server-visit-hook
+  'gnuserv-visit-hook)
+(define-obsolete-variable-alias 'server-done-hook
+  'gnuserv-done-hook)
+(define-obsolete-variable-alias 'server-kill-quietly
+  'gnuserv-kill-quietly)
+(define-obsolete-variable-alias 'server-temp-file-regexp
+  'gnuserv-temp-file-regexp)
+(define-obsolete-variable-alias 'server-make-temp-file-backup
+  'gnuserv-make-temp-file-backup)
 
 ;;;###autoload
 (defcustom gnuserv-frame nil
@@ -184,29 +210,6 @@ and reused by the programs that invoke the Emacs server."
   :group 'gnuserv)
 
 
-;; The old functions are provided as aliases, to avoid breaking .emacs
-;; files.  However, they are obsolete and should be avoided.
-
-(define-obsolete-variable-alias 'server-frame 'gnuserv-frame)
-(define-obsolete-variable-alias 'server-done-function 'gnuserv-done-function)
-(define-obsolete-variable-alias 'server-done-temp-file-function
-  'gnuserv-done-temp-file-function)
-(define-obsolete-variable-alias 'server-find-file-function
-  'gnuserv-find-file-function)
-(define-obsolete-variable-alias 'server-program
-  'gnuserv-program)
-(define-obsolete-variable-alias 'server-visit-hook
-  'gnuserv-visit-hook)
-(define-obsolete-variable-alias 'server-done-hook
-  'gnuserv-done-hook)
-(define-obsolete-variable-alias 'server-kill-quietly
-  'gnuserv-kill-quietly)
-(define-obsolete-variable-alias 'server-temp-file-regexp
-  'gnuserv-temp-file-regexp)
-(define-obsolete-variable-alias 'server-make-temp-file-backup
-  'gnuserv-make-temp-file-backup)
-
-
 ;;; Internal variables:
 
 (defstruct gnuclient
@@ -288,21 +291,17 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
 ;; We used to restart the server here, but it's too risky -- if
 ;; something goes awry, it's too easy to wind up in a loop.
 (defun gnuserv-sentinel (proc msg)
+  (let ((msgstring (concat "Gnuserv process %s; restart with `%s'"))
+	(keystring (substitute-command-keys "\\[gnuserv-start]")))
   (case (process-status proc)
     (exit
-     (message
-      (substitute-command-keys
-       "Gnuserv subprocess exited; restart with `\\[gnuserv-start]'"))
+     (message msgstring "exited" keystring)
      (gnuserv-prepare-shutdown))
     (signal
-     (message
-      (substitute-command-keys
-       "Gnuserv subprocess killed; restart with `\\[gnuserv-start]'"))
+     (message msgstring "killed" keystring)
      (gnuserv-prepare-shutdown))
     (closed
-     (message
-      (substitute-command-keys
-       "Gnuserv subprocess closed; restart with `\\[gnuserv-start]'"))
+     (message msgstring "closed" keystring))
      (gnuserv-prepare-shutdown))))
 
 ;; This function reads client requests from our current server.  Every
@@ -466,10 +465,12 @@ If a flag is `view', view the files read-only."
 	;; `gnuserv-edit'.
 	(if (and (not (or quick view))
 		 (gnuclient-buffers client))
-	    (message (substitute-command-keys
+	    (message "%s"
+		     (substitute-command-keys
 		      "Type `\\[gnuserv-edit]' to finish editing"))
 	  (or dest-frame
-	      (message (substitute-command-keys
+	      (message "%s"
+		       (substitute-command-keys
 			"Type `\\[delete-frame]' to finish editing")))))))))
 
 
@@ -543,7 +544,7 @@ editing has ended."
 	;; we must make sure that the server kill doesn't result in
 	;; killing the device, because it would cause a device-dead
 	;; error when `delete-device' tries to do the job later.
-	(gnuserv-kill-client (car client) t))))
+	(gnuserv-kill-client client t))))
   (callf2 delq device gnuserv-devices))
 
 (add-hook 'delete-device-hook 'gnuserv-check-device)

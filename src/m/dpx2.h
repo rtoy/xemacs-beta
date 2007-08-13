@@ -153,11 +153,6 @@ Boston, MA 02111-1307, USA.  */
 # undef USG_JOBCTRL
 #endif
 
-/*
- * but we have that
-*/
-#define GETPGRP_NO_ARG
-
 /* select also needs this header file--but not in ymakefile.  */
 #ifndef NOT_C_CODE
 #include <sys/types.h>

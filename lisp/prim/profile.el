@@ -26,26 +26,37 @@
 
 ;;; Commentary:
 
+;; `profile' macro and `profile-key-sequence' added in June 1997 by
+;; hniksic.
+
+
 ;;; Code:
 
 ;;;###autoload
-(defun pretty-print-profiling-info (&optional info)
-  "Print profiling info INFO to standard output in a pretty format.
+(defun pretty-print-profiling-info (&optional info stream)
+  "Print profiling info INFO to STREAM in a pretty format.
 If INFO is omitted, the current profiling info is retrieved using
-`get-profiling-info'."
-  (if info (setq info (copy-alist info))
+`get-profiling-info'.
+If STREAM is omitted, either current buffer or standard output are used,
+ depending on whether the function was called interactively or not."
+  (interactive)
+  (if info
+      (setq info (copy-alist info))
     (setq info (get-profiling-info)))
-  (setq info (nreverse (sort info #'cdr-less-than-cdr)))
-  (princ "Function                                               Count        %\n")
-  (princ "---------------------------------------------------------------------\n")
-  (let ((sum 0.0))
-    (dolist (info2 info)
-      (incf sum (cdr info2)))
-    (while info
-      (let ((f (caar info)))
-	(princ (format "%-50s%10d   %6.3f\n" f (cdar info)
-		       (* 100 (/ (cdar info) sum)))))
-      (setq info (cdr info)))))
+  (let ((standard-output (or stream (if (interactive-p)
+					(current-buffer)
+				      standard-output))))
+    (setq info (nreverse (sort info #'cdr-less-than-cdr)))
+    (princ "Function                                               Count        %\n")
+    (princ "---------------------------------------------------------------------\n")
+    (let ((sum 0.0))
+      (dolist (info2 info)
+	(incf sum (cdr info2)))
+      (while info
+	(let ((f (caar info)))
+	  (princ (format "%-50s%10d   %6.3f\n" f (cdar info)
+			 (* 100 (/ (cdar info) sum)))))
+	(pop info)))))
 
 ;;;###autoload
 (defmacro profile (&rest forms)
@@ -60,5 +71,18 @@ Returns the profiling info, printable by `pretty-print-profiling-info'."
      (get-profiling-info)))
 
 (put 'profile 'lisp-indent-function 0)
+
+;;;###autoload
+(defun profile-key-sequence (keys)
+  "Dispatch the key sequence KEYS and profile the execution.
+KEYS can be a vector of keypress events, a keypress event, or a character.
+The function returns the profiling info."
+  (interactive "kProfile keystroke: ")
+  (and (characterp keys)
+       (setq keys (character-to-event keys)))
+  (or (vectorp keys)
+      (setq keys (vector keys)))
+  (profile
+    (mapc 'dispatch-event keys)))
 
 ;;; profile.el ends here

@@ -615,6 +615,25 @@ with no args, if that value is non-nil." t nil)
 
 ;;;***
 
+;;;### (autoloads (image-decode-xpm image-decode-png image-decode-gif image-decode-jpeg image-mode) "image-mode" "modes/image-mode.el")
+
+(autoload 'image-mode "image-mode" "\
+\\{image-mode-map}" t nil)
+
+(autoload 'image-decode-jpeg "image-mode" "\
+Decode JPEG image between START and END." nil nil)
+
+(autoload 'image-decode-gif "image-mode" "\
+Decode GIF image between START and END." nil nil)
+
+(autoload 'image-decode-png "image-mode" "\
+Decode PNG image between START and END." nil nil)
+
+(autoload 'image-decode-xpm "image-mode" "\
+Decode XPM image between START and END." nil nil)
+
+;;;***
+
 ;;;### (autoloads (imenu imenu-add-to-menubar) "imenu" "modes/imenu.el")
 
 (defvar imenu-generic-expression nil "\
@@ -661,7 +680,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.2 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.3 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -769,6 +788,15 @@ Installation:
          (setq ksh-match-and-tell t)
          (setq ksh-align-to-keyword t)	;; Turn on keyword alignment
 	 )))" t nil)
+
+;;;***
+
+;;;### (autoloads (linuxdoc-sgml-mode) "linuxdoc-sgml" "modes/linuxdoc-sgml.el")
+
+(autoload 'linuxdoc-sgml-mode "linuxdoc-sgml" "\
+Major mode based on SGML mode for editing linuxdoc-sgml documents.
+See the documentation on sgml-mode for more info. This mode
+understands the linuxdoc-sgml tags." t nil)
 
 ;;;***
 
@@ -1584,6 +1612,10 @@ Like `mail' command, but display mail buffer in another frame." t nil)
 
 ;;;***
 
+;;;### (autoloads nil "sgml-mode" "modes/sgml-mode.el")
+
+;;;***
+
 ;;;### (autoloads (sh-mode) "sh-script" "modes/sh-script.el")
 
 (put 'sh-mode 'mode-class 'special)
@@ -2005,7 +2037,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.2 $
+vhdl-mode $Revision: 1.3 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

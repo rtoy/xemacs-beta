@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/7/15
-;; Version: $Id: richtext.el,v 1.1 1997/06/03 04:18:36 steve Exp $
+;; Version: $Id: richtext.el,v 1.2 1997/06/29 23:12:06 steve Exp $
 ;; Keywords: wp, faces, MIME, multimedia
 
 ;; This file is not part of GNU Emacs yet.
@@ -76,6 +76,7 @@ of this structure.")
 ;;; @ encoder
 ;;;
 
+;;;###autoload
 (defun richtext-encode (from to)
   (if enriched-verbose (message "Richtext: encoding document..."))
   (save-restriction
@@ -136,6 +137,7 @@ Return value is \(begin end name positive-p), or nil if none was found."
 	       ))
 	))))
 
+;;;###autoload
 (defun richtext-decode (from to)
   (if enriched-verbose (message "Richtext: decoding document..."))
   (save-excursion

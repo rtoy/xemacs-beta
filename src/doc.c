@@ -36,31 +36,6 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Vdoc_file_name;
 
-#ifdef VMS
-/* For VMS versions with limited file name syntax,
-   convert the name to something VMS will allow. */
-static void
-munge_doc_file_name (char *name)
-{
-#ifndef VMS4_4
-  /* For VMS versions with limited file name syntax,
-     convert the name to something VMS will allow.  */
-  p = name;
-  while (*p)
-    {
-      if (*p == '-')
-	*p = '_';
-      p++;
-    }
-#endif /* not VMS4_4 */
-#ifdef VMS4_4
-  strcpy (name, sys_translate_unix (name));
-#endif /* VMS4_4 */
-}
-#else /* NOT VMS */
-#define munge_doc_file_name(name)
-#endif /* VMS */
-
 /* Read and return doc string from open file descriptor FD
    at position POSITION.  Does not close the file.  Returns
    string; or if error, returns a cons holding the error
@@ -233,7 +208,6 @@ get_doc_string (Lisp_Object filepos)
 	minsize = 12;
       name_nonreloc = (char *) alloca (minsize + XSTRING_LENGTH (file) + 8);
       string_join (name_nonreloc, Vdoc_directory, file);
-      munge_doc_file_name (name_nonreloc);
     }
   else
     name_reloc = file;
@@ -251,7 +225,6 @@ get_doc_string (Lisp_Object filepos)
 	     So check in ../lib-src. */
 	  strcpy (name_nonreloc, "../lib-src/");
 	  strcat (name_nonreloc, (char *) XSTRING_DATA (file));
-	  munge_doc_file_name (name_nonreloc);
 
 	  fd = open (name_nonreloc, O_RDONLY, 0);
 	}
@@ -463,22 +436,6 @@ when doc strings are referred to in the dumped Emacs.
   strcpy (name, (char *) XSTRING_DATA (Vdoc_directory));
 #endif /* CANNOT_DUMP */
   strcat (name, (char *) XSTRING_DATA (filename));
-#ifdef VMS
-#ifndef VMS4_4
-  /* For VMS versions with limited file name syntax,
-     convert the name to something VMS will allow.  */
-  p = name;
-  while (*p)
-    {
-      if (*p == '-')
-	*p = '_';
-      p++;
-    }
-#endif /* not VMS4_4 */
-#ifdef VMS4_4
-  strcpy (name, sys_translate_unix (name));
-#endif /* VMS4_4 */
-#endif /* VMS */
 
   fd = open (name, O_RDONLY, 0);
   if (fd < 0)

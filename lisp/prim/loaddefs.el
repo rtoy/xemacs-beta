@@ -69,12 +69,14 @@
 ;;; already has an autoload section in this file.
 ;;; **********************************************************************
 
+
 ;;; Code:
 
 ;; These variables are used by autoloadable packages.
 ;; They are defined here so that they do not get overridden
 ;; by the loading of those packages.
 
+
 ;; Names in directory that end in one of these
 ;; are ignored in completion,
 ;; making it more likely you will get a unique match.
@@ -90,74 +92,70 @@
 		  ".lof" ".blg" ".bbl" ".glo" ".idx" ".lot" ".fmt"
 		  ".diff" ".oi"))))
 
+
 (setq debug-ignored-errors
       '(beginning-of-line
 	beginning-of-buffer
 	end-of-line
         end-of-buffer
 	end-of-file buffer-read-only
-	"^Previous command was not a yank\\'"
-	"^Minibuffer window is not active\\'"
-	"^End of history; no next item\\'"
-	"^Beginning of history; no preceding item\\'"
-	"^No recursive edit is in progress\\'"
-	"^Changes to be undone are outside visible portion of buffer\\'"
-	"^No undo information in this buffer\\'"
-	"^No further undo information\\'"
-	"^Save not confirmed\\'"
-	"^Recover-file cancelled\\.\\'"
+	"\\`Previous command was not a yank\\'"
+	"\\`Minibuffer is not active for completion\\'"
+	"\\`No \\(following\\|preceding\\) item in .*-history\\'"
+	"\\`No recursive edit is in progress\\'"
+	"\\`Changes to be undone are outside visible portion of buffer\\'"
+	"\\`No further undo information\\'"
+	"\\`No undo information in this buffer\\'"
+	"\\`Buffer modified since last undo/redo, cannot redo"
+	"\\`Save not confirmed\\'"
+	"\\`Canceled\\'"
+	"\\`\\(Revert\\|Steal\\|Recover-file\\) cancelled\\.\\'"
 
 	;; comint
-	"^Not at command line\\'"
-	"^Empty input ring\\'"
-	"^No history\\'"
-	"^Not found\\'";; To common?
-	"^Current buffer has no process\\'"
+	"\\`Not at command line\\'"
+	"\\`Empty input ring\\'"
+	"\\`No history\\'"
+	"\\`Not found\\'" ;; To common?
+	"\\`Current buffer has no process\\'"
 
 	;; dabbrev
-	"^No dynamic expansion for \".*\" found\\.\\'"
-	"^No further dynamic expansions for \".*\" found\\.\\'"
-	"^No further dynamic expansions for `.*' found\\'"
+	"\\`No \\(further \\)?dynamic expansion for .* found\\.?\\'"
 
 	;; Completion
-	"^To complete, the point must be after a symbol at least [0-9]* character long\\.\\'"
-	"^The string \".*\" is too short to be saved as a completion\\.\\'"
+	"\\`To complete, the point must be after a symbol at least [0-9]* character long\\.\\'"
+	"\\`The string \".*\" is too short to be saved as a completion\\.\\'"
 
 	;; Compile
-	"^No more errors\\( yet\\|\\)\\'"
+	"\\`No more errors\\( yet\\|\\)\\'"
 
 	;; Gnus
-	"^NNTP: Connection closed\\.\\'"
+	;"\\`NNTP: Connection closed\\.\\'"
 
 	;; info
-	"^Node has no Previous\\'"
-	"^No \".*\" in index\\'"
+	"\\`Node has no Previous\\'"
+	"\\`No \".*\" in index\\'"
 
 	;; imenu
-	"^No items suitable for an index found in this buffer\\.\\'"
-	"^The mode \".*\" does not take full advantage of imenu\\.el yet\\.\\'"
+	;"\\`No items suitable for an index found in this buffer\\.\\'"
+	;"\\`The mode \".*\" does not take full advantage of imenu\\.el yet\\.\\'"
 
 	;; ispell
-	"^No word found to check!\\'"
+	"\\`No word found to check!\\'"
 
 	;; man
+	"\\`.* not found\\'"
+	"\\`No more history\\.\\'"
 
 	;; etags
-	"^No tags table in use!  Use .* to select one\\.\\'"
-	"^There is no default tag\\'"
-	"^No previous tag locations\\'"
-	"^File .* is not a valid tags table\\'"
-	"^No \\(more \\|\\)tags \\(matching\\|containing\\) "
-	"^Rerun etags: `.*' not found in "
-	"^All files processed\\.\\'"
-	"^No .* or .* in progress.\\'"
-	"^File .* not in current tags tables\\'"
-	"No tags table loaded."
-	"^Nothing to complete\\'"
+	"\\`File .* is not a valid tag table\\'"
+	"\\`File .* is not a valid tags file\\'"
+	"\\`All files processed\\.\\'"
+	"No TAGS file name supplied\\'"
+	"\\`Nothing to complete\\'"
 
 	;; BBDB
-	"^no previous record\\'"
-	"^no next record\\'"))
+	"\\`no previous record\\'"
+	"\\`no next record\\'"))
 
 (make-variable-buffer-local 'indent-tabs-mode)
 

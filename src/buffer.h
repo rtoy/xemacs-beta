@@ -75,142 +75,141 @@ Boston, MA 02111-1307, USA.  */
    */
 
 struct buffer_text
-  {
-    Bufbyte *beg;		/* Actual address of buffer contents. */    
-    Bytind gpt;			/* Index of gap in buffer. */
-    Bytind z;			/* Index of end of buffer. */
-    Bufpos bufz;		/* Equivalent as a Bufpos. */
-    int gap_size;		/* Size of buffer's gap */
-    int end_gap_size;		/* Size of buffer's end gap */
-    int modiff;			/* This counts buffer-modification events
-				   for this buffer.  It is incremented for
-				   each such event, and never otherwise
-				   changed.  */
-    int save_modiff;		/* Previous value of modiff, as of last
-				   time buffer visited or saved a file.  */
+{
+  Bufbyte *beg;		/* Actual address of buffer contents. */    
+  Bytind gpt;		/* Index of gap in buffer. */
+  Bytind z;		/* Index of end of buffer. */
+  Bufpos bufz;		/* Equivalent as a Bufpos. */
+  int gap_size;		/* Size of buffer's gap */
+  int end_gap_size;	/* Size of buffer's end gap */
+  long modiff;		/* This counts buffer-modification events
+			   for this buffer.  It is incremented for
+			   each such event, and never otherwise
+			   changed.  */
+  long save_modiff;	/* Previous value of modiff, as of last
+			   time buffer visited or saved a file.  */
 
 #ifdef MULE
-    /* We keep track of a "known" region for very fast access.
-       This information is text-only so it goes here. */
-    Bufpos mule_bufmin, mule_bufmax;
-    Bytind mule_bytmin, mule_bytmax;
-    int mule_shifter, mule_three_p;
+  /* We keep track of a "known" region for very fast access.
+     This information is text-only so it goes here. */
+  Bufpos mule_bufmin, mule_bufmax;
+  Bytind mule_bytmin, mule_bytmax;
+  int mule_shifter, mule_three_p;
 
-    /* And we also cache 16 positions for fairly fast access near those
-       positions. */
-    Bufpos mule_bufpos_cache[16];
-    Bytind mule_bytind_cache[16];
+  /* And we also cache 16 positions for fairly fast access near those
+     positions. */
+  Bufpos mule_bufpos_cache[16];
+  Bytind mule_bytind_cache[16];
 #endif
 
-    /* Change data that goes with the text. */
-    struct buffer_text_change_data *changes;
+  /* Change data that goes with the text. */
+  struct buffer_text_change_data *changes;
 
-  };
+};
 
 struct buffer
-  {
-    struct lcrecord_header header;
+{
+  struct lcrecord_header header;
 
-    /* This structure holds the coordinates of the buffer contents
-       in ordinary buffers.  In indirect buffers, this is not used.  */
-    struct buffer_text own_text;
+  /* This structure holds the coordinates of the buffer contents
+     in ordinary buffers.  In indirect buffers, this is not used.  */
+  struct buffer_text own_text;
 
-    /* This points to the `struct buffer_text' that is used for this buffer.
-       In an ordinary buffer, this is the own_text field above.
-       In an indirect buffer, this is the own_text field of another buffer.  */
-    struct buffer_text *text;
+  /* This points to the `struct buffer_text' that is used for this buffer.
+     In an ordinary buffer, this is the own_text field above.
+     In an indirect buffer, this is the own_text field of another buffer.  */
+  struct buffer_text *text;
 
-    Bytind pt;			/* Position of point in buffer. */
-    Bufpos bufpt;		/* Equivalent as a Bufpos. */
-    Bytind begv;		/* Index of beginning of accessible range. */
-    Bufpos bufbegv;		/* Equivalent as a Bufpos. */
-    Bytind zv;			/* Index of end of accessible range. */
-    Bufpos bufzv;		/* Equivalent as a Bufpos. */
+  Bytind pt;		/* Position of point in buffer. */
+  Bufpos bufpt;		/* Equivalent as a Bufpos. */
+  Bytind begv;		/* Index of beginning of accessible range. */
+  Bufpos bufbegv;	/* Equivalent as a Bufpos. */
+  Bytind zv;		/* Index of end of accessible range. */
+  Bufpos bufzv;		/* Equivalent as a Bufpos. */
 
-    int face_change;		/* This is set when a change in how the text
-				   should be displayed (e.g., font, color)
-				   is made. */
+  int face_change;	/* This is set when a change in how the text should
+			   be displayed (e.g., font, color) is made. */
 
-    /* change data indicating what portion of the text has changed
-       since the last time this was reset.  Used by redisplay.
-       Logically we should keep this with the text structure, but
-       redisplay resets it for each buffer individually and we don't
-       want interference between an indirect buffer and its base
-       buffer. */
-    struct each_buffer_change_data *changes;
+  /* change data indicating what portion of the text has changed
+     since the last time this was reset.  Used by redisplay.
+     Logically we should keep this with the text structure, but
+     redisplay resets it for each buffer individually and we don't
+     want interference between an indirect buffer and its base
+     buffer. */
+  struct each_buffer_change_data *changes;
 
 #ifdef REGION_CACHE_NEEDS_WORK
-    /* If the long line scan cache is enabled (i.e. the buffer-local
-       variable cache-long-line-scans is non-nil), newline_cache
-       points to the newline cache, and width_run_cache points to the
-       width run cache.
+  /* If the long line scan cache is enabled (i.e. the buffer-local
+     variable cache-long-line-scans is non-nil), newline_cache
+     points to the newline cache, and width_run_cache points to the
+     width run cache.
 
-       The newline cache records which stretches of the buffer are
-       known *not* to contain newlines, so that they can be skipped
-       quickly when we search for newlines.
+     The newline cache records which stretches of the buffer are
+     known *not* to contain newlines, so that they can be skipped
+     quickly when we search for newlines.
 
-       The width run cache records which stretches of the buffer are
-       known to contain characters whose widths are all the same.  If
-       the width run cache maps a character to a value > 0, that value is
-       the character's width; if it maps a character to zero, we don't
-       know what its width is.  This allows compute_motion to process
-       such regions very quickly, using algebra instead of inspecting
-       each character.   See also width_table, below.  */
-    struct region_cache *newline_cache;
-    struct region_cache *width_run_cache;
-#endif
+     The width run cache records which stretches of the buffer are
+     known to contain characters whose widths are all the same.  If
+     the width run cache maps a character to a value > 0, that value
+     is the character's width; if it maps a character to zero, we
+     don't know what its width is.  This allows compute_motion to
+     process such regions very quickly, using algebra instead of
+     inspecting each character.  See also width_table, below.  */
+  struct region_cache *newline_cache;
+  struct region_cache *width_run_cache;
+#endif /* REGION_CACHE_NEEDS_WORK */
 
-    /* The markers that refer to this buffer.  This
-       is actually a single marker -- successive elements in its marker
-       `chain' are the other markers referring to this buffer */
-    struct Lisp_Marker *markers;
+  /* The markers that refer to this buffer.  This is actually a single
+     marker -- successive elements in its marker `chain' are the other
+     markers referring to this buffer */
+  struct Lisp_Marker *markers;
 
-    /* The buffer's extent info.  This is its own type, an extent-info
-       object (done this way for ease in marking / finalizing). */
-    Lisp_Object extent_info;
+  /* The buffer's extent info.  This is its own type, an extent-info
+     object (done this way for ease in marking / finalizing). */
+  Lisp_Object extent_info;
 
-    /* ----------------------------------------------------------------- */
-    /* All the stuff above this line is the responsibility of insdel.c,
-       with some help from marker.c and extents.c.
-       All the stuff below this line is the responsibility of buffer.c. */
+  /* ----------------------------------------------------------------- */
+  /* All the stuff above this line is the responsibility of insdel.c,
+     with some help from marker.c and extents.c.
+     All the stuff below this line is the responsibility of buffer.c. */
 
-    /* In an indirect buffer, this points to the base buffer.
-       In an ordinary buffer, it is 0.
-       We DO mark through this slot. */
-    struct buffer *base_buffer;
+  /* In an indirect buffer, this points to the base buffer.
+     In an ordinary buffer, it is 0.
+     We DO mark through this slot. */
+  struct buffer *base_buffer;
 
-    /* List of indirect buffers whose base is this buffer.
-       If we are an indirect buffer, this will be nil.
-       Do NOT mark through this. */
-    Lisp_Object indirect_children;
+  /* List of indirect buffers whose base is this buffer.
+     If we are an indirect buffer, this will be nil.
+     Do NOT mark through this. */
+  Lisp_Object indirect_children;
 
-    /* Flags saying which DEFVAR_PER_BUFFER variables
-       are local to this buffer.  */
-    int local_var_flags;
+  /* Flags saying which DEFVAR_PER_BUFFER variables
+     are local to this buffer.  */
+  int local_var_flags;
 
-    /* Set to the modtime of the visited file when read or written.
-       -1 means visited file was nonexistent.
-       0 means visited file modtime unknown; in no case complain
-       about any mismatch on next save attempt.  */
-    int modtime;
+  /* Set to the modtime of the visited file when read or written.
+     -1 means visited file was nonexistent.
+     0  means visited file modtime unknown; in no case complain
+     about any mismatch on next save attempt.  */
+  int modtime;
 
-    /* the value of text->modiff at the last auto-save.  */
-    int auto_save_modified;
+  /* the value of text->modiff at the last auto-save.  */
+  int auto_save_modified;
 
-    /* The time at which we detected a failure to auto-save,
-       Or -1 if we didn't have a failure.  */
-    int auto_save_failure_time;
+  /* The time at which we detected a failure to auto-save,
+     Or -1 if we didn't have a failure.  */
+  int auto_save_failure_time;
 
-    /* Position in buffer at which display started
-       the last time this buffer was displayed.  */
-    int last_window_start;
+  /* Position in buffer at which display started
+     the last time this buffer was displayed.  */
+  int last_window_start;
 
-    /* Everything from here down must be a Lisp_Object */
+  /* Everything from here down must be a Lisp_Object */
 
 #define MARKED_SLOT(x) Lisp_Object x
 #include "bufslots.h"
 #undef MARKED_SLOT
-  };
+};
 
 DECLARE_LRECORD (buffer, struct buffer);
 #define XBUFFER(x) XRECORD (x, buffer, struct buffer)
@@ -520,8 +519,7 @@ charptr_length (CONST Bufbyte *ptr)
 
 Emchar non_ascii_charptr_emchar (CONST Bufbyte *ptr);
 Bytecount non_ascii_set_charptr_emchar (Bufbyte *ptr, Emchar c);
-Bytecount non_ascii_charptr_copy_char (CONST Bufbyte *ptr,
-				       Bufbyte *ptr2);
+Bytecount non_ascii_charptr_copy_char (CONST Bufbyte *ptr, Bufbyte *ptr2);
 
 INLINE Emchar charptr_emchar (CONST Bufbyte *ptr);
 INLINE Emchar
@@ -862,9 +860,6 @@ memind_to_bytind (struct buffer *buf, Memind x)
 
     make_bufpos(buf, bi):
 	Given a Bytind, return the equivalent Bufpos as a Lisp Object.
-
-
-
  */
 
 
@@ -1858,10 +1853,8 @@ INLINE Emchar UPCASE (struct buffer *buf, Emchar ch);
 INLINE Emchar
 UPCASE (struct buffer *buf, Emchar ch)
 {
-  if (DOWNCASE_TABLE_OF (buf, ch) == ch)
-    return UPCASE_TABLE_OF (buf, ch);
-  else
-    return ch;
+  return (DOWNCASE_TABLE_OF (buf, ch) == ch) ?
+    UPCASE_TABLE_OF (buf, ch) : ch;
 }
 
 /* Upcase a character known to be not upper case.  */
@@ -1873,7 +1866,7 @@ UPCASE (struct buffer *buf, Emchar ch)
 #define DOWNCASE(buf, ch) DOWNCASE_TABLE_OF (buf, ch)
 
 
-/* put it here, somewhat arbitrarily ...  its needs to be in *some*
+/* put it here, somewhat arbitrarily ...  it needs to be in *some*
    header file. */
 DECLARE_LRECORD (range_table, struct Lisp_Range_Table);
 

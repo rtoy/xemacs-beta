@@ -518,7 +518,10 @@ Obsolete autoload entries for files that no longer exist are deleted."
       (mapatoms (lambda (symbol)
 		  (let ((members (condition-case nil
 				     (get symbol 'custom-group)
-				   (t nil)))
+				   (t (progn
+					(message "Bad plist in %s"
+						 (symbol-name symbol)))
+				      nil)))
 			item where found)
 		    (when members
 		      (princ "(put '")
@@ -599,7 +602,8 @@ be used only with -batch, and kills XEmacs on completion."
 	(save-some-buffers t))
       (message "Done")
       ;; (kill-emacs 0)
-      )))
+      )
+    (setq command-line-args-left nil)))
 
 (provide 'autoload)
 

@@ -3,6 +3,7 @@
 (put 'custom-buffer 'custom-loads '("cus-edit"))
 (put 'eldoc 'custom-loads '())
 (put 'custom-faces 'custom-loads '("cus-edit"))
+(put 'auto-show 'custom-loads '())
 (put 'execute 'custom-loads '())
 (put 'mouse 'custom-loads '())
 (put 'mail-abbrevs 'custom-loads '())

@@ -28,20 +28,23 @@
 ;;; String manipulations while paying attention to multibyte
 ;;; characters.
 
+;; [Was defsubst]
 ;;;###autoload
-(defsubst string-to-sequence (string type)
+(defun string-to-sequence (string type)
   "Convert STRING to a sequence of TYPE which contains characters in STRING.
 TYPE should be `list' or `vector'.
-Multibyte characters are conserned."
+Multibyte characters are concerned."
   (map type (function identity) string))
 
+;; [Was defsubst]
 ;;;###autoload
-(defsubst string-to-list (string)
+(defun string-to-list (string)
   "Return a list of characters in STRING."
   (mapcar (function identity) string))
 
+;; [Was defsubst]
 ;;;###autoload
-(defsubst string-to-vector (string)
+(defun string-to-vector (string)
   "Return a vector of characters in STRING."
   (string-to-sequence string 'vector))
 
@@ -111,8 +114,9 @@ If PADDING is nil, the resulting string may be narrower than WIDTH."
 ;;; Nested alist handler.  Nested alist is alist whose elements are
 ;;; also nested alist.
 
+;; [Was defsubst]
 ;;;###autoload
-(defsubst nested-alist-p (obj)
+(defun nested-alist-p (obj)
   "Return t if OBJ is a nesetd alist.
 
 Nested alist is a list of the form (ENTRY . BRANCHES), where ENTRY is

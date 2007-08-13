@@ -275,7 +275,7 @@ mo_file = ${mo_dir}emacs.mo
 LOADPATH =  EMACSLOADPATH="${lispdir}prim"
 DUMPENV = $(LOADPATH)
 
-release: temacs ${lisp} ${libsrc}DOC $(mo_file) ${other_files}
+release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 #ifdef CANNOT_DUMP
 	ln temacs xemacs
 #else
@@ -299,13 +299,15 @@ release: temacs ${lisp} ${libsrc}DOC $(mo_file) ${other_files}
 	touch release
 #endif /* ! defined (CANNOT_DUMP) */
 
-xemacs: temacs ${libsrc}DOC ${lisp} $(mo_file) ${other_files}
+FRC.DOC:
+
+xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} dump-elcs
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
 	@if test ! -f SATISFIED; then $(MAKE) $@; fi
 	@$(RM) SATISFIED
 
-xemacs-no-site-file: temacs ${libsrc}DOC ${lisp} $(mo_file) ${other_files}
+xemacs-no-site-file: temacs ${libsrc}DOC $(mo_file) ${other_files} dump-elcs
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump no-site-file
 	@if test ! -f SATISFIED; then $(MAKE) $@; fi
@@ -319,8 +321,10 @@ dynodump_deps = ../dynodump/dynodump.so
 	cd ../dynodump && ${MAKE} ${MFLAGS}
 #endif /* DYNODUMP */
 
-${libsrc}DOC:
-	$(RM) ${libsrc}DOC
+${libsrc}DOC: ../lib-src/make-docfile FRC.DOC
+#ifdef NO_DOC_FILE
+	if test -f $@; then touch $@ && exit 0; fi; \
+#endif
 	-${DUMPENV} ./temacs -batch -l ../prim/make-docfile.el -- \
 		-o ${libsrc}DOC -d ${srcdir} -i ${libsrc}../site-packages \
 		${obj_src} ${mallocdocsrc} ${rallocdocsrc}
@@ -348,8 +352,8 @@ all-elc all-elcs:
    msgfmt=		 msgfmt
 #endif
 
-${mo_dir}emacs.po: ${libsrc}make-msgfile ${libsrc}make-po ${objs} ${lisp}
-	${libsrc}make-msgfile -o ${libsrc}messages ${objs} ${lisp} ${otherlisp}
+${mo_dir}emacs.po: ${libsrc}make-msgfile ${libsrc}make-po ${objs}
+	${libsrc}make-msgfile -o ${libsrc}messages ${objs}
 	cd ${libsrc} && ${xgettext} ${xgettext_args}
 	$(RM) ${mo_dir}emacs.po
 	cd ${libsrc} && ${libsrc}make-po -a ${mo_dir}emacs.po DOC

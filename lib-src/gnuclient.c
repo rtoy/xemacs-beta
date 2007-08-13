@@ -78,7 +78,7 @@ static pid_t emacs_pid;			/* Process id for emacs process */
 
 void initialize_signals (void);
 
-void
+static void
 tell_emacs_to_resume (int sig)
 {
   char buffer[GSERV_BUFSZ+1];
@@ -104,7 +104,7 @@ tell_emacs_to_resume (int sig)
 #endif /* !SYSV_IPC */
 }
 
-void
+static void
 pass_signal_to_emacs (int sig)
 {
   if (kill (emacs_pid, sig) == -1)
@@ -196,7 +196,7 @@ filename_expand (char *fullpath, char *filename)
 
 /* Encase the string in quotes, escape all the backslashes and quotes
    in string.  */
-char *
+static char *
 clean_string (CONST char *s)
 {
   int i = 0;

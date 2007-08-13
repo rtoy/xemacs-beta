@@ -54,7 +54,7 @@
     ((make-chinese-cns11643-charset
       (name plane final)
       (make-charset
-       name (concat "Chinese CNS Plane " plane)
+       name (concat "CNS 11643 Plane " plane " (Chinese traditional)")
        `(registry 
          ,(concat "CNS11643[.-]\\(.*[.-]\\)?" plane "$")
          dimension 2
@@ -70,6 +70,18 @@
   (make-chinese-cns11643-charset 'chinese-cns11643-6 "6" ?L)
   (make-chinese-cns11643-charset 'chinese-cns11643-7 "7" ?M)
   )
+
+;; ISO-IR-165 (CCITT Extended GB)
+;;    It is based on CCITT Recommendation T.101, includes GB 2312-80 +
+;;    GB 8565-88 table A4 + 293 characters.
+(make-charset
+ 'chinese-isoir165
+ "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"
+ `(registry "isoir165"
+   dimension 2
+   chars 94
+   final ?E
+   graphic 0))
 
 ;; PinYin-ZhuYin
 (make-charset 'sisheng "PinYin-ZhuYin"

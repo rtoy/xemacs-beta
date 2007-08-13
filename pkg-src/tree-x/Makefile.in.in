@@ -1,0 +1,79 @@
+##
+## SUMMARY:      Makefile for the OO-Browser
+##
+## AUTHOR:       Bob Weiner / Mark Stern
+## ORG:          InfoDock Associates / Brown U.
+##
+## ORIG-DATE:    15-Oct-90
+## LAST-MOD:     19-Oct-96 at 00:53:29 by Bob Weiner
+##
+## Copyright (C) 1990-1996  Free Software Foundation, Inc.
+## See the file BR-COPY for license information.
+##
+## This file is part of the OO-Browser.
+
+#define NOT_C_CODE
+#include "../../src/config.h"
+
+SHELL = /bin/sh
+RM = rm -f
+
+## ==================== Things "configure" will edit ====================
+CC=@CC@
+CPP=@CPP@
+CFLAGS=@CFLAGS@
+CPPFLAGS=@CPPFLAGS@
+LDFLAGS=@LDFLAGS@
+
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+c_switch_all=@c_switch_all@
+ld_switch_all=@ld_switch_all@
+ld_libs_all=@ld_libs_all@
+
+build_top=../..
+
+#ifdef USE_GNU_MAKE
+vpath %.c @srcdir@
+vpath %.h @srcdir@
+#else
+VPATH=@srcdir@
+#endif
+
+#ifndef HAVE_USLEEP
+usleep_objs = usleep.o
+#endif
+
+progs = xoobr
+objs = draw.o tree.o input.o dissolve.o dbl.o intf.o $(usleep_objs)
+
+all : xoobr
+
+xoobr: $(objs)
+	$(CC) $(objs) $(ldflags) -o $@
+
+cflags  = $(CFLAGS) -DHAVE_CONFIG_H -I${build_top}/src $(CPPFLAGS) $(c_switch_all)
+ldflags = $(LDFLAGS) $(ld_switch_all) -lXaw $(ld_libs_all)
+
+.c.o :
+	${CC} -c $(cflags) $<
+
+install: $(progs)
+	../../lib-src/make-path ${archlibdir}
+	for file in $(progs); do \
+	  (cd ../.. && $(INSTALL_PROGRAM) pkg-src/tree-x/$${file} ${archlibdir}/$${file}) ; \
+	done
+
+clean:
+	$(RM) $(progs) *.o *.i *.orig *.rej core *~
+
+size:
+	wc *.c *.h
+
+## Dependencies
+dbl.o: 		dbl.h 
+dissolve.o:	dissolve.h
+draw.o: 	defs.h tree.h dbl.h intf.h
+input.o: 	defs.h tree.h input.h
+intf.o: 	defs.h tree.h dbl.h intf.h rsrc.h input.h help.h
+tree.o: 	defs.h tree.h intf.h

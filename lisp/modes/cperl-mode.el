@@ -31,8 +31,10 @@
 
 ;;; Corrections made by Ilya Zakharevich ilya@math.mps.ohio-state.edu
 ;;; XEmacs changes by Peter Arius arius@informatik.uni-erlangen.de
+;;; XEmacs 'delete key behavior handling added for XEmacs 20.x by
+;;; Gary D. Foster <Gary.Foster@corp.sun.com>
 
-;; $Id: cperl-mode.el,v 1.11 1997/06/14 20:31:09 steve Exp $
+;; $Id: cperl-mode.el,v 1.12 1997/06/29 23:12:54 steve Exp $
 
 ;;; To use this mode put the following into your .emacs file:
 
@@ -1563,8 +1565,13 @@ If not, or if we are not at the end of marking range, would self-insert."
 	(delete-region (point) p))
     (backward-delete-char-untabify arg)))
 
+;; helper function for deletion, which honors the desired delete direction
+;; behavior.  Added by Gary D. Foster, <Gary.Foster@corp.sun.com> and bound
+;; to the 'delete keysym by default.
+
 (defun cperl-electric-delete (arg)
-  "Backspace-untabify, or remove the whitespace inserted by an electric key."
+  "Delete, or remove the whitespace inserted by an electric key.
+Delete direction is controlled by the setting of `delete-key-deletes-forward'."
   (interactive "*p")
   (if (and cperl-auto-newline 
 	   (memq last-command '(cperl-electric-semi 

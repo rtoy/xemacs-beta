@@ -3,6 +3,7 @@
 (put 'psgml-dtd 'custom-loads '("psgml"))
 (put 'copyright 'custom-loads '())
 (put 'eldoc 'custom-loads '())
+(put 'auto-show 'custom-loads '())
 (put 'execute 'custom-loads '())
 (put 'mouse 'custom-loads '())
 (put 'mail-abbrevs 'custom-loads '())

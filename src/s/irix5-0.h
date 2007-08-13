@@ -71,9 +71,6 @@ char *_getpty ();
    on this system, so inhibit use of matherr.  */
 #define NO_MATHERR
 
-/* Info from simon@lia.di.epfl.ch (Simon Leinen) suggests this is needed.  */
-#define GETPGRP_NO_ARG
-
 /* Ulimit(UL_GMEMLIM) is busted...  */
 #define ULIMIT_BREAK_VALUE 0x14000000
 

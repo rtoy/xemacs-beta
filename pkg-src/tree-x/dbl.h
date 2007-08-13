@@ -36,7 +36,7 @@ typedef struct _doublebuffer {
     int          depth;	        /* depth of screen in planes          */
     int          num_planes;    /* number of planes used              */
 
-/* surface information is used to do double buffering                 */ 
+/* surface information is used to do double buffering                 */
 
    int       num_surfaces;
    int       current_surface;
@@ -45,22 +45,24 @@ typedef struct _doublebuffer {
 /* we need to remember which pixels and planes we allocated           */
 
    int       mask;
-   long      pixels[DBL_MAX_COLORS];                                  
+   long      pixels[DBL_MAX_COLORS];
    long      planes[DBL_MAX_PLANES];
 
 /* the pixel values one should use when drawing to the viewports      */
 
-   int       num_colors; 
+   int       num_colors;
    int       colors[DBL_MAX_COLORS];
 } DoubleBuffer;
 
 
-extern DoubleBuffer  *DBLcreate_double_buffer();
-extern void           DBLdelete_double_buffer();
-extern unsigned long  DBLinq_background();
-extern char          *getenv();
+void		DBLend_frame(DoubleBuffer *db, short init);
+void		DBLbegin_frame (DoubleBuffer *db);
+void		DBLdelete_double_buffer(DoubleBuffer *db);
+unsigned long	DBLinq_background(DoubleBuffer *db);
 
-
-
-
-
+DoubleBuffer *
+DBLcreate_double_buffer (Display *display,
+			 Window   window,
+			 int      backing_store,
+			 XColor  *colors,
+			 int      num_colors);

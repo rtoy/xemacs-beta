@@ -30,9 +30,11 @@
 ;;; Code:
 
 ;jwz: this is preloaded so don't ;;;###autoload
-(defconst only-global-abbrevs nil "\
-*t means user plans to use global abbrevs only.
-Makes the commands to define mode-specific abbrevs define global ones instead.")
+(defcustom only-global-abbrevs nil "\
+*Non-nil means user plans to use global abbrevs only.
+Makes the commands to define mode-specific abbrevs define global ones instead."
+  :type 'boolean
+  :group 'abbrev)
 
 ;;; XEmacs: the following block of code is not in FSF
 (defvar abbrev-table-name-list '()
@@ -73,7 +75,7 @@ of the form (ABBREVNAME EXPANSION HOOK USECOUNT)."
 (defun define-abbrev (table name &optional expansion hook count)
   "Define an abbrev in TABLE named NAME, to expand to EXPANSION or call HOOK.
 NAME and EXPANSION are strings.  Hook is a function or `nil'.
-To undefine an abbrev, define with the an expansion of `nil'."
+To undefine an abbrev, define it with an expansion of `nil'."
   (or (not expansion)
       (stringp expansion)
       (setq expansion (signal 'wrong-type-argument
@@ -82,14 +84,20 @@ To undefine an abbrev, define with the an expansion of `nil'."
       (integerp count)
       (setq count (signal 'wrong-type-argument
                           (list 'fixnump count))))
+  (or (vectorp table)
+      (setq table (signal 'wrong-type-argument
+			  (list 'vectorp table))))
   (let* ((sym (intern name table))
          (oexp (and (boundp sym) (symbol-value sym)))
          (ohook (and (fboundp sym) (symbol-function sym))))
-    (if (not (and (equal ohook hook)
-                  (stringp oexp)
-                  (stringp expansion)
-                  (string-equal oexp expansion)))
-        (setq abbrevs-changed t))
+    (unless (and (equal ohook hook)
+		 (stringp oexp)
+		 (stringp expansion)
+		 (string-equal oexp expansion))
+      (setq abbrevs-changed t)
+      ;; If there is a non-word character in the string, set the flag.
+      (if (string-match "\\W" name)
+	  (set (intern " " table) nil)))
     (set sym expansion)
     (fset sym hook)
     (setplist sym (or count 0))
@@ -132,7 +140,7 @@ To undefine an abbrev, define with the an expansion of `nil'."
   (interactive "sDefine mode abbrev: \nsExpansion for %s: ")
   (define-abbrev (or local-abbrev-table
                      (error "Major mode has no abbrev table"))
-		 (downcase name) nil 0))
+		 (downcase name) expansion 0))
 
 (defun abbrev-symbol (abbrev &optional table)
   "Return the symbol representing abbrev named ABBREV.

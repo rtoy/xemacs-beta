@@ -376,7 +376,15 @@ Hostname matching is stricter in this case than for
   "*Function to display the current buffer in a WWW browser.
 Used by the `browse-url-at-point', `browse-url-at-mouse', and
 `browse-url-of-file' commands."
-  :type 'function
+  :type '(radio (function-item browse-url-w3)
+		(function-item browse-url-netscape)
+		(function-item browse-url-mosaic)
+		(function-item browse-url-cci)
+		(function-item browse-url-iximosaic)
+		(function-item browse-url-lynx-xterm)
+		(function-item browse-url-lynx-emacs)
+		(function-item browse-url-grail)
+		(function :tag "Other" nil))
   :group 'browse-url)
 
 (defcustom browse-url-netscape-command "netscape"

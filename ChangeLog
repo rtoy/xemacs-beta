@@ -1,3 +1,65 @@
+1997-06-29  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta10 is released.
+
+1997-06-29  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/language/chinese.el: Add chinese-isoir165 (CCITT Extended
+	GB).
+
+	* lisp/language/chinese.el: Modify charset DOC-strings for CNS
+	11643 to be more detailed.
+
+	* lisp/language/arabic.el: Rename `arabic-0', `arabic-1' and
+	`arabic-2' to `arabic-digit', `arabic-1-column' and
+	`arabic-2-column' to sync with Emacs/mule-19.34.94-zeta.
+
+	* src/mule-charset.c: Modify charset DOC-strings to be more
+	detailed.
+
+	Use BOX DRAWINGS characters of JIS X0208.
+
+1997-06-28  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/apel/richtext.el: Add autoload comments for
+	`richtext-encode' and `richtext-decode'.
+
+	* lisp/prim/format.el (format-alist): Add `text/richtext'.
+
+	* lisp/tl/chartblxmas.el: New file.
+
+	* lisp/x11/x-menubar.el (default-menubar): Add "Show character
+	table" for MULE menu.
+
+	* lisp/apel/emu.el: Check richtext.el is bundled.
+
+	* lisp/tl/char-table.el (view-charset): New command.
+
+	* lisp/tl/char-table.el: Rename some functions.
+
+	* lisp/packages/hexl.el (hexl-mode-exit): Run
+	`hexl-mode-exit-hook'.
+
+	* lisp/x11/x-menubar.el (default-menubar): Fix "Describe language
+	support" and "Set language environment" of mule menu.
+
+	* lisp/apel/file-detect.el: Add autoload comments for function
+	`add-path', `add-latest-path', `get-latest-path',
+	`file-installed-p', `exec-installed-p', `module-installed-p' and
+	variable `exec-suffix-list'.
+
+	* lisp/prim/format.el (format-alist): Add image/jpeg, image/gif,
+	image/png and image/x-xpm.
+
+	* lisp/modes/image-mode.el: New file.
+
+1997-06-27  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/tm/tm-ew-e.el (tm-eword::encode-string-1): avoid infinite
+	loop caused by long non-encoded-word element. (cf. [tm-en:1356])
+
+	(mime/field-encoding-method-alist): Add "Message-ID" as ignored.
+
 1997-06-25  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta9 is released.

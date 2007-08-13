@@ -9,7 +9,7 @@
 /*
  *  #define DELIMITER_BEGIN_LIST '{'
  *  #define DELIMITER_END_LIST   '}'
- */ 
+ */
 
 /* Possible token types in file */
 
@@ -21,7 +21,7 @@ enum { TOKEN_LABEL,
        TOKEN_EOF };
 
 
-typedef enum { 
+typedef enum {
    ERR_OPENFAIL,
    ERR_EMPTYFILE,
    ERR_MEMALLOC,
@@ -29,9 +29,12 @@ typedef enum {
    ERR_NOEND,
    ERR_NOROOT,
    ERR_MANYROOT,
-   ERR_NONE,
+   ERR_NONE
 } ErrCode;
 
 #define NUM_ERRS             7	/* don't count ERR_NONE */
 
 
+Tree*	ReadTreeFromFile(char *fname, ErrCode *error);
+void	SetNodeLabelAndValue(Tree *node, char *label_and_value);
+int	SaveTreeToFile(Tree *tree, char *fname);

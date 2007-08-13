@@ -38,6 +38,7 @@
 (defvar docfile nil)
 (defvar docfile-buffer nil)
 (defvar site-file-list nil)
+(defvar docfile-out-of-date nil)
 
 ;; Gobble up the stuff we don't wish to pass on.
 (setq command-line-args (cdr (cdr (cdr (cdr command-line-args)))))
@@ -66,7 +67,11 @@
 (while command-line-args
   (let ((arg (car command-line-args)))
     (if (null (member arg processed))
-	(setq processed (cons arg processed))))
+	(progn
+	  (if (and (null docfile-out-of-date)
+		   (file-newer-than-file-p arg docfile))
+	      (setq docfile-out-of-date t))
+	  (setq processed (cons arg processed)))))
   (setq command-line-args (cdr command-line-args)))
 
 ;; Then process the list of Lisp files.
@@ -101,7 +106,11 @@
    (let ((arg (packages-add-suffix (car dumped-lisp-packages))))
      (setq arg (locate-library arg))
      (if (null (member arg processed))
-	 (setq processed (cons arg processed)))
+	 (progn
+	   (if (and (null docfile-out-of-date)
+		    (file-newer-than-file-p arg docfile))
+	       (setq docfile-out-of-date t))
+	   (setq processed (cons arg processed))))
      (setq dumped-lisp-packages (cdr dumped-lisp-packages)))))
 
 ;; Finally process the list of site-loaded files.
@@ -111,7 +120,11 @@
       (while site-load-packages
 	(let ((arg (car site-load-packages)))
 	  (if (not (member arg processed))
-	      (setq processed (cons arg processed))))
+	      (progn
+		(if (and (null docfile-out-of-date)
+			 (file-newer-than-file-p arg docfile))
+		    (setq docfile-out-of-date t))
+		(setq processed (cons arg processed)))))
 	(setq site-load-packages (cdr site-load-packages)))))
 
 (let ((autoloads (list-autoloads)))
@@ -119,7 +132,11 @@
   (while autoloads
     (let ((arg (car autoloads)))
       (if (null (member arg processed))
-	  (setq processed (cons arg processed)))
+	  (progn
+	    (if (and (null docfile-out-of-date)
+		     (file-newer-than-file-p arg docfile))
+		(setq docfile-out-of-date t))
+	    (setq processed (cons arg processed))))
       (setq autoloads (cdr autoloads)))))
 
 ;; Now fire up make-docfile and we're done
@@ -128,22 +145,26 @@
 
 ;; (print (prin1-to-string (append options processed)))
 
-(princ "Spawning make-docfile ...")
-;; (print (prin1-to-string (append options processed)))
+(if docfile-out-of-date
+    (progn
+      (princ "Spawning make-docfile ...")
+      ;; (print (prin1-to-string (append options processed)))
 
-(setq exec-path (list (concat default-directory "../lib-src")))
+      (setq exec-path (list (concat default-directory "../lib-src")))
 
-;; (locate-file-clear-hashing nil)
-(apply 'call-process-internal
-       ;; (concat default-directory "../lib-src/make-docfile")
-       "make-docfile"
-       nil
-       t
-       nil
-       (append options processed))
+      ;; (locate-file-clear-hashing nil)
+      (apply 'call-process-internal
+	     ;; (concat default-directory "../lib-src/make-docfile")
+	     "make-docfile"
+	     nil
+	     t
+	     nil
+	     (append options processed))
 
-(princ "Spawning make-docfile ...done\n")
-;; (write-region-internal (point-min) (point-max) "/tmp/DOC")
+      (princ "Spawning make-docfile ...done\n")
+      ;; (write-region-internal (point-min) (point-max) "/tmp/DOC")
+      )
+  (princ "DOC file is up to date\n"))
 
 (kill-emacs)
 

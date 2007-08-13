@@ -105,6 +105,8 @@ Boston, MA 02111-1307, USA.  */
 #define HAVE_LOCALE_H
 #define HAVE_X11_LOCALE_H
 #define STDC_HEADERS
+#define HAVE_LIMITS_H
+#define HAVE_GETCWD
 
 #define HAVE_LONG_FILE_NAMES
 
@@ -362,8 +364,21 @@ Boston, MA 02111-1307, USA.  */
 */
 #undef HAVE_CDE
 
-/* Mocklisp Support. */
-#undef MOCKLISP_SUPPORT
+/* Define this if you want Mule support (multi-byte character support).
+   There may be some performance penalty, although it should be small
+   if you're working with ASCII files. */
+#define MULE
+
+/* Do we want to use X window input methods for use with Mule? (requires X11R5)
+   If so, use raw Xlib or higher level Motif interface? */
+#define HAVE_XIM
+#define XIM_XLIB
+#undef XIM_MOTIF
+
+/* Non-XIM input methods for use with Mule. */
+#undef HAVE_CANNA
+#undef HAVE_WNN
+#undef WNN6
 
 /* enable special GNU Make features in the Makefiles. */
 #undef USE_GNU_MAKE

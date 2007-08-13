@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------------
  * File    : intf.h
- * Purpose : include file for intf.c and draw.c 
+ * Purpose : include file for intf.c and draw.c
  * ----------------------------------------------------------------------------
  */
 
@@ -33,7 +33,7 @@
 #define CONTOUR_COLOR             2
 #define HIGHLIGHT_COLOR           3
 #define SPLIT_COLOR               4
-#define ACTION_COLOR              5  
+#define ACTION_COLOR              5
 #define NUM_COLORS                6
 
 #define TREE_MENU_NEW             0
@@ -77,7 +77,7 @@
 #define STR_HIDE_CONTOUR          5
 #define STR_LOAD_FILE             6
 #define STR_SAVE_FILE             7
-#define NUM_MENU_STRS             8 
+#define NUM_MENU_STRS             8
 
 #define DLG_NEW                   0
 #define DLG_NODE_NAME             1
@@ -120,5 +120,14 @@ extern  DoubleBuffer *TreeDrawingAreaDB;
 extern  char          TreeShowSteps;
 extern  ContourOption TreeShowContourOption;
 extern  DensityOption TreeLayoutDensity;
-extern  char          TreeAlignNodes;   
+extern  char          TreeAlignNodes;
 extern  char          PauseAfterStep;
+
+void	Pause(void);
+void	StatusMsg(char *msg, int urgent);
+void	InsertNode(Tree *base_node, NodePosition node_pos, char *new_node_text);
+void	SetNodeLabel(Tree *node, char *label);
+void	SetDrawColor(int color);
+void	ExpandCollapseNode(Tree *node);
+void	SetDrawingTree(Tree *tree);
+void	ExposeHandler(Widget, XtPointer, XEvent*, Boolean*);

@@ -150,7 +150,7 @@
     (popup-menu id-popup-wrolo-menu)))
 
 (cond ((null hyperb:window-system))
-      ((fboundp 'id-menubar-set)
+      ((and (featurep 'infodock) (fboundp 'id-menubar-set))
        ;; InfoDock under a window system
        (require 'id-menubars)
        (id-menubar-set 'wrolo-mode 'id-menubar-wrolo))

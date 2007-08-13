@@ -1223,6 +1223,10 @@ run `normal-mode' explicitly."
     ("/app-defaults/" . xrdb-mode)
     ("\\.[^/]*wm\\'" . winmgr-mode)
     ("\\.[^/]*wm2?rc" . winmgr-mode)
+    ("\\.[Jj][Pp][Ee]?[Gg]\\'" . image-mode)
+    ("\\.[Pp][Nn][Gg]\\'" . image-mode)
+    ("\\.[Gg][Ii][Ff]\\'" . image-mode)
+    ("\\.xpm\\'" . image-mode)
     )
 "Alist of filename patterns vs. corresponding major mode functions.
 Each element looks like (REGEXP . FUNCTION) or (REGEXP FUNCTION NON-NIL).

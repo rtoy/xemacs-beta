@@ -1,3 +1,181 @@
+1997-06-29  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* modes/abbrev.el (define-mode-abbrev): Would ignore EXPANSION.
+
+1997-06-28  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* modes/abbrev.el (define-abbrev): If NAME contains a non-word
+ 	character, intern a ` ' symbol in the obarray.
+
+1997-06-29  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (auto-mode-alist): Set image-mode for various
+	image file names (JPEG, GIF, PNG, and xpm).
+
+Sun Jun 29 03:02:10 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* src/undo.c (record_extent):
+	  If the extent's object is a string, just return.  We
+	  can't record undo information for strings, and it is
+	  very bad to reference through a string pointer as if it 
+	  were a buffer pointer.
+
+1997-06-28  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/delbs.el: Removed as obsolete.
+	Suggested by Gary D. Foster <Gary.Foster@Corp.Sun.COM>
+
+	* packages/hyper-apropos.el (hyper-apropos-documentation): Remove
+	obsolete alias.
+	(hyper-apropos-hyperlink): Ditto.
+	(hyper-apropos-major-heading): Ditto.
+	(hyper-apropos-section-heading): Ditto.
+	(hyper-apropos-heading): Ditto.
+	(hyper-apropos-warning): Ditto.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* prim/simple.el (show-message-log): Restore an oldie-but
+	prematurely-retired-goodie.
+
+	* x11/x-menubar.el (default-menubar): Restore Show Message Log
+	command in Edit menu.
+
+	* mule/mule-util.el: Change defsubst to defun for
+	string-to-sequence, string-to-list, string-to-vector,
+	nested-alist-p to shut up build time diagnostics.
+
+	* prim/loadup.el (Top level): Added instrumentation to diagnose
+	where the 0 property list is getting added at dump.  Naturally, I
+	cannot reproduce the problem now.
+
+	* modes/abbrev.el (define-abbrev): Trap nil tables (which might
+	cause bogus plists to get put into obarray).
+	Fix docstring.
+
+1997-06-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* modes/auto-show.el:  Customized.
+
+1997-06-27  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/make-docfile.el: [oops] Check auto-autoloads.elc for
+	out-of-dated-ness too.
+
+	* utils/autoload.el (batch-update-directory): Kill command line
+	args when done.
+	(autoload-save-customization): Print a warning message with the
+	offending symbol when we run across the elusive malformed property 
+	list ((0 0)).
+
+1997-06-26  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/profile.el (profile-key-sequence): New function.
+	(pretty-print-profiling-info): Allow interactive calls.
+
+	* prim/overlay.el: Make more FSF compatible.
+	
+1997-06-27  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/loaddefs.el (debug-ignored-errors): Fix regexps.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* hyperbole/wrolo-menu.el (TopLevel): Fix tests so that W3's
+	id-menubar simulation doesn't bollux up feature tests.
+
+	* prim/about.el (about-xemacs): Adjust planned release date.
+
+1997-06-26  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/cus-load.el: Use correct load name.
+	- Silence the load messages.
+
+	* mule/mule-util.el (string-to-sequence): Spelling correction.
+
+	* prim/make-docfile.el: Don't overwrite DOC file when it is
+	up-to-date.
+
+1997-06-29  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/chinese.el: Add chinese-isoir165 (CCITT Extended GB).
+
+	* language/chinese.el: Modify charset DOC-strings for CNS 11643 to
+	be more detailed.
+
+	* language/arabic.el: (require 'language/arabic-util) instead
+	of (require 'arabic) for Arabic environment.
+
+	* language/arabic-util.el: Provide `language/arabic-util' instead
+	of `arabic'.
+
+	* language/arabic.el: Rename `arabic-0', `arabic-1' and `arabic-2'
+	to `arabic-digit', `arabic-1-column' and `arabic-2-column' to sync
+	with Emacs/mule-19.34.94-zeta.
+
+	* tl/char-table.el (char-position-to-string): Use `defsubst'.
+	(char-table-1): New implementation.
+
+	Use BOX DRAWINGS characters of JIS X0208.
+
+1997-06-28  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* apel/richtext.el: Add autoload comments for `richtext-encode'
+	and `richtext-decode'.
+
+	* prim/format.el (format-alist): Add `text/richtext'.
+
+	* modes/image-mode.el (image-decode): Display description for some
+	commands when XEmacs cannot decodes current buffer as inline
+	image.
+
+	* tl/chartblxmas.el: New file.
+
+	* tl/char-table.el (view-charset): Use `view-buffer'.
+
+	* x11/x-menubar.el (default-menubar): Add "Show character table"
+	for MULE menu.
+
+	* apel/emu.el: Check richtext.el is bundled.
+
+	* tl/char-table.el: Use `charset-doc-string' directly.
+
+	* tl/char-table.el (view-charset): New command.
+
+	* tl/char-table.el: `show-char-table' -> `insert-charset-table'.
+
+	* tl/char-table.el: `show-96x96-table' ->
+	`insert-96x96-charset-table'.
+
+	* tl/char-table.el: `show-94x94-table' ->
+	`insert-94x94-charset-table'.
+
+	* tl/char-table.el: `show-96-table' -> `insert-96-charset-table'.
+
+	* tl/char-table.el: `show-94-table' -> `insert-94-charset-table'.
+
+	* tl/char-table.el: Use `insert'.
+
+	* packages/hexl.el (hexl-mode-exit): Run `hexl-mode-exit-hook'.
+
+	* x11/x-menubar.el (default-menubar): Fix "Describe language
+	support" and "Set language environment" of mule menu.
+
+	* apel/file-detect.el: Add autoload comments for function
+	`add-path', `add-latest-path', `get-latest-path',
+	`file-installed-p', `exec-installed-p', `module-installed-p' and
+	variable `exec-suffix-list'.
+
+	* prim/format.el (format-alist): Add image/jpeg, image/gif,
+	image/png and image/x-xpm.
+
+	* modes/image-mode.el: New file.
+
+1997-06-27  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* tm/tm-ew-e.el (tm-eword::encode-string-1): avoid infinite loop
+	caused by long non-encoded-word element. (cf. [tm-en:1356])
+
+	(mime/field-encoding-method-alist): Add "Message-ID" as ignored.
+
 1997-06-25  Steven L Baur  <steve@altair.xemacs.org>
 
 	* x11/x-menubar.el(default-menubar): Comment out changes to the

@@ -148,13 +148,6 @@ int noninteractive;
 
 int noninteractive1;
 
-/* Major & Minor version numbers are needed in temacs as of 20.3 */
-/* Version numbers and strings */
-int emacs_beta_version;
-int emacs_major_version;
-int emacs_minor_version;
-Lisp_Object Vxemacs_codename;
-
 /* Save argv and argc.  */
 char **initial_argv;
 int initial_argc;
@@ -2355,23 +2348,4 @@ before you compile XEmacs, to enable the code for this feature.
 */ );
   emacs_priority = 0;
 
-  DEFVAR_INT ("emacs-major-version", &emacs_major_version /*
-Major version number of this version of Emacs, as an integer.
-Warning, this variable did not exist in Emacs versions earlier than:
-  FSF Emacs:   19.23
-  XEmacs:      19.10
-This variable was not available to temacs prior to:
-  XEmacs:      20.3
-*/ );
-  emacs_major_version = EMACS_MAJOR_VERSION;
-
-  DEFVAR_INT ("emacs-minor-version", &emacs_minor_version /*
-Minor version number of this version of Emacs, as an integer.
-Warning, this variable did not exist in Emacs versions earlier than:
-  FSF Emacs:   19.23
-  XEmacs:      19.10
-This variable was not available to temacs prior to:
-  XEMacs:      20.3
-*/ );
-  emacs_minor_version = EMACS_MINOR_VERSION;
 }

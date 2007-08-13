@@ -96,13 +96,18 @@ Set variable keyboard-coding-system to CODESYS and modify keymap for it." t nil)
 
 ;;;***
 
-;;;### (autoloads (decompose-composite-char compose-chars decompose-region compose-region set-coding-system-alist lookup-nested-alist set-nested-alist truncate-string-to-width store-substring) "mule-util" "mule/mule-util.el")
+;;;### (autoloads (decompose-composite-char compose-chars decompose-region compose-region set-coding-system-alist lookup-nested-alist set-nested-alist nested-alist-p truncate-string-to-width store-substring string-to-vector string-to-list string-to-sequence) "mule-util" "mule/mule-util.el")
 
-(defsubst string-to-sequence (string type) "Convert STRING to a sequence of TYPE which contains characters in STRING.\nTYPE should be `list' or `vector'.\nMultibyte characters are conserned." (map type (function identity) string))
+(autoload 'string-to-sequence "mule-util" "\
+Convert STRING to a sequence of TYPE which contains characters in STRING.
+TYPE should be `list' or `vector'.
+Multibyte characters are concerned." nil nil)
 
-(defsubst string-to-list (string) "Return a list of characters in STRING." (mapcar (function identity) string))
+(autoload 'string-to-list "mule-util" "\
+Return a list of characters in STRING." nil nil)
 
-(defsubst string-to-vector (string) "Return a vector of characters in STRING." (string-to-sequence string 'vector))
+(autoload 'string-to-vector "mule-util" "\
+Return a vector of characters in STRING." nil nil)
 
 (autoload 'store-substring "mule-util" "\
 Embed OBJ (string or character) at index IDX of STRING." nil nil)
@@ -116,7 +121,16 @@ If PADDING is nil, the resulting string may be narrower than WIDTH." nil nil)
 
 (defalias 'truncate-string 'truncate-string-to-width)
 
-(defsubst nested-alist-p (obj) "Return t if OBJ is a nesetd alist.\n\nNested alist is a list of the form (ENTRY . BRANCHES), where ENTRY is\nany Lisp object, and BRANCHES is a list of cons cells of the form\n(KEY-ELEMENT . NESTED-ALIST).\n\nYou can use a nested alist to store any Lisp object (ENTRY) for a key\nsequence KEYSEQ, where KEYSEQ is a sequence of KEY-ELEMENT.  KEYSEQ\ncan be a string, a vector, or a list." (and obj (listp obj) (listp (cdr obj))))
+(autoload 'nested-alist-p "mule-util" "\
+Return t if OBJ is a nesetd alist.
+
+Nested alist is a list of the form (ENTRY . BRANCHES), where ENTRY is
+any Lisp object, and BRANCHES is a list of cons cells of the form
+\(KEY-ELEMENT . NESTED-ALIST).
+
+You can use a nested alist to store any Lisp object (ENTRY) for a key
+sequence KEYSEQ, where KEYSEQ is a sequence of KEY-ELEMENT.  KEYSEQ
+can be a string, a vector, or a list." nil nil)
 
 (autoload 'set-nested-alist "mule-util" "\
 Set ENTRY for KEYSEQ in a nested alist ALIST.

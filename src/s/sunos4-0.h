@@ -11,11 +11,6 @@
 #define SUNOS4
 #endif
 
-/* XEmacs addition: */
-#ifndef HAVE_SYS_TIME_H
-#define HAVE_SYS_TIME_H
-#endif
-
 #if 0  /* This may have been needed for an earlier version of Sun OS 4.
 	  It seems to cause warnings in 4.0.3 and 4.1.  */
 #define O_NDELAY        FNDELAY /* Non-blocking I/O (4.2 style) */
@@ -41,11 +36,6 @@
 #define TEXT_START 0
 #define DATA_START 0
 
-/* XEmacs change -- Sun CC needs this to default to ANSI */
-#if __SUNPRO_C
-#define C_SWITCH_SYSTEM "-Xa"
-#endif
-
 /* #### XEmacs: #define of SYSTEM_MALLOC removed.  Is this OK?  FSF says:
 
    In SunOS 4.1, a static function called by tzsetwall reportedly
@@ -70,7 +60,7 @@ extern char *ttyname (int);
 extern void tzsetwall (void);
 extern int getpagesize (void);
 
-#ifndef __SUNPRO_C
+#ifdef __SUNPRO_C
 /* Suppress zillions of warnings from outdated SunOS4 prototypes */
 /* Bother! Sun can't even get the arg types right. */
 #include <memory.h>
@@ -84,7 +74,7 @@ void * __builtin_alloca(int);
 #include <X11/Xlib.h>
 #define XFree(p) XFree((char*)(p))
 #endif /* X Windows */
-#endif /* !__SUNPRO_C */
+#endif /* __SUNPRO_C */
 
 #endif /* __STDC__ */
 

@@ -625,7 +625,7 @@ Return SYMBOL's name, a string.
 }
 
 DEFUN ("fset", Ffset, 2, 2, 0, /*
-Set SYMBOL's function definition to NEWVAL, and return NEWVAL.
+Set SYMBOL's function definition to NEWDEF, and return NEWDEF.
 */
        (sym, newdef))
 {
@@ -648,7 +648,7 @@ Set SYMBOL's function definition to NEWVAL, and return NEWVAL.
 
 /* FSFmacs */
 DEFUN ("define-function", Fdefine_function, 2, 2, 0, /*
-Set SYMBOL's function definition to NEWVAL, and return NEWVAL.
+Set SYMBOL's function definition to NEWDEF, and return NEWDEF.
 Associates the function with the current load file, if any.
 */
        (sym, newdef))
@@ -662,11 +662,17 @@ Associates the function with the current load file, if any.
 
 
 DEFUN ("setplist", Fsetplist, 2, 2, 0, /*
-Set SYMBOL's property list to NEWVAL, and return NEWVAL.
+Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
 */
        (sym, newplist))
 {
   CHECK_SYMBOL (sym);
+#if 0 /* Inserted for debugging 6/28/1997 -slb */
+  /* Somebody is setting a property list of integer 0, who? */
+  /* Not this way apparently. */
+  if (EQ(newplist, Qzero)) abort();
+#endif
+
   XSYMBOL (sym)->plist = newplist;
   return newplist;
 }
@@ -1918,8 +1924,8 @@ for this variable.
 }
 
 DEFUN ("setq-default", Fsetq_default, 2, UNEVALLED, 0, /*
-Set the default value of variable VAR to VALUE.
-VAR, the variable name, is literal (not evaluated);
+Set the default value of variable SYN to VALUE.
+SYM, the variable name, is literal (not evaluated);
 VALUE is an expression and it is evaluated.
 The default value of a variable is seen in buffers
 that do not have their own values for the variable.

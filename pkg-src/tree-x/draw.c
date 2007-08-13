@@ -4,9 +4,11 @@
  * ----------------------------------------------------------------------------
  */
 
+#include <stdlib.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
 
+#include "dissolve.h"
 #include "defs.h"
 #include "tree.h"
 #include "dbl.h"
@@ -23,16 +25,9 @@ Tree *TheTree;
 /*				Local Variables                              */
 /* ------------------------------------------------------------------------- */
 
-static char AnimationMode = FALSE;        
+static char AnimationMode = FALSE;
 static char strbuf[BUFSIZ];
 static int  AnimationStep = ANIMATION_STEP;
-
-/* ------------------------------------------------------------------------- */
-/*			 Forward Function Declarations                       */
-/* ------------------------------------------------------------------------- */
-
-void DrawNode();
-void DrawTreeContour();
 
 
 /* ------------------------------------------------------------------------- */
@@ -41,53 +36,52 @@ void DrawTreeContour();
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   BeginFrame() provides an abstraction for double buffering. It should
  *   be called prior to creating a new frame of animation.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-BeginFrame()
+BeginFrame(void)
 {
   DBLbegin_frame(TreeDrawingAreaDB);
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   EndFrame() provides an abstraction for double buffering. It should
  *   be called after creating a new frame of animation.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-EndFrame()
+EndFrame(void)
 {
   DBLend_frame(TreeDrawingAreaDB, 0);
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   GetDrawingSize() gets the size of the drawing area, and returns the
  *   dimensions in the arguments.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-GetDrawingSize(width, height)
-     int *width, *height;
+static void
+GetDrawingSize(int *width, int *height)
 {
   Dimension w, h;
-  
-  XtVaGetValues(TreeDrawingArea, 
-		XtNwidth, &w,
-		XtNheight, &h,
-		NULL);
+  Arg al [2];
+
+  XtSetArg (al [0], XtNwidth,  &w);
+  XtSetArg (al [1], XtNheight, &h);
+  XtGetValues(TreeDrawingArea, al, 2);
 
   *width  = (int) w;
   *height = (int) h;
@@ -95,60 +89,56 @@ GetDrawingSize(width, height)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   SetDrawingSize() sets the size of the drawing area to the given
- *   dimensions. 
- * 
+ *   dimensions.
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-SetDrawingSize(width, height)
-     int width, height;
+static void
+SetDrawingSize(int width, int height)
 {
-  XtVaSetValues(TreeDrawingArea,
-		XtNwidth, (Dimension) width,
-		XtNheight,  (Dimension) height,
-		NULL);
+  Arg al [2];
+  XtSetArg (al [0], XtNwidth,   (Dimension) width);
+  XtSetArg (al [1], XtNheight,  (Dimension) height);
+  XtSetValues (TreeDrawingArea, al, 2);
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   SetDrawingTree() is used to specify what tree is to be drawn in the
- *   drawing area. 
- * 
+ *   drawing area.
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-SetDrawingTree(tree)
-   Tree *tree;
+SetDrawingTree(Tree *tree)
 {
-   TheTree = tree;
+  TheTree = tree;
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   SetNodeLabel() sets the label text of the specified node and computes
  *   the bounding rectangle so that the layout can be determined. This
  *   function is called when new nodes are created. If TreeAlignNodes is
  *   True, the string is truncated so that the node's width is no longer
  *   than TreeParentDistance.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-SetNodeLabel(node, label)
-     Tree *node;
-     char *label;
+SetNodeLabel(Tree *node, char *label)
 {
   int         len;
   int         dummy;
   XCharStruct rtrn;
-  
+
   len = strlen(label);
   while (len > 1) {
     XTextExtents(TreeLabelFont, label, len, &dummy, &dummy, &dummy, &rtrn);
@@ -163,7 +153,7 @@ SetNodeLabel(node, label)
     else
       break;
   }
-  
+
   node->label.text = label;
   node->label.len  = len;
   node->label.xoffset = LABEL_MAT_WIDTH + 1,
@@ -172,30 +162,28 @@ SetNodeLabel(node, label)
 
 
 /* ----------------------------------------------------------------------------
- * 
- *   SetDrawColor() sets the drawing color of the TreeDrawingArea. 
- * 
+ *
+ *   SetDrawColor() sets the drawing color of the TreeDrawingArea.
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-SetDrawColor(color)
-     int color;
+SetDrawColor(int color)
 {
   XSetForeground(TreeDrawingAreaDB->display, TreeDrawingAreaDB->gc,
 		 TreeDrawingAreaDB->colors[color]);
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   SetLineWidth() sets the line width of lines drawn in the TreeDrawingArea.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-SetLineWidth(width)
-     unsigned int width;
+static void
+SetLineWidth(unsigned int width)
 {
   XSetLineAttributes(TreeDrawingAreaDB->display, TreeDrawingAreaDB->gc,
 		     width, LineSolid, CapButt, JoinRound);
@@ -203,16 +191,15 @@ SetLineWidth(width)
 
 
 /* ----------------------------------------------------------------------------
- * 
- *   SetContours() sets the visibility of three possible contour modes: 
+ *
+ *   SetContours() sets the visibility of three possible contour modes:
  *   the outside contour, all subtree contours, or selected contours.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-SetContours(option)
-     ContourOption option;
+static void
+SetContours(ContourOption option)
 {
   if (option == NoContours) {
     switch (TreeShowContourOption) {
@@ -262,15 +249,14 @@ SetContours(option)
 
 
 /* ----------------------------------------------------------------------------
- * 
- *   HiliteNode() is called by Unzip() to change the color of a node. 
- * 
+ *
+ *   HiliteNode() is called by Unzip() to change the color of a node.
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-HiliteNode(tree, pos_mode)
-     Tree *tree;
+HiliteNode(Tree *tree, PosMode pos_mode)
 {
   SetDrawColor(HIGHLIGHT_COLOR);
   DrawNode(tree, pos_mode);
@@ -279,30 +265,28 @@ HiliteNode(tree, pos_mode)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   DrawNode() takes a node and draws the node in the specified widget
  *   at its (x,y) coordinate. (x, y) indicates the upper-left corner where
  *   the node is drawn. Also, a line is drawn from the center of the left
- *   edge to the center of the parent's right edge. 'draw_mode' specifies 
+ *   edge to the center of the parent's right edge. 'draw_mode' specifies
  *   the drawing mode (whether or not the node is erased, rather than drawn).
  *   'pos_mode' determines whether or not to use the old position of the node.
  *   This flag is used in animating the movement of a node from its old
  *   position to its new position.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-DrawNode(node, pos_mode)
-     Tree     *node;
-     PosMode  pos_mode;
+DrawNode(Tree *node, PosMode pos_mode)
 {
   Widget   w;
   GC       gc;
-  
+
   w  = TreeDrawingArea;
   gc = TreeDrawingAreaDB->gc;
-  
+
   if (pos_mode == Old) {
     XDrawString(XtDisplay(w), XtWindow(w), gc,
 		node->old_pos.x + node->label.xoffset,
@@ -311,7 +295,7 @@ DrawNode(node, pos_mode)
     XDrawRectangle(XtDisplay(w), XtWindow(w), gc,
 		   node->old_pos.x, node->old_pos.y,
 		   node->width, node->height);
-    if (node->parent) 
+    if (node->parent)
       XDrawLine(XtDisplay(w), XtWindow(w), gc,
 		node->old_pos.x - 1,
 		node->old_pos.y + (node->height / 2),
@@ -331,11 +315,11 @@ DrawNode(node, pos_mode)
 		node->pos.x + node->label.xoffset,
 		node->pos.y + node->label.yoffset,
 		node->label.text, node->label.len);
-    
+
     XDrawRectangle(XtDisplay(w), XtWindow(w), gc,
 		   node->pos.x, node->pos.y,
 		   node->width, node->height);
-    if (node->parent) 
+    if (node->parent)
       XDrawLine(XtDisplay(w), XtWindow(w), gc,
 		node->pos.x - 1,
 		node->pos.y + (node->height / 2),
@@ -355,25 +339,20 @@ DrawNode(node, pos_mode)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   DrawTreeContour() draws the contour of the specified subtree. Bridges
  *   are not traversed, so the actual subtree contour is drawn, as opposed
  *   to the merged contour. 'color' specifies the drawing color. If 'detach'
  *   is True,  the lines attaching the subtree contour to the node are not
  *   drawn.  If 'select' is true, then only subtrees that are flagged as
  *   selected are shown. If 'recursive' is True, the entire tree is traversed.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-DrawTreeContour(tree, pos_mode, color, detach, select, recursive)
-     Tree *tree;
-     PosMode pos_mode;
-     int color;
-     int detach;
-     int select;
-     int recursive;
+DrawTreeContour(Tree *tree, PosMode pos_mode,
+		int color, int detach_p, int select_p, int recursive)
 {
   Widget w = TreeDrawingArea;
   Polyline *contour, *tail;
@@ -383,11 +362,11 @@ DrawTreeContour(tree, pos_mode, color, detach, select, recursive)
   if (tree == NULL)
     return;
 
-  if ((select && tree->show_contour) || !select) {
+  if ((select_p && tree->show_contour) || !select_p) {
 
     SetDrawColor(color);
     SetLineWidth(TreeContourWidth);
-   
+
     /* draw upper contour */
     contour = tree->contour.upper.head;
     tail    = tree->contour.upper.tail;
@@ -400,14 +379,14 @@ DrawTreeContour(tree, pos_mode, color, detach, select, recursive)
       y = tree->pos.y - tree->border;
     }
 
-    if (detach) {		/* skip over attaching lines */
+    if (detach_p) {		/* skip over attaching lines */
       for (i = 0 ; i < 2 ; i++) {
 	x += contour->dx;
 	y += contour->dy;
 	contour = contour->link;
       }
     }
-    
+
     while (contour) {
       XDrawLine(XtDisplay(w), XtWindow(w), TreeDrawingAreaDB->gc,
 		x, y, x + contour->dx, y + contour->dy);
@@ -430,7 +409,7 @@ DrawTreeContour(tree, pos_mode, color, detach, select, recursive)
       y = tree->pos.y + tree->border + tree->height;
     }
 
-    if (detach) {		/* skip over attaching lines */
+    if (detach_p) {		/* skip over attaching lines */
       for (i = 0 ; i < 2 ; i++) {
 	x += contour->dx;
 	y += contour->dy;
@@ -449,12 +428,12 @@ DrawTreeContour(tree, pos_mode, color, detach, select, recursive)
 	contour = contour->link;
     }
   }
-  
+
   if (recursive) {
     FOREACH_CHILD(child, tree)
       if (!child->elision)
 	DrawTreeContour(child, pos_mode, color,
-			detach, select, recursive);
+			detach_p, select_p, recursive);
   }
 
   SetDrawColor(TREE_COLOR);
@@ -463,22 +442,20 @@ DrawTreeContour(tree, pos_mode, color, detach, select, recursive)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   DrawTree() traverses the given tree, drawing the node and connecting
  *   segments. The tree contours are also drawn at each step, if enabled.
  *   'draw_mode' specifies the drawing mode in which the tree is drawn.
  *   'pos_mode' determines whether or not to use the old position of the node.
  *   This flag is used in animating the movement of a node from its old
- *   position to its new position. DrawNode() is called to draw an individual 
+ *   position to its new position. DrawNode() is called to draw an individual
  *   node.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-DrawTree(tree, pos_mode)
-     Tree     *tree;
-     PosMode  pos_mode;
+DrawTree(Tree *tree, PosMode pos_mode)
 {
   if (tree == NULL)
     return;
@@ -497,7 +474,7 @@ DrawTree(tree, pos_mode)
   if (tree->on_path)
     HiliteNode(tree, pos_mode);
 
-  if (tree->child && !tree->elision) 
+  if (tree->child && !tree->elision)
     DrawTree(tree->child, pos_mode);
   if (tree->sibling)
     DrawTree(tree->sibling, pos_mode);
@@ -505,51 +482,48 @@ DrawTree(tree, pos_mode)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   ShiftTree() adjusts the positions of each node so that it moves from
  *   the "old" position towards the "new position". This is used by
  *   AnimateTree(). 'done' is set to FALSE if the tree is not in its
  *   final position; it is used to determine when to stop animating the tree.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-ShiftTree(tree, done)
-     Tree *tree;
-     int  *done;
+static void
+ShiftTree(Tree *tree, int *done)
 {
   Tree *child;
-  
+
   if (tree->old_pos.x != tree->pos.x ||
       tree->old_pos.y != tree->pos.y)
     {
       tree->old_pos.x = tree->pos.x;
       tree->old_pos.y = tree->pos.y;
     }
-  
+
   FOREACH_CHILD(child, tree)
     ShiftTree(child, done);
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   AnimateTree() draws the given tree in a series of steps to give the
  *   effect of animation from the "old" layout to the "new" layout of the
- *   tree. 
- * 
+ *   tree.
+ *
  *   The algorithm used here is not efficient; the entire tree is drawn
  *   on each iteration of the animation sequence; it would be more efficient
  *   to only redraw what is necessary. However, the method used here takes
  *   advantage of existing code without modification.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-AnimateTree(tree)
-     Tree *tree;
+static void
+AnimateTree(Tree *tree)
 {
   int done = FALSE;
 
@@ -558,7 +532,7 @@ AnimateTree(tree)
   BeginFrame();
     DrawTree(tree, Old);
   EndFrame();
-  Pause(); 
+  Pause();
   if (PauseAfterStep)
     AnimationStep = ANIMATION_STEP_STEP;
   while (!done) {
@@ -577,19 +551,18 @@ AnimateTree(tree)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   AnimateZip() generates a sequence of frames that animates the Zip() step.
  *   It is similar in logical structure to Zip().
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void 
-AnimateZip(tree)
-     Tree *tree;
+static void
+AnimateZip(Tree *tree)
 {
   Tree *child;
-   
+
   /* show results of Join() step */
   if (tree->child) {
     BeginFrame();
@@ -600,8 +573,8 @@ AnimateZip(tree)
     EndFrame();
 
     StatusMsg("Zip: merge and join contours", FALSE);
-    Pause(); 
-   
+    Pause();
+
     /* show results of AttachParent() step */
     BeginFrame();
       DrawTree(TheTree, New);
@@ -609,11 +582,11 @@ AnimateZip(tree)
     EndFrame();
 
     StatusMsg("Zip: attach parents", FALSE);
-    Pause(); 
+    Pause();
   }
-  
+
   tree->on_path = FALSE;
-   
+
   if (tree->parent)
     AnimateZip(tree->parent);
   else {
@@ -623,26 +596,25 @@ AnimateZip(tree)
       DrawTreeContour(TheTree, New, CONTOUR_COLOR, FALSE, FALSE, FALSE);
     EndFrame();
     StatusMsg("Zip: reassemble entire contour", FALSE);
-    Pause(); 
+    Pause();
   }
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
- *   CountNodes() returns the number of nodes in the specified tree. 
- *   Nodes below a node that has been collapsed are ignored. 
- * 
+ *
+ *   CountNodes() returns the number of nodes in the specified tree.
+ *   Nodes below a node that has been collapsed are ignored.
+ *
  * ----------------------------------------------------------------------------
  */
 
-int
-CountNodes(tree)
-     Tree *tree;
+static int
+CountNodes(Tree *tree)
 {
   int num_nodes = 1;		/* count root of subtree */
   Tree *child;
-  
+
   if (!tree->elision) {
     FOREACH_CHILD(child, tree)
       num_nodes += CountNodes(child);
@@ -652,22 +624,19 @@ CountNodes(tree)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   CollectNodeRectangles() is a recursive function used by
  *   GetSubTreeRectangles() to collect the rectangles of descendant nodes
  *   into the pre-allocated storage passed to this function.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-CollectNodeRectangles(node, rectangles, fill)
-     Tree *node;
-     XRectangle **rectangles;
-     int fill;
+static void
+CollectNodeRectangles(Tree *node, XRectangle **rectangles, int fill)
 {
   Tree *child;
-   
+
   (*rectangles)->x = node->pos.x;
   (*rectangles)->y = node->pos.y;
   if (fill) {
@@ -678,40 +647,38 @@ CollectNodeRectangles(node, rectangles, fill)
     (*rectangles)->height = node->height;
   }
   (*rectangles)++;
-  
+
   if (!node->elision)
-    FOREACH_CHILD(child, node) 
+    FOREACH_CHILD(child, node)
       CollectNodeRectangles(child, rectangles, fill);
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   GetSubTreeRectangles() builds an array of XRectangles that contain
- *   all the node rectangles in the tree, except the root node itself. 
+ *   all the node rectangles in the tree, except the root node itself.
  *   The array is returned in 'rectangles' and the number of rectangles
  *   is returned in 'nrectangles.' Storage for the rectangles is allocated
  *   in this function. This function is used by PickAction to determine
  *   what rectangles need to be dissolved away. 'fill', if True, specifies
- *   that the rectangles should be 1 pixel larger in each dimension to 
- *   compensate for FillRectangle behavior. 
- * 
+ *   that the rectangles should be 1 pixel larger in each dimension to
+ *   compensate for FillRectangle behavior.
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-GetSubTreeRectangles(tree, rectangles, nrectangles, fill)
-     Tree *tree;
-     XRectangle **rectangles;
-     int *nrectangles, fill;
+static void
+GetSubTreeRectangles(Tree *tree, XRectangle **rectangles,
+		     int *nrectangles, int fill)
 {
   Tree *child;
   XRectangle *crect;		/* current rectangle */
-  
+
   *nrectangles = CountNodes(tree) - 1;        /* don't count root node */
   *rectangles = (XRectangle *) malloc(sizeof(XRectangle) * *nrectangles);
   ASSERT(*rectangles, "could not allocate memory for rectangles");
-  
+
   crect = *rectangles;
   if (!tree->elision)
     FOREACH_CHILD(child, tree)
@@ -720,21 +687,19 @@ GetSubTreeRectangles(tree, rectangles, nrectangles, fill)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   CollectNodeSegments() is a recursive function used by GetSubTreeSegments()
- *   to collect the line segments connecting nodes into the pre-allocated 
+ *   to collect the line segments connecting nodes into the pre-allocated
  *   storage passed to this function.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-CollectNodeSegments(node, segments)
-     Tree *node;
-     XSegment **segments;
+static void
+CollectNodeSegments(Tree *node, XSegment **segments)
 {
   Tree *child;
-   
+
   (*segments)->x1 = node->pos.x - 1;
   (*segments)->y1 = node->pos.y + (node->height / 2),
   (*segments)->x2 = node->parent->pos.x + node->parent->width + 1;
@@ -742,28 +707,25 @@ CollectNodeSegments(node, segments)
   (*segments)++;
 
   if (!node->elision)
-    FOREACH_CHILD(child, node) 
+    FOREACH_CHILD(child, node)
       CollectNodeSegments(child, segments);
 }
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   GetSubTreeSegments() builds an array of XSegments that contain
  *   all the line segments connecting the nodes in the tree. The array is
  *   returned in 'segments' and the number of segments is returned in
  *   'nsegments.' Storage for the segments is allocated in this function.
  *   This function is used by PickAction to determine what line segments
  *   rectangles need to be dissolved away.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
-void
-GetSubTreeSegments(tree, segments, nsegments)
-     Tree *tree;
-     XSegment **segments;
-     int *nsegments;
+static void
+GetSubTreeSegments(Tree *tree, XSegment **segments, int *nsegments)
 {
   Tree *child;
   XSegment *cseg;		/* current segment */
@@ -771,7 +733,7 @@ GetSubTreeSegments(tree, segments, nsegments)
   *nsegments = CountNodes(tree) - 1;
   *segments = (XSegment *) malloc(sizeof(XSegment) * *nsegments);
   ASSERT(*segments, "could not allocate memory for segments");
-  
+
   cseg = *segments;
   if (!tree->elision)
     FOREACH_CHILD(child, tree)
@@ -780,21 +742,20 @@ GetSubTreeSegments(tree, segments, nsegments)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   ComputeSubTreeExtent() computes the extent of a subtree. This is
  *   easily computed based on the tree's contour, as in ComputeTreeSize().
- *   This extent is stored in the node, and used by SearchTree for 
- *   pick-correlation. 
- * 
+ *   This extent is stored in the node, and used by SearchTree for
+ *   pick-correlation.
+ *
  *   This function assumes that the given tree has at least one child; do not
- *   pass a leaf node to this function. 
- * 
+ *   pass a leaf node to this function.
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-ComputeSubTreeExtent(tree)
-     Tree *tree;
+ComputeSubTreeExtent(Tree *tree)
 {
   int width, height;
   int x_offset, y_offset;
@@ -808,28 +769,26 @@ ComputeSubTreeExtent(tree)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   SearchTree() determines if a node's rectangular region encloses the
- *   specified point in (x,y). Rather than using a brute-force search 
+ *   specified point in (x,y). Rather than using a brute-force search
  *   through all node rectangles of a given tree, the subtree extents
  *   are used in a recursive fashion to drive the search as long as the
  *   given point is enclosed in an extent. In the worst case, the search
  *   time would be on the order of a brute-force search, but with complex
- *   trees, this method reduces the number of visits. 
- * 
+ *   trees, this method reduces the number of visits.
+ *
  *   The extent of a subtree is computed by ComputeSubTreeExtent() and is
  *   stored in each node of the tree.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 int
-SearchTree(tree, x, y, node)
-     Tree *tree, **node;
-     int x, y;
+SearchTree(Tree *tree, int x, int y, Tree **node)
 {
   Tree *child;
-  
+
   if (tree == NULL)
     return (FALSE);
 
@@ -839,9 +798,9 @@ SearchTree(tree, x, y, node)
     *node = tree;
     return (TRUE);
   }
-  if (tree->child && (PT_IN_EXTENT(x, y, tree->subextent))) 
+  if (tree->child && (PT_IN_EXTENT(x, y, tree->subextent)))
     FOREACH_CHILD(child, tree) {
-      if (SearchTree(child, x, y, node)) 
+      if (SearchTree(child, x, y, node))
 	return (TRUE);
     }
   return (FALSE);
@@ -849,21 +808,18 @@ SearchTree(tree, x, y, node)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   ExposeHandler() handles expose events in the TreeDrawingArea. This
  *   function is not intelligent; it just redraws the entire contents.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-ExposeHandler(w, client_data, event)
-     Widget   w;
-     caddr_t client_data;
-     XExposeEvent  *event;
+ExposeHandler(Widget w, XtPointer closure,
+	      XEvent *event, Boolean *continue_to_dispatch)
 {
-  
-  if (event->count == 0) {
+  if (event->xexpose.count == 0) {
     BeginFrame();
       SetContours(TreeShowContourOption);
       DrawTree(TheTree, New);
@@ -873,15 +829,14 @@ ExposeHandler(w, client_data, event)
 
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   ExpandCollapseNode is called to expand or collapse a node in the tree.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-ExpandCollapseNode(node)
-     Tree *node;
+ExpandCollapseNode(Tree *node)
 {
   int        width, height;
   int        old_width, old_height;
@@ -891,25 +846,25 @@ ExpandCollapseNode(node)
   int        nrectangles, nsegments;
   int        expand = FALSE;
   Widget     w = TreeDrawingArea;
-  
+
   StatusMsg("", TRUE);
-  
+
   /* hilite node so that we know where we are */
   /* DrawTree will hilite it as a side effect */
   if (TreeShowSteps)
     node->on_path = TRUE;
-  
+
   /* erase the contour before changing in the tree */
   if ((TreeShowContourOption != NoContours) || TreeShowSteps) {
     BeginFrame();
       DrawTree(TheTree, New);
     EndFrame();
   }
-   
+
   sprintf(strbuf, "Node `%s' selected for %s", node->label.text,
 	  node->elision ? "expansion" : "collapse");
   StatusMsg(strbuf, FALSE);
-  Pause(); 
+  Pause();
 
   if (node->parent)
     Unzip(node->parent);
@@ -920,7 +875,7 @@ ExpandCollapseNode(node)
         DrawTreeContour(TheTree, New, CONTOUR_COLOR, FALSE, FALSE, FALSE);
         DrawTree(TheTree, New);
       EndFrame();
-      Pause(); 
+      Pause();
     }
   }
 
@@ -934,8 +889,8 @@ ExpandCollapseNode(node)
 		 segments, nsegments, TRUE);
     free(rectangles);
     free(segments);
-    Pause(); 
-    
+    Pause();
+
     StatusMsg("Replace subtree contour with leaf contour", FALSE);
     node->elision = TRUE;
     if (TreeShowSteps)
@@ -947,7 +902,7 @@ ExpandCollapseNode(node)
       SetContours(TreeShowContourOption);
       DrawTree(TheTree, New);
     EndFrame();
-    Pause();  
+    Pause();
   } else {
     StatusMsg("Replace leaf contour with old subtree contour", FALSE);
     if (TreeShowSteps)
@@ -956,10 +911,10 @@ ExpandCollapseNode(node)
     node->contour = node->old_contour;
     expand = TRUE;
   }
-  
+
   if (node->parent)
     Zip(node->parent);
-  
+
   ComputeTreeSize(TheTree, &width, &height, &x_offset, &y_offset);
   PetrifyTree(TheTree, x_offset + MAT_SIZE, y_offset + MAT_SIZE);
   GetDrawingSize(&old_width, &old_height);
@@ -969,7 +924,7 @@ ExpandCollapseNode(node)
     BeginFrame();
       DrawTree(TheTree, Old);
     EndFrame();
-    Pause(); 
+    Pause();
     StatusMsg("Move tree to new configuration", FALSE);
     AnimateTree(TheTree);
   } else {
@@ -982,7 +937,7 @@ ExpandCollapseNode(node)
   if (expand) {
     StatusMsg("Expand subtree", FALSE);
     node->elision = FALSE;
-    
+
     /* erase elision marker */
     XSetFunction(TreeDrawingAreaDB->display, TreeDrawingAreaDB->gc,
 		 GXclear);
@@ -992,7 +947,7 @@ ExpandCollapseNode(node)
     XSetFunction(TreeDrawingAreaDB->display, TreeDrawingAreaDB->gc,
 		 GXcopy);
     node->width -= ELISION_WIDTH;
-    
+
     GetSubTreeRectangles(node, &rectangles, &nrectangles, FALSE);
     GetSubTreeSegments(node, &segments, &nsegments);
     /* dissolve the tree back in */
@@ -1001,15 +956,15 @@ ExpandCollapseNode(node)
 		 segments, nsegments, FALSE);
     free(rectangles);
     free(segments);
-    
+
     /* draw text of nodes */
     BeginFrame();
       SetContours(TreeShowContourOption);
       DrawTree(TheTree, New);
     EndFrame();
-    Pause(); 
+    Pause();
   }
-  
+
   if (TreeShowSteps) {
     node->on_path = FALSE;
     if (node->parent)
@@ -1017,11 +972,11 @@ ExpandCollapseNode(node)
     else
       node->split = FALSE;
   }
-  
+
   /* BUG: the display isn't properly updated here! */
   /* There should probably be some code here that
-     clears the tree below the node currently being 
-     collapsed or expanded. Hack added 20.03.95 (torgeir@ii.uib.no). 
+     clears the tree below the node currently being
+     collapsed or expanded. Hack added 20.03.95 (torgeir@ii.uib.no).
      I'll try to fix this later. */
 
   XClearArea(TreeDisplay, XtWindow(TreeDrawingArea), 0, 0, 0, 0, FALSE);
@@ -1030,24 +985,21 @@ ExpandCollapseNode(node)
     SetContours(TreeShowContourOption);
     DrawTree(TheTree, New);
   EndFrame();
-  
+
   StatusMsg("Ready", TRUE);
 }
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   InsertNode() handles the task of inserting a new node in the tree,
  *   at the given position with respect to 'base_node'. When 'node_pos' is
  *   either Before or After, it is assumed that 'base_node' has a parent.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-InsertNode(base_node, node_pos, new_node_text)
-     Tree *base_node;
-     NodePosition node_pos;
-     char *new_node_text;
+InsertNode(Tree *base_node, NodePosition node_pos, char *new_node_text)
 {
   Tree *new_node;
   Tree *parent;
@@ -1079,11 +1031,14 @@ InsertNode(base_node, node_pos, new_node_text)
 	sibling = child;
 	break;
       }
+  } else {
+    parent = NULL;
+    abort();
   }
 
   if (TreeShowSteps)
     parent->on_path = TRUE;
-  
+
   if ((TreeShowContourOption != NoContours) ||
       TreeShowSteps) {
     BeginFrame();
@@ -1094,15 +1049,15 @@ InsertNode(base_node, node_pos, new_node_text)
   sprintf(strbuf, "Inserting `%s' as child of node `%s'",
 	  new_node_text, parent->label.text);
   StatusMsg(strbuf, FALSE);
-  Pause(); 
-   
+  Pause();
+
   /* erase the contour before changing in the tree */
-  
+
   Insert(parent, new_node, sibling);
-  
+
   ComputeTreeSize(TheTree, &width, &height, &x_offset, &y_offset);
   PetrifyTree(TheTree, x_offset + MAT_SIZE, y_offset + MAT_SIZE);
-  
+
   if (sibling)
     new_node->old_pos = sibling->old_pos;
   else if (new_node->sibling)
@@ -1111,7 +1066,7 @@ InsertNode(base_node, node_pos, new_node_text)
     new_node->old_pos.x = new_node->pos.x;
     new_node->old_pos.y = parent->old_pos.y;
   }
-  
+
   if (TreeShowSteps)
     new_node->split = TRUE;
 
@@ -1120,8 +1075,8 @@ InsertNode(base_node, node_pos, new_node_text)
     DrawTree(TheTree, Old);
   EndFrame();
   StatusMsg("Insert: add new node and contour", FALSE);
-  Pause(); 
-   
+  Pause();
+
   StatusMsg("Move tree to new configuration", FALSE);
   AnimateTree(TheTree);
 
@@ -1136,18 +1091,17 @@ InsertNode(base_node, node_pos, new_node_text)
   EndFrame();
 
   StatusMsg("Ready", TRUE);
-}   
+}
 
 /* ----------------------------------------------------------------------------
- * 
+ *
  *   DeleteNode() handles the task of deleting a given node in the tree.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-DeleteNode(node)
-     Tree *node;
+DeleteNode(Tree *node)
 {
   Tree *parent;
 
@@ -1157,12 +1111,12 @@ DeleteNode(node)
   Widget      w = TreeDrawingArea;
   int  width, height;
   int  x_offset, y_offset;
-  
+
   StatusMsg("", TRUE);
 
   if (TreeShowSteps)
     node->on_path = TRUE;
-   
+
   /* erase the contour before changing in the tree */
   if ((TreeShowContourOption != NoContours) ||
       TreeShowSteps) {
@@ -1173,10 +1127,10 @@ DeleteNode(node)
 
   sprintf(strbuf, "Node `%s' selected for deletion", node->label.text);
   StatusMsg(strbuf, FALSE);
-  Pause(); 
-  
+  Pause();
+
   parent = node->parent;
-  
+
   if (parent)
     Unzip(parent);
   else
@@ -1195,21 +1149,21 @@ DeleteNode(node)
   Delete(node);
 
   BeginFrame();
-  if (TheTree) 
+  if (TheTree)
     DrawTree(TheTree, New);
   EndFrame();
-  Pause(); 
+  Pause();
 
   if (parent)
     Zip(parent);
-  
+
   if (TheTree) {
     ComputeTreeSize(TheTree, &width, &height, &x_offset, &y_offset);
     PetrifyTree(TheTree, x_offset + MAT_SIZE, y_offset + MAT_SIZE);
     StatusMsg("Move tree to new configuration", FALSE);
     AnimateTree(TheTree);
     SetDrawingSize(width + (2 * MAT_SIZE), height + (2 * MAT_SIZE));
-    Pause(); 
+    Pause();
 
     if (TreeShowSteps) {
       if (parent)
@@ -1228,19 +1182,19 @@ DeleteNode(node)
 
 
 /* ----------------------------------------------------------------------------
- * 
- *   ResetLabels() is called when the TreeAlignNodes mode is changed. 
+ *
+ *   ResetLabels() is called when the TreeAlignNodes mode is changed.
  *   When TreeParentDistance changes, the node width changes, so this
- *   function forces each node's width to be recomputed. 
- * 
+ *   function forces each node's width to be recomputed.
+ *
  * ----------------------------------------------------------------------------
  */
 
-ResetLabels(tree)
-     Tree *tree;
+void
+ResetLabels(Tree *tree)
 {
   Tree *child;
-  
+
   SetNodeLabel(tree, tree->label.text);
   FOREACH_CHILD(child, tree)
     ResetLabels(child);
@@ -1248,20 +1202,19 @@ ResetLabels(tree)
 
 
 /* ----------------------------------------------------------------------------
- * 
- *   SetupTree() handles the task of setting up the specified tree in 
+ *
+ *   SetupTree() handles the task of setting up the specified tree in
  *   the drawing area.
- * 
+ *
  * ----------------------------------------------------------------------------
  */
 
 void
-SetupTree(tree)
-     Tree *tree;
+SetupTree(Tree *tree)
 {
   int width, height;
   int x_offset, y_offset;
-  
+
   LayoutTree(tree);
   ComputeTreeSize(tree, &width, &height, &x_offset, &y_offset);
   PetrifyTree(tree, x_offset + MAT_SIZE, y_offset + MAT_SIZE);
@@ -1272,9 +1225,3 @@ SetupTree(tree)
     DrawTree(tree, New);
   EndFrame();
 }
-
-
-
-
-
-

@@ -286,7 +286,8 @@ With arg, don't unhexlify buffer."
   (use-local-map hexl-mode-old-local-map)
   (set-syntax-table hexl-mode-old-syntax-table)
   (setq major-mode hexl-mode-old-major-mode)
-  (force-mode-line-update))
+  (force-mode-line-update)
+  (run-hooks 'hexl-mode-exit-hook))
 
 (defun hexl-maybe-dehexlify-buffer ()
   "Convert a hexl format buffer to binary.

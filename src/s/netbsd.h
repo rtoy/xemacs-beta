@@ -40,9 +40,7 @@
 
 #define NEED_ERRNO
 
-#define GETPGRP_NO_ARG
-
-#if 0
+#if 0 /* mrb */
 #ifndef NO_SHARED_LIBS
 /* These definitions should work for either dynamic or static linking,
    whichever is the default for `cc -nostdlib'.  */
@@ -56,7 +54,7 @@
 #define START_FILES "crt0.o"
 
 #endif /* not NO_SHARED_LIBS */
-#endif /* 0 */
+#endif /* 0 - mrb */
 
 #define HAVE_TEXT_START		/* No need to define `start_of_text'.  */
 #define ORDINARY_LINK

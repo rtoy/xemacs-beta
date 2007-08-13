@@ -55,6 +55,9 @@ Lisp_Object Vdefault_x_device;
 Lisp_Object Qx_error; 
 Lisp_Object Qinit_pre_x_win, Qinit_post_x_win;
 
+/* 切腹, n.  Japanese ritual suicide. */
+int x_seppuku_on_epipe;
+
 /* The application class of Emacs. */
 Lisp_Object Vx_emacs_application_class;
 
@@ -649,6 +652,19 @@ x_IO_error_handler (Display *disp)
 
   if (d)
     enqueue_magic_eval_event (io_error_delete_device, dev);
+
+  /* CvE, July 16, 1996, XEmacs 19.14 */
+  /* Test for broken pipe error, which indicates X-server has gone down */
+  if (errno == EPIPE && x_seppuku_on_epipe)
+    {
+      /* Most probably X-server has gone down: Avoid infinite loop by just */
+      /* exiting */
+      /* slb:  This sounds really, really dangerous to do by default, so */
+      /* I'm adding a guard to avoid doing this as default behavior */
+      stderr_out( "\n\nXEmacs exiting on broken pipe (errno %d, %s)\n",
+		  errno, strerror(errno));
+      exit(errno);
+    }
 
   return 0;
 }
@@ -1437,6 +1453,14 @@ args are placed back into `x-initial-arg-list' and thence into
 just reside in C.
 */ );
   Vx_initial_argv_list = Qnil;
+
+  DEFVAR_BOOL ("x-seppuku-on-epipe", &x_seppuku_on_epipe /*
+When non-nil terminate XEmacs immediately on SIGPIPE from the X server.
+XEmacs doesn't terminate properly on some systems.
+When this variable is non-nil, XEmacs will commit immediate suicide
+when it gets a sigpipe from the X Server.
+*/ );
+  x_seppuku_on_epipe = 0;
 
   Fprovide (Qx);
 

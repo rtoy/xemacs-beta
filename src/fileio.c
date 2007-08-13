@@ -3372,10 +3372,12 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
      to protect the current_buffer from being destroyed, but the
      multiple return points make this a pain in the butt. */
 
+#if 0
 #ifdef DOS_NT
   int buffer_file_type
     = NILP (current_buffer->buffer_file_type) ? O_TEXT : O_BINARY;
 #endif /* DOS_NT */
+#endif
 
 #ifdef MULE
   codesys = Fget_coding_system (codesys);
@@ -3462,7 +3464,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   if (!NILP (append))
 #ifdef DOS_NT
     desc = open ((char *) XSTRING_DATA (fn),
-                       (O_WRONLY | buffer_file_type), 0);
+                       (O_WRONLY | O_BINARY), 0);
 #else /* not DOS_NT */
     desc = open ((char *) XSTRING_DATA (fn), O_WRONLY, 0);
 #endif /* not DOS_NT */
@@ -3472,7 +3474,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     {
 #ifdef DOS_NT
       desc = open ((char *) XSTRING_DATA (fn),
-                   (O_WRONLY | O_TRUNC | O_CREAT | buffer_file_type),
+                   (O_WRONLY | O_TRUNC | O_CREAT | O_BINARY),
                    (S_IREAD | S_IWRITE));
 #else /* not DOS_NT */
       desc = creat ((char *) XSTRING_DATA (fn),
@@ -4414,7 +4416,7 @@ Non-nil second argument means save only current buffer.
 		{
 #ifdef DOS_NT
 		  listdesc = open ((char *) XSTRING_DATA (listfile),
-				   O_WRONLY | O_TRUNC | O_CREAT | O_TEXT,
+				   O_WRONLY | O_TRUNC | O_CREAT | O_BINARY,
 				   S_IREAD | S_IWRITE);
 #else /* not DOS_NT */
 		  listdesc = creat ((char *) XSTRING_DATA (listfile), 0666);

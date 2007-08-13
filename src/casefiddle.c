@@ -141,7 +141,7 @@ casify_region (struct buffer *buf, enum case_action flag, Lisp_Object b,
   REGISTER Bufpos i;
   Bufpos start, end;
   REGISTER Emchar c;
-  REGISTER int inword = flag == CASE_DOWN;
+  REGISTER int inword = (flag == CASE_DOWN);
   struct Lisp_Char_Table *syntax_table =
     XCHAR_TABLE (buf->mirror_syntax_table);
   int mccount;

@@ -223,16 +223,23 @@ Type \\[describe-mode] in that buffer for a list of commands." t nil)
 
 ;;;***
 
-;;;### (autoloads (profile pretty-print-profiling-info) "profile" "prim/profile.el")
+;;;### (autoloads (profile-key-sequence profile pretty-print-profiling-info) "profile" "prim/profile.el")
 
 (autoload 'pretty-print-profiling-info "profile" "\
-Print profiling info INFO to standard output in a pretty format.
+Print profiling info INFO to STREAM in a pretty format.
 If INFO is omitted, the current profiling info is retrieved using
-`get-profiling-info'." nil nil)
+`get-profiling-info'.
+If STREAM is omitted, either current buffer or standard output are used,
+ depending on whether the function was called interactively or not." t nil)
 
 (autoload 'profile "profile" "\
 Turn on profiling, execute FORMS and stop profiling.
 Returns the profiling info, printable by `pretty-print-profiling-info'." nil 'macro)
+
+(autoload 'profile-key-sequence "profile" "\
+Dispatch the key sequence KEYS and profile the execution.
+KEYS can be a vector of keypress events, a keypress event, or a character.
+The function returns the profiling info." t nil)
 
 ;;;***
 

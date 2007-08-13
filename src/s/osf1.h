@@ -12,8 +12,6 @@
 #define C_SWITCH_SYSTEM	"-D_BSD"
 #define LIBS_SYSTEM	"-lbsd"
 
-#define GETPGRP_NO_ARG
-
 #define INTERRUPTIBLE_OPEN
 #define INTERRUPTIBLE_CLOSE
 #define INTERRUPTIBLE_IO

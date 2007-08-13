@@ -2,6 +2,13 @@
 (if (not (featurep 'cc-mode-autoloads))
     (progn
 
+;;;### (autoloads nil "cc-langs" "cc-mode/cc-langs.el")
+
+(defvar c-mode-syntax-table nil "\
+Syntax table used in c-mode buffers.")
+
+;;;***
+
 ;;;### (autoloads (java-mode objc-mode c++-mode c-mode) "cc-mode" "cc-mode/cc-mode.el")
 
 (autoload 'c-mode "cc-mode" "\

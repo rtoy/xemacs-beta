@@ -247,6 +247,7 @@ typedef int pid_t;
 #define rindex    strrchr
 #define read	  _read
 #define write	  _write
+#define getcwd    _getcwd
 
 #ifdef HAVE_NTGUI
 #define abort	win32_abort

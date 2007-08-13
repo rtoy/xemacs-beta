@@ -1,5 +1,7 @@
+(put 'extensions 'custom-loads '())
 (put 'copyright 'custom-loads '())
 (put 'eldoc 'custom-loads '())
+(put 'auto-show 'custom-loads '())
 (put 'execute 'custom-loads '())
 (put 'mouse 'custom-loads '("mouse"))
 (put 'mail-abbrevs 'custom-loads '())

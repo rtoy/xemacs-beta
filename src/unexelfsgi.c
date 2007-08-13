@@ -626,13 +626,14 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
   char *old_section_names;
 
   l_Elf_Addr old_bss_addr, new_bss_addr;
+  l_Elf_Addr old_base_addr;
   l_Elf_Word old_bss_size, new_data2_size;
-  l_Elf_Off  new_data2_offset;
+  l_Elf_Off  new_data2_offset, new_base_offset;
   l_Elf_Addr new_data2_addr;
   l_Elf_Addr new_offsets_shift;
 
   int n, nn, old_bss_index, old_data_index, new_data2_index;
-  int old_mdebug_index;
+  int old_mdebug_index, old_sbss_index;
   struct stat stat_buf;
 
   /* Open the old file & map it into the address space.  */
@@ -668,6 +669,11 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
   old_mdebug_index = find_section (".mdebug", old_section_names,
 				   old_name, old_file_h, old_section_h, 1);
 
+  /* Find the .sbss section, if any.  */
+
+  old_sbss_index = find_section (".sbss", old_section_names,
+				 old_name, old_file_h, old_section_h, 1);
+
   /* Find the old .bss section. */
 
   old_bss_index = find_section (".bss", old_section_names,
@@ -681,6 +687,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 
   old_bss_addr	    = OLD_SECTION_H (old_bss_index).sh_addr;
   old_bss_size	    = OLD_SECTION_H (old_bss_index).sh_size;
+  old_base_addr     = old_sbss_index == -1 ? old_bss_addr : OLD_SECTION_H (old_sbss_index).sh_addr;
 #if defined(emacs) || !defined(DEBUG)
   bss_end	    = (uintptr_t) sbrk (0);
   new_bss_addr	    = (l_Elf_Addr) bss_end;
@@ -691,13 +698,16 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
   new_data2_size    = new_bss_addr - old_bss_addr;
   new_data2_offset  = OLD_SECTION_H (old_data_index).sh_offset +
     (new_data2_addr - OLD_SECTION_H (old_data_index).sh_addr);
+  new_base_offset  = OLD_SECTION_H (old_data_index).sh_offset +
+    (old_base_addr - OLD_SECTION_H (old_data_index).sh_addr);
   new_offsets_shift = new_bss_addr -
-    ((old_bss_addr & ~0xfff) + ((old_bss_addr & 0xfff) ? 0x1000 : 0));
+    ((old_base_addr & ~0xfff) + ((old_base_addr & 0xfff) ? 0x1000 : 0));
 
 #ifdef DEBUG
   fprintf (stderr, "old_bss_index %d\n", old_bss_index);
   fprintf (stderr, "old_bss_addr %x\n", old_bss_addr);
   fprintf (stderr, "old_bss_size %x\n", old_bss_size);
+  fprintf (stderr, "old_base_addr %x\n", old_base_addr);
   fprintf (stderr, "new_bss_addr %x\n", new_bss_addr);
   fprintf (stderr, "new_data2_addr %x\n", new_data2_addr);
   fprintf (stderr, "new_data2_size %x\n", new_data2_size);
@@ -774,7 +784,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 
       /* Supposedly this condition is okay for the SGI.  */
 #if 0
-      if (NEW_PROGRAM_H (n).p_vaddr + NEW_PROGRAM_H (n).p_filesz > old_bss_addr)
+      if (NEW_PROGRAM_H (n).p_vaddr + NEW_PROGRAM_H (n).p_filesz > old_base_addr)
 	fatal ("Program segment above .bss in %s\n", old_name, 0);
 #endif
 
@@ -782,11 +792,12 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 	  && (round_up ((NEW_PROGRAM_H (n)).p_vaddr
 			+ (NEW_PROGRAM_H (n)).p_filesz,
 			alignment)
-	      == round_up (old_bss_addr, alignment)))
+	      == round_up (old_base_addr, alignment)))
 	break;
     }
   if (n < 0)
-    fatal ("Couldn't find segment next to .bss in %s\n", old_name, 0);
+    fatal ("Couldn't find segment next to %s in %s\n",
+	   old_sbss_index == -1 ? ".sbss" : ".bss", old_name, 0);
 
   NEW_PROGRAM_H (n).p_filesz += new_offsets_shift;
   NEW_PROGRAM_H (n).p_memsz = NEW_PROGRAM_H (n).p_filesz;
@@ -870,7 +881,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
       /* Any section that was original placed AFTER the bss
 	 section must now be adjusted by NEW_OFFSETS_SHIFT.  */
 
-      if (NEW_SECTION_H (nn).sh_offset >= new_data2_offset)
+      if (NEW_SECTION_H (nn).sh_offset >= new_base_offset)
 	NEW_SECTION_H (nn).sh_offset += new_offsets_shift;
       
       /* If any section hdr refers to the section after the new .data
@@ -897,7 +908,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 	  || NEW_SECTION_H (nn).sh_type == SHT_NOBITS)
 	continue;
       
-      /* Write out the sections. .data, .data1 nad .sbss (and data2, called
+      /* Write out the sections. .data, .data1 and .sbss (and data2, called
 	 ".data" in the strings table) get copied from the current process
 	 instead of the old file.  */
       if (!strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data")

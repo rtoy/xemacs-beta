@@ -36,13 +36,17 @@
 #define LIBS_TERMCAP "-ltermcap"
 #define LIB_GCC "-lgcc"
 
-/* freebsd has POSIX-style pgrp behavior. */
-#define GETPGRP_NO_ARG
-
 #ifndef NO_SHARED_LIBS
+#if 0 /* mrb */
 #define LD_SWITCH_SYSTEM "-dc -dp -e start"
-#define HAVE_TEXT_START		/* No need to define `start_of_text'. */
 #define START_FILES "pre-crt0.o /usr/lib/crt0.o"
+#else /* mrb */
+#define ORDINARY_LINK
+#undef LD_SWITCH_SYSTEM
+#undef START_FILES
+#endif /* mrb */
+
+#define HAVE_TEXT_START		/* No need to define `start_of_text'. */
 #define UNEXEC "unexfreebsd.o"
 #define RUN_TIME_REMAP
 

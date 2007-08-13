@@ -90,13 +90,34 @@ typedef enum {
    New
 } PosMode;			/* Position mode */
 
-extern Polyline* MakeLine();
-extern Tree*     MakeNode();
-extern Tree*     ReadTreeFromFile();
-extern void      ComputeTreeSize();
-extern void      Unzip();
-extern void      Zip();
+
+Polyline* MakeLine(short dx, short dy, Polyline *line);
+Tree*	MakeNode(void);
+void	ComputeTreeSize(Tree *tree,
+			int *width, int *height,
+			int *x_offset, int *y_offset);
+void	Unzip       (Tree *tree);
+void	Zip         (Tree *tree);
+void	PetrifyTree (Tree *tree, int x, int y);
+void	DrawTree    (Tree *tree, PosMode pos_mode);
+void	Delete      (Tree *tree);
+void	DeleteTree  (Tree *tree, int contour);
+void	Insert      (Tree *parent, Tree *child, Tree *sibling);
+void	DrawTreeContour(Tree *tree, PosMode pos_mode,
+			int color, int detach_p, int select_p, int recursive);
+void	ComputeSubTreeExtent(Tree *tree);
+void	LayoutLeaf  (Tree *tree);
+void	RuboutLeaf  (Tree *tree);
+void	HiliteNode  (Tree *tree, PosMode pos_mode);
+void	DeleteNode  (Tree *node);
+void	DrawNode    (Tree *node, PosMode pos_mode);
+void	ResetLabels (Tree *tree);
+void	SetupTree   (Tree *tree);
+int	SearchTree  (Tree *tree, int x, int y, Tree **node);
+void	LayoutTree  (Tree *tree);
+
+/* draw.c */
+void	BeginFrame (void);
+void	EndFrame   (void);
 
 extern Tree     *TheTree;
-extern int       NumLines;
-extern int       NumNodes;

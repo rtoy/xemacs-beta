@@ -3345,7 +3345,7 @@ This function looks at the value of the variable `features'.
   return NILP (Fmemq (feature, Vfeatures)) ? Qnil : Qt;
 }
 #else
-extern int emacs_major_version, emacs_minor_version;
+extern Lisp_Object Vemacs_major_version, Vemacs_minor_version;
 
 DEFUN ("featurep", Ffeaturep, 1, 1, 0, /*
 Return non-nil if feature expression FEXP is true.
@@ -3366,8 +3366,8 @@ Return non-nil if feature expression FEXP is true.
 
       if (featurep_emacs_version == 0.0)
 	{
-	  featurep_emacs_version = emacs_major_version +
-	    (emacs_minor_version / 100.0);
+	  featurep_emacs_version = XINT (Vemacs_major_version) +
+	    (XINT (Vemacs_minor_version) / 100.0);
 	}
       return (featurep_emacs_version >= d) ? Qt : Qnil;
     }
@@ -3417,7 +3417,7 @@ Return non-nil if feature expression FEXP is true.
       return Fsignal(Qinvalid_read_syntax, list1 (fexp));
     }
 }
-#endif
+#endif /* FEATUREP_SYNTAX */
 
 DEFUN ("provide", Fprovide, 1, 1, 0, /*
 Announce that FEATURE is a feature of the current Emacs.

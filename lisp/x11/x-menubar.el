@@ -104,15 +104,15 @@
       ["Start Macro Recording"	start-kbd-macro	      (not defining-kbd-macro)]
       ["End Macro Recording"	end-kbd-macro		defining-kbd-macro]
       ["Execute Last Macro"	call-last-kbd-macro	last-kbd-macro]
+      "----"
+      ["Show Message Log"	show-message-log	t]
       )
      
      ,@(if (featurep 'mule)
 	   '(("Mule"
-	      ;; ["Describe language support"
-	       ;; mule-describe-language-support-prefix nil]
-	      ;; ["Set language environment"
-	       ;; mule-set-language-environment-prefix nil]
-	      ;; "--"
+	      ("Describe language support")
+	      ("Set language environment")
+	      "--"
 	      ["Toggle input method" toggle-input-method t]
 	      ["Select input method" select-input-method t]
 	      ["Describe input method" describe-input-method t]
@@ -128,6 +128,7 @@
 	      ["Set coding system of process"
 	       set-current-process-coding-system nil] ; not implemented yet
 	      "--"
+	      ["Show character table" view-charset-by-menu t]
 	      ["Show diagnosis for MULE" mule-diag nil] ; not implemented yet
 	      ["Show many languages" view-hello-file t]
 	      )))

@@ -344,32 +344,6 @@ static struct sensemode {
 
 /* EMACS_GETPGRP (arg) returns the process group of the terminal.  */
 
-/* USG systems have always used the no-arg form of getpgrp().
-   POSIX also calls for this, and thus some newer BSD systems
-   have this change.  Older BSD systems have an argument.
-   It would be nice to autodetect this, but there's unfortunately
-   no general way. */
-
-/* The above comment is crap, because AC_FUNC_GETPGRP provides just
-   such a way - mrb. */
-
-#if 0 /* mrb */
-/* XEmacs backwards-compatibility */
-#ifdef GETPGRP_NEEDS_ARG
-# undef GETPGRP_NO_ARG
-#else
-# ifdef GETPGRP_NO_ARG
-#  undef GETPGRP_NEEDS_ARG
-# endif
-#endif
-
-#if defined (USG) && !defined (GETPGRP_NEEDS_ARG)
-#  if !defined (GETPGRP_NO_ARG)
-#    define GETPGRP_NO_ARG
-#  endif
-#endif
-#endif /* 0 */
-
 #ifdef GETPGRP_VOID
 #define EMACS_GETPGRP(x) getpgrp()
 #else

@@ -455,7 +455,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 #ifdef WINDOWSNT
     pid = child_setup (filefd, fd1, fd_error, new_argv, current_dir);
 #else  /* not WINDOWSNT */
-    pid = vfork ();
+    pid = fork ();
 
     if (pid == 0)
       {
@@ -496,7 +496,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     {
       if (fd[0] >= 0)
 	close (fd[0]);
-      report_file_error ("Doing vfork", Qnil);
+      report_file_error ("Doing fork", Qnil);
     }
 
   if (INTP (buffer))
@@ -627,7 +627,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
    This function may change environ for the superior process.
    Therefore, the superior process must save and restore the value
-   of environ around the vfork and the call to this function.
+   of environ around the fork and the call to this function.
 
    ENV is the environment for the subprocess.
 

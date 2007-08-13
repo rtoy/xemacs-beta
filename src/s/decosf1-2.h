@@ -22,7 +22,6 @@
 #endif 
 #define LIBS_SYSTEM	"-lbsd"
 #define SYSTEM_MALLOC
-#define GETPGRP_NO_ARG
 
 /* This to get rid of the -X that ymakefile inserts */
 #undef LD_SWITCH_SYSTEM

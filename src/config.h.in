@@ -65,7 +65,9 @@ Boston, MA 02111-1307, USA.  */
 /* Used to identify the XEmacs version in stack traces. */
 #undef CANONICAL_VERSION
 
-/* #### This will be removed in 19.15. */
+/* This will be removed in 19.15. */
+/* Hah!  Try 20.3 ... */
+/* Hah!  Try never ... */
 #define LOSING_BYTECODE
 
 /* Does XEmacs support floating-point numbers? */
@@ -248,6 +250,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_STRCASECMP
 #undef HAVE_STRERROR
 #undef HAVE_TZSET
+#undef HAVE_USLEEP
 #undef HAVE_UTIMES
 #undef HAVE_WAITPID
 

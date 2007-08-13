@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu.el,v 1.1 1997/06/03 04:18:35 steve Exp $
+;; Version: $Id: emu.el,v 1.2 1997/06/29 23:12:06 steve Exp $
 ;; Keywords: emulation, compatibility, NEmacs, MULE, Emacs/mule, XEmacs
 
 ;; This file is part of emu.
@@ -291,7 +291,10 @@ This function does not move point. [XEmacs emulating function]"
 ;;; @ for text/richtext and text/enriched
 ;;;
 
-(cond ((or running-emacs-19_29-or-later running-xemacs-19_14-or-later)
+(cond ((fboundp 'richtext-decode)
+       ;; have richtext.el
+       )
+      ((or running-emacs-19_29-or-later running-xemacs-19_14-or-later)
        ;; have enriched.el
        (autoload 'richtext-decode "richtext")
        (or (assq 'text/richtext format-alist)

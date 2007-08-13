@@ -3,6 +3,18 @@
  * ----------------------------------------------------------------------------
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_USLEEP
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif /* HAVE_UNISTD_H */
+#else
+int usleep(unsigned long microSeconds);
+#endif /* HAVE_USLEEP */
+
 #include <X11/Xlib.h>
 
 #include "dissolve.h"
@@ -13,21 +25,21 @@ static GC     DissolveOutGC;
 static GC     DissolveInLineGC[NUM_LINE_STEPS];
 static GC     DissolveOutLineGC[NUM_LINE_STEPS];
 
-static unsigned char first_dash[] =  {1, 3}; 
-static unsigned char second_dash[] = {1, 1}; 
+static char first_dash[] =  {1, 3};
+static char second_dash[] = {1, 1};
 
-InitializeDissolveEffect(dpy, drawable, fg_pixel, bg_pixel)
-   Display *dpy;
-   Drawable drawable;
-   int fg_pixel;
-   int bg_pixel;
-{   
+void
+InitializeDissolveEffect(Display *dpy,
+			 Drawable drawable,
+			 int fg_pixel,
+			 int bg_pixel)
+{
    unsigned long  gcvaluemask;
    XGCValues      gcvalues;
    int i;
 
    /* make DissolveOutGC */
-   gcvalues.background = bg_pixel; 
+   gcvalues.background = bg_pixel;
    gcvalues.foreground = bg_pixel;
    gcvalues.function   = GXcopy;
    gcvalues.fill_style = FillStippled;
@@ -60,7 +72,7 @@ InitializeDissolveEffect(dpy, drawable, fg_pixel, bg_pixel)
    XSetDashes(dpy, DissolveOutLineGC[i], 3, first_dash, 2);
    i++;
    gcvalues.line_style = LineSolid;
-   DissolveOutLineGC[i] = XCreateGC(dpy, drawable, gcvaluemask, &gcvalues);   
+   DissolveOutLineGC[i] = XCreateGC(dpy, drawable, gcvaluemask, &gcvalues);
 
    /* make DissolveInLineGC */
    i = 0;
@@ -80,55 +92,46 @@ InitializeDissolveEffect(dpy, drawable, fg_pixel, bg_pixel)
    XSetDashes(dpy, DissolveInLineGC[i], 3, first_dash, 2);
    i++;
    gcvalues.line_style = LineSolid;
-   DissolveInLineGC[i] = XCreateGC(dpy, drawable, gcvaluemask, &gcvalues);   
+   DissolveInLineGC[i] = XCreateGC(dpy, drawable, gcvaluemask, &gcvalues);
 
    i = 0;
-   DissolvePixmaps[i] = XCreateBitmapFromData(dpy, drawable,
-					      first_bits,
-					      first_width,
-					      first_height);
+   DissolvePixmaps[i] =
+     XCreateBitmapFromData(dpy, drawable,
+			   (char *) first_bits, first_width, first_height);
    i++;
-   DissolvePixmaps[i] = XCreateBitmapFromData(dpy, drawable,
-					      second_bits,
-					      second_width,
-					      second_height);
+   DissolvePixmaps[i] =
+     XCreateBitmapFromData(dpy, drawable,
+			   (char *) second_bits, second_width, second_height);
    i++;
-   DissolvePixmaps[i] = XCreateBitmapFromData(dpy, drawable,
-					      third_bits,
-					      third_width,
-					      third_height);
+   DissolvePixmaps[i] =
+     XCreateBitmapFromData(dpy, drawable,
+			   (char *) third_bits, third_width, third_height);
    i++;
-   DissolvePixmaps[i] = XCreateBitmapFromData(dpy, drawable,
-					      fourth_bits,
-					      fourth_width,
-					      fourth_height);
+   DissolvePixmaps[i] =
+     XCreateBitmapFromData(dpy, drawable,
+			   (char *) fourth_bits, fourth_width, fourth_height);
    i++;
-   DissolvePixmaps[i] = XCreateBitmapFromData(dpy, drawable,
-					      fifth_bits,
-					      fifth_width,
-					      fifth_height);
+   DissolvePixmaps[i] =
+     XCreateBitmapFromData(dpy, drawable,
+			   (char *) fifth_bits, fifth_width, fifth_height);
    i++;
-   DissolvePixmaps[i] = XCreateBitmapFromData(dpy, drawable,
-					      sixth_bits,
-					      sixth_width,
-					      sixth_height);
+   DissolvePixmaps[i] =
+     XCreateBitmapFromData(dpy, drawable,
+			   (char *) sixth_bits, sixth_width, sixth_height);
    i++;
-   DissolvePixmaps[i] = XCreateBitmapFromData(dpy, drawable,
-					      seventh_bits,
-					      seventh_width,
-					      seventh_height);
+   DissolvePixmaps[i] =
+     XCreateBitmapFromData(dpy, drawable,
+			   (char *) seventh_bits, seventh_width, seventh_height);
    i++;
-   DissolvePixmaps[i] = XCreateBitmapFromData(dpy, drawable,
-					      eighth_bits,
-					      eighth_width,
-					      eighth_height);
+   DissolvePixmaps[i] =
+     XCreateBitmapFromData(dpy, drawable,
+			   (char *) eighth_bits, eighth_width, eighth_height);
 }
 
-DissolveRectangle(dpy, drawable, x, y, width, height, mode)
-   Display *dpy;
-   Window drawable;
-   int x, y, width, height;
-   int mode;
+#if 0 /* Currently Unused */
+void
+DissolveRectangle(Display *dpy, Window drawable,
+		  int x, int y, int width, int height, int mode)
 {
    int i;
    GC gc;
@@ -145,13 +148,13 @@ DissolveRectangle(dpy, drawable, x, y, width, height, mode)
       usleep(50000);
    }
 }
-   
-DissolveRectangles(dpy, drawable, rectangles, nrectangles, mode)
-   Display *dpy;
-   Window drawable;
-   XRectangle rectangles[];
-   int nrectangles;
-   int mode;
+
+void
+DissolveRectangles(Display *dpy,
+		   Window drawable,
+		   XRectangle rectangles[],
+		   int nrectangles,
+		   int mode)
 {
    int i;
    GC gc;
@@ -169,12 +172,9 @@ DissolveRectangles(dpy, drawable, rectangles, nrectangles, mode)
    }
 }
 
-DissolveSegments(dpy, drawable, segments, nsegments, mode)
-   Display *dpy;
-   Window drawable;
-   XSegment segments[];
-   int nsegments;
-   int mode;
+void
+DissolveSegments(Display *dpy, Window drawable,
+		 XSegment segments[], int nsegments, int mode)
 {
    int i;
    GC *gc;
@@ -188,14 +188,16 @@ DissolveSegments(dpy, drawable, segments, nsegments, mode)
    }
 }
 
-DissolveTree(dpy, drawable, rectangles, nrectangles, segments, nsegments, mode)
-   Display *dpy;
-   Window drawable;
-   XRectangle rectangles[];
-   int nrectangles;
-   XSegment segments[];
-   int nsegments;
-   int mode;
+#endif /* 0 - Unused */
+
+void
+DissolveTree(Display *dpy,
+	     Window drawable,
+	     XRectangle rectangles[],
+	     int nrectangles,
+	     XSegment segments[],
+	     int nsegments,
+	     int mode)
 {
    int i;
    int j = 0;
@@ -208,7 +210,7 @@ DissolveTree(dpy, drawable, rectangles, nrectangles, segments, nsegments, mode)
 
    /* speed up if there are lots of nodes */
    idle = nrectangles > 50 ? 0 : 25000;
-   
+
    for (i = 0 ; i < NUM_DISSOLVE_STEPS ; i++) {
       XSetStipple(dpy, gc, DissolvePixmaps[i]);
       if (mode)
@@ -222,12 +224,13 @@ DissolveTree(dpy, drawable, rectangles, nrectangles, segments, nsegments, mode)
    }
 }
 
-DissolvePolygon(dpy, drawable, pts, num_pts, mode)
-   Display *dpy;
-   Window drawable;
-   XPoint *pts;
-   int num_pts;
-   int mode;
+#if 0 /* Currently Unused */
+void
+DissolvePolygon(Display *dpy,
+		Window drawable,
+		XPoint *pts,
+		int num_pts,
+		int mode)
 {
    int i;
    GC gc;
@@ -243,3 +246,4 @@ DissolvePolygon(dpy, drawable, pts, num_pts, mode)
    }
 }
 
+#endif /* Currently Unused */

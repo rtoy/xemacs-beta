@@ -1,4 +1,61 @@
+1997-06-28  Steven L Baur  <steve@altair.xemacs.org>
+
+	* cus-edit.el (customize-customized): Trap errors.
+	(customize-saved): Ditto.
+	(custom-add-parent-links): Ditto.
+	(custom-save-variables): Ditto.
+	(custom-save-faces): Ditto.
+	(customize-save-customized): Ditto.
+
+Thu Jun 26 16:49:32 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9940 released.
+
+Thu Jun 26 15:19:27 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-field-value-create): Add comment explaining
+	why `:field-overlay' contains two markers.
+
+	* cus-edit.el (custom-browse-visibility,
+	custom-browse-visibility-action, custom-browse-group-tag,
+	custom-browse-group-tag-action, custom-browse-variable-tag-action,
+	custom-browse-face-tag, custom-browse-face-tag-action,
+	custom-browse-face-tag-action, custom-browse-alist): Changed
+	prefix from `custom-tree' to `custom-browse'.
+	(custom-variable-value-create, custom-face-value-create,
+	custom-group-value-create): Updated caller.
+
+	* cus-edit.el (custom-browse-only-groups): New option.
+	(custom-group-value-create): Use it.  Omit non-groups if non-nil.
+	Patch by Simon Marshall <Simon.Marshall@esrin.esa.it>.
+
+	* cus-edit.el (custom-help-menu): Renamed "Variable" to "Option".
+	Remove "..." from non-prompting entries.
+	Patch by Simon Marshall <Simon.Marshall@esrin.esa.it>.
+
+	* Version 1.9939 released.
+
+Thu Jun 26 15:16:15 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-single-line-field-face): New face.
+	(widget-single-line-display-table): New variable.
+	(regexp, file): Use `widget-single-line-field-face'.
+	Patch by Hrvoje Niksic <hniksic@srce.hr>.
+	
+Wed Jun 25 20:23:52 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9938 released.
+
 Wed Jun 25 17:46:18 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-unloaded-symbol-p): New function.
+	(custom-unloaded-widget-p): New function.
+	(custom-group-value-create): Use it.
+	(customize-browse): Mention [?].
+
+	* cus-edit.el (custom-toggle-hide): Load dependencies here.
+
+	* wid-edit.el (functionp): New function.
 
 	* Version 1.9937 released.
 

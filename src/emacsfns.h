@@ -545,7 +545,7 @@ extern int suppress_early_backtrace;
 
 extern Lisp_Object Qsave_buffers_kill_emacs;
 extern Lisp_Object Qkill_emacs_hook;
-
+extern Lisp_Object Frunning_temacs_p();
 
 /* Defined in eval.c */
 extern Lisp_Object Qautoload, Qexit, Qinteractive, Qcommandp, Qdefun, Qmacro;
@@ -1558,6 +1558,7 @@ void print_float (Lisp_Object, Lisp_Object stream, int escapeflag);
 extern Lisp_Object Qprint_length, Qprint_string_length;
 void internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			      int escapeflag);
+extern Lisp_Object Ferror_message_string(Lisp_Object obj);
 
 /* Defined in process.c */
 Lisp_Object Fprocess_send_eof (Lisp_Object process);

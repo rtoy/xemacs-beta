@@ -28,7 +28,7 @@
 ;;; Code:
 
 ;; Three character sets for Arabic
-(make-charset 'arabic-0 "Arabic digits"
+(make-charset 'arabic-digit "Arabic digits"
 	      '(registry "MuleArabic-0"
 		dimension 1
 		chars 94
@@ -37,7 +37,7 @@
 		direction l2r
 		))
 
-(make-charset 'arabic-1 "one-column Arabic"
+(make-charset 'arabic-1-column "Arabic 1-column"
 	      '(registry "MuleArabic-1"
 		dimension 1
 		chars 94
@@ -46,7 +46,7 @@
 		direction r2l
 		))
 
-(make-charset 'arabic-2 "two-column Arabic"
+(make-charset 'arabic-2-column "Arabic 2-column"
 	      '(registry "MuleArabic-2"
 		dimension 1
 		chars 94
