@@ -120,7 +120,7 @@ programs on your path.")
 
 (defvar highlight-headers-convert-quietly nil
   "*Non-nil inhibits the message that is normally displayed when external
-filters are used to convert an X-Face header.  This has no affect if
+filters are used to convert an X-Face header.  This has no effect if
 XEmacs is compiled with internal support for x-faces.")
 
 (defvar highlight-headers-invert-x-face-data nil 

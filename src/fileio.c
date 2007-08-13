@@ -2480,7 +2480,7 @@ For a directory, this means you can access files in that directory.
        (filename))
 
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.10. */
   Lisp_Object abspath;
   Lisp_Object handler;
   struct gcpro gcpro1;
@@ -2506,16 +2506,14 @@ See also `file-exists-p' and `file-attributes'.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.10. */
   Lisp_Object abspath;
   Lisp_Object handler;
   int desc;
   struct gcpro gcpro1;
   
-  GCPRO1 (filename);
   CHECK_STRING (filename);
   abspath = Fexpand_file_name (filename, Qnil);
-  UNGCPRO;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -2539,7 +2537,7 @@ Return t if file FILENAME can be written or created by you.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.10. */
   Lisp_Object abspath, dir;
   Lisp_Object handler;
   struct stat statbuf;
@@ -2584,7 +2582,7 @@ Otherwise returns nil.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.10. */
 #ifdef S_IFLNK
   char *buf;
   int bufsize;
@@ -2636,7 +2634,7 @@ if the directory so specified exists and really is a directory.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.10. */
   Lisp_Object abspath;
   struct stat st;
   Lisp_Object handler;
@@ -2670,7 +2668,7 @@ searchable directory.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.10. */
   Lisp_Object handler;
 
   /* If the file name has special constructs in it,
@@ -2692,7 +2690,7 @@ This is the sort of file that holds an ordinary stream of data bytes.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.10. */
   Lisp_Object abspath;
   struct stat st;
   Lisp_Object handler;
@@ -2720,7 +2718,7 @@ Return mode bits of FILE, as an integer.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.10. */
   Lisp_Object abspath;
   struct stat st;
   Lisp_Object handler;
@@ -2755,7 +2753,7 @@ Only the 12 low bits of MODE are used.
 */
        (filename, mode))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.10. */
   Lisp_Object abspath;
   Lisp_Object handler;
   struct gcpro gcpro1;
@@ -2833,7 +2831,7 @@ otherwise, if FILE2 does not exist, the answer is t.
 */
        (file1, file2))
 {
-  /* This function can call lisp */
+  /* This function can GC.  GC checked 1997.04.10. */
   Lisp_Object abspath1, abspath2;
   struct stat st;
   int mtime1;

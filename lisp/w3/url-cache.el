@@ -1,7 +1,7 @@
 ;;; url-cache.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/04/03 21:04:08
-;; Version: 1.11
+;; Created: 1997/04/11 14:39:32
+;; Version: 1.12
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -27,8 +27,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'md5)
 
-(defvar url-cache-directory "~/.w3/cache/"
-  "*The directory where cache files should be stored.")
+(defcustom url-cache-directory "~/.w3/cache/"
+  "*The directory where cache files should be stored."
+  :type 'directory
+  :group 'url-file)
 
 ;; Cache manager
 (defun url-cache-file-writable-p (file)
@@ -57,9 +59,11 @@ FILE can be created or overwritten."
 	(or (make-directory (file-name-directory file) t) t)
       (error nil)))))
 
-(defvar url-cache-ignored-protocols
+(defcustom url-cache-ignored-protocols
   '("www" "about" "https" "mailto")
-  "*A list of protocols that we should never cache.")
+  "*A list of protocols that we should never cache."
+  :type '(repeat (string :tag "Protocol"))
+  :group 'url-cache)
 
 (defun url-cache-cachable-p (obj)
   ;; return t iff the current buffer is cachable
@@ -221,8 +225,14 @@ FILE can be created or overwritten."
 				(mapconcat 'identity host-components "/")
 				url-cache-directory))))))
 
-(defvar url-cache-creation-function 'url-cache-create-filename-using-md5
-  "*What function to use to create a cached filename.")
+(defcustom url-cache-creation-function 'url-cache-create-filename-using-md5
+  "*What function to use to create a cached filename."
+  :type '(choice (const :tag "MD5 of filename (low collision rate)"
+			:value url-cache-create-filename-using-md5)
+		 (const :tag "Human readable filenames (higher collision rate)"
+			:value url-cache-create-filename-human-readable)
+		 (function :tag "Other"))
+  :group 'url-cache)
 
 (defun url-cache-create-filename (url)
   (funcall url-cache-creation-function url))

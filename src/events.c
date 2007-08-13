@@ -1097,7 +1097,6 @@ process		Input is available from a subprocess.
 timeout		A timeout has expired.
 eval		This causes a specified action to occur when dispatched.
 magic		Some window-system-specific event has occurred.
-dead		The event has been deallocated.
 empty		The event has been allocated but not assigned.
 
 */
@@ -1136,9 +1135,6 @@ empty		The event has been allocated but not assigned.
 
     case empty_event:
       return Qempty;
-
-    case dead_event:
-      return Qdead;
 
     default:
       abort ();
@@ -1850,7 +1846,6 @@ This is in the form of a property list (alternating keyword/value pairs).
 
     case magic_eval_event:
     case magic_event:
-    case dead_event:
     case empty_event:
       break;
 

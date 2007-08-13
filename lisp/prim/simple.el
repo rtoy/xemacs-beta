@@ -1229,7 +1229,7 @@ comes the newest one."
 	;; It is cleaner to avoid activation, even though the command
 	;; loop would deactivate the mark because we inserted text.
 	(goto-char (prog1 (mark t)
-		     (set-marker (mark-marker) (point) (current-buffer))))))
+		     (set-marker (mark-marker t) (point) (current-buffer))))))
   nil)
 
 

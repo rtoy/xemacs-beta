@@ -658,7 +658,9 @@ language.aff file \(e.g., english.aff\).")
 ;;; XEmacs version 19
 (if (and (string-lessp "19" emacs-version)
 	 (string-match "Lucid" emacs-version)
-	 (not (and (boundp 'infodock-version) infodock-version)))
+	 (not (and (boundp 'infodock-version) infodock-version))
+	 (featurep 'menubar)
+	 (or current-menubar default-menubar))
     (let ((dicts (cons (cons "default" nil) ispell-dictionary-alist))
 	  (current-menubar (or current-menubar default-menubar))
 	  (menu

@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/04/07 17:01:38
-;; Version: 1.172
+;; Created: 1997/04/11 14:42:46
+;; Version: 1.173
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -79,8 +79,9 @@
   (defmacro w3-get-face-info (info &optional other)
     (let ((var (intern (format "w3-face-%s" info))))
       (` (push (w3-get-style-info (quote (, info)) node
-				  (or (cdr-safe (assq (quote (, other))
-						      (nth 1 node)))
+				  (or (and (not w3-user-colors-take-precedence)
+					   (cdr-safe (assq (quote (, other))
+							   (nth 1 node))))
 				      (car (, var))))
 	       (, var)))))
 
@@ -1892,12 +1893,16 @@ Can sometimes make the structure of a document clearer")
 	       (if alink
 		   (setq sheet (format "%sa:active { color: %s }\n" sheet
 				       (w3-fix-color alink))))
-	       (if (/= (length sheet) 0)
+	       (if (and (not w3-user-colors-take-precedence)
+			(/= (length sheet) 0))
 		   (w3-handle-style (list 'data sheet
 					  'notation "text/css")))
-	       (if (and (w3-get-attribute 'text) (not fore))
-		   (setf (car w3-face-color) (w3-fix-color
-					      (w3-get-attribute 'text))))
+	       (if (and (not w3-user-colors-take-precedence)
+			(w3-get-attribute 'text)
+			(not fore))
+		   (progn
+		     (setq fore (w3-fix-color (w3-get-attribute 'text)))
+		     (setf (car w3-face-color) fore)))
 	       (if (not font-running-xemacs)
 		   (setq w3-display-background-properties (cons fore back))
 		 (if fore

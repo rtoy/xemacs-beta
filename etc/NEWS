@@ -84,1104 +84,6 @@ C-c C-l	   make body under heading and under its subheadings invisible.
 C-c C-k  make all subheadings at all levels visible.x1
 
 
-* The History of XEmacs
-=======================
-
-This product is an extension of GNU Emacs, previously known to some as
-"Lucid Emacs" or "ERA".  It was initially based on an early version of Emacs
-Version 19 from the Free Software Foundation and has since been kept
-up-to-date with recent versions of that product.  It stems from a
-collaboration of Lucid, Inc. with SunSoft DevPro (a division of Sun
-Microsystems, Inc.; formerly called SunPro) and the University of Illinois.
-
-NOTE: Lucid, Inc. is currently out of business but development on XEmacs
-continues strong.  Recently, Amdahl Corporation and INS Engineering have
-both contributed significantly to the development of XEmacs.
-
-
-* What's Different?
-===================
-
-
-** Differences between XEmacs and GNU Emacs 19
-==================================================
-In XEmacs 20, characters are first-class objects.  Characters can be
-converted to integers, but are not integers.  FSF 19, XEmacs 19, and Mule
-represent them as integers.
-
-In XEmacs, events are first-class objects.  FSF 19 represents them as
-integers, which obscures the differences between a key gesture and the
-ancient ASCII code used to represent a particular overlapping subset of them.
-
-In XEmacs, keymaps are first-class opaque objects.  FSF 19 represents them as
-complicated combinations of association lists and vectors.  If you use the
-advertised functional interface to manipulation of keymaps, the same code
-will work in XEmacs, Emacs 18, and GNU Emacs 19; if your code depends
-on the underlying implementation of keymaps, it will not.
-
-XEmacs uses "extents" to represent all non-textual aspects of buffers;
-FSF 19 uses two distinct objects, "text properties" and "overlays",
-which divide up the functionality between them.  Extents are a
-superset of the functionality of the two FSF data types.  The full FSF
-19 interface to text properties is supported in XEmacs (with extents
-being the underlying representation).
-
-Extents can be made to be copied into strings, and thus restored by kill
-and yank.  Thus, one can specify this behavior on either "extents" or
-"text properties", whereas in FSF 19 text properties always have this
-behavior and overlays never do.
-
-Many more packages are provided standard with XEmacs than with FSF 19.
-
-Pixmaps of arbitrary size can be embedded in a buffer.
-
-Variable width fonts work.
-
-The height of a line is the height of the tallest font on that line, instead
-of all lines having the same height.
-
-XEmacs uses the MIT "Xt" toolkit instead of raw Xlib calls, which
-makes it be a more well-behaved X citizen (and also improves
-portability).  A result of this is that it is possible to include
-other Xt "Widgets" in the XEmacs window.  Also, XEmacs understands the
-standard Xt command-line arguments.
-
-XEmacs provides support for ToolTalk on systems that have it.
-
-XEmacs can ask questions using popup dialog boxes.  Any command executed from
-a menu will ask yes/no questions with dialog boxes, while commands executed
-via the keyboard will use the minibuffer.
-
-XEmacs has a built-in toolbar.  Four toolbars can actually be configured:
-top, bottom, left, and right toolbars.
-
-XEmacs has vertical and horizontal scrollbars.  Unlike in FSF 19 (which
-provides a primitive form of vertical scrollbar), these are true toolkit
-scrollbars.  A look-alike Motif scrollbar is provided for those who
-don't have Motif. (Even for those who do, the look-alike may be preferable
-as it is faster.)
-
-If you're running on a machine with audio hardware, you can specify sound 
-files for XEmacs to play instead of the default X beep.  See the documentation
-of the function load-sound-file and the variable sound-alist.
-
-An XEmacs frame can be placed within an "external client widget" managed by
-another application.  This allows an application to use an XEmacs frame as its
-text pane rather than the standard Text widget that is provided with Motif or
-Athena.  XEmacs supports Motif applications, generic Xt (e.g. Athena)
-applications, and raw Xlib applications.
-
-Here are some more specifics about the XEmacs implementation:
-
-*** The Input Model
--------------------
-
-The fundamental unit of input is an "event" instead of a character.  An
-event is a new data type that contains several pieces of information.
-There are several kinds of event, and corresponding accessor and utility
-functions.  We tried to abstract them so that they would apply equally
-well to a number of window systems.
-
-NOTE: All timestamps are measured as milliseconds since Emacs started.
-
- key_press_event	
-    event_channel	A token representing which keyboard generated it.
-			For this kind of event, this is a console object.
-    timestamp		When it happened
-    key			What keysym this is; a character or a symbol.
-			If it is a character, it will be a printing
-			ASCII character.
-    modifiers		Bucky-bits on that key: control, meta, etc.
-			For most keys, Shift is not a bit; that is implicit
-			in the keyboard layout.
-
- button_press_event
- button_release_event
-    event_channel	A token representing which mouse generated it.
-			For this kind of event, this is a frame object.
-    timestamp		When it happened
-    button		What button went down or up.
-    modifiers		Bucky-bits on that button: shift, control, meta, etc.
-    x, y		Where it was at the button-state-change (in pixels).
-
- pointer_motion_event
-    event_channel	A token representing which mouse generated it.
-			For this kind of event, this is a frame object.
-    timestamp		When it happened
-    x, y		Where it was after it moved (in pixels).
-    modifiers		Bucky-bits down when the motion was detected.
-			(Possibly not all window systems will provide this?)
-
- process_event
-    timestamp		When it happened
-    process		the emacs "process" object in question
-
- timeout_event
-    timestamp		Now (really, when the timeout was signaled)
-    interval_id		The ID returned when the associated call to
-			add_timeout_cb() was made
-	------ the rest of the fields are filled in by Emacs -----
-    id_number		The Emacs timeout ID for this timeout (more
-			than one timeout event can have the same value
-			here, since Emacs timeouts, as opposed to
-			add_timeout_cb() timeouts, can resignal
-			themselves)
-    function		An elisp function to call when this timeout is
-			processed.
-    object		The object passed to that function.
-
- eval_event
-    timestamp		When it happened
-    function		An elisp function to call with this event object.
-    object		Anything.
-			This kind of event is used internally; sometimes the
-			window system interface would like to inform emacs of
-			some user action (such as focusing on another frame)
-			but needs that to happen synchronously with the other
-			user input, like keypresses.  This is useful when
-			events are reported through callbacks rather
-			than in the standard event stream.
-
- misc_user_event
-    timestamp		When it happened
-    function		An elisp function to call with this event object.
-    object		Anything.
-			This is similar to an eval_event, except that it is
-			generated by user actions: selections in the
-			menubar or scrollbar actions.  It is a "command"
-			event, like key and mouse presses (and unlike mouse
-			motion, process output, and enter and leave window
-			hooks).  In many ways, eval_events are not the same
-			as keypresses or misc_user_events.
-
- magic_event
-			No user-serviceable parts within.  This is for things
-			like KeymapNotify and ExposeRegion events and so on
-			that emacs itself doesn't care about, but which it
-			must do something with for proper interaction with
-			the window system.
-
-			Magic_events are handled somewhat asynchronously, just
-			like subprocess filters.  However, occasionally a 
-			magic_event needs to be handled synchronously; in that
-			case, the asynchronous handling of the magic_event will
-			push an eval_event back onto the queue, which will be 
-			handled synchronously later.  This is one of the
-			reasons why eval_events exist; I'm not entirely happy
-			with this aspect of this event model.
-
-
-The function `next-event' blocks and returns one of the above-described 
-event objects.  The function `dispatch-event' takes an event and processes
-it in the appropriate way.
-
-For a process-event, dispatch-event calls the process's handler; for a
-mouse-motion event, the mouse-motion-handler hook is called, and so on.
-For magic-events, dispatch-event does window-system-dependent things,
-including calling some non-window-system-dependent hooks: map-frame-hook,
-unmap-frame-hook, mouse-enter-frame-hook, and mouse-leave-frame-hook.
-
-The function `next-command-event' calls `next-event' until it gets a key or
-button from the user (that is, not a process, motion, timeout, or magic
-event).  If it gets an event that is not a key or button, it calls
-`dispatch-event' on it immediately and reads another one.  The
-next-command-event function could be implemented in Emacs Lisp, though it
-isn't.  Generally one should call `next-command-event' instead of
-`next-event'.
-
-read-char calls next-command-event; if it doesn't get an event that can be
-converted to an ASCII character, it signals an error.  Otherwise it returns
-an integer.
-
-The variable `last-command-char' always contains an integer, or nil (if the
-last read event has no ASCII equivalent, as when it is a mouse-click or a
-non-ASCII character chord.)
-
-The new variable `last-command-event' holds an event object, that could be
-a non-ASCII character, a button click, a menu selection, etc.
-
-The variable `unread-command-char' no longer exists, and has been replaced
-by `unread-command-events'.  With the new event model, it is incorrect for
-code to do (setq unread-command-char (read-char)), because all user-input
-can't be represented as ASCII characters.  *** This is an incompatible 
-change.  Code which sets `unread-command-char' must be updated to use the
-combination of `next-command-event' and `unread-command-events' instead.
-
-The functions `this-command-keys' and `recent-keys' return a vector of
-event objects, instead of a string of ASCII characters.  *** This also
-is an incompatible change.
-
-Almost nothing happens at interrupt level; the SIGIO handler simply sets a
-flag, and later, the X event queue is scanned for KeyPress events which map
-to ^G.  All redisplay happens in the main thread of the process.
-
-
-*** Keymaps
------------
-
-Instead of keymaps being alists or obarrays, they are a new primary data
-type.  The only user access to the contents of a keymap is through the
-existing keymap-manipulation functions, and a new function, map-keymap.
-This means that existing code that manipulates keymaps may need to 
-be changed.
-
-One of our goals with the new input and keymap code was to make more
-character combinations available for binding, besides just ASCII and
-function keys.  We want to be able bind different commands to Control-a 
-and Control-Shift-a; we also want it to be possible for the keys Control-h
-and Backspace (and Control-M and Return, and Control-I and Tab, etc) to
-be distinct.
-
-One of the most common complaints that new Emacs users have is that backspace
-is help.  The answer is to play around with the keyboard-translate-table, or
-be lucky enough to have a system administrator who has done this for you
-already; but if it were possible to bind backspace and C-h to different
-things, then (under a window manager at least) both backspace and delete
-would delete a character, and ^H would be help.  There's no need to deal 
-with xmodmap, kbd-translate-table, etc.
-
-Here are some more examples: suppose you want to bind one function to Tab, 
-and another to Control-Tab.  This can't be done if Tab and Control-I are the
-same thing.  What about control keys that have no ASCII equivalent, like
-Control-< ?  One might want that to be bound to set-mark-at-point-min.  We
-want M-C-Backspace to be kill-backward-sexp.  But we want M-Backspace to be
-kill-backward-word.  Again, this can't be done if Backspace and C-h are
-indistinguishable.
-
-The user represents keys as a string of ASCII characters (when possible and
-convenient), or as a vector of event objects, or as a vector of "key 
-description lists", that looks like (control a), or (control meta delete) 
-or (shift f1).  The order of the modifier-names is not significant, so
-(meta control x) and (control meta x) are the same.
-
-`define-key' knows how to take any of the above representations and store them
-into a keymap.  When Emacs wants to return a key sequence (this-command-keys,
-recent-keys, keyboard-macros, and read-key-sequence, for example) it returns
-a vector of event objects.  Keyboard macros can also be represented as ASCII
-strings or as vectors of key description lists.  
-
-This is an incompatible change: code which calls `this-command-keys',
-`recent-keys', `read-key-sequence', or manipulates keyboard-macros probably
-needs to be changed so that it no longer assumes that the returned value is a
-string.
-
-Control-Shift-a is specified as (control A), not (control shift a), since A
-is a two-case character.  But for keys that don't have an upper case
-version, like F1, Backspace, and Escape, you use the (shift backspace) syntax.
-
-See the doc string for our version of define-key, reproduced below in the
-`Changed Functions' section.  Note that when the KEYS argument is a string,
-it has the same semantics as the v18 define-key.
-
-
-*** Xt Integration
-------------------
-
-The heart of the event loop is implemented in terms of the Xt event functions
-(specifically XtAppProcessEvent), and uses Xt's concept of timeouts and
-file-descriptor callbacks, eliminating a large amount of system-dependent code
-(Xt does it for you.)
-
-If Emacs is compiled with support for X, it uses the Xt event loop even when
-Emacs is not running on an X display (the Xt event loop supports this).  This
-makes it possible to run Emacs on a dumb TTY, and later connect it to one or
-more X servers.  It should also be possible to later connect an existing Emacs
-process to additional TTY's, although this code is still experimental.  (Our
-intent at this point is not to have an Emacs that is being used by multiple
-people at the same time: it is to make it possible for someone to go home, log
-in on a dialup line, and connect to the same Emacs process that is running
-under X in their office without having to recreate their buffer state and so
-on.)
-
-If Emacs is not compiled with support for X, then it instead uses more general
-code, something like what v18 does; but this way of doing things is a lot more
-modular.
-
-(Linking Emacs with Xt seems to only add about 300k to the executable size,
-compared with an Emacs linked with Xlib only.)
-
-
-*** Region Highlighting
------------------------
-
-If the variable `zmacs-regions' is true, then the region between point and
-mark will be highlighted when "active".  Those commands which push a mark
-(such as C-SPC, and C-x C-x) make the region become "active" and thus
-highlighted.  Most commands (all non-motion commands, basically) cause it to
-become non-highlighted (non-"active").  Commands that operate on the region
-(such as C-w, C-x C-l, etc.) only work if the region is in the highlighted
-state.
-
-zmacs-activate-region-hook and zmacs-deactivate-region-hook are run at the
-appropriate times; under X, zmacs-activate-region-hook makes the X selection
-be the region between point and mark, thus doing two things at once: making
-the region and the X selection be the same; and making the region highlight
-in the same way as the X selection.
-
-If `zmacs-regions' is true, then the `mark-marker' command returns nil unless
-the region is currently in the active (highlighted) state.  With an argument
-of t, this returns the mark (if there is one) regardless of the active-region
-state.  You should *generally* not use the mark unless the region is active,
-if the user has expressed a preference for the active-region model.  Watch
-out!  Moving this marker changes the mark position.  If you set the marker not
-to point anywhere, the buffer will have no mark.
-
-In this way, the primary selection is a fairly transitory entity; but
-when something is copied to the kill ring, it is made the Clipboard
-selection.  It is also stored into CUT_BUFFER0, for compatibility with
-X applications that don't understand selections (like Emacs18).
-
-Compatibility note: if you have code which uses (mark) or (mark-marker),
-then you need to either: change those calls to (mark t) or (mark-marker t);
-or simply bind `zmacs-regions' to nil around the call to mark or mark-marker.
-This is probably the best solution, since it will work in Emacs 18 as well.
-
-
-*** Menubars and Dialog Boxes
------------------------------
-
-Here is an example of a menubar definition:
-
-(defvar default-menubar
-  '(("File"     ["Open File..."         find-file               t]
-                ["Save Buffer"          save-buffer             t]
-                ["Save Buffer As..."    write-file              t]
-                ["Revert Buffer"        revert-buffer           t]
-                "-----"
-                ["Print Buffer"         lpr-buffer              t]
-                "-----"
-                ["Delete Frame"         delete-frame            t]
-                ["Kill Buffer..."       kill-buffer             t]
-                ["Exit Emacs"           save-buffers-kill-emacs t]
-                )
-    ("Edit"     ["Undo"                 advertised-undo         t]
-                ["Cut"                  kill-primary-selection  t]
-                ["Copy"                 copy-primary-selection  t]
-                ["Paste"                yank-clipboard-selection t]
-                ["Clear"                delete-primary-selection t]
-                )
-    ...))
-
-The first element of each menu item is the string to print on the menu.
-
-The second element is the callback function; if it is a symbol, it is
-invoked with `call-interactively.'  If it is a list, it is invoked with
-`eval'.  
-
-If the second element is a symbol, then the menu also displays the key that
-is bound to that command (if any).
-
-The third element of the menu items determines whether the item is selectable.
-It may be t, nil, or a form to evaluate.  Also, a hook is run just before a
-menu is exposed, which can be used to change the value of these slots. 
-For example, there is a hook that makes the "undo" menu item be selectable
-only in the cases when `advertised-undo' would not signal an error.  
-
-Menus may have other menus nested within them; they will cascade.
-
-There are utility functions for adding items to menus, deleting items,
-disabling them, etc.
-
-The function `popup-menu' takes a menu description and pops it up.  
-
-The function `popup-dialog-box' takes a dialog-box description and pops 
-it up.  Dialog box descriptions look a lot like menu descriptions.
-
-The menubar, menu, and dialog-box code is implemented as a library, 
-with an interface which hides the toolkit that implements it.  
-
-
-*** Isearch Changes
--------------------
-
-Isearch has been reimplemented in a different way, adding some new features,
-and causing a few incompatible changes.
-
- -  the old isearch-*-char variables are no longer supported.  In the old
-    system, one could make ^A mean "repeat the search" by doing something
-    like (setq search-repeat-char ?C-a).  In the new system, this is 
-    accomplished with 
-
-       (define-key isearch-mode-map "\C-a" 'isearch-repeat-forward)
-
- -  The advantage of using the normal keymap mechanism for this is that you
-    can bind more than one key to an isearch command: for example, both C-a
-    and C-s could do the same thing inside isearch mode.  You can also bind
-    multi-key sequences inside of isearch mode, and bind non-ASCII keys.
-    For example, to use the F1 key to terminate a search:
-
-       (define-key isearch-mode-map 'f1 'isearch-exit)
-
-    or to make ``C-c C-c'' terminate a search:
-
-       (define-key isearch-mode-map "\C-c\C-c" 'isearch-exit)
-
- -  If isearch is behaving case-insensitively (the default) and you type an
-    upper case character, then the search will become case-sensitive.  This
-    can be disabled by setting `search-caps-disable-folding' to nil.
-
- -  There is a history ring of the strings previously searched for; typing
-    M-p or M-n while searching will cycle through this ring.  Typing M-TAB
-    will do completion across the set of items in the history ring.
-
- -  The ESC key is no longer used to terminate an incremental search.  The
-    RET key should be used instead.  This change is necessary for it to be
-    possible to bind "meta" characters to isearch commands.
-
-
-*** Startup Code Changes
-------------------------
-
-The initial X frame is mapped before the user's .emacs file is executed.
-Without this, there is no way for the user to see any error messages
-generated by their .emacs file, any windows created by the .emacs file
-don't show up, and the copyleft notice isn't shown.
-
-The default values for load-path, exec-path, lock-directory, and
-Info-directory-list are not (necessarily) built into Emacs, but are
-computed at startup time.  
-
-First, Emacs looks at the directory in which its executable file resides:
-
-  o  If that directory contains subdirectories named "lisp" and "lib-src",
-     then those directories are used as the lisp library and exec directory.
-
-  o  If the parent of the directory in which the emacs executable is located
-     contains "lisp" and "lib-src" subdirectories, then those are used.
-
-  o  If ../lib/xemacs-<version> (starting from the directory in which the
-     emacs executable is located) contains a "lisp" subdirectory and either
-     a "lib-src" subdirectory or a <configuration-name> subdirectory, then
-     those are used.
-
-  o  If the emacs executable that was run is a symbolic link, then the link
-     is chased, and the resultant directory is checked as above.
-
-(Actually, it doesn't just look for "lisp/", it looks for "lisp/prim/",
-which reduces the chances of a false positive.)
-
-If the lisp directory contains subdirectories, they are added to the default
-load-path as well.  If the site-lisp directory exists and contains
-subdirectories, they are then added.  Subdirectories whose names begin with
-a dot or a hyphen are not added to the load-path.
-
-These heuristics fail if the Emacs binary was copied from the main Emacs
-tree to some other directory, and links for the lisp directory were not put
-in.  This isn't much of a restriction: either make there be subdirectories
-(or symbolic links) of the directory of the emacs executable, or make the
-"installed" emacs executable be a symbolic link to an executable in a more
-appropriate directory structure.  For example, this setup works:
-
-    /usr/local/xemacs/xemacs*           ; The executable.
-    /usr/local/xemacs/lisp/             ; The associated directories.
-    /usr/local/xemacs/etc/              ; Any of the files in this list
-    /usr/local/xemacs/lock/             ; could be symbolic links as well.
-    /usr/local/xemacs/info/
-
-As does this:
-
-    /usr/local/bin/xemacs -> ../xemacs/src/xemacs-19.14 ; A link...
-    /usr/local/xemacs/src/xemacs-19.14*                 ; The executable,
-    /usr/local/xemacs/lisp/                             ; and the rest of
-    /usr/local/xemacs/etc/                              ; the source tree
-    /usr/local/xemacs/lock/
-    /usr/local/xemacs/info/
-
-This configuration might be used for a multi-architecture installation; assume
-that $LOCAL refers to a directory which contains only files specific to a 
-particular architecture (i.e., executables) and $SHARED refers to those files 
-which are not machine specific (i.e., lisp code and documentation.)
-
-    $LOCAL/bin/xemacs@ -> $LOCAL/xemacs-19.14/xemacs*
-    $LOCAL/xemacs-19.14/lisp@ -> $SHARED/xemacs-19.14/lisp/
-    $LOCAL/xemacs-19.14/etc@  -> $SHARED/xemacs-19.14/etc/
-    $LOCAL/xemacs-19.14/info@ -> $SHARED/xemacs-19.14/info/
-
-The following would also work, but the above is probably more attractive:
-
-    $LOCAL/bin/xemacs*
-    $LOCAL/bin/lisp@ -> $SHARED/xemacs-19.14/lisp/
-    $LOCAL/bin/etc@  -> $SHARED/xemacs-19.14/etc/
-    $LOCAL/bin/info@ -> $SHARED/xemacs-19.14/info/
-
-If Emacs can't find the requisite directories, it writes a message like this
-(or some appropriate subset of it) to stderr:
-
-  WARNING:
-  couldn't find an obvious default for load-path, exec-directory, and
-  lock-directory, and there were no defaults specified in paths.h when
-  Emacs was built.  Perhaps some directories don't exist, or the Emacs
-  executable, /cadillac-th/jwz/somewhere/xemacs is in a strange place?
-
-  Without both exec-directory and load-path, Emacs will be very broken.
-  Consider making a symbolic link from /cadillac-th/jwz/somewhere/etc
-  to wherever the appropriate Emacs etc/ directory is, and from
-  /cadillac-th/jwz/somewhere/lisp/ to wherever the appropriate Emacs
-  lisp library is.
-
-  Without lock-directory set, file locking won't work.  Consider
-  creating /cadillac-th/jwz/somewhere/lock as a directory or symbolic
-  link for use as the lock directory.
-
-The default installation tree is the following:
-
-    /usr/local/bin/b2m                          ;
-                   ctags                        ; executables that
-                   emacsclient                  ; should be in
-                   etags                        ; user's path
-                   xemacs -> xemacs-<version>   ;
-                   xemacs                       ;
-    /usr/local/lib/xemacs/site-lisp
-    /usr/local/lib/xemacs/lock
-    /usr/local/lib/xemacs-<version>/etc         ; architecture ind. files
-    /usr/local/lib/xemacs-<version>/info
-    /usr/local/lib/xemacs-<version>/lisp
-    /usr/local/lib/xemacs-<version>/<configuration>  ; binaries emacs may run
-
-
-*** X Resources
----------------
-
-(Note: This section is copied verbatim from the XEmacs Reference Manual.)
-
-   The Emacs resources are generally set per-frame. Each Emacs frame
-can have its own name or the same name as another, depending on the
-name passed to the `make-frame' function.
-
-   You can specify resources for all frames with the syntax:
-
-     Emacs*parameter: value
-
-or
-
-     Emacs*EmacsFrame.parameter:value
-
-You can specify resources for a particular frame with the syntax:
-
-     Emacs*FRAME-NAME.parameter: value
-
-
-**** Geometry Resources
------------------------
-
-   To make the default size of all Emacs frames be 80 columns by 55
-lines, do this:
-
-     Emacs*EmacsFrame.geometry: 80x55
-
-To set the geometry of a particular frame named `fred', do this:
-
-     Emacs*fred.geometry: 80x55
-
-Important! Do not use the following syntax:
-
-     Emacs*geometry: 80x55
-
-You should never use `*geometry' with any X application. It does not
-say "make the geometry of Emacs be 80 columns by 55 lines."  It really
-says, "make Emacs and all subwindows thereof be 80x55 in whatever units
-they care to measure in."  In particular, that is both telling the
-Emacs text pane to be 80x55 in characters, and telling the menubar pane
-to be 80x55 pixels, which is surely not what you want.
-
-   As a special case, this geometry specification also works (and sets
-the default size of all Emacs frames to 80 columns by 55 lines):
-
-     Emacs.geometry: 80x55
-
-since that is the syntax used with most other applications (since most
-other applications have only one top-level window, unlike Emacs).  In
-general, however, the top-level shell (the unmapped ApplicationShell
-widget named `Emacs' that is the parent of the shell widgets that
-actually manage the individual frames) does not have any interesting
-resources on it, and you should set the resources on the frames instead.
-
-   The `-geometry' command-line argument sets only the geometry of the
-initial frame created by Emacs.
-
-   A more complete explanation of geometry-handling is
-
-   * The `-geometry' command-line option sets the `Emacs.geometry'
-     resource, that is, the geometry of the ApplicationShell.
-
-   * For the first frame created, the size of the frame is taken from
-     the ApplicationShell if it is specified, otherwise from the
-     geometry of the frame.
-
-   * For subsequent frames, the order is reversed: First the frame, and
-     then the ApplicationShell.
-
-   * For the first frame created, the position of the frame is taken
-     from the ApplicationShell (`Emacs.geometry') if it is specified,
-     otherwise from the geometry of the frame.
-
-   * For subsequent frames, the position is taken only from the frame,
-     and never from the ApplicationShell.
-
-   This is rather complicated, but it does seem to provide the most
-intuitive behavior with respect to the default sizes and positions of
-frames created in various ways.
-
-
-**** Iconic Resources
----------------------
-
-   Analogous to `-geometry', the `-iconic' command-line option sets the
-iconic flag of the ApplicationShell (`Emacs.iconic') and always applies
-to the first frame created regardless of its name.  However, it is
-possible to set the iconic flag on particular frames (by name) by using
-the `Emacs*FRAME-NAME.iconic' resource.
-
-
-**** Resource List
-------------------
-
-   Emacs frames accept the following resources:
-
-`geometry' (class `Geometry'): string
-     Initial geometry for the frame.  *Note Geometry Resources:: for a
-     complete discussion of how this works.
-
-`iconic' (class `Iconic'): boolean
-     Whether this frame should appear in the iconified state.
-
-`internalBorderWidth' (class `InternalBorderWidth'): int
-     How many blank pixels to leave between the text and the edge of the
-     window.
-
-`interline' (class `Interline'): int
-     How many pixels to leave between each line (may not be
-     implemented).
-
-`menubar' (class `Menubar'): boolean
-     Whether newly-created frames should initially have a menubar.  Set
-     to true by default.
-
-`initiallyUnmapped' (class `InitiallyUnmapped'): boolean
-     Whether XEmacs should leave the initial frame unmapped when it
-     starts up.  This is useful if you are starting XEmacs as a server
-     (e.g. in conjunction with gnuserv or the external client widget).
-     You can also control this with the `-unmapped' command-line option.
-
-`barCursor' (class `BarColor'): boolean
-     Whether the cursor should be displayed as a bar, or the
-     traditional box.
-
-`textPointer' (class `Cursor'): cursor-name
-     The cursor to use when the mouse is over text.  This resource is
-     used to initialize the variable `x-pointer-shape'.
-
-`selectionPointer' (class `Cursor'): cursor-name
-     The cursor to use when the mouse is over a selectable text region
-     (an extent with the `highlight' property; for example, an Info
-     cross-reference).  This resource is used to initialize the variable
-     `x-selection-pointer-shape'.
-
-`spacePointer' (class `Cursor'): cursor-name
-     The cursor to use when the mouse is over a blank space in a buffer
-     (that is, after the end of a line or after the end-of-file).  This
-     resource is used to initialize the variable
-     `x-nontext-pointer-shape'.
-
-`modeLinePointer' (class `Cursor'): cursor-name
-     The cursor to use when the mouse is over a mode line.  This
-     resource is used to initialize the variable `x-mode-pointer-shape'.
-
-`gcPointer' (class `Cursor'): cursor-name
-     The cursor to display when a garbage-collection is in progress.
-     This resource is used to initialize the variable
-     `x-gc-pointer-shape'.
-
-`scrollbarPointer' (class `Cursor'): cursor-name
-     The cursor to use when the mouse is over the scrollbar.  This
-     resource is used to initialize the variable
-     `x-scrollbar-pointer-shape'.
-
-`pointerColor' (class `Foreground'): color-name
-`pointerBackground' (class `Background'): color-name
-     The foreground and background colors of the mouse cursor.  These
-     resources are used to initialize the variables
-     `x-pointer-foreground-color' and `x-pointer-background-color'.
-
-`scrollBarWidth' (class `ScrollBarWidth'): integer
-     How wide the vertical scrollbars should be, in pixels; 0 means no
-     vertical scrollbars.  You can also use a resource specification of
-     the form `*scrollbar.width', or the usual toolkit scrollbar
-     resources: `*XmScrollBar.width' (Motif), `*XlwScrollBar.width'
-     (Lucid), or `*Scrollbar.thickness' (Athena).  We don't recommend
-     that you use the toolkit resources, though, because they're
-     dependent on how exactly your particular build of XEmacs was
-     configured.
-
-`scrollBarHeight' (class `ScrollBarHeight'): integer
-     How high the horizontal scrollbars should be, in pixels; 0 means no
-     horizontal scrollbars.  You can also use a resource specification
-     of the form `*scrollbar.height', or the usual toolkit scrollbar
-     resources: `*XmScrollBar.height' (Motif), `*XlwScrollBar.height'
-     (Lucid), or `*Scrollbar.thickness' (Athena).  We don't recommend
-     that you use the toolkit resources, though, because they're
-     dependent on how exactly your particular build of XEmacs was
-     configured.
-
-`scrollBarPlacement' (class `ScrollBarPlacement'): string
-     Where the horizontal and vertical scrollbars should be positioned.
-     This should be one of the four strings `bottom-left',
-     `bottom-right', `top-left', and `top-right'.  Default is
-     `bottom-right' for the Motif and Lucid scrollbars and
-     `bottom-left' for the Athena scrollbars.
-
-`topToolBarHeight' (class `TopToolBarHeight'): integer
-`bottomToolBarHeight' (class `BottomToolBarHeight'): integer
-`leftToolBarWidth' (class `LeftToolBarWidth'): integer
-`rightToolBarWidth' (class `RightToolBarWidth'): integer
-     Height and width of the four possible toolbars.
-
-`topToolBarShadowColor' (class `TopToolBarShadowColor'): color-name
-`bottomToolBarShadowColor' (class `BottomToolBarShadowColor'): color-name
-     Color of the top and bottom shadows for the toolbars.  NOTE: These
-     resources do *not* have anything to do with the top and bottom
-     toolbars (i.e. the toolbars at the top and bottom of the frame)!
-     Rather, they affect the top and bottom shadows around the edges of
-     all four kinds of toolbars.
-
-`topToolBarShadowPixmap' (class `TopToolBarShadowPixmap'): pixmap-name
-`bottomToolBarShadowPixmap' (class `BottomToolBarShadowPixmap'): pixmap-name
-     Pixmap of the top and bottom shadows for the toolbars.  If set,
-     these resources override the corresponding color resources. NOTE:
-     These resources do *not* have anything to do with the top and
-     bottom toolbars (i.e. the toolbars at the top and bottom of the
-     frame)!  Rather, they affect the top and bottom shadows around the
-     edges of all four kinds of toolbars.
-
-`toolBarShadowThickness' (class `ToolBarShadowThickness'): integer
-     Thickness of the shadows around the toolbars, in pixels.
-
-`visualBell' (class `VisualBell'): boolean
-     Whether XEmacs should flash the screen rather than making an
-     audible beep.
-
-`bellVolume' (class `BellVolume'): integer
-     Volume of the audible beep.
-
-`useBackingStore' (class `UseBackingStore'): boolean
-     Whether XEmacs should set the backing-store attribute of the X
-     windows it creates.  This increases the memory usage of the X
-     server but decreases the amount of X traffic necessary to update
-     the screen, and is useful when the connection to the X server goes
-     over a low-bandwidth line such as a modem connection.
-
-
-**** Face Resources
--------------------
-
-   The attributes of faces are also per-frame. They can be specified as:
-
-     Emacs.FACE_NAME.parameter: value
-
-     (*do not* use `Emacs*FACE_NAME...')
-
-or
-
-     Emacs*FRAME_NAME.FACE_NAME.parameter: value
-
-Faces accept the following resources:
-
-`attributeFont' (class `AttributeFont'): font-name
-     The font of this face.
-
-`attributeForeground' (class `AttributeForeground'): color-name
-`attributeBackground' (class `AttributeBackground'): color-name
-     The foreground and background colors of this face.
-
-`attributeBackgroundPixmap' (class `AttributeBackgroundPixmap'): file-name
-     The name of an XBM file (or XPM file, if your version of Emacs
-     supports XPM), to use as a background stipple.
-
-`attributeUnderline' (class `AttributeUnderline'): boolean
-     Whether text in this face should be underlined.
-
-   All text is displayed in some face, defaulting to the face named
-`default'.  To set the font of normal text, use
-`Emacs*default.attributeFont'. To set it in the frame named `fred', use
-`Emacs*fred.default.attributeFont'.
-
-   These are the names of the predefined faces:
-
-`default'
-     Everything inherits from this.
-
-`bold'
-     If this is not specified in the resource database, Emacs tries to
-     find a bold version of the font of the default face.
-
-`italic'
-     If this is not specified in the resource database, Emacs tries to
-     find an italic version of the font of the default face.
-
-`bold-italic'
-     If this is not specified in the resource database, Emacs tries to
-     find a bold-italic version of the font of the default face.
-
-`modeline'
-     This is the face that the modeline is displayed in.  If not
-     specified in the resource database, it is determined from the
-     default face by reversing the foreground and background colors.
-
-`highlight'
-     This is the face that highlighted extents (for example, Info
-     cross-references and possible completions, when the mouse passes
-     over them) are displayed in.
-
-`left-margin'
-`right-margin'
-     These are the faces that the left and right annotation margins are
-     displayed in.
-
-`zmacs-region'
-     This is the face that mouse selections are displayed in.
-
-`text-cursor'
-     This is the face that the cursor is displayed in.
-
-`isearch'
-     This is the face that the matched text being searched for is
-     displayed in.
-
-`info-node'
-     This is the face of info menu items.  If unspecified, it is copied
-     from `bold-italic'.
-
-`info-xref'
-     This is the face of info cross-references.  If unspecified, it is
-     copied from `bold'. (Note that, when the mouse passes over a
-     cross-reference, the cross-reference's face is determined from a
-     combination of the `info-xref' and `highlight' faces.)
-
-   Other packages might define their own faces; to see a list of all
-faces, use any of the interactive face-manipulation commands such as
-`set-face-font' and type `?' when you are prompted for the name of a
-face.
-
-   If the `bold', `italic', and `bold-italic' faces are not specified
-in the resource database, then XEmacs attempts to derive them from the
-font of the default face.  It can only succeed at this if you have
-specified the default font using the XLFD (X Logical Font Description)
-format, which looks like
-
-     *-courier-medium-r-*-*-*-120-*-*-*-*-*-*
-
-If you use any of the other, less strict font name formats, some of
-which look like
-
-     lucidasanstypewriter-12
-     fixed
-     9x13
-
-   then XEmacs won't be able to guess the names of the bold and italic
-versions.  All X fonts can be referred to via XLFD-style names, so you
-should use those forms.  See the man pages for `X(1)', `xlsfonts(1)',
-and `xfontsel(1)'.
-
-
-**** Widgets
-------------
-
-   There are several structural widgets between the terminal EmacsFrame
-widget and the top level ApplicationShell; the exact names and types of
-these widgets change from release to release (for example, they changed
-in 19.9, 19.10, 19.12, and 19.13) and are subject to further change in
-the future, so you should avoid mentioning them in your resource database.
-The above-mentioned syntaxes should be forward-compatible.  As of 19.14,
-the exact widget hierarchy is as follows:
-
-    INVOCATION-NAME           "shell"              "container"     FRAME-NAME
-    x-emacs-application-class "TopLevelEmacsShell" "EmacsManager" "EmacsFrame"
-
-(for normal frames)
-
-or
-
-    INVOCATION-NAME           "shell"               "container"     FRAME-NAME
-    x-emacs-application-class "TransientEmacsShell" "EmacsManager" "EmacsFrame"
-
-(for popup/dialog-box frames)
-
-where INVOCATION-NAME is the terminal component of the name of the
-XEmacs executable (usually `xemacs'), and `x-emacs-application-class'
-is generally `Emacs'.
-
-
-**** Menubar Resources
-----------------------
-
-   As the menubar is implemented as a widget which is not a part of
-XEmacs proper, it does not use the face mechanism for specifying fonts
-and colors: It uses whatever resources are appropriate to the type of
-widget which is used to implement it.
-
-   If Emacs was compiled to use only the Motif-lookalike menu widgets,
-then one way to specify the font of the menubar would be
-
-     Emacs*menubar*font: *-courier-medium-r-*-*-*-120-*-*-*-*-*-*
-
-   If the Motif library is being used, then one would have to use
-
-     Emacs*menubar*fontList: *-courier-medium-r-*-*-*-120-*-*-*-*-*-*
-
-   because the Motif library uses the `fontList' resource name instead
-of `font', which has subtly different semantics.
-
-   The same is true of the scrollbars: They accept whichever resources
-are appropriate for the toolkit in use.
-
-
-*** Source Code Highlighting
-----------------------------
-
-It's possible to have your buffers "decorated" with fonts or colors
-indicating syntactic structures (such as strings, comments, function names,
-"reserved words", etc.).  In XEmacs, the preferred way to do this is with
-font-lock-mode; activate it by adding the following code to your .emacs file:
-
-        (add-hook 'emacs-lisp-mode-hook 'turn-on-font-lock)
-        (add-hook 'c-mode-hook          'turn-on-font-lock)
-        (add-hook 'c++-mode-hook        'turn-on-font-lock)
-        (add-hook 'dired-mode-hook      'turn-on-font-lock)
-        ...etc...
-
-To customize it, see the descriptions of the function `font-lock-mode' and
-the variables `font-lock-keywords', `c-font-lock-keywords', etc.
-
-There exist several other source code highlighting packages, but font-lock
-does one thing that most others don't do: highlights as you type new text;
-and one thing that no others do: bases part of its decoration on the
-syntax table of the major mode.  Font-lock has C-level support to do this
-efficiently, so it should also be significantly faster than the others.
-
-If there's something that another highlighting package does that you can't
-make font-lock do, let us know.  We would prefer to consolidate all of the
-desired functionality into one package rather than ship several different
-packages which do essentially the same thing in different ways.
-
-
-** Differences Between XEmacs and Emacs 18
-==========================================
-
-Auto-configure support has been added, so it should be fairly easy to compile
-XEmacs on different systems.  If you have any problems or feedback about
-compiling on your system, please let us know.
-
-We have reimplemented the basic input model in a more general way; instead of
-X input being a special-case of the normal ASCII input stream, XEmacs has a
-concept of "input events", and ASCII characters are a subset of that.  The
-events that XEmacs knows about are not X events, but are a generalization of
-them, so that XEmacs can eventually be ported to different window systems.
-
-We have reimplemented keymaps so that sequences of events can be stored into
-them instead of just ASCII codes; it is possible to, for example, bind
-different commands to each of the chords Control-h, Control-H, Backspace,
-Control-Backspace, and Super-Shift-Backspace.  Key bindings, function key
-bindings, and mouse bindings live in the same keymaps.
-
-Input and display of all ISO-8859-1 characters is supported.
-
-You can have multiple X windows ("frames" in XEmacs terminology).
-
-XEmacs has objects called "extents" and "faces", which are roughly
-analogous to Epoch's "buttons," "zones," and "styles."  An extent is a
-region of text (a start position and an end position) and a face is a
-collection of textual attributes like fonts and colors.  Every extent
-is displayed in some "face", so changing the properties of a face
-immediately updates the display of all associated extents.  Faces can
-be frame-local: you can have a region of text which displays with
-completely different attributes when its buffer is viewed from a
-different X window.
-
-The display attributes of faces may be specified either in lisp or through
-the X resource manager.
-
-Pixmaps of arbitrary size can be embedded in a buffer.
-
-Variable width fonts work.
-
-The height of a line is the height of the tallest font on that line, instead
-of all lines having the same height.
-
-XEmacs uses the MIT "Xt" toolkit instead of raw Xlib calls, which
-makes it be a more well-behaved X citizen (and also improves
-portability).  A result of this is that it is possible to include
-other Xt "Widgets" in the XEmacs window.  Also, XEmacs understands the
-standard Xt command-line arguments.
-
-XEmacs understands the X11 "Selection" mechanism; it's possible to define
-and customize selection converter functions and new selection types from 
-Emacs Lisp, without having to recompile XEmacs.
-
-XEmacs provides support for ToolTalk on systems that have it.
-
-XEmacs supports the Zmacs/Lispm style of region highlighting, where the
-region between the point and mark is highlighted when in its "active" state.
-
-XEmacs has a menubar, whose contents are customizable from emacs-lisp.
-This menubar looks Motif-ish, but does not require Motif.  If you already
-own Motif, however, you can configure XEmacs to use a *real* Motif menubar
-instead.
-
-XEmacs can ask questions using popup dialog boxes.  Any command executed from
-a menu will ask yes/no questions with dialog boxes, while commands executed
-via the keyboard will use the minibuffer.
-
-XEmacs has vertical and horizontal scrollbars.
-
-The initial load-path is computed at run-time, instead of at compile-time.
-This means that if you move the XEmacs executable and associated directories
-to somewhere else, you don't have to recompile anything.
-
-You can specify what the title of the XEmacs windows and icons should be
-with the variables `frame-title-format' and `frame-icon-title-format',
-which have the same syntax as `mode-line-format'.
-
-XEmacs now supports floating-point numbers.
-
-XEmacs now knows about timers directly, instead of them being simulated by
-a subprocess.
-
-XEmacs understands truenames, and can be configured to notice when you are
-visiting two names of the same file.  See the variables find-file-use-truenames
-and find-file-compare-truenames.
-
-If you're running on a machine with audio hardware, you can specify sound 
-files for XEmacs to play instead of the default X beep.  See the documentation
-of the function load-sound-file and the variable sound-alist.
-
-An XEmacs frame can be placed within an "external client widget" managed by
-another application.  This allows an application to use an XEmacs frame as its
-text pane rather than the standard Text widget that is provided with Motif or
-Athena.  XEmacs supports Motif applications, generic Xt (e.g. Athena)
-applications, and raw Xlib applications.
-
-Random changes to the emacs-lisp library: (some of this was not written by
-us, but is included because it's free software and we think it's good stuff)
-
-  - there is a new optimizing byte-compiler
-  - there is a new abbrev-based mail-alias mechanism
-  - the -*- line can contain local-variable settings
-  - there is a new TAGS package
-  - there is a new VI-emulation mode (viper)
-  - there is a new implementation of Dired
-  - there is a new implementation of Isearch
-  - the VM package for reading mail is provided
-  - the W3 package for browsing the World Wide Web hypertext information
-    system is provided
-  - the Hyperbole package, a programmable information management and
-    hypertext system
-  - the OO-Browser package, a multi-language object-oriented browser
-
-There are many more specifics in the "Miscellaneous Changes" section, below.
-
-The online Emacs Manual and Emacs-Lisp Manual are now both relatively
-up-to-date.
-
 * XEmacs Release Notes
 ======================
 
@@ -1201,41 +103,6 @@ We are working on improving the Mule support in future releases:
 
 ** Major Differences between 20.0 and 20.1
 
-Many packages have been add and upgraded.
-
--- Gnus-5.4.17  Courtesy of Lars Magne Ingebrigtsen
--- mic-paren.el-1.3.1  Courtesy of Mikael Sjödin
--- hyperbole-4.022 Courtesy of Bob Weiner
--- W3-3.0.62 Courtesy of William Perry
--- AUCTeX-9.7k Courtesy of Per Abrahamsen
--- hm--html-menus-5.3 Courtesy of Heiko Muenkel
--- custom-1.46 Courtesy of Per Abrahamsen
--- python-mode.el-2.90 Courtesy of Barry Warsaw
--- balloon-help-1.04 Courtesy of Kyle Jones
--- xrdb-mode.el-1.21 Courtesy of Barry Warsaw
--- igrep.el-2.56 Courtesy of Kevin Rodgers
--- frame-icon.el Courtesy of Michael Lamoureux and Bob Weiner
--- itimer.el-1.01 Courtesy of Kyle Jones
--- redo.el-1.01 Courtesy of Kyle Jones
--- VM-6.15 Courtesy of Kyle Jones
--- OO-Browser-2.10 Courtesy of Bob Weiner
--- viper-2.93 Courtesy of Michael Kifer
--- ediff-2.64 Courtesy of Michael Kifer
--- edmacro.el-3.05 Courtesy of Dave Gillespie, port to XEmacs by
-   Hrvoje Niksic.
--- detached-minibuf.el Courtesy of Alvin Shelton
--- whitespace-mode.el Courtesy of Heiko Muenkel
--- winmgr-mode.el Courtesy of David Konerding, Stefan Strobel & Barry Warsaw
--- mine.el-1.17 Courtesy of Jacques Duthen
--- fast-lock.el-3.11.01 Courtesy of Simon Marshall
--- lazy-lock.el-1.16 Courtesy of Simon Marshall
--- browse-cltl2.el-1.1 Courtesy of Holger Schauer
--- eldoc.el-1.8 Courtesy of Noah Friedman
--- tm-7.105 Courtesy of MORIOKA Tomohiko
--- efs-1.15 courtesy of Andy Norman and Michael Sperber
--- verilog-mode.el Courtesy of Michael McNamara & Adrian Aichner
--- overlay.el Courtesy of Joseph Nuspl
-
 *** User Interface changes.
 
 The keysyms mouse-1, mouse-2, mouse-3 and down-mouse-1, down-mouse-2,
@@ -1247,6 +114,265 @@ region when moving up against a buffer boundary.
 
 The logo has been changed, and the default background color is now
 shade of gray instead of white.
+
+Many packages have been add and upgraded.
+
+-- Gnus-5.4.43  Courtesy of Lars Magne Ingebrigtsen
+
+*** Gnus changes.
+
+**** nntp.el has been totally rewritten in an asynchronous fashion.
+
+**** Article prefetching functionality has been moved up into 
+Gnus.  
+
+**** Scoring can now be performed with logical operators like 
+`and', `or', `not', and parent redirection.
+
+*** Article washing status can be displayed in the
+article mode line.
+
+**** gnus.el has been split into many smaller files.
+
+**** Suppression of duplicate articles based on Message-ID.
+
+(setq gnus-suppress-duplicates t)
+
+**** New variables for specifying what score and adapt files
+are to be considered home score and adapt files.  See
+`gnus-home-score-file' and `gnus-home-adapt-files'.
+
+**** Groups can inherit group parameters from parent topics.
+
+**** Article editing has been revamped and is now usable.
+
+**** Signatures can be recognized in more intelligent fashions.
+See `gnus-signature-separator' and `gnus-signature-limit'.
+
+**** Summary pick mode has been made to look more nn-like.
+Line numbers are displayed and the `.' command can be
+used to pick articles.
+
+**** Commands for moving the .newsrc.eld from one server to
+another have been added.
+
+    `M-x gnus-change-server'
+
+**** A way to specify that "uninteresting" fields be suppressed when
+generating lines in buffers.
+
+**** Several commands in the group buffer can be undone with
+`M-C-_'.
+
+**** Scoring can be done on words using the new score type `w'.
+
+**** Adaptive scoring can be done on a Subject word-by-word basis:
+
+    (setq gnus-use-adaptive-scoring '(word))
+
+**** Scores can be decayed.
+ 
+    (setq gnus-decay-scores t)
+
+**** Scoring can be performed using a regexp on the Date header.  The
+Date is normalized to compact ISO 8601 format first.
+
+**** A new command has been added to remove all data on articles from
+the native server.
+
+   `M-x gnus-group-clear-data-on-native-groups'
+
+**** A new command for reading collections of documents
+(nndoc with nnvirtual on top) has been added -- `M-C-d'.
+
+**** Process mark sets can be pushed and popped.
+
+**** A new mail-to-news backend makes it possible to post
+even when the NNTP server doesn't allow posting.
+
+**** A new backend for reading searches from Web search engines
+(DejaNews, Alta Vista, InReference) has been added.
+
+    Use the `G w' command in the group buffer to create such
+    a group.
+
+**** Groups inside topics can now be sorted using the standard
+sorting functions, and each topic can be sorted independently.
+
+    See the commands under the `T S' submap.
+
+**** Subsets of the groups can be sorted independently.
+
+    See the commands under the `G P' submap.
+
+**** Cached articles can be pulled into the groups.
+  
+    Use the `Y c' command.
+
+**** Score files are now applied in a more reliable order.
+
+**** Reports on where mail messages end up can be generated.
+
+    `M-x nnmail-split-history'
+
+**** More hooks and functions have been added to remove junk
+from incoming mail before saving the mail.
+ 
+    See `nnmail-prepare-incoming-header-hook'.
+
+**** The nnml mail backend now understands compressed article files.
+
+-- custom-1.82 Courtesy of Per Abrahamsen
+
+The Customize library enables Emacs Lisp programmers to specify types
+of their variables, so that the users can customize them.  For
+example, the old declaration
+
+(defvar foo-blurgoze nil
+  "*non-nil means that foo will act very blurgozely.")
+
+now becomes:
+
+(defcustom foo-blurgoze nil
+  "*non-nil means that foo will act very blurgozely."
+  :type 'boolean)
+
+Now the user can type `M-x customize RET foo-blurgoze RET' to
+customize the variable.  Other, more complex data structures can be
+represented and customized too, e.g.
+
+(defcustom foo-hairy-alist '((somekey . "somestring")
+                             (otherkey . (foo-doit))
+                             (thirdkey . [1 2 3]))
+"*Alist describing the hairy options of foo package.
+The CAR of each element is a symbol, whereas the CDR can be either a
+string, a form to evaluate, or a vector of integers."
+  :type '(repeat (cons (symbol :tag "Key")
+                       (choice string
+                               (vector (repeat :inline t integer))
+                               sexp))))
+
+The user will be able to add and remove the entries to the list, as
+well as save the settings to his/her `.emacs'.
+
+The Customize now has its submenu at the top of the Options menu, and
+is the preferred way to change XEmacs settings.  Tens of packages have
+been converted to take advantage of the Customize features, including:
+Gnus, Message, Supercite, Psgml, Comint, Calendar, W3, cc-mode (and
+many other programming language modes), ispell.el, ps-print.el,
+id-select.el, most of the programming language modes, and many many
+more.
+
+been converted to use the Customize features.
+
+-- mic-paren.el-1.3.1  Courtesy of Mikael Sjödin
+-- hyperbole-4.022 Courtesy of Bob Weiner
+
+-- W3-3.0.80 Courtesy of William Perry
+
+Version 3 of Emacs/W3, the Emacs World Wide Web browser, has been
+included.  It is much faster than any of the previous versions, and
+contains numerous other features.
+
+-- AUCTeX-9.7k Courtesy of Per Abrahamsen
+
+   AUC TeX is a comprehensive customizable integrated environment for
+writing input files for LaTeX using GNU Emacs.
+
+   AUC TeX lets you run TeX/LaTeX and other LaTeX-related tools, such
+as a output filters or post processor from inside Emacs.  Especially
+`running LaTeX' is interesting, as AUC TeX lets you browse through the
+errors TeX reported, while it moves the cursor directly to the reported
+error, and displays some documentation for that particular error.  This
+will even work when the document is spread over several files.
+
+   AUC TeX automatically indents your `LaTeX-source', not only as you
+write it -- you can also let it indent and format an entire document.
+It has a special outline feature, which can greatly help you `getting an
+overview' of a document.
+
+   Apart from these special features, AUC TeX provides an large range of
+handy Emacs macros, which in several different ways can help you write
+your LaTeX documents fast and painless.
+
+-- hm--html-menus-5.3 Courtesy of Heiko Muenkel
+-- python-mode.el-2.90 Courtesy of Barry Warsaw
+-- balloon-help-1.04 Courtesy of Kyle Jones
+-- xrdb-mode.el-1.21 Courtesy of Barry Warsaw
+-- igrep.el-2.56 Courtesy of Kevin Rodgers
+-- frame-icon.el Courtesy of Michael Lamoureux and Bob Weiner
+-- itimer.el-1.01 Courtesy of Kyle Jones
+
+-- redo.el-1.01 Courtesy of Kyle Jones
+
+redo.el is a package that implements true redo mechanism in XEmacs
+buffers.  You can bind the `redo' command to a convenient key to use
+it.
+
+Emacs' normal undo system allows you to undo an arbitrary
+number of buffer changes.  These undos are recorded as ordinary
+buffer changes themselves.  So when you break the chain of
+undos by issuing some other command, you can then undo all
+the undos.  The chain of recorded buffer modifications
+therefore grows without bound, truncated only at garbage
+collection time.
+
+The redo/undo system is different in two ways:
+  1. The undo/redo command chain is only broken by a buffer
+     modification.  You can move around the buffer or switch
+     buffers and still come back and do more undos or redos.
+  2. The `redo' command rescinds the most recent undo without
+     recording the change as a _new_ buffer change.  It
+     completely reverses the effect of the undo, which
+     includes making the chain of buffer modification records
+     shorter by one, to counteract the effect of the undo
+     command making the record list longer by one.
+
+-- VM-6.15 Courtesy of Kyle Jones
+-- OO-Browser-2.10 Courtesy of Bob Weiner
+-- viper-2.93 Courtesy of Michael Kifer
+-- ediff-2.64 Courtesy of Michael Kifer
+
+-- edmacro.el-3.05 Courtesy of Dave Gillespie, port to XEmacs by
+   Hrvoje Niksic.
+
+Edmacro is a utility that provides easy editing of keyboard macros.
+Press `C-x C-k' to invoke the `edit-kbd-macro' command that lets you
+edit and define new keyboard macros.  You can also edit the last 100
+keystrokes and insert them into a macro to be bound to a key.  The
+macros can be conveniently dumped to `.emacs' file.
+
+The `read-kbd-macro' function is now available in XEmacs.  The short
+form `kbd' that evaluates at compile-time can be used instead.
+
+-- detached-minibuf.el Courtesy of Alvin Shelton
+-- whitespace-mode.el Courtesy of Heiko Muenkel
+-- winmgr-mode.el Courtesy of David Konerding, Stefan Strobel & Barry Warsaw
+
+-- xmine.el-1.4 Courtesy of Jens Lautenbacher
+
+XEmacs now includes a minesweeper game with a full-featured graphics
+and mouse interface.  Invoke with `M-x xmine'.
+
+-- fast-lock.el-3.11.01 Courtesy of Simon Marshall
+-- lazy-lock.el-1.16 Courtesy of Simon Marshall
+-- browse-cltl2.el-1.1 Courtesy of Holger Schauer
+-- eldoc.el-1.8 Courtesy of Noah Friedman
+-- tm-7.105 Courtesy of MORIOKA Tomohiko
+
+-- efs-1.15 courtesy of Andy Norman and Michael Sperber
+
+EFS is now integrated with XEmacs, and replaces the old ange-ftp.  It
+has many more features, including info documentation, support for many
+different FTP servers, and integration with dired.
+
+-- verilog-mode.el Courtesy of Michael McNamara & Adrian Aichner
+
+-- overlay.el Courtesy of Joseph Nuspl
+
+The overlay support in XEmacs is now functional.  Overlays are
+implemented on top of native extents, and can be used as a GNU
+Emacs-compatible way of changing display properties.
 
 *** Other changes
 
@@ -3121,3 +2247,1101 @@ font-lock.el:   A code-highlighting package, driven off of syntax tables, so
                 insertion hook is used to fontify text as you type it in.
 
 shell-font.el:  Displays your shell-buffer prompt in boldface.
+
+* The History of XEmacs
+=======================
+
+This product is an extension of GNU Emacs, previously known to some as
+"Lucid Emacs" or "ERA".  It was initially based on an early version of Emacs
+Version 19 from the Free Software Foundation and has since been kept
+up-to-date with recent versions of that product.  It stems from a
+collaboration of Lucid, Inc. with SunSoft DevPro (a division of Sun
+Microsystems, Inc.; formerly called SunPro) and the University of Illinois.
+
+NOTE: Lucid, Inc. is currently out of business but development on XEmacs
+continues strong.  Recently, Amdahl Corporation and INS Engineering have
+both contributed significantly to the development of XEmacs.
+
+
+* What's Different?
+===================
+
+
+** Differences between XEmacs and GNU Emacs 19
+==================================================
+In XEmacs 20, characters are first-class objects.  Characters can be
+converted to integers, but are not integers.  FSF 19, XEmacs 19, and Mule
+represent them as integers.
+
+In XEmacs, events are first-class objects.  FSF 19 represents them as
+integers, which obscures the differences between a key gesture and the
+ancient ASCII code used to represent a particular overlapping subset of them.
+
+In XEmacs, keymaps are first-class opaque objects.  FSF 19 represents them as
+complicated combinations of association lists and vectors.  If you use the
+advertised functional interface to manipulation of keymaps, the same code
+will work in XEmacs, Emacs 18, and GNU Emacs 19; if your code depends
+on the underlying implementation of keymaps, it will not.
+
+XEmacs uses "extents" to represent all non-textual aspects of buffers;
+FSF 19 uses two distinct objects, "text properties" and "overlays",
+which divide up the functionality between them.  Extents are a
+superset of the functionality of the two FSF data types.  The full FSF
+19 interface to text properties is supported in XEmacs (with extents
+being the underlying representation).
+
+Extents can be made to be copied into strings, and thus restored by kill
+and yank.  Thus, one can specify this behavior on either "extents" or
+"text properties", whereas in FSF 19 text properties always have this
+behavior and overlays never do.
+
+Many more packages are provided standard with XEmacs than with FSF 19.
+
+Pixmaps of arbitrary size can be embedded in a buffer.
+
+Variable width fonts work.
+
+The height of a line is the height of the tallest font on that line, instead
+of all lines having the same height.
+
+XEmacs uses the MIT "Xt" toolkit instead of raw Xlib calls, which
+makes it be a more well-behaved X citizen (and also improves
+portability).  A result of this is that it is possible to include
+other Xt "Widgets" in the XEmacs window.  Also, XEmacs understands the
+standard Xt command-line arguments.
+
+XEmacs provides support for ToolTalk on systems that have it.
+
+XEmacs can ask questions using popup dialog boxes.  Any command executed from
+a menu will ask yes/no questions with dialog boxes, while commands executed
+via the keyboard will use the minibuffer.
+
+XEmacs has a built-in toolbar.  Four toolbars can actually be configured:
+top, bottom, left, and right toolbars.
+
+XEmacs has vertical and horizontal scrollbars.  Unlike in FSF 19 (which
+provides a primitive form of vertical scrollbar), these are true toolkit
+scrollbars.  A look-alike Motif scrollbar is provided for those who
+don't have Motif. (Even for those who do, the look-alike may be preferable
+as it is faster.)
+
+If you're running on a machine with audio hardware, you can specify sound 
+files for XEmacs to play instead of the default X beep.  See the documentation
+of the function load-sound-file and the variable sound-alist.
+
+An XEmacs frame can be placed within an "external client widget" managed by
+another application.  This allows an application to use an XEmacs frame as its
+text pane rather than the standard Text widget that is provided with Motif or
+Athena.  XEmacs supports Motif applications, generic Xt (e.g. Athena)
+applications, and raw Xlib applications.
+
+Here are some more specifics about the XEmacs implementation:
+
+*** The Input Model
+-------------------
+
+The fundamental unit of input is an "event" instead of a character.  An
+event is a new data type that contains several pieces of information.
+There are several kinds of event, and corresponding accessor and utility
+functions.  We tried to abstract them so that they would apply equally
+well to a number of window systems.
+
+NOTE: All timestamps are measured as milliseconds since Emacs started.
+
+ key_press_event	
+    event_channel	A token representing which keyboard generated it.
+			For this kind of event, this is a console object.
+    timestamp		When it happened
+    key			What keysym this is; a character or a symbol.
+			If it is a character, it will be a printing
+			ASCII character.
+    modifiers		Bucky-bits on that key: control, meta, etc.
+			For most keys, Shift is not a bit; that is implicit
+			in the keyboard layout.
+
+ button_press_event
+ button_release_event
+    event_channel	A token representing which mouse generated it.
+			For this kind of event, this is a frame object.
+    timestamp		When it happened
+    button		What button went down or up.
+    modifiers		Bucky-bits on that button: shift, control, meta, etc.
+    x, y		Where it was at the button-state-change (in pixels).
+
+ pointer_motion_event
+    event_channel	A token representing which mouse generated it.
+			For this kind of event, this is a frame object.
+    timestamp		When it happened
+    x, y		Where it was after it moved (in pixels).
+    modifiers		Bucky-bits down when the motion was detected.
+			(Possibly not all window systems will provide this?)
+
+ process_event
+    timestamp		When it happened
+    process		the emacs "process" object in question
+
+ timeout_event
+    timestamp		Now (really, when the timeout was signaled)
+    interval_id		The ID returned when the associated call to
+			add_timeout_cb() was made
+	------ the rest of the fields are filled in by Emacs -----
+    id_number		The Emacs timeout ID for this timeout (more
+			than one timeout event can have the same value
+			here, since Emacs timeouts, as opposed to
+			add_timeout_cb() timeouts, can resignal
+			themselves)
+    function		An elisp function to call when this timeout is
+			processed.
+    object		The object passed to that function.
+
+ eval_event
+    timestamp		When it happened
+    function		An elisp function to call with this event object.
+    object		Anything.
+			This kind of event is used internally; sometimes the
+			window system interface would like to inform emacs of
+			some user action (such as focusing on another frame)
+			but needs that to happen synchronously with the other
+			user input, like keypresses.  This is useful when
+			events are reported through callbacks rather
+			than in the standard event stream.
+
+ misc_user_event
+    timestamp		When it happened
+    function		An elisp function to call with this event object.
+    object		Anything.
+			This is similar to an eval_event, except that it is
+			generated by user actions: selections in the
+			menubar or scrollbar actions.  It is a "command"
+			event, like key and mouse presses (and unlike mouse
+			motion, process output, and enter and leave window
+			hooks).  In many ways, eval_events are not the same
+			as keypresses or misc_user_events.
+
+ magic_event
+			No user-serviceable parts within.  This is for things
+			like KeymapNotify and ExposeRegion events and so on
+			that emacs itself doesn't care about, but which it
+			must do something with for proper interaction with
+			the window system.
+
+			Magic_events are handled somewhat asynchronously, just
+			like subprocess filters.  However, occasionally a 
+			magic_event needs to be handled synchronously; in that
+			case, the asynchronous handling of the magic_event will
+			push an eval_event back onto the queue, which will be 
+			handled synchronously later.  This is one of the
+			reasons why eval_events exist; I'm not entirely happy
+			with this aspect of this event model.
+
+
+The function `next-event' blocks and returns one of the above-described 
+event objects.  The function `dispatch-event' takes an event and processes
+it in the appropriate way.
+
+For a process-event, dispatch-event calls the process's handler; for a
+mouse-motion event, the mouse-motion-handler hook is called, and so on.
+For magic-events, dispatch-event does window-system-dependent things,
+including calling some non-window-system-dependent hooks: map-frame-hook,
+unmap-frame-hook, mouse-enter-frame-hook, and mouse-leave-frame-hook.
+
+The function `next-command-event' calls `next-event' until it gets a key or
+button from the user (that is, not a process, motion, timeout, or magic
+event).  If it gets an event that is not a key or button, it calls
+`dispatch-event' on it immediately and reads another one.  The
+next-command-event function could be implemented in Emacs Lisp, though it
+isn't.  Generally one should call `next-command-event' instead of
+`next-event'.
+
+read-char calls next-command-event; if it doesn't get an event that can be
+converted to an ASCII character, it signals an error.  Otherwise it returns
+an integer.
+
+The variable `last-command-char' always contains an integer, or nil (if the
+last read event has no ASCII equivalent, as when it is a mouse-click or a
+non-ASCII character chord.)
+
+The new variable `last-command-event' holds an event object, that could be
+a non-ASCII character, a button click, a menu selection, etc.
+
+The variable `unread-command-char' no longer exists, and has been replaced
+by `unread-command-events'.  With the new event model, it is incorrect for
+code to do (setq unread-command-char (read-char)), because all user-input
+can't be represented as ASCII characters.  *** This is an incompatible 
+change.  Code which sets `unread-command-char' must be updated to use the
+combination of `next-command-event' and `unread-command-events' instead.
+
+The functions `this-command-keys' and `recent-keys' return a vector of
+event objects, instead of a string of ASCII characters.  *** This also
+is an incompatible change.
+
+Almost nothing happens at interrupt level; the SIGIO handler simply sets a
+flag, and later, the X event queue is scanned for KeyPress events which map
+to ^G.  All redisplay happens in the main thread of the process.
+
+
+*** Keymaps
+-----------
+
+Instead of keymaps being alists or obarrays, they are a new primary data
+type.  The only user access to the contents of a keymap is through the
+existing keymap-manipulation functions, and a new function, map-keymap.
+This means that existing code that manipulates keymaps may need to 
+be changed.
+
+One of our goals with the new input and keymap code was to make more
+character combinations available for binding, besides just ASCII and
+function keys.  We want to be able bind different commands to Control-a 
+and Control-Shift-a; we also want it to be possible for the keys Control-h
+and Backspace (and Control-M and Return, and Control-I and Tab, etc) to
+be distinct.
+
+One of the most common complaints that new Emacs users have is that backspace
+is help.  The answer is to play around with the keyboard-translate-table, or
+be lucky enough to have a system administrator who has done this for you
+already; but if it were possible to bind backspace and C-h to different
+things, then (under a window manager at least) both backspace and delete
+would delete a character, and ^H would be help.  There's no need to deal 
+with xmodmap, kbd-translate-table, etc.
+
+Here are some more examples: suppose you want to bind one function to Tab, 
+and another to Control-Tab.  This can't be done if Tab and Control-I are the
+same thing.  What about control keys that have no ASCII equivalent, like
+Control-< ?  One might want that to be bound to set-mark-at-point-min.  We
+want M-C-Backspace to be kill-backward-sexp.  But we want M-Backspace to be
+kill-backward-word.  Again, this can't be done if Backspace and C-h are
+indistinguishable.
+
+The user represents keys as a string of ASCII characters (when possible and
+convenient), or as a vector of event objects, or as a vector of "key 
+description lists", that looks like (control a), or (control meta delete) 
+or (shift f1).  The order of the modifier-names is not significant, so
+(meta control x) and (control meta x) are the same.
+
+`define-key' knows how to take any of the above representations and store them
+into a keymap.  When Emacs wants to return a key sequence (this-command-keys,
+recent-keys, keyboard-macros, and read-key-sequence, for example) it returns
+a vector of event objects.  Keyboard macros can also be represented as ASCII
+strings or as vectors of key description lists.  
+
+This is an incompatible change: code which calls `this-command-keys',
+`recent-keys', `read-key-sequence', or manipulates keyboard-macros probably
+needs to be changed so that it no longer assumes that the returned value is a
+string.
+
+Control-Shift-a is specified as (control A), not (control shift a), since A
+is a two-case character.  But for keys that don't have an upper case
+version, like F1, Backspace, and Escape, you use the (shift backspace) syntax.
+
+See the doc string for our version of define-key, reproduced below in the
+`Changed Functions' section.  Note that when the KEYS argument is a string,
+it has the same semantics as the v18 define-key.
+
+
+*** Xt Integration
+------------------
+
+The heart of the event loop is implemented in terms of the Xt event functions
+(specifically XtAppProcessEvent), and uses Xt's concept of timeouts and
+file-descriptor callbacks, eliminating a large amount of system-dependent code
+(Xt does it for you.)
+
+If Emacs is compiled with support for X, it uses the Xt event loop even when
+Emacs is not running on an X display (the Xt event loop supports this).  This
+makes it possible to run Emacs on a dumb TTY, and later connect it to one or
+more X servers.  It should also be possible to later connect an existing Emacs
+process to additional TTY's, although this code is still experimental.  (Our
+intent at this point is not to have an Emacs that is being used by multiple
+people at the same time: it is to make it possible for someone to go home, log
+in on a dialup line, and connect to the same Emacs process that is running
+under X in their office without having to recreate their buffer state and so
+on.)
+
+If Emacs is not compiled with support for X, then it instead uses more general
+code, something like what v18 does; but this way of doing things is a lot more
+modular.
+
+(Linking Emacs with Xt seems to only add about 300k to the executable size,
+compared with an Emacs linked with Xlib only.)
+
+
+*** Region Highlighting
+-----------------------
+
+If the variable `zmacs-regions' is true, then the region between point and
+mark will be highlighted when "active".  Those commands which push a mark
+(such as C-SPC, and C-x C-x) make the region become "active" and thus
+highlighted.  Most commands (all non-motion commands, basically) cause it to
+become non-highlighted (non-"active").  Commands that operate on the region
+(such as C-w, C-x C-l, etc.) only work if the region is in the highlighted
+state.
+
+zmacs-activate-region-hook and zmacs-deactivate-region-hook are run at the
+appropriate times; under X, zmacs-activate-region-hook makes the X selection
+be the region between point and mark, thus doing two things at once: making
+the region and the X selection be the same; and making the region highlight
+in the same way as the X selection.
+
+If `zmacs-regions' is true, then the `mark-marker' command returns nil unless
+the region is currently in the active (highlighted) state.  With an argument
+of t, this returns the mark (if there is one) regardless of the active-region
+state.  You should *generally* not use the mark unless the region is active,
+if the user has expressed a preference for the active-region model.  Watch
+out!  Moving this marker changes the mark position.  If you set the marker not
+to point anywhere, the buffer will have no mark.
+
+In this way, the primary selection is a fairly transitory entity; but
+when something is copied to the kill ring, it is made the Clipboard
+selection.  It is also stored into CUT_BUFFER0, for compatibility with
+X applications that don't understand selections (like Emacs18).
+
+Compatibility note: if you have code which uses (mark) or (mark-marker),
+then you need to either: change those calls to (mark t) or (mark-marker t);
+or simply bind `zmacs-regions' to nil around the call to mark or mark-marker.
+This is probably the best solution, since it will work in Emacs 18 as well.
+
+
+*** Menubars and Dialog Boxes
+-----------------------------
+
+Here is an example of a menubar definition:
+
+(defvar default-menubar
+  '(("File"     ["Open File..."         find-file               t]
+                ["Save Buffer"          save-buffer             t]
+                ["Save Buffer As..."    write-file              t]
+                ["Revert Buffer"        revert-buffer           t]
+                "-----"
+                ["Print Buffer"         lpr-buffer              t]
+                "-----"
+                ["Delete Frame"         delete-frame            t]
+                ["Kill Buffer..."       kill-buffer             t]
+                ["Exit Emacs"           save-buffers-kill-emacs t]
+                )
+    ("Edit"     ["Undo"                 advertised-undo         t]
+                ["Cut"                  kill-primary-selection  t]
+                ["Copy"                 copy-primary-selection  t]
+                ["Paste"                yank-clipboard-selection t]
+                ["Clear"                delete-primary-selection t]
+                )
+    ...))
+
+The first element of each menu item is the string to print on the menu.
+
+The second element is the callback function; if it is a symbol, it is
+invoked with `call-interactively.'  If it is a list, it is invoked with
+`eval'.  
+
+If the second element is a symbol, then the menu also displays the key that
+is bound to that command (if any).
+
+The third element of the menu items determines whether the item is selectable.
+It may be t, nil, or a form to evaluate.  Also, a hook is run just before a
+menu is exposed, which can be used to change the value of these slots. 
+For example, there is a hook that makes the "undo" menu item be selectable
+only in the cases when `advertised-undo' would not signal an error.  
+
+Menus may have other menus nested within them; they will cascade.
+
+There are utility functions for adding items to menus, deleting items,
+disabling them, etc.
+
+The function `popup-menu' takes a menu description and pops it up.  
+
+The function `popup-dialog-box' takes a dialog-box description and pops 
+it up.  Dialog box descriptions look a lot like menu descriptions.
+
+The menubar, menu, and dialog-box code is implemented as a library, 
+with an interface which hides the toolkit that implements it.  
+
+
+*** Isearch Changes
+-------------------
+
+Isearch has been reimplemented in a different way, adding some new features,
+and causing a few incompatible changes.
+
+ -  the old isearch-*-char variables are no longer supported.  In the old
+    system, one could make ^A mean "repeat the search" by doing something
+    like (setq search-repeat-char ?C-a).  In the new system, this is 
+    accomplished with 
+
+       (define-key isearch-mode-map "\C-a" 'isearch-repeat-forward)
+
+ -  The advantage of using the normal keymap mechanism for this is that you
+    can bind more than one key to an isearch command: for example, both C-a
+    and C-s could do the same thing inside isearch mode.  You can also bind
+    multi-key sequences inside of isearch mode, and bind non-ASCII keys.
+    For example, to use the F1 key to terminate a search:
+
+       (define-key isearch-mode-map 'f1 'isearch-exit)
+
+    or to make ``C-c C-c'' terminate a search:
+
+       (define-key isearch-mode-map "\C-c\C-c" 'isearch-exit)
+
+ -  If isearch is behaving case-insensitively (the default) and you type an
+    upper case character, then the search will become case-sensitive.  This
+    can be disabled by setting `search-caps-disable-folding' to nil.
+
+ -  There is a history ring of the strings previously searched for; typing
+    M-p or M-n while searching will cycle through this ring.  Typing M-TAB
+    will do completion across the set of items in the history ring.
+
+ -  The ESC key is no longer used to terminate an incremental search.  The
+    RET key should be used instead.  This change is necessary for it to be
+    possible to bind "meta" characters to isearch commands.
+
+
+*** Startup Code Changes
+------------------------
+
+The initial X frame is mapped before the user's .emacs file is executed.
+Without this, there is no way for the user to see any error messages
+generated by their .emacs file, any windows created by the .emacs file
+don't show up, and the copyleft notice isn't shown.
+
+The default values for load-path, exec-path, lock-directory, and
+Info-directory-list are not (necessarily) built into Emacs, but are
+computed at startup time.  
+
+First, Emacs looks at the directory in which its executable file resides:
+
+  o  If that directory contains subdirectories named "lisp" and "lib-src",
+     then those directories are used as the lisp library and exec directory.
+
+  o  If the parent of the directory in which the emacs executable is located
+     contains "lisp" and "lib-src" subdirectories, then those are used.
+
+  o  If ../lib/xemacs-<version> (starting from the directory in which the
+     emacs executable is located) contains a "lisp" subdirectory and either
+     a "lib-src" subdirectory or a <configuration-name> subdirectory, then
+     those are used.
+
+  o  If the emacs executable that was run is a symbolic link, then the link
+     is chased, and the resultant directory is checked as above.
+
+(Actually, it doesn't just look for "lisp/", it looks for "lisp/prim/",
+which reduces the chances of a false positive.)
+
+If the lisp directory contains subdirectories, they are added to the default
+load-path as well.  If the site-lisp directory exists and contains
+subdirectories, they are then added.  Subdirectories whose names begin with
+a dot or a hyphen are not added to the load-path.
+
+These heuristics fail if the Emacs binary was copied from the main Emacs
+tree to some other directory, and links for the lisp directory were not put
+in.  This isn't much of a restriction: either make there be subdirectories
+(or symbolic links) of the directory of the emacs executable, or make the
+"installed" emacs executable be a symbolic link to an executable in a more
+appropriate directory structure.  For example, this setup works:
+
+    /usr/local/xemacs/xemacs*           ; The executable.
+    /usr/local/xemacs/lisp/             ; The associated directories.
+    /usr/local/xemacs/etc/              ; Any of the files in this list
+    /usr/local/xemacs/lock/             ; could be symbolic links as well.
+    /usr/local/xemacs/info/
+
+As does this:
+
+    /usr/local/bin/xemacs -> ../xemacs/src/xemacs-19.14 ; A link...
+    /usr/local/xemacs/src/xemacs-19.14*                 ; The executable,
+    /usr/local/xemacs/lisp/                             ; and the rest of
+    /usr/local/xemacs/etc/                              ; the source tree
+    /usr/local/xemacs/lock/
+    /usr/local/xemacs/info/
+
+This configuration might be used for a multi-architecture installation; assume
+that $LOCAL refers to a directory which contains only files specific to a 
+particular architecture (i.e., executables) and $SHARED refers to those files 
+which are not machine specific (i.e., lisp code and documentation.)
+
+    $LOCAL/bin/xemacs@ -> $LOCAL/xemacs-19.14/xemacs*
+    $LOCAL/xemacs-19.14/lisp@ -> $SHARED/xemacs-19.14/lisp/
+    $LOCAL/xemacs-19.14/etc@  -> $SHARED/xemacs-19.14/etc/
+    $LOCAL/xemacs-19.14/info@ -> $SHARED/xemacs-19.14/info/
+
+The following would also work, but the above is probably more attractive:
+
+    $LOCAL/bin/xemacs*
+    $LOCAL/bin/lisp@ -> $SHARED/xemacs-19.14/lisp/
+    $LOCAL/bin/etc@  -> $SHARED/xemacs-19.14/etc/
+    $LOCAL/bin/info@ -> $SHARED/xemacs-19.14/info/
+
+If Emacs can't find the requisite directories, it writes a message like this
+(or some appropriate subset of it) to stderr:
+
+  WARNING:
+  couldn't find an obvious default for load-path, exec-directory, and
+  lock-directory, and there were no defaults specified in paths.h when
+  Emacs was built.  Perhaps some directories don't exist, or the Emacs
+  executable, /cadillac-th/jwz/somewhere/xemacs is in a strange place?
+
+  Without both exec-directory and load-path, Emacs will be very broken.
+  Consider making a symbolic link from /cadillac-th/jwz/somewhere/etc
+  to wherever the appropriate Emacs etc/ directory is, and from
+  /cadillac-th/jwz/somewhere/lisp/ to wherever the appropriate Emacs
+  lisp library is.
+
+  Without lock-directory set, file locking won't work.  Consider
+  creating /cadillac-th/jwz/somewhere/lock as a directory or symbolic
+  link for use as the lock directory.
+
+The default installation tree is the following:
+
+    /usr/local/bin/b2m                          ;
+                   ctags                        ; executables that
+                   emacsclient                  ; should be in
+                   etags                        ; user's path
+                   xemacs -> xemacs-<version>   ;
+                   xemacs                       ;
+    /usr/local/lib/xemacs/site-lisp
+    /usr/local/lib/xemacs/lock
+    /usr/local/lib/xemacs-<version>/etc         ; architecture ind. files
+    /usr/local/lib/xemacs-<version>/info
+    /usr/local/lib/xemacs-<version>/lisp
+    /usr/local/lib/xemacs-<version>/<configuration>  ; binaries emacs may run
+
+
+*** X Resources
+---------------
+
+(Note: This section is copied verbatim from the XEmacs Reference Manual.)
+
+   The Emacs resources are generally set per-frame. Each Emacs frame
+can have its own name or the same name as another, depending on the
+name passed to the `make-frame' function.
+
+   You can specify resources for all frames with the syntax:
+
+     Emacs*parameter: value
+
+or
+
+     Emacs*EmacsFrame.parameter:value
+
+You can specify resources for a particular frame with the syntax:
+
+     Emacs*FRAME-NAME.parameter: value
+
+
+**** Geometry Resources
+-----------------------
+
+   To make the default size of all Emacs frames be 80 columns by 55
+lines, do this:
+
+     Emacs*EmacsFrame.geometry: 80x55
+
+To set the geometry of a particular frame named `fred', do this:
+
+     Emacs*fred.geometry: 80x55
+
+Important! Do not use the following syntax:
+
+     Emacs*geometry: 80x55
+
+You should never use `*geometry' with any X application. It does not
+say "make the geometry of Emacs be 80 columns by 55 lines."  It really
+says, "make Emacs and all subwindows thereof be 80x55 in whatever units
+they care to measure in."  In particular, that is both telling the
+Emacs text pane to be 80x55 in characters, and telling the menubar pane
+to be 80x55 pixels, which is surely not what you want.
+
+   As a special case, this geometry specification also works (and sets
+the default size of all Emacs frames to 80 columns by 55 lines):
+
+     Emacs.geometry: 80x55
+
+since that is the syntax used with most other applications (since most
+other applications have only one top-level window, unlike Emacs).  In
+general, however, the top-level shell (the unmapped ApplicationShell
+widget named `Emacs' that is the parent of the shell widgets that
+actually manage the individual frames) does not have any interesting
+resources on it, and you should set the resources on the frames instead.
+
+   The `-geometry' command-line argument sets only the geometry of the
+initial frame created by Emacs.
+
+   A more complete explanation of geometry-handling is
+
+   * The `-geometry' command-line option sets the `Emacs.geometry'
+     resource, that is, the geometry of the ApplicationShell.
+
+   * For the first frame created, the size of the frame is taken from
+     the ApplicationShell if it is specified, otherwise from the
+     geometry of the frame.
+
+   * For subsequent frames, the order is reversed: First the frame, and
+     then the ApplicationShell.
+
+   * For the first frame created, the position of the frame is taken
+     from the ApplicationShell (`Emacs.geometry') if it is specified,
+     otherwise from the geometry of the frame.
+
+   * For subsequent frames, the position is taken only from the frame,
+     and never from the ApplicationShell.
+
+   This is rather complicated, but it does seem to provide the most
+intuitive behavior with respect to the default sizes and positions of
+frames created in various ways.
+
+
+**** Iconic Resources
+---------------------
+
+   Analogous to `-geometry', the `-iconic' command-line option sets the
+iconic flag of the ApplicationShell (`Emacs.iconic') and always applies
+to the first frame created regardless of its name.  However, it is
+possible to set the iconic flag on particular frames (by name) by using
+the `Emacs*FRAME-NAME.iconic' resource.
+
+
+**** Resource List
+------------------
+
+   Emacs frames accept the following resources:
+
+`geometry' (class `Geometry'): string
+     Initial geometry for the frame.  *Note Geometry Resources:: for a
+     complete discussion of how this works.
+
+`iconic' (class `Iconic'): boolean
+     Whether this frame should appear in the iconified state.
+
+`internalBorderWidth' (class `InternalBorderWidth'): int
+     How many blank pixels to leave between the text and the edge of the
+     window.
+
+`interline' (class `Interline'): int
+     How many pixels to leave between each line (may not be
+     implemented).
+
+`menubar' (class `Menubar'): boolean
+     Whether newly-created frames should initially have a menubar.  Set
+     to true by default.
+
+`initiallyUnmapped' (class `InitiallyUnmapped'): boolean
+     Whether XEmacs should leave the initial frame unmapped when it
+     starts up.  This is useful if you are starting XEmacs as a server
+     (e.g. in conjunction with gnuserv or the external client widget).
+     You can also control this with the `-unmapped' command-line option.
+
+`barCursor' (class `BarColor'): boolean
+     Whether the cursor should be displayed as a bar, or the
+     traditional box.
+
+`textPointer' (class `Cursor'): cursor-name
+     The cursor to use when the mouse is over text.  This resource is
+     used to initialize the variable `x-pointer-shape'.
+
+`selectionPointer' (class `Cursor'): cursor-name
+     The cursor to use when the mouse is over a selectable text region
+     (an extent with the `highlight' property; for example, an Info
+     cross-reference).  This resource is used to initialize the variable
+     `x-selection-pointer-shape'.
+
+`spacePointer' (class `Cursor'): cursor-name
+     The cursor to use when the mouse is over a blank space in a buffer
+     (that is, after the end of a line or after the end-of-file).  This
+     resource is used to initialize the variable
+     `x-nontext-pointer-shape'.
+
+`modeLinePointer' (class `Cursor'): cursor-name
+     The cursor to use when the mouse is over a mode line.  This
+     resource is used to initialize the variable `x-mode-pointer-shape'.
+
+`gcPointer' (class `Cursor'): cursor-name
+     The cursor to display when a garbage-collection is in progress.
+     This resource is used to initialize the variable
+     `x-gc-pointer-shape'.
+
+`scrollbarPointer' (class `Cursor'): cursor-name
+     The cursor to use when the mouse is over the scrollbar.  This
+     resource is used to initialize the variable
+     `x-scrollbar-pointer-shape'.
+
+`pointerColor' (class `Foreground'): color-name
+`pointerBackground' (class `Background'): color-name
+     The foreground and background colors of the mouse cursor.  These
+     resources are used to initialize the variables
+     `x-pointer-foreground-color' and `x-pointer-background-color'.
+
+`scrollBarWidth' (class `ScrollBarWidth'): integer
+     How wide the vertical scrollbars should be, in pixels; 0 means no
+     vertical scrollbars.  You can also use a resource specification of
+     the form `*scrollbar.width', or the usual toolkit scrollbar
+     resources: `*XmScrollBar.width' (Motif), `*XlwScrollBar.width'
+     (Lucid), or `*Scrollbar.thickness' (Athena).  We don't recommend
+     that you use the toolkit resources, though, because they're
+     dependent on how exactly your particular build of XEmacs was
+     configured.
+
+`scrollBarHeight' (class `ScrollBarHeight'): integer
+     How high the horizontal scrollbars should be, in pixels; 0 means no
+     horizontal scrollbars.  You can also use a resource specification
+     of the form `*scrollbar.height', or the usual toolkit scrollbar
+     resources: `*XmScrollBar.height' (Motif), `*XlwScrollBar.height'
+     (Lucid), or `*Scrollbar.thickness' (Athena).  We don't recommend
+     that you use the toolkit resources, though, because they're
+     dependent on how exactly your particular build of XEmacs was
+     configured.
+
+`scrollBarPlacement' (class `ScrollBarPlacement'): string
+     Where the horizontal and vertical scrollbars should be positioned.
+     This should be one of the four strings `bottom-left',
+     `bottom-right', `top-left', and `top-right'.  Default is
+     `bottom-right' for the Motif and Lucid scrollbars and
+     `bottom-left' for the Athena scrollbars.
+
+`topToolBarHeight' (class `TopToolBarHeight'): integer
+`bottomToolBarHeight' (class `BottomToolBarHeight'): integer
+`leftToolBarWidth' (class `LeftToolBarWidth'): integer
+`rightToolBarWidth' (class `RightToolBarWidth'): integer
+     Height and width of the four possible toolbars.
+
+`topToolBarShadowColor' (class `TopToolBarShadowColor'): color-name
+`bottomToolBarShadowColor' (class `BottomToolBarShadowColor'): color-name
+     Color of the top and bottom shadows for the toolbars.  NOTE: These
+     resources do *not* have anything to do with the top and bottom
+     toolbars (i.e. the toolbars at the top and bottom of the frame)!
+     Rather, they affect the top and bottom shadows around the edges of
+     all four kinds of toolbars.
+
+`topToolBarShadowPixmap' (class `TopToolBarShadowPixmap'): pixmap-name
+`bottomToolBarShadowPixmap' (class `BottomToolBarShadowPixmap'): pixmap-name
+     Pixmap of the top and bottom shadows for the toolbars.  If set,
+     these resources override the corresponding color resources. NOTE:
+     These resources do *not* have anything to do with the top and
+     bottom toolbars (i.e. the toolbars at the top and bottom of the
+     frame)!  Rather, they affect the top and bottom shadows around the
+     edges of all four kinds of toolbars.
+
+`toolBarShadowThickness' (class `ToolBarShadowThickness'): integer
+     Thickness of the shadows around the toolbars, in pixels.
+
+`visualBell' (class `VisualBell'): boolean
+     Whether XEmacs should flash the screen rather than making an
+     audible beep.
+
+`bellVolume' (class `BellVolume'): integer
+     Volume of the audible beep.
+
+`useBackingStore' (class `UseBackingStore'): boolean
+     Whether XEmacs should set the backing-store attribute of the X
+     windows it creates.  This increases the memory usage of the X
+     server but decreases the amount of X traffic necessary to update
+     the screen, and is useful when the connection to the X server goes
+     over a low-bandwidth line such as a modem connection.
+
+
+**** Face Resources
+-------------------
+
+   The attributes of faces are also per-frame. They can be specified as:
+
+     Emacs.FACE_NAME.parameter: value
+
+     (*do not* use `Emacs*FACE_NAME...')
+
+or
+
+     Emacs*FRAME_NAME.FACE_NAME.parameter: value
+
+Faces accept the following resources:
+
+`attributeFont' (class `AttributeFont'): font-name
+     The font of this face.
+
+`attributeForeground' (class `AttributeForeground'): color-name
+`attributeBackground' (class `AttributeBackground'): color-name
+     The foreground and background colors of this face.
+
+`attributeBackgroundPixmap' (class `AttributeBackgroundPixmap'): file-name
+     The name of an XBM file (or XPM file, if your version of Emacs
+     supports XPM), to use as a background stipple.
+
+`attributeUnderline' (class `AttributeUnderline'): boolean
+     Whether text in this face should be underlined.
+
+   All text is displayed in some face, defaulting to the face named
+`default'.  To set the font of normal text, use
+`Emacs*default.attributeFont'. To set it in the frame named `fred', use
+`Emacs*fred.default.attributeFont'.
+
+   These are the names of the predefined faces:
+
+`default'
+     Everything inherits from this.
+
+`bold'
+     If this is not specified in the resource database, Emacs tries to
+     find a bold version of the font of the default face.
+
+`italic'
+     If this is not specified in the resource database, Emacs tries to
+     find an italic version of the font of the default face.
+
+`bold-italic'
+     If this is not specified in the resource database, Emacs tries to
+     find a bold-italic version of the font of the default face.
+
+`modeline'
+     This is the face that the modeline is displayed in.  If not
+     specified in the resource database, it is determined from the
+     default face by reversing the foreground and background colors.
+
+`highlight'
+     This is the face that highlighted extents (for example, Info
+     cross-references and possible completions, when the mouse passes
+     over them) are displayed in.
+
+`left-margin'
+`right-margin'
+     These are the faces that the left and right annotation margins are
+     displayed in.
+
+`zmacs-region'
+     This is the face that mouse selections are displayed in.
+
+`text-cursor'
+     This is the face that the cursor is displayed in.
+
+`isearch'
+     This is the face that the matched text being searched for is
+     displayed in.
+
+`info-node'
+     This is the face of info menu items.  If unspecified, it is copied
+     from `bold-italic'.
+
+`info-xref'
+     This is the face of info cross-references.  If unspecified, it is
+     copied from `bold'. (Note that, when the mouse passes over a
+     cross-reference, the cross-reference's face is determined from a
+     combination of the `info-xref' and `highlight' faces.)
+
+   Other packages might define their own faces; to see a list of all
+faces, use any of the interactive face-manipulation commands such as
+`set-face-font' and type `?' when you are prompted for the name of a
+face.
+
+   If the `bold', `italic', and `bold-italic' faces are not specified
+in the resource database, then XEmacs attempts to derive them from the
+font of the default face.  It can only succeed at this if you have
+specified the default font using the XLFD (X Logical Font Description)
+format, which looks like
+
+     *-courier-medium-r-*-*-*-120-*-*-*-*-*-*
+
+If you use any of the other, less strict font name formats, some of
+which look like
+
+     lucidasanstypewriter-12
+     fixed
+     9x13
+
+   then XEmacs won't be able to guess the names of the bold and italic
+versions.  All X fonts can be referred to via XLFD-style names, so you
+should use those forms.  See the man pages for `X(1)', `xlsfonts(1)',
+and `xfontsel(1)'.
+
+
+**** Widgets
+------------
+
+   There are several structural widgets between the terminal EmacsFrame
+widget and the top level ApplicationShell; the exact names and types of
+these widgets change from release to release (for example, they changed
+in 19.9, 19.10, 19.12, and 19.13) and are subject to further change in
+the future, so you should avoid mentioning them in your resource database.
+The above-mentioned syntaxes should be forward-compatible.  As of 19.14,
+the exact widget hierarchy is as follows:
+
+    INVOCATION-NAME           "shell"              "container"     FRAME-NAME
+    x-emacs-application-class "TopLevelEmacsShell" "EmacsManager" "EmacsFrame"
+
+(for normal frames)
+
+or
+
+    INVOCATION-NAME           "shell"               "container"     FRAME-NAME
+    x-emacs-application-class "TransientEmacsShell" "EmacsManager" "EmacsFrame"
+
+(for popup/dialog-box frames)
+
+where INVOCATION-NAME is the terminal component of the name of the
+XEmacs executable (usually `xemacs'), and `x-emacs-application-class'
+is generally `Emacs'.
+
+
+**** Menubar Resources
+----------------------
+
+   As the menubar is implemented as a widget which is not a part of
+XEmacs proper, it does not use the face mechanism for specifying fonts
+and colors: It uses whatever resources are appropriate to the type of
+widget which is used to implement it.
+
+   If Emacs was compiled to use only the Motif-lookalike menu widgets,
+then one way to specify the font of the menubar would be
+
+     Emacs*menubar*font: *-courier-medium-r-*-*-*-120-*-*-*-*-*-*
+
+   If the Motif library is being used, then one would have to use
+
+     Emacs*menubar*fontList: *-courier-medium-r-*-*-*-120-*-*-*-*-*-*
+
+   because the Motif library uses the `fontList' resource name instead
+of `font', which has subtly different semantics.
+
+   The same is true of the scrollbars: They accept whichever resources
+are appropriate for the toolkit in use.
+
+
+*** Source Code Highlighting
+----------------------------
+
+It's possible to have your buffers "decorated" with fonts or colors
+indicating syntactic structures (such as strings, comments, function names,
+"reserved words", etc.).  In XEmacs, the preferred way to do this is with
+font-lock-mode; activate it by adding the following code to your .emacs file:
+
+        (add-hook 'emacs-lisp-mode-hook 'turn-on-font-lock)
+        (add-hook 'c-mode-hook          'turn-on-font-lock)
+        (add-hook 'c++-mode-hook        'turn-on-font-lock)
+        (add-hook 'dired-mode-hook      'turn-on-font-lock)
+        ...etc...
+
+To customize it, see the descriptions of the function `font-lock-mode' and
+the variables `font-lock-keywords', `c-font-lock-keywords', etc.
+
+There exist several other source code highlighting packages, but font-lock
+does one thing that most others don't do: highlights as you type new text;
+and one thing that no others do: bases part of its decoration on the
+syntax table of the major mode.  Font-lock has C-level support to do this
+efficiently, so it should also be significantly faster than the others.
+
+If there's something that another highlighting package does that you can't
+make font-lock do, let us know.  We would prefer to consolidate all of the
+desired functionality into one package rather than ship several different
+packages which do essentially the same thing in different ways.
+
+
+** Differences Between XEmacs and Emacs 18
+==========================================
+
+Auto-configure support has been added, so it should be fairly easy to compile
+XEmacs on different systems.  If you have any problems or feedback about
+compiling on your system, please let us know.
+
+We have reimplemented the basic input model in a more general way; instead of
+X input being a special-case of the normal ASCII input stream, XEmacs has a
+concept of "input events", and ASCII characters are a subset of that.  The
+events that XEmacs knows about are not X events, but are a generalization of
+them, so that XEmacs can eventually be ported to different window systems.
+
+We have reimplemented keymaps so that sequences of events can be stored into
+them instead of just ASCII codes; it is possible to, for example, bind
+different commands to each of the chords Control-h, Control-H, Backspace,
+Control-Backspace, and Super-Shift-Backspace.  Key bindings, function key
+bindings, and mouse bindings live in the same keymaps.
+
+Input and display of all ISO-8859-1 characters is supported.
+
+You can have multiple X windows ("frames" in XEmacs terminology).
+
+XEmacs has objects called "extents" and "faces", which are roughly
+analogous to Epoch's "buttons," "zones," and "styles."  An extent is a
+region of text (a start position and an end position) and a face is a
+collection of textual attributes like fonts and colors.  Every extent
+is displayed in some "face", so changing the properties of a face
+immediately updates the display of all associated extents.  Faces can
+be frame-local: you can have a region of text which displays with
+completely different attributes when its buffer is viewed from a
+different X window.
+
+The display attributes of faces may be specified either in lisp or through
+the X resource manager.
+
+Pixmaps of arbitrary size can be embedded in a buffer.
+
+Variable width fonts work.
+
+The height of a line is the height of the tallest font on that line, instead
+of all lines having the same height.
+
+XEmacs uses the MIT "Xt" toolkit instead of raw Xlib calls, which
+makes it be a more well-behaved X citizen (and also improves
+portability).  A result of this is that it is possible to include
+other Xt "Widgets" in the XEmacs window.  Also, XEmacs understands the
+standard Xt command-line arguments.
+
+XEmacs understands the X11 "Selection" mechanism; it's possible to define
+and customize selection converter functions and new selection types from 
+Emacs Lisp, without having to recompile XEmacs.
+
+XEmacs provides support for ToolTalk on systems that have it.
+
+XEmacs supports the Zmacs/Lispm style of region highlighting, where the
+region between the point and mark is highlighted when in its "active" state.
+
+XEmacs has a menubar, whose contents are customizable from emacs-lisp.
+This menubar looks Motif-ish, but does not require Motif.  If you already
+own Motif, however, you can configure XEmacs to use a *real* Motif menubar
+instead.
+
+XEmacs can ask questions using popup dialog boxes.  Any command executed from
+a menu will ask yes/no questions with dialog boxes, while commands executed
+via the keyboard will use the minibuffer.
+
+XEmacs has vertical and horizontal scrollbars.
+
+The initial load-path is computed at run-time, instead of at compile-time.
+This means that if you move the XEmacs executable and associated directories
+to somewhere else, you don't have to recompile anything.
+
+You can specify what the title of the XEmacs windows and icons should be
+with the variables `frame-title-format' and `frame-icon-title-format',
+which have the same syntax as `mode-line-format'.
+
+XEmacs now supports floating-point numbers.
+
+XEmacs now knows about timers directly, instead of them being simulated by
+a subprocess.
+
+XEmacs understands truenames, and can be configured to notice when you are
+visiting two names of the same file.  See the variables find-file-use-truenames
+and find-file-compare-truenames.
+
+If you're running on a machine with audio hardware, you can specify sound 
+files for XEmacs to play instead of the default X beep.  See the documentation
+of the function load-sound-file and the variable sound-alist.
+
+An XEmacs frame can be placed within an "external client widget" managed by
+another application.  This allows an application to use an XEmacs frame as its
+text pane rather than the standard Text widget that is provided with Motif or
+Athena.  XEmacs supports Motif applications, generic Xt (e.g. Athena)
+applications, and raw Xlib applications.
+
+Random changes to the emacs-lisp library: (some of this was not written by
+us, but is included because it's free software and we think it's good stuff)
+
+  - there is a new optimizing byte-compiler
+  - there is a new abbrev-based mail-alias mechanism
+  - the -*- line can contain local-variable settings
+  - there is a new TAGS package
+  - there is a new VI-emulation mode (viper)
+  - there is a new implementation of Dired
+  - there is a new implementation of Isearch
+  - the VM package for reading mail is provided
+  - the W3 package for browsing the World Wide Web hypertext information
+    system is provided
+  - the Hyperbole package, a programmable information management and
+    hypertext system
+  - the OO-Browser package, a multi-language object-oriented browser
+
+There are many more specifics in the "Miscellaneous Changes" section, below.
+
+The online Emacs Manual and Emacs-Lisp Manual are now both relatively
+up-to-date.

@@ -1,3 +1,52 @@
+Sat Apr 12 05:57:51 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (lisp): Dump cus-start.elc with XEmacs.
+
+	* event-Xt.c (x_to_emacs_keysym): Allow for dead keys.  (Patch
+	from Joachim Schnitter).
+
+	* Makefile.in.in: Allow native sound for BSD/I.
+
+	* linuxplay.c: Rename global sndbuf to linuxplay_sndbuf.
+	Make sndbuf, mix_fd, audio_vol, audio_fd, audio_dev non-static to
+	avoid dump time lossage.
+	(sndcnv8U_2mono): Rename global sndbuf to linuxplay_sndbuf.
+	(sndcnv8S_2mono): Ditto.
+	(sndcnv2monounsigned): Ditto.
+	(sndcnv2unsigned): Ditto.
+	(sndcnvULaw_2mono): Ditto.
+	(sndcnv16_2monoLE): Ditto.
+	(sndcnv16_2monoBE): Ditto.
+	(sndcnv2byteLE): Ditto.
+	(sndcnv2byteBE): Ditto.
+	(sndcnv2monobyteLE): Ditto.
+	(sndcnv2monobyteBE): Ditto.
+	(linux_play_data_or_file): Ditto.
+	(linux_play_data_or_file): Ditto.
+	(linux_play_data_or_file): Ditto.
+
+Sat Apr 12 01:59:14 1997  Kyle Jones  <kyle_jones@WonderWorks.COM>
+
+	* glyphs-x.c, glyphs.c, glyphs.h: Added domain parameter to all
+ 	  image *_instantiate functions so that the domsin is available to
+ 	  specifier lookups in the various instantiator functions.  Passed
+	  domain argument to extract_xpm_color_names for the
+	  Fspecifier_instance call.
+
+Fri Apr 11 20:02:40 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c (extract_xpm_color_names): Add checking to handle
+	case for when XEmacs is in initialization.
+
+	* events.c (Fevent_type): Remove handling for dead_event.
+	(Fevent_properties): Remove handling for dead_event.
+
+Thu Apr 10 20:41:53 1997  David Moore  <dmoore@ucsd.edu>
+
+	* ntproc.c (sys_spawnve): Clean up GC protection.
+
+	* fileio.c (Ffile_executable_p): Clean up GC protection.
+
 Thu Apr 10 12:48:49 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* glyphs.c: Undo duplicate declaration of display_table.

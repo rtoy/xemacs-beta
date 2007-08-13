@@ -1,7 +1,7 @@
 ;;; url-cookie.el --- Netscape Cookie support
 ;; Author: wmperry
-;; Created: 1997/03/26 00:06:01
-;; Version: 1.15
+;; Created: 1997/04/11 14:41:18
+;; Version: 1.16
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -268,11 +268,15 @@
   "A regular expression of top-level domains that only require two matching
 '.'s in the domain name in order to set a cookie.")
 
-(defvar url-cookie-trusted-urls nil
-  "*A list of regular expressions matching URLs to always accept cookies from.")
+(defcustom url-cookie-trusted-urls nil
+  "*A list of regular expressions matching URLs to always accept cookies from."
+  :type '(repeat regexp)
+  :group 'url-cookie)
 
-(defvar url-cookie-untrusted-urls nil
-  "*A list of regular expressions matching URLs to never accept cookies from.")
+(defcustom url-cookie-untrusted-urls nil
+  "*A list of regular expressions matching URLs to never accept cookies from."
+  :type '(repeat regexp)
+  :group 'url-cookie)
 
 (defun url-cookie-host-can-set-p (host domain)
   (let ((numdots 0)

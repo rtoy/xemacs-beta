@@ -715,10 +715,10 @@ notifications to be given via messages in a pop-up frame."
     ;; we're about to redefine it...
        (fset 'old-display-time-filter (symbol-function old-fn))
        (fset old-fn
-	     '(lambda (&rest args)  ;; ...here's the revised definition
-		"Revised version of the original function: this version calls a hook."
-		(apply 'old-display-time-filter args)
-		(run-hooks 'display-time-hook)))))
+	     (lambda (&rest args)  ;; ...here's the revised definition
+	       "Revised version of the original function: this version calls a hook."
+	       (apply 'old-display-time-filter args)
+	       (run-hooks 'display-time-hook)))))
    (setq display-time-hook-installed t)
    (if (fboundp 'add-hook)
        (add-hook 'display-time-hook 'appt-check)

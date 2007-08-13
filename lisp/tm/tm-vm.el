@@ -9,7 +9,7 @@
 ;;         Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: 1994/10/29
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.4 $
 ;; Keywords: mail, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -60,7 +60,7 @@ made available.")
 (defvar tm-vm/attach-to-popup-menus t
   "*If t append MIME specific commands to VM's popup menus.")
 
-(defvar tm-vm/use-original-url-button nil
+(defvar tm-vm/use-original-url-button t
   "*If it is t, use original URL button instead of tm's.")
 
 (defvar tm-vm/automatic-mime-preview (or (and (boundp 'vm-display-using-mime)
@@ -103,7 +103,7 @@ These hooks are run in the MIME-Preview buffer.")
 ;;; @@ System/Information variables
 
 (defconst tm-vm/RCS-ID
-  "$Id: tm-vm.el,v 1.3 1997/03/22 06:02:46 steve Exp $")
+  "$Id: tm-vm.el,v 1.4 1997/04/13 03:14:15 steve Exp $")
 (defconst tm-vm/version (get-version-string tm-vm/RCS-ID))
 
 ; Ensure vm-menu-mail-menu gets properly defined *before* tm-vm/vm-emulation-map
@@ -425,10 +425,12 @@ Current buffer should be VM's folder buffer."
 	(narrow-to-region (point)
 			  (vm-end-of (car vm-message-pointer)))
     
-	(let ((ml vm-message-list))
+	(let ((ml vm-message-list)
+	      (mp vm-message-pointer))
 	  (mime/viewer-mode nil nil nil nil nil nil)
 	  (setq vm-mail-buffer mime::preview/article-buffer)
-	  (setq vm-message-list ml))
+	  (setq vm-message-list ml
+		vm-message-pointer mp))
 	;; Install VM toolbar for MIME-Preview buffer if not installed
 	(tm-vm/check-for-toolbar)
 	(if tm-vm/use-vm-bindings
@@ -442,14 +444,23 @@ Current buffer should be VM's folder buffer."
 
 	;; Highlight message (and display XFace if supported)
 	(if (or vm-highlighted-header-regexp
-		(and (vm-xemacs-p) vm-use-lucid-highlighting))
+		(and running-xemacs vm-use-lucid-highlighting))
 	    (vm-highlight-headers))
-	;; Energize URLs and buttons
+	;; Display XFaces with VM internal support if appropriate
+	(if (and vm-display-xfaces
+		 running-xemacs
+		 (vm-multiple-frames-possible-p)
+		 (featurep 'xface))
+	    (let ((highlight-headers-hack-x-face-p t)
+		  (highlight-headers-regexp nil)
+		  (highlight-headers-citation-regexp nil)
+		  (highlight-headers-citation-header-regexp nil))
+	      (highlight-headers (point-min) (point-max) t)))
+        ;; Energize URLs and buttons
 	(if (and tm-vm/use-original-url-button
 		 vm-use-menus (vm-menu-support-possible-p))
-	    (progn
-	      (vm-energize-urls)
-	      (vm-energize-headers)))
+	    (progn (vm-energize-headers)
+		   (vm-energize-urls)))
 	(run-hooks 'tm-vm/build-mime-preview-buffer-hook)
 	))))
 

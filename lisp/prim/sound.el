@@ -35,7 +35,8 @@ You can only play sound files if you are running on display 0 of the
 console of a machine with native sound support or running a NetAudio
 server and XEmacs has the necessary sound support compiled in.
 
-The sound file must be in the Sun/NeXT U-LAW format."
+The sound file must be in the Sun/NeXT U-LAW format, except on Linux,
+where .wav files are also supported by the sound card drivers."
   (interactive "fSound file name: \n\
 SSymbol to name this sound: \n\
 nVolume (0 for default): ")
@@ -65,9 +66,10 @@ nVolume (0 for default): ")
 
 ;;;###autoload
 (defun load-default-sounds ()
-  "Load and install some sound files as beep-types.
-This only works if you're on display 0 of a Sun SparcStation, SGI machine,
-or HP9000s700, or running a NetAudio server."
+  "Load and install some sound files as beep-types, using
+`load-sound-file'.  This only works if you're on display 0 of the
+console of a machine with native sound support or running a NetAudio
+server and XEmacs has the necessary sound support compiled in."
   (interactive)
   ;; #### - this should do NOTHING if the sounds can't be played.  
   (message "Loading sounds...")

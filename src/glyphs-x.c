@@ -110,7 +110,8 @@ static void cursor_font_instantiate (Lisp_Object image_instance,
 				     Lisp_Object instantiator,
 				     Lisp_Object pointer_fg,
 				     Lisp_Object pointer_bg,
-				     int dest_mask);
+				     int dest_mask,
+				     Lisp_Object domain);
 
 #include "bitmaps.h"
 
@@ -1034,7 +1035,7 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 static void
 xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		 int dest_mask)
+		 int dest_mask, Lisp_Object domain)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   CONST char *gcc_go_home;
@@ -1270,7 +1271,7 @@ my_jpeg_error_exit (j_common_ptr cinfo)
 static void
 jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		  int dest_mask)
+		  int dest_mask, Lisp_Object domain)
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
@@ -1747,7 +1748,7 @@ our_own_dgif_slurp_from_gif2x11_c (GifFileType *GifFile)
 static void
 gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		 int dest_mask)
+		 int dest_mask, Lisp_Object domain)
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
@@ -2032,7 +2033,7 @@ _get_png_val (png_byte **pp, int bit_depth)
 static void
 png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		 int dest_mask)
+		 int dest_mask, Lisp_Object domain)
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
@@ -2326,7 +2327,7 @@ tiff_possible_dest_types (void)
 static void
 tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		  int dest_mask)
+		  int dest_mask, Lisp_Object domain)
 {
   abort ();
 }
@@ -2556,6 +2557,7 @@ Upgrade to version 3.2g or better or compile with --with-xpm=no.
 
 static XpmColorSymbol *
 extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
+			 Lisp_Object domain,
 			 Lisp_Object color_symbol_alist)
 {
   /* This function can GC */
@@ -2588,10 +2590,8 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
 	    (value, device, encode_error_behavior_flag (ERROR_ME_NOT));
       else
         {
-	  Lisp_Object frame = DEVICE_SELECTED_FRAME(XDEVICE(device));
-	  Lisp_Object window = FRAME_SELECTED_WINDOW(XFRAME(frame));
           assert (COLOR_SPECIFIERP (value));
-          value = Fspecifier_instance (value, window, Qnil, Qnil);
+          value = Fspecifier_instance (value, domain, Qnil, Qnil);
         }
       if (NILP (value))
         continue;
@@ -2640,7 +2640,7 @@ xpm_free (XpmAttributes *xpmattrs)
 static void
 xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		 int dest_mask)
+		 int dest_mask, Lisp_Object domain)
 {
   /* This function can GC */
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -2701,7 +2701,7 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       xpmattrs.valuemask |= XpmCloseness;
     }
   
-  color_symbols = extract_xpm_color_names (&xpmattrs, device,
+  color_symbols = extract_xpm_color_names (&xpmattrs, device, domain,
 					   color_symbol_alist);
 
   result = XpmCreatePixmapFromBuffer (dpy,
@@ -3052,7 +3052,7 @@ extern jmp_buf comp_env;
 static void
 xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		   int dest_mask)
+		   int dest_mask, Lisp_Object domain)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
@@ -3220,7 +3220,7 @@ autodetect_instantiate (Lisp_Object image_instance,
 				  Lisp_Object instantiator,
 				  Lisp_Object pointer_fg,
 				  Lisp_Object pointer_bg,
-				  int dest_mask)
+				  int dest_mask, Lisp_Object domain)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   struct gcpro gcpro1, gcpro2, gcpro3;
@@ -3248,10 +3248,10 @@ autodetect_instantiate (Lisp_Object image_instance,
 
   if (is_cursor_font)
     cursor_font_instantiate (image_instance, result, pointer_fg,
-			     pointer_bg, dest_mask);
+			     pointer_bg, dest_mask, domain);
   else
     string_instantiate (image_instance, result, pointer_fg,
-			pointer_bg, dest_mask);
+			pointer_bg, dest_mask, domain);
 
   UNGCPRO;
 }
@@ -3317,7 +3317,7 @@ font_possible_dest_types (void)
 static void
 font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		  int dest_mask)
+		  int dest_mask, Lisp_Object domain)
 {
   /* This function can GC */
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
@@ -3415,7 +3415,7 @@ cursor_font_possible_dest_types (void)
 static void
 cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			 int dest_mask)
+			 int dest_mask, Lisp_Object domain)
 {
   /* This function can GC */
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);

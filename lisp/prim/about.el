@@ -80,7 +80,7 @@
   (view-mode nil 'kill-buffer)		;; assume the new view-less
   (let* ((buffer-read-only nil)
          (emacs-short-version (concat emacs-major-version "." emacs-minor-version))
-         (emacs-about-version (format "version %s; February 1997" emacs-short-version))
+         (emacs-about-version (format "version %s; April 1997" emacs-short-version))
 	 (indent-tabs-mode t)
 	 )
     (erase-buffer)
@@ -304,6 +304,8 @@
 	  ('jareth "About Jareth Hein")
 	  ('morioka "About MORIOKA Tomohiko")
 	  ('dmoore "About David Moore")
+	  ('thiessel "About Marcus Thiessel")
+	  ('sperber "About Michael Sperber")
 	  ('others "About Everyone")
 	  ('features "New XEmacs Features")
 	  ('history "XEmacs History")
@@ -859,6 +861,40 @@
 	  (insert " to go back to the previous page.\n")
 	  )
 
+	 ((eq xref 'thiessel)
+	  (about-face "Marcus Thiessel" 'bold)
+	  (insert " <thiessel@rhrk.uni-kl.de>
+
+	On May 1, 1996 he started working at University of Kaiserslautern in
+	the field of computer aided analog circuit design. His
+	responsibilities include the development and design of a CAD-Tool for
+	analog integrated circuits with special emphasis on distributed
+	software concepts.
+
+	When all the daily hacking is done he tries to take care of XEmacs
+	website at <http://www.xemacs.org>.")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
+	 ((eq xref 'sperber)
+	  (about-face "Michael Sperber [Mr. Preprocessor]" 'bold)
+	  (insert " <sperber@informatik.uni-tuebingen.de>
+
+	Mike ported EFS to XEmacs 20 and integrated EFS into XEmacs.  He's
+	also responsible for the ports of facemenu.el and enriched.el.  When
+	Mike isn't busy putting together patches for free software he has just
+	installed or changing his hairstyle, he does research in modern
+	programming languages and their implementation, and hopes that one day
+	XEmacs will speak Scheme.")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
 	 ((eq xref 'others)
 	  (insert "Click ")
 	  (about-xref "here" 'about "Return to previous page")
@@ -968,6 +1004,26 @@
 	mail & news environment he's found in 10 years.  (That'd be
 	XEmacs, Gnus and bbdb, of course.)  He can be found at
 	`druidmuck.egbt.org 4201' at various hours of the day.
+
+	") (about-xref "Marcus Thiessel" 'thiessel "Find out more about Marcus Thiessel") (insert " <thiessel@rhrk.uni-kl.de>
+
+	On May 1, 1996 he started working at University of Kaiserslautern in
+	the field of computer aided analog circuit design. His
+	responsibilities include the development and design of a CAD-Tool for
+	analog integrated circuits with special emphasis on distributed
+	software concepts.
+
+	When all the daily hacking is done he tries to take care of XEmacs
+	website at <http://www.xemacs.org>.
+
+	") (about-xref "Michael Sperber" 'sperber "Find out more about Michael Sperber") (insert " <sperber@informatik.uni-tuebingen.de>
+
+	Mike ported EFS to XEmacs 20 and integrated EFS into XEmacs.  He's
+	also responsible for the ports of facemenu.el and enriched.el.  When
+	Mike isn't busy putting together patches for free software he has just
+	installed or changing his hairstyle, he does research in modern
+	programming languages and their implementation, and hopes that one day
+	XEmacs will speak Scheme.
 
 	Darrell Kindred <Darrell.Kindred@cmu.edu>
 	Unofficial maintainer of the xemacs-beta list of extant bugs
@@ -1202,13 +1258,11 @@
 	  Murata Shuuichirou <mrt@mickey.ai.kyutech.ac.jp>
 	  Dinesh Somasekhar <somasekh@ecn.purdue.edu>
 	  Jeffrey Sparkes <jsparkes@bnr.ca>
-	  Michael Sperber <sperber@informatik.uni-tuebingen.de>
 	  Manoj Srivastava <srivasta@pilgrim.umass.edu>
 	  Francois Staes <frans@kiwi.uia.ac.be>
 	  Anders Stenman <stenman@isy.liu.se>
 	  Jason Stewart <jasons@cs.unm.edu>
 	  Rick Tait <rickt@gnu.ai.mit.edu>
-	  Marcus Thiessel <thiessel@rhrk.uni-kl.de>
 	  James Thompson <thompson@wg2.waii.com>
 	  Raymond L. Toy <toy@rtp.ericsson.se>
 	  Remek Trzaska <remek@npac.syr.edu>

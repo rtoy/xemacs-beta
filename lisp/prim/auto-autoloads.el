@@ -999,7 +999,7 @@ See also `\\[telnet]'." t nil)
 
 ;;;***
 
-;;;### (autoloads (custom-make-dependencies custom-menu-create custom-save-all custom-buffer-create customize-apropos customize-customized customize-face customize-variable customize) "cus-edit" "custom/cus-edit.el")
+;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-buffer-create customize-apropos customize-customized customize-face-other-window customize-face customize-variable-other-window customize-variable customize) "cus-edit" "custom/cus-edit.el")
 
 (autoload 'customize "cus-edit" "\
 Customize SYMBOL, which must be a customization group." t nil)
@@ -1007,9 +1007,16 @@ Customize SYMBOL, which must be a customization group." t nil)
 (autoload 'customize-variable "cus-edit" "\
 Customize SYMBOL, which must be a variable." t nil)
 
+(autoload 'customize-variable-other-window "cus-edit" "\
+Customize SYMBOL, which must be a variable.
+Show the buffer in another window, but don't select it." t nil)
+
 (autoload 'customize-face "cus-edit" "\
 Customize SYMBOL, which should be a face name or nil.
 If SYMBOL is nil, customize all faces." t nil)
+
+(autoload 'customize-face-other-window "cus-edit" "\
+Show customization buffer for FACE in other window." t nil)
 
 (autoload 'customize-customized "cus-edit" "\
 Customize all already customized user options." t nil)
@@ -1030,20 +1037,24 @@ Save all customizations in `custom-file'." nil nil)
 
 (autoload 'custom-menu-create "cus-edit" "\
 Create menu for customization group SYMBOL.
-If optional NAME is given, use that as the name of the menu. 
-Otherwise make up a name from SYMBOL.
 The menu is in a format applicable to `easy-menu-define'." nil nil)
 
-(autoload 'custom-make-dependencies "cus-edit" "\
-Batch function to extract custom dependencies from .el files.
-Usage: emacs -batch *.el -f custom-make-dependencies > deps.el" nil nil)
+(autoload 'customize-menu-create "cus-edit" "\
+Return a customize menu for customization group SYMBOL.
+If optional NAME is given, use that as the name of the menu. 
+Otherwise the menu will be named `Customize'.
+The format is suitable for use with `easy-menu-define'." nil nil)
 
 ;;;***
 
-;;;### (autoloads (custom-set-faces custom-declare-face) "cus-face" "custom/cus-face.el")
+;;;### (autoloads (custom-set-faces custom-initialize-frame custom-declare-face) "cus-face" "custom/cus-face.el")
 
 (autoload 'custom-declare-face "cus-face" "\
 Like `defface', but FACE is evaluated as a normal argument." nil nil)
+
+(autoload 'custom-initialize-frame "cus-face" "\
+Initialize local faces for FRAME if necessary.
+If FRAME is missing or nil, the first member of (frame-list) is used." nil nil)
 
 (autoload 'custom-set-faces "cus-face" "\
 Initialize faces according to user preferences.
@@ -1058,10 +1069,16 @@ See `defface' for the format of SPEC." nil nil)
 
 ;;;***
 
-;;;### (autoloads (widget-browse-at) "wid-browse" "custom/wid-browse.el")
+;;;### (autoloads (widget-browse-other-window widget-browse widget-browse-at) "wid-browse" "custom/wid-browse.el")
 
 (autoload 'widget-browse-at "wid-browse" "\
 Browse the widget under point." t nil)
+
+(autoload 'widget-browse "wid-browse" "\
+Create a widget browser for WIDGET." t nil)
+
+(autoload 'widget-browse-other-window "wid-browse" "\
+Show widget browser for WIDGET in other window." t nil)
 
 ;;;***
 
@@ -3905,7 +3922,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.20 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.21 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -5259,7 +5276,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.20 $
+vhdl-mode $Revision: 1.21 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -6041,12 +6058,6 @@ This operates on the output from the \\[compile] command." t nil)
 Reparse the error message buffer and start at the first error
 Visit corresponding source code.
 This operates on the output from the \\[compile] command." t nil)
-
-;;;***
-
-;;;### (autoloads (cu-edit-faces) "cu-edit-faces" "packages/cu-edit-faces.el")
-
-(autoload 'cu-edit-faces "cu-edit-faces" nil t nil)
 
 ;;;***
 
@@ -7312,19 +7323,7 @@ redisplayed as output is inserted." t nil)
 
 ;;;### (autoloads (blink-paren paren-set-mode) "paren" "packages/paren.el")
 
-(defvar paren-mode nil "\
-*Sets the style of parenthesis highlighting.
-Valid values are nil, `blink-paren', `paren', and `sexp'.
-  nil		no parenthesis highlighting.
-  blink-paren	causes the matching paren to blink.
-  paren		causes the matching paren to be highlighted but not to blink.
-  sexp		whole expression enclosed by the local paren at its mate.
-  nested	(not yet implemented) use variable shading to see the
-		nesting of an expression.  Also groks regular expressions
-		and shell quoting.
-
-This variable is global by default, but you can make it buffer-local and
-highlight parentheses differently in different major modes.")
+(defcustom paren-mode nil "*Sets the style of parenthesis highlighting.\nValid values are nil, `blink-paren', `paren', and `sexp'.\n  nil		no parenthesis highlighting.\n  blink-paren	causes the matching paren to blink.\n  paren		causes the matching paren to be highlighted but not to blink.\n  sexp		whole expression enclosed by the local paren at its mate.\n  nested	(not yet implemented) use variable shading to see the\n		nesting of an expression.  Also groks regular expressions\n		and shell quoting.\n\nThis variable is global by default, but you can make it buffer-local and\nhighlight parentheses differently in different major modes." :type '(radio (const nil) (const blink-paren) (const paren) (const sexp) (const nested)) :group 'paren)
 
 (autoload 'paren-set-mode "paren" "\
 Cycles through possible values for `paren-mode', force off with negative arg.
@@ -7360,13 +7359,9 @@ When active, typed text replaces the selection." t nil)
 
 ;;;### (autoloads (ps-setup ps-nb-pages-region ps-nb-pages-buffer ps-line-lengths ps-despool ps-spool-region-with-faces ps-spool-region ps-spool-buffer-with-faces ps-spool-buffer ps-print-region-with-faces ps-print-region ps-print-buffer-with-faces ps-print-buffer) "ps-print" "packages/ps-print.el")
 
-(defvar ps-paper-type 'letter "\
-*Specifies the size of paper to format for.
-Should be one of the paper types defined in `ps-page-dimensions-database', for
-example `letter', `legal' or `a4'.")
+(defcustom ps-paper-type 'letter "*Specifies the size of paper to format for.\nShould be one of the paper types defined in `ps-page-dimensions-database', for\nexample `letter', `legal' or `a4'." :type '(symbol :validate (lambda (wid) (if (assq (widget-value wid) ps-page-dimensions-database) nil (widget-put wid :error "Unknown paper size") wid))) :group 'ps-print)
 
-(defvar ps-print-color-p (or (fboundp 'x-color-values) (fboundp 'color-instance-rgb-components)) "\
-*If non-nil, print the buffer's text in color.")
+(defcustom ps-print-color-p (or (fboundp 'x-color-values) (fboundp 'color-instance-rgb-components)) "*If non-nil, print the buffer's text in color." :type 'boolean :group 'ps-print-color)
 
 (autoload 'ps-print-buffer "ps-print" "\
 Generate and print a PostScript image of the buffer.
@@ -8372,12 +8367,14 @@ You can only play sound files if you are running on display 0 of the
 console of a machine with native sound support or running a NetAudio
 server and XEmacs has the necessary sound support compiled in.
 
-The sound file must be in the Sun/NeXT U-LAW format." t nil)
+The sound file must be in the Sun/NeXT U-LAW format, except on Linux,
+where .wav files are also supported by the sound card drivers." t nil)
 
 (autoload 'load-default-sounds "sound" "\
-Load and install some sound files as beep-types.
-This only works if you're on display 0 of a Sun SparcStation, SGI machine,
-or HP9000s700, or running a NetAudio server." t nil)
+Load and install some sound files as beep-types, using
+`load-sound-file'.  This only works if you're on display 0 of the
+console of a machine with native sound support or running a NetAudio
+server and XEmacs has the necessary sound support compiled in." t nil)
 
 ;;;***
 

@@ -35,17 +35,34 @@
 ;;
 ;; Variable definitions
 
-(defvar add-minibuf-options t
+(defgroup detached-minibuf nil
+  "Support a detached minibuffer in XEmacs"
+  :group 'minibuffer
+  :prefix "minibuf-frame-"
+  :group 'frames)
+
+
+(defcustom add-minibuf-options t
   "*If nil, prevent minibuffer options from being added to the Options menu.\
-This must be set before detached-minibuf is loaded.")
-(defvar minibuf-frame-height 1
-  "*The height in lines of the minibuffer frame created by make-detached-minibuf")
-(defvar minibuf-frame-width (frame-width (selected-frame))
-  "*The width in chars of the minibuffer frame created by make-detached-minibuf")
-(defvar minibuf-frame-pos-y -2
-  "*The y position of the minibuffer frame as created by make-detached-minibuf")
-(defvar minibuf-frame-pos-x -2
-  "*The x position of the minibuffer frame as created by make-detached-minibuf")
+This must be set before detached-minibuf is loaded."
+  :type 'boolean
+  :group 'detached-minibuf)
+(defcustom minibuf-frame-height 1
+  "*The height in lines of the minibuffer frame created by make-detached-minibuf"
+  :type 'integer
+  :group 'detached-minibuf)
+(defcustom minibuf-frame-width (frame-width (selected-frame))
+  "*The width in chars of the minibuffer frame created by make-detached-minibuf"
+  :type 'integer
+  :group 'detached-minibuf)
+(defcustom minibuf-frame-pos-y -2
+  "*The y position of the minibuffer frame as created by make-detached-minibuf"
+  :type 'integer
+  :group 'detached-minibuf)
+(defcustom minibuf-frame-pos-x -2
+  "*The x position of the minibuffer frame as created by make-detached-minibuf"
+  :type 'integer
+  :group 'detached-minibuf)
 
 ;;
 ;; Add minibuffer options to the Options menu

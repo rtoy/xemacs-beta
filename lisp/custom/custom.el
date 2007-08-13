@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.74
+;; Version: 1.84
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -23,23 +23,28 @@
 
 (define-widget-keywords :prefix :tag :load :link :options :type :group)
 
-(defvar custom-define-hook nil
-  "Hook called after defining each customize option.")
-
-;; These autoloads should be deleted when the file is added to Emacs
-
+;; These autoloads should be deleted eventually. 
 (unless (fboundp 'load-gc)
   ;; From cus-edit.el
   (autoload 'customize "cus-edit" nil t)
   (autoload 'customize-variable "cus-edit" nil t)
+  (autoload 'customize-variable-other-window "cus-edit" nil t)
   (autoload 'customize-face "cus-edit" nil t)
+  (autoload 'customize-face-other-window "cus-edit" nil t)
   (autoload 'customize-apropos "cus-edit" nil t)
   (autoload 'customize-customized "cus-edit" nil t)
   (autoload 'custom-buffer-create "cus-edit")
   (autoload 'custom-make-dependencies "cus-edit")
+  (autoload 'custom-menu-create "cus-edit")
+  (autoload 'customize-menu-create "cus-edit")
+  
   ;; From cus-face.el
   (autoload 'custom-declare-face "cus-face")
   (autoload 'custom-set-faces "cus-face"))
+
+(defvar custom-define-hook nil
+  ;; Customize information for this option is in `cus-edit.el'.
+  "Hook called after defining each customize option.")
 
 ;;; The `defcustom' Macro.
 
@@ -295,6 +300,9 @@ the default value for the SYMBOL."
 		   (set-default symbol (eval value))))
 	    (setq args (cdr args)))
 	;; Old format, a plist of SYMBOL VALUE pairs.
+	(message "Warning: old format `custom-set-variables'")
+	(ding)
+	(sit-for 2)
 	(let ((symbol (nth 0 args))
 	      (value (nth 1 args)))
 	  (put symbol 'saved-value (list value)))

@@ -1,7 +1,7 @@
 ;;; url-vars.el --- Variables for Uniform Resource Locator tool
 ;; Author: wmperry
-;; Created: 1997/04/10 21:18:12
-;; Version: 1.50
+;; Created: 1997/04/11 14:49:23
+;; Version: 1.52
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,11 +26,60 @@
 ;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst url-version (let ((x "p3.0.81"))
+(eval-and-compile
+  (condition-case ()
+      (require 'custom)
+    (error nil))
+  (if (and (featurep 'custom) (fboundp 'custom-declare-variable))
+      nil ;; We've got what we needed
+    ;; We have the old custom-library, hack around it!
+    (defmacro defgroup (&rest args)
+      nil)
+    (defmacro defcustom (var value doc &rest args) 
+      (` (defvar (, var) (, value) (, doc))))))
+
+(defconst url-version (let ((x "p3.0.82"))
 			(if (string-match "State: \\([^ \t\n]+\\)" x)
 			    (substring x (match-beginning 1) (match-end 1))
 			  x))
   "Version # of URL package.")
+
+(defgroup url nil
+  "Uniform Resource Locator tool"
+  :group 'hypermedia)
+
+(defgroup url-file nil
+  "URL storage"
+  :prefix "url-"
+  :group 'url)
+
+(defgroup url-cache nil
+  "URL cache"
+  :prefix "url-"
+  :prefix "url-cache-"
+  :group 'url)
+
+(defgroup url-history nil
+  "History variables in the URL package"
+  :prefix "url-"
+  :group 'url)
+
+(defgroup url-cookie nil
+  "URL cookies"
+  :prefix "url-"
+  :prefix "url-cookie-"
+  :group 'url)
+
+(defgroup url-mime nil
+  "MIME options of URL"
+  :prefix "url-"
+  :group 'url)
+
+(defgroup url-hairy nil
+  "Hairy options of URL"
+  :prefix "url-"
+  :group 'url)
+
 
 (defvar url-current-can-be-cached t
   "*Whether the current URL can be cached.")
@@ -68,48 +117,69 @@ each item in the list will be an argument to the url-current-callback-func.")
 
 (defvar url-cookie-storage nil         "Where cookies are stored.")
 (defvar url-cookie-secure-storage nil  "Where secure cookies are stored.")
-(defvar url-cookie-file nil            "*Where cookies are stored on disk.")
+(defcustom url-cookie-file nil            "*Where cookies are stored on disk."
+  :type '(choice (const :tag "Default" :value nil) file)
+  :group 'url-file
+  :group 'url-cookie)
 
-(defvar url-default-retrieval-proc 'url-default-callback
-  "*The default action to take when an asynchronous retrieval completes.")
+(defcustom url-default-retrieval-proc 'url-default-callback
+  "*The default action to take when an asynchronous retrieval completes."
+  :type 'function
+  :group 'url-hairy)
 
-(defvar url-honor-refresh-requests t
+(defcustom url-honor-refresh-requests t
   "*Whether to do automatic page reloads at the request of the document
 author or the server via the `Refresh' header in an HTTP/1.0 response.
 If nil, no refresh requests will be honored.
 If t, all refresh requests will be honored.
-If non-nil and not t, the user will be asked for each refresh request.")
+If non-nil and not t, the user will be asked for each refresh request."
+  :type '(choice (const :tag "off" nil)
+		 (const :tag "on" t)
+		 (const :tag "ask" 'ask))
+  :group 'url-hairy)
 
-(defvar url-inhibit-mime-parsing nil
-  "Whether to parse out (and delete) the MIME headers from a message.")
+(defcustom url-inhibit-mime-parsing nil
+  "Whether to parse out (and delete) the MIME headers from a message."
+  :type 'boolean
+  :group 'url-mime)
 
-(defvar url-automatic-caching nil
+(defcustom url-automatic-caching nil
   "*If non-nil, all documents will be automatically cached to the local
-disk.")
+disk."
+  :type 'boolean
+  :group 'url-cache)
 
-(defvar url-cache-expired
+(defcustom url-cache-expired
   (function (lambda (t1 t2) (>= (- (car t2) (car t1)) 5)))
   "*A function (`funcall'able) that takes two times as its arguments, and
 returns non-nil if the second time is 'too old' when compared to the first
-time.")
+time."
+  :type 'function
+  :group 'url-cache)
 
 (defvar url-bug-address "wmperry@cs.indiana.edu"
   "Where to send bug reports.")
 
-(defvar url-cookie-confirmation nil
-  "*If non-nil, confirmation by the user is required to accept HTTP cookies.")
+(defcustom url-cookie-confirmation nil
+  "*If non-nil, confirmation by the user is required to accept HTTP cookies."
+  :type 'boolean
+  :group 'url-cookie)
 
-(defvar url-personal-mail-address nil
+(defcustom url-personal-mail-address nil
   "*Your full email address.
 This is what is sent to HTTP/1.0 servers as the FROM field in an HTTP/1.0
-request.")
+request."
+  :type '(choice (const nil) string)
+  :group 'url)
 
-(defvar url-directory-index-file "index.html"
-  "*The filename to look for when indexing a directory.  If this file
-exists, and is readable, then it will be viewed instead of
-automatically creating the directory listing.")
+(defcustom url-directory-index-file "index.html"
+  "*The filename to look for when indexing a directory.
+If this file exists, and is readable, then it will be viewed instead of
+using `dired' to view the directory."
+  :type 'string
+  :group 'url-file)
 
-(defvar url-privacy-level '(email)
+(defcustom url-privacy-level '(email)
   "*How private you want your requests to be.
 HTTP/1.0 has header fields for various information about the user, including
 operating system information, email addresses, the last page you visited, etc.
@@ -132,65 +202,100 @@ cookie   -- never accept HTTP cookies
 
 Samples:
 
-(setq url-privacy-level 'high)
-(setq url-privacy-level '(email lastloc))    ;; equivalent to 'high
-(setq url-privacy-level '(os))
+ (setq url-privacy-level 'high)
+ (setq url-privacy-level '(email lastloc))    ;; equivalent to 'high
+ (setq url-privacy-level '(os))
 
 ::NOTE::
 This variable controls several other variables and is _NOT_ automatically
 updated.  Call the function `url-setup-privacy-info' after modifying this
-variable.
-")
+variable."
+  :type '(choice (const :tag "None (you believe in the basic goodness of humanity)"
+			:value none)
+		 (const :tag "Low (do not reveal last location)"
+			:value low)
+		 (const :tag "High (no email address or last location)"
+			:value high)
+		 (const :tag "Paranoid (reveal nothing!)"
+			:value paranoid)
+		 (checklist :tag "Custom"
+			    (const :tag "Email address" :value email)
+			    (const :tag "Operating system" :value os)
+			    (const :tag "Last location" :value lastloc)
+			    (const :tag "Browser identification" :value agent)
+			    (const :tag "No cookies" :value cookie)))
+  :group 'url)
 
 (defvar url-history-list nil "List of urls visited this session.")
 
 (defvar url-inhibit-uncompression nil "Do not do decompression if non-nil.")
 
-(defvar url-keep-history nil
-  "*Controls whether to keep a list of all the URLS being visited.  If
-non-nil, url will keep track of all the URLS visited.
+(defcustom url-keep-history nil
+  "*Controls whether to keep a list of all the URLS being visited.
+If non-nil, url will keep track of all the URLS visited.
 If eq to `t', then the list is saved to disk at the end of each emacs
-session.")
+session."
+  :type 'boolean
+  :group 'url-history)
 
-(defvar url-uncompressor-alist '((".z"  . "x-gzip")
-				 (".gz" . "x-gzip")
-				 (".uue" . "x-uuencoded")
-				 (".hqx" . "x-hqx")
-				 (".Z"  . "x-compress"))
+(defcustom url-uncompressor-alist '((".z"  . "x-gzip")
+				    (".gz" . "x-gzip")
+				    (".uue" . "x-uuencoded")
+				    (".hqx" . "x-hqx")
+				    (".Z"  . "x-compress"))
   "*An assoc list of file extensions and the appropriate
-content-transfer-encodings for each.")
+content-transfer-encodings for each."
+  :type '(repeat (cons (string :tag "Extension") (string :tag "Encoding")))
+  :group 'url-mime)
 
-(defvar url-mail-command 'url-mail
-  "*This function will be called whenever url needs to send mail.  It should
-enter a mail-mode-like buffer in the current window.
+(defcustom url-mail-command 'url-mail
+  "*This function will be called whenever url needs to send mail.
+It should enter a mail-mode-like buffer in the current window.
 The commands mail-to and mail-subject should still work in this
-buffer, and it should use mail-header-separator if possible.")
+buffer, and it should use mail-header-separator if possible."
+  :type 'function
+  :group 'url)
 
-(defvar url-proxy-services nil
+(defcustom url-proxy-services nil
   "*An assoc list of access types and servers that gateway them.
 Looks like ((\"http\" . \"hostname:portnumber\") ....)  This is set up
-from the ACCESS_proxy environment variables in url-do-setup.")
+from the ACCESS_proxy environment variables in url-do-setup."
+  :type '(repeat (cons (string :tag "Protocol")
+		       (string :tag "Proxy"
+			       :validate widget-field-validate
+			       :valid-regexp "^[a-z.0-9-:]+$")))
+  :group 'url)
 
-(defvar url-global-history-file nil
+(defcustom url-global-history-file nil
   "*The global history file used by both Mosaic/X and the url package.
 This file contains a list of all the URLs you have visited.  This file
-is parsed at startup and used to provide URL completion.")
+is parsed at startup and used to provide URL completion."
+  :type '(choice (const :tag "Default" :value nil) file)
+  :group 'url-history)
 
-(defvar url-global-history-save-interval 3600
+(defcustom url-global-history-save-interval 3600
   "*The number of seconds between automatic saves of the history list.
 Default is 1 hour.  Note that if you change this variable after `url-do-setup'
-has been run, you need to run the `url-setup-save-timer' function manually.")
+has been run, you need to run the `url-setup-save-timer' function manually."
+  :type 'integer
+  :group 'url-history)
 
 (defvar url-global-history-timer nil)
 
-(defvar url-passwd-entry-func nil
+(defcustom url-passwd-entry-func nil
   "*This is a symbol indicating which function to call to read in a
 password.  It will be set up depending on whether you are running EFS
 or ange-ftp at startup if it is nil.  This function should accept the
 prompt string as its first argument, and the default value as its
-second argument.")
+second argument."
+  :type '(choice (const :tag "Guess" :value nil)
+		 (const :tag "Use Ange-FTP" :value ange-ftp-read-passwd)
+		 (const :tag "Use EFS"      :value efs-read-passwd)
+		 (const :tag "Use Password Package" :value read-passwd)
+		 (function :tag "Other"))
+  :group 'url-hairy)
 
-(defvar url-gopher-labels
+(defcustom url-gopher-labels
   '(("0" . "(TXT)")
     ("1" . "(DIR)")
     ("2" . "(CSO)")
@@ -211,9 +316,12 @@ menus.  These can be any string, but HTML/HTML+ entities should be
 used when necessary, or it could disrupt formatting of the document
 later on.  It is also a good idea to make sure all the strings are the
 same length after entity references are removed, on a strictly
-stylistic level.")
+stylistic level."
+  :type '(repeat (cons (string :tag "Type")
+		       (string :tag "Description")))
+  :group 'url-hairy)
 
-(defvar url-gopher-icons
+(defcustom url-gopher-icons
   '(
     ("0" . "&text.document;")
     ("1" . "&folder;")
@@ -230,11 +338,18 @@ stylistic level.")
     ("I" . "&image;")
     ("s" . "&audio;"))
   "*An assoc list of gopher types and the graphic entity references to
-show when possible.")
+show when possible."
+  :type '(repeat (cons (string :tag "Type")
+		       (string :tag "Icon")))
+  :group 'url-hairy)
 
-(defvar url-standalone-mode nil "*Rely solely on the cache?")
-(defvar url-multiple-p t
-  "*If non-nil, multiple queries are possible through ` *URL-<i>*' buffers")
+(defcustom url-standalone-mode nil "*Rely solely on the cache?"
+  :type 'boolean
+  :group 'url-cache)
+(defcustom url-multiple-p t
+  "*If non-nil, multiple queries are possible through ` *URL-<i>*' buffers"
+  :type 'boolean
+  :group 'url-hairy)
 (defvar url-default-working-buffer " *URL*" " The default buffer to do all of the processing in.")
 (defvar url-working-buffer url-default-working-buffer
   "The buffer to do all of the processing in.
@@ -256,20 +371,26 @@ buffers when used for multiple requests, cf. `url-multiple-p'")
 						"0123456789'()+_,-./=?"))
   "Characters allowable in a MIME multipart separator.")
 
-(defvar url-bad-port-list
+(defcustom url-bad-port-list
   '("25" "119" "19")
   "*List of ports to warn the user about connecting to.  Defaults to just
 the mail, chargen, and NNTP ports so you cannot be tricked into sending
-fake mail or forging messages by a malicious HTML document.")
+fake mail or forging messages by a malicious HTML document."
+  :type '(repeat (string :tag "Port"))
+  :group 'url-hairy)
 
-(defvar url-be-anal-about-file-attributes nil
+(defcustom url-be-anal-about-file-attributes nil
   "*Whether to use HTTP/1.0 to figure out file attributes
-or just guess based on file extension, etc.")
+or just guess based on file extension, etc."
+  :type 'boolean
+  :group 'url-mime)
 
-(defvar url-be-asynchronous nil
+(defcustom url-be-asynchronous nil
   "*Controls whether document retrievals over HTTP should be done in
 the background.  This allows you to keep working in other windows
-while large downloads occur.")
+while large downloads occur."
+  :type 'boolean
+  :group 'url)
 (make-variable-buffer-local 'url-be-asynchronous)
 
 (defvar url-request-data nil "Any data to send with the next request.")
@@ -284,9 +405,12 @@ an assoc list of headers/contents.")
   "*String to send to the server in the Accept-encoding: field in HTTP/1.0
 requests.  This is created automatically from mm-content-transfer-encodings.")
 
-(defvar url-mime-language-string "*"
+(defcustom url-mime-language-string "*"
   "*String to send to the server in the Accept-language: field in
-HTTP/1.0 requests.")
+HTTP/1.0 requests."
+  :type 'string
+  :group 'url-mime
+  :group 'i18n)
 
 (defvar url-mime-accept-string nil
   "String to send to the server in the Accept: field in HTTP/1.0 requests.
@@ -309,28 +433,36 @@ has been parsed.")
 (defvar url-system-type nil "What type of system we are on.")
 (defvar url-os-type nil "What OS we are on.")
 
-(defvar url-max-password-attempts 5
+(defcustom url-max-password-attempts 5
   "*Maximum number of times a password will be prompted for when a
-protected document is denied by the server.")
+protected document is denied by the server."
+  :type 'integer
+  :group 'url)
 
-(defvar url-temporary-directory (or (getenv "TMPDIR") "/tmp")
-  "*Where temporary files go.")
+(defcustom url-temporary-directory (or (getenv "TMPDIR") "/tmp")
+  "*Where temporary files go."
+  :type 'directory
+  :group 'url-file)
 
-(defvar url-show-status t
+(defcustom url-show-status t
   "*Whether to show a running total of bytes transferred.  Can cause a
 large hit if using a remote X display over a slow link, or a terminal
-with a slow modem.")
+with a slow modem."
+  :type 'boolean
+  :group 'url)
 
 (defvar url-using-proxy nil
   "Either nil or the fully qualified proxy URL in use, e.g.
 http://www.domain.com/")
 
-(defvar url-news-server nil
+(defcustom url-news-server nil
   "*The default news server to get newsgroups/articles from if no server
 is specified in the URL.  Defaults to the environment variable NNTPSERVER
-or \"news\" if NNTPSERVER is undefined.")
+or \"news\" if NNTPSERVER is undefined."
+  :type '(choice (const :tag "None" :value nil) string)
+  :group 'url)
 
-(defvar url-gopher-to-mime
+(defcustom url-gopher-to-mime
   '((?0 . "text/plain")			; It's a file
     (?1 . "www/gopher")			; Gopher directory
     (?2 . "www/gopher-cso-search")	; CSO search
@@ -345,14 +477,18 @@ or \"news\" if NNTPSERVER is undefined.")
     (?h . "text/html")			; HTML source
     (?s . "audio/basic")		; Sound file
     )
-  "*An assoc list of gopher types and their corresponding MIME types.")
+  "*An assoc list of gopher types and their corresponding MIME types."
+  :type '(repeat (cons sexp string))
+  :group 'url-hairy)
 
-(defvar url-use-hypertext-gopher t
+(defcustom url-use-hypertext-gopher t
   "*Controls how gopher documents are retrieved.
 If non-nil, the gopher pages will be converted into HTML and parsed
 just like any other page.  If nil, the requests will be passed off to
 the gopher.el package by Scott Snyder.  Using the gopher.el package
-will lose the gopher+ support, and inlined searching.")
+will lose the gopher+ support, and inlined searching."
+  :type 'boolean
+  :group 'url)
 
 (defvar url-global-history-hash-table nil
   "Hash table for global history completion.")
@@ -361,13 +497,17 @@ will lose the gopher+ support, and inlined searching.")
   "^\\([-a-zA-Z0-9+.]+:\\)"
   "A regular expression that will match an absolute URL.")
 
-(defvar url-confirmation-func 'y-or-n-p
+(defcustom url-confirmation-func 'y-or-n-p
   "*What function to use for asking yes or no functions.  Possible
 values are 'yes-or-no-p or 'y-or-n-p, or any function that takes a
 single argument (the prompt), and returns t only if a positive answer
-is gotten.")
+is gotten."
+  :type '(choice (const :tag "Short (y or n)" :value y-or-n-p)
+		 (const :tag "Long (yes or no)" :value yes-or-no-p)
+		 (function :tag "Other"))
+  :group 'url-hairy)
 
-(defvar url-gateway-method 'native
+(defcustom url-gateway-method 'native
   "*The type of gateway support to use.
 Should be a symbol specifying how we are to get a connection off of the
 local machine.
@@ -381,7 +521,14 @@ Currently supported methods:
                    This simply does a (require 'tcp), then sets
                    url-gateway-method to be 'native.
 'native		:: Use the native open-network-stream in emacs
-")
+"
+  :type '(radio (const :tag "Telnet to gateway host" :value telnet)
+		(const :tag "Rlogin to gateway host" :value rlogin)
+		(const :tag "Use SOCKS proxy" :value socks)
+		(const :tag "Use SSL for all connections" :value ssl)
+		(const :tag "Use the `tcp' package" :value tcp)
+		(const :tag "Direct connection" :value native))
+  :group 'url-hairy)
 
 (defvar url-running-xemacs (string-match "XEmacs" emacs-version)
   "*Got XEmacs?")

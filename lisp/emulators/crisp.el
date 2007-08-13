@@ -1,7 +1,7 @@
 ;; @(#) crisp.el -- CRiSP/Brief Emacs emulator
 
 ;; Author: Gary D. Foster <Gary.Foster@corp.sun.com>
-;; $Revision: 1.2 $
+;; $Revision: 1.3 $
 ;; Keywords: emulations brief crisp
 
 ;; This file is part of GNU Emacs.
@@ -20,8 +20,6 @@
 ;; along with GNU Emacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
-
-;; CRiSP is a registered trademark of Foxtrot Systems Ltd.
 
 ;;; Commentary:
 
@@ -55,42 +53,45 @@
 ;; local variables
 
 (defvar crisp-mode-map (copy-keymap (current-global-map))
-  "Local keymap for CRiSP mode.
+  "Local keymap for CRiSP emulation mode.
 All the bindings are done here instead of globally to try and be
 nice to the world.")
 
 (defvar crisp-mode-modeline-string " *CRiSP*"
-  "String to display in the modeline when CRiSP mode is enabled.")
+  "String to display in the modeline when CRiSP emulation mode is enabled.")
 
 (defvar crisp-mode-original-keymap (copy-keymap (current-global-map))
-  "The original keymap before CRiSP mode remaps anything.
-This keymap is restored when CRiSP mode is disabled.")
+  "The original keymap before CRiSP emulation mode remaps anything.
+This keymap is restored when CRiSP emulation mode is disabled.")
 
 (defvar crisp-mode-enabled 'nil
-  "Track status of CRiSP mode.
+  "Track status of CRiSP emulation mode.
 A value of nil means CRiSP mode is not enabled.  A value of t
 indicates CRiSP mode is enabled.")
 
 (defvar crisp-override-meta-x 't
-  "Controls overriding the normal Emacs M-x key binding.
-The normal binding for M-x is `execute-extended-command', however
-the normal CRiSP keybinding for M-x is to exit the editor, while
-the F10 key is used to execute extended commands.  If you don't
-want M-x to dump you out of emacs, set this to nil before loading
-the package.")
+  "Controls overriding the normal Emacs M-x key binding in the CRiSP emulator.
+Normally the CRiSP emulator rebinds M-x to save-buffers-exit-emacs
+and provides the usual M-x functionality on the F10 key.
+
+If this variable is nil when you start the CRiSP emulator, it
+does not alter the binding of M-x.")
 
 (defvar crisp-load-scroll-lock 't
-  "Controls loading of the Scroll Lock minor mode package.
-Default behavior is to load the scroll lock minor mode
-package when CRiSP mode is enabled.  Set to nil prior
-to loading this package to prevent it.")
+  "Controls loading of the Scroll Lock in the CRiSP emulator.
+Its Default behavior is to load and enable the Scroll Lock minor mode
+package when enabling the CRiSP emulator.
+
+If this variable is nil when you start the CRiSP emulator, it
+does not load Scroll Lock.")
 
 (defvar crisp-load-hook nil
-  "Hooks to run after CRiSP mode is enabled.")
+  "Hooks to run after loadint the CRiSP emulator package.")
 
-(defvar crisp-mode-running-xemacs (string-match "XEmacs\\Lucid" emacs-version))
+(defvar crisp-version "crisp.el release 1.1/$Revision: 1.3 $"
+  "The release number and RCS version for the CRiSP emulator.")
 
-(if crisp-mode-running-xemacs
+(if (string-match "XEmacs\\Lucid" emacs-version)
     (add-minor-mode 'crisp-mode-enabled crisp-mode-modeline-string)
   (or (assq 'crisp-mode-enabled minor-mode-alist)
       (setq minor-mode-alist
@@ -141,12 +142,23 @@ to loading this package to prevent it.")
 (define-key crisp-mode-map [(meta g)]       'goto-line)
 (define-key crisp-mode-map [(meta h)]       'help)
 (define-key crisp-mode-map [(meta i)]       'overwrite-mode)
+(define-key crisp-mode-map [(meta j)]       'bookmark-jump)
 (define-key crisp-mode-map [(meta u)]       'advertised-undo)
 (define-key crisp-mode-map [(f14)]          'advertised-undo)
 (define-key crisp-mode-map [(meta w)]       'save-buffer)
 (if
  (eq crisp-override-meta-x 't)
-  (define-key crisp-mode-map [(meta x)]       'save-buffers-kill-emacs))
+  (define-key crisp-mode-map [(meta x)]     'save-buffers-kill-emacs))
+(define-key crisp-mode-map [(meta ?0)]      (lambda () (interactive) (bookmark-set "0")))
+(define-key crisp-mode-map [(meta ?1)]      (lambda () (interactive) (bookmark-set "1")))
+(define-key crisp-mode-map [(meta ?2)]      (lambda () (interactive) (bookmark-set "2")))
+(define-key crisp-mode-map [(meta ?3)]      (lambda () (interactive) (bookmark-set "3")))
+(define-key crisp-mode-map [(meta ?4)]      (lambda () (interactive) (bookmark-set "4")))
+(define-key crisp-mode-map [(meta ?5)]      (lambda () (interactive) (bookmark-set "5")))
+(define-key crisp-mode-map [(meta ?6)]      (lambda () (interactive) (bookmark-set "6")))
+(define-key crisp-mode-map [(meta ?7)]      (lambda () (interactive) (bookmark-set "7")))
+(define-key crisp-mode-map [(meta ?8)]      (lambda () (interactive) (bookmark-set "8")))
+(define-key crisp-mode-map [(meta ?9)]      (lambda () (interactive) (bookmark-set "9")))
 
 (define-key crisp-mode-map [(shift right)]  'fkey-forward-word)
 (define-key crisp-mode-map [(shift left)]   'fkey-backward-word)
@@ -159,10 +171,10 @@ to loading this package to prevent it.")
 (define-key crisp-mode-map [(end)] 'crisp-end)
 
 (defun crisp-home ()
-  "Home the point according to CRiSP conventions.
-First call to this moves point to beginning of the line.  Second
-consecutive call moves point to beginning of the screen.  Third
-consecutive call moves the point to the beginning of the buffer."
+  "\"Home\" the point, the way CRiSP would do it.
+The first use moves point to beginning of the line.  Second
+consecutive use moves point to beginning of the screen.  Third
+consecutive use moves point to the beginning of the buffer."
   (interactive nil)
   (cond
     ((and (eq last-command 'crisp-home) (eq last-last-command 'crisp-home))
@@ -174,10 +186,10 @@ consecutive call moves the point to the beginning of the buffer."
   (setq last-last-command last-command))
 
 (defun crisp-end ()
-  "End the point according to CRiSP conventions.
-First call to this moves point to end of the line.  Second
-consecutive call moves point to the end of the screen.  Third
-consecutive call moves point to the end of the buffer."
+  "\"End\" the point, the way CRiSP would do it.
+The first use moves point to end of the line.  Second
+consecutive use moves point to the end of the screen.  Third
+consecutive use moves point to the end of the buffer."
   (interactive nil)
   (cond
     ((and (eq last-command 'crisp-end) (eq last-last-command 'crisp-end))
@@ -192,7 +204,7 @@ consecutive call moves point to the end of the buffer."
 ;; Now enable the mode
 
 (defun crisp-mode ()
-  "Toggle CRiSP minor mode."
+  "Toggle CRiSP emulation minor mode."
   (interactive nil)
   (setq crisp-mode-enabled (not crisp-mode-enabled))
   (cond

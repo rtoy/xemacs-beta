@@ -1,3 +1,18 @@
+Sat Apr 12 20:11:08 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b15 is released.
+
+Sat Apr 12 09:01:32 1997  Hrvoje Niksic <hniksic@srce.hr>
+	* PROBLEMS: I have cleaned up a bit the PROBLEMS file, by:
+	1) changing it into sections -- there is now a section for building,
+	   running and compatibility problems
+
+	2) removing some obviously obsolete entries -- e.g. those pertaining
+	   to Emacs 18, etc. --> size is off by 20K
+
+	3) Rearranging the entries by relevance.  I have tried to put the most
+	   relevant entries in front.
+	
 Thu Apr 10 19:07:26 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.1-b14 is released.  (Beta 13 was skipped).

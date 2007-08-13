@@ -164,23 +164,36 @@
 ;;; Public variables
 ;;; ************************************************************************
 
-(defvar id-select-brace-modes
+(defgroup id-select nil
+  "Select larger and larger syntax-driven regions in a buffer"
+  :group 'mouse)
+
+
+(defcustom id-select-brace-modes
   '(c++-mode c-mode java-mode objc-mode perl-mode tcl-mode)
-  "*List of language major modes which define things with brace delimiters.")
+  "*List of language major modes which define things with brace delimiters."
+  :type '(repeat (symbol :tag "Mode" symbol))
+  :group 'id-select)
 
-(defvar id-select-markup-modes
+(defcustom id-select-markup-modes
   '(html-mode sgml-mode)
-  "*List of markup language modes that use SGML-style <tag> </tag> pairs.")
+  "*List of markup language modes that use SGML-style <tag> </tag> pairs."
+  :type '(repeat (symbol :tag "Mode"))
+  :group 'id-select)
 
-(defvar id-select-text-modes
+(defcustom id-select-text-modes
   '(fundamental-mode kotl-mode indented-text-mode Info-mode outline-mode text-mode)
-  "*List of textual modes where paragraphs may be outdented or indented.")
+  "*List of textual modes where paragraphs may be outdented or indented."
+  :type '(repeat (symbol :tag "Mode"))
+  :group 'id-select)
 
-(defvar id-select-indent-modes
+(defcustom id-select-indent-modes
   (append '(asm-mode csh-mode eiffel-mode ksh-mode miranda-mode python-mode
 	    pascal-mode sather-mode)
 	  id-select-text-modes)
-  "*List of language major modes which use mostly indentation to define syntactic structure.")
+  "*List of language major modes which use mostly indentation to define syntactic structure."
+  :type '(repeat (symbol :tag "Mode"))
+  :group 'id-select)
 
 (defvar id-select-indent-non-end-regexp-alist
   '((csh-mode    "\\(\\|then\\|elsif\\|else\\)[ \t]*$")
@@ -214,14 +227,20 @@
     )
   "List of (major-mode . terminator-line-regexp) elements used to include a final line when marking indented code.")
 
-(defvar id-select-char-p t
-  "*If t, return single character boundaries when all else fails.")
+(defcustom id-select-char-p t
+  "*If t, return single character boundaries when all else fails."
+  :type 'boolean
+  :group 'id-select)
 
-(defvar id-select-display-type t
-  "*If t, display the thing selected with each mouse click.")
+(defcustom id-select-display-type t
+  "*If t, display the thing selected with each mouse click."
+  :type 'boolean
+  :group 'id-select)
 
-(defvar id-select-whitespace t
-  "*If t, groups of whitespace are considered as things.")
+(defcustom id-select-whitespace t
+  "*If t, groups of whitespace are considered as things."
+  :type 'boolean
+  :group 'id-select)
 
 (if (string-match "XEmacs" emacs-version)
     (add-hook 'mouse-track-click-hook 'id-select-double-click-hook)
@@ -1229,7 +1248,7 @@ The function `id-select-set-region' updates and returns it.")
 (defvar id-select-old-region (cons 'nil 'nil)
   "Cons cell that contains a region (<beginning> . <end>).")
 
-(defvar id-select-syntax-alist
+(defcustom id-select-syntax-alist
   '((?w  id-select-word)
     (?_  id-select-symbol)
     (?\" id-select-string)
@@ -1243,7 +1262,9 @@ The function `id-select-set-region' updates and returns it.")
   "*List of pairs of the form (SYNTAX-CHAR FUNCTION) used by the function `id-select-syntactical-region'.
 Each FUNCTION takes a single position argument and returns a region
 (start . end) delineating the boundaries of the thing at that position.
-Ordering of entries is largely irrelevant to any code that uses this list.")
+Ordering of entries is largely irrelevant to any code that uses this list."
+  :type '(repeat (list (sexp :tag "Syntax-Char" function)))
+  :group 'id-select)
 
 
 (provide 'id-select)

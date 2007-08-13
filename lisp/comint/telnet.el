@@ -53,6 +53,10 @@
 
 (require 'comint)
 
+(defgroup telnet nil
+  "Telnet/rsh stuff"
+  :group 'comint)
+
 (defvar telnet-new-line "\r")
 (defvar telnet-mode-map nil)
 (defvar telnet-default-prompt-pattern "^[^#$%>\n]*[#$%>] *")
@@ -70,8 +74,14 @@
 while looking for the initial password.")
 ;; (make-variable-buffer-local 'telnet-count)
 
-(defvar telnet-program "telnet"
-  "Program to run to open a telnet connection.")
+(defcustom telnet-program "telnet"
+  "*Program to run to open a telnet connection."
+  :group 'telnet)
+
+(defcustom rsh-eat-password-string nil
+  "Non-nil means rsh will look for a string matching a password prompt."
+  :type 'boolean
+  :group 'telnet)
 
 (defvar telnet-initial-count -75
   "Initial value of `telnet-count'.  Should be set to the negative of the
@@ -119,7 +129,7 @@ rejecting one login and prompting again for a username and password.")
   "Tries to put correct initializations in.  Needs work."
   (let ((case-fold-search t))
     (cond ((string-match "unix" string)
-	   (setq telnet-prompt-pattern comint-prompt-regexp)
+	   (setq telnet-prompt-pattern shell-prompt-pattern)
 	   (setq telnet-new-line "\n"))
 	  ((string-match "tops-20" string) ;;maybe add telnet-replace-c-g
 	   (setq telnet-prompt-pattern  "[@>] *"))
@@ -305,7 +315,9 @@ See also `\\[telnet]'."
     ;;
     ;; I disagree with the above.  -sb
     ;;
-    (set-process-filter (get-process name) 'telnet-initial-filter)
+    (set-process-filter (get-process name) (if rsh-eat-password-string
+					       'telnet-initial-filter
+					     'telnet-filter))
     ;; (set-process-filter (get-process name) 'telnet-filter)
     ;; run last so that hooks can change things.
     (telnet-mode)))

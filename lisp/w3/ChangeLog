@@ -2,7 +2,27 @@ Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 * Makefile (xemacs-w3): Special target for XEmacs Build.
 
+Fri Apr 11 07:39:26 1997  William M. Perry  <wmperry@aventail.com>
+
+* Synch'd up with Widget 1.78
+
+* w3-display.el (w3-get-face-info): Don't look for face attributes on tags
+  unless w3-user-colors-take-precedence is nil
+  (w3-display-node): Don't honor face attributes on <body> tag unless
+  w3-user-colors-take-precedence is nil
+
+* url-vars.el: Modified a few customizations to make them prettier
+
+* url-cache.el (url-cache-creation-function): Modified customization
+
+Fri Apr 11 07:03:20 1997  Hrvoje Niksic <hniksic@srce.hr>
+
+* url-cache.el, url-gw.el, url-cookie.el, url-irc.el, url-vars.el, url.el:
+  All URL related variables are now customizable.
+
 Wed Apr  9 16:46:52 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs/W3 3.0.81 released
 
 * w3-xemac.el (w3-text-pixel-width): And a XEmacs specific version of it.
 

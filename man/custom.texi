@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Customization Library
 
-Version: 1.74
+Version: 1.84
 
 @menu
 * Introduction::                
@@ -611,10 +611,10 @@ To the custom option @var{symbol} add the dependency @var{load}.
 @var{load} should be either a library file name, or a feature name.
 @end defun
 
-@defun custom-menu-create symbol &optional name
+@defun customize-menu-create symbol &optional name
 Create menu for customization group @var{symbol}.
 If optional @var{name} is given, use that as the name of the menu. 
-Otherwise make up a name from @var{symbol}.
+Otherwise the menu will be named `Customize'.
 The menu is in a format applicable to @code{easy-menu-define}.
 @end defun
 
@@ -684,6 +684,10 @@ Suggested by Jens Lautenbacher
 
 @item
 Empty customization groups should start open (harder than it looks).
+
+@item
+Make it possible to include a comment/remark/annotation when saving an
+option.
 
 @end itemize
 

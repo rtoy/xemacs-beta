@@ -2,7 +2,7 @@
 
 ;; Author:     Jens Lautenbacher <jens@lemming0.lem.uni-karlsruhe.de>
 ;; Keywords:   games
-;; Version:    1.4
+;; Version:    1.7
 
 ;; This file is part of XEmacs.
 
@@ -44,7 +44,7 @@
 ;;
 ;;; First of all we'll define the needed varibles.
 
-(defconst xmine-version-number "1.4" "XEmacs Mine version number.")
+(defconst xmine-version-number "1.7" "XEmacs Mine version number.")
 (defconst xmine-version (format "XEmacs Mine v%s by Jens Lautenbacher © 1997"
 			       xmine-version-number)
   "Full XEmacs Mine version number.")
@@ -341,7 +341,9 @@ preferred if you don't want to use white."
 	    (progn
 	      (xmine-unhide-sound)
 	      (xmine-field-repaint ext)
-	      (if (xmine-game-solved-p) (xmine-end-game)))))))
+	      (if (and (xmine-game-solved-p)
+		       (not (xmine-mine-button-p ext)))
+		       (xmine-end-game)))))))
 
 (defun xmine-action2 (ext)
   "This unhides all hidden neighbours of a button.

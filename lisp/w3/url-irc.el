@@ -1,7 +1,7 @@
 ;;; url-irc.el --- IRC URL interface
 ;; Author: wmperry
-;; Created: 1997/01/10 00:13:05
-;; Version: 1.5
+;; Created: 1997/04/11 14:40:56
+;; Version: 1.6
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -29,14 +29,17 @@
 (require 'url-vars)
 (require 'url-parse)
 
-(defvar url-irc-function 'url-irc-zenirc
+(defcustom url-irc-function 'url-irc-zenirc
   "*Function to actually open an IRC connection.
 Should be a function that takes several argument:
     HOST - the hostname of the IRC server to contact
     PORT - the port number of the IRC server to contact
  CHANNEL - What channel on the server to visit right away (can be nil)
     USER - What username to use
-PASSWORD - What password to use")
+PASSWORD - What password to use"
+  :type '(choice (const :tag "ZEN IRC" :value 'url-irc-zenirc)
+		 (function :tag "Other"))
+  :group 'url)
 
 (defun url-irc-zenirc (host port channel user password)
   (let ((zenirc-buffer-name (if (and user host port)

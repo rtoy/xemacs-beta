@@ -158,12 +158,15 @@ With prefix argument N, move N items (negative N means move backward)."
 
 (defun list-mode-item-mouse-selected (event)
   (interactive "e")
-  ;; #### sometimes event-closest-point returns nil.
+  ;; Sometimes event-closest-point returns nil.
+  ;; So beep instead of bombing.
   (let ((point (event-closest-point event)))
-    (list-mode-item-selected-1 (extent-at point
-					  (event-buffer event)
-					  'list-mode-item nil 'at)
-			       event)))
+    (if point
+	(list-mode-item-selected-1 (extent-at point
+					      (event-buffer event)
+					      'list-mode-item nil 'at)
+				   event)
+      (ding))))
 
 (defun add-list-mode-item (start end &optional buffer activate-callback
 				 user-data)

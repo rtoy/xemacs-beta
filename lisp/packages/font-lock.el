@@ -1101,8 +1101,6 @@ HIGHLIGHT should be of the form MATCH-HIGHLIGHT, see `font-lock-keywords'."
   (let* ((match (nth 0 highlight))
 	 (start (match-beginning match)) (end (match-end match))
 	 (override (nth 2 highlight)))
-    (and end
-	 (goto-char end)) ;; tlp00 hack to allow for back to back fonts
     (let ((newface (nth 1 highlight)))
       (or (symbolp newface)
 	  (setq newface (eval newface)))

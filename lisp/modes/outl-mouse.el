@@ -69,20 +69,38 @@
 ;;
 ;; User definable variables.
 ;;
-(defvar outline-mac-style nil
-  "*If t then outline glyphs will be right and down arrows.")
 
-(defvar outline-glyphs-on-left nil
-  "*The position of outline glyphs on a line.")
+(defgroup outl-mouse nil
+  "Outline mouse mode commands for Emacs"
+  :prefix "outline-"
+  :group 'outlines
+  :group 'mouse)
 
-(defvar outline-glyph-colour "Gray75"
-  "*The colour of outlining arrows.")
 
-(defvar outline-glyph-shade-colour "Gray40"
-  "*The shadow colour of outlining arrows.")
+(defcustom outline-mac-style nil
+  "*If t then outline glyphs will be right and down arrows."
+  :type 'boolean
+  :group 'outl-mouse)
 
-(defvar outline-glyph-lit-colour "Gray90"
-  "*The lit colour of outlining arrows.")
+(defcustom outline-glyphs-on-left nil
+  "*The position of outline glyphs on a line."
+  :type 'boolean
+  :group 'outl-mouse)
+
+(defcustom outline-glyph-colour "Gray75"
+  "*The colour of outlining arrows."
+  :type 'color
+  :group 'outl-mouse)
+
+(defcustom outline-glyph-shade-colour "Gray40"
+  "*The shadow colour of outlining arrows."
+  :type 'color
+  :group 'outl-mouse)
+
+(defcustom outline-glyph-lit-colour "Gray90"
+  "*The lit colour of outlining arrows."
+  :type 'color
+  :group 'outl-mouse)
 
 (defvar outline-fold-in-function 'outline-fold-in
   "Function to call for folding in. 
@@ -94,18 +112,24 @@ The function should take an annotation argument.")
 The function should take an annotation argument.")
 (make-variable-buffer-local 'outline-fold-out-function)
 
-(defvar outline-sync-with-func-menu nil
+(defcustom outline-sync-with-func-menu nil
   "*If t then outline glyphs are permanently added by func-menu scans.
 If outline-minor-mode is  turned off then  turing it back on will have
 no  effect. Instead the  buffer  should be rescanned from the function
-menu.")
+menu."
+  :type 'boolean
+  :group 'outl-mouse)
 
-(defvar outline-move-point-after-click t
-  "*If t then point is moved to the current heading when clicked.")
+(defcustom outline-move-point-after-click t
+  "*If t then point is moved to the current heading when clicked."
+  :type 'boolean
+  :group 'outl-mouse)
 
-(defvar outline-scanning-message "Adding glyphs... (%3d%%)"
+(defcustom outline-scanning-message "Adding glyphs... (%3d%%)"
   "*Progress message during the scanning of the buffer.
-Set this to nil to inhibit progress messages.")
+Set this to nil to inhibit progress messages."
+  :type 'string
+  :group 'outl-mouse)
 
 ;;
 ;; No user definable variables beyond this point.

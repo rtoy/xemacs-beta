@@ -54,19 +54,30 @@
 
 ;;; Code:
 
-(defvar paren-message-offscreen t
-  "*Display message if matching open paren is offscreen.")
+(defgroup paren nil
+  "Highlight (un)matching parens and whole expressions"
+  :group 'matching)
 
-(defvar paren-ding-unmatched nil
+
+(defcustom paren-message-offscreen t
+  "*Display message if matching open paren is offscreen."
+  :type 'boolean
+  :group 'paren)
+
+(defcustom paren-ding-unmatched nil
   "*Make noise if the cursor is at an unmatched paren.
 
 If T, then typing or passing over an unmatched paren will ring the bell
 using the `paren' sound.  If NIL, then the bell will not ring even if an
 unmatched paren is typed.  If neither T or NIL, then the bell will not ring
-when the cursor moves over unmatched parens but will ring if one is typed.")
+when the cursor moves over unmatched parens but will ring if one is typed."
+  :type '(choice (const :tag "off" nil)
+		 (const :tag "on" t)
+		 (const :tag "other" other))
+  :group 'paren)
 
 ;;;###autoload
-(defvar paren-mode nil
+(defcustom paren-mode nil
   "*Sets the style of parenthesis highlighting.
 Valid values are nil, `blink-paren', `paren', and `sexp'.
   nil		no parenthesis highlighting.
@@ -78,7 +89,10 @@ Valid values are nil, `blink-paren', `paren', and `sexp'.
 		and shell quoting.
 
 This variable is global by default, but you can make it buffer-local and
-highlight parentheses differently in different major modes.")
+highlight parentheses differently in different major modes."
+  :type '(radio (const nil) (const blink-paren) (const paren)
+		(const sexp) (const nested))
+  :group 'paren)
 
 (make-face 'paren-match)
 (or (face-differs-from-default-p 'paren-match)

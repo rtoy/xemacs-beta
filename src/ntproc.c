@@ -586,7 +586,8 @@ sys_spawnve (int mode, char *cmdname, char **argv, char **envp)
   int pid;
   child_process *cp;
   int is_dos_binary;
-  
+  struct gcpro gcpro1;
+    
   /* We don't care about the other modes */
   if (mode != _P_NOWAIT)
     {
@@ -596,22 +597,22 @@ sys_spawnve (int mode, char *cmdname, char **argv, char **envp)
 
   /* Handle executable names without an executable suffix.  */
   program = make_string (cmdname, strlen (cmdname));
+  GCPRO1 (program);
   if (NILP (Ffile_executable_p (program)))
     {
-      struct gcpro gcpro1;
-      
       full = Qnil;
-      GCPRO1 (program);
       locate_file (Vexec_path, program, EXEC_SUFFIXES, &full, 1);
-      UNGCPRO;
       if (NILP (full))
 	{
+	  UNGCPRO;
 	  errno = EINVAL;
 	  return -1;
 	}
       cmdname = XSTRING (full)->_data;
       argv[0] = cmdname;
     }
+  UNGCPRO;
+
 
   /* make sure cmdname is in DOS format */
   strcpy (cmdname = alloca (strlen (cmdname) + 1), argv[0]);

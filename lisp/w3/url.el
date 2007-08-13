@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/04/09 23:49:33
-;; Version: 1.73
+;; Created: 1997/04/11 14:41:10
+;; Version: 1.74
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/04/09 23:49:33|1.73|Location Undetermined
+;;; 1997/04/11 14:41:10|1.74|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1797,12 +1797,16 @@ user for what type to save as."
     (set-buffer nntp-server-buffer)
     (buffer-string)))
 
-(defvar url-external-retrieval-program "www"
-  "*Name of the external executable to run to retrieve URLs.")
+(defcustom url-external-retrieval-program "www"
+  "*Name of the external executable to run to retrieve URLs."
+  :type 'string
+  :group 'url)
 
-(defvar url-external-retrieval-args '("-source")
+(defcustom url-external-retrieval-args '("-source")
   "*A list of arguments to pass to `url-external-retrieval-program' to
-retrieve a URL by its HTML source.")
+retrieve a URL by its HTML source."
+  :type '(repeat string)
+  :group 'url)
 
 (defun url-retrieve-externally (url &optional no-cache)
   (let ((url-working-buffer (if (and url-multiple-p

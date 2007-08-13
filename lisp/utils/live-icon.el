@@ -37,9 +37,10 @@
 	   (or (> emacs-major-version 19)
 	       (and (= emacs-major-version 19)
 		    (>= emacs-minor-version 12))))
-      (let ((colour (if bg-p
-			(face-background face)
-		      (face-foreground face))))
+      (let* ((face (if (consp face) (car face) face))
+	     (colour (if bg-p
+			 (face-background face)
+		       (face-foreground face))))
 	(if (consp colour)
 	    (setq colour (cdr (car colour))))
 	(if (color-instance-p colour)

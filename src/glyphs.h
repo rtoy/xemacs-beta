@@ -95,7 +95,8 @@ struct image_instantiator_methods
 			      Lisp_Object instantiator,
 			      Lisp_Object pointer_fg,
 			      Lisp_Object pointer_bg,
-			      int dest_mask);
+			      int dest_mask,
+			      Lisp_Object domain);
 };
 
 struct ii_keyword_entry
@@ -496,7 +497,7 @@ Lisp_Object tagged_vector_to_alist (Lisp_Object vector);
 Lisp_Object alist_to_tagged_vector (Lisp_Object tag, Lisp_Object alist);
 void string_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			 int dest_mask);
+			 int dest_mask, Lisp_Object domain);
 Lisp_Object allocate_glyph (enum glyph_type type,
 			    void (*after_change) (Lisp_Object glyph,
 						  Lisp_Object property,

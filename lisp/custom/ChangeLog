@@ -1,3 +1,131 @@
+Sat Apr 12 18:31:22 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.84 released.
+
+Sat Apr 12 15:08:31 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (abbrev-mode, alloc, undo, modeline, fill,
+	editing-basics, display, execute, installation, dired, limits,
+	debug, minibuffer, keyboard, mouse, menu, auto-save,
+	processes-basics, windows): New customization groups.
+
+	* Version 1.83 released.
+
+Sat Apr 12 10:44:15 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-start.el: New file.
+
+	* cus-face.el (custom-face-font-size): Don't assume integral
+	number.  Patch by Steven L Baur <steve@miranova.com>.
+
+	* cus-edit.el (custom-menu-create): Don't allow optional `NAME'.
+	(customize-menu-create): Do allow optional name.
+
+	* widget.texi (atoms): Documented `character' widget.
+
+	* custom.el (custom-set-variables): Add warning for old format. 
+
+Fri Apr 11 21:23:33 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.82 released.
+
+Fri Apr 11 18:27:02 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-variable-set): Use `set-default' instead of
+	`set'. 
+	(custom-variable-save): Ditto.
+	(custom-variable-reset-saved): Ditto.
+	(custom-variable-reset-factory): Ditto.
+
+	* Version 1.81 released.
+
+	* custom.el: Added missing autoloads.
+
+Fri Apr 11 18:13:12 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.80 released.
+
+Fri Apr 11 18:06:28 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (customize-face-other-window): Added autoload cookie.
+
+	* Version 1.79 released.
+
+Fri Apr 11 15:27:25 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (customize-face-other-window): New function.
+
+	* wid-browse.el (widget-browse-mode-customize-menu): New menu.
+	(widget-browse-mode): Add it.
+	(widget-browse-mode-map): Bind `q'.
+
+	* wid-browse.el (widget-browse-other-window): New function.
+	* widget.el (widget-browse-other-window): Autoload.
+
+	* cus-edit.el (customize-menu-create): New function.
+	(custom-mode-customize-menu): Use it.
+
+	* Version 1.78 released.
+
+Fri Apr 11 11:12:41 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-make-dependencies): Deleted function.
+
+	* Makefile (cus-load.el): Removed target.
+
+	* cus-edit.el (customize-face): Sort faces.
+
+Thu Apr 10 22:20:20 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.77 released.
+
+Thu Apr 10 19:44:07 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-buffer-create-internal): Move to bob + 1.
+
+	* Version 1.76 released.
+
+Thu Apr 10 16:55:28 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-faces): New group.
+	(custom-magic-alist): Added.
+	(custom-variable-sample-face): Added.
+	(custom-variable-button-face): Added.
+	(custom-face-tag-face): Added.
+	(custom-group-tag-faces): Added.
+	(custom-group-tag-face): Added.
+	(customize): Removed from faces group.
+
+	* cus-edit.el (custom-load-recursion): New variable.
+	(custom-load-symbol): Use it.
+	(custom-mode-customize-menu): New menu.
+	(custom-mode): Use it.
+	Code moved to te end of the file.
+
+	* Version 1.75 released.
+
+Thu Apr 10 09:50:25 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-buffer-create-internal): Split out from
+	`custom-buffer-create'. 
+	(custom-buffer-create-other-window): New function.
+
+	* cus-edit.el (custom-guess-name-alist): Renamed from
+	`custom-guess-type-alist'.
+	(custom-guess-doc-alist): New option.
+	(custom-guess-type): Use them.
+
+	* cus-edit.el (custom-menu-create): Add autoload cookie.
+
+	* cus-face.el (set-face-stipple): Removed Kyle Jones code.
+
+	* cus-face.el (face-doc-string): Changed property name to
+	`face-documentation'. 
+	(set-face-doc-string): Ditto.
+
+	* cus-edit.el (custom-variable-type): Don't guess type of
+	variables defined with `defcustom'.
+
 Wed Apr 09 21:11:14 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.74 released.
@@ -20,7 +148,7 @@ Wed Apr  9 11:57:02 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 	Remove XEmacs support.
 	(custom-help-menu): Move here from `custom.el'.
 	Remove XEmacs support.
-	(custom-menu-create): Work even if custom-menu-nesting is
+	(custom-menu-create): Work even if `custom-menu-nesting' is
 	unbound. 
 	(custom-menu-nesting): Don't define for XEmacs.
 

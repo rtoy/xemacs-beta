@@ -5,7 +5,7 @@
 @c %**end of header
 
 @ifinfo
-This file documents tm-vm.el v7.79.
+This file documents tm-vm.el v8.11
 
 tm-vm is part of the TM Package.
 
@@ -26,7 +26,7 @@ Copyright 1996 Tomohiko Morioka, Oscar Figueiredo
 @titlepage
 @title tm-vm Manual (English Version)
 @author by Oscar Figueiredo
-@code{$Id: tm-vm-en.texi,v 1.3 1997/01/11 20:14:34 steve Exp $}
+@code{$Id: tm-vm-en.texi,v 1.4 1997/04/13 03:14:26 steve Exp $}
 @page
 
 tm-vm is part of the TM Package.
@@ -48,15 +48,15 @@ tm-vm is an interface between tm and the VM mail user agent that lets
 you read and write multimedia mail on the Internet using the MIME
 standard.
 
-This document applies to release 7.79 of tm-vm.el
+This document applies to release 8.11 of tm-vm.el
 @end ifinfo
 
 @menu
-* Overview::                    Reading and writing MIME mail in VM
-* Install::                     Installation procedure
-* Usage::                       Detailed usage of tm-vm                  
-* Customization::               How to customize tm-vm behavior.
-* News::                  	Recent modifications      
+* Overview::                    
+* Install::                     
+* Usage::                       
+* Customization::               
+* News::                        
 * Copyright::                   
 * Variable Index::              
 * Concept Index::               
@@ -72,10 +72,12 @@ This document applies to release 7.79 of tm-vm.el
 tm-vm is an interface between TM (@pxref{Top,TM,,tm-en,TM Manual}.) and the VM
 mail user agent (@pxref{Top,VM,,vm,VM Manual}.).
 
-In its current version VM does not provide functionality to support the
-MIME standard. tm-vm integrates the TM package into VM so as to give you
-a powerful MIME support in your usual mail environment for both mail
-reading and composing.
+Until recently VM did not support the MIME standard. Kyle Jones has
+begun to implement it in VM 6.0 however TM provides a much more complete
+support of MIME than the one currently offered in VM 6. tm-vm integrates
+the TM package into VM so as to give you a powerful MIME support in your
+usual mail environment for both mail reading and composing. tm-vm adds
+MIME features to VM 5 and replaces the native features offered by VM 6.
 
 @section Mail Reading Features
 
@@ -85,10 +87,20 @@ MIME messages appear to you just like plain messages.
 tm-vm detects MIME messages when you try to view them and, if automatic
 MIME previewing is enabled (the default), then it automatically parses
 the message and displays a "beautified" version under the MIME Viewer.
+Note that the word @emph{previewing} has two different meanings for VM and
+TM. In VM, it means view the first lines of a message only, as defined by
+the variable @code{vm-preview-lines}, to avoid confusion we call this
+@emph{message previewing}. In TM, previewing means parsing the contents
+of a message according to the rules of the MIME standard and display a
+corresponding view of it. We call that more specifically @emph{MIME
+previewing}. 
 
 The MIME Viewer offers all the functionality to view/extract the MIME
 components (attachments) of the message. It also displays images inline
-in XEmacs. @xref{tm-view,,MIME Viewer tm-view,tm-en,TM Manual}.
+in XEmacs. @xref{Top,MIME Viewer,MIME Viewer,tm-view-en,TM View
+Manual}. Note however that for a better VM integration, tm-vm
+overrides the standard bindings of the MIME-Viewer and makes them
+available with a @key{C-c} prefix.
 
 @section Mail Composing Features
 
@@ -107,7 +119,8 @@ Insert a voice sample recorded from a microphone attached to the computer
 Enclose message sections as PGP encrypted
 @end itemize
 
-and much more. For details, @pxref{tm-edit,,MIME Editor,tm-en,TM Manual}.
+and much more. For details, @pxref{Top,MIME Editor,MIME
+Editor,tm-edit-en,TM Edit Manual}.
 
 When you reply to a message citing the original and tm-vm is active,
 tm-vm will insert the contents of the MIME-Preview buffer in the reply
@@ -126,7 +139,7 @@ already installed.
 VM is part of XEmacs distributions and so if you're running XEmacs you
 don't need to install it.  If you're running Emacs, you will need to
 install VM. The official VM distribution site is
-@file{ftp://ftp.uu.net/networking/mail/vm/}.
+@file{ftp://ftp.uu.net/networking/mail/vm/}. 
 
 If you're reading this manual then there is a pretty good chance you
 already have a recent version of tm. The official tm distribution site
@@ -162,10 +175,10 @@ to respect the following sequence in your initialization file:
 
 
 @menu
-* Reading MIME mail::       Commands for MIME previewing    
-* Composing MIME mail::     Writing/Replying to/Forwarding MIME messages
-* Printing::                Printing MIME messages
-* Using BBDB::              BBDB integration
+* Reading MIME mail::           Commands for MIME previewing    
+* Composing MIME mail::         Writing/Replying to/Forwarding MIME messages
+* Printing::                    Printing MIME messages
+* Using BBDB::                  BBDB integration
 @end menu
 
 
@@ -199,11 +212,13 @@ buffer where the MIME contents remain unparsed
 message. It is generally what you want to see as it is more readable.
 @end itemize
 
-There are two different buffers due to the current VM implementation
-that makes TM/VM integration difficult. However, we try hard to make the
-MIME Preview buffer act as if it were the real VM message buffer by
-making all bindings act the same in the Preview buffer as in the folder
-buffer.
+There are two different buffers due to the VM 5 implementation that
+makes TM/VM integration difficult. However, we try hard to make the MIME
+Preview buffer act as if it were the real VM message buffer by making
+all bindings act the same in the Preview buffer as in the folder
+buffer. In this version of tm-vm, most of the usual VM bindings are made
+available transparently in the MIME Preview buffer, others will be in
+the future, contact the maintainer for more information.
 
 
 @code{tm-vm/toggle-preview-mode} (bound to @kbd{M-t}) lets you toggle
@@ -213,16 +228,16 @@ between automatic and on-demand preview modes.
 @node Composing MIME mail, Printing, Reading MIME mail, Usage
 @section Composing MIME mail
 
-Regardless of the current preview mode, tm-vm activates the mime-editor
-mode each time you compose a mail message (new message, reply or
-forward).  @xref{tm-edit,,MIME Editor,tm-en,TM Manual}, for details on
-mime-editor mode.
+Regardless of the current MIME preview mode (automatic or on-demand),
+tm-vm activates the mime-editor mode each time you compose a mail
+message (new message, reply or forward).  @xref{Top,MIME Editor,MIME
+Editor,tm-edit-en,TM Edit Manual}, for details on mime-editor mode.
 
 When you reply to a message, tm-vm will insert the contents of the
 @strong{decoded} message if there exists a MIME Preview buffer. This is
 generally what you want for quoted-printable text, for instance. Inline
 images are removed from the reply. If for some reason you want the
-@strong{raw} message to be inserted instead of the decoded one you have
+@strong{raw} message to be inserted instead of the decoded one, you have
 to kill the MIME Preview buffer first. You do this with
 @code{kill-buffer} (bound to @kbd{C-x k}) in the MIME Preview
 buffer. You can also toggle automatic preview off, if it was on, with
@@ -250,6 +265,7 @@ BBDB, the Big Brother's Database, should operate normally with
 VM/tm-vm. You must ensure, however, that tm-vm is loaded @strong{after}
 BBDB has installed its hooks. Therefore be sure to respect the following
 sequence in your initialization file:
+
 @lisp
 (bbdb-insinuate-vm)
 (require 'tm-vm)
@@ -279,10 +295,22 @@ regardless of the existence of a @code{MIME-Version} header. Default
 @code{t}.
 @end defopt
 
-@defopt tm-vm/use-xemacs-popup-menu
-If this is non-@code{nil} and you're running XEmacs, tm-vm will install a
-menu of MIME commands as a mode popup (@key{Button 3}) in message
-composition buffers. Default @code{t}.
+@defopt tm-vm/use-vm-bindings
+If non-@code{nil} tm-vm will use usual VM bindings in MIME-Preview
+buffers and make TM bindings available with a prefix. Otherwise usual TM
+bindings are used without prefix (this was the default in versions of
+tm-vm older than 8.0). Default @code{t}.
+@end defopt
+
+@defopt tm-vm/attach-to-popup-menus
+If this is non-@code{nil}, tm-vm will append a menu of MIME commands to
+the VM standard mode popup (@key{Button 3}). Default @code{t}. Untested
+in Emacs.
+@end defopt
+
+@defopt tm-vm/use-original-url-button
+If this is non-@code{nil}, tm-vm will use VM to energize URL's contained
+in the message body as weel as message headers. Default @code{t}.
 @end defopt
 
 @defopt tm-vm/use-ps-print
@@ -290,6 +318,12 @@ If this is non-@code{nil} then MIME messages will be printed in
 Postscript using the ps-print package. By default it is @code{t} for
 non-MULE Emacses.
 @end defopt
+
+@defvar tm-vm/build-mime-preview-buffer-hook
+tm-vm runs the hooks in this list each time it builds a MIME-Preview
+buffer for a message. You can attach your own hook functions using
+@code{add-hook}.
+@end defvar
 
 @defvar tm-vm/select-message-hook
 tm-vm runs the hooks in this list after selecting a message. You can
@@ -325,7 +359,44 @@ explicitly if you want to:
 @node News, Copyright, Customization, Top
 @chapter News
 
-This section documents the changes in the latest releases of tm-vm.
+This section documents the user-visible changes in the latest releases
+of tm-vm. For more technical details see the ChangeLog.
+
+@section 8.5 to 8.11
+
+@itemize @bullet
+@item
+Bug fixes
+@item
+Compatible with successive VM 6 versions (tested up to VM 6.24).
+@item
+Improved overall VM integration.
+@item
+New hook variable @code{tm-vm/build-mime-preview-buffer-hook}.
+@end itemize
+
+@section 8.4
+
+@itemize @bullet
+@item
+Bug fixes in Emacs menus.
+@end itemize
+
+@section 8.0 to 8.3
+@itemize @bullet
+@item
+Most usual VM bindings are available in MIME-Preview buffers (motion
+commands, summary generation). Usual TM bindings are prefixed with
+@key{C-c} now. See the variable @code{tm-vm/use-vm-bindings}.
+@item
+VM menu bar and toolbar are accessible from MIME-Preview buffers
+@item
+MIME-Preview buffers support header toggling
+@item
+VM message previewing is correctly supported
+@item
+Bug fixes
+@end itemize
 
 @section 7.79
 
@@ -396,7 +467,7 @@ X-Faces are displayed by default. @pxref{Customization}
 @ifinfo
 @chapter Copyright
 
-This file documents tm-vm 7.76, an interface between tm and the VM mail
+This file documents tm-vm 8.11, an interface between tm and the VM mail
 user agent.
 
 Copyright 1996 Tomohiko Morioka, Oscar Figueiredo

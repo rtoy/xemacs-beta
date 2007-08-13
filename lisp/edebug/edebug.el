@@ -29,7 +29,7 @@
 ;; LCD Archive Entry:
 ;; edebug|Daniel LaLiberte|liberte@cs.uiuc.edu
 ;; |A source level debugger for Emacs Lisp.
-;; |$Date: 1997/03/08 23:25:52 $|$Revision: 1.3 $|~/modes/edebug.el|
+;; |$Date: 1997/04/13 03:13:54 $|$Revision: 1.4 $|~/modes/edebug.el|
 
 ;; This minor mode allows programmers to step through Emacs Lisp
 ;; source code while executing functions.  You can also set
@@ -87,7 +87,7 @@
 ;;; Code:
 
 (defconst edebug-version
-  (let ((raw-version "$Revision: 1.3 $"))
+  (let ((raw-version "$Revision: 1.4 $"))
     (substring raw-version (string-match "[0-9.]*" raw-version)
 	       (match-end 0))))
      
@@ -1105,8 +1105,9 @@ This controls how we read comma constructs.")
   ;; Here we just catch any no-match not caught below and signal an error.
 
   ;; Run the setup hook.
-  (run-hooks 'edebug-setup-hook)
-  (setq edebug-setup-hook nil)
+  (let ((temp-hook edebug-setup-hook))
+    (setq edebug-setup-hook nil)
+    (run-hooks 'temp-hook))
 
   (let (result
 	edebug-top-window-data

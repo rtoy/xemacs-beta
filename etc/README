@@ -2,3 +2,93 @@
 This directory contains some text files of documentation for XEmacs or
 of interest to XEmacs users, some programs used by or with XEmacs, and
 the file of on-line documentation for XEmacs.
+
+BABYL			A description of BABYL file format
+CODING-STANDARDS	XEmacs C & Lisp coding standards
+COOKIES			Urban Legend, or True Story? :-)
+COPYING			GNU Public License
+COPYING.LIB		Library GNU Public License
+DEBUG			Hints on how to debug XEmacs
+DISTRIB			How to obtain copies of XEmacs and Emacs
+Emacs.ad		Sample Resource file
+FTP			XEmacs FTP Mirrors
+GNU			GNU Manifesto
+GNUS-NEWS		New features in Gnus-5.4
+LPF			Information about the League for Programming Freedom
+MACHINES		List of known machines configurations (OLD)
+MAILINGLISTS		List of available Mailing lists
+MH-E-NEWS		List of changes to MH-E to version 5.0.
+MORE.STUFF		List of useful unbundled packages
+MSDOS			Status of MSDOS port
+NEWS			XEmacs 20.1 release information
+ORDERS
+ORDERS.EUROPE
+ORDERS.JAPAN
+OTHER.EMACSES		Order forms for GNU software
+README			This file
+SERVICE			How to obtain paid support for free software
+TERMS			Information about termcap entries
+TUTORIAL		Tutorial for first time users
+XKeysymDB		X Keysym Database with Motif bindings
+app-defaults/		Localization resource files (Japanese only)
+auctex/			AUC TeX style files
+*.Z			Various pictures of XEmacs developers
+categories		XEmacs GNATS bug report categories
+ctags.1			Ctags man page
+custom/			Images used in Custom mode
+e/			Emacs terminal types
+edt-user.doc		Information about EDT mode
+emacskeys.sco		
+emacsstrs.sco		Special files for running on an SCO console
+enriched.doc		Information about Enriched mode
+eos/			Images for EOS support (GUD)
+etags.1			Etags man page
+frame-icon/		Images for frame-icon.el
+gnats/			XEmacs GNATS bug report support files
+gnu.xbm			
+gnu.xpm			Image of a Gnu.
+gnuattach.1		Gnuattach man page
+gnuclient.1		Gnuclient man page
+gnudoit.1		Gnudoit man page
+gnus/			Images for the Gnus News & Mail reader
+gnus-refcard.tex	Gnus reference card (refcard.tex in Gnus distribution)
+gnus-tut.txt		Gnus tutorial
+gnuserv.1		Gnuserv man page
+gnuserv.README		Original README file from gnuserv
+gnusref.tex		Gnus reference card
+gray1.xbm		Gray bitmap
+hypb-mouse.txt		Hyperbole mouse reference
+ida-logo.xpm		InfoDock Associates logo
+ledit.l			Ledit lisp file?
+message/		Images for Message mode
+mine/			Images for Xmine game
+ms-kermit
+ms-kermit-7bit		Files for running XEmacs through kermit
+mule/			MULE documentation (OLD)
+recycle.xpm
+recycle2.xpm		Two versions of oversized Recycle cursor
+refcard.ps		Postscript version of XEmacs reference card
+refcard.tex		XEmacs reference card
+sample.Xdefaults	Example ~/.Xdefaults file
+sample.emacs		Example ~/.emacs file
+sgml/			SGML catalog, DTDs, etc.
+sink.xbm		A Gnu icon
+smilies/		Smiley images for smiley.el
+sounds/			Sound files for sound support
+sparcworks/		Support files for Sparcworks
+spook.lines		Keywords that might trip TLA wiretaps
+tests/			Testcases for external widget
+time/			Image files for display-time
+toolbar/		Image files for the toolbar
+trash.xpm		Garbage can icon
+viperCard.tex		Viper reference card
+vm/			Image files for VM mail reader
+w3/			Image files for W3 browser
+xemacs-icon.xpm
+xemacs-icon2.xbm
+xemacs-icon2.xpm
+xemacs-icon3.xpm	Various versions of an XEmacs WM icon
+xemacs.1		XEmacs man page
+xemacs.xbm
+xemacs.xpm		XEmacs logo used on the splash screen
+yow.lines		Database used by yow.el

@@ -254,20 +254,15 @@ not be enclosed in { } or ( ).")
 ;  Bogus FSFmacs crap.
 (defface makefile-space-face
   '((((class color))
-     (:background "hotpink"))		; uhm
-    (((class grayscale)
-      (background light))
-     (:background "black"))
-    (((class grayscale)
-      (background black))
-     (:background "white"))
-    (((class mono)
-      (background light))
-     (:background "white"))
-    (((class mono)
-      (background dark))
-     (:background "black")))
-  "Face to use for highlighting leading spaces in Font-Lock mode."
+     (:background "hotpink"))		; Yeah!
+    ;; Everything else, just choose the most visible background
+    ;; color.  We don't care about foreground, since it is only used
+    ;; for whitespace.
+    (((background light))
+      (:background "black"))
+    (((background dark))
+      (:background "white")))
+  "Face to use for highlighting leading Makefile spaces in Font-Lock mode."
   :group 'makefile-mode)
 
 ;Older version of same.

@@ -1,4 +1,14 @@
 							-*- indented-text -*-
+to 20.1 beta15
+-- Restoration of zawinski features in telnet.el.
+-- paren.el & ps-print.el customized
+-- Gnus-5.4.45
+-- W3-3.0.82
+-- xmine.el-1.7
+-- Crisp.el-1.17
+-- miscellaneous bug fixes
+-- Custom-1.84
+
 to 20.1 beta14
 -- about.el hacking
 -- W3-3.0.81

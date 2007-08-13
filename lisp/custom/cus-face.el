@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.74
+;; Version: 1.84
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -39,7 +39,7 @@
 
 (eval-and-compile
   (unless (fboundp 'frame-property)
-    ;; XEmacs function missing in Emacs 19.34.
+    ;; XEmacs function missing in Emacs.
     (defun frame-property (frame property &optional default)
       "Return FRAME's value for property PROPERTY."
       (or (cdr (assq property (frame-parameters frame)))
@@ -49,44 +49,13 @@
     ;; XEmacs function missing in Emacs.
     (defun face-doc-string (face)
       "Get the documentation string for FACE."
-      (get face 'face-doc-string)))
+      (get face 'face-documentation)))
 
   (unless (fboundp 'set-face-doc-string)
     ;; XEmacs function missing in Emacs.
     (defun set-face-doc-string (face string)
       "Set the documentation string for FACE to STRING."
-      (put face 'face-doc-string string)))
-
-  (when (and (not (fboundp 'set-face-stipple))
-	     (fboundp 'set-face-background-pixmap))
-    ;; Emacs function missing in XEmacs 19.15.
-    (defun set-face-stipple (face pixmap &optional frame)
-      ;; Written by Kyle Jones.
-      "Change the stipple pixmap of face FACE to PIXMAP.
-PIXMAP should be a string, the name of a file of pixmap data.
-The directories listed in the `x-bitmap-file-path' variable are searched.
-
-Alternatively, PIXMAP may be a list of the form (WIDTH HEIGHT DATA)
-where WIDTH and HEIGHT are the size in pixels,
-and DATA is a string, containing the raw bits of the bitmap.  
-
-If the optional FRAME argument is provided, change only
-in that frame; otherwise change each frame."
-      (while (not (find-face face))
-	(setq face (signal 'wrong-type-argument (list 'facep face))))
-      (while (cond ((stringp pixmap)
-		    (unless (file-readable-p pixmap)
-		      (setq pixmap (vector 'xbm ':file pixmap)))
-		    nil)
-		   ((and (consp pixmap) (= (length pixmap) 3))
-		    (setq pixmap (vector 'xbm ':data pixmap))
-		    nil)
-		   (t t))
-	(setq pixmap (signal 'wrong-type-argument
-			     (list 'stipple-pixmap-p pixmap))))
-      (while (and frame (not (framep frame)))
-	(setq frame (signal 'wrong-type-argument (list 'framep frame))))
-      (set-face-background-pixmap face pixmap frame))))
+      (put face 'face-documentation string))))
 
 (unless (fboundp 'x-color-values)
   ;; Emacs function missing in XEmacs 19.14.
@@ -410,7 +379,7 @@ If FRAME is nil, use the default face."
     "Return the size of the font of FACE as a string."
     (let* ((font (apply 'custom-face-font-name face args))
 	   (fontobj (font-create-object font)))
-      (format "%d" (font-size fontobj))))
+      (format "%s" (font-size fontobj))))
 
   (defun custom-set-face-font-family (face family &rest args)
     "Set the font of FACE to FAMILY."
@@ -540,6 +509,7 @@ If FRAME is nil or omitted, initialize them for all frames."
 		(initialize-face-resources symbol frame))))
 	  (face-list)))
 
+;;;###autoload
 (defun custom-initialize-frame (&optional frame)
   "Initialize local faces for FRAME if necessary.
 If FRAME is missing or nil, the first member of (frame-list) is used."

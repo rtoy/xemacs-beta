@@ -482,7 +482,8 @@ normalize_image_instantiator (Lisp_Object instantiator,
 }
 
 static Lisp_Object
-instantiate_image_instantiator (Lisp_Object device, Lisp_Object instantiator,
+instantiate_image_instantiator (Lisp_Object device, Lisp_Object domain,
+				Lisp_Object instantiator,
 				Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 				int dest_mask)
 {
@@ -502,7 +503,7 @@ instantiate_image_instantiator (Lisp_Object device, Lisp_Object instantiator,
 	("Don't know how to instantiate this image instantiator?",
 	 instantiator);
     IIFORMAT_METH (meths, instantiate, (ii, instantiator, pointer_fg,
-					pointer_bg, dest_mask));
+					pointer_bg, dest_mask, domain));
   }
   UNGCPRO;
 
@@ -985,7 +986,8 @@ make_image_instance_1 (Lisp_Object data, Lisp_Object device,
   if (VECTORP (data)
 	   && EQ (vector_data (XVECTOR (data))[0], Qinherit))
     signal_simple_error ("inheritance not allowed here", data);
-  ii = instantiate_image_instantiator (device, data, Qnil, Qnil, dest_mask);
+  ii = instantiate_image_instantiator (device, device, data,
+				       Qnil, Qnil, dest_mask);
   RETURN_UNGCPRO (ii);
 }
 
@@ -1330,7 +1332,7 @@ nothing_possible_dest_types (void)
 static void
 nothing_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		     int dest_mask)
+		     int dest_mask, Lisp_Object domain)
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
 
@@ -1372,7 +1374,7 @@ inherit_possible_dest_types (void)
 static void
 inherit_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		     int dest_mask)
+		     int dest_mask, Lisp_Object domain)
 {
   /* handled specially in image_instantiate */
   abort ();
@@ -1399,7 +1401,7 @@ string_possible_dest_types (void)
 void
 string_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		    Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		    int dest_mask)
+		    int dest_mask, Lisp_Object domain)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -1435,7 +1437,7 @@ static void
 formatted_string_instantiate (Lisp_Object image_instance,
 			      Lisp_Object instantiator,
 			      Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			      int dest_mask)
+			      int dest_mask, Lisp_Object domain)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -1599,6 +1601,7 @@ image_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	  record_unwind_protect (image_instantiate_cache_result,
 				 locative);
 	  instance = instantiate_image_instantiator (device,
+						     domain,
 						     instantiator,
 						     pointer_fg, pointer_bg,
 						     dest_mask);

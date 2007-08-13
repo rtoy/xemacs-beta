@@ -63,6 +63,8 @@
 #include <fcntl.h>
 #ifdef __FreeBSD__
 #  include <machine/soundcard.h>
+#elif defined(__bsdi__)
+#  include <sys/soundcard.h>
 #else
 #  include <linux/soundcard.h>
 #endif
@@ -119,12 +121,12 @@ static union {
 
 /* Use a global buffer as scratch-pad for possible conversions of the
    sampling format */
-static unsigned char sndbuf[SNDBUFSZ];
+unsigned char linuxplay_sndbuf[SNDBUFSZ];
 
-static int           mix_fd    = -1;
-static int           audio_vol = -1;
-static int           audio_fd  = -1;
-static char         *audio_dev = "";
+int           mix_fd    = -1;
+int           audio_vol = -1;
+int           audio_fd  = -1;
+char         *audio_dev = "";
 
 typedef enum {fmtIllegal,fmtRaw,fmtVoc,fmtWave,fmtSunAudio} fmtType;
 
@@ -421,7 +423,7 @@ static size_t sndcnv8U_2mono(void **data,size_t *sz,void **outbuf)
   rc      = count;
   src     = *data;
   *outbuf =
-  dest    = sndbuf;
+  dest    = linuxplay_sndbuf;
   while (count--)
     *dest++ = (unsigned char)(((int)*((unsigned char *)src)++ +
 			       (int)*((unsigned char *)src)++) / 2);
@@ -442,7 +444,7 @@ static size_t sndcnv8S_2mono(void **data,size_t *sz,void **outbuf)
   rc      = count;
   src     = *data;
   *outbuf =
-  dest    = sndbuf;
+  dest    = linuxplay_sndbuf;
   while (count--)
     *dest++ = (unsigned char)(((int)*((signed char *)src)++ +
 			       (int)*((signed char *)src)++) / 2);
@@ -463,7 +465,7 @@ static size_t sndcnv2monounsigned(void **data,size_t *sz,void **outbuf)
   rc      = count;
   src     = *data;
   *outbuf =
-  dest    = sndbuf;
+  dest    = linuxplay_sndbuf;
   while (count--)
     *dest++ = (unsigned char)(((int)*((signed char *)src)++ +
 			       (int)*((signed char *)src)++) / 2) ^ 0x80;
@@ -484,7 +486,7 @@ static size_t sndcnv2unsigned(void **data,size_t *sz,void **outbuf)
   rc      = count;
   src     = *data;
   *outbuf =
-  dest    = sndbuf;
+  dest    = linuxplay_sndbuf;
   while (count--)
     *dest++ = *((unsigned char *)src)++ ^ 0x80;
   *data   = src;
@@ -563,7 +565,7 @@ static size_t sndcnvULaw_2mono(void **data,size_t *sz,void **outbuf)
   rc      = count;
   src     = *data;
   *outbuf =
-  dest    = sndbuf;
+  dest    = linuxplay_sndbuf;
   while (count--)
     /* it is not possible to directly interpolate between two ulaw encoded
        data bytes, thus we need to convert to linear format first and later
@@ -589,7 +591,7 @@ static size_t sndcnv16_2monoLE(void **data,size_t *sz,void **outbuf)
   rc      = count;
   src     = *data;
   *outbuf =
-  dest    = sndbuf;
+  dest    = linuxplay_sndbuf;
   for (count /= 2; count--; ) {
     i = ((int)(((unsigned char *)src)[0]) +
         256*(int)(((unsigned char *)src)[1]) +
@@ -617,7 +619,7 @@ static size_t sndcnv16_2monoBE(void **data,size_t *sz,void **outbuf)
   rc      = count;
   src     = *data;
   *outbuf =
-  dest    = sndbuf;
+  dest    = linuxplay_sndbuf;
   for (count /= 2; count--; ) {
     i = ((int)(((unsigned char *)src)[1]) +
         256*(int)(((unsigned char *)src)[0]) +
@@ -643,7 +645,7 @@ static size_t sndcnv2byteLE(void **data,size_t *sz,void **outbuf)
   rc      = count;
   src     = *data;
   *outbuf =
-  dest    = sndbuf;
+  dest    = linuxplay_sndbuf;
   while (count--) {
     *dest++ = (unsigned char)(((signed char *)src)[1] ^ (signed char)0x80);
     ((char *)src) += 2; }
@@ -664,7 +666,7 @@ static size_t sndcnv2byteBE(void **data,size_t *sz,void **outbuf)
   rc      = count;
   src     = *data;
   *outbuf =
-  dest    = sndbuf;
+  dest    = linuxplay_sndbuf;
   while (count--) {
     *dest++ = (unsigned char)(((signed char *)src)[0] ^ (signed char)0x80);
     ((char *)src) += 2; }
@@ -686,7 +688,7 @@ static size_t sndcnv2monobyteLE(void **data,size_t *sz,void **outbuf)
   rc      = count;
   src     = *data;
   *outbuf =
-  dest    = sndbuf;
+  dest    = linuxplay_sndbuf;
   while (count--) {
     *dest++ = (unsigned char)(((int)((signed char *)src)[1] +
 			       (int)((signed char *)src)[3]) / 2 ^ 0x80);
@@ -709,7 +711,7 @@ static size_t sndcnv2monobyteBE(void **data,size_t *sz,void **outbuf)
   rc      = count;
   src     = *data;
   *outbuf =
-  dest    = sndbuf;
+  dest    = linuxplay_sndbuf;
   while (count--) {
     *dest++ = (unsigned char)(((int)((signed char *)src)[0] +
 			       (int)((signed char *)src)[2]) / 2 ^ 0x80);
@@ -962,10 +964,10 @@ static void linux_play_data_or_file(int fd,unsigned char *data,
   if (!data || length < HEADERSZ)
     if (fd < 0) return;
     else {
-      length = read(fd,sndbuf,SNDBUFSZ);
+      length = read(fd,linuxplay_sndbuf,SNDBUFSZ);
       if (length < HEADERSZ)
 	return;
-      data   = sndbuf;
+      data   = linuxplay_sndbuf;
       length = SNDBUFSZ; }
 
   ffmt = analyze_format(data,&fmt,&speed,&tracks,&parsesndfile);
@@ -1017,7 +1019,7 @@ static void linux_play_data_or_file(int fd,unsigned char *data,
 	  warn(buf);
 	  goto END_OF_PLAY; } }
     if (fd >= 0) {
-      if ((rrtn = read(fd,sndbuf,SNDBUFSZ)) < 0) {
+      if ((rrtn = read(fd,linuxplay_sndbuf,SNDBUFSZ)) < 0) {
 	perror("read"); goto END_OF_PLAY; } }
     else
       break;

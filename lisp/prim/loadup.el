@@ -38,6 +38,8 @@
     (error "loadup.el already loaded!"))
 
 (define-function 'defalias 'define-function)
+(defvar running-xemacs t
+  "non-nil when the current emacsen is XEmacs.")
 
 (call-with-condition-handler
       ;; This is awfully damn early to be getting an error, right?
@@ -78,6 +80,7 @@
      (load-gc "cl")
      (load-gc "widget")
      (load-gc "custom") ; Before the world so everything can be customized
+     (load-gc "cus-start") ; for customization of builtin variables
      (load-gc "cmdloop")
      (or (fboundp 'recursive-edit) (load-gc "cmdloop1"))
      (load-gc "keymap")

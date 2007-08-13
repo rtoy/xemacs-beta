@@ -1,7 +1,5 @@
 \input texinfo.tex
 
-@c $Id: widget.texi,v 1.12 1997/04/10 05:56:22 steve Exp $
-
 @c %**start of header
 @setfilename widget
 @settitle The Emacs Widget Library
@@ -15,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.74
+Version: 1.84
 
 @menu
 * Introduction::                
@@ -1052,11 +1050,15 @@ The @var{value}, if present, is used to initialize the @code{:value}
 property and must be an expression of the same type as the widget.
 I.e. the string widget can only be initialized with a string.
 
-All the atom widgets take the same keyword arguments as the @code{editable-field}
-widget.
+All the atom widgets take the same keyword arguments as the
+@code{editable-field} widget.
 
 @deffn Widget string
 Allows you to edit a string in an editable field.
+@end deffn
+
+@deffn Widget character
+Allows you to enter a character in an editable field.
 @end deffn
 
 @deffn Widget file
