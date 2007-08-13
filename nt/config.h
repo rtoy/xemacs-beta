@@ -1,4 +1,4 @@
-/* XEmacs site configuration template file.  -*- C -*-
+/* XEmacs configuration file for Win32                             -*- C -*-
    Copyright (C) 1986, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -641,7 +641,7 @@ on various systems. */
 
 #endif /* compiler understands #pragma warning*/
 
-#define enum_field(enumeration_type) enum enumeration_type
+#define enum_field(enumeration_type) unsigned int
 
 /* We want to avoid saving the signal mask if possible, because
    that necessitates a system call. */

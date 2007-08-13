@@ -63,6 +63,34 @@ it is nil, it is assumes to be the value returned by emacs-pid."
   (make-device 'tty tty (list 'terminal-type terminal-type 
 			      'controlling-process controlling-process)))
 
+(defun device-pixel-width (&optional device)
+  "Return the width in pixels of DEVICE, or nil if unknown."
+  (let ((ds (device-system-metrics device 'size-device)))
+    (and ds (car ds))))
+
+(defun device-pixel-height (&optional device)
+  "Return the height in pixels of DEVICE, or nil if unknown."
+  (let ((ds (device-system-metrics device 'size-device)))
+    (and ds (cdr ds))))
+
+(defun device-mm-width (&optional device)
+  "Return the width in millimeters of DEVICE, or nil if unknown."
+  (let ((ds (device-system-metrics device 'size-device-mm)))
+    (and ds (car ds))))
+
+(defun device-mm-height (&optional device)
+  "Return the height in millimeters of DEVICE, or nil if unknown."
+  (let ((ds (device-system-metrics device 'size-device-mm)))
+    (and ds (cdr ds))))
+
+(defun device-bitplanes (&optional device)
+  "Return the number of bitplanes of DEVICE, or nil if unknown."
+  (device-system-metrics device 'num-bit-planes))
+
+(defun device-color-cells (&optional device)
+  "Return the number of color cells of DEVICE, or nil if unknown."
+  (device-system-metrics device 'num-color-cells))
+
 (defun make-x-device (&optional display)
   "Create a new device connected to DISPLAY."
   (make-device 'x display))

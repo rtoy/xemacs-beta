@@ -257,7 +257,7 @@ event_stream_unixoid_create_stream_pair (void* inhandle, void* outhandle,
   int infd, outfd;
   /* Decode inhandle and outhandle. Their meaning depends on
      the process implementation being used. */
-#ifdef HAVE_WIN32_PROCESSES
+#if defined (HAVE_WIN32_PROCESSES)
   /* We're passed in Windows handles. Open new fds for them */
   if ((HANDLE)inhandle != INVALID_HANDLE_VALUE)
     {
@@ -282,12 +282,12 @@ event_stream_unixoid_create_stream_pair (void* inhandle, void* outhandle,
     outfd = -1;
 
   flags = 0;
-#endif
-
-#ifdef HAVE_UNIX_PROCESSES
+#elif defined (HAVE_UNIX_PROCESSES)
   /* We are passed plain old file descs */
   infd  = (int)inhandle;
   outfd = (int)outhandle;
+#else
+# error Which processes do you have?
 #endif
 
   *instream = (infd >= 0
@@ -300,7 +300,7 @@ event_stream_unixoid_create_stream_pair (void* inhandle, void* outhandle,
 
 #if defined(HAVE_UNIX_PROCESSES) && defined(HAVE_PTYS)
   /* FLAGS is process->pty_flag for UNIX_PROCESSES */
-  if (flags && outfd >= 0)
+  if ((flags & STREAM_PTY_FLUSHING) && outfd >= 0)
     {
       Bufbyte eof_char = get_eof_char (outfd);
       int pty_max_bytes = get_pty_max_bytes (outfd);

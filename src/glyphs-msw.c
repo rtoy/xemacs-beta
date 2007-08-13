@@ -1,9 +1,4 @@
 /* mswindows-specific Lisp objects.
-   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996 Ben Wing
-   Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1998 Andy Piper.
    
 This file is part of XEmacs.
@@ -50,10 +45,14 @@ Boston, MA 02111-1307, USA.  */
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (bmp);
 Lisp_Object Qbmp;
 Lisp_Object Vmswindows_bitmap_file_path;
+static	COLORREF transparent_color = RGB (1,1,1);
 
 static void
 mswindows_initialize_dibitmap_image_instance (struct Lisp_Image_Instance *ii,
 					    enum image_instance_type type);
+static void
+mswindows_initialize_image_instance_mask (struct Lisp_Image_Instance* image, 
+					  struct frame* f);
 
 COLORREF mswindows_string_to_color (CONST char *name);
 
@@ -239,12 +238,15 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
 				   int dest_mask,
 				   void *bmp_data,
 				   int bmp_bits,
-				   Lisp_Object instantiator)
+				   Lisp_Object instantiator, 
+				   int x_hot, int y_hot,
+				   int create_mask)
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   struct device *d = XDEVICE (device);
   struct frame *f = XFRAME (DEVICE_SELECTED_FRAME (d));
   void* bmp_buf=0;
+  int type;
   HBITMAP bitmap;
   HDC hdc;
 
@@ -254,9 +256,13 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
   if (NILP (DEVICE_SELECTED_FRAME (d)))
     signal_simple_error ("No selected frame on mswindows device", device);
 
-  if (!(dest_mask & IMAGE_COLOR_PIXMAP_MASK))
+  if (dest_mask & IMAGE_COLOR_PIXMAP_MASK)
+    type = IMAGE_COLOR_PIXMAP;
+  else if (dest_mask & IMAGE_POINTER_MASK)
+    type = IMAGE_POINTER;
+  else 
     incompatible_image_types (instantiator, dest_mask,
-			      IMAGE_COLOR_PIXMAP_MASK);
+			      IMAGE_COLOR_PIXMAP_MASK | IMAGE_POINTER_MASK);
   hdc = FRAME_MSWINDOWS_DC (f);
 
   bitmap=CreateDIBSection (hdc,  
@@ -271,16 +277,28 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
   /* copy in the actual bitmap */
   memcpy (bmp_buf, bmp_data, bmp_bits);
 
-  mswindows_initialize_dibitmap_image_instance (ii, IMAGE_COLOR_PIXMAP);
+  mswindows_initialize_dibitmap_image_instance (ii, type);
 
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) =
     find_keyword_in_vector (instantiator, Q_file);
 
   IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = bitmap;
-  IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = bitmap;
+  IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = NULL;
   IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = bmp_info->bmiHeader.biWidth;
   IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = bmp_info->bmiHeader.biHeight;
   IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = bmp_info->bmiHeader.biBitCount;
+  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), x_hot);
+  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), y_hot);
+
+  if (create_mask)
+    {
+      mswindows_initialize_image_instance_mask (ii, f);
+    }
+  
+  if (type == IMAGE_POINTER)
+    {
+      mswindows_initialize_image_instance_icon(ii, TRUE);
+    }
 }
 
 static void
@@ -315,77 +333,114 @@ mswindows_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
 
   /* Now create the pixmap and set up the image instance */
   init_image_instance_from_dibitmap (ii, bmp_info, dest_mask,
-				     bmp_data, bmp_bits, instantiator);
+				     bmp_data, bmp_bits, instantiator,
+				     0, 0, 0);
 
   xfree (bmp_info);
   xfree (bmp_data);
 }
 
-void
-mswindows_create_icon_from_image(Lisp_Object image, struct frame* f, int size)
+static void set_mono_pixel ( unsigned char* bits, 
+			     int bpline, int height, 
+			     int x, int y, int white ) 
+{ 
+  int index;
+  unsigned char    bitnum;  
+  /* Find the byte on which this scanline begins */
+  index = (height - y - 1) * bpline; 
+  /* Find the byte containing this pixel */
+  index += (x >> 3); 
+  /* Which bit is it? */
+  bitnum = (unsigned char)( 7 - (x % 8) );  
+  if( white )         /* Turn it on */
+    bits[index] |= (1<<bitnum);
+  else         /* Turn it off */
+    bits[index] &= ~(1<<bitnum); 
+} 
+
+static void
+mswindows_initialize_image_instance_mask (struct Lisp_Image_Instance* image, 
+					  struct frame* f)
 {
   HBITMAP mask, bmp;
   HDC hcdc = FRAME_MSWINDOWS_CDC (f);
-  HDC hdcDst = CreateCompatibleDC (hcdc);  
-  ICONINFO x_icon;
+  BITMAPINFO* bmp_info = 
+    xmalloc_and_zero (sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD));
+  int i, j;
+  int height = IMAGE_INSTANCE_PIXMAP_HEIGHT (image);
   
-  if (size!=16 && size!=32)
+  void* and_bits;
+  int bpline= (int)(~3UL & (unsigned long)
+		    (((IMAGE_INSTANCE_PIXMAP_WIDTH (image)+7)/8) +3));
+
+  bmp_info->bmiHeader.biWidth=IMAGE_INSTANCE_PIXMAP_WIDTH (image);
+  bmp_info->bmiHeader.biHeight = height;
+  bmp_info->bmiHeader.biPlanes=1;
+  bmp_info->bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
+  bmp_info->bmiHeader.biBitCount=1; 
+  bmp_info->bmiHeader.biCompression=BI_RGB; 
+  bmp_info->bmiHeader.biClrUsed = 2; 
+  bmp_info->bmiHeader.biClrImportant = 2; 
+  bmp_info->bmiHeader.biSizeImage = height * bpline; 
+  bmp_info->bmiColors[0].rgbRed = 0;
+  bmp_info->bmiColors[0].rgbGreen = 0;
+  bmp_info->bmiColors[0].rgbBlue = 0;
+  bmp_info->bmiColors[0].rgbReserved = 0;
+  bmp_info->bmiColors[1].rgbRed = 255;
+  bmp_info->bmiColors[1].rgbGreen = 255;
+  bmp_info->bmiColors[1].rgbBlue = 255;
+  bmp_info->bmiColors[0].rgbReserved = 0;
+    
+  if (!(mask = CreateDIBSection (hcdc,  
+				 bmp_info,
+				 DIB_RGB_COLORS,
+				 &and_bits, 
+				 0,0)))
     {
-      signal_simple_error("Icons must be 16x16 or 32x32", image);
+      xfree (bmp_info);
+      return;
     }
 
-#if 0
-  iIconWidth = GetSystemMetrics(SM_CXICON);
-  iIconHeight = GetSystemMetrics(SM_CYICON);
-#endif
-
-  SelectObject(hcdc, XIMAGE_INSTANCE_MSWINDOWS_BITMAP (image)); 
-
-  bmp = CreateCompatibleBitmap(hcdc, size, size);
-  DeleteObject( SelectObject(hdcDst, bmp) );
+  xfree (bmp_info);
+  SelectObject (hcdc, IMAGE_INSTANCE_MSWINDOWS_BITMAP (image));
   
-  if (!StretchBlt(hdcDst, 0, 0, size, size,
-		  hcdc, 0, 0, 
-		  XIMAGE_INSTANCE_PIXMAP_WIDTH (image), 
-		  XIMAGE_INSTANCE_PIXMAP_HEIGHT (image), 
-		  SRCCOPY))
-    {
-      printf("StretchBlt failed\n");
-    }
-  
-  if (!(mask = CreateBitmap(size, size, 1, 1, NULL)))
-    {
-      printf("CreateBitmap() failed\n");
-    }
-  if (!SelectObject(hdcDst, mask)
-      ||
-      !SelectObject(hcdc, bmp))
-    {
-      printf("SelectObject() failed\n");
-    }
-  
-  if (!BitBlt(hdcDst, 0, 0, size, size,
-	     hcdc, 0, 0, 
-	     NOTSRCCOPY))
-    {
-      printf("BitBlt failed\n");
+  for(i=0; i<IMAGE_INSTANCE_PIXMAP_WIDTH (image); i++)     
+    { 
+      for(j=0; j<height; j++)         
+	{ 
+	  if( GetPixel( hcdc, i, j ) == transparent_color )
+	    { 
+	      SetPixel( hcdc, i, j, RGB (0,0,0));  
+	      set_mono_pixel( and_bits, bpline, height, i, j, TRUE );
+	    }
+	  else             
+	    { 
+	      set_mono_pixel( and_bits, bpline, height, i, j, FALSE );
+            }
+	}
     }
 
-  SelectObject(hdcDst, 0);
+  GdiFlush();
   SelectObject(hcdc, 0);
-  /*   PatBlt(hdcDst, 0, 0, size, size, WHITENESS);*/
+
+  IMAGE_INSTANCE_MSWINDOWS_MASK (image) = mask;
+}
+
+void
+mswindows_initialize_image_instance_icon (struct Lisp_Image_Instance* image,
+					  int cursor)
+{
+  ICONINFO x_icon;
+
+  /* we rely on windows to do any resizing necessary */
+  x_icon.fIcon=cursor ? FALSE : TRUE;
+  x_icon.xHotspot=XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (image));
+  x_icon.yHotspot=XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (image));
+  x_icon.hbmMask=IMAGE_INSTANCE_MSWINDOWS_MASK (image);
+  x_icon.hbmColor=IMAGE_INSTANCE_MSWINDOWS_BITMAP (image);
   
-  x_icon.fIcon=TRUE;
-  x_icon.xHotspot=XINT (XIMAGE_INSTANCE_PIXMAP_HOTSPOT_X (image));
-  x_icon.yHotspot=XINT (XIMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (image));
-  x_icon.hbmMask=mask;
-  x_icon.hbmColor=bmp;
-  
-  XIMAGE_INSTANCE_MSWINDOWS_ICON (image)=
+  IMAGE_INSTANCE_MSWINDOWS_ICON (image)=
     CreateIconIndirect (&x_icon);
-  XIMAGE_INSTANCE_MSWINDOWS_MASK (image)=mask;
-  
-  DeleteDC(hdcDst);
 }
 
 int
@@ -508,7 +563,8 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
 			  unsigned char** data,
 			  int* width, int* height,
 			  int* x_hot, int* y_hot,
-			  COLORREF bg, struct color_symbol* color_symbols,
+			  int* transp,
+			  struct color_symbol* color_symbols,
 			  int nsymbols)
 {
   XpmImage xpmimage;
@@ -522,6 +578,7 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
   xzero (xpmimage);
   xzero (xpminfo);
   xpminfo.valuemask=XpmHotspot;
+  *transp=FALSE;
 
   result = XpmCreateXpmImageFromBuffer ((char*)buffer,
 				       &xpmimage,
@@ -596,9 +653,16 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
 	    }
 	}
 				/* pick up transparencies */
-      else if (!strcmp (xpmimage.colorTable[i].c_color,"None"))
+      else if (!strcasecmp (xpmimage.colorTable[i].c_color,"None")
+	       ||
+	       xpmimage.colorTable[i].symbolic
+	       &&
+	       (!strcasecmp (xpmimage.colorTable[i].symbolic,"BgColor")
+		||
+		!strcasecmp (xpmimage.colorTable[i].symbolic,"None")))
 	{
-	  colortbl[i]=bg; /* PALETTERGB(0,0,0); */
+	  *transp=TRUE;
+	  colortbl[i]=transparent_color; 
 	  transp_idx=i;
 	}
       else
@@ -646,7 +710,7 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
   unsigned char*	bmp_data;
   int			bmp_bits;
   COLORREF		bkcolor;
-  int 			nsymbols=0;
+  int 			nsymbols=0, transp;
   struct color_symbol*	color_symbols=NULL;
   
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
@@ -660,18 +724,13 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
 
   GET_STRING_BINARY_DATA_ALLOCA (data, bytes, len);
 
-  /* this is a hack but MaskBlt and TransparentBlt are not supported
-     on most windows variants */
-  bkcolor = COLOR_INSTANCE_MSWINDOWS_COLOR 
-    (XCOLOR_INSTANCE (FACE_BACKGROUND (Vdefault_face, domain)));
-
   /* in case we have color symbols */
   color_symbols = extract_xpm_color_names (device, domain,
 					   color_symbol_alist, &nsymbols);
 
   /* convert to an eimage to make processing easier */
   if (!xpm_to_eimage (image_instance, bytes, &eimage, &width, &height,
-		      &x_hot, &y_hot, bkcolor, color_symbols, nsymbols))
+		      &x_hot, &y_hot, &transp, color_symbols, nsymbols))
     {
       signal_simple_error ("XPM to EImage conversion failed", 
 			   image_instance);
@@ -691,11 +750,9 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
 
   /* Now create the pixmap and set up the image instance */
   init_image_instance_from_dibitmap (ii, bmp_info, dest_mask,
-				     bmp_data, bmp_bits, instantiator);
+				     bmp_data, bmp_bits, instantiator,
+				     x_hot, y_hot, transp);
 
-  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), x_hot);
-  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), y_hot);
-  
   xfree (bmp_info);
   xfree (bmp_data);
 }
@@ -756,7 +813,8 @@ bmp_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* Now create the pixmap and set up the image instance */
   init_image_instance_from_dibitmap (ii, bmp_info, dest_mask,
-				     bmp_data, bmp_bits, instantiator);
+				     bmp_data, bmp_bits, instantiator,
+				     0, 0, 0);
 }
 
 

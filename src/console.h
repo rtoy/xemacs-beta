@@ -42,6 +42,22 @@ Boston, MA 02111-1307, USA.  */
    could be different, and input would come directly from the console).
 */
 
+
+/* GCC does not like forward enum declaration. This needs to be
+   defined here. What a disgust! */
+
+enum device_metrics
+{
+  color_default, color_select, color_balloon, color_3d_face, color_3d_light,
+  color_3d_dark, color_menu, color_menu_high, color_menu_button,
+  color_menu_unsel, color_toolbar, color_scrollbar, color_desktop,
+  color_workspace, font_default, font_menubar, font_dialog, size_cursor,
+  size_scrollbar, size_menu, size_toolbar, size_tbbutton, size_tbborder,
+  size_icon, size_icon_small, size_device, size_workspace, size_device_mm,
+  device_dpi, num_bit_planes, num_color_cells,mouse_buttons,
+  swap_buttons, show_sounds, slow_device, security, dbcs, ime, mid_east
+};
+
 struct console_methods
 {
   CONST char *name;	/* Used by print_console, print_device, print_frame */
@@ -70,12 +86,7 @@ struct console_methods
   void (*delete_device_method) (struct device *);
   void (*mark_device_method) (struct device *, void (*)(Lisp_Object));
   void (*asynch_device_change_method) (void);
-  int (*device_pixel_width_method) (struct device *);
-  int (*device_pixel_height_method) (struct device *);
-  int (*device_mm_width_method) (struct device *);
-  int (*device_mm_height_method) (struct device *);
-  int (*device_bitplanes_method) (struct device *);
-  int (*device_color_cells_method) (struct device *);
+  Lisp_Object (*device_system_metrics_method) (struct device *, enum device_metrics);
   unsigned int (*device_implementation_flags_method) ();
 
   /* frame methods */
@@ -113,6 +124,7 @@ struct console_methods
   void (*popup_menu_method) (Lisp_Object menu, Lisp_Object event);
   Lisp_Object (*get_frame_parent_method) (struct frame *f);
   void (*update_frame_external_traits_method) (struct frame *f, Lisp_Object name);
+  int (*frame_size_fixed_p_method) (struct frame *f);
 
   /* redisplay methods */
   int (*left_margin_width_method) (struct window *);
@@ -215,15 +227,6 @@ struct console_methods
 
 #ifdef HAVE_TOOLBARS
   /* toolbar methods */
-  void (*toolbar_size_changed_in_frame_method) (struct frame *f,
-						enum toolbar_pos pos,
-						Lisp_Object oldval);
-  void (*toolbar_border_width_changed_in_frame_method) (struct frame *f,
-							enum toolbar_pos pos,
-							Lisp_Object oldval);
-  void (*toolbar_visible_p_changed_in_frame_method) (struct frame *f,
-						     enum toolbar_pos pos,
-						     Lisp_Object oldval);
   void (*output_frame_toolbars_method) (struct frame *);
   void (*initialize_frame_toolbars_method) (struct frame *);
   void (*free_frame_toolbars_method) (struct frame *);
@@ -240,11 +243,6 @@ struct console_methods
   void (*release_scrollbar_instance_method) (struct scrollbar_instance *);
   void (*create_scrollbar_instance_method) (struct frame *, int,
 					    struct scrollbar_instance *);
-  void (*scrollbar_width_changed_in_frame_method) (Lisp_Object, struct frame *,
-						   Lisp_Object);
-  void (*scrollbar_height_changed_in_frame_method) (Lisp_Object,
-						    struct frame *,
-						   Lisp_Object);
   void (*update_scrollbar_instance_values_method) (struct window *,
 						   struct scrollbar_instance *,
 						   int, int, int, int, int,

@@ -507,34 +507,22 @@ void
 read_in_bss (char *filename)
 {
   HANDLE file;
-  unsigned long size, index, n_read, total_read;
-  char   buffer[512], *bss;
-  int    i;
+  unsigned long index, n_read;
 
   file = CreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
 		     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-  if (file == INVALID_HANDLE_VALUE) 
-    {
-      i = GetLastError ();
-      exit (1);
-    }
-
+  if (file == INVALID_HANDLE_VALUE)
+    abort ();
+  
   /* Seek to where the .bss section is tucked away after the heap...  */
   index = heap_index_in_executable + get_committed_heap_size ();
   if (SetFilePointer (file, index, NULL, FILE_BEGIN) == 0xFFFFFFFF) 
-    {
-      i = GetLastError ();
-      exit (1);
-    }
+    abort ();
 
-  
   /* Ok, read in the saved .bss section and initialize all 
      uninitialized variables.  */
   if (!ReadFile (file, bss_start, bss_size, &n_read, NULL))
-    {
-      i = GetLastError ();
-      exit (1);
-    }
+    abort ();
 
   CloseHandle (file);
 }
@@ -547,25 +535,18 @@ map_in_heap (char *filename)
   HANDLE file_mapping;
   void  *file_base;
   unsigned long size, upper_size, n_read;
-  int    i;
 
   file = CreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
 		     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if (file == INVALID_HANDLE_VALUE) 
-    {
-      i = GetLastError ();
-      exit (1);
-    }
-  
+    abort ();
+
   size = GetFileSize (file, &upper_size);
   file_mapping = CreateFileMapping (file, NULL, PAGE_WRITECOPY, 
 				    0, size, NULL);
   if (!file_mapping) 
-    {
-      i = GetLastError ();
-      exit (1);
-    }
-    
+    abort ();
+
   size = get_committed_heap_size ();
   file_base = MapViewOfFileEx (file_mapping, FILE_MAP_COPY, 0, 
 			       heap_index_in_executable, size,
@@ -582,26 +563,17 @@ map_in_heap (char *filename)
 
   if (VirtualAlloc (get_heap_start (), get_committed_heap_size (),
 		    MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE) == NULL)
-    {
-      i = GetLastError ();
-      exit (1);
-    }
+    abort ();
 
   /* Seek to the location of the heap data in the executable.  */
-  i = heap_index_in_executable;
-  if (SetFilePointer (file, i, NULL, FILE_BEGIN) == 0xFFFFFFFF)
-    {
-      i = GetLastError ();
-      exit (1);
-    }
+  if (SetFilePointer (file, heap_index_in_executable,
+		      NULL, FILE_BEGIN) == 0xFFFFFFFF)
+    abort ();
 
   /* Read in the data.  */
   if (!ReadFile (file, get_heap_start (), 
 		 get_committed_heap_size (), &n_read, NULL))
-    {
-      i = GetLastError ();
-      exit (1);
-    }
+    abort ();
 
   CloseHandle (file);
 }

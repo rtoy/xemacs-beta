@@ -1086,13 +1086,18 @@ Finishes by calling the functions in `find-file-hooks'."
 		   (setq buffer-read-only nil)
 		   ;; XEmacs
 		   (or (file-exists-p (file-name-directory buffer-file-name))
-		       (if (yes-or-no-p
-			    (format
-			     "The directory containing %s does not exist.  Create? "
-			     (abbreviate-file-name buffer-file-name)))
-			   (make-directory (file-name-directory
-					    buffer-file-name)
-					   t)))
+		       (condition-case nil
+			   (if (yes-or-no-p
+				(format
+				 "\
+The directory containing %s does not exist.  Create? "
+				 (abbreviate-file-name buffer-file-name)))
+			       (make-directory (file-name-directory
+						buffer-file-name)
+					       t))
+			 (quit
+			  (kill-buffer (current-buffer))
+			  (error "Canceled"))))
 		   nil))))
       (if msg
 	  (progn

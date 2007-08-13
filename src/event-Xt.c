@@ -58,7 +58,11 @@ Boston, MA 02111-1307, USA.  */
 #include "file-coding.h"
 #endif
 
-#ifdef HAVE_OFFIX_DND
+#ifdef HAVE_DRAGNDROP
+#include "dragdrop.h"
+#endif
+
+#if defined (HAVE_OFFIX_DND)
 #include "offix.h"
 #endif
 
@@ -1123,11 +1127,11 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	      return 0;	/* not for us */
 	    XSETFRAME (emacs_event->channel, frame);
 
-	    emacs_event->event_type = dnd_drop_event;
+	    emacs_event->event_type = misc_user_event;
 	    emacs_event->timestamp  = DEVICE_X_LAST_SERVER_TIMESTAMP (d);
 
 	    state=DndDragButtons(x_event);
-
+	    
 	    if (state & ShiftMask)	modifiers |= MOD_SHIFT;
 	    if (state & ControlMask)	modifiers |= MOD_CONTROL;
 	    if (state & xd->MetaMask)	modifiers |= MOD_META;
@@ -1141,12 +1145,12 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	    if (state & Button2Mask)    button = Button2;
 	    if (state & Button1Mask)    button = Button1;
 
-	    emacs_event->event.dnd_drop.modifiers = modifiers;
-	    emacs_event->event.dnd_drop.button	  = button;
+	    emacs_event->event.misc.modifiers = modifiers;
+	    emacs_event->event.misc.button    = button;
 
 	    DndDropCoordinates(FRAME_X_TEXT_WIDGET(frame), x_event,
-			       &(emacs_event->event.dnd_drop.x),
-			       &(emacs_event->event.dnd_drop.y) );
+			       &(emacs_event->event.misc.x),
+			       &(emacs_event->event.misc.y) );
 
 	    DndGetData(x_event,&data,&size);
 
@@ -1156,40 +1160,72 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	      case DndFiles: /* null terminated strings, end null */
 		{
 		  int len;
+		  char *hurl = NULL;
+
 		  while (*data)
 		    {
-		      len = strlen ((char*) data);
-		      l_item = make_ext_string (data, len,
-						FORMAT_FILENAME);
-		      /* order is irrelevant */
+		      len = strlen ((char*)data);
+		      hurl = dnd_url_hexify_string ((char *)data, "file:");
+		      l_item = make_string (hurl, strlen (hurl));
 		      l_dndlist = Fcons (l_item, l_dndlist);
-		      data += len+1;
+		      data += len + 1;
+		      xfree (hurl);
 		    }
+		  l_type = Qdragdrop_URL;
 		}
 		break;
 	      case DndText:
+		l_type = Qdragdrop_MIME;
+		l_dndlist = list1 ( list3 ( make_string ("text/plain", 10),
+					    make_string ("8bit", 4),
+					    make_ext_string (data, 
+							     strlen((char *)data),
+							     FORMAT_CTEXT) ) );
+		break;
 	      case DndMIME:
-		/* is there a better way to format this ? */
-		l_dndlist = make_ext_string (data, strlen((char *)data),
-					     FORMAT_BINARY);
+		/* we have to parse this in some way to extract
+		   content-type and params (in the tm way) and
+		   content encoding.
+		   OR: if data is string, let tm do the job
+		       if data is list[2], give the first two
+		       to tm...
+		*/
+		l_type = Qdragdrop_MIME;
+		l_dndlist = list1 ( make_ext_string (data, strlen((char *)data),
+						     FORMAT_BINARY) );
 		break;
 	      case DndFile:
 	      case DndDir:
 	      case DndLink:
 	      case DndExe:
-	      case DndURL: /* this could also break with FORMAT_FILENAME */
-		l_dndlist = make_ext_string (data, strlen((char *)data),
-					     FORMAT_FILENAME);
+		{
+		  char *hurl = dnd_url_hexify_string (data, "file:");
+
+		  l_dndlist = list1 ( make_string (hurl, strlen (hurl)) );
+		  l_type = Qdragdrop_URL;
+
+		  xfree (hurl);
+		}
+		break;
+	      case DndURL:
+		/* as it is a real URL it should already be escaped
+		   and escaping again will break them (cause % is unsave) */
+		l_dndlist = list1 ( make_ext_string ((char *)data, 
+						     strlen ((char *)data),
+						     FORMAT_FILENAME) );
+		l_type = Qdragdrop_URL;
 		break;
 	      default: /* Unknown, RawData and any other type */
-		l_dndlist = make_ext_string (data, size,
-					     FORMAT_BINARY);
+		l_dndlist = list1 ( list3 ( make_string ("application/octet-stream", 24),
+					    make_string ("8bit", 4),
+					    make_ext_string ((char *)data, size,
+							     FORMAT_BINARY) ) );
+		l_type = Qdragdrop_MIME;
 		break;
 	      }
 
-	    l_type=make_int(dtype);
-
-	    emacs_event->event.dnd_drop.data = Fcons (l_type, Fcons (l_dndlist, Qnil));
+	    emacs_event->event.misc.function = Qdragdrop_drop_dispatch;
+	    emacs_event->event.misc.object = Fcons (l_type, l_dndlist);
 
 	    UNGCPRO;
 

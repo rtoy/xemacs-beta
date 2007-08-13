@@ -106,10 +106,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define LD_SWITCH_MACHINE "-e __start -N"
 
-/* Sigh...cannot define this for WICAT cuz 0 length memcpy blows chunks */
-
-#define BROKEN_BCOPY
-
 /*
  * Define optimflags if you want to optimize.
  *	- Set to null string for pre-4.2 C compiler

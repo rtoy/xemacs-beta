@@ -948,10 +948,10 @@ which I started two years ago with one of my friends. We provide
 business network solutions based on linux servers and various other
 networking products.
 
-Most of my spare time I spent on the development of the XEmacs DnD
-events, a enhanced version of Tk called TkStep (better looks, DnD,
-and more), and various other minor hacks: ISDN-tools, cd players,
-python, etc...
+Most of my spare time I spent on the development of the XEmacs
+Drag'n'Drop API, a enhanced version of Tk called TkStep (better looks,
+also Drag'n'Drop, and more), and various other hacks: ISDN-tools,
+cd players, python, etc...
 
 To see some of these have a look at ")
      (about-url-link 'ograf "one of my homepages")

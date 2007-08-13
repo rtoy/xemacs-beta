@@ -194,6 +194,12 @@ struct window
   Lisp_Object scrollbar_width;
   /* Height of horizontal scrollbars. */
   Lisp_Object scrollbar_height;
+  /* Whether the scrollbars are visible */
+  Lisp_Object horizontal_scrollbar_visible_p;
+  Lisp_Object vertical_scrollbar_visible_p;
+  /* Scrollbar positions */
+  Lisp_Object scrollbar_on_left_p;
+  Lisp_Object scrollbar_on_top_p;
   /* Pointer to use for vertical and horizontal scrollbars. */
   Lisp_Object scrollbar_pointer;
 #endif /* HAVE_SCROLLBARS */
@@ -340,7 +346,7 @@ EXFUN (Fget_buffer_window, 3);
 EXFUN (Fmove_to_window_line, 2);
 EXFUN (Frecenter, 2);
 EXFUN (Freplace_buffer_in_windows, 1);
-EXFUN (Fselect_window, 1);
+EXFUN (Fselect_window, 2);
 EXFUN (Fselected_window, 1);
 EXFUN (Fset_window_buffer, 2);
 EXFUN (Fset_window_hscroll, 2);

@@ -23,6 +23,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Ben Wing, August 1995. */
 
+#include <config.h>
+#include "lisp.h"
 #include "rangetab.h"
 
 Lisp_Object Qrange_tablep;

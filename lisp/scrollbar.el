@@ -31,20 +31,18 @@
 ;;; Code:
 
 (defcustom scrollbars-visible-p ;; added for the options menu - dverna
-  (> (specifier-instance scrollbar-width) 0)
+  (specifier-instance vertical-scrollbar-visible-p (selected-device))
   "Whether the scrollbars are globally visible. This variable can be
 customized through the options menu."
   :group 'display
   :type 'boolean
-  ;; This is really a hack: there should be a real specifier for this, in
-  ;; order to turn on/off the scrollbars without altering their size.
   :set '(lambda (var val)
 	  (if val
 	      (progn
-		(set-specifier scrollbar-width 15)
-		(set-specifier scrollbar-height 15))
-	    (set-specifier scrollbar-width 0)
-	    (set-specifier scrollbar-height 0))
+		(remove-specifier vertical-scrollbar-visible-p 'global)
+		(remove-specifier horizontal-scrollbar-visible-p 'global))
+	    (set-specifier vertical-scrollbar-visible-p nil 'global)
+	    (set-specifier horizontal-scrollbar-visible-p nil 'global))
 	  (setq scrollbars-visible-p val))
   )
 

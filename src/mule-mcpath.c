@@ -195,7 +195,7 @@ mc_chdir (unsigned char *path)
       {
 	if (path != buffer)	/* It is not good to modify original path. */
 	  {
-	    bcopy (path, buffer, len - 1); /* no need to copy last /. */
+	    memcpy (path, buffer, len - 1); /* no need to copy last /. */
 	    path = buffer;
 	  }
 	path[len - 1] = 0;

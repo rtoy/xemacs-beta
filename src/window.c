@@ -157,6 +157,10 @@ mark_window (Lisp_Object obj, void (*markobj) (Lisp_Object))
 #ifdef HAVE_SCROLLBARS
   ((markobj) (window->scrollbar_width));
   ((markobj) (window->scrollbar_height));
+  ((markobj) (window->horizontal_scrollbar_visible_p));
+  ((markobj) (window->vertical_scrollbar_visible_p));
+  ((markobj) (window->scrollbar_on_left_p));
+  ((markobj) (window->scrollbar_on_top_p));
   ((markobj) (window->scrollbar_pointer));
 #endif /* HAVE_SCROLLBARS */
   ((markobj) (window->left_margin_width));
@@ -310,6 +314,10 @@ allocate_window (void)
 #ifdef HAVE_SCROLLBARS
   p->scrollbar_width = Qnil;
   p->scrollbar_height = Qnil;
+  p->horizontal_scrollbar_visible_p = Qnil;
+  p->vertical_scrollbar_visible_p = Qnil;
+  p->scrollbar_on_left_p = Qnil;
+  p->scrollbar_on_top_p = Qnil;
 #endif
   p->left_margin_width = Qnil;
   p->right_margin_width = Qnil;
@@ -772,7 +780,7 @@ window_needs_vertical_divider (struct window *w)
 {
 #ifdef HAVE_SCROLLBARS
   return (!window_scrollbar_width (w) &&
-	  ((XFRAME (w->frame)->scrollbar_on_left) ?
+	  (!NILP (w->scrollbar_on_left_p) ?
 	   !window_is_leftmost  (w) :
 	   !window_is_rightmost (w)));
 #else
@@ -786,7 +794,8 @@ window_scrollbar_width (struct window *w)
 #ifdef HAVE_SCROLLBARS
   if (!WINDOW_WIN_P (w)
       || MINI_WINDOW_P (w)
-      || NILP (w->buffer))
+      || NILP (w->buffer)
+      || NILP (w->vertical_scrollbar_visible_p))
     /* #### when does NILP (w->buffer) happen? */
     return 0;
 
@@ -805,6 +814,7 @@ window_scrollbar_height (struct window *w)
   if (!WINDOW_WIN_P (w)
       || MINI_WINDOW_P (w)
       || NILP (w->buffer)
+      || NILP (w->horizontal_scrollbar_visible_p)
       || !window_truncation_on (w))
     return 0;
 
@@ -997,7 +1007,7 @@ window_top_gutter_height (struct window *w)
     return 0;
 
 #ifdef HAVE_SCROLLBARS
-  if (XFRAME (w->frame)->scrollbar_on_top)
+  if (!NILP (w->scrollbar_on_top_p))
     return window_scrollbar_height (w) + toolbar_height;
   else
 #endif
@@ -1016,7 +1026,7 @@ window_bottom_gutter_height (struct window *w)
       window_modeline_height (w) + window_bottom_toolbar_height (w);
 
 #ifdef HAVE_SCROLLBARS
-  if (!XFRAME (w->frame)->scrollbar_on_top)
+  if (NILP (w->scrollbar_on_top_p))
     return window_scrollbar_height (w) + other_height;
   else
 #endif
@@ -1062,7 +1072,7 @@ window_left_gutter_width (struct window *w, int modeline)
     return 0;
 
 #ifdef HAVE_SCROLLBARS
-  if (XFRAME (w->frame)->scrollbar_on_left)
+  if (!NILP (w->scrollbar_on_left_p))
     {
 #endif
       return (window_left_right_gutter_width_internal (w, modeline) +
@@ -1081,7 +1091,7 @@ window_right_gutter_width (struct window *w, int modeline)
     return 0;
 
 #ifdef HAVE_SCROLLBARS
-  if (!XFRAME (w->frame)->scrollbar_on_left)
+  if (NILP (w->scrollbar_on_left_p))
     {
       return (window_left_right_gutter_width_internal (w, modeline) +
 	      window_right_toolbar_width (w));
@@ -1819,7 +1829,7 @@ will automatically call `save-buffers-kill-emacs'.)
 	   delete the selected window on any other frame, we shouldn't do
 	   anything but set the frame's selected_window slot.  */
 	if (EQ (frame, Fselected_frame (Qnil)))
-	  Fselect_window (alternative);
+	  Fselect_window (alternative, Qnil);
 	else
 	  set_frame_selected_window (f, alternative);
       }
@@ -2294,7 +2304,7 @@ Otherwise, all windows are considered.
       w = Fprevious_window (w, Qnil, frame, console);
       i++;
     }
-  Fselect_window (w);
+  Fselect_window (w, Qnil);
   return Qnil;
 }
 
@@ -3118,12 +3128,15 @@ BUFFER can be a buffer or buffer name.
   return Qnil;
 }
 
-DEFUN ("select-window", Fselect_window, 1, 1, 0, /*
+DEFUN ("select-window", Fselect_window, 1, 2, 0, /*
 Select WINDOW.  Most editing will apply to WINDOW's buffer.
 The main editor command loop selects the buffer of the selected window
 before each command.
+
+With non-nil optional argument `norecord', do not modify the
+global or per-frame buffer ordering.
 */
-       (window))
+       (window, norecord))
 {
   struct window *w;
   Lisp_Object old_selected_window = Fselected_window (Qnil);
@@ -3158,7 +3171,8 @@ before each command.
   select_frame_1 (WINDOW_FRAME (w));
 
   /* also select the window's buffer */
-  Frecord_buffer (w->buffer);
+  if (NILP (norecord))
+    Frecord_buffer (w->buffer);
   Fset_buffer (w->buffer);
 
   /* Go to the point recorded in the window.
@@ -3234,7 +3248,7 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
 		  record_unwind_protect (save_window_excursion_unwind,
 					 Fcurrent_window_configuration (Qnil));
 
-		  Fselect_window (window);
+		  Fselect_window (window, Qnil);
 		  run_hook (Qtemp_buffer_show_hook);
 		  unbind_to (count, Qnil);
 		}
@@ -4537,6 +4551,10 @@ struct saved_window
 #ifdef HAVE_SCROLLBARS
   Lisp_Object scrollbar_width;
   Lisp_Object scrollbar_height;
+  Lisp_Object horizontal_scrollbar_visible_p;
+  Lisp_Object vertical_scrollbar_visible_p;
+  Lisp_Object scrollbar_on_left_p;
+  Lisp_Object scrollbar_on_top_p;
   Lisp_Object scrollbar_pointer;
 #endif /* HAVE_SCROLLBARS */
 #ifdef HAVE_TOOLBARS
@@ -4676,6 +4694,10 @@ saved_window_equal (struct saved_window *win1, struct saved_window *win2)
 #ifdef HAVE_SCROLLBARS
     EQ(win1->scrollbar_width, win2->scrollbar_width) &&
     EQ(win1->scrollbar_height, win2->scrollbar_height) &&
+    EQ(win1->horizontal_scrollbar_visible_p, win2->horizontal_scrollbar_visible_p) &&
+    EQ(win1->vertical_scrollbar_visible_p, win2->vertical_scrollbar_visible_p) &&
+    EQ(win1->scrollbar_on_left_p, win2->scrollbar_on_left_p) &&
+    EQ(win1->scrollbar_on_top_p, win2->scrollbar_on_top_p) &&
     EQ(win1->scrollbar_pointer, win2->scrollbar_pointer) &&
 #endif /* HAVE_SCROLLBARS */
 #ifdef HAVE_TOOLBARS
@@ -4995,6 +5017,10 @@ by `current-window-configuration' (which see).
 #ifdef HAVE_SCROLLBARS
 	  w->scrollbar_width = p->scrollbar_width;
 	  w->scrollbar_height = p->scrollbar_height;
+	  w->horizontal_scrollbar_visible_p = p->horizontal_scrollbar_visible_p;
+	  w->vertical_scrollbar_visible_p = p->vertical_scrollbar_visible_p;
+	  w->scrollbar_on_left_p = p->scrollbar_on_left_p;
+	  w->scrollbar_on_top_p = p->scrollbar_on_top_p;
 	  w->scrollbar_pointer = p->scrollbar_pointer;
 #endif /* HAVE_SCROLLBARS */
 #ifdef HAVE_TOOLBARS
@@ -5125,9 +5151,10 @@ by `current-window-configuration' (which see).
 	  if (!minibuf_level &&
 	      MINI_WINDOW_P (XWINDOW (config->current_window)))
 	    Fselect_window (Fnext_window (config->current_window,
-					  Qnil, Qnil, Qnil));
+					  Qnil, Qnil, Qnil),
+                            Qnil);
 	  else
-	    Fselect_window (config->current_window);
+	    Fselect_window (config->current_window, Qnil);
 	  if (!NILP (new_current_buffer))
 	    Fset_buffer (new_current_buffer);
 	  else
@@ -5256,6 +5283,10 @@ save_window_save (Lisp_Object window, struct window_config *config, int i)
 #ifdef HAVE_SCROLLBARS
       p->scrollbar_width = w->scrollbar_width;
       p->scrollbar_height = w->scrollbar_height;
+      p->horizontal_scrollbar_visible_p = w->horizontal_scrollbar_visible_p;
+      p->vertical_scrollbar_visible_p = w->vertical_scrollbar_visible_p;
+      p->scrollbar_on_left_p = w->scrollbar_on_left_p;
+      p->scrollbar_on_top_p = w->scrollbar_on_top_p;
       p->scrollbar_pointer = w->scrollbar_pointer;
 #endif /* HAVE_SCROLLBARS */
 #ifdef HAVE_TOOLBARS

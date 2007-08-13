@@ -166,13 +166,6 @@ void xfree (void *);
 #define xfree_1 xfree
 #endif /* ERROR_CHECK_MALLOC */
 
-/* We assume an ANSI C compiler and libraries and memcpy, memset, memcmp */
-/*  (This definition is here because system header file macros may want
- *   to call bzero (eg FD_ZERO) */
-#ifndef bzero
-# define bzero(m, l) memset (m, 0, l)
-#endif
-
 #ifndef PRINTF_ARGS
 # if defined (__GNUC__) && (__GNUC__ >= 2)
 #  define PRINTF_ARGS(string_index,first_to_check) \
@@ -1149,10 +1142,13 @@ XCHAR (Lisp_Object obj)
 
 #ifdef LISP_FLOAT_TYPE
 
+/* Note: the 'next' field is there to ensure that there is enough room
+   for the next pointer float type's free list. */
+
 struct Lisp_Float
 {
   struct lrecord_header lheader;
-  double data;
+  union { double d; struct Lisp_Float *next; } data;
 };
 
 DECLARE_LRECORD (float, struct Lisp_Float);
@@ -1163,7 +1159,8 @@ DECLARE_LRECORD (float, struct Lisp_Float);
 #define CHECK_FLOAT(x) CHECK_RECORD (x, float)
 #define CONCHECK_FLOAT(x) CONCHECK_RECORD (x, float)
 
-#define float_data(f) ((f)->data)
+#define float_next(f) ((f)->data.next)
+#define float_data(f) ((f)->data.d)
 
 #define XFLOATINT(n) extract_float (n)
 
@@ -2720,7 +2717,7 @@ extern Lisp_Object Qcrlf, Qctext, Qcurrent_menubar;
 extern Lisp_Object Qcyclic_variable_indirection, Qdata, Qdead, Qdecode;
 extern Lisp_Object Qdefault, Qdefun, Qdelete, Qdelq, Qdevice, Qdevice_live_p;
 extern Lisp_Object Qdim, Qdimension, Qdisabled, Qdisplay, Qdisplay_table;
-extern Lisp_Object Qdnd_data, Qdoc_string, Qdomain_error, Qdynarr_overhead;
+extern Lisp_Object Qdoc_string, Qdomain_error, Qdynarr_overhead;
 extern Lisp_Object Qempty, Qencode, Qend_of_buffer, Qend_of_file, Qend_open;
 extern Lisp_Object Qeol_cr, Qeol_crlf, Qeol_lf, Qeol_type, Qeq, Qeql, Qequal;
 extern Lisp_Object Qerror, Qerror_conditions, Qerror_message, Qescape_quoted;

@@ -235,7 +235,7 @@ unexec_pad (int fd, int bytes)
       char buf[1024];
       int remaining = bytes;
 
-      bzero (buf, sizeof(buf));
+      memset (buf, 0, sizeof(buf));
   
       while (remaining > 0)
         {

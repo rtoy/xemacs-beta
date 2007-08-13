@@ -70,7 +70,6 @@ Lisp_Object Qderef;
 Lisp_Object Qdevice;
 Lisp_Object Qdimension;
 Lisp_Object Qdisplay;
-Lisp_Object Qdnd_data;
 Lisp_Object Qdoc_string;
 Lisp_Object Qdynarr_overhead;
 Lisp_Object Qempty;
@@ -222,7 +221,6 @@ syms_of_general (void)
   defsymbol (&Qdevice, "device");
   defsymbol (&Qdimension, "dimension");
   defsymbol (&Qdisplay, "display");
-  defsymbol (&Qdnd_data, "dnd-data");
   defsymbol (&Qdoc_string, "doc-string");
   defsymbol (&Qdynarr_overhead, "dynarr-overhead");
   defsymbol (&Qempty, "empty");

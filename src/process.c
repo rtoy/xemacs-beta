@@ -715,7 +715,8 @@ Fifth argument FAMILY is a protocol family. When omitted, 'tcp/ip
 
   XPROCESS (proc)->pid = Fcons (service, host);
   XPROCESS (proc)->buffer = buffer;
-  init_process_io_handles (XPROCESS (proc), (void*)inch, (void*)outch, 0);
+  init_process_io_handles (XPROCESS (proc), (void*)inch, (void*)outch,
+			   STREAM_NETWORK_CONNECTION);
 
   event_stream_select_process (XPROCESS (proc));
 
@@ -765,7 +766,8 @@ Third, fourth and fifth args are the multicast destination group, port and ttl.
 
   XPROCESS (proc)->pid = Fcons (port, dest);
   XPROCESS (proc)->buffer = buffer;
-  init_process_io_handles (XPROCESS (proc), (void*)inch, (void*)outch, 0);
+  init_process_io_handles (XPROCESS (proc), (void*)inch, (void*)outch,
+			   STREAM_NETWORK_CONNECTION);
 
   event_stream_select_process (XPROCESS (proc));
 

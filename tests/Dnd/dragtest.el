@@ -1,6 +1,8 @@
 ;; a simple test of the drag functions
 ;;
-;; still to do: drag only after about 10 pix of movement
+;; it still uses the old way, but it will work to test
+;; the drop functions using droptest.el
+;;
 
 (defun text-drag (event)
   (interactive "@e")

@@ -809,7 +809,7 @@ for use in the 'weight' field of an mswindows font string.")
 
 (defun mswindows-font-create-object (fontname &optional device)
   (let ((case-fold-search t)
-	(font (mswindows-font-canicolize-name fontname)))
+	(font (mswindows-font-canonicalize-name fontname)))
     (if (or (not (stringp font))
 	    (not (string-match font-mswindows-font-regexp font)))
 	(make-font)

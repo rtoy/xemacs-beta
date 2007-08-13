@@ -366,4 +366,15 @@ This function is a trivial wrapper around `make-frame-on-device'."
   (if (equal display "") (setq display nil))
   (make-frame-on-device 'x display props))
 
+;; Character 160 (octal 0240) displays incorrectly under X apparently
+;; due to a universally crocked font width specification.  Display it
+;; as a space since that's what seems to be expected.
+;;
+;; (make-vector 256 nil) instead of (make-display-table) because
+;; make-display-table doesn't exist when this file is loaded.
+
+(let ((tab (make-vector 256 nil)))
+  (aset tab 160 " ")
+  (set-specifier current-display-table tab 'global 'x))
+
 ;;; x-init.el ends here

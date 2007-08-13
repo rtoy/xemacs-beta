@@ -294,85 +294,6 @@ x_update_scrollbar_instance_status (struct window *w, int active, int size,
     }
 }
 
-/* A device method. */
-static void
-x_scrollbar_width_changed_in_frame (Lisp_Object specifier, struct frame *f,
-				    Lisp_Object oldval)
-{
-  XtWidgetGeometry req, repl;
-  Lisp_Object newval = f->scrollbar_width;
-
-  in_specifier_change_function++;
-
-  /* We want the text area to stay the same size.  So, we query the
-     current size and then adjust it for the change in the scrollbar
-     width. */
-
-  /* mirror the value in the frame resources, unless it was already
-     done. */
-  if (!in_resource_setting)
-    Xt_SET_VALUE (FRAME_X_TEXT_WIDGET (f), XtNscrollBarWidth, XINT (newval));
-
-  if (XtIsRealized (FRAME_X_CONTAINER_WIDGET (f)))
-    {
-      req.request_mode = 0;
-
-      /* the query-geometry method looks at the current value of
-	 f->scrollbar_width, so temporarily set it back to the old
-	 one. */
-      f->scrollbar_width = oldval;
-      XtQueryGeometry (FRAME_X_CONTAINER_WIDGET (f), &req, &repl);
-      f->scrollbar_width = newval;
-
-      repl.width += XINT (newval) - XINT (oldval);
-      EmacsManagerChangeSize (FRAME_X_CONTAINER_WIDGET (f), repl.width,
-			      repl.height);
-    }
-
-  in_specifier_change_function--;
-}
-
-/* A device method. */
-static void
-x_scrollbar_height_changed_in_frame (Lisp_Object specifier, struct frame *f,
-				     Lisp_Object oldval)
-{
-  XtWidgetGeometry req, repl;
-  Lisp_Object newval = f->scrollbar_height;
-
-  in_specifier_change_function++;
-
-  /* We want the text area to stay the same size.  So, we query the
-     current size and then adjust it for the change in the scrollbar
-     height. */
-
-    /* mirror the value in the frame resources, unless it was already
-       done.  Also don't do it if this is the when the frame is being
-       created -- the widgets don't even exist yet, and even if they
-       did, we wouldn't want to overwrite the resource information
-       (which might specify a user preference). */
-  if (!in_resource_setting)
-    Xt_SET_VALUE (FRAME_X_TEXT_WIDGET (f), XtNscrollBarHeight, XINT (newval));
-
-  if (XtIsRealized (FRAME_X_CONTAINER_WIDGET (f)))
-    {
-      req.request_mode = 0;
-
-      /* the query-geometry method looks at the current value of
-	 f->scrollbar_height, so temporarily set it back to the old
-	 one. */
-      f->scrollbar_height = oldval;
-      XtQueryGeometry (FRAME_X_CONTAINER_WIDGET (f), &req, &repl);
-      f->scrollbar_height = newval;
-
-      repl.height += XINT (newval) - XINT (oldval);
-      EmacsManagerChangeSize (FRAME_X_CONTAINER_WIDGET (f), repl.width,
-			      repl.height);
-    }
-
-  in_specifier_change_function--;
-}
-
 enum x_scrollbar_loop
 {
   X_FIND_SCROLLBAR_WINDOW_MIRROR,
@@ -817,8 +738,6 @@ console_type_create_scrollbar_x (void)
   CONSOLE_HAS_METHOD (x, create_scrollbar_instance);
   CONSOLE_HAS_METHOD (x, update_scrollbar_instance_values);
   CONSOLE_HAS_METHOD (x, update_scrollbar_instance_status);
-  CONSOLE_HAS_METHOD (x, scrollbar_width_changed_in_frame);
-  CONSOLE_HAS_METHOD (x, scrollbar_height_changed_in_frame);
   CONSOLE_HAS_METHOD (x, scrollbar_pointer_changed_in_window);
 #ifdef MEMORY_USAGE_STATS
   CONSOLE_HAS_METHOD (x, compute_scrollbar_instance_usage);

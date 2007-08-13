@@ -283,7 +283,9 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 	    path = list1 (gui_item.name);
 	  else
 	    {
-	      Lisp_Object arg[2] = { path, list1 (gui_item.name) };
+	      Lisp_Object arg[2];
+	      arg[0] = path;
+	      arg[1] = list1 (gui_item.name);
 	      /* Fappend gcpro'es its arg */
 	      path = Fappend (2, arg);
 	    }

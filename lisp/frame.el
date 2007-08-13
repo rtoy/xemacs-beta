@@ -826,25 +826,6 @@ For use as the value of `deselect-frame-hook'."
 (or deselect-frame-hook
     (add-hook 'deselect-frame-hook 'default-deselect-frame-hook))
 
-(defun default-drag-and-drop-functions (frame filepath &optional data)
-  "Implement the `drag-and-drop-functions' variable.
-For use as the value of `drag-and-drop-functions'.
-A file is popped up in a new buffer, some data without
-is inserted at point."
-  ;; changed this back -- hope it works for CDE ;-) Oliver Graf <ograf@fga.de>
-  ;; the OffiX drop stuff has moved to mouse.el (mouse-offix-drop)
-  (if data
-      (insert data)
-    (let ((x pop-up-windows))
-      (setq pop-up-windows nil)
-      (pop-to-buffer (find-file-noselect filepath) nil frame)
-      (make-frame-visible frame)
-      (setq pop-up-windows x))))
-
-(and (boundp 'drag-and-drop-functions)
-     (or drag-and-drop-functions
-	 (add-hook 'drag-and-drop-functions 'default-drag-and-drop-functions)))
-
 (defun cde-start-drag (begin end)
   "Implement the CDE drag operation.
 Calls the internal function cde-start-drag-internal to do the actual work."

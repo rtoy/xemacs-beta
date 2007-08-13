@@ -1,3 +1,32 @@
+1998-05-07  Andy Piper  <andyp@parallax.co.uk>
+
+	* update-elc.sh: test x && y loses in the presence of set -e, use
+	if instead.
+
+1998-05-06  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (INSTALLABLES): Add ootags.
+	(ootags): New rule.
+
+	* ootags.c: New file.
+	(C_entries): Annotate changes neeeded for increased OO-Browser
+	context.
+
+1998-05-05  Jeff Miller <jmiller@smart.net>
+
+	* Makefile.in.in: Fix blessmail target.
+
+1998-05-05  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (etags_args): Back out -DOO_BROWSER
+
+	* etags.c: Revert to CVS version 1.11 (pre OO-browser additions).
+
+1998-05-04  SL Baur  <steve@altair.xemacs.org>
+
+	* etags.c (C_entries): Fix order typo.
+	(C_entries): Restore previous test.
+
 Wed Apr 22 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* installexe.sh: fix to use -f instead of -e file and fix shift

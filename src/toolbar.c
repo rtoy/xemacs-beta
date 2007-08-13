@@ -759,14 +759,6 @@ compute_frame_toolbars_data (struct frame *f, int first_time_p)
   set_frame_toolbar (f, BOTTOM_TOOLBAR);			 
   set_frame_toolbar (f, LEFT_TOOLBAR);			 
   set_frame_toolbar (f, RIGHT_TOOLBAR);			 
-
-  if (!first_time_p)
-    {
-      int height, width;
-      pixel_to_char_size (f, FRAME_PIXWIDTH(f), FRAME_PIXHEIGHT(f),
-			  &width, &height);
-      change_frame_size (f, height, width, 0);
-    }
 }
 
 void
@@ -1233,65 +1225,6 @@ default_toolbar_specs_changed (Lisp_Object specifier, struct window *w,
 }
 
 static void
-toolbar_size_changed_in_frame (Lisp_Object specifier, struct frame *f,
-			       Lisp_Object oldval)
-{
-  int pos;
-
-  for (pos = 0; pos < countof (Vtoolbar_size); pos++)
-    if (EQ (specifier, Vtoolbar_size[(enum toolbar_pos) pos]))
-      break;
-
-  assert (pos < countof (Vtoolbar_size));
-
-  MAYBE_FRAMEMETH (f, toolbar_size_changed_in_frame,
-		   (f, (enum toolbar_pos) pos, oldval));
-
-  /* Let redisplay know that something has possibly changed. */
-  MARK_TOOLBAR_CHANGED;
-}
-
-static void
-toolbar_border_width_changed_in_frame (Lisp_Object specifier, struct frame *f,
-				       Lisp_Object oldval)
-{
-  int pos;
-
-  for (pos = 0; pos < countof (Vtoolbar_border_width); pos++)
-    {
-      if (EQ (specifier, Vtoolbar_border_width[(enum toolbar_pos) pos]))
-	break;
-    }
-
-  assert (pos < countof (Vtoolbar_border_width));
-
-  MAYBE_FRAMEMETH (f, toolbar_border_width_changed_in_frame,
-		   (f, (enum toolbar_pos) pos, oldval));
-
-  /* Let redisplay know that something has possibly changed. */
-  MARK_TOOLBAR_CHANGED;
-}
-
-static void
-toolbar_visible_p_changed_in_frame (Lisp_Object specifier, struct frame *f,
-				    Lisp_Object oldval)
-{
-  int pos;
-
-  for (pos = 0; pos < countof (Vtoolbar_visible_p); pos++)
-    if (EQ (specifier, Vtoolbar_visible_p[(enum toolbar_pos) pos]))
-      break;
-
-  assert (pos < countof (Vtoolbar_visible_p));
-
-  MAYBE_FRAMEMETH (f, toolbar_visible_p_changed_in_frame,
-		   (f, (enum toolbar_pos) pos, oldval));
-
-  /* Let redisplay know that something has possibly changed. */
-  MARK_TOOLBAR_CHANGED;
-}
-
-static void
 default_toolbar_size_changed_in_frame (Lisp_Object specifier, struct frame *f,
 				       Lisp_Object oldval)
 {
@@ -1673,7 +1606,7 @@ See `default-toolbar-height' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_size[TOP_TOOLBAR]),
-			 toolbar_size_changed_in_frame);
+			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("bottom-toolbar-height",
 		    &Vtoolbar_size[BOTTOM_TOOLBAR] /*
@@ -1689,7 +1622,7 @@ See `default-toolbar-height' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_size[BOTTOM_TOOLBAR]),
-			 toolbar_size_changed_in_frame);
+			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("left-toolbar-width",
 		    &Vtoolbar_size[LEFT_TOOLBAR] /*
@@ -1705,7 +1638,7 @@ See `default-toolbar-height' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_size[LEFT_TOOLBAR]),
-			 toolbar_size_changed_in_frame);
+			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("right-toolbar-width",
 		    &Vtoolbar_size[RIGHT_TOOLBAR] /*
@@ -1721,7 +1654,7 @@ See `default-toolbar-height' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_size[RIGHT_TOOLBAR]),
-			 toolbar_size_changed_in_frame);
+			 frame_size_slipped);
 
   fb = Qnil;
 #ifdef HAVE_TTY
@@ -1802,7 +1735,7 @@ See `default-toolbar-height' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_border_width[TOP_TOOLBAR]),
-			 toolbar_border_width_changed_in_frame);
+			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("bottom-toolbar-border-width",
 		    &Vtoolbar_border_width[BOTTOM_TOOLBAR] /*
@@ -1818,7 +1751,7 @@ See `default-toolbar-height' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_border_width[BOTTOM_TOOLBAR]),
-			 toolbar_border_width_changed_in_frame);
+			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("left-toolbar-border-width",
 		    &Vtoolbar_border_width[LEFT_TOOLBAR] /*
@@ -1834,7 +1767,7 @@ See `default-toolbar-height' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_border_width[LEFT_TOOLBAR]),
-			 toolbar_border_width_changed_in_frame);
+			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("right-toolbar-border-width",
 		    &Vtoolbar_border_width[RIGHT_TOOLBAR] /*
@@ -1850,7 +1783,7 @@ See `default-toolbar-height' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_border_width[RIGHT_TOOLBAR]),
-			 toolbar_border_width_changed_in_frame);
+			 frame_size_slipped);
 
   fb = Qnil;
 #ifdef HAVE_TTY
@@ -1914,7 +1847,7 @@ See `default-toolbar-visible-p' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_visible_p[TOP_TOOLBAR]),
-			 toolbar_visible_p_changed_in_frame);
+			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("bottom-toolbar-visible-p",
 		    &Vtoolbar_visible_p[BOTTOM_TOOLBAR] /*
@@ -1930,7 +1863,7 @@ See `default-toolbar-visible-p' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_visible_p[BOTTOM_TOOLBAR]),
-			 toolbar_visible_p_changed_in_frame);
+			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("left-toolbar-visible-p",
 		    &Vtoolbar_visible_p[LEFT_TOOLBAR] /*
@@ -1946,7 +1879,7 @@ See `default-toolbar-visible-p' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_visible_p[LEFT_TOOLBAR]),
-			 toolbar_visible_p_changed_in_frame);
+			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("right-toolbar-visible-p",
 		    &Vtoolbar_visible_p[RIGHT_TOOLBAR] /*
@@ -1962,7 +1895,7 @@ See `default-toolbar-visible-p' for more information.
 			 toolbar_geometry_changed_in_window,
 			 slot_offset (struct frame,
 				      toolbar_visible_p[RIGHT_TOOLBAR]),
-			 toolbar_visible_p_changed_in_frame);
+			 frame_size_slipped);
 
   /* initially, top inherits from default; this can be
      changed with `set-default-toolbar-position'. */

@@ -776,7 +776,8 @@ unix_create_process (struct Lisp_Process *p,
 
   /* Record this as an active process, with its channels.
      As a result, child_setup will close Emacs's side of the pipes.  */
-  init_process_io_handles (p, (void*)inchannel, (void*)outchannel, pty_flag);
+  init_process_io_handles (p, (void*)inchannel, (void*)outchannel,
+			   pty_flag ? STREAM_PTY_FLUSHING : 0);
   /* Record the tty descriptor used in the subprocess.  */
   UNIX_DATA(p)->subtty = forkin;
 
@@ -1600,7 +1601,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest, Lisp_Object port,
     }
 
   /* This will be used for both sockets */
-  bzero(&sa, sizeof(sa));
+  memset (&sa, 0, sizeof(sa));
   sa.sin_family = AF_INET;
   sa.sin_port = theport;
   sa.sin_addr.s_addr = htonl (inet_addr ((char *) XSTRING_DATA (dest)));

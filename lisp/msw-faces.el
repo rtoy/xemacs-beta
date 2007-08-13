@@ -58,9 +58,9 @@
 ;;;	Courier New:Bold Italic:10:underline strikeout:ansi
 ;;; Missing parts of the font spec should be filled in with these values:
 ;;;	Courier New:Normal:10::ansi
-(defun mswindows-font-canicolize-name (font)
-  "Given a mswindows font specification, this returns its name in canonical
-form."
+(defun mswindows-font-canonicalize-name (font)
+  "Given a mswindows font or font specification, this returns its
+specification in canonical form."
   (if (or (font-instance-p font)
 	  (stringp font))
       (let ((name (if (font-instance-p font) 
@@ -83,7 +83,7 @@ form."
   "Given a mswindows font specification, this attempts to make a bold font.
 If it fails, it returns nil."
   (if (font-instance-p font)
-      (let ((name (mswindows-font-canicolize-name font))
+      (let ((name (mswindows-font-canonicalize-name font))
 	    (oldwidth (font-instance-width font)))
 	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
 	(let ((newfont (make-font-instance
@@ -102,7 +102,7 @@ If it fails, it returns nil."
   "Given a mswindows font specification, this attempts to make a non-bold font.
 If it fails, it returns nil."
   (if (font-instance-p font)
-      (let ((name (mswindows-font-canicolize-name font)))
+      (let ((name (mswindows-font-canonicalize-name font)))
 	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
 	(make-font-instance (concat
 			     (substring name 0 (match-beginning 1))
@@ -113,7 +113,7 @@ If it fails, it returns nil."
   "Given a mswindows font specification, this attempts to make an `italic'
 font. If it fails, it returns nil."
   (if (font-instance-p font)
-      (let ((name (mswindows-font-canicolize-name font)))
+      (let ((name (mswindows-font-canonicalize-name font)))
 	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
 	(make-font-instance (concat
 			     (substring name 0 (match-beginning 1))
@@ -124,7 +124,7 @@ font. If it fails, it returns nil."
   "Given a mswindows font specification, this attempts to make a non-italic
 font. If it fails, it returns nil."
   (if (font-instance-p font)
-      (let ((name (mswindows-font-canicolize-name font)))
+      (let ((name (mswindows-font-canonicalize-name font)))
 	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
 	(make-font-instance (concat
 			     (substring name 0 (match-beginning 1))
@@ -135,7 +135,7 @@ font. If it fails, it returns nil."
   "Given a mswindows font specification, this attempts to make a `bold-italic'
 font. If it fails, it returns nil."
   (if (font-instance-p font)
-      (let ((name (mswindows-font-canicolize-name font))
+      (let ((name (mswindows-font-canonicalize-name font))
 	    (oldwidth (font-instance-width font)))
 	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
 	(let ((newfont (make-font-instance
@@ -154,7 +154,7 @@ font. If it fails, it returns nil."
   "Loads a new version of the given font (or font name) 1 point smaller.
 Returns the font if it succeeds, nil otherwise."
   (if (font-instance-p font)
-      (let (old-size (name (mswindows-font-canicolize-name font)))
+      (let (old-size (name (mswindows-font-canonicalize-name font)))
 	(string-match "^[a-zA-Z ]+:[a-zA-Z ]*:\\([0-9]+\\):" name)
 	(setq old-size (string-to-int
 			(substring name (match-beginning 1) (match-end 1))))
@@ -169,7 +169,7 @@ Returns the font if it succeeds, nil otherwise."
   "Loads a new version of the given font (or font name) 1 point larger.
 Returns the font if it succeeds, nil otherwise."
   (if (font-instance-p font)
-      (let (old-size (name (mswindows-font-canicolize-name font)))
+      (let (old-size (name (mswindows-font-canonicalize-name font)))
 	(string-match "^[a-zA-Z ]+:[a-zA-Z ]*:\\([0-9]+\\):" name)
 	(setq old-size (string-to-int
 			(substring name (match-beginning 1) (match-end 1))))

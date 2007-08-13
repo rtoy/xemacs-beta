@@ -1,10 +1,416 @@
-1998-05-03  Olivier Galibert  <galibert@pobox.com>
+1998-05-06  Oliver Graf <ograf@fga.de>
 
-	* alloc.c  (make_pure_float): Remove reference  to obsolete 'next'
-	field.
-	(make_float): Ditto.
+	* Makefile.in.in: removed dragdrop.o from objs
+	* config.h.in: HAVE_DRAGNDROP added
+	* emacs.c: do syms_of_dragdrop only if HAVE_DRAGNDROP is defined
+	* event-Xt.c: dragdrop.h include now depends on HAVE_DRAGNDROP
+	changed calls to dnd_url_hexify_string
+	MIME data is now a list of MIME strings or lists
+	this was required by CDE, and a good idea in any case
+	* dragdrop.c (dnd_url_hexify_string): method prefix code added
+	* dragdrop.h: dnd_url_hexify_string prototype changed
+	* frame-x.c (x_cde_transfer_callback): CDE adapted the new API
 
-	* lisp.h (struct Lisp_Float): Remove obsolete 'next' field.
+1998-05-05  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* event-msw.c: now creates misc-user-events on dnd drops
+
+1998-05-05  Oliver Graf <ograf@fga.de>
+
+	* events.h: changed comment for misc_user_events
+	* events.c (make-event): removed dnd_data defs
+	* frame.c: removed everything referring to drag_and_drop_functions
+	* frame-x.c (x_cde_transfer_callback): disabled (needs to be changed)
+	* lisp.h: removed Qdnd_data
+	* general.c: removed Qdnd_data
+	* symsinit.h: added syms_of_dragdrop
+	* frame.el: deleted default-drag-and-drop-functions
+
+1998-05-04  Oliver Graf <ograf@fga.de>
+
+	* events.c: removed all dnd_drop stuff
+	* events.h: extended misc_user_data by button info
+	removed dnd_drop event
+	* emacs.c: added call to syms_of_dragdrop
+	* dragdrop.c: created
+	* dragdrop.h: created
+	* event-stream.c (enqueue_misc_user_event): initialization of the
+	new fields of misc_user_data
+	dnd_drop stuff removed
+	* keymap.c: drop symbols removed
+	* Makefile.in.in: added dragdrop.o to objs
+
+1998-05-09  SL Baur  <steve@altair.xemacs.org>
+
+	* EmacsFrame.c (EmacsFrameSetValues): Fix typo.
+	Suggested by: Kirill M. Katsnelson  <kkm@kis.ru>
+
+1998-05-09  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* This change adds four scrollbar specifiers:
+	  {horizontal,vertical}-scrollbar-visible-p and
+	  scrollbar-on-{top,left}-p.
+	  Spare parts supplied by Didier Verna <verna@inf.enst.fr> 
+
+	* frameslots.h: Added slots for the four specifier caching.
+
+	* frame.h: FRAME_SCROLLBAR_{WIDTH,HEIGHT} count for scrollbar
+	visible specifiers.
+	Removed old resource-only controlled scrollbar_on_* ints.
+
+	* frame-x.c (x_layout_widgets): Removed (to x-scrollbar.el)
+	initialization of old style scrollbar placement from resources.
+
+	* frame-tty.c (tty_init_frame_1): Removed initialization of old
+	style scrollbar placement.
+
+	* frame-msw.c (mswindows_init_frame_1): Removed random
+	initialization of scrollbar sizes to 15 pixel.
+
+	* redisplay-msw.c (mswindows_redisplay_deadbox_maybe): Use
+	scrollbar placement specifiers cached values from window, instead
+	of the old per-frame values.
+	(mswindows_output_vertical_divider): Ditto.
+
+	* redisplay-x.c (x_output_vertical_divider): Ditto.
+
+	* redisplay-output.c (redisplay_clear_bottom_of_window): Ditto.
+
+	* scrollbar.c (update_scrollbar_instance): Ditto.
+	(specifier_vars_of_scrollbar): Declared the four specifiers.
+
+	* window.h (struct window): Defined slots for caching the new
+	specifiers. 
+
+	* window.c (mark_window): Mark them.
+	(allocate_window): Initialize them.
+	(struct saved_window): Store them in a cool place.
+	(saved_window_equal): Compare them.
+	(save_window_save): Save them.
+	(Fset_window_configuration): Fetch them back.
+	(window_needs_vertical_divider): Check for scrollbar placement
+	using window cached specs.
+	(window_top_gutter_height): Ditto.
+	(window_bottom_gutter_height): Ditto.
+	(window_left_gutter_width): Ditto.
+	(window_right_gutter_width): Ditto.
+	(window_scrollbar_width): Account for scrollbar visibility
+	specification in window.
+	(window_scrollbar_height): Ditto.
+
+1998-04-18  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* device.c (Fdevice_system_metrics): Added function.
+	Moved (device-pixel-height), (device-pixel-width),
+	(device-mm-width), (device-mm-height), (device-bitplanes),
+	(device-color-cells) to device.el, amd make them call
+	(device-system-metrics).
+
+	* console.h (struct console_methods): Replaced methods:
+	device_pixel_width_method(), device_pixel_height_method(),
+	device_mm_width_method(), device_mm_height_method(),
+	device_bitplanes_method(), device_color_cells_method()
+	with single device_system_metrics_method().
+	(device_metrics): Declared enumeration of supported
+	device system metrics.
+
+	* device-msw.c (mswindows_device_system_metrics): Implement
+	device_system_metrics_method(), remove six obsolete methods.
+
+	* device-tty.c (tty_device_system_metrics): Ditto.
+
+	* device-x.c (x_device_system_metrics): Ditto.
+
+1998-05-10  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* EmacsFrame.c (update_various_frame_slots): Do not store internal 
+	border width there.
+	(EmacsFrameInitialize): Do it rather here.
+	(EmacsFrameSetValues): If EditRes has changed internal border
+	width, mark frame size as slipped.
+
+1998-05-06  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* frame.h (struct frame): Added char_{width,height} member
+	variables and access macros
+	Added size_slipped redisplay bit and mark/clear macros.
+
+	* redisplay.c (redisplay_frame): Adjust frame size if size slipped 
+	bit is set.
+	(redisplay_device): Call redisplay_frame if size slipped bit is set.
+	
+	* frame.c (adjust_frame_size): Redisplay beats frame back in shape 
+	with this. Added.
+	(frame_size_slipped): Added.
+	(internal_set_frame_size): Clear size slipped bit.
+	(change_frame_size_1): Store real charsize into frame object.
+	(vars_of_frame): Declared adjust-frame-function.
+
+	* frame-msw.c (mswindows_update_frame_external_traits): Same
+	change as for frame-x.c
+	(mswindows_frame_size_fixed_p): Implemented the method.
+
+	* frame-x.c (x_update_frame_external_traits): Do not call
+	Fset_frame_size to adjust frame, redisplay will do.
+
+	* faces.c (update_EmacsFrame): Mark frame as slipped when default
+	font changes.
+
+	* toolbar.c (compute_frame_toolbars_data): Removed obsoleted call
+	to change_frame_size. Redisplay will fix it later.
+	Removed toolbar_*_changed_in_frame specifier
+	change handlers.
+	(specifier_vars_of_toolbar): Calls to these routed to
+	frame_size_slipped generic handler.
+
+	* toolbar-x.c: Removed toolbar_*_changed_in_frame device methods.
+
+	* scrollbar-x.c: Removed scrollbar_*_changed_in_frame device
+	methods.
+
+	* scrollbar.c: Removed scrollbar_*_changed_in_frame specifier
+	change handlers.
+	(specifier_vars_of_scrollbar): Calls to the above changed to
+	frame_size_slipped generic handler.
+
+	* menubar-x.c (x_update_frame_menubar_internal): Do not resize
+	frame, just mark frame size as slipped.
+
+	* device-x.c: Removed declaration of in_specifier_change_function.
+
+	* EmacsFrame.c (EmacsFrameSetValues): Do not check
+	in_specifier_change_function.
+	(EmacsFrameSetValues): Simulate a call to resize callback when no
+	actual geometry change happened.
+
+	* console.h (struct console_methods): Removed declarations for all 
+	<specifier>_changed_in_frame methods for toolbars and scrollbars.
+	Added frame_size_fixed_p method.
+
+1998-05-08  SL Baur  <steve@altair.xemacs.org>
+
+	* redisplay.c (decode_mode_spec): Guard against garbage
+	overwriting the stack.
+
+1998-05-08  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* dired-msw.c (vars_of_dired_mswindows): Syntax fix for union
+	lisp object type.
+
+	* menubar-msw.c (populate_menu_add_item): Ditto.
+
+	* ntheap.c (sbrk): Ditto.
+
+	* ntproc.c (create_child): Ditto.
+	(syms_of_ntproc): Ditto.
+
+1998-05-07  Andy Piper  <andyp@parallax.co.uk>
+
+	* glyphs-msw.c: updates to support total transparency.
+	(mswindows_initialize_image_instance_icon): don't resize bitmaps
+	for icons.
+	(mswindows_initialize_image_instance_mask): new function.
+	Use these new functions as appropriate.
+
+	* glyphs-msw.h (mswindows_initialize_image_instance_icon):
+	function renamed.
+
+	* frame-msw.c: use renamed mswindows_initialize_image_instance_icon.
+
+	* redisplay-msw.c: MaskBlt bitmaps if we have a mask, BitBlt
+	otherwise.
+
+1998-05-07  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* unexnt.c (read_in_bss): Removed unused variables, replaced exits
+	with aborts.
+	(map_in_heap): Ditto.
+
+1998-05-06  SL Baur  <steve@altair.xemacs.org>
+
+	* frame.c (adjust_frame_size): Don't mix integers and Lisp_Objects.
+
+1998-05-07  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* print.c (write_string_to_stdio_stream): Under MS Windows, flush
+	stdio and stderr after output. Ouch.
+
+1998-05-05  Andy Piper  <andyp@parallax.co.uk>
+
+	* event-msw.c: comment out broken dnd stuff and don't use msw socket
+	support if we have cygwin select.
+
+1998-05-03  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* events.h (STREAM_* defines): Defined constants for the parameter
+	FLAGS to create_stream_pair_cb().
+
+	* process.c (Fopen_network_stream_internal): Use flags from events.h
+	(Fopen_multicast_group_internal): Ditto.
+
+	* process-unix.c (unix_create_process): Ditto.
+
+	* event-unixoid.c (event_stream_unixoid_create_stream_pair): Ditto.
+	Changed #ifdef process type logic to catch configuretion errors
+	when no process type is defined.
+
+	* event-msw.c: Implemented winsock_stream
+	(get_process_input_waitable): Differentiate network connections.
+	(emacs_mswindows_select_process): Ditto.
+	(emacs_mswindows_create_stream_pair): Ditto.
+	(emacs_mswindows_delete_stream_pair): Ditto.
+
+	* process-nt.c: Implemented network connections.
+	(nt_init_process): Initialize Winsock.
+
+	* sysdep.c (init_system_name): Ask for the right name right from
+	the system.
+
+	* ntproc.c: Removed select emulation crap and dynamic Windock
+	loading. 
+
+	* nt.c: Removed a lot of terrible wrappers for socket functions.
+
+	* s/windowsnt.h: Removed sys_select encapsulation.
+
+1998-05-05  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* search.c (Fmatch_data): Synch with FSF.
+
+1998-05-04  Greg Klanderman  <greg@alphatech.com>
+
+	* events.h: Add extern declarations for focus_follows_mouse and
+	investigate_frame_change().
+	* cmdloop.c (Fcommand_loop_1): cleanup focus-follows-mouse
+	handling - move externs to events.h.
+
+1998-05-05  Andy Piper  <andyp@parallax.co.uk>
+
+	* glyphs-msw.c: generate an AND mask when creating an icon and really
+	make it an icon if that is what is required.
+
+	* glyphs-msw.h (mswindows_create_icon_from_image): new cursor
+	argument.
+
+	* frame-msw.c (mswindows_set_frame_pointer): set the frame cursor when
+	asked.
+
+1998-05-05  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* s/windowsnt.h:
+	* s/rtu.h:
+	* s/aix4.h:
+	* m/wicat.h:
+	* m/gould.h:
+	* m/gould-np1.h
+	* unexhp9k3.c:
+	* unexconvex.c:
+	* unexalpha.c:
+	* unexaix.c:
+	* regex.c:
+	* process-unix.c:
+	* mule-mcpath.c:
+	* msdos.c:
+	* lisp.h:
+	* gmalloc.c:
+	* getloadavg.c:
+	* broken-sun.h:
+	Removed references to ancient bcmp, bzero, and bcopy.
+
+1998-05-04  Andy Piper  <andyp@parallax.co.uk>
+
+	* gui.el: make gui-button-face colors apply in the mswindows
+	domain as well as for x.
+
+	* objects-msw.c (mswindows_string_to_color): grok
+	rgb:rrrr/gggg/bbbb color formats used by xpm-button.el.
+
+1998-05-04  Greg Klanderman  <greg@alphatech.com>
+
+	* window.c (Fselect_window): Add optional second argument
+	`norecord' to avoid recording a buffer change.
+	* window.h: change the EXFUN for Fselect_window.
+	* window.c (Fdelete_window): call Fselect_window with 2nd arg Qnil.
+	(Fother_window): ditto.
+	(temp_output_buffer_show): ditto.
+	(Fset_window_configuration): ditto.
+	(Fset_window_configuration): ditto.
+	* frame.c (Fselect_frame): ditto.
+	(Fset_frame_selected_window): ditto.
+	(delete_frame_internal): ditto.
+	* device.c (Fselect_device): ditto.
+	* console.c (Fselect_console): ditto.
+	* callint.c (Fcall_interactively): ditto.
+
+1998-05-05  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* search.c (Fregexp_quote): Loop by characters, not by bytes.
+
+1998-05-05  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* redisplay.c (window_line_number): Guard against selected_device
+	= nil.
+
+	* frame-x.c (x_init_frame_2): Revert to updating frame title.
+
+1998-05-05  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (shut_down_emacs): Update crash report information.
+
+1998-05-04  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* linuxplay.c: Initialize audio_dev to /dev/dsp at
+	  compile time instead of at run-time.  Don't initialize
+	  mixer_fd, audio_fd and audio_vol to -1; none of them need
+	  it, and XEmacs will crash on some architectures when
+	  these variable are modified after being initialized.
+	  Declare audio_dev, audio_vol, audio_fd, and mixer_fd as
+	  static, since none of them need to be visible outside
+	  linuxplay.c.
+
+1998-04-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* eldap.c (make_ldap): New function.
+	(finalize_ldap): Use it.
+	(Fldap_open): Ditto.
+
+	* eldap.c (struct Lisp_LDAP): Removed connection status symbol.
+
+	* eldap.h (LDAP_LIVE_P): Removed
+	(CHECK_LIVE_LDAP): Adapt to changes in struct Lisp_LDAP
+
+1998-05-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lread.c: (read_escape): Restore handling of \M-a; clarify
+	comment.
+
+1998-05-04  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* realpath.c: Rename realpath() to xrealpath().
+
+	* fileio.c: Call xrealpath() instead of realpath().
+
+	* sysdep.h: Use #define to map xrealpath() calls to
+	  realpath() on systems that have realpath().
+
+1998-05-04  Martin Buchholz  <martin@xemacs.org>
+
+	* rangetab.c: 
+	* rangetab.h: Move #include's from rangetab.h into rangetab.c for
+	consistency. 
+	* inline.c: include rangetab.h to get GCC inlines
+
+1998-05-03  SL Baur  <steve@altair.xemacs.org>
+
+	* event-stream.c (event_stream_next_event): Reverse previous patch to
+	slow down poll for quit.
+	Suggested by Kyle Jones <kyle_jones@wonderworks.com>
+
+	* lread.c (read_escape): Turn off interpretation of "\M..."
+	Suggested by Olivier Galibert <galibert@pobox.com>
+
+	* lread.c (read_escape): add explanatory comment about why
+	FSF_KEYS are being turned off.
 
 1998-05-02  SL Baur  <steve@altair.xemacs.org>
 

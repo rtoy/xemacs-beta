@@ -271,7 +271,7 @@ time this function is called.
       if (!NILP (frame))
 	{
 	  struct frame *f = XFRAME(frame);
-	  Fselect_window (FRAME_SELECTED_WINDOW (f));
+	  Fselect_window (FRAME_SELECTED_WINDOW (f), Qnil);
 	}
       else
 	error ("Can't select console with no frames.");

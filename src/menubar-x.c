@@ -670,7 +670,6 @@ x_update_frame_menubar_internal (struct frame *f)
   Boolean menubar_was_visible = XtIsManaged (FRAME_X_MENUBAR_WIDGET (f));
   Boolean menubar_will_be_visible = menubar_was_visible;
   Boolean menubar_visibility_changed;
-  Cardinal new_num_top_widgets = 1; /* for the menubar */
   Widget container = FRAME_X_CONTAINER_WIDGET (f);
 
   if (menubar_contents_changed)
@@ -678,39 +677,14 @@ x_update_frame_menubar_internal (struct frame *f)
 
   menubar_visibility_changed = menubar_was_visible != menubar_will_be_visible;
 
-  if (! (menubar_visibility_changed
-	 ))
+  if (!menubar_visibility_changed)
     return;
 
-
   /* Set menubar visibility */
-  if (menubar_visibility_changed)
-    (menubar_will_be_visible ? XtManageChild : XtUnmanageChild)
-      (FRAME_X_MENUBAR_WIDGET (f));
+  (menubar_will_be_visible ? XtManageChild : XtUnmanageChild)
+    (FRAME_X_MENUBAR_WIDGET (f));
 
-  /* Note that new_num_top_widgets doesn't need to reflect the actual
-     number of top widgets, but just the limit of FRAME_X_TOP_WIDGETS (f)[]. */
-  FRAME_X_NUM_TOP_WIDGETS (f) = new_num_top_widgets;
-  {
-    /* We want to end up as close in size as possible to what we
-       were before.  So, ask the EmacsManager what size it wants to be
-       (suggesting the current size), and resize it to that size.  It
-       in turn will call our query-geometry callback, which will round
-       the size to something that exactly fits the text widget. */
-    XtWidgetGeometry req, repl;
-    Arg al [2];
-
-    req.request_mode = CWWidth | CWHeight;
-    XtSetArg (al [0], XtNwidth,  &req.width);
-    XtSetArg (al [1], XtNheight, &req.height);
-    XtGetValues (container, al, 2);
-    XtQueryGeometry (container, &req, &repl);
-    EmacsManagerChangeSize (container, repl.width, repl.height);
-    /* The window size might not have changed but the text size
-       did; thus, the base size might be incorrect.  So update it. */
-    EmacsShellUpdateSizeHints (FRAME_X_SHELL_WIDGET (f));
-  }
-
+  MARK_FRAME_SIZE_SLIPPED (f);
 }
 
 static void

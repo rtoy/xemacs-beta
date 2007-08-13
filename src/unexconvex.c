@@ -492,7 +492,7 @@ struct scnhdr *sptr;
     if( lseek( new, (long) sptr->s_scnptr, 0 ) == -1 )
 	PERROR( "unexecing" );
 
-    bzero (zeros, sizeof zeros);
+    memset (zeros, 0, sizeof zeros);
 
     ptr = (char *) sptr->s_vaddr;
     end = ptr + sptr->s_size;

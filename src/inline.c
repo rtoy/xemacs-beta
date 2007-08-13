@@ -58,6 +58,7 @@ Boston, MA 02111-1307, USA.  */
 #include "objects.h"
 #include "opaque.h"
 #include "process.h"
+#include "rangetab.h"
 #include "specifier.h"
 #include "syntax.h"
 #include "window.h"

@@ -79,9 +79,6 @@
 /* Data isn't right next to text on an NP1 */
 #define NO_REMAP
 
-/* The bcopy bug has reappeared */
-#define BROKEN_BCOPY
-
 #ifndef GOULD_NP1
 #define GOULD_NP1
 #endif

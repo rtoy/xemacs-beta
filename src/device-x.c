@@ -97,8 +97,6 @@ static XrmOptionDescRec emacs_options[] =
 
 /* Functions to synchronize mirroring resources and specifiers */
 int in_resource_setting;
-int in_specifier_change_function;
-
 
 /************************************************************************/
 /*                          helper functions                            */
@@ -1397,52 +1395,32 @@ Return the bitplane depth of the visual the X display `device' is using.
    return make_int (DEVICE_X_DEPTH (decode_x_device (device)));
 }
 
-static int
-x_device_pixel_width (struct device *d)
+static Lisp_Object
+x_device_system_metrics (struct device *d,
+			 enum device_metrics m)
 {
   Display *dpy = DEVICE_X_DISPLAY (d);
 
-  return DisplayWidth (dpy, DefaultScreen (dpy));
-}
+  switch (m)
+    {
+    case size_device:
+      return Fcons (make_int (DisplayWidth (dpy, DefaultScreen (dpy))),
+		    make_int (DisplayHeight (dpy, DefaultScreen (dpy))));
+      break;
+    case size_device_mm:
+      return Fcons (make_int (DisplayWidthMM (dpy, DefaultScreen (dpy))),
+		    make_int (DisplayHeightMM (dpy, DefaultScreen (dpy))));
+      break;
+    case num_bit_planes:
+      return make_int (DisplayPlanes (dpy, DefaultScreen (dpy)));
+      break;
+    case num_color_cells:
+      return make_int (DisplayCells (dpy, DefaultScreen (dpy)));
+      break;
+    }
 
-static int
-x_device_pixel_height (struct device *d)
-{
-  Display *dpy = DEVICE_X_DISPLAY (d);
-
-  return DisplayHeight (dpy, DefaultScreen (dpy));
-}
-
-static int
-x_device_mm_width (struct device *d)
-{
-  Display *dpy = DEVICE_X_DISPLAY (d);
-
-  return DisplayWidthMM (dpy, DefaultScreen (dpy));
-}
-
-static int
-x_device_mm_height (struct device *d)
-{
-  Display *dpy = DEVICE_X_DISPLAY (d);
-
-  return DisplayHeightMM (dpy, DefaultScreen (dpy));
-}
-
-static int
-x_device_bitplanes (struct device *d)
-{
-  Display *dpy = DEVICE_X_DISPLAY (d);
-
-  return DisplayPlanes (dpy, DefaultScreen (dpy));
-}
-
-static int
-x_device_color_cells (struct device *d)
-{
-  Display *dpy = DEVICE_X_DISPLAY (d);
-
-  return DisplayCells (dpy, DefaultScreen (dpy));
+  /* Do not know such property */
+  return Qnil;
 }
 
 DEFUN ("x-server-vendor", Fx_server_vendor, 0, 1, 0, /*
@@ -1713,12 +1691,7 @@ console_type_create_device_x (void)
   CONSOLE_HAS_METHOD (x, finish_init_device);
   CONSOLE_HAS_METHOD (x, mark_device);
   CONSOLE_HAS_METHOD (x, delete_device);
-  CONSOLE_HAS_METHOD (x, device_pixel_width);
-  CONSOLE_HAS_METHOD (x, device_pixel_height);
-  CONSOLE_HAS_METHOD (x, device_mm_width);
-  CONSOLE_HAS_METHOD (x, device_mm_height);
-  CONSOLE_HAS_METHOD (x, device_bitplanes);
-  CONSOLE_HAS_METHOD (x, device_color_cells);
+  CONSOLE_HAS_METHOD (x, device_system_metrics);
 
   {
     /* Initialize variables to speed up X resource interactions */
@@ -1790,5 +1763,4 @@ where the localized init files are.
   error_occurred = 0;
 
   in_resource_setting = 0;
-  in_specifier_change_function = 0;
 }

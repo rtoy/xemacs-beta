@@ -829,18 +829,12 @@ the key pressed and the modifiers that were held down at the time.
 or released, button events specify the modifier keys that were held down
 at the time and the position of the pointer at the time.
 
-@item dnd-drop event
-  Some dragged data was released. The event provides the button that was used
-to drag the data, the modifier keys that were hold down, the position where
-the drop took place, and a lisp object containing the type and the data
-dropped (Note: until now only the OffiX protocol supports dnd-drop).
-
 @item motion event
   The pointer was moved.  Along with the position of the pointer, these events
 also specify the modifier keys that were held down at the time.
 
 @item misc-user event
-  A menu item was selected, or the scrollbar was used.
+  A menu item was selected, the scrollbar was used, or a drag or a drop occured.
 
 @item process event
   Input is available on a process.
@@ -910,21 +904,6 @@ for the shift key does @emph{not} apply to mouse events.
   The position of the pointer (in pixels) at the time of the event.
 @end table
 
-@item dnd-drop event
-@table @asis
-@item channel
-@item timestamp
-@item button
-  What button was used to drag. Buttons are numbered starting at 1.
-@item modifiers
-  Which modifier keys were pressed to do the drag.
-@item x
-@itemx y
-  The position of the pointer (in pixels) at the time of the event.
-@item data
-  A lisp object containing the dropped type and data.
-@end table
-
 @item pointer-motion event
 @table @asis
 @item channel
@@ -946,6 +925,14 @@ for the shift key does @emph{not} apply to mouse events.
 @item object
   The object to pass to the function.  This is normally the callback that
 was specified in the menu description.
+@item button
+  What button went down or up.  Buttons are numbered starting at 1.
+@item modifiers
+  Which modifier keys were pressed.  The special business mentioned above
+for the shift key does @emph{not} apply to mouse events.
+@item x
+@itemx y
+  The position of the pointer (in pixels) at the time of the event.
 @end table
 
 @item process_event
@@ -996,13 +983,11 @@ A key was pressed.
 A mouse button was pressed.
 @item button-release
 A mouse button was released.
-@item dnd-drop
-A drop occured.
 @item motion
 The mouse moved.
 @item misc-user
 Some other user action happened; typically, this is
-a menu selection or scrollbar action.
+a menu selection, scrollbar action, or drag and drop action.
 @item process
 Input is available from a subprocess.
 @item timeout
@@ -1035,10 +1020,6 @@ This is true if @var{object} is a mouse button-press event.
 
 @defun button-release-event-p object
 This is true if @var{object} is a mouse button-release event.
-@end defun
-
-@defun dnd-drop-event-p object
-This is true if @var{object} is a mouse dnd-drop event.
 @end defun
 
 @defun motion-event-p object
@@ -1074,9 +1055,10 @@ This is true if @var{object} is any event that has not been deallocated.
 @subsection Accessing the Position of a Mouse Event
 
 Unlike other events, mouse events (i.e. motion, button-press,
-button-release, and dnd-drop events) occur in a particular location
-on the screen. Many primitives are provided for determining exactly
-where the event occurred and what is under that location.
+button-release, and drag or drop type misc-user events) occur in a
+particular location on the screen. Many primitives are provided for
+determining exactly where the event occurred and what is under that
+location.
 
 @menu
 * Frame-Level Event Position Info::
@@ -1095,7 +1077,7 @@ a mouse event occurred.
 
 @defun event-frame event
 This function returns the ``channel'' or frame that the given mouse
-motion, button press, button release, or dnd drop event occurred in.
+motion, button press, button release, or misc-user event occurred in.
 This will be @code{nil} for non-mouse events.
 @end defun
 
@@ -1118,14 +1100,14 @@ The following functions return window-level information about where
 a mouse event occurred.
 
 @defun event-window event
-Given a mouse motion, button press, button release, or dnd drop event, compute and
+Given a mouse motion, button press, button release, or misc-user event, compute and
 return the window on which that event occurred.  This may be @code{nil}
 if the event occurred in the border or over a toolbar.  The modeline is
 considered to be within the window it describes.
 @end defun
 
 @defun event-buffer event
-Given a mouse motion, button press, button release, or dnd drop event, compute and
+Given a mouse motion, button press, button release, or misc-user event, compute and
 return the buffer of the window on which that event occurred.  This may
 be @code{nil} if the event occurred in the border or over a toolbar.
 The modeline is considered to be within the window it describes.  This is
@@ -1137,14 +1119,14 @@ equivalent to calling @code{event-window} and then calling
 This function returns the X position in pixels of the given mouse event.
 The value returned is relative to the window the event occurred in.
 This will signal an error if the event is not a mouse-motion, button-press,
-button-release, or dnd-drop event.
+button-release, or misc-user event.
 @end defun
 
 @defun event-window-y-pixel event
 This function returns the Y position in pixels of the given mouse event.
 The value returned is relative to the window the event occurred in.
 This will signal an error if the event is not a mouse-motion, button-press,
-or button-release event.
+button-release, or misc-user event.
 @end defun
 
 @node Event Text Position Info
@@ -1154,33 +1136,33 @@ The following functions return information about the text (including the
 modeline) that a mouse event occurred over or near.
 
 @defun event-over-text-area-p event
-Given a mouse-motion, button-press, button-release, or dnd-drop event, this
+Given a mouse-motion, button-press, button-release, or misc-user event, this
 function returns @code{t} if the event is over the text area of a
 window.  Otherwise, @code{nil} is returned.  The modeline is not
 considered to be part of the text area.
 @end defun
 
 @defun event-over-modeline-p event
-Given a mouse-motion, button-press, button-release, or dnd-drop event, this
+Given a mouse-motion, button-press, button-release, or misc-user event, this
 function returns @code{t} if the event is over the modeline of a window.
 Otherwise, @code{nil} is returned.
 @end defun
 
 @defun event-x event
 This function returns the X position of the given mouse-motion,
-button-press, button-release, or dnd-drop event in characters.  This is relative
+button-press, button-release, or misc-user event in characters.  This is relative
 to the window the event occurred over.
 @end defun
 
 @defun event-y event
 This function returns the Y position of the given mouse-motion,
-button-press, button-release, or dnd-drop event in characters.  This is relative
+button-press, button-release, or misc-user event in characters.  This is relative
 to the window the event occurred over.
 @end defun
 
 @defun event-point event
 This function returns the character position of the given mouse-motion,
-button-press, button-release, or dnd-drop event.  If the event did not occur over
+button-press, button-release, or misc-user event.  If the event did not occur over
 a window, or did not occur over text, then this returns @code{nil}.
 Otherwise, it returns an index into the buffer visible in the event's
 window.
@@ -1188,7 +1170,7 @@ window.
 
 @defun event-closest-point event
 This function returns the character position of the given mouse-motion,
-button-press, button-release, or dnd-drop event.  If the event did not occur over
+button-press, button-release, or misc-user event.  If the event did not occur over
 a window or over text, it returns the closest point to the location of
 the event.  If the Y pixel position overlaps a window and the X pixel
 position is to the left of that window, the closest point is the
@@ -1206,25 +1188,25 @@ The following functions return information about the glyph (if any) that
 a mouse event occurred over.
 
 @defun event-over-glyph-p event
-Given a mouse-motion, button-press, button-release, or dnd-drop event, this
+Given a mouse-motion, button-press, button-release, or misc-user event, this
 function returns @code{t} if the event is over a glyph.  Otherwise,
 @code{nil} is returned.
 @end defun
 
 @defun event-glyph-extent event
-If the given mouse-motion, button-press, button-release, or dnd-drop event happened
+If the given mouse-motion, button-press, button-release, or misc-user event happened
 on top of a glyph, this returns its extent; else @code{nil} is returned.
 @end defun
 
 @defun event-glyph-x-pixel event
-Given a mouse-motion, button-press, button-release, or dnd-drop event over a
+Given a mouse-motion, button-press, button-release, or misc-user event over a
 glyph, this function returns the X position of the pointer relative to
 the upper left of the glyph.  If the event is not over a glyph, it returns
 @code{nil}.
 @end defun
 
 @defun event-glyph-y-pixel event
-Given a mouse-motion, button-press, button-release, or dnd-drop event over a
+Given a mouse-motion, button-press, button-release, or misc-user event over a
 glyph, this function returns the Y position of the pointer relative to
 the upper left of the glyph.  If the event is not over a glyph, it returns
 @code{nil}.
@@ -1234,13 +1216,13 @@ the upper left of the glyph.  If the event is not over a glyph, it returns
 @subsubsection Event Toolbar Position Info
 
 @defun event-over-toolbar-p event
-Given a mouse-motion, button-press, button-release, or dnd-drop event, this
+Given a mouse-motion, button-press, button-release, or misc-user event, this
 function returns @code{t} if the event is over a toolbar.  Otherwise,
 @code{nil} is returned.
 @end defun
 
 @defun event-toolbar-button event
-If the given mouse-motion, button-press, button-release, or dnd-drop event
+If the given mouse-motion, button-press, button-release, or misc-user event
 happened on top of a toolbar button, this function returns the button.
 Otherwise, @code{nil} is returned.
 @end defun
@@ -1249,7 +1231,7 @@ Otherwise, @code{nil} is returned.
 @subsubsection Other Event Position Info
 
 @defun event-over-border-p event
-Given a mouse-motion, button-press, button-release, or dnd-drop event, this
+Given a mouse-motion, button-press, button-release, or misc-user event, this
 function returns @code{t} if the event is over an internal toolbar.
 Otherwise, @code{nil} is returned.
 @end defun
@@ -1300,11 +1282,6 @@ misc-user, or eval event.
 
 @defun event-process event
 This function returns the process of the given process event.
-@end defun
-
-@defun event-drag-and-drop-data event
-This function returns a list containing the type of the drop as first element
-and the data of the drop as second element.
 @end defun
 
 @node Working With Events

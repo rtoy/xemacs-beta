@@ -1,3 +1,26 @@
+1998-05-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta39 is released.
+
+1998-05-06  Oliver Graf <ograf@fga.de>
+
+	* configure.in: added autodetection for the Drag'n'Drop API
+	if some DnD protocol is found, HAVE_DRAGNDROP will be defined
+	and dragdrop.o is added to extra_objs
+	* configure.usage: added with-dragndrop, added (*) to with-offix
+	* tests/Dnd/droptest.el: complete overhaul, no it's a real test
+
+1998-05-04  Oliver Graf <ograf@fga.de>
+
+	* tests/Dnd/droptest.el: changed to test new protocol
+	* tests/Dnd/README.OffiX: removed
+	* tests/Dnd/README: created, info about new protocol
+	* tests/Dnd/dragtest.el: comment change
+
+1998-05-07  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/altrasoft-logo.xpm: Removed.
+
 1998-05-02  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-beta38 is released.

@@ -1,7 +1,7 @@
 (setq preloaded-file-list
       '("backquote" 		; needed for defsubst etc.
 	"bytecomp-runtime"	; define defsubst
-	#-infodock "Installation.el"
+	"Installation.el"
 	"find-paths"
 	"packages"		; Bootstrap run-time lisp environment
 	"setup-paths"
@@ -58,7 +58,7 @@
 	;; (pureload "hyper-apropos")  Soon...
 	#-file-coding "files-nomule"
 	"files"
-	#-infodock "lib-complete" ; InfoDock uses an older version
+	"lib-complete"
 	"format"
 	"indent"
 	"isearch-mode"
@@ -159,9 +159,10 @@
 	#+window-system "gui"
 	#+window-system "mode-motion"
 	#+window-system "mouse"
+	#+window-system "dragdrop"
 	#+window-system "select"
 ;; preload the X code, for faster startup.
-	#+(and (not infodock) (or x mswindows) menubar) "x-menubar"
+	#+(and (not infodock) (or x mswindows) menubar) "menubar-items"
 	#+(and infodock (or x mswindows) menubar) "id-menus"
 	#+x "x-faces"
 	#+x "x-iso8859-1"
@@ -170,7 +171,7 @@
 	#+(and x scrollbar) "x-scrollbar"
 	#+x "x-misc"
 	#+x "x-init"
-	#+(and (not infodock) window-system toolbar) "x-toolbar"
+	#+(and (not infodock) window-system toolbar) "toolbar-items"
 	#+x "x-win-xfree86"
 	#+x "x-win-sun"
 ;; preload the mswindows code.

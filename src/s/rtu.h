@@ -45,10 +45,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define HAVE_PTYS
 
-/* The system library bcopy() is broken in RTU.  For one thing, it expects
-   the length to be less than 64k. */
-#define BROKEN_BCOPY
-
 /* If your system uses COFF (Common Object File Format) then define the
    preprocessor symbol "COFF". */
 

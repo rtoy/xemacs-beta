@@ -38,13 +38,12 @@ DECLARE_LRECORD (ldap, struct Lisp_LDAP);
 #define GC_LDAPP(x) GC_RECORDP (x, ldap)
 #define CHECK_LDAP(x) CHECK_RECORD (x, ldap)
 #define CONCHECK_LDAP(x) CONCHECK_RECORD (x, ldap)
-#define LDAP_LIVE_P(x) (EQ (x->status_symbol, Qopen))
 
-#define CHECK_LIVE_LDAP(ldap) do {                                       \
-  CHECK_LDAP (ldap);                                                     \
-  if (!LDAP_LIVE_P (XLDAP (ldap)))                                       \
-    signal_simple_error ("Attempting to access closed LDAP connection",  \
-                         ldap);                                          \
+#define CHECK_LIVE_LDAP(ldap) do {					\
+  CHECK_LDAP (ldap);							\
+  if (!XLDAP (ldap)->livep)						\
+    signal_simple_error ("Attempting to access closed LDAP connection",	\
+                         ldap);						\
 } while (0)
 
 

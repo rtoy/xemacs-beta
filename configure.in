@@ -451,6 +451,7 @@ while test $# != 0; do
 	with_ncurses	| \
 	with_dnet	| \
 	with_socks	| \
+	with_dragndrop	| \
 	with_cde	| \
 	with_offix	| \
 	with_gpm	| \
@@ -2417,7 +2418,7 @@ test -z "$window_system" && window_system="none"
 
 dnl Test for features that require a window system - ANY window system
 if test "$window_system" = "none"; then
-  for feature in menubars scrollbars toolbars dialogs
+  for feature in menubars scrollbars toolbars dialogs dragndrop
   do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
        AC_MSG_WARN([--with-$feature ignored:  Not valid without window system support])
@@ -2492,19 +2493,27 @@ if test "$with_xauth" = "yes"; then
 fi
 AC_SUBST(libs_xauth)
 
-dnl Always compile OffiX unless --without-offix is given or no
-dnl X11 support is compiled in or no standard Xmu.
+dnl Always compile OffiX unless --without-offix is given, no
+dnl X11 support is compiled in, no standard Xmu is avaiable,
+dnl or dragndrop support is disabled
 test "$window_system" != "x11" && with_offix=no
 if test "$with_xmu" != yes -a "$with_x11" = yes; then
   AC_MSG_WARN([No OffiX without real Xmu support])
+  with_offix=no
+fi
+if test "$with_dragndrop" = no; then
+  AC_MSG_WARN([No OffiX without generic Drag'n'Drop support])
   with_offix=no
 fi
 test -z "$with_offix" && with_offix=yes
 if test "$with_offix" = "yes"; then
   AC_DEFINE(HAVE_OFFIX_DND)
   XE_APPEND(offix.o, dnd_objs)
+  XE_APPEND(OffiX, dragndrop_proto)
 fi
 
+dnl This one is for the static initializeds variables in
+dnl offix.c, so that the thing is dumped after lastfile.o
 AC_SUBST(dnd_objs)
 
 dnl Autodetect tooltalk
@@ -2535,11 +2544,31 @@ dnl Autodetect CDE
 test -z "$with_cde" && { AC_CHECK_HEADER(Dt/Dt.h,               , with_cde=no) }
 test -z "$with_cde" && { AC_CHECK_LIB(DtSvc, DtDndDragStart, [:], with_cde=no) }
 test -z "$with_cde" && with_cde=yes
+if test "$with_dragndrop" = no; then
+  AC_MSG_WARN([No CDE without generic Drag'n'Drop support])
+  with_cde=no
+fi
 if test "$with_cde" = "yes" ; then
   AC_DEFINE(HAVE_CDE)
   XE_PREPEND(-lDtSvc, libs_x)
+  XE_APPEND(CDE, dragndrop_proto)
   with_tooltalk=yes # CDE requires Tooltalk
   need_motif=yes    # CDE requires Motif
+fi
+
+dnl Autodetect Drag'n'Drop support
+dnl always included if CDE, Offix, or MSWindows are defined
+AC_MSG_CHECKING(if drag and drop API is needed)
+if test "$with_dragndrop" != "no" ; then
+  if test -n "$dragndrop_proto" ; then
+    with_dragndrop=yes
+    AC_MSG_RESULT([yes (${dragndrop_proto} )])
+    AC_DEFINE(HAVE_DRAGNDROP)
+    XE_APPEND(dragdrop.o, extra_objs)
+  else
+    with_dragndrop=no
+    AC_MSG_RESULT(no)
+  fi
 fi
 
 dnl Autodetect LDAP
@@ -3851,6 +3880,7 @@ test "$with_i18n3"    = yes && echo "  Compiling in I18N support, level 3 (doesn
 test "$with_cde"      = yes && echo "  Compiling in support for CDE."
 test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
+test "$with_dragndrop" = yes && echo "  Compiling in support for Drag'n'Drop ($dragndrop_proto )."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_session"  != no && echo "  Compiling in support for proper session-management."
 case "$with_menubars" in

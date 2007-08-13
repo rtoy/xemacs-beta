@@ -524,16 +524,30 @@ mswindows_output_dibitmap (struct frame *f, struct Lisp_Image_Instance *p,
     }
 
   /* Select the bitmaps into the compatible DC. */
-  if ((old=SelectObject(FRAME_MSWINDOWS_CDC(f),
-			IMAGE_INSTANCE_MSWINDOWS_BITMAP(p))))
+  if ((old=SelectObject(FRAME_MSWINDOWS_CDC (f),
+			IMAGE_INSTANCE_MSWINDOWS_BITMAP (p))))
     {
-      BitBlt(hdc, 
-	     x,y,
-	     width, height, 
-	     FRAME_MSWINDOWS_CDC(f),
-	     0,0, 
-	     SRCCOPY);                  
-      SelectObject(FRAME_MSWINDOWS_CDC(f),old);
+      if (!IMAGE_INSTANCE_MSWINDOWS_MASK (p))
+	{
+	  BitBlt(hdc, 
+		 x,y,
+		 width, height, 
+		 FRAME_MSWINDOWS_CDC (f),
+		 0,0, 
+		 SRCCOPY);                  
+	}
+      else
+	{
+	  MaskBlt(hdc, 
+		  x,y,
+		  width, height, 
+		  FRAME_MSWINDOWS_CDC (f),
+		  0,0, 
+		  IMAGE_INSTANCE_MSWINDOWS_MASK (p),
+		  0,0,
+		  MAKEROP4(SRCINVERT,SRCCOPY));
+	}
+      SelectObject (FRAME_MSWINDOWS_CDC (f),old);
     }
   else
     {
@@ -678,12 +692,10 @@ mswindows_redisplay_deadbox_maybe (struct window *w, CONST RECT* prc)
   int sbh = window_scrollbar_height (w);
   int sbw = window_scrollbar_width (w);
   RECT rect_dead, rect_paint;
-  struct frame *f;
   if (sbh == 0 || sbw == 0)
     return;
 
-  f = XFRAME (WINDOW_FRAME (w));
-  if (f->scrollbar_on_left)
+  if (!NILP (w->scrollbar_on_left_p))
     {
       rect_dead.left = WINDOW_LEFT (w);
       rect_dead.right = WINDOW_LEFT (w) + sbw;
@@ -694,7 +706,7 @@ mswindows_redisplay_deadbox_maybe (struct window *w, CONST RECT* prc)
       rect_dead.right = WINDOW_RIGHT (w);
     }
 
-  if (f->scrollbar_on_top)
+  if (!NILP (w->scrollbar_on_top_p))
     {
       rect_dead.top = WINDOW_TOP (w);
       rect_dead.bottom = WINDOW_TOP (w) + sbh;
@@ -707,8 +719,11 @@ mswindows_redisplay_deadbox_maybe (struct window *w, CONST RECT* prc)
     }
       
   if (IntersectRect (&rect_paint, &rect_dead, prc))
-    FillRect (FRAME_MSWINDOWS_DC (f), &rect_paint,
-	      (HBRUSH) (COLOR_BTNFACE+1));
+    {
+      struct frame *f = XFRAME (WINDOW_FRAME (w));
+      FillRect (FRAME_MSWINDOWS_DC (f), &rect_paint,
+		(HBRUSH) (COLOR_BTNFACE+1));
+    }
 }
 
 #endif /* HAVE_SCROLLBARS */
@@ -1191,7 +1206,7 @@ mswindows_output_vertical_divider (struct window *w, int clear)
 
   /* XXX Not sure about this */
 #ifdef HAVE_SCROLLBARS
-  if (f->scrollbar_on_left)
+  if (!NILP (w->scrollbar_on_left_p))
     rect.left = WINDOW_LEFT (w);
   else
     rect.left = WINDOW_RIGHT (w) - MSWINDOWS_DIVIDER_WIDTH;
@@ -1201,7 +1216,7 @@ mswindows_output_vertical_divider (struct window *w, int clear)
   rect.right = rect.left + MSWINDOWS_DIVIDER_WIDTH;
 
 #ifdef HAVE_SCROLLBARS
-  if (f->scrollbar_on_top)
+  if (!NILP (w->scrollbar_on_top_p))
     rect.top = WINDOW_TOP (w);
   else
 #endif

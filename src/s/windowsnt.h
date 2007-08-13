@@ -162,8 +162,6 @@ typedef int pid_t;
 #define HAVE_MKDIR
 #define HAVE_RMDIR
 #define HAVE_RANDOM
-#define HAVE_BCOPY
-#define HAVE_BCMP
 #define HAVE_LOGB
 #define HAVE_FREXP
 #define HAVE_FMOD
@@ -252,8 +250,6 @@ int wait (int *status);
 
 #define kill    sys_kill
 int kill (int pid, int sig);
-
-#define select  sys_select
 
 /* map to MSVC names */
 #define chdir     _chdir

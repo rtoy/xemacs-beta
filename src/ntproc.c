@@ -327,7 +327,11 @@ create_child (char *exe, char *cmdline, char *env,
     cp->pid = -cp->pid;
 
   /* pid must fit in a Lisp_Int */
+#ifdef USE_UNION_TYPE
+  cp->pid = (cp->pid & ((1U << VALBITS) - 1));
+#else
   cp->pid = (cp->pid & VALMASK);
+#endif
 
   *pPid = cp->pid;
   
@@ -957,284 +961,6 @@ sys_spawnve (int mode, CONST char *cmdname,
   return pid;
 }
 
-/* Emulate the select call
-   Wait for available input on any of the given rfds, or timeout if
-   a timeout is given and no input is detected
-   wfds and efds are not supported and must be NULL.
-
-   For simplicity, we detect the death of child processes here and
-   synchronously call the SIGCHLD handler.  Since it is possible for
-   children to be created without a corresponding pipe handle from which
-   to read output, we wait separately on the process handles as well as
-   the char_avail events for each process pipe.  We only call
-   wait/reap_process when the process actually terminates.  */
-
-/* From ntterm.c */
-extern HANDLE keyboard_handle;
-/* From process.c */
-extern int proc_buffered_char[];
-
-int 
-sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
-	    EMACS_TIME *timeout)
-{
-  SELECT_TYPE orfds;
-  DWORD timeout_ms, start_time;
-  int i, nh, nc, nr;
-  DWORD active;
-  child_process *cp, *cps[MAX_CHILDREN];
-  HANDLE wait_hnd[MAXDESC + MAX_CHILDREN];
-  int fdindex[MAXDESC];   /* mapping from wait handles back to descriptors */
-  
-  timeout_ms = timeout ? (timeout->tv_sec * 1000 + timeout->tv_usec / 1000) : INFINITE;
-
-  /* If the descriptor sets are NULL but timeout isn't, then just Sleep.  */
-  if (rfds == NULL && wfds == NULL && efds == NULL && timeout != NULL) 
-    {
-      Sleep (timeout_ms);
-      return 0;
-    }
-
-  /* Otherwise, we only handle rfds, so fail otherwise.  */
-  if (rfds == NULL || wfds != NULL || efds != NULL)
-    {
-      errno = EINVAL;
-      return -1;
-    }
-  
-  orfds = *rfds;
-  FD_ZERO (rfds);
-  nr = 0;
-  
-  /* Build a list of pipe handles to wait on.  */
-  nh = 0;
-  for (i = 0; i < nfds; i++)
-    if (FD_ISSET (i, &orfds))
-      {
-	if (i == 0)
-	  {
-#if 0
-/* Sync with FSF Emacs 19.34.6 note:  ifdef'ed out in XEmacs */
-	    if (keyboard_handle)
-	      {
-		/* Handle stdin specially */
-		wait_hnd[nh] = keyboard_handle;
-		fdindex[nh] = i;
-		nh++;
-	      }
-#endif
-
-	    /* Check for any emacs-generated input in the queue since
-	       it won't be detected in the wait */
-		if (detect_input_pending ())
-	      {
-		FD_SET (i, rfds);
-		return 1;
-	      }
-	  }
-	else
-	  {
-	    /* Child process and socket input */
-	    cp = fd_info[i].cp;
-	    if (cp)
-	      {
-		int current_status = cp->status;
-
-		if (current_status == STATUS_READ_ACKNOWLEDGED)
-		  {
-		    /* Tell reader thread which file handle to use. */
-		    cp->fd = i;
-		    /* Wake up the reader thread for this process */
-		    cp->status = STATUS_READ_READY;
-		    if (!SetEvent (cp->char_consumed))
-		      DebPrint (("nt_select.SetEvent failed with "
-				 "%lu for fd %ld\n", GetLastError (), i));
-		  }
-
-#ifdef CHECK_INTERLOCK
-		/* slightly crude cross-checking of interlock between threads */
-
-		current_status = cp->status;
-		if (WaitForSingleObject (cp->char_avail, 0) == WAIT_OBJECT_0)
-		  {
-		    /* char_avail has been signalled, so status (which may
-		       have changed) should indicate read has completed
-		       but has not been acknowledged. */
-		    current_status = cp->status;
-		    if (current_status != STATUS_READ_SUCCEEDED &&
-			current_status != STATUS_READ_FAILED)
-		      DebPrint (("char_avail set, but read not completed: status %d\n",
-				 current_status));
-		  }
-		else
-		  {
-		    /* char_avail has not been signalled, so status should
-		       indicate that read is in progress; small possibility
-		       that read has completed but event wasn't yet signalled
-		       when we tested it (because a context switch occurred
-		       or if running on separate CPUs). */
-		    if (current_status != STATUS_READ_READY &&
-			current_status != STATUS_READ_IN_PROGRESS &&
-			current_status != STATUS_READ_SUCCEEDED &&
-			current_status != STATUS_READ_FAILED)
-		      DebPrint (("char_avail reset, but read status is bad: %d\n",
-				 current_status));
-		  }
-#endif
-		wait_hnd[nh] = cp->char_avail;
-		fdindex[nh] = i;
-		if (!wait_hnd[nh]) abort ();
-		nh++;
-#ifdef FULL_DEBUG
-		DebPrint (("select waiting on child %d fd %d\n",
-			   cp-child_procs, i));
-#endif
-	      }
-	    else
-	      {
-		/* Unable to find something to wait on for this fd, skip */
-
-		/* Note that this is not a fatal error, and can in fact
-		   happen in unusual circumstances.  Specifically, if
-		   sys_spawnve fails, eg. because the program doesn't
-		   exist, and debug-on-error is t so Fsignal invokes a
-		   nested input loop, then the process output pipe is
-		   still included in input_wait_mask with no child_proc
-		   associated with it.  (It is removed when the debugger
-		   exits the nested input loop and the error is thrown.)  */
-
-		DebPrint (("sys_select: fd %ld is invalid! ignoring\n", i));
-	      }
-	      }
-	  }
-
-count_children:
-  /* Add handles of child processes.  */
-  nc = 0;
-  for (cp = child_procs+(child_proc_count-1); cp >= child_procs; cp--)
-    /* Some child_procs might be sockets; ignore them.  Also some
-       children may have died already, but we haven't finished reading
-       the process output; ignore them too.  */
-    if (CHILD_ACTIVE (cp) && cp->procinfo.hProcess
-	&& (cp->fd < 0
-	    || (fd_info[cp->fd].flags & FILE_SEND_SIGCHLD) == 0
-	    || (fd_info[cp->fd].flags & FILE_AT_EOF) != 0)
-	)
-      {
-	wait_hnd[nh + nc] = cp->procinfo.hProcess;
-	cps[nc] = cp;
-	nc++;
-      }
-  
-  /* Nothing to look for, so we didn't find anything */
-  if (nh + nc == 0) 
-    {
-      if (timeout)
-	Sleep (timeout_ms);
-      return 0;
-    }
-  
-  /* Wait for input or child death to be signalled.  */
-  start_time = GetTickCount ();
-  active = WaitForMultipleObjects (nh + nc, wait_hnd, FALSE, timeout_ms);
-
-  if (active == WAIT_FAILED)
-    {
-      DebPrint (("select.WaitForMultipleObjects (%d, %lu) failed with %lu\n",
-		 nh + nc, timeout_ms, GetLastError ()));
-      /* don't return EBADF - this causes wait_reading_process_input to
-	 abort; WAIT_FAILED is returned when single-stepping under
-	 Windows 95 after switching thread focus in debugger, and
-	 possibly at other times. */
-      errno = EINTR;
-      return -1;
-    }
-  else if (active == WAIT_TIMEOUT)
-    {
-      return 0;
-    }
-  else if (active >= WAIT_OBJECT_0 &&
-	   active < WAIT_OBJECT_0+MAXIMUM_WAIT_OBJECTS)
-    {
-      active -= WAIT_OBJECT_0;
-    }
-  else if (active >= WAIT_ABANDONED_0 &&
-	   active < WAIT_ABANDONED_0+MAXIMUM_WAIT_OBJECTS)
-    {
-      active -= WAIT_ABANDONED_0;
-    }
-  else
-    abort ();
-
-  /* Loop over all handles after active (now officially documented as
-     being the first signalled handle in the array).  We do this to
-     ensure fairness, so that all channels with data available will be
-     processed - otherwise higher numbered channels could be starved. */
-  do
-    {
-      if (active >= nh)
-	{
-	  cp = cps[active - nh];
-
-	  /* We cannot always signal SIGCHLD immediately; if we have not
-	     finished reading the process output, we must delay sending
-	     SIGCHLD until we do.  */
-
-	  if (cp->fd >= 0 && (fd_info[cp->fd].flags & FILE_AT_EOF) == 0)
-	    fd_info[cp->fd].flags |= FILE_SEND_SIGCHLD;
-	  /* SIG_DFL for SIGCHLD is ignore */
-	  else 
-	    {
-#ifdef FULL_DEBUG
-	      DebPrint (("select is raising SIGCHLD handler for pid %d\n",
-			 cp->pid));
-#endif
-	      dead_child = cp;
-	      /* msw_raise (SIGCHLD); -kkm: I will erase this file
-		 slowly, line by line, character by character,
-		 I will press undo often, to prolong this.
-		 Even such a revenge will not be enough for it!!! */
-	      dead_child = NULL;
-	    }
-	}
-      else if (fdindex[active] == 0)
-	{
-	  /* Keyboard input available */
-	  FD_SET (0, rfds);
-	  nr++;
-	    }
-      else
-	{
-	  /* must be a socket or pipe - read ahead should have
-             completed, either succeeding or failing.  */
-	  FD_SET (fdindex[active], rfds);
-	  nr++;
-	}
-
-      /* Even though wait_reading_process_output only reads from at most
-	 one channel, we must process all channels here so that we reap
-	 all children that have died.  */
-      while (++active < nh + nc)
-	if (WaitForSingleObject (wait_hnd[active], 0) == WAIT_OBJECT_0)
-	  break;
-    } while (active < nh + nc);
-
-  /* If no input has arrived and timeout hasn't expired, wait again.  */
-  if (nr == 0)
-    {
-      DWORD elapsed = GetTickCount () - start_time;
-
-      if (timeout_ms > elapsed)	/* INFINITE is MAX_UINT */
-	{
-	  if (timeout_ms != INFINITE)
-	    timeout_ms -= elapsed;
-	  goto count_children;
-	}
-    }
-
-  return nr;
-}
-
 /* Substitute for certain kill () operations */
 
 static BOOL CALLBACK
@@ -1493,75 +1219,6 @@ set_process_dir (char * dir)
 {
   process_dir = dir;
 }
-
-#ifdef HAVE_SOCKETS
-
-/* To avoid problems with winsock implementations that work over dial-up
-   connections causing or requiring a connection to exist while Emacs is
-   running, Emacs no longer automatically loads winsock on startup if it
-   is present.  Instead, it will be loaded when open-network-stream is
-   first called.
-
-   To allow full control over when winsock is loaded, we provide these
-   two functions to dynamically load and unload winsock.  This allows
-   dial-up users to only be connected when they actually need to use
-   socket services.  */
-
-/* From nt.c */
-extern HANDLE winsock_lib;
-extern BOOL term_winsock (void);
-extern BOOL init_winsock (int load_now);
-
-extern Lisp_Object Vsystem_name;
-
-DEFUN ("win32-has-winsock", Fwin32_has_winsock, 0, 1, "", /*
-Test for presence of the Windows socket library `winsock'.
-Returns non-nil if winsock support is present, nil otherwise.
-
-If the optional argument LOAD-NOW is non-nil, the winsock library is
-also loaded immediately if not already loaded.  If winsock is loaded,
-the winsock local hostname is returned (since this may be different from
-the value of `system-name' and should supplant it), otherwise t is
-returned to indicate winsock support is present.
-*/
-	(load_now))
-{
-  int have_winsock;
-
-  have_winsock = init_winsock (!NILP (load_now));
-  if (have_winsock)
-    {
-      if (winsock_lib != NULL)
-	{
-	  /* Return new value for system-name.  The best way to do this
-	     is to call init_system_name, saving and restoring the
-	     original value to avoid side-effects.  */
-	  Lisp_Object orig_hostname = Vsystem_name;
-	  Lisp_Object hostname;
-
-	  init_system_name ();
-	  hostname = Vsystem_name;
-	  Vsystem_name = orig_hostname;
-	  return hostname;
-	}
-      return Qt;
-    }
-  return Qnil;
-}
-
-DEFUN ("win32-unload-winsock", Fwin32_unload_winsock, 0, 0, "", /*
-Unload the Windows socket library `winsock' if loaded.
-This is provided to allow dial-up socket connections to be disconnected
-when no longer needed.  Returns nil without unloading winsock if any
-socket connections still exist.
-*/
-	())
-{
-  return term_winsock () ? Qt : Qnil;
-}
-
-#endif /* HAVE_SOCKETS */
-
 
 /* Some miscellaneous functions that are Windows specific, but not GUI
    specific (ie. are applicable in terminal or batch mode as well).  */
@@ -1818,10 +1475,6 @@ syms_of_ntproc ()
   Qhigh = intern ("high");
   Qlow = intern ("low");
 
-#ifdef HAVE_SOCKETS
-  DEFSUBR (Fwin32_has_winsock);
-  DEFSUBR (Fwin32_unload_winsock);
-#endif
   DEFSUBR (Fwin32_short_file_name);
   DEFSUBR (Fwin32_long_file_name);
   DEFSUBR (Fwin32_set_process_priority);
@@ -1862,7 +1515,7 @@ otherwise respond to interrupts from Emacs.
 */ );
   Vwin32_start_process_share_console = Qnil;
 
-  DEFVAR_INT ("win32-pipe-read-delay", &Vwin32_pipe_read_delay /*
+  DEFVAR_LISP ("win32-pipe-read-delay", &Vwin32_pipe_read_delay /*
     Forced delay before reading subprocess output.
 This is done to improve the buffering of subprocess output, by
 avoiding the inefficiency of frequently reading small amounts of data.
@@ -1872,7 +1525,7 @@ reading the subprocess output.  If negative, the magnitude is the number
 of time slices to wait (effectively boosting the priority of the child
 process temporarily).  A value of zero disables waiting entirely.
 */ );
-  Vwin32_pipe_read_delay = 50;
+  Vwin32_pipe_read_delay = make_int (50);
 
 #if 0
   DEFVAR_LISP ("win32-generate-fake-inodes", &Vwin32_generate_fake_inodes /*

@@ -75,6 +75,30 @@
   (if (featurep 'athena-scrollbars)
       (x-init-specifier-from-resources
        (specifier-fallback scrollbar-height) 'natnum locale
-       '("scrollbar.height" . "ScrollBar.Height"))))
+       '("scrollbar.height" . "ScrollBar.Height")))
+
+  ;; Now do ScrollBarPlacement.scrollBarPlacement
+  (let ((case-fold-search t)
+	(resval (x-get-resource-and-maybe-bogosity-check
+		 "ScrollBarPlacement" "scrollBarPlacement" 'string locale)))
+    (cond
+     ((null resval))
+     ((string-match "^top_left$" resval)
+      (set-specifier scrollbar-on-top-p t locale)
+      (set-specifier scrollbar-on-left-p t locale))
+     ((string-match "^top_right$" resval)
+      (set-specifier scrollbar-on-top-p t locale)
+      (set-specifier scrollbar-on-left-p nil locale))
+     ((string-match "^bottom_left$" resval)
+      (set-specifier scrollbar-on-top-p nil locale)
+      (set-specifier scrollbar-on-left-p t locale))
+     ((string-match "^bottom_right$" resval)
+      (set-specifier scrollbar-on-top-p nil locale)
+      (set-specifier scrollbar-on-left-p nil locale))
+     (t
+      (display-warning 'resource
+	(format "Illegal value '%s' for scrollBarPlacement resource" resval)))))
+
+)
 
 ;;; x-scrollbar.el ends here

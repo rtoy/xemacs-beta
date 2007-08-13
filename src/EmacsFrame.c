@@ -254,8 +254,6 @@ update_various_frame_slots (EmacsFrame ew)
 {
   ew->emacs_frame.frame->pixheight = ew->core.height;
   ew->emacs_frame.frame->pixwidth = ew->core.width;
-  ew->emacs_frame.frame->internal_border_width =
-    ew->emacs_frame.internal_border_width;
 }
 
 static void
@@ -267,6 +265,9 @@ EmacsFrameInitialize (Widget request, Widget new,
 
   if (!f)
     fatal ("can't create an emacs frame widget without a frame.");
+
+  ew->emacs_frame.frame->internal_border_width =
+    ew->emacs_frame.internal_border_width;
 }
 
 void emacs_Xt_event_handler (Widget wid /* unused */,
@@ -350,8 +351,9 @@ EmacsFrameResize (Widget widget)
   int rows;
   XtWidgetGeometry req, repl;
 
-  pixel_to_char_size (f, ew->core.width, ew->core.height, &columns, &rows);
   update_various_frame_slots (ew);
+
+  pixel_to_char_size (f, ew->core.width, ew->core.height, &columns, &rows);
   change_frame_size (f, rows, columns, 0);
 
   /* Now we tell the EmacsShell that we've changed the size of the non-fixed
@@ -371,13 +373,14 @@ EmacsFrameResize (Widget widget)
 
 static Boolean
 EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
-		      ArgList dum1, Cardinal *dum2)
+		      ArgList argv, Cardinal *argc)
 {
   EmacsFrame cur = (EmacsFrame) cur_widget;
   EmacsFrame new = (EmacsFrame) new_widget;
+  struct frame *f = new->emacs_frame.frame;
   Lisp_Object frame;
 
-  XSETFRAME (frame, new->emacs_frame.frame);
+  XSETFRAME (frame, f);
   in_resource_setting++;
   /* This function does not need to do much.  Pretty much everything
      interesting will get done in the resize method, which will
@@ -397,13 +400,18 @@ EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
     x_wm_set_shell_iconic_p (FRAME_X_SHELL_WIDGET (new->emacs_frame.frame),
 			     new->emacs_frame.iconic);
 
-  if (!in_specifier_change_function)
-    {
       /* If we got here, then we were likely called as a result of
 	 the EditRes protocol, so go ahead and change scrollbar-width
 	 and scrollbar-height.  Otherwise, we're merely mirroring
 	 a change made to scrollbar-width etc. so don't do anything
 	 special. */
+  if (cur->emacs_frame.internal_border_width !=
+      new->emacs_frame.internal_border_width)
+    {
+      f->internal_border_width = new->emacs_frame.internal_border_width;
+      MARK_FRAME_SIZE_SLIPPED (f);
+    }
+    
 #ifdef HAVE_SCROLLBARS
       if (cur->emacs_frame.scrollbar_width !=
 	  new->emacs_frame.scrollbar_width)
@@ -468,8 +476,26 @@ EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
 	   make_int (new->emacs_frame.right_toolbar_border_width),
 	   frame, Qnil, Qnil);
 #endif /* HAVE_TOOLBARS */
-    }
+
   in_resource_setting--;
+
+  /* If the request was to resize us, but the size has not changed, Xt
+     will do nothing, and won't call our resize callback. Since such a
+     request might be issued as a result of hiding/showing menubar or
+     changing toolbar placement, where we rely on relayout made by the
+     callback, we go ahead and simulate such a call */
+  if (cur->core.width == new->core.width
+      && cur->core.height == new->core.height)
+    {
+      int i;
+      for (i=0; i<*argc; i++)
+	if (strcmp (argv[i].name, XtNwidth) == 0
+	    || strcmp (argv[i].name, XtNheight) == 0)
+	  {
+	    EmacsFrameResize (new_widget);
+	    break;
+	  }
+    }
 
   return False;
 

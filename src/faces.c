@@ -1580,6 +1580,10 @@ static void
 update_EmacsFrame (Lisp_Object frame, Lisp_Object name)
 {
   struct frame *frm = XFRAME (frame);
+
+  if (EQ (name, Qfont))
+    MARK_FRAME_SIZE_SLIPPED (frm);
+
   MAYBE_FRAMEMETH (frm, update_frame_external_traits, (frm, name));
 }
 

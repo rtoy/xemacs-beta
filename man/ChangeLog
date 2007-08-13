@@ -1,3 +1,12 @@
+1998-05-05  Oliver Graf <ograf@fga.de>
+
+	* commands.texi: exchange of dnd-drop with misc-user
+
+1998-05-04  Martin Buchholz  <martin@xemacs.org>
+
+	* internals.texi (Techniques for XEmacs Developers): Add some more 
+	comments on adding new files, inspired by Olivier Galibert.
+
 1998-05-02  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* lispref/windows.texi (Vertical Scrolling): Fixup docstring for

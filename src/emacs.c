@@ -890,6 +890,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_elhash ();
       syms_of_emacs ();
       syms_of_eval ();
+#ifdef HAVE_DRAGNDROP
+      syms_of_dragdrop ();
+#endif
       syms_of_event_stream ();
       syms_of_events ();
       syms_of_extents ();
@@ -2220,21 +2223,22 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 	("Your files have been auto-saved.\n"
 	 "Use `M-x recover-session' to recover them.\n"
 	 "\n"
+#ifdef INFODOCK
+	 "Please report this bug by selecting `Report-Bug' in the InfoDock\n"
+	 "menu.\n"
+#else
 	 "Please report this bug by running the send-pr script included\n"
 	 "with XEmacs, or selecting `Send Bug Report' from the help menu.\n"
 	 "As a last resort send ordinary email to `crashes@xemacs.org'.\n"
-	 "*MAKE SURE* to include as much configuration information as\n"
-	 "possible; at the very least what OS and hardware you are running\n"
-	 "on, and hopefully also what compiler and compiler options the\n"
-	 "binary was compiled with, what options XEmacs was compiled with,\n"
-	 "whether you are using a prebuilt binary from ftp.xemacs.org or\n"
-	 "compiled XEmacs yourself for your system, etc.\n"
+#endif
+	 "*MAKE SURE* to include the information in the command\n"
+	 "M-x describe-installation.\n"
 	 "\n"
 	 "If at all possible, *please* try to obtain a C stack backtrace;\n"
 	 "it will help us immensely in determining what went wrong.\n"
 	 "To do this, locate the core file that was produced as a result\n"
 	 "of this crash (it's usually called `core' and is located in the\n"
-	 "directory in which you started XEmacs, or maybe in your home\n"
+	 "directory in which you started the editor, or maybe in your home\n"
 	 "directory), and type\n"
 	 "\n"
 	 "  gdb ");

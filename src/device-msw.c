@@ -135,40 +135,30 @@ mswindows_delete_device (struct device *d)
   DdeUninitialize (mswindows_dde_mlid);
 }
 
-static int
-mswindows_device_pixel_width (struct device *d)
+static Lisp_Object
+mswindows_device_system_metrics (struct device *d,
+				 enum device_metrics m)
 {
-  return(DEVICE_MSWINDOWS_HORZRES(d));
-}
+  switch (m)
+    {
+    case size_device:
+      return Fcons (make_int (DEVICE_MSWINDOWS_HORZRES(d)),
+		    make_int (DEVICE_MSWINDOWS_VERTRES(d)));
+      break;
+    case size_device_mm:
+      return Fcons (make_int (DEVICE_MSWINDOWS_HORZSIZE(d)),
+		    make_int (DEVICE_MSWINDOWS_VERTSIZE(d)));
+      break;
+    case num_bit_planes:
+      return make_int (DEVICE_MSWINDOWS_PLANES(d));
+      break;
+    case num_color_cells:
+      return make_int (DEVICE_MSWINDOWS_CELLS(d));
+      break;
+    }
 
-static int
-mswindows_device_pixel_height (struct device *d)
-{
-  return(DEVICE_MSWINDOWS_VERTRES(d));
-}
-
-static int
-mswindows_device_mm_width (struct device *d)
-{
-  return(DEVICE_MSWINDOWS_HORZSIZE(d));
-}
-
-static int
-mswindows_device_mm_height (struct device *d)
-{
-  return(DEVICE_MSWINDOWS_VERTSIZE(d));
-}
-
-static int
-mswindows_device_bitplanes (struct device *d)
-{
-  return(DEVICE_MSWINDOWS_PLANES(d));
-}
-
-static int
-mswindows_device_color_cells (struct device *d)
-{
-  return(DEVICE_MSWINDOWS_CELLS(d));
+  /* Do not know such property */
+  return Qnil;
 }
 
 static unsigned int
@@ -208,12 +198,7 @@ console_type_create_device_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, finish_init_device);
 /*  CONSOLE_HAS_METHOD (mswindows, mark_device); */
   CONSOLE_HAS_METHOD (mswindows, delete_device);
-  CONSOLE_HAS_METHOD (mswindows, device_pixel_width);
-  CONSOLE_HAS_METHOD (mswindows, device_pixel_height);
-  CONSOLE_HAS_METHOD (mswindows, device_mm_width);
-  CONSOLE_HAS_METHOD (mswindows, device_mm_height);
-  CONSOLE_HAS_METHOD (mswindows, device_bitplanes);
-  CONSOLE_HAS_METHOD (mswindows, device_color_cells);
+  CONSOLE_HAS_METHOD (mswindows, device_system_metrics);
   CONSOLE_HAS_METHOD (mswindows, device_implementation_flags);
 }
 

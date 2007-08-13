@@ -1271,6 +1271,7 @@ make_float (double float_value)
 
   ALLOCATE_FIXED_TYPE (float, struct Lisp_Float, f);
   set_lheader_implementation (&(f->lheader), lrecord_float);
+  float_next (f) = ((struct Lisp_Float *) -1);
   float_data (f) = float_value;
   XSETFLOAT (val, f);
   return val;
@@ -2748,6 +2749,7 @@ make_pure_float (double num)
   pure_bytes_used += sizeof (struct Lisp_Float);
   bump_purestat (&purestat_float, sizeof (struct Lisp_Float));
 
+  float_next (f) = ((struct Lisp_Float *) -1);
   float_data (f) = num;
   XSETFLOAT (val, f);
   return val;

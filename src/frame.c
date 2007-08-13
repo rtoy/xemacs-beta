@@ -54,9 +54,7 @@ Lisp_Object Vmouse_leave_frame_hook, Qmouse_leave_frame_hook;
 Lisp_Object Vmap_frame_hook, Qmap_frame_hook;
 Lisp_Object Vunmap_frame_hook, Qunmap_frame_hook;
 int  allow_deletion_of_last_visible_frame;
-#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-Lisp_Object Vdrag_and_drop_functions, Qdrag_and_drop_functions;
-#endif
+Lisp_Object Vadjust_frame_function;
 Lisp_Object Vmouse_motion_handler;
 Lisp_Object Vsynchronize_minibuffers;
 Lisp_Object Qsynchronize_minibuffers;
@@ -617,8 +615,71 @@ unhold_frame_size_changes (void)
   FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
     unhold_one_frame_size_changes (XFRAME (XCAR (frmcons)));
 }
+
+/*
+ * Frame size may change due to changes in scrollbars, toolbars,
+ * default font etc. These changes are applied early in redisplay
+ * frame.
+ */
+void
+adjust_frame_size (struct frame *f)
+{
+  int keep_char_size = 0;
+  Lisp_Object frame;
+  XSETFRAME (frame, f);
 
+  if (!f->size_slipped)
+    return;
 
+  /* Don't adjust tty frames. #### May break when TTY have menubars.
+     Then, write an Vadjust_frame_function which will return t for TTY
+     frames. Another solution is frame_size_fixed_p method for TTYs,
+     which always returned yes it's fixed.
+  */
+  if (!FRAME_WIN_P (f))
+    {
+      CLEAR_FRAME_SIZE_SLIPPED (f);
+      return;
+    }
+
+  /* frame_size_fixed_p tells that frame size cannot currently
+     be changed change due to external conditions */
+  if (!FRAMEMETH_OR_GIVEN (f, frame_size_fixed_p, (f), 0))
+    {
+      if (NILP (Vadjust_frame_function))
+	keep_char_size = 1;
+      else if (EQ (Vadjust_frame_function, Qt))
+	keep_char_size = 0;
+      else
+	keep_char_size =
+	  NILP (call1_trapping_errors ("Error in adjust-frame-function",
+				       Vadjust_frame_function, frame));
+
+      if (keep_char_size)
+	Fset_frame_size (frame, make_int (FRAME_CHARWIDTH(f)),
+			 make_int (FRAME_CHARHEIGHT(f)), Qnil);
+    }
+
+  if (!keep_char_size)
+    {
+      int height, width;
+      pixel_to_char_size (f, FRAME_PIXWIDTH(f), FRAME_PIXHEIGHT(f),
+			  &width, &height);
+      change_frame_size (f, height, width, 0);
+      CLEAR_FRAME_SIZE_SLIPPED (f);
+    }
+}
+
+/*
+ * This is a "specifier changed in frame" handler for various specifiers
+ * changing which causes frame size adjustment
+ */
+void
+frame_size_slipped (Lisp_Object specifier, struct frame *f,
+		    Lisp_Object oldval)
+{
+  MARK_FRAME_SIZE_SLIPPED(f);
+}
 
 DEFUN ("framep", Fframep, 1, 1, 0, /*
 Return non-nil if OBJECT is a frame.
@@ -681,7 +742,7 @@ a (sit-for 0) within the scope of the binding.
 
   /* select the frame's selected window.  This will call
      selected_frame_1(). */
-  Fselect_window (FRAME_SELECTED_WINDOW (XFRAME (frame)));
+  Fselect_window (FRAME_SELECTED_WINDOW (XFRAME (frame)), Qnil);
 
   /* Nothing should be depending on the return value of this function.
      But, of course, there is stuff out there which is. */
@@ -860,7 +921,7 @@ If FRAME is the selected frame, this makes WINDOW the selected window.
     error ("In `set-frame-selected-window', WINDOW is not on FRAME");
 
   if (XFRAME (frame) == selected_frame ())
-    return Fselect_window (window);
+    return Fselect_window (window, Qnil);
 
   set_frame_selected_window (XFRAME (frame), window);
   return window;
@@ -1459,7 +1520,7 @@ delete_frame_internal (struct frame *f, int force,
       /* If the dying minibuffer window was selected,
 	 select the new one.  */
       if (minibuffer_selected)
-	Fselect_window (minibuf_window);
+	Fselect_window (minibuf_window, Qnil);
     }
 
   /* After this point, no errors must be allowed to occur. */
@@ -2480,6 +2541,9 @@ No argument or nil as argument means use selected frame as FRAME.
 static void
 internal_set_frame_size (struct frame *f, int cols, int rows, int pretend)
 {
+  /* An explicit size change cancels any pending frame size adjustment */
+  CLEAR_FRAME_SIZE_SLIPPED(f);
+
   if (pretend || !HAS_FRAMEMETH_P (f, set_frame_size))
     change_frame_size (f, rows, cols, 0);
   else
@@ -2856,6 +2920,15 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 	f->pixwidth = newwidth;
     }
 
+  if (window_system_pixelated_geometry (frame))
+    pixel_to_real_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
+			     &FRAME_CHARWIDTH (f), &FRAME_CHARHEIGHT (f));
+  else
+    {
+      FRAME_CHARWIDTH (f) = FRAME_WIDTH (f);
+      FRAME_CHARHEIGHT (f) = FRAME_HEIGHT (f);
+    }
+      
   MARK_FRAME_TOOLBARS_CHANGED (f);
   MARK_FRAME_CHANGED (f);
   f->echo_area_garbaged = 1;
@@ -2999,9 +3072,6 @@ syms_of_frame (void)
   defsymbol (&Qmouse_leave_frame_hook, "mouse-leave-frame-hook");
   defsymbol (&Qmap_frame_hook, "map-frame-hook");
   defsymbol (&Qunmap_frame_hook, "unmap-frame-hook");
-#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-  defsymbol (&Qdrag_and_drop_functions, "drag-and-drop-functions");
-#endif
 
   defsymbol (&Qframep, "framep");
   defsymbol (&Qframe_live_p, "frame-live-p");
@@ -3189,16 +3259,19 @@ One argument, the frame.
 */ );
   allow_deletion_of_last_visible_frame = 0;
 
-#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-  DEFVAR_LISP ("drag-and-drop-functions", &Vdrag_and_drop_functions /*
-Function or functions to run when an object is dropped on a frame.
-Each function is called with either two or three args.  If called with
-two args, the args are a frame and a pathname.  If with three, the
-args are a frame, a pathname (which will be either a string or nil)
-and the textual representation of the dragged object.
+  DEFVAR_LISP ("adjust-frame-function", &Vadjust_frame_function /*
+Function or constant controlling adjustment of frame.
+When scrollbars, toolbars, default font etc. change in frame, the frame
+needs to be adjusted. The adjustment is controlled by this variable.
+Legal values are:
+  nil to keep character frame size unchanged when possible (resize)
+  t   to keep pixel size unchanged (never resize)
+  function symbol or lambda form. This function must return boolean
+      value which is treated as above. Function is passed one parameter,
+      the frame being adjusted. It function should not modify or delete
+      the frame.
 */ );
-  Vdrag_and_drop_functions = Qnil;
-#endif /* HAVE_CDE || HAVE_OFFIX_DND || HAVE_MS_WINDOWS */
+  Vadjust_frame_function = Qnil;
 
   DEFVAR_LISP ("mouse-motion-handler", &Vmouse_motion_handler /*
 Handler for motion events.  One arg, the event.

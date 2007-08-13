@@ -1,4 +1,4 @@
-;;; x-toolbar.el -- Runtime initialization of XEmacs toolbar
+;;; toolbar-items.el -- Static initialization of XEmacs toolbar
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1994 Andy Piper <andyp@parallax.demon.co.uk>
@@ -29,7 +29,8 @@
 
 ;;; Commentary:
 
-;; This file is dumped with XEmacs (when X and toolbar support is compiled in).
+;; This file is dumped with XEmacs (when window system and toolbar support
+;; is compiled in).
 
 ;; Miscellaneous toolbar functions, useful for users to redefine, in
 ;; order to get different behaviour.
@@ -583,4 +584,4 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
    right-toolbar-border-width 'natnum locale
    '("rightToolBarBorderWidth" . "RightToolBarBorderWidth")))
 
-;;; x-toolbar.el ends here
+;;; toolbar-items.el ends here

@@ -5927,6 +5927,14 @@ redisplay_frame (struct frame *f, int preemption_check)
   if (f->size_change_pending)
     change_frame_size (f, f->new_height, f->new_width, 0);
 
+  /* If frame size might need to be changed, due to changed size
+     of toolbars, scroolabrs etc, change it now */
+  if (f->size_slipped)
+    {
+      adjust_frame_size (f);
+      assert (!f->size_slipped);
+    }
+  
   /* The menubar, toolbar, and icon updates must be done before
      hold_frame_size_changes is called and we are officially
      'in_display'.  They may eval lisp code which may call Fsignal.
@@ -6061,9 +6069,8 @@ redisplay_device (struct device *d)
       if (f->buffers_changed  || f->clip_changed  || f->extents_changed ||
 	  f->faces_changed    || f->frame_changed || f->menubar_changed ||
 	  f->modeline_changed || f->point_changed || f->size_changed    ||
-	  f->toolbar_changed  || f->windows_changed ||
-	  f->windows_structure_changed ||
-	  f->glyphs_changed)
+	  f->toolbar_changed  || f->windows_changed || f->size_slipped  ||
+	  f->windows_structure_changed || f->glyphs_changed)
 	{
 	  preempted = redisplay_frame (f, 0);
 	}
@@ -6270,11 +6277,14 @@ window_line_number (struct window *w, int type)
 {
   struct device *d = XDEVICE (XFRAME (w->frame)->device);
   struct buffer *b = XBUFFER (w->buffer);
+  /* Be careful in the order of these tests. The first clasue will
+     fail if DEVICE_SELECTED_FRAME == Qnil (since w->frame cannot be).
+     This can occur when the frame title is computed really early */ 
   Bufpos pos =
-    (((w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d)))) &&
+    ((EQ(DEVICE_SELECTED_FRAME(d), w->frame) &&
+       (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame(d)))) &&
       EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d &&
-      EQ(DEVICE_SELECTED_FRAME(d), w->frame))
+      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d )
      ? BUF_PT (b)
      : marker_position (w->pointm[type]));
   EMACS_INT line;
@@ -6293,7 +6303,11 @@ window_line_number (struct window *w, int type)
    represents.
 
    This function is largely unchanged from previous versions of the
-   redisplay engine. */
+   redisplay engine.
+
+   Warning! This code is also used for frame titles and can be called
+   very early in the device/frame update process!  JV
+*/
 
 static void
 decode_mode_spec (struct window *w, Emchar spec, int type)
@@ -6362,8 +6376,9 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 #ifdef HAVE_TTY
       {
 	struct frame *f = XFRAME (w->frame);
-	if (FRAME_TTY_P (f) && f->order_count > 1)
+	if (FRAME_TTY_P (f) && f->order_count > 1 && f->order_count <= 99999999)
 	  {
+	    /* Naughty, naughty */
 	    char * writable_str = alloca_array (char, 10);
 	    sprintf (writable_str, "-%d", f->order_count);
 	    str = writable_str;

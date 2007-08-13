@@ -1,0 +1,41 @@
+ * Sun May 3 1998 Oliver Graf <ograf@fga.de>
+
+This path contains test code for the new XEmacs
+Drag'n'Drop code.
+
+Currently only drags are of interest. The internal
+functions only work for OffiX. MSWindows and CDE
+are broken with this patch.
+
+The OffiX functions in mouse.el also work no longer,
+because drags are now misc-user-events.
+
+The misc-user-event now also responds as a button-x-event
+to the event-* query functions.
+
+The function of a drag is called dragdrop-drop-dispatch
+as you can see in droptest.el. From within the function
+you can access the actual misc-user-event through the
+current-mouse-event variable.
+
+dragtest.el works theoretically, but it needs to be
+adapted to some new scheme fitting the drop code.
+
+Short description of the object part of a drop misc-user-event:
+( TYPE . DATA )
+TYPE is either the symbol dragdrop_MIME
+     or the symbol dragdrop_URL
+
+DATA is a list of URL strings if TYPE is dragdrop_URL
+     if TYPE is dragdrop_MIME DATA is either a string
+     which contains the MIME data, or it is a list of
+     ( CONTENT-TYPE CONTENT-ENCODING MIME-DATA )
+
+     For DATA I am thinking of some different scheme:
+     perhaps it would be more efficient to split the
+     MIME data into header and body, make a plist from
+     the header (for easy access), pre-convert the body
+     to 8bit, and also attach the original data.
+     This would make the access easier, but it would
+     require that I do a lot of MIME stuff in C, a thing
+     that tm-mime-view already does for us.

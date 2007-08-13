@@ -1408,7 +1408,7 @@ x_output_vertical_divider (struct window *w, int clear)
   int y1, y2;
 
 #ifdef HAVE_SCROLLBARS
-  if (f->scrollbar_on_left)
+  if (!NILP (w->scrollbar_on_left_p))
 #endif
     x1 = WINDOW_LEFT (w);
 #ifdef HAVE_SCROLLBARS
@@ -1418,7 +1418,7 @@ x_output_vertical_divider (struct window *w, int clear)
   x2 = x1 + X_DIVIDER_SPACING;
 
 #ifdef HAVE_SCROLLBARS
-  if (f->scrollbar_on_top)
+  if (!NILP (w->scrollbar_on_top_p))
     y1 = WINDOW_TOP (w);
   else
 #endif

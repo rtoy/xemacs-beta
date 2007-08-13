@@ -68,7 +68,10 @@ Lisp_Object Qload, Qload_file_name;
 Lisp_Object Qlocate_file_hash_table;
 Lisp_Object Qfset;
 
+/* See read_escape() for an explanation of this.  */
+#if 0
 int fail_on_bucky_bit_character_escapes;
+#endif
 
 /* This symbol is also used in fns.c */
 #define FEATUREP_SYNTAX
@@ -1593,11 +1596,21 @@ read_escape (Lisp_Object readcharfun)
 	c = read_escape (readcharfun);
       return c | 0200;
 
-#ifndef MULE
-#define FSF_KEYS
-#endif
-#ifdef FSF_KEYS
+      /* Originally, FSF_KEYS provided a degree of FSF Emacs
+	 compatibility by defining character "modifiers" alt, super,
+	 hyper and shift to infest the characters (i.e. integers).
 
+	 However, this doesn't cut it for XEmacs 20, which
+	 distinguishes characters from integers.  Without Mule, ?\H-a
+	 simply returns ?a because every character is clipped into
+	 0-255.  Under Mule it is much worse -- ?\H-a with FSF_KEYS
+	 produces an illegal character, and moves us to crash-land.
+
+         For these reasons, FSF_KEYS hack is useless and without hope
+         of ever working under XEmacs 20.  */
+#undef FSF_KEYS
+
+#ifdef FSF_KEYS
 #define alt_modifier   (0x040000)
 #define super_modifier (0x080000)
 #define hyper_modifier (0x100000)
@@ -3146,6 +3159,8 @@ You cannot count on them to still be there!
 */ );
   Vsource_directory = Qnil;
 
+  /* See read_escape().  */
+#if 0
   /* Used to be named `puke-on-fsf-keys' */
   DEFVAR_BOOL ("fail-on-bucky-bit-character-escapes",
 	       &fail_on_bucky_bit_character_escapes /*
@@ -3153,6 +3168,7 @@ Whether `read' should signal an error when it encounters unsupported
 character escape syntaxes or just read them incorrectly.
 */ );
   fail_on_bucky_bit_character_escapes = 0;
+#endif
 
   /* This must be initialized in init_lread otherwise it may start out
      with values saved when the image is dumped. */

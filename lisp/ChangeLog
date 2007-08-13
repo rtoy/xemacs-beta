@@ -1,3 +1,127 @@
+1998-05-06  Oliver Graf <ograf@fga.de>
+
+	* dragdrop.el (dragdrop-drop-dispatch): changed to new list concept
+	(dragdrop-drop-url-default) default handler for URL drops created
+	(dragdrop-drop-mime-default) default handler for MIME drops created
+	(dragdrop-drop-functions) default custom for handling drops created
+	(dragdrop-drop-do-functions) helper for drgadrop-drop-dispatch
+
+1998-05-05  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* mouse.el: Removed redundant mouse-mswindows-drop function.
+
+1998-05-05  Oliver Graf <ograf@fga.de>
+
+	* about.el: changed some text in my entry
+	* dragdrop.el: added customs
+
+1998-05-04  Oliver Graf <ograf@fga.de>
+
+	* mouse.el: killed global drop key bindings
+	(mouse-offix-drop) removed
+	* dragdrop.el: created
+	* dumped-lisp.el: inclusion of dragdrop.el for window-systems
+
+1998-05-09  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* x-scrollbar.el (x-init-scrollbar-from-resources): Initialize
+	scrollbar-on-{left,top}-p from *scrollBarPlacement resources.
+
+	* x-misc.el (x-get-resource-and-maybe-bogosity-check): Removed
+	obsolete comment.
+
+	* scrollbar.el (scrollbars-visible-p): Use new
+	{vertical,horizontal}-scrollbar-visible-p specifiers.
+
+1998-04-18  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* device.el (device-pixel-height): 
+	(device-pixel-width): 
+	(device-mm-width): 
+	(device-mm-height): 
+	(device-bitplanes): 
+	(device-color-cells): Moved these 6 functions from device.c; they
+	all use single (device-system-metrics) call.
+
+1998-05-09  SL Baur  <steve@altair.xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list): x-menubar.el and x-toolbar.el
+	were renamed.
+
+	* menubar-items.el: 
+	* toolbar-items.el: Renamed from x-menubar/x-toolbar.
+	Suggested by Hrvoje Niksic <hniksic@srce.hr>
+
+	* help.el (help-map): Remove Hyperbole keybinding logic.
+	Suggested by: Michael Ernst <mernst@cs.washington.edu>
+
+1998-05-08  SL Baur  <steve@altair.xemacs.org>
+
+	* x-menubar.el (default-menubar): Enable 'mail-user-agent' feature.
+	From SAKIYAMA Nobuo <nobuo@db3.so-net.or.jp>
+
+1998-05-07  Andy Piper  <andyp@parallax.co.uk>
+
+	* msw-glyphs.el: use nicer icon3 from the frame icon.
+
+1998-05-07  SL Baur  <steve@altair.xemacs.org>
+
+	* version.el (emacs-version): Remove InfoDock conditionals.
+
+	* startup.el (startup-splash-frame): Change ID logo name.
+
+1998-05-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* files.el (after-find-file): If the user presses C-g on
+	directory-creation prompt, kill the buffer.
+
+1998-05-06  SL Baur  <steve@altair.xemacs.org>
+
+	* simple.el (count-words-region): Reverse previous change.
+
+1998-05-05  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* replace.el (query-replace): Just call perform-replace.
+	(query-replace-regexp): Ditto.
+	(perform-replace): Move region handling here.
+	(perform-replace): Use the new arg to match-data.
+
+1998-03-08  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* x-init.el: Install X specific display table that
+	  displays char 0240 as a space to avoid whatever it is
+	  that screws up display of that character code.
+
+1998-05-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* help.el (function-arglist): If no arguments are documented for a 
+	subr, print nothing rather than incorrect output.
+
+1998-05-05  SL Baur  <steve@altair.xemacs.org>
+
+	* cmdloop.el (command-error): Update bail-out error message to use 
+	`emacs-program-name'.
+
+	* lib-complete.el: Remove reader macro cruft.
+
+	* dumped-lisp.el (preloaded-file-list): Phase I:  remove InfoDock
+	cruft.
+
+	* simple.el (count-words-region): Drop interactive-p check on the
+	message.
+
+1998-05-04  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* font.el
+	* msw-faces.el
+	Correct spelling of mswindows-font-canonicalize-name.
+
+1998-05-03 Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
+
+	* ldap.el (ldap-host-parameters-alist): Replaced with
+	`ldap-host-parameters-plist'
+	(ldap-search): Adapt to previous change
+
 1998-05-02  SL Baur  <steve@altair.xemacs.org>
 
 	* about.el (about-hackers): Update Bob Weiner bio.

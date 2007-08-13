@@ -66,11 +66,6 @@ Lisp_Object Qprocess_event_p;
 Lisp_Object Qkey_press, Qbutton_press, Qbutton_release, Qmisc_user;
 Lisp_Object Qascii_character;
 
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-Lisp_Object Qdnd_drop_event_p;
-Lisp_Object Qdnd_drop;
-#endif
-
 EXFUN (Fevent_x_pixel, 1);
 EXFUN (Fevent_y_pixel, 1);
 
@@ -138,9 +133,6 @@ mark_event (Lisp_Object obj, void (*markobj) (Lisp_Object))
     case magic_event:
     case empty_event:
     case dead_event:
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-#endif
       break;
     default:
       abort ();
@@ -203,13 +195,14 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	write_c_string ("#<empty-event", printcharfun);
 	break;
     case misc_user_event:
+	write_c_string ("#<misc-user-event (", printcharfun);
+	print_internal (XEVENT (obj)->event.misc.function, printcharfun, 1);
+	write_c_string (" ", printcharfun);
+	print_internal (XEVENT (obj)->event.misc.object, printcharfun, 1);
+	write_c_string (")", printcharfun);
+	break;
     case eval_event:
-	write_c_string ("#<", printcharfun);
-	if (XEVENT (obj)->event_type == misc_user_event)
-	  write_c_string ("misc-user", printcharfun);
-	else
-	  write_c_string ("eval", printcharfun);
-	write_c_string ("-event (", printcharfun);
+	write_c_string ("#<eval-event (", printcharfun);
 	print_internal (XEVENT (obj)->event.eval.function, printcharfun, 1);
 	write_c_string (" ", printcharfun);
 	print_internal (XEVENT (obj)->event.eval.object, printcharfun, 1);
@@ -218,11 +211,6 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case dead_event:
 	write_c_string ("#<DEALLOCATED-EVENT", printcharfun);
 	break;
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-      print_event_1 ("#<dnd-drop-event ", obj, printcharfun);
-      break;
-#endif
     default:
 	write_c_string ("#<UNKNOWN-EVENT-TYPE", printcharfun);
 	break;
@@ -264,6 +252,15 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	      e1->event.motion.y == e2->event.motion.y);
 
     case misc_user_event:
+      return (internal_equal (e1->event.eval.function,
+			      e2->event.eval.function, 0) &&
+	      internal_equal (e1->event.eval.object,
+			      e2->event.eval.object, 0) &&
+	      /* is this really needed for equality
+	         or is x and y also important? */
+	      e1->event.misc.button    == e2->event.misc.button &&
+	      e1->event.misc.modifiers == e2->event.misc.modifiers);
+
     case eval_event:
       return (internal_equal (e1->event.eval.function,
 			      e2->event.eval.function, 0) &&
@@ -275,13 +272,6 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	      e2->event.magic_eval.internal_function &&
 	      internal_equal (e1->event.magic_eval.object,
 			      e2->event.magic_eval.object, 0));
-
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-      return (e1->event.dnd_drop.button    == e2->event.dnd_drop.button &&
-	      e1->event.dnd_drop.modifiers == e2->event.dnd_drop.modifiers &&
-	      EQ (e1->event.dnd_drop.data, e2->event.dnd_drop.data));
-#endif
 
     case magic_event:
       {
@@ -344,6 +334,10 @@ event_hash (Lisp_Object obj, int depth)
       return HASH3 (hash, e->event.motion.x, e->event.motion.y);
 
     case misc_user_event:
+      return HASH5 (hash, internal_hash (e->event.misc.function, depth + 1),
+		    internal_hash (e->event.misc.object, depth + 1),
+		    e->event.misc.button, e->event.misc.modifiers);
+
     case eval_event:
       return HASH3 (hash, internal_hash (e->event.eval.function, depth + 1),
 		    internal_hash (e->event.eval.object, depth + 1));
@@ -352,12 +346,6 @@ event_hash (Lisp_Object obj, int depth)
       return HASH3 (hash,
 		    (unsigned long) e->event.magic_eval.internal_function,
 		    internal_hash (e->event.magic_eval.object, depth + 1));
-
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-      return HASH4 (hash, e->event.dnd_drop.button, e->event.dnd_drop.modifiers,
-		    LISP_HASH(e->event.dnd_drop.data));
-#endif
 
     case magic_event:
       {
@@ -396,7 +384,7 @@ DEFUN ("make-event", Fmake_event, 0, 2, 0, /*
 Return a new event of type TYPE, with properties described by PLIST.
 
 TYPE is a symbol, either `empty', `key-press', `button-press',
- `button-release', `motion' or `dnd-drop'.  If TYPE is nil, it
+ `button-release', or `motion'.  If TYPE is nil, it
  defaults to `empty'.
 
 PLIST is a property list, the properties being compatible to those
@@ -404,27 +392,24 @@ PLIST is a property list, the properties being compatible to those
  allowed:
 
  channel	-- The event channel, a frame or a console.  For
-		   button-press, button-release, motion and dnd-drop
-		   events, this must be a frame.  For key-press
+		   button-press, button-release, motion events,
+		   this must be a frame.  For key-press
 		   events, it must be a console.  If channel is
 		   unspecified, it will be set to the selected frame
 		   or selected console, as appropriate.
  key		-- The event key, a symbol or character.  Allowed only for
 		   keypress events.
  button		-- The event button, integer 1, 2 or 3.  Allowed for
-		   button-press, button-release and dnd-drag events.
+		   button-press, button-release and misc-user events.
  modifiers	-- The event modifiers, a list of modifier symbols.  Allowed
 		   for key-press, button-press, button-release, motion and
-		   dnd-drop events.
+		   misc-user events.
  x		-- The event X coordinate, an integer.  This is relative
 		   to the left of CHANNEL's root window.  Allowed for
-		   motion, button-press, button-release and dnd-drop events.
+		   motion, button-press, button-release and misc-user events.
  y		-- The event Y coordinate, an integer.  This is relative
 		   to the top of CHANNEL's root window.  Allowed for
-		   motion, button-press, button-release and dnd-drop events.
- dnd-data	-- The event DND data, a list of (INTEGER DATA).  Allowed
-		   for dnd-drop events, if support for DND has been
-		   compiled into XEmacs.
+		   motion, button-press, button-release and misc-user events.
  timestamp	-- The event timestamp, a non-negative integer.  Allowed for
 		   all types of events.  If unspecified, it will be set to 0
 		   by default.
@@ -443,12 +428,11 @@ WARNING: the event object returned may be a reused one; see the function
 {
   Lisp_Object tail, keyword, value;
   Lisp_Object event = Qnil;
-  Lisp_Object dnd_data = Qnil;
   struct Lisp_Event *e;
   EMACS_INT coord_x = 0, coord_y = 0;
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1;
 
-  GCPRO2 (event, dnd_data);
+  GCPRO1 (event);
 
   if (NILP (type))
     type = Qempty;
@@ -493,13 +477,6 @@ WARNING: the event object returned may be a reused one; see the function
       e->event_type = misc_user_event;
       e->event.eval.function = e->event.eval.object = Qnil;
     }
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-  else if (EQ (type, Qdnd_drop))
-    {
-      e->event_type = dnd_drop_event;
-      e->event.dnd_drop.data = Qnil;
-    }
-#endif
   else
     {
       /* Not allowed: Qprocess, Qtimeout, Qmagic, Qeval, Qmagic_eval.  */
@@ -542,13 +519,17 @@ WARNING: the event object returned may be a reused one; see the function
       else if (EQ (keyword, Qbutton))
 	{
 	  if (e->event_type != button_press_event
-	      && e->event_type != button_release_event)
+	      && e->event_type != button_release_event
+	      && e->event_type != misc_user_event)
 	    {
 	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
 	    }
 	  CHECK_NATNUM (value);
 	  check_int_range (XINT (value), 0, 7);
-	  e->event.button.button = XINT (value);
+	  if (e->event_type == misc_user_event)
+	    e->event.misc.button = XINT (value);
+	  else
+	    e->event.button.button = XINT (value);
 	}
       else if (EQ (keyword, Qmodifiers))
 	{
@@ -558,7 +539,8 @@ WARNING: the event object returned may be a reused one; see the function
 	  if (e->event_type != key_press_event
 	      && e->event_type != button_press_event
 	      && e->event_type != button_release_event
-	      && e->event_type != pointer_motion_event)
+	      && e->event_type != pointer_motion_event
+	      && e->event_type != misc_user_event)
 	    {
 	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
 	    }
@@ -581,14 +563,17 @@ WARNING: the event object returned may be a reused one; see the function
 	  else if (e->event_type == button_press_event
 		   || e->event_type == button_release_event)
 	    e->event.button.modifiers = modifiers;
-	  else /* pointer_motion_event */
+	  else if (e->event_type == pointer_motion_event)
 	    e->event.motion.modifiers = modifiers;
+	  else /* misc_user_event */
+	    e->event.misc.modifiers = modifiers;
 	}
       else if (EQ (keyword, Qx))
 	{
 	  if (e->event_type != pointer_motion_event
 	      && e->event_type != button_press_event
-	      && e->event_type != button_release_event)
+	      && e->event_type != button_release_event
+	      && e->event_type != misc_user_event)
 	    {
 	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
 	    }
@@ -601,7 +586,8 @@ WARNING: the event object returned may be a reused one; see the function
 	{
 	  if (e->event_type != pointer_motion_event
 	      && e->event_type != button_press_event
-	      && e->event_type != button_release_event)
+	      && e->event_type != button_release_event
+	      && e->event_type != misc_user_event)
 	    {
 	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
 	    }
@@ -626,34 +612,6 @@ WARNING: the event object returned may be a reused one; see the function
 	    WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
 	  e->event.eval.object = value;
 	}
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-      else if (EQ (keyword, Qdnd_data))
-	{
-	  if (e->event_type != dnd_drop_event)
-	    WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
-
-	  /* Value is either nil, or a list of (TYPE DATA).  TYPE is
-             an integer.  DATA is a list. */
-	  if (!NILP (value))
-	    {
-	      Lisp_Object dnd_tail;
-	      CHECK_CONS (value);
-	      /* To be changed to CHECK_SYMBOL. */
-	      CHECK_NATNUM (XCAR (value));
-	      CHECK_CONS (XCDR (value));
-	      if (XINT (Flength (value)) != 2)
-		signal_simple_error ("Data should be a two-element list", value);
-	      /* Check validity of DATA.  */
-	      EXTERNAL_LIST_LOOP (dnd_tail, XCAR (XCDR (value)))
-		{
-		  /* Every element must be a string. */
-		  CHECK_STRING (XCAR (dnd_tail));
-		}
-	      /* And now, copy it all to avoid corruption later.  */
-	      e->event.dnd_drop.data = Fcopy_tree (value, Qnil);
-	    }
-	}
-#endif /* HAVE_OFFIX_DND || HAVE_MS_WINDOWS */
       else
 	signal_simple_error_2 ("Invalid property", keyword, value);
     }
@@ -672,10 +630,7 @@ WARNING: the event object returned may be a reused one; see the function
   if (e->event_type == pointer_motion_event
       || e->event_type == button_press_event
       || e->event_type == button_release_event
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-      || e->event_type == dnd_drop_event
-#endif
-      )
+      || e->event_type == misc_user_event)
     {
       struct frame *f = XFRAME (EVENT_CHANNEL (e));
 
@@ -688,14 +643,15 @@ WARNING: the event object returned may be a reused one; see the function
 	  e->event.motion.y = coord_y;
 	}
       else if (e->event_type == button_press_event
-	       || e->event_type == button_release_event
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-	       || e->event_type == dnd_drop_event
-#endif
-	       )
+	       || e->event_type == button_release_event)
 	{
 	  e->event.button.x = coord_x;
 	  e->event.button.y = coord_y;
+	}
+      else if (e->event_type == misc_user_event)
+	{
+	  e->event.misc.x = coord_x;
+	  e->event.misc.y = coord_y;
 	}
     }
 
@@ -709,20 +665,14 @@ WARNING: the event object returned may be a reused one; see the function
       break;
     case button_press_event:
     case button_release_event:
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-#endif
       if (!e->event.button.button)
 	error ("Undefined button for %s event",
 	       e->event_type == button_press_event
-	       ? "buton-press" :
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-	       e->event_type == button_release_event
-	       ? "button-release" : "dnd-drop"
-#else
-	       "button-release"
-#endif
-	       );
+	       ? "buton-press" : "button-release");
+      break;
+    case misc_user_event:
+      if (!e->event.misc.button)
+	error ("Undefined button for misc-user event");
       break;
     default:
       break;
@@ -977,9 +927,6 @@ command_event_p (Lisp_Object event)
     case button_press_event:
     case button_release_event:
     case misc_user_event:
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-#endif
       return 1;
     default:
       return 0;
@@ -1249,9 +1196,6 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
   int mouse_p = 0;
   int mod = 0;
   Lisp_Object key;
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-  int dnd_p = 0;
-#endif
 
   switch (event->event_type)
     {
@@ -1296,15 +1240,6 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
 	else strcpy (buf, "???");
 	return;
       }
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-      {
-	dnd_p++;
-        mod = event->event.dnd_drop.modifiers;
-        key = make_char (event->event.dnd_drop.button + '0');
-        break;
-      }
-#endif
     case magic_eval_event:	strcpy (buf, "magic-eval"); return;
     case pointer_motion_event:	strcpy (buf, "motion");	    return;
     case misc_user_event:	strcpy (buf, "misc-user");  return;
@@ -1329,14 +1264,6 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
       modprint1 ("button");
       --mouse_p;
     }
-
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-  switch (dnd_p)
-    {
-    case 1:
-      modprint1 ("drop");
-    }
-#endif
 
 #undef modprint
 #undef modprint1
@@ -1473,9 +1400,6 @@ empty		The event has been allocated but not assigned.
     case process_event:		return Qprocess;
     case timeout_event:		return Qtimeout;
     case eval_event:		return Qeval;
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:	return Qdnd_drop;
-#endif
     case magic_event:
     case magic_eval_event:
       return Qmagic;
@@ -1515,6 +1439,14 @@ Return the timestamp of the event object EVENT.
     e = wrong_type_argument ((sym),(e));	\
 } while (0)
 
+#define CHECK_EVENT_TYPE3(e,t1,t2,t3,sym) do {	\
+  CHECK_LIVE_EVENT (e);				\
+  if (XEVENT(e)->event_type != (t1) &&		\
+      XEVENT(e)->event_type != (t2) &&		\
+      XEVENT(e)->event_type != (t3))		\
+    e = wrong_type_argument ((sym),(e));	\
+} while (0)
+
 DEFUN ("event-key", Fevent_key, 1, 1, 0, /*
 Return the Keysym of the key-press event EVENT.
 This will be a character if the event is associated with one, else a symbol.
@@ -1530,30 +1462,18 @@ Return the button-number of the given button-press or button-release event.
 */
        (event))
 {
-#if !defined(HAVE_OFFIX_DND) && !defined(HAVE_MS_WINDOWS)
 
-  CHECK_EVENT_TYPE2 (event, button_press_event, button_release_event,
-		     Qbutton_event_p);
+  CHECK_EVENT_TYPE3 (event, button_press_event, button_release_event,
+		     misc_user_event, Qbutton_event_p);
 #ifdef HAVE_WINDOW_SYSTEM
-  return make_int (XEVENT (event)->event.button.button);
+  if ( XEVENT (event)->event_type == misc_user_event)
+    return make_int (XEVENT (event)->event.misc.button);
+  else
+    return make_int (XEVENT (event)->event.button.button);
 #else /* !HAVE_WINDOW_SYSTEM */
   return Qzero;
 #endif /* !HAVE_WINDOW_SYSTEM */
 
-#else /* HAVE_OFFIX_DND || HAVE_MS_WINDOWS */
-
-  CHECK_LIVE_EVENT (event);
-  if (XEVENT(event)->event_type == (button_press_event) ||
-      XEVENT(event)->event_type == (button_release_event))
-    /* we always have X if we have OffiX !! */
-    return make_int (XEVENT (event)->event.button.button);
-  else if (XEVENT(event)->event_type == (dnd_drop_event))
-    /* we always have X if we have OffiX !! */
-    return make_int (XEVENT (event)->event.button.button);
-  else
-    return wrong_type_argument ((Qbutton_event_p),(event));
-
-#endif
 }
 
 DEFUN ("event-modifier-bits", Fevent_modifier_bits, 1, 1, 0, /*
@@ -1574,10 +1494,8 @@ See also the function event-modifiers.
       return make_int (XEVENT (event)->event.button.modifiers);
     case pointer_motion_event:
       return make_int (XEVENT (event)->event.motion.modifiers);
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-      return make_int (XEVENT (event)->event.dnd_drop.modifiers);
-#endif
+    case misc_user_event:
+      return make_int (XEVENT (event)->event.misc.modifiers);
     default:
       event = wrong_type_argument (intern ("key-or-mouse-event-p"), event);
       goto again;
@@ -1619,13 +1537,11 @@ event_x_y_pixel_internal (Lisp_Object event, int *x, int *y, int relative)
       *x = XEVENT (event)->event.button.x;
       *y = XEVENT (event)->event.button.y;
     }
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-  else if (XEVENT (event)->event_type == dnd_drop_event)
+  else if (XEVENT (event)->event_type == misc_user_event)
     {
-      *x = XEVENT (event)->event.dnd_drop.x;
-      *y = XEVENT (event)->event.dnd_drop.y;
+      *x = XEVENT (event)->event.misc.x;
+      *y = XEVENT (event)->event.misc.y;
     }
-#endif
   else
     return 0;
 
@@ -1776,12 +1692,10 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
       pix_x = XEVENT (event)->event.button.x;
       pix_y = XEVENT (event)->event.button.y;
       break;
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event :
-      pix_x = XEVENT (event)->event.dnd_drop.x;
-      pix_y = XEVENT (event)->event.dnd_drop.y;
+    case misc_user_event :
+      pix_x = XEVENT (event)->event.misc.x;
+      pix_y = XEVENT (event)->event.misc.y;
       break;
-#endif
     default:
       dead_wrong_type_argument (Qmouse_event_p, event);
     }
@@ -2103,6 +2017,7 @@ EVENT should be a timeout, misc-user, or eval event.
     case timeout_event:
       return XEVENT (event)->event.timeout.function;
     case misc_user_event:
+      return XEVENT (event)->event.misc.function;
     case eval_event:
       return XEVENT (event)->event.eval.function;
     default:
@@ -2124,34 +2039,13 @@ EVENT should be a timeout, misc-user, or eval event.
     case timeout_event:
       return XEVENT (event)->event.timeout.object;
     case misc_user_event:
+      return XEVENT (event)->event.misc.object;
     case eval_event:
       return XEVENT (event)->event.eval.object;
     default:
       event = wrong_type_argument (intern ("timeout-or-eval-event-p"), event);
       goto again;
     }
-}
-
-DEFUN ("event-drag-and-drop-data", Fevent_drag_and_drop_data, 1, 1, 0, /*
-Return the Dnd data list of EVENT.
-EVENT should be a dnd_drop event.
-*/
-       (event))
-{
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
- again:
-  CHECK_LIVE_EVENT (event);
-  switch (XEVENT (event)->event_type)
-    {
-    case dnd_drop_event:
-      return XEVENT (event)->event.dnd_drop.data;
-    default:
-      event = wrong_type_argument (Qdnd_drop_event_p, event);
-      goto again;
-    }
-#else /* !(HAVE_OFFIX_DND || HAVE_MS_WINDOWS) */
-  return Qnil;
-#endif /* HAVE_OFFIX_DND || HAVE_MS_WINDOWS */
 }
 
 DEFUN ("event-properties", Fevent_properties, 1, 1, 0, /*
@@ -2202,20 +2096,18 @@ This is in the form of a property list (alternating keyword/value pairs).
       break;
 
     case misc_user_event:
+      props = cons3 (Qobject,	 Fevent_object	(event), props);
+      props = cons3 (Qfunction,  Fevent_function (event), props);
+      props = cons3 (Qy,	 Fevent_y_pixel	  (event), props);
+      props = cons3 (Qx,	 Fevent_x_pixel	  (event), props);
+      props = cons3 (Qmodifiers, Fevent_modifiers (event), props);
+      props = cons3 (Qbutton,	 Fevent_button	  (event), props);
+      break;
+
     case eval_event:
       props = cons3 (Qobject,	Fevent_object	(event), props);
       props = cons3 (Qfunction, Fevent_function (event), props);
       break;
-
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-      props = cons3 (Qy,	 Fevent_y_pixel	  (event),	    props);
-      props = cons3 (Qx,	 Fevent_x_pixel	  (event),	    props);
-      props = cons3 (Qmodifiers, Fevent_modifiers (event),	    props);
-      props = cons3 (Qbutton,	 Fevent_button	  (event),	    props);
-      props = cons3 (Qdnd_data,	 Fevent_drag_and_drop_data (event), props);
-      break;
-#endif
 
     case magic_eval_event:
     case magic_event:
@@ -2283,7 +2175,6 @@ syms_of_events (void)
   DEFSUBR (Fevent_process);
   DEFSUBR (Fevent_function);
   DEFSUBR (Fevent_object);
-  DEFSUBR (Fevent_drag_and_drop_data);
 
   defsymbol (&Qeventp, "eventp");
   defsymbol (&Qevent_live_p, "event-live-p");
@@ -2296,10 +2187,6 @@ syms_of_events (void)
   defsymbol (&Qbutton_release, "button-release");
   defsymbol (&Qmisc_user, "misc-user");
   defsymbol (&Qascii_character, "ascii-character");
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-  defsymbol (&Qdnd_drop_event_p, "dnd-drop-event-p");
-  defsymbol (&Qdnd_drop, "dnd-drop");
-#endif
 }
 
 void

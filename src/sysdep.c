@@ -2254,7 +2254,12 @@ extern Lisp_Object Vsystem_name;
 void
 init_system_name (void)
 {
-#ifndef HAVE_GETHOSTNAME
+#if defined (WINDOWSNT)
+  char hostname [MAX_COMPUTERNAME_LENGTH + 1];
+  size_t size = sizeof(hostname);
+  GetComputerName (hostname, &size);
+  Vsystem_name = build_string (hostname);
+#elif !defined (HAVE_GETHOSTNAME)
   struct utsname uts;
   uname (&uts);
   Vsystem_name = build_string (uts.nodename);

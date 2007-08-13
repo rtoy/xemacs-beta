@@ -1,4 +1,4 @@
-;;; x-menubar.el --- Menubar and popup-menu support for X.
+;;; menubar-items.el --- Menubar and popup-menu content for XEmacs.
 
 ;; Copyright (C) 1991-1995, 1997-1998 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
@@ -7,7 +7,7 @@
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Maintainer: XEmacs Development Team
-;; Keywords: extensions, internal, dumped
+;; Keywords: frames, extensions, internal, dumped
 
 ;; This file is part of XEmacs.
 
@@ -28,8 +28,8 @@
 
 ;;; Commentary:
 
-;; This file is dumped with XEmacs (when X11 and menubar support is compiled
-;; in).
+;; This file is dumped with XEmacs (when window system and menubar support is
+;; compiled in).
 
 ;;; Code:
 
@@ -170,8 +170,8 @@
        :active (fboundp 'vm)]
       ["Read Mail (MH)..." (mh-rmail t)
        :active (fboundp 'mh-rmail)]
-      ["Send mail..." mail
-       :active (fboundp 'mail)]
+      ["Send mail..." compose-mail
+       :active (fboundp 'compose-mail)]
       ["Usenet News" gnus
        :active (fboundp 'gnus)]
       ["Browse the Web" w3
@@ -1483,6 +1483,8 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
     (delete-other-windows)))
 
 
+;;; backwards compatibility
 (provide 'x-menubar)
+(provide 'menubar-items)
 
 ;;; x-menubar.el ends here.

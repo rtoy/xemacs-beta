@@ -47,13 +47,23 @@ struct frame
      through frame->device->console, but it's faster this way. */
   struct console_methods *framemeths;
 
-  /* Size of this frame, in units of characters.  */
-  int height;
-  int width;
+  /* Size of text only area of this frame, excluding scrollbars,
+     toolbars and end of line glyphs. The size can be in charactes
+     or pixels, depending on units in which window system resizes
+     its windows */
+  int height, width;
 
-  /* Size of this frame, in units of pixels. */
-  int pixheight;
-  int pixwidth;
+  /* New height and width for pending size change, in the same units
+     as above. 0 if no change pending.  */
+  int new_height, new_width;
+
+  /* Size of text-only are of the frame, in default font characters.
+     This may be inaccurate due to rounding error */
+  int char_height, char_width;
+  
+  /* Size of the whole frame, including scrollbars, toolbars and end
+     of line glyphs, in pixels */
+  int pixheight, pixwidth;
 
 #ifdef HAVE_TTY
   /* The count of frame number.  This applies to TTY frames only. */
@@ -66,9 +76,6 @@ struct frame
      dependencies. */
   int internal_border_width;
 
-  /* New height and width for pending size change.  0 if no change pending.  */
-  int new_height, new_width;
-
   /* This frame's root window mirror.  This structure exactly mirrors
      the frame's window structure but contains only pointers to the
      display structures. */
@@ -79,8 +86,6 @@ struct frame
 #ifdef HAVE_SCROLLBARS
   /* frame-local scrollbar information.  See scrollbar.c. */
   int scrollbar_y_offset;
-  int scrollbar_on_left;
-  int scrollbar_on_top;
 
   /* cache of created scrollbars */
   struct scrollbar_instance *sb_vcache;
@@ -176,6 +181,7 @@ Value : Emacs meaning                           :f-v-p : X meaning
   unsigned int windows_structure_changed :1;
   unsigned int window_face_cache_reset :1;	/* used by expose handler */
   unsigned int echo_area_garbaged :1;	/* used by Fredisplay_echo_area */
+  unsigned int size_slipped :1;
 
   unsigned int size_change_pending :1;
   unsigned int mirror_dirty :1;
@@ -378,6 +384,24 @@ extern int frame_changed;
     windows_structure_changed = 1;			\
 } while (0)
 
+#define MARK_FRAME_SIZE_SLIPPED(f) do {			\
+  struct frame *fwsc_f = (f);				\
+  fwsc_f->size_slipped = 1;				\
+  fwsc_f->modiff++;					\
+  if (!NILP (fwsc_f->device))				\
+    {							\
+      struct device *fwsc_d = XDEVICE (fwsc_f->device);	\
+      MARK_DEVICE_FRAME_CHANGED (fwsc_d);		\
+    }							\
+  else							\
+    frame_changed = 1;					\
+} while (0)
+
+#define CLEAR_FRAME_SIZE_SLIPPED(f) do {		\
+  struct frame *fwsc_f = (f);				\
+  fwsc_f->size_slipped = 0;				\
+} while (0)
+
 #define SET_FRAME_CLEAR(f) MARK_FRAME_CHANGED (f); (f)->clear = 1
 #define FRAME_DEVICE(f) ((f)->device)
 #define FRAME_CONSOLE(f) DEVICE_CONSOLE (XDEVICE (FRAME_DEVICE (f)))
@@ -388,11 +412,17 @@ extern int frame_changed;
 #define FRAME_HAS_MINIBUF_P(f) ((f)->has_minibuffer)
 #define FRAME_HEIGHT(f) ((f)->height)
 #define FRAME_WIDTH(f) ((f)->width)
+#define FRAME_CHARHEIGHT(f) ((f)->char_height)
+#define FRAME_CHARWIDTH(f) ((f)->char_width)
 #define FRAME_PIXHEIGHT(f) ((f)->pixheight)
 #define FRAME_PIXWIDTH(f) ((f)->pixwidth)
 #ifdef HAVE_SCROLLBARS
-#define FRAME_SCROLLBAR_WIDTH(f) XINT ((f)->scrollbar_width)
-#define FRAME_SCROLLBAR_HEIGHT(f) XINT ((f)->scrollbar_height)
+#define FRAME_SCROLLBAR_WIDTH(f)		\
+  (NILP ((f)->vertical_scrollbar_visible_p) ?	\
+    0 : XINT ((f)->scrollbar_width))
+#define FRAME_SCROLLBAR_HEIGHT(f)		\
+  (NILP ((f)->horizontal_scrollbar_visible_p) ?	\
+    0 : XINT ((f)->scrollbar_height))
 #else
 #define FRAME_SCROLLBAR_WIDTH(f) 0
 #define FRAME_SCROLLBAR_HEIGHT(f) 0
@@ -660,6 +690,9 @@ void round_size_to_real_char (struct frame *f, int in_width, int in_height,
 void change_frame_size (struct frame *frame,
 			int newlength, int newwidth,
 			int delay);
+void adjust_frame_size (struct frame *frame);
+void frame_size_slipped (Lisp_Object specifier, struct frame *f,
+			 Lisp_Object oldval);
 void hold_frame_size_changes (void);
 void unhold_one_frame_size_changes (struct frame *f);
 void unhold_frame_size_changes (void);

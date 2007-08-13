@@ -44,6 +44,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #include "device.h"
+#include "dragdrop.h"
 #include "events.h"
 #include "frame.h"
 #include "lstream.h"
@@ -73,11 +74,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Timer ID used for button2 emulation */
 #define BUTTON_2_TIMER_ID 1
-
-/* Drag and drop event data types (subset of types in offix-types.h) */
-#define DndFile		2
-#define	DndFiles	3
-#define	DndText		4
 
 extern Lisp_Object 
 mswindows_get_toolbar_button_text (struct frame* f, int command_id);
@@ -445,8 +441,6 @@ init_slurp_stream (void)
 /*                Pipe outstream - writes process input                 */
 /************************************************************************/
 
-#define MAX_FLUSH_TIME 500
-
 #define NTPIPE_SHOVE_STREAM_DATA(stream) \
   LSTREAM_TYPE_DATA (stream, ntpipe_shove)
 
@@ -606,6 +600,232 @@ init_shove_stream (void)
 }
 
 /************************************************************************/
+/*                         Winsock I/O stream                           */
+/************************************************************************/
+#if defined (HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
+
+#define WINSOCK_READ_BUFFER_SIZE 1024
+
+struct winsock_stream
+{
+  LPARAM user_data;		/* Any user data stored in the stream object */
+  SOCKET s;			/* Socket handle (which is a Win32 handle)   */
+  OVERLAPPED ov;		/* Overlapped I/O structure		     */
+  void* buffer;			/* Buffer. Allocated for input stream only   */
+  unsigned int bufsize;		/* Number of bytes last read		     */
+  unsigned int bufpos;		/* Psition in buffer for next fetch	     */
+  unsigned int error_p :1;	/* I/O Error seen			     */
+  unsigned int eof_p :1;	/* EOF Error seen			     */
+  unsigned int pending_p :1;	/* There is a pending I/O operation	     */
+  unsigned int blocking_p :1;	/* Last write attempt would block	     */
+};
+
+#define WINSOCK_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, winsock)
+
+DEFINE_LSTREAM_IMPLEMENTATION ("winsock", lstream_winsock,
+			       sizeof (struct winsock_stream));
+
+static void
+winsock_initiate_read (struct winsock_stream *str)
+{
+  ResetEvent (str->ov.hEvent);
+  str->bufpos = 0;
+
+  if (!ReadFile ((HANDLE)str->s, str->buffer, WINSOCK_READ_BUFFER_SIZE,
+		 &str->bufsize, &str->ov))
+    {
+      if (GetLastError () == ERROR_IO_PENDING)
+	str->pending_p = 1;
+      else if (GetLastError () == ERROR_HANDLE_EOF)
+	str->eof_p = 1;
+      else
+	str->error_p = 1;
+    }
+  else if (str->bufsize == 0)
+    str->eof_p = 1;
+}
+
+static int
+winsock_reader (Lstream *stream, unsigned char *data, size_t size)
+{
+  struct winsock_stream *str = WINSOCK_STREAM_DATA (stream);
+
+  /* If the current operation is not yet complete, there's nothing to
+     give back */
+  if (str->pending_p)
+    {
+      if (WaitForSingleObject (str->ov.hEvent, 0) == WAIT_TIMEOUT)
+	{
+	  errno = EAGAIN;
+	  return -1;
+	}
+      else
+	{
+	  if (!GetOverlappedResult ((HANDLE)str->s, &str->ov, &str->bufsize, TRUE))
+	    {
+	      if (GetLastError() == ERROR_HANDLE_EOF)
+		str->bufsize = 0;
+	      else
+		str->error_p = 1;
+	    }
+	  if (str->bufsize == 0)
+	    str->eof_p = 1;
+	  str->pending_p = 0;
+	}
+    }
+
+  if (str->eof_p)
+    return 0;
+  if (str->error_p)
+    return -1;
+  
+  /* Return as much of buffer as we have */
+  size = min (size, (size_t) (str->bufsize - str->bufpos));
+  memcpy (data, (void*)((BYTE*)str->buffer + str->bufpos), size);
+  str->bufpos += size;
+
+  /* Read more if buffer is exhausted */
+  if (str->bufsize == str->bufpos)
+    winsock_initiate_read (str);
+
+  return size;
+}
+
+static int
+winsock_writer (Lstream *stream, CONST unsigned char *data, size_t size)
+{
+  struct winsock_stream *str = WINSOCK_STREAM_DATA (stream);
+
+  if (str->pending_p)
+    {
+      if (WaitForSingleObject (str->ov.hEvent, 0) == WAIT_TIMEOUT)
+	{
+	  str->blocking_p = 1;
+	  return -1;
+	}
+      else
+	{
+	  DWORD dw_unused;
+	  if (!GetOverlappedResult ((HANDLE)str->s, &str->ov, &dw_unused, TRUE))
+	    str->error_p = 1;
+	  str->pending_p = 0;
+	}
+    }
+
+  str->blocking_p = 0;
+
+  if (str->error_p)
+    return -1;
+
+  if (size == 0)
+    return 0;
+  
+  {
+    ResetEvent (str->ov.hEvent);
+    
+    if (WriteFile ((HANDLE)str->s, data, size, NULL, &str->ov)
+	|| GetLastError() == ERROR_IO_PENDING)
+      str->pending_p = 1;
+    else
+      str->error_p = 1;
+  }
+
+  return str->error_p ? -1 : size;
+}
+
+static int
+winsock_closer (Lstream *lstr)
+{
+  struct winsock_stream *str = WINSOCK_STREAM_DATA (lstr);
+
+  if (lstr->flags & LSTREAM_FL_READ)
+    shutdown (str->s, 0);
+  else
+    shutdown (str->s, 1);
+
+  CloseHandle ((HANDLE)str->s);
+  if (str->pending_p)
+    WaitForSingleObject (str->ov.hEvent, INFINITE);
+
+  if (lstr->flags & LSTREAM_FL_READ)
+    xfree (str->buffer);
+
+  CloseHandle (str->ov.hEvent);
+  return 0;
+}
+
+static int
+winsock_was_blocked_p (Lstream *stream)
+{
+  struct winsock_stream *str = WINSOCK_STREAM_DATA (stream);
+  return str->blocking_p;
+}
+
+static Lisp_Object
+make_winsock_stream_1 (SOCKET s, LPARAM param, CONST char *mode)
+{
+  Lisp_Object obj;
+  Lstream *lstr = Lstream_new (lstream_winsock, mode);
+  struct winsock_stream *str = WINSOCK_STREAM_DATA (lstr);
+
+  str->s = s;
+  str->blocking_p = 0;
+  str->error_p = 0;
+  str->eof_p = 0;
+  str->pending_p = 0;
+  str->user_data = param;
+
+  xzero (str->ov);
+  str->ov.hEvent = CreateEvent (NULL, TRUE, FALSE, NULL);
+
+  if (lstr->flags & LSTREAM_FL_READ)
+    {
+      str->buffer = xmalloc (WINSOCK_READ_BUFFER_SIZE);
+      winsock_initiate_read (str);
+    }
+
+  lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
+  XSETLSTREAM (obj, lstr);
+  return obj;
+}
+
+static Lisp_Object
+make_winsock_input_stream (SOCKET s, LPARAM param)
+{
+  return make_winsock_stream_1 (s, param, "r");
+}
+
+static Lisp_Object
+make_winsock_output_stream (SOCKET s, LPARAM param)
+{
+  return make_winsock_stream_1 (s, param, "w");
+}
+
+static HANDLE
+get_winsock_stream_waitable (Lstream *lstr)
+{
+  struct winsock_stream *str = WINSOCK_STREAM_DATA (lstr);
+  return str->ov.hEvent;
+}
+
+static LPARAM
+get_winsock_stream_param (Lstream *lstr)
+{
+  struct winsock_stream *str = WINSOCK_STREAM_DATA (lstr);
+  return str->user_data;
+}
+
+static void
+init_winsock_stream (void)
+{
+  LSTREAM_HAS_METHOD (winsock, reader);
+  LSTREAM_HAS_METHOD (winsock, writer);
+  LSTREAM_HAS_METHOD (winsock, closer);
+  LSTREAM_HAS_METHOD (winsock, was_blocked_p);
+}
+#endif /* defined (HAVE_SOCKETS) */
+
+/************************************************************************/
 /*                     Dispatch queue management                        */
 /************************************************************************/
 
@@ -614,8 +834,7 @@ mswindows_user_event_p (struct Lisp_Event* sevt)
 {
   return (sevt->event_type == key_press_event
 	  || sevt->event_type == button_press_event
-	  || sevt->event_type == button_release_event
-	  || sevt->event_type == dnd_drop_event);
+	  || sevt->event_type == button_release_event);
 }
 
 /* 
@@ -1222,11 +1441,10 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	{
 	  DWORD len = DdeGetData (hdata, NULL, 0, 0);
 	  char *cmd = alloca (len+1);
-#ifdef __CYGWIN32__
-	  char *cmd_1;
-#endif
 	  char *end;
-          Lisp_Object l_dndlist;
+	  char *filename;
+	  struct gcpro gcpro1, gcpro2;
+          Lisp_Object l_dndlist = Qnil;
 	  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 	  struct Lisp_Event *event = XEVENT (emacs_event);
 
@@ -1234,7 +1452,8 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	  cmd[len] = '\0';
 	  DdeFreeDataHandle (hdata);
 
-	  /* Check syntax & that it's an [Open("foo")] command */
+	  /* Check syntax & that it's an [Open("foo")] command, which we
+	   * treat like a file drop */
 	  /* #### Ought to be generalised and accept some other commands */
 	  if (*cmd == '[')
 	    cmd++;
@@ -1258,27 +1477,37 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	    end++;
 	  if (*end)
 	    return DDE_FNOTPROCESSED;
+
 #ifdef __CYGWIN32__
-	  CYGWIN_CONV_PATH(cmd,cmd_1);
-	  cmd = cmd_1;
+	  filename = alloca (cygwin32_win32_to_posix_path_list_buf_size (cmd) + 5);
+	  strcpy (filename, "file:");
+	  cygwin32_win32_to_posix_path_list (cmd, filename+5);
+#else
+	  dostounix_filename (cmd);
+	  filename = alloca (strlen (cmd)+6);
+	  strcpy (filename, "file:");
+	  strcat (filename, cmd);
 #endif
-	  l_dndlist = make_ext_string (cmd, strlen(cmd), FORMAT_FILENAME);
+	  GCPRO2 (emacs_event, l_dndlist);
+	  l_dndlist = make_string (filename, strlen (filename));
 
 	  event->channel = Qnil;
 	  event->timestamp = GetTickCount();
-	  event->event_type = dnd_drop_event;
-	  event->event.dnd_drop.button = 0;
-	  event->event.dnd_drop.modifiers = 0;
-	  event->event.dnd_drop.x = -1;
-	  event->event.dnd_drop.y = -1;
-	  event->event.dnd_drop.data = Fcons (make_int (DndFile),
-					      Fcons (l_dndlist, Qnil));
+	  event->event_type = misc_user_event;
+	  event->event.misc.button = 1;
+	  event->event.misc.modifiers = 0;
+	  event->event.misc.x = -1;
+	  event->event.misc.y = -1;
+	  event->event.misc.function = Qdragdrop_drop_dispatch;
+	  event->event.misc.object = Fcons (Qdragdrop_URL,
+					    Fcons (l_dndlist, Qnil));
 	  mswindows_enqueue_dispatch_event (emacs_event);
-
+	  UNGCPRO;
 	  return (HDDEDATA) DDE_FACK;
 	}
       DdeFreeDataHandle (hdata); 
       return (HDDEDATA) DDE_FNOTPROCESSED;
+
     default: 
       return (HDDEDATA) NULL; 
     } 
@@ -1834,61 +2063,62 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
       UINT filecount, i, len;
       POINT point;
-      char filename[MAX_PATH];
+      char* filename;
 #ifdef __CYGWIN32__
       char* fname;
 #endif
-      Lisp_Object l_type, l_dndlist = Qnil, l_item;
+      Lisp_Object l_dndlist = Qnil, l_item = Qnil;
+      struct gcpro gcpro1, gcpro2, gcpro3;
 
       emacs_event = Fmake_event (Qnil, Qnil);
       event = XEVENT(emacs_event);
 
+      GCPRO3 (emacs_event, l_dndlist, l_item);
+
       if (!DragQueryPoint ((HANDLE) wParam, &point))
 	point.x = point.y = -1;		/* outside client area */
 
-      filecount = DragQueryFile ((HANDLE) wParam, -1, NULL, 0);
-      if (filecount == 1)
-	{
-      	  l_type = make_int (DndFile);
-	  len = DragQueryFile ((HANDLE) wParam, 0, filename, MAX_PATH);
-#ifdef __CYGWIN32__
-	  CYGWIN_CONV_PATH(filename, fname);
-	  len=strlen(fname);
-	  l_dndlist = make_ext_string (fname, len, FORMAT_FILENAME);
-#else
-	  l_dndlist = make_ext_string (filename, len, FORMAT_FILENAME);
-#endif
-	}
-      else
-	{
-	  l_type = make_int (DndFiles);	  
-	  for (i=0; i<filecount; i++)
-	    {
-  	      len = DragQueryFile ((HANDLE) wParam, i, filename, MAX_PATH);
-#ifdef __CYGWIN32__
-	      CYGWIN_CONV_PATH(filename, fname);
-	      len=strlen(fname);
-	      l_item = make_ext_string (fname, len, FORMAT_FILENAME);
-#else
-	      l_item = make_ext_string (filename, len, FORMAT_FILENAME);
-#endif
-	      l_dndlist = Fcons (l_item, l_dndlist);	/* reverse order */
-	    }
-	}
-      DragFinish ((HANDLE) wParam);
-      
+      event->event_type = misc_user_event;
       event->channel = mswindows_find_frame(hwnd);
       event->timestamp = GetMessageTime();
-      event->event_type = dnd_drop_event;
-      event->event.dnd_drop.button = 1;		/* #### Should try harder */
-      event->event.dnd_drop.modifiers = mswindows_modifier_state (NULL, 0);
-      event->event.dnd_drop.x = point.x;
-      event->event.dnd_drop.y = point.y;
-      event->event.dnd_drop.data = Fcons (l_type, Fcons (l_dndlist, Qnil));
+      event->event.misc.button = 1;		/* #### Should try harder */
+      event->event.misc.modifiers = mswindows_modifier_state (NULL, 0);
+      event->event.misc.x = point.x;
+      event->event.misc.y = point.y;
+      event->event.misc.function = Qdragdrop_drop_dispatch;
 
+      filecount = DragQueryFile ((HANDLE) wParam, 0xffffffff, NULL, 0);
+      for (i=0; i<filecount; i++)
+	{
+	  len = DragQueryFile ((HANDLE) wParam, i, NULL, 0);
+	  /* The URLs that we make here aren't correct according to section
+	   * 3.10 of rfc1738 because they're missing the //<host>/ part and
+	   * because they may contain reserved characters. But that's OK. */
+#ifdef __CYGWIN32__
+	  fname = (char *)xmalloc (len+1);
+	  DragQueryFile ((HANDLE) wParam, i, fname, len+1);
+	  filename = xmalloc (cygwin32_win32_to_posix_path_list_buf_size (fname) + 5);
+	  strcpy (filename, "file:");
+	  cygwin32_win32_to_posix_path_list (fname, filename+5);
+	  xfree (fname);
+#else
+	  filename = (char *)xmalloc (len+6);
+	  strcpy (filename, "file:");
+	  DragQueryFile ((HANDLE) wParam, i, filename+5, len+1);
+	  dostounix_filename (filename+5);
+#endif
+	  l_item = make_string (filename, strlen (filename));
+	  l_dndlist = Fcons (l_item, l_dndlist);
+	  xfree (filename);
+	}
+      DragFinish ((HANDLE) wParam);
+
+      event->event.misc.object = Fcons (Qdragdrop_URL, l_dndlist);
       mswindows_enqueue_dispatch_event (emacs_event);
+      UNGCPRO;
     }
   break;
+
 
   defproc:
   default:
@@ -2213,10 +2443,17 @@ emacs_mswindows_handle_magic_event (struct Lisp_Event *emacs_event)
 static HANDLE
 get_process_input_waitable (struct Lisp_Process *process)
 {
-  Lisp_Object instr, outstr;
+  Lisp_Object instr, outstr, p;
+  XSETPROCESS (p, process);
   get_process_streams (process, &instr, &outstr);
   assert (!NILP (instr));
-  return get_ntpipe_input_stream_waitable (XLSTREAM (instr));
+#if defined (HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
+  return (network_connection_p (p)
+	  ? get_winsock_stream_waitable (XLSTREAM (instr))
+	  : get_ntpipe_input_stream_waitable (XLSTREAM (instr)));
+#else
+    return get_ntpipe_input_stream_waitable (XLSTREAM (instr));
+#endif
 }
 
 static void
@@ -2229,11 +2466,16 @@ emacs_mswindows_select_process (struct Lisp_Process *process)
 
 #ifdef HAVE_WIN32_PROCESSES
   {
-    HANDLE hprocess = get_nt_process_handle (process);
-    if (!add_waitable_handle (hprocess))
+    Lisp_Object p;
+    XSETPROCESS (p, process);
+    if (!network_connection_p (p))
       {
-	remove_waitable_handle (hev);
-	error ("Too many active processes");
+	HANDLE hprocess = get_nt_process_handle (process);
+	if (!add_waitable_handle (hprocess))
+	  {
+	    remove_waitable_handle (hev);
+	    error ("Too many active processes");
+	  }
       }
   }
 #endif
@@ -2321,14 +2563,22 @@ emacs_mswindows_create_stream_pair (void* inhandle, void* outhandle,
 #error "So, WHICH kind of processes do you want?"
 #endif
 
-  *instream = (hin != INVALID_HANDLE_VALUE
-	       ? make_ntpipe_input_stream (hin, fdi)
-	       : Qnil);
+  *instream = (hin == INVALID_HANDLE_VALUE
+	       ? Qnil
+#if defined (HAVE_SOCKETS) && !defined (HAVE_MSG_SELECT)
+	       : flags & STREAM_NETWORK_CONNECTION
+	       ? make_winsock_input_stream ((SOCKET)hin, fdi)
+#endif
+	       : make_ntpipe_input_stream (hin, fdi));
 
 #ifdef HAVE_WIN32_PROCESSES
-  *outstream = (hout != INVALID_HANDLE_VALUE
-		? make_ntpipe_output_stream (hout, fdo)
-		: Qnil);
+  *outstream = (hout == INVALID_HANDLE_VALUE
+		? Qnil
+#if defined (HAVE_SOCKETS) && !defined (HAVE_MSG_SELECT)
+		: flags & STREAM_NETWORK_CONNECTION
+		? make_winsock_output_stream ((SOCKET)hout, fdo)
+#endif
+		: make_ntpipe_output_stream (hout, fdo));
 #elif defined (HAVE_UNIX_PROCESSES)
   *outstream = (fdo >= 0
 		? make_filedesc_output_stream (fdo, 0, -1, LSTR_BLOCKED_OK)
@@ -2336,7 +2586,7 @@ emacs_mswindows_create_stream_pair (void* inhandle, void* outhandle,
 
 #if defined(HAVE_UNIX_PROCESSES) && defined(HAVE_PTYS)
   /* FLAGS is process->pty_flag for UNIX_PROCESSES */
-  if (flags && fdo >= 0)
+  if ((flags & STREAM_PTY_FLUSHING) && fdo >= 0)
     {
       Bufbyte eof_char = get_eof_char (fdo);
       int pty_max_bytes = get_pty_max_bytes (fdo);
@@ -2345,7 +2595,12 @@ emacs_mswindows_create_stream_pair (void* inhandle, void* outhandle,
 #endif
 #endif
 
-  return (NILP (*instream) ? USID_ERROR
+  return (NILP (*instream)
+	  ? USID_ERROR
+#if defined(HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
+	  : flags & STREAM_NETWORK_CONNECTION
+	  ? HANDLE_TO_USID (get_winsock_stream_waitable (XLSTREAM (*instream)))
+#endif
 	  : HANDLE_TO_USID (get_ntpipe_input_stream_waitable (XLSTREAM (*instream))));
 }
 
@@ -2355,7 +2610,12 @@ emacs_mswindows_delete_stream_pair (Lisp_Object instream,
 {
   /* Oh nothing special here for Win32 at all */
 #if defined (HAVE_UNIX_PROCESSES)
-  int in = (NILP(instream) ? -1
+  int in = (NILP(instream)
+	    ? -1
+#if defined(HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
+	    : LSTREAM_TYPE_P (XLSTREAM (instream), winsock)
+	    ? get_winsock_stream_param (XLSTREAM (instream))
+#endif
 	    : get_ntpipe_input_stream_param (XLSTREAM (instream)));
   int out = (NILP(outstream) ? -1
 	     : filedesc_stream_fd (XLSTREAM (outstream)));
@@ -2366,10 +2626,14 @@ emacs_mswindows_delete_stream_pair (Lisp_Object instream,
     close (out);
 #endif
 
-  return (NILP (instream) ? USID_DONTHASH
+  return (NILP (instream)
+	  ? USID_DONTHASH
+#if defined(HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
+	  : LSTREAM_TYPE_P (XLSTREAM (instream), winsock)
+	  ? HANDLE_TO_USID (get_winsock_stream_waitable (XLSTREAM (instream)))
+#endif
 	  : HANDLE_TO_USID (get_ntpipe_input_stream_waitable (XLSTREAM (instream))));
 }
-
 
 #ifndef HAVE_X_WINDOWS
 /* This is called from GC when a process object is about to be freed.
@@ -2491,6 +2755,9 @@ lstream_type_create_mswindows_selectable (void)
 {
   init_slurp_stream ();
   init_shove_stream ();
+#if defined (HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
+  init_winsock_stream ();
+#endif
 }
 
 void

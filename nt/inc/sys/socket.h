@@ -8,12 +8,6 @@
 #undef _WINSOCKAPI_
 #endif
 
-/* avoid confusion with our version of select */
-#ifdef select
-#undef select
-#define MUST_REDEF_SELECT
-#endif
-
 #if 0 /* What's wrong with winsock.h version ? - kkm */
 /* avoid clashing with our version of FD_SET if already defined */
 #ifdef FD_SET
@@ -34,12 +28,6 @@
 
 #include <winsock.h>
 
-/* redefine select to reference our version */
-#ifdef MUST_REDEF_SELECT
-#define select sys_select
-#undef MUST_REDEF_SELECT
-#endif
-
 #if 0 /* What's wrong with winsock.h version ? - kkm */
 /* revert to our version of FD_SET */
 #undef FD_SET
@@ -53,31 +41,6 @@
 #ifdef HAVE_TIMEVAL
 #undef timeval
 #endif
-
-/* shadow functions where we provide our own wrapper */
-#define socket         sys_socket
-#define bind           sys_bind
-#define connect        sys_connect
-#define htons          sys_htons
-#define ntohs          sys_ntohs
-#define inet_addr      sys_inet_addr
-#define gethostname    sys_gethostname
-#define gethostbyname  sys_gethostbyname
-#define getservbyname  sys_getservbyname
-
-int sys_socket(int af, int type, int protocol);
-int sys_bind (int s, const struct sockaddr *addr, int namelen);
-int sys_connect (int s, const struct sockaddr *addr, int namelen);
-u_short sys_htons (u_short hostshort);
-u_short sys_ntohs (u_short netshort);
-unsigned long sys_inet_addr (const char * cp);
-int sys_gethostname (char * name, int namelen);
-struct hostent * sys_gethostbyname(const char * name);
-struct servent * sys_getservbyname(const char * name, const char * proto);
-
-/* we are providing a real h_errno variable */
-#undef h_errno
-extern int h_errno;
 
 /* map winsock error codes to standard names */
 #define EWOULDBLOCK             WSAEWOULDBLOCK

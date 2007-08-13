@@ -20,7 +20,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* Author: Oscar Figueiredo */
+/* Author: Oscar Figueiredo with lots of support from Hrvoje Niksic */
 
 /* This file provides lisp primitives for access to an LDAP library
    conforming to the API defined in RFC 1823.
@@ -40,15 +40,18 @@ Boston, MA 02111-1307, USA.  */
 #include "eldap.h"
 
 #ifdef HAVE_NS_LDAP
-#define HAVE_LDAP_SET_OPTION 1
-#define HAVE_LDAP_GET_ERRNO 1
+# define HAVE_LDAP_SET_OPTION 1
+# define HAVE_LDAP_GET_ERRNO 1
 #else
-#undef HAVE_LDAP_SET_OPTION
-#undef HAVE_LDAP_GET_ERRNO
+# undef HAVE_LDAP_SET_OPTION
+# undef HAVE_LDAP_GET_ERRNO
 #endif
 
 static int ldap_default_port;
 static Lisp_Object Vldap_default_base;
+
+/* Needed by the lrecord definition */
+Lisp_Object Qldapp;
 
 /* ldap-open plist keywords */
 extern Lisp_Object Qport, Qauth, Qbinddn, Qpasswd, Qderef, Qtimelimit,
@@ -56,19 +59,9 @@ extern Lisp_Object Qport, Qauth, Qbinddn, Qpasswd, Qderef, Qtimelimit,
 /* Search scope limits */
 extern Lisp_Object Qbase, Qonelevel, Qsubtree;
 /* Authentication methods */
-#ifdef LDAP_AUTH_KRBV41
-extern Lisp_Object Qkrbv41;
-#endif
-#ifdef LDAP_AUTH_KRBV42
-extern Lisp_Object Qkrbv42;
-#endif
+extern Lisp_Object Qkrbv41, Qkrbv42;
 /* Deref policy */
 extern Lisp_Object Qnever, Qalways, Qfind;
-/* Connection status */
-extern Lisp_Object Qopen, Qclosed;
-
-static Lisp_Object Qldapp;
-
 
 /************************************************************************/
 /*                         Utility Functions                            */
@@ -77,7 +70,7 @@ static Lisp_Object Qldapp;
 static void
 signal_ldap_error (LDAP *ld)
 {
-#if HAVE_LDAP_GET_ERRNO
+#ifdef HAVE_LDAP_GET_ERRNO
   signal_simple_error
     ("LDAP error",
      build_string (ldap_err2string (ldap_get_lderrno (ld, NULL, NULL))));
@@ -104,25 +97,29 @@ struct Lisp_LDAP
   LDAP *ld;
   /* Name of the host we connected to */
   Lisp_Object host;
-  /* Status of the LDAP connection.
-     This is a symbol: open or closed */
-  Lisp_Object status_symbol;
+  /* Status of the LDAP connection.  */
+  int livep;
 };
 
 
+static Lisp_Object
+make_ldap (struct Lisp_LDAP *ldap)
+{
+  Lisp_Object lisp_ldap;
+  XSETLDAP (lisp_ldap, ldap);
+  return lisp_ldap;
+}
 
 static Lisp_Object
 mark_ldap (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
-  struct Lisp_LDAP *ldap = XLDAP (obj);
-  ((markobj) (ldap->host));
-  return ldap->status_symbol;
+  return XLDAP (obj)->host;
 }
 
 static void
 print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  char buf[16];
+  char buf[32];
 
   struct Lisp_LDAP *ldap = XLDAP (obj);
 
@@ -132,8 +129,8 @@ print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   write_c_string ("#<ldap ", printcharfun);
   print_internal (ldap->host, printcharfun, 1);
-  write_c_string (" state:",printcharfun);
-  print_internal (ldap->status_symbol, printcharfun, 1);
+  if (!ldap->livep)
+    write_c_string ("(dead) ",printcharfun);
   sprintf (buf, " 0x%x>", ldap);
   write_c_string (buf, printcharfun);
 }
@@ -144,9 +141,9 @@ allocate_ldap (void)
   struct Lisp_LDAP *ldap =
     alloc_lcrecord_type (struct Lisp_LDAP, lrecord_ldap);
 
-  ldap->ld = (LDAP *) NULL;
+  ldap->ld = NULL;
   ldap->host = Qnil;
-  ldap->status_symbol = Qnil;
+  ldap->livep = 0;
   return ldap;
 }
 
@@ -156,13 +153,10 @@ finalize_ldap (void *header, int for_disksave)
   struct Lisp_LDAP *ldap = (struct Lisp_LDAP *) header;
 
   if (for_disksave)
-    {
-      Lisp_Object obj;
-      XSETLDAP (obj, ldap);
-      signal_simple_error
-	("Can't dump an emacs containing LDAP objects", obj);
-    }
-  if (EQ (ldap->status_symbol, Qopen))
+    signal_simple_error ("Can't dump an emacs containing LDAP objects",
+			 make_ldap (ldap));
+
+  if (ldap->livep)
     ldap_unbind (ldap->ld);
 }
 
@@ -185,7 +179,6 @@ Return t if OBJECT is a LDAP connection.
   return LDAPP (object) ? Qt : Qnil;
 }
 
-
 DEFUN ("ldap-host", Fldap_host, 1, 1, 0, /*
 Return the server host of the connection LDAP, as a string.
 */
@@ -195,22 +188,14 @@ Return the server host of the connection LDAP, as a string.
   return (XLDAP (ldap))->host;
 }
 
-
-
-DEFUN ("ldap-status", Fldap_status, 1, 1, 0, /*
-Return the status of the connection LDAP.
-This is a symbol, one of these:
-
-open   -- for a LDAP connection that is open.
-closed -- for a LDAP connection that is closed.
+DEFUN ("ldap-live-p", Fldap_status, 1, 1, 0, /*
+Return t if LDAP is an active LDAP connection.
 */
        (ldap))
 {
   CHECK_LDAP (ldap);
-  return (XLDAP (ldap))->status_symbol;
+  return (XLDAP (ldap))->livep ? Qt : Qnil;
 }
-
-
 
 /************************************************************************/
 /*                  Opening/Closing a LDAP connection                   */
@@ -233,9 +218,8 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
 */
        (host, plist))
 {
-  /* This function can call lisp */
-
-  struct Lisp_LDAP *lisp_ldap;
+  /* This function can GC */
+  struct Lisp_LDAP *ldap;
   LDAP *ld;
   int  ldap_port = 0;
   int  ldap_auth = LDAP_AUTH_SIMPLE;
@@ -246,15 +230,11 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
   int  ldap_sizelimit = 0;
   int  err;
 
-  Lisp_Object ldap, list, keyword, value;
-  struct gcpro gcpro1;
-
-  ldap =  Qnil;
-  GCPRO1 (ldap);
+  Lisp_Object list, keyword, value;
 
   CHECK_STRING (host);
 
-  EXTERNAL_PROPERTY_LIST_LOOP(list, keyword, value, plist)
+  EXTERNAL_PROPERTY_LIST_LOOP (list, keyword, value, plist)
     {
       /* TCP Port */
       if (EQ (keyword, Qport))
@@ -265,8 +245,6 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
       /* Authentication method */
       if (EQ (keyword, Qauth))
         {
-          CHECK_SYMBOL (value);
-
           if (EQ (value, Qsimple))
             ldap_auth = LDAP_AUTH_SIMPLE;
 #ifdef LDAP_AUTH_KRBV41
@@ -297,7 +275,6 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
       /* Deref */
       else if (EQ (keyword, Qderef))
         {
-          CHECK_SYMBOL (value);
           if (EQ (value, Qnever))
             ldap_deref = LDAP_DEREF_NEVER;
           else if (EQ (value, Qsearch))
@@ -358,7 +335,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
 #endif /* not LDAP_REFERRALS */
 #endif /* not HAVE_LDAP_SET_OPTION */
 
-  /* ldap_bind_s calls select and may be wedged by spurious signals */
+  /* ldap_bind_s calls select and may be wedged by SIGIO.  */
   slow_down_interrupts ();
   err = ldap_bind_s (ld, ldap_binddn, ldap_passwd, ldap_auth);
   speed_up_interrupts ();
@@ -366,14 +343,12 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
     signal_simple_error ("Failed binding to the server",
                          build_string (ldap_err2string (err)));
 
-  lisp_ldap = allocate_ldap ();
-  lisp_ldap->ld = ld;
-  lisp_ldap->host = host;
-  lisp_ldap->status_symbol = Qopen;
-  XSETLDAP (ldap,lisp_ldap);
+  ldap = allocate_ldap ();
+  ldap->ld = ld;
+  ldap->host = host;
+  ldap->livep = 1;
 
-  UNGCPRO;
-  return ldap;
+  return make_ldap (ldap);
 }
 
 
@@ -387,7 +362,7 @@ Close an LDAP connection.
   CHECK_LIVE_LDAP (ldap);
   lldap = XLDAP (ldap);
   ldap_unbind (lldap->ld);
-  lldap->status_symbol = Qclosed;
+  lldap->livep = 0;
   return Qnil;
 }
 
@@ -408,9 +383,9 @@ ldap_search_unwind (Lisp_Object unwind_obj)
 {
   struct ldap_unwind_struct *unwind =
     (struct ldap_unwind_struct *) get_opaque_ptr (unwind_obj);
-  if (unwind->res != (LDAPMessage *)NULL)
+  if (unwind->res)
     ldap_msgfree (unwind->res);
-  if (unwind->vals != (char **)NULL)
+  if (unwind->vals)
     ldap_value_free (unwind->vals);
 }
 
@@ -431,7 +406,7 @@ an alist of attribute/values.
 */
        (ldap, filter, base, scope, attrs, attrsonly))
 {
-  /* This function can call lisp */
+  /* This function can GC */
 
   /* Vars for query */
   LDAP *ld;
@@ -451,14 +426,14 @@ an alist of attribute/values.
   struct gcpro gcpro1, gcpro2, gcpro3;
 
   list = entry = result = Qnil;
-  GCPRO3(list, entry, result);
+  GCPRO3 (list, entry, result);
 
-  unwind.res = (LDAPMessage *)NULL;
-  unwind.vals = (char **)NULL;
+  unwind.res = NULL;
+  unwind.vals = NULL;
 
   /* Do all the parameter checking  */
   CHECK_LIVE_LDAP (ldap);
-  ld = (XLDAP (ldap))->ld;
+  ld = XLDAP (ldap)->ld;
 
   /* Filter */
   CHECK_STRING (filter);
@@ -476,7 +451,6 @@ an alist of attribute/values.
   /* Search scope */
   if (!NILP (scope))
     {
-      CHECK_SYMBOL (scope);
       if (EQ (scope, Qbase))
         ldap_scope = LDAP_SCOPE_BASE;
       else if (EQ (scope, Qonelevel))
@@ -510,7 +484,6 @@ an alist of attribute/values.
   /* Attributes only ? */
   CHECK_SYMBOL (attrsonly);
 
-
   /* Perform the search */
   if (ldap_search (ld,
                    NILP (base) ? "" : (char *) XSTRING_DATA (base),
@@ -532,14 +505,18 @@ an alist of attribute/values.
 
   /* ldap_result calls select() and can get wedged by EINTR signals */
   slow_down_interrupts ();
-  rc = ldap_result (ld, LDAP_RES_ANY, 0, NULL, &(unwind.res));
+  rc = ldap_result (ld, LDAP_RES_ANY, 0, NULL, &unwind.res);
   speed_up_interrupts ();
-  while ( rc == LDAP_RES_SEARCH_ENTRY )
+  while (rc == LDAP_RES_SEARCH_ENTRY)
     {
       QUIT;
       matches ++;
       e = ldap_first_entry (ld, unwind.res);
-      message ("Parsing results... %d", matches);
+      /* #### This call to message() is pretty fascist, because it
+         destroys the current echo area contents, even when invoked
+         from Lisp.  It should use echo_area_message() instead, and
+         restore the old echo area contents later.  */
+      message ("Parsing ldap results... %d", matches);
       entry = Qnil;
       for (a= ldap_first_attribute (ld, e, &ptr);
            a != NULL;
@@ -549,7 +526,7 @@ an alist of attribute/values.
           unwind.vals = ldap_get_values (ld, e, a);
           if (unwind.vals != NULL)
             {
-              for (i=0; unwind.vals[i]!=NULL; i++)
+              for (i = 0; unwind.vals[i] != NULL; i++)
                 {
                   list = Fcons (build_string (unwind.vals[i]),
                                 list);
@@ -558,12 +535,12 @@ an alist of attribute/values.
           entry = Fcons (Fnreverse (list),
                          entry);
           ldap_value_free (unwind.vals);
-          unwind.vals = (char **)NULL;
+          unwind.vals = NULL;
         }
       result = Fcons (Fnreverse (entry),
                       result);
       ldap_msgfree (unwind.res);
-      unwind.res = (LDAPMessage *)NULL;
+      unwind.res = NULL;
 
       slow_down_interrupts ();
       rc = ldap_result (ld, LDAP_RES_ANY, 0, NULL, &(unwind.res));
@@ -583,14 +560,12 @@ an alist of attribute/values.
 
   ldap_msgfree (unwind.res);
   unwind.res = (LDAPMessage *)NULL;
-  message ("Done.");
-
-  result = Fnreverse (result);
-  clear_message ();
+  /* #### See above for calling message().  */
+  message ("Parsing ldap results... done");
 
   unbind_to (speccount, Qnil);
   UNGCPRO;
-  return result;
+  return Fnreverse (result);
 }
 
 
@@ -598,7 +573,6 @@ void
 syms_of_eldap (void)
 {
   defsymbol (&Qldapp, "ldapp");
-
   DEFSUBR (Fldapp);
   DEFSUBR (Fldap_host);
   DEFSUBR (Fldap_status);

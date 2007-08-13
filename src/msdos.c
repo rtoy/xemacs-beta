@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 
 #ifdef MSDOS
+#include <strings.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <dos.h>
@@ -663,7 +664,7 @@ internal_terminal_init (void)
 
   Vwindow_system = intern ("pc");
 
-  bzero (&the_only_x_display, sizeof the_only_x_display);
+  memset (&the_only_x_display, 0, sizeof the_only_x_display);
   the_only_x_display.background_pixel = 7; /* White */
   the_only_x_display.foreground_pixel = 0; /* Black */
   colors = getenv ("EMACSCOLORS");
@@ -1139,12 +1140,12 @@ and then the scan code.
   else
     {
       val = Fvector (NUM_RECENT_DOSKEYS, keys);
-      bcopy (keys + recent_doskeys_index,
-	     XVECTOR_DATA (val),
-	     (NUM_RECENT_DOSKEYS - recent_doskeys_index) * sizeof (Lisp_Object));
-      bcopy (keys,
-	     XVECTOR_DATA (val) + NUM_RECENT_DOSKEYS - recent_doskeys_index,
-	     recent_doskeys_index * sizeof (Lisp_Object));
+      memcpy (keys + recent_doskeys_index,
+	      XVECTOR_DATA (val),
+	      (NUM_RECENT_DOSKEYS - recent_doskeys_index) * sizeof (Lisp_Object));
+      memcpy (keys,
+	      XVECTOR_DATA (val) + NUM_RECENT_DOSKEYS - recent_doskeys_index,
+	      recent_doskeys_index * sizeof (Lisp_Object));
       return val;
     }
 }

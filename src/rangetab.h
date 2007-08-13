@@ -26,9 +26,6 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_RANGETAB_H_
 #define _XEMACS_RANGETAB_H_
 
-#include <config.h>
-#include "lisp.h"
-
 typedef struct range_table_entry range_table_entry;
 struct range_table_entry
 {

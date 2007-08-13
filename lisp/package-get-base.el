@@ -1,19 +1,19 @@
 (setq package-get-base
 '((eudc
   (standards-version 1.0
-   version "1.05"
-   author-version "1.05"
-   date "1998-04-29"
-   build-date "1998-05-01"
+   version "1.06"
+   author-version "1.06"
+   date "1998-05-03"
+   build-date "1998-05-04"
    maintainer "Oscar Figueiredo <Oscar.Figueiredo@epfl.ch>"
    distribution stable
    priority low
    category "comm"
    dump nil
    description "Emacs Unified Directory Client."
-   filename "eudc-1.05-pkg.tar.gz"
-   md5sum "1313a4cf7bb644e807bd846ab0d6e414"
-   size 40378
+   filename "eudc-1.06-pkg.tar.gz"
+   md5sum "aff14f51353f6ad31f28f10104bb4996"
+   size 40382
    provides (eudc eudc-ldap eudc-ph)
    requires (fsf-compat xemacs-base)
    type regular
@@ -172,19 +172,19 @@
 ))
 (supercite
   (standards-version 1.0
-   version "1.05"
+   version "1.06"
    author-version "3.55x"
-   date "1998-02-11"
-   build-date "1998-04-04"
+   date "1998-05-07"
+   build-date "1998-05-09"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "comm"
    dump nil
    description "An Emacs citation tool for News & Mail messages."
-   filename "supercite-1.05-pkg.tar.gz"
-   md5sum "de8676b20143e985ab2b7c46f82218dc"
-   size 90162
+   filename "supercite-1.06-pkg.tar.gz"
+   md5sum "9626dcb33f2b7719c49324a8ed92956b"
+   size 70857
    provides (supercite)
    requires (mail-lib xemacs-base)
    type regular
@@ -362,19 +362,19 @@
 ))
 (dired
   (standards-version 1.0
-   version "1.0"
+   version "1.01"
    author-version "7.9"
-   date "1998-02-17"
-   build-date "1998-04-04"
+   date "1998-05-05"
+   build-date "1998-05-05"
    maintainer "Mike Sperber <sperber@informatik.uni-tuebingen.de>"
    distribution stable
    priority medium
    category "libs"
    dump nil
    description "Manage file systems."
-   filename "dired-1.0-pkg.tar.gz"
-   md5sum "9d0fab9ce63853d8a44d95fe8f87ad29"
-   size 187355
+   filename "dired-1.01-pkg.tar.gz"
+   md5sum "d9748d8e8af8a63095aaaab9924987ef"
+   size 187526
    provides (diff dired)
    requires (xemacs-base)
    type regular
@@ -420,9 +420,9 @@
 (fsf-compat
   (standards-version 1.0
    version "1.0"
-   author-version "21.0b35"
+   author-version "21.0b39"
    date "1998-03-25"
-   build-date "1998-04-04"
+   build-date "1998-05-06"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution mule
    priority high
@@ -430,30 +430,30 @@
    dump nil
    description "FSF Emacs compatibility files."
    filename "fsf-compat-1.0-pkg.tar.gz"
-   md5sum "813d839e6907a1e0b4a1226ca4340e0b"
-   size 16103
+   md5sum "71351ff26a69b341015612d9b88dfc55"
+   size 16083
    provides (overlay thingatpt timer)
    requires ()
    type single
 ))
 (mail-lib
   (standards-version 1.0
-   version "1.12"
-   author-version "21.0b38"
-   date "1998-05-01"
-   build-date "1998-05-02"
+   version "1.13"
+   author-version "21.0b39"
+   date "1998-05-09"
+   build-date "1998-05-09"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "libs"
    dump nil
    description "Fundamental lisp files for providing email support."
-   filename "mail-lib-1.12-pkg.tar.gz"
-   md5sum "287eaaeafd45a778e45200866e6952f4"
-   size 119922
+   filename "mail-lib-1.13-pkg.tar.gz"
+   md5sum "39c95ef0dfc8d2bee106768c14821d98"
+   size 120019
    provides (browse-url highlight-headers mail-abbrevs mail-extr mail-utils reporter rfc822 rmail-mini rmailout sendmail smtpmail)
    requires (xemacs-base)
-   type single
+   type regular
 ))
 (tooltalk
   (standards-version 1.0
@@ -515,20 +515,20 @@
 (edict
   (standards-version 1.0
    version "1.01"
-   author-version "0.9.6X1"
+   author-version "0.9.7"
    date "1998-03-13"
-   build-date "1998-03-13"
-   maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
+   build-date "1998-05-06"
+   maintainer "Stephen J. Turnbull <turnbull@sk.tsukuba.ac.jp>"
    distribution mule
    priority high
    category "mule"
    dump t
    description "Lisp Interface to EDICT, Kanji Dictionary"
    filename "edict-1.01-pkg.tar.gz"
-   md5sum "f3e4eab5058a028d1d5224adf8d6fc91"
-   size 85019
+   md5sum "45881df2e316f5fb38bed46f46c9992e"
+   size 144862
    provides ()
-   requires (skk egg-its mule-base xemacs-base)
+   requires (mule-base xemacs-base)
    type regular
 ))
 (egg-its
@@ -590,19 +590,19 @@
 ))
 (mule-base
   (standards-version 1.0
-   version "1.14"
-   author-version "21.0b36"
-   date "1998-04-07"
-   build-date "1998-04-17"
-   maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
+   version "1.16"
+   author-version "21.0b39"
+   date "1998-05-09"
+   build-date "1998-05-09"
+   maintainer "SL Baur <steve@altair.xemacs.org>"
    distribution mule
    priority high
    category "mule"
    dump t
    description "Basic Mule support, required for building with Mule."
-   filename "mule-base-1.14-pkg.tar.gz"
-   md5sum "6f5cd80e31ff852636c19df9ad7d3e95"
-   size 487974
+   filename "mule-base-1.16-pkg.tar.gz"
+   md5sum "5acc72aebf3a3f6505ddc947bd111cb1"
+   size 508454
    provides (canna-leim canna char-table china-util cyril-util isearch-ext japan-util ccl can-n-egg mule-help)
    requires (fsf-compat xemacs-base)
    type regular
@@ -1120,21 +1120,40 @@
    requires ()
    type regular
 ))
+(jde
+  (standards-version 1.0
+   version "1.0"
+   author-version "2.0"
+   date "1998-04-19"
+   build-date "1998-05-06"
+   maintainer "Andy Piper <andyp@parallax.co.uk>"
+   distribution stable
+   priority medium
+   category "prog"
+   dump nil
+   description "Java language and development support."
+   filename "jde-1.0-pkg.tar.gz"
+   md5sum "f17436f90709e197ea7937d75b8ede15"
+   size 112195
+   provides (jde)
+   requires (cc-mode debug speedbar edit-utils mail-lib xemacs-base)
+   type regular
+))
 (pcl-cvs
   (standards-version 1.0
-   version "1.07"
-   author-version "21.0b38"
-   date "1998-04-27"
-   build-date "1998-05-01"
+   version "1.08"
+   author-version "21.0b39"
+   date "1998-05-07"
+   build-date "1998-05-09"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "prog"
    dump nil
    description "CVS frontend."
-   filename "pcl-cvs-1.07-pkg.tar.gz"
-   md5sum "252e448e4d2a6d68d52b7e0389949889"
-   size 170580
+   filename "pcl-cvs-1.08-pkg.tar.gz"
+   md5sum "c1cf0841a3df11130736a82e20b1ccf4"
+   size 172294
    provides (pcl-cvs dll elib-node generic-sc)
    requires (xemacs-base)
    type regular

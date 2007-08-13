@@ -42,9 +42,6 @@ Gould Power Node (-machine=gould -opsystem=bsd4-2 or bsd4-3)
   lib-src/sorted-doc tickles a compiler bug:  remove the -g flag to cc in the 
   makefile.
 
-  UTX/32 1.3 has a bug in the bcopy library routine.  Fix it by 
-  #define BROKEN_BCOPY in gould.h.
-
   Version 19 incorporates support for releases 2.1 and later of UTX/32.
   A site running a pre-release of 2.1 should #define RELEASE2_1 in config.h.
 NOTE-END */

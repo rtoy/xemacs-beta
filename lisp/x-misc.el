@@ -77,7 +77,6 @@ a check is done for bogus resource specifications."
   (x-bogosity-check-resource name class type)
   (x-get-resource name class type locale nil t))
 
-;; #### this function is not necessary.
 (defun x-get-resource-and-maybe-bogosity-check (name class type &optional
 						     locale)
   (if (eq locale 'global)

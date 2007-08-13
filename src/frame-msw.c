@@ -115,12 +115,6 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   mswindows_frame_target_rect.width = NILP (width) ? -1 : abs (XINT (width));
   mswindows_frame_target_rect.height = NILP (height) ? -1 : abs (XINT (height));
 
-  /* These shouldn't be here, but the window is created too early.
-     The initialization of scrollbar resources is done between
-     init_frame_1 and init_frame_2 in make_frame.  jsparkes */
-  f->scrollbar_width  = make_int (15);
-  f->scrollbar_height = make_int (15);
-
   f->frame_data = xnew_and_zero (struct mswindows_frame);
 
   /* Misc frame stuff */
@@ -369,7 +363,8 @@ mswindows_set_frame_icon (struct frame *f)
     {
       if (!XIMAGE_INSTANCE_MSWINDOWS_ICON (f->icon))
 	{
-	  mswindows_create_icon_from_image(f->icon, f, 16);
+	  mswindows_initialize_image_instance_icon (XIMAGE_INSTANCE (f->icon), 
+						    FALSE);
 	}
       
       SetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HICON, 
@@ -380,14 +375,13 @@ mswindows_set_frame_icon (struct frame *f)
 static void
 mswindows_set_frame_pointer (struct frame *f)
 {
-#if 0
-  XDefineCursor (XtDisplay (FRAME_X_TEXT_WIDGET (f)),
-		 XtWindow (FRAME_X_TEXT_WIDGET (f)),
-		 XIMAGE_INSTANCE_X_CURSOR (f->pointer));
-  XSync (XtDisplay (FRAME_X_TEXT_WIDGET (f)), 0);
-#endif
+  if (IMAGE_INSTANCEP (f->pointer)
+      && IMAGE_INSTANCE_TYPE (XIMAGE_INSTANCE (f->pointer)) == IMAGE_POINTER)
+    {
+      SetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HCURSOR,
+		    (LONG) XIMAGE_INSTANCE_MSWINDOWS_ICON (f->pointer));
+    }
 }
-
 
 static void
 mswindows_set_mouse_position (struct window *w, int x, int y)
@@ -626,38 +620,13 @@ mswindows_get_frame_parent (struct frame *f)
 static void
 mswindows_update_frame_external_traits (struct frame* frm, Lisp_Object name)
 {
-  if (EQ (name, Qfont))
-    {
-      /* We resize the frame along with the font if user preference
-	 of MS style compliance is turned off, and if font size has
-	 really changed
-      */
-      /* #### Frame gets resized after font here */
-      if (1)
-	{
-	  int new_char_height, new_char_width;
-          pixel_to_real_char_size (frm, FRAME_PIXWIDTH(frm), FRAME_PIXHEIGHT(frm),
-				   &new_char_width, &new_char_height);
-	  if (new_char_width != FRAME_MSWINDOWS_CHARWIDTH (frm)
-	      || new_char_height != FRAME_MSWINDOWS_CHARHEIGHT (frm))
-	    {
-	      Lisp_Object frame;
-	      XSETFRAME (frame, frm);
-	      Fset_frame_size (frame, 
-			       make_int(FRAME_MSWINDOWS_CHARWIDTH (frm)),
-			       make_int(FRAME_MSWINDOWS_CHARHEIGHT (frm)),
-			       Qnil);
-	    }
-	}
+}
 
-      /* This resizes minibuffer and redraws modeline. */
-      {
-        int width, height;
-	pixel_to_char_size (frm, FRAME_PIXWIDTH(frm), FRAME_PIXHEIGHT(frm),
-			    &width, &height);
-	change_frame_size (frm, height, width, 1);
-      }
-   }
+static int
+mswindows_frame_size_fixed_p (struct frame *f)
+{
+  /* Frame size cannot change if the frame is maximized */
+  return IsZoomed (FRAME_MSWINDOWS_HANDLE (f));
 }
 
 void
@@ -693,6 +662,7 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, set_frame_icon); 
   CONSOLE_HAS_METHOD (mswindows, get_frame_parent);
   CONSOLE_HAS_METHOD (mswindows, update_frame_external_traits);
+  CONSOLE_HAS_METHOD (mswindows, frame_size_fixed_p);
 }
 
 void

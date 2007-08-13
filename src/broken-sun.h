@@ -44,8 +44,6 @@ Boston, MA 02111-1307, USA.  */
 /* char *	strchr (CONST char *, int); */
 /* int	strcmp (CONST char *, CONST char *); */
 int	strcasecmp (char *, char *);
-void	bzero (char *, int);
-void	bcopy (char *, char *, int);
 
 /* Yes, they even left these functions out! */
 int      tolower (int);

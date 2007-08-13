@@ -588,7 +588,7 @@ BUFFER defaults to the current buffer."
       (while (< (point) end)
 	(when (forward-word 1)
 	  (incf words)))
-      (when (interactive-p)
+      (when  (interactive-p)
 	(message "Region has %d words" words))
       words)))
 

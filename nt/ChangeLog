@@ -1,3 +1,22 @@
+1998-05-08  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* config.h (enum_field): Redefine to be unsigned int.
+
+1998-05-07  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Really honor minimal tagbits, indexed lrecord and
+	union type.
+
+1998-05-03  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* inc/sys/socket.h: Removed encapsulating definitions for Winsock
+	functions.
+
+1998-05-04  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Defined PATH_PROGNAME and	PATH_VERSION C macros.
+	Make _DEBUG defined only when DEBUG_XEMACS.
+
 1998-04-26  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* xemacs.mak: Added glyphs-eimage.{c,obj}

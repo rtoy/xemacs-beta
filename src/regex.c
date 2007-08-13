@@ -133,36 +133,7 @@ typedef int Emchar;
 #define INC_CHARPTR(p) ((p)++)
 #define DEC_CHARPTR(p) ((p)--)
 
-/* When used in Emacs's lib-src, we need to get bzero and bcopy somehow.
-   If nothing else has been done, use the method below.  */
-#ifdef INHIBIT_STRING_HEADER
-#if !(defined (HAVE_BZERO) && defined (HAVE_BCOPY))
-#if !defined (bzero) && !defined (bcopy)
-#undef INHIBIT_STRING_HEADER
-#endif
-#endif
-#endif
-
-/* This is the normal way of making sure we have a bcopy and a bzero.
-   This is used in most programs--a few other programs avoid this
-   by defining INHIBIT_STRING_HEADER.  */
-#ifndef INHIBIT_STRING_HEADER
-#if defined (HAVE_STRING_H) || defined (STDC_HEADERS) || defined (_LIBC)
 #include <string.h>
-#ifndef bcmp
-#define bcmp(s1, s2, n)	memcmp ((s1), (s2), (n))
-#endif
-#ifndef bcopy
-#define bcopy(s, d, n)	memcpy ((d), (s), (n))
-#endif
-#ifndef bzero
-#define bzero(s, n)	memset ((s), 0, (n))
-#endif
-#else
-#include <strings.h>
-#endif
-#endif
-
 
 /* Define the syntax stuff for \<, \>, etc.  */
 
@@ -2267,7 +2238,7 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
             BUF_PUSH ((1 << BYTEWIDTH) / BYTEWIDTH);
 
             /* Clear the whole map.  */
-            bzero (b, (1 << BYTEWIDTH) / BYTEWIDTH);
+            memset (b, 0, (1 << BYTEWIDTH) / BYTEWIDTH);
 
             /* charset_not matches newline according to a syntax bit.  */
             if ((re_opcode_t) b[-2] == charset_not
@@ -3427,7 +3398,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
   assert (fastmap != NULL && p != NULL);
 
   INIT_FAIL_STACK ();
-  bzero (fastmap, 1 << BYTEWIDTH);  /* Assume nothing's valid.  */
+  memset (fastmap, 0, 1 << BYTEWIDTH);  /* Assume nothing's valid.  */
   bufp->fastmap_accurate = 1;	    /* It will be when we're done.  */
   bufp->can_be_null = 0;
 

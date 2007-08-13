@@ -68,7 +68,7 @@ That becomes the \"string to replace\".")
 
 ;; As per suggestion from Per Abrahamsen, limit replacement to the region
 ;; if the region is active.
-(defun query-replace (from-string to-string &optional arg)
+(defun query-replace (from-string to-string &optional delimited)
   "Replace some occurrences of FROM-STRING with TO-STRING.
 As each match is found, the user must type a character saying
 what to do with it.  For directions, type \\[help-command] at that time.
@@ -87,16 +87,9 @@ only matches surrounded by word boundaries.
 
 To customize possible responses, change the \"bindings\" in `query-replace-map'."
   (interactive (query-replace-read-args "Query replace" nil))
-  (if (or (and (boundp 'zmacs-region-active-p) zmacs-region-active-p)
-	  (and (boundp 'transient-mark-mode) transient-mark-mode mark-active))
-      (save-restriction
-	(save-excursion
-	  (narrow-to-region (point) (mark))
-	  (goto-char (point-min))
-	  (perform-replace from-string to-string t nil arg)))
-    (perform-replace from-string to-string t nil arg)))
+  (perform-replace from-string to-string t nil delimited))
 
-(defun query-replace-regexp (regexp to-string &optional arg)
+(defun query-replace-regexp (regexp to-string &optional delimited)
   "Replace some things after point matching REGEXP with TO-STRING.
 As each match is found, the user must type a character saying
 what to do with it.  For directions, type \\[help-command] at that time.
@@ -113,14 +106,7 @@ In TO-STRING, `\\&' stands for whatever matched the whole of REGEXP,
 and `\\=\\N' (where N is a digit) stands for
  whatever what matched the Nth `\\(...\\)' in REGEXP."
   (interactive (query-replace-read-args "Query replace regexp" t))
-  (if (or (and (boundp 'zmacs-region-active-p) zmacs-region-active-p)
-	  (and (boundp 'transient-mark-mode) transient-mark-mode mark-active))
-      (save-restriction
-	(save-excursion
-	  (narrow-to-region (point) (mark))
-	  (goto-char (point-min))
-	  (perform-replace regexp to-string t t arg)))
-    (perform-replace regexp to-string t t arg)))
+  (perform-replace regexp to-string t t delimited))
 
 ;;#### Not patently useful
 (defun map-query-replace-regexp (regexp to-strings &optional arg)
@@ -594,8 +580,8 @@ The valid answers include `act', `skip', `act-and-show',
       
       (setq query-replace-map map)))
 
-
-(autoload 'isearch-highlight "isearch")
+;; isearch-mode is dumped, so don't autoload.
+;(autoload 'isearch-highlight "isearch")
 
 ;; XEmacs
 (defun perform-replace-next-event (event)
@@ -635,6 +621,9 @@ which will run faster and probably do exactly what you want."
 	 (next-rotate-count 0)
 	 (replace-count 0)
 	 (lastrepl nil)			;Position after last match considered.
+	 ;; If non-nil, it is marker saying where in the buffer to
+	 ;; stop.
+	 (limit nil)
 	 (match-again t)
 	 ;; XEmacs addition
 	 (qr-case-fold-search
@@ -645,6 +634,14 @@ which will run faster and probably do exactly what you want."
 	  (if query-flag
 	      (substitute-command-keys
 	       "Query replacing %s with %s: (\\<query-replace-map>\\[help] for help) "))))
+    ;; If the region is active, operate on region.
+    (when (region-active-p)
+      ;; Original Per Abrahamsen's code simply narrowed the region,
+      ;; thus providing a visual indication of the search boundary.
+      ;; Stallman, on the other hand, handles it like this.
+      (setq limit (copy-marker (region-end)))
+      (goto-char (region-beginning))
+      (zmacs-deactivate-region))
     (if (stringp replacements)
 	(setq next-replacement replacements)
       (or repeat-count (setq repeat-count 1)))
@@ -661,7 +658,7 @@ which will run faster and probably do exactly what you want."
 	(while (and keep-going
 		    (not (eobp))
 		    (let ((case-fold-search qr-case-fold-search))
-		      (funcall search-function search-string nil t))
+		      (funcall search-function search-string limit t))
 		    ;; If the search string matches immediately after
 		    ;; the previous match, but it did not match there
 		    ;; before the replacement was done, ignore the match.
@@ -675,7 +672,7 @@ which will run faster and probably do exactly what you want."
 			  ;; right after end of previous replacement.
 			  (forward-char 1)
 			  (let ((case-fold-search qr-case-fold-search))
-			    (funcall search-function search-string nil t)))
+			    (funcall search-function search-string limit t)))
 		      t))
 
 	  ;; Save the data associated with the real match.
@@ -797,44 +794,43 @@ which will run faster and probably do exactly what you want."
 	      (setq stack
 		    (cons (cons (point)
 				(or replaced
-				    (mapcar
-				     #'(lambda (elt)
-					 (if (markerp elt)
-					     (prog1 (marker-position elt)
-					       (set-marker elt nil))
-					   elt))
-				     (match-data))))
+				    (match-data t)))
 			  stack))
 	      (if replaced (setq replace-count (1+ replace-count)))))
 	  (setq lastrepl (point)))
-      (replace-dehighlight))
+      ;; Useless in XEmacs.  We handle (de)highlighting through
+      ;; perform-replace-next-event.
+      ;(replace-dehighlight)
+      )
     (or unread-command-events
 	(message "Replaced %d occurrence%s"
 		 replace-count
 		 (if (= replace-count 1) "" "s")))
     (and keep-going stack)))
 
-(defvar query-replace-highlight nil
-  "*Non-nil means to highlight words during query replacement.")
+;; FSFmacs code: someone should port it.
 
-(defvar replace-overlay nil)
+;(defvar query-replace-highlight nil
+;  "*Non-nil means to highlight words during query replacement.")
 
-(defun replace-dehighlight ()
-  (and replace-overlay
-       (progn
-	 (delete-overlay replace-overlay)
-	 (setq replace-overlay nil))))
+;(defvar replace-overlay nil)
 
-(defun replace-highlight (start end)
-  (and query-replace-highlight
-       (progn
-	 (or replace-overlay
-	     (progn
-	       (setq replace-overlay (make-overlay start end))
-	       (overlay-put replace-overlay 'face
-			    (if (internal-find-face 'query-replace)
-				'query-replace 'region))))
-	 (move-overlay replace-overlay start end (current-buffer)))))
+;(defun replace-dehighlight ()
+;  (and replace-overlay
+;       (progn
+;	 (delete-overlay replace-overlay)
+;	 (setq replace-overlay nil))))
+
+;(defun replace-highlight (start end)
+;  (and query-replace-highlight
+;       (progn
+;	 (or replace-overlay
+;	     (progn
+;	       (setq replace-overlay (make-overlay start end))
+;	       (overlay-put replace-overlay 'face
+;			    (if (internal-find-face 'query-replace)
+;				'query-replace 'region))))
+;	 (move-overlay replace-overlay start end (current-buffer)))))
 
 (defun match-string (num &optional string)
   "Return string of text matched by last search.

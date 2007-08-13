@@ -468,7 +468,7 @@ when reading the arguments.
 		      run_hook (Qmouse_leave_buffer_hook);
 #endif
 
-		    Fselect_window (window);
+		    Fselect_window (window, Qnil);
 		  }
 	      }
 	  }

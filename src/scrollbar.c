@@ -57,11 +57,17 @@ Lisp_Object Qscrollbar_horizontal_drag;
 #define DEFAULT_SCROLLBAR_WIDTH 15
 #define DEFAULT_SCROLLBAR_HEIGHT 15
 
-/* Width of the scrollbar. */
+/* Width and height of the scrollbar. */
 Lisp_Object Vscrollbar_width;
-
-/* Height of the scrollbar. */
 Lisp_Object Vscrollbar_height;
+
+/* Scrollbar visibility specifiers */
+Lisp_Object Vhorizontal_scrollbar_visible_p;
+Lisp_Object Vvertical_scrollbar_visible_p;
+
+/* Scrollbar location specifiers */
+Lisp_Object Vscrollbar_on_left_p;
+Lisp_Object Vscrollbar_on_top_p;
 
 Lisp_Object Vscrollbar_pointer_glyph;
 
@@ -460,7 +466,7 @@ update_scrollbar_instance (struct window *w, int vertical,
     /* Scrollbars are always the farthest from the text area. */
     if (vertical)
       {
-	x_offset = (f->scrollbar_on_left
+	x_offset = (!NILP (w->scrollbar_on_left_p)
 		    ? WINDOW_LEFT (w)
 		    : WINDOW_RIGHT (w) - scrollbar_width);
 	y_offset = WINDOW_TEXT_TOP (w) + f->scrollbar_y_offset;
@@ -469,7 +475,7 @@ update_scrollbar_instance (struct window *w, int vertical,
       {
 	x_offset = WINDOW_TEXT_LEFT (w);
 	y_offset = f->scrollbar_y_offset +
-	  (f->scrollbar_on_top
+	  (!NILP (w->scrollbar_on_top_p)
 	   ? WINDOW_TOP (w)
 	   : WINDOW_TEXT_BOTTOM (w) + window_bottom_toolbar_height (w));
       }
@@ -579,27 +585,6 @@ init_global_scrollbars (struct device *d)
 			       Qglobal);
       unbind_to (depth, Qnil);
     }
-}
-
-
-/* This function is called as a result of a change to the
-   `scrollbar-width' specifier. */
-static void
-scrollbar_width_changed_in_frame (Lisp_Object specifier, struct frame *f,
-				  Lisp_Object oldval)
-{
-  MAYBE_FRAMEMETH (f, scrollbar_width_changed_in_frame,
-		   (specifier, f, oldval));
-}
-
-/* This function is called as a result of a change to the
-   `scrollbar-height' specifier.  */
-static void
-scrollbar_height_changed_in_frame (Lisp_Object specifier, struct frame *f,
-				   Lisp_Object oldval)
-{
-  MAYBE_FRAMEMETH (f, scrollbar_height_changed_in_frame,
-		   (specifier, f, oldval));
 }
 
 /* This function is called as a result of a change to the
@@ -946,7 +931,7 @@ This is a specifier; use `set-specifier' to change it.
 			 some_window_value_changed,
 			 slot_offset (struct frame,
 				      scrollbar_width),
-			 scrollbar_width_changed_in_frame);
+			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("scrollbar-height", &Vscrollbar_height /*
 *Height of horizontal scrollbars.
@@ -962,7 +947,80 @@ This is a specifier; use `set-specifier' to change it.
 			 some_window_value_changed,
 			 slot_offset (struct frame,
 				      scrollbar_height),
-			 scrollbar_height_changed_in_frame);
+			 frame_size_slipped);
+
+  DEFVAR_SPECIFIER ("horizontal-scrollbar-visible-p", &Vhorizontal_scrollbar_visible_p /*
+*Whether the horizontal scrollbar is visible.
+This is a specifier; use `set-specifier' to change it.
+*/ );
+  Vhorizontal_scrollbar_visible_p = Fmake_specifier (Qboolean);
+  set_specifier_fallback (Vhorizontal_scrollbar_visible_p,
+			  list1 (Fcons (Qnil, Qt)));
+  set_specifier_caching (Vhorizontal_scrollbar_visible_p,
+			 slot_offset (struct window,
+				      horizontal_scrollbar_visible_p),
+			 some_window_value_changed,
+			 slot_offset (struct frame,
+				      horizontal_scrollbar_visible_p),
+			 frame_size_slipped);
+
+  DEFVAR_SPECIFIER ("vertical-scrollbar-visible-p", &Vvertical_scrollbar_visible_p /*
+*Whether the vertical scrollbar is visible.
+This is a specifier; use `set-specifier' to change it.
+*/ );
+  Vvertical_scrollbar_visible_p = Fmake_specifier (Qboolean);
+  set_specifier_fallback (Vvertical_scrollbar_visible_p,
+			  list1 (Fcons (Qnil, Qt)));
+  set_specifier_caching (Vvertical_scrollbar_visible_p,
+			 slot_offset (struct window,
+				      vertical_scrollbar_visible_p),
+			 some_window_value_changed,
+			 slot_offset (struct frame,
+				      vertical_scrollbar_visible_p),
+			 frame_size_slipped);
+
+  DEFVAR_SPECIFIER ("scrollbar-on-left-p", &Vscrollbar_on_left_p /*
+*Whether the verical scrollbar is on the left side of window or frame.
+This is a specifier; use `set-specifier' to change it.
+*/ );
+  Vscrollbar_on_left_p = Fmake_specifier (Qboolean);
+  
+  {
+    /* Klugde. Under X, we want athena scrollbars on the left,
+       while all other scrollbars go on the right by default. */
+    Lisp_Object fallback = list1 (Fcons (Qnil, Qnil));
+#if defined (HAVE_X_WINDOWS)			\
+    && !defined (LWLIB_SCROLLBARS_MOTIF)	\
+    && !defined (LWLIB_SCROLLBARS_LUCID) 	\
+    && !defined (LWLIB_SCROLLBARS_ATHENA3D)
+
+    fallback = Fcons (Fcons (list1 (Qx), Qt), fallback);
+#endif
+    set_specifier_fallback (Vscrollbar_on_left_p, fallback);
+  }
+
+  set_specifier_caching (Vscrollbar_on_left_p,
+			 slot_offset (struct window,
+				      scrollbar_on_left_p),
+			 some_window_value_changed,
+			 slot_offset (struct frame,
+				      scrollbar_on_left_p),
+			 frame_size_slipped);
+
+  DEFVAR_SPECIFIER ("scrollbar-on-top-p", &Vscrollbar_on_top_p /*
+*Whether the verical scrollbar is on the top side of window or frame.
+This is a specifier; use `set-specifier' to change it.
+*/ );
+  Vscrollbar_on_top_p = Fmake_specifier (Qboolean);
+  set_specifier_fallback (Vscrollbar_on_top_p,
+			  list1 (Fcons (Qnil, Qnil)));
+  set_specifier_caching (Vscrollbar_on_top_p,
+			 slot_offset (struct window,
+				      scrollbar_on_top_p),
+			 some_window_value_changed,
+			 slot_offset (struct frame,
+				      scrollbar_on_top_p),
+			 frame_size_slipped);
 }
 
 void

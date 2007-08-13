@@ -189,13 +189,19 @@ sbrk (unsigned long increment)
       if (!data_region_base)
 	return NULL;
 
+#ifndef USE_MINIMAL_TAGBITS
       /* Ensure that the addresses don't use the upper tag bits since
 	 the Lisp type goes there.  */
-      if (((unsigned long) data_region_base & ~VALMASK) != 0) 
+#ifdef USE_UNION_TYPE
+      if (((unsigned long) data_region_base & ~((1U << VALBITS) - 1)) != 0)
+#else
+      if (((unsigned long) data_region_base & ~VALMASK) != 0)
+#endif
 	{
 	  printf ("Error: The heap was allocated in upper memory.\n");
 	  exit (1);
 	}
+#endif
 
       data_region_end = data_region_base;
       real_data_region_end = data_region_end;

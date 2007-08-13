@@ -54,10 +54,6 @@ tty_init_frame_1 (struct frame *f, Lisp_Object props)
   f->order_count = CONSOLE_TTY_DATA (c)->frame_count;
   f->height = CONSOLE_TTY_DATA (c)->height;
   f->width = CONSOLE_TTY_DATA (c)->width;
-#ifdef HAVE_SCROLLBARS
-  f->scrollbar_on_left = 1;
-  f->scrollbar_on_top = 0;
-#endif
 }
 
 static void

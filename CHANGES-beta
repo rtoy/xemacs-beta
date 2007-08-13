@@ -1,4 +1,41 @@
 							-*- indented-text -*-
+to 21.0 beta39 "Russian White"
+-- DnD fixes from Oliver Graf and Jonathan Harris
+-- scrollbar visibility and placement specifiers from of Kirill Katsnelson
+-- x-toolbar.el and x-menubar.el renamed to toolbar-items.el and
+   menubar-items.el
+-- Device metrics from Kirill Katsnelson
+-- Frame redraw smoothing fix from Kirill Katsnelson
+-- MS Windows transparency handling from Andy Piper
+-- XEmacs FAQ update from Christian Nybo
+-- MS Windows build fix for minimal tagbits, etc. from Kirill Katsnelson
+-- Fix cancelling directory creation prompt from Hrvoje Niksic
+-- cygwin build fixes from Andy Piper
+-- Restore oo-browser etags.c as ootags.c
+-- Socket connections for Windows from Kirill Katsnelson
+-- region limiting fixes from Hrvoje Niksic
+-- cleanup focus-follows-mouse handling from Greg Klanderman
+-- mswindows cursor support from Andy Piper
+-- elimination of bzero from Michael Sperber
+-- build fix from Jeff Miller
+-- xpm button fix from Andy Piper
+-- add optional `norecord' arg to select-window from Greg Klanderman
+-- regexp quote fix from Hrvoje Niksic
+-- early frame title update from Jan Vroonhof
+-- Make character 0240 display as space from Kyle Jones
+-- 0 argument printing fix from Hrvoje Niksic
+-- revert recent changes to etags.c
+-- dump clean up, removal of Lisp reader macros
+-- spelling fix from Jonathan Harris
+-- MS Windows build fix from Kirill Katsnelson
+-- sound fixes from Kyle Jones
+-- LDAP updates from Oscar Figueiredo
+-- Drag and drop update from Oliver Graf
+-- rename XEmacs internal realpath from Kyle Jones
+-- rangetab cleanup from Martin Buchholz
+-- etags fix
+-- miscellaneous bug fixes
+
 to 21.0 beta38 "Repartida"
 -- apropos.el modernization
 -- Documentation updates from Hrvoje Niksic

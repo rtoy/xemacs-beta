@@ -70,7 +70,7 @@
 
   (cond ((featurep 'xpm)
 	 (set-glyph-image frame-icon-glyph
-			  (concat "../etc/" "xemacs-icon.xpm")
+			  (concat "../etc/" "xemacs-icon3.xpm")
 			  'global 'mswindows)
 	 (set-glyph-image xemacs-logo
 			  (concat "../etc/"

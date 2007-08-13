@@ -2047,8 +2047,44 @@ commands: @code{quantify-start-recording-data},
 @code{quantify-stop-recording-data} and @code{quantify-clear-data}.
 
 To get started debugging XEmacs, take a look at the @file{gdbinit} and
-@file{dbxrc} files in the @file{src} directory.
+@file{dbxrc} files in the @file{src} directory.  
+@xref{Q2.1.15: How to Debug an XEmacs problem with a debugger,,, 
+xemacs-faq, XEmacs FAQ}.
 
+
+Here are things to know when you create a new source file:
+
+@itemize @bullet
+@item
+All .c files should @code{#include <config.h>} first.  Almost all .c
+files should @code{#include "lisp.h"} second.
+
+@item
+Generated header files should be included using the @code{<>} syntax,
+not the @code{""} syntax.  The generated headers are:
+
+config.h puresize-adjust.h sheap-adjust.h paths.h Emacs.ad.h
+
+The basic rule is that you should assume builds using @code{--srcdir}
+and the @code{<>} syntax needs to be used when the to-be-included
+generated file is in a potentially different directory 
+@emph{at compile time}.
+
+@item 
+Header files should not include <config.h> and "lisp.h".   It is the
+responsibility of the .c files that use it to do so.
+
+@item 
+If the header uses INLINE, either directly or though DECLARE_LRECORD,
+then it must be added to inline.c's includes.
+
+@item
+Try compiling at least once with 
+
+@example
+gcc --with-mule --with-union-type --error-checking=all
+@end example
+@end itemize
 
 @node A Summary of the Various XEmacs Modules, Allocation of Objects in XEmacs Lisp, Rules When Writing New C Code, Top
 @chapter A Summary of the Various XEmacs Modules

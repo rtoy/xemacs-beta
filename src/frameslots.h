@@ -102,6 +102,12 @@ Boston, MA 02111-1307, USA.  */
   /* Width and height of the scrollbars. */
   MARKED_SLOT (scrollbar_width);
   MARKED_SLOT (scrollbar_height);
+  /* Whether the scrollbars are visible */
+  MARKED_SLOT (horizontal_scrollbar_visible_p);
+  MARKED_SLOT (vertical_scrollbar_visible_p);
+  /* Scrollbars location */
+  MARKED_SLOT (scrollbar_on_left_p);
+  MARKED_SLOT (scrollbar_on_top_p);
 #endif
 
 #ifdef HAVE_TOOLBARS

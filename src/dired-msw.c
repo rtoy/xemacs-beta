@@ -86,11 +86,13 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 
-Lisp_Object		Vmswindows_ls_sort_case_insensitive;
-Lisp_Object		Vmswindows_ls_round_file_size;
+static int mswindows_ls_sort_case_insensitive;
+static int mswindows_ls_round_file_size;
+
 Lisp_Object		Qmswindows_insert_directory;
 
 extern Lisp_Object	Vmswindows_downcase_file_names;	/* in device-msw.c */
+
 
 
 enum mswindows_sortby {
@@ -443,12 +445,9 @@ switches do not contain `d', so that a full listing is expected.
   hide_dot = 1;
   display_size = 0;
   reverse = 0;
-  if (NILP(Vmswindows_ls_sort_case_insensitive))
-    {
-      sort_by = MSWINDOWS_SORT_BY_NAME;
-    } else {
-      sort_by = MSWINDOWS_SORT_BY_NAME_NOCASE;
-    }
+  sort_by = (mswindows_ls_sort_case_insensitive
+	     ? MSWINDOWS_SORT_BY_NAME_NOCASE
+	     : MSWINDOWS_SORT_BY_NAME);
   nfiles = 0;
   while (1)
     {
@@ -572,7 +571,7 @@ switches do not contain `d', so that a full listing is expected.
 	   */
 	  double		total_size, file_size, block_size;
 
-	  if ((block_size = XINT(Vmswindows_ls_round_file_size)) <= 0)
+	  if ((block_size = mswindows_ls_round_file_size) <= 0)
 	  {
 	      block_size = 0;
 	  }
@@ -635,13 +634,13 @@ syms_of_dired_mswindows (void)
 void
 vars_of_dired_mswindows (void)
 {
-  DEFVAR_LISP ("mswindows-ls-sort-case-insensitive", &Vmswindows_ls_sort_case_insensitive, /*
+  DEFVAR_BOOL ("mswindows-ls-sort-case-insensitive", &mswindows_ls_sort_case_insensitive, /*
 *Non-nil means filenames are sorted in a case-insensitive fashion.
 Nil means filenames are sorted in a case-sensitive fashion, just like Unix.
 */ );
-  Vmswindows_ls_sort_case_insensitive = Qt;
+  mswindows_ls_sort_case_insensitive = 1;
 
-  DEFVAR_INT ("mswindows-ls-round-file-size", &Vmswindows_ls_round_file_size /*
+  DEFVAR_INT ("mswindows-ls-round-file-size", &mswindows_ls_round_file_size /*
 *If non-zero, file sizes are rounded in terms of this block size when
 the file totals are being calculated.  This is useful for getting a more
 accurate estimate of allocated disk space.  Note that this only affects
@@ -657,5 +656,5 @@ enforced), as filesystem block (cluster) sizes are typically powers-of-2.
    * We should allow something like a alist here, to make the size
    * dependent on the drive letter, etc..
    */
-  Vmswindows_ls_round_file_size = 4096;
+  mswindows_ls_round_file_size = 4096;
 }

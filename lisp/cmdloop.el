@@ -147,7 +147,7 @@ or go back to just one window (by deleting all but the selected window)."
 
     (if (noninteractive)
         (progn
-          (message "XEmacs exiting.")
+          (message "%s exiting." emacs-program-name)
           (kill-emacs -1)))
     t))
 

@@ -40,14 +40,10 @@ Warning, this variable did not exist in XEmacs versions prior to 20.3")
    (format "%d.%d %s%s%s"
 	   emacs-major-version
 	   emacs-minor-version
-	   (if (and xemacs-codename (not (featurep 'infodock)))
+	   (if xemacs-codename
 	       (concat "\"" xemacs-codename "\"")
 	     "")
-	   (concat " XEmacs "
-;;		   (if (not (featurep 'infodock))
-		       " Lucid"
-;;		     ""))
-		       )
+	   " XEmacs Lucid"
 	   (if xemacs-betaname
 	       (concat " " xemacs-betaname)
 	     "")))

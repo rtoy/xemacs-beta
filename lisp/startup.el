@@ -981,7 +981,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 (defun startup-splash-frame ()
   (let ((p (point))
 	(logo (cond ((featurep 'infodock)
-		     (make-glyph (locate-data-file "altrasoft-logo.xpm")))
+		     (make-glyph (locate-data-file "altrasoft-slogo.xpm")))
 		    (t xemacs-logo)))
         (cramped-p (eq 'tty (console-type))))
     (unless cramped-p (insert "\n"))

@@ -127,10 +127,10 @@ static union {
    sampling format */
 unsigned char linuxplay_sndbuf[SNDBUFSZ];
 
-int           mix_fd    = -1;
-int           audio_vol = -1;
-int           audio_fd  = -1;
-char         *audio_dev = "";
+static int           mix_fd;
+static int           audio_vol;
+static int           audio_fd;
+static char	     *audio_dev = "/dev/dsp";
 
 typedef enum {fmtIllegal,fmtRaw,fmtVoc,fmtWave,fmtSunAudio} fmtType;
 
@@ -994,7 +994,7 @@ static void linux_play_data_or_file(int fd,unsigned char *data,
 
   /* The VoxWare-SDK discourages opening /dev/audio; opening /dev/dsp and
      properly intializing it via ioctl() is prefered */
-  if ((audio_fd=open((audio_dev="/dev/dsp"),
+  if ((audio_fd=open(audio_dev,
 		     (O_WRONLY|O_NDELAY),0)) < 0) {
     perror(audio_dev);
     if (mix_fd > 0 && mix_fd != audio_fd) { close(mix_fd); mix_fd = -1; }

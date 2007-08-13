@@ -69,6 +69,7 @@ void syms_of_dialog (void);
 void syms_of_dired (void);
 void syms_of_dll (void);
 void syms_of_doc (void);
+void syms_of_dragdrop (void);
 void syms_of_editfns (void);
 void syms_of_elhash (void);
 void syms_of_emacs (void);

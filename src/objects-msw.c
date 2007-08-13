@@ -740,7 +740,8 @@ mswindows_string_to_color(CONST char *name)
 
   if (*name == '#')
     {
-      /* numeric names look like "#RRGGBB", "#RRRGGGBBB" or "#RRRRGGGGBBBB" */
+      /* numeric names look like "#RRGGBB", "#RRRGGGBBB" or "#RRRRGGGGBBBB"
+	 or "rgb:rrrr/gggg/bbbb" */
       unsigned int r, g, b;
   
       for (i=1; i<strlen(name); i++)
@@ -769,6 +770,19 @@ mswindows_string_to_color(CONST char *name)
 	  b = hexval (name[9]) * 16 + hexval (name[10]);
 	  return (PALETTERGB (r, g, b));
 	}
+    }
+  else if (!strncmp(name, "rgb:", 4))
+    {
+      unsigned int r,g,b;
+
+      if (sscanf(name, "rgb:%04x/%04x/%04x", &r, &g, &b) <0)
+	return -1;
+
+      r /= 257;
+      g /= 257;
+      b /= 257;
+
+      return (PALETTERGB (r, g, b));
     }
   else if (*name)	/* Can't be an empty string */
     {

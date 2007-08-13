@@ -5,7 +5,7 @@
 ;; Author: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: Jan 1998
-;; Version: $Revision: 1.4 $
+;; Version: $Revision: 1.5 $
 ;; Keywords: help comm
 
 ;; This file is part of XEmacs
@@ -41,28 +41,21 @@
 (defvar ldap-default-host nil
   "*Default LDAP server.")
 
-(defvar ldap-host-parameters-alist nil
-  "*An alist describing per host options to use for LDAP transactions
-The list has the form ((HOST OPTION OPTION ...) (HOST OPTION OPTION ...))
-HOST is the name of an LDAP server. OPTIONs are cons cells describing
-parameters for the server.  Valid options are:
- (binddn . BINDDN)
- (passwd . PASSWD)
- (auth . AUTH)
- (base . BASE)
- (scope . SCOPE)
- (deref . DEREF)
- (timelimit . TL)
- (sizelimit . SL))
-BINDDN is the distinguished name of the user to bind as (in RFC 1779 syntax).
-PASSWD is the password to use for simple authentication.
-AUTH is the authentication method to use, possible values are:
-`simple', `krbv41' and `krbv42'.
-BASE is the base for the search as described in RFC 1779.
-SCOPE is one of the three symbols `subtree', `base' or `onelevel'.
-DEREF is one of the symbols `never', `always', `search' or `find'.
-TL is the timeout limit for the connection in seconds.
-SL is the maximum number of matches to return." )
+(defvar ldap-host-parameters-plist nil
+  "*A property list of per host options for LDAP transactions
+The list elements look like (HOST PROP1 VAL1 PROP2 VAL2 ...)
+HOST is the name of an LDAP server. PROPn and VALn are property/value pairs
+describing parameters for the server.  Valid properties: 
+  `binddn' is the distinguished name of the user to bind as 
+    (in RFC 1779 syntax).
+  `passwd' is the password to use for simple authentication.
+  `auth' is the authentication method to use. 
+    Possible values are: `simple', `krbv41' and `krbv42'.
+  `base' is the base for the search as described in RFC 1779.
+  `scope' is one of the three symbols `subtree', `base' or `onelevel'.
+  `deref' is one of the symbols `never', `always', `search' or `find'.
+  `timelimit' is the timeout limit for the connection in seconds.
+  `sizelimit' is the maximum number of matches to return." )
 
 
 (defun ldap-search (filter &optional host attributes attrsonly)
@@ -74,21 +67,21 @@ retrieve all
 ATTRSONLY if non nil retrieves the attributes only without 
 the associated values.
 Additional search parameters can be specified through 
-`ldap-host-parameters-alist' which see."
+`ldap-host-parameters-plist' which see."
   (interactive "sFilter:")
-  (let (host-alist res ldap)
+  (let (host-plist res ldap)
     (if (null host)
 	(setq host ldap-default-host))
     (if (null host)
 	(error "No LDAP host specified"))
-    (setq host-alist
-	  (assoc host ldap-host-parameters-alist))
+    (setq host-plist
+	  (cdr (assoc host ldap-host-parameters-plist)))
     (message "Opening LDAP connection to %s..." host)
-    (setq ldap (ldap-open host (alist-to-plist (cdr host-alist))))
+    (setq ldap (ldap-open host host-plist))
     (message "Searching with LDAP on %s..." host)
     (setq res (ldap-search-internal ldap filter 
-				    (cdr (assq 'base host-alist))
-				    (cdr (assq 'scope host-alist))
+				    (plist-get host-plist 'base)
+				    (plist-get host-plist 'scope)
 				    attributes attrsonly))
     (ldap-close ldap)
     res))

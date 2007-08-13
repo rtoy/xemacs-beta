@@ -609,7 +609,7 @@ write_segment (int new, char *ptr, char *end)
 	 So write zeros for it.  */
       if (ret == -1 && errno == EFAULT)
 	{
-	  bzero (zeros, nwrite);
+	  memset (zeros, 0, nwrite);
 	  write (new, zeros, nwrite);
 	}
       else if (nwrite != ret)

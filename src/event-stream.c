@@ -557,15 +557,15 @@ event_stream_next_event (struct Lisp_Event *event)
      Let's hope it doesn't.  I think the code here is fairly
      clean and doesn't do this. */
   emacs_is_blocking = 1;
-
-  /* Do not poll for quit while blocking, because this prevents idle
-     XEmacs from swapping out from memory */
+#if 0
+  /* Do this if the poll-for-quit timer seems to be taking too
+     much CPU time when idle ... */
   reset_poll_for_quit ();
-
+#endif
   event_stream->next_event_cb (event);
-
+#if 0
   init_poll_for_quit ();
-
+#endif
   emacs_is_blocking = 0;
 
 #ifdef DEBUG_XEMACS
@@ -1609,8 +1609,12 @@ enqueue_misc_user_event (Lisp_Object channel, Lisp_Object function,
 
   XEVENT (event)->event_type = misc_user_event;
   XEVENT (event)->channel = channel;
-  XEVENT (event)->event.eval.function = function;
-  XEVENT (event)->event.eval.object = object;
+  XEVENT (event)->event.misc.function  = function;
+  XEVENT (event)->event.misc.object    = object;
+  XEVENT (event)->event.misc.button    = 0;
+  XEVENT (event)->event.misc.modifiers = 0;
+  XEVENT (event)->event.misc.x         = -1;
+  XEVENT (event)->event.misc.y         = -1;
   enqueue_command_event (event);
 
   return event;
@@ -2239,9 +2243,6 @@ The returned event will be one of the following types:
     default:
       goto RETURN;
     case button_release_event:
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-#endif
     case misc_user_event:
       /* don't echo menu accelerator keys */
       reset_key_echo (command_builder, 1);
@@ -4033,9 +4034,6 @@ extract_this_command_keys_nth_mouse_event (int n)
       if (EVENTP (event)
 	  && (XEVENT_TYPE (event) == button_press_event
 	      || XEVENT_TYPE (event) == button_release_event
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-	      || XEVENT_TYPE (event) == dnd_drop_event
-#endif
 	      || XEVENT_TYPE (event) == misc_user_event))
 	{
 	  if (!n)
@@ -4067,9 +4065,6 @@ extract_vector_nth_mouse_event (Lisp_Object vector, int n)
 	  {
 	  case button_press_event :
 	  case button_release_event :
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-	  case dnd_drop_event:
-#endif
 	  case misc_user_event :
 	    if (n == 0)
 	      return event;
@@ -4173,10 +4168,6 @@ lookup_command_event (struct command_builder *command_builder,
 	else if (e->event_type == button_press_event
 		 || e->event_type == button_release_event)
 	  e->event.button.modifiers |= MOD_META;
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-	else if (e->event_type == dnd_drop_event)
-	  e->event.dnd_drop.modifiers |= MOD_META;
-#endif
 	else
 	  abort ();
 
@@ -4276,9 +4267,6 @@ execute_command_event (struct command_builder *command_builder,
       break;
     case button_press_event:
     case button_release_event:
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-#endif
     case misc_user_event:
       Vcurrent_mouse_event = Fcopy_event (event, Qnil);
       break;
@@ -4506,9 +4494,6 @@ Magic events are handled as necessary.
     {
     case button_press_event:
     case button_release_event:
-#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
-    case dnd_drop_event:
-#endif
     case key_press_event:
       {
 	Lisp_Object leaf = lookup_command_event (command_builder, event, 1);

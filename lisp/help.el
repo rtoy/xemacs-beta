@@ -83,18 +83,6 @@
 
 (define-key help-map "F" 'xemacs-local-faq)
 
-;;; Setup so Hyperbole can be autoloaded from a key.
-;;; Choose a key on which to place the Hyperbole menus.
-;;; For most people this key binding will work and will be equivalent
-;;; to {C-h h}.
-;;;
-(when (featurep 'infodock) ; This isn't used in XEmacs
-  ;; #### This needs fixing for InfoDock 4.0.
-  (or (where-is-internal 'hyperbole)
-      (where-is-internal 'hui:menu)
-      (define-key help-map "h" 'hyperbole))
-  (autoload 'hyperbole "hsite" "Hyperbole info manager menus." t))
-
 (define-key help-map "i" 'info)
 (define-key help-map '(control i) 'Info-query)
 ;; FSFmacs has Info-goto-emacs-command-node on C-f, no binding
@@ -996,10 +984,16 @@ arguments in the standard Lisp style."
 	       ((eq (car-safe fndef) 'lambda)
 		(nth 1 fndef))
 	       ((subrp fndef)
-		(let ((doc (documentation function)))
-		  (if (string-match "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'"
-				    doc)
-		      (substring doc (match-beginning 1) (match-end 1)))))
+		(let* ((doc (documentation function))
+		       (args (and (string-match
+				   "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'"
+				   doc)
+				  (match-string 1 doc))))
+		  ;; If there are no arguments documented for the
+		  ;; subr, rather don't print anything.
+		  (cond ((null args) t)
+			((equal args "") nil)
+			(args))))
 	       (t t))))
     (cond ((listp arglist)
 	   (prin1-to-string

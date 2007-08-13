@@ -1042,7 +1042,7 @@ redisplay_clear_bottom_of_window (struct window *w, display_line_dynarr *ddla,
   ypos2 = WINDOW_TEXT_BOTTOM (w);
 #ifdef HAVE_SCROLLBARS
   /* This adjustment is to catch the intersection of any scrollbars. */
-  if (f->windows_structure_changed && !f->scrollbar_on_top)
+  if (f->windows_structure_changed && NILP (w->scrollbar_on_top_p))
     ypos2 += window_scrollbar_height (w);
 #endif
 
@@ -1053,7 +1053,7 @@ redisplay_clear_bottom_of_window (struct window *w, display_line_dynarr *ddla,
 	  ypos1 = WINDOW_TEXT_TOP (w);
 #ifdef HAVE_SCROLLBARS
 	  /* This adjustment is to catch the intersection of any scrollbars. */
-	  if (f->windows_structure_changed && f->scrollbar_on_top)
+	  if (f->windows_structure_changed && !NILP (w->scrollbar_on_top_p))
 	    ypos1 -= window_scrollbar_height (w);
 #endif
 	}

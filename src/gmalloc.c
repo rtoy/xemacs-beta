@@ -67,17 +67,7 @@ Boston, MA 02111-1307, USA.
 #include <config.h>
 #endif
 
-#if	defined(_LIBC) || defined(STDC_HEADERS) || defined(USG)
 #include <string.h>
-#else
-#ifndef memset
-#define	memset(s, zero, n)	bzero ((s), (n))
-#endif
-#ifndef memcpy
-#define	memcpy(d, s, n)		bcopy ((s), (d), (n))
-#endif
-#endif
-
 #include <limits.h>
 
 #ifdef	HAVE_UNISTD_H

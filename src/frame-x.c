@@ -51,6 +51,10 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "window.h"
 
+#ifdef HAVE_DRAGNDROP
+#include "dragdrop.h"
+#endif
+
 #ifdef HAVE_OFFIX_DND
 #include "offix.h"
 #include "events-mod.h"
@@ -1088,12 +1092,20 @@ static void
 x_cde_transfer_callback (Widget widget, XtPointer clientData,
 			 XtPointer callData)
 {
-  char *filePath, *buf;
+  char *filePath, *hurl;
   int ii;
-  Lisp_Object path  = Qnil;
   Lisp_Object frame = Qnil;
-  Lisp_Object data  = Qnil;
+  Lisp_Object l_type = Qnil;
+  Lisp_Object l_data = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
+
+  /*
+    this needs to be changed to the new protocol:
+    - we need the button, modifier and pointer states to create a
+      correct misc_user_event
+    - the data must be converted to the new format (URL/MIME)
+  */
+  return;
 
   DtDndTransferCallbackStruct *transferInfo =
     (DtDndTransferCallbackStruct *) callData;
@@ -1101,40 +1113,52 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
   if (transferInfo == NULL)
     return;
 
-  GCPRO3 (path, frame, data);
+  GCPRO3 (frame, l_type, l_data);
 
   frame = make_frame ((struct frame *) clientData);
   if (transferInfo->dropData->protocol == DtDND_FILENAME_TRANSFER)
     {
+      l_type = Qdragdrop_URL;
+
       for (ii = 0; ii < transferInfo->dropData->numItems; ii++)
 	{
 	  filePath = transferInfo->dropData->data.files[ii];
+	  hurl = dnd_url_hexify_string ((char *)filePath, "file:");
           /* ### Mule-izing required */
-	  path = make_string ((Bufbyte *)filePath, strlen (filePath));
-	  va_run_hook_with_args (Qdrag_and_drop_functions, 2, frame, path);
+	  l_data = Fcons ( make_string (hurl, strlen (hurl)), l_data );
+	  xfree (hurl);
 	}
     }
   else if (transferInfo->dropData->protocol == DtDND_BUFFER_TRANSFER)
     {
       int speccount = specpdl_depth();
 
+      l_type = Qdragdrop_MIME;
+      /* the meaning of this is not clear to me... */
       record_unwind_protect(abort_current_drag, Qnil);
       drag_not_done = 1;
       for (ii = 0; ii < transferInfo->dropData->numItems; ii++)
  	{
- 	  filePath = transferInfo->dropData->data.buffers[ii].name;
-	  /* ### Mule-izing required */
- 	  path = (filePath == NULL) ? Qnil
-	    : make_string ((Bufbyte *)filePath, strlen (filePath));
- 	  buf = transferInfo->dropData->data.buffers[ii].bp;
- 	  data = make_string((Bufbyte *)buf,
- 			     transferInfo->dropData->data.buffers[ii].size);
- 	  va_run_hook_with_args(Qdrag_and_drop_functions, 3, frame, path,
- 				data);
+	  /* let us forget this name thing for now... */
+ 	  /* filePath = transferInfo->dropData->data.buffers[ii].name;
+	     path = (filePath == NULL) ? Qnil
+	     : make_string ((Bufbyte *)filePath, strlen (filePath)); */
+	  /* what, if the data is no text, and how can I tell it? */
+	  l_data = Fcons ( list3 ( make_string ("text/plain", 10),
+				   make_string ("8bit", 4),
+				   make_ext_string (transferInfo->dropData->data.buffers[ii].bp, 
+						    transferInfo->dropData->data.buffers[ii].size,
+						    FORMAT_CTEXT) ),
+			   l_data );
  	}
       drag_not_done = 0;
+      /* and what is this */
       unbind_to(speccount, Qnil);
     }
+  
+  /* where are button, mod and pos? -- query the pointer... */
+  enqueue_misc_user_event ( frame, Qdragdrop_drop_dispatch,
+			    Fcons (l_type, l_data) );
 
   UNGCPRO;
   return;
@@ -1626,26 +1650,8 @@ x_layout_widgets (Widget w, XtPointer client_data, XtPointer call_data)
     }
 
 #ifdef HAVE_SCROLLBARS
-  {
-    /* The scrollbar positioning is completely handled by redisplay.  We
-       just need to know which sides they are supposed to go on. */
-    unsigned char scrollbar_placement;
-
-    Xt_GET_VALUE (text, XtNscrollBarPlacement, &scrollbar_placement);
-    switch (scrollbar_placement)
-      {
-      case XtTOP_LEFT:
-	f->scrollbar_on_left = 1, f->scrollbar_on_top = 1; break;
-      case XtBOTTOM_LEFT:
-	f->scrollbar_on_left = 1, f->scrollbar_on_top = 0; break;
-      case XtTOP_RIGHT:
-	f->scrollbar_on_left = 0, f->scrollbar_on_top = 1; break;
-      case XtBOTTOM_RIGHT:
-	f->scrollbar_on_left = 0, f->scrollbar_on_top = 0; break;
-      }
-    f->scrollbar_y_offset = topbreadth + textbord;
-  }
-#endif /* HAVE_SCROLLBARS */
+  f->scrollbar_y_offset = topbreadth + textbord;
+#endif
 
   /* finally the text area */
   XtConfigureWidget (text, text_x, text_y,
@@ -2032,13 +2038,16 @@ x_init_frame_2 (struct frame *f, Lisp_Object props)
 
   update_frame_face_values (f);
   x_initialize_frame_size (f);
-  /*
-   * update_frame_title() can't be done here, because some of the
-   * modeline specs depend on the frame's device having a selected
-   * frame, and that may not have been set up yet.  The redisplay
-   * will update the frame title anyway, so nothing is lost.
+  /* Kyle:
+   *   update_frame_title() can't be done here, because some of the
+   *   modeline specs depend on the frame's device having a selected
+   *   frame, and that may not have been set up yet.  The redisplay
+   *   will update the frame title anyway, so nothing is lost.
+   * JV:
+   *   It turns out it gives problems with FVWMs name based mapping.
+   *   We'll just  need to be carefull in the modeline specs.
    */
-  /* update_frame_title (f); */
+  update_frame_title (f); 
 }
 
 static void
@@ -2570,19 +2579,10 @@ x_update_frame_external_traits (struct frame* frm, Lisp_Object name)
     MAYBE_DEVMETH (XDEVICE (frm->device), redraw_frame_toolbars, (frm));
   #endif /* HAVE_TOOLBARS */
 
-  /* The intent of this code is to cause the frame size in
-    characters to remain the same when the font changes, at the
-    expense of changing the frame size in pixels.  It's not
-    totally clear that this is the right thing to do, but it's
-    not clearly wrong either.  */
+  /* Set window manager resize increment hints according to
+     the new character size */
   if (EQ (name, Qfont))
-   {
-     EmacsFrameRecomputeCellSize (FRAME_X_TEXT_WIDGET (frm));
-     Fset_frame_size (frame,
-		      make_int (frm->width),
-		      make_int (frm->height),
-		      Qnil);
-   }
+    EmacsFrameRecomputeCellSize (FRAME_X_TEXT_WIDGET (frm));
 }
 
 

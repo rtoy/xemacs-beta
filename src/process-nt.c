@@ -35,6 +35,9 @@ Boston, MA 02111-1307, USA.  */
 #include <windows.h>
 #include <shellapi.h>
 #include <signal.h>
+#ifdef HAVE_SOCKETS
+#include <winsock.h>
+#endif
 
 /* Implemenation-specific data. Pointed to by Lisp_Process->process_data */
 struct nt_process_data
@@ -375,20 +378,8 @@ validate_signal_number (int signo)
 static void
 nt_alloc_process_data (struct Lisp_Process *p)
 {
-  p->process_data = xnew (struct nt_process_data);
+  p->process_data = xnew_and_zero (struct nt_process_data);
 }
-
-#if 0 /* #### Need this method? */
-/*
- * Mark any Lisp objects in Lisp_Process->process_data
- */
-
-static void
-nt_mark_process_data (struct Lisp_Process *proc,
-			void (*markobj) (Lisp_Object))
-{
-}
-#endif
 
 static void
 nt_finalize_process_data (struct Lisp_Process *p, int for_disksave)
@@ -398,30 +389,17 @@ nt_finalize_process_data (struct Lisp_Process *p, int for_disksave)
     CloseHandle (NT_DATA(p)->h_process);
 }
 
-#if 0 /* #### Need this method? */
 /*
  * Initialize XEmacs process implemenation once
  */
-
 static void
 nt_init_process (void)
 {
+  /* Initialize winsock */
+  WSADATA wsa_data;
+  /* Request Winsock v1.1 Note the order: (minor=1, major=1) */
+  WSAStartup (MAKEWORD (1,1), &wsa_data);
 }
-#endif
-
-#if 0 /* #### Need this method? */
-/*
- * Initialize any process local data. This is called when newly
- * created process is connected to real OS file handles. The
- * handles are generally represented by void* type, but are
- * of type HANDLE for Win32
- */
-
-static void
-nt_init_process_io_handles (struct Lisp_Process *p, void* in, void* out, int flags)
-{
-}
-#endif
 
 /*
  * Fork off a subprocess. P is a pointer to newly created subprocess
@@ -730,7 +708,198 @@ nt_kill_process_by_pid (int pid, int signo)
 
   return send_result ? 0 : -1;
 }
+
+/*-----------------------------------------------------------------------*/
+/* Sockets connections							 */
+/*-----------------------------------------------------------------------*/
+#ifdef HAVE_SOCKETS
 
+/* #### Hey MS, how long Winsock 2 for '95 will be in beta? */
+
+#define SOCK_TIMER_ID 666
+#define XM_SOCKREPLY (WM_USER + 666)
+
+static int
+get_internet_address (Lisp_Object host, struct sockaddr_in *address,
+		      Error_behavior errb)
+{
+  char buf [MAXGETHOSTSTRUCT];
+  HWND hwnd;
+  HANDLE hasync;
+  int success = 0;
+
+  address->sin_family = AF_INET;
+
+  /* First check if HOST is already a numeric address */
+  {
+    unsigned long inaddr = inet_addr (XSTRING_DATA (host));
+    if (inaddr != INADDR_NONE)
+      {
+	address->sin_addr.s_addr = inaddr;
+	return 1;
+      }
+  }
+
+  /* Create a window which will receive completion messages */
+  hwnd = CreateWindow ("STATIC", NULL, WS_OVERLAPPED, 0, 0, 1, 1,
+		       NULL, NULL, NULL, NULL);
+  assert (hwnd);
+
+  /* Post name resolution request */
+  hasync = WSAAsyncGetHostByName (hwnd, XM_SOCKREPLY, XSTRING_DATA (host),
+				  buf, sizeof (buf));
+  if (hasync == NULL)
+    goto done;
+
+  /* Set a timer to poll for quit every 250 ms */
+  SetTimer (hwnd, SOCK_TIMER_ID, 250, NULL);
+
+  while (1)
+    {
+      MSG msg;
+      GetMessage (&msg, hwnd, 0, 0);
+      if (msg.message == XM_SOCKREPLY)
+	{
+	  /* Ok, got an answer */
+	  if (WSAGETASYNCERROR(msg.lParam) == NO_ERROR)
+	    success = 1;
+	  goto done;
+	}
+      else if (msg.message == WM_TIMER && msg.wParam == SOCK_TIMER_ID)
+	{
+	  if (QUITP)
+	    {
+	      WSACancelAsyncRequest (hasync);
+	      KillTimer (hwnd, SOCK_TIMER_ID);
+	      DestroyWindow (hwnd);
+	      REALLY_QUIT;
+	    }
+	}
+      DispatchMessage (&msg);
+    }
+
+ done:
+  KillTimer (hwnd, SOCK_TIMER_ID);
+  DestroyWindow (hwnd);
+  if (success)
+    {
+      /* BUF starts with struct hostent */
+      struct hostent* he = (struct hostent*) buf;
+      address->sin_addr.s_addr = *(unsigned long*)he->h_addr_list[0];
+    }
+  return success;
+}
+
+static Lisp_Object
+nt_canonicalize_host_name (Lisp_Object host)
+{
+  struct sockaddr_in address;
+
+  if (!get_internet_address (host, &address, ERROR_ME_NOT))
+    return host;
+
+  if (address.sin_family == AF_INET)
+    return build_string (inet_ntoa (address.sin_addr));
+  else
+    return host;
+}
+
+/* open a TCP network connection to a given HOST/SERVICE.  Treated
+   exactly like a normal process when reading and writing.  Only
+   differences are in status display and process deletion.  A network
+   connection has no PID; you cannot signal it.  All you can do is
+   deactivate and close it via delete-process */
+
+static void
+nt_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object service,
+			Lisp_Object family, void** vinfd, void** voutfd)
+{
+  struct sockaddr_in address;
+  SOCKET s;
+  int port;
+  int retval;
+
+  CHECK_STRING (host);
+
+  if (!EQ (family, Qtcpip))
+    error ("Unsupported protocol family \"%s\"",
+	   string_data (symbol_name (XSYMBOL (family))));
+
+  if (INTP (service))
+    port = htons ((unsigned short) XINT (service));
+  else
+    {
+      struct servent *svc_info;
+      CHECK_STRING (service);
+      svc_info = getservbyname ((char *) XSTRING_DATA (service), "tcp");
+      if (svc_info == 0)
+	error ("Unknown service \"%s\"", XSTRING_DATA (service));
+      port = svc_info->s_port;
+    }
+
+  get_internet_address (host, &address, ERROR_ME);
+  address.sin_port = port;
+
+  s = socket (address.sin_family, SOCK_STREAM, 0);
+  if (s < 0)
+    report_file_error ("error creating socket", list1 (name));
+
+  /* We don't want to be blocked on connect */
+  {
+    unsigned int nonblock = 1;
+    ioctlsocket (s, FIONBIO, &nonblock);
+  }
+  
+  retval = connect (s, (struct sockaddr *) &address, sizeof (address));
+  if (retval != NO_ERROR && WSAGetLastError() != WSAEWOULDBLOCK)
+    goto connect_failed;
+
+  /* Wait while connection is established */
+  while (1)
+    {
+      fd_set fdset;
+      struct timeval tv;
+      int nsel;
+
+      if (QUITP)
+	{
+	  closesocket (s);
+	  REALLY_QUIT;
+	}
+
+      /* Poll for quit every 250 ms */
+      tv.tv_sec = 0;
+      tv.tv_usec = 250 * 1000;
+
+      FD_ZERO (&fdset);
+      FD_SET (s, &fdset);
+      nsel = select (0, NULL, &fdset, &fdset, &tv);
+
+      if (nsel > 0)
+	{
+	  /* Check was connnection successful or not */
+	  tv.tv_usec = 0;
+	  nsel = select (0, NULL, NULL, &fdset, &tv);
+	  if (nsel > 0)
+	    goto connect_failed;
+	  else
+	    break;
+	}
+    }
+
+  /* We are connected at this point */
+  *vinfd = (void*)s;
+  DuplicateHandle (GetCurrentProcess(), (HANDLE)s,
+		   GetCurrentProcess(), (LPHANDLE)voutfd,
+		   0, FALSE, DUPLICATE_SAME_ACCESS);
+  return;
+
+ connect_failed:  
+  closesocket (s);
+  report_file_error ("connection failed", list2 (host, name));
+}
+
+#endif
 
 /*-----------------------------------------------------------------------*/
 /* Initialization							 */
@@ -741,21 +910,18 @@ process_type_create_nt (void)
 {
   PROCESS_HAS_METHOD (nt, alloc_process_data);
   PROCESS_HAS_METHOD (nt, finalize_process_data);
-  /*  PROCESS_HAS_METHOD (nt, mark_process_data); */
-  /* PROCESS_HAS_METHOD (nt, init_process); */
-  /* PROCESS_HAS_METHOD (nt, init_process_io_handles); */
+  PROCESS_HAS_METHOD (nt, init_process);
   PROCESS_HAS_METHOD (nt, create_process);
   PROCESS_HAS_METHOD (nt, update_status_if_terminated);
   PROCESS_HAS_METHOD (nt, send_process);
   PROCESS_HAS_METHOD (nt, kill_child_process);
   PROCESS_HAS_METHOD (nt, kill_process_by_pid);
-#if 0 /* Yet todo */
 #ifdef HAVE_SOCKETS
   PROCESS_HAS_METHOD (nt, canonicalize_host_name);
   PROCESS_HAS_METHOD (nt, open_network_stream);
 #ifdef HAVE_MULTICAST
+#error I won't do this until '95 has winsock2
   PROCESS_HAS_METHOD (nt, open_multicast_group);
-#endif
 #endif
 #endif
 }

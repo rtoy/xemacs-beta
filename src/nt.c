@@ -72,19 +72,6 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <windows.h>
 #include <mmsystem.h>
 
-#ifdef HAVE_SOCKETS	/* TCP connection support, if kernel can do it */
-#include <sys/socket.h>
-#undef socket
-#undef bind
-#undef connect
-#undef htons
-#undef ntohs
-#undef inet_addr
-#undef gethostname
-#undef gethostbyname
-#undef getservbyname
-#endif
-
 #include "nt.h"
 #include <sys/dir.h>
 #include "ntheap.h"
@@ -114,17 +101,6 @@ getwd (char *dir)
   return dir;
 #endif
 }
-
-#ifndef HAVE_SOCKETS
-/* Emulate gethostname.  */
-int
-gethostname (char *buffer, int size)
-{
-  /* NT only allows small host names, so the buffer is 
-     certainly large enough.  */
-  return !GetComputerName (buffer, &size);
-}
-#endif /* HAVE_SOCKETS */
 
 /* Emulate getloadavg.  */
 int
@@ -1831,403 +1807,6 @@ stat (const char * path, struct stat * buf)
   return 0;
 }
 
-#ifdef HAVE_SOCKETS
-
-/* Wrappers for  winsock functions to map between our file descriptors
-   and winsock's handles; also set h_errno for convenience.
-
-   To allow Emacs to run on systems which don't have winsock support
-   installed, we dynamically link to winsock on startup if present, and
-   otherwise provide the minimum necessary functionality
-   (eg. gethostname). */
-
-/* function pointers for relevant socket functions */
-int (PASCAL *pfn_WSAStartup) (WORD wVersionRequired, LPWSADATA lpWSAData);
-void (PASCAL *pfn_WSASetLastError) (int iError);
-int (PASCAL *pfn_WSAGetLastError) (void);
-int (PASCAL *pfn_socket) (int af, int type, int protocol);
-int (PASCAL *pfn_bind) (SOCKET s, const struct sockaddr *addr, int namelen);
-int (PASCAL *pfn_connect) (SOCKET s, const struct sockaddr *addr, int namelen);
-int (PASCAL *pfn_ioctlsocket) (SOCKET s, long cmd, u_long *argp);
-int (PASCAL *pfn_recv) (SOCKET s, char * buf, int len, int flags);
-int (PASCAL *pfn_send) (SOCKET s, const char * buf, int len, int flags);
-int (PASCAL *pfn_closesocket) (SOCKET s);
-int (PASCAL *pfn_shutdown) (SOCKET s, int how);
-int (PASCAL *pfn_WSACleanup) (void);
-
-u_short (PASCAL *pfn_htons) (u_short hostshort);
-u_short (PASCAL *pfn_ntohs) (u_short netshort);
-unsigned long (PASCAL *pfn_inet_addr) (const char * cp);
-int (PASCAL *pfn_gethostname) (char * name, int namelen);
-struct hostent * (PASCAL *pfn_gethostbyname) (const char * name);
-struct servent * (PASCAL *pfn_getservbyname) (const char * name, const char * proto);
-  
-/* SetHandleInformation is only needed to make sockets non-inheritable. */
-BOOL (WINAPI *pfn_SetHandleInformation) (HANDLE object, DWORD mask, DWORD flags);
-#ifndef HANDLE_FLAG_INHERIT
-#define HANDLE_FLAG_INHERIT	1
-#endif
-
-HANDLE winsock_lib;
-static int winsock_inuse;
-
-BOOL
-term_winsock (void)
-{
-  if (winsock_lib != NULL && winsock_inuse == 0)
-    {
-      /* Not sure what would cause WSAENETDOWN, or even if it can happen
-	 after WSAStartup returns successfully, but it seems reasonable
-	 to allow unloading winsock anyway in that case. */
-      if (pfn_WSACleanup () == 0 ||
-	  pfn_WSAGetLastError () == WSAENETDOWN)
-	{
-	  if (FreeLibrary (winsock_lib))
-	  winsock_lib = NULL;
-	  return TRUE;
-	}
-    }
-  return FALSE;
-}
-
-BOOL
-init_winsock (int load_now)
-{
-  WSADATA  winsockData;
-
-  if (winsock_lib != NULL)
-    return TRUE;
-
-  pfn_SetHandleInformation = NULL;
-  pfn_SetHandleInformation
-    = (void *) GetProcAddress (GetModuleHandle ("kernel32.dll"),
-			       "SetHandleInformation");
-
-  winsock_lib = LoadLibrary ("wsock32.dll");
-
-  if (winsock_lib != NULL)
-    {
-      /* dynamically link to socket functions */
-
-#define LOAD_PROC(fn) \
-      if ((pfn_##fn = (void *) GetProcAddress (winsock_lib, #fn)) == NULL) \
-        goto fail;
-
-      LOAD_PROC( WSAStartup );
-      LOAD_PROC( WSASetLastError );
-      LOAD_PROC( WSAGetLastError );
-      LOAD_PROC( socket );
-      LOAD_PROC( bind );
-      LOAD_PROC( connect );
-      LOAD_PROC( ioctlsocket );
-      LOAD_PROC( recv );
-      LOAD_PROC( send );
-      LOAD_PROC( closesocket );
-      LOAD_PROC( shutdown );
-      LOAD_PROC( htons );
-      LOAD_PROC( ntohs );
-      LOAD_PROC( inet_addr );
-      LOAD_PROC( gethostname );
-      LOAD_PROC( gethostbyname );
-      LOAD_PROC( getservbyname );
-      LOAD_PROC( WSACleanup );
-
-#undef LOAD_PROC
-
-      /* specify version 1.1 of winsock */
-      if (pfn_WSAStartup (0x101, &winsockData) == 0)
-        {
-	  if (winsockData.wVersion != 0x101)
-	    goto fail;
-
-	  if (!load_now)
-	    {
-	      /* Report that winsock exists and is usable, but leave
-		 socket functions disabled.  I am assuming that calling
-		 WSAStartup does not require any network interaction,
-		 and in particular does not cause or require a dial-up
-		 connection to be established. */
-
-	      pfn_WSACleanup ();
-	      FreeLibrary (winsock_lib);
-	      winsock_lib = NULL;
-	    }
-	  winsock_inuse = 0;
-	  return TRUE;
-	}
-
-    fail:
-      FreeLibrary (winsock_lib);
-      winsock_lib = NULL;
-    }
-
-  return FALSE;
-}
-
-
-int h_errno = 0;
-
-/* function to set h_errno for compatability; map winsock error codes to
-   normal system codes where they overlap (non-overlapping definitions
-   are already in <sys/socket.h> */
-static void set_errno ()
-{
-  if (winsock_lib == NULL)
-    h_errno = EINVAL;
-  else
-    h_errno = pfn_WSAGetLastError ();
-
-  switch (h_errno)
-    {
-    case WSAEACCES:		h_errno = EACCES; break;
-    case WSAEBADF: 		h_errno = EBADF; break;
-    case WSAEFAULT:		h_errno = EFAULT; break;
-    case WSAEINTR: 		h_errno = EINTR; break;
-    case WSAEINVAL:		h_errno = EINVAL; break;
-    case WSAEMFILE:		h_errno = EMFILE; break;
-    case WSAENAMETOOLONG: 	h_errno = ENAMETOOLONG; break;
-    case WSAENOTEMPTY:		h_errno = ENOTEMPTY; break;
-    }
-  errno = h_errno;
-}
-
-static void check_errno ()
-{
-  if (h_errno == 0 && winsock_lib != NULL)
-    pfn_WSASetLastError (0);
-}
-
-/* [andrewi 3-May-96] I've had conflicting results using both methods,
-   but I believe the method of keeping the socket handle separate (and
-   insuring it is not inheritable) is the correct one. */
-
-//#define SOCK_REPLACE_HANDLE
-
-#ifdef SOCK_REPLACE_HANDLE
-#define SOCK_HANDLE(fd) ((SOCKET) _get_osfhandle (fd))
-#else
-#define SOCK_HANDLE(fd) ((SOCKET) fd_info[fd].hnd)
-#endif
-
-int
-sys_socket(int af, int type, int protocol)
-{
-  int fd;
-  long s;
-  child_process * cp;
-
-  if (winsock_lib == NULL)
-    {
-      h_errno = ENETDOWN;
-      return INVALID_SOCKET;
-    }
-
-  check_errno ();
-
-  /* call the real socket function */
-  s = (long) pfn_socket (af, type, protocol);
-  
-  if (s != INVALID_SOCKET)
-    {
-      /* Although under NT 3.5 _open_osfhandle will accept a socket
-	 handle, if opened with SO_OPENTYPE == SO_SYNCHRONOUS_NONALERT,
-	 that does not work under NT 3.1.  However, we can get the same
-	 effect by using a backdoor function to replace an existing
-	 descriptor handle with the one we want. */
-
-      /* allocate a file descriptor (with appropriate flags) */
-      fd = _open ("NUL:", _O_RDWR);
-      if (fd >= 0)
-        {
-#ifdef SOCK_REPLACE_HANDLE
-	  /* now replace handle to NUL with our socket handle */
-	  CloseHandle ((HANDLE) _get_osfhandle (fd));
-	  _free_osfhnd (fd);
-	  _set_osfhnd (fd, s);
-	  /* setmode (fd, _O_BINARY); */
-#else
-	  /* Make a non-inheritable copy of the socket handle. */
-	  {
-	    HANDLE parent;
-	    HANDLE new_s = INVALID_HANDLE_VALUE;
-
-	    parent = GetCurrentProcess ();
-
-	    /* Apparently there is a bug in NT 3.51 with some service
-	       packs, which prevents using DuplicateHandle to make a
-	       socket handle non-inheritable (causes WSACleanup to
-	       hang).  The work-around is to use SetHandleInformation
-	       instead if it is available and implemented. */
-	    if (!pfn_SetHandleInformation
-		|| !pfn_SetHandleInformation ((HANDLE) s,
-					      HANDLE_FLAG_INHERIT,
-					      HANDLE_FLAG_INHERIT))
-	      {
-		DuplicateHandle (parent,
-				 (HANDLE) s,
-				 parent,
-				 &new_s,
-				 0,
-				 FALSE,
-				 DUPLICATE_SAME_ACCESS);
-		pfn_closesocket (s);
-		s = (SOCKET) new_s;
-	      }
-	    fd_info[fd].hnd = (HANDLE) s;
-	  }
-#endif
-
-	  /* set our own internal flags */
-	  fd_info[fd].flags = FILE_SOCKET | FILE_BINARY | FILE_READ | FILE_WRITE;
-
-	  cp = new_child ();
-	  if (cp)
-	    {
-	      cp->fd = fd;
-	      cp->status = STATUS_READ_ACKNOWLEDGED;
-
-	      /* attach child_process to fd_info */
-	      if (fd_info[ fd ].cp != NULL)
-		{
-		  DebPrint (("sys_socket: fd_info[%d] apparently in use!\n", fd));
-		  abort ();
-		}
-
-	      fd_info[ fd ].cp = cp;
-
-	      /* success! */
-	      winsock_inuse++;	/* count open sockets */
-	      return fd;
-	    }
-
-	  /* clean up */
-	  _close (fd);
-	}
-      pfn_closesocket (s);
-      h_errno = EMFILE;
-    }
-  set_errno ();
-
-  return -1;
-}
-
-
-int
-sys_bind (int s, const struct sockaddr * addr, int namelen)
-{
-  if (winsock_lib == NULL)
-    {
-      h_errno = ENOTSOCK;
-      return SOCKET_ERROR;
-    }
-
-  check_errno ();
-  if (fd_info[s].flags & FILE_SOCKET)
-    {
-      int rc = pfn_bind (SOCK_HANDLE (s), addr, namelen);
-      if (rc == SOCKET_ERROR)
-	set_errno ();
-      return rc;
-    }
-  h_errno = ENOTSOCK;
-  return SOCKET_ERROR;
-}
-
-
-int
-sys_connect (int s, const struct sockaddr * name, int namelen)
-{
-  if (winsock_lib == NULL)
-    {
-      h_errno = ENOTSOCK;
-      return SOCKET_ERROR;
-    }
-
-  check_errno ();
-  if (fd_info[s].flags & FILE_SOCKET)
-    {
-      int rc = pfn_connect (SOCK_HANDLE (s), name, namelen);
-      if (rc == SOCKET_ERROR)
-	set_errno ();
-      return rc;
-    }
-  h_errno = ENOTSOCK;
-  return SOCKET_ERROR;
-}
-
-u_short
-sys_htons (u_short hostshort)
-{
-  return (winsock_lib != NULL) ?
-    pfn_htons (hostshort) : hostshort;
-}
-
-u_short
-sys_ntohs (u_short netshort)
-{
-  return (winsock_lib != NULL) ?
-    pfn_ntohs (netshort) : netshort;
-}
-
-unsigned long
-sys_inet_addr (const char * cp)
-{
-  return (winsock_lib != NULL) ?
-    pfn_inet_addr (cp) : INADDR_NONE;
-}
-
-int
-sys_gethostname (char * name, int namelen)
-{
-  if (winsock_lib != NULL)
-    return pfn_gethostname (name, namelen);
-
-  if (namelen > MAX_COMPUTERNAME_LENGTH)
-    return !GetComputerName (name, &namelen);
-
-  h_errno = EFAULT;
-  return SOCKET_ERROR;
-}
-
-struct hostent *
-sys_gethostbyname(const char * name)
-{
-  struct hostent * host;
-
-  if (winsock_lib == NULL)
-    {
-      h_errno = ENETDOWN;
-      return NULL;
-    }
-
-  check_errno ();
-  host = pfn_gethostbyname (name);
-  if (!host)
-    set_errno ();
-  return host;
-}
-
-struct servent *
-sys_getservbyname(const char * name, const char * proto)
-{
-  struct servent * serv;
-
-  if (winsock_lib == NULL)
-    {
-      h_errno = ENETDOWN;
-      return NULL;
-    }
-
-  check_errno ();
-  serv = pfn_getservbyname (name, proto);
-  if (!serv)
-    set_errno ();
-  return serv;
-}
-
-#endif /* HAVE_SOCKETS */
-
-
 /* Shadow main io functions: we need to handle pipes and sockets more
    intelligently, and implement non-blocking mode as well. */
 
@@ -2261,18 +1840,6 @@ sys_close (int fd)
 	    }
 	  if (i == MAXDESC)
 	    {
-#ifdef HAVE_SOCKETS
-	      if (fd_info[fd].flags & FILE_SOCKET)
-		{
-#ifndef SOCK_REPLACE_HANDLE
-		  if (winsock_lib == NULL) abort ();
-
-		  pfn_shutdown (SOCK_HANDLE (fd), 2);
-		  rc = pfn_closesocket (SOCK_HANDLE (fd));
-#endif
-		  winsock_inuse--; /* count open sockets */
-		}
-#endif
 	      delete_child (cp);
 	    }
 	}
@@ -2415,11 +1982,7 @@ _sys_read_ahead (int fd)
 	      Sleep (0);
 	}
     }
-#ifdef HAVE_SOCKETS
-  else if (fd_info[fd].flags & FILE_SOCKET)
-    rc = pfn_recv (SOCK_HANDLE (fd), &cp->chr, sizeof (char), 0);
-#endif
-  
+
   if (rc == sizeof (char))
     cp->status = STATUS_READ_SUCCEEDED;
   else
@@ -2513,34 +2076,6 @@ sys_read (int fd, char * buffer, size_t count)
 	      if (to_read > 0)
 		nchars += _read (fd, buffer, to_read);
 	    }
-#ifdef HAVE_SOCKETS
-	  else /* FILE_SOCKET */
-	    {
-	      if (winsock_lib == NULL) abort ();
-
-	      /* do the equivalent of a non-blocking read */
-	      pfn_ioctlsocket (SOCK_HANDLE (fd), FIONREAD, &waiting);
-	      if (waiting == 0 && nchars == 0)
-	        {
-		  h_errno = errno = EWOULDBLOCK;
-		  return -1;
-		}
-
-	      if (waiting)
-	        {
-		  /* always use binary mode for sockets */
-		  int res = pfn_recv (SOCK_HANDLE (fd), buffer, count, 0);
-		  if (res == SOCKET_ERROR)
-		    {
-		      DebPrint(("sys_read.recv failed with error %d on socket %ld\n",
-				pfn_WSAGetLastError (), SOCK_HANDLE (fd)));
-			  set_errno ();
-			  return -1;
-			}
-		  nchars += res;
-		}
-	    }
-#endif
 	}
       else
 	{
@@ -2628,21 +2163,7 @@ sys_write (int fd, const void * buffer, size_t count)
 	}
     }
 
-#ifdef HAVE_SOCKETS
-  if (fd_info[fd].flags & FILE_SOCKET)
-    {
-      if (winsock_lib == NULL) abort ();
-      nchars =  pfn_send (SOCK_HANDLE (fd), buffer, count, 0);
-      if (nchars == SOCKET_ERROR)
-        {
-	  DebPrint(("sys_read.send failed with error %d on socket %ld\n",
-		    pfn_WSAGetLastError (), SOCK_HANDLE (fd)));
-	  set_errno ();
-	}
-    }
-  else
-#endif
-    nchars = _write (fd, buffer, count);
+  nchars = _write (fd, buffer, count);
 
   return nchars;
 }
@@ -2651,31 +2172,11 @@ sys_write (int fd, const void * buffer, size_t count)
 void
 term_ntproc ()
 {
-#ifdef HAVE_SOCKETS
-  /* shutdown the socket interface if necessary */
-  term_winsock ();
-#endif
 }
 
 void
 init_ntproc ()
 {
-#ifdef HAVE_SOCKETS
-  /* Initialise the socket interface now if available and requested by
-     the user by defining PRELOAD_WINSOCK; otherwise loading will be
-     delayed until open-network-stream is called (win32-has-winsock can
-     also be used to dynamically load or reload winsock).
-
-     Conveniently, init_environment is called before us, so
-     PRELOAD_WINSOCK can be set in the registry. */
-
-  /* Always initialize this correctly. */
-  winsock_lib = NULL;
-
-  if (getenv ("PRELOAD_WINSOCK") != NULL)
-    init_winsock (TRUE);
-#endif
-
   /* Initial preparation for subprocess support: replace our standard
      handles with non-inheritable versions. */
   {

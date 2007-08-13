@@ -180,20 +180,22 @@ tty_asynch_device_change (void)
 
 #endif /* SIGWINCH */
 
-static int
-tty_device_pixel_width (struct device *d)
+static Lisp_Object
+tty_device_system_metrics (struct device *d,
+			   enum device_metrics m)
 {
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
-  return CONSOLE_TTY_DATA (con)->width;
-}
+  switch (m)
+    {
+    case size_device:
+      return Fcons (make_int (CONSOLE_TTY_DATA (con)->width),
+		    make_int (CONSOLE_TTY_DATA (con)->height));
+      break;
+    }
 
-static int
-tty_device_pixel_height (struct device *d)
-{
-  struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
-  return CONSOLE_TTY_DATA (con)->height;
+  /* Do not know such property */
+  return Qnil;
 }
-
 
 /************************************************************************/
 /*                            initialization                            */
@@ -215,8 +217,7 @@ console_type_create_device_tty (void)
 #ifdef SIGWINCH
   CONSOLE_HAS_METHOD (tty, asynch_device_change);
 #endif /* SIGWINCH */
-  CONSOLE_HAS_METHOD (tty, device_pixel_width);
-  CONSOLE_HAS_METHOD (tty, device_pixel_height);
+  CONSOLE_HAS_METHOD (tty, device_system_metrics);
 }
 
 void

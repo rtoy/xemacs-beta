@@ -201,19 +201,37 @@ MULE_DEFINES=-DMULE
 !endif
 
 !if $(DEBUG_XEMACS)
-DEBUG_DEFINES=-DDEBUG_XEMACS
+DEBUG_DEFINES=-DDEBUG_XEMACS -D_DEBUG 
 DEBUG_FLAGS= -debugtype:both -debug:full
 !endif
 
+!if $(USE_MINIMAL_TAGBITS)
+TAGBITS_DEFINES=-DUSE_MINIMAL_TAGBITS
+!endif
+!if $(USE_INDEXED_LRECORD_IMPLEMENTATION)
+LRECORD_DEFINES=-DUSE_INDEXED_LRECORD_IMPLEMENTATION
+!endif
+!if $(USE_UNION_TYPE)
+UNION_DEFINES=-DUSE_UNION_TYPE
+!endif
+
 !include "..\version.sh"
+
+!if defined(emacs_beta_version)
+XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)-b$(emacs_beta_version)
+!else
+XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)
+!endif
 
 # Generic variables
 
 INCLUDES=$(X_INCLUDES) $(MSW_INCLUDES) -I$(XEMACS)\nt\inc -I$(XEMACS)\src -I$(XEMACS)\lwlib
 
 DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MULE_DEFINES) \
+	$(TAGBITS_DEFINES) $(LRECORD_DEFINES) $(UNION_DEFINES) \
 	-DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN -DWINDOWSNT -Demacs \
-	-DHAVE_CONFIG_H -D_DEBUG
+	-DHAVE_CONFIG_H -DPATH_PROGNAME=\"xemacs\" \
+	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"
 
 OUTDIR=obj
 

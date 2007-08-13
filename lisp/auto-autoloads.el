@@ -949,7 +949,7 @@ the wrong pattern can dramatically slow things down!")
 
 (make-variable-buffer-local 'font-lock-keywords)
 
-(defvar font-lock-mode nil)
+(defcustom font-lock-mode nil "Non nil means `font-lock-mode' is on" :group 'font-lock :type 'boolean :initialize 'custom-initialize-default :require 'font-lock :set '(lambda (var val) (font-lock-mode (or val 0))))
 
 (defvar font-lock-mode-hook nil "\
 Function or functions to run on entry to font-lock-mode.")
@@ -1097,7 +1097,7 @@ Interactively set the variable on the current line." t nil)
 
 ;;;***
 
-;;;### (autoloads (Info-elisp-ref Info-emacs-key Info-goto-emacs-key-command-node Info-goto-emacs-command-node Info-emacs-command Info-search Info-visit-file Info-goto-node Info-query info) "info" "lisp/info.el")
+;;;### (autoloads (Info-elisp-ref Info-emacs-key Info-goto-emacs-key-command-node Info-goto-emacs-command-node Info-emacs-command Info-search Info-visit-file Info-goto-node Info-batch-rebuild-dir Info-query info) "info" "lisp/info.el")
 
 (defvar Info-directory-list nil "\
 List of directories to search for Info documentation files.
@@ -1117,6 +1117,13 @@ to read a file name from the minibuffer." t nil)
 
 (autoload 'Info-query "info" "\
 Enter Info, the documentation browser.  Prompt for name of Info file." t nil)
+
+(autoload 'Info-batch-rebuild-dir "info" "\
+(Re)build info `dir' files in the directories remaining on the command line.
+Use this from the command line, with `-batch';
+it won't work in an interactive Emacs.
+Each file is processed even if an error occurred previously.
+For example, invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\"" nil nil)
 
 (autoload 'Info-goto-node "info" "\
 Go to info node named NAME.  Give just NODENAME or (FILENAME)NODENAME.

@@ -64,7 +64,8 @@ mswindows_resize_dibitmap_instance (struct Lisp_Image_Instance* ii,
 				    struct frame* f,
 				    int newx, int newy);
 void
-mswindows_create_icon_from_image(Lisp_Object image, struct frame* f, int size);
+mswindows_initialize_image_instance_icon (struct Lisp_Image_Instance* image,
+					  int cursor);
 
 #endif /* HAVE_MS_WINDOWS */
 #endif /* _XEMACS_GLYPHS_MSW_H_ */

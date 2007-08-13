@@ -119,7 +119,17 @@ write_string_to_stdio_stream (FILE *stream, struct console *con,
 
   GET_CHARPTR_EXT_DATA_ALLOCA (str + offset, len, fmt, extptr, extlen);
   if (stream)
-    fwrite (extptr, 1, extlen, stream);
+    {
+      fwrite (extptr, 1, extlen, stream);
+#ifdef WINDOWSNT
+      /* Q122442 says that pipes are "treated as files, not as
+	 devices", and that this is a feature. Before I found that
+	 article, I thought it was a bug. Thanks MS, I feel much
+	 better now. - kkm */
+      if (stream == stdout || stream == stderr)
+	fflush (stream);
+#endif
+    }
   else
     {
       assert (CONSOLE_TTY_P (con));
