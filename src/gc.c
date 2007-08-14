@@ -314,12 +314,12 @@ recompute_need_to_garbage_collect (void)
       (consing_since_gc > gc_cons_threshold
        &&
 #if 0 /* #### implement this better */
-       (100 * consing_since_gc) / total_data_usage () >=
-       gc_cons_percentage
+       ((double)consing_since_gc) / total_data_usage()) >=
+      ((double)gc_cons_percentage / 100)
 #else
        (!total_gc_usage_set ||
-	(100 * consing_since_gc) / total_gc_usage >=
-	gc_cons_percentage)
+	((double)consing_since_gc / total_gc_usage) >=
+	((double)gc_cons_percentage / 100))
 #endif
        );
   recompute_funcall_allocation_flag ();
