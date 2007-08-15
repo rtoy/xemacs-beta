@@ -1,3 +1,8 @@
+2007-08-16  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Mirror site update.
+	* package-get.el (package-get-pre-release-download-sites): Ditto.
+
 2007-08-09  Mike Sperber  <mike@xemacs.org>
 
 	* startup.el (migrate-user-init-file): Create backup of
