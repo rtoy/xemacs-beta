@@ -132,7 +132,6 @@ Test virtual dirty bit implementation. Prints results to stderr.
       fprintf (stderr, "WRONG page fault at %x\n",
 	       (int) Dynarr_at (page_fault_table, count - 1));
   Dynarr_free (page_fault_table);
-  mc_free (p);
   return Qnil;
 }
 

@@ -720,9 +720,7 @@ gap_array_delete_marker (Gap_Array *ga, Gap_Array_Marker *m)
     prev->next = p->next;
   else
     ga->markers = p->next;
-#ifdef NEW_GC
-  mc_free (m);
-#else /* not NEW_GC */
+#ifndef NEW_GC
   m->next = gap_array_marker_freelist;
   m->pos = 0xDEADBEEF; /* -559038737 base 10 */
   gap_array_marker_freelist = m;

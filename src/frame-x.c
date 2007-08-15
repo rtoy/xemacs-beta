@@ -2686,9 +2686,7 @@ x_delete_frame (struct frame *f)
 
   if (f->frame_data)
     {
-#ifdef NEW_GC
-      mc_free (f->frame_data);
-#else /* not NEW_GC */
+#ifndef NEW_GC
       xfree (f->frame_data, void *);
 #endif /* not NEW_GC */
       f->frame_data = 0;

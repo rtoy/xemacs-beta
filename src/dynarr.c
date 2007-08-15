@@ -162,13 +162,10 @@ static void
 Dynarr_lisp_realloc (Dynarr *dy, int new_size)
 {
   void *new_base = alloc_lrecord_array (dy->elsize, new_size, dy->lisp_imp);
-  void *old_base = dy->base;
   if (dy->base)
     memcpy (new_base, dy->base, 
 	    (dy->max < new_size ? dy->max : new_size) * dy->elsize);
   dy->base = new_base;
-  if (old_base)
-    mc_free (old_base);
 }
 
 void *
@@ -266,16 +263,12 @@ Dynarr_free (void *d)
 #ifdef NEW_GC
   if (dy->base && !DUMPEDP (dy->base))
     {
-      if (dy->lisp_imp)
-	mc_free (dy->base);
-      else
+      if (!dy->lisp_imp)
 	xfree (dy->base, void *);
     }
   if(!DUMPEDP (dy))
     {
-      if (dy->lisp_imp)
-	mc_free (dy);
-      else
+      if (!dy->lisp_imp)
 	xfree (dy, Dynarr *);
     }
 #else /* not NEW_GC */

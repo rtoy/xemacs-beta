@@ -359,15 +359,13 @@ gtk_mark_device (struct device *d)
 /*                       closing an X connection	                */
 /************************************************************************/
 
+#ifndef NEW_GC
 static void
 free_gtk_device_struct (struct device *d)
 {
-#ifdef NEW_GC
-  mc_free (d->device_data);
-#else /* not NEW_GC */
   xfree (d->device_data, void *);
-#endif /* not NEW_GC */
 }
+#endif /* not NEW_GC */
 
 static void
 gtk_delete_device (struct device *d)

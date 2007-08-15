@@ -49,12 +49,6 @@ void *mc_alloc (size_t size);
    dynamic arrays use this function. */
 void *mc_alloc_array (size_t size, EMACS_INT elemcount);
 
-/* Free the object pointed to by ptr and make its memory re-usable
-   again.  The memory must have been returned by a previous call to
-   mc_alloc().  This can be used to free memory explicitly, outside a
-   garbage collection. */
-void mc_free (void *ptr);
-
 /* Modify the size of the memory block pointed to by ptr. Return the
    address of the new block of given size.  The content of the memory
    block will be unchanged to the minimum of the old and new sizes: if

@@ -1354,9 +1354,7 @@ gtk_delete_frame (struct frame *f)
 
     if (FRAME_GTK_GEOM_FREE_ME_PLEASE (f))
 	xfree (FRAME_GTK_GEOM_FREE_ME_PLEASE (f), char *);
-#ifdef NEW_GC
-    mc_free (f->frame_data);
-#else /* not NEW_GC */
+#ifndef NEW_GC
     xfree (f->frame_data, void *);
 #endif /* not NEW_GC */
     f->frame_data = 0;

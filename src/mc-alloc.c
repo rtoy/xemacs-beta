@@ -1576,15 +1576,6 @@ mc_sweep (void)
 }
 
 
-/* Frees the cell pointed to by ptr. */
-void
-mc_free (void *UNUSED (ptr))
-{
-  /* Manual frees are not allowed with asynchronous finalization */
-  return;
-}
-
-
 /* Changes the size of the cell pointed to by ptr.
    Returns the new address of the new cell with new size. */
 void *
@@ -1603,12 +1594,10 @@ mc_realloc_1 (void *ptr, size_t size, int elemcount)
 #ifdef ALLOC_TYPE_STATS
 	  inc_lrecord_stats (size, (struct lrecord_header *) result);
 #endif /* not ALLOC_TYPE_STATS */
-	  /* mc_free (ptr); not needed, will be collected next gc */
 	  return result;
 	}
       else
 	{
-	  /* mc_free (ptr); not needed, will be collected next gc */
 	  return 0;
 	}
     }

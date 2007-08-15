@@ -398,28 +398,16 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
     write_fmt_string (printcharfun, " 0x%x>", ht->header.uid);
 }
 
+#ifndef NEW_GC
 static void
-free_hentries (
-#if defined (NEW_GC) && !defined (ERROR_CHECK_STRUCTURES)
-	       htentry *UNUSED (hentries),
-#else
-	       htentry *hentries,
-#endif
+free_hentries (htentry *hentries,
 #ifdef ERROR_CHECK_STRUCTURES
 	       size_t size
-#else /* not (NEW_GC && ! ERROR_CHECK_STRUCTURES) */
+#else /* not ERROR_CHECK_STRUCTURES) */
 	       size_t UNUSED (size)
-#endif /* not (NEW_GC && ! ERROR_CHECK_STRUCTURES) */
+#endif /* not ERROR_CHECK_STRUCTURES) */
 	       )
 {
-#ifdef NEW_GC
-#ifdef ERROR_CHECK_STRUCTURES
-  htentry *e, *sentinel;
-
-  for (e = hentries, sentinel = e + size; e < sentinel; e++)
-    mc_free (e);
-#endif
-#else /* not NEW_GC */
 #ifdef ERROR_CHECK_STRUCTURES
   /* Ensure a crash if other code uses the discarded entries afterwards. */
   htentry *e, *sentinel;
@@ -430,10 +418,8 @@ free_hentries (
 
   if (!DUMPEDP (hentries))
     xfree (hentries, htentry *);
-#endif /* not NEW_GC */
 }
 
-#ifndef NEW_GC
 static void
 finalize_hash_table (void *header, int for_disksave)
 {
@@ -1071,7 +1057,9 @@ resize_hash_table (Lisp_Hash_Table *ht, Elemcount new_size)
 	*probe = *e;
       }
 
+#ifndef NEW_GC
   free_hentries (old_entries, old_size);
+#endif /* not NEW_GC */
 }
 
 /* After a hash table has been saved to disk and later restored by the
@@ -1101,9 +1089,7 @@ pdump_reorganize_hash_table (Lisp_Object hash_table)
 
   memcpy (ht->hentries, new_entries, ht->size * sizeof (htentry));
 
-#ifdef NEW_GC
-  mc_free (new_entries);
-#else /* not NEW_GC */
+#ifndef NEW_GC
   xfree (new_entries, htentry *);
 #endif /* not NEW_GC */
 }

@@ -4576,9 +4576,7 @@ check_for_ignored_expose (struct frame* f, int x, int y, int width, int height)
 	  if (ei == f->subwindow_exposures_tail)
 	    f->subwindow_exposures_tail = prev;
 
-#ifdef NEW_GC
-	  mc_free (ei);
-#else /* not NEW_GC */
+#ifndef NEW_GC
 	  Blocktype_free (the_expose_ignore_blocktype, ei);
 #endif /* not NEW_GC */
 	  return 1;

@@ -353,9 +353,7 @@ mswindows_delete_frame (struct frame *f)
 #endif
       ReleaseDC (FRAME_MSWINDOWS_HANDLE (f), FRAME_MSWINDOWS_DC (f));
       DestroyWindow (FRAME_MSWINDOWS_HANDLE (f));
-#ifdef NEW_GC
-      mc_free (f->frame_data);
-#else /* not NEW_GC */
+#ifndef NEW_GC
       xfree (f->frame_data, void *);
 #endif /* not NEW_GC */
     }

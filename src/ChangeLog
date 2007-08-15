@@ -1,3 +1,32 @@
+2007-08-15  Marcus Crestani  <crestani@xemacs.org>
+
+	* buffer.c (Fkill_buffer):
+	* console-tty.c (free_tty_console_struct):
+	* device-gtk.c (free_gtk_device_struct):
+	* device-msw.c (mswindows_delete_device):
+	* device-msw.c (msprinter_delete_device):
+	* device-x.c (free_x_device_struct):
+	* device-x.c (x_delete_device):
+	* dynarr.c (Dynarr_lisp_realloc):
+	* dynarr.c (Dynarr_free):
+	* elhash.c:
+	* elhash.c (finalize_hash_table):
+	* elhash.c (resize_hash_table):
+	* elhash.c (pdump_reorganize_hash_table):
+	* extents.c (gap_array_delete_marker):
+	* frame-gtk.c (gtk_delete_frame):
+	* frame-msw.c (mswindows_delete_frame):
+	* frame-x.c (x_delete_frame):
+	* glyphs.c (check_for_ignored_expose):
+	* mc-alloc.c (mc_realloc_1):
+	* mc-alloc.h:
+	* objects-tty.c (tty_finalize_color_instance):
+	* objects-tty.c (tty_finalize_font_instance):
+	* objects-tty.c (console_type_create_objects_tty):
+	* syntax.c:
+	* syntax.c (uninit_buffer_syntax_cache):
+	* vdb.c (Ftest_vdb): Remove all calls to mc_free.
+
 2006-12-29  Nix  <nix@esperi.org.uk>
 
 	* gc.c (recompute_need_to_garbage_collect): Avoid numeric
