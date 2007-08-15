@@ -55,6 +55,7 @@ exec_prefix=@exec_prefix@
 bindir=@bindir@
 libdir=@libdir@
 srcdir=@srcdir@
+datarootdir=@datarootdir@
 datadir=@datadir@
 instvardir=@instvardir@
 top_srcdir=@top_srcdir@

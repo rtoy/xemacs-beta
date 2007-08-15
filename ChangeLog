@@ -1,3 +1,10 @@
+2007-08-12  Mike Sperber  <mike@xemacs.org>
+
+	* Makefile.in.in (datarootdir): Add.
+	* configure.ac (infodir): Now in terms of $(datarootdir).
+	(mandir): Ditto, making it usually point to $(prefix)/share/man,
+	conformant with the GNU Coding Standards.
+
 2007-07-31  Mike Sperber  <mike@xemacs.org>
 
 	* configure.ac: Don't divert `share' to `lib' for datadir.

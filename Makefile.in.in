@@ -116,6 +116,10 @@ exec_prefix=@exec_prefix@
 ## run directly (like etags).
 bindir=@bindir@
 
+## Base for installing architecture-independent data files.
+## ${infodir} and ${mandir} are subdirectories of this.
+datarootdir=@datarootdir@
+
 ## Where to install architecture-independent data files.
 ## ${lispdir} and ${etcdir} are subdirectories of this.
 datadir=@datadir@

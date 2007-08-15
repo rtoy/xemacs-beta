@@ -1095,7 +1095,7 @@ XE_EXPAND_VARIABLE(mandir,mandir_expanded)
 
 if test "x$mandir_expanded" = "x$prefix_expanded/man"
 then
-  mandir='${prefix}/man/man1'
+  mandir='${datarootdir}/man/man1'
 fi
 
 XE_EXPAND_VARIABLE(infodir,infodir_expanded)
@@ -1104,7 +1104,7 @@ if test "x$infodir_expanded" != "x${prefix_expanded}/info"
 then
   AC_DEFINE(INFODIR_USER_DEFINED)
 else
-  infodir='${datadir}/${instvardir}/info'
+  infodir='${datarootdir}/${instvardir}/info'
 fi
 
 with_sitelispdir='${datadir}/${inststaticdir}/site-lisp'
@@ -5704,8 +5704,7 @@ AC_SUBST(inststaticdir)
 AC_SUBST(instvardir)
 AC_SUBST(srcdir)
 AC_SUBST(bindir)
-dnl Shut up spurious warnings from autoconf
-AC_DEFUN([AC_DATAROOTDIR_CHECKED])
+AC_SUBST(datarootdir)
 AC_SUBST(datadir)
 AC_SUBST(statedir)
 AC_SUBST(libdir)
