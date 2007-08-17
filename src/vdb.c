@@ -90,9 +90,8 @@ Test virtual dirty bit implementation. Prints results to stderr.
      protection of PROT_READ|PROT_WRITE. */
   p = (Rawbyte *) mc_alloc (mc_get_page_size());
   set_lheader_implementation ((struct lrecord_header *) p, &lrecord_cons);
-  fprintf (stderr, "Allocate p: [%x ... %x], length %d\n", 
-	   (int) p, (int) (p + mc_get_page_size ()), 
-	   (int) mc_get_page_size ());
+  fprintf (stderr, "Allocate p: [%p ... %p], length %d\n", 
+	   p, p + mc_get_page_size (), (int) mc_get_page_size ());
 
   /* Test read. */
   fprintf (stderr, "Attempt to read p[666]... ");
@@ -126,11 +125,11 @@ Test virtual dirty bit implementation. Prints results to stderr.
   vdb_unprotect (p, mc_get_page_size ());
   for (count = Dynarr_length (page_fault_table); count; count--)
     if (Dynarr_at (page_fault_table, count - 1) == &p[666])
-      fprintf (stderr, "VALID page fault at %x\n",
-	       (int) Dynarr_at (page_fault_table, count - 1));
+      fprintf (stderr, "VALID page fault at %p\n",
+	       Dynarr_at (page_fault_table, count - 1));
     else
-      fprintf (stderr, "WRONG page fault at %x\n",
-	       (int) Dynarr_at (page_fault_table, count - 1));
+      fprintf (stderr, "WRONG page fault at %p\n",
+	       Dynarr_at (page_fault_table, count - 1));
   Dynarr_free (page_fault_table);
   return Qnil;
 }

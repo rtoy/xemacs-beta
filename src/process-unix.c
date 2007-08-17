@@ -174,7 +174,7 @@ connect_to_file_descriptor (Lisp_Object name, Lisp_Object buffer,
 {
   /* This function can GC */
   Lisp_Object proc;
-  int inch;
+  EMACS_INT inch;
 
   CHECK_STRING (name);
   CHECK_INT (infd);
@@ -424,8 +424,8 @@ allocate_pty_the_old_fashioned_way (void)
 }
 
 static int
-create_bidirectional_pipe (int *inchannel, int *outchannel,
-			   volatile int *forkin, volatile int *forkout)
+create_bidirectional_pipe (EMACS_INT *inchannel, EMACS_INT *outchannel,
+			   volatile EMACS_INT *forkin, volatile EMACS_INT *forkout)
 {
   int sv[2];
 
@@ -1055,13 +1055,13 @@ unix_create_process (Lisp_Process *p,
 		     int separate_err)
 {
   int pid;
-  int inchannel  = -1;
-  int outchannel = -1;
-  int errchannel = -1;
+  EMACS_INT inchannel  = -1;
+  EMACS_INT outchannel = -1;
+  EMACS_INT errchannel = -1;
   /* Use volatile to protect variables from being clobbered by longjmp.  */
-  volatile int forkin   = -1;
-  volatile int forkout  = -1;
-  volatile int forkerr  = -1;
+  volatile EMACS_INT forkin   = -1;
+  volatile EMACS_INT forkout  = -1;
+  volatile EMACS_INT forkerr  = -1;
   volatile int pty_flag = 0;
 
   if (!NILP (Vprocess_connection_type))
@@ -1884,8 +1884,8 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 			  Lisp_Object service, Lisp_Object protocol,
 			  void **vinfd, void **voutfd)
 {
-  int inch;
-  int outch;
+  EMACS_INT inch;
+  EMACS_INT outch;
   volatile int s = -1;
   volatile int port;
   volatile int retry = 0;
@@ -2162,7 +2162,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   struct ip_mreq imr;
   struct sockaddr_in sa;
   struct protoent *udp;
-  int ws, rs;
+  EMACS_INT ws, rs;
   int theport;
   unsigned char thettl;
   int one = 1; /* For REUSEADDR */

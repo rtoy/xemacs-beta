@@ -713,7 +713,7 @@ EmacsFreeXIMStyles (
 
   if (converter_data)
     {
-      Boolean free_p    = (Boolean) (int) converter_data;
+      Boolean free_p    = (Boolean) (EMACS_INT) converter_data;
       XIMStyles *styles = (XIMStyles *) toVal->addr;
       if (free_p)
         XFree ( styles->supported_styles );
