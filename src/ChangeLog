@@ -1,3 +1,7 @@
+2007-08-14  Marcus Crestani  <crestani@xemacs.org>
+
+	* s/sol2.h: Fix for GCC lossage not needed with SunOS 5.10.
+
 2007-08-15  Marcus Crestani  <crestani@xemacs.org>
 
 	* buffer.c (Fkill_buffer):
