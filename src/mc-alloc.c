@@ -179,11 +179,11 @@ static EMACS_INT page_size_div_2;
 
 #ifdef USE_HASH_TABLE
 # define HASH(hi) ((hi) & (LEVEL1_SIZE - 1))
-# define L1_INDEX(p) HASH ((EMACS_INT) p >> (LOG_LEVEL2_SIZE + LOG_PAGE_SIZE))
+# define L1_INDEX(p) HASH ((EMACS_UINT) p >> (LOG_LEVEL2_SIZE + LOG_PAGE_SIZE))
 #else
-# define L1_INDEX(p) ((EMACS_INT) p >> (LOG_LEVEL2_SIZE + LOG_PAGE_SIZE))
+# define L1_INDEX(p) ((EMACS_UINT) p >> (LOG_LEVEL2_SIZE + LOG_PAGE_SIZE))
 #endif
-#define L2_INDEX(p) (((EMACS_INT) p >> LOG_PAGE_SIZE) & (LEVEL2_SIZE - 1))
+#define L2_INDEX(p) (((EMACS_UINT) p >> LOG_PAGE_SIZE) & (LEVEL2_SIZE - 1))
 
 
 
@@ -393,7 +393,7 @@ mc_allocator_globals_type mc_allocator_globals;
 #define BYTES_TO_PAGES(bytes) (div_PAGE_SIZE ((bytes + (PAGE_SIZE - 1))))
 
 #define PAGE_SIZE_ALIGNMENT(address) \
-  (void *) ((((EMACS_INT) (address)) + PAGE_SIZE) & ~(PAGE_SIZE - 1))
+  (void *) ((((EMACS_UINT) (address)) + PAGE_SIZE) & ~(PAGE_SIZE - 1))
 
 #define PH_ON_FREE_LIST_P(ph) \
   (ph && PH_PLH (ph) && (PLH_LIST_TYPE (PH_PLH (ph)) == FREE_LIST))
@@ -618,7 +618,7 @@ get_bit (Rawbyte *bit_array, EMACS_INT pos)
 
 /* Bit_Arrays bit at pos to val. */
 static void
-set_bit (Rawbyte *bit_array, EMACS_INT pos, EMACS_INT val)
+set_bit (Rawbyte *bit_array, EMACS_INT pos, EMACS_UINT val)
 {
 #if N_MARK_BITS > 1
   EMACS_INT i;
@@ -1648,7 +1648,7 @@ init_mc_allocator (void)
       ABORT ();
     }
   
-  page_size_div_2 = (EMACS_INT) SYS_PAGE_SIZE >> 1;
+  page_size_div_2 = (EMACS_UINT) SYS_PAGE_SIZE >> 1;
   
   mc_allocator_globals.used_heap_pages = 
     (page_list_header *) xmalloc_and_zero ((N_USED_PAGE_LISTS + 1)

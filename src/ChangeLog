@@ -1,3 +1,11 @@
+2007-08-17  Marcus Crestani  <crestani@xemacs.org>
+
+	* mc-alloc.c (L1_INDEX):
+	* mc-alloc.c (PAGE_SIZE_ALIGNMENT):
+	* mc-alloc.c (set_bit):
+	* mc-alloc.c (init_mc_allocator): Use EMACS_UINT with bit
+	shifting.
+	
 2007-08-15  Marcus Crestani  <crestani@xemacs.org>
 
 	* database.c (dbm_map): Add typecast.
