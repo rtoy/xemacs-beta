@@ -61,7 +61,7 @@ count_hyphens(const Ibyte *str, Bytecount length, Ibyte **last_hyphen)
   const Ibyte *new_hyphening;
 
   for (hyphen_count = 0; 
-       NULL != (new_hyphening = memchr((const void *)hyphening, '-', length));
+       NULL != (new_hyphening = (Ibyte *) memchr((const void *)hyphening, '-', length));
        hyphen_count++)
     {
       ++new_hyphening;
@@ -786,7 +786,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
       for (j = 0; j < registries_len; ++j)
 	{
 	  if (0 == qxestrcasecmp(XSTRING_DATA(XVECTOR_DATA(registries)[j]),
-				 FALLBACK_ASCII_REGISTRY))
+				 (Ibyte *) FALLBACK_ASCII_REGISTRY))
 	    {
 	      have_latin1 = 1;
 	      break;

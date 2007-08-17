@@ -374,7 +374,7 @@ tty_find_charset_font (Lisp_Object device, Lisp_Object font,
   if (strchr ((const char *) fontname, '/'))
     {
       if (tty_font_spec_matches_charset (XDEVICE (device), charset, 0,
-					 font, 0, -1, 0))
+					 font, 0, -1, initial))
 	return font;
       return Qnil;
     }

@@ -1,5 +1,14 @@
 2007-08-15  Marcus Crestani  <crestani@xemacs.org>
 
+	* database.c (dbm_map): Add typecast.
+	* database.c (dbm_get): Add typecast.
+	* gc.c (gc_state_type): Declare type.
+	* objects-tty.c (tty_find_charset_font): Add typecast.
+	* objects-xlike-inc.c (count_hyphens): Add typecast.
+	* objects-xlike-inc.c (endif): Add typecast.
+
+2007-08-15  Marcus Crestani  <crestani@xemacs.org>
+
 	* input-method-xlib.c (EmacsFreeXIMStyles):
 	* lisp.h:
 	* process-unix.c (connect_to_file_descriptor):

@@ -281,9 +281,9 @@ dbm_map (Lisp_Database *db, Lisp_Object func)
        keydatum = dbm_nextkey (db->dbm_handle))
     {
       valdatum = dbm_fetch (db->dbm_handle, keydatum);
-      key = make_ext_string (keydatum.dptr, keydatum.dsize,
+      key = make_ext_string ((Extbyte *) keydatum.dptr, keydatum.dsize,
 			     db->coding_system);
-      val = make_ext_string (valdatum.dptr, valdatum.dsize,
+      val = make_ext_string ((Extbyte *) valdatum.dptr, valdatum.dsize,
 			     db->coding_system);
       call2 (func, key, val);
     }
@@ -300,7 +300,7 @@ dbm_get (Lisp_Database *db, Lisp_Object key)
   valdatum = dbm_fetch (db->dbm_handle, keydatum);
 
   return (valdatum.dptr
-	  ? make_ext_string (valdatum.dptr, valdatum.dsize,
+	  ? make_ext_string ((Extbyte *) valdatum.dptr, valdatum.dsize,
 			     db->coding_system)
 	  : Qnil);
 }

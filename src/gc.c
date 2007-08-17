@@ -107,10 +107,10 @@ enum gc_phase
 };
 
 #ifndef ERROR_CHECK_GC
-struct
+typedef struct gc_state_type
 {
   enum gc_phase phase;
-} gc_state;
+} gc_state_type;
 #else /* ERROR_CHECK_GC */
 enum gc_stat_id
 {
@@ -122,7 +122,7 @@ enum gc_stat_id
   GC_STAT_COUNT /* has to be last */
 };
 
-struct
+typedef struct gc_state_type
 {
   enum gc_phase phase;
   double n_gc[GC_STAT_COUNT];
@@ -134,8 +134,10 @@ struct
   double dequeued2[GC_STAT_COUNT];
   double finalized[GC_STAT_COUNT];
   double freed[GC_STAT_COUNT];
-} gc_state;
+} gc_state_type;
 #endif /* ERROR_CHECK_GC */
+
+gc_state_type gc_state;
 
 #define GC_PHASE gc_state.phase
 #define GC_SET_PHASE(p) GC_PHASE = p
