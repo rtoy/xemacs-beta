@@ -721,6 +721,11 @@ The corresponding face should be set using `edit-faces' or the
 It is present only for horrid FSF compatibility reasons.
 The corresponding face should be set using `edit-faces' or the
 `set-face-*' functions.")
+(defvar font-lock-warning-face 'font-lock-warning-face
+  "This variable should not be set.
+It is present only for horrid FSF compatibility reasons.
+The corresponding face should be set using `edit-faces' or the
+`set-face-*' functions.")
 
 (defconst font-lock-face-list
   '(font-lock-comment-face
