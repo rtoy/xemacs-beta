@@ -1,3 +1,8 @@
+2007-08-18  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Update mirror sites.
+	* package-get.el (package-get-pre-release-download-sites): Ditto.
+
 2007-08-16  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Mirror site update.
