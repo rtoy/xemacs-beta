@@ -237,11 +237,9 @@ directory."
     ("Ireland (ie.xemacs.org)" "ftp.ie.xemacs.org" "mirrors/ftp.xemacs.org/pub/xemacs/packages")
     ("Ireland (heanet.ie)" "ftp.heanet.ie" "mirrors/ftp.xemacs.org/packages")
     ("Italy (it.xemacs.org)" "ftp.it.xemacs.org" "unix/packages/XEMACS/packages")
-    ("Japan (aist.go.jp)" "ring.aist.go.jp" "pub/text/xemacs/packages")
-    ("Japan (asahi-net.or.jp)" "ring.asahi-net.or.jp" "pub/text/xemacs/packages")
     ("Japan (dti.ad.jp)" "ftp.dti.ad.jp" "pub/unix/editor/xemacs/packages")
 ;   ("Japan (jaist.ac.jp)" "ftp.jaist.ac.jp" "pub/GNU/xemacs/packages")
-;   ("Japan (jp.xemacs.org)" "ftp.jp.xemacs.org" "pub/GNU/xemacs/packages")
+    ("Japan (jp.xemacs.org)" "ftp.jp.xemacs.org" "pub/text/xemacs/packages")
 ;   ("Japan (nucba.ac.jp)" "mirror.nucba.ac.jp" "mirror/xemacs/packages")
     ("Korea (kr.xemacs.org)" "ftp.kr.xemacs.org" "pub/tools/emacs/xemacs/packages")
     ("Netherlands (nl.xemacs.org)" "ftp.nl.xemacs.org" "pub/xemacs/ftp/packages")
@@ -319,16 +317,12 @@ variable actually used to specify package download sites."
      "mirrors/ftp.xemacs.org/beta/experimental/packages")
     ("Italy Pre-Releases (it.xemacs.org)" "ftp.it.xemacs.org"
      "unix/packages/XEMACS/beta/experimental/packages")
-    ("Japan Pre-Releases (aist.go.jp)" "ring.aist.go.jp"
-     "pub/text/xemacs/beta/experimental/packages")
-    ("Japan Pre-Releases (asahi-net.or.jp)" "ring.asahi-net.or.jp"
-     "pub/text/xemacs/beta/experimental/packages")
     ("Japan Pre-Releases (dti.ad.jp)" "ftp.dti.ad.jp"
      "pub/unix/editor/xemacs/beta/experimental/packages")
 ;   ("Japan Pre-Releases (jaist.ac.jp)" "ftp.jaist.ac.jp"
 ;    "pub/GNU/xemacs/beta/experimental/packages")
-;   ("Japan Pre-Releases (jp.xemacs.org)" "ftp.jp.xemacs.org"
-;    "pub/GNU/xemacs/beta/experimental/packages")
+    ("Japan Pre-Releases (jp.xemacs.org)" "ftp.jp.xemacs.org"
+     "pub/text/xemacs/beta/experimental/packages")
     ("Korea (kr.xemacs.org)" "ftp.kr.xemacs.org"
      "pub/tools/emacs/xemacs/beta/experimental/packages")
     ("Netherlands (nl.xemacs.org)" "ftp.nl.xemacs.org"
@@ -353,7 +347,7 @@ variable actually used to specify package download sites."
      "pub/mirrors/xemacs/beta/experimental/packages")
     ("US Pre-Releases (us.xemacs.org)" "ftp.us.xemacs.org"
      "pub/mirrors/xemacs/beta/experimental/packages")
-)
+    )
   "*List of remote sites available for downloading \"Pre-Release\" packages.
 List format is '(site-description site-name directory-on-site).
 SITE-DESCRIPTION is a textual description of the site.  SITE-NAME
