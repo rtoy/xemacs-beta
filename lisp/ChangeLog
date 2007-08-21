@@ -1,3 +1,10 @@
+2007-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/vietnamese.el ("Vietnamese"): Remove vscii and viqr from
+	the coding-system slot of the language environment for Vietnamese;
+	they're no longer available as coding systems in XEmacs, and they
+	were never widely used. 
+
 2007-08-21  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Update download

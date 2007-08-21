@@ -42,12 +42,12 @@
 (defun test-chars (&optional for-test-harness)
   "Insert all characters in a buffer, to see if XEmacs will crash.
 This is done by creating a string with all the legal characters
-in [0, 2^19) range, inserting it into the buffer, and checking
+in [0, 2^21) range, inserting it into the buffer, and checking
 that the buffer's contents are equivalent to the string.
 
 If FOR-TEST-HARNESS is specified, a temporary buffer is used, and
 the Assert macro checks for correctness."
-  (let ((max (expt 2 (if (featurep 'mule) 19 8)))
+  (let ((max (expt 2 (if (featurep 'mule) 21 8)))
 	(list nil)
 	(i 0))
     (while (< i max)
@@ -118,14 +118,27 @@ This is a naive implementation in Lisp.  "
 ;; Fixed 2007-06-22 <18043.2793.611745.734215@parhasard.net>.
 ;;----------------------------------------------------------------
 
-;; #### need a temp file name but this will do for now
-(let ((test-file-name (expand-file-name "~/test-revert-buffer-resets-modiff"))
+(let ((test-file-name
+       ;; The Gnus people, when they call #'make-temp-name, then loop,
+       ;; checking if the corresponding file exists. Our #'make-temp-name
+       ;; already does this loop, and the Gnus approach doesn't bring
+       ;; anything; there remains a race condition if you can predict the
+       ;; path name. The path name in question depends on the process ID and
+       ;; a (weak) PRNG seeded with the seconds to the power of the
+       ;; milliseconds of some instant close to the startup time of this
+       ;; XEmacs; without being able to read the address space of this
+       ;; XEmacs, or monitor what stat() calls it does, it is not predictable.
+       ;;
+       ;; The really kosher way to do this is to merge GNU's make-temp-file
+       ;; and use that. It basically has the functionality of the Unix
+       ;; mkstemp.
+       (make-temp-name (expand-file-name "tXfXsKc" (temp-directory))))
       revert-buffer-function
       kill-buffer-hook)		; paranoia
   (find-file test-file-name)
   (erase-buffer)
   (insert "a string\n")
-  (save-buffer 0)
+  (Silence-Message (save-buffer 0))
   (insert "more text\n")
   (revert-buffer t t)
   ;; Just "find-file" with autodetect coding didn't fail for me, but it does
@@ -491,7 +504,7 @@ This is a naive implementation in Lisp.  "
              ;; The sort is to make the algorithm of charsets-in-region
              ;; irrelevant.
              (sort (charsets-in-region (point-min) (point-max))
-                   'string<)
+                   #'string<)
              '(arabic-1-column arabic-2-column ascii chinese-big5-1
                chinese-gb2312 cyrillic-iso8859-5 ethiopic greek-iso8859-7
                hebrew-iso8859-8 japanese-jisx0208 japanese-jisx0212
@@ -500,26 +513,54 @@ This is a naive implementation in Lisp.  "
     (Assert (equal 
              (sort (charsets-in-string (buffer-substring (point-min)
 							 (point-max)))
-                   'string<)
+                   #'string<)
              '(arabic-1-column arabic-2-column ascii chinese-big5-1
                chinese-gb2312 cyrillic-iso8859-5 ethiopic greek-iso8859-7
                hebrew-iso8859-8 japanese-jisx0208 japanese-jisx0212
                katakana-jisx0201 korean-ksc5601 latin-iso8859-1
                latin-iso8859-2 thai-xtis vietnamese-viscii-lower))))
 
-  ;; Language environments. 
-  (dolist (language (mapcar 'car language-info-alist))
-    (set-language-environment language)
+  ;;---------------------------------------------------------------
+  ;; Language environments, and whether the specified values are sane.
+  ;;---------------------------------------------------------------
+  (loop
+    for language in (mapcar #'car language-info-alist)
+    with language-input-method = nil
+    do
+    ;; s-l-e can call #'require, which says "Loading ..."
+    (Silence-Message (set-language-environment language))
     (Assert (equal language current-language-environment))
-    (set-input-method (get-language-info language 'input-method))
-    (Assert (equal (get-language-info language 'input-method) 
-                   current-input-method))
+
+    (setq language-input-method
+	  (get-language-info language 'input-method))
+    (when (and language-input-method
+               ;; #### Not robust, if more input methods besides canna are
+               ;; in core.  The intention of this is that if *any* of the
+               ;; packages' input methods are available, we check that *all*
+               ;; of the language environments' input methods actually
+               ;; exist, which goes against the spirit of non-monolithic
+               ;; packages. But I don't have a better approach to this.
+               (> (length input-method-alist) 1))
+      (Assert (assoc language-input-method input-method-alist))
+      (Skip-Test-Unless
+       (assoc language-input-method input-method-alist)
+       "input method unavailable"
+       (format "check that IM %s can be activated" language-input-method)
+       ;; s-i-m can load files.
+       (Silence-Message
+	(set-input-method language-input-method))
+       (Assert (equal language-input-method current-input-method))))
+
     (dolist (charset (get-language-info language 'charset))
       (Assert (charsetp (find-charset charset))))
     (dolist (coding-system (get-language-info language 'coding-system))
       (Assert (coding-system-p (find-coding-system coding-system))))
-    (dolist (coding-system (get-language-info language 'coding-system))
-      (Assert (coding-system-p (find-coding-system coding-system)))))
+    (dolist (coding-system (get-language-info language
+                                              'native-coding-system))
+      ;; We don't have the appropriate POSIX locales to test with a
+      ;; native-coding-system that is a function.
+      (unless (functionp coding-system)
+	(Assert (coding-system-p (find-coding-system coding-system))))))
 
   (with-temp-buffer
     (flet
@@ -535,9 +576,9 @@ This is a naive implementation in Lisp.  "
                 temporary-file-name
                 (current-buffer)
                 byte-compile-result)
-               (Assert (string-match "^;;;###coding system: escape-quoted"
-                                     (buffer-substring nil nil
-                                                       byte-compile-result))))))
+               (Assert (string-match
+                        "^;;;###coding system: escape-quoted"
+                        (buffer-substring nil nil byte-compile-result))))))
          (Assert-elc-has-no-specified-encoding ()
            "Assert the current buffer has no coding cookie if compiled."
            (save-excursion
@@ -552,17 +593,21 @@ This is a naive implementation in Lisp.  "
                 byte-compile-result)
                (Assert (not (string-match
                              ";;;###coding system:"
-                             (buffer-substring nil nil byte-compile-result))))))))
+                             (buffer-substring nil nil
+                                               byte-compile-result))))))))
       (insert 
-       ;; Create a buffer creating the Unicode escapes. 
-       #r" (defvar testing-mule-compilation-handling 
-            (string ?\u371E   ;; kDefinition beautiful; pretty, used 
+       ;; Create a buffer with Unicode escapes. The #'read call is at
+       ;; runtime, because this file may be compiled and read in a non-Mule
+       ;; XEmacs. (But it won't be run.)
+       (read 
+        "#r\" (defvar testing-mule-compilation-handling 
+            (string ?\\u371E   ;; kDefinition beautiful; pretty, used 
                               ;; in girl's name
-                ?\U0002A6A9   ;; kDefinition	(Cant.) sound of shouting
-                ?\U0002A65B   ;; kDefinition	(Cant.) decayed teeth; 
+                ?\\U0002A6A9   ;; kDefinition	(Cant.) sound of shouting
+                ?\\U0002A65B   ;; kDefinition	(Cant.) decayed teeth; 
                               ;; tongue-tied
-                ?\U00010400   ;; DESERET CAPITAL LETTER LONG I
-                    ?\u3263)) ;; CIRCLED HANGUL RIEUL ")
+                ?\\U00010400   ;; DESERET CAPITAL LETTER LONG I
+                    ?\\u3263)) ;; CIRCLED HANGUL RIEUL \""))
 
       (Assert-elc-is-escape-quoted)
       (delete-region (point-min) (point-max))
@@ -570,55 +615,83 @@ This is a naive implementation in Lisp.  "
       (insert
        ;; This time, the buffer will contain the actual characters, because of
        ;; u flag to the #r. 
-       #ru" (defvar testing-mule-compilation-handling 
-            (string ?\u371E   ;; kDefinition beautiful; pretty, used 
+       (read 
+        "#ru\" (defvar testing-mule-compilation-handling 
+            (string ?\\u371E   ;; kDefinition beautiful; pretty, used 
                               ;; in girl's name
-                ?\U0002A6A9   ;; kDefinition	(Cant.) sound of shouting
-                ?\U0002A65B   ;; kDefinition	(Cant.) decayed teeth; 
+                ?\\U0002A6A9   ;; kDefinition	(Cant.) sound of shouting
+                ?\\U0002A65B   ;; kDefinition	(Cant.) decayed teeth; 
                               ;; tongue-tied
-                ?\U00010400   ;; DESERET CAPITAL LETTER LONG I
-                    ?\u3263)) ;; CIRCLED HANGUL RIEUL ")
+                ?\\U00010400   ;; DESERET CAPITAL LETTER LONG I
+                    ?\\u3263)) ;; CIRCLED HANGUL RIEUL \""))
     
       (Assert-elc-is-escape-quoted)
       (delete-region (point-min) (point-max))
 
       (insert
        ;; Just a single four character escape. 
-       #r" (defvar testing-mule-compilation-handling 
-            (string ?\u371E))   ;; kDefinition beautiful; pretty, used")
+       (read
+        "#r\" (defvar testing-mule-compilation-handling 
+            (string ?\\u371E))   ;; kDefinition beautiful; pretty, used\""))
 
       (Assert-elc-is-escape-quoted)
       (delete-region (point-min) (point-max))
 
       (insert
        ;; Just a single eight character escape. 
-       #r" (defvar testing-mule-compilation-handling 
-            (string ?\U0002A65B))   ;; kDefinition (Cant.) decayed teeth;")
+       (read 
+        "#r\" (defvar testing-mule-compilation-handling 
+            (string ?\\U0002A65B))   ;; kDefinition (Cant.) decayed teeth;\""))
 
       (Assert-elc-is-escape-quoted)
       (delete-region (point-min) (point-max))
 
       (insert
-       ;; A single latin-1 hex digit escape
+       ;; A single latin-1 hex digit escape No run-time #'read call,
+       ;; non-Mule can handle this too.
        #r" (defvar testing-mule-compilation-handling 
-            (string ?\xab))   ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK")
+         (string ?\xab))   ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK")
       
       (Assert-elc-has-no-specified-encoding)
       (delete-region (point-min) (point-max))
 
       (insert
-       ;; A single latin-1 character
+       ;; A single latin-1 character. No run-time #'read call.
        #ru" (defvar testing-mule-compilation-handling 
-            (string ?\u00AB))   ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK")
+        (string ?\u00AB))   ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK\")")
       
       (Assert-elc-has-no-specified-encoding)
       (delete-region (point-min) (point-max))
 
       (insert
-       ;; Just ASCII. 
+       ;; Just ASCII. No run-time #'read call
        #r" (defvar testing-mule-compilation-handling 
             (string ?A))   ;; LATIN CAPITAL LETTER A")
       
       (Assert-elc-has-no-specified-encoding)
+      (delete-region (point-min) (point-max))
+
+      ;; This bug exists because the coding-cookie insertion code looks at
+      ;; the input buffer, not the output buffer.
+      ;;
+      ;; It looks at the input buffer because byte-compile-dynamic and
+      ;; byte-compile-dynamic-docstrings currently need to be
+      ;; unconditionally turned off for Mule files, since dynamic
+      ;; compilation of function bodies and docstrings fails if you can't
+      ;; call (point) and trivially get the byte offset in the file.
+      ;;
+      ;; And to unconditionally turn those two features off, you need to
+      ;; know before byte-compilation whether the byte-compilation output
+      ;; file contains non-Latin-1 characters, or perhaps to check after
+      ;; compilation and redo; but we don't do the latter.
+      ;; 
+      ;; To fix this bug, we need to add Mule support to
+      ;; byte-compile-dynamic and byte-compile-dynamic-docstrings. Or drop
+      ;; support for those features entirely.
+      (insert
+       "(defvar testing-mule-compilation-handling (eval-when-compile
+	(decode-char 'ucs #x371e))) ;; kDefinition beautiful; pretty, used\"")
+      (Known-Bug-Expect-Failure
+       (Assert-elc-is-escape-quoted))
       (delete-region (point-min) (point-max))))
   )

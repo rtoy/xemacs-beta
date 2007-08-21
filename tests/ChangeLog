@@ -1,3 +1,31 @@
+2007-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (test-chars):
+	There are now 2^21 possible characters under Mule, not 2^19.
+	* automated/mule-tests.el (test-file-name):
+	Call #'make-temp-name instead of writing the file needed for the
+	rever-buffer test to the user's home directory. Wrap the following
+	#'save-buffer in a Silence-Message call.
+	* automated/mule-tests.el:
+	In the language environment tests, check that a given input method
+	exists before trying to activate it. If there are installed input
+	methods, assert that every input method specified in any language
+	environment exists. If the native-coding-system of the language
+	environment is specified as a function, don't assert that it is a
+	coding system. 
+
+	In the byte-compiler coding cookie tests, call #'read at runtime
+	on strings with non-Latin-1 Unicode escapes. This avoids errors
+	when make check is run under a non-Mule XEmacs, where unavailable
+	Unicode escapes throw an error in the Lisp reader.
+
+	Add a new Known-Bug-Expect-Failure call for a bug that occurred to
+	me yesterday; if non-Latin-1 is generated in an eval-when-compile
+	clause, that non-ASCII may be trashed and the compiled code
+	incorrectly saved as no-conversion if no other non-Latin-1 exists
+	in the input buffer. Add a comment giving more details of the bug
+	and how one might fix it. 
+
 2007-06-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/mule-tests.el (buffer-modified-p): Test after revert.

@@ -205,7 +205,7 @@
 
 (set-language-info-alist
  "Vietnamese" '((charset vietnamese-viscii-lower vietnamese-viscii-upper)
-		(coding-system viscii vscii viqr)
+		(coding-system viscii)
 		(coding-priority viscii)
 		(locale "vietnamese" "vi")
                 ;; Not available in packages. 
