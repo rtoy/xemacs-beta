@@ -2890,7 +2890,15 @@ XCHAR_OR_INT_1 (Lisp_Object obj, const Ascbyte *file, int line)
 
 #else /* no error checking */
 
-#define XCHAR_OR_INT(obj) (CHARP (obj) ? XCHAR (obj) : XINT (obj))
+/* obj is multiply eval'ed and not an lvalue; use an inline function instead
+   of a macro. */
+DECLARE_INLINE_HEADER (
+EMACS_INT
+XCHAR_OR_INT (Lisp_Object obj)
+)
+{
+  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
+}
 
 #endif /* no error checking */
 

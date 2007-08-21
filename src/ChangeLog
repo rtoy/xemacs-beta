@@ -1,3 +1,12 @@
+2007-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-ccl.c (ccl_driver):
+	Don't pass XCHAR_OR_INT an argument of which the evaluation has
+	side effects; thank you Mike Fabian. 
+	* lisp.h: 
+	Redundantly, don't multiply evaluate the argument to XCHAR_OR_INT; 
+	this should prevent the same error in the future. 
+
 2007-08-17  Marcus Crestani  <crestani@xemacs.org>
 
 	* mc-alloc.c (L1_INDEX):

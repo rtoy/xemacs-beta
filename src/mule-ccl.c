@@ -1578,7 +1578,7 @@ ccl_driver (struct ccl_program *ccl,
 		Lisp_Object map, content, attrib, value;
 		int point, size, fin_ic;
 
-		j = XCHAR_OR_INT (ccl_prog[ic++]); /* number of maps. */
+		j = XCHAR_OR_INT (ccl_prog[ic]); ic++; /* number of maps. */
 		fin_ic = ic + j;
 		op = reg[rrr];
 		if ((j > reg[RRR]) && (j >= 0))
@@ -1693,7 +1693,7 @@ ccl_driver (struct ccl_program *ccl,
 		stack_idx_of_map_multiple = 0;
 
 		map_set_rest_length =
-		  XCHAR_OR_INT (ccl_prog[ic++]); /* number of maps and separators. */
+		  XCHAR_OR_INT (ccl_prog[ic]); ic++; /* number of maps and separators. */
 		fin_ic = ic + map_set_rest_length;
 		op = reg[rrr];
 
@@ -1880,7 +1880,7 @@ ccl_driver (struct ccl_program *ccl,
 	      {
 		Lisp_Object map, attrib, value, content;
 		int size, point;
-		j = XCHAR_OR_INT (ccl_prog[ic++]); /* map_id */
+		j = XCHAR_OR_INT (ccl_prog[ic]); ic++;/* map_id */
 		op = reg[rrr];
 		if (j >= XVECTOR (Vcode_conversion_map_vector)->size)
 		  {
