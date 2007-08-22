@@ -2659,7 +2659,7 @@ pdump_load (const Wexttext *argv0)
       wext_strcpy (exe_path, wexe);
     }
 #else /* !WIN32_NATIVE */
-  Wexttext *exe_path;
+  Wexttext exe_path[PATH_MAX_EXTERNAL];
   Wexttext *w;
   const Wexttext *dir, *p;
 
@@ -2693,8 +2693,7 @@ pdump_load (const Wexttext *argv0)
   if (p != dir)
     {
       /* invocation-name includes a directory component -- presumably it
-	 is relative to cwd, not $PATH */
-      exe_path = alloca_array (Wexttext, 1 + wext_strlen (dir));
+	 is relative to cwd, not $PATH. */
       wext_strcpy (exe_path, dir);
     }
   else
@@ -2702,9 +2701,6 @@ pdump_load (const Wexttext *argv0)
       const Wexttext *path = wext_getenv ("PATH"); /* not egetenv --
 						     not yet init. */
       const Wexttext *name = p;
-      exe_path = alloca_array (Wexttext,
-			       10 + max (wext_strlen (name),
-					 wext_strlen (path)));
       for (;;)
 	{
 	  p = path;

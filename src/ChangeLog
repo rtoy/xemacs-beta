@@ -1,3 +1,9 @@
+2006-10-26  Nix  <nix@esperi.org.uk>
+
+	* dumper.c (pdump_load): Statically allocate a large enough
+	exe_path for all conceivable uses. Fixes a buffer overrun.
+	* text.h (MAX_XETCHAR_SIZE): Define, for PATH_MAX_EXTERNAL.
+
 2007-08-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c (ccl_driver):
