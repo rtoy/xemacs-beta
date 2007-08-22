@@ -1,3 +1,9 @@
+2007-08-20  Mike Sperber  <mike@xemacs.org>
+
+	* window-xemacs.el (root-window->saved-window): 
+	(restore-saved-window-parameters): Don't save the point of the
+	current buffer, as per the docstring.
+
 2007-08-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/vietnamese.el ("Vietnamese"): Remove vscii and viqr from

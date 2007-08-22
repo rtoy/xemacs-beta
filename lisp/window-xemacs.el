@@ -278,11 +278,10 @@ its value is -not- saved."
 	      (let ((marker (make-marker)))
 		(set-marker marker (window-start window) buffer)
 		(setf (saved-window-start-marker saved-window) marker))
-	      (let ((marker (make-marker)))
-		(if (eq window (selected-window))
-		    (set-marker marker (point buffer) buffer)
-		  (set-marker marker (window-point window) buffer))
-		(setf (saved-window-point-marker saved-window) marker))
+	      (if (not (eq buffer (current-buffer)))
+		  (let ((marker (make-marker)))
+		    (set-marker marker (window-point window) buffer)
+		    (setf (saved-window-point-marker saved-window) marker)))
 	      (setf (saved-window-mark-marker saved-window)
 		    (copy-marker (mark-marker t buffer)))))
 	saved-window))))
@@ -417,8 +416,9 @@ by `current-window-configuration'."
 	  (set-window-start window
 			    (marker-position (saved-window-start-marker saved-window))
 			    t)
-	  (set-window-point window
-			    (marker-position (saved-window-point-marker saved-window)))
+	  (if (markerp (saved-window-point-marker saved-window))
+	      (set-window-point window
+				(marker-position (saved-window-point-marker saved-window))))
 	  (set-marker (mark-marker t buffer)
 		      (marker-position (saved-window-mark-marker saved-window))
 		      buffer)
