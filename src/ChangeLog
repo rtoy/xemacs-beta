@@ -1,3 +1,10 @@
+2007-08-18  Vin Shelton  <acs@xemacs.org>
+
+	* frame-msw.c (mswindows_init_frame_3): Restore extra call to
+	ShowWindow so that cygwin's run command can be used to open an
+	XEmacs session.  Without this, no frame appears when the XEmacs
+	process starts up.
+
 2006-10-26  Nix  <nix@esperi.org.uk>
 
 	* dumper.c (pdump_load): Statically allocate a large enough

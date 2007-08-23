@@ -304,10 +304,20 @@ mswindows_init_frame_2 (struct frame *f, Lisp_Object UNUSED (props))
 static void
 mswindows_init_frame_3 (struct frame *f)
 {
-  /* Don't do this earlier or we get a WM_PAINT before the frame is ready */
-  ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_SHOWNORMAL);
-  SetForegroundWindow (FRAME_MSWINDOWS_HANDLE (f));
-  DragAcceptFiles (FRAME_MSWINDOWS_HANDLE (f), TRUE);
+  /* Don't do this earlier or we get a WM_PAINT before the frame is ready. */
+  ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
+#ifdef CYGWIN
+  /* The SW_x parameter in the first call that an app makes to ShowWindow is
+   * ignored, and the parameter specified in the caller's STARTUPINFO is
+   * substituted instead. That parameter is SW_HIDE if we were started by
+   * runemacs, so call this twice. #### runemacs is evil.  To see why this
+   * second call was restored, see the threads referenced by
+   * 20a807210611011157j57ea2b22ue892f4dfcb6aade8@mail.gmail.com and
+   * 20a807210708181345m7ac94ff2m43337be71e853d95@mail.gmail.com . */
+  ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
+#endif
+  SetForegroundWindow (FRAME_MSWINDOWS_HANDLE(f));
+  DragAcceptFiles (FRAME_MSWINDOWS_HANDLE(f), TRUE);
 }
 
 static void
