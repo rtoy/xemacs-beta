@@ -1240,7 +1240,7 @@ two over the issue of commercialism, RMS pretty much disowned this
 collaboration, referring to it as "Gosling Emacs".
 
 At this point we pick up with a time line of events. (A broader timeline
-is available at @uref{http://http://www.jwz.org/doc/emacs-timeline.html,
+is available at @uref{http://www.jwz.org/doc/emacs-timeline.html,
 ``Emacs Timeline''}.)
 
 @strong{NOTE}: Sometimes there are two release dates listed below.  In
@@ -27913,7 +27913,7 @@ XEmacs.default.attributeFont: Bitstream Vera Sans Mono,Sazanami Mincho-16
 @end example
 Order is important; Japanese fonts will support English, but Sazanami's
 Roman characters are not very pretty compared to the Bitstream font.
-@strong{Note:} @emph{This is untested, but should work in theory.}
+@strong{NOTE}: @emph{This is untested, but should work in theory.}
 @end itemize
 
 
