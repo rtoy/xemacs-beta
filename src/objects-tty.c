@@ -218,14 +218,14 @@ tty_print_color_instance (Lisp_Color_Instance *UNUSED (c),
 {
 }
 
-#ifndef NEW_GC
 static void
 tty_finalize_color_instance (Lisp_Color_Instance *c)
 {
+#ifndef NEW_GC
   if (c->data)
     xfree (c->data, void *);
-}
 #endif /* not NEW_GC */
+}
 
 static int
 tty_color_instance_equal (Lisp_Color_Instance *c1,
@@ -313,14 +313,14 @@ tty_print_font_instance (Lisp_Font_Instance *UNUSED (f),
 {
 }
 
-#ifndef NEW_GC
 static void
 tty_finalize_font_instance (Lisp_Font_Instance *f)
 {
+#ifndef NEW_GC
   if (f->data)
     xfree (f->data, void *);
-}
 #endif /* not NEW_GC */
+}
 
 static Lisp_Object
 tty_font_list (Lisp_Object UNUSED (pattern), Lisp_Object UNUSED (device),
@@ -417,9 +417,7 @@ console_type_create_objects_tty (void)
   CONSOLE_HAS_METHOD (tty, initialize_color_instance);
   CONSOLE_HAS_METHOD (tty, mark_color_instance);
   CONSOLE_HAS_METHOD (tty, print_color_instance);
-#ifndef NEW_GC
   CONSOLE_HAS_METHOD (tty, finalize_color_instance);
-#endif /* not NEW_GC */
   CONSOLE_HAS_METHOD (tty, color_instance_equal);
   CONSOLE_HAS_METHOD (tty, color_instance_hash);
   CONSOLE_HAS_METHOD (tty, valid_color_name_p);
@@ -428,9 +426,7 @@ console_type_create_objects_tty (void)
   CONSOLE_HAS_METHOD (tty, initialize_font_instance);
   CONSOLE_HAS_METHOD (tty, mark_font_instance);
   CONSOLE_HAS_METHOD (tty, print_font_instance);
-#ifndef NEW_GC
   CONSOLE_HAS_METHOD (tty, finalize_font_instance);
-#endif /* not NEW_GC */
   CONSOLE_HAS_METHOD (tty, font_list);
 #ifdef MULE
   CONSOLE_HAS_METHOD (tty, font_spec_matches_charset);

@@ -1,3 +1,12 @@
+2007-08-17  Marcus Crestani  <crestani@xemacs.org>
+
+	* buffer.c (Fkill_buffer):
+	* objects-tty.c (tty_finalize_color_instance):
+	* objects-tty.c (tty_finalize_font_instance):
+	* objects-tty.c (console_type_create_objects_tty):
+	* syntax.c (uninit_buffer_syntax_cache): Keep functions that do
+	nothing for NEW_GC instead of removing them.
+
 2007-08-18  Vin Shelton  <acs@xemacs.org>
 
 	* frame-msw.c (mswindows_init_frame_3): Restore extra call to

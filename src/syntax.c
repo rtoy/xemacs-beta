@@ -537,16 +537,16 @@ init_buffer_syntax_cache (struct buffer *buf)
   reset_buffer_syntax_cache_range (cache, cache->object, 0);
 }
 
-#ifndef NEW_GC
 /* finalize the syntax cache for BUF */
 
 void
 uninit_buffer_syntax_cache (struct buffer *buf)
 {
+#ifndef NEW_GC
   xfree (buf->syntax_cache, struct syntax_cache *);
   buf->syntax_cache = 0;
-}
 #endif /* not NEW_GC */
+}
 
 /* extent-specific APIs used in extents.c and insdel.c */
 

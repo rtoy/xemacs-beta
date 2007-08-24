@@ -1348,9 +1348,7 @@ with `delete-process'.
       }
 
     uninit_buffer_markers (b);
-#ifndef NEW_GC
     uninit_buffer_syntax_cache (b);
-#endif /* not NEW_GC */
 
     kill_buffer_local_variables (b);
 
