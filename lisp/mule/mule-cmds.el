@@ -679,7 +679,7 @@ the language environment for the major languages of Western Europe."
       (let ((func (get-language-info current-language-environment
 				     'exit-function)))
 	(run-hooks 'exit-language-environment-hook)
-	(if (fboundp func) (funcall func))))
+	(if (functionp func) (funcall func))))
   (setq current-language-environment language-name)
   (let ((default-eol-type (coding-system-eol-type
 			   default-buffer-file-coding-system)))
@@ -757,7 +757,7 @@ the language environment for the major languages of Western Europe."
       (require (car required-features))
       (setq required-features (cdr required-features))))
   (let ((func (get-language-info language-name 'setup-function)))
-    (if (fboundp func)
+    (if (functionp func)
 	(funcall func)))
 
   ;; Fit the charsets preferences in unicode conversions for the
@@ -1021,9 +1021,9 @@ when the language environment is made current."
 ;; auto-language-alist deleted.  We have a more sophisticated system,
 ;; with the locales stored in the language data.
 
-;; Initialised with an eval-when-compile in mule/general-late.el, which is
-;; compiled after all the language support--and, thus, minority Chinese
-;; coding systems and so on--has been loaded.
+;; Initialised in mule/general-late.el, which is compiled after all the
+;; language support--and, thus, minority Chinese coding systems and so
+;; on--has been loaded.
 (defvar posix-charset-to-coding-system-hash nil
   "A map from the POSIX locale charset versions of the defined coding
 systems' names, with all alpha-numeric characters removed, to the actual

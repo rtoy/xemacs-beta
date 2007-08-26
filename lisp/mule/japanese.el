@@ -424,50 +424,54 @@ a similar structure:
 	       "japan"
 	       "ja"
 	       )
-
-	      (native-coding-system
-	       ;; first, see if an explicit encoding was given.
-	       (lambda (locale)
-		   (let ((case-fold-search t))
-		     (cond
-		      ;; many unix versions
-		      ((string-match "\\.euc" locale) 'euc-jp)
-		      ((string-match "\\.sjis" locale) 'shift-jis)
-
-		      ;; X11R6 (CJKV p. 471)
-		      ((string-match "\\.jis7" locale) 'jis7)
-		      ((string-match "\\.jis8" locale) 'jis8)
-		      ((string-match "\\.mscode" locale) 'shift-jis)
-		      ((string-match "\\.pjis" locale) 'iso-2022-jp)
-		      ((string-match "\\.ujis" locale) 'euc-jp)
-
-		      ;; other names in X11R6 locale.alias
-		      ((string-match "\\.ajec" locale) 'euc-jp)
-		      ((string-match "-euc" locale) 'euc-jp)
-		      ((string-match "\\.iso-2022-jp" locale) 'iso-2022-jp)
-		      ((string-match "\\.jis" locale) 'jis7) ;; or just jis?
-		      )))
-
-	       ;; aix (CJKV p. 465)
-	       (lambda (locale)
-		   (when (eq system-type 'aix)
-		     (cond
-		      ((string-match "^Ja_JP" locale) 'shift-jis)
-		      ((string-match "^ja_JP" locale) 'euc-jp))))
-
-	       ;; other X11R6 locale.alias
-	       (lambda (locale)
-		   (cond
-		    ((string-match "^Jp_JP" locale) 'euc-jp)
-		    ((and (eq system-type 'hpux) (eq locale "japanese"))
-		     'shift-jis)))
-
-	       ;; fallback
-	       euc-jp)
-
 ;;	      (input-method . "japanese")
 	      (features japan-util)
 	      (sample-text . "Japanese (日本語)	こんにちは, ｺﾝﾆﾁﾊ")
 	      (documentation . t)))
+
+;; Set the native-coding-system separately so the lambdas get compiled. (Not
+;; a huge speed improvement, but this code is called at startup, and every
+;; little helps there.)
+(set-language-info "Japanese"
+                   'native-coding-system
+                   (list
+                    ;; first, see if an explicit encoding was given.
+                    (lambda (locale)
+                      (let ((case-fold-search t))
+                        (cond
+                         ;; many unix versions
+                         ((string-match "\\.euc" locale) 'euc-jp)
+                         ((string-match "\\.sjis" locale) 'shift-jis)
+
+                         ;; X11R6 (CJKV p. 471)
+                         ((string-match "\\.jis7" locale) 'jis7)
+                         ((string-match "\\.jis8" locale) 'jis8)
+                         ((string-match "\\.mscode" locale) 'shift-jis)
+                         ((string-match "\\.pjis" locale) 'iso-2022-jp)
+                         ((string-match "\\.ujis" locale) 'euc-jp)
+
+                         ;; other names in X11R6 locale.alias
+                         ((string-match "\\.ajec" locale) 'euc-jp)
+                         ((string-match "-euc" locale) 'euc-jp)
+                         ((string-match "\\.iso-2022-jp" locale) 'iso-2022-jp)
+                         ((string-match "\\.jis" locale) 'jis7) ;; or just jis?
+                         )))
+
+                    ;; aix (CJKV p. 465)
+                    (lambda (locale)
+                      (when (eq system-type 'aix)
+                        (cond
+                         ((string-match "^Ja_JP" locale) 'shift-jis)
+                         ((string-match "^ja_JP" locale) 'euc-jp))))
+
+                    ;; other X11R6 locale.alias
+                    (lambda (locale)
+                      (cond
+                       ((string-match "^Jp_JP" locale) 'euc-jp)
+                       ((and (eq system-type 'hpux) (eq locale "japanese"))
+                        'shift-jis)))
+
+                    ;; fallback
+                    'euc-jp))
 
 ;;; japanese.el ends here

@@ -1,3 +1,73 @@
+2007-08-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/chinese.el ("Chinese-GB"):
+	* mule/chinese.el ("Chinese-BIG5"):
+	* mule/japanese.el ("Japanese"):
+	These three language environments have associated lambda
+	expressions to determine whether the current locale matches and
+	and what the native-coding-system should be.  These used to be
+	stored uncompiled, since they were specified deep in the ALIST
+	argument to a #'set-language-info-alist call; this change moves
+	them into #'set-language-info calls where the byte-compiler can
+	compile them. Shouldn't make a huge difference, but startup time
+	is an issue for us.
+	
+	* mule/cyrillic.el (windows-1251):
+	Unconditionally provide windows-1251 using
+	make-8-bit-coding-system. 
+
+	* mule/latin.el:
+	Add a setup-function and an exit-function to the Turkish language
+	environment to change and restore the standard case table,
+	respectively. This reflects case conventions in Turkish, where
+	dotless i and dotted i are distinct characters with distinct case
+	forms. Add windows-1252, Mac Roman as coding systems. 
+	
+	* mule/mule-cmds.el:
+	* mule/mule-cmds.el (set-language-environment):
+	* mule/mule-cmds.el (finish-set-language-environment):
+	Check setup-function and exit-function's validity with
+	#'functionp, not fboundp. It doesn't make a lot of sense to
+	exclude lambdas from being specified as setup-function and
+	exit-functions. Update a comment to reflect the that
+	posix-charset-to-coding-system-hash is no longer initialised at
+	compile time. 
+	* mule/mule-coding.el:
+	* mule/mule-coding.el (define-translation-hash-table):
+	Call check-argument-type on the two arguments instead of an
+	explicit error in a conditional, for the sake of better style. 
+	* mule/mule-coding.el (make-8-bit-choose-category): New.
+	Function that looks at a make-8-bit-coding-system decode table and
+	decides on an appropriate category for the associated coding
+	system. 
+	* mule/mule-coding.el (make-8-bit-coding-system):
+	Use make-8-bit-choose-category to make the coding category for the
+	generated coding systems a bit more sane. 
+
+	* mule/mule-win32-init.el:
+	Move to a loop-with-destructuring-bind syntax for the creation of
+	Windows-specific coding systems. Specify the coding category of
+	the created coding systems, and create aliases of the form cpNNNN
+	for the compatibility with GNU. Use our own implementations
+	instead of the Windows ones for several coding systems, for the
+	sake of greater cross-platform compatibility.
+
+2007-08-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (load-unicode-tables):
+	Explicitly set the default unicode-precedence-list after loading
+	the unicode tables, to move the Western character sets before the
+	East Asian ones by default. 
+	* unicode.el :
+	Avoid overflowing 80 characters per line with the CCL
+	program. Make unicode-error-sequence-zero and
+	unicode-error-sequence-regexp-range available to user code that
+	wants to work with Unicode error sequences. Decode those
+	characters in WGL4 that are not available in other Western
+	character sets at dump time into jit-ucs-charset-0, in the
+	interest of avoiding them getting East Asian fonts and width
+	information when decoding from Unicode.
+
 2007-08-20  Mike Sperber  <mike@xemacs.org>
 
 	* window-xemacs.el (root-window->saved-window): 

@@ -588,7 +588,7 @@
       (string (char-syntax (make-char 'latin-iso8859-1 i)))
       syntax-table))
 
-;; Case. #### Bug: this doesn't handle I WITH DOT ABOVE. 
+;; Case. The Turkish case idiosyncracy is handled with its language environment.  
 (setup-case-pairs
  'latin-iso8859-9
  '((#xC0 #xE0) ;; A WITH GRAVE
@@ -617,6 +617,16 @@
    (#xDB #xFB) ;; U WITH CIRCUMFLEX
    (#xDC #xFC) ;; U WITH DIAERESIS
    (#xDE #xFE))) ;; S WITH CEDILLA
+
+;; LATIN CAPITAL LETTER I WITH DOT ABOVE
+(put-case-table 'downcase
+                (make-char 'latin-iso8859-9 #xdd)
+                ?i (standard-case-table))
+
+;; LATIN SMALL LETTER DOTLESS I
+(put-case-table 'upcase
+                (make-char 'latin-iso8859-9 #xfd)
+                ?I (standard-case-table))
 
 (make-coding-system
  'iso-8859-9 'iso2022 "ISO-8859-9 (Latin-5)"
@@ -724,5 +734,193 @@ Generic language environment for %s (%s)." nice-charset-1 nice-charset-2))))
        (documentation . ,(format "\
 This language environment supports %s. " name)))
      '("European"))))
+
+;; The case table for Turkish is special:
+;; #### Maybe we should limit this change to interactive functions; this may
+;; well be awkward for protocols and so on. 
+(set-language-info "Turkish"
+                   'setup-function
+                   (lambda ()
+                     ;; The lowercase version of I is dotless i
+                     (put-case-table-pair ?I 
+                                          (make-char 'latin-iso8859-9 #xfd)
+                                          (standard-case-table))
+                     ;; The uppercase version of i is I with dot
+                     (put-case-table-pair (make-char 'latin-iso8859-9 #xdd)
+                                          ?i (standard-case-table))))
+
+(set-language-info "Turkish"
+                   'exit-function
+                   (lambda ()
+                     ;; Restore the normal case mappings for the characters.
+                     (put-case-table-pair ?I ?i (standard-case-table))))
+
+(make-8-bit-coding-system
+ 'macintosh
+ '((#x80 ?\u00C4) ;; LATIN CAPITAL LETTER A WITH DIAERESIS
+   (#x81 ?\u00C5) ;; LATIN CAPITAL LETTER A WITH RING ABOVE
+   (#x82 ?\u00C7) ;; LATIN CAPITAL LETTER C WITH CEDILLA
+   (#x83 ?\u00C9) ;; LATIN CAPITAL LETTER E WITH ACUTE
+   (#x84 ?\u00D1) ;; LATIN CAPITAL LETTER N WITH TILDE
+   (#x85 ?\u00D6) ;; LATIN CAPITAL LETTER O WITH DIAERESIS
+   (#x86 ?\u00DC) ;; LATIN CAPITAL LETTER U WITH DIAERESIS
+   (#x87 ?\u00E1) ;; LATIN SMALL LETTER A WITH ACUTE
+   (#x88 ?\u00E0) ;; LATIN SMALL LETTER A WITH GRAVE
+   (#x89 ?\u00E2) ;; LATIN SMALL LETTER A WITH CIRCUMFLEX
+   (#x8A ?\u00E4) ;; LATIN SMALL LETTER A WITH DIAERESIS
+   (#x8B ?\u00E3) ;; LATIN SMALL LETTER A WITH TILDE
+   (#x8C ?\u00E5) ;; LATIN SMALL LETTER A WITH RING ABOVE
+   (#x8D ?\u00E7) ;; LATIN SMALL LETTER C WITH CEDILLA
+   (#x8E ?\u00E9) ;; LATIN SMALL LETTER E WITH ACUTE
+   (#x8F ?\u00E8) ;; LATIN SMALL LETTER E WITH GRAVE
+   (#x90 ?\u00EA) ;; LATIN SMALL LETTER E WITH CIRCUMFLEX
+   (#x91 ?\u00EB) ;; LATIN SMALL LETTER E WITH DIAERESIS
+   (#x92 ?\u00ED) ;; LATIN SMALL LETTER I WITH ACUTE
+   (#x93 ?\u00EC) ;; LATIN SMALL LETTER I WITH GRAVE
+   (#x94 ?\u00EE) ;; LATIN SMALL LETTER I WITH CIRCUMFLEX
+   (#x95 ?\u00EF) ;; LATIN SMALL LETTER I WITH DIAERESIS
+   (#x96 ?\u00F1) ;; LATIN SMALL LETTER N WITH TILDE
+   (#x97 ?\u00F3) ;; LATIN SMALL LETTER O WITH ACUTE
+   (#x98 ?\u00F2) ;; LATIN SMALL LETTER O WITH GRAVE
+   (#x99 ?\u00F4) ;; LATIN SMALL LETTER O WITH CIRCUMFLEX
+   (#x9A ?\u00F6) ;; LATIN SMALL LETTER O WITH DIAERESIS
+   (#x9B ?\u00F5) ;; LATIN SMALL LETTER O WITH TILDE
+   (#x9C ?\u00FA) ;; LATIN SMALL LETTER U WITH ACUTE
+   (#x9D ?\u00F9) ;; LATIN SMALL LETTER U WITH GRAVE
+   (#x9E ?\u00FB) ;; LATIN SMALL LETTER U WITH CIRCUMFLEX
+   (#x9F ?\u00FC) ;; LATIN SMALL LETTER U WITH DIAERESIS
+   (#xA0 ?\u2020) ;; DAGGER
+   (#xA1 ?\u00B0) ;; DEGREE SIGN
+   (#xA2 ?\u00A2) ;; CENT SIGN
+   (#xA3 ?\u00A3) ;; POUND SIGN
+   (#xA4 ?\u00A7) ;; SECTION SIGN
+   (#xA5 ?\u2022) ;; BULLET
+   (#xA6 ?\u00B6) ;; PILCROW SIGN
+   (#xA7 ?\u00DF) ;; LATIN SMALL LETTER SHARP S
+   (#xA8 ?\u00AE) ;; REGISTERED SIGN
+   (#xA9 ?\u00A9) ;; COPYRIGHT SIGN
+   (#xAA ?\u2122) ;; TRADE MARK SIGN
+   (#xAB ?\u00B4) ;; ACUTE ACCENT
+   (#xAC ?\u00A8) ;; DIAERESIS
+   (#xAD ?\u2260) ;; NOT EQUAL TO
+   (#xAE ?\u00C6) ;; LATIN CAPITAL LETTER AE
+   (#xAF ?\u00D8) ;; LATIN CAPITAL LETTER O WITH STROKE
+   (#xB0 ?\u221E) ;; INFINITY
+   (#xB1 ?\u00B1) ;; PLUS-MINUS SIGN
+   (#xB2 ?\u2264) ;; LESS-THAN OR EQUAL TO
+   (#xB3 ?\u2265) ;; GREATER-THAN OR EQUAL TO
+   (#xB4 ?\u00A5) ;; YEN SIGN
+   (#xB5 ?\u00B5) ;; MICRO SIGN
+   (#xB6 ?\u2202) ;; PARTIAL DIFFERENTIAL
+   (#xB7 ?\u2211) ;; N-ARY SUMMATION
+   (#xB8 ?\u220F) ;; N-ARY PRODUCT
+   (#xB9 ?\u03C0) ;; GREEK SMALL LETTER PI
+   (#xBA ?\u222B) ;; INTEGRAL
+   (#xBB ?\u00AA) ;; FEMININE ORDINAL INDICATOR
+   (#xBC ?\u00BA) ;; MASCULINE ORDINAL INDICATOR
+   (#xBD ?\u03A9) ;; GREEK CAPITAL LETTER OMEGA
+   (#xBE ?\u00E6) ;; LATIN SMALL LETTER AE
+   (#xBF ?\u00F8) ;; LATIN SMALL LETTER O WITH STROKE
+   (#xC0 ?\u00BF) ;; INVERTED QUESTION MARK
+   (#xC1 ?\u00A1) ;; INVERTED EXCLAMATION MARK
+   (#xC2 ?\u00AC) ;; NOT SIGN
+   (#xC3 ?\u221A) ;; SQUARE ROOT
+   (#xC4 ?\u0192) ;; LATIN SMALL LETTER F WITH HOOK
+   (#xC5 ?\u2248) ;; ALMOST EQUAL TO
+   (#xC6 ?\u2206) ;; INCREMENT
+   (#xC7 ?\u00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+   (#xC8 ?\u00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+   (#xC9 ?\u2026) ;; HORIZONTAL ELLIPSIS
+   (#xCA ?\u00A0) ;; NO-BREAK SPACE
+   (#xCB ?\u00C0) ;; LATIN CAPITAL LETTER A WITH GRAVE
+   (#xCC ?\u00C3) ;; LATIN CAPITAL LETTER A WITH TILDE
+   (#xCD ?\u00D5) ;; LATIN CAPITAL LETTER O WITH TILDE
+   (#xCE ?\u0152) ;; LATIN CAPITAL LIGATURE OE
+   (#xCF ?\u0153) ;; LATIN SMALL LIGATURE OE
+   (#xD0 ?\u2013) ;; EN DASH
+   (#xD1 ?\u2014) ;; EM DASH
+   (#xD2 ?\u201C) ;; LEFT DOUBLE QUOTATION MARK
+   (#xD3 ?\u201D) ;; RIGHT DOUBLE QUOTATION MARK
+   (#xD4 ?\u2018) ;; LEFT SINGLE QUOTATION MARK
+   (#xD5 ?\u2019) ;; RIGHT SINGLE QUOTATION MARK
+   (#xD6 ?\u00F7) ;; DIVISION SIGN
+   (#xD7 ?\u25CA) ;; LOZENGE
+   (#xD8 ?\u00FF) ;; LATIN SMALL LETTER Y WITH DIAERESIS
+   (#xD9 ?\u0178) ;; LATIN CAPITAL LETTER Y WITH DIAERESIS
+   (#xDA ?\u2044) ;; FRACTION SLASH
+   (#xDB ?\u20AC) ;; EURO SIGN
+   (#xDC ?\u2039) ;; SINGLE LEFT-POINTING ANGLE QUOTATION MARK
+   (#xDD ?\u203A) ;; SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
+   (#xDE ?\uFB01) ;; LATIN SMALL LIGATURE FI
+   (#xDF ?\uFB02) ;; LATIN SMALL LIGATURE FL
+   (#xE0 ?\u2021) ;; DOUBLE DAGGER
+   (#xE1 ?\u00B7) ;; MIDDLE DOT
+   (#xE2 ?\u201A) ;; SINGLE LOW-9 QUOTATION MARK
+   (#xE3 ?\u201E) ;; DOUBLE LOW-9 QUOTATION MARK
+   (#xE4 ?\u2030) ;; PER MILLE SIGN
+   (#xE5 ?\u00C2) ;; LATIN CAPITAL LETTER A WITH CIRCUMFLEX
+   (#xE6 ?\u00CA) ;; LATIN CAPITAL LETTER E WITH CIRCUMFLEX
+   (#xE7 ?\u00C1) ;; LATIN CAPITAL LETTER A WITH ACUTE
+   (#xE8 ?\u00CB) ;; LATIN CAPITAL LETTER E WITH DIAERESIS
+   (#xE9 ?\u00C8) ;; LATIN CAPITAL LETTER E WITH GRAVE
+   (#xEA ?\u00CD) ;; LATIN CAPITAL LETTER I WITH ACUTE
+   (#xEB ?\u00CE) ;; LATIN CAPITAL LETTER I WITH CIRCUMFLEX
+   (#xEC ?\u00CF) ;; LATIN CAPITAL LETTER I WITH DIAERESIS
+   (#xED ?\u00CC) ;; LATIN CAPITAL LETTER I WITH GRAVE
+   (#xEE ?\u00D3) ;; LATIN CAPITAL LETTER O WITH ACUTE
+   (#xEF ?\u00D4) ;; LATIN CAPITAL LETTER O WITH CIRCUMFLEX
+   (#xF0 ?\uF8FF) ;; Apple logo
+   (#xF1 ?\u00D2) ;; LATIN CAPITAL LETTER O WITH GRAVE
+   (#xF2 ?\u00DA) ;; LATIN CAPITAL LETTER U WITH ACUTE
+   (#xF3 ?\u00DB) ;; LATIN CAPITAL LETTER U WITH CIRCUMFLEX
+   (#xF4 ?\u00D9) ;; LATIN CAPITAL LETTER U WITH GRAVE
+   (#xF5 ?\u0131) ;; LATIN SMALL LETTER DOTLESS I
+   (#xF6 ?\u02C6) ;; MODIFIER LETTER CIRCUMFLEX ACCENT
+   (#xF7 ?\u02DC) ;; SMALL TILDE
+   (#xF8 ?\u00AF) ;; MACRON
+   (#xF9 ?\u02D8) ;; BREVE
+   (#xFA ?\u02D9) ;; DOT ABOVE
+   (#xFB ?\u02DA) ;; RING ABOVE
+   (#xFC ?\u00B8) ;; CEDILLA
+   (#xFD ?\u02DD) ;; DOUBLE ACUTE ACCENT
+   (#xFE ?\u02DB) ;; OGONEK
+   (#xFF ?\u02C7)) ;; CARON
+ "The Macintosh encoding for Western Europe and the Americas"
+ '(mnemonic "MR"
+   documentation "MacRoman, MIME name macintosh"
+   aliases (cp10000 MacRoman)))
+
+(make-8-bit-coding-system
+ 'windows-1252
+ '((#x80 ?\u20AC) ;; EURO SIGN
+   (#x82 ?\u201A) ;; SINGLE LOW-9 QUOTATION MARK
+   (#x83 ?\u0192) ;; LATIN SMALL LETTER F WITH HOOK
+   (#x84 ?\u201E) ;; DOUBLE LOW-9 QUOTATION MARK
+   (#x85 ?\u2026) ;; HORIZONTAL ELLIPSIS
+   (#x86 ?\u2020) ;; DAGGER
+   (#x87 ?\u2021) ;; DOUBLE DAGGER
+   (#x88 ?\u02C6) ;; MODIFIER LETTER CIRCUMFLEX ACCENT
+   (#x89 ?\u2030) ;; PER MILLE SIGN
+   (#x8A ?\u0160) ;; LATIN CAPITAL LETTER S WITH CARON
+   (#x8B ?\u2039) ;; SINGLE LEFT-POINTING ANGLE QUOTATION MARK
+   (#x8C ?\u0152) ;; LATIN CAPITAL LIGATURE OE
+   (#x8E ?\u017D) ;; LATIN CAPITAL LETTER Z WITH CARON
+   (#x91 ?\u2018) ;; LEFT SINGLE QUOTATION MARK
+   (#x92 ?\u2019) ;; RIGHT SINGLE QUOTATION MARK
+   (#x93 ?\u201C) ;; LEFT DOUBLE QUOTATION MARK
+   (#x94 ?\u201D) ;; RIGHT DOUBLE QUOTATION MARK
+   (#x95 ?\u2022) ;; BULLET
+   (#x96 ?\u2013) ;; EN DASH
+   (#x97 ?\u2014) ;; EM DASH
+   (#x98 ?\u02DC) ;; SMALL TILDE
+   (#x99 ?\u2122) ;; TRADE MARK SIGN
+   (#x9A ?\u0161) ;; LATIN SMALL LETTER S WITH CARON
+   (#x9B ?\u203A) ;; SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
+   (#x9C ?\u0153) ;; LATIN SMALL LIGATURE OE
+   (#x9E ?\u017E) ;; LATIN SMALL LETTER Z WITH CARON
+   (#x9F ?\u0178));; LATIN CAPITAL LETTER Y WITH DIAERESIS
+ "Microsoft's extension of iso-8859-1 for Western Europe and the Americas.  "
+ '(mnemonic "cp1252"
+   aliases (cp1252)))
 
 ;;; latin.el ends here

@@ -197,9 +197,8 @@ The allowable range of REGISTER is 0 through 3."
 Analogous to `define-translation-table', but updates
 `translation-hash-table-vector' and the table is for use in the CCL
 `lookup-integer' and `lookup-character' functions."
-  (unless (and (symbolp symbol)
-	       (hash-table-p table))
-    (error "Bad args to define-translation-hash-table"))
+  (check-argument-type #'symbolp symbol)
+  (check-argument-type #'hash-table-p table)
   (let ((len (length translation-hash-table-vector))
 	(id 0)
 	done)
@@ -229,10 +228,9 @@ a file is read, not changed, and then written.  ")
 				   encode-failure-octet)
   "Helper function for `make-8-bit-generate-encode-program', which see.
 
-Deals with the case where ASCII and another character set provide the
-can both be encoded unambiguously into the coding-system; if this is
-so, returns a list corresponding to such a ccl-program.  If not, it
-returns nil.  "
+Deals with the case where ASCII and another character set can both be
+encoded unambiguously and completely into the coding-system; if this is so,
+returns a list corresponding to such a ccl-program.  If not, it returns nil.  "
   (let ((tentative-encode-program-parts
 	 (eval-when-compile 
 	   (let* ((compiled 
@@ -313,7 +311,7 @@ message--it will not work.  ")
 	      worth-trying nil)))
 
     (when worth-trying
-      (setq other-charset-vector (make-vector 256 encode-failure-octet))
+      (setq other-charset-vector (make-vector 128 encode-failure-octet))
       (loop for i from charset-lower to charset-upper
         do (aset other-charset-vector i
 		 (gethash (encode-char (make-char worth-trying i)
@@ -523,6 +521,19 @@ table to the that entry in the table.  "
     (append decode-table nil)
     (second decode-program-parts))))
 
+(defun make-8-bit-choose-category (decode-table)
+  "Given DECODE-TABLE, return an appropriate coding category.
+DECODE-TABLE is a 256-entry vector describing the mapping from octets on
+disk to XEmacs characters for some fixed-width 8-bit coding system.  "
+  (check-argument-type #'vectorp decode-table)
+  (check-argument-range (length decode-table) #x100 #x100)
+  (block category
+    (loop
+      for i from #x80 to #xBF
+      do (unless (= i (aref decode-table i))
+           (return-from category 'no-conversion)))
+    'iso-8-1))
+
 ;;;###autoload
 (defun make-8-bit-coding-system (name unicode-map &optional description props)
   "Make and return a fixed-width 8-bit CCL coding system named NAME.
@@ -600,12 +611,12 @@ the code for tilde `~'.  "
            description 
            (plist-put (plist-put props 'decode decode-program)
                       'encode encode-program)))
-    (coding-system-put name 'category 'iso-8-1)
+    (coding-system-put name 'category 
+                       (make-8-bit-choose-category decode-table))
     (loop for alias in aliases
       do (define-coding-system-alias alias name))
     result))
 
-;;;###autoload
 (define-compiler-macro make-8-bit-coding-system (&whole form name unicode-map
 						 &optional description props)
 
@@ -671,7 +682,8 @@ the code for tilde `~'.  "
                                    'encode-table-sym
                                    (symbol-value 'encode-table-sym)))
                             ',encode-program))))
-        (coding-system-put ',name 'category 'iso-8-1)
+        (coding-system-put ',name 'category ',
+                           (make-8-bit-choose-category decode-table))
         ,(macroexpand `(loop for alias in ',aliases
                         do (define-coding-system-alias alias
                              ',name)))

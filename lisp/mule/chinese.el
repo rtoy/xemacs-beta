@@ -225,11 +225,6 @@ G2: Sisheng (PinYin - ZhuYin)"
 		(coding-system cn-gb-2312 iso-2022-7bit hz-gb-2312)
 		(coding-priority cn-gb-2312 big5 iso-2022-7bit)
 		(cygwin-locale "zh")
-		(locale "zh_CN.eucCN" "zh_CN.EUC" "zh_CN"
-			"chinese-s" "zh"
-			 (lambda (arg)
-			      (and arg (let ((case-fold-search t))
-					 (string-match "^zh_.*.GB.*" arg)))))
 		(mswindows-locale ("CHINESE" . "CHINESE_SIMPLIFIED"))
 		(native-coding-system cn-gb-2312)
 		(input-method . "chinese-py-punct")
@@ -239,6 +234,14 @@ G2: Sisheng (PinYin - ZhuYin)"
 "Supports Simplified Chinese, used in mainland China.
 Uses the GB2312 character set."))
  '("Chinese"))
+
+;; Set the locale information separately so that the lambda gets compiled.
+(set-language-info "Chinese-GB" 
+                   'locale
+                   (list "zh_CN.eucCN" "zh_CN.EUC" "zh_CN" "chinese-s" "zh"
+			 (lambda (arg)
+                           (and arg (let ((case-fold-search t))
+                                      (string-match "^zh_.*.GB.*" arg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese BIG5 (traditional)
@@ -295,11 +298,6 @@ of a Chinese character\"."))
 		  (coding-system big5 iso-2022-7bit)
 		  (coding-priority big5 cn-gb-2312 iso-2022-7bit)
 		  (cygwin-locale "zh_TW")
-		  (locale "zh_TW.Big5" "zh_TW.big5" "zh_CN.big5" "zh_TW"
-			  "chinese-t"
-			  (lambda (arg)
-			      (and arg (let ((case-fold-search t))
-					 (string-match "^zh_.*.BIG5.*" arg)))))
 		  (mswindows-locale ("CHINESE" . "CHINESE_TRADITIONAL"))
 		  (native-coding-system big5)
 		  (input-method . "chinese-py-punct-b5")
@@ -310,6 +308,15 @@ of a Chinese character\"."))
 Uses the Chinese Big5 character set."
 ))
  '("Chinese"))
+
+;; Set the locale information separately so that the lambda gets compiled.
+(set-language-info "Chinese-BIG5" 
+                   'locale
+		  (list "zh_TW.Big5" "zh_TW.big5" "zh_CN.big5" "zh_TW"
+                        "chinese-t"
+                        (lambda (arg)
+                          (and arg (let ((case-fold-search t))
+                                     (string-match "^zh_.*.BIG5.*" arg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese CNS11643 (traditional)

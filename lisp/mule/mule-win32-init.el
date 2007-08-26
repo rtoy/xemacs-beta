@@ -116,68 +116,83 @@ as returned by
    locale user-default
    code-page oem))
 
-(let ((cplist
-       '(("EBCDIC"      037 "EBCDIC")
-	 ("OEM"         437 "MS-DOS United States")
-	 ("EBCDIC"      500 "EBCDIC \"500V1\"")
-	 ("OEM"         708 "Arabic (ASMO 708)")
-	 ("OEM"         709 "Arabic (ASMO 449+, BCON V4)")
-	 ("OEM"         710 "Arabic (Transparent Arabic)")
-	 ("OEM"         720 "Arabic (Transparent ASMO)")
-	 ("OEM"         737 "Greek (formerly 437G)")
-	 ("OEM"         775 "Baltic")
-	 ("OEM"         850 "MS-DOS Multilingual (Latin I)")
-	 ("OEM"         852 "MS-DOS Slavic (Latin II)")
-	 ("OEM"         855 "IBM Cyrillic (primarily Russian)")
-	 ("OEM"         857 "IBM Turkish")
-	 ("OEM"         860 "MS-DOS Portuguese")
-	 ("OEM"         861 "MS-DOS Icelandic")
-	 ("OEM"         862 "Hebrew")
-	 ("OEM"         863 "MS-DOS Canadian-French")
-	 ("OEM"         864 "Arabic")
-	 ("OEM"         865 "MS-DOS Nordic")
-	 ("OEM"         866 "MS-DOS Russian")
-	 ("OEM"         869 "IBM Modern Greek")
-	 ("Ansi/OEM"    874 "Thai")
-	 ("EBCDIC"      875 "EBCDIC")
-	 ("Ansi/OEM"    932 "Japanese")
-	 ("Ansi/OEM"    936 "Chinese (PRC, Singapore)")
-	 ("Ansi/OEM"    949 "Korean")
-	 ("Ansi/OEM"    950 "Chinese (Taiwan; Hong Kong SAR, PRC)")
-	 ("EBCDIC"      1026 "EBCDIC")
-	 ("ANSI"        1200 "Unicode (BMP of ISO 10646)")
-	 ("ANSI"        1250 "Windows 3.1 Eastern European")
-	 ("ANSI"        1251 "Windows 3.1 Cyrillic")
-	 ("ANSI"        1252 "Windows 3.1 US (ANSI)")
-	 ("ANSI"        1253 "Windows 3.1 Greek")
-	 ("ANSI"        1254 "Windows 3.1 Turkish")
-	 ("ANSI"        1255 "Hebrew")
-	 ("ANSI"        1256 "Arabic")
-	 ("ANSI"        1257 "Baltic")
-	 ("ANSI"        1258 "VietNam")
-	 ("Ansi/OEM"    1361 "Korean (Johab)")
-	 ("Mac"         10000 "Macintosh Roman")
-	 ("Mac"         10001 "Macintosh Japanese")
-	 ("Mac"         10006 "Macintosh Greek I")
-	 ("Mac"         10007 "Macintosh Cyrillic")
-	 ("Mac"         10029 "Macintosh Latin 2")
-	 ("Mac"         10079 "Macintosh Icelandic")
-	 ("Mac"         10081 "Macintosh Turkish"))))
-  (dolist (cpprops cplist)
-    (let ((ansioem (first cpprops))
-	  (cp (second cpprops))
-	  (name (third cpprops)))
-      (make-coding-system
-       (intern (format "windows-%s" cp))
-       'mswindows-multibyte
-       (format "MS Windows code page %s (%s, %s)" cp ansioem name)
-       `(mnemonic
-	 ,(format "MSW-%s" cp)
-	 code-page ,cp
-	 documentation
-	 ,(format
-	  "MS Windows Multibyte -- code page %s (%s, %s).
+(loop
+  for (ansioem cp category name)
+  in '(("EBCDIC"      037 no-conversion "EBCDIC")
+       ("OEM"         437 no-conversion "MS-DOS United States")
+       ("EBCDIC"      500 no-conversion "EBCDIC \"500V1\"")
+
+       ;; This is ISO-8859-6. 
+       ;; ("OEM"         708 "Arabic (ASMO 708)")
+       ("OEM"         709 no-conversion "Arabic (ASMO 449+, BCON V4)")
+       ("OEM"         710 no-conversion "Arabic (Transparent Arabic)")
+       ("OEM"         720 no-conversion "Arabic (Transparent ASMO)")
+       ("OEM"         737 no-conversion "Greek (formerly 437G)")
+       ("OEM"         775 no-conversion "Baltic")
+       ("OEM"         850 no-conversion "MS-DOS Multilingual (Latin I)")
+       ("OEM"         852 no-conversion "MS-DOS Slavic (Latin II)")
+       ("OEM"         855 no-conversion "IBM Cyrillic (primarily Russian)")
+       ("OEM"         857 no-conversion "IBM Turkish")
+       ("OEM"         860 no-conversion "MS-DOS Portuguese")
+       ("OEM"         861 no-conversion "MS-DOS Icelandic")
+       ("OEM"         862 no-conversion "Hebrew")
+       ("OEM"         863 no-conversion "MS-DOS Canadian-French")
+       ("OEM"         864 no-conversion "Arabic")
+       ("OEM"         865 no-conversion "MS-DOS Nordic")
+       ; ("OEM"         866 no-conversion "MS-DOS Russian")
+       ("OEM"         869 no-conversion "IBM Modern Greek")
+       ("Ansi/OEM"    874 no-conversion "Thai")
+       ("EBCDIC"      875 no-conversion "EBCDIC")
+       ("Ansi/OEM"    932 shift_jis "Japanese")
+       ("Ansi/OEM"    936 iso_8_2 "Chinese (PRC, Singapore)")
+       ("Ansi/OEM"    949 iso_8_2 "Korean")
+       ("Ansi/OEM"    950 big5 "Chinese (Taiwan; Hong Kong SAR, PRC)")
+       ("EBCDIC"      1026 no-conversion "EBCDIC")
+
+       ;; This code page doesn't work. See 
+       ;; http://blogs.msdn.com/michkap/archive/2005/08/01/446475.aspx
+       ; ("ANSI"        1200 utf-16-little-endian "Unicode (BMP of ISO 10646)")
+
+       ("ANSI"        1250 no-conversion "Windows 3.1 Eastern European")
+
+       ;; We implement this ourselves, and keeping the same implementation
+       ;; across platforms means behaviour is a bit more consistent.
+       ; ("ANSI"        1251 no-conversion "Windows 3.1 Cyrillic")
+       ; ("ANSI"        1252 no-conversion "Windows 3.1 US (ANSI)")
+
+        ; ("ANSI"        1253 no-conversion "Windows 3.1 Greek")
+       ("ANSI"        1254 no-conversion "Windows 3.1 Turkish")
+       ("ANSI"        1255 no-conversion "Hebrew")
+       ("ANSI"        1256 no-conversion "Arabic")
+       ("ANSI"        1257 no-conversion "Baltic")
+       ("ANSI"        1258 no-conversion "VietNam")
+       ;; #### Is this category right? I don't have Lunde to hand, and the
+       ;; online information on Johab is scant.
+       ("Ansi/OEM"    1361 iso_8_2 "Korean (Johab)")
+       ("Mac"         10000 no-conversion "Macintosh Roman")
+       ("Mac"         10001 shift_jis "Macintosh Japanese")
+       ("Mac"         10006 no-conversion "Macintosh Greek I")
+       ("Mac"         10007 no-conversion "Macintosh Cyrillic")
+       ("Mac"         10029 no-conversion "Macintosh Latin 2")
+       ("Mac"         10079 no-conversion "Macintosh Icelandic")
+       ("Mac"         10081 no-conversion "Macintosh Turkish"))
+  do
+  (make-coding-system
+   (intern (format "windows-%s" cp))
+   'mswindows-multibyte
+   (format "MS Windows code page %s (%s, %s)" cp ansioem name)
+   `(mnemonic
+     ,(format "MSW-%s" cp)
+     code-page ,cp
+     documentation
+     ,(format
+       "MS Windows Multibyte -- code page %s (%s, %s).
 
 This implements the encoding specified by code page %s.
 For more information on code pages, see `mswindows-charset-code-page'."
-	  cp ansioem name cp))))))
+       cp ansioem name cp)))
+  (define-coding-system-alias 
+    (intern (format "cp%s" cp))
+    (intern (format "windows-%s" cp)))
+  (coding-system-put (intern (format "windows-%s" cp)) 'category category))
+
