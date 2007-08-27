@@ -1,3 +1,7 @@
+2007-08-27  Mike Sperber  <mike@xemacs.org>
+
+	* config.values.in (datarootdir):  Add.
+
 2007-08-12  Mike Sperber  <mike@xemacs.org>
 
 	* Makefile.in.in (datarootdir): Add.
