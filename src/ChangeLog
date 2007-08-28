@@ -1,3 +1,9 @@
+2007-08-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-ccl.c (ccl_driver):
+	Revert the last change to mule-ccl.c, on objection from SL
+	Baur. The change to lisp.h in the same commit sufficed.
+
 2007-08-17  Marcus Crestani  <crestani@xemacs.org>
 
 	* buffer.c (Fkill_buffer):
