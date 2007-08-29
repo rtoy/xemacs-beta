@@ -3490,27 +3490,39 @@ extern Bool XRegisterIMInstantiateCallback(
   if test "$with_xft_emacs" = "yes"; then
     AC_MSG_CHECKING([for Xrender, fontconfig, and Xft])
     xft_includes_found=no
-    AC_CHECK_HEADERS([freetype/config/ftheader.h],
-		     [xft_includes_found=yes],
-		     [
-      dnl #### How about /sw/include, and /opt/local/include?
-      dnl these directories need to be the parent of the freetype directory
-      for freetype_include_top in "/usr/X11R6/include/freetype2" \
-				  "/usr/include/freetype2"
-      do
-	if test -d $freetype_include_top; then
-	  AC_MSG_CHECKING([in ${freetype_include_top}/freetype2])
-	  dnl disable autoconf's fucking cache; why these fuckheads think it
-	  dnl is better to be broken than to be slow, I don't know!
-	  dnl #### there's gotta be a better-looking way to do this!!
-	  unset "$as_ac_Header"
-          save_c_switch_site="$c_switch_site"
-          c_switch_site="$c_switch_site -I${freetype_include_top}"
-          AC_CHECK_HEADERS([freetype/config/ftheader.h],
-			   [xft_includes_found=yes],
-			   [c_switch_site=$save_c_switch_site])
-	fi
-      done])
+    dnl try pkg-config
+    xft_config_prog="pkg-config xft"
+    xft_config_ok=`$xft_config_prog --cflags 2>/dev/null`
+    if test "$?" = 0 ; then
+	xft_cflags=`$xft_config_prog --cflags`
+	xft_libs=`$xft_config_prog --libs`
+	c_switch_site="$c_switch_site $xft_cflags"
+	ld_switch_site="$ld_switch_site $xft_libs"
+	xft_includes_found=yes
+    else
+      AC_CHECK_HEADERS([freetype/config/ftheader.h],
+		       [xft_includes_found=yes],
+		       [
+	dnl #### How about /sw/include, and /opt/local/include?
+	dnl these directories need to be the parent of the freetype directory
+	for freetype_include_top in "/usr/local/include/freetype2" \
+				    "/usr/X11R6/include/freetype2" \
+				    "/usr/include/freetype2"
+	do
+	  if test -d $freetype_include_top; then
+	    AC_MSG_CHECKING([in ${freetype_include_top}])
+	    dnl disable autoconf's fucking cache; why these fuckheads think it
+	    dnl is better to be broken than to be slow, I don't know!
+	    dnl #### there's gotta be a better-looking way to do this!!
+	    unset "$as_ac_Header"
+	    save_c_switch_site="$c_switch_site"
+	    c_switch_site="$c_switch_site -I${freetype_include_top}"
+	    AC_CHECK_HEADERS([freetype/config/ftheader.h],
+			     [xft_includes_found=yes],
+			     [c_switch_site=$save_c_switch_site])
+	  fi
+	done])
+    fi
     if test "$xft_includes_found" != "yes"; then
       XE_DIE(["Unable to find headers for --with-xft"])
     else

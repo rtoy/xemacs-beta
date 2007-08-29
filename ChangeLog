@@ -1,3 +1,8 @@
+2007-08-27  Mike Sperber  <mike@xemacs.org>
+
+	* configure.ac: Try to use pkg-config for finding Xft includes and
+	libraries.  If that fails, search also in /usr/local.
+
 2007-08-12  Mike Sperber  <mike@xemacs.org>
 
 	* Makefile.in.in (datarootdir): Add.

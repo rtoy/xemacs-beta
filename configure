@@ -19603,6 +19603,15 @@ fi
     { echo "$as_me:$LINENO: checking for Xrender, fontconfig, and Xft" >&5
 echo $ECHO_N "checking for Xrender, fontconfig, and Xft... $ECHO_C" >&6; }
     xft_includes_found=no
+        xft_config_prog="pkg-config xft"
+    xft_config_ok=`$xft_config_prog --cflags 2>/dev/null`
+    if test "$?" = 0 ; then
+	xft_cflags=`$xft_config_prog --cflags`
+	xft_libs=`$xft_config_prog --libs`
+	c_switch_site="$c_switch_site $xft_cflags"
+	ld_switch_site="$ld_switch_site $xft_libs"
+	xft_includes_found=yes
+    else
 
 for ac_header in freetype/config/ftheader.h
 do
@@ -19746,15 +19755,16 @@ _ACEOF
  xft_includes_found=yes
 else
 
-                  for freetype_include_top in "/usr/X11R6/include/freetype2" \
-				  "/usr/include/freetype2"
-      do
-	if test -d $freetype_include_top; then
-	  { echo "$as_me:$LINENO: checking in ${freetype_include_top}/freetype2" >&5
-echo $ECHO_N "checking in ${freetype_include_top}/freetype2... $ECHO_C" >&6; }
-	  	  	  	  unset "$as_ac_Header"
-          save_c_switch_site="$c_switch_site"
-          c_switch_site="$c_switch_site -I${freetype_include_top}"
+			for freetype_include_top in "/usr/local/include/freetype2" \
+				    "/usr/X11R6/include/freetype2" \
+				    "/usr/include/freetype2"
+	do
+	  if test -d $freetype_include_top; then
+	    { echo "$as_me:$LINENO: checking in ${freetype_include_top}" >&5
+echo $ECHO_N "checking in ${freetype_include_top}... $ECHO_C" >&6; }
+	    	    	    	    unset "$as_ac_Header"
+	    save_c_switch_site="$c_switch_site"
+	    c_switch_site="$c_switch_site -I${freetype_include_top}"
 
 for ac_header in freetype/config/ftheader.h
 do
@@ -19902,12 +19912,13 @@ fi
 
 done
 
-	fi
-      done
+	  fi
+	done
 fi
 
 done
 
+    fi
     if test "$xft_includes_found" != "yes"; then
       { echo "Error:" "Unable to find headers for --with-xft" >&2; exit 1; }
     else
