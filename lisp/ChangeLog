@@ -1,3 +1,9 @@
+2007-08-29  Mike Sperber  <mike@xemacs.org>
+
+	* setup-paths.el (paths-emacs-data-root-p): Use "share" instead of
+	"lib" as the subdirectory to look for when testing for a data
+	root.
+
 2007-08-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/chinese.el ("Chinese-GB"):
