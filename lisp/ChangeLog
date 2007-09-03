@@ -1,3 +1,19 @@
+2007-09-02  Steve Youngs  <steve@sxemacs.org>
+
+	* byte-optimize.el (byte-optimize-featurep): New.  Optimise
+	feature 'sxemacs to nil and 'xemacs to t.  This is along the same
+	lines as GNU/Emacs where they optimise both 'xemacs and 'sxemacs
+	to nil.  It has the added advantage of suppressing byte-compiler
+	warnings in most cases.
+
+	* package-get.el (package-get-pgp-available-p): Removed.
+	(package-get-require-signed-base-updates): Ditto.
+	(package-entries-are-signed): Ditto.
+	(package-get-pgp-signed-begin-line): Ditto.
+	(package-get-pgp-signature-begin-line): Ditto.
+	(package-get-pgp-signature-end-line): Ditto.
+	(package-get-update-base-from-buffer): Remove the PGP nonsense.
+
 2007-08-29  Didier Verna  <didier@xemacs.org>
 
 	* files.el (files-fetch-hook-value): Preserve locality of hooks by

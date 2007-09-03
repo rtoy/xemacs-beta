@@ -395,50 +395,6 @@ Otherwise respect the `force-current' argument of `package-get-require-base'."
   :type 'boolean
   :group 'package-get)
 
-(defun package-get-pgp-available-p ()
-  "Checks the availability of Mailcrypt and PGP executable.
-
-Returns t if both are found, nil otherwise.  As a side effect, set
-`mc-default-scheme' dependent on the PGP executable found."
-  (let (result)
-    (when (featurep 'mailcrypt-autoloads)
-      (autoload 'mc-setversion "mc-setversion"))
-    (when-fboundp 'mc-setversion
-      (cond ((locate-file "gpg" exec-path
-			  '("" ".btm" ".bat" ".cmd" ".exe" ".com")
-			  'executable)
-	     (mc-setversion "gpg")
-	     (setq result t))
-	    ((locate-file "pgpe" exec-path
-			  '("" ".btm" ".bat" ".cmd" ".exe" ".com")
-			  'executable)
-	     (mc-setversion "5.0")
-	     (setq result t))
-	    ((locate-file "pgp" exec-path
-			  '("" ".btm" ".bat" ".cmd" ".exe" ".com")
-			  'executable)
-	     (mc-setversion "2.6")
-	     (setq result t))))
-    (if result
-	result
-      nil)))
-
-(defcustom package-get-require-signed-base-updates (package-get-pgp-available-p)
-  "*If non-nil, try to verify the package index database via PGP.
-
-If nil, no PGP verification is done.  If the package index database
-entries are not PGP signed and this variable is non-nil, require user
-confirmation to continue with the package-get procedure.
-
-The default for this variable is the return value of
-`package-get-pgp-available-p', non-nil if both the \"Mailcrypt\"
-package and a suitable PGP executable are available, nil otherwise."
-  :type 'boolean
-  :group 'package-get)
-
-(defvar package-entries-are-signed nil
-  "Non-nil when the package index file has been PGP signed.")
-
 (defvar package-get-continue-update-base nil
   "Non-nil update the index even if it hasn't been signed.")
 
@@ -465,13 +421,6 @@ and remote access is likely in the near future."
       (error 'void-variable
 	     "Package-get database not loaded")
     (setq package-get-was-current force-current)))
-
-(defconst package-get-pgp-signed-begin-line "^-----BEGIN PGP SIGNED MESSAGE-----"
-  "Text for start of PGP signed messages.")
-(defconst package-get-pgp-signature-begin-line "^-----BEGIN PGP SIGNATURE-----"
-  "Text for beginning of PGP signature.")
-(defconst package-get-pgp-signature-end-line "^-----END PGP SIGNATURE-----"
-  "Text for end of PGP signature.")
 
 ;;;###autoload
 (defun package-get-update-base-entry (entry)
@@ -600,39 +549,8 @@ used interactively, for example from a mail or news buffer."
       (goto-char (point-min))
       (setq content-beg (point))
       (setq content-end (save-excursion (goto-char (point-max)) (point)))
-      (when (re-search-forward package-get-pgp-signed-begin-line nil t)
-        (setq content-beg (match-end 0)))
-      (when (re-search-forward package-get-pgp-signature-begin-line nil t)
-        (setq content-end (match-beginning 0))
-	(setq package-entries-are-signed t))
-      (re-search-forward package-get-pgp-signature-end-line nil t)
-      (setq package-get-continue-update-base t)
-      ;; This is a little overkill because the default value of
-      ;; `package-get-require-signed-base-updates' is the return of
-      ;; `package-get-pgp-available-p', but we have to allow for
-      ;; someone explicitly setting
-      ;; `package-get-require-signed-base-updates' to t. --SY
-      (when (and package-get-require-signed-base-updates
-		 (package-get-pgp-available-p))
-	(if package-entries-are-signed
-	    (let (good-sig)
-	      (setq package-get-continue-update-base nil)
-	      (autoload 'mc-verify "mc-toplev")
-	      (when (declare-fboundp (mc-verify))
-		(setq good-sig t))
-	      (if good-sig
-		  (setq package-get-continue-update-base t)
-		(error 'process-error 
-		       "GnuPG error.  Package database not updated")))
-	  (if (yes-or-no-p
-	       "Package Index is not PGP signed.  Continue anyway? ")
-	      (setq package-get-continue-update-base t)
-	    (setq package-get-continue-update-base nil)
-	    (warn "Package database not updated"))))
-      ;; ToDo: We should call package-get-maybe-save-index on the region
-      (when package-get-continue-update-base
-	(package-get-update-base-entries content-beg content-end)
-	(message "Updated package database")))))
+      (package-get-update-base-entries content-beg content-end)
+      (message "Updated package database"))))
 
 (defun package-get-update-base-entries (start end)
   "Update the package-get database with the entries found between

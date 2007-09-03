@@ -1168,6 +1168,15 @@
     (if constant
 	(eval form)
       form)))
+
+(put 'featurep 'byte-optimizer 'byte-optimize-featurep)
+(defun byte-optimize-featurep (form)
+  (let ((str (prin1-to-string (cdr-safe form)))
+	(regex #r"\s-+s?xemacs\(\s-\|)\)"))
+    (if (string-match regex str)
+	(byte-optimize-predicate form)
+      form)))
+
 
 ;;; enumerating those functions which need not be called if the returned
 ;;; value is not used.  That is, something like
