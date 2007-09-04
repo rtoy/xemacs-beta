@@ -47,11 +47,18 @@ struct backtrace backtrace
    This ensures correct behavior (e.g. we never modify the profiling info
    when profiling is not active) because we seed and reap all functions
    currently on the stack when starting and stopping.  See
-   `start-profiling'. */
+   `start-profiling'.
+
+   We check do_backtrace to make sure that the backtrace structure is
+   initialised. If it isn't, we can enter a function with profiling turned
+   off, and exit it with it turned on, with the consequence that an
+   unitialised backtrace structure is passed to
+   profile_record_just_called. Since do_backtrace is function-local (apart
+   from in the garbage collector) this avoids that.  */
 #define PROFILE_ENTER_FUNCTION()		\
 do						\
 {						\
-  if (profiling_active)				\
+  if (profiling_active && do_backtrace)		\
     profile_record_about_to_call (&backtrace);	\
 }						\
 while (0)
@@ -59,7 +66,7 @@ while (0)
 #define PROFILE_EXIT_FUNCTION()			\
 do						\
 {						\
-  if (profiling_active)				\
+  if (profiling_active && do_backtrace)		\
     profile_record_just_called (&backtrace);	\
 }						\
 while (0)

@@ -3100,7 +3100,7 @@ when reading the arguments.
   /* This function can GC */
   Lisp_Object prefixarg;
   Lisp_Object final = cmd;
-  struct backtrace backtrace;
+  PROFILE_DECLARE();
   struct console *con = XCONSOLE (Vselected_console);
 
   prefixarg = con->prefix_arg;
@@ -3533,7 +3533,7 @@ Evaluate FORM and return its value.
   /* This function can GC */
   Lisp_Object fun, val, original_fun, original_args;
   int nargs;
-  struct backtrace backtrace;
+  PROFILE_DECLARE();
 
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
   check_proper_critical_section_lisp_protection ();
@@ -3841,7 +3841,7 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
   /* This function can GC */
   Lisp_Object fun;
   Lisp_Object val;
-  struct backtrace backtrace;
+  PROFILE_DECLARE();
   int fun_nargs = nargs - 1;
   Lisp_Object *fun_args = args + 1;
 

@@ -1,3 +1,16 @@
+2006-11-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Fcommand_execute):
+	* eval.c (Feval):
+	* eval.c (Ffuncall):
+	Use the PROFILE_DECLARE macro instead of declaring `struct
+	backtrace backtrace' by hand. 
+	* profile.h:
+	* profile.h (PROFILE_EXIT_FUNCTION):
+	* profile.h (PROFILE_ENTER_FUNCTION):
+	Check do_backtrace before passing the backtrace structure to
+	profile_record_about_to_call, profile_record_just_called. 
+
 2007-08-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c (ccl_driver):
