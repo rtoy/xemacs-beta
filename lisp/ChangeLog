@@ -1,3 +1,10 @@
+2007-09-05  Mike Sperber  <mike@xemacs.org>
+
+	* menubar.el (add-menu-item-1): Remove bogus `leaf-p' argument.
+	(add-menu-button): Follow above change; also remove bogus
+	docstring talking about "leaf node".
+	(add-submenu): Follow above change.
+
 2007-09-02  Steve Youngs  <steve@sxemacs.org>
 
 	* byte-optimize.el (byte-optimize-featurep): New.  Optimise
