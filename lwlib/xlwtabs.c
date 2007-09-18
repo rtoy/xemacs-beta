@@ -572,7 +572,11 @@ TabsRealize(Widget w, Mask *valueMask, XSetWindowAttributes *attributes)
 static	void
 TabsDestroy(Widget w)
 {
-	TabsFreeGCs((TabsWidget)w) ;
+	TabsWidget tw = (TabsWidget) w;
+#ifdef USE_XFT_TABS
+	XftFontClose (XtDisplay (w), tw->tabs.renderFont);
+#endif /* ! USE_XFT_TABS */
+	TabsFreeGCs (tw) ;
 }
 
 

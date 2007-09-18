@@ -3351,6 +3351,10 @@ XlwMenuDestroy (Widget w)
   XFreePixmap (XtDisplay (mw), mw->menu.gray_pixmap);
   mw->menu.gray_pixmap = (Pixmap) -1;
 
+#ifdef USE_XFT_MENUBARS
+  XftFontClose (XtDisplay (mw), mw->menu.renderFont);
+#endif
+
   /* Don't free mw->menu.contents because that comes from our creator.
      The `*_stack' elements are just pointers into `contents' so leave
      that alone too.  But free the stacks themselves. */
