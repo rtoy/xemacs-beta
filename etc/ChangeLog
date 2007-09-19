@@ -1,3 +1,8 @@
+2007-09-19  Didier Verna  <didier@lrde.epita.fr>
+
+	* photos/dv.png: Remove.
+	* photos/didier.png: Add.
+
 2007-07-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode/unicode-consortium/BIG5.TXT:
@@ -47,14 +52,14 @@
 2006-12-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode/unicode-consortium/8859-7.TXT:
-	Update the mapping to the 2003 version of ISO 8859-7. 
+	Update the mapping to the 2003 version of ISO 8859-7.
 
 2006-11-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* NEWS:
 	Add information on set-charset-registries, and the change to
-	define-specifier-tag. 
-	
+	define-specifier-tag.
+
 2006-10-08  Adrian Aichner  <adrian@xemacs.org>
 
 	* TUTORIAL.de: Small rephrasing as suggested by hroptatyr on
@@ -98,7 +103,7 @@
 	* HELLO: Add Irish, Tajik. Don't give the local name for the
 	latter language, because we don't support CYRILLIC SMALL LETTER
 	CHE WITH DESCENDER nor CYRILLIC SMALL LETTER I WITH MACRON by
-	default. 
+	default.
 
 2005-11-16  Malcolm Purvis  <malcolmp@xemacs.org>
 
@@ -119,7 +124,7 @@
 2005-07-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* NEWS: Add information on the last argument to event-to-character
-	being ignored. 
+	being ignored.
 
 2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -131,7 +136,7 @@
 
 2005-03-24  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* NEWS: Mention the move to XEmacs as the application class. 
+	* NEWS: Mention the move to XEmacs as the application class.
 	* sample.Xresources: Emacs as app class -> XEmacs as app class
 
 2005-03-23  Adrian Aichner  <adrian@xemacs.org>
@@ -288,7 +293,7 @@
 
 2003-07-03  Stephen J. Turnbull  <stephen@xemacs.org>
 
-	* etc/README.HYPERBOLE: 
+	* etc/README.HYPERBOLE:
 	* etc/README.OO-BROWSER:
 	Update.
 
@@ -317,7 +322,7 @@
 	* package-index.LATEST.gpg: Updated to current reality.
 
 	* package-index.LATEST.pgp: Removed, 21.5 uses
-	'package-index.LATEST.gpg'. 
+	'package-index.LATEST.gpg'.
 
 2003-04-24  Steve Youngs  <youngs@xemacs.org>
 
@@ -836,12 +841,12 @@
 1999-11-13  Jason R Mastaler  <jason@mastaler.com>
 
 	* FTP: Updated FTP mirrors list.  Replaced GNU FTP document
- 	with a URL.
+	with a URL.
 
 1999-11-13  Jason R Mastaler  <jason@mastaler.com>
 
 	* MAILINGLISTS: Updated mailing list subscription information.
-  	Replaced GNU MAILINGLISTS document with a URL.
+	Replaced GNU MAILINGLISTS document with a URL.
 
 1999-08-01  Adrian Aichner  <adrian@xemacs.org>
 
@@ -928,7 +933,7 @@
 	* README: Bump version numbers.
 	* NEWS: Ditto and purge pre-21.0 stuff.
 
- 	* XEmacs 21.0-pre5 is released.
+	* XEmacs 21.0-pre5 is released.
 
 1998-07-09  SL Baur  <steve@altair.xemacs.org>
 
@@ -1941,4 +1946,3 @@ Tue Dec 10 19:25:25 1996  Steven L Baur  <steve@altair.xemacs.org>
 Thu Dec  5 20:42:35 1996  Steven L Baur  <steve@altair.xemacs.org>
 
 	* edt-user.doc (File): New file from Emacs 19.34.
-
