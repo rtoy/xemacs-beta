@@ -1,9 +1,15 @@
-2007-09-05  Mike Sperber  <mike@xemacs.org>
+2007-09-19  Didier Verna  <didier@xemacs.org>
 
-	* menubar.el (add-menu-item-1): Remove bogus `leaf-p' argument.
-	(add-menu-button): Follow above change; also remove bogus
-	docstring talking about "leaf node".
-	(add-submenu): Follow above change.
+	Update my personal info.
+	* about.el (xemacs-hackers): Use 'didier instead of 'dv.
+	* about.el (about-other-current-hackers): Ditto.
+	* about.el (about-url-alist): Add my musical website.
+	* about.el (about-personal-info): Update my entry.
+	* about.el (about-hacker-contribution): Ditto.
+
+2007-09-09  Norbert Koch  <viteno@xemacs.org>
+
+	* byte-optimize.el: Revert last patch from Steve Youngs.
 
 2007-09-02  Steve Youngs  <steve@sxemacs.org>
 
