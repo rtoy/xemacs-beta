@@ -1,3 +1,36 @@
+2007-09-20  Didier Verna  <didier@xemacs.org>
+
+	Improvements in user options interactive prompting. This mainly
+	involves the following: before this patch, options of type 'group
+	or 'checklist were prompted by full sexp, without taking a
+	possible default value into account. Now, the user interaction
+	features individual prompting _with completion_ for each group or
+	checklist member. For group options, an optional default value is
+	also handled on an individual group member basis.
+
+	* cus-edit.el (customize-set-value): Suppress the final ": " from
+	created prompts.
+	(customize-set-variable): Ditto.
+	(customize-save-variable): Ditto.
+	(custom-prompt-variable): Add final ": " to prompts if needed.
+
+	* wid-edit.el (widget-prompt-spaceify): New. Add trailing space to
+	string if needed.
+	(widget-prompt): New. Construct a prompt for a widget.
+	(widget-prompt-value): Use it; make prompt argument optional.
+	(widget-default-prompt-value): Add final ": " to prompt.
+	(widget-field-prompt-internal): Ditto.
+	(widget-sexp-prompt-value): Ditto.
+	(widget-file-prompt-value): Ditto.
+	(widget-symbol-prompt-internal): Ditto.
+	(widget-choice-prompt-value): Ditto.
+	(widget-boolean-prompt-value): Ditto.
+	(widget-checklist-prompt-value): New. Prompt value with completion.
+	(checklist): Make the widget aware of it.
+	(widget-group-prompt-value): New. Prompt value with completion;
+	handle default value individually for each group member.
+	* wid-edit.el (group): Make the widget aware of it.
+
 2007-09-19  Didier Verna  <didier@xemacs.org>
 
 	Update my personal info.
