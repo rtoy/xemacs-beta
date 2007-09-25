@@ -225,6 +225,7 @@ directory."
     ;; with
     ;; xemacs-builds/adrian/website/package-get-2-download-sites.el
 ;     ("Chile (cl.xemacs.org)" "ftp.cl.xemacs.org" "packages")
+    ("China (ftp.cn.postgresql.org)" "ftp.cn.postgresql.org" "pub/xemacs/packages")
     ("Czech Republic (cz.xemacs.org)" "ftp.cz.xemacs.org" "MIRRORS/ftp.xemacs.org/pub/xemacs/packages")
     ("Denmark (dk.xemacs.org)" "ftp.dk.xemacs.org" "xemacs/packages")
     ("Finland (fi.xemacs.org)" "ftp.fi.xemacs.org" "pub/mirrors/ftp.xemacs.org/pub/tux/xemacs/packages")
@@ -243,6 +244,10 @@ directory."
 ;   ("Japan (nucba.ac.jp)" "mirror.nucba.ac.jp" "mirror/xemacs/packages")
     ("Korea (kr.xemacs.org)" "ftp.kr.xemacs.org" "pub/tools/emacs/xemacs/packages")
     ("Netherlands (nl.xemacs.org)" "ftp.nl.xemacs.org" "pub/xemacs/ftp/packages")
+    ;; no anonymous ftp available, uncomment when updating website
+    ;; with
+    ;; xemacs-builds/adrian/website/package-get-2-download-sites.el
+;     ("Netherlands (xemacsftp.digimirror.nl)" "xemacsftp.digimirror.nl" "packages")
     ("Norway (no.xemacs.org)" "ftp.no.xemacs.org" "pub/xemacs/packages")
     ("Portugal (pt.xemacs.org)" "ftp.pt.xemacs.org" "pub/MIRRORS/ftp.xemacs.org/packages")
     ("Russia (ru.xemacs.org)" "ftp.ru.xemacs.org" "pub/emacs/xemacs/packages")
@@ -280,7 +285,7 @@ variable actually used to specify package download sites."
      "pub/xemacs/beta/experimental/packages")
     ("Austria Pre-Releases (at.xemacs.org)" "ftp.at.xemacs.org"
      "editors/xemacs/beta/experimental/packages")
-    ("Belgium (be.xemacs.org)" "ftp.be.xemacs.org"
+    ("Belgium Pre-Releases (be.xemacs.org)" "ftp.be.xemacs.org"
      "xemacs/beta/experimental/packages")
     ("Brazil Pre-Releases (br.xemacs.org)" "ftp.br.xemacs.org"
      "pub/xemacs/xemacs-21.5/experimental/packages")
@@ -293,6 +298,8 @@ variable actually used to specify package download sites."
     ;; xemacs-builds/adrian/website/package-get-2-download-sites.el
 ;     ("Chile Pre-Releases (cl.xemacs.org)" "ftp.cl.xemacs.org"
 ;      "beta/experimental/packages")
+    ("China Pre-Releases (ftp.cn.postgresql.org)" "ftp.cn.postgresql.org"
+     "pub/xemacs/beta/experimental/packages")
     ("Czech Republic Pre-Releases (cz.xemacs.org)" "ftp.cz.xemacs.org"
      "MIRRORS/ftp.xemacs.org/pub/xemacs/xemacs-21.5/experimental/packages")
     ("Denmark Pre-Releases (dk.xemacs.org)" "ftp.dk.xemacs.org"
@@ -323,17 +330,22 @@ variable actually used to specify package download sites."
 ;    "pub/GNU/xemacs/beta/experimental/packages")
     ("Japan Pre-Releases (jp.xemacs.org)" "ftp.jp.xemacs.org"
      "pub/text/xemacs/beta/experimental/packages")
-    ("Korea (kr.xemacs.org)" "ftp.kr.xemacs.org"
+    ("Korea Pre-Releases (kr.xemacs.org)" "ftp.kr.xemacs.org"
      "pub/tools/emacs/xemacs/beta/experimental/packages")
-    ("Netherlands (nl.xemacs.org)" "ftp.nl.xemacs.org"
+    ("Netherlands Pre-Releases (nl.xemacs.org)" "ftp.nl.xemacs.org"
      "pub/xemacs/ftp/beta/experimental/packages")
+    ;; no anonymous ftp available, uncomment when updating website
+    ;; with
+    ;; xemacs-builds/adrian/website/package-get-2-download-sites.el
+;     ("Netherlands Pre-Releases (xemacsftp.digimirror.nl)" "xemacsftp.digimirror.nl"
+;      "beta/experimental/packages")
     ("Norway Pre-Releases (no.xemacs.org)" "ftp.no.xemacs.org"
      "pub/xemacs/beta/experimental/packages")
     ("Portugal Pre-Releases (pt.xemacs.org)" "ftp.pt.xemacs.org"
      "pub/MIRRORS/ftp.xemacs.org/beta/experimental/packages")
     ("Russia Pre-Releases (ru.xemacs.org)" "ftp.ru.xemacs.org"
      "pub/emacs/xemacs/beta/experimental/packages")
-    ("Saudi Arabia (sa.xemacs.org)" "ftp.sa.xemacs.org"
+    ("Saudi Arabia Pre-Releases (sa.xemacs.org)" "ftp.sa.xemacs.org"
      "pub/xemacs.org/beta/experimental/packages")
     ("Sweden Pre-Releases (se.xemacs.org)" "ftp.se.xemacs.org"
      "pub/gnu/xemacs/beta/experimental/packages")
