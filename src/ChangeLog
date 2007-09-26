@@ -1,5 +1,16 @@
 2007-09-26  Didier Verna  <didier@xemacs.org>
 
+	More fixes similar to previous patch:
+
+	* faces.c (reset_face_cachels): Add informative comment about the
+	order of faces cache addition.
+	* redisplay.h: Ditto.
+	* redisplay-output.c (output_display_line): Don't rely on
+	DEFAULT_INDEX being 0.
+	* redisplay.c (create_string_text_block): Ditto.
+
+2007-09-26  Didier Verna  <didier@xemacs.org>
+
 	* gutter.c (calculate_gutter_size): Don't hardwire face index to
 	0: use DEFAULT_INDEX instead.
 

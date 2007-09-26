@@ -81,6 +81,8 @@ typedef struct
 #define NEXT_CURSOR	3
 #define IGNORE_CURSOR	4
 
+/* #### NOTE: these indexes depend on the order in which the faces are added
+   to the cache in the function reset_face_cachels. */
 #define DEFAULT_INDEX	(face_index) 0
 #define MODELINE_INDEX	(face_index) 1
 
@@ -134,7 +136,7 @@ struct rune
 				   Charcount, but who's looking? */
   Charxpos endpos;		/* if set this rune covers a range of pos;
 				   used in redisplay_move_cursor(). */
- 				/* #### Chuck, what does it mean for a rune
+				/* #### Chuck, what does it mean for a rune
 				   to cover a range of pos?  I don't get
 				   this. */
 
@@ -145,11 +147,11 @@ struct rune
 
   unsigned char cursor_type;	/* is this rune covered by the cursor? */
   unsigned int type;		/* type of rune object */
-                                /* We used to do bitfields here, but if I
-                                   (JV) count correctly that doesn't matter
-                                   for the size of the structure. All the bit
-                                   fiddling _does_ slow down redisplay by
-                                   about 10%. So don't do that */
+				/* We used to do bitfields here, but if I
+				   (JV) count correctly that doesn't matter
+				   for the size of the structure. All the bit
+				   fiddling _does_ slow down redisplay by
+				   about 10%. So don't do that */
 
   union				/* Information specific to the type of rune */
   {
@@ -313,7 +315,7 @@ struct display_line
   char modeline;			/* t if this line is a modeline */
 
   char line_continuation;		/* t if this line continues to
-                                           next display line. */
+					   next display line. */
 
   /* Dynamic array of display blocks */
   display_block_dynarr *display_blocks;
@@ -510,15 +512,15 @@ extern int windows_structure_changed;
     Lisp_Object MTC_devcons, MTC_concons;			\
     DEVICE_LOOP_NO_BREAK (MTC_devcons, MTC_concons)		\
       {								\
-        Lisp_Object MTC_frmcons;				\
-        struct device *MTC_d = XDEVICE (XCAR (MTC_devcons));	\
-        DEVICE_FRAME_LOOP (MTC_frmcons, MTC_d)			\
+	Lisp_Object MTC_frmcons;				\
+	struct device *MTC_d = XDEVICE (XCAR (MTC_devcons));	\
+	DEVICE_FRAME_LOOP (MTC_frmcons, MTC_d)			\
 	  {							\
 	    struct frame *MTC_f = XFRAME (XCAR (MTC_frmcons));	\
-            MTC_f->object##_changed = 1;			\
+	    MTC_f->object##_changed = 1;			\
 	    MTC_f->modiff++;					\
 	  }							\
-        MTC_d->object##_changed = 1;				\
+	MTC_d->object##_changed = 1;				\
       }								\
     object##_changed = 1;					\
     object##_changed_set = 1; }					\
@@ -807,7 +809,7 @@ void redisplay_output_pixmap (struct window *w,
 			      int cursor_height, int offset_bitmap);
 int redisplay_calculate_display_boxes (struct display_line *dl, int xpos,
 				       int xoffset, int yoffset, int start_pixpos,
-                                       int width, struct display_box* dest,
+				       int width, struct display_box* dest,
 				       struct display_glyph_area* src);
 int redisplay_normalize_glyph_area (struct display_box* dest,
 				    struct display_glyph_area* glyphsrc);
