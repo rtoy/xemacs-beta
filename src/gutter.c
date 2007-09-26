@@ -272,7 +272,7 @@ static Lisp_Object construct_window_gutter_spec (struct window* w,
   for (rest = gutter; !NILP (rest); rest = XCDR (XCDR (rest)))
     {
       /* We only put things in the real gutter that are declared to be
-         visible. */
+	 visible. */
       if (!CONSP (WINDOW_GUTTER_VISIBLE (w, pos))
 	  ||
 	  !NILP (Fmemq (XCAR (rest), WINDOW_GUTTER_VISIBLE (w, pos))))
@@ -301,7 +301,7 @@ calculate_gutter_size_from_display_lines (enum gutter_pos pos,
       if (Dynarr_length (ddla))
 	{
 	  dl = Dynarr_atp (ddla, Dynarr_length (ddla) - 1);
-	  size = (dl->ypos + dl->descent - dl->clip) 
+	  size = (dl->ypos + dl->descent - dl->clip)
 	    - (Dynarr_atp (ddla, 0)->ypos - Dynarr_atp (ddla, 0)->ascent);
 	}
     }
@@ -365,7 +365,7 @@ calculate_gutter_size (struct window *w, enum gutter_pos pos)
 				 - FRAME_LEFT_BORDER_END (f),
 				 FRAME_BOTTOM_BORDER_START (f)
 				 - FRAME_TOP_BORDER_END (f),
-				 ddla, 0, 0);
+				 ddla, 0, DEFAULT_INDEX);
 
       /* Let GC happen again. */
       exit_redisplay_critical_section (count);
@@ -424,7 +424,7 @@ output_gutter (struct frame *f, enum gutter_pos pos, int force)
       (f->extents_changed && w->gutter_extent_modiff[pos]))
     {
 #ifdef DEBUG_GUTTERS
-      stderr_out ("gutter redisplay [%s %dx%d@%d+%d] triggered by %s,\n", 
+      stderr_out ("gutter redisplay [%s %dx%d@%d+%d] triggered by %s,\n",
 	      pos == TOP_GUTTER ? "TOP" :
 	      pos == BOTTOM_GUTTER ? "BOTTOM" :
 	      pos == LEFT_GUTTER ? "LEFT" : "RIGHT",
@@ -465,12 +465,12 @@ output_gutter (struct frame *f, enum gutter_pos pos, int force)
       redisplay_clear_region (window, findex, x + border_width , ypos,
 			      width - 2 * border_width, height - (ypos - y) - border_width);
       /* If, for some reason, we have more to display than we have
-         room for, and we are allowed to resize the gutter, then make
-         sure this happens before the next time we try and
-         output. This can happen when face font sizes change. */
-      if (dl && EQ (w->gutter_size[pos], Qautodetect) 
+	 room for, and we are allowed to resize the gutter, then make
+	 sure this happens before the next time we try and
+	 output. This can happen when face font sizes change. */
+      if (dl && EQ (w->gutter_size[pos], Qautodetect)
 	  && (dl->clip > 0 ||
-	      calculate_gutter_size_from_display_lines (pos, ddla) > 
+	      calculate_gutter_size_from_display_lines (pos, ddla) >
 	      WINDOW_GUTTER_SIZE_INTERNAL (w, pos)))
 	{
 	  /* #### Ideally we would just mark the specifier as dirty
@@ -500,7 +500,7 @@ output_gutter (struct frame *f, enum gutter_pos pos, int force)
   else
     {
       /* Nothing of significance happened so sync the display line
-         structs. */
+	 structs. */
       for (line = 0; line < Dynarr_length (ddla); line++)
 	{
 	  sync_display_line_structs (w, line, 1, cdla, ddla);
@@ -542,7 +542,7 @@ mark_gutters (struct frame *f)
       if (f->current_display_lines[pos])
 	mark_redisplay_structs (f->current_display_lines[pos]);
       /* [[#### Do we really need to mark the desired lines?]]
-         ALWAYS mark everything. --ben */
+	 ALWAYS mark everything. --ben */
       if (f->desired_display_lines[pos])
 	mark_redisplay_structs (f->desired_display_lines[pos]);
     }
@@ -602,16 +602,16 @@ update_gutter_geometry (struct frame *f, enum gutter_pos pos)
 void
 update_frame_gutter_geometry (struct frame *f)
 {
-  if (f->gutter_changed 
-      || f->frame_layout_changed 
+  if (f->gutter_changed
+      || f->frame_layout_changed
       || f->windows_structure_changed)
     {
       enum gutter_pos pos;
 
       /* If the gutter geometry has changed then re-layout the
-         frame. If we are in display there is almost no point in doing
-         anything else since the frame size changes will be delayed
-         until we are out of redisplay proper. */
+	 frame. If we are in display there is almost no point in doing
+	 anything else since the frame size changes will be delayed
+	 until we are out of redisplay proper. */
       GUTTER_POS_LOOP (pos)
 	{
 	  update_gutter_geometry (f, pos);
@@ -631,7 +631,7 @@ update_frame_gutters (struct frame *f)
       enum gutter_pos pos;
 
       /* We don't actually care about these when outputting the gutter
-         so locally disable them. */
+	 so locally disable them. */
       int local_clip_changed = f->clip_changed;
       int local_buffers_changed = f->buffers_changed;
       f->clip_changed = 0;
@@ -1129,7 +1129,7 @@ Ensure that all gutters are correctly showing their gutter specifier.
 	      int depth;
 
 	      /* We have to be "in display" when we output the gutter
-                 - make it so. */
+		 - make it so. */
 	      depth = enter_redisplay_critical_section ();
 	      update_frame_gutters (f);
 	      exit_redisplay_critical_section (depth);
