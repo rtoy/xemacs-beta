@@ -1,3 +1,9 @@
+2007-09-26  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Introduce
+	ftp.cn.xemacs.org.
+	* package-get.el (package-get-pre-release-download-sites): Ditto.
+
 2007-09-25  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Add new mirrors in

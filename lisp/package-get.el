@@ -225,7 +225,7 @@ directory."
     ;; with
     ;; xemacs-builds/adrian/website/package-get-2-download-sites.el
 ;     ("Chile (cl.xemacs.org)" "ftp.cl.xemacs.org" "packages")
-    ("China (ftp.cn.postgresql.org)" "ftp.cn.postgresql.org" "pub/xemacs/packages")
+    ("China (ftp.cn.xemacs.org)" "ftp.cn.xemacs.org" "pub/xemacs/packages")
     ("Czech Republic (cz.xemacs.org)" "ftp.cz.xemacs.org" "MIRRORS/ftp.xemacs.org/pub/xemacs/packages")
     ("Denmark (dk.xemacs.org)" "ftp.dk.xemacs.org" "xemacs/packages")
     ("Finland (fi.xemacs.org)" "ftp.fi.xemacs.org" "pub/mirrors/ftp.xemacs.org/pub/tux/xemacs/packages")
@@ -298,7 +298,7 @@ variable actually used to specify package download sites."
     ;; xemacs-builds/adrian/website/package-get-2-download-sites.el
 ;     ("Chile Pre-Releases (cl.xemacs.org)" "ftp.cl.xemacs.org"
 ;      "beta/experimental/packages")
-    ("China Pre-Releases (ftp.cn.postgresql.org)" "ftp.cn.postgresql.org"
+    ("China Pre-Releases (ftp.cn.xemacs.org)" "ftp.cn.xemacs.org"
      "pub/xemacs/beta/experimental/packages")
     ("Czech Republic Pre-Releases (cz.xemacs.org)" "ftp.cz.xemacs.org"
      "MIRRORS/ftp.xemacs.org/pub/xemacs/xemacs-21.5/experimental/packages")
