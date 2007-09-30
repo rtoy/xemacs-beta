@@ -1,3 +1,11 @@
+2007-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-ccl.c:
+	* mule-ccl.c (CCL_CALL_FOR_MAP_INSTRUCTION):
+	* mule-ccl.c (ccl_driver):
+	Merge Kenichi Handa's 2004-06-12 GNU bugfix, handling EOF in 
+	ccl_driver correctly. 
+
 2007-09-26  Didier Verna  <didier@xemacs.org>
 
 	More fixes similar to previous patch:

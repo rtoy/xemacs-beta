@@ -634,14 +634,17 @@ static int stack_idx_of_map_multiple;
 	  {							\
 	    ccl_prog = ccl_prog_stack_struct[0].ccl_prog;	\
 	    ic = ccl_prog_stack_struct[0].ic;			\
+	    eof_ic = ccl_prog_stack_struct[0].eof_ic;		\
 	  }							\
 	CCL_INVALID_CMD;					\
       }								\
     ccl_prog_stack_struct[stack_idx].ccl_prog = ccl_prog;	\
     ccl_prog_stack_struct[stack_idx].ic = (ret_ic);		\
+    ccl_prog_stack_struct[stack_idx].eof_ic = eof_ic;		\
     stack_idx++;						\
     ccl_prog = called_ccl.prog;					\
     ic = CCL_HEADER_MAIN;					\
+    eof_ic = XINT (ccl_prog[CCL_HEADER_EOF]);                   \
     /* The "if (1)" prevents warning				\
        "end-of loop code not reached" */			\
     if (1) goto ccl_repeat;					\
@@ -926,6 +929,7 @@ struct ccl_prog_stack
   {
     Lisp_Object *ccl_prog;	/* Pointer to an array of CCL code.  */
     int ic;			/* Instruction Counter.  */
+    int eof_ic;			/* Instruction Counter to jump on EOF.  */
   };
 
 /* For the moment, we only support depth 256 of stack.  */
@@ -950,8 +954,11 @@ ccl_driver (struct ccl_program *ccl,
   int stack_idx = ccl->stack_idx;
   /* Instruction counter of the current CCL code. */
   int this_ic = 0;
+  int eof_ic = ccl->eof_ic;
+  int eof_hit = 0;
+  static int ccl_driver_calls;
 
-  if (ic >= ccl->eof_ic)
+  if (ic >= eof_ic)
     ic = CCL_HEADER_MAIN;
 
   if (ccl->buf_magnification ==0) /* We can't produce any bytes.  */
@@ -963,6 +970,8 @@ ccl_driver (struct ccl_program *ccl,
 #ifdef CCL_DEBUG
   ccl_backtrace_idx = 0;
 #endif
+
+  ++ccl_driver_calls;
 
   for (;;)
     {
@@ -1161,15 +1170,18 @@ ccl_driver (struct ccl_program *ccl,
 		  {
 		    ccl_prog = ccl_prog_stack_struct[0].ccl_prog;
 		    ic = ccl_prog_stack_struct[0].ic;
+		    eof_ic = ccl_prog_stack_struct[0].eof_ic;
 		  }
 		CCL_INVALID_CMD;
 	      }
 
 	    ccl_prog_stack_struct[stack_idx].ccl_prog = ccl_prog;
 	    ccl_prog_stack_struct[stack_idx].ic = ic;
+	    ccl_prog_stack_struct[stack_idx].eof_ic = eof_ic;
 	    stack_idx++;
 	    ccl_prog = XVECTOR (XVECTOR (slot)->contents[1])->contents;
 	    ic = CCL_HEADER_MAIN;
+	    eof_ic = XINT (ccl_prog[CCL_HEADER_EOF]);
 	  }
 	  break;
 
@@ -1200,6 +1212,9 @@ ccl_driver (struct ccl_program *ccl,
 	      stack_idx--;
 	      ccl_prog = ccl_prog_stack_struct[stack_idx].ccl_prog;
 	      ic = ccl_prog_stack_struct[stack_idx].ic;
+	      eof_ic = ccl_prog_stack_struct[stack_idx].eof_ic;
+	      if (eof_hit)
+		ic = eof_ic;
 	      break;
 	    }
 	  if (src)
@@ -1398,10 +1413,32 @@ ccl_driver (struct ccl_program *ccl,
 	      break;
 
 	    ccl_read_multibyte_character_suspend:
+	      if (src <= src_end && ccl->last_block)
+		{
+                  /* #### Unclear when this happens. GNU use
+                    CHARSET_8_BIT_CONTROL here, which we can't. */
+                  if (i < 0x80)
+                    {
+                      reg[RRR] = LEADING_BYTE_ASCII;
+                      reg[rrr] = i;
+                    }
+                  else if (i < 0xA0)
+                    {
+                      reg[RRR] = LEADING_BYTE_CONTROL_1;
+                      reg[rrr] = i - 0xA0;
+                    }
+                  else
+                    {
+                      reg[RRR] = LEADING_BYTE_LATIN_ISO8859_1;
+                      reg[rrr] = i & 0x7F;
+                    }
+		  break;
+		}
 	      src--;
 	      if (ccl->last_block)
 		{
-		  ic = ccl->eof_ic;
+		  ic = eof_ic;
+		  eof_hit = 1;
 		  goto ccl_repeat;
 		}
 	      else
