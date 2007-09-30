@@ -23,8 +23,8 @@
 SHELL    = /bin/sh
 MAKEINFO = makeinfo
 TEXI2DVI = texi2dvi
-TEXI2HTML = texi2html -verbose -subdir $(HTMLDIR)
-TEXI2HTML_SPLIT = $(TEXI2HTML) -split chapter
+TEXI2HTML = texi2html
+TEXI2HTML_SPLIT = $(TEXI2HTML) -verbose -subdir $(HTMLDIR) -split chapter
 
 RM = rm -f
 CP = cp
