@@ -1,4 +1,4 @@
-## Copyright (C) 2003, 2005 Ben Wing.
+## Copyright (C) 2003, 2005 Ben Wing. 
 
 ## DIST: This is the distribution Makefile for XEmacs.  configure can
 ## DIST: make most of the changes to this file you might want, so try
