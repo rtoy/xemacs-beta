@@ -654,7 +654,11 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;;; result in a crash.
 
 ;; When we initialise a face from an X resource, note that we did so. 
-(define-specifier-tag 'x-resource)
+;;
+;; Now in specifier.el so run-time checks for it on non-X builds don't
+;; error.
+
+; (define-specifier-tag 'x-resource)
 
 (defun x-init-face-from-resources (face &optional locale set-anyway)
 

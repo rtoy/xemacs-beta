@@ -605,15 +605,10 @@ detail in the doc string for `current-display-table'."
 ;;
 ;; from producing an error if no X support was compiled in.
 
-(or (valid-specifier-tag-p 'x)
-    (define-specifier-tag 'x (lambda (dev) (eq (device-type dev) 'x))))
-(or (valid-specifier-tag-p 'tty)
-    (define-specifier-tag 'tty (lambda (dev) (eq (device-type dev) 'tty))))
-(or (valid-specifier-tag-p 'mswindows)
-    (define-specifier-tag 'mswindows (lambda (dev)
-				       (eq (device-type dev) 'mswindows))))
-(or (valid-specifier-tag-p 'gtk)
-    (define-specifier-tag 'gtk (lambda (dev) (eq (device-type dev) 'gtk))))
+(loop
+  for tag in '(x tty mswindows msprinter gtk carbon)
+  do (unless (valid-specifier-tag-p tag)
+       (define-specifier-tag tag #'ignore)))
 
 ;; Add special tag for use by initialization code.  Code that
 ;; sets up default specs should use this tag.  Code that needs to
@@ -622,6 +617,11 @@ detail in the doc string for `current-display-table'."
 ;; about clobbering user settings.
 
 (define-specifier-tag 'default)
+
+;; The x-resource specifier tag is provide so the X resource initialization
+;; code can be overridden by custom without trouble. 
+
+(define-specifier-tag 'x-resource)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;                    "Heuristic" specifier functions                ;;;
