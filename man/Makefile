@@ -24,6 +24,7 @@ SHELL    = /bin/sh
 MAKEINFO = makeinfo
 TEXI2DVI = texi2dvi
 TEXI2HTML = texi2html
+TEXI2HTML_NOSPLIT = $(TEXI2HTML) -verbose -subdir $(HTMLDIR)
 TEXI2HTML_SPLIT = $(TEXI2HTML) -verbose -subdir $(HTMLDIR) -split chapter
 
 RM = rm -f
@@ -354,7 +355,7 @@ extraclean: realclean
 ############################################################################
 
 $(HTMLDIR)/beta.html : beta.texi
-	$(TEXI2HTML) beta.texi
+	$(TEXI2HTML_NOSPLIT) beta.texi
 
 $(HTMLDIR)/cl.html : cl.texi
 	$(TEXI2HTML_SPLIT) cl.texi
@@ -387,7 +388,7 @@ $(HTMLDIR)/widget.html : widget.texi
 	$(TEXI2HTML_SPLIT) widget.texi
 
 $(HTMLDIR)/xemacs-faq.html : xemacs-faq.texi
-	$(TEXI2HTML) xemacs-faq.texi
+	$(TEXI2HTML_NOSPLIT) xemacs-faq.texi
 	$(TEXI2HTML_SPLIT) -top_file xemacs-faq_1.html xemacs-faq.texi
 	$(CP) $(PHOTODIR)/ben.png $(HTMLDIR)
 	$(CP) $(PHOTODIR)/cthomp.png $(HTMLDIR)

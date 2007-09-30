@@ -1,5 +1,11 @@
 2007-09-30  Adrian Aichner  <adrian@xemacs.org>
 
+	* Makefile (TEXI2HTML_NOSPLIT): New.
+	* Makefile ($(HTMLDIR)/beta.html): Use TEXI2HTML_NOSPLIT.
+	* Makefile ($(HTMLDIR)/xemacs-faq.html): Ditto.
+
+2007-09-30  Adrian Aichner  <adrian@xemacs.org>
+
 	* Makefile (TEXI2HTML): Refactor TEXI2HTML for use by
 	xemacsweb/Documentation/Makefile.
 
