@@ -459,3 +459,72 @@ baaaa
   (Assert (null (match-string 2 text2)))
 )
 
+;; replace-regexp-in-string (regexp rep source
+;;                           fixedcase literal buf-or-subexp start)
+
+;; Currently we test the following cases:
+;; where `cbuf' and `bar-or-empty' are bound below.
+
+;; #### Tests for the various functional features (fixedcase, literal, start)
+;; should be added.
+
+(with-temp-buffer
+  (flet ((bar-or-empty (subexp) (if (string= subexp "foo") "bar" "")))
+    (let ((cbuf (current-buffer)))
+      (dolist (test-case
+               ;; REP           BUF-OR-SUBEXP   EXPECTED RESULT
+               `(("bar"         nil             " bar")
+                 ("bar"         ,cbuf           " bar")
+                 ("bar"         0               " bar")
+                 ("bar"         1               " bar foo")
+                 (bar-or-empty  nil             " ")
+                 (bar-or-empty  ,cbuf           " ")
+                 (bar-or-empty  0               " ")
+                 (bar-or-empty  1               " bar foo")))
+        (Assert
+         (string=
+          (nth 2 test-case)
+          (replace-regexp-in-string "\\(foo\\).*\\'" (nth 0 test-case)
+                                    " foo foo" nil nil (nth 1 test-case)))))
+      ;; #### Why doesn't this loop work right?
+;       (dolist (test-case
+;                ;; REP   BUF-OR-SUBEXP   EXPECTED ERROR		EXPECTED MESSAGE
+;                `(;; expected message was "bufferp, symbol" up to 21.5.28
+; 		 ("bar"     'symbol     wrong-type-argument	"integerp, symbol")
+;                  ("bar"     -1          invalid-argument
+; 						 "match data register invalid, -1")
+;                  ("bar"     2           invalid-argument
+; 						  "match data register not set, 2")
+; 		 ))
+;         (eval
+; 	 `(Check-Error-Message ,(nth 2 test-case) ,(nth 3 test-case)
+; 	    (replace-regexp-in-string "\\(foo\\).*\\'" ,(nth 0 test-case)
+; 				      " foo foo" nil nil ,(nth 1 test-case)))))
+      ;; #### Can't test the message with w-t-a, see test-harness.el.
+      (Check-Error wrong-type-argument
+		   (replace-regexp-in-string "\\(foo\\).*\\'"
+					     "bar"
+					     " foo foo" nil nil
+					     'symbol))
+      ;; #### Can't test the FROB (-1), see test-harness.el.
+      (Check-Error-Message invalid-argument
+			   "match data register invalid"
+			   (replace-regexp-in-string "\\(foo\\).*\\'"
+						     "bar"
+						     " foo foo" nil nil
+						     -1))
+      ;; #### Can't test the FROB (-1), see test-harness.el.
+      (Check-Error-Message invalid-argument
+			   "match data register not set"
+			   (replace-regexp-in-string "\\(foo\\).*\\'"
+						     "bar"
+						     " foo foo" nil nil
+						     2))
+      )))
+
+;; replace-match (REPLACEMENT &optional FIXEDCASE LITERAL STRING STRBUFFER)
+
+;; #### Write some tests!  Much functionality is implicitly tested above
+;; via `replace-regexp-in-string', but we should specifically test bogus
+;; combinations of STRING and STRBUFFER.
+

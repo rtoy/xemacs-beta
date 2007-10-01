@@ -1,3 +1,9 @@
+2007-09-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/searching.texi (Replacing Match): Document the escapes
+	for changing case in `replace-match'.  Document the change to
+	STRBUFFER to permit subexpressions in string replacement.
+
 2007-09-30  Adrian Aichner  <adrian@xemacs.org>
 
 	* Makefile (TEXI2HTML_NOSPLIT): New.

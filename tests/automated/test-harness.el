@@ -285,6 +285,10 @@ BODY is a sequence of expressions and may contain several tests."
 				,quoted-body ',expected-error)
 		 (incf no-error-failures))
 	     (,expected-error
+	      ;; #### Damn, this binding doesn't capture frobs, eg, for
+	      ;; invalid_argument() ... you only get the REASON.  And for
+	      ;; wrong_type_argument(), there's no reason only FROBs.
+	      ;; If this gets fixed, fix tests in regexp-tests.el.
 	      (let ((error-message (second error-info)))
 		(if (string-match ,expected-error-regexp error-message)
 		    (progn

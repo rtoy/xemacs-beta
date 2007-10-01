@@ -2364,15 +2364,22 @@ free_created_dynarrs (Lisp_Object cons)
 
 DEFUN ("replace-match", Freplace_match, 1, 5, 0, /*
 Replace text matched by last search with REPLACEMENT.
-If second arg FIXEDCASE is non-nil, do not alter case of replacement text.
+Leaves point at end of replacement text.
+Optional boolean FIXEDCASE inhibits matching case of REPLACEMENT to source.
+Optional boolean LITERAL inhibits interpretation of escape sequences.
+Optional STRING provides the source text to replace.
+Optional STRBUFFER may be a buffer, providing match context, or an integer
+ specifying the subexpression to replace.
+
+If FIXEDCASE is non-nil, do not alter case of replacement text.
 Otherwise maybe capitalize the whole text, or maybe just word initials,
 based on the replaced text.
-If the replaced text has only capital letters
-and has at least one multiletter word, convert REPLACEMENT to all caps.
+If the replaced text has only capital letters and has at least one
+multiletter word, convert REPLACEMENT to all caps.
 If the replaced text has at least one word starting with a capital letter,
 then capitalize each word in REPLACEMENT.
 
-If third arg LITERAL is non-nil, insert REPLACEMENT literally.
+If LITERAL is non-nil, insert REPLACEMENT literally.
 Otherwise treat `\\' as special:
   `\\&' in REPLACEMENT means substitute original matched text.
   `\\N' means substitute what matched the Nth `\\(...\\)'.
@@ -2385,24 +2392,31 @@ Otherwise treat `\\' as special:
   `\\E' means terminate the effect of any `\\U' or `\\L'.
   Case changes made with `\\u', `\\l', `\\U', and `\\L' override
   all other case changes that may be made in the replaced text.
-FIXEDCASE and LITERAL are optional arguments.
-Leaves point at end of replacement text.
 
-The optional fourth argument STRING can be a string to modify.
-In that case, this function creates and returns a new string
-which is made by replacing the part of STRING that was matched.
-When fourth argument is a string, fifth argument STRBUFFER specifies
-the buffer to be used for syntax-table and case-table lookup and
-defaults to the current buffer.  When fourth argument is not a string,
-the buffer that the match occurred in has automatically been remembered
-and you do not need to specify it.
+If non-nil, STRING is the source string, and a new string with the specified
+replacements is created and returned.  Otherwise the current buffer is the
+source text.
 
-When fourth argument is nil, STRBUFFER specifies a subexpression of
-the match.  It says to replace just that subexpression instead of the
-whole match.  This is useful only after a regular expression search or
-match since only regular expressions have distinguished subexpressions.
+If non-nil, STRBUFFER may be an integer, interpreted as the index of the
+subexpression to replace in the source text, or a buffer to provide the
+syntax table and case table.  If nil, then the \"subexpression\" is 0, i.e.,
+the whole match, and the current buffer provides the syntax and case tables.
+If STRING is nil, STRBUFFER must be nil or an integer.
 
-If no match (including searches) has been conducted or the requested
+Specifying a subexpression is only useful after a regular expression match,
+since a fixed string search has no non-trivial subexpressions.
+
+It is not possible to specify both a buffer and a subexpression.  If that is
+desired, the idiom `(with-current-buffer BUFFER (replace-match ... INTEGER))'
+may be appropriate.
+
+If STRING is nil but the last thing matched (or searched) was a string, or
+STRING is a string but the last thing matched was a buffer, an
+`invalid-argument' error will be signaled.  (XEmacs does not check that the
+last thing searched is the source string, but it is not useful to use a
+different string as source.)
+
+If no match (including searches) has been successful or the requested
 subexpression was not matched, an `args-out-of-range' error will be
 signaled.  (If no match has ever been conducted in this instance of
 XEmacs, an `invalid-operation' error will be signaled.  This is very
@@ -2430,31 +2444,59 @@ rare.)
 
   CHECK_STRING (replacement);
 
+  /* Because GNU decided to be incompatible here, we support the following
+     baroque and bogus API for the STRING and STRBUFFER arguments:
+          types            interpretations
+     STRING   STRBUFFER   STRING   STRBUFFER
+     nil      nil         none     0 = index of subexpression to replace
+     nil      integer     none     index of subexpression to replace
+     nil      other       ***** error *****
+     string   nil         source   current buffer provides syntax table
+                                   subexpression = 0 (whole match)
+     string   buffer      source   buffer providing syntax table
+                                   subexpression = 0 (whole match)
+     string   integer     source   current buffer provides syntax table
+                                   subexpression = STRBUFFER
+     string   other       ***** error *****
+  */
+
+  /* Do STRBUFFER first; if STRING is nil, we'll overwrite BUF and BUFFER. */
+
+  /* If the match data were abstracted into a special "match data" type
+     instead of the typical half-assed "let the implementation be visible"
+     form it's in, we could extend it to include the last string matched
+     and the buffer used for that matching.  But of course we can't change
+     it as it is.
+  */
+  if (NILP (strbuffer) || BUFFERP (strbuffer))
+    {
+      buf = decode_buffer (strbuffer, 0);
+    }
+  else if (!NILP (strbuffer))
+    {
+      CHECK_INT (strbuffer);
+      sub = XINT (strbuffer);
+      if (sub < 0 || sub >= (int) search_regs.num_regs)
+	invalid_argument ("match data register invalid", strbuffer);
+      if (search_regs.start[sub] < 0)
+	invalid_argument ("match data register not set", strbuffer);
+      buf = current_buffer;
+    }
+  else
+    invalid_argument ("STRBUFFER must be nil, a buffer, or an integer",
+		      strbuffer);
+  buffer = wrap_buffer (buf);
+
   if (! NILP (string))
     {
       CHECK_STRING (string);
       if (!EQ (last_thing_searched, Qt))
- invalid_argument ("last thing matched was not a string", Qunbound);
-      /* If the match data
-	 were abstracted into a special "match data" type instead
-	 of the typical half-assed "let the implementation be
-	 visible" form it's in, we could extend it to include
-	 the last string matched and the buffer used for that
-	 matching.  But of course we can't change it as it is. */
-      buf = decode_buffer (strbuffer, 0);
-      buffer = wrap_buffer (buf);
+	invalid_argument ("last thing matched was not a string", Qunbound);
     }
   else
     {
-      if (!NILP (strbuffer))
-	{
-	  CHECK_INT (strbuffer);
-	  sub = XINT (strbuffer);
-	  if (sub < 0 || sub >= (int) search_regs.num_regs)
-	    args_out_of_range (strbuffer, make_int (search_regs.num_regs));
-	}
       if (!BUFFERP (last_thing_searched))
- invalid_argument ("last thing matched was not a buffer", Qunbound);
+	invalid_argument ("last thing matched was not a buffer", Qunbound);
       buffer = last_thing_searched;
       buf = XBUFFER (buffer);
     }
@@ -2557,8 +2599,8 @@ rare.)
       Lisp_Object before, after;
 
       speccount = specpdl_depth ();
-      before = Fsubstring (string, Qzero, make_int (search_regs.start[0]));
-      after = Fsubstring (string, make_int (search_regs.end[0]), Qnil);
+      before = Fsubstring (string, Qzero, make_int (search_regs.start[sub]));
+      after = Fsubstring (string, make_int (search_regs.end[sub]), Qnil);
 
       /* Do case substitution into REPLACEMENT if desired.  */
       if (NILP (literal))
@@ -2600,6 +2642,8 @@ rare.)
 		      substart = search_regs.start[0];
 		      subend = search_regs.end[0];
 		    }
+		  /* #### This logic is totally broken,
+		     since we can have backrefs like "\99", right? */
 		  else if (c >= '1' && c <= '9' &&
 			   c <= search_regs.num_regs + '0')
 		    {
@@ -2759,6 +2803,8 @@ rare.)
                   (buffer,
                    make_int (search_regs.start[0] + offset),
                    make_int (search_regs.end[0] + offset));
+	      /* #### This logic is totally broken,
+		 since we can have backrefs like "\99", right? */
 	      else if (c >= '1' && c <= '9' &&
 		       c <= search_regs.num_regs + '0')
 		{

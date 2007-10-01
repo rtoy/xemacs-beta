@@ -1,3 +1,12 @@
+2007-09-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* search.c (Freplace_match): Improve range-checking on STRBUFFER.
+
+2007-09-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* search.c (Freplace_match): Allow STRBUFFER to specify a
+	subexpression when the source is a string.
+
 2007-09-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c:

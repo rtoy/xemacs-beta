@@ -791,20 +791,33 @@ Otherwise treat `\\' in NEWTEXT as special:
 
 Return a new string containing the replacements.
 
-Optional arguments FIXEDCASE, LITERAL and SUBEXP are like the
-arguments with the same names of function `replace-match'.  If START
-is non-nil, start replacements at that index in STRING.
+Optional arguments FIXEDCASE and LITERAL are like the arguments with
+the same names of function `replace-match'.  If START is non-nil,
+start replacements at that index in STRING.
+
+For compatibility with old XEmacs code and with recent GNU Emacs, the
+interpretation of SUBEXP is somewhat complicated.  If SUBEXP is a
+buffer, it is interpreted as the buffer which provides syntax tables
+and case tables for the match and replacement.  If it is not a buffer,
+the current buffer is used.  If SUBEXP is an integer, it is the index
+of the subexpression of REGEXP which is to be replaced.
 
 REP is either a string used as the NEWTEXT arg of `replace-match' or a
 function.  If it is a function it is applied to each match to generate
 the replacement passed to `replace-match'; the match-data at this
-point are such that match 0 is the function's argument.
+point are such that `(match-string SUBEXP STRING)' is the function's
+argument if SUBEXP is an integer \(otherwise the whole match is passed
+and replaced).
 
 To replace only the first match (if any), make REGEXP match up to \\'
 and replace a sub-expression, e.g.
   (replace-regexp-in-string \"\\(foo\\).*\\'\" \"bar\" \" foo foo\" nil nil 1)
     => \" bar foo\"
-"
+
+Signals `invalid-argument' if SUBEXP is not an integer, buffer, or nil;
+or is an integer, but the indicated subexpression was not matched.
+Signals `invalid-argument' if STRING is nil but the last text matched was a string,
+or if STRING is a string but the last text matched was a buffer."
 
   ;; To avoid excessive consing from multiple matches in long strings,
   ;; don't just call `replace-match' continually.  Walk down the
@@ -817,6 +830,7 @@ and replace a sub-expression, e.g.
   ;; might be reasonable to do so for long enough STRING.]
   (let ((l (length string))
 	(start (or start 0))
+	(expndx (if (integerp subexp) subexp 0))
 	matches str mb me)
     (save-match-data
       (while (and (< start l) (string-match regexp string start))
@@ -833,7 +847,8 @@ and replace a sub-expression, e.g.
 	(setq matches
 	      (cons (replace-match (if (stringp rep)
 				       rep
-				     (funcall rep (match-string 0 str)))
+				     (funcall rep (match-string expndx str)))
+				   ;; no, this subexp shouldn't be expndx
 				   fixedcase literal str subexp)
 		    (cons (substring string start mb) ; unmatched prefix
 			  matches)))

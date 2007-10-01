@@ -1,3 +1,19 @@
+2007-09-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/os-tests.el: Suppress `executable-find' lossage.
+
+	* automated/regexp-tests.el (replace-regexp-in-string):
+	New tests for error conditions.
+
+	* automated/test-harness.el (test-harness-from-buffer): Comment
+	about inability to check the FROB in invalid_argument.
+
+2007-09-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el (replace-regexp-in-string):
+	New tests for correct operation.  Comment need for `replace-match'
+	tests.
+
 2007-08-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (test-chars):
