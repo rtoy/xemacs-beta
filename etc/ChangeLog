@@ -1,3 +1,9 @@
+2004-12-03  Shyamal Prasad  <shyamal@member.fsf.org>
+
+	* xemacs.1: Now describe $HOME/.xemacs/init.el as the
+        preferred init file. Fixed excessive space insertion 
+        in the description of the '-vanilla' option
+
 2007-09-19  Didier Verna  <didier@lrde.epita.fr>
 
 	* photos/dv.png: Remove.
