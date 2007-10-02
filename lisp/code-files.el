@@ -357,8 +357,11 @@ and last save file modtime are set, and it is marked unmodified.
 If visiting and the file does not exist, visiting is completed
 before the error is signaled.
 
-The optional third and fourth arguments START and END
-specify what portion of the file to insert.
+The optional third and fourth arguments START and END specify what portion
+of the file to insert, and start at zero, in direct and needless contrast to
+buffer offsets.  That is, values of 0 and 10 for START and END respectively
+will give the first ten octets of a file.
+
 If VISIT is non-nil, START and END must be nil.
 If optional fifth argument REPLACE is non-nil,
 it means replace the current buffer contents (in the accessible portion)

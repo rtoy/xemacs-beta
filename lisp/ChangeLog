@@ -1,3 +1,9 @@
+2007-10-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* code-files.el (insert-file-contents):
+	Document that START and END are zero-based, in contrast to buffer
+	offsets, and give an example of their use. 
+
 2007-09-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.el (unicode-error-default-translation-table):
