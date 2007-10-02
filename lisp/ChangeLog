@@ -1,3 +1,8 @@
+2007-10-02  Didier Verna  <didier@xemacs.org>
+
+	* objects.el (make-face-boolean-specifier): Fix docstring, really
+	make a face-boolean specifier (not a color one).
+
 2007-09-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* subr.el (replace-regexp-in-string): Handle SUBEXP arg properly.
@@ -7,10 +12,10 @@
 	* x-faces.el:
 	* x-faces.el ('x-resource)): Removed.
 	Specifier tag moved to specifier.el to ensure availability on
-	non-X builds. 
+	non-X builds.
 	* specifier.el:
 	Provide x, tty, mswindows, msprinter, gtk and carbon as device
-	tags that never match on builds that don't support them. 
+	tags that never match on builds that don't support them.
 	* specifier.el ('x-resource)): New.
 	Moved here from x-faces.el
 
