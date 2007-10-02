@@ -1,3 +1,20 @@
+2007-09-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (unicode-error-default-translation-table):
+	New. A char table mapping from Unicode error octets (as
+	represented in XEmacs) to ASCII, Control-1 and latin-iso8859-1.
+
+	* unicode.el (unicode-error-sequence-regexp-range):
+	Correct it, add a build-time check that it matches every possible
+	error octet.
+
+	* unicode.el (frob-unicode-errors-region) New.
+	Apply a supplied function to each set of error sequences in a
+	region.
+	* unicode.el (unicode-error-translate-region) New.
+	Translate the error octets in a region to the corresponding
+	ASCII, control-1 and latin-1 characters. 
+
 2007-10-02  Didier Verna  <didier@xemacs.org>
 
 	* objects.el (make-face-boolean-specifier): Fix docstring, really

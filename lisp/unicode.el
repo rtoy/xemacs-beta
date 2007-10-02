@@ -496,41 +496,109 @@ The second argument must be 'ucs, the third argument is ignored.  "
 
   ;; Create all the Unicode error sequences, normally as jit-ucs-charset-0
   ;; characters starting at U+200000 (which isn't a valid Unicode code
-  ;; point).
-  (loop
-    for i from #x00 to #xFF
-    ;; #xd800 is the first leading surrogate; trailing surrogates must be in
-    ;; the range #xdc00-#xdfff. These examples are not, so we intentionally
-    ;; provoke an error sequence.
-    do (decode-coding-string (format "\xd8\x00\x01%c" i) 'utf-16-be))
+  ;; point). Make them available to user code. 
+  (defvar unicode-error-default-translation-table
+    (loop 
+      with char-table = (make-char-table 'char)
+      for i from ?\x00 to ?\xFF
+      do
+      (put-char-table (aref
+		       ;; #xd800 is the first leading surrogate;
+		       ;; trailing surrogates must be in the range
+		       ;; #xdc00-#xdfff. These examples are not, so we
+		       ;; intentionally provoke an error sequence.
+		       (decode-coding-string (format "\xd8\x00\x00%c" i)
+					     'utf-16-be)
+		       3)
+		      i
+                      char-table)
+      finally return char-table)
+    "Translation table mapping Unicode error sequences to Latin-1 chars.
 
-  ;; Make them available to user code.
-  (defvar unicode-error-sequence-zero
-    (aref (decode-coding-string "\xd8\x00\x01\x00" 'utf-16-be) 3)
-    "The XEmacs character representing an invalid zero octet in Unicode.
-
-Subtract this character from each XEmacs character in an invalid sequence to
-get the octet on disk. E.g.
-
-\(- (aref (decode-coding-string ?\\x80 'utf-8) 0)
-   unicode-error-characters-zero)
-=> ?\\x80
-
-You can search for invalid sequences using
-`unicode-error-sequence-regexp-range', which see.  ")
+To transform XEmacs Unicode error sequences to the Latin-1 characters that
+correspond to the octets on disk, you can use this variable.  ")
 
   (defvar unicode-error-sequence-regexp-range
-    (format "%c-%c"
-            (aref (decode-coding-string "\xd8\x00\x01\x00" 'utf-16-be) 3)
-            (aref (decode-coding-string "\xd8\x00\x01\xFF" 'utf-16-be) 3))
+    (format "%c%c-%c"
+            (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 0)
+            (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 3)
+            (aref (decode-coding-string "\xd8\x00\x00\xFF" 'utf-16-be) 3))
     "Regular expression range to match Unicode error sequences in XEmacs.
 
-Invalid Unicode sequences on input are represented as XEmacs characters with
-values starting at `unicode-error-sequence-zero', one character for each
-invalid octet.  Use this variable (with `re-search-forward' or
-`skip-chars-forward') to search for such characters; use
-`unicode-error-sequence-zero' from such characters to get a character
-corresponding to the octet on disk.  "))
+Invalid Unicode sequences on input are represented as XEmacs
+characters with values stored as the keys in
+`unicode-error-default-translation-table', one character for each
+invalid octet.  You can use this variable (with `re-search-forward' or
+`skip-chars-forward') to search for such characters; see also
+`unicode-error-translate-region'.  ")
+
+  ;; Check that the lookup table is correct, and that all the actual error
+  ;; sequences are caught by the regexp.
+  (with-temp-buffer
+    (loop
+      for i from ?\x00 to ?\xFF
+      with to-check = (make-string 20 ?\x20) 
+      with res = t
+      do 
+      (delete-region (point-min) (point-max))
+      (insert to-check)
+      (goto-char 10)
+      (insert (decode-coding-string (format "\xd8\x00\x00%c" i)
+				    'utf-16-be))
+      (backward-char)
+      (assert (= i (get-char-table (char-after (point)) 
+				   unicode-error-default-translation-table))
+	      (format "Char ?\\x%x not the expected error sequence!"
+		      i))
+
+      (goto-char (point-min))
+      (assert (re-search-forward (concat "[" 
+					 unicode-error-sequence-regexp-range
+					 "]"))
+	      nil
+	      (format "Could not find char ?\\x%x in buffer" i))))
+
+  (defun frob-unicode-errors-region (frob-function begin end &optional buffer)
+    "Call FROB-FUNCTION on the Unicode error sequences between BEGIN and END.
+
+Optional argument BUFFER specifies the buffer that should be examined for
+such sequences.  "
+    (check-argument-type #'functionp frob-function)
+    (check-argument-range begin (point-min buffer) (point-max buffer))
+    (check-argument-range end (point-min buffer) (point-max buffer))
+    (save-excursion
+      (save-restriction
+	(if buffer (set-buffer buffer))
+	(narrow-to-region begin end)
+	(goto-char (point-min))
+	(while end
+	  (setq begin
+		(progn
+		  (skip-chars-forward
+		   (concat "^" unicode-error-sequence-regexp-range))
+		  (point))
+		end (and (not (= (point) (point-max)))
+			 (progn
+			   (skip-chars-forward
+			    unicode-error-sequence-regexp-range)
+			   (point))))
+	  (if end
+	      (funcall frob-function begin end))))))
+
+  (defun unicode-error-translate-region (begin end &optional buffer table)
+    "Translate the Unicode error sequences in BUFFER between BEGIN and END.
+
+The error sequences are transformed, by default, into the ASCII,
+control-1 and latin-iso8859-1 characters with the numeric values
+corresponding to the incorrect octets encountered.  This is achieved
+by using `unicode-error-default-translation-table' (which see) for
+TABLE; you can change this by supplying another character table,
+mapping from the error sequences to the desired characters.  "
+    (unless table (setq table unicode-error-default-translation-table))
+    (frob-unicode-errors-region
+     (lambda (start finish)
+       (translate-region start finish table))
+     begin end buffer)))
 
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version
