@@ -1015,6 +1015,8 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %d is replaced by the day of month, zero-padded.
 %D is a synonym for "%m/%d/%y".
 %e is replaced by the day of month, blank-padded.
+%G is replaced by the year containing the ISO 8601 week
+%g is replaced by the year of the ISO 8601 week within the century (00-99)
 %h is a synonym for "%b".
 %H is replaced by the hour (00-23).
 %I is replaced by the hour (00-12).
@@ -1033,12 +1035,14 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %t is a synonym for "\\t".
 %T is a synonym for "%H:%M:%S".
 %U is replaced by the week of the year (00-53), first day of week is Sunday.
+%V is replaced by the ISO 8601 week number
 %w is replaced by the day of week (0-6), Sunday is day 0.
 %W is replaced by the week of the year (00-53), first day of week is Monday.
 %x is a locale-specific synonym, which defaults to "%D" in the C locale.
 %X is a locale-specific synonym, which defaults to "%T" in the C locale.
 %y is replaced by the year without century (00-99).
 %Y is replaced by the year with century.
+%z is replaced by the time zone as a numeric offset (e.g +0530, -0800 etc.)
 %Z is replaced by the time zone abbreviation.
 
 The number of options reflects the `strftime' function.
@@ -1063,13 +1067,15 @@ characters appearing in the day and month names may be incorrect.
     {
       Extbyte *buf = alloca_extbytes (size);
       Extbyte *formext;
+      /* make a copy of the static buffer returned by localtime() */
+      struct tm tm = * localtime(&value); 
+      
       *buf = 1;
 
       /* !!#### this use of external here is not totally safe, and
 	 potentially data lossy. */
       LISP_STRING_TO_EXTERNAL (format_string, formext, Qnative);
-      if (emacs_strftime (buf, size, formext,
-			  localtime (&value))
+      if (emacs_strftime (buf, size, formext, &tm)
 	  || !*buf)
 	return build_ext_string (buf, Qnative);
       /* If buffer was too small, make it bigger.  */

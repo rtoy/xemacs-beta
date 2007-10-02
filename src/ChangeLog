@@ -1,3 +1,16 @@
+2004-12-08  Shyamal Prasad  <shyamal@member.fsf.org>
+
+	* editfns.c:
+	* editfns.c (Fformat_time_string):
+	Added documentation for %z, %g, %G and %V specifiers. This synchs
+	up the set of % specifiers for format-time-string with Emacs
+	21.3.1. Make copy of static buffer returned by localtime().
+	
+	* strftime.c:
+	* strftime.c (strftime):
+	Implemented %z, %g, %G and %V in a style similar to existing
+	implementation of other specifiers.
+
 2007-09-30  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* search.c (Freplace_match): Improve range-checking on STRBUFFER.

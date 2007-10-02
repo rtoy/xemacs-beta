@@ -58,6 +58,7 @@
    %S	second (00..61)
    %T	time, 24-hour (hh:mm:ss)
    %X	locale's time representation (%H:%M:%S)
+   %z   time zone offset (e.g. +0530, -0800 etc)
    %Z	time zone (EDT), or nothing if no time zone is determinable
 
    Date fields:
@@ -70,10 +71,13 @@
    %d	day of month (01..31)
    %e	day of month ( 1..31)
    %D	date (mm/dd/yy)
+   %G   year corresponding to the ISO 8601 week
+   %g   Year of the ISO 8601 week within century (00 - 99)
    %h	same as %b
    %j	day of year (001..366)
    %m	month (01..12)
    %U	week number of year with Sunday as first day of week (00..53)
+   %V   ISO 8601 week number (first week is the earliest one with Thu)
    %w	day of week (0..6)
    %W	week number of year with Monday as first day of week (00..53)
    %x	locale's date representation (mm/dd/yy)
@@ -235,6 +239,30 @@ mon_week (const struct tm *tm)
   return dl <= 0 ? 0 : dl / 7 + (dl % 7 != 0);
 }
 
+#ifndef __isleap
+/* Nonzero if YEAR is a leap year (every 4 years,
+   except every 100th isn't, and every 400th is).  */
+# define __isleap(year)	\
+  ((year) % 4 == 0 && ((year) % 100 != 0 || (year) % 400 == 0))
+#endif
+
+/* The number of days from the first day of the first ISO week of this
+   year to the year day YDAY with week day WDAY.  ISO weeks start on
+   Monday; the first ISO week has the year's first Thursday.  YDAY may
+   be as small as YDAY_MINIMUM.  */
+#define ISO_WEEK_START_WDAY 1 /* Monday */
+#define ISO_WEEK1_WDAY 4 /* Thursday */
+#define YDAY_MINIMUM (-366)
+static int
+iso_week_days (int yday, int wday)
+{
+  /* Add enough to the first operand of % to make it nonnegative.  */
+  int big_enough_multiple_of_7 = (-YDAY_MINIMUM / 7 + 2) * 7;
+  return (yday
+	  - (yday - wday + ISO_WEEK1_WDAY + big_enough_multiple_of_7) % 7
+	  + ISO_WEEK1_WDAY - ISO_WEEK_START_WDAY);
+}
+
 #if !defined(HAVE_TM_ZONE) && !defined(HAVE_TZNAME)
 char *zone_name (const struct tm *tp);
 char *
@@ -362,10 +390,125 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
 	      length +=
 		strftime (&string[length], max - length, "%H:%M:%S", tm);
 	      break;
+              
+            case 'V':
+            case 'g':
+            case 'G':
+              {
+                int year = tm->tm_year + 1900;
+                int days = iso_week_days (tm->tm_yday, tm->tm_wday);
+
+                if (days < 0)
+                  {
+                    /* This ISO week belongs to the previous year.  */
+                    year--;
+                    days =
+                      iso_week_days (tm->tm_yday + (365 + __isleap (year)),
+                                     tm->tm_wday);
+                  }
+                else
+                  {
+                    int d =
+                      iso_week_days (tm->tm_yday - (365 + __isleap (year)),
+                                     tm->tm_wday);
+                    if (0 <= d)
+                      {
+                        /* This ISO week belongs to the next year.  */
+                        year++;
+                        days = d;
+                      }
+                  }
+
+                switch (*format)
+                  {
+                    /*
+                      #### FIXME
+                      We really can't assume 1000 <= year <= 9999 
+                      once time_t gets beyond 32 bits, but it's true
+                      of the rest of the code here so get with the
+                      program
+                    */
+                  case 'g':
+                    length +=
+                      add_num2 (&string[length], year % 100,
+                                max - length, pad);
+                    break;
+                    
+                  case 'G':
+                    add_char (year / 1000 + '0');
+                    length += add_num3 (&string[length], year % 1000,
+                                        max - length, zero);
+                    break;
+                    
+                  default:
+                    length +=
+                      add_num2 (&string[length], days / 7 + 1,
+                                max - length, pad);
+                    break;
+                  }
+              }
+              break;
 	    case 'X':
 	      length +=
 		strftime (&string[length], max - length, "%H:%M:%S", tm);
 	      break;
+            case 'z':
+              {
+                /*
+                  #### FIXME: could use tm->tm_gmtoff if present. Since
+                  the other code in xemacs does not do so we follow the
+                  leaders (and don't add a autoconf macro to detect
+                  its presence). 
+                */
+                long int offset;
+                long int minutes;
+                struct tm lt, *ut;
+                time_t utc;
+
+                lt = *tm;
+                utc = mktime(&lt);
+                ut = gmtime(&utc);
+                /* assume that tm is valid so the others will be too! */
+                assert( utc != (time_t) -1 && ut != NULL );
+                
+                /* tm diff code below is based on mktime.c, glibc 2.3.2 */
+                {
+                  int lt4, ut4, lt100, ut100, lt400, ut400;
+                  int intervening_leap_days, years, days;
+
+                  lt4 = (lt.tm_year >> 2) + (1900 >> 2) -
+                    ! (lt.tm_year & 3);
+                  ut4 = (ut->tm_year >> 2) + (1900 >> 2) -
+                    ! (ut->tm_year & 3);
+                  lt100 = lt4 / 25 - (lt4 % 25 < 0);
+                  ut100 = ut4 / 25 - (ut4 % 25 < 0);
+                  lt400 = lt100 >> 2;
+                  ut400 = ut100 >> 2;
+                  intervening_leap_days =
+                    (lt4 - ut4) - (lt100 - ut100) + (lt400 - ut400);
+                  years = lt.tm_year - ut->tm_year;
+                  days = (365 * years + intervening_leap_days
+                          + (lt.tm_yday - ut->tm_yday));
+                  offset = (60 * (60 * (24 * days + (lt.tm_hour - ut->tm_hour))
+                                 + (lt.tm_min - ut->tm_min))
+                           + (lt.tm_sec - ut->tm_sec));
+                }
+
+                minutes = offset / ( offset < 0 ? -60 : 60 );
+
+                add_char ((offset < 0 ? '-' : '+'));
+                
+                if ( minutes / 600 != 0 )
+                  add_char (minutes / 600 + '0');
+                else if ( pad != none )
+                  add_char ((pad == zero ? '0' : ' '));
+                
+                length +=
+                  add_num3 (&string[length],
+                            ((minutes / 60 ) % 10) * 100 + (minutes % 60),
+                            max - length, pad);
+                break;
+              }
 	    case 'Z':
 #ifdef HAVE_TM_ZONE
 	      length += add_str (&string[length], tm->tm_zone, max - length);
