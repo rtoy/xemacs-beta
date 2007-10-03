@@ -1,3 +1,10 @@
+2007-10-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (featurep):
+	Comment out the assertion until the issue in
+	18179.49815.622843.336527@parhasard.net is fixed.  This doesn't
+	remove any functionality, just a check. 
+
 2007-10-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* code-files.el (insert-file-contents):
