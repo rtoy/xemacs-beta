@@ -1584,6 +1584,7 @@ reset_face_cachels (struct window *w)
   if (w->face_cachels)
     {
       int i;
+      face_index fi;
 
       for (i = 0; i < Dynarr_length (w->face_cachels); i++)
 	{
@@ -1594,10 +1595,13 @@ reset_face_cachels (struct window *w)
       Dynarr_reset (w->face_cachels);
       /* #### NOTE: be careful with the order !
 	 The cpp macros DEFAULT_INDEX and MODELINE_INDEX defined in
-	 redisplay.h depend on the code below, which is really clumsy.
+	 redisplay.h depend on the code below. Please make sure to assert the
+	 correct values if you ever add new built-in faces here.
 	 -- dvl */
-      get_builtin_face_cache_index (w, Vdefault_face);
-      get_builtin_face_cache_index (w, Vmodeline_face);
+      fi = get_builtin_face_cache_index (w, Vdefault_face);
+      assert (fi == DEFAULT_INDEX);
+      fi = get_builtin_face_cache_index (w, Vmodeline_face);
+      assert (fi == MODELINE_INDEX);
       XFRAME (w->frame)->window_face_cache_reset = 1;
     }
 }

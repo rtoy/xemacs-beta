@@ -1,5 +1,10 @@
 2007-10-03  Didier Verna  <didier@xemacs.org>
 
+	* faces.c (reset_face_cachels): Assert correct order of built-in
+	faces additions to the face cache, as per suggestion from Aidan.
+
+2007-10-03  Didier Verna  <didier@xemacs.org>
+
 	Again, fix some DEFAULT_INDEX == 0 assumptions. Actually, properly
 	initialize display_line structures.
 
