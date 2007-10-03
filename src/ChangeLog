@@ -1,5 +1,10 @@
 2007-10-03  Didier Verna  <didier@xemacs.org>
 
+	* faces.c (reset_face_cachels): Check for noninteractive mode in
+	the assertions below, in which case the cache is unused.
+
+2007-10-03  Didier Verna  <didier@xemacs.org>
+
 	* faces.c (reset_face_cachels): Assert correct order of built-in
 	faces additions to the face cache, as per suggestion from Aidan.
 

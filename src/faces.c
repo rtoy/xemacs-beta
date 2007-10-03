@@ -1599,9 +1599,9 @@ reset_face_cachels (struct window *w)
 	 correct values if you ever add new built-in faces here.
 	 -- dvl */
       fi = get_builtin_face_cache_index (w, Vdefault_face);
-      assert (fi == DEFAULT_INDEX);
+      assert (noninteractive || fi == DEFAULT_INDEX);
       fi = get_builtin_face_cache_index (w, Vmodeline_face);
-      assert (fi == MODELINE_INDEX);
+      assert (noninteractive || fi == MODELINE_INDEX);
       XFRAME (w->frame)->window_face_cache_reset = 1;
     }
 }
