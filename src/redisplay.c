@@ -4529,7 +4529,8 @@ ensure_modeline_generated (struct window *w, int type)
 	  else
 	    {
 	      struct display_line modeline;
-	      xzero (modeline);
+
+	      DISPLAY_LINE_INIT (modeline);
 	      Dynarr_add (dla, modeline);
 	    }
 	}
@@ -5355,8 +5356,7 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
 	}
       else
 	{
-
-	  xzero (dl);
+	  DISPLAY_LINE_INIT (dl);
 	  dlp = &dl;
 	  local = 1;
 	}
@@ -5523,8 +5523,7 @@ Info on Re-entrancy crashes, with backtraces given:
 	}
       else
 	{
-
-	  xzero (dl);
+	  DISPLAY_LINE_INIT (dl);
 	  dlp = &dl;
 	  local = 1;
 	}

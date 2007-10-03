@@ -1,3 +1,17 @@
+2007-10-03  Didier Verna  <didier@xemacs.org>
+
+	Again, fix some DEFAULT_INDEX == 0 assumptions. Actually, properly
+	initialize display_line structures.
+
+	* redisplay.h (DISPLAY_LINE_INIT): New macro. Properly initialize
+	the default_index field to DEFAULT_INDEX.
+	* frame.c (init_frame): Use it.
+	* redisplay.c (ensure_modeline_generated): Ditto.
+	* redisplay.c (generate_displayable_area): Ditto.
+	* redisplay.c (regenerate_window): Ditto.
+	* redisplay-output.c (sync_display_line_structs): Ditto.
+	* redisplay-output.c (redisplay_output_layout): Ditto.
+
 2004-12-08  Shyamal Prasad  <shyamal@member.fsf.org>
 
 	* editfns.c:
@@ -5,7 +19,7 @@
 	Added documentation for %z, %g, %G and %V specifiers. This synchs
 	up the set of % specifiers for format-time-string with Emacs
 	21.3.1. Make copy of static buffer returned by localtime().
-	
+
 	* strftime.c:
 	* strftime.c (strftime):
 	Implemented %z, %g, %G and %V in a style similar to existing
@@ -25,8 +39,8 @@
 	* mule-ccl.c:
 	* mule-ccl.c (CCL_CALL_FOR_MAP_INSTRUCTION):
 	* mule-ccl.c (ccl_driver):
-	Merge Kenichi Handa's 2004-06-12 GNU bugfix, handling EOF in 
-	ccl_driver correctly. 
+	Merge Kenichi Handa's 2004-06-12 GNU bugfix, handling EOF in
+	ccl_driver correctly.
 
 2007-09-26  Didier Verna  <didier@xemacs.org>
 

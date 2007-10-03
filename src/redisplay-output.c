@@ -114,6 +114,9 @@ sync_display_line_structs (struct window *w, int line, int do_blocks,
   int db_elt;
   int local = 0;
 
+  /* #### NOTE: practically, this is not needed because of the memcpy below.
+     #### However, it's cleaner and bugs-in-the-future proof. -- dvl */
+  DISPLAY_LINE_INIT (dl);
   dlp = Dynarr_atp (ddla, line);
   if (line >= Dynarr_largest (cdla))
     {
@@ -1518,21 +1521,21 @@ redisplay_output_layout (Lisp_Object domain,
 	  IMAGE_INSTANCE_OPTIMIZE_OUTPUT (childii) =
 	    IMAGE_INSTANCE_OPTIMIZE_OUTPUT (p);
 
-	  /* Although normalization is done by the output routines
-	     we have to do it here so that they don't try and
-	     clear all of db. This is true below also. */
+	  /* Although normalization is done by the output routines we have to
+	     do it here so that they don't try and clear all of db. This is
+	     true below also. */
 	  if (redisplay_normalize_glyph_area (&cdb, &cdga))
 	    {
 	      redisplay_normalize_display_box (&cdb, &cdga);
-	      /* Since the display boxes will now be totally in the
-		 window if they are visible at all we can now check this easily. */
+	      /* Since the display boxes will now be totally in the window if
+		 they are visible at all we can now check this easily. */
 	      if (cdb.xpos < db->xpos || cdb.ypos < db->ypos
 		  || cdb.xpos + cdb.width > db->xpos + db->width
 		  || cdb.ypos + cdb.height > db->ypos + db->height)
 		continue;
-	      /* We have to invert the offset here as normalization
-		 will have made them positive which the output
-		 routines will treat as a truly +ve offset. */
+	      /* We have to invert the offset here as normalization will have
+		 made them positive which the output routines will treat as a
+		 truly +ve offset. */
 	      cdga.xoffset = -cdga.xoffset;
 	      cdga.yoffset = -cdga.yoffset;
 
@@ -1551,35 +1554,40 @@ redisplay_output_layout (Lisp_Object domain,
 			Lisp_Object string =
 			  IMAGE_INSTANCE_TEXT_STRING (childii);
 			unsigned char charsets[NUM_LEADING_BYTES];
-			struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
+			struct face_cachel *cachel
+			  = WINDOW_FACE_CACHEL (w, findex);
+
+			DISPLAY_LINE_INIT (dl);
 
 			find_charsets_in_ibyte_string (charsets,
-							 XSTRING_DATA (string),
-							 XSTRING_LENGTH (string));
+						       XSTRING_DATA (string),
+						       XSTRING_LENGTH (string));
 			ensure_face_cachel_complete (cachel, window, charsets);
 
 			convert_ibyte_string_into_ichar_dynarr
-			  (XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
+			  (XSTRING_DATA (string), XSTRING_LENGTH (string),
+			   buf);
 
 			redisplay_normalize_display_box (&cdb, &cdga);
 			/* Offsets are now +ve again so be careful
 			   when fixing up the display line. */
-			xzero (dl);
 			/* Munge boxes into display lines. */
 			dl.ypos = (cdb.ypos - cdga.yoffset)
 			  + glyph_ascent (child, image_instance);
 			dl.ascent = glyph_ascent (child, image_instance);
 			dl.descent = glyph_descent (child, image_instance);
 			dl.top_clip = cdga.yoffset;
-			dl.clip = (dl.ypos + dl.descent) - (cdb.ypos + cdb.height);
+			dl.clip = (dl.ypos + dl.descent)
+			  - (cdb.ypos + cdb.height);
 			/* output_string doesn't understand offsets in
 			   the same way as other routines - we have to
 			   add the offset to the width so that we
 			   output the full string. */
-			MAYBE_DEVMETH (d, output_string, (w, &dl, buf, cdb.xpos,
-							  cdga.xoffset, cdb.xpos,
-							  cdga.width + cdga.xoffset,
-							  findex, 0, 0, 0, 0));
+			MAYBE_DEVMETH (d, output_string,
+				       (w, &dl, buf, cdb.xpos,
+					cdga.xoffset, cdb.xpos,
+					cdga.width + cdga.xoffset,
+					findex, 0, 0, 0, 0));
 			Dynarr_reset (buf);
 		      }
 		  }

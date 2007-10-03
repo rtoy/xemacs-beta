@@ -329,6 +329,14 @@ struct display_line
   face_index	default_findex;
 };
 
+#define DISPLAY_LINE_INIT(dl)			\
+  do						\
+    {						\
+      xzero (dl);				\
+      dl.default_findex = DEFAULT_INDEX;	\
+    }						\
+  while (0)
+
 #define DISPLAY_LINE_HEIGHT(dl) \
 (dl->ascent + dl->descent - (dl->clip + dl->top_clip))
 #define DISPLAY_LINE_YPOS(dl) \
