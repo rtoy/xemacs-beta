@@ -1,3 +1,8 @@
+2007-10-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* x-faces.el (x-color-list-internal): Should return a list of
+	strings.  Make it so.
+
 2007-10-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.el (featurep):

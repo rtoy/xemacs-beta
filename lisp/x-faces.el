@@ -603,6 +603,15 @@ Otherwise, it returns the next larger version of this font that is defined."
 
 (defvar x-color-list-internal-cache)
 
+;; Ben originally coded this in 2005/01 to return a list of lists each
+;; containing a single string.  This is apparently derived from use of
+;; this list in completion, but in fact `read-color-completion-table'
+;; already does this wrapping.  So I'm changing this to return a list of
+;; strings as the TTY code does, and as expected by r-c-c-t.
+;; -- sjt 2007-10-06
+
+;; This function is probably also used by the GTK platform.  Cf.
+;; gtk_color_list in src/objects-gtk.c.
 (defun x-color-list-internal ()
   (if (boundp 'x-color-list-internal-cache)
       x-color-list-internal-cache
@@ -623,12 +632,12 @@ Otherwise, it returns the next larger version of this font that is defined."
 	    (setq p (point))
 	    (end-of-line)
 	    (setq color (buffer-substring p (point))
-		  clist (cons (list color) clist))
+		  clist (cons color clist))
 	    ;; Ugh.  If we want to be able to complete the lowercase form
 	    ;; of the color name, we need to add it twice!  Yuck.
 	    (let ((dcase (downcase color)))
 	      (or (string= dcase color)
-		  (push (list dcase) clist)))
+		  (push dcase clist)))
 	    (forward-char 1))
 	  (kill-buffer (current-buffer))))
       (setq x-color-list-internal-cache clist)
