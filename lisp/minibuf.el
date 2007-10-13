@@ -2095,7 +2095,7 @@ whether it is a file(/result) or a directory (/result/)."
 		 ;; any more. --ben
 		 (lambda ()
 		   (mouse-rfn-setup-vars prompt)
-		   (when (featurep 'scrollbar)
+		   (when-boundp #'scrollbar-width
 		     (set-specifier scrollbar-width 0 (current-buffer)))
 		   (setq truncate-lines t))))
 	    

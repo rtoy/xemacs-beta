@@ -3969,7 +3969,8 @@ See the variable `zmacs-regions'.")
       (cond
        (zmacs-region-rectangular-p
 	(setq zmacs-region-extent (list zmacs-region-extent))
-	(default-mouse-track-next-move-rect start end zmacs-region-extent)
+        (when-fboundp #'default-mouse-track-next-move-rect
+          (default-mouse-track-next-move-rect start end zmacs-region-extent))
 	))
 
       zmacs-region-extent)))
@@ -3995,8 +3996,8 @@ Returns t if the region was activated (i.e. if `zmacs-regions' if t)."
       nil
     (setq zmacs-region-active-p t
 	  zmacs-region-stays t
-	  zmacs-region-rectangular-p (and (boundp 'mouse-track-rectangle-p)
-					  mouse-track-rectangle-p))
+	  zmacs-region-rectangular-p (and-boundp 'mouse-track-rectangle-p
+                                       mouse-track-rectangle-p))
     (if (marker-buffer (mark-marker t))
 	(zmacs-make-extent-for-region (cons (point-marker t) (mark-marker t))))
     (run-hooks 'zmacs-activate-region-hook)

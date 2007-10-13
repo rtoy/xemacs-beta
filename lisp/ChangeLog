@@ -1,3 +1,47 @@
+2007-10-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmdloop.el (yes-or-no-p):
+	Only call #'yes-or-no-p-dialog-box if it's bound. Eliminates a
+	compile-time warning; should not actually avoid any run-time
+	errors.
+	* coding.el:
+	* coding.el ('automatic-conversion): Removed.
+	On non-Mule builds, alias 'iso-8859-1 to 'no-conversion, not
+	'undecided, since the latter does coding system autorecognition
+	that is useless and leads to stack overflows without Mule. Delete
+	'iso-8859-2 as an alias on non-Mule
+	* faces.el (face-font-instance):
+	Only call get-charset if it's bound. 
+	* faces.el (xpm-color-symbols):
+	Only modify xpm-color-symbols if it's bound. 
+	* map-ynp.el (map-y-or-n-p):
+	Check that #'get-dialog-box-response is bound before calling it. 
+	* menubar.el:
+	List #'menu-split-long-menu as an autoload, for those builds that
+	don't use it at runtime but nonetheless have to compile code that
+	uses it. 
+	* minibuf.el (mouse-read-file-name-1):
+	Only use scrollbar-width if it's bound. 
+	* obsolete.el:
+	Only provide #'add-meu-item, #'add-menu,
+	#'package-get-download-menu if the menubar feature is available at
+	runtime. 
+	* obsolete.el (find-non-ascii-charset-string):
+	Only call #'charset-in-string if it's bound; else give nil. 
+	* obsolete.el (find-non-ascii-charset-region):
+	Only call #'charset-in-region if it's bound; else give nil. 
+	* select.el (activate-region-as-selection):
+	Only call #'mouse-track-rectangle-p if it's bound. 
+	* select.el (select-make-extent-for-selection):
+	Ditto. 
+	* simple.el (zmacs-make-extent-for-region):
+	Only call #'default-mouse-track-next-move-rect if it's bound. 
+	* simple.el (zmacs-activate-region):
+	Use and-boundp rather than (and (boundp ...))) when checking for a
+	variable. 
+	* unicode.el (featurep):
+	Don't bind res, which is not used, in the loop. 
+
 2007-10-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* x-faces.el (x-color-list-internal): Should return a list of

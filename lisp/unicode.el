@@ -538,7 +538,6 @@ invalid octet.  You can use this variable (with `re-search-forward' or
     (loop
       for i from ?\x00 to ?\xFF
       with to-check = (make-string 20 ?\x20) 
-      with res = t
       do 
       (delete-region (point-min) (point-max))
       (insert to-check)

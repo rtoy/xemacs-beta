@@ -488,7 +488,10 @@ It should end in a space; `yes-or-no-p' adds `(yes or no) ' to it.
 The user must confirm the answer with RET,
 and can edit it until it as been confirmed."
   (if (should-use-dialog-box-p)
-      (yes-or-no-p-dialog-box prompt)
+      ;; and-fboundp is redundant, since yes-or-no-p-dialog-box is only
+      ;; bound if (featurep 'dialog). But it eliminates a compile-time
+      ;; warning.
+      (and-fboundp #'yes-or-no-p-dialog-box (yes-or-no-p-dialog-box prompt))
     (yes-or-no-p-minibuf prompt)))
 
 (defun y-or-n-p (prompt)

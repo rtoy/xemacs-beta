@@ -472,7 +472,9 @@ See `face-property-instance' for more information."
     (let (matchspec)
       ;; get-charset signals an error if its argument doesn't have an
       ;; associated charset.
-      (setq charset (get-charset charset)
+      (setq charset (if-fboundp #'get-charset
+                        (get-charset charset)
+                      (error 'unimplemented "Charset support not available"))
 	    matchspec (cons charset nil))
       (or (null (setcdr matchspec 'initial))
 	  (face-property-matching-instance 
@@ -2059,29 +2061,31 @@ in that frame; otherwise change each frame."
 		     'global)
 
 ;; Define some logical color names to be used when reading the pixmap files.
-(if (featurep 'xpm)
-    (setq xpm-color-symbols
-	  (list
-	   '("foreground" (face-foreground 'default))
-	   '("background" (face-background 'default))
-	   '("backgroundToolBarColor"
-	     (or
-	      (and
-	       (featurep 'x)
-	       (x-get-resource "backgroundToolBarColor"
-			       "BackgroundToolBarColor" 'string
-			       nil nil 'warn))
+(and-boundp 
+    'xpm-color-symbols
+  (featurep 'xpm)
+  (setq xpm-color-symbols
+        (list
+         '("foreground" (face-foreground 'default))
+         '("background" (face-background 'default))
+         '("backgroundToolBarColor"
+           (or
+            (and
+             (featurep 'x)
+             (x-get-resource "backgroundToolBarColor"
+                             "BackgroundToolBarColor" 'string
+                             nil nil 'warn))
 
-	      (face-background 'toolbar)))
-	   '("foregroundToolBarColor"
-	     (or
-	      (and
-	       (featurep 'x)
-	       (x-get-resource "foregroundToolBarColor"
-			       "ForegroundToolBarColor" 'string
-			       nil nil 'warn))
-	      (face-foreground 'toolbar)))
-	   )))
+            (face-background 'toolbar)))
+         '("foregroundToolBarColor"
+           (or
+            (and
+            (featurep 'x)
+            (x-get-resource "foregroundToolBarColor"
+                            "ForegroundToolBarColor" 'string
+                            nil nil 'warn))
+            (face-foreground 'toolbar)))
+         )))
 
 (when (featurep 'tty)
   (set-face-highlight-p 'bold                    t 'global '(default tty))

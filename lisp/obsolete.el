@@ -222,22 +222,23 @@ set Info-directory-list.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; menu stuff
 
-(defun add-menu-item (menu-path item-name function enabled-p &optional before)
-  "Obsolete.  See the function `add-menu-button'."
-  (or item-name (error "must specify an item name"))
-  (add-menu-button menu-path (vector item-name function enabled-p) before))
-(make-obsolete 'add-menu-item 'add-menu-button)
+(when (featurep 'menubar)
+  (defun add-menu-item (menu-path item-name function enabled-p &optional before)
+    "Obsolete.  See the function `add-menu-button'."
+    (or item-name (error "must specify an item name"))
+    (add-menu-button menu-path (vector item-name function enabled-p) before))
+  (make-obsolete 'add-menu-item 'add-menu-button)
 
-(defun add-menu (menu-path menu-name menu-items &optional before)
-  "See the function `add-submenu'."
-  (or menu-name (error "must specify a menu name"))
-  (or menu-items (error "must specify some menu items"))
-  (add-submenu menu-path (cons menu-name menu-items) before))
-;; Can't make this obsolete.  easymenu depends on it.
-(make-compatible 'add-menu 'add-submenu)
+  (defun add-menu (menu-path menu-name menu-items &optional before)
+    "See the function `add-submenu'."
+    (or menu-name (error "must specify a menu name"))
+    (or menu-items (error "must specify some menu items"))
+    (add-submenu menu-path (cons menu-name menu-items) before))
+  ;; Can't make this obsolete.  easymenu depends on it.
+  (make-compatible 'add-menu 'add-submenu)
 
-(define-obsolete-function-alias 'package-get-download-menu 
-  'package-ui-download-menu)
+  (define-obsolete-function-alias 'package-get-download-menu 
+    'package-ui-download-menu))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; minibuffer
 
@@ -345,7 +346,7 @@ It always returns 1 in XEmacs, and in recent FSF Emacs versions."
   "Return a list of charsets in the STRING except ascii.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (charsets-in-string string)))
+  (delq 'ascii (and-fboundp #'charsets-in-string (charsets-in-string string))))
 (make-obsolete 'find-non-ascii-charset-string
 	       "use (delq 'ascii (charsets-in-string STRING)) instead.")
 
@@ -353,7 +354,8 @@ because its `find-charset-string' ignores ASCII charset."
   "Return a list of charsets except ascii in the region between START and END.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (charsets-in-region start end)))
+  (delq 'ascii (and-fboundp #'charsets-in-region
+                 (charsets-in-region start end))))
 (make-obsolete 'find-non-ascii-charset-region
 	       "use (delq 'ascii (charsets-in-region START END)) instead.")
 

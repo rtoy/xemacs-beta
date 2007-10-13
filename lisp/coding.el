@@ -266,13 +266,11 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 (when (not (featurep 'mule))
   (define-coding-system-alias 'escape-quoted 'binary)
   ;; these are so that gnus and friends work when not mule
-  (define-coding-system-alias 'iso-8859-1 'undecided)
-  (define-coding-system-alias 'iso-8859-2 'undecided)
+  (define-coding-system-alias 'iso-8859-1 'no-conversion)
+  ;; We're misrepresenting ourselves to the gnus code by saying we support
+  ;; both.
+  ; (define-coding-system-alias 'iso-8859-2 'no-conversion)
   (define-coding-system-alias 'ctext 'binary))
-
-
-;; compatibility for old XEmacsen (don't use it)
-(define-coding-system-alias 'automatic-conversion 'undecided)
 
 (make-compatible-variable 'enable-multibyte-characters "Unimplemented")
 

@@ -162,9 +162,11 @@ Returns the number of actions taken."
 		   ;; Prompt the user about this object.
 		   (setq quit-flag nil)
 		   (if mouse-event ; XEmacs
-		       (setq def (or (get-dialog-box-response
-				      mouse-event
-				      (cons prompt map))
+		       (setq def (or (and-fboundp 
+                                         #'get-dialog-box-response
+                                         (get-dialog-box-response
+                                          mouse-event
+                                          (cons prompt map)))
 				     'quit))
 		     ;; Prompt in the echo area.
 		     (let ((cursor-in-echo-area (not no-cursor-in-echo-area)))
