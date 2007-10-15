@@ -1,3 +1,8 @@
+2007-10-15  Adrian Aichner  <adrian@xemacs.org>
+
+	* Makefile (info_files): Sync nt/xemacs.mak and man/Makefile.
+	Sort enries to easy future syncs.
+
 2007-09-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/searching.texi (Replacing Match): Document the escapes

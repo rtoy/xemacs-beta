@@ -1447,21 +1447,22 @@ MAKEINFO=$(XEMACS_BATCH_PACKAGES) -l texinfmt -f batch-texinfo-format
 MANDIR = $(SRCROOT)\man
 INFODIR = $(SRCROOT)\info
 INFO_FILES= \
+	$(INFODIR)\beta.info \
 	$(INFODIR)\cl.info \
 	$(INFODIR)\custom.info \
 	$(INFODIR)\emodules.info \
 	$(INFODIR)\external-widget.info \
 	$(INFODIR)\info.info \
+	$(INFODIR)\internals.info \
+	$(INFODIR)\lispref.info \
+	$(INFODIR)\new-users-guide.info \
 	$(INFODIR)\standards.info \
 	$(INFODIR)\term.info \
 	$(INFODIR)\termcap.info \
 	$(INFODIR)\texinfo.info \
 	$(INFODIR)\widget.info \
 	$(INFODIR)\xemacs-faq.info \
-	$(INFODIR)\xemacs.info \
-	$(INFODIR)\lispref.info \
-	$(INFODIR)\new-users-guide.info \
-	$(INFODIR)\internals.info
+	$(INFODIR)\xemacs.info
 
 {$(MANDIR)}.texi{$(INFODIR)}.info:
 	cd $(MANDIR)
@@ -1559,6 +1560,7 @@ LISPREF_SRCS = \
 	$(MANDIR)\lispref\numbers.texi \
 	$(MANDIR)\lispref\objects.texi \
 	$(MANDIR)\lispref\os.texi \
+	$(MANDIR)\lispref\packaging.texi \
 	$(MANDIR)\lispref\positions.texi \
 	$(MANDIR)\lispref\processes.texi \
 	$(MANDIR)\lispref\range-tables.texi \

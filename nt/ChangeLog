@@ -1,3 +1,9 @@
+2007-10-15  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs.mak (INFO_FILES): Sync nt/xemacs.mak and man/Makefile
+	(adding beta.info).
+	* xemacs.mak (LISPREF_SRCS): Ditto.  Adding packages.texi.
+
 2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.28 "fuki" is released.

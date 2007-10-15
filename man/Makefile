@@ -50,16 +50,16 @@ info_files = \
 	$(INFODIR)/emodules.info \
 	$(INFODIR)/external-widget.info \
 	$(INFODIR)/info.info \
-	$(INFODIR)/lispref.info \
 	$(INFODIR)/internals.info \
+	$(INFODIR)/lispref.info \
 	$(INFODIR)/new-users-guide.info \
 	$(INFODIR)/standards.info \
 	$(INFODIR)/term.info \
 	$(INFODIR)/termcap.info \
 	$(INFODIR)/texinfo.info \
 	$(INFODIR)/widget.info \
-	$(INFODIR)/xemacs.info \
-	$(INFODIR)/xemacs-faq.info
+	$(INFODIR)/xemacs-faq.info \
+	$(INFODIR)/xemacs.info
 
 html_files = \
 	$(HTMLDIR)/beta.html \
