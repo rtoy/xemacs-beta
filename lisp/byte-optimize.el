@@ -1169,6 +1169,21 @@
 	(eval form)
       form)))
 
+(defvar byte-optimize-ever-present-features 
+  '(xemacs cl cl-extra cl-19 backquote))
+
+(put 'featurep 'byte-optimizer 'byte-optimize-featurep)
+(defun byte-optimize-featurep (form)
+  (let ((to-check (cdr-safe form)))
+    (if (memq (car-safe
+	       (cdr-safe
+		(car-safe
+		 (cdr-safe 
+		  form))))
+	      byte-optimize-ever-present-features)
+	t
+      form)))
+
 
 ;;; enumerating those functions which need not be called if the returned
 ;;; value is not used.  That is, something like

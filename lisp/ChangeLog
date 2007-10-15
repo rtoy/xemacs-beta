@@ -1,3 +1,14 @@
+2007-10-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el:
+	* byte-optimize.el (byte-optimize-ever-present-features): New.
+	* byte-optimize.el (byte-optimize-featurep): New.
+	Optimise calls to (featurep 'xemacs) to t, since our byte code
+	refuses to run on GNU Emacs. Also optimises away checks for cl,
+	cl-extra, cl-19 and backquote, a conservative list of those
+	features that have been available in every XEmacs build since the
+	last time our opcodes changed. 
+
 2007-10-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* coding.el:
