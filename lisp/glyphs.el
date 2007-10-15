@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 2000, 2005 Ben Wing.
+;; Copyright (C) 2007 Didier Verna
 
 ;; Author: Chuck Thompson <cthomp@cs.uiuc.edu>, Ben Wing <ben@xemacs.org>
 ;; Maintainer: XEmacs Development Team
@@ -1184,24 +1185,33 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 				 [jpeg :data nil] 2)))
        ,@(if (featurep 'png) '(("\\.png\\'" [png :file nil] 2)))
        ,@(if (featurep 'png) '(("\\`\211PNG" [png :data nil] 2)))
-       ("" [string :data nil] 2)
+       ;; No, I don't think we want to inline images... -- dvl
+       ;; ("" [string :data nil] 2)
        ("" [nothing]))))
   ;; #### this should really be formatted-string, not string but we
   ;; don't have it implemented yet
-  ;;
-  ;; #define could also mean a bitmap as well as a version 1 XPM.  Who
-  ;; cares.  We don't want the file contents getting converted to a
-  ;; string in either case which is why the entry is there.
   (if (featurep 'tty)
       (progn
 	(set-console-type-image-conversion-list
 	 'tty
-	 '(("^#define" [string :data "[xpm]"])
-	   ("\\`X-Face:" [string :data "[xface]"])
+         '(("\\.xpm\\'" [string :data nil] 2)
+           ("\\.xbm\\'" [string :data nil] 2)
+           ;; #define could also mean a bitmap as well as a version 1 XPM. Who
+           ;; cares.
+           ("^#define" [string :data "[xpm]"])
 	   ("\\`/\\* XPM \\*/" [string :data "[xpm]"])
-	   ("\\`GIF87" [string :data "[gif]"])
+           ("\\`X-Face:" [string :data "[xface]"])
+           ("\\.gif\\'" [string :data nil] 2)
+           ("\\`GIF8[79]" [string :data "[gif]"])
+           ("\\.jpe?g\\'" [string :data nil] 2)
 	   ("\\`\377\330\340\000\020JFIF" [string :data "[jpeg]"])
-	   ("" [string :data nil] 2)
+           ;; all of the JFIF-format JPEG's that I've seen begin with
+           ;; the following.  I have no idea if this is standard.
+           ("\\`\377\330\377\340\000\020JFIF" [string :data "[jpeg]"])
+           ("\\.png\\'" [string :data nil] 2)
+           ("\\`\211PNG" [string :data "[png]"])
+           ;; No, I don't think we want to inline images... -- dvl
+           ;;("" [string :data nil] 2)
 	   ;; this last one is here for pointers and icons and such --
 	   ;; strings are not allowed so they will be ignored.
 	   ("" [nothing])))
@@ -1217,6 +1227,10 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 	;; finish initializing hscroll glyph -- created internally
 	;; because it has a built-in bitmap
 	(set-glyph-image hscroll-glyph "$" 'global 'tty)))
+
+  ;; For streams, we don't want images at all -- dvl
+  (set-console-type-image-conversion-list 'stream '(("" [nothing])))
+
 
   (set-glyph-image octal-escape-glyph "\\")
   (set-glyph-image control-arrow-glyph "^")

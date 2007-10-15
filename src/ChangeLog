@@ -1,3 +1,17 @@
+2007-10-10  Didier Verna  <didier@xemacs.org>
+
+        * glyphs.c (potential_pixmap_file_instantiator): Make a difference
+        between not being able to locate a pixmap file, and not having a
+        console method to do so.
+        * glyphs.c (simple_image_type_normalize): Notice that difference,
+        and don't err when the method is unavailable.
+        * glyphs.c (xbm_normalize): Ditto.
+        * glyphs.c (xface_normalize): Ditto.
+        * glyphs.c (xpm_normalize): Ditto.
+        * glyphs-shared.c (shared_resource_normalize): Ditto.
+        * glyphs-x.c (x_locate_pixmap_file): Recognize ~ pathnames as
+        fully qualified.
+
 2007-10-03  Didier Verna  <didier@xemacs.org>
 
 	* faces.c (reset_face_cachels): Check for noninteractive mode in

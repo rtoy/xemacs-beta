@@ -550,16 +550,19 @@ Lisp_Object Vx_bitmap_file_path;
    where the file might be located.  Return a full pathname if found;
    otherwise, return Qnil. */
 
+/* #### FIXME: when Qnil is returned, the caller can't make a difference
+   #### between a non existing X device, an unreadable file, or an actual
+   #### failure to locate the file, so the issued message is really not
+   #### informative. -- dvl */
 static Lisp_Object
 x_locate_pixmap_file (Lisp_Object name)
 {
   /* This function can GC if IN_REDISPLAY is false */
   Display *display;
 
-  /* Check non-absolute pathnames with a directory component relative to
-     the search path; that's the way Xt does it. */
   /* #### Unix-specific */
-  if (string_byte (name, 0) == '/' ||
+  if (string_byte (name, 0) == '~' ||
+      string_byte (name, 0) == '/' ||
       (string_byte (name, 0) == '.' &&
        (string_byte (name, 1) == '/' ||
 	(string_byte (name, 1) == '.' &&
@@ -571,6 +574,8 @@ x_locate_pixmap_file (Lisp_Object name)
 	return Qnil;
     }
 
+  /* Check non-absolute pathnames with a directory component relative to
+     the search path; that's the way Xt does it. */
   {
     Lisp_Object defx = get_default_device (Qx);
     if (NILP (defx))

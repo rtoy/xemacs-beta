@@ -1,10 +1,10 @@
 /* Routines shared between window-system backends for glyph objects.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 1995 Board of Trustees, University of Illinois
    Copyright (C) 1995 Tinker Systems
    Copyright (C) 1995, 1996, 2001 Ben Wing
    Copyright (C) 1995 Sun Microsystems
-   Copyright (C) 1998, 1999, 2000 Andy Piper.
+   Copyright (C) 1998, 1999, 2000 Andy Piper
 
 This file is part of XEmacs.
 
@@ -75,12 +75,15 @@ shared_resource_normalize (Lisp_Object inst, Lisp_Object console_type,
   file = potential_pixmap_file_instantiator (inst, Q_file, Q_data,
 					     console_type);
 
+  if (NILP (file)) /* normalization impossible for the console type */
+    RETURN_UNGCPRO (Qnil);
+
   if (CONSP (file)) /* failure locating filename */
     signal_double_image_error ("Opening pixmap file",
 			       "no such file or directory",
 			       Fcar (file));
 
-  if (NILP (file)) /* no conversion necessary */
+  if (EQ (file, Qt)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
 
   alist = tagged_vector_to_alist (inst);

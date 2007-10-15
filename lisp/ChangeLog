@@ -1,3 +1,9 @@
+2007-10-15  Didier Verna  <didier@xemacs.org>
+
+	* glyphs.el (init-glyphs): Use more sensible image conversion
+	rules for tty consoles (don't inline images, explicitely recognize
+	more image types). Avoid images on stream consoles altogether.
+
 2007-10-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cmdloop.el (yes-or-no-p):
@@ -11,36 +17,36 @@
 	that is useless and leads to stack overflows without Mule. Delete
 	'iso-8859-2 as an alias on non-Mule
 	* faces.el (face-font-instance):
-	Only call get-charset if it's bound. 
+	Only call get-charset if it's bound.
 	* faces.el (xpm-color-symbols):
-	Only modify xpm-color-symbols if it's bound. 
+	Only modify xpm-color-symbols if it's bound.
 	* map-ynp.el (map-y-or-n-p):
-	Check that #'get-dialog-box-response is bound before calling it. 
+	Check that #'get-dialog-box-response is bound before calling it.
 	* menubar.el:
 	List #'menu-split-long-menu as an autoload, for those builds that
 	don't use it at runtime but nonetheless have to compile code that
-	uses it. 
+	uses it.
 	* minibuf.el (mouse-read-file-name-1):
-	Only use scrollbar-width if it's bound. 
+	Only use scrollbar-width if it's bound.
 	* obsolete.el:
 	Only provide #'add-meu-item, #'add-menu,
 	#'package-get-download-menu if the menubar feature is available at
-	runtime. 
+	runtime.
 	* obsolete.el (find-non-ascii-charset-string):
-	Only call #'charset-in-string if it's bound; else give nil. 
+	Only call #'charset-in-string if it's bound; else give nil.
 	* obsolete.el (find-non-ascii-charset-region):
-	Only call #'charset-in-region if it's bound; else give nil. 
+	Only call #'charset-in-region if it's bound; else give nil.
 	* select.el (activate-region-as-selection):
-	Only call #'mouse-track-rectangle-p if it's bound. 
+	Only call #'mouse-track-rectangle-p if it's bound.
 	* select.el (select-make-extent-for-selection):
-	Ditto. 
+	Ditto.
 	* simple.el (zmacs-make-extent-for-region):
-	Only call #'default-mouse-track-next-move-rect if it's bound. 
+	Only call #'default-mouse-track-next-move-rect if it's bound.
 	* simple.el (zmacs-activate-region):
 	Use and-boundp rather than (and (boundp ...))) when checking for a
-	variable. 
+	variable.
 	* unicode.el (featurep):
-	Don't bind res, which is not used, in the loop. 
+	Don't bind res, which is not used, in the loop.
 
 2007-10-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -52,13 +58,13 @@
 	* unicode.el (featurep):
 	Comment out the assertion until the issue in
 	18179.49815.622843.336527@parhasard.net is fixed.  This doesn't
-	remove any functionality, just a check. 
+	remove any functionality, just a check.
 
 2007-10-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* code-files.el (insert-file-contents):
 	Document that START and END are zero-based, in contrast to buffer
-	offsets, and give an example of their use. 
+	offsets, and give an example of their use.
 
 2007-09-09  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -75,7 +81,7 @@
 	region.
 	* unicode.el (unicode-error-translate-region) New.
 	Translate the error octets in a region to the corresponding
-	ASCII, control-1 and latin-1 characters. 
+	ASCII, control-1 and latin-1 characters.
 
 2007-10-02  Didier Verna  <didier@xemacs.org>
 

@@ -1,9 +1,10 @@
 /* Generic glyph/image implementation + display tables
-   Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 1994, 1995 Board of Trustees, University of Illinois
    Copyright (C) 1995 Tinker Systems
    Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004, 2005 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1998, 1999, 2000 Andy Piper
+   Copyright (C) 2007 Didier Verna
 
 This file is part of XEmacs.
 
@@ -2554,17 +2555,24 @@ potential_pixmap_file_instantiator (Lisp_Object instantiator,
 
   if (!NILP (file) && NILP (data))
     {
-      Lisp_Object retval = MAYBE_LISP_CONTYPE_METH
-	(decode_console_type(console_type, ERROR_ME),
-	 locate_pixmap_file, (file));
+      struct console_methods *meths
+        = decode_console_type(console_type, ERROR_ME);
+
+      if (HAS_CONTYPE_METH_P (meths, locate_pixmap_file))
+        {
+          Lisp_Object retval
+            = CONTYPE_METH (meths, locate_pixmap_file, (file));
 
       if (!NILP (retval))
 	return retval;
       else
 	return Fcons (file, Qnil); /* should have been file */
     }
-
+      else /* method unavailable */
   return Qnil;
+}
+
+  return Qt;
 }
 
 Lisp_Object
@@ -2589,12 +2597,15 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
   file = potential_pixmap_file_instantiator (inst, Q_file, Q_data,
 					     console_type);
 
+  if (NILP (file)) /* normalization impossible for the console type */
+    RETURN_UNGCPRO (Qnil);
+
   if (CONSP (file)) /* failure locating filename */
     signal_double_image_error ("Opening pixmap file",
 			       "no such file or directory",
 			       Fcar (file));
 
-  if (NILP (file)) /* no conversion necessary */
+  if (EQ (file, Qt)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
 
   alist = tagged_vector_to_alist (inst);
@@ -2793,17 +2804,20 @@ xbm_normalize (Lisp_Object inst, Lisp_Object console_type,
   mask_file = potential_pixmap_file_instantiator (inst, Q_mask_file,
 						  Q_mask_data, console_type);
 
+  if (NILP (file)) /* normalization impossible for the console type */
+    RETURN_UNGCPRO (Qnil);
+
   if (CONSP (file)) /* failure locating filename */
     signal_double_image_error ("Opening bitmap file",
 			       "no such file or directory",
 			       Fcar (file));
 
-  if (NILP (file) && NILP (mask_file)) /* no conversion necessary */
+  if (EQ (file, Qt) && EQ (mask_file, Qt)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
 
   alist = tagged_vector_to_alist (inst);
 
-  if (!NILP (file))
+  if (!EQ (file, Qt))
     {
       int xhot, yhot;
       Lisp_Object data = bitmap_to_lisp_data (file, &xhot, &yhot, 0);
@@ -2820,6 +2834,7 @@ xbm_normalize (Lisp_Object inst, Lisp_Object console_type,
 		       alist);
     }
 
+  /* #### FIXME: Hmmm... what about mask being Qt ?? -- dvl */
   alist = xbm_mask_file_munging (alist, file, mask_file, console_type);
 
   {
@@ -2878,14 +2893,19 @@ xface_normalize (Lisp_Object inst, Lisp_Object console_type,
   mask_file = potential_pixmap_file_instantiator (inst, Q_mask_file,
 						  Q_mask_data, console_type);
 
+  if (NILP (file)) /* normalization impossible for the console type */
+    RETURN_UNGCPRO (Qnil);
+
   if (CONSP (file)) /* failure locating filename */
     signal_double_image_error ("Opening bitmap file",
 			       "no such file or directory",
 			       Fcar (file));
 
-  if (NILP (file) && NILP (mask_file)) /* no conversion necessary */
+  if (EQ (file, Qt) && EQ (mask_file, Qt)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
 
+
+  /* #### FIXME: and what about file / mask being Qt ? -- dvl */
   alist = tagged_vector_to_alist (inst);
 
   {
@@ -3094,6 +3114,9 @@ xpm_normalize (Lisp_Object inst, Lisp_Object console_type,
   file = potential_pixmap_file_instantiator (inst, Q_file, Q_data,
 					     console_type);
 
+  if (NILP (file)) /* normalization impossible for the console type */
+    RETURN_UNGCPRO (Qnil);
+
   if (CONSP (file)) /* failure locating filename */
     signal_double_image_error ("Opening pixmap file",
 			       "no such file or directory",
@@ -3102,13 +3125,13 @@ xpm_normalize (Lisp_Object inst, Lisp_Object console_type,
   color_symbols = find_keyword_in_vector_or_given (inst, Q_color_symbols,
 						   Qunbound);
 
-  if (NILP (file) && !UNBOUNDP (color_symbols))
+  if (EQ (file, Qt) && !UNBOUNDP (color_symbols))
     /* no conversion necessary */
     RETURN_UNGCPRO (inst);
 
   alist = tagged_vector_to_alist (inst);
 
-  if (!NILP (file))
+  if (!NILP (file) && !EQ (file, Qt))
     {
       Lisp_Object data = pixmap_to_lisp_data (file, 0);
       alist = remassq_no_quit (Q_file, alist);
