@@ -1,3 +1,10 @@
+2007-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* coding.el:
+	Use raw-text, not no-conversion for iso-8859-1 on non-Mule;
+	preserves the line ending autodetection, but doesn't do coding
+	system autodetection. Thank you Stephen. 
+
 2007-10-15  Didier Verna  <didier@xemacs.org>
 
 	* glyphs.el (init-glyphs): Use more sensible image conversion
