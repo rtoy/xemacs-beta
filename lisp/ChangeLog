@@ -1,3 +1,11 @@
+2007-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/latin.el:
+	"pl" is the normal POSIX language code for Polish, not "po"; if a
+	tutorial is provided, set tutorial-coding-system explicitly based
+	on the language environment coding system, to override confusion
+	that can arise with the variant language environments.
+
 2007-10-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* byte-optimize.el:

@@ -681,7 +681,7 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
       ("Czech" ("cs" "cz") "TUTORIAL.cs" "P,Bx(Bejeme v,Ba(Bm hezk,B}(B den!"
        "latin-2-postfix")
       ("Hungarian" ("hungarian" "hu"))
-      ("Polish" "po" "TUTORIAL.pl")
+      ("Polish" ("pl" "po") "TUTORIAL.pl") ;; #### Is "po" actually used?
       ("Romanian" "ro" "TUTORIAL.ro" "Bun,Bc(B ziua, bine a,B~(Bi venit!"
        "latin-2-postfix")
       ("Serbian" "sr")
@@ -728,7 +728,8 @@ Generic language environment for %s (%s)." nice-charset-1 nice-charset-2))))
        (coding-priority ,codesys)
        (native-coding-system ,codesys)
        ,@(if locale `((locale . ,locale)))
-       ,@(if tutorial `((tutorial . ,tutorial)))
+       ,@(if tutorial `((tutorial . ,tutorial)
+			(tutorial-coding-system ,codesys)))
        ,@(if sample-text `((sample-text . ,sample-text)))
        (input-method . ,(or input-method default-input))
        (documentation . ,(format "\
