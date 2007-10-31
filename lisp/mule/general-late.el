@@ -54,7 +54,16 @@
 	    (remassoc "German" language-info-alist))
       language-info-alist
       (cons (assoc "English" language-info-alist)
-	    (remassoc "English" language-info-alist)))
+	    (remassoc "English" language-info-alist))
+
+      ;; Make Installation-string actually reflect the environment at
+      ;; byte-compile time. (We can't necessarily decode it when version.el
+      ;; is loaded, since not all the coding systems are available then.)
+      Installation-string (if-boundp 'Installation-file-coding-system
+			      (decode-coding-string
+			       Installation-string
+			       Installation-file-coding-system)
+			    Installation-string))
 
 ;; At this point in the dump, all the charsets have been loaded. Now, load
 ;; their Unicode mappings.

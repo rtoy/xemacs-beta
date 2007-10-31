@@ -117,8 +117,7 @@
   '("paths.el"
     "dumped-lisp.el"
     "dumped-pkg-lisp.el"
-    "raw-process.el"
-    "version.el")
+    "raw-process.el")
   "Lisp files that should not be byte compiled.
 Files in `additional-dump-dependencies' do not need to be listed here.")
 

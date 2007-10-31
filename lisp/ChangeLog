@@ -1,5 +1,38 @@
 2007-10-26  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/general-late.el:
+	Now that all the dumped coding systems are available, decode
+	Installation-string using the value for
+	Installation-file-coding-system at dump time. 
+
+2007-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Allow version.el to be compiled. 
+	* help.el (describe-installation):
+	Use and-boundp instead of (and (boundp ...); don't decode
+	Installation-string. Call #'error with a DATUM arg. 
+	* loadup.el:
+	* loadup.el (Installation-string): Removed.
+	Moved to version.el.
+	* loadup.el (really-early-error-handler):
+	Move the initialization of Installation-string to version.el too.
+	* update-elc-2.el (update-elc-ignored-files):
+	* update-elc-2.el (batch-update-elc-2):
+	Remove version.el from the ignored files; if Mule is available,
+	always recompile it, since Installation-file-coding-system depends
+	on relatively complex Mule code. 
+	* update-elc.el (unbytecompiled-lisp-files):
+	Remove version.el.
+	* version.el:
+	* version.el (Installation-file-coding-system): New.
+	Variable reflecting the native coding system at build time, to
+	better work out Installation-string. 
+	* version.el (Installation-string): New.
+	Moved from loadup.el; documented in more detail.
+
+2007-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule/latin.el:
 	"pl" is the normal POSIX language code for Polish, not "po"; if a
 	tutorial is provided, set tutorial-coding-system explicitly based

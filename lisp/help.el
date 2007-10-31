@@ -829,16 +829,13 @@ of the key sequence that ran this command."
 (defun describe-installation ()
   "Display a buffer showing information about this XEmacs was compiled."
   (interactive)
-  (if (and (boundp 'Installation-string)
-	   (stringp Installation-string))
+  (if (and-boundp 'Installation-string
+	(stringp Installation-string))
       (with-displaying-help-buffer
        (lambda ()
-	 (princ
-	  (if (fboundp 'decode-coding-string)
-	      (decode-coding-string Installation-string 'automatic-conversion)
-	    Installation-string)))
+	 (princ Installation-string))
        "Installation")
-    (error "No Installation information available.")))
+    (error 'unimplemented "No Installation information available.")))
 
 (defun view-emacs-news ()
   "Display info on recent changes to XEmacs."

@@ -69,9 +69,6 @@ Used during loadup and for documenting source of symbols defined in C.")
 (defvar preloaded-file-list nil
   "List of files preloaded into the XEmacs binary image.")
 
-(defvar Installation-string nil
-  "Description of XEmacs installation.")
-
 ;(start-profiling)
 
 (let ((gc-cons-threshold
@@ -88,22 +85,6 @@ Used during loadup and for documenting source of symbols defined in C.")
 ;; This is awfully damn early to be getting an error, right?
 (call-with-condition-handler 'really-early-error-handler
     #'(lambda ()
-
-	;; Initialize Installation-string.  We do it before loading
-	;; anything so that dumped code can make use of its value.
-	(setq Installation-string
-	      (save-current-buffer
-		(set-buffer (get-buffer-create (generate-new-buffer-name
-						" *temp*")))
-		;; insert-file-contents-internal bogusly calls
-		;; format-decode without checking if it's defined.
-		(fset 'format-decode #'(lambda (f l &optional v) l))
-		(insert-file-contents-internal
-		 (expand-file-name "Installation" build-directory))
-		(fmakunbound 'format-decode)
-		(prog1 (buffer-substring)
-		  (kill-buffer (current-buffer)))))
-
 	(setq load-path (list source-lisp))
 	(setq module-load-path (list 
 				(expand-file-name "modules" build-directory)))

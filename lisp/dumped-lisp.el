@@ -33,7 +33,7 @@ in dumped-lisp.el and is not itself listed.")
        "post-gc"
        "replace" 		; match-string used in version.el.
 
-       "version.el"             ; Ignore compiled-by-mistake version.elc
+       "version"
 
        "cl"
        "cl-extra"

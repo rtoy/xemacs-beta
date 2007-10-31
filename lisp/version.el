@@ -129,16 +129,48 @@ argument are optional. Only the Non-nil arguments are used in the test."
 ;;; We hope that this alias is easier for people to find.
 (define-function 'version 'emacs-version)
 
-;; Put the emacs version number into the `pure[]' array in a form that
-;; `what(1)' can extract from the executable or a core file.  We don't
-;; actually need this to be pointed to from lisp; pure objects can't
-;; be GCed.
-(concat "\n@" "(#)" (emacs-version)
-	"\n@" "(#)" "Configuration: "
-	system-configuration "\n")
+(defvar Installation-file-coding-system
+  (eval-when-compile `,(coding-system-name (find-coding-system 'native)))
+  "The coding system used to create the `Installation' file.
 
-;;Local variables:
-;;version-control: never
-;;End:
+The `Installation' file is created by configure, and the
+`Installation-string' variable reflects its contents.
+
+This is initialized to reflect the native coding system at the time
+version.el was byte-compiled; ideally it would reflect the native coding
+system of the environment when XEmacs was dumped, but the locale
+initialization code isn't called at dump time, and the appropriate value
+at byte-compile time should be close enough.  Note that this means that the
+value of `Installation-string' during dump time thus reflects loading the
+file using the `binary' coding system.  ")
+
+(defvar Installation-string
+  ;; Initialize Installation-string.  We do it before loading
+  ;; anything so that dumped code can make use of its value.
+  (save-current-buffer
+    (set-buffer (get-buffer-create (generate-new-buffer-name
+				    " *temp*")))
+    ;; insert-file-contents-internal bogusly calls
+    ;; format-decode without checking if it's defined.
+    (fset 'format-decode #'(lambda (f l &optional v) l))
+    (insert-file-contents-internal
+     (expand-file-name "Installation" build-directory)
+     ;; Relies on our working out the system coding system
+     ;; correctly at startup.
+     nil nil nil nil 
+     ;; Installation-file-coding-system is actually respected in
+     ;; mule/general-late.el, after all the dumped coding systems have been
+     ;; loaded.
+     'binary)
+    (fmakunbound 'format-decode)
+    (prog1 (buffer-substring)
+      (kill-buffer (current-buffer))))
+  "Description of XEmacs installation.
+
+This reflects the values that the configure script worked out at build time,
+including things like the C code features included at compile time and the
+installation prefix.  Normally used when submitting a bug report;
+occasionally used, in a way the XEmacs developers don't endorse, to work out
+version information.  ")
 
 ;;; version.el ends here
