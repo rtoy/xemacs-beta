@@ -159,7 +159,7 @@ void emacs_Xt_enqueue_focus_event (Widget wants_it, Lisp_Object frame,
 
 /************************************************************************/
 /* convert from a series of RGB triples to an XImage formated for the   */
-/* proper display 							*/
+/* proper display							*/
 /************************************************************************/
 static XImage *
 convert_EImage_to_XImage (Lisp_Object device, int width, int height,
@@ -591,18 +591,18 @@ x_locate_pixmap_file (Lisp_Object name)
     Ibyte *path = egetenv ("XBMLANGPATH");
     if (path)
       {
-        Extbyte *pathext;
+	Extbyte *pathext;
 	SubstitutionRec subs[1];
 	subs[0].match = 'B';
 	LISP_STRING_TO_EXTERNAL (name, subs[0].substitution, Qfile_name);
 	C_STRING_TO_EXTERNAL (path, pathext, Qfile_name);
 	/* #### Motif uses a big hairy default if $XBMLANGPATH isn't set.
-           We don't.  If you want it used, set it. */
+	   We don't.  If you want it used, set it. */
 	if (pathext &&
 	    (pathext = XtResolvePathname (display, "bitmaps", 0, 0, pathext,
 					  subs, XtNumber (subs), 0)))
-          {
-            name = build_ext_string (pathext, Qfile_name);
+	  {
+	    name = build_ext_string (pathext, Qfile_name);
 	    XtFree (pathext);
 	    return (name);
 	  }
@@ -1311,12 +1311,12 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
 	  Fmake_color_instance
 	    (value, device, encode_error_behavior_flag (ERROR_ME_DEBUG_WARN));
       else
-        {
-          assert (COLOR_SPECIFIERP (value));
-          value = Fspecifier_instance (value, domain, Qnil, Qnil);
-        }
+	{
+	  assert (COLOR_SPECIFIERP (value));
+	  value = Fspecifier_instance (value, domain, Qnil, Qnil);
+	}
       if (NILP (value))
-        continue;
+	continue;
       results = noseeum_cons (noseeum_cons (name, value), results);
       i++;
     }
@@ -1562,7 +1562,7 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (xpmattrs.x_hotspot);
       if (xpmattrs.valuemask & XpmHotspot)
 	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (xpmattrs.y_hotspot);
-      
+
       image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
 					 pointer_bg);
       break;
@@ -1718,7 +1718,7 @@ autodetect_normalize (Lisp_Object instantiator,
 	    alist = Fcons (Fcons (Q_hotspot_y, make_int (yhot)),
 			   alist);
 
-	  alist = xbm_mask_file_munging (alist, filename, Qnil, console_type);
+	  alist = xbm_mask_file_munging (alist, filename, Qt, console_type);
 
 	  {
 	    Lisp_Object result = alist_to_tagged_vector (Qxbm, alist);
@@ -1789,10 +1789,10 @@ autodetect_instantiate (Lisp_Object image_instance,
       const char *name_ext;
       LISP_STRING_TO_EXTERNAL (data, name_ext, Qfile_name);
       if (XmuCursorNameToIndex (name_ext) != -1)
-        {
-          result = alist_to_tagged_vector (Qcursor_font, alist);
-          is_cursor_font = 1;
-        }
+	{
+	  result = alist_to_tagged_vector (Qcursor_font, alist);
+	  is_cursor_font = 1;
+	}
     }
 
   if (!is_cursor_font)
@@ -2078,7 +2078,7 @@ x_unmap_subwindow (Lisp_Image_Instance *p)
       /* Since we are being unmapped we want the enclosing frame to
 	 get focus. The losing with simple scrolling but is the safest
 	 thing to do. */
-      emacs_Xt_handle_widget_losing_focus 
+      emacs_Xt_handle_widget_losing_focus
 	( XFRAME (IMAGE_INSTANCE_FRAME (p)),
 	  IMAGE_INSTANCE_X_WIDGET_ID (p));
       XtUnmapWidget (IMAGE_INSTANCE_X_CLIPWIDGET (p));
@@ -2175,7 +2175,7 @@ x_redisplay_widget (Lisp_Image_Instance *p)
 	 changes we make to the values we get back will look like they
 	 have already been applied. If we rebuild the widget tree then
 	 we may lose properties. */
-      wv = copy_widget_value_tree (lw_get_all_values 
+      wv = copy_widget_value_tree (lw_get_all_values
 				   (IMAGE_INSTANCE_X_WIDGET_LWID (p)),
 				   NO_CHANGE);
     }
@@ -2236,7 +2236,7 @@ x_redisplay_widget (Lisp_Image_Instance *p)
       Arg al[2];
       XtSetArg (al [0], XtNx, &IMAGE_INSTANCE_X_WIDGET_XOFFSET (p));
       XtSetArg (al [1], XtNy, &IMAGE_INSTANCE_X_WIDGET_YOFFSET (p));
-      XtGetValues (FRAME_X_TEXT_WIDGET 
+      XtGetValues (FRAME_X_TEXT_WIDGET
 		   (XFRAME (IMAGE_INSTANCE_FRAME (p))), al, 2);
     }
 
@@ -2977,7 +2977,7 @@ image_instantiator_format_create_glyphs_x (void)
   IIFORMAT_HAS_METHOD (autodetect, validate);
   IIFORMAT_HAS_METHOD (autodetect, normalize);
   IIFORMAT_HAS_METHOD (autodetect, possible_dest_types);
-  /* #### autodetect is flawed IMO: 
+  /* #### autodetect is flawed IMO:
   1. It makes the assumption that you can detect whether the user
   wanted a cursor or a string based on the data, since the data is a
   string you have to prioritise cursors. Instead we will force users

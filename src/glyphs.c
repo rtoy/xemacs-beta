@@ -474,8 +474,8 @@ find_instantiator_differences (Lisp_Object new_, Lisp_Object old)
   for (len -= 2; len >= 1; len -= 2)
     {
       /* Keyword comparisons can be done with eq, the value must be
-         done with equal.
-         #### Note that this does not optimize re-ordering. */
+	 done with equal.
+	 #### Note that this does not optimize re-ordering. */
       if (!EQ (elt[len], old_elt[len])
 	  || !internal_equal (elt[len+1], old_elt[len+1], 0))
 	alist = Fcons (Fcons (elt[len], elt[len+1]), alist);
@@ -914,7 +914,7 @@ static const struct memory_description image_instance_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Image_Instance, name) },
   { XD_LISP_OBJECT, offsetof (Lisp_Image_Instance, parent) },
   { XD_LISP_OBJECT, offsetof (Lisp_Image_Instance, instantiator) },
-  { XD_UNION, offsetof (struct Lisp_Image_Instance, u), 
+  { XD_UNION, offsetof (struct Lisp_Image_Instance, u),
     XD_INDIRECT (0, 0), { &image_instance_data_description } },
   { XD_END }
 };
@@ -993,7 +993,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 
   if (print_readably)
     printing_unreadable_object ("#<image-instance 0x%x>",
-           ii->header.uid);
+	   ii->header.uid);
   write_fmt_string_lisp (printcharfun, "#<image-instance (%s) ", 1,
 			 Fimage_instance_type (obj));
   if (!NILP (ii->name))
@@ -1095,7 +1095,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 	  write_c_string (printcharfun, "dead");
 	else
 	  write_c_string (printcharfun,
-	                  DEVICE_TYPE_NAME (XDEVICE (FRAME_DEVICE (f))));
+			  DEVICE_TYPE_NAME (XDEVICE (FRAME_DEVICE (f))));
       }
       write_c_string (printcharfun, "-frame>");
       write_fmt_string (printcharfun, " 0x%p",
@@ -1293,7 +1293,7 @@ image_instance_hash (Lisp_Object obj, int depth)
 
     case IMAGE_WIDGET:
       /* We need the hash to be equivalent to what should be
-         displayed. */
+	 displayed. */
       hash = HASH5 (hash,
 		    LISP_HASH (IMAGE_INSTANCE_WIDGET_TYPE (i)),
 		    internal_hash (IMAGE_INSTANCE_WIDGET_PROPS (i), depth + 1),
@@ -2236,7 +2236,7 @@ signal_double_image_error (const CIbyte *string1, const CIbyte *string2,
 			   Lisp_Object data)
 {
   signal_error_1 (Qimage_conversion_error,
-                list3 (build_msg_string (string1),
+		list3 (build_msg_string (string1),
 		       build_msg_string (string2),
 		       data));
 }
@@ -2246,7 +2246,7 @@ signal_double_image_error_2 (const CIbyte *string1, const CIbyte *string2,
 			     Lisp_Object data1, Lisp_Object data2)
 {
   signal_error_1 (Qimage_conversion_error,
-                list4 (build_msg_string (string1),
+		list4 (build_msg_string (string1),
 		       build_msg_string (string2),
 		       data1, data2));
 }
@@ -2530,9 +2530,10 @@ formatted_string_instantiate (Lisp_Object image_instance,
 /*                        pixmap file functions                         */
 /************************************************************************/
 
-/* If INSTANTIATOR refers to inline data, return Qnil.
+/* If INSTANTIATOR refers to inline data, return Qt.
    If INSTANTIATOR refers to data in a file, return the full filename
-   if it exists; otherwise, return a cons of (filename).
+   if it exists, Qnil if there's no console method for locating the file, or
+   (filename) if there was an error locating the file.
 
    FILE_KEYWORD and DATA_KEYWORD are symbols specifying the
    keywords used to look up the file and inline data,
@@ -2556,21 +2557,21 @@ potential_pixmap_file_instantiator (Lisp_Object instantiator,
   if (!NILP (file) && NILP (data))
     {
       struct console_methods *meths
-        = decode_console_type(console_type, ERROR_ME);
+	= decode_console_type(console_type, ERROR_ME);
 
       if (HAS_CONTYPE_METH_P (meths, locate_pixmap_file))
-        {
-          Lisp_Object retval
-            = CONTYPE_METH (meths, locate_pixmap_file, (file));
+	{
+	  Lisp_Object retval
+	    = CONTYPE_METH (meths, locate_pixmap_file, (file));
 
-      if (!NILP (retval))
-	return retval;
-      else
-	return Fcons (file, Qnil); /* should have been file */
-    }
+	  if (!NILP (retval))
+	    return retval;
+	  else
+	    return Fcons (file, Qnil); /* should have been file */
+	}
       else /* method unavailable */
-  return Qnil;
-}
+	return Qnil;
+    }
 
   return Qt;
 }
@@ -2751,10 +2752,10 @@ xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
   /* This is unclean but it's fairly standard -- a number of the
      bitmaps in /usr/include/X11/bitmaps use it -- so we support
      it. */
-  if (NILP (mask_file)
+  if (EQ (mask_file, Qt)
       /* don't override explicitly specified mask data. */
       && NILP (assq_no_quit (Q_mask_data, alist))
-      && !NILP (file))
+      && !EQ (file, Qt))
     {
       mask_file = MAYBE_LISP_CONTYPE_METH
 	(decode_console_type(console_type, ERROR_ME),
@@ -2834,7 +2835,6 @@ xbm_normalize (Lisp_Object inst, Lisp_Object console_type,
 		       alist);
     }
 
-  /* #### FIXME: Hmmm... what about mask being Qt ?? -- dvl */
   alist = xbm_mask_file_munging (alist, file, mask_file, console_type);
 
   {
@@ -2904,11 +2904,11 @@ xface_normalize (Lisp_Object inst, Lisp_Object console_type,
   if (EQ (file, Qt) && EQ (mask_file, Qt)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
 
-
-  /* #### FIXME: and what about file / mask being Qt ? -- dvl */
   alist = tagged_vector_to_alist (inst);
 
   {
+    /* #### FIXME: what if EQ (file, Qt) && !EQ (mask, Qt) ? Is that possible?
+       If so, we have a problem... -- dvl */
     Lisp_Object data = make_string_from_file (file);
     alist = remassq_no_quit (Q_file, alist);
     /* there can't be a :data at this point. */
@@ -3382,7 +3382,7 @@ image_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 	ABORT ();	/* We're not allowed anything else currently. */
 
       /* If we don't have an instance at this point then create
-         one. */
+	 one. */
       if (UNBOUNDP (instance))
 	{
 	  Lisp_Object locative =
@@ -3429,12 +3429,12 @@ image_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
       else if (NILP (instance))
 	gui_error ("Can't instantiate image (probably cached)", instantiator);
       /* We found an instance. However, because we are using the glyph
-         as the hash key instead of the instantiator, the current
-         instantiator may not be the same as the original. Thus we
-         must update the instance based on the new
-         instantiator. Preserving instance identity like this is
-         important to stop excessive window system widget creation and
-         deletion - and hence flashing. */
+	 as the hash key instead of the instantiator, the current
+	 instantiator may not be the same as the original. Thus we
+	 must update the instance based on the new
+	 instantiator. Preserving instance identity like this is
+	 important to stop excessive window system widget creation and
+	 deletion - and hence flashing. */
       else
 	{
 	  /* #### This function should be able to cope with *all*
@@ -4284,7 +4284,7 @@ glyph_do_layout (Lisp_Object glyph_or_image, int width, int height,
 
 
 /*****************************************************************************
- *                     glyph cachel functions                         	     *
+ *                     glyph cachel functions	     *
  *****************************************************************************/
 
 /* #### All of this is 95% copied from face cachels.  Consider
@@ -4457,7 +4457,7 @@ compute_glyph_cachel_usage (glyph_cachel_dynarr *glyph_cachels,
 
 
 /*****************************************************************************
- *                     subwindow cachel functions                     	     *
+ *                     subwindow cachel functions	     *
  *****************************************************************************/
 /* Subwindows are curious in that you have to physically unmap them to
    not display them. It is problematic deciding what to do in
@@ -4825,7 +4825,7 @@ unmap_subwindow (Lisp_Object subwindow)
   register_ignored_expose (f, IMAGE_INSTANCE_DISPLAY_X (ii),
 			   IMAGE_INSTANCE_DISPLAY_Y (ii),
 			   IMAGE_INSTANCE_DISPLAY_WIDTH (ii),
-			   IMAGE_INSTANCE_DISPLAY_HEIGHT (ii));  
+			   IMAGE_INSTANCE_DISPLAY_HEIGHT (ii));
   IMAGE_INSTANCE_SUBWINDOW_DISPLAYEDP (ii) = 0;
 
   MAYBE_DEVMETH (XDEVICE (IMAGE_INSTANCE_DEVICE (ii)),
@@ -5101,7 +5101,7 @@ Don't use this.
 	    {
 	      /* Increment the index of the image slice we are currently
 		 viewing. */
-	      IMAGE_INSTANCE_PIXMAP_SLICE (ii) = 
+	      IMAGE_INSTANCE_PIXMAP_SLICE (ii) =
 		(IMAGE_INSTANCE_PIXMAP_SLICE (ii) + 1)
 		% IMAGE_INSTANCE_PIXMAP_MAXSLICE (ii);
 	      /* We might need to kick redisplay at this point - but we

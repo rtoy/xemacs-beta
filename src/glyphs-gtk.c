@@ -162,7 +162,7 @@ Lisp_Object Qgtk_widget_redisplay_internal, Qgtk_widget_set_style;
 
 /************************************************************************/
 /* convert from a series of RGB triples to an XImage formated for the   */
-/* proper display 							*/
+/* proper display							*/
 /************************************************************************/
 static GdkImage *
 convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
@@ -215,7 +215,7 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
       gdk_image_destroy (outimg);
       return NULL;
     }
-  
+
   if (vis->type == GDK_VISUAL_PSEUDO_COLOR)
     {
       unsigned long pixarray[256];
@@ -231,7 +231,7 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
 	{
 	  GdkColor color;
 	  int res;
-	
+
 	  color.red = qtable->rm[i] ? qtable->rm[i] << 8 : 0;
 	  color.green = qtable->gm[i] ? qtable->gm[i] << 8 : 0;
 	  color.blue = qtable->bm[i] ? qtable->bm[i] << 8 : 0;
@@ -343,7 +343,7 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
 #endif
 	    }
 	}
-    }  
+    }
   return outimg;
 }
 
@@ -885,7 +885,7 @@ static void
 gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
 				     int width, int height,
 				     int slices,
-				     unsigned char *eimage, 
+				     unsigned char *eimage,
 				     int dest_mask,
 				     Lisp_Object instantiator,
 				     Lisp_Object pointer_fg,
@@ -1168,13 +1168,13 @@ extract_xpm_color_names (Lisp_Object device,
 	  Fmake_color_instance
 	  (value, device, encode_error_behavior_flag (ERROR_ME_DEBUG_WARN));
       else
-        {
-          assert (COLOR_SPECIFIERP (value));
-          value = Fspecifier_instance (value, domain, Qnil, Qnil);
-        }
+	{
+	  assert (COLOR_SPECIFIERP (value));
+	  value = Fspecifier_instance (value, domain, Qnil, Qnil);
+	}
 
       if (NILP (value))
-        continue;
+	continue;
       results = noseeum_cons (noseeum_cons (name, value), results);
       i++;
     }
@@ -1188,7 +1188,7 @@ extract_xpm_color_names (Lisp_Object device,
   for (j=0; j<i; j++)
     {
       Lisp_Object cons = XCAR (results);
-      colortbl[j].color = 
+      colortbl[j].color =
 	* COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (XCDR (cons)));
 
       colortbl[j].name = XSTRING_DATA (XCAR (cons));
@@ -1334,7 +1334,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = 1;
 	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = 1;
 
-     
+
       image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
 					 pointer_bg);
       break;
@@ -1441,9 +1441,9 @@ gtk_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 static void
 gtk_resource_validate (Lisp_Object instantiator)
 {
-  if ((NILP (find_keyword_in_vector (instantiator, Q_file)) 
+  if ((NILP (find_keyword_in_vector (instantiator, Q_file))
        &&
-       NILP (find_keyword_in_vector (instantiator, Q_resource_id))) 
+       NILP (find_keyword_in_vector (instantiator, Q_resource_id)))
       ||
       NILP (find_keyword_in_vector (instantiator, Q_resource_type)))
     sferror ("Must supply :file, :resource-id and :resource-type",
@@ -1513,11 +1513,11 @@ gtk_resource_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     iitype = IMAGE_POINTER;
   else if (dest_mask & IMAGE_COLOR_PIXMAP_MASK)
     iitype = IMAGE_COLOR_PIXMAP;
-  else 
+  else
     incompatible_image_types (instantiator, dest_mask,
-   			      IMAGE_COLOR_PIXMAP_MASK | IMAGE_POINTER_MASK);
+			      IMAGE_COLOR_PIXMAP_MASK | IMAGE_POINTER_MASK);
 #endif
-  
+
   /* mess with the keyword info we were provided with */
   gtk_initialize_pixmap_image_instance (ii, 1, type);
   c = gdk_cursor_new ((GdkCursorType) resource_name_to_resource (resource_id, type));
@@ -1614,7 +1614,7 @@ autodetect_normalize (Lisp_Object instantiator,
 	    alist = Fcons (Fcons (Q_hotspot_y, make_int (yhot)),
 			   alist);
 
-	  alist = xbm_mask_file_munging (alist, filename, Qnil, console_type);
+	  alist = xbm_mask_file_munging (alist, filename, Qt, console_type);
 
 	  {
 	    Lisp_Object result = alist_to_tagged_vector (Qxbm, alist);
@@ -1689,10 +1689,10 @@ autodetect_instantiate (Lisp_Object image_instance,
 			  Qfile_name);
 
       if (cursor_name_to_index (name_ext) != -1)
-        {
-          result = alist_to_tagged_vector (Qcursor_font, alist);
-          is_cursor_font = 1;
-        }
+	{
+	  result = alist_to_tagged_vector (Qcursor_font, alist);
+	  is_cursor_font = 1;
+	}
     }
 
   if (!is_cursor_font)
@@ -1851,7 +1851,7 @@ cursor_name_to_index (const char *name)
     {
 	/* Need to initialize the array */
 	/* Supposedly since this array is static it should be
-           initialized to NULLs for us, but I'm very paranoid. */
+	   initialized to NULLs for us, but I'm very paranoid. */
 	for (i = 0; i < GDK_NUM_GLYPHS; i++)
 	{
 	    the_gdk_cursors[i] = NULL;
@@ -2210,7 +2210,7 @@ update_widget_face (GtkWidget *w, Lisp_Image_Instance *ii,
       GdkColor *fcolor, *bcolor;
 
       style = gtk_style_copy (style);
-  
+
       /* Update the foreground. */
       pixel = FACE_FOREGROUND (IMAGE_INSTANCE_WIDGET_FACE (ii), domain);
       fcolor = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (pixel));
@@ -2592,7 +2592,7 @@ static void gtk_tab_control_callback(GtkNotebook *notebook,
 	 this possibility. */
       if (IMAGE_INSTANCEP (image_instance))
 	XIMAGE_INSTANCE_WIDGET_ACTION_OCCURRED (image_instance) = 1;
-      
+
       if (!NILP (callback_ex) && !UNBOUNDP (callback_ex))
 	{
 	  event = Fmake_event (Qnil, Qnil);
@@ -3009,4 +3009,3 @@ gtk_colorize_image_instance (Lisp_Object image_instance,
     return 1;
   }
 }
-
