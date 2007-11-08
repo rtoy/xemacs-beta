@@ -1,3 +1,12 @@
+2007-11-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cus-edit.el (custom-save-all):
+	Merge Jason Spiro's fix of 
+	c241693f0710021645g642f145n5925c7a35e7b2c58@mail.gmail.com , to
+	avoid corruption of the custom-set-variables and custom-set-fonts
+	calls in ~/.emacs if XEmacs doesn't understand any part of the
+	syntax of ~/.emacs . 
+
 2007-10-31  Mike Sperber  <mike@xemacs.org>
 
 	* autoload.el (make-autoload): Add `defclass' and `defmethod' as

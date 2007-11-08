@@ -3756,6 +3756,9 @@ Hashes several heavily used functions for `custom-save-resets'")
 ;;;###autoload
 (defun custom-save-all ()
   "Save all customizations in `custom-file'."
+  (when init-file-had-error
+    (error 'invalid-change
+	   "Cannot save customizations; init file was not fully loaded"))
   (let ((inhibit-read-only t))
     (custom-save-variables)
     (custom-save-faces)
