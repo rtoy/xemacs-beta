@@ -249,7 +249,8 @@ or macro definition or a defcustom)."
      ((memq car '(defun define-skeleton defmacro define-derived-mode
 		   define-generic-mode easy-mmode-define-minor-mode
 		   easy-mmode-define-global-mode
-		   define-minor-mode defun* defmacro*))
+		   define-minor-mode defun* defmacro*
+		   defclass defmethod)) ; from the EIEIO package
       (let* ((macrop (memq car '(defmacro defmacro*)))
 	     (name (nth 1 form))
 	     (body (nthcdr (get car 'doc-string-elt) form))
@@ -799,6 +800,8 @@ at the beginning of lines and ^L characters."
 (put 'easy-mmode-define-minor-mode 'doc-string-elt 2)
 (put 'define-minor-mode 'doc-string-elt 2)
 (put 'define-generic-mode 'doc-string-elt 7)
+(put 'defclass 'doc-string-elt 4)
+(put 'defmethod 'doc-string-elt 3)
 ;; defin-global-mode has no explicit docstring.
 (put 'easy-mmode-define-global-mode 'doc-string-elt 1000)
 

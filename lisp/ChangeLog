@@ -1,3 +1,9 @@
+2007-10-31  Mike Sperber  <mike@xemacs.org>
+
+	* autoload.el (make-autoload): Add `defclass' and `defmethod' as
+	defmacro-like operators.  This is need to enable compilation of
+	packages that depend on eieio.
+
 2007-10-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/general-late.el:
