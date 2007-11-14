@@ -2541,8 +2541,8 @@ is not available by any other means.
 
   DEFVAR_LISP ("user-full-name", &Vuser_full_name /*
 *The name of the user.
-The function `user-full-name', which will return the value of this
- variable, when called without arguments.
+The function `user-full-name' will return the value of this variable, when
+called without arguments.
 This is initialized to the value of the NAME environment variable.
 */ );
   /* Initialized at run-time. */

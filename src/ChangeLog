@@ -1,3 +1,20 @@
+2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* editfns.c (vars_of_editfns):
+	Correct the docstring of user-full-name. 
+	* fileio.c:
+	* fileio.c (Fmake_temp_name):
+	Document that make-temp-file is available and the best approach to
+	this.
+	* fileio.c (Fwrite_region_internal):
+	Take a new arg, MUSTBENEW, to error if the file to be written
+	already exists.
+	* fileio.c (auto_save_1):
+	Update a call to Fwrite_region_internal to pass the new argument. 
+	* fileio.c (syms_of_fileio):
+	Provide 'excl as a symbol, for the calls to
+	write-region-internal. 
+
 2007-11-05  Didier Verna  <didier@xemacs.org>
 
 	* glyphs.c (potential_pixmap_file_instanciator): Fix comment

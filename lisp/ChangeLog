@@ -1,3 +1,19 @@
+2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* code-files.el (write-region):
+	Provide a new arg, CODING-SYSTEM-OR-MUSTBENEW, for compatibility
+	both with GNU (where it has the MUSTBENEW meaning) and earlier
+	XEmacs code (where it has the CODING-SYSTEM meaning). 
+	* files.el:
+	* files.el (normal-backup-enable-predicate):
+	* files.el (auto-save-file-name-transforms):
+	Correct the docstrings of #'normal-backup-enable-predicate,
+	#'auto-save-file-name-transforms.
+	* files.el (make-temp-file): New.
+	Merge from GNU. 
+	* subr.el:
+	Document that #'make-temp-name is now in files.el. 
+
 2007-11-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cus-edit.el (custom-save-all):

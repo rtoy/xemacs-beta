@@ -514,7 +514,8 @@ FILENAME, APPEND, VISIT, LOCKNAME, and CODING-SYSTEM, the same as the
 corresponding arguments in the call to `write-region'.")
 
 (defun write-region (start end filename
-		     &optional append visit lockname coding-system)
+		     &optional append visit lockname
+                     coding-system-or-mustbenew)
   "Write current region into specified file.
 By default the file's existing contents are replaced by the specified region.
 Called interactively, prompts for a file name.  With a prefix arg, prompts
@@ -536,25 +537,40 @@ The optional sixth arg LOCKNAME, if non-nil, specifies the name to
   use for locking and unlocking, overriding FILENAME and VISIT.
 Kludgy feature: if START is a string, then that string is written
 to the file, instead of any buffer contents, and END is ignored.
-Optional seventh argument CODING-SYSTEM specifies the coding system
-  used to encode the text when it is written out, and defaults to
-  the value of `buffer-file-coding-system' in the current buffer.
+
+Optional seventh argument CODING-SYSTEM-OR-MUSTBENEW has a rather kludgy
+  interpretation.  If it is a coding system it describes the coding system
+  used to encode the text when it is written out, defaulting to to the value
+  of `buffer-file-coding-system' in the current buffer.
+
+If CODING-SYSTEM-OR-MUSTBENEW is non-nil and not a coding system, it means
+  that a check for an existing file with the same name should be made; with
+  a value of 'excl XEmacs will error if the file already exists and never
+  overwrite it.  If it is some other non-nil non-coding-system value, the
+  user will be asked for confirmation if the file already exists, and the
+  file will be overwritten if confirmation is given.
+
 See also `write-region-pre-hook' and `write-region-post-hook'."
   (interactive "r\nFWrite region to file: \ni\ni\ni\nZCoding-system: ")
-  (setq coding-system
-	(or coding-system-for-write
-	    (run-hook-with-args-until-success
-	     'write-region-pre-hook
-	     start end filename append visit lockname coding-system)
-	    coding-system
-	    buffer-file-coding-system
-	    (find-file-coding-system-for-write-from-filename filename)
-	    ))
-  (if (consp coding-system)
-      ;; One of the `write-region-pre-hook' functions wrote the file
-      coding-system
-    (let ((func
-	   (coding-system-property coding-system 'pre-write-conversion)))
+  (let (mustbenew coding-system func hook-result)
+    (setq hook-result
+          (or coding-system-for-write
+              (run-hook-with-args-until-success
+               'write-region-pre-hook
+               start end filename append visit lockname
+               coding-system-or-mustbenew)
+              coding-system
+              buffer-file-coding-system
+              (find-file-coding-system-for-write-from-filename filename)))
+    (if (consp hook-result)
+        ;; One of the `write-region-pre-hook' functions wrote the file. 
+        hook-result
+      ;; The hooks didn't do the work; do it ourselves.
+      (setq mustbenew (unless (coding-system-p coding-system-or-mustbenew)
+                        coding-system-or-mustbenew)
+            coding-system (cond ((coding-system-p hook-result) hook-result)
+                                ((null mustbenew) coding-system-or-mustbenew))
+            func (coding-system-property coding-system 'pre-write-conversion))
       (if func
 	  (let ((curbuf (current-buffer))
 		(tempbuf (generate-new-buffer " *temp-write-buffer*"))
@@ -569,7 +585,8 @@ See also `write-region-pre-hook' and `write-region-post-hook'."
 					 append
 					 (if (eq visit t) nil visit)
 					 lockname
-					 coding-system))
+                                         coding-system
+                                         mustbenew))
 	      ;; leaving a buffer associated with file will cause problems
 	      ;; when next visiting.
 	      (kill-buffer tempbuf)
@@ -579,7 +596,7 @@ See also `write-region-pre-hook' and `write-region-post-hook'."
 		    (set-buffer-modified-p nil)
 		    (if (buffer-file-name) (set-visited-file-modtime))))))
 	(write-region-internal start end filename append visit lockname
-			       coding-system)))
+			       coding-system mustbenew)))
     (run-hook-with-args 'write-region-post-hook
 			start end filename append visit lockname
 			coding-system)))

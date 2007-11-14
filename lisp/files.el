@@ -163,8 +163,8 @@ This variable is relevant only if `backup-by-copying' and
 
 (defun normal-backup-enable-predicate (name)
   "Default `backup-enable-predicate' function.
-Checks for files in `temporary-file-directory' or
-`small-temporary-file-directory'."
+Checks for files in the directory returned by `temp-directory' or specified
+by `small-temporary-file-directory'."
   (let ((temporary-file-directory (temp-directory)))
     (not (or (let ((comp (compare-strings temporary-file-directory 0 nil
 					  name 0 nil)))
@@ -330,9 +330,8 @@ All the transforms in the list are tried, in the order they are listed.
 When one transform applies, its result is final;
 no further transforms are tried.
 
-The default value is set up to put the auto-save file into the
-temporary directory (see the variable `temporary-file-directory') for
-editing a remote file."
+The default value is set up to put the auto-save file into the temporary
+directory (see the function `temp-directory') for editing a remote file."
   :group 'auto-save
   :type '(repeat (list (string :tag "Regexp") (string :tag "Replacement")))
   ;:version "21.1"
@@ -715,6 +714,51 @@ unlike `file-truename'."
 	(setq newname (expand-file-name tem (file-name-directory newname)))
 	(setq count (1- count))))
     newname))
+
+(defun make-temp-file (prefix &optional dir-flag suffix)
+  "Create a temporary file.
+The returned file name (created by appending some random characters at the
+end of PREFIX, and expanding against the return value of `temp-directory' if
+necessary), is guaranteed to point to a newly created empty file.  You can
+then use `write-region' to write new data into the file.
+
+If DIR-FLAG is non-nil, create a new empty directory instead of a file.
+
+If SUFFIX is non-nil, add that at the end of the file name.
+
+This function is analagous to mkstemp(3) under POSIX, avoiding the race
+condition between testing for the existence of the generated filename (under
+POSIX with mktemp(3), under Emacs Lisp with `make-temp-name') and creating
+it."
+  (let ((umask (default-file-modes))
+	(temporary-file-directory (temp-directory))
+	file)
+    (unwind-protect
+	(progn
+	  ;; Create temp files with strict access rights.  It's easy to
+	  ;; loosen them later, whereas it's impossible to close the
+	  ;; time-window of loose permissions otherwise.
+	  (set-default-file-modes #o700)
+	  (while (condition-case ()
+		     (progn
+		       (setq file
+			     (make-temp-name
+			      (expand-file-name prefix
+						temporary-file-directory)))
+		       (if suffix
+			   (setq file (concat file suffix)))
+		       (if dir-flag
+			   (make-directory file)
+			 (write-region "" nil file nil 'silent nil 'excl))
+		       nil)
+		   (file-already-exists t))
+	    ;; the file was somehow created by someone else between
+	    ;; `make-temp-name' and `write-region', let's try again.
+	    nil)
+	  file)
+      ;; Reset the umask.
+      (set-default-file-modes umask))))
+
 
 (defun switch-to-other-buffer (arg)
   "Switch to the previous buffer.  With a numeric arg, n, switch to the nth

@@ -1678,7 +1678,7 @@ one is kept."
 
 ;; assq-del-all in obsolete.el.
 
-;; (defun make-temp-file (prefix &optional dir-flag suffix) #### doesn't exist.
+;; make-temp-file in files.el.
 
 ;; add-minor-mode in modeline.el.
 

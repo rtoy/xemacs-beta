@@ -122,6 +122,7 @@ static Lisp_Object Vinhibit_file_name_handlers;
 static Lisp_Object Vinhibit_file_name_operation;
 
 Lisp_Object Qfile_already_exists;
+Lisp_Object Qexcl;
 
 Lisp_Object Qauto_save_hook;
 Lisp_Object Qauto_save_error;
@@ -623,11 +624,12 @@ danger of generating a name being used by another process.
 
 In addition, this function makes an attempt to choose a name that
 does not specify an existing file.  To make this work, PREFIX should
-be an absolute file name.  A reasonable idiom is
+be an absolute file name.
 
-\(make-temp-name (expand-file-name "myprefix" (temp-directory)))
-
-which puts the file in the OS-specified temporary directory.
+This function is analagous to mktemp(3) under POSIX, and as with it, there
+exists a race condition between the test for the existence of the new file
+and its creation.  See `make-temp-name' for a function which avoids this
+race condition by specifying the appropriate flags to `write-region'. 
 */
        (prefix))
 {
@@ -3313,21 +3315,31 @@ build_annotations_unwind (Lisp_Object buf)
   return Qnil;
 }
 
-DEFUN ("write-region-internal", Fwrite_region_internal, 3, 7,
+DEFUN ("write-region-internal", Fwrite_region_internal, 3, 8,
        "r\nFWrite region to file: ", /*
 Write current region into specified file; no coding-system frobbing.
-This function is identical to `write-region' except for the handling
-of the CODESYS argument under XEmacs/Mule. (When Mule support is not
-present, both functions are identical and ignore the CODESYS argument.)
-If support for Mule exists in this Emacs, the file is encoded according
-to the value of CODESYS.  If this is nil, no code conversion occurs.
+
+This function is almost identical to `write-region'; see that function for
+documentation of the START, END, FILENAME, APPEND, VISIT, and LOCKNAME
+arguments.  CODESYS specifies the encoding to be used for the file; if it is
+nil, no code conversion occurs. (With `write-region' the coding system is
+determined automatically if not specified.)
+
+MUSTBENEW specifies that a check for an existing file of the same name
+should be made.  If it is 'excl, XEmacs will error on detecting such a file
+and never write it.  If it is some other non-nil value, the user will be
+prompted to confirm the overwriting of an existing file.  If it is nil,
+existing files are silently overwritten when file system permissions allow
+this.
 
 As a special kludge to support auto-saving, when START is nil START and
 END are set to the beginning and end, respectively, of the buffer,
 regardless of any restrictions.  Don't use this feature.  It is documented
 here because write-region handler writers need to be aware of it.
+
 */
-       (start, end, filename, append, visit, lockname, codesys))
+       (start, end, filename, append, visit, lockname, codesys,
+        mustbenew))
 {
   /* This function can call lisp.  GC checked 2000-07-28 ben */
   int desc;
@@ -3371,6 +3383,9 @@ here because write-region handler writers need to be aware of it.
 
   {
     Lisp_Object handler;
+
+    if (!NILP (mustbenew) && !EQ (mustbenew, Qexcl))
+      barf_or_query_if_file_exists (filename, "overwrite", 1, NULL);
 
     if (visiting_other)
       visit_file = Fexpand_file_name (visit, Qnil);
@@ -3433,12 +3448,14 @@ here because write-region handler writers need to be aware of it.
   desc = -1;
   if (!NILP (append))
     {
-      desc = qxe_open (XSTRING_DATA (fn), O_WRONLY | OPEN_BINARY, 0);
+      desc = qxe_open (XSTRING_DATA (fn), O_WRONLY | OPEN_BINARY
+                       | (EQ (mustbenew, Qexcl) ? O_EXCL : 0), 0);
     }
   if (desc < 0)
     {
       desc = qxe_open (XSTRING_DATA (fn),
-		       O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
+		       O_WRONLY | (EQ (mustbenew, Qexcl) ? O_EXCL : O_TRUNC)
+                       | O_CREAT | OPEN_BINARY,
 		       auto_saving ? auto_save_mode_bits : CREAT_MODE);
     }
 
@@ -4007,11 +4024,11 @@ auto_save_1 (Lisp_Object UNUSED (ignored))
     Fwrite_region_internal (Qnil, Qnil, a, Qnil, Qlambda, Qnil,
 #if 1 /* #### Kyle wants it changed to not use escape-quoted.  Think
 	 carefully about how this works. */
-	        	    Qescape_quoted
+	        	    Qescape_quoted,
 #else
-			    current_buffer->buffer_file_coding_system
+			    current_buffer->buffer_file_coding_system,
 #endif
-			    );
+			    Qnil);
 }
 
 static Lisp_Object
@@ -4367,6 +4384,7 @@ syms_of_fileio (void)
   DEFSYMBOL (Qverify_visited_file_modtime);
   DEFSYMBOL (Qset_visited_file_modtime);
   DEFSYMBOL (Qcar_less_than_car); /* Vomitous! */
+  DEFSYMBOL (Qexcl);
 
   DEFSYMBOL (Qauto_save_hook);
   DEFSYMBOL (Qauto_save_error);
