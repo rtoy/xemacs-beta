@@ -947,17 +947,17 @@ simply returns the length of the string."
 TYPE should be `list' or `vector'."
   (ecase type
     (list
-     (mapcar #'identity string))
+     (append string nil))
     (vector
-     (mapvector #'identity string))))
+     (vconcat string))))
 
 (defun string-to-list (string)
   "Return a list of characters in STRING."
-  (mapcar #'identity string))
+  (append string nil))
 
 (defun string-to-vector (string)
   "Return a vector of characters in STRING."
-  (mapvector #'identity string))
+  (vconcat string))
 
 (defun store-substring (string idx obj)
   "Embed OBJ (string or character) at index IDX of STRING."

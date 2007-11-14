@@ -1,5 +1,14 @@
 2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* subr.el (string-to-sequence):
+	* subr.el (string-to-list):
+	* subr.el (string-to-vector):
+	(append STRING nil) is faster than (mapcar #'identity STRING),
+	(vconcat STRING) is faster than (mapcar #'identity STRING). Change
+	from GNU. 
+
+2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* code-files.el (write-region):
 	Provide a new arg, CODING-SYSTEM-OR-MUSTBENEW, for compatibility
 	both with GNU (where it has the MUSTBENEW meaning) and earlier
