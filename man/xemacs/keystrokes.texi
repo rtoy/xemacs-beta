@@ -444,18 +444,23 @@ This section briefly discusses how characters are represented in Emacs
 buffers.  @xref{Key Sequences}, for information on representing key
 sequences to create key bindings. 
 
-  ASCII graphic characters in Emacs buffers are displayed with their
-graphics.  @key{LFD} is the same as a newline character; it is displayed
-by starting a new line.  @key{TAB} is displayed by moving to the next
-tab stop column (usually every 8 spaces).  Other control characters are
-displayed as a caret (@samp{^}) followed by the non-control version of
-the character; thus, @kbd{C-a} is displayed as @samp{^A}.  Non-ASCII
-characters 128 and up are displayed with octal escape sequences; thus,
-character code 243 (octal), also called @kbd{M-#} when used as an input
-character, is displayed as @samp{\243}.
+  Printable characters (letters, numbers, punctuation and so on) in
+XEmacs buffers are displayed as such. @key{LFD} (line feed, character
+code @samp{\012} (octal)) is the same as a newline character; it is
+displayed by starting a new line.  @key{TAB} is displayed by moving to
+the next tab stop column (usually every 8 spaces).  Other control
+characters below #x20 (hexadecimal) are displayed as a caret (@samp{^})
+followed by the non-control version of the character; thus, @kbd{C-a} is
+displayed as @samp{^A}.  Characters between (hexadecimal) #x80 and #xA0
+are displayed with octal escape sequences; thus, character code 243
+(octal), also called @kbd{M-#} when used as an input character, is
+displayed as @samp{\243}.
 
 The variable @code{ctl-arrow} may be used to alter this behavior.
-@xref{Display Vars}.
+@xref{Display Vars}. As a rule, its value limits octal display to those
+characters in the range just mentioned, and otherwise characters are
+treated as printable, and will be displayed as themselves when the
+relevant fonts are available. 
 
 @node Commands, Non-Latin keyboards, Character Representation, Keystrokes
 @section Keys and Commands

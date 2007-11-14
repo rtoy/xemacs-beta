@@ -1,3 +1,10 @@
+2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/keystrokes.texi (Character Representation):
+	Clarify the description of which characters are displayed as
+	themselves and which as octal escapes bzw. "control" characters
+	with an initial caret. 
+
 2007-10-15  Adrian Aichner  <adrian@xemacs.org>
 
 	* Makefile (info_files): Sync nt/xemacs.mak and man/Makefile.
