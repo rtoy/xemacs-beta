@@ -336,6 +336,11 @@ Lisp_Object Vcurrent_jit_charset;
 Lisp_Object Qlast_allocated_character;
 Lisp_Object Qccl_encode_to_ucs_2;
 
+Lisp_Object Vnumber_of_jit_charsets;
+Lisp_Object Vlast_jit_charset_final;
+Lisp_Object Vcharset_descr;
+
+
 
 /************************************************************************/
 /*                        Unicode implementation                        */
@@ -1080,8 +1085,6 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
   int code_levels;
   int i;
   int n = Dynarr_length (charsets);
-  static int number_of_jit_charsets;
-  static Ascbyte last_jit_charset_final;
 
   type_checking_assert (code >= 0);
   /* This shortcut depends on the representation of an Ichar, see text.c.
@@ -1124,33 +1127,21 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 	  (-1 == (i = get_free_codepoint(Vcurrent_jit_charset))))
 	{
 	  Ibyte setname[32]; 
-	  Lisp_Object charset_descr = build_string
-	    ("Mule charset for otherwise unknown Unicode code points.");
+	  int number_of_jit_charsets = XINT (Vnumber_of_jit_charsets);
+	  Ascbyte last_jit_charset_final = XCHAR (Vlast_jit_charset_final);
 
-	  struct gcpro gcpro1;
-
-	  if ('\0' == last_jit_charset_final)
-	    {
-	      /* This final byte shit is, umm, not that cool. */
-	      last_jit_charset_final = 0x30;
-	    }
+	  /* This final byte shit is, umm, not that cool. */
+	  assert (last_jit_charset_final >= 0x30);
 
 	  /* Assertion added partly because our Win32 layer doesn't
 	     support snprintf; with this, we're sure it won't overflow
 	     the buffer.  */
 	  assert(100 > number_of_jit_charsets);
 
-	  qxesprintf(setname, "jit-ucs-charset-%d", number_of_jit_charsets++);
+	  qxesprintf(setname, "jit-ucs-charset-%d", number_of_jit_charsets);
 
-	  /* Aside: GCPROing here would be overkill according to the FSF's
-	     philosophy. make-charset cannot currently GC, but is intended
-	     to be called from Lisp, with its arguments protected by the
-	     Lisp reader. We GCPRO in case it GCs in the future and no-one
-	     checks all the C callers.  */
-
-	  GCPRO1 (charset_descr);
 	  Vcurrent_jit_charset = Fmake_charset 
-	    (intern((const CIbyte *)setname), charset_descr, 
+	    (intern((const CIbyte *)setname), Vcharset_descr, 
 	     /* Set encode-as-utf-8 to t, to have this character set written
 		using UTF-8 escapes in escape-quoted and ctext. This
 		sidesteps the fact that our internal character -> Unicode
@@ -1159,11 +1150,15 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 		     nconc2 (list6(Qcolumns, make_int(1), Qchars, make_int(96),
 				   Qdimension, make_int(2)),
 			     list6(Qregistries, Qunicode_registries,
-				   Qfinal, make_char(last_jit_charset_final++),
+				   Qfinal, make_char(last_jit_charset_final),
 				   /* This CCL program is initialised in
 				      unicode.el. */
 				   Qccl_program, Qccl_encode_to_ucs_2))));
-	  UNGCPRO;
+
+	  /* Record for the Unicode infrastructure that we've created
+	     this character set.  */
+	  Vnumber_of_jit_charsets = make_int (number_of_jit_charsets + 1);
+	  Vlast_jit_charset_final = make_char (last_jit_charset_final + 1);
 
 	  i = get_free_codepoint(Vcurrent_jit_charset);
 	} 
@@ -1421,10 +1416,15 @@ argument.
 If the CODE would not otherwise be converted to an XEmacs character, and the
 list of character sets to be consulted is nil or the default, a new XEmacs
 character will be created for it in one of the `jit-ucs-charset' Mule
-character sets, and that character will be returned.  There is scope for
-tens of thousands of separate Unicode code points in every session using
-this technique, so despite XEmacs' internal encoding not being based on
-Unicode, your data won't be trashed.
+character sets, and that character will be returned.  
+
+This is limited to around 400,000 characters per XEmacs session, though, so
+while normal usage will not be problematic, things like:
+
+\(dotimes (i #x110000) (decode-char 'ucs i))
+
+will eventually error.  The long-term solution to this is Unicode as an
+internal encoding. 
 */
        (code, USED_IF_MULE (charsets)))
 {
@@ -2862,6 +2862,14 @@ syms_of_unicode (void)
 void
 coding_system_type_create_unicode (void)
 {
+  staticpro (&Vnumber_of_jit_charsets);
+  Vnumber_of_jit_charsets = make_int (0);
+  staticpro (&Vlast_jit_charset_final);
+  Vlast_jit_charset_final = make_char (0x30);
+  staticpro (&Vcharset_descr);
+  Vcharset_descr
+    = build_string ("Mule charset for otherwise unknown Unicode code points.");
+
   INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (unicode, "unicode-coding-system-p");
   CODING_SYSTEM_HAS_METHOD (unicode, print);
   CODING_SYSTEM_HAS_METHOD (unicode, convert);

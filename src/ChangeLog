@@ -1,5 +1,17 @@
 2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* lread.c (read_unicode_escape):
+	Correct the range check for Unicode characters specified with
+	source-level escapes. 
+	* unicode.c:
+	* unicode.c (unicode_to_ichar):
+	* unicode.c (coding_system_type_create_unicode):
+	Correct the dump behaviour for just-in-time Unicode code
+	points. Update the docstring for #'unicode-to-char to indicate
+	that code points will run out above around 400,000 in a session. 
+
+2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* editfns.c (vars_of_editfns):
 	Correct the docstring of user-full-name. 
 	* fileio.c:

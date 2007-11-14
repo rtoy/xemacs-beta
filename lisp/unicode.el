@@ -494,36 +494,40 @@ The second argument must be 'ucs, the third argument is ignored.  "
                           (char-syntax ascii-or-latin-1))
                          syntax-table))
 
-  ;; Create all the Unicode error sequences, normally as jit-ucs-charset-0
-  ;; characters starting at U+200000 (which isn't a valid Unicode code
-  ;; point). Make them available to user code. 
-  (defvar unicode-error-default-translation-table
-    (loop 
-      with char-table = (make-char-table 'char)
-      for i from ?\x00 to ?\xFF
-      do
-      (put-char-table (aref
-		       ;; #xd800 is the first leading surrogate;
-		       ;; trailing surrogates must be in the range
-		       ;; #xdc00-#xdfff. These examples are not, so we
-		       ;; intentionally provoke an error sequence.
-		       (decode-coding-string (format "\xd8\x00\x00%c" i)
-					     'utf-16-be)
-		       3)
-		      i
-                      char-table)
-      finally return char-table)
-    "Translation table mapping Unicode error sequences to Latin-1 chars.
+;; *Sigh*, declarations needs to be at the start of the line to be picked up
+;; by make-docfile. Not so much an issue with ccl-encode-to-ucs-2, which we
+;; don't necessarily want to advertise, but the following are important.
+
+;; Create all the Unicode error sequences, normally as jit-ucs-charset-0
+;; characters starting at U+200000 (which isn't a valid Unicode code
+;; point). Make them available to user code. 
+(defvar unicode-error-default-translation-table
+  (loop 
+    with char-table = (make-char-table 'char)
+    for i from ?\x00 to ?\xFF
+    do
+    (put-char-table (aref
+                     ;; #xd800 is the first leading surrogate;
+                     ;; trailing surrogates must be in the range
+                     ;; #xdc00-#xdfff. These examples are not, so we
+                     ;; intentionally provoke an error sequence.
+                     (decode-coding-string (format "\xd8\x00\x00%c" i)
+                                           'utf-16-be)
+                     3)
+                    i
+                    char-table)
+    finally return char-table)
+  "Translation table mapping Unicode error sequences to Latin-1 chars.
 
 To transform XEmacs Unicode error sequences to the Latin-1 characters that
 correspond to the octets on disk, you can use this variable.  ")
 
-  (defvar unicode-error-sequence-regexp-range
-    (format "%c%c-%c"
-            (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 0)
-            (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 3)
-            (aref (decode-coding-string "\xd8\x00\x00\xFF" 'utf-16-be) 3))
-    "Regular expression range to match Unicode error sequences in XEmacs.
+(defvar unicode-error-sequence-regexp-range
+  (format "%c%c-%c"
+          (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 0)
+          (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 3)
+          (aref (decode-coding-string "\xd8\x00\x00\xFF" 'utf-16-be) 3))
+  "Regular expression range to match Unicode error sequences in XEmacs.
 
 Invalid Unicode sequences on input are represented as XEmacs
 characters with values stored as the keys in
@@ -559,14 +563,14 @@ invalid octet.  You can use this variable (with `re-search-forward' or
 	      nil
 	      (format "Could not find char ?\\x%x in buffer" i))))
 
-  (defun frob-unicode-errors-region (frob-function begin end &optional buffer)
-    "Call FROB-FUNCTION on the Unicode error sequences between BEGIN and END.
+(defun frob-unicode-errors-region (frob-function begin end &optional buffer)
+  "Call FROB-FUNCTION on the Unicode error sequences between BEGIN and END.
 
 Optional argument BUFFER specifies the buffer that should be examined for
 such sequences.  "
-    (check-argument-type #'functionp frob-function)
-    (check-argument-range begin (point-min buffer) (point-max buffer))
-    (check-argument-range end (point-min buffer) (point-max buffer))
+  (check-argument-type #'functionp frob-function)
+  (check-argument-range begin (point-min buffer) (point-max buffer))
+  (check-argument-range end (point-min buffer) (point-max buffer))
     (save-excursion
       (save-restriction
 	(if buffer (set-buffer buffer))

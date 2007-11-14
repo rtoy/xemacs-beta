@@ -1694,7 +1694,7 @@ read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
 	}
     }
 
-  if (i > 0x110000 || i < 0)
+  if (i >= 0x110000 || i < 0)
     {
       syntax_error ("Not a Unicode code point", make_int(i));
     }

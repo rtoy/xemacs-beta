@@ -1,5 +1,14 @@
 2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* unicode.el (unicode-error-default-translation-table): 
+	* unicode.el (unicode-error-sequence-regexp-range):
+	* unicode.el (frob-unicode-errors-region):
+	Make these variables and the single function available to
+	make-docfile, by moving them to the start of the line. This
+	conflicts with normal indentation of Lisp, unfortunately. 
+
+2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* subr.el (string-to-sequence):
 	* subr.el (string-to-list):
 	* subr.el (string-to-vector):
