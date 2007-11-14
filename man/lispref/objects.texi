@@ -1084,10 +1084,13 @@ string, like this: @code{#r"this \ is an embedded backslash"}.  In  such
 a string, each character following a backslash is included literally in
 the string, and all backslashes are left in the string.  This means that
 @code{#r"\""} is a valid string literal with two characters, a backslash and a
-double-quote.  It also means that a string  with this syntax @emph{cannot end
-in a single backslash}.  As with Python, from where this syntax was
+double-quote.  It also means that a string  with this syntax cannot end
+in a single backslash.  As with Python, from where this syntax was
 taken, you can specify @code{u} or @code{U} after the @code{#r} to
-specify that interpretation of Unicode escapes should be done. 
+specify that interpretation of Unicode escapes should be
+done---@pxref{Character Type}---and if you use @code{#ru} for your raw
+strings, the restriction on the trailing backslash can be worked around
+like so: @code{#ru"Backslash: \u005C"}.
 
   The newline character is not special in the read syntax for strings;
 if you write a new line between the double-quotes, it becomes a

@@ -1,5 +1,11 @@
 2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* lispref/objects.texi (String Type):
+	Describe how one can include a trailing backslash in a raw string,
+	by means of the Unicode escape syntax. 
+
+2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* xemacs/keystrokes.texi (Character Representation):
 	Clarify the description of which characters are displayed as
 	themselves and which as octal escapes bzw. "control" characters
