@@ -559,14 +559,19 @@ See also `write-region-pre-hook' and `write-region-post-hook'."
                'write-region-pre-hook
                start end filename append visit lockname
                coding-system-or-mustbenew)
-              coding-system
+              (if (and coding-system-or-mustbenew
+		       (coding-system-p
+			(find-coding-system coding-system-or-mustbenew)))
+		  coding-system-or-mustbenew)
               buffer-file-coding-system
               (find-file-coding-system-for-write-from-filename filename)))
     (if (consp hook-result)
         ;; One of the `write-region-pre-hook' functions wrote the file. 
         hook-result
       ;; The hooks didn't do the work; do it ourselves.
-      (setq mustbenew (unless (coding-system-p coding-system-or-mustbenew)
+      (setq hook-result (find-coding-system hook-result)
+	    mustbenew (unless (coding-system-p
+			       (find-coding-system coding-system-or-mustbenew))
                         coding-system-or-mustbenew)
             coding-system (cond ((coding-system-p hook-result) hook-result)
                                 ((null mustbenew) coding-system-or-mustbenew))

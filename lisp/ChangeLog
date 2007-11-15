@@ -1,3 +1,13 @@
+2007-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* code-files.el (write-region):
+	Call #'find-coding-system on the (possible) coding system argument
+	before checking it with #'coding-system-p; the latter function
+	gives false results when passed coding system names as symbols. 
+
+	Preserve the old order of determination of the coding system
+	better.
+
 2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.el (unicode-error-default-translation-table): 
