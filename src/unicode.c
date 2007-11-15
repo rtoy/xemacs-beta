@@ -2862,14 +2862,6 @@ syms_of_unicode (void)
 void
 coding_system_type_create_unicode (void)
 {
-  staticpro (&Vnumber_of_jit_charsets);
-  Vnumber_of_jit_charsets = make_int (0);
-  staticpro (&Vlast_jit_charset_final);
-  Vlast_jit_charset_final = make_char (0x30);
-  staticpro (&Vcharset_descr);
-  Vcharset_descr
-    = build_string ("Mule charset for otherwise unknown Unicode code points.");
-
   INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (unicode, "unicode-coding-system-p");
   CODING_SYSTEM_HAS_METHOD (unicode, print);
   CODING_SYSTEM_HAS_METHOD (unicode, convert);
@@ -2907,6 +2899,14 @@ vars_of_unicode (void)
   Fprovide (intern ("unicode"));
 
 #ifdef MULE
+  staticpro (&Vnumber_of_jit_charsets);
+  Vnumber_of_jit_charsets = make_int (0);
+  staticpro (&Vlast_jit_charset_final);
+  Vlast_jit_charset_final = make_char (0x30);
+  staticpro (&Vcharset_descr);
+  Vcharset_descr
+    = build_string ("Mule charset for otherwise unknown Unicode code points.");
+
   staticpro (&Vlanguage_unicode_precedence_list);
   Vlanguage_unicode_precedence_list = Qnil;
 

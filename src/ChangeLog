@@ -1,3 +1,12 @@
+2007-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.c (coding_system_type_create_unicode):
+	* unicode.c (vars_of_unicode):
+	Move the initialisation of Vnumber_of_jit_charsets,
+	Vlast_jit_charset_final, Vcharset_descr to an #ifdef MULE block in
+	vars_of_unicode. Fixes a build failure reported by Vin
+	Shelton--thank you Vin!
+
 2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (read_unicode_escape):
