@@ -217,10 +217,20 @@ static void describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 static Lisp_Object keymap_submaps (Lisp_Object keymap);
 
 Lisp_Object Qcontrol, Qctrl, Qmeta, Qsuper, Qhyper, Qalt, Qshift;
-Lisp_Object Qbutton0, Qbutton1, Qbutton2, Qbutton3;
-Lisp_Object Qbutton4, Qbutton5, Qbutton6, Qbutton7;
-Lisp_Object Qbutton0up, Qbutton1up, Qbutton2up, Qbutton3up;
-Lisp_Object Qbutton4up, Qbutton5up, Qbutton6up, Qbutton7up;
+Lisp_Object Qbutton0;
+Lisp_Object Qbutton1, Qbutton2, Qbutton3, Qbutton4, Qbutton5;
+Lisp_Object Qbutton6, Qbutton7, Qbutton8, Qbutton9, Qbutton10;
+Lisp_Object Qbutton11, Qbutton12, Qbutton13, Qbutton14, Qbutton15;
+Lisp_Object Qbutton16, Qbutton17, Qbutton18, Qbutton19, Qbutton20;
+Lisp_Object Qbutton21, Qbutton22, Qbutton23, Qbutton24, Qbutton25;
+Lisp_Object Qbutton26;
+Lisp_Object Qbutton0up;
+Lisp_Object Qbutton1up, Qbutton2up, Qbutton3up, Qbutton4up, Qbutton5up;
+Lisp_Object Qbutton6up, Qbutton7up, Qbutton8up, Qbutton9up, Qbutton10up;
+Lisp_Object Qbutton11up, Qbutton12up, Qbutton13up, Qbutton14up, Qbutton15up;
+Lisp_Object Qbutton16up, Qbutton17up, Qbutton18up, Qbutton19up, Qbutton20up;
+Lisp_Object Qbutton21up, Qbutton22up, Qbutton23up, Qbutton24up, Qbutton25up;
+Lisp_Object Qbutton26up;
 
 Lisp_Object Qmenu_selection;
 /* Emacs compatibility */
@@ -231,6 +241,25 @@ Lisp_Object Qdown_mouse_4, Qmouse_4;
 Lisp_Object Qdown_mouse_5, Qmouse_5;
 Lisp_Object Qdown_mouse_6, Qmouse_6;
 Lisp_Object Qdown_mouse_7, Qmouse_7;
+Lisp_Object Qdown_mouse_8, Qmouse_8;  
+Lisp_Object Qdown_mouse_9, Qmouse_9;  
+Lisp_Object Qdown_mouse_10, Qmouse_10;
+Lisp_Object Qdown_mouse_11, Qmouse_11;
+Lisp_Object Qdown_mouse_12, Qmouse_12;
+Lisp_Object Qdown_mouse_13, Qmouse_13;
+Lisp_Object Qdown_mouse_14, Qmouse_14;
+Lisp_Object Qdown_mouse_15, Qmouse_15;
+Lisp_Object Qdown_mouse_16, Qmouse_16;
+Lisp_Object Qdown_mouse_17, Qmouse_17;
+Lisp_Object Qdown_mouse_18, Qmouse_18;
+Lisp_Object Qdown_mouse_19, Qmouse_19;
+Lisp_Object Qdown_mouse_20, Qmouse_20;
+Lisp_Object Qdown_mouse_21, Qmouse_21;
+Lisp_Object Qdown_mouse_22, Qmouse_22;
+Lisp_Object Qdown_mouse_23, Qmouse_23;
+Lisp_Object Qdown_mouse_24, Qmouse_24;
+Lisp_Object Qdown_mouse_25, Qmouse_25;
+Lisp_Object Qdown_mouse_26, Qmouse_26;
 
 /* Kludge kludge kludge */
 Lisp_Object QLFD, QTAB, QRET, QESC, QDEL, QSPC, QBS;
@@ -468,7 +497,14 @@ keymap_lookup_directly (Lisp_Object keymap,
   Lisp_Keymap *k;
 
   modifiers &= ~(XEMACS_MOD_BUTTON1 | XEMACS_MOD_BUTTON2 | XEMACS_MOD_BUTTON3
-		 | XEMACS_MOD_BUTTON4 | XEMACS_MOD_BUTTON5);
+		 | XEMACS_MOD_BUTTON4 | XEMACS_MOD_BUTTON5 | XEMACS_MOD_BUTTON6
+                 | XEMACS_MOD_BUTTON7 | XEMACS_MOD_BUTTON8 | XEMACS_MOD_BUTTON9
+                 | XEMACS_MOD_BUTTON10 | XEMACS_MOD_BUTTON11 | XEMACS_MOD_BUTTON12
+                 | XEMACS_MOD_BUTTON13 | XEMACS_MOD_BUTTON14 | XEMACS_MOD_BUTTON15
+                 | XEMACS_MOD_BUTTON16 | XEMACS_MOD_BUTTON17 | XEMACS_MOD_BUTTON18
+                 | XEMACS_MOD_BUTTON19 | XEMACS_MOD_BUTTON20 | XEMACS_MOD_BUTTON21
+                 | XEMACS_MOD_BUTTON22 | XEMACS_MOD_BUTTON23 | XEMACS_MOD_BUTTON24
+                 | XEMACS_MOD_BUTTON25 | XEMACS_MOD_BUTTON26);
   if ((modifiers & ~(XEMACS_MOD_CONTROL | XEMACS_MOD_META | XEMACS_MOD_SUPER
 		     | XEMACS_MOD_HYPER | XEMACS_MOD_ALT | XEMACS_MOD_SHIFT))
       != 0)
@@ -649,7 +685,14 @@ keymap_store (Lisp_Object keymap, const Lisp_Key_Data *key,
   Lisp_Keymap *k = XKEYMAP (keymap);
 
   modifiers &= ~(XEMACS_MOD_BUTTON1 | XEMACS_MOD_BUTTON2 | XEMACS_MOD_BUTTON3
-		 | XEMACS_MOD_BUTTON4 | XEMACS_MOD_BUTTON5);
+		 | XEMACS_MOD_BUTTON4 | XEMACS_MOD_BUTTON5 | XEMACS_MOD_BUTTON6
+                 | XEMACS_MOD_BUTTON7 | XEMACS_MOD_BUTTON8 | XEMACS_MOD_BUTTON9
+                 | XEMACS_MOD_BUTTON10 | XEMACS_MOD_BUTTON11 | XEMACS_MOD_BUTTON12
+                 | XEMACS_MOD_BUTTON13 | XEMACS_MOD_BUTTON14 | XEMACS_MOD_BUTTON15
+                 | XEMACS_MOD_BUTTON16 | XEMACS_MOD_BUTTON17 | XEMACS_MOD_BUTTON18
+                 | XEMACS_MOD_BUTTON19 | XEMACS_MOD_BUTTON20 | XEMACS_MOD_BUTTON21
+                 | XEMACS_MOD_BUTTON22 | XEMACS_MOD_BUTTON23 | XEMACS_MOD_BUTTON24
+                 | XEMACS_MOD_BUTTON25 | XEMACS_MOD_BUTTON26);
   assert ((modifiers & ~(XEMACS_MOD_CONTROL | XEMACS_MOD_META
 			 | XEMACS_MOD_SUPER | XEMACS_MOD_HYPER
 			 | XEMACS_MOD_ALT | XEMACS_MOD_SHIFT)) == 0);
@@ -1363,7 +1406,7 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	*keysym = QKbackspace;
       /* Emacs compatibility */
       else if (EQ(*keysym, Qdown_mouse_1))
-	*keysym = Qbutton1;
+        *keysym = Qbutton1;
       else if (EQ(*keysym, Qdown_mouse_2))
 	*keysym = Qbutton2;
       else if (EQ(*keysym, Qdown_mouse_3))
@@ -1376,6 +1419,44 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	*keysym = Qbutton6;
       else if (EQ(*keysym, Qdown_mouse_7))
 	*keysym = Qbutton7;
+      else if (EQ(*keysym, Qdown_mouse_8))
+        *keysym = Qbutton8;
+      else if (EQ(*keysym, Qdown_mouse_9))
+        *keysym = Qbutton9;
+      else if (EQ(*keysym, Qdown_mouse_10))
+        *keysym = Qbutton10;
+      else if (EQ(*keysym, Qdown_mouse_11))
+        *keysym = Qbutton11;
+      else if (EQ(*keysym, Qdown_mouse_12))
+        *keysym = Qbutton12;
+      else if (EQ(*keysym, Qdown_mouse_13))
+        *keysym = Qbutton13;
+      else if (EQ(*keysym, Qdown_mouse_14))
+        *keysym = Qbutton14;
+      else if (EQ(*keysym, Qdown_mouse_15))
+        *keysym = Qbutton15;
+      else if (EQ(*keysym, Qdown_mouse_16))
+        *keysym = Qbutton16;
+      else if (EQ(*keysym, Qdown_mouse_17))
+        *keysym = Qbutton17;
+      else if (EQ(*keysym, Qdown_mouse_18))
+        *keysym = Qbutton18;
+      else if (EQ(*keysym, Qdown_mouse_19))
+        *keysym = Qbutton19;
+      else if (EQ(*keysym, Qdown_mouse_20))
+        *keysym = Qbutton20;
+      else if (EQ(*keysym, Qdown_mouse_21))
+        *keysym = Qbutton21;
+      else if (EQ(*keysym, Qdown_mouse_22))
+        *keysym = Qbutton22;
+      else if (EQ(*keysym, Qdown_mouse_23))
+        *keysym = Qbutton23;
+      else if (EQ(*keysym, Qdown_mouse_24))
+        *keysym = Qbutton24;
+      else if (EQ(*keysym, Qdown_mouse_25))
+        *keysym = Qbutton25;
+      else if (EQ(*keysym, Qdown_mouse_26))
+        *keysym = Qbutton26;
       else if (EQ(*keysym, Qmouse_1))
 	*keysym = Qbutton1up;
       else if (EQ(*keysym, Qmouse_2))
@@ -1390,6 +1471,44 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	*keysym = Qbutton6up;
       else if (EQ(*keysym, Qmouse_7))
 	*keysym = Qbutton7up;
+      else if (EQ(*keysym, Qmouse_8))
+        *keysym = Qbutton8up;
+      else if (EQ(*keysym, Qmouse_9))
+        *keysym = Qbutton9up;
+      else if (EQ(*keysym, Qmouse_10))
+        *keysym = Qbutton10up;
+      else if (EQ(*keysym, Qmouse_11))
+        *keysym = Qbutton11up;
+      else if (EQ(*keysym, Qmouse_12))
+        *keysym = Qbutton12up;
+      else if (EQ(*keysym, Qmouse_13))
+        *keysym = Qbutton13up;
+      else if (EQ(*keysym, Qmouse_14))
+        *keysym = Qbutton14up;
+      else if (EQ(*keysym, Qmouse_15))
+        *keysym = Qbutton15up;
+      else if (EQ(*keysym, Qmouse_16))
+        *keysym = Qbutton16up;
+      else if (EQ(*keysym, Qmouse_17))
+        *keysym = Qbutton17up;
+      else if (EQ(*keysym, Qmouse_18))
+        *keysym = Qbutton18up;
+      else if (EQ(*keysym, Qmouse_19))
+        *keysym = Qbutton19up;
+      else if (EQ(*keysym, Qmouse_20))
+        *keysym = Qbutton20up;
+      else if (EQ(*keysym, Qmouse_21))
+        *keysym = Qbutton21up;
+      else if (EQ(*keysym, Qmouse_22))
+        *keysym = Qbutton22up;
+      else if (EQ(*keysym, Qmouse_23))
+        *keysym = Qbutton23up;
+      else if (EQ(*keysym, Qmouse_24))
+        *keysym = Qbutton24up;
+      else if (EQ(*keysym, Qmouse_25))
+        *keysym = Qbutton25up;
+      else if (EQ(*keysym, Qmouse_26))
+        *keysym = Qbutton26up;
     }
 }
 
@@ -1453,6 +1572,63 @@ define_key_parser (Lisp_Object spec, Lisp_Key_Data *returned_value)
 	      case 7:
 		SET_KEY_DATA_KEYSYM (returned_value, (down ? Qbutton7 : Qbutton7up)); 
 		break;
+              case 8:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton8 : Qbutton8up));
+                 break;
+              case 9:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton9 : Qbutton9up));
+                 break;
+              case 10:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton10 : Qbutton10up));
+                 break;
+              case 11:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton11 : Qbutton11up));
+                 break;
+              case 12:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton12 : Qbutton12up));
+                 break;
+              case 13:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton13 : Qbutton13up));
+                 break;
+              case 14:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton14 : Qbutton14up));
+                 break;
+              case 15:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton15 : Qbutton15up));
+                 break;
+              case 16:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton16 : Qbutton16up));
+                 break;
+              case 17:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton17 : Qbutton17up));
+                 break;
+              case 18:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton18 : Qbutton18up));
+                 break;
+              case 19:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton19 : Qbutton19up));
+                 break;
+              case 20:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton20 : Qbutton20up));
+                 break;
+              case 21:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton21 : Qbutton21up));
+                 break;
+              case 22:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton22 : Qbutton22up));
+                 break;
+              case 23:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton23 : Qbutton23up));
+                 break;
+              case 24:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton24 : Qbutton24up));
+                 break;
+              case 25:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton25 : Qbutton25up));
+                 break;
+              case 26:
+                 SET_KEY_DATA_KEYSYM(returned_value, (down ? Qbutton26 : Qbutton26up));
+                 break;
 	      default:
 		SET_KEY_DATA_KEYSYM (returned_value, (down ? Qbutton0 : Qbutton0up)); 
 		break;
@@ -1552,7 +1728,26 @@ key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
       EQ (raw_key.keysym, Qbutton4) || EQ (raw_key.keysym, Qbutton4up) ||
       EQ (raw_key.keysym, Qbutton5) || EQ (raw_key.keysym, Qbutton5up) ||
       EQ (raw_key.keysym, Qbutton6) || EQ (raw_key.keysym, Qbutton6up) ||
-      EQ (raw_key.keysym, Qbutton7) || EQ (raw_key.keysym, Qbutton7up))
+      EQ (raw_key.keysym, Qbutton7) || EQ (raw_key.keysym, Qbutton7up) ||
+      EQ (raw_key.keysym, Qbutton8) || EQ (raw_key.keysym, Qbutton8up) ||
+      EQ (raw_key.keysym, Qbutton9) || EQ (raw_key.keysym, Qbutton9up) ||
+      EQ (raw_key.keysym, Qbutton10) || EQ (raw_key.keysym, Qbutton10up) ||
+      EQ (raw_key.keysym, Qbutton11) || EQ (raw_key.keysym, Qbutton11up) ||
+      EQ (raw_key.keysym, Qbutton12) || EQ (raw_key.keysym, Qbutton12up) ||
+      EQ (raw_key.keysym, Qbutton13) || EQ (raw_key.keysym, Qbutton13up) ||
+      EQ (raw_key.keysym, Qbutton14) || EQ (raw_key.keysym, Qbutton14up) ||
+      EQ (raw_key.keysym, Qbutton15) || EQ (raw_key.keysym, Qbutton15up) ||
+      EQ (raw_key.keysym, Qbutton16) || EQ (raw_key.keysym, Qbutton16up) ||
+      EQ (raw_key.keysym, Qbutton17) || EQ (raw_key.keysym, Qbutton17up) ||
+      EQ (raw_key.keysym, Qbutton18) || EQ (raw_key.keysym, Qbutton18up) ||
+      EQ (raw_key.keysym, Qbutton19) || EQ (raw_key.keysym, Qbutton19up) ||
+      EQ (raw_key.keysym, Qbutton20) || EQ (raw_key.keysym, Qbutton20up) ||
+      EQ (raw_key.keysym, Qbutton21) || EQ (raw_key.keysym, Qbutton21up) ||
+      EQ (raw_key.keysym, Qbutton22) || EQ (raw_key.keysym, Qbutton22up) ||
+      EQ (raw_key.keysym, Qbutton23) || EQ (raw_key.keysym, Qbutton23up) ||
+      EQ (raw_key.keysym, Qbutton24) || EQ (raw_key.keysym, Qbutton24up) ||
+      EQ (raw_key.keysym, Qbutton25) || EQ (raw_key.keysym, Qbutton25up) ||
+      EQ (raw_key.keysym, Qbutton26) || EQ (raw_key.keysym, Qbutton26up))
     invalid_operation ("Mouse-clicks can't appear in saved keyboard macros",
 		       Qunbound);
 
@@ -4063,14 +4258,52 @@ describe_map_mapper (const Lisp_Key_Data *key,
 	  EQ (keysym, Qbutton5) ||
 	  EQ (keysym, Qbutton6) ||
 	  EQ (keysym, Qbutton7) ||
+          EQ (keysym, Qbutton8) ||
+          EQ (keysym, Qbutton9) ||
+          EQ (keysym, Qbutton10) ||
+          EQ (keysym, Qbutton11) ||
+          EQ (keysym, Qbutton12) ||
+          EQ (keysym, Qbutton13) ||
+          EQ (keysym, Qbutton14) ||
+          EQ (keysym, Qbutton15) ||
+          EQ (keysym, Qbutton16) ||
+          EQ (keysym, Qbutton17) ||
+          EQ (keysym, Qbutton18) ||
+          EQ (keysym, Qbutton19) ||
+          EQ (keysym, Qbutton20) ||
+          EQ (keysym, Qbutton21) ||
+          EQ (keysym, Qbutton22) ||
+          EQ (keysym, Qbutton23) ||
+          EQ (keysym, Qbutton24) ||
+          EQ (keysym, Qbutton25) ||
+          EQ (keysym, Qbutton26) ||
 	  EQ (keysym, Qbutton0up) ||
 	  EQ (keysym, Qbutton1up) ||
 	  EQ (keysym, Qbutton2up) ||
 	  EQ (keysym, Qbutton3up) ||
 	  EQ (keysym, Qbutton4up) ||
 	  EQ (keysym, Qbutton5up) ||
-	  EQ (keysym, Qbutton6up) ||
-	  EQ (keysym, Qbutton7up))))
+          EQ (keysym, Qbutton6up) ||
+          EQ (keysym, Qbutton7up) ||
+          EQ (keysym, Qbutton8up) ||
+          EQ (keysym, Qbutton9up) ||
+          EQ (keysym, Qbutton10up) ||
+          EQ (keysym, Qbutton11up) ||
+          EQ (keysym, Qbutton12up) ||
+          EQ (keysym, Qbutton13up) ||
+          EQ (keysym, Qbutton14up) ||
+          EQ (keysym, Qbutton15up) ||
+          EQ (keysym, Qbutton16up) ||
+          EQ (keysym, Qbutton17up) ||
+          EQ (keysym, Qbutton18up) ||
+          EQ (keysym, Qbutton19up) ||
+          EQ (keysym, Qbutton20up) ||
+          EQ (keysym, Qbutton21up) ||
+          EQ (keysym, Qbutton22up) ||
+          EQ (keysym, Qbutton23up) ||
+          EQ (keysym, Qbutton24up) ||
+          EQ (keysym, Qbutton25up) ||
+          EQ (keysym, Qbutton26up))))
     return;
 
   /* If this command in this map is shadowed by some other map, ignore it. */
@@ -4382,6 +4615,25 @@ syms_of_keymap (void)
   DEFSYMBOL (Qbutton5);
   DEFSYMBOL (Qbutton6);
   DEFSYMBOL (Qbutton7);
+  DEFSYMBOL (Qbutton8);
+  DEFSYMBOL (Qbutton9);
+  DEFSYMBOL (Qbutton10);
+  DEFSYMBOL (Qbutton11);
+  DEFSYMBOL (Qbutton12);
+  DEFSYMBOL (Qbutton13);
+  DEFSYMBOL (Qbutton14);
+  DEFSYMBOL (Qbutton15);
+  DEFSYMBOL (Qbutton16);
+  DEFSYMBOL (Qbutton17);
+  DEFSYMBOL (Qbutton18);
+  DEFSYMBOL (Qbutton19);
+  DEFSYMBOL (Qbutton20);
+  DEFSYMBOL (Qbutton21);
+  DEFSYMBOL (Qbutton22);
+  DEFSYMBOL (Qbutton23);
+  DEFSYMBOL (Qbutton24);
+  DEFSYMBOL (Qbutton25);
+  DEFSYMBOL (Qbutton26);
   DEFSYMBOL (Qbutton0up);
   DEFSYMBOL (Qbutton1up);
   DEFSYMBOL (Qbutton2up);
@@ -4390,6 +4642,25 @@ syms_of_keymap (void)
   DEFSYMBOL (Qbutton5up);
   DEFSYMBOL (Qbutton6up);
   DEFSYMBOL (Qbutton7up);
+  DEFSYMBOL (Qbutton8up);
+  DEFSYMBOL (Qbutton9up);
+  DEFSYMBOL (Qbutton10up);
+  DEFSYMBOL (Qbutton11up);
+  DEFSYMBOL (Qbutton12up);
+  DEFSYMBOL (Qbutton13up);
+  DEFSYMBOL (Qbutton14up);
+  DEFSYMBOL (Qbutton15up);
+  DEFSYMBOL (Qbutton16up);
+  DEFSYMBOL (Qbutton17up);
+  DEFSYMBOL (Qbutton18up);
+  DEFSYMBOL (Qbutton19up);
+  DEFSYMBOL (Qbutton20up);
+  DEFSYMBOL (Qbutton21up);
+  DEFSYMBOL (Qbutton22up);
+  DEFSYMBOL (Qbutton23up);
+  DEFSYMBOL (Qbutton24up);
+  DEFSYMBOL (Qbutton25up);
+  DEFSYMBOL (Qbutton26up);
   DEFSYMBOL (Qmouse_1);
   DEFSYMBOL (Qmouse_2);
   DEFSYMBOL (Qmouse_3);
@@ -4397,6 +4668,25 @@ syms_of_keymap (void)
   DEFSYMBOL (Qmouse_5);
   DEFSYMBOL (Qmouse_6);
   DEFSYMBOL (Qmouse_7);
+  DEFSYMBOL (Qmouse_8);
+  DEFSYMBOL (Qmouse_9);
+  DEFSYMBOL (Qmouse_10);
+  DEFSYMBOL (Qmouse_11);
+  DEFSYMBOL (Qmouse_12);
+  DEFSYMBOL (Qmouse_13);
+  DEFSYMBOL (Qmouse_14);
+  DEFSYMBOL (Qmouse_15);
+  DEFSYMBOL (Qmouse_16);
+  DEFSYMBOL (Qmouse_17);
+  DEFSYMBOL (Qmouse_18);
+  DEFSYMBOL (Qmouse_19);
+  DEFSYMBOL (Qmouse_20);
+  DEFSYMBOL (Qmouse_21);
+  DEFSYMBOL (Qmouse_22);
+  DEFSYMBOL (Qmouse_23);
+  DEFSYMBOL (Qmouse_24);
+  DEFSYMBOL (Qmouse_25);
+  DEFSYMBOL (Qmouse_26);
   DEFSYMBOL (Qdown_mouse_1);
   DEFSYMBOL (Qdown_mouse_2);
   DEFSYMBOL (Qdown_mouse_3);
@@ -4404,6 +4694,25 @@ syms_of_keymap (void)
   DEFSYMBOL (Qdown_mouse_5);
   DEFSYMBOL (Qdown_mouse_6);
   DEFSYMBOL (Qdown_mouse_7);
+  DEFSYMBOL (Qdown_mouse_8);
+  DEFSYMBOL (Qdown_mouse_9);
+  DEFSYMBOL (Qdown_mouse_10);
+  DEFSYMBOL (Qdown_mouse_11);
+  DEFSYMBOL (Qdown_mouse_12);
+  DEFSYMBOL (Qdown_mouse_13);
+  DEFSYMBOL (Qdown_mouse_14);
+  DEFSYMBOL (Qdown_mouse_15);
+  DEFSYMBOL (Qdown_mouse_16);
+  DEFSYMBOL (Qdown_mouse_17);
+  DEFSYMBOL (Qdown_mouse_18);
+  DEFSYMBOL (Qdown_mouse_19);
+  DEFSYMBOL (Qdown_mouse_20);
+  DEFSYMBOL (Qdown_mouse_21);
+  DEFSYMBOL (Qdown_mouse_22);
+  DEFSYMBOL (Qdown_mouse_23);
+  DEFSYMBOL (Qdown_mouse_24);
+  DEFSYMBOL (Qdown_mouse_25);
+  DEFSYMBOL (Qdown_mouse_26);
   DEFSYMBOL (Qmenu_selection);
   DEFSYMBOL (QLFD);
   DEFSYMBOL (QTAB);

@@ -1,3 +1,10 @@
+2007-11-11  Mats Lidell  <matsl@xemacs.org>
+
+	* events.h: Based on SXEmacs patch. Support for mouse button 6 to
+	26.
+	* keymap.h: Ditto.
+	* keymap.c: Ditto.
+
 2007-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.c (coding_system_type_create_unicode):
