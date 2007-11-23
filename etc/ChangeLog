@@ -1,3 +1,8 @@
+2007-11-22  Vin Shelton  <acs@xemacs.org>
+
+	* photos/vin.png:
+	* photos/vinm.png: Updated.
+
 2004-12-03  Shyamal Prasad  <shyamal@member.fsf.org>
 
 	* xemacs.1: Now describe $HOME/.xemacs/init.el as the
