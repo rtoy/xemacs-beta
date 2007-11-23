@@ -1481,14 +1481,11 @@ Well, they also serve who rail 'n' rant.
      (widget-insert "\n"))
     (vin
      (widget-insert "\
-I own and operate my own consulting firm, EtherSoft.  Shhh, don't
-tell anyone, but it's named after an Ultimate team I used to play
-with in Austin, Texas - the Ether Bunnies.  I'm getting too old
-to play competitive Ultimate any more, so now I've gotten roped
-into serving on the board of directors of the Ultimate Players
-Association.  See ")
-     (about-url-link 'vin nil "Visit the UPA homepage")
-     (widget-insert ".\n"))
+I'm a software engineer and manager for Adaptive Optics Associates in
+Cambridge, Massachusetts.  I used to play a lot of Ultimate (see\n")
+     (about-url-link 'vin nil "Visit the Ultimate Players Association homepage")
+     (widget-insert " for more details), but nowadays I'm a family man,
+so I spend a lot of time with my wife, Becky, and my son, Noah.\n"))
     (viteno
      (widget-insert
       "\
@@ -1912,12 +1909,11 @@ Steve is maintainer of the edict, mule-ucs, and latin-unity packages,
 and has contributed quite a bit of documentation, especially for Mule.\n"))
     (vin
      (widget-insert "\
-Vin helps maintain the older, more mature (read: moldy) versions of
-XEmacs.  Vin maintains the XEmacs patch pages in order to bring a more
-stable XEmacs.  (Actually, he does it 'cause it's fun and he's been
-using emacs for a long, long time.)  Vin also contributed the detached
-minibuffer code as well as a few minor enhancements to the menubar
-options.\n"))
+Vin maintains the stable version of XEmacs.  This involves reviewing
+a lot of other peoples' patches and testing and applying them.
+He also gets to generate his own patches from time to time.  Being
+release manager is a fun way to contribute to the XEmacs project.
+Write me at acs@xemacs.org if you're interested in learning more.\n"))
     (viteno
      (widget-insert
       "\
