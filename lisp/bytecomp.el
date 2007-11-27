@@ -2376,13 +2376,40 @@ list that represents a doc string reference.
 (put 'custom-declare-variable 'byte-hunk-handler
      'byte-compile-file-form-custom-declare-variable)
 (defun byte-compile-file-form-custom-declare-variable (form)
-  (if (memq 'free-vars byte-compile-warnings)
-      (setq byte-compile-bound-variables
-	    (cons (cons (nth 1 (nth 1 form))
-			byte-compile-global-bit)
-		  byte-compile-bound-variables)))
-  form)
-
+  ;; XEmacs change; our implementation byte compiles and gives warnings
+  ;; about the default value code, which GNU's doesn't.
+  (let* ((quoted-default (car-safe (cdr-safe (cdr-safe form))))
+         (to-examine (car-safe (cdr-safe quoted-default))))
+    (if (memq 'free-vars byte-compile-warnings)
+        (setq byte-compile-bound-variables
+              (cons (cons (nth 1 (nth 1 form))
+                          byte-compile-global-bit)
+                    byte-compile-bound-variables)))
+    ;; Byte compile anything that smells like a lambda. I initially
+    ;; considered limiting it to the :initialize, :set and :get args, but
+    ;; that's not amazingly forward-compatible, and anyone expecting other
+    ;; things to be stored as data, not code, is unrealistic. 
+     (loop
+       for entry in-ref (nthcdr 4 form)
+       do (cond ((and (eq 'function (car-safe entry))
+                      (consp (car-safe (cdr-safe entry))))
+                 (setf entry (copy-sequence entry))
+                 (setcar (cdr entry) (byte-compile-lambda (car (cdr entry)))))
+                ((and (eq 'lambda (car-safe entry)))
+                 (setf entry (byte-compile-lambda entry)))))
+     ;; Byte compile the default value, as we do for defvar. 
+     (when (consp (cdr-safe to-examine))
+       (setq form (copy-sequence form))
+       (setcdr (third form)
+               (list (byte-compile-top-level to-examine nil 'file)))
+       ;; And save a value to be examined in the custom UI, if that differs
+       ;; from the init value.
+       (unless (equal to-examine (car-safe (cdr (third form))))
+         (setf (nthcdr 4 form) (nconc
+                                (list :default 
+                                      (list 'quote to-examine))
+                                (nthcdr 4 form)))))
+    form))
 
 ;;;###autoload
 (defun byte-compile (form)

@@ -116,9 +116,11 @@ Like `custom-initialize-set', but use the function specified by
                    (t
                     (eval value)))))
 
-(defun custom-initialize-changed (symbol value)
+;; XEmacs change; move to defsubst, since this is only called in one place
+;; and usage of it clusters.
+(defsubst custom-initialize-changed (symbol value)
   "Initialize SYMBOL with VALUE.
-Like `custom-initialize-reset', but only use the `:set' function if the
+Like `custom-initialize-reset', but only use the `:set' function if
 not using the standard setting.
 For the standard setting, use `set-default'."
   (cond ((default-boundp symbol)
@@ -142,9 +144,15 @@ DEFAULT is stored as SYMBOL's value in the standard theme.  See
 `custom-known-themes' for a list of known themes.  For backwards
 compatibility, DEFAULT is also stored in SYMBOL's property
 `standard-value'.  At the same time, SYMBOL's property `force-value' is
-set to nil, as the value is no longer rogue."
+set to nil, as the value is no longer rogue.
+
+The byte compiler adds an XEmacs-specific :default keyword and value to
+`custom-declare-variable' calls when it byte-compiles the DEFAULT argument.
+These describe what the custom UI shows when editing a customizable
+variable's associated Lisp expression.  We don't encourage use of this
+keyword in your own programs.  "
   ;; Remember the standard setting.  The value should be in the standard
-  ;; theme, not in this property.  However, his would require changeing
+  ;; theme, not in this property.  However, this would require changing
   ;; the C source of defvar and others as well...
   (put symbol 'standard-value (list default))
   ;; Maybe this option was rogue in an earlier version.  It no longer is.
@@ -184,6 +192,10 @@ set to nil, as the value is no longer rogue."
 			   value)
 		   ;; Fast code for the common case.
 		   (put symbol 'custom-options (copy-sequence value))))
+                ;; In the event that the byte compile has compiled the init
+                ;; value, we want the value the UI sees to be uncompiled.
+                ((eq keyword :default)
+                 (put symbol 'standard-value (list value)))
 		(t
 		 (custom-handle-keyword symbol keyword value
 					'custom-variable))))))

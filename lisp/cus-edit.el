@@ -825,7 +825,8 @@ The default group is `Emacs'."
 (defun customize-changed-options (since-version)
   "Customize all user option variables whose default values changed recently.
 This means, in other words, variables defined with a `:version' keyword."
-  (interactive "sCustomize options changed, since version (default all versions): ")
+  (interactive
+   "sCustomize options changed, since version (default all versions): ")
   (if (equal since-version "")
       (setq since-version nil))
   (let ((found nil))
@@ -834,7 +835,8 @@ This means, in other words, variables defined with a `:version' keyword."
 		     (let ((version (get symbol 'custom-version)))
 		       (and version
 			    (or (null since-version)
-				(customize-version-lessp since-version version))))
+				(customize-version-lessp since-version
+                                                         version))))
 		     (push (list symbol 'custom-variable) found))))
     (unless found
       (error "No user options have changed defaults %s"
@@ -2203,36 +2205,37 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
     (widget-put widget :custom-state state)))
 
 (defvar custom-variable-menu
-  '(("Set for Current Session" custom-variable-set
-     (lambda (widget)
-       (eq (widget-get widget :custom-state) 'modified)))
+  `(("Set for Current Session" custom-variable-set
+     ,#'(lambda (widget)
+          (eq (widget-get widget :custom-state) 'modified)))
     ("Save for Future Sessions" custom-variable-save
-     (lambda (widget)
-       (memq (widget-get widget :custom-state) '(modified set changed rogue))))
+     ,#'(lambda (widget)
+          (memq (widget-get widget :custom-state)
+                '(modified set changed rogue))))
     ("Reset to Current" custom-redraw
-     (lambda (widget)
-       (and (default-boundp (widget-value widget))
-	    (memq (widget-get widget :custom-state) '(modified changed)))))
+     ,#'(lambda (widget)
+          (and (default-boundp (widget-value widget))
+               (memq (widget-get widget :custom-state) '(modified changed)))))
     ("Reset to Saved" custom-variable-reset-saved
-     (lambda (widget)
-       (and (or (get (widget-value widget) 'saved-value)
-		(get (widget-value widget) 'saved-variable-comment))
-	    (memq (widget-get widget :custom-state)
-		  '(modified set changed rogue)))))
+     ,#'(lambda (widget)
+          (and (or (get (widget-value widget) 'saved-value)
+                   (get (widget-value widget) 'saved-variable-comment))
+               (memq (widget-get widget :custom-state)
+                     '(modified set changed rogue)))))
     ("Reset to Standard Settings" custom-variable-reset-standard
-     (lambda (widget)
-       (and (get (widget-value widget) 'standard-value)
-	    (memq (widget-get widget :custom-state)
-		  '(modified set changed saved rogue)))))
+     ,#'(lambda (widget)
+          (and (get (widget-value widget) 'standard-value)
+               (memq (widget-get widget :custom-state)
+                     '(modified set changed saved rogue)))))
     ("---" ignore ignore)
     ("Add Comment" custom-comment-show custom-comment-invisible-p)
     ("---" ignore ignore)
     ("Don't show as Lisp expression" custom-variable-edit
-     (lambda (widget)
-       (eq (widget-get widget :custom-form) 'lisp)))
+     ,#'(lambda (widget)
+          (eq (widget-get widget :custom-form) 'lisp)))
     ("Show as Lisp expression" custom-variable-edit-lisp
-     (lambda (widget)
-       (eq (widget-get widget :custom-form) 'edit))))
+     ,#'(lambda (widget)
+          (eq (widget-get widget :custom-form) 'edit))))
   "Alist of actions for the `custom-variable' widget.
 Each entry has the form (NAME ACTION FILTER) where NAME is the name of
 the menu entry, ACTION is the function to call on the widget when the
@@ -2694,27 +2697,27 @@ Match frames with dark backgrounds")
 	     (message "Creating face editor...done"))))))
 
 (defvar custom-face-menu
-  '(("Set for Current Session" custom-face-set)
+  `(("Set for Current Session" custom-face-set)
     ("Save for Future Sessions" custom-face-save)
     ("Reset to Saved" custom-face-reset-saved
-     (lambda (widget)
-       (or (get (widget-value widget) 'saved-face)
-	   (get (widget-value widget) 'saved-face-comment))))
+     ,#'(lambda (widget)
+          (or (get (widget-value widget) 'saved-face)
+              (get (widget-value widget) 'saved-face-comment))))
     ("Reset to Standard Setting" custom-face-reset-standard
-     (lambda (widget)
-       (get (widget-value widget) 'face-defface-spec)))
+     ,#'(lambda (widget)
+          (get (widget-value widget) 'face-defface-spec)))
     ("---" ignore ignore)
     ("Add Comment" custom-comment-show custom-comment-invisible-p)
     ("---" ignore ignore)
     ("Show all display specs" custom-face-edit-all
-     (lambda (widget)
-       (not (eq (widget-get widget :custom-form) 'all))))
+     ,#'(lambda (widget)
+          (not (eq (widget-get widget :custom-form) 'all))))
     ("Just current attributes" custom-face-edit-selected
-     (lambda (widget)
-       (not (eq (widget-get widget :custom-form) 'selected))))
+     ,#'(lambda (widget)
+          (not (eq (widget-get widget :custom-form) 'selected))))
     ("Show as Lisp expression" custom-face-edit-lisp
-     (lambda (widget)
-       (not (eq (widget-get widget :custom-form) 'lisp)))))
+     ,#'(lambda (widget)
+          (not (eq (widget-get widget :custom-form) 'lisp)))))
   "Alist of actions for the `custom-face' widget.
 Each entry has the form (NAME ACTION FILTER) where NAME is the name of
 the menu entry, ACTION is the function to call on the widget when the
@@ -3336,21 +3339,21 @@ Creating group members... %2d%%"
 	   (insert "/\n")))))
 
 (defvar custom-group-menu
-  '(("Set for Current Session" custom-group-set
-     (lambda (widget)
-       (eq (widget-get widget :custom-state) 'modified)))
+  `(("Set for Current Session" custom-group-set
+     ,#'(lambda (widget)
+          (eq (widget-get widget :custom-state) 'modified)))
     ("Save for Future Sessions" custom-group-save
-     (lambda (widget)
-       (memq (widget-get widget :custom-state) '(modified set))))
+     ,#'(lambda (widget)
+          (memq (widget-get widget :custom-state) '(modified set))))
     ("Reset to Current" custom-group-reset-current
-     (lambda (widget)
-       (memq (widget-get widget :custom-state) '(modified))))
+     ,#'(lambda (widget)
+          (memq (widget-get widget :custom-state) '(modified))))
     ("Reset to Saved" custom-group-reset-saved
-     (lambda (widget)
-       (memq (widget-get widget :custom-state) '(modified set))))
+     ,#'(lambda (widget)
+          (memq (widget-get widget :custom-state) '(modified set))))
     ("Reset to standard setting" custom-group-reset-standard
-     (lambda (widget)
-       (memq (widget-get widget :custom-state) '(modified set saved)))))
+     ,#'(lambda (widget)
+          (memq (widget-get widget :custom-state) '(modified set saved)))))
   "Alist of actions for the `custom-group' widget.
 Each entry has the form (NAME ACTION FILTER) where NAME is the name of
 the menu entry, ACTION is the function to call on the widget when the

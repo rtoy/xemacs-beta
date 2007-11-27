@@ -1,5 +1,35 @@
 2007-11-27  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp.el (byte-compile-file-form-custom-declare-variable):
+	Byte compile the default value for #'custom-declare-variable (and
+	thence defcustom) calls; pass the uncompiled value as the value of
+	a :default keyword, to be used in the customize UI if the byte
+	compiled init value differs from the non byte compiled init
+	value.
+
+	GNU don't do these things. The advantages of doing it our way are
+	a) the byte compilation warnings and b) since our interpreter is
+	proportionately so much slower than theirs, we are penalised more
+	strongly when we interpret code, especially when
+	#'custom-declare-variable calls cluster, as they tend to do. 
+	* cus-edit.el (customize-changed-options):
+	Wrap the #'interactive call to be less than 80 columns. 
+	Wrap the code to less than 80 columns.
+	* cus-edit.el (custom-variable-menu):
+	* cus-edit.el (custom-face-menu):
+	* cus-edit.el (custom-group-menu):
+	Expose the lambda expressions in these variables to the byte
+	compiler.
+	* custom.el (custom-initialize-changed):
+	Correct the docstring; change the defun to defsubst, since calls
+	to this are only done from one function, and calls to that
+	function cluster. 
+	* custom.el (custom-declare-variable):
+	Document the :default argument to #'custom-declare-variable;
+	implement it. 
+
+2007-11-27  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* byte-optimize.el (byte-optimize-featurep):
 	Remove a useless let binding that was a hangover from an earlier
 	version of the code. Eliminates a byte-compile time warning. 
