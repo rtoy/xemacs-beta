@@ -1279,6 +1279,10 @@
 (Assert (= (read (format "%d"  most-negative-fixnum)) most-negative-fixnum))
 (Assert (= (read (format "%ld" most-negative-fixnum)) most-negative-fixnum))
 
+;; These used to crash. 
+(Assert (eql (read (format "%f" 1.2e+302)) 1.2e+302))
+(Assert (eql (read (format "%.1000d" 1)) 1))
+
 ;;; "%u" is undocumented, and Emacs Lisp has no unsigned type.
 ;;; What to do if "%u" is used with a negative number?
 ;;; For non-bignum XEmacsen, the most reasonable thing seems to be to print an

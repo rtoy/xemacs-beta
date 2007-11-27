@@ -1,3 +1,12 @@
+2007-11-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c: 
+	Default to a buffer size of 350 for the sprintf call, but increase
+	it if the precision and minwidth indicate that it should be
+	bigger. Issue reported by Hans de Graaff; bug originally fixed by
+	Sebastian Freundt in SXEmacs following the change I merged on
+	2006-11-28. Forks have their disadvantages. 
+
 2007-11-11  Mats Lidell  <matsl@xemacs.org>
 
 	* events.h: Based on SXEmacs patch. Support for mouse button 6 to
