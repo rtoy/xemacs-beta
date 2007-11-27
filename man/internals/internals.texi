@@ -9985,9 +9985,10 @@ etc.).
 @node Ibytes and Ichars, Byte-Char Position Conversion, The Text in a Buffer, Text
 @section Ibytes and Ichars
 @cindex Ibytes and Ichars
-@cindex Ichars, Ibytes and
+@cindex Ichars, Ibytes
 
-  Not yet documented.
+This is documented under the internationalization support:
+@pxref{Byte/Character Types; Buffer Positions; Other Typedefs}
 
 @node Byte-Char Position Conversion, Searching and Matching, Ibytes and Ichars, Text
 @section Byte-Char Position Conversion
