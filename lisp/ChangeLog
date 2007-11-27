@@ -1,3 +1,9 @@
+2007-11-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (byte-optimize-featurep):
+	Remove a useless let binding that was a hangover from an earlier
+	version of the code. Eliminates a byte-compile time warning. 
+
 2007-11-22  Vin Shelton  <acs@xemacs.org>
 
 	* about.el (about-hacker-contribution): Updated my bio.
