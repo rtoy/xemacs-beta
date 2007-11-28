@@ -1,5 +1,13 @@
 2007-11-28  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* simple.el:
+	* simple.el (xemacs-default-composefunc-dont-nag): New.
+	Variable to be bound when using the xemacs-default-composefunc
+	and when nagging should be avoided (notably when submitting bug
+	report).
+
+2007-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule/mule-cmds.el (create-variant-language-environment):
 	Set tutorial-coding-system to correspond to the original coding
 	system when creating the variant language environment. 

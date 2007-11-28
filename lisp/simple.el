@@ -3433,10 +3433,13 @@ The properties used on SYMBOL are `composefunc', `sendfunc',
 ;;
 ;; and hope for the best. Not code we want to use, IMO.
 
+(defvar xemacs-default-composefunc-dont-nag nil
+  "Disable the `xemacs-default-composefunc' nagging; for bug reports.")
+
 (defun xemacs-default-composefunc (&rest args) 
   "Warn that the default mail-reading package is heinously underfeatured;
 compose a mail using it, all the same.  "
-  (unless (noninteractive)
+  (unless (or noninteractive xemacs-default-composefunc-dont-nag)
     (warn "
 
 Defaulting to the GNU Emacs-derived `sendmail.el' mail client. This facility,
