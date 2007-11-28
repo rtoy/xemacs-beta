@@ -1099,13 +1099,18 @@ environment.  "
    (destructive-plist-to-alist 
     (plist-put
      (plist-put
-      (plist-put (alist-to-plist (cdr langenv))
-                 'native-coding-system
-                 coding-system)
-      'coding-system (cons coding-system
-                           (cdr (assoc 'coding-system (cdr langenv)))))
-     'coding-priority (cons coding-system
-                           (cdr (assq 'coding-priority (cdr langenv))))))))
+      (plist-put
+       (plist-put (alist-to-plist (cdr langenv)) 'native-coding-system
+                  coding-system)
+       'coding-system (cons coding-system
+                            (cdr (assoc 'coding-system (cdr langenv)))))
+      'coding-priority (cons coding-system
+                             (cdr (assq 'coding-priority (cdr langenv)))))
+     ;; The tutorial coding system is important; otherwise the tutorial file
+     ;; gets loaded in the variant coding system.
+     'tutorial-coding-system
+     (or (car-safe (cdr-safe (assoc 'tutorial-coding-system (cdr langenv))))
+         (car-safe (cdr-safe (assoc 'coding-system (cdr langenv)))))))))
 
 (defun get-language-environment-from-locale (locale)
   "Convert LOCALE into a language environment.

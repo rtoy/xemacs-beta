@@ -1,3 +1,9 @@
+2007-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (create-variant-language-environment):
+	Set tutorial-coding-system to correspond to the original coding
+	system when creating the variant language environment. 
+
 2007-11-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-file-form-custom-declare-variable):
