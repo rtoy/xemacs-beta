@@ -1,3 +1,8 @@
+2007-11-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-ccl.c (ccl_driver):
+	Take out a static variable I was using for debugging. 
+
 2007-11-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doprnt.c: 

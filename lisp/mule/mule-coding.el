@@ -233,7 +233,8 @@ encoded unambiguously and completely into the coding-system; if this is so,
 returns a list corresponding to such a ccl-program.  If not, it returns nil.  "
   (let ((tentative-encode-program-parts
 	 (eval-when-compile 
-	   (let* ((compiled 
+	   (let* ((vec-len 128)
+		  (compiled 
 		   (append
                     (ccl-compile
                      `(1
@@ -244,7 +245,10 @@ returns a list corresponding to such a ccl-program.  If not, it returns nil.  "
                            ((if (r0 == #xABAB)
                                 ;; #xBFFE is a sentinel in the compiled
                                 ;; program.
-                                (write r1 ,(make-vector 256 #xBFFE))
+                                ;; #xBFFE is a sentinel in the compiled
+                                ;; program.
+				((r0 = r1 & #x7F)
+				 (write r0 ,(make-vector vec-len #xBFFE)))
                               ((mule-to-unicode r0 r1)
                                (if (r0 == #xFFFD)
                                    (write #xBEEF)
@@ -260,8 +264,11 @@ returns a list corresponding to such a ccl-program.  If not, it returns nil.  "
                                    (lambda (entr) (eq #xBFFE entr))
                                    first-part))))
 	     (while compiled
-	       (if (eq #xBFFE (cadr compiled))
-		   (setcdr compiled nil))
+	       (when (eq #xBFFE (cadr compiled))
+		 (assert (= vec-len (search '(#xBFFE) (cdr compiled)
+					    :test #'/=)) nil
+					    "Strange ccl vector length")
+		 (setcdr compiled nil))
 	       (setq compiled (cdr compiled)))
              ;; Is the generated code as we expect it to be?
 	     (assert (and (memq #xABAB first-part)
@@ -271,11 +278,11 @@ returns a list corresponding to such a ccl-program.  If not, it returns nil.  "
 compiled CCL code,\nand that the constant #xABAB is #xABAB. If that is
 not the case, and it appears not to be--that's why you're getting this
 message--it will not work.  ")
-	     (list first-part last-part))))
+	     (list first-part last-part vec-len))))
 	(charset-lower -1)
 	(charset-upper -1)
 	worth-trying known-charsets encode-program
-	other-charset-vector ucs)
+	other-charset-vector ucs args-out-of-range)
 
     (loop for char across decode-table
       do (pushnew (char-charset char) known-charsets))
@@ -311,7 +318,9 @@ message--it will not work.  ")
 	      worth-trying nil)))
 
     (when worth-trying
-      (setq other-charset-vector (make-vector 128 encode-failure-octet))
+      (setq other-charset-vector
+	    (make-vector (third tentative-encode-program-parts)
+			 encode-failure-octet))
       (loop for i from charset-lower to charset-upper
         do (aset other-charset-vector i
 		 (gethash (encode-char (make-char worth-trying i)
@@ -611,6 +620,7 @@ the code for tilde `~'.  "
            description 
            (plist-put (plist-put props 'decode decode-program)
                       'encode encode-program)))
+    (coding-system-put name '8-bit-fixed t)
     (coding-system-put name 'category 
                        (make-8-bit-choose-category decode-table))
     (loop for alias in aliases
@@ -682,6 +692,7 @@ the code for tilde `~'.  "
                                    'encode-table-sym
                                    (symbol-value 'encode-table-sym)))
                             ',encode-program))))
+	(coding-system-put ',name '8-bit-fixed t)
         (coding-system-put ',name 'category ',
                            (make-8-bit-choose-category decode-table))
         ,(macroexpand `(loop for alias in ',aliases

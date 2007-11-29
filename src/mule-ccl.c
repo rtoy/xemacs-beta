@@ -956,7 +956,6 @@ ccl_driver (struct ccl_program *ccl,
   int this_ic = 0;
   int eof_ic = ccl->eof_ic;
   int eof_hit = 0;
-  static int ccl_driver_calls;
 
   if (ic >= eof_ic)
     ic = CCL_HEADER_MAIN;
@@ -970,8 +969,6 @@ ccl_driver (struct ccl_program *ccl,
 #ifdef CCL_DEBUG
   ccl_backtrace_idx = 0;
 #endif
-
-  ++ccl_driver_calls;
 
   for (;;)
     {

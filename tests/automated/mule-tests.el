@@ -495,6 +495,28 @@ This is a naive implementation in Lisp.  "
                (eq (aref ccl-vector 4)  
                    (encode-char (make-char 'control-1 31) 'ucs)))))
 
+
+  ;; Test the 8 bit fixed-width coding systems for round-trip
+  ;; compatibility with themselves.
+  (loop
+    for coding-system in (coding-system-list)
+    with all-possible-octets = (apply #'string
+				      (loop for i from ?\x00 to ?\xFF
+					collect i))
+    do
+    (when (and (coding-system-get coding-system '8-bit-fixed)
+	       ;; Don't check the coding systems with autodetect, they are
+	       ;; not round-trip compatible for the possible line-ending
+	       ;; characters.
+	       (string-match #r"-\(unix\|dos\|mac\)$"
+			     (symbol-name coding-system)))
+      ;; These coding systems are round-trip compatible with themselves.
+      (Assert (equal (encode-coding-string 
+		      (decode-coding-string all-possible-octets
+					    coding-system)
+		      coding-system)
+		     all-possible-octets))))
+
   ;;---------------------------------------------------------------
   ;; Test charset-in-* functions
   ;;---------------------------------------------------------------

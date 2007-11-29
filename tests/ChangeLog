@@ -1,3 +1,9 @@
+2007-11-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Check the eight-bit fixed-width CCL coding systems for round-trip
+	compatibility with themselves. 
+
 2007-11-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

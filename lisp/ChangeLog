@@ -1,3 +1,14 @@
+2007-11-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-coding.el (make-8-bit-generate-helper):
+	Don't use 128 as a magic constant, instead make a let-binding to
+	in in the eval-when-compile clause, and pass that bound value
+	through to the run-time code. Fixes a bug where the compile-time
+	and run-time code didn't share this value.
+	* mule/mule-coding.el (make-8-bit-coding-system):
+	Mark the coding systems created by this code as such, for the sake
+	of automated testing of their round-trip compatibility. 
+
 2007-11-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el:
