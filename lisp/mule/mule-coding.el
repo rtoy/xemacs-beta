@@ -107,11 +107,6 @@ The allowable range of REGISTER is 0 through 3."
    mnemonic "CText"))
 
 (make-coding-system
- 'iso-8859-1 'no-conversion
- "ISO-8859-1 (Latin-1)"
- '(eol-type nil mnemonic "Noconv"))
-
-(make-coding-system
  'iso-2022-8bit-ss2 'iso2022
  "ISO-2022 8-bit w/SS2"
  '(charset-g0 ascii
@@ -699,3 +694,13 @@ the code for tilde `~'.  "
                         do (define-coding-system-alias alias
                              ',name)))
         (find-coding-system ',name)))))
+
+;; Ideally this would be in latin.el, but code-init.el uses it.
+(make-8-bit-coding-system
+ 'iso-8859-1 
+ '() ;; No differences from Latin 1. 
+ "ISO-8859-1 (Latin-1)"
+ '(mnemonic "Latin 1"
+   documentation "The most used encoding of Western Europe and the Americas."
+   aliases (iso-latin-1 latin-1)))
+

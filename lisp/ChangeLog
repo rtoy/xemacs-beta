@@ -1,5 +1,29 @@
 2007-12-01  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/mule-coding.el (iso-8859-1):
+	* mule/latin.el (iso-8859-2):
+	* mule/latin.el (iso-8859-3):
+	* mule/latin.el (iso-8859-4):
+	* mule/cyrillic.el (iso-8859-5):
+	* mule/greek.el (iso-8859-7):
+	* mule/hebrew.el (iso-8859-8):
+	* mule/latin.el (iso-8859-9):
+	* mule/latin.el (iso-8859-15):
+	* mule/latin.el (iso-8859-16):
+	Move the various ISO 8859 coding systems away from the ISO 2022
+	implementation to a #'make-8-bit-coding-system implementation;
+	this has the handy side-effect of adressing most of the
+	unification problems the old implementation had.
+
+	Add aliases for GNU compatibility.
+	  
+	Still no warning on the imminent corruption of data, though. I'm
+	working on it.
+	* mule/greek.el (windows-1253):
+	Unconditionally provide this coding system.
+
+2007-12-01  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el (byte-compile-output-file-form):
 	Bind print-gensym to a cons, to tell the Lisp printer not to clear
 	print-gensym-alist on exit from #'print. This is appropriate

@@ -48,16 +48,42 @@
 (modify-syntax-entry (make-char 'hebrew-iso8859-8 32) "w") ; no-break space
 
 
-(make-coding-system
- 'iso-8859-8 'iso2022
+(make-8-bit-coding-system
+ 'iso-8859-8
+ '((#xAA ?\u00D7) ;; MULTIPLICATION SIGN
+   (#xBA ?\u00F7) ;; DIVISION SIGN
+   (#xDF ?\u2017) ;; DOUBLE LOW LINE
+   (#xE0 ?\u05D0) ;; HEBREW LETTER ALEF
+   (#xE1 ?\u05D1) ;; HEBREW LETTER BET
+   (#xE2 ?\u05D2) ;; HEBREW LETTER GIMEL
+   (#xE3 ?\u05D3) ;; HEBREW LETTER DALET
+   (#xE4 ?\u05D4) ;; HEBREW LETTER HE
+   (#xE5 ?\u05D5) ;; HEBREW LETTER VAV
+   (#xE6 ?\u05D6) ;; HEBREW LETTER ZAYIN
+   (#xE7 ?\u05D7) ;; HEBREW LETTER HET
+   (#xE8 ?\u05D8) ;; HEBREW LETTER TET
+   (#xE9 ?\u05D9) ;; HEBREW LETTER YOD
+   (#xEA ?\u05DA) ;; HEBREW LETTER FINAL KAF
+   (#xEB ?\u05DB) ;; HEBREW LETTER KAF
+   (#xEC ?\u05DC) ;; HEBREW LETTER LAMED
+   (#xED ?\u05DD) ;; HEBREW LETTER FINAL MEM
+   (#xEE ?\u05DE) ;; HEBREW LETTER MEM
+   (#xEF ?\u05DF) ;; HEBREW LETTER FINAL NUN
+   (#xF0 ?\u05E0) ;; HEBREW LETTER NUN
+   (#xF1 ?\u05E1) ;; HEBREW LETTER SAMEKH
+   (#xF2 ?\u05E2) ;; HEBREW LETTER AYIN
+   (#xF3 ?\u05E3) ;; HEBREW LETTER FINAL PE
+   (#xF4 ?\u05E4) ;; HEBREW LETTER PE
+   (#xF5 ?\u05E5) ;; HEBREW LETTER FINAL TSADI
+   (#xF6 ?\u05E6) ;; HEBREW LETTER TSADI
+   (#xF7 ?\u05E7) ;; HEBREW LETTER QOF
+   (#xF8 ?\u05E8) ;; HEBREW LETTER RESH
+   (#xF9 ?\u05E9) ;; HEBREW LETTER SHIN
+   (#xFA ?\u05EA) ;; HEBREW LETTER TAV
+   (#xFD ?\u200E) ;; LEFT-TO-RIGHT MARK
+   (#xFE ?\u200F)) ;; RIGHT-TO-LEFT MARK
  "ISO-8859-8 (Hebrew)"
- '(charset-g0 ascii
-   charset-g1 hebrew-iso8859-8
-   charset-g2 t
-   charset-g3 t
-   no-iso6429 t
-   mnemonic "MIME/Hbrw"
-   ))
+ '(mnemonic "MIME/Hbrw"))
 
 (make-coding-system
  'ctext-hebrew 'iso2022
