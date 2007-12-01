@@ -1888,7 +1888,7 @@ With argument, insert value in current buffer after the form."
 	  (print-readably t)	; print #[] for bytecode, 'x for (quote x)
 	  (print-gensym (if (and byte-compile-print-gensym
 				 (not byte-compile-emacs19-compatibility))
-			    t nil)))
+			    '(t) nil)))
       (princ "\n" byte-compile-outbuffer)
       (prin1 form byte-compile-outbuffer)
       nil)))

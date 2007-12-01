@@ -1,3 +1,12 @@
+2007-12-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-output-file-form):
+	Bind print-gensym to a cons, to tell the Lisp printer not to clear
+	print-gensym-alist on exit from #'print. This is appropriate
+	because #'byte-compile-output-file-form may be called multiple
+	times for a given output file, and re-using the
+	#1=#:... placeholders in that context is inappropriate. 
+
 2007-11-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-coding.el (make-8-bit-generate-helper):
