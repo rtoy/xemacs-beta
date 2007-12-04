@@ -1,3 +1,10 @@
+2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep):
+	The native coding system specified in the language environment can
+	be either a list (which we used to handle fine) or a single coding
+	system expression (which we failed on). Handle the latter case. 
+
 2007-11-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:
