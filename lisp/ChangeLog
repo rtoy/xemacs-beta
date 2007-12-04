@@ -1,3 +1,16 @@
+2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/iso-with-esc.el:
+	* mule/iso-with-esc.el ('iso-latin-1-with-esc): New.
+	Provide the variable-length rarely-used ISO 2022 compatible coding
+	systems for Latin (that is, iso-8859-[1-16]) again, to address
+	Stephen's veto. 
+
+2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* autoload.el (make-autoload):
+	Support auto-autoloads for coding systems. 
+
 2007-12-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-coding.el (iso-8859-1):

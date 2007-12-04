@@ -229,6 +229,8 @@ Lisp_Object Qcanonicalize_after_coding;
 
 Lisp_Object QScoding_system_cookie;
 
+Lisp_Object Qposix_charset_to_coding_system_hash;
+
 /* This is used to convert autodetected coding systems into existing
    systems.  For example, the chain undecided->convert-eol-autodetect may
    have its separate parts detected as mswindows-multibyte and
@@ -469,6 +471,89 @@ a coding system is called for. (This is similar to how faces work.)
   return CODING_SYSTEMP (object) ? Qt : Qnil;
 }
 
+static Lisp_Object
+find_coding_system (Lisp_Object coding_system_or_name,
+                    int do_autoloads)
+{
+  Lisp_Object lookup;
+
+  if (NILP (coding_system_or_name))
+    coding_system_or_name = Qbinary;
+  else if (CODING_SYSTEMP (coding_system_or_name))
+    return coding_system_or_name;
+  else
+    CHECK_SYMBOL (coding_system_or_name);
+
+  while (1)
+    {
+      lookup =
+	Fgethash (coding_system_or_name, Vcoding_system_hash_table, Qnil);
+
+      if (CONSP (lookup) && do_autoloads)
+        {
+          struct gcpro gcpro1;
+          int length;
+          DECLARE_EISTRING (desired_base);
+          DECLARE_EISTRING (warning_info);
+
+          eicpy_lstr (desired_base, XSYMBOL_NAME (coding_system_or_name));
+
+          /* Work out the name of the base coding system. */
+          length = eilen (desired_base);
+          if (length > (int)(sizeof ("-unix") - 1))
+            {
+              if (0 == qxestrcmp ((UAscbyte *)"-unix", (eidata (desired_base))
+                                  + (length - (sizeof ("-unix") - 1))))
+                {
+                  eidel (desired_base, length - (sizeof ("-unix") - 1),
+                         -1, 5, 5);
+                }
+            }
+          else if (length > (int)(sizeof ("-dos") - 1))
+            {
+              if ((0 == qxestrcmp ((UAscbyte *)"-dos", (eidata (desired_base))
+                                   + (length - (sizeof ("-dos") - 1)))) ||
+                  (0 == qxestrcmp ((UAscbyte *)"-mac", (eidata (desired_base))
+                                   + (length - (sizeof ("-mac") - 1)))))
+                {
+                  eidel (desired_base, length - (sizeof ("-dos") - 1), -1,
+                         4, 4);
+                }
+            }
+
+          coding_system_or_name = intern_int (eidata (desired_base));
+
+          /* Remove this coding system and its subsidiary coding
+             systems from the hash, to avoid calling this code recursively. */
+          Fremhash (coding_system_or_name, Vcoding_system_hash_table);
+          Fremhash (add_suffix_to_symbol(coding_system_or_name, "-unix"),
+                    Vcoding_system_hash_table);
+          Fremhash (add_suffix_to_symbol(coding_system_or_name, "-dos"),
+                    Vcoding_system_hash_table);
+          Fremhash (add_suffix_to_symbol(coding_system_or_name, "-mac"),
+                    Vcoding_system_hash_table);
+
+          eicpy_ascii (warning_info, "Error autoloading coding system ");
+          eicat_lstr (warning_info, XSYMBOL_NAME (coding_system_or_name));
+
+          /* Keep around the form so it doesn't disappear from under
+             #'eval's feet. */
+          GCPRO1 (lookup);
+          call1_trapping_problems ((const CIbyte *)eidata (warning_info),
+                                   Qeval, lookup, 0);
+          UNGCPRO;
+
+          lookup =
+            Fgethash (coding_system_or_name, Vcoding_system_hash_table, Qnil);
+        }
+
+      if (CODING_SYSTEMP (lookup) || NILP (lookup))
+        return lookup;
+
+      coding_system_or_name = lookup;
+    }
+}
+
 DEFUN ("find-coding-system", Ffind_coding_system, 1, 1, 0, /*
 Retrieve the coding system of the given name.
 
@@ -479,22 +564,77 @@ associated coding system object is returned.
 */
        (coding_system_or_name))
 {
-  if (NILP (coding_system_or_name))
-    coding_system_or_name = Qbinary;
-  else if (CODING_SYSTEMP (coding_system_or_name))
-    return coding_system_or_name;
-  else
-    CHECK_SYMBOL (coding_system_or_name);
+  return find_coding_system(coding_system_or_name, 1);
+}
 
-  while (1)
+DEFUN ("autoload-coding-system", Fautoload_coding_system, 2, 2, 0, /*
+Define SYMBOL as a coding-system that is loaded on demand.
+
+FORM is a form to evaluate to define the coding-system. 
+*/
+       (symbol, form))
+{
+  Lisp_Object lookup;
+
+  CHECK_SYMBOL (symbol);
+  CHECK_CONS (form);
+
+  lookup = find_coding_system (symbol, 0);
+
+  if (!NILP (lookup) &&
+      /* Allow autoloads to be redefined. */
+      !CONSP (lookup))
     {
-      coding_system_or_name =
-	Fgethash (coding_system_or_name, Vcoding_system_hash_table, Qnil);
-
-      if (CODING_SYSTEMP (coding_system_or_name)
-	  || NILP (coding_system_or_name))
-	return coding_system_or_name;
+      invalid_operation ("Cannot redefine existing coding system",
+                         symbol);
     }
+
+  Fputhash (symbol, form, Vcoding_system_hash_table);
+  Fputhash (add_suffix_to_symbol(symbol, "-unix"), form,
+            Vcoding_system_hash_table);
+  Fputhash (add_suffix_to_symbol(symbol, "-dos"), form,
+            Vcoding_system_hash_table);
+  Fputhash (add_suffix_to_symbol(symbol, "-mac"), form,
+            Vcoding_system_hash_table);
+
+  /* Tell the POSIX locale infrastructure about this coding system (though
+     unfortunately it'll be too late for the startup locale sniffing. */
+  if (!UNBOUNDP (Qposix_charset_to_coding_system_hash))
+    {
+      Lisp_Object val = Fsymbol_value (Qposix_charset_to_coding_system_hash);
+      DECLARE_EISTRING (minimal_name);
+      Ibyte *full_name;
+      int len = XSTRING_LENGTH (XSYMBOL_NAME (symbol)), i;
+
+      if (!NILP (val))
+        {
+          full_name = XSTRING_DATA (XSYMBOL_NAME (symbol));
+          for (i = 0; i < len; ++i)
+            {
+              if (full_name[i] >= '0' && full_name[i] <= '9')
+                {
+                  eicat_ch (minimal_name, full_name[i]);
+                }
+              else if (full_name[i] >= 'a' && full_name[i] <= 'z')
+                {
+                  eicat_ch (minimal_name, full_name[i]);
+                }
+              else if (full_name[i] >= 'A'  && full_name[i] <= 'Z')
+                {
+                  eicat_ch (minimal_name, full_name[i] + 
+                            ('a' - 'A'));
+                }
+            }
+
+          if (eilen (minimal_name))
+            {
+              CHECK_HASH_TABLE (val);
+              Fputhash (eimake_string(minimal_name), symbol, val);
+            }
+        }
+    }
+
+  return Qt;
 }
 
 DEFUN ("get-coding-system", Fget_coding_system, 1, 1, 0, /*
@@ -651,7 +791,7 @@ struct coding_system_list_closure
 };
 
 static int
-add_coding_system_to_list_mapper (Lisp_Object key, Lisp_Object UNUSED (value),
+add_coding_system_to_list_mapper (Lisp_Object key, Lisp_Object value,
 				  void *coding_system_list_closure)
 {
   /* This function can GC */
@@ -660,9 +800,13 @@ add_coding_system_to_list_mapper (Lisp_Object key, Lisp_Object UNUSED (value),
   Lisp_Object *coding_system_list = cscl->coding_system_list;
 
   /* We can't just use VALUE because KEY might be an alias, and we need
-     the real coding system object. */
-  if (XCODING_SYSTEM (Ffind_coding_system (key))->internal_p ?
-      cscl->internal : cscl->normal)
+     the real coding system object.
+
+     Autoloaded coding systems have conses for their values, and can't be
+     internal coding systems, or coding system aliases.  */
+  if (CONSP (value) ||
+      (XCODING_SYSTEM (Ffind_coding_system (key))->internal_p ?
+       cscl->internal : cscl->normal))
     *coding_system_list = Fcons (key, *coding_system_list);
   return 0;
 }
@@ -921,9 +1065,13 @@ make_coding_system_1 (Lisp_Object name_or_existing, Ascbyte *prefix,
   else
     CHECK_SYMBOL (name_or_existing);
 
-  if (!NILP (Ffind_coding_system (name_or_existing)))
+  /* See is there an entry for name_or_existing in the defined coding system
+     hash table. */
+  csobj = find_coding_system (name_or_existing, 0);
+  /* Error if it's there and not an autoload form. */
+  if (!NILP (csobj) && !CONSP (csobj))
     invalid_operation ("Cannot redefine existing coding system",
-		       name_or_existing);
+                       name_or_existing);
 
   cs = allocate_coding_system (meths, meths->extra_data_size,
 			       name_or_existing);
@@ -999,6 +1147,8 @@ make_coding_system_1 (Lisp_Object name_or_existing, Ascbyte *prefix,
     XCODING_SYSTEM_EOL_TYPE (csobj) = EOL_AUTODETECT; /* for copy-coding-system
 							 below */
 
+    Fputhash (name_or_existing, csobj, Vcoding_system_hash_table);
+
     if (need_to_setup_eol_systems && !cs->internal_p)
       setup_eol_coding_systems (csobj);
     else if (eol_wrapper == EOL_CR || eol_wrapper == EOL_CRLF)
@@ -1037,8 +1187,6 @@ make_coding_system_1 (Lisp_Object name_or_existing, Ascbyte *prefix,
       }
     XCODING_SYSTEM_EOL_TYPE (csobj) = eol_wrapper;
   }
-  
-  Fputhash (name_or_existing, csobj, Vcoding_system_hash_table);
 
   return csobj;
 }
@@ -1396,7 +1544,7 @@ Use `define-coding-system-alias' instead.
   Lisp_Object new_coding_system;
   old_coding_system = Fget_coding_system (old_coding_system);
   new_coding_system =
-    UNBOUNDP (new_name) ? Qnil : Ffind_coding_system (new_name);
+    UNBOUNDP (new_name) ? Qnil : find_coding_system (new_name, 0);
   if (NILP (new_coding_system))
     {
       new_coding_system =
@@ -4386,6 +4534,7 @@ syms_of_file_coding (void)
   DEFSUBR (Fvalid_coding_system_type_p);
   DEFSUBR (Fcoding_system_type_list);
   DEFSUBR (Fcoding_system_p);
+  DEFSUBR (Fautoload_coding_system);
   DEFSUBR (Ffind_coding_system);
   DEFSUBR (Fget_coding_system);
   DEFSUBR (Fcoding_system_list);
@@ -4456,6 +4605,8 @@ syms_of_file_coding (void)
   DEFSYMBOL (Qdo_coding);
 
   DEFSYMBOL (Qcanonicalize_after_coding);
+
+  DEFSYMBOL (Qposix_charset_to_coding_system_hash);
 
   DEFSYMBOL (Qescape_quoted);
 

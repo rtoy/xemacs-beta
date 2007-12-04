@@ -280,7 +280,9 @@ or macro definition or a defcustom)."
 				  ',varname 'custom-variable)
 	     (custom-add-load ',varname
 			      ,(plist-get rest :require))))))
-
+     ;; Coding systems. #### Would be nice to handle the docstring here too.
+     ((memq car '(make-coding-system make-8-bit-coding-system))
+      `(autoload-coding-system ,(nth 1 form) '(load ,file)))
      ;; nil here indicates that this is not a special autoload form.
      (t nil))))
 

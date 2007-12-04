@@ -1,3 +1,32 @@
+2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c:
+	* file-coding.c (find_coding_system):
+	C-accessible version of #'find-coding-system that doesn't
+	necessarily call the autoload code, for use in
+	#'autoload-coding-system (which we allow to overwrite autoloaded
+	coding systems) and make_coding_system_1 (which has to).
+	* file-coding.c (Ffind_coding_system):
+	Move the implementation to find_coding_system; call that function
+	with a do_autoloads argument of 1. 
+	* file-coding.c (Fautoload_coding_system):
+	New.
+	* file-coding.c (add_coding_system_to_list_mapper):
+	When returning a list of coding systems, don't call the autoload
+	code.
+	* file-coding.c (make_coding_system_1):
+	* file-coding.c (Fcopy_coding_system):
+	* file-coding.c (syms_of_file_coding):
+
+	Implement autoloaded coding systems. The form to be evaluated to
+	load a given coding system is stored as the value in
+	Vcoding_system_hash_table; this form is evaluated if
+	find-coding-system is called with the symbol name of the coding
+	system as its argument.
+
+	This is also tied in with the POSIX locale infrastructure by means
+	of posix-charset-to-coding-system-hash. 
+
 2007-11-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c (ccl_driver):
