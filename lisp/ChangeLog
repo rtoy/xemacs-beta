@@ -1,3 +1,10 @@
+2007-12-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-file-form-custom-declare-variable):
+	Instead of using a keyword argument that's incompatible with 21.4,
+	modify the byte compiled init code to change the variable's
+	standard-value property itself. 
+
 2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/iso-with-esc.el:

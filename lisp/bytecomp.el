@@ -2405,10 +2405,17 @@ list that represents a doc string reference.
        ;; And save a value to be examined in the custom UI, if that differs
        ;; from the init value.
        (unless (equal to-examine (car-safe (cdr (third form))))
-         (setf (nthcdr 4 form) (nconc
-                                (list :default 
-                                      (list 'quote to-examine))
-                                (nthcdr 4 form)))))
+         (setcdr (third form)
+                 (list (byte-compile-top-level 
+                        ;; This is ugly. custom-declare-variable errors if
+                        ;; it's passed a keyword it doesn't know about, and
+                        ;; so to make this code run on 21.4, we add code to
+                        ;; modify the standard-value property to the
+                        ;; byte-compiled value for DEFAULT.
+                        `(prog2 (put ,(second form) 'standard-value
+                                     '(,to-examine))
+                          ,to-examine)
+                        nil 'file)))))
     form))
 
 ;;;###autoload
