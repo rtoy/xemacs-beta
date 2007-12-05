@@ -1,3 +1,9 @@
+2007-12-02  Ron Isaacson  <ron.isaacson@morganstanley.com>
+
+	* frame.c (change_frame_size):
+	(change_frame_size_1):
+	Must reset pending flag per-frame, so do it in the latter.
+
 2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c:

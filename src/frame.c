@@ -3273,6 +3273,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
   default_face_height_and_width_1 (frame, &font_height, &font_width);
 
   /* This size-change overrides any pending one for this frame.  */
+  f->size_change_pending = 0;
   FRAME_NEW_HEIGHT (f) = 0;
   FRAME_NEW_WIDTH (f) = 0;
 
@@ -3450,7 +3451,6 @@ change_frame_size (struct frame *f, int newheight, int newwidth, int delay)
       return;
     }
 
-  f->size_change_pending = 0;
   /* For TTY frames, it's like one, like all ...
      Can't have two TTY frames of different sizes on the same device. */
   if (FRAME_TTY_P (f))
