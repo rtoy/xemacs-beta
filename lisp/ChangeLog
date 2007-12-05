@@ -1,3 +1,15 @@
+2007-12-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* code-files.el (write-region):
+	Use a more concise and probably less confusing docstring from
+	Stephen. See 
+	87ve84323s.fsf@uwakimon.sk.tsukuba.ac.jp. 
+
+	Not following his suggestion of keeping the CODING-SYSTEM name for
+	the last argument, given that that would make reworking the
+	body of the necessary, and that I introduced a short-lived bug the
+	last time I did that. 
+
 2007-12-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-file-form-custom-declare-variable):

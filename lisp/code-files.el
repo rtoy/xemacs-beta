@@ -513,42 +513,34 @@ The functions on this hook are called with arguments START, END,
 FILENAME, APPEND, VISIT, LOCKNAME, and CODING-SYSTEM, the same as the
 corresponding arguments in the call to `write-region'.")
 
-(defun write-region (start end filename
-		     &optional append visit lockname
+(defun write-region (start end filename &optional append visit lockname
                      coding-system-or-mustbenew)
   "Write current region into specified file.
-By default the file's existing contents are replaced by the specified region.
-Called interactively, prompts for a file name.  With a prefix arg, prompts
-for a coding system as well.
+Called interactively, prompts for a file name.
+With a prefix arg, prompts for a coding system as well.
 
 When called from a program, takes three required arguments:
 START, END and FILENAME.  START and END are buffer positions.
-Optional fourth argument APPEND if non-nil means
-  append to existing file contents (if any).
-Optional fifth argument VISIT if t means
-  set last-save-file-modtime of buffer to this file's modtime
-  and mark buffer not modified.
-If VISIT is a string, it is a second file name;
-  the output goes to FILENAME, but the buffer is marked as visiting VISIT.
-  VISIT is also the file name to lock and unlock for clash detection.
-If VISIT is neither t nor nil nor a string,
-  that means do not print the \"Wrote file\" message.
-The optional sixth arg LOCKNAME, if non-nil, specifies the name to
-  use for locking and unlocking, overriding FILENAME and VISIT.
-Kludgy feature: if START is a string, then that string is written
-to the file, instead of any buffer contents, and END is ignored.
+APPEND, if non-nil, means append to existing file contents (if any), else
+  the file's existing contents are replaced by the specified region.
+VISIT, if non-nil, should be a string naming a file.  The buffer is marked
+                 as  visiting VISIT.  VISIT is also the file name to lock
+                 and unlock for clash detection.
+LOCKNAME, if non-nil, specifies the name to use for locking and unlocking,
+  overriding FILENAME and VISIT.
+CODING-SYSTEM-OR-MUSTBENEW specifies the coding system used to encode the
+  text written.  It defaults to the value of `buffer-file-coding-system'
+  in the current buffer.
 
-Optional seventh argument CODING-SYSTEM-OR-MUSTBENEW has a rather kludgy
-  interpretation.  If it is a coding system it describes the coding system
-  used to encode the text when it is written out, defaulting to to the value
-  of `buffer-file-coding-system' in the current buffer.
-
-If CODING-SYSTEM-OR-MUSTBENEW is non-nil and not a coding system, it means
-  that a check for an existing file with the same name should be made; with
-  a value of 'excl XEmacs will error if the file already exists and never
-  overwrite it.  If it is some other non-nil non-coding-system value, the
-  user will be asked for confirmation if the file already exists, and the
-  file will be overwritten if confirmation is given.
+For compatibility with GNU Emacs, several arguments are overloaded:
+START may be a string, which is written to the file.  END is ignored.
+VISIT may take the value t, meaning to set last-save-file-modtime of buffer
+  to this file's modtime and mark buffer not modified.  With any other
+  non-nil value of VISIT, suppress printing of the \"Wrote file\" message.
+CODING-SYSTEM-OR-MUSTBENEW may be a non-nil, non-coding-system value.
+  If it is `excl' and FILENAME already exists, signal `file-already-exists'.
+  Otherwise, if FILENAME already exists, ask for confirmation before
+  writing, and signal `file-already-exists' if not confirmed.
 
 See also `write-region-pre-hook' and `write-region-post-hook'."
   (interactive "r\nFWrite region to file: \ni\ni\ni\nZCoding-system: ")
