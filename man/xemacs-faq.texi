@@ -823,7 +823,7 @@ Gutters, tabs: andy piper
 @item Device subsystems
 @itemize @minus
 @item
-X Windows: Jamie Zawinksi, Ben Wing, others
+X Windows: Jamie Zawinski, Ben Wing, others
 @item
 GTK: William Perry, Malcolm Purvis
 @item
@@ -887,7 +887,7 @@ mailing lists.
 @item
 Steve Youngs currently produces the beta releases (???).
 @item
-Steve Youngs, Ville Skytta, and now Norbert Koch have taken turns
+Steve Youngs, Ville Skyttä, and now Norbert Koch have taken turns
 maintaining the packages.
 @item
 Vin Shelton maintains the stable releases.
@@ -3290,7 +3290,7 @@ the packages somewhere else, just change @samp{PACKAGE_PREFIX}.
 Note that XEmacs finds the packages automatically anywhere underneath
 the directory tree where it expects to find the packages.  All you
 need to do is put stuff there; you don't need to run any program to
-tell XEmacs to find the packges, or do anything of that sort.
+tell XEmacs to find the packages, or do anything of that sort.
 
 However, XEmacs will only notice newly installed packages when it
 starts up, so you will have to restart if you are already running
@@ -3441,10 +3441,10 @@ keyb: x
 
 As the exact files and their locations contained in a package may
 change it is recommended to remove a package first before installing a
-new version. In order to facilitate removal each package contains an
-pgkinfo/MANIFEST.pkgname file which list all the files belong to the
-package. M-x package-admin-delete-binary-package RET can be used to
-remove a package using this file.
+new version. In order to facilitate removal each package contains a
+pkginfo/MANIFEST.pkgname file which lists all the files belonging to
+the package. M-x package-admin-delete-binary-package RET can be used
+to remove a package using this file.
 
 Note that the interactive package tools included with XEmacs already do
 this for you.
@@ -3536,7 +3536,7 @@ default.  A good place to put @file{site-start.el} would be in
 
 A typical error: FTP Error: USER request failed; 500 AUTH not understood.
 
-Thanks to giacomo boffi @email{giacomo.boffi@@polimi.it} who recommends
+Thanks to Giacomo Boffi @email{giacomo.boffi@@polimi.it} who recommends
 on comp.emacs.xemacs:
 
    tell your ftp client to not attempt AUTH authentication (or do not
@@ -7159,7 +7159,7 @@ John.@email{Cooper@@Eng.Sun.COM, John S Cooper} writes:
 @node Q6.1.6, Q6.2.1, Q6.1.5, Internet
 @unnumberedsubsec Q6.1.6: Customization of VM not covered in the manual, or here.
 
-@email{boffi@@hp735.stru.polimi.it, giacomo boffi} writes:
+@email{boffi@@hp735.stru.polimi.it, Giacomo Boffi} writes:
 
 @quotation
 The meta-answer is to look into the file @file{vm-vars.el}, in the vm
@@ -7350,7 +7350,7 @@ front of the load-path, the other at the end:
 (setq load-path (nconc load-path '("foo" "bar")))
 @end lisp
 
-@email{keithh@@nortel.ca, keith (k.p.) hanlan} writes:
+@email{keithh@@nortel.ca, Keith (k.p.) Hanlan} writes:
 
 @quotation
 To add directories using Unix shell metacharacters use
@@ -8289,7 +8289,7 @@ scheme of Linux, where at any point there are at least two different
 development branches, one "stable" and one "experimental".  Periodic
 releases happen in both branches, but those in the experimental branch
 are not tested as well, and there's no guarantee they will work at all.
-The experiemental branch is open to any and all code that's acceptable
+The experimental branch is open to any and all code that's acceptable
 to the developers; the stable branch, however, is in general limited
 only to bug fixes, and all contributions are carefully reviewed to make
 sure they will increase and not decrease stability.
