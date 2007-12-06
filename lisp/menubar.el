@@ -210,7 +210,7 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 				      (car item-path-list)))))
 	(cons result parent)))))
 
-(defun add-menu-item-1 (menu-path new-item before in-menu)
+(defun add-menu-item-1 (leaf-p menu-path new-item before in-menu)
   ;; This code looks like it could be cleaned up some more
   ;; Do we really need 6 calls to find-menu-item?
   (let* ((item-name
@@ -283,20 +283,20 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
     (set-menubar-dirty-flag)
     new-item))
 
-(defun add-menu-button (menu-path menu-item &optional before in-menu)
+(defun add-menu-button (menu-path menu-leaf &optional before in-menu)
   "Add a menu item to some menu, creating the menu first if necessary.
 If the named item exists already, it is changed.
 MENU-PATH identifies the menu under which the new menu item should be inserted.
  It is a list of strings; for example, (\"File\") names the top-level \"File\"
  menu.  (\"File\" \"Foo\") names a hypothetical submenu of \"File\".
-MENU-ITEM is a menu or menu item.  See the documentation of `current-menubar'.
+MENU-LEAF is a menubar leaf node.  See the documentation of `current-menubar'.
 BEFORE, if provided, is the name of a menu item before which this item should
  be added, if this item is not on the menu already.  If the item is already
  present, it will not be moved.
 IN-MENU, if provided, means use that instead of `current-menubar' as the
  menu to change."
   ;; Note easymenu.el uses the fact that menu-leaf can be a submenu.
-  (add-menu-item-1 menu-path menu-item before in-menu))
+  (add-menu-item-1 t menu-path menu-leaf before in-menu))
 
 ;; I actually liked the old name better, but the interface has changed too
 ;; drastically to keep it. --Stig
@@ -315,8 +315,7 @@ BEFORE, if provided, is the name of a menu before which this menu should
 IN-MENU, if provided, means use that instead of `current-menubar' as the
  menu to change."
   (check-menu-syntax submenu nil)
-  (add-menu-item-1 menu-path submenu before in-menu))
-
+  (add-menu-item-1 nil menu-path submenu before in-menu))
 ;; purespace is no more, so this function is unnecessary
 ;(defun purecopy-menubar (x)
 ;  ;; this calls purecopy on the strings, and the contents of the vectors,
@@ -569,6 +568,7 @@ You can also call `submenu-generate-accelerator-spec' yourself to add
 accelerator specs -- this works even if the specs have already been added."
   (menu-split-long-menu (menu-sort-menu menu)))
 
+;;;###autoload
 (defun menu-split-long-menu (menu)
   "Split MENU according to `menu-max-items' and add accelerator specs.
 If MENU already has accelerator specs, they will be removed and new ones
