@@ -34,7 +34,7 @@ This is some notes about the term Emacs mode.
 @end menu
 
 The @code{term} package includes the major modes @code{term},
-@code{shell}, and @code{gud} (for running gbd or another debugger).
+@code{shell}, and @code{gud} (for running gdb or another debugger).
 It is a replacement for the comint mode of Emacs 19,
 as well as shell, gdb, terminal, and telnet modes.
 The package works best with recent releases of Emacs 19,

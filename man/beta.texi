@@ -350,7 +350,7 @@ command.
 
 @item
 Run @code{configure}.  If you are new, just consider running it with no
-options, to see if you can get a succesful build.  When you are more
+options, to see if you can get a successful build.  When you are more
 experienced, you should put various flags in.  Here is what we suggest:
 
 @enumerate
@@ -424,7 +424,7 @@ compile with that are located in an unusual place.  For example:
 @end example
 
 @item
-Depending on your build environment, consuder setting or not setting
+Depending on your build environment, consider setting or not setting
 options for menubars, scrollbars, window systems, native sound, etc.  If
 you're not sure, leave them out and let configure do the auto-detection.
 (If you get bugs compiling GTK, use @code{--with-gtk=no --with-gnome=no}.)

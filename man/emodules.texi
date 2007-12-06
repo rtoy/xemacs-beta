@@ -990,7 +990,7 @@ the right place.  Once this is done, the user can call the Lisp
 function @code{my-function}, if it was defined as an interactive
 function (which in this case it was).
 
-Thats all there is to defining and announcing new functions.  The rules
+That's all there is to defining and announcing new functions.  The rules
 for what goes inside the functions, and how to write good modules, is
 beyond the scope of this document.  Please consult the @value{emacs}
 internals manual for more details.

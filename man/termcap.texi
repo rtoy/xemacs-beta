@@ -174,7 +174,7 @@ On GNU systems, it suffices to include the header file
 variables.@refill
 
 On Unix systems, there is often no such header file.  Then you must
-explictly declare the variables as external.  You can do likewise for
+explicitly declare the variables as external.  You can do likewise for
 the functions, or let them be implicitly declared and cast their
 values from type @code{int} to the appropriate type.
 
@@ -487,7 +487,7 @@ buffer to fill up.  Then any additional output that cannot be processed
 immediately will be lost.
 
 To avoid this problem, we normally follow each display command with enough
-useless charaters (usually null characters) to fill up the time that the
+useless characters (usually null characters) to fill up the time that the
 display command needs to execute.  This does the job if the terminal throws
 away null characters without using up space in the buffer (which most
 terminals do).  If enough padding is used, no output can ever be lost.  The
@@ -912,7 +912,7 @@ Parameters encoded with @samp{%.} encoding can generate null characters,
 tabs or newlines.  These might cause trouble: the null character because
 @code{tputs} would think that was the end of the string, the tab because
 the kernel or other software might expand it into spaces, and the newline
-becaue the kernel might add a carriage-return, or padding characters
+because the kernel might add a carriage-return, or padding characters
 normally used for a newline.  To prevent such problems, @code{tgoto} is
 careful to avoid these characters.  Here is how this works: if the target
 cursor position value is such as to cause a problem (that is to say, zero,
@@ -3317,7 +3317,7 @@ String to terminate redirection of output to the printer.
 @item po
 String to redirect further output to the printer.
 @item pO
-String to redirect @var{n} characters ofoutput to the printer.
+String to redirect @var{n} characters of output to the printer.
 @item ps
 String to print the screen on the attached printer.
 @item rc
