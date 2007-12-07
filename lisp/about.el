@@ -1485,7 +1485,7 @@ I'm a software engineer and manager for Adaptive Optics Associates in
 Cambridge, Massachusetts.  I used to play a lot of Ultimate (see\n")
      (about-url-link 'vin nil "Visit the Ultimate Players Association homepage")
      (widget-insert " for more details), but nowadays I'm a family man,
-so I spend a lot of time with my wife, Becky, and my son, Noah.\n"))
+so I spend a lot of time with my wife, Becky, and our son, Noah.\n"))
     (viteno
      (widget-insert
       "\

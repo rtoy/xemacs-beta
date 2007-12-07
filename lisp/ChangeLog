@@ -1,3 +1,7 @@
+2007-12-07  Vin Shelton  <acs@xemacs.org>
+
+	* about.el: Minor bio update to test hg repository.
+
 2007-12-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* code-files.el (write-region):
