@@ -1,3 +1,8 @@
+2007-12-07  Ville Skyttä  <scop@xemacs.org>
+
+	* beta.texi, emodules.texi, term.texi, termcap.texi, texinfo.texi,
+	widget.texi, xemacs-faq.texi: Spelling fixes.
+
 2007-11-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* internals/internals.texi (Ibytes and Ichars):
