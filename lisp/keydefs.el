@@ -674,4 +674,12 @@ Keymap for characters following C-c.")
 ;(define-key global-map 'insertchar	'function-key-error)
 (define-key global-map 'deletechar	'delete-char)
 
+;; Bind the mouse wheel by default. 
+(dolist (keyspec '([(mouse-4)] [(shift mouse-4)] [(control mouse-4)]
+                   [(mouse-5)] [(shift mouse-5)] [(control mouse-5)]))
+  (define-key global-map keyspec
+    #'(lambda (event)
+        (interactive "e")
+        (mwheel-install)
+        (declare-fboundp (mwheel-scroll event)))))
 ;;; keydefs.el ends here
