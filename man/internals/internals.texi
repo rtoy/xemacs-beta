@@ -947,21 +947,21 @@ Menus: Jamie Zawinski, someone at Lucid (Lucid menus)
 @item
 Scrollbars: Chuck Thompson, ??? (Lucid scrollbar)
 @item
-Multi-device/device-independence work (console/device/etc methods): Ben Wing, prototype by chuck thompson
+Multi-device/device-independence work (console/device/etc methods): Ben Wing, prototype by Chuck Thompson
 @item
 Faces: first implementation, Jamie Zawinski; second, chuck; third, Ben Wing
 @item
 Fonts/colors: first implementation, Jamie Zawinski; further work, Ben Wing
 @item
-Toolbars: implementation, chuck, much interface work, Ben Wing
+Toolbars: implementation, Chuck, much interface work, Ben Wing
 @item
-Gutters, tabs: andy piper
+Gutters, tabs: Andy Piper
 @end itemize
 
 @item Device subsystems
 @itemize @minus
 @item
-X Windows: Jamie Zawinksi, Ben Wing, others
+X Windows: Jamie Zawinski, Ben Wing, others
 @item
 GTK: William Perry, Malcolm Purvis
 @item
@@ -975,7 +975,7 @@ Cygwin: Andy Piper
 @item Misc
 @itemize @minus
 @item
-Configure: initial porting from fsf, Chuck Thompson; conversion to autoconf 2, much rewriting, Martin Buchholz
+Configure: initial porting from FSF, Chuck Thompson; conversion to autoconf 2, much rewriting, Martin Buchholz
 @item
 Most initialization-related code: Ben Wing
 @item
@@ -1023,7 +1023,7 @@ Stephen Turnbull has produced many of the beta and semi-stable releases
 and has attempted to be the "face" of XEmacs on the newsgroups and
 mailing lists.
 @item
-Steve Youngs, Ville Skytta, and now Norbert Koch have taken turns
+Steve Youngs, Ville Skytt䬠and now Norbert Koch have taken turns
 maintaining the packages.
 @item
 Vin Shelton maintains the stable releases.
@@ -1037,7 +1037,7 @@ Testing - #### Norbert, Adrian, ???
 @table @asis
 
 @item Jamie Zawinski, Eric Benson, Matthieu Devin, Harlan Sexton
-These were the early creators of Lucid Emacs, the predecessor of Xemacs.
+These were the early creators of Lucid Emacs, the predecessor of XEmacs.
 Jamie Zawinski was the primary maintainer and coder for Lucid Emacs,
 active between early 1991 and June 1994.  He presided over versions 19.0
 through 19.10, and then abruptly left for Netscape.  He wrote the
@@ -1054,44 +1054,44 @@ code, which was added later.
 Active 1991 to 1993, author of much of the current Lisp object scheme,
 including Lrecords and LC records (added this support in 1993 to allow
 for 28-bit pointers, which had previously been restricted to 26 bits.)
-Moved the minibuffer and abbreve code into Lisp, worked on the keymap
-code and did the initial synching between Xemacs and the first released
+Moved the minibuffer and abbrev code into Lisp, worked on the keymap
+code and did the initial synching between XEmacs and the first released
 version of GNU Emacs version 19 in mid-1993.
 
 @item Martin Buchholz
-Active 1995 to 2001, maintainer of Xemacs late 1999 to ?, author of the
+Active 1995 to 2001, maintainer of XEmacs late 1999 to ?, author of the
 current configure support, mini optimizations to the byte interpreter,
 many improvements to the case changing code and many bug fixes to the
 process and system-specific code, also general spell checking and code
 cleanliness guru.
 
 @item Steve Baur
-Maintainer of Xemacs 1996 to 1999, responsible for many improvements to
-the Xemacs development process, for example, creation of the review
-board and arranging for Xemacs to be placed under CVS.  Author of the
+Maintainer of XEmacs 1996 to 1999, responsible for many improvements to
+the XEmacs development process, for example, creation of the review
+board and arranging for XEmacs to be placed under CVS.  Author of the
 package code.
 
 @item Chuck Thompson
 Active January 1993 to June 1996, author of the current and previous
-versions of the redisplay code and maintainer of Xemacs from mid-1994
-to mid-1996.  Creator of XEMacs.org.  Also wrote the scrollbar code, the
+versions of the redisplay code and maintainer of XEmacs from mid-1994
+to mid-1996.  Creator of xemacs.org.  Also wrote the scrollbar code, the
 original configure support, and prototype versions of the toolbar and
 device code.
 
 @item Ben Wing
 Active April 1993 to April 1996 and February 2000 to present.  Chief
-coder for Xemacs between 1994 and 1996.  Ben Wing was never the
-maintainer of Xemacs, and as a result, is the author of more of the
-Xemacs specific code in Xemacs than anyone else. Author of the mule
+coder for XEmacs between 1994 and 1996.  Ben Wing was never the
+maintainer of XEmacs, and as a result, is the author of more of the
+XEmacs specific code in XEmacs than anyone else. Author of the mule
 support (Extense code), the glis-phonetically spelled-and specifiers
 code most of the toolbars, and device distraction code, the error
 checking code, the Lstream code, the bit vector, char-table, and
 range-table code, much of the current Xt code, much, much of the events
 code (including most of the TTY event code), some of the phase code, and
-numerous other aspects of the code.  Also author of most of the Xemacs
-documentation including the internals manual and the Xemacs editions to
+numerous other aspects of the code.  Also author of most of the XEmacs
+documentation including the internals manual and the XEmacs editions to
 the Lisp reference manual, and responsible for much of the synching
-between Xemacs and GNU Emacs.
+between XEmacs and GNU Emacs.
 
 @item Kyle Jones
 Author of the minimal tag bits support, which allows for 32-bit
@@ -1160,13 +1160,13 @@ structures.
 
 @item alloca.c
 Inherited a long time ago from a prerelease version of GNU Emacs 19,
-kept in sync with more recent versions very few changes from Xemacs.
+kept in sync with more recent versions very few changes from XEmacs.
 Most changes consist of converting the code to ANSI C, and fixing up the
-includes at the top of the file to follow Xemacs conventions.
+includes at the top of the file to follow XEmacs conventions.
 
 @item alloca.s
 Inherited almost unchanged from FSF kept in sync up through 19.30
-basically no changes for Xemacs.
+basically no changes for XEmacs.
 @end table
 @end ignore
 
@@ -1275,13 +1275,13 @@ The problem is that, when I press an arrow key, it isn't
 transmitted/read by emacs (one or the other) correctly.
 The 4410 terminal description that I'm using defines up=M-[A
 (it appears as ^[[A, with the initial ^[ as one character).
-Pressting cntrl-Q up_arrow while in emacs shows me the same thing.
+Pressing Ctrl-Q up_arrow while in emacs shows me the same thing.
 On the vt100 the same thing happens but the terminal file says up=M-A
 (it appears as ^[A).  I've tried every other imaginable up= but get
 the same results.  I've also been unsuccessful writing a macro that
 understands what my keyboard is saying.
 
-Any ideas on how I can get the arrow keys to do somethingt? 
+Any ideas on how I can get the arrow keys to do something? 
 Anything?  Thanks in advance.
 
 --Bruce Burger     AT&T-Information Systems     Freehold, NJ
@@ -1751,7 +1751,7 @@ Niksic and Kyle Jones figured prominently in XEmacs development during
 these same years.  Steve Baur added the package system in 1997 (?),
 and Olivier Galibert also added the portable dumper support around
 2000.  Martin Buchholz took over from Steve Baur as release manager in
-late 1998 (?), and continued in this position through to eary 2000
+late 1998 (?), and continued in this position through to early 2000
 (?), when Stephen Turnbull took it over.  XEmacs has also been split
 into stable and experimental branches since early 1999, and Vin
 Shelton has been the release manager of the stable branches since the
@@ -4630,7 +4630,7 @@ implemented in the file @file{aclocal.m4}.
 Autoconf 2.59 divides the @file{configure} options into those that
 specify features (@samp{--enable}) and those that specify external
 libraries (@samp{--with}).  Many XEmacs options to not fall neatly into
-either of these catagories and so as a matter of policy all options can
+either of these categories and so as a matter of policy all options can
 be specified by either method.
 
 These merged options are declared with the @code{XE_MERGED_ARG} macro.
@@ -4660,7 +4660,7 @@ pre-defined values (if support for sets of values is needed, x1see
 @samp{--with-mail-locking=flock}.
 
 Keyword options are defined with an expanded form of
-@samp{XE_MERGED_ARG} called @samp{XE_KEYWORD_ARG}, which taks 5
+@samp{XE_MERGED_ARG} called @samp{XE_KEYWORD_ARG}, which takes 5
 parameters.  The first 4 parameters are the same as original macro with
 the exception that all of these four parameters are @strong{required}.
 The @var{action-if-true} code is run after the argument list has been
@@ -5954,7 +5954,7 @@ Sometimes major textual changes are made to the source.  This means that
 a search-and-replace is done to change type names and such.  Some people
 disagree with such changes, and certainly if done without good reason
 will just lead to headaches.  But it's important to keep the code clean
-and understable, and consistent naming goes a long way towards this.
+and understandable, and consistent naming goes a long way towards this.
 
 An example of the right way to do this was the so-called "great integral
 type renaming".
@@ -11328,7 +11328,7 @@ were encoded in a one-byte-per-character fashion rather than
 the actual multi-byte encoding.
 @end enumerate
 
-  None of the pre-Unciode standard non-modal encodings meet all of these
+  None of the pre-Unicode standard non-modal encodings meet all of these
 conditions.  For example, EUC satisfies only (2) and (3), while
 Shift-JIS and Big5 (not yet described) satisfy only (2). (All non-modal
 encodings must satisfy (2), in order to be unambiguous.)  UTF-8,
@@ -11515,7 +11515,7 @@ bits worth of data per character.  UTF-5 is meant for encoding Unicode
 inside of DNS names.
 @end itemize
 
-Thus, we can imagine three levels in the representation of texual data:
+Thus, we can imagine three levels in the representation of textual data:
 
 @example
 series of characters -> series of textual units -> series of bytes
@@ -12095,7 +12095,7 @@ To declare an Eistring, either put one of the following in the local
 variable section:
 
 DECLARE_EISTRING (name);
-     Declare a new Eistring and initialize it to the empy string.  This
+     Declare a new Eistring and initialize it to the empty string.  This
      is a standard local variable declaration and can go anywhere in the
      variable declaration section.  NAME itself is declared as an
      Eistring *, and its storage declared on the stack.

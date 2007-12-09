@@ -1,3 +1,7 @@
+2007-12-10  Ville Skyttä  <scop@xemacs.org>
+
+	* internals/internals.texi: Spelling fixes.
+
 2007-12-07  Ville Skyttä  <scop@xemacs.org>
 
 	* beta.texi, emodules.texi, term.texi, termcap.texi, texinfo.texi,
