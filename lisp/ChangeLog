@@ -1,5 +1,35 @@
 2007-12-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* unicode.el (load-unicode-mapping-tables):
+	Call #'set-default-unicode-precedence wrapped with
+	#'declare-fboundp, to avoid warnings on non-Mule builds. 
+
+	* unicode.el (ccl-encode-to-ucs-2):
+	* unicode.el (unicode-error-sequence-regexp-range):	
+	* unicode.el (frob-unicode-errors-region):
+	* unicode.el (unicode-error-translate-region):
+	Unconditionally provide these functions and variables at top
+	level in the code, to make them available to make-docfile. For the
+	INITVALUE args to #'defvar, conditionalise on (featurep 'mule);
+	ditto for the code that tests the lookup tables and provides the
+	WGL4 characters as jit-ucs-charset-0 characters.
+
+	Unintern the function and variable symbols if (featurep 'mule) is
+	not true, so their function definitions and so on get garbage
+	collected at dump time in non-Mule builds. 
+
+	* obsolete.el (add-menu-item): 
+	* obsolete.el (add-menu): 
+	* obsolete.el (add-menu): 
+	* obsolete.el (package-get-download-menu):
+	Provide these functions at top level, in order to make them
+	available to make-docfile.c, which has trouble interpreting byte
+	code. Unintern their symbols if the menubar feature is not
+	available, which means they will be garbage collected on
+	non-menubar builds.
+
+2007-12-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule/latin.el: 
 	Create clones of the English language environment with UTF-8 and
 	Windows-1252 as the associated coding system, for Joachim Schrod's

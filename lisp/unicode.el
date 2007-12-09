@@ -149,20 +149,21 @@ Setting this at run-time does nothing.")
     ;; *not* mapping various European characters to East Asian characters;
     ;; otherwise the default-unicode-precedence-list is numerically ordered
     ;; by charset ID.
-    (set-default-unicode-precedence-list
-     '(ascii control-1 latin-iso8859-1 latin-iso8859-2 latin-iso8859-15
-       greek-iso8859-7 hebrew-iso8859-8 ipa cyrillic-iso8859-5
-       latin-iso8859-16 latin-iso8859-3 latin-iso8859-4 latin-iso8859-9
-       vietnamese-viscii-lower vietnamese-viscii-upper arabic-iso8859-6
-       jit-ucs-charset-0 japanese-jisx0208 japanese-jisx0208-1978
-       japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2
-       chinese-gb2312 chinese-sisheng chinese-big5-1 chinese-big5-2
-       indian-is13194 korean-ksc5601 chinese-cns11643-1 chinese-cns11643-2
-       chinese-isoir165 arabic-1-column arabic-2-column arabic-digit
-       composite ethiopic indian-1-column indian-2-column jit-ucs-charset-0
-       katakana-jisx0201 lao thai-tis620 thai-xtis tibetan tibetan-1-column
-       latin-jisx0201 chinese-cns11643-3 chinese-cns11643-4
-       chinese-cns11643-5 chinese-cns11643-6 chinese-cns11643-7))))
+    (declare-fboundp
+     (set-default-unicode-precedence-list
+      '(ascii control-1 latin-iso8859-1 latin-iso8859-2 latin-iso8859-15
+	greek-iso8859-7 hebrew-iso8859-8 ipa cyrillic-iso8859-5
+	latin-iso8859-16 latin-iso8859-3 latin-iso8859-4 latin-iso8859-9
+	vietnamese-viscii-lower vietnamese-viscii-upper arabic-iso8859-6
+	jit-ucs-charset-0 japanese-jisx0208 japanese-jisx0208-1978
+	japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2
+	chinese-gb2312 chinese-sisheng chinese-big5-1 chinese-big5-2
+	indian-is13194 korean-ksc5601 chinese-cns11643-1 chinese-cns11643-2
+	chinese-isoir165 arabic-1-column arabic-2-column arabic-digit
+	composite ethiopic indian-1-column indian-2-column jit-ucs-charset-0
+	katakana-jisx0201 lao thai-tis620 thai-xtis tibetan tibetan-1-column
+	latin-jisx0201 chinese-cns11643-3 chinese-cns11643-4
+	chinese-cns11643-5 chinese-cns11643-6 chinese-cns11643-7)))))
 
 (make-coding-system
  'utf-16 'unicode
@@ -327,172 +328,174 @@ The second argument must be 'ucs, the third argument is ignored.  "
 	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
   (char-to-unicode char))
 
+(defconst ccl-encode-to-ucs-2
+  (eval-when-compile
+    (let ((pre-existing 
+           ;; This is the compiled CCL program from the assert
+           ;; below. Since this file is dumped and ccl.el isn't (and
+           ;; even when it was, it was dumped much later than this
+           ;; one), we can't compile the program at dump time. We can
+           ;; check at byte compile time that the program is as
+           ;; expected, though.
+           [1 16 131127 7 98872 65823 1307 5 -65536 65313 64833 1028
+              147513 8 82009 255 22]))
+      (when (featurep 'mule)
+        ;; Check that the pre-existing constant reflects the intended
+        ;; CCL program.
+        (assert
+         (equal pre-existing
+                (ccl-compile
+                 `(1 
+                   ( ;; mule-to-unicode's first argument is the
+                    ;; charset ID, the second its first byte
+                    ;; left shifted by 7 bits masked with its
+                    ;; second byte.
+                    (r1 = (r1 << 7)) 
+                    (r1 = (r1 | r2)) 
+                    (mule-to-unicode r0 r1) 
+                    (if (r0 & ,(lognot #xFFFF))
+                        ;; Redisplay looks in r1 and r2 for the first
+                        ;; and second bytes of the X11 font,
+                        ;; respectively. For non-BMP characters we
+                        ;; display U+FFFD.
+                        ((r1 = #xFF)
+                         (r2 = #xFD))
+                      ((r1 = (r0 >> 8)) 
+                       (r2 = (r0 & #xFF))))))))
+         nil 
+         "The pre-compiled CCL program appears broken. "))
+      pre-existing))
+  "CCL program to transform Mule characters to UCS-2.")
+
 (when (featurep 'mule)
-  (let ((prog
-         (eval-when-compile
-           (let ((pre-existing 
-                  ;; This is the compiled CCL program from the assert
-                  ;; below. Since this file is dumped and ccl.el isn't (and
-                  ;; even when it was, it was dumped much later than this
-                  ;; one), we can't compile the program at dump time. We can
-                  ;; check at byte compile time that the program is as
-                  ;; expected, though.
-                  [1 16 131127 7 98872 65823 1307 5 -65536 65313 64833 1028
-                     147513 8 82009 255 22]))
-             (when (featurep 'mule)
-               ;; Check that the pre-existing constant reflects the intended
-               ;; CCL program.
-               (assert
-                (equal pre-existing
-                       (ccl-compile
-                        `(1 
-                          (;; mule-to-unicode's first argument is the
-                           ;; charset ID, the second its first byte
-                           ;; left shifted by 7 bits masked with its
-                           ;; second byte.
-                           (r1 = (r1 << 7)) 
-                           (r1 = (r1 | r2)) 
-                           (mule-to-unicode r0 r1) 
-                           (if (r0 & ,(lognot #xFFFF))
-                               ;; Redisplay looks in r1 and r2 for the first
-                               ;; and second bytes of the X11 font,
-                               ;; respectively. For non-BMP characters we
-                               ;; display U+FFFD.
-                               ((r1 = #xFF)
-                                (r2 = #xFD))
-                             ((r1 = (r0 >> 8)) 
-                              (r2 = (r0 & #xFF))))))))
-                       nil 
-                       "The pre-compiled CCL program appears broken. "))
-             pre-existing))))
-    (defconst ccl-encode-to-ucs-2 prog
-      "CCL program to transform Mule characters to UCS-2.")
-    (put 'ccl-encode-to-ucs-2 'ccl-program-idx
-         (register-ccl-program 'ccl-encode-to-ucs-2 prog)))
+  (put 'ccl-encode-to-ucs-2 'ccl-program-idx
+       (declare-fboundp
+	(register-ccl-program 'ccl-encode-to-ucs-2 ccl-encode-to-ucs-2))))
 
-  ;; Now, create jit-ucs-charset-0 entries for those characters in Windows
-  ;; Glyph List 4 that would otherwise end up in East Asian character sets.
-  ;; 
-  ;; WGL4 is a character repertoire from Microsoft that gives a guideline
-  ;; for font implementors as to what characters are sufficient for
-  ;; pan-European support.  The intention of this code is to avoid the
-  ;; situation where these characters end up mapping to East Asian XEmacs
-  ;; characters, which generally clash strongly with European characters
-  ;; both in font choice and character width; jit-ucs-charset-0 is a
-  ;; single-width character set which comes before the East Asian character
-  ;; sets in the default-unicode-precedence-list above.
-  (loop for (ucs ascii-or-latin-1)
-    in '((#x2013 ?-) ;; U+2013 EN DASH
-         (#x2014 ?-) ;; U+2014 EM DASH
-         (#x2105 ?%) ;; U+2105 CARE OF
-         (#x203e ?-) ;; U+203E OVERLINE
-         (#x221f ?|) ;; U+221F RIGHT ANGLE
-         (#x2584 ?|) ;; U+2584 LOWER HALF BLOCK
-         (#x2588 ?|) ;; U+2588 FULL BLOCK
-         (#x258c ?|) ;; U+258C LEFT HALF BLOCK
-         (#x2550 ?|) ;; U+2550 BOX DRAWINGS DOUBLE HORIZONTAL
-         (#x255e ?|) ;; U+255E BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE
-         (#x256a ?|) ;; U+256A BOX DRAWINGS VERTICAL SINGLE & HORIZONTAL DOUBLE
-         (#x2561 ?|) ;; U+2561 BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE
-         (#x2215 ?/) ;; U+2215 DIVISION SLASH
-         (#x02c9 ?`) ;; U+02C9 MODIFIER LETTER MACRON
-         (#x2211 ?s) ;; U+2211 N-ARY SUMMATION
-         (#x220f ?s) ;; U+220F N-ARY PRODUCT
-         (#x2248 ?=) ;; U+2248 ALMOST EQUAL TO
-         (#x2264 ?=) ;; U+2264 LESS-THAN OR EQUAL TO
-         (#x2265 ?=) ;; U+2265 GREATER-THAN OR EQUAL TO
-         (#x201c ?') ;; U+201C LEFT DOUBLE QUOTATION MARK
-         (#x2026 ?.) ;; U+2026 HORIZONTAL ELLIPSIS
-         (#x2212 ?-) ;; U+2212 MINUS SIGN
-         (#x2260 ?=) ;; U+2260 NOT EQUAL TO
-         (#x221e ?=) ;; U+221E INFINITY
-         (#x2642 ?=) ;; U+2642 MALE SIGN
-         (#x2640 ?=) ;; U+2640 FEMALE SIGN
-         (#x2032 ?=) ;; U+2032 PRIME
-         (#x2033 ?=) ;; U+2033 DOUBLE PRIME
-         (#x25cb ?=) ;; U+25CB WHITE CIRCLE
-         (#x25cf ?=) ;; U+25CF BLACK CIRCLE
-         (#x25a1 ?=) ;; U+25A1 WHITE SQUARE
-         (#x25a0 ?=) ;; U+25A0 BLACK SQUARE
-         (#x25b2 ?=) ;; U+25B2 BLACK UP-POINTING TRIANGLE
-         (#x25bc ?=) ;; U+25BC BLACK DOWN-POINTING TRIANGLE
-         (#x2192 ?=) ;; U+2192 RIGHTWARDS ARROW
-         (#x2190 ?=) ;; U+2190 LEFTWARDS ARROW
-         (#x2191 ?=) ;; U+2191 UPWARDS ARROW
-         (#x2193 ?=) ;; U+2193 DOWNWARDS ARROW
-         (#x2229 ?=) ;; U+2229 INTERSECTION
-         (#x2202 ?=) ;; U+2202 PARTIAL DIFFERENTIAL
-         (#x2261 ?=) ;; U+2261 IDENTICAL TO
-         (#x221a ?=) ;; U+221A SQUARE ROOT
-         (#x222b ?=) ;; U+222B INTEGRAL
-         (#x2030 ?=) ;; U+2030 PER MILLE SIGN
-         (#x266a ?=) ;; U+266A EIGHTH NOTE
-         (#x2020 ?*) ;; U+2020 DAGGER
-         (#x2021 ?*) ;; U+2021 DOUBLE DAGGER
-         (#x2500 ?|) ;; U+2500 BOX DRAWINGS LIGHT HORIZONTAL
-         (#x2502 ?|) ;; U+2502 BOX DRAWINGS LIGHT VERTICAL
-         (#x250c ?|) ;; U+250C BOX DRAWINGS LIGHT DOWN AND RIGHT
-         (#x2510 ?|) ;; U+2510 BOX DRAWINGS LIGHT DOWN AND LEFT
-         (#x2518 ?|) ;; U+2518 BOX DRAWINGS LIGHT UP AND LEFT
-         (#x2514 ?|) ;; U+2514 BOX DRAWINGS LIGHT UP AND RIGHT
-         (#x251c ?|) ;; U+251C BOX DRAWINGS LIGHT VERTICAL AND RIGHT
-         (#x252c ?|) ;; U+252C BOX DRAWINGS LIGHT DOWN AND HORIZONTAL
-         (#x2524 ?|) ;; U+2524 BOX DRAWINGS LIGHT VERTICAL AND LEFT
-         (#x2534 ?|) ;; U+2534 BOX DRAWINGS LIGHT UP AND HORIZONTAL
-         (#x253c ?|) ;; U+253C BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
-         (#x02da ?^) ;; U+02DA RING ABOVE
-         (#x2122 ?\xa9) ;; U+2122 TRADE MARK SIGN, ?,A)(B
+;; Now, create jit-ucs-charset-0 entries for those characters in Windows
+;; Glyph List 4 that would otherwise end up in East Asian character sets.
+;; 
+;; WGL4 is a character repertoire from Microsoft that gives a guideline
+;; for font implementors as to what characters are sufficient for
+;; pan-European support.  The intention of this code is to avoid the
+;; situation where these characters end up mapping to East Asian XEmacs
+;; characters, which generally clash strongly with European characters
+;; both in font choice and character width; jit-ucs-charset-0 is a
+;; single-width character set which comes before the East Asian character
+;; sets in the default-unicode-precedence-list above.
+(loop for (ucs ascii-or-latin-1)
+  in '((#x2013 ?-) ;; U+2013 EN DASH
+       (#x2014 ?-) ;; U+2014 EM DASH
+       (#x2105 ?%) ;; U+2105 CARE OF
+       (#x203e ?-) ;; U+203E OVERLINE
+       (#x221f ?|) ;; U+221F RIGHT ANGLE
+       (#x2584 ?|) ;; U+2584 LOWER HALF BLOCK
+       (#x2588 ?|) ;; U+2588 FULL BLOCK
+       (#x258c ?|) ;; U+258C LEFT HALF BLOCK
+       (#x2550 ?|) ;; U+2550 BOX DRAWINGS DOUBLE HORIZONTAL
+       (#x255e ?|) ;; U+255E BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE
+       (#x256a ?|) ;; U+256A BOX DRAWINGS VERTICAL SINGLE & HORIZONTAL DOUBLE
+       (#x2561 ?|) ;; U+2561 BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE
+       (#x2215 ?/) ;; U+2215 DIVISION SLASH
+       (#x02c9 ?`) ;; U+02C9 MODIFIER LETTER MACRON
+       (#x2211 ?s) ;; U+2211 N-ARY SUMMATION
+       (#x220f ?s) ;; U+220F N-ARY PRODUCT
+       (#x2248 ?=) ;; U+2248 ALMOST EQUAL TO
+       (#x2264 ?=) ;; U+2264 LESS-THAN OR EQUAL TO
+       (#x2265 ?=) ;; U+2265 GREATER-THAN OR EQUAL TO
+       (#x201c ?') ;; U+201C LEFT DOUBLE QUOTATION MARK
+       (#x2026 ?.) ;; U+2026 HORIZONTAL ELLIPSIS
+       (#x2212 ?-) ;; U+2212 MINUS SIGN
+       (#x2260 ?=) ;; U+2260 NOT EQUAL TO
+       (#x221e ?=) ;; U+221E INFINITY
+       (#x2642 ?=) ;; U+2642 MALE SIGN
+       (#x2640 ?=) ;; U+2640 FEMALE SIGN
+       (#x2032 ?=) ;; U+2032 PRIME
+       (#x2033 ?=) ;; U+2033 DOUBLE PRIME
+       (#x25cb ?=) ;; U+25CB WHITE CIRCLE
+       (#x25cf ?=) ;; U+25CF BLACK CIRCLE
+       (#x25a1 ?=) ;; U+25A1 WHITE SQUARE
+       (#x25a0 ?=) ;; U+25A0 BLACK SQUARE
+       (#x25b2 ?=) ;; U+25B2 BLACK UP-POINTING TRIANGLE
+       (#x25bc ?=) ;; U+25BC BLACK DOWN-POINTING TRIANGLE
+       (#x2192 ?=) ;; U+2192 RIGHTWARDS ARROW
+       (#x2190 ?=) ;; U+2190 LEFTWARDS ARROW
+       (#x2191 ?=) ;; U+2191 UPWARDS ARROW
+       (#x2193 ?=) ;; U+2193 DOWNWARDS ARROW
+       (#x2229 ?=) ;; U+2229 INTERSECTION
+       (#x2202 ?=) ;; U+2202 PARTIAL DIFFERENTIAL
+       (#x2261 ?=) ;; U+2261 IDENTICAL TO
+       (#x221a ?=) ;; U+221A SQUARE ROOT
+       (#x222b ?=) ;; U+222B INTEGRAL
+       (#x2030 ?=) ;; U+2030 PER MILLE SIGN
+       (#x266a ?=) ;; U+266A EIGHTH NOTE
+       (#x2020 ?*) ;; U+2020 DAGGER
+       (#x2021 ?*) ;; U+2021 DOUBLE DAGGER
+       (#x2500 ?|) ;; U+2500 BOX DRAWINGS LIGHT HORIZONTAL
+       (#x2502 ?|) ;; U+2502 BOX DRAWINGS LIGHT VERTICAL
+       (#x250c ?|) ;; U+250C BOX DRAWINGS LIGHT DOWN AND RIGHT
+       (#x2510 ?|) ;; U+2510 BOX DRAWINGS LIGHT DOWN AND LEFT
+       (#x2518 ?|) ;; U+2518 BOX DRAWINGS LIGHT UP AND LEFT
+       (#x2514 ?|) ;; U+2514 BOX DRAWINGS LIGHT UP AND RIGHT
+       (#x251c ?|) ;; U+251C BOX DRAWINGS LIGHT VERTICAL AND RIGHT
+       (#x252c ?|) ;; U+252C BOX DRAWINGS LIGHT DOWN AND HORIZONTAL
+       (#x2524 ?|) ;; U+2524 BOX DRAWINGS LIGHT VERTICAL AND LEFT
+       (#x2534 ?|) ;; U+2534 BOX DRAWINGS LIGHT UP AND HORIZONTAL
+       (#x253c ?|) ;; U+253C BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
+       (#x02da ?^) ;; U+02DA RING ABOVE
+       (#x2122 ?\xa9) ;; U+2122 TRADE MARK SIGN, ?,A)(B
 
-         (#x0132 ?\xe6) ;; U+0132 LATIN CAPITAL LIGATURE IJ, ?,Af(B
-         (#x013f ?\xe6) ;; U+013F LATIN CAPITAL LETTER L WITH MIDDLE DOT, ?,Af(B
+       (#x0132 ?\xe6) ;; U+0132 LATIN CAPITAL LIGATURE IJ, ?,Af(B
+       (#x013f ?\xe6) ;; U+013F LATIN CAPITAL LETTER L WITH MIDDLE DOT, ?,Af(B
 
-         (#x0133 ?\xe6) ;; U+0133 LATIN SMALL LIGATURE IJ, ?,Af(B
-         (#x0140 ?\xe6) ;; U+0140 LATIN SMALL LETTER L WITH MIDDLE DOT, ?,Af(B
-         (#x0149 ?\xe6) ;; U+0149 LATIN SMALL LETTER N PRECEDED BY APOSTROPH,?,Af(B
+       (#x0133 ?\xe6) ;; U+0133 LATIN SMALL LIGATURE IJ, ?,Af(B
+       (#x0140 ?\xe6) ;; U+0140 LATIN SMALL LETTER L WITH MIDDLE DOT, ?,Af(B
+       (#x0149 ?\xe6) ;; U+0149 LATIN SMALL LETTER N PRECEDED BY APOSTROPH,?,Af(B
 
-         (#x2194 ?|) ;; U+2194 LEFT RIGHT ARROW
-         (#x2660 ?*) ;; U+2660 BLACK SPADE SUIT
-         (#x2665 ?*) ;; U+2665 BLACK HEART SUIT
-         (#x2663 ?*) ;; U+2663 BLACK CLUB SUIT
-         (#x2592 ?|) ;; U+2592 MEDIUM SHADE
-         (#x2195 ?|) ;; U+2195 UP DOWN ARROW
+       (#x2194 ?|) ;; U+2194 LEFT RIGHT ARROW
+       (#x2660 ?*) ;; U+2660 BLACK SPADE SUIT
+       (#x2665 ?*) ;; U+2665 BLACK HEART SUIT
+       (#x2663 ?*) ;; U+2663 BLACK CLUB SUIT
+       (#x2592 ?|) ;; U+2592 MEDIUM SHADE
+       (#x2195 ?|) ;; U+2195 UP DOWN ARROW
 
-         (#x2113 ?\xb9) ;; U+2113 SCRIPT SMALL L, ?,A9(B
-         (#x215b ?\xbe) ;; U+215B VULGAR FRACTION ONE EIGHTH, ?,A>(B
-         (#x215c ?\xbe) ;; U+215C VULGAR FRACTION THREE EIGHTHS, ?,A>(B
-         (#x215d ?\xbe) ;; U+215D VULGAR FRACTION FIVE EIGHTHS, ?,A>(B
-         (#x215e ?\xbe) ;; U+215E VULGAR FRACTION SEVEN EIGHTHS, ?,A>(B
-         (#x207f ?\xbe) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A>(B
+       (#x2113 ?\xb9) ;; U+2113 SCRIPT SMALL L, ?,A9(B
+       (#x215b ?\xbe) ;; U+215B VULGAR FRACTION ONE EIGHTH, ?,A>(B
+       (#x215c ?\xbe) ;; U+215C VULGAR FRACTION THREE EIGHTHS, ?,A>(B
+       (#x215d ?\xbe) ;; U+215D VULGAR FRACTION FIVE EIGHTHS, ?,A>(B
+       (#x215e ?\xbe) ;; U+215E VULGAR FRACTION SEVEN EIGHTHS, ?,A>(B
+       (#x207f ?\xbe) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A>(B
   
-         ;; These are not in WGL 4, but are IPA characters that should not
-         ;; be double width. They are the only IPA characters that both
-         ;; occur in packages/mule-packages/leim/ipa.el and end up in East
-         ;; Asian character sets when that file is loaded in an XEmacs
-         ;; without packages.
-         (#x2197 ?|) ;; U+2197 NORTH EAST ARROW
-         (#x2199 ?|) ;; U+2199 SOUTH WEST ARROW
-         (#x2191 ?|) ;; U+2191 UPWARDS ARROW
-         (#x207f ?\xb9));; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A9(B
-    with decoded = nil
-    with syntax-table = (standard-syntax-table)
-    ;; This creates jit-ucs-charset-0 entries because:
-    ;;
-    ;;    1. If the tables are dumped, it is run at dump time before they are
-    ;;    dumped, and as such before the relevant conversions are available
-    ;;    (they are made available in mule/general-late.el). 
-    ;;
-    ;;    2. If the tables are not dumped, it is run at dump time, long before
-    ;;    any of the other mappings are available.
-    ;;
-    do
-    (setq decoded (decode-char 'ucs ucs))
-    (assert (eq (char-charset decoded)
-                'jit-ucs-charset-0) nil 
-                "Unexpected Unicode decoding behavior.  ")
-    (modify-syntax-entry decoded
-                         (string 
-                          (char-syntax ascii-or-latin-1))
-                         syntax-table))
+       ;; These are not in WGL 4, but are IPA characters that should not
+       ;; be double width. They are the only IPA characters that both
+       ;; occur in packages/mule-packages/leim/ipa.el and end up in East
+       ;; Asian character sets when that file is loaded in an XEmacs
+       ;; without packages.
+       (#x2197 ?|) ;; U+2197 NORTH EAST ARROW
+       (#x2199 ?|) ;; U+2199 SOUTH WEST ARROW
+       (#x2191 ?|) ;; U+2191 UPWARDS ARROW
+       (#x207f ?\xb9)) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A9(B
+  with decoded = nil
+  with syntax-table = (standard-syntax-table)
+  initially (unless (featurep 'mule) (return))
+  ;; This creates jit-ucs-charset-0 entries because:
+  ;;
+  ;;    1. If the tables are dumped, it is run at dump time before they are
+  ;;    dumped, and as such before the relevant conversions are available
+  ;;    (they are made available in mule/general-late.el). 
+  ;;
+  ;;    2. If the tables are not dumped, it is run at dump time, long before
+  ;;    any of the other mappings are available.
+  ;;
+  do
+  (setq decoded (decode-char 'ucs ucs))
+  (assert (eq (declare-fboundp (char-charset decoded))
+              'jit-ucs-charset-0) nil 
+              "Unexpected Unicode decoding behavior.  ")
+  (modify-syntax-entry decoded
+                       (string 
+                        (char-syntax ascii-or-latin-1))
+                       syntax-table))
 
 ;; *Sigh*, declarations needs to be at the start of the line to be picked up
 ;; by make-docfile. Not so much an issue with ccl-encode-to-ucs-2, which we
@@ -505,6 +508,7 @@ The second argument must be 'ucs, the third argument is ignored.  "
   (loop 
     with char-table = (make-char-table 'char)
     for i from ?\x00 to ?\xFF
+    initially (unless (featurep 'mule) (return))
     do
     (put-char-table (aref
                      ;; #xd800 is the first leading surrogate;
@@ -523,10 +527,11 @@ To transform XEmacs Unicode error sequences to the Latin-1 characters that
 correspond to the octets on disk, you can use this variable.  ")
 
 (defvar unicode-error-sequence-regexp-range
-  (format "%c%c-%c"
-          (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 0)
-          (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 3)
-          (aref (decode-coding-string "\xd8\x00\x00\xFF" 'utf-16-be) 3))
+  (and (featurep 'mule)
+       (format "%c%c-%c"
+               (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 0)
+               (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 3)
+               (aref (decode-coding-string "\xd8\x00\x00\xFF" 'utf-16-be) 3)))
   "Regular expression range to match Unicode error sequences in XEmacs.
 
 Invalid Unicode sequences on input are represented as XEmacs
@@ -536,32 +541,33 @@ invalid octet.  You can use this variable (with `re-search-forward' or
 `skip-chars-forward') to search for such characters; see also
 `unicode-error-translate-region'.  ")
 
-  ;; Check that the lookup table is correct, and that all the actual error
-  ;; sequences are caught by the regexp.
-  (with-temp-buffer
-    (loop
-      for i from ?\x00 to ?\xFF
-      with to-check = (make-string 20 ?\x20) 
-      do 
-      (delete-region (point-min) (point-max))
-      (insert to-check)
-      (goto-char 10)
-      (insert (decode-coding-string (format "\xd8\x00\x00%c" i)
-				    'utf-16-be))
-      (backward-char)
-      (assert (= i (get-char-table (char-after (point)) 
-				   unicode-error-default-translation-table))
-	      (format "Char ?\\x%x not the expected error sequence!"
-		      i))
+;; Check that the lookup table is correct, and that all the actual error
+;; sequences are caught by the regexp.
+(with-temp-buffer
+  (loop
+    for i from ?\x00 to ?\xFF
+    with to-check = (make-string 20 ?\x20) 
+    initially (unless (featurep 'mule) (return))
+    do 
+    (delete-region (point-min) (point-max))
+    (insert to-check)
+    (goto-char 10)
+    (insert (decode-coding-string (format "\xd8\x00\x00%c" i)
+                                  'utf-16-be))
+    (backward-char)
+    (assert (= i (get-char-table (char-after (point)) 
+                                 unicode-error-default-translation-table))
+            (format "Char ?\\x%x not the expected error sequence!"
+                    i))
 
-      (goto-char (point-min))
-      ;; Comment out until the issue in
-      ;; 18179.49815.622843.336527@parhasard.net is fixed.
-      (assert t ;(re-search-forward (concat "[" 
-		;			 unicode-error-sequence-regexp-range
-		;			 "]"))
-	      nil
-	      (format "Could not find char ?\\x%x in buffer" i))))
+    (goto-char (point-min))
+    ;; Comment out until the issue in
+    ;; 18179.49815.622843.336527@parhasard.net is fixed.
+    (assert t ; (re-search-forward (concat "[" 
+              ;                        unicode-error-sequence-regexp-range
+              ;                        "]"))
+            nil
+            (format "Could not find char ?\\x%x in buffer" i))))
 
 (defun frob-unicode-errors-region (frob-function begin end &optional buffer)
   "Call FROB-FUNCTION on the Unicode error sequences between BEGIN and END.
@@ -590,8 +596,8 @@ such sequences.  "
 	  (if end
 	      (funcall frob-function begin end))))))
 
-  (defun unicode-error-translate-region (begin end &optional buffer table)
-    "Translate the Unicode error sequences in BUFFER between BEGIN and END.
+(defun unicode-error-translate-region (begin end &optional buffer table)
+  "Translate the Unicode error sequences in BUFFER between BEGIN and END.
 
 The error sequences are transformed, by default, into the ASCII,
 control-1 and latin-iso8859-1 characters with the numeric values
@@ -603,7 +609,18 @@ mapping from the error sequences to the desired characters.  "
     (frob-unicode-errors-region
      (lambda (start finish)
        (translate-region start finish table))
-     begin end buffer)))
+     begin end buffer))
+
+(unless (featurep 'mule)
+  ;; We do this in such a roundabout way--instead of having the above defun
+  ;; and defvar calls inside a (when (featurep 'mule) ...) form--to have
+  ;; make-docfile.c pick up symbol and function documentation correctly. An
+  ;; alternative approach would be to fix make-docfile.c to be able to read
+  ;; Lisp.
+  (mapcar #'unintern
+          '(ccl-encode-to-ucs-2 unicode-error-default-translation-table
+            unicode-error-sequence-regexp-range
+            frob-unicode-errors-region unicode-error-translate-region)))
 
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version

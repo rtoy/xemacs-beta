@@ -222,23 +222,28 @@ set Info-directory-list.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; menu stuff
 
-(when (featurep 'menubar)
-  (defun add-menu-item (menu-path item-name function enabled-p &optional before)
-    "Obsolete.  See the function `add-menu-button'."
-    (or item-name (error "must specify an item name"))
-    (add-menu-button menu-path (vector item-name function enabled-p) before))
-  (make-obsolete 'add-menu-item 'add-menu-button)
+(defun add-menu-item (menu-path item-name function enabled-p &optional before)
+  "Obsolete.  See the function `add-menu-button'."
+  (or item-name (error "must specify an item name"))
+  (declare-fboundp (add-menu-button menu-path (vector item-name function enabled-p) before)))
+(make-obsolete 'add-menu-item 'add-menu-button)
 
-  (defun add-menu (menu-path menu-name menu-items &optional before)
-    "See the function `add-submenu'."
-    (or menu-name (error "must specify a menu name"))
-    (or menu-items (error "must specify some menu items"))
-    (add-submenu menu-path (cons menu-name menu-items) before))
-  ;; Can't make this obsolete.  easymenu depends on it.
-  (make-compatible 'add-menu 'add-submenu)
+(defun add-menu (menu-path menu-name menu-items &optional before)
+  "See the function `add-submenu'."
+  (or menu-name (error "must specify a menu name"))
+  (or menu-items (error "must specify some menu items"))
+  (declare-fboundp (add-submenu menu-path (cons menu-name menu-items) before)))
+;; Can't make this obsolete.  easymenu depends on it.
+(make-compatible 'add-menu 'add-submenu)
 
-  (define-obsolete-function-alias 'package-get-download-menu 
-    'package-ui-download-menu))
+(define-obsolete-function-alias 'package-get-download-menu 
+  'package-ui-download-menu)
+
+(unless (featurep 'menubar)
+  ;; Don't provide the last three functions unless the menubar feature is
+  ;; available. This approach (with #'unintern) avoids warnings about lost
+  ;; docstrings since make-docfile doesn't parse bytecode.
+  (mapcar #'unintern '(add-menu-item add-menu package-get-download-menu)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; minibuffer
 
