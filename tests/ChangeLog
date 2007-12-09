@@ -1,3 +1,15 @@
+2007-12-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Add a Known-Bug-Expect-Error call testing and documenting that we
+	don't support all of the Unicode code space in a single session.
+	* automated/test-harness.el (Known-Bug-Expect-Error):
+	Provide Known-Bug-Expect-Error, analagous to
+	Known-Bug-Expect-Failure and Check-Error.
+	* automated/test-harness.el (Silence-Message):
+	Dynamically bind the function definition of #'clear-message, as
+	well as that of #'append-message, to nil.
+
 2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (featurep):

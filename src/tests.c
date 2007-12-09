@@ -37,7 +37,6 @@ Boston, MA 02111-1307, USA.  */
 
 static Lisp_Object Vtest_function_list;
 
-
 DEFUN ("test-data-format-conversion", Ftest_data_format_conversion, 0, 0, "", /*
 Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 */
@@ -70,6 +69,9 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 
   /* Check for expected strings before and after conversion.
      Conversions depend on whether MULE is defined. */
+
+  /* #### Any code below that uses iso-latin-2-with-esc is ill-conceived. */
+
 #ifdef MULE
 #define DFC_CHECK_DATA_COND_MULE(ptr,len,			\
 				 constant_string_mule,		\
@@ -137,7 +139,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (LISP_STRING, string_latin1,
 		      ALLOCA, (ptr, len),
-		      intern ("iso-8859-2"));
+		      intern ("iso-latin-2-with-esc"));
   DFC_CHECK_DATA (ptr, len, ext_latin12);
 
   ptr = NULL, len = rand();
@@ -155,34 +157,34 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   ptr = NULL, len = rand();
   TO_INTERNAL_FORMAT (DATA, (ext_latin, sizeof (ext_latin) - 1),
 		      ALLOCA, (ptr, len),
-		      intern ("iso-8859-2"));
+		      intern ("iso-latin-2-with-esc"));
   DFC_CHECK_DATA (ptr, len, int_latin2);
 
   ptr = NULL, len = rand();
   TO_INTERNAL_FORMAT (DATA, (ext_latin, sizeof (ext_latin) - 1),
 		      MALLOC, (ptr, len),
-		      intern ("iso-8859-2"));
+		      intern ("iso-latin-2-with-esc"));
   DFC_CHECK_DATA (ptr, len, int_latin2);
   xfree (ptr, void *);
 
   TO_INTERNAL_FORMAT (DATA, (ext_latin, sizeof (ext_latin) - 1),
 		      LISP_STRING, string,
-		      intern ("iso-8859-2"));
+		      intern ("iso-latin-2-with-esc"));
   DFC_CHECK_DATA (XSTRING_DATA (string), XSTRING_LENGTH (string), int_latin2);
 
   TO_INTERNAL_FORMAT (LISP_OPAQUE, opaque_latin,
 		      LISP_STRING, string,
-		      intern ("iso-8859-2"));
+		      intern ("iso-latin-2-with-esc"));
   DFC_CHECK_DATA (XSTRING_DATA (string), XSTRING_LENGTH (string), int_latin2);
 
   TO_INTERNAL_FORMAT (LISP_OPAQUE, opaque0_latin,
 		      LISP_STRING, string,
-		      intern ("iso-8859-2"));
+		      intern ("iso-latin-2-with-esc"));
   DFC_CHECK_DATA_NUL (XSTRING_DATA (string), XSTRING_LENGTH (string), int_latin2);
 
   TO_INTERNAL_FORMAT (LISP_OPAQUE, opaque0_latin,
 		      LISP_BUFFER, Fcurrent_buffer(),
-		      intern ("iso-8859-2"));
+		      intern ("iso-latin-2-with-esc"));
   DFC_CHECK_DATA_NUL (BUF_BYTE_ADDRESS (current_buffer, BUF_PT (current_buffer)),
 		    sizeof (int_latin2), int_latin2);
 
@@ -194,7 +196,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 
   TO_INTERNAL_FORMAT (DATA, (ext_latin12, sizeof (ext_latin12) - 1),
 		      ALLOCA, (ptr, len),
-		      intern ("iso-8859-2"));
+		      intern ("iso-latin-2-with-esc"));
   DFC_CHECK_DATA (ptr, len, int_latin1);
 
 #endif /* MULE */

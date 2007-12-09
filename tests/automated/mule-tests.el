@@ -721,4 +721,17 @@ This is a naive implementation in Lisp.  "
       (Known-Bug-Expect-Failure
        (Assert-elc-is-escape-quoted))
       (delete-region (point-min) (point-max))))
+
+  (Known-Bug-Expect-Error
+   invalid-constant
+   (loop
+     for i from #x0 to #x10FFFF 
+     with exceptions = #s(range-table type start-closed-end-closed
+                                      data ((#xFFFE #xFFFF) t
+                                            (#xFDD0 #xFDEF) t
+                                            (#xD800 #xDBFF) t
+                                            (#xDC00 #xDFFF) t))
+     do (unless (get-range-table i exceptions)
+          (read (format (if (> i #xFFFF) #r"?\U%08X" #r"?\u%04X") i)))
+     finally return t))
   )

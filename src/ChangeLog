@@ -1,3 +1,9 @@
+2007-12-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* tests.c (Ftest_data_format_conversion):
+	Move those tests that expect that iso-8859-2 is ISO
+	2022-compatible to testing iso-latin-2-with-esc instead.
+
 2007-12-02  Ron Isaacson  <ron.isaacson@morganstanley.com>
 
 	* frame.c (change_frame_size):
