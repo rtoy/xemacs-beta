@@ -421,8 +421,11 @@ Does not print anything."
 
 (defun write-abbrev-file (file)
   "Write all abbrev definitions to a file of Lisp code.
+This does not include system abbrevs; it includes only the abbrev tables
+listed in listed in `abbrev-table-name-list'.
 The file written can be loaded in another session to define the same abbrevs.
-The argument FILE is the file name to write."
+The argument FILE is the file name to write.  If omitted or nil, the file
+specified in `abbrev-file-name' is used."
   (interactive
    (list
     (read-file-name "Write abbrev file: "
@@ -430,15 +433,19 @@ The argument FILE is the file name to write."
 		    abbrev-file-name)))
   (or (and file (> (length file) 0))
       (setq file abbrev-file-name))
-  (save-excursion
-   (set-buffer (get-buffer-create " write-abbrev-file"))
-   (erase-buffer)
-   (let ((tables abbrev-table-name-list))
-     (while tables
-       (insert-abbrev-table-description (car tables) nil)
-       (setq tables (cdr tables))))
-   (write-region 1 (point-max) file)
-   (erase-buffer)))
+  (let ((coding-system-for-write 'escape-quoted))
+    (with-temp-file file
+      ;; XEmacs change; not emacs-mule, and use the coding system
+      ;; escape-quoted resolves to, which will differ depending on whether
+      ;; the build is Mule or not.
+      (insert (format ";;-*-coding: %s;-*-\n"
+                      (coding-system-name
+                       (find-coding-system coding-system-for-write))))
+      (dolist (table
+               ;; XEmacs change; we keep the table sorted at runtime, no
+               ;; need to sort it here.
+               abbrev-table-name-list)
+        (insert-abbrev-table-description table nil)))))
 
 (defun abbrev-string-to-be-defined (arg)
   "Return the string for which an abbrev will be defined.

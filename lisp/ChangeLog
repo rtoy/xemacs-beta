@@ -1,5 +1,17 @@
 2007-12-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* abbrev.el (write-abbrev-file):
+	Write FILE using escape-quoted, as a coding system. Add a coding
+	cookie to specify exactly what coding system was used
+	(escape-quoted is aliased to binary on non-Mule). Thank you for
+	the bug report, Uwe Brauer.
+
+	This bug would have been resolved ages ago if we had merged
+	Dave Love's 2002 changes from GNU. Nope, I didn't merge the whole
+	file when doing this.
+
+2007-12-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* unicode.el (load-unicode-mapping-tables):
 	Call #'set-default-unicode-precedence wrapped with
 	#'declare-fboundp, to avoid warnings on non-Mule builds. 
