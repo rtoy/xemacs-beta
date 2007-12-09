@@ -1102,4 +1102,17 @@ This language environment supports %s. " name)))
  '(mnemonic "cp1252"
    aliases (cp1252)))
 
+;; Provide language environments that prefer specific coding systems.
+(loop
+  for coding-system in '(utf-8 windows-1252 macintosh)
+  with name = nil
+  with assocked = nil
+  do
+  (setq name (create-variant-language-environment "English" coding-system)
+        assocked (assoc name language-info-alist))
+  (setcar assocked
+          (upcase (symbol-name coding-system)))
+  (setcdr assocked
+          (remassq 'locale (cdr assocked))))
+
 ;;; latin.el ends here

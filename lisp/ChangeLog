@@ -1,3 +1,10 @@
+2007-12-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/latin.el: 
+	Create clones of the English language environment with UTF-8 and
+	Windows-1252 as the associated coding system, for Joachim Schrod's
+	use case of f8q022$3o3$1@sea.gmane.org. 
+
 2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keydefs.el:
