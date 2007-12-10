@@ -37,6 +37,10 @@
 ;; It's a bad idea to rely on code in this file continuing to work in
 ;; the same way. :-)
 
+;; #### This file should be cleaned up and renamed reproduce-crashes.el.
+;; #### Bugs need docstrings.
+;; #### Fixed bugs should become regression tests.
+
 ;;; Code:
 
 (defvar bug-hashtable (make-hashtable 10))
@@ -63,7 +67,7 @@ A debug version of XEmacs may be needed to reproduce some bugs."
 
 ;;; Change this to your preferred key-binding
 
-(global-set-key  [(control ?Z)] 'reproduce-bug)
+;; (global-set-key  [(control ?Z)] 'reproduce-bug)
 
 ;;;; Bugs follow:
 
@@ -170,6 +174,7 @@ public static void main(String[] args) throws java.io.IOException
 	(message "Bug!  point should equal 3 but is %d" (point)))))
 
 ;;; crash popup frames FIXED
+;; defbug 8
 ;;(global-set-key
 ;; [(alt meta control f12)]
 ;; (lambda ()
@@ -182,6 +187,7 @@ public static void main(String[] args) throws java.io.IOException
 ;;     (save-buffers-kill-emacs))))
 
 ;;; crash on delete-frame-hook - FIXED!
+;; defbug 9
 ;;(global-set-key
 ;; [(alt meta control f10)]
 ;; (lambda ()

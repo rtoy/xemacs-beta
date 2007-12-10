@@ -1,3 +1,9 @@
+2007-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* reproduce-bugs.el: Add some commentary.
+	Number the two unnumbered bugs.
+	Comment out the keybinding.
+
 2007-12-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:
