@@ -1,5 +1,9 @@
 2007-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* reproduce-bugs.el (reproduce-bug): Add bug 10, crash in search.
+
+2007-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* reproduce-bugs.el: Add some commentary.
 	Number the two unnumbered bugs.
 	Comment out the keybinding.

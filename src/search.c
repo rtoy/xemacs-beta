@@ -1371,14 +1371,17 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	    boyer_moore_ok = 0;
 	  if (translated != c || inverse != c)
 	    {
-	      /* Keep track of which character set row
-		 contains the characters that need translation.  */
+	      /* Keep track of which charset and character set row
+		 contains the characters that need translation.
+		 Zero out the bits corresponding to the last byte.
+	      */
 	      int charset_base_code = c & ~ICHAR_FIELD3_MASK;
 	      if (charset_base == -1)
 		charset_base = charset_base_code;
 	      else if (charset_base != charset_base_code)
-		/* If two different rows appear, needing translation,
-		   then we cannot use boyer_moore search.  */
+		/* If two different rows appear, needing translation, then
+		   we cannot use boyer_moore search.  See the comment at the
+		   head of boyer_moore(). */
 		boyer_moore_ok = 0;
 	    }
 	  memcpy (pat, tmp_str, new_bytelen);
@@ -1468,43 +1471,51 @@ simple_search (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	n--;
       }
   else
-    while (n < 0)
-      {
-	while (1)
-	  {
-	    Bytecount this_len = len;
-	    Bytebpos this_pos = pos;
-	    Ibyte *p;
-	    if (pos <= lim)
-	      goto stop;
-	    p = base_pat + len;
+    {
+      /* If lim < len, then there are too few buffer positions to hold the
+	 pattern between the beginning of the buffer and lim.  Adjust to
+	 ensure pattern fits.  If we don't do this, we can assert in the
+	 DEC_BYTEBPOS below. */
+      if (lim < len)
+	lim = len;
+      while (n < 0)
+	{
+	  while (1)
+	    {
+	      Bytecount this_len = len;
+	      Bytebpos this_pos = pos;
+	      Ibyte *p;
+	      if (pos <= lim)
+		goto stop;
+	      p = base_pat + len;
 
-	    while (this_len > 0)
-	      {
-		Ichar pat_ch, buf_ch;
+	      while (this_len > 0)
+		{
+		  Ichar pat_ch, buf_ch;
 
-		DEC_IBYTEPTR (p);
-		DEC_BYTEBPOS (buf, this_pos);
-		pat_ch = itext_ichar (p);
-		buf_ch = BYTE_BUF_FETCH_CHAR (buf, this_pos);
+		  DEC_IBYTEPTR (p);
+		  DEC_BYTEBPOS (buf, this_pos);
+		  pat_ch = itext_ichar (p);
+		  buf_ch = BYTE_BUF_FETCH_CHAR (buf, this_pos);
 
-		buf_ch = TRANSLATE (trt, buf_ch);
+		  buf_ch = TRANSLATE (trt, buf_ch);
 
-		if (buf_ch != pat_ch)
+		  if (buf_ch != pat_ch)
+		    break;
+
+		  this_len -= itext_ichar_len (p);
+		}
+	      if (this_len == 0)
+		{
+		  buf_len = pos - this_pos;
+		  pos = this_pos;
 		  break;
-
-		this_len -= itext_ichar_len (p);
-	      }
-	    if (this_len == 0)
-	      {
-		buf_len = pos - this_pos;
-		pos = this_pos;
-		break;
-	      }
-	    DEC_BYTEBPOS (buf, pos);
-	  }
-	n++;
-      }
+		}
+	      DEC_BYTEBPOS (buf, pos);
+	    }
+	  n++;
+	}
+    }
  stop:
   if (n == 0)
     {

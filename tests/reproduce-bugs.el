@@ -72,6 +72,26 @@ A debug version of XEmacs may be needed to reproduce some bugs."
 ;;;; Bugs follow:
 
 ;;; ------------------------------------------------------------------
+;;; Crash in search due to backward movement
+;;; Need Mule build with error checking in 21.5.28.
+;;; Fatal error: assertion failed,
+;;; file /Users/steve/Software/XEmacs/alioth/xemacs/src/search.c, line 1487,
+;;; (this_pos) > ((Bytebpos) 1) && this_pos <= ((buf)->text->z + 0)
+;;; Reported: <475B104F.2070807@barco.com>
+;;;           <87hcixwkh4.fsf@uwakimon.sk.tsukuba.ac.jp>
+;;; Fixed:    <87hcixwkh4.fsf@uwakimon.sk.tsukuba.ac.jp>
+(defbug 10
+  (switch-to-buffer (get-buffer-create "*crash me*"))
+  ;; doozy is the keystroke version of the keyboard macro
+  ;; "IAI" C-b C-b C-s C-x
+  (let ((doozy [;;(control ?x) ?b ?j ?u ?n ?k return
+		?I ?A ?I
+		   (control ?b) (control ?b)
+		   (control ?s) (control ?w)]))
+    (execute-kbd-macro doozy)))
+
+
+;;; ------------------------------------------------------------------
 ;;; Crash on trace-function
 ;;; Fatal error: assertion failed, file src/eval.c, line 1405, abort()
 (defbug 1
