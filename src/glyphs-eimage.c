@@ -109,6 +109,14 @@ BEGIN_C_DECLS
 #define XMD_H
 typedef signed int INT32;
 typedef signed short INT16;
+
+/* And another one... jmorecfg.h defines the 'boolean' type as int,
+   which conflicts with the standard Windows 'boolean' definition as
+   unsigned char. Ref: http://www.asmail.be/msg0054688232.html */
+#ifndef __RPCNDR_H__		/* don't conflict if rpcndr.h already read */
+typedef unsigned char boolean;
+#endif
+#define HAVE_BOOLEAN		/* prevent jmorecfg.h from redefining it */
 #endif
 
 #include <jpeglib.h>

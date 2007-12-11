@@ -1,5 +1,12 @@
 2007-12-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* glyphs-eimage.c: 
+	Merge Ron Isaacson's patch of
+	3ggprxj7ifh.wl_Ron.Isaacson@morganstanley.com , originally from
+	Gennady Khokhorin. Prevents library incompatibilities on Win32.
+
+2007-12-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fileio.c (Fsubstitute_in_file_name):
 	On encountering non-existent environment variables or incorrect
 	syntax for specifying environment variables (as is routine on
