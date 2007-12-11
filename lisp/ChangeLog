@@ -1,3 +1,10 @@
+2007-12-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/latin.el :
+	Specify tutorial-coding-system using dotted cons notation, since
+	it's not a list. Prevents an error in help-with-tutorial for these
+	languages.
+
 2007-12-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* abbrev.el (write-abbrev-file):

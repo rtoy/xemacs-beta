@@ -907,7 +907,7 @@ Generic language environment for %s (%s)." nice-charset-1 nice-charset-2))))
        (native-coding-system ,codesys)
        ,@(if locale `((locale . ,locale)))
        ,@(if tutorial `((tutorial . ,tutorial)
-			(tutorial-coding-system ,codesys)))
+			(tutorial-coding-system . ,codesys)))
        ,@(if sample-text `((sample-text . ,sample-text)))
        (input-method . ,(or input-method default-input))
        (documentation . ,(format "\
