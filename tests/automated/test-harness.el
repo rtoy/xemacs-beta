@@ -203,7 +203,29 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	`(let ((test-harness-failure-tag "KNOWN BUG")
 	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
 	  ,@body))
-    
+
+      (defmacro Known-Bug-Expect-Error (expected-error &rest body)
+	(let ((quoted-body (if (= 1 (length body))
+			       `(quote ,(car body)) `(quote (progn ,@body)))))
+          `(let ((test-harness-failure-tag "KNOWN BUG")
+                 (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
+            (condition-case error-info
+                (progn
+                  (setq trick-optimizer (progn ,@body))
+                  (Print-Pass 
+                   "%S executed successfully, but expected error %S"
+                   ,quoted-body
+                   ',expected-error)
+                  (incf passes))
+              (,expected-error
+               (Print-Failure "%S ==> error %S, as expected"
+                              ,quoted-body ',expected-error)
+               (incf no-error-failures))
+              (error
+               (Print-Failure "%S ==> expected error %S, got error %S instead"
+                              ,quoted-body ',expected-error error-info)
+               (incf wrong-error-failures))))))
+
       (defmacro Implementation-Incomplete-Expect-Failure (&rest body)
 	`(let ((test-harness-failure-tag "IMPLEMENTATION INCOMPLETE")
 	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
@@ -337,7 +359,9 @@ BODY is a sequence of expressions and may contain several tests."
 
       ;; #### Perhaps this should override `message' itself, too?
       (defmacro Silence-Message (&rest body)
-	`(flet ((append-message (&rest args) ())) ,@body))
+	`(flet ((append-message (&rest args) ())
+                (clear-message (&rest args) ()))
+          ,@body))
 
       (defmacro Ignore-Ebola (&rest body)
 	`(let ((debug-issue-ebola-notices -42)) ,@body))
