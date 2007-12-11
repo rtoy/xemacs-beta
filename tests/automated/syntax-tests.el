@@ -205,3 +205,37 @@
     ;; special-case check that point didn't move
     (Assert (= (point) 25))))
 
+(loop
+  with envvar-not-existing = (symbol-name (gensym "whatever"))
+  with envvar-existing = (symbol-name (gensym "whatever"))
+  with envvar-existing-val = (make-string #x10000 ?\xe1)
+  with examples = 
+  (list (list (format "%chome%cwhatever%c%chi-there%c$%s"
+                      directory-sep-char
+                      directory-sep-char
+                      directory-sep-char
+                      directory-sep-char
+                      directory-sep-char
+                      envvar-existing)
+              (format "%chi-there%c%s"
+                      directory-sep-char
+                      directory-sep-char
+                      envvar-existing-val))
+        (if (memq system-type '(windows-nt cygwin32))
+            '("//network-path/c$" "//network-path/c$")
+          '("/network-path/c$" "/network-path/c$"))
+        (list (format "/home/whoever/$%s" envvar-not-existing)
+              (format "/home/whoever/$%s" envvar-not-existing))
+        (list (format "/home/whoever/$%s" envvar-existing)
+              (format "/home/whoever/%s" envvar-existing-val))
+        (list (format "/home/whoever/${%s}" envvar-existing)
+              (format "/home/whoever/%s" envvar-existing-val))
+        (list (format "/home/whoever/${%s}" envvar-not-existing)
+              (format "/home/whoever/${%s}" envvar-not-existing)))
+  initially (progn (setenv envvar-not-existing nil t)
+                   (setenv envvar-existing envvar-existing-val))
+  for (pre post)
+  in examples
+  do 
+  (Assert (string= post (substitute-in-file-name pre))))
+

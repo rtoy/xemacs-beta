@@ -1,3 +1,12 @@
+2007-12-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/syntax-tests.el:
+	Check that substitute-in-file-name doesn't error when handed
+	non-existing environment variables, passing through the specified
+	string instead. Also check that existing environment variables are
+	correctly substituted. Also check that double slashes in the
+	middle of a path name are treated as re-starting the path. 
+
 2007-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* reproduce-bugs.el (reproduce-bug): Add bug 10, crash in search.

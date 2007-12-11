@@ -1518,10 +1518,10 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
   /* This function can GC.  GC checked 2000-07-28 ben. */
   Ibyte *nm;
 
-  Ibyte *s, *p, *o, *x, *endp;
+  Ibyte *s, *p, *o, *x, *endp, *got;
   Ibyte *target = 0;
   int total = 0;
-  int substituted = 0;
+  int substituted = 0, seen_braces;
   Ibyte *xnm;
   Lisp_Object handler;
 
@@ -1576,7 +1576,10 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
       {
 	p++;
 	if (p == endp)
-	  goto badsubst;
+	  {
+	    /* No substitution, no error. */
+	    break;
+	  }
 	else if (*p == '$')
 	  {
 	    /* "$$" means a single "$" */
@@ -1589,7 +1592,12 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  {
 	    o = ++p;
 	    while (p != endp && *p != '}') p++;
-	    if (*p != '}') goto missingclose;
+	    if (*p != '}')
+	      {
+		/* No substitution, no error. Keep looking. */
+		p = o;
+		continue;
+	      }
 	    s = p;
 	  }
 	else
@@ -1608,10 +1616,12 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 #endif /* WIN32_NATIVE */
 
 	/* Get variable value */
-	o = egetenv ((CIbyte *) target);
-	if (!o) goto badvar;
-	total += qxestrlen (o);
-	substituted = 1;
+	got = egetenv ((CIbyte *) target);
+	if (got)
+	  {
+	    total += qxestrlen (got);
+	    substituted = 1;
+	  }
       }
 
   if (!substituted)
@@ -1629,8 +1639,12 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
     else
       {
 	p++;
+	seen_braces = 0;
 	if (p == endp)
-	  goto badsubst;
+	  {
+	    *x++ = '$';
+	    break;
+	  }
 	else if (*p == '$')
 	  {
 	    *x++ = *p++;
@@ -1638,9 +1652,16 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  }
 	else if (*p == '{')
 	  {
+	    seen_braces = 1;
 	    o = ++p;
 	    while (p != endp && *p != '}') p++;
-	    if (*p != '}') goto missingclose;
+	    if (*p != '}')
+	      {
+		/* Don't syntax error, don't substitute */
+		*x++ = '{';
+		p = o;
+		continue;
+	      }
 	    s = p++;
 	  }
 	else
@@ -1659,12 +1680,30 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 #endif /* WIN32_NATIVE */
 
 	/* Get variable value */
-	o = egetenv ((CIbyte *) target);
-	if (!o)
-	  goto badvar;
-
-	qxestrcpy (x, o);
-	x += qxestrlen (o);
+	got = egetenv ((CIbyte *) target);
+	if (got)
+	  {
+	    qxestrcpy (x, got);
+	    x += qxestrlen (got);
+	  }
+	else
+	  {
+	    *x++ = '$';
+	    if (seen_braces)
+	      {
+		*x++ = '{';
+                /* Preserve the original case. */
+		qxestrncpy (x, o, s - o);
+		x += s - o;
+		*x++ = '}';
+	      }
+	    else
+	      {
+                /* Preserve the original case. */
+		qxestrncpy (x, o, s - o);
+		x += s - o;
+	      }
+	  }
       }
 
   *x = 0;
@@ -1689,17 +1728,6 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 #endif
 
   return make_string (xnm, x - xnm);
-
- badsubst:
-  syntax_error ("Bad format environment-variable substitution", filename);
- missingclose:
-  syntax_error ("Missing \"}\" in environment-variable substitution",
-		filename);
- badvar:
-  syntax_error_2 ("Substituting nonexistent environment variable",
-		  filename, build_intstring (target));
-
-  RETURN_NOT_REACHED (Qnil);
 }
 
 /* A slightly faster and more convenient way to get

@@ -1,3 +1,10 @@
+2007-12-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (Fsubstitute_in_file_name):
+	On encountering non-existent environment variables or incorrect
+	syntax for specifying environment variables (as is routine on
+	Windows) don't error, instead pass the original strings through.
+
 2007-12-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* search.c (simple_search): Fix underrun in reverse search.
