@@ -90,6 +90,17 @@ DECLARE_LRECORD(fc_config, struct fc_config);
 #endif /* FONTCONFIG_EXPOSE_CONFIG */
 
 #ifdef USE_XFT
+
+#ifndef HAVE_FCCONFIGGETRESCANINTERVAL
+/* Older fontconfig versions misspell this function name. */
+#define FcConfigGetRescanInterval FcConfigGetRescanInverval 
+#endif /* */
+
+#ifndef HAVE_FCCONFIGSETRESCANINTERVAL
+/* Older fontconfig versions misspell this function name. */
+#define FcConfigSetRescanInterval FcConfigSetRescanInverval 
+#endif /* */
+
 /*
   The format of a fontname (as returned by fontconfig) is not well-documented,
   But the character repertoire is represented in an ASCII-compatible way.  See

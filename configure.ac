@@ -3532,6 +3532,9 @@ extern Bool XRegisterIMInstantiateCallback(
           [XE_DIE(["Unable to find libfontconfig for --with-xft"])])
       AC_CHECK_LIB(Xft, XftFontOpen, XE_PREPEND(-lXft, libs_x),
           [XE_DIE(["Unable to find libXft for --with-xft"])])
+
+      AC_CHECK_FUNCS(FcConfigGetRescanInterval)
+      AC_CHECK_FUNCS(FcConfigSetRescanInterval)
       dnl #### detect fontconfig properly!!!!
       with_fontconfig=yes
       AC_DEFINE(HAVE_FONTCONFIG)

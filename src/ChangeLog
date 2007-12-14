@@ -1,3 +1,18 @@
+2007-12-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in:
+	Make the results of the checks for 
+	FcConfigGetRescanInterval, FcConfigSetRescanInterval
+	available.
+	* font-mgr.h:
+	If FcConfigSetRescanInterval and FcConfigGetRescanInterval are not
+	available as functions, #define them to map to their old
+	misspelled names. 	
+	* font-mgr.c (Ffc_config_get_rescan_interval):
+	* font-mgr.c (Ffc_config_set_rescan_interval):
+	Use the correct spelling in
+	FcConfigGetRescanInterval, FcConfigSetRescanInterval
+
 2007-12-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* glyphs-eimage.c: 

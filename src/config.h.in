@@ -209,6 +209,14 @@ things are arranged in config.h.in.  In particular:
 /* Compile with support for fontconfig? */
 #undef HAVE_FONTCONFIG
 
+/* Was the spelling of FcConfigGetRescanInterval corrected in this
+   fontconfig version? */
+#undef HAVE_FCCONFIGGETRESCANINTERVAL
+
+/* Was the spelling of FcConfigSetRescanInterval corrected in this
+   fontconfig version? */
+#undef HAVE_FCCONFIGSETRESCANINTERVAL
+
 /* Compile with support for Xft? */
 #undef USE_XFT
 /* Per-widget stuff will go away? */

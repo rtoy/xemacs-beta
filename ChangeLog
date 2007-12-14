@@ -1,3 +1,10 @@
+2007-12-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac :
+	Check for FcConfigGetRescanInterval, FcConfigSetRescanInterval.
+	* configure :
+	Rebuild.
+
 2007-08-27  Mike Sperber  <mike@xemacs.org>
 
 	* configure.ac: Try to use pkg-config for finding Xft includes and

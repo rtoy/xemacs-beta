@@ -898,10 +898,8 @@ XEmacs: should convert to a chartable.
 		intern ("fc-config-get-blanks"));
 }
 
-/* The misspelling in the fontconfig function name accurately corresponds to
-   the version of fontconfig.h I had on 2007-04-13. -- sjt */
 DEFUN("fc-config-get-rescan-interval", Ffc_config_get_rescan_interval, 1, 1, 0, /*
- -- Function: int FcConfigGetRescanInverval (FcConfig *config)
+ -- Function: int FcConfigGetRescanInterval (FcConfig *config)
      Returns the interval between automatic checks of the configuration
      (in seconds) specified in 'config'.  The configuration is checked
      during a call to FcFontList when this interval has passed since
@@ -909,13 +907,11 @@ DEFUN("fc-config-get-rescan-interval", Ffc_config_get_rescan_interval, 1, 1, 0, 
       (config))
 {
   CHECK_FCCONFIG (config);
-  return make_int (FcConfigGetRescanInverval (XFCCONFIG_PTR (config)));
+  return make_int (FcConfigGetRescanInterval (XFCCONFIG_PTR (config)));
 }
 
-/* The misspelling in the fontconfig function name accurately corresponds to
-   the version of fontconfig.h I had on 2007-04-13. -- sjt */
 DEFUN("fc-config-set-rescan-interval", Ffc_config_set_rescan_interval, 2, 2, 0, /*
- -- Function: FcBool FcConfigSetRescanInverval (FcConfig *config, int
+ -- Function: FcBool FcConfigSetRescanInterval (FcConfig *config, int
           rescanInterval)
      Sets the rescan interval; returns FcFalse if an error occurred.
      XEmacs: signal such error, or return nil on success. */
@@ -923,7 +919,7 @@ DEFUN("fc-config-set-rescan-interval", Ffc_config_set_rescan_interval, 2, 2, 0, 
 {
   CHECK_FCCONFIG (config);
   CHECK_INT (rescan_interval);
-  if (FcConfigSetRescanInverval (XFCCONFIG_PTR (config),
+  if (FcConfigSetRescanInterval (XFCCONFIG_PTR (config),
 				 XINT (rescan_interval)) == FcFalse)
     signal_error (Qio_error, "FcConfigSetRescanInverval barfed",
 		  intern ("fc-config-set-rescan-interval"));
