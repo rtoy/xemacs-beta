@@ -1,3 +1,21 @@
+2007-12-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.el (substitute-env-vars):
+	Merge an example from GNU's docstring. 
+	* process.el (setenv):	
+	Pass nil as the default abbrev table to the #'read-from-minibuffer
+	call, instead of passing the current value of the variable. Bug
+	introduced by an incorrect sync from GNU by Ben; reported by
+	Thomas Mittelstaedt in 47626712.40609@cadenas.de.
+
+	Document the #'set-time-zone-rule call when TZ is set. Push the
+	old value on to the beginning of setenv-history. (Both merged from
+	GNU.) Document that we don't do the coding-system frobbing at this
+	level that GNU does. 
+
+	Provide a commented-out, sample implementation of GNU's
+	#'environment; document why I think we shouldn't include it.
+
 2007-12-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/latin.el :

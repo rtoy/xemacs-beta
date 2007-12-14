@@ -25,7 +25,7 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30, except for setenv/getenv (synched with FSF
-;;; 21.0.105).
+;;; 21.2.1).
 
 ;;; Authorship:
 
@@ -542,8 +542,10 @@ If it is also not t, RET does not exit if it does non-null completion."
 `$FOO' where FOO is an environment variable name means to substitute
 the value of that variable.  The variable name should be terminated
 with a character not a letter, digit or underscore; otherwise, enclose
-the entire variable name in braces.  Use `$$' to insert a single
-dollar sign."
+the entire variable name in braces.  For instance, in `ab$cd-x',
+`$cd' is treated as an environment variable.
+
+Use `$$' to insert a single dollar sign."
   (let ((start 0))
     (while (string-match
 	    ;; XEmacs change - FSF use their rx macro to generate this regexp
@@ -575,19 +577,40 @@ Interactively, a prefix argument means to unset the variable.
 Interactively, the current value (if any) of the variable
 appears at the front of the history list when you type in the new value.
 
-This function works by modifying `process-environment'."
+This function works by modifying `process-environment'.
+
+As a special case, setting variable `TZ' calls `set-time-zone-rule' as
+a side-effect."
   (interactive
    (if current-prefix-arg
        (list (read-envvar-name "Clear environment variable: " 'exact) nil t)
-     (let ((var (read-envvar-name "Set environment variable: " nil)))
+     (let* ((var (read-envvar-name "Set environment variable: " nil))
+            (value (getenv var)))
+       (when value
+         (push value setenv-history))
        ;; Here finally we specify the args to call setenv with.
        (list var (read-from-minibuffer (format "Set %s to value: " var)
 				       nil nil nil 'setenv-history
-				       (getenv var))))))
+                                       ;; XEmacs change; don't specify a
+                                       ;; default. (Nor an abbrev table.)
+                                       )))))
   (if unset 
       (setq value nil)
     (if substitute-env-vars
 	(setq value (substitute-env-vars value))))
+
+  ;; GNU fuck around with coding systems here. We do it at a much lower
+  ;; level; an equivalent of the following code of Handa's would be
+  ;; worthwhile here, though:
+
+; (let ((codings (find-coding-systems-string (concat variable value))))
+;   (unless (or (eq 'undecided (car codings))
+;               (memq (coding-system-base locale-coding-system) codings))
+;     (error "Can't encode `%s=%s' with `locale-coding-system'"
+;            variable (or value "")))))
+
+  ;; But then right now our find-coding-systems analogue is in packages.
+
   (if (string-match "=" variable)
       (error "Environment variable name `%s' contains `='" variable)
     (let ((pattern (concat "\\`" (regexp-quote (concat variable "="))))
@@ -625,6 +648,25 @@ This function works by modifying `process-environment'."
 ;     (when (interactive-p)
 ;       (message "%s" (if value value "Not set")))
 ;     value))
+
+
+;; GNU have an #'environment function here, as of 2007-12-14. If someone
+;; actually uses it in the wild, this would suffice as an implementation:
+
+; (defun environment (&optional frame) 
+;   "Return a list of environment variables with their values.
+; Each entry in the list is a string of the form NAME=VALUE.
+; 
+; Optional argument FRAME is ignored, for GNU compatibility.
+; 
+; Non-ASCII characters look like Mojibake (that is, they are unreadable.)"
+;   (loop
+;     for entry in process-environment
+;     collect (encode-coding-string entry 'native)))
+; 
+
+;; but we shouldn't encourage that sort of ugliness and needless backwards
+;; incompatibility.
 
 (provide 'env) ;; Yuck.  Formerly the above were in env.el, which did this
 	       ;; provide.
