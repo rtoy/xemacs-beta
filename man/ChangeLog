@@ -1,3 +1,8 @@
+2007-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Document %b for binary output.
+
 2007-12-10  Ville Skyttä  <scop@xemacs.org>
 
 	* internals/internals.texi: Spelling fixes.

@@ -1269,6 +1269,29 @@ long_to_string (char *buffer, long number)
 #undef DIGITS_18
 #undef DIGITS_19
 
+void
+ulong_to_bit_string (char *p, unsigned long number)
+{
+  int i, seen_high_order = 0;;
+  
+  for (i = ((SIZEOF_LONG * 8) - 1); i >= 0; --i)
+    {
+      if (number & (unsigned long)1 << i)
+        {
+          seen_high_order = 1;
+          *p++ = '1';
+        }
+      else
+        {
+          if (seen_high_order)
+            {
+              *p++ = '0';
+            }
+        }
+    }
+  *p = '\0';
+}
+
 static void
 print_vector_internal (const char *start, const char *end,
                        Lisp_Object obj,
