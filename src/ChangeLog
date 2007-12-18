@@ -1,3 +1,9 @@
+2007-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (Fspecial_form_p): New.
+	For the use of advice.el, and perhaps other files; is SUBR a
+	special form?
+
 2007-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doprnt.c (emacs_doprnt_1):

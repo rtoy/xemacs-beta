@@ -732,6 +732,17 @@ SUBR must be a built-in function.
   return make_string ((const Ibyte *)name, strlen (name));
 }
 
+DEFUN ("special-form-p", Fspecial_form_p, 1, 1, 0, /*
+Return whether SUBR is a special form.  SUBR must be built-in.
+*/
+       (subr))
+{
+  subr = indirect_function (subr, 1);
+  CHECK_SUBR (subr);
+
+  return XSUBR (subr)->max_args == UNEVALLED ? Qt : Qnil;
+}
+
 DEFUN ("setplist", Fsetplist, 2, 2, 0, /*
 Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
 */
@@ -3719,6 +3730,7 @@ syms_of_symbols (void)
   DEFSUBR (Fdefine_function);
   Ffset (intern ("defalias"), intern ("define-function"));
   DEFSUBR (Fsubr_name);
+  DEFSUBR (Fspecial_form_p);
   DEFSUBR (Fsetplist);
   DEFSUBR (Fsymbol_value_in_buffer);
   DEFSUBR (Fsymbol_value_in_console);
