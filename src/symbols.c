@@ -733,14 +733,23 @@ SUBR must be a built-in function.
 }
 
 DEFUN ("special-form-p", Fspecial_form_p, 1, 1, 0, /*
-Return whether SUBR is a special form.  SUBR must be built-in.
+Return whether SUBR is a special form.
+
+A special form is a built-in function (a subr, that is a function
+implemented in C, not Lisp) which does not necessarily evaluate all its
+arguments.  Much of the basic XEmacs Lisp syntax is implemented by means of
+special forms; examples are `let', `condition-case', `defun', `setq' and so
+on.
+
+If you intend to write a Lisp function that does not necessarily evaluate
+all its arguments, the portable (across emacs variants, and across Lisp
+implementations) way to go about it is to write a macro instead.  See
+`defmacro' and `backquote'.
 */
        (subr))
 {
-  subr = indirect_function (subr, 1);
-  CHECK_SUBR (subr);
-
-  return XSUBR (subr)->max_args == UNEVALLED ? Qt : Qnil;
+  subr = indirect_function (subr, 0);
+  return (SUBRP (subr) && XSUBR (subr)->max_args == UNEVALLED) ? Qt : Qnil;
 }
 
 DEFUN ("setplist", Fsetplist, 2, 2, 0, /*

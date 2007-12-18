@@ -1,5 +1,15 @@
 2007-12-18  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* symbols.c (Fspecial_form_p):
+	Following commentary from Jerry James, don't error if not passed a
+	subr. 
+
+	Flesh out the docstring; give details of what a subr is, what a
+	special form is, and why one should probably not write special
+	forms oneself. 
+
+2007-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* symbols.c (Fspecial_form_p): New.
 	For the use of advice.el, and perhaps other files; is SUBR a
 	special form?
