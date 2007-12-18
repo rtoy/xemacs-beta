@@ -665,7 +665,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 			case 'o': ch = 'p'; break;
 			case 'x': ch = 'y'; break;
 			case 'X': ch = 'Y'; break;
-                        case 'b': ch = 'b'; break;
+                        case 'b': ch = '\337'; break;
 			default: /* ch == 'u' */
 			  if (strchr (unsigned_int_converters, ch) &&
 			      ratio_sign (XRATIO_DATA (obj)) < 0)
@@ -747,7 +747,6 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 #ifdef HAVE_BIGNUM
 	      if (BIGNUMP (arg.obj))
 		{
-                  bignum *d = XBIGNUM_DATA (arg.obj);
 		  Ibyte *text_to_print =
 		    (Ibyte *) bignum_to_string (XBIGNUM_DATA (arg.obj),
 						base);
