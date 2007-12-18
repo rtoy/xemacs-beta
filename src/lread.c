@@ -2029,7 +2029,7 @@ parse_integer (const Ibyte *buf, Bytecount len, int base)
  overflow:
 #ifdef HAVE_BIGNUM
   {
-    bignum_set_string (scratch_bignum, (const char *) buf, 0);
+    bignum_set_string (scratch_bignum, (const char *) buf, base);
     return make_bignum_bg (scratch_bignum);
   }
 #else

@@ -2155,7 +2155,7 @@ It may contain %-sequences meaning to substitute the next argument.
 %s means print all objects as-is, using `princ'.
 %S means print all objects as s-expressions, using `prin1'.
 %d or %i means print as an integer in decimal (%o octal, %x lowercase hex,
-  %X uppercase hex).
+  %X uppercase hex, %b binary).
 %c means print as a single character.
 %f means print as a floating-point number in fixed notation (e.g. 785.200).
 %e or %E means print as a floating-point number in scientific notation

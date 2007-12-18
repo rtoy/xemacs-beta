@@ -715,6 +715,11 @@ integer, using lowercase letters.
 Replace the specification with the base-sixteen representation of an
 integer, using uppercase letters.
 
+@item %b
+@cindex integer to binary
+Replace the specification with the base-two representation of an
+integer.
+
 @item %c
 Replace the specification with the character which is the value given.
 
