@@ -1,3 +1,10 @@
+2007-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (describe-function-1):
+	Give details of bindings for commands, taking into account
+	global-window-system-map and global-tty-map when bindings differ
+	compared to the global map. 
+
 2007-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (integer-to-bit-vector): New.

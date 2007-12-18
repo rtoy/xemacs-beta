@@ -1484,7 +1484,53 @@ part of the documentation of internal subroutines."
 		   (goto-char newp standard-output))
 		 (unless (or (equal doc "")
 			     (eq ?\n (aref doc (1- (length doc)))))
-		   (terpri)))))))))
+		   (terpri)))
+	       (when (commandp function)
+		 (princ "\nInvoked with:\n")
+		 (let ((global-binding
+			(where-is-internal function global-map))
+		       (global-tty-binding 
+			(where-is-internal function global-tty-map))
+		       (global-window-system-binding 
+			(where-is-internal function global-window-system-map)))
+                   (if (or global-binding global-tty-binding
+                           global-window-system-binding)
+                       (if (and (equal global-binding
+                                       global-tty-binding)
+                                (equal global-binding
+                                       global-window-system-binding))
+                           (princ
+                            (substitute-command-keys
+                             (format "\n\\[%s]" function)))
+                         (when (and global-window-system-binding
+                                    (not (equal global-window-system-binding
+                                                global-binding)))
+                           (princ 
+                            (format 
+                             "\n%s\n        -- under window systems\n"
+                             (mapconcat #'key-description
+                                        global-window-system-binding
+                                        ", "))))
+                         (when (and global-tty-binding
+                                    (not (equal global-tty-binding
+                                                global-binding)))
+                           (princ 
+                            (format 
+                             "\n%s\n        -- under TTYs\n"
+                             (mapconcat #'key-description
+                                        global-tty-binding
+                                        ", "))))
+                         (when global-binding
+                           (princ 
+                            (format 
+                             "\n%s\n        -- generally (that is, unless\
+ overridden by TTY- or
+           window-system-specific mappings)\n"
+                             (mapconcat #'key-description
+                                        global-binding
+                                        ", ")))))
+                     (princ (substitute-command-keys
+                             (format "\n\\[%s]" function))))))))))))
 
 ;;; [Obnoxious, whining people who complain very LOUDLY on Usenet
 ;;; are binding this to keys.]
