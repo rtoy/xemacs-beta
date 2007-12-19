@@ -1,3 +1,8 @@
+2007-12-08  Jerry James  <james@xemacs.org>
+
+	* config.guess:
+	* config.sub: Sync with the latest upstream versions.
+
 2007-12-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure.ac :
