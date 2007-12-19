@@ -1,3 +1,9 @@
+2007-12-18  Kenny Chien <Kenny.Chien@morganstanley.com>
+
+	* extw-Xt.c (extw_wait_for_response): Don't use undocumented
+	internal Xt functions, avoiding inconsistent behavior between
+	different Solaris versions.
+
 2007-12-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in:
