@@ -64,7 +64,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #if defined(HAVE_NATIVE_SOUND) || defined(HAVE_NAS_SOUND) \
-  || defined(HAVE_ESD_SOUND)
+  || defined(HAVE_ALSA_SOUND) || defined(HAVE_ESD_SOUND)
 #define USED_IF_HAVE_ANY(decl) decl
 #else
 #define USED_IF_HAVE_ANY(decl) UNUSED (decl)

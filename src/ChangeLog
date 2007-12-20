@@ -1,3 +1,7 @@
+2007-12-20  Jerry James  <james@xemacs.org>
+
+	* sound.c: Fix unused parameter warnings when HAVE_ALSA_SOUND.
+
 2007-12-18  Kenny Chien <Kenny.Chien@morganstanley.com>
 
 	* extw-Xt.c (extw_wait_for_response): Don't use undocumented
