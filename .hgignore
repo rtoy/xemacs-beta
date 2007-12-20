@@ -5,6 +5,9 @@
 \.elc$
 ~$
 \.orig$
+\.rej$
+(^|/)#[^/]*#$
+(^|/).#[^/]*$
 info/.*\.info(-[0-9]+)?$
 ^GNUmakefile$
 ^Installation$
