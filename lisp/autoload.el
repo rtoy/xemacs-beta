@@ -516,7 +516,8 @@ Updates AUTOLOADS-DONE and returns the new value."
 	   (let ((begin (point)))
 	     (forward-sexp)
 	     (forward-line 1)
-	     (princ (buffer-substring begin (point)) outbuf)))
+	     (princ (buffer-substring begin (point)) outbuf))
+	   (setq autoloads-done (cons '<immediate> autoloads-done)))
 	  (t
 	   (princ (buffer-substring
 		   (progn
