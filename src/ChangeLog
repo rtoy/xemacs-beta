@@ -4,6 +4,40 @@
 	internal Xt functions, avoiding inconsistent behavior between
 	different Solaris versions.
 
+2007-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (Fspecial_form_p):
+	Following commentary from Jerry James, don't error if not passed a
+	subr. 
+
+	Flesh out the docstring; give details of what a subr is, what a
+	special form is, and why one should probably not write special
+	forms oneself. 
+
+2007-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (Fspecial_form_p): New.
+	For the use of advice.el, and perhaps other files; is SUBR a
+	special form?
+
+2007-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (emacs_doprnt_1):
+	Add support for formatted printing of both longs and bignums as
+	base 2.
+	* editfns.c (Fformat):
+	Document the new %b escape for #'format. 
+	* lisp.h:
+	Make ulong_to_bit_string available beside long_to_string. 
+	* lread.c:
+	Fix a bug where the integer base was being ignored in certain
+	contexts; thank you Sebastian Freundt. This is necessary for
+	correct behaviour of #'integer-to-bit-vector and
+	#'bit-vector-to-integer, just added to subr.el
+	* print.c (ulong_to_bit_string): New.
+	Analagous to long_to_string, but used all the time when %b is
+	encountered, since we can't pass that to sprintf. 	
+
 2007-12-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in:

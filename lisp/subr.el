@@ -913,6 +913,26 @@ See also `equalp'."
 (define-function 'char-int 'char-to-int)
 (define-function 'int-char 'int-to-char)
 
+;; XEmacs addition.
+(defun integer-to-bit-vector (integer &optional minlength)
+  "Return INTEGER converted to a bit vector.
+Optional argument MINLENGTH gives a minimum length for the returned vector.
+If MINLENGTH is not given, zero high-order bits will be ignored."
+  (check-argument-type #'integerp integer)
+  (setq minlength (or minlength 0))
+  (check-nonnegative-number minlength)
+  (read (format (format "#*%%0%db" minlength) integer)))
+
+;; XEmacs addition.
+(defun bit-vector-to-integer (bit-vector)
+  "Return BIT-VECTOR converted to an integer.
+If bignum support is available, BIT-VECTOR's length is unlimited.
+Otherwise the limit is the number of value bits in an Lisp integer. "
+  (check-argument-type #'bit-vector-p bit-vector)
+  (setq bit-vector (prin1-to-string bit-vector))
+  (aset bit-vector 1 ?b)
+  (read bit-vector))
+
 (defun string-width (string)
   "Return number of columns STRING occupies when displayed.
 With international (Mule) support, uses the charset-columns attribute of

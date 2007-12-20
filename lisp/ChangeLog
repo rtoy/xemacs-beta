@@ -4,6 +4,19 @@
 	the section header for immediate autoloads, to make sure the
 	upstream doesn't think there aren't any autoloads at all.
 
+2007-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (describe-function-1):
+	Give details of bindings for commands, taking into account
+	global-window-system-map and global-tty-map when bindings differ
+	compared to the global map. 
+
+2007-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (integer-to-bit-vector): New.
+	* subr.el (bit-vector-to-integer): New.
+	Provide naive implementations using the Lisp reader for these. 
+
 2007-12-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* process.el (substitute-env-vars):
