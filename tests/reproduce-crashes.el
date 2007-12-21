@@ -37,11 +37,9 @@
 ;; It's a bad idea to rely on code in this file continuing to work in
 ;; the same way. :-)
 
-;; #### This file should be cleaned up and renamed reproduce-crashes.el.
 ;; #### Bugs < 11 need to be tested and versions where they pass recorded.
 ;; #### Fixed bugs should become regression tests, maybe?
 ;; #### Non-crashes should be copied (not moved) to tests/automatic.
-;; #### Do the autoloads make any sense?
 ;; #### `list-bugs' should optionally sort on status.
 ;; #### Bugs that depend on features (eg, Mule) should check for them and
 ;;      document them.

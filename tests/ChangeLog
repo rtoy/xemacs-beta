@@ -1,5 +1,9 @@
 2007-12-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* reproduce-crashes.el: Renamed from reproduce-bugs.el.  Update to-do.
+
+2007-12-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* reproduce-bugs.el:  Reorganize.  Minor cosmetic improvements.
 	Update to-do list.
 	(defbug):  Include status and docstring in value.
