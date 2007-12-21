@@ -849,12 +849,16 @@ the menubar)."
     (or (find-user-init-directory-init-file init-directory)
 	(find-user-home-directory-init-file home-directory))))
 
+(defun ask-about-user-init-file-migration-p ()
+  "Check whether we want to ask the user if she wants to migrate the init file."
+  (and (not load-home-init-file)
+       (not (find-user-init-directory-init-file user-init-directory))
+       (stringp user-init-file)
+       (file-readable-p user-init-file)))
+
 (defun maybe-migrate-user-init-file ()
   "Ask user if she wants to migrate the init file(s) to new location."
-  (if (and (not load-home-init-file)
-	   (not (find-user-init-directory-init-file user-init-directory))
-	   (stringp user-init-file)
-	   (file-readable-p user-init-file))
+  (if (ask-about-user-init-file-migration-p)
       (if (with-output-to-temp-buffer (help-buffer-name nil)
 	    (progn
 	      (princ "XEmacs recommends that the initialization code in
@@ -881,7 +885,8 @@ perform the migration at any time with M-x migrate-user-init-file.")
 					   user-init-directory
 					   "? "))))
 
-	  (let ((backup (migrate-user-init-file)))
+	  (progn
+	    (migrate-user-init-file)
 	    (with-output-to-temp-buffer (help-buffer-name nil)
 	      (progn
 	      (princ "The initialization code has now been migrated to the ")
@@ -890,46 +895,63 @@ perform the migration at any time with M-x migrate-user-init-file.")
 
 For backwards compatibility with, for example, older versions of XEmacs,
 XEmacs can create a special old-style .emacs file in your home
-directory which will load the relocated initialization code.")
-	      (if backup
-		  (progn
-		    (princ "\nMoreover, a backup of your old .emacs file was created as\n")
-		    (princ backup)
-		    (princ ".\n")))
+directory which will load the relocated initialization code.
+
+NOTE THAT THIS WILL OVERWRITE YOUR EXISTING .emacs FILE!")
 	      (show-temp-buffer-in-current-frame standard-output)
 	      (maybe-create-compatibility-dot-emacs))))
-	(customize-save-variable 'load-home-init-file t))))
+	(set-load-home-init-file user-init-file t))))
 
 (defun maybe-create-compatibility-dot-emacs ()
   "Ask user if she wants to create a .emacs compatibility file."
-  (if (yes-or-no-p-minibuf "Create compatibility .emacs? ")
+  (if (yes-or-no-p-minibuf "Create compatibility .emacs?")
       (create-compatibility-dot-emacs)))
 
 (defun migrate-user-init-file ()
-  "Migrate the init file from the home directory.
-Return the name of backup file, if one was created."
+  "Migrate the init file from the home directory."
   (interactive)
   (if (not (file-exists-p user-init-directory))
       (progn
 	(message "Creating %s directory..." user-init-directory)
 	(make-directory user-init-directory)))
   (message "Migrating custom file...")
-  (let* ((backup (concat user-init-file ".backup"))
-	 (backup-p
-	  (and (not (file-exists-p backup))
-	       (progn
-		 (copy-file user-init-file backup)
-		 t))))
-    (customize-set-value 'load-home-init-file nil)
-    (custom-migrate-custom-file (make-custom-file-name user-init-file
-						       'force-new))
-    (message "Moving init file...")
-    (let ((new-user-init-file (expand-file-name user-init-file-base
-						user-init-directory)))
-      (rename-file user-init-file new-user-init-file)
-      (setq user-init-file new-user-init-file))
-    (message "Migration done.")
-    (and backup-p backup)))
+  (set-load-home-init-file user-init-file nil)
+  (setq custom-file (make-custom-file-name user-init-file 'force-new))
+  (custom-save-all)
+  (message "Copying init file...")
+  (let ((new-user-init-file (expand-file-name user-init-file-base
+					      user-init-directory)))
+    (copy-file user-init-file new-user-init-file)
+    (setq user-init-file new-user-init-file))
+  (message "Migration done."))
+
+(defun set-load-home-init-file (filename val)
+  "Put code in `filename' to set `load-home-init-file' to `val'.
+More precisely, remove the first `setq' form for `load-home-init-file',
+and replace it by (setq load-home-init-file t) if `val' is non-nil."
+  (save-excursion
+    (set-buffer (find-file-noselect filename))
+    (goto-char (point-min))
+    (condition-case nil
+	(block find-existing
+	  (while (not (eobp))
+	    (forward-sexp 1)
+	    (backward-sexp 1)
+	    (let* ((beginning (point))
+		   (sexp (read (current-buffer))))
+	      (if (and (consp sexp)
+		       (consp (cdr sexp))
+		       (eq 'setq (car sexp))
+		       (eq 'load-home-init-file (cadr sexp)))
+		  (progn
+		    (forward-line 1)
+		    (delete-region beginning (point))
+		    (return-from find-existing nil))
+		(forward-sexp 1)))))
+	(error nil)) ; ignore if there are no sexprs in the file
+    (if val
+	(insert "(setq load-home-init-file t) ; don't load init file from ~/.xemacs/init.el\n"))
+    (save-buffer)))
 
 (defun create-compatibility-dot-emacs ()
   "Create .emacs compatibility file for migrated setup."
@@ -965,8 +987,9 @@ Return the name of backup file, if one was created."
     (rename-file user-init-file target-file-name 'ok-if-already-exists)
     (setq user-init-file target-file-name)
     (let ((old-custom-file custom-file))
-      (custom-migrate-custom-file target-file-name)
-      (customize-save-variable 'load-home-init-file t)
+      (setq custom-file target-file-name)
+      (custom-save-all)
+      (set-load-home-init-file user-init-file t)
       (delete-file old-custom-file))))
 
 (defun load-user-init-file ()
@@ -1089,7 +1112,8 @@ a new format, when variables have changed, etc."
 
       ;; Don't clobber a non-scratch buffer if init file
       ;; has selected it.
-      (when (string= (buffer-name) "*scratch*")
+      (when (and (string= (buffer-name) "*scratch*")
+		 (not (ask-about-user-init-file-migration-p)))
 	(unless (or inhibit-startup-message
 		    (input-pending-p))
 	  (let (tmout)

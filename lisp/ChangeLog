@@ -4,6 +4,23 @@
 	the section header for immediate autoloads, to make sure the
 	upstream doesn't think there aren't any autoloads at all.
 
+2007-12-19  Mike Sperber  <mike@xemacs.org>
+
+	* startup.el (ask-about-user-init-file-migration-p): Factored out
+	check.
+	(maybe-migrate-user-init-file):
+	(migrate-user-init-file): Don't do a backup of ~/.emacs anymore.
+	Instead, make only a manual adjustment of the file, if at all,
+	i.e. don't go through customize magic anymore.
+	(unmigrate-user-init-file): Don't use customize to set
+	`load-home-init-file' anymore.
+	(set-load-home-init-file): Add; performs the modification
+	previously done through customize.
+	(unmigrate-user-init-file): Use `set-load-home-init-file' instead
+	of customize.
+	(command-line-1): Only wait for the first event if we're not going
+	to ask about migration.
+
 2007-12-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* help.el (describe-function-1):
