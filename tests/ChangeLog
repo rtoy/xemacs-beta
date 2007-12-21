@@ -1,3 +1,16 @@
+2007-12-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* reproduce-bugs.el:  Reorganize.  Minor cosmetic improvements.
+	Update to-do list.
+	(defbug):  Include status and docstring in value.
+	(bug-hashtable):  Document the table format.
+	(reproduce-bug):  Handle revised table format.  Remove broken
+	autoload cookie.
+	(describe-bug):  New function.  Pop up description of one bug.
+	(list-bugs):  New function.  Pop up brief descriptions of all bugs.
+	(1,2,3,4,5,6,7,8,9,10,11):  (Re)number all bugs.  Move comments to
+	docstrings.
+
 2007-12-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/syntax-tests.el:
