@@ -1521,7 +1521,7 @@ Run-time path-searching options
                           Specify location of last/legacy packages (instead of
                           default location; same as --with-legacy-packages).
   --with-legacy-packages=DIR
-                          Specify location of late/legacy packages (instead of
+                          Specify location of last/legacy packages (instead of
                           default location; same as --with-last-packages).
   --with-package-path=PATH
                           Search path for package directories.
@@ -2842,7 +2842,7 @@ if test "${with_legacy_packages+set}" = set; then
   enableval="$with_legacy_packages"
   withval="$with_legacy_packages"
   cat >>confdefs.h <<\_ACEOF
-#define LATE_PACKAGE_DIRECTORIES_USER_DEFINED 1
+#define LAST_PACKAGE_DIRECTORIES_USER_DEFINED 1
 _ACEOF
 
 fi;
