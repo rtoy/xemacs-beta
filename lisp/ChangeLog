@@ -1,3 +1,11 @@
+2007-12-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Factor out lists of operators specially treated by `make-autoload'.
+
+	* autoload.el (autoload-make-autoload-operators): New.
+	(autoload-make-autoload-complex-operators): New.
+	(make-autoload): Use them.
+
 2007-12-18  Mike Sperber  <mike@xemacs.org>
 
 	* autoload.el (process-one-lisp-autoload): Insert <immediate> into

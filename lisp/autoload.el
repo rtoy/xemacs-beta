@@ -226,6 +226,20 @@ the section of autoloads for a file.")
 ;; Parsing the source file text.
 ;; Autoloads in C source differ from those in Lisp source.
 
+;; #### Eventually operators like defclass and defmethod (defined in an
+;; external package, EIEIO) may be factored out.  Don't add operators here
+;; without discussing whether and how to do that on the developers' channel.
+(defvar autoload-make-autoload-operators
+  '(defun define-skeleton defmacro define-derived-mode define-generic-mode
+    easy-mmode-define-minor-mode easy-mmode-define-global-mode
+    define-minor-mode defun* defmacro* defclass defmethod)
+  "`defun'-like operators that use `autoload' to load the library.")
+
+(defvar autoload-make-autoload-complex-operators
+  '(easy-mmode-define-minor-mode easy-mmode-define-global-mode
+    define-minor-mode)
+  "`defun'-like operators to macroexpand before using `autoload'.")
+
 (defun make-autoload (form file)
   "Turn FORM into an autoload or defvar for source file FILE.
 Returns nil if FORM is not a special autoload form (i.e. a function definition
@@ -233,8 +247,7 @@ or macro definition or a defcustom)."
   (let ((car (car-safe form)) expand)
     (cond
      ;; For complex cases, try again on the macro-expansion.
-     ((and (memq car '(easy-mmode-define-global-mode
-		       easy-mmode-define-minor-mode define-minor-mode))
+     ((and (memq car autoload-make-autoload-complex-operators)
 	   (setq expand (let ((load-file-name file)) (macroexpand form)))
 	   (eq (car expand) 'progn)
 	   (memq :autoload-end expand))
@@ -246,11 +259,7 @@ or macro definition or a defcustom)."
 		      (cdr expand)))))
 
      ;; For special function-like operators, use the `autoload' function.
-     ((memq car '(defun define-skeleton defmacro define-derived-mode
-		   define-generic-mode easy-mmode-define-minor-mode
-		   easy-mmode-define-global-mode
-		   define-minor-mode defun* defmacro*
-		   defclass defmethod)) ; from the EIEIO package
+     ((memq car autoload-make-autoload-operators)
       (let* ((macrop (memq car '(defmacro defmacro*)))
 	     (name (nth 1 form))
 	     (body (nthcdr (get car 'doc-string-elt) form))
