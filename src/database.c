@@ -31,6 +31,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysfile.h"
 #include "buffer.h"
+#include "file-coding.h"
 
 #ifndef HAVE_DATABASE
 #error HAVE_DATABASE not defined!!
@@ -181,11 +182,16 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun,
 			 3, db->fname, db->funcs->get_type (db),
 			 db->funcs->get_subtype (db));
 
-  write_fmt_string (printcharfun, "%s) 0x%x>",
+  write_fmt_string (printcharfun, "%s) ",
 		    (!DATABASE_LIVE_P (db)    ? "closed"    :
 		     (db->access_ & O_WRONLY) ? "writeonly" :
-		     (db->access_ & O_RDWR)   ? "readwrite" : "readonly"),
-		    db->header.uid);
+		     (db->access_ & O_RDWR)   ? "readwrite" : "readonly"));
+
+  write_fmt_string_lisp (printcharfun, "coding: %s ", 1,
+                         XSYMBOL_NAME (XCODING_SYSTEM_NAME
+                                       (db->coding_system)));
+
+  write_fmt_string (printcharfun, "0x%x>", db->header.uid);
 }
 
 static void
@@ -654,7 +660,7 @@ variable `database-coding-system'.
   if (NILP (codesys))
     codesys = Vdatabase_coding_system;
 
-  codesys = get_coding_system_for_text_file (Vdatabase_coding_system, 1);
+  codesys = get_coding_system_for_text_file (codesys, 0);
 
 #ifdef HAVE_DBM
   if (NILP (type) || EQ (type, Qdbm))

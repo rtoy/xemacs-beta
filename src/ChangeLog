@@ -1,3 +1,15 @@
+2007-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* database.c (Fopen_database):
+	Actually respect the CODESYS argument; don't require EOL
+	autodetection from the coding system, because autodetection mostly
+	fails with reads of small amounts of data. It might be possible
+	with an implicit #'map-database on open, though I don't think
+	that's a great idea.
+	* database.c (print_database):
+	Give the coding system used for text conversion when printing a
+	database object. 
+
 2007-12-20  Jerry James  <james@xemacs.org>
 
 	* sound.c: Fix unused parameter warnings when HAVE_ALSA_SOUND.
