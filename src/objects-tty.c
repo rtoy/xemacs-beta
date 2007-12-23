@@ -347,7 +347,7 @@ tty_font_spec_matches_charset (struct device *UNUSED (d), Lisp_Object charset,
   fixup_internal_substring (nonreloc, reloc, offset, &length);
   the_nonreloc += offset;
 
-  if (UNBOUNDP (charset))
+  if (NILP (charset))
     return !memchr (the_nonreloc, '/', length);
   the_nonreloc = (const Ibyte *) memchr (the_nonreloc, '/', length);
   if (!the_nonreloc)
@@ -379,7 +379,7 @@ tty_find_charset_font (Lisp_Object device, Lisp_Object font,
       return Qnil;
     }
 
-  if (UNBOUNDP (charset))
+  if (NILP (charset))
     return font;
 
   return concat3 (font, build_string ("/"),

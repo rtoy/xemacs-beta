@@ -1,3 +1,17 @@
+2007-12-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* objects-tty.c (tty_find_charset_font): 
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_1):
+	* objects-xlike-inc.c (x_font_spec_matches_charset): 
+	* objects-xlike-inc.c (gtk_font_spec_matches_charset):
+	If the charset is not specified when calling the
+	font_spec_matches_charset device method, its value is Qnil, not
+	Qunbound. See
+	http://mid.gmane.org/E1EfbmW-00029r-5G@iwi191.iwi.uni-sb.de and
+	Ben Wing's patch of
+	http://mid.gmane.org/439FA06B.3090007@xemacs.org. 
+
 2007-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* database.c (Fopen_database):

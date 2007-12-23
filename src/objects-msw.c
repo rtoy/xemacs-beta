@@ -1976,7 +1976,7 @@ mswindows_font_spec_matches_charset_stage_1 (struct device *UNUSED (d),
   const Ibyte *c;
   Bytecount the_length = length;
 
-  if (UNBOUNDP (charset))
+  if (NILP (charset))
     return 1;
 
   if (!the_nonreloc)
@@ -2038,7 +2038,7 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
   Bytecount the_length = length;
   int i;
 
-  if (UNBOUNDP (charset))
+  if (NILP (charset))
     return 1;
 
   if (!the_nonreloc)

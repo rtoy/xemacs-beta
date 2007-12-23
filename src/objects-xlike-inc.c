@@ -125,7 +125,7 @@ x_font_spec_matches_charset (struct device * USED_IF_XFT (d),
 #endif
 
   /* Hmm, this smells bad. */
-  if (UNBOUNDP (charset))
+  if (NILP (charset))
     return 1;
 
   /* Hack! Short font names don't have the registry in them,
