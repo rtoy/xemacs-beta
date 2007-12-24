@@ -254,17 +254,17 @@ for use in the 'weight' field of an X font string.")
 	(i 0))
     ;; Standard ASCII characters
     (while (< i 26)
-      (aset table (+ i ?a) (+ i ?A))
+      (put-display-table (+ i ?a) (+ i ?A) table)
       (setq i (1+ i)))
     ;; Now ISO translations
     ;; #### FIXME what's this for??
     (setq i 224)
     (while (< i 247)			;; Agrave - Ouml
-      (aset table i (- i 32))
+      (put-display-table i (- i 32) table)
       (setq i (1+ i)))
     (setq i 248)
     (while (< i 255)			;; Oslash - Thorn
-      (aset table i (- i 32))
+      (put-display-table i (- i 32) table)
       (setq i (1+ i)))
     table))
 

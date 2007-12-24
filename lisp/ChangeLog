@@ -1,3 +1,46 @@
+2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/cyril-util.el:
+	* mule/cyril-util.el (cyrillic-encode-koi8-r-char): Removed.
+	* mule/cyril-util.el (cyrillic-encode-alternativnyj-char):
+	Removed.  No-one uses these functions in google.com/codesearch,
+	GNU have a comment doubting their utility, and their
+	implementation is trivial. 
+	* mule/cyril-util.el (cyrillic-language-alist):
+	Reformatted.
+	* mule/cyril-util.el (standard-display-table)): Removed. It wasn't
+	used anyway. 
+	* mule/cyril-util.el (standard-display-cyrillic-translit):
+	Rewrite it to work with character tables as display tables, and
+	not to abort with an error.
+
+2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* disp-table.el:
+	* disp-table.el (make-display-table): Moved earlier in the file in
+	a weak attempt at making syncing with GNU easier. 
+	* disp-table.el (frob-display-table):
+	Autoload it, accept TAG-SET, for editing specifiers.
+	* disp-table.el (describe-display-table):
+	Have it handle character sets. 	
+	* disp-table.el (standard-display-8bit-1):
+	* disp-table.el (standard-display-8bit):
+	* disp-table.el (standard-display-default-1):
+	* disp-table.el (standard-display-ascii):
+	* disp-table.el (standard-display-g1):
+	* disp-table.el (standard-display-graphic):
+	* disp-table.el (standard-display-underline):
+	* disp-table.el (standard-display-european):
+	Rework them all to use put-char-table, remove-char-table instead
+	of aset. Limit standard-display-g1, standard-display-graphic to
+	TTYs; have standard-display-underline work on X11 too. 
+	
+	* font.el (font-caps-display-table):
+	Use put-char-table instead of aset when editing a display table.
+	* x-init.el:
+	* x-init.el (tab):
+	Create the initial display table as a char-table, not a vector. 
+
 2007-12-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Factor out lists of operators specially treated by `make-autoload'.
