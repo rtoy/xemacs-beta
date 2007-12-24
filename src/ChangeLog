@@ -1,3 +1,10 @@
+2007-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-xlike-inc.c (x_keysym_to_character): 
+	* event-xlike-inc.c (gtk_keysym_to_character):
+	Unify the typed character if possible, following the current value
+	for the unicode precedence list. 
+
 2007-12-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* tests.c (Ftest_data_format_conversion):
