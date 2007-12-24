@@ -1,3 +1,14 @@
+2007-12-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in (mkpkgdir):
+	(check-available-packages):
+	(install-bootstrap-packages):
+	(install-nonmule-packages):
+	(install-all-packages):
+	New targets supporting bundled packages.
+
+	* .hgignore: Ignore tarballs in etc/bundled-packages/.
+
 2007-12-08  Jerry James  <james@xemacs.org>
 
 	* config.guess:
