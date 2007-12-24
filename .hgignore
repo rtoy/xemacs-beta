@@ -44,4 +44,4 @@ info/.*\.info(-[0-9]+)?$
 ^src/xemacs\.def(\.in)?$
 ^src/xemacs\.dmp$
 ^src/Emacs\.ad\.h$
-
+^etc/bundled-packages/.*\.tar\.gz$

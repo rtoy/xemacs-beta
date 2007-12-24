@@ -1,3 +1,8 @@
+2007-12-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* bundled-packages/README: Documentation for bundled packages.
+	* bundled-packages/test.sh: Test suite for bundled packages.
+
 2007-11-22  Vin Shelton  <acs@xemacs.org>
 
 	* photos/vin.png:

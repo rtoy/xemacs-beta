@@ -1,0 +1,68 @@
+Package distributions may be placed in this directory.
+If present and a package-path is configured, packages can be installed
+using the top-level makefile.
+
+To configure the package path, use the --with-late-packages option to
+configure, which specifies the path to the directory containing the
+xemacs-packages and mule-packages hierarchies to install.
+
+To find out if a distribution includes bundled packages, type
+
+    make check-available-packages
+
+There are three Make targets that may be available depending on the package
+sets supplied.
+
+    make install-bootstrap-packages
+        Install a selected set of packages sufficient to support
+        downloading and installing packages via the M-x list-packages
+        interface.  Chose this if you want to be able to install the
+        latest version of each package immediately.
+
+    make install-nomule-packages
+        Install the full distribution of packages that do not require a
+        Mule-enabled XEmacs.  Choose this package if you don't have a
+        Mule-enabled XEmacs and want the convenience of a single-command
+        installation.  You can add or update packages via M-x list-packages
+        at any time.
+
+    make install-all-packages
+        Install the full distribution of packages, including those requiring
+        a Mule-enabled XEmacs.  Choose this package if you have a Mule-
+        enabled XEmacs and want the convenience of a single-command
+        installation.  You can add or update packages via M-x list-packages
+        at any time.
+
+DISTRIBUTOR'S NOTE: you may choose what packages you wish to include in
+bootstrap.tar.gz, but to make list-packages work you need to include at
+least xemacs-base, dired, and efs.  The tarball should unpack directly as
+an xemacs-packages tree (and optionaly, a mule-packages tree.  Also, if
+either of xemacs-sumo.tar.gz or xemacs-mule-sumo.tar.gz is provided, the
+other should be as well.
+
+If packages are not available with the distribution, you can get them at
+
+    ftp://ftp.xemacs.org/pub/xemacs/packages/xemacs-sumo.tar.gz
+    ftp://ftp.xemacs.org/pub/xemacs/packages/xemacs-mule-sumo.tar.gz
+    http://turnbull.sk.tsukuba.ac.jp/Tools/XEmacs/bootstrap.tar.gz
+
+and place them in the same directory as this file.  You can also make your
+own bootstrap.tar.gz by creating a directory xemacs-packages, then
+untarring the packages of your choice into that directory, and tarring the
+whole thing up with "tar czf bootstrap.tar.gz xemacs-packages".  (If you
+wish to include mule-packages, you should place them in mule-packages as
+a sibling of xemacs-packages.)
+
+This facility currently does not support installations which configure
+the --with-early-packages, --with-late-packages, or --with-last-packages
+options.
+
+This facility currently will not overwrite an existing package
+installation, not even if a whole hierarchy (usually the mule-packages)
+is missing.  In particular, you cannot use this feature to add the
+mule-packages to a package installation which lacks them, even if the
+hierarchy is missing, or the xemacs-packages hierarchy was installed
+this way.  Nor can you "upgrade" a bootstrap installation to a full
+installation.  If you wish to do any of these things you will need to
+remove the existing hierarchies.
+
