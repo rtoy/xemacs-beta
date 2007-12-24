@@ -1,3 +1,10 @@
+2007-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (Fintern_soft): 
+	Provide a new optional third argument, DEFAULT, for those who want
+	to check if "nil" is a symbol or not. (More realistically, general
+	code that may get handed "nil" should probably use this argument.)
+
 2007-12-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* objects-tty.c (tty_find_charset_font): 

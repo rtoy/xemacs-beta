@@ -5067,7 +5067,7 @@ EXFUN (Fdefault_value, 1);
 EXFUN (Ffboundp, 1);
 EXFUN (Ffset, 2);
 EXFUN (Fintern, 2);
-EXFUN (Fintern_soft, 2);
+EXFUN (Fintern_soft, 3);
 EXFUN (Fkill_local_variable, 1);
 EXFUN (Fset, 2);
 EXFUN (Fset_default, 2);

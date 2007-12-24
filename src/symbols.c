@@ -256,17 +256,17 @@ it defaults to the value of the variable `obarray'.
   return object;
 }
 
-DEFUN ("intern-soft", Fintern_soft, 1, 2, 0, /*
+DEFUN ("intern-soft", Fintern_soft, 1, 3, 0, /*
 Return the canonical symbol named NAME, or nil if none exists.
 NAME may be a string or a symbol.  If it is a symbol, that exact
 symbol is searched for.
 Optional second argument OBARRAY specifies the obarray to use;
 it defaults to the value of the variable `obarray'.
+Optional third argument DEFAULT says what Lisp object to return if there is
+no canonical symbol named NAME, and defaults to nil. 
 */
-       (name, obarray))
+       (name, obarray, default_))
 {
-  /* #### Bug!  (intern-soft "nil") returns nil.  Perhaps we should
-     add a DEFAULT-IF-NOT-FOUND arg, like in get.  */
   Lisp_Object tem;
   Lisp_Object string;
 
@@ -283,7 +283,7 @@ it defaults to the value of the variable `obarray'.
 
   tem = oblookup (obarray, XSTRING_DATA (string), XSTRING_LENGTH (string));
   if (INTP (tem) || (SYMBOLP (name) && !EQ (name, tem)))
-    return Qnil;
+    return default_;
   else
     return tem;
 }
