@@ -1,3 +1,33 @@
+2007-12-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* casetab.c:
+	Extend and correct some case table documentation. 
+	* search.c (search_buffer):
+	Correct a bug where only the first entry for a character in the
+	case equivalence table was examined in determining if the
+	Boyer-Moore search algorithm is appropriate.
+
+	If there are case mappings outside of the charset and row of the
+	characters specified in the search string, those case mappings can
+	be safely ignored (and Boyer-Moore search can be used) if we know
+	from the buffer statistics that the corresponding characters cannot
+	occur.
+
+	* search.c (boyer_moore):
+	Assert that we haven't been passed a string with varying
+	characters sets or rows within character sets. That's what
+	simple_search is for. 
+
+	In the very rare event that a character in the search string has a
+	canonical case mapping that is not in the same character set and
+	row, don't try to search for the canonical character, search for
+	some other character that is in the the desired character set and
+	row. Assert that the case table isn't corrupt.
+
+	Do not search for any character case mappings that cannot possibly
+	occur in the buffer, given the buffer metadata about its
+	contents. 
+
 2007-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* symbols.c (Fintern_soft): 

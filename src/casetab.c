@@ -48,13 +48,28 @@ Boston, MA 02111-1307, USA.  */
    or vice versa, both characters will have the same entry in the canon
    table.
 
-   (4) `equiv' lists the "equivalence classes" defined by `canon'.  Imagine
+   (4) `eqv' lists the "equivalence classes" defined by `canon'.  Imagine
    that all characters are divided into groups having the same `canon'
-   entry; these groups are called "equivalence classes" and `equiv' lists
-   them by linking the characters in each equivalence class together in a
-   circular list.
+   entry; these groups are called "equivalence classes" and `eqv' lists them
+   by linking the characters in each equivalence class together in a
+   circular list. That is, to find out all all the members of a given char's
+   equivalence classe, you need something like the following code:
 
-   `canon' is used when doing case-insensitive comparisons.  `equiv' is
+    (let* ((char ?i)
+           (original-char char)
+           (standard-case-eqv (case-table-eqv (standard-case-table))))
+      (loop
+        with res = (list char)
+        until (eq (setq char (get-char-table char standard-case-eqv))
+                  original-char)
+        do (push char res)
+        finally return res))
+
+   (Where #'case-table-eqv doesn't yet exist, and probably never will, given
+   that the C code needs to keep it in a consistent state so Lisp can't mess
+   around with it.)
+
+   `canon' is used when doing case-insensitive comparisons.  `eqv' is
    used in the Boyer-Moore search code.
    */
 
