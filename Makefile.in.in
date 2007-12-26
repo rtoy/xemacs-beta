@@ -500,15 +500,18 @@ pkgsrcdir = ${srcdir}/etc/bundled-packages
 
 check-available-packages:
 	@if test -r ${pkgsrcdir}/bootstrap.tar.gz; \
-	then echo "To install a set of bootstrap packages, type:"; \
+	then echo "To install a set of bootstrap packages in"; \
+	     echo "${package_path}/xemacs-packages, type:"; \
 	     echo "  make install-bootstrap-packages"; \
 	fi; \
 	if test -r ${pkgsrcdir}/xemacs-sumo.tar.gz; \
-	then echo "To install the full set of non-mule packages, type:"; \
+	then echo "To install the full set of non-mule packages in"; \
+	     echo "${package_path}/xemacs-packages, type:"; \
 	     echo "  make install-nonmule-packages"; \
 	fi; \
 	if test -r ${pkgsrcdir}/xemacs-mule-sumo.tar.gz; \
-	then echo "To install the full set of packages with mule, type:"; \
+	then echo "To install the full set of packages with mule in"; \
+	     echo "${package_path}/mule-packages, type:"; \
 	     echo "  make install-all-packages"; \
 	fi;
 

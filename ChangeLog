@@ -1,3 +1,7 @@
+2007-12-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in (check-available-packages): Say where to install.
+
 2007-12-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* Makefile.in.in (mkpkgdir):
