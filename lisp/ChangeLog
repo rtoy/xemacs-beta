@@ -1,3 +1,11 @@
+2007-12-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* glyphs.el (init-glyphs):
+	Revert part of Didier's 2007-10-15 commit, which broke
+	#'make-image-specifier with string arguments, and more noticeably
+	truncation-glyph, continuation-glyph, octal-escape-glyph,
+	control-arrow-glyph. 
+
 2007-12-23  Mike Sperber  <mike@xemacs.org>
 
 	* font.el (xft-font-create-object): Use
