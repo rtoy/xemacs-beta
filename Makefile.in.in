@@ -513,11 +513,18 @@ check-available-packages:
 	then echo "To install the full set of packages with mule in"; \
 	     echo "${package_path}/mule-packages, type:"; \
 	     echo "  make install-all-packages"; \
-	fi;
+	fi
+
+# The test for a non-trivial path simply checks for the conventional Unix
+# path separator ":".  This is reasonable because this is basically just
+# a convenience feature, anyway.
 
 mkpkgdir: FRC.mkdir ${MAKEPATH}
 	@if test -z ${package_path}; \
-	then echo "not configured --with-late-packages; no place to install."; \
+	then echo "Not configured --with-late-packages; no place to install."; \
+		exit -1; \
+	elif echo ${package_path} | grep ":"; \
+	then echo "Configured with multiple late package directories; you decide where to install."; \
 		exit -1; \
 	elif test -e ${package_path}/xemacs-packages \
 		-o -e ${package_path}/mule-packages; \
