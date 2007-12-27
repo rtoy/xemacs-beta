@@ -813,7 +813,7 @@ Optional DEVICE defaults to `default-x-device'."
 	 (pattern (fc-font-match device (fc-name-parse name)))
 	 (font-obj (make-font))
 	 (family (fc-pattern-get-family pattern 0))
-	 (size (fc-pattern-get-size pattern 0))
+	 (size (fc-pattern-get-or-compute-size pattern 0))
 	 (weight (fc-pattern-get-weight pattern 0)))
     (set-font-family font-obj 
 		     (and (not (equal family 'fc-result-no-match)) 

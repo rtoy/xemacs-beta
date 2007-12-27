@@ -1,3 +1,11 @@
+2007-12-23  Mike Sperber  <mike@xemacs.org>
+
+	* font.el (xft-font-create-object): Use
+	`fc-pattern-get-or-compute-size' instead of
+	`fc-pattern-get-size'.
+
+	* fontconfig.el (fc-pattern-get-or-compute-size): Add.
+
 2007-12-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Factor out lists of operators specially treated by `make-autoload'.
