@@ -1185,8 +1185,7 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 				 [jpeg :data nil] 2)))
        ,@(if (featurep 'png) '(("\\.png\\'" [png :file nil] 2)))
        ,@(if (featurep 'png) '(("\\`\211PNG" [png :data nil] 2)))
-       ;; No, I don't think we want to inline images... -- dvl
-       ;; ("" [string :data nil] 2)
+       ("" [string :data nil] 2)
        ("" [nothing]))))
   ;; #### this should really be formatted-string, not string but we
   ;; don't have it implemented yet
@@ -1210,8 +1209,7 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
            ("\\`\377\330\377\340\000\020JFIF" [string :data "[jpeg]"])
            ("\\.png\\'" [string :data nil] 2)
            ("\\`\211PNG" [string :data "[png]"])
-           ;; No, I don't think we want to inline images... -- dvl
-           ;;("" [string :data nil] 2)
+           ("" [string :data nil] 2)
 	   ;; this last one is here for pointers and icons and such --
 	   ;; strings are not allowed so they will be ignored.
 	   ("" [nothing])))
