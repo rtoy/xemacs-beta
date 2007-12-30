@@ -84,4 +84,7 @@
 ;; by default.
 (setq-default ctl-arrow #xA0)
 
+;; Shouldn't be necessary, but one file in the packages uses it:
+(provide 'iso8859-1) 
+
 ;;; iso8859-1.el ends here
