@@ -1,10 +1,13 @@
 Package distributions may be placed in this directory.
 If present and a package-path is configured, packages can be installed
-using the top-level makefile.
+using the top-level Makefile.
 
 To configure the package path, use the --with-late-packages option to
-configure, which specifies the path to the directory containing the
-xemacs-packages and mule-packages hierarchies to install.
+configure, which specifies a single directory in which to install the
+xemacs-packages and mule-packages hierarchies provided.  If this is null,
+or contains a Unix-style search path (i.e., a colon is present in the
+argument of the --with-late-packages option), you will have to install
+the packages by hand.
 
 To find out if a distribution includes bundled packages, type
 

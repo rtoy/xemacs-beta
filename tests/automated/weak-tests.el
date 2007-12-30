@@ -36,11 +36,6 @@
      (push (file-name-directory load-file-name) load-path)
      (require 'test-harness))))
 
-(when test-harness-test-compiled
-  ;; this ha-a-ack depends on the compiled test coming last
-  (setq test-harness-failure-tag
-	"KNOWN BUG - fix reverted; after 2003-10-31 bitch at stephen\n"))
-
 (garbage-collect)
 
 ;; tests for weak-boxes

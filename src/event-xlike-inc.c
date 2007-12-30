@@ -708,7 +708,15 @@ gtk_keysym_to_character(guint keysym)
     return Qnil;
 
 #ifdef MULE
-  return make_char (make_ichar (charset, code, 0));
+  {
+    Lisp_Object unified = Funicode_to_char
+      (Fchar_to_unicode (make_char (make_ichar (charset, code, 0))), Qnil);
+    if (!NILP (unified))
+      {
+        return unified;
+      }
+    return make_char (make_ichar (charset, code, 0));
+  }
 #else
   return make_char (code + 0x80);
 #endif

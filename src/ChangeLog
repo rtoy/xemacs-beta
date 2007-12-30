@@ -1,3 +1,17 @@
+2007-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fbuilt_in_symbol_file):
+	Take a new TYPE argument, specifying whether the function or
+	variable definition of the symbol should be searched for.
+	Handle built-in macros correctly.
+
+2007-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-xlike-inc.c (x_keysym_to_character): 
+	* event-xlike-inc.c (gtk_keysym_to_character):
+	Unify the typed character if possible, following the current value
+	for the unicode precedence list. 
+
 2007-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* symbols.c (Fintern_soft): 

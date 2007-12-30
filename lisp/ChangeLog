@@ -12,6 +12,33 @@
 	* iso8859-1.el (ctl-arrow):
 	Initialise it to something more comprehensible. 
 
+2007-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* loadhist.el (symbol-file):
+	Accept a new TYPE argument, compatible with GNU, saying
+	whether function or variable definitions should be searched for.
+	Implement the functionality for autoloads, handling TYPE
+	correctly. 
+	Pass the TYPE argument to built-in-symbol-file correctly.
+	Document that TYPE is not implemented for non-autoloaded Lisp
+	definitions. Our load-history doesn't have the relevant metadata. 
+
+2007-12-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* glyphs.el (init-glyphs):
+	Revert part of Didier's 2007-10-15 commit, which broke
+	#'make-image-specifier with string arguments, and more noticeably
+	truncation-glyph, continuation-glyph, octal-escape-glyph,
+	control-arrow-glyph. 
+
+2007-12-23  Mike Sperber  <mike@xemacs.org>
+
+	* font.el (xft-font-create-object): Use
+	`fc-pattern-get-or-compute-size' instead of
+	`fc-pattern-get-size'.
+
+	* fontconfig.el (fc-pattern-get-or-compute-size): Add.
+
 2007-12-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Factor out lists of operators specially treated by `make-autoload'.
