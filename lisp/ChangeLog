@@ -1,3 +1,17 @@
+2007-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (with-case-table): New.
+	Idea and implementation taken from GNU's code of April 2007,
+	before GPL V3 was implied. Thank you GNU. 
+	* iso8859-1.el (ascii-case-table): New. 
+	Idea taken from GNU.
+	* iso8859-1.el :
+	Change Jamie's implicit compile-time call to a macro literal into
+	something comprehensible to and maintainable by mortals, using to
+	cl.el's #'loop.
+	* iso8859-1.el (ctl-arrow):
+	Initialise it to something more comprehensible. 
+
 2007-12-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Factor out lists of operators specially treated by `make-autoload'.
