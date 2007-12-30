@@ -1,3 +1,14 @@
+2007-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* loadhist.el (symbol-file):
+	Accept a new TYPE argument, compatible with GNU, saying
+	whether function or variable definitions should be searched for.
+	Implement the functionality for autoloads, handling TYPE
+	correctly. 
+	Pass the TYPE argument to built-in-symbol-file correctly.
+	Document that TYPE is not implemented for non-autoloaded Lisp
+	definitions. Our load-history doesn't have the relevant metadata. 
+
 2007-12-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* glyphs.el (init-glyphs):
