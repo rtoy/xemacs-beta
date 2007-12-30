@@ -25,6 +25,8 @@
 
 ;;; Synched up with: FSF 20.2.
 
+;; #### Sync this file! 
+
 ;;; Commentary:
 
 ;; This file is dumped with XEmacs.
@@ -37,19 +39,36 @@
 ;; load-history is a list of entries that look like this:
 ;; ("outline" outline-regexp ... (require . wid-edit) ... (provide . outline) ...)
 
-(defun symbol-file (sym)
+(defun symbol-file (sym &optional type)
   "Return the input source from which SYM was loaded.
-This is a file name, or nil if the source was a buffer with no associated file."
+This is a file name, or nil if the source was a buffer with no associated file.
+
+If TYPE is nil or omitted, any kind of definition is acceptable.
+If TYPE is `defun', then function, subr, special form or macro definitions
+are acceptable.
+If TYPE is `defvar', then variable definitions are acceptable.
+
+#### For the moment the difference is not implemented for non-autoloaded
+Lisp symbols."
   (interactive "SFind source file for symbol: ") ; XEmacs
   (block look-up-symbol-file
-    (dolist (entry load-history)
-      (when (memq sym (cdr entry))
-	(return-from look-up-symbol-file (car entry))))
-    (when (or (and (boundp sym) (built-in-variable-type sym))
-	      (and (fboundp sym) (subrp (symbol-function sym))))
-      (let ((built-in-file (built-in-symbol-file sym)))
-	(if built-in-file
-	    (concat source-directory "/src/" built-in-file))))))
+    (let (built-in-file autoload-cons)
+      (when (and 
+             (eq 'autoload
+                 (car-safe (setq autoload-cons
+                                 (and (fboundp sym)
+                                      (symbol-function sym)))))
+             (or (and (or (null type) (eq 'defvar type))
+                      (eq (fifth autoload-cons) 'keymap))
+                 (and (or (null type) (eq 'defvar type))
+                    (memq (fifth autoload-cons) '(nil macro)))))
+        (return-from look-up-symbol-file
+          (locate-library (second autoload-cons))))
+      (dolist (entry load-history)
+        (when (memq sym (cdr entry))
+          (return-from look-up-symbol-file (car entry))))
+      (setq built-in-file (built-in-symbol-file sym type))
+      (if built-in-file (concat source-directory "/src/" built-in-file)))))
 
 (defun feature-symbols (feature)
   "Return the file and list of symbols associated with a given FEATURE."

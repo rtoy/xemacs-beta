@@ -37,7 +37,7 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Vinternal_doc_file_name;
 
-Lisp_Object QSsubstitute;
+Lisp_Object QSsubstitute, Qdefvar;
 
 /* Work out what source file a function or variable came from, taking the
    information from the documentation file. */
@@ -499,21 +499,28 @@ weird_doc (Lisp_Object sym, const CIbyte *weirdness, const CIbyte *type,
            weirdness, type, XSTRING_DATA (XSYMBOL (sym)->name), pos);
 }
 
-DEFUN ("built-in-symbol-file", Fbuilt_in_symbol_file, 1, 1, 0, /*
+DEFUN ("built-in-symbol-file", Fbuilt_in_symbol_file, 1, 2, 0, /*
 Return the C source file built-in symbol SYM comes from. 
 Don't use this.  Use the more general `symbol-file' (q.v.) instead. 
+
+If TYPE is nil or omitted, any kind of definition is acceptable. 
+If TYPE is `defun', then function, subr, special form or macro definitions
+are acceptable.
+If TYPE is `defvar', then variable definitions are acceptable.
 */
-       (symbol))
+       (symbol, type))
 {
   /* This function can GC */
   Lisp_Object fun;
   Lisp_Object filename = Qnil;
 
-  if (EQ(Ffboundp(symbol), Qt))
+  if (EQ(Ffboundp(symbol), Qt) && (EQ(type, Qnil) || EQ(type, Qdefun)))
     {
       fun = Findirect_function (symbol);
 
-      if (SUBRP (fun))
+      if (SUBRP (fun) || (CONSP(fun) && (EQ (Qmacro, Fcar_safe (fun)))
+                          && (fun = Fcdr_safe (fun))
+                          && (SUBRP (fun))))
 	{
 	  if (XSUBR (fun)->doc == 0)
 	    return Qnil;
@@ -529,7 +536,7 @@ Don't use this.  Use the more general `symbol-file' (q.v.) instead.
 	      (make_int (- (EMACS_INT) XSUBR (fun)->doc));
 	}
     }
-  else if (EQ(Fboundp(symbol), Qt))
+  else if (EQ(Fboundp(symbol), Qt) && (EQ(type, Qnil) || EQ(type, Qdefvar)))
     {
       Lisp_Object doc_offset = Fget (symbol, Qvariable_documentation, Qnil);
 
@@ -1273,6 +1280,8 @@ syms_of_doc (void)
   DEFSUBR (Fsnarf_documentation);
   DEFSUBR (Fverify_documentation);
   DEFSUBR (Fsubstitute_command_keys);
+
+  DEFSYMBOL (Qdefvar);
 }
 
 void
