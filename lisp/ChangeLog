@@ -1,3 +1,15 @@
+2007-12-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* menubar-items.el (default-menubar): 
+	Byte compile the specified lambdas. Correct some compile time
+	warnings uncovered by this.
+	* menubar-items.el (tutorials-menu-filter):
+	If a language environment doesn't have an associated POSIX locale
+	specified--which indicates we don't want it used except by those
+	who know what they're doing--don't show its tutorial in the menu.
+	* behavior.el (behavior-menu-filter):
+	Byte compile the lambdas in the generated menu. 
+
 2007-12-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Factor out lists of operators specially treated by `make-autoload'.

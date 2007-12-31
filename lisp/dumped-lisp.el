@@ -104,7 +104,7 @@ in dumped-lisp.el and is not itself listed.")
        "isearch-mode"
        "buffer"
        "buff-menu"
-       "paths.el"		; don't get confused if paths compiled.
+       "paths"
        "lisp"
        "page"
        "register"
