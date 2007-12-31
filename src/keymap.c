@@ -1388,7 +1388,7 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	  DECLARE_EISTRING (temp);
 	  eicpy_raw (temp, name, qxestrlen (name));
 	  eisetch_char (temp, 2, '-');
-	  *keysym = Fintern_soft (eimake_string (temp), Qnil);
+	  *keysym = Fintern_soft (eimake_string (temp), Qnil, Qnil);
 	}
       else if (EQ (*keysym, QLFD))
 	*keysym = QKlinefeed;

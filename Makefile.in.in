@@ -491,6 +491,58 @@ mkdir: FRC.mkdir
 #endif
 	  ${sitelispdir}
 
+## Install bundled packages, if present.
+
+package_path = @LATE_PACKAGE_DIRECTORIES@
+pkgsrcdir = ${srcdir}/etc/bundled-packages
+
+## #### Probably we should add a rule for lib-src/make-path here.
+
+check-available-packages:
+	@if test -r ${pkgsrcdir}/bootstrap.tar.gz; \
+	then echo "To install a set of bootstrap packages in"; \
+	     echo "${package_path}/xemacs-packages, type:"; \
+	     echo "  make install-bootstrap-packages"; \
+	fi; \
+	if test -r ${pkgsrcdir}/xemacs-sumo.tar.gz; \
+	then echo "To install the full set of non-mule packages in"; \
+	     echo "${package_path}/xemacs-packages, type:"; \
+	     echo "  make install-nonmule-packages"; \
+	fi; \
+	if test -r ${pkgsrcdir}/xemacs-mule-sumo.tar.gz; \
+	then echo "To install the full set of packages with mule in"; \
+	     echo "${package_path}/mule-packages, type:"; \
+	     echo "  make install-all-packages"; \
+	fi
+
+# The test for a non-trivial path simply checks for the conventional Unix
+# path separator ":".  This is reasonable because this is basically just
+# a convenience feature, anyway.
+
+mkpkgdir: FRC.mkdir ${MAKEPATH}
+	@if test -z ${package_path}; \
+	then echo "Not configured --with-late-packages; no place to install."; \
+		exit -1; \
+	elif echo ${package_path} | grep ":"; \
+	then echo "Configured with multiple late package directories; you decide where to install."; \
+		exit -1; \
+	elif test -e ${package_path}/xemacs-packages \
+		-o -e ${package_path}/mule-packages; \
+	then echo "${package_path} is installed; won't overwrite packages."; \
+		exit -1; \
+	fi
+	${MAKEPATH} ${package_path};
+
+install-bootstrap-packages: mkpkgdir
+	cd ${package_path}; tar xvzf ${pkgsrcdir}/bootstrap.tar.gz
+
+install-nonmule-packages: mkpkgdir
+	cd ${package_path}; tar xvzf ${pkgsrcdir}/xemacs-sumo.tar.gz
+
+install-all-packages: mkpkgdir
+	cd ${package_path}; tar xvzf ${pkgsrcdir}/xemacs-sumo.tar.gz; \
+	cd ${package_path}; tar xvzf ${pkgsrcdir}/xemacs-mule-sumo.tar.gz
+
 ## Delete all the installed files that the `install' target would
 ## create (but not the noninstalled files such as `make all' would
 ## create).
