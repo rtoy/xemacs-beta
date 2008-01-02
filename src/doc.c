@@ -519,7 +519,7 @@ If TYPE is `defvar', then variable definitions are acceptable.
       fun = Findirect_function (symbol);
 
       if (SUBRP (fun) || (CONSP(fun) && (EQ (Qmacro, Fcar_safe (fun)))
-                          && (fun = Fcdr_safe (fun))
+                          && !NILP(fun = Fcdr_safe (fun))
                           && (SUBRP (fun))))
 	{
 	  if (XSUBR (fun)->doc == 0)
