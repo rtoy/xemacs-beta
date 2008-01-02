@@ -3520,8 +3520,6 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
   int line_size;
   int defheight, defwidth;
 
-  /* #### This is very likely incorrect and instead the char_to_pixel_
-     functions should be called. */
   default_face_height_and_width (window, &defheight, &defwidth);
   line_size = (set_height ? defheight : defwidth);
 
@@ -3532,7 +3530,7 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
 
   if (!nodelete
       && !TOP_LEVEL_WINDOW_P (w)
-      && new_pixsize < minsize)
+      && (new_pixsize + window_modeline_height (w)) < minsize)
     {
       Fdelete_window (window, Qnil);
       return;
@@ -4369,8 +4367,6 @@ change_window_height (Lisp_Object window, int delta, Lisp_Object horizontalp,
   if (EQ (window, FRAME_ROOT_WINDOW (f)))
     invalid_operation ("Won't change only window", Qunbound);
 
-  /* #### This is very likely incorrect and instead the char_to_pixel_
-     functions should be called. */
   default_face_height_and_width (window, &defheight, &defwidth);
 
   while (1)
