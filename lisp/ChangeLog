@@ -1,3 +1,10 @@
+2008-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-iso8859-1.el: Removed.
+	* gtk-iso8859-1.el: Removed.
+	These haven't been used in a year and a half. No need to keep them
+	around. 
+
 2008-01-02  Mike Sperber  <mike@xemacs.org>
 
 	* minibuf.el (mouse-read-file-name-1): Make the buttons in the
