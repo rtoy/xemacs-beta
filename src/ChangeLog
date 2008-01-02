@@ -1,5 +1,15 @@
 2008-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* emacs.c (main_1): 
+	Call the new vars_of_console_gtk function. 
+	* console-gtk.c (vars_of_console_gtk): New.
+	* console-gtk.c (gtk_perhaps_init_unseen_key_defaults):
+	Correct the initialisation of the hash table, on the model of the
+	MSW and TTY builds.
+	
+
+2008-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* doc.c (Fbuilt_in_symbol_file):
 	Don't check is fun zero in the condition, check that it's not
 	nil. Fixes the union build; thank you Stephen. 

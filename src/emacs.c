@@ -2162,6 +2162,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
 #ifdef HAVE_GTK
       vars_of_device_gtk ();
+      vars_of_console_gtk ();
 #ifdef HAVE_DIALOGS
       vars_of_dialog_gtk ();
 #endif

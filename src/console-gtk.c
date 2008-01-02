@@ -39,6 +39,8 @@ Boston, MA 02111-1307, USA.  */
 
 DEFINE_CONSOLE_TYPE (gtk);
 
+Lisp_Object Vgtk_seen_characters;
+
 static int
 gtk_initially_selected_for_input (struct console *UNUSED (con))
 {
@@ -122,13 +124,11 @@ gtk_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
 				      Lisp_Object key)
 {
   Lisp_Object char_to_associate = Qnil;
-  extern Lisp_Object Vcurrent_global_map, Qgtk_seen_characters,
-    Qcharacter_of_keysym;
+  extern Lisp_Object Vcurrent_global_map, Qcharacter_of_keysym;
 
   if (SYMBOLP(key))
     {
       gchar *symbol_name;
-      guint keyval;
       DECLARE_EISTRING(ei_symname);
       
       eicpy_rawz(ei_symname, XSTRING_DATA(symbol_name(XSYMBOL(key))));
@@ -154,21 +154,22 @@ gtk_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
   else
     {
       CHECK_CHAR(key);
+      char_to_associate = key;
     }
 
-  if (!(HASH_TABLEP(Qgtk_seen_characters)))
+  if (!(HASH_TABLEP(Vgtk_seen_characters)))
     {
-      Qgtk_seen_characters = make_lisp_hash_table (128, HASH_TABLE_NON_WEAK,
+      Vgtk_seen_characters = make_lisp_hash_table (128, HASH_TABLE_NON_WEAK,
 						   HASH_TABLE_EQUAL);
     }
 
   /* Might give the user an opaque error if make_lisp_hash_table fails,
      but it shouldn't crash. */
-  CHECK_HASH_TABLE(Qgtk_seen_characters);
+  CHECK_HASH_TABLE(Vgtk_seen_characters);
 
   if (EQ(char_to_associate, Qnil) /* If there's no char to bind,  */
       || (XCHAR(char_to_associate) < 0x80) /* or it's ASCII */
-      || !NILP(Fgethash(key, Qgtk_seen_characters, Qnil))) /* Or we've seen
+      || !NILP(Fgethash(key, Vgtk_seen_characters, Qnil))) /* Or we've seen
 							      it already, */
     {
       /* then don't bind the key. */
@@ -177,7 +178,7 @@ gtk_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
 
   if (NILP (Flookup_key (Vcurrent_global_map, key, Qnil))) 
     {
-      Fputhash(key, Qt, Qgtk_seen_characters);
+      Fputhash(key, Qt, Vgtk_seen_characters;)
       Fdefine_key (Vcurrent_global_map, key, Qself_insert_command); 
       if (SYMBOLP(key))
 	{
@@ -208,4 +209,11 @@ void
 reinit_console_type_create_gtk (void)
 {
   REINITIALIZE_CONSOLE_TYPE (gtk);
+}
+
+void
+vars_of_console_gtk (void)
+{
+  staticpro (&Vgtk_seen_characters);
+  Vgtk_seen_characters = Qnil;
 }

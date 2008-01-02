@@ -1,5 +1,10 @@
 2008-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* gtk-init.el (init-post-gtk-win): 
+	Trust the X11 code to give us decent default fonts.
+
+2008-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* x-iso8859-1.el: Removed.
 	* gtk-iso8859-1.el: Removed.
 	These haven't been used in a year and a half. No need to keep them

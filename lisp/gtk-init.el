@@ -133,62 +133,6 @@ GNU long form though.")
 
 (defun init-post-gtk-win ()
   (unless gtk-post-win-initted
-    (when (featurep 'mule)
-      (define-specifier-tag 'mule-fonts
-	(lambda (device) (eq 'gtk (device-type device))))
-      (set-face-font
-       'default
-       '("-*-fixed-medium-r-*--16-*-iso8859-1"
-	 "-*-fixed-medium-r-*--*-iso8859-1"
-	 "-*-fixed-medium-r-*--*-iso8859-2"
-	 "-*-fixed-medium-r-*--*-iso8859-3"
-	 "-*-fixed-medium-r-*--*-iso8859-4"
-	 "-*-fixed-medium-r-*--*-iso8859-7"
-	 "-*-fixed-medium-r-*--*-iso8859-8"
-	 "-*-fixed-medium-r-*--*-iso8859-5"
-	 "-*-fixed-medium-r-*--*-iso8859-9"
-
-	 ;; Following 3 fonts proposed by Teruhiko.Kurosaka@Japan.eng.sun
-	 "-sun-gothic-medium-r-normal--14-120-75-75-c-60-jisx0201.1976-0"
-	 "-sun-gothic-medium-r-normal--14-120-75-75-c-120-jisx0208.1983-0"
-	 "-wadalab-gothic-medium-r-normal--14-120-75-75-c-120-jisx0212.1990-0"
-	 ;; Other Japanese fonts
-	 "-*-fixed-medium-r-*--*-jisx0201.1976-*"
-	 "-*-fixed-medium-r-*--*-jisx0208.1983-*"
-	 "-*-fixed-medium-r-*--*-jisx0212*-*"
-
-	 ;; Chinese fonts
-	 "-*-*-medium-r-*--*-gb2312.1980-*"
-       
-	 ;; Use One font specification for CNS chinese
-	 ;; Too many variations in font naming
-	 "-*-fixed-medium-r-*--*-cns11643*-*"
-	 ;; "-*-fixed-medium-r-*--*-cns11643*2"
-	 ;; "-*-fixed-medium-r-*--*-cns11643*3"
-	 ;; "-*-fixed-medium-r-*--*-cns11643*4"
-	 ;; "-*-fixed-medium-r-*--*-cns11643.5-0"
-	 ;; "-*-fixed-medium-r-*--*-cns11643.6-0"
-	 ;; "-*-fixed-medium-r-*--*-cns11643.7-0"
-       
-	 "-*-fixed-medium-r-*--*-big5*-*"
-	 "-*-fixed-medium-r-*--*-sisheng_cwnn-0"
-
-	 ;; Other fonts
-       
-	 ;; "-*-fixed-medium-r-*--*-viscii1.1-1"
-       
-	 ;; "-*-fixed-medium-r-*--*-mulearabic-0"
-	 ;; "-*-fixed-medium-r-*--*-mulearabic-1"
-	 ;; "-*-fixed-medium-r-*--*-mulearabic-2"
-
-	 ;; "-*-fixed-medium-r-*--*-muleipa-1"
-	 ;; "-*-fixed-medium-r-*--*-ethio-*"
-
-	 "-*-mincho-medium-r-*--*-ksc5601.1987-*" ; Korean
-	 "-*-fixed-medium-r-*--*-tis620.2529-1" ; Thai
-	 )
-       'global '(mule-fonts) 'append))
-    
     (setq gtk-post-win-initted t)))
     
 (push '("-geometry" . gtk-init-handle-geometry) command-switch-alist)
