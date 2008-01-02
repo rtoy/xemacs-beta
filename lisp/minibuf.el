@@ -2057,7 +2057,7 @@ whether it is a file(/result) or a directory (/result/)."
   (let* ((file-p (eq 'read-file-name-internal completer))
 	 (filebuf (get-buffer-create "*Completions*"))
 	 (dirbuf (and file-p (generate-new-buffer " *mouse-read-file*")))
-	 (butbuf (generate-new-buffer " *mouse-read-file*"))
+	 (butbuf (generate-new-buffer " *mouse-read-file-buttons*"))
 	 (frame (make-dialog-frame))
 	 filewin dirwin
 	 user-data)
@@ -2067,12 +2067,11 @@ whether it is a file(/result) or a directory (/result/)."
 
 	  ;; set up the frame.
 	  (focus-frame frame)
-	  (let ((window-min-height 1))
-	    ;; #### should be 2 not 3, but that causes
-	    ;; "window too small to split" errors for some
-	    ;; people (but not for me ...) There's a more
-	    ;; fundamental bug somewhere.
-	    (split-window nil (- (frame-height frame) 3)))
+	  ;; We really need `window-min-height' lines for the button
+	  ;; buffer, as otherwise the button buffer might get
+	  ;; inadvertently deleted when other window-size changes
+	  ;; happen (such as through resize-minibuffer-mode).
+	  (split-window nil (- (frame-height frame) window-min-height))
 	  (if file-p
 	      (progn
 		(split-window-horizontally 16)

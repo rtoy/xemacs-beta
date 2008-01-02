@@ -4,6 +4,14 @@
 	Don't check is fun zero in the condition, check that it's not
 	nil. Fixes the union build; thank you Stephen. 
 
+2008-01-02  Mike Sperber  <mike@xemacs.org>
+
+	* window.c (set_window_pixsize): Factor in the modeline when
+	looking at window_min_width.  Remove obsolete comment about
+	incorrect use of `default_face_height_and_width'.
+	(change_window_height): Remove obsolete comment about
+	incorrect use of `default_face_height_and_width'.
+
 2007-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doc.c (Fbuilt_in_symbol_file):

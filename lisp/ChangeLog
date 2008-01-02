@@ -1,3 +1,10 @@
+2008-01-02  Mike Sperber  <mike@xemacs.org>
+
+	* minibuf.el (mouse-read-file-name-1): Make the buttons in the
+	dialog frame occupy `window-min-height' lines to avoid problems
+	when the window configuration changes---as it does with
+	`resize-minibuffer-mode'.
+
 2007-12-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* menubar-items.el (default-menubar): 
