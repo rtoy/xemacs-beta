@@ -515,9 +515,9 @@ check-available-packages:
 	     echo "  make install-all-packages"; \
 	fi
 
-# The test for a non-trivial path simply checks for the conventional Unix
-# path separator ":".  This is reasonable because this is basically just
-# a convenience feature, anyway.
+## The test for a non-trivial path simply checks for the conventional Unix
+## path separator ":".  This is reasonable because this is basically just
+## a convenience feature, anyway.
 
 mkpkgdir: FRC.mkdir ${MAKEPATH}
 	@if test -z ${package_path}; \
