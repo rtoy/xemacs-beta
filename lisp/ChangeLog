@@ -1,3 +1,14 @@
+2008-01-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cus-edit.el (custom-save-all): 
+	If the directory containing the custom file doesn't exist, try to
+	create it. Fixes Nick's Crabtree's bug of 
+	5fb265820712140145w512fa3bbh355cf76f7e2cf792@mail.gmail.com ;
+	thank you Nick.
+	* menubar-items.el (default-menubar):
+	In the code to edit the user's init file, try to create the
+	containing directory if it doesn't exist. 
+
 2008-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gtk-init.el (init-post-gtk-win): 

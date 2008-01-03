@@ -1441,10 +1441,16 @@ Write your filter like this:
      ["Edit I%_nit File"
       ;; #### there should be something that holds the name that the init
       ;; file should be created as, when it's not present.
-      (let ((el-file (or user-init-file "~/.xemacs/init.el")))
+      (let ((el-file (or user-init-file "~/.xemacs/init.el"))
+            el-file-directory)
 	(if (string-match "\\.elc$" el-file)
 	    (setq el-file
 		  (substring user-init-file 0 (1- (length el-file)))))
+        (unless (file-directory-p
+                 (setq el-file-directory (file-name-directory el-file)))
+          (message "Creating %s... " el-file-directory)
+          (make-directory el-file-directory t)
+          (message "Creating %s... done." el-file-directory))
 	(find-file el-file)
 	(or (eq major-mode 'emacs-lisp-mode)
 	    (emacs-lisp-mode)))]
