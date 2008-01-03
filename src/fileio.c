@@ -628,7 +628,7 @@ be an absolute file name.
 
 This function is analagous to mktemp(3) under POSIX, and as with it, there
 exists a race condition between the test for the existence of the new file
-and its creation.  See `make-temp-name' for a function which avoids this
+and its creation.  See `make-temp-file' for a function which avoids this
 race condition by specifying the appropriate flags to `write-region'. 
 */
        (prefix))
