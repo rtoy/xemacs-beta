@@ -332,3 +332,23 @@
 ;  (Assert (equal (catch 'test-tag
 ;		   (set mysym 'foo))
 ;		 `(,mysym (foo) make-local nil nil))))
+
+;; ----------------------------------------------------------------
+;; Symbol documentation
+;; ----------------------------------------------------------------
+
+;; built-in variable documentation
+(Assert (string= (built-in-symbol-file 'internal-doc-file-name)
+		 "doc.c"))
+
+;; built-in function documentation
+(Assert (string= (built-in-symbol-file 'built-in-symbol-file)
+		 "doc.c"))
+
+;; built-in macro documentation
+(Assert (string= (built-in-symbol-file 'when)
+		 "eval.c"))
+
+;; #### we should handle symbols defined in Lisp, dumped, autoloaded,
+;; and required, too.
+

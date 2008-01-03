@@ -1,3 +1,7 @@
+2008-01-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* doc.c (Fbuilt_in_symbol_file): Improve style.
+
 2008-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* emacs.c (main_1): 
