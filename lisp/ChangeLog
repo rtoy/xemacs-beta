@@ -23,6 +23,13 @@
 
 2008-01-02  Mike Sperber  <mike@xemacs.org>
 
+	* minibuf.el (mouse-read-file-name-1): Use `window-height' instead
+	of `frame-height' to be consistent with `split-window''s
+	calculations.  Bind `window-min-height' for the whole thing to
+	avoid geometry problems with the buttons window.
+
+2008-01-02  Mike Sperber  <mike@xemacs.org>
+
 	* minibuf.el (mouse-read-file-name-1): Make the buttons in the
 	dialog frame occupy `window-min-height' lines to avoid problems
 	when the window configuration changes---as it does with
