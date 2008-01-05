@@ -235,10 +235,10 @@ object (the entry specified a coding system)."
 
 ;(defun convert-mbox-coding-system (filename visit start end) ...)
 
-(defun load (file &optional noerror nomessage nosuffix)
-  "Execute a file of Lisp code named FILE, or load a binary module.
-First tries to find a Lisp FILE with .elc appended, then with .el, then with
- FILE unmodified.  If unsuccessful, tries to find a binary module FILE with
+(defun load (filename &optional noerror nomessage nosuffix)
+  "Execute a file of Lisp code named FILENAME, or load a binary module.
+First tries to find a Lisp file FILENAME with .elc appended, then with .el, then with
+ FILENAME unmodified.  If unsuccessful, tries to find a binary module FILE with
  the elements of `module-extensions' appended, one at a time.
 Searches directories in load-path for Lisp files, and in `module-load-path'
  for binary modules.
@@ -250,9 +250,8 @@ If optional fourth arg NOSUFFIX is non-nil, don't try adding suffixes
  .elc, .el, or elements of `module-extensions' to the specified name FILE.
 Return t if file exists."
   (declare (special load-modules-quietly))
-  (let* ((filename (substitute-in-file-name file))
-	 (handler (find-file-name-handler filename 'load))
-	 (path nil))
+  (let ((handler (find-file-name-handler filename 'load))
+	(path nil))
     (if handler
 	(funcall handler 'load filename noerror nomessage nosuffix)
       ;; First try to load a Lisp file
@@ -262,10 +261,10 @@ Return t if file exists."
 					    '(".elc" ".el" "")))))
 	  ;; now use the internal load to actually load the file.
 	  (load-internal
-	   file noerror nomessage nosuffix
+	   filename noerror nomessage nosuffix
 	   (let ((elc ; use string= instead of string-match to keep match-data.
-		(equalp ".elc" (substring path -4))))
-	     (or (and (not elc) coding-system-for-read) ;prefer for source file
+		  (equalp ".elc" (substring path -4))))
+	     (or (and (not elc) coding-system-for-read)	;prefer for source file
 		 ;; find magic-cookie
 		 (let ((codesys
 			(find-coding-system-magic-cookie-in-file path)))
@@ -401,8 +400,7 @@ coding-system determination procedure.
 See also `insert-file-contents-access-hook',
 `insert-file-contents-pre-hook', `insert-file-contents-error-hook',
 and `insert-file-contents-post-hook'."
-  (let* ((expanded (substitute-in-file-name filename))
-	 (handler (find-file-name-handler expanded 'insert-file-contents)))
+  (let ((handler (find-file-name-handler filename 'insert-file-contents)))
     (if handler
 	(funcall handler 'insert-file-contents filename visit start end replace)
       (let (return-val coding-system used-codesys)
