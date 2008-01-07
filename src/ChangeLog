@@ -1,3 +1,7 @@
+2008-01-07  Jerry James  <james@xemacs.org>
+
+	* xemacs.def.in.in: Clarify the copyright and license.
+
 2008-01-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fileio.c (Fmake_temp_name): Correct the comment to cross
