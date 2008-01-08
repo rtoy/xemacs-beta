@@ -1,3 +1,7 @@
+2008-01-08  Jerry James  <james@xemacs.org>
+
+	* config.h.in (INLINE_HEADER): adapt to C99 inline semantics.
+
 2008-01-07  Jerry James  <james@xemacs.org>
 
 	* xemacs.def.in.in: Clarify the copyright and license.
