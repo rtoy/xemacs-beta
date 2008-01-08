@@ -2630,6 +2630,8 @@ pdump_file_try (Wexttext *exe_path)
   return 0;
 }
 
+#define DUMP_SLACK 100 /* Enough to include dump ID, version name, .DMP */
+
 int
 pdump_load (const Wexttext *argv0)
 {
@@ -2637,7 +2639,6 @@ pdump_load (const Wexttext *argv0)
   Wexttext *exe_path = NULL;
   int bufsize = 4096;
   int cchpathsize;
-#define DUMP_SLACK 100 /* Enough to include dump ID, version name, .DMP */
 
   /* Copied from mswindows_get_module_file_name ().  Not clear if it's
      kosher to malloc() yet. */
@@ -2659,7 +2660,7 @@ pdump_load (const Wexttext *argv0)
       wext_strcpy (exe_path, wexe);
     }
 #else /* !WIN32_NATIVE */
-  Wexttext exe_path[PATH_MAX_EXTERNAL];
+  Wexttext *exe_path;
   Wexttext *w;
   const Wexttext *dir, *p;
 
@@ -2694,13 +2695,17 @@ pdump_load (const Wexttext *argv0)
     {
       /* invocation-name includes a directory component -- presumably it
 	 is relative to cwd, not $PATH. */
+      exe_path = alloca_array (Wexttext, 1 + wext_strlen (dir) + DUMP_SLACK);
       wext_strcpy (exe_path, dir);
     }
   else
     {
       const Wexttext *path = wext_getenv ("PATH"); /* not egetenv --
-						     not yet init. */
+                                                      not yet init. */
       const Wexttext *name = p;
+      exe_path = alloca_array (Wexttext,
+			       1 + DUMP_SLACK + max (wext_strlen (name),
+                                                     wext_strlen (path)));
       for (;;)
 	{
 	  p = path;

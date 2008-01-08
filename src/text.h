@@ -2988,7 +2988,6 @@ int wcsncmp_ascii (const wchar_t *s1, const Ascbyte *s2, Charcount len);
 /* Extra indirection needed in case of manifest constant as arg */
 #define WEXTSTRING_1(arg) L##arg
 #define WEXTSTRING(arg) WEXTSTRING_1(arg)
-#define MAX_XETCHAR_SIZE sizeof (WCHAR)
 #define wext_strlen wcslen
 #define wext_strcmp wcscmp
 #define wext_strncmp wcsncmp
@@ -3014,7 +3013,6 @@ int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
 #else
 #define WEXTTEXT_ZTERM_SIZE sizeof (char)
 #define WEXTSTRING(arg) arg
-#define MAX_XETCHAR_SIZE sizeof (char)
 #define wext_strlen strlen
 #define wext_strcmp strcmp
 #define wext_strncmp strncmp

@@ -1,3 +1,12 @@
+2008-01-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.h (MAX_XETCHAR_SIZE): Remove, eliminating a redefinition
+	warning on Win32.
+	* dumper.c (pdump_load): 
+	Don't use PATH_MAX_EXTERNAL, instead allocate enough for the path
+	+ DUMP_SLACK (space for .dmp and version information), already
+	used on Win32 and #defined to be 100.
+
 2008-01-08  Jerry James  <james@xemacs.org>
 
 	* config.h.in (INLINE_HEADER): adapt to C99 inline semantics.
