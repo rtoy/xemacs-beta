@@ -1086,8 +1086,8 @@ extern "C" {
    Use `inline static' to define inline functions in .c files.
    See the Internals manual for examples and more information. */
 
-#if __STDC_VERSION__ >= 199901L || defined (__cplusplus) || \
-    ! defined (__GNUC__) || ! defined(emacs)
+#if (defined ( __STDC_VERSION__) &&  __STDC_VERSION__ >= 199901L) \
+  || defined (__cplusplus) || ! defined (__GNUC__) || ! defined(emacs)
 # define INLINE_HEADER inline static
 #elif defined (DONT_EXTERN_INLINE_HEADER_FUNCTIONS)
 # define INLINE_HEADER inline

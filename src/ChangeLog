@@ -1,3 +1,9 @@
+2008-01-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in: 
+	Check that __STDC_VERSION__ is defined before examining its
+	value. Eliminates a Cygwin warning. 
+
 2008-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.h (MAX_XETCHAR_SIZE): Remove, eliminating a redefinition
