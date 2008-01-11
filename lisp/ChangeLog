@@ -220,7 +220,7 @@
 
 	* keydefs.el:
 	Bind mouse wheel movements by default, to a lambda that calls the
-	autoloaded #'mwheel-install and then #'mwheel-scrool with the
+	autoloaded #'mwheel-install and then #'mwheel-scroll with the
 	appropriate event. 
 
 2007-12-07  Vin Shelton  <acs@xemacs.org>
