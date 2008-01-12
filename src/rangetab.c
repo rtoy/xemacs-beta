@@ -571,7 +571,8 @@ the beginning and end of the range and the corresponding value.
 Results are guaranteed to be correct (i.e. each entry processed
 exactly once) if FUNCTION modifies or deletes the current entry
 \(i.e. passes the current range to `put-range-table' or
-`remove-range-table'), but not otherwise.
+`remove-range-table').  If FUNCTION modifies or deletes any other entry,
+this guarantee doesn't hold.
 */
        (function, range_table))
 {

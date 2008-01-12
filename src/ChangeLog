@@ -1,3 +1,9 @@
+2008-01-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* rangetab.c (Fmap_range_table): 
+	Clarify docstring. (If FUNCTION doesn't touch any range-table
+	entry, things will also be correct.)
+
 2008-01-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in: 
