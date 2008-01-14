@@ -1,3 +1,11 @@
+2008-01-14  Jerry James  <james@xemacs.org>
+
+	* font-lock.el (font-lock-add-keywords): Adapt to differences in
+	Emacs and XEmacs compiled font-lock lists.
+	* font-lock.el (font-lock-remove-keywords): Ditto.
+	* font-lock.el (font-lock-set-defaults-1): Make changes specified
+	by font-lock-keywords-alist and font-lock-removed-keywords-alist.
+
 2008-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-output-file-form): 

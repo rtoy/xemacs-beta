@@ -959,7 +959,7 @@ see the variables `c-font-lock-extra-types', `c++-font-lock-extra-types',
 	 (let ((was-compiled (eq (car font-lock-keywords) t)))
 	   ;; Bring back the user-level (uncompiled) keywords.
 	   (if was-compiled
-	       (setq font-lock-keywords (cadr font-lock-keywords)))
+	       (setq font-lock-keywords (cdr font-lock-keywords)))
 	   ;; Now modify or replace them.
 	   (if (eq how 'set)
 	       (setq font-lock-keywords keywords)
@@ -1069,7 +1069,7 @@ happens, so the major mode can be corrected."
 	 (let ((was-compiled (eq (car font-lock-keywords) t)))
 	   ;; Bring back the user-level (uncompiled) keywords.
 	   (if was-compiled
-	       (setq font-lock-keywords (cadr font-lock-keywords)))
+	       (setq font-lock-keywords (cdr font-lock-keywords)))
 
 	   ;; Edit them.
 	   (setq font-lock-keywords (copy-sequence font-lock-keywords))
@@ -2031,7 +2031,10 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
 			     font-lock-defaults
 			     (font-lock-find-font-lock-defaults major-mode)))
 	       (keywords (font-lock-choose-keywords
-			  (nth 0 defaults) font-lock-maximum-decoration)))
+			  (nth 0 defaults) font-lock-maximum-decoration))
+	       (local (cdr (assq major-mode font-lock-keywords-alist)))
+	       (removed-keywords
+		(cdr-safe (assq major-mode font-lock-removed-keywords-alist))))
 
 	  ;; Keywords?
 	  (setq font-lock-keywords (if (fboundp keywords)
@@ -2096,7 +2099,14 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
 		 ;; older way:
 		 ;; defaults not specified at all, so use `beginning-of-defun'.
 		 (setq font-lock-beginning-of-syntax-function
-		       'beginning-of-defun)))))
+		       'beginning-of-defun)))
+
+	  ;; Local fontification?
+	  (while local
+	    (font-lock-add-keywords nil (car (car local)) (cdr (car local)))
+	    (setq local (cdr local)))
+	  (when removed-keywords
+	    (font-lock-remove-keywords nil removed-keywords))))
 
     (setq font-lock-cache-position (make-marker))
     (setq font-lock-defaults-computed t)))
