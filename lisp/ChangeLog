@@ -1,3 +1,9 @@
+2008-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-output-file-form): 
+	Bind print-gensym-alist to nil, as we do within
+	byte-compile-output-docform.
+
 2008-01-04  Michael Sperber  <mike@xemacs.org>
 
         * code-files.el (insert-file-contents):
