@@ -1,3 +1,14 @@
+2008-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (prin1_to_string): New.
+	The guts of Fprin1_to_string, without resetting
+	Vprint_gensym_alist. 
+	(Fprin1_to_string): 
+	Call prin1_to_string, wrapped with RESET_PRINT_GENSYM calls.
+	* doprnt.c (emacs_doprnt_1): 
+	Call prin1_to_string, not Fprin1_to_string (dos veces). Avoids an
+	inappropriate reset of print-gensym-alist. 
+
 2008-01-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* rangetab.c (Fmap_range_table): 

@@ -558,7 +558,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		{
 		  /* For `S', prin1 the argument and then treat like
 		     a string.  */
-		  ls = Fprin1_to_string (obj, Qnil);
+		  ls = prin1_to_string (obj, 0);
 		}
 	      else if (STRINGP (obj))
 		ls = obj;
@@ -567,7 +567,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      else
 		{
 		  /* convert to string using princ. */
-		  ls = Fprin1_to_string (obj, Qt);
+		  ls = prin1_to_string (obj, 1);
 		}
 	      string = XSTRING_DATA (ls);
 	      string_len = XSTRING_LENGTH (ls);

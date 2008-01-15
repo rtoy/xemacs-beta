@@ -4932,6 +4932,7 @@ EXFUN (Fprin1_to_string, 2);
 EXFUN (Fprinc, 2);
 EXFUN (Fprint, 2);
 
+Lisp_Object prin1_to_string (Lisp_Object, int);
 
 /* Lower-level ways to output data: */
 void default_object_printer (Lisp_Object, Lisp_Object, int);
