@@ -1,3 +1,10 @@
+2008-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keydefs.el (global-map): 
+	Bind '(shift delete) to #'kill-primary-selection, as described by
+	Glynn Clements in
+	16434.49191.47038.991206@cerise.nosuchdomain.co.uk of 2004-02-08. 
+
 2008-01-14  Jerry James  <james@xemacs.org>
 
 	* font-lock.el (font-lock-add-keywords): Adapt to differences in
