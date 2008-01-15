@@ -1303,7 +1303,7 @@
 (let* ((literal-with-uninterned
 	'(first-element
 	  [#1=#:G32976 #2=#:G32974 #3=#:G32971 #4=#:G32969 alias
-		       #s(hash-table size 256 data (969 ?ù 55 ?7 166 ?¦ ))
+		       #s(hash-table size 256 data (969 ?\xF9 55 ?7 166 ?\xA6))
 		       #5=#:G32970 #6=#:G32972]))
        (print-readably t)
        (print-gensym t)

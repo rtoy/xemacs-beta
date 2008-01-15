@@ -1,5 +1,11 @@
 2008-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* automated/lisp-tests.el (literal-with-uninterned):
+	Use ?\x syntax for Latin-1 characters, don't assume that the file
+	will be read as UTF-8. 
+
+2008-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* automated/lisp-tests.el (thing): 
 	Check that printing a hash table literal doesn't clear
 	print-gensym-alist. 
