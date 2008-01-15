@@ -1299,3 +1299,17 @@
 ;; Check all-completions ignore element start with space.
 (Assert (not (all-completions "" '((" hidden" . "object")))))
 (Assert (all-completions " " '((" hidden" . "object"))))
+
+(let* ((literal-with-uninterned
+	'(first-element
+	  [#1=#:G32976 #2=#:G32974 #3=#:G32971 #4=#:G32969 alias
+		       #s(hash-table size 256 data (969 ?ù 55 ?7 166 ?¦ ))
+		       #5=#:G32970 #6=#:G32972]))
+       (print-readably t)
+       (print-gensym t)
+       (printed-with-uninterned (prin1-to-string literal-with-uninterned))
+       (awkward-regexp "#1=#")
+       (first-match-start (string-match awkward-regexp
+					printed-with-uninterned)))
+  (Assert (null (string-match awkward-regexp printed-with-uninterned
+			      (1+ first-match-start)))))

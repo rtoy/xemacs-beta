@@ -867,6 +867,26 @@ Output stream is STREAM, or value of `standard-output' (which see).
   return object;
 }
 
+Lisp_Object
+prin1_to_string (Lisp_Object object, int noescape)
+{
+  /* This function can GC */
+  Lisp_Object result = Qnil;
+  Lisp_Object stream = make_resizing_buffer_output_stream ();
+  Lstream *str = XLSTREAM (stream);
+  /* gcpro OBJECT in case a caller forgot to do so */
+  struct gcpro gcpro1, gcpro2, gcpro3;
+  GCPRO3 (object, stream, result);
+
+  print_internal (object, stream, !noescape);
+  Lstream_flush (str);
+  UNGCPRO;
+  result = make_string (resizing_buffer_stream_ptr (str),
+			Lstream_byte_count (str));
+  Lstream_delete (str);
+  return result;
+}
+
 DEFUN ("prin1-to-string", Fprin1_to_string, 1, 2, 0, /*
 Return a string containing the printed representation of OBJECT,
 any Lisp object.  Quoting characters are used when needed to make output
@@ -877,20 +897,11 @@ second argument NOESCAPE is non-nil.
 {
   /* This function can GC */
   Lisp_Object result = Qnil;
-  Lisp_Object stream = make_resizing_buffer_output_stream ();
-  Lstream *str = XLSTREAM (stream);
-  /* gcpro OBJECT in case a caller forgot to do so */
-  struct gcpro gcpro1, gcpro2, gcpro3;
-  GCPRO3 (object, stream, result);
 
   RESET_PRINT_GENSYM;
-  print_internal (object, stream, NILP (noescape));
+  result = prin1_to_string (object, !(EQ(noescape, Qnil)));
   RESET_PRINT_GENSYM;
-  Lstream_flush (str);
-  UNGCPRO;
-  result = make_string (resizing_buffer_stream_ptr (str),
-			Lstream_byte_count (str));
-  Lstream_delete (str);
+
   return result;
 }
 

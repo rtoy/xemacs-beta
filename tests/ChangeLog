@@ -1,3 +1,9 @@
+2008-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (thing): 
+	Check that printing a hash table literal doesn't clear
+	print-gensym-alist. 
+
 2008-01-03  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/symbol-tests.el (Symbol documentation): Add tests to
