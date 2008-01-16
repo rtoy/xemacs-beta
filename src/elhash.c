@@ -1719,12 +1719,33 @@ internal_hash (Lisp_Object obj, int depth)
 {
   if (depth > 5)
     return 0;
-  if (CONSP (obj))
+
+  if (CONSP(obj)) 
     {
-      /* no point in worrying about tail recursion, since we're not
-	 going very deep */
-      return HASH2 (internal_hash (XCAR (obj), depth + 1),
-		    internal_hash (XCDR (obj), depth + 1));
+      Hashcode hash, h;
+      int s;
+
+      depth += 1;
+
+      if (!CONSP(XCDR(obj)))
+	{
+	  /* special case for '(a . b) conses */
+	  return HASH2(internal_hash(XCAR(obj), depth),
+		       internal_hash(XCDR(obj), depth));
+	}
+
+      /* Don't simply tail recurse; we want to hash lists with the
+	 same contents in distinct orders differently. */
+      hash = internal_hash(XCAR(obj), depth);
+
+      obj = XCDR(obj);
+      for (s = 1; s < 6 && CONSP(obj); obj = XCDR(obj), s++)
+	{
+	  h = internal_hash(XCAR(obj), depth);
+	  hash = HASH3(hash, h, s);
+	}
+
+      return hash;
     }
   if (STRINGP (obj))
     {

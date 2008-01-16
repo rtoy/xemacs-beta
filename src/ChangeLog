@@ -1,3 +1,10 @@
+2008-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (internal_hash):
+	Make short lists with the same contents in a different order hash
+	distinctly. Gives better performance for things like three-element
+	lists describing colours. Thank you Sebastian Freundt!
+
 2008-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (prin1_to_string): New.

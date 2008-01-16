@@ -1,3 +1,9 @@
+2008-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/hash-table-tests.el: 
+	Assert that two short lists with the same contents in distinct
+	orders hash differently. 
+
 2008-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (literal-with-uninterned):
