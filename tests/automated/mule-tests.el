@@ -118,21 +118,8 @@ This is a naive implementation in Lisp.  "
 ;; Fixed 2007-06-22 <18043.2793.611745.734215@parhasard.net>.
 ;;----------------------------------------------------------------
 
-(let ((test-file-name
-       ;; The Gnus people, when they call #'make-temp-name, then loop,
-       ;; checking if the corresponding file exists. Our #'make-temp-name
-       ;; already does this loop, and the Gnus approach doesn't bring
-       ;; anything; there remains a race condition if you can predict the
-       ;; path name. The path name in question depends on the process ID and
-       ;; a (weak) PRNG seeded with the seconds to the power of the
-       ;; milliseconds of some instant close to the startup time of this
-       ;; XEmacs; without being able to read the address space of this
-       ;; XEmacs, or monitor what stat() calls it does, it is not predictable.
-       ;;
-       ;; The really kosher way to do this is to merge GNU's make-temp-file
-       ;; and use that. It basically has the functionality of the Unix
-       ;; mkstemp.
-       (make-temp-name (expand-file-name "tXfXsKc" (temp-directory))))
+(let ((test-file-name 
+       (make-temp-file (expand-file-name "tXfXsKc" (temp-directory))))
       revert-buffer-function
       kill-buffer-hook)		; paranoia
   (find-file test-file-name)

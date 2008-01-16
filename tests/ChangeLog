@@ -1,5 +1,12 @@
 2008-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* automated/mule-tests.el (test-file-name): 
+	Call #'make-temp-file now it's available. Remove a long comment
+	saying, essentially, that it should be used, not
+	#'make-temp-name. 
+
+2008-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* automated/hash-table-tests.el: 
 	Assert that two short lists with the same contents in distinct
 	orders hash differently. 
