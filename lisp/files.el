@@ -4177,6 +4177,9 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 			file switches wildcard full-directory-p)))
      (t
       (let* ((beg (point))
+	     ;; on Unix, assume that ls will output in what the
+	     ;; file-name coding system specifies
+	     (coding-system-for-read (get-coding-system 'file-name))
 	     (result
 	      (if wildcard
 		  ;; Run ls in the directory of the file pattern we asked for.
