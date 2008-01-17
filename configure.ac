@@ -5408,10 +5408,13 @@ dnl Check for DBM support in libgdbm.
 if test "$enable_database_gdbm" != "no"; then
   AC_CHECK_LIB(gdbm, dbm_open, [
    enable_database_gdbm=yes enable_database_dbm=no libdbm=-lgdbm], [
+       AC_CHECK_LIB(gdbm_compat, dbm_open, [
+       enable_database_gdbm=yes enable_database_dbm=no libdbm="-lgdbm_compat -lgdbm"], [
    if test "$enable_database_gdbm" = "yes"; then
      XE_DIE("Required GNU DBM support cannot be provided.")
    fi
-   enable_database_gdbm=no])
+   enable_database_gdbm=no], -lgdbm)
+  ])
 fi
 
 dnl Check for DBM support in libc and libdbm.
@@ -5492,7 +5495,7 @@ yes
   fi
 
   dnl Berk db 4.1 decorates public functions with version information
-  if test "$enable_database_berkdb" != "yes" -a "$dbver" = "4"; then
+  if test "$enable_database_berkdb" = "yes" -a "$dbver" = "4"; then
     rm -f $tempcname
     echo "#include <$db_h_file>" > $tempcname
     echo "configure___ dbfunc=db_create" >> $tempcname
