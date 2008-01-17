@@ -1,3 +1,17 @@
+2008-01-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac:
+	If using a version of the gdbm library that sticks dbm_open in
+	libgdbm_compat.so, also link to that library. 
+	Correct a thinko with DBM version 4 checks. Both from Hans de
+	Graaff, in 
+	http://mid.gmane.org/20050812092756.6850.qmail@graaff.xs4all.nl
+	and
+	http://mid.gmane.org/pan.2007.06.24.10.10.57@gentoo.org; thank you
+	Hans!
+	* configure:
+	Regenerate.
+
 2008-01-01  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* Makefile.in.in (mkpkgdir): Fix incorrect comment convention.
