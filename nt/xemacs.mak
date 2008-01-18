@@ -251,6 +251,11 @@ USE_MINITAR=$(HAVE_ZLIB)
 # MSVCRT.DLL (the same that we use in USE_CRTDLL, more or less), so using
 # this is a good thing.
 
+!if $(USE_INTEL_COMPILER)
+CC=icl
+INTEL_LIBS=libirc.lib libmmt.lib
+!endif
+
 !if !defined(USE_SYSTEM_MALLOC)
 USE_SYSTEM_MALLOC=$(USE_PORTABLE_DUMPER)
 !endif
@@ -1290,7 +1295,7 @@ TEMACS_BROWSE=$(BLDSRC)\temacs.bsc
 TEMACS_LIBS=$(LASTFILE) $(OPT_LIBS) \
  oldnames.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib \
  shell32.lib wsock32.lib netapi32.lib winmm.lib winspool.lib ole32.lib \
- mpr.lib uuid.lib imm32.lib $(LIBC_LIB)
+ mpr.lib uuid.lib imm32.lib $(INTEL_LIBS) $(LIBC_LIB)
 TEMACS_COMMON_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS_LINK) \
  -base:0x1000000 -stack:0x800000 $(TEMACS_ENTRYPOINT) -subsystem:windows \
  -heap:0x00100000 -nodefaultlib $(PROFILE_FLAGS) setargv.obj

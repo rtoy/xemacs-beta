@@ -257,3 +257,6 @@ NEW_GC=0
 # *AND CURRENTLY HAPPENS WITH VC++*, at least when using pdump.  Therefore,
 # be warned!
 USE_UNION_TYPE=0
+
+# Set this to build XEmacs with the Intel C Compiler.
+USE_INTEL_COMPILER=0
