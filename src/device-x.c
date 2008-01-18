@@ -703,6 +703,10 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 	path = alloca_extbytes (strlen (data_dir) + 13 + strlen (locale) + 7);
 	format = "%sapp-defaults/%s/Emacs";
       }
+    else
+      {
+	goto no_data_directory;
+      }
 
     /*
      * The general form for $LANG is <language>_<country>.<encoding>.  Try
@@ -730,6 +734,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 	XrmCombineFileDatabase (path, &db, False);
     }
 
+  no_data_directory:
     xfree (locale, Extbyte*);
  }
 #endif /* MULE */

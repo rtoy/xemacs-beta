@@ -1,3 +1,8 @@
+2008-01-18  Jerry James  <james@xemacs.org>
+
+	* device-x.c (x_init_device): Don't write to path or read from
+	format when neither has been initialized.
+
 2008-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* elhash.c (internal_hash):
