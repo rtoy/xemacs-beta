@@ -1,3 +1,10 @@
+2008-01-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dired.c (Ffile_attributes): If bignums are available, use them
+	for the file size when necessary. If they are not, be clearer
+	about the check for whether the file size can fit in a Lisp
+	integer. 
+
 2008-01-18  Jerry James  <james@xemacs.org>
 
 	* device-x.c (x_init_device): Don't write to path or read from

@@ -824,7 +824,7 @@ Otherwise, list elements are:
   First integer has high-order 16 bits of time, second has low 16 bits.
  5. Last modification time, likewise.
  6. Last status change time, likewise.
- 7. Size in bytes. (-1, if number is out of range).
+ 7. Size in bytes. (-1, if number out of range and no bignum support.)
  8. File modes, as a string of ten letters or dashes as in ls -l.
  9. t iff file's gid would change if file were deleted and recreated.
 10. inode number.
@@ -900,11 +900,14 @@ If file does not exist, returns nil.
   values[4] = make_time (s.st_atime);
   values[5] = make_time (s.st_mtime);
   values[6] = make_time (s.st_ctime);
-  values[7] = make_int ((EMACS_INT) s.st_size);
-  /* If the size is out of range, give back -1.  */
-  /* #### Fix when Emacs gets bignums! */
-  if (XINT (values[7]) != s.st_size)
-    values[7] = make_int (-1);
+
+#ifndef HAVE_BIGNUM
+  values[7] = make_integer (NUMBER_FITS_IN_AN_EMACS_INT (s.st_size) ? 
+                            (EMACS_INT)s.st_size : -1);
+#else
+  values[7] = make_integer (s.st_size);
+#endif 
+
   filemodestring (&s, modes);
   values[8] = make_string ((Ibyte *) modes, 10);
 #if defined (BSD4_2) || defined (BSD4_3)	/* file gid will be dir gid */
