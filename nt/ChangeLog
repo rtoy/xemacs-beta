@@ -1,3 +1,7 @@
+2008-01-18  Vin Shelton  <acs@xemacs.org>
+
+	* xemacs.mak: Use debug version of Intel's libm, if appropriate.
+
 2008-01-17  Vin Shelton  <acs@xemacs.org>
 
 	* config.inc.samp: Added USE_INTEL_COMPILER to support the Intel

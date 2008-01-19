@@ -195,8 +195,11 @@ DEBUG_XEMACS=0
 !if !defined(SUPPORT_EDIT_AND_CONTINUE)
 SUPPORT_EDIT_AND_CONTINUE=0
 !endif
+!if !defined(BUILD_FOR_SETUP_KIT)
+BUILD_FOR_SETUP_KIT=0
+!endif
 
-!if !defined(BUILD_FOR_SETUP_KIT) || "$(BUILD_FOR_SETUP_KIT)" == "0"
+!if !$(BUILD_FOR_SETUP_KIT)
 OK_TO_USE_MSVCRTD=1
 !else
 OK_TO_USE_MSVCRTD=0
@@ -250,11 +253,6 @@ USE_MINITAR=$(HAVE_ZLIB)
 # NOTE: The various graphics libraries are generally compiled to use
 # MSVCRT.DLL (the same that we use in USE_CRTDLL, more or less), so using
 # this is a good thing.
-
-!if $(USE_INTEL_COMPILER)
-CC=icl
-INTEL_LIBS=libirc.lib libmmt.lib
-!endif
 
 !if !defined(USE_SYSTEM_MALLOC)
 USE_SYSTEM_MALLOC=$(USE_PORTABLE_DUMPER)
@@ -661,6 +659,16 @@ OPT_DEFINES=$(OPT_DEFINES) -DSYSTEM_MALLOC
 OPT_DEFINES=$(OPT_DEFINES) -DGNU_MALLOC
 OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\free-hook.obj $(OUTDIR)\gmalloc.obj \
 	$(OUTDIR)\ntheap.obj $(OUTDIR)\vm-limit.obj
+!endif
+
+!if $(USE_INTEL_COMPILER)
+CC=icl
+# Use static library if possible
+INTEL_LIBS=libircmt.lib libmmt.lib
+# Debugging requires DLL version of libm
+!if $(DEBUG_XEMACS)
+INTEL_LIBS=libircmt.lib libmmd.lib
+!endif
 !endif
 
 ########################### Process options related to compilation.
