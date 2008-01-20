@@ -4851,13 +4851,20 @@ _ACEOF
 
   version=${infodock_major_version}.${infodock_minor_version}.${infodock_build_version}
   PROGNAME=infodock
+  SHEBANG_PROGNAME=infodock-script
   CPPFLAGS="$CPPFLAGS -DINFODOCK"
 else
   PROGNAME=xemacs
+  SHEBANG_PROGNAME=xemacs-script
 fi
 
 cat >>confdefs.h <<_ACEOF
 #define EMACS_PROGNAME "$PROGNAME"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define SHEBANG_PROGNAME "${PROGNAME}-script"
 _ACEOF
 
 

@@ -1,3 +1,8 @@
+2008-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/cmdargs.texi (Command Switches): 
+	Describe --script, -script. 
+
 2007-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/strings.texi (Formatting Strings):
