@@ -479,6 +479,9 @@ heading.")
 			      (".info.zip" . "unzip -c %s")
 			      (".y" . "cat %s | unyabba")
 			      ("info.y" . "cat %s | unyabba")
+                              ;; Mandriva Linux uses lzma.
+                              (".lzma" . "unlzma --stdout %s")
+                              (".info.lzma" . "unlzma --stdout %s")
 			      ;; These ones are for MS-DOS filenames.
 			      (".inf" . nil)
 			      (".igz" . "gzip -dc %s")
