@@ -1158,7 +1158,7 @@ If there is no corresponding value, return DEFAULT (which defaults to nil).
 }
 
 DEFUN ("puthash", Fputhash, 3, 3, 0, /*
-Hash KEY to VALUE in HASH-TABLE.
+Hash KEY to VALUE in HASH-TABLE, and return VALUE. 
 */
        (key, value, hash_table))
 {
@@ -1222,6 +1222,7 @@ Return non-nil if an entry was removed.
 
 DEFUN ("clrhash", Fclrhash, 1, 1, 0, /*
 Remove all entries from HASH-TABLE, leaving it empty.
+Return HASH-TABLE.
 */
        (hash_table))
 {
