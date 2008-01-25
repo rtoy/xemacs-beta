@@ -866,10 +866,10 @@ XE_HELP_SUBSECTION([Database options])
 XE_COMPLEX_ARG([database],
 	AS_HELP_STRING([--enable-database=TYPE],[Compile with database support.  Valid types are
                         `no' or a comma-separated list of one or more
-                        of `berkdb' and either `dbm' or `gnudbm'.]),
+                        of `berkdb' and either `dbm' or `gdbm'.]),
 	[
 if test "$enable_database_dbm"  = "yes" -a "$enable_database_gdbm" = "yes"; then
-	USAGE_ERROR("Only one of \`dbm' and \`gnudbm' may be specified
+	USAGE_ERROR("Only one of \`dbm' and \`gdbm' may be specified
 with the \`--with-database' option.")
 fi
 ],

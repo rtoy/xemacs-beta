@@ -1,3 +1,7 @@
+2008-01-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (--with-database): 'gnudbm' -> 'gdbm' in docstrings.
+
 2008-01-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure.ac:

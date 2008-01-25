@@ -1661,7 +1661,7 @@ Database options
 
   --with-database=TYPE    Compile with database support. Valid types are `no'
                           or a comma-separated list of one or more of `berkdb'
-                          and either `dbm' or `gnudbm'.
+                          and either `dbm' or `gdbm'.
   --with-ldap             Support the LDAP protocol.
   --with-postgresql       Support the PostgreSQL RDBMS.
 
@@ -3772,7 +3772,7 @@ unset _with_database_args _database_found x y _require_database
 
 if test "$enable_database_dbm"  = "yes" -a "$enable_database_gdbm" = "yes"; then
 	(echo "$progname: Usage error:"
-echo " " "Only one of \`dbm' and \`gnudbm' may be specified
+echo " " "Only one of \`dbm' and \`gdbm' may be specified
 with the \`--with-database' option."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
 fi
