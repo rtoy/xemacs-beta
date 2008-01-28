@@ -1,3 +1,8 @@
+2008-01-24 Mike Sperber   <mike@xemacs.org>
+
+	* make-src-depend (PrintDeps): Fix Perl code that no longer works
+	with Perl 5.10.
+
 2008-01-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* elhash.c (Fputhash): Document the return value. 

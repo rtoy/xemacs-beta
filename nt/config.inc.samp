@@ -31,7 +31,7 @@ GTK_DIR=
 ############################################################################
 
 # Directory under which the optional libraries are placed.  To make your
-# life easy, just grab http://ftp.xemacs.org/aux/optional-libs.exe
+# life easy, just grab http://www.xemacs.org/Download/win32/optional-libs.exe
 # (a self-installing .ZIP) and unzip them into an appropriate directory
 # (by default, c:\src).  This gets you precompiled versions of all of
 # the libraries below.

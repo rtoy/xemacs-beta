@@ -458,10 +458,10 @@ PATH_LATE_PACKAGE_DIRECTORIES="$(PACKAGE_PREFIX:\=\\)"
 !if $(INFODOCK)
 PATH_PREFIX=../..
 !else
-PATH_PREFIX=..
+PATH_PREFIX="$(INSTALL_DIR)"
 !endif
 
-PATH_DEFINES=-DPATH_PREFIX=\"$(PATH_PREFIX)\"
+PATH_DEFINES=-DPATH_PREFIX=\"$(PATH_PREFIX:\=\\)\"
 
 !if $(SEPARATE_BUILD)
 PATH_DEFINES=$(PATH_DEFINES) -DPATH_LOADSEARCH=\"$(LISP:\=\\)\" -DPATH_DATA=\"$(ETC:\=\\)\" -DPATH_INFO=\"$(INFO:\=\\)\"
@@ -691,8 +691,8 @@ CCV=@$(CC)
 # giving it.
 DEBUG_FLAG_LINK_DEBUG=-debug -opt:noref
 # This turns on additional run-time checking
-# For some reason it causes spawning of make-docfile to crash in VC 7
-DEBUG_FLAG_COMPILE_DEBUG=-RTC1
+# For some reason it causes spawning of make-docfile to crash in VC 7 and VC 8
+# DEBUG_FLAG_COMPILE_DEBUG=-RTC1
 ! else
 DEBUG_FLAG_LINK_DEBUG=-debug:full
 DEBUG_FLAG_COMPILE_DEBUG=
@@ -1366,7 +1366,8 @@ TEMACS_DUMP_DEP = $(OUTDIR)\temacs.res
 !endif
 
 $(RAW_EXE): $(TEMACS_OBJS) $(LASTFILE) $(TEMACS_DUMP_DEP)
-	@echo link $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_DUMP_DEP) $(TEMACS_LIBS)
+# Command line too long for some Windows installation:
+#	@echo link $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_DUMP_DEP) $(TEMACS_LIBS)
 	link.exe @<<
   $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_DUMP_DEP) $(TEMACS_LIBS)
 <<

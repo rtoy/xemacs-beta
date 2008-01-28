@@ -1,3 +1,13 @@
+2008-01-24 Mike Sperber   <mike@xemacs.org>
+
+	* config.inc.samp: Fix URL for optional libraries.
+	* xemacs.mak (PATH_PREFIX): Set PATH_PREFIX to the value of INSTALL_DIR.
+	* xemacs.mak (PATH_DEFINES): Fix setting of PATH_DEFINES.
+	* xemacs.mak (DEBUG_FLAG_COMPILE_DEBUG): Comment out -RTC1: it
+	even crashes with VC 8.
+	* xemacs.mak: Comment out echo line that leads to
+	command-line-too-long error on some Windowses.
+
 2008-01-18  Vin Shelton  <acs@xemacs.org>
 
 	* xemacs.mak: Use debug version of Intel's libm, if appropriate.
